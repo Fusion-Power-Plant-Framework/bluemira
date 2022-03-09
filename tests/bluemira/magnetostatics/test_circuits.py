@@ -29,7 +29,12 @@ import tests
 from bluemira.base.file import get_bluemira_path
 from bluemira.geometry._deprecated_loop import Loop
 from bluemira.geometry._deprecated_tools import innocent_smoothie
-from bluemira.geometry.parameterisations import PictureFrame, PrincetonD, TripleArc
+from bluemira.geometry.parameterisations import (
+    FullDomeFlatInnerCurvedPictureFrame,
+    PictureFrame,
+    PrincetonD,
+    TripleArc,
+)
 from bluemira.geometry.tools import make_circle
 from bluemira.magnetostatics.baseclass import SourceGroup
 from bluemira.magnetostatics.circuits import (
@@ -140,52 +145,60 @@ def test_mixedsourcesolver():
 
 
 class TestArbitraryPlanarXSCircuit:
-    @classmethod
-    def setup_class(cls):
-        pd_inputs = {"x1": {"value": 4}, "x2": {"value": 16}, "dz": {"value": 0}}
-        pd = PrincetonD(pd_inputs).create_shape()
-        pf_inputs = {
-            "x1": {"value": 5},
-            "x2": {"value": 10},
-            "z1": {"value": -10},
-            "z2": {"value": 9},
-            "ri": {"value": 0.4},
-            "ro": {"value": 1},
-        }
-        pf = PictureFrame(pf_inputs).create_shape()
-        ta_inputs = {
-            "x1": {"value": 4},
-            "dz": {"value": 0},
-            "sl": {"value": 6.5},
-            "f1": {"value": 3},
-            "f2": {"value": 4},
-            "a1": {"value": 20},
-            "a2": {"value": 40},
-        }
-        ta = TripleArc(ta_inputs).create_shape()
-        shapes = [pd, ta, pf]
-        open_coordinates = []
-        closed_coordinates = []
-        for shape in shapes:
-            closed_coordinates.append(shape.discretize(ndiscr=50, byedges=True))
-            open_coordinates.append(shape.discretize(ndiscr=50, byedges=True)[:, :25])
+    pd_inputs = {"x1": {"value": 4}, "x2": {"value": 16}, "dz": {"value": 0}}
 
-        cls.open_circuits = [
-            ArbitraryPlanarRectangularXSCircuit(c, 0.25, 0.5, 1)
-            for c in open_coordinates
-        ]
-        cls.closed_circuits = [
-            ArbitraryPlanarRectangularXSCircuit(c, 0.25, 0.5, 1)
-            for c in closed_coordinates
-        ]
+    pf_inputs = {
+        "x1": {"value": 5},
+        "x2": {"value": 10},
+        "z1": {"value": -10},
+        "z2": {"value": 9},
+        "ri": {"value": 0.4},
+        "ro": {"value": 1},
+    }
+    ta_inputs = {
+        "x1": {"value": 4},
+        "dz": {"value": 0},
+        "sl": {"value": 6.5},
+        "f1": {"value": 3},
+        "f2": {"value": 4},
+        "a1": {"value": 20},
+        "a2": {"value": 40},
+    }
 
-    def test_geometry(self):
-        for circuit in self.open_circuits:
-            for i, source_1 in enumerate(circuit.sources[:-1]):
-                source_2 = circuit.sources[i + 1]
-                s1_rect = source_1.points[0][:4]
-                s2_rect = source_1.points[1][:4]
-                assert np.allclose(s1_rect, s2_rect)
+    wtf_inputs = {
+        "x_mid": {"value": 0.4},
+        "x_curve_start": {"value": 2.5},
+        "x_out": {"value": 9.5},
+        "z_mid_up": {"value": 7.5},
+        "z_mid_down": {"value": -7.5},
+        "z_max_up": {"value": 11},
+        "z_max_down": {"value": -11},
+    }
+    shapes = [pd, ta, pf, wtf]
+    parameterisations = [
+        PrincetonD,
+        TripleArc,
+        PictureFrame,
+        FullDomeFlatInnerCurvedPictureFrame,
+    ]
+    p_inputs = [pd_inputs, ta_inputs, pf_inputs, wtf_inputs]
+
+    @pytest.mark.parametrize(
+        "parameterisation", "input", zip(parameterisations, p_inputs)
+    )
+    def test_geometry(self, parameterisation, inputs):
+        shape = parameterisation(inputs).create_shape()
+        coords = shape.discretize(ndiscr=50, byedges=True)
+        circuit = ArbitraryPlanarRectangularXSCircuit(coords, 0.25, 0.5, 1.0)
+        open_circuit = ArbitraryPlanarRectangularXSCircuit(
+            coords[:, :25].T, 0.25, 0.5, 1.0
+        )
+
+        for i, source_1 in enumerate(circuit.source[:-1]):
+            source_2 = circuit.sources[i + 1]
+            s1_rect = source_1.points[0][:4]
+            s2_rect = source_1.points[1][:4]
+            assert np.allclose(s1_rect, s2_rect)
 
 
 class TestCariddiBenchmark:
