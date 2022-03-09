@@ -163,15 +163,18 @@ def coordinates_to_path(x, z):
     return Path(vertices, codes)
 
 
-def set_component_plane(comp: Component, plane: Union[str, BluemiraPlacement]):
-    if plane not in ["xy", "xz", "zy"] and not isinstance(plane, BluemiraPlacement):
+def set_component_placement(comp: Component, placement: Union[str, BluemiraPlacement]):
+    if placement not in ["xyz", "xzy", "yzx"] and not isinstance(
+        placement, BluemiraPlacement
+    ):
         raise bm_display_error.DisplayError(
-            f"Not a valid placement {plane} - select either xy, xz, zy, or a BluemiraPlacement"
+            f"Not a valid placement {placement} - select either xyz, xzy, yzx, "
+            f"or a BluemiraPlacement"
         )
 
-    comp.plot_options.plane = plane
+    comp.plot_options.view = placement
     for child in comp.children:
-        set_component_plane(child, plane)
+        set_component_placement(child, placement)
 
 
 class Plot3D(Axes3D):
