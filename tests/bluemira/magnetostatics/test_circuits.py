@@ -174,7 +174,7 @@ class TestArbitraryPlanarXSCircuit:
         "z_max_up": {"value": 11},
         "z_max_down": {"value": -11},
     }
-    shapes = [pd, ta, pf, wtf]
+
     parameterisations = [
         PrincetonD,
         TripleArc,
