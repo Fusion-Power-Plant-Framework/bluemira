@@ -171,10 +171,12 @@ class TestArbitraryPlanarXSCircuit:
             open_coordinates.append(shape.discretize(ndiscr=50, byedges=True)[:, :25])
 
         cls.open_circuits = [
-            ArbitraryPlanarXSCircuit(c, 0.25, 0.5, 1) for coord in open_coordinates
+            ArbitraryPlanarRectangularXSCircuit(c, 0.25, 0.5, 1)
+            for c in open_coordinates
         ]
         cls.closed_circuits = [
-            ArbitraryPlanarXSCircuit(c, 0.25, 0.5, 1) for coord in closed_coordinates
+            ArbitraryPlanarRectangularXSCircuit(c, 0.25, 0.5, 1)
+            for c in closed_coordinates
         ]
 
     def test_geometry(self):
