@@ -420,9 +420,9 @@ class Solver(interface.FileProgramInterface):
             POWERBALANCE,
             params,
             build_config.get("mode", "run"),
-            binary=build_config.get("binary", BINARY),
             run_dir=run_dir,
             read_dir=read_dir,
+            binary="",
             mappings=mappings,
             problem_settings=build_config.get("problem_settings", None),
         )

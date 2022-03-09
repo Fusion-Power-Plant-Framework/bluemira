@@ -24,25 +24,51 @@ Test for power balance run
 """
 
 # %%
+import logging
+
 import bluemira.codes.ukaea_powerbalance as power_balance
 from bluemira.base.config import Configuration
 from bluemira.base.logs import set_log_level
+from bluemira.codes.ukaea_powerbalance.constants import MODEL_NAME
+from bluemira.codes.ukaea_powerbalance.mapping import mappings
 
-set_log_level("DEBUG", logger_names=["bluemira", "PowerBalance"])
+logging.basicConfig()
+logging.getLogger("PowerBalance").setLevel(logging.DEBUG)
 
 # %%[markdown]
 # # Configure Power Balance Models (UKAEA)
+# Currently BLUEMIRA does not contain any parameters usable by Power Balance
+# instead these are read from PROCESS
 
-params = Configuration({})
+# %%
+param_list = {}
+params = Configuration(param_list)
 
-pbm_solver = power_balance.Solver(
-    params=params,
-    build_config={
-        "problem_settings": {},
-        "mode": "run",
-        "binary": "",
-    },
-)
+# %%[markdown]
+# Some values are not linked into bluemira. These power balance parameters can be set
+# directly in `problem_settings`.
 
-# # Run the Solver
+# %%
+problem_settings = {
+    f"{MODEL_NAME}.CryogenicPower.CD.FBCol_2": 0.00041,
+    f"{MODEL_NAME}.wasteheatpower.wasteHeatCryo.Height": 3.2,
+    f"{MODEL_NAME}.magnetpower.magnetTF.numCoils": 20,
+}
+
+# %%[markdown]
+# Finally the `build_config` dictionary collates the configuration settings for
+# the solver.
+
+# %%
+build_config = {"problem_settings": problem_settings, "mode": "run"}
+
+# %%[markdown]
+# Now we can create the solver object with the parameters and build configuration
+
+# %%
+pbm_solver = power_balance.Solver(params=params, build_config=build_config)
+
+# %%[markdown]
+# ### Running the solver
+# Very simply use the `run` method of the solver
 pbm_solver.run()
