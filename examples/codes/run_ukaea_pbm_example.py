@@ -20,7 +20,29 @@
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 
 """
-Importer for UKAEA PowerBalance runner constants and functions
+Test for power balance run
 """
-from bluemira.codes.ukaea_powerbalance.api import Solver
-from bluemira.codes.ukaea_powerbalance.constants import NAME
+
+# %%
+import bluemira.codes.ukaea_powerbalance as power_balance
+from bluemira.base.config import Configuration
+from bluemira.base.logs import set_log_level
+
+set_log_level("DEBUG", logger_names=["bluemira", "PowerBalance"])
+
+# %%[markdown]
+# # Configure Power Balance Models (UKAEA)
+
+params = Configuration({})
+
+pbm_solver = power_balance.Solver(
+    params=params,
+    build_config={
+        "problem_settings": {},
+        "mode": "run",
+        "binary": "",
+    },
+)
+
+# # Run the Solver
+pbm_solver.run()

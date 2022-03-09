@@ -24,14 +24,15 @@ API for the ukaea powerbalance model and related functions
 """
 
 import copy
+import glob
 import os
 import pprint
+import shutil
 from enum import auto
 from pathlib import Path
 from typing import Optional
 
 import pandas
-import power_balance.cli as ukaea_pbm
 import power_balance.configs as ukaea_pbm_conf
 import power_balance.core as ukaea_pbm_core
 import power_balance.exceptions as ukaea_pbm_exc
@@ -42,11 +43,21 @@ import toml
 import bluemira.codes.interface as interface
 from bluemira.base.file import get_bluemira_path
 from bluemira.base.look_and_feel import bluemira_debug  # , bluemira_warn
+from bluemira.codes.error import CodesError
 
 # from bluemira.codes.error import CodesError
 from bluemira.codes.ukaea_powerbalance.constants import BINARY, MODEL_NAME
 from bluemira.codes.ukaea_powerbalance.constants import NAME as POWERBALANCE
 from bluemira.codes.ukaea_powerbalance.mapping import mappings
+
+
+class UKAEAPowerBalanceExecutionError(CodesError, Exception):
+    """
+    Exceptions relating to BLUEMIRA execution of UKAEA Power Balance Models
+    """
+
+    def __init__(self, msg):
+        Exception().__init__(msg)
 
 
 class PowerBalanceSolutions:
@@ -55,8 +66,8 @@ class PowerBalanceSolutions:
     """
 
     def __init__(self, output_directory):
-        _hdf5_file = os.path.join(output_directory, "data", "session.hdf5")
-        _hdf5_key = MODEL_NAME.lower()
+        _hdf5_file = os.path.join(output_directory, "data", "session_data.h5")
+        _hdf5_key = MODEL_NAME.lower().replace(".", "_")
         self._data_frame = pandas.read_hdf(_hdf5_file, _hdf5_key)
         self._metadata = pandas.HDFStore(_hdf5_file).get_storer(_hdf5_key).attrs
 
@@ -86,9 +97,20 @@ class Inputs(ukaea_pbm_param.PBMParameterSet):
     Class for UKAEA Power Balance inputs
     """
 
-    def __init__(self, run_dir, new_inputs=None):
-        ukaea_pbm.new(run_dir)
-        super().__init__(run_dir)
+    def __init__(self, run_dir, config, new_inputs=None):
+        _params = glob.glob(os.path.join(ukaea_pbm_param.DEFAULT_PARAM_DIR, "*.toml"))
+
+        for param_file in _params:
+            _out_file = os.path.join(run_dir, os.path.basename(param_file))
+            ukaea_pbm_param.remove_do_not_edit_header(param_file, _out_file)
+
+        super().__init__(
+            parameters_directory=run_dir,
+            simulation_options_file=config["simulation_options_file"],
+            structural_params_file=config["structural_params_file"],
+            plasma_scenario_file=config["plasma_scenario_file"],
+        )
+
         if new_inputs:
             self.modify(new_inputs)
 
@@ -124,7 +146,7 @@ class Outputs(PowerBalanceSolutions):
     def_outdir = Path(filepath, "default")
 
     def __init__(self, output_dir=None):
-        super().__init__(output_dir or self.def_outdir)
+        super().__init__(os.path.abspath(output_dir or self.def_outdir))
 
 
 class RunMode(interface.RunMode):
@@ -166,7 +188,9 @@ class Setup(interface.Setup):
         super().__init__(parent, *args, **kwargs)
 
         self.default_plasma = toml.load(
-            self._default_param_dir, self._default_config["simulation_options_file"]
+            os.path.join(
+                self._default_param_dir, self._default_config["plasma_scenario_file"]
+            )
         )
         self.default_simopts = toml.load(
             os.path.join(
@@ -177,7 +201,11 @@ class Setup(interface.Setup):
         self._problem_settings = problem_settings if problem_settings is not None else {}
         self.input_file = "powerbalance_input.dat"
         self.output_file = "powerbalance_outputs.dat"
-        self.io_manager = Inputs({**self._get_new_inputs(), **self._problem_settings})
+        self.io_manager = Inputs(
+            self.parent.run_dir,
+            config=self._default_config,
+            new_inputs={**self._get_new_inputs(), **self._problem_settings},
+        )
         self._generate_profiles()
 
     def _get_new_inputs(self):
@@ -228,7 +256,12 @@ class Setup(interface.Setup):
         )
 
     def _generate_profiles(self):
-        _profile_dir = os.mkdirs(os.path.join(self.parent.run_dir, "ukaea_pbm_profiles"))
+        _profile_dir = os.path.join(self.parent.run_dir, "ukaea_pbm_profiles")
+
+        if os.path.isdir(_profile_dir):
+            shutil.rmtree(_profile_dir)
+
+        os.makedirs(_profile_dir)
 
         _plasma_tuple = (
             self.default_plasma["plasma_ramp_up_start"],
@@ -269,7 +302,9 @@ class Setup(interface.Setup):
         Writes input files to run directory
         """
         _params_dir = os.path.join(self.parent.run_dir, "ukaea_pbm_parameters")
-        self.io_manager.save_to_directory(_params_dir)
+        if not os.path.exists(_params_dir):
+            os.makedirs(_params_dir, exist_ok=True)
+        self.io_manager.save_to_directory(os.path.abspath(_params_dir))
 
     def update_inputs(self):
         """
@@ -298,8 +333,6 @@ class Run(interface.Run):
 
     """
 
-    _binary = BINARY
-
     def __init__(self, parent, *args, **kwargs):
         super().__init__(parent, kwargs.pop("binary", self._binary), *args, **kwargs)
 
@@ -308,12 +341,13 @@ class Run(interface.Run):
         Run powerbalance runner
         """
         bluemira_debug("Mode: run")
+        _prof_dir = os.path.join(self.parent.run_dir, "ukaea_pbm_profiles")
+        _param_dir = os.path.join(self.parent.run_dir, "ukaea_pbm_parameters")
         _session = ukaea_pbm_core.PowerBalance(
+            print_intro=True,
             no_browser=True,
-            parameter_directory=os.path.join(
-                self.parent.run_dir, "ukaea_pbm_parameters"
-            ),
-            profiles_directory=os.path.join(self.parent.run_dir, "ukaea_pbm_profiles"),
+            parameter_directory=os.path.abspath(_param_dir),
+            profiles_directory=os.path.abspath(_prof_dir),
         )
         _session.run_simulation(
             output_directory=os.path.join(self.parent.run_dir, "ukaea_pbm_outputs")
@@ -329,7 +363,13 @@ class Teardown(interface.Teardown):
         """
         Run powerbalance teardown
         """
-        self.io_manager = Outputs(self.parent.run_dir)
+        _runs = glob.glob(
+            os.path.join(self.parent.run_dir, "ukaea_pbm_outputs", "pbm_*")
+        )
+        _runs.sort(key=os.path.getmtime)
+        if not _runs:
+            raise UKAEAPowerBalanceExecutionError("No run directories could be found")
+        self.io_manager = Outputs(_runs[-1])
 
     def _mock(self):
         """
