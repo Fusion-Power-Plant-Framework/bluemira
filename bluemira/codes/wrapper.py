@@ -38,7 +38,7 @@ if TYPE_CHECKING:
 def systems_code_solver(
     params: ParameterFrame,
     build_config: BuildConfig,
-    run_dir: str,
+    run_dir: Optional[str] = None,
     read_dir: Optional[str] = None,
     template_indat=None,
     module: Optional[str] = "PROCESS",
@@ -105,7 +105,7 @@ def plot_radial_build(
 def transport_code_solver(
     params: ParameterFrame,
     build_config: BuildConfig,
-    run_dir: str,
+    run_dir: Optional[str] = None,
     read_dir: Optional[str] = None,
     module: Optional[str] = "PLASMOD",
 ) -> FileProgramInterface:

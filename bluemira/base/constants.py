@@ -28,11 +28,16 @@ from typing import List, Union
 
 import numpy as np
 from periodictable import elements
-from pint import UnitRegistry, set_application_registry
+from pint import Context, UnitRegistry, set_application_registry
+from pint.util import UnitsContainer
 
 LOCALE = "en_GB"
 ureg = UnitRegistry(
-    fmt_locale=LOCALE, preprocessors=[lambda x: x.replace("%", " percent ")]
+    fmt_locale=LOCALE,
+    preprocessors=[
+        lambda x: x.replace("%", " percent "),
+        lambda x: x.replace("$", "USD "),
+    ],
 )
 ureg.default_format = "~P"
 set_application_registry(ureg)
@@ -51,6 +56,55 @@ FLUX_DENSITY = METRE**-2 / SECOND
 ureg.define("displacements_per_atom  = count = dpa")
 ureg.define("full_power_year = year = fpy")
 ureg.define("percent = 0.01 count = %")
+ureg.define("atomic_parts_per_million = count * 1e-6 = appm")
+ureg.define("USD = [currency]")  # Other currencies need to be set up in a context
+
+T_units = UnitsContainer({"[temperature]": 1})
+
+
+def _energy_temperature_context():
+    """
+    Converter between energy an temperature
+
+    temperature = energy / k_B
+    """
+    e_to_t = Context("Energy_to_Temperature")
+
+    eV_units = UnitsContainer({"[length]": 2, "[mass]": 1, "[time]": -2})
+
+    e_to_t.add_transformation(eV_units, T_units, lambda ureg, x: x / ureg.k_B)
+    e_to_t.add_transformation(T_units, eV_units, lambda ureg, x: x * ureg.k_B)
+    return e_to_t
+
+
+def _flow_context():
+    """
+    Convert between flow in mol and Pa m^3
+
+    Pa m^3 = R * 0degC * mol
+    """
+    mols_to_pam3 = Context("Mol to Pa.m^3 for a gas")
+
+    mol_units = UnitsContainer({"[substance]": 1})
+
+    Pam3_units = UnitsContainer({"[length]": 2, "[mass]": 1, "[time]": -2})
+
+    conversion_factor = ureg.Quantity("molar_gas_constant") * ureg.Quantity(
+        0, ureg.celsius
+    ).to("kelvin")
+
+    mols_to_pam3.add_transformation(
+        mol_units, Pam3_units, lambda ureg, x: x * conversion_factor
+    )
+    mols_to_pam3.add_transformation(
+        Pam3_units, mol_units, lambda ureg, x: x / conversion_factor
+    )
+    return mols_to_pam3
+
+
+ureg.add_context(_energy_temperature_context())
+ureg.add_context(_flow_context())
+
 
 # =============================================================================
 # Physical constants
@@ -169,30 +223,16 @@ def raw_uc(
 
     """
     unit_from, unit_to = ureg.Unit(unit_from), ureg.Unit(unit_to)
-    if unit_from.is_compatible_with("eV") and unit_to.is_compatible_with("kelvin"):
-        return from_eV(value, to=unit_to, _from=unit_from)
-    elif (
-        unit_from.is_compatible_with("Pa m^3") and unit_to.is_compatible_with("mol")
-    ) or (
-        unit_from.is_compatible_with("Pa m^3/s") and unit_to.is_compatible_with("mol/s")
-    ):
-        return pam3s_to_mols(value)
-    elif (
-        unit_from.is_compatible_with("mol") and unit_to.is_compatible_with("Pa m^3")
-    ) or (
-        unit_from.is_compatible_with("mol/s") and unit_to.is_compatible_with("Pa m^3/s")
-    ):
-        return mols_to_pam3s(value)
-    elif unit_from.is_compatible_with("kelvin") and np.any(
+
+    converted_val = ureg.Quantity(value, unit_from).to(unit_to).magnitude
+    if unit_to.dimensionality == T_units and np.any(
         np.less(
-            value,
-            ABS_ZERO.get(
-                unit_from, ureg.Quantity(0, ureg.kelvin).to(unit_from).magnitude
-            ),
+            converted_val,
+            ABS_ZERO.get(unit_to, ureg.Quantity(0, ureg.kelvin).to(unit_to).magnitude),
         )
     ):
         raise ValueError("Negative temperature in K specified.")
-    return ureg.Quantity(value, unit_from).to(unit_to).magnitude
+    return converted_val
 
 
 def to_celsius(kelvin: Union[float, np.array, List[float]]) -> Union[float, np.array]:
@@ -229,35 +269,6 @@ def to_kelvin(celsius: Union[float, np.array, List[float]]) -> Union[float, np.a
     return raw_uc(celsius, CELSIUS, ureg.kelvin)
 
 
-def from_eV(
-    value: Union[float, np.array, List[float]],
-    to: str = "celsius",
-    *,
-    _from: str = "keV"
-):
-    """
-    Convert a temperature in eV to Celsius.
-
-    The conversion to and from can be modified.
-    Value is divided by the boltzmann constant (k_B).
-
-    Parameters
-    ----------
-    value: Union[float, np.array, List[float]]
-        The temperature to convert [keV]
-    to: str
-        Unit to convert to eg celsius or kelvin
-    from: str
-        allows modification of keV prefix to eg eV or MeV etc
-
-    Returns
-    -------
-    temp: Union[float, np.array]
-        The temperature
-    """
-    return (ureg.Quantity(value, _from) / ureg.Quantity("k_B")).to(to).magnitude
-
-
 def kgm3_to_gcm3(density: Union[float, np.array, List[float]]) -> Union[float, np.array]:
     """
     Convert a density in kg/m3 to g/cm3
@@ -290,63 +301,6 @@ def gcm3_to_kgm3(density: Union[float, np.array, List[float]]) -> Union[float, n
         The density [kg/m3]
     """
     return raw_uc(density, "g cm^3", "kg m^3")
-
-
-def pam3s_to_mols(flow_in_pam3_s):
-    """
-    Convert a flow in Pa.m^3/s to a flow in mol/s.
-
-    Parameters
-    ----------
-    flow_in_pam3_s: Union[float, np.array]
-        The flow in Pa.m^3/s to convert
-
-    Returns
-    -------
-    flow_in_mols: Union[float, np.array]
-        The flow in mol/s
-
-    Notes
-    -----
-    At 273.15 K for a diatomic gas
-    """
-    return (
-        (ureg.Quantity(flow_in_pam3_s, "Pa m^3") / _pam3_mol_const())
-        .to_base_units()
-        .magnitude
-    )
-
-
-def mols_to_pam3s(flow_in_mols):  # noqa :N802
-    """
-    Convert a flow in mol/s to a flow in Pa.m^3/s.
-
-    Parameters
-    ----------
-    flow_in_mols: Union[float, np.array]
-        The flow in mol/s to convert
-
-    Returns
-    -------
-    flow_in_pam3_s: Union[float, np.array]
-        The flow in Pa.m^3/s
-
-    Notes
-    -----
-    At 273.15 K for a diatomic gas
-    """
-    return (
-        (ureg.Quantity(flow_in_mols, "mole") * _pam3_mol_const())
-        .to_base_units()
-        .magnitude
-    )
-
-
-@lru_cache(1)
-def _pam3_mol_const():
-    return ureg.Quantity("molar_gas_constant") * ureg.Quantity(0, ureg.celsius).to(
-        "kelvin"
-    )
 
 
 # =============================================================================
