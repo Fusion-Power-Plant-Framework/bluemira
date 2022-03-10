@@ -285,7 +285,8 @@ class TFCoilsBuilder(OptimisedShapeBuilder):
         field_solver = self._make_field_solver()
         component = TFCoilsComponent(self.name, field_solver=field_solver)
 
-        component.add_child(self.build_xy())
+        self.build_xy()
+        # component.add_child(self.build_xy())
         component.add_child(self.build_xyz())
         component.add_child(self.build_xz())
         return component
@@ -443,7 +444,7 @@ class TFCoilsBuilder(OptimisedShapeBuilder):
         insulation.display_cad_options.color = BLUE_PALETTE["TF"][2]
         sectors = circular_pattern_component(insulation, n_tf_draw, degree=degree)
         component.add_children(sectors, merge_trees=True)
-
+        """
         # Casing
         # Normally I'd do lots more here to get to a proper casing
         # This is just a proof-of-principle
@@ -540,7 +541,7 @@ class TFCoilsBuilder(OptimisedShapeBuilder):
         casing.display_cad_options.color = BLUE_PALETTE["TF"][0]
         sectors = circular_pattern_component(casing, n_tf_draw, degree=degree)
         component.add_children(sectors, merge_trees=True)
-
+        """
         return component
 
     def build_nontangent_xyz(self, centreline, xs):
