@@ -429,7 +429,7 @@ class TFCoilsBuilder(OptimisedShapeBuilder):
         # Winding pack
 
         wp_solid = sweep_shape(self._wp_cross_section, self._centreline)
-        wp_solid = self._correct_wp_shape(wp_solid)
+        # wp_solid = self._correct_wp_shape(wp_solid)
         winding_pack = PhysicalComponent("Winding pack", wp_solid)
         winding_pack.display_cad_options.color = BLUE_PALETTE["TF"][1]
         sectors = circular_pattern_component(winding_pack, n_tf_draw, degree=degree)

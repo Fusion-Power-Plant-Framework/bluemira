@@ -1000,8 +1000,8 @@ class PictureFrameTools:
         x_mid,
         z_top,
         z_mid,
+        r_c,
         flip=False,
-        r_c=0,
     ):
         """
         Makes smooth dome for CP coils. This includes a initial straight section
@@ -1072,7 +1072,6 @@ class PictureFrameTools:
         )
 
         # Inner Corner
-        r_c = 0.1
         z_corner = z_mid + r_c if flip else z_mid - r_c
         corner_in = make_circle(
             r_c,
@@ -1584,8 +1583,8 @@ class FullDomeFlatInnerCurvedPictureFrame(GeometryParameterisation):
             x_mid,
             z_max_up,
             z_mid_up,
+            r_c,
             flip=False,
-            r_c=0,
         )
 
         wires.append(top_leg_curve)
@@ -1599,8 +1598,8 @@ class FullDomeFlatInnerCurvedPictureFrame(GeometryParameterisation):
             x_mid,
             z_max_down,
             z_mid_down,
+            r_c,
             flip=True,
-            r_c=0,
         )
 
         # Outer leg
@@ -1696,14 +1695,7 @@ class TopDomeFlatInnerCurvedPictureFrame(GeometryParameterisation):
 
         # Top Curve
         top_leg_curve = PictureFrameTools._make_domed_leg(
-            axis,
-            x_out,
-            x_curve_start,
-            x_mid,
-            z_max_up,
-            z_mid_up,
-            flip=False,
-            r_c=0,
+            axis, x_out, x_curve_start, x_mid, z_max_up, z_mid_up, r_j, flip=False
         )
 
         wires.append(top_leg_curve)
