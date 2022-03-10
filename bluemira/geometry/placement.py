@@ -245,10 +245,13 @@ class BluemiraPlacement:
         return BluemiraPlane.from_3_points(base, p1, p2)
 
     def xy_plane(self):
+        """Returns the corresponding placement xy plane"""
         return self.extract_plane(v1=np.array([1, 0, 0]), v2=np.array([0, 1, 0]))
 
     def yz_plane(self):
+        """Returns the corresponding placement yz plane"""
         return self.extract_plane(v1=np.array([0, 1, 0]), v2=np.array([0, 0, 1]))
 
     def xz_plane(self):
+        """Returns the corresponding placement xz plane"""
         return self.extract_plane(v1=np.array([1, 0, 0]), v2=np.array([0, 0, 1]))
