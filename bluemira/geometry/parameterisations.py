@@ -1136,7 +1136,6 @@ class PictureFrameTools:
             out_wire.append(make_polygon([p2, p1]))
             out_wire.append(corner_in)
         label = "bot_limb" if flip else "top_limb"
-
         return BluemiraWire(out_wire, label=label)
 
     @staticmethod
@@ -1605,8 +1604,8 @@ class FullDomeFlatInnerCurvedPictureFrame(GeometryParameterisation):
         )
 
         # Outer leg
-        px = top_leg_curve.discretize(100)[:, -1]
-        po = bot_leg_curve.discretize(100)[:, 0]
+        px = top_leg_curve.discretize(100, byedges=True)[:, -1]
+        po = bot_leg_curve.discretize(100, byedges=True)[:, 0]
         wires.append(make_polygon([px, po], label="outer_limb"))
 
         wires.append(bot_leg_curve)

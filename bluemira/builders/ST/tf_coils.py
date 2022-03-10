@@ -43,7 +43,7 @@ from bluemira.display.palettes import BLUE_PALETTE
 from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.optimisation import GeometryOptimisationProblem
 from bluemira.geometry.parameterisations import GeometryParameterisation
-from bluemira.geometry.plane import BluemiraPlane
+from bluemira.geometry.placement import BluemiraPlacement
 from bluemira.geometry.solid import BluemiraSolid
 from bluemira.geometry.tools import (
     boolean_cut,
@@ -188,7 +188,7 @@ class TFCoilsBuilder(OptimisedShapeBuilder):
             "m",
             source="bluemira",
         )
-        shape_params["x1"] = {"value": r_current_in_board, "fixed": True}
+        shape_params["x_mid"] = {"value": r_current_in_board, "fixed": True}
         return shape_params
 
     def reinitialise(
@@ -308,7 +308,7 @@ class TFCoilsBuilder(OptimisedShapeBuilder):
         )
         winding_pack.plot_options.face_options["color"] = BLUE_PALETTE["TF"][1]
         component.add_child(winding_pack)
-
+        """
         # Insulation
         ins_o_outer = offset_wire(wp_outer, self.params.tk_tf_ins.value, join="arc")
         ins_outer = PhysicalComponent("inner", BluemiraFace([ins_o_outer, wp_outer]))
@@ -329,7 +329,7 @@ class TFCoilsBuilder(OptimisedShapeBuilder):
         cas_outer.plot_options.face_options["color"] = BLUE_PALETTE["TF"][0]
         casing = Component("Casing", children=[cas_inner, cas_outer])
         component.add_child(casing)
-
+        """
         bm_plot_tools.set_component_plane(component, "xz")
 
         return component
@@ -426,19 +426,9 @@ class TFCoilsBuilder(OptimisedShapeBuilder):
         degree = (360.0 / self._params.n_TF.value) * n_tf_draw
 
         # Winding pack
-        if not _wire_edges_tangent(self._centreline._shape):
-            wp_wires = []
-            for wp_wire in self._centreline._wires:
-                wp_wire = BluemiraWire(wp_wire)
-                plot_2d(wp_wire)
-                wp_wire = sweep_shape(
-                    self._wp_cross_section, wp_wire, label=wp_wire.label
-                )
-                wp_wires.append(wp_wire)
-                show_cad(wp_wires, DisplayCADOptions(color="blue", transparency=0.1))
-        else:
-            wp_solid = sweep_shape(self._wp_cross_section, self._centreline)
+
         wp_solid = sweep_shape(self._wp_cross_section, self._centreline)
+        wp_solid = self._correct_wp_shape(wp_solid)
         winding_pack = PhysicalComponent("Winding pack", wp_solid)
         winding_pack.display_cad_options.color = BLUE_PALETTE["TF"][1]
         sectors = circular_pattern_component(winding_pack, n_tf_draw, degree=degree)
@@ -488,7 +478,7 @@ class TFCoilsBuilder(OptimisedShapeBuilder):
 
         # This is because the bounding box of a solid is not to be trusted
         cut_wires = slice_shape(
-            solid, BluemiraPlane.from_3_points([0, 0, 0], [1, 0, 0], [1, 0, 1])
+            solid, BluemiraPlacement.from_3_points([0, 0, 0], [1, 0, 0], [1, 0, 1])
         )
         cut_wires.sort(key=lambda wire: wire.length)
         boundary = cut_wires[-1]
@@ -553,6 +543,19 @@ class TFCoilsBuilder(OptimisedShapeBuilder):
 
         return component
 
+    def build_nontangent_xyz(self, centreline, xs):
+        """
+        Builds the xyz components for the TF coil for shapes with sharp corners
+
+        Returns
+        -------
+        component: Component
+            The component grouping the results in 3D (xyz).
+        """
+        wp_wires = []
+        wire_prev = None
+        return None
+
     def _make_field_solver(self):
         """
         Make a magnetostatics solver for the field from the TF coils.
@@ -573,19 +576,49 @@ class TFCoilsBuilder(OptimisedShapeBuilder):
         """
         Make the winding pack x-y cross-section wire
         """
-        x_c = self.params.r_tf_current_ib
-        # PROCESS WP thickness includes insulation and insertion gap
-        d_xc = 0.5 * (self.params.tf_wp_width - 2 * self.params.tk_tf_ins)
-        d_yc = 0.5 * (self.params.tf_wp_depth - 2 * self.params.tk_tf_ins)
+        x_in = self.params.r_tf_in + self.params.tk_tf_nose
+        x_out = x_in + self.params.tf_wp_width
+        # Insulation included in WP width
+
+        # Make a trapezoidal WP
+        tan_half_angle = np.tan(np.pi / self.params.n_TF.value)
+        y_out = self.params.tf_wp_depth / 2
+        y_in = y_out - (x_out - x_in) * tan_half_angle
         wp_xs = make_polygon(
             [
-                [x_c - d_xc, x_c + d_xc, x_c + d_xc, x_c - d_xc],
-                [-d_yc, -d_yc, d_yc, d_yc],
+                [x_in, x_out, x_out, x_in],
+                [-y_in, -y_out, y_out, y_in],
                 [0, 0, 0, 0],
             ],
             closed=True,
         )
         return wp_xs
+
+    def _correct_wp_shape(self, wp_shape):
+        """
+        Correct the winding pack x-y cross-section wire. Cuts existing centrepost
+        and replaces with one created from scratch
+        """
+        inb_centreline = self._centreline.boundary[0]
+        x_out = self.params.r_tf_in + self.params.tk_tf_nose + self.params.tf_wp_width
+        y_out = self.params.tf_wp_depth / 2
+
+        corrector = make_polygon(
+            [
+                [0, x_out, x_out, 0],
+                [-y_out, -y_out, y_out, y_out],
+                [0, 0, 0, 0],
+            ],
+            closed=True,
+        )
+        corrector = sweep_shape(corrector, inb_centreline)
+
+        inb_limb = sweep_shape(self._wp_cross_section, inb_centreline)
+        show_cad(inb_limb)
+        wp_corrected = boolean_cut(wp_shape, corrector)
+        wp_corrected = boolean_fuse(wp_corrected, inb_limb)
+
+        return wp_corrected
 
     def _make_ins_xs(self):
         """
@@ -604,6 +637,7 @@ class TFCoilsBuilder(OptimisedShapeBuilder):
         Make the casing x-y cross-section wires
         """
         x_in = self.params.r_tf_in
+
         # Insulation included in WP width
         x_out = (
             x_in
@@ -623,20 +657,12 @@ class TFCoilsBuilder(OptimisedShapeBuilder):
             closed=True,
         )
 
-        dx_ins = 0.5 * self.params.tf_wp_width.value
-        dy_ins = 0.5 * self.params.tf_wp_depth.value
-
-        # Split the total radial thickness equally on the outboard
-        # This could be done with input params too..
-        tk_total = self.params.tk_tf_front_ib.value + self.params.tk_tf_nose.value
-        tk = 0.5 * tk_total
-
-        dx_out = dx_ins + tk
-        dy_out = dy_ins + self.params.tk_tf_side.value
+        # DON'T Split the total radial thickness equally on the outboard
+        # For ST Designs casing thickness is const all the way around
         outboard_wire = make_polygon(
             [
-                [-dx_out, dx_out, dx_out, -dx_out],
-                [-dy_out, -dy_out, dy_out, dy_out],
+                [x_in, x_out, x_out, x_in],
+                [-y_in, -y_out, y_out, y_in],
                 [0, 0, 0, 0],
             ],
             closed=True,
@@ -650,7 +676,7 @@ class TFCoilsBuilder(OptimisedShapeBuilder):
         Make the casing x-z cross-section from a 3-D volume.
         """
         wires = slice_shape(
-            solid, BluemiraPlane.from_3_points([0, 0, 0], [1, 0, 0], [1, 0, 1])
+            solid, BluemiraPlacement.from_3_points([0, 0, 0], [1, 0, 0], [1, 0, 1])
         )
         wires.sort(key=lambda wire: wire.length)
         if len(wires) != 4:
