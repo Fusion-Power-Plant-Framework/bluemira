@@ -286,6 +286,8 @@ class NLOPTOptimiser:
         for k, v in opt_parameters.items():
             if self._opt.has_param(k):
                 self._opt.set_param(k, v)
+            elif k == "initial_step":
+                self._opt.set_initial_step(v)
             else:
                 bluemira_warn(f"Unrecognised algorithm parameter: {k}")
 
