@@ -200,6 +200,11 @@ class TestArbitraryPlanarXSCircuit:
     def test_circle(self):
         shape = make_circle(5, (0, 9, 0), axis=(0, 0, 1))
         coords = shape.discretize(ndiscr=30, byedges=True)
+        coords.set_ccw((0, 0, 1))
+        circuit = ArbitraryPlanarRectangularXSCircuit(coords, 0.25, 0.5, 1.0)
+        assert self._calc_daisychain(circuit) == len(circuit.sources) - 1
+        assert self._check_continuity(circuit.sources[-1], circuit.sources[0])
+        coords.set_ccw((0, 0, -1))
         circuit = ArbitraryPlanarRectangularXSCircuit(coords, 0.25, 0.5, 1.0)
         assert self._calc_daisychain(circuit) == len(circuit.sources) - 1
         assert self._check_continuity(circuit.sources[-1], circuit.sources[0])
