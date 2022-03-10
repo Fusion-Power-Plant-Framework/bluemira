@@ -32,13 +32,10 @@ jobs:
         ssh-key: ${{ secrets.BLUEMIRA_PRIVATE_DATA_DEPLOY_KEY }}
         path: './bluemira-private-data'
 
-    - name: Move bluemira_private_data
+    - name: Move bluemira-private-data
       working-directory: "/home/runner/work/"
       run: |
           mv ~/work/bluemira/bluemira/bluemira-private-data ~/work/bluemira/bluemira-private-data
-          ls ~/work/bluemira
-          ls ~/work/bluemira/bluemira
-          ls ~/work/bluemira/bluemira-private-data
 
     - name: Cache pip
       uses: actions/cache@v2
@@ -104,7 +101,7 @@ jobs:
       run: |
         pytest --cov=BLUEPRINT \
                --cov-report html:htmlcov_BLUEPRINT \
-               tests/BLUEPRINT --reactor --private
+               tests/BLUEPRINT --reactor
 
     - name: Run pytest bluemira
       shell: bash -l {0}
