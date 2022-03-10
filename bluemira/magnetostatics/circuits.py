@@ -88,6 +88,9 @@ class ArbitraryPlanarRectangularXSCircuit(SourceGroup):
                 else:
                     alpha = 0.0
 
+            if np.sign(alpha) != np.sign(beta):
+                print("signs: ", alpha, beta)
+
             d_l_norm = d_l / np.linalg.norm(d_l)
             t_vec = np.cross(d_l_norm, normal)
 
@@ -115,19 +118,20 @@ class ArbitraryPlanarRectangularXSCircuit(SourceGroup):
         angle = np.arccos(np.clip(cos_angle, -1, 1))
 
         d = distance_between_points(p0, p1)
-        v_norm = np.linalg.norm(-v1 + v2)
+        v_norm = np.linalg.norm(v1 - v2)
         if np.isclose(v_norm, 0):
             return 0.5 * angle
 
-        r1 = p1 + 0.1 * d * (-v1 + v2) / v_norm
+        r1 = p1 + 0.0000001 * (v1 - v2) / v_norm
 
         if self._point_in_triangle(r1, p0, p1, p2):
             if np.isclose(angle, np.pi / 2):
                 print("halfpi")
                 angle += 2 * np.pi
             else:
-                print("default")
+
                 angle = angle - 2 * np.pi
+                print("default: ", angle + 2 * np.pi)
 
         return 0.5 * angle
 
