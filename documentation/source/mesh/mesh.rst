@@ -18,7 +18,7 @@ The meshing module of bluemira implements the following main classe:
 * :py:class:`bluemira.mesh.meshing.Mesh`: active class that performs the mesh operation
 
 Meshable objects
-================
+----------------
 All objects that inherit from Meshable are provided by a mesh_options dictionary
 in which the following properties can be specified:
 
@@ -29,7 +29,7 @@ in which the following properties can be specified:
 
 
 Geometry definition and Mesh assignment
-=======================================
+---------------------------------------
 All BluemiraGeo objects inherit from Meshable. After creating a geo object,
 `mesh_options` must to be specified (no default values are used). Easiest way is to
 use a simple dictionary with `lcar` and `physical_group` keys.
@@ -55,7 +55,7 @@ checking purpose.
     gmsh_ for more information).
 
 msh2xdmf and fenics import
-==========================
+--------------------------
 Once the mesh has been generated, it can be imported in a PDEs solver. Fenics_ solver,
 is integrated into bluemira. Coupling with mesh is made through msh2xdmf package.
 
