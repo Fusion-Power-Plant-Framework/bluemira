@@ -193,7 +193,9 @@ class TestArbitraryPlanarXSCircuit:
         open_circuit = ArbitraryPlanarRectangularXSCircuit(
             coords[:, :25].T, 0.25, 0.5, 1.0
         )
-        assert self._calc_daisychain(circuit) == len(circuit.sources) - 1
+        n_chain = int(self._calc_daisychain(circuit))
+        n_sources = len(circuit.sources) - 1
+        assert n_chain == n_sources
         assert self._check_continuity(circuit.sources[-1], circuit.sources[0])
         assert self._calc_daisychain(open_circuit) == len(open_circuit.sources) - 1
 

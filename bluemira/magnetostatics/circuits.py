@@ -124,7 +124,7 @@ class ArbitraryPlanarRectangularXSCircuit(SourceGroup):
             if np.isclose(angle, np.pi / 2):
                 angle += 2 * np.pi
             else:
-                angle = -(angle - 2 * np.pi)
+                angle = angle - 2 * np.pi
         return 0.5 * angle
 
     @staticmethod
