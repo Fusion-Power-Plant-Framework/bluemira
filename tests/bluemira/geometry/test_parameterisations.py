@@ -229,42 +229,36 @@ class TestFullDomeFlatInnerCurvedPictureFrame:
     def test_length(self):
         p = FullDomeFlatInnerCurvedPictureFrame()
         wire = p.create_shape()
-        assert np.isclose(wire.length, 55.64519, rtol=1e-4, atol=1e-5)
+        assert np.isclose(wire.length, 57.6308, rtol=1e-4, atol=1e-5)
 
-
-class TestFullDomeTaperedInnerCurvedPictureFrame:
-    def test_length(self):
-        p = FullDomeTaperedInnerCurvedPictureFrame()
+    def test_ordering(self):
+        p = FullDomeFlatInnerCurvedPictureFrame()
         wire = p.create_shape()
-        assert np.isclose(wire.length, 53.732, rtol=1e-4, atol=1e-5)
+        assert _wire_edges_tangent(wire._shape)
 
 
 class TestTopDomeFlatInnerCurvedPictureFrame:
     def test_length(self):
         p = TopDomeFlatInnerCurvedPictureFrame()
         wire = p.create_shape()
-        assert np.isclose(wire.length, 51.707, rtol=1e-4, atol=1e-5)
+        assert np.isclose(wire.length, 56.829, rtol=1e-4, atol=1e-5)
 
-
-class TestBotDomeTaperedInnerCurvedPictureFrame:
-    def test_length(self):
-        p = BotDomeTaperedInnerCurvedPictureFrame()
+    def test_ordering(self):
+        p = TopDomeFlatInnerCurvedPictureFrame()
         wire = p.create_shape()
-        assert np.isclose(wire.length, 49.794, rtol=1e-4, atol=1e-5)
-
-
-class TestTopDomeTaperedInnerCurvedPictureFrame:
-    def test_length(self):
-        p = TopDomeTaperedInnerCurvedPictureFrame()
-        wire = p.create_shape()
-        assert np.isclose(wire.length, 49.794, rtol=1e-4, atol=1e-5)
+        assert _wire_edges_tangent(wire._shape)
 
 
 class TestBotDomeFlatInnerCurvedPictureFrame:
     def test_length(self):
         p = BotDomeFlatInnerCurvedPictureFrame()
         wire = p.create_shape()
-        assert np.isclose(wire.length, 51.707, rtol=1e-4, atol=1e-5)
+        assert np.isclose(wire.length, 56.829, rtol=1e-4, atol=1e-5)
+
+    def test_ordering(self):
+        p = BotDomeFlatInnerCurvedPictureFrame()
+        wire = p.create_shape()
+        assert _wire_edges_tangent(wire._shape)
 
 
 class TestSextupleArc:

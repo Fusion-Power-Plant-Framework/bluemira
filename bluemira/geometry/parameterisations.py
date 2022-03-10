@@ -1033,7 +1033,7 @@ class PictureFrameTools:
             True if limb is lower limb of section, False if upper
 
         r_c: np.float
-            Radius of corner transition. Nominally equal to inboard corner radius.
+            Radius of corner transition. Nominally 0 [m]
 
         Returns
         -------
@@ -1053,23 +1053,23 @@ class PictureFrameTools:
         cos_a = np.cos(theta_leg_basic * 0.5)
 
         # Joint Curve
-        r_c = min(x_curve_start - x_mid, 0.8)
-        theta_j = np.arccos((r_leg * cos_a + r_c) / (r_leg + r_c))
-        z_mid_r_c = z_mid - r_c if flip else z_mid + r_c
+        r_j = min(x_curve_start - x_mid, 0.8)
+        theta_j = np.arccos((r_leg * cos_a + r_j) / (r_leg + r_j))
+        z_mid_r_j = z_mid - r_j if flip else z_mid + r_j
         joint_curve_centre = (
-            leg_centre[0] - (r_leg + r_c) * np.sin(theta_j),
+            leg_centre[0] - (r_leg + r_j) * np.sin(theta_j),
             0,
-            z_mid_r_c,
+            z_mid_r_j,
         )
 
         # Corner Transitioning Curve
 
-        theta_trans = np.arccos((r_c - r_leg * sin_a) / (r_c - r_leg))
-        x_trans = leg_centre[0] + (r_leg - r_c) * np.cos(theta_trans)
+        theta_trans = np.arccos((r_j - r_leg * sin_a) / (r_j - r_leg))
+        x_trans = leg_centre[0] + (r_leg - r_j) * np.cos(theta_trans)
         z_trans = (
-            leg_centre[2] - (r_leg - r_c) * np.sin(theta_trans)
+            leg_centre[2] - (r_leg - r_j) * np.sin(theta_trans)
             if flip
-            else leg_centre[2] + (r_leg - r_c) * np.sin(theta_trans)
+            else leg_centre[2] + (r_leg - r_j) * np.sin(theta_trans)
         )
 
         # Inner Corner
@@ -1085,11 +1085,11 @@ class PictureFrameTools:
 
         # Build straight section of leg
         p1 = [x_mid + r_c, 0, z_mid]
-        p2 = [leg_centre[0] - (r_leg + r_c) * np.sin(theta_j), 0, z_mid]
+        p2 = [leg_centre[0] - (r_leg + r_j) * np.sin(theta_j), 0, z_mid]
 
         # Dome-inboard section transition curve
         joint_curve = make_circle(
-            radius=r_c,
+            radius=r_j,
             center=joint_curve_centre,
             start_angle=90 - np.rad2deg(theta_j) if flip else -90,
             end_angle=90 if flip else np.rad2deg(theta_j) - 90,
@@ -1110,7 +1110,7 @@ class PictureFrameTools:
 
         # Outboard corner transition curve
         transition_curve = make_circle(
-            radius=r_c,
+            radius=r_j,
             center=[x_trans, 0, z_trans],
             start_angle=0 if flip else -np.rad2deg(theta_trans),
             end_angle=np.rad2deg(theta_trans) if flip else 0,
@@ -1605,7 +1605,7 @@ class FullDomeFlatInnerCurvedPictureFrame(GeometryParameterisation):
             flip=False,
         )
         wires.append(top_leg_curve)
-        plot_2d(wires)
+
         # Bottom Curve
 
         bot_leg_curve = PictureFrameTools._make_domed_leg(
@@ -1625,7 +1625,7 @@ class FullDomeFlatInnerCurvedPictureFrame(GeometryParameterisation):
         wires.append(make_polygon([p3, p4], label="outer_limb"))
 
         wires.append(bot_leg_curve)
-        plot_2d(wires)
+
         return BluemiraWire(wires, label=label)
 
 
@@ -1676,13 +1676,13 @@ class TopDomeFlatInnerCurvedPictureFrame(GeometryParameterisation):
                 # Outer limb radius
                 BoundedVariable("x_out", 9.5, lower_bound=9.4, upper_bound=9.8),
                 # Upper limb flat section height
-                BoundedVariable("z_mid_up", 7.5, lower_bound=6, upper_bound=8),
+                BoundedVariable("z_mid_up", 9.5, lower_bound=8, upper_bound=10.5),
                 # Lower limb flat section height
-                BoundedVariable("z_mid_down", -7.5, lower_bound=-8, upper_bound=-6),
+                BoundedVariable("z_mid_down", -9.5, lower_bound=-10.5, upper_bound=-8),
                 # Upper limb max height
                 BoundedVariable("z_max_up", 11, lower_bound=6, upper_bound=12),
                 # Corner/transition joint radius
-                BoundedVariable("r_c", 0.3, lower_bound=0.1, upper_bound=0.5),
+                BoundedVariable("r_c", 0.1, lower_bound=0.09, upper_bound=0.11),
             ],
             frozen=True,
         )
@@ -1721,10 +1721,17 @@ class TopDomeFlatInnerCurvedPictureFrame(GeometryParameterisation):
 
         # Top Curve
         top_leg_curve = PictureFrameTools._make_domed_leg(
-            axis, x_out, x_curve_start, x_mid, z_max_up, z_mid_up, r_c, flip=False
+            axis,
+            x_out,
+            x_curve_start,
+            x_mid,
+            z_max_up,
+            z_mid_up,
+            r_c,
+            flip=False,
         )
-
         wires.append(top_leg_curve)
+        plot_2d(wires)
 
         # Bottom leg is flat
 
@@ -1733,7 +1740,7 @@ class TopDomeFlatInnerCurvedPictureFrame(GeometryParameterisation):
             x_mid,
             x_out,
             z_mid_down,
-            0,
+            r_c,
             r_c,
             flip=True,
         )
@@ -1742,8 +1749,10 @@ class TopDomeFlatInnerCurvedPictureFrame(GeometryParameterisation):
         p3 = top_leg_curve.discretize(100, byedges=True)[:, -1]
         p4 = bot_leg.discretize(100, byedges=True)[:, 0]
         wires.append(make_polygon([p3, p4], label="outer_limb"))
+        plot_2d(wires)
 
         wires.append(bot_leg)
+        plot_2d(wires)
 
         return BluemiraWire(wires, label=label)
 
@@ -1795,13 +1804,13 @@ class BotDomeFlatInnerCurvedPictureFrame(GeometryParameterisation):
                 # Outer limb radius
                 BoundedVariable("x_out", 9.5, lower_bound=9.4, upper_bound=9.8),
                 # Upper limb flat section height
-                BoundedVariable("z_mid_up", 7.5, lower_bound=6, upper_bound=8),
+                BoundedVariable("z_mid_up", 9.5, lower_bound=8, upper_bound=10.5),
                 # Lower limb flat section height
-                BoundedVariable("z_mid_down", -7.5, lower_bound=-8, upper_bound=-6),
+                BoundedVariable("z_mid_down", -9.5, lower_bound=-10.5, upper_bound=-8),
                 # Lower limb max height
                 BoundedVariable("z_max_down", -11, lower_bound=-12, upper_bound=-6),
                 # Corner/transition joint radius
-                BoundedVariable("r_c", 0.5, lower_bound=0, upper_bound=0.8),
+                BoundedVariable("r_c", 0.1, lower_bound=0.09, upper_bound=0.11),
             ],
             frozen=True,
         )
@@ -1844,7 +1853,7 @@ class BotDomeFlatInnerCurvedPictureFrame(GeometryParameterisation):
             x_mid,
             x_out,
             z_mid_up,
-            0,
+            r_c,
             r_c,
             flip=False,
         )
@@ -1859,8 +1868,8 @@ class BotDomeFlatInnerCurvedPictureFrame(GeometryParameterisation):
             x_mid,
             z_max_down,
             z_mid_down,
+            r_c,
             flip=True,
-            r_c=0,
         )
 
         # Outer leg
