@@ -23,7 +23,6 @@
 A collection of generic physical constants, conversions, and miscellaneous constants.
 """
 
-from functools import lru_cache
 from typing import List, Union
 
 import numpy as np
@@ -70,9 +69,9 @@ def _energy_temperature_context():
     """
     e_to_t = Context("Energy_to_Temperature")
 
-    eV_units = UnitsContainer({"[length]": 2, "[mass]": 1, "[time]": -2})
+    ev_units = UnitsContainer({"[length]": 2, "[mass]": 1, "[time]": -2})
 
-    e_to_t.add_transformation(eV_units, T_units, lambda ureg, x: x / ureg.k_B)
+    e_to_t.add_transformation(ev_units, T_units, lambda ureg, x: x / ureg.k_B)
     e_to_t.add_transformation(T_units, eV_units, lambda ureg, x: x * ureg.k_B)
     return e_to_t
 
@@ -87,17 +86,17 @@ def _flow_context():
 
     mol_units = UnitsContainer({"[substance]": 1})
 
-    Pam3_units = UnitsContainer({"[length]": 2, "[mass]": 1, "[time]": -2})
+    pam3_units = UnitsContainer({"[length]": 2, "[mass]": 1, "[time]": -2})
 
     conversion_factor = ureg.Quantity("molar_gas_constant") * ureg.Quantity(
         0, ureg.celsius
     ).to("kelvin")
 
     mols_to_pam3.add_transformation(
-        mol_units, Pam3_units, lambda ureg, x: x * conversion_factor
+        mol_units, pam3_units, lambda ureg, x: x * conversion_factor
     )
     mols_to_pam3.add_transformation(
-        Pam3_units, mol_units, lambda ureg, x: x / conversion_factor
+        pam3_units, mol_units, lambda ureg, x: x / conversion_factor
     )
     return mols_to_pam3
 
