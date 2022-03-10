@@ -693,13 +693,13 @@ def slice_shape(shape: apiShape, plane_origin: Iterable, plane_axis: Iterable):
     shape: apiShape
         shape to slice
     plane_origin: Iterable
-        normal plane origin
+        plane origin
     plane_axis: Iterable
         normal plane axis
 
     Notes
     -----
-    Degenerate cases such as tangets to solid or faces do not return intersections
+    Degenerate cases such as tangents to solid or faces do not return intersections
     if the shape and plane are acting at the Placement base.
     Further investigation needed.
 
