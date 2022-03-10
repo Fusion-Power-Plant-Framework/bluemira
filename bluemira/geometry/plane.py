@@ -20,7 +20,7 @@
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 
 """
-Wrapper for FreeCAD Placement objects
+Wrapper for FreeCAD Plane objects
 """
 
 from __future__ import annotations
@@ -29,7 +29,6 @@ import numpy as np
 
 import bluemira.codes._freecadapi as cadapi
 from bluemira.geometry.face import BluemiraFace
-from bluemira.geometry.placement import BluemiraPlacement
 
 __all__ = ["BluemiraPlane"]
 
@@ -55,7 +54,7 @@ class BluemiraPlane:
     @classmethod
     def from_3_points(cls, point_1, point_2, point_3, label: str = ""):
         """
-        Instantiate a BluemiraPlacement from three points.
+        Instantiate a BluemiraPlane from three points.
 
         Parameters
         ----------
@@ -119,12 +118,12 @@ class BluemiraPlane:
 
     def copy(self, label=None):
         """Make a copy of the BluemiraPlane"""
-        placement_copy = BluemiraPlane(self.base, self.axis)
+        plane_copy = BluemiraPlane(self.base, self.axis)
         if label is not None:
-            placement_copy.label = label
+            plane_copy.label = label
         else:
-            placement_copy.label = self.label
-        return placement_copy
+            plane_copy.label = self.label
+        return plane_copy
 
     def deepcopy(self, label=None):
         """Make a deepcopy of the BluemiraPlane"""
@@ -143,4 +142,6 @@ class BluemiraPlane:
         """
         Convert the plane into a placement
         """
+        from bluemira.geometry.placement import BluemiraPlacement
+
         return BluemiraPlacement._create(cadapi.placement_from_plane(self._shape))

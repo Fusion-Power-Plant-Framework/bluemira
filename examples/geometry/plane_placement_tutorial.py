@@ -22,6 +22,8 @@
 Plotting module examples
 """
 
+import numpy as np
+
 # %%
 from bluemira.geometry.plane import BluemiraPlane
 
@@ -29,13 +31,21 @@ from bluemira.geometry.plane import BluemiraPlane
 # Creation of a plane and respective placement
 
 # %%
-plane = BluemiraPlane()
+plane = BluemiraPlane(axis=[0, 1, 1])
 placement = plane.to_placement()
+xy_plane = placement.xy_plane()
+
+print(np.allclose(xy_plane.base, plane.base))
+print(np.allclose(xy_plane.axis, plane.axis))
 
 # %%[markdown]
 # Change plane base and axis
 
 # %%
-plane.base = [0, 1, 0]
+plane.base = [1, -1, 5]
 plane.axis = [1, 1, 0]
 placement = plane.to_placement()
+xy_plane = placement.xy_plane()
+
+print(np.allclose(xy_plane.base, plane.base))
+print(np.allclose(xy_plane.axis, plane.axis))

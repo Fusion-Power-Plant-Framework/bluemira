@@ -1431,7 +1431,9 @@ def placement_from_plane(plane):
     if dir_z == axis:
         placement = make_placement(pos, dir_z, 0)
     else:
-        placement = make_placement(pos, axis.cross(dir_z), axis.getAngle(dir_z))
+        placement = make_placement(
+            pos, axis.cross(dir_z), np.rad2deg(axis.getAngle(dir_z))
+        )
 
     return placement
 
