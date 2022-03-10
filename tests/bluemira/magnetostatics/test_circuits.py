@@ -182,13 +182,20 @@ class TestArbitraryPlanarXSCircuit:
         FullDomeFlatInnerCurvedPictureFrame,
     ]
     p_inputs = [pd_inputs, ta_inputs, pf_inputs, wtf_inputs]
+    ccws = [True] * len(p_inputs) + [False] * len(p_inputs)
+    p_inputs = [p_inputs] * 2
+    parameterisations = [parameterisations] * 2
 
     @pytest.mark.parametrize(
-        "parameterisation, inputs", zip(parameterisations, p_inputs)
+        "parameterisation, inputs, ccw", zip(parameterisations, p_inputs, ccws)
     )
-    def test_geometry(self, parameterisation, inputs):
+    def test_geometry_ccw(self, parameterisation, inputs, ccw):
         shape = parameterisation(inputs).create_shape()
         coords = shape.discretize(ndiscr=50, byedges=True)
+        if ccw:
+            coords.set_ccw((0, -1, 0))
+        else:
+            coords.set_ccw((0, 1, 0))
         circuit = ArbitraryPlanarRectangularXSCircuit(coords, 0.25, 0.5, 1.0)
         open_circuit = ArbitraryPlanarRectangularXSCircuit(
             coords[:, :25].T, 0.25, 0.5, 1.0
