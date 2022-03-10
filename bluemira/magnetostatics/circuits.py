@@ -79,6 +79,7 @@ class ArbitraryPlanarRectangularXSCircuit(SourceGroup):
                 alpha = self._get_half_angle(
                     midpoint, self.shape[i + 1], self.midpoints[i + 1]
                 )
+
             else:
                 if closed:
                     alpha = self._get_half_angle(
@@ -122,9 +123,12 @@ class ArbitraryPlanarRectangularXSCircuit(SourceGroup):
 
         if self._point_in_triangle(r1, p0, p1, p2):
             if np.isclose(angle, np.pi / 2):
+                print("halfpi")
                 angle += 2 * np.pi
             else:
+                print("default")
                 angle = angle - 2 * np.pi
+
         return 0.5 * angle
 
     @staticmethod
