@@ -197,6 +197,13 @@ class TestArbitraryPlanarXSCircuit:
         assert self._check_continuity(circuit.sources[-1], circuit.sources[0])
         assert self._calc_daisychain(open_circuit) == len(open_circuit.sources) - 1
 
+    def test_circle(self):
+        shape = make_circle(5, (0, 9, 0), axis=(0, 0, 1))
+        coords = shape.discretize(ndiscr=30, byedges=True)
+        circuit = ArbitraryPlanarRectangularXSCircuit(coords, 0.25, 0.5, 1.0)
+        assert self._calc_daisychain(circuit) == len(circuit.sources) - 1
+        assert self._check_continuity(circuit.sources[-1], circuit.sources[0])
+
     def _calc_daisychain(self, circuit):
         chain = []
         for i, source_1 in enumerate(circuit.sources[:-1]):
