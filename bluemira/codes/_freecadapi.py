@@ -1312,6 +1312,15 @@ def move_placement(placement, vector):
     placement.move(Base.Vector(vector))
 
 
+def make_placement_from_vectors(
+    base=[0, 0, 0], vx=[1, 0, 0], vy=[0, 1, 0], vz=[0, 0, 1], order="ZXY"
+):
+    """Create a placement from three directional vectors"""
+    rotation = Base.Rotation(vx, vy, vz, order)
+    placement = Base.Placement(base, rotation)
+    return placement
+
+
 def change_placement(geo, placement):
     """
     Change the placement of a FreeCAD object
@@ -1426,16 +1435,14 @@ def placement_from_plane(plane):
     """
     axis = plane.Axis
     pos = plane.Position
-    dir_z = Base.Vector(0, 0, 1)
 
-    if dir_z == axis:
-        placement = make_placement(pos, dir_z, 0)
-    else:
-        placement = make_placement(
-            pos, axis.cross(dir_z), np.rad2deg(axis.getAngle(dir_z))
-        )
+    vx = plane.value(1, 0) - pos
+    vy = plane.value(0, 1) - pos
 
-    return placement
+    # rotation = Base.Rotation(vx, vy, axis, 'ZXY')
+    # placement = Base.Placement(pos, rotation)
+
+    return make_placement_from_vectors(pos, vx, vy, axis, "ZXY")
 
 
 # ======================================================================================

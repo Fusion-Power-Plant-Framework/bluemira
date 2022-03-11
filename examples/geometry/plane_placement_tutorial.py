@@ -31,21 +31,28 @@ from bluemira.geometry.plane import BluemiraPlane
 # Creation of a plane and respective placement
 
 # %%
-plane = BluemiraPlane(axis=[0, 1, 1])
+factor = np.random.uniform(1, 100)
+base = np.random.random((1, 3))[0] * factor
+axis = np.random.random((1, 3))[0] * factor
+
+plane = BluemiraPlane(base=base, axis=axis)
 placement = plane.to_placement()
 xy_plane = placement.xy_plane()
+yz_plane = placement.yz_plane()
+xz_plane = placement.xz_plane()
 
+dir_z = np.array([0, 0, 1])
+dir_z1 = placement.mult_vec(dir_z) - placement.mult_vec(np.array([0, 0, 0]))
+
+print(f"dir_z = {dir_z}, dir_z1 = {dir_z1}, plane.axis = {plane.axis}")
+print(np.allclose(dir_z1, plane.axis))
 print(np.allclose(xy_plane.base, plane.base))
 print(np.allclose(xy_plane.axis, plane.axis))
 
-# %%[markdown]
-# Change plane base and axis
-
-# %%
-plane.base = [1, -1, 5]
-plane.axis = [1, 1, 0]
-placement = plane.to_placement()
-xy_plane = placement.xy_plane()
-
-print(np.allclose(xy_plane.base, plane.base))
-print(np.allclose(xy_plane.axis, plane.axis))
+plane = placement.xy_plane()
+placement2 = plane.to_placement()
+print(np.allclose(plane.axis, placement.mult_vec([0, 0, 1]) - placement.base))
+plane = placement.xz_plane()
+print(np.allclose(plane.axis, placement.mult_vec([0, -1, 0]) - placement.base))
+plane = placement.yz_plane()
+print(np.allclose(plane.axis, placement.mult_vec([1, 0, 0]) - placement.base))

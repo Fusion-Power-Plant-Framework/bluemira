@@ -45,7 +45,7 @@ class BluemiraPlacement:
     axis: Iterable
         vector describing the axis of rotation
     angle: float
-        angle of rotation
+        angle of rotation in degree
     label: str
         Label of the placement
     """
@@ -187,7 +187,7 @@ class BluemiraPlacement:
         new.append(f"([{type(self).__name__}] = Label: {self.label}")
         new.append(f" base: {self.base}")
         new.append(f" axis: {self.axis}")
-        new.append(f" angle: {np.rad2deg(self.angle)}")
+        new.append(f" angle: {self.angle}")
         new.append(")")
         return ", ".join(new)
 
@@ -239,8 +239,10 @@ class BluemiraPlacement:
         """
         if base is None:
             base = self.base
-        p1 = self.inverse().mult_vec(self.mult_vec(base) + v1)
-        p2 = self.inverse().mult_vec(self.mult_vec(base) + v2)
+        # p1 = self.inverse().mult_vec(self.mult_vec(base) + v1)
+        # p2 = self.inverse().mult_vec(self.mult_vec(base) + v2)
+        p1 = self.mult_vec(v1)
+        p2 = self.mult_vec(v2)
 
         return BluemiraPlane.from_3_points(base, p1, p2)
 

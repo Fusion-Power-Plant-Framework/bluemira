@@ -69,3 +69,20 @@ class TestPlacement:
         np.testing.assert_almost_equal(
             np.array([bmface.length, bmface.area]), np.array([2 * (lx + ly), lx * ly])
         )
+
+    def test_convert_to_placement(self):
+        factor = np.random.uniform(1, 100)
+        base = np.random.random((1, 3))[0] * factor
+        axis = np.random.random((1, 3))[0] * factor
+
+        plane = BluemiraPlane(base=base, axis=axis)
+        placement = plane.to_placement()
+        xy_plane = placement.xy_plane()
+
+        dir_z = np.array([0, 0, 1])
+        dir_z1 = placement.mult_vec(dir_z) - placement.mult_vec(np.array([0, 0, 0]))
+
+        assert np.allclose(dir_z1, plane.axis)
+        assert np.allclose(placement.base, plane.base)
+        assert np.allclose(xy_plane.base, plane.base)
+        assert np.allclose(xy_plane.axis, plane.axis)
