@@ -103,11 +103,13 @@ class ArbitraryPlanarRectangularXSCircuit(SourceGroup):
                 current,
             )
             sources.append(source)
-            beta = alpha
 
         super().__init__(sources)
 
     def _get_betas_alphas(self, shape):
+        """
+        Get the first and second half-angles (transformed to the x-z plane)
+        """
         shape = deepcopy(shape)
         shape = self._transform_to_xz(shape)
         self._t_shape = shape

@@ -152,14 +152,6 @@ def test_mixedsourcesolver():
 class TestArbitraryPlanarXSCircuit:
     pd_inputs = {"x1": {"value": 4}, "x2": {"value": 16}, "dz": {"value": 0}}
 
-    pf_inputs = {
-        "x1": {"value": 5},
-        "x2": {"value": 10},
-        "z1": {"value": -10},
-        "z2": {"value": 9},
-        "ri": {"value": 0.4},
-        "ro": {"value": 1},
-    }
     ta_inputs = {
         "x1": {"value": 4},
         "dz": {"value": 0},
@@ -183,10 +175,9 @@ class TestArbitraryPlanarXSCircuit:
     parameterisations = [
         PrincetonD,
         TripleArc,
-        PictureFrame,
         FullDomeFlatInnerCurvedPictureFrame,
     ]
-    p_inputs = [pd_inputs, ta_inputs, pf_inputs, wtf_inputs]
+    p_inputs = [pd_inputs, ta_inputs, wtf_inputs]
     clockwises = [False] * len(p_inputs) + [True] * len(p_inputs)
     p_inputs = p_inputs * 2
     parameterisations = parameterisations * 2
