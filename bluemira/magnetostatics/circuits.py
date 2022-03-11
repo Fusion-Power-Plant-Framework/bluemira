@@ -78,7 +78,7 @@ class ArbitraryPlanarRectangularXSCircuit(SourceGroup):
         shape = deepcopy(shape)
         closed = shape.closed
         self.clockwise = shape.check_ccw((0, 1, 0))
-        normal = get_normal_vector(*shape.xyz)
+        normal = shape.normal_vector
         # if self.clockwise:
         #     shape.set_ccw((0, 1, 0))
         # else:
@@ -176,9 +176,9 @@ class ArbitraryPlanarRectangularXSCircuit(SourceGroup):
                 angle = angle - 2 * np.pi
             angle = -0.5 * angle
         if self.clockwise:
-            return -angle + np.pi
+            return -angle
         else:
-            return angle - np.pi
+            return angle
 
     @staticmethod
     def _point_in_triangle(point, p0, p1, p2):
