@@ -137,7 +137,7 @@ class ArbitraryPlanarRectangularXSCircuit(SourceGroup):
             alphas.append(alpha)
             beta = alpha
             betas.append(beta)
-        print(betas)
+
         return betas, alphas
 
     def _transform_to_xz(self, shape):
