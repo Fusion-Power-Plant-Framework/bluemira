@@ -492,6 +492,18 @@ def bounding_box(obj) -> Tuple[float, float, float, float, float, float]:
     return box.XMin, box.YMin, box.ZMin, box.XMax, box.YMax, box.ZMax
 
 
+def start_point(obj) -> np.ndarray:
+    """The start point of the object"""
+    point = obj.Edges[0].firstVertex().Point
+    return vector_to_numpy(point)
+
+
+def end_point(obj) -> np.ndarray:
+    """The end point of the object"""
+    point = obj.Edges[-1].lastVertex().Point
+    return vector_to_numpy(point)
+
+
 # ======================================================================================
 # Wire manipulation
 # ======================================================================================

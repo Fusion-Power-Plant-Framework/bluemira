@@ -24,10 +24,11 @@ Useful functions for bluemira geometries.
 """
 
 from copy import deepcopy
-from typing import Iterable, List, Type, Union
+from typing import Iterable, List, Sequence, Type, Union
 
 import numba as nb
 import numpy as np
+from scipy.spatial import ConvexHull
 
 import bluemira.mesh.meshing as meshing
 from bluemira.base.look_and_feel import bluemira_warn
@@ -320,6 +321,54 @@ def offset_wire(
     return BluemiraWire(
         cadapi.offset_wire(wire._shape, thickness, join, open_wire), label=label
     )
+
+
+def convex_hull_wires_2d(
+    wires: Sequence[BluemiraWire], ndiscr: int, plane="xz"
+) -> BluemiraWire:
+    """
+    Perform a convex hull around the given wires and return the hull
+    as a new wire.
+
+    The operation performs discretisations on the input wires.
+
+    Parameters
+    ----------
+    wires: Sequence[BluemiraWire]
+        The wires to draw a hull around.
+    ndiscr: int
+        The number of points to discretise each wire into.
+    plane: str
+        The plane to perform the hull in. One of: 'xz', 'xy', 'yz'.
+        Default is 'xz'.
+
+    Returns
+    -------
+    hull: BluemiraWire
+        A wire forming a convex hull around the input wires in the given
+        plane.
+    """
+    if not wires:
+        raise ValueError("Must have at least one wire to draw a hull around.")
+    if plane == "xz":
+        plane_idxs = (0, 2)
+    elif plane == "xy":
+        plane_idxs = (0, 1)
+    elif plane == "yz":
+        plane_idxs = (1, 2)
+    else:
+        raise ValueError(f"Invalid plane: '{plane}'. Must be one of 'xz', 'xy', 'yz'.")
+
+    shape_discretizations = []
+    for wire in wires:
+        discretized_points = wire.discretize(byedges=True, ndiscr=ndiscr)
+        shape_discretizations.append(getattr(discretized_points, plane))
+    coords = np.hstack(shape_discretizations)
+
+    hull = ConvexHull(coords.T)
+    hull_coords = np.zeros((3, len(hull.vertices)))
+    hull_coords[plane_idxs, :] = coords[:, hull.vertices]
+    return make_polygon(hull_coords, closed=True)
 
 
 # # =============================================================================
@@ -919,3 +968,46 @@ def get_shape_by_name(shape: BluemiraGeo, name: str):
         for o in shape.boundary:
             shapes += get_shape_by_name(o, name)
     return shapes
+
+
+# ======================================================================================
+# Find operations
+# ======================================================================================
+def find_point_along_wire_at_length(
+    wire: BluemiraWire, length: float, ndiscr: int = 2000
+) -> np.ndarray:
+    """
+    Find the coordinates of the point that is, from the start of the
+    wire, a given length along the wire.
+
+    This method discretizes the wire in order to find the desired point.
+    Hence, the error in this calculation will depend on the
+    discretization's step size.
+
+    Parameters
+    ----------
+    wire: BluemiraWire
+        The wire to find the point along the length of.
+    length: float
+        The length along the wire to find the coordinates of.
+    ndiscr: int
+        The number of points to discretize the wire into.
+
+    Returns
+    -------
+    coords: np.ndarray[float, (3,)]
+        The coordinate of the point at the given length along the wire.
+    """
+    coords = wire.discretize(ndiscr=ndiscr)
+    segment_lengths = np.linalg.norm(np.diff(coords, axis=1), axis=0)
+    cumulative_lengths = np.cumsum(segment_lengths)
+    if length > cumulative_lengths[-1]:
+        raise ValueError(
+            "Given length ({length}) greater than wire length ({wire.length})."
+        )
+    index = np.searchsorted(cumulative_lengths, length)
+
+    # Could potentially use the calculated coordinate as the starting
+    # point for some sort of optimization/root finder if this needs to
+    # be more accurate in the future
+    return coords[:, index]
