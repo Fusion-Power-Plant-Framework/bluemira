@@ -570,7 +570,7 @@ class CoilsetPositionCOP(CoilsetOP):
         # to set coilset.
         # Necessary as optimised state may not always be the final
         # one evaluated by optimiser.
-        self.get_state_figure_of_merit(state)
+        self._objective(state, np.empty(shape=(0, 0)))
         return self.coilset
 
     @staticmethod
@@ -748,7 +748,7 @@ class NestedCoilsetPositionCOP(CoilsetOP):
         # to set coilset.
         # Necessary as optimised state may not always be the final
         # one evaluated by optimiser.
-        self.get_state_figure_of_merit(positions)
+        self._objective(positions, np.empty(shape=(0, 0)))
         return self.coilset
 
     @staticmethod
