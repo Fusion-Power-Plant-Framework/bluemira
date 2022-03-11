@@ -41,7 +41,7 @@ from bluemira.base.file import get_bluemira_path
 from bluemira.base.look_and_feel import bluemira_print
 from bluemira.display import plot_defaults
 from bluemira.equilibria.coils import Coil, CoilSet
-from bluemira.equilibria.constraints import AutoConstraints
+from bluemira.equilibria.eq_constraints import AutoConstraints
 from bluemira.equilibria.equilibrium import Breakdown, Equilibrium
 from bluemira.equilibria.grid import Grid
 from bluemira.equilibria.optimiser import BreakdownOptimiser, FBIOptimiser

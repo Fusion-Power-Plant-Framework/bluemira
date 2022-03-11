@@ -25,7 +25,7 @@ Equilibrium objects for EU-DEMO design
 
 import numpy as np
 
-from bluemira.equilibria.constraints import (
+from bluemira.equilibria.eq_constraints import (
     DivertorLegCalculator,
     FieldNullConstraint,
     MagneticConstraintSet,

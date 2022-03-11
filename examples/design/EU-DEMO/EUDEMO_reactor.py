@@ -33,7 +33,7 @@ from bluemira.base.config import Configuration
 from bluemira.base.error import ParameterError
 from bluemira.base.file import get_bluemira_root
 from bluemira.base.logs import set_log_level
-from bluemira.base.parameter import ParameterMappingEncoder
+from bluemira.base.parameter import ParameterEncoder
 from bluemira.builders.cryostat import CryostatBuilder
 from bluemira.builders.EUDEMO.pf_coils import PFCoilsBuilder
 from bluemira.builders.EUDEMO.plasma import PlasmaBuilder, PlasmaComponent
@@ -42,7 +42,7 @@ from bluemira.builders.EUDEMO.tf_coils import TFCoilsBuilder
 from bluemira.builders.radiation_shield import RadiationShieldBuilder
 from bluemira.builders.tf_coils import RippleConstrainedLengthOpt
 from bluemira.builders.thermal_shield import ThermalShieldBuilder
-from bluemira.codes import plot_PROCESS
+from bluemira.codes import plot_radial_build
 from bluemira.codes.plasmod.mapping import (  # noqa: N812
     create_mapping as create_PLASMOD_mappings,
 )
@@ -122,7 +122,7 @@ json_writer(
     params,
     f"{get_bluemira_root()}/examples/design/EU-DEMO/template.json",
     indent=2,
-    cls=ParameterMappingEncoder,
+    cls=ParameterEncoder,
     ensure_ascii=True,
 )
 
@@ -174,7 +174,7 @@ json_writer(
     config,
     f"{get_bluemira_root()}/examples/design/EU-DEMO/params.json",
     indent=2,
-    cls=ParameterMappingEncoder,
+    cls=ParameterEncoder,
     ensure_ascii=False,
 )
 
@@ -326,7 +326,7 @@ component = reactor.run()
 
 # %%
 if build_config["PROCESS"]["runmode"] == "run":
-    plot_PROCESS(reactor.file_manager.generated_data_dirs["systems_code"])
+    plot_radial_build(reactor.file_manager.generated_data_dirs["systems_code"])
 else:
     print(
         "The PROCESS design stage did not have the runmode set to run."

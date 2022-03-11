@@ -58,14 +58,14 @@ class BreedingBlanket(Meshable, ReactorSystem):
 
     # fmt: off
     default_params = [
-        ['n_TF', 'Number of TF coils', 16, 'N/A', None, 'Input'],
-        ['plasma_type', 'Type of plasma', 'SN', 'N/A', None, 'Input'],
-        ['A', 'Plasma aspect ratio', 3.1, 'N/A', None, 'Input'],
+        ['n_TF', 'Number of TF coils', 16, 'dimensionless', None, 'Input'],
+        ['plasma_type', 'Type of plasma', 'SN', 'dimensionless', None, 'Input'],
+        ['A', 'Plasma aspect ratio', 3.1, 'dimensionless', None, 'Input'],
         ['R_0', 'Major radius', 9, 'm', None, 'Input'],
-        ['blanket_type', 'Blanket type', 'HCPB', 'N/A', None, 'Input'],
+        ['blanket_type', 'Blanket type', 'HCPB', 'dimensionless', None, 'Input'],
         ['g_vv_bb', 'Gap between VV and BB', 0.02, 'm', None, 'Input'],
         ['c_rm', 'Remote maintenance clearance', 0.02, 'm', 'Distance between IVCs', None],
-        ["bb_e_mult", "Energy multiplication factor", 1.35, "N/A", None, "HCPB classic"],
+        ["bb_e_mult", "Energy multiplication factor", 1.35, "dimensionless", None, "HCPB classic"],
         ['bb_min_angle', 'Mininum BB module angle', 70, '°', 'Sharpest cut of a module possible', 'Lorenzo Boccaccini said this in a meeting in 2015, Garching, Germany'],
         ['fw_dL_min', 'Minimum FW module length', 0.75, 'm', None, 'Input'],
         ['fw_dL_max', 'Maximum FW module length', 3, 'm', 'Cost+manufacturing implications', 'Input'],
@@ -75,12 +75,12 @@ class BreedingBlanket(Meshable, ReactorSystem):
         ['tk_bb_ob', 'Outboard blanket thickness', 1.1, 'm', None, 'Input'],
         ['tk_bb_fw', 'First wall thickness', 0.025, 'm', None, 'Input'],
         ['tk_bb_arm', 'Tungsten armour thickness', 0.002, 'm', None, 'Input'],
-        ["tk_r_ib_bz", "Thickness ratio of the inboard blanket breeding zone", 0.309, "N/A", None, "HCPB 2015 design description document"],
-        ["tk_r_ib_manifold", "Thickness ratio of the inboard blanket manifold", 0.114, "N/A", None, "HCPB 2015 design description document"],
-        ["tk_r_ib_bss", "Thickness ratio of the inboard blanket back supporting structure", 0.577, "N/A", None, "HCPB 2015 design description document"],
-        ["tk_r_ob_bz", "Thickness ratio of the outboard blanket breeding zone", 0.431, "N/A", None, "HCPB 2015 design description document"],
-        ["tk_r_ob_manifold", "Thickness ratio of the outboard blanket manifold", 0.071, "N/A", None, "HCPB 2015 design description document"],
-        ["tk_r_ob_bss", "Thickness ratio of the outboard blanket back supporting structure", 0.498, "N/A", None, "HCPB 2015 design description document"],
+        ["tk_r_ib_bz", "Thickness ratio of the inboard blanket breeding zone", 0.309, "dimensionless", None, "HCPB 2015 design description document"],
+        ["tk_r_ib_manifold", "Thickness ratio of the inboard blanket manifold", 0.114, "dimensionless", None, "HCPB 2015 design description document"],
+        ["tk_r_ib_bss", "Thickness ratio of the inboard blanket back supporting structure", 0.577, "dimensionless", None, "HCPB 2015 design description document"],
+        ["tk_r_ob_bz", "Thickness ratio of the outboard blanket breeding zone", 0.431, "dimensionless", None, "HCPB 2015 design description document"],
+        ["tk_r_ob_manifold", "Thickness ratio of the outboard blanket manifold", 0.071, "dimensionless", None, "HCPB 2015 design description document"],
+        ["tk_r_ob_bss", "Thickness ratio of the outboard blanket back supporting structure", 0.498, "dimensionless", None, "HCPB 2015 design description document"],
     ]
     # fmt: on
     CADConstructor = BlanketCAD
@@ -113,27 +113,27 @@ class BreedingBlanket(Meshable, ReactorSystem):
         if blanket_type == "HCPB":
             # fmt: off
             p = [
-                ["coolant", "Coolant", "He", "N/A", None, None],
-                ["mult", "Neutron multiplier", "Be", "N/A", None, None],
-                ["maxTBR", "Maximum TBR", 1.27, "N/A", None, "HCPB classic"],
+                ["coolant", "Coolant", "He", "dimensionless", None, None],
+                ["mult", "Neutron multiplier", "Be", "dimensionless", None, None],
+                ["maxTBR", "Maximum TBR", 1.27, "dimensionless", None, "HCPB classic"],
                 ["T_in", "Inlet temperature", 300, "°C", None, "HCPB classic"],
                 ["T_out", "Outlet temperature", 500, "°C", None, "HCPB classic"],
                 ["P_in", "Inlet pressure", 8, "MPa", None, "HCPB classic"],
                 ["dP", "Pressure drop", 0.5, "MPa", None, None],
-                ["f_dh", "Decay heat fraction", 0.0175, "N/A", None, "PPCS FWBL Helium Cooled Model P PPCS04 D5part1"],
+                ["f_dh", "Decay heat fraction", 0.0175, "dimensionless", None, "PPCS FWBL Helium Cooled Model P PPCS04 D5part1"],
             ]
             # fmt: on
         elif blanket_type == "WCLL":
             # fmt: off
             p = [
-                ["coolant", "Coolant", "Water", "N/A", None, None],
-                ["mult", "Neutron multiplier", "LiPb", "N/A", None, None],
-                ["maxTBR", "Maximum TBR", 1.22, "N/A", None, "WCLL classic"],
+                ["coolant", "Coolant", "Water", "dimensionless", None, None],
+                ["mult", "Neutron multiplier", "LiPb", "dimensionless", None, None],
+                ["maxTBR", "Maximum TBR", 1.22, "dimensionless", None, "WCLL classic"],
                 ["T_in", "Inlet temperature", 200, "°C", None, None],
                 ["T_out", "Outlet temperature", 300, "°C", None, None],
                 ["P_in", "Inlet pressure", 155, "MPa", None, None],
                 ["dP", "Pressure drop", 0.5, "MPa", None, None],
-                ["f_dh", "Decay heat fraction", 0.0001, "N/A", "Insignificant number to preserve plotting", None],
+                ["f_dh", "Decay heat fraction", 0.0001, "dimensionless", "Insignificant number to preserve plotting", None],
             ]
             # fmt: on
         else:
@@ -739,8 +739,8 @@ class STBreedingBlanket(Meshable, ReactorSystem):
 
     # fmt: off
     default_params = [
-        ['n_TF', 'Number of TF coils', 16, 'N/A', None, 'Input'],
-        ['blanket_type', 'Blanket type', 'banana', 'N/A', None, 'Input'],
+        ['n_TF', 'Number of TF coils', 16, 'dimensionless', None, 'Input'],
+        ['blanket_type', 'Blanket type', 'banana', 'dimensionless', None, 'Input'],
         ['g_bb_fw', 'Separation between the first wall and the breeding blanket', 0.05, 'm', None, 'Input'],
         ['tk_bb_bz', 'Breeding zone thickness', 1.0, 'm', None, 'Input'],
         ['tk_bb_man', 'Breeding blanket manifold thickness', 0.2, 'm', None, 'Input'],

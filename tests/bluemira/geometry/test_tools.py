@@ -27,7 +27,9 @@ from bluemira.geometry.parameterisations import PrincetonD
 from bluemira.geometry.placement import BluemiraPlacement
 from bluemira.geometry.tools import (
     _signed_distance_2D,
+    convex_hull_wires_2d,
     extrude_shape,
+    find_point_along_wire_at_length,
     make_circle,
     make_polygon,
     offset_wire,
@@ -372,3 +374,71 @@ class TestPointInside:
 
         for point in out_points:
             assert not point_inside_shape(point, polygon)
+
+
+class TestPointAlongWire:
+    def test_point_along_wire_at_length_2d(self):
+        # Line in 2d: z = 3x - 4
+        coords = np.array([[1, 2, 3, 4, 5], [0, 0, 0, 0, 0], [-1, 2, 5, 8, 11]])
+        wire = make_polygon(coords)
+        desired_len = np.sqrt(2.5)
+
+        point = find_point_along_wire_at_length(wire, desired_len)
+
+        np.testing.assert_almost_equal(point, [1.5, 0, 0.5], decimal=2)
+
+    def test_point_along_wire_at_length_3d(self):
+        circle = make_circle(radius=1, axis=[1, 1, 1])
+        semi_circle = make_circle(radius=1, axis=[1, 1, 1], end_angle=180)
+
+        point = find_point_along_wire_at_length(circle, np.pi)
+
+        np.testing.assert_almost_equal(point, semi_circle.end_point().T[0], decimal=2)
+
+    @pytest.mark.parametrize("len_offset", [0.1, 1, 10, 200])
+    def test_ValueError_given_length_gt_wire_length(self, len_offset):
+        coords = np.array([[1, 2, 3, 4, 5], [0, 0, 0, 0, 0], [-1, 2, 5, 8, 11]])
+        wire = make_polygon(coords)
+        wire_length = wire.length
+
+        with pytest.raises(ValueError):
+            find_point_along_wire_at_length(wire, wire_length + len_offset)
+
+
+class TestConvexHullWires2d:
+    def test_ValueError_given_wires_empty(self):
+        with pytest.raises(ValueError):
+            convex_hull_wires_2d([], 10)
+
+    def test_hull_around_two_circles_xz_plane(self):
+        circle_1 = make_circle(radius=1, center=[-0.5, 0, 0.5], axis=(0, 1, 0))
+        circle_2 = make_circle(radius=1, center=[0.5, 0, -0.5], axis=(0, 1, 0))
+
+        hull = convex_hull_wires_2d([circle_1, circle_2], ndiscr=200)
+
+        assert hull.is_closed
+        assert np.allclose(hull.center_of_mass, [0, 0, 0])
+        bounding_box = hull.bounding_box
+        assert bounding_box.z_min == -1.5
+        assert bounding_box.z_max == 1.5
+        assert bounding_box.x_min == -1.5
+        assert bounding_box.x_max == 1.5
+        assert bounding_box.y_min == bounding_box.y_max == 0
+
+    def test_hull_around_two_circles_xy_plane(self):
+        circle_1 = make_circle(radius=1, center=[-0.5, 1, 0.5], axis=(1, 1, 1))
+        circle_2 = make_circle(radius=1, center=[0.5, -2, -0.5], axis=(1, 1, 1))
+
+        hull = convex_hull_wires_2d([circle_1, circle_2], ndiscr=1000, plane="xy")
+
+        assert hull.is_closed
+        assert np.allclose(hull.center_of_mass, [0, -0.5, 0])
+        bounding_box = hull.bounding_box
+        assert bounding_box.z_min == bounding_box.z_max == 0
+
+    @pytest.mark.parametrize("bad_plane", ["ab", "", None, ["x", "y"]])
+    def test_ValueError_if_invalid_plane(self, bad_plane):
+        circle = make_circle(radius=1)
+
+        with pytest.raises(ValueError):
+            convex_hull_wires_2d([circle], 10, plane=bad_plane)

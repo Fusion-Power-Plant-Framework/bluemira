@@ -27,20 +27,19 @@ from __future__ import annotations
 
 from typing import List
 
-import numpy
-
 from bluemira.codes._freecadapi import (
     apiWire,
     change_placement,
     discretize,
     discretize_by_edges,
+    end_point,
     rotate_shape,
     scale_shape,
+    start_point,
     translate_shape,
     wire_closure,
 )
 
-# import from bluemira
 # import from bluemira
 from bluemira.geometry.base import BluemiraGeo, _Orientation
 from bluemira.geometry.coordinates import Coordinates
@@ -149,7 +148,7 @@ class BluemiraWire(BluemiraGeo):
 
     def discretize(
         self, ndiscr: int = 100, byedges: bool = False, dl: float = None
-    ) -> numpy.ndarray:
+    ) -> Coordinates:
         """
         Discretize the wire in ndiscr equidistant points or with a reference dl
         segment step.
@@ -159,7 +158,7 @@ class BluemiraWire(BluemiraGeo):
         Returns
         -------
         points: Coordinates
-            a numpy array with the x,y,z coordinates of the discretized points.
+            a np array with the x,y,z coordinates of the discretized points.
         """
         if byedges:
             points = discretize_by_edges(self._shape, ndiscr=ndiscr, dl=dl)
@@ -220,3 +219,15 @@ class BluemiraWire(BluemiraGeo):
                 change_placement(o, placement._shape)
             else:
                 o.change_placement(placement)
+
+    def start_point(self) -> Coordinates:
+        """
+        Get the coordinates of the start of the wire.
+        """
+        return Coordinates(start_point(self._shape))
+
+    def end_point(self) -> Coordinates:
+        """
+        Get the coordinates of the end of the wire.
+        """
+        return Coordinates(end_point(self._shape))

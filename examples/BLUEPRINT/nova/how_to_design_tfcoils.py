@@ -59,7 +59,7 @@ from BLUEPRINT.systems.tfcoils import ToroidalFieldCoils
 params = [
     ["R_0", "Major radius", 9, "m", None, "Input"],
     ["B_0", "Toroidal field at R_0", 6, "T", None, "Input"],
-    ["n_TF", "Number of TF coils", 16, "N/A", None, "Input"],
+    ["n_TF", "Number of TF coils", 16, "dimensionless", None, "Input"],
     ["rho_j", "TF coil WP current density", 18.25, "MA/m^2", None, "Input"],
     ["tk_tf_nose", "TF coil inboard nose thickness", 0.6, "m", None, "Input"],
     ["tk_tf_wp", "TF coil winding pack thickness", 0.5, "m", None, "PROCESS"],

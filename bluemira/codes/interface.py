@@ -88,13 +88,12 @@ class Task:
 
     def __init__(self, parent):
         self.parent = parent
-        self._run_dir = parent._run_dir
 
     def _run_subprocess(self, command, **kwargs):
         stdout = LogPipe("print")
         stderr = LogPipe("error")
 
-        kwargs["cwd"] = kwargs.get("cwd", self._run_dir)
+        kwargs["cwd"] = kwargs.get("cwd", self.parent.run_dir)
         kwargs.pop("shell", None)  # Protect against user input
 
         with subprocess.Popen(  # noqa :S603
@@ -193,12 +192,6 @@ class Teardown(Task):
     def __init__(self, parent, *args, **kwargs):
         super().__init__(parent)
 
-    def get_parameters(self):
-        """
-        TODO?
-        """
-        pass
-
 
 class FileProgramInterface:
     """An external code wrapper"""
@@ -209,19 +202,29 @@ class FileProgramInterface:
     _runmode = RunMode
 
     def __init__(
-        self, NAME, params, runmode, *args, run_dir=None, mappings=None, **kwargs
+        self,
+        NAME,
+        params,
+        runmode,
+        *args,
+        run_dir=None,
+        read_dir=None,
+        mappings=None,
+        **kwargs,
     ):
         self.NAME = NAME
 
         add_mapping(NAME, params, mappings)
 
-        if not hasattr(self, "__run_dir"):
-            self.__run_dir = "./" if run_dir is None else run_dir
+        if not hasattr(self, "run_dir"):
+            self.run_dir = "./" if run_dir is None else run_dir
+
+        self.read_dir = read_dir
 
         if self._runmode is not RunMode and issubclass(self._runmode, RunMode):
             self._set_runmode(runmode)
         else:
-            raise CodesError("Please define a RunMode child lass")
+            raise CodesError("Please define a RunMode child class")
 
         self._protect_tasks()
 
@@ -273,30 +276,6 @@ class FileProgramInterface:
         """
         mode = runmode.upper().translate(str.maketrans("", "", string.whitespace))
         self._runner = self._runmode[mode]
-
-    @property
-    def _run_dir(self):
-        """
-        Run directory
-        """
-        return self.__run_dir
-
-    @_run_dir.setter
-    def _run_dir(self, directory: str):
-        """
-        Set run directory
-
-        Parameters
-        ----------
-        directory: str
-            new directory
-        """
-        self.__run_dir = directory
-        self._set_property("_run_dir", directory)
-
-    def _set_property(self, prop, val):
-        for obj in ["setup", "run", "teardown"]:
-            setattr(getattr(self, f"{obj}_obj"), prop, val)
 
     @property
     def params(self) -> bm_base.ParameterFrame:

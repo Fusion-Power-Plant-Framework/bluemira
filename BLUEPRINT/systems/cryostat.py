@@ -47,10 +47,10 @@ class Cryostat(Meshable, OnionRing, ReactorSystem):
     # fmt: off
     default_params = [
         ['tk_cr_vv', 'Cryostat VV thickness', 0.3, 'm', None, 'Input'],
-        ['n_TF', 'Number of TF coils', 16, 'N/A', None, 'Input'],
+        ['n_TF', 'Number of TF coils', 16, 'dimensionless', None, 'Input'],
         ['g_cr_ts', 'Gap between the Cryostat and CTS', 0.3, 'm', None, 'Input'],
         ['o_p_cr', 'Port offset from VV to CR', 0.1, 'm', None, 'Input'],
-        ['n_cr_lab', 'Number of cryostat labyrinth levels', 2, 'N/A', None, 'Input'],
+        ['n_cr_lab', 'Number of cryostat labyrinth levels', 2, 'dimensionless', None, 'Input'],
         ['cr_l_d', 'Cryostat labyrinth total delta', 0.2, 'm', None, 'Input'],
     ]
     # fmt: on

@@ -24,7 +24,7 @@ The bluemira equilibria module
 """
 
 from bluemira.equilibria.coils import Coil, CoilSet, SymmetricCircuit
-from bluemira.equilibria.constraints import (
+from bluemira.equilibria.eq_constraints import (
     AutoConstraints,
     FieldNullConstraint,
     IsofluxConstraint,
@@ -40,15 +40,13 @@ from bluemira.equilibria.find import (
 )
 from bluemira.equilibria.grid import Grid
 from bluemira.equilibria.limiter import Limiter
-from bluemira.equilibria.optimiser import (
-    BoundedCurrentOptimiser,
-    CoilsetOptimiser,
-    FBIOptimiser,
-    NestedCoilsetOptimiser,
-    Norm2Tikhonov,
-    PositionOptimiser,
-    UnconstrainedCurrentOptimiser,
+from bluemira.equilibria.opt_problems import (
+    BoundedCurrentCOP,
+    CoilsetPositionCOP,
+    NestedCoilsetPositionCOP,
+    UnconstrainedCurrentCOP,
 )
+from bluemira.equilibria.optimiser import FBIOptimiser, Norm2Tikhonov, PositionOptimiser
 from bluemira.equilibria.profiles import BetaIpProfile, CustomProfile
 from bluemira.equilibria.shapes import (
     flux_surface_cunningham,

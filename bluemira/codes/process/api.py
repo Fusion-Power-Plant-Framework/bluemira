@@ -29,7 +29,7 @@ from bluemira.base.file import get_bluemira_path
 from bluemira.base.look_and_feel import bluemira_print, bluemira_warn
 from bluemira.utilities.tools import flatten_iterable
 
-PROCESS_ENABLED = True
+ENABLED = True
 
 
 # Create dummy PROCESS objects.
@@ -68,11 +68,11 @@ try:
     from process.io.mfile import MFile  # noqa: F811,F401
     from process.io.python_fortran_dicts import get_dicts  # noqa: F811
 except (ModuleNotFoundError, FileNotFoundError):
-    PROCESS_ENABLED = False
+    ENABLED = False
     bluemira_warn("PROCESS not installed on this machine; cannot run PROCESS.")
 
 # Get dict of obsolete vars from PROCESS (if installed)
-if PROCESS_ENABLED:
+if ENABLED:
     try:
         from process.io.obsolete_vars import OBS_VARS
     except (ModuleNotFoundError, FileNotFoundError):
@@ -147,13 +147,6 @@ def _nested_check(process_name):
                 names += [_nested_check(p)]
             return list(flatten_iterable(names))
     return process_name
-
-
-def _pconvert(dictionary, key):
-    key_name = dictionary.get(key, key)
-    if key_name is None:
-        raise ValueError(f'Define a parameter conversion for "{key}"')
-    return key_name
 
 
 def convert_unit_p_to_b(s):

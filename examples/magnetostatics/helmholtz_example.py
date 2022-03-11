@@ -22,6 +22,14 @@
 """
 Simple HelmholzCage example with different current sources.
 """
+
+# %%[markdown]
+# ## Introduction
+
+# In this example we will build some HelmholtzCages with different types of current
+# sources.
+
+# %%
 import matplotlib.pyplot as plt
 import numpy as np
 
@@ -35,7 +43,10 @@ from bluemira.magnetostatics.circuits import (
 from bluemira.magnetostatics.circular_arc import CircularArcCurrentSource
 from bluemira.utilities.plot_tools import Plot3D
 
+# %%[markdown]
 # Set up some geometry and key parameters
+
+# %%
 n_TF = 6
 current = 20e6
 breadth = 0.5
@@ -45,7 +56,10 @@ x_c = 9
 z_c = 0
 x, z = make_circle_arc(radius, x_c, z_c, n_points=200, start_angle=np.pi)
 
+# %%[markdown]
 # Make a Biot-Savart filament (which needs to be properly discretised)
+
+# %%
 n_filaments_x = 2
 n_filaments_y = 3
 fil_radius = 0.5 * (breadth + depth) / (n_filaments_x * n_filaments_y)
@@ -69,15 +83,20 @@ biotsavart_circuit = BiotSavartFilament(
     loops, radius=fil_radius, current=current / (n_filaments_x * n_filaments_y)
 )
 
+# %%[markdown]
 # Make an analytical circuit with a rectangular cross-section comprised
 # of several trapezoidal prism elements
+
+# %%
 loop.close()
 analytical_circuit1 = ArbitraryPlanarRectangularXSCircuit(
     loop, breadth=breadth, depth=depth, current=current
 )
 
+# %%[markdown]
 # Make an analytical circuit of a circle arc with a rectangular cross-section
 
+# %%
 analytical_circuit2 = CircularArcCurrentSource(
     [x_c, 0, z_c],
     [-1, 0, 0],
@@ -89,12 +108,19 @@ analytical_circuit2 = CircularArcCurrentSource(
     dtheta=2 * np.pi,
     current=current,
 )
-# Pattern the three circuits
+
+# %%[markdown]
+# Pattern the three circuits into HelmholtzCages
+
+# %%
 biotsavart_tf_cage = HelmholtzCage(biotsavart_circuit, n_TF=n_TF)
 analytical_tf_cage1 = HelmholtzCage(analytical_circuit1, n_TF=n_TF)
 analytical_tf_cage2 = HelmholtzCage(analytical_circuit2, n_TF=n_TF)
 
-# Calculate the fields in the x-y plane
+# %%[markdown]
+# Calculate the fields in the x-y and x-z planes
+
+# %%
 nx, ny = 50, 50
 x = np.linspace(0, 18, nx)
 y = np.linspace(-18, 0, ny)
@@ -108,7 +134,6 @@ biotsavart_xy_fields = np.sqrt(np.sum(biotsavart_xy_fields**2, axis=0))
 analytical_xy_fields = np.sqrt(np.sum(analytical_xy_fields**2, axis=0))
 analytical_xy_fields2 = np.sqrt(np.sum(analytical_xy_fields2**2, axis=0))
 
-# Calculate the fields in the x-z plane
 nx, nz = 50, 50
 x = np.linspace(0, 18, nx)
 z = np.linspace(0, 14, nz)
@@ -122,43 +147,48 @@ biotsavart_xz_fields = np.sqrt(np.sum(biotsavart_xz_fields**2, axis=0))
 analytical_xz_fields = np.sqrt(np.sum(analytical_xz_fields**2, axis=0))
 analytical_xz_fields2 = np.sqrt(np.sum(analytical_xz_fields2**2, axis=0))
 
+# %%[markdown]
+
+# Let's visualise the results
+
+# %%
+
 
 def plot_cage_results(cage, xz_fields, xy_fields):
     """
     Plot utility for contours in 3-D projections in matplotlib.
     """
-    b_minmax = min(np.amax(xz_fields), np.amax(xy_fields))
     b_max = max(np.amax(xz_fields), np.amax(xy_fields))
-    levels = np.linspace(0, b_minmax, 20)
-    levels2 = np.linspace(b_minmax, b_max, 10)
+    levels = np.linspace(0, b_max, 20)
 
     ax = Plot3D()
-    # This will make the plot look better once matplotlib PRs are accepted
-    ax.computed_zorder = False
+
     cm = ax.contourf(
-        xx1, yy, xy_fields, zdir="z", levels=levels, offset=0, alpha=0.8, zorder=-1
-    )
-    cm2 = ax.contourf(
         xx1,
         yy,
         xy_fields,
         zdir="z",
-        levels=levels2,
+        levels=levels,
         offset=0,
         alpha=0.8,
         zorder=-1,
-        cmap="plasma_r",
-    )
-    ax.contourf(
-        xx, xz_fields, zz, zdir="y", levels=levels, offset=0, alpha=0.8, zorder=-1
+        cmap="magma",
     )
 
-    #  We need to use 2 colorbars because of 3-D projection shenanigans in matplotlib
+    ax.contourf(
+        xx,
+        xz_fields,
+        zz,
+        zdir="y",
+        levels=levels,
+        offset=0,
+        alpha=0.8,
+        zorder=-1,
+        cmap="magma",
+    )
     f = plt.gcf()
     cb0 = f.colorbar(cm, shrink=0.46)
-    cb = f.colorbar(cm2, shrink=0.46)
     cb0.ax.set_title("$B$ [T]")
-    cb.ax.set_title("$B$ [T]")
     cage.plot(ax=ax)
     ax.set_xlabel("x [m]")
     ax.set_ylabel("y [m]")

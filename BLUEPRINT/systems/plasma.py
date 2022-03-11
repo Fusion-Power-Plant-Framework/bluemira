@@ -50,36 +50,36 @@ class Plasma(Meshable, ReactorSystem):
     default_params = [
         ['R_0', 'Major radius', 9, 'm', None, 'Input'],
         ['B_0', 'Toroidal field at R_0', 6, 'T', None, 'Input'],
-        ['A', 'Aspect ratio', 3.1, 'N/A', None, 'Input'],
-        ['n_TF', 'Number of TF coils', 16, 'N/A', None, 'Input'],
+        ['A', 'Aspect ratio', 3.1, 'dimensionless', None, 'Input'],
+        ['n_TF', 'Number of TF coils', 16, 'dimensionless', None, 'Input'],
         ['I_p', 'Plasma current', 20, 'MA', None, 'Input'],
         ['T_e', 'Electron temperature', 10, 'keV', None, 'Input'],
         ['P_fus', 'Total fusion power', 2000, 'MW', None, 'Input'],
-        ['kappa_95', '95th flux surface elongation', 1.59, 'N/A', None, 'Input'],
-        ['delta_95', '95th flux surface triangularity', 0.333, 'N/A', None, 'Input'],
-        ['rho', 'Plasma density', 0.8, '10**20 /m^3', None, None],
-        ['f_b', 'Burnup fraction', 0.03, 'N/A', None, None],
+        ['kappa_95', '95th flux surface elongation', 1.59, 'dimensionless', None, 'Input'],
+        ['delta_95', '95th flux surface triangularity', 0.333, 'dimensionless', None, 'Input'],
+        ['rho', 'Plasma density', 80, 'um^-3', None, None],
+        ['f_b', 'Burnup fraction', 0.03, 'dimensionless', None, None],
         ['V_p', 'Plasma volume', 2400, 'm^3', None, 'Input'],
-        ['beta_p', 'Ratio of plasma pressure to poloidal magnetic pressure', 1.3, 'N/A', None, 'Input'],
-        ['li', 'Normalised plasma internal inductance', 0.8, 'N/A', None, 'Input'],
-        ['li3', 'Normalised plasma internal inductance (ITER def)', 0.8, 'N/A', None, 'Input'],
+        ['beta_p', 'Ratio of plasma pressure to poloidal magnetic pressure', 1.3, 'dimensionless', None, 'Input'],
+        ['li', 'Normalised plasma internal inductance', 0.8, 'dimensionless', None, 'Input'],
+        ['li3', 'Normalised plasma internal inductance (ITER def)', 0.8, 'dimensionless', None, 'Input'],
         ['Li', 'Plasma internal inductance', 1, 'H', None, 'Input'],
         ['Wp', 'Plasma energy', 2e6, 'MJ', None, 'Input'],
-        ['delta', 'Plasma triangularity', 0.3, 'N/A', None, 'Input'],
-        ['kappa', 'Plasma elongation', 1.6, 'N/A', None, 'Input'],
+        ['delta', 'Plasma triangularity', 0.3, 'dimensionless', None, 'Input'],
+        ['kappa', 'Plasma elongation', 1.6, 'dimensionless', None, 'Input'],
         ['shaf_shift', 'Shafranov shift of plasma (geometric=>magnetic)', 0.5, 'm', None, 'Input'],
         ['lambda_q', 'Scrape-off layer power decay length', 0.003, 'm', None, 'Input'],
-        ['plasma_mode', 'Plasma mode', 'H', 'N/A', 'The plasma mode {H, L, or A}', 'Input'],
-        ['ion_density_peaking_factor', 'Ion density peaking factor', 1, 'N/A', None, 'Fausser et. al. https://doi.org/10.1016/j.fusengdes.2012.02.025'],
-        ['ion_temperature_peaking_factor', 'Ion temperature peaking factor', 8.06, 'N/A', None, 'Fausser et. al. https://doi.org/10.1016/j.fusengdes.2012.02.025'],
-        ['ion_temperature_beta', 'Ion temperature beta', 6, 'N/A', 'The beta_T parameter, as described in the reference', 'Fausser et. al. https://doi.org/10.1016/j.fusengdes.2012.02.025'],
+        ['plasma_mode', 'Plasma mode', 'H', 'dimensionless', 'The plasma mode {H, L, or A}', 'Input'],
+        ['ion_density_peaking_factor', 'Ion density peaking factor', 1, 'dimensionless', None, 'Fausser et. al. https://doi.org/10.1016/j.fusengdes.2012.02.025'],
+        ['ion_temperature_peaking_factor', 'Ion temperature peaking factor', 8.06, 'dimensionless', None, 'Fausser et. al. https://doi.org/10.1016/j.fusengdes.2012.02.025'],
+        ['ion_temperature_beta', 'Ion temperature beta', 6, 'dimensionless', 'The beta_T parameter, as described in the reference', 'Fausser et. al. https://doi.org/10.1016/j.fusengdes.2012.02.025'],
         ['ion_density_pedestal', 'Pedestal ion density', 1.09e20, 'm^-3', None, 'Fausser et. al. https://doi.org/10.1016/j.fusengdes.2012.02.025'],
         ['ion_density_separatrix', 'Separatrix ion density', 3e19, 'm^-3', None, 'Fausser et. al. https://doi.org/10.1016/j.fusengdes.2012.02.025'],
         ['ion_density_origin', 'Magnetic origin ion density', 1.09e20, 'm^-3', None, 'Fausser et. al. https://doi.org/10.1016/j.fusengdes.2012.02.025'],
         ['ion_temperature_pedestal', 'Pedestal ion temperature', 6.09, 'keV', None, 'Fausser et. al. https://doi.org/10.1016/j.fusengdes.2012.02.025'],
         ['ion_temperature_separatrix', 'Separatrix ion temperature', 0.1, 'keV', None, 'Fausser et. al. https://doi.org/10.1016/j.fusengdes.2012.02.025'],
         ['ion_temperature_origin', 'Magnetic origin ion temperature', 45.9, 'keV', None, 'Fausser et. al. https://doi.org/10.1016/j.fusengdes.2012.02.025'],
-        ['relative_pedestal_radius', 'Pedestal radius relative to minor radius', 0.8, 'N/A', 'The pedestal radius as a fraction of the minor radius (where minor_radius = R_0 / A)', 'Fausser et. al. https://doi.org/10.1016/j.fusengdes.2012.02.025'],
+        ['relative_pedestal_radius', 'Pedestal radius relative to minor radius', 0.8, 'dimensionless', 'The pedestal radius as a fraction of the minor radius (where minor_radius = R_0 / A)', 'Fausser et. al. https://doi.org/10.1016/j.fusengdes.2012.02.025'],
     ]
     # fmt: on
     CADConstructor = PlasmaCAD
@@ -305,7 +305,7 @@ class Plasma(Meshable, ReactorSystem):
         p = [
             ["A_p", "Plasma cross-sectional area", self.geom["LCFS"].area, "m^2", None, None],
             ["V_p", "Plasma volume", loop_volume(*self.geom["LCFS"].d2), "m^3", None, None],
-            ["res_plasma", "Plasma resistance", self.plasma_resistance, "Ohm", None, "Uckan et al."],
+            ["res_plasma", "Plasma resistance", self.plasma_resistance, "ohm", None, "Uckan et al."],
             ["P_LH", "L-H transition power", self.calc_p_lh(), "MW", "Martin scaling", None]
         ]
         # fmt: on
@@ -321,7 +321,7 @@ class Plasma(Meshable, ReactorSystem):
             The L-H transition power [MW]
         """
         a = self.params.R_0 / self.params.A
-        return P_LH(self.params.rho * 1e20, self.params.B_0, a, self.params.R_0)
+        return P_LH(self.params.rho * 1e18, self.params.B_0, a, self.params.R_0)
 
     @property
     def plasma_resistance(self):

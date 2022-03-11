@@ -34,7 +34,8 @@ with warnings.catch_warnings():
     from neutronics_material_maker.utils import make_serpent_material
 
 import tests
-from bluemira.utilities.tools import is_num, kgm3_to_gcm3, to_kelvin
+from bluemira.base.constants import kgm3_to_gcm3, to_kelvin
+from bluemira.utilities.tools import is_num
 from tests.bluemira.materials.materials_helpers import MATERIAL_CACHE
 
 

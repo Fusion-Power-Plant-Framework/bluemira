@@ -48,7 +48,7 @@ class RMMetrics(ReactorSystem):
     config: Type[ParameterFrame]
     inputs: dict
 
-    default_params = [["n_TF", "Number of TF coils", 16, "N/A", None, "Input"]]
+    default_params = [["n_TF", "Number of TF coils", 16, "dimensionless", None, "Input"]]
     normalise = True
     ref = {"RMTFI": 322.283, "RMSI": 554.095}
 
@@ -128,7 +128,9 @@ class RMMetrics(ReactorSystem):
         weightS = self.AHPw["RMSI"]["Total number of blanket segments"]
         data = np.array([self.inputs["n_BB_seg"], weightT, weightS]).reshape(1, 3)
         return DataFrame(
-            data, index=[("Total number of blanket segments", "N/A")], columns=self.col
+            data,
+            index=[("Total number of blanket segments", "dimensionless")],
+            columns=self.col,
         )
 
     def submetrics(self, name):

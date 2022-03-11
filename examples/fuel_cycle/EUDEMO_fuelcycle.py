@@ -64,7 +64,7 @@ else:
 
 # fmt:off
 lifecycle_config = ParameterFrame([
-    ["A_global", "Global load factor", A_global, "N/A", "Not always used", "Input"],
+    ["A_global", "Global load factor", A_global, "dimensionless", "Not always used", "Input"],
     ["I_p", "Plasma current", 19.2, "MA", None, "Input"],
     ["bmd", "Blanket maintenance duration", 150, "days", "Full replacement intervention duration", "Input"],
     ["dmd", "Divertor maintenance duration", 90, "days", "Full replacement intervention duration", "Input"],
@@ -83,7 +83,7 @@ lifecycle_config = ParameterFrame([
     ["div_dpa", "Divertor life limit (CuCrZr)", 5, "dpa",
      "https://iopscience.iop.org/article/10.1088/1741-4326/57/9/092002/pdf", "Input"],
     ["vv_dpa", "Vacuum vessel life limit (SS316-LN-IG)", 3.25, "dpa", "RCC-Mx or whatever it is called", "Input"],
-    ["tf_fluence", "Insulation fluence limit for ITER equivalent to 10 MGy", 3.2e21, "n/m^2",
+    ["tf_fluence", "Insulation fluence limit for ITER equivalent to 10 MGy", 3.2e21, "1/m^2",
      "https://ieeexplore.ieee.org/document/6374236/", "Input"],
 ])
 # fmt:on
@@ -169,29 +169,29 @@ m_cryodistillation = 1.8
 
 # fmt: off
 tfv_config = ParameterFrame([
-    ['TBR', 'Tritium breeding ratio', TBR, 'N/A', None, 'Input'],
-    ['f_b', 'Burn-up fraction', 0.015, 'N/A', None, 'Input'],
-    ['m_gas', 'Gas puff flow rate', 50, 'Pam^3/s', 'To maintain detachment - no chance of fusion from gas injection', 'Discussions with Chris Day and Yannick Hörstenmeyer'],
-    ['A_global', 'Load factor', A_global, 'N/A', None, 'Silent input'],
-    ['r_learn', 'Learning rate', 1, 'N/A', None, 'Silent input'],
+    ['TBR', 'Tritium breeding ratio', TBR, 'dimensionless', None, 'Input'],
+    ['f_b', 'Burn-up fraction', 0.015, 'dimensionless', None, 'Input'],
+    ['m_gas', 'Gas puff flow rate', 50, 'Pa m^3/s', 'To maintain detachment - no chance of fusion from gas injection', 'Discussions with Chris Day and Yannick Hörstenmeyer'],
+    ['A_global', 'Load factor', A_global, 'dimensionless', None, 'Silent input'],
+    ['r_learn', 'Learning rate', 1, 'dimensionless', None, 'Silent input'],
     ['t_pump', 'Time in DIR loop', t_pump, 's', 'Time between exit from plasma and entry into plasma through DIR loop', 'Discussions with Chris Day and Yannick Hörstenmeyer'],
     ['t_exh', 'Time in INDIR loop', t_exh, 's', 'Time between exit from plasma and entry into TFV systems INDIR', 'Input'],
     ['t_ters', 'Time from BB exit to TFV system', 6750, 's', None, 'Input'],
     ['t_freeze', 'Time taken to freeze pellets', 3600 / 2, 's', None, 'Discussions with Chris Day and Yannick Hörstenmeyer'],
-    ['f_dir', 'Fraction of flow through DIR loop', f_dir, 'N/A', None, 'Discussions with Chris Day and Yannick Hörstenmeyer'],
+    ['f_dir', 'Fraction of flow through DIR loop', f_dir, 'dimensionless', None, 'Discussions with Chris Day and Yannick Hörstenmeyer'],
     ['t_detrit', 'Time in detritiation system', 0, 's', None, 'Input'],
-    ['f_detrit_split', 'Fraction of detritiation line tritium extracted', 0.9999, 'N/A', None, 'Input'],
-    ['f_exh_split', 'Fraction of exhaust tritium extracted', 0.99, 'N/A', None, 'Input'],
-    ['eta_fuel_pump', 'Efficiency of fuel line pump', 0.9, 'N/A', 'Pump which pumps down the fuelling lines', 'Input'],
-    ['eta_f', 'Fuelling efficiency', 0.5, 'N/A', 'Efficiency of the fuelling lines prior to entry into the VV chamber', 'Input'],
+    ['f_detrit_split', 'Fraction of detritiation line tritium extracted', 0.9999, 'dimensionless', None, 'Input'],
+    ['f_exh_split', 'Fraction of exhaust tritium extracted', 0.99, 'dimensionless', None, 'Input'],
+    ['eta_fuel_pump', 'Efficiency of fuel line pump', 0.9, 'dimensionless', 'Pump which pumps down the fuelling lines', 'Input'],
+    ['eta_f', 'Fuelling efficiency', 0.5, 'dimensionless', 'Efficiency of the fuelling lines prior to entry into the VV chamber', 'Input'],
     ['I_miv', 'Maximum in-vessel T inventory', max_ivc_inventory, 'kg', None, 'Input'],
     ['I_tfv_min', 'Minimum TFV inventory', m_cryodistillation, 'kg', 'Without which e.g. cryodistillation columns are not effective', "Discussions with Chris Day and Jonas Schwenzer (N.B. working assumptions only)"],
     ['I_tfv_max', 'Maximum TFV inventory', m_cryodistillation + 0.2, 'kg', "Account for T sequestration inside the T plant", "Discussions with Chris Day and Jonas Schwenzer (N.B. working assumptions only)"],
     ['I_mbb', 'Maximum BB T inventory', max_bb_inventory, 'kg', None, 'Input'],
-    ['eta_iv', 'In-vessel bathtub parameter', eta_ivc, 'N/A', None, 'Input'],
-    ['eta_bb', 'BB bathtub parameter', 0.995, 'N/A', None, 'Input'],
-    ['eta_tfv', 'TFV bathtub parameter', 0.998, 'N/A', None, 'Input'],
-    ['f_terscwps', 'TERS and CWPS cumulated factor', 0.9999, 'N/A', None, 'Input']
+    ['eta_iv', 'In-vessel bathtub parameter', eta_ivc, 'dimensionless', None, 'Input'],
+    ['eta_bb', 'BB bathtub parameter', 0.995, 'dimensionless', None, 'Input'],
+    ['eta_tfv', 'TFV bathtub parameter', 0.998, 'dimensionless', None, 'Input'],
+    ['f_terscwps', 'TERS and CWPS cumulated factor', 0.9999, 'dimensionless', None, 'Input']
 ])
 # fmt:on
 

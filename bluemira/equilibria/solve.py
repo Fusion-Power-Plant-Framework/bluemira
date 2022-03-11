@@ -753,10 +753,11 @@ class PicardBaseIterator(ABC):
         in consistency. In the case of unconverged equilibria, gives a more
         reasonable understanding of the final state.
         """
-        self.eq.get_OX_points(force_update=True)
+        o_points, x_points = self.eq.get_OX_points(force_update=True)
         self.eq._jtor = self.profiles.jtor(
-            self.eq.x, self.eq.z, self.eq.psi(), self.eq._o_points, self.eq._x_points
+            self.eq.x, self.eq.z, self.eq.psi(), o_points, x_points
         )
+        self.eq._reassign_profiles(self.profiles)
 
 
 class PicardDeltaIterator(CurrentGradientOptimiser, PicardBaseIterator):

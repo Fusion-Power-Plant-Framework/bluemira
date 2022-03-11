@@ -48,7 +48,7 @@ class LifeCycle:
 
     # fmt: off
     default_params = [
-        ["A_global", "Global load factor", 0.3, "N/A", "Not always used", "Input"],
+        ["A_global", "Global load factor", 0.3, "dimensionless", "Not always used", "Input"],
         ["I_p", "Plasma current", 19, "MA", None, "Input"],
         ["bmd", "Blanket maintenance duration", 150, "days", "Full replacement intervention duration", "Input"],
         ["dmd", "Divertor maintenance duration", 90, "days", "Full replacement intervention duration", "Input"],
@@ -63,8 +63,8 @@ class LifeCycle:
         ["blk_2_dpa", "Second blanket life limit (EUROfer)", 50, "dpa", "https://iopscience.iop.org/article/10.1088/1741-4326/57/9/092002/pdf", "Input"],
         ["div_dpa", "Divertor life limit (CuCrZr)", 5, "dpa", "https://iopscience.iop.org/article/10.1088/1741-4326/57/9/092002/pdf", "Input"],
         ["vv_dpa", "Vacuum vessel life limit (SS316-LN-IG)", 3.25, "dpa", "RCC-Mx or whatever it is called", "Input"],
-        ["tf_fluence", "Insulation fluence limit for ITER equivalent to 10 MGy", 3.2e21, "n/m^2", "https://ieeexplore.ieee.org/document/6374236/", "Input"],
-        ["tf_ins_nflux", "TF insulation peak neutron flux", 1.4e13, "n/m^2/s", "Pavel Pereslavtsev sent me an email 20/02/2017", "Input"],
+        ["tf_fluence", "Insulation fluence limit for ITER equivalent to 10 MGy", 3.2e21, "1/m^2", "https://ieeexplore.ieee.org/document/6374236/", "Input"],
+        ["tf_ins_nflux", "TF insulation peak neutron flux", 1.4e13, "1/m^2/s", "Pavel Pereslavtsev sent me an email 20/02/2017", "Input"],
         ["blk_dmg", "Blanket neutron daamge rate", 10.2, "dpa/fpy", "Pavel Pereslavtsev 2M7HN3 fig. 20", "Input"],
         ["div_dmg", "Divertor neutron damange rate", 3, "dpa/fpy", "https://iopscience.iop.org/article/10.1088/1741-4326/57/9/092002/pdf", "Input"],
         ["vv_dmg", "Vacuum vessel neutron damage rate", 0.3, "dpa/fpy", "Pavel Pereslavtsev 2M7HN3 fig. 18", "Input"],

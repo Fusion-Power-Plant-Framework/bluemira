@@ -362,7 +362,7 @@ class MyExtendedConfiguration(MyExtendedConfigurationSchema, ParameterFrame):
 
     # Add our new parameter and default value to the list of default parameters
     params = Configuration.params + [
-        ["my_new_parameter", "Super Awesome Config!", 42, "N/A", None, "Input"]
+        ["my_new_parameter", "Super Awesome Config!", 42, "dimensionless", None, "Input"]
     ]
 
     new_params = {"R_0": (6, "New Input")}

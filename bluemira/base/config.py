@@ -31,50 +31,50 @@ class Configuration(ConfigurationSchema, ParameterFrame):
     The base object for all variable names and metadata in bluemira.
     Variables specified here should be physical in some way, and not represent
     how the code is being run.
-    Defaults are also specified here, and overidden later.
+    Defaults are also specified here, and overridden later.
     New variables should be defined here, with a corresponding entry in the
     ConfigurationSchema, and passed onwards as Parameter objects.
     """
 
     # fmt: off
     params = [
-        ['Name', 'Reactor name', 'Cambridge', 'N/A', None, 'Input'],
-        ['plasma_type', 'Type of plasma', 'SN', 'N/A', None, 'Input'],
-        ['reactor_type', 'Type of reactor', 'Normal', 'N/A', None, 'Input'],
-        ['op_mode', 'Mode of operation', 'Pulsed', 'N/A', None, 'Input'],
+        ['Name', 'Reactor name', 'Cambridge', 'dimensionless', None, 'Input'],
+        ['plasma_type', 'Type of plasma', 'SN', 'dimensionless', None, 'Input'],
+        ['reactor_type', 'Type of reactor', 'Normal', 'dimensionless', None, 'Input'],
+        ['op_mode', 'Mode of operation', 'Pulsed', 'dimensionless', None, 'Input'],
 
         # Reactor
         ['P_el_net', 'Net electrical power output', 500, 'MW', None, 'Input'],
         ['P_el_net_process', 'Net electrical power output as provided by PROCESS', None, 'MW', None, 'PROCESS'],
         ['tau_flattop', 'Flat-top duration', 2 * 3600, 's', None, 'Input'],
-        ['blanket_type', 'Blanket type', 'HCPB', 'N/A', None, 'Input'],
-        ['n_TF', 'Number of TF coils', 16, 'N/A', None, 'Input'],
-        ['n_PF', 'Number of PF coils', 6, 'N/A', None, 'Input'],
-        ['n_CS', 'Number of CS coil divisions', 5, 'N/A', None, 'Input'],
+        ['blanket_type', 'Blanket type', 'HCPB', 'dimensionless', None, 'Input'],
+        ['n_TF', 'Number of TF coils', 16, 'dimensionless', None, 'Input'],
+        ['n_PF', 'Number of PF coils', 6, 'dimensionless', None, 'Input'],
+        ['n_CS', 'Number of CS coil divisions', 5, 'dimensionless', None, 'Input'],
         ['TF_ripple_limit', 'TF coil ripple limit', 0.6, '%', None, 'Input'],
-        ['Av', 'Reactor availability', 0.3, 'N/A', None, 'Input'],
-        ['A', 'Plasma aspect ratio', 3.1, 'N/A', None, 'Input'],
+        ['Av', 'Reactor availability', 0.3, 'dimensionless', None, 'Input'],
+        ['A', 'Plasma aspect ratio', 3.1, 'dimensionless', None, 'Input'],
         ['R_0', 'Major radius', 9, 'm', None, 'Input'],
         ['z_0', 'Vertical offset of plasma centreline', 0, 'm', None, 'Input'],
         ['B_0', 'Toroidal field at R_0', 6, 'T', None, 'Input'],
 
         # Plasma
-        ['q_95', 'Plasma safety factor', 3.5, 'N/A', None, 'Input'],
-        ['kappa_95', '95th percentile plasma elongation', 1.6, 'N/A', None, 'Input'],
-        ['kappa', 'Last closed surface plasma elongation', 1.792, 'N/A', None, 'Input'],
-        ['delta_95', '95th percentile plasma triangularity', 0.333, 'N/A', None, 'Input'],
-        ['delta', 'Last closed surface plasma triangularity', 0.5, 'N/A', None, 'Input'],
+        ['q_95', 'Plasma safety factor', 3.5, 'dimensionless', None, 'Input'],
+        ['kappa_95', '95th percentile plasma elongation', 1.6, 'dimensionless', None, 'Input'],
+        ['kappa', 'Last closed surface plasma elongation', 1.792, 'dimensionless', None, 'Input'],
+        ['delta_95', '95th percentile plasma triangularity', 0.333, 'dimensionless', None, 'Input'],
+        ['delta', 'Last closed surface plasma triangularity', 0.5, 'dimensionless', None, 'Input'],
         ['T_e', 'Average plasma electron temperature', 13, 'keV', None, 'Input'],
-        ['Z_eff', 'Effective particle radiation atomic mass', 2.2, 'a.u.', None, 'Input'],
-        ['res_plasma', 'Plasma resistance', 0, 'Ohm', None, 'Calculated'],
+        ['Z_eff', 'Effective particle radiation atomic mass', 2.2, 'amu', None, 'Input'],
+        ['res_plasma', 'Plasma resistance', 0, 'ohm', None, 'Calculated'],
         ['V_p', 'Plasma volume', 2400, 'm^3', None, 'Calculated'],
-        ['l_i', 'Normalised internal plasma inductance', 0.8, 'N/A', None, 'Input'],
+        ['l_i', 'Normalised internal plasma inductance', 0.8, 'dimensionless', None, 'Input'],
         ['I_p', 'Plasma current', 19, 'MA', None, 'PLASMOD'],
         ['P_fus', 'Total fusion power', 2000, 'MW', None, 'PLASMOD'],
         ['P_fus_DT', 'D-T fusion power', 1995, 'MW', None, 'PLASMOD'],
         ['P_fus_DD', 'D-D fusion power', 5, 'MW', None, 'PLASMOD'],
-        ['f_DD_fus', 'Fraction of D-D fusion in total fusion', 0.0025, 'N/A', None, 'PLASMOD'],
-        ['H_star', 'H factor (radiation corrected)', 1, 'N/A', None, 'PLASMOD'],
+        ['f_DD_fus', 'Fraction of D-D fusion in total fusion', 0.0025, 'dimensionless', None, 'PLASMOD'],
+        ['H_star', 'H factor (radiation corrected)', 1, 'dimensionless', None, 'PLASMOD'],
         ['P_sep', 'Separatrix power', 150, 'MW', None, 'PLASMOD'],
         ['P_rad_core', 'Core radiation power', 0, 'MW', None, 'PLASMOD'],
         ['P_rad_edge', 'Edge radiation power', 400, 'MW', None, 'PLASMOD'],
@@ -84,37 +84,37 @@ class Configuration(ConfigurationSchema, ParameterFrame):
         ['P_brehms', 'Bremsstrahlung', 80, 'MW', None, 'PLASMOD'],
         ['P_LH', 'LH transition power', 0, 'W', None, 'PLASMOD'],
         ['P_ohm', 'Ohimic heating power', 0, 'W', None, 'PLASMOD'],
-        ['f_bs', 'Bootstrap fraction', 0.5, 'N/A', None, 'PLASMOD'],
-        ['beta_N', 'Normalised ratio of plasma pressure to magnetic pressure', 2.7, 'N/A', None, 'PLASMOD'],
-        ['beta_p', 'Ratio of plasma pressure to poloidal magnetic pressure', 0.04, 'N/A', None, 'PLASMOD'],
-        ['beta', 'Total ratio of plasma pressure to magnetic pressure', 0.04, 'N/A', None, 'PLASMOD'],
+        ['f_bs', 'Bootstrap fraction', 0.5, 'dimensionless', None, 'PLASMOD'],
+        ['beta_N', 'Normalised ratio of plasma pressure to magnetic pressure', 2.7, 'dimensionless', None, 'PLASMOD'],
+        ['beta_p', 'Ratio of plasma pressure to poloidal magnetic pressure', 0.04, 'dimensionless', None, 'PLASMOD'],
+        ['beta', 'Total ratio of plasma pressure to magnetic pressure', 0.04, 'dimensionless', None, 'PLASMOD'],
         ['tau_e', 'Energy confinement time', 3, 's', None, 'PLASMOD'],
         ['v_burn', 'Loop voltage during burn', 0.05, 'V', None, 'PROCESS'],
-        ['shaf_shift', 'Shafranov shift of plasma (geometric=>magnetic)', 0.5, 'N/A', None, 'equilibria'],
-        ["C_Ejima", "Ejima constant", 0.4, "N/A", None, "Input (Ejima, et al., Volt-second analysis and consumption in Doublet III plasmas, Nuclear Fusion 22, 1313 (1982))"],
-        ["m_s_limit", "Margin to vertical stability", 0.3, "N/A", None, "Input"],
+        ['shaf_shift', 'Shafranov shift of plasma (geometric=>magnetic)', 0.5, 'm', None, 'equilibria'],
+        ["C_Ejima", "Ejima constant", 0.4, "dimensionless", None, "Input (Ejima, et al., Volt-second analysis and consumption in Doublet III plasmas, Nuclear Fusion 22, 1313 (1982))"],
+        ["m_s_limit", "Margin to vertical stability", 0.3, "dimensionless", None, "Input"],
 
         # Heating and current drive
-        ['f_ni', 'Non-inductive current drive fraction', 0.1, 'N/A', None, 'Input'],
+        ['f_ni', 'Non-inductive current drive fraction', 0.1, 'dimensionless', None, 'Input'],
         ['e_nbi', 'Neutral beam energy', 1000, 'keV', None, 'Input'],
         ['P_hcd_ss', 'Steady-state HCD power', 50, 'MW', None, 'Input'],
         ['q_control', 'Control HCD power', 50, 'MW', None, 'Input'],
         ['g_cd_nb', 'NB current drive efficiency', 0.4, 'MA/MW.m', 'Check units!', 'Input'],
-        ['eta_nb', 'NB electrical efficiency', 0.3, 'N/A', 'Check units!', 'Input'],
+        ['eta_nb', 'NB electrical efficiency', 0.3, 'dimensionless', 'Check units!', 'Input'],
         ['p_nb', 'NB launcher power', 1, 'MA', 'Maximum launcher current drive in a port', 'Input'],
         ['g_cd_ec', 'EC current drive efficiency', 0.15, 'MA/MW.m', 'Check units!', 'Input'],
-        ['eta_ec', 'EC electrical efficiency', 0.35, 'N/A', 'Check units!', 'Input'],
+        ['eta_ec', 'EC electrical efficiency', 0.35, 'dimensionless', 'Check units!', 'Input'],
         ['p_ec', 'EC launcher power', 10, 'MW', 'Maximum launcher power per sector', 'Input'],
-        ['f_cd_aux', 'Auxiliary current drive fraction', 0.1, 'N/A', None, 'Input'],
-        ['f_cd_ohm', 'Ohmic current drive fraction', 0.1, 'N/A', None, 'Input'],
+        ['f_cd_aux', 'Auxiliary current drive fraction', 0.1, 'dimensionless', None, 'Input'],
+        ['f_cd_ohm', 'Ohmic current drive fraction', 0.1, 'dimensionless', None, 'Input'],
 
         # First wall profile
-        ['fw_psi_n', 'Normalised psi boundary to fit FW to', 1.07, 'N/A', None, 'Input'],
+        ['fw_psi_n', 'Normalised psi boundary to fit FW to', 1.07, 'dimensionless', None, 'Input'],
         ['fw_dL_min', 'Minimum FW module length', 0.75, 'm', None, 'Input'],
         ['fw_dL_max', 'Maximum FW module length', 2, 'm', None, 'Input'],
         ['fw_a_max', 'Maximum angle between FW modules', 25, '°', None, 'Input'],
         ['P_sep_particle', 'Separatrix power', 150, 'MW', None, 'Input'],
-        ['f_p_sol_near', 'near scrape-off layer power rate', 0.65, 'N/A', None, 'Input'],
+        ['f_p_sol_near', 'near scrape-off layer power rate', 0.65, 'dimensionless', None, 'Input'],
         ['hf_limit', 'heat flux material limit', 0.5, 'MW/m^2', None, 'Input'],
 
         # SN/DN variables for heat flux transport
@@ -122,22 +122,22 @@ class Configuration(ConfigurationSchema, ParameterFrame):
         ['fw_lambda_q_far_omp', 'Lambda_q far SOL omp', 0.1, 'm', None, 'Input'],
         ['fw_lambda_q_near_imp', 'Lambda_q near SOL imp', 0.003, 'm', None, 'Input'],
         ['fw_lambda_q_far_imp', 'Lambda_q far SOL imp', 0.1, 'm', None, 'Input'],
-        ["f_lfs_lower_target", "Fraction of SOL power deposited on the LFS lower target", 0.5, "N/A", None, "Input"],
-        ["f_hfs_lower_target", "Fraction of SOL power deposited on the HFS lower target", 0.5, "N/A", None, "Input"],
-        ["f_lfs_upper_target", "Fraction of SOL power deposited on the LFS upper target (DN only)", 0.5, "N/A", None, "Input"],
-        ["f_hfs_upper_target", "Fraction of SOL power deposited on the HFS upper target (DN only)", 0.5, "N/A", None, "Input"],
+        ["f_lfs_lower_target", "Fraction of SOL power deposited on the LFS lower target", 0.5, "dimensionless", None, "Input"],
+        ["f_hfs_lower_target", "Fraction of SOL power deposited on the HFS lower target", 0.5, "dimensionless", None, "Input"],
+        ["f_lfs_upper_target", "Fraction of SOL power deposited on the LFS upper target (DN only)", 0.5, "dimensionless", None, "Input"],
+        ["f_hfs_upper_target", "Fraction of SOL power deposited on the HFS upper target (DN only)", 0.5, "dimensionless", None, "Input"],
 
         # Divertor profile
         ['div_L2D_ib', 'Inboard divertor leg length', 1.1, 'm', None, 'Input'],
         ['div_L2D_ob', 'Outboard divertor leg length', 1.45, 'm', None, 'Input'],
         ['div_graze_angle', 'Divertor SOL grazing angle', 1.5, '°', None, 'Input'],
-        ['div_psi_o', 'Divertor flux offset', 0.5, 'n/a', None, 'Input'],
+        ['div_psi_o', 'Divertor flux offset', 0.5, 'm', None, 'Input'],
         ['div_Ltarg', 'Divertor target length', 0.5, 'm', None, 'Input'],
-        ['div_open', 'Divertor open/closed configuration', False, 'N/A', None, 'Input'],
+        ['div_open', 'Divertor open/closed configuration', False, 'dimensionless', None, 'Input'],
         ['g_vv_div_add', 'Additional divertor/VV gap', 0, 'm', None, 'Input'],
         ['LPangle', 'Lower port inclination angle', -30, '°', None, 'Input'],
-        ['n_div_cassettes', 'Number of divertor cassettes per sector', 3, 'N/A', None, 'Common decision'],
-        ['psi_norm', 'Normalised flux value of strike-point contours', 1, 'N/A', None, 'Input'],
+        ['n_div_cassettes', 'Number of divertor cassettes per sector', 3, 'dimensionless', None, 'Common decision'],
+        ['psi_norm', 'Normalised flux value of strike-point contours', 1, 'dimensionless', None, 'Input'],
         ['xpt_outer_gap', 'Gap between x-point and outer wall', 2, 'm', None, 'Input'],
         ['xpt_inner_gap', 'Gap between x-point and inner wall', 0.4, 'm', None, 'Input'],
         ['tk_outer_target_sol', 'Outer target length SOL side', 0.7, 'm', None, 'Input'],
@@ -159,14 +159,14 @@ class Configuration(ConfigurationSchema, ParameterFrame):
 
 
         # Blanket
-        ["bb_e_mult", "Energy multiplication factor", 1.35, "N/A", None, "HCPB classic"],
+        ["bb_e_mult", "Energy multiplication factor", 1.35, "dimensionless", None, "HCPB classic"],
         ['bb_min_angle', 'Minimum module angle', 70, '°', 'Sharpest cut of a module possible', 'Input (Lorenzo Boccaccini said this in a meeting in 2015, Garching, Germany)'],
-        ["tk_r_ib_bz", "Thickness ratio of the inboard blanket breeding zone", 0.309, "N/A", None, "Input (HCPB 2015 design description document 2MHDNB)"],
-        ["tk_r_ib_manifold", "Thickness ratio of the inboard blanket manifold", 0.114, "N/A", None, "Input (HCPB 2015 design description document 2MHDNB)"],
-        ["tk_r_ib_bss", "Thickness ratio of the inboard blanket back supporting structure", 0.577, "N/A", None, "Input (HCPB 2015 design description document 2MHDNB)"],
-        ["tk_r_ob_bz", "Thickness ratio of the outboard blanket breeding zone", 0.431, "N/A", None, "Input (HCPB 2015 design description document 2MHDNB)"],
-        ["tk_r_ob_manifold", "Thickness ratio of the outboard blanket manifold", 0.071, "N/A", None, "Input (HCPB 2015 design description document 2MHDNB)"],
-        ["tk_r_ob_bss", "Thickness ratio of the outboard blanket back supporting structure", 0.498, "N/A", None, "Input (HCPB 2015 design description document 2MHDNB)"],
+        ["tk_r_ib_bz", "Thickness ratio of the inboard blanket breeding zone", 0.309, "dimensionless", None, "Input (HCPB 2015 design description document 2MHDNB)"],
+        ["tk_r_ib_manifold", "Thickness ratio of the inboard blanket manifold", 0.114, "dimensionless", None, "Input (HCPB 2015 design description document 2MHDNB)"],
+        ["tk_r_ib_bss", "Thickness ratio of the inboard blanket back supporting structure", 0.577, "dimensionless", None, "Input (HCPB 2015 design description document 2MHDNB)"],
+        ["tk_r_ob_bz", "Thickness ratio of the outboard blanket breeding zone", 0.431, "dimensionless", None, "Input (HCPB 2015 design description document 2MHDNB)"],
+        ["tk_r_ob_manifold", "Thickness ratio of the outboard blanket manifold", 0.071, "dimensionless", None, "Input (HCPB 2015 design description document 2MHDNB)"],
+        ["tk_r_ob_bss", "Thickness ratio of the outboard blanket back supporting structure", 0.498, "dimensionless", None, "Input (HCPB 2015 design description document 2MHDNB)"],
 
         # ST Breeding blanket
         ['g_bb_fw', 'Separation between the first wall and the breeding blanket', 0.05, 'm', None, 'Input'],
@@ -218,7 +218,7 @@ class Configuration(ConfigurationSchema, ParameterFrame):
         ['h_tf_max_in', 'Plasma side TF coil maximum height', 6.5, 'm', None, 'PROCESS'],
         ['h_tf_min_in', 'Plasma side TF coil min height', -6.5, 'm', None, 'PROCESS'],
         ['B_tf_peak', 'Peak field inside the TF coil winding pack', 12, 'T', None, 'PROCESS'],
-        ['tf_taper_frac', "Height of straight portion as fraction of total tapered section height", 0.5, 'N/A', None, 'Input'],
+        ['tf_taper_frac', "Height of straight portion as fraction of total tapered section height", 0.5, 'dimensionless', None, 'Input'],
         ['r_tf_outboard_corner', "Corner Radius of TF coil outboard legs", 0.8, 'm', None, 'Input'],
         ['r_tf_inboard_corner', "Corner Radius of TF coil inboard legs", 0.0, 'm', None, 'Input'],
         ['r_tf_curve', "Start of the upper curve of domed picture frame shale", 3., 'm', None, 'Input'],
@@ -245,13 +245,13 @@ class Configuration(ConfigurationSchema, ParameterFrame):
         ['r_cs_in', 'Central Solenoid inner radius', 2.2, 'm', None, 'PROCESS'],
         ['r_tf_in', 'Inboard radius of the TF coil inboard leg', 3.2, 'm', None, 'PROCESS'],
         ['r_tf_inboard_out', 'Outboard Radius of the TF coil inboard leg tapered region', 0.6265, "m", None, "PROCESS"],
-        ['r_tf_in_centre', 'Inboard TF leg centre radius', 3.7, 'N/A', None, 'PROCESS'],
+        ['r_tf_in_centre', 'Inboard TF leg centre radius', 3.7, 'm', None, 'PROCESS'],
         ['r_ts_ib_in', 'Inboard TS inner radius', 4.3, 'm', None, 'PROCESS'],
         ['r_vv_ib_in', 'Inboard vessel inner radius', 5.1, 'm', None, 'PROCESS'],
         ['r_fw_ib_in', 'Inboard first wall inner radius', 5.8, 'm', None, 'PROCESS'],
         ['r_fw_ob_in', 'Outboard first wall inner radius', 12.1, 'm', None, 'PROCESS'],
         ['r_vv_ob_in', 'Outboard vessel inner radius', 14.5, 'm', None, 'PROCESS'],
-        ['r_tf_out_centre', 'Outboard TF leg centre radius', 16.2, 'N/A', None, 'PROCESS'],
+        ['r_tf_out_centre', 'Outboard TF leg centre radius', 16.2, 'm', None, 'PROCESS'],
         ['r_ts_joint', 'Radius of inboard/outboard TS joint', 2., 'm', None, 'Input'],
         ['r_vv_joint', 'Radius of inboard/outboard VV joint', 2., 'm', None, 'Input'],
 
@@ -280,49 +280,49 @@ class Configuration(ConfigurationSchema, ParameterFrame):
         # Vacuum vessel
         ['vv_dtk', 'VV double-walled thickness', 0.2, 'm', None, 'Input'],
         ['vv_stk', 'VV single-walled thickness', 0.06, 'm', None, 'Input'],
-        ['vvpfrac', 'Fraction of neutrons deposited in VV', 0.04, 'N/A', 'simpleneutrons needs a correction for VV n absorbtion', 'Input (Bachmann, probably thanks to P. Pereslavtsev)'],
+        ['vvpfrac', 'Fraction of neutrons deposited in VV', 0.04, 'dimensionless', 'simpleneutrons needs a correction for VV n absorbtion', 'Input (Bachmann, probably thanks to P. Pereslavtsev)'],
 
         # Neutronics
         ['blk_1_dpa', 'Starter blanket life limit (EUROfer)', 20, 'dpa', None, 'Input (https://iopscience.iop.org/article/10.1088/1741-4326/57/9/092002/pdf)'],
         ['blk_2_dpa', 'Second blanket life limit (EUROfer)', 50, 'dpa', None, 'Input (https://iopscience.iop.org/article/10.1088/1741-4326/57/9/092002/pdf)'],
         ['div_dpa', 'Divertor life limit (CuCrZr)', 5, 'dpa', None, 'Input (https://iopscience.iop.org/article/10.1088/1741-4326/57/9/092002/pdf)'],
         ['vv_dpa', 'Vacuum vessel life limit (SS316-LN-IG)', 3.25, 'dpa', None, 'Input (RCC-Mx or whatever it is called)'],
-        ['tf_fluence', 'Insulation fluence limit for ITER equivalent to 10 MGy', 3.2e21, 'n/m^2', None, 'Input (https://ieeexplore.ieee.org/document/6374236/)'],
+        ['tf_fluence', 'Insulation fluence limit for ITER equivalent to 10 MGy', 3.2e21, '1/m^2', None, 'Input (https://ieeexplore.ieee.org/document/6374236/)'],
 
         # Central solenoid
         ['F_pf_zmax', 'Maximum vertical force on a single PF coil', 450, 'MN', None, 'Input'],
         ['F_cs_ztotmax', 'Maximum total vertical force in the CS stack', 350, 'MN', None, 'Input'],
         ['F_cs_sepmax', 'Maximum separation force between CS modules', 300, 'MN', None, 'Input'],
-        ['CS_material', 'Conducting material to use for the CS modules', 'Nb3Sn', 'N/A', None, 'Input'],
+        ['CS_material', 'Conducting material to use for the CS modules', 'Nb3Sn', 'dimensionless', None, 'Input'],
 
         # PF magnets
-        ['PF_material', 'Conducting material to use for the PF coils', 'NbTi', 'N/A', None, 'Input'],
+        ['PF_material', 'Conducting material to use for the PF coils', 'NbTi', 'dimensionless', None, 'Input'],
 
         # Cryostat
-        ['n_cr_lab', 'Number of cryostat labyrinth levels', 2, 'N/A', None, 'Input'],
+        ['n_cr_lab', 'Number of cryostat labyrinth levels', 2, 'dimensionless', None, 'Input'],
         ['cr_l_d', 'Cryostat labyrinth total delta', 0.2, 'm', None, 'Input'],
         ['tk_cryo_ts', 'Cryo TS thickness', 0.10, 'm', None, 'Input'],
         ['r_cryo_ts', 'Radius of outboard cryo TS', 8, 'm', None, 'Input'],
         ['z_cryo_ts', 'Half height of outboard cryo TS', 8, 'm', None, 'Input'],
 
         # Radiation shield
-        ['n_rs_lab', 'Number of radiation shield labyrinth levels', 4, 'N/A', None, 'Input'],
+        ['n_rs_lab', 'Number of radiation shield labyrinth levels', 4, 'dimensionless', None, 'Input'],
         ['rs_l_d', 'Radiation shield labyrinth delta', 0.6, 'm', 'Thickness of a radiation shield penetration neutron labyrinth', 'Input'],
         ['rs_l_gap', 'Radiation shield labyrinth gap', 0.02, 'm', 'Gap between plug and radiation shield', 'Input'],
 
         # Lifecycle
         ['n_DT_reactions', 'D-T fusion reaction rate', 7.1E20, '1/s', 'At full power', 'Input'],
         ['n_DD_reactions', 'D-D fusion reaction rate', 8.5E18, '1/s', 'At full power', 'Input'],
-        ['a_min', 'Minimum operational load factor', 0.1, 'N/A', 'Otherwise nobody pays', 'Input'],
-        ['a_max', 'Maximum operational load factor', 0.5, 'N/A', 'Can be violated', 'Input'],
+        ['a_min', 'Minimum operational load factor', 0.1, 'dimensionless', 'Otherwise nobody pays', 'Input'],
+        ['a_max', 'Maximum operational load factor', 0.5, 'dimensionless', 'Can be violated', 'Input'],
 
         # Tritium fuelling and vacuum system
-        ['m_gas', 'Gas puff flow rate', 50, 'Pam^3/s', 'To maintain detachment - no chance of fusion from gas injection', 'Input (Discussions with Chris Day and Yannick Hörstensmeyer)'],
+        ['m_gas', 'Gas puff flow rate', 50, 'Pa m^3/s', 'To maintain detachment - no chance of fusion from gas injection', 'Input (Discussions with Chris Day and Yannick Hörstensmeyer)'],
 
         # Maintenance
         ['bmd', 'Blanket maintenance duration', 150, 'days', 'Full replacement intervention duration', 'Input'],
         ['dmd', 'Divertor maintenance duration', 90, 'days', 'Full replacement intervention duration', 'Input'],
-        ['RMTFI', 'RM Technical Feasibility Index', 1, 'N/A', 'Default value. Should not really be 1', 'Input'],
+        ['RMTFI', 'RM Technical Feasibility Index', 1, 'dimensionless', 'Default value. Should not really be 1', 'Input'],
 
         # Central column shield
         ["g_ccs_vv_inboard", "Gap between central column shield and the vacuum vessel on the inboard side", 0.05, "m", None, "Input"],
