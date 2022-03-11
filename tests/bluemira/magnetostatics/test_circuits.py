@@ -36,7 +36,6 @@ from bluemira.geometry._deprecated_tools import (
 from bluemira.geometry.coordinates import Coordinates
 from bluemira.geometry.parameterisations import (
     FullDomeFlatInnerCurvedPictureFrame,
-    PictureFrame,
     PrincetonD,
     TripleArc,
 )
