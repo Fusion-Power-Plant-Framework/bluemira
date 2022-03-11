@@ -60,7 +60,7 @@ class ArbitraryPlanarRectangularXSCircuit(SourceGroup):
 
     Notes
     -----
-    Presently only works for an x-z planar geometry.
+    Works best with planar x-z geometries.
     """
 
     shape: np.array
