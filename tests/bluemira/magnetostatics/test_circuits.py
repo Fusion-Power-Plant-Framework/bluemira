@@ -278,17 +278,15 @@ class TestCariddiBenchmark:
             x, z = offset(x, z, width / 2)
 
             coil_loop = Coordinates({"x": x, "y": 0, "z": z})
-            coil_loop.set_ccw((0, 1, 0))
 
         # Smooth out graphically determined TF centreline...
         x, z = innocent_smoothie(coil_loop.x, coil_loop.z, n=150, s=0.02)
         coil_loop = Coordinates({"x": x[:-10], "y": 0, "z": z[:-10]})
         coil_loop.close()
-        coil_loop.set_ccw((0, 1, 0))
         cls.coil_loop = coil_loop
 
         circuit = ArbitraryPlanarRectangularXSCircuit(
-            coil_loop, width / 2, depth / 2, current=1.0
+            coil_loop, width / 2, depth / 2, current=1.0, clockwise=True
         )
 
         # Set the current in the HelmholtzCage to generate the desired B_T,0 field
