@@ -32,7 +32,9 @@ from bluemira.geometry._deprecated_tools import (
     in_polygon,
     rotation_matrix,
 )
+from bluemira.geometry.coordinates import Coordinates, rotation_matrix_v1v2
 from bluemira.magnetostatics.baseclass import SourceGroup
+from bluemira.magnetostatics.error import MagnetostaticsError
 from bluemira.magnetostatics.tools import process_to_coordinates, process_xyz_array
 from bluemira.magnetostatics.trapezoidal_prism import TrapezoidalPrismCurrentSource
 
@@ -69,9 +71,13 @@ class ArbitraryPlanarRectangularXSCircuit(SourceGroup):
 
     def __init__(self, shape, breadth, depth, current):
         shape = process_to_coordinates(shape)
-        shape = deepcopy(shape)
-        closed = shape.closed
-        self.clockwise = shape.check_ccw((0, 1, 0))
+        if not shape.is_planar:
+            raise MagnetostaticsError(
+                f"The input shape for {self.__class__.__name__} must be planar."
+            )
+
+        betas, alphas = self._get_betas_alphas(shape)
+
         normal = shape.normal_vector
 
         # Set up geometry, calculating all trapezoidal prism sources
@@ -80,27 +86,7 @@ class ArbitraryPlanarRectangularXSCircuit(SourceGroup):
         self.midpoints = self.shape[:-1, :] + 0.5 * self.d_l
         sources = []
 
-        if closed:
-            beta = self._get_half_angle(
-                self.midpoints[-1], self.shape[0], self.midpoints[0]
-            )
-        else:
-            beta = 0.0
-
-        for i, (midpoint, d_l) in enumerate(zip(self.midpoints, self.d_l)):
-
-            if i != len(self.midpoints) - 1:
-                alpha = self._get_half_angle(
-                    midpoint, self.shape[i + 1], self.midpoints[i + 1]
-                )
-
-            else:
-                if closed:
-                    alpha = self._get_half_angle(
-                        midpoint, self.shape[-1], self.midpoints[0]
-                    )
-                else:
-                    alpha = 0.0
+        for midpoint, d_l, beta, alpha in zip(self.midpoints, self.d_l, betas, alphas):
 
             d_l_norm = d_l / np.linalg.norm(d_l)
             t_vec = np.cross(d_l_norm, normal)
@@ -118,13 +104,56 @@ class ArbitraryPlanarRectangularXSCircuit(SourceGroup):
             )
             sources.append(source)
             beta = alpha
+
         super().__init__(sources)
+
+    def _get_betas_alphas(self, shape):
+        shape = deepcopy(shape)
+        shape = self._transform_to_xz(shape)
+        self._t_shape = shape
+        closed = shape.closed
+        self.clockwise = shape.check_ccw((0, 1, 0))
+        d_l = np.diff(shape.T, axis=0)
+        midpoints = shape.T[:-1, :] + 0.5 * d_l
+        if closed:
+            betas = [self._get_half_angle(midpoints[-1], shape.points[0], midpoints[0])]
+        else:
+            betas = [0.0]
+        alphas = []
+
+        for i, (midpoint, d_l) in enumerate(zip(midpoints, d_l)):
+            if i != len(midpoints) - 1:
+                alpha = self._get_half_angle(
+                    midpoint, shape.points[i + 1], midpoints[i + 1]
+                )
+            else:
+                if closed:
+                    alpha = self._get_half_angle(
+                        midpoint, shape.points[-1], midpoints[0]
+                    )
+                else:
+                    alpha = 0.0
+            alphas.append(alpha)
+            beta = alpha
+            betas.append(beta)
+
+        return betas, alphas
+
+    def _transform_to_xz(self, shape):
+        normal_vector = shape.normal_vector
+        if abs(normal_vector[1]) == 1.0:
+            return shape
+        shape.translate(-np.array(shape.center_of_mass))
+
+        rot_mat = rotation_matrix_v1v2(normal_vector, np.array([0.0, -1.0, 0.0]))
+        shape = Coordinates(rot_mat @ shape._array)
+        return shape
 
     def _point_inside_xz(self, point):
         if self.clockwise:
-            xz_poly = np.array([self.shape[:, 0][::-1], self.shape[:, 2][::-1]]).T
+            xz_poly = np.array([self._t_shape.x[::-1], self._t_shape.z[::-1]]).T
         else:
-            xz_poly = np.array([self.shape[:, 0], self.shape[:, 2]]).T
+            xz_poly = np.array([self._t_shape.x, self._t_shape.z]).T
 
         return in_polygon(point[0], point[2], xz_poly)
 
@@ -160,22 +189,6 @@ class ArbitraryPlanarRectangularXSCircuit(SourceGroup):
             return -angle
         else:
             return angle
-
-    @staticmethod
-    def _point_in_triangle(point, p0, p1, p2):
-        """
-        Determine whether a point lies inside a 3-D triangle.
-        """
-        area = 0.5 * np.linalg.norm(np.cross(p1 - p0, p2 - p0))
-        alpha = np.linalg.norm(np.cross(p1 - point, p2 - point)) / (2 * area)
-        beta = np.linalg.norm(np.cross(p2 - point, p0 - point)) / (2 * area)
-        gamma = 1.0 - alpha - beta
-        return (
-            (0 < alpha < 1)
-            and (0 < beta < 1)
-            and (0 < gamma < 1)
-            and (np.isclose(alpha + beta + gamma, 1.0))
-        )
 
 
 class HelmholtzCage(SourceGroup):
