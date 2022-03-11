@@ -169,11 +169,6 @@ class ArbitraryPlanarRectangularXSCircuit(SourceGroup):
         if point_in_poly:
             angle = 0.5 * angle
         else:
-            if np.isclose(angle, np.pi / 2):
-                angle = angle - 2 * np.pi
-            else:
-
-                angle = angle - 2 * np.pi
             angle = -0.5 * angle
         if self.clockwise:
             return -angle
