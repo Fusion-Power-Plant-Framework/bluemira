@@ -31,9 +31,7 @@ from bluemira.codes._freecadapi import _wire_edges_tangent
 from bluemira.geometry.error import GeometryParameterisationError
 from bluemira.geometry.parameterisations import (
     BotDomeFlatInnerCurvedPictureFrame,
-    BotDomeTaperedInnerCurvedPictureFrame,
     FullDomeFlatInnerCurvedPictureFrame,
-    FullDomeTaperedInnerCurvedPictureFrame,
     GeometryParameterisation,
     PictureFrame,
     PolySpline,
@@ -41,7 +39,6 @@ from bluemira.geometry.parameterisations import (
     SextupleArc,
     TaperedPictureFrame,
     TopDomeFlatInnerCurvedPictureFrame,
-    TopDomeTaperedInnerCurvedPictureFrame,
     TripleArc,
 )
 from bluemira.geometry.tools import make_polygon
