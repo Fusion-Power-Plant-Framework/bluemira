@@ -113,7 +113,7 @@ class ArbitraryPlanarRectangularXSCircuit(SourceGroup):
         shape = self._transform_to_xz(shape)
         self._t_shape = shape
         closed = shape.closed
-        self.clockwise = shape.check_ccw((0, 1, 0))
+        self._clockwise = shape.check_ccw((0, 1, 0))
         d_l = np.diff(shape.T, axis=0)
         midpoints = shape.T[:-1, :] + 0.5 * d_l
         if closed:
@@ -177,7 +177,7 @@ class ArbitraryPlanarRectangularXSCircuit(SourceGroup):
         if not point_in_poly:
             angle *= -1
 
-        if self.clockwise:
+        if self._clockwise:
             angle *= -1
 
         if abs(angle) > 0.25 * np.pi:
@@ -187,10 +187,10 @@ class ArbitraryPlanarRectangularXSCircuit(SourceGroup):
         return angle
 
     def _point_inside_xz(self, point):
-        if self.clockwise:
-            xz_poly = np.array([self._t_shape.x[::-1], self._t_shape.z[::-1]]).T
+        if self._clockwise:
+            xz_poly = self._t_shape.xz[:, ::-1].T
         else:
-            xz_poly = np.array([self._t_shape.x, self._t_shape.z]).T
+            xz_poly = self._t_shape.xz.T
 
         return in_polygon(point[0], point[2], xz_poly)
 
