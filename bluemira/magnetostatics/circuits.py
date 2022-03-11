@@ -32,13 +32,8 @@ from bluemira.geometry._deprecated_tools import (
     in_polygon,
     rotation_matrix,
 )
-from bluemira.geometry.coordinates import get_normal_vector
 from bluemira.magnetostatics.baseclass import SourceGroup
-from bluemira.magnetostatics.tools import (
-    process_loop_array,
-    process_to_coordinates,
-    process_xyz_array,
-)
+from bluemira.magnetostatics.tools import process_to_coordinates, process_xyz_array
 from bluemira.magnetostatics.trapezoidal_prism import TrapezoidalPrismCurrentSource
 
 __all__ = ["ArbitraryPlanarRectangularXSCircuit", "HelmholtzCage"]
