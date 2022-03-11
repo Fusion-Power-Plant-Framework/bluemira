@@ -182,7 +182,7 @@ class TestArbitraryPlanarXSCircuit:
         FullDomeFlatInnerCurvedPictureFrame,
     ]
     p_inputs = [pd_inputs, ta_inputs, pf_inputs, wtf_inputs]
-    ccws = [True] * len(p_inputs) + [False] * len(p_inputs)
+    ccws = [False] * len(p_inputs) + [False] * len(p_inputs)
     p_inputs = p_inputs * 2
     parameterisations = parameterisations * 2
 

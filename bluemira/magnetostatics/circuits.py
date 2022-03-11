@@ -25,7 +25,11 @@ Three-dimensional current source terms.
 
 import numpy as np
 
-from bluemira.geometry._deprecated_tools import distance_between_points, rotation_matrix
+from bluemira.geometry._deprecated_tools import (
+    distance_between_points,
+    in_polygon,
+    rotation_matrix,
+)
 from bluemira.geometry.coordinates import get_normal_vector
 from bluemira.magnetostatics.baseclass import SourceGroup
 from bluemira.magnetostatics.tools import process_loop_array, process_xyz_array
@@ -107,6 +111,9 @@ class ArbitraryPlanarRectangularXSCircuit(SourceGroup):
         super().__init__(sources)
 
     def _get_half_angle(self, p0, p1, p2):
+        """
+        Get the half angle between three points, respecting winding direction.
+        """
         v1 = p1 - p0
         v2 = p2 - p1
         v1 /= np.linalg.norm(v1)
@@ -114,36 +121,32 @@ class ArbitraryPlanarRectangularXSCircuit(SourceGroup):
         cos_angle = np.dot(v1, v2)
         angle = np.arccos(np.clip(cos_angle, -1, 1))
 
-        bisect_point = 0.5 * (p0 + p2)
-
-        vb = p1 - bisect_point
-        vb_norm = np.linalg.norm(vb)
-        if np.isclose(vb_norm, 0.0):
-            return angle
-
-        vb /= vb_norm
-        cos_angle2 = np.dot(v1, vb)
-        print(cos_angle2)
-        angle2 = np.arccos(np.clip(cos_angle2, -1, 1))
-        return -0.5 * angle2
-        d = distance_between_points(p1, bisect_point)
         v_norm = np.linalg.norm(v1 - v2)
         if np.isclose(v_norm, 0):
+            return 0.0
+
+        v3 = p2 - p0
+        v3 /= np.linalg.norm(v3)
+        project_point = p0 + np.dot(p1 - p0, v3) * v3
+        d = distance_between_points(p1, project_point)
+        if np.isclose(d, 0.0):
+            return 0.0
+
+        point_in_poly = in_polygon(
+            project_point[0],
+            project_point[2],
+            np.array([self.shape[:, 0], self.shape[:, 2]]).T,
+        )
+
+        if point_in_poly:
             return 0.5 * angle
-
-        r1 = p1 + 0.5 * d * (v1 - v2) / v_norm
-
-        if self._point_in_triangle(r1, p0, p1, p2):
-            print("in here")
+        else:
             if np.isclose(angle, np.pi / 2):
-                print("halfpi")
-                angle += 2 * np.pi
+                angle = angle - 2 * np.pi
             else:
 
                 angle = angle - 2 * np.pi
-                print("default: ", angle + 2 * np.pi)
-
-        return 0.5 * angle
+            return -0.5 * angle
 
     @staticmethod
     def _point_in_triangle(point, p0, p1, p2):
