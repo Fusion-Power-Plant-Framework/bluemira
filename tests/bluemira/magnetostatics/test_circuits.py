@@ -286,7 +286,7 @@ class TestCariddiBenchmark:
         cls.coil_loop = coil_loop
 
         circuit = ArbitraryPlanarRectangularXSCircuit(
-            coil_loop, width / 2, depth / 2, current=1.0, clockwise=True
+            coil_loop, width / 2, depth / 2, current=1.0, clockwise=False
         )
 
         # Set the current in the HelmholtzCage to generate the desired B_T,0 field
