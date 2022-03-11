@@ -27,6 +27,7 @@ from copy import deepcopy
 
 import numpy as np
 
+from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.geometry._deprecated_tools import (
     distance_between_points,
     in_polygon,
@@ -56,8 +57,6 @@ class ArbitraryPlanarRectangularXSCircuit(SourceGroup):
         The depth of the current source (half-height) [m]
     current: float
         The current flowing through the source [A]
-    clockwise: bool (default = False)
-        Whether or not the current flows clockwise in the plane
 
     Notes
     -----
@@ -138,7 +137,7 @@ class ArbitraryPlanarRectangularXSCircuit(SourceGroup):
             alphas.append(alpha)
             beta = alpha
             betas.append(beta)
-
+        print(betas)
         return betas, alphas
 
     def _transform_to_xz(self, shape):
@@ -181,6 +180,10 @@ class ArbitraryPlanarRectangularXSCircuit(SourceGroup):
         if self.clockwise:
             angle *= -1
 
+        if abs(angle) > 0.25 * np.pi:
+            bluemira_warn(
+                f"{self.__class__.__name__} cannot handle acute angles, as there will be overlaps in the sources."
+            )
         return angle
 
     def _point_inside_xz(self, point):
