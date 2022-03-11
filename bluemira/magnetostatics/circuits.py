@@ -79,14 +79,6 @@ class ArbitraryPlanarRectangularXSCircuit(SourceGroup):
         closed = shape.closed
         self.clockwise = shape.check_ccw((0, 1, 0))
         normal = shape.normal_vector
-        # if self.clockwise:
-        #     shape.set_ccw((0, 1, 0))
-        # else:
-        #     shape.set_ccw((0, -1, 0))
-        # normal = shape.normal_vector
-        # shape.set_ccw((0, -1, 0))
-        # normal = np.array([0, -1.0, 0])
-        # self.clockwise = False
 
         # Set up geometry, calculating all trapezoidal prism sources
         self.shape = shape.T
