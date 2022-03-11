@@ -24,10 +24,15 @@ import json
 import matplotlib.pyplot as plt
 import numpy as np
 import pytest
+from scipy.interpolate import interp1d
 
 import tests
 from bluemira.base.file import get_bluemira_path
-from bluemira.geometry._deprecated_tools import innocent_smoothie
+from bluemira.geometry._deprecated_tools import (
+    innocent_smoothie,
+    offset,
+    vector_lengthnorm,
+)
 from bluemira.geometry.coordinates import Coordinates
 from bluemira.geometry.parameterisations import (
     FullDomeFlatInnerCurvedPictureFrame,
@@ -263,8 +268,14 @@ class TestCariddiBenchmark:
             z = data["z"]
             coil_loop = Coordinates({"x": x, "y": 0, "z": z})
             coil_loop.close()
-            coil_loop.interpolate(300)
-            coil_loop = coil_loop.offset(width / 2)
+            coil_loop.set_ccw((0, -1, 0))
+            linterp = np.linspace(0, 1, 300)
+            ll = vector_lengthnorm(*coil_loop)
+            x = interp1d(ll, coil_loop.x)(linterp)
+            z = interp1d(ll, coil_loop.z)(linterp)
+            x, z = offset(x, z, width / 2)
+
+            coil_loop = Coordinates({"x": x, "y": 0, "z": z})
 
         # Smooth out graphically determined TF centreline...
         x, z = innocent_smoothie(coil_loop.x, coil_loop.z, n=150, s=0.02)
@@ -303,7 +314,7 @@ class TestCariddiBenchmark:
             ax.set_xlabel("Point index")
             ax.set_xticks(np.arange(1, 19, 2))
 
-            self.coil_loop.plot(ax2, fill=False)
+            ax2.plot(self.coil_loop.x, self.coil_loop.z, color="b")
             ax2.plot(self.x_rip[1:19], self.z_rip[1:19], "s", marker=".", color="r")
             plt.show()
 
