@@ -27,8 +27,8 @@ import pytest
 
 import tests
 from bluemira.base.file import get_bluemira_path
-from bluemira.geometry._deprecated_loop import Loop
 from bluemira.geometry._deprecated_tools import innocent_smoothie
+from bluemira.geometry.coordinates import Coordinates
 from bluemira.geometry.parameterisations import (
     FullDomeFlatInnerCurvedPictureFrame,
     PictureFrame,
@@ -261,14 +261,14 @@ class TestCariddiBenchmark:
             data = json.load(f)
             x = data["x"]
             z = data["z"]
-            coil_loop = Loop(x=x, z=z)
+            coil_loop = Coordinates({"x": x, "y": 0, "z": z})
             coil_loop.close()
             coil_loop.interpolate(300)
             coil_loop = coil_loop.offset(width / 2)
 
         # Smooth out graphically determined TF centreline...
         x, z = innocent_smoothie(coil_loop.x, coil_loop.z, n=150, s=0.02)
-        coil_loop = Loop(x=x[:-10], z=z[:-10])
+        coil_loop = Coordinates({"x": x[:-10], "y": 0, "z": z[:-10]})
         coil_loop.close()
         cls.coil_loop = coil_loop
 
