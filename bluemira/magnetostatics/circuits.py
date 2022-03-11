@@ -23,6 +23,8 @@
 Three-dimensional current source terms.
 """
 
+from copy import deepcopy
+
 import numpy as np
 
 from bluemira.geometry._deprecated_tools import (
@@ -32,7 +34,11 @@ from bluemira.geometry._deprecated_tools import (
 )
 from bluemira.geometry.coordinates import get_normal_vector
 from bluemira.magnetostatics.baseclass import SourceGroup
-from bluemira.magnetostatics.tools import process_loop_array, process_xyz_array
+from bluemira.magnetostatics.tools import (
+    process_loop_array,
+    process_to_coordinates,
+    process_xyz_array,
+)
 from bluemira.magnetostatics.trapezoidal_prism import TrapezoidalPrismCurrentSource
 
 __all__ = ["ArbitraryPlanarRectangularXSCircuit", "HelmholtzCage"]
@@ -53,19 +59,33 @@ class ArbitraryPlanarRectangularXSCircuit(SourceGroup):
         The depth of the current source (half-height) [m]
     current: float
         The current flowing through the source [A]
+    clockwise: bool (default = False)
+        Whether or not the current flows clockwise in the plane
+
+    Notes
+    -----
+    Presently only works for an x-z planar geometry.
     """
 
     shape: np.array
     breadth: float
     depth: float
     current: float
+    clockwise: bool
 
-    def __init__(self, shape, breadth, depth, current):
-        self.shape = process_loop_array(shape)
-        normal = get_normal_vector(*self.shape.T)
-        closed = np.allclose(self.shape[-1], self.shape[0])
+    def __init__(self, shape, breadth, depth, current, clockwise=False):
+        shape = process_to_coordinates(shape)
+        shape = deepcopy(shape)
+        closed = shape.closed
+        self.clockwise = clockwise
+        if self.clockwise:
+            shape.set_ccw((0, 1, 0))
+        else:
+            shape.set_ccw((0, -1, 0))
+        normal = shape.normal_vector
 
         # Set up geometry, calculating all trapezoidal prism sources
+        self.shape = shape.T
         self.d_l = np.diff(self.shape, axis=0)
         self.midpoints = self.shape[:-1, :] + 0.5 * self.d_l
         sources = []
@@ -110,6 +130,14 @@ class ArbitraryPlanarRectangularXSCircuit(SourceGroup):
             beta = alpha
         super().__init__(sources)
 
+    def _point_inside_xz(self, point):
+        if self.clockwise:
+            xz_poly = np.array([self.shape[:, 0][::-1], self.shape[:, 2][::-1]]).T
+        else:
+            xz_poly = np.array([self.shape[:, 0], self.shape[:, 2]]).T
+
+        return in_polygon(point[0], point[2], xz_poly)
+
     def _get_half_angle(self, p0, p1, p2):
         """
         Get the half angle between three points, respecting winding direction.
@@ -132,21 +160,21 @@ class ArbitraryPlanarRectangularXSCircuit(SourceGroup):
         if np.isclose(d, 0.0):
             return 0.0
 
-        point_in_poly = in_polygon(
-            project_point[0],
-            project_point[2],
-            np.array([self.shape[:, 0], self.shape[:, 2]]).T,
-        )
+        point_in_poly = self._point_inside_xz(project_point)
 
         if point_in_poly:
-            return 0.5 * angle
+            angle = 0.5 * angle
         else:
             if np.isclose(angle, np.pi / 2):
                 angle = angle - 2 * np.pi
             else:
 
                 angle = angle - 2 * np.pi
-            return -0.5 * angle
+            angle = -0.5 * angle
+        if self.clockwise:
+            return -angle + np.pi
+        else:
+            return angle - np.pi
 
     @staticmethod
     def _point_in_triangle(point, p0, p1, p2):

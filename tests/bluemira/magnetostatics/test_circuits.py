@@ -187,21 +187,21 @@ class TestArbitraryPlanarXSCircuit:
         FullDomeFlatInnerCurvedPictureFrame,
     ]
     p_inputs = [pd_inputs, ta_inputs, pf_inputs, wtf_inputs]
-    ccws = [False] * len(p_inputs) + [False] * len(p_inputs)
+    clockwises = [False] * len(p_inputs) + [True] * len(p_inputs)
     p_inputs = p_inputs * 2
     parameterisations = parameterisations * 2
 
     @pytest.mark.parametrize(
-        "parameterisation, inputs, ccw", zip(parameterisations, p_inputs, ccws)
+        "parameterisation, inputs, clockwise",
+        zip(parameterisations, p_inputs, clockwises),
     )
-    def test_geometry_ccw(self, parameterisation, inputs, ccw):
+    def test_geometry_ccw(self, parameterisation, inputs, clockwise):
         shape = parameterisation(inputs).create_shape()
         coords = shape.discretize(ndiscr=50, byedges=True)
-        if ccw:
-            coords.set_ccw((0, -1, 0))
-        else:
-            coords.set_ccw((0, 1, 0))
-        circuit = ArbitraryPlanarRectangularXSCircuit(coords, 0.25, 0.5, 1.0)
+
+        circuit = ArbitraryPlanarRectangularXSCircuit(
+            coords, 0.25, 0.5, 1.0, clockwise=clockwise
+        )
         open_circuit = ArbitraryPlanarRectangularXSCircuit(
             coords[:, :25].T, 0.25, 0.5, 1.0
         )
@@ -214,12 +214,14 @@ class TestArbitraryPlanarXSCircuit:
     def test_circle(self):
         shape = make_circle(5, (0, 9, 0), axis=(0, 0, 1))
         coords = shape.discretize(ndiscr=30, byedges=True)
-        coords.set_ccw((0, 0, 1))
-        circuit = ArbitraryPlanarRectangularXSCircuit(coords, 0.25, 0.5, 1.0)
+        circuit = ArbitraryPlanarRectangularXSCircuit(
+            coords, 0.25, 0.5, 1.0, clockwise=False
+        )
         assert self._calc_daisychain(circuit) == len(circuit.sources) - 1
         assert self._check_continuity(circuit.sources[-1], circuit.sources[0])
-        coords.set_ccw((0, 0, -1))
-        circuit = ArbitraryPlanarRectangularXSCircuit(coords, 0.25, 0.5, 1.0)
+        circuit = ArbitraryPlanarRectangularXSCircuit(
+            coords, 0.25, 0.5, 1.0, clockwise=True
+        )
         assert self._calc_daisychain(circuit) == len(circuit.sources) - 1
         assert self._check_continuity(circuit.sources[-1], circuit.sources[0])
 
@@ -268,7 +270,7 @@ class TestCariddiBenchmark:
             z = data["z"]
             coil_loop = Coordinates({"x": x, "y": 0, "z": z})
             coil_loop.close()
-            coil_loop.set_ccw((0, -1, 0))
+            coil_loop.set_ccw((0, 1, 0))
             linterp = np.linspace(0, 1, 300)
             ll = vector_lengthnorm(*coil_loop)
             x = interp1d(ll, coil_loop.x)(linterp)
@@ -276,11 +278,13 @@ class TestCariddiBenchmark:
             x, z = offset(x, z, width / 2)
 
             coil_loop = Coordinates({"x": x, "y": 0, "z": z})
+            coil_loop.set_ccw((0, 1, 0))
 
         # Smooth out graphically determined TF centreline...
         x, z = innocent_smoothie(coil_loop.x, coil_loop.z, n=150, s=0.02)
         coil_loop = Coordinates({"x": x[:-10], "y": 0, "z": z[:-10]})
         coil_loop.close()
+        coil_loop.set_ccw((0, 1, 0))
         cls.coil_loop = coil_loop
 
         circuit = ArbitraryPlanarRectangularXSCircuit(
