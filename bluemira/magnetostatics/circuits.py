@@ -78,7 +78,7 @@ class ArbitraryPlanarRectangularXSCircuit(SourceGroup):
         shape = deepcopy(shape)
         closed = shape.closed
         self.clockwise = shape.check_ccw((0, 1, 0))
-        normal = shape.normal_vector
+        normal = get_normal_vector(*shape.xyz)
         # if self.clockwise:
         #     shape.set_ccw((0, 1, 0))
         # else:
