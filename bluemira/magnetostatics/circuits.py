@@ -149,14 +149,6 @@ class ArbitraryPlanarRectangularXSCircuit(SourceGroup):
         shape = Coordinates(rot_mat @ shape._array)
         return shape
 
-    def _point_inside_xz(self, point):
-        if self.clockwise:
-            xz_poly = np.array([self._t_shape.x[::-1], self._t_shape.z[::-1]]).T
-        else:
-            xz_poly = np.array([self._t_shape.x, self._t_shape.z]).T
-
-        return in_polygon(point[0], point[2], xz_poly)
-
     def _get_half_angle(self, p0, p1, p2):
         """
         Get the half angle between three points, respecting winding direction.
@@ -166,7 +158,7 @@ class ArbitraryPlanarRectangularXSCircuit(SourceGroup):
         v1 /= np.linalg.norm(v1)
         v2 /= np.linalg.norm(v2)
         cos_angle = np.dot(v1, v2)
-        angle = np.arccos(np.clip(cos_angle, -1, 1))
+        angle = 0.5 * np.arccos(np.clip(cos_angle, -1, 1))
 
         v_norm = np.linalg.norm(v1 - v2)
         if np.isclose(v_norm, 0):
@@ -181,14 +173,21 @@ class ArbitraryPlanarRectangularXSCircuit(SourceGroup):
 
         point_in_poly = self._point_inside_xz(project_point)
 
-        if point_in_poly:
-            angle = 0.5 * angle
-        else:
-            angle = -0.5 * angle
+        if not point_in_poly:
+            angle *= -1
+
         if self.clockwise:
-            return -angle
+            angle *= -1
+
+        return angle
+
+    def _point_inside_xz(self, point):
+        if self.clockwise:
+            xz_poly = np.array([self._t_shape.x[::-1], self._t_shape.z[::-1]]).T
         else:
-            return angle
+            xz_poly = np.array([self._t_shape.x, self._t_shape.z]).T
+
+        return in_polygon(point[0], point[2], xz_poly)
 
 
 class HelmholtzCage(SourceGroup):
