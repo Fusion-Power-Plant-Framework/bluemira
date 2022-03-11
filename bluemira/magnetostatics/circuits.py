@@ -66,9 +66,8 @@ class ArbitraryPlanarRectangularXSCircuit(SourceGroup):
     breadth: float
     depth: float
     current: float
-    clockwise: bool
 
-    def __init__(self, shape, breadth, depth, current, clockwise=False):
+    def __init__(self, shape, breadth, depth, current):
         shape = process_to_coordinates(shape)
         shape = deepcopy(shape)
         closed = shape.closed

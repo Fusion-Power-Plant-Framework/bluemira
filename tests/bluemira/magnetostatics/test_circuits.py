@@ -198,9 +198,14 @@ class TestArbitraryPlanarXSCircuit:
     def test_geometry_ccw(self, parameterisation, inputs, clockwise):
         shape = parameterisation(inputs).create_shape()
         coords = shape.discretize(ndiscr=50, byedges=True)
-
+        coords.set_ccw((0, -1, 0))
+        if clockwise:
+            coords.set_ccw((0, 1, 0))
         circuit = ArbitraryPlanarRectangularXSCircuit(
-            coords, 0.25, 0.5, 1.0, clockwise=clockwise
+            coords,
+            0.25,
+            0.5,
+            1.0,
         )
         open_circuit = ArbitraryPlanarRectangularXSCircuit(
             coords[:, :25].T, 0.25, 0.5, 1.0
