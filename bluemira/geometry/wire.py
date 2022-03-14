@@ -237,7 +237,7 @@ class BluemiraWire(BluemiraGeo):
         if alpha is None:
             alpha = distance / self.length
 
-        return Coordinates(wire_value_at(self.get_single_wire()._shape, alpha=alpha))
+        return wire_value_at(self.get_single_wire()._shape, alpha=alpha)
 
     def start_point(self) -> Coordinates:
         """

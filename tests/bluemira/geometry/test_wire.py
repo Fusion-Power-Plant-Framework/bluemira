@@ -89,11 +89,11 @@ class TestWireValueAt:
         cls.square = make_polygon(
             {"x": [0, 1, 1, 0], "y": 0, "z": [0, 0, 1, 1]}, closed=True
         )
-        line = make_polygon([[0, 0, 1], [0, 0, 0], [0, 0, 0]])
+        line = make_polygon({"x": [0, 0, 1], "y": 0, "z": [0, 0, 0]})
         semicircle = make_circle(
             1, center=(1, 0, -1), start_angle=90, end_angle=270, axis=(0, 1, 0)
         )
-        line2 = make_polygon([[1, 0, -2], [2, 0, -2]])
+        line2 = make_polygon({"x": [1, 0, -2], "y": 0, "z": [2, 0, -2]})
         cls.mixed = BluemiraWire([line, semicircle, line2])
 
     def test_square_alpha(self):
