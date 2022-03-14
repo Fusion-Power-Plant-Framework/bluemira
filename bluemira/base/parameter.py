@@ -59,9 +59,7 @@ def _unitify(unit: Union[str, Unit]) -> Unit:
     """
     Convert string to pint Unit and have custom error messages
     """
-    if isinstance(unit, Unit):
-        return unit
-    if isinstance(unit, str):
+    if isinstance(unit, (Unit, str)):
         return Unit(unit)
     raise TypeError(f"Unknown unit type {type(unit)}")
 

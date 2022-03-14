@@ -64,33 +64,17 @@ if ENABLED:
         bluemira_warn(
             "The OBS_VAR dict is not installed in your PROCESS installed version"
         )
+        OBS_VARS = dict()
+
     # Load dicts from dicts JSON file
     PROCESS_DICT = get_dicts()
+else:
+    OBS_VARS = dict()
+    PROCESS_DICT = dict()
 
 DEFAULT_INDAT = os.path.join(
     get_bluemira_path("codes/process"), "PROCESS_DEFAULT_IN.DAT"
 )
-
-PTOBUNITS = {
-    "a": "A",
-    "a/m2": "A/m^2",
-    "h": "H",
-    "k": "K",
-    "kw": "kW",
-    "m": "m",
-    "m2": "m^2",
-    "m3": "m^3",
-    "mpa": "MPa",
-    "mw": "MW",
-    "ohm": "Ohm",
-    "pa": "Pa",
-    "v": "V",
-    "kv": "kV",
-    "w": "W",
-    "wb": "Wb",
-}
-
-BTOPUNITS = {val: key for key, val in PTOBUNITS.items()}
 
 
 def update_obsolete_vars(process_map_name: str) -> str:
@@ -132,18 +116,3 @@ def _nested_check(process_name):
                 names += [_nested_check(p)]
             return list(flatten_iterable(names))
     return process_name
-
-
-def convert_unit_p_to_b(s):
-    """
-    Conversion from PROCESS units to bluemira units
-    Handles text formatting only
-    """
-    return PTOBUNITS.get(s, s)
-
-
-def convert_unit_b_to_p(s):
-    """
-    Conversion from bluemira units to PROCESS units
-    """
-    return BTOPUNITS.get(s, s)
