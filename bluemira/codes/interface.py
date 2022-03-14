@@ -232,7 +232,17 @@ class Teardown(Task):
 
     def prepare_outputs(self, outputs: Dict, source: Optional[str] = None):
         """
-        TODO?
+        Prepare outputs for ParameterFrame
+
+        Implicitly converts to bluemira units in unit available
+
+        Parameters
+        ----------
+        outputs: Dict
+            key value pair of code outputs
+        source: Optional[str]
+            Set the source of all outputs, by default is code name
+
         """
         for bm_key, value in outputs.items():
             code_unit = (

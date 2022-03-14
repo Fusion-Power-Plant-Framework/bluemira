@@ -168,6 +168,42 @@ def add_mapping(
             param.mapping[code_name] = mapping[param.var]
 
 
+def create_mapping(
+    in_mappings=None, out_mappings=None, io_mappings=None, none_mappings=None
+):
+    """
+    Creates mappings for external codes
+
+    Returns
+    -------
+    mappings: Dict
+        A mapping from bluemira names to an external code ParameterMapping
+
+    """
+    mappings = {}
+    ins = {"send": True, "recv": False}
+    outs = {"send": False, "recv": True}
+    inouts = {"send": True, "recv": True}
+    nones = {"send": False, "recv": False}
+
+    for puts, sr in [
+        [in_mappings, ins],
+        [out_mappings, outs],
+        [io_mappings, inouts],
+        [none_mappings, nones],
+    ]:
+        if puts is not None:
+            for (
+                bm_key,
+                (ec_key, unit),
+            ) in puts.items():
+                mappings[bm_key] = ParameterMapping(
+                    ec_key, send=sr["send"], recv=sr["recv"], unit=unit
+                )
+
+    return mappings
+
+
 class LogPipe(threading.Thread):
     """
     Capture logs for subprocesses

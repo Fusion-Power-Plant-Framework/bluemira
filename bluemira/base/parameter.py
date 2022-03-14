@@ -84,8 +84,8 @@ class ParameterMapping:
     """
 
     name: str
-    recv: bool = True
     send: bool = True
+    recv: bool = True
     unit: Optional[str] = None
 
     _frozen = ()
@@ -102,8 +102,8 @@ class ParameterMapping:
         """
         return {
             "name": self.name,
-            "recv": self.recv,
             "send": self.send,
+            "recv": self.recv,
             "unit": self.unit.format_babel()
             if isinstance(self.unit, Unit)
             else self.unit,

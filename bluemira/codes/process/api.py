@@ -22,54 +22,39 @@
 """
 PROCESS api
 """
-
 import os
 
 from bluemira.base.file import get_bluemira_path
 from bluemira.base.look_and_feel import bluemira_print, bluemira_warn
 from bluemira.utilities.tools import flatten_iterable
 
-ENABLED = True
-
-
-# Create dummy PROCESS objects.
-class MFile:
-    """
-    Dummy  MFile Class. Replaced by PROCESS import if PROCESS installed.
-    """
-
-    def __init__(self, filename):
-        self.filename = filename
-
-
-class InDat:
-    """
-    Dummy InDat Class. Replaced by PROCESS import if PROCESS installed.
-    """
-
-    def __init__(self, filename):
-        self.filename = filename
-
-
-def get_dicts():
-    """
-    Dummy get_dicts function. Replaced by PROCESS import if PROCESS installed.
-    """
-    pass
-
-
-OBS_VARS = dict()
-PROCESS_DICT = dict()
-
-# Import PROCESS objects, override the above dummy objects if PROCESS installed.
-# Note: noqa used to ignore "redefinition of unused variable" errors.
 try:
-    from process.io.in_dat import InDat  # noqa: F811,F40
-    from process.io.mfile import MFile  # noqa: F811,F401
-    from process.io.python_fortran_dicts import get_dicts  # noqa: F811
+    from process.io.in_dat import InDat
+    from process.io.mfile import MFile
+    from process.io.python_fortran_dicts import get_dicts
+
+    ENABLED = True
 except (ModuleNotFoundError, FileNotFoundError):
-    ENABLED = False
     bluemira_warn("PROCESS not installed on this machine; cannot run PROCESS.")
+
+    # Create dummy PROCESS objects.
+    class MFile:
+        """
+        Dummy  MFile Class. Replaced by PROCESS import if PROCESS installed.
+        """
+
+        def __init__(self, filename):
+            self.filename = filename
+
+    class InDat:
+        """
+        Dummy InDat Class. Replaced by PROCESS import if PROCESS installed.
+        """
+
+        def __init__(self, filename):
+            self.filename = filename
+
+    ENABLED = False
 
 # Get dict of obsolete vars from PROCESS (if installed)
 if ENABLED:

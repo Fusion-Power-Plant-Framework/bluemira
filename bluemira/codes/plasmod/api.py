@@ -47,7 +47,7 @@ from bluemira.codes.plasmod.mapping import (
     Profiles,
     SOLModel,
     TransportModel,
-    create_mapping,
+    mappings,
 )
 from bluemira.utilities.tools import CommentJSONDecoder
 
@@ -484,7 +484,7 @@ class Solver(interface.FileProgramInterface):
             binary=build_config.get("binary", BINARY),
             run_dir=run_dir,
             read_dir=read_dir,
-            mappings=create_mapping(),
+            mappings=mappings,
             problem_settings=build_config.get("problem_settings", None),
         )
         self.get_raw_variables = self.get_scalar
