@@ -129,3 +129,20 @@ class TestWireValueAt:
             self.mixed.value_at(distance=0.5 * length), np.array([0, 0, -1])
         )
         assert np.allclose(self.mixed.value_at(distance=length), np.array([2, 0, -2]))
+
+    def test_point_along_wire_at_length_2d(self):
+        # Line in 2d: z = 3x - 4
+        coords = np.array([[1, 2, 3, 4, 5], [0, 0, 0, 0, 0], [-1, 2, 5, 8, 11]])
+        wire = make_polygon(coords)
+        desired_len = np.sqrt(2.5)
+        point = wire.value_at(distance=desired_len)
+
+        np.testing.assert_almost_equal(point, [1.5, 0, 0.5], decimal=2)
+
+    def test_point_along_wire_at_length_3d(self):
+        circle = make_circle(radius=1, axis=[1, 1, 1])
+        semi_circle = make_circle(radius=1, axis=[1, 1, 1], end_angle=180)
+
+        point = circle.value_at(distance=np.pi)
+
+        np.testing.assert_almost_equal(point, semi_circle.end_point().T[0], decimal=2)

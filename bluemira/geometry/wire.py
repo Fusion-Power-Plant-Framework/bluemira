@@ -44,9 +44,11 @@ from bluemira.codes._freecadapi import (
 # import from bluemira
 from bluemira.geometry.base import BluemiraGeo, _Orientation
 from bluemira.geometry.coordinates import Coordinates
-
-# import from error
-from bluemira.geometry.error import MixedOrientationWireError, NotClosedWire
+from bluemira.geometry.error import (
+    GeometryError,
+    MixedOrientationWireError,
+    NotClosedWire,
+)
 
 __all__ = ["BluemiraWire"]
 
@@ -227,7 +229,15 @@ class BluemiraWire(BluemiraGeo):
         """
         Get a point along the wire at a given parameterised length or length.
         """
-        return Coordinates(wire_value_at(self._shape, alpha=alpha, distance=distance))
+        if alpha and distance:
+            raise GeometryError("Must specify either alpha or distance, not both.")
+        if not alpha and not distance:
+            raise GeometryError("Must specify one of alpha or distance.")
+
+        if distance:
+            alpha = distance / self.length
+
+        return Coordinates(wire_value_at(self, alpha=alpha))
 
     def start_point(self) -> Coordinates:
         """
