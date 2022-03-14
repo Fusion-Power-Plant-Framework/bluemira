@@ -341,30 +341,6 @@ class FileProgramInterface(ABC):
         self._runner = self._runmode[mode]
 
     @property
-    def _run_dir(self):
-        """
-        Run directory
-        """
-        return self.__run_dir
-
-    @_run_dir.setter
-    def _run_dir(self, directory: str):
-        """
-        Set run directory
-
-        Parameters
-        ----------
-        directory: str
-            new directory
-        """
-        self.__run_dir = directory
-        self._set_property("_run_dir", directory)
-
-    def _set_property(self, prop, val):
-        for obj in ["setup", "run", "teardown"]:
-            setattr(getattr(self, f"{obj}_obj"), prop, val)
-
-    @property
     def params(self) -> ParameterFrame:
         """
         The ParameterFrame corresponding to this run.
