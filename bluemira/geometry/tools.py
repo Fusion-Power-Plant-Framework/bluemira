@@ -514,7 +514,7 @@ def distance_to(geo1: BluemiraGeo, geo2: BluemiraGeo):
 
 def wire_value_at(wire: BluemiraWire, alpha: float, length: float):
     """ """
-    return cadapi.wire_value_at(wire._shape, alpha, length)
+    return cadapi.wire_value_at(wire.get_single_wire()._shape, alpha, length)
 
 
 def slice_shape(shape: BluemiraGeo, plane):
