@@ -27,83 +27,117 @@ from typing import List, Union
 
 import numpy as np
 from periodictable import elements
-from pint import Context, UnitRegistry, set_application_registry
+from pint import Context, Quantity, UnitRegistry, set_application_registry
 from pint.util import UnitsContainer
 
-LOCALE = "en_GB"
-ureg = UnitRegistry(
-    fmt_locale=LOCALE,
-    preprocessors=[
-        lambda x: x.replace("%", " percent "),
-        lambda x: x.replace("$", "USD "),
-    ],
-)
-ureg.default_format = "~P"
+
+class BMUnitRegistry(UnitRegistry):
+    """
+    Bluemira UnitRegistry
+
+    Extra conversions:
+
+    eV <-> Kelvin
+    Pa m^3 <-> mol
+
+    Extra units:
+
+    displacements_per_atom (dpa)
+    full_power_year (fpy)
+    percent (%)
+    atomic_parts_per_million (appm)
+    USD ($)
+
+    """
+
+    def __init__(self):
+
+        super().__init__(
+            fmt_locale="en_GB",
+            preprocessors=[
+                lambda x: x.replace("%", " percent "),
+                lambda x: x.replace("$", "USD "),
+            ],
+        )
+
+        # Extra units
+        self.define("displacements_per_atom  = count = dpa")
+        self.define("full_power_year = year = fpy")
+        self.define("percent = 0.01 count")
+        self.define("atomic_parts_per_million = count * 1e-6 = appm")
+        # Other currencies need to be set up in a new context
+        self.define("USD = [currency]")
+
+        # TODO conversion per unit time etc
+        self.add_context(self._energy_temperature_context())
+        self.add_context(self._flow_context())
+
+    def _energy_temperature_context(self):
+        """
+        Converter between energy an temperature
+
+        temperature = energy / k_B
+
+        Returns
+        -------
+        pint context
+
+        """
+        e_to_t = Context("Energy_to_Temperature")
+
+        self.T_units = UnitsContainer({"[temperature]": 1})
+
+        ev_units = UnitsContainer({"[length]": 2, "[mass]": 1, "[time]": -2})
+
+        e_to_t.add_transformation(ev_units, self.T_units, lambda ureg, x: x / self.k_B)
+        e_to_t.add_transformation(self.T_units, ev_units, lambda ureg, x: x * self.k_B)
+        return e_to_t
+
+    def _flow_context(self):
+        """
+        Convert between flow in mol and Pa m^3
+
+        Pa m^3 = R * 0degC * mol
+
+        Returns
+        -------
+        pint context
+
+        """
+        mols_to_pam3 = Context("Mol to Pa.m^3 for a gas")
+
+        mol_units = UnitsContainer({"[substance]": 1})
+
+        pam3_units = UnitsContainer({"[length]": 2, "[mass]": 1, "[time]": -2})
+
+        conversion_factor = Quantity("molar_gas_constant") * Quantity(0, "celsius").to(
+            "kelvin"
+        )
+
+        mols_to_pam3.add_transformation(
+            mol_units, pam3_units, lambda ureg, x: x * conversion_factor
+        )
+        mols_to_pam3.add_transformation(
+            pam3_units, mol_units, lambda ureg, x: x / conversion_factor
+        )
+        return mols_to_pam3
+
+
+ureg = BMUnitRegistry()
+
 set_application_registry(ureg)
 
-SECOND = ureg.second
-METRE = ureg.metre
-KILOGRAM = ureg.kilogram
-AMP = ureg.ampere
-CELSIUS = ureg.celsius
-MOL = ureg.mol
-DEGREE = ureg.degree
-DENSITY = KILOGRAM / METRE**3
-PART_DENSITY = METRE**-3
-FLUX_DENSITY = METRE**-2 / SECOND
-
-ureg.define("displacements_per_atom  = count = dpa")
-ureg.define("full_power_year = year = fpy")
-ureg.define("percent = 0.01 count = %")
-ureg.define("atomic_parts_per_million = count * 1e-6 = appm")
-ureg.define("USD = [currency]")  # Other currencies need to be set up in a context
-
-T_units = UnitsContainer({"[temperature]": 1})
-
-
-def _energy_temperature_context():
-    """
-    Converter between energy an temperature
-
-    temperature = energy / k_B
-    """
-    e_to_t = Context("Energy_to_Temperature")
-
-    ev_units = UnitsContainer({"[length]": 2, "[mass]": 1, "[time]": -2})
-
-    e_to_t.add_transformation(ev_units, T_units, lambda ureg, x: x / ureg.k_B)
-    e_to_t.add_transformation(T_units, eV_units, lambda ureg, x: x * ureg.k_B)
-    return e_to_t
-
-
-def _flow_context():
-    """
-    Convert between flow in mol and Pa m^3
-
-    Pa m^3 = R * 0degC * mol
-    """
-    mols_to_pam3 = Context("Mol to Pa.m^3 for a gas")
-
-    mol_units = UnitsContainer({"[substance]": 1})
-
-    pam3_units = UnitsContainer({"[length]": 2, "[mass]": 1, "[time]": -2})
-
-    conversion_factor = ureg.Quantity("molar_gas_constant") * ureg.Quantity(
-        0, ureg.celsius
-    ).to("kelvin")
-
-    mols_to_pam3.add_transformation(
-        mol_units, pam3_units, lambda ureg, x: x * conversion_factor
-    )
-    mols_to_pam3.add_transformation(
-        pam3_units, mol_units, lambda ureg, x: x / conversion_factor
-    )
-    return mols_to_pam3
-
-
-ureg.add_context(_energy_temperature_context())
-ureg.add_context(_flow_context())
-
+# For reference
+TIME = ureg.second
+LENGTH = ureg.metre
+MASS = ureg.kilogram
+CURRENT = ureg.ampere
+TEMP = ureg.kelvin
+QUANTITY = ureg.mol
+ANGLE = ureg.degree
+DENSITY = MASS / LENGTH**3
+PART_DENSITY = LENGTH**-3
+FLUX_DENSITY = LENGTH**-2 / TIME
 
 # =============================================================================
 # Physical constants
@@ -128,7 +162,7 @@ GRAVITY = ureg.Quantity("gravity").to_base_units().magnitude  # [m/s^2]  # nO ES
 N_AVOGADRO = ureg.Quantity("avogadro_number").to_base_units().magnitude
 
 # Stefan-Boltzmann constant: black-body radiation constant of proportionality
-SIGMA_BOLTZMANN = ureg.Quantity("sigma").to_base_units().magnitude  # [W/m^2.K^4]
+SIGMA_BOLTZMANN = ureg.Quantity("sigma").to_base_units().magnitude  # [W/(m^2.K^4)]
 
 # Boltzmann constant kB = R/N_a
 K_BOLTZMANN = ureg.Quantity("k_B").to_base_units().magnitude  # [J/K]
@@ -173,28 +207,28 @@ HE3_MOLAR_MASS = elements.isotope("3-He").mass
 ABS_ZERO_K = 0  # [K]
 
 # Absolute zero in Celsius
-ABS_ZERO_C = ureg.Quantity(0, ureg.kelvin).to("celsius").magnitude  # [°C]
+ABS_ZERO_C = ureg.Quantity(0, ureg.kelvin).to(ureg.celsius).magnitude  # [°C]
 
-ABS_ZERO = {ureg.kelvin: ABS_ZERO_K, CELSIUS: ABS_ZERO_C}
+ABS_ZERO = {ureg.kelvin: ABS_ZERO_K, TEMP: ABS_ZERO_C}
 
 # =============================================================================
 # Conversions
 # =============================================================================
 
 # Electron-volts to Joules
-EV_TO_J = ureg.Quantity(1, ureg.eV).to("joule").magnitude
+EV_TO_J = ureg.Quantity(1, ureg.eV).to(ureg.joule).magnitude
 
 # Joules to Electron-volts
-J_TO_EV = ureg.Quantity(1, ureg.joule).to("eV").magnitude
+J_TO_EV = ureg.Quantity(1, ureg.joule).to(ureg.eV).magnitude
 
 # Atomic mass units to kilograms
-AMU_TO_KG = ureg.Quantity(1, ureg.amu).to("kg").magnitude
+AMU_TO_KG = ureg.Quantity(1, ureg.amu).to(ureg.kg).magnitude
 
 # Years to seconds
-YR_TO_S = ureg.Quantity(1, ureg.year).to("s").magnitude
+YR_TO_S = ureg.Quantity(1, ureg.year).to(ureg.second).magnitude
 
 # Seconds to years
-S_TO_YR = ureg.Quantity(1, ureg.second).to("year").magnitude
+S_TO_YR = ureg.Quantity(1, ureg.second).to(ureg.year).magnitude
 
 
 def raw_uc(
@@ -224,7 +258,7 @@ def raw_uc(
     unit_from, unit_to = ureg.Unit(unit_from), ureg.Unit(unit_to)
 
     converted_val = ureg.Quantity(value, unit_from).to(unit_to).magnitude
-    if unit_to.dimensionality == T_units and np.any(
+    if unit_to.dimensionality == ureg.T_units and np.any(
         np.less(
             converted_val,
             ABS_ZERO.get(unit_to, ureg.Quantity(0, ureg.kelvin).to(unit_to).magnitude),
@@ -248,7 +282,7 @@ def to_celsius(kelvin: Union[float, np.array, List[float]]) -> Union[float, np.a
     temp_in_celsius: Union[float, np.array]
         The temperature [°C]
     """
-    return raw_uc(kelvin, ureg.kelvin, CELSIUS)
+    return raw_uc(kelvin, ureg.kelvin, ureg.celsius)
 
 
 def to_kelvin(celsius: Union[float, np.array, List[float]]) -> Union[float, np.array]:
@@ -265,7 +299,7 @@ def to_kelvin(celsius: Union[float, np.array, List[float]]) -> Union[float, np.a
     temp_in_kelvin: Union[float, np.array]
         The temperature [K]
     """
-    return raw_uc(celsius, CELSIUS, ureg.kelvin)
+    return raw_uc(celsius, ureg.celsius, ureg.kelvin)
 
 
 def kgm3_to_gcm3(density: Union[float, np.array, List[float]]) -> Union[float, np.array]:
