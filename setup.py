@@ -22,13 +22,13 @@ install_requires = [
     "fortranformat",
     "imageio",
     "ipykernel",
-    "matplotlib==3.3.4",  # upgrade on BP removal
+    "matplotlib<=3.3.4",  # upgrade on BP removal
     "natsort",
     "neutronics-material-maker==0.1.11",  # Crash on upgrade
     "nlopt",
     "numba",
     "numba-scipy",
-    "numpy==1.21.5",  # numba's highest numpy
+    "numpy<=1.21.5",  # numba's highest numpy
     "pandas",
     "pint",
     "periodictable",
@@ -42,7 +42,7 @@ install_requires = [
     "tables",
     "tabulate",
     "trimesh",
-    "scipy==1.5.3",
+    "scipy<=1.5.3",
     "wrapt",
 ]
 
