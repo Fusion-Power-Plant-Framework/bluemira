@@ -87,7 +87,7 @@ class TestWireValueAt:
     @classmethod
     def setup_class(cls):
         cls.square = make_polygon(
-            {"x": [0, 1, 1, 0], "y": 0, "z": [0, 0, 1, 1]}, closed=True
+            {"x": [0, 2, 2, 0], "y": 0, "z": [0, 0, 2, 2]}, closed=True
         )
         line = make_polygon({"x": [0, 0, 1], "y": 0, "z": [0, 0, 0]})
         semicircle = make_circle(
@@ -97,25 +97,25 @@ class TestWireValueAt:
         cls.mixed = BluemiraWire([line, semicircle, line2])
 
     def test_square_alpha(self):
-        assert np.allclose(self.square.value_at(alpha=0.0), self.square.start_point)
-        assert np.allclose(self.square.value_at(alpha=0.25), np.array([1, 0, 0]))
-        assert np.allclose(self.square.value_at(alpha=0.5), np.array([1, 0, 1]))
-        assert np.allclose(self.square.value_at(alpha=0.75), np.array([1, 0, 0]))
-        assert np.allclose(self.square.value_at(alpha=1.0), self.square.end_point)
+        assert np.allclose(self.square.value_at(alpha=0.0), np.array([0, 0, 0]))
+        assert np.allclose(self.square.value_at(alpha=0.25), np.array([2, 0, 0]))
+        assert np.allclose(self.square.value_at(alpha=0.5), np.array([2, 0, 2]))
+        assert np.allclose(self.square.value_at(alpha=0.75), np.array([2, 0, 0]))
+        assert np.allclose(self.square.value_at(alpha=1.0), np.array([0, 0, 0]))
 
     def test_square_distance(self):
         length = self.square.length
-        assert np.allclose(self.square.value_at(distance=0.0), self.square.start_point)
+        assert np.allclose(self.square.value_at(distance=0.0), np.array([0, 0, 0]))
         assert np.allclose(
-            self.square.value_at(distance=0.25 * length), np.array([1, 0, 0])
+            self.square.value_at(distance=0.25 * length), np.array([2, 0, 0])
         )
         assert np.allclose(
-            self.square.value_at(distance=0.5 * length), np.array([1, 0, 1])
+            self.square.value_at(distance=0.5 * length), np.array([2, 0, 2])
         )
         assert np.allclose(
-            self.square.value_at(distance=0.75 * length), np.array([1, 0, 0])
+            self.square.value_at(distance=0.75 * length), np.array([2, 0, 0])
         )
-        assert np.allclose(self.square.value_at(distance=length), self.square.end_point)
+        assert np.allclose(self.square.value_at(distance=length), np.array([0, 0, 0]))
 
     def test_mixed_alpha(self):
         assert np.allclose(self.mixed.value_at(alpha=0.0), np.array([0, 0, 0]))
