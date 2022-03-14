@@ -24,7 +24,7 @@ Useful functions for bluemira geometries.
 """
 
 from copy import deepcopy
-from typing import Iterable, List, Sequence, Type, Union
+from typing import Iterable, List, Optional, Sequence, Type, Union
 
 import numba as nb
 import numpy as np
@@ -512,9 +512,20 @@ def distance_to(geo1: BluemiraGeo, geo2: BluemiraGeo):
     return cadapi.dist_to_shape(shape1, shape2)
 
 
-def wire_value_at(wire: BluemiraWire, alpha: float, length: float):
+def wire_value_at(
+    wire: BluemiraWire, alpha: Optional[float] = None, distance: Optional[float] = None
+):
     """ """
-    return cadapi.wire_value_at(wire.get_single_wire()._shape, alpha, length)
+    if alpha and distance:
+        raise GeometryError("Must specify either alpha or distance, not both.")
+    if not alpha and not distance:
+        raise GeometryError("Must specify one of alpha or distance.")
+
+    single_wire = wire.get_single_wire()._shape
+    if alpha:
+        return cadapi.wire_value_at_alpha(single_wire, alpha)
+    if distance:
+        return cadapi.wire_value_at_distance(single_wire, distance)
 
 
 def slice_shape(shape: BluemiraGeo, plane):

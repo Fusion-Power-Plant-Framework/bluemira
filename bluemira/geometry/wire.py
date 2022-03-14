@@ -38,6 +38,7 @@ from bluemira.codes._freecadapi import (
     start_point,
     translate_shape,
     wire_closure,
+    wire_value_at,
 )
 
 # import from bluemira
@@ -220,11 +221,13 @@ class BluemiraWire(BluemiraGeo):
             else:
                 o.change_placement(placement)
 
-    def value_at(self, alpha: float, length: Optional[float] = None) -> Coordinates:
+    def value_at(
+        self, alpha: Optional[float] = None, distance: Optional[float] = None
+    ) -> Coordinates:
         """
         Get a point along the wire at a given parameterised length or length.
         """
-        return Coordinates(wire_value_at(self._shape))
+        return Coordinates(wire_value_at(self._shape, alpha=alpha, distance=distance))
 
     def start_point(self) -> Coordinates:
         """

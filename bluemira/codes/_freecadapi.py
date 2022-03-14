@@ -642,6 +642,7 @@ def dist_to_shape(shape1, shape2):
 
 def wire_value_at(wire: apiWire, alpha: float):
     """ """
+
     if alpha < 0.0:
         bluemira_warn(
             f"wire_value_at requires an alpha value between 0 and 1, not: {alpha}"
