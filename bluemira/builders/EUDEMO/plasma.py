@@ -377,7 +377,7 @@ class PlasmaBuilder(Builder):
         lcfs_component.plot_options.face_options["color"] = BLUE_PALETTE["PL"]
         component.add_child(lcfs_component)
 
-        bm_plot_tools.set_component_placement(component, "xzy")
+        bm_plot_tools.set_component_view(component, "xzy")
 
         return component
 
@@ -413,7 +413,7 @@ class PlasmaBuilder(Builder):
 
         component.add_child(lcfs_component)
 
-        bm_plot_tools.set_component_placement(component, "xyz")
+        bm_plot_tools.set_component_view(component, "xyz")
 
         return component
 

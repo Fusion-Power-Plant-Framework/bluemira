@@ -163,7 +163,7 @@ def coordinates_to_path(x, z):
     return Path(vertices, codes)
 
 
-def set_component_placement(comp: Component, placement: Union[str, BluemiraPlacement]):
+def set_component_view(comp: Component, placement: Union[str, BluemiraPlacement]):
     if placement not in ["xyz", "xzy", "yzx"] and not isinstance(
         placement, BluemiraPlacement
     ):
@@ -174,7 +174,7 @@ def set_component_placement(comp: Component, placement: Union[str, BluemiraPlace
 
     comp.plot_options.view = placement
     for child in comp.children:
-        set_component_placement(child, placement)
+        set_component_view(child, placement)
 
 
 class Plot3D(Axes3D):

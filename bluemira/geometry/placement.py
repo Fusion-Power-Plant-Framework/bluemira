@@ -239,8 +239,7 @@ class BluemiraPlacement:
         """
         if base is None:
             base = self.base
-        # p1 = self.inverse().mult_vec(self.mult_vec(base) + v1)
-        # p2 = self.inverse().mult_vec(self.mult_vec(base) + v2)
+
         p1 = self.mult_vec(v1)
         p2 = self.mult_vec(v2)
 
