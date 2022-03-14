@@ -40,7 +40,6 @@ from bluemira.geometry.tools import (
     slice_shape,
     wire_value_at,
 )
-from bluemira.geometry.wire import BluemiraWire
 
 generic_wire = make_polygon(
     [
