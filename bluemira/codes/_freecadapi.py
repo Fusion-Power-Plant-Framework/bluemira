@@ -1402,10 +1402,6 @@ def face_from_plane(plane: Part.Plane, width: float, height: float):
         output face height
     """
     # as suggested in https://forum.freecadweb.org/viewtopic.php?t=46418
-    axis = plane.Axis
-    pos = plane.Position
-    dir_z = Base.Vector(0, 0, 1)
-
     corners = [
         Base.Vector(-width / 2, -height / 2, 0),
         Base.Vector(width / 2, -height / 2, 0),
@@ -1415,10 +1411,7 @@ def face_from_plane(plane: Part.Plane, width: float, height: float):
     border = Part.makePolygon(corners + [corners[0]])  # will return a closed Wire
     wall = Part.Face(plane, border)
 
-    if dir_z == axis:
-        wall.Placement = Base.Placement(pos, dir_z, 0)
-    else:
-        wall.Placement = Base.Placement(pos, axis.cross(dir_z), axis.getAngle(dir_z))
+    wall.Placement = placement_from_plane(plane)
 
     return wall
 
@@ -1438,9 +1431,6 @@ def placement_from_plane(plane):
 
     vx = plane.value(1, 0) - pos
     vy = plane.value(0, 1) - pos
-
-    # rotation = Base.Rotation(vx, vy, axis, 'ZXY')
-    # placement = Base.Placement(pos, rotation)
 
     return make_placement_from_vectors(pos, vx, vy, axis, "ZXY")
 

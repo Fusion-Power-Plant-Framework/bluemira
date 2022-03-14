@@ -77,12 +77,17 @@ class TestPlacement:
 
         plane = BluemiraPlane(base=base, axis=axis)
         placement = plane.to_placement()
-        xy_plane = placement.xy_plane()
 
-        dir_z = np.array([0, 0, 1])
-        dir_z1 = placement.mult_vec(dir_z) - placement.mult_vec(np.array([0, 0, 0]))
-
-        assert np.allclose(dir_z1, plane.axis)
         assert np.allclose(placement.base, plane.base)
-        assert np.allclose(xy_plane.base, plane.base)
-        assert np.allclose(xy_plane.axis, plane.axis)
+
+        plane_xy = placement.xy_plane()
+        assert np.allclose(placement.base, plane_xy.base)
+        assert np.allclose(plane_xy.axis, placement.mult_vec([0, 0, 1]) - placement.base)
+        plane_xz = placement.xz_plane()
+        assert np.allclose(placement.base, plane_xz.base)
+        assert np.allclose(
+            plane_xz.axis, placement.mult_vec([0, -1, 0]) - placement.base
+        )
+        plane_yz = placement.yz_plane()
+        assert np.allclose(placement.base, plane_yz.base)
+        assert np.allclose(plane_yz.axis, placement.mult_vec([1, 0, 0]) - placement.base)
