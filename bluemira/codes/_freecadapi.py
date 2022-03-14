@@ -640,6 +640,11 @@ def dist_to_shape(shape1, shape2):
     return dist, vectors
 
 
+def wire_value_at(wire: apiWire, alpha: float, length: float):
+    """ """
+    return vertex_to_numpy(point)
+
+
 def slice_shape(shape: apiShape, plane_origin: Iterable, plane_axis: Iterable):
     """
     Slice a shape along a given plane

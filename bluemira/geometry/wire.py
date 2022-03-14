@@ -25,7 +25,7 @@ Wrapper for FreeCAD Part.Wire objects
 
 from __future__ import annotations
 
-from typing import List
+from typing import List, Optional
 
 from bluemira.codes._freecadapi import (
     apiWire,
@@ -219,6 +219,12 @@ class BluemiraWire(BluemiraGeo):
                 change_placement(o, placement._shape)
             else:
                 o.change_placement(placement)
+
+    def value_at(self, alpha: float, length: Optional[float] = None) -> Coordinates:
+        """
+        Get a point along the wire at a given parameterised length or length.
+        """
+        return Coordinates(wire_value_at(self._shape))
 
     def start_point(self) -> Coordinates:
         """

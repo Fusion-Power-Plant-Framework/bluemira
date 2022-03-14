@@ -512,6 +512,11 @@ def distance_to(geo1: BluemiraGeo, geo2: BluemiraGeo):
     return cadapi.dist_to_shape(shape1, shape2)
 
 
+def wire_value_at(wire: BluemiraWire, alpha: float, length: float):
+    """ """
+    return cadapi.wire_value_at(wire._shape, alpha, length)
+
+
 def slice_shape(shape: BluemiraGeo, plane):
     """
     Calculate the plane intersection points with an object
