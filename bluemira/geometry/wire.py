@@ -229,15 +229,15 @@ class BluemiraWire(BluemiraGeo):
         """
         Get a point along the wire at a given parameterised length or length.
         """
-        if alpha and distance:
+        if alpha is None and distance is None:
             raise GeometryError("Must specify either alpha or distance, not both.")
-        if not alpha and not distance:
+        if alpha is not None and distance is not None:
             raise GeometryError("Must specify one of alpha or distance.")
 
-        if distance:
+        if alpha is None:
             alpha = distance / self.length
 
-        return Coordinates(wire_value_at(self, alpha=alpha))
+        return Coordinates(wire_value_at(self.get_single_wire()._shape, alpha=alpha))
 
     def start_point(self) -> Coordinates:
         """
