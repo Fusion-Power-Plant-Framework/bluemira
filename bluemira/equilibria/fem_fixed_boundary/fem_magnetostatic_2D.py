@@ -98,8 +98,8 @@ class FemMagnetostatic2d:
         neumann_bc_function=None,
     ):
         """
-        Solve the weak formulation equation given a right hand side g, Dirichlet and
-        Neumann boundary conditions and convergence tolerance error.
+        Solve the weak formulation maxwell equation given a right hand side g,
+        Dirichlet and Neumann boundary conditions.
 
         Parameters
         ----------
@@ -109,8 +109,6 @@ class FemMagnetostatic2d:
                               the Dirichlet boundary condition function
         neumann_bc_function : dolfin.Expression or dolfin.Function
                             the Neumann boundary condition function
-        tol : float64
-              the error goal to stop the iteration process
         dirichlet_marker : int
                            the identification number for the dirichlet boundary
 
