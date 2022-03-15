@@ -1346,7 +1346,7 @@ def change_placement(geo, placement):
 # ======================================================================================
 # Plane creation and manipulations
 # ======================================================================================
-def make_plane(base=[0.0, 0.0, 0.0], axis=[0.0, 0.0, 1.0]):
+def make_plane(base=(0.0, 0.0, 0.0), axis=(0.0, 0.0, 1.0)):
     """
     Creates a FreeCAD plane with a given location and normal
 
@@ -1364,7 +1364,7 @@ def make_plane(base=[0.0, 0.0, 0.0], axis=[0.0, 0.0, 1.0]):
 
 
 def make_plane_from_3_points(
-    point1=[0.0, 0.0, 0.0], point2=[1.0, 0.0, 0.0], point3=[0.0, 1.0, 0.0]
+    point1=(0.0, 0.0, 0.0), point2=(1.0, 0.0, 0.0), point3=(0.0, 1.0, 0.0)
 ):
     """
     Creates a FreeCAD plane defined by three non-linear points
@@ -1424,7 +1424,8 @@ def plane_from_shape(shape):
 
 def placement_from_plane(plane):
     """
-    Return a placement from a plane with
+    Return a placement from a plane with the origin on the plane base and the z-axis
+    directed as the plane normal.
     """
     axis = plane.Axis
     pos = plane.Position

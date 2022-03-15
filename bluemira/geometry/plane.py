@@ -47,7 +47,9 @@ class BluemiraPlane:
         Label of the plane
     """
 
-    def __init__(self, base=[0.0, 0.0, 0.0], axis=[0.0, 0.0, 1.0], label: str = ""):
+    def __init__(self, base=(0.0, 0.0, 0.0), axis=(0.0, 0.0, 1.0), label: str = ""):
+        if np.allclose(np.array(axis), np.array([0, 0, 0])):
+            raise ValueError("Axis must to be a vector with non zero norm.")
         self._shape = cadapi.make_plane(base, axis)
         self.label = label
 
@@ -91,7 +93,7 @@ class BluemiraPlane:
     @property
     def axis(self):
         """Plane's normal vector"""
-        return self._shape.Axis
+        return cadapi.vector_to_numpy(self._shape.Axis)
 
     @axis.setter
     def axis(self, value):

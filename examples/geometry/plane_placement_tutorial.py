@@ -36,7 +36,7 @@ from bluemira.geometry.plane import BluemiraPlane
 
 # %%
 base = np.array([20, 0, 0])
-axis = np.array([0, 0, 0])
+axis = np.array([0, 1, 0])
 plane = BluemiraPlane(base=base, axis=axis)
 print(plane)
 
@@ -48,7 +48,7 @@ print(plane)
 face = plane.to_face(width=50, height=50)
 
 options = display.plotter.PlotOptions()
-options.view = "xzy"
+options.view = "xz"
 display.plot_2d(face, options)
 
 # %%[markdown]
@@ -59,6 +59,8 @@ placement = plane.to_placement()
 
 # %%[markdown]
 # On the other side, default xy, yz, and xz plane can be extracted from a placement.
+# Note: xy, yz, and xz plane are referred to the placement axes. Thus, in this
+# particular case, xy plane lies on the GLOBAL xz plane.
 
 # %%
 xy_plane = placement.xy_plane()

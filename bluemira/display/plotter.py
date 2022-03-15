@@ -54,7 +54,7 @@ DEFAULT_PLOT_OPTIONS = {
     "wire_options": {"color": "black", "linewidth": 0.5, "zorder": 20},
     "face_options": {"color": "blue", "zorder": 10},
     # reference plotting placement
-    "view": "xzy",
+    "view": "xz",
     # discretization properties for plotting wires (and faces)
     "ndiscr": 100,
     "byedges": True,
@@ -136,7 +136,7 @@ class PlotOptions(DisplayOptions):
         Dictionary with matplotlib options for faces. By default {"color": "red"}
     view: [str, Placement]
         The reference view for plotting. As string, possible
-        options are "xyz", "xzy", "yzx". By default 'xzy'.
+        options are "xy", "xz", "yz". By default 'xz'.
     ndiscr: int
         The number of points to use when discretising a wire or face.
     byedges: bool
@@ -232,7 +232,7 @@ class PlotOptions(DisplayOptions):
     def view(self):
         """
         The reference view for plotting. As string, possible options are "xyz",
-        "xzy", "yzx". By default 'xzy'.
+        "xz", "yz". By default 'xz'.
         """
         return self._options["view"]
 
@@ -286,11 +286,11 @@ class BasePlotter(ABC):
 
     def set_view(self, view):
         """Set the plotting view"""
-        if view == "xyz":
+        if view == "xy":
             self.options._options["view"] = _placement.BluemiraPlacement.xyz()
-        elif view == "xzy":
+        elif view == "xz":
             self.options._options["view"] = _placement.BluemiraPlacement.xzy()
-        elif view == "yzx":
+        elif view == "yz":
             self.options._options["view"] = _placement.BluemiraPlacement.yzx()
         elif isinstance(view, _placement.BluemiraPlacement):
             self.options._options["view"] = view
