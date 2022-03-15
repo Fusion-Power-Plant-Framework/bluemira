@@ -24,9 +24,9 @@
 import math
 
 
-def Bteo_coil(r, z, pz, I):
+def Bteo_coil(r, z, pz, curr):
     """
     Return the module of the magnetic field of a coil in the plane xy calculated on
     a point on the axis at a distance pz from the coil center
     """
-    return 4 * math.pi * 1e-7 * I * r**2 / (r**2 + (pz - z) ** 2) ** 1.5 / 2.0
+    return 4 * math.pi * 1e-7 * curr * r**2 / (r**2 + (pz - z) ** 2) ** 1.5 / 2.0
