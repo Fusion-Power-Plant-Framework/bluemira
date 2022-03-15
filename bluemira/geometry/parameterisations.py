@@ -32,7 +32,6 @@ from typing import TextIO, Union
 import numpy as np
 from scipy.special import iv as bessel
 
-from bluemira.display.plotter import plot_2d
 from bluemira.geometry._deprecated_tools import distance_between_points
 from bluemira.geometry.error import GeometryParameterisationError
 from bluemira.geometry.tools import (
@@ -54,6 +53,9 @@ __all__ = [
     "PictureFrame",
     "TaperedPictureFrame",
     "PolySpline",
+    "FullDomeCurvedPictureFrame",
+    "TopDomeCurvedPictureFrame",
+    "BotDomeCurvedPictureFrame",
 ]
 
 
@@ -1007,31 +1009,24 @@ class PictureFrameTools:
         """
         Makes smooth dome for CP coils. This includes a initial straight section
         and a main curved dome section, with a transitioning 'joint' between them,
-        producing smooth tanent curves.
+        producing smooth tangent curves.
 
         Parameters
         ----------
         axis: np.ndarray
             [x,y,z] vector normal to plane of parameterisation
-
         x_out: np.float
             Radial position of outer edge of limb [m]
-
         x_curve start: np.float
             Radial position of straight-curve transition of limb [m]
-
         x_mid: np.float
             Radial position of inner edge of  upper/lower limb [m]
-
         z_top: np.float
             Vertical position of top of limb dome [m]
-
         z_mid: np.float
             Vertical position of flat section [m]
-
         flip: bool
             True if limb is lower limb of section, False if upper
-
         r_c: np.float
             Radius of corner transition. Nominally 0 [m]
 
@@ -1147,22 +1142,16 @@ class PictureFrameTools:
         ----------
         axis: np.ndarray
             [x,y,z] vector normal to plane of parameterisation
-
         x_in: np.float
             Radial position of inner edge of limb [m]
-
         x_out: np.float
             Radial position of outer edge of limb [m]
-
         z: np.float
             Vertical position of limb [m]
-
         r_i: np.float
             Radius of inner corner [m]
-
         r_o: np.float
             Radius of outer corner [m]
-
         flip: bool
             True if limb is lower limb of section, False if upper
 
@@ -1289,28 +1278,20 @@ class PictureFrame(GeometryParameterisation):
     ----------
     var_dict: Optional[dict]
         Dictionary with which to update the default values of the parameterisation.
-
     axis: np.ndarray
         [x,y,z] vector normal to plane of parameterisation
-
     x1: np.float
         Radial position of inner edge of upper/lower limb [m]
-
     x2: np.float
         Radial position of outer limb [m]
-
     z1: np.float
         Vertical position of top limb [m]
-
     z2: np.float
         Vertical position of top limb [m]
-
     ri: np.float
         Radius of inner corners [m]
-
     ro: np.float
         Radius of outer corners [m]
-
     """
 
     __slots__ = ()
@@ -1391,25 +1372,18 @@ class TaperedPictureFrame(GeometryParameterisation):
         Dictionary with which to update the default values of the parameterisation.
     axis: np.ndarray
         [x,y,z] vector normal to plane of parameterisation
-
     x1: np.float
         Radial position of innermost point of inner limb [m]
-
     x2: np.float
         Radial position of non-tapered section of inner limb [m]
-
     x3: np.float
         Radial position of outer limb [m]
-
     z1: np.float
         Vertical position of top of tapered section [m]
-
     z2: np.float
         Vertical position of top limb [m]
-
     r_i: np.float
         Radius of inner corner [m]
-
     r_o: np.float
         Radius of outer corner [m]
     """
@@ -1506,31 +1480,22 @@ class FullDomeCurvedPictureFrame(GeometryParameterisation):
     ----------
     var_dict: Optional[dict]
         Dictionary with which to update the default values of the parameterisation.
-
     axis: np.ndarray
         [x,y,z] vector normal to plane of parameterisation
-
     x_mid: np.float
         Radial position of inner edge of upper/lower limb [m]
-
     x_out: np.float
         Radial position of outer edge of limb [m]
-
     x_curve start: np.float
         Radial position of straight-curve transition of limb [m]
-
     z_mid_up: np.float
         Vertical position of flat section of upper limb [m]
-
     z_mid_down: np.float
         Vertical position of flat section of lower limb [m]
-
     z_max_up: np.float
         Vertical position of top of limb dome [m]
-
     z_max_down: np.float
         Vertical position of top of limb dome [m]
-
     r_c: np.float
         radius of inboard and outboard corners. [m]
     """
@@ -1638,28 +1603,20 @@ class TopDomeCurvedPictureFrame(GeometryParameterisation):
     ----------
     var_dict: Optional[dict]
         Dictionary with which to update the default values of the parameterisation.
-
     axis: np.ndarray
             [x,y,z] vector normal to plane of parameterisation
-
     x_mid: np.float
         Radial position of inner edge of  upper/lower limb [m]
-
     x_out: np.float
         Radial position of outer edge of limb [m]
-
     x_curve start: np.float
         Radial position of straight-curve transition of limb [m]
-
     z_mid_up: np.float
         Vertical position of flat section of upper limb [m]
-
     z_mid_down: np.float
         Vertical position of lower limb [m]
-
     z_max_up: np.float
         Vertical position of top of upper limb dome [m]
-
     r_c: np.float
         Radius of corner [m]
     """
@@ -1731,7 +1688,6 @@ class TopDomeCurvedPictureFrame(GeometryParameterisation):
             flip=False,
         )
         wires.append(top_leg_curve)
-        plot_2d(wires)
 
         # Bottom leg is flat
 
@@ -1749,10 +1705,8 @@ class TopDomeCurvedPictureFrame(GeometryParameterisation):
         p3 = top_leg_curve.discretize(100, byedges=True)[:, -1]
         p4 = bot_leg.discretize(100, byedges=True)[:, 0]
         wires.append(make_polygon([p3, p4], label="outer_limb"))
-        plot_2d(wires)
 
         wires.append(bot_leg)
-        plot_2d(wires)
 
         return BluemiraWire(wires, label=label)
 
@@ -1766,28 +1720,20 @@ class BotDomeCurvedPictureFrame(GeometryParameterisation):
     ----------
     var_dict: Optional[dict]
         Dictionary with which to update the default values of the parameterisation.
-
     axis: np.ndarray
         [x,y,z] vector normal to plane of parameterisation
-
     x_mid: np.float
         Radial position of inner edge of  upper/lower limb [m]
-
     x_out: np.float
         Radial position of outer edge of limb [m]
-
     x_curve start: np.float
         Radial position of straight-curve transition of limb [m]
-
     z_mid_up: np.float
         Vertical position of upper limb [m]
-
     z_mid_down: np.float
         Vertical position of flat section of lower limb [m]
-
     z_max_down: np.float
         Vertical position of bottom of lower limb dome [m]
-
     r_c: np.float
         Radius of corner [m]
     """
