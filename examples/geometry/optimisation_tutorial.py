@@ -39,7 +39,7 @@ def calculate_length(vector, parameterisation):
     """
     Calc
     """
-    # print(parameterisation)
+    print(parameterisation)
     print(type(parameterisation))
     parameterisation.variables.set_values_from_norm(vector)
     return parameterisation.create_shape().length
@@ -85,7 +85,9 @@ class MyProblem(GeometryOptimisationProblem):
     ):
         objective = OptimisationObjective(
             minimise_length,
-            f_objective_args={"objective_args": {"parameterisation": parameterisation}},
+            # f_objective_args={"objective_args": {"parameterisation": parameterisation,}},
+            # f_objective_args={"parameterisation": parameterisation},
+            f_objective_args={"objective_args": {}},
         )
         super().__init__(parameterisation, optimiser, objective, constraints)
 

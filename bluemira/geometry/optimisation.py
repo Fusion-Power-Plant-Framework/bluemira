@@ -90,6 +90,10 @@ class GeometryOptimisationProblem(OptimisationProblem):
         """
         Solve the GeometryOptimisationProblem.
         """
+        print("here")
+        self._objective._args["objective_args"][
+            "parameterisation"
+        ] = self._parameterisation
         if x0 is None:
             x0 = self._parameterisation.variables.get_normalised_values()
         x_star = self.opt.optimise(x0)
