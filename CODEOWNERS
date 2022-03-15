@@ -9,12 +9,12 @@
 */balance_of_plant/ @CoronelBuendia @je-cook @tplobo
 */base/ @je-cook @DanShort12 @hsaunders1904
 */builders/ @DanShort12 @hsaunders1904 @je-cook
-*/codes/ @je-cook @ivanmaione
+*/codes/ @je-cook @ivanmaione @hsaunders1904
 */display/ @ivanmaione @DanShort12
-*/equilibria/ @CoronelBuendia @je-cook @alexanderianblair
+*/equilibria/ @CoronelBuendia @je-cook @alexanderianblair @ivanmaione
 */fuel_cycle/ @CoronelBuendia
-*/geometry/ @ivanmaione @CoronelBuendia
-*/magnetostatics/ @CoronelBuendia @ivanmaione
+*/geometry/ @ivanmaione @CoronelBuendia @je-cook
+*/magnetostatics/ @CoronelBuendia @ivanmaione @hsaunders1904
 */materials/ @DanShort12
 */mesh/ @ivanmaione
 */radiation_transport/ @CoronelBuendia @DarioV86
