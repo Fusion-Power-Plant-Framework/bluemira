@@ -22,6 +22,7 @@ import numpy as np
 import pytest
 
 from bluemira.geometry.coordinates import Coordinates
+from bluemira.geometry.error import GeometryError
 from bluemira.geometry.tools import make_bezier, make_circle, make_polygon
 from bluemira.geometry.wire import BluemiraWire
 
@@ -163,3 +164,13 @@ class TestWireValueAt:
         point = circle.value_at(distance=np.pi)
 
         np.testing.assert_almost_equal(point, semi_circle.end_point().T[0], decimal=2)
+
+    def test_two_value_error(self):
+        line = make_polygon([[0, 0, 0], [1, 0, 0]])
+        with pytest.raises(GeometryError):
+            line.value_at(alpha=0.5, distance=0.5)
+
+    def test_no_value_error(self):
+        line = make_polygon([[0, 0, 0], [1, 0, 0]])
+        with pytest.raises(GeometryError):
+            line.value_at()
