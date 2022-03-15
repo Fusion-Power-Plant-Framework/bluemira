@@ -26,6 +26,7 @@ Supporting functions for the bluemira geometry module.
 from __future__ import annotations
 
 import math
+from turtle import st
 
 # import typing
 from typing import Dict, Iterable, List, Optional, Tuple, Union
@@ -641,10 +642,25 @@ def dist_to_shape(shape1, shape2):
 
 
 def wire_value_at(wire: apiWire, distance: float):
-    """ """
+    """
+    Get a point a given distance along a wire.
+
+    Parameters
+    ----------
+    wire: apiWire
+        Wire along which to get a point
+    distance: float
+        Distance
+    """
     if distance == 0.0:
         return start_point(wire)
     elif distance == wire.Length:
+        return end_point(wire)
+    elif distance < 0.0:
+        bluemira_warn("Distance must be greater than 0; returning start point.")
+        return start_point(wire)
+    elif distance > wire.Length:
+        bluemira_warn("Distance greater than the length of wire; returning end point.")
         return end_point(wire)
 
     length = 0
