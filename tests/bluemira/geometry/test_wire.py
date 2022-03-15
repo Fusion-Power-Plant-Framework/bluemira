@@ -100,7 +100,7 @@ class TestWireValueAt:
         assert np.allclose(self.square.value_at(alpha=0.0), np.array([0, 0, 0]))
         assert np.allclose(self.square.value_at(alpha=0.25), np.array([2, 0, 0]))
         assert np.allclose(self.square.value_at(alpha=0.5), np.array([2, 0, 2]))
-        assert np.allclose(self.square.value_at(alpha=0.75), np.array([2, 0, 0]))
+        assert np.allclose(self.square.value_at(alpha=0.75), np.array([0, 0, 2]))
         assert np.allclose(self.square.value_at(alpha=1.0), np.array([0, 0, 0]))
 
     def test_square_distance(self):
@@ -113,7 +113,7 @@ class TestWireValueAt:
             self.square.value_at(distance=0.5 * length), np.array([2, 0, 2])
         )
         assert np.allclose(
-            self.square.value_at(distance=0.75 * length), np.array([2, 0, 0])
+            self.square.value_at(distance=0.75 * length), np.array([0, 0, 2])
         )
         assert np.allclose(self.square.value_at(distance=length), np.array([0, 0, 0]))
 

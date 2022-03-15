@@ -662,20 +662,6 @@ def wire_value_at(wire: apiWire, distance: float):
             break
     return np.array(point)
 
-    edges = wire.OrderedEdges
-    full_length = wire.Length
-
-    lengths = [edge.Length for edge in edges]
-    cum_lengths = np.cumsum(lengths)
-    cum_alphas = cum_lengths / full_length
-    print(cum_alphas)
-    i_edge = np.where(cum_alphas <= alpha)[0][-1] + 1
-    edge = edges[i_edge]
-    edge_alpha = cum_alphas[i_edge]
-    edge_length = lengths[i_edge]
-    new_alpha = (alpha - edge_alpha) * full_length
-    return np.array(edge.valueAt(new_alpha))
-
 
 def slice_shape(shape: apiShape, plane_origin: Iterable, plane_axis: Iterable):
     """
