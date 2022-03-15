@@ -164,11 +164,11 @@ def coordinates_to_path(x, z):
 
 
 def set_component_view(comp: Component, placement: Union[str, BluemiraPlacement]):
-    if placement not in ["xyz", "xzy", "yzx"] and not isinstance(
+    if placement not in ["xy", "xz", "yz"] and not isinstance(
         placement, BluemiraPlacement
     ):
         raise bm_display_error.DisplayError(
-            f"Not a valid placement {placement} - select either xyz, xzy, yzx, "
+            f"Not a valid view {placement} - select either xy, xz, yz, "
             f"or a BluemiraPlacement"
         )
 
