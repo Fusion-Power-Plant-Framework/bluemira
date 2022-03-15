@@ -128,7 +128,7 @@ class TestWireValueAt:
             ([-1.0, [0, 0, 0]]),
         ],
     )
-    def test_square_alpha(self, l_frac, expected_point):
+    def test_square_distance(self, l_frac, expected_point):
         length = self.square.length
         np.testing.assert_allclose(
             self.square.value_at(distance=l_frac * length), np.array(expected_point)
