@@ -22,14 +22,54 @@
 A quick tutorial on the optimisation of geometry in bluemira
 """
 
+from typing import List
+
 import numpy as np
 
 from bluemira.geometry.optimisation import GeometryOptimisationProblem
-from bluemira.geometry.parameterisations import PrincetonD
-from bluemira.utilities.optimiser import Optimiser
+from bluemira.geometry.parameterisations import GeometryParameterisation, PrincetonD
+from bluemira.utilities.opt_problems import OptimisationConstraint, OptimisationObjective
+from bluemira.utilities.optimiser import Optimiser, approx_derivative
 from bluemira.utilities.tools import set_random_seed
 
 set_random_seed(134365475)
+
+
+def calculate_length(vector, parameterisation):
+    """
+    Calc
+    """
+    # print(parameterisation)
+    print(type(parameterisation))
+    parameterisation.variables.set_values_from_norm(vector)
+    return parameterisation.create_shape().length
+
+
+def minimise_length(vector, grad, objective_args):
+    """
+    Objective function for nlopt optimisation (minimisation),
+    consisting of a least-squares objective with Tikhonov
+    regularisation term, which updates the gradient in-place.
+
+    Parameters
+    ----------
+    vector: np.array(n_C)
+        State vector of the array of coil currents.
+    grad: np.array
+        Local gradient of objective function used by LD NLOPT algorithms.
+        Updated in-place.
+
+    Returns
+    -------
+    fom: Value of objective function (figure of merit).
+    """
+    length = calculate_length(vector, **objective_args)
+    if grad.size > 0:
+        grad[:] = approx_derivative(
+            calculate_length, vector, f0=length, args=objective_args
+        )
+
+    return length
 
 
 class MyProblem(GeometryOptimisationProblem):
@@ -37,32 +77,17 @@ class MyProblem(GeometryOptimisationProblem):
     A simple geometry optimisation problem
     """
 
-    def calculate_length(self, x):
-        """
-        Calculate the length of the GeometryParameterisation
-        """
-        self.update_parameterisation(x)
-        return self.parameterisation.create_shape().length
-
-    def f_objective(self, x, grad):
-        """
-        Signature for an objective function.
-
-        If we use a gradient-based optimisation algorithm and we don't how to calculate
-        the gradient, we can approximate it numerically.
-
-        Note that this is not particularly robust in some cases... Probably best to
-        calculate the gradients analytically, or use a gradient-free algorithm.
-        """
-        length = self.calculate_length(x)
-
-        if grad.size > 0:
-            # Only called if a gradient-based optimiser is used
-            grad[:] = self.optimiser.approx_derivative(
-                self.calculate_length, x, f0=length
-            )
-
-        return length
+    def __init__(
+        self,
+        parameterisation: GeometryParameterisation,
+        optimiser: Optimiser = None,
+        constraints: List[OptimisationConstraint] = None,
+    ):
+        objective = OptimisationObjective(
+            minimise_length,
+            f_objective_args={"objective_args": {"parameterisation": parameterisation}},
+        )
+        super().__init__(parameterisation, optimiser, objective, constraints)
 
 
 # Here we solve the problem with a gradient-based optimisation algorithm (SLSQP)
@@ -81,7 +106,8 @@ slsqp_optimiser = Optimiser(
     "SLSQP", opt_conditions={"max_eval": 100, "ftol_abs": 1e-12, "ftol_rel": 1e-12}
 )
 problem = MyProblem(parameterisation_1, slsqp_optimiser)
-problem.solve()
+problem.optimise()
+
 
 # Here we're minimising the length, within the bounds of our PrincetonD parameterisation,
 # so we'd expect that x1 goes to its upper bound, and x2 goes to its lower bound.

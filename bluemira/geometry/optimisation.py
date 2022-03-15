@@ -23,7 +23,8 @@
 Geometry optimisation classes and tools
 """
 
-import abc
+
+from typing import List
 
 import numpy as np
 
@@ -31,10 +32,15 @@ from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.geometry.parameterisations import GeometryParameterisation
 from bluemira.geometry.tools import signed_distance_2D_polygon
 from bluemira.geometry.wire import BluemiraWire
+from bluemira.utilities.opt_problems import (
+    OptimisationConstraint,
+    OptimisationObjective,
+    OptimisationProblem,
+)
 from bluemira.utilities.optimiser import Optimiser
 
 
-class GeometryOptimisationProblem(abc.ABC):
+class GeometryOptimisationProblem(OptimisationProblem):
     """
     Geometry optimisation problem class.
 
@@ -46,13 +52,18 @@ class GeometryOptimisationProblem(abc.ABC):
         Optimiser instance to use in the optimisation problem
     """
 
-    def __init__(self, parameterisation: GeometryParameterisation, optimiser: Optimiser):
-        self.parameterisation = parameterisation
-        self.optimiser = optimiser
-        self.optimiser.build_optimiser(parameterisation.variables.n_free_variables)
-        self.optimiser.set_lower_bounds(np.zeros(optimiser.n_variables))
-        self.optimiser.set_upper_bounds(np.ones(optimiser.n_variables))
-        self.optimiser.set_objective_function(self.f_objective)
+    def __init__(
+        self,
+        parameterisation: GeometryParameterisation,
+        optimiser: Optimiser = None,
+        objective: OptimisationObjective = None,
+        constraints: List[OptimisationConstraint] = None,
+    ):
+        super().__init__(parameterisation, optimiser, objective, constraints)
+
+        dimension = parameterisation.variables.n_free_variables
+        bounds = (np.zeros(dimension), np.ones(dimension))
+        self.set_up_optimiser(dimension, bounds)
 
     def apply_shape_constraints(self):
         """
@@ -60,7 +71,7 @@ class GeometryOptimisationProblem(abc.ABC):
         """
         n_shape_ineq_cons = self.parameterisation.n_ineq_constraints
         if n_shape_ineq_cons > 0:
-            self.optimiser.add_ineq_constraints(
+            self.opt.add_ineq_constraints(
                 self.parameterisation.shape_ineq_constraints, np.zeros(n_shape_ineq_cons)
             )
         else:
@@ -73,17 +84,15 @@ class GeometryOptimisationProblem(abc.ABC):
         """
         Update the GeometryParameterisation.
         """
-        self.parameterisation.variables.set_values_from_norm(x)
+        self._parameterisation.variables.set_values_from_norm(x)
 
-    f_objective = None
-
-    def solve(self, x0=None):
+    def optimise(self, x0=None):
         """
         Solve the GeometryOptimisationProblem.
         """
         if x0 is None:
-            x0 = self.parameterisation.variables.get_normalised_values()
-        x_star = self.optimiser.optimise(x0)
+            x0 = self._parameterisation.variables.get_normalised_values()
+        x_star = self.opt.optimise(x0)
         self.update_parameterisation(x_star)
 
 
