@@ -224,11 +224,21 @@ class BluemiraWire(BluemiraGeo):
             else:
                 o.change_placement(placement)
 
-    def value_at(
-        self, alpha: Optional[float] = None, distance: Optional[float] = None
-    ) -> Coordinates:
+    def value_at(self, alpha: Optional[float] = None, distance: Optional[float] = None):
         """
         Get a point along the wire at a given parameterised length or length.
+
+        Parameters
+        ----------
+        alpha: Optional[float]
+            Parameterised distance along the wire length, in the range [0 .. 1]
+        distance: Optional[float]
+            Physical distance along the wire length
+
+        Returns
+        -------
+        point: np.ndarray
+            Point coordinates (w.r.t. BluemiraWire's BluemiraPlacement)
         """
         if alpha is None and distance is None:
             raise GeometryError("Must specify either alpha or distance, not both.")

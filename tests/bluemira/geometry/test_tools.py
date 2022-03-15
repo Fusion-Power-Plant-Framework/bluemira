@@ -376,35 +376,6 @@ class TestPointInside:
             assert not point_inside_shape(point, polygon)
 
 
-# class TestPointAlongWire:
-#     def test_point_along_wire_at_length_2d(self):
-#         # Line in 2d: z = 3x - 4
-#         coords = np.array([[1, 2, 3, 4, 5], [0, 0, 0, 0, 0], [-1, 2, 5, 8, 11]])
-#         wire = make_polygon(coords)
-#         desired_len = np.sqrt(2.5)
-
-#         point = wire_value_at(wire, distance=desired_len)
-
-#         np.testing.assert_almost_equal(point, [1.5, 0, 0.5], decimal=2)
-
-#     def test_point_along_wire_at_length_3d(self):
-#         circle = make_circle(radius=1, axis=[1, 1, 1])
-#         semi_circle = make_circle(radius=1, axis=[1, 1, 1], end_angle=180)
-
-#         point = wire_value_at(circle, distance=np.pi)
-
-#         np.testing.assert_almost_equal(point, semi_circle.end_point().T[0], decimal=2)
-
-#     @pytest.mark.parametrize("len_offset", [0.1, 1, 10, 200])
-#     def test_ValueError_given_length_gt_wire_length(self, len_offset):
-#         coords = np.array([[1, 2, 3, 4, 5], [0, 0, 0, 0, 0], [-1, 2, 5, 8, 11]])
-#         wire = make_polygon(coords)
-#         wire_length = wire.length
-
-#         with pytest.raises(ValueError):
-#             find_point_along_wire_at_length(wire, wire_length + len_offset)
-
-
 class TestConvexHullWires2d:
     def test_ValueError_given_wires_empty(self):
         with pytest.raises(ValueError):
