@@ -654,12 +654,14 @@ def wire_value_at(wire: apiWire, distance: float):
         if new_length < distance:
             length = new_length
         elif new_length == distance:
-            point = edge.valueAt(edge_length)
+            point = edge.valueAt(edge.LastParameter)
             break
         else:
             new_distance = distance - length
-            point = edge.valueAt(new_distance)
+            parameter = edge.getParameterByLength(new_distance)
+            point = edge.valueAt(parameter)
             break
+
     return np.array(point)
 
 

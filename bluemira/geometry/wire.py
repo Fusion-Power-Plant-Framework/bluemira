@@ -27,6 +27,7 @@ from __future__ import annotations
 
 from typing import List, Optional
 
+from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.codes._freecadapi import (
     apiWire,
     change_placement,
@@ -235,6 +236,16 @@ class BluemiraWire(BluemiraGeo):
             raise GeometryError("Must specify one of alpha or distance.")
 
         if distance is None:
+            if alpha < 0.0:
+                bluemira_warn(
+                    f"alpha must be between 0 and 1, not: {alpha}, setting to 0.0"
+                )
+                alpha = 0
+            elif alpha > 1.0:
+                bluemira_warn(
+                    f"alpha must be between 0 and 1, not: {alpha}, setting to 1.0"
+                )
+                alpha = 1.0
             distance = alpha * self.length
 
         return wire_value_at(self.get_single_wire()._shape, distance)
