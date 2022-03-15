@@ -241,9 +241,9 @@ class BluemiraWire(BluemiraGeo):
             Point coordinates (w.r.t. BluemiraWire's BluemiraPlacement)
         """
         if alpha is None and distance is None:
-            raise GeometryError("Must specify either alpha or distance, not both.")
-        if alpha is not None and distance is not None:
             raise GeometryError("Must specify one of alpha or distance.")
+        if alpha is not None and distance is not None:
+            raise GeometryError("Must specify either alpha or distance, not both.")
 
         if distance is None:
             if alpha < 0.0:

@@ -19,6 +19,7 @@
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 import numpy as np
+import pytest
 
 from bluemira.geometry.coordinates import Coordinates
 from bluemira.geometry.tools import make_bezier, make_circle, make_polygon
@@ -96,30 +97,42 @@ class TestWireValueAt:
         line2 = make_polygon([[1, 0, -2], [2, 0, -2]])
         cls.mixed = BluemiraWire([line, semicircle, line2])
 
-    def test_square_alpha(self):
-        assert np.allclose(self.square.value_at(alpha=0.0), np.array([0, 0, 0]))
-        assert np.allclose(self.square.value_at(alpha=0.25), np.array([2, 0, 0]))
-        assert np.allclose(self.square.value_at(alpha=0.375), np.array([2, 0, 1]))
-        assert np.allclose(self.square.value_at(alpha=0.5), np.array([2, 0, 2]))
-        assert np.allclose(self.square.value_at(alpha=0.75), np.array([0, 0, 2]))
-        assert np.allclose(self.square.value_at(alpha=1.0), np.array([0, 0, 0]))
+    @pytest.mark.parametrize(
+        "alpha, expected_point",
+        [
+            (0, [0, 0, 0]),
+            (0.25, [2, 0, 0]),
+            (0.375, [2, 0, 1]),
+            (0.5, [2, 0, 2]),
+            ([0.75, [0, 0, 2]]),
+            ([1.0, [0, 0, 0]]),
+            ([1.1, [0, 0, 0]]),
+            ([-1.0, [0, 0, 0]]),
+        ],
+    )
+    def test_square_alpha(self, alpha, expected_point):
+        np.testing.assert_allclose(
+            self.square.value_at(alpha=alpha), np.array(expected_point)
+        )
 
-    def test_square_distance(self):
+    @pytest.mark.parametrize(
+        "l_frac, expected_point",
+        [
+            (0, [0, 0, 0]),
+            (0.25, [2, 0, 0]),
+            (0.375, [2, 0, 1]),
+            (0.5, [2, 0, 2]),
+            ([0.75, [0, 0, 2]]),
+            ([1.0, [0, 0, 0]]),
+            ([1.1, [0, 0, 0]]),
+            ([-1.0, [0, 0, 0]]),
+        ],
+    )
+    def test_square_alpha(self, l_frac, expected_point):
         length = self.square.length
-        assert np.allclose(self.square.value_at(distance=0.0), np.array([0, 0, 0]))
-        assert np.allclose(
-            self.square.value_at(distance=0.25 * length), np.array([2, 0, 0])
+        np.testing.assert_allclose(
+            self.square.value_at(distance=l_frac * length), np.array(expected_point)
         )
-        assert np.allclose(
-            self.square.value_at(distance=0.375 * length), np.array([2, 0, 1])
-        )
-        assert np.allclose(
-            self.square.value_at(distance=0.5 * length), np.array([2, 0, 2])
-        )
-        assert np.allclose(
-            self.square.value_at(distance=0.75 * length), np.array([0, 0, 2])
-        )
-        assert np.allclose(self.square.value_at(distance=length), np.array([0, 0, 0]))
 
     def test_mixed_alpha(self):
         assert np.allclose(self.mixed.value_at(alpha=0.0), np.array([0, 0, 0]))
