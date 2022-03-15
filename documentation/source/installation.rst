@@ -40,6 +40,8 @@ following steps in a mac or Ubuntu command terminal.
     # To activate your environment
     source ~/.miniforge-init.sh
     conda activate bluemira
+    # Install meshing utility [temporary]
+    bash scripts/install-msh2xdmf.sh
     # If you are going to be developing bluemira
     python -m pip install --no-cache-dir -e .'[dev]'
     pre-commit install -f
