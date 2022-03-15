@@ -28,32 +28,37 @@ from bluemira.base.file import get_bluemira_path
 from bluemira.base.look_and_feel import bluemira_print, bluemira_warn
 from bluemira.utilities.tools import flatten_iterable
 
+
+# Create dummy PROCESS objects.required here for docs to build properly
+class MFile:
+    """
+    Dummy  MFile Class. Replaced by PROCESS import if PROCESS installed.
+    """
+
+    def __init__(self, filename):
+        self.filename = filename
+
+
+class InDat:
+    """
+    Dummy InDat Class. Replaced by PROCESS import if PROCESS installed.
+    """
+
+    def __init__(self, filename):
+        self.filename = filename
+
+
+OBS_VARS = dict()
+PROCESS_DICT = dict()
+
 try:
-    from process.io.in_dat import InDat
-    from process.io.mfile import MFile
+    from process.io.in_dat import InDat  # noqa: F401, F811
+    from process.io.mfile import MFile  # noqa: F401, F811
     from process.io.python_fortran_dicts import get_dicts
 
     ENABLED = True
 except (ModuleNotFoundError, FileNotFoundError):
     bluemira_warn("PROCESS not installed on this machine; cannot run PROCESS.")
-
-    # Create dummy PROCESS objects.
-    class MFile:
-        """
-        Dummy  MFile Class. Replaced by PROCESS import if PROCESS installed.
-        """
-
-        def __init__(self, filename):
-            self.filename = filename
-
-    class InDat:
-        """
-        Dummy InDat Class. Replaced by PROCESS import if PROCESS installed.
-        """
-
-        def __init__(self, filename):
-            self.filename = filename
-
     ENABLED = False
 
 # Get dict of obsolete vars from PROCESS (if installed)
@@ -64,13 +69,9 @@ if ENABLED:
         bluemira_warn(
             "The OBS_VAR dict is not installed in your PROCESS installed version"
         )
-        OBS_VARS = dict()
 
-    # Load dicts from dicts JSON file
     PROCESS_DICT = get_dicts()
-else:
-    OBS_VARS = dict()
-    PROCESS_DICT = dict()
+
 
 DEFAULT_INDAT = os.path.join(
     get_bluemira_path("codes/process"), "PROCESS_DEFAULT_IN.DAT"
