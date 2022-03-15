@@ -26,7 +26,6 @@ Supporting functions for the bluemira geometry module.
 from __future__ import annotations
 
 import math
-from turtle import st
 
 # import typing
 from typing import Dict, Iterable, List, Optional, Tuple, Union
