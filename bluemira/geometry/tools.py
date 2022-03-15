@@ -976,7 +976,7 @@ def get_shape_by_name(shape: BluemiraGeo, name: str):
 def find_clockwise_angle_2d(base: np.ndarray, vector: np.ndarray) -> np.ndarray:
     """
     Find the clockwise angle between the 2D vectors ``base`` and
-    ``vector`` in the range [0, 2π).
+    ``vector`` in the range [0°, 360°).
 
     Parameters
     ----------
@@ -988,7 +988,7 @@ def find_clockwise_angle_2d(base: np.ndarray, vector: np.ndarray) -> np.ndarray:
     Returns
     -------
     angle: np.ndarray[float, (1, vector.shape[1])]
-        The clockwise angle between the two vectors.
+        The clockwise angle between the two vectors in degrees.
     """
     if not isinstance(base, np.ndarray) or not isinstance(vector, np.ndarray):
         raise TypeError(
@@ -1004,4 +1004,4 @@ def find_clockwise_angle_2d(base: np.ndarray, vector: np.ndarray) -> np.ndarray:
     dot = np.dot(base, vector)
     angle = np.array(np.arctan2(det, dot))
     angle[angle < 0] += 2 * np.pi
-    return angle
+    return np.degrees(angle)

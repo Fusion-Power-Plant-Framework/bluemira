@@ -420,20 +420,12 @@ class TestFindClockwiseAngle2d:
         "fixture",
         [
             (np.array([-1, 0]), np.array([-1, 0]), 0),
-            (np.array([-1, 0]), np.array([0, 1]), np.pi / 2),
-            (np.array([-1, 0]), np.array([0, -1]), 3 * np.pi / 2),
-            (np.array([-1, 0]), np.array([0, -1]), 3 * np.pi / 2),
+            (np.array([-1, 0]), np.array([0, 1]), 90),
+            (np.array([-1, 0]), np.array([0, -1]), 270),
             (
                 np.array([-1, 0]),
                 np.array([[0, 1, 0, -1], [1, 1, -1, -1]]),
-                np.array(
-                    [
-                        np.pi / 2,
-                        3 / 4 * np.pi,
-                        3 / 2 * np.pi,
-                        7 / 4 * np.pi,
-                    ]
-                ),
+                np.array([90, 135, 270, 315]),
             ),
         ],
     )
