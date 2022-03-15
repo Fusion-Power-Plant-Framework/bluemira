@@ -640,25 +640,27 @@ def dist_to_shape(shape1, shape2):
     return dist, vectors
 
 
-def wire_value_at(wire: apiWire, alpha: float):
+def wire_value_at(wire: apiWire, distance: float):
     """ """
-
-    if alpha < 0.0:
-        bluemira_warn(
-            f"wire_value_at requires an alpha value between 0 and 1, not: {alpha}"
-        )
-        alpha = 0.0
-    elif alpha > 1.0:
-        bluemira_warn(
-            f"wire_value_at requires an alpha value between 0 and 1, not: {alpha}"
-        )
-        alpha = 1.0
-
-    if alpha == 0.0:
+    if distance == 0.0:
         return start_point(wire)
-
-    if alpha == 1.0:
+    elif distance == wire.Length:
         return end_point(wire)
+
+    length = 0
+    for edge in wire.OrderedEdges:
+        edge_length = edge.Length
+        new_length = length + edge_length
+        if new_length < distance:
+            length = new_length
+        elif new_length == distance:
+            point = edge.valueAt(edge_length)
+            break
+        else:
+            new_distance = distance - length
+            point = edge.valueAt(new_distance)
+            break
+    return np.array(point)
 
     edges = wire.OrderedEdges
     full_length = wire.Length

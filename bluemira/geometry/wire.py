@@ -234,10 +234,10 @@ class BluemiraWire(BluemiraGeo):
         if alpha is not None and distance is not None:
             raise GeometryError("Must specify one of alpha or distance.")
 
-        if alpha is None:
-            alpha = distance / self.length
+        if distance is None:
+            distance = alpha * self.length
 
-        return wire_value_at(self.get_single_wire()._shape, alpha=alpha)
+        return wire_value_at(self.get_single_wire()._shape, distance)
 
     def start_point(self) -> Coordinates:
         """
