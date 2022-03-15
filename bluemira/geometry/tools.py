@@ -518,7 +518,7 @@ def slice_shape(shape: BluemiraGeo, plane):
 
     Parameters
     ----------
-    obj: Union[BluemiraWire, BluemiraFace, BluemiraSolid, BluemiraShell]
+    shape: Union[BluemiraWire, BluemiraFace, BluemiraSolid, BluemiraShell]
         obj to intersect with a plane
     plane: BluemiraPlacement
 
