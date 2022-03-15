@@ -29,7 +29,6 @@ from bluemira.geometry.tools import (
     _signed_distance_2D,
     convex_hull_wires_2d,
     extrude_shape,
-    find_point_along_wire_at_length,
     make_circle,
     make_polygon,
     offset_wire,
