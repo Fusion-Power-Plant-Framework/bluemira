@@ -24,7 +24,7 @@ Useful functions for bluemira geometries.
 """
 
 from copy import deepcopy
-from typing import Iterable, List, Optional, Sequence, Type, Union
+from typing import Iterable, List, Sequence, Type, Union
 
 import numba as nb
 import numpy as np
