@@ -1497,7 +1497,7 @@ class TaperedPictureFrame(GeometryParameterisation):
         return BluemiraWire(wires, label=label)
 
 
-class FullDomeFlatInnerCurvedPictureFrame(GeometryParameterisation):
+class FullDomeCurvedPictureFrame(GeometryParameterisation):
     """
     Curved picture-frame geometry parameterisation, with
     top flat and bottom domed. Straight (non-tapered) inner limb
@@ -1629,7 +1629,7 @@ class FullDomeFlatInnerCurvedPictureFrame(GeometryParameterisation):
         return BluemiraWire(wires, label=label)
 
 
-class TopDomeFlatInnerCurvedPictureFrame(GeometryParameterisation):
+class TopDomeCurvedPictureFrame(GeometryParameterisation):
     """
     Curved picture-frame geometry parameterisation, with
     top domed and bottom flat. Straight (non-tapered) inner limb
@@ -1757,7 +1757,7 @@ class TopDomeFlatInnerCurvedPictureFrame(GeometryParameterisation):
         return BluemiraWire(wires, label=label)
 
 
-class BotDomeFlatInnerCurvedPictureFrame(GeometryParameterisation):
+class BotDomeCurvedPictureFrame(GeometryParameterisation):
     """
     Curved picture-frame geometry parameterisation, with
     top flat and bottom domed. Straight (non-tapered) inner limb

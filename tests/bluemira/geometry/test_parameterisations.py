@@ -30,15 +30,15 @@ import pytest
 from bluemira.codes._freecadapi import _wire_edges_tangent
 from bluemira.geometry.error import GeometryParameterisationError
 from bluemira.geometry.parameterisations import (
-    BotDomeFlatInnerCurvedPictureFrame,
-    FullDomeFlatInnerCurvedPictureFrame,
+    BotDomeCurvedPictureFrame,
+    FullDomeCurvedPictureFrame,
     GeometryParameterisation,
     PictureFrame,
     PolySpline,
     PrincetonD,
     SextupleArc,
     TaperedPictureFrame,
-    TopDomeFlatInnerCurvedPictureFrame,
+    TopDomeCurvedPictureFrame,
     TripleArc,
 )
 from bluemira.geometry.tools import make_polygon
@@ -222,38 +222,38 @@ class TestTaperedPictureFrame:
         assert len(wire._boundary) == 4
 
 
-class TestFullDomeFlatInnerCurvedPictureFrame:
+class TestFullDomeCurvedPictureFrame:
     def test_length(self):
-        p = FullDomeFlatInnerCurvedPictureFrame()
+        p = FullDomeCurvedPictureFrame()
         wire = p.create_shape()
         assert np.isclose(wire.length, 57.6308, rtol=1e-4, atol=1e-5)
 
     def test_ordering(self):
-        p = FullDomeFlatInnerCurvedPictureFrame()
+        p = FullDomeCurvedPictureFrame()
         wire = p.create_shape()
         assert _wire_edges_tangent(wire._shape)
 
 
-class TestTopDomeFlatInnerCurvedPictureFrame:
+class TestTopDomeCurvedPictureFrame:
     def test_length(self):
-        p = TopDomeFlatInnerCurvedPictureFrame()
+        p = TopDomeCurvedPictureFrame()
         wire = p.create_shape()
         assert np.isclose(wire.length, 56.829, rtol=1e-4, atol=1e-5)
 
     def test_ordering(self):
-        p = TopDomeFlatInnerCurvedPictureFrame()
+        p = TopDomeCurvedPictureFrame()
         wire = p.create_shape()
         assert _wire_edges_tangent(wire._shape)
 
 
-class TestBotDomeFlatInnerCurvedPictureFrame:
+class TestBotDomeCurvedPictureFrame:
     def test_length(self):
-        p = BotDomeFlatInnerCurvedPictureFrame()
+        p = BotDomeCurvedPictureFrame()
         wire = p.create_shape()
         assert np.isclose(wire.length, 56.829, rtol=1e-4, atol=1e-5)
 
     def test_ordering(self):
-        p = BotDomeFlatInnerCurvedPictureFrame()
+        p = BotDomeCurvedPictureFrame()
         wire = p.create_shape()
         assert _wire_edges_tangent(wire._shape)
 
