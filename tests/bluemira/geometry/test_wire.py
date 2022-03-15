@@ -89,16 +89,17 @@ class TestWireValueAt:
         cls.square = make_polygon(
             {"x": [0, 2, 2, 0], "y": 0, "z": [0, 0, 2, 2]}, closed=True
         )
-        line = make_polygon({"x": [0, 0, 1], "y": 0, "z": [0, 0, 0]})
+        line = make_polygon([[0, 0, 0], [1, 0, 0]])
         semicircle = make_circle(
-            1, center=(1, 0, -1), start_angle=90, end_angle=270, axis=(0, 1, 0)
+            1, center=(1, 0, -1), start_angle=90, end_angle=270, axis=(0, -1, 0)
         )
-        line2 = make_polygon({"x": [1, 0, -2], "y": 0, "z": [2, 0, -2]})
+        line2 = make_polygon([[1, 0, -2], [2, 0, -2]])
         cls.mixed = BluemiraWire([line, semicircle, line2])
 
     def test_square_alpha(self):
         assert np.allclose(self.square.value_at(alpha=0.0), np.array([0, 0, 0]))
         assert np.allclose(self.square.value_at(alpha=0.25), np.array([2, 0, 0]))
+        assert np.allclose(self.square.value_at(alpha=0.375), np.array([2, 0, 1]))
         assert np.allclose(self.square.value_at(alpha=0.5), np.array([2, 0, 2]))
         assert np.allclose(self.square.value_at(alpha=0.75), np.array([0, 0, 2]))
         assert np.allclose(self.square.value_at(alpha=1.0), np.array([0, 0, 0]))
@@ -108,6 +109,9 @@ class TestWireValueAt:
         assert np.allclose(self.square.value_at(distance=0.0), np.array([0, 0, 0]))
         assert np.allclose(
             self.square.value_at(distance=0.25 * length), np.array([2, 0, 0])
+        )
+        assert np.allclose(
+            self.square.value_at(distance=0.375 * length), np.array([2, 0, 1])
         )
         assert np.allclose(
             self.square.value_at(distance=0.5 * length), np.array([2, 0, 2])
