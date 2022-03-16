@@ -117,7 +117,7 @@ class OptimisationObjective:
         """
         # Add optimisation problem to objective arguments if needed by
         # objective function
-        if "opt_problem" in inspect.getargspec(self._f_objective).args:
+        if "opt_problem" in inspect.signature(self._f_objective).args:
             self._args["opt_problem"] = opt_problem
 
         # Apply objective to optimiser
