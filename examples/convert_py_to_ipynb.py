@@ -149,13 +149,13 @@ def convert(path, check, ci):
 
         nb_json = json.dumps(nb_str, indent=2) + "\n"
 
-        if not (check or equal(orig_nb_json, nb_json)):
+        if not equal(orig_nb_json, nb_json):
             if ci:
                 return ipynb + " NEEDS UPDATE"
-            else:
-                with open(name + ".ipynb", "w") as nb_fh:
-                    nb_fh.write(nb_json)
-                return ipynb + " UPDATED"
+
+            with open(name + ".ipynb", "w") as nb_fh:
+                nb_fh.write(nb_json)
+            return ipynb + " UPDATED"
     else:
         return path + " No markdown comments"
 
