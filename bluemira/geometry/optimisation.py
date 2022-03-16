@@ -85,6 +85,7 @@ class GeometryOptimisationProblem(OptimisationProblem):
         Update the GeometryParameterisation.
         """
         self._parameterisation.variables.set_values_from_norm(x)
+        return self._parameterisation
 
     def optimise(self, x0=None):
         """

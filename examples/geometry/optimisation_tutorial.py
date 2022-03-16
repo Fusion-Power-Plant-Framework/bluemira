@@ -90,6 +90,9 @@ class MyProblem(GeometryOptimisationProblem):
             f_objective_args={"objective_args": {}},
         )
         super().__init__(parameterisation, optimiser, objective, constraints)
+        self._objective._args["objective_args"] = {
+            "parameterisation": parameterisation,
+        }
 
 
 # Here we solve the problem with a gradient-based optimisation algorithm (SLSQP)
