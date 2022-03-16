@@ -36,19 +36,15 @@ from bluemira.base.error import BuilderError
 from bluemira.base.look_and_feel import bluemira_print
 from bluemira.builders.EUDEMO.tools import circular_pattern_component
 from bluemira.builders.shapes import OptimisedShapeBuilder
-from bluemira.codes._freecadapi import _wire_edges_tangent
-from bluemira.display import plot_2d, show_cad
-from bluemira.display.displayer import DisplayCADOptions
+from bluemira.display import show_cad
 from bluemira.display.palettes import BLUE_PALETTE
 from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.optimisation import GeometryOptimisationProblem
 from bluemira.geometry.parameterisations import GeometryParameterisation
 from bluemira.geometry.placement import BluemiraPlacement
-from bluemira.geometry.solid import BluemiraSolid
 from bluemira.geometry.tools import (
     boolean_cut,
     boolean_fuse,
-    extrude_shape,
     make_polygon,
     offset_wire,
     slice_shape,
@@ -553,8 +549,6 @@ class TFCoilsBuilder(OptimisedShapeBuilder):
         component: Component
             The component grouping the results in 3D (xyz).
         """
-        wp_wires = []
-        wire_prev = None
         return None
 
     def _make_field_solver(self):
