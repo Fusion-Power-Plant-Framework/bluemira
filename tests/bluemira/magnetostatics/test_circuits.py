@@ -195,7 +195,9 @@ class TestArbitraryPlanarXSCircuit:
         "parameterisation, inputs, clockwise",
         zip(parameterisations, p_inputs, clockwises),
     )
-    def test_geometry_ccw(self, parameterisation, inputs, clockwise):
+    def test_circuits_are_continuous_and_chained(
+        self, parameterisation, inputs, clockwise
+    ):
         shape = parameterisation(inputs).create_shape()
         coords = shape.discretize(ndiscr=50, byedges=True)
         coords.set_ccw((0, -1, 0))
