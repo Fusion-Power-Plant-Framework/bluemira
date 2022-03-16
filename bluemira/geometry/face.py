@@ -104,7 +104,7 @@ class BluemiraFace(BluemiraGeo):
 
         if not cadapi.is_valid(face):
             bluemira_warn("Invalid face.. attempting to fix.")
-            cadapi.fix_face(face)
+            cadapi.fix_shape(face)
             if not cadapi.is_valid(face):
                 bluemira_warn("This face is invalid and will causes problems later on.")
 
