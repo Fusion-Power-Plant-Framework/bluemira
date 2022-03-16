@@ -101,7 +101,7 @@ def coil_force_constraints(
     constraint, vector, grad, eq, n_PF, n_CS, PF_Fz_max, CS_Fz_sum, CS_Fz_sep, scale
 ):
     """
-    Current optimisation force constraints
+    Current optimisation force constraints on coils
 
     Parameters
     ----------
@@ -130,12 +130,6 @@ def coil_force_constraints(
     -------
     constraint: np.ndarray
         Updated constraint vector
-
-    Note
-    ----
-    Modifies (in place):
-        constraint
-        grad
     """
     # get coil force and jacobian
     F, dF = eq.force_field.calc_force(vector * scale)  # noqa :N803
@@ -180,4 +174,36 @@ def coil_force_constraints(
             # CS seperation constraints
             f_sep = np.sum(cs_fz[: j + 1]) - np.sum(cs_fz[j + 1 :])
             constraint[2 * n_PF + 2 + j] = f_sep - CS_Fz_sep
+    return constraint
+
+
+def coil_field_constraints(constraint, vector, grad, eq, B_max, scale):
+    """
+    Current optimisation field constraints on coils
+
+    Parameters
+    ----------
+    constraint: np.ndarray
+        Constraint array (modified in place)
+    vector: np.ndarray
+        Current vector
+    grad: np.ndarray
+        Constraint Jacobian (modified in place)
+    eq: Equilibrium
+        Equilibrium object with which to calculate constraints
+    B_max: np.ndarray
+        Maximum fields inside the coils
+    scale: float
+        Current scale with which to calculate the constraints
+
+    Returns
+    -------
+    constraint: np.ndarray
+        Updated constraint vector
+    """
+    B, dB = eq.force_field.calc_field(vector * scale)  # noqa :N803
+    dB /= scale**2
+    if grad.size > 0:
+        grad[:] = dB
+    constraint[:] = B - B_max
     return constraint
