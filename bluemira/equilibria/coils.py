@@ -461,15 +461,19 @@ class CoilSizer:
     def __init__(self, coil):
         self.update(coil)
 
-        dx_specified = np.array([is_num(dx) for dx in self.dx], dtype=bool)
-        dz_specified = np.array([is_num(dz) for dz in self.dz], dtype=bool)
-        dxdz_specified = dx_specified and dz_specified
+        dx_specified = np.array([is_num(self.dx)], dtype=bool)
+        dz_specified = np.array([is_num(self.dz)], dtype=bool)
+        dxdz_specified = np.logical_and(dx_specified, dz_specified)
 
-        if any(np.logical_and(not dxdz_specified, dx_specified != dz_specified)):
+        if any(
+            np.logical_and(
+                ~dxdz_specified, np.logical_xor(dx_specified, dz_specified)
+            ).flatten()
+        ):
             # Check that we don't have dx = None and dz = float or vice versa
             raise EquilibriaError("Must specify either dx and dz or neither.")
 
-        if any(dxdz_specified):
+        if any(dxdz_specified.flatten()):
             if not self.flag_sizefix:
                 # If dx and dz are specified, we presume the coil size should
                 # remain fixed
@@ -478,7 +482,7 @@ class CoilSizer:
             self._set_coil_attributes(coil)
 
         else:
-            if any(self.j_max == np.nan):
+            if any(~is_num(self.j_max)):
                 # Check there is a viable way to size the coil
                 raise EquilibriaError("Must specify either dx and dz or j_max.")
 
@@ -674,7 +678,7 @@ class CoilGroup(CoilFieldsMixin, abc.ABC):
             "dx": dx,
             "dz": dz,
             "current": current,
-            "name": name if isinstance(name, Iterable) else [name],
+            "name": name,
             "ctype": ctype,
             "j_max": j_max,
             "b_max": b_max,
@@ -736,16 +740,25 @@ class CoilGroup(CoilFieldsMixin, abc.ABC):
         String and CoilType are converted to lists everything else is a np.array
         with dtype=float.
         """
-        return {
-            name: (
-                [arg]
-                if isinstance(arg, (str, CoilType))
-                else arg
-                if isinstance(arg, Iterable)
-                else np.atleast_2d(np.array(arg, dtype=float))
-            )
-            for name, arg in kwargs.items()
-        }
+        ret = {}
+
+        n_c = len(kwargs["x"]) if isinstance(kwargs["x"], Iterable) else 1
+        for name, arg in kwargs.items():
+            if isinstance(arg, (str, CoilType, type(None))) and name in [
+                "name",
+                "ctype",
+            ]:
+                arg = [arg for _ in range(n_c)]
+            elif isinstance(arg, np.ndarray) and arg.ndim != 2:
+                arg = arg[:, None]
+            elif isinstance(arg, Iterable):
+                if isinstance(arg[0], (int, float, complex)):
+                    arg = np.array(arg)[:, None]
+            else:
+                arg = np.array([arg for _ in range(n_c)], dtype=float)[:, None]
+            ret[name] = arg
+
+        return ret
 
     @staticmethod
     def _lengthcheck(ignore: Optional[List] = None, **kwargs: __ANY_ITERABLE) -> None:

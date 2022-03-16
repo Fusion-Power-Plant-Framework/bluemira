@@ -324,6 +324,8 @@ def is_num(thing):
         return False
     if thing is np.nan:
         return False
+    if isinstance(thing, np.ndarray) and thing.dtype in [float, int, complex]:
+        return ~np.isnan(thing)
     try:
         float(thing)
         return True

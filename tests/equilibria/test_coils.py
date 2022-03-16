@@ -65,7 +65,7 @@ class TestCoil:
         assert no_coil._index[0] == self.no_coil._index[0] + 1
 
     def test_field(self):
-        c = Coil(x=1, z=0, current=1591550, dx=0, dz=0)  # Sollte 5 T am Achse erzeugen
+        c = Coil(x=1, z=0, current=1591550, dx=0, dz=0)  # Should produce 5 T on axis
         Bx, Bz = 0, MU_0 * c.current / (2 * c.x)
 
         assert c.Bx(0.001, 0) == Bx
