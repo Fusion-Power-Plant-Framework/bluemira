@@ -113,12 +113,14 @@ def equal(orig, new):
 
     version_str = '"version": "3'
 
+    if orig == "":
+        return False
     for old, new in zip(orig_check, new_check):
         if old != new:
             if not (version_str in old and version_str in new):
-                return True
+                return False
 
-    return False
+    return True
 
 
 def convert(path, check, ci):
@@ -147,7 +149,7 @@ def convert(path, check, ci):
 
         nb_json = json.dumps(nb_str, indent=2) + "\n"
 
-        if not check or equal(orig_nb_json, nb_json):
+        if not (check or equal(orig_nb_json, nb_json)):
             if ci:
                 return ipynb + " NEEDS UPDATE"
             else:
