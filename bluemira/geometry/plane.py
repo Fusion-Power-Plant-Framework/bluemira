@@ -25,9 +25,12 @@ Wrapper for FreeCAD Plane objects
 
 from __future__ import annotations
 
+import copy
+
 import numpy as np
 
 import bluemira.codes._freecadapi as cadapi
+from bluemira.geometry.constants import VERY_BIG
 from bluemira.geometry.face import BluemiraFace
 
 __all__ = ["BluemiraPlane"]
@@ -119,8 +122,10 @@ class BluemiraPlane:
         return ", ".join(new)
 
     def copy(self, label=None):
-        """Make a copy of the BluemiraPlane"""
-        plane_copy = BluemiraPlane(self.base, self.axis)
+        """
+        Make a copy of the BluemiraGeo.
+        """
+        plane_copy = copy.copy(self)
         if label is not None:
             plane_copy.label = label
         else:
@@ -129,9 +134,16 @@ class BluemiraPlane:
 
     def deepcopy(self, label=None):
         """Make a deepcopy of the BluemiraPlane"""
-        return self.copy()
+        plane_copy = BluemiraPlane(self.base, self.axis)
+        if label is not None:
+            plane_copy.label = label
+        else:
+            plane_copy.label = self.label
+        return plane_copy
 
-    def to_face(self, width: float, height: float, label: str = ""):
+    def to_face(
+        self, width: float = VERY_BIG, height: float = VERY_BIG, label: str = ""
+    ):
         """
         Convert the plane to a face with dimension (width, height) and centered into
         the plane base position.

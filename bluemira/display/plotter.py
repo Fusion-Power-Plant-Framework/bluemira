@@ -287,11 +287,11 @@ class BasePlotter(ABC):
     def set_view(self, view):
         """Set the plotting view"""
         if view == "xy":
-            self.options._options["view"] = _placement.BluemiraPlacement.xyz()
+            self.options._options["view"] = _placement.XYZ
         elif view == "xz":
-            self.options._options["view"] = _placement.BluemiraPlacement.xzy()
+            self.options._options["view"] = _placement.XZY
         elif view == "yz":
-            self.options._options["view"] = _placement.BluemiraPlacement.yzx()
+            self.options._options["view"] = _placement.YZX
         elif isinstance(view, _placement.BluemiraPlacement):
             self.options._options["view"] = view
         else:

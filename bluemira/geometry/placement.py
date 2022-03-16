@@ -100,25 +100,6 @@ class BluemiraPlacement:
         obj.label = label
         return obj
 
-    @classmethod
-    def xyz(cls, label="xyz"):
-        """Return the default xyz placement"""
-        obj = cls(label=label)
-        return obj
-
-    @classmethod
-    def yzx(cls, label="yzx"):
-        """Return the default yzx placement"""
-        matrix = np.array([[0, 0, 1, 0], [1, 0, 0, 0], [0, 1, 0, 0], [0, 0, 0, 1]])
-        obj = cls.from_matrix(matrix=matrix, label=label)
-        return obj
-
-    @classmethod
-    def xzy(cls, label="xzy"):
-        """Return the default xzy placement"""
-        obj = cls(axis=(1.0, 0.0, 0.0), angle=-90.0, label=label)
-        return obj
-
     @property
     def base(self):
         """Placement's local origin"""
@@ -256,3 +237,11 @@ class BluemiraPlacement:
     def xz_plane(self):
         """Returns the corresponding placement xz plane"""
         return self.extract_plane(v1=np.array([1, 0, 0]), v2=np.array([0, 0, 1]))
+
+
+XYZ = BluemiraPlacement(label="xyz")
+YZX = BluemiraPlacement.from_matrix(
+    matrix=np.array([[0, 0, 1, 0], [1, 0, 0, 0], [0, 1, 0, 0], [0, 0, 0, 1]]),
+    label="yzx",
+)
+XZY = BluemiraPlacement(axis=(1.0, 0.0, 0.0), angle=-90.0, label="xzy")
