@@ -180,3 +180,19 @@ class TestFreecadapi:
 
         # assert that points1 and points2 are the same
         assert np.allclose(points1 - points2, 0, atol=D_TOLERANCE)
+
+    def test_start_point_given_polygon(self):
+        wire = cadapi.make_polygon([[0, 0, 0], [1, 0, 0], [1, 1, 0]])
+
+        start_point = cadapi.start_point(wire)
+
+        assert isinstance(start_point, np.ndarray)
+        np.testing.assert_equal(start_point, np.array([0, 0, 0]))
+
+    def test_end_point_given_polygon(self):
+        wire = cadapi.make_polygon([[0, 0, 0], [1, 0, 0], [1, 1, 0]])
+
+        end_point = cadapi.end_point(wire)
+
+        assert isinstance(end_point, np.ndarray)
+        np.testing.assert_equal(end_point, np.array([1, 1, 0]))

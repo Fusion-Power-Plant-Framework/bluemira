@@ -123,6 +123,24 @@ class TestComponentClass:
         with pytest.raises(ComponentError):
             parent.add_children([child1, child2])
 
+    def test_prune_child_removes_node_with_given_name(self):
+        parent = Component("Parent")
+        Component("Child1", parent=parent)
+        Component("Child2", parent=parent)
+
+        parent.prune_child("Child1")
+
+        assert parent.get_component("Child1") is None
+        assert parent.get_component("Child2") is not None
+
+    def test_prune_child_does_nothing_if_node_does_not_exist(self):
+        parent = Component("Parent")
+        Component("Child1", parent=parent)
+
+        parent.prune_child("not_a_child")
+
+        assert parent.get_component("Child1") is not None
+
 
 class TestPhysicalComponent:
     """

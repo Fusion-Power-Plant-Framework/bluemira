@@ -18,11 +18,13 @@
 #
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
-
 """
-Initialise the bluemira package.
+Module containing builders for the EUDEMO first wall components
 """
-
-from . import _version  # noqa: ABS101
-
-__version__ = _version.get_versions()["version"]
+from bluemira.builders.EUDEMO.first_wall.divertor import DivertorBuilder
+from bluemira.builders.EUDEMO.first_wall.first_wall import FirstWallBuilder
+from bluemira.builders.EUDEMO.first_wall.wall import (
+    WallBuilder,
+    WallPolySpline,
+    WallPrincetonD,
+)

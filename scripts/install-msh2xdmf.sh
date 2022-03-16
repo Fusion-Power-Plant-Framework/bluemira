@@ -3,6 +3,8 @@
 # not have a setup.py or pyproject.toml, so cannot be installed as a normal python
 # project.
 
+set -e
+
 if [[ $(basename $PWD) == *"bluemira"* ]]; then
   cd ..
 fi

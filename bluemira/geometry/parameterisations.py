@@ -377,7 +377,7 @@ class PrincetonD(GeometryParameterisation):
         """  # noqa :W505
         if x2 <= x1:
             raise GeometryParameterisationError(
-                "Princeton D parameterisation requires an x2 value"
+                "Princeton D parameterisation requires an x2 value "
                 f"greater than x1: {x1} >= {x2}"
             )
 

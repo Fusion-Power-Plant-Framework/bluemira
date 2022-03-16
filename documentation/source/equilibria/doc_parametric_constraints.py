@@ -1,4 +1,4 @@
-from bluemira.equilibria.constraints import (
+from bluemira.equilibria.eq_constraints import (
     FieldNullConstraint,
     IsofluxConstraint,
     MagneticConstraintSet,

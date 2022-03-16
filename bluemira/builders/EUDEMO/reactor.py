@@ -28,6 +28,7 @@ import os
 from bluemira.base.components import Component, PhysicalComponent
 from bluemira.base.design import Reactor
 from bluemira.base.look_and_feel import bluemira_print
+from bluemira.builders.EUDEMO.first_wall import FirstWallBuilder
 from bluemira.builders.EUDEMO.pf_coils import PFCoilsBuilder
 from bluemira.builders.EUDEMO.plasma import PlasmaBuilder
 from bluemira.builders.EUDEMO.tf_coils import TFCoilsBuilder
@@ -42,13 +43,15 @@ class EUDEMOReactor(Reactor):
     design.
     """
 
+    PLASMA = "Plasma"
+    TF_COILS = "TF Coils"
+    PF_COILS = "PF Coils"
+    THERMAL_SHIELD = "Thermal Shield"
+    FIRST_WALL = "First Wall"
+
     def run(self) -> Component:
         """
-        Run the EU-DEMO reactor build process. Performs the following tasks:
-
-        - Run the (PROCESS) systems code
-        - Build the Plasma
-        - Build the TF Coils
+        Run the EU-DEMO reactor build process.
         """
         component = super().run()
 
@@ -57,6 +60,7 @@ class EUDEMOReactor(Reactor):
         component.add_child(self.build_TF_coils(component))
         component.add_child(self.build_PF_coils(component))
         component.add_child(self.build_thermal_shield(component))
+        component.add_child(self.build_first_wall(component))
 
         bluemira_print("Reactor Design Complete!")
 
@@ -96,7 +100,7 @@ class EUDEMOReactor(Reactor):
         """
         Run the plasma build using the requested equilibrium problem.
         """
-        name = "Plasma"
+        name = EUDEMOReactor.PLASMA
 
         bluemira_print(f"Starting design stage: {name}")
 
@@ -121,7 +125,7 @@ class EUDEMOReactor(Reactor):
         """
         Run the TF Coils build using the requested mode.
         """
-        name = "TF Coils"
+        name = EUDEMOReactor.TF_COILS
 
         bluemira_print(f"Starting design stage: {name}")
 
@@ -168,7 +172,7 @@ class EUDEMOReactor(Reactor):
 
             config["geom_path"] = geom_path
 
-        plasma = component_tree.get_component("Plasma")
+        plasma = component_tree.get_component(EUDEMOReactor.PLASMA)
         sep_comp: PhysicalComponent = plasma.get_component("xz").get_component("LCFS")
         sep_shape = sep_comp.shape.boundary[0]
 
@@ -185,7 +189,7 @@ class EUDEMOReactor(Reactor):
         """
         Run the PF Coils build using the requested mode.
         """
-        name = "PF Coils"
+        name = EUDEMOReactor.PF_COILS
 
         default_eqdsk_dir = self._file_manager.reference_data_dirs["equilibria"]
         default_eqdsk_name = f"{self._params.Name.value}_eqref.json"
@@ -210,7 +214,7 @@ class EUDEMOReactor(Reactor):
         """
         Run the thermal shield build.
         """
-        name = "Thermal Shield"
+        name = self.THERMAL_SHIELD
 
         bluemira_print(f"Starting design stage: {name}")
 
@@ -239,4 +243,44 @@ class EUDEMOReactor(Reactor):
 
         bluemira_print(f"Completed design stage: {name}")
 
+        return component
+
+    def build_first_wall(self, component_tree: Component, **kwargs):
+        """
+        Run the first wall builder.
+        """
+        name = EUDEMOReactor.FIRST_WALL
+
+        bluemira_print(f"Starting design stage: {name}")
+
+        default_variables_map = {
+            "x1": {"value": "r_fw_ib_in"},  # ib radius
+            "x2": {"value": "r_fw_ob_in"},  # ob radius
+        }
+
+        default_config = {
+            "algorithm_name": "SLSQP",
+            "name": self.FIRST_WALL,
+            "opt_conditions": {
+                "ftol_rel": 1e-6,
+                "max_eval": 100,
+                "xtol_abs": 1e-8,
+                "xtol_rel": 1e-8,
+            },
+            "param_class": "bluemira.builders.EUDEMO.first_wall::WallPrincetonD",
+            "problem_class": "bluemira.geometry.optimisation::MinimiseLength",
+            "runmode": "run",
+            "variables_map": default_variables_map,
+        }
+
+        config = self._process_design_stage_config(name, default_config)
+
+        plasma = component_tree.get_component(self.PLASMA)
+        builder = FirstWallBuilder(
+            self._params.to_dict(), build_config=config, equilibrium=plasma.equilibrium
+        )
+        self.register_builder(builder, name)
+
+        component = super()._build_stage(name)
+        bluemira_print(f"Completed design stage: {name}")
         return component

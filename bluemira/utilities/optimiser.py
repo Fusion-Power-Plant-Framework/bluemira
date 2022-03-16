@@ -108,7 +108,7 @@ class Optimiser(NLOPTOptimiser):
                 \\end{bmatrix}
 
 
-    The grad and constraint matrices must be assigned in place
+    The grad and constraint matrices must be assigned in place.
     """  # noqa :W505
 
     def optimise(self, x0=None):

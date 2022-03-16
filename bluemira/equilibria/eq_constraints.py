@@ -365,6 +365,16 @@ class MagneticConstraintSet(ABC):
         """
         return sum([len(c) for c in self.constraints])
 
+    def get_weighted_arrays(self):
+        """
+        Get [A] and [b] scaled by weight matrix.
+        Weight matrix assumed to be diagonal.
+        """
+        weights = self.w
+        weighted_a = weights[:, np.newaxis] * self.A
+        weighted_b = weights * self.b
+        return weights, weighted_a, weighted_b
+
     def build_weight_matrix(self):
         """
         Build the weight matrix used in optimisation.
