@@ -28,11 +28,7 @@ from copy import deepcopy
 import numpy as np
 
 from bluemira.base.look_and_feel import bluemira_warn
-from bluemira.geometry._deprecated_tools import (
-    distance_between_points,
-    in_polygon,
-    rotation_matrix,
-)
+from bluemira.geometry._deprecated_tools import in_polygon, rotation_matrix
 from bluemira.geometry.coordinates import Coordinates, rotation_matrix_v1v2
 from bluemira.magnetostatics.baseclass import SourceGroup
 from bluemira.magnetostatics.error import MagnetostaticsError
@@ -168,7 +164,7 @@ class ArbitraryPlanarRectangularXSCircuit(SourceGroup):
         v3 = p2 - p0
         v3 /= np.linalg.norm(v3)
         project_point = p0 + np.dot(p1 - p0, v3) * v3
-        d = distance_between_points(p1, project_point)
+        d = np.linalg.norm(p1 - project_point)
         if np.isclose(d, 0.0):
             return 0.0
 
