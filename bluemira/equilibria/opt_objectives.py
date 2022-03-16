@@ -148,7 +148,7 @@ def regularised_lsq_fom(x, a_mat, b_vec, gamma):
         Residual vector (Ax - b)
     """
     residual = np.dot(a_mat, x) - b_vec
-    number_of_targets = np.float(len(residual))
+    number_of_targets = float(len(residual))
     fom = residual.T @ residual / number_of_targets + gamma * gamma * x.T @ x
 
     if not fom > 0:
