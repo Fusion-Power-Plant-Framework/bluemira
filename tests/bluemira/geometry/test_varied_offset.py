@@ -27,79 +27,8 @@ from scipy.interpolate import interp1d
 
 from bluemira.geometry.parameterisations import PictureFrame
 from bluemira.geometry.tools import find_clockwise_angle_2d
-from bluemira.geometry.varied_offset import variable_offset_curve, varied_offset_function
+from bluemira.geometry.varied_offset import varied_offset_function
 from bluemira.geometry.wire import BluemiraWire
-
-
-class TestVariableOffsetCurve:
-
-    _fixtures = [
-        {
-            "minor_distance": np.sqrt(2),
-            "minor_angle": np.pi / 4,
-            "major_distance": np.sqrt(8),
-            "major_angle": 3 * np.pi / 2,
-            "origin": np.array([1, 1]),
-            "num_points": 20,
-        },
-        {
-            "minor_distance": np.sqrt(125),
-            "minor_angle": np.radians(20),
-            "major_distance": 18,
-            "major_angle": np.radians(320),
-            "origin": np.array([-11, 0]),
-            "num_points": 25,
-        },
-    ]
-
-    @pytest.mark.parametrize("params", _fixtures)
-    def test_first_point_is_at_minor_angle_from_origin(self, params):
-        coords = variable_offset_curve(**params)
-
-        angle = np.radians(
-            find_clockwise_angle_2d(np.array([-1, 0]), coords[:, 0] - params["origin"])
-        )
-        assert angle == pytest.approx(params["minor_angle"])
-
-    @pytest.mark.parametrize("params", _fixtures)
-    def test_distance_from_first_coord_is_minor_distance(self, params):
-        coords = variable_offset_curve(**params)
-
-        dist = np.linalg.norm(coords[:, 0] - params["origin"])
-        assert dist == pytest.approx(params["minor_distance"])
-
-    @pytest.mark.parametrize("params", _fixtures)
-    def test_final_point_is_at_major_angle_from_origin(self, params):
-        coords = variable_offset_curve(**params)
-
-        angle = np.radians(
-            find_clockwise_angle_2d(np.array([-1, 0]), coords[:, -1] - params["origin"])
-        )
-        assert angle == pytest.approx(params["major_angle"])
-
-    @pytest.mark.parametrize("params", _fixtures)
-    def test_distance_from_final_coord_is_major_distance(self, params):
-        coords = variable_offset_curve(**params)
-
-        dist = np.linalg.norm(coords[:, -1] - params["origin"])
-        assert dist == pytest.approx(params["major_distance"])
-
-    @pytest.mark.parametrize("params", _fixtures)
-    def test_distance_to_origin_increases_linearly_between_angles(self, params):
-        coords = variable_offset_curve(**params)
-
-        distances = np.linalg.norm(coords - params["origin"].reshape((2, 1)), axis=0)
-        gradient = np.gradient(distances)
-        # Gradient is always positive
-        assert np.all(gradient > 0)
-        # Gradient is constant
-        assert np.all(np.isclose(np.gradient(gradient), 0))
-
-    @pytest.mark.parametrize("params", _fixtures)
-    def test_curve_has_num_points(self, params):
-        coords = variable_offset_curve(**params)
-
-        assert coords.shape[1] == params["num_points"]
 
 
 class TestVariedOffsetFunction:
@@ -116,7 +45,7 @@ class TestVariedOffsetFunction:
         self.params = {
             "minor_offset": 1,
             "major_offset": 4,
-            "offset_angle_deg": 45,  # degrees
+            "offset_angle": 45,  # degrees
         }
 
     def test_offset_wire_is_closed(self):
@@ -159,10 +88,35 @@ class TestVariedOffsetFunction:
         )
         assert np.all(offset_size <= self.params["major_offset"])
 
-    def test_shape_is_closed(self):
+    def test_offset_increases_between_offset_angle_and_ob_axis(self):
         offset_wire = varied_offset_function(self.picture_frame, **self.params)
 
-        assert offset_wire.is_closed
+        offset_interp = self._interpolation_func_closed_wire(offset_wire)
+        shape_interp = self._interpolation_func_closed_wire(self.picture_frame)
+        offset_angle_rad = np.radians(self.params["offset_angle"])
+        ang_space = np.linspace(offset_angle_rad, np.pi, 50)
+        offset_size = np.linalg.norm(
+            offset_interp(ang_space) - shape_interp(ang_space), axis=0
+        )
+        offset_size_gradient = np.gradient(offset_size)
+        assert np.all(offset_size_gradient >= 0)
+
+    def test_offset_eq_to_minor_offset_within_offset_angle(self):
+        offset_wire = varied_offset_function(self.picture_frame, **self.params)
+
+        offset_interp = self._interpolation_func_closed_wire(offset_wire)
+        shape_interp = self._interpolation_func_closed_wire(self.picture_frame)
+        offset_angle_rad = np.radians(self.params["offset_angle"])
+        ang_space = np.concatenate(
+            (
+                np.linspace(0, offset_angle_rad, 25),
+                np.linspace(2 * np.pi - offset_angle_rad, 2 * np.pi, 25),
+            )
+        )
+        offset_size = np.linalg.norm(
+            offset_interp(ang_space) - shape_interp(ang_space), axis=0
+        )
+        np.testing.assert_allclose(offset_size, self.params["minor_offset"])
 
     @staticmethod
     def _interpolation_func_closed_wire(wire: BluemiraWire) -> Callable:
