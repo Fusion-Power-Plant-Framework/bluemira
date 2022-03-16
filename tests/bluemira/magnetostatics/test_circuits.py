@@ -216,19 +216,14 @@ class TestArbitraryPlanarXSCircuit:
         assert self._check_continuity(circuit.sources[-1], circuit.sources[0])
         assert self._calc_daisychain(open_circuit) == len(open_circuit.sources) - 1
 
-    def test_circle(self):
+    @pytest.mark.parametrize("clockwise", [False, True])
+    def test_a_circuit_from_a_clockwise_circle_is_continuous(self, clockwise):
         shape = make_circle(5, (0, 9, 0), axis=(0, 0, 1))
         coords = shape.discretize(ndiscr=30, byedges=True)
-        coords.set_ccw((0, 0, -1))
-        circuit = ArbitraryPlanarRectangularXSCircuit(
-            coords,
-            0.25,
-            0.5,
-            1.0,
-        )
-        assert self._calc_daisychain(circuit) == len(circuit.sources) - 1
-        assert self._check_continuity(circuit.sources[-1], circuit.sources[0])
-        coords.set_ccw((0, 0, 1))
+        if clockwise:
+            coords.set_ccw((0, 0, 1))
+        else:
+            coords.set_ccw((0, 0, -1))
         circuit = ArbitraryPlanarRectangularXSCircuit(
             coords,
             0.25,
