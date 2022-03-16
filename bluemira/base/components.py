@@ -85,7 +85,7 @@ class Component(NodeMixin, Plottable, DisplayableCAD):
 
     def get_component(
         self, name: str, first: bool = True, full_tree: bool = False
-    ) -> Union["Component", List[Component]]:
+    ) -> Union["Component", List[Component], None]:
         """
         Find the components with the specified name.
 
@@ -174,11 +174,21 @@ class Component(NodeMixin, Plottable, DisplayableCAD):
                     duplicates += [child]
         if duplicates != []:
             raise ComponentError(
-                f"Components {duplicates} are already a children of {self}"
+                f"Components {duplicates} are already children of {self}"
             )
         self.children = list(self.children) + children
 
         return self
+
+    def prune_child(self, name: str):
+        """
+        Remove the child with the given name, and all its children.
+        """
+        found_component = anytree.search.find_by_attr(self, name)
+        if found_component:
+            # Method of deleting a node suggested by library author
+            # https://github.com/c0fec0de/anytree/issues/152
+            found_component.parent = None
 
 
 class PhysicalComponent(Component):

@@ -138,11 +138,11 @@ class RectangularCrossSectionCurrentSource(CurrentSource):
         Parameters
         ----------
         angle: float
-            The rotation degree [rad]
+            The rotation degree [degree]
         axis: Union[np.array(3), str]
             The axis of rotation
         """
-        r = rotation_matrix(angle, axis)
+        r = rotation_matrix(np.deg2rad(angle), axis).T
         self.origin = self.origin @ r
         self.points = np.array([p @ r for p in self.points], dtype=object)
         self.dcm = self.dcm @ r

@@ -604,15 +604,18 @@ class CustomProfile(Profile):
         Force-Force prime profile f*df/dpsi(psi_N)
     R_0: float
         Reactor major radius [m]
-    B_0:
+    B_0: float
         Field at major radius [T]
+    Ip: Optional[float]
+        Plasma current [A]. If None, the plasma current will be calculated
+        from p' and ff'.
     """
 
     def __init__(
         self, pprime_func, ffprime_func, R_0, B_0, p_func=None, f_func=None, Ip=None
     ):
-        self.pprime = self.parse_to_callable(pprime_func)
-        self.ffprime = self.parse_to_callable(ffprime_func)
+        self._pprime_in = self.parse_to_callable(pprime_func)
+        self._ffprime_in = self.parse_to_callable(ffprime_func)
         self.p_func = self.parse_to_callable(p_func)
         self.f_func = self.parse_to_callable(f_func)
         self._fvac = R_0 * B_0
@@ -639,6 +642,18 @@ class CustomProfile(Profile):
         else:
             raise TypeError("Could not make input object a callable function.")
 
+    def pprime(self, pn):
+        """
+        dp/dpsi as a function of normalised psi
+        """
+        return abs(self.scale) * self._pprime_in(pn)
+
+    def ffprime(self, pn):
+        """
+        f*df/dpsi as a function of normalised psi
+        """
+        return abs(self.scale) * self._ffprime_in(pn)
+
     def jtor(self, x, z, psi, o_points, x_points):
         """
         Calculate toroidal plasma current
@@ -651,7 +666,7 @@ class CustomProfile(Profile):
         self.psisep = psisep
         self.psiax = psiax
         psi_norm = np.clip((psi - psiax) / (psisep - psiax), 0, 1)
-        jtor = x * self.pprime(psi_norm) + self.ffprime(psi_norm) / (x * MU_0)
+        jtor = x * self._pprime_in(psi_norm) + self._ffprime_in(psi_norm) / (x * MU_0)
         if mask is not None:
             jtor *= mask
         if self.Ip is not None:
@@ -666,7 +681,7 @@ class CustomProfile(Profile):
         Return pressure [Pa] at given value(s) of normalised psi
         """
         if self.p_func is not None:
-            return self.p_func(psinorm)
+            return abs(self.scale) * self.p_func(psinorm)
         return super().pressure(psinorm)
 
     def fRBpol(self, psinorm):
@@ -674,7 +689,7 @@ class CustomProfile(Profile):
         Return f=R*Bt at given value(s) of normalised psi
         """
         if self.f_func is not None:
-            return self.f_func(psinorm)
+            return abs(self.scale) * self.f_func(psinorm)
         return super().fRBpol(psinorm)
 
     @classmethod

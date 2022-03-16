@@ -39,6 +39,8 @@ from bluemira.geometry.base import BluemiraGeo
 from bluemira.geometry.error import DisjointedFace, NotClosedWire
 from bluemira.geometry.wire import BluemiraWire
 
+__all__ = ["BluemiraFace"]
+
 
 class BluemiraFace(BluemiraGeo):
     """Bluemira Face class."""

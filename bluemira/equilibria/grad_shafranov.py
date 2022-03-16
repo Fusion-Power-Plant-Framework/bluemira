@@ -23,7 +23,6 @@
 Grad-Shafranov operator classes
 """
 import numpy as np
-from numpy import linspace, ones, reshape
 from scipy.sparse import lil_matrix
 from scipy.sparse.linalg import factorized
 
@@ -79,8 +78,8 @@ class GSOperator:
         """
         d_x = (self.x_max - self.x_min) / (nx - 1)
         d_z = (self.z_max - self.z_min) / (nz - 1)
-        x = linspace(self.x_min, self.x_max, nx)
-        d_x2, d_z2 = d_x**2, d_z**2
+        half_xdx = 0.5 / (np.linspace(self.x_min, self.x_max, nx) * d_x)
+        inv_dx_2, inv_dz_2 = 1 / d_x**2, 1 / d_z**2
 
         if self.force_symmetry:
             # Check if applied grid is symmetric
@@ -93,33 +92,34 @@ class GSOperator:
             nz = np.floor_divide(nz + 1, 2)
 
         A = lil_matrix((nx * nz, nx * nz))
-        A.setdiag(ones(nx * nz))
-        # NOTE: nb.jit doesn't seem to help here :(
-        for i in range(1, nx - 1):
-            for j in range(1, nz - 1):
-                ind = i * nz + j
-                rp = 0.5 * (x[i + 1] + x[i])  # x_{i+1/2}
-                rm = 0.5 * (x[i] + x[i - 1])  # x_{i-1/2}
-                A[ind, ind] = -(x[i] / d_x2) * (1 / rp + 1 / rm) - 2 / d_z2  # j, l
-                A[ind, ind + nz] = (x[i] / d_x2) / rp  # j, l-1
-                A[ind, ind - nz] = (x[i] / d_x2) / rm  # j, l+1
-                A[ind, ind + 1] = 1 / d_z2  # j-1, l
-                A[ind, ind - 1] = 1 / d_z2  # j+1, l
-            # Apply symmetry boundary if desired
-            if self.force_symmetry:
-                # Apply ghost point method to apply symmetry to (d/dz^2) operator
-                # constributions close to symmetry plane.
-                # If symmetry boundary is centred halfway between cells,
-                # d(psi)/dz = 0 across midplane,
-                # else if symmetry boundary is centred on cells, d(psi)/dz
-                # is equal either side of midplane but reverses sign.
-                ind = i * nz + nz - 1
-                ghost_factor = 1 + nz % 2
+        A.setdiag(1)
 
-                A[ind, ind] = -(x[i] / d_x2) * (1 / rp + 1 / rm) - ghost_factor / d_z2
-                A[ind, ind - 1] = ghost_factor / d_z2
-                A[ind, ind + nz] = (x[i] / d_x2) / rp  # j, l-1
-                A[ind, ind - nz] = (x[i] / d_x2) / rm  # j, l+1
+        i, j = np.meshgrid(np.arange(1, nx - 1), np.arange(1, nz - 1), indexing="ij")
+        i = i.ravel()
+        j = j.ravel()
+        ind = i * nz + j
+
+        A[ind, ind] = -2 * (inv_dx_2 + inv_dz_2)  # j, l
+        A[ind, ind + nz] = inv_dx_2 - half_xdx[i]  # j, l-1
+        A[ind, ind - nz] = inv_dx_2 + half_xdx[i]  # j, l+1
+        A[ind, ind + 1] = inv_dz_2  # j-1, l
+        A[ind, ind - 1] = inv_dz_2  # j+1, l
+
+        # Apply symmetry boundary if desired
+        if self.force_symmetry:
+            # Apply ghost point method to apply symmetry to (d/dz^2) operator
+            # contributions close to symmetry plane.
+            # If symmetry boundary is centred halfway between cells,
+            # d(psi)/dz = 0 across midplane,
+            # else if symmetry boundary is centred on cells, d(psi)/dz
+            # is equal either side of midplane but reverses sign.
+            ind = i * nz + nz - 1
+            ghost_factor = 1 + nz % 2
+
+            A[ind, ind] = -2 * inv_dx_2 - ghost_factor * inv_dz_2
+            A[ind, ind - 1] = ghost_factor * inv_dz_2
+            A[ind, ind + nz] = inv_dx_2 - half_xdx[i]  # j, l-1
+            A[ind, ind - nz] = inv_dx_2 + half_xdx[i]  # j, l+1
         return A.tocsr()  # Compressed sparse row format
 
 
@@ -147,11 +147,11 @@ class DirectSolver:
             Numpy array containing RHS of equation system.
             Converted to 1D before linear solve applied..
         """
-        b1d = reshape(b, -1)
+        b1d = np.reshape(b, -1)
         x = self.solve(b1d)
         if np.any(np.isnan(x)):
             raise EquilibriaError("Matrix inversion problem in GS solver.")
-        return reshape(x, b.shape)
+        return np.reshape(x, b.shape)
 
 
 class GSSolver(DirectSolver):

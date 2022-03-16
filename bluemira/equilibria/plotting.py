@@ -33,7 +33,6 @@ from scipy.interpolate import RectBivariateSpline
 
 from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.equilibria.constants import J_TOR_MIN, M_PER_MN
-from bluemira.equilibria.error import EquilibriaError
 from bluemira.equilibria.find import Xpoint, get_contours, grid_2d_contour
 from bluemira.equilibria.physics import calc_psi
 from bluemira.utilities.plot_tools import str_to_latex
@@ -525,7 +524,7 @@ class EquilibriumPlotter(Plotter):
         """
         try:
             separatrix = self.eq.get_separatrix()
-        except EquilibriaError:
+        except Exception:
             bluemira_warn("Unable to plot separatrix")
             return
 

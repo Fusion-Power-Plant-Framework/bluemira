@@ -76,11 +76,13 @@ class TestEUDEMO:
         """
         Test the results of the plasma build.
         """
-        plasma_builder = self.reactor.get_builder("Plasma")
+        plasma_builder = self.reactor.get_builder(EUDEMOReactor.PLASMA)
         assert plasma_builder is not None
         assert plasma_builder.design_problem is not None
 
-        plasma_component: PlasmaComponent = self.component.get_component("Plasma")
+        plasma_component: PlasmaComponent = self.component.get_component(
+            EUDEMOReactor.PLASMA
+        )
         assert plasma_component is not None
         assert plasma_component.equilibrium is not None
 
@@ -102,11 +104,13 @@ class TestEUDEMO:
         """
         Test the results of the TF build.
         """
-        tf_builder: TFCoilsBuilder = self.reactor.get_builder("TF Coils")
+        tf_builder: TFCoilsBuilder = self.reactor.get_builder(EUDEMOReactor.TF_COILS)
         assert tf_builder is not None
         assert tf_builder.design_problem is not None
 
-        tf_component: TFCoilsComponent = self.component.get_component("TF Coils")
+        tf_component: TFCoilsComponent = self.component.get_component(
+            EUDEMOReactor.TF_COILS
+        )
         assert tf_component is not None
 
         # Check field at origin
@@ -132,6 +136,23 @@ class TestEUDEMO:
         finally:
             shutil.rmtree(tempdir)
 
+    def test_pf_coils_built(self):
+        """
+        Test the results of the PF build.
+        """
+        tf_builder = self.reactor.get_builder(EUDEMOReactor.PF_COILS)
+        assert tf_builder is not None
+
+        tf_component = self.component.get_component(EUDEMOReactor.PF_COILS)
+        assert tf_component is not None
+
+    def test_first_wall_built(self):
+        wall_builder = self.reactor.get_builder(EUDEMOReactor.FIRST_WALL)
+        assert wall_builder is not None
+
+        wall_component = self.component.get_component(EUDEMOReactor.FIRST_WALL)
+        assert wall_component is not None
+
     @pytest.mark.skipif(not tests.PLOTTING, reason="plotting disabled")
     def test_plot_xz(self):
         """
@@ -140,8 +161,8 @@ class TestEUDEMO:
         Component(
             "xz view",
             children=[
-                self.component.get_component("Plasma").get_component("xz"),
-                self.component.get_component("TF Coils").get_component("xz"),
+                self.component.get_component(EUDEMOReactor.PLASMA).get_component("xz"),
+                self.component.get_component(EUDEMOReactor.TF_COILS).get_component("xz"),
             ],
         ).plot_2d()
 
@@ -153,8 +174,8 @@ class TestEUDEMO:
         Component(
             "xy view",
             children=[
-                self.component.get_component("Plasma").get_component("xy"),
-                self.component.get_component("TF Coils").get_component("xy"),
+                self.component.get_component(EUDEMOReactor.PLASMA).get_component("xy"),
+                self.component.get_component(EUDEMOReactor.TF_COILS).get_component("xy"),
             ],
         ).plot_2d()
 
@@ -166,8 +187,10 @@ class TestEUDEMO:
         Component(
             "xyz view",
             children=[
-                self.component.get_component("Plasma").get_component("xyz"),
-                self.component.get_component("TF Coils").get_component("xyz"),
+                self.component.get_component(EUDEMOReactor.PLASMA).get_component("xyz"),
+                self.component.get_component(EUDEMOReactor.TF_COILS).get_component(
+                    "xyz"
+                ),
             ],
         ).show_cad()
 

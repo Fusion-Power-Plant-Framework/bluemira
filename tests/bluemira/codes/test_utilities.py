@@ -63,7 +63,7 @@ class TestMappings:
                 "another_param",
                 "_another_param",
                 None,
-                "N/A",
+                "dimensionless",
                 None,
                 "Input",
                 {"CodeC": ParameterMapping("pArAm", recv=True, send=True)},

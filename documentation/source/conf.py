@@ -161,7 +161,7 @@ class SkipAlreadyDocumented:
 
     def __init__(self):
         lis = [
-            "bluemira.codes.process.api.PROCESS_ENABLED",
+            "bluemira.codes.process.api.ENABLED",
             "bluemira.codes.process.api.PROCESS_DICT",
         ]
 

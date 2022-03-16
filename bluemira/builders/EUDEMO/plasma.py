@@ -36,7 +36,7 @@ from bluemira.base.config import Configuration
 from bluemira.base.error import BuilderError
 from bluemira.base.look_and_feel import bluemira_print
 from bluemira.display.palettes import BLUE_PALETTE
-from bluemira.equilibria import AbInitioEquilibriumProblem
+from bluemira.equilibria._deprecated_run import AbInitioEquilibriumProblem
 from bluemira.equilibria.constants import (
     NB3SN_B_MAX,
     NB3SN_J_MAX,

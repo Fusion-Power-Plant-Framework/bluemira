@@ -31,9 +31,40 @@ import enum
 # import for abstract class
 from abc import ABC, abstractmethod
 
+import bluemira.mesh.meshing as meshing
+
 # import freecad api
 from bluemira.codes import _freecadapi as cadapi
 from bluemira.geometry.bound_box import BoundingBox
+
+
+class GeoMeshable(meshing.Meshable):
+    """
+    Extended Meshable class for BluemiraGeo objects.
+    """
+
+    def remove_mesh_options(self, recursive=False):
+        """
+        Remove mesh options for this object.
+        """
+        super().remove_mesh_options()
+        if hasattr(self, "boundary"):
+            for obj in self.boundary:
+                if isinstance(obj, GeoMeshable):
+                    obj.remove_mesh_options(recursive=True)
+
+    def print_mesh_options(self, recursive=True):
+        """
+        Print the mesh options for this object.
+        """
+        # TODO: improve the output of this function
+        output = []
+        output.append(self.mesh_options)
+        if hasattr(self, "boundary"):
+            for obj in self.boundary:
+                if isinstance(obj, GeoMeshable):
+                    output.append(obj.print_mesh_options(True))
+        return output
 
 
 class _Orientation(enum.Enum):
@@ -41,8 +72,9 @@ class _Orientation(enum.Enum):
     REVERSED = "Reversed"
 
 
-class BluemiraGeo(ABC):
-    """Base abstract class for geometry
+class BluemiraGeo(ABC, GeoMeshable):
+    """
+    Abstract base class for geometry.
 
     Parameters
     ----------
@@ -60,6 +92,7 @@ class BluemiraGeo(ABC):
         label: str = "",
         boundary_classes=None,
     ):
+        super().__init__()
         self._boundary_classes = boundary_classes
         self.boundary = boundary
         self.label = label
@@ -81,11 +114,15 @@ class BluemiraGeo(ABC):
 
     @staticmethod
     def _converter(func):
-        """Function used in __getattr__ to modify the added functions"""
+        """
+        Function used in __getattr__ to modify the added functions.
+        """
         return func
 
     def _check_boundary(self, objs):
-        """Check if objects objs can be used as boundaries"""
+        """
+        Check if objects objs can be used as boundaries.
+        """
         if not hasattr(objs, "__len__"):
             objs = [objs]
         check = False
@@ -99,7 +136,9 @@ class BluemiraGeo(ABC):
 
     @property
     def boundary(self):
-        """Shape's boundary"""
+        """
+        The shape's boundary.
+        """
         return self._boundary
 
     @boundary.setter
@@ -109,46 +148,63 @@ class BluemiraGeo(ABC):
     @property
     @abstractmethod
     def _shape(self):
-        """Primitive shape of the object"""
+        """
+        The primitive shape of the object.
+        """
         # Note: this is the "hidden" connection with primitive shapes
         pass
 
     @property
     def length(self):
-        """Shape's length"""
+        """
+        The shape's length.
+        """
         return cadapi.length(self._shape)
 
     @property
     def area(self):
-        """Shape's area"""
+        """
+        The shape's area.
+        """
         return cadapi.area(self._shape)
 
     @property
     def volume(self):
-        """Shape's volume"""
+        """
+        The shape's volume.
+        """
         return cadapi.volume(self._shape)
 
     @property
     def center_of_mass(self):
-        """Shape's center of mass"""
+        """
+        The shape's center of mass.
+        """
         return cadapi.center_of_mass(self._shape)
 
     @property
     def bounding_box(self):
-        """The bounding box of the shape"""
+        """
+        The bounding box of the shape."""
         x_min, y_min, z_min, x_max, y_max, z_max = cadapi.bounding_box(self._shape)
         return BoundingBox(x_min, x_max, y_min, y_max, z_min, z_max)
 
     def is_null(self):
-        """Checks if the shape is null."""
+        """
+        Check if the shape is null.
+        """
         return cadapi.is_null(self._shape)
 
     def is_closed(self):
-        """Checks if the shape is closed"""
+        """
+        Check if the shape is closed.
+        """
         return cadapi.is_closed(self._shape)
 
     def is_valid(self):
-        """Checks if the shape is valid"""
+        """
+        Check if the shape is valid.
+        """
         return cadapi.is_valid(self._shape)
 
     def search(self, label: str):
@@ -206,10 +262,12 @@ class BluemiraGeo(ABC):
         for o in self.boundary:
             o.rotate(base, direction, degree)
 
-    def change_plane(self, plane) -> None:
-        """Apply a plane transformation to the wire"""
+    def change_placement(self, placement) -> None:
+        """
+        Change the placement of self
+        """
         for o in self.boundary:
-            o.change_plane(plane)
+            o.change_placement(placement)
 
     def __repr__(self):  # noqa D105
         new = []
@@ -221,7 +279,9 @@ class BluemiraGeo(ABC):
         return ", ".join(new)
 
     def copy(self, label=None):
-        """Make a copy of the BluemiraGeo"""
+        """
+        Make a copy of the BluemiraGeo.
+        """
         geo_copy = copy.copy(self)
         if label is not None:
             geo_copy.label = label
@@ -230,7 +290,9 @@ class BluemiraGeo(ABC):
         return geo_copy
 
     def deepcopy(self, label=None):
-        """Make a deepcopy of the BluemiraGeo"""
+        """
+        Make a deepcopy of the BluemiraGeo.
+        """
         geo_copy = copy.deepcopy(self)
         if label is not None:
             geo_copy.label = label

@@ -20,6 +20,7 @@
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 
 import os
+from unittest.mock import patch
 
 import numpy as np
 import pytest
@@ -42,10 +43,10 @@ class TestChargedParticleInputs:
 
         # fmt: off
         params = ParameterFrame([
-            ["f_lfs_lower_target", "Fraction of SOL power deposited on the LFS lower target", 0.1, "N/A", None, "Input"],
-            ["f_hfs_lower_target", "Fraction of SOL power deposited on the HFS lower target", 0.1, "N/A", None, "Input"],
-            ["f_lfs_upper_target", "Fraction of SOL power deposited on the LFS upper target (DN only)", 0.1, "N/A", None, "Input"],
-            ["f_hfs_upper_target", "Fraction of SOL power deposited on the HFS upper target (DN only)", 0.1, "N/A", None, "Input"],
+            ["f_lfs_lower_target", "Fraction of SOL power deposited on the LFS lower target", 0.1, "dimensionless", None, "Input"],
+            ["f_hfs_lower_target", "Fraction of SOL power deposited on the HFS lower target", 0.1, "dimensionless", None, "Input"],
+            ["f_lfs_upper_target", "Fraction of SOL power deposited on the LFS upper target (DN only)", 0.1, "dimensionless", None, "Input"],
+            ["f_hfs_upper_target", "Fraction of SOL power deposited on the HFS upper target (DN only)", 0.1, "dimensionless", None, "Input"],
         ])
         # fmt: on
 
@@ -54,10 +55,10 @@ class TestChargedParticleInputs:
 
         # fmt: off
         params = ParameterFrame([
-            ["f_lfs_lower_target", "Fraction of SOL power deposited on the LFS lower target", 0.9, "N/A", None, "Input"],
-            ["f_hfs_lower_target", "Fraction of SOL power deposited on the HFS lower target", 0.9, "N/A", None, "Input"],
-            ["f_lfs_upper_target", "Fraction of SOL power deposited on the LFS upper target (DN only)", 0, "N/A", None, "Input"],
-            ["f_hfs_upper_target", "Fraction of SOL power deposited on the HFS upper target (DN only)", 0.9, "N/A", None, "Input"],
+            ["f_lfs_lower_target", "Fraction of SOL power deposited on the LFS lower target", 0.9, "dimensionless", None, "Input"],
+            ["f_hfs_lower_target", "Fraction of SOL power deposited on the HFS lower target", 0.9, "dimensionless", None, "Input"],
+            ["f_lfs_upper_target", "Fraction of SOL power deposited on the LFS upper target (DN only)", 0, "dimensionless", None, "Input"],
+            ["f_hfs_upper_target", "Fraction of SOL power deposited on the HFS upper target (DN only)", 0.9, "dimensionless", None, "Input"],
         ])
         # fmt: on
         with pytest.raises(AdvectionTransportError):
@@ -77,13 +78,13 @@ class TestChargedParticleRecursionSN:
         # fmt: off
         cls.params = ParameterFrame([
             ["P_sep_particle", "power crossing the separatrix", 100, "MW", None, "Input"],
-            ["f_p_sol_near", "near scrape-off layer power rate", 0.50, "N/A", None, "Input"],
+            ["f_p_sol_near", "near scrape-off layer power rate", 0.50, "dimensionless", None, "Input"],
             ["fw_lambda_q_near_omp", "Lambda q near SOL at the outboard", 0.05, "m", None, "Input"],
             ["fw_lambda_q_far_omp", "Lambda q far SOL at the outboard", 0.05, "m", None, "Input"],
-            ["f_lfs_lower_target", "Fraction of SOL power deposited on the LFS lower target", 0.75, "N/A", None, "Input"],
-            ["f_hfs_lower_target", "Fraction of SOL power deposited on the HFS lower target", 0.25, "N/A", None, "Input"],
-            ["f_lfs_upper_target", "Fraction of SOL power deposited on the LFS upper target (DN only)", 0, "N/A", None, "Input"],
-            ["f_hfs_upper_target", "Fraction of SOL power deposited on the HFS upper target (DN only)", 0, "N/A", None, "Input"],
+            ["f_lfs_lower_target", "Fraction of SOL power deposited on the LFS lower target", 0.75, "dimensionless", None, "Input"],
+            ["f_hfs_lower_target", "Fraction of SOL power deposited on the HFS lower target", 0.25, "dimensionless", None, "Input"],
+            ["f_lfs_upper_target", "Fraction of SOL power deposited on the LFS upper target (DN only)", 0, "dimensionless", None, "Input"],
+            ["f_hfs_upper_target", "Fraction of SOL power deposited on the HFS upper target (DN only)", 0, "dimensionless", None, "Input"],
         ])
         # fmt:on
 
@@ -161,15 +162,15 @@ class TestChargedParticleRecursionDN:
         # fmt: off
         cls.params = ParameterFrame([
             ["P_sep_particle", "power crossing the separatrix", 140, "MW", None, "Input"],
-            ["f_p_sol_near", "near scrape-off layer power rate", 0.65, "N/A", None, "Input"],
+            ["f_p_sol_near", "near scrape-off layer power rate", 0.65, "dimensionless", None, "Input"],
             ["fw_lambda_q_near_omp", "Lambda q near SOL at the outboard", 0.003, "m", None, "Input"],
             ["fw_lambda_q_far_omp", "Lambda q far SOL at the outboard", 0.1, "m", None, "Input"],
             ["fw_lambda_q_near_imp", "Lambda q near SOL at the inboard", 0.003, "m", None, "Input"],
             ["fw_lambda_q_far_imp", "Lambda q far SOL at the inboard", 0.1, "m", None, "Input"],
-            ["f_lfs_lower_target", "Fraction of SOL power deposited on the LFS lower target", 0.9 * 0.5, "N/A", None, "Input"],
-            ["f_hfs_lower_target", "Fraction of SOL power deposited on the HFS lower target", 0.1 * 0.5, "N/A", None, "Input"],
-            ["f_lfs_upper_target", "Fraction of SOL power deposited on the LFS upper target (DN only)", 0.9 * 0.5, "N/A", None, "Input"],
-            ["f_hfs_upper_target", "Fraction of SOL power deposited on the HFS upper target (DN only)", 0.1 * 0.5, "N/A", None, "Input"],
+            ["f_lfs_lower_target", "Fraction of SOL power deposited on the LFS lower target", 0.9 * 0.5, "dimensionless", None, "Input"],
+            ["f_hfs_lower_target", "Fraction of SOL power deposited on the HFS lower target", 0.1 * 0.5, "dimensionless", None, "Input"],
+            ["f_lfs_upper_target", "Fraction of SOL power deposited on the LFS upper target (DN only)", 0.9 * 0.5, "dimensionless", None, "Input"],
+            ["f_hfs_upper_target", "Fraction of SOL power deposited on the HFS upper target (DN only)", 0.1 * 0.5, "dimensionless", None, "Input"],
         ])
         # fmt: on
 
@@ -181,3 +182,19 @@ class TestChargedParticleRecursionDN:
     def test_recursion(self):
         assert np.isclose(np.max(self.hf), 86.194, rtol=1e-2)
         assert np.isclose(np.sum(self.hf), 830.6, rtol=1e-2)
+
+    def test_analyse_DN(self, caplog):
+        fw = self.solver.first_wall.copy()
+        _, x_wall_limit = self.solver._get_sep_out_intersection(outboard=True)
+        x_out_wall = x_wall_limit + 1
+        fs_out_low, fs_out_up = self.solver._make_flux_surfaces(
+            x_out_wall, self.solver._o_point.z
+        )
+        self.solver.flux_surfaces_ob_lfs.append(fs_out_low)
+        self.solver.flux_surfaces_ob_hfs.append(fs_out_up)
+        fs_before_pop = self.solver.flux_surfaces
+        with patch.object(self.solver, "_make_flux_surfaces_ob"):
+            self.solver._analyse_DN(fw)
+            fs_after_pop = self.solver.flux_surfaces
+        assert len(fs_before_pop) > len(fs_after_pop)
+        assert "No intersection detected" in caplog.text

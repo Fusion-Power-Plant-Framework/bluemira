@@ -23,6 +23,7 @@
 BLUEPRINT -> bluemira ST equilibrium recursion test
 """
 
+import copy
 import os
 
 import numpy as np
@@ -42,7 +43,6 @@ from bluemira.equilibria import (
     SymmetricCircuit,
 )
 from bluemira.equilibria.file import EQDSKInterface
-from bluemira.equilibria.physics import calc_li
 from bluemira.equilibria.solve import DudsonConvergence
 
 
@@ -78,7 +78,7 @@ class TestSTEquilibrium:
 
         R_0 = 3.639
         A = 1.667
-        i_p = 20975205.2  # (EQDSK)
+        i_p = self.jeq_dict["cplasma"]
 
         xc = np.array(
             [1.5, 1.5, 8.259059936102478, 8.259059936102478, 10.635505223274231]
@@ -180,22 +180,54 @@ class TestSTEquilibrium:
             convergence=criterion,
         )
         fbe_iterator()
-        self._test_equilibrium_good(eq, psi_rtol=1e-1, li_rtol=1e-2)
+        self.eq = eq
+        self._test_equilibrium_good(eq)
+        self._test_profiles_good(eq)
 
         # Verify by removing symmetry constraint and checking convergence
         eq.force_symmetry = False
         eq.set_grid(grid)
         fbe_iterator()
         # I probably exported the eq before it was regridded without symmetry..
-        self._test_equilibrium_good(eq, psi_rtol=1e-1, li_rtol=1e-3)
+        self._test_equilibrium_good(eq)
 
-    def _test_equilibrium_good(self, eq, psi_rtol, li_rtol):
-        lcfs_area = eq.get_LCFS().area
-        assert np.isclose(self.eq_blueprint.get_LCFS().area, lcfs_area, rtol=1e-3)
+        self._test_profiles_good(eq)
 
-        li_bp = calc_li(self.eq_blueprint)
-        assert np.isclose(li_bp, calc_li(eq), rtol=li_rtol)
-        assert np.allclose(self.eq_blueprint.psi(), eq.psi(), rtol=psi_rtol)
+    def _test_equilibrium_good(self, eq):
+        assert np.isclose(eq._Ip, abs(self.jeq_dict["cplasma"]))
+        lcfs = eq.get_LCFS()
+        assert np.isclose(self.eq_blueprint.get_LCFS().area, lcfs.area, rtol=1e-2)
+        assert np.isclose(lcfs.centroid[-1], 0.0)
+
+    def _test_profiles_good(self, eq):
+        """
+        Test the profiles are the same shape. Normalisation won't be one: JETTO is
+        fixed boundary and has a different plasma volume.
+        """
+
+        def scale(profile):
+            return np.abs(profile) / np.max(np.abs(profile))
+
+        jetto_pprime = self.jeq_dict["pprime"]
+        jetto_ffprime = self.jeq_dict["ffprime"]
+
+        psi_n = self.jeq_dict["psinorm"]
+        bm_pprime_p = self.profiles.pprime(psi_n)
+        bm_ffprime_p = self.profiles.ffprime(psi_n)
+
+        bm_pprime = eq._profiles.pprime(psi_n)
+        bm_ffprime = eq._profiles.ffprime(psi_n)
+        assert np.allclose(bm_pprime, bm_pprime_p)
+        assert np.allclose(bm_ffprime, bm_ffprime_p)
+        assert np.isclose(max(bm_ffprime) / max(jetto_ffprime), abs(eq._profiles.scale))
+        assert np.isclose(max(bm_pprime) / max(jetto_pprime), abs(eq._profiles.scale))
+
+        jetto_pprime = scale(jetto_pprime)
+        jetto_ffprime = scale(jetto_ffprime)
+        bm_pprime = scale(bm_pprime)
+        bm_ffprime = scale(bm_ffprime)
+        assert np.allclose(jetto_pprime, bm_pprime)
+        assert np.allclose(jetto_ffprime, bm_ffprime)
 
     def _make_initial_psi(
         self,
@@ -207,7 +239,9 @@ class TestSTEquilibrium:
         plasma_current,
         tikhonov_gamma,
     ):
-        coilset_temp = coilset.copy()
+
+        coilset_temp = copy.deepcopy(coilset)
+
         dummy = Coil(
             x=x_current,
             z=z_current,

@@ -42,6 +42,7 @@ from bluemira.geometry._deprecated_loop import Loop
 from bluemira.geometry._deprecated_tools import (
     check_linesegment,
     get_angle_between_points,
+    get_intersect,
     join_intersect,
     loop_plane_intersect,
 )
@@ -65,7 +66,7 @@ class FluxSurface:
         Flux surface geometry object
     """
 
-    __slots__ = ["loop"]
+    __slots__ = "loop"
 
     def __init__(self, geometry):
         self.loop = geometry
@@ -145,7 +146,7 @@ class ClosedFluxSurface(FluxSurface):
     Utility class for closed flux surfaces.
     """
 
-    __slots__ = []
+    __slots__ = ("_p1", "_p2", "_p3", "_p4", "_z_centre")
 
     def __init__(self, geometry):
         if not geometry.closed:
@@ -153,6 +154,17 @@ class ClosedFluxSurface(FluxSurface):
                 "Cannot make a ClosedFluxSurface from an open geometry."
             )
         super().__init__(geometry)
+        i_p1 = np.argmax(self.loop.x)
+        i_p2 = np.argmax(self.loop.z)
+        i_p3 = np.argmin(self.loop.x)
+        i_p4 = np.argmin(self.loop.z)
+        self._p1 = (self.loop.x[i_p1], self.loop.z[i_p1])
+        self._p2 = (self.loop.x[i_p2], self.loop.z[i_p2])
+        self._p3 = (self.loop.x[i_p3], self.loop.z[i_p3])
+        self._p4 = (self.loop.x[i_p4], self.loop.z[i_p4])
+
+        # Still debatable what convention to follow...
+        self._z_centre = 0.5 * (self.loop.z[i_p1] + self.loop.z[i_p3])
 
     @property
     @lru_cache(1)
@@ -160,8 +172,7 @@ class ClosedFluxSurface(FluxSurface):
         """
         Major radius of the ClosedFluxSurface.
         """
-        # debatable... could also be x_min + 0.5 * (x_max - x_min)
-        return self.loop.centroid[0]
+        return np.min(self.loop.x) + self.minor_radius
 
     @property
     @lru_cache(1)
@@ -185,7 +196,7 @@ class ClosedFluxSurface(FluxSurface):
         """
         Average elongation of the ClosedFluxSurface.
         """
-        return 0.5 * (self.kappa_upper + self.kappa_lower)
+        return 0.5 * (np.max(self.loop.z) - np.min(self.loop.z)) / self.minor_radius
 
     @property
     @lru_cache(1)
@@ -193,7 +204,7 @@ class ClosedFluxSurface(FluxSurface):
         """
         Upper elongation of the ClosedFluxSurface.
         """
-        return (np.max(self.loop.z) - self.loop.centroid[1]) / self.minor_radius
+        return (np.max(self.loop.z) - self._z_centre) / self.minor_radius
 
     @property
     @lru_cache(1)
@@ -201,7 +212,7 @@ class ClosedFluxSurface(FluxSurface):
         """
         Lower elongation of the ClosedFluxSurface.
         """
-        return abs(np.min(self.loop.z) - self.loop.centroid[1]) / self.minor_radius
+        return abs(np.min(self.loop.z) - self._z_centre) / self.minor_radius
 
     @property
     @lru_cache(1)
@@ -217,9 +228,7 @@ class ClosedFluxSurface(FluxSurface):
         """
         Upper triangularity of the ClosedFluxSurface.
         """
-        arg_z_max = np.argmax(self.loop.z)
-        x_z_max = self.loop.x[arg_z_max]
-        return (self.major_radius - x_z_max) / self.minor_radius
+        return (self.major_radius - self._p2[0]) / self.minor_radius
 
     @property
     @lru_cache(1)
@@ -227,9 +236,68 @@ class ClosedFluxSurface(FluxSurface):
         """
         Lower triangularity of the ClosedFluxSurface.
         """
+        return (self.major_radius - self._p4[0]) / self.minor_radius
+
+    @property
+    @lru_cache(1)
+    def zeta(self):
+        """
+        Average squareness of the ClosedFluxSurface.
+        """
+        return 0.5 * (self.zeta_upper + self.zeta_lower)
+
+    @property
+    @lru_cache(1)
+    def zeta_upper(self):
+        """
+        Outer upper squareness of the ClosedFluxSurface.
+        """
+        z_max = np.max(self.loop.z)
+        arg_z_max = np.argmax(self.loop.z)
+        x_z_max = self.loop.x[arg_z_max]
+        x_max = np.max(self.loop.x)
+        arg_x_max = np.argmax(self.loop.x)
+        z_x_max = self.loop.z[arg_x_max]
+
+        a = z_max - z_x_max
+        b = x_max - x_z_max
+        return self._zeta_calc(a, b, x_z_max, z_x_max, x_max, z_max)
+
+    @property
+    @lru_cache(1)
+    def zeta_lower(self):
+        """
+        Outer lower squareness of the ClosedFluxSurface.
+        """
+        z_min = np.min(self.loop.z)
         arg_z_min = np.argmin(self.loop.z)
         x_z_min = self.loop.x[arg_z_min]
-        return (self.major_radius - x_z_min) / self.minor_radius
+        x_max = np.max(self.loop.x)
+        arg_x_max = np.argmax(self.loop.x)
+        z_x_max = self.loop.z[arg_x_max]
+
+        a = z_min - z_x_max
+        b = x_max - x_z_min
+
+        return self._zeta_calc(a, b, x_z_min, z_x_max, x_max, z_min)
+
+    def _zeta_calc(self, a, b, xa, za, xd, zd):
+        """
+        Actual squareness calculation
+
+        Notes
+        -----
+        Squareness defined here w.r.t an ellipse intersection along a projected line
+        """
+        xc = xa + b * np.sqrt(0.5)
+        zc = za + a * np.sqrt(0.5)
+
+        line = Loop([xa, xd], z=[za, zd])
+        xb, zb = get_intersect(self.loop, line)
+        d_ab = np.hypot(xb - xa, zb - za)
+        d_ac = np.hypot(xc - xa, zc - za)
+        d_cd = np.hypot(xd - xc, zd - zc)
+        return float((d_ab - d_ac) / d_cd)
 
     @property
     @lru_cache(1)
@@ -264,7 +332,7 @@ class ClosedFluxSurface(FluxSurface):
             Vertical Shafranov shift
         """
         o_point = eq.get_OX_points()[0][0]  # magnetic axis
-        return o_point.x - self.major_radius, o_point.z - self.loop.centroid[1]
+        return o_point.x - self.major_radius, o_point.z - self._z_centre
 
     def safety_factor(self, eq):
         """
@@ -296,7 +364,7 @@ class OpenFluxSurface(FluxSurface):
     Utility class for handling open flux surface geometries.
     """
 
-    __slots__ = []
+    __slots__ = ()
 
     def __init__(self, loop):
         if loop.closed:
@@ -453,7 +521,11 @@ def analyse_plasma_core(eq, n_points=50):
     psi_n = np.append(psi_n, 1.0)
     flux_surfaces = [ClosedFluxSurface(loop) for loop in loops]
     vars = ["major_radius", "minor_radius", "aspect_ratio", "area", "volume"]
-    vars += [f"{v}{end}" for end in ["", "_upper", "_lower"] for v in ["kappa", "delta"]]
+    vars += [
+        f"{v}{end}"
+        for end in ["", "_upper", "_lower"]
+        for v in ["kappa", "delta", "zeta"]
+    ]
     return CoreResults(
         psi_n,
         *[[getattr(fs, var) for fs in flux_surfaces] for var in vars],
@@ -475,11 +547,14 @@ class CoreResults:
     area: Iterable
     V: Iterable
     kappa: Iterable
-    kappa_upper: Iterable
-    kappa_lower: Iterable
     delta: Iterable
-    delta_lower: Iterable
+    zeta: Iterable
+    kappa_upper: Iterable
     delta_upper: Iterable
+    zeta_upper: Iterable
+    kappa_lower: Iterable
+    delta_lower: Iterable
+    zeta_lower: Iterable
     q: Iterable
     Delta_shaf: Iterable
 

@@ -28,7 +28,8 @@ from unittest.mock import patch
 import pytest
 
 from bluemira.base.builder import BuildConfig
-from bluemira.codes.process import PROCESS_ENABLED, Solver
+from bluemira.codes.process import ENABLED as PROCESS_ENABLED
+from bluemira.codes.process import Solver
 from bluemira.codes.process.constants import NAME as PROCESS
 from tests.bluemira.codes.process import (
     FRAME_LIST,
@@ -130,7 +131,8 @@ class TestRun:
         Test that the PROCESS runner accepts valid runmodes and calls the corresponding
         function.
         """
-        self.run_PROCESS(runmode)
+        with patch("bluemira.codes.process.run.Solver._enabled_check"):
+            self.run_PROCESS(runmode)
 
         # Check correct call was made.
         if runmode.upper() == "RUN":

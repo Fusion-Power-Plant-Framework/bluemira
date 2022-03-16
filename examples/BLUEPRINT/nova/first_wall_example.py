@@ -85,7 +85,7 @@ eof = Equilibrium.from_eqdsk(eof_name)
 
 # %%
 dx = 0.125  # [m] Geometrical offset to LCFS
-psi_n = 1.06  # [N/A] Normalised psi of the desired boundary flux surface
+psi_n = 1.06  # [-] Normalised psi of the desired boundary flux surface
 
 # %%[markdown]
 # Now let's extract some geometry from the Equilibrium objects

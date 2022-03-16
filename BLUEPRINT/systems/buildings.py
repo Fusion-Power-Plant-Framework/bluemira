@@ -48,10 +48,10 @@ class RadiationShield(Meshable, OnionRing, ReactorSystem):
     # fmt: off
     default_params = [
         ['tk_rs', 'Radiation shield thickness', 2.5, 'm', None, 'Input'],
-        ['n_TF', 'Number of TF coils', 16, 'N/A', None, 'Input'],
+        ['n_TF', 'Number of TF coils', 16, 'dimensionless', None, 'Input'],
         ['g_cr_rs', 'Cryostat VV offset to radiation shield', 0.5, 'm', 'Distance away from edge of cryostat VV in all directions', None],
         ['o_p_rs', 'Port offset from VV to RS', 0.25, 'm', None, 'Input'],
-        ['n_rs_lab', 'Number of labyrinth levels', 4, 'N/A', None, 'Input'],
+        ['n_rs_lab', 'Number of labyrinth levels', 4, 'dimensionless', None, 'Input'],
         ['rs_l_d', 'Radiation shield labyrinth total delta', 0.6, 'm', 'Thickness of a radiation shield penetration neutron labyrinth', None],
         ['rs_l_gap', 'Radiation shield labyrinth gap', 0.02, 'm', 'Gap between plug and radiation shield', None]
     ]

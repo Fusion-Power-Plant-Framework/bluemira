@@ -62,7 +62,7 @@ class ToroidalFieldCoils(Meshable, ReactorSystem):
     default_params = [
         ['R_0', 'Major radius', 9, 'm', None, 'Input'],
         ['B_0', 'Toroidal field at R_0', 6, 'T', None, 'Input'],
-        ['n_TF', 'Number of TF coils', 16, 'N/A', None, 'Input'],
+        ['n_TF', 'Number of TF coils', 16, 'dimensionless', None, 'Input'],
         ['rho_j', 'TF coil WP current density', 18.25, 'MA/m^2', None, 'Input'],
         ['twall', 'Wall thickness', 0.045, 'm', 'No idea yet', 'Nova'],
         ['tk_tf_nose', 'TF coil inboard nose thickness', 0.6, 'm', None, 'Input'],
@@ -75,18 +75,18 @@ class ToroidalFieldCoils(Meshable, ReactorSystem):
         ['tk_tf_case_out_out', 'TF coil case thickness on the outboard outside', 0.4, 'm', None, 'Calc'],
         ['tf_wp_width', 'TF coil winding pack radial width', 0.76, 'm', 'Including insulation', 'PROCESS'],
         ['tf_wp_depth', 'TF coil winding pack depth (in y)', 1.05, 'm', 'Including insulation', 'PROCESS'],
-        ['tk_tf_outboard', 'TF coil outboard thickness', 1, 'm', None, 'Input', 'PROCESS'],
+        ['tk_tf_outboard', 'TF coil outboard thickness', 1, 'm', None, 'PROCESS'],
         ['r_tf_in', 'Inboard radius of the TF coil inboard leg', 3.2, 'm', None, 'PROCESS'],
         ['TF_ripple_limit', 'TF coil ripple limit', 0.6, '%', None, 'Input'],
         ['h_cp_top', 'Height of the Tapered Section', 4.199, 'm', None, 'PROCESS'],
         ['r_cp_top', 'Radial Position of Top of taper', 1.31, 'm', None, 'PROCESS'],
-        ['tf_taper_frac', "Height of straight portion as fraction of total tapered section height", 0.5, 'N/A', None, 'Input'],
+        ['tf_taper_frac', "Height of straight portion as fraction of total tapered section height", 0.5, 'dimensionless', None, 'Input'],
         ['r_tf_outboard_corner', "Corner Radius of TF coil outboard legs", 0.8, 'm', None, 'Input'],
         ['r_tf_inboard_corner', "Corner Radius of TF coil inboard legs", 0.0, 'm', None, 'Input'],
         ["tk_tf_ob_casing", "TF outboard leg conductor casing thickness", 0.1, "m", None, "PROCESS"],
         ["r_tf_curve", "Radial position of the CP-leg conductor joint", 1.5, "m", None, "PROCESS"],
         ['h_tf_max_in', 'Plasma side TF coil maximum height', 11.5, 'm', None, 'PROCESS'],
-        ['r_tf_in_centre', 'Inboard TF leg centre radius', 3.7, 'N/A', None, 'PROCESS'],
+        ['r_tf_in_centre', 'Inboard TF leg centre radius', 3.7, 'm', None, 'PROCESS'],
         ['tk_tf_inboard', 'TF coil inboard thickness', 1, 'm', None, 'Input'],
         ["r_tf_inboard_out", "Outboard Radius of the TF coil inboard leg tapered region", 0.8934, "m", None, "PROCESS"],
         ['h_tf_min_in', 'Plasma side TF coil min height', -6.5, 'm', None, 'PROCESS'],
@@ -182,7 +182,6 @@ class ToroidalFieldCoils(Meshable, ReactorSystem):
             read_directory=self.inputs["read_folder"],
             write_directory=self.inputs["write_folder"],
         )
-
         # The outer point of the TF coil inboard in the mid-plane
         r_tf_inboard_out = (
             self.params.r_tf_in
@@ -649,12 +648,16 @@ class ToroidalFieldCoils(Meshable, ReactorSystem):
             self.cage.set_coil(xloop["cl"])  # update coil cage
         return xloop
 
-    def optimise(self, verbose=True, **kwargs):
-        """
-        Carry out the optimisation of the TF coil centreline shape.
+    def build(self, callback=None, verbose=True, **kwargs):
+        """Build the TF coil with or without optimisation of the TF coil
+        centreline shape (depending on the callback). No optimization
+        is performed unless a callback is passed!
 
         Parameters
         ----------
+        callback: callable (optional)
+            A routine which, if present, performs the optimisation. If
+            none is provided (default) then no optimisation is performed.
         verbose: bool (default = True)
             Verbosity of the scipy optimiser
 
@@ -670,6 +673,7 @@ class ToroidalFieldCoils(Meshable, ReactorSystem):
             The number of current filaments in the radial direction
         nrippoints: int
             The number of points on the separatrix to check for ripple
+
         """
         # Handle kwargs and update corresponding attributes
         for attr in ["ripple", "ripple_limit", "nrippoints"]:
@@ -690,7 +694,10 @@ class ToroidalFieldCoils(Meshable, ReactorSystem):
         # Perform optimisation with geometric and magnetic constraints
         self.ripple = True
         self.shp.args = (self.ripple, self.ripple_limit)
-        self.shp.optimise(verbose=verbose, **kwargs)
+
+        # Perform an optimisation (if desired)
+        if callback is not None:
+            callback(self, verbose, kwargs)
 
         self.shp.write()
         self.cage.loop_ripple()

@@ -43,14 +43,14 @@ class HCDSystem(ReactorSystem):
     # fmt: off
     default_params = [
         ['g_cd_nb', 'NB current drive efficiency', 0.4, 'MA/MW.m', 'Check units!', 'Input'],
-        ['eta_nb', 'NB electrical efficiency', 0.3, 'N/A', 'Check units!', 'Input'],
+        ['eta_nb', 'NB electrical efficiency', 0.3, 'dimensionless', 'Check units!', 'Input'],
         ['p_nb', 'NB launcher power', 1, 'MA', 'Maximum launcher current drive in a port', 'Input'],
         ['g_cd_ec', 'EC current drive efficiency', 0.15, 'MA/MW.m', 'Check units!', 'Input'],
-        ['eta_ec', 'EC electrical efficiency', 0.35, 'N/A', 'Check units!', 'Input'],
+        ['eta_ec', 'EC electrical efficiency', 0.35, 'dimensionless', 'Check units!', 'Input'],
         ['p_ec', 'EC launcher power', 10, 'MW', 'Maximum launcher power per sector', 'Input'],
-        ['f_cd_aux', 'Auxiliary current drive fraction', 0.1, 'N/A', None, 'Input'],
-        ['f_bs', 'UNKNOWN_2', 0.1, 'N/A', None, 'Input'],
-        ['op_mode', 'UNKNOWN_3', "str", 'N/A', None, 'Input'],
+        ['f_cd_aux', 'Auxiliary current drive fraction', 0.1, 'dimensionless', None, 'Input'],
+        ['f_bs', 'UNKNOWN_2', 0.1, 'dimensionless', None, 'Input'],
+        ['op_mode', 'UNKNOWN_3', "str", 'dimensionless', None, 'Input'],
     ]
     # fmt: on
 
@@ -143,8 +143,8 @@ class GenericHCD(ReactorSystem):
 
     default_params = [
         ["R_0", "Major radius", 9, "m", None, "Input"],
-        ["n_TF", "Number of TF coils", 16, "N/A", None, "Input"],
-        ["I", "Current drive", 0.1, "N/A", None, "Input"],
+        ["n_TF", "Number of TF coils", 16, "dimensionless", None, "Input"],
+        ["I", "Current drive", 0.1, "dimensionless", None, "Input"],
     ]
 
     def __init__(self, config, inputs):
@@ -268,10 +268,17 @@ class NeutralBeam(GenericHCD):
     # plauncher = FloatOrInt()  # MA per NBI launcher in sector. Total guess
     default_params = [
         ["R_0", "Major radius", 9, "m", None, "Input"],
-        ["n_TF", "Number of TF coils", 16, "N/A", None, "Input"],
-        ["I", "Current drive", 0.1, "N/A", None, "Input"],
-        ["P_h_ss", "Steady-state plasma heating power", 0.1, "N/A", None, "Input"],
-        ["P_el", "Electric power input", 0.1, "N/A", None, "Input"],
+        ["n_TF", "Number of TF coils", 16, "dimensionless", None, "Input"],
+        ["I", "Current drive", 0.1, "dimensionless", None, "Input"],
+        [
+            "P_h_ss",
+            "Steady-state plasma heating power",
+            0.1,
+            "dimensionless",
+            None,
+            "Input",
+        ],
+        ["P_el", "Electric power input", 0.1, "dimensionless", None, "Input"],
     ]
 
     def __init__(self, config, inputs, g_cd, eta_cd, plauncher):
@@ -293,10 +300,17 @@ class ElectronCyclotron(GenericHCD):
     # plauncher = FloatOrInt()  # MW per EC launcher in sector. Total guess
     default_params = [
         ["R_0", "Major radius", 9, "m", None, "Input"],
-        ["n_TF", "Number of TF coils", 16, "N/A", None, "Input"],
-        ["I", "Current drive", 0.1, "N/A", None, "Input"],
-        ["P_h_ss", "Steady-state plasma heating power", 0.1, "N/A", None, "Input"],
-        ["P_el", "Electric power input", 0.1, "N/A", None, "Input"],
+        ["n_TF", "Number of TF coils", 16, "dimensionless", None, "Input"],
+        ["I", "Current drive", 0.1, "dimensionless", None, "Input"],
+        [
+            "P_h_ss",
+            "Steady-state plasma heating power",
+            0.1,
+            "dimensionless",
+            None,
+            "Input",
+        ],
+        ["P_el", "Electric power input", 0.1, "dimensionless", None, "Input"],
     ]
 
     def __init__(self, config, inputs, g_cd, eta_cd, plauncher):

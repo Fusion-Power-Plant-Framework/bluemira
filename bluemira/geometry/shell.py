@@ -32,6 +32,8 @@ import bluemira.codes._freecadapi as cadapi
 from bluemira.geometry.base import BluemiraGeo
 from bluemira.geometry.face import BluemiraFace
 
+__all__ = ["BluemiraShell"]
+
 
 class BluemiraShell(BluemiraGeo):
     """Bluemira Shell class."""

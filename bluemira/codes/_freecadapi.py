@@ -28,7 +28,7 @@ from __future__ import annotations
 import math
 
 # import typing
-from typing import Dict, Iterable, List, Optional, Union
+from typing import Dict, Iterable, List, Optional, Tuple, Union
 
 import freecad  # noqa: F401
 import FreeCAD
@@ -41,8 +41,6 @@ import BOPTools.SplitAPI
 import BOPTools.SplitFeatures
 import BOPTools.Utils
 import FreeCADGui
-
-# import math lib
 import numpy as np
 import Part
 from FreeCAD import Base
@@ -368,8 +366,8 @@ def make_ellipse(
         FreeCAD wire that contains the ellipse or arc of ellipse
     """
     # TODO: check the creation of the arc when start_angle < end_angle
-    s1 = Base.Vector(major_axis).normalize().multiply(major_radius)
-    s2 = Base.Vector(minor_axis).normalize().multiply(minor_radius)
+    s1 = Base.Vector(major_axis).normalize().multiply(major_radius) + Base.Vector(center)
+    s2 = Base.Vector(minor_axis).normalize().multiply(minor_radius) + Base.Vector(center)
     center = Base.Vector(center)
     output = Part.Ellipse(s1, s2, center)
 
@@ -382,30 +380,6 @@ def make_ellipse(
         )
 
     return Part.Wire(Part.Edge(output))
-
-
-def _wire_is_planar(wire):
-    """
-    Check if a wire is planar.
-    """
-    try:
-        face = Part.Face(wire)
-    except Part.OCCError:
-        return False
-    return isinstance(face.Surface, Part.Plane)
-
-
-def _wire_is_straight(wire):
-    """
-    Check if a wire is a straight line.
-    """
-    if len(wire.Edges) == 1:
-        edge = wire.Edges[0]
-        if len(edge.Vertexes) == 2:
-            straight = dist_to_shape(edge.Vertexes[0], edge.Vertexes[1])[0]
-            if np.isclose(straight, wire.Length, rtol=EPS, atol=1e-8):
-                return True
-    return False
 
 
 def offset_wire(
@@ -494,28 +468,40 @@ def volume(obj) -> float:
 
 def center_of_mass(obj) -> np.ndarray:
     """Object's center of mass"""
-    return _get_api_attr(obj, "CenterOfMass")
+    return vector_to_numpy(_get_api_attr(obj, "CenterOfMass"))
 
 
-def is_null(obj):
+def is_null(obj) -> bool:
     """True if obj is null"""
     return _get_api_attr(obj, "isNull")()
 
 
-def is_closed(obj):
+def is_closed(obj) -> bool:
     """True if obj is closed"""
     return _get_api_attr(obj, "isClosed")()
 
 
-def is_valid(obj):
+def is_valid(obj) -> bool:
     """True if obj is valid"""
     return _get_api_attr(obj, "isValid")()
 
 
-def bounding_box(obj):
+def bounding_box(obj) -> Tuple[float, float, float, float, float, float]:
     """Object's bounding box"""
     box = _get_api_attr(obj, "BoundBox")
     return box.XMin, box.YMin, box.ZMin, box.XMax, box.YMax, box.ZMax
+
+
+def start_point(obj) -> np.ndarray:
+    """The start point of the object"""
+    point = obj.Edges[0].firstVertex().Point
+    return vector_to_numpy(point)
+
+
+def end_point(obj) -> np.ndarray:
+    """The end point of the object"""
+    point = obj.Edges[-1].lastVertex().Point
+    return vector_to_numpy(point)
 
 
 # ======================================================================================
@@ -699,7 +685,7 @@ def _slice_wire(wire, normal_plane, shift, *, BIG_NUMBER=1e5):
 
 def _slice_solid(obj, normal_plane, shift):
     """
-    Get the plane intersection points of a face or solid
+    Get the plane intersection wires of a face or solid
     """
     return obj.slice(Base.Vector(*normal_plane), shift)
 
@@ -855,42 +841,6 @@ def extrude_shape(shape, vec: tuple):
     return shape.extrude(vec)
 
 
-def _edges_tangent(edge_1, edge_2):
-    """
-    Check if two adjacent edges are tangent to one another.
-    """
-    angle = edge_1.tangentAt(edge_1.LastParameter).getAngle(
-        edge_2.tangentAt(edge_2.FirstParameter)
-    )
-    return np.isclose(
-        angle,
-        0.0,
-        rtol=1e-4,
-        atol=1e-4,
-    )
-
-
-def _wire_edges_tangent(wire):
-    """
-    Check that all consecutive edges in a wire are tangent
-    """
-    if len(wire.Edges) <= 1:
-        return True
-
-    else:
-        edges_tangent = []
-        for i in range(len(wire.Edges) - 1):
-            edge_1 = wire.Edges[i]
-            edge_2 = wire.Edges[i + 1]
-            edges_tangent.append(_edges_tangent(edge_1, edge_2))
-
-    if wire.isClosed():
-        # Check last and first edge tangency
-        edges_tangent.append(_edges_tangent(wire.Edges[-1], wire.Edges[0]))
-
-    return all(edges_tangent)
-
-
 def _split_wire(wire):
     """
     Split a wire into two parts.
@@ -992,13 +942,19 @@ def boolean_fuse(shapes):
     if len(shapes) < 2:
         raise ValueError("At least 2 shapes must be given")
 
-    # check that all the shapes are of the same time
     _type = type(shapes[0])
-    if not all(isinstance(s, _type) for s in shapes):
-        raise ValueError(f"All instances in {shapes} must be of the same type.")
+    _check_shapes_same_type(shapes)
+
+    if _is_wire_or_face(_type):
+        _check_shapes_coplanar(shapes)
+        if not _shapes_are_coaxis(shapes):
+            bluemira_warn(
+                "Boolean fuse on shapes that do not have the same planar axis. Reversing."
+            )
+            _make_shapes_coaxis(shapes)
 
     try:
-        if _type == Part.Wire:
+        if _type == apiWire:
             merged_shape = BOPTools.SplitAPI.booleanFragments(shapes, "Split")
             if len(merged_shape.Wires) > len(shapes):
                 raise FreeCADError(
@@ -1011,7 +967,7 @@ def boolean_fuse(shapes):
                 merged_shape = Part.Wire(merged_shape.Wires)
                 return merged_shape
 
-        elif _type == Part.Face:
+        elif _type == apiFace:
             merged_shape = shapes[0].fuse(shapes[1:])
             merged_shape = merged_shape.removeSplitter()
             if len(merged_shape.Faces) > 1:
@@ -1020,7 +976,7 @@ def boolean_fuse(shapes):
                 )
             return merged_shape.Faces[0]
 
-        elif _type == Part.Solid:
+        elif _type == apiSolid:
             merged_shape = shapes[0].fuse(shapes[1:])
             merged_shape = merged_shape.removeSplitter()
             if len(merged_shape.Solids) > 1:
@@ -1065,17 +1021,20 @@ def boolean_cut(shape, tools, split=True):
     if not isinstance(tools, list):
         tools = [tools]
 
+    if _is_wire_or_face(_type):
+        _check_shapes_coplanar([shape] + tools)
+
     cut_shape = shape.cut(tools)
     if split:
         cut_shape = BOPTools.SplitAPI.slice(cut_shape, tools, mode="Split")
 
-    if _type == Part.Wire:
+    if _type == apiWire:
         output = cut_shape.Wires
-    elif _type == Part.Face:
+    elif _type == apiFace:
         output = cut_shape.Faces
-    elif _type == Part.Shell:
+    elif _type == apiShell:
         output = cut_shape.Shells
-    elif _type == Part.Solid:
+    elif _type == apiSolid:
         output = cut_shape.Solids
     else:
         raise ValueError(f"Cut function not implemented for {_type} objects.")
@@ -1100,6 +1059,124 @@ def point_inside_shape(point, shape):
     """
     vector = apiVector(*point)
     return shape.isInside(vector, EPS, True)
+
+
+# ======================================================================================
+# Geometry checking tools
+# ======================================================================================
+
+
+def _edges_tangent(edge_1, edge_2):
+    """
+    Check if two adjacent edges are tangent to one another.
+    """
+    angle = edge_1.tangentAt(edge_1.LastParameter).getAngle(
+        edge_2.tangentAt(edge_2.FirstParameter)
+    )
+    return np.isclose(
+        angle,
+        0.0,
+        rtol=1e-4,
+        atol=1e-4,
+    )
+
+
+def _wire_edges_tangent(wire):
+    """
+    Check that all consecutive edges in a wire are tangent
+    """
+    if len(wire.Edges) <= 1:
+        return True
+
+    else:
+        edges_tangent = []
+        for i in range(len(wire.OrderedEdges) - 1):
+            edge_1 = wire.OrderedEdges[i]
+            edge_2 = wire.OrderedEdges[i + 1]
+            edges_tangent.append(_edges_tangent(edge_1, edge_2))
+
+    if wire.isClosed():
+        # Check last and first edge tangency
+        edges_tangent.append(_edges_tangent(wire.OrderedEdges[-1], wire.OrderedEdges[0]))
+
+    return all(edges_tangent)
+
+
+def _wire_is_planar(wire):
+    """
+    Check if a wire is planar.
+    """
+    try:
+        face = Part.Face(wire)
+    except Part.OCCError:
+        return False
+    return isinstance(face.Surface, Part.Plane)
+
+
+def _wire_is_straight(wire):
+    """
+    Check if a wire is a straight line.
+    """
+    if len(wire.Edges) == 1:
+        edge = wire.Edges[0]
+        if len(edge.Vertexes) == 2:
+            straight = dist_to_shape(edge.Vertexes[0], edge.Vertexes[1])[0]
+            if np.isclose(straight, wire.Length, rtol=EPS, atol=1e-8):
+                return True
+    return False
+
+
+def _is_wire_or_face(shape_type):
+    return shape_type == apiWire or shape_type == apiFace
+
+
+def _check_shapes_same_type(shapes):
+    """
+    Check that all the shapes are of the same type.
+    """
+    _type = type(shapes[0])
+    if not all(isinstance(s, _type) for s in shapes):
+        raise ValueError(f"All instances in {shapes} must be of the same type.")
+
+
+def _check_shapes_coplanar(shapes):
+    if not _shapes_are_coplanar(shapes):
+        raise ValueError(
+            "Shapes are not co-planar; this operation does not support non-co-planar wires or faces."
+        )
+
+
+def _shapes_are_coplanar(shapes):
+    """
+    Check if a list of shapes are all coplanar. First shape is taken as the reference.
+    """
+    coplanar = []
+    for other in shapes[1:]:
+        coplanar.append(shapes[0].isCoplanar(other))
+    return all(coplanar)
+
+
+def _shapes_are_coaxis(shapes):
+    """
+    Check if a list of shapes are all co-axis. First shape is taken as the reference.
+    """
+    axis = shapes[0].findPlane().Axis
+    for shape in shapes[1:]:
+        other_axis = shape.findPlane().Axis
+        if not axis == other_axis:
+            return False
+    return True
+
+
+def _make_shapes_coaxis(shapes):
+    """
+    Make a list of shapes co-axis by reversing. First shape is taken as the reference.
+    """
+    axis = shapes[0].findPlane().Axis
+    for shape in shapes[1:]:
+        other_axis = shape.findPlane().Axis
+        if not axis == other_axis:
+            shape.reverse()
 
 
 # ======================================================================================
@@ -1140,23 +1217,18 @@ def fix_face(face, precision=EPS, min_length=MINIMUM_LENGTH):
 
 
 # ======================================================================================
-# Plane manipulations
+# Placement manipulations
 # ======================================================================================
-
-# BluemiraPlane wraps Base.Placement not Part.Plane. These conversions become useful..
-# They are probably a bit broken... cos this stuff is a mess in FreeCAD
-
-
-def make_plane(base, axis, angle):
+def make_placement(base, axis, angle):
     """
     Make a FreeCAD Placement
 
     Parameters
     ----------
     base: Iterable
-        a vector representing the Plane's position
+        a vector representing the Placement local origin
     axis: Iterable
-        normal vector to the Plane
+        axis of rotation
     angle:
         rotation angle in degree
     """
@@ -1166,26 +1238,55 @@ def make_plane(base, axis, angle):
     return Base.Placement(base, axis, angle)
 
 
-def move_plane(plane, vector):
+def make_placement_from_matrix(matrix):
     """
-    Moves the FreeCAD Plane along the given vector
+    Make a FreeCAD Placement from a 4 x 4 matrix.
 
     Parameters
     ----------
-    plane: FreeCAD plane
-        the FreeCAD plane to be modified
+    matrix: np.ndarray
+        4 x 4 matrix from which to make the placement
+
+    Notes
+    -----
+    Matrix should be of the form:
+        [cos_11, cos_12, cos_13, dx]
+        [cos_21, cos_22, cos_23, dy]
+        [cos_31, cos_32, cos_33, dz]
+        [     0,      0,      0,  1]
+    """
+    if not matrix.shape == (4, 4):
+        raise FreeCADError(f"Matrix must be of shape (4, 4), not: {matrix.shape}")
+
+    for i in range(3):
+        row = matrix[i, :3]
+        matrix[i, :3] = row / np.linalg.norm(row)
+    matrix[-1, :] = [0, 0, 0, 1]
+
+    matrix = Base.Matrix(*matrix.flat)
+    return Base.Placement(matrix)
+
+
+def move_placement(placement, vector):
+    """
+    Moves the FreeCAD Placement along the given vector
+
+    Parameters
+    ----------
+    placement: FreeCAD placement
+        the FreeCAD placement to be modified
     vector: Iterable
-        direction along which the plane is moved
+        direction along which the placement is moved
 
     Returns
     -------
     nothing:
-        The plane is directly modified.
+        The placement is directly modified.
     """
-    plane.move(Base.Vector(vector))
+    placement.move(Base.Vector(vector))
 
 
-def change_plane(geo, plane):
+def change_placement(geo, placement):
     """
     Change the placement of a FreeCAD object
 
@@ -1193,16 +1294,16 @@ def change_plane(geo, plane):
     ----------
     geo: FreeCAD object
         the object to be modified
-    plane: FreeCAD plane
-        the FreeCAD plane to be modified
+    placement: FreeCAD placement
+        the FreeCAD placement to be modified
 
     Returns
     -------
     nothing:
         The object is directly modified.
     """
-    new_placement = geo.Placement.multiply(plane)
-    new_base = plane.multVec(geo.Placement.Base)
+    new_placement = geo.Placement.multiply(placement)
+    new_base = placement.multVec(geo.Placement.Base)
     new_placement.Base = new_base
     geo.Placement = new_placement
 
@@ -1219,6 +1320,11 @@ def _colourise(
         node.transparency.setValue(transparency)
     for child in node.getChildren() or []:
         _colourise(child, options)
+
+
+# ======================================================================================
+# Geometry visualisation
+# ======================================================================================
 
 
 def show_cad(
@@ -1282,3 +1388,220 @@ def show_cad(
     viewer.setWindowTitle("Bluemira Display")
     viewer.show()
     app.exec_()
+
+
+# # =============================================================================
+# # Serialize and Deserialize
+# # =============================================================================
+def extract_attribute(func):
+    """
+    Decorator for serialize_shape. Convert the function output attributes string
+    list to the corresponding object attributes.
+    The first argument of func is the reference object.
+    If an output is callable, the output result is returned.
+    """
+
+    def wrapper(*args, **kwargs):
+        type_, attrs = func(*args, **kwargs)
+        output = {}
+        for k, v in attrs.items():
+            if k == "type":
+                output[k] = type(args[0])
+            else:
+                output[v] = getattr(args[0], k)
+                if callable(output[v]):
+                    output[v] = output[v]()
+        return {type_: output}
+
+    return wrapper
+
+
+def serialize_shape(shape):
+    """
+    Serialize a FreeCAD topological data object.
+    """
+    type_ = type(shape)
+
+    if type_ == Part.Wire:
+        output = []
+        edges = shape.OrderedEdges
+        for count, e in enumerate(edges):
+            output.append(serialize_shape(e))
+        return {"Wire": output}
+
+    if type_ == Part.Edge:
+        output = serialize_shape(_convert_edge_to_curve(shape))
+        return output
+
+    if type_ in [Part.LineSegment, Part.Line]:
+        output = {
+            "LineSegment": {"StartPoint": shape.StartPoint, "EndPoint": shape.EndPoint},
+        }
+        return output
+
+    if type_ == Part.BezierCurve:
+        output = {
+            "BezierCurve": {
+                "Poles": vector_to_list(shape.getPoles()),
+                "FirstParameter": shape.FirstParameter,
+                "LastParameter": shape.LastParameter,
+            }
+        }
+        return output
+
+    if type_ == Part.BSplineCurve:
+        output = {
+            "BSplineCurve": {
+                "Poles": vector_to_list(shape.getPoles()),
+                "FirstParameter": shape.FirstParameter,
+                "LastParameter": shape.LastParameter,
+            }
+        }
+        return output
+
+    if type_ == Part.ArcOfCircle:
+        output = {
+            "ArcOfCircle": {
+                "Radius": shape.Radius,
+                "Center": shape.Center,
+                "Axis": shape.Axis,
+                "StartAngle": math.degrees(shape.FirstParameter),
+                "EndAngle": math.degrees(shape.LastParameter),
+                "StartPoint": shape.StartPoint,
+                "EndPoint": shape.EndPoint,
+            }
+        }
+        return output
+
+    if type_ == Part.ArcOfEllipse:
+        output = {
+            "ArcOfEllipse": {
+                "Center": shape.Center,
+                "MajorRadius": shape.MajorRadius,
+                "MinorRadius": shape.MinorRadius,
+                "MajorAxis": shape.XAxis,
+                "MinorAxis": shape.YAxis,
+                "StartAngle": math.degrees(shape.FirstParameter),
+                "EndAngle": math.degrees(shape.LastParameter),
+                "Focus1": shape.Ellipse.Focus1,
+                "StartPoint": shape.StartPoint,
+                "EndPoint": shape.EndPoint,
+            }
+        }
+        return output
+
+    raise NotImplementedError(f"Serialization non implemented for {type_}")
+
+
+def deserialize_shape(buffer):
+    """
+    Deserialize a FreeCAD topological data object obtained from serialize_shape.
+
+    Parameters
+    ----------
+    buffer
+        Object serialization as stored by serialize_shape
+
+    Returns
+    -------
+        The deserialized FreeCAD object
+    """
+    for type_, v in buffer.items():
+        if type_ == "Wire":
+            temp_list = []
+            for edge in v:
+                temp_list.append(deserialize_shape(edge))
+            return Part.Wire(temp_list)
+        if type_ == "LineSegment":
+            return make_polygon([v["StartPoint"], v["EndPoint"]])
+        elif type_ == "BezierCurve":
+            return make_bezier(v["Poles"])
+        elif type_ == "BSplineCurve":
+            return make_bspline(v["Poles"])
+        elif type_ == "ArcOfCircle":
+            return make_circle(
+                v["Radius"], v["Center"], v["StartAngle"], v["EndAngle"], v["Axis"]
+            )
+        elif type_ == "ArcOfEllipse":
+            return make_ellipse(
+                v["Center"],
+                v["MajorRadius"],
+                v["MinorRadius"],
+                v["MajorAxis"],
+                v["MinorAxis"],
+                v["StartAngle"],
+                v["EndAngle"],
+            )
+        else:
+            raise NotImplementedError(f"Deserialization non implemented for {type_}")
+
+
+def _convert_edge_to_curve(edge):
+    """
+    Convert a Freecad Edge to the respective curve.
+
+    Parameters
+    ----------
+    edge: Part.Edge
+        FreeCAD Edge
+
+    Returns
+    -------
+    output:
+        FreeCAD Part curve object
+    """
+    curve = edge.Curve
+    first = edge.FirstParameter
+    last = edge.LastParameter
+    if edge.Orientation == "Reversed":
+        first, last = last, first
+    output = None
+
+    if isinstance(curve, Part.Line):
+        output = Part.LineSegment(curve.value(first), curve.value(last))
+    elif isinstance(curve, Part.Ellipse):
+        output = Part.ArcOfEllipse(curve, first, last)
+        if edge.Orientation == "Reversed":
+            output.Axis = -output.Axis
+            p0 = curve.value(first)
+            p1 = curve.value(last)
+            output = Part.ArcOfEllipse(
+                output.Ellipse,
+                output.Ellipse.parameter(p0),
+                output.Ellipse.parameter(p1),
+            )
+    elif isinstance(curve, Part.Circle):
+        output = Part.ArcOfCircle(curve, first, last)
+        if edge.Orientation == "Reversed":
+            output.Axis = -output.Axis
+            p0 = curve.value(first)
+            p1 = curve.value(last)
+            output = Part.ArcOfCircle(
+                output.Circle,
+                output.Circle.parameter(p0),
+                output.Circle.parameter(p1),
+            )
+    elif isinstance(curve, Part.BezierCurve):
+        output = Part.BezierCurve()
+        poles = curve.getPoles()
+        if edge.Orientation == "Reversed":
+            poles.reverse()
+        output.setPoles(poles)
+        output.segment(first, last)
+    elif isinstance(curve, Part.BSplineCurve):
+        output = curve
+        # p = curve.discretize(100)
+        # if edge.Orientation == "Reversed":
+        #     p.reverse()
+        # output = Part.BSplineCurve()
+        # output.interpolate(p)
+    elif isinstance(curve, Part.OffsetCurve):
+        c = curve.toNurbs()
+        if isinstance(c, Part.BSplineCurve):
+            if edge.Orientation == "Reversed":
+                c.reverse()
+        output = _convert_edge_to_curve(Part.Edge(c))
+    else:
+        bluemira_warn("Conversion of {} is still not supported!".format(type(curve)))
+
+    return output

@@ -25,69 +25,121 @@ Bluemira External Codes Wrapper
 
 from __future__ import annotations
 
-from typing import Optional
+from typing import TYPE_CHECKING, Optional
 
-import bluemira.base as bm_base
-from bluemira.codes import process
-from bluemira.codes.error import CodesError
+from bluemira.codes.interface import FileProgramInterface
+from bluemira.codes.utilities import get_code_interface
+
+if TYPE_CHECKING:
+    from bluemira.base.builder import BuildConfig
+    from bluemira.base.parameter import ParameterFrame
 
 
-def run_systems_code(
-    params: bm_base.ParameterFrame,
-    build_config: bm_base.BuildConfig,
+def systems_code_solver(
+    params: ParameterFrame,
+    build_config: BuildConfig,
     run_dir: str,
     read_dir: Optional[str] = None,
     template_indat=None,
     params_to_update=None,
-) -> bm_base.ParameterFrame:
+    module: Optional[str] = "PROCESS",
+) -> FileProgramInterface:
     """
-    Runs, reads or mocks PROCESS according to the build configuration dictionary.
+    Runs, reads or mocks systems code according to the build configuration dictionary.
 
     Parameters
     ----------
-    reactor: class
-        The instantiated reactor class for the run. Note the run mode is set by
-        reactor.build_config.process_mode (or the build_config.json input file).
-
+    params: ParameterFrame
+        ParameterFrame for code
+    build_config: Dict
+        build configuration dictionary
+    run_dir: str
+        Path to the run directory, where the main executable is located
+        and the input/output files will be written.
+    read_dir: str
+        Path to the read directory, where the output files from a run are
+        read in
+    template_indat: str
+        Path to the template file to be used for the run.
     params_to_update: list
         A list of parameter names compatible with the ParameterFrame class.
         If provided, parameters included in this list will be modified to write their
-        values to PROCESS inputs, while all others will be modified to not be written to
-        the PROCESS inputs. By default, None.
+        values to the inputs, while all others will be modified to not be written to
+        the inputs. By default, None.
 
-    Notes
-    -----
-    - "run": Run PROCESS within a bluemira run to generate an radial build.
-        Creates a new input file from a template IN.DAT modified with updated parameters
-        from the bluemira run mapped with write=True. If params_to_update are provided
-        then these will be modified to have write=True and all other will be modified to
-        have write=False.
-    - "runinput": Run PROCESS from an unmodified input file (IN.DAT), generating the
-        radial build to use as the input to the bluemira run. Overrides the write
-        mapping of all parameters to be False.
-    - "read": Load the radial build from a previous PROCESS run (MFILE.DAT). Loads
-        only the parameters mapped with read=True.
-    - "readall": Load the radial build from a previous PROCESS run (MFILE.DAT). Loads
-        all values with a bluemira mapping regardless of the mapping.read bool.
-        Overrides the read mapping of all parameters to be True.
-    - "mock": Run bluemira without running PROCESS, using the default radial build based
-        on EU-DEMO. This option should not be used if PROCESS is installed, except for
-        testing purposes.
+    Returns
+    -------
+    Solver object: FileProgramInterface
+
+    Returns
+    -------
+    solver: FileProgramInterface
+        The solver that has been run.
 
     Raises
     ------
     CodesError
         If PROCESS is not being mocked and is not installed.
+
     """
     # Remove me, temp compatibility layer
     build_config["mode"] = build_config.get("mode", build_config["process_mode"])
     # #####################################
-    process_mode = build_config.get("mode", "run")
-    if (not process.PROCESS_ENABLED) and (process_mode.lower() != "mock"):
-        raise CodesError("PROCESS not (properly) installed")
+    syscode = get_code_interface(module)
 
-    solver = process.Solver(
+    return syscode.Solver(
         params, build_config, run_dir, read_dir, template_indat, params_to_update
     )
-    solver.run()
-    return solver.params
+
+
+def plot_radial_build(
+    filename: str, width: float = 1.0, show: bool = True, module="PROCESS"
+):
+    """
+    Systems code radial build
+
+    Parameters
+    ----------
+    filename: str
+        The directory containing the system code run results.
+    width: float
+        The relative width of the plot.
+    show: bool
+        If True then immediately display the plot, else delay displaying the plot until
+        the user shows it, by default True.
+
+    """
+    syscode = get_code_interface(module)
+
+    return syscode.plot_radial_build(filename, width, show)
+
+
+def transport_code_solver(
+    params: ParameterFrame,
+    build_config: BuildConfig,
+    run_dir: str,
+    read_dir: Optional[str] = None,
+    module: Optional[str] = "PLASMOD",
+) -> FileProgramInterface:
+    """
+    Transport solver
+
+    Parameters
+    ----------
+    params: ParameterFrame
+        ParameterFrame for plasmod
+    build_config: Dict
+        build configuration dictionary
+    run_dir: str
+        Plasmod run directory
+    read_dir: str
+        Directory to read in previous run
+
+    Returns
+    -------
+    Solver object: FileProgramInterface
+
+    """
+    transp = get_code_interface(module)
+
+    return transp.Solver(params, build_config, run_dir, read_dir)

@@ -48,10 +48,10 @@ class Divertor(Meshable, ReactorSystem):
 
     # fmt: off
     default_params = [
-        ['n_TF', 'Number of TF coils', 16, 'N/A', None, 'Input'],
-        ['plasma_type', 'Type of plasma', 'SN', 'N/A', None, 'Input'],
-        ['n_div_cassettes', 'Number of divertor cassettes per sector', 3, 'N/A', None, "Common decision"],
-        ['coolant', 'Coolant', 'Water', None, 'Divertor coolant type', 'Common sense'],
+        ['n_TF', 'Number of TF coils', 16, 'dimensionless', None, 'Input'],
+        ['plasma_type', 'Type of plasma', 'SN', 'dimensionless', None, 'Input'],
+        ['n_div_cassettes', 'Number of divertor cassettes per sector', 3, 'dimensionless', None, "Common decision"],
+        ['coolant', 'Coolant', 'Water', "dimensionless", 'Divertor coolant type', 'Common sense'],
         ['T_in', 'Coolant inlet T', 80, '°C', 'Coolant inlet T', None],
         ['T_out', 'Coolant outlet T', 120, '°C', 'Coolant inlet T', None],
         ['P_in', 'Coolant inlet P', 8, 'MPa', 'Coolant inlet P', None],

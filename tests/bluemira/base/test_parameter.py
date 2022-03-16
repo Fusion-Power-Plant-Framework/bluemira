@@ -19,11 +19,13 @@
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 
+import copy
 from typing import Type
 
 import pytest
+from pint import DimensionalityError, Unit
 
-from bluemira.base.parameter import Parameter, ParameterFrame, ParameterMapping
+from bluemira.base.parameter import Parameter, ParameterFrame, ParameterMapping, _unitify
 from BLUEPRINT.systems.baseclass import ReactorSystem
 
 
@@ -32,7 +34,14 @@ class Dummy(ReactorSystem):
     # Var_name    Name    Value     Unit        Description        Source
     inputs: dict
     default_params = [
-        ["coolant", "Coolant", "Water", None, "Divertor coolant type", "Common sense"],
+        [
+            "coolant",
+            "Coolant",
+            "Water",
+            "dimensionless",
+            "Divertor coolant type",
+            "Common sense",
+        ],
         ["T_in", "Coolant inlet T", 80, "°C", "Coolant inlet T", None],
         ["T_out", "Coolant outlet T", 120, "°C", "Coolant inlet T", None],
         ["P_in", "Coolant inlet P", 8, "MPa", "Coolant inlet P", None],
@@ -65,22 +74,55 @@ class DummyPF(ReactorSystem):
 
 
 class TestParameterMapping:
+    def setup(self):
+        self.pm = ParameterMapping("Name", send=True, recv=False)
+
+    @pytest.mark.parametrize(
+        "attr, value",
+        zip(
+            ["name", "mynewattr", "_frozen", "unit"],
+            ["NewName", "Hello", ["custom", "list"], "MW"],
+        ),
+    )
+    def test_no_keyvalue_change(self, attr, value):
+
+        with pytest.raises(KeyError):
+            setattr(self.pm, attr, value)
+
     def test_value_change(self):
-        pm = ParameterMapping("Name", send=True, recv=False)
 
-        with pytest.raises(ValueError):
-            pm.send = "A string"
+        for var in ["send", "recv"]:
+            with pytest.raises(ValueError):
+                setattr(self.pm, var, "A string")
 
-        with pytest.raises(KeyError):
-            pm.name = "NewName"
+        assert self.pm.send
+        assert not self.pm.recv
+        self.pm.send = False
+        self.pm.recv = True
+        assert not self.pm.send
+        assert self.pm.recv
 
-        with pytest.raises(KeyError):
-            pm.mynewattr = "Hello"
+    def test_tofrom_dict(self):
+        assert self.pm == ParameterMapping.from_dict(self.pm.to_dict())
 
-        pm.send = False
-        pm.recv = True
-        assert not pm.send
-        assert pm.recv
+
+class TestUnitify:
+    def test_convert_string_to_unit(self):
+        uf = _unitify("MW")
+        pu = Unit("MW")
+
+        assert isinstance(uf, Unit)
+        assert isinstance(pu, Unit)
+        assert uf == pu
+
+        mperc = _unitify("M%")
+        mperc_u = Unit("M%")
+        assert isinstance(mperc, Unit)
+        assert isinstance(mperc_u, Unit)
+        assert mperc == mperc_u
+
+        with pytest.raises(TypeError):
+            _unitify(None)
 
 
 class TestParameter:
@@ -91,11 +133,11 @@ class TestParameter:
         "m",
         "marjogrgrbg",
         "Input",
-        {"PROCESS": ParameterMapping("rmajor", False, True)},
+        {"PROCESS": ParameterMapping("rmajor", False, True, "m")},
     )
     p_str = (
         "Major radius [m]: r_0 = 9 (marjogrgrbg)\n"
-        "    {'PROCESS': {'name': 'rmajor', 'recv': False, 'send': True}}"
+        "    {'PROCESS': {'name': 'rmajor', 'recv': False, 'send': True, 'unit': 'm'}}"
     )
     g = Parameter(
         "B_0",
@@ -209,11 +251,15 @@ class TestParameter:
 
     @pytest.mark.parametrize("param, expected", [(p, p_str), (g, g_str)])
     def test_to_str(self, param, expected):
-        assert str(param) == expected
+        assert f"{param}" == expected
+
+    def test_nounit_error(self):
+        with pytest.raises(TypeError):
+            Parameter("p", "param", 1.0)
 
     def test_source_warning(self, caplog):
         warning_str = "The source of the value of p not consistently known"
-        p = Parameter("p", "param", 1.0)
+        p = Parameter("p", "param", 1.0, "m")
 
         # check we get a warning if source hasn't been defined
         p.value = 5
@@ -222,7 +268,7 @@ class TestParameter:
         assert warning_str in out
 
     def test_source_no_warning(self, caplog):
-        p = Parameter("p", "param", 1.0)
+        p = Parameter("p", "param", 1.0, "m")
         p.source = "Input"
 
         # check we don't get a warning if source has been defined
@@ -236,7 +282,7 @@ class TestParameter:
 
     def test_source_warning_init_update(self, caplog):
         warning_str = "The source of the value of p not consistently known"
-        p = Parameter("p", "param", 1.0, source="Input")
+        p = Parameter("p", "param", 1.0, "m", source="Input")
 
         # check we don't get a warning if source has been defined
         p.value = 5
@@ -249,7 +295,7 @@ class TestParameter:
 
     def test_source_inplace_warning(self, caplog):
         warning_str = "The source of the value of p not consistently known"
-        p = Parameter("p", "param", 1.0, source="Input")
+        p = Parameter("p", "param", 1.0, "m", source="Input")
         p += 5
 
         # source should now be reset to False, so check we get a warning if we update
@@ -259,7 +305,7 @@ class TestParameter:
         assert warning_str in out
 
     def test_source_inplace_no_warning(self, caplog):
-        p = Parameter("p", "param", 1.0, source="Input")
+        p = Parameter("p", "param", 1.0, "m", source="Input")
         p += 5
         p.source = "new"
 
@@ -267,24 +313,121 @@ class TestParameter:
         p += 5
         assert len(caplog.messages) == 0
 
+    def test_mappingtype_enforcement(self):
+
+        p = Parameter("p", "param", 1.0, "m", source="Input")
+
+        for val in ("string", {"A": "dict"}):
+            with pytest.raises(TypeError):
+                p.mapping = val
+
+        mapping = ParameterMapping("param_name", send=True, recv=True, unit="T")
+        p.mapping = {"MYCODE": mapping}
+
+        assert p.mapping["MYCODE"] == mapping
+
+        p.mapping = {"MYOTHERCODE": mapping}
+
+        assert p.mapping["MYCODE"] == mapping
+        assert p.mapping["MYOTHERCODE"] == mapping
+
+        del p.mapping["MYOTHERCODE"]
+
+        assert p.mapping.keys() == set(["MYCODE"])
+
+
+def _converted_helper(test_pm, source):
+    """
+    Dunno why this only works without static or
+    class decorator....dont question it
+    """
+    pm = copy.deepcopy(test_pm).to_dict()
+    pm["source"] = source
+    return pm
+
+
+def _gen_unit_conversions():
+    answers = 0.05, 5
+    units = "cm", "m"
+    conversion_str = ": Units converted from centimetre to metre", ""
+
+    names = "tuple", "list", "dict", "param", "param_from_dict", "list_param"
+    parameterisations = []
+    for ans, unit, conv_str in zip(answers, units, conversion_str):
+        parameterisations += [[(answers[1], names[0], unit), ans, names[0] + conv_str]]
+        parameterisations += [[[answers[1], names[1], unit], ans, names[1] + conv_str]]
+        parameterisations += [
+            [
+                {"value": answers[1], "source": names[2], "unit": unit},
+                ans,
+                names[2] + conv_str,
+            ]
+        ]
+
+        test_pm = Parameter(
+            **{"var": "R_0", "value": answers[1], "source": names[3], "unit": unit}
+        )
+
+        parameterisations += [[test_pm, ans, names[3] + conv_str]]
+        parameterisations += [
+            [
+                _converted_helper(test_pm, names[4]),
+                ans,
+                names[4] + conv_str,
+            ]
+        ]
+        parameterisations += [
+            [
+                list(_converted_helper(test_pm, names[5]).values()),
+                ans,
+                names[5] + conv_str,
+            ]
+        ]
+    return parameterisations
+
+
+def _gen_record_list():
+    rec_list = [
+        [
+            "R_0",
+            "Fake Radius",
+            10,
+            "m",
+            "Fake Description.",
+            "Old Source",
+        ],
+        [
+            "B_0",
+            "Fake Field",
+            10,
+            "T",
+            "Fake Description.",
+            "Old Source",
+        ],
+        ["n_TF", "Fake Num", 16, "dimensionless", "Fake Description.", "Old Source"],
+    ]
+    rec_list_param = [Parameter(*p) for p in rec_list]
+    rec_dict_param = {p[0]: Parameter(*p) for p in rec_list}
+    return rec_list, rec_list_param, rec_dict_param
+
 
 class TestParameterFrame:
     default_params = [
-        ["Name", "Reactor name", "Cambridge", "N/A", None, "Input"],
-        ["plasma_type", "Type of plasma", "SN", "N/A", None, "Input"],
-        ["op_mode", "Mode of operation", "Pulsed", "N/A", None, "Input"],
-        ["blanket_type", "Blanket type", "HCPB", "N/A", None, "Input"],
+        ["Name", "Reactor name", "Cambridge", "dimensionless", None, "Input"],
+        ["plasma_type", "Type of plasma", "SN", "dimensionless", None, "Input"],
+        ["op_mode", "Mode of operation", "Pulsed", "dimensionless", None, "Input"],
+        ["blanket_type", "Blanket type", "HCPB", "dimensionless", None, "Input"],
         [
             "n_TF",
             "Number of TF coils",
             16,
-            "N/A",
+            "dimensionless",
             None,
             "Input",
             {"PROCESS": ParameterMapping("n_tf", True, False)},
         ],
-        ["n_PF", "Number of PF coils", 6, "N/A", None, "Input"],
-        ["n_CS", "Number of CS coil divisions", 5, "N/A", None, "Input"],
+        ["n_PF", "Number of PF coils", 6, "dimensionless", None, "Input"],
+        ["n_CS", "Number of CS coil divisions", 5, "dimensionless", None, "Input"],
         [
             "TF_ripple_limit",
             "TF coil ripple limit",
@@ -298,7 +441,7 @@ class TestParameterFrame:
             "A",
             "Plasma aspect ratio",
             3.1,
-            "N/A",
+            "dimensionless",
             None,
             "Input",
             {"PROCESS": ParameterMapping("aspect", True, False)},
@@ -323,14 +466,8 @@ class TestParameterFrame:
         ],
     ]
 
-    # ParameterFrame.set_default_parameters(default_params)
-
     def setup(self):
         self.params = ParameterFrame(self.default_params)
-
-    # @classmethod
-    # def teardown_class(cls):
-    #     ParameterFrame._clean()
 
     def test_keys(self):
         assert list(self.params.keys()) == [p[0] for p in self.default_params]
@@ -392,7 +529,7 @@ class TestParameterFrame:
         params_copy = self.params.copy()
         p = {
             "R_0": Parameter(
-                "R_0", "Really bad parameter", 10, "m/N/s", "Don't change me", None
+                "R_0", "Really bad parameter", 10, "m", "Don't change me", None
             )
         }
         params_copy.update_kw_parameters(p)
@@ -408,69 +545,44 @@ class TestParameterFrame:
         # The source should be updated because it has changed
         # assert params_copy.get("R_0").source == self.params.get("R_0").source
 
-    def test_add_parameters_source_using_class_format(self):
+    @pytest.mark.parametrize(
+        "record_list",
+        _gen_record_list(),
+        ids=["list_format", "params_format", "params_kw"],
+    )
+    def test_add_parameters_source(self, record_list):
         """
         Test that a source passed to directly to add_parameters is updated correctly in
-        each parameter in record_list (where record_list is a list of parameter objects).
+        each parameter in record_list (where record_list is a list of lists,
+        a list of parameters and a dict of parameters).
         """
         params_copy = self.params.copy()
-        record_list = [
-            Parameter(
-                "R_0", "Fake Radius", 10, "Fake Units", "Fake Description.", "Old Source"
-            ),
-            Parameter(
-                "B_0", "Fake Field", 10, "Fake Units", "Fake Description.", "Old Source"
-            ),
-            Parameter(
-                "n_TF", "Fake Num", 16, "Fake Units", "Fake Description.", "Old Source"
-            ),
-        ]
         new_source = "New Source"
         params_copy.add_parameters(record_list, source=new_source)
         assert params_copy.get_param("R_0").source == new_source
         assert params_copy.get_param("B_0").source == new_source
         assert params_copy.get_param("n_TF").source == new_source
 
-    def test_add_parameters_source_using_list_format(self):
-        """
-        Test that a source passed to directly to add_parameters is updated correctly in
-        each parameter in record_list (where record_list is a list of lists).
-        """
+    def test_complex_update_kw(self):
         params_copy = self.params.copy()
-        record_list = [
-            ["R_0", "Fake Radius", 10, "Fake Units", "Fake Description.", "Old Source"],
-            ["B_0", "Fake Field", 10, "Fake Units", "Fake Description.", "Old Source"],
-            ["n_TF", "Fake Num", 16, "Fake Units", "Fake Description.", "Old Source"],
-        ]
-        new_source = "New Source"
-        params_copy.add_parameters(record_list, source=new_source)
-        assert params_copy.get_param("R_0").source == new_source
-        assert params_copy.get_param("B_0").source == new_source
-        assert params_copy.get_param("n_TF").source == new_source
 
-    def test_add_parameters_source_via_update_kw_parameters(self):
-        """
-        Test that a source passed to directly to add_parameters is updated correctly in
-        each parameter in record_list (where record_list is a dict of Parameter objects).
-        Note in this case record_list and source are passed to update_kw_parameters.
-        """
-        params_copy = self.params.copy()
-        record_list = {
-            "R_0": Parameter(
-                "R_0", "Fake Radius", 10, "Fake Units", "Fake Description.", "Old Source"
-            ),
-            "B_0": Parameter(
-                "B_0", "Fake Field", 10, "Fake Units", "Fake Description.", "Old Source"
-            ),
-            "n_TF": Parameter(
-                "n_TF", "Fake Num", 16, "Fake Units", "Fake Description.", "Old Source"
-            ),
+        params = {
+            "R_0": 9.0,
+            "n_TF": {
+                "value": 16,
+                "description": "Number of TF coils needed for this study",
+            },
+            "A": {
+                "value": 3.1,
+                "unit": "dimensionless",
+                "description": "some description",
+            },
         }
-        new_source = "New Source"
-        params_copy.add_parameters(record_list, source=new_source)
-        assert params_copy.get_param("R_0").source == new_source
-        assert params_copy.get_param("B_0").source == new_source
-        assert params_copy.get_param("n_TF").source == new_source
+        params_copy.update_kw_parameters(params)
+
+        assert params_copy.R_0.value == 9.0
+        assert params_copy.n_TF == 16
+        assert params_copy.A.description == "some description"
 
     def test_bad_index(self):
         """
@@ -491,13 +603,22 @@ class TestParameterFrame:
     def test_mismatched_attr(self):
         """
         Test that the ParameterFrame fails gracefully on a mismatched attribute.
+
+        We assume that if the units match its ok and copy over the value and source
         """
-        with pytest.raises(ValueError) as ex_info:
+        with pytest.raises(DimensionalityError) as ex_info:
             self.params.R_0 = self.params.get_param("B_0")
         assert (
             str(ex_info.value)
-            == "Mismatch between parameter var B_0 and attribute to be set R_0."
+            == "Cannot convert from 'tesla' ([mass] / [current] / [time] ** 2) to 'meter' ([length])"
         )
+
+    def test_mismatched_attr_name(self):
+        with pytest.raises(ValueError):
+            ParameterFrame({"B_O": self.params.R_0})
+
+        with pytest.raises(ValueError):
+            ParameterFrame().add_parameters({"B_O": self.params.R_0})
 
     def test_starstar(self):
         def starstar(pf):
@@ -646,23 +767,64 @@ class TestParameterFrame:
         assert params_copy.R_0 == 6.8
         assert params_copy.R_0.source is None
 
-    def test_parameter_source_tuple(self):
+    @pytest.mark.parametrize(
+        "value, source",
+        zip([(6.8, "New Value"), {"value": 6.8, "source": None}], ["New Value", None]),
+        ids=["tuple", "dict"],
+    )
+    def test_parameter_source(self, value, source):
         params_copy = self.params.copy()
 
-        # Set both value and source from a tuple
-        params_copy.R_0 = (6.8, "New Value")
+        params_copy.R_0 = value
         assert len(params_copy.R_0.history()) == 2
         assert params_copy.R_0 == 6.8
-        assert params_copy.R_0.source == "New Value"
+        assert params_copy.R_0.source == source
 
-    def test_parameter_source_dict(self):
+    @pytest.mark.parametrize(
+        "var, value, source",
+        _gen_unit_conversions(),
+        ids=["tuple", "list", "dict", "param", "param_from_dict", "list_param"]
+        + [
+            i + "noconvert"
+            for i in ["tuple", "list", "dict", "param", "param_from_dict", "list_param"]
+        ],
+    )
+    def test_converted_unit(self, var, value, source):
+        params_copy = self.params.copy()
+        params_copy.R_0 = var
+        assert params_copy.R_0.value == value
+        assert params_copy.R_0.source == source
+
+    def test_bad_unit_conversion(self):
         params_copy = self.params.copy()
 
-        # Set both value and source from a dict
-        params_copy.R_0 = {"value": 6.9, "source": None}
-        assert len(params_copy.R_0.history()) == 2
-        assert params_copy.R_0 == 6.9
-        assert params_copy.R_0.source is None
+        p = {
+            "R_0": Parameter(
+                "R_0", "Really bad parameter", 10, "m/N/s", "Don't change me", None
+            )
+        }
+        with pytest.raises(DimensionalityError):
+            params_copy.update_kw_parameters(p)
+
+    def test_set_parameter(self):
+        params_copy = self.params.copy()
+        params_copy.set_parameter("n_CS", 10, "dimensionless", "hello")
+
+        assert params_copy.n_CS.value == 10
+        assert params_copy.n_CS.source == "hello"
+
+        params_copy.set_parameter(
+            "n_CS",
+            Parameter(var="n_CS", value=15, unit="dimensionless", source="hello2"),
+        )
+
+        assert params_copy.n_CS.value == 15
+        assert params_copy.n_CS.source == "hello2"
+
+        # No unit provided
+        params_copy.set_parameter("n_CS", 10, source="hello")
+        assert params_copy.n_CS.value == 10
+        assert params_copy.n_CS.source == "hello"
 
 
 class TestReactorSystem:
@@ -673,7 +835,7 @@ class TestReactorSystem:
     # @classmethod
     # def teardown_class(cls):
     #     ParameterFrame._clean()
-    DIV = Dummy({"T_in": 88})
+    DIV = Dummy({"T_in": {"value": 88, "unit": "celsius"}})
 
     def test_input_handling(self):
         assert self.DIV.params.T_in == 88
@@ -682,16 +844,18 @@ class TestReactorSystem:
         self.DIV.add_parameter("R_0", "Major radius", 8.8, "m", None, None)
 
         assert self.DIV.params.R_0 == 8.8
-        assert self.DIV.params.R_0 == 8.8
+        assert self.DIV.params["R_0"] == 8.8
 
-        self.DIV.add_parameter("n_TF", "Number of TF coils", 17, "N/A", None, "Input")
+        self.DIV.add_parameter(
+            "n_TF", "Number of TF coils", 17, "dimensionless", None, "Input"
+        )
         assert self.DIV.params.n_TF == 17
         assert self.DIV.params["n_TF"] == 17
 
     def test_add_parameters(self):
         p = [
-            ["n_TF", "Number of TF coils", 200, "N/A", None, "Input"],
-            ["n_PF", "Number of PF coils", 6, "N/A", None, "Input"],
+            ["n_TF", "Number of TF coils", 200, "dimensionless", None, "Input"],
+            ["n_PF", "Number of PF coils", 6, "dimensionless", None, "Input"],
         ]
         self.DIV.add_parameters(p)
         assert self.DIV.params.n_TF == 200

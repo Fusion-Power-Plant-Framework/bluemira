@@ -30,7 +30,12 @@ jobs:
       with:
         repository: 'Fusion-Power-Plant-Framework/bluemira-private-data'
         ssh-key: ${{ secrets.BLUEMIRA_PRIVATE_DATA_DEPLOY_KEY }}
-        path: './bluemira_private_data'
+        path: './bluemira-private-data'
+
+    - name: Move bluemira-private-data
+      working-directory: "/home/runner/work/"
+      run: |
+          mv ~/work/bluemira/bluemira/bluemira-private-data ~/work/bluemira/bluemira-private-data
 
     - name: Cache pip
       uses: actions/cache@v2
@@ -68,6 +73,21 @@ jobs:
         miniforge-version: "latest"
         use-only-tar-bz2: true
 
+    - name: Get msh2xdmf
+      shell: bash -l {0}
+      run: |
+        bash scripts/install-msh2xdmf.sh
+
+    - name: Freeze conda env
+      shell: bash -l {0}
+      run: |
+        conda env export -n bluemira > bluemira.yml
+
+    - uses: actions/upload-artifact@v3
+      with:
+        name: bluemira.yml
+        path: bluemira.yml
+
     - name: Check Code Quality
       shell: bash -l {0}
       run: |
@@ -99,7 +119,7 @@ jobs:
         pytest --cov=bluemira \
                --cov-report html:htmlcov_bluemira \
                --cov-report xml \
-               tests/bluemira --reactor
+               tests/bluemira --reactor --private
 
     - name: "Upload coverage to Codecov"
       uses: codecov/codecov-action@v2

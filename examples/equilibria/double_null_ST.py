@@ -21,6 +21,17 @@
 """
 ST equilibrium attempt
 """
+
+# %%[markdown]
+
+# # Script to demonstrate optimisation of coilset of a double null equilibrium
+
+# # Imports
+
+# Import necessary Equilbrium module definitions.
+
+# %%
+
 import argparse
 import copy
 
@@ -29,19 +40,20 @@ import numpy as np
 
 from bluemira.display.auto_config import plot_defaults
 from bluemira.equilibria.coils import Coil, CoilSet, SymmetricCircuit
-from bluemira.equilibria.constraints import IsofluxConstraint, MagneticConstraintSet
+from bluemira.equilibria.eq_constraints import IsofluxConstraint, MagneticConstraintSet
 from bluemira.equilibria.equilibrium import Equilibrium
 from bluemira.equilibria.grid import Grid
-from bluemira.equilibria.optimiser import (
-    BoundedCurrentOptimiser,
-    CoilsetOptimiser,
-    NestedCoilsetOptimiser,
-    Norm2Tikhonov,
-    UnconstrainedCurrentOptimiser,
+from bluemira.equilibria.opt_problems import (
+    BoundedCurrentCOP,
+    CoilsetPositionCOP,
+    NestedCoilsetPositionCOP,
+    UnconstrainedCurrentCOP,
 )
+from bluemira.equilibria.optimiser import Norm2Tikhonov
 from bluemira.equilibria.profiles import CustomProfile
 from bluemira.equilibria.solve import PicardCoilsetIterator, PicardDeltaIterator
 from bluemira.geometry._deprecated_loop import Loop
+from bluemira.utilities.optimiser import Optimiser
 
 # Clean up and make plots look good
 plt.close("all")
@@ -69,6 +81,14 @@ Z0 = 0
 Bt = 1.9
 Ip = 16e6
 
+# %%[markdown]
+
+# # Input Definitions
+
+# ## Grid
+
+# %%
+
 
 def init_grid():
     """
@@ -79,6 +99,13 @@ def init_grid():
     nx, nz = 129, 257
     grid = Grid(r0, r1, z0, z1, nx, nz)
     return grid
+
+
+# %%[markdown]
+
+# ## Plasma Profiles
+
+# %%
 
 
 def init_profile():
@@ -157,7 +184,14 @@ def init_profile():
     return profile
 
 
-def init_constraints():
+# %%[markdown]
+
+# ## Magnetic Field Targets
+
+# %%
+
+
+def init_targets():
     """
     Create the set of constraints for the FBE solver.
     """
@@ -177,7 +211,15 @@ def init_constraints():
     legs_isoflux = IsofluxConstraint(x_legs, z_legs, ref_x=x_lcfs[2], ref_z=z_lcfs[2])
 
     constraint_set = MagneticConstraintSet([lcfs_isoflux, legs_isoflux])
-    return constraint_set
+    core_constraints = MagneticConstraintSet([lcfs_isoflux])
+    return constraint_set, core_constraints
+
+
+# %%[markdown]
+
+# ## Initial CoilSet
+
+# %%
 
 
 def init_coilset():
@@ -207,6 +249,13 @@ def init_coilset():
     return coilset
 
 
+# %%[markdown]
+
+# ## Initial allowed PF regions (if needed)
+
+# %%
+
+
 def init_pfregions(coilset):
     """
     Initialises regions in which coil position optimisation will be limited to.
@@ -229,6 +278,13 @@ def init_pfregions(coilset):
 
         pfregions[coil.name] = rect
     return pfregions
+
+
+# %%[markdown]
+
+# ## Initial Equilibrium
+
+# %%
 
 
 def init_equilibrium(grid, coilset, constraint_set):
@@ -254,8 +310,8 @@ def init_equilibrium(grid, coilset, constraint_set):
         li=None,
     )
     constraint_set(eq)
-    optimiser = UnconstrainedCurrentOptimiser(coilset_temp, gamma=1e-7)
-    coilset_temp = optimiser(eq, constraint_set)
+    optimiser = UnconstrainedCurrentCOP(coilset_temp, eq, constraint_set, gamma=1e-7)
+    coilset_temp = optimiser()
 
     coilset.set_control_currents(coilset_temp.get_control_currents())
 
@@ -274,6 +330,15 @@ def init_equilibrium(grid, coilset, constraint_set):
     return eq
 
 
+# %%[markdown]
+
+# # Optimisation
+
+# ## Handle to Iterator call
+
+# %%
+
+
 def optimise_fbe(program):
     """
     Run the iterator to optimise the FBE.
@@ -290,12 +355,19 @@ def optimise_fbe(program):
     return
 
 
+# %%[markdown]
+
+# ## Specification of initial coarse optimisation routine
+
+# %%
+
+
 def pre_optimise(eq, profile, constraint_set):
     """
     Run a simple unconstrained optimisation to improve the
     initial equilibrium for the main optimiser.
     """
-    optimiser = UnconstrainedCurrentOptimiser(eq.coilset, gamma=1e-8)
+    optimiser = UnconstrainedCurrentCOP(eq.coilset, eq, constraint_set, gamma=1e-8)
 
     program = PicardCoilsetIterator(
         eq,
@@ -313,11 +385,20 @@ def pre_optimise(eq, profile, constraint_set):
     return eq
 
 
+# %%[markdown]
+
+# ## Specification of primary CoilSet OptimisationProblem to solve
+
+# %%
+
+
 def set_coilset_optimiser(
     coilset,
+    eq,
+    targets,
     optimiser_name,
     optimisation_options,
-    suboptimiser_name="BoundedCurrentOptimiser",
+    suboptimiser_name="BoundedCurrentCOP",
     suboptimisation_options=None,
 ):
     """
@@ -326,24 +407,33 @@ def set_coilset_optimiser(
     pfregions = init_pfregions(coilset)
     if optimiser_name in ["Norm2Tikhonov"]:
         optimiser = Norm2Tikhonov(**optimisation_options)
-    if optimiser_name in ["UnconstrainedCurrentOptimiser"]:
-        optimiser = UnconstrainedCurrentOptimiser(coilset, **optimisation_options)
-    elif optimiser_name in ["BoundedCurrentOptimiser"]:
-        optimiser = BoundedCurrentOptimiser(coilset, **optimisation_options)
-    elif optimiser_name in ["CoilsetOptimiser"]:
-        optimiser = CoilsetOptimiser(
-            coilset, pfregions=pfregions, **optimisation_options
+    if optimiser_name in ["UnconstrainedCurrentCOP"]:
+        optimiser = UnconstrainedCurrentCOP(coilset, eq, targets, **optimisation_options)
+    elif optimiser_name in ["BoundedCurrentCOP"]:
+        optimiser = BoundedCurrentCOP(coilset, eq, targets, **optimisation_options)
+    elif optimiser_name in ["CoilsetPositionCOP"]:
+        optimiser = CoilsetPositionCOP(
+            coilset, eq, targets, pfregions=pfregions, **optimisation_options
         )
-    elif optimiser_name in ["NestedCoilsetOptimiser"]:
+    elif optimiser_name in ["NestedCoilsetPositionCOP"]:
         sub_optimiser = set_coilset_optimiser(
             coilset,
+            eq,
+            targets,
             optimiser_name=suboptimiser_name,
             optimisation_options=suboptimisation_options,
         )
-        optimiser = NestedCoilsetOptimiser(
-            sub_optimiser, pfregions=pfregions, **optimisation_options
+        optimiser = NestedCoilsetPositionCOP(
+            sub_optimiser, eq, targets, pfregions=pfregions, **optimisation_options
         )
     return optimiser
+
+
+# %%[markdown]
+
+# ## Specification of Equilibrium Iterator
+
+# %%
 
 
 def set_iterator(eq, profile, constraint_set, optimiser):
@@ -355,10 +445,10 @@ def set_iterator(eq, profile, constraint_set, optimiser):
     iterator_kwargs = {"plot": True, "gif": False, "relaxation": 0.3, "maxiter": 400}
 
     if optimiser_name in [
-        "BoundedCurrentOptimiser",
-        "CoilsetOptimiser",
-        "NestedCoilsetOptimiser",
-        "UnconstrainedCurrentOptimiser",
+        "BoundedCurrentCOP",
+        "CoilsetPositionCOP",
+        "NestedCoilsetPositionCOP",
+        "UnconstrainedCurrentCOP",
     ]:
         program = PicardCoilsetIterator(*iterator_args, **iterator_kwargs)
     else:
@@ -367,47 +457,61 @@ def set_iterator(eq, profile, constraint_set, optimiser):
     return program
 
 
+# %%[markdown]
+
+# ## Selection of OptimisationProblem specific options
+
+# %%
+
+
 def default_optimiser_options(optimiser_name):
     """
     Specifies default optimiser options.
     """
     options = {"optimiser_name": optimiser_name}
-    if optimiser_name in ["Norm2Tikhonov", "UnconstrainedCurrentOptimiser"]:
+    if optimiser_name in ["Norm2Tikhonov", "UnconstrainedCurrentCOP"]:
         options["optimisation_options"] = {"gamma": 1e-8}
-    elif optimiser_name in ["BoundedCurrentOptimiser"]:
+    elif optimiser_name in ["BoundedCurrentCOP"]:
         options["optimisation_options"] = {
             "max_currents": 3.0e7,
             "gamma": 1e-8,
         }
-    elif optimiser_name in ["CoilsetOptimiser"]:
+    elif optimiser_name in ["CoilsetPositionCOP"]:
         options["optimisation_options"] = {
             "max_currents": 3.0e7,
             "gamma": 1e-8,
-            "opt_args": {
-                "algorithm_name": "SBPLX",
-                "opt_conditions": {
+            "optimiser": Optimiser(
+                algorithm_name="SBPLX",
+                opt_conditions={
                     "stop_val": 2.5e-2,
                     "max_eval": 100,
                 },
-                "opt_parameters": {},
-            },
+                opt_parameters={},
+            ),
         }
-    elif optimiser_name in ["NestedCoilsetOptimiser"]:
+    elif optimiser_name in ["NestedCoilsetPositionCOP"]:
         options["optimisation_options"] = {
-            "opt_args": {
-                "algorithm_name": "SBPLX",
-                "opt_conditions": {
+            "optimiser": Optimiser(
+                algorithm_name="SBPLX",
+                opt_conditions={
                     "stop_val": 2.5e-2,
                     "max_eval": 100,
                 },
-                "opt_parameters": {},
-            },
+                opt_parameters={},
+            )
         }
-        options["suboptimiser_name"] = "BoundedCurrentOptimiser"
+        options["suboptimiser_name"] = "BoundedCurrentCOP"
         options["suboptimisation_options"] = {"max_currents": 3.0e7, "gamma": 1e-8}
     else:
         print("Coilset optimiser name not supported for this example")
     return options
+
+
+# %%[markdown]
+
+# ## Main program
+
+# %%
 
 
 def run(args):
@@ -417,7 +521,7 @@ def run(args):
     optimiser_name = args.optimiser_name
     grid = init_grid()
     profile = init_profile()
-    constraint_set = init_constraints()
+    constraint_set = init_targets()[0]
     coilset = init_coilset()
     eq = init_equilibrium(grid, coilset, constraint_set)
 
@@ -427,27 +531,35 @@ def run(args):
         pre_optimise(eq, profile, constraint_set)
     if optimiser_name is not None:
         options = default_optimiser_options(optimiser_name)
-        optimiser = set_coilset_optimiser(eq.coilset, **options)
+        optimiser = set_coilset_optimiser(eq.coilset, eq, constraint_set, **options)
         program = set_iterator(eq, profile, constraint_set, optimiser)
         optimise_fbe(program)
     eq.plot()
     plt.show()
 
 
+# %%[markdown]
+
+# ## Argument parsing
+
+# Parse command line to control OptimisationProblem to use in example.
+
+# %%
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument(
         "--optimiser_name",
-        help="Name of optimiser to use",
+        help="Name of Coilset OptimisationProblem to use",
         choices=[
             "Norm2Tikhonov",
-            "UnconstrainedCurrentOptimiser",
-            "BoundedCurrentOptimiser",
-            "CoilsetOptimiser",
-            "NestedCoilsetOptimiser",
+            "UnconstrainedCurrentCOP",
+            "BoundedCurrentCOP",
+            "CoilsetPositionCOP",
+            "NestedCoilsetPositionCOP",
         ],
         type=str,
-        default="UnconstrainedCurrentOptimiser",
+        default="UnconstrainedCurrentCOP",
     )
     parser.add_argument(
         "--no-pre_optimise",

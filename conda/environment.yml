@@ -26,11 +26,11 @@ dependencies:
   - gmsh=4.9.3
   - fenics=2019.1.0
   - MeshPy=2020.1
-  - meshio=5.2.2
+  - meshio=4.4.5
   - mshr=2019.1.0
   - wrapt=1.13.3
   - pythonocc-core=7.5.1
-  - fluids=1.0.16
+  - fluids=1.0.19
   - shapely=1.8.0
   - scipy=1.5.3
   - graphviz

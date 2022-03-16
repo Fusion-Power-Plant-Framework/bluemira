@@ -23,17 +23,44 @@
 A collection of generic physical constants, conversions, and miscellaneous constants.
 """
 
+from functools import lru_cache
+from typing import List, Union
+
 import numpy as np
+from periodictable import elements
+from pint import UnitRegistry, set_application_registry
+
+LOCALE = "en_GB"
+ureg = UnitRegistry(
+    fmt_locale=LOCALE, preprocessors=[lambda x: x.replace("%", " percent ")]
+)
+ureg.default_format = "~P"
+set_application_registry(ureg)
+
+SECOND = ureg.second
+METRE = ureg.metre
+KILOGRAM = ureg.kilogram
+AMP = ureg.ampere
+CELSIUS = ureg.celsius
+MOL = ureg.mol
+DEGREE = ureg.degree
+DENSITY = KILOGRAM / METRE**3
+PART_DENSITY = METRE**-3
+FLUX_DENSITY = METRE**-2 / SECOND
+
+ureg.define("displacements_per_atom  = count = dpa")
+ureg.define("full_power_year = year = fpy")
+ureg.define("percent = 0.01 count = %")
 
 # =============================================================================
 # Physical constants
 # =============================================================================
 
 # Speed of light
-C_LIGHT = 299792458  # [m/s]
+C_LIGHT = ureg.Quantity("c").to_base_units().magnitude  # [m/s]
 
 # Vacuum permeability
-MU_0 = 4 * np.pi * 1e-7  # [T.m/A] or [V.s/(A.m)]
+MU_0 = ureg.Quantity("mu_0").to_base_units().magnitude  # [T.m/A] or [V.s/(A.m)]
 
 # Commonly used..
 MU_0_4PI = 1e-7  # [T.m/A] or [V.s/(A.m)]
@@ -42,68 +69,233 @@ MU_0_4PI = 1e-7  # [T.m/A] or [V.s/(A.m)]
 ONE_4PI = 1 / (4 * np.pi)
 
 # Gravitational constant
-GRAVITY = 9.81  # [m/s^2]  # nO ESCAPING
+GRAVITY = ureg.Quantity("gravity").to_base_units().magnitude  # [m/s^2]  # nO ESCAPING
 
-# Avogadro's number
-N_AVOGADRO = 6.02214e23  # [1/mol] Number of particles in a mol
+# Avogadro's number, [1/mol] Number of particles in a mol
+N_AVOGADRO = ureg.Quantity("avogadro_number").to_base_units().magnitude
 
 # Stefan-Boltzmann constant: black-body radiation constant of proportionality
-SIGMA_BOLTZMANN = 5.670367e-8  # [W/m^2.K^4]
+SIGMA_BOLTZMANN = ureg.Quantity("sigma").to_base_units().magnitude  # [W/m^2.K^4]
 
 # Boltzmann constant kB = R/N_a
-K_BOLTZMANN = 1.38064852e-23  # [J/K]
+K_BOLTZMANN = ureg.Quantity("k_B").to_base_units().magnitude  # [J/K]
+
+# neutron molar mass, [u] or [g/mol]
+NEUTRON_MOLAR_MASS = (
+    ureg.Quantity("m_n").to("g") * ureg.Quantity("avogadro_constant").to_base_units()
+).magnitude
+
+# proton molar mass, [u] or [g/mol]
+PROTON_MOLAR_MASS = (
+    ureg.Quantity("m_p").to("g") * ureg.Quantity("avogadro_constant").to_base_units()
+).magnitude
+
+# electron molar mass, [u] or [g/mol]
+ELECTRON_MOLAR_MASS = (
+    ureg.Quantity("m_e").to("g") * ureg.Quantity("avogadro_constant").to_base_units()
+).magnitude
 
 # Tritium half-life
-T_HALFLIFE = 12.32  # [yr]
+# https://www.nist.gov/pml/radiation-physics/radioactivity/radionuclide-half-life-measurements
+# http://www.lnhb.fr/nuclear-data/nuclear-data-table/
+# http://www.lnhb.fr/nuclides/H-3_tables.pdf
+T_HALFLIFE = 12.312  # [yr]
 
 # Tritium decay constant
 T_LAMBDA = np.log(2) / T_HALFLIFE  # [1/yr]
 
-# Tritium molar mass
-T_MOLAR_MASS = 3.016050  # [u] or [g/mol]
+# Tritium molar mass,  [u] or [g/mol]
+T_MOLAR_MASS = elements.isotope("T").mass
 
-# Deuterium molar mass
-D_MOLAR_MASS = 2.014102  # [u] or [g/mol]
+# Deuterium molar mass, [u] or [g/mol]
+D_MOLAR_MASS = elements.isotope("D").mass
 
-# Helium molar mass
-HE_MOLAR_MASS = 4.002603  # [u] or [g/mol]
+# Helium molar mass, [u] or [g/mol]
+HE_MOLAR_MASS = elements.isotope("He").mass
 
-# Helium-3 molar mass
-HE3_MOLAR_MASS = 3.0160293  # [u] or [g/mol]
-
-# neutron molar mass
-NEUTRON_MOLAR_MASS = 1.008665  # [u] or [g/mol]
-
-# proton molar mass
-PROTON_MOLAR_MASS = 1.007276466879  # [u] or [g/mol]
-
-# electron molar mass
-ELECTRON_MOLAR_MASS = 5.48579909070e-4  # [u] or [g/mol]
+# Helium-3 molar mass, [u] or [g/mol]
+HE3_MOLAR_MASS = elements.isotope("3-He").mass
 
 # Absolute zero in Kelvin
 ABS_ZERO_K = 0  # [K]
 
 # Absolute zero in Celsius
-ABS_ZERO_C = -273.15  # [°C]
+ABS_ZERO_C = ureg.Quantity(0, ureg.kelvin).to("celsius").magnitude  # [°C]
 
 # =============================================================================
 # Conversions
 # =============================================================================
 
 # Electron-volts to Joules
-EV_TO_J = 1.602176565e-19
+EV_TO_J = ureg.Quantity(1, ureg.eV).to("joule").magnitude
 
 # Joules to Electron-volts
-J_TO_EV = 1 / EV_TO_J
+J_TO_EV = ureg.Quantity(1, ureg.joule).to("eV").magnitude
 
 # Atomic mass units to kilograms
-AMU_TO_KG = 1.660539040e-27
+AMU_TO_KG = ureg.Quantity(1, ureg.amu).to("kg").magnitude
 
 # Years to seconds
-YR_TO_S = 60 * 60 * 24 * 365
+YR_TO_S = ureg.Quantity(1, ureg.year).to("s").magnitude
 
 # Seconds to years
-S_TO_YR = 1 / YR_TO_S
+S_TO_YR = ureg.Quantity(1, ureg.second).to("year").magnitude
+
+
+def to_celsius(kelvin: Union[float, np.array, List[float]]) -> Union[float, np.array]:
+    """
+    Convert a temperature in Kelvin to Celsius.
+
+    Parameters
+    ----------
+    kelvin: Union[float, np.array, List[float]]
+        The temperature to convert [K]
+
+    Returns
+    -------
+    temp_in_celsius: Union[float, np.array]
+        The temperature [°C]
+    """
+    if np.any(np.less(kelvin, ABS_ZERO_K)):
+        raise ValueError("Negative temperature in K specified.")
+    return ureg.Quantity(kelvin, ureg.kelvin).to("celsius").magnitude
+
+
+def to_kelvin(celsius: Union[float, np.array, List[float]]) -> Union[float, np.array]:
+    """
+    Convert a temperature in Celsius to Kelvin.
+
+    Parameters
+    ----------
+    temp_in_celsius: Union[float, np.array, List[float]]
+        The temperature to convert [°C]
+
+    Returns
+    -------
+    temp_in_kelvin: Union[float, np.array]
+        The temperature [K]
+    """
+    if np.any(np.less(celsius, ABS_ZERO_C)):
+        raise ValueError("Negative temperature in K specified.")
+    return ureg.Quantity(celsius, ureg.celsius).to("kelvin").magnitude
+
+
+def from_keV(
+    value: Union[float, np.array, List[float]],
+    to: str = "celsius",
+    *,
+    _from: str = "keV"
+):
+    """
+    Convert a temperature in keV to Celsius.
+
+    Parameters
+    ----------
+    value: Union[float, np.array, List[float]]
+        The temperature to convert [keV]
+    to: str
+        Unit to convert to eg celsius or kelvin
+    from: str
+        allows modification of keV prefix to eg eV or MeV etc
+
+    Returns
+    -------
+    temp: Union[float, np.array]
+        The temperature
+    """
+    return (ureg.Quantity(value, _from) / ureg.Quantity("k_B")).to(to).magnitude
+
+
+def kgm3_to_gcm3(density: Union[float, np.array, List[float]]) -> Union[float, np.array]:
+    """
+    Convert a density in kg/m3 to g/cm3
+
+    Parameters
+    ----------
+    density : Union[float, np.array, List[float]]
+        The density [kg/m3]
+
+    Returns
+    -------
+    density_gcm3 : Union[float, np.array]
+        The density [g/cm3]
+    """
+    return density / 1000.0
+
+
+def gcm3_to_kgm3(density: Union[float, np.array, List[float]]) -> Union[float, np.array]:
+    """
+    Convert a density in g/cm3 to kg/m3
+
+    Parameters
+    ----------
+    density : Union[float, np.array, List[float]]
+        The density [g/cm3]
+
+    Returns
+    -------
+    density_kgm3 : Union[float, np.array]
+        The density [kg/m3]
+    """
+    return density * 1000.0
+
+
+def pam3s_to_mols(flow_in_pam3_s):
+    """
+    Convert a flow in Pa.m^3/s to a flow in mols.
+
+    Parameters
+    ----------
+    flow_in_pam3_s: Union[float, np.array]
+        The flow in Pa.m^3/s to convert
+
+    Returns
+    -------
+    flow_in_mols: Union[float, np.array]
+        The flow in mol/s
+
+    Notes
+    -----
+    At 273.15 K for a diatomic gas
+    """
+    return (
+        (ureg.Quantity(flow_in_pam3_s, "Pa m^3") / _pam3_mol_const())
+        .to_base_units()
+        .magnitude
+    )
+
+
+def mols_to_pam3s(flow_in_mols):  # noqa :N802
+    """
+    Convert a flow in mols to a flow in Pa.m^3/s.
+
+    Parameters
+    ----------
+    flow_in_mols: Union[float, np.array]
+        The flow in mol/s to convert
+
+    Returns
+    -------
+    flow_in_pam3_s: Union[float, np.array]
+        The flow in Pa.m^3/s
+
+    Notes
+    -----
+    At 273.15 K for a diatomic gas
+    """
+    return (
+        (ureg.Quantity(flow_in_mols, "mole") * _pam3_mol_const())
+        .to_base_units()
+        .magnitude
+    )
+
+
+@lru_cache(1)
+def _pam3_mol_const():
+    return ureg.Quantity("molar_gas_constant") * ureg.Quantity(0, ureg.celsius).to(
+        "kelvin"
+    )
+
 
 # =============================================================================
 # Working constants

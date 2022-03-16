@@ -23,14 +23,14 @@
 Importer for PROCESS runner constants and functions
 """
 
-from bluemira.codes.process.api import PROCESS_ENABLED
+from bluemira.codes.process.api import ENABLED
 from bluemira.codes.process.constants import NAME
 from bluemira.codes.process.run import Solver
-from bluemira.codes.process.teardown import plot_PROCESS
+from bluemira.codes.process.teardown import plot_radial_build
 
 __all__ = [
-    "PROCESS_ENABLED",
+    "ENABLED",
     "NAME",
     "Solver",
-    "plot_PROCESS",
+    "plot_radial_build",
 ]

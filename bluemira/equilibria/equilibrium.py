@@ -524,7 +524,7 @@ class Equilibrium(MHDState):
     Ip: float (optional) default = 0
         Plasma current [A]
     li: None or float (default None)
-        Normalised plasma internal inductance [N/A]
+        Normalised plasma internal inductance [-]
     RB0: float (optional) default = None
         Major radius vacuum R_0*B_T,0 - used when loading eqdsks
     jtor: np.array or None
@@ -684,8 +684,6 @@ class Equilibrium(MHDState):
         nbdry = lcfs.d2.shape[1]
         x_c, z_c, dxc, dzc, currents = self.coilset.to_group_vecs()
 
-        profile_scale = np.abs(self._profiles.scale)
-
         result = {
             "nx": n_x,
             "nz": n_z,
@@ -704,9 +702,9 @@ class Equilibrium(MHDState):
             "cplasma": self._Ip,
             "psi": psi,
             "fpol": self.fRBpol(psinorm),
-            "ffprime": self.ffprime(psinorm) * profile_scale,
-            "pprime": self.pprime(psinorm) * profile_scale,
-            "pressure": self.pressure(psinorm) * profile_scale,
+            "ffprime": self.ffprime(psinorm),
+            "pprime": self.pprime(psinorm),
+            "pressure": self.pressure(psinorm),
             "pnorm": psinorm,
             "nbdry": nbdry,
             "xbdry": lcfs["x"],
@@ -867,6 +865,7 @@ class Equilibrium(MHDState):
 
         self._Ip = self._int_dxdz(jtor)
         self._jtor = jtor
+        self._reassign_profiles(profiles)
 
     def solve_li(self, profiles, jtor=None, psi=None):
         """
@@ -1227,7 +1226,7 @@ class Equilibrium(MHDState):
         """
         Get f = R*Bt at specified values of normalised psi.
         """
-        return self._profiles.fRBpol(psinorm) * np.abs(self._profiles.scale)
+        return self._profiles.fRBpol(psinorm)
 
     def fvac(self):
         """

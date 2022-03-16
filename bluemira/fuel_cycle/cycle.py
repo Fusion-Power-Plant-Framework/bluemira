@@ -26,7 +26,13 @@ import matplotlib.pyplot as plt
 import numpy as np
 from scipy.interpolate import interp1d
 
-from bluemira.base.constants import N_AVOGADRO, T_LAMBDA, T_MOLAR_MASS, YR_TO_S
+from bluemira.base.constants import (
+    N_AVOGADRO,
+    T_LAMBDA,
+    T_MOLAR_MASS,
+    YR_TO_S,
+    pam3s_to_mols,
+)
 from bluemira.base.look_and_feel import bluemira_print
 from bluemira.base.parameter import ParameterFrame
 from bluemira.fuel_cycle.blocks import FuelCycleComponent, FuelCycleFlow
@@ -36,7 +42,6 @@ from bluemira.fuel_cycle.tools import (
     find_max_load_factor,
     find_noisy_locals,
     legal_limit,
-    pam3s_to_mols,
 )
 
 # TODO: Make the whole thing run in self.t (higher resolution, better plotting)
@@ -86,29 +91,29 @@ class EUDEMOFuelCycleModel:
 
     # fmt: off
     default_params = [
-        ['TBR', 'Tritium breeding ratio', 1.05, 'N/A', None, 'Default'],
-        ['f_b', 'Burn-up fraction', 0.015, 'N/A', None, 'Default'],
-        ['m_gas', 'Gas puff flow rate', 50, 'Pam^3/s', 'To maintain detachment - no chance of fusion from gas injection', 'Discussions with Chris Day and Yannick Hörstenmeyer'],
-        ['A_global', 'Load factor', 0.3, 'N/A', None, 'Default'],
-        ['r_learn', 'Learning rate', 1, 'N/A', None, 'Default'],
+        ['TBR', 'Tritium breeding ratio', 1.05, 'dimensionless', None, 'Default'],
+        ['f_b', 'Burn-up fraction', 0.015, 'dimensionless', None, 'Default'],
+        ['m_gas', 'Gas puff flow rate', 50, 'Pa m^3/s', 'To maintain detachment - no chance of fusion from gas injection', 'Discussions with Chris Day and Yannick Hörstenmeyer'],
+        ['A_global', 'Load factor', 0.3, 'dimensionless', None, 'Default'],
+        ['r_learn', 'Learning rate', 1, 'dimensionless', None, 'Default'],
         ['t_pump', 'Time in DIR loop', 100, 's', 'Time between exit from plasma and entry into plasma through DIR loop', 'Discussions with Chris Day and Yannick Hörstenmeyer'],
         ['t_exh', 'Time in INDIR loop', 3600, 's', 'Time between exit from plasma and entry into TFV systems INDIR', 'Default'],
         ['t_ters', 'Time from BB exit to TFV system', 5 * 3600, 's', None, 'Default'],
         ['t_freeze', 'Time taken to freeze pellets', 1800, 's', None, 'Discussions with Chris Day and Yannick Hörstenmeyer'],
-        ['f_dir', 'Fraction of flow through DIR loop', 0.9, 'N/A', None, 'Discussions with Chris Day and Yannick Hörstenmeyer'],
+        ['f_dir', 'Fraction of flow through DIR loop', 0.9, 'dimensionless', None, 'Discussions with Chris Day and Yannick Hörstenmeyer'],
         ['t_detrit', 'Time in detritiation system', 10 * 3600, 's', None, 'Default'],
-        ['f_detrit_split', 'Fraction of detritiation line tritium extracted', 0.9999, 'N/A', None, 'Default'],
-        ['f_exh_split', 'Fraction of exhaust tritium extracted', 0.99, 'N/A', None, 'Default'],
-        ['eta_fuel_pump', 'Efficiency of fuel line pump', 0.9, 'N/A', 'Pump which pumps down the fuelling lines', 'Default'],
-        ['eta_f', 'Fuelling efficiency', 0.5, 'N/A', 'Efficiency of the fuelling lines prior to entry into the VV chamber', 'Default'],
+        ['f_detrit_split', 'Fraction of detritiation line tritium extracted', 0.9999, 'dimensionless', None, 'Default'],
+        ['f_exh_split', 'Fraction of exhaust tritium extracted', 0.99, 'dimensionless', None, 'Default'],
+        ['eta_fuel_pump', 'Efficiency of fuel line pump', 0.9, 'dimensionless', 'Pump which pumps down the fuelling lines', 'Default'],
+        ['eta_f', 'Fuelling efficiency', 0.5, 'dimensionless', 'Efficiency of the fuelling lines prior to entry into the VV chamber', 'Default'],
         ['I_miv', 'Maximum in-vessel T inventory', 0.3, 'kg', None, 'Default'],
         ['I_tfv_min', 'Minimum TFV inventory', 2, 'kg', 'Without which e.g. cryodistillation columns are not effective', "Discussions with Chris Day and Jonas Schwenzer (N.B. working assumptions only)"],
         ['I_tfv_max', 'Maximum TFV inventory', 2.2, 'kg', "Account for T sequestration inside the T plant", "Discussions with Chris Day and Jonas Schwenzer (N.B. working assumptions only)"],
         ['I_mbb', 'Maximum BB T inventory', 0.055, 'kg', None, 'Default'],
-        ['eta_iv', 'In-vessel bathtub parameter', 0.9995, 'N/A', None, 'Default'],
-        ['eta_bb', 'BB bathtub parameter', 0.995, 'N/A', None, 'Default'],
-        ['eta_tfv', 'TFV bathtub parameter', 0.998, 'N/A', None, 'Default'],
-        ['f_terscwps', 'TERS and CWPS cumulated factor', 0.9999, 'N/A', None, 'Default']
+        ['eta_iv', 'In-vessel bathtub parameter', 0.9995, 'dimensionless', None, 'Default'],
+        ['eta_bb', 'BB bathtub parameter', 0.995, 'dimensionless', None, 'Default'],
+        ['eta_tfv', 'TFV bathtub parameter', 0.998, 'dimensionless', None, 'Default'],
+        ['f_terscwps', 'TERS and CWPS cumulated factor', 0.9999, 'dimensionless', None, 'Default']
     ]
     # fmt: on
 

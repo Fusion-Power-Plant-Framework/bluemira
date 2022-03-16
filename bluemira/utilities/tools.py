@@ -36,13 +36,13 @@ from json import JSONDecoder, JSONEncoder, dumps
 from json.encoder import _make_iterencode
 from os import listdir
 from types import ModuleType
-from typing import Any, List, Type, Union
+from typing import Any, Type, Union
 from unittest.mock import patch
 
 import nlopt
 import numpy as np
 
-from bluemira.base.constants import ABS_ZERO_C, ABS_ZERO_K, E_I, E_IJ, E_IJK
+from bluemira.base.constants import E_I, E_IJ, E_IJK
 from bluemira.base.look_and_feel import bluemira_debug, bluemira_warn
 
 # =====================================================
@@ -443,7 +443,7 @@ def set_random_seed(seed_number: int):
     nlopt.srand(seed_number)
 
 
-def compare_dicts(d1, d2, almost_equal=False, verbose=True):
+def compare_dicts(d1, d2, almost_equal=False, verbose=True, rtol=1e-5, atol=1e-8):
     """
     Compares two dictionaries. Will print information about the differences
     between the two to the console. Dictionaries are compared by length, keys,
@@ -459,6 +459,10 @@ def compare_dicts(d1, d2, almost_equal=False, verbose=True):
         Whether or not to use np.isclose and np.allclose for numbers and arrays
     verbose: bool (default = True)
         Whether or not to print to the console
+    rtol: float
+        The relative tolerance parameter, used if ``almost_eqaul`` is True
+    atol: float
+        The abosulte tolerance parameter, used if ``almost_eqaul`` is True
 
     Returns
     -------
@@ -476,17 +480,28 @@ def compare_dicts(d1, d2, almost_equal=False, verbose=True):
     # Define functions to use for comparison in either the array, dict, or
     # numeric cases.
     def dict_eq(value_1, value_2):
-        return compare_dicts(value_1, value_2, almost_equal, verbose)
+        return compare_dicts(value_1, value_2, almost_equal, verbose, rtol, atol)
+
+    def array_almost_eq(val1, val2):
+        return np.allclose(val1, val2, rtol, atol)
+
+    def num_almost_eq(val1, val2):
+        return np.isclose(val1, val2, rtol, atol)
+
+    def array_is_eq(val1, val2):
+        return (np.asarray(val1) == np.asarray(val2)).all()
 
     if almost_equal:
-        array_eq, num_eq = np.allclose, np.isclose
+        array_eq = array_almost_eq
+        num_eq = num_almost_eq
     else:
-        array_eq, num_eq = lambda val1, val2: (val1 == val2).all(), operator.eq
+        array_eq = array_is_eq
+        num_eq = operator.eq
 
     # Map the comparison functions to the keys based on the type of value in d1.
     comp_map = {
         key: array_eq
-        if isinstance(val, np.ndarray)
+        if isinstance(val, (np.ndarray, list))
         else dict_eq
         if isinstance(val, dict)
         else num_eq
@@ -762,93 +777,6 @@ def get_class_from_module(name: str, default_module: str = "") -> Type:
 
     bluemira_debug(f"Loaded class {output.__name__}")
     return output
-
-
-# ======================================================================================
-# Materials related conversion functions
-# ======================================================================================
-
-
-def to_kelvin(
-    temp_in_celsius: Union[float, np.array, List[float]]
-) -> Union[float, np.array]:
-    """
-    Convert a temperature in Celsius to Kelvin.
-
-    Parameters
-    ----------
-    temp_in_celsius: Union[float, np.array, List[float]]
-        The temperature to convert [°C]
-
-    Returns
-    -------
-    temp_in_kelvin: Union[float, np.array]
-        The temperature [K]
-    """
-    if (is_num(temp_in_celsius) and temp_in_celsius < ABS_ZERO_C) or np.any(
-        np.less(temp_in_celsius, ABS_ZERO_C)
-    ):
-        raise ValueError("Negative temperature in K specified.")
-    return array_or_num(list_array(temp_in_celsius) - ABS_ZERO_C)
-
-
-def to_celsius(
-    temp_in_kelvin: Union[float, np.array, List[float]]
-) -> Union[float, np.array]:
-    """
-    Convert a temperature in Celsius to Kelvin.
-
-    Parameters
-    ----------
-    temp_in_kelvin: Union[float, np.array, List[float]]
-        The temperature to convert [K]
-
-    Returns
-    -------
-    temp_in_celsius: Union[float, np.array]
-        The temperature [°C]
-    """
-    if (is_num(temp_in_kelvin) and temp_in_kelvin < ABS_ZERO_K) or np.any(
-        np.less(temp_in_kelvin, ABS_ZERO_K)
-    ):
-        raise ValueError("Negative temperature in K specified.")
-    return array_or_num(list_array(temp_in_kelvin) + ABS_ZERO_C)
-
-
-def kgm3_to_gcm3(density: Union[float, np.array, List[float]]) -> Union[float, np.array]:
-    """
-    Convert a density in kg/m3 to g/cm3
-
-    Parameters
-    ----------
-    density : Union[float, np.array, List[float]]
-        The density [kg/m3]
-
-    Returns
-    -------
-    density_gcm3 : Union[float, np.array]
-        The density [g/cm3]
-    """
-    if density is not None:
-        return array_or_num(list_array(density) / 1000.0)
-
-
-def gcm3_to_kgm3(density: Union[float, np.array, List[float]]) -> Union[float, np.array]:
-    """
-    Convert a density in g/cm3 to kg/m3
-
-    Parameters
-    ----------
-    density : Union[float, np.array, List[float]]
-        The density [g/cm3]
-
-    Returns
-    -------
-    density_kgm3 : Union[float, np.array]
-        The density [kg/m3]
-    """
-    if density is not None:
-        return array_or_num(list_array(density) * 1000.0)
 
 
 def list_array(list_: Any) -> np.ndarray:
