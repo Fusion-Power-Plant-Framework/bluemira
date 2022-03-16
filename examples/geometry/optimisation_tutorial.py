@@ -37,15 +37,13 @@ set_random_seed(134365475)
 
 def calculate_length(vector, parameterisation):
     """
-    Calc
+    Calculate the length of the parameterised shape for a given state vector.
     """
-    print(parameterisation)
-    print(type(parameterisation))
     parameterisation.variables.set_values_from_norm(vector)
     return parameterisation.create_shape().length
 
 
-def minimise_length(vector, grad, objective_args):
+def minimise_length(vector, grad, parameterisation, ad_args=None):
     """
     Objective function for nlopt optimisation (minimisation),
     consisting of a least-squares objective with Tikhonov
@@ -63,10 +61,10 @@ def minimise_length(vector, grad, objective_args):
     -------
     fom: Value of objective function (figure of merit).
     """
-    length = calculate_length(vector, **objective_args)
+    length = calculate_length(vector, parameterisation)
     if grad.size > 0:
         grad[:] = approx_derivative(
-            calculate_length, vector, f0=length, args=objective_args
+            calculate_length, vector, f0=length, args=(parameterisation,), **ad_args
         )
 
     return length
@@ -85,14 +83,9 @@ class MyProblem(GeometryOptimisationProblem):
     ):
         objective = OptimisationObjective(
             minimise_length,
-            # f_objective_args={"objective_args": {"parameterisation": parameterisation,}},
-            # f_objective_args={"parameterisation": parameterisation},
-            f_objective_args={"objective_args": {}},
+            f_objective_args={"parameterisation": parameterisation},
         )
         super().__init__(parameterisation, optimiser, objective, constraints)
-        self._objective._args["objective_args"] = {
-            "parameterisation": parameterisation,
-        }
 
 
 # Here we solve the problem with a gradient-based optimisation algorithm (SLSQP)
@@ -137,15 +130,15 @@ cobyla_optimiser = Optimiser(
     },
 )
 problem = MyProblem(parameterisation_2, cobyla_optimiser)
-problem.solve()
+problem.optimise()
 
 # Again, let's check it's found the correct result:
 
 print(
-    f"x1: value: {parameterisation_1.variables['x1'].value}, upper_bound: {parameterisation_1.variables['x1'].upper_bound}"
+    f"x1: value: {parameterisation_2.variables['x1'].value}, upper_bound: {parameterisation_2.variables['x1'].upper_bound}"
 )
 print(
-    f"x2: value: {parameterisation_1.variables['x2'].value}, lower_bound: {parameterisation_1.variables['x2'].lower_bound}"
+    f"x2: value: {parameterisation_2.variables['x2'].value}, lower_bound: {parameterisation_2.variables['x2'].lower_bound}"
 )
 
 
@@ -156,41 +149,26 @@ print(
 # inequality constraint.
 
 
-class MyConstrainedProblem(MyProblem):
-    """
-    Now, a constraint is added in
-    """
+def calculate_constraint(vector, parameterisation, c_value):
+    parameterisation.variables.set_values_from_norm(vector)
+    length = parameterisation.create_shape().length
+    return np.array([c_value - length])
 
-    def __init__(self, parameterisation, optimiser, ineq_con_tolerances):
-        super().__init__(parameterisation, optimiser)
-        self.optimiser.add_ineq_constraints(self.f_ineq_constraints, ineq_con_tolerances)
-        self.some_arg_value = 50
 
-    def my_constraint(self, x):
-        """
-        Constraints are satisfied if the return value(s) are negative
-        """
-        self.update_parameterisation(x)
-        length = self.parameterisation.create_shape().length
-        return np.array([self.some_arg_value - length])
+def my_constraint(constraint, vector, grad, parameterisation, c_value, ad_args=None):
+    value = calculate_constraint(vector, parameterisation, c_value)
+    constraint[:] = value
 
-    def f_ineq_constraints(self, constraint, x, grad):
-        """
-        Signature for an inequality constraint.
+    if grad.size > 0:
+        grad[:] = approx_derivative(
+            calculate_constraint,
+            vector,
+            f0=value,
+            args=(parameterisation, c_value),
+            **ad_args,
+        )
 
-        If we use a gradient-based optimisation algorithm and we don't how to calculate
-        the gradient, we can approximate it numerically.
-
-        Note that this is not particularly robust in some cases... Probably best to
-        calculate the gradients analytically, or use a gradient-free algorithm.
-        """
-        constraint[:] = self.my_constraint(x)
-
-        if grad.size > 0:
-            # Only called if a gradient-based optimiser is used
-            grad[:] = self.optimiser.approx_derivative(self.my_constraint, x, constraint)
-
-        return constraint
+    return constraint
 
 
 parameterisation_3 = PrincetonD()
@@ -203,17 +181,28 @@ slsqp_optimiser2 = Optimiser(
         "max_eval": 1000,
     },
 )
-problem = MyConstrainedProblem(parameterisation_3, slsqp_optimiser2, 1e-6 * np.ones(1))
-problem.solve()
+c_value = 50
+c_tolerance = 1e-6
+constraint_function = OptimisationConstraint(
+    my_constraint,
+    f_constraint_args={"parameterisation": parameterisation_2, "c_value": c_value},
+    tolerance=np.array([c_tolerance]),
+)
+
+problem = MyProblem(
+    parameterisation_3, slsqp_optimiser2, constraints=[constraint_function]
+)
+problem.optimise()
+
 
 # Both x1 and x2 are free variables and between them they should be create a PrincetonD
 # shape of length exactly 50 (as the bounds on these variables surely allow it).
 # As we are minimising length, we'd expect to see a function value of 50 here (+/- the
 # tolerances)... but we don't!
 
-print(f"Theoretical optimum: {problem.some_arg_value-1e-6}")
+print(f"Theoretical optimum: {c_value-c_tolerance}")
 print(f"Length with SLSQP: {parameterisation_3.create_shape().length}")
-print(f"n_evals: {problem.optimiser.n_evals}")
+print(f"n_evals: {problem.opt.n_evals}")
 
 # This is because we're using numerical gradients and jacobians for our objective and
 # inequality constraint functions. This can be faster than other approaches, but is less
@@ -234,12 +223,15 @@ cobyla_optimiser2 = Optimiser(
         "max_eval": 1000,
     },
 )
-problem = MyConstrainedProblem(parameterisation_4, cobyla_optimiser2, 1e-6 * np.ones(1))
-problem.solve()
 
-print(f"Theoretical optimum: {problem.some_arg_value-1e-6}")
+problem = MyProblem(
+    parameterisation_4, cobyla_optimiser2, constraints=[constraint_function]
+)
+problem.optimise()
+
+print(f"Theoretical optimum: {c_value - c_tolerance}")
 print(f"Length with COBYLA: {parameterisation_4.create_shape().length}")
-print(f"n_evals: {problem.optimiser.n_evals}")
+print(f"n_evals: {problem.opt.n_evals}")
 
 parameterisation_5 = PrincetonD()
 irses_optimiser = Optimiser(
@@ -251,12 +243,15 @@ irses_optimiser = Optimiser(
         "max_eval": 1000,
     },
 )
-problem = MyConstrainedProblem(parameterisation_5, irses_optimiser, 1e-6 * np.ones(1))
-problem.solve()
 
-print(f"Theoretical optimum: {problem.some_arg_value-1e-6}")
+problem = MyProblem(
+    parameterisation_5, irses_optimiser, constraints=[constraint_function]
+)
+problem.optimise()
+
+print(f"Theoretical optimum: {c_value - c_tolerance}")
 print(f"Length with ISRES: {parameterisation_5.create_shape().length}")
-print(f"n_evals: {problem.optimiser.n_evals}")
+print(f"n_evals: {problem.opt.n_evals}")
 
 
 # Horses for courses folks... YMMV. Best thing you can do is specify your optimisation

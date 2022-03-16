@@ -64,6 +64,10 @@ class GeometryOptimisationProblem(OptimisationProblem):
         dimension = parameterisation.variables.n_free_variables
         bounds = (np.zeros(dimension), np.ones(dimension))
         self.set_up_optimiser(dimension, bounds)
+        self._objective._args["ad_args"] = {"bounds": bounds}
+        if constraints:
+            for constraint in self._constraints:
+                constraint._args["ad_args"] = {"bounds": bounds}
 
     def apply_shape_constraints(self):
         """
@@ -91,10 +95,7 @@ class GeometryOptimisationProblem(OptimisationProblem):
         """
         Solve the GeometryOptimisationProblem.
         """
-        print("here")
-        self._objective._args["objective_args"][
-            "parameterisation"
-        ] = self._parameterisation
+        self._objective._args["parameterisation"] = self._parameterisation
         if x0 is None:
             x0 = self._parameterisation.variables.get_normalised_values()
         x_star = self.opt.optimise(x0)
