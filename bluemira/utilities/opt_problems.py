@@ -76,7 +76,7 @@ class OptimisationConstraint:
         """
         # Add optimisation problem to constraint arguments if needed by
         # constraint function
-        if "opt_problem" in inspect.getargspec(self._f_constraint).args:
+        if "opt_problem" in inspect.signature(self._f_constraint).args:
             self._args["opt_problem"] = opt_problem
 
         # Apply constraint to optimiser
