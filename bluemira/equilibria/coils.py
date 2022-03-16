@@ -1078,17 +1078,22 @@ class CoilGroup(CoilFieldsMixin, abc.ABC):
         """
         Pretty coil printing.
         """
-        ret_str = ""
-        for ind, name in enumerate(self.name):
-            np.array
-            ret_str += f"{name}: X={self.x[ind][0]:.2f} m, Z={self.z[ind][0]:.2f} m, I={self.current[ind][0]/1e6:.2f} MA"
-        return ret_str[:-1]
+        return "".join(
+            (
+                f"{name}: X={self.x[ind][0]:.2f} m,"
+                f" Z={self.z[ind][0]:.2f} m,"
+                f" I={self.current[ind][0]/1e6:.2f} MA\n"
+            )
+            for ind, name in enumerate(self.name)
+        )[:-1]
 
     def __repr__(self) -> str:
         """
         Pretty console coil rendering.
         """
-        return f"{self.__class__.__name__}({self.__str__()})"
+        newline = "\n" + " " * (len(self.__class__.__name__) + 1)
+        _str = self.__str__().replace("\n", newline)
+        return f"{self.__class__.__name__}({_str})"
 
 
 class Coil(CoilGroup):
