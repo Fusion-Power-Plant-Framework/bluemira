@@ -71,6 +71,11 @@ class ArbitraryPlanarRectangularXSCircuit(SourceGroup):
                 f"The input shape for {self.__class__.__name__} must be planar."
             )
 
+        if not shape.closed:
+            raise MagnetostaticsError(
+                f"{self.__class__.__name__} cannot yet reliably handle open shapes."
+            )
+
         betas, alphas = self._get_betas_alphas(shape)
 
         normal = shape.normal_vector
@@ -177,6 +182,8 @@ class ArbitraryPlanarRectangularXSCircuit(SourceGroup):
             angle *= -1
 
         if abs(angle) > 0.25 * np.pi:
+            # This the half-angle between two segments (bisector); if this is greater than
+            # 45 degrees, there will be a problem
             bluemira_warn(
                 f"{self.__class__.__name__} cannot handle acute angles, as there will be overlaps in the sources."
             )
