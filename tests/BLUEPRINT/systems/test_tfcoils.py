@@ -54,6 +54,7 @@ def tempdir():
     shutil.rmtree(tempdir)
 
 
+@pytest.mark.longrun
 class TestTFCoil:
     """
     Test the TF coil ripple optimisation for different TF coil shapes and test CAD
@@ -140,6 +141,7 @@ class TestTFCoil:
         assert CAD.component["names"] == expected_names
 
 
+@pytest.mark.longrun
 class TestTaperedPictureFrameTF:
     @classmethod
     def setup_class(cls):
@@ -266,6 +268,7 @@ class TestTaperedPictureFrameTF:
         assert CAD.component["names"] == expected_names
 
 
+@pytest.mark.longrun
 class TestSCPictureFrameTF:
     @classmethod
     def setup_class(cls):
@@ -352,6 +355,7 @@ class TestSCPictureFrameTF:
         assert CAD.component["names"] == expected_names
 
 
+@pytest.mark.longrun
 class TestCurvedPictureframeTF:
     @classmethod
     def setup_class(cls):
@@ -442,6 +446,7 @@ class TestCurvedPictureframeTF:
         assert CAD.component["names"] == expected_names
 
 
+@pytest.mark.longrun
 class TestResistiveCurvedPictureframeTF:
     @classmethod
     def setup_class(cls):
