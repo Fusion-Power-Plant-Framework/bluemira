@@ -134,13 +134,14 @@ def minimise_coil_currents(vector, grad):
     sum_abs_currents: float
         Sum of the absolute values of the currents.
     """
+    sum_abs_currents = np.sum(np.abs(vector))
 
     if grad.size > 0:
         signs = np.sign(vector)  # Probably of concern with current = 0.0
         signs[signs == 0] = 1  # questionable
         grad[:] = signs
 
-    return np.sum(np.abs(vector))
+    return sum_abs_currents
 
 
 def maximise_flux(vector, grad, c_psi_mat, scale):
@@ -162,11 +163,11 @@ def maximise_flux(vector, grad, c_psi_mat, scale):
     psi: float
         Psi value at the point
     """
-
+    psi = -scale * c_psi_mat @ vector
     if grad.size > 0:
-        grad[:] = scale * c_psi_mat
+        grad[:] = -scale * c_psi_mat
 
-    return scale * c_psi_mat @ vector
+    return psi
 
 
 # =============================================================================
