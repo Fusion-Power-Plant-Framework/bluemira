@@ -27,7 +27,7 @@ from typing import List, Union
 
 import numpy as np
 from periodictable import elements
-from pint import Context, Quantity, UnitRegistry, set_application_registry
+from pint import Context, UnitRegistry, set_application_registry
 from pint.util import UnitsContainer
 
 
@@ -71,6 +71,9 @@ class BMUnitRegistry(UnitRegistry):
         self._contexts_added = False
 
     def _add_contexts(self, contexts=None):
+        """
+        Add new contexts to registry
+        """
         if not self._contexts_added:
             self.contexts = [self._energy_temperature_context(), self._flow_context()]
 
@@ -82,6 +85,9 @@ class BMUnitRegistry(UnitRegistry):
                 self.add_context(c)
 
     def enable_contexts(self, *contexts, **kwargs):
+        """
+        Enable contexts
+        """
         self._add_contexts(contexts)
 
         super().enable_contexts(*[*self.contexts, *contexts], **kwargs)
@@ -99,10 +105,10 @@ class BMUnitRegistry(UnitRegistry):
         """
         e_to_t = Context("Energy_to_Temperature")
 
-        T_units = "[temperature]"
+        t_units = "[temperature]"
         ev_units = "[energy]"
 
-        return self._transform(e_to_t, T_units, ev_units, self.Quantity("k_B"))
+        return self._transform(e_to_t, t_units, ev_units, self.Quantity("k_B"))
 
     def _flow_context(self):
         """
