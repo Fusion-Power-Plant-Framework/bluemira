@@ -80,6 +80,8 @@ class BMUnitRegistry(UnitRegistry):
             for c in self.contexts:
                 self.add_context(c)
 
+            self._contexts_added = True
+
         if contexts not in (None, ()):
             for c in contexts:
                 self.add_context(c)
