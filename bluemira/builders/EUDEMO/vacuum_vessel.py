@@ -25,8 +25,6 @@ Builder for making a parameterised EU-DEMO vacuum vessel.
 
 from typing import List, Optional
 
-from this import d
-
 import bluemira.utilities.plot_tools as bm_plot_tools
 from bluemira.base.builder import BuildConfig, Builder
 from bluemira.base.components import Component, PhysicalComponent
@@ -34,7 +32,7 @@ from bluemira.base.config import Configuration
 from bluemira.builders.EUDEMO.tools import circular_pattern_component
 from bluemira.display.palettes import BLUE_PALETTE
 from bluemira.geometry.face import BluemiraFace
-from bluemira.geometry.tools import revolve_shape
+from bluemira.geometry.tools import make_circle, revolve_shape
 from bluemira.geometry.wire import BluemiraWire
 
 
@@ -44,10 +42,11 @@ class VacuumVesselBuilder(Builder):
     """
 
     _required_params: List[str] = [
-        "tk_ts",
-        "g_ts_pf",
-        "g_ts_tf",
-        "g_vv_ts",
+        "r_vv_ib_in",
+        "r_vv_ob_in",
+        "tk_vv_in",
+        "tk_vv_out",
+        "g_vv_bb",
         "n_TF",
     ]
     _params: Configuration
@@ -77,6 +76,10 @@ class VacuumVesselBuilder(Builder):
         super().build()
 
         component = Component(name=self.name)
+        component.add_child(self.build_xz())
+        component.add_child(self.build_xy())
+        component.add_child(self.build_xyz())
+        return component
 
     def build_xz(self):
         """
@@ -91,8 +94,27 @@ class VacuumVesselBuilder(Builder):
         """
         Build the x-y components of the vacuum vessel.
         """
+        center = (0, 0, 0)
+        axis = (0, 0, 1)
+        degree = 360
+        r_ib_in = self._params.r_vv_ib_in.value
+        r_ib_out = r_ib_in + self._params.tk_vv_in.value
+        r_ob_in = self._params.r_vv_ob_in.value
+        r_ob_out = r_ob_out + self._params.tk_vv_out.value
 
-        component = Component("xy", children=[])
+        ib_inner = make_circle(r_ib_in, center=center, axis=axis, end_angle=degree)
+        ib_outer = make_circle(r_ib_out, center=center, axis=axis, end_angle=degree)
+        inboard = BluemiraFace([ib_outer, ib_inner])
+        vv_inboard = PhysicalComponent("inboard", inboard)
+        vv_inboard.plot_options.face_options["color"] = BLUE_PALETTE["VV"][0]
+
+        ob_inner = make_circle(r_ob_in, center=center, axis=axis, end_angle=degree)
+        ob_outer = make_circle(r_ob_out, center=center, axis=axis, end_angle=degree)
+        outboard = BluemiraFace([ob_outer, ob_inner])
+        vv_outboard = PhysicalComponent("outboard", outboard)
+        vv_outboard.plot_options.face_options["color"] = BLUE_PALETTE["VV"][0]
+
+        component = Component("xy", children=[vv_inboard, vv_outboard])
         bm_plot_tools.set_component_plane(component, "xy")
         return component
 
@@ -103,8 +125,8 @@ class VacuumVesselBuilder(Builder):
         n_ts_draw = max(1, int(degree // (360 // self._params.n_TF.value)))
         degree = (360.0 / self._params.n_TF.value) * n_ts_draw
 
-        component = Component("xyz")
         sectors = circular_pattern_component([], n_ts_draw, degree=degree)
+        component = Component("xyz")
         component.add_children(sectors, merge_trees=True)
 
         return component
