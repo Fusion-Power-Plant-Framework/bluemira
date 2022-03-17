@@ -25,8 +25,9 @@ Wrapper for FreeCAD Part.Wire objects
 
 from __future__ import annotations
 
-from typing import List
+from typing import List, Optional
 
+from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.codes._freecadapi import (
     apiWire,
     change_placement,
@@ -38,14 +39,17 @@ from bluemira.codes._freecadapi import (
     start_point,
     translate_shape,
     wire_closure,
+    wire_value_at,
 )
 
 # import from bluemira
 from bluemira.geometry.base import BluemiraGeo, _Orientation
 from bluemira.geometry.coordinates import Coordinates
-
-# import from error
-from bluemira.geometry.error import MixedOrientationWireError, NotClosedWire
+from bluemira.geometry.error import (
+    GeometryError,
+    MixedOrientationWireError,
+    NotClosedWire,
+)
 
 __all__ = ["BluemiraWire"]
 
@@ -219,6 +223,42 @@ class BluemiraWire(BluemiraGeo):
                 change_placement(o, placement._shape)
             else:
                 o.change_placement(placement)
+
+    def value_at(self, alpha: Optional[float] = None, distance: Optional[float] = None):
+        """
+        Get a point along the wire at a given parameterised length or length.
+
+        Parameters
+        ----------
+        alpha: Optional[float]
+            Parameterised distance along the wire length, in the range [0 .. 1]
+        distance: Optional[float]
+            Physical distance along the wire length
+
+        Returns
+        -------
+        point: np.ndarray
+            Point coordinates (w.r.t. BluemiraWire's BluemiraPlacement)
+        """
+        if alpha is None and distance is None:
+            raise GeometryError("Must specify one of alpha or distance.")
+        if alpha is not None and distance is not None:
+            raise GeometryError("Must specify either alpha or distance, not both.")
+
+        if distance is None:
+            if alpha < 0.0:
+                bluemira_warn(
+                    f"alpha must be between 0 and 1, not: {alpha}, setting to 0.0"
+                )
+                alpha = 0
+            elif alpha > 1.0:
+                bluemira_warn(
+                    f"alpha must be between 0 and 1, not: {alpha}, setting to 1.0"
+                )
+                alpha = 1.0
+            distance = alpha * self.length
+
+        return wire_value_at(self.get_single_wire()._shape, distance)
 
     def start_point(self) -> Coordinates:
         """

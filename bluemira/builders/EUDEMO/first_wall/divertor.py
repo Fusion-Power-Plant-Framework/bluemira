@@ -34,7 +34,7 @@ from bluemira.base.config import Configuration
 from bluemira.base.error import BuilderError
 from bluemira.equilibria.equilibrium import Equilibrium
 from bluemira.equilibria.find import find_flux_surface_through_point, get_legs
-from bluemira.geometry.tools import find_point_along_wire_at_length, make_polygon
+from bluemira.geometry.tools import make_polygon
 from bluemira.geometry.wire import BluemiraWire
 
 
@@ -168,7 +168,7 @@ class DivertorBuilder(Builder):
         sols = self._get_sols_for_leg(leg)
         leg_length = self._get_length_for_leg(leg)
         # Just use the first scrape-off layer for now
-        point = find_point_along_wire_at_length(sols[0], leg_length)
+        point = sols[0].value_at(distance=leg_length)
 
         # Create some vertical targets for now. Eventually the target
         # angle will be derived from the grazing-angle parameter

@@ -640,6 +640,46 @@ def dist_to_shape(shape1, shape2):
     return dist, vectors
 
 
+def wire_value_at(wire: apiWire, distance: float):
+    """
+    Get a point a given distance along a wire.
+
+    Parameters
+    ----------
+    wire: apiWire
+        Wire along which to get a point
+    distance: float
+        Distance
+    """
+    if distance == 0.0:
+        return start_point(wire)
+    elif distance == wire.Length:
+        return end_point(wire)
+    elif distance < 0.0:
+        bluemira_warn("Distance must be greater than 0; returning start point.")
+        return start_point(wire)
+    elif distance > wire.Length:
+        bluemira_warn("Distance greater than the length of wire; returning end point.")
+        return end_point(wire)
+
+    length = 0
+    for edge in wire.OrderedEdges:
+        edge_length = edge.Length
+        new_length = length + edge_length
+        if new_length < distance:
+            length = new_length
+        elif new_length == distance:
+            point = edge.valueAt(edge.LastParameter)
+            break
+        else:
+            new_distance = distance - length
+            parameter = edge.getParameterByLength(new_distance)
+            point = edge.valueAt(parameter)
+            break
+
+    return np.array(point)
+
+
 def slice_shape(shape: apiShape, plane_origin: Iterable, plane_axis: Iterable):
     """
     Slice a shape along a given plane
