@@ -118,7 +118,7 @@ class SOLModel(Model):
 
 class Profiles(Model):
     """
-    Profile Selector
+    Profile Selector:
 
     x       [-] normalized toroidal flux coordinate (Phi/Phi_b)
     ne      [10¹⁹/m3] electron density profile
@@ -132,7 +132,7 @@ class Profiles(Model):
     kprof   [-] Elongation profile
     dprof   [-] Triangularity profile
     shif    [m] Grad-Shafranov shift profile
-    g2      [m²] < |grad V|²/r²> g2 metric coefficient's profile
+    g2      [m²] < mod(grad V)²/r²> g2 metric coefficient's profile
     g3      [m⁻²] < 1/r²> g3 metric coefficient's profile
     volprof [m³] Volume profile
     vprime  [m³] Volume profile
