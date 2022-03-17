@@ -53,11 +53,6 @@ class TestVariedOffsetFunction:
 
         assert offset_wire.is_closed
 
-    @pytest.mark.xfail(
-        reason="The plot looks correct, but I think the interpolation to find the point "
-        "at the angle is not quite right. Probably to do with the fact the curve is not "
-        "smooth enough at the ob_radius"
-    )
     def test_the_offset_at_the_ob_radius_is_major_offset(self):
         offset_wire = varied_offset_function(self.picture_frame, **self.params)
 
@@ -88,7 +83,7 @@ class TestVariedOffsetFunction:
         )
         assert np.all(offset_size <= self.params["major_offset"])
 
-    def test_offset_increases_between_offset_angle_and_ob_axis(self):
+    def test_offset_never_decreases_between_offset_angle_and_ob_axis(self):
         offset_wire = varied_offset_function(self.picture_frame, **self.params)
 
         offset_interp = self._interpolation_func_closed_wire(offset_wire)
@@ -125,6 +120,8 @@ class TestVariedOffsetFunction:
         angles = np.radians(
             find_clockwise_angle_2d(np.array([-1, 0]), coords - centroid.reshape((2, 1)))
         )
+        if angles[0] == angles[-1]:
+            angles = angles[:-1]
         sort_idx = np.argsort(angles)
         angle_space = angles[sort_idx]
         sorted_coords = coords[:, sort_idx]

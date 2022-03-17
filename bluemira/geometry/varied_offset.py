@@ -55,7 +55,7 @@ def varied_offset_function(
     var_offset_angles[var_offset_angles > np.pi] = (
         2 * np.pi - var_offset_angles[var_offset_angles > np.pi]
     )
-    var_offset_offsets = ((var_offset_angles - var_offset_angles.min()) / np.pi) * (
+    var_offset_offsets = (var_offset_angles - offset_angle) / (np.pi - offset_angle) * (
         major_offset - minor_offset
     ) + minor_offset
 
