@@ -23,9 +23,19 @@
 Builder for making a parameterised EU-DEMO vacuum vessel.
 """
 
+from typing import List, Optional
+
+from this import d
+
 import bluemira.utilities.plot_tools as bm_plot_tools
 from bluemira.base.builder import BuildConfig, Builder
 from bluemira.base.components import Component, PhysicalComponent
+from bluemira.base.config import Configuration
+from bluemira.builders.EUDEMO.tools import circular_pattern_component
+from bluemira.display.palettes import BLUE_PALETTE
+from bluemira.geometry.face import BluemiraFace
+from bluemira.geometry.tools import revolve_shape
+from bluemira.geometry.wire import BluemiraWire
 
 
 class VacuumVesselBuilder(Builder):
@@ -41,24 +51,60 @@ class VacuumVesselBuilder(Builder):
         "n_TF",
     ]
     _params: Configuration
-    _pf_kozs: List[BluemiraWire]
-    _tf_koz: BluemiraWire
-    _vv_koz: Optional[BluemiraWire]
-    _cts_face: BluemiraFace
+    _fw_koz: BluemiraWire
 
     def __init__(
         self,
         params,
         build_config: BuildConfig,
-        pf_coils_xz_kozs: List[BluemiraWire],
-        tf_xz_koz: BluemiraWire,
-        vv_xz_koz: Optional[BluemiraWire] = None,
+        fw_koz: BluemiraWire,
     ):
         super().__init__(
             params,
             build_config,
-            pf_coils_xz_kozs=pf_coils_xz_kozs,
-            tf_xz_koz=tf_xz_koz,
-            vv_xz_koz=vv_xz_koz,
+            fw_koz=fw_koz,
         )
-        self._cts_face = None
+
+    def build(self) -> Component:
+        """
+        Build the vacuum vessel component.
+
+        Returns
+        -------
+        component: Component
+            The Component built by this builder.
+        """
+        super().build()
+
+        component = Component(name=self.name)
+
+    def build_xz(self):
+        """
+        Build the x-z components of the vacuum vessel.
+        """
+
+        component = Component("xz", children=[])
+        bm_plot_tools.set_component_plane(component, "xz")
+        return component
+
+    def build_xy(self):
+        """
+        Build the x-y components of the vacuum vessel.
+        """
+
+        component = Component("xy", children=[])
+        bm_plot_tools.set_component_plane(component, "xy")
+        return component
+
+    def build_xyz(self, degree=360.0) -> Component:
+        """
+        Build the x-y-z components of the vacuum vessel.
+        """
+        n_ts_draw = max(1, int(degree // (360 // self._params.n_TF.value)))
+        degree = (360.0 / self._params.n_TF.value) * n_ts_draw
+
+        component = Component("xyz")
+        sectors = circular_pattern_component([], n_ts_draw, degree=degree)
+        component.add_children(sectors, merge_trees=True)
+
+        return component
