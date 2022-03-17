@@ -221,7 +221,7 @@ build_config = {
         "runmode": "read",  # ["run", "read", "mock"]
     },
     "TF Coils": {
-        "runmode": "run",  # ["run", "read", "mock"]
+        "runmode": "read",  # ["run", "read", "mock"]
         "param_class": "TripleArc",
         "variables_map": {
             "x1": {
@@ -478,6 +478,8 @@ ax = tf_coils.get_component("xz").plot_2d(show=False)
 plasma.get_component("xz").plot_2d(ax=ax, show=False)
 pf_coils.get_component("xz").plot_2d(ax=ax, show=False)
 
+first_wall = component.get_component("First Wall")
+first_wall.get_component("xz").plot_2d(ax=ax, show=False)
 thermal_shield = component.get_component("Thermal Shield")
 thermal_shield.get_component("xz").plot_2d(ax=ax, show=False)
 cryostat = component.get_component("Cryostat")
@@ -489,7 +491,7 @@ radiation_shield.get_component("xz").plot_2d(ax=ax)
 ComponentDisplayer().show_cad(component.get_component("xyz", first=False))
 
 # %%
-component = Component("Segment View")
+sector = Component("Segment View")
 plasma_builder: PlasmaBuilder = reactor.get_builder("Plasma")
 tf_coils_builder: TFCoilsBuilder = reactor.get_builder("TF Coils")
 pf_coils_builder: PFCoilsBuilder = reactor.get_builder("PF Coils")
@@ -498,10 +500,10 @@ cryostat_builder: CryostatBuilder = reactor.get_builder("Cryostat")
 radiation_shield_builder: RadiationShieldBuilder = reactor.get_builder(
     "Radiation Shield"
 )
-component.add_child(plasma_builder.build_xyz(degree=270))
-component.add_child(tf_coils_builder.build_xyz(degree=270))
-component.add_child(pf_coils_builder.build_xyz(degree=270))
-component.add_child(thermal_shield_builder.build_xyz(degree=270))
-component.add_child(cryostat_builder.build_xyz(degree=270))
-component.add_child(radiation_shield_builder.build_xyz(degree=270))
-component.show_cad()
+sector.add_child(plasma_builder.build_xyz(degree=270))
+sector.add_child(tf_coils_builder.build_xyz(degree=270))
+sector.add_child(pf_coils_builder.build_xyz(degree=270))
+sector.add_child(thermal_shield_builder.build_xyz(degree=270))
+sector.add_child(cryostat_builder.build_xyz(degree=270))
+sector.add_child(radiation_shield_builder.build_xyz(degree=270))
+sector.show_cad()
