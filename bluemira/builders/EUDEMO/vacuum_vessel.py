@@ -86,7 +86,6 @@ class VacuumVesselBuilder(Builder):
         """
         Build the x-z components of the vacuum vessel.
         """
-
         self._vv_face = None
 
         component = Component("xz", children=[])
