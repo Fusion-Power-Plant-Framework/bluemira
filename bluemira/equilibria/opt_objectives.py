@@ -97,6 +97,14 @@ def regularised_lsq_objective(vector, grad, scale, a_mat, b_vec, gamma):
     grad: np.array
         Local gradient of objective function used by LD NLOPT algorithms.
         Updated in-place.
+    scale: float
+        Scaling factor for the vector
+    a_mat: np.array(n, m)
+        The 2-D a_mat control matrix A
+    b_vec: np.array(n)
+        The 1-D b vector of target values
+    gamma: float
+        The Tikhonov regularisation parameter.
 
     Returns
     -------
@@ -156,7 +164,10 @@ def maximise_flux(vector, grad, c_psi_mat, scale):
         Local gradient of objective function used by LD NLOPT algorithms.
         Updated in-place.
     c_psi_mat: np.ndarray
-
+        Response matrix of the coil psi contributions to the point at which the flux
+        should be maximised
+    scale: float
+        Scaling factor for the vector
 
     Returns
     -------
