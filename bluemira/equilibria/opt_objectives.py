@@ -72,7 +72,8 @@ def ad_objective(vector, grad, objective, objective_args, ad_args=None):
 
     Returns
     -------
-    fom: Value of objective function (figure of merit).
+    fom: float
+        Value of objective function (figure of merit).
     """
     fom = objective(vector, grad, **objective_args)
     if grad.size > 0:
@@ -99,7 +100,8 @@ def regularised_lsq_objective(vector, grad, scale, a_mat, b_vec, gamma):
 
     Returns
     -------
-    fom: Value of objective function (figure of merit).
+    fom: float
+        Value of objective function (figure of merit).
     """
     vector = vector * scale
     fom, err = regularised_lsq_fom(vector, a_mat, b_vec, gamma)
@@ -113,6 +115,58 @@ def regularised_lsq_objective(vector, grad, scale, a_mat, b_vec, gamma):
             "Optimiser least-squares objective function less than zero or nan."
         )
     return fom
+
+
+def minimise_coil_currents(vector, grad):
+    """
+    Objective function for the minimisation of the sum of absolute coil currents
+
+    Parameters
+    ----------
+    vector: np.ndarray
+        State vector of the array of coil currents.
+    grad: np.array
+        Local gradient of objective function used by LD NLOPT algorithms.
+        Updated in-place.
+
+    Returns
+    -------
+    sum_abs_currents: float
+        Sum of the absolute values of the currents.
+    """
+
+    if grad.size > 0:
+        signs = np.sign(vector)  # Probably of concern with current = 0.0
+        signs[signs == 0] = 1  # questionable
+        grad[:] = signs
+
+    return np.sum(np.abs(vector))
+
+
+def maximise_flux(vector, grad, c_psi_mat, scale):
+    """
+    Objective function to maximise flux
+
+    Parameters
+    ----------
+    vector: np.ndarray
+        State vector of the array of coil currents.
+    grad: np.array
+        Local gradient of objective function used by LD NLOPT algorithms.
+        Updated in-place.
+    c_psi_mat: np.ndarray
+
+
+    Returns
+    -------
+    psi: float
+        Psi value at the point
+    """
+
+    if grad.size > 0:
+        grad[:] = scale * c_psi_mat
+
+    return scale * c_psi_mat @ vector
 
 
 # =============================================================================
