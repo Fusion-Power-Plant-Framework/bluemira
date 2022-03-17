@@ -113,13 +113,15 @@ class BluemiraPlane:
         """Moves the Plane along the given vector"""
         self.base = self.base + np.array(vector)
 
-    def __repr__(self):  # noqa D105
-        new = []
-        new.append(f"([{type(self).__name__}] = Label: {self.label}")
-        new.append(f" base: {self.base}")
-        new.append(f" axis: {self.axis}")
-        new.append(")")
-        return ", ".join(new)
+    def __repr__(self):
+        """
+        Plane __repr__
+        """
+        return (
+            f"([{type(self).__name__}] = Label: {self.label},"
+            f" base: {self.base},"
+            f" axis: {self.axis})"
+        )
 
     def copy(self, label=None):
         """
