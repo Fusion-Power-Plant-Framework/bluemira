@@ -68,9 +68,23 @@ class BMUnitRegistry(UnitRegistry):
         # Other currencies need to be set up in a new context
         self.define("USD = [currency]")
 
-        # TODO conversion per unit time etc
-        self.add_context(self._energy_temperature_context())
-        self.add_context(self._flow_context())
+        self._contexts_added = False
+
+    def _add_contexts(self, contexts=None):
+        if not self._contexts_added:
+            self.contexts = [self._energy_temperature_context(), self._flow_context()]
+
+            for c in self.contexts:
+                self.add_context(c)
+
+        if contexts not in (None, ()):
+            for c in contexts:
+                self.add_context(c)
+
+    def enable_contexts(self, *contexts, **kwargs):
+        self._add_contexts(contexts)
+
+        super().enable_contexts(*[*self.contexts, *contexts], **kwargs)
 
     def _energy_temperature_context(self):
         """
@@ -85,13 +99,10 @@ class BMUnitRegistry(UnitRegistry):
         """
         e_to_t = Context("Energy_to_Temperature")
 
-        self.T_units = UnitsContainer({"[temperature]": 1})
+        T_units = "[temperature]"
+        ev_units = "[energy]"
 
-        ev_units = UnitsContainer({"[length]": 2, "[mass]": 1, "[time]": -2})
-
-        e_to_t.add_transformation(ev_units, self.T_units, lambda ureg, x: x / self.k_B)
-        e_to_t.add_transformation(self.T_units, ev_units, lambda ureg, x: x * self.k_B)
-        return e_to_t
+        return self._transform(e_to_t, T_units, ev_units, self.Quantity("k_B"))
 
     def _flow_context(self):
         """
@@ -106,25 +117,38 @@ class BMUnitRegistry(UnitRegistry):
         """
         mols_to_pam3 = Context("Mol to Pa.m^3 for a gas")
 
-        mol_units = UnitsContainer({"[substance]": 1})
+        mol_units = "[substance]"
+        pam3_units = "[energy]"
 
-        pam3_units = UnitsContainer({"[length]": 2, "[mass]": 1, "[time]": -2})
+        conversion_factor = self.Quantity("molar_gas_constant") * self.Quantity(
+            0, "celsius"
+        ).to("kelvin")
 
-        conversion_factor = Quantity("molar_gas_constant") * Quantity(0, "celsius").to(
-            "kelvin"
-        )
+        return self._transform(mols_to_pam3, mol_units, pam3_units, conversion_factor)
 
-        mols_to_pam3.add_transformation(
-            mol_units, pam3_units, lambda ureg, x: x * conversion_factor
-        )
-        mols_to_pam3.add_transformation(
-            pam3_units, mol_units, lambda ureg, x: x / conversion_factor
-        )
-        return mols_to_pam3
+    @staticmethod
+    def _transform(context, units_from, units_to, conversion):
+
+        formatters = ["{}", "{} / [time]"]
+
+        for form in formatters:
+
+            context.add_transformation(
+                form.format(units_from),
+                form.format(units_to),
+                lambda ureg, x: x * conversion,
+            )
+            context.add_transformation(
+                form.format(units_to),
+                form.format(units_from),
+                lambda ureg, x: x / conversion,
+            )
+
+        return context
 
 
 ureg = BMUnitRegistry()
-
+ureg.enable_contexts()
 set_application_registry(ureg)
 
 # For reference
@@ -258,7 +282,7 @@ def raw_uc(
     unit_from, unit_to = ureg.Unit(unit_from), ureg.Unit(unit_to)
 
     converted_val = ureg.Quantity(value, unit_from).to(unit_to).magnitude
-    if unit_to.dimensionality == ureg.T_units and np.any(
+    if unit_to.dimensionality == UnitsContainer({"[temperature]": 1}) and np.any(
         np.less(
             converted_val,
             ABS_ZERO.get(unit_to, ureg.Quantity(0, ureg.kelvin).to(unit_to).magnitude),

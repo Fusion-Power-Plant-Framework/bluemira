@@ -245,9 +245,12 @@ class Teardown(Task):
 
         """
         for bm_key, value in outputs.items():
-            code_unit = (
-                self.parent.params.get_param(bm_key).mapping[self.parent.NAME].unit
-            )
+            try:
+                code_unit = (
+                    self.parent.params.get_param(bm_key).mapping[self.parent.NAME].unit
+                )
+            except AttributeError:
+                raise AttributeError(f"No mapping found for {bm_key}")
             if code_unit is not None:
                 outputs[bm_key] = {"value": value, "unit": code_unit}
 

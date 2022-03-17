@@ -104,6 +104,7 @@ IO_mappings = {
 
 NONE_mappings = {
     "tau_flattop": ("tburn", "s"),
+    "B_tf_peak": ("bmaxtfrp", "T"),
     "q_95": ("q95", "dimensionless"),
     "T_e": ("te", "keV"),
     "Z_eff": ("zeff", "dimensionless"),
@@ -112,6 +113,7 @@ NONE_mappings = {
     "f_ni": ("faccd", "dimensionless"),
     "tk_tf_outboard": ("tfthko", "m"),
     "tf_wp_depth": ("wwp1", "m"),
+    "tf_wp_width": ("wwp2", "m"),
     "sigma_tf_case_max": ("sig_tf_case_max", "Pa"),
     "sigma_tf_wp_max": ("sig_tf_wp_max", "Pa"),
     "h_cp_top": ("h_cp_top", "m"),
