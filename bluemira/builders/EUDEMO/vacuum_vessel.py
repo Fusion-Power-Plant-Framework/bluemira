@@ -23,7 +23,7 @@
 Builder for making a parameterised EU-DEMO vacuum vessel.
 """
 
-from typing import List, Optional
+from typing import List
 
 import bluemira.utilities.plot_tools as bm_plot_tools
 from bluemira.base.builder import BuildConfig, Builder
@@ -63,6 +63,7 @@ class VacuumVesselBuilder(Builder):
             build_config,
             fw_koz=fw_koz,
         )
+        self._vv_face = None
 
     def build(self) -> Component:
         """
@@ -86,6 +87,8 @@ class VacuumVesselBuilder(Builder):
         Build the x-z components of the vacuum vessel.
         """
 
+        self._vv_face = None
+
         component = Component("xz", children=[])
         bm_plot_tools.set_component_plane(component, "xz")
         return component
@@ -100,7 +103,7 @@ class VacuumVesselBuilder(Builder):
         r_ib_in = self._params.r_vv_ib_in.value
         r_ib_out = r_ib_in + self._params.tk_vv_in.value
         r_ob_in = self._params.r_vv_ob_in.value
-        r_ob_out = r_ob_out + self._params.tk_vv_out.value
+        r_ob_out = r_ob_in + self._params.tk_vv_out.value
 
         ib_inner = make_circle(r_ib_in, center=center, axis=axis, end_angle=degree)
         ib_outer = make_circle(r_ib_out, center=center, axis=axis, end_angle=degree)
@@ -122,10 +125,23 @@ class VacuumVesselBuilder(Builder):
         """
         Build the x-y-z components of the vacuum vessel.
         """
-        n_ts_draw = max(1, int(degree // (360 // self._params.n_TF.value)))
-        degree = (360.0 / self._params.n_TF.value) * n_ts_draw
+        n_vv_draw = max(1, int(degree // (360 // self._params.n_TF.value)))
+        degree = (360.0 / self._params.n_TF.value) * n_vv_draw
 
-        sectors = circular_pattern_component([], n_ts_draw, degree=degree)
+        vv_face = self._vv_face.deepcopy()
+        base = (0, 0, 0)
+        direction = (0, 0, 1)
+        vv_body = revolve_shape(
+            vv_face,
+            base=base,
+            direction=direction,
+            degree=360 / self._params.n_TF.value,
+        )
+
+        vv = PhysicalComponent("Body", vv_body)
+        vv.display_cad_options.color = BLUE_PALETTE["VV"][0]
+
+        sectors = circular_pattern_component([vv], n_vv_draw, degree=degree)
         component = Component("xyz")
         component.add_children(sectors, merge_trees=True)
 
