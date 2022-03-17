@@ -54,7 +54,6 @@ def tempdir():
     shutil.rmtree(tempdir)
 
 
-@pytest.mark.longrun
 class TestTFCoil:
     """
     Test the TF coil ripple optimisation for different TF coil shapes and test CAD
