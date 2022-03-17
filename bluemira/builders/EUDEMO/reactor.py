@@ -28,10 +28,12 @@ import os
 from bluemira.base.components import Component, PhysicalComponent
 from bluemira.base.design import Reactor
 from bluemira.base.look_and_feel import bluemira_print
+from bluemira.builders.cryostat import CryostatBuilder
 from bluemira.builders.EUDEMO.first_wall import FirstWallBuilder
 from bluemira.builders.EUDEMO.pf_coils import PFCoilsBuilder
 from bluemira.builders.EUDEMO.plasma import PlasmaBuilder
 from bluemira.builders.EUDEMO.tf_coils import TFCoilsBuilder
+from bluemira.builders.radiation_shield import RadiationShieldBuilder
 from bluemira.builders.thermal_shield import ThermalShieldBuilder
 from bluemira.codes import systems_code_solver
 from bluemira.codes.process import NAME as PROCESS
@@ -46,8 +48,10 @@ class EUDEMOReactor(Reactor):
     PLASMA = "Plasma"
     TF_COILS = "TF Coils"
     PF_COILS = "PF Coils"
-    THERMAL_SHIELD = "Thermal Shield"
     FIRST_WALL = "First Wall"
+    THERMAL_SHIELD = "Thermal Shield"
+    CRYOSTAT = "Cryostat"
+    RADIATION_SHIELD = "Radiation Shield"
 
     def run(self) -> Component:
         """
@@ -59,8 +63,10 @@ class EUDEMOReactor(Reactor):
         component.add_child(self.build_plasma())
         component.add_child(self.build_TF_coils(component))
         component.add_child(self.build_PF_coils(component))
-        component.add_child(self.build_thermal_shield(component))
         component.add_child(self.build_first_wall(component))
+        component.add_child(self.build_thermal_shield(component))
+        component.add_child(self.build_cryostat(component))
+        component.add_child(self.build_radiation_shield(component))
 
         bluemira_print("Reactor Design Complete!")
 
@@ -283,4 +289,56 @@ class EUDEMOReactor(Reactor):
 
         component = super()._build_stage(name)
         bluemira_print(f"Completed design stage: {name}")
+        return component
+
+    def build_cryostat(self, component_tree: Component):
+        """
+        Run the cryostat vacuum vessel build.
+        """
+        name = EUDEMOReactor.CRYOSTAT
+
+        bluemira_print(f"Starting design stage: {name}")
+
+        thermal_shield = component_tree.get_component(
+            EUDEMOReactor.THERMAL_SHIELD
+        ).get_component("xz")
+        cts = thermal_shield.get_component("Cryostat TS").shape.boundary[0]
+
+        default_config = {}
+        config = self._process_design_stage_config(name, default_config)
+
+        builder = CryostatBuilder(self._params.to_dict(), config, cts_xz=cts)
+        self.register_builder(builder, name)
+        component = super()._build_stage(name)
+
+        bluemira_print(f"Completed design stage: {name}")
+
+        return component
+
+    def build_radiation_shield(self, component_tree: Component):
+        """
+        Run the radiation shield build.
+        """
+        name = EUDEMOReactor.RADIATION_SHIELD
+
+        bluemira_print(f"Starting design stage: {name}")
+
+        cryostat = component_tree.get_component(EUDEMOReactor.CRYOSTAT).get_component(
+            "xz"
+        )
+        cryo_vv_xz = cryostat.get_component("Cryostat VV").shape
+
+        default_config = {}
+        config = self._process_design_stage_config(name, default_config)
+
+        builder = RadiationShieldBuilder(
+            self._params.to_dict(),
+            config,
+            cryo_vv_xz=cryo_vv_xz,
+        )
+        self.register_builder(builder, name)
+        component = super()._build_stage(name)
+
+        bluemira_print(f"Completed design stage: {name}")
+
         return component
