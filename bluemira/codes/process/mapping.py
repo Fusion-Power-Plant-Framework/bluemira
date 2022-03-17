@@ -107,7 +107,7 @@ NONE_mappings = {
     "B_tf_peak": ("bmaxtfrp", "T"),
     "q_95": ("q95", "dimensionless"),
     "T_e": ("te", "keV"),
-    "Z_eff": ("zeff", "dimensionless"),
+    "Z_eff": ("zeff", "amu"),
     "V_p": ("vol", "m^3"),
     "l_i": ("rli", "dimensionless"),
     "f_ni": ("faccd", "dimensionless"),
