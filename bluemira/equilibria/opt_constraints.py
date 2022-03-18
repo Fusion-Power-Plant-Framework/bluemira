@@ -98,7 +98,16 @@ def current_midplane_constraint(constraint, vector, grad, eq, radius, inboard=Tr
 
 
 def coil_force_constraints(
-    constraint, vector, grad, eq, n_PF, n_CS, PF_Fz_max, CS_Fz_sum, CS_Fz_sep, scale
+    constraint,
+    vector,
+    grad,
+    eq,
+    n_PF,
+    n_CS,
+    PF_Fz_max,
+    CS_Fz_sum_max,
+    CS_Fz_sep_max,
+    scale,
 ):
     """
     Current optimisation force constraints on coils
@@ -119,9 +128,9 @@ def coil_force_constraints(
         Number of CS coils
     PF_Fz_max: float
         Maximum vertical force on each PF coil [MN]
-    CS_Fz_sum: float
+    CS_Fz_sum_max: float
         Maximum total vertical force on the CS stack [MN]
-    CS_Fz_sep: float
+    CS_Fz_sep_max: float
         Maximum vertical separation force in the CS stack [MN]
     scale: float
         Current scale with which to calculate the constraints
@@ -167,13 +176,13 @@ def coil_force_constraints(
         # vertical force on CS stack
         cs_z_sum = np.sum(cs_fz)
         # CSsum lower bound
-        constraint[2 * n_PF] = -CS_Fz_sum - cs_z_sum
+        constraint[2 * n_PF] = -CS_Fz_sum_max - cs_z_sum
         # CSsum upper bound
-        constraint[2 * n_PF + 1] = cs_z_sum - CS_Fz_sum
+        constraint[2 * n_PF + 1] = cs_z_sum - CS_Fz_sum_max
         for j in range(n_CS - 1):  # evaluate each gap in CS stack
             # CS seperation constraints
             f_sep = np.sum(cs_fz[: j + 1]) - np.sum(cs_fz[j + 1 :])
-            constraint[2 * n_PF + 2 + j] = f_sep - CS_Fz_sep
+            constraint[2 * n_PF + 2 + j] = f_sep - CS_Fz_sep_max
     return constraint
 
 
