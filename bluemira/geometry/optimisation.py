@@ -31,7 +31,6 @@ import numpy as np
 from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.geometry.parameterisations import GeometryParameterisation
 from bluemira.geometry.tools import signed_distance_2D_polygon
-from bluemira.geometry.wire import BluemiraWire
 from bluemira.utilities.opt_problems import (
     OptimisationConstraint,
     OptimisationObjective,
