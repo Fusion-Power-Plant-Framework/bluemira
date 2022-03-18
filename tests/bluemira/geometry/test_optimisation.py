@@ -24,7 +24,6 @@ import pytest
 
 from bluemira.geometry.optimisation import (
     GeometryOptimisationProblem,
-    MinimiseLength,
     constrain_koz,
     minimise_length,
 )
