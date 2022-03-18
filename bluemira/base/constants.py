@@ -250,7 +250,7 @@ ABS_ZERO_K = 0  # [K]
 # Absolute zero in Celsius
 ABS_ZERO_C = ureg.Quantity(0, ureg.kelvin).to(ureg.celsius).magnitude  # [°C]
 
-ABS_ZERO = {ureg.kelvin: ABS_ZERO_K, TEMP: ABS_ZERO_C}
+ABS_ZERO = {ureg.kelvin: ABS_ZERO_K, ureg.celsius: ABS_ZERO_C}
 
 # =============================================================================
 # Conversions
@@ -299,40 +299,49 @@ def raw_uc(
     return ureg.Quantity(value, unit_from).to(unit_to).magnitude
 
 
-def to_celsius(kelvin: Union[float, np.array, List[float]]) -> Union[float, np.array]:
+def to_celsius(
+    temp: Union[float, np.array, List[float]], unit: Union[str, Unit] = ureg.kelvin
+) -> Union[float, np.array]:
     """
     Convert a temperature in Kelvin to Celsius.
 
     Parameters
     ----------
-    kelvin: Union[float, np.array, List[float]]
-        The temperature to convert [K]
+    temp: Union[float, np.array, List[float]]
+        The temperature to convert, default [K]
+    unit: Union[str, Unit]
+        change the unit of the incoming value
 
     Returns
     -------
     temp_in_celsius: Union[float, np.array]
         The temperature [°C]
     """
-    converted_val = raw_uc(kelvin, ureg.kelvin, ureg.celsius)
+    converted_val = raw_uc(temp, unit, ureg.celsius)
     _temp_check(ureg.celsius, converted_val)
     return converted_val
 
 
-def to_kelvin(celsius: Union[float, np.array, List[float]]) -> Union[float, np.array]:
+def to_kelvin(
+    temp: Union[float, np.array, List[float]], unit: Union[str, Unit] = ureg.celsius
+) -> Union[float, np.array]:
     """
     Convert a temperature in Celsius to Kelvin.
 
     Parameters
     ----------
-    temp_in_celsius: Union[float, np.array, List[float]]
-        The temperature to convert [°C]
+    temp: Union[float, np.array, List[float]]
+        The temperature to convert, default [°C]
+    unit: Union[str, Unit]
+    change the unit of the incoming value
+
 
     Returns
     -------
     temp_in_kelvin: Union[float, np.array]
         The temperature [K]
     """
-    converted_val = raw_uc(celsius, ureg.celsius, ureg.kelvin)
+    converted_val = raw_uc(temp, unit, ureg.kelvin)
     _temp_check(ureg.kelvin, converted_val)
     return converted_val
 

@@ -21,13 +21,27 @@
 import numpy as np
 import pytest
 
-from bluemira.base.constants import E_I, E_IJ, E_IJK
+from bluemira.base.constants import E_I, E_IJ, E_IJK, to_celsius, to_kelvin
 from bluemira.utilities.tools import levi_civita_tensor
 
 
 def test_lct_constants():
     for i, lct in enumerate([E_I, E_IJ, E_IJK], start=1):
         np.testing.assert_equal(lct, levi_civita_tensor(dim=i))
+
+
+class TestTemperatureConverters:
+    params = ("unit", ["celsius", "kelvin", "rankine", "reaumur", "fahrenheit"])
+
+    @pytest.mark.parametrize(*params)
+    def test_to_kelvin_rasies_error(self, unit):
+        with pytest.raises(ValueError):
+            to_kelvin(-1000, unit)
+
+    @pytest.mark.parametrize(*params)
+    def test_to_celsius_raises_error(self, unit):
+        with pytest.raises(ValueError):
+            to_celsius(-1000, unit)
 
 
 if __name__ == "__main__":
