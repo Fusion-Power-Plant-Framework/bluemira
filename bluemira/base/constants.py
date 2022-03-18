@@ -27,7 +27,7 @@ from typing import List, Optional, Union
 
 import numpy as np
 from periodictable import elements
-from pint import Context, Quantity, UnitRegistry, set_application_registry
+from pint import Context, Quantity, Unit, UnitRegistry, set_application_registry
 from pint.util import UnitsContainer
 
 
@@ -292,17 +292,7 @@ def raw_uc(
     converted value
 
     """
-    unit_from, unit_to = ureg.Unit(unit_from), ureg.Unit(unit_to)
-
-    converted_val = ureg.Quantity(value, unit_from).to(unit_to).magnitude
-    if unit_to.dimensionality == UnitsContainer({"[temperature]": 1}) and np.any(
-        np.less(
-            converted_val,
-            ABS_ZERO.get(unit_to, ureg.Quantity(0, ureg.kelvin).to(unit_to).magnitude),
-        )
-    ):
-        raise ValueError("Negative temperature in K specified.")
-    return converted_val
+    return ureg.Quantity(value, unit_from).to(unit_to).magnitude
 
 
 def to_celsius(kelvin: Union[float, np.array, List[float]]) -> Union[float, np.array]:
@@ -319,7 +309,9 @@ def to_celsius(kelvin: Union[float, np.array, List[float]]) -> Union[float, np.a
     temp_in_celsius: Union[float, np.array]
         The temperature [°C]
     """
-    return raw_uc(kelvin, ureg.kelvin, ureg.celsius)
+    converted_val = raw_uc(kelvin, ureg.kelvin, ureg.celsius)
+    _temp_check(ureg.celsius, converted_val)
+    return converted_val
 
 
 def to_kelvin(celsius: Union[float, np.array, List[float]]) -> Union[float, np.array]:
@@ -336,7 +328,34 @@ def to_kelvin(celsius: Union[float, np.array, List[float]]) -> Union[float, np.a
     temp_in_kelvin: Union[float, np.array]
         The temperature [K]
     """
-    return raw_uc(celsius, ureg.celsius, ureg.kelvin)
+    converted_val = raw_uc(celsius, ureg.celsius, ureg.kelvin)
+    _temp_check(ureg.kelvin, converted_val)
+    return converted_val
+
+
+def _temp_check(unit: Unit, val: Union[float, int, complex, Quantity]):
+    """
+    Check temperature is above absolute zero
+
+    Parameters
+    ----------
+    unit: Unit
+        pint Unit
+    val: Union[float, int, complex, Quantity]
+        value to check
+
+    Raises
+    ------
+    ValueError if below absolute zero
+
+    """
+    if unit.dimensionality == UnitsContainer({"[temperature]": 1}) and np.any(
+        np.less(
+            val,
+            ABS_ZERO.get(unit, ureg.Quantity(0, ureg.kelvin).to(unit).magnitude),
+        )
+    ):
+        raise ValueError("Negative temperature in K specified.")
 
 
 def kgm3_to_gcm3(density: Union[float, np.array, List[float]]) -> Union[float, np.array]:
