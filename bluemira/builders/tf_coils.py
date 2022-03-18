@@ -43,6 +43,7 @@ from bluemira.geometry.wire import BluemiraWire
 from bluemira.magnetostatics.biot_savart import BiotSavartFilament
 from bluemira.magnetostatics.circuits import HelmholtzCage
 from bluemira.utilities.opt_problems import OptimisationConstraint, OptimisationObjective
+from bluemira.utilities.optimiser import approx_derivative
 
 
 class RippleConstrainedLengthOpt(GeometryOptimisationProblem):
@@ -111,7 +112,11 @@ class RippleConstrainedLengthOpt(GeometryOptimisationProblem):
             minimise_length, f_objective_args={"parameterisation": parameterisation}
         )
 
-        ripple_constraint = OptimisationConstraint()
+        ripple_constraint = OptimisationConstraint(
+            self.constrain_ripple,
+            f_constraint_args={"parameterisation": parameterisation},
+            tolerance=rip_con_tol * np.ones(n_rip_points),
+        )
         constraints = [ripple_constraint]
         if keep_out_zone is not None:
             koz_points = self._make_koz_points(keep_out_zone)
@@ -166,24 +171,74 @@ class RippleConstrainedLengthOpt(GeometryOptimisationProblem):
         # points = points[:, idx]
         return points
 
-    def _make_single_circuit(self, wire):
+    @staticmethod
+    def constrain_ripple(
+        constraint,
+        vector,
+        grad,
+        parameterisation,
+        ripple_points,
+        wp_xs,
+        nx,
+        ny,
+        params,
+        ad_args=None,
+    ):
+        func = RippleConstrainedLengthOpt.calculate_ripple
+        constraint[:] = func(
+            vector, parameterisation, ripple_points, wp_xs, nx, ny, params
+        )
+        if grad.size > 0:
+            grad[:] = approx_derivative(
+                func,
+                vector,
+                f0=constraint,
+                args=(parameterisation, ripple_points, wp_xs, nx, ny, params),
+                **ad_args,
+            )
+
+        bluemira_debug_flush(
+            f"Max ripple: {max(constraint+params.TF_ripple_limit.value)}"
+        )
+        return constraint
+
+    @staticmethod
+    def calculate_ripple(vector, parameterisation, ripple_points, wp_xs, nx, ny, params):
+        cage = RippleConstrainedLengthOpt.update_cage(
+            vector, parameterisation, wp_xs, nx, ny, params
+        )
+        ripple = cage.ripple(*ripple_points)
+        ripple_values = ripple
+        return ripple - params.TF_ripple_limit.value
+
+    @staticmethod
+    def update_cage(vector, parameterisation, wp_xs, nx, ny, params):
+        parameterisation.variables.set_values_from_norm(vector)
+        wire = parameterisation.create_shape()
+        circuit = RippleConstrainedLengthOpt._make_single_circuit(wire, wp_xs, nx, ny)
+
+        cage = HelmholtzCage(circuit, params.n_TF.value)
+        field = cage.field(params.R_0, 0, params.z_0)
+        current = -params.B_0 / field[1]  # single coil amp-turns
+        current /= nx * ny  # single filament amp-turns
+        cage.set_current(current)
+        return cage
+
+    @staticmethod
+    def _make_single_circuit(wire, wp_cross_section, nx, ny):
         """
         Make a single BioSavart Filament for a single TF coil
         """
-        bb = self.wp_cross_section.bounding_box
+        bb = wp_cross_section.bounding_box
         dx_xs = 0.5 * (bb.x_max - bb.x_min)
         dy_xs = 0.5 * (bb.y_max - bb.y_min)
 
         dx_wp, dy_wp = [0], [0]  # default to coil centreline
-        if self.nx > 1:
-            dx_wp = np.linspace(
-                dx_xs * (1 / self.nx - 1), dx_xs * (1 - 1 / self.nx), self.nx
-            )
+        if nx > 1:
+            dx_wp = np.linspace(dx_xs * (1 / nx - 1), dx_xs * (1 - 1 / nx), nx)
 
-        if self.ny > 1:
-            dy_wp = np.linspace(
-                dy_xs * (1 / self.ny - 1), dy_xs * (1 - 1 / self.ny), self.ny
-            )
+        if ny > 1:
+            dy_wp = np.linspace(dy_xs * (1 / ny - 1), dy_xs * (1 - 1 / ny), ny)
 
         current_wires = []
         for dx in dx_wp:
@@ -200,9 +255,9 @@ class RippleConstrainedLengthOpt(GeometryOptimisationProblem):
         for c in current_arrays:
             c.set_ccw((0, 1, 0))
 
-        radius = 0.5 * BluemiraFace(self.wp_cross_section).area / (self.nx * self.ny)
+        radius = 0.5 * BluemiraFace(wp_cross_section).area / (nx * ny)
         filament = BiotSavartFilament(
-            current_arrays, radius=radius, current=1 / (self.nx * self.ny)
+            current_arrays, radius=radius, current=1 / (nx * ny)
         )
         return filament
 
