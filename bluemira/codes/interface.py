@@ -249,8 +249,8 @@ class Teardown(Task):
                 code_unit = (
                     self.parent.params.get_param(bm_key).mapping[self.parent.NAME].unit
                 )
-            except AttributeError:
-                raise AttributeError(f"No mapping found for {bm_key}")
+            except AttributeError as exc:
+                raise AttributeError(f"No mapping found for {bm_key}") from exc
             if code_unit is not None:
                 outputs[bm_key] = {"value": value, "unit": code_unit}
 

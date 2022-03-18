@@ -96,7 +96,7 @@ class BMUnitRegistry(UnitRegistry):
 
     def _energy_temperature_context(self):
         """
-        Converter between energy an temperature
+        Converter between energy and temperature
 
         temperature = energy / k_B
 
@@ -264,10 +264,10 @@ S_TO_YR = ureg.Quantity(1, ureg.second).to(ureg.year).magnitude
 
 
 def raw_uc(
-    value: Union[int, float, np.array],
+    value: Union[int, float, np.ndarray],
     unit_from: Union[str, ureg.Unit],
     unit_to: Union[str, ureg.Unit],
-) -> Union[int, float, np.array]:
+) -> Union[int, float, np.ndarray]:
     """
     Raw unit converter
 
