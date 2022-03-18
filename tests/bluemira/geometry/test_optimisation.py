@@ -33,21 +33,6 @@ from bluemira.utilities.opt_problems import OptimisationConstraint, Optimisation
 from bluemira.utilities.optimiser import Optimiser
 
 
-class DummyOptimisationProblem(GeometryOptimisationProblem):
-    def calculate_length(self, x):
-        self.update_parameterisation(x)
-        return self.parameterisation.create_shape().length
-
-    def f_objective(self, x, grad):
-        value = self.calculate_length(x)
-
-        if grad.size > 0:
-            grad[:] = self.optimiser.approx_derivative(
-                self.calculate_length, x, f0=value
-            )
-        return value
-
-
 class TestGeometryOptimisationProblem:
     @classmethod
     def setup_class(cls):
@@ -205,9 +190,14 @@ class TestMinimiseLength:
                 "xtol_abs": 1e-8,
             },
         )
-        problem = MinimiseLength(
-            parameterisation, optimiser, keep_out_zone=keep_out_zone
+
+        objective = OptimisationObjective(
+            minimise_length,
+            f_objective_args={"parameterisation": parameterisation},
         )
+
+        constraints = [OptimisationConstraint()]
+        problem = MinimiseLength(parameterisation, optimiser, objective)
 
         problem.optimise()
 

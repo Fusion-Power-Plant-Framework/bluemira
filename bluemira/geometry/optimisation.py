@@ -39,6 +39,8 @@ from bluemira.utilities.opt_problems import (
 )
 from bluemira.utilities.optimiser import Optimiser, approx_derivative
 
+__all__ = ("GeometryOptimisationProblem", "minimise_length")
+
 
 def calculate_length(vector, parameterisation):
     """
@@ -75,6 +77,28 @@ def minimise_length(vector, grad, parameterisation, ad_args=None):
     return length
 
 
+def calculate_signed_distance(vector, parameterisation, koz_points):
+    """
+    Calculate the signed distances from the parameterised shape to
+    the keep-out zone.
+    """
+    parameterisation.variables.set_values_from_norm(vector)
+
+    shape = parameterisation.create_shape()
+    s = shape.discretize(ndiscr=self.n_koz_points).xz
+    return signed_distance_2D_polygon(s.T, koz_points.T).T
+
+
+def f_constrain_koz(constraint, vector, grad, parameterisation, koz_points):
+    """
+    Geometry constraint function to the keep-out-zone.
+    """
+    constraint[:] = calculate_signed_distance(vector, parameterisation, koz_points)
+    if grad.size > 0:
+        grad[:] = approx_derivative(calculate_signed_distance, vector, constraint)
+    return constraint
+
+
 class GeometryOptimisationProblem(OptimisationProblem):
     """
     Geometry optimisation problem class.
@@ -108,15 +132,14 @@ class GeometryOptimisationProblem(OptimisationProblem):
         """
         Add shape constraints to the geometry parameterisation, if they exist.
         """
-        n_shape_ineq_cons = self._parameterisation.n_ineq_constraints
+        n_shape_ineq_cons = self.parameterisation.n_ineq_constraints
         if n_shape_ineq_cons > 0:
             self.opt.add_ineq_constraints(
-                self._parameterisation.shape_ineq_constraints,
-                np.zeros(n_shape_ineq_cons),
+                self.parameterisation.shape_ineq_constraints, np.zeros(n_shape_ineq_cons)
             )
         else:
             bluemira_warn(
-                f"GeometryParameterisation {self._parameterisation.__class.__name__} does"
+                f"GeometryParameterisation {self.parameterisation.__class.__name__} does"
                 "not have any shape constraints."
             )
 
