@@ -231,7 +231,7 @@ class RippleConstrainedLengthOpt(GeometryOptimisationProblem):
             f_constraint_args={
                 "parameterisation": parameterisation,
                 "solver": self.solver,
-                "params": params,
+                "TF_ripple_limit": params.TF_ripple_limit.value,
             },
             tolerance=rip_con_tol * np.ones(n_rip_points),
         )
@@ -289,32 +289,67 @@ class RippleConstrainedLengthOpt(GeometryOptimisationProblem):
         grad,
         parameterisation,
         solver,
-        params,
+        TF_ripple_limit,
         ad_args=None,
     ):
+        """
+        Ripple constraint function
+
+        Parameters
+        ----------
+        constraint: np.ndarray
+            Constraint vector (updated in place)
+        vector: np.ndarray
+            Variable vector
+        grad: np.ndarray
+            Jacobian matrix of the constraint (updated in place)
+        parameterisation: GeometryParameterisation
+            Geometry parameterisation
+        solver: ParameterisedHelmholtzSolver
+            TF ripple solver
+        TF_ripple_limit: float
+            Maximum allowable TF ripple
+        """
         func = RippleConstrainedLengthOpt.calculate_ripple
-        constraint[:] = func(vector, parameterisation, solver, params)
+        constraint[:] = func(vector, parameterisation, solver, TF_ripple_limit)
         if grad.size > 0:
             grad[:] = approx_derivative(
                 func,
                 vector,
                 f0=constraint,
-                args=(parameterisation, solver, params),
+                args=(parameterisation, solver, TF_ripple_limit),
                 **ad_args,
             )
 
-        bluemira_debug_flush(
-            f"Max ripple: {max(constraint+params.TF_ripple_limit.value)}"
-        )
+        bluemira_debug_flush(f"Max ripple: {max(constraint+TF_ripple_limit)}")
         return constraint
 
     @staticmethod
-    def calculate_ripple(vector, parameterisation, solver, params):
+    def calculate_ripple(vector, parameterisation, solver, TF_ripple_limit):
+        """
+        Calculate ripple constraint
+
+        Parameters
+        ----------
+        vector: np.ndarray
+            Variable vector
+        parameterisation: GeometryParameterisation
+            Geometry parameterisation
+        solver: ParameterisedHelmholtzSolver
+            TF ripple solver
+        TF_ripple_limit: float
+            Maximum allowable TF ripple
+
+        Returns
+        -------
+        c_values: np.ndarray
+            Ripple constraint values
+        """
         parameterisation.variables.set_values_from_norm(vector)
         wire = parameterisation.create_shape()
         solver.update_cage(wire)
         ripple = solver.ripple()
-        return ripple - params.TF_ripple_limit.value
+        return ripple - TF_ripple_limit
 
     def optimise(self, x0=None):
         """
