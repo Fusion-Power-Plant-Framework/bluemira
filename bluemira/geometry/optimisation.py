@@ -31,6 +31,7 @@ import numpy as np
 from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.geometry.parameterisations import GeometryParameterisation
 from bluemira.geometry.tools import signed_distance_2D_polygon
+from bluemira.geometry.wire import BluemiraWire
 from bluemira.utilities.opt_problems import (
     OptimisationConstraint,
     OptimisationObjective,
@@ -169,3 +170,37 @@ class GeometryOptimisationProblem(OptimisationProblem):
             x0 = self._parameterisation.variables.get_normalised_values()
         x_star = self.opt.optimise(x0)
         self.update_parameterisation(x_star)
+
+
+class MinimiseLength(GeometryOptimisationProblem):
+    """
+    Optimiser to minimise the length of a geometry 2D parameterisation
+    in the xz-plane, with optional constraints in the form of a
+    "keep-out zone".
+    """
+
+    def __init__(
+        self,
+        parameterisation: GeometryParameterisation,
+        optimiser: Optimiser,
+        keep_out_zone: BluemiraWire = None,
+        n_koz_points: int = 100,
+        koz_con_tol: float = 1e-3,
+    ):
+        objective = OptimisationObjective(
+            minimise_length, {"parameterisation": parameterisation}
+        )
+        koz_points = keep_out_zone.discretize(n_koz_points, byedges=True).xz
+        koz_constraint = OptimisationConstraint(
+            constrain_koz,
+            f_constraint_args={
+                "parameterisation": parameterisation,
+                "n_shape_discr": n_koz_points,
+                "koz_points": koz_points,
+            },
+            tolerance=koz_con_tol * np.ones(n_koz_points),
+        )
+
+        super().__init__(
+            parameterisation, optimiser, objective, constaints=[koz_constraint]
+        )
