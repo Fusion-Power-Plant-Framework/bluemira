@@ -206,6 +206,11 @@ slsqp_optimiser2 = Optimiser(
         "max_eval": 1000,
     },
 )
+constraint_function = OptimisationConstraint(
+    my_constraint,
+    f_constraint_args={"parameterisation": parameterisation_3, "c_value": c_value},
+    tolerance=np.array([c_tolerance]),
+)
 objective = OptimisationObjective(
     minimise_length,
     f_objective_args={"parameterisation": parameterisation_3},
@@ -248,7 +253,11 @@ cobyla_optimiser2 = Optimiser(
         "max_eval": 1000,
     },
 )
-
+constraint_function = OptimisationConstraint(
+    my_constraint,
+    f_constraint_args={"parameterisation": parameterisation_4, "c_value": c_value},
+    tolerance=np.array([c_tolerance]),
+)
 objective = OptimisationObjective(
     minimise_length,
     f_objective_args={"parameterisation": parameterisation_4},
@@ -284,6 +293,11 @@ set_random_seed(134365475)
 objective = OptimisationObjective(
     minimise_length,
     f_objective_args={"parameterisation": parameterisation_5},
+)
+constraint_function = OptimisationConstraint(
+    my_constraint,
+    f_constraint_args={"parameterisation": parameterisation_5, "c_value": c_value},
+    tolerance=np.array([c_tolerance]),
 )
 problem = GeometryOptimisationProblem(
     parameterisation_5, irses_optimiser, objective, constraints=[constraint_function]
