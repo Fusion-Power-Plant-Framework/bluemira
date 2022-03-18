@@ -1048,7 +1048,7 @@ class PictureFrameTools:
         cos_a = np.cos(theta_leg_basic * 0.5)
 
         # Joint Curve
-        r_j = min(x_curve_start - x_mid, 0.8)
+        r_j = 2 * r_c
         theta_j = np.arccos((r_leg * cos_a + r_j) / (r_leg + r_j))
         z_mid_r_j = z_mid - r_j if flip else z_mid + r_j
         joint_curve_centre = (

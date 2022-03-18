@@ -27,6 +27,7 @@ from copy import deepcopy
 from typing import List, Optional, Type
 
 import numpy as np
+from matplotlib.pyplot import axes
 
 import bluemira.utilities.plot_tools as bm_plot_tools
 from bluemira.base.builder import BuildConfig
@@ -38,13 +39,16 @@ from bluemira.builders.EUDEMO.tools import circular_pattern_component
 from bluemira.builders.shapes import OptimisedShapeBuilder
 from bluemira.display import show_cad
 from bluemira.display.palettes import BLUE_PALETTE
+from bluemira.display.plotter import plot_2d
 from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.optimisation import GeometryOptimisationProblem
 from bluemira.geometry.parameterisations import GeometryParameterisation
 from bluemira.geometry.placement import BluemiraPlacement
+from bluemira.geometry.solid import BluemiraSolid
 from bluemira.geometry.tools import (
     boolean_cut,
     boolean_fuse,
+    extrude_shape,
     make_polygon,
     offset_wire,
     slice_shape,
@@ -281,8 +285,7 @@ class TFCoilsBuilder(OptimisedShapeBuilder):
         field_solver = self._make_field_solver()
         component = TFCoilsComponent(self.name, field_solver=field_solver)
 
-        self.build_xy()
-        # component.add_child(self.build_xy())
+        component.add_child(self.build_xy())
         component.add_child(self.build_xyz())
         component.add_child(self.build_xz())
         return component
@@ -317,7 +320,7 @@ class TFCoilsBuilder(OptimisedShapeBuilder):
         ins_inner.plot_options.face_options["color"] = BLUE_PALETTE["TF"][2]
         insulation = Component("Insulation", children=[ins_outer, ins_inner])
         component.add_child(insulation)
-
+        """
         # Casing
         cas_inner, cas_outer = self._temp_casing
         cas_inner = PhysicalComponent("inner", cas_inner)
@@ -326,7 +329,7 @@ class TFCoilsBuilder(OptimisedShapeBuilder):
         cas_outer.plot_options.face_options["color"] = BLUE_PALETTE["TF"][0]
         casing = Component("Casing", children=[cas_inner, cas_outer])
         component.add_child(casing)
-        """
+
         bm_plot_tools.set_component_plane(component, "xz")
 
         return component
@@ -370,8 +373,8 @@ class TFCoilsBuilder(OptimisedShapeBuilder):
                 ob_ins_comp,
             ],
         )
-        sectors = circular_pattern_component(insulation, self._params.n_TF.value)
-        component.add_children(sectors, merge_trees=True)
+        # sectors = circular_pattern_component(insulation, self._params.n_TF.value)
+        # component.add_children(sectors, merge_trees=True)
 
         # Casing
         ib_cas_wire, ob_cas_wire = self._make_cas_xs()
@@ -397,7 +400,7 @@ class TFCoilsBuilder(OptimisedShapeBuilder):
 
         return component
 
-    def build_xyz(self, degree: float = 360.0) -> Component:
+    def build_xyz(self, degree: float = 90.0) -> Component:
         """
         Build the x-y-z components of the TF coils.
 
@@ -439,12 +442,14 @@ class TFCoilsBuilder(OptimisedShapeBuilder):
         insulation = PhysicalComponent("Insulation", ins_solid)
         insulation.display_cad_options.color = BLUE_PALETTE["TF"][2]
         sectors = circular_pattern_component(insulation, n_tf_draw, degree=degree)
-        component.add_children(sectors, merge_trees=True)
-        """
+        # component.add_children(sectors, merge_trees=True)
+
         # Casing
         # Normally I'd do lots more here to get to a proper casing
         # This is just a proof-of-principle
         inner_xs, outer_xs = self._make_cas_xs()
+
+        """
         # Make inner xs into a rectangle
         bb = inner_xs.bounding_box
         x_min = bb.x_min
@@ -456,7 +461,7 @@ class TFCoilsBuilder(OptimisedShapeBuilder):
             [[x_min, x_max, x_max, x_min], [-y_in, -y_in, y_in, y_in], [0, 0, 0, 0]],
             closed=True,
         )
-
+        """
         # Sweep with a varying rectangular cross-section
         centreline_points = self._centreline.discretize(byedges=True, ndiscr=2000)
         idx = np.where(np.isclose(centreline_points.x, np.min(centreline_points.x)))[0]
@@ -465,82 +470,30 @@ class TFCoilsBuilder(OptimisedShapeBuilder):
         z_min_cl = np.min(centreline_points.z)
         z_max_cl = np.max(centreline_points.z)
 
-        inner_xs_rect_top = deepcopy(inner_xs_rect)
-        inner_xs_rect_top.translate((0, 0, z_turn_top))
-        inner_xs_rect_bot = deepcopy(inner_xs_rect)
-        inner_xs_rect_bot.translate((0, 0, z_turn_bot))
-        solid = sweep_shape(
-            [inner_xs_rect_top, outer_xs, inner_xs_rect_bot], self._centreline
-        )
+        inner_xs_top = deepcopy(inner_xs)
+        inner_xs_top.translate((0, 0, z_turn_top))
+        inner_xs_bot = deepcopy(inner_xs)
+        inner_xs_bot.translate((0, 0, z_turn_bot))
+        inner_solid = sweep_shape(inner_xs, self._centreline)
+        plot_2d(self._centreline)
+        plot_2d([inner_xs, self._wp_cross_section], plane="xy")
 
-        # This is because the bounding box of a solid is not to be trusted
-        cut_wires = slice_shape(
-            solid, BluemiraPlacement.from_3_points([0, 0, 0], [1, 0, 0], [1, 0, 1])
-        )
-        cut_wires.sort(key=lambda wire: wire.length)
-        boundary = cut_wires[-1]
-        bb = boundary.bounding_box
-        z_min = bb.z_min
-        z_max = bb.z_max
-        y_in = 0.5 * (
-            self.params.tf_wp_depth + self.params.tk_tf_ins + self.params.tk_tf_side
-        )
+        in_leg = sweep_shape(inner_xs, self._centreline.boundary[0])
+        in_leg_wp = sweep_shape(self._wp_cross_section, self._centreline._boundary[0])
+        show_cad([in_leg, in_leg_wp])
 
-        inner_xs.translate((0, 0, z_min - inner_xs.center_of_mass[2]))
-        inboard_casing = extrude_shape(BluemiraFace(inner_xs), (0, 0, z_max - z_min))
-
-        # Join the straight leg to the curvy bits
-        x_min = np.min(centreline_points.x)
-        idx = np.where(np.isclose(centreline_points.z, z_max_cl))[0]
-        x_turn_top = np.min(centreline_points.x[idx])
-        idx = np.where(np.isclose(centreline_points.z, z_min_cl))[0]
-        x_turn_bot = np.min(centreline_points.x[idx])
-        joiner_top = make_polygon(
-            [
-                [x_min, x_turn_top, x_turn_top, x_min],
-                [-y_in, -y_in, y_in, y_in],
-                [z_max, z_max, z_max, z_max],
-            ],
-            closed=True,
-        )
-        joiner_top = extrude_shape(BluemiraFace(joiner_top), (0, 0, -z_max))
-        joiner_bot = make_polygon(
-            [
-                [x_min, x_turn_bot, x_turn_bot, x_min],
-                [-y_in, -y_in, y_in, y_in],
-                [z_min, z_min, z_min, z_min],
-            ],
-            closed=True,
-        )
-        joiner_bot = extrude_shape(BluemiraFace(joiner_bot), (0, 0, -z_min))
-
-        # Need to cut away the excess joiner extrusions
-        cl = deepcopy(self._centreline)
-        cl.translate((0, -2 * self.params.tf_wp_depth, 0))
-        cl_face = BluemiraFace(cl)
-        cutter = extrude_shape(cl_face, (0, 4 * self.params.tf_wp_depth, 0))
-        joiner_top = boolean_cut(joiner_top, cutter)[0]
-        joiner_bot = boolean_cut(joiner_bot, cutter)[0]
-
-        # Cut away straight sweep before fusing to protect against degenerate faces
-        # Keep the largest piece
-        pieces = boolean_cut(solid, inboard_casing)
-        pieces.sort(key=lambda x: x.volume)
-        solid = pieces[-1]
-
-        case_solid = boolean_fuse([solid, inboard_casing, joiner_top, joiner_bot])
-        outer_ins_solid = BluemiraSolid(ins_solid.boundary[0])
-        case_solid_hollow = boolean_cut(case_solid, outer_ins_solid)[0]
+        case_solid_hollow = boolean_cut(inner_solid, wp_solid)[0]
+        show_cad(case_solid_hollow)
         self._make_cas_xz(case_solid_hollow)
 
         casing = PhysicalComponent("Casing", case_solid_hollow)
         casing.display_cad_options.color = BLUE_PALETTE["TF"][0]
         sectors = circular_pattern_component(casing, n_tf_draw, degree=degree)
         component.add_children(sectors, merge_trees=True)
-        """
+
         return component
 
-    def build_nontangent_xyz(self, centreline, xs):
+    def build_tapered_centrepost(self, centreline, xs):
         """
         Builds the xyz components for the TF coil for shapes with sharp corners
 
@@ -549,6 +502,9 @@ class TFCoilsBuilder(OptimisedShapeBuilder):
         component: Component
             The component grouping the results in 3D (xyz).
         """
+        p1 = centreline._boundary[0].bounding_box.z_min
+        p2 = centreline._boundary[0].bounding_box.z_min
+
         return None
 
     def _make_field_solver(self):

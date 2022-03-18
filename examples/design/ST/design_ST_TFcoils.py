@@ -42,7 +42,7 @@ from bluemira.geometry.tools import make_polygon
 build_config = {
     "name": "test_ST_TF",
     "runmode": "run",  # ["run", "read", "mock"]
-    "param_class": "FullDomeFlatInnerCurvedPictureFrame",
+    "param_class": "TopDomeCurvedPictureFrame",
     "problem_class": "bluemira.builders.tf_coils::RippleConstrainedLengthOpt",
     "variables_map": {
         "x_mid": {"value": "r_tf_in_centre", "fixed": True},
@@ -51,8 +51,7 @@ build_config = {
         "z_mid_up": {"value": 11.5, "fixed": True},
         "z_mid_down": {"value": -11.5, "fixed": True},
         "z_max_up": {"value": 13, "fixed": True},
-        "z_max_down": {"value": -13, "fixed": True},
-        "r_c": {"value": 0.5, "fixed": True},
+        "r_c": {"value": 0.6, "fixed": True},
     },
     "algorithm_name": "COBYLA",
     "problem_settings": {
@@ -98,6 +97,8 @@ lcfs = make_polygon(lcfs.xyz)
 builder = TFCoilsBuilder(params, build_config, lcfs, None)
 builder.run()
 cad = builder.build()
+xz = builder.build_xz()
+xz.plot_2d()
 cad.show_cad()
 
 if builder.runmode == "run":
