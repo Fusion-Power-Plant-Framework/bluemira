@@ -112,9 +112,17 @@ class RippleConstrainedLengthOpt(GeometryOptimisationProblem):
             minimise_length, f_objective_args={"parameterisation": parameterisation}
         )
 
+        ripple_points = self._make_ripple_points(separatrix)
         ripple_constraint = OptimisationConstraint(
             self.constrain_ripple,
-            f_constraint_args={"parameterisation": parameterisation},
+            f_constraint_args={
+                "parameterisation": parameterisation,
+                "ripple_points": ripple_points,
+                "wp_xs": wp_cross_section,
+                "nx": nx,
+                "ny": ny,
+                "params": params,
+            },
             tolerance=rip_con_tol * np.ones(n_rip_points),
         )
         constraints = [ripple_constraint]
@@ -261,44 +269,44 @@ class RippleConstrainedLengthOpt(GeometryOptimisationProblem):
         )
         return filament
 
-    def update_cage(self, x):
-        """
-        Update the magnetostatic solver
-        """
-        super().update_parameterisation(x)
-        wire = self.parameterisation.create_shape()
-        circuit = self._make_single_circuit(wire)
+    # def update_cage(self, x):
+    #     """
+    #     Update the magnetostatic solver
+    #     """
+    #     super().update_parameterisation(x)
+    #     wire = self.parameterisation.create_shape()
+    #     circuit = self._make_single_circuit(wire)
 
-        self.cage = HelmholtzCage(circuit, self.params.n_TF.value)
-        field = self.cage.field(self.params.R_0, 0, self.params.z_0)
-        current = -self.params.B_0 / field[1]  # single coil amp-turns
-        current /= self.nx * self.ny  # single filament amp-turns
-        self.cage.set_current(current)
+    #     self.cage = HelmholtzCage(circuit, self.params.n_TF.value)
+    #     field = self.cage.field(self.params.R_0, 0, self.params.z_0)
+    #     current = -self.params.B_0 / field[1]  # single coil amp-turns
+    #     current /= self.nx * self.ny  # single filament amp-turns
+    #     self.cage.set_current(current)
 
-    def calculate_ripple(self, x):
-        """
-        Calculate the ripple on the target points for a given variable vector
-        """
-        self.update_cage(x)
-        ripple = self.cage.ripple(*self.ripple_points)
-        self.ripple_values = ripple
-        return ripple - self.params.TF_ripple_limit
+    # def calculate_ripple(self, x):
+    #     """
+    #     Calculate the ripple on the target points for a given variable vector
+    #     """
+    #     self.update_cage(x)
+    #     ripple = self.cage.ripple(*self.ripple_points)
+    #     self.ripple_values = ripple
+    #     return ripple - self.params.TF_ripple_limit
 
-    def f_constrain_ripple(self, constraint, x, grad):
-        """
-        Toroidal field ripple constraint function
-        """
-        constraint[:] = self.calculate_ripple(x)
+    # def f_constrain_ripple(self, constraint, x, grad):
+    #     """
+    #     Toroidal field ripple constraint function
+    #     """
+    #     constraint[:] = self.calculate_ripple(x)
 
-        if grad.size > 0:
-            # Only called if a gradient-based optimiser is used
-            grad[:] = self.optimiser.approx_derivative(
-                self.calculate_ripple, x, constraint
-            )
-        bluemira_debug_flush(
-            f"Max ripple: {max(constraint+self.params.TF_ripple_limit)}"
-        )
-        return constraint
+    #     if grad.size > 0:
+    #         # Only called if a gradient-based optimiser is used
+    #         grad[:] = self.optimiser.approx_derivative(
+    #             self.calculate_ripple, x, constraint
+    #         )
+    #     bluemira_debug_flush(
+    #         f"Max ripple: {max(constraint+self.params.TF_ripple_limit)}"
+    #     )
+    #     return constraint
 
     def plot(self, ax=None):
         """
