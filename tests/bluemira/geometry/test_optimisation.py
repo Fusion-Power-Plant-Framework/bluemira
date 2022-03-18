@@ -25,6 +25,7 @@ import pytest
 from bluemira.geometry.optimisation import (
     GeometryOptimisationProblem,
     MinimiseLength,
+    constrain_koz,
     minimise_length,
 )
 from bluemira.geometry.parameterisations import PictureFrame, TripleArc
@@ -196,8 +197,20 @@ class TestMinimiseLength:
             f_objective_args={"parameterisation": parameterisation},
         )
 
-        constraints = [OptimisationConstraint()]
-        problem = MinimiseLength(parameterisation, optimiser, objective)
+        constraints = [
+            OptimisationConstraint(
+                constrain_koz,
+                f_constraint_args={
+                    "parameterisation": parameterisation,
+                    "n_shape_discr": 100,
+                    "koz_points": keep_out_zone.discretize(ndiscr=100, byedges=True).xz,
+                },
+                tolerance=1e-6 * np.ones(100),
+            )
+        ]
+        problem = GeometryOptimisationProblem(
+            parameterisation, optimiser, objective, constraints
+        )
 
         problem.optimise()
 
