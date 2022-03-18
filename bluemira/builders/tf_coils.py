@@ -46,6 +46,74 @@ from bluemira.utilities.opt_problems import OptimisationConstraint, Optimisation
 from bluemira.utilities.optimiser import approx_derivative
 
 
+class ParameterisedHelmhotzSolver:
+    def __init__(self, wp_xs, nx, ny, n_TF, R_0, z_0, B_0, ripple_points):
+        self.wp_xs = wp_xs
+        self.nx = nx
+        self.ny = ny
+        self.n_TF = n_TF
+        self.R_0 = R_0
+        self.z_0 = z_0
+        self.B_0 = B_0
+        self.ripple_points = ripple_points
+        self.cage = None
+
+    def update_cage(self, parameterisation, vector):
+        parameterisation.variables.set_values_from_norm(vector)
+        wire = parameterisation.create_shape()
+        circuit = self._make_single_circuit(wire, self.wp_xs, self.nx, self.ny)
+
+        self.cage = HelmholtzCage(circuit, self.n_TF)
+        field = self.cage.field(self.R_0, 0, self.z_0)
+        current = -self.B_0 / field[1]  # single coil amp-turns
+        current /= self.nx * self.ny  # single filament amp-turns
+        self.cage.set_current(current)
+
+    def _make_single_circuit(self, wire):
+        """
+        Make a single BioSavart Filament for a single TF coil
+        """
+        bb = self.wp_xs.bounding_box
+        dx_xs = 0.5 * (bb.x_max - bb.x_min)
+        dy_xs = 0.5 * (bb.y_max - bb.y_min)
+
+        dx_wp, dy_wp = [0], [0]  # default to coil centreline
+        if self.nx > 1:
+            dx_wp = np.linspace(
+                dx_xs * (1 / self.nx - 1), dx_xs * (1 - 1 / self.nx), self.nx
+            )
+
+        if self.ny > 1:
+            dy_wp = np.linspace(
+                dy_xs * (1 / self.ny - 1), dy_xs * (1 - 1 / self.ny), self.ny
+            )
+
+        current_wires = []
+        for dx in dx_wp:
+            c_wire = offset_wire(wire, dx)
+            for dy in dy_wp:
+                c_w = deepcopy(c_wire)
+                c_w.translate((0, dy, 0))
+                current_wires.append(c_w)
+
+        current_arrays = [
+            w.discretize(byedges=True, dl=wire.length / 200) for w in current_wires
+        ]
+
+        for c in current_arrays:
+            c.set_ccw((0, 1, 0))
+
+        radius = 0.5 * BluemiraFace(self.wp_xs).area / (self.nx * self.ny)
+        filament = BiotSavartFilament(
+            current_arrays, radius=radius, current=1 / (self.nx * self.ny)
+        )
+        return filament
+
+    def ripple(self):
+        ripple = self.cage.ripple(*self.ripple_points)
+        return ripple
+
+
 class RippleConstrainedLengthOpt(GeometryOptimisationProblem):
     """
     Toroidal field coil winding pack shape optimisation problem.
@@ -103,24 +171,27 @@ class RippleConstrainedLengthOpt(GeometryOptimisationProblem):
         self.wp_cross_section = wp_cross_section
         self.keep_out_zone = keep_out_zone
 
-        self.n_rip_points = n_rip_points
-        self.ripple_points = self._make_ripple_points(separatrix)
-        self.ripple_values = None
-
         objective = OptimisationObjective(
             minimise_length, f_objective_args={"parameterisation": parameterisation}
         )
 
-        ripple_points = self._make_ripple_points(separatrix)
+        self.ripple_points = self._make_ripple_points(separatrix)
+        self.ripple_values = None
+        solver = ParameterisedHelmhotzSolver(
+            wp_cross_section,
+            nx,
+            ny,
+            params.n_TF.value,
+            params.R_0.value,
+            params.z_0.value,
+            params.B_0.value,
+            self.ripple_points,
+        )
         ripple_constraint = OptimisationConstraint(
             self.constrain_ripple,
             f_constraint_args={
                 "parameterisation": parameterisation,
-                "ripple_points": ripple_points,
-                "wp_xs": wp_cross_section,
-                "nx": nx,
-                "ny": ny,
-                "params": params,
+                "solver": solver,
             },
             tolerance=rip_con_tol * np.ones(n_rip_points),
         )
@@ -177,23 +248,18 @@ class RippleConstrainedLengthOpt(GeometryOptimisationProblem):
         vector,
         grad,
         parameterisation,
-        ripple_points,
-        wp_xs,
-        nx,
-        ny,
+        solver,
         params,
         ad_args=None,
     ):
         func = RippleConstrainedLengthOpt.calculate_ripple
-        constraint[:] = func(
-            vector, parameterisation, ripple_points, wp_xs, nx, ny, params
-        )
+        constraint[:] = func(vector, parameterisation, solver, params)
         if grad.size > 0:
             grad[:] = approx_derivative(
                 func,
                 vector,
                 f0=constraint,
-                args=(parameterisation, ripple_points, wp_xs, nx, ny, params),
+                args=(parameterisation, solver, params),
                 **ad_args,
             )
 
@@ -203,102 +269,22 @@ class RippleConstrainedLengthOpt(GeometryOptimisationProblem):
         return constraint
 
     @staticmethod
-    def calculate_ripple(vector, parameterisation, ripple_points, wp_xs, nx, ny, params):
-        cage = RippleConstrainedLengthOpt.update_cage(
-            vector, parameterisation, wp_xs, nx, ny, params
-        )
-        ripple = cage.ripple(*ripple_points)
-        ripple_values = ripple
+    def calculate_ripple(vector, parameterisation, solver, params):
+        solver.update(parameterisation, vector)
+        ripple = solver.ripple()
         return ripple - params.TF_ripple_limit.value
 
-    @staticmethod
-    def update_cage(vector, parameterisation, wp_xs, nx, ny, params):
-        parameterisation.variables.set_values_from_norm(vector)
-        wire = parameterisation.create_shape()
-        circuit = RippleConstrainedLengthOpt._make_single_circuit(wire, wp_xs, nx, ny)
-
-        cage = HelmholtzCage(circuit, params.n_TF.value)
-        field = cage.field(params.R_0, 0, params.z_0)
-        current = -params.B_0 / field[1]  # single coil amp-turns
-        current /= nx * ny  # single filament amp-turns
-        cage.set_current(current)
-        return cage
-
-    @staticmethod
-    def _make_single_circuit(wire, wp_cross_section, nx, ny):
+    def optimise(self, x0=None):
         """
-        Make a single BioSavart Filament for a single TF coil
+        Solve the GeometryOptimisationProblem.
         """
-        bb = wp_cross_section.bounding_box
-        dx_xs = 0.5 * (bb.x_max - bb.x_min)
-        dy_xs = 0.5 * (bb.y_max - bb.y_min)
-
-        dx_wp, dy_wp = [0], [0]  # default to coil centreline
-        if nx > 1:
-            dx_wp = np.linspace(dx_xs * (1 / nx - 1), dx_xs * (1 - 1 / nx), nx)
-
-        if ny > 1:
-            dy_wp = np.linspace(dy_xs * (1 / ny - 1), dy_xs * (1 - 1 / ny), ny)
-
-        current_wires = []
-        for dx in dx_wp:
-            c_wire = offset_wire(wire, dx)
-            for dy in dy_wp:
-                c_w = deepcopy(c_wire)
-                c_w.translate((0, dy, 0))
-                current_wires.append(c_w)
-
-        current_arrays = [
-            w.discretize(byedges=True, dl=wire.length / 200) for w in current_wires
-        ]
-
-        for c in current_arrays:
-            c.set_ccw((0, 1, 0))
-
-        radius = 0.5 * BluemiraFace(wp_cross_section).area / (nx * ny)
-        filament = BiotSavartFilament(
-            current_arrays, radius=radius, current=1 / (nx * ny)
-        )
-        return filament
-
-    # def update_cage(self, x):
-    #     """
-    #     Update the magnetostatic solver
-    #     """
-    #     super().update_parameterisation(x)
-    #     wire = self.parameterisation.create_shape()
-    #     circuit = self._make_single_circuit(wire)
-
-    #     self.cage = HelmholtzCage(circuit, self.params.n_TF.value)
-    #     field = self.cage.field(self.params.R_0, 0, self.params.z_0)
-    #     current = -self.params.B_0 / field[1]  # single coil amp-turns
-    #     current /= self.nx * self.ny  # single filament amp-turns
-    #     self.cage.set_current(current)
-
-    # def calculate_ripple(self, x):
-    #     """
-    #     Calculate the ripple on the target points for a given variable vector
-    #     """
-    #     self.update_cage(x)
-    #     ripple = self.cage.ripple(*self.ripple_points)
-    #     self.ripple_values = ripple
-    #     return ripple - self.params.TF_ripple_limit
-
-    # def f_constrain_ripple(self, constraint, x, grad):
-    #     """
-    #     Toroidal field ripple constraint function
-    #     """
-    #     constraint[:] = self.calculate_ripple(x)
-
-    #     if grad.size > 0:
-    #         # Only called if a gradient-based optimiser is used
-    #         grad[:] = self.optimiser.approx_derivative(
-    #             self.calculate_ripple, x, constraint
-    #         )
-    #     bluemira_debug_flush(
-    #         f"Max ripple: {max(constraint+self.params.TF_ripple_limit)}"
-    #     )
-    #     return constraint
+        self._objective._args["parameterisation"] = self._parameterisation
+        if x0 is None:
+            x0 = self._parameterisation.variables.get_normalised_values()
+        x_star = self.opt.optimise(x0)
+        parameterisation = self.update_parameterisation(x_star)
+        self.solver.update(parameterisation, x_star)
+        self.ripple_values = self.solver.ripple()
 
     def plot(self, ax=None):
         """
@@ -320,7 +306,7 @@ class RippleConstrainedLengthOpt(GeometryOptimisationProblem):
             wire_options={"color": "red", "linewidth": "0.5"},
         )
         plot_2d(
-            self.parameterisation.create_shape(),
+            self._parameterisation.create_shape(),
             ax=ax,
             show=False,
             wire_options={"color": "blue", "linewidth": 1.0},

@@ -243,7 +243,7 @@ class TFCoilsBuilder(OptimisedShapeBuilder):
             separatrix=self._separatrix,
             keep_out_zone=self._keep_out_zone,
         )
-        self._centreline = self._design_problem.parameterisation.create_shape()
+        self._centreline = self._design_problem._parameterisation.create_shape()
 
     def read(self):
         """
