@@ -147,7 +147,7 @@ class Setup(Task):
 
         Parameters
         ----------
-        remapper: Optional[Union[callable, Dict]]
+        remapper: Optional[Union[callable, dict]]
             a function or dictionary for remapping variable names.
             Useful for renaming old variables
 
@@ -159,15 +159,21 @@ class Setup(Task):
         TODO unit conversion
         """
         _inputs = {}
+
+        if not (callable(remapper) or isinstance(remapper, (type(None), Dict))):
+            raise TypeError("remapper is not callable or a dictionary")
+        elif remapper is not None and isinstance(remapper, Dict):
+            orig_remap = remapper.copy()
+
+            def remapper(x):
+                return orig_remap[x]
+
         for prog_key, bm_key in self._send_mapping.items():
-            if remapper:
-                prog_key = (
-                    remapper(prog_key) if callable(remapper) else remapper[prog_key]
-                )
-                if isinstance(prog_key, list):
-                    for key in prog_key:
-                        _inputs[key] = self._convert_units(self.params.get_param(bm_key))
-                    continue
+            prog_key = remapper(prog_key)
+            if isinstance(prog_key, list):
+                for key in prog_key:
+                    _inputs[key] = self._convert_units(self.params.get_param(bm_key))
+                continue
 
             _inputs[prog_key] = self._convert_units(self.params.get_param(bm_key))
 
