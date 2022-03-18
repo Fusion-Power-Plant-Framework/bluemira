@@ -38,7 +38,7 @@ from bluemira.geometry.optimisation import (
     constrain_koz,
     minimise_length,
 )
-from bluemira.geometry.tools import offset_wire, signed_distance_2D_polygon
+from bluemira.geometry.tools import offset_wire
 from bluemira.geometry.wire import BluemiraWire
 from bluemira.magnetostatics.biot_savart import BiotSavartFilament
 from bluemira.magnetostatics.circuits import HelmholtzCage
