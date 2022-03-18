@@ -61,7 +61,7 @@ class ParameterisedHelmhotzSolver:
     def update_cage(self, parameterisation, vector):
         parameterisation.variables.set_values_from_norm(vector)
         wire = parameterisation.create_shape()
-        circuit = self._make_single_circuit(wire, self.wp_xs, self.nx, self.ny)
+        circuit = self._make_single_circuit(wire)
 
         self.cage = HelmholtzCage(circuit, self.n_TF)
         field = self.cage.field(self.R_0, 0, self.z_0)
@@ -192,6 +192,7 @@ class RippleConstrainedLengthOpt(GeometryOptimisationProblem):
             f_constraint_args={
                 "parameterisation": parameterisation,
                 "solver": solver,
+                "params": params,
             },
             tolerance=rip_con_tol * np.ones(n_rip_points),
         )
@@ -270,7 +271,7 @@ class RippleConstrainedLengthOpt(GeometryOptimisationProblem):
 
     @staticmethod
     def calculate_ripple(vector, parameterisation, solver, params):
-        solver.update(parameterisation, vector)
+        solver.update_cage(parameterisation, vector)
         ripple = solver.ripple()
         return ripple - params.TF_ripple_limit.value
 
