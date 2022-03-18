@@ -47,6 +47,29 @@ from bluemira.utilities.optimiser import approx_derivative
 
 
 class ParameterisedHelmhotzSolver:
+    """
+    A parameterised Biot-Savart HelmholtzCage solver.
+
+    Parameters
+    ----------
+    wp_xs: BluemiraWire
+        Geometry of the TF coil winding pack cross-section
+    nx: int
+        Number of radial Biot-Savart filaments to use
+    ny: int
+        Number of toroidal Biot-Savart filaments to use
+    n_TF: int
+        Number of TF coils
+    R_0: float
+        Major radius at which to calculate B_0
+    z_0: float
+        Vertical coordinate at which to calculcate B_0
+    B_0: float
+        Toroidal field at (R_0, z_0)
+    ripple_points: np.ndarray
+        Points at which to calculate TF ripple
+    """
+
     def __init__(self, wp_xs, nx, ny, n_TF, R_0, z_0, B_0, ripple_points):
         self.wp_xs = wp_xs
         self.nx = nx
@@ -59,6 +82,15 @@ class ParameterisedHelmhotzSolver:
         self.cage = None
 
     def update_cage(self, wire):
+        """
+        Update the HelmHoltzCage, setting the current to produce a field of B_0 at
+        R_0, z_0).
+
+        Parameters
+        ----------
+        wire: BluemiraWire
+            TF coil winding pack current centreline
+        """
         circuit = self._make_single_circuit(wire)
         self.cage = HelmholtzCage(circuit, self.n_TF)
         field = self.cage.field(self.R_0, 0, self.z_0)
@@ -107,6 +139,14 @@ class ParameterisedHelmhotzSolver:
         return filament
 
     def ripple(self):
+        """
+        Calculate the TF ripple at the specified ripple points
+
+        Returns
+        -------
+        ripple: np.ndarray
+            Ripple of the specified ripple points
+        """
         ripple = self.cage.ripple(*self.ripple_points)
         return ripple
 
@@ -123,6 +163,8 @@ class RippleConstrainedLengthOpt(GeometryOptimisationProblem):
         Optimiser to use to solve the optimisation problem
     params: ParameterFrame
         Parameters required to solve the optimisation problem
+    wp_cross_section: BluemiraWire
+        Geometry of the TF coil winding pack cross-section
     separatrix: BluemiraWire
         Separatrix shape at which the TF ripple is to be constrained
     keep_out_zone: Optional[BluemiraWire]
