@@ -77,7 +77,7 @@ def minimise_length(vector, grad, parameterisation, ad_args=None):
     return length
 
 
-def calculate_signed_distance(vector, parameterisation, koz_points):
+def calculate_signed_distance(vector, parameterisation, n_shape_discr, koz_points):
     """
     Calculate the signed distances from the parameterised shape to
     the keep-out zone.
@@ -85,17 +85,27 @@ def calculate_signed_distance(vector, parameterisation, koz_points):
     parameterisation.variables.set_values_from_norm(vector)
 
     shape = parameterisation.create_shape()
-    s = shape.discretize(ndiscr=self.n_koz_points).xz
+    s = shape.discretize(ndiscr=n_shape_discr).xz
     return signed_distance_2D_polygon(s.T, koz_points.T).T
 
 
-def f_constrain_koz(constraint, vector, grad, parameterisation, koz_points):
+def constrain_koz(
+    constraint, vector, grad, parameterisation, n_shape_discr, koz_points, ad_args=None
+):
     """
     Geometry constraint function to the keep-out-zone.
     """
-    constraint[:] = calculate_signed_distance(vector, parameterisation, koz_points)
+    constraint[:] = calculate_signed_distance(
+        vector, parameterisation, n_shape_discr, koz_points
+    )
     if grad.size > 0:
-        grad[:] = approx_derivative(calculate_signed_distance, vector, constraint)
+        grad[:] = approx_derivative(
+            calculate_signed_distance,
+            vector,
+            f0=constraint,
+            args=(parameterisation, n_shape_discr, koz_points),
+            **ad_args,
+        )
     return constraint
 
 
@@ -132,14 +142,15 @@ class GeometryOptimisationProblem(OptimisationProblem):
         """
         Add shape constraints to the geometry parameterisation, if they exist.
         """
-        n_shape_ineq_cons = self.parameterisation.n_ineq_constraints
+        n_shape_ineq_cons = self._parameterisation.n_ineq_constraints
         if n_shape_ineq_cons > 0:
             self.opt.add_ineq_constraints(
-                self.parameterisation.shape_ineq_constraints, np.zeros(n_shape_ineq_cons)
+                self._parameterisation.shape_ineq_constraints,
+                np.zeros(n_shape_ineq_cons),
             )
         else:
             bluemira_warn(
-                f"GeometryParameterisation {self.parameterisation.__class.__name__} does"
+                f"GeometryParameterisation {self._parameterisation.__class.__name__} does"
                 "not have any shape constraints."
             )
 
