@@ -141,14 +141,15 @@ class Setup(Task):
         self.__recv_mapping = get_recv_mapping(params, NAME)
         self.__send_mapping = get_send_mapping(params, NAME)
 
-    def _get_new_inputs(self, remapper: Optional[callable] = None):
+    def _get_new_inputs(self, remapper: Optional[Union[callable, Dict]] = None):
         """
         Get new key mappings from the ParameterFrame.
 
         Parameters
         ----------
-        remapper: callable
-            a function for remapping variable names. Useful for renaming old variables
+        remapper: Optional[Union[callable, Dict]]
+            a function or dictionary for remapping variable names.
+            Useful for renaming old variables
 
         Returns
         -------
@@ -159,8 +160,10 @@ class Setup(Task):
         """
         _inputs = {}
         for prog_key, bm_key in self._send_mapping.items():
-            if callable(remapper):
-                prog_key = remapper(prog_key)
+            if remapper:
+                prog_key = (
+                    remapper(prog_key) if callable(remapper) else remapper[prog_key]
+                )
                 if isinstance(prog_key, list):
                     for key in prog_key:
                         _inputs[key] = self._convert_units(self.params.get_param(bm_key))
