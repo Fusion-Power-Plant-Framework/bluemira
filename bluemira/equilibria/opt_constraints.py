@@ -139,6 +139,11 @@ def coil_force_constraints(
     -------
     constraint: np.ndarray
         Updated constraint vector
+
+    Notes
+    -----
+    TODO: Presently only handles CoilSets with Coils (SymmetricCircuits not yet
+    supported)
     """
     # get coil force and jacobian
     F, dF = eq.force_field.calc_force(vector * scale)  # noqa :N803
@@ -179,7 +184,7 @@ def coil_force_constraints(
 
 def coil_field_constraints(constraint, vector, grad, eq, B_max, scale):
     """
-    Current optimisation field constraints on coils
+    Current optimisation poloidal field constraints on coils
 
     Parameters
     ----------
@@ -200,6 +205,13 @@ def coil_field_constraints(constraint, vector, grad, eq, B_max, scale):
     -------
     constraint: np.ndarray
         Updated constraint vector
+
+    Notes
+    -----
+    TODO: Presently only handles CoilSets with Coils (SymmetricCircuits not yet
+    supported)
+    TODO: Presently only accounts for poloidal field contributions from PF coils and
+    plasma (TF from TF coils not accounted for if PF coils are inside the TF coils.)
     """
     B, dB = eq.force_field.calc_field(vector * scale)  # noqa :N803
     dB /= scale**2
