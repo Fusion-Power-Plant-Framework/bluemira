@@ -145,8 +145,6 @@ def minimise_coil_currents(vector, grad):
     sum_sq_currents = np.sum(vector**2)
 
     if grad.size > 0:
-        signs = np.sign(vector)  # Probably of concern with current = 0.0
-        signs[signs == 0] = 1  # questionable
         grad[:] = 2 * vector
 
     return sum_sq_currents
