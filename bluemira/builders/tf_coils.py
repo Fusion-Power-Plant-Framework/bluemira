@@ -33,11 +33,16 @@ from bluemira.base.error import BuilderError
 from bluemira.base.look_and_feel import bluemira_debug_flush
 from bluemira.display import plot_2d
 from bluemira.geometry.face import BluemiraFace
-from bluemira.geometry.optimisation import GeometryOptimisationProblem
+from bluemira.geometry.optimisation import (
+    GeometryOptimisationProblem,
+    constrain_koz,
+    minimise_length,
+)
 from bluemira.geometry.tools import offset_wire, signed_distance_2D_polygon
 from bluemira.geometry.wire import BluemiraWire
 from bluemira.magnetostatics.biot_savart import BiotSavartFilament
 from bluemira.magnetostatics.circuits import HelmholtzCage
+from bluemira.utilities.opt_problems import OptimisationConstraint, OptimisationObjective
 
 
 class RippleConstrainedLengthOpt(GeometryOptimisationProblem):
@@ -102,17 +107,30 @@ class RippleConstrainedLengthOpt(GeometryOptimisationProblem):
         self.ripple_points = self._make_ripple_points(separatrix)
         self.ripple_values = None
 
+        objective = OptimisationObjective(
+            minimise_length, f_objective_args={"parameterisation": parameterisation}
+        )
+
+        ripple_constraint = OptimisationConstraint()
+        constraints = [ripple_constraint]
+        if keep_out_zone is not None:
+            koz_points = self._make_koz_points(keep_out_zone)
+            koz_constraint = OptimisationConstraint(
+                constrain_koz,
+                f_constraint_args={
+                    "parameterisation": parameterisation,
+                    "n_shape_discr": n_koz_points,
+                    "koz_points": koz_points,
+                },
+                tolerance=koz_con_tol * np.ones(n_koz_points),
+            )
+            constraints.append(koz_constraint)
+
+        super().__init__(parameterisation, optimiser, objective, constraints)
+
         self.optimiser.add_ineq_constraints(
             self.f_constrain_ripple, rip_con_tol * np.ones(len(self.ripple_points[0]))
         )
-
-        if self.keep_out_zone:
-            self.n_koz_points = n_koz_points
-            self.koz_points = self._make_koz_points(keep_out_zone)
-
-            self.optimiser.add_ineq_constraints(
-                self.f_constrain_koz, koz_con_tol * np.ones(n_koz_points)
-            )
 
         self.nx = nx
         self.ny = ny
@@ -226,48 +244,6 @@ class RippleConstrainedLengthOpt(GeometryOptimisationProblem):
             f"Max ripple: {max(constraint+self.params.TF_ripple_limit)}"
         )
         return constraint
-
-    def calculate_signed_distance(self, x):
-        """
-        Calculate the signed distances from the parameterised shape to the keep-out zone.
-        """
-        self.update_cage(x)
-        shape = self.parameterisation.create_shape()
-        s = shape.discretize(ndiscr=self.n_koz_points).xz
-        return signed_distance_2D_polygon(s, self.koz_points)
-
-    def f_constrain_koz(self, constraint, x, grad):
-        """
-        Geometry constraint function to the keep-out-zone
-        """
-        constraint[:] = self.calculate_signed_distance(x)
-
-        if grad.size > 0:
-            grad[:] = self.optimiser.approx_derivative(
-                self.calculate_signed_distance, x, constraint
-            )
-        return constraint
-
-    def calculate_length(self, x):
-        """
-        Calculate the length of the GeometryParameterisation
-        """
-        self.update_parameterisation(x)
-        return self.parameterisation.create_shape().length
-
-    def f_objective(self, x, grad):
-        """
-        Length minimisation objective
-        """
-        length = self.calculate_length(x)
-
-        if grad.size > 0:
-            # Only called if a gradient-based optimiser is used
-            grad[:] = self.optimiser.approx_derivative(
-                self.calculate_length, x, f0=length
-            )
-
-        return length
 
     def plot(self, ax=None):
         """
