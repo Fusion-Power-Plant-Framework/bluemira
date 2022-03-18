@@ -30,12 +30,10 @@ A quick tutorial on the optimisation of geometry in bluemira
 
 # %%
 
-from typing import List
-
 import numpy as np
 
 from bluemira.geometry.optimisation import GeometryOptimisationProblem, minimise_length
-from bluemira.geometry.parameterisations import GeometryParameterisation, PrincetonD
+from bluemira.geometry.parameterisations import PrincetonD
 from bluemira.utilities.opt_problems import OptimisationConstraint, OptimisationObjective
 from bluemira.utilities.optimiser import Optimiser, approx_derivative
 from bluemira.utilities.tools import set_random_seed
@@ -82,7 +80,7 @@ slsqp_optimiser = Optimiser(
 # %%
 objective = OptimisationObjective(
     minimise_length,
-    f_objective_args={"parameterisation": parameterisation},
+    f_objective_args={"parameterisation": parameterisation_1},
 )
 
 # %%[markdown]
@@ -126,6 +124,10 @@ cobyla_optimiser = Optimiser(
         "xtol_abs": 1e-12,
         "max_eval": 1000,
     },
+)
+objective = OptimisationObjective(
+    minimise_length,
+    f_objective_args={"parameterisation": parameterisation_2},
 )
 problem = GeometryOptimisationProblem(parameterisation_2, cobyla_optimiser, objective)
 problem.optimise()
@@ -204,8 +206,12 @@ slsqp_optimiser2 = Optimiser(
         "max_eval": 1000,
     },
 )
+objective = OptimisationObjective(
+    minimise_length,
+    f_objective_args={"parameterisation": parameterisation_3},
+)
 problem = GeometryOptimisationProblem(
-    parameterisation_3, slsqp_optimiser2, constraints=[constraint_function]
+    parameterisation_3, slsqp_optimiser2, objective, constraints=[constraint_function]
 )
 problem.optimise()
 
@@ -243,6 +249,10 @@ cobyla_optimiser2 = Optimiser(
     },
 )
 
+objective = OptimisationObjective(
+    minimise_length,
+    f_objective_args={"parameterisation": parameterisation_4},
+)
 problem = GeometryOptimisationProblem(
     parameterisation_4, cobyla_optimiser2, objective, constraints=[constraint_function]
 )
@@ -271,8 +281,12 @@ irses_optimiser = Optimiser(
 
 # %%
 set_random_seed(134365475)
-problem = MyProblem(
-    parameterisation_5, irses_optimiser, constraints=[constraint_function]
+objective = OptimisationObjective(
+    minimise_length,
+    f_objective_args={"parameterisation": parameterisation_5},
+)
+problem = GeometryOptimisationProblem(
+    parameterisation_5, irses_optimiser, objective, constraints=[constraint_function]
 )
 problem.optimise()
 
