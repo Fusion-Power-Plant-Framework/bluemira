@@ -127,7 +127,7 @@ def regularised_lsq_objective(vector, grad, scale, a_mat, b_vec, gamma):
 
 def minimise_coil_currents(vector, grad):
     """
-    Objective function for the minimisation of the sum of absolute coil currents
+    Objective function for the minimisation of the sum of coil currents squared
 
     Parameters
     ----------
@@ -139,17 +139,17 @@ def minimise_coil_currents(vector, grad):
 
     Returns
     -------
-    sum_abs_currents: float
-        Sum of the absolute values of the currents.
+    sum_sq_currents: float
+        Sum of the currents squared.
     """
-    sum_abs_currents = np.sum(np.abs(vector))
+    sum_sq_currents = np.sum(vector**2)
 
     if grad.size > 0:
         signs = np.sign(vector)  # Probably of concern with current = 0.0
         signs[signs == 0] = 1  # questionable
-        grad[:] = signs
+        grad[:] = 2 * vector
 
-    return sum_abs_currents
+    return sum_sq_currents
 
 
 def maximise_flux(vector, grad, c_psi_mat, scale):
