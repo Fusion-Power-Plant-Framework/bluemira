@@ -52,15 +52,15 @@ class TestSetup:
 
     _remapper_dict = {"a": "a", "b": ["b", "d"], "c": "c"}
 
-    def test_get_new_input_raises_TypeError(self):
-        with pytest.raises(TypeError):
-            interface.Setup._get_new_inputs(MagicMock(), "hello")
-
     def _remapper(val):  # noqa: N805
         if val == "b":
             return ["b", "d"]
         else:
             return val
+
+    def test_get_new_input_raises_TypeError(self):
+        with pytest.raises(TypeError):
+            interface.Setup._get_new_inputs(MagicMock(), "hello")
 
     @pytest.mark.parametrize("remapper", [_remapper_dict, _remapper])
     def test_get_new_input_many_from_one(self, remapper):
