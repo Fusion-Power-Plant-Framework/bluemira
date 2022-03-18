@@ -202,5 +202,5 @@ class MinimiseLength(GeometryOptimisationProblem):
         )
 
         super().__init__(
-            parameterisation, optimiser, objective, constaints=[koz_constraint]
+            parameterisation, optimiser, objective, constraints=[koz_constraint]
         )
