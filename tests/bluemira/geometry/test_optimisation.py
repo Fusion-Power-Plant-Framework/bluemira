@@ -128,7 +128,12 @@ class TestGeometryOptimisationProblem:
             "SLSQP",
             opt_conditions=self.opt_conditions,
         )
-        problem = DummyOptimisationProblem(parameterisation, optimiser)
+
+        objective = OptimisationObjective(
+            minimise_length,
+            f_objective_args={"parameterisation": parameterisation},
+        )
+        problem = GeometryOptimisationProblem(parameterisation, optimiser, objective)
         problem.apply_shape_constraints()
         assert problem._parameterisation.variables.n_free_variables == 6
         assert problem._parameterisation.variables._fixed_variable_indices == [0]
@@ -154,7 +159,12 @@ class TestGeometryOptimisationProblem:
             "SLSQP",
             opt_conditions=self.opt_conditions,
         )
-        problem = DummyOptimisationProblem(parameterisation, optimiser)
+
+        objective = OptimisationObjective(
+            minimise_length,
+            f_objective_args={"parameterisation": parameterisation},
+        )
+        problem = GeometryOptimisationProblem(parameterisation, optimiser, objective)
 
         assert problem._parameterisation.variables.n_free_variables == 5
         assert problem._parameterisation.variables._fixed_variable_indices == [0, 5]
@@ -201,7 +211,7 @@ class TestMinimiseLength:
 
         problem.optimise()
 
-        optimised_shape = problem.parameterisation.create_shape()
+        optimised_shape = problem._parameterisation.create_shape()
         np.testing.assert_array_almost_equal(
             list(optimised_shape.center_of_mass), koz_center, decimal=2
         )
