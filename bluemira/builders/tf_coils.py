@@ -98,7 +98,6 @@ class RippleConstrainedLengthOpt(GeometryOptimisationProblem):
         n_rip_points=100,
         n_koz_points=100,
     ):
-        super().__init__(parameterisation, optimiser)
         self.params = params
         self.separatrix = separatrix
         self.wp_cross_section = wp_cross_section
@@ -140,13 +139,6 @@ class RippleConstrainedLengthOpt(GeometryOptimisationProblem):
             constraints.append(koz_constraint)
 
         super().__init__(parameterisation, optimiser, objective, constraints)
-
-        self.optimiser.add_ineq_constraints(
-            self.f_constrain_ripple, rip_con_tol * np.ones(len(self.ripple_points[0]))
-        )
-
-        self.nx = nx
-        self.ny = ny
 
     def _make_koz_points(self, keep_out_zone):
         """
