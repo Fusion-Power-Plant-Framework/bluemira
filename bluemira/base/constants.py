@@ -23,11 +23,11 @@
 A collection of generic physical constants, conversions, and miscellaneous constants.
 """
 
-from typing import List, Union
+from typing import List, Optional, Union
 
 import numpy as np
 from periodictable import elements
-from pint import Context, UnitRegistry, set_application_registry
+from pint import Context, Quantity, UnitRegistry, set_application_registry
 from pint.util import UnitsContainer
 
 
@@ -70,7 +70,7 @@ class BMUnitRegistry(UnitRegistry):
 
         self._contexts_added = False
 
-    def _add_contexts(self, contexts=None):
+    def _add_contexts(self, contexts: Optional[List[Context]] = None):
         """
         Add new contexts to registry
         """
@@ -82,11 +82,11 @@ class BMUnitRegistry(UnitRegistry):
 
             self._contexts_added = True
 
-        if contexts not in (None, ()):
+        if contexts:
             for c in contexts:
                 self.add_context(c)
 
-    def enable_contexts(self, *contexts, **kwargs):
+    def enable_contexts(self, *contexts: List[Context], **kwargs):
         """
         Enable contexts
         """
@@ -135,7 +135,12 @@ class BMUnitRegistry(UnitRegistry):
         return self._transform(mols_to_pam3, mol_units, pam3_units, conversion_factor)
 
     @staticmethod
-    def _transform(context, units_from, units_to, conversion):
+    def _transform(
+        context: Context,
+        units_from: str,
+        units_to: str,
+        conversion: Union[float, int, complex, Quantity],
+    ):
 
         formatters = ["{}", "{} / [time]"]
 
