@@ -58,11 +58,8 @@ class ParameterisedHelmhotzSolver:
         self.ripple_points = ripple_points
         self.cage = None
 
-    def update_cage(self, parameterisation, vector):
-        parameterisation.variables.set_values_from_norm(vector)
-        wire = parameterisation.create_shape()
+    def update_cage(self, wire):
         circuit = self._make_single_circuit(wire)
-
         self.cage = HelmholtzCage(circuit, self.n_TF)
         field = self.cage.field(self.R_0, 0, self.z_0)
         current = -self.B_0 / field[1]  # single coil amp-turns
@@ -177,7 +174,7 @@ class RippleConstrainedLengthOpt(GeometryOptimisationProblem):
 
         self.ripple_points = self._make_ripple_points(separatrix, n_rip_points)
         self.ripple_values = None
-        solver = ParameterisedHelmhotzSolver(
+        self.solver = ParameterisedHelmhotzSolver(
             wp_cross_section,
             nx,
             ny,
@@ -191,7 +188,7 @@ class RippleConstrainedLengthOpt(GeometryOptimisationProblem):
             self.constrain_ripple,
             f_constraint_args={
                 "parameterisation": parameterisation,
-                "solver": solver,
+                "solver": self.solver,
                 "params": params,
             },
             tolerance=rip_con_tol * np.ones(n_rip_points),
@@ -271,7 +268,9 @@ class RippleConstrainedLengthOpt(GeometryOptimisationProblem):
 
     @staticmethod
     def calculate_ripple(vector, parameterisation, solver, params):
-        solver.update_cage(parameterisation, vector)
+        parameterisation.variables.set_values_from_norm(vector)
+        wire = parameterisation.create_shape()
+        solver.update_cage(wire)
         ripple = solver.ripple()
         return ripple - params.TF_ripple_limit.value
 
@@ -284,7 +283,7 @@ class RippleConstrainedLengthOpt(GeometryOptimisationProblem):
             x0 = self._parameterisation.variables.get_normalised_values()
         x_star = self.opt.optimise(x0)
         parameterisation = self.update_parameterisation(x_star)
-        self.solver.update(parameterisation, x_star)
+        self.solver.update_cage(parameterisation.create_shape())
         self.ripple_values = self.solver.ripple()
 
     def plot(self, ax=None):
