@@ -108,23 +108,24 @@ class TestCoil:
         gbp = np.sqrt(gbx**2 + gbz**2)
         gp = c.control_psi(x, z)
 
-        f, ax = plt.subplots()
-        cc = ax.contourf(x, z, gbx)
+        if tests.PLOTTING:
+            f, ax = plt.subplots()
+            cc = ax.contourf(x, z, gbx)
 
-        plt.colorbar(cc)
-        ax.set_aspect("equal")
-        ax.set_xlim([2, 6])
-        ax.set_ylim([-3, 3])
+            plt.colorbar(cc)
+            ax.set_aspect("equal")
+            ax.set_xlim([2, 6])
+            ax.set_ylim([-3, 3])
 
         c.mesh_coil(0.1)
 
-        f, ax = plt.subplots()
         gbxn = c.control_Bx(x, z)
         gbzn = c.control_Bz(x, z)
         gbpn = np.sqrt(gbx**2 + gbz**2)
         gpn = c.control_psi(x, z)
 
         if tests.PLOTTING:
+            f, ax = plt.subplots()
             c = ax.contourf(x, z, gbxn)
             plt.colorbar(c)
             ax.set_aspect("equal")

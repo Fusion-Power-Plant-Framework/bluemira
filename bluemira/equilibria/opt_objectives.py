@@ -104,8 +104,8 @@ def regularised_lsq_objective(vector, grad, scale, a_mat, b_vec, gamma):
     vector = vector * scale
     fom, err = regularised_lsq_fom(vector, a_mat, b_vec, gamma)
     if grad.size > 0:
-        jac = 2 * a_mat.T @ a_mat @ vector / np.float(len(b_vec))
-        jac -= 2 * a_mat.T @ b_vec / np.float(len(b_vec))
+        jac = 2 * a_mat.T @ a_mat @ vector / float(len(b_vec))
+        jac -= 2 * a_mat.T @ b_vec / float(len(b_vec))
         jac += 2 * gamma * gamma * vector
         grad[:] = scale * jac
     if not fom > 0:
@@ -148,7 +148,7 @@ def regularised_lsq_fom(x, a_mat, b_vec, gamma):
         Residual vector (Ax - b)
     """
     residual = np.dot(a_mat, x) - b_vec
-    number_of_targets = np.float(len(residual))
+    number_of_targets = float(len(residual))
     fom = residual.T @ residual / number_of_targets + gamma * gamma * x.T @ x
 
     if not fom > 0:
