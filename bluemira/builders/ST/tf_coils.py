@@ -42,7 +42,10 @@ from bluemira.display.palettes import BLUE_PALETTE
 from bluemira.display.plotter import plot_2d
 from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.optimisation import GeometryOptimisationProblem
-from bluemira.geometry.parameterisations import GeometryParameterisation
+from bluemira.geometry.parameterisations import (
+    GeometryParameterisation,
+    PictureFrameTools,
+)
 from bluemira.geometry.placement import BluemiraPlacement
 from bluemira.geometry.solid import BluemiraSolid
 from bluemira.geometry.tools import (
@@ -502,10 +505,24 @@ class TFCoilsBuilder(OptimisedShapeBuilder):
         component: Component
             The component grouping the results in 3D (xyz).
         """
-        p1 = centreline._boundary[0].bounding_box.z_min
-        p2 = centreline._boundary[0].bounding_box.z_min
+        xmin = self.params.r_tf_in.value
+        xmax = 1.1 * self.params.r_cp_top.value
+        zmin = centreline._boundary[0].bounding_box.z_min - 0.5 * self.params.tf_wp_width
+        zmax = centreline._boundary[0].bounding_box.z_max + 0.5 * self.params.tf_wp_width
+        p1 = [xmin, 0, zmin]
+        p2 = [xmin, 0, zmax]
+        p3 = [xmax, 0, zmax]
+        p4 = [xmax, 0, zmax - self.params.tf_wp_width]
+        p5 = [self.params.r_cp_top, 0, zmax - self.params.tf_wp_width]
 
-        return None
+        cp_xz = [make_polygon([p1, p2, p3, p4, p5], label="inner_Edge")]
+        axis = [0, 1, 0]
+        x1 = self.params.r_tf_iboard_out.value
+        tapered_bit = PictureFrameTools._make_tapered_inner_leg(
+            axis, x1, x2, z1, z2 - ri, -z2 + ri
+        )
+
+        return cp_xz
 
     def _make_field_solver(self):
         """
