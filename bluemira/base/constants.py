@@ -52,6 +52,10 @@ class BMUnitRegistry(UnitRegistry):
 
     def __init__(self):
 
+        # Preprocessor replacements have spaces so
+        # the units dont become prefixes or get prefixed
+        # space before on % so that M% is not a thing
+        # M$ makes sense if a bit non-standard
         super().__init__(
             fmt_locale="en_GB",
             preprocessors=[
