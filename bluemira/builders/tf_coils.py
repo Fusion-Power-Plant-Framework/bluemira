@@ -175,7 +175,7 @@ class RippleConstrainedLengthOpt(GeometryOptimisationProblem):
             minimise_length, f_objective_args={"parameterisation": parameterisation}
         )
 
-        self.ripple_points = self._make_ripple_points(separatrix)
+        self.ripple_points = self._make_ripple_points(separatrix, n_rip_points)
         self.ripple_values = None
         solver = ParameterisedHelmhotzSolver(
             wp_cross_section,
@@ -217,7 +217,7 @@ class RippleConstrainedLengthOpt(GeometryOptimisationProblem):
         """
         return keep_out_zone.discretize(byedges=True, dl=keep_out_zone.length / 200).xz
 
-    def _make_ripple_points(self, separatrix):
+    def _make_ripple_points(self, separatrix, n_rip_points):
         """
         Make a set of points at which to check the ripple
 
@@ -231,7 +231,7 @@ class RippleConstrainedLengthOpt(GeometryOptimisationProblem):
             raise BuilderError(
                 "Ripple points on faces made from multiple wires not yet supported."
             )
-        points = separatrix.discretize(ndiscr=self.n_rip_points)
+        points = separatrix.discretize(ndiscr=n_rip_points)
         points.set_ccw((0, 1, 0))
         # Real argument to making the points the inputs... but then the plot would look
         # sad! :D
