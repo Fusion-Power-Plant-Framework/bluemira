@@ -154,16 +154,16 @@ def coil_force_constraints(
     constraint[:n_PF] = F[:n_PF, 1] ** 2 - PF_Fz_max**2
 
     if n_CS != 0:
-        # vertical force on CS coils
+        # vertical forces on CS coils
         cs_fz = F[n_PF:, 1]
         # vertical force on CS stack
         cs_z_sum = np.sum(cs_fz)
         # Absolute sum of vertical force constraint on entire CS stack
         constraint[n_PF] = cs_z_sum**2 - CS_Fz_sum_max**2
-        for j in range(n_CS - 1):  # evaluate each gap in CS stack
+        for i in range(n_CS - 1):  # evaluate each gap in CS stack
             # CS seperation constraints
-            f_sep = np.sum(cs_fz[: j + 1]) - np.sum(cs_fz[j + 1 :])
-            constraint[n_PF + 1 + j] = f_sep - CS_Fz_sep_max
+            f_sep = np.sum(cs_fz[: i + 1]) - np.sum(cs_fz[i + 1 :])
+            constraint[n_PF + 1 + i] = f_sep - CS_Fz_sep_max
 
     # calculate constraint jacobian
     if grad.size > 0:
@@ -174,11 +174,11 @@ def coil_force_constraints(
             # Absolute sum of vertical force constraint on entire CS stack
             grad[n_PF] = 2 * np.sum(dF[n_PF:, :, 1], axis=0)
 
-            for j in range(n_CS - 1):  # evaluate each gap in CS stack
+            for i in range(n_CS - 1):  # evaluate each gap in CS stack
                 # CS separation constraint Jacobians
-                f_up = np.sum(dF[n_PF : n_PF + j + 1, :, 1], axis=0)
-                f_down = np.sum(dF[n_PF + j + 1 :, :, 1], axis=0)
-                grad[n_PF + 1 + j] = f_up - f_down
+                f_up = np.sum(dF[n_PF : n_PF + i + 1, :, 1], axis=0)
+                f_down = np.sum(dF[n_PF + i + 1 :, :, 1], axis=0)
+                grad[n_PF + 1 + i] = f_up - f_down
     return constraint
 
 
