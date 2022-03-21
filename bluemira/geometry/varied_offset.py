@@ -25,7 +25,7 @@ from bluemira.geometry.tools import find_clockwise_angle_2d, make_polygon
 from bluemira.geometry.wire import BluemiraWire
 
 
-def varied_offset_function(
+def varied_offset(
     shape: BluemiraWire,
     minor_offset: float,
     major_offset: float,
