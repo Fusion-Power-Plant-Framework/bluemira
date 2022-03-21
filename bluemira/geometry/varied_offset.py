@@ -38,48 +38,66 @@ def varied_offset_function(
     ib_axis = np.array([-1, 0])
 
     angles = np.radians(find_clockwise_angle_2d(ib_axis, shape_coords - center_of_mass))
+    # Sorting angles makes smoothing via interpolation easier later on
+    sorted_angles, sorted_coords = _sort_coords_by_angle(angles, shape_coords)
+
+    offsets = _calculate_offset_magnitudes(
+        sorted_angles, offset_angle, minor_offset, major_offset, num_points
+    )
+    normals = _calculate_normals_2d(sorted_coords)
+    new_shape_coords = sorted_coords + normals * offsets
+    return _2d_coords_to_wire(new_shape_coords)
+
+
+def _sort_coords_by_angle(angles, coords):
     angle_sort_idx = np.argsort(angles)
-    sorted_angles = angles[angle_sort_idx]
-    sorted_coords = shape_coords[:, angle_sort_idx]
+    return angles[angle_sort_idx], coords[:, angle_sort_idx]
 
-    # Find outward-pointing normal vectors to points
-    normals = -_calculate_normals_2d(sorted_coords)
 
-    constant_offset_idx = np.logical_or(
-        sorted_angles < offset_angle, sorted_angles > (2 * np.pi - offset_angle)
+def _find_constant_offset_indices(angles, offset_angle):
+    return np.logical_or(angles < offset_angle, angles > (2 * np.pi - offset_angle))
+
+
+def _calculate_offset_magnitudes(
+    angles, offset_angle, minor_offset, major_offset, num_points
+):
+    constant_offset_idxs = _find_constant_offset_indices(angles, offset_angle)
+    variable_offset_idxs = np.logical_not(constant_offset_idxs)
+
+    offsets = np.empty_like(angles)
+    offsets[constant_offset_idxs] = minor_offset
+    offsets[variable_offset_idxs] = _calculate_variable_offset_magnitudes(
+        angles[variable_offset_idxs], offset_angle, minor_offset, major_offset
     )
-    variable_offset_idx = np.logical_not(constant_offset_idx)
 
-    # Offset values should be a function of the angle
-    var_offset_angles = sorted_angles[variable_offset_idx]
-    var_offset_angles[var_offset_angles > np.pi] = (
-        2 * np.pi - var_offset_angles[var_offset_angles > np.pi]
-    )
-    var_offset_offsets = (var_offset_angles - offset_angle) / (np.pi - offset_angle) * (
+    # Smooth out the shape using an interpolation over 0 to 2π
+    angular_space = np.linspace(0, 2 * np.pi, num_points)
+    return _interpolate_over_angles(angles, offsets, angular_space)
+
+
+def _calculate_variable_offset_magnitudes(
+    angles, offset_angle, minor_offset, major_offset
+):
+    angles[angles > np.pi] = 2 * np.pi - angles[angles > np.pi]
+    return (angles - offset_angle) / (np.pi - offset_angle) * (
         major_offset - minor_offset
     ) + minor_offset
 
-    offsets = np.empty_like(angles)
-    offsets[constant_offset_idx] = minor_offset
-    offsets[variable_offset_idx] = var_offset_offsets
 
-    interp_func = interp1d(
-        sorted_angles, offsets, fill_value="extrapolate", kind="slinear"
-    )
-    var_ang_space = np.linspace(0, 2 * np.pi, num_points)
-    offsets = interp_func(var_ang_space)
-
-    # Add the offsets to the original shape
-    new_shape_coords = sorted_coords + normals * offsets
-    new_shape_coords_3d = np.zeros((3, new_shape_coords.shape[1]))
-    new_shape_coords_3d[(0, 2), :] = new_shape_coords
-    new_shape = make_polygon(new_shape_coords_3d, closed=True)
-    return new_shape
+def _interpolate_over_angles(angles, values, angular_space):
+    interp_func = interp1d(angles, values, fill_value="extrapolate", kind="linear")
+    return interp_func(angular_space)
 
 
 def _calculate_normals_2d(shape_coords: np.ndarray) -> np.ndarray:
     gradients = np.gradient(shape_coords, axis=1)
     normals = np.empty_like(gradients)
-    normals[0] = gradients[1]
-    normals[1] = -gradients[0]
+    normals[0] = -gradients[1]
+    normals[1] = gradients[0]
     return normals / np.linalg.norm(normals, axis=0)
+
+
+def _2d_coords_to_wire(coords_2d):
+    coords_3d = np.zeros((3, coords_2d.shape[1]))
+    coords_3d[(0, 2), :] = coords_2d
+    return make_polygon(coords_3d, closed=True)
