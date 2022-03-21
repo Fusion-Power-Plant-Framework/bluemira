@@ -296,7 +296,18 @@ def raw_uc(
     converted value
 
     """
-    return ureg.Quantity(value, ureg.Unit(unit_from)).to(ureg.Unit(unit_to)).magnitude
+    try:
+        return (
+            ureg.Quantity(value, ureg.Unit(unit_from)).to(ureg.Unit(unit_to)).magnitude
+        )
+    except ValueError:
+        # Catch scales on units eg the ridculousness this unit: 10^19/m^3
+        unit_from_q = ureg.Quantity(unit_from)
+        unit_to_q = ureg.Quantity(unit_to)
+        return (
+            ureg.Quantity(value * unit_from_q).to(unit_to_q.units).magnitude
+            / unit_to_q.magnitude
+        )
 
 
 def to_celsius(

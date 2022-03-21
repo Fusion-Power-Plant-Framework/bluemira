@@ -57,6 +57,11 @@ class TestRawConverter:
         assert np.isclose(raw_uc(1, "eV", "K"), 11604.518121550082)
         assert np.isclose(raw_uc(1, "eV/s", "K/s"), 11604.518121550082)
 
+    def test_units_with_scales(self):
+        # .....I know.....
+        assert np.isclose(raw_uc(1, "10^19/m^3", "um^-3"), 10)
+        assert np.isclose(raw_uc(1, "10^19/m^3", "10um^-3"), 1)
+
 
 if __name__ == "__main__":
     pytest.main([__file__])
