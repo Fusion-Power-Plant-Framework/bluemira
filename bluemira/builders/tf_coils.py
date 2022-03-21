@@ -362,6 +362,7 @@ class RippleConstrainedLengthGOP(GeometryOptimisationProblem):
         parameterisation = self.update_parameterisation(x_star)
         self.solver.update_cage(parameterisation.create_shape())
         self.ripple_values = self.solver.ripple()
+        return parameterisation
 
     def plot(self, ax=None):
         """
