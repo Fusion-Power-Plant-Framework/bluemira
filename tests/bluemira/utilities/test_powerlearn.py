@@ -26,11 +26,11 @@ from bluemira.utilities.powerlearn import LinearLaw, PowerLaw
 
 
 def power_law_func1(x, y, z):
-    return 0.5 * x ** 2.3 * y ** -0.6 * z ** 4.44
+    return 0.5 * x**2.3 * y**-0.6 * z**4.44
 
 
 def power_law_func2(x, y, z):
-    return 4.3 * x ** 1.1 * y ** 4.6 * z ** 0
+    return 4.3 * x**1.1 * y**4.6 * z**0
 
 
 def linear_law_func1(x, y, z):

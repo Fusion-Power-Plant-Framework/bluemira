@@ -22,23 +22,21 @@
 """
 Database and DOE tools wrapping pypet (HDF5 files)
 """
-import logging
-import os  # To allow file paths working under Windows and Linux
+import os
+from pathlib import Path
 
 import numpy as np
 import pandas as pd
 from pandas import DataFrame
-from pypet import Environment, pypetconstants
+from pypet import Environment
+from pypet import Parameter as pypetParameter
+from pypet import pypetconstants
 from pypet.trajectory import Trajectory
 from pypet.utils.explore import cartesian_product
 from pypet.utils.hdf5compression import compact_hdf5_file
 
+from bluemira.base.logs import LogLevel, get_log_level
 from bluemira.base.look_and_feel import bluemira_print
-
-logger = logging.getLogger()
-logger.setLevel("INFO")
-
-I_GLOBAL = 0
 
 
 class DataBase:
@@ -69,12 +67,9 @@ class DataBase:
     def __init__(self, directory, name, function, variables, results, **kwargs):
         self.name = name
         self.ncpu = kwargs.get("ncpu", os.cpu_count() - 2)
-        if self.ncpu == 1:
-            self._multiproc = False
-        else:
-            self._multiproc = True
+        self._multiproc = self.ncpu != 1
 
-        self.filename = os.path.join(directory, f"{self.name}.hdf5")
+        self.filename = Path(directory, f"{self.name}.hdf5")
         self.function = function
         self.variables = variables
         self.results = results
@@ -86,12 +81,12 @@ class DataBase:
         self.env0 = None
         self.traj_old = None
 
-        if os.path.exists(self.filename):
+        if self.filename.exists():
             self.load_existing()
             self.runs = DataFrame.from_dict(self.get_run_inputs(self.traj_old))
-            self.initialise(name=self.name + "_temp")
-        else:
-            self.initialise(name=self.name)
+            name += "_temp"
+
+        self.initialise(name=name)
 
     def initialise(self, name):
         """
@@ -100,9 +95,9 @@ class DataBase:
         self.env = self.set_env(name)
         self.traj = self.env.trajectory
         for p in self.variables:
-            if "Parameter" in str(type(p)):
+            if isinstance(p, pypetParameter):
                 self.traj.f_add_parameter(
-                    p.var, float(p.value), comment=p.name + " " + p.unit
+                    p.var, float(p.value), comment=f"{p.name} {p.unit}"
                 )
             else:
                 raise ValueError(f"Need a Parameter, not a {type(p)}")
@@ -116,7 +111,7 @@ class DataBase:
             filename=self.filename,
             add_time=False,
             log_stdout=True,
-            log_level=logging.INFO,
+            log_level=LogLevel(get_log_level()),
             overwrite_file=False,
             multiproc=self._multiproc,
             ncores=self.ncpu,
@@ -133,8 +128,7 @@ class DataBase:
         parameter_dict: dict
             The dictionary of ranges for variables to add to the DataBase
         """
-        exploration = cartesian_product(parameter_dict)
-        new_runs = self.check_for_duplicates(exploration)
+        new_runs = self.check_for_duplicates(cartesian_product(parameter_dict))
         if new_runs is None:
             bluemira_print("Already fully explored this parameter set.")
             self.lock = True
@@ -156,14 +150,11 @@ class DataBase:
         exploration: dict
             The dictionary of unique parameter ranges to explore
         """
-        exploration = self.pad_exploration(exploration)
-        exploration = DataFrame.from_dict(exploration)
+        exploration = DataFrame.from_dict(self.pad_exploration(exploration))
         if hasattr(self, "runs"):
             c = pd.merge(self.runs, exploration, how="outer", indicator=True)
             new = c[c["_merge"] == "right_only"]
-            if len(new) == 0:
-                return None
-            else:
+            if len(new) != 0:
                 bluemira_print("Dropping duplicate parameter entries.")
                 return new.drop("_merge", axis=1)
         else:
@@ -174,17 +165,16 @@ class DataBase:
         Adds default values to varied values so that check duplicates
         finds proper duplicates
         """
-        defaults = self.get_run_inputs(self.traj)
-        length = len(next(iter(exploration.items()))[-1])  # Length of expl
-        for k, v in defaults.items():
-            defaults[k] = v[0] * np.ones(length)
-        return {**defaults, **exploration}  # Latter ** overwrites!
+        length = np.ones(len(next(iter(exploration.items()))[-1]))  # Length of expl
+        return {
+            **{k: v[0] * length for k, v in self.get_run_inputs(self.traj).items()},
+            **exploration,
+        }  # Latter ** overwrites!
 
     def run(self):
         """
         Build the DataBase with the specified ranges of variables.
         """
-        # self.env.disable_logging()
         if self.lock:
             bluemira_print("Add new parameter explorations before running.")
             return None
@@ -196,7 +186,6 @@ class DataBase:
                 delete_other_trajectory=True,
                 move_data=True,
             )
-        # self.env.disable_logging()
 
     def load(self):
         """
@@ -226,19 +215,21 @@ class DataBase:
         """
         Build a summary DataFrame of the results.
         """
-        res = [list() for _ in range(len(self.results))]
+        res = []
         for i, run in enumerate(self.traj_old.f_get_run_names()):
             self.traj_old.f_set_crun(run)
-            for k in range(len(self.results)):
-                res[k].append(self.traj_old.crun[self.results[k]])
+            res += [
+                [self.traj_old.crun[self.results[k]] for k in range(len(self.results))]
+            ]
         self.traj_old.f_restore_default()  # Clears the run
 
         # Build dictionaries, then DataFrame
-        new_res = {}
-        for i, r in enumerate(self.results):
-            new_res[r] = res[i]
-        var_dict = self.get_run_inputs(self.traj_old)
-        self.df = DataFrame.from_dict(dict(**var_dict, **new_res))
+        self.df = DataFrame.from_dict(
+            {
+                **self.get_run_inputs(self.traj_old),
+                **{r: res[i] for i, r in enumerate(self.results)},
+            }
+        )
 
     def get_run_inputs(self, traj):
         """
@@ -254,15 +245,12 @@ class DataBase:
         var_dict: dict
             The dictionary of variables
         """
-        var = [np.zeros(len(traj)) for _ in range(len(self.variables))]
+        var = np.zeros((len(self.variables), len(traj)))
         for i, run in enumerate(traj.f_get_run_names()):
             traj.f_set_crun(run)
-            for j in range(len(var)):
-                var[j][i] = traj[self.variables[j].var]
-        var_dict = {}
-        for j, v in enumerate(self.variables):
-            var_dict[v.var] = var[j]
-        return var_dict
+            for j in range(var.shape[0]):
+                var[j, i] = traj[self.variables[j].var]
+        return {v.var: var[j] for j, v in enumerate(self.variables)}
 
     def get_result(self, input_set):
         """
@@ -273,13 +261,9 @@ class DataBase:
         df = self.runs
         for k, v in input_set.items():
             df = df[np.isclose(df[k], v)]
-        i = df.index[0]
-        name = "run_" + str("0" * (8 - len(str(i)))) + str(i)
-        result = self.traj_old.results.f_get(name)
-        res_dict = {}
-        for k in self.results:
-            res_dict[k] = result[k]
-        return res_dict
+        result = self.traj_old.results.f_get(f"run_{df.index[0]:0>8}")
+
+        return {k: result[k] for k in self.results}
 
     def compact_file(self):
         """
@@ -301,16 +285,13 @@ class DataBase:
         if not self.__loaded__:
             self.load()
         var = [i.var for i in self.variables]
-        res = self.results
         row_list = []
         for run in self.traj_old.f_get_run_names():
             self.traj_old.f_set_crun(run)
-            row = {}
-            for i in var:
-                row[i] = self.traj_old[i]
-            for k in range(len(self.traj_old.results[0][res[0]])):
+            row = {i: self.traj_old[i] for i in var}
+            for k in range(len(self.traj_old.results[0][self.results[0]])):
                 newrow = row.copy()
-                for j in res:
+                for j in self.results:
                     try:
                         newrow[j] = self.traj_old.results[run][j][k]
                     except AttributeError:  # Run failed

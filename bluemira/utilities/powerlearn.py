@@ -22,6 +22,8 @@
 """
 2-bit machine learning..
 """
+from typing import List, Optional
+
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
@@ -46,11 +48,17 @@ class Law:
         These are excluded from the fitting.
     target: str
         The result column name in the DataFrame to fit to
-    constant: Union[float, None]
+    constant: Optional[float]
         The constant (if any) to add to the Law.
     """
 
-    def __init__(self, dataframe, targets, target, constant=None):
+    def __init__(
+        self,
+        dataframe: pd.DataFrame,
+        targets: List[str],
+        target: [str],
+        constant: Optional[float] = None,
+    ):
 
         self.db_original = dataframe.copy()
         self.db = None
@@ -89,7 +97,7 @@ class Law:
             self.db_original = pd.read_excel(path + "/" + self.file)
         elif ".csv" in self.file:
             self.db_original = pd.read_csv(
-                path + "/" + self.file, skiprows=0, error_bad_lines=False
+                f"{path}/{self.file}", skiprows=0, error_bad_lines=False
             )
         if target == "t_d":
             self.db_original = self.db_original[np.isfinite(self.db_original[target])]
@@ -106,7 +114,7 @@ class Law:
         self.db_original.dropna(inplace=True)
         self.db = self.db_original
 
-    def process_constant(self, constant, target):
+    def process_constant(self, constant: float, target: str):
         """
         Handle a leading constant to form an equation of the type: y = CONSTANT + f(X)
         """
@@ -134,7 +142,7 @@ class Law:
         cols = nun[nun == 1].index
         self.db = df.drop(cols, axis=1)
 
-    def set_targets(self, targets, target):
+    def set_targets(self, targets: List[str], target: str):
         """
         Remove the result columns from the DataFrame, and set the fitting target.
 
@@ -153,13 +161,13 @@ class Law:
         self.target = self.db[target]
         self.variables = inputs.columns
 
-    def train_test(self, split=None):
+    def train_test(self, split: Optional[float] = None):
         """
         Split the data into training and testing data.
 
         Parameters
         ----------
-        split: Union[float, None]
+        split: Optional[float]
             The split fraction between train and test. Defaults to 0.8
         """
         (
@@ -181,7 +189,7 @@ class Law:
         """
         self.model.fit(x, y)
 
-    def score(self, x, y, show=False):
+    def score(self, x, y, show: bool = False):
         """
         Score the model.
         """
@@ -190,7 +198,7 @@ class Law:
             bluemira_print(f"R\u00b2 = {score:.2f}")
         return round(score, 2)
 
-    def score_model(self, bounds=False):
+    def score_model(self, bounds: bool = False):
         """
         Plot the model result with score.
         """
@@ -217,7 +225,13 @@ class Law:
     def _process_xy(self):
         raise NotImplementedError
 
-    def predict(self, x, xc=None, logged_input=False, show=False):
+    def predict(
+        self,
+        x,
+        xc: Optional[float] = None,
+        logged_input: bool = False,
+        show: bool = False,
+    ):
         """
         List and np.array supported only internal
         Xc is the constant, if used
@@ -246,7 +260,7 @@ class Law:
         return pred, c
 
     @staticmethod
-    def cheap_kdeplot(x, y, ax, nbins=50):
+    def cheap_kdeplot(x, y, ax, nbins: int = 50):
         """
         Kernel density estimate plot.
         """
@@ -274,7 +288,7 @@ class Law:
         ax.yaxis.set_major_locator(ticker.MultipleLocator(1))
         return ax
 
-    def print_fit(self, sep1, sep2):
+    def print_fit(self, sep1: str, sep2: str):
         """
         Prints the equation of the Law and the fitting R^2 score.
         """
@@ -317,7 +331,7 @@ class LinearLaw(Law):
         Get an inital regression law fit.
         """
         self.model = LinearRegression(normalize=True)
-        self.fit(inputs, target)
+        self.model.fit(inputs, target)
         self.r_2 = self.score(inputs, target)
         return self.r_2
 
@@ -332,11 +346,11 @@ class LinearLaw(Law):
         self.model = LinearRegression(normalize=True)
         for var in self.variables:
             tinput = inputs.drop(var, axis=1)
-            self.fit(tinput, target)
+            self.model.fit(tinput, target)
             if self.score(tinput, target) >= self.r_2:
                 inputs = inputs.drop(var, axis=1)
                 self.x_test = self.x_test.drop(var, axis=1)
-        self.fit(inputs, target)
+        self.model.fit(inputs, target)
         self.r_2 = self.score(inputs, target)
         self.x_train = inputs
 
