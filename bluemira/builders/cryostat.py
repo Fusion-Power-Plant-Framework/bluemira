@@ -123,7 +123,7 @@ class CryostatBuilder(Builder):
         cryostat_vv = PhysicalComponent("Cryostat VV", shape)
         cryostat_vv.plot_options.face_options["color"] = BLUE_PALETTE["CR"][0]
         component = Component("xz", children=[cryostat_vv])
-        bm_plot_tools.set_component_plane(component, "xz")
+        bm_plot_tools.set_component_view(component, "xz")
         return component
 
     def build_xy(self):
@@ -139,7 +139,7 @@ class CryostatBuilder(Builder):
         cryostat_vv = PhysicalComponent("Cryostat VV", shape)
         cryostat_vv.plot_options.face_options["color"] = BLUE_PALETTE["CR"][0]
         component = Component("xy", children=[cryostat_vv])
-        bm_plot_tools.set_component_plane(component, "xy")
+        bm_plot_tools.set_component_view(component, "xy")
         return component
 
     def build_xyz(self, degree=360.0):

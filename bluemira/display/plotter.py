@@ -53,8 +53,8 @@ DEFAULT_PLOT_OPTIONS = {
     "point_options": {"s": 10, "facecolors": "red", "edgecolors": "black", "zorder": 30},
     "wire_options": {"color": "black", "linewidth": 0.5, "zorder": 20},
     "face_options": {"color": "blue", "zorder": 10},
-    # projection plane
-    "plane": "xz",
+    # reference plotting placement
+    "view": "xz",
     # discretization properties for plotting wires (and faces)
     "ndiscr": 100,
     "byedges": True,
@@ -72,9 +72,9 @@ def get_default_options():
     """
     output_dict = {}
     for k, v in DEFAULT_PLOT_OPTIONS.items():
-        # FreeCAD Plane that is contained in BluemiraPlacement cannot be deepcopied by
-        # copy.deepcopy. For this reason, its deepcopy method must be used in
-        # this case.
+        # FreeCAD Placement that is contained in BluemiraPlacement cannot be
+        # deepcopied by copy.deepcopy. For this reason, its deepcopy method must be
+        # used in this case.
         if isinstance(v, _placement.BluemiraPlacement):
             output_dict[k] = v.deepcopy()
         else:
@@ -134,9 +134,9 @@ class PlotOptions(DisplayOptions):
         "linewidth": "0.5"}
     face_options: Dict
         Dictionary with matplotlib options for faces. By default {"color": "red"}
-    plane: [str, Plane]
-        The plane on which the object is projected for plotting. As string, possible
-        options are "xy", "xz", "zy". By default 'xz'.
+    view: [str, Placement]
+        The reference view for plotting. As string, possible
+        options are "xy", "xz", "yz". By default 'xz'.
     ndiscr: int
         The number of points to use when discretising a wire or face.
     byedges: bool
@@ -153,9 +153,9 @@ class PlotOptions(DisplayOptions):
         """
         output_dict = {}
         for k, v in self._options.items():
-            # FreeCAD Plane that is contained in BluemiraPlacement cannot be deepcopied
-            # by copy.deepcopy. For this reason, its deepcopy method must to be used in
-            # this case.
+            # FreeCAD Placement that is contained in BluemiraPlacement cannot be
+            # deepcopied by copy.deepcopy. For this reason, its deepcopy method must
+            # to be used in this case.
             if isinstance(v, _placement.BluemiraPlacement):
                 output_dict[k] = v.deepcopy()
             else:
@@ -229,16 +229,16 @@ class PlotOptions(DisplayOptions):
         self._options["face_options"] = val
 
     @property
-    def plane(self):
+    def view(self):
         """
-        The plane on which the object is projected for plotting. As string, possible
-        options are "xy", "xz", "zy".
+        The reference view for plotting. As string, possible options are "xyz",
+        "xz", "yz". By default 'xz'.
         """
-        return self._options["plane"]
+        return self._options["view"]
 
-    @plane.setter
-    def plane(self, val):
-        self._options["plane"] = val
+    @view.setter
+    def view(self, val):
+        self._options["view"] = val
 
     @property
     def ndiscr(self):
@@ -275,34 +275,27 @@ class BasePlotter(ABC):
     def __init__(self, options: Optional[PlotOptions] = None, **kwargs):
         # discretization points representing the shape in global coordinate system
         self._data = []
-        # modified discretization points for plotting (e.g. after plane transformation)
+        # modified discretization points for plotting (e.g. after view transformation)
         self._data_to_plot = []
         self.ax = None
         self.options = (
             PlotOptions(**self._CLASS_PLOT_OPTIONS) if options is None else options
         )
         self.options.modify(**kwargs)
-        self.set_placement(self.options._options["plane"])
+        self.set_view(self.options._options["view"])
 
-    def set_placement(self, plane):
-        """Set the plotting plane"""
-        if plane == "xy":
-            # Base.Placement(origin, axis, angle)
-            self.options._options["plane"] = _placement.BluemiraPlacement()
-        elif plane == "xz":
-            # Base.Placement(origin, axis, angle)
-            self.options._options["plane"] = _placement.BluemiraPlacement(
-                axis=(1.0, 0.0, 0.0), angle=-90.0
-            )
-        elif plane == "zy":
-            # Base.Placement(origin, axis, angle)
-            self.options._options["plane"] = _placement.BluemiraPlacement(
-                axis=(0.0, 1.0, 0.0), angle=90.0
-            )
-        elif isinstance(plane, _placement.BluemiraPlacement):
-            self.options._options["plane"] = plane
+    def set_view(self, view):
+        """Set the plotting view"""
+        if view == "xy":
+            self.options._options["view"] = _placement.XYZ
+        elif view == "xz":
+            self.options._options["view"] = _placement.XZY
+        elif view == "yz":
+            self.options._options["view"] = _placement.YZX
+        elif isinstance(view, _placement.BluemiraPlacement):
+            self.options._options["view"] = view
         else:
-            DisplayError(f"{plane} is not a valid plane")
+            DisplayError(f"{view} is not a valid view")
 
     @abstractmethod
     def _check_obj(self, obj):
@@ -346,12 +339,7 @@ class BasePlotter(ABC):
         self.ax.set_aspect("equal")
 
     def _set_label_2d(self):
-        # TODO: BluemiraPlacement stuff. I feel like the axis may not be the plane normal
-        # and this makes me very sad. The workaround here is by creating the planes from
-        # strs, but we're unlikely to recognise a user-input BluemiraPlacement.
-        # Note that the angle argument gets used to rotate the data for reasons I still
-        # do not understand, hence why the axis here is not the plane normal..
-        axis = np.abs(self.options.plane.axis)
+        axis = np.abs(self.options.view.axis)
         if np.allclose(axis, (1, 0, 0)):
             self.ax.set_xlabel(X_LABEL)
             self.ax.set_ylabel(Z_LABEL)
@@ -362,7 +350,7 @@ class BasePlotter(ABC):
             self.ax.set_xlabel(Y_LABEL)
             self.ax.set_ylabel(Z_LABEL)
         else:
-            # Do not put x,y,z labels for planes we do not recognise
+            # Do not put x,y,z labels for views we do not recognise
             self.ax.set_xlabel(UNIT_LABEL)
             self.ax.set_ylabel(UNIT_LABEL)
 
@@ -457,8 +445,8 @@ class PointsPlotter(BasePlotter):
     def _populate_data(self, points):
         points = _parse_to_xyz_array(points).T
         self._data = points
-        # apply rotation matrix given by options['plane']
-        rot = self.options.plane.to_matrix().T
+        # apply rotation matrix given by options['view']
+        rot = self.options.view.to_matrix().T
         temp_data = np.c_[self._data, np.ones(len(self._data))]
         self._data_to_plot = temp_data.dot(rot).T
         self._data_to_plot = self._data_to_plot[0:2]
@@ -496,8 +484,8 @@ class WirePlotter(BasePlotter):
     def _populate_data(self, wire):
         self._pplotter = PointsPlotter(self.options)
         new_wire = wire.deepcopy()
-        # # change of plane integrated in PointsPlotter2D. Not necessary here.
-        # new_wire.change_placement(self.options._options['plane'])
+        # # change of view integrated in PointsPlotter2D. Not necessary here.
+        # new_wire.change_placement(self.options._options['view'])
         pointsw = new_wire.discretize(
             ndiscr=self.options._options["ndiscr"],
             byedges=self.options._options["byedges"],

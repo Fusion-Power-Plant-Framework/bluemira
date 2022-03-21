@@ -219,7 +219,7 @@ class WallBuilder(OptimisedShapeBuilder):
             )
         )
         component.plot_options.wire_options["color"] = BLUE_PALETTE["DIV"]
-        bm_plot_tools.set_component_plane(component, "xz")
+        bm_plot_tools.set_component_view(component, "xz")
         return component
 
     def _derive_shape_params(self):

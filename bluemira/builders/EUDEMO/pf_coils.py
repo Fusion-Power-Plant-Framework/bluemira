@@ -196,7 +196,7 @@ class PFCoilsBuilder(Builder):
         for comp in self.sub_components:
             xy_comps.append(comp.build_xy())
         component = Component("xy", children=xy_comps)
-        bm_plot_tools.set_component_plane(component, "xy")
+        bm_plot_tools.set_component_view(component, "xy")
         return component
 
     def build_xz(self):
@@ -213,7 +213,7 @@ class PFCoilsBuilder(Builder):
         for comp in self.sub_components:
             xz_comps.append(comp.build_xz())
         component = Component("xz", children=xz_comps)
-        bm_plot_tools.set_component_plane(component, "xz")
+        bm_plot_tools.set_component_view(component, "xz")
         return component
 
     def build_xyz(self, degree: float = 360.0):
