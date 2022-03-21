@@ -69,6 +69,10 @@ def estimate_kappa95(A, m_s_limit):
     on the polynomial surface fit.
     The data are stored in: data/equilibria/vertical_stability_data.json
 
+    For the A=2.6, m_s=0 case (a bit of an outlier), there is a fudging to cap the
+    kappa_95 to ~1.8 (which is the recommended value). The fit otherwise overestimates
+    kappa_95 in this corner of the space (kappa_95 ~ 1.81)
+
     This is only a crude model, and is only relevant for EU-DEMO-like machines.
 
     Furthermore, this is only for flat-top..! Ramp-up and ramp-down may be
