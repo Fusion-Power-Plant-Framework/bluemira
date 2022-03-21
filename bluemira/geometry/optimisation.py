@@ -28,6 +28,7 @@ from typing import List
 
 import numpy as np
 
+from bluemira.base.constants import EPS
 from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.geometry.parameterisations import GeometryParameterisation
 from bluemira.geometry.tools import signed_distance_2D_polygon
@@ -146,7 +147,7 @@ class GeometryOptimisationProblem(OptimisationProblem):
         if n_shape_ineq_cons > 0:
             self.opt.add_ineq_constraints(
                 self._parameterisation.shape_ineq_constraints,
-                np.zeros(n_shape_ineq_cons),
+                EPS * np.ones(n_shape_ineq_cons),
             )
         else:
             bluemira_warn(
