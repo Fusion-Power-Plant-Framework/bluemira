@@ -107,7 +107,9 @@ print(
 )
 
 # %%[markdown]
-# Now let's do the same with an optimisation algorithm that doesn't require gradients
+# Now let's do the same with an optimisation algorithm that doesn't require gradients.
+# The `minimise_length` function will not calculate the gradients numerically if the
+# optimisation algorithm does not require them.
 
 # %%
 parameterisation_2 = PrincetonD(
