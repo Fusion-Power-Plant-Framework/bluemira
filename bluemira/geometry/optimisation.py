@@ -174,7 +174,7 @@ class GeometryOptimisationProblem(OptimisationProblem):
 
 class MinimiseLengthGOP(GeometryOptimisationProblem):
     """
-    Optimiser to minimise the length of a geometry 2D parameterisation
+    Optimiser to minimise the length of a geometry 2-D parameterisation
     in the xz-plane, with optional constraints in the form of a
     "keep-out zone".
     """

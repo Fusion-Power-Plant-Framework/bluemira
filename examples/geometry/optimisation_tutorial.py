@@ -77,6 +77,7 @@ slsqp_optimiser = Optimiser(
 
 # NOTE: This `minimise_length` function includes automatic numerical calculation of the
 # objective function gradient, and expects a certain signature.
+
 # %%
 objective = OptimisationObjective(
     minimise_length,
@@ -108,6 +109,7 @@ print(
 # %%[markdown]
 # Now let's do the same with an optimisation algorithm that doesn't require gradients
 
+# %%
 parameterisation_2 = PrincetonD(
     {
         "x1": {"lower_bound": 2, "value": 4, "upper_bound": 6},
