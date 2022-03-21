@@ -103,10 +103,12 @@ def estimate_kappa95(A, m_s_limit):
         )
     ) / (2 * a)
 
-    # We're going to trim kappa_95 to 1.8, which is the maximum of the data
+    # We're going to trim kappa_95 to 1.8, which is the maximum of the data, keeping
+    # the function smooth
     if kappa_95 > 1.77:
-        ratio = 1.8 / kappa_95
-        kappa_95 = kappa_95 ** (ratio)
+        ratio = 1.77 / kappa_95
+        corner_fudge = 0.3 * (kappa_95 - 1.77) / ratio
+        kappa_95 = kappa_95 ** (ratio) + corner_fudge
 
     return kappa_95
 
