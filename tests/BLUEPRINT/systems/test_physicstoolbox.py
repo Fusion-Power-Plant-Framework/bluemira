@@ -82,7 +82,7 @@ class TestKappaLaw:
     )
     def test_kappa(self, A, m_s, expected):
         k95 = estimate_kappa95(A, m_s)
-        np.testing.assert_almost_equal(k95, expected, decimal=2)
+        np.testing.assert_allclose(k95, expected, rtol=5e-3)
 
 
 if __name__ == "__main__":
