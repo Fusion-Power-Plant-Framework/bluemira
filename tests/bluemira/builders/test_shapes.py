@@ -100,7 +100,7 @@ class TestMakeParameterisedShape:
             shutil.rmtree(tempdir)
 
 
-class MinimiseLength(GeometryOptimisationProblem):
+class MinimiseLengthGOP(GeometryOptimisationProblem):
     """
     A simple geometry optimisation problem that minimises length without constraints.
     """
@@ -120,7 +120,7 @@ class MinimiseLength(GeometryOptimisationProblem):
 class TestMakeOptimisedShape:
     @pytest.mark.parametrize(
         "problem_class",
-        ["tests.bluemira.builders.test_shapes::MinimiseLength", MinimiseLength],
+        ["tests.bluemira.builders.test_shapes::MinimiseLengthGOP", MinimiseLengthGOP],
     )
     def test_builder(self, problem_class):
         params = {
