@@ -161,13 +161,15 @@ class ChargedParticleSolver:
         z_fw = np.array([fs.z_end for fs in flux_surfaces])
         alpha = np.array([fs.alpha for fs in flux_surfaces], dtype=object)
         intersecting = np.where(alpha != None)[0]
+        alpha = alpha[intersecting]
+        alpha = np.array(alpha, dtype=float)
 
         return (
             x_mp[intersecting],
             z_mp[intersecting],
             x_fw[intersecting],
             z_fw[intersecting],
-            alpha[intersecting],
+            alpha,
         )
 
     def _get_sep_out_intersection(self, outboard=True):
@@ -305,7 +307,7 @@ class ChargedParticleSolver:
         Bp_hfs = self.eq.Bp(x_hfs_inter, z_hfs_inter)
 
         # Calculate parallel power at the intersections
-        # Note that flux expansion terms cancelate down to this
+        # Note that flux expansion terms cancel down to this
         q_par_lfs = q_par_omp * Bp_lfs / B_omp
         q_par_hfs = q_par_omp * Bp_hfs / B_omp
 
@@ -379,6 +381,8 @@ class ChargedParticleSolver:
         # Calculate parallel power at the intersections
         # Note that flux expansion terms cancelate down to this
         q_par_lfs_down = q_par_omp * Bp_lfs_down / B_omp
+        assert len(q_par_omp) == len(Bp_lfs_up)
+        assert len(q_par_omp) == len(B_omp)
         q_par_lfs_up = q_par_omp * Bp_lfs_up / B_omp
         q_par_hfs_down = q_par_imp * Bp_hfs_down / B_imp
         q_par_hfs_up = q_par_imp * Bp_hfs_up / B_imp
