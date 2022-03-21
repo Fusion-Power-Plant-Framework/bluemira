@@ -17,7 +17,7 @@
         1.7077151335311571,
         1.66,
         1.77,
-        1.8,
+        1.8
     ],
     "A": [
         3.6,
@@ -37,7 +37,7 @@
         2.6,
 	    3.6,
         3.1,
-        2.6,
+        2.6
     ],
     "m_stability": [
         0.6655172413793103,
@@ -57,7 +57,7 @@
         0.3999999999999999,
 	    0.0,
         0.0,
-        0.0,
+        0.0
     ],
     "source": "These data come from a CREATE report (2L4NMJ) commissioned by EUROfusion.",
     "author": "R. Albanese et al.",
