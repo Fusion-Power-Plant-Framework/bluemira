@@ -159,8 +159,16 @@ class ChargedParticleSolver:
         z_mp = np.array([fs.z_start for fs in flux_surfaces])
         x_fw = np.array([fs.x_end for fs in flux_surfaces])
         z_fw = np.array([fs.z_end for fs in flux_surfaces])
-        alpha = np.array([fs.alpha for fs in flux_surfaces])
-        return x_mp, z_mp, x_fw, z_fw, alpha
+        alpha = np.array([fs.alpha for fs in flux_surfaces], dtype=object)
+        intersecting = np.where(alpha != None)[0]
+
+        return (
+            x_mp[intersecting],
+            z_mp[intersecting],
+            x_fw[intersecting],
+            z_fw[intersecting],
+            alpha[intersecting],
+        )
 
     def _get_sep_out_intersection(self, outboard=True):
         """
