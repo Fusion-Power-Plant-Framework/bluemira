@@ -237,13 +237,13 @@ class TFCoilsBuilder(OptimisedShapeBuilder):
         Run the specified design optimisation problem to generate the TF coil winding
         pack current centreline.
         """
-        super().run(
+        parameterisation = super().run(
             params=self._params,
             wp_cross_section=self._wp_cross_section,
             separatrix=self._separatrix,
             keep_out_zone=self._keep_out_zone,
         )
-        self._centreline = self._design_problem._parameterisation.create_shape()
+        self._centreline = parameterisation.create_shape()
 
     def read(self):
         """
