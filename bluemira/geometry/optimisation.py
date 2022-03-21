@@ -124,14 +124,14 @@ class GeometryOptimisationProblem(OptimisationProblem):
 
     def __init__(
         self,
-        parameterisation: GeometryParameterisation,
+        geometry_parameterisation: GeometryParameterisation,
         optimiser: Optimiser = None,
         objective: OptimisationObjective = None,
         constraints: List[OptimisationConstraint] = None,
     ):
-        super().__init__(parameterisation, optimiser, objective, constraints)
+        super().__init__(geometry_parameterisation, optimiser, objective, constraints)
 
-        dimension = parameterisation.variables.n_free_variables
+        dimension = geometry_parameterisation.variables.n_free_variables
         bounds = (np.zeros(dimension), np.ones(dimension))
         self.set_up_optimiser(dimension, bounds)
         self._objective._args["ad_args"] = {"bounds": bounds}
