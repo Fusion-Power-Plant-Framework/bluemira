@@ -239,10 +239,9 @@ print(f"n_evals: {problem.opt.n_evals}")
 # inequality constraint functions. This can be faster than other approaches, but is less
 # robust and also less likely to find the best solution.
 
-# Let's try a few different optimisers, noting:
-#       The different termination conditions we can play with and their effect
-#       The fact that ISRES is a stochastic optimiser, and its results will vary if we
-#       don't always reset the random seed value.
+# Let's try a few different optimisers, noting the different termination conditions we
+# can play with and their effect.
+
 
 # %%
 parameterisation_4 = PrincetonD()
@@ -273,7 +272,15 @@ print(f"Theoretical optimum: {c_value - c_tolerance}")
 print(f"Length with COBYLA: {parameterisation_4.create_shape().length}")
 print(f"n_evals: {problem.opt.n_evals}")
 
+
+# %%[markdown]
+
+# ISRES is a stochastic optimisation algorithm; if we want to see the same results every
+# time, it's advisable to set the random seed to a known value.
+
 # %%
+set_random_seed(134365475)
+
 parameterisation_5 = PrincetonD()
 irses_optimiser = Optimiser(
     "ISRES",
@@ -285,13 +292,6 @@ irses_optimiser = Optimiser(
     },
 )
 
-# %%[markdown]
-
-# ISRES is a stochastic optimisation algorithm; if we want to see the same results every
-# time, it's advisable to set the random seed to a known value.
-
-# %%
-set_random_seed(134365475)
 objective = OptimisationObjective(
     minimise_length,
     f_objective_args={"parameterisation": parameterisation_5},
