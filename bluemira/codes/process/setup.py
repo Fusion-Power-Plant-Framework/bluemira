@@ -28,6 +28,10 @@ import os
 import bluemira.codes.interface as interface
 from bluemira.codes.error import CodesError
 from bluemira.codes.process.api import DEFAULT_INDAT, InDat, update_obsolete_vars
+from bluemira.codes.process.mapping import (
+    CurrentDriveEfficiencyModel,
+    TFCoilConductorTechnology,
+)
 
 
 class PROCESSInputWriter(InDat):
@@ -65,6 +69,22 @@ class Setup(interface.Setup):
     def _runinput(self):
         self.write_indat(use_bp_inputs=False)
 
+    def _validate_models(self, writer):
+        models = [
+            "iefrf",
+            CurrentDriveEfficiencyModel,
+            "i_tf_sup",
+            TFCoilConductorTechnology,
+        ]
+
+        for name, model_cls in models:
+            try:
+                val = writer.data[name].value
+            except KeyError:
+                continue
+            model = model_cls[val] if isinstance(val, str) else model_cls(val)
+            writer.add_parameter(name, model.value)
+
     def write_indat(self, use_bp_inputs=True):
         """
         Write the IN.DAT file and stores in the main PROCESS folder.
@@ -87,6 +107,8 @@ class Setup(interface.Setup):
             _inputs = self.get_new_inputs(remapper=update_obsolete_vars)
             for key, value in _inputs.items():
                 writer.add_parameter(key, value)
+
+        self._validate_models(writer)
 
         filename = os.path.join(self.parent.run_dir, "IN.DAT")
         writer.write_in_dat(output_filename=filename)
