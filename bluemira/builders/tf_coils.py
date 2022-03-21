@@ -355,11 +355,7 @@ class RippleConstrainedLengthGOP(GeometryOptimisationProblem):
         """
         Solve the GeometryOptimisationProblem.
         """
-        self._objective._args["parameterisation"] = self._parameterisation
-        if x0 is None:
-            x0 = self._parameterisation.variables.get_normalised_values()
-        x_star = self.opt.optimise(x0)
-        parameterisation = self.update_parameterisation(x_star)
+        parameterisation = super().optimise(x0=x0)
         self.solver.update_cage(parameterisation.create_shape())
         self.ripple_values = self.solver.ripple()
         return parameterisation

@@ -170,7 +170,7 @@ class GeometryOptimisationProblem(OptimisationProblem):
         if x0 is None:
             x0 = self._parameterisation.variables.get_normalised_values()
         x_star = self.opt.optimise(x0)
-        self.update_parameterisation(x_star)
+        return self.update_parameterisation(x_star)
 
 
 class MinimiseLengthGOP(GeometryOptimisationProblem):
