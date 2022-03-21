@@ -67,7 +67,7 @@ class BMUnitRegistry(UnitRegistry):
         # Extra units
         self.define("displacements_per_atom  = count = dpa")
         self.define("full_power_year = year = fpy")
-        self.define("percent = 0.01 count")
+        self.define("percent = 0.01 count = %")
         self.define("atomic_parts_per_million = count * 1e-6 = appm")
         # Other currencies need to be set up in a new context
         self.define("USD = [currency]")
@@ -296,7 +296,7 @@ def raw_uc(
     converted value
 
     """
-    return ureg.Quantity(value, unit_from).to(unit_to).magnitude
+    return ureg.Quantity(value, ureg.Unit(unit_from)).to(ureg.Unit(unit_to)).magnitude
 
 
 def to_celsius(

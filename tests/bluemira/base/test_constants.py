@@ -21,7 +21,7 @@
 import numpy as np
 import pytest
 
-from bluemira.base.constants import E_I, E_IJ, E_IJK, to_celsius, to_kelvin
+from bluemira.base.constants import E_I, E_IJ, E_IJK, raw_uc, to_celsius, to_kelvin
 from bluemira.utilities.tools import levi_civita_tensor
 
 
@@ -42,6 +42,20 @@ class TestTemperatureConverters:
     def test_to_celsius_raises_error(self, unit):
         with pytest.raises(ValueError):
             to_celsius(-1000, unit)
+
+
+class TestRawConverter:
+    def test_percentage_conversion(self):
+        assert raw_uc(1, "percent", "%") == 1
+        assert raw_uc(1, "count", "%") == 100
+
+    def test_flow_conversion(self):
+        assert np.isclose(raw_uc(1, "mol", "Pa m^3"), 2271.0954641485578)
+        assert np.isclose(raw_uc(1, "mol/s", "Pa m^3/s"), 2271.0954641485578)
+
+    def test_energy_temperature_conversion(self):
+        assert np.isclose(raw_uc(1, "eV", "K"), 11604.518121550082)
+        assert np.isclose(raw_uc(1, "eV/s", "K/s"), 11604.518121550082)
 
 
 if __name__ == "__main__":
