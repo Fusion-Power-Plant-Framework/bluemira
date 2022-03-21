@@ -46,7 +46,7 @@ from bluemira.utilities.opt_problems import OptimisationConstraint, Optimisation
 from bluemira.utilities.optimiser import approx_derivative
 
 
-class ParameterisedHelmhotzSolver:
+class ParameterisedRippleSolver:
     """
     A parameterised Biot-Savart HelmholtzCage solver.
 
@@ -151,7 +151,7 @@ class ParameterisedHelmhotzSolver:
         return ripple
 
 
-class RippleConstrainedLengthOpt(GeometryOptimisationProblem):
+class RippleConstrainedLengthGOP(GeometryOptimisationProblem):
     """
     Toroidal field coil winding pack shape optimisation problem.
 
@@ -216,7 +216,7 @@ class RippleConstrainedLengthOpt(GeometryOptimisationProblem):
 
         self.ripple_points = self._make_ripple_points(separatrix, n_rip_points)
         self.ripple_values = None
-        self.solver = ParameterisedHelmhotzSolver(
+        self.solver = ParameterisedRippleSolver(
             wp_cross_section,
             nx,
             ny,
@@ -310,7 +310,7 @@ class RippleConstrainedLengthOpt(GeometryOptimisationProblem):
         TF_ripple_limit: float
             Maximum allowable TF ripple
         """
-        func = RippleConstrainedLengthOpt.calculate_ripple
+        func = RippleConstrainedLengthGOP.calculate_ripple
         constraint[:] = func(vector, parameterisation, solver, TF_ripple_limit)
         if grad.size > 0:
             grad[:] = approx_derivative(

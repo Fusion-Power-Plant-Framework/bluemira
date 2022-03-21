@@ -40,7 +40,7 @@ from bluemira.builders.EUDEMO.plasma import PlasmaBuilder, PlasmaComponent
 from bluemira.builders.EUDEMO.reactor import EUDEMOReactor
 from bluemira.builders.EUDEMO.tf_coils import TFCoilsBuilder
 from bluemira.builders.radiation_shield import RadiationShieldBuilder
-from bluemira.builders.tf_coils import RippleConstrainedLengthOpt
+from bluemira.builders.tf_coils import RippleConstrainedLengthGOP
 from bluemira.builders.thermal_shield import ThermalShieldBuilder
 from bluemira.codes import plot_radial_build
 from bluemira.codes.plasmod.mapping import (  # noqa: N812
@@ -458,7 +458,7 @@ if tf_coils_builder.runmode == "run":
 # %%
 tf_coils_builder: TFCoilsBuilder = reactor.get_builder("TF Coils")
 if tf_coils_builder.runmode == "run":
-    design_problem: RippleConstrainedLengthOpt = tf_coils_builder.design_problem
+    design_problem: RippleConstrainedLengthGOP = tf_coils_builder.design_problem
     design_problem.plot()
     plt.show()
 
