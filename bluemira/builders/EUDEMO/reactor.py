@@ -155,7 +155,7 @@ class EUDEMOReactor(Reactor):
             "variables_map": default_variables_map,
             "geom_path": None,
             "runmode": "run",
-            "problem_class": "bluemira.builders.tf_coils::RippleConstrainedLengthOpt",
+            "problem_class": "bluemira.builders.tf_coils::RippleConstrainedLengthGOP",
             "problem_settings": {},
             "opt_conditions": {
                 "ftol_rel": 1e-3,
@@ -274,7 +274,7 @@ class EUDEMOReactor(Reactor):
                 "xtol_rel": 1e-8,
             },
             "param_class": "bluemira.builders.EUDEMO.first_wall::WallPrincetonD",
-            "problem_class": "bluemira.geometry.optimisation::MinimiseLength",
+            "problem_class": "bluemira.geometry.optimisation::MinimiseLengthGOP",
             "runmode": "run",
             "variables_map": default_variables_map,
         }
