@@ -172,7 +172,7 @@ class GeometryOptimisationProblem(OptimisationProblem):
         self.update_parameterisation(x_star)
 
 
-class MinimiseLength(GeometryOptimisationProblem):
+class MinimiseLengthGOP(GeometryOptimisationProblem):
     """
     Optimiser to minimise the length of a geometry 2D parameterisation
     in the xz-plane, with optional constraints in the form of a
