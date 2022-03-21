@@ -301,7 +301,7 @@ def raw_uc(
             ureg.Quantity(value, ureg.Unit(unit_from)).to(ureg.Unit(unit_to)).magnitude
         )
     except ValueError:
-        # Catch scales on units eg the ridculousness this unit: 10^19/m^3
+        # Catch scales on units eg the ridculousness of this unit: 10^19/m^3
         unit_from_q = ureg.Quantity(unit_from)
         unit_to_q = ureg.Quantity(unit_to)
         return (
