@@ -84,12 +84,12 @@ def estimate_kappa95(A, m_s_limit):
             f"Kappa 95 estimate only valid for 0.0 <= m_s <= 0.865, not m_s = {m_s_limit}"
         )
 
-    a = 8.39148185
-    b = -0.17713049
-    c = 1.9031585
-    d = -37.17364535
-    e = -2.54598909
-    f = 38.75101822
+    a = 3.68436807
+    b = -0.27706527
+    c = 0.87040251
+    d = -18.83740952
+    e = -0.27267618
+    f = 20.5141261
 
     kappa_95 = (
         -d
@@ -103,9 +103,7 @@ def estimate_kappa95(A, m_s_limit):
         )
     ) / (2 * a)
 
-    # Include power correction for more conservative extrapolation from low
-    # number of data points
-    return kappa_95**0.98
+    return kappa_95
 
 
 # TODO UPDATE:  EF says this is wrong or not the best

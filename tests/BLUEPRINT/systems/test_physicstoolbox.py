@@ -65,18 +65,24 @@ class TestTE:
 
 
 class TestKappaLaw:
+    """
+    As per the conclusions of the CREATE report 2L4NMJ
+    """
+
     @pytest.mark.parametrize(
         "A, m_s, expected",
-        [3.6, 0.3, 1.58],
-        [3.1, 0.3, 1.68],
-        [2.6, 0.3, 1.64],
-        [3.6, 0, 1.66],
-        [3.1, 0, 1.77],
-        [2.6, 0, 1.80],
+        [
+            [3.6, 0.3, 1.58],
+            [3.1, 0.3, 1.68],
+            [2.6, 0.3, 1.73],
+            [3.6, 0, 1.66],
+            [3.1, 0, 1.77],
+            [2.6, 0, 1.80],
+        ],
     )
     def test_kappa(self, A, m_s, expected):
         k95 = estimate_kappa95(A, m_s)
-        assert np.testing.assert_almost_equal(k95, expected, decimal=2)
+        np.testing.assert_almost_equal(k95, expected, decimal=2)
 
 
 if __name__ == "__main__":
