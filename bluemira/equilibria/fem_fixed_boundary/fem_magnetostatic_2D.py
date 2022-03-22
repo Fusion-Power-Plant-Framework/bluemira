@@ -60,9 +60,9 @@ class FemMagnetostatic2d:
             self.boundaries = dolfin.MeshFunction(
                 "size_t", mesh, mesh.topology().dim() - 1
             )  # initialize the MeshFunction
-        elif isinstance(
-            boundaries, str
-        ):  # check wether boundaries is a filename or a MeshFunction, then load it or use it
+        elif isinstance(boundaries, str):
+            # check wether boundaries is a filename or a MeshFunction,
+            # then load it or use it
             self.boundaries = dolfin.MeshFunction(
                 "size_t", self.mesh, boundaries
             )  # define the boundaries
