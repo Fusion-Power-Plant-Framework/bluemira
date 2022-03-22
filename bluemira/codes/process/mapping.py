@@ -136,6 +136,7 @@ OUT_mappings = {
     "r_tf_out_centre": ("r_tf_outboard_mid", "m"),
     "g_vv_ts": ("gapds", "m"),
     "TF_res_bus": ("tfbusres", "m"),
+    "TF_res_tot": ("ztot", "ohm"),
     "TF_E_tot": ("estotftgj", "GJ"),
     "TF_respc_ob": ("tflegres", "ohm"),
     "TF_currpt_ob": ("cpttf", "A"),
