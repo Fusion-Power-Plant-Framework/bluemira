@@ -18,7 +18,7 @@
 */materials/ @DanShort12
 */mesh/ @ivanmaione
 */radiation_transport/ @CoronelBuendia @DarioV86
-*/utilities/ @je-cook @CoronelBuendia
+*/utilities/ @Fusion-Power-Plant-Framework/tsvv-14/utilities-dev
 
 # Order is important; the last matching pattern takes the most
 # precedence. eg js-owner would own all *.js files. Directories and wildcards can be specified etc
