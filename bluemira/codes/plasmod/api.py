@@ -336,20 +336,23 @@ class Setup(interface.Setup):
 
     """
 
-    def __init__(self, parent, *args, problem_settings=None, **kwargs):
+    def __init__(self, parent, *args, **kwargs):
         super().__init__(parent, *args, **kwargs)
 
-        self._problem_settings = problem_settings if problem_settings is not None else {}
         self.input_file = "plasmod_input.dat"
         self.output_file = "plasmod_outputs.dat"
         self.profiles_file = "plasmod_profiles.dat"
-        self.io_manager = Inputs({**self.get_new_inputs(), **self._problem_settings})
+        self.io_manager = Inputs(
+            {**self._get_new_inputs(), **self.parent.problem_settings}
+        )
 
     def update_inputs(self):
         """
         Update plasmod inputs
         """
-        self.io_manager.modify({**self.get_new_inputs(), **self._problem_settings})
+        self.io_manager.modify(
+            {**self._get_new_inputs(), **self.parent.problem_settings}
+        )
 
     def write_input(self):
         """
@@ -487,13 +490,6 @@ class Solver(interface.FileProgramInterface):
             mappings=mappings,
             problem_settings=build_config.get("problem_settings", None),
         )
-
-    @property
-    def problem_settings(self):
-        """
-        Get problem settings dictionary
-        """
-        return self.setup_obj._problem_settings
 
     def get_raw_variables(self, scalar: Union[List, str]):
         """

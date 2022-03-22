@@ -58,11 +58,6 @@ class Setup(interface.Setup):
     Setup Task for process
     """
 
-    def __init__(self, parent, *args, problem_settings=None, **kwargs):
-        super().__init__(parent, *args, **kwargs)
-
-        self._problem_settings = problem_settings if problem_settings is not None else {}
-
     def _run(self):
         """
         Write the IN.DAT file and store in the main PROCESS folder
@@ -112,7 +107,7 @@ class Setup(interface.Setup):
             _inputs = self._get_new_inputs(remapper=update_obsolete_vars)
             for key, value in _inputs.items():
                 writer.add_parameter(key, value)
-            for key, value in self._problem_settings.items():
+            for key, value in self.parent.problem_settings.items():
                 writer.add_parameter(key, value)
 
         self._validate_models(writer)
