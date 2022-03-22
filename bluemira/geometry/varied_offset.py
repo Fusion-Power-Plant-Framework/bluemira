@@ -21,7 +21,7 @@
 import numpy as np
 from scipy.interpolate import interp1d
 
-from bluemira.geometry.tools import find_clockwise_angle_2d, make_polygon
+from bluemira.geometry.tools import find_clockwise_angle_2d, make_bspline
 from bluemira.geometry.wire import BluemiraWire
 
 
@@ -29,11 +29,13 @@ def varied_offset(
     shape: BluemiraWire,
     minor_offset: float,
     major_offset: float,
-    offset_angle: float,
+    start_var_offset_angle: float,
+    end_var_offset_angle: float,
     num_points: int = 200,
 ) -> BluemiraWire:
     shape_coords = shape.discretize(num_points).xz
-    offset_angle = np.radians(offset_angle)  # % 2*np.pi ?
+    start_var_offset_angle = np.radians(start_var_offset_angle)  # % 2*np.pi ?
+    end_var_offset_angle = np.radians(end_var_offset_angle)
     center_of_mass = shape.center_of_mass[[0, 2]].reshape((2, 1))
     ib_axis = np.array([-1, 0])
 
@@ -42,7 +44,12 @@ def varied_offset(
     sorted_angles, sorted_coords = _sort_coords_by_angle(angles, shape_coords)
 
     offsets = _calculate_offset_magnitudes(
-        sorted_angles, offset_angle, minor_offset, major_offset, num_points
+        sorted_angles,
+        start_var_offset_angle,
+        end_var_offset_angle,
+        minor_offset,
+        major_offset,
+        num_points,
     )
     normals = _calculate_normals_2d(sorted_coords)
     new_shape_coords = sorted_coords + normals * offsets
@@ -54,20 +61,39 @@ def _sort_coords_by_angle(angles, coords):
     return angles[angle_sort_idx], coords[:, angle_sort_idx]
 
 
-def _find_constant_offset_indices(angles, offset_angle):
-    return np.logical_or(angles < offset_angle, angles > (2 * np.pi - offset_angle))
+def _find_constant_offset_indices(angles, start_var_offset_angle):
+    return np.logical_or(
+        angles < start_var_offset_angle, angles > (2 * np.pi - start_var_offset_angle)
+    )
 
 
 def _calculate_offset_magnitudes(
-    angles, offset_angle, minor_offset, major_offset, num_points
+    angles,
+    start_var_offset_angle,
+    end_var_offset_angle,
+    minor_offset,
+    major_offset,
+    num_points,
 ):
-    constant_offset_idxs = _find_constant_offset_indices(angles, offset_angle)
-    variable_offset_idxs = np.logical_not(constant_offset_idxs)
+    constant_minor_offset_idxs = _find_constant_offset_indices(
+        angles, start_var_offset_angle
+    )
+    constant_major_offset_idxs = np.logical_and(
+        angles >= end_var_offset_angle, angles <= 2 * np.pi - end_var_offset_angle
+    )
+    variable_offset_idxs = np.logical_not(
+        np.logical_or(constant_minor_offset_idxs, constant_major_offset_idxs)
+    )
 
     offsets = np.empty_like(angles)
-    offsets[constant_offset_idxs] = minor_offset
+    offsets[constant_minor_offset_idxs] = minor_offset
+    offsets[constant_major_offset_idxs] = major_offset
     offsets[variable_offset_idxs] = _calculate_variable_offset_magnitudes(
-        angles[variable_offset_idxs], offset_angle, minor_offset, major_offset
+        angles[variable_offset_idxs],
+        start_var_offset_angle,
+        end_var_offset_angle,
+        minor_offset,
+        major_offset,
     )
 
     # Smooth out the shape using an interpolation over 0 to 2π
@@ -76,10 +102,10 @@ def _calculate_offset_magnitudes(
 
 
 def _calculate_variable_offset_magnitudes(
-    angles, offset_angle, minor_offset, major_offset
+    angles, start_angle, end_angle, minor_offset, major_offset
 ):
     angles[angles > np.pi] = 2 * np.pi - angles[angles > np.pi]
-    return (angles - offset_angle) / (np.pi - offset_angle) * (
+    return (angles - start_angle) / (end_angle - start_angle) * (
         major_offset - minor_offset
     ) + minor_offset
 
