@@ -33,8 +33,40 @@ def varied_offset(
     end_var_offset_angle: float,
     num_points: int = 200,
 ) -> BluemiraWire:
+    """
+    Create a new wire that offsets the given wire using a variable offset.
+
+    All angles are measured from the negative x-direction (9 o'clock).
+    The offset will be 'minor_offset' between the negative x-direction
+    and 'start_var_offset_angle'. Between 'end_var_offset_angle' and
+    the positive x-direction the offset will be 'major_offset'. Between
+    those angles, the offset will linearly transition between the major
+    and minor.
+
+    Parameters
+    ----------
+    shape: BluemiraWire
+        The wire to create the offset from. This shape should be convex
+        in order to get a sensible offset shape.
+    minor_offset: float
+        The size of the minimum offset.
+    major_offset: float
+        The size of the maximum offset.
+    start_var_offset_angle: float
+        The angle at which the variable offset should begin, in degrees.
+    end_var_offset_angle: float
+        The angle at which the variable offset should end, in degrees.
+    num_points: int
+        The number of points to use in the discretization of the input
+        wire.
+
+    Returns
+    -------
+    wire: BluemiraWire
+        The varied offset wire.
+    """
     shape_coords = shape.discretize(num_points).xz
-    start_var_offset_angle = np.radians(start_var_offset_angle)  # % 2*np.pi ?
+    start_var_offset_angle = np.radians(start_var_offset_angle)
     end_var_offset_angle = np.radians(end_var_offset_angle)
     center_of_mass = shape.center_of_mass[[0, 2]].reshape((2, 1))
     ib_axis = np.array([-1, 0])
