@@ -21,8 +21,6 @@
 
 """Module to support the fem_fixed_boundary implementation"""
 
-import math
-
 import dolfin
 import numpy as np
 
@@ -33,7 +31,7 @@ def b_coil_axis(r, z, pz, curr):
     (0, z)) calculated on a point on the coil axis at a distance pz from the
     axis origin.
     """
-    return 4 * math.pi * 1e-7 * curr * r**2 / (r**2 + (pz - z) ** 2) ** 1.5 / 2.0
+    return 4 * np.pi * 1e-7 * curr * r**2 / (r**2 + (pz - z) ** 2) ** 1.5 / 2.0
 
 
 def _convert_const_to_dolfin(value):
