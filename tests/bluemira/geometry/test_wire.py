@@ -85,7 +85,7 @@ class TestWire:
         np.testing.assert_equal(start_point, np.array([[5], [0.2], [90]]))
 
 
-class TestWireValueAt:
+class ValueParameterBase:
     @classmethod
     def setup_class(cls):
         cls.square = make_polygon(
@@ -98,6 +98,8 @@ class TestWireValueAt:
         line2 = make_polygon([[1, 0, -2], [2, 0, -2]])
         cls.mixed = BluemiraWire([line, semicircle, line2])
 
+
+class TestWireValueAt(ValueParameterBase):
     @pytest.mark.parametrize(
         "alpha, expected_point",
         [
@@ -174,3 +176,19 @@ class TestWireValueAt:
         line = make_polygon([[0, 0, 0], [1, 0, 0]])
         with pytest.raises(GeometryError):
             line.value_at()
+
+
+class TestWireParameterAt(ValueParameterBase):
+    @pytest.mark.parametrize(
+        "point, alpha",
+        [
+            ([0, 0, 0], 0),
+            ([2, 0, 0], 0.25),
+            ([2, 0, 1], 0.375),
+            ([2, 0, 2], 0.5),
+            ([0, 0, 2], 0.75),
+            ([0, 0, 1e-6], 1.0),  # last point (closure point maps to 0.0)
+        ],
+    )
+    def test_square_vertex(self, point, alpha):
+        assert np.isclose(self.square.parameter_at(point), alpha)

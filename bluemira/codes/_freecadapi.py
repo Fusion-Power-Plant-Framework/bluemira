@@ -711,21 +711,22 @@ def wire_parameter_at(wire: apiWire, vertex: np.ndarray, tolerance=EPS):
             f"Vertex is not close enough to the wire: {distance} > {tolerance}"
         )
 
-    closest_vertex = apiVertex(points[0])
+    closest_vertex = apiVertex(points[0][0])
     edges = wire.OrderedEdges
 
     distances = [edge.distToShape(closest_vertex)[0] for edge in edges]
     idx = np.argmin(distances)
     closest_edge = wire.OrderedEdges[idx]
-    edge_alpha = closest_edge.Curve.parameter(closest_vertex)
+    # edge_alpha = closest_edge.parameterAt(closest_vertex)
+    edge_p_length = closest_edge.Curve.parameter(points[0][0])
 
     wire_length = wire.Length
 
     if idx == 0:
-        return edge_alpha * closest_edge.Length / wire_length
+        return edge_p_length / wire_length
 
     length = sum([edge.Length for edge in edges[:idx]])
-    return (length + edge_alpha * closest_edge.Length) / wire_length
+    return (length + edge_p_length) / wire_length
 
 
 def slice_shape(shape: apiShape, plane_origin: Iterable, plane_axis: Iterable):
