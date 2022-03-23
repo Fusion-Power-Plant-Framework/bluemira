@@ -705,6 +705,21 @@ def wire_parameter_at(wire: apiWire, vertex: Iterable, tolerance=EPS):
     FreeCADError:
         If the vertex is further away to the wire than the specified tolerance
     """
+    split_wire_1, _ = split_wire(wire, vertex, tolerance)
+    if split_wire_1:
+        return split_wire_1.Length / wire.Length
+    else:
+        return 0.0
+
+
+def split_wire(wire, vertex, tolerance):
+    """ """
+
+    def warning_msg():
+        bluemira_warn(
+            "Wire split operation only returning one wire; you are splitting at an end."
+        )
+
     vertex = apiVertex(*vertex)
     distance, points, _ = wire.distToShape(vertex)
     if distance > tolerance:
@@ -714,35 +729,61 @@ def wire_parameter_at(wire: apiWire, vertex: Iterable, tolerance=EPS):
 
     edges = wire.OrderedEdges
     idx = _get_closest_edge_idx(wire, vertex)
-    closest_edge = edges[idx]
-    parameter = closest_edge.Curve.parameter(points[0][0])
-    p0 = closest_edge.ParameterRange[0]
-    p1 = closest_edge.ParameterRange[1]
-    if parameter == p0:
-        edge_p_length = 0.0
-    elif parameter == p1:
-        edge_p_length = closest_edge.Length
+
+    if len(edges) == 1:
+        parameter = edges[0].Curve.parameter(points[0][0])
+        edges_1, edges_2 = _split_edge(edges[0], parameter)
+
+        if edges_1:
+            wire_1 = apiWire(edges_1)
+        else:
+            wire_1 = None
+            warning_msg()
+
+        if edges_2:
+            wire_2 = apiWire(edges_2)
+        else:
+            wire_2 = None
+            warning_msg()
+        return wire_1, wire_2
+
+    edges_1, edges_2 = [], []
+    for i, edge in enumerate(edges):
+        if i < idx:
+            edges_1.append(edge)
+        elif i == idx:
+            parameter = edge.Curve.parameter(points[0][0])
+            half_edge_1, half_edge_2 = _split_edge(edge, parameter)
+            if half_edge_1:
+                edges_1.append(half_edge_1)
+            if half_edge_2:
+                edges_2.append(half_edge_2)
+        else:
+            edges_2.append(edge)
+
+    if edges_1:
+        wire_1 = apiWire(edges_1)
     else:
-        half_edge = closest_edge.Curve.toShape(p0, parameter)
-        edge_p_length = half_edge.Length
+        wire_1 = None
+        warning_msg()
 
-    length = sum([edge.Length for edge in edges[:idx]]) + edge_p_length
-    return length / wire.Length
+    if edges_2:
+        wire_2 = apiWire(edges_2)
+    else:
+        wire_2 = None
+        warning_msg()
+
+    return wire_1, wire_2
 
 
-def split_wire(wire, alpha):
-    """ """
-
-
-def split_edge(edge, alpha):
-    if alpha == 0.0:
-        return edge, None
-    if alpha == 1.0:
-        return edge, None
+def _split_edge(edge, parameter):
     p0, p1 = edge.ParameterRange[0], edge.ParameterRange[1]
-    p05 = p0 + alpha * (p1 - p0)
-    curve = edge.Curve
-    return curve.toShape(p0, p05), curve.toShape(p05, p1)
+    if parameter == p0:
+        return None, edge
+    if parameter == p1:
+        return edge, None
+
+    return edge.Curve.toShape(p0, parameter), edge.Curve.toShape(parameter, p1)
 
 
 def _get_closest_edge_idx(wire, vertex):
