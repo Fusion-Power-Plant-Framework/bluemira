@@ -708,7 +708,7 @@ def wire_parameter_at(wire: apiWire, vertex: Iterable, tolerance=EPS):
     distance, points, _ = wire.distToShape(apiVertex(*vertex))
     if distance > tolerance:
         raise FreeCADError(
-            f"Vertex is not close enough to the wire: {distance} > {tolerance}"
+            f"Vertex is not close enough to the wire, with a distance: {distance} > {tolerance}"
         )
 
     closest_vector = points[0][0]
