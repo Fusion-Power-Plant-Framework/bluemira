@@ -126,4 +126,4 @@ def _calculate_normals_2d(shape_coords: np.ndarray) -> np.ndarray:
 def _2d_coords_to_wire(coords_2d):
     coords_3d = np.zeros((3, coords_2d.shape[1]))
     coords_3d[(0, 2), :] = coords_2d
-    return make_polygon(coords_3d, closed=True)
+    return make_bspline(coords_3d, closed=True)
