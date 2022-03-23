@@ -714,7 +714,30 @@ def wire_parameter_at(wire: apiWire, vertex: Iterable, tolerance=EPS):
 
 
 def split_wire(wire, vertex, tolerance):
-    """ """
+    """
+    Split a wire at a given vertex.
+
+    Parameters
+    ----------
+    wire: apiWire
+        Wire to be split
+    vertex: Iterable
+        Vertex at which to split the wire
+    tolerance: float
+        Tolerance within which to find the closest vertex on the wire
+
+    Returns
+    -------
+    wire_1: Optional[apiWire]
+        First half of the wire. Will be None if the vertex is the start point of the wire
+    wire_2: Optional[apiWire]
+        Second half of the wire. Will be None if the vertex is the start point of the wire
+
+    Raises
+    ------
+    FreeCADError:
+        If the vertex is further away to the wire than the specified tolerance
+    """
 
     def warning_msg():
         bluemira_warn(

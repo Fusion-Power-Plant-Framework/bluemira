@@ -513,10 +513,33 @@ def distance_to(geo1: BluemiraGeo, geo2: BluemiraGeo):
     return cadapi.dist_to_shape(shape1, shape2)
 
 
-def split_wire(wire: BluemiraWire, point: Iterable, tolerance: float = EPS):
-    """ """
+def split_wire(wire: BluemiraWire, vertex: Iterable, tolerance: float = EPS):
+    """
+    Split a wire at a given vertex.
+
+    Parameters
+    ----------
+    wire: apiWire
+        Wire to be split
+    vertex: Iterable
+        Vertex at which to split the wire
+    tolerance: float
+        Tolerance within which to find the closest vertex on the wire
+
+    Returns
+    -------
+    wire_1: Optional[BluemiraWire]
+        First half of the wire. Will be None if the vertex is the start point of the wire
+    wire_2: Optional[BluemiraWire]
+        Second half of the wire. Will be None if the vertex is the start point of the wire
+
+    Raises
+    ------
+    GeometryError:
+        If the vertex is further away to the wire than the specified tolerance
+    """
     wire_1, wire_2 = cadapi.split_wire(
-        wire.get_single_wire()._shape, point, tolerance=tolerance
+        wire.get_single_wire()._shape, vertex, tolerance=tolerance
     )
     if wire_1:
         wire_1 = BluemiraWire(wire_1)
