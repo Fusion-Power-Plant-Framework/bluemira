@@ -194,10 +194,17 @@ class TestWireParameterAt(ValueParameterBase):
         assert np.isclose(self.square.parameter_at(point), alpha)
 
     def test_mixed_alpha(self):
-        assert np.allclose(self.mixed.parameter_at([0, 0, 0]), 0.0)
-        assert np.allclose(self.mixed.parameter_at([1, 0, 0]), 1 / (2 + np.pi))
-        assert np.allclose(self.mixed.parameter_at([0, 0, -1]), 0.5)
-        assert np.allclose(
-            self.mixed.parameter_at([1, 0, -2]), (1 + np.pi) / (2 + np.pi)
-        )
-        assert np.allclose(self.mixed.parameter_at([2, 0, -2]), 1.0)
+        assert np.isclose(self.mixed.parameter_at([0, 0, 0]), 0.0)
+        assert np.isclose(self.mixed.parameter_at([1, 0, 0]), 1 / (2 + np.pi))
+        assert np.isclose(self.mixed.parameter_at([0, 0, -1]), 0.5)
+        assert np.isclose(self.mixed.parameter_at([1, 0, -2]), (1 + np.pi) / (2 + np.pi))
+        assert np.isclose(self.mixed.parameter_at([2, 0, -2]), 1.0)
+
+    @pytest.mark.parametrize("tolerance", [1e-5, 1e-6, 1e-8, 1e-17])
+    def test_tolerance(self, tolerance):
+        line = make_polygon([[0, 0, 0], [1, 0, 0]])
+        alpha = line.parameter_at([-tolerance, 0, 0], tolerance=tolerance)
+        assert np.isclose(alpha, 0.0)
+
+    def test_error(self):
+        pass
