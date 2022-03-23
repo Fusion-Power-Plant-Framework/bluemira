@@ -210,4 +210,4 @@ class TestWireParameterAt(ValueParameterBase):
     def test_error(self, tolerance):
         with pytest.raises(GeometryError):
             line = make_polygon([[0, 0, 0], [1, 0, 0]])
-            alpha = line.parameter_at([-2 * tolerance, 0, 0], tolerance=tolerance)
+            line.parameter_at([-2 * tolerance, 0, 0], tolerance=tolerance)
