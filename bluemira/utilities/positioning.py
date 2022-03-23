@@ -107,7 +107,7 @@ class PathInterpolator(XZGeometryInterpolator):
         Convert parametric-space 'L' values to physical x-z space.
         """
         l_value = np.clip(l_value, 0.0, 1.0)
-        return self.x_ius(l_value), self.z_ius(l_value)
+        return self.geometry.value_at(alpha=l_value)[[0, 2]]
 
     def to_L(self, x, z):
         """
@@ -115,7 +115,7 @@ class PathInterpolator(XZGeometryInterpolator):
         """
         return minimize_scalar(
             self._f_min,
-            args=(self.x_ius, self.z_ius, x, z),
+            args=(self.geometry, x, z),
             bounds=[0, 1],
             method="bounded",
             options={"xatol": 1e-8},
