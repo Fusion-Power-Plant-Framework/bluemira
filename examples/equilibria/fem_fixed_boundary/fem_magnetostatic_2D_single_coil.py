@@ -44,6 +44,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 import bluemira.geometry.tools as tools
+import bluemira.magnetostatics.greens as greens
 from bluemira.base.components import Component, PhysicalComponent
 from bluemira.base.file import get_bluemira_root
 from bluemira.equilibria.fem_fixed_boundary.fem_magnetostatic_2D import (
@@ -180,6 +181,8 @@ jtot = ScalarSubFunc(functions, markers, subdomains)
 # %%[markdown]
 
 # plot the source term
+# Note: depending on the geometric dimension of the coil, enclosure, and mesh
+# characteristic length, the plot could be not so "explanatory".
 
 # %%
 
@@ -199,21 +202,73 @@ em_solver.solve(jtot)
 
 # %%[markdown]
 
-# compare the obtained B with the theoretical value
+# Compare the obtained B with both the theoretical value (analytical solution) and the
+# green function solution
+
+# 1) Along the z axis
 
 # %%
-axis = np.linspace(0, r_enclo, 200)
-B_axis = np.array([em_solver.B(x) for x in np.array([axis * 0, axis]).T]).T[1]
-B_teo = np.array([b_coil_axis(rc, 0, z, Ic) for z in axis])
+z_points_axis = np.linspace(0, r_enclo, 200)
+r_points_axis = np.zeros(z_points_axis.shape)
+Bz_axis = np.array(
+    [em_solver.B(x) for x in np.array([r_points_axis, z_points_axis]).T]
+).T[1]
+B_teo = np.array([b_coil_axis(rc, 0, z, Ic) for z in z_points_axis])
+
+g_bz = greens.greens_Bz(rc, 0, r_points_axis, z_points_axis)
 
 fig, ax = plt.subplots()
-ax.plot(axis, B_axis, label="B_calc")
-ax.plot(axis, B_teo, label="B_teo")
+ax.plot(z_points_axis, Bz_axis, label="B_calc")
+ax.plot(z_points_axis, B_teo, label="B_teo")
+ax.plot(z_points_axis, g_bz, label="Green Bz")
 plt.legend()
 plt.show()
 
-diff = B_axis - B_teo
+diff1 = Bz_axis - B_teo
+diff2 = Bz_axis - g_bz
+
 fig, ax = plt.subplots()
-ax.plot(axis, diff)
-plt.title("B_calc - B_teo")
+ax.plot(z_points_axis, diff1, label="B_calc - B_teo")
+ax.plot(z_points_axis, diff2, label="B_calc - GreenBz")
+plt.legend()
+plt.show()
+
+# %%[markdown]
+
+# 1) Along a radial path at z_offset
+
+# %%
+
+z_offset = 40 * drc
+
+points_x = np.linspace(0, r_enclo, 200)
+points_z = np.zeros(z_points_axis.shape) + z_offset
+
+g_psi, g_bx, g_bz = greens.greens_all(rc, 0, points_x, points_z)
+g_psi *= Ic
+g_bx *= Ic
+g_bz *= Ic
+B_fem = np.array([em_solver.B(x) for x in np.array([points_x, points_z]).T])
+Bx_fem = B_fem.T[0]
+Bz_fem = B_fem.T[1]
+
+fig, ax = plt.subplots()
+ax.plot(z_points_axis, Bx_fem, label="Bx_fem")
+ax.plot(z_points_axis, g_bx, label="Green Bx")
+plt.legend()
+plt.show()
+
+fig, ax = plt.subplots()
+ax.plot(z_points_axis, Bz_fem, label="Bz_fem")
+ax.plot(z_points_axis, g_bz, label="Green Bz")
+plt.legend()
+plt.show()
+
+diff1 = Bx_fem - g_bx
+diff2 = Bz_fem - g_bz
+
+fig, ax = plt.subplots()
+ax.plot(z_points_axis, diff1, label="B_calc - GreenBx")
+ax.plot(z_points_axis, diff2, label="B_calc - GreenBz")
+plt.legend()
 plt.show()
