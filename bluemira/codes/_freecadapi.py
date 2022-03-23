@@ -763,11 +763,6 @@ def split_wire(wire, vertex, tolerance):
             edges_2.append(edge)
 
     if edges_1:
-        for e in edges_1:
-            v1 = e.firstVertex()
-            v2 = e.lastVertex()
-            print((v1.X, v1.Y, v1.Z), (v2.X, v2.Y, v2.Z))
-
         wire_1 = apiWire(edges_1)
 
     else:

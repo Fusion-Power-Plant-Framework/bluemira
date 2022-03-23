@@ -298,16 +298,12 @@ def make_coil_mapper(track, exclusion_zones, coils):
         elif len(bin) == 1:
             new_segments.append(PathInterpolator(segment))
         else:
-            # Split segment: Sub-divide into BSplines for now...
-            # TODO: Actual primitive sub-division less fun...
             coils = [coils[i] for i in bin]
             l_values = [
                 segment.parameter_at([c.x, 0, c.z], tolerance=VERY_BIG) for c in coils
             ]
             split_values = l_values[:-1] + 0.5 * np.diff(l_values)
-            # split_values = np.concatenate([[0.0], split_values, [1.0]])
 
-            # TODO: Treat start == stop
             sub_segs = []
             for i, split in enumerate(split_values):
                 sub_seg, segment = split_wire(segment, segment.value_at(alpha=split))
