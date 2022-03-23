@@ -95,6 +95,7 @@ class PathInterpolator(XZGeometryInterpolator):
         l_values = np.clip(l_values, 0.0, 1.0)
         if is_num(l_values):
             return self.geometry.value_at(alpha=l_values)[[0, 2]]
+
         x, z = np.zeros(len(l_values)), np.zeros(len(l_values))
         for i, lv in enumerate(l_values):
             x[i], z[i] = self.geometry.value_at(alpha=lv)[[0, 2]]

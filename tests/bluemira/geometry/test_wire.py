@@ -97,6 +97,9 @@ class ValueParameterBase:
         )
         line2 = make_polygon([[1, 0, -2], [2, 0, -2]])
         cls.mixed = BluemiraWire([line, semicircle, line2])
+        cls.circle = make_circle(
+            5, center=(5, 0, 0), start_angle=90, end_angle=270, axis=(0, -1, 0)
+        )
 
 
 class TestWireValueAt(ValueParameterBase):
@@ -192,6 +195,12 @@ class TestWireParameterAt(ValueParameterBase):
     )
     def test_square_vertex(self, point, alpha):
         assert np.isclose(self.square.parameter_at(point), alpha)
+
+    @pytest.mark.parametrize(
+        "point, alpha", [([5, 0, 5], 0), ([0, 0, 0], 0.5), ([5, 0, -5], 1.0)]
+    )
+    def test_circle_vertex(self, point, alpha):
+        assert np.isclose(self.circle.parameter_at(point), alpha)
 
     def test_mixed_alpha(self):
         assert np.isclose(self.mixed.parameter_at([0, 0, 0]), 0.0)
