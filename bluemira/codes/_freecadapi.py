@@ -753,23 +753,6 @@ def split_wire(wire, vertex, tolerance):
     edges = wire.OrderedEdges
     idx = _get_closest_edge_idx(wire, vertex)
 
-    if len(edges) == 1:
-        parameter = edges[0].Curve.parameter(points[0][0])
-        edges_1, edges_2 = _split_edge(edges[0], parameter)
-
-        if edges_1:
-            wire_1 = apiWire(edges_1)
-        else:
-            wire_1 = None
-            warning_msg()
-
-        if edges_2:
-            wire_2 = apiWire(edges_2)
-        else:
-            wire_2 = None
-            warning_msg()
-        return wire_1, wire_2
-
     edges_1, edges_2 = [], []
     for i, edge in enumerate(edges):
         if i < idx:
@@ -786,7 +769,6 @@ def split_wire(wire, vertex, tolerance):
 
     if edges_1:
         wire_1 = apiWire(edges_1)
-
     else:
         wire_1 = None
         warning_msg()
