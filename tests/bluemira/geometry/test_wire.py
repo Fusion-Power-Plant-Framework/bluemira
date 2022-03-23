@@ -192,3 +192,8 @@ class TestWireParameterAt(ValueParameterBase):
     )
     def test_square_vertex(self, point, alpha):
         assert np.isclose(self.square.parameter_at(point), alpha)
+
+    def test_mixed_alpha(self):
+        assert np.allclose(self.mixed.parameter_at([0, 0, 0]), 0.0)
+        assert np.allclose(self.mixed.parameter_at([0, 0, -1]), 0.5)
+        assert np.allclose(self.mixed.parameter_at([2, 0, -2]), 1.0)
