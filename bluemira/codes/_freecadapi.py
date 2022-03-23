@@ -44,7 +44,6 @@ import FreeCADGui
 import numpy as np
 import Part
 from FreeCAD import Base
-from matplotlib.pyplot import plot  # noqa: F401
 
 # import visualisation
 from pivy import coin, quarter
