@@ -682,6 +682,50 @@ def wire_value_at(wire: apiWire, distance: float):
     return np.array(point)
 
 
+def wire_parameter_at(wire: apiWire, vertex: np.ndarray, tolerance=EPS):
+    """
+    Get the parameter value at a vertex along a wire.
+
+    Parameters
+    ----------
+    wire: apiWire
+        Wire along which to get the parameter
+    vertex: np.ndarray
+        Vertex for which to get the parameter
+    tolerance: float
+        Tolerance within which to get the parameter
+
+    Returns
+    -------
+
+    Raises
+    ------
+    FreeCADError:
+        If the vertex is further away to the wire than the specified tolerance
+    """
+    distance, points, _ = wire.distToShape(apiVertex(*vertex))
+    if distance > tolerance:
+        raise FreeCADError(
+            f"Vertex is not close enough to the wire: {distance} > {tolerance}"
+        )
+
+    closest_vertex = apiVertex(points[0])
+    edges = wire.OrderedEdges
+
+    distances = [edge.distToShape(closest_vertex)[0] for edge in edges]
+    idx = np.argmin(distances)
+    closest_edge = wire.OrderedEdges[idx]
+    edge_alpha = closest_edge.Curve.parameter(closest_vertex)
+
+    wire_length = wire.Length
+
+    if idx == 0:
+        return edge_alpha * closest_edge.Length / wire_length
+
+    length = sum([edge.Length for edge in edges[:idx]])
+    return (length + edge_alpha * closest_edge.Length) / wire_length
+
+
 def slice_shape(shape: apiShape, plane_origin: Iterable, plane_axis: Iterable):
     """
     Slice a shape along a given plane
