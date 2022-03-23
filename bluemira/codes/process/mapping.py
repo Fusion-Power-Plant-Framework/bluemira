@@ -137,7 +137,7 @@ OUT_mappings = {
     "g_vv_ts": ("gapds", "m"),
     "TF_res_bus": ("tfbusres", "m"),
     "TF_res_tot": ("ztot", "ohm"),
-    "TF_E_tot": ("estotftgj", "GJ"),
+    "TF_E_stored": ("estotftgj", "GJ"),
     "TF_respc_ob": ("tflegres", "ohm"),
     "TF_currpt_ob": ("cpttf", "A"),
     "P_bd_in": ("pinjmw", "MW"),

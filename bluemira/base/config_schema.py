@@ -97,6 +97,13 @@ class ConfigurationSchema:
     p_ec: Parameter
     f_cd_aux: Parameter
     f_cd_ohm: Parameter
+    TF_res_bus: Parameter
+    TF_res_tot: Parameter
+    TF_E_stored: Parameter
+    TF_respc_ob: Parameter
+    TF_currpt_ob: Parameter
+    P_bd_in: Parameter
+    condrad_cryo_heat: Parameter
 
     # First wall profile
     fw_psi_n: Parameter
