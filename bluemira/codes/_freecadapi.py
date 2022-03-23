@@ -720,14 +720,14 @@ def wire_parameter_at(wire: apiWire, vertex: Iterable, tolerance=EPS):
     closest_edge = wire.OrderedEdges[idx]
     first_vertex = closest_edge.firstVertex()
     first_vector = apiVector(first_vertex.X, first_vertex.Y, first_vertex.Z)
-    edge_p_length = closest_edge.Curve.parameter(
+    parameter = closest_edge.Curve.parameter(
         closest_vector
     ) - closest_edge.Curve.parameter(first_vector)
-
-    wire_length = wire.Length
+    point = closest_edge.valueAt(parameter)
+    edge_p_length = parameter
 
     length = sum([edge.Length for edge in edges[:idx]]) + edge_p_length
-    return length / wire_length
+    return length / wire.Length
 
 
 def slice_shape(shape: apiShape, plane_origin: Iterable, plane_axis: Iterable):

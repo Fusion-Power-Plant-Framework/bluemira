@@ -140,6 +140,14 @@ class TestWireValueAt(ValueParameterBase):
             self.square.value_at(distance=l_frac * length), np.array(expected_point)
         )
 
+    @pytest.mark.parametrize(
+        "alpha, expected_point", [(0.0, [5, 0, 5]), (0.5, [0, 0, 0]), (1.0, [5, 0, -5])]
+    )
+    def test_circle_alpha(self, alpha, expected_point):
+        np.testing.assert_allclose(
+            self.circle.value_at(alpha=alpha), np.array(expected_point)
+        )
+
     def test_mixed_alpha(self):
         assert np.allclose(self.mixed.value_at(alpha=0.0), np.array([0, 0, 0]))
         assert np.allclose(self.mixed.value_at(alpha=0.5), np.array([0, 0, -1]))
@@ -200,7 +208,7 @@ class TestWireParameterAt(ValueParameterBase):
         "point, alpha", [([5, 0, 5], 0), ([0, 0, 0], 0.5), ([5, 0, -5], 1.0)]
     )
     def test_circle_vertex(self, point, alpha):
-        assert np.isclose(self.circle.parameter_at(point), alpha)
+        assert np.isclose(self.circle.parameter_at(point, tolerance=1e-6), alpha)
 
     def test_mixed_alpha(self):
         assert np.isclose(self.mixed.parameter_at([0, 0, 0]), 0.0)
@@ -209,7 +217,7 @@ class TestWireParameterAt(ValueParameterBase):
         assert np.isclose(self.mixed.parameter_at([1, 0, -2]), (1 + np.pi) / (2 + np.pi))
         assert np.isclose(self.mixed.parameter_at([2, 0, -2]), 1.0)
 
-    @pytest.mark.parametrize("tolerance", [1e-5, 1e-7, 1e-17])
+    @pytest.mark.parametrize("tolerance", [1e-5, 1e-6, 1e-17])
     def test_tolerance(self, tolerance):
         line = make_polygon([[0, 0, 0], [1, 0, 0]])
         alpha = line.parameter_at([-tolerance, 0, 0], tolerance=tolerance)
