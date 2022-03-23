@@ -195,5 +195,9 @@ class TestWireParameterAt(ValueParameterBase):
 
     def test_mixed_alpha(self):
         assert np.allclose(self.mixed.parameter_at([0, 0, 0]), 0.0)
+        assert np.allclose(self.mixed.parameter_at([1, 0, 0]), 1 / (2 + np.pi))
         assert np.allclose(self.mixed.parameter_at([0, 0, -1]), 0.5)
+        assert np.allclose(
+            self.mixed.parameter_at([1, 0, -2]), (1 + np.pi) / (2 + np.pi)
+        )
         assert np.allclose(self.mixed.parameter_at([2, 0, -2]), 1.0)
