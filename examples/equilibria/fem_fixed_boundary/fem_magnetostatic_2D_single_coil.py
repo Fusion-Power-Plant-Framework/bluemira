@@ -202,10 +202,9 @@ em_solver.solve(jtot)
 
 # %%[markdown]
 
-# Compare the obtained B with both the theoretical value (analytical solution) and the
-# green function solution
+# Compare the obtained B with both the theoretical value
 
-# 1) Along the z axis
+# 1) Along the z axis (analytical solution)
 
 # %%
 z_points_axis = np.linspace(0, r_enclo, 200)
@@ -215,27 +214,22 @@ Bz_axis = np.array(
 ).T[1]
 B_teo = np.array([b_coil_axis(rc, 0, z, Ic) for z in z_points_axis])
 
-g_bz = greens.greens_Bz(rc, 0, r_points_axis, z_points_axis)
-
 fig, ax = plt.subplots()
 ax.plot(z_points_axis, Bz_axis, label="B_calc")
 ax.plot(z_points_axis, B_teo, label="B_teo")
-ax.plot(z_points_axis, g_bz, label="Green Bz")
 plt.legend()
 plt.show()
 
-diff1 = Bz_axis - B_teo
-diff2 = Bz_axis - g_bz
+diff = Bz_axis - B_teo
 
 fig, ax = plt.subplots()
-ax.plot(z_points_axis, diff1, label="B_calc - B_teo")
-ax.plot(z_points_axis, diff2, label="B_calc - GreenBz")
+ax.plot(z_points_axis, diff, label="B_calc - B_teo")
 plt.legend()
 plt.show()
 
 # %%[markdown]
 
-# 1) Along a radial path at z_offset
+# 1) Along a radial path at z_offset (solution from green function)
 
 # %%
 
