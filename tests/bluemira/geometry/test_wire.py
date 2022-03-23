@@ -145,7 +145,7 @@ class TestWireValueAt(ValueParameterBase):
     )
     def test_circle_alpha(self, alpha, expected_point):
         np.testing.assert_allclose(
-            self.circle.value_at(alpha=alpha), np.array(expected_point)
+            self.circle.value_at(alpha=alpha), np.array(expected_point), atol=1e-10
         )
 
     def test_mixed_alpha(self):

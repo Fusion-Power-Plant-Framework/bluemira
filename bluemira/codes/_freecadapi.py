@@ -718,13 +718,14 @@ def wire_parameter_at(wire: apiWire, vertex: Iterable, tolerance=EPS):
     distances = [edge.distToShape(closest_vertex)[0] for edge in edges]
     idx = np.argmin(distances)
     closest_edge = wire.OrderedEdges[idx]
-    first_vertex = closest_edge.firstVertex()
-    first_vector = apiVector(first_vertex.X, first_vertex.Y, first_vertex.Z)
-    parameter = closest_edge.Curve.parameter(
-        closest_vector
-    ) - closest_edge.Curve.parameter(first_vector)
-    point = closest_edge.valueAt(parameter)
+    parameter = (
+        closest_edge.Curve.parameter(closest_vector) - closest_edge.FirstParameter
+    )
+
     edge_p_length = parameter
+    # TODO: Find a better way... what about ellipses, etc.? :S
+    if hasattr(closest_edge.Curve, "Radius"):
+        edge_p_length *= closest_edge.Curve.Radius
 
     length = sum([edge.Length for edge in edges[:idx]]) + edge_p_length
     return length / wire.Length
