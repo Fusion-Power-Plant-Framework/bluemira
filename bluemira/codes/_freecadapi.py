@@ -697,6 +697,8 @@ def wire_parameter_at(wire: apiWire, vertex: np.ndarray, tolerance=EPS):
 
     Returns
     -------
+    alpha: float
+        Parameter value along the wire at the vertex
 
     Raises
     ------
