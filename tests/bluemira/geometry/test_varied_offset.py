@@ -45,7 +45,8 @@ class TestVariedOffsetFunction:
         self.params = {
             "minor_offset": 1,
             "major_offset": 4,
-            "offset_angle": 45,  # degrees
+            "start_var_offset_angle": 45,  # degrees
+            "end_var_offset_angle": 160,  # degrees
         }
 
     def test_offset_wire_is_closed(self):
@@ -69,42 +70,23 @@ class TestVariedOffsetFunction:
         offset_size = self._get_offset_sizes(offset_wire, self.picture_frame, ang_space)
         assert np.all(offset_size >= self.params["minor_offset"])
 
-    def test_offset_from_shape_never_gt_major_offset(self):
+    def test_offset_never_decreases_between_offset_angles(self):
         offset_wire = varied_offset(self.picture_frame, **self.params)
 
-        ang_space = np.linspace(np.radians(self.params["offset_angle"]), np.pi, 50)
-        offset_size = self._get_offset_sizes(offset_wire, self.picture_frame, ang_space)
-        assert np.all(offset_size <= self.params["major_offset"])
-
-    def test_offset_never_decreases_between_offset_angle_and_ob_axis(self):
-        offset_wire = varied_offset(self.picture_frame, **self.params)
-
-        # Don't go all the way to π, as the interpolation used to
-        # calculate the offset isn't perfect and we may go past π in
-        # real terms
         ang_space = np.linspace(
-            np.radians(self.params["offset_angle"]), np.pi * 0.99, 50
+            np.radians(self.params["start_var_offset_angle"]),
+            np.radians(self.params["end_var_offset_angle"]),
+            50,
         )
         offset_size = self._get_offset_sizes(offset_wire, self.picture_frame, ang_space)
         offset_size_gradient = np.diff(offset_size)
         assert np.all(offset_size_gradient >= 0)
 
-    @pytest.mark.xfail(
-        "The test is comparing to the wrong offset, we want the 'normal' offset, not "
-        " the 'radial' offset."
-    )
-    def test_offset_eq_to_minor_offset_within_offset_angle(self):
+    def test_offset_eq_to_minor_offset_at_0_degrees(self):
         offset_wire = varied_offset(self.picture_frame, **self.params)
 
-        offset_angle_rad = np.radians(self.params["offset_angle"])
-        ang_space = np.concatenate(
-            (
-                np.linspace(0, offset_angle_rad, 25),
-                np.linspace(2 * np.pi - offset_angle_rad, 2 * np.pi, 25),
-            )
-        )
-        offset_size = self._get_offset_sizes(offset_wire, self.picture_frame, ang_space)
-        np.testing.assert_allclose(offset_size, self.params["minor_offset"])
+        offset_size = self._get_offset_sizes(offset_wire, self.picture_frame, 0)
+        assert offset_size == pytest.approx(self.params["minor_offset"], 1e-3)
 
     @staticmethod
     def _interpolation_func_closed_wire(wire: BluemiraWire) -> Callable:
@@ -128,6 +110,14 @@ class TestVariedOffsetFunction:
     def _get_offset_sizes(
         shape_1: BluemiraWire, shape_2: BluemiraWire, angles: np.ndarray
     ) -> np.ndarray:
+        """
+        Gets the "radial" offsets between the two shapes at the given
+        angles.
+
+        Note that this is the radial offset from the center of the
+        shapes, not the offset in the direction of the normal of the
+        first shape (or "normal" offset).
+        """
         interp_1 = TestVariedOffsetFunction._interpolation_func_closed_wire(shape_1)
         interp_2 = TestVariedOffsetFunction._interpolation_func_closed_wire(shape_2)
         return np.linalg.norm(interp_1(angles) - interp_2(angles), axis=0)
