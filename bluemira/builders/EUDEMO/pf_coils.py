@@ -36,7 +36,7 @@ from bluemira.base.parameter import ParameterFrame
 from bluemira.builders.pf_coils import PFCoilBuilder
 from bluemira.equilibria.coils import CoilSet
 from bluemira.geometry.constants import VERY_BIG
-from bluemira.geometry.tools import boolean_cut, distance_to, make_bspline, split_wire
+from bluemira.geometry.tools import boolean_cut, distance_to, split_wire
 from bluemira.magnetostatics.baseclass import SourceGroup
 from bluemira.magnetostatics.circular_arc import CircularArcCurrentSource
 from bluemira.utilities.positioning import PathInterpolator, PositionMapper

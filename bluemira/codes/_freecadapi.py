@@ -30,7 +30,7 @@ import math
 # import typing
 from typing import Dict, Iterable, List, Optional, Tuple, Union
 
-import freecad
+import freecad  # noqa: F401
 import FreeCAD
 import BOPTools
 import BOPTools.GeneralFuseResult
