@@ -720,17 +720,31 @@ def wire_parameter_at(wire: apiWire, vertex: Iterable, tolerance=EPS):
     closest_edge = wire.OrderedEdges[idx]
     # curve = closest_edge.Curve
     # shape = curve.toShape(closest_edge.FirstParameter, curve.parameter(closest_vector))
-    parameter = (
-        closest_edge.Curve.parameter(closest_vector) - closest_edge.FirstParameter
-    )
-
-    edge_p_length = parameter
-    # TODO: Find a better way... what about ellipses, etc.? :S
-    if hasattr(closest_edge.Curve, "Radius"):
-        edge_p_length *= closest_edge.Curve.Radius
+    parameter = closest_edge.Curve.parameter(closest_vector)
+    p0 = closest_edge.ParameterRange[0]
+    p1 = closest_edge.ParameterRange[1]
+    alpha = (parameter - p0) / (p1 - p0)
+    if alpha == 0.0:
+        edge_p_length = 0.0
+    elif alpha == 1.0:
+        edge_p_length = closest_edge.Length
+    else:
+        half_edge, _ = split_edge(closest_edge, alpha)
+        edge_p_length = half_edge.Length
 
     length = sum([edge.Length for edge in edges[:idx]]) + edge_p_length
     return length / wire.Length
+
+
+def split_edge(edge, alpha):
+    if alpha == 0.0:
+        return edge, None
+    if alpha == 1.0:
+        return edge, None
+    p0, p1 = edge.ParameterRange[0], edge.ParameterRange[1]
+    p05 = p0 + alpha * (p1 - p0)
+    curve = edge.Curve
+    return curve.toShape(p0, p05), curve.toShape(p05, p1)
 
 
 def slice_shape(shape: apiShape, plane_origin: Iterable, plane_axis: Iterable):
