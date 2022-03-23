@@ -107,6 +107,13 @@ class Configuration(ConfigurationSchema, ParameterFrame):
         ['p_ec', 'EC launcher power', 10, 'MW', 'Maximum launcher power per sector', 'Input'],
         ['f_cd_aux', 'Auxiliary current drive fraction', 0.1, 'dimensionless', None, 'Input'],
         ['f_cd_ohm', 'Ohmic current drive fraction', 0.1, 'dimensionless', None, 'Input'],
+        ['TF_res_bus', 'TF Bus resistance', 0, 'm' , None, 'Input'],
+        ['TF_res_tot', 'Total resistance for TF coil set', 0, 'ohm' , None, 'Input'],
+        ['TF_E_stored', 'total stored energy in the toroidal field', 0, 'GJ', None, 'Input'],
+        ['TF_respc_ob', 'TF coil leg resistance', 0, 'ohm', None, 'Input'],
+        ['TF_currpt_ob', 'TF coil current per turn' , 0, 'A', None, 'Input'],
+        ['P_bd_in', 'total auxiliary injected power' , 0, 'MW', None, 'Input'],
+        ['condrad_cryo_heat', "Conduction and radiation heat loads on cryogenic components", 0, 'MW', None, 'Input'],
 
         # First wall profile
         ['fw_psi_n', 'Normalised psi boundary to fit FW to', 1.07, 'dimensionless', None, 'Input'],
