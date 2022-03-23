@@ -36,6 +36,16 @@ from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.placement import BluemiraPlacement
 from bluemira.mesh import meshing
 
+try:
+    from bluemira.utilities.tools import get_module
+
+    msh2xdmf = get_module(
+        os.path.join(get_bluemira_root(), "..", "msh2xdmf", "msh2xdmf.py")
+    )
+
+except ImportError as err:
+    ImportWarning(f"Unable to import msh2xdmf, dolfin examples will not run: {err}")
+
 
 class TestGetNormal:
     def test_simple_thin_coil(self):
