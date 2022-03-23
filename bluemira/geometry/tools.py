@@ -531,7 +531,7 @@ def split_wire(wire: BluemiraWire, vertex: Iterable, tolerance: float = EPS):
     wire_1: Optional[BluemiraWire]
         First half of the wire. Will be None if the vertex is the start point of the wire
     wire_2: Optional[BluemiraWire]
-        Second half of the wire. Will be None if the vertex is the start point of the wire
+        Last half of the wire. Will be None if the vertex is the start point of the wire
 
     Raises
     ------

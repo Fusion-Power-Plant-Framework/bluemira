@@ -731,7 +731,7 @@ def split_wire(wire, vertex, tolerance):
     wire_1: Optional[apiWire]
         First half of the wire. Will be None if the vertex is the start point of the wire
     wire_2: Optional[apiWire]
-        Second half of the wire. Will be None if the vertex is the start point of the wire
+        Last half of the wire. Will be None if the vertex is the start point of the wire
 
     Raises
     ------
