@@ -718,6 +718,8 @@ def wire_parameter_at(wire: apiWire, vertex: Iterable, tolerance=EPS):
     distances = [edge.distToShape(closest_vertex)[0] for edge in edges]
     idx = np.argmin(distances)
     closest_edge = wire.OrderedEdges[idx]
+    # curve = closest_edge.Curve
+    # shape = curve.toShape(closest_edge.FirstParameter, curve.parameter(closest_vector))
     parameter = (
         closest_edge.Curve.parameter(closest_vector) - closest_edge.FirstParameter
     )
