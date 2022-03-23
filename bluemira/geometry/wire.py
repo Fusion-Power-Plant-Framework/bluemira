@@ -25,9 +25,7 @@ Wrapper for FreeCAD Part.Wire objects
 
 from __future__ import annotations
 
-from typing import List, Optional
-
-import numpy as np
+from typing import Iterable, List, Optional
 
 from bluemira.base.constants import EPS
 from bluemira.base.look_and_feel import bluemira_warn
@@ -265,7 +263,7 @@ class BluemiraWire(BluemiraGeo):
 
         return wire_value_at(self.get_single_wire()._shape, distance)
 
-    def parameter_at(self, vertex: np.ndarray, tolerance: float = EPS):
+    def parameter_at(self, vertex: Iterable, tolerance: float = EPS):
         """
         Get the parameter value at a vertex along a wire.
 
@@ -273,7 +271,7 @@ class BluemiraWire(BluemiraGeo):
         ----------
         wire: apiWire
             Wire along which to get the parameter
-        vertex: np.ndarray
+        vertex: Iterable
             Vertex for which to get the parameter
         tolerance: float
             Tolerance within which to get the parameter
