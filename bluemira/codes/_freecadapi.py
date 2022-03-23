@@ -705,35 +705,33 @@ def wire_parameter_at(wire: apiWire, vertex: Iterable, tolerance=EPS):
     FreeCADError:
         If the vertex is further away to the wire than the specified tolerance
     """
-    distance, points, _ = wire.distToShape(apiVertex(*vertex))
+    vertex = apiVertex(*vertex)
+    distance, points, _ = wire.distToShape(vertex)
     if distance > tolerance:
         raise FreeCADError(
             f"Vertex is not close enough to the wire, with a distance: {distance} > {tolerance}"
         )
 
-    closest_vector = points[0][0]
-    closest_vertex = apiVertex(closest_vector)
     edges = wire.OrderedEdges
-
-    distances = [edge.distToShape(closest_vertex)[0] for edge in edges]
-    idx = np.argmin(distances)
-    closest_edge = wire.OrderedEdges[idx]
-    # curve = closest_edge.Curve
-    # shape = curve.toShape(closest_edge.FirstParameter, curve.parameter(closest_vector))
-    parameter = closest_edge.Curve.parameter(closest_vector)
+    idx = _get_closest_edge_idx(wire, vertex)
+    closest_edge = edges[idx]
+    parameter = closest_edge.Curve.parameter(points[0][0])
     p0 = closest_edge.ParameterRange[0]
     p1 = closest_edge.ParameterRange[1]
-    alpha = (parameter - p0) / (p1 - p0)
-    if alpha == 0.0:
+    if parameter == p0:
         edge_p_length = 0.0
-    elif alpha == 1.0:
+    elif parameter == p1:
         edge_p_length = closest_edge.Length
     else:
-        half_edge, _ = split_edge(closest_edge, alpha)
+        half_edge = closest_edge.Curve.toShape(p0, parameter)
         edge_p_length = half_edge.Length
 
     length = sum([edge.Length for edge in edges[:idx]]) + edge_p_length
     return length / wire.Length
+
+
+def split_wire(wire, alpha):
+    """ """
 
 
 def split_edge(edge, alpha):
@@ -745,6 +743,15 @@ def split_edge(edge, alpha):
     p05 = p0 + alpha * (p1 - p0)
     curve = edge.Curve
     return curve.toShape(p0, p05), curve.toShape(p05, p1)
+
+
+def _get_closest_edge_idx(wire, vertex):
+    _, points, _ = wire.distToShape(vertex)
+    closest_vector = points[0][0]
+    closest_vertex = apiVertex(closest_vector)
+    distances = [edge.distToShape(closest_vertex)[0] for edge in wire.OrderedEdges]
+    idx = np.argmin(distances)
+    return idx
 
 
 def slice_shape(shape: apiShape, plane_origin: Iterable, plane_axis: Iterable):
