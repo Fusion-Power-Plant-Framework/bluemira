@@ -26,12 +26,9 @@ A collection of tools used for position interpolation.
 import abc
 
 import numpy as np
-from scipy.interpolate import InterpolatedUnivariateSpline
-from scipy.optimize import minimize_scalar
 from scipy.spatial import ConvexHull
 
 from bluemira.base.constants import EPS
-from bluemira.geometry._deprecated_tools import vector_lengthnorm_2d
 from bluemira.geometry.constants import VERY_BIG
 from bluemira.geometry.placement import BluemiraPlacement
 from bluemira.geometry.tools import slice_shape
@@ -90,10 +87,6 @@ class PathInterpolator(XZGeometryInterpolator):
     geometry: BluemiraWire
         Path to interpolate along
     """
-
-    def __init__(self, geometry):
-        super().__init__(geometry)
-        x, z = self._get_xz_coordinates()
 
     def to_xz(self, l_values):
         """
