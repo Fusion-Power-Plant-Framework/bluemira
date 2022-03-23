@@ -30,7 +30,7 @@ import math
 # import typing
 from typing import Dict, Iterable, List, Optional, Tuple, Union
 
-import freecad  # noqa: F401
+import freecad
 import FreeCAD
 import BOPTools
 import BOPTools.GeneralFuseResult
@@ -44,6 +44,7 @@ import FreeCADGui
 import numpy as np
 import Part
 from FreeCAD import Base
+from matplotlib.pyplot import plot  # noqa: F401
 
 # import visualisation
 from pivy import coin, quarter
@@ -762,7 +763,13 @@ def split_wire(wire, vertex, tolerance):
             edges_2.append(edge)
 
     if edges_1:
+        for e in edges_1:
+            v1 = e.firstVertex()
+            v2 = e.lastVertex()
+            print((v1.X, v1.Y, v1.Z), (v2.X, v2.Y, v2.Z))
+
         wire_1 = apiWire(edges_1)
+
     else:
         wire_1 = None
         warning_msg()

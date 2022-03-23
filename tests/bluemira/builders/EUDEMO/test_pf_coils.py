@@ -38,17 +38,18 @@ class TestMakeCoilMapper:
         PrincetonD(
             {"x1": {"value": 4}, "x2": {"value": 14}, "dz": {"value": 0}}
         ).create_shape(label="PrincetonD"),
-        TaperedPictureFrame(
-            {
-                "x1": {"value": 4, "upper_bound": 5},
-                "x2": {"value": 5, "upper_bound": 6},
-                "x3": {"value": 11.5, "upper_bound": 12},
-                "ri": {"value": 0},
-                "ro": {"value": 1},
-                "z1": {"value": 8},
-                "z2": {"value": 9, "upper_bound": 10},
-            }
-        ).create_shape(label="TPFrame"),
+        # Waiting on #747
+        # TaperedPictureFrame(
+        #     {
+        #         "x1": {"value": 4, "upper_bound": 5},
+        #         "x2": {"value": 5, "upper_bound": 6},
+        #         "x3": {"value": 11.5, "upper_bound": 12},
+        #         "ri": {"value": 0},
+        #         "ro": {"value": 1},
+        #         "z1": {"value": 8},
+        #         "z2": {"value": 9, "upper_bound": 10},
+        #     }
+        # ).create_shape(label="TPFrame"),
         TripleArc().create_shape(label="TripleArc"),
     ]
 
