@@ -26,7 +26,6 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 import bluemira.geometry.tools as tools
-import bluemira.magnetostatics.greens as greens
 from bluemira.base.components import Component, PhysicalComponent
 from bluemira.base.file import get_bluemira_root
 from bluemira.equilibria.fem_fixed_boundary.fem_magnetostatic_2D import (
@@ -122,6 +121,7 @@ class TestGetNormal:
         jtot = ScalarSubFunc(functions, markers, subdomains)
 
         em_solver.solve(jtot)
+        em_solver.calculate_b()
 
         z_points_axis = np.linspace(0, r_enclo, 200)
         r_points_axis = np.zeros(z_points_axis.shape)

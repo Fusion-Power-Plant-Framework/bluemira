@@ -21,7 +21,7 @@
 
 """
 Bluemira module for the solution of a 2D magnetostatic problem with cylindrical symmetry
-using fenics FEM solver
+and toroidal current source using fenics FEM solver
 """
 
 import dolfin
@@ -29,7 +29,28 @@ import dolfin
 
 class FemMagnetostatic2d:
     """
-    2D magnetostic solver
+    A 2D magnetostic solver. The solver is thought as support for the fem fixed
+    boundary module and it is limited to axisymmetric magnetostatic problem
+    with toroidal current sources. The Maxwell equations, as function of the poloidal
+    magnetic flux (:math:`\Psi`), are then reduced to the form ([Zohm]_, page 25):
+
+    .. math::
+        r^2 {\\nabla}{\cdot}{\\left(}{\\frac{{\\nabla}{\psi}}{r^2}}{\\right)} = 2
+        \pi r \mu_0 J_{\Phi}
+
+    whose weak formulation is defined as ([Villone]_):
+
+    .. math::
+        \\int_{D_p} {\\frac{1}{r}}{\\nabla}{\Psi}{\cdot}{\\nabla} v \,dr\,dz = 2
+        \pi r \mu_0 \\int_{D_p} J_{\Phi} v \,dr\,dz
+
+    where :math:`v` is the basis element function of the defined functional subspace
+    :math:`V`.
+
+    .. [Zohm] H. Zohm, Magnetohydrodynamic Stability of Tokamaks, Wiley-VCH, Germany,
+       2015
+    .. [Villone] VILLONE, F. et al. Plasma Phys. Control. Fusion 55 (2013) 095008,
+       https://doi.org/10.1088/0741-3335/55/9/095008
 
     Parameters
     ----------
@@ -41,8 +62,7 @@ class FemMagnetostatic2d:
                  or a MeshFunction that defines the boundaries
     p : int
         the order of the approximating polynomial basis functions
-
-    """
+    """  # noqa (W505)
 
     def __init__(self, mesh, boundaries=None, p=3):
         # ======================================================================
@@ -115,7 +135,7 @@ class FemMagnetostatic2d:
         Returns
         -------
         psi : dolfin function
-            the solution of the magnetostatic problem
+            the poloidal magnetic flux as solution of the magnetostatic problem
         """
         if neumann_bc_function is None:
             neumann_bc_function = dolfin.Expression("0.0", degree=2)
@@ -138,12 +158,10 @@ class FemMagnetostatic2d:
         # solve the system taking into account the boundary conditions
         dolfin.solve(self.a == self.L, self.psi, bcs)
 
-        self.__calculate_b()
-
         # return the solution
         return self.psi
 
-    def __calculate_b(self):
+    def calculate_b(self):
         """Calculates the magnetic field intensity from psi"""
         w = dolfin.VectorFunctionSpace(
             self.mesh, "P", 1
@@ -158,3 +176,5 @@ class FemMagnetostatic2d:
         self.B = dolfin.project(
             dolfin.as_vector((Bx, Bz)), w
         )  # project B as vector to new function space
+
+        return self.B

@@ -194,11 +194,12 @@ plt.show()
 
 # %%[markdown]
 
-# solve the em problem
+# solve the em problem and calculate the magnetic field B
 
 # %%
 
 em_solver.solve(jtot)
+em_solver.calculate_b()
 
 # %%[markdown]
 
