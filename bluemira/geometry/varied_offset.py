@@ -68,28 +68,19 @@ def varied_offset(
     start_var_offset_angle = np.radians(start_var_offset_angle)
     end_var_offset_angle = np.radians(end_var_offset_angle)
     center_of_mass = shape.center_of_mass[[0, 2]].reshape((2, 1))
+
     ib_axis = np.array([-1, 0])
-
     angles = np.radians(find_clockwise_angle_2d(ib_axis, shape_coords - center_of_mass))
-    # Sorting angles makes smoothing via interpolation easier later on
-    sorted_angles, sorted_coords = _sort_coords_by_angle(angles, shape_coords)
-
     offsets = _calculate_offset_magnitudes(
-        sorted_angles,
+        angles,
         start_var_offset_angle,
         end_var_offset_angle,
         minor_offset,
         major_offset,
     )
-    normals = _calculate_normals_2d(sorted_coords)
-    new_shape_coords = sorted_coords + normals * offsets
+    normals = _calculate_normals_2d(shape_coords)
+    new_shape_coords = shape_coords + normals * offsets
     return _2d_coords_to_wire(new_shape_coords)
-
-
-def _sort_coords_by_angle(angles: np.ndarray, coords: np.ndarray):
-    """Sort the given angles and use that to re-order the coords."""
-    angle_sort_idx = np.argsort(angles)
-    return angles[angle_sort_idx], coords[:, angle_sort_idx]
 
 
 def _calculate_offset_magnitudes(
@@ -145,8 +136,8 @@ def _calculate_normals_2d(shape_coords: np.ndarray) -> np.ndarray:
     """
     gradients = np.gradient(shape_coords, axis=1)
     normals = np.empty_like(gradients)
-    normals[0] = -gradients[1]
-    normals[1] = gradients[0]
+    normals[0] = gradients[1]
+    normals[1] = -gradients[0]
     return normals / np.linalg.norm(normals, axis=0)
 
 
