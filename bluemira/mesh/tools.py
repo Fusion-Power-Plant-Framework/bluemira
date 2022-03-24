@@ -33,8 +33,9 @@ import meshio
 import numpy as np
 from dolfin import Mesh, MeshValueCollection, XDMFFile
 from dolfin.cpp.mesh import MeshFunctionSizet
+from tabulate import tabulate
 
-from bluemira.base.look_and_feel import bluemira_warn
+from bluemira.base.look_and_feel import bluemira_print, bluemira_warn
 from bluemira.mesh.error import MeshConversionError
 
 __all__ = ("msh_to_xdmf", "import_mesh")
@@ -61,12 +62,20 @@ def msh_to_xdmf(mesh_name, dimension=2, directory=".", verbose=False):
     Parameters
     ----------
     mesh_name: str
-
+        Name of the MSH file to convert to XDMF
     dimension: int
-
+        Dimensionality of the mesh (defaults to 2)
     directory: str
-
+        Directory in which the MSH file exists and where the XDMF files will be written
     verbose: bool
+        Whether or not to display the association table in stdout
+
+    Raises
+    ------
+    MeshConversionError:
+        * If the file does not exist
+        * If the dimensionality != [2, 3]
+        * If no domain physical groups are found
 
     Notes
     -----
@@ -78,15 +87,43 @@ def msh_to_xdmf(mesh_name, dimension=2, directory=".", verbose=False):
     if dimension not in [2, 3]:
         raise MeshConversionError(f"Dimension must be either 2 or 3, not: {dimension}")
 
+    file_path = os.sep.join([directory, mesh_name])
+    if not os.path.exists(file_path):
+        raise MeshConversionError(f"No such file: {file_path}")
+
     file_prefix = mesh_name.split(".")[0]
-    mesh = meshio.read(os.sep.join([directory, mesh_name]))
+    mesh = meshio.read(file_path)
     _export_domain(mesh, file_prefix, directory, dimension)
     _export_boundaries(mesh, file_prefix, directory, dimension)
     _export_association_table(mesh, file_prefix, directory, verbose=verbose)
 
 
-def import_mesh(file_prefix, subdomains=False, dimension=2, directory="."):
-    """ """
+def import_mesh(file_prefix="mesh", subdomains=False, dimension=2, directory="."):
+    """
+    Import a dolfin mesh.
+
+    Parameters
+    ----------
+    file_prefix: str
+        File prefix to use when importing a mesh (defaults to 'mesh')
+    subdomains: bool
+        Whether or not to subdomains are present (defaults to False)
+    dimension: int
+        Dimensionality of the mesh (defaults to 2)
+    directory: str
+        Directory in which the MSH file and XDMF files exist
+
+    Returns
+    -------
+    mesh: dolfin::Mesh
+        Dolfin Mesh object containing the domain
+    boundaries_mf: dolfin::MeshFunctionSizet
+        Dolfin MeshFunctionSizet object containing the geometry
+    subdomains_mf: Optional[dolfin::MeshFunctionSizet]
+        Dolfin MeshFunctionSizet object containing the geometry
+    association_table: dict
+        Link dictionary between MSH and XDMF objects
+    """
     domain_file = os.sep.join([directory, f"{file_prefix}_{DOMAIN_SUFFIX}"])
     boundary_file = os.sep.join([directory, f"{file_prefix}_{BOUNDARY_SUFFIX}"])
     association_file = os.sep.join([directory, f"{file_prefix}_{ASS_TAB_SUFFIX}"])
@@ -122,7 +159,9 @@ def import_mesh(file_prefix, subdomains=False, dimension=2, directory="."):
 
 
 def _export_domain(mesh, file_prefix, directory, dimension):
-    """ """
+    """
+    Export the domain of a mesh to XDMF.
+    """
     cell_type = CELL_TYPE_DIM[dimension + 1]
     data = _get_data(mesh, cell_type)
 
@@ -148,7 +187,9 @@ def _export_domain(mesh, file_prefix, directory, dimension):
 
 
 def _export_boundaries(mesh, file_prefix, directory, dimension):
-    """ """
+    """
+    Export the boundaries of a mesh to XDMF.
+    """
     cell_type = CELL_TYPE_DIM[dimension]
     data = _get_data(mesh, cell_type)
 
@@ -173,7 +214,9 @@ def _export_boundaries(mesh, file_prefix, directory, dimension):
 
 
 def _export_association_table(mesh, file_prefix, directory, verbose=False):
-    """ """
+    """
+    Export the association file between MSH and XDMF objects.
+    """
     table = {}
     for key, arrays in mesh.cell_sets.items():
         for i, array in enumerate(arrays):
@@ -182,6 +225,15 @@ def _export_association_table(mesh, file_prefix, directory, verbose=False):
         if key != "gmsh:bounding_entities":
             value = mesh.cell_data[GMSH_PHYS][index][0]
             table[key] = int(value)
+
+    if verbose:
+        bluemira_print(
+            tabulate(
+                list(table.items()),
+                headers=["GMSH label", "MeshFunction value"],
+                tablefmt="simple",
+            )
+        )
 
     content = ConfigParser()
     content["ASSOCIATION TABLE"] = table

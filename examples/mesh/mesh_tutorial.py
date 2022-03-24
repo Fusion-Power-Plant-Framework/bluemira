@@ -23,32 +23,18 @@
 Some examples of using bluemira mesh module.
 """
 
-import os
-
 import dolfin
 import matplotlib.pyplot as plt
 
 import bluemira.geometry.tools as tools
 from bluemira.base.components import Component, PhysicalComponent
-from bluemira.base.file import get_bluemira_root
 from bluemira.equilibria.shapes import JohnerLCFS
 from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.placement import BluemiraPlacement
 from bluemira.geometry.shell import BluemiraShell
 from bluemira.geometry.wire import BluemiraWire
 from bluemira.mesh import meshing
-
-HAS_MSH2XDMF = False
-try:
-    from bluemira.utilities.tools import get_module
-
-    msh2xdmf = get_module(
-        os.path.join(get_bluemira_root(), "..", "msh2xdmf", "msh2xdmf.py")
-    )
-
-    HAS_MSH2XDMF = True
-except ImportError as err:
-    print(f"Unable to import msh2xdmf, dolfin examples will not run: {err}")
+from bluemira.mesh.tools import import_mesh, msh_to_xdmf
 
 # Creation of a simple geometry
 
@@ -94,20 +80,17 @@ m = meshing.Mesh()
 buffer = m(comp)
 print(m.get_gmsh_dict(buffer))
 
-# Convert the mesh in xdmf for reading in fenics. Note that this requires the msh2xdmf
-# module to be available.
+# Convert the mesh in xdmf for reading in fenics.
 
-if HAS_MSH2XDMF:
-    msh2xdmf.msh2xdmf("Mesh.msh", dim=2, directory=".")
+msh_to_xdmf("Mesh.msh", dimension=2, directory=".", verbose=True)
 
-    mesh, boundaries, subdomains, labels = msh2xdmf.import_mesh(
-        prefix="Mesh",
-        dim=2,
-        directory=".",
-        subdomains=True,
-    )
-    dolfin.plot(mesh)
-    plt.show()
+mesh, boundaries, subdomains, labels = import_mesh(
+    "Mesh",
+    dimension=2,
+    directory=".",
+    subdomains=True,
+)
+dolfin.plot(mesh)
+plt.show()
 
-    if HAS_MSH2XDMF:
-        print(mesh.coordinates())
+print(mesh.coordinates())
