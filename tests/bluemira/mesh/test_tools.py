@@ -35,6 +35,7 @@ class TestMSHtoXDMF:
         """
         msh_to_xdmf("GeneratedMesh.msh", dimension=2, directory=DATA_PATH)
         for filename in [
+            "Mesh_linkfile.json",
             "Mesh_boundaries.h5",
             "Mesh_boundaries.xdmf",
             "Mesh_domain.h5",
