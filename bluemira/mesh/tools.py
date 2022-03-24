@@ -26,8 +26,8 @@ R. Delaporte-Mathurin, and C. Weickhmann's https://github.com/floiseau/msh2xdmf
 Credit: F. Loiseau, R. Delaporte-Mathurin, and C. Weickhmann
 """
 
+import json
 import os
-from configparser import ConfigParser
 
 import meshio
 import numpy as np
@@ -52,7 +52,7 @@ GMSH_PHYS = "gmsh:physical"
 
 DOMAIN_SUFFIX = "domain.xdmf"
 BOUNDARY_SUFFIX = "boundaries.xdmf"
-ASS_TAB_SUFFIX = "association_table.ini"
+LINKFILE_SUFFIX = "linkfile.json"
 
 
 def msh_to_xdmf(mesh_name, dimension=2, directory=".", verbose=False):
@@ -82,7 +82,7 @@ def msh_to_xdmf(mesh_name, dimension=2, directory=".", verbose=False):
     Creates the following files:
         * DOMAIN_SUFFIX
         * BOUNDARY_SUFFIX
-        * ASS_TAB_SUFFIX
+        * LINKFILE_SUFFIX
     """
     if dimension not in [2, 3]:
         raise MeshConversionError(f"Dimension must be either 2 or 3, not: {dimension}")
@@ -95,7 +95,7 @@ def msh_to_xdmf(mesh_name, dimension=2, directory=".", verbose=False):
     mesh = meshio.read(file_path)
     _export_domain(mesh, file_prefix, directory, dimension)
     _export_boundaries(mesh, file_prefix, directory, dimension)
-    _export_association_table(mesh, file_prefix, directory, verbose=verbose)
+    _export_link_file(mesh, file_prefix, directory, verbose=verbose)
 
 
 def import_mesh(file_prefix="mesh", subdomains=False, dimension=2, directory="."):
@@ -121,12 +121,12 @@ def import_mesh(file_prefix="mesh", subdomains=False, dimension=2, directory="."
         Dolfin MeshFunctionSizet object containing the geometry
     subdomains_mf: Optional[dolfin::MeshFunctionSizet]
         Dolfin MeshFunctionSizet object containing the geometry
-    association_table: dict
+    link_dict: dict
         Link dictionary between MSH and XDMF objects
     """
     domain_file = os.sep.join([directory, f"{file_prefix}_{DOMAIN_SUFFIX}"])
     boundary_file = os.sep.join([directory, f"{file_prefix}_{BOUNDARY_SUFFIX}"])
-    association_file = os.sep.join([directory, f"{file_prefix}_{ASS_TAB_SUFFIX}"])
+    link_file = os.sep.join([directory, f"{file_prefix}_{LINKFILE_SUFFIX}"])
 
     if not os.path.exists(domain_file) or not os.path.exists(boundary_file):
         msh_to_xdmf(f"{file_prefix}.msh", dimension=dimension, directory=directory)
@@ -151,11 +151,10 @@ def import_mesh(file_prefix="mesh", subdomains=False, dimension=2, directory="."
     else:
         subdomains_mf = None
 
-    content = ConfigParser()
-    content.read(association_file)
-    association_table = dict(content["ASSOCIATION TABLE"])
+    with open(link_file, "r") as file:
+        link_dict = json.load(file)
 
-    return mesh, boundaries_mf, subdomains_mf, association_table
+    return mesh, boundaries_mf, subdomains_mf, link_dict
 
 
 def _export_domain(mesh, file_prefix, directory, dimension):
@@ -213,7 +212,7 @@ def _export_boundaries(mesh, file_prefix, directory, dimension):
     )
 
 
-def _export_association_table(mesh, file_prefix, directory, verbose=False):
+def _export_link_file(mesh, file_prefix, directory, verbose=False):
     """
     Export the association file between MSH and XDMF objects.
     """
@@ -235,12 +234,9 @@ def _export_association_table(mesh, file_prefix, directory, verbose=False):
             )
         )
 
-    content = ConfigParser()
-    content["ASSOCIATION TABLE"] = table
-
-    filename = os.sep.join([directory, f"{file_prefix}_{ASS_TAB_SUFFIX}"])
+    filename = os.sep.join([directory, f"{file_prefix}_{LINKFILE_SUFFIX}"])
     with open(filename, "w") as file:
-        content.write(file)
+        json.dump(table, file)
 
 
 def _get_data(mesh, cell_type):
