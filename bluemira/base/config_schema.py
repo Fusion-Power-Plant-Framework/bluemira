@@ -200,7 +200,8 @@ class ConfigurationSchema:
     tf_wp_width: Parameter
     tf_wp_depth: Parameter
     tk_cs: Parameter
-    sigma_tf_max: Parameter
+    sigma_tf_case_max: Parameter
+    sigma_tf_wp_max: Parameter
     h_cp_top: Parameter
     B_tf_peak: Parameter
     tf_taper_frac: Parameter

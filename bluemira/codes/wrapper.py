@@ -38,10 +38,9 @@ if TYPE_CHECKING:
 def systems_code_solver(
     params: ParameterFrame,
     build_config: BuildConfig,
-    run_dir: str,
+    run_dir: Optional[str] = None,
     read_dir: Optional[str] = None,
     template_indat=None,
-    params_to_update=None,
     module: Optional[str] = "PROCESS",
 ) -> FileProgramInterface:
     """
@@ -61,19 +60,10 @@ def systems_code_solver(
         read in
     template_indat: str
         Path to the template file to be used for the run.
-    params_to_update: list
-        A list of parameter names compatible with the ParameterFrame class.
-        If provided, parameters included in this list will be modified to write their
-        values to the inputs, while all others will be modified to not be written to
-        the inputs. By default, None.
 
     Returns
     -------
     Solver object: FileProgramInterface
-
-    Returns
-    -------
-    solver: FileProgramInterface
         The solver that has been run.
 
     Raises
@@ -87,9 +77,7 @@ def systems_code_solver(
     # #####################################
     syscode = get_code_interface(module)
 
-    return syscode.Solver(
-        params, build_config, run_dir, read_dir, template_indat, params_to_update
-    )
+    return syscode.Solver(params, build_config, run_dir, read_dir, template_indat)
 
 
 def plot_radial_build(
@@ -117,7 +105,7 @@ def plot_radial_build(
 def transport_code_solver(
     params: ParameterFrame,
     build_config: BuildConfig,
-    run_dir: str,
+    run_dir: Optional[str] = None,
     read_dir: Optional[str] = None,
     module: Optional[str] = "PLASMOD",
 ) -> FileProgramInterface:

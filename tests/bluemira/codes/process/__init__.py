@@ -42,8 +42,8 @@ FRAME_LIST = [
     ["a", None, 0, "", None, None],
     ["b", None, 1, "", None, None, None],
     ["c", None, 2, "", None, None, {"PROCESS": ParameterMapping("cp", False, False)}],
-    ["d", None, 3, "", None, None, {"PROCESS": ParameterMapping("dp", False, True)}],
-    ["e", None, 4, "", None, None, {"PROCESS": ParameterMapping("ep", True, False)}],
+    ["d", None, 3, "", None, None, {"PROCESS": ParameterMapping("dp", True, False)}],
+    ["e", None, 4, "", None, None, {"PROCESS": ParameterMapping("ep", False, True)}],
     ["f", None, 5, "", None, None, {"PROCESS": ParameterMapping("fp", True, True)}],
     ["g", None, 6, "", None, None, {"FAKE_CODE": ParameterMapping("gp", True, True)}],
 ]

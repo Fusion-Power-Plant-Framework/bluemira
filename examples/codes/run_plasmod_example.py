@@ -89,7 +89,7 @@ params = Configuration(new_params)
 for param_name in params.keys():
     if param_name in new_params:
         param = params.get_param(param_name)
-        param.source = "input"
+        param.source = "Plasmod Example"
 
 # %%[markdown]
 # Some values are not linked into bluemira. These plasmod parameters can be set
