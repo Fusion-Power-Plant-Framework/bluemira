@@ -987,7 +987,7 @@ def find_clockwise_angle_2d(base: np.ndarray, vector: np.ndarray) -> np.ndarray:
 
     Returns
     -------
-    angle: np.ndarray[float, (1, vector.shape[1])]
+    angle: np.ndarray[float, (1, N)]
         The clockwise angle between the two vectors in degrees.
     """
     if not isinstance(base, np.ndarray) or not isinstance(vector, np.ndarray):
@@ -997,11 +997,12 @@ def find_clockwise_angle_2d(base: np.ndarray, vector: np.ndarray) -> np.ndarray:
         )
     if base.shape[0] != 2 or vector.shape[0] != 2:
         raise ValueError(
-            f"Input vectors' axis 0 shape must be 2, found shapes '{base.shape}' and "
+            f"Input vectors' axis 0 length must be 2, found shapes '{base.shape}' and "
             f"'{vector.shape}'."
         )
     det = base[1] * vector[0] - base[0] * vector[1]
     dot = np.dot(base, vector)
+    # Convert to array here in case arctan2 returns a scalar
     angle = np.array(np.arctan2(det, dot))
     angle[angle < 0] += 2 * np.pi
     return np.degrees(angle)

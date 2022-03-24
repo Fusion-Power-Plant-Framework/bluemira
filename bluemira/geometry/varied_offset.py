@@ -41,7 +41,8 @@ def varied_offset(
     """
     Create a new wire that offsets the given wire using a variable offset.
 
-    All angles are measured from the negative x-direction (9 o'clock).
+    All angles are measured from the negative x-direction (9 o'clock),
+    centred at the center of mass of the wire.
     The offset will be 'min_offset' between the negative x-direction
     and 'min_offset_angle'. Between 'max_offset_angle' and
     the positive x-direction the offset will be 'max_offset'. Between
