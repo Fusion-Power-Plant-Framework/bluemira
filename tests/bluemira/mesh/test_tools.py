@@ -31,7 +31,7 @@ DATA_PATH = get_bluemira_path("mesh/test_data", subfolder="tests/bluemira")
 class TestMSHtoXDMF:
     def test_conversion_from_msh_to_xdm_new(self):
         """
-        Regression test on example
+        Regression test on x-y example
         """
         msh_to_xdmf("GeneratedMesh.msh", dimensions=(0, 1), directory=DATA_PATH)
         for filename in [
