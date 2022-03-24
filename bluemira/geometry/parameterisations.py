@@ -1724,6 +1724,8 @@ class BotDomeCurvedPictureFrame(GeometryParameterisation):
 
     Parameters
     ----------
+    var_dict: Optional[dict]
+        Dictionary with which to update the default values of the parameterisation.
 
     Notes
     -----
