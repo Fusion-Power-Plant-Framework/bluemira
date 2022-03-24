@@ -161,5 +161,4 @@ if HAS_MSH2XDMF:
     dolfin.plot(mesh)
     plt.show()
 
-    if HAS_MSH2XDMF:
-        print(mesh.coordinates())
+    print(mesh.coordinates())
