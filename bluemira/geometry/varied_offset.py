@@ -24,6 +24,12 @@ from bluemira.geometry.tools import find_clockwise_angle_2d, make_bspline
 from bluemira.geometry.wire import BluemiraWire
 
 
+def angle_between_vectors(vec_1, vec_2):
+    unit_vec_1 = vec_1 / np.linalg.norm(vec_1)
+    unit_vec_2 = vec_2 / np.linalg.norm(vec_2)
+    return np.arccos(np.clip(np.dot(unit_vec_1, unit_vec_2), -1.0, 1.0))
+
+
 def varied_offset(
     wire: BluemiraWire,
     min_offset: float,
@@ -71,12 +77,21 @@ def varied_offset(
 
     ib_axis = np.array([-1, 0])
     angles = np.radians(find_clockwise_angle_2d(ib_axis, wire_coords - center_of_mass))
+    # Sort angles so coordinates are always clockwise and normals point outward
+    angles, wire_coords = _sort_coords_by_angle(angles, wire_coords)
+
     offsets = _calculate_offset_magnitudes(
         angles, min_offset_angle, max_offset_angle, min_offset, max_offset
     )
     normals = _calculate_normals_2d(wire_coords)
     new_shape_coords = wire_coords + normals * offsets
     return _2d_coords_to_wire(new_shape_coords)
+
+
+def _sort_coords_by_angle(angles: np.ndarray, coords: np.ndarray):
+    """Sort the given angles and use that to re-order the coords."""
+    angle_sort_idx = np.argsort(angles)
+    return angles[angle_sort_idx], coords[:, angle_sort_idx]
 
 
 def _calculate_offset_magnitudes(
@@ -131,11 +146,13 @@ def _calculate_normals_2d(wire_coords: np.ndarray) -> np.ndarray:
     """
     Calculate the unit normals to the tangents at each of the given
     coordinates.
+
+    Note that this applies an anti-clockwise rotation to the tangents,
+    so to get an outward facing normal to a polygon, the coordinates
+    should be ordered in the clockwise direction.
     """
     gradients = np.gradient(wire_coords, axis=1)
-    normals = np.empty_like(gradients)
-    normals[0] = gradients[1]
-    normals[1] = -gradients[0]
+    normals = np.array([-gradients[1], gradients[0]])
     return normals / np.linalg.norm(normals, axis=0)
 
 
