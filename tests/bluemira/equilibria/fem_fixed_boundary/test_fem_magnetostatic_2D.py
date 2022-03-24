@@ -35,15 +35,9 @@ from bluemira.equilibria.fem_fixed_boundary.utilities import ScalarSubFunc, b_co
 from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.placement import BluemiraPlacement
 from bluemira.mesh import meshing
+from bluemira.utilities.tools import get_module
 
-try:
-    from bluemira.utilities.tools import get_module
-
-    msh2xdmf = get_module(
-        os.path.join(get_bluemira_root(), "..", "msh2xdmf", "msh2xdmf.py")
-    )
-except ImportError as err:
-    print(f"Unable to import msh2xdmf, dolfin examples will not run: {err}")
+msh2xdmf = get_module(os.path.join(get_bluemira_root(), "..", "msh2xdmf", "msh2xdmf.py"))
 
 
 class TestGetNormal:
