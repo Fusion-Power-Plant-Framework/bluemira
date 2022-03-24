@@ -23,6 +23,20 @@
 Importer for external code API and related functions
 """
 
+from bluemira.codes.wrapper import (
+    plot_radial_build,
+    powerbalance_solver,
+    systems_code_solver,
+    transport_code_solver,
+)
+
+__all__ = [
+    "plot_radial_build",
+    "powerbalance_solver",
+    "systems_code_solver",
+    "transport_code_solver",
+]
+
 
 def freecad_message_removal():
     """
@@ -46,16 +60,3 @@ def freecad_message_removal():
 
 
 freecad_default_path = freecad_message_removal()
-
-# External codes wrapper imports
-from bluemira.codes.wrapper import (
-    plot_radial_build,
-    systems_code_solver,
-    transport_code_solver,
-)
-
-__all__ = [
-    "systems_code_solver",
-    "transport_code_solver",
-    "plot_radial_build",
-]
