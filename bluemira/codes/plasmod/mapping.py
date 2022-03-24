@@ -23,6 +23,9 @@
 PLASMOD mappings
 """
 
+from bluemira.codes.utilities import Model, create_mapping
+
+
 class ImpurityModel(Model):
     """
     Impurity Model selector
