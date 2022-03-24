@@ -91,6 +91,8 @@ class FemMagnetostatic2d:
 
         # ======================================================================
         # define the function space and bilinear forms
+        # the Continuos Galerkin function space has been chosen as suitable for the
+        # solution of the magnetostatic weak formulation in a Soblev Space H1(D)
         self.V = dolfin.FunctionSpace(self.mesh, "CG", p_order)
 
         # define trial and test functions

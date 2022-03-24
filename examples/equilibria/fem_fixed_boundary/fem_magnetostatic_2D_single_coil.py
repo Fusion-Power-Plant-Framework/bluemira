@@ -156,7 +156,7 @@ plt.show()
 
 # %%
 
-em_solver = FemMagnetostatic2d(mesh, boundaries, p=3)
+em_solver = FemMagnetostatic2d(mesh, boundaries, 3)
 
 # %%[markdown]
 
