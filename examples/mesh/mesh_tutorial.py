@@ -33,7 +33,7 @@ from bluemira.base.components import Component, PhysicalComponent
 from bluemira.base.file import get_bluemira_root
 from bluemira.equilibria.shapes import JohnerLCFS
 from bluemira.geometry.face import BluemiraFace
-from bluemira.geometry.plane import BluemiraPlane
+from bluemira.geometry.placement import BluemiraPlacement
 from bluemira.geometry.shell import BluemiraShell
 from bluemira.geometry.wire import BluemiraWire
 from bluemira.mesh import meshing
@@ -54,7 +54,7 @@ except ImportError as err:
 
 p = JohnerLCFS()
 lcfs = p.create_shape(label="LCFS")
-lcfs.change_plane(BluemiraPlane(axis=[1.0, 0.0, 0.0], angle=-90))
+lcfs.change_placement(BluemiraPlacement(axis=[1.0, 0.0, 0.0], angle=-90))
 lcfs.mesh_options = {"lcar": 0.75, "physical_group": "LCFS"}
 face = BluemiraFace(lcfs, label="plasma_surface")
 face.mesh_options = {"lcar": 0.5, "physical_group": "surface"}
