@@ -60,11 +60,11 @@ class FemMagnetostatic2d:
     boundaries : dolfin.MeshFunction or string
                  the filename of the xml file with the boundaries definition
                  or a MeshFunction that defines the boundaries
-    p : int
+    p_order : int
         the order of the approximating polynomial basis functions
     """  # noqa (W505)
 
-    def __init__(self, mesh, boundaries=None, p=3):
+    def __init__(self, mesh, boundaries=None, p_order=3):
         # ======================================================================
         # define the geometry
         if isinstance(
@@ -91,14 +91,14 @@ class FemMagnetostatic2d:
 
         # ======================================================================
         # define the function space and bilinear forms
-        self.V = dolfin.FunctionSpace(self.mesh, "CG", p)  # the solution function space
+        self.V = dolfin.FunctionSpace(self.mesh, "CG", p_order)
 
         # define trial and test functions
         self.u = dolfin.TrialFunction(self.V)
         self.v = dolfin.TestFunction(self.V)
 
         # Define r
-        r = dolfin.Expression("x[0]", degree=p)
+        r = dolfin.Expression("x[0]", degree=p_order)
 
         self.a = (
             1
@@ -152,7 +152,7 @@ class FemMagnetostatic2d:
         else:
             dirichlet_bc = dolfin.DirichletBC(
                 self.V, dirichlet_bc_function, self.boundaries, dirichlet_marker
-            )  # dirichlet_marker is the identification of Dirichlet BC in the mesh
+            )
         bcs = [dirichlet_bc]
 
         # solve the system taking into account the boundary conditions
@@ -162,10 +162,14 @@ class FemMagnetostatic2d:
         return self.psi
 
     def calculate_b(self):
-        """Calculates the magnetic field intensity from psi"""
-        w = dolfin.VectorFunctionSpace(
-            self.mesh, "P", 1
-        )  # new function space for mapping B as vector
+        """
+        Calculates the magnetic field intensity from psi
+
+        Note: code from Fenics_tutorial (
+        https://link.springer.com/book/10.1007/978-3-319-52462-7), pag. 104
+        """
+        # new function space for mapping B as vector
+        w = dolfin.VectorFunctionSpace(self.mesh, "CG", 1)
 
         r = dolfin.Expression("x[0]", degree=1)
 
@@ -173,8 +177,7 @@ class FemMagnetostatic2d:
         Bx = -self.psi.dx(1) / (2 * dolfin.pi * r)
         Bz = self.psi.dx(0) / (2 * dolfin.pi * r)
 
-        self.B = dolfin.project(
-            dolfin.as_vector((Bx, Bz)), w
-        )  # project B as vector to new function space
+        # project B as vector to new function space
+        self.B = dolfin.project(dolfin.as_vector((Bx, Bz)), w)
 
         return self.B
