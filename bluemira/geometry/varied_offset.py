@@ -19,7 +19,6 @@
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 import numpy as np
-from scipy.interpolate import interp1d
 
 from bluemira.geometry.tools import find_clockwise_angle_2d, make_bspline
 from bluemira.geometry.wire import BluemiraWire
@@ -81,22 +80,16 @@ def varied_offset(
         end_var_offset_angle,
         minor_offset,
         major_offset,
-        num_points,
     )
     normals = _calculate_normals_2d(sorted_coords)
     new_shape_coords = sorted_coords + normals * offsets
     return _2d_coords_to_wire(new_shape_coords)
 
 
-def _sort_coords_by_angle(angles, coords):
+def _sort_coords_by_angle(angles: np.ndarray, coords: np.ndarray):
+    """Sort the given angles and use that to re-order the coords."""
     angle_sort_idx = np.argsort(angles)
     return angles[angle_sort_idx], coords[:, angle_sort_idx]
-
-
-def _find_constant_offset_indices(angles, start_var_offset_angle):
-    return np.logical_or(
-        angles < start_var_offset_angle, angles > (2 * np.pi - start_var_offset_angle)
-    )
 
 
 def _calculate_offset_magnitudes(
@@ -105,21 +98,22 @@ def _calculate_offset_magnitudes(
     end_var_offset_angle,
     minor_offset,
     major_offset,
-    num_points,
 ):
-    constant_minor_offset_idxs = _find_constant_offset_indices(
-        angles, start_var_offset_angle
+    """Calculate the magnitude of the offset at each angle."""
+    offsets = np.empty_like(angles)
+    constant_minor_offset_idxs = np.logical_or(
+        angles < start_var_offset_angle, angles > (2 * np.pi - start_var_offset_angle)
     )
+    offsets[constant_minor_offset_idxs] = minor_offset
+
     constant_major_offset_idxs = np.logical_and(
         angles >= end_var_offset_angle, angles <= 2 * np.pi - end_var_offset_angle
     )
+    offsets[constant_major_offset_idxs] = major_offset
+
     variable_offset_idxs = np.logical_not(
         np.logical_or(constant_minor_offset_idxs, constant_major_offset_idxs)
     )
-
-    offsets = np.empty_like(angles)
-    offsets[constant_minor_offset_idxs] = minor_offset
-    offsets[constant_major_offset_idxs] = major_offset
     offsets[variable_offset_idxs] = _calculate_variable_offset_magnitudes(
         angles[variable_offset_idxs],
         start_var_offset_angle,
@@ -127,27 +121,28 @@ def _calculate_offset_magnitudes(
         minor_offset,
         major_offset,
     )
-
-    # Smooth out the shape using an interpolation over 0 to 2π
-    angular_space = np.linspace(0, 2 * np.pi, num_points)
-    return _interpolate_over_angles(angles, offsets, angular_space)
+    return offsets
 
 
 def _calculate_variable_offset_magnitudes(
     angles, start_angle, end_angle, minor_offset, major_offset
 ):
+    """
+    Calculate the variable offset magnitude for each of the given angles.
+
+    The offset increases linearly between start_angle and end_angle,
+    between minor_offset and major_offset.
+    """
     angles[angles > np.pi] = 2 * np.pi - angles[angles > np.pi]
-    return (angles - start_angle) / (end_angle - start_angle) * (
-        major_offset - minor_offset
-    ) + minor_offset
-
-
-def _interpolate_over_angles(angles, values, angular_space):
-    interp_func = interp1d(angles, values, fill_value="extrapolate", kind="linear")
-    return interp_func(angular_space)
+    angle_fraction = (angles - start_angle) / (end_angle - start_angle)
+    return minor_offset + angle_fraction * (major_offset - minor_offset)
 
 
 def _calculate_normals_2d(shape_coords: np.ndarray) -> np.ndarray:
+    """
+    Calculate the unit normals to the tangents at each of the given
+    coordinates.
+    """
     gradients = np.gradient(shape_coords, axis=1)
     normals = np.empty_like(gradients)
     normals[0] = -gradients[1]
@@ -156,6 +151,9 @@ def _calculate_normals_2d(shape_coords: np.ndarray) -> np.ndarray:
 
 
 def _2d_coords_to_wire(coords_2d):
+    """
+    Build a wire from a 2D array of coordinates using a bspline.
+    """
     coords_3d = np.zeros((3, coords_2d.shape[1]))
     coords_3d[(0, 2), :] = coords_2d
     return make_bspline(coords_3d, closed=True)
