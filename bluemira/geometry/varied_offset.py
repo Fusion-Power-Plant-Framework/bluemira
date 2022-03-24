@@ -24,12 +24,6 @@ from bluemira.geometry.tools import find_clockwise_angle_2d, make_bspline
 from bluemira.geometry.wire import BluemiraWire
 
 
-def angle_between_vectors(vec_1, vec_2):
-    unit_vec_1 = vec_1 / np.linalg.norm(vec_1)
-    unit_vec_2 = vec_2 / np.linalg.norm(vec_2)
-    return np.arccos(np.clip(np.dot(unit_vec_1, unit_vec_2), -1.0, 1.0))
-
-
 def varied_offset(
     wire: BluemiraWire,
     min_offset: float,
