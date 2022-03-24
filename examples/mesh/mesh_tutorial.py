@@ -40,25 +40,25 @@ from bluemira.mesh.tools import import_mesh, msh_to_xdmf
 
 p = JohnerLCFS()
 lcfs = p.create_shape(label="LCFS")
-lcfs.change_placement(BluemiraPlacement(axis=[1.0, 0.0, 0.0], angle=-90))
+
 lcfs.mesh_options = {"lcar": 0.75, "physical_group": "LCFS"}
 face = BluemiraFace(lcfs, label="plasma_surface")
 face.mesh_options = {"lcar": 0.5, "physical_group": "surface"}
 
 poly1 = tools.make_polygon(
-    [[0, 1, 1], [0, 0, 1], [0, 0, 0]], closed=False, label="poly1"
+    [[0, 1, 1], [0, 0, 0], [0, 0, 1]], closed=False, label="poly1"
 )
 poly2 = tools.make_polygon(
-    [[1, 0, 0], [1, 1, 0], [0, 0, 0]], closed=False, label="poly2"
+    [[1, 0, 0], [0, 0, 0], [1, 1, 0]], closed=False, label="poly2"
 )
 poly1.mesh_options = {"lcar": 0.25, "physical_group": "poly1"}
 poly2.mesh_options = {"lcar": 0.25, "physical_group": "poly2"}
 
 poly3 = tools.make_polygon(
-    [[0.25, 0.75, 0.75], [0.25, 0.25, 0.75], [0, 0, 0]], closed=False, label="poly3"
+    [[0.25, 0.75, 0.75], [0, 0, 0], [0.25, 0.25, 0.75]], closed=False, label="poly3"
 )
 poly4 = tools.make_polygon(
-    [[0.75, 0.25, 0.25], [0.75, 0.75, 0.25], [0, 0, 0]], closed=False, label="poly4"
+    [[0.75, 0.25, 0.25], [0, 0, 0], [0.75, 0.75, 0.25]], closed=False, label="poly4"
 )
 poly3.mesh_options = {"lcar": 0.75, "physical_group": "poly3"}
 poly4.mesh_options = {"lcar": 0.75, "physical_group": "poly4"}
@@ -82,11 +82,11 @@ print(m.get_gmsh_dict(buffer))
 
 # Convert the mesh in xdmf for reading in fenics.
 
-msh_to_xdmf("Mesh.msh", dimensions=2, directory=".", verbose=True)
+msh_to_xdmf("Mesh.msh", dimensions=(0, 2), directory=".", verbose=True)
 
 mesh, boundaries, subdomains, labels = import_mesh(
     "Mesh",
-    dimensions=2,
+    dimensions=(0, 1),
     directory=".",
     subdomains=True,
 )
