@@ -236,7 +236,7 @@ def _export_link_file(mesh, file_prefix, directory, verbose=False):
 
     filename = os.sep.join([directory, f"{file_prefix}_{LINKFILE_SUFFIX}"])
     with open(filename, "w") as file:
-        json.dump(table, file)
+        json.dump(table, file, indent=4)
 
 
 def _get_data(mesh, cell_type):
