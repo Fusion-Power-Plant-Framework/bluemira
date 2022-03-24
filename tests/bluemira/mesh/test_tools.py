@@ -65,3 +65,7 @@ class TestMSHtoXDMF:
     def test_dimension_errors(self, dimensions):
         with pytest.raises(MeshConversionError):
             msh_to_xdmf("GeneratedMesh.msh", dimensions=dimensions, directory=DATA_PATH)
+
+    def test_nofile(self):
+        with pytest.raises(MeshConversionError):
+            msh_to_xdmf("not_here.msh", dimensions=(0, 1), directory=DATA_PATH)
