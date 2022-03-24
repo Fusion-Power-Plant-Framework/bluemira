@@ -141,7 +141,7 @@ class Setup(Task):
         self.__recv_mapping = get_recv_mapping(params, NAME)
         self.__send_mapping = get_send_mapping(params, NAME)
 
-    def _get_new_inputs(self, remapper: Optional[Union[Callable, Dict]] = None):
+    def get_new_inputs(self, remapper: Optional[Union[Callable, Dict]] = None):
         """
         Get new key mappings from the ParameterFrame.
 
