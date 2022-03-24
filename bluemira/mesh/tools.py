@@ -49,13 +49,14 @@ CELL_TYPE_DIM = {
 
 
 GMSH_PHYS = "gmsh:physical"
+GMSH_BE = "gmsh:bounding_entities"
 
 DOMAIN_SUFFIX = "domain.xdmf"
 BOUNDARY_SUFFIX = "boundaries.xdmf"
 LINKFILE_SUFFIX = "linkfile.json"
 
 
-def msh_to_xdmf(mesh_name, dimension=2, directory=".", verbose=False):
+def msh_to_xdmf(mesh_name, dimensions=(0, 2), directory=".", verbose=False):
     """
     Convert a MSH file to an XMDF file.
 
@@ -63,8 +64,9 @@ def msh_to_xdmf(mesh_name, dimension=2, directory=".", verbose=False):
     ----------
     mesh_name: str
         Name of the MSH file to convert to XDMF
-    dimension: int
-        Dimensionality of the mesh (defaults to 2)
+    dimensions: Tuple[Int]
+        Dimensions of the mesh (0: x, 1: y, 2: z), defaults to x-z
+        (0, 1, 2) would be a 3-D mesh
     directory: str
         Directory in which the MSH file exists and where the XDMF files will be written
     verbose: bool
@@ -84,8 +86,20 @@ def msh_to_xdmf(mesh_name, dimension=2, directory=".", verbose=False):
         * BOUNDARY_SUFFIX
         * LINKFILE_SUFFIX
     """
-    if dimension not in [2, 3]:
-        raise MeshConversionError(f"Dimension must be either 2 or 3, not: {dimension}")
+    if len(dimensions) not in [2, 3]:
+        raise MeshConversionError(
+            f"Dimension must be either 2 or 3, not: {len(dimensions)}"
+        )
+    for dim in dimensions:
+        if dim not in [0, 1, 2]:
+            raise MeshConversionError(
+                f"Dimensions tuple must contain integers 0, 1, or 2, not: {dim}"
+            )
+
+    if len(dimensions) != len(set(dimensions)):
+        raise MeshConversionError(
+            f"Dimensions tuple cannot have repeated integers: {dimensions}"
+        )
 
     file_path = os.sep.join([directory, mesh_name])
     if not os.path.exists(file_path):
@@ -93,8 +107,8 @@ def msh_to_xdmf(mesh_name, dimension=2, directory=".", verbose=False):
 
     file_prefix = mesh_name.split(".")[0]
     mesh = meshio.read(file_path)
-    _export_domain(mesh, file_prefix, directory, dimension)
-    _export_boundaries(mesh, file_prefix, directory, dimension)
+    _export_domain(mesh, file_prefix, directory, dimensions)
+    _export_boundaries(mesh, file_prefix, directory, dimensions)
     _export_link_file(mesh, file_prefix, directory, verbose=verbose)
 
 
@@ -112,7 +126,6 @@ def import_mesh(file_prefix="mesh", subdomains=False, dimension=2, directory="."
         Dimensionality of the mesh (defaults to 2)
     directory: str
         Directory in which the MSH file and XDMF files exist
-
     Returns
     -------
     mesh: dolfin::Mesh
@@ -129,7 +142,7 @@ def import_mesh(file_prefix="mesh", subdomains=False, dimension=2, directory="."
     link_file = os.sep.join([directory, f"{file_prefix}_{LINKFILE_SUFFIX}"])
 
     if not os.path.exists(domain_file) or not os.path.exists(boundary_file):
-        msh_to_xdmf(f"{file_prefix}.msh", dimension=dimension, directory=directory)
+        msh_to_xdmf(f"{file_prefix}.msh", dimensions=dimension, directory=directory)
 
     mesh = Mesh()
 
@@ -157,11 +170,11 @@ def import_mesh(file_prefix="mesh", subdomains=False, dimension=2, directory="."
     return mesh, boundaries_mf, subdomains_mf, link_dict
 
 
-def _export_domain(mesh, file_prefix, directory, dimension):
+def _export_domain(mesh, file_prefix, directory, dimensions):
     """
     Export the domain of a mesh to XDMF.
     """
-    cell_type = CELL_TYPE_DIM[dimension + 1]
+    cell_type = CELL_TYPE_DIM[len(dimensions) + 1]
     data = _get_data(mesh, cell_type)
 
     if len(data) == 0:
@@ -177,7 +190,7 @@ def _export_domain(mesh, file_prefix, directory, dimension):
 
     cell_data = {"subdomains": [np.concatenate(subdomains)]}
 
-    domain = meshio.Mesh(mesh.points[:, :dimension], cells=cells, cell_data=cell_data)
+    domain = _make_mesh(mesh, dimensions, cells, cell_data)
 
     _write_mesh(
         os.sep.join([directory, f"{file_prefix}_{DOMAIN_SUFFIX}"]),
@@ -185,11 +198,11 @@ def _export_domain(mesh, file_prefix, directory, dimension):
     )
 
 
-def _export_boundaries(mesh, file_prefix, directory, dimension):
+def _export_boundaries(mesh, file_prefix, directory, dimensions):
     """
     Export the boundaries of a mesh to XDMF.
     """
-    cell_type = CELL_TYPE_DIM[dimension]
+    cell_type = CELL_TYPE_DIM[len(dimensions)]
     data = _get_data(mesh, cell_type)
 
     if len(data) == 0:
@@ -202,9 +215,7 @@ def _export_boundaries(mesh, file_prefix, directory, dimension):
 
     cell_data = {"boundaries": [np.concatenate(boundaries)]}
 
-    boundaries = meshio.Mesh(
-        points=mesh.points[:, :dimension], cells=cells, cell_data=cell_data
-    )
+    boundaries = _make_mesh(mesh, dimensions, cells, cell_data)
 
     _write_mesh(
         os.sep.join([directory, f"{file_prefix}_{BOUNDARY_SUFFIX}"]),
@@ -221,7 +232,7 @@ def _export_link_file(mesh, file_prefix, directory, verbose=False):
         for i, array in enumerate(arrays):
             if array.size != 0:
                 index = i
-        if key != "gmsh:bounding_entities":
+        if key != GMSH_BE:
             value = mesh.cell_data[GMSH_PHYS][index][0]
             table[key] = int(value)
 
@@ -245,6 +256,12 @@ def _get_data(mesh, cell_type):
 
 def _make_cellblocks(data, cell_type):
     return [meshio.CellBlock(cell_type, np.concatenate(data))]
+
+
+def _make_mesh(mesh, dimensions, cells, cell_data):
+    return meshio.Mesh(
+        mesh.points[:, list(dimensions)], cells=cells, cell_data=cell_data
+    )
 
 
 def _get_cells(mesh, cell_type):

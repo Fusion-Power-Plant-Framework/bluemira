@@ -39,7 +39,7 @@ class TestMeshing:
         m = meshing.Mesh()
         buffer = m(surf)
 
-        msh_to_xdmf("Mesh.msh", dimension=2, directory=".")
+        msh_to_xdmf("Mesh.msh", dimensions=2, directory=".")
 
         mesh, boundaries, subdomains, labels = import_mesh(
             "Mesh",
@@ -65,7 +65,7 @@ class TestMeshing:
         m = meshing.Mesh()
         buffer = m(surf)
 
-        msh_to_xdmf("Mesh.msh", dimension=2, directory=".")
+        msh_to_xdmf("Mesh.msh", dimensions=2, directory=".")
 
         mesh, boundaries, subdomains, labels = import_mesh(
             "Mesh",

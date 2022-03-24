@@ -82,7 +82,7 @@ print(m.get_gmsh_dict(buffer))
 
 # Convert the mesh in xdmf for reading in fenics.
 
-msh_to_xdmf("Mesh.msh", dimension=2, directory=".", verbose=True)
+msh_to_xdmf("Mesh.msh", dimensions=2, directory=".", verbose=True)
 
 mesh, boundaries, subdomains, labels = import_mesh(
     "Mesh",
