@@ -37,7 +37,8 @@ def varied_offset(
     num_points: int = 200,
 ) -> BluemiraWire:
     """
-    Create a new wire that offsets the given wire using a variable offset.
+    Create a new wire that offsets the given wire using a variable
+    offset in the xz plane.
 
     All angles are measured from the negative x-direction (9 o'clock),
     centred at the center of mass of the wire.
