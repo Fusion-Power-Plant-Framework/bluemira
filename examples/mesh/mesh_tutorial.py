@@ -30,7 +30,6 @@ import bluemira.geometry.tools as tools
 from bluemira.base.components import Component, PhysicalComponent
 from bluemira.equilibria.shapes import JohnerLCFS
 from bluemira.geometry.face import BluemiraFace
-from bluemira.geometry.placement import BluemiraPlacement
 from bluemira.geometry.shell import BluemiraShell
 from bluemira.geometry.wire import BluemiraWire
 from bluemira.mesh import meshing
