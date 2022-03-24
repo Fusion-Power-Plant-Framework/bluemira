@@ -28,7 +28,7 @@ import string
 import subprocess  # noqa :S404
 from abc import ABC, abstractmethod
 from enum import Enum
-from typing import Dict, List, Optional, Union
+from typing import Callable, Dict, List, Optional, Union
 
 from bluemira.base.constants import raw_uc
 from bluemira.base.look_and_feel import bluemira_warn
@@ -141,7 +141,7 @@ class Setup(Task):
         self.__recv_mapping = get_recv_mapping(params, NAME)
         self.__send_mapping = get_send_mapping(params, NAME)
 
-    def _get_new_inputs(self, remapper: Optional[Union[callable, Dict]] = None):
+    def _get_new_inputs(self, remapper: Optional[Union[Callable, Dict]] = None):
         """
         Get new key mappings from the ParameterFrame.
 
