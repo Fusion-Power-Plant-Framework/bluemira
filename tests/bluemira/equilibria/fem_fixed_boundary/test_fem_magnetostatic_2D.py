@@ -42,9 +42,8 @@ try:
     msh2xdmf = get_module(
         os.path.join(get_bluemira_root(), "..", "msh2xdmf", "msh2xdmf.py")
     )
-
 except ImportError as err:
-    ImportWarning(f"Unable to import msh2xdmf, dolfin examples will not run: {err}")
+    print(f"Unable to import msh2xdmf, dolfin examples will not run: {err}")
 
 
 class TestGetNormal:
