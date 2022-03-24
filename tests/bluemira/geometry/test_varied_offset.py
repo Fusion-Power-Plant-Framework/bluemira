@@ -26,71 +26,79 @@ import pytest
 from scipy.interpolate import interp1d
 
 from bluemira.geometry.parameterisations import PictureFrame
-from bluemira.geometry.tools import find_clockwise_angle_2d
+from bluemira.geometry.tools import find_clockwise_angle_2d, make_circle
 from bluemira.geometry.varied_offset import varied_offset
 from bluemira.geometry.wire import BluemiraWire
 
 
 class TestVariedOffsetFunction:
-    @classmethod
-    def setup_class(cls):
-        cls.picture_frame = PictureFrame(
-            {
-                "ro": {"value": 6},
-                "ri": {"value": 3},
-            }
-        ).create_shape()
 
-    def setup_method(self):
-        self.params = {
+    fixtures = [
+        {
+            "wire": PictureFrame(
+                {"ro": {"value": 6}, "ri": {"value": 3}}
+            ).create_shape(),
             "min_offset": 1,
             "max_offset": 4,
             "min_offset_angle": 45,  # degrees
             "max_offset_angle": 160,  # degrees
-        }
+        },
+        {
+            "wire": make_circle(axis=(0, 1, 0)),
+            "min_offset": 1,
+            "max_offset": 3,
+            "min_offset_angle": 90,  # degrees
+            "max_offset_angle": 140,  # degrees
+        },
+    ]
 
-    def test_offset_wire_is_closed(self):
-        offset_wire = varied_offset(self.picture_frame, **self.params)
+    @pytest.mark.parametrize("kwargs", fixtures)
+    def test_offset_wire_is_closed(self, kwargs):
+        offset_wire = varied_offset(**kwargs)
 
         assert offset_wire.is_closed
 
-    def test_the_offset_at_the_ob_radius_is_major_offset(self):
-        offset_wire = varied_offset(self.picture_frame, **self.params)
+    @pytest.mark.parametrize("kwargs", fixtures)
+    def test_the_offset_at_the_ob_radius_is_major_offset(self, kwargs):
+        offset_wire = varied_offset(**kwargs)
 
-        offset_size = self._get_offset_sizes(offset_wire, self.picture_frame, np.pi)
+        offset_size = self._get_offset_sizes(offset_wire, kwargs["wire"], np.pi)
         # Trade-off here between finer discretization when we
         # interpolate and a tighter tolerance. A bit of lee-way here for
         # the sake of fewer points to interpolate
-        assert offset_size == pytest.approx(self.params["max_offset"], rel=1e-3)
+        assert offset_size == pytest.approx(kwargs["max_offset"], rel=1e-3)
 
-    def test_offset_from_shape_never_lt_minor_offset(self):
-        offset_wire = varied_offset(self.picture_frame, **self.params)
+    @pytest.mark.parametrize("kwargs", fixtures)
+    def test_offset_from_shape_never_lt_minor_offset(self, kwargs):
+        offset_wire = varied_offset(**kwargs)
 
         ang_space = np.linspace(0, 2 * np.pi, 50)
-        offset_size = self._get_offset_sizes(offset_wire, self.picture_frame, ang_space)
-        assert np.all(offset_size >= self.params["min_offset"])
+        offset_size = self._get_offset_sizes(offset_wire, kwargs["wire"], ang_space)
+        assert self.greater_or_close(offset_size, kwargs["min_offset"], atol=1e-3)
 
-    def test_offset_never_decreases_between_offset_angles(self):
-        offset_wire = varied_offset(self.picture_frame, **self.params)
+    @pytest.mark.parametrize("kwargs", fixtures)
+    def test_offset_never_decreases_between_offset_angles(self, kwargs):
+        offset_wire = varied_offset(**kwargs)
 
         ang_space = np.linspace(
-            np.radians(self.params["min_offset_angle"]),
-            np.radians(self.params["max_offset_angle"]),
+            np.radians(kwargs["min_offset_angle"]),
+            np.radians(kwargs["max_offset_angle"]),
             50,
         )
-        offset_size = self._get_offset_sizes(offset_wire, self.picture_frame, ang_space)
+        offset_size = self._get_offset_sizes(offset_wire, kwargs["wire"], ang_space)
         offset_size_gradient = np.diff(offset_size)
-        assert np.all(offset_size_gradient >= 0)
+        assert self.greater_or_close(offset_size_gradient, 0, atol=1e-2)
 
-    def test_offset_eq_to_minor_offset_at_0_degrees(self):
-        offset_wire = varied_offset(self.picture_frame, **self.params)
+    @pytest.mark.parametrize("kwargs", fixtures)
+    def test_offset_eq_to_minor_offset_at_0_degrees(self, kwargs):
+        offset_wire = varied_offset(**kwargs)
 
-        offset_size = self._get_offset_sizes(offset_wire, self.picture_frame, 0)
-        assert offset_size == pytest.approx(self.params["min_offset"], 1e-3)
+        offset_size = self._get_offset_sizes(offset_wire, kwargs["wire"], 0)
+        assert offset_size == pytest.approx(kwargs["min_offset"], 1e-3)
 
     @staticmethod
     def _interpolation_func_closed_wire(wire: BluemiraWire) -> Callable:
-        coords = wire.discretize(100).xz
+        coords = wire.discretize(200).xz
         centroid = wire.center_of_mass[[0, 2]]
         angles = np.radians(
             find_clockwise_angle_2d(np.array([-1, 0]), coords - centroid.reshape((2, 1)))
@@ -121,3 +129,14 @@ class TestVariedOffsetFunction:
         interp_1 = TestVariedOffsetFunction._interpolation_func_closed_wire(shape_1)
         interp_2 = TestVariedOffsetFunction._interpolation_func_closed_wire(shape_2)
         return np.linalg.norm(interp_1(angles) - interp_2(angles), axis=0)
+
+    @staticmethod
+    def greater_or_close(values: np.ndarray, limit: float, **kwargs):
+        """
+        Check if the given values are greater or close to the given limit.
+
+        The kwargs are passed directly to ``np.isclose``
+        """
+        return np.all(
+            np.logical_or(values >= limit, np.isclose(values, limit, **kwargs))
+        )
