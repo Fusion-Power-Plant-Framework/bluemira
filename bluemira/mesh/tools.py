@@ -31,3 +31,84 @@ from configparser import ConfigParser
 
 import meshio
 import numpy as np
+
+from bluemira.base.look_and_feel import bluemira_warn
+from bluemira.mesh.error import MeshConversionError
+
+__all__ = "msh_to_xdmf"
+
+
+DOMAIN_CELL_DIM = {
+    2: "triangle",
+    3: "tetra",
+}
+
+
+BOUNDARY_CELL_DIM = {
+    2: "line",
+    3: "triangle",
+}
+
+
+def msh_to_xdmf(mesh_name, dimension=2, directory="."):
+    """
+    Convert a MSH file to an XMDF file.
+
+    Parameters
+    ----------
+    mesh_name: str
+
+    dimension: int
+
+    directory: str
+
+    Notes
+    -----
+    Creates the following files:
+        * domain.xdmf
+        * boundaries.xdmf
+    """
+    if dimension not in [2, 3]:
+        raise MeshConversionError(f"Dimension must be either 2 or 3, not: {dimension}")
+
+    file_prefix = mesh_name.split(".")[0]
+    mesh = meshio.read(os.sep.join([directory, mesh_name]))
+    _export_domain(mesh, file_prefix, directory, dimension)
+    _export_boundaries(mesh, file_prefix, directory, dimension)
+    _export_association_table(mesh, file_prefix, directory)
+
+
+def _export_domain(mesh, file_prefix, directory, dimension):
+    cell_type = DOMAIN_CELL_DIM[dimension]
+    data = [arr for (t, arr) in mesh.cells if t == cell_type]
+
+    if len(data) == 0:
+        raise MeshConversionError("No domain physical group found in: {file_prefix}")
+    if "gmsh:physical" not in mesh.cell_data:
+        raise MeshConversionError("No domain physical group found in: {file_prefix}")
+
+    cells = meshio.CellBlock(cell_type, np.concatenate(data))
+
+    subdomains = [
+        mesh.cell_data["gmsh:physical"][i]
+        for i, cell in enumerate(mesh.cells)
+        if cell.type == cell_type
+    ]
+
+    cell_data = {"subdomains": np.concatenate(subdomains)}
+
+    domain = meshio.Mesh(mesh.points[:, :dimension], cells, cell_data=cell_data)
+
+    meshio.write(
+        os.sep.join([directory, f"{file_prefix}_domain.xdmf"]),
+        domain,
+        file_format="xdmf",
+    )
+
+
+def _export_boundaries(mesh, file_prefix, directory, dimension):
+    pass
+
+
+def _export_association_table(mesh, file_prefix, directory):
+    pass
