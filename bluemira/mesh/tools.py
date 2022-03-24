@@ -161,7 +161,7 @@ def import_mesh(file_prefix="mesh", subdomains=False, dimensions=2, directory=".
 def _check_dimensions(dimensions):
     if len(dimensions) not in [2, 3]:
         raise MeshConversionError(
-            f"Dimension must be either 2 or 3, not: {len(dimensions)}"
+            f"Length of dimensions must be either 2 or 3, not: {len(dimensions)}"
         )
     for dim in dimensions:
         if dim not in [0, 1, 2]:

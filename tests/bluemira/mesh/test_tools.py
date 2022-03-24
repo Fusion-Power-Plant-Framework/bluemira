@@ -22,7 +22,10 @@
 import filecmp
 import os
 
+import pytest
+
 from bluemira.base.file import get_bluemira_path
+from bluemira.mesh.error import MeshConversionError
 from bluemira.mesh.tools import msh_to_xdmf
 
 DATA_PATH = get_bluemira_path("mesh/test_data", subfolder="tests/bluemira")
@@ -45,3 +48,20 @@ class TestMSHtoXDMF:
             reference = os.sep.join([DATA_PATH, "Reference" + filename])
             filecmp.cmp(generated, reference)
             os.remove(generated)
+
+    @pytest.mark.parametrize(
+        "dimensions",
+        [
+            (),
+            (0),
+            (0, 0),
+            (1, 1),
+            (0, 0, 0),
+            (0, 0, 1),
+            (0, 1, 2, 3),
+            (0, 1, 1),
+        ],
+    )
+    def test_dimension_errors(self, dimensions):
+        with pytest.raises(MeshConversionError):
+            msh_to_xdmf("GeneratedMesh.msh", dimensions=dimensions, directory=DATA_PATH)
