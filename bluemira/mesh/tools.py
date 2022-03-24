@@ -49,8 +49,10 @@ BOUNDARY_CELL_DIM = {
     3: "triangle",
 }
 
+GMSH_PHYS = "gmsh:physical"
 
-def msh_to_xdmf(mesh_name, dimension=2, directory="."):
+
+def msh_to_xdmf(mesh_name, dimension=2, directory=".", verbose=False):
     """
     Convert a MSH file to an XMDF file.
 
@@ -61,6 +63,8 @@ def msh_to_xdmf(mesh_name, dimension=2, directory="."):
     dimension: int
 
     directory: str
+
+    verbose: bool
 
     Notes
     -----
@@ -75,7 +79,7 @@ def msh_to_xdmf(mesh_name, dimension=2, directory="."):
     mesh = meshio.read(os.sep.join([directory, mesh_name]))
     _export_domain(mesh, file_prefix, directory, dimension)
     _export_boundaries(mesh, file_prefix, directory, dimension)
-    _export_association_table(mesh, file_prefix, directory)
+    _export_association_table(mesh, file_prefix, directory, verbose=verbose)
 
 
 def _export_domain(mesh, file_prefix, directory, dimension):
@@ -83,14 +87,14 @@ def _export_domain(mesh, file_prefix, directory, dimension):
     data = [arr for (t, arr) in mesh.cells if t == cell_type]
 
     if len(data) == 0:
-        raise MeshConversionError("No domain physical group found in: {file_prefix}")
-    if "gmsh:physical" not in mesh.cell_data:
-        raise MeshConversionError("No domain physical group found in: {file_prefix}")
+        raise MeshConversionError(f"No domain physical group found in: {file_prefix}")
+    if GMSH_PHYS not in mesh.cell_data:
+        raise MeshConversionError(f"No domain physical group found in: {file_prefix}")
 
     cells = meshio.CellBlock(cell_type, np.concatenate(data))
 
     subdomains = [
-        mesh.cell_data["gmsh:physical"][i]
+        mesh.cell_data[GMSH_PHYS][i]
         for i, cell in enumerate(mesh.cells)
         if cell.type == cell_type
     ]
@@ -107,8 +111,44 @@ def _export_domain(mesh, file_prefix, directory, dimension):
 
 
 def _export_boundaries(mesh, file_prefix, directory, dimension):
-    pass
+    cell_type = BOUNDARY_CELL_DIM[dimension]
+    data = [arr for (t, arr) in mesh.cells if t == cell_type]
+
+    if len(data) == 0:
+        raise MeshConversionError(f"No boundary physical group found in: {file_prefix}")
+
+    cells = meshio.CellBlock(cell_type, np.concatenate(data))
+
+    boundaries = [
+        mesh.cell_data[GMSH_PHYS][i]
+        for i, cell in enumerate(cells)
+        if cell.type == cell_type
+    ]
+
+    cell_data = {"boundaries": np.concatenate(boundaries)}
+
+    boundaries = meshio.Mesh(mesh.points[:, :dimension], cells, cell_data=cell_data)
+
+    meshio.write(
+        os.sep.join([directory, f"{file_prefix}_boundaries.xdmf"]),
+        boundaries,
+        file_format="xdmf",
+    )
 
 
-def _export_association_table(mesh, file_prefix, directory):
-    pass
+def _export_association_table(mesh, file_prefix, directory, verbose=False):
+    table = {}
+    for key, arrays in mesh.cell_sets.items():
+        for i, array in enumerate(arrays):
+            if array.size != 0:
+                index = i
+        if key != "gmsh:bounding_entities":
+            value = mesh.cell_data[GMSH_PHYS][index][0]
+            table[key] = value
+
+    content = ConfigParser()
+    content["ASSOCIATION TABLE"] = table
+
+    filename = os.sep.join([directory, f"{file_prefix}_association_table.ini"])
+    with open(filename, "w") as file:
+        content.write(file)
