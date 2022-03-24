@@ -33,7 +33,7 @@ class TestMSHtoXDMF:
         """
         Regression test on example
         """
-        msh_to_xdmf("GeneratedMesh.msh", dimensions=2, directory=DATA_PATH)
+        msh_to_xdmf("GeneratedMesh.msh", dimensions=(0, 1), directory=DATA_PATH)
         for filename in [
             "Mesh_linkfile.json",
             "Mesh_boundaries.h5",
