@@ -109,7 +109,7 @@ class TestMSHtoXDMF:
             os.remove(generated)
 
     def test_conversion_from_msh_to_xdm_new(self):
-        mesh_to_xdmf("GeneratedMesh.msh", dim=2, directory=DATA_PATH)
+        msh_to_xdmf("GeneratedMesh.msh", dimension=2, directory=DATA_PATH)
         for filename in [
             "Mesh_association_table.ini",
             "Mesh_boundaries.h5",
