@@ -1729,8 +1729,6 @@ class BotDomeCurvedPictureFrame(GeometryParameterisation):
     -----
     The dictionary keys in var_dict are:
 
-    var_dict: Optional[dict]
-        Dictionary with which to update the default values of the parameterisation.
     axis: np.ndarray
         [x,y,z] vector normal to plane of parameterisation
     x_mid: np.float
