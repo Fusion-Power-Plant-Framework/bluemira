@@ -18,6 +18,10 @@
 #
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
+"""
+Module containing functions to generate variable offset curves
+"""
+
 import numpy as np
 
 from bluemira.geometry.tools import find_clockwise_angle_2d, make_bspline
