@@ -1216,16 +1216,12 @@ class PictureFrameTools:
         ----------
         axis: np.ndarray
             [x,y,z] vector normal to plane of parameterisation
-
         x_in: np.float
             Radial position of innermost point of limb [m]
-
         x_mid: np.float
             Radial position of outer edge of limb [m]
-
         z_in: np.float
             Vertical position of start of tapering [m]
-
         z_mid_up: np.float
             Vertical position of top of limb [m]
 
@@ -1480,6 +1476,11 @@ class FullDomeCurvedPictureFrame(GeometryParameterisation):
     ----------
     var_dict: Optional[dict]
         Dictionary with which to update the default values of the parameterisation.
+
+    Notes
+    -----
+    The dictionary keys in var_dict are:
+    
     axis: np.ndarray
         [x,y,z] vector normal to plane of parameterisation
     x_mid: np.float
