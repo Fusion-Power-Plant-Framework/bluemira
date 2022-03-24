@@ -1470,7 +1470,7 @@ class TaperedPictureFrame(GeometryParameterisation):
 class FullDomeCurvedPictureFrame(GeometryParameterisation):
     """
     Curved picture-frame geometry parameterisation, with
-    top flat and bottom domed. Straight (non-tapered) inner limb
+    top and bottom domed. Straight (non-tapered) inner limb
 
     Parameters
     ----------
@@ -1480,7 +1480,7 @@ class FullDomeCurvedPictureFrame(GeometryParameterisation):
     Notes
     -----
     The dictionary keys in var_dict are:
-    
+
     axis: np.ndarray
         [x,y,z] vector normal to plane of parameterisation
     x_mid: np.float
@@ -1604,6 +1604,11 @@ class TopDomeCurvedPictureFrame(GeometryParameterisation):
     ----------
     var_dict: Optional[dict]
         Dictionary with which to update the default values of the parameterisation.
+
+    Notes
+    -----
+    The dictionary keys in var_dict are:
+
     axis: np.ndarray
             [x,y,z] vector normal to plane of parameterisation
     x_mid: np.float
@@ -1719,6 +1724,11 @@ class BotDomeCurvedPictureFrame(GeometryParameterisation):
 
     Parameters
     ----------
+
+    Notes
+    -----
+    The dictionary keys in var_dict are:
+
     var_dict: Optional[dict]
         Dictionary with which to update the default values of the parameterisation.
     axis: np.ndarray
