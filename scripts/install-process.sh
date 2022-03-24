@@ -15,12 +15,19 @@ fi
 
 if [ ! -d process ]; then
   git clone git@git.ccfe.ac.uk:process/process.git
-  cd process
-  git checkout v2.2.0
-  cd ..
 fi
 
 cd process
+git checkout develop
+git pull
+
+if [ "$1" ]
+  then
+    git checkout "$1"
+else
+    git checkout v2.3.0
+fi
+
 
 # Make sure we always perform a fresh install of PROCESS
 # Takes longer but ensures we avoid leaving old environment references in cmake
@@ -31,7 +38,7 @@ fi
 # Come out of bluemira conda and make a new environment for our build
 conda deactivate
 conda env remove -n bluemira-process-build || true
-conda create -y -n bluemira-process-build python=3.8 numpy=1.19.5
+conda create -y -n bluemira-process-build python=3.8 numpy=1.21.5
 conda activate bluemira-process-build
 
 # Install requirements into the build environment
