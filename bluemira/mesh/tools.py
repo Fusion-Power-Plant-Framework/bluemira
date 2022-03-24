@@ -86,20 +86,7 @@ def msh_to_xdmf(mesh_name, dimensions=(0, 2), directory=".", verbose=False):
         * BOUNDARY_SUFFIX
         * LINKFILE_SUFFIX
     """
-    if len(dimensions) not in [2, 3]:
-        raise MeshConversionError(
-            f"Dimension must be either 2 or 3, not: {len(dimensions)}"
-        )
-    for dim in dimensions:
-        if dim not in [0, 1, 2]:
-            raise MeshConversionError(
-                f"Dimensions tuple must contain integers 0, 1, or 2, not: {dim}"
-            )
-
-    if len(dimensions) != len(set(dimensions)):
-        raise MeshConversionError(
-            f"Dimensions tuple cannot have repeated integers: {dimensions}"
-        )
+    _check_dimensions(dimensions)
 
     file_path = os.sep.join([directory, mesh_name])
     if not os.path.exists(file_path):
@@ -112,7 +99,7 @@ def msh_to_xdmf(mesh_name, dimensions=(0, 2), directory=".", verbose=False):
     _export_link_file(mesh, file_prefix, directory, verbose=verbose)
 
 
-def import_mesh(file_prefix="mesh", subdomains=False, dimension=2, directory="."):
+def import_mesh(file_prefix="mesh", subdomains=False, dimensions=2, directory="."):
     """
     Import a dolfin mesh.
 
@@ -137,19 +124,20 @@ def import_mesh(file_prefix="mesh", subdomains=False, dimension=2, directory="."
     link_dict: dict
         Link dictionary between MSH and XDMF objects
     """
+    _check_dimensions(dimensions)
     domain_file = os.sep.join([directory, f"{file_prefix}_{DOMAIN_SUFFIX}"])
     boundary_file = os.sep.join([directory, f"{file_prefix}_{BOUNDARY_SUFFIX}"])
     link_file = os.sep.join([directory, f"{file_prefix}_{LINKFILE_SUFFIX}"])
 
     if not os.path.exists(domain_file) or not os.path.exists(boundary_file):
-        msh_to_xdmf(f"{file_prefix}.msh", dimensions=dimension, directory=directory)
+        msh_to_xdmf(f"{file_prefix}.msh", dimensions=dimensions, directory=directory)
 
     mesh = Mesh()
 
     with XDMFFile(domain_file) as file:
         file.read(mesh)
 
-    boundaries_mvc = MeshValueCollection("size_t", mesh, dim=dimension)
+    boundaries_mvc = MeshValueCollection("size_t", mesh, dim=len(dimensions))
 
     with XDMFFile(boundary_file) as file:
         file.read(boundaries_mvc, "boundaries")
@@ -157,7 +145,7 @@ def import_mesh(file_prefix="mesh", subdomains=False, dimension=2, directory="."
     boundaries_mf = MeshFunctionSizet(mesh, boundaries_mvc)
 
     if subdomains:
-        subdomains_mvc = MeshValueCollection("size_t", mesh, dim=dimension)
+        subdomains_mvc = MeshValueCollection("size_t", mesh, dim=len(dimensions))
         with XDMFFile(domain_file) as file:
             file.read(subdomains_mvc, "subdomains")
         subdomains_mf = MeshFunctionSizet(mesh, subdomains_mvc)
@@ -168,6 +156,23 @@ def import_mesh(file_prefix="mesh", subdomains=False, dimension=2, directory="."
         link_dict = json.load(file)
 
     return mesh, boundaries_mf, subdomains_mf, link_dict
+
+
+def _check_dimensions(dimensions):
+    if len(dimensions) not in [2, 3]:
+        raise MeshConversionError(
+            f"Dimension must be either 2 or 3, not: {len(dimensions)}"
+        )
+    for dim in dimensions:
+        if dim not in [0, 1, 2]:
+            raise MeshConversionError(
+                f"Dimensions tuple must contain integers 0, 1, or 2, not: {dim}"
+            )
+
+    if len(dimensions) != len(set(dimensions)):
+        raise MeshConversionError(
+            f"Dimensions tuple cannot have repeated integers: {dimensions}"
+        )
 
 
 def _export_domain(mesh, file_prefix, directory, dimensions):

@@ -43,7 +43,7 @@ class TestMeshing:
 
         mesh, boundaries, subdomains, labels = import_mesh(
             "Mesh",
-            dimension=2,
+            dimensions=2,
             directory=".",
             subdomains=True,
         )
@@ -69,7 +69,7 @@ class TestMeshing:
 
         mesh, boundaries, subdomains, labels = import_mesh(
             "Mesh",
-            dimension=2,
+            dimensions=2,
             directory=".",
             subdomains=True,
         )
