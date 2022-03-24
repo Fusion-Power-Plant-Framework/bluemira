@@ -103,7 +103,7 @@ class TestGetNormal:
         dolfin.plot(mesh)
         plt.show()
 
-        em_solver = FemMagnetostatic2d(mesh, boundaries, p=3)
+        em_solver = FemMagnetostatic2d(mesh, boundaries, 3)
 
         current = 1e6
         jc = current / coil.area
