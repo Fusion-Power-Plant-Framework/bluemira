@@ -33,16 +33,13 @@ from bluemira.base.config import Configuration
 from bluemira.base.error import ParameterError
 from bluemira.base.file import get_bluemira_root
 from bluemira.base.logs import set_log_level
-from bluemira.base.parameter import ParameterEncoder
-from bluemira.builders.cryostat import CryostatBuilder
+from bluemira.base.parameter import ParameterMappingEncoder
 from bluemira.builders.EUDEMO.pf_coils import PFCoilsBuilder
 from bluemira.builders.EUDEMO.plasma import PlasmaBuilder, PlasmaComponent
 from bluemira.builders.EUDEMO.reactor import EUDEMOReactor
 from bluemira.builders.EUDEMO.tf_coils import TFCoilsBuilder
-from bluemira.builders.radiation_shield import RadiationShieldBuilder
 from bluemira.builders.tf_coils import RippleConstrainedLengthOpt
-from bluemira.builders.thermal_shield import ThermalShieldBuilder
-from bluemira.codes import plot_radial_build
+from bluemira.codes import plot_PROCESS
 from bluemira.codes.plasmod.mapping import (  # noqa: N812
     create_mapping as create_PLASMOD_mappings,
 )
@@ -122,7 +119,7 @@ json_writer(
     params,
     f"{get_bluemira_root()}/examples/design/EU-DEMO/template.json",
     indent=2,
-    cls=ParameterEncoder,
+    cls=ParameterMappingEncoder,
     ensure_ascii=True,
 )
 
@@ -140,7 +137,7 @@ json_writer(
 
 # %%
 config = {
-    "Name": "EU-DEMO",
+    "Name": "ST",
     "tau_flattop": 6900,
     "n_TF": 18,
     "fw_psi_n": 1.06,
@@ -174,7 +171,7 @@ json_writer(
     config,
     f"{get_bluemira_root()}/examples/design/EU-DEMO/params.json",
     indent=2,
-    cls=ParameterEncoder,
+    cls=ParameterMappingEncoder,
     ensure_ascii=False,
 )
 
@@ -218,17 +215,19 @@ build_config = {
         "runmode": "mock",  # ["run", "read", "mock"]
     },
     "Plasma": {
-        "runmode": "read",  # ["run", "read", "mock"]
+        "runmode": "mock",  # ["run", "read", "mock"]
     },
     "TF Coils": {
         "runmode": "run",  # ["run", "read", "mock"]
-        "param_class": "PictureFrame",
+        "param_class": "FullDomeFlatInnerCurvedPictureFrame",
         "variables_map": {
-            "x1": {"value": "r_tf_in_centre", "fixed": True},
-            "x2": {"value": 15, "lower_bound": 9},
-            "z1": {"value": 15, "lower_bound": 13},
-            "z2": {"value": -15, "upper_bound": -13},
-            "ri": {"value": 0, "fixed": True},
+            "x_mid": {"value": "r_tf_in_centre", "fixed": True},
+            "x_curve_start": {"value": 1.8, "fixed": True},
+            "x_out": {"value": 15, "lower_bound": 12, "upper_bound": 16},
+            "z_mid_up": {"value": 7.5, "fixed": True},
+            "z_mid_down": {"value": -7.5, "fixed": True},
+            "z_max_up": {"value": 9, "lower_bound": 8},
+            "z_max_down": {"value": -9, "upper_bound": -8},
         },
         "algorithm_name": "COBYLA",
         "problem_settings": {
@@ -319,7 +318,7 @@ component = reactor.run()
 
 # %%
 if build_config["PROCESS"]["runmode"] == "run":
-    plot_radial_build(reactor.file_manager.generated_data_dirs["systems_code"])
+    plot_PROCESS(reactor.file_manager.generated_data_dirs["systems_code"])
 else:
     print(
         "The PROCESS design stage did not have the runmode set to run."
@@ -469,34 +468,18 @@ pf_coils.get_component("xy").plot_2d(ax=ax)
 # %%
 ax = tf_coils.get_component("xz").plot_2d(show=False)
 plasma.get_component("xz").plot_2d(ax=ax, show=False)
-pf_coils.get_component("xz").plot_2d(ax=ax, show=False)
+pf_coils.get_component("xz").plot_2d(ax=ax)
 
-first_wall = component.get_component("First Wall")
-first_wall.get_component("xz").plot_2d(ax=ax, show=False)
-thermal_shield = component.get_component("Thermal Shield")
-thermal_shield.get_component("xz").plot_2d(ax=ax, show=False)
-cryostat = component.get_component("Cryostat")
-cryostat.get_component("xz").plot_2d(ax=ax, show=False)
-radiation_shield = component.get_component("Radiation Shield")
-radiation_shield.get_component("xz").plot_2d(ax=ax)
 
 # %%
 ComponentDisplayer().show_cad(component.get_component("xyz", first=False))
 
 # %%
-sector = Component("Segment View")
+component = Component("Segment View")
 plasma_builder: PlasmaBuilder = reactor.get_builder("Plasma")
 tf_coils_builder: TFCoilsBuilder = reactor.get_builder("TF Coils")
 pf_coils_builder: PFCoilsBuilder = reactor.get_builder("PF Coils")
-thermal_shield_builder: ThermalShieldBuilder = reactor.get_builder("Thermal Shield")
-cryostat_builder: CryostatBuilder = reactor.get_builder("Cryostat")
-radiation_shield_builder: RadiationShieldBuilder = reactor.get_builder(
-    "Radiation Shield"
-)
-sector.add_child(plasma_builder.build_xyz(degree=270))
-sector.add_child(tf_coils_builder.build_xyz(degree=270))
-sector.add_child(pf_coils_builder.build_xyz(degree=270))
-sector.add_child(thermal_shield_builder.build_xyz(degree=270))
-sector.add_child(cryostat_builder.build_xyz(degree=270))
-sector.add_child(radiation_shield_builder.build_xyz(degree=270))
-sector.show_cad()
+component.add_child(plasma_builder.build_xyz(degree=270))
+component.add_child(tf_coils_builder.build_xyz(degree=270))
+component.add_child(pf_coils_builder.build_xyz(degree=270))
+component.show_cad()

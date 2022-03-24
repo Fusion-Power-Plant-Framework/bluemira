@@ -99,6 +99,7 @@ class ToroidalFieldCoils(Meshable, ReactorSystem):
         self.config = config
         self.inputs = inputs
         self._plotter = ToroidalFieldCoilsPlotter()
+        self._corrector = ToroidalFieldCoilsCorrector
 
         self._init_params(self.config)
 
@@ -1074,7 +1075,11 @@ class ToroidalFieldCoils(Meshable, ReactorSystem):
 
         self.geom["TF WP"] = Shell(wp_in, wp_out)
 
-        if self.inputs["shape_type"] in ["TP", "CP"]:
+        if self.inputs["shape_type"] in ["TP", "CP", "P"]:
+
+            wp_in, wp_out, case_in, case_out = CorrectorFactory(
+                self.inputs["shape_type"]
+            ).produce_loops()
             # For tapered cp based coils
             (
                 wp_in,
@@ -1424,6 +1429,37 @@ class ToroidalFieldCoils(Meshable, ReactorSystem):
             funcs[side]["dz"] = funcs[side]["z"].derivative()
         return funcs
 
+    def bucking_cylinder(self, p_in):
+        """
+        Draw Bucking Cylinder Loop
+        """
+        xmin = self.params.r_tf_in
+        xmax = xmin + self.params.tk_tf_nose
+        zmax = np.max(p_in["z"])
+        if self.shape_type in ["CP"]:
+            # CP is weird because max height of coil is the dome, not the b_cyl height
+            correct_l = self.shp.parameterisation.xo["x_curve_start"]["value"]
+            tapered_cp_temp = boolean_2d_difference_loop(
+                Loop(**p_in), make_box_xz(correct_l - 0.25, 20, -25, 25)
+            )
+            zmax = np.max(tapered_cp_temp.z) + self.section["case"]["WP"]
+
+        x = np.array([xmin, xmax, xmax, xmin, xmin])
+        z = zmax * np.array([1, 1, -1, -1, 1])
+
+        return x, z
+
+
+class ToroidalFieldCoilsCorrector:
+    """
+    The corrector for Toroidal Field Coils. Tapers inboard
+    legs, segments centreposts etc.
+    """
+
+    def __init__(self, shape_type):
+
+        self._palette_key = "TF"
+
     def correct_inboard_corners(
         self, loop, x_thick, tapered=False, xmin=None, zmax=None, zmin=None
     ):
@@ -1697,26 +1733,6 @@ class ToroidalFieldCoils(Meshable, ReactorSystem):
             case_in = simplify_loop(case_in)
 
         return centrepost, leg_conductor, case_in, case_out
-
-    def bucking_cylinder(self, p_in):
-        """
-        Draw Bucking Cylinder Loop
-        """
-        xmin = self.params.r_tf_in
-        xmax = xmin + self.params.tk_tf_nose
-        zmax = np.max(p_in["z"])
-        if self.shape_type in ["CP"]:
-            # CP is weird because max height of coil is the dome, not the b_cyl height
-            correct_l = self.shp.parameterisation.xo["x_curve_start"]["value"]
-            tapered_cp_temp = boolean_2d_difference_loop(
-                Loop(**p_in), make_box_xz(correct_l - 0.25, 20, -25, 25)
-            )
-            zmax = np.max(tapered_cp_temp.z) + self.section["case"]["WP"]
-
-        x = np.array([xmin, xmax, xmax, xmin, xmin])
-        z = zmax * np.array([1, 1, -1, -1, 1])
-
-        return x, z
 
 
 class ToroidalFieldCoilsPlotter(ReactorSystemPlotter):

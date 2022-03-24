@@ -36,19 +36,16 @@ from bluemira.base.error import BuilderError
 from bluemira.base.look_and_feel import bluemira_print
 from bluemira.builders.EUDEMO.tools import circular_pattern_component
 from bluemira.builders.shapes import OptimisedShapeBuilder
-from bluemira.codes._freecadapi import _wire_edges_tangent
-from bluemira.display import plot_2d, show_cad
-from bluemira.display.displayer import DisplayCADOptions
+from bluemira.display import show_cad
 from bluemira.display.palettes import BLUE_PALETTE
+from bluemira.display.plotter import plot_2d
 from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.optimisation import GeometryOptimisationProblem
 from bluemira.geometry.parameterisations import GeometryParameterisation
 from bluemira.geometry.placement import BluemiraPlacement
-from bluemira.geometry.solid import BluemiraSolid
 from bluemira.geometry.tools import (
     boolean_cut,
     boolean_fuse,
-    extrude_shape,
     make_polygon,
     offset_wire,
     slice_shape,
@@ -188,7 +185,7 @@ class TFCoilsBuilder(OptimisedShapeBuilder):
             "m",
             source="bluemira",
         )
-        shape_params["x1"] = {"value": r_current_in_board, "fixed": True}
+        shape_params["x_mid"] = {"value": r_current_in_board, "fixed": True}
         return shape_params
 
     def reinitialise(
@@ -308,7 +305,7 @@ class TFCoilsBuilder(OptimisedShapeBuilder):
         )
         winding_pack.plot_options.face_options["color"] = BLUE_PALETTE["TF"][1]
         component.add_child(winding_pack)
-
+        """
         # Insulation
         ins_o_outer = offset_wire(wp_outer, self.params.tk_tf_ins.value, join="arc")
         ins_outer = PhysicalComponent("inner", BluemiraFace([ins_o_outer, wp_outer]))
@@ -320,7 +317,7 @@ class TFCoilsBuilder(OptimisedShapeBuilder):
         ins_inner.plot_options.face_options["color"] = BLUE_PALETTE["TF"][2]
         insulation = Component("Insulation", children=[ins_outer, ins_inner])
         component.add_child(insulation)
-
+        """
         # Casing
         cas_inner, cas_outer = self._temp_casing
         cas_inner = PhysicalComponent("inner", cas_inner)
@@ -330,7 +327,7 @@ class TFCoilsBuilder(OptimisedShapeBuilder):
         casing = Component("Casing", children=[cas_inner, cas_outer])
         component.add_child(casing)
 
-        bm_plot_tools.set_component_view(component, "xz")
+        bm_plot_tools.set_component_plane(component, "xz")
 
         return component
 
@@ -373,8 +370,8 @@ class TFCoilsBuilder(OptimisedShapeBuilder):
                 ob_ins_comp,
             ],
         )
-        sectors = circular_pattern_component(insulation, self._params.n_TF.value)
-        component.add_children(sectors, merge_trees=True)
+        # sectors = circular_pattern_component(insulation, self._params.n_TF.value)
+        # component.add_children(sectors, merge_trees=True)
 
         # Casing
         ib_cas_wire, ob_cas_wire = self._make_cas_xs()
@@ -396,11 +393,11 @@ class TFCoilsBuilder(OptimisedShapeBuilder):
         sectors = circular_pattern_component(casing, self._params.n_TF.value)
         component.add_children(sectors, merge_trees=True)
 
-        bm_plot_tools.set_component_view(component, "xy")
+        bm_plot_tools.set_component_plane(component, "xy")
 
         return component
 
-    def build_xyz(self, degree: float = 360.0) -> Component:
+    def build_xyz(self, degree: float = 90.0) -> Component:
         """
         Build the x-y-z components of the TF coils.
 
@@ -428,6 +425,7 @@ class TFCoilsBuilder(OptimisedShapeBuilder):
         # Winding pack
 
         wp_solid = sweep_shape(self._wp_cross_section, self._centreline)
+        # wp_solid = self._correct_wp_shape(wp_solid)
         winding_pack = PhysicalComponent("Winding pack", wp_solid)
         winding_pack.display_cad_options.color = BLUE_PALETTE["TF"][1]
         sectors = circular_pattern_component(winding_pack, n_tf_draw, degree=degree)
@@ -441,12 +439,14 @@ class TFCoilsBuilder(OptimisedShapeBuilder):
         insulation = PhysicalComponent("Insulation", ins_solid)
         insulation.display_cad_options.color = BLUE_PALETTE["TF"][2]
         sectors = circular_pattern_component(insulation, n_tf_draw, degree=degree)
-        component.add_children(sectors, merge_trees=True)
+        # component.add_children(sectors, merge_trees=True)
 
         # Casing
         # Normally I'd do lots more here to get to a proper casing
         # This is just a proof-of-principle
         inner_xs, outer_xs = self._make_cas_xs()
+
+        """
         # Make inner xs into a rectangle
         bb = inner_xs.bounding_box
         x_min = bb.x_min
@@ -458,7 +458,7 @@ class TFCoilsBuilder(OptimisedShapeBuilder):
             [[x_min, x_max, x_max, x_min], [-y_in, -y_in, y_in, y_in], [0, 0, 0, 0]],
             closed=True,
         )
-
+        """
         # Sweep with a varying rectangular cross-section
         centreline_points = self._centreline.discretize(byedges=True, ndiscr=2000)
         idx = np.where(np.isclose(centreline_points.x, np.min(centreline_points.x)))[0]
@@ -467,72 +467,20 @@ class TFCoilsBuilder(OptimisedShapeBuilder):
         z_min_cl = np.min(centreline_points.z)
         z_max_cl = np.max(centreline_points.z)
 
-        inner_xs_rect_top = deepcopy(inner_xs_rect)
-        inner_xs_rect_top.translate((0, 0, z_turn_top))
-        inner_xs_rect_bot = deepcopy(inner_xs_rect)
-        inner_xs_rect_bot.translate((0, 0, z_turn_bot))
-        solid = sweep_shape(
-            [inner_xs_rect_top, outer_xs, inner_xs_rect_bot], self._centreline
-        )
+        inner_xs_top = deepcopy(inner_xs)
+        inner_xs_top.translate((0, 0, z_turn_top))
+        inner_xs_bot = deepcopy(inner_xs)
+        inner_xs_bot.translate((0, 0, z_turn_bot))
+        inner_solid = sweep_shape(inner_xs, self._centreline)
+        plot_2d(self._centreline)
+        plot_2d([inner_xs, self._wp_cross_section], plane="xy")
 
-        # This is because the bounding box of a solid is not to be trusted
-        cut_wires = slice_shape(
-            solid, BluemiraPlacement.from_3_points([0, 0, 0], [1, 0, 0], [1, 0, 1])
-        )
-        cut_wires.sort(key=lambda wire: wire.length)
-        boundary = cut_wires[-1]
-        bb = boundary.bounding_box
-        z_min = bb.z_min
-        z_max = bb.z_max
-        y_in = 0.5 * (
-            self.params.tf_wp_depth + self.params.tk_tf_ins + self.params.tk_tf_side
-        )
+        in_leg = sweep_shape(inner_xs, self._centreline.boundary[0])
+        in_leg_wp = sweep_shape(self._wp_cross_section, self._centreline._boundary[0])
+        show_cad([in_leg, in_leg_wp])
 
-        inner_xs.translate((0, 0, z_min - inner_xs.center_of_mass[2]))
-        inboard_casing = extrude_shape(BluemiraFace(inner_xs), (0, 0, z_max - z_min))
-
-        # Join the straight leg to the curvy bits
-        x_min = np.min(centreline_points.x)
-        idx = np.where(np.isclose(centreline_points.z, z_max_cl))[0]
-        x_turn_top = np.min(centreline_points.x[idx])
-        idx = np.where(np.isclose(centreline_points.z, z_min_cl))[0]
-        x_turn_bot = np.min(centreline_points.x[idx])
-        joiner_top = make_polygon(
-            [
-                [x_min, x_turn_top, x_turn_top, x_min],
-                [-y_in, -y_in, y_in, y_in],
-                [z_max, z_max, z_max, z_max],
-            ],
-            closed=True,
-        )
-        joiner_top = extrude_shape(BluemiraFace(joiner_top), (0, 0, -z_max))
-        joiner_bot = make_polygon(
-            [
-                [x_min, x_turn_bot, x_turn_bot, x_min],
-                [-y_in, -y_in, y_in, y_in],
-                [z_min, z_min, z_min, z_min],
-            ],
-            closed=True,
-        )
-        joiner_bot = extrude_shape(BluemiraFace(joiner_bot), (0, 0, -z_min))
-
-        # Need to cut away the excess joiner extrusions
-        cl = deepcopy(self._centreline)
-        cl.translate((0, -2 * self.params.tf_wp_depth, 0))
-        cl_face = BluemiraFace(cl)
-        cutter = extrude_shape(cl_face, (0, 4 * self.params.tf_wp_depth, 0))
-        joiner_top = boolean_cut(joiner_top, cutter)[0]
-        joiner_bot = boolean_cut(joiner_bot, cutter)[0]
-
-        # Cut away straight sweep before fusing to protect against degenerate faces
-        # Keep the largest piece
-        pieces = boolean_cut(solid, inboard_casing)
-        pieces.sort(key=lambda x: x.volume)
-        solid = pieces[-1]
-
-        case_solid = boolean_fuse([solid, inboard_casing, joiner_top, joiner_bot])
-        outer_ins_solid = BluemiraSolid(ins_solid.boundary[0])
-        case_solid_hollow = boolean_cut(case_solid, outer_ins_solid)[0]
+        case_solid_hollow = boolean_cut(inner_solid, wp_solid)[0]
+        show_cad(case_solid_hollow)
         self._make_cas_xz(case_solid_hollow)
 
         casing = PhysicalComponent("Casing", case_solid_hollow)
@@ -541,58 +489,6 @@ class TFCoilsBuilder(OptimisedShapeBuilder):
         component.add_children(sectors, merge_trees=True)
 
         return component
-
-    def build_nontangent_xyz(self, centreline, xs):
-        """
-        Builds the xyz components for the TF coil for shapes with sharp corners
-
-        Returns
-        -------
-        component: Component
-            The component grouping the results in 3D (xyz).
-        """
-        wp_wires = []
-        wire_prev = None
-        for wp_wire in self._centreline.boundary:
-
-            print(wp_wire.label)
-            plot_2d(wp_wire)
-            x_s = deepcopy(self._wp_cross_section)
-            x_s_xmin = x_s.bounding_box.x_min
-            sweep_start = tuple(wp_wire.discretize(100)[:, 0].reshape(1, -1)[0])
-            x_shift = x_s_xmin - sweep_start[0]
-
-            if not _wire_edges_tangent(BluemiraWire([wire_prev, wp_wire])):
-                if wp_wire.label in ["top_limb"]:
-
-                    x_s.rotate(base=x_s.center_of_mass, direction=(0, 1, 0), degree=90)
-                    x_s.translate((0, 0, sweep_start[2]))
-                    x_s.translate((x_shift, 0, 0))
-                elif wp_wire.label in ["bot_limb"]:
-
-                    x_s.rotate(base=x_s.center_of_mass, direction=(0, 1, 0), degree=90)
-                    x_s.translate((0, 0, sweep_start[2]))
-                    x_s.translate((x_shift, 0, 0))
-
-                elif wp_wire.label in ["outer_limb"]:
-
-                    x_s.rotate(base=x_s.center_of_mass, direction=(0, 1, 0), degree=90)
-                    x_s.translate(
-                        (
-                            sweep_start[0] - x_s.center_of_mass.x,
-                            0,
-                            -x_s.center_of_mass.z + sweep_start[2],
-                        )
-                    )
-                    x_s.translate((0, 0, x_s.bounding_box.x_max - sweep_start[0]))
-
-                wp_wire_cad = sweep_shape(x_s, wp_wire, label=wp_wire.label)
-            else:
-                wp_wire_cad = sweep_shape(x_s, wp_wire, label=wp_wire.label)
-            wire_prev = wp_wire
-
-            wp_wires.append(wp_wire_cad)
-            show_cad(wp_wires, DisplayCADOptions(color="blue", transparency=0.1))
 
     def _make_field_solver(self):
         """
@@ -614,19 +510,49 @@ class TFCoilsBuilder(OptimisedShapeBuilder):
         """
         Make the winding pack x-y cross-section wire
         """
-        x_c = self.params.r_tf_current_ib
-        # PROCESS WP thickness includes insulation and insertion gap
-        d_xc = 0.5 * (self.params.tf_wp_width - 2 * self.params.tk_tf_ins)
-        d_yc = 0.5 * (self.params.tf_wp_depth - 2 * self.params.tk_tf_ins)
+        x_in = self.params.r_tf_in + self.params.tk_tf_nose
+        x_out = x_in + self.params.tf_wp_width
+        # Insulation included in WP width
+
+        # Make a trapezoidal WP
+        tan_half_angle = np.tan(np.pi / self.params.n_TF.value)
+        y_out = self.params.tf_wp_depth / 2
+        y_in = y_out - (x_out - x_in) * tan_half_angle
         wp_xs = make_polygon(
             [
-                [x_c - d_xc, x_c + d_xc, x_c + d_xc, x_c - d_xc],
-                [-d_yc, -d_yc, d_yc, d_yc],
+                [x_in, x_out, x_out, x_in],
+                [-y_in, -y_out, y_out, y_in],
                 [0, 0, 0, 0],
             ],
             closed=True,
         )
         return wp_xs
+
+    def _correct_wp_shape(self, wp_shape):
+        """
+        Correct the winding pack x-y cross-section wire. Cuts existing centrepost
+        and replaces with one created from scratch
+        """
+        inb_centreline = self._centreline.boundary[0]
+        x_out = self.params.r_tf_in + self.params.tk_tf_nose + self.params.tf_wp_width
+        y_out = self.params.tf_wp_depth / 2
+
+        corrector = make_polygon(
+            [
+                [0, x_out, x_out, 0],
+                [-y_out, -y_out, y_out, y_out],
+                [0, 0, 0, 0],
+            ],
+            closed=True,
+        )
+        corrector = sweep_shape(corrector, inb_centreline)
+
+        inb_limb = sweep_shape(self._wp_cross_section, inb_centreline)
+        show_cad(inb_limb)
+        wp_corrected = boolean_cut(wp_shape, corrector)
+        wp_corrected = boolean_fuse(wp_corrected, inb_limb)
+
+        return wp_corrected
 
     def _make_ins_xs(self):
         """
@@ -645,6 +571,7 @@ class TFCoilsBuilder(OptimisedShapeBuilder):
         Make the casing x-y cross-section wires
         """
         x_in = self.params.r_tf_in
+
         # Insulation included in WP width
         x_out = (
             x_in
@@ -664,20 +591,12 @@ class TFCoilsBuilder(OptimisedShapeBuilder):
             closed=True,
         )
 
-        dx_ins = 0.5 * self.params.tf_wp_width.value
-        dy_ins = 0.5 * self.params.tf_wp_depth.value
-
-        # Split the total radial thickness equally on the outboard
-        # This could be done with input params too..
-        tk_total = self.params.tk_tf_front_ib.value + self.params.tk_tf_nose.value
-        tk = 0.5 * tk_total
-
-        dx_out = dx_ins + tk
-        dy_out = dy_ins + self.params.tk_tf_side.value
+        # DON'T Split the total radial thickness equally on the outboard
+        # For ST Designs casing thickness is const all the way around
         outboard_wire = make_polygon(
             [
-                [-dx_out, dx_out, dx_out, -dx_out],
-                [-dy_out, -dy_out, dy_out, dy_out],
+                [x_in, x_out, x_out, x_in],
+                [-y_in, -y_out, y_out, y_in],
                 [0, 0, 0, 0],
             ],
             closed=True,

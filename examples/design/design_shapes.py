@@ -45,20 +45,17 @@ from bluemira.geometry.optimisation import GeometryOptimisationProblem
 
 
 # %%
-class MaximiseLength(GeometryOptimisationProblem):
+class MinimiseLength(GeometryOptimisationProblem):
     """
     A simple geometry optimisation problem that minimises length without constraints.
     """
 
     def calculate_length(self, x):
         """
-        Calculate the length of the GeometryParameterisation.
-
-        Result is negative as we're maximising rather than minimising. Note that most
-        real life problems will minimise.
+        Calculate the length of the GeometryParameterisation
         """
         self.update_parameterisation(x)
-        return -self.parameterisation.create_shape().length
+        return self.parameterisation.create_shape().length
 
     def f_objective(self, x, grad):
         """
@@ -117,7 +114,7 @@ build_config = {
     },
     "TF Coils": {
         "class": "MakeOptimisedShape",
-        "param_class": "PrincetonD",
+        "param_class": "PictureFrame",
         "variables_map": {
             "x1": {
                 "value": "r_tf_in_centre",
@@ -127,12 +124,16 @@ build_config = {
                 "value": "r_tf_out_centre",
                 "lower_bound": 14.0,
             },
-            "dz": {
-                "value": 0.0,
-                "fixed": True,
+            "z1": {
+                "value": 12.0,
+                "lower_bound": 9.0,
+            },
+            "z2": {
+                "value": -12.0,
+                "upper_bound": -9.0,
             },
         },
-        "problem_class": MaximiseLength,
+        "problem_class": MinimiseLength,
         "label": "Shape",
     },
 }
