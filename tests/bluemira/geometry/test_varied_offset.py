@@ -61,7 +61,7 @@ class TestVariedOffsetFunction:
         # Trade-off here between finer discretization when we
         # interpolate and a tighter tolerance. A bit of lee-way here for
         # the sake of fewer points to interpolate
-        assert offset_size == pytest.approx(self.params["max_offset"], rel=1e-2)
+        assert offset_size == pytest.approx(self.params["max_offset"], rel=1e-3)
 
     def test_offset_from_shape_never_lt_minor_offset(self):
         offset_wire = varied_offset(self.picture_frame, **self.params)
