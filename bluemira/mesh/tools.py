@@ -28,6 +28,7 @@ Credit: F. Loiseau, R. Delaporte-Mathurin, and C. Weickhmann
 
 import json
 import os
+from typing import Tuple
 
 import meshio
 import numpy as np
@@ -56,7 +57,12 @@ BOUNDARY_SUFFIX = "boundaries.xdmf"
 LINKFILE_SUFFIX = "linkfile.json"
 
 
-def msh_to_xdmf(mesh_name, dimensions=(0, 2), directory=".", verbose=False):
+def msh_to_xdmf(
+    mesh_name: str,
+    dimensions: Tuple[int] = (0, 2),
+    directory: str = ".",
+    verbose: bool = False,
+):
     """
     Convert a MSH file to an XMDF file.
 
