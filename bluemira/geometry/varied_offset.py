@@ -25,35 +25,35 @@ from bluemira.geometry.wire import BluemiraWire
 
 
 def varied_offset(
-    shape: BluemiraWire,
-    minor_offset: float,
-    major_offset: float,
-    start_var_offset_angle: float,
-    end_var_offset_angle: float,
+    wire: BluemiraWire,
+    min_offset: float,
+    max_offset: float,
+    min_offset_angle: float,
+    max_offset_angle: float,
     num_points: int = 200,
 ) -> BluemiraWire:
     """
     Create a new wire that offsets the given wire using a variable offset.
 
     All angles are measured from the negative x-direction (9 o'clock).
-    The offset will be 'minor_offset' between the negative x-direction
-    and 'start_var_offset_angle'. Between 'end_var_offset_angle' and
-    the positive x-direction the offset will be 'major_offset'. Between
-    those angles, the offset will linearly transition between the major
-    and minor.
+    The offset will be 'min_offset' between the negative x-direction
+    and 'min_offset_angle'. Between 'max_offset_angle' and
+    the positive x-direction the offset will be 'max_offset'. Between
+    those angles, the offset will linearly transition between the min
+    and max.
 
     Parameters
     ----------
-    shape: BluemiraWire
-        The wire to create the offset from. This shape should be convex
-        in order to get a sensible offset shape.
-    minor_offset: float
+    wire: BluemiraWire
+        The wire to create the offset from. This should be convex in
+        order to get a sensible, non-intersecting, offset.
+    min_offset: float
         The size of the minimum offset.
-    major_offset: float
+    max_offset: float
         The size of the maximum offset.
-    start_var_offset_angle: float
+    min_offset_angle: float
         The angle at which the variable offset should begin, in degrees.
-    end_var_offset_angle: float
+    max_offset_angle: float
         The angle at which the variable offset should end, in degrees.
     num_points: int
         The number of points to use in the discretization of the input
@@ -61,80 +61,78 @@ def varied_offset(
 
     Returns
     -------
-    wire: BluemiraWire
-        The varied offset wire.
+    offset_wire: BluemiraWire
+        New wire at a variable offset to the input.
     """
-    shape_coords = shape.discretize(num_points).xz
-    start_var_offset_angle = np.radians(start_var_offset_angle)
-    end_var_offset_angle = np.radians(end_var_offset_angle)
-    center_of_mass = shape.center_of_mass[[0, 2]].reshape((2, 1))
+    wire_coords = wire.discretize(num_points).xz
+    min_offset_angle = np.radians(min_offset_angle)
+    max_offset_angle = np.radians(max_offset_angle)
+    center_of_mass = wire.center_of_mass[[0, 2]].reshape((2, 1))
 
     ib_axis = np.array([-1, 0])
-    angles = np.radians(find_clockwise_angle_2d(ib_axis, shape_coords - center_of_mass))
+    angles = np.radians(find_clockwise_angle_2d(ib_axis, wire_coords - center_of_mass))
     offsets = _calculate_offset_magnitudes(
-        angles,
-        start_var_offset_angle,
-        end_var_offset_angle,
-        minor_offset,
-        major_offset,
+        angles, min_offset_angle, max_offset_angle, min_offset, max_offset
     )
-    normals = _calculate_normals_2d(shape_coords)
-    new_shape_coords = shape_coords + normals * offsets
+    normals = _calculate_normals_2d(wire_coords)
+    new_shape_coords = wire_coords + normals * offsets
     return _2d_coords_to_wire(new_shape_coords)
 
 
 def _calculate_offset_magnitudes(
     angles,
-    start_var_offset_angle,
-    end_var_offset_angle,
-    minor_offset,
-    major_offset,
+    min_offset_angle,
+    max_offset_angle,
+    min_offset,
+    max_offset,
 ):
     """Calculate the magnitude of the offset at each angle."""
     offsets = np.empty_like(angles)
+    # All angles less than min_offset_angle set to min offset
     constant_minor_offset_idxs = np.logical_or(
-        angles < start_var_offset_angle, angles > (2 * np.pi - start_var_offset_angle)
+        angles < min_offset_angle, angles > (2 * np.pi - min_offset_angle)
     )
-    offsets[constant_minor_offset_idxs] = minor_offset
+    offsets[constant_minor_offset_idxs] = min_offset
 
+    # All angles greater than max_offset_angle set to max offset
     constant_major_offset_idxs = np.logical_and(
-        angles >= end_var_offset_angle, angles <= 2 * np.pi - end_var_offset_angle
+        angles > max_offset_angle, angles < 2 * np.pi - max_offset_angle
     )
-    offsets[constant_major_offset_idxs] = major_offset
+    offsets[constant_major_offset_idxs] = max_offset
 
     variable_offset_idxs = np.logical_not(
         np.logical_or(constant_minor_offset_idxs, constant_major_offset_idxs)
     )
     offsets[variable_offset_idxs] = _calculate_variable_offset_magnitudes(
         angles[variable_offset_idxs],
-        start_var_offset_angle,
-        end_var_offset_angle,
-        minor_offset,
-        major_offset,
+        min_offset_angle,
+        max_offset_angle,
+        min_offset,
+        max_offset,
     )
     return offsets
 
 
 def _calculate_variable_offset_magnitudes(
-    angles, start_angle, end_angle, minor_offset, major_offset
+    angles, start_angle, end_angle, min_offset, max_offset
 ):
     """
     Calculate the variable offset magnitude for each of the given angles.
 
     The offset increases linearly between start_angle and end_angle,
-    between minor_offset and major_offset.
+    between min_offset and max_offset.
     """
     angles[angles > np.pi] = 2 * np.pi - angles[angles > np.pi]
     angle_fraction = (angles - start_angle) / (end_angle - start_angle)
-    return minor_offset + angle_fraction * (major_offset - minor_offset)
+    return min_offset + angle_fraction * (max_offset - min_offset)
 
 
-def _calculate_normals_2d(shape_coords: np.ndarray) -> np.ndarray:
+def _calculate_normals_2d(wire_coords: np.ndarray) -> np.ndarray:
     """
     Calculate the unit normals to the tangents at each of the given
     coordinates.
     """
-    gradients = np.gradient(shape_coords, axis=1)
+    gradients = np.gradient(wire_coords, axis=1)
     normals = np.empty_like(gradients)
     normals[0] = gradients[1]
     normals[1] = -gradients[0]

@@ -43,10 +43,10 @@ class TestVariedOffsetFunction:
 
     def setup_method(self):
         self.params = {
-            "minor_offset": 1,
-            "major_offset": 4,
-            "start_var_offset_angle": 45,  # degrees
-            "end_var_offset_angle": 160,  # degrees
+            "min_offset": 1,
+            "max_offset": 4,
+            "min_offset_angle": 45,  # degrees
+            "max_offset_angle": 160,  # degrees
         }
 
     def test_offset_wire_is_closed(self):
@@ -61,21 +61,21 @@ class TestVariedOffsetFunction:
         # Trade-off here between finer discretization when we
         # interpolate and a tighter tolerance. A bit of lee-way here for
         # the sake of fewer points to interpolate
-        assert offset_size == pytest.approx(self.params["major_offset"], rel=1e-2)
+        assert offset_size == pytest.approx(self.params["max_offset"], rel=1e-2)
 
     def test_offset_from_shape_never_lt_minor_offset(self):
         offset_wire = varied_offset(self.picture_frame, **self.params)
 
         ang_space = np.linspace(0, 2 * np.pi, 50)
         offset_size = self._get_offset_sizes(offset_wire, self.picture_frame, ang_space)
-        assert np.all(offset_size >= self.params["minor_offset"])
+        assert np.all(offset_size >= self.params["min_offset"])
 
     def test_offset_never_decreases_between_offset_angles(self):
         offset_wire = varied_offset(self.picture_frame, **self.params)
 
         ang_space = np.linspace(
-            np.radians(self.params["start_var_offset_angle"]),
-            np.radians(self.params["end_var_offset_angle"]),
+            np.radians(self.params["min_offset_angle"]),
+            np.radians(self.params["max_offset_angle"]),
             50,
         )
         offset_size = self._get_offset_sizes(offset_wire, self.picture_frame, ang_space)
@@ -86,7 +86,7 @@ class TestVariedOffsetFunction:
         offset_wire = varied_offset(self.picture_frame, **self.params)
 
         offset_size = self._get_offset_sizes(offset_wire, self.picture_frame, 0)
-        assert offset_size == pytest.approx(self.params["minor_offset"], 1e-3)
+        assert offset_size == pytest.approx(self.params["min_offset"], 1e-3)
 
     @staticmethod
     def _interpolation_func_closed_wire(wire: BluemiraWire) -> Callable:
