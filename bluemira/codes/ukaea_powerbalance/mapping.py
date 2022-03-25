@@ -26,25 +26,22 @@ from bluemira.base.parameter import ParameterMapping
 from bluemira.codes.ukaea_powerbalance.constants import MODEL_NAME
 
 mappings = {
-    "TF_cond_tech": ParameterMapping(
-        "structural.Magnets.isMagnetTFSuperconCoil", False, True
-    ),
     "TF_res_bus": ParameterMapping(
-        f"{MODEL_NAME}.magnetpower.magnetTF.Rfeeder", False, True
+        f"{MODEL_NAME}.magnetpower.magnetTF.Rfeeder", True, False
     ),
-    "TF_E_tot": ParameterMapping(
-        f"{MODEL_NAME}.magnetpower.magnetTF.magEnergy", False, True
+    "TF_E_stored": ParameterMapping(
+        f"{MODEL_NAME}.magnetpower.magnetTF.magEnergy", True, False
     ),
     "TF_res_tot": ParameterMapping(
-        f"{MODEL_NAME}.magnetpower.magnetTF.Rtot", False, True
+        f"{MODEL_NAME}.magnetpower.magnetTF.Rtot", True, False
     ),
-    "TF_currpt_ob": ParameterMapping("profiles.TFCoil.max_current", False, True),
+    "TF_currpt_ob": ParameterMapping("profiles.TFCoil.max_current", True, False),
     "TF_respc_ob": ParameterMapping(
-        f"{MODEL_NAME}.magnetpower.magnetTF.Roleg", False, True
+        f"{MODEL_NAME}.magnetpower.magnetTF.Roleg", True, False
     ),
-    "P_bd_in": ParameterMapping("profiles.Heat.max_power", False, True),
+    "P_bd_in": ParameterMapping("profiles.Heat.max_power", True, False),
     "condrad_cryo_heat": ParameterMapping(
-        f"{MODEL_NAME}.cryogenicpower.PFcrMW", False, True
+        f"{MODEL_NAME}.cryogenicpower.PFcrMW", True, False
     ),
-    "tk_tp_tot": ParameterMapping("profiles.ThermalPowerOut.max_power", False, True),
+    "tk_tp_tot": ParameterMapping("profiles.ThermalPowerOut.max_power", True, False),
 }

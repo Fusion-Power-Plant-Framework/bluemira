@@ -24,14 +24,12 @@ Test for power balance run
 """
 
 # %%
-import logging
-
 import bluemira.codes.ukaea_powerbalance as power_balance
 from bluemira.base.config import Configuration
+from bluemira.base.logs import set_log_level
 from bluemira.codes.ukaea_powerbalance.constants import MODEL_NAME
 
-logging.basicConfig()
-logging.getLogger("PowerBalance").setLevel(logging.DEBUG)
+set_log_level("DEBUG", logger_names=["PowerBalance"])
 
 # %%[markdown]
 # # Configure Power Balance Models (UKAEA)
@@ -48,6 +46,8 @@ params = Configuration(param_list)
 
 # %%
 problem_settings = {
+    "currdrive_eff_model": 8,
+    "structural.Magnets.isMagnetTFSuperconCoil": 2,
     f"{MODEL_NAME}.CryogenicPower.CD.FBCol_2": 0.00041,
     f"{MODEL_NAME}.wasteheatpower.wasteHeatCryo.Height": 3.2,
     f"{MODEL_NAME}.magnetpower.magnetTF.numCoils": 20,

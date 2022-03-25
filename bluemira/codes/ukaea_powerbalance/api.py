@@ -29,8 +29,9 @@ import os
 import pprint
 import shutil
 from enum import auto
+from operator import itemgetter
 from pathlib import Path
-from typing import Optional
+from typing import List, Optional, Union
 
 import pandas
 import power_balance.configs as ukaea_pbm_conf
@@ -184,7 +185,7 @@ class Setup(interface.Setup):
     # TODO get inputs update inputs write inputs io_manager
     # file names
     # use _get_new_inputs, involve problem settings
-    def __init__(self, parent, *args, problem_settings=None, **kwargs):
+    def __init__(self, parent, *args, **kwargs):
         super().__init__(parent, *args, **kwargs)
 
         self.default_plasma = toml.load(
@@ -198,24 +199,14 @@ class Setup(interface.Setup):
             )
         )
 
-        self._problem_settings = problem_settings if problem_settings is not None else {}
         self.input_file = "powerbalance_input.dat"
         self.output_file = "powerbalance_outputs.dat"
         self.io_manager = Inputs(
             self.parent.run_dir,
             config=self._default_config,
-            new_inputs={**self._get_new_inputs(), **self._problem_settings},
+            new_inputs={**self.get_new_inputs(), **self._problem_settings},
         )
         self._generate_profiles()
-
-    def _get_new_inputs(self):
-        """
-        Get new key mappings from the ParameterFrame.
-        """
-        return {
-            pl_key: self.params.get(bm_key)
-            for pl_key, bm_key in self._send_mapping.items()
-        }
 
     def _generate_hcd_profiles(self, profile_dir, plasma_tuple):
         try:
@@ -310,7 +301,7 @@ class Setup(interface.Setup):
         """
         Update input values
         """
-        self.io_manager.modify({**self._get_new_inputs(), **self._problem_settings})
+        self.io_manager.modify({**self.get_new_inputs(), **self.parent.problem_settings})
 
     def _run(self):
         """
@@ -427,9 +418,17 @@ class Solver(interface.FileProgramInterface):
             problem_settings=build_config.get("problem_settings", None),
         )
 
-    @property
-    def problem_settings(self):
+    def get_raw_variables(self, params: Union[List, str]):
         """
-        Get problem settings dictionary
+        Get raw parameters from powerbalance
+
+        Parameters
+        ----------
+        params: Union[List, str]
+            parameter names to access
+
+        Returns
+        -------
+        values list
         """
-        return self.setup_obj._problem_settings
+        return itemgetter(*params)(self.io_manager)
