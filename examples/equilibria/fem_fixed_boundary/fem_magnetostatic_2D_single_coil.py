@@ -37,8 +37,6 @@ Application of the dolfin fem 2D magnetostatic to a single coil problem
 
 # %%
 
-import os
-
 import dolfin
 import matplotlib.pyplot as plt
 import numpy as np
@@ -46,7 +44,6 @@ import numpy as np
 import bluemira.geometry.tools as tools
 import bluemira.magnetostatics.greens as greens
 from bluemira.base.components import Component, PhysicalComponent
-from bluemira.base.file import get_bluemira_root
 from bluemira.equilibria.fem_fixed_boundary.fem_magnetostatic_2D import (
     FemMagnetostatic2d,
 )
@@ -54,10 +51,7 @@ from bluemira.equilibria.fem_fixed_boundary.utilities import ScalarSubFunc, b_co
 from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.placement import BluemiraPlacement
 from bluemira.mesh import meshing
-from bluemira.utilities.tools import get_module
-
-msh2xdmf = get_module(os.path.join(get_bluemira_root(), "..", "msh2xdmf", "msh2xdmf.py"))
-
+from bluemira.mesh.tools import import_mesh, msh_to_xdmf
 
 # %%[markdown]
 
@@ -88,7 +82,6 @@ poly_coil = tools.make_polygon(
     closed=True,
     label="poly_enclo",
 )
-poly_coil.change_placement((BluemiraPlacement(axis=[1.0, 0.0, 0.0], angle=-90)))
 
 poly_coil.mesh_options = {"lcar": lcar_coil, "physical_group": "poly_coil"}
 coil = BluemiraFace(poly_coil)
@@ -104,7 +97,6 @@ poly_enclo = tools.make_polygon(
     closed=True,
     label="poly_enclo",
 )
-poly_enclo.change_placement((BluemiraPlacement(axis=[1.0, 0.0, 0.0], angle=-90)))
 
 poly_enclo.mesh_options = {"lcar": lcar_enclo, "physical_group": "poly_enclo"}
 enclosure = BluemiraFace([poly_enclo, poly_coil])
@@ -137,11 +129,11 @@ m(c_universe, dim=2)
 
 # %%
 
-msh2xdmf.msh2xdmf("Mesh.msh", dim=2, directory=".")
+msh_to_xdmf("Mesh.msh", dimensions=(0, 2), directory=".")
 
-mesh, boundaries, subdomains, labels = msh2xdmf.import_mesh(
-    prefix="Mesh",
-    dim=2,
+mesh, boundaries, subdomains, labels = import_mesh(
+    "Mesh",
+    dimensions=(0, 2),
     directory=".",
     subdomains=True,
 )
