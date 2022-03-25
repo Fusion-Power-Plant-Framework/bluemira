@@ -142,12 +142,13 @@ class Mesh:
     A class for supporting the creation of meshes and writing out those meshes to files.
     """
 
-    def __init__(self, modelname="Mesh", terminal=1, meshfile=None):
+    def __init__(self, modelname="Mesh", terminal=0, meshfile=None, logfile="gmsh.log"):
         self.modelname = modelname
         self.terminal = terminal
         self.meshfile = (
             ["Mesh.geo_unrolled", "Mesh.msh"] if meshfile is None else meshfile
         )
+        self.logfile = logfile
 
     def _check_meshfile(self, meshfile):
         """
@@ -179,6 +180,8 @@ class Mesh:
         """
         Generate the mesh and save it to file.
         """
+        bluemira_print("Starting mesh process...")
+
         if "Component" in [c.__name__ for c in inspect.getmro(type(obj))]:
             from bluemira.base.tools import create_compound_from_component
 
@@ -209,9 +212,12 @@ class Mesh:
                 _FreeCADGmsh._save_mesh(file)
 
             # close gmsh
-            _FreeCADGmsh._finalize_mesh()
+            _FreeCADGmsh._finalize_mesh(self.logfile)
         else:
             raise ValueError("Only Meshable objects can be meshed")
+
+        bluemira_print("Mesh process completed.")
+
         return buffer
 
     def __mesh_obj(self, obj, dim):
@@ -569,6 +575,8 @@ class _FreeCADGmsh:
         # on the terminal, just set the "General.Terminal" option to 1:
         gmsh.option.setNumber("General.Terminal", terminal)
 
+        gmsh.logger.start()
+
         # gmsh.option.setNumber("Mesh.MshFileVersion", 2.0)
 
         # Next we add a new model named "t1" (if gmsh.model.add() is
@@ -582,7 +590,13 @@ class _FreeCADGmsh:
         gmsh.write(meshfile)
 
     @staticmethod
-    def _finalize_mesh():
+    def _finalize_mesh(logfile="gmsh.log"):
+
+        with open(logfile, "w") as file_handler:
+            file_handler.write("\n".join(str(item) for item in gmsh.logger.get()))
+
+        gmsh.logger.stop()
+
         # This should be called when you are done using the Gmsh Python API:
         gmsh.finalize()
 
