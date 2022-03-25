@@ -69,10 +69,6 @@ lcar_coil = 0.01
 # %%[markdown]
 
 # create the coil (rectangular cross section) and set the mesh options
-# Note: just to simulate a "real" application, enclosure is generated into the xz
-# plane, but then its placement is changed in order to be in the xy plane (due to a
-# limitation in the importing of the mesh with msh2xdmf for which only the first 2
-# column are considered when importing a 2D mesh)
 
 # %%
 
@@ -123,8 +119,7 @@ m(c_universe, dim=2)
 
 # %%[markdown]
 
-# Convert the mesh in xdmf for reading in fenics. Note that this requires the msh2xdmf
-# module to be available.
+# Convert the mesh in xdmf for reading in fenics.
 
 # %%
 
