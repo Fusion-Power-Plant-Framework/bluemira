@@ -92,7 +92,7 @@ def msh_to_xdmf(
         * BOUNDARY_SUFFIX
         * LINKFILE_SUFFIX
     """
-    _check_dimensions(dimensions)
+    dimensions = _check_dimensions(dimensions)
 
     file_path = os.sep.join([directory, mesh_name])
     if not os.path.exists(file_path):
@@ -130,7 +130,7 @@ def import_mesh(file_prefix="mesh", subdomains=False, dimensions=2, directory=".
     link_dict: dict
         Link dictionary between MSH and XDMF objects
     """
-    _check_dimensions(dimensions)
+    dimensions = _check_dimensions(dimensions)
     domain_file = os.sep.join([directory, f"{file_prefix}_{DOMAIN_SUFFIX}"])
     boundary_file = os.sep.join([directory, f"{file_prefix}_{BOUNDARY_SUFFIX}"])
     link_file = os.sep.join([directory, f"{file_prefix}_{LINKFILE_SUFFIX}"])
@@ -165,6 +165,9 @@ def import_mesh(file_prefix="mesh", subdomains=False, dimensions=2, directory=".
 
 
 def _check_dimensions(dimensions):
+    if isinstance(dimensions, int):
+        dimensions = tuple(np.arange(dimensions))
+
     if len(dimensions) not in [2, 3]:
         raise MeshConversionError(
             f"Length of dimensions must be either 2 or 3, not: {len(dimensions)}"
@@ -179,12 +182,15 @@ def _check_dimensions(dimensions):
         raise MeshConversionError(
             f"Dimensions tuple cannot have repeated integers: {dimensions}"
         )
+    return dimensions
 
 
 def _export_domain(mesh, file_prefix, directory, dimensions):
     """
     Export the domain of a mesh to XDMF.
     """
+    dimensions = _check_dimensions(dimensions)
+
     cell_type = CELL_TYPE_DIM[len(dimensions) + 1]
     data = _get_data(mesh, cell_type)
 
@@ -213,6 +219,8 @@ def _export_boundaries(mesh, file_prefix, directory, dimensions):
     """
     Export the boundaries of a mesh to XDMF.
     """
+    dimensions = _check_dimensions(dimensions)
+
     cell_type = CELL_TYPE_DIM[len(dimensions)]
     data = _get_data(mesh, cell_type)
 
