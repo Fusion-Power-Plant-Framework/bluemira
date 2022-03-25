@@ -104,7 +104,7 @@ class Setup(interface.Setup):
             )
 
         if use_bp_inputs is True:
-            _inputs = self._get_new_inputs(remapper=update_obsolete_vars)
+            _inputs = self.get_new_inputs(remapper=update_obsolete_vars)
             for key, value in _inputs.items():
                 writer.add_parameter(key, value)
             for key, value in self.parent.problem_settings.items():

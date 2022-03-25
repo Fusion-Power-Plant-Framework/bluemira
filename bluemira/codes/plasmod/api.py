@@ -343,16 +343,14 @@ class Setup(interface.Setup):
         self.output_file = "plasmod_outputs.dat"
         self.profiles_file = "plasmod_profiles.dat"
         self.io_manager = Inputs(
-            {**self._get_new_inputs(), **self.parent.problem_settings}
+            {**self.get_new_inputs(), **self.parent.problem_settings}
         )
 
     def update_inputs(self):
         """
         Update plasmod inputs
         """
-        self.io_manager.modify(
-            {**self._get_new_inputs(), **self.parent.problem_settings}
-        )
+        self.io_manager.modify({**self.get_new_inputs(), **self.parent.problem_settings})
 
     def write_input(self):
         """
