@@ -1330,12 +1330,29 @@ class ParameterFrame:
 
     @staticmethod
     def _from_iterable(value):
+        """
+        Organise a value into value source unit.
+
+        Parameters
+        ----------
+        value: Union[List, Tuple, Dict, Parameter]
+
+        Returns
+        -------
+        value, source, unit
+
+        Notes
+        -----
+        Attemps to parse out source and unit from the value.
+        If value is a list of two or three elements it assumes
+        [value, source, unit] ordering which could be a source of errors.
+
+        """
         if (
             isinstance(value, (list, tuple))
             and len(value) in [2, 3]
             and isinstance(value[1], (str, type(None)))
         ):
-            # bluemira_debug("Consider using a dictionary for ordering safety")
             unit = value[2] if len(value) == 3 else None
             source = value[1]
             value = value[0]
