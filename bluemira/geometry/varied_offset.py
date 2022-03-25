@@ -75,7 +75,13 @@ def varied_offset(
         raise GeometryError(
             "Cannot create a variable offset from a wire that is not closed."
         )
-    wire_coords = wire.discretize(num_points).xz
+    coordinates = wire.discretize(num_points)
+    if not np.all(coordinates.normal_vector == [0, 1, 0]):
+        raise GeometryError(
+            "Cannot create a variable offset from a wire that is not planar in xz."
+        )
+
+    wire_coords = coordinates.xz
     min_offset_angle = np.radians(min_offset_angle)
     max_offset_angle = np.radians(max_offset_angle)
     center_of_mass = wire.center_of_mass[[0, 2]].reshape((2, 1))

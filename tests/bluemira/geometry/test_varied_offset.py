@@ -103,6 +103,12 @@ class TestVariedOffsetFunction:
         with pytest.raises(GeometryError):
             varied_offset(wire, 1, 2, 50, 170)
 
+    def test_GeometryError_raised_given_input_wire_not_xz_planar(self):
+        wire = make_circle(axis=(1, 1, 1))
+
+        with pytest.raises(GeometryError):
+            varied_offset(wire, 1, 2, 50, 170)
+
     @staticmethod
     def _interpolation_func_closed_wire(wire: BluemiraWire) -> Callable:
         coords = wire.discretize(200).xz
