@@ -137,7 +137,9 @@ class Setup(Task):
         NAME = self.parent.NAME
         self._parameter_mapping = get_recv_mapping(params, NAME, recv_all=True)
         self._params = type(params).from_template(self._parameter_mapping.values())
-        self._params.update_kw_parameters(params.to_dict(verbose=True))
+        self._params.update_kw_parameters(
+            {k: params.get_param(k) for k in self._params.keys()}
+        )
         self.__recv_mapping = get_recv_mapping(params, NAME)
         self.__send_mapping = get_send_mapping(params, NAME)
 

@@ -1335,7 +1335,7 @@ class ParameterFrame:
             and len(value) in [2, 3]
             and isinstance(value[1], (str, type(None)))
         ):
-            bluemira_debug("Consider using a dictionary for ordering safety")
+            # bluemira_debug("Consider using a dictionary for ordering safety")
             unit = value[2] if len(value) == 3 else None
             source = value[1]
             value = value[0]
