@@ -268,7 +268,8 @@ def make_bspline(
 
     if start_tangent and not end_tangent or end_tangent and not start_tangent:
         bluemira_warn(
-            "You must set both start and end tangencies or neither when creating a bspline. Start and end tangencies ignored."
+            "You must set both start and end tangencies or neither when creating a "
+            "bspline. Start and end tangencies ignored."
         )
 
     bsc = Part.BSplineCurve()

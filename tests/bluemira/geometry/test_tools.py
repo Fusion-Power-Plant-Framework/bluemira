@@ -29,6 +29,7 @@ from bluemira.geometry.tools import (
     _signed_distance_2D,
     convex_hull_wires_2d,
     extrude_shape,
+    make_bspline,
     make_circle,
     make_polygon,
     offset_wire,
@@ -412,3 +413,23 @@ class TestConvexHullWires2d:
 
         with pytest.raises(ValueError):
             convex_hull_wires_2d([circle], 10, plane=bad_plane)
+
+
+class TestMakeBSpline:
+    @pytest.mark.parametrize(
+        "st, et, expected_length",
+        [
+            (None, None, 1.0),
+            ([0, 0, 1], [0, 0, 1], 1.1399463039310453),
+            ([0, 0, -1], [0, 0, -1], 1.1399463039310453),
+            ([0, 0, -1], [0, 0, 1], 1.2212551596513086),
+            ([0, 0, 1], [0, 0, -1], 1.2212551596513086),
+        ],
+    )
+    def test_tangencies(self, st, et, expected_length):
+        """
+        No.. I didn't work out the actual values :), so this is more of a regression test
+        """
+        points = {"x": [0, 1], "y": 0, "z": [0, 0]}
+        spline = make_bspline(points, closed=False, start_tangent=st, end_tangent=et)
+        assert np.isclose(spline.length, expected_length)
