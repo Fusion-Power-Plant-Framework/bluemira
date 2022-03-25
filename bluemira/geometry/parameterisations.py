@@ -296,6 +296,8 @@ class PrincetonD(GeometryParameterisation):
         outer_arc = make_bspline(
             xyz.T,
             label="outer_arc",
+            start_tangent=[0, 0, 1],
+            end_tangent=[0, 0, -1],
         )
         # TODO: Enforce tangency of this bspline... causing issues with offsetting
         straight_segment = wire_closure(outer_arc, label="straight_segment")
