@@ -182,8 +182,8 @@ class NLOPTOptimiser:
         self,
         algorithm_name,
         n_variables=None,
-        opt_conditions={},
-        opt_parameters={},
+        opt_conditions=None,
+        opt_parameters=None,
     ):
         self.opt_conditions = opt_conditions
         self.opt_parameters = opt_parameters
@@ -283,6 +283,9 @@ class NLOPTOptimiser:
         opt_parameters: dict
             Optimisation algorithm parameters to use
         """
+        if opt_parameters is None:
+            return
+
         for k, v in opt_parameters.items():
             if self._opt.has_param(k):
                 self._opt.set_param(k, v)
@@ -301,6 +304,9 @@ class NLOPTOptimiser:
         opt_conditions: dict
             Termination conditions for the optimisation algorithm
         """
+        if opt_conditions is None:
+            return
+
         conditions = process_NLOPT_conditions(opt_conditions)
 
         if "ftol_abs" in conditions:

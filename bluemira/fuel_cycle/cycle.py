@@ -26,13 +26,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 from scipy.interpolate import interp1d
 
-from bluemira.base.constants import (
-    N_AVOGADRO,
-    T_LAMBDA,
-    T_MOLAR_MASS,
-    YR_TO_S,
-    pam3s_to_mols,
-)
+from bluemira.base.constants import N_AVOGADRO, T_LAMBDA, T_MOLAR_MASS, YR_TO_S, raw_uc
 from bluemira.base.look_and_feel import bluemira_print
 from bluemira.base.parameter import ParameterFrame
 from bluemira.fuel_cycle.blocks import FuelCycleComponent, FuelCycleFlow
@@ -211,7 +205,7 @@ class EUDEMOFuelCycleModel:
         self.DEMO_rt = np.array(timeline["fusion_time"][:n])
         self.DT_rate = timeline["DT_rate"][:n]
         self.DD_rate = timeline["DD_rate"][:n]
-        m_gas = T_MOLAR_MASS * pam3s_to_mols(self.params.m_gas) / 1000
+        m_gas = T_MOLAR_MASS * raw_uc(self.params.m_gas, "Pa.m^3/s", "mol/s") / 1000
         self.grate = m_gas * self.DT_rate / max(self.DT_rate)
         self.bci = timeline["blanket_change_index"]
         # Burn rate of T [kgs of T per second]

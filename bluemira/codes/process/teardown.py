@@ -24,24 +24,17 @@ PROCESS teardown functions
 """
 import json
 import os
-import re
-from collections import namedtuple
 from typing import List, Union
 
 import matplotlib.patches as patches
 import matplotlib.pyplot as plt
 import numpy as np
 
-import bluemira.base as bm_base
 import bluemira.codes.interface as interface
 from bluemira.base.look_and_feel import bluemira_print, bluemira_warn
+from bluemira.base.parameter import ParameterFrame
 from bluemira.codes.error import CodesError
-from bluemira.codes.process.api import (
-    PROCESS_DICT,
-    MFile,
-    convert_unit_p_to_b,
-    update_obsolete_vars,
-)
+from bluemira.codes.process.api import PROCESS_DICT, MFile, update_obsolete_vars
 from bluemira.codes.process.constants import NAME as PROCESS
 from bluemira.utilities.tools import is_num
 
@@ -53,14 +46,19 @@ class BMFile(MFile):
     Builds ParameterFrames of output in logical chunks
     """
 
-    def __init__(self, path, parameter_mapping):
+    def __init__(self, path, parameter_mapping, units):
         filename = os.path.join(path, "MFILE.DAT")
 
         if not os.path.isfile(filename):
             raise CodesError(f"No MFILE.dat found in: {path}")
 
         super().__init__(filename=filename)
-        self.defs = self.unitsplit(PROCESS_DICT["DICT_DESCRIPTIONS"])
+
+        self.defs = self.get_defs(PROCESS_DICT["DICT_DESCRIPTIONS"])
+
+        # TODO read units directly from PROCESS, waiting until python api
+        self.units = units
+
         self.ptob_mapping = parameter_mapping
         self.btop_mapping = self.new_mappings(
             {val: key for key, val in parameter_mapping.items()}
@@ -88,30 +86,12 @@ class BMFile(MFile):
             new_mappings[key] = update_obsolete_vars(val)
         return new_mappings
 
-    @staticmethod
-    def linesplit(line):
+    def get_defs(self, dictionary):
         """
-        Split a line in the MFILE.dat.
+        Get value definitions
         """
-        # TODO improve re catching and pick up [] etc
-        lin = line.split("\n")
-        val = " ".join(lin)
-        try:
-            unit = re.search(r"\((\w+)\)", lin[0]).group(1)
-            val = val.replace("(" + unit + ")", "")
-        except AttributeError:
-            unit = "dimensionless"
-        return val, unit
-
-    def unitsplit(self, dictionary):
-        """
-        Splits description of variable and returns dict of key, (value, unit)
-        """
-        p = namedtuple("PROCESSparameter", ["Descr", "Unit"])
-        dictionary = {}
         for key, val in dictionary.items():
-            val, unit = self.linesplit(val)
-            dictionary[key] = p(val, unit)
+            dictionary[key] = " ".join(val.split("\n"))
         return dictionary
 
     def build_parameter_frame(self, msubdict):
@@ -121,12 +101,15 @@ class BMFile(MFile):
         param = []
         for key, val in msubdict.items():
             try:
-                desc, unit = self.defs[key][0], convert_unit_p_to_b(self.defs[key][1])
+                desc = self.defs[key]
             except KeyError:
-                desc = key + ": PROCESS variable description not found"
+                desc = f"{key}: PROCESS variable description not found"
+            try:
+                unit = self.units[key]
+            except KeyError:
                 unit = "dimensionless"
             param.append([key, desc, val, unit, None, PROCESS])
-        return bm_base.ParameterFrame(param)
+        return ParameterFrame(param)
 
     def read(self):
         """
@@ -301,7 +284,8 @@ class Teardown(interface.Teardown):
             else self.parent._recv_mapping.values()
         )
         param = self.bm_file.extract_outputs(var)
-        self.parent.params.update_kw_parameters(dict(zip(var, param)), source=PROCESS)
+
+        self.prepare_outputs(dict(zip(var, param)), source=PROCESS)
 
     def read_mfile(self, path: str = None):
         """
@@ -319,7 +303,12 @@ class Teardown(interface.Teardown):
             The object representation of the output MFILE.DAT.
         """
         m_file = BMFile(
-            self.parent.run_dir if path is None else path, self.parent._parameter_mapping
+            self.parent.run_dir if path is None else path,
+            self.parent._parameter_mapping,
+            {
+                key: self.parent.params.get_param(val).mapping[PROCESS].unit
+                for key, val in self.parent._parameter_mapping.items()
+            },
         )
         self._check_feasible_solution(m_file)
         return m_file
@@ -336,7 +325,7 @@ class Teardown(interface.Teardown):
         with open(filename, "r") as fh:
             process = json.load(fh)
 
-        self.parent.params.update_kw_parameters(process, source=f"{PROCESS} (Mock)")
+        self.prepare_outputs(process, source=f"{PROCESS} (Mock)")
 
     def _check_PROCESS_output_files(self):
         """

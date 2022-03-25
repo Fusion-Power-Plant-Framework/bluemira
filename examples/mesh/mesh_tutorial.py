@@ -23,6 +23,19 @@
 Some examples of using bluemira mesh module.
 """
 
+# %%[markdown]
+
+# # Introduction
+
+# In this example, we will show how to use the mesh module to create a 2D mesh for fem
+# application
+
+# # Imports
+
+# Import necessary module definitions.
+
+# %%
+
 import dolfin
 import matplotlib.pyplot as plt
 
@@ -30,19 +43,20 @@ import bluemira.geometry.tools as tools
 from bluemira.base.components import Component, PhysicalComponent
 from bluemira.equilibria.shapes import JohnerLCFS
 from bluemira.geometry.face import BluemiraFace
-from bluemira.geometry.shell import BluemiraShell
 from bluemira.geometry.wire import BluemiraWire
 from bluemira.mesh import meshing
 from bluemira.mesh.tools import import_mesh, msh_to_xdmf
 
-# Creation of a simple geometry
+# %%[markdown]
+
+# # Geometry
+
+# Creation of a simple 2-D geometry, i.e. a Johner shape + a coil with casing
+
+# %%
 
 p = JohnerLCFS()
 lcfs = p.create_shape(label="LCFS")
-
-lcfs.mesh_options = {"lcar": 0.75, "physical_group": "LCFS"}
-face = BluemiraFace(lcfs, label="plasma_surface")
-face.mesh_options = {"lcar": 0.5, "physical_group": "surface"}
 
 poly1 = tools.make_polygon(
     [[0, 1, 1], [0, 0, 0], [0, 0, 1]], closed=False, label="poly1"
@@ -50,42 +64,70 @@ poly1 = tools.make_polygon(
 poly2 = tools.make_polygon(
     [[1, 0, 0], [0, 0, 0], [1, 1, 0]], closed=False, label="poly2"
 )
-poly1.mesh_options = {"lcar": 0.25, "physical_group": "poly1"}
-poly2.mesh_options = {"lcar": 0.25, "physical_group": "poly2"}
-
 poly3 = tools.make_polygon(
     [[0.25, 0.75, 0.75], [0, 0, 0], [0.25, 0.25, 0.75]], closed=False, label="poly3"
 )
 poly4 = tools.make_polygon(
     [[0.75, 0.25, 0.25], [0, 0, 0], [0.75, 0.75, 0.25]], closed=False, label="poly4"
 )
-poly3.mesh_options = {"lcar": 0.75, "physical_group": "poly3"}
-poly4.mesh_options = {"lcar": 0.75, "physical_group": "poly4"}
-
 poly_out = BluemiraWire([poly1, poly2], label="poly_out")
 poly_in = BluemiraWire([poly3, poly4], label="poly_in")
-coil = BluemiraFace([poly_out, poly_in], label="coil")
-coil.mesh_options = {"lcar": 1, "physical_group": "coil"}
+coil_out = BluemiraFace([poly_out, poly_in], label="coil_out")
+coil_in = BluemiraFace([poly_in], label="coil_in")
 
-shell = BluemiraShell([face, coil])
 
-comp = Component(name="comp")
-pcomp1 = PhysicalComponent(name="pcomp1", shape=coil, parent=comp)
-pcomp2 = PhysicalComponent(name="pcomp2", shape=face, parent=comp)
+# %%[markdown]
 
-# Mesh creation
+# # Mesh setup
+
+# setup characteristic mesh length
+
+# %%
+
+lcfs.mesh_options = {"lcar": 0.75, "physical_group": "LCFS"}
+face = BluemiraFace(lcfs, label="plasma_surface")
+face.mesh_options = {"lcar": 0.5, "physical_group": "surface"}
+
+poly1.mesh_options = {"lcar": 0.25, "physical_group": "poly1"}
+poly2.mesh_options = {"lcar": 0.25, "physical_group": "poly2"}
+poly3.mesh_options = {"lcar": 0.75, "physical_group": "poly3"}
+poly4.mesh_options = {"lcar": 0.75, "physical_group": "poly4"}
+coil_out.mesh_options = {"lcar": 1, "physical_group": "coil"}
+coil_in.mesh_options = {"lcar": 0.3, "physical_group": "coil"}
+
+# %%[markdown]
+
+# In order to mesh all the geometry in one, the best solution is to create a component
+# tree as in the following
+
+# %%
+c_all = Component(name="all")
+c_plasma = PhysicalComponent(name="plasma", shape=face, parent=c_all)
+c_coil = Component(name="coil", parent=c_all)
+c_coil_in = PhysicalComponent(name="coil_in", shape=coil_in, parent=c_coil)
+c_coil_out = PhysicalComponent(name="coil_out", shape=coil_out, parent=c_coil)
+
+# %%[markdown]
+
+# Initialize and create the mesh
+
+# %%
 
 m = meshing.Mesh()
-buffer = m(comp)
+buffer = m(c_all)
 print(m.get_gmsh_dict(buffer))
 
-# Convert the mesh in xdmf for reading in fenics.
+# %%[markdown]
+
+# # Convert to xdmf
+
+# %%
 
 msh_to_xdmf("Mesh.msh", dimensions=(0, 2), directory=".", verbose=True)
 
 mesh, boundaries, subdomains, labels = import_mesh(
     "Mesh",
-    dimensions=(0, 1),
+    dimensions=(0, 2),
     directory=".",
     subdomains=True,
 )
