@@ -22,7 +22,56 @@
 """
 PROCESS mappings
 """
-from bluemira.codes.utilities import create_mapping
+from bluemira.codes.utilities import Model, create_mapping
+
+
+class CurrentDriveEfficiencyModel(Model):
+    """
+    Switch for current drive efficiency model:
+
+    1 - Fenstermacher Lower Hybrid
+    2 - Ion Cyclotron current drive
+    3 - Fenstermacher ECH
+    4 - Ehst Lower Hybrid
+    5 - ITER Neutral Beam
+    6 - new Culham Lower Hybrid model
+    7 - new Culham ECCD model
+    8 - new Culham Neutral Beam model
+    10 - ECRH user input gamma
+    11 - ECRH "HARE" model (E. Poli, Physics of Plasmas 2019)
+    12 - EBW user scaling input. Scaling (S. Freethy)
+
+    PROCESS variable name: "iefrf"
+    """
+
+    FENSTER_LH = 1
+    ICYCCD = 2
+    FENSTER_ECH = 3
+    EHST_LH = 4
+    ITER_NB = 5
+    CUL_LH = 6
+    CUL_ECCD = 7
+    CUL_NB = 8
+    ECRH_UI_GAM = 10
+    ECRH_HARE = 11
+    EBW_UI = 12
+
+
+class TFCoilConductorTechnology(Model):
+    """
+    Switch for TF coil conductor model:
+
+    0 - copper
+    1 - superconductor
+    2 - Cryogenic aluminium
+
+    PROCESS variable name: i_tf_sup
+    """
+
+    COPPER = 1
+    SC = 2
+    CYRO_AL = 3
+
 
 IN_mappings = {
     "P_el_net": ("pnetelin", "MW"),
@@ -86,6 +135,13 @@ OUT_mappings = {
     "r_vv_ob_in": ("r_vv_ob_in", "m"),
     "r_tf_out_centre": ("r_tf_outboard_mid", "m"),
     "g_vv_ts": ("gapds", "m"),
+    "TF_res_bus": ("tfbusres", "m"),
+    "TF_res_tot": ("ztot", "ohm"),
+    "TF_E_stored": ("estotftgj", "GJ"),
+    "TF_respc_ob": ("tflegres", "ohm"),
+    "TF_currpt_ob": ("cpttf", "A"),
+    "P_bd_in": ("pinjmw", "MW"),
+    "condrad_cryo_heat": ("qss/1.0D6", "MW"),
 }
 
 IO_mappings = {

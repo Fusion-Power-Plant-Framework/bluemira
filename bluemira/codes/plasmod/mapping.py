@@ -22,24 +22,8 @@
 """
 PLASMOD mappings
 """
-from enum import Enum
 
-from bluemira.base.look_and_feel import bluemira_print
-from bluemira.codes.utilities import create_mapping
-
-
-class Model(Enum):
-    """
-    Base Model Enum
-    """
-
-    @classmethod
-    def info(cls):
-        """
-        Show Model options
-        """
-        infostr = f"{cls.__doc__}\n" + "\n".join(repr(l_) for l_ in list(cls))
-        bluemira_print(infostr)
+from bluemira.codes.utilities import Model, create_mapping
 
 
 class ImpurityModel(Model):
