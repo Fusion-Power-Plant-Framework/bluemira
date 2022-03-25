@@ -233,7 +233,8 @@ def make_bezier(points: Union[list, np.ndarray], closed: bool = False) -> Part.W
 def make_bspline(
     points: Union[list, np.ndarray],
     closed: bool = False,
-    **kwargs,
+    start_tangent: Optional[Iterable] = None,
+    end_tangent: Optional[Iterable] = None,
 ) -> Part.Wire:
     """
     Make a bezier curve from a set of points.
@@ -246,10 +247,10 @@ def make_bspline(
     closed: bool, default = False
         if True, the first and last points will be connected in order to form a
         closed shape.
-
-    Other Parameters
-    ----------------
-        knot sequence
+    start_tangent: Optional[Iterable]
+        Tangency of the BSpline at the first pole. Must be specified with end_tangent
+    end_tangent: Optional[Iterable]
+        Tangency of the BSpline at the last pole. Must be specified with start_tangent
 
     Returns
     -------
@@ -258,9 +259,18 @@ def make_bspline(
     """
     # In this case, it is not really necessary to convert points in FreeCAD vector. Just
     # left for consistency with other methods.
-    # TODO: Add support for start and end tangencies.. I tried but I don't think FreeCAD
-    # wraps OCC enough here.
     pntslist = [Base.Vector(x) for x in points]
+
+    kwargs = {}
+    if start_tangent and end_tangent:
+        kwargs["InitialTangent"] = Base.Vector(start_tangent)
+        kwargs["FinalTangent"] = Base.Vector(end_tangent)
+
+    if start_tangent and not end_tangent or end_tangent and not start_tangent:
+        bluemira_warn(
+            "You must set both start and end tangencies or neither when creating a bspline. Start and end tangencies ignored."
+        )
+
     bsc = Part.BSplineCurve()
     bsc.interpolate(pntslist, PeriodicFlag=closed, **kwargs)
     wire = apiWire(bsc.toShape())
