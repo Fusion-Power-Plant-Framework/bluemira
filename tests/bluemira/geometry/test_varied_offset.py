@@ -41,15 +41,15 @@ class TestVariedOffsetFunction:
             ).create_shape(),
             "inboard_offset": 1,
             "outboard_offset": 4,
-            "inboard_offset_angle": 45,  # degrees
-            "outboard_offset_angle": 160,  # degrees
+            "inboard_offset_degree": 45,  # degrees
+            "outboard_offset_degree": 160,  # degrees
         },
         {
             "wire": make_circle(axis=(0, 1, 0)),
             "inboard_offset": 1,
             "outboard_offset": 3,
-            "inboard_offset_angle": 90,  # degrees
-            "outboard_offset_angle": 140,  # degrees
+            "inboard_offset_degree": 90,  # degrees
+            "outboard_offset_degree": 140,  # degrees
         },
     ]
 
@@ -82,8 +82,8 @@ class TestVariedOffsetFunction:
         offset_wire = varied_offset(**kwargs)
 
         ang_space = np.linspace(
-            np.radians(kwargs["inboard_offset_angle"]),
-            np.radians(kwargs["outboard_offset_angle"]),
+            np.radians(kwargs["inboard_offset_degree"]),
+            np.radians(kwargs["outboard_offset_degree"]),
             50,
         )
         offset_size = self._get_offset_sizes(offset_wire, kwargs["wire"], ang_space)

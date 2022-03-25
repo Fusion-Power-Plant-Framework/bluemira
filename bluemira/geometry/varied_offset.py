@@ -33,8 +33,8 @@ def varied_offset(
     wire: BluemiraWire,
     inboard_offset: float,
     outboard_offset: float,
-    inboard_offset_angle: float,
-    outboard_offset_angle: float,
+    inboard_offset_degree: float,
+    outboard_offset_degree: float,
     num_points: int = 200,
 ) -> BluemiraWire:
     """
@@ -44,7 +44,7 @@ def varied_offset(
     All angles are measured from the negative x-direction (9 o'clock),
     centred at the center of mass of the wire.
     The offset will be 'inboard_offset' between the negative x-direction
-    and 'inboard_offset_angle'. Between 'outboard_offset_angle' and
+    and 'inboard_offset_degree'. Between 'outboard_offset_degree' and
     the positive x-direction the offset will be 'outboard_offset'. Between
     those angles, the offset will linearly transition between the min
     and max.
@@ -58,9 +58,9 @@ def varied_offset(
         The size of the offset on the inboard side.
     outboard_offset: float
         The size of the offset on the outboard side.
-    inboard_offset_angle: float
+    inboard_offset_degree: float
         The angle at which the variable offset should begin, in degrees.
-    outboard_offset_angle: float
+    outboard_offset_degree: float
         The angle at which the variable offset should end, in degrees.
     num_points: int
         The number of points to use in the discretization of the input
@@ -82,8 +82,8 @@ def varied_offset(
         )
 
     wire_coords = coordinates.xz
-    inboard_offset_angle = np.radians(inboard_offset_angle)
-    outboard_offset_angle = np.radians(outboard_offset_angle)
+    inboard_offset_degree = np.radians(inboard_offset_degree)
+    outboard_offset_degree = np.radians(outboard_offset_degree)
     center_of_mass = wire.center_of_mass[[0, 2]].reshape((2, 1))
 
     ib_axis = np.array([-1, 0])
@@ -93,8 +93,8 @@ def varied_offset(
 
     offsets = _calculate_offset_magnitudes(
         angles,
-        inboard_offset_angle,
-        outboard_offset_angle,
+        inboard_offset_degree,
+        outboard_offset_degree,
         inboard_offset,
         outboard_offset,
     )
@@ -111,22 +111,22 @@ def _sort_coords_by_angle(angles: np.ndarray, coords: np.ndarray):
 
 def _calculate_offset_magnitudes(
     angles,
-    inboard_offset_angle,
-    outboard_offset_angle,
+    inboard_offset_degree,
+    outboard_offset_degree,
     inboard_offset,
     outboard_offset,
 ):
     """Calculate the magnitude of the offset at each angle."""
     offsets = np.empty_like(angles)
-    # All angles less than inboard_offset_angle set to min offset
+    # All angles less than inboard_offset_degree set to min offset
     constant_minor_offset_idxs = np.logical_or(
-        angles < inboard_offset_angle, angles > (2 * np.pi - inboard_offset_angle)
+        angles < inboard_offset_degree, angles > (2 * np.pi - inboard_offset_degree)
     )
     offsets[constant_minor_offset_idxs] = inboard_offset
 
-    # All angles greater than outboard_offset_angle set to max offset
+    # All angles greater than outboard_offset_degree set to max offset
     constant_major_offset_idxs = np.logical_and(
-        angles > outboard_offset_angle, angles < 2 * np.pi - outboard_offset_angle
+        angles > outboard_offset_degree, angles < 2 * np.pi - outboard_offset_degree
     )
     offsets[constant_major_offset_idxs] = outboard_offset
 
@@ -135,8 +135,8 @@ def _calculate_offset_magnitudes(
     )
     offsets[variable_offset_idxs] = _calculate_variable_offset_magnitudes(
         angles[variable_offset_idxs],
-        inboard_offset_angle,
-        outboard_offset_angle,
+        inboard_offset_degree,
+        outboard_offset_degree,
         inboard_offset,
         outboard_offset,
     )
