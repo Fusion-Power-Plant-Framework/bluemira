@@ -39,17 +39,17 @@ class TestVariedOffsetFunction:
             "wire": PictureFrame(
                 {"ro": {"value": 6}, "ri": {"value": 3}}
             ).create_shape(),
-            "min_offset": 1,
-            "max_offset": 4,
-            "min_offset_angle": 45,  # degrees
-            "max_offset_angle": 160,  # degrees
+            "inboard_offset": 1,
+            "outboard_offset": 4,
+            "inboard_offset_angle": 45,  # degrees
+            "outboard_offset_angle": 160,  # degrees
         },
         {
             "wire": make_circle(axis=(0, 1, 0)),
-            "min_offset": 1,
-            "max_offset": 3,
-            "min_offset_angle": 90,  # degrees
-            "max_offset_angle": 140,  # degrees
+            "inboard_offset": 1,
+            "outboard_offset": 3,
+            "inboard_offset_angle": 90,  # degrees
+            "outboard_offset_angle": 140,  # degrees
         },
     ]
 
@@ -67,7 +67,7 @@ class TestVariedOffsetFunction:
         # Trade-off here between finer discretization when we
         # interpolate and a tighter tolerance. A bit of lee-way here for
         # the sake of fewer points to interpolate
-        assert offset_size == pytest.approx(kwargs["max_offset"], rel=1e-3)
+        assert offset_size == pytest.approx(kwargs["outboard_offset"], rel=1e-3)
 
     @pytest.mark.parametrize("kwargs", fixtures)
     def test_offset_from_shape_never_lt_minor_offset(self, kwargs):
@@ -75,15 +75,15 @@ class TestVariedOffsetFunction:
 
         ang_space = np.linspace(0, 2 * np.pi, 50)
         offset_size = self._get_offset_sizes(offset_wire, kwargs["wire"], ang_space)
-        assert self.greater_or_close(offset_size, kwargs["min_offset"], atol=1e-3)
+        assert self.greater_or_close(offset_size, kwargs["inboard_offset"], atol=1e-3)
 
     @pytest.mark.parametrize("kwargs", fixtures)
     def test_offset_never_decreases_between_offset_angles(self, kwargs):
         offset_wire = varied_offset(**kwargs)
 
         ang_space = np.linspace(
-            np.radians(kwargs["min_offset_angle"]),
-            np.radians(kwargs["max_offset_angle"]),
+            np.radians(kwargs["inboard_offset_angle"]),
+            np.radians(kwargs["outboard_offset_angle"]),
             50,
         )
         offset_size = self._get_offset_sizes(offset_wire, kwargs["wire"], ang_space)
@@ -95,7 +95,7 @@ class TestVariedOffsetFunction:
         offset_wire = varied_offset(**kwargs)
 
         offset_size = self._get_offset_sizes(offset_wire, kwargs["wire"], 0)
-        assert offset_size == pytest.approx(kwargs["min_offset"], 1e-3)
+        assert offset_size == pytest.approx(kwargs["inboard_offset"], 1e-3)
 
     def test_GeometryError_raised_given_input_wire_not_closed(self):
         wire = make_polygon([[0, 1], [0, 0], [1, 1]])
