@@ -85,7 +85,7 @@ msh_to_xdmf("Mesh.msh", dimensions=(0, 2), directory=".", verbose=True)
 
 mesh, boundaries, subdomains, labels = import_mesh(
     "Mesh",
-    dimensions=(0, 1),
+    dimensions=2,
     directory=".",
     subdomains=True,
 )
