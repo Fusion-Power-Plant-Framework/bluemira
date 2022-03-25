@@ -1343,7 +1343,7 @@ class ParameterFrame:
 
         Notes
         -----
-        Attemps to parse out source and unit from the value.
+        Attempts to parse out source and unit from the value.
         If value is a list of two or three elements it assumes
         [value, source, unit] ordering which could be a source of errors.
 
