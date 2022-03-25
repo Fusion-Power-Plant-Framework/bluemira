@@ -24,6 +24,7 @@ Module containing functions to generate variable offset curves
 
 import numpy as np
 
+from bluemira.geometry.error import GeometryError
 from bluemira.geometry.tools import find_clockwise_angle_2d, make_bspline
 from bluemira.geometry.wire import BluemiraWire
 
@@ -70,6 +71,10 @@ def varied_offset(
     offset_wire: BluemiraWire
         New wire at a variable offset to the input.
     """
+    if not wire.is_closed():
+        raise GeometryError(
+            "Cannot create a variable offset from a wire that is not closed."
+        )
     wire_coords = wire.discretize(num_points).xz
     min_offset_angle = np.radians(min_offset_angle)
     max_offset_angle = np.radians(max_offset_angle)

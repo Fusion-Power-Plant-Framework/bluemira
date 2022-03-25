@@ -25,8 +25,9 @@ import numpy as np
 import pytest
 from scipy.interpolate import interp1d
 
+from bluemira.geometry.error import GeometryError
 from bluemira.geometry.parameterisations import PictureFrame
-from bluemira.geometry.tools import find_clockwise_angle_2d, make_circle
+from bluemira.geometry.tools import find_clockwise_angle_2d, make_circle, make_polygon
 from bluemira.geometry.varied_offset import varied_offset
 from bluemira.geometry.wire import BluemiraWire
 
@@ -95,6 +96,12 @@ class TestVariedOffsetFunction:
 
         offset_size = self._get_offset_sizes(offset_wire, kwargs["wire"], 0)
         assert offset_size == pytest.approx(kwargs["min_offset"], 1e-3)
+
+    def test_GeometryError_raised_given_input_wire_not_closed(self):
+        wire = make_polygon([[0, 1], [0, 0], [1, 1]])
+
+        with pytest.raises(GeometryError):
+            varied_offset(wire, 1, 2, 50, 170)
 
     @staticmethod
     def _interpolation_func_closed_wire(wire: BluemiraWire) -> Callable:
