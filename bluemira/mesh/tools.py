@@ -105,7 +105,7 @@ def msh_to_xdmf(
     _export_link_file(mesh, file_prefix, directory, verbose=verbose)
 
 
-def import_mesh(file_prefix="mesh", subdomains=False, dimensions=2, directory="."):
+def import_mesh(file_prefix="mesh", subdomains=False, directory="."):
     """
     Import a dolfin mesh.
 
@@ -115,8 +115,6 @@ def import_mesh(file_prefix="mesh", subdomains=False, dimensions=2, directory=".
         File prefix to use when importing a mesh (defaults to 'mesh')
     subdomains: bool
         Whether or not to subdomains are present (defaults to False)
-    dimension: int
-        Dimensionality of the mesh (defaults to 2)
     directory: str
         Directory in which the MSH file and XDMF files exist
     Returns
@@ -130,20 +128,17 @@ def import_mesh(file_prefix="mesh", subdomains=False, dimensions=2, directory=".
     link_dict: dict
         Link dictionary between MSH and XDMF objects
     """
-    dimensions = _check_dimensions(dimensions)
     domain_file = os.sep.join([directory, f"{file_prefix}_{DOMAIN_SUFFIX}"])
     boundary_file = os.sep.join([directory, f"{file_prefix}_{BOUNDARY_SUFFIX}"])
     link_file = os.sep.join([directory, f"{file_prefix}_{LINKFILE_SUFFIX}"])
-
-    if not os.path.exists(domain_file) or not os.path.exists(boundary_file):
-        msh_to_xdmf(f"{file_prefix}.msh", dimensions=dimensions, directory=directory)
 
     mesh = Mesh()
 
     with XDMFFile(domain_file) as file:
         file.read(mesh)
 
-    boundaries_mvc = MeshValueCollection("size_t", mesh, dim=len(dimensions))
+    dimension = mesh.topology().dim
+    boundaries_mvc = MeshValueCollection("size_t", mesh, dim=dimension)
 
     with XDMFFile(boundary_file) as file:
         file.read(boundaries_mvc, "boundaries")
@@ -151,7 +146,7 @@ def import_mesh(file_prefix="mesh", subdomains=False, dimensions=2, directory=".
     boundaries_mf = MeshFunctionSizet(mesh, boundaries_mvc)
 
     if subdomains:
-        subdomains_mvc = MeshValueCollection("size_t", mesh, dim=len(dimensions))
+        subdomains_mvc = MeshValueCollection("size_t", mesh, dim=dimension)
         with XDMFFile(domain_file) as file:
             file.read(subdomains_mvc, "subdomains")
         subdomains_mf = MeshFunctionSizet(mesh, subdomains_mvc)
