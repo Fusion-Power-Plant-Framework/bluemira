@@ -25,7 +25,7 @@ import numpy as np
 import pytest
 from scipy.interpolate import interp1d
 
-from bluemira.builders.EUDEMO.first_wall.varied_offset import varied_offset
+from bluemira.builders.EUDEMO.first_wall.tools import varied_offset
 from bluemira.geometry.error import GeometryError
 from bluemira.geometry.parameterisations import PictureFrame
 from bluemira.geometry.tools import find_clockwise_angle_2d, make_circle, make_polygon
