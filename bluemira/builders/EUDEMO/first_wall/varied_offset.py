@@ -71,16 +71,12 @@ def varied_offset(
     offset_wire: BluemiraWire
         New wire at a variable offset to the input.
     """
-    if not wire.is_closed():
-        raise GeometryError(
-            "Cannot create a variable offset from a wire that is not closed."
-        )
+    _throw_if_inputs_invalid(wire, inboard_offset_degree, outboard_offset_degree)
     coordinates = wire.discretize(num_points)
     if not np.all(coordinates.normal_vector == [0, 1, 0]):
         raise GeometryError(
-            "Cannot create a variable offset from a wire that is not planar in xz."
+            "Cannot create a variable offset from a wire that is not xz planar."
         )
-
     wire_coords = coordinates.xz
     inboard_offset_degree = np.radians(inboard_offset_degree)
     outboard_offset_degree = np.radians(outboard_offset_degree)
@@ -101,6 +97,22 @@ def varied_offset(
     normals = _calculate_normals_2d(wire_coords)
     new_shape_coords = wire_coords + normals * offsets
     return _2d_coords_to_wire(new_shape_coords)
+
+
+def _throw_if_inputs_invalid(wire, inboard_offset_degree, outboard_offset_degree):
+    if not wire.is_closed():
+        raise GeometryError(
+            "Cannot create a variable offset from a wire that is not closed."
+        )
+    if not 0 < inboard_offset_degree < 180:
+        raise ValueError("Inboard offset angle must be in the range [0, 180].")
+    if not 0 < outboard_offset_degree < 180:
+        raise ValueError("Outboard offset angle must be in the range [0, 180].")
+    if inboard_offset_degree > outboard_offset_degree:
+        raise ValueError(
+            f"Inboard offset angle must be less than outboard angle. "
+            f"Found '{inboard_offset_degree}' and '{outboard_offset_degree}'."
+        )
 
 
 def _sort_coords_by_angle(angles: np.ndarray, coords: np.ndarray):

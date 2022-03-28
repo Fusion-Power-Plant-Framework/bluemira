@@ -109,6 +109,27 @@ class TestVariedOffsetFunction:
         with pytest.raises(GeometryError):
             varied_offset(wire, 1, 2, 50, 170)
 
+    @pytest.mark.parametrize(
+        "angle", ["inboard_offset_degree", "outboard_offset_degree"]
+    )
+    @pytest.mark.parametrize("angle_degree", [-1, -0.001, 180.01, 181])
+    def test_ValueError_given_angle_not_in_range_0_to_180(self, angle, angle_degree):
+        kwargs = self.fixtures[0].copy()
+        kwargs.update({angle: angle_degree})
+
+        with pytest.raises(ValueError):
+            varied_offset(**kwargs)
+
+    def test_ValueError_given_inboard_degree_gt_outboard_degree(self):
+        with pytest.raises(ValueError):
+            varied_offset(
+                make_circle(axis=(0, 1, 0)),
+                1,
+                3,
+                inboard_offset_degree=91,
+                outboard_offset_degree=90,
+            )
+
     @staticmethod
     def _interpolation_func_closed_wire(wire: BluemiraWire) -> Callable:
         coords = wire.discretize(200).xz
