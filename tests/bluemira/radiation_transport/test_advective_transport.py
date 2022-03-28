@@ -20,6 +20,7 @@
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 
 import os
+from unittest.mock import patch
 
 import numpy as np
 import pytest
@@ -181,3 +182,19 @@ class TestChargedParticleRecursionDN:
     def test_recursion(self):
         assert np.isclose(np.max(self.hf), 86.194, rtol=1e-2)
         assert np.isclose(np.sum(self.hf), 830.6, rtol=1e-2)
+
+    def test_analyse_DN(self, caplog):
+        fw = self.solver.first_wall.copy()
+        _, x_wall_limit = self.solver._get_sep_out_intersection(outboard=True)
+        x_out_wall = x_wall_limit + 1e-4
+        fs_out_low, fs_out_up = self.solver._make_flux_surfaces(
+            x_out_wall, self.solver._o_point.z
+        )
+        self.solver.flux_surfaces_ob_lfs.append(fs_out_low)
+        self.solver.flux_surfaces_ob_hfs.append(fs_out_up)
+        fs_before_pop = self.solver.flux_surfaces
+        with patch.object(self.solver, "_make_flux_surfaces_ob"):
+            self.solver._analyse_DN(fw)
+            fs_after_pop = self.solver.flux_surfaces
+        assert len(fs_before_pop) > len(fs_after_pop)
+        assert "No intersection detected" in caplog.text
