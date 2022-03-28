@@ -137,7 +137,7 @@ def import_mesh(file_prefix="mesh", subdomains=False, directory="."):
     with XDMFFile(domain_file) as file:
         file.read(mesh)
 
-    dimension = mesh.topology().dim
+    dimension = mesh.topology().dim()
     boundaries_mvc = MeshValueCollection("size_t", mesh, dim=dimension)
 
     with XDMFFile(boundary_file) as file:
