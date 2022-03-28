@@ -25,8 +25,11 @@ A collection of tools used in the EU-DEMO design.
 
 import copy
 
+import numpy as np
+
 import bluemira.base.components as bm_comp
 import bluemira.geometry as bm_geo
+from bluemira.geometry.tools import circular_pattern, revolve_shape
 
 
 def circular_pattern_component(
@@ -114,3 +117,29 @@ def circular_pattern_component(
     process_children(component)
 
     return sectors
+
+
+def pattern_revolved_silhouette(face, n_seg_p_sector, n_sectors, gap):
+    """
+    Something
+    """
+    sector_degree = 360 / n_sectors
+    segment_degree = sector_degree / n_seg_p_sector
+
+    x_offset = gap / np.sin(0.5 * segment_degree)
+    shape = revolve_shape(
+        face, base=(x_offset, 0, 0), direction=(0, 0, 1), degree=segment_degree
+    )
+    shape.translate((0.5 * gap, 0, 0))
+
+    shapes = circular_pattern(
+        shape, origin=(x_offset, 0, 0), degree=sector_degree, n_shapes=n_seg_p_sector
+    )
+    return shapes
+
+
+def pattern_lofted_silhouette(face, n_seg_p_sector, n_sectors, gap):
+    """
+    Something
+    """
+    pass
