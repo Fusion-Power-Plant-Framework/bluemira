@@ -88,7 +88,6 @@ class TestGetNormal:
 
         mesh, boundaries, subdomains, labels = import_mesh(
             "Mesh",
-            dimensions=(0, 2),
             directory=".",
             subdomains=True,
         )
