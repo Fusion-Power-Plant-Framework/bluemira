@@ -225,7 +225,7 @@ class Builder(abc.ABC):
 
     def _reset_params(self, params):
         self._validate_params(params)
-        self._params.update_kw_parameters(params)
+        self._params.update_kw_parameters({k: params[k] for k in self._params.keys()})
 
     def _extract_config(self, build_config: BuildConfig):
         has_runmode = (
