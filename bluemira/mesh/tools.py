@@ -28,7 +28,7 @@ Credit: F. Loiseau, R. Delaporte-Mathurin, and C. Weickhmann
 
 import json
 import os
-from typing import Tuple
+from typing import Tuple, Union
 
 import meshio
 import numpy as np
@@ -59,7 +59,7 @@ LINKFILE_SUFFIX = "linkfile.json"
 
 def msh_to_xdmf(
     mesh_name: str,
-    dimensions: Tuple[int] = (0, 2),
+    dimensions: Union[Tuple[int], int] = (0, 2),
     directory: str = ".",
     verbose: bool = False,
 ):
