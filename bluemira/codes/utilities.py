@@ -26,32 +26,16 @@ Utility functions for interacting with external codes
 
 import os
 import threading
-from enum import Enum
 from typing import Dict, Literal
 
 from bluemira.base.look_and_feel import (
     _bluemira_clean_flush,
     bluemira_error_clean,
-    bluemira_print,
     bluemira_print_clean,
 )
 from bluemira.base.parameter import ParameterFrame, ParameterMapping
 from bluemira.codes.error import CodesError
 from bluemira.utilities.tools import get_module
-
-
-class Model(Enum):
-    """
-    Base Model Enum
-    """
-
-    @classmethod
-    def info(cls):
-        """
-        Show Model options
-        """
-        infostr = f"{cls.__doc__}\n" + "\n".join(repr(l_) for l_ in list(cls))
-        bluemira_print(infostr)
 
 
 def get_code_interface(module):

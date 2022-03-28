@@ -191,7 +191,6 @@ class Solver(interface.FileProgramInterface):
             run_dir=run_dir,
             read_dir=read_dir,
             mappings=mappings,
-            problem_settings=build_config.get("problem_settings", None),
         )
 
         self._enabled_check(build_config.get("mode", "run").lower())
