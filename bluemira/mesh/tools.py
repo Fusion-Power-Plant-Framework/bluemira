@@ -132,6 +132,19 @@ def import_mesh(file_prefix="mesh", subdomains=False, directory="."):
     boundary_file = os.sep.join([directory, f"{file_prefix}_{BOUNDARY_SUFFIX}"])
     link_file = os.sep.join([directory, f"{file_prefix}_{LINKFILE_SUFFIX}"])
 
+    df_exists = os.path.exists(domain_file)
+    bf_exists = os.path.exists(boundary_file)
+    lf_exists = os.path.exists(link_file)
+
+    if not df_exists:
+        raise MeshConversionError(f"No mesh domain file found: {domain_file}")
+
+    if not bf_exists:
+        raise MeshConversionError(f"No mesh boundaries file found: {boundary_file}")
+
+    if not lf_exists:
+        raise MeshConversionError(f"No mesh link file found: {link_file}")
+
     mesh = Mesh()
 
     with XDMFFile(domain_file) as file:
