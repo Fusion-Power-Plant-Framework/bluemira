@@ -70,7 +70,7 @@ def msh_to_xdmf(
     ----------
     mesh_name: str
         Name of the MSH file to convert to XDMF
-    dimensions: Tuple[Int]
+    dimensions: Union[Tuple[int], int]
         Dimensions of the mesh (0: x, 1: y, 2: z), defaults to x-z
         (0, 1, 2) would be a 3-D mesh
     directory: str
