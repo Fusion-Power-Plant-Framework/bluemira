@@ -131,15 +131,11 @@ def import_mesh(file_prefix="mesh", subdomains=False, directory="."):
     domain_file = os.sep.join([directory, f"{file_prefix}_{DOMAIN_SUFFIX}"])
     boundary_file = os.sep.join([directory, f"{file_prefix}_{BOUNDARY_SUFFIX}"])
     link_file = os.sep.join([directory, f"{file_prefix}_{LINKFILE_SUFFIX}"])
+    files = [domain_file, boundary_file, link_file]
+    exists = [os.path.exists(file) for file in files]
 
-    df_exists = os.path.exists(domain_file)
-    bf_exists = os.path.exists(boundary_file)
-    lf_exists = os.path.exists(link_file)
-
-    if not df_exists or not bf_exists or not lf_exists:
-        files = [domain_file, boundary_file, link_file]
-        exist = [df_exists, bf_exists, lf_exists]
-        msg = "\n".join([fn for fn, exists in zip(files, exist) if not exists])
+    if not all(exists):
+        msg = "\n".join([fn for fn, exist in zip(files, exists) if not exist])
         raise MeshConversionError(f"No mesh file(s) found:\n {msg}")
 
     mesh = Mesh()
