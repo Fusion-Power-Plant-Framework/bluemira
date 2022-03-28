@@ -136,14 +136,11 @@ def import_mesh(file_prefix="mesh", subdomains=False, directory="."):
     bf_exists = os.path.exists(boundary_file)
     lf_exists = os.path.exists(link_file)
 
-    if not df_exists:
-        raise MeshConversionError(f"No mesh domain file found: {domain_file}")
-
-    if not bf_exists:
-        raise MeshConversionError(f"No mesh boundaries file found: {boundary_file}")
-
-    if not lf_exists:
-        raise MeshConversionError(f"No mesh link file found: {link_file}")
+    if not df_exists or not bf_exists or not lf_exists:
+        files = [domain_file, boundary_file, link_file]
+        exist = [df_exists, bf_exists, lf_exists]
+        msg = "\n".join([fn for fn, exists in zip([files, exist]) if not exists])
+        raise MeshConversionError(f"No mesh file(s) found: {msg}")
 
     mesh = Mesh()
 

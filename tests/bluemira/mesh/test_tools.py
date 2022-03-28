@@ -26,7 +26,7 @@ import pytest
 
 from bluemira.base.file import get_bluemira_path
 from bluemira.mesh.error import MeshConversionError
-from bluemira.mesh.tools import msh_to_xdmf
+from bluemira.mesh.tools import import_mesh, msh_to_xdmf
 
 DATA_PATH = get_bluemira_path("mesh/test_data", subfolder="tests/bluemira")
 
@@ -70,3 +70,7 @@ class TestMSHtoXDMF:
     def test_nofile(self):
         with pytest.raises(MeshConversionError):
             msh_to_xdmf("not_here.msh", dimensions=(0, 1), directory=DATA_PATH)
+
+    def test_nofile_import(self):
+        with pytest.raises(MeshConversionError):
+            import_mesh("not_here.msh", directory=DATA_PATH)
