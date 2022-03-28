@@ -18,3 +18,36 @@
 #
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
+
+import numpy as np
+import pytest
+
+from bluemira.builders.EUDEMO.tools import (
+    pattern_lofted_silhouette,
+    pattern_revolved_silhouette,
+)
+from bluemira.geometry.face import BluemiraFace
+from bluemira.geometry.tools import distance_to, make_polygon
+
+
+class TestPatterning:
+    @pytest.mark.parametrize(
+        "n_segments, n_sectors, gap",
+        [
+            (3, 16, 0.05),
+        ],
+    )
+    def test_revolved_silhouette(self, n_segments, n_sectors, gap):
+        p = make_polygon({"x": [9, 10, 10, 9], "y": 0, "z": [-1, -1, 1, 1]}, closed=True)
+        face = BluemiraFace(p)
+
+        shapes = pattern_revolved_silhouette(face, n_segments, n_sectors, gap)
+
+        assert len(shapes) == n_segments
+
+        volume = shapes[0].volume
+        for i in range(n_segments) - 1:
+            # Check distances between shapes is correct
+            np.testing.assert_almost_equal(distance_to(shapes[i], shapes[i + 1]), gap)
+            # Check volumes
+            np.testing.assert_almost_equal(shapes[i + 1].volume, volume)
