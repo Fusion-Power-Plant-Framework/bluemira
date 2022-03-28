@@ -121,10 +121,8 @@ class Setup(Task):
 
     """
 
-    def __init__(self, parent, *args, params=None, problem_settings=None, **kwargs):
+    def __init__(self, parent, *args, params=None, **kwargs):
         super().__init__(parent)
-
-        self._problem_settings = problem_settings if problem_settings is not None else {}
         self.set_parameters(params)
 
     def set_parameters(self, params):
@@ -289,7 +287,6 @@ class FileProgramInterface(ABC):
         run_dir=None,
         read_dir=None,
         mappings=None,
-        problem_settings=None,
         **kwargs,
     ):
         self.NAME = NAME
@@ -308,9 +305,7 @@ class FileProgramInterface(ABC):
 
         self._protect_tasks()
 
-        self.setup_obj = self._setup(
-            self, *args, params=params, problem_settings=problem_settings, **kwargs
-        )
+        self.setup_obj = self._setup(self, *args, params=params, **kwargs)
         self.run_obj = self._run(self, *args, **kwargs)
         self.teardown_obj = self._teardown(self, *args, **kwargs)
 
@@ -386,13 +381,6 @@ class FileProgramInterface(ABC):
         The ParameterFrame corresponding to this run.
         """
         return self.setup_obj._send_mapping
-
-    @property
-    def problem_settings(self):
-        """
-        Get problem settings dictionary
-        """
-        return self.setup_obj._problem_settings
 
     def modify_mappings(self, mappings: Dict[str, Dict[str, bool]]):
         """
