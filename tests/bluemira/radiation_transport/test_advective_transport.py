@@ -20,7 +20,6 @@
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 
 import os
-from unittest.mock import patch
 
 import numpy as np
 import pytest
@@ -185,16 +184,19 @@ class TestChargedParticleRecursionDN:
 
     def test_analyse_DN(self, caplog):
         fw = self.solver.first_wall.copy()
-        _, x_wall_limit = self.solver._get_sep_out_intersection(outboard=True)
-        x_out_wall = x_wall_limit + 1e-4
-        fs_out_low, fs_out_up = self.solver._make_flux_surfaces(
-            x_out_wall, self.solver._o_point.z
-        )
-        self.solver.flux_surfaces_ob_lfs.append(fs_out_low)
-        self.solver.flux_surfaces_ob_hfs.append(fs_out_up)
+        self.solver.flux_surfaces_ob_hfs = []
+        self.solver.flux_surfaces_ob_lfs = []
+        x_sep_omp, x_wall_limit = self.solver._get_sep_out_intersection(outboard=True)
+
+        x = x_sep_omp + 1e-3
+        while x < x_wall_limit + 2e-3:
+            lfs, hfs = self.solver._make_flux_surfaces(x, self.solver._o_point.z)
+            self.solver.flux_surfaces_ob_lfs.append(lfs)
+            self.solver.flux_surfaces_ob_hfs.append(hfs)
+            x += 1e-3
+
         fs_before_pop = self.solver.flux_surfaces
-        with patch.object(self.solver, "_make_flux_surfaces_ob"):
-            self.solver._analyse_DN(fw)
-            fs_after_pop = self.solver.flux_surfaces
+        self.solver._clip_flux_surfaces(fw)
+        fs_after_pop = self.solver.flux_surfaces
         assert len(fs_before_pop) > len(fs_after_pop)
         assert "No intersection detected" in caplog.text

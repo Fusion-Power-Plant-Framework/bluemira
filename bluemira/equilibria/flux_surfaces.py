@@ -467,7 +467,9 @@ class PartialOpenFluxSurface(OpenFluxSurface):
         args = join_intersect(self.loop, first_wall, get_arg=True)
 
         if not args:
-            bluemira_warn("No intersection between flux surface and first_wall.")
+            bluemira_warn(
+                "No intersection detected between flux surface and first_wall."
+            )
             self.alpha = None
             return
 
