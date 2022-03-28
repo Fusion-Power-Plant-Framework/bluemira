@@ -27,6 +27,7 @@ import copy
 
 import bluemira.base.components as bm_comp
 import bluemira.geometry as bm_geo
+from bluemira.builders.EUDEMO._varied_offset import varied_offset  # noqa :F401
 
 
 def circular_pattern_component(
