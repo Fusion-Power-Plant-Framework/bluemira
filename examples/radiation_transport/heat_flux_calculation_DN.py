@@ -32,16 +32,26 @@ from bluemira.geometry._deprecated_loop import Loop
 from bluemira.radiation_transport.advective_transport import ChargedParticleSolver
 
 read_path = get_bluemira_path("equilibria", subfolder="data")
-eq_name = "DN-DEMO_eqref.json"
+
+fw_name = "FW_inner_profile_SKbug.csv"
+fw_name = os.sep.join([read_path, fw_name])
+import pandas
+
+data = pandas.read_csv(fw_name)
+
+eq_name = "STEP_eqref_SKbug.json"
 eq_name = os.sep.join([read_path, eq_name])
 eq = Equilibrium.from_eqdsk(eq_name, load_large_file=True)
 
-read_path = get_bluemira_path(
-    "bluemira/radiation_transport/test_data", subfolder="tests"
-)
-fw_name = "DN_fw_shape.json"
+# read_path = get_bluemira_path(
+#     "bluemira/radiation_transport/test_data", subfolder="tests"
+# )
+fw_name = "FW_inner_profile_SKbug.csv"
 fw_name = os.sep.join([read_path, fw_name])
-fw_shape = Loop.from_file(fw_name)
+import pandas
+
+data = pandas.read_csv(fw_name)
+fw_shape = Loop.from_array(data.to_numpy().T)
 
 params = ParameterFrame(
     # fmt: off
