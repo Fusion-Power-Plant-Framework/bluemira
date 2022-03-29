@@ -200,35 +200,38 @@ def pattern_lofted_silhouette(face, n_seg_p_sector, n_sectors, gap):
     """
     sector_degree = 360 / n_sectors
 
-    if gap <= 0.0:
-        pass
-    else:
-        degree = sector_degree * (1 + 1 / n_seg_p_sector)
-        faces = circular_pattern(
-            face,
-            origin=(0, 0, 0),
-            direction=(0, 0, 1),
-            degree=degree,
-            n_shapes=n_seg_p_sector + 1,
-        )
-        volumes = []
-        for i, r_face in enumerate(faces[:-1]):
-            com_1 = r_face.center_of_mass
-            com_2 = faces[i + 1].center_of_mass
+    degree = sector_degree * (1 + 1 / n_seg_p_sector)
+    faces = circular_pattern(
+        face,
+        origin=(0, 0, 0),
+        direction=(0, 0, 1),
+        degree=degree,
+        n_shapes=n_seg_p_sector + 1,
+    )
+    shapes = []
+    for i, r_face in enumerate(faces[:-1]):
+        com_1 = r_face.center_of_mass
+        com_2 = faces[i + 1].center_of_mass
 
-            wire = make_polygon(
-                {
-                    "x": [com_1[0], com_2[0]],
-                    "y": [com_1[1], com_2[1]],
-                    "z": [com_1[2], com_2[2]],
-                }
-            )
-            volume = sweep_shape([r_face.boundary[0], faces[i + 1].boundary[0]], wire)
-            volumes.append(volume)
-        volume = boolean_fuse(volumes)
+        wire = make_polygon(
+            {
+                "x": [com_1[0], com_2[0]],
+                "y": [com_1[1], com_2[1]],
+                "z": [com_1[2], com_2[2]],
+            }
+        )
+        volume = sweep_shape([r_face.boundary[0], faces[i + 1].boundary[0]], wire)
+        shapes.append(volume)
+
+    if gap > 0.0:
+
+        if len(shapes) > 1:
+            full_volume = boolean_fuse(shapes)
+        else:
+            full_volume = shapes[0]
 
         gaps = _generate_gap_volumes(face, n_seg_p_sector, n_sectors, gap)
-        shapes = boolean_cut(volume, gaps)
+        shapes = boolean_cut(full_volume, gaps)
 
     return _order_shapes_anticlockwise(shapes)
 
