@@ -20,13 +20,10 @@
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 from typing import Any, Dict
 
-import numpy as np
-
 from bluemira.base.builder import BuildConfig, Builder, Component
 from bluemira.base.components import PhysicalComponent
 from bluemira.base.error import BuilderError
 from bluemira.builders.EUDEMO.tools import varied_offset
-from bluemira.geometry.tools import boolean_cut, make_polygon
 from bluemira.geometry.wire import BluemiraWire
 
 
@@ -48,9 +45,8 @@ class BlanketBuilder(Builder):
         wall_shape: BluemiraWire,
         z_min: float,
     ):
-        # if not wall_shape.is_closed():
-        #     raise BuilderError("Wall shape must be closed.")
-
+        if not wall_shape.is_closed():
+            raise BuilderError("Wall shape must be closed.")
         super().__init__(params, build_config)
         self._wall_shape = wall_shape
         self._z_min = z_min
@@ -69,25 +65,9 @@ class BlanketBuilder(Builder):
 
     def _build_xz(self) -> Component:
         """Build the components in the xz-plane."""
-        offset_wire = varied_offset(self._wall_shape, 1, 2.5, 45, 175)
-        boundary_wire = self._cut_below_z_min(offset_wire)
+        # TODO(hsaunders): add thickness parameters to input params dict
+        boundary_wire = varied_offset(self._wall_shape, 1, 2.5, 45, 175)
         xz_component = Component("xz")
         boundary = PhysicalComponent("blanket_boundary", boundary_wire)
         xz_component.add_child(boundary)
         return xz_component
-
-    def _cut_below_z_min(self, wire: BluemiraWire) -> BluemiraWire:
-        """Cut the given wire below the minimum z value."""
-        bb = wire.bounding_box
-        cut_box_points = np.array(
-            [
-                [bb.x_min, 0, bb.z_min],
-                [bb.x_min, 0, self._z_min],
-                [bb.x_max, 0, self._z_min],
-                [bb.x_max, 0, bb.z_min],
-                [bb.x_min, 0, bb.z_min],
-            ]
-        )
-        cut_zone = make_polygon(cut_box_points)
-        pieces = boolean_cut(wire, [cut_zone])
-        return pieces[np.argmax([p.center_of_mass[2] for p in pieces])]

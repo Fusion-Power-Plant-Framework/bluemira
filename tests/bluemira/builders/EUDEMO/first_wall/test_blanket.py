@@ -55,18 +55,13 @@ class TestBlanketBuilder:
         assert boundary_xz is not None
         assert boundary_xz.depth == 2
 
-    def test_build_returns_boundary_that_is_cut_below_z_min(self):
+    def test_build_returns_boundary_that_does_not_intersect_wire(self):
         builder = BlanketBuilder(self.params, self.build_config, self.picture_frame, -4)
 
         component = builder.build()
 
         shape = component.get_component("blanket_boundary").shape
-        assert not shape.is_closed()
-        coordinates = shape.discretize(50)
-        assert (coordinates[2] >= -(4 + 1e-8)).all()
-
-    def test_build_returns_boundary_that_does_not_intersect_wire(self):
-        builder = BlanketBuilder(self.params, self.build_config, self.picture_frame, -4)
+        assert signed_distance(shape, self.picture_frame) < 0
 
         component = builder.build()
 
