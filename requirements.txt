@@ -22,7 +22,7 @@ importlib-metadata==4.11.3
 importlib-resources==5.6.0
 iniconfig==1.1.1
 ipykernel==6.9.2
-ipython==8.1.1
+ipython==8.2.0
 ipython-genutils==0.2.0
 jedi==0.18.1
 Jinja2==3.0.3
