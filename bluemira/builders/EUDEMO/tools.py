@@ -177,7 +177,7 @@ def pattern_lofted_silhouette(face, n_seg_p_sector, n_sectors, gap):
     Parameters
     ----------
     face: BluemiraFace
-        x-z silhouette of the geometry to revolve and pattern
+        x-z silhouette of the geometry to loft and pattern
     n_seg_p_sector: int
         Number of segments per sector
     n_sectors: int
