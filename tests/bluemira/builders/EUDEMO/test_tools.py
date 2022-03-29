@@ -47,13 +47,8 @@ class TestPatterning:
 
         assert len(shapes) == n_segments
 
-        volume = shapes[0].volume
-        for i in range(n_segments - 1):
-            # Check volumes all the same
-            np.testing.assert_almost_equal(shapes[i + 1].volume, volume)
-            # Check distances between shapes is correct
-            np.testing.assert_almost_equal(distance_to(shapes[i], shapes[i + 1])[0], gap)
-
+        self._assert_volumes_same(shapes)
+        self._assert_distances_right(shapes, gap)
         total_volume = sum([shape.volume for shape in shapes])
 
         # Slightly dubious estimate for the volume of parallel gaps
@@ -68,4 +63,22 @@ class TestPatterning:
 
     @pytest.mark.parametrize("n_segments, n_sectors, gap", fixture)
     def test_lofted_silhouette(self, n_segments, n_sectors, gap):
-        pass
+        p = make_polygon({"x": [4, 5, 5, 4], "y": 0, "z": [-1, -1, 1, 1]}, closed=True)
+        face = BluemiraFace(p)
+
+        shapes = pattern_lofted_silhouette(face, n_segments, n_sectors, gap)
+
+        assert len(shapes) == n_segments
+        self._assert_volumes_same(shapes)
+        self._assert_distances_right(shapes, gap)
+
+    @staticmethod
+    def _assert_volumes_same(shapes):
+        volume = shapes[0].volume
+        for i in range(len(shapes) - 1):
+            np.testing.assert_almost_equal(shapes[i + 1].volume, volume)
+
+    @staticmethod
+    def _assert_distances_right(shapes, gap):
+        for i in range(len(shapes) - 1):
+            np.testing.assert_almost_equal(distance_to(shapes[i], shapes[i + 1])[0], gap)
