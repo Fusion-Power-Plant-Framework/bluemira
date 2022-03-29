@@ -22,21 +22,23 @@
 import numpy as np
 import pytest
 
-from bluemira.builders.EUDEMO.tools import pattern_revolved_silhouette
+from bluemira.builders.EUDEMO.tools import (
+    pattern_lofted_silhouette,
+    pattern_revolved_silhouette,
+)
 from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.tools import distance_to, make_polygon
 
 
 class TestPatterning:
-    @pytest.mark.parametrize(
-        "n_segments, n_sectors, gap",
-        [
-            (3, 16, 0.0),
-            (3, 16, 0.1),
-            (10, 20, 0.05),
-            (2, 1, 1),
-        ],
-    )
+    fixture = [
+        (3, 16, 0.0),
+        (3, 16, 0.1),
+        (10, 20, 0.05),
+        (2, 1, 1),
+    ]
+
+    @pytest.mark.parametrize("n_segments, n_sectors, gap", fixture)
     def test_revolved_silhouette(self, n_segments, n_sectors, gap):
         p = make_polygon({"x": [4, 5, 5, 4], "y": 0, "z": [-1, -1, 1, 1]}, closed=True)
         face = BluemiraFace(p)
@@ -47,7 +49,7 @@ class TestPatterning:
 
         volume = shapes[0].volume
         for i in range(n_segments - 1):
-            # Check volumes
+            # Check volumes all the same
             np.testing.assert_almost_equal(shapes[i + 1].volume, volume)
             # Check distances between shapes is correct
             np.testing.assert_almost_equal(distance_to(shapes[i], shapes[i + 1])[0], gap)
@@ -63,3 +65,7 @@ class TestPatterning:
         theory_volume = face.area * com_radius * 2 * np.pi / (n_sectors) - theory_gap
 
         np.testing.assert_allclose(total_volume, theory_volume, rtol=5e-6)
+
+    @pytest.mark.parametrize("n_segments, n_sectors, gap", fixture)
+    def test_lofted_silhouette(self, n_segments, n_sectors, gap):
+        pass

@@ -32,10 +32,12 @@ import bluemira.geometry as bm_geo
 from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.tools import (
     boolean_cut,
+    boolean_fuse,
     circular_pattern,
     extrude_shape,
     make_polygon,
     revolve_shape,
+    sweep_shape,
 )
 
 
@@ -153,10 +155,10 @@ def pattern_revolved_silhouette(face, n_seg_p_sector, n_sectors, gap):
         # No gaps; just touching solids
         segment_degree = sector_degree / n_seg_p_sector
         shape = revolve_shape(
-            face, base=(0, 0, 1), direction=(0, 0, 1), degree=segment_degree
+            face, base=(0, 0, 0), direction=(0, 0, 1), degree=segment_degree
         )
         shapes = circular_pattern(
-            shape, origin=(0, 0, 1), degree=sector_degree, n_shapes=n_seg_p_sector
+            shape, origin=(0, 0, 0), degree=sector_degree, n_shapes=n_seg_p_sector
         )
     else:
         volume = revolve_shape(
@@ -164,6 +166,62 @@ def pattern_revolved_silhouette(face, n_seg_p_sector, n_sectors, gap):
         )
         gaps = _generate_gap_volumes(face, n_seg_p_sector, n_sectors, gap)
         shapes = boolean_cut(volume, gaps)
+    return _order_shapes_anticlockwise(shapes)
+
+
+def pattern_lofted_silhouette(face, n_seg_p_sector, n_sectors, gap):
+    """
+    Pattern a silhouette with lofts about the z-axis, inter-spaced with parallel
+    gaps between solids.
+
+    Parameters
+    ----------
+    face: BluemiraFace
+        x-z silhouette of the geometry to revolve and pattern
+    n_seg_p_sector: int
+        Number of segments per sector
+    n_sectors: int
+        Number of sectors
+    gap: float
+        Absolute distance between segments (parallel)
+
+    Returns
+    -------
+    shapes: List[BluemiraSolid]
+        List of solids for each segment (ordered anti-clockwise)
+    """
+    sector_degree = 360 / n_sectors
+
+    if gap <= 0.0:
+        pass
+    else:
+        degree = sector_degree * (1 + 1 / n_seg_p_sector)
+        faces = circular_pattern(
+            face,
+            origin=(0, 0, 0),
+            direction=(0, 0, 1),
+            degree=degree,
+            n_shapes=n_seg_p_sector + 1,
+        )
+        volumes = []
+        for i, r_face in enumerate(faces[:-1]):
+            com_1 = r_face.center_of_mass
+            com_2 = faces[i + 1].center_of_mass
+
+            wire = make_polygon(
+                {
+                    "x": [com_1[0], com_2[0]],
+                    "y": [com_1[1], com_2[1]],
+                    "z": [com_1[2], com_2[2]],
+                }
+            )
+            volume = sweep_shape([r_face.boundary[0], faces[i + 1].boundary[0]], wire)
+            volumes.append(volume)
+        volume = boolean_fuse(volumes)
+
+        gaps = _generate_gap_volumes(face, n_seg_p_sector, n_sectors, gap)
+        shapes = boolean_cut(volume, gaps)
+
     return _order_shapes_anticlockwise(shapes)
 
 
