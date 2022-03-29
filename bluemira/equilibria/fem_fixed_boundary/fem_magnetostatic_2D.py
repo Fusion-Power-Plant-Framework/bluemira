@@ -25,6 +25,9 @@ and toroidal current source using fenics FEM solver
 """
 
 import dolfin
+import numpy as np
+
+from bluemira.base.constants import MU_0
 
 
 class FemMagnetostatic2d:
@@ -76,7 +79,7 @@ class FemMagnetostatic2d:
 
         # ======================================================================
         # define boundaries
-        if boundaries is None:  # Dirichlet B.C. are defined
+        if boundaries is None:
             self.boundaries = dolfin.MeshFunction(
                 "size_t", mesh, mesh.topology().dim() - 1
             )  # initialize the MeshFunction
@@ -183,3 +186,91 @@ class FemMagnetostatic2d:
         self.B = dolfin.project(dolfin.as_vector((Bx, Bz)), w)
 
         return self.B
+
+
+class FemGradShafranov(FemMagnetostatic2d):
+    """
+    A 2D fem Grad Shafranov solver. The solver is thought as support for the fem fixed
+    boundary module.
+
+    Parameters
+    ----------
+    mesh : dolfin.mesh or string
+           the filename of the xml file with the mesh definition
+           or a dolfin mesh
+    boundaries : dolfin.MeshFunction or string
+                 the filename of the xml file with the boundaries definition
+                 or a MeshFunction that defines the boundaries
+    p_order : int
+        the order of the approximating polynomial basis functions
+    """  # noqa (W505)
+
+    def __init__(self, mesh, boundaries=None, p_order=3):
+        super().__init__(mesh, boundaries, p_order)
+
+    @property
+    def _psi_ax(self):
+        """Poloidal flux on the magnetic axis"""
+        return np.max(self.psi.vector()[:])
+
+    @property
+    def _psi_b(self):
+        """Poloidal flux on the boundary"""
+        return np.min(self.psi.vector()[:])
+
+    @property
+    def _psi_norm_2d(self):
+        """Normalized flux function in 2-D"""
+
+        def myfunc(x):
+            return (self.psi(x) - self._psi_ax) / (self._psi_b - self._psi_ax)
+
+        return myfunc
+
+    def _create_g(self, pprime, ffprime, curr_target):
+        """
+        Returns the density current function given pprime and ffprime.
+
+        Parameters
+        ----------
+        pprime: callable
+            pprime as function of psi_norm (1-D function)
+        ffprime: callable
+            ffprime as function of psi_norm (1-D function)
+        curr_target: float
+            target current (also used to initialize the solution in case self.psi is
+            still 0 and pprime and ffprime are, then, not defined)
+
+        Returns
+        -------
+        g: callble
+            source current to solve the magnetostatic problem
+        """
+        dx = dolfin.Measure("dx", domain=self.mesh)
+        area = dolfin.assemble(dolfin.Constant(1) * dx())
+        j_target = curr_target / area
+
+        def myfunc(x):
+            if self._psi_ax == 0:
+                return j_target
+            else:
+                r = x[0]
+                x_psi = self._psi_norm(x)
+                a = -MU_0 * r * pprime(self.psi(x_psi))
+                b = -1 / r * ffprime(self.psi(x_psi))
+                return -1 / MU_0 * (a + b)
+
+        return myfunc
+
+    def solve(
+        self,
+        pprime,
+        ffprime,
+        curr_target,
+        dirichlet_bc_function=None,
+        dirichlet_marker=None,
+        neumann_bc_function=None,
+    ):
+        """Solves the GS problem given pprime and ffprime"""
+        g = self._create_g(self, pprime, ffprime, curr_target)
+        super().solve(g, dirichlet_bc_function, dirichlet_marker, neumann_bc_function)
