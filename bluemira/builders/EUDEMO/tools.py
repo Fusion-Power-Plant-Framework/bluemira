@@ -35,7 +35,6 @@ from bluemira.geometry.tools import (
     circular_pattern,
     extrude_shape,
     make_polygon,
-    offset_wire,
     revolve_shape,
 )
 
@@ -168,13 +167,6 @@ def pattern_revolved_silhouette(face, n_seg_p_sector, n_sectors, gap):
     return _order_shapes_anticlockwise(shapes)
 
 
-def pattern_lofted_silhouette(face, n_seg_p_sector, n_sectors, gap):
-    """
-    Something
-    """
-    pass
-
-
 def _generate_gap_volumes(face, n_seg_p_sector, n_sectors, gap):
     """
     Generate the gap volumes
@@ -200,6 +192,9 @@ def _generate_gap_volumes(face, n_seg_p_sector, n_sectors, gap):
 
 
 def _order_shapes_anticlockwise(shapes):
+    """
+    Order shapes anti-clockwise about (0, 0, 1) by center of mass
+    """
     x, y = np.zeros(len(shapes)), np.zeros(len(shapes))
 
     for i, shape in enumerate(shapes):

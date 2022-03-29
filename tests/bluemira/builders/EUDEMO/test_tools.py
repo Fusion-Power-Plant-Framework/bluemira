@@ -22,10 +22,7 @@
 import numpy as np
 import pytest
 
-from bluemira.builders.EUDEMO.tools import (
-    pattern_lofted_silhouette,
-    pattern_revolved_silhouette,
-)
+from bluemira.builders.EUDEMO.tools import pattern_revolved_silhouette
 from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.tools import distance_to, make_polygon
 
