@@ -170,6 +170,11 @@ class Setup(Task):
             def remapper(x):
                 return orig_remap[x]
 
+        else:
+
+            def remapper(x):
+                return x
+
         for prog_key, bm_key in self._send_mapping.items():
             prog_key = remapper(prog_key)
             if isinstance(prog_key, list):

@@ -487,7 +487,6 @@ class Solver(interface.FileProgramInterface):
             mappings=mappings,
             problem_settings=build_config.get("problem_settings", None),
         )
-        self.get_raw_variables = self.get_scalar
 
     @property
     def problem_settings(self):
@@ -496,7 +495,7 @@ class Solver(interface.FileProgramInterface):
         """
         return self.setup_obj._problem_settings
 
-    def get_scalar(self, scalar: Union[List, str]):
+    def get_raw_variables(self, scalar: Union[List, str]):
         """
         Get scalar values for unmapped variables.
 
