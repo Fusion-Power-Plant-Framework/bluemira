@@ -217,7 +217,7 @@ class TestPatterning:
 
         np.testing.assert_allclose(total_volume, theory_volume, rtol=5e-6)
 
-    @pytest.mark.parametrize("n_segments, n_sectors, gap", fixture)
+    @pytest.mark.parametrize("n_segments, n_sectors, gap", fixture[:-1])
     def test_lofted_silhouette(self, n_segments, n_sectors, gap):
         p = make_polygon({"x": [4, 5, 5, 4], "y": 0, "z": [-1, -1, 1, 1]}, closed=True)
         face = BluemiraFace(p)
