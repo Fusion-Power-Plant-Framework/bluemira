@@ -29,10 +29,10 @@ import bluemira.utilities.plot_tools as bm_plot_tools
 from bluemira.base.builder import BuildConfig, Builder
 from bluemira.base.components import Component, PhysicalComponent
 from bluemira.base.config import Configuration
-from bluemira.builders.EUDEMO.tools import circular_pattern_component
+from bluemira.builders.EUDEMO.tools import circular_pattern_component, varied_offset
 from bluemira.display.palettes import BLUE_PALETTE
 from bluemira.geometry.face import BluemiraFace
-from bluemira.geometry.tools import make_circle, revolve_shape
+from bluemira.geometry.tools import make_circle, offset_wire, revolve_shape
 from bluemira.geometry.wire import BluemiraWire
 
 
@@ -86,9 +86,26 @@ class VacuumVesselBuilder(Builder):
         """
         Build the x-z components of the vacuum vessel.
         """
-        self._vv_face = None
+        inner_vv = offset_wire(
+            self._fw_koz, self._params.g_vv_bb.value, join="arc", open_wire=False
+        )
+        angle_1 = 80
+        angle_2 = 160
+        outer_vv = varied_offset(
+            inner_vv,
+            self._params.tk_vv_in.value,
+            self._params.tk_vv_out.value,
+            angle_1,
+            angle_2,
+            num_points=300,
+        )
+        face = BluemiraFace([outer_vv, inner_vv])
+        self._vv_face = face
 
-        component = Component("xz", children=[])
+        body = PhysicalComponent("body", face)
+        body.plot_options.face_options["color"] = BLUE_PALETTE["VV"][0]
+
+        component = Component("xz", children=[body])
         bm_plot_tools.set_component_plane(component, "xz")
         return component
 
