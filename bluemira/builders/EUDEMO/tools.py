@@ -29,6 +29,7 @@ import numpy as np
 
 import bluemira.base.components as bm_comp
 import bluemira.geometry as bm_geo
+from bluemira.builders.EUDEMO._varied_offset import varied_offset
 from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.tools import (
     boolean_cut,
@@ -38,6 +39,13 @@ from bluemira.geometry.tools import (
     make_polygon,
     revolve_shape,
     sweep_shape,
+)
+
+__all__ = (
+    "circular_pattern_component",
+    "pattern_revolved_silhouette",
+    "pattern_lofted_silhouette",
+    "varied_offset",
 )
 
 
