@@ -50,18 +50,18 @@ class VacuumVesselBuilder(Builder):
         "n_TF",
     ]
     _params: Configuration
-    _fw_koz: BluemiraWire
+    _ivc_koz: BluemiraWire
 
     def __init__(
         self,
         params,
         build_config: BuildConfig,
-        fw_koz: BluemiraWire,
+        ivc_koz: BluemiraWire,
     ):
         super().__init__(
             params,
             build_config,
-            fw_koz=fw_koz,
+            ivc_koz=ivc_koz,
         )
         self._vv_face = None
 
@@ -87,7 +87,7 @@ class VacuumVesselBuilder(Builder):
         Build the x-z components of the vacuum vessel.
         """
         inner_vv = offset_wire(
-            self._fw_koz, self._params.g_vv_bb.value, join="arc", open_wire=False
+            self._ivc_koz, self._params.g_vv_bb.value, join="arc", open_wire=False
         )
         angle_1 = 80
         angle_2 = 160

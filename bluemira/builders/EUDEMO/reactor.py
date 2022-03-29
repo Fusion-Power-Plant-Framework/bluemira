@@ -36,6 +36,7 @@ from bluemira.builders.EUDEMO.ivc.ivc import build_ivc_xz_shapes
 from bluemira.builders.EUDEMO.pf_coils import PFCoilsBuilder
 from bluemira.builders.EUDEMO.plasma import PlasmaBuilder
 from bluemira.builders.EUDEMO.tf_coils import TFCoilsBuilder
+from bluemira.builders.EUDEMO.vacuum_vessel import VacuumVesselBuilder
 from bluemira.builders.radiation_shield import RadiationShieldBuilder
 from bluemira.builders.thermal_shield import ThermalShieldBuilder
 from bluemira.codes import systems_code_solver
@@ -54,6 +55,7 @@ class EUDEMOReactor(Reactor):
     TF_COILS = "TF Coils"
     PF_COILS = "PF Coils"
     IVC = "In-Vessel Components"
+    VACUUM_VESSEL = "Vacuum Vessel"
     THERMAL_SHIELD = "Thermal Shield"
     CRYOSTAT = "Cryostat"
     RADIATION_SHIELD = "Radiation Shield"
@@ -338,6 +340,29 @@ class EUDEMOReactor(Reactor):
         builder = BlanketBuilder(
             self._params.to_dict(), config, blanket_silhouette=blanket_face
         )
+        self.register_builder(builder, name)
+        component = super()._build_stage(name)
+
+        bluemira_print(f"Completed design stage: {name}")
+
+        return component
+
+    def build_vacuum_vessel(self, component_tree: Component):
+        """
+        Run the reactor vacuum vessel build.
+        """
+        name = EUDEMOReactor.VACUUM_VESSEL
+
+        bluemira_print(f"Starting design stage: {name}")
+
+        default_config = {}
+        config = self._process_design_stage_config(name, default_config)
+
+        ivc = component_tree.get_component(EUDEMOReactor.FIRST_WALL).get_component("xz")
+
+        ivc_koz = ivc
+
+        builder = VacuumVesselBuilder(self._params.to_dict(), config, ivc_koz=ivc_koz)
         self.register_builder(builder, name)
         component = super()._build_stage(name)
 
