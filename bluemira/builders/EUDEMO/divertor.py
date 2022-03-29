@@ -24,10 +24,8 @@ Define builder for divertor
 
 from typing import List, Optional
 
-import numpy as np
-
 import bluemira.utilities.plot_tools as bm_plot_tools
-from bluemira.base.builder import BuildConfig, Builder, Component
+from bluemira.base.builder import Builder, Component
 from bluemira.base.components import PhysicalComponent
 from bluemira.base.config import Configuration
 from bluemira.builders.EUDEMO.tools import pattern_revolved_silhouette
