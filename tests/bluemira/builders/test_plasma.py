@@ -23,6 +23,9 @@
 Tests for plasma builders
 """
 
+import sys
+from unittest import mock
+
 import tests
 from bluemira.base.components import Component, PhysicalComponent
 from bluemira.builders.plasma import MakeParameterisedPlasma
@@ -68,3 +71,30 @@ class TestMakeParameterisedPlasma:
                 else:
                     lcfs.plot_options.face_options["color"] = color
                     lcfs.plot_2d()
+
+    def test_builder_with_import_isolation(self):
+        """Check that the build works with a clean set of imports."""
+        with mock.patch.dict(sys.modules):
+            for mod in list(sys.modules.keys()):
+                if mod.startswith("bluemira"):
+                    sys.modules.pop(mod)
+
+            from bluemira.builders.plasma import MakeParameterisedPlasma
+
+            params = {
+                "R_0": (9.0, "Input"),
+                "A": (3.5, "Input"),
+            }
+            build_config = {
+                "name": "Plasma",
+                "class": "MakeParameterisedPlasma",
+                "param_class": "bluemira.equilibria.shapes::JohnerLCFS",
+                "variables_map": {
+                    "r_0": "R_0",
+                    "a": "A",
+                },
+            }
+            builder = MakeParameterisedPlasma(params, build_config)
+            plasma = builder().get_component("xz").get_component("LCFS")
+
+            assert plasma is not None
