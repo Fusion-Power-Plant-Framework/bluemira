@@ -29,6 +29,7 @@ from bluemira.geometry.tools import (
     _signed_distance_2D,
     convex_hull_wires_2d,
     extrude_shape,
+    find_clockwise_angle_2d,
     make_circle,
     make_polygon,
     offset_wire,
@@ -412,3 +413,46 @@ class TestConvexHullWires2d:
 
         with pytest.raises(ValueError):
             convex_hull_wires_2d([circle], 10, plane=bad_plane)
+
+
+class TestFindClockwiseAngle2d:
+    @pytest.mark.parametrize(
+        "fixture",
+        [
+            (np.array([-1, 0]), np.array([-1, 0]), 0),
+            (np.array([-1, 0]), np.array([0, 1]), 90),
+            (np.array([-1, 0]), np.array([0, -1]), 270),
+            (
+                np.array([-1, 0]),
+                np.array([[0, 1, 0, -1], [1, 1, -1, -1]]),
+                np.array([90, 135, 270, 315]),
+            ),
+        ],
+    )
+    def test_output_contains_clockwise_angle_given_valid_input(self, fixture):
+        base, vector, expected = fixture
+        np.testing.assert_allclose(find_clockwise_angle_2d(base, vector), expected)
+
+    @pytest.mark.parametrize("value", [[0, 1], 100, "not np.ndarray"])
+    @pytest.mark.parametrize("vector_name", ["base", "vector"])
+    def test_TypeError_given_input_is_not_ndarray(self, value, vector_name):
+        params = {
+            "base": np.array([0, 1]),
+            "vector": np.array([0, 1]),
+        }
+        params[vector_name] = value
+
+        with pytest.raises(TypeError):
+            find_clockwise_angle_2d(**params)
+
+    @pytest.mark.parametrize("size", [0, 3, 10])
+    @pytest.mark.parametrize("vector_name", ["base", "vector"])
+    def test_ValueError_given_inputs_axis_0_size_not_2(self, size, vector_name):
+        params = {
+            "base": np.array([0, 1]),
+            "vector": np.array([0, 1]),
+        }
+        params[vector_name] = np.zeros((size, 1))
+
+        with pytest.raises(ValueError):
+            find_clockwise_angle_2d(**params)
