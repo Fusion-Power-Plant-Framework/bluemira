@@ -34,11 +34,13 @@ class TestPatterning:
     @pytest.mark.parametrize(
         "n_segments, n_sectors, gap",
         [
-            (3, 16, 0.05),
+            (3, 16, 0.0),
+            (3, 16, 0.1),
+            (2, 1, 1),
         ],
     )
     def test_revolved_silhouette(self, n_segments, n_sectors, gap):
-        p = make_polygon({"x": [9, 10, 10, 9], "y": 0, "z": [-1, -1, 1, 1]}, closed=True)
+        p = make_polygon({"x": [4, 5, 5, 4], "y": 0, "z": [-1, -1, 1, 1]}, closed=True)
         face = BluemiraFace(p)
 
         shapes = pattern_revolved_silhouette(face, n_segments, n_sectors, gap)
@@ -46,8 +48,20 @@ class TestPatterning:
         assert len(shapes) == n_segments
 
         volume = shapes[0].volume
-        for i in range(n_segments) - 1:
-            # Check distances between shapes is correct
-            np.testing.assert_almost_equal(distance_to(shapes[i], shapes[i + 1]), gap)
+        for i in range(n_segments - 1):
             # Check volumes
             np.testing.assert_almost_equal(shapes[i + 1].volume, volume)
+            # Check distances between shapes is correct
+            np.testing.assert_almost_equal(distance_to(shapes[i], shapes[i + 1])[0], gap)
+
+        total_volume = sum([shape.volume for shape in shapes])
+
+        # Slightly dubious estimate for the volume of parallel gaps
+        com_radius = p.center_of_mass[0]
+        gamma_gap = 2 * np.arcsin(0.5 * gap / com_radius)
+        d_l = com_radius * gamma_gap
+        theory_gap = face.area * n_segments * d_l
+
+        theory_volume = face.area * com_radius * 2 * np.pi / (n_sectors) - theory_gap
+
+        np.testing.assert_allclose(total_volume, theory_volume, rtol=5e-6)
