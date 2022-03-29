@@ -30,8 +30,10 @@ import numpy as np
 from bluemira.base.builder import BuildConfig, Component
 from bluemira.base.components import PhysicalComponent
 from bluemira.base.error import BuilderError
+from bluemira.builders.EUDEMO.first_wall.blanket import BlanketBuilder
 from bluemira.builders.EUDEMO.first_wall.divertor import DivertorBuilder
 from bluemira.builders.EUDEMO.first_wall.wall import WallBuilder
+from bluemira.builders.EUDEMO.tools import varied_offset
 from bluemira.builders.shapes import Builder
 from bluemira.equilibria.equilibrium import Equilibrium
 from bluemira.equilibria.find import find_OX_points
@@ -91,6 +93,8 @@ class FirstWallBuilder(Builder):
         └── xz (Component)
             └── wall (Component)
                 └── wall_boundary (PhysicalComponent)
+            └── blanket (Component)
+                └── blanket_boundary (PhysicalComponent)
             └── divertor (Component)
                 ├── inner_target (PhysicalComponent)
                 ├── outer_target (PhysicalComponent)
@@ -102,6 +106,7 @@ class FirstWallBuilder(Builder):
     COMPONENT_DIVERTOR = "divertor"
     COMPONENT_FIRST_WALL = "first_wall"
     COMPONENT_WALL = "wall"
+    COMPONENT_BLANKET = "blanket"
 
     def __init__(
         self,
@@ -142,7 +147,15 @@ class FirstWallBuilder(Builder):
         """
         Build the component.
         """
-        self.wall = self._build_wall()
+        wall = self._wall_builder()
+        closed_wall_shape = wall.get_component(WallBuilder.COMPONENT_WALL_BOUNDARY).shape
+
+        self._blanket_builder = BlanketBuilder(
+            {}, {"name": self.COMPONENT_BLANKET}, closed_wall_shape, self.x_points[0].z
+        )
+        self.blanket = self._blanket_builder()
+
+        self.wall = self._cut_wall(wall)
         wall_shape = self.wall.get_component(WallBuilder.COMPONENT_WALL_BOUNDARY).shape
         self._divertor_builder.x_limits = [
             wall_shape.start_point().x[0],
@@ -151,10 +164,10 @@ class FirstWallBuilder(Builder):
         self.divertor = self._divertor_builder()
 
         first_wall = Component(self.name)
-        first_wall.add_child(self.build_xz())
+        first_wall.add_child(self._build_xz())
         return first_wall
 
-    def build_xz(self) -> Component:
+    def _build_xz(self) -> Component:
         """
         Build the component in the xz-plane.
         """
@@ -166,6 +179,13 @@ class FirstWallBuilder(Builder):
             self.COMPONENT_WALL,
             parent=parent_component,
             children=list(wall_xz.children),
+        )
+
+        blanket_xz_component = self.blanket.get_component("xz")
+        Component(
+            self.COMPONENT_BLANKET,
+            parent=parent_component,
+            children=list(blanket_xz_component.children),
         )
 
         # Extract the xz components in the divertor
@@ -208,17 +228,7 @@ class FirstWallBuilder(Builder):
             x_limits=[],
         )
 
-    def _build_wall(self):
-        """
-        Build the component for the wall, excluding the divertor.
-
-        This uses the WallBuilder class to create a (optionally
-        optimised) first wall shape. It then cuts the wall below the
-        equilibrium's x-point, to make space for a divertor.
-        """
-        # Build a full, closed, wall shape
-        wall = self._wall_builder()
-
+    def _cut_wall(self, wall: Component) -> Component:
         # Cut wall below x-point in xz, a divertor will be put in the
         # space
         wall_xz = wall.get_component("xz")

@@ -33,7 +33,7 @@ class TestBlanketBuilder:
         "name": "Blanket",
         "runmode": "run",
     }
-    params = {"c_rm": 0.03}  # m
+    params = {}
 
     def test_BuilderError_given_wall_shape_not_closed(self):
         wall_shape = make_circle(end_angle=180)

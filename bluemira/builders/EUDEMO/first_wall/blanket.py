@@ -18,16 +18,15 @@
 #
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
-from typing import Any, Dict, List
+from typing import Any, Dict
 
 import numpy as np
-from sklearn.datasets import make_sparse_uncorrelated
 
 from bluemira.base.builder import BuildConfig, Builder, Component
 from bluemira.base.components import PhysicalComponent
 from bluemira.base.error import BuilderError
 from bluemira.builders.EUDEMO.tools import varied_offset
-from bluemira.geometry.tools import boolean_cut, make_polygon  # noqa(F401)
+from bluemira.geometry.tools import boolean_cut, make_polygon
 from bluemira.geometry.wire import BluemiraWire
 
 
@@ -42,10 +41,6 @@ class BlanketBuilder(Builder):
             └── blanket_boundary (PhysicalComponent)
     """
 
-    _required_params: List[str] = [
-        "c_rm",  # Remote maintenance clearance
-    ]
-
     def __init__(
         self,
         params: Dict[str, Any],
@@ -53,8 +48,8 @@ class BlanketBuilder(Builder):
         wall_shape: BluemiraWire,
         z_min: float,
     ):
-        if not wall_shape.is_closed():
-            raise BuilderError("Wall shape must be closed.")
+        # if not wall_shape.is_closed():
+        #     raise BuilderError("Wall shape must be closed.")
 
         super().__init__(params, build_config)
         self._wall_shape = wall_shape
@@ -74,10 +69,9 @@ class BlanketBuilder(Builder):
 
     def _build_xz(self) -> Component:
         """Build the components in the xz-plane."""
-        xz_component = Component("xz")
         offset_wire = varied_offset(self._wall_shape, 1, 2.5, 45, 175)
-
         boundary_wire = self._cut_below_z_min(offset_wire)
+        xz_component = Component("xz")
         boundary = PhysicalComponent("blanket_boundary", boundary_wire)
         xz_component.add_child(boundary)
         return xz_component
