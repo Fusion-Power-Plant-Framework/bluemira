@@ -21,8 +21,12 @@
 
 """Module to support the fem_fixed_boundary implementation"""
 
+from typing import Callable
+
 import dolfin
+import matplotlib.pyplot as plt
 import numpy as np
+import scipy
 
 
 def b_coil_axis(r, z, pz, curr):
@@ -59,26 +63,40 @@ class ScalarSubFunc(dolfin.UserExpression):
         the whole subdomains mesh function
     """
 
-    def __init__(self, func_list, mark_list, subdomains, **kwargs):
+    def __init__(self, func_list, mark_list=None, subdomains=None, **kwargs):
         super().__init__(**kwargs)
-        self.subdomains = subdomains
-        self.functions = func_list
+        self.functions = self.check_functions(func_list)
         self.markers = mark_list
+        self.subdomains = subdomains
+
+    def check_functions(self, functions):
+        if isinstance(functions, (int, float, Callable)):
+            return [functions]
+        if isinstance(functions, list):
+            if all(isinstance(f, (int, float, Callable)) for f in functions):
+                return functions
+        raise ValueError(
+            "Accepted functions are instance of (int, float, Callable)"
+            "or alist of them."
+        )
 
     def eval_cell(self, values, x, cell):
         """Evaluate the value on each cell"""
-        m = self.subdomains[cell.index]
-        if m in self.markers:
-            index = np.where(np.array(self.markers) == m)
-            func = self.functions[index[0][0]]
-            if callable(func):
-                values[0] = func(x)
-            elif isinstance(func, (int, float)):
-                values[0] = func
-            else:
-                raise ValueError(f"{func} is not callable or is not a constant")
+        if self.markers is None or self.subdomains is None:
+            func = self.functions[0]
         else:
-            values[0] = 0
+            m = self.subdomains[cell.index]
+            if m in self.markers:
+                index = np.where(np.array(self.markers) == m)
+                func = self.functions[index[0][0]]
+            else:
+                func = 0
+        if callable(func):
+            values[0] = func(x)
+        elif isinstance(func, (int, float)):
+            values[0] = func
+        else:
+            raise ValueError(f"{func} is not callable or is not a constant")
 
     def value_shape(self):
         """
@@ -86,3 +104,106 @@ class ScalarSubFunc(dolfin.UserExpression):
         https://fenicsproject.discourse.group/t/problems-interpolating-a-userexpression-and-plotting-it/1303
         """
         return ()
+
+
+def plot_scalar_field(x, y, z, levels=20, axis=None, tofill=True, **kwargs):
+
+    cntr = None
+    cntrf = None
+
+    if axis is None:
+        fig = plt.figure()
+        axis = fig.add_subplot()
+
+    if not kwargs:
+        kwargs = {"linewidths": 2, "colors": "k"}
+
+    # # ----------
+    # # Tricontour
+    # # ----------
+    # # Directly supply the unordered, irregularly spaced coordinates
+    # # to tricontour.
+    # opts = {'linewidths': 0.5, 'colors':'k'}
+    cntr = axis.tricontour(x, y, z, levels=levels, **kwargs)
+    if tofill:
+        cntrf = axis.tricontourf(x, y, z, levels=levels, cmap="RdBu_r")
+        plt.gcf().colorbar(cntrf, ax=axis)
+
+    plt.gca().set_aspect("equal")
+
+    return axis, cntr, cntrf
+
+
+class Solovev:
+    def __init__(self, R0, a, kappa, delta, A1, A2):
+        self.R0 = R0
+        self.a = a
+        self.kappa = kappa
+        self.delta = delta
+        self.A1 = A1
+        self.A2 = A2
+        self._findParams()
+
+    def _findParams(self):
+        ri = self.R0 - self.a
+        ro = self.R0 + self.a
+        rt = self.R0 - self.delta * self.a
+        zt = self.kappa * self.a
+
+        m = np.array(
+            [
+                [1.0, ri**2, ri**4, ri**2 * np.log(ri)],
+                [1.0, ro**2, ro**4, ro**2 * np.log(ro)],
+                [
+                    1.0,
+                    rt**2,
+                    rt**2 * (rt**2 - 4 * zt**2),
+                    rt**2 * np.log(rt) - zt**2,
+                ],
+                [0.0, 2.0, 4 * (rt**2 - 2 * zt**2), 2 * np.log(rt) + 1.0],
+            ]
+        )
+
+        b = np.array(
+            [
+                [-(ri**4) / 8.0, 0],
+                [-(ro**4) / 8.0, 0.0],
+                [-(rt**4) / 8.0, +(zt**2) / 2.0],
+                [-(rt**2) / 2.0, 0.0],
+            ]
+        )
+        b = b * np.array([self.A1, self.A2])
+        b = np.sum(b, axis=1)
+
+        self.coeff = scipy.linalg.solve(m, b)
+        print(f"Solovev coefficients: {self.coeff}")
+
+    def psi(self, points):
+        if len(points.shape) == 1:
+            points = np.array([points])
+
+        c = lambda x: np.array(
+            [
+                1.0,
+                x[0] ** 2,
+                x[0] ** 2 * (x[0] ** 2 - 4 * x[1] ** 2),
+                x[0] ** 2 * np.log(x[0]) - x[1] ** 2,
+                (x[0] ** 4) / 8.0,
+                -(x[1] ** 2) / 2.0,
+            ]
+        )
+
+        m = np.concatenate((self.coeff, np.array([self.A1, self.A2])))
+
+        return [np.sum(c(x) * m) * 2 * np.pi for x in points]
+
+    def plot_psi(self, ri, zi, dr, dz, nr, nz, levels=20, axis=None, tofill=True):
+        r = np.linspace(ri, ri + dr, nr)
+        z = np.linspace(zi, zi + dz, nz)
+        rv, zv = np.meshgrid(r, z)
+        points = np.vstack([rv.ravel(), zv.ravel()]).T
+        psi = self.psi(points)
+        cplot = plot_scalar_field(
+            points[:, 0], points[:, 1], psi, levels=levels, axis=axis, tofill=tofill
+        )
+        return cplot + (points, psi)
