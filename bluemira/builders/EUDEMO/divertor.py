@@ -22,7 +22,7 @@
 Define builder for divertor
 """
 
-from typing import Any, Callable, Dict, Iterable, List, Optional, Sequence
+from typing import List, Optional
 
 import numpy as np
 
@@ -30,10 +30,8 @@ import bluemira.utilities.plot_tools as bm_plot_tools
 from bluemira.base.builder import BuildConfig, Builder, Component
 from bluemira.base.components import PhysicalComponent
 from bluemira.base.config import Configuration
-from bluemira.base.error import BuilderError
-from bluemira.equilibria.equilibrium import Equilibrium
-from bluemira.equilibria.find import find_flux_surface_through_point, get_legs
-from bluemira.geometry.tools import make_polygon
+from bluemira.builders.EUDEMO.tools import pattern_revolved_silhouette
+from bluemira.display.palettes import BLUE_PALETTE
 from bluemira.geometry.wire import BluemiraWire
 
 
@@ -43,8 +41,9 @@ class DivertorBuilder(Builder):
     """
 
     _required_params: List[str] = [
-        "reactor_type",
-        "plasma_type",
+        "n_TF",
+        "n_div_cassettes",
+        "c_rm",
     ]
 
     _params: Configuration
@@ -85,7 +84,9 @@ class DivertorBuilder(Builder):
         """
         Build the x-z components of the divertor.
         """
-        component = Component("xz", children=[])
+        body = PhysicalComponent("body", self._silhouette)
+        body.plot_options.face_options["color"] = BLUE_PALETTE["DIV"][0]
+        component = Component("xz", children=[body])
         bm_plot_tools.set_component_view(component, "xz")
         return component
 
@@ -101,5 +102,18 @@ class DivertorBuilder(Builder):
         """
         Build the x-y-z components of the divertor.
         """
-        component = Component("xyz", children=[])
+        shapes = pattern_revolved_silhouette(
+            self._silhouette,
+            self._params.n_div_cassettes.value,
+            self._params.n_TF.value,
+            self._params.c_rm.value,
+        )
+
+        segments = []
+        for i, shape in enumerate(shapes):
+            segment = PhysicalComponent(f"segment_{i}", shape)
+            segment.display_cad_options.color = BLUE_PALETTE["DIV"][i]
+            segments.append(segment)
+
+        component = Component("xyz", children=segments)
         return component
