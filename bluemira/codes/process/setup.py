@@ -70,18 +70,17 @@ class Setup(interface.Setup):
         self.write_indat(use_bp_inputs=False)
 
     def _validate_models(self, writer):
-        models = [
-            "iefrf",
-            CurrentDriveEfficiencyModel,
-            "i_tf_sup",
-            TFCoilConductorTechnology,
-        ]
+        models = {
+            "iefrf": CurrentDriveEfficiencyModel,
+            "i_tf_sup": TFCoilConductorTechnology,
+        }
 
-        for name, model_cls in models:
+        for name, model_cls in models.items():
             try:
-                val = writer.data[name].value
+                val = writer.data[name].get_value
             except KeyError:
                 continue
+
             model = model_cls[val] if isinstance(val, str) else model_cls(val)
             writer.add_parameter(name, model.value)
 
