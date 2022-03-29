@@ -65,7 +65,7 @@ class TFCoilConductorTechnology(Model):
     1 - superconductor
     2 - Cryogenic aluminium
 
-    PROCESS variable name: i_tf_sup
+    PROCESS variable name: "i_tf_sup"
     """
 
     COPPER = 1
