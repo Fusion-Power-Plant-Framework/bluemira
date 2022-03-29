@@ -164,7 +164,7 @@ class Setup(Task):
 
         if not (callable(remapper) or isinstance(remapper, (type(None), Dict))):
             raise TypeError("remapper is not callable or a dictionary")
-        elif remapper is not None and isinstance(remapper, Dict):
+        elif isinstance(remapper, Dict):
             orig_remap = remapper.copy()
 
             def remapper(x):
