@@ -57,6 +57,11 @@ class TestSetup:
 
     @pytest.mark.parametrize("problem_settings", ({}, {"iefrf": 6, "i_tf_sup": 2}))
     def test_write_input_file(self, problem_settings):
+        """
+        Tests that an input file is written properly (by proxy calls validate models)
+
+        Eventually this should be moved out to PROCESS itself
+        """
         self.setup_writer.parent.problem_settings = problem_settings
         self.setup_writer.write_indat()
 
