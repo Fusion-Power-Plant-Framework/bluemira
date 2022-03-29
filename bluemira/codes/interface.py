@@ -170,7 +170,7 @@ class Setup(Task):
             def remapper(x):
                 return orig_remap[x]
 
-        else:
+        elif remapper is None:
 
             def remapper(x):
                 return x
