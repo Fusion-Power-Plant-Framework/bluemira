@@ -158,7 +158,7 @@ class Geometry:
         dz: float
             The z distance to move the Node
         """
-        if np.sqrt(dx ** 2 + dy ** 2 + dz ** 2) <= D_TOLERANCE:
+        if np.sqrt(dx**2 + dy**2 + dz**2) <= D_TOLERANCE:
             return
 
         moved_node = deepcopy(self.nodes[node_id])
@@ -320,9 +320,9 @@ class Geometry:
         coordinates: Coordinates
             The coordinates to transform into connected Nodes and Elements
         cross_section: CrossSection
-            The cross section of all the Elements in the Loop
+            The cross section of all the Elements in the Coordinates
         material: Material
-            The material of all the Elements in the Loop
+            The material of all the Elements in the Coordinates
         """
         n_start = self.add_node(*coordinates[0])  # Add first Node
 

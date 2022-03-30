@@ -68,10 +68,9 @@ def make_platform(width, elevation, cross_section, elements=True, internodes=Fal
 
 # %%
 cs1 = RectangularBeam(5, 5)
-cs2 = RectangularBeam(3, 3)
-cs3 = RectangularBeam(1.5, 1.5)
+cs2 = RectangularBeam(4, 4)
+cs3 = RectangularBeam(2, 2)
 cs4 = RectangularBeam(1, 1)
-cs5 = RectangularBeam(0.5, 0.5)
 
 # %%
 make_platform(124.9, 0, cs1, elements=False)
@@ -128,13 +127,13 @@ for i in range(4):
 
 # %%
 model.add_node(0, 0, 324)
-model.add_element(20, 21, cs5, SS316)
+model.add_element(20, 21, cs4, SS316)
 
 # %%
 model.plot(show_cross_sections=True)
 
 # %%
-# model.add_gravity_loads()
+model.add_gravity_loads()
 model.add_distributed_load(40, -10000, "Fz")
 model.add_distributed_load(43, -10000, "Fz")
 

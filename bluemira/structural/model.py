@@ -163,12 +163,12 @@ class FiniteElementModel:
 
         Parameters
         ----------
-        loop: BLUEPRINT::geometry::Loop object
-            The Loop to transform into Nodes and Elements
-        cross_section: BLUEPRINT::structural::CrossSection object
-            The cross section of all the Elements in the Loop
-        material: BLUEPRINT::structural::Material object
-            The material of all the Elements in the Loop
+        coordinates: Coordinates
+            The coordinates to transform into connected Nodes and Elements
+        cross_section: CrossSection object
+            The cross section of all the Elements in the Coordinates
+        material: Material object
+            The material of all the Elements in the Coordinates
         """
         self.geometry.add_coordinates(loop, cross_section, material)
 
@@ -444,7 +444,7 @@ class FiniteElementModel:
         """
         xmax, xmin, ymax, ymin, zmax, zmin = self.geometry.bounds()
         dx, dy, dz = xmax - xmin, ymax - ymin, zmax - zmin
-        length = np.sqrt(dx ** 2 + dy ** 2 + dz ** 2)
+        length = np.sqrt(dx**2 + dy**2 + dz**2)
 
         # Get per node displacements
         deflections = deflections.reshape((self.geometry.n_nodes, -1))
