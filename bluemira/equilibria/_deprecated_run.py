@@ -20,7 +20,7 @@
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 
 """
-Main interface for building and loading equilibria and coilset designs
+DEPRECATED interface for building and loading equilibria and coilset designs
 """
 
 from copy import deepcopy
@@ -32,16 +32,16 @@ from pandas import DataFrame, concat
 
 from bluemira.base.file import try_get_bluemira_path
 from bluemira.base.look_and_feel import bluemira_print, bluemira_warn
+from bluemira.builders.EUDEMO.equilibria import (
+    EUDEMODoubleNullConstraints,
+    EUDEMOSingleNullConstraints,
+)
 from bluemira.equilibria.constants import (
     B_BREAKDOWN,
     NB3SN_B_MAX,
     NB3SN_J_MAX,
     NBTI_B_MAX,
     NBTI_J_MAX,
-)
-from bluemira.equilibria.constraints import (
-    EUDEMODoubleNullConstraints,
-    EUDEMOSingleNullConstraints,
 )
 from bluemira.equilibria.equilibrium import Breakdown, Equilibrium
 from bluemira.equilibria.grid import Grid

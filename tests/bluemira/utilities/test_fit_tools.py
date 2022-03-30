@@ -52,7 +52,7 @@ class TestSurfaceFit:
 
         def quadratic_surface(x, y):
             c1, c2, c3, c4, c5, c6 = coeffs_true
-            return c1 * x ** 2 + c2 * y ** 2 + c3 * x * y + c4 * x + c5 * y + c6
+            return c1 * x**2 + c2 * y**2 + c3 * x * y + c4 * x + c5 * y + c6
 
         x = np.array([1, 2, 3, 4, 5, 6, 7, 9, 2, 4, 10, 12, 13])
         y = np.array([0, 2, 0, 1, 3, 5, 1, 2, 4, 5, 2, 0, 2])
@@ -67,12 +67,12 @@ class TestSurfaceFit:
         def cubic_surface(x, y):
             c1, c2, c3, c4, c5, c6, c7, c8, c9, c10 = coeffs_true
             return (
-                c1 * x ** 3
-                + c2 * y ** 3
-                + c3 * x ** 2 * y
-                + c4 * y ** 2 * x
-                + c5 * x ** 2
-                + c6 * y ** 2
+                c1 * x**3
+                + c2 * y**3
+                + c3 * x**2 * y
+                + c4 * y**2 * x
+                + c5 * x**2
+                + c6 * y**2
                 + c7 * x * y
                 + c8 * x
                 + c9 * y

@@ -68,3 +68,11 @@ class ParameterError(BluemiraError):
     """
 
     pass
+
+
+class DesignError(BluemiraError):
+    """
+    Exception class for Designs.
+    """
+
+    pass

@@ -22,11 +22,12 @@
 Convert all example .py files specified or in the underlying directory to .ipynb.
 """
 
-import glob
+
 import json
 import os
 import platform
 from argparse import ArgumentParser
+from pathlib import Path
 from sys import exit
 
 header_comment = "# %%"
@@ -113,12 +114,14 @@ def equal(orig, new):
 
     version_str = '"version": "3'
 
+    if orig == "":
+        return False
     for old, new in zip(orig_check, new_check):
         if old != new:
             if not (version_str in old and version_str in new):
-                return True
+                return False
 
-    return False
+    return True
 
 
 def convert(path, check, ci):
@@ -147,15 +150,15 @@ def convert(path, check, ci):
 
         nb_json = json.dumps(nb_str, indent=2) + "\n"
 
-        if not check or equal(orig_nb_json, nb_json):
+        if not equal(orig_nb_json, nb_json):
             if ci:
                 return ipynb + " NEEDS UPDATE"
-            else:
-                with open(name + ".ipynb", "w") as nb_fh:
-                    nb_fh.write(nb_json)
-                return ipynb + " UPDATED"
+
+            with open(name + ".ipynb", "w") as nb_fh:
+                nb_fh.write(nb_json)
+            return ipynb + " UPDATED"
     else:
-        return path + " No markdown comments"
+        return str(path) + " No markdown comments"
 
 
 def arguments():
@@ -184,7 +187,7 @@ def arguments():
 
     args = parser.parse_args()
     if args.files == [] and not args.check:
-        files = list(glob.glob(f"{os.path.dirname(__file__)}/**/*.py", recursive=True))
+        files = list(Path(__file__).parent.rglob("*.py"))
         try:
             pop = [
                 __file__,
@@ -200,13 +203,14 @@ def arguments():
     return files, args.check, args.ci
 
 
-files, check, ci = arguments()
-updated = []
-for file in files:
-    update = convert(file, check, ci)
-    if update is not None:
-        updated.append(update)
+if __name__ == "__main__":
+    files, check, ci = arguments()
+    updated = []
+    for file in files:
+        update = convert(file, check, ci)
+        if update is not None:
+            updated.append(update)
 
-if updated != []:
-    print("\n".join(updated))
-    exit(1)
+    if updated != []:
+        print("\n".join(updated))
+        exit(1)

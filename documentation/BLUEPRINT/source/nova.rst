@@ -51,7 +51,7 @@ Here is a default ParameterFrame for a TF coil in BLUEPRINT:
 	p = [
 	    ["R_0", "Major radius", 9, "m", None, "Input"],
 	    ["B_0", "Toroidal field at R_0", 6, "T", None, "Input"],
-	    ["n_TF", "Number of TF coils", 16, "N/A", None, "Input"],
+	    ["n_TF", "Number of TF coils", 16, "dimensionless", None, "Input"],
 	    ["rho_j", "TF coil WP current density", 18.25, "MA/m^2", None, "Input"],
 	    ["tk_tf_nose", "TF coil inboard nose thickness", 0.6, "m", None, "Input"],
 	    ["tk_tf_wp", "TF coil winding pack thickness", 0.5, "m", None, "PROCESS"],
@@ -134,7 +134,7 @@ Name                                                   Value  Unit
 ================================================  ==========  ======
 Major radius                                               9  m
 Toroidal field at R_0                                      6  T
-Number of TF coils                                        16  N/A
+Number of TF coils                                        16  dimensionless
 TF coil WP current density                             18.25  MA/m^2
 Wall thickness                                         0.045  m
 TF coil inboard nose thickness                           0.6  m
@@ -149,10 +149,10 @@ TF coil winding pack radial width                       0.76  m
 TF coil winding pack depth (in y)                    1.34356  m
 Inboard radius of the TF coil inboard leg                3.2  m
 TF coil ripple limit                                     0.6  %
-Number of radial filaments                                 1  N/A
-Number of toroidal toroidal filaments                      1  N/A
-Number of positions to check for ripple                   25  N/A
-Number of points                                          80  N/A
+Number of radial filaments                                 1  dimensionless
+Number of toroidal toroidal filaments                      1  dimensionless
+Number of positions to check for ripple                   25  dimensionless
+Number of points                                          80  dimensionless
 TF coil current                                   1.6875e+07  MA
 ================================================  ==========  ======
 

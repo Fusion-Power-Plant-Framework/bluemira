@@ -48,6 +48,8 @@ per-file-ignores =
         D404,
         D406,
         D409,
+        # It can be useful to have class names in test names e.g., test_raises_SomeException
+        N802,
     __init__.py:
         # Allow unused imports in __init__.py, so we can expose at parent module level
         F401,
@@ -165,4 +167,5 @@ ignore_names =
     *LFS*,
     *HFS*,
     *_OX_*,
-    *_F
+    *_F,
+    *eV,

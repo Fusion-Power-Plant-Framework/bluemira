@@ -75,7 +75,7 @@ class BiotSavartFilament(CurrentSource):
                 self.ref_mid_points = mid_points
                 self.ref_d_l = d_l
 
-                lengths = np.sqrt(np.sum(d_l ** 2, axis=1))
+                lengths = np.sqrt(np.sum(d_l**2, axis=1))
                 self.length = np.sum(lengths)
                 self.length_scale = np.min(lengths)
 
@@ -92,7 +92,7 @@ class BiotSavartFilament(CurrentSource):
         """
         Check the discretisation of the array.
         """
-        lengths = np.sqrt(np.sum(d_l ** 2, axis=1))
+        lengths = np.sqrt(np.sum(d_l**2, axis=1))
         total = np.sum(lengths)
         max_d_l = np.max(lengths)
         if max_d_l > 0.03 * total:
@@ -169,7 +169,7 @@ class BiotSavartFilament(CurrentSource):
         ds_mag = np.linalg.norm(ds / d_l_hat, axis=1)
         ds_mag = np.tile(ds_mag, (3, 1)).T
         ds_mag[ds_mag < EPS] = EPS
-        core = ds_mag ** 2 / self.radius ** 2
+        core = ds_mag**2 / self.radius**2
         core[ds_mag > self.radius] = 1
         return MU_0_4PI * self.current * np.sum(core * ds / r3[:, np.newaxis], axis=0)
 
@@ -198,7 +198,7 @@ class BiotSavartFilament(CurrentSource):
         for i, (x1, dx1) in enumerate(zip(self.ref_mid_points, self.ref_d_l)):
             # We create a mask to drop the point where x1 == x2
             r = x1 - self.mid_points
-            mask = np.sum(r ** 2, axis=1) > self.radius
+            mask = np.sum(r**2, axis=1) > self.radius
             inductance += np.sum(
                 np.dot(dx1, self.d_l[mask].T) / np.linalg.norm(r[mask], axis=1)
             )
@@ -217,11 +217,11 @@ class BiotSavartFilament(CurrentSource):
         Parameters
         ----------
         angle: float
-            The rotation degree [rad]
+            The rotation degree [degree]
         axis: Union[np.array(3), str]
             The axis of rotation
         """
-        r = rotation_matrix(angle, axis)
+        r = rotation_matrix(np.deg2rad(angle), axis).T
         self.points = self.points @ r
         self.d_l = self.d_l @ r
         self.mid_points = self.mid_points @ r

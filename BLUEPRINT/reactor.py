@@ -43,10 +43,10 @@ from bluemira.base.look_and_feel import bluemira_print, bluemira_warn, print_ban
 from bluemira.base.parameter import ParameterFrame
 
 # PROCESS imports
-from bluemira.codes import run_systems_code
+from bluemira.codes import systems_code_solver
 
 # Equilibria imports
-from bluemira.equilibria import AbInitioEquilibriumProblem
+from bluemira.equilibria._deprecated_run import AbInitioEquilibriumProblem
 from bluemira.equilibria.constants import (
     NB3SN_B_MAX,
     NB3SN_J_MAX,
@@ -102,6 +102,11 @@ from BLUEPRINT.systems import (
     VacuumVessel,
 )
 from BLUEPRINT.systems.maintenance import RMMetrics
+from BLUEPRINT.systems.optimisation_callbacks import (
+    EQ_optimiser,
+    FW_optimiser,
+    TF_optimiser,
+)
 from BLUEPRINT.systems.physicstoolbox import (
     estimate_kappa95,
     lambda_q,
@@ -178,6 +183,13 @@ class Reactor(ReactorSystem):
         self.prepare_params(config)
 
         self.nmodel = None
+
+        # Set callbacks to use for optimisation of subsystems
+        self.callbacks = {
+            "TF": TF_optimiser,
+            "EQ": EQ_optimiser,
+            "FW": FW_optimiser,
+        }
 
         # Final configurational defaults
         self.date = datetime.datetime.now().isoformat()
@@ -280,13 +292,15 @@ class Reactor(ReactorSystem):
         """
         Runs, reads, or mocks the systems code according to the build config dictionary.
         """
-        PROCESS_output: ParameterFrame = run_systems_code(
+        PROCESS_solver = systems_code_solver(
             self.params,
             self.build_config,
             self.file_manager.generated_data_dirs["systems_code"],
             self.file_manager.reference_data_dirs["systems_code"],
         )
-        self.params.update_kw_parameters(PROCESS_output.to_dict())
+
+        PROCESS_solver.run()
+        self.params.update_kw_parameters(PROCESS_solver.params.to_dict())
 
     def estimate_kappa_95(self):
         """
@@ -328,7 +342,7 @@ class Reactor(ReactorSystem):
 
         derived_params = {
             "f_DD_fus": self.params.P_fus_DD / self.params.P_fus,
-            "beta_n": normalise_beta(
+            "beta_N": normalise_beta(
                 self.params.beta,
                 self.params.R_0 / self.params.A,
                 self.params.B_0,
@@ -408,6 +422,7 @@ class Reactor(ReactorSystem):
 
         a.coilset.assign_coil_materials("PF", j_max=j_pf, b_max=b_pf)
         a.coilset.assign_coil_materials("CS", j_max=j_cs, b_max=b_cs)
+        # NOTE: Is this doing optimisations? I don't think so, but not sure...
         a.solve(plot=self.plot_flag)
         print("")  # stdout flusher
 
@@ -439,18 +454,18 @@ class Reactor(ReactorSystem):
 
         # fmt: off
         params = [['I_p', 'Plasma current', d['Ip'] / 1e6, 'MA', None, 'equilibria'],
-                  ['q_95', 'Plasma safety factor', d['q_95'], 'N/A', None, 'equilibria'],
+                  ['q_95', 'Plasma safety factor', d['q_95'], 'dimensionless', None, 'equilibria'],
                   ['Vp', 'Plasma volume', d['V'], 'm^3', None, 'equilibria'],
                   ['beta_p', 'Ratio of plasma pressure to poloidal magnetic pressure',
-                  d['beta_p'], 'N/A', None, 'equilibria'],
-                  ['li', 'Normalised plasma internal inductance', d['li'], 'N/A', None, 'equilibria'],
-                  ['li3', 'Normalised plasma internal inductance (ITER def)', d['li(3)'], 'N/A', None, 'equilibria'],
+                  d['beta_p'], 'dimensionless', None, 'equilibria'],
+                  ['li', 'Normalised plasma internal inductance', d['li'], 'dimensionless', None, 'equilibria'],
+                  ['li3', 'Normalised plasma internal inductance (ITER def)', d['li(3)'], 'dimensionless', None, 'equilibria'],
                   ['Li', 'Plasma internal inductance', d['Li'], 'H', None, 'equilibria'],
                   ['Wp', 'Plasma energy', d['W'] / 1e6, 'MJ', None, 'equilibria'],
-                  ['delta_95', '95th percentile plasma triangularity', d['delta_95'], 'N/A', None, 'equilibria'],
-                  ['kappa_95', '95th percentile plasma elongation', d['kappa_95'], 'N/A', None, 'equilibria'],
-                  ['delta', 'Plasma triangularity', d['delta'], 'N/A', None, 'equilibria'],
-                  ['kappa', 'Plasma elongation', d['kappa'], 'N/A', None, 'equilibria'],
+                  ['delta_95', '95th percentile plasma triangularity', d['delta_95'], 'dimensionless', None, 'equilibria'],
+                  ['kappa_95', '95th percentile plasma elongation', d['kappa_95'], 'dimensionless', None, 'equilibria'],
+                  ['delta', 'Plasma triangularity', d['delta'], 'dimensionless', None, 'equilibria'],
+                  ['kappa', 'Plasma elongation', d['kappa'], 'dimensionless', None, 'equilibria'],
                   ['shaf_shift', 'Shafranov shift of plasma (geometric=>magnetic)', shaf, 'm', None, 'equilibria'],
                   ['lambda_q', 'Scrape-off layer power decay length', lq, 'm', None, 'Eich scaling']]
         # fmt: on
@@ -702,7 +717,7 @@ class Reactor(ReactorSystem):
                 f"|   subject to: {self.params.TF_ripple_limit} % ripple"
             )
 
-            self.TF.optimise()
+            self.TF.build(self.callbacks.get("TF"))
         elif self.build_config["tf_mode"] == "read":
             bluemira_print(
                 f'Loading {self.build_config["TF_type"]}-type TF coil shape' "."
@@ -721,39 +736,15 @@ class Reactor(ReactorSystem):
         """
         Design and optimise the reactor poloidal field system.
         """
-        eta_pf_imax = 1.4  # Maximum current scaling for PF coil
-        if self.params.PF_material == "NbTi":
-            jmax = NBTI_J_MAX
-        elif self.params.PF_material == "Nb3Sn":
-            jmax = NB3SN_J_MAX
-        else:
-            raise ValueError("Ainda nao!")
-
-        offset = self.params.g_tf_pf + np.sqrt(eta_pf_imax * self.params.I_p / jmax) / 2
-        tf_loop = self.TF.get_TF_track(offset)
-        exclusions = self.define_port_exclusions()
-
-        bluemira_print(
-            "Designing plasma equilibria and PF coil system.\n"
-            "|   optimising: positions and currents\n"
-            "|   subject to: F, B, I, L, and plasma shape constraints"
-        )
-        t = time()
-        self.EQ.optimise_positions(
-            max_PF_current=eta_pf_imax * self.params.I_p * 1e6,
-            PF_Fz_max=self.params.F_pf_zmax * 1e6,
-            CS_Fz_sum=self.params.F_cs_ztotmax * 1e6,
-            CS_Fz_sep=self.params.F_cs_sepmax * 1e6,
-            tau_flattop=self.params.tau_flattop,
-            v_burn=self.params.v_burn,
-            psi_bd=None,  # Will calculate BD flux
-            pfcoiltrack=tf_loop,
-            pf_exclusions=exclusions,
-            CS=False,
-            plot=self.plot_flag,
-            gif=False,
-        )
-        bluemira_print(f"optimisation time: {time()-t:.2f} s")
+        callback = self.callbacks.get("EQ")
+        if callback is not None:
+            callback(
+                self.EQ,
+                self.TF,
+                self.params,
+                self.define_port_exclusions(),
+                self.plot_flag,
+            )
 
         for name, snap in self.EQ.snapshots.items():
             if name != "Breakdown":
@@ -940,7 +931,7 @@ class Reactor(ReactorSystem):
             "potential_TBR",
             "Potential TBR",
             self.BC.TBR,
-            "N/A",
+            "dimensionless",
             None,
             "BLUEPRINT simpleneutrons",
         )
@@ -961,7 +952,12 @@ class Reactor(ReactorSystem):
         # Re-estimate TBR now all penetrations installed
         self.BC.calculate()
         self.add_parameter(
-            "TBR", "Estimated TBR", self.BC.TBR, "N/A", None, "BLUEPRINT simpleneutrons"
+            "TBR",
+            "Estimated TBR",
+            self.BC.TBR,
+            "dimensionless",
+            None,
+            "BLUEPRINT simpleneutrons",
         )
 
     def calculate_TF_coil_peak_field(self):
@@ -1009,7 +1005,7 @@ class Reactor(ReactorSystem):
                 pf_fields, theta=np.pi / self.params.n_TF, p1=[0, 0, 0], p2=[0, 0, 1]
             )
             total_fields = tf_fields + pf_fields
-            peak_fields[i] = np.max(np.sqrt(np.sum(total_fields ** 2, axis=1)))
+            peak_fields[i] = np.max(np.sqrt(np.sum(total_fields**2, axis=1)))
 
         b_tf_peak = max(peak_fields)
         self.add_parameter(
@@ -1036,7 +1032,7 @@ class Reactor(ReactorSystem):
         # fmt: off
         params = [['bmd', 'Blanket mainteance duration', rm.FM, 'days', None, 'BLUEPRINT'],
                   ['dmd', 'Divertor maintenance duration', rm.DM, 'days', None, 'BLUEPRINT'],
-                  ['RMTFI', 'RM Technical Feasibility Index', rm.RMTFI, 'N/A', None, 'BLUEPRINT']]
+                  ['RMTFI', 'RM Technical Feasibility Index', rm.RMTFI, 'dimensionless', None, 'BLUEPRINT']]
         # fmt: on
         self.add_parameters(params)
 
@@ -1167,7 +1163,7 @@ class Reactor(ReactorSystem):
 
         p_el_net, eta = self.BOP.build()
         params = [
-            ["P_el_net", "Net electric power", p_el_net, "MWe", None, "BLUEPRINT"],
+            ["P_el_net", "Net electric power", p_el_net, "MW", None, "BLUEPRINT"],
             ["eta_plant", "Plant efficiency", eta * 100, "%", None, "BLUEPRINT"],
         ]
         self.add_parameters(params)

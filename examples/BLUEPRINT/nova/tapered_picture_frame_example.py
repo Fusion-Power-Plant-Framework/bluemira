@@ -40,7 +40,7 @@ from BLUEPRINT.systems.tfcoils import ToroidalFieldCoils
 params = [
     ["R_0", "Major radius", 3.42, "m", None, "Input"],
     ["B_0", "Toroidal field at R_0", 2.2, "T", None, "Input"],
-    ["n_TF", "Number of TF coils", 12, "N/A", None, "Input"],
+    ["n_TF", "Number of TF coils", 12, "dimensionless", None, "Input"],
     ["tk_tf_nose", "Bucking Cylinder Thickness", 0.17, "m", None, "Input"],
     ["tk_tf_wp", "TF coil winding pack thickness", 0.4505, "m", None, "PROCESS"],
     ["tk_tf_front_ib", "TF coil inboard steel front plasma-facing", 0.02252, "m", None, "Input"],  # casthi
@@ -49,14 +49,14 @@ params = [
     ["r_tf_in", "Inner Radius of the TF coil inboard leg", 0.176, "m", None, "PROCESS"],
     ["r_tf_inboard_out", "Outboard Radius of the TF coil inboard leg tapered region", 0.6265, "m", None, "PROCESS"],
     ['TF_ripple_limit', 'TF coil ripple limit', 1.0, '%', None, 'Input'],
-    ["npts", "Number of points", 200, "N/A", "Used for vessel and plasma", "Input"],
+    ["npts", "Number of points", 200, "dimensionless", "Used for vessel and plasma", "Input"],
     ["h_cp_top", "Height of the Tapered Section", 6.199, "m", None, "PROCESS"],
     ["r_cp_top", "Radial Position of Top of taper", 0.8934, "m", None, "PROCESS"],
-    ['tk_tf_outboard', 'TF coil outboard thickness', 1, 'm', None, 'Input', 'PROCESS'],
-    ['tf_taper_frac', "Height of straight portion as fraction of total tapered section height", 0.5, 'N/A', None, 'Input'],
+    ['tk_tf_outboard', 'TF coil outboard thickness', 1, 'm', None, 'PROCESS'],
+    ['tf_taper_frac', "Height of straight portion as fraction of total tapered section height", 0.5, 'dimensionless', None, 'Input'],
     ['r_tf_outboard_corner', "Corner Radius of TF coil outboard legs", 0.8, 'm', None, 'Input'],
     ["tk_tf_ob_casing", "TF leg conductor casing general thickness", 0.1, "m", None, "PROCESS"],
-    ['tk_tf_inboard', 'TF coil inboard thickness', 0.4505, 'm', None, 'Input', 'PROCESS'],
+    ['tk_tf_inboard', 'TF coil inboard thickness', 0.4505, 'm', None, 'PROCESS'],
 ]
 # fmt: on
 

@@ -47,13 +47,15 @@ def freecad_message_removal():
 
 freecad_default_path = freecad_message_removal()
 
-# PROCESS systems code imports
-from bluemira.codes.process.teardown import plot_PROCESS
-
 # External codes wrapper imports
-from bluemira.codes.wrapper import run_systems_code
+from bluemira.codes.wrapper import (
+    plot_radial_build,
+    systems_code_solver,
+    transport_code_solver,
+)
 
 __all__ = [
-    "run_systems_code",
-    "plot_PROCESS",
+    "systems_code_solver",
+    "transport_code_solver",
+    "plot_radial_build",
 ]

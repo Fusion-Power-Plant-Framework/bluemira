@@ -114,7 +114,7 @@ def weather_front(d2, n=10, scale=True, ends=True, **kwargs):
     asp = 1
     dy *= s
     dx = dx / asp
-    mag = np.sqrt(dx ** 2 + dy ** 2)
+    mag = np.sqrt(dx**2 + dy**2)
     dx /= mag
     dy /= mag
     x = xn[i::i]

@@ -28,22 +28,27 @@ import pprint as pprint
 
 import matplotlib.pyplot as plt
 
+from bluemira.base.components import Component
 from bluemira.base.config import Configuration
 from bluemira.base.error import ParameterError
 from bluemira.base.file import get_bluemira_root
 from bluemira.base.logs import set_log_level
-from bluemira.base.parameter import ParameterMappingEncoder
-from bluemira.builders.EUDEMO.plasma import PlasmaComponent
+from bluemira.base.parameter import ParameterEncoder
+from bluemira.builders.cryostat import CryostatBuilder
+from bluemira.builders.EUDEMO.pf_coils import PFCoilsBuilder
+from bluemira.builders.EUDEMO.plasma import PlasmaBuilder, PlasmaComponent
 from bluemira.builders.EUDEMO.reactor import EUDEMOReactor
 from bluemira.builders.EUDEMO.tf_coils import TFCoilsBuilder
+from bluemira.builders.radiation_shield import RadiationShieldBuilder
 from bluemira.builders.tf_coils import RippleConstrainedLengthOpt
-from bluemira.codes import plot_PROCESS
+from bluemira.builders.thermal_shield import ThermalShieldBuilder
+from bluemira.codes import plot_radial_build
 from bluemira.codes.plasmod.mapping import (  # noqa: N812
     create_mapping as create_PLASMOD_mappings,
 )
 from bluemira.codes.process.mapping import mappings as PROCESS_mappings  # noqa: N812
 from bluemira.display.displayer import ComponentDisplayer
-from bluemira.equilibria.run import AbInitioEquilibriumProblem
+from bluemira.equilibria._deprecated_run import AbInitioEquilibriumProblem
 from bluemira.utilities.tools import json_writer
 
 # %%[markdown]
@@ -117,7 +122,7 @@ json_writer(
     params,
     f"{get_bluemira_root()}/examples/design/EU-DEMO/template.json",
     indent=2,
-    cls=ParameterMappingEncoder,
+    cls=ParameterEncoder,
     ensure_ascii=True,
 )
 
@@ -169,7 +174,7 @@ json_writer(
     config,
     f"{get_bluemira_root()}/examples/design/EU-DEMO/params.json",
     indent=2,
-    cls=ParameterMappingEncoder,
+    cls=ParameterEncoder,
     ensure_ascii=False,
 )
 
@@ -321,7 +326,7 @@ component = reactor.run()
 
 # %%
 if build_config["PROCESS"]["runmode"] == "run":
-    plot_PROCESS(reactor.file_manager.generated_data_dirs["systems_code"])
+    plot_radial_build(reactor.file_manager.generated_data_dirs["systems_code"])
 else:
     print(
         "The PROCESS design stage did not have the runmode set to run."
@@ -471,8 +476,34 @@ pf_coils.get_component("xy").plot_2d(ax=ax)
 # %%
 ax = tf_coils.get_component("xz").plot_2d(show=False)
 plasma.get_component("xz").plot_2d(ax=ax, show=False)
-pf_coils.get_component("xz").plot_2d(ax=ax)
+pf_coils.get_component("xz").plot_2d(ax=ax, show=False)
 
+first_wall = component.get_component("First Wall")
+first_wall.get_component("xz").plot_2d(ax=ax, show=False)
+thermal_shield = component.get_component("Thermal Shield")
+thermal_shield.get_component("xz").plot_2d(ax=ax, show=False)
+cryostat = component.get_component("Cryostat")
+cryostat.get_component("xz").plot_2d(ax=ax, show=False)
+radiation_shield = component.get_component("Radiation Shield")
+radiation_shield.get_component("xz").plot_2d(ax=ax)
 
 # %%
 ComponentDisplayer().show_cad(component.get_component("xyz", first=False))
+
+# %%
+sector = Component("Segment View")
+plasma_builder: PlasmaBuilder = reactor.get_builder("Plasma")
+tf_coils_builder: TFCoilsBuilder = reactor.get_builder("TF Coils")
+pf_coils_builder: PFCoilsBuilder = reactor.get_builder("PF Coils")
+thermal_shield_builder: ThermalShieldBuilder = reactor.get_builder("Thermal Shield")
+cryostat_builder: CryostatBuilder = reactor.get_builder("Cryostat")
+radiation_shield_builder: RadiationShieldBuilder = reactor.get_builder(
+    "Radiation Shield"
+)
+sector.add_child(plasma_builder.build_xyz(degree=270))
+sector.add_child(tf_coils_builder.build_xyz(degree=270))
+sector.add_child(pf_coils_builder.build_xyz(degree=270))
+sector.add_child(thermal_shield_builder.build_xyz(degree=270))
+sector.add_child(cryostat_builder.build_xyz(degree=270))
+sector.add_child(radiation_shield_builder.build_xyz(degree=270))
+sector.show_cad()

@@ -100,7 +100,7 @@ plt.close("all")
 # Let's make a triangle:
 
 # %%
-triangle = Loop(x=[1, 2, 0], y=[2 ** 0.5, 0, 0])
+triangle = Loop(x=[1, 2, 0], y=[2**0.5, 0, 0])
 
 print(f"triangle.x: {triangle.x}")
 print(f"triangle.y: {triangle.y}")

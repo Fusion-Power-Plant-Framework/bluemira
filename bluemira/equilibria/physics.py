@@ -151,7 +151,7 @@ def calc_qstar(R_0, A, B_0, kappa, Ip):
     q_star: float
         Kink safety factor
     """
-    return np.pi * (R_0 / A) ** 2 * B_0 * (1 + kappa ** 2) / (MU_0 * R_0 * Ip)
+    return np.pi * (R_0 / A) ** 2 * B_0 * (1 + kappa**2) / (MU_0 * R_0 * Ip)
 
 
 def calc_k0(psi_xx0, psi_zz0):
@@ -197,7 +197,7 @@ def calc_q0(R_0, B_0, jp0, psi_xx0, psi_zz0):
         The MHD safety factor on the plasma axis
     """
     k_0 = calc_k0(psi_xx0, psi_zz0)
-    return (B_0 / (MU_0 * R_0 * jp0)) * (1 + k_0 ** 2) / k_0
+    return (B_0 / (MU_0 * R_0 * jp0)) * (1 + k_0**2) / k_0
 
 
 def calc_volume(eq):
@@ -216,7 +216,7 @@ def calc_energy(eq):
     """
     mask = in_plasma(eq.x, eq.z, eq.psi())
     Bp = eq.Bp()
-    return volume_integral(Bp ** 2 * mask, eq.x, eq.dx, eq.dz) / (2 * MU_0)
+    return volume_integral(Bp**2 * mask, eq.x, eq.dx, eq.dz) / (2 * MU_0)
 
 
 def calc_Li(eq):  # noqa :N802
@@ -226,7 +226,7 @@ def calc_Li(eq):  # noqa :N802
     \t:math:`L_i=\\dfrac{2W}{I_{p}^{2}}`
     """
     p_energy = calc_energy(eq)
-    return 2 * p_energy / eq._Ip ** 2
+    return 2 * p_energy / eq._Ip**2
 
 
 def calc_li(eq):
@@ -255,7 +255,7 @@ def calc_li3(eq):
     """
     mask = in_plasma(eq.x, eq.z, eq.psi())
     Bp = eq.Bp()
-    bpavg = volume_integral(Bp ** 2 * mask, eq.x, eq.dx, eq.dz)
+    bpavg = volume_integral(Bp**2 * mask, eq.x, eq.dx, eq.dz)
     return 2 * bpavg / (eq._R_0 * (MU_0 * eq._Ip) ** 2)
 
 
@@ -269,7 +269,7 @@ def calc_li3minargs(
     """
     if mask is None:
         mask = in_plasma(x, z, psi, o_points=o_points, x_points=x_points)
-    bpavg = volume_integral(Bp ** 2 * mask, x, dx, dz)
+    bpavg = volume_integral(Bp**2 * mask, x, dx, dz)
     return 2 * bpavg / (R_0 * (MU_0 * Ip) ** 2)
 
 
@@ -311,7 +311,7 @@ def calc_betap(eq):
         Ratio of plasma to magnetic pressure
     """
     p = eq.pressure_map()
-    return 4 / (MU_0 * eq._R_0 * eq._Ip ** 2) * volume_integral(p, eq.x, eq.dx, eq.dz)
+    return 4 / (MU_0 * eq._R_0 * eq._Ip**2) * volume_integral(p, eq.x, eq.dx, eq.dz)
 
 
 def calc_beta_t(eq):
@@ -331,7 +331,7 @@ def calc_beta_t(eq):
         Ratio of plasma to toroidal magnetic pressure
     """
     p_avg = calc_p_average(eq)
-    return 2 * MU_0 * p_avg / eq._B_0 ** 2
+    return 2 * MU_0 * p_avg / eq._B_0**2
 
 
 def calc_beta_p(eq):
@@ -354,7 +354,7 @@ def calc_beta_p(eq):
     p_avg = calc_p_average(eq)
     circumference = eq.get_LCFS().length
     Bp = MU_0 * eq._Ip / circumference
-    return 2 * MU_0 * p_avg / Bp ** 2
+    return 2 * MU_0 * p_avg / Bp**2
 
 
 def calc_summary(eq):
@@ -363,9 +363,9 @@ def calc_summary(eq):
     """
     mask = in_plasma(eq.x, eq.z, eq.psi())
     Bp = eq.Bp()
-    bpavg = volume_integral(Bp ** 2 * mask, eq.x, eq.dx, eq.dz)
+    bpavg = volume_integral(Bp**2 * mask, eq.x, eq.dx, eq.dz)
     energy = bpavg / (2 * MU_0)
-    li_true = 2 * energy / eq._Ip ** 2
+    li_true = 2 * energy / eq._Ip**2
     li = 2 * li_true / (MU_0 * eq._R_0)
     li3 = 2 * bpavg / (eq._R_0 * (MU_0 * eq._Ip) ** 2)
     volume = calc_volume(eq)
@@ -398,7 +398,7 @@ def beta(pressure, field):
     beta: float
         Ratio of plasma to magnetic pressure
     """
-    return np.mean(pressure) / (field ** 2 / 2 * MU_0)
+    return np.mean(pressure) / (field**2 / 2 * MU_0)
 
 
 def beta_p(pressure, Bp):

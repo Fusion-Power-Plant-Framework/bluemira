@@ -247,3 +247,6 @@ BLUE_PALETTE = ColorPalette(
 BLUE_PALETTE["BB"] = make_alpha_palette(BLUE_PALETTE["BB"], 8)
 BLUE_PALETTE["PF"] = make_alpha_palette(BLUE_PALETTE["PF"], 4)
 BLUE_PALETTE["TF"] = make_alpha_palette(BLUE_PALETTE["TF"], 3)
+BLUE_PALETTE["CR"] = make_alpha_palette(BLUE_PALETTE["CR"], 2)
+BLUE_PALETTE["RS"] = make_alpha_palette(BLUE_PALETTE["RS"], 2)
+BLUE_PALETTE["TS"] = make_alpha_palette(BLUE_PALETTE["TS"], 2)

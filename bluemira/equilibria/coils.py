@@ -24,6 +24,7 @@ Coil and coil grouping objects
 """
 
 from copy import deepcopy
+from re import split
 from typing import Any, Optional
 
 import matplotlib.pyplot as plt
@@ -42,7 +43,12 @@ from bluemira.equilibria.constants import (
 from bluemira.equilibria.error import EquilibriaError
 from bluemira.equilibria.file import EQDSKInterface
 from bluemira.equilibria.plotting import CoilPlotter, CoilSetPlotter, PlasmaCoilPlotter
-from bluemira.magnetostatics.greens import greens_Bx, greens_Bz, greens_psi
+from bluemira.magnetostatics.greens import (
+    circular_coil_inductance_elliptic,
+    greens_Bx,
+    greens_Bz,
+    greens_psi,
+)
 from bluemira.magnetostatics.semianalytic_2d import semianalytic_Bx, semianalytic_Bz
 from bluemira.utilities.tools import is_num
 
@@ -719,7 +725,7 @@ class Coil:
         """  # noqa :W505
         Bx, Bz = eqcoil.Bx(self.x, self.z), eqcoil.Bz(self.x, self.z)
         if self.rc != 0:  # true divide errors for zero current coils
-            a = MU_0 * self.current ** 2 / (4 * np.pi * self.x)
+            a = MU_0 * self.current**2 / (4 * np.pi * self.x)
             fx = a * (np.log(8 * self.x / self.rc) - 1 + 0.25)
 
         else:
@@ -888,9 +894,15 @@ class CoilGroup:
         cs_coils = [coil for coil in coils if coil.ctype == "CS"]
         other = [coil for coil in coils if coil.ctype not in ["PF", "CS"]]
 
-        pf_coils.sort(key=lambda x: x.name)
-        cs_coils.sort(key=lambda x: x.name)
-        other.sort(key=lambda x: x.name)
+        def sort_function(key):
+            return [
+                int(text) if text.isdigit() else text
+                for text in split(r"(\d+)", key.name)
+            ]
+
+        pf_coils.sort(key=sort_function)
+        cs_coils.sort(key=sort_function)
+        other.sort(key=sort_function)
 
         all_coils = pf_coils + cs_coils + other
 
@@ -1723,6 +1735,9 @@ class SymmetricCircuit(Circuit):
         """
         self.apply_coil_method("mesh_coil", d_coil)
 
+    def _points_inside_coil(self, x, z):
+        return self.coils[self.name + ".1"]._points_inside_coil(x, abs(z))
+
 
 class CoilSet(CoilGroup):
     """
@@ -2158,3 +2173,42 @@ def symmetrise_coilset(coilset):
             raise EquilibriaError("There are super-posed Coils in this CoilSet.")
 
     return CoilSet(new_coils)
+
+
+def make_mutual_inductance_matrix(coilset):
+    """
+    Calculate the mutual inductance matrix of a coilset.
+
+    Parameters
+    ----------
+    coilset: CoilSet
+        Coilset for which to calculate the mutual inductance matrix
+
+    Returns
+    -------
+    M: np.ndarray
+        The symmetric mutual inductance matrix [H]
+
+    Notes
+    -----
+    Single-filament coil formulation; serves as a useful approximation.
+    """
+    n_coils = coilset.n_coils
+    M = np.zeros((n_coils, n_coils))  # noqa
+    coils = list(coilset.coils.values())
+
+    itri, jtri = np.triu_indices(n_coils, k=1)
+
+    for i, j in zip(itri, jtri):
+        coil_1 = coils[i]
+        coil_2 = coils[j]
+        n1 = coil_1.n_turns
+        n2 = coil_2.n_turns
+        mi = n1 * n2 * greens_psi(coil_1.x, coil_1.z, coil_2.x, coil_2.z)
+        M[i, j] = M[j, i] = mi
+
+    for i, coil in enumerate(coils):
+        radius = np.hypot(coil.dx, coil.dz)
+        M[i, i] = coil.n_turns**2 * circular_coil_inductance_elliptic(coil.x, radius)
+
+    return M

@@ -40,8 +40,9 @@ following steps in a mac or Ubuntu command terminal.
     # To activate your environment
     source ~/.miniforge-init.sh
     conda activate bluemira
+
     # If you are going to be developing bluemira
-    python -m pip install --no-cache-dir -e .[dev]
+    python -m pip install --no-cache-dir -e .'[dev]'
     pre-commit install -f
 
 When you want to activate your ``bluemira`` environment after closing your terminal (or
@@ -52,6 +53,8 @@ after ``conda deactivate``) then you can initialise miniforge and activate your
 
     source ~/.miniforge-init.sh
     conda activate bluemira
+
+Please refer to our :ref:`FAQ <faq>` if you run into issues.
 
 Installing PROCESS
 ------------------

@@ -317,5 +317,5 @@ show_cad([cut_box_1, new_cut_box_1], options=blue_red_options)
 
 my_shapes = [cut_box_1]
 # Modify this file path to where you want to save the data.
-my_file_path = "home/my_data/my_tutorial_assembly.STP"
+my_file_path = "my_tutorial_assembly.STP"
 save_as_STEP(my_shapes, filename=my_file_path, scale=1)

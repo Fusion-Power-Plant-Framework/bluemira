@@ -53,7 +53,7 @@
         0.3999999999999999,
 	0.2,
     ],
-    "source": "These data come from a CREATE report (2M5CJJ) commissioned by EUROfusion.",
+    "source": "These data come from a CREATE report (2L4NMJ) commissioned by EUROfusion.",
     "author": "R. Albanese et al.",
     "date": "26/11/2014",
     "comment": "The last data point is in fact not data, but a necessary extrapolation for the A=2.6 case.",

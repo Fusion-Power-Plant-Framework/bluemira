@@ -57,7 +57,7 @@ class TestMakeParameterisedShape:
             "label": "Shape",
         }
         cls.builder = MakeParameterisedShape(cls.params, cls.build_config)
-        cls.component = cls.builder(cls.params)
+        cls.component = cls.builder()
 
     def test_builder_output(self):
         """
@@ -156,7 +156,7 @@ class TestMakeOptimisedShape:
             "label": "Shape",
         }
         builder = MakeOptimisedShape(params, build_config)
-        component = builder(params)
+        component = builder()
 
         assert component is not None
 

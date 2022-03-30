@@ -81,12 +81,12 @@ class DivertorSilhouette(DivertorProfile):
 
     # fmt: off
     default_params = [
-        ["plasma_type", "Type of plasma", "SN", "N/A", None, "Input"],
+        ["plasma_type", "Type of plasma", "SN", "dimensionless", None, "Input"],
         ["div_L2D_ib", "Inboard divertor leg length", 1.1, "m", None, "Input"],
         ["div_L2D_ob", "Outboard divertor leg length", 1.3, "m", None, "Input"],
         ["div_graze_angle", "Divertor SOL grazing angle", 1.5, "°", None, "Input"],
         ["div_Ltarg", "Divertor target length", 0.5, "m", None, "Input"],
-        ['div_open', 'Divertor open/closed configuration', False, 'N/A', None, 'Input'],
+        ['div_open', 'Divertor open/closed configuration', False, 'dimensionless', None, 'Input'],
         ["div_r_min", "Divertor minimum radial extent", 0.25, "m", None, "Input"],
         ["tk_div", "Divertor thickness", 0.1, "m", None, "Input"],
         ["bb_gap", "Gap between divertor and breeding blanket", 0.05, "m", None, "Input"],

@@ -28,6 +28,7 @@ from bluemira.equilibria.equilibrium import Equilibrium
 from bluemira.geometry._deprecated_loop import Loop
 from BLUEPRINT.geometry.shell import Shell
 from BLUEPRINT.systems.firstwall import FirstWallDN, FirstWallSN, get_tangent_vector
+from BLUEPRINT.systems.optimisation_callbacks import FW_optimiser
 
 DATA_PATH = get_bluemira_path("equilibria", subfolder="data")
 
@@ -148,7 +149,13 @@ class TestFirstWallSN:
     # Setup for *every* test in class
     def setup_method(self):
         self.firstwall = load_firstwall_sn()
-        self.firstwall.build()
+        self.firstwall.build(FW_optimiser)
+
+    def test_build_callback(self):
+        wall2 = load_firstwall_sn()
+        wall2.build()
+        assert wall2.__getstate__() != self.firstwall.__getstate__()
+        wall3 = load_firstwall_sn()
 
     def test_make_preliminary_profile(self):
         prof = self.firstwall.make_preliminary_profile()
@@ -162,7 +169,7 @@ class TestFirstWallSN:
         self.firstwall.params.tk_fw_in = tk_in
         self.firstwall.params.tk_fw_out = tk_in + tk_out_diff
         self.firstwall.params.tk_fw_div = tk_in + tk_div_diff
-        self.firstwall.build()
+        self.firstwall.build(FW_optimiser)
         assert check_firstwall(self.firstwall)
 
 
@@ -170,7 +177,7 @@ class TestFirstWallDN:
     # Setup for *every* test in class
     def setup_method(self):
         self.firstwall = load_firstwall_dn()
-        self.firstwall.build()
+        self.firstwall.build(FW_optimiser)
 
     def test_make_preliminary_profile(self):
         prof = self.firstwall.make_preliminary_profile()
@@ -262,7 +269,7 @@ class TestFirstWallDN:
         self.firstwall.params.tk_fw_in = tk_in
         self.firstwall.params.tk_fw_out = tk_in + tk_out_diff
         self.firstwall.params.tk_fw_div = tk_in + tk_div_diff
-        self.firstwall.build()
+        self.firstwall.build(FW_optimiser)
         assert check_firstwall(self.firstwall)
 
     def test_modify_fw_profile(self):

@@ -19,7 +19,7 @@
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, Mock
 
 import pytest
 
@@ -46,3 +46,58 @@ class TestTask:
         assert e_dict["shell"]
         with pytest.raises(FileNotFoundError):
             task._run_subprocess("random command", shell=e_dict["shell"])  # noqa :S604
+
+
+class TestSetup:
+
+    _remapper_dict = {"a": "a", "b": ["b", "d"], "c": "c"}
+
+    def _remapper(val):  # noqa: N805
+        if val == "b":
+            return ["b", "d"]
+        else:
+            return val
+
+    def test_get_new_input_raises_TypeError(self):
+        with pytest.raises(TypeError):
+            interface.Setup.get_new_inputs(MagicMock(), "hello")
+
+    @pytest.mark.parametrize("remapper", [_remapper_dict, _remapper])
+    def test_get_new_input_many_from_one(self, remapper):
+        fake_self = MagicMock()
+        fake_self._send_mapping = {"a": "b", "b": "c", "c": "d"}
+        fake_self._convert_units = lambda x: x
+        fake_self.params.get_param = lambda x: x
+        inputs = interface.Setup.get_new_inputs(fake_self, remapper)
+        assert inputs == {"a": "b", "b": "c", "d": "c", "c": "d"}
+
+
+class TestFileProgramInterface:
+    def test_modify_mappings(self, caplog):
+        my_self = MagicMock()
+        sr = MagicMock()
+        sr.send = False
+        sr.recv = True
+        my_self.NAME = "TestProgram"
+        my_self.params.test_key.mapping = {my_self.NAME: sr}
+        my_self.params.test_key2.mapping = {}
+        my_self.params.otherkey = Mock(spec=[])  # to raise AttributeError
+
+        interface.FileProgramInterface.modify_mappings(
+            my_self, {"test_key2": {"send": False, "recv": True}}
+        )
+        assert len(caplog.messages) == 1
+        interface.FileProgramInterface.modify_mappings(
+            my_self, {"otherkey": {"send": False, "recv": True}}
+        )
+        assert len(caplog.messages) == 2
+
+        assert not my_self.params.test_key.mapping[my_self.NAME].send
+        assert my_self.params.test_key.mapping[my_self.NAME].recv
+
+        interface.FileProgramInterface.modify_mappings(
+            my_self, {"test_key": {"send": True, "recv": False}}
+        )
+
+        assert my_self.params.test_key.mapping[my_self.NAME].send
+        assert not my_self.params.test_key.mapping[my_self.NAME].recv

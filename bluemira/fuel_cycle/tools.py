@@ -70,7 +70,7 @@ def E_DT_fusion():  # noqa :N802
         \\Delta E = \\Delta m c^2
     """
     delta_m = (D_MOLAR_MASS + T_MOLAR_MASS) - (HE_MOLAR_MASS + NEUTRON_MOLAR_MASS)
-    return delta_m * C_LIGHT ** 2 * AMU_TO_KG * J_TO_EV
+    return delta_m * C_LIGHT**2 * AMU_TO_KG * J_TO_EV
 
 
 def E_DD_fusion():  # noqa :N802
@@ -100,7 +100,7 @@ def E_DD_fusion():  # noqa :N802
         ]
     )
     delta_m = np.average(delta_m)
-    return delta_m * C_LIGHT ** 2 * AMU_TO_KG * J_TO_EV
+    return delta_m * C_LIGHT**2 * AMU_TO_KG * J_TO_EV
 
 
 def n_DT_reactions(p_fus) -> float:
@@ -190,48 +190,6 @@ def r_D_burn_DT(p_fus):  # noqa :N802
 # =============================================================================
 # Miscellaneous utility functions.
 # =============================================================================
-
-
-def pam3s_to_mols(flow_in_pam3_s):
-    """
-    Convert a flow in Pa.m^3/s to a flow in mols.
-
-    Parameters
-    ----------
-    flow_in_pam3_s: Union[float, np.array]
-        The flow in Pa.m^3/s to convert
-
-    Returns
-    -------
-    flow_in_mols: Union[float, np.array]
-        The flow in mol/s
-
-    Notes
-    -----
-    At 273.15 K for a diatomic gas
-    """
-    return flow_in_pam3_s / 2270
-
-
-def mols_to_pam3s(flow_in_mols):  # noqa :N802
-    """
-    Convert a flow in Pa.m^3/s to a flow in mols.
-
-    Parameters
-    ----------
-    flow_in_mols: Union[float, np.array]
-        The flow in mol/s to convert
-
-    Returns
-    -------
-    flow_in_pam3_s: Union[float, np.array]
-        The flow in Pa.m^3/s
-
-    Notes
-    -----
-    At 273.15 K for a diatomic gas
-    """
-    return flow_in_mols * 2270
 
 
 def find_noisy_locals(x, x_bins=50, mode="min"):

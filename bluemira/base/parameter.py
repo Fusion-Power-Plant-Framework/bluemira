@@ -34,15 +34,17 @@ import json
 import os
 from dataclasses import dataclass
 from functools import wraps
-from typing import Dict, List, Union
+from typing import Dict, List, Optional, Union
 
 import numpy as np
 import wrapt
 from pandas import DataFrame
+from pint import Unit
 from tabulate import tabulate
 
+from bluemira.base.constants import raw_uc
 from bluemira.base.error import ParameterError
-from bluemira.base.look_and_feel import bluemira_warn
+from bluemira.base.look_and_feel import bluemira_debug, bluemira_warn
 from bluemira.utilities.tools import json_writer
 
 __all__ = ["Parameter", "ParameterFrame", "ParameterMapping"]
@@ -51,6 +53,15 @@ RecordList = List[List[Union[int, str, float]]]
 """
 Type for parameters when represented as a record list.
 """
+
+
+def _unitify(unit: Union[str, Unit]) -> Unit:
+    """
+    Convert string to pint Unit and have custom error messages
+    """
+    if isinstance(unit, (Unit, str)):
+        return Unit(unit)
+    raise TypeError(f"Unknown unit type {type(unit)}")
 
 
 @dataclass
@@ -71,17 +82,33 @@ class ParameterMapping:
     """
 
     name: str
-    recv: bool = True
     send: bool = True
+    recv: bool = True
+    unit: Optional[str] = None
 
-    def to_dict(self):
+    _frozen = ()
+
+    def __post_init__(self):
+        """
+        Freeze the dataclass
+        """
+        self._frozen = ("name", "unit", "_frozen")
+
+    def to_dict(self) -> Dict:
         """
         Convert this object to a dictionary with attributes as values.
         """
-        return {"name": self.name, "recv": self.recv, "send": self.send}
+        return {
+            "name": self.name,
+            "send": self.send,
+            "recv": self.recv,
+            "unit": self.unit.format_babel()
+            if isinstance(self.unit, Unit)
+            else self.unit,
+        }
 
     @classmethod
-    def from_dict(cls, the_dict) -> "ParameterMapping":
+    def from_dict(cls, the_dict: Dict) -> "ParameterMapping":
         """
         Create a ParameterMapping using a dictionary with attributes as values.
         """
@@ -94,8 +121,30 @@ class ParameterMapping:
         """
         return repr(self.to_dict())
 
+    def __setattr__(self, attr: str, value: Union[bool, str]):
+        """
+        Protect against additional attributes
 
-class ParameterMappingEncoder(json.JSONEncoder):
+        Parameters
+        ----------
+        attr: str
+            Attribute to set (name can only be set on init)
+        value: Union[bool, str]
+            Value of attribute
+
+        """
+        if (
+            attr not in ["send", "recv", "name", "unit", "_frozen"]
+            or attr in self._frozen
+        ):
+            raise KeyError(f"{attr} cannot be set for a {self.__class__.__name__}")
+        elif attr in ["send", "recv"] and not isinstance(value, bool):
+            raise ValueError(f"{attr} must be a bool")
+        else:
+            super().__setattr__(attr, value)
+
+
+class ParameterEncoder(json.JSONEncoder):
     """
     Class to handle serialisation of ParameterMapping objects to JSON.
     """
@@ -108,6 +157,8 @@ class ParameterMappingEncoder(json.JSONEncoder):
         """
         if isinstance(obj, ParameterMapping):
             return obj.to_dict()
+        if isinstance(obj, Unit):
+            return str(obj)
         return json.JSONEncoder.default(self, obj)
 
 
@@ -152,23 +203,24 @@ class Parameter(wrapt.ObjectProxy):
     All operations you would normally do with for instance an 'int' will work the same
     """
 
+    _concise_keys = {"value", "source", "unit"}
     __slots__ = (
         "var",
         "name",
-        "unit",
+        "_unit",
         "description",
         "_source",
-        "mapping",
+        "_mapping",
         "_value_history",
         "_source_history",
     )
 
     var: str
     name: Union[str, None]
-    unit: Union[str, None]
+    _unit: Union[Unit, str, None]
     description: Union[str, None]
     _source: Union[str, None]
-    mapping: Union[Dict[str, ParameterMapping], None]
+    _mapping: Dict[str, ParameterMapping]
     _value_history: Union[list, None]
     _source_history: Union[list, None]
 
@@ -177,7 +229,7 @@ class Parameter(wrapt.ObjectProxy):
         var: str,
         name: Union[str, None] = None,
         value: Union[str, float, int, None] = None,
-        unit: Union[str, None] = None,
+        unit: Union[Unit, str, None] = None,
         description: Union[str, None] = None,
         source: Union[str, bool] = None,
         mapping: Union[Dict[str, ParameterMapping], None] = None,
@@ -191,7 +243,7 @@ class Parameter(wrapt.ObjectProxy):
             The parameter name.
         value: Union[str, float, int, None]
             The value of the parameter, by default None.
-        unit: Union[str, None]
+        unit: Union[Unit, str, None]
             The unit of the parameter, by default None.
         description: Union[str, None]
             The description of the parameter.
@@ -206,9 +258,9 @@ class Parameter(wrapt.ObjectProxy):
         super().__init__(value)
         self.var = var
         self.name = name
-        self.unit = unit
+        self._unit = self._unit_setup(unit)
         self.description = description
-        self.mapping = mapping if mapping is not None else {}
+        self.mapping = mapping
 
         self._source = source
         if value is not None:
@@ -217,6 +269,36 @@ class Parameter(wrapt.ObjectProxy):
         else:
             self._value_history = []
             self._source_history = []
+
+    def __dir__(self):
+        """
+        Add missing methods
+        """
+        return list(
+            set(
+                super().__dir__()
+                + list(self.__slots__)
+                + [
+                    "__array__",
+                    "__deepcopy__",
+                    "_full_slots",
+                    "_get_k",
+                    "_history_keys",
+                    "_unit_setup",
+                    "_update_history",
+                    "from_json",
+                    "history",
+                    "mapping",
+                    "source",
+                    "source_history",
+                    "to_dict",
+                    "to_list",
+                    "unit",
+                    "value",
+                    "value_history",
+                ]
+            )
+        )
 
     def __deepcopy__(self, memo):
         """
@@ -304,6 +386,54 @@ class Parameter(wrapt.ObjectProxy):
         Get source_history
         """
         return self._source_history
+
+    @property
+    def unit(self):
+        """
+        The unit of the parameter
+        """
+        return self._unit
+
+    def _unit_setup(self, unit: Union[Unit, str]):
+        """
+        Initialise Parameter Units
+        """
+        return _unitify(unit)
+
+    @property
+    def mapping(self) -> Dict[str, ParameterMapping]:
+        """
+        Get mapping
+        """
+        return self._mapping
+
+    @mapping.setter
+    def mapping(self, mapping: Dict[str, ParameterMapping]) -> None:
+        """
+        Overwrite mapping, enforcing type
+        """
+
+        def get_types():
+            return set(map(type, mapping.values()))
+
+        error_str = "mapping should of type Dict[str, ParameterMapping]: {}"
+
+        if mapping in [None, {}]:
+            self._mapping = {}
+            return
+        elif isinstance(mapping, dict):
+            val_types = get_types()
+            if dict in val_types:
+                for k, v in mapping.items():
+                    if isinstance(v, dict):
+                        mapping[k] = ParameterMapping(**v)
+            val_types = get_types()
+            if len(val_types) == 1 and ParameterMapping in val_types:
+                self._mapping = (
+                    {**self._mapping, **mapping} if hasattr(self, "mapping") else mapping
+                )
+                return
+        raise TypeError(error_str.format(mapping))
 
     @property
     def value(self):
@@ -398,9 +528,10 @@ class Parameter(wrapt.ObjectProxy):
             new_cls._source_history = source_history
         return new_cls
 
-    def _full_slots(self):
+    @classmethod
+    def _full_slots(cls):
         """
-        Return a list of slots including 'value'.
+        Return a list of slots including '__wrapped__'.
 
         Returns
         -------
@@ -409,9 +540,16 @@ class Parameter(wrapt.ObjectProxy):
 
         """
         wrp = "__wrapped__"
-        slots_copy = list(self.__slots__)
+        slots_copy = list(cls.__slots__)
         slots_copy.insert(2, wrp)
         return slots_copy
+
+    @classmethod
+    def _attrnames(cls):
+        """
+        List of initialisation attribute names
+        """
+        return [cls._get_k(k) for k in cls._full_slots()]
 
     @staticmethod
     def _get_k(name):
@@ -513,6 +651,12 @@ class Parameter(wrapt.ObjectProxy):
             The string representation of the Parameter.
 
         """
+        name = self.name if self.name is not None else ""
+        unit = "-" if self.unit.__str__() == "dimensionless" else f"{self.unit:~P}"
+        description = (
+            " (" + self.description + ")" if self.description is not None else ""
+        )
+        value = " = " + str(self.value) if self.value is not None else ""
         mapping_str = (
             "\n    {"
             + ", ".join([repr(k) + ": " + str(v) for k, v in self.mapping.items()])
@@ -520,14 +664,7 @@ class Parameter(wrapt.ObjectProxy):
             if self.mapping != {}
             else ""
         )
-        return (
-            f"{self.name if self.name is not None else ''}"
-            f" [{self.unit if self.unit not in [None, 'N/A'] else '-'}]:"
-            f" {self.var}"
-            f"{' = ' + str(self.value) if self.value is not None else ''}"
-            f"{' (' + self.description + ')' if self.description is not None else ''}"
-            f"{mapping_str}"
-        )
+        return f"{name} [{unit}]: {self.var}{value}{description}{mapping_str}"
 
 
 class ParameterFrame:
@@ -565,47 +702,6 @@ class ParameterFrame:
         cls.set_template_parameters(cls.params)
 
     @classmethod
-    def set_default_parameters(cls, params):
-        """
-        Set the default parameters for all reactor objects.
-
-        TODO: A cleaner way of doing this
-
-        Parameters
-        ----------
-        params: list
-            default parameters
-
-        """
-        if not cls.__defaults_set:
-            cls.__defaults_setting = True
-
-            sv = cls.add_parameter
-            sv_set = cls.__setattr__
-
-            cls.__setattr__ = cls.__setattr
-            cls.__setattr = sv_set
-            cls.add_parameter = cls._add_parameter
-            cls._add_parameter = sv
-
-            cls.add_parameters(cls, params)
-
-            cls._add_parameter = cls.add_parameter
-            cls.add_parameter = sv
-            cls.__setattr = cls.__setattr__
-            cls.__setattr__ = sv_set
-
-            cls.set_template_parameters(params)
-
-            cls.__defaults_setting = False
-        else:
-            raise ParameterError(
-                "Default parameters already set please use"
-                "'_force_update_defaults' if you really want to do this."
-            )
-        cls.__defaults_set = True
-
-    @classmethod
     def set_template_parameters(cls, params: RecordList):
         """
         Fills the template parameters from the minimal content of the provided parameter
@@ -623,8 +719,102 @@ class ParameterFrame:
             }
 
     @classmethod
+    def set_default_parameters(cls, params):
+        """
+        Set the default parameters for all reactor objects.
+
+        TODO: A cleaner way of doing this
+
+        Parameters
+        ----------
+        params: list
+            default parameters
+
+        TODO remove when defaults removed
+        """
+        if not cls.__defaults_set:
+            cls.__defaults_setting = True
+
+            sv = cls.add_parameter
+            sv_set = cls.__setattr__
+            sv_mod = cls._set_modified_param
+            sv_unit = cls._unit_conversion
+
+            cls.__setattr__ = cls.__setattr
+            cls.__setattr = sv_set
+            cls.add_parameter = cls._add_parameter
+            cls._add_parameter = sv
+            cls._set_modified_param = cls.__set_modified_param
+            cls.__set_modified_param = sv_mod
+            cls._unit_conversion = cls.__unit_conversion
+            cls.__unit_conversion = sv_unit
+
+            cls.add_parameters(cls, params)
+
+            cls._add_parameter = cls.add_parameter
+            cls.add_parameter = sv
+            cls.__set_modified_param = cls._set_modified_param
+            cls._set_modified_param = sv_mod
+            cls.__unit_conversion = cls._unit_conversion
+            cls._unit_conversion = sv_unit
+            cls.__setattr = cls.__setattr__
+            cls.__setattr__ = sv_set
+
+            cls.set_template_parameters(params)
+
+            cls.__defaults_setting = False
+        else:
+            raise ParameterError(
+                "Default parameters already set please use"
+                "'_force_update_defaults' if you really want to do this."
+            )
+        cls.__defaults_set = True
+
+    @classmethod
     def __setattr(cls, *args, **kwargs):
+        """
+        TODO remove when defaults removed
+        """
         return cls.__setattr(cls, *args, **kwargs)
+
+    @classmethod
+    def __set_modified_param(cls, *args, **kwargs):
+        """
+        TODO remove when defaults removed
+        """
+        return cls.__set_modified_param(cls, *args, **kwargs)
+
+    @classmethod
+    def __unit_conversion(cls, *args, **kwargs):
+        """
+        TODO remove when defaults removed
+        """
+        return cls.__unit_conversion(cls, *args, **kwargs)
+
+    @classmethod
+    def _add_parameter(cls, *args, **kwargs):
+        """
+        Add parameter as a class method for defaults.
+        TODO remove when defaults removed
+        """
+        return cls._add_parameter(cls, *args, **kwargs)
+
+    @classmethod
+    def _clean(cls):
+        """
+        Clean ParameterFrame to remove all defaults
+        from the internal state saving.
+        TODO remove when defaults removed
+        """
+        cls.__default_params = {}
+        cls.__defaults_set = False
+
+    def _reinit(self):
+        """
+        Reinitialise class with defaults.
+        TODO remove when defaults removed
+        """
+        self.__dict__ = copy.deepcopy(self.__default_params)
 
     @classmethod
     def from_template(cls, param_vars: List[str]) -> "ParameterFrame":
@@ -656,16 +846,16 @@ class ParameterFrame:
         return params
 
     @staticmethod
-    def modify_source(source, param):
+    def modify_source(param: Union[Parameter, list, dict], source: str):
         """
         Modify the source term of a Parameter
 
         Parameters
         ----------
-        source: str
-            New source
         param: Union[Parameter, list, dict]
             Parameter that will have its source modified
+        source: str
+            New source
 
         Returns
         -------
@@ -709,11 +899,11 @@ class ParameterFrame:
 
         """
         if isinstance(value, Parameter) or not isinstance(value, (list, dict, tuple)):
-            value = self.modify_source(source, value)
+            value = self.modify_source(value, source)
         else:
             value = self.modify_source(
-                source,
                 Parameter(**value) if isinstance(value, dict) else Parameter(*value),
+                source,
             )
 
         if attr not in self.__class__.__default_params and not isinstance(
@@ -733,21 +923,6 @@ class ParameterFrame:
         for instance in instances:
             instance.__setattr__(attr, value, allow_new=True)
 
-    @classmethod
-    def _clean(cls):
-        """
-        Clean ParameterFrame to remove all defaults
-        from the internal state saving.
-        """
-        cls.__default_params = {}
-        cls.__defaults_set = False
-
-    def _reinit(self):
-        """
-        Reinitialise class with defaults.
-        """
-        self.__dict__ = copy.deepcopy(self.__default_params)
-
     def to_records(self):
         """
         Convert the ParameterFrame to a record of lists
@@ -756,19 +931,12 @@ class ParameterFrame:
             [list(self.__dict__[key].to_list()) for key in self.__dict__.keys()]
         )
 
-    @classmethod
-    def _add_parameter(cls, *args, **kwargs):
-        """
-        Add parameter as a class method for defaults.
-        """
-        return cls._add_parameter(cls, *args, **kwargs)
-
     def add_parameter(
         self,
         var: str,
         name: str = None,
         value=None,
-        unit: Union[str, None] = None,
+        unit: Union[Unit, str, None] = None,
         description: Union[str, None] = None,
         source: Union[str, None] = None,
         mapping=None,
@@ -787,7 +955,7 @@ class ParameterFrame:
             The long parameter name, by default None.
         value: Union[str, float, int, None]
             The value of the parameter, by default None.
-        unit: Union[str, None]
+        unit: Union[Unit, str, None]
             The unit of the parameter, by default None.
         description: Union[str, None]
             The long description of the parameter, by default None.
@@ -851,15 +1019,18 @@ class ParameterFrame:
             specified value, by default None (i.e. the value is left unchanged).
         """
         if isinstance(record_list, dict):
-            self.update_kw_parameters(record_list, source=source)
+            self.update_kw_parameters(record_list, source=source, allow_new=True)
         else:
             for param in record_list:
                 if isinstance(param, Parameter):
-                    self.add_parameter(self.modify_source(source, param))
+                    self.add_parameter(self.modify_source(param, source))
                 else:
-                    self.add_parameter(*self.modify_source(source, param))
+                    plen = len(Parameter.__slots__)
+                    if len(param) not in [plen - 1, plen - 2, plen + 1]:
+                        raise ValueError
+                    self.add_parameter(*self.modify_source(param, source))
 
-    def set_parameter(self, var, value, source=None):
+    def set_parameter(self, var, value, unit=None, source=None):
         """
         Updates only the value of a parameter in the ParameterFrame
 
@@ -869,13 +1040,25 @@ class ParameterFrame:
             variable name
         value: Union[Parameter, int, float, str ...]
             new value of parameter
-        source: str
+        unit: Optional[Union[Unit, str]]
+            value unit
+        source: Optional[str]
             override value for source
 
         """
-        self.__setattr__(var, self.modify_source(source, value))
+        if isinstance(value, Parameter):
+            if source is None:
+                source = value.source
+            if unit is None:
+                unit = value.unit
+            value = value.value
 
-    def update_kw_parameters(self, kwargs, source=None):
+        if unit is None:
+            unit = self.get_param(var).unit
+
+        self.__setattr__(var, Parameter(var=var, value=value, unit=unit, source=source))
+
+    def update_kw_parameters(self, kwargs, source=None, *, allow_new=False):
         """
         Handles dictionary keys like update
 
@@ -898,33 +1081,41 @@ class ParameterFrame:
         source and the value are taken (unless the source is overridden)
 
         """
-        for key, var in kwargs.items():
-            if key not in self.__dict__:
+        kwarg_items = (
+            [(key, kwargs.get_param(key)) for key in kwargs.keys()]
+            if isinstance(kwargs, ParameterFrame)
+            else kwargs.items()
+        )
+        for key, var in kwarg_items:
+            desc = None
+            if key not in self.__dict__ and not allow_new:
                 # Skip keys that aren't parameters, note this could mask typos!
+                bluemira_debug(
+                    f"Parameter '{key}' not in {self.__class__.__name__}, skipping"
+                )
                 continue
-            if isinstance(var, dict):
-                src = var.get("source") if source is None else source
-                desc = var.get("description")
-                mapping = var.get("mapping")
-                var = var.get("value")
-            elif isinstance(var, Parameter):
-                src = var.source if source is None else source
+            if not isinstance(var, Parameter):
+                if isinstance(var, dict):
+                    var = var.copy()
+                    var["unit"] = var.get("unit", self.__dict__[key].unit)
+                    var["var"] = key
+                    var = Parameter(**self.modify_source(var, source))
+                    desc = var.description
+                elif isinstance(var, (tuple, list)):
+                    if len(var) == len(Parameter.__slots__) - 2:
+                        var = Parameter(*var)
+                        desc = var.description
+                    var = self.modify_source(var, source)
+                elif source is not None:
+                    var = var, source
+            elif source is not None:
+                var.source = source
                 desc = var.description
-                mapping = var.mapping
-                var = var.value
-            else:
-                src = source
-                desc = None
-                mapping = None
 
-            self.__setattr__(key, self.modify_source(src, var))
+            self.__setattr__(key, var, allow_new=allow_new)
+
             if desc is not None:
-                self.__dict__[key].description = desc
-            if mapping is not None:
-                for code, val in mapping.items():
-                    if isinstance(val, dict):
-                        mapping[code] = ParameterMapping.from_dict(val)
-                self.__dict__[key].mapping = mapping
+                getattr(self, key).description = desc
 
     def items(self):
         """
@@ -1075,7 +1266,7 @@ class ParameterFrame:
         except KeyError:
             raise KeyError(f"Var name {var} not present in ParameterFrame")
 
-    def __setattr__(self, attr, value, allow_new=False, defaults=False):
+    def __setattr__(self, attr, value, allow_new=False, *, defaults=False):
         """
         Set an attribute on the ParameterFrame
 
@@ -1089,7 +1280,7 @@ class ParameterFrame:
         ----------
         attr: str
             The var name of the Parameter in the ParameterFrame
-        value: Union[Parameter, tuple, list, str, float, int]
+        value: Union[Parameter, tuple, list, dict, str, float, int]
             The value of the Parameter to set
         allow_new: bool
             Whether or not to allow new Parameters (previously unset) in the
@@ -1097,52 +1288,196 @@ class ParameterFrame:
 
         Notes
         -----
-        If value is a two element list and the second element is a string
-        the second element is assumed to be the source and the first is the value
-        of the parameter.
+        If value is a two/three element list and the second element is a string
+        the first element is the value the second element is the source
+        of the parameter and the third is the current units of value.
 
         """
-        # Move as much of this as possible into Parameter
-        if defaults:
-            _dict = self.__default_params
-        else:
-            _dict = self.__dict__
+        _dict = self.__default_params if defaults else self.__dict__
 
         if not allow_new:
             if attr != "__dict__" and attr not in _dict:
                 raise ValueError(f"Attribute {attr} not defined in ParameterFrame.")
 
-        if (
-            isinstance(value, (list, tuple))
-            and len(value) == 2
-            and isinstance(value[1], (str, type(None)))
-        ):
-            source = value[1]
-            value = value[0]
-        elif isinstance(value, dict) and list(value.keys()) == ["value", "source"]:
-            source = value["source"]
-            value = value["value"]
-        else:
-            source = None
+        value, source, unit = self._from_iterable(value)
 
         if isinstance(value, Parameter):
+            self._set_modified_param(_dict, attr, value, source, value.unit, allow_new)
+        elif isinstance(_dict.get(attr, None), Parameter):
+            _dict[attr].value = self._unit_conversion(
+                value, unit, unit_to=_dict[attr].unit
+            )
+            if source is None:
+                src = None
+            else:
+                src = source
+                src += (
+                    f": Units converted from {Unit(unit).format_babel()} to {_dict[attr].unit.format_babel()}"
+                    if unit is not None and Unit(unit) != _dict[attr].unit
+                    else ""
+                )
+
+            _dict[attr].source = src
+        else:
+            # what other attributes need to be set?
+            if attr not in ["__dict__"]:
+                bluemira_debug(
+                    "Please send this to the bluemira maintainers:\n"
+                    "ParameterFrame type catching\n"
+                    f"{attr=}, {value=}, type={type(value)}"
+                )
+            super().__setattr__(attr, value)
+
+    @staticmethod
+    def _from_iterable(value):
+        """
+        Organise a value into value source unit.
+
+        Parameters
+        ----------
+        value: Union[List, Tuple, Dict, Parameter]
+
+        Returns
+        -------
+        value, source, unit
+
+        Notes
+        -----
+        Attempts to parse out source and unit from the value.
+        If value is a list of two or three elements it assumes
+        [value, source, unit] ordering which could be a source of errors.
+
+        """
+        if (
+            isinstance(value, (list, tuple))
+            and len(value) in [2, 3]
+            and isinstance(value[1], (str, type(None)))
+        ):
+            unit = value[2] if len(value) == 3 else None
+            source = value[1]
+            value = value[0]
+        elif isinstance(value, dict) and value.keys() <= set(Parameter._attrnames()):
+            source = value.get("source", None)
+            unit = value.get("unit", None)
+            value = value["value"]
+        else:
+            if isinstance(value, list):
+                value = Parameter(*value)
+            source = None
+            unit = None
+
+        return value, source, unit
+
+    def _set_modified_param(self, _dict, attr, value, source, unit, allow_new):
+        """
+        Set a value to of an existing parameter, modifying it in place
+
+        Parameters
+        ----------
+        _dict: dict
+            dictionary object containing parameters
+        attr: str
+            parameter name
+        value: Any
+            Parameter value
+        source: str
+            source of value
+        unit: Union[str, Unit]
+            unit to convert to
+        allow_new: bool
+            allow new paramters to be added
+
+        """
+        if attr != value.var:
+            # may just want to copy over value of parameter
+            bluemira_debug(
+                f"Mismatch between parameter var {value.var} and attribute to be set {attr}."
+            )
+
+        if source is not None:
+            value.source = source
+
+        value = self._unit_conversion(
+            value,
+            unit,
+            unit_to=value.unit if allow_new else _dict[attr].unit,
+            force=True,
+            source=value.source,
+        )
+
+        if allow_new:
             if attr != value.var:
                 raise ValueError(
                     f"Mismatch between parameter var {value.var} and attribute to be set {attr}."
                 )
-            if source is not None:
-                value.source = source
-            if allow_new:
-                _dict[attr] = value
-            else:
-                _dict[attr].value = value.value
-                _dict[attr].source = value.source
-        elif isinstance(_dict.get(attr, None), Parameter):
-            _dict[attr].value = value
-            _dict[attr].source = source
+            _dict[attr] = value
         else:
-            # what other attributes need to be set?
-            super().__setattr__(attr, value)
+            _dict[attr].value = value.value
+            _dict[attr].source = value.source
+            if value.mapping != {} and attr == value.var:
+                _dict[attr].mapping = value.mapping
+
+    def _unit_conversion(self, value, unit_from, unit_to=None, force=False, source=None):
+        """
+        Convert the value of a parameter to a different unit
+
+        Parameters
+        ----------
+        value: Any
+            A value of convert
+        unit_from: Union[str, Unit]
+            unit to convert from
+        unit_to: Optional[Union[str, Unit]]
+            unit to convert to (default for parameter used if not available)
+        force: bool
+            forcibly convert to new unit
+        source: str
+            source of new parameter
+
+        Returns
+        -------
+        value: Any
+
+        """
+        if not isinstance(value, Parameter) and unit_to is None:
+            raise ParameterError("No unit to convert to")
+        elif isinstance(value, Parameter):
+            return self.__modify_value(
+                unit_from,
+                self.__get_unit_to(unit_to, value.unit, force),
+                value,
+                source,
+            )
+        elif None not in [unit_to, unit_from]:
+            unit_to = _unitify(unit_to)
+            unit_from = _unitify(unit_from)
+            return raw_uc(value, unit_from, unit_to)
+        else:
+            return value
+
+    @staticmethod
+    def __get_unit_to(unit_to, current, force):
+        if unit_to is not None:
+            unit_to = _unitify(unit_to)
+            if unit_to != current and not force:
+                raise ParameterError("Can't change unit of existing parameter")
+        else:
+            unit_to = current
+        return unit_to
+
+    @staticmethod
+    def __modify_value(unit_from, unit_to, value, source):
+        if unit_from is not None:
+            unit_from = _unitify(unit_from)
+
+            if unit_to == unit_from:
+                return value
+            value.value = raw_uc(value.value, unit_from, unit_to)
+            value.source = (
+                f"{source if source is not None else ''}: "
+                f"Units converted from {unit_from.format_babel()} to {unit_to.format_babel()}"
+            )
+        return value
 
     def to_dict(self, verbose=False) -> dict:
         """
@@ -1165,7 +1500,11 @@ class ParameterFrame:
             }
         else:
             return {
-                key: {"value": parameter.value, "source": parameter.source}
+                key: {
+                    "value": parameter.value,
+                    "unit": parameter.unit,
+                    "source": parameter.source,
+                }
                 for (key, parameter) in self.__dict__.items()
             }
 
@@ -1272,7 +1611,7 @@ class ParameterFrame:
             the_dict,
             output_path,
             return_output,
-            cls=ParameterMappingEncoder,
+            cls=ParameterEncoder,
             **kwargs,
         )
 
@@ -1282,7 +1621,7 @@ class ParameterFrame:
         Callback to convert suitable JSON objects (dictionaries) into
         ParameterMapping objects.
         """
-        if {"name", "send", "recv"} == set(dct.keys()):
+        if {"name", "send", "recv", "unit"} == set(dct.keys()):
             return ParameterMapping(**dct)
         return dct
 
@@ -1311,7 +1650,7 @@ class ParameterFrame:
         else:
             the_data = json.loads(data, object_hook=cls.parameter_mapping_hook)
             if any(
-                not isinstance(v, dict) or list(v.keys()) == ["value", "source"]
+                not isinstance(v, dict) or v.keys() == Parameter._concise_keys
                 for v in the_data.values()
             ):
                 raise ValueError(
@@ -1338,11 +1677,12 @@ class ParameterFrame:
         else:
             the_data = json.loads(data)
             if any(
-                isinstance(v, dict) and list(v.keys()) != ["value", "source"]
+                isinstance(v, dict) and v.keys() != Parameter._concise_keys
                 for v in the_data.values()
             ):
                 raise ValueError(
-                    f"Setting the values on a {self.__class__.__name__} using set_values_from_json requires a concise json format."
+                    f"Setting the values on a {self.__class__.__name__}"
+                    " using set_values_from_json requires a concise json format."
                 )
             self.update_kw_parameters(the_data, source=source)
 

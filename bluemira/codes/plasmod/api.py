@@ -29,7 +29,7 @@ import json
 import pprint
 from enum import Enum, auto
 from pathlib import Path
-from typing import Dict, Iterable, Optional, Union
+from typing import Dict, Iterable, List, Optional, Union
 
 import fortranformat as ff
 import numpy as np
@@ -47,7 +47,7 @@ from bluemira.codes.plasmod.mapping import (
     Profiles,
     SOLModel,
     TransportModel,
-    create_mapping,
+    mappings,
 )
 from bluemira.utilities.tools import CommentJSONDecoder
 
@@ -217,8 +217,11 @@ class Inputs(PlasmodParameters):
 class Outputs(PlasmodParameters):
     """Class for Plasmod outputs"""
 
-    def __init__(self):
+    def __init__(self, use_defaults=False):
         self._options = self.get_default_plasmod_outputs()
+        if not use_defaults:
+            for k in self._options.keys():
+                self._options[k] = None
 
     def get_default_plasmod_outputs(self):
         """
@@ -301,7 +304,7 @@ class Outputs(PlasmodParameters):
                 f"{PLASMOD} error: " "Abnormal paramters, possibly dtmax/dtmin too large"
             )
         else:
-            raise CodesError(f"{PLASMOD} error: " f"Unknown error code {exit_flag}")
+            raise CodesError(f"{PLASMOD} error: Unknown error code {exit_flag}")
 
 
 class RunMode(interface.RunMode):
@@ -310,6 +313,7 @@ class RunMode(interface.RunMode):
     """
 
     RUN = auto()
+    READ = auto()
     MOCK = auto()
 
 
@@ -339,39 +343,23 @@ class Setup(interface.Setup):
         self.input_file = "plasmod_input.dat"
         self.output_file = "plasmod_outputs.dat"
         self.profiles_file = "plasmod_profiles.dat"
-        self.io_manager = Inputs({**self._get_new_inputs(), **self._problem_settings})
+        self.io_manager = Inputs({**self.get_new_inputs(), **self._problem_settings})
 
     def update_inputs(self):
         """
         Update plasmod inputs
         """
-        self.io_manager.modify({**self._get_new_inputs(), **self._problem_settings})
-
-    def _get_new_inputs(self):
-        """
-        Get new key mappings from the ParameterFrame.
-        """
-        _inputs = {}
-        for pl_key, bm_key in self._send_mapping.items():
-            _inputs[pl_key] = self.params.get(bm_key)
-        return _inputs
+        self.io_manager.modify({**self.get_new_inputs(), **self._problem_settings})
 
     def write_input(self):
         """
         Write input file
         """
-        self.io_manager._write(Path(self._run_dir, self.input_file))
+        self.io_manager._write(Path(self.parent.run_dir, self.input_file))
 
     def _run(self):
         """
         Run plasmod setup
-        """
-        self.update_inputs()
-        self.write_input()
-
-    def _mock(self):
-        """
-        Mock plasmod setup
         """
         self.update_inputs()
         self.write_input()
@@ -403,9 +391,9 @@ class Run(interface.Run):
         super()._run_subprocess(
             [
                 self._binary,
-                Path(self._run_dir, self.parent.setup_obj.input_file),
-                Path(self._run_dir, self.parent.setup_obj.output_file),
-                Path(self._run_dir, self.parent.setup_obj.profiles_file),
+                Path(self.parent.run_dir, self.parent.setup_obj.input_file),
+                Path(self.parent.run_dir, self.parent.setup_obj.output_file),
+                Path(self.parent.run_dir, self.parent.setup_obj.profiles_file),
             ]
         )
 
@@ -421,8 +409,8 @@ class Teardown(interface.Teardown):
         """
         self.io_manager = Outputs()
         self.io_manager.read_output_files(
-            Path(self._run_dir, self.parent.setup_obj.output_file),
-            Path(self._run_dir, self.parent.setup_obj.profiles_file),
+            Path(self.parent.run_dir, self.parent.setup_obj.output_file),
+            Path(self.parent.run_dir, self.parent.setup_obj.profiles_file),
         )
         self.prepare_outputs()
 
@@ -430,10 +418,17 @@ class Teardown(interface.Teardown):
         """
         Mock plasmod teardown
         """
+        self.io_manager = Outputs(use_defaults=True)
+        self.prepare_outputs()
+
+    def _read(self):
+        """
+        Read plasmod teardown
+        """
         self.io_manager = Outputs()
         self.io_manager.read_output_files(
-            Path(self._run_dir, self.parent.setup_obj.output_file),
-            Path(self._run_dir, self.parent.setup_obj.profiles_file),
+            Path(self.parent.read_dir, self.parent.setup_obj.output_file),
+            Path(self.parent.read_dir, self.parent.setup_obj.profiles_file),
         )
         self.prepare_outputs()
 
@@ -441,7 +436,7 @@ class Teardown(interface.Teardown):
         """
         Prepare outputs for ParameterFrame
         """
-        self.parent.params.update_kw_parameters(
+        super().prepare_outputs(
             {
                 bm_key: getattr(self.io_manager, pl_key)
                 for pl_key, bm_key in self.parent._recv_mapping.items()
@@ -462,6 +457,8 @@ class Solver(interface.FileProgramInterface):
         build configuration dictionary
     run_dir: str
         Plasmod run directory
+    read_dir: str
+        Directory to read in previous run
 
     Notes
     -----
@@ -478,6 +475,7 @@ class Solver(interface.FileProgramInterface):
         params,
         build_config=None,
         run_dir: Optional[str] = None,
+        read_dir: Optional[str] = None,
     ):
         super().__init__(
             PLASMOD,
@@ -485,7 +483,8 @@ class Solver(interface.FileProgramInterface):
             build_config.get("mode", "run"),
             binary=build_config.get("binary", BINARY),
             run_dir=run_dir,
-            mappings=create_mapping(),
+            read_dir=read_dir,
+            mappings=mappings,
             problem_settings=build_config.get("problem_settings", None),
         )
 
@@ -496,7 +495,7 @@ class Solver(interface.FileProgramInterface):
         """
         return self.setup_obj._problem_settings
 
-    def get_scalar(self, scalar):
+    def get_raw_variables(self, scalar: Union[List, str]):
         """
         Get scalar values for unmapped variables.
 
@@ -504,7 +503,7 @@ class Solver(interface.FileProgramInterface):
 
         Parameters
         ----------
-        scalar: str
+        scalar: Union[List, str])
             scalar value to get
 
         Returns
@@ -512,6 +511,8 @@ class Solver(interface.FileProgramInterface):
         scalar value
 
         """
+        if isinstance(scalar, list):
+            return [getattr(self.teardown_obj.io_manager, sc) for sc in scalar]
         return getattr(self.teardown_obj.io_manager, scalar)
 
     def get_profile(self, profile: str):

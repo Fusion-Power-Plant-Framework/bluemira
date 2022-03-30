@@ -27,6 +27,7 @@ import copy
 
 import bluemira.base.components as bm_comp
 import bluemira.geometry as bm_geo
+from bluemira.builders.EUDEMO._varied_offset import varied_offset  # noqa :F401
 
 
 def circular_pattern_component(
@@ -42,8 +43,8 @@ def circular_pattern_component(
     Pattern the provided Component equally spaced around a circle n_children times.
 
     The resulting components are assigned to a set of common parent Components having
-    a name with the structure "{parent_prefix} {idx}", where idx runs from 0 to
-    n_children - 1. The Components produced under each parent are named according to the
+    a name with the structure "{parent_prefix} {idx}", where idx runs from 1 to
+    n_children. The Components produced under each parent are named according to the
     original Component with the corresponding idx value appended.
 
     Parameters
@@ -63,7 +64,9 @@ def circular_pattern_component(
     degree: float
         The angular extent of the patterning in degrees, by default 360.
     """
-    sectors = [bm_comp.Component(f"{parent_prefix} {idx}") for idx in range(n_children)]
+    sectors = [
+        bm_comp.Component(f"{parent_prefix} {idx+1}") for idx in range(n_children)
+    ]
 
     def assign_component_to_sector(
         comp: bm_comp.Component,

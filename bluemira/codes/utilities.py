@@ -28,13 +28,34 @@ import os
 import threading
 from typing import Dict, Literal
 
-import bluemira.base as bm_base
 from bluemira.base.look_and_feel import (
     _bluemira_clean_flush,
     bluemira_error_clean,
     bluemira_print_clean,
 )
+from bluemira.base.parameter import ParameterFrame, ParameterMapping
 from bluemira.codes.error import CodesError
+from bluemira.utilities.tools import get_module
+
+
+def get_code_interface(module):
+    """
+    Dynamically import code interface
+
+    Parameters
+    ----------
+    module: str
+        module to import
+
+    Returns
+    -------
+    code module
+
+    """
+    try:
+        return get_module(f"bluemira.codes.{module.lower()}")
+    except ImportError:
+        return get_module(module)
 
 
 def _get_mapping(
@@ -124,8 +145,8 @@ def get_send_mapping(params, code_name, send_all=False):
 
 def add_mapping(
     code_name: str,
-    params: bm_base.ParameterFrame,
-    mapping: Dict[str, bm_base.ParameterMapping],
+    params: ParameterFrame,
+    mapping: Dict[str, ParameterMapping],
 ):
     """
     Adds mappings for a given code to a ParameterFrame.
@@ -145,6 +166,42 @@ def add_mapping(
         param = params.get_param(key)
         if param.var in mapping and code_name not in param.mapping:
             param.mapping[code_name] = mapping[param.var]
+
+
+def create_mapping(
+    in_mappings=None, out_mappings=None, io_mappings=None, none_mappings=None
+):
+    """
+    Creates mappings for external codes
+
+    Returns
+    -------
+    mappings: Dict
+        A mapping from bluemira names to an external code ParameterMapping
+
+    """
+    mappings = {}
+    ins = {"send": True, "recv": False}
+    outs = {"send": False, "recv": True}
+    inouts = {"send": True, "recv": True}
+    nones = {"send": False, "recv": False}
+
+    for puts, sr in [
+        [in_mappings, ins],
+        [out_mappings, outs],
+        [io_mappings, inouts],
+        [none_mappings, nones],
+    ]:
+        if puts is not None:
+            for (
+                bm_key,
+                (ec_key, unit),
+            ) in puts.items():
+                mappings[bm_key] = ParameterMapping(
+                    ec_key, send=sr["send"], recv=sr["recv"], unit=unit
+                )
+
+    return mappings
 
 
 class LogPipe(threading.Thread):

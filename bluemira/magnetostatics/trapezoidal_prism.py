@@ -69,10 +69,10 @@ def primitive_sxn_bound(cos_theta, sin_theta, r, q, t):
     """
     # First compute the divisors of each of the terms to determine if there
     # are singularities
-    divisor_1 = cos_theta * np.sqrt(t ** 2 + q ** 2)
-    divisor_2 = cos_theta * np.sqrt(r ** 2 * cos_theta ** 2 + q ** 2)
+    divisor_1 = cos_theta * np.sqrt(t**2 + q**2)
+    divisor_2 = cos_theta * np.sqrt(r**2 * cos_theta**2 + q**2)
     divisor_3 = q * np.sqrt(
-        t ** 2 + 2 * r * t * sin_theta * cos_theta + (r ** 2 + q ** 2) * cos_theta ** 2
+        t**2 + 2 * r * t * sin_theta * cos_theta + (r**2 + q**2) * cos_theta**2
     )
 
     # All singularities resolve to 0?
@@ -82,7 +82,7 @@ def primitive_sxn_bound(cos_theta, sin_theta, r, q, t):
     if divisor_2 != 0:
         result += r * cos_theta * np.arcsinh((t + r * cos_theta * sin_theta) / divisor_2)
     if divisor_3 != 0:
-        result += q * np.arctan((q ** 2 * sin_theta - t * r * cos_theta) / divisor_3)
+        result += q * np.arctan((q**2 * sin_theta - t * r * cos_theta) / divisor_3)
 
     return result
 
@@ -144,18 +144,18 @@ def primitive_szn_bound(cos_theta, sin_theta, r, ll, t):
     Singularities all resolve to: lim(ln(1)) --> 0
     """
     sqrt_term = np.sqrt(
-        t ** 2 * cos_theta ** 2
-        + ll ** 2
+        t**2 * cos_theta**2
+        + ll**2
         + 2 * r * ll * sin_theta * cos_theta
-        + r ** 2 * cos_theta ** 2
+        + r**2 * cos_theta**2
     )
 
     # First compute the divisors of each of the terms to determine if there
     # are singularities
-    divisor_1 = cos_theta * np.sqrt(t ** 2 + r ** 2 * cos_theta ** 2)
-    divisor_2 = cos_theta * np.sqrt(t ** 2 + ll ** 2)
+    divisor_1 = cos_theta * np.sqrt(t**2 + r**2 * cos_theta**2)
+    divisor_2 = cos_theta * np.sqrt(t**2 + ll**2)
     divisor_3 = np.sqrt(
-        ll ** 2 + 2 * ll * r * sin_theta * cos_theta + r ** 2 * cos_theta ** 2
+        ll**2 + 2 * ll * r * sin_theta * cos_theta + r**2 * cos_theta**2
     )
     divisor_4 = r * cos_theta * sqrt_term
     divisor_5 = ll * sqrt_term
@@ -169,7 +169,7 @@ def primitive_szn_bound(cos_theta, sin_theta, r, ll, t):
     if divisor_2 != 0:
         result -= t * np.arcsinh((ll * sin_theta + r * cos_theta) / divisor_2)
     if divisor_3 != 0:
-        result -= r * cos_theta ** 2 * np.arcsinh((t * cos_theta) / divisor_3)
+        result -= r * cos_theta**2 * np.arcsinh((t * cos_theta) / divisor_3)
     if divisor_4 != 0:
         result -= (
             r
@@ -321,6 +321,7 @@ class TrapezoidalPrismCurrentSource(RectangularCrossSectionCurrentSource):
         self.origin = origin
 
         length = np.linalg.norm(ds)
+        self._halflength = 0.5 * length
         # Normalised direction cosine matrix
         self.dcm = np.array([t_vec, ds / length, normal])
         self.length = 0.5 * (length - breadth * np.tan(alpha) - breadth * np.tan(beta))
@@ -388,20 +389,20 @@ class TrapezoidalPrismCurrentSource(RectangularCrossSectionCurrentSource):
         """
         Calculate extrema points of the current source for plotting and debugging.
         """
-        b = self.length
+        b = self._halflength
         c = self.depth
         d = self.breadth
         # Lower rectangle
-        p1 = np.array([-d, -b, -c])
-        p2 = np.array([d, -b - 2 * d * np.tan(self.beta), -c])
-        p3 = np.array([d, -b - 2 * d * np.tan(self.beta), c])
-        p4 = np.array([-d, -b, c])
+        p1 = np.array([-d, -b + d * np.tan(self.beta), -c])
+        p2 = np.array([d, -b - d * np.tan(self.beta), -c])
+        p3 = np.array([d, -b - d * np.tan(self.beta), c])
+        p4 = np.array([-d, -b + d * np.tan(self.beta), c])
 
         # Upper rectangle
-        p5 = np.array([-d, b, -c])
-        p6 = np.array([d, b + 2 * d * np.tan(self.alpha), -c])
-        p7 = np.array([d, b + 2 * d * np.tan(self.alpha), c])
-        p8 = np.array([-d, b, c])
+        p5 = np.array([-d, b - d * np.tan(self.alpha), -c])
+        p6 = np.array([d, b + d * np.tan(self.alpha), -c])
+        p7 = np.array([d, b + d * np.tan(self.alpha), c])
+        p8 = np.array([-d, b - d * np.tan(self.alpha), c])
 
         points_array = []
         points = [

@@ -22,7 +22,7 @@
 import pytest
 
 from bluemira.codes.process import teardown
-from bluemira.codes.process.api import PROCESS_ENABLED
+from bluemira.codes.process.api import ENABLED as PROCESS_ENABLED
 from bluemira.codes.process.mapping import mappings
 from tests.bluemira.codes.process import INDIR
 
@@ -32,7 +32,8 @@ class TestMFileReader:
     @classmethod
     def setup_class(cls):
         cls.mapping = {p_map.name: bm_key for bm_key, p_map in mappings.items()}
-        cls.bmfile = teardown.BMFile(INDIR, cls.mapping)
+        units = {p_map.name: p_map.unit for val, p_map in mappings.items()}
+        cls.bmfile = teardown.BMFile(INDIR, cls.mapping, units)
         return cls
 
     def test_extraction(self):

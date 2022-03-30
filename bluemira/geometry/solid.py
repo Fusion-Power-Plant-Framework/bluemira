@@ -33,6 +33,8 @@ from bluemira.geometry.base import BluemiraGeo
 from bluemira.geometry.error import DisjointedSolid
 from bluemira.geometry.shell import BluemiraShell
 
+__all__ = ["BluemiraSolid"]
+
 
 class BluemiraSolid(BluemiraGeo):
     """Bluemira Solid class."""

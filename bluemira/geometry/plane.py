@@ -20,15 +20,20 @@
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 
 """
-Wrapper for FreeCAD Plane (Placement) objects
+Wrapper for FreeCAD Plane objects
 """
 
 from __future__ import annotations
 
+import copy
+
 import numpy as np
 
 import bluemira.codes._freecadapi as cadapi
-from bluemira.geometry.error import GeometryError
+from bluemira.geometry.constants import VERY_BIG
+from bluemira.geometry.face import BluemiraFace
+
+__all__ = ["BluemiraPlane"]
 
 
 class BluemiraPlane:
@@ -38,27 +43,17 @@ class BluemiraPlane:
     Parameters
     ----------
     base: Iterable
-        Base vector of the plane
+        Plane reference point
     axis: Iterable
-        Axis vector of the plane
-    angle: float
-        Angle of the plane
+        normal vector dto the plane
     label: str
         Label of the plane
-
-    Notes
-    -----
-    The BluemiraPlane wraps a Placement, and not a Plane. The reasons for this will
-    become clear in future. Placements and Planes should be interchangeable.
-
-    Angle is rotation around the axis which is taken from the base.
-    Usually the shape has a starting point which is not its centre
     """
 
-    def __init__(
-        self, base=[0.0, 0.0, 0.0], axis=[0.0, 0.0, 1.0], angle=0.0, label: str = ""
-    ):
-        self._shape = cadapi.make_plane(base, axis, angle)
+    def __init__(self, base=(0.0, 0.0, 0.0), axis=(0.0, 0.0, 1.0), label: str = ""):
+        if np.allclose(np.array(axis), np.array([0, 0, 0])):
+            raise ValueError("Axis must to be a vector with non zero norm.")
+        self._shape = cadapi.make_plane(base, axis)
         self.label = label
 
     @classmethod
@@ -77,21 +72,15 @@ class BluemiraPlane:
         label: str
             Label of the plane
         """
-        p1 = np.array(point_1)
-        p2 = np.array(point_2)
-        p3 = np.array(point_3)
-        v1, v2 = p3 - p1, p2 - p1
-        v3 = np.cross(v2, v1)
-        if np.all(v3 == 0):
-            raise GeometryError("Cannot make a BluemiraPlane from co-linear points.")
-
-        normal = v3 / np.sqrt(v3.dot(v3))
-        return cls(point_1, normal, 0.0, label=label)
+        plane = BluemiraPlane()
+        plane._shape = cadapi.make_plane_from_3_points(point_1, point_2, point_3)
+        plane.label = label
+        return plane
 
     @property
     def base(self):
-        """Plane's base vector"""
-        return cadapi.vector_to_list(self._shape.Base)
+        """Plane's reference point"""
+        return cadapi.vector_to_numpy(self._shape.Position)
 
     @base.setter
     def base(self, value):
@@ -102,12 +91,12 @@ class BluemiraPlane:
         ----------
         value: Iterable
         """
-        self._shape.Base = cadapi.Base.Vector(value)
+        self._shape.Position = cadapi.Base.Vector(value)
 
     @property
     def axis(self):
-        """Plane's rotation matrix"""
-        return self._shape.Rotation.Axis
+        """Plane's normal vector"""
+        return cadapi.vector_to_numpy(self._shape.Axis)
 
     @axis.setter
     def axis(self, value):
@@ -120,43 +109,25 @@ class BluemiraPlane:
         """
         self._shape.Axis = cadapi.Base.Vector(value)
 
-    @property
-    def angle(self):
-        """Plane's angle"""
-        return np.rad2deg(self._shape.Rotation.Angle)
-
-    @angle.setter
-    def angle(self, value):
-        """
-        Set a new plane angle
-
-        Parameters
-        ----------
-        value: float
-            angle value in degree
-        """
-        self._shape.Angle = value
-
-    def to_matrix(self):
-        """Returns a matrix (quaternion) representing the Plane's transformation"""
-        return np.array(self._shape.Matrix.A).reshape(4, 4)
-
     def move(self, vector):
         """Moves the Plane along the given vector"""
-        cadapi.move_plane(self._shape, vector)
+        self.base = self.base + np.array(vector)
 
-    def __repr__(self):  # noqa D105
-        new = []
-        new.append(f"([{type(self).__name__}] = Label: {self.label}")
-        new.append(f" base: {self.base}")
-        new.append(f" axis: {self.axis}")
-        new.append(f" angle: {self.angle}")
-        new.append(")")
-        return ", ".join(new)
+    def __repr__(self):
+        """
+        Plane __repr__
+        """
+        return (
+            f"([{type(self).__name__}] = Label: {self.label},"
+            f" base: {self.base},"
+            f" axis: {self.axis})"
+        )
 
     def copy(self, label=None):
-        """Make a copy of the BluemiraPlane"""
-        plane_copy = BluemiraPlane(self.base, self.axis, self.angle)
+        """
+        Make a copy of the BluemiraGeo.
+        """
+        plane_copy = copy.copy(self)
         if label is not None:
             plane_copy.label = label
         else:
@@ -165,4 +136,28 @@ class BluemiraPlane:
 
     def deepcopy(self, label=None):
         """Make a deepcopy of the BluemiraPlane"""
-        return self.copy()
+        plane_copy = BluemiraPlane(self.base, self.axis)
+        if label is not None:
+            plane_copy.label = label
+        else:
+            plane_copy.label = self.label
+        return plane_copy
+
+    def to_face(
+        self, width: float = VERY_BIG, height: float = VERY_BIG, label: str = ""
+    ):
+        """
+        Convert the plane to a face with dimension (width, height) and centered into
+        the plane base position.
+        """
+        face = cadapi.face_from_plane(self._shape, width, height)
+        bmface = BluemiraFace._create(face, label)
+        return bmface
+
+    def to_placement(self):
+        """
+        Convert the plane into a placement
+        """
+        from bluemira.geometry.placement import BluemiraPlacement
+
+        return BluemiraPlacement._create(cadapi.placement_from_plane(self._shape))
