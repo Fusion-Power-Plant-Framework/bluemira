@@ -23,7 +23,7 @@
 Structural module plotting tools
 """
 import numpy as np
-from matplotlib.colors import DivergingNorm, Normalize
+from matplotlib.colors import Normalize, TwoSlopeNorm
 
 from bluemira.display import plot_3d
 from bluemira.display.plotter import PlotOptions
@@ -520,7 +520,7 @@ class StressDeformedGeometryPlotter(BasePlotter):
         if not smin < 0 < smax:
             centre = (smin + smax) / 2
 
-        return DivergingNorm(centre, vmin=min(stress), vmax=max(stress))
+        return TwoSlopeNorm(centre, vmin=min(stress), vmax=max(stress))
 
 
 if __name__ == "__main__":
