@@ -18,6 +18,12 @@
 #
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
+import numpy as np
+from matplotlib import scale
+
+from bluemira.equilibria.winding_pack import generate_cable_current, select_temperature
+
+# from pyrsistent import T
 
 """
 Equilibrium optimisation constraint functions.
