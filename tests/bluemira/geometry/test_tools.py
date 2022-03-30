@@ -432,4 +432,8 @@ class TestMakeBSpline:
         """
         points = {"x": [0, 1], "y": 0, "z": [0, 0]}
         spline = make_bspline(points, closed=False, start_tangent=st, end_tangent=et)
-        assert np.isclose(spline.length, expected_length)
+        np.testing.assert_allclose(spline.length, expected_length)
+        if st and et:
+            e = spline._shape.Edges[0]
+            np.testing.assert_allclose(e.tangentAt(0), st)
+            # np.testing.assert_allclose(e.tangentAt(e.Length), et)
