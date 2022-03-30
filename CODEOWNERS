@@ -22,14 +22,14 @@
 
 # Repository responsibility
 
-*/ @Fusion-Power-Plant-Framework/repo-review
+/.* @Fusion-Power-Plant-Framework/repo-review
+/.github/ @Fusion-Power-Plant-Framework/repo-review
 /scripts/ @Fusion-Power-Plant-Framework/repo-review
 /conda/ @Fusion-Power-Plant-Framework/repo-review
-
-# Order is important; the last matching pattern takes the most
-# precedence. eg js-owner would own all *.js files. Directories and wildcards can be specified etc
-# no user can be used to default to global owner
-# *.js    @js-owner
-# *.go docs@example.com
-# /build/logs/ @doctocat @doctocat2
-# /build/info/
+/conftest.py @Fusion-Power-Plant-Framework/repo-review
+/setup.* @Fusion-Power-Plant-Framework/repo-review
+/requirements* @Fusion-Power-Plant-Framework/repo-review
+/pyproject.toml @Fusion-Power-Plant-Framework/repo-review
+/pytest.ini @Fusion-Power-Plant-Framework/repo-review
+/MANIFEST.in @Fusion-Power-Plant-Framework/repo-review
+/LICENSE @Fusion-Power-Plant-Framework/repo-review
