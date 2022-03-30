@@ -23,20 +23,20 @@ Builders for the first wall of the reactor, including divertor
 """
 
 from copy import deepcopy
-from typing import Any, Dict
+from typing import Any, Dict, Tuple
 
 import numpy as np
 
 from bluemira.base.builder import BuildConfig, Component
-from bluemira.base.components import PhysicalComponent
+from bluemira.base.components import Component, PhysicalComponent
 from bluemira.base.error import BuilderError
 from bluemira.builders.EUDEMO.ivc.blanket import BlanketBuilder
 from bluemira.builders.EUDEMO.ivc.divertor import DivertorBuilder
 from bluemira.builders.EUDEMO.ivc.wall import WallBuilder
-from bluemira.builders.EUDEMO.tools import varied_offset
 from bluemira.builders.shapes import Builder
-from bluemira.equilibria.equilibrium import Equilibrium
+from bluemira.equilibria import Equilibrium
 from bluemira.equilibria.find import find_OX_points
+from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.tools import (
     boolean_cut,
     convex_hull_wires_2d,
@@ -274,3 +274,117 @@ class InVesselComponentBuilder(Builder):
         # Remove the "legs" from the keep-out zone, we want the wall to
         # intersect these
         return _cut_wall_below_x_point(flux_surface_zone, self.x_points[0].z)
+
+
+def build_ivc_xz_shapes(
+    components: Component, rm_clearance: float
+) -> Tuple[BluemiraFace, BluemiraFace, BluemiraWire]:
+    """
+    Build in-vessel component shapes in the xz-plane.
+
+    Takes the blanket boundary, creates a face from it, then cuts away
+    the plasma-facing (first wall) shape. It then cuts a remote
+    maintainance clearance between the divertor and wall and returns
+    the two shapes, along with the wire defining the boundary of the
+    blanket.
+
+    Parameters
+    ----------
+    components: Component
+        A component tree outputted by InVesselComponentBuilder.build().
+    rm_clearance: float
+        The thickness of the clearance between the blanket and the
+        divertor.
+
+    Returns
+    -------
+    blanket_face: BluemiraFace
+        Face representing the space for the blankets.
+    divertor_face: BluemiraFace
+        Face representing the space for the divertor.
+    blanket_boundary: BlurmiraWire
+        The shape of the outer boundary of the blanket.
+    """
+    if not components:
+        raise ValueError("No 'xz' components in component tree.")
+
+    # Make the in-vessel "shell"
+    blanket_boundary = _extract_wire(components, BlanketBuilder.COMPONENT_BOUNDARY)
+    filled_blanket_face = BluemiraFace(blanket_boundary, label="blanket_face")
+    plasma_facing_wire = _build_plasma_facing_wire(components)
+    plasma_facing_face = BluemiraFace(plasma_facing_wire)
+    in_vessel_face = boolean_cut(filled_blanket_face, [plasma_facing_face])[0]
+
+    # Cut a clearance between the blankets and divertor - getting two
+    # new faces
+    vessel_bbox = in_vessel_face.bounding_box
+    rm_clearance_face = _make_clearance_face(
+        vessel_bbox.x_min,
+        vessel_bbox.x_max,
+        _extract_wire(
+            components, WallBuilder.COMPONENT_WALL_BOUNDARY
+        ).bounding_box.z_min,
+        rm_clearance,
+    )
+    blanket_face, divertor_face = _cut_vessel_shape(in_vessel_face, rm_clearance_face)
+    return blanket_face, divertor_face, blanket_boundary
+
+
+def _build_plasma_facing_wire(components: Component) -> BluemiraWire:
+    """
+    Build a wire of the plasma facing shape of the first wall
+    """
+    labels = [
+        WallBuilder.COMPONENT_WALL_BOUNDARY,
+        DivertorBuilder.COMPONENT_INNER_TARGET,
+        DivertorBuilder.COMPONENT_OUTER_TARGET,
+        DivertorBuilder.COMPONENT_DOME,
+        DivertorBuilder.COMPONENT_INNER_BAFFLE,
+        DivertorBuilder.COMPONENT_OUTER_BAFFLE,
+    ]
+    wires = [_extract_wire(components, label) for label in labels]
+    return BluemiraWire(wires)
+
+
+def _cut_vessel_shape(
+    in_vessel_face: BluemiraFace, rm_clearance_face: BluemiraFace
+) -> Tuple[BluemiraFace, BluemiraFace]:
+    """
+    Cut a remote maintainance clearance into the given vessel shape.
+    """
+    pieces = boolean_cut(in_vessel_face, [rm_clearance_face])
+    blanket_face = pieces[np.argmax([p.center_of_mass[2] for p in pieces])]
+    divertor_face = pieces[np.argmin([p.center_of_mass[2] for p in pieces])]
+    return blanket_face, divertor_face
+
+
+def _make_clearance_face(x_min: float, x_max: float, z: float, thickness: float):
+    """
+    Makes a rectangular face in xz with the given thickness in z.
+
+    The face is intended to be used to cut a remote maintainance
+    clearance between blankets and divertor.
+    """
+    x_coords = [x_min, x_min, x_max, x_max]
+    y_coords = [0, 0, 0, 0]
+    z_coords = [
+        z + thickness / 2,
+        z - thickness / 2,
+        z - thickness / 2,
+        z + thickness / 2,
+    ]
+    return BluemiraFace(make_polygon([x_coords, y_coords, z_coords], closed=True))
+
+
+def _extract_wire(component_tree: Component, label: str) -> BluemiraWire:
+    """
+    Extract the wire from the component with the given label.
+
+    Throw if there is not exactly one component with the given label.
+    """
+    component = component_tree.get_component(label)
+    if not component:
+        raise ValueError(f"No component '{label}' in component tree.")
+    if isinstance(component, list):
+        raise ValueError(f"More than one component with label '{label}'.")
+    return component.shape

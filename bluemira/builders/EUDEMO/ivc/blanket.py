@@ -38,6 +38,8 @@ class BlanketBuilder(Builder):
             └── blanket_boundary (PhysicalComponent)
     """
 
+    COMPONENT_BOUNDARY = "blanket_boundary"
+
     def __init__(
         self,
         params: Dict[str, Any],
@@ -68,6 +70,6 @@ class BlanketBuilder(Builder):
         # TODO(hsaunders): add thickness parameters to input params dict
         boundary_wire = varied_offset(self._wall_shape, 1, 2.5, 45, 175)
         xz_component = Component("xz")
-        boundary = PhysicalComponent("blanket_boundary", boundary_wire)
+        boundary = PhysicalComponent(self.COMPONENT_BOUNDARY, boundary_wire)
         xz_component.add_child(boundary)
         return xz_component
