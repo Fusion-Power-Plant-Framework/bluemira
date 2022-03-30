@@ -27,7 +27,6 @@ from matplotlib.colors import DivergingNorm, Normalize
 
 from bluemira.display import plot_3d
 from bluemira.display.plotter import PlotOptions
-from bluemira.geometry._deprecated_tools import get_angle_between_vectors
 from bluemira.geometry.placement import BluemiraPlacement
 from bluemira.structural.constants import (
     DEFLECT_COLOR,
@@ -335,8 +334,8 @@ class BasePlotter:
         the mid-point of the Element.
         """
         xss = []
+        options = []
         for element in self.geometry.elements:
-            angle = get_angle_between_vectors([1, 0, 0], element.space_vector)
             matrix = np.zeros((4, 4))
             matrix[:3, :3] = element.lambda_matrix[:3, :3].T
             matrix[:3, -1] = element.mid_point
@@ -346,13 +345,75 @@ class BasePlotter:
                 show_wires=False,
                 show_faces=True,
                 face_options=self.options["cross_section_options"],
-                # plane="yz",
             )
+            options.append(plot_options)
             xs = element._cross_section.geometry.deepcopy()
             xs.change_placement(placement)
             xss.append(xs)
 
-        plot_3d(xss, ax=self.ax, show=False)  # , options=[plot_options])
+        plot_3d(xss, ax=self.ax, show=False, options=options)
+
+    def plot_loads(self):
+        """
+        Plots all of the loads applied to the geometry
+        """
+        for node in self.geometry.nodes:
+            if node.loads:
+                for load in node.loads:
+                    self._plot_node_load(node, load)
+
+        for element in self.geometry.elements:
+            for load in element.loads:
+                if load["type"] == "Element Load":
+                    self._plot_element_load(element, load)
+                elif load["type"] == "Distributed Load":
+                    self._plot_distributed_load(element, load)
+
+    def _plot_node_load(self, node, load):
+        load_value = load["Q"] * LOAD_STR_VECTORS[load["sub_type"]]
+
+        load_value = arrow_scale(load_value, 10 * self.unit_length, self.force_size)
+
+        if "F" in load["sub_type"]:
+            _plot_force(self.ax, node, load_value, color="r")
+
+        elif "M" in load["sub_type"]:
+            _plot_moment(self.ax, node, load_value, color="r")
+
+    def _plot_element_load(self, element, load):
+        load = load["Q"] * LOAD_STR_VECTORS[load["sub_type"]]
+
+        load = arrow_scale(load, 10 * self.unit_length, self.force_size)
+
+        dcm = element.lambda_matrix[0:3, 0:3]
+        load = load @ dcm
+        point = np.array(
+            [element.node_1.x, element.node_1.y, element.node_1.z], dtype=FLOAT_TYPE
+        )
+        point += (np.array([1.0, 0.0, 0.0]) * np.float(load["x"])) @ dcm
+        self.ax.quiver(*point - load, *load, color="r")
+
+    def _plot_distributed_load(self, element, load):
+        length = element.length
+        n = int(length * 10)
+        dcm = element.lambda_matrix[0:3, 0:3]
+        load = load["w"] * LOAD_STR_VECTORS[load["sub_type"]] / length
+
+        load = arrow_scale(load, 10 * self.unit_length, self.force_size)
+
+        load = load @ dcm
+        load = load * np.ones((3, n)).T
+        load = load.T
+        point = np.array(
+            [element.node_1.x, element.node_1.y, element.node_1.z], dtype=FLOAT_TYPE
+        )
+        point = point * np.ones((3, n)).T
+        point += (
+            np.array([x * np.array([1.0, 0.0, 0.0]) for x in np.linspace(0, length, n)])
+            @ dcm
+        )
+        point = point.T
+        self.ax.quiver(*point - load, *load, color="r")
 
     def _set_aspect_equal(self):
         """
@@ -367,6 +428,99 @@ class BasePlotter:
 
         for x, y, z in zip(x_bb, y_bb, z_bb):
             self.ax.plot([x], [y], [z], color="w")
+
+
+class GeometryPlotter(BasePlotter):
+    """
+    Utility class for the plotting of Beams geometry models
+    """
+
+    def __init__(self, geometry, ax=None, **kwargs):
+        self.options = DEFAULT_PLOT_OPTIONS.copy()
+        self.options["show_stress"] = False
+        self.options["show_deflections"] = False
+        super().__init__(geometry, ax, **kwargs)
+
+        self.plot_nodes()
+        self.plot_elements()
+        self.plot_supports()
+        self.plot_loads()
+        if self.options["show_cross_sections"]:
+            self.plot_cross_sections()
+        self._set_aspect_equal()
+
+
+class DeformedGeometryPlotter(BasePlotter):
+    """
+    Utility class for the plotting of Beams deformed geometry models and
+    overlaying with GeometryPlotters
+    """
+
+    def __init__(self, geometry, ax=None, **kwargs):
+        self.options = DEFAULT_PLOT_OPTIONS.copy()
+        self.options["node_options"]["color"] = "b"
+        self.options["element_options"]["color"] = "b"
+        self.options["show_stress"] = False
+        self.options["annotate_nodes"] = True
+        self.options["interpolate"] = True
+        self.options["show_all_nodes"] = False
+
+        super().__init__(geometry, ax, **kwargs)
+
+        self.plot_nodes()
+        self.plot_elements()
+        self._set_aspect_equal()
+
+
+class StressDeformedGeometryPlotter(BasePlotter):
+    """
+    Utility class for the plotting of Beams deformed geometry models and
+    overlaying with GeometryPlotters
+    """
+
+    def __init__(self, geometry, ax=None, stress=None, deflection=False, **kwargs):
+        self.options = DEFAULT_PLOT_OPTIONS.copy()
+        self.options["node_options"]["color"] = "b"
+        self.options["element_options"]["color"] = None
+        self.options["show_stress"] = True
+        self.options["annotate_nodes"] = False
+        self.options["interpolate"] = True
+        self.options["show_all_nodes"] = False
+        self.options["show_as_grey"] = False
+
+        super().__init__(geometry, ax, **kwargs)
+
+        self.color_normer = self.make_color_normer(stress, deflection)
+
+        self.plot_nodes()
+        self.plot_elements()
+        self._set_aspect_equal()
+
+    @staticmethod
+    def make_color_normer(stress, deflection=False):
+        """
+        Make a ColorNorm object for the plot based on the stress values.
+        """
+        smin, smax = min(stress), max(stress)
+        if smin == smax:
+
+            class SameColour:
+                def __call__(self, value):
+                    return 0.5
+
+            return SameColour()
+
+        centre = 0
+
+        if deflection:
+            # deflections positive when plotting
+            deflections = np.abs(stress)
+            return Normalize(vmin=0, vmax=max(deflections))
+
+        if not smin < 0 < smax:
+            centre = (smin + smax) / 2
+
+        return DivergingNorm(centre, vmin=min(stress), vmax=max(stress))
 
 
 if __name__ == "__main__":
