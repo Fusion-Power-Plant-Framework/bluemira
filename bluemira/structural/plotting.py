@@ -330,7 +330,9 @@ class BasePlotter:
                     "linestyle",
                     DEFAULT_STRUCT_PLOT_OPTIONS["element_options"]["linestyle"],
                 )
-                self.ax.plot(*element.shapes, marker=None, linestyle="--", **kwargs)
+                self.ax.plot(
+                    *element.shapes, marker=None, linestyle="--", color=color, **kwargs
+                )
                 kwargs["linestyle"] = ls
 
     def plot_cross_sections(self):
