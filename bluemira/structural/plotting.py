@@ -20,11 +20,14 @@
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 
 """
-FE plotting tools
+Structural module plotting tools
 """
 import numpy as np
 from matplotlib.colors import DivergingNorm, Normalize
 
+from bluemira.display import plot_3d
+from bluemira.display.plotter import PlotOptions
+from bluemira.geometry.placement import BluemiraPlacement
 from bluemira.structural.constants import (
     DEFLECT_COLOR,
     FLOAT_TYPE,
@@ -34,19 +37,50 @@ from bluemira.structural.constants import (
 )
 from bluemira.utilities.plot_tools import Plot3D
 
-# Plotting options
-DEFAULT_OPTIONS = {
-    "SCALE": 1.1,  # Scaling factor for 3-D axes offset
-    "NODE_KWARGS": {"marker": "o", "ms": 12, "color": "k"},
-    "ELEM_KWARGS": {"linewidth": 3, "color": "k"},
-    "ANNOTATE": True,
-    "CROSSSECTIONS": True,
-    "STRESSES": False,
-    "DEFLECTIONS": False,
-    "INTERPOLATE": False,
-    "SHOW_ALL_NODES": True,
-    "GREY_OUT": False,
+DEFAULT_PLOT_OPTIONS = {
+    "bound_scale": 1.1,
+    "show_all_nodes": True,
+    "show_stress": False,
+    "show_deflection": False,
+    "interpolate": False,
+    "show_cross_sections": True,
+    "annotate_nodes": True,
+    "annotate_elements": True,
+    "node_options": {"marker": "o", "ms": 12, "color": "k", "alpha": 1},
+    "symmetry_node_color": "g",
+    "support_node_color": "r",
+    "element_options": {"linewidth": 3, "color": "k", "linestyle": "-", "alpha": 1},
+    "show_as_grey": False,
+    "cross_section_options": {"color": "b"},
 }
+
+
+def annotate_node(ax, node, text_size, color):
+    """
+    Annotate a node.
+    """
+    name = f"N{node.id_number}"
+    ax.text(
+        node.x,
+        node.y,
+        node.z,
+        name,
+        size=text_size,
+        color=color,
+    )
+
+
+def annotate_element(ax, element, text_size, color):
+    """
+    Annotate an element.
+    """
+    name = f"E{element.id_number}"
+    ax.text(
+        *element.mid_point,
+        name,
+        size=text_size,
+        color=color,
+    )
 
 
 def arrow_scale(vector, max_length, max_force):
@@ -126,7 +160,7 @@ def _plot_moment(ax, node, vector, color="r", support=False):
         node.y - vector[1],
         node.z - vector[2],
         *f1 * vector,
-        color=color
+        color=color,
     )
     ax.quiver(
         node.x - vector[0],
@@ -134,7 +168,7 @@ def _plot_moment(ax, node, vector, color="r", support=False):
         node.z - vector[2],
         *f2 * vector,
         color=color,
-        arrow_length_ratio=0.6
+        arrow_length_ratio=0.6,
     )
 
 
@@ -144,17 +178,15 @@ class BasePlotter:
     """
 
     def __init__(self, geometry, ax=None, **kwargs):
+        self.geometry = geometry
         if ax is None:
             self.ax = Plot3D()
         else:
             self.ax = ax
 
-        if kwargs:
-            for k in kwargs:
-                if k in self.options:
-                    self.options[k] = kwargs[k]
+        self.options = {**DEFAULT_PLOT_OPTIONS, **kwargs}
 
-        self.geometry = geometry
+        # Cached size and plot hints
         self._unit_length = None
         self._force_size = None
         self._size = None
@@ -228,39 +260,29 @@ class BasePlotter:
 
     def plot_nodes(self):
         """
-        Plots all the nodes in the geometry
+        Plots all the Nodes in the Geometry.
         """
-        kwargs = self.options["NODE_KWARGS"].copy()
-        color = kwargs["color"]
+        kwargs = self.options["node_options"].copy()
+        default_color = kwargs.pop(
+            "color", DEFAULT_PLOT_OPTIONS["node_options"]["color"]
+        )
 
         for node in self.geometry.nodes:
-            name = "N" + str(node.id_number)
-
-            if self.options["GREY_OUT"]:
-                continue
             if node.supports.any():
-                kwargs["color"] = "g"
+                color = self.options["support_node_color"]
             elif node.symmetry:
-                kwargs["color"] = "r"
+                color = self.options["symmetry_node_color"]
+            else:
+                color = default_color
 
-            elif not self.options["SHOW_ALL_NODES"]:
-                continue
+            self.ax.plot([node.x], [node.y], [node.z], color=color, **kwargs)
 
-            self.ax.plot([node.x], [node.y], [node.z], **kwargs)
-            if self.options["ANNOTATE"]:
-                self.ax.text(
-                    node.x,
-                    node.y,
-                    node.z,
-                    name,
-                    size=self.text_size,
-                    color=kwargs["color"],
-                )
-            kwargs["color"] = color
+            if self.options["annotate_nodes"]:
+                annotate_node(self.ax, node, self.text_size, color)
 
     def plot_supports(self):
         """
-        Plots all supports in the Geometry model
+        Plots all supports in the Geometry.
         """
         lengths = np.array([e.length for e in self.geometry.elements])
         length = lengths.min() / 5
@@ -277,78 +299,59 @@ class BasePlotter:
 
     def plot_elements(self):
         """
-        Plots all of the elements in the geometry
+        Plots all of the Elements in the Geometry.
         """
-        kwargs = self.options["ELEM_KWARGS"].copy()
-        color = kwargs["color"]
-
-        if self.options["GREY_OUT"]:
-            kwargs["color"] = "grey"
-            kwargs["alpha"] = 0.5
+        kwargs = self.options["node_options"].copy()
+        default_color = kwargs.pop(
+            "color", DEFAULT_PLOT_OPTIONS["element_options"]["color"]
+        )
 
         for element in self.geometry.elements:
-            name = "E" + str(element.id_number)
             x = [element.node_1.x, element.node_2.x]
             y = [element.node_1.y, element.node_2.y]
             z = [element.node_1.z, element.node_2.z]
 
-            if not self.options["GREY_OUT"]:
-                if self.options["STRESSES"]:
-                    c_i = self.color_normer(element.max_stress)
-                    kwargs["color"] = STRESS_COLOR(c_i)
-                elif self.options["DEFLECTIONS"]:
-                    c_i = self.color_normer(element.max_displacement)
-                    kwargs["color"] = DEFLECT_COLOR(c_i)
-                else:
-                    pass
+            if self.options["show_stress"]:
+                color = STRESS_COLOR(self.color_normer(element.max_stress))
+            elif self.options["show_deflection"]:
+                color = DEFLECT_COLOR(self.color_normer(element.max_deflection))
+            else:
+                color = default_color
 
-            self.ax.plot(x, y, z, **kwargs)
-            if self.options["ANNOTATE"]:
-                self.ax.text(
-                    sum(x) / 2,
-                    sum(y) / 2,
-                    sum(z) / 2,
-                    name,
-                    size=self.text_size,
-                    color=kwargs["color"],
-                )
-            if self.options["INTERPOLATE"]:
+            self.ax.plot(x, y, z, color=color, **kwargs)
+
+            if self.options["annotate_elements"]:
+                annotate_element(self.ax, element, self.text_size, color)
+
+            if self.options["interpolate"]:
+                ls = kwargs.pop("linestyle")
                 self.ax.plot(*element.shapes, linestyle="--", **kwargs)
-
-        kwargs["color"] = color
+                kwargs["linestyle"] = ls
 
     def plot_cross_sections(self):
         """
-        Plots the cross-sections for each element in the geometry, rotated to
-        the mid-point of the element
+        Plots the cross-sections for each Element in the Geometry, rotated to
+        the mid-point of the Element.
         """
-        if self.options["GREY_OUT"]:
-            facecolor = "grey"
-            edgecolor = "darkgrey"
-            alpha = 0.2
-        else:
-            facecolor = "b"
-            edgecolor = "k"
-            alpha = 0.5
-
+        xss = []
+        options = []
         for element in self.geometry.elements:
+            matrix = np.zeros((4, 4))
+            matrix[:3, :3] = element.lambda_matrix[:3, :3].T
+            matrix[:3, -1] = element.mid_point
+            matrix[-1, :] = [0, 0, 0, 1]
+            placement = BluemiraPlacement.from_matrix(matrix)
+            plot_options = PlotOptions(
+                show_wires=False,
+                show_faces=True,
+                face_options=self.options["cross_section_options"],
+            )
+            options.append(plot_options)
+            xs = element._cross_section.geometry.deepcopy()
+            xs.change_placement(placement)
+            xss.append(xs)
 
-            # Get the centre-point of the element cross-section
-            dx = (element.node_1.x + element.node_2.x) / 2
-            dy = (element.node_1.y + element.node_2.y) / 2
-            dz = (element.node_1.z + element.node_2.z) / 2
-
-            cs = element._cross_section.geometry
-
-            if not isinstance(cs, list):
-                # Handles multiple Loops and Shells in cross-section
-                cs = [cs]
-
-            dcm = element.lambda_matrix[0:3, 0:3]
-            for sub_cs in cs:
-                loop = sub_cs.rotate_dcm(dcm.T, update=False)
-                loop.translate([dx, dy, dz], update=True)
-                loop.plot(self.ax, edgecolor=edgecolor, facecolor=facecolor, alpha=alpha)
+        plot_3d(xss, ax=self.ax, show=False, options=options)
 
     def plot_loads(self):
         """
@@ -419,9 +422,9 @@ class BasePlotter:
         """
         x_bb, y_bb, z_bb = self.geometry.bounding_box()
 
-        x_bb *= self.options["SCALE"]
-        y_bb *= self.options["SCALE"]
-        z_bb *= self.options["SCALE"]
+        x_bb *= self.options["bound_scale"]
+        y_bb *= self.options["bound_scale"]
+        z_bb *= self.options["bound_scale"]
 
         for x, y, z in zip(x_bb, y_bb, z_bb):
             self.ax.plot([x], [y], [z], color="w")
@@ -433,16 +436,16 @@ class GeometryPlotter(BasePlotter):
     """
 
     def __init__(self, geometry, ax=None, **kwargs):
-        self.options = DEFAULT_OPTIONS.copy()
-        self.options["STRESSES"] = False
-        self.options["DEFLECTIONS"] = False
+        self.options = DEFAULT_PLOT_OPTIONS.copy()
+        self.options["show_stress"] = False
+        self.options["show_deflections"] = False
         super().__init__(geometry, ax, **kwargs)
 
         self.plot_nodes()
         self.plot_elements()
         self.plot_supports()
         self.plot_loads()
-        if self.options["CROSSSECTIONS"]:
+        if self.options["show_cross_sections"]:
             self.plot_cross_sections()
         self._set_aspect_equal()
 
@@ -454,13 +457,13 @@ class DeformedGeometryPlotter(BasePlotter):
     """
 
     def __init__(self, geometry, ax=None, **kwargs):
-        self.options = DEFAULT_OPTIONS.copy()
-        self.options["NODE_KWARGS"] = {"marker": "o", "ms": 12, "color": "b"}
-        self.options["ELEM_KWARGS"] = {"linewidth": 3, "color": "b"}
-        self.options["STRESSES"] = False
-        self.options["ANNOTATE"] = True
-        self.options["INTERPOLATE"] = True
-        self.options["SHOW_ALL_NODES"] = False
+        self.options = DEFAULT_PLOT_OPTIONS.copy()
+        self.options["node_options"]["color"] = "b"
+        self.options["element_options"]["color"] = "b"
+        self.options["show_stress"] = False
+        self.options["annotate_nodes"] = True
+        self.options["interpolate"] = True
+        self.options["show_all_nodes"] = False
 
         super().__init__(geometry, ax, **kwargs)
 
@@ -476,14 +479,14 @@ class StressDeformedGeometryPlotter(BasePlotter):
     """
 
     def __init__(self, geometry, ax=None, stress=None, deflection=False, **kwargs):
-        self.options = DEFAULT_OPTIONS.copy()
-        self.options["NODE_KWARGS"] = {"marker": "o", "ms": 12, "color": "b"}
-        self.options["ELEM_KWARGS"] = {"linewidth": 3, "color": None}
-        self.options["STRESSES"] = True
-        self.options["ANNOTATE"] = False
-        self.options["INTERPOLATE"] = True
-        self.options["SHOW_ALL_NODES"] = False
-        self.options["GREY_OUT"] = False
+        self.options = DEFAULT_PLOT_OPTIONS.copy()
+        self.options["node_options"]["color"] = "b"
+        self.options["element_options"]["color"] = None
+        self.options["show_stress"] = True
+        self.options["annotate_nodes"] = False
+        self.options["interpolate"] = True
+        self.options["show_all_nodes"] = False
+        self.options["show_as_grey"] = False
 
         super().__init__(geometry, ax, **kwargs)
 
@@ -518,3 +521,32 @@ class StressDeformedGeometryPlotter(BasePlotter):
             centre = (smin + smax) / 2
 
         return DivergingNorm(centre, vmin=min(stress), vmax=max(stress))
+
+
+if __name__ == "__main__":
+    import matplotlib.pyplot as plt
+
+    from bluemira.structural.crosssection import IBeam
+    from bluemira.structural.geometry import Geometry
+    from bluemira.structural.material import SS316
+
+    xs = IBeam(0.25, 0.5, 0.1, 0.1)
+
+    geometry = Geometry()
+    geometry.add_node(0, 0, 0)
+    geometry.add_node(1, 1, 1)
+    geometry.add_node(2, 1, 1)
+    geometry.add_node(2, 1, 2)
+    geometry.add_node(3, 2, 2)
+    geometry.add_element(0, 1, xs, SS316)
+    geometry.add_element(1, 2, xs, SS316)
+    geometry.add_element(2, 3, xs, SS316)
+    geometry.add_element(3, 4, xs, SS316)
+
+    plotter = BasePlotter(geometry)
+    plotter.plot_nodes()
+    plotter.plot_supports()
+    plotter.plot_elements()
+    plotter.plot_cross_sections()
+    plotter._set_aspect_equal()
+    plt.show()
