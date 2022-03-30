@@ -59,6 +59,9 @@ class StructuralMaterial:
     description: Optional[str] = field(default="", repr=True)
 
     def __post_init__(self):
+        """
+        Shear modulus for isotropic materials
+        """
         self.G = self.E / (0.5 + 0.5 * self.nu)
 
 
