@@ -28,7 +28,10 @@ import bluemira.utilities.plot_tools as bm_plot_tools
 from bluemira.base.builder import Builder, Component
 from bluemira.base.components import PhysicalComponent
 from bluemira.base.config import Configuration
-from bluemira.builders.EUDEMO.tools import pattern_revolved_silhouette
+from bluemira.builders.EUDEMO.tools import (
+    circular_pattern_component,
+    pattern_revolved_silhouette,
+)
 from bluemira.display.palettes import BLUE_PALETTE
 from bluemira.geometry.wire import BluemiraWire
 
@@ -107,11 +110,17 @@ class DivertorBuilder(Builder):
             self._params.c_rm.value,
         )
 
+        n_sector_draw = max(1, int(degree // (360 // self._params.n_TF.value)))
+        degree = (360.0 / self._params.n_TF.value) * n_sector_draw
+
         segments = []
         for i, shape in enumerate(shapes):
             segment = PhysicalComponent(f"segment_{i}", shape)
             segment.display_cad_options.color = BLUE_PALETTE["DIV"][i]
             segments.append(segment)
 
-        component = Component("xyz", children=segments)
+        sector = Component("cassettes", children=segments)
+        sectors = circular_pattern_component(sector, n_sector_draw, degree=degree)
+
+        component = Component("xyz", children=sectors)
         return component
