@@ -273,7 +273,7 @@ def make_bspline(
         )
 
     bsc = Part.BSplineCurve()
-    bsc.interpolate(pntslist, PeriodicFlag=closed, **kwargs)
+    bsc.interpolate(pntslist, PeriodicFlag=True, **kwargs)
     wire = apiWire(bsc.toShape())
     return wire
 
