@@ -416,17 +416,16 @@ class TestConvexHullWires2d:
 
 
 class TestMakeBSpline:
-    @pytest.mark.parametrize(
-        "st, et",
-        [
-            (None, None),
-            ([0, 0, 1], [0, 0, 1]),
-            ([0, 0, -1], [0, 0, -1]),
-            ([0, 0, -1], [0, 0, 1]),
-            ([0, 0, 1], [0, 0, -1]),
-        ],
-    )
-    def test_tangencies(self, st, et):
+    fixture = [
+        (None, None),
+        ([0, 0, 1], [0, 0, 1]),
+        ([0, 0, -1], [0, 0, -1]),
+        ([0, 0, -1], [0, 0, 1]),
+        ([0, 0, 1], [0, 0, -1]),
+    ]
+
+    @pytest.mark.parametrize("st, et", fixture)
+    def test_tangencies_open(self, st, et):
         """
         Open spline start and end tangencies.
         """
@@ -438,6 +437,16 @@ class TestMakeBSpline:
             e = spline._shape.Edges[0]
             np.testing.assert_allclose(e.tangentAt(0), st)
             # TODO: Understand why the end tangent is not respected..
-            # np.testing.assert_allclose(e.tangentAt(e.Length), et)
+            np.testing.assert_allclose(e.tangentAt(e.Length), et)
         else:
             np.testing.assert_allclose(spline.length, 1.0)
+
+    @pytest.mark.parametrize("st, et", fixture)
+    def test_tangencies_closed(self, st, et):
+        points = {"x": [0, 1, 2, 1], "y": 0, "z": [0, -1, 0, 1]}
+        spline = make_bspline(points, closed=True, start_tangent=st, end_tangent=et)
+        if st and et:
+            e = spline._shape.Edges[0]
+            np.testing.assert_allclose(e.tangentAt(0), st)
+            # TODO: Understand why the end tangent is not respected..
+            np.testing.assert_allclose(e.tangentAt(e.Length), et)
