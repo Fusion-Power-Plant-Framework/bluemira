@@ -22,7 +22,6 @@
 Define builder for blanket
 """
 
-from re import L
 from typing import List, Optional
 
 import numpy as np
