@@ -105,13 +105,13 @@ def local_k_shear(EA, EIyy, EIzz, ry, rz, L, GJ, A, A_sy, A_sz, nu=NU):  # noqa 
     phi_y = 24 * (1 + nu) * (A / A_sy) * (rz / L) ** 2  # y shear deformation parameter
     phi_z = 24 * (1 + nu) * (A / A_sz) * (ry / L) ** 2  # z shear deformation parameter
     k11 = EA / L
-    k22 = 12 * EIzz / (L ** 3 * (1 + phi_y))
-    k33 = 12 * EIyy / (L ** 3 * (1 + phi_z))
+    k22 = 12 * EIzz / (L**3 * (1 + phi_y))
+    k33 = 12 * EIyy / (L**3 * (1 + phi_z))
     k44 = GJ / L
     k55 = (4 + phi_z) * EIyy / (L * (1 + phi_z))
     k66 = (4 + phi_y) * EIzz / (L * (1 + phi_y))
-    k35 = -6 * EIyy / (L ** 2 * (1 + phi_z))
-    k26 = 6 * EIzz / (L ** 2 * (1 + phi_y))
+    k35 = -6 * EIyy / (L**2 * (1 + phi_z))
+    k26 = 6 * EIzz / (L**2 * (1 + phi_y))
     k511 = (2 - phi_z) * EIyy / (L * (1 + phi_z))
     k612 = (2 - phi_y) * EIzz / (L * (1 + phi_y))
     return _k_array(k11, k22, k33, k44, k55, k66, k35, k26, k511, k612)
@@ -141,13 +141,13 @@ def local_k(EA, EIyy, EIzz, L, GJ):  # noqa (N803)
         The local member stiffness matrix
     """
     k11 = EA / L
-    k22 = 12 * EIzz / L ** 3
-    k33 = 12 * EIyy / L ** 3
+    k22 = 12 * EIzz / L**3
+    k33 = 12 * EIyy / L**3
     k44 = GJ / L
     k55 = 4 * EIyy / L
     k66 = 4 * EIzz / L
-    k35 = -6 * EIyy / L ** 2
-    k26 = 6 * EIzz / L ** 2
+    k35 = -6 * EIyy / L**2
+    k26 = 6 * EIzz / L**2
     k511 = 2 * EIyy / L
     k612 = 2 * EIzz / L
     return _k_array(k11, k22, k33, k44, k55, k66, k35, k26, k511, k612)
@@ -344,7 +344,7 @@ class Element:
         """
         d_1 = self.node_1.displacements[:3]
         d_2 = self.node_2.displacements[:3]
-        return max(np.sqrt(np.sum(d_1 ** 2)), np.sqrt(np.sum(d_2 ** 2)))
+        return max(np.sqrt(np.sum(d_1**2)), np.sqrt(np.sum(d_2**2)))
 
     @property
     def k_matrix(self):
@@ -509,8 +509,8 @@ class Element:
                 u1d = np.array([u[2], u[4], u[8], u[10]])
 
             d[:, i] = np.dot(s_funcs[0], u1d)
-            m[:, i] = np.dot(s_funcs[1], u1d) / length ** 2
-            v[:, i] = np.dot(s_funcs[2], u1d) / length ** 3
+            m[:, i] = np.dot(s_funcs[1], u1d) / length**2
+            v[:, i] = np.dot(s_funcs[2], u1d) / length**3
         self.calculate_stress(u, m)
         self.calculate_shape(u, d, m, v, scale)
 

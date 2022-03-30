@@ -47,8 +47,8 @@ def _calculate_properties(y, z):
         d_area = y1 * z2 - y2 * z1
         q_zz += (y2 + y1) * d_area
         q_yy += (z2 + z1) * d_area
-        i_zz += (y1 ** 2 + y1 * y2 + y2 ** 2) * d_area
-        i_yy += (z1 ** 2 + z1 * z2 + z2 ** 2) * d_area
+        i_zz += (y1**2 + y1 * y2 + y2**2) * d_area
+        i_yy += (z1**2 + z1 * z2 + z2**2) * d_area
         i_zy += (z1 * y2 + 2 * z1 * y1 + 2 * z2 * y2 + z2 * y1) * d_area
     return q_zz / 6, q_yy / 6, i_zz / 12, i_yy / 12, i_zy / 24
 
@@ -194,8 +194,8 @@ class RectangularBeam(CrossSection):
     def __init__(self, width, height):
         super().__init__()
         self.area = width * height
-        self.i_zz = width ** 3 * height / 12
-        self.i_yy = width * height ** 3 / 12
+        self.i_zz = width**3 * height / 12
+        self.i_yy = width * height**3 / 12
         self.i_zy = 0.0
         self.j = self.calc_torsion(width, height)
         self.ry = np.sqrt(self.i_yy / self.area)
@@ -222,7 +222,7 @@ class RectangularBeam(CrossSection):
             a = height / 2
             b = width / 2
 
-        return a * b ** 3 * (16 / 3 - 3.36 * (b / a) * (1 - b ** 4 / (12 * a ** 4)))
+        return a * b**3 * (16 / 3 - 3.36 * (b / a) * (1 - b**4 / (12 * a**4)))
 
     def make_geometry(self):
         """
@@ -256,11 +256,11 @@ class CircularBeam(CrossSection):
 
     def __init__(self, radius, n_discr=30):
         super().__init__()
-        self.area = np.pi * radius ** 2
-        self.i_zz = np.pi * radius ** 4 / 4
-        self.i_yy = np.pi * radius ** 4 / 4
+        self.area = np.pi * radius**2
+        self.i_zz = np.pi * radius**4 / 4
+        self.i_yy = np.pi * radius**4 / 4
         self.i_zy = 0.0
-        self.j = np.pi * radius ** 4 / 2
+        self.j = np.pi * radius**4 / 2
         self.ry = radius / 2
         self.rz = radius / 2
         self.qyy = 0  # Centred about (0, 0)
@@ -284,13 +284,13 @@ class CircularHollowBeam(CrossSection):
 
     def __init__(self, r_inner, r_outer, n_discr=30):
         super().__init__()
-        self.area = np.pi * (r_outer ** 2 - r_inner ** 2)
-        self.i_zz = np.pi / 4 * (r_outer ** 4 - r_inner ** 4)
-        self.i_yy = np.pi / 4 * (r_outer ** 4 - r_inner ** 4)
+        self.area = np.pi * (r_outer**2 - r_inner**2)
+        self.i_zz = np.pi / 4 * (r_outer**4 - r_inner**4)
+        self.i_yy = np.pi / 4 * (r_outer**4 - r_inner**4)
         self.i_zy = 0.0
-        self.j = np.pi / 2 * (r_outer ** 4 - r_inner ** 4)
-        self.ry = np.sqrt((r_outer ** 2 + r_inner ** 2) / 4)
-        self.rz = np.sqrt((r_outer ** 2 + r_inner ** 2) / 4)
+        self.j = np.pi / 2 * (r_outer**4 - r_inner**4)
+        self.ry = np.sqrt((r_outer**2 + r_inner**2) / 4)
+        self.rz = np.sqrt((r_outer**2 + r_inner**2) / 4)
         self.qyy = 0  # Centred about (0, 0)
         self.qzz = 0  # Centred about (0, 0)
 
@@ -325,10 +325,10 @@ class IBeam(CrossSection):
         h = depth - 2 * flange
         b, d, t, s = base, depth, web, flange
         self.area = b * d - h * (b - t)
-        self.i_yy = (b * d ** 3 - h ** 3 * (b - t)) / 12
-        self.i_zz = (2 * s * b ** 3 + h * t ** 3) / 12
+        self.i_yy = (b * d**3 - h**3 * (b - t)) / 12
+        self.i_zz = (2 * s * b**3 + h * t**3) / 12
         self.i_zy = 0.0
-        self.j = (2 * b * t ** 3 + (d - s) * t ** 3) / 3
+        self.j = (2 * b * t**3 + (d - s) * t**3) / 3
         self.ry = np.sqrt(self.i_yy / self.area)
         self.rz = np.sqrt(self.i_zz / self.area)
         self.qyy = 0  # Centred about (0, 0)
@@ -425,8 +425,8 @@ class AnalyticalCrossSection(CrossSection):
         cz = q_yy_o / area
         self.centroid_geom = (cy, cz)
 
-        self.i_yy = i_yy_o - area * cz ** 2
-        self.i_zz = i_zz_o - area * cy ** 2
+        self.i_yy = i_yy_o - area * cz**2
+        self.i_zz = i_zz_o - area * cy**2
         self.i_zy = i_zy_o - area * cz * cy
         self.qyy = q_yy_o
         self.qzz = q_zz_o
@@ -435,7 +435,7 @@ class AnalyticalCrossSection(CrossSection):
 
         # OK so there is no cute general polygon form for J... need FE!
         # St Venant approach
-        self.j = self.area ** 4 / (j_opt_var * (i_yy_o + i_zz_o))
+        self.j = self.area**4 / (j_opt_var * (i_yy_o + i_zz_o))
 
 
 class AnalyticalCompositeCrossSection(CrossSection):

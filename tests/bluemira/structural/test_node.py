@@ -32,7 +32,7 @@ class TestNode:
             v = 1000 * np.random.rand(3) - 1000
             dx, dy, dz = v
             n2 = Node(dx, dy, dz, 1)
-            assert np.isclose(n1.distance_to_other(n2), np.sqrt(np.sum(v ** 2)))
+            assert np.isclose(n1.distance_to_other(n2), np.sqrt(np.sum(v**2)))
 
     def test_assignment(self):
         with pytest.raises(AttributeError):

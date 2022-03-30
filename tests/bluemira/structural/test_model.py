@@ -161,12 +161,12 @@ class TestFEModel:
 
         k1 = treat_matrix(k[0])
 
-        k1a = (e_mat * i_xs / length ** 3) * np.array(
+        k1a = (e_mat * i_xs / length**3) * np.array(
             [
                 [12, 6 * length, -12, 6 * length],
-                [6 * length, 4 * length ** 2, -6 * length, 2 * length ** 2],
+                [6 * length, 4 * length**2, -6 * length, 2 * length**2],
                 [-12, -6 * length, 12, -6 * length],
-                [6 * length, 2 * length ** 2, -6 * length, 4 * length ** 2],
+                [6 * length, 2 * length**2, -6 * length, 4 * length**2],
             ]
         )
         assert np.allclose(k1, k1a)
@@ -190,12 +190,12 @@ class TestFEModel:
         k_a = (
             e_mat
             * i_xs
-            / length ** 3
+            / length**3
             * np.array(
                 [
                     [24, 0, 6 * length],
-                    [0, 8 * length ** 2, 2 * length ** 2],
-                    [6 * length, 2 * length ** 2, 4 * length ** 2],
+                    [0, 8 * length**2, 2 * length**2],
+                    [6 * length, 2 * length**2, 4 * length**2],
                 ]
             )
         )
@@ -242,7 +242,7 @@ class TestCantilever:
         result = self.model.solve(load_case)
         deflections = result.deflections
         end_deflection = deflections[6 + 2]
-        analytical = load * b ** 2 / (6 * e_mat * i_xs) * (3 * length - b)
+        analytical = load * b**2 / (6 * e_mat * i_xs) * (3 * length - b)
         assert np.isclose(end_deflection, analytical)
 
     def test_end_load(self):
@@ -250,7 +250,7 @@ class TestCantilever:
         length = 34
         e_mat = self.material.E
         i_xs = self.cross_section.i_yy
-        end_deflection = load * length ** 3 / (3 * e_mat * i_xs)
+        end_deflection = load * length**3 / (3 * e_mat * i_xs)
 
         for node_coords in [[length, 0, 0]]:
             model = FiniteElementModel()
@@ -279,7 +279,7 @@ class TestCantilever:
         length = 8
         e_mat = self.material.E
         i_xs = self.cross_section.i_yy
-        end_deflection = -load * length ** 2 / (2 * e_mat * i_xs)
+        end_deflection = -load * length**2 / (2 * e_mat * i_xs)
 
         for node_coords in [[length, 0, 0]]:
             model = FiniteElementModel()
@@ -354,7 +354,7 @@ class TestCantilever:
             # Check the displacement has correctly been mapped to the Node
             assert end_deflection1 == end_deflection2
 
-            analytical = load * b ** 2 / (6 * e_mat * i_xs) * (3 * length - b)
+            analytical = load * b**2 / (6 * e_mat * i_xs) * (3 * length - b)
 
             # Check the deflection is the same as expected
             assert np.isclose(end_deflection1, analytical)
@@ -368,7 +368,7 @@ class TestCantilever:
         load_case.add_node_load(1, load, "Fz")
         result = self.model.solve(load_case)
         deflections = result.deflections
-        end_deflection = load * self.length ** 3 / (3 * e_mat * i_xs)
+        end_deflection = load * self.length**3 / (3 * e_mat * i_xs)
         assert np.isclose(deflections[6 + 2], end_deflection)
 
     def test_neutral_load(self):
@@ -453,7 +453,7 @@ class TestDistributedLoads:
         e_mat = SS316.E
         i_xs = rect_beam.i_yy
 
-        end_deflection = w * length ** 4 / (8 * e_mat * i_xs)
+        end_deflection = w * length**4 / (8 * e_mat * i_xs)
 
         for node_coords in [
             [length, 0, 0],
@@ -508,10 +508,10 @@ class TestLFrame:
 
         result = self.model.solve(load_case)
         deflections = result.deflections
-        delta_cx = w * self.height ** 2 * self.length ** 2 / (4 * self.e_mat * self.i_xs)
+        delta_cx = w * self.height**2 * self.length**2 / (4 * self.e_mat * self.i_xs)
         delta_cz = (
             w
-            * self.length ** 3
+            * self.length**3
             * (self.length + 4 * self.height)
             / (8 * self.e_mat * self.i_xs)
         )

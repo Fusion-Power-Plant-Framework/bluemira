@@ -66,7 +66,7 @@ def _direction_cosine_matrix(dx, dy, dz):
     """
     # Please be careful when modifying this function, and instead work on the
     # debugging version which is tested...
-    length = np.sqrt(dx ** 2 + dy ** 2 + dz ** 2)
+    length = np.sqrt(dx**2 + dy**2 + dz**2)
     a = dx / length
     b = dy / length
     c = dz / length

@@ -102,28 +102,28 @@ def point_load(load, x, length, load_type):
         reactions[0] = -load * a / length
         reactions[6] = -load * x / length
     elif load_type == "Fy":
-        reactions[1] = load * a ** 2 * (length + 2 * x) / length ** 3
-        reactions[5] = load * x * a ** 2 / length ** 2
-        reactions[7] = load * x ** 2 * (length + 2 * a) / length ** 3
-        reactions[11] = -load * x ** 2 * a / length ** 2
+        reactions[1] = load * a**2 * (length + 2 * x) / length**3
+        reactions[5] = load * x * a**2 / length**2
+        reactions[7] = load * x**2 * (length + 2 * a) / length**3
+        reactions[11] = -load * x**2 * a / length**2
     elif load_type == "Fz":
-        reactions[2] = load * a ** 2 * (length + 2 * x) / length ** 3
-        reactions[4] = -load * x * a ** 2 / length ** 2
-        reactions[8] = load * x ** 2 * (length + 2 * a) / length ** 3
-        reactions[10] = load * x ** 2 * a / length ** 2
+        reactions[2] = load * a**2 * (length + 2 * x) / length**3
+        reactions[4] = -load * x * a**2 / length**2
+        reactions[8] = load * x**2 * (length + 2 * a) / length**3
+        reactions[10] = load * x**2 * a / length**2
     elif load_type == "Mx":
         reactions[3] = -load * a / length
         reactions[9] = -load * x / length
     elif load_type == "My":
-        reactions[2] = 6 * load * x * a / length ** 3
-        reactions[4] = load * a * (2 * x - a) / length ** 2
-        reactions[8] = -load * x * a / length ** 3
-        reactions[10] = load * x * (2 * a - x) / length ** 2
+        reactions[2] = 6 * load * x * a / length**3
+        reactions[4] = load * a * (2 * x - a) / length**2
+        reactions[8] = -load * x * a / length**3
+        reactions[10] = load * x * (2 * a - x) / length**2
     elif load_type == "Mz":
-        reactions[1] = -load * x * a / length ** 3
-        reactions[5] = load * a * (2 * x - a) / length ** 2
-        reactions[7] = load * x * a / length ** 3
-        reactions[11] = load * x * (2 * a - x) / length ** 2
+        reactions[1] = -load * x * a / length**3
+        reactions[5] = load * a * (2 * x - a) / length**2
+        reactions[7] = load * x * a / length**3
+        reactions[11] = load * x * (2 * a - x) / length**2
 
     return reactions
 
@@ -151,14 +151,14 @@ def distributed_load(w, length, load_type):
         reactions[6] = -w * length / 2
     elif load_type == "Fy":
         reactions[1] = w * length / 2
-        reactions[5] = w * length ** 2 / 12
+        reactions[5] = w * length**2 / 12
         reactions[7] = w * length / 2
-        reactions[11] = -w * length ** 2 / 12
+        reactions[11] = -w * length**2 / 12
     elif load_type == "Fz":
         reactions[2] = w * length / 2
-        reactions[4] = -w * length ** 2 / 12
+        reactions[4] = -w * length**2 / 12
         reactions[8] = w * length / 2
-        reactions[10] = w * length ** 2 / 12
+        reactions[10] = w * length**2 / 12
 
     return reactions
 

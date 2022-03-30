@@ -34,10 +34,10 @@ def hermite_displacement(n):
     """
     x = np.linspace(0, 1, n)
     matrix = np.zeros((n, 4))
-    matrix[:, 0] = 1 - 3 * x ** 2 + 2 * x ** 3
-    matrix[:, 1] = x - 2 * x ** 2 + x ** 3
-    matrix[:, 2] = 3 * x ** 2 - 2 * x ** 3
-    matrix[:, 3] = -(x ** 2) + x ** 3
+    matrix[:, 0] = 1 - 3 * x**2 + 2 * x**3
+    matrix[:, 1] = x - 2 * x**2 + x**3
+    matrix[:, 2] = 3 * x**2 - 2 * x**3
+    matrix[:, 3] = -(x**2) + x**3
     return matrix
 
 
