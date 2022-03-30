@@ -143,7 +143,6 @@ class Configuration(ConfigurationSchema, ParameterFrame):
         ['div_open', 'Divertor open/closed configuration', False, 'dimensionless', None, 'Input'],
         ['g_vv_div_add', 'Additional divertor/VV gap', 0, 'm', None, 'Input'],
         ['LPangle', 'Lower port inclination angle', -30, '°', None, 'Input'],
-        ['n_div_cassettes', 'Number of divertor cassettes per sector', 3, 'dimensionless', None, 'Common decision'],
         ['psi_norm', 'Normalised flux value of strike-point contours', 1, 'dimensionless', None, 'Input'],
         ['xpt_outer_gap', 'Gap between x-point and outer wall', 2, 'm', None, 'Input'],
         ['xpt_inner_gap', 'Gap between x-point and inner wall', 0.4, 'm', None, 'Input'],
@@ -163,6 +162,7 @@ class Configuration(ConfigurationSchema, ParameterFrame):
         # Divertor cassette
         ['tk_div_cass', 'Minimum thickness between inner divertor profile and cassette', 0.3, 'm', None, 'Input'],
         ['tk_div_cass_in', 'Additional radial thickness on inboard side relative to to inner strike point', 0.1, 'm', None, 'Input'],
+        ['n_div_cassettes', 'Number of divertor cassettes per sector', 3, 'dimensionless', None, 'Common decision'],
 
 
         # Blanket
@@ -174,6 +174,8 @@ class Configuration(ConfigurationSchema, ParameterFrame):
         ["tk_r_ob_bz", "Thickness ratio of the outboard blanket breeding zone", 0.431, "dimensionless", None, "Input (HCPB 2015 design description document 2MHDNB)"],
         ["tk_r_ob_manifold", "Thickness ratio of the outboard blanket manifold", 0.071, "dimensionless", None, "Input (HCPB 2015 design description document 2MHDNB)"],
         ["tk_r_ob_bss", "Thickness ratio of the outboard blanket back supporting structure", 0.498, "dimensionless", None, "Input (HCPB 2015 design description document 2MHDNB)"],
+        ["n_bb_inboard", "Number of inboard blanket segments", 2, "dimensionless", None, "Input"],
+        ["n_bb_outboard", "Number of outboard blanket segments", 3, "dimensionless", None, "Input"],
 
         # ST Breeding blanket
         ['g_bb_fw', 'Separation between the first wall and the breeding blanket', 0.05, 'm', None, 'Input'],
