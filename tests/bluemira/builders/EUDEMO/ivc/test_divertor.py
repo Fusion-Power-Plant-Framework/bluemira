@@ -29,8 +29,8 @@ import pytest
 
 from bluemira.base.error import BuilderError
 from bluemira.base.file import get_bluemira_path
-from bluemira.builders.EUDEMO.first_wall import DivertorBuilder
-from bluemira.builders.EUDEMO.first_wall.divertor import LegPosition
+from bluemira.builders.EUDEMO.ivc import DivertorBuilder
+from bluemira.builders.EUDEMO.ivc.divertor import LegPosition
 from bluemira.equilibria import Equilibrium
 from bluemira.equilibria.find import find_OX_points
 from bluemira.geometry.tools import make_polygon, signed_distance

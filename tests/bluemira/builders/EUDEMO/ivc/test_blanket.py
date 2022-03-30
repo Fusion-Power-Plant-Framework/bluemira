@@ -21,7 +21,7 @@
 import pytest
 
 from bluemira.base.error import BuilderError
-from bluemira.builders.EUDEMO.first_wall.blanket import BlanketBuilder
+from bluemira.builders.EUDEMO.ivc.blanket import BlanketBuilder
 from bluemira.geometry.parameterisations import PictureFrame
 from bluemira.geometry.tools import make_circle, signed_distance
 
@@ -57,11 +57,6 @@ class TestBlanketBuilder:
 
     def test_build_returns_boundary_that_does_not_intersect_wire(self):
         builder = BlanketBuilder(self.params, self.build_config, self.picture_frame, -4)
-
-        component = builder.build()
-
-        shape = component.get_component("blanket_boundary").shape
-        assert signed_distance(shape, self.picture_frame) < 0
 
         component = builder.build()
 

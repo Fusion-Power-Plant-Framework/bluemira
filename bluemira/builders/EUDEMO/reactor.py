@@ -29,7 +29,7 @@ from bluemira.base.components import Component, PhysicalComponent
 from bluemira.base.design import Reactor
 from bluemira.base.look_and_feel import bluemira_print
 from bluemira.builders.cryostat import CryostatBuilder
-from bluemira.builders.EUDEMO.first_wall import FirstWallBuilder
+from bluemira.builders.EUDEMO.ivc import InVesselComponentBuilder
 from bluemira.builders.EUDEMO.pf_coils import PFCoilsBuilder
 from bluemira.builders.EUDEMO.plasma import PlasmaBuilder
 from bluemira.builders.EUDEMO.tf_coils import TFCoilsBuilder
@@ -273,7 +273,7 @@ class EUDEMOReactor(Reactor):
                 "xtol_abs": 1e-8,
                 "xtol_rel": 1e-8,
             },
-            "param_class": "bluemira.builders.EUDEMO.first_wall::WallPrincetonD",
+            "param_class": "bluemira.builders.EUDEMO.ivc::WallPrincetonD",
             "problem_class": "bluemira.geometry.optimisation::MinimiseLength",
             "runmode": "run",
             "variables_map": default_variables_map,
@@ -282,7 +282,7 @@ class EUDEMOReactor(Reactor):
         config = self._process_design_stage_config(name, default_config)
 
         plasma = component_tree.get_component(self.PLASMA)
-        builder = FirstWallBuilder(
+        builder = InVesselComponentBuilder(
             self._params.to_dict(), build_config=config, equilibrium=plasma.equilibrium
         )
         self.register_builder(builder, name)

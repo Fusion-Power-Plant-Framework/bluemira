@@ -30,9 +30,9 @@ import numpy as np
 from bluemira.base.builder import BuildConfig, Component
 from bluemira.base.components import PhysicalComponent
 from bluemira.base.error import BuilderError
-from bluemira.builders.EUDEMO.first_wall.blanket import BlanketBuilder
-from bluemira.builders.EUDEMO.first_wall.divertor import DivertorBuilder
-from bluemira.builders.EUDEMO.first_wall.wall import WallBuilder
+from bluemira.builders.EUDEMO.ivc.blanket import BlanketBuilder
+from bluemira.builders.EUDEMO.ivc.divertor import DivertorBuilder
+from bluemira.builders.EUDEMO.ivc.wall import WallBuilder
 from bluemira.builders.EUDEMO.tools import varied_offset
 from bluemira.builders.shapes import Builder
 from bluemira.equilibria.equilibrium import Equilibrium
@@ -77,7 +77,7 @@ def _cut_wall_below_x_point(shape: BluemiraWire, x_point_z: float) -> BluemiraWi
     return wall_piece
 
 
-class FirstWallBuilder(Builder):
+class InVesselComponentBuilder(Builder):
     """
     Build a first wall with a divertor.
 
