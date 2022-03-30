@@ -73,12 +73,12 @@ cs3 = RectangularBeam(2, 2)
 cs4 = RectangularBeam(1, 1)
 
 # %%
-make_platform(124.9, 0, cs1, elements=False)
+make_platform(100, 0, cs1, elements=False)
 for i in range(4):
     model.add_support(i, *6 * [True])
 
 # %%
-make_platform(70.69, 57.64, cs2, internodes=True)
+make_platform(60, 56, cs2, internodes=True)
 model.add_element(0, 4, cs1, SS316)
 model.add_element(0, 5, cs1, SS316)
 model.add_element(0, 11, cs1, SS316)
@@ -93,7 +93,7 @@ model.add_element(3, 10, cs1, SS316)
 model.add_element(3, 11, cs1, SS316)
 
 # %%
-make_platform(40.96, 115.73, cs3)
+make_platform(37, 116, cs3)
 
 # %%
 model.add_element(4, 12, cs2, SS316)
@@ -110,7 +110,7 @@ model.add_element(10, 15, cs2, SS316)
 model.add_element(11, 15, cs2, SS316)
 
 # %%
-make_platform(18.65, 276.13, cs4)
+make_platform(12, 196, cs3)
 
 # %%
 model.add_element(12, 16, cs3, SS316)
@@ -119,23 +119,32 @@ model.add_element(14, 18, cs3, SS316)
 model.add_element(15, 19, cs3, SS316)
 
 # %%
+make_platform(6, 276, cs3)
+
+model.add_element(16, 20, cs4, SS316)
+model.add_element(17, 21, cs4, SS316)
+model.add_element(18, 22, cs4, SS316)
+model.add_element(19, 23, cs4, SS316)
+
+
+# %%
 model.add_node(0, 0, 316)
 
 # %%
 for i in range(4):
-    model.add_element(16 + i, 20, cs3, SS316)
+    model.add_element(20 + i, 24, cs4, SS316)
 
 # %%
 model.add_node(0, 0, 324)
-model.add_element(20, 21, cs4, SS316)
+model.add_element(24, 25, cs4, SS316)
 
 # %%
 model.plot(show_cross_sections=True)
 
 # %%
 model.add_gravity_loads()
-model.add_distributed_load(40, -10000, "Fz")
-model.add_distributed_load(43, -10000, "Fz")
+model.add_node_load(24, 1e6, "Fy")
+
 
 # %%
 result = model.solve()
