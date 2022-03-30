@@ -19,25 +19,19 @@
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 
-import os
-
 import dolfin
 import matplotlib.pyplot as plt
 import numpy as np
 
 import bluemira.geometry.tools as tools
 from bluemira.base.components import Component, PhysicalComponent
-from bluemira.base.file import get_bluemira_root
 from bluemira.equilibria.fem_fixed_boundary.fem_magnetostatic_2D import (
     FemMagnetostatic2d,
 )
 from bluemira.equilibria.fem_fixed_boundary.utilities import ScalarSubFunc, b_coil_axis
 from bluemira.geometry.face import BluemiraFace
-from bluemira.geometry.placement import BluemiraPlacement
 from bluemira.mesh import meshing
-from bluemira.utilities.tools import get_module
-
-msh2xdmf = get_module(os.path.join(get_bluemira_root(), "..", "msh2xdmf", "msh2xdmf.py"))
+from bluemira.mesh.tools import import_mesh, msh_to_xdmf
 
 
 class TestGetNormal:
@@ -64,7 +58,6 @@ class TestGetNormal:
             closed=True,
             label="poly_enclo",
         )
-        poly_coil.change_placement((BluemiraPlacement(axis=[1.0, 0.0, 0.0], angle=-90)))
 
         poly_coil.mesh_options = {"lcar": lcar_coil, "physical_group": "poly_coil"}
         coil = BluemiraFace(poly_coil)
@@ -79,7 +72,6 @@ class TestGetNormal:
             closed=True,
             label="poly_enclo",
         )
-        poly_enclo.change_placement((BluemiraPlacement(axis=[1.0, 0.0, 0.0], angle=-90)))
 
         poly_enclo.mesh_options = {"lcar": lcar_enclo, "physical_group": "poly_enclo"}
         enclosure = BluemiraFace([poly_enclo, poly_coil])
@@ -92,11 +84,10 @@ class TestGetNormal:
         m = meshing.Mesh()
         m(c_universe, dim=2)
 
-        msh2xdmf.msh2xdmf("Mesh.msh", dim=2, directory=".")
+        msh_to_xdmf("Mesh.msh", dimensions=(0, 2), directory=".")
 
-        mesh, boundaries, subdomains, labels = msh2xdmf.import_mesh(
-            prefix="Mesh",
-            dim=2,
+        mesh, boundaries, subdomains, labels = import_mesh(
+            "Mesh",
             directory=".",
             subdomains=True,
         )
@@ -123,7 +114,7 @@ class TestGetNormal:
 
         B_teo = np.array([b_coil_axis(rc, 0, z, current) for z in z_points_axis])
 
-        # I just set an absolute tolerance for the compoarison (since the magnetic field
+        # I just set an absolute tolerance for the comparison (since the magnetic field
         # goes to zero, the comparison cannot be made on the basis of a relative
         # tolerance). An allclose comparison was out of discussion considering the
         # necessary accuracy.

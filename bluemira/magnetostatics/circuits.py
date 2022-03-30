@@ -23,12 +23,16 @@
 Three-dimensional current source terms.
 """
 
+from copy import deepcopy
+
 import numpy as np
 
-from bluemira.geometry._deprecated_tools import distance_between_points, rotation_matrix
-from bluemira.geometry.coordinates import get_normal_vector
+from bluemira.base.look_and_feel import bluemira_warn
+from bluemira.geometry._deprecated_tools import in_polygon, rotation_matrix
+from bluemira.geometry.coordinates import Coordinates, rotation_matrix_v1v2
 from bluemira.magnetostatics.baseclass import SourceGroup
-from bluemira.magnetostatics.tools import process_loop_array, process_xyz_array
+from bluemira.magnetostatics.error import MagnetostaticsError
+from bluemira.magnetostatics.tools import process_to_coordinates, process_xyz_array
 from bluemira.magnetostatics.trapezoidal_prism import TrapezoidalPrismCurrentSource
 
 __all__ = ["ArbitraryPlanarRectangularXSCircuit", "HelmholtzCage"]
@@ -49,6 +53,10 @@ class ArbitraryPlanarRectangularXSCircuit(SourceGroup):
         The depth of the current source (half-height) [m]
     current: float
         The current flowing through the source [A]
+
+    Notes
+    -----
+    Works best with planar x-z geometries.
     """
 
     shape: np.array
@@ -57,35 +65,23 @@ class ArbitraryPlanarRectangularXSCircuit(SourceGroup):
     current: float
 
     def __init__(self, shape, breadth, depth, current):
-        self.shape = process_loop_array(shape)
-        normal = get_normal_vector(*self.shape.T)
-        closed = np.allclose(self.shape[-1], self.shape[0])
+        shape = process_to_coordinates(shape)
+        if not shape.is_planar:
+            raise MagnetostaticsError(
+                f"The input shape for {self.__class__.__name__} must be planar."
+            )
+
+        betas, alphas = self._get_betas_alphas(shape)
+
+        normal = shape.normal_vector
 
         # Set up geometry, calculating all trapezoidal prism sources
+        self.shape = shape.T
         self.d_l = np.diff(self.shape, axis=0)
         self.midpoints = self.shape[:-1, :] + 0.5 * self.d_l
         sources = []
 
-        if closed:
-            beta = self._get_half_angle(
-                self.midpoints[-1], self.shape[0], self.midpoints[0]
-            )
-        else:
-            beta = 0.0
-
-        for i, (midpoint, d_l) in enumerate(zip(self.midpoints, self.d_l)):
-
-            if i != len(self.midpoints) - 1:
-                alpha = self._get_half_angle(
-                    midpoint, self.shape[i + 1], self.midpoints[i + 1]
-                )
-            else:
-                if closed:
-                    alpha = self._get_half_angle(
-                        midpoint, self.shape[-1], self.midpoints[0]
-                    )
-                else:
-                    alpha = 0.0
+        for midpoint, d_l, beta, alpha in zip(self.midpoints, self.d_l, betas, alphas):
 
             d_l_norm = d_l / np.linalg.norm(d_l)
             t_vec = np.cross(d_l_norm, normal)
@@ -102,46 +98,100 @@ class ArbitraryPlanarRectangularXSCircuit(SourceGroup):
                 current,
             )
             sources.append(source)
-            beta = alpha
+
         super().__init__(sources)
 
+    def _get_betas_alphas(self, shape):
+        """
+        Get the first and second half-angles (transformed to the x-z plane)
+        """
+        shape = deepcopy(shape)
+        shape = self._transform_to_xz(shape)
+        self._t_shape = shape
+        closed = shape.closed
+        self._clockwise = shape.check_ccw((0, 1, 0))
+        d_l = np.diff(shape.T, axis=0)
+        midpoints = shape.T[:-1, :] + 0.5 * d_l
+        if closed:
+            betas = [self._get_half_angle(midpoints[-1], shape.points[0], midpoints[0])]
+        else:
+            betas = [0.0]
+        alphas = []
+
+        for i, (midpoint, d_l) in enumerate(zip(midpoints, d_l)):
+            if i != len(midpoints) - 1:
+                alpha = self._get_half_angle(
+                    midpoint, shape.points[i + 1], midpoints[i + 1]
+                )
+            else:
+                if closed:
+                    alpha = self._get_half_angle(
+                        midpoint, shape.points[-1], midpoints[0]
+                    )
+                else:
+                    alpha = 0.0
+            alphas.append(alpha)
+            beta = alpha
+            betas.append(beta)
+
+        return betas, alphas
+
+    def _transform_to_xz(self, shape):
+        normal_vector = shape.normal_vector
+        if abs(normal_vector[1]) == 1.0:
+            return shape
+        shape.translate(-np.array(shape.center_of_mass))
+
+        rot_mat = rotation_matrix_v1v2(normal_vector, np.array([0.0, -1.0, 0.0]))
+        shape = Coordinates(rot_mat @ shape._array)
+        return shape
+
     def _get_half_angle(self, p0, p1, p2):
+        """
+        Get the half angle between three points, respecting winding direction.
+        """
         v1 = p1 - p0
         v2 = p2 - p1
         v1 /= np.linalg.norm(v1)
         v2 /= np.linalg.norm(v2)
         cos_angle = np.dot(v1, v2)
-        angle = np.arccos(np.clip(cos_angle, -1, 1))
+        angle = 0.5 * np.arccos(np.clip(cos_angle, -1, 1))
 
-        d = distance_between_points(p0, p1)
-        v_norm = np.linalg.norm(-v1 + v2)
+        v_norm = np.linalg.norm(v1 - v2)
         if np.isclose(v_norm, 0):
-            return 0.5 * angle
+            return 0.0
 
-        r1 = p1 + 0.1 * d * (-v1 + v2) / v_norm
+        v3 = p2 - p0
+        v3 /= np.linalg.norm(v3)
+        project_point = p0 + np.dot(p1 - p0, v3) * v3
+        d = np.linalg.norm(p1 - project_point)
+        if np.isclose(d, 0.0):
+            return 0.0
 
-        if self._point_in_triangle(r1, p0, p1, p2):
-            if np.isclose(angle, np.pi / 2):
-                angle += 2 * np.pi
-            else:
-                angle = -(angle - 2 * np.pi)
-        return 0.5 * angle
+        point_in_poly = self._point_inside_xz(project_point)
 
-    @staticmethod
-    def _point_in_triangle(point, p0, p1, p2):
-        """
-        Determine whether a point lies inside a 3-D triangle.
-        """
-        area = 0.5 * np.linalg.norm(np.cross(p1 - p0, p2 - p0))
-        alpha = np.linalg.norm(np.cross(p1 - point, p2 - point)) / (2 * area)
-        beta = np.linalg.norm(np.cross(p2 - point, p0 - point)) / (2 * area)
-        gamma = 1.0 - alpha - beta
-        return (
-            (0 < alpha < 1)
-            and (0 < beta < 1)
-            and (0 < gamma < 1)
-            and (np.isclose(alpha + beta + gamma, 1.0))
-        )
+        if not point_in_poly:
+            angle *= -1
+
+        if self._clockwise:
+            angle *= -1
+
+        if abs(angle) > 0.25 * np.pi:
+            # We're actually concerned with (pi/2 - angle) < pi/4
+            # If this is the case, two consecutive sources will have sharp corners that
+            # will overlap
+            bluemira_warn(
+                f"{self.__class__.__name__} cannot handle acute angles, as there will be overlaps in the sources."
+            )
+        return angle
+
+    def _point_inside_xz(self, point):
+        if self._clockwise:
+            xz_poly = self._t_shape.xz[:, ::-1].T
+        else:
+            xz_poly = self._t_shape.xz.T
+
+        return in_polygon(point[0], point[2], xz_poly)
 
 
 class HelmholtzCage(SourceGroup):

@@ -121,10 +121,8 @@ class Setup(Task):
 
     """
 
-    def __init__(self, parent, *args, params=None, problem_settings=None, **kwargs):
+    def __init__(self, parent, *args, params=None, **kwargs):
         super().__init__(parent)
-
-        self._problem_settings = problem_settings if problem_settings is not None else {}
         self.set_parameters(params)
 
     def set_parameters(self, params):
@@ -139,7 +137,9 @@ class Setup(Task):
         NAME = self.parent.NAME
         self._parameter_mapping = get_recv_mapping(params, NAME, recv_all=True)
         self._params = type(params).from_template(self._parameter_mapping.values())
-        self._params.update_kw_parameters(params.to_dict(verbose=True))
+        self._params.update_kw_parameters(
+            {k: params.get_param(k) for k in self._params.keys()}
+        )
         self.__recv_mapping = get_recv_mapping(params, NAME)
         self.__send_mapping = get_send_mapping(params, NAME)
 
@@ -164,11 +164,16 @@ class Setup(Task):
 
         if not (callable(remapper) or isinstance(remapper, (type(None), Dict))):
             raise TypeError("remapper is not callable or a dictionary")
-        elif remapper is not None and isinstance(remapper, Dict):
+        elif isinstance(remapper, Dict):
             orig_remap = remapper.copy()
 
             def remapper(x):
                 return orig_remap[x]
+
+        elif remapper is None:
+
+            def remapper(x):
+                return x
 
         for prog_key, bm_key in self._send_mapping.items():
             prog_key = remapper(prog_key)
@@ -287,7 +292,6 @@ class FileProgramInterface(ABC):
         run_dir=None,
         read_dir=None,
         mappings=None,
-        problem_settings=None,
         **kwargs,
     ):
         self.NAME = NAME
@@ -306,9 +310,7 @@ class FileProgramInterface(ABC):
 
         self._protect_tasks()
 
-        self.setup_obj = self._setup(
-            self, *args, params=params, problem_settings=problem_settings, **kwargs
-        )
+        self.setup_obj = self._setup(self, *args, params=params, **kwargs)
         self.run_obj = self._run(self, *args, **kwargs)
         self.teardown_obj = self._teardown(self, *args, **kwargs)
 
@@ -384,13 +386,6 @@ class FileProgramInterface(ABC):
         The ParameterFrame corresponding to this run.
         """
         return self.setup_obj._send_mapping
-
-    @property
-    def problem_settings(self):
-        """
-        Get problem settings dictionary
-        """
-        return self.setup_obj._problem_settings
 
     def modify_mappings(self, mappings: Dict[str, Dict[str, bool]]):
         """

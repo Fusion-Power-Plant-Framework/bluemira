@@ -73,11 +73,6 @@ jobs:
         miniforge-version: "latest"
         use-only-tar-bz2: true
 
-    - name: Get msh2xdmf
-      shell: bash -l {0}
-      run: |
-        bash scripts/install-msh2xdmf.sh
-
     - name: Freeze conda env
       shell: bash -l {0}
       run: |
