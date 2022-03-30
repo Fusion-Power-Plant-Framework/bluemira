@@ -439,7 +439,7 @@ class BasePlotter:
 
 class GeometryPlotter(BasePlotter):
     """
-    Utility class for the plotting of Beams geometry models
+    Utility class for the plotting of structural geometry models
     """
 
     def __init__(self, geometry, ax=None, **kwargs):
@@ -459,7 +459,7 @@ class GeometryPlotter(BasePlotter):
 
 class DeformedGeometryPlotter(BasePlotter):
     """
-    Utility class for the plotting of Beams deformed geometry models and
+    Utility class for the plotting of structural deformed geometry models and
     overlaying with GeometryPlotters
     """
 
@@ -481,7 +481,7 @@ class DeformedGeometryPlotter(BasePlotter):
 
 class StressDeformedGeometryPlotter(BasePlotter):
     """
-    Utility class for the plotting of Beams deformed geometry models and
+    Utility class for the plotting of structural deformed geometry models and
     overlaying with GeometryPlotters
     """
 

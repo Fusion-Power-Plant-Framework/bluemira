@@ -536,7 +536,7 @@ class FiniteElementModel:
 
         Parameters
         ----------
-        load_case: Beams::LoadCase (default=None)
+        load_case: LoadCase (default=None)
             Will default to the loads applied to the elements and nodes in the
             geometry
         sparse: bool (default=False)
