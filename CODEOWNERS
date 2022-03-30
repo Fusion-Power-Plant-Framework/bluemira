@@ -33,3 +33,4 @@
 /pytest.ini @Fusion-Power-Plant-Framework/repo-review
 /MANIFEST.in @Fusion-Power-Plant-Framework/repo-review
 /LICENSE @Fusion-Power-Plant-Framework/repo-review
+/versioneer.py @Fusion-Power-Plant-Framework/repo-review
