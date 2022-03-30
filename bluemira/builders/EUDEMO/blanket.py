@@ -55,8 +55,6 @@ class BlanketBuilder(Builder):
     _params: Configuration
     _silhouette: Optional[BluemiraFace] = None
     _default_runmode: str = "run"
-    _ibs_silhouette: Optional[BluemiraFace] = None
-    _obs_silhouette: Optional[BluemiraFace] = None
 
     def reinitialise(self, params) -> None:
         """
