@@ -36,7 +36,7 @@ from bluemira.builders.EUDEMO.tools import (
 )
 from bluemira.display.palettes import BLUE_PALETTE
 from bluemira.geometry.face import BluemiraFace
-from bluemira.geometry.tools import make_polygon
+from bluemira.geometry.tools import boolean_cut, make_polygon
 from bluemira.geometry.wire import BluemiraWire
 
 
@@ -132,11 +132,17 @@ class BlanketBuilder(Builder):
 
     def _segment_blanket(self):
         """
-        Cut the blanket silhouette into segment silhouettes.
+        Cut the blanket silhouette into segment silhouettes. Simple vertical cut for now.
         """
         bb = self._silhouette.bounding_box
-        delta = 0.1
-        x = np.array([])
-        z = np.array([])
+        x_mid = 0.5 * (bb.x_min + bb.x_max)
+        delta = 0.5 * self._params.c_rm.value
+        x = np.array([x_mid - delta, x_mid + delta, x_mid + delta, x_mid - delta])
+        off = 0.1
+        z = np.array([0, 0, bb.z_max + off, bb.z_max + off])
         cut_wire = make_polygon({"x": x, "y": 0, "z": z}, closed=True)
         cut_face = BluemiraFace(cut_wire)
+
+        segments = boolean_cut(self._silhouette, cut_face)
+        segments.sort(key=lambda seg: seg.bounding_box.x_min)
+        ibs, obs = segments
