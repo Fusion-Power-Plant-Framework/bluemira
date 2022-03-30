@@ -22,6 +22,7 @@
 Define builder for blanket
 """
 
+from re import L
 from typing import List, Optional
 
 import numpy as np
@@ -36,8 +37,8 @@ from bluemira.builders.EUDEMO.tools import (
 )
 from bluemira.display.palettes import BLUE_PALETTE
 from bluemira.geometry.face import BluemiraFace
-from bluemira.geometry.tools import boolean_cut, make_polygon
-from bluemira.geometry.wire import BluemiraWire
+from bluemira.geometry.placement import BluemiraPlacement
+from bluemira.geometry.tools import boolean_cut, make_polygon, slice_shape
 
 
 class BlanketBuilder(Builder):
@@ -53,8 +54,10 @@ class BlanketBuilder(Builder):
     ]
 
     _params: Configuration
-    _silhouette: Optional[BluemiraWire] = None
+    _silhouette: Optional[BluemiraFace] = None
     _default_runmode: str = "run"
+    _ibs_silhouette: Optional[BluemiraFace] = None
+    _obs_silhouette: Optional[BluemiraFace] = None
 
     def reinitialise(self, params) -> None:
         """
@@ -79,20 +82,23 @@ class BlanketBuilder(Builder):
             The Component built by this builder.
         """
         super().build()
+        self._segment_blanket()
 
         component = Component(name=self.name)
         component.add_child(self.build_xz())
-        component.add_child(self.build_xy())
         component.add_child(self.build_xyz())
+        component.add_child(self.build_xy())
         return component
 
     def build_xz(self):
         """
         Build the x-z components of the blanket.
         """
-        body = PhysicalComponent("body", self._silhouette)
-        body.plot_options.face_options["color"] = BLUE_PALETTE["BB"][0]
-        component = Component("xz", children=[body])
+        ibs = PhysicalComponent("IBS", self._ibs_silhouette)
+        ibs.plot_options.face_options["color"] = BLUE_PALETTE["BB"][0]
+        obs = PhysicalComponent("OBS", self._ibs_silhouette)
+        obs.plot_options.face_options["color"] = BLUE_PALETTE["BB"][1]
+        component = Component("xz", children=[ibs, obs])
         bm_plot_tools.set_component_view(component, "xz")
         return component
 
@@ -100,6 +106,19 @@ class BlanketBuilder(Builder):
         """
         Build the x-y components of the blanket.
         """
+        xy_plane = BluemiraPlacement.from_3_points([0, 0, 0], [1, 0, 0], [0, 1, 0])
+
+        slices = []
+        for i, segment in enumerate(self._segments):
+            slice = PhysicalComponent(segment.name, slice_shape(segment.shape, xy_plane))
+            slice.plot_options.face_options["color"] = BLUE_PALETTE["BB"][i]
+            slices.append(slice)
+
+        sector = Component("", children=slices)
+        sectors = circular_pattern_component(sector, self._params.n_TF.value, degree=360)
+
+        component = Component("xyz", children=sectors)
+
         component = Component("xy", children=[])
         bm_plot_tools.set_component_view(component, "xy")
         return component
@@ -108,23 +127,37 @@ class BlanketBuilder(Builder):
         """
         Build the x-y-z components of the blanket.
         """
-        shapes = pattern_revolved_silhouette(
-            self._silhouette,
+        n_sector_draw = max(1, int(degree // (360 // self._params.n_TF.value)))
+        degree = (360.0 / self._params.n_TF.value) * n_sector_draw
+
+        ibs_shapes = pattern_revolved_silhouette(
+            self._ibs_silhouette,
             self._params.n_bb_inboard.value,
             self._params.n_TF.value,
             self._params.c_rm.value,
         )
 
-        n_sector_draw = max(1, int(degree // (360 // self._params.n_TF.value)))
-        degree = (360.0 / self._params.n_TF.value) * n_sector_draw
-
         segments = []
-        for i, shape in enumerate(shapes):
-            segment = PhysicalComponent(f"segment_{i}", shape)
+        for i, shape in enumerate(ibs_shapes):
+            segment = PhysicalComponent(f"IBS_{i}", shape)
             segment.display_cad_options.color = BLUE_PALETTE["BB"][i]
             segments.append(segment)
 
-        sector = Component("cassettes", children=segments)
+        obs_shapes = pattern_revolved_silhouette(
+            self._obs_silhouette,
+            self._params.n_bb_outboard.value,
+            self._params.n_TF.value,
+            self._params.c_rm.value,
+        )
+        for i, shape in enumerate(obs_shapes):
+            segment = PhysicalComponent(f"OBS_{i}", shape)
+            segment.display_cad_options.color = BLUE_PALETTE["BB"][
+                self._params.n_bb_inboard.value + i + 1
+            ]
+            segments.append(segment)
+        self._segments = segments
+
+        sector = Component("segments", children=segments)
         sectors = circular_pattern_component(sector, n_sector_draw, degree=degree)
 
         component = Component("xyz", children=sectors)
@@ -146,3 +179,5 @@ class BlanketBuilder(Builder):
         segments = boolean_cut(self._silhouette, cut_face)
         segments.sort(key=lambda seg: seg.bounding_box.x_min)
         ibs, obs = segments
+        self._ibs_silhouette = ibs
+        self._obs_silhouette = obs
