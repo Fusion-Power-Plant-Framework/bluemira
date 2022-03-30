@@ -89,7 +89,7 @@ class InVesselComponentBuilder(Builder):
 
     .. code-block::
 
-        first_wall (Component)
+        in_vessel_components (Component)
         └── xz (Component)
             └── wall (Component)
                 └── wall_boundary (PhysicalComponent)
@@ -104,7 +104,6 @@ class InVesselComponentBuilder(Builder):
     """
 
     COMPONENT_DIVERTOR = "divertor"
-    COMPONENT_FIRST_WALL = "first_wall"
     COMPONENT_WALL = "wall"
     COMPONENT_BLANKET = "blanket"
 
@@ -334,12 +333,14 @@ def _build_plasma_facing_wire(components: Component) -> BluemiraWire:
     """
     Build a wire of the plasma facing shape of the first wall
     """
+    # Note, the order of these lables matters. We need to go
+    # anti-clockwise around the shape in order to get our closed wire
     labels = [
         WallBuilder.COMPONENT_WALL_BOUNDARY,
-        DivertorBuilder.COMPONENT_INNER_TARGET,
-        DivertorBuilder.COMPONENT_OUTER_TARGET,
-        DivertorBuilder.COMPONENT_DOME,
         DivertorBuilder.COMPONENT_INNER_BAFFLE,
+        DivertorBuilder.COMPONENT_INNER_TARGET,
+        DivertorBuilder.COMPONENT_DOME,
+        DivertorBuilder.COMPONENT_OUTER_TARGET,
         DivertorBuilder.COMPONENT_OUTER_BAFFLE,
     ]
     wires = [_extract_wire(components, label) for label in labels]
