@@ -13,7 +13,7 @@ look like it might make sense when using computers.
 
 “Craig” a.k.a. JWock82 (`PyNite <https://github.com/JWock82/PyNite>`_) and Runar Tenfjord a.k.a. tenko
 (`feapy <https://github.com/tenko/feapy>`_) whose modules were
-useful examples, if not quite what I was looking for.
+useful examples at the time, if not quite what I was looking for.
 
 .. figure:: structural_eiffel.png
    :name: eiffel
