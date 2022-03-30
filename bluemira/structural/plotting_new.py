@@ -28,7 +28,7 @@ from matplotlib.colors import DivergingNorm, Normalize
 from bluemira.display import plot_3d
 from bluemira.display.plotter import PlotOptions
 from bluemira.geometry._deprecated_tools import get_angle_between_vectors
-from bluemira.geometry.plane import BluemiraPlane
+from bluemira.geometry.placement import BluemiraPlacement
 from bluemira.structural.constants import (
     DEFLECT_COLOR,
     FLOAT_TYPE,
@@ -337,9 +337,11 @@ class BasePlotter:
         xss = []
         for element in self.geometry.elements:
             angle = get_angle_between_vectors([1, 0, 0], element.space_vector)
-            plane = BluemiraPlane(
-                base=element.mid_point, axis=(0, 1, 0), angle=-np.rad2deg(angle)
-            )
+            matrix = np.zeros((4, 4))
+            matrix[:3, :3] = element.lambda_matrix[:3, :3].T
+            matrix[:3, -1] = element.mid_point
+            matrix[-1, :] = [0, 0, 0, 1]
+            placement = BluemiraPlacement.from_matrix(matrix)
             plot_options = PlotOptions(
                 show_wires=False,
                 show_faces=True,
@@ -347,7 +349,7 @@ class BasePlotter:
                 # plane="yz",
             )
             xs = element._cross_section.geometry.deepcopy()
-            xs.change_plane(plane)
+            xs.change_placement(placement)
             xss.append(xs)
 
         plot_3d(xss, ax=self.ax, show=False)  # , options=[plot_options])
