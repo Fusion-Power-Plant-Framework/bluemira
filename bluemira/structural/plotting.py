@@ -22,6 +22,8 @@
 """
 Structural module plotting tools
 """
+from copy import deepcopy
+
 import numpy as np
 from matplotlib.colors import Normalize, TwoSlopeNorm
 
@@ -37,7 +39,7 @@ from bluemira.structural.constants import (
 )
 from bluemira.utilities.plot_tools import Plot3D
 
-DEFAULT_PLOT_OPTIONS = {
+DEFAULT_STRUCT_PLOT_OPTIONS = {
     "bound_scale": 1.1,
     "show_all_nodes": True,
     "show_stress": False,
@@ -65,7 +67,7 @@ def annotate_node(ax, node, text_size, color):
         node.y,
         node.z,
         name,
-        size=text_size,
+        fontsize=text_size,
         color=color,
     )
 
@@ -184,7 +186,7 @@ class BasePlotter:
         else:
             self.ax = ax
 
-        self.options = {**DEFAULT_PLOT_OPTIONS, **kwargs}
+        self.options = {**DEFAULT_STRUCT_PLOT_OPTIONS, **kwargs}
 
         # Cached size and plot hints
         self._unit_length = None
@@ -262,9 +264,9 @@ class BasePlotter:
         """
         Plots all the Nodes in the Geometry.
         """
-        kwargs = self.options["node_options"].copy()
+        kwargs = deepcopy(self.options["node_options"])
         default_color = kwargs.pop(
-            "color", DEFAULT_PLOT_OPTIONS["node_options"]["color"]
+            "color", DEFAULT_STRUCT_PLOT_OPTIONS["node_options"]["color"]
         )
 
         for node in self.geometry.nodes:
@@ -301,9 +303,9 @@ class BasePlotter:
         """
         Plots all of the Elements in the Geometry.
         """
-        kwargs = self.options["node_options"].copy()
+        kwargs = deepcopy(self.options["element_options"])
         default_color = kwargs.pop(
-            "color", DEFAULT_PLOT_OPTIONS["element_options"]["color"]
+            "color", DEFAULT_STRUCT_PLOT_OPTIONS["element_options"]["color"]
         )
 
         for element in self.geometry.elements:
@@ -318,14 +320,17 @@ class BasePlotter:
             else:
                 color = default_color
 
-            self.ax.plot(x, y, z, color=color, **kwargs)
+            self.ax.plot(x, y, z, marker=None, color=color, **kwargs)
 
             if self.options["annotate_elements"]:
-                annotate_element(self.ax, element, self.text_size, color)
+                annotate_element(self.ax, element, self.text_size, color="k")
 
             if self.options["interpolate"]:
-                ls = kwargs.pop("linestyle")
-                self.ax.plot(*element.shapes, linestyle="--", **kwargs)
+                ls = kwargs.pop(
+                    "linestyle",
+                    DEFAULT_STRUCT_PLOT_OPTIONS["element_options"]["linestyle"],
+                )
+                self.ax.plot(*element.shapes, marker=None, linestyle="--", **kwargs)
                 kwargs["linestyle"] = ls
 
     def plot_cross_sections(self):
@@ -436,10 +441,10 @@ class GeometryPlotter(BasePlotter):
     """
 
     def __init__(self, geometry, ax=None, **kwargs):
-        self.options = DEFAULT_PLOT_OPTIONS.copy()
-        self.options["show_stress"] = False
-        self.options["show_deflections"] = False
         super().__init__(geometry, ax, **kwargs)
+        self.options = deepcopy(DEFAULT_STRUCT_PLOT_OPTIONS)
+        self.options["show_stress"] = False
+        self.options["show_deflection"] = False
 
         self.plot_nodes()
         self.plot_elements()
@@ -457,15 +462,15 @@ class DeformedGeometryPlotter(BasePlotter):
     """
 
     def __init__(self, geometry, ax=None, **kwargs):
-        self.options = DEFAULT_PLOT_OPTIONS.copy()
+        super().__init__(geometry, ax, **kwargs)
+        self.options = deepcopy(DEFAULT_STRUCT_PLOT_OPTIONS)
         self.options["node_options"]["color"] = "b"
         self.options["element_options"]["color"] = "b"
         self.options["show_stress"] = False
+        self.options["show_deflection"] = True
         self.options["annotate_nodes"] = True
         self.options["interpolate"] = True
         self.options["show_all_nodes"] = False
-
-        super().__init__(geometry, ax, **kwargs)
 
         self.plot_nodes()
         self.plot_elements()
@@ -479,7 +484,8 @@ class StressDeformedGeometryPlotter(BasePlotter):
     """
 
     def __init__(self, geometry, ax=None, stress=None, deflection=False, **kwargs):
-        self.options = DEFAULT_PLOT_OPTIONS.copy()
+        super().__init__(geometry, ax, **kwargs)
+        self.options = deepcopy(DEFAULT_STRUCT_PLOT_OPTIONS)
         self.options["node_options"]["color"] = "b"
         self.options["element_options"]["color"] = None
         self.options["show_stress"] = True
@@ -487,8 +493,6 @@ class StressDeformedGeometryPlotter(BasePlotter):
         self.options["interpolate"] = True
         self.options["show_all_nodes"] = False
         self.options["show_as_grey"] = False
-
-        super().__init__(geometry, ax, **kwargs)
 
         self.color_normer = self.make_color_normer(stress, deflection)
 

@@ -131,17 +131,18 @@ model.add_node(0, 0, 324)
 model.add_element(20, 21, cs5, SS316)
 
 # %%
-model.plot(CROSSSECTIONS=True)
+model.plot(show_cross_sections=True)
 
 # %%
-model.add_gravity_loads()
-model.add_distributed_load(40, -1000, "Fz")
-model.add_distributed_load(43, -1000, "Fz")
+# model.add_gravity_loads()
+model.add_distributed_load(40, -10000, "Fz")
+model.add_distributed_load(43, -10000, "Fz")
 
 # %%
 result = model.solve()
 
 # %%
+
 result.plot(stress=True)
 
 plt.show()

@@ -77,8 +77,8 @@ class Result:
             d_n1 = element.node_1.displacements[:3]
             d_n2 = element.node_2.displacements[3:]
 
-            d1 = np.sqrt(np.sum(d_n1 ** 2))
-            d2 = np.sqrt(np.sum(d_n2 ** 2))
+            d1 = np.sqrt(np.sum(d_n1**2))
+            d2 = np.sqrt(np.sum(d_n2**2))
 
             max_deflections[i] = max(d1, d2)
         self._safety_factors = safety_factors
@@ -144,9 +144,9 @@ class Result:
         dg = self.make_deformed_geometry(deformation_scale)
 
         if stress:
-            dg.plot(ax, self._max_stresses, **kwargs)
+            dg.plot(ax, stress=self._max_stresses, **kwargs)
         elif deflection:
-            dg.plot(ax, self._max_deflections, **kwargs)
+            dg.plot(ax, stress=self._max_deflections, **kwargs)
 
         else:
             self.geometry.plot(ax)
