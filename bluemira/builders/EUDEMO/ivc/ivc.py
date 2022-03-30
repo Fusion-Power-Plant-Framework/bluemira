@@ -304,9 +304,6 @@ def build_ivc_xz_shapes(
     blanket_boundary: BlurmiraWire
         The shape of the outer boundary of the blanket.
     """
-    if not components:
-        raise ValueError("No 'xz' components in component tree.")
-
     # Make the in-vessel "shell"
     blanket_boundary = _extract_wire(components, BlanketBuilder.COMPONENT_BOUNDARY)
     filled_blanket_face = BluemiraFace(blanket_boundary, label="blanket_face")
