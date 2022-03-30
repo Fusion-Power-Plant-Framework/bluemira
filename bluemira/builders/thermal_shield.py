@@ -49,6 +49,76 @@ from bluemira.geometry.tools import (
 from bluemira.geometry.wire import BluemiraWire
 
 
+class VVTSBuilder(Builder):
+    """
+    Build for the vacuum vessel thermal shield (VVTS).
+    """
+
+    _required_params: List[str] = [
+        "tk_ts",
+        "g_vv_ts",
+        "n_TF",
+    ]
+    _params: Configuration
+    _vv_koz: Optional[BluemiraWire]
+
+    def reinitialise(self, params, vv_xz_koz) -> None:
+        """
+        Initialise the state of this builder ready for a new run.
+        """
+        super().reinitialise(params)
+
+        self._vv_koz = vv_xz_koz
+
+    def build(self) -> Component:
+        """
+        Build the vacuum vessel thermal shield component.
+
+        Returns
+        -------
+        component: Component
+            The Component built by this builder.
+        """
+        super().build()
+
+        component = Component(name=self.name)
+        component.add_child(self.build_xz())
+        component.add_child(self.build_xy())
+        component.add_child(self.build_xyz())
+        return component
+
+    def build_xz(self):
+        """
+        Build the x-z components of the vacuum vessel thermal shield.
+        """
+        vv_ts_inner_wire = offset_wire(
+            self._vv_koz, self._params.g_vv_ts.value, join="arc", open_wire=False
+        )
+        vv_ts_outer_wire = offset_wire(
+            vv_ts_inner_wire, self._params.tk_ts.value, join="arc", open_wire=False
+        )
+        vv_ts_face = BluemiraFace([vv_ts_outer_wire, vv_ts_inner_wire])
+        vv_ts = PhysicalComponent("VVTS", vv_ts_face)
+
+        vv_ts.plot_options.face_options["color"] = BLUE_PALETTE["TS"][0]
+
+        component = Component("xz", children=[vv_ts])
+        bm_plot_tools.set_component_view(component, "xz")
+        return component
+
+    def build_xy(self):
+        """
+        Build the x-y components of the vacuum vessel thermal shield.
+        """
+        pass
+
+    def build_xyz(self):
+        """
+        Build the x-y-z components of the vacuum vessel thermal shield.
+        """
+        pass
+
+
 class ThermalShieldBuilder(Builder):
     """
     Builder for the thermal shield
