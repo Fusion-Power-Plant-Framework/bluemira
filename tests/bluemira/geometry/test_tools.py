@@ -452,7 +452,7 @@ class TestMakeBSpline:
             # TODO: Understand why the end tangent is not respected..
             # np.testing.assert_allclose(e.tangentAt(e.Length), et)
 
-            
+
 class TestFindClockwiseAngle2d:
     @pytest.mark.parametrize(
         "fixture",
