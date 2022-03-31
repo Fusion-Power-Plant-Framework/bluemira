@@ -41,12 +41,12 @@ from bluemira.geometry.tools import (
     sweep_shape,
 )
 
-__all__ = (
+__all__ = [
     "circular_pattern_component",
     "pattern_revolved_silhouette",
     "pattern_lofted_silhouette",
     "varied_offset",
-)
+]
 
 
 def circular_pattern_component(
