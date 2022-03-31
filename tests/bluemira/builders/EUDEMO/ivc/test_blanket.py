@@ -21,12 +21,12 @@
 import pytest
 
 from bluemira.base.error import BuilderError
-from bluemira.builders.EUDEMO.ivc.blanket import BlanketBuilder
+from bluemira.builders.EUDEMO.ivc.blanket import BlanketThicknessBuilder
 from bluemira.geometry.parameterisations import PictureFrame
 from bluemira.geometry.tools import make_circle, signed_distance
 
 
-class TestBlanketBuilder:
+class TestBlanketThicknessBuilder:
 
     picture_frame = PictureFrame({"ro": {"value": 6}, "ri": {"value": 3}}).create_shape()
     build_config = {
@@ -39,11 +39,11 @@ class TestBlanketBuilder:
         wall_shape = make_circle(end_angle=180)
 
         with pytest.raises(BuilderError):
-            BlanketBuilder({}, {}, wall_shape, 0.0)
+            BlanketThicknessBuilder({}, {}, wall_shape, 0.0)
 
     def test_build_returns_component_containing_boundary_in_xz(self):
         wall_shape = make_circle(axis=(0, 1, 0))
-        builder = BlanketBuilder(self.params, self.build_config, wall_shape, 0)
+        builder = BlanketThicknessBuilder(self.params, self.build_config, wall_shape, 0)
 
         component = builder.build()
 
@@ -56,7 +56,9 @@ class TestBlanketBuilder:
         assert boundary_xz.depth == 2
 
     def test_build_returns_boundary_that_does_not_intersect_wire(self):
-        builder = BlanketBuilder(self.params, self.build_config, self.picture_frame, -4)
+        builder = BlanketThicknessBuilder(
+            self.params, self.build_config, self.picture_frame, -4
+        )
 
         component = builder.build()
 

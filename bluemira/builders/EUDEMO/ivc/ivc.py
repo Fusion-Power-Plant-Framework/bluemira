@@ -30,7 +30,7 @@ import numpy as np
 from bluemira.base.builder import BuildConfig, Component
 from bluemira.base.components import Component, PhysicalComponent
 from bluemira.base.error import BuilderError
-from bluemira.builders.EUDEMO.ivc.blanket import BlanketBuilder
+from bluemira.builders.EUDEMO.ivc.blanket import BlanketThicknessBuilder
 from bluemira.builders.EUDEMO.ivc.divertor import DivertorBuilder
 from bluemira.builders.EUDEMO.ivc.wall import WallBuilder
 from bluemira.builders.shapes import Builder
@@ -164,7 +164,7 @@ class InVesselComponentBuilder(Builder):
         closed_wall_shape = wall.get_component(WallBuilder.COMPONENT_WALL_BOUNDARY).shape
         cut_wall, cut_wall_wire = self._cut_wall(wall)
 
-        blanket = self._build_blanket(closed_wall_shape)
+        blanket = self._build_blanket_thickness(closed_wall_shape)
         divertor = self._build_divertor(cut_wall_wire)
 
         first_wall = Component(self.name)
@@ -181,7 +181,7 @@ class InVesselComponentBuilder(Builder):
         )
         return builder()
 
-    def _build_blanket(self, wall_shape) -> Component:
+    def _build_blanket_thickness(self, wall_shape) -> Component:
         """
         Build the blanket thickness component.
 
@@ -191,7 +191,7 @@ class InVesselComponentBuilder(Builder):
         build_config = deepcopy(self._build_config)
         build_config.update({"name": self.COMPONENT_BLANKET})
         build_config.pop("runmode", None)
-        blanket_builder = BlanketBuilder(
+        blanket_builder = BlanketThicknessBuilder(
             self.params,
             build_config,
             wall_shape,
@@ -283,9 +283,7 @@ class InVesselComponentBuilder(Builder):
         """
         flux_surface_zone = self.equilibrium.get_flux_surface(psi_n)
         flux_surface_zone = make_polygon(flux_surface_zone.xyz, closed=True)
-        # Remove the "legs" from the keep-out zone, we want the wall to
-        # intersect these
-        return _cut_wall_below_x_point(flux_surface_zone, self.x_points[0].z)
+        return flux_surface_zone
 
 
 def build_ivc_xz_shapes(
@@ -321,7 +319,9 @@ def build_ivc_xz_shapes(
         The shape of the outer boundary of the blanket.
     """
     # Make the in-vessel "shell"
-    blanket_boundary = _extract_wire(components, BlanketBuilder.COMPONENT_BOUNDARY)
+    blanket_boundary = _extract_wire(
+        components, BlanketThicknessBuilder.COMPONENT_BOUNDARY
+    )
     filled_blanket_face = BluemiraFace(blanket_boundary, label="blanket_face")
     plasma_facing_wire = _build_plasma_facing_wire(components)
     plasma_facing_face = BluemiraFace(plasma_facing_wire, label="plasma_facing_face")

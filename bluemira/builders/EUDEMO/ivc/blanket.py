@@ -27,7 +27,7 @@ from bluemira.builders.EUDEMO.tools import varied_offset
 from bluemira.geometry.wire import BluemiraWire
 
 
-class BlanketBuilder(Builder):
+class BlanketThicknessBuilder(Builder):
     """
     Build a blanket for the given wall shape using a variable thickness.
 
