@@ -136,7 +136,7 @@ class InVesselComponentBuilder(Builder):
 
         self._build_config = build_config
         self.equilibrium = equilibrium
-        _, self.x_points = find_OX_points(
+        self.o_points, self.x_points = find_OX_points(
             self.equilibrium.x, self.equilibrium.z, self.equilibrium.psi()
         )
 
@@ -282,7 +282,9 @@ class InVesselComponentBuilder(Builder):
         Make a "keep-out zone" from an equilibrium's flux surface.
         """
         flux_surface_zone = self.equilibrium.get_flux_surface(psi_n)
-        flux_surface_zone = make_polygon(flux_surface_zone.xyz, closed=True)
+        # Chop the flux surface to only take the upper half
+        indices = np.where(flux_surface_zone.z >= self.o_points[0][1])[0]
+        flux_surface_zone = make_polygon(flux_surface_zone.xyz[:, indices], closed=True)
         return flux_surface_zone
 
 

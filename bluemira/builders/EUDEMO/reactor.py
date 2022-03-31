@@ -64,7 +64,14 @@ class EUDEMOReactor(Reactor):
 
         self.run_systems_code()
         component.add_child(self.build_plasma())
-        _, divertor_face, _ = self.build_in_vessel_component_shapes(component)
+        (
+            blanket_face,
+            divertor_face,
+            blanket_boundary,
+        ) = self.build_in_vessel_component_shapes(component)
+        blanket_boundary = PhysicalComponent("boundary", blanket_boundary)
+        outer_ivc = Component("Outer IVC", children=[blanket_boundary])
+        component.add_child(outer_ivc)
         component.add_child(self.build_divertor(component, divertor_face))
         component.add_child(self.build_TF_coils(component))
         component.add_child(self.build_PF_coils(component))
@@ -265,7 +272,7 @@ class EUDEMOReactor(Reactor):
 
         default_variables_map = {
             "x1": {"value": "r_fw_ib_in", "fixed": True},  # ib radius
-            "x2": {"value": "r_fw_ob_in", "fixed": True},  # ob radius
+            "x2": {"value": "r_fw_ob_in"},  # ob radius
         }
 
         default_config = {
@@ -273,11 +280,11 @@ class EUDEMOReactor(Reactor):
             "name": self.IVC,
             "opt_conditions": {
                 "ftol_rel": 1e-6,
-                "max_eval": 100,
+                "max_eval": 1000,
                 "xtol_abs": 1e-8,
                 "xtol_rel": 1e-8,
             },
-            "param_class": "bluemira.builders.EUDEMO.ivc::WallPolySpline",
+            "param_class": "bluemira.builders.EUDEMO.ivc::WallPrincetonD",
             "problem_class": "bluemira.geometry.optimisation::MinimiseLengthGOP",
             "runmode": "run",
             "variables_map": default_variables_map,
