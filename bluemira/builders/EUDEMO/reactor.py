@@ -64,7 +64,7 @@ class EUDEMOReactor(Reactor):
 
         self.run_systems_code()
         component.add_child(self.build_plasma())
-        _, divertor_face, _ = self.build_in_vessel_component_shapes()
+        _, divertor_face, _ = self.build_in_vessel_component_shapes(component)
         component.add_child(self.build_divertor(component, divertor_face))
         component.add_child(self.build_TF_coils(component))
         component.add_child(self.build_PF_coils(component))
@@ -277,7 +277,7 @@ class EUDEMOReactor(Reactor):
                 "xtol_abs": 1e-8,
                 "xtol_rel": 1e-8,
             },
-            "param_class": "bluemira.builders.EUDEMO.first_wall::WallPrincetonD",
+            "param_class": "bluemira.builders.EUDEMO.ivc::WallPrincetonD",
             "problem_class": "bluemira.geometry.optimisation::MinimiseLengthGOP",
             "runmode": "run",
             "variables_map": default_variables_map,
