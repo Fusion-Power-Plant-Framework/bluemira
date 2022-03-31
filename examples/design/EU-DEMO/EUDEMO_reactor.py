@@ -478,8 +478,6 @@ pf_coils.get_component("xy").plot_2d(ax=ax)
 ax = tf_coils.get_component("xz").plot_2d(show=False)
 plasma.get_component("xz").plot_2d(ax=ax, show=False)
 
-ivc = component.get_component("Outer IVC")
-ivc.get_component("boundary").plot_2d(ax=ax, show=False)
 divertor = component.get_component("Divertor")
 divertor.get_component("xz").plot_2d(ax=ax, show=False)
 pf_coils.get_component("xz").plot_2d(ax=ax, show=False)
