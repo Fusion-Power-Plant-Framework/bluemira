@@ -203,9 +203,11 @@ class TestPatterning:
 
         assert len(shapes) == n_segments
 
-        self._assert_volumes_same(shapes)
-        self._assert_distances_right(shapes, gap)
-        total_volume = sum([shape.volume for shape in shapes])
+        volumes = [shape.volume for shape in shapes]
+        np.testing.assert_almost_equal(volumes[1:], volumes[0])
+
+        distances = self._distances_between_shapes(shapes)
+        np.testing.assert_almost_equal(distances, gap)
 
         # Slightly dubious estimate for the volume of parallel gaps
         com_radius = p.center_of_mass[0]
@@ -215,7 +217,7 @@ class TestPatterning:
 
         theory_volume = face.area * com_radius * 2 * np.pi / (n_sectors) - theory_gap
 
-        np.testing.assert_allclose(total_volume, theory_volume, rtol=5e-6)
+        np.testing.assert_allclose(sum(volumes), theory_volume, rtol=5e-6)
 
     @pytest.mark.parametrize("n_segments, n_sectors, gap", fixture[:-1])
     def test_lofted_silhouette(self, n_segments, n_sectors, gap):
@@ -225,16 +227,15 @@ class TestPatterning:
         shapes = pattern_lofted_silhouette(face, n_segments, n_sectors, gap)
 
         assert len(shapes) == n_segments
-        self._assert_volumes_same(shapes)
-        self._assert_distances_right(shapes, gap)
+        volumes = [shape.volume for shape in shapes]
+        np.testing.assert_almost_equal(volumes[1:], volumes[0])
+
+        distances = self._distances_between_shapes(shapes)
+        np.testing.assert_almost_equal(distances, gap)
 
     @staticmethod
-    def _assert_volumes_same(shapes):
-        volume = shapes[0].volume
+    def _distances_between_shapes(shapes):
+        distances = []
         for i in range(len(shapes) - 1):
-            np.testing.assert_almost_equal(shapes[i + 1].volume, volume)
-
-    @staticmethod
-    def _assert_distances_right(shapes, gap):
-        for i in range(len(shapes) - 1):
-            np.testing.assert_almost_equal(distance_to(shapes[i], shapes[i + 1])[0], gap)
+            distances.append(distance_to(shapes[i], shapes[i + 1])[0])
+        return distances
