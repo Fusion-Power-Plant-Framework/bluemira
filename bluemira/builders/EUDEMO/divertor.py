@@ -51,7 +51,7 @@ class DivertorBuilder(Builder):
     _silhouette: Optional[BluemiraWire] = None
     _default_runmode: str = "run"
 
-    def reinitialise(self, params) -> None:
+    def reinitialise(self, params, divertor_silhouette) -> None:
         """
         Reinitialise the parameters and boundary.
 
@@ -62,7 +62,7 @@ class DivertorBuilder(Builder):
         """
         super().reinitialise(params)
 
-        self._silhouette = None
+        self._silhouette = divertor_silhouette
 
     def build(self) -> Component:
         """
