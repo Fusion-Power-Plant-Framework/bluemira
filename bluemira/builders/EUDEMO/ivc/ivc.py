@@ -31,7 +31,7 @@ from bluemira.base.builder import BuildConfig, Component
 from bluemira.base.components import Component, PhysicalComponent
 from bluemira.base.error import BuilderError
 from bluemira.builders.EUDEMO.ivc.blanket import BlanketThicknessBuilder
-from bluemira.builders.EUDEMO.ivc.divertor import DivertorBuilder
+from bluemira.builders.EUDEMO.ivc.divertor import DivertorSilhouetteBuilder
 from bluemira.builders.EUDEMO.ivc.wall import WallBuilder
 from bluemira.builders.shapes import Builder
 from bluemira.equilibria import Equilibrium
@@ -206,7 +206,7 @@ class InVesselComponentBuilder(Builder):
         build_config.pop("runmode", None)
 
         x_lims = (wall.start_point().x[0], wall.end_point().x[0])
-        builder = DivertorBuilder(
+        builder = DivertorSilhouetteBuilder(
             self.params,
             build_config,
             equilibrium=self.equilibrium,
@@ -350,11 +350,11 @@ def _build_plasma_facing_wire(components: Component) -> BluemiraWire:
     # anti-clockwise around the shape in order to get our closed wire
     labels = [
         WallBuilder.COMPONENT_WALL_BOUNDARY,
-        DivertorBuilder.COMPONENT_INNER_BAFFLE,
-        DivertorBuilder.COMPONENT_INNER_TARGET,
-        DivertorBuilder.COMPONENT_DOME,
-        DivertorBuilder.COMPONENT_OUTER_TARGET,
-        DivertorBuilder.COMPONENT_OUTER_BAFFLE,
+        DivertorSilhouetteBuilder.COMPONENT_INNER_BAFFLE,
+        DivertorSilhouetteBuilder.COMPONENT_INNER_TARGET,
+        DivertorSilhouetteBuilder.COMPONENT_DOME,
+        DivertorSilhouetteBuilder.COMPONENT_OUTER_TARGET,
+        DivertorSilhouetteBuilder.COMPONENT_OUTER_BAFFLE,
     ]
     wires = [_extract_wire(components, label) for label in labels]
     return BluemiraWire(wires)
