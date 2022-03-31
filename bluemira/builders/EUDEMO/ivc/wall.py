@@ -71,18 +71,20 @@ class WallPolySpline(PolySpline):
         lower = self.variables["lower"].value
         bottom = self.variables["bottom"].value
 
-        self.adjust_variable(
-            "x1",
-            ib_radius,
-            lower_bound=ib_radius - 2,
-            upper_bound=ib_radius * 1.1,
-        )
-        self.adjust_variable(
-            "x2",
-            value=ob_radius,
-            lower_bound=ob_radius * 0.9,
-            upper_bound=ob_radius + 2,
-        )
+        if not self.variables["x1"].fixed:
+            self.adjust_variable(
+                "x1",
+                ib_radius,
+                lower_bound=ib_radius - 2,
+                upper_bound=ib_radius * 1.1,
+            )
+        if not self.variables["x2"].fixed:
+            self.adjust_variable(
+                "x2",
+                value=ob_radius,
+                lower_bound=ob_radius * 0.9,
+                upper_bound=ob_radius + 2,
+            )
         self.adjust_variable("z2", z2, lower_bound=-0.9, upper_bound=0.9)
         self.adjust_variable(
             "height", height, lower_bound=height - 0.001, upper_bound=50
@@ -121,12 +123,15 @@ class WallPrincetonD(PrincetonD):
 
         ib_radius = self.variables["x1"].value
         ob_radius = self.variables["x2"].value
-        self.adjust_variable(
-            "x1", ib_radius, lower_bound=ib_radius - 2, upper_bound=ib_radius * 1.02
-        )
-        self.adjust_variable(
-            "x2", ob_radius, lower_bound=ob_radius * 0.98, upper_bound=ob_radius + 2
-        )
+        if not self.variables["x1"].fixed:
+            self.adjust_variable(
+                "x1", ib_radius, lower_bound=ib_radius - 2, upper_bound=ib_radius * 1.02
+            )
+
+        if not self.variables["x2"].fixed:
+            self.adjust_variable(
+                "x2", ob_radius, lower_bound=ob_radius * 0.98, upper_bound=ob_radius + 2
+            )
         self.adjust_variable(
             "dz", self.variables["dz"].value, lower_bound=-3, upper_bound=3
         )
