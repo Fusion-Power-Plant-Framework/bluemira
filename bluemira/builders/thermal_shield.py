@@ -176,7 +176,6 @@ class ThermalShieldBuilder(Builder):
     _params: Configuration
     _pf_kozs: List[BluemiraWire]
     _tf_koz: BluemiraWire
-    _vv_koz: Optional[BluemiraWire]
     _cts_face: BluemiraFace
 
     def __init__(
@@ -192,18 +191,16 @@ class ThermalShieldBuilder(Builder):
             build_config,
             pf_coils_xz_kozs=pf_coils_xz_kozs,
             tf_xz_koz=tf_xz_koz,
-            vv_xz_koz=vv_xz_koz,
         )
         self._cts_face = None
 
-    def reinitialise(self, params, pf_coils_xz_kozs, tf_xz_koz, vv_xz_koz=None) -> None:
+    def reinitialise(self, params, pf_coils_xz_kozs, tf_xz_koz) -> None:
         """
         Initialise the state of this builder ready for a new run.
         """
         super().reinitialise(params)
         self._pf_kozs = pf_coils_xz_kozs
         self._tf_koz = tf_xz_koz
-        self._vv_koz = vv_xz_koz
 
     def build(self) -> Component:
         """

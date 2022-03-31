@@ -256,7 +256,6 @@ class EUDEMOReactor(Reactor):
             config,
             pf_coils_xz_kozs=pf_kozs,
             tf_xz_koz=tf_koz,
-            vv_xz_koz=None,
         )
         self.register_builder(builder, name)
         component = super()._build_stage(name)
