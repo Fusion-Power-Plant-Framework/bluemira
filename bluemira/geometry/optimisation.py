@@ -61,7 +61,7 @@ def minimise_length(vector, grad, parameterisation, ad_args=None):
     ----------
     vector: np.ndarray
         State vector of the array of coil currents.
-    grad: np.array
+    grad: np.ndarray
         Local gradient of objective function used by LD NLOPT algorithms.
         Updated in-place.
 
