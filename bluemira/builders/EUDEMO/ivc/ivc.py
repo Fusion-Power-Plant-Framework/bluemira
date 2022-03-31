@@ -27,7 +27,7 @@ from typing import Any, Dict, Tuple
 
 import numpy as np
 
-from bluemira.base.builder import BuildConfig, Component
+from bluemira.base.builder import BuildConfig
 from bluemira.base.components import Component, PhysicalComponent
 from bluemira.base.error import BuilderError
 from bluemira.builders.EUDEMO.ivc.blanket import BlanketThicknessBuilder
