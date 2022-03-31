@@ -266,7 +266,9 @@ class InVesselComponentBuilder(Builder):
         """
         geom_offset_zone = self._make_geometric_keep_out_zone(geom_offset)
         flux_surface_zone = self._make_flux_surface_keep_out_zone(psi_n)
-        leg_zone = self._make_divertor_leg_keep_out_zone(1, 1.45)
+        leg_zone = self._make_divertor_leg_keep_out_zone(
+            self._params.div_L2D_ib.value, self._params.div_L2D_ob.value
+        )
         return convex_hull_wires_2d(
             [geom_offset_zone, flux_surface_zone, leg_zone], ndiscr=200, plane="xz"
         )
