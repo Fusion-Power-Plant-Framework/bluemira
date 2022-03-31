@@ -110,6 +110,9 @@ class InVesselComponentBuilder(Builder):
         "kappa_95",  # 95th percentile plasma elongation
         "r_fw_ib_in",  # inboard first wall inner radius
         "r_fw_ob_in",  # inboard first wall outer radius
+        # Wall flux and geometric offsets
+        "fw_psi_n",  # Normalised psi boundary to fit FW to
+        "tk_sol_ib",  # Inboard SOL thickness (used as a geometric offset to LCFS)
         "A",  # aspect ratio
         # Divertor silhouette
         "div_L2D_ib",  # Inboard leg length
@@ -175,7 +178,9 @@ class InVesselComponentBuilder(Builder):
         """Build the first wall component."""
         build_config = deepcopy(self._build_config)
         build_config.update({"name": self.COMPONENT_WALL})
-        keep_out_zone = self._make_wall_keep_out_zone(geom_offset=0.2, psi_n=1.05)
+        keep_out_zone = self._make_wall_keep_out_zone(
+            geom_offset=self._params.tk_sol_ib.value, psi_n=self._params.fw_psi_n.value
+        )
         builder = WallBuilder(
             self.params, build_config=build_config, keep_out_zone=keep_out_zone
         )
