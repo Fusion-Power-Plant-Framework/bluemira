@@ -122,7 +122,7 @@ class VVTSBuilder(Builder):
         vvts_ib.plot_options.face_options["color"] = BLUE_PALETTE["TS"][0]
 
         x_max = self._vv_koz.bounding_box.x_max
-        r_in_ob = x_min + self._params.g_vv_ts.value
+        r_in_ob = x_max + self._params.g_vv_ts.value
         r_out_ob = r_in_ob + self._params.tk_ts.value
         inner = make_circle(radius=r_in_ob)
         outer = make_circle(radius=r_out_ob)
