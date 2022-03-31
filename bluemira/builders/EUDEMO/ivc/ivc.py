@@ -35,7 +35,7 @@ from bluemira.builders.EUDEMO.ivc.divertor import DivertorSilhouetteBuilder
 from bluemira.builders.EUDEMO.ivc.wall import WallBuilder
 from bluemira.builders.shapes import Builder
 from bluemira.equilibria import Equilibrium
-from bluemira.equilibria.find import find_OX_points
+from bluemira.equilibria.find import find_OX_points, get_legs
 from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.tools import (
     boolean_cut,
@@ -286,6 +286,16 @@ class InVesselComponentBuilder(Builder):
         indices = np.where(flux_surface_zone.z >= self.o_points[0][1])[0]
         flux_surface_zone = make_polygon(flux_surface_zone.xyz[:, indices], closed=True)
         return flux_surface_zone
+
+    def _make_divertor_leg_keep_out_zone(
+        self, leg_length_ib_2D, leg_length_ob_2D
+    ) -> BluemiraWire:
+        """
+        Make a "keep-out zone" from an equilibrium's divertor legs
+        """
+        legs = get_legs(self.equilibrium, n_layers=1, dx_off=0.0)
+        legs = list(legs.values())
+        return make_polygon(np.concatenate(legs, axis=1), closed=False)
 
 
 def build_ivc_xz_shapes(
