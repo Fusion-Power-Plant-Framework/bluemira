@@ -293,8 +293,7 @@ class EUDEMOReactor(Reactor):
 
         component = super()._build_stage(name)
         bluemira_print(f"Completed design stage: {name}")
-        # TODO(hsaunders1904): this is not functional at the moment,
-        # need to check parameter access is correct
+
         return build_ivc_xz_shapes(component, self._params.c_rm.value)
 
     def build_divertor(self, component_tree: Component, divertor_face):
