@@ -53,9 +53,7 @@ def calculate_length(vector, parameterisation):
 
 def minimise_length(vector, grad, parameterisation, ad_args=None):
     """
-    Objective function for nlopt optimisation (minimisation),
-    consisting of a least-squares objective with Tikhonov
-    regularisation term, which updates the gradient in-place.
+    Objective function for nlopt optimisation (minimisation) of length.
 
     Parameters
     ----------
