@@ -302,6 +302,7 @@ class EUDEMOReactor(Reactor):
         Run the divertor build.
         """
         name = EUDEMOReactor.DIVERTOR
+
         bluemira_print(f"Starting design stage: {name}")
 
         default_config = {}

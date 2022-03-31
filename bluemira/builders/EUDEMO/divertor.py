@@ -25,7 +25,7 @@ Define builder for divertor
 from typing import List, Optional
 
 import bluemira.utilities.plot_tools as bm_plot_tools
-from bluemira.base.builder import Builder, Component
+from bluemira.base.builder import BuildConfig, Builder, Component
 from bluemira.base.components import PhysicalComponent
 from bluemira.base.config import Configuration
 from bluemira.builders.EUDEMO.tools import (
@@ -33,6 +33,7 @@ from bluemira.builders.EUDEMO.tools import (
     pattern_revolved_silhouette,
 )
 from bluemira.display.palettes import BLUE_PALETTE
+from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.wire import BluemiraWire
 
 
@@ -49,7 +50,18 @@ class DivertorBuilder(Builder):
 
     _params: Configuration
     _silhouette: Optional[BluemiraWire] = None
-    _default_runmode: str = "run"
+
+    def __init__(
+        self,
+        params,
+        build_config: BuildConfig,
+        divertor_silhouette: BluemiraFace,
+    ):
+        super().__init__(
+            params,
+            build_config,
+            divertor_silhouette=divertor_silhouette,
+        )
 
     def reinitialise(self, params, divertor_silhouette) -> None:
         """
