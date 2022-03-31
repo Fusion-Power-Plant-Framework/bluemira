@@ -266,8 +266,9 @@ class InVesselComponentBuilder(Builder):
         """
         geom_offset_zone = self._make_geometric_keep_out_zone(geom_offset)
         flux_surface_zone = self._make_flux_surface_keep_out_zone(psi_n)
+        leg_zone = self._make_divertor_leg_keep_out_zone(1, 1.45)
         return convex_hull_wires_2d(
-            [geom_offset_zone, flux_surface_zone], ndiscr=200, plane="xz"
+            [geom_offset_zone, flux_surface_zone, leg_zone], ndiscr=200, plane="xz"
         )
 
     def _make_geometric_keep_out_zone(self, offset: float) -> BluemiraWire:
@@ -294,8 +295,14 @@ class InVesselComponentBuilder(Builder):
         Make a "keep-out zone" from an equilibrium's divertor legs
         """
         legs = get_legs(self.equilibrium, n_layers=1, dx_off=0.0)
-        legs = list(legs.values())
-        return make_polygon(np.concatenate(legs, axis=1), closed=False)
+        ib_leg = make_polygon(legs["lower_inner"][0])
+        ob_leg = make_polygon(legs["lower_outer"][0])
+
+        p_ib = ib_leg.value_at(distance=leg_length_ib_2D)
+
+        p_ob = ob_leg.value_at(distance=leg_length_ob_2D)
+
+        return make_polygon([p_ib, p_ob], closed=False)
 
 
 def build_ivc_xz_shapes(
