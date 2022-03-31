@@ -33,7 +33,10 @@ class TestBlanketThicknessBuilder:
         "name": "Blanket",
         "runmode": "run",
     }
-    params = {}
+    params = {
+        "tk_bb_ib": (0.8, "Input"),
+        "tk_bb_ob": (1.1, "Input"),
+    }
 
     def test_BuilderError_given_wall_shape_not_closed(self):
         wall_shape = make_circle(end_angle=180)
