@@ -67,8 +67,8 @@ class TestInVesselComponentBuilder:
         "kappa_95": (2.4, "Input"),
         "r_fw_ib_in": (5, "Input"),
         "r_fw_ob_in": (13, "Input"),
-        "fw_psi_n": (1.07, "Input"),
-        "tk_sol_ib": (0.225, "Input"),
+        "fw_psi_n": (1.05, "Input"),
+        "tk_sol_ib": (0.2, "Input"),
         "A": (3.1, "Input"),
         # Divertor opts
         "div_L2D_ib": (1.1, "Input"),
