@@ -174,8 +174,6 @@ opt_parameters: {self._opt_parameters}"""
 
         bluemira_debug("Solving...")
         self._shape = self._design_problem.optimise()
-        # parameterisation = self._design_problem.optimise()
-        # return parameterisation
 
 
 class SimpleBuilderMixin:
