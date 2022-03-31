@@ -73,6 +73,9 @@ class TestInVesselComponentBuilder:
         "div_L2D_ob": (1.45, "Input"),
         "div_Ltarg": (0.5, "Input"),
         "div_open": (False, "Input"),
+        # Blanket opts
+        "tk_bb_ib": (0.8, "Input"),
+        "tk_bb_ob": (1.1, "Input"),
     }
 
     @classmethod

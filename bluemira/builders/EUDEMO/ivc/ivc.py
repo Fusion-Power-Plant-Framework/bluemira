@@ -103,6 +103,24 @@ class InVesselComponentBuilder(Builder):
                 └── outer_baffle (PhysicalComponent)
     """
 
+    _required_params = [
+        # Wall
+        "plasma_type",
+        "R_0",  # major radius
+        "kappa_95",  # 95th percentile plasma elongation
+        "r_fw_ib_in",  # inboard first wall inner radius
+        "r_fw_ob_in",  # inboard first wall outer radius
+        "A",  # aspect ratio
+        # Divertor silhouette
+        "div_L2D_ib",  # Inboard leg length
+        "div_L2D_ob",  # Outboard leg length
+        "div_Ltarg",  # Target length
+        "div_open",  # Divertor open/closed configuration
+        # Blanket thickness
+        "tk_bb_ib",  # Inboard blanket thickness
+        "tk_bb_ob",  # Outboard blanket thickness
+    ]
+
     COMPONENT_DIVERTOR = "divertor"
     COMPONENT_WALL = "wall"
     COMPONENT_BLANKET = "blanket"
@@ -116,15 +134,11 @@ class InVesselComponentBuilder(Builder):
     ):
         super().__init__(params, build_config, **kwargs)
 
-        self.wall: Component
-        self.divertor: Component
-
+        self._build_config = build_config
         self.equilibrium = equilibrium
         _, self.x_points = find_OX_points(
             self.equilibrium.x, self.equilibrium.z, self.equilibrium.psi()
         )
-        self._wall_builder = self._init_wall_builder(params, build_config)
-        self._divertor_builder = self._init_divertor_builder(params, build_config)
 
     def reinitialise(self, params, **kwargs) -> None:
         """
@@ -146,49 +160,78 @@ class InVesselComponentBuilder(Builder):
         """
         Build the component.
         """
-        wall = self._wall_builder()
+        wall = self._build_wall()
         closed_wall_shape = wall.get_component(WallBuilder.COMPONENT_WALL_BOUNDARY).shape
+        cut_wall, cut_wall_wire = self._cut_wall(wall)
 
-        self._blanket_builder = BlanketBuilder(
-            {}, {"name": self.COMPONENT_BLANKET}, closed_wall_shape, self.x_points[0].z
-        )
-        self.blanket = self._blanket_builder()
-
-        self.wall = self._cut_wall(wall)
-        wall_shape = self.wall.get_component(WallBuilder.COMPONENT_WALL_BOUNDARY).shape
-        self._divertor_builder.x_limits = [
-            wall_shape.start_point().x[0],
-            wall_shape.end_point().x[0],
-        ]
-        self.divertor = self._divertor_builder()
+        blanket = self._build_blanket(closed_wall_shape)
+        divertor = self._build_divertor(cut_wall_wire)
 
         first_wall = Component(self.name)
-        first_wall.add_child(self._build_xz())
+        first_wall.add_child(self._build_xz(cut_wall, blanket, divertor))
         return first_wall
 
-    def _build_xz(self) -> Component:
+    def _build_wall(self) -> Component:
+        """Build the first wall component."""
+        build_config = deepcopy(self._build_config)
+        build_config.update({"name": self.COMPONENT_WALL})
+        keep_out_zone = self._make_wall_keep_out_zone(geom_offset=0.2, psi_n=1.05)
+        builder = WallBuilder(
+            self.params, build_config=build_config, keep_out_zone=keep_out_zone
+        )
+        return builder()
+
+    def _build_blanket(self, wall_shape) -> Component:
         """
-        Build the component in the xz-plane.
+        Build the blanket thickness component.
+
+        The input wall shape must be closed, i.e., do not cut the wall
+        below the x-point before passing it into this function.
+        """
+        build_config = deepcopy(self._build_config)
+        build_config.update({"name": self.COMPONENT_BLANKET})
+        build_config.pop("runmode", None)
+        blanket_builder = BlanketBuilder(
+            self.params,
+            build_config,
+            wall_shape,
+            self.x_points[0].z,
+        )
+        return blanket_builder()
+
+    def _build_divertor(self, wall: BluemiraWire) -> Component:
+        """Build the divertor silhouette component tree."""
+        build_config = deepcopy(self._build_config)
+        build_config.update({"name": self.COMPONENT_DIVERTOR})
+        build_config.pop("runmode", None)
+
+        x_lims = (wall.start_point().x[0], wall.end_point().x[0])
+        builder = DivertorBuilder(
+            self.params,
+            build_config,
+            equilibrium=self.equilibrium,
+            x_limits=x_lims,
+        )
+        return builder()
+
+    def _build_xz(self, wall, blanket, divertor) -> Component:
+        """
+        Build the component tree in the xz-plane.
         """
         parent_component = Component("xz")
-
-        # Extract the xz components in the wall
-        wall_xz = self.wall.get_component("xz")
+        wall_xz = wall.get_component("xz")
         Component(
             self.COMPONENT_WALL,
             parent=parent_component,
             children=list(wall_xz.children),
         )
-
-        blanket_xz_component = self.blanket.get_component("xz")
+        blanket_xz_component = blanket.get_component("xz")
         Component(
             self.COMPONENT_BLANKET,
             parent=parent_component,
             children=list(blanket_xz_component.children),
         )
-
-        # Extract the xz components in the divertor
-        divertor_xz_component = self.divertor.get_component("xz")
+        divertor_xz_component = divertor.get_component("xz")
         Component(
             self.COMPONENT_DIVERTOR,
             parent=parent_component,
@@ -196,38 +239,8 @@ class InVesselComponentBuilder(Builder):
         )
         return parent_component
 
-    def _init_wall_builder(
-        self, params: Dict[str, Any], build_config: BuildConfig
-    ) -> WallBuilder:
-        """
-        Initialize the wall builder.
-        """
-        build_config = deepcopy(build_config)
-        build_config.update({"name": self.COMPONENT_WALL})
-        keep_out_zone = self._make_wall_keep_out_zone(geom_offset=0.2, psi_n=1.05)
-        return WallBuilder(
-            params, build_config=build_config, keep_out_zone=keep_out_zone
-        )
-
-    def _init_divertor_builder(
-        self, params: Dict[str, Any], build_config: BuildConfig
-    ) -> DivertorBuilder:
-        """
-        Initialize the divertor builder.
-        """
-        build_config = deepcopy(build_config)
-        build_config.update({"name": self.COMPONENT_DIVERTOR})
-        build_config.pop("runmode", None)
-        return DivertorBuilder(
-            params,
-            build_config,
-            equilibrium=self.equilibrium,
-            # no limits for now, we need to build the wall shape before
-            # we know them
-            x_limits=[],
-        )
-
-    def _cut_wall(self, wall: Component) -> Component:
+    def _cut_wall(self, wall: Component) -> Tuple[Component, BluemiraWire]:
+        """Cut the given wall component below the equilibrium's x-point."""
         # Cut wall below x-point in xz, a divertor will be put in the
         # space
         wall_xz = wall.get_component("xz")
@@ -244,7 +257,7 @@ class InVesselComponentBuilder(Builder):
         wall_xz.add_child(
             PhysicalComponent(WallBuilder.COMPONENT_WALL_BOUNDARY, cut_shape)
         )
-        return wall
+        return wall, cut_shape
 
     def _make_wall_keep_out_zone(self, geom_offset, psi_n) -> BluemiraWire:
         """
@@ -281,6 +294,9 @@ def build_ivc_xz_shapes(
     """
     Build in-vessel component shapes in the xz-plane.
 
+    This function is intended to be used to create shapes from the
+    component tree outputted by InVesselComponentBuilder.
+
     Takes the blanket boundary, creates a face from it, then cuts away
     the plasma-facing (first wall) shape. It then cuts a remote
     maintainance clearance between the divertor and wall and returns
@@ -308,7 +324,7 @@ def build_ivc_xz_shapes(
     blanket_boundary = _extract_wire(components, BlanketBuilder.COMPONENT_BOUNDARY)
     filled_blanket_face = BluemiraFace(blanket_boundary, label="blanket_face")
     plasma_facing_wire = _build_plasma_facing_wire(components)
-    plasma_facing_face = BluemiraFace(plasma_facing_wire)
+    plasma_facing_face = BluemiraFace(plasma_facing_wire, label="plasma_facing_face")
     in_vessel_face = boolean_cut(filled_blanket_face, [plasma_facing_face])[0]
 
     # Cut a clearance between the blankets and divertor - getting two

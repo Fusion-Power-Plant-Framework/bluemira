@@ -38,6 +38,10 @@ class BlanketBuilder(Builder):
             └── blanket_boundary (PhysicalComponent)
     """
 
+    _required_params = [
+        "tk_bb_ib",  # Inboard blanket thickness
+        "tk_bb_ob",  # Outboard blanket thickness
+    ]
     COMPONENT_BOUNDARY = "blanket_boundary"
 
     def __init__(
@@ -67,8 +71,15 @@ class BlanketBuilder(Builder):
 
     def _build_xz(self) -> Component:
         """Build the components in the xz-plane."""
-        # TODO(hsaunders): add thickness parameters to input params dict
-        boundary_wire = varied_offset(self._wall_shape, 1, 2.5, 45, 175)
+        ib_offset_angle = 45  # degrees
+        ob_offset_angle = 175  # degrees
+        boundary_wire = varied_offset(
+            self._wall_shape,
+            self._params.tk_bb_ib,
+            self._params.tk_bb_ob,
+            ib_offset_angle,
+            ob_offset_angle,
+        )
         xz_component = Component("xz")
         boundary = PhysicalComponent(self.COMPONENT_BOUNDARY, boundary_wire)
         xz_component.add_child(boundary)
