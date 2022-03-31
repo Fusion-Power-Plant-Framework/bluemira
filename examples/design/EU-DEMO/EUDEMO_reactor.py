@@ -35,6 +35,7 @@ from bluemira.base.file import get_bluemira_root
 from bluemira.base.logs import set_log_level
 from bluemira.base.parameter import ParameterEncoder
 from bluemira.builders.cryostat import CryostatBuilder
+from bluemira.builders.EUDEMO.divertor import DivertorBuilder
 from bluemira.builders.EUDEMO.pf_coils import PFCoilsBuilder
 from bluemira.builders.EUDEMO.plasma import PlasmaBuilder, PlasmaComponent
 from bluemira.builders.EUDEMO.reactor import EUDEMOReactor
@@ -496,6 +497,7 @@ ComponentDisplayer().show_cad(component.get_component("xyz", first=False))
 # %%
 sector = Component("Segment View")
 plasma_builder: PlasmaBuilder = reactor.get_builder("Plasma")
+divertor_builder: DivertorBuilder = reactor.get_builder("Divertor")
 tf_coils_builder: TFCoilsBuilder = reactor.get_builder("TF Coils")
 pf_coils_builder: PFCoilsBuilder = reactor.get_builder("PF Coils")
 thermal_shield_builder: ThermalShieldBuilder = reactor.get_builder("Thermal Shield")
@@ -504,6 +506,7 @@ radiation_shield_builder: RadiationShieldBuilder = reactor.get_builder(
     "Radiation Shield"
 )
 sector.add_child(plasma_builder.build_xyz(degree=270))
+sector.add_child(divertor_builder.build_xyz(degree=270))
 sector.add_child(tf_coils_builder.build_xyz(degree=270))
 sector.add_child(pf_coils_builder.build_xyz(degree=270))
 sector.add_child(thermal_shield_builder.build_xyz(degree=270))

@@ -295,8 +295,8 @@ class InVesselComponentBuilder(Builder):
         Make a "keep-out zone" from an equilibrium's divertor legs
         """
         legs = get_legs(self.equilibrium, n_layers=1, dx_off=0.0)
-        ib_leg = make_polygon(legs["lower_inner"][0])
-        ob_leg = make_polygon(legs["lower_outer"][0])
+        ib_leg = make_polygon(legs["lower_inner"][0].xyz)
+        ob_leg = make_polygon(legs["lower_outer"][0].xyz)
 
         p_ib = ib_leg.value_at(distance=leg_length_ib_2D)
 
