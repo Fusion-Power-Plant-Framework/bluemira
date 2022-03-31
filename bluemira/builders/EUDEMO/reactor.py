@@ -264,8 +264,8 @@ class EUDEMOReactor(Reactor):
         bluemira_print(f"Starting design stage: {name}")
 
         default_variables_map = {
-            "x1": {"value": "r_fw_ib_in"},  # ib radius
-            "x2": {"value": "r_fw_ob_in"},  # ob radius
+            "x1": {"value": "r_fw_ib_in", "fixed": True},  # ib radius
+            "x2": {"value": "r_fw_ob_in", "fixed": True},  # ob radius
         }
 
         default_config = {
