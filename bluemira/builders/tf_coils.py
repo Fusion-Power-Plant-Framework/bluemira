@@ -63,7 +63,7 @@ class ParameterisedRippleSolver:
     R_0: float
         Major radius at which to calculate B_0
     z_0: float
-        Vertical coordinate at which to calculcate B_0
+        Vertical coordinate at which to calculate B_0
     B_0: float
         Toroidal field at (R_0, z_0)
     ripple_points: np.ndarray
@@ -84,7 +84,7 @@ class ParameterisedRippleSolver:
     def update_cage(self, wire):
         """
         Update the HelmHoltzCage, setting the current to produce a field of B_0 at
-        R_0, z_0).
+        (R_0, z_0).
 
         Parameters
         ----------
