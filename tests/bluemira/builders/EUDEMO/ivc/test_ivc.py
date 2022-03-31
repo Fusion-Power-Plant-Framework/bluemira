@@ -54,7 +54,7 @@ class TestInVesselComponentBuilder:
     _default_config = {
         "name": "In Vessel Components",
         "param_class": f"{WALL_MODULE_REF}::WallPrincetonD",
-        "problem_class": f"{OPTIMISER_MODULE_REF}::MinimiseLength",
+        "problem_class": f"{OPTIMISER_MODULE_REF}::MinimiseLengthGOP",
         "runmode": "mock",
         "variables_map": _default_variables_map,
     }

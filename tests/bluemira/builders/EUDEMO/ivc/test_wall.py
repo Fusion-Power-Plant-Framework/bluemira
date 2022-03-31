@@ -43,7 +43,7 @@ CONFIG = {
     },
     "runmode": "mock",
     "name": "First Wall",
-    "problem_class": f"{OPTIMISER_MODULE_REF}::MinimiseLength",
+    "problem_class": f"{OPTIMISER_MODULE_REF}::MinimiseLengthGOP",
 }
 PARAMS = {
     "Name": "First Wall Example",
