@@ -111,7 +111,29 @@ class VVTSBuilder(Builder):
         """
         Build the x-y components of the vacuum vessel thermal shield.
         """
-        pass
+        x_min = self._vv_koz.bounding_box.x_min
+        r_in_ib = x_min - self._params.g_vv_ts.value
+        r_out_ib = r_in_ib - self._params.tk_ts.value
+        inner = make_circle(radius=r_in_ib)
+        outer = make_circle(radius=r_out_ib)
+
+        vvts_ib_face = BluemiraFace([outer, inner])
+        vvts_ib = PhysicalComponent("inboard", vvts_ib_face)
+        vvts_ib.plot_options.face_options["color"] = BLUE_PALETTE["TS"][0]
+
+        x_max = self._vv_koz.bounding_box.x_max
+        r_in_ob = x_min + self._params.g_vv_ts.value
+        r_out_ob = r_in_ob + self._params.tk_ts.value
+        inner = make_circle(radius=r_in_ob)
+        outer = make_circle(radius=r_out_ob)
+
+        vvts_ob_face = BluemiraFace([outer, inner])
+        vvts_ob = PhysicalComponent("outboard", vvts_ob_face)
+        vvts_ob.plot_options.face_options["color"] = BLUE_PALETTE["TS"][0]
+
+        component = Component("xy", children=[vvts_ib])
+        bm_plot_tools.set_component_view(component, "xy")
+        return component
 
     def build_xyz(self, degree=360.0):
         """
