@@ -91,18 +91,19 @@ class VVTSBuilder(Builder):
         """
         Build the x-z components of the vacuum vessel thermal shield.
         """
-        vv_ts_inner_wire = offset_wire(
+        vvts_inner_wire = offset_wire(
             self._vv_koz, self._params.g_vv_ts.value, join="arc", open_wire=False
         )
-        vv_ts_outer_wire = offset_wire(
-            vv_ts_inner_wire, self._params.tk_ts.value, join="arc", open_wire=False
+        vvts_outer_wire = offset_wire(
+            vvts_inner_wire, self._params.tk_ts.value, join="arc", open_wire=False
         )
-        vv_ts_face = BluemiraFace([vv_ts_outer_wire, vv_ts_inner_wire])
-        vv_ts = PhysicalComponent("VVTS", vv_ts_face)
+        vvts_face = BluemiraFace([vvts_outer_wire, vvts_inner_wire])
+        self._vvts_face = vvts_face
+        vvts = PhysicalComponent("VVTS", vvts_face)
 
-        vv_ts.plot_options.face_options["color"] = BLUE_PALETTE["TS"][0]
+        vvts.plot_options.face_options["color"] = BLUE_PALETTE["TS"][0]
 
-        component = Component("xz", children=[vv_ts])
+        component = Component("xz", children=[vvts])
         bm_plot_tools.set_component_view(component, "xz")
         return component
 
@@ -112,11 +113,30 @@ class VVTSBuilder(Builder):
         """
         pass
 
-    def build_xyz(self):
+    def build_xyz(self, degree=360.0):
         """
-        Build the x-y-z components of the vacuum vessel thermal shield.
+        Build the x-y-z components of the vacuum vessel thermal shield
         """
-        pass
+        n_ts_draw = max(1, int(degree // (360 // self._params.n_TF.value)))
+        degree = (360.0 / self._params.n_TF.value) * n_ts_draw
+
+        component = Component("xyz")
+        vvts_face = self._vvts_face.deepcopy()
+        base = (0, 0, 0)
+        direction = (0, 0, 1)
+        shape = revolve_shape(
+            vvts_face,
+            base=base,
+            direction=direction,
+            degree=360 / self._params.n_TF.value,
+        )
+
+        vvts_body = PhysicalComponent("VVTS", shape)
+        vvts_body.display_cad_options.color = BLUE_PALETTE["TS"][0]
+        sectors = circular_pattern_component(vvts_body, n_ts_draw, degree=degree)
+        component.add_children(sectors, merge_trees=True)
+
+        return component
 
 
 class ThermalShieldBuilder(Builder):
