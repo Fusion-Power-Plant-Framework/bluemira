@@ -29,7 +29,8 @@ from bluemira.base.components import Component, PhysicalComponent
 from bluemira.base.design import Reactor
 from bluemira.base.look_and_feel import bluemira_print
 from bluemira.builders.cryostat import CryostatBuilder
-from bluemira.builders.EUDEMO.first_wall import FirstWallBuilder
+from bluemira.builders.EUDEMO.ivc import InVesselComponentBuilder
+from bluemira.builders.EUDEMO.ivc.ivc import build_ivc_xz_shapes
 from bluemira.builders.EUDEMO.pf_coils import PFCoilsBuilder
 from bluemira.builders.EUDEMO.plasma import PlasmaBuilder
 from bluemira.builders.EUDEMO.tf_coils import TFCoilsBuilder
@@ -48,7 +49,7 @@ class EUDEMOReactor(Reactor):
     PLASMA = "Plasma"
     TF_COILS = "TF Coils"
     PF_COILS = "PF Coils"
-    FIRST_WALL = "First Wall"
+    IVC = "In-Vessel Components"
     THERMAL_SHIELD = "Thermal Shield"
     CRYOSTAT = "Cryostat"
     RADIATION_SHIELD = "Radiation Shield"
@@ -63,7 +64,6 @@ class EUDEMOReactor(Reactor):
         component.add_child(self.build_plasma())
         component.add_child(self.build_TF_coils(component))
         component.add_child(self.build_PF_coils(component))
-        component.add_child(self.build_first_wall(component))
         component.add_child(self.build_thermal_shield(component))
         component.add_child(self.build_cryostat(component))
         component.add_child(self.build_radiation_shield(component))
@@ -251,11 +251,11 @@ class EUDEMOReactor(Reactor):
 
         return component
 
-    def build_first_wall(self, component_tree: Component, **kwargs):
+    def build_in_vessel_component_shapes(self, component_tree: Component):
         """
-        Run the first wall builder.
+        Run the in-vessel component builder.
         """
-        name = EUDEMOReactor.FIRST_WALL
+        name = EUDEMOReactor.IVC
 
         bluemira_print(f"Starting design stage: {name}")
 
@@ -266,14 +266,14 @@ class EUDEMOReactor(Reactor):
 
         default_config = {
             "algorithm_name": "SLSQP",
-            "name": self.FIRST_WALL,
+            "name": self.IVC,
             "opt_conditions": {
                 "ftol_rel": 1e-6,
                 "max_eval": 100,
                 "xtol_abs": 1e-8,
                 "xtol_rel": 1e-8,
             },
-            "param_class": "bluemira.builders.EUDEMO.first_wall::WallPrincetonD",
+            "param_class": "bluemira.builders.EUDEMO.ivc::WallPrincetonD",
             "problem_class": "bluemira.geometry.optimisation::MinimiseLength",
             "runmode": "run",
             "variables_map": default_variables_map,
@@ -282,14 +282,16 @@ class EUDEMOReactor(Reactor):
         config = self._process_design_stage_config(name, default_config)
 
         plasma = component_tree.get_component(self.PLASMA)
-        builder = FirstWallBuilder(
+        builder = InVesselComponentBuilder(
             self._params.to_dict(), build_config=config, equilibrium=plasma.equilibrium
         )
         self.register_builder(builder, name)
 
         component = super()._build_stage(name)
         bluemira_print(f"Completed design stage: {name}")
-        return component
+        # TODO(hsaunders1904): this is not functional at the moment,
+        # need to check parameter access is correct
+        return build_ivc_xz_shapes(component, self._params.c_rm.value)
 
     def build_cryostat(self, component_tree: Component):
         """
