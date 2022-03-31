@@ -72,7 +72,8 @@ def ad_objective(vector, grad, objective, objective_args, ad_args=None):
 
     Returns
     -------
-    fom: Value of objective function (figure of merit).
+    fom: float
+        Value of objective function (figure of merit).
     """
     fom = objective(vector, grad, **objective_args)
     if grad.size > 0:
@@ -96,10 +97,19 @@ def regularised_lsq_objective(vector, grad, scale, a_mat, b_vec, gamma):
     grad: np.array
         Local gradient of objective function used by LD NLOPT algorithms.
         Updated in-place.
+    scale: float
+        Scaling factor for the vector
+    a_mat: np.array(n, m)
+        The 2-D a_mat control matrix A
+    b_vec: np.array(n)
+        The 1-D b vector of target values
+    gamma: float
+        The Tikhonov regularisation parameter.
 
     Returns
     -------
-    fom: Value of objective function (figure of merit).
+    fom: float
+        Value of objective function (figure of merit).
     """
     vector = vector * scale
     fom, err = regularised_lsq_fom(vector, a_mat, b_vec, gamma)
@@ -113,6 +123,60 @@ def regularised_lsq_objective(vector, grad, scale, a_mat, b_vec, gamma):
             "Optimiser least-squares objective function less than zero or nan."
         )
     return fom
+
+
+def minimise_coil_currents(vector, grad):
+    """
+    Objective function for the minimisation of the sum of coil currents squared
+
+    Parameters
+    ----------
+    vector: np.ndarray
+        State vector of the array of coil currents.
+    grad: np.array
+        Local gradient of objective function used by LD NLOPT algorithms.
+        Updated in-place.
+
+    Returns
+    -------
+    sum_sq_currents: float
+        Sum of the currents squared.
+    """
+    sum_sq_currents = np.sum(vector**2)
+
+    if grad.size > 0:
+        grad[:] = 2 * vector
+
+    return sum_sq_currents
+
+
+def maximise_flux(vector, grad, c_psi_mat, scale):
+    """
+    Objective function to maximise flux
+
+    Parameters
+    ----------
+    vector: np.ndarray
+        State vector of the array of coil currents.
+    grad: np.array
+        Local gradient of objective function used by LD NLOPT algorithms.
+        Updated in-place.
+    c_psi_mat: np.ndarray
+        Response matrix of the coil psi contributions to the point at which the flux
+        should be maximised
+    scale: float
+        Scaling factor for the vector
+
+    Returns
+    -------
+    psi: float
+        Psi value at the point
+    """
+    psi = -scale * c_psi_mat @ vector
+    if grad.size > 0:
+        grad[:] = -scale * c_psi_mat
+
+    return psi
 
 
 # =============================================================================

@@ -42,7 +42,7 @@ from pandas import DataFrame
 from pint import Unit
 from tabulate import tabulate
 
-from bluemira.base.constants import ureg
+from bluemira.base.constants import raw_uc
 from bluemira.base.error import ParameterError
 from bluemira.base.look_and_feel import bluemira_debug, bluemira_warn
 from bluemira.utilities.tools import json_writer
@@ -59,9 +59,7 @@ def _unitify(unit: Union[str, Unit]) -> Unit:
     """
     Convert string to pint Unit and have custom error messages
     """
-    if isinstance(unit, Unit):
-        return unit
-    if isinstance(unit, str):
+    if isinstance(unit, (Unit, str)):
         return Unit(unit)
     raise TypeError(f"Unknown unit type {type(unit)}")
 
@@ -84,8 +82,8 @@ class ParameterMapping:
     """
 
     name: str
-    recv: bool = True
     send: bool = True
+    recv: bool = True
     unit: Optional[str] = None
 
     _frozen = ()
@@ -102,8 +100,8 @@ class ParameterMapping:
         """
         return {
             "name": self.name,
-            "recv": self.recv,
             "send": self.send,
+            "recv": self.recv,
             "unit": self.unit.format_babel()
             if isinstance(self.unit, Unit)
             else self.unit,
@@ -1332,12 +1330,29 @@ class ParameterFrame:
 
     @staticmethod
     def _from_iterable(value):
+        """
+        Organise a value into value source unit.
+
+        Parameters
+        ----------
+        value: Union[List, Tuple, Dict, Parameter]
+
+        Returns
+        -------
+        value, source, unit
+
+        Notes
+        -----
+        Attempts to parse out source and unit from the value.
+        If value is a list of two or three elements it assumes
+        [value, source, unit] ordering which could be a source of errors.
+
+        """
         if (
             isinstance(value, (list, tuple))
             and len(value) in [2, 3]
             and isinstance(value[1], (str, type(None)))
         ):
-            bluemira_debug("Consider using a dictionary for ordering safety")
             unit = value[2] if len(value) == 3 else None
             source = value[1]
             value = value[0]
@@ -1432,12 +1447,11 @@ class ParameterFrame:
                 self.__get_unit_to(unit_to, value.unit, force),
                 value,
                 source,
-                self.__raw_unit_converter,
             )
         elif None not in [unit_to, unit_from]:
             unit_to = _unitify(unit_to)
             unit_from = _unitify(unit_from)
-            return self.__raw_unit_converter(value, unit_from, unit_to)
+            return raw_uc(value, unit_from, unit_to)
         else:
             return value
 
@@ -1452,23 +1466,18 @@ class ParameterFrame:
         return unit_to
 
     @staticmethod
-    def __modify_value(unit_from, unit_to, value, source, converter):
+    def __modify_value(unit_from, unit_to, value, source):
         if unit_from is not None:
             unit_from = _unitify(unit_from)
 
             if unit_to == unit_from:
                 return value
-            value.value = converter(value.value, unit_from, unit_to)
+            value.value = raw_uc(value.value, unit_from, unit_to)
             value.source = (
                 f"{source if source is not None else ''}: "
                 f"Units converted from {unit_from.format_babel()} to {unit_to.format_babel()}"
             )
         return value
-
-    @staticmethod
-    def __raw_unit_converter(value, unit_from, unit_to):
-        # TODO if temperature conversion use constants converters
-        return ureg.Quantity(value, unit_from).to(unit_to).magnitude
 
     def to_dict(self, verbose=False) -> dict:
         """

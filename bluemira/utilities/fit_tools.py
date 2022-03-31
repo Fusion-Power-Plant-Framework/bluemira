@@ -21,6 +21,7 @@
 """
 Fitting tools
 """
+from typing import List
 
 import numpy as np
 from scipy.linalg import lstsq
@@ -74,7 +75,6 @@ def surface_fit(x, y, z, order: int = 2, n_grid: int = 30):
 
     eq_matrix = poly.fit_transform(np.c_[x, y])
 
-    # Ordering the array is harder than the actual fit!
     index = powers_arange(poly.powers_)
     eq_matrix = eq_matrix[:, index]
 
@@ -97,14 +97,14 @@ def surface_fit(x, y, z, order: int = 2, n_grid: int = 30):
     return x2d, y2d, zz, coeffs, r2_score(z, z_predicted)
 
 
-def powers_arange(powers):
+def powers_arange(powers: np.ndarray) -> List:
     """
     Reorder powers index to order by power from 1st to nth index.
 
     Parameters
     ----------
     powers: np.ndarray
-        array of powers (from `PolynomialFeatures().powers_`)
+        array of powers
 
     Returns
     -------
@@ -112,50 +112,8 @@ def powers_arange(powers):
         index to rearrange array
 
     """
-
-    def max_index(pl):
-        index_order = []
-        for mx in range(pl.shape[1]):
-            index_order += [pl[:, mx].argmax()]
-        return index_order
-
-    def remain_list(p_len, index_order):
-        return list(set(p_len) - set(index_order))
-
-    reorder_list = []
-    glob_list = []
-    for i, p in enumerate(np.append(powers, np.atleast_2d(np.zeros(2)), axis=0)):
-        if powers[i - 1].sum() == p.sum():
-            # Add index of equal power sum to list
-            if reorder_list == []:
-                # Add first one to index
-                reorder_list += [i - 1]
-            reorder_list += [i]
-        elif reorder_list != []:
-            reorder_list = np.array(reorder_list)
-
-            # Change order of max powers in reorder_list
-            p_list = powers[reorder_list]
-            p_len = np.arange(len(p_list))
-
-            index_order = max_index(p_list)
-            rem_list = np.array(remain_list(p_len, index_order))
-
-            # Change order of < max power in reorder_list
-            while len(rem_list) > 1:
-                reo_l = reorder_list[rem_list]
-                index_order += rem_list[max_index(powers[reo_l])].tolist()
-                rem_list = remain_list(p_len, index_order)
-
-            # Single value remaining in odd lengthed reorder_list
-            if len(rem_list) > 0:
-                index_order += [rem_list[0]]
-
-            glob_list = reorder_list[index_order].tolist() + glob_list
-
-            reorder_list = []
-
-    # Add powers [0, 0] to index
-    glob_list += [0]
-
-    return glob_list
+    return sorted(
+        range(powers.shape[0]),
+        key=lambda x: (np.sum(powers[x]), np.max(powers[x])),
+        reverse=True,
+    )

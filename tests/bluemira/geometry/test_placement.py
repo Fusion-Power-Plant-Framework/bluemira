@@ -32,8 +32,8 @@ class TestPlacement:
         xy_placement_2 = BluemiraPlacement.from_3_points(
             [0, 0, 0], [1, -1, 0], [1, 1, 0]
         )
-        assert xy_placement.axis == xy_placement_2.axis
-        assert xy_placement.base == xy_placement_2.base
+        assert np.allclose(xy_placement.axis, xy_placement_2.axis)
+        assert np.allclose(xy_placement.base, xy_placement_2.base)
         assert xy_placement.angle == xy_placement_2.angle
 
     def test_instantiation_xz(self):
@@ -41,8 +41,8 @@ class TestPlacement:
         xz_placement_2 = BluemiraPlacement.from_3_points(
             [0, 0, 0], [1, 0, -1], [1, 0, 1]
         )
-        assert xz_placement.axis == xz_placement_2.axis
-        assert xz_placement.base == xz_placement_2.base
+        assert np.allclose(xz_placement.axis, xz_placement_2.axis)
+        assert np.allclose(xz_placement.base, xz_placement_2.base)
         assert xz_placement.angle == xz_placement_2.angle
 
     def test_instantiation_yz(self):
@@ -50,8 +50,8 @@ class TestPlacement:
         yz_placement_2 = BluemiraPlacement.from_3_points(
             [0, 0, 0], [0, 1, -1], [0, 1, 1]
         )
-        assert yz_placement.axis == yz_placement_2.axis
-        assert yz_placement.base == yz_placement_2.base
+        assert np.allclose(yz_placement.axis, yz_placement_2.axis)
+        assert np.allclose(yz_placement.base, yz_placement_2.base)
         assert yz_placement.angle == yz_placement_2.angle
 
     def test_instantiation_xyz(self):
@@ -60,7 +60,7 @@ class TestPlacement:
             [0, 0, 0], [1, -1, 0], [1, 0, -1]
         )
         assert np.allclose(xyz_placement.axis, xyz_placement_2.axis)
-        assert xyz_placement.base == xyz_placement_2.base
+        assert np.allclose(xyz_placement.base, xyz_placement_2.base)
         assert xyz_placement.angle == xyz_placement_2.angle
 
     def test_colinear(self):

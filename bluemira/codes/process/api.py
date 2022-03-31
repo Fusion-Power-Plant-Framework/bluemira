@@ -22,17 +22,14 @@
 """
 PROCESS api
 """
-
 import os
 
 from bluemira.base.file import get_bluemira_path
 from bluemira.base.look_and_feel import bluemira_print, bluemira_warn
 from bluemira.utilities.tools import flatten_iterable
 
-ENABLED = True
 
-
-# Create dummy PROCESS objects.
+# Create dummy PROCESS objects.required here for docs to build properly
 class MFile:
     """
     Dummy  MFile Class. Replaced by PROCESS import if PROCESS installed.
@@ -51,25 +48,18 @@ class InDat:
         self.filename = filename
 
 
-def get_dicts():
-    """
-    Dummy get_dicts function. Replaced by PROCESS import if PROCESS installed.
-    """
-    pass
-
-
 OBS_VARS = dict()
 PROCESS_DICT = dict()
 
-# Import PROCESS objects, override the above dummy objects if PROCESS installed.
-# Note: noqa used to ignore "redefinition of unused variable" errors.
 try:
-    from process.io.in_dat import InDat  # noqa: F811,F40
-    from process.io.mfile import MFile  # noqa: F811,F401
-    from process.io.python_fortran_dicts import get_dicts  # noqa: F811
+    from process.io.in_dat import InDat  # noqa: F401, F811
+    from process.io.mfile import MFile  # noqa: F401, F811
+    from process.io.python_fortran_dicts import get_dicts
+
+    ENABLED = True
 except (ModuleNotFoundError, FileNotFoundError):
-    ENABLED = False
     bluemira_warn("PROCESS not installed on this machine; cannot run PROCESS.")
+    ENABLED = False
 
 # Get dict of obsolete vars from PROCESS (if installed)
 if ENABLED:
@@ -79,33 +69,13 @@ if ENABLED:
         bluemira_warn(
             "The OBS_VAR dict is not installed in your PROCESS installed version"
         )
-    # Load dicts from dicts JSON file
+
     PROCESS_DICT = get_dicts()
+
 
 DEFAULT_INDAT = os.path.join(
     get_bluemira_path("codes/process"), "PROCESS_DEFAULT_IN.DAT"
 )
-
-PTOBUNITS = {
-    "a": "A",
-    "a/m2": "A/m^2",
-    "h": "H",
-    "k": "K",
-    "kw": "kW",
-    "m": "m",
-    "m2": "m^2",
-    "m3": "m^3",
-    "mpa": "MPa",
-    "mw": "MW",
-    "ohm": "Ohm",
-    "pa": "Pa",
-    "v": "V",
-    "kv": "kV",
-    "w": "W",
-    "wb": "Wb",
-}
-
-BTOPUNITS = {val: key for key, val in PTOBUNITS.items()}
 
 
 def update_obsolete_vars(process_map_name: str) -> str:
@@ -147,18 +117,3 @@ def _nested_check(process_name):
                 names += [_nested_check(p)]
             return list(flatten_iterable(names))
     return process_name
-
-
-def convert_unit_p_to_b(s):
-    """
-    Conversion from PROCESS units to bluemira units
-    Handles text formatting only
-    """
-    return PTOBUNITS.get(s, s)
-
-
-def convert_unit_b_to_p(s):
-    """
-    Conversion from bluemira units to PROCESS units
-    """
-    return BTOPUNITS.get(s, s)

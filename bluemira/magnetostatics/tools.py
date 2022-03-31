@@ -122,6 +122,22 @@ def process_loop_array(shape):
     return shape
 
 
+def process_to_coordinates(shape):
+    """
+    Parse input to Coordinates
+
+    Raises
+    ------
+    CoordinatesError: if the type could not be parsed, or if the input was bad.
+    """
+    if isinstance(shape, Coordinates):
+        return shape
+    elif isinstance(shape, Loop) or shape.__class__.__name__ == "Loop":
+        return Coordinates(shape.xyz)
+    else:
+        return Coordinates(shape)
+
+
 def jit_llc7(f_integrand):
     """
     Decorator for 6-argument integrand function to a low-level callable.

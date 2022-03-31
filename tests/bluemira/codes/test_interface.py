@@ -48,6 +48,30 @@ class TestTask:
             task._run_subprocess("random command", shell=e_dict["shell"])  # noqa :S604
 
 
+class TestSetup:
+
+    _remapper_dict = {"a": "a", "b": ["b", "d"], "c": "c"}
+
+    def _remapper(val):  # noqa: N805
+        if val == "b":
+            return ["b", "d"]
+        else:
+            return val
+
+    def test_get_new_input_raises_TypeError(self):
+        with pytest.raises(TypeError):
+            interface.Setup.get_new_inputs(MagicMock(), "hello")
+
+    @pytest.mark.parametrize("remapper", [_remapper_dict, _remapper])
+    def test_get_new_input_many_from_one(self, remapper):
+        fake_self = MagicMock()
+        fake_self._send_mapping = {"a": "b", "b": "c", "c": "d"}
+        fake_self._convert_units = lambda x: x
+        fake_self.params.get_param = lambda x: x
+        inputs = interface.Setup.get_new_inputs(fake_self, remapper)
+        assert inputs == {"a": "b", "b": "c", "d": "c", "c": "d"}
+
+
 class TestFileProgramInterface:
     def test_modify_mappings(self, caplog):
         my_self = MagicMock()

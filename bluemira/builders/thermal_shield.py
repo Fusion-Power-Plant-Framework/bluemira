@@ -171,7 +171,7 @@ class ThermalShieldBuilder(Builder):
         cryostat_ts.plot_options.face_options["color"] = BLUE_PALETTE["TS"][0]
 
         component = Component("xz", children=[cryostat_ts])
-        bm_plot_tools.set_component_plane(component, "xz")
+        bm_plot_tools.set_component_view(component, "xz")
         return component
 
     def build_xy(self):
@@ -192,7 +192,7 @@ class ThermalShieldBuilder(Builder):
         cryostat_ts.plot_options.face_options["color"] = BLUE_PALETTE["TS"][0]
 
         component = Component("xy", children=[cryostat_ts])
-        bm_plot_tools.set_component_plane(component, "xy")
+        bm_plot_tools.set_component_view(component, "xy")
         return component
 
     def build_xyz(self, degree=360.0) -> Component:

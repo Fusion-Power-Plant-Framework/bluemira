@@ -63,7 +63,7 @@ def get_separatrix_legs(
     return separatrix_legs
 
 
-class DivertorBuilder(Builder):
+class DivertorSilhouetteBuilder(Builder):
     """
     Build an EUDEMO divertor.
 
@@ -313,7 +313,7 @@ class DivertorBuilder(Builder):
         Get the coordinates of the end of a wire with largest value in
         the given dimension
         """
-        return DivertorBuilder._get_wire_end(wire, axis, operator.lt)
+        return DivertorSilhouetteBuilder._get_wire_end(wire, axis, operator.lt)
 
     @staticmethod
     def _get_wire_end_with_largest(wire: BluemiraWire, axis: str) -> np.ndarray:
@@ -321,7 +321,7 @@ class DivertorBuilder(Builder):
         Get the coordinates of the end of a wire with largest value in
         the given dimension
         """
-        return DivertorBuilder._get_wire_end(wire, axis, operator.gt)
+        return DivertorSilhouetteBuilder._get_wire_end(wire, axis, operator.gt)
 
     @staticmethod
     def _get_wire_end(wire: BluemiraWire, axis: str, comp: Callable):
