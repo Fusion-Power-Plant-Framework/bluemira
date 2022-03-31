@@ -277,7 +277,7 @@ class EUDEMOReactor(Reactor):
                 "xtol_abs": 1e-8,
                 "xtol_rel": 1e-8,
             },
-            "param_class": "bluemira.builders.EUDEMO.ivc::WallPrincetonD",
+            "param_class": "bluemira.builders.EUDEMO.ivc::WallPolySpline",
             "problem_class": "bluemira.geometry.optimisation::MinimiseLengthGOP",
             "runmode": "run",
             "variables_map": default_variables_map,
