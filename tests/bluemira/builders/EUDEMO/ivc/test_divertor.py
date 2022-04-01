@@ -65,6 +65,7 @@ class TestDivertorSilhouetteBuilder:
     def setup_method(self):
         self.params = copy.deepcopy(self._default_params)
         self.x_lims = [5, 11]
+        self.z_lims = [self.x_points[0][1], self.x_points[0][1]]
 
     def test_no_BuilderError_on_init_given_valid_params(self):
         try:
@@ -85,14 +86,14 @@ class TestDivertorSilhouetteBuilder:
 
         with pytest.raises(BuilderError):
             DivertorSilhouetteBuilder(
-                self.params, {"name": "some_name"}, self.eq, self.x_lims
+                self.params, {"name": "some_name"}, self.eq, self.x_lims, self.z_lims
             )
 
     def test_new_builder_sets_leg_lengths(self):
         self.params.update({"div_L2D_ib": 5, "div_L2D_ob": 10})
 
         builder = DivertorSilhouetteBuilder(
-            self.params, {"name": "some_name"}, self.eq, self.x_lims
+            self.params, {"name": "some_name"}, self.eq, self.x_lims, self.z_lims
         )
 
         assert builder.leg_length[LegPosition.INNER] == 5
@@ -100,7 +101,7 @@ class TestDivertorSilhouetteBuilder:
 
     def test_targets_intersect_separatrix(self):
         builder = DivertorSilhouetteBuilder(
-            self.params, {"name": "some_name"}, self.eq, self.x_lims
+            self.params, {"name": "some_name"}, self.eq, self.x_lims, self.z_lims
         )
 
         divertor = builder()
@@ -112,7 +113,7 @@ class TestDivertorSilhouetteBuilder:
     def test_target_length_set_by_parameter(self):
         self.params.update({"div_Ltarg": 1.5})
         builder = DivertorSilhouetteBuilder(
-            self.params, {"name": "some_name"}, self.eq, self.x_lims
+            self.params, {"name": "some_name"}, self.eq, self.x_lims, self.z_lims
         )
 
         divertor = builder()
@@ -123,7 +124,7 @@ class TestDivertorSilhouetteBuilder:
 
     def test_dome_added_to_divertor(self):
         builder = DivertorSilhouetteBuilder(
-            self.params, {"name": "some_name"}, self.eq, self.x_lims
+            self.params, {"name": "some_name"}, self.eq, self.x_lims, self.z_lims
         )
 
         divertor = builder()
@@ -134,7 +135,7 @@ class TestDivertorSilhouetteBuilder:
 
     def test_dome_intersects_targets(self):
         builder = DivertorSilhouetteBuilder(
-            self.params, {"name": "some_name"}, self.eq, self.x_lims
+            self.params, {"name": "some_name"}, self.eq, self.x_lims, self.z_lims
         )
 
         divertor = builder()
@@ -146,7 +147,7 @@ class TestDivertorSilhouetteBuilder:
 
     def test_dome_does_not_intersect_separatrix(self):
         builder = DivertorSilhouetteBuilder(
-            self.params, {"name": "some_name"}, self.eq, self.x_lims
+            self.params, {"name": "some_name"}, self.eq, self.x_lims, self.z_lims
         )
 
         divertor = builder()
@@ -156,7 +157,7 @@ class TestDivertorSilhouetteBuilder:
 
     def test_SN_lower_dome_has_turning_point_below_x_point(self):
         builder = DivertorSilhouetteBuilder(
-            self.params, {"name": "some_name"}, self.eq, self.x_lims
+            self.params, {"name": "some_name"}, self.eq, self.x_lims, self.z_lims
         )
         x_points, _ = self.eq.get_OX_points()
 
@@ -171,7 +172,7 @@ class TestDivertorSilhouetteBuilder:
 
     def test_inner_baffle_has_end_at_lower_x_limit(self):
         builder = DivertorSilhouetteBuilder(
-            self.params, {"name": "some_name"}, self.eq, self.x_lims
+            self.params, {"name": "some_name"}, self.eq, self.x_lims, self.z_lims
         )
 
         divertor = builder()
@@ -198,7 +199,7 @@ class TestDivertorSilhouetteBuilder:
     @pytest.mark.parametrize("side", ("INNER", "OUTER"))
     def test_baffle_and_target_intersect(self, side):
         builder = DivertorSilhouetteBuilder(
-            self.params, {"name": "some_name"}, self.eq, self.x_lims
+            self.params, {"name": "some_name"}, self.eq, self.x_lims, self.z_lims
         )
 
         divertor = builder()
@@ -213,7 +214,7 @@ class TestDivertorSilhouetteBuilder:
 
     def test_setting_x_limits_after_init_sets_start_and_end_points(self):
         builder = DivertorSilhouetteBuilder(
-            self.params, {"name": "some_name"}, self.eq, []
+            self.params, {"name": "some_name"}, self.eq, [], []
         )
 
         builder.x_limits = self.x_lims
@@ -233,7 +234,7 @@ class TestDivertorSilhouetteBuilder:
     @pytest.mark.parametrize("x_lims", [[], None, ()])
     def test_BuilderError_on_call_given_x_limits_empty(self, x_lims):
         builder = DivertorSilhouetteBuilder(
-            self.params, {"name": "some_name"}, self.eq, x_lims
+            self.params, {"name": "some_name"}, self.eq, x_lims, self.z_lims
         )
 
         with pytest.raises(BuilderError):
