@@ -146,7 +146,7 @@ class VacuumVesselBuilder(Builder):
         vv_outboard.plot_options.face_options["color"] = BLUE_PALETTE["VV"][0]
 
         component = Component("xy", children=[vv_inboard, vv_outboard])
-        bm_plot_tools.set_component_plane(component, "xy")
+        bm_plot_tools.set_component_view(component, "xy")
         return component
 
     def build_xyz(self, degree=360.0) -> Component:
