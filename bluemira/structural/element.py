@@ -153,18 +153,6 @@ def local_k(EA, EIyy, EIzz, L, GJ):  # noqa (N803)
     return _k_array(k11, k22, k33, k44, k55, k66, k35, k26, k511, k612)
 
 
-def local_sigma(e_modulus, nu):
-    """
-    Material matrix
-    """
-    d = np.eye(6)
-    for i in range(3, 6):
-        d[i, i] = (1 - 2 * nu) / 2
-    for i, j in zip([0, 0, 1, 1, 2, 2], [1, 2, 0, 2, 0, 1]):
-        d[i, j] = -nu
-    return e_modulus / ((1 + nu) * (1 - 2 * nu)) * d
-
-
 class Element:
     """
     A 3-D beam element (Euler-Bernoulli type)
