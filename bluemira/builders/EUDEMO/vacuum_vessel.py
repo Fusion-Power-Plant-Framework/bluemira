@@ -127,20 +127,20 @@ class VacuumVesselBuilder(Builder):
         """
         center = (0, 0, 0)
         axis = (0, 0, 1)
-        degree = 360
-        r_ib_in = self._params.r_vv_ib_in.value
-        r_ib_out = r_ib_in + self._params.tk_vv_in.value
+
+        r_ib_out = self._params.r_vv_ib_in.value
+        r_ib_in = r_ib_out - self._params.tk_vv_in.value
         r_ob_in = self._params.r_vv_ob_in.value
         r_ob_out = r_ob_in + self._params.tk_vv_out.value
 
-        ib_inner = make_circle(r_ib_in, center=center, axis=axis, end_angle=degree)
-        ib_outer = make_circle(r_ib_out, center=center, axis=axis, end_angle=degree)
+        ib_inner = make_circle(r_ib_in, center=center, axis=axis)
+        ib_outer = make_circle(r_ib_out, center=center, axis=axis)
         inboard = BluemiraFace([ib_outer, ib_inner])
         vv_inboard = PhysicalComponent("inboard", inboard)
         vv_inboard.plot_options.face_options["color"] = BLUE_PALETTE["VV"][0]
 
-        ob_inner = make_circle(r_ob_in, center=center, axis=axis, end_angle=degree)
-        ob_outer = make_circle(r_ob_out, center=center, axis=axis, end_angle=degree)
+        ob_inner = make_circle(r_ob_in, center=center, axis=axis)
+        ob_outer = make_circle(r_ob_out, center=center, axis=axis)
         outboard = BluemiraFace([ob_outer, ob_inner])
         vv_outboard = PhysicalComponent("outboard", outboard)
         vv_outboard.plot_options.face_options["color"] = BLUE_PALETTE["VV"][0]
