@@ -30,9 +30,9 @@ import numpy as np
 import bluemira.utilities.plot_tools as bm_plot_tools
 from bluemira.base.builder import BuildConfig, Builder
 from bluemira.base.components import Component
+from bluemira.base.config import Configuration
 from bluemira.base.error import BuilderError
 from bluemira.base.look_and_feel import bluemira_warn
-from bluemira.base.parameter import ParameterFrame
 from bluemira.builders.pf_coils import PFCoilBuilder
 from bluemira.equilibria.coils import CoilSet
 from bluemira.geometry.tools import boolean_cut, distance_to, make_bspline
@@ -102,7 +102,7 @@ class PFCoilsBuilder(Builder):
         "r_cs_corner",
     ]
     _required_config: List[str] = []
-    _params: ParameterFrame
+    _params: Configuration
 
     def _extract_config(self, build_config: BuildConfig):
         super()._extract_config(build_config)
