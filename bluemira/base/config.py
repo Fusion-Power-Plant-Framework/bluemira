@@ -162,7 +162,7 @@ class Configuration(ConfigurationSchema, ParameterFrame):
         # Divertor cassette
         ['tk_div_cass', 'Minimum thickness between inner divertor profile and cassette', 0.3, 'm', None, 'Input'],
         ['tk_div_cass_in', 'Additional radial thickness on inboard side relative to to inner strike point', 0.1, 'm', None, 'Input'],
-        ['n_div_cassettes', 'Number of divertor cassettes per sector', 3, 'dimensionless', None, 'Common decision'],
+        ['n_div_cassettes', 'Number of divertor cassettes per sector', 3, 'dimensionless', None, 'Input'],
 
 
         # Blanket
