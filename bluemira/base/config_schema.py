@@ -160,6 +160,8 @@ class ConfigurationSchema:
     tk_r_ob_bz: Parameter
     tk_r_ob_manifold: Parameter
     tk_r_ob_bss: Parameter
+    n_bb_inboard: Parameter
+    n_bb_outboard: Parameter
 
     # ST Breeding blanket
     g_bb_fw: Parameter
