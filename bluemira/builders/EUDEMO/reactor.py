@@ -67,11 +67,12 @@ class EUDEMOReactor(Reactor):
         self.run_systems_code()
         component.add_child(self.build_plasma())
         (
-            _,
+            blanket_face,
             divertor_face,
             _,
         ) = self.build_in_vessel_component_shapes(component)
         component.add_child(self.build_divertor(component, divertor_face))
+        component.add_child(self.build_blanket(component, blanket_face))
         component.add_child(self.build_TF_coils(component))
         component.add_child(self.build_PF_coils(component))
         component.add_child(self.build_thermal_shield(component))
