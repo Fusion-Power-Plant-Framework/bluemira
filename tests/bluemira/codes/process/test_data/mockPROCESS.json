@@ -54,5 +54,12 @@
     "g_ts_tf": 0.05,
     "g_vv_bb": 0.02,
     "tk_fw_in": 0.052,
-    "tk_fw_out": 0.052
+    "tk_fw_out": 0.052,
+    "TF_res_bus": 0,
+    "TF_res_tot": 0,
+    "TF_E_stored": 0,
+    "TF_respc_ob": 0,
+    "TF_currpt_ob": 0,
+    "P_bd_in": 0,
+    "condrad_cryo_heat": 0
 }
