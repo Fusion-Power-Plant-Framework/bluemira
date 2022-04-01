@@ -488,23 +488,21 @@ class AnalyticalCompositeCrossSection(CrossSection):
         cross_sections = [outer]
         cross_sections.extend(inners)
 
-        self.area = 0
-        self.ea = 0
-        ga = 0
-        self.ei_yy = 0
-        self.ei_zz = 0
-        self.ei_zy = 0
-        rhoa = 0
+        e_values = np.array([mat["E"] for mat in materials])
+        g_values = np.array([mat["G"] for mat in materials])
+        rho_values = np.array([mat["rho"] for mat in materials])
+        areas = np.array([xs.area for xs in cross_sections])
+        i_yy_values = np.array([xs.i_yy for xs in cross_sections])
+        i_zz_values = np.array([xs.i_zz for xs in cross_sections])
+        i_zy_values = np.array([xs.i_zy for xs in cross_sections])
 
-        for xs, mat in zip(cross_sections, materials):
-            self.area += xs.area
-            e, g, rho = mat["E"], mat["G"], mat["rho"]
-            self.ea += e * xs.area
-            ga += g * xs.area
-            self.ei_yy += e * xs.i_yy
-            self.ei_zz += e * xs.i_zz
-            self.ei_zy += e * xs.i_zy
-            rhoa += rho * xs.area
+        self.area = np.sum(areas)
+        self.ea = np.dot(e_values, areas)
+        self.ei_yy = np.dot(e_values, i_yy_values)
+        self.ei_zz = np.dot(e_values, i_zz_values)
+        self.ei_zy = np.dot(e_values, i_zy_values)
+        ga = np.dot(g_values, areas)
+        rhoa = np.dot(rho_values, areas)
 
         self.nu = self.ea / (2 * ga) - 1
         self.ry = np.sqrt(self.ei_yy / self.ea)
