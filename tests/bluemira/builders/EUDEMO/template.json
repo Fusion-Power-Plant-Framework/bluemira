@@ -1067,6 +1067,18 @@
       }
     }
   },
+  "n_bb_inboard": {
+    "name": "Number of inboard blanket segments",
+    "value": 2,
+    "unit": "dimensionless",
+    "source": "Input"
+  },
+  "n_bb_outboard": {
+    "name": "Number of outboard blanket segments",
+    "value": 3,
+    "unit": "dimensionless",
+    "source": "Input"
+  },
   "n_cr_lab": {
     "name": "Number of cryostat labyrinth levels",
     "value": 2,
