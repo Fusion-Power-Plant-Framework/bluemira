@@ -269,7 +269,7 @@ class EUDEMOReactor(Reactor):
 
         default_variables_map = {
             "x1": {"value": "r_fw_ib_in", "fixed": True},  # ib radius
-            "x2": {"value": "r_fw_ob_in", "fixed": True},  # ob radius
+            "x2": {"value": "r_fw_ob_in"},  # ob radius
         }
 
         default_config = {
