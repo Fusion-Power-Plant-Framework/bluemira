@@ -353,11 +353,6 @@ def build_ivc_xz_shapes(
         components, BlanketThicknessBuilder.COMPONENT_BOUNDARY
     )
     plasma_facing_wire = _build_plasma_facing_wire(components)
-    blanket_boundary._orientation = "Forward"
-    plasma_facing_wire._orientation = "Forward"
-    from bluemira.display import show_cad
-
-    show_cad([blanket_boundary])
     in_vessel_face = BluemiraFace([blanket_boundary, plasma_facing_wire])
 
     # Cut a clearance between the blankets and divertor - getting two
@@ -390,10 +385,6 @@ def _build_plasma_facing_wire(components: Component) -> BluemiraWire:
         DivertorSilhouetteBuilder.COMPONENT_OUTER_BAFFLE,
     ]
     wires = [_extract_wire(components, label) for label in labels]
-
-    from bluemira.display import show_cad
-
-    show_cad(wires)
     return BluemiraWire(wires)
 
 
