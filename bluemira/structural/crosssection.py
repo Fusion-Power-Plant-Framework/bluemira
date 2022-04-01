@@ -84,31 +84,29 @@ class CrossSection:
     Base class for a structural cross-section of a 1-D beam.
     """
 
-    def __init__(self):
-        # Initialise properties
-        self.area = None
-        self.i_yy = None
-        self.i_zz = None
-        self.i_zy = None
-        self.ei_yy = None
-        self.ei_zz = None
-        self.ei_zy = None
-        self.j = None
-        self.area_sy = None
-        self.area_sz = None
-        self.ry = None
-        self.rz = None
-        self.qyy = None
-        self.qzz = None
-        self.centroid_geom = None
-        self.ea = None
-        self.gj = None
-        self.nu = None
-        self.rho = None
+    __slots__ = (
+        "area",
+        "i_yy",
+        "i_zz",
+        "i_zy",
+        "ei_yy",
+        "ei_zz",
+        "ei_zy",
+        "j",
+        "area_sy",
+        "area_sz",
+        "ry",
+        "rz",
+        "qyy",
+        "qzz",
+        "centroid_geom",
+        "geometry",
+        "y",
+        "z",
+    )
 
-        self.geometry: BluemiraFace = None
-        self.y = None
-        self.z = None
+    def __init__(self):
+        pass
 
     def make_geometry(self, *args, **kwargs):
         """
@@ -140,7 +138,7 @@ class CrossSection:
             self.i_zz = i_uu
             self.i_yy = i_vv
             self.i_zy = i_uv
-        except TypeError:
+        except AttributeError:
             pass
 
         try:
@@ -150,7 +148,7 @@ class CrossSection:
             self.ei_zz = ei_uu
             self.ei_yy = ei_vv
             self.ei_zy = ei_uv
-        except TypeError:
+        except AttributeError:
             pass
 
         if isinstance(self.geometry, list):
@@ -191,6 +189,8 @@ class RectangularBeam(CrossSection):
         The height of the beam
     """
 
+    __slots__ = ()
+
     def __init__(self, width, height):
         super().__init__()
         self.area = width * height
@@ -202,9 +202,7 @@ class RectangularBeam(CrossSection):
         self.rz = np.sqrt(self.i_zz / self.area)
         self.qyy = 0  # Centred about (0, 0)
         self.qzz = 0  # Centred about (0, 0)
-        self.width = width
-        self.height = height
-        self.make_geometry()
+        self.make_geometry(width, height)
 
     @staticmethod
     def calc_torsion(width, height):
@@ -224,12 +222,12 @@ class RectangularBeam(CrossSection):
 
         return a * b**3 * (16 / 3 - 3.36 * (b / a) * (1 - b**4 / (12 * a**4)))
 
-    def make_geometry(self):
+    def make_geometry(self, width, height):
         """
         Make a BluemiraFace for the RectangularBeam cross-section.
         """
-        w = 0.5 * self.width
-        h = 0.5 * self.height
+        w = 0.5 * width
+        h = 0.5 * height
         self.y = np.array([-w, w, w, -w, -w])
         self.z = np.array([-h, -h, h, h, -h])
         polygon = BluemiraFace(
@@ -253,6 +251,8 @@ class CircularBeam(CrossSection):
     radius: float
         The radius of the circular cross-section
     """
+
+    __slots__ = ()
 
     def __init__(self, radius, n_discr=30):
         super().__init__()
@@ -281,6 +281,8 @@ class CircularHollowBeam(CrossSection):
     r_outer: float
         The outer radius of the hollow circular cross-section
     """
+
+    __slots__ = ()
 
     def __init__(self, r_inner, r_outer, n_discr=30):
         super().__init__()
@@ -318,6 +320,8 @@ class IBeam(CrossSection):
     flange:float
         I-beam flange thickness
     """
+
+    __slots__ = ()
 
     def __init__(self, base, depth, flange, web):
         super().__init__()
@@ -397,6 +401,8 @@ class AnalyticalCrossSection(CrossSection):
     If the geometry has any holes in it, they will be treated as holes.
     """
 
+    __slots__ = ()
+
     def __init__(self, geometry, n_discr=100, j_opt_var=14.123):
         super().__init__()
         self.geometry = deepcopy(geometry)
@@ -459,6 +465,8 @@ class AnalyticalCompositeCrossSection(CrossSection):
     materials: List[Material]
         The ordered list of Materials to use for the geometry
     """
+
+    __slots__ = ("ea", "nu", "gj", "rho")
 
     def __init__(self, geometry, materials):
         super().__init__()
