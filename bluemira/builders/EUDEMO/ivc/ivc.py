@@ -295,7 +295,7 @@ class InVesselComponentBuilder(Builder):
         """
         flux_surface_zone = self.equilibrium.get_flux_surface(psi_n)
         # Chop the flux surface to only take the upper half
-        indices = np.where(flux_surface_zone.z >= self.o_points[0][1])[0]
+        indices = flux_surface_zone.z >= self.o_points[0][1]
         flux_surface_zone = make_polygon(flux_surface_zone.xyz[:, indices], closed=True)
         return flux_surface_zone
 
