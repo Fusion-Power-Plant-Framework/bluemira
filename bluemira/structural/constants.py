@@ -71,9 +71,6 @@ LOAD_STR_VECTORS = {
 # Mapping of load integer to direction vectors (for plotting purposes)
 LOAD_INT_VECTORS = {k: v for k, v in enumerate(LOAD_STR_VECTORS.values())}
 
-# The length of load vectors relative to space vectors (for plotting purposes)
-NEWTON_TO_M = 5e-6
-
 # Mapping of indices to displacement/support types
 DISP_MAPPING = {"Dx": 0, "Dy": 1, "Dz": 2, "Rx": 3, "Ry": 4, "Rz": 5}
 
