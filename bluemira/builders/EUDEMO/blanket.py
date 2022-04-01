@@ -54,7 +54,6 @@ class BlanketBuilder(Builder):
 
     _params: Configuration
     _silhouette: Optional[BluemiraFace] = None
-    _default_runmode: str = "run"
 
     def reinitialise(self, params) -> None:
         """
