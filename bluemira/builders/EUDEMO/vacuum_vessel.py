@@ -118,7 +118,7 @@ class VacuumVesselBuilder(Builder):
         body.plot_options.face_options["color"] = BLUE_PALETTE["VV"][0]
 
         component = Component("xz", children=[body])
-        bm_plot_tools.set_component_plane(component, "xz")
+        bm_plot_tools.set_component_view(component, "xz")
         return component
 
     def build_xy(self):
