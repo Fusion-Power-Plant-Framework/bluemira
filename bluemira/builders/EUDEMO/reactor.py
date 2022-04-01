@@ -49,6 +49,7 @@ class EUDEMOReactor(Reactor):
 
     PLASMA = "Plasma"
     DIVERTOR = "Divertor"
+    BLANKET = "Breeding Blanket"
     TF_COILS = "TF Coils"
     PF_COILS = "PF Coils"
     IVC = "In-Vessel Components"
