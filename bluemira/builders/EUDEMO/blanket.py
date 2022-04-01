@@ -116,18 +116,16 @@ class BlanketBuilder(Builder):
         """
         xy_plane = BluemiraPlacement.from_3_points([0, 0, 0], [1, 0, 0], [0, 1, 0])
 
-        slices = []
+        segments = []
         for i, segment in enumerate(self._segments):
             slice = PhysicalComponent(segment.name, slice_shape(segment.shape, xy_plane))
             slice.plot_options.face_options["color"] = BLUE_PALETTE["BB"][i]
-            slices.append(slice)
+            segment = circular_pattern_component(
+                slice, self._params.n_TF.value, degree=360
+            )
+            segments.append(segments)
 
-        sector = Component("", children=slices)
-        sectors = circular_pattern_component(sector, self._params.n_TF.value, degree=360)
-
-        component = Component("xyz", children=sectors)
-
-        component = Component("xy", children=[])
+        component = Component("xy", children=segments)
         bm_plot_tools.set_component_view(component, "xy")
         return component
 
