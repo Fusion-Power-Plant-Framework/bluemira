@@ -178,9 +178,7 @@ class InVesselComponentBuilder(Builder):
         """Build the first wall component."""
         build_config = deepcopy(self._build_config)
         build_config.update({"name": self.COMPONENT_WALL})
-        keep_out_zone = self._make_wall_keep_out_zone(
-            geom_offset=self._params.tk_sol_ib.value, psi_n=self._params.fw_psi_n.value
-        )
+        keep_out_zone = self._make_wall_keep_out_zone()
         builder = WallBuilder(
             self.params, build_config=build_config, keep_out_zone=keep_out_zone
         )
@@ -264,11 +262,15 @@ class InVesselComponentBuilder(Builder):
         )
         return wall, cut_shape
 
-    def _make_wall_keep_out_zone(self, geom_offset, psi_n) -> BluemiraWire:
+    def _make_wall_keep_out_zone(self) -> BluemiraWire:
         """
         Create a "keep-out zone" to be used as a constraint in the
         wall shape optimiser.
         """
+        geom_offset = self._params.tk_sol_ib.value
+        psi_n = self._params.fw_psi_n.value
+        geom_offset = 0.2  # TODO: Unpin
+        psi_n = 1.05  # TODO: Unpin
         geom_offset_zone = self._make_geometric_keep_out_zone(geom_offset)
         flux_surface_zone = self._make_flux_surface_keep_out_zone(psi_n)
         leg_zone = self._make_divertor_leg_keep_out_zone(
