@@ -68,9 +68,9 @@ class TFCoilConductorTechnology(Model):
     PROCESS variable name: "i_tf_sup"
     """
 
-    COPPER = 1
-    SC = 2
-    CYRO_AL = 3
+    COPPER = 0
+    SC = 1
+    CYRO_AL = 2
 
 
 IN_mappings = {
