@@ -19,55 +19,31 @@
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 
-"""
-Errors for sub-modules
-"""
-from bluemira.base.error import BluemiraError
+import pytest
+
+from bluemira.structural.constants import LOAD_TYPES
+from bluemira.structural.error import StructuralError
+from bluemira.structural.loads import distributed_load, point_load
 
 
-class NeutronicsError(BluemiraError):
-    """
-    Error class for use in the neutronics module
-    """
+class TestPointLoad:
+    def test_bad(self):
+        with pytest.raises(StructuralError):
+            point_load(100, 0.15, 5, "Fxy")
 
-    pass
-
-
-class CADError(BluemiraError):
-    """
-    Error class for use in the cad module
-    """
-
-    pass
+    def test_good(self):
+        for load_type in LOAD_TYPES:
+            r = point_load(100, 0.14, 10, load_type)
+            assert len(r) == 12
 
 
-class SystemsError(BluemiraError):
-    """
-    Error class for use in the systems module
-    """
+class TestDistributedLoad:
+    def test_bad(self):
+        for string in ["Mx", "My", "Mz"]:
+            with pytest.raises(StructuralError):
+                distributed_load(0.3, 1, string)
 
-    pass
-
-
-class UtilitiesError(BluemiraError):
-    """
-    Error class for use in the utilities module
-    """
-
-    pass
-
-
-class NovaError(BluemiraError):
-    """
-    Error class for use in the nova module
-    """
-
-    pass
-
-
-class BaseError(BluemiraError):
-    """
-    Error class for use in the base module
-    """
-
-    pass
+    def test_good(self):
+        for string in ["Fx", "Fy", "Fz"]:
+            r = distributed_load(0.3, 1, string)
+            assert len(r) == 12

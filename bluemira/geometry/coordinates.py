@@ -483,6 +483,28 @@ def rotation_matrix_v1v2(v1, v2):
     return matrix
 
 
+def project_point_axis(point, axis):
+    """
+    Project a 3-D point onto a 3-D axis.
+    \t:math:`\\mathbf{p_{proj}} = \\dfrac{\\mathbf{p}\\cdot\\mathbf{a}}{\\mathbf{a}\\cdot\\mathbf{a}}\\mathbf{a}`
+
+    Parameters
+    ----------
+    point: np.array(3)
+        The point to project onto the axis
+    axis: np.array(3)
+        The axis onto which to project the point
+
+    Returns
+    -------
+    projection: np.array(3)
+        The coordinates of the projected point
+    """  # noqa: W505
+    point = np.array(point)
+    axis = np.array(axis)
+    return axis * np.dot(point, axis) / np.dot(axis, axis)
+
+
 def principal_components(xyz_array):
     """
     Principal component analysis.

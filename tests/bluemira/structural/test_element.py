@@ -19,55 +19,24 @@
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 
-"""
-Errors for sub-modules
-"""
-from bluemira.base.error import BluemiraError
+import numpy as np
+import pytest
+
+from bluemira.structural.element import _k_array
 
 
-class NeutronicsError(BluemiraError):
-    """
-    Error class for use in the neutronics module
-    """
+class TestK:
+    def test_shape(self):
+        k = _k_array(1, 2, 3, 4, 5, 6, 7, 8, 9, 10)
+        assert k.shape == (12, 12)
+        k2 = k.T
+        for i in range(12):
+            for j in range(12):
+                assert k[i, j] == k2[j, i], f"{i}, {j}"
 
-    pass
-
-
-class CADError(BluemiraError):
-    """
-    Error class for use in the cad module
-    """
-
-    pass
+        # Check array is symmetric
+        assert np.allclose(k, k.T, rtol=1e-9)
 
 
-class SystemsError(BluemiraError):
-    """
-    Error class for use in the systems module
-    """
-
-    pass
-
-
-class UtilitiesError(BluemiraError):
-    """
-    Error class for use in the utilities module
-    """
-
-    pass
-
-
-class NovaError(BluemiraError):
-    """
-    Error class for use in the nova module
-    """
-
-    pass
-
-
-class BaseError(BluemiraError):
-    """
-    Error class for use in the base module
-    """
-
-    pass
+if __name__ == "__main__":
+    pytest.main([__file__])

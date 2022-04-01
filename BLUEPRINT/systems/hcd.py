@@ -74,7 +74,7 @@ class HCDSystem(ReactorSystem):
 
     def build(self):
         """
-        Build the neutral beams and electorn cyclotrons. IRCH is not cool.
+        Build the neutral beams and electron cyclotrons. IRCH is not cool.
         """
         self.NB.build()
         self.EC.build()

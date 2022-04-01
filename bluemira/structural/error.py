@@ -20,54 +20,15 @@
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 
 """
-Errors for sub-modules
+Error classes for the structural module
 """
+
 from bluemira.base.error import BluemiraError
 
 
-class NeutronicsError(BluemiraError):
+class StructuralError(BluemiraError):
     """
-    Error class for use in the neutronics module
-    """
-
-    pass
-
-
-class CADError(BluemiraError):
-    """
-    Error class for use in the cad module
-    """
-
-    pass
-
-
-class SystemsError(BluemiraError):
-    """
-    Error class for use in the systems module
-    """
-
-    pass
-
-
-class UtilitiesError(BluemiraError):
-    """
-    Error class for use in the utilities module
-    """
-
-    pass
-
-
-class NovaError(BluemiraError):
-    """
-    Error class for use in the nova module
-    """
-
-    pass
-
-
-class BaseError(BluemiraError):
-    """
-    Error class for use in the base module
+    Structural base error
     """
 
     pass

@@ -605,7 +605,7 @@ class CoilArchitect(ReactorSystem):
         Calculates the cross-section of the TF coil and winding pack at a given
         x location, for use in finite element analysis. The returned Shell is
         centred at the TF coil winding pack centre (not the geometric centre)
-        and is in the y-z plane (for use in `beams`).
+        and is in the y-z plane (for use in `structural`).
 
         Parameters
         ----------

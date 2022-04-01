@@ -32,6 +32,7 @@ The documentation is divided into the following sections:
     3-D magnetostatics <magnetostatics/magnetostatics>
     Materials <materials/materials>
     Radiation transport solvers <radiation_transport/radiation_transport>
+    Structural module <structural/structural>
     Utilities <utilities/utilities>
 
 .. toctree::
