@@ -1034,7 +1034,6 @@ class PictureFrameTools:
         -------
         shape: BluemiraWire
             CAD Wire of the geometry
-
         """
         # Define the basic main curve (with no joint or transitions curves)
         alpha = np.arctan(0.5 * (x_out - x_curve_start) / abs(z_top - z_mid))
@@ -1278,6 +1277,7 @@ class PictureFrame(GeometryParameterisation):
     Notes
     -----
     The dictionary keys in var_dict are:
+
     x1: np.float
         Radial position of inner edge of upper/lower limb [m]
     x2: np.float
