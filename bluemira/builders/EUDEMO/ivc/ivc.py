@@ -348,10 +348,8 @@ def build_ivc_xz_shapes(
     blanket_boundary = _extract_wire(
         components, BlanketThicknessBuilder.COMPONENT_BOUNDARY
     )
-    filled_blanket_face = BluemiraFace(blanket_boundary, label="blanket_face")
     plasma_facing_wire = _build_plasma_facing_wire(components)
-    plasma_facing_face = BluemiraFace(plasma_facing_wire, label="plasma_facing_face")
-    in_vessel_face = boolean_cut(filled_blanket_face, [plasma_facing_face])[0]
+    in_vessel_face = BluemiraFace([blanket_boundary, plasma_facing_wire])
 
     # Cut a clearance between the blankets and divertor - getting two
     # new faces
