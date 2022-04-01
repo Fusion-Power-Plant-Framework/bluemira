@@ -35,7 +35,7 @@ from bluemira.builders.EUDEMO.ivc.divertor import DivertorSilhouetteBuilder
 from bluemira.builders.EUDEMO.ivc.wall import WallBuilder
 from bluemira.builders.shapes import Builder
 from bluemira.equilibria import Equilibrium
-from bluemira.equilibria.find import find_OX_points
+from bluemira.equilibria.find import find_OX_points, get_legs
 from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.tools import (
     boolean_cut,
@@ -110,6 +110,9 @@ class InVesselComponentBuilder(Builder):
         "kappa_95",  # 95th percentile plasma elongation
         "r_fw_ib_in",  # inboard first wall inner radius
         "r_fw_ob_in",  # inboard first wall outer radius
+        # Wall flux and geometric offsets
+        "fw_psi_n",  # Normalised psi boundary to fit FW to
+        "tk_sol_ib",  # Inboard SOL thickness (used as a geometric offset to LCFS)
         "A",  # aspect ratio
         # Divertor silhouette
         "div_L2D_ib",  # Inboard leg length
@@ -136,7 +139,7 @@ class InVesselComponentBuilder(Builder):
 
         self._build_config = build_config
         self.equilibrium = equilibrium
-        _, self.x_points = find_OX_points(
+        self.o_points, self.x_points = find_OX_points(
             self.equilibrium.x, self.equilibrium.z, self.equilibrium.psi()
         )
 
@@ -175,7 +178,7 @@ class InVesselComponentBuilder(Builder):
         """Build the first wall component."""
         build_config = deepcopy(self._build_config)
         build_config.update({"name": self.COMPONENT_WALL})
-        keep_out_zone = self._make_wall_keep_out_zone(geom_offset=0.2, psi_n=1.05)
+        keep_out_zone = self._make_wall_keep_out_zone()
         builder = WallBuilder(
             self.params, build_config=build_config, keep_out_zone=keep_out_zone
         )
@@ -206,11 +209,13 @@ class InVesselComponentBuilder(Builder):
         build_config.pop("runmode", None)
 
         x_lims = (wall.start_point().x[0], wall.end_point().x[0])
+        z_lims = (wall.start_point().z[0], wall.end_point().z[0])
         builder = DivertorSilhouetteBuilder(
             self.params,
             build_config,
             equilibrium=self.equilibrium,
             x_limits=x_lims,
+            z_limits=z_lims,
         )
         return builder()
 
@@ -259,15 +264,22 @@ class InVesselComponentBuilder(Builder):
         )
         return wall, cut_shape
 
-    def _make_wall_keep_out_zone(self, geom_offset, psi_n) -> BluemiraWire:
+    def _make_wall_keep_out_zone(self) -> BluemiraWire:
         """
         Create a "keep-out zone" to be used as a constraint in the
         wall shape optimiser.
         """
+        geom_offset = self._params.tk_sol_ib.value
+        psi_n = self._params.fw_psi_n.value
+        geom_offset = 0.2  # TODO: Unpin
+        psi_n = 1.05  # TODO: Unpin
         geom_offset_zone = self._make_geometric_keep_out_zone(geom_offset)
         flux_surface_zone = self._make_flux_surface_keep_out_zone(psi_n)
+        leg_zone = self._make_divertor_leg_keep_out_zone(
+            self._params.div_L2D_ib.value, self._params.div_L2D_ob.value
+        )
         return convex_hull_wires_2d(
-            [geom_offset_zone, flux_surface_zone], ndiscr=200, plane="xz"
+            [geom_offset_zone, flux_surface_zone, leg_zone], ndiscr=200, plane="xz"
         )
 
     def _make_geometric_keep_out_zone(self, offset: float) -> BluemiraWire:
@@ -282,8 +294,26 @@ class InVesselComponentBuilder(Builder):
         Make a "keep-out zone" from an equilibrium's flux surface.
         """
         flux_surface_zone = self.equilibrium.get_flux_surface(psi_n)
-        flux_surface_zone = make_polygon(flux_surface_zone.xyz, closed=True)
+        # Chop the flux surface to only take the upper half
+        indices = flux_surface_zone.z >= self.o_points[0][1]
+        flux_surface_zone = make_polygon(flux_surface_zone.xyz[:, indices], closed=True)
         return flux_surface_zone
+
+    def _make_divertor_leg_keep_out_zone(
+        self, leg_length_ib_2D, leg_length_ob_2D
+    ) -> BluemiraWire:
+        """
+        Make a "keep-out zone" from an equilibrium's divertor legs
+        """
+        legs = get_legs(self.equilibrium, n_layers=1, dx_off=0.0)
+        ib_leg = make_polygon(legs["lower_inner"][0].xyz)
+        ob_leg = make_polygon(legs["lower_outer"][0].xyz)
+
+        p_ib = ib_leg.value_at(distance=leg_length_ib_2D)
+
+        p_ob = ob_leg.value_at(distance=leg_length_ob_2D)
+
+        return make_polygon([p_ib, p_ob], closed=False)
 
 
 def build_ivc_xz_shapes(
@@ -322,10 +352,8 @@ def build_ivc_xz_shapes(
     blanket_boundary = _extract_wire(
         components, BlanketThicknessBuilder.COMPONENT_BOUNDARY
     )
-    filled_blanket_face = BluemiraFace(blanket_boundary, label="blanket_face")
     plasma_facing_wire = _build_plasma_facing_wire(components)
-    plasma_facing_face = BluemiraFace(plasma_facing_wire, label="plasma_facing_face")
-    in_vessel_face = boolean_cut(filled_blanket_face, [plasma_facing_face])[0]
+    in_vessel_face = BluemiraFace([blanket_boundary, plasma_facing_wire])
 
     # Cut a clearance between the blankets and divertor - getting two
     # new faces

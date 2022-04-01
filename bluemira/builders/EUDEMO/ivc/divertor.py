@@ -101,6 +101,7 @@ class DivertorSilhouetteBuilder(Builder):
         build_config: BuildConfig,
         equilibrium: Equilibrium,
         x_limits: Sequence[float],
+        z_limits: Sequence[float],
     ):
         super().__init__(params, build_config)
 
@@ -108,6 +109,7 @@ class DivertorSilhouetteBuilder(Builder):
 
         self.equilibrium = equilibrium
         self.x_limits = x_limits
+        self.z_limits = z_limits
         self.leg_length = {
             LegPosition.INNER: self.params["div_L2D_ib"],
             LegPosition.OUTER: self.params["div_L2D_ob"],
@@ -153,11 +155,17 @@ class DivertorSilhouetteBuilder(Builder):
         component.add_child(dome)
 
         # Build the baffles
+        idx_inner = np.argmin(self.x_limits)
+        x_lim_inner = self.x_limits[idx_inner]
+        z_lim_inner = self.z_limits[idx_inner]
         component.add_child(
-            self._make_inner_baffle(inner_target.shape, min(self.x_limits))
+            self._make_inner_baffle(inner_target.shape, x_lim_inner, z_lim_inner)
         )
+        idx_outer = np.argmax(self.x_limits)
+        x_lim_outer = self.x_limits[idx_outer]
+        z_lim_outer = self.z_limits[idx_outer]
         component.add_child(
-            self._make_outer_baffle(outer_target.shape, max(self.x_limits))
+            self._make_outer_baffle(outer_target.shape, x_lim_outer, z_lim_outer)
         )
         return component
 
@@ -256,7 +264,10 @@ class DivertorSilhouetteBuilder(Builder):
         return PhysicalComponent(label, make_polygon(coords))
 
     def _make_inner_baffle(
-        self, target: BluemiraWire, x_lim: float
+        self,
+        target: BluemiraWire,
+        x_lim: float,
+        z_lim: float,
     ) -> PhysicalComponent:
         """
         Build the inner baffle to join with the given target.
@@ -267,12 +278,15 @@ class DivertorSilhouetteBuilder(Builder):
             inner_target_start = self._get_wire_end_with_largest(target, "x")
         return self.make_baffle(
             label=self.COMPONENT_INNER_BAFFLE,
-            start=np.array([x_lim, self.x_points[0].z]),
+            start=np.array([x_lim, z_lim]),
             end=inner_target_start,
         )
 
     def _make_outer_baffle(
-        self, target: BluemiraWire, x_lim: float
+        self,
+        target: BluemiraWire,
+        x_lim: float,
+        z_lim: float,
     ) -> PhysicalComponent:
         """
         Build the outer baffle to join with the given target.
@@ -284,7 +298,7 @@ class DivertorSilhouetteBuilder(Builder):
         return self.make_baffle(
             label=self.COMPONENT_OUTER_BAFFLE,
             start=outer_target_end,
-            end=np.array([x_lim, self.x_points[0].z]),
+            end=np.array([x_lim, z_lim]),
         )
 
     def _get_length_for_leg(self, leg: LegPosition):
