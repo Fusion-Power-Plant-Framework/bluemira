@@ -1274,8 +1274,10 @@ class PictureFrame(GeometryParameterisation):
     ----------
     var_dict: Optional[dict]
         Dictionary with which to update the default values of the parameterisation.
-    axis: np.ndarray
-        [x,y,z] vector normal to plane of parameterisation
+
+    Notes
+    -----
+    The dictionary keys in var_dict are:
     x1: np.float
         Radial position of inner edge of upper/lower limb [m]
     x2: np.float
@@ -1366,8 +1368,11 @@ class TaperedPictureFrame(GeometryParameterisation):
     ----------
     var_dict: Optional[dict]
         Dictionary with which to update the default values of the parameterisation.
-    axis: np.ndarray
-        [x,y,z] vector normal to plane of parameterisation
+
+    Notes
+    -----
+    The dictionary keys in var_dict are:
+
     x1: np.float
         Radial position of innermost point of inner limb [m]
     x2: np.float
@@ -1481,8 +1486,6 @@ class FullDomeCurvedPictureFrame(GeometryParameterisation):
     -----
     The dictionary keys in var_dict are:
 
-    axis: np.ndarray
-        [x,y,z] vector normal to plane of parameterisation
     x_mid: np.float
         Radial position of inner edge of upper/lower limb [m]
     x_out: np.float
@@ -1609,8 +1612,6 @@ class TopDomeCurvedPictureFrame(GeometryParameterisation):
     -----
     The dictionary keys in var_dict are:
 
-    axis: np.ndarray
-            [x,y,z] vector normal to plane of parameterisation
     x_mid: np.float
         Radial position of inner edge of  upper/lower limb [m]
     x_out: np.float
@@ -1731,8 +1732,6 @@ class BotDomeCurvedPictureFrame(GeometryParameterisation):
     -----
     The dictionary keys in var_dict are:
 
-    axis: np.ndarray
-        [x,y,z] vector normal to plane of parameterisation
     x_mid: np.float
         Radial position of inner edge of  upper/lower limb [m]
     x_out: np.float
