@@ -29,7 +29,7 @@ import bluemira.utilities.plot_tools as bm_plot_tools
 from bluemira.base.builder import BuildConfig, Builder
 from bluemira.base.components import Component, PhysicalComponent
 from bluemira.base.config import Configuration
-from bluemira.builders.EUDEMO.tools import circular_pattern_component, varied_offset
+from bluemira.builders.EUDEMO.tools import varied_offset
 from bluemira.display.palettes import BLUE_PALETTE
 from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.tools import make_circle, offset_wire, revolve_shape
@@ -153,9 +153,6 @@ class VacuumVesselBuilder(Builder):
         """
         Build the x-y-z components of the vacuum vessel.
         """
-        n_vv_draw = max(1, int(degree // (360 // self._params.n_TF.value)))
-        degree = (360.0 / self._params.n_TF.value) * n_vv_draw
-
         vv_face = self._vv_face.deepcopy()
         base = (0, 0, 0)
         direction = (0, 0, 1)
@@ -163,14 +160,18 @@ class VacuumVesselBuilder(Builder):
             vv_face,
             base=base,
             direction=direction,
-            degree=360 / self._params.n_TF.value,
+            degree=degree
+            - 1,  # TODO: Put back `degree/ self._params.n_TF.value,` (#901)
         )
 
         vv = PhysicalComponent("Body", vv_body)
         vv.display_cad_options.color = BLUE_PALETTE["VV"][0]
-
-        sectors = circular_pattern_component(vv, n_vv_draw, degree=degree)
-        component = Component("xyz")
-        component.add_children(sectors, merge_trees=True)
+        component = Component("xyz", children=[vv])
+        # TODO: Put back sector segmentation (see #901 for details)
+        # n_vv_draw = max(1, int(degree // (360 // self._params.n_TF.value)))
+        # degree = (360.0 / self._params.n_TF.value) * n_vv_draw
+        # sectors = circular_pattern_component(vv, n_vv_draw, degree=degree)
+        # component = Component("xyz")
+        # component.add_children(sectors, merge_trees=True)
 
         return component
