@@ -63,7 +63,19 @@ class VacuumVesselBuilder(Builder):
             build_config,
             ivc_koz=ivc_koz,
         )
-        self._vv_face = None
+
+    def reinitialise(self, params, ivc_koz) -> None:
+        """
+        Reinitialise the parameters and boundary.
+
+        Parameters
+        ----------
+        params: dict
+            The new parameter values to initialise this builder against.
+        """
+        super().reinitialise(params)
+
+        self._ivc_koz = ivc_koz
 
     def build(self) -> Component:
         """
