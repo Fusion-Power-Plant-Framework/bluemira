@@ -34,10 +34,6 @@ NU = 0.33
 #   Above which shear deformation properties must be used
 SD_LIMIT = 0.1
 
-
-# The type of number to use in the matrices
-FLOAT_TYPE = np.float64
-
 # The proximity tolerance
 #   Used for checking node existence
 D_TOLERANCE = 1e-5

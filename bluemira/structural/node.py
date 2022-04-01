@@ -24,7 +24,7 @@ Finite element Node object
 """
 import numpy as np
 
-from bluemira.structural.constants import D_TOLERANCE, FLOAT_TYPE
+from bluemira.structural.constants import D_TOLERANCE
 from bluemira.structural.error import StructuralError
 from bluemira.structural.loads import node_load
 
@@ -67,8 +67,8 @@ class Node:
         self.loads = []
         self.supports = np.zeros(6, dtype=bool)  # Defaults to False
         self.symmetry = False
-        self.displacements = np.zeros(6, dtype=FLOAT_TYPE)
-        self.reactions = np.zeros(6, dtype=FLOAT_TYPE)
+        self.displacements = np.zeros(6, dtype=float)
+        self.reactions = np.zeros(6, dtype=float)
         self.connections = set()
 
     @property

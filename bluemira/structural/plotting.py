@@ -32,7 +32,6 @@ from bluemira.display.plotter import PlotOptions
 from bluemira.geometry.placement import BluemiraPlacement
 from bluemira.structural.constants import (
     DEFLECT_COLOR,
-    FLOAT_TYPE,
     LOAD_INT_VECTORS,
     LOAD_STR_VECTORS,
     STRESS_COLOR,
@@ -395,7 +394,7 @@ class BasePlotter:
         dcm = element.lambda_matrix[0:3, 0:3]
         load = load @ dcm
         point = np.array(
-            [element.node_1.x, element.node_1.y, element.node_1.z], dtype=FLOAT_TYPE
+            [element.node_1.x, element.node_1.y, element.node_1.z], dtype=float
         )
         point += (np.array([1.0, 0.0, 0.0]) * np.float(load["x"])) @ dcm
         self.ax.quiver(*point - load, *load, color="r")
@@ -412,7 +411,7 @@ class BasePlotter:
         load = load * np.ones((3, n)).T
         load = load.T
         point = np.array(
-            [element.node_1.x, element.node_1.y, element.node_1.z], dtype=FLOAT_TYPE
+            [element.node_1.x, element.node_1.y, element.node_1.z], dtype=float
         )
         point = point * np.ones((3, n)).T
         point += (
