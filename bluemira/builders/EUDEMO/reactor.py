@@ -71,8 +71,9 @@ class EUDEMOReactor(Reactor):
         (
             blanket_face,
             divertor_face,
-            _,
+            ivc_boundary,
         ) = self.build_in_vessel_component_shapes(component)
+        component.add_child(self.build_vacuum_vessel(component, ivc_boundary))
         component.add_child(self.build_divertor(component, divertor_face))
         component.add_child(self.build_blanket(component, blanket_face))
         component.add_child(self.build_TF_coils(component))
@@ -347,7 +348,7 @@ class EUDEMOReactor(Reactor):
 
         return component
 
-    def build_vacuum_vessel(self, component_tree: Component):
+    def build_vacuum_vessel(self, component_tree: Component, ivc_boundary):
         """
         Run the reactor vacuum vessel build.
         """
@@ -358,11 +359,9 @@ class EUDEMOReactor(Reactor):
         default_config = {}
         config = self._process_design_stage_config(name, default_config)
 
-        ivc = component_tree.get_component(EUDEMOReactor.FIRST_WALL).get_component("xz")
-
-        ivc_koz = ivc
-
-        builder = VacuumVesselBuilder(self._params.to_dict(), config, ivc_koz=ivc_koz)
+        builder = VacuumVesselBuilder(
+            self._params.to_dict(), config, ivc_koz=ivc_boundary
+        )
         self.register_builder(builder, name)
         component = super()._build_stage(name)
 
