@@ -74,6 +74,7 @@ class TestDivertorSilhouetteBuilder:
                 {"name": "some_name"},
                 self.eq,
                 self.x_lims,
+                self.z_lims,
             )
         except BuilderError:
             pytest.fail(str(BuilderError))
@@ -185,7 +186,7 @@ class TestDivertorSilhouetteBuilder:
 
     def test_outer_baffle_has_end_at_upper_x_limit(self):
         builder = DivertorSilhouetteBuilder(
-            self.params, {"name": "some_name"}, self.eq, self.x_lims
+            self.params, {"name": "some_name"}, self.eq, self.x_lims, self.z_lims
         )
 
         divertor = builder()
@@ -212,12 +213,13 @@ class TestDivertorSilhouetteBuilder:
         )
         assert signed_distance(target.shape, baffle.shape) == 0
 
-    def test_setting_x_limits_after_init_sets_start_and_end_points(self):
+    def test_setting_xz_limits_after_init_sets_start_and_end_points(self):
         builder = DivertorSilhouetteBuilder(
             self.params, {"name": "some_name"}, self.eq, [], []
         )
 
         builder.x_limits = self.x_lims
+        builder.z_limits = self.z_lims
         divertor = builder()
 
         inner_baffle = divertor.get_component(
