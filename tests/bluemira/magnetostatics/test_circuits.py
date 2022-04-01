@@ -34,12 +34,7 @@ from bluemira.geometry._deprecated_tools import (
     vector_lengthnorm,
 )
 from bluemira.geometry.coordinates import Coordinates
-from bluemira.geometry.parameterisations import (
-    FullDomeFlatInnerCurvedPictureFrame,
-    PictureFrame,
-    PrincetonD,
-    TripleArc,
-)
+from bluemira.geometry.parameterisations import PictureFrame, PrincetonD, TripleArc
 from bluemira.geometry.tools import make_circle
 from bluemira.magnetostatics.baseclass import SourceGroup
 from bluemira.magnetostatics.circuits import (
@@ -170,23 +165,12 @@ class TestArbitraryPlanarXSCircuit:
         "a2": {"value": 40},
     }
 
-    wtf_inputs = {
-        "x_mid": {"value": 0.4},
-        "x_curve_start": {"value": 2.5},
-        "x_out": {"value": 9.5},
-        "z_mid_up": {"value": 7.5},
-        "z_mid_down": {"value": -7.5},
-        "z_max_up": {"value": 11},
-        "z_max_down": {"value": -11},
-    }
-
     parameterisations = [
         PrincetonD,
         TripleArc,
         PictureFrame,
-        FullDomeFlatInnerCurvedPictureFrame,
     ]
-    p_inputs = [pd_inputs, ta_inputs, pf_inputs, wtf_inputs]
+    p_inputs = [pd_inputs, ta_inputs, pf_inputs]
     clockwises = [False] * len(p_inputs) + [True] * len(p_inputs)
     p_inputs = p_inputs * 2
     parameterisations = parameterisations * 2
