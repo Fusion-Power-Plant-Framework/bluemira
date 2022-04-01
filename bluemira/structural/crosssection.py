@@ -213,7 +213,7 @@ class RectangularBeam(CrossSection):
         -----
         Young, W and Budynas, R: Roark's Formulas for Stress and Strain
 
-        \t:math:`J\approx ab^3(\dfrac{16}{3}-3.36\dfrac{b}{a}(1-\dfrac{b^4}{12a^4}))`
+        \t:math:`J\\approx ab^3(\\dfrac{16}{3}-3.36\\dfrac{b}{a}(1-\\dfrac{b^4}{12a^4}))`
         """
         if width >= height:
             a = width / 2
