@@ -27,8 +27,9 @@ from copy import deepcopy
 import numpy as np
 from scipy.sparse.linalg import spsolve
 
+from bluemira.base.constants import EPS
 from bluemira.base.look_and_feel import bluemira_warn
-from bluemira.structural.constants import CONDEPS, R_LARGE_DISP
+from bluemira.structural.constants import R_LARGE_DISP
 from bluemira.structural.error import StructuralError
 from bluemira.structural.geometry import Geometry
 from bluemira.structural.loads import LoadCase
@@ -51,7 +52,7 @@ def check_matrix_condition(matrix, digits):
     condition_number = np.linalg.cond(matrix)
     digit_loss = np.log10(condition_number)
 
-    if condition_number > 1 / CONDEPS:
+    if condition_number > 1 / EPS:
         bluemira_warn(
             "Structural::FiniteElementModel:\n Singular stiffness matrix will "
             "cause LinAlgErrors.\n"

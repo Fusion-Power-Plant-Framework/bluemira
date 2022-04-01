@@ -25,6 +25,8 @@ Constants for use in the structural module.
 import numpy as np
 from matplotlib import cm
 
+from bluemira.base.constants import EPS
+
 # Poisson's ratio
 NU = 0.33
 
@@ -36,9 +38,6 @@ SD_LIMIT = 0.1
 # The type of number to use in the matrices
 FLOAT_TYPE = np.float64
 
-# The small number limit
-CONDEPS = np.finfo(FLOAT_TYPE).eps
-
 # The proximity tolerance
 #   Used for checking node existence
 D_TOLERANCE = 1e-5
@@ -48,7 +47,7 @@ D_TOLERANCE = 1e-5
 #   Chosen to be slightly larger than:
 #      * np.cos(3 * np.pi / 2) =  -1.8369701987210297e-16
 #      * np.sin(np.pi * 2) = -2.4492935982947064e-16
-NEAR_ZERO = 5e-16
+NEAR_ZERO = 2 * EPS
 
 # The large displacement ratio (denominator)
 R_LARGE_DISP = 100
