@@ -167,6 +167,7 @@ class BlanketBuilder(Builder):
             ]
             segments.append(segment)
         self._segments = segments
+        # TODO: Add blanket cuts properly in 3-D
 
         sector = Component("segments", children=segments)
         sectors = circular_pattern_component(sector, n_sector_draw, degree=degree)
