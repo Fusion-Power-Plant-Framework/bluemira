@@ -169,7 +169,7 @@ class VacuumVesselBuilder(Builder):
         vv = PhysicalComponent("Body", vv_body)
         vv.display_cad_options.color = BLUE_PALETTE["VV"][0]
 
-        sectors = circular_pattern_component([vv], n_vv_draw, degree=degree)
+        sectors = circular_pattern_component(vv, n_vv_draw, degree=degree)
         component = Component("xyz")
         component.add_children(sectors, merge_trees=True)
 
