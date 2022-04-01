@@ -25,6 +25,7 @@ FE transformation matrices and methods
 from copy import deepcopy
 
 import numpy as np
+from scipy.linalg import block_diag
 
 from bluemira.geometry._deprecated_tools import rotation_matrix
 
@@ -180,12 +181,7 @@ def lambda_matrix(dx, dy, dz):
         The transformation matrix
     """
     dcm = _direction_cosine_matrix(dx, dy, dz)
-    llambda = np.zeros((12, 12))
-    llambda[0:3, 0:3] = dcm
-    llambda[3:6, 3:6] = dcm
-    llambda[6:9, 6:9] = dcm
-    llambda[9:12, 9:12] = dcm
-    return llambda
+    return block_diag(*[dcm] * 4)
 
 
 def cyclic_pattern(geometry, axis, angle, n, include_first=True):
