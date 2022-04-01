@@ -474,6 +474,8 @@ if tf_coils_builder.runmode == "run":
 # %%
 ax = tf_coils.get_component("xy").plot_2d(show=False)
 plasma.get_component("xy").plot_2d(ax=ax, show=False)
+blanket = component.get_component("Breeding Blanket")
+blanket.get_component("xy").plot_2d(ax=ax, show=False)
 pf_coils.get_component("xy").plot_2d(ax=ax)
 
 # %%
@@ -482,7 +484,6 @@ plasma.get_component("xz").plot_2d(ax=ax, show=False)
 
 divertor = component.get_component("Divertor")
 divertor.get_component("xz").plot_2d(ax=ax, show=False)
-blanket = component.get_component("Breeding Blanket")
 blanket.get_component("xz").plot_2d(ax=ax, show=False)
 pf_coils.get_component("xz").plot_2d(ax=ax, show=False)
 

@@ -104,7 +104,7 @@ class BlanketBuilder(Builder):
         """
         ibs = PhysicalComponent("IBS", self._ibs_silhouette)
         ibs.plot_options.face_options["color"] = BLUE_PALETTE["BB"][0]
-        obs = PhysicalComponent("OBS", self._ibs_silhouette)
+        obs = PhysicalComponent("OBS", self._obs_silhouette)
         obs.plot_options.face_options["color"] = BLUE_PALETTE["BB"][1]
         component = Component("xz", children=[ibs, obs])
         bm_plot_tools.set_component_view(component, "xz")
@@ -117,14 +117,16 @@ class BlanketBuilder(Builder):
         xy_plane = BluemiraPlacement.from_3_points([0, 0, 0], [1, 0, 0], [0, 1, 0])
 
         segments = []
+        slices = []
         for i, segment in enumerate(self._segments):
-            slice = PhysicalComponent(segment.name, slice_shape(segment.shape, xy_plane))
-            slice.plot_options.face_options["color"] = BLUE_PALETTE["BB"][i]
-            segment = circular_pattern_component(
-                slice, self._params.n_TF.value, degree=360
+            slice = PhysicalComponent(
+                segment.name, slice_shape(segment.shape, xy_plane)[0]
             )
-            segments.append(segments)
+            slice.plot_options.face_options["color"] = BLUE_PALETTE["BB"][i]
+            slices.append(slice)
 
+        sector = Component("", children=slices)
+        segments = circular_pattern_component(sector, self._params.n_TF.value, 360)
         component = Component("xy", children=segments)
         bm_plot_tools.set_component_view(component, "xy")
         return component
