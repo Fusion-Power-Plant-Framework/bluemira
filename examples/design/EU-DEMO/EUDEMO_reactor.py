@@ -41,6 +41,7 @@ from bluemira.builders.EUDEMO.pf_coils import PFCoilsBuilder
 from bluemira.builders.EUDEMO.plasma import PlasmaBuilder, PlasmaComponent
 from bluemira.builders.EUDEMO.reactor import EUDEMOReactor
 from bluemira.builders.EUDEMO.tf_coils import TFCoilsBuilder
+from bluemira.builders.EUDEMO.vacuum_vessel import VacuumVesselBuilder
 from bluemira.builders.radiation_shield import RadiationShieldBuilder
 from bluemira.builders.tf_coils import RippleConstrainedLengthGOP
 from bluemira.builders.thermal_shield import ThermalShieldBuilder
@@ -476,6 +477,8 @@ ax = tf_coils.get_component("xy").plot_2d(show=False)
 plasma.get_component("xy").plot_2d(ax=ax, show=False)
 blanket = component.get_component("Breeding Blanket")
 blanket.get_component("xy").plot_2d(ax=ax, show=False)
+vessel = component.get_component("Vacuum Vessel")
+vessel.get_component("xy").plot_2d(ax=ax, show=False)
 pf_coils.get_component("xy").plot_2d(ax=ax)
 
 # %%
@@ -485,6 +488,7 @@ plasma.get_component("xz").plot_2d(ax=ax, show=False)
 divertor = component.get_component("Divertor")
 divertor.get_component("xz").plot_2d(ax=ax, show=False)
 blanket.get_component("xz").plot_2d(ax=ax, show=False)
+vessel.get_component("xz").plot_2d(ax=ax, show=False)
 pf_coils.get_component("xz").plot_2d(ax=ax, show=False)
 
 thermal_shield = component.get_component("Thermal Shield")
@@ -501,6 +505,7 @@ ComponentDisplayer().show_cad(component.get_component("xyz", first=False))
 sector = Component("Segment View")
 plasma_builder: PlasmaBuilder = reactor.get_builder("Plasma")
 divertor_builder: DivertorBuilder = reactor.get_builder("Divertor")
+vessel_builder: VacuumVesselBuilder = reactor.get_builder("Vacuum Vessel")
 blanket_builder: BlanketBuilder = reactor.get_builder("Breeding Blanket")
 tf_coils_builder: TFCoilsBuilder = reactor.get_builder("TF Coils")
 pf_coils_builder: PFCoilsBuilder = reactor.get_builder("PF Coils")
@@ -512,6 +517,7 @@ radiation_shield_builder: RadiationShieldBuilder = reactor.get_builder(
 sector.add_child(plasma_builder.build_xyz(degree=270))
 sector.add_child(divertor_builder.build_xyz(degree=270))
 sector.add_child(blanket_builder.build_xyz(degree=270))
+sector.add_child(vessel_builder.build_xyz(degree=360))
 sector.add_child(tf_coils_builder.build_xyz(degree=270))
 sector.add_child(pf_coils_builder.build_xyz(degree=270))
 sector.add_child(thermal_shield_builder.build_xyz(degree=270))
