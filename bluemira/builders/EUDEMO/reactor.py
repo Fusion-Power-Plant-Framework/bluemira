@@ -336,7 +336,7 @@ class EUDEMOReactor(Reactor):
         config = self._process_design_stage_config(name, default_config)
 
         builder = BlanketBuilder(
-            self._params.to_dict(), config, divertor_silhouette=blanket_face
+            self._params.to_dict(), config, blanket_silhouette=blanket_face
         )
         self.register_builder(builder, name)
         component = super()._build_stage(name)
