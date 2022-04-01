@@ -259,6 +259,7 @@ class Element:
             properties["rho"] = material.rho
             properties["A"] = cross_section.area
             self.material = material
+
         return properties
 
     @property

@@ -25,8 +25,6 @@ FE stress interpolations
 
 import numpy as np
 
-s = np.linspace(0, 1, 10)
-
 
 def hermite_displacement(n):
     """
