@@ -29,6 +29,7 @@ from bluemira.base.components import Component, PhysicalComponent
 from bluemira.base.design import Reactor
 from bluemira.base.look_and_feel import bluemira_print
 from bluemira.builders.cryostat import CryostatBuilder
+from bluemira.builders.EUDEMO.blanket import BlanketBuilder
 from bluemira.builders.EUDEMO.divertor import DivertorBuilder
 from bluemira.builders.EUDEMO.ivc import InVesselComponentBuilder
 from bluemira.builders.EUDEMO.ivc.ivc import build_ivc_xz_shapes
@@ -314,6 +315,27 @@ class EUDEMOReactor(Reactor):
 
         builder = DivertorBuilder(
             self._params.to_dict(), config, divertor_silhouette=divertor_face
+        )
+        self.register_builder(builder, name)
+        component = super()._build_stage(name)
+
+        bluemira_print(f"Completed design stage: {name}")
+
+        return component
+
+    def build_blanket(self, component_tree: Component, blanket_face):
+        """
+        Run the breeding blanket build.
+        """
+        name = EUDEMOReactor.BLANKET
+
+        bluemira_print(f"Starting design stage: {name}")
+
+        default_config = {}
+        config = self._process_design_stage_config(name, default_config)
+
+        builder = BlanketBuilder(
+            self._params.to_dict(), config, divertor_silhouette=blanket_face
         )
         self.register_builder(builder, name)
         component = super()._build_stage(name)

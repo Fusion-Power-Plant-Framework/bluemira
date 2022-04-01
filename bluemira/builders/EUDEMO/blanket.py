@@ -27,7 +27,7 @@ from typing import List, Optional
 import numpy as np
 
 import bluemira.utilities.plot_tools as bm_plot_tools
-from bluemira.base.builder import Builder, Component
+from bluemira.base.builder import BuildConfig, Builder, Component
 from bluemira.base.components import PhysicalComponent
 from bluemira.base.config import Configuration
 from bluemira.builders.EUDEMO.tools import (
@@ -55,7 +55,19 @@ class BlanketBuilder(Builder):
     _params: Configuration
     _silhouette: Optional[BluemiraFace] = None
 
-    def reinitialise(self, params) -> None:
+    def __init__(
+        self,
+        params,
+        build_config: BuildConfig,
+        blanket_silhouette: BluemiraFace,
+    ):
+        super().__init__(
+            params,
+            build_config,
+            blanket_silhouette=blanket_silhouette,
+        )
+
+    def reinitialise(self, params, blanket_silhouette) -> None:
         """
         Reinitialise the parameters and boundary.
 
@@ -66,7 +78,7 @@ class BlanketBuilder(Builder):
         """
         super().reinitialise(params)
 
-        self._silhouette = None
+        self._silhouette = blanket_silhouette
 
     def build(self) -> Component:
         """
