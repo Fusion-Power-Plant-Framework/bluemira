@@ -174,7 +174,3 @@ class TestLambdaTransformationMatrices:
             self.assert_maths_good(dcm, msg=f"coords: {axis}")
 
             self.assert_works_good(dcm, local, msg=f"coords: {axis}")
-
-
-if __name__ == "__main__":
-    pytest.main([__file__])

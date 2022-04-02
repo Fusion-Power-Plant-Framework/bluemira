@@ -82,7 +82,3 @@ class TestPlotting:
         fem.apply_load_case(load_case)
 
         GeometryPlotter(geometry)
-
-
-if __name__ == "__main__":
-    pytest.main([__file__])

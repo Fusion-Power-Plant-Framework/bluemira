@@ -36,7 +36,3 @@ class TestK:
 
         # Check array is symmetric
         assert np.allclose(k, k.T, rtol=1e-9)
-
-
-if __name__ == "__main__":
-    pytest.main([__file__])

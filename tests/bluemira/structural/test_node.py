@@ -49,7 +49,3 @@ class TestNode:
         assert node.supports[:5].all()
         node.clear_supports()
         assert not node.supports.all()
-
-
-if __name__ == "__main__":
-    pytest.main([__file__])
