@@ -19,6 +19,7 @@
 */balance_of_plant/ @Fusion-Power-Plant-Framework/power-cycle-review
 */radiation_transport/ @Fusion-Power-Plant-Framework/radiation-transport-review
 */utilities/  @Fusion-Power-Plant-Framework/utilities-review
+*/structural/  @Fusion-Power-Plant-Framework/structural-review
 
 # Repository responsibility
 
