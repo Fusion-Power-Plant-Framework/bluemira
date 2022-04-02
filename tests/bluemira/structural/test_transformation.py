@@ -35,7 +35,7 @@ from bluemira.structural.transformation import (
 
 class TestLambdaTransformationMatrices:
     """
-    The absolute nightmare you had with these fucking dcms...
+    The absolute nightmare you had with these dcms...
     """
 
     global_cs = np.array([[1, 0, 0], [0, 1, 0], [0, 0, 1]])
