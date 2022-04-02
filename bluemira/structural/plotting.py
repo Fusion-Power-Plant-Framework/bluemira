@@ -526,32 +526,3 @@ class StressDeformedGeometryPlotter(BasePlotter):
             centre = (smin + smax) / 2
 
         return TwoSlopeNorm(centre, vmin=min(stress), vmax=max(stress))
-
-
-if __name__ == "__main__":
-    import matplotlib.pyplot as plt
-
-    from bluemira.structural.crosssection import IBeam
-    from bluemira.structural.geometry import Geometry
-    from bluemira.structural.material import SS316
-
-    xs = IBeam(0.25, 0.5, 0.1, 0.1)
-
-    geometry = Geometry()
-    geometry.add_node(0, 0, 0)
-    geometry.add_node(1, 1, 1)
-    geometry.add_node(2, 1, 1)
-    geometry.add_node(2, 1, 2)
-    geometry.add_node(3, 2, 2)
-    geometry.add_element(0, 1, xs, SS316)
-    geometry.add_element(1, 2, xs, SS316)
-    geometry.add_element(2, 3, xs, SS316)
-    geometry.add_element(3, 4, xs, SS316)
-
-    plotter = BasePlotter(geometry)
-    plotter.plot_nodes()
-    plotter.plot_supports()
-    plotter.plot_elements()
-    plotter.plot_cross_sections()
-    plotter._set_aspect_equal()
-    plt.show()
