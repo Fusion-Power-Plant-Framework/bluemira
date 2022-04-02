@@ -38,7 +38,7 @@ from bluemira.builders.EUDEMO.plasma import PlasmaBuilder
 from bluemira.builders.EUDEMO.tf_coils import TFCoilsBuilder
 from bluemira.builders.EUDEMO.vacuum_vessel import VacuumVesselBuilder
 from bluemira.builders.radiation_shield import RadiationShieldBuilder
-from bluemira.builders.thermal_shield import ThermalShieldBuilder
+from bluemira.builders.thermal_shield import ThermalShieldBuilder, VVTSBuilder
 from bluemira.codes import systems_code_solver
 from bluemira.codes.process import NAME as PROCESS
 
@@ -76,6 +76,7 @@ class EUDEMOReactor(Reactor):
         component.add_child(self.build_vacuum_vessel(component, ivc_boundary))
         component.add_child(self.build_divertor(component, divertor_face))
         component.add_child(self.build_blanket(component, blanket_face))
+        component.add_child(self.build_VV_thermal_shield(component))
         component.add_child(self.build_TF_coils(component))
         component.add_child(self.build_PF_coils(component))
         component.add_child(self.build_thermal_shield(component))
@@ -228,6 +229,30 @@ class EUDEMOReactor(Reactor):
         component = super()._build_stage(name)
 
         bluemira_print(f"Completed design stage: {name}")
+        return component
+
+    def build_VV_thermal_shield(self, component_tree: Component):
+        """
+        Run the vacuum vessel thermal shield build.
+        """
+        name = self.THERMAL_SHIELD
+
+        bluemira_print(f"Starting design stage: {name}")
+
+        vessel = component_tree.get_component("Vacuum Vessel").get_component("xz")
+
+        vv_koz = vessel.get_component("Body").shape.boundary[0]
+
+        default_config = {}
+        config = self._process_design_stage_config(name, default_config)
+
+        builder = VVTSBuilder(self._params.to_dict(), config, vv_koz=vv_koz)
+
+        self.register_builder(builder, name)
+        component = super()._build_stage(name)
+
+        bluemira_print(f"Completed design stage: {name}")
+
         return component
 
     def build_thermal_shield(self, component_tree: Component):
