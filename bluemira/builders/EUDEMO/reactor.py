@@ -196,8 +196,14 @@ class EUDEMOReactor(Reactor):
         plasma = component_tree.get_component(EUDEMOReactor.PLASMA)
         sep_comp: PhysicalComponent = plasma.get_component("xz").get_component("LCFS")
         sep_shape = sep_comp.shape.boundary[0]
+        thermal_shield = component_tree.get_component(EUDEMOReactor.THERMAL_SHIELD)
+        vvts_xz = (
+            thermal_shield.get_component("xz").get_component("VVTS").shape.boundary[0]
+        )
 
-        builder = TFCoilsBuilder(self._params.to_dict(), config, separatrix=sep_shape)
+        builder = TFCoilsBuilder(
+            self._params.to_dict(), config, separatrix=sep_shape, keep_out_zone=vvts_xz
+        )
         self.register_builder(builder, name)
 
         component = super()._build_stage(name)
