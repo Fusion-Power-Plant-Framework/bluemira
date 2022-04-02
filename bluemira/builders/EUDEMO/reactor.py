@@ -79,7 +79,7 @@ class EUDEMOReactor(Reactor):
         component.add_child(self.build_VV_thermal_shield(component))
         component.add_child(self.build_TF_coils(component))
         component.add_child(self.build_PF_coils(component))
-        component.add_child(self.build_thermal_shield(component))
+        component.add_child(self.build_cryo_thermal_shield(component))
         component.add_child(self.build_cryostat(component))
         component.add_child(self.build_radiation_shield(component))
 
@@ -261,9 +261,9 @@ class EUDEMOReactor(Reactor):
 
         return component
 
-    def build_thermal_shield(self, component_tree: Component):
+    def build_cryo_thermal_shield(self, component_tree: Component):
         """
-        Run the thermal shield build.
+        Run the cryostat thermal shield build.
         """
         name = self.THERMAL_SHIELD
 
