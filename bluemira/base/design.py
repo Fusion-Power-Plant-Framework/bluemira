@@ -27,8 +27,9 @@ from __future__ import annotations
 
 import abc
 import copy
+import functools
 import typing
-from typing import Dict, Optional, Set, Type, Union
+from typing import Callable, Dict, Optional, Set, Type, Union
 
 from bluemira.base.builder import BuildConfig, Builder
 from bluemira.base.components import Component
@@ -120,7 +121,7 @@ class DesignABC(abc.ABC):
         """
         return self._solvers[solver_name]
 
-    def register_solver(self, solver: FileProgramInterface, name: str):
+    def register_solver(self, solver: FileProgramInterface):
         """
         Add this solver to the internal solver registry.
 
@@ -136,10 +137,10 @@ class DesignABC(abc.ABC):
         DesignError
             If name already exists in the registry.
         """
-        if name not in self._solvers:
-            self._solvers[name] = solver
+        if self.stage not in self._solvers:
+            self._solvers[self.stage] = solver
         else:
-            raise DesignError(f"Solver {name} already exists in {self}.")
+            raise DesignError(f"Solver {self.stage} already exists in {self}.")
 
     def get_builder(self, builder_name: str) -> Builder:
         """
@@ -157,7 +158,7 @@ class DesignABC(abc.ABC):
         """
         return self._builders[builder_name]
 
-    def register_builder(self, builder: Builder, name: str):
+    def register_builder(self, builder: Builder):
         """
         Add this builder to the internal builder registry.
 
@@ -173,12 +174,12 @@ class DesignABC(abc.ABC):
         DesignError
             If name already exists in the registry.
         """
-        if name not in self._builders:
-            self._builders[name] = builder
+        if self.stage not in self._builders:
+            self._builders[self.stage] = builder
         else:
-            raise DesignError(f"Builder {name} already exists in {self}.")
+            raise DesignError(f"Builder {self.stage} already exists in {self}.")
 
-    def _build_stage(self, name: str) -> Component:
+    def _build_stage(self) -> Component:
         """
         Build the requested stage and update the design's parameters.
 
@@ -192,10 +193,40 @@ class DesignABC(abc.ABC):
         component: Component
             The resulting component from the build.
         """
-        component = self._builders[name]()
-        self._params.update_kw_parameters(self._builders[name].params.to_dict())
+        component = self._builders[self.stage]()
+        self._params.update_kw_parameters(self._builders[self.stage].params.to_dict())
 
         return component
+
+    @staticmethod
+    def design_stage(name: str) -> Callable:
+        """
+        Design stage decorator.
+        Adds some printing to each stage and sets the 'stage' variable
+
+        Parameters
+        ----------
+        name: str
+            Name of design stage
+
+        Returns
+        -------
+        decorated function
+
+        """
+
+        def decorator(func):
+            @functools.wraps(func)
+            def wrapper(self, *args, **kwargs):
+                bluemira_print(f"Starting design stage: {name}")
+                self.stage = name
+                ret = func(self, *args, **kwargs)
+                bluemira_print(f"Completed design stage: {name}")
+                return ret
+
+            return wrapper
+
+        return decorator
 
     @abc.abstractmethod
     def _extract_build_config(self, params: Dict[str, Union[int, float, str]]):
@@ -324,9 +355,9 @@ class Reactor(DesignABC):
         self._plot_flag: bool = self._build_config.get("plot_flag", False)
 
     def _process_design_stage_config(
-        self, name: str, default_config: BuildConfig = None
+        self, default_config: BuildConfig = None
     ) -> Dict[str, BuildConfig]:
-        config = {"name": name}
+        config = {"name": self.stage}
 
         # Copy in top-level configuration
         for key, val in self._build_config.items():
@@ -337,7 +368,7 @@ class Reactor(DesignABC):
         config.update(default_config)
 
         # Set the specified configuration values
-        config.update(self._build_config.get(name, {}))
+        config.update(self._build_config.get(self.stage, {}))
 
         return config
 
