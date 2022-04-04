@@ -48,6 +48,8 @@ class ProminenceDownloader:
 
     """
 
+    BINARY = "prominence"
+
     def __init__(self, jobid, save_dir, force=False):
         self.id = jobid
         self.dir = False
@@ -84,13 +86,12 @@ class ProminenceDownloader:
             except ImportError:
                 continue
 
-    @staticmethod
-    def _get_binary_path():
+    def _get_binary_path(self):
         """
         Find all paths to prominence binaries
         """
         for path in sys.path:
-            filepath = Path(path, "prominence")
+            filepath = Path(path, self.BINARY)
             if filepath.is_file():
                 yield filepath
 
