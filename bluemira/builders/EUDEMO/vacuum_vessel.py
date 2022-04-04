@@ -32,7 +32,7 @@ from bluemira.base.config import Configuration
 from bluemira.builders.EUDEMO.tools import make_circular_xy_ring, varied_offset
 from bluemira.display.palettes import BLUE_PALETTE
 from bluemira.geometry.face import BluemiraFace
-from bluemira.geometry.tools import make_circle, offset_wire, revolve_shape
+from bluemira.geometry.tools import offset_wire, revolve_shape
 from bluemira.geometry.wire import BluemiraWire
 
 
