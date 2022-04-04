@@ -354,9 +354,9 @@ print(component.tree())
 # tree.
 
 # %%
-plasma: PlasmaComponent = component.get_component("Plasma")
-tf_coils = component.get_component("TF Coils")
-pf_coils = component.get_component("PF Coils")
+plasma: PlasmaComponent = component.get_component(EUDEMOReactor.PLASMA)
+tf_coils = component.get_component(EUDEMOReactor.TF_COILS)
+pf_coils = component.get_component(EUDEMOReactor.PF_COILS)
 
 # %%[markdown]
 # ### Saving the Equilibrium
@@ -415,9 +415,11 @@ plasma.get_component("xyz").show_cad()
 # view the solution that was found.
 
 # %%
-plasma_builder = reactor.get_builder("Plasma")
+plasma_builder = reactor.get_builder(EUDEMOReactor.PLASMA)
 if plasma_builder.runmode == "run":
-    eq_problem: AbInitioEquilibriumProblem = reactor.get_builder("Plasma").design_problem
+    eq_problem: AbInitioEquilibriumProblem = reactor.get_builder(
+        EUDEMOReactor.PLASMA
+    ).design_problem
     _, ax = plt.subplots()
     eq_problem.eq.plot(ax=ax)
     eq_problem.constraints.plot(ax=ax)
@@ -448,7 +450,7 @@ tf_coils.get_component("xyz").show_cad()
 # by using the `save_shape` method on the `TFCoilsBuilder`.
 
 # %%
-tf_coils_builder: TFCoilsBuilder = reactor.get_builder("TF Coils")
+tf_coils_builder: TFCoilsBuilder = reactor.get_builder(EUDEMOReactor.TF_COILS)
 if tf_coils_builder.runmode == "run":
     tf_coils_builder.save_shape()
 
@@ -460,7 +462,7 @@ if tf_coils_builder.runmode == "run":
 # Coils build.
 
 # %%
-tf_coils_builder: TFCoilsBuilder = reactor.get_builder("TF Coils")
+tf_coils_builder: TFCoilsBuilder = reactor.get_builder(EUDEMOReactor.TF_COILS)
 if tf_coils_builder.runmode == "run":
     design_problem: RippleConstrainedLengthGOP = tf_coils_builder.design_problem
     design_problem.plot()
@@ -475,9 +477,9 @@ if tf_coils_builder.runmode == "run":
 # %%
 ax = tf_coils.get_component("xy").plot_2d(show=False)
 plasma.get_component("xy").plot_2d(ax=ax, show=False)
-blanket = component.get_component("Breeding Blanket")
+blanket = component.get_component(EUDEMOReactor.BLANKET)
 blanket.get_component("xy").plot_2d(ax=ax, show=False)
-vessel = component.get_component("Vacuum Vessel")
+vessel = component.get_component(EUDEMOReactor.VACUUM_VESSEL)
 vessel.get_component("xy").plot_2d(ax=ax, show=False)
 pf_coils.get_component("xy").plot_2d(ax=ax)
 
@@ -485,17 +487,17 @@ pf_coils.get_component("xy").plot_2d(ax=ax)
 ax = tf_coils.get_component("xz").plot_2d(show=False)
 plasma.get_component("xz").plot_2d(ax=ax, show=False)
 
-divertor = component.get_component("Divertor")
+divertor = component.get_component(EUDEMOReactor.DIVERTOR)
 divertor.get_component("xz").plot_2d(ax=ax, show=False)
 blanket.get_component("xz").plot_2d(ax=ax, show=False)
 vessel.get_component("xz").plot_2d(ax=ax, show=False)
 pf_coils.get_component("xz").plot_2d(ax=ax, show=False)
 
-thermal_shield = component.get_component("Thermal Shield")
+thermal_shield = component.get_component(EUDEMOReactor.THERMAL_SHIELD)
 thermal_shield.get_component("xz").plot_2d(ax=ax, show=False)
-cryostat = component.get_component("Cryostat")
+cryostat = component.get_component(EUDEMOReactor.CRYOSTAT)
 cryostat.get_component("xz").plot_2d(ax=ax, show=False)
-radiation_shield = component.get_component("Radiation Shield")
+radiation_shield = component.get_component(EUDEMOReactor.RADIATION_SHIELD)
 radiation_shield.get_component("xz").plot_2d(ax=ax)
 
 # %%
@@ -503,16 +505,18 @@ ComponentDisplayer().show_cad(component.get_component("xyz", first=False))
 
 # %%
 sector = Component("Segment View")
-plasma_builder: PlasmaBuilder = reactor.get_builder("Plasma")
-divertor_builder: DivertorBuilder = reactor.get_builder("Divertor")
-vessel_builder: VacuumVesselBuilder = reactor.get_builder("Vacuum Vessel")
-blanket_builder: BlanketBuilder = reactor.get_builder("Breeding Blanket")
-tf_coils_builder: TFCoilsBuilder = reactor.get_builder("TF Coils")
-pf_coils_builder: PFCoilsBuilder = reactor.get_builder("PF Coils")
-thermal_shield_builder: ThermalShieldBuilder = reactor.get_builder("Thermal Shield")
-cryostat_builder: CryostatBuilder = reactor.get_builder("Cryostat")
+plasma_builder: PlasmaBuilder = reactor.get_builder(EUDEMOReactor.PLASMA)
+divertor_builder: DivertorBuilder = reactor.get_builder(EUDEMOReactor.DIVERTOR)
+vessel_builder: VacuumVesselBuilder = reactor.get_builder(EUDEMOReactor.VACUUM_VESSEL)
+blanket_builder: BlanketBuilder = reactor.get_builder(EUDEMOReactor.BLANKET)
+tf_coils_builder: TFCoilsBuilder = reactor.get_builder(EUDEMOReactor.TF_COILS)
+pf_coils_builder: PFCoilsBuilder = reactor.get_builder(EUDEMOReactor.PF_COILS)
+thermal_shield_builder: ThermalShieldBuilder = reactor.get_builder(
+    EUDEMOReactor.THERMAL_SHIELD
+)
+cryostat_builder: CryostatBuilder = reactor.get_builder(EUDEMOReactor.CRYOSTAT)
 radiation_shield_builder: RadiationShieldBuilder = reactor.get_builder(
-    "Radiation Shield"
+    EUDEMOReactor.RADIATION_SHIELD
 )
 sector.add_child(plasma_builder.build_xyz(degree=270))
 sector.add_child(divertor_builder.build_xyz(degree=270))
