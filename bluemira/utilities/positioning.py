@@ -26,15 +26,14 @@ A collection of tools used for position interpolation.
 import abc
 
 import numpy as np
-from scipy.interpolate import InterpolatedUnivariateSpline
-from scipy.optimize import minimize_scalar
 from scipy.spatial import ConvexHull
 
 from bluemira.base.constants import EPS
-from bluemira.geometry._deprecated_tools import vector_lengthnorm_2d
+from bluemira.geometry.constants import VERY_BIG
 from bluemira.geometry.placement import BluemiraPlacement
 from bluemira.geometry.tools import slice_shape
 from bluemira.utilities.error import PositionerError
+from bluemira.utilities.tools import is_num
 
 
 class XZGeometryInterpolator(abc.ABC):
@@ -89,37 +88,31 @@ class PathInterpolator(XZGeometryInterpolator):
         Path to interpolate along
     """
 
-    def __init__(self, geometry):
-        super().__init__(geometry)
-        x, z = self._get_xz_coordinates()
-        ln = vector_lengthnorm_2d(x, z)
-        self.x_ius = InterpolatedUnivariateSpline(ln, x)
-        self.z_ius = InterpolatedUnivariateSpline(ln, z)
-
-    @staticmethod
-    def _f_min(l_value, f_x, f_z, x, z):
-        dx = f_x(l_value) - x
-        dz = f_z(l_value) - z
-        return dx**2 + dz**2
-
-    def to_xz(self, l_value):
+    def to_xz(self, l_values):
         """
         Convert parametric-space 'L' values to physical x-z space.
         """
-        l_value = np.clip(l_value, 0.0, 1.0)
-        return self.x_ius(l_value), self.z_ius(l_value)
+        l_values = np.clip(l_values, 0.0, 1.0)
+        if is_num(l_values):
+            return self.geometry.value_at(alpha=l_values)[[0, 2]]
+
+        x, z = np.zeros(len(l_values)), np.zeros(len(l_values))
+        for i, lv in enumerate(l_values):
+            x[i], z[i] = self.geometry.value_at(alpha=lv)[[0, 2]]
+
+        return x, z
 
     def to_L(self, x, z):
         """
         Convert physical x-z space values to parametric-space 'L' values.
         """
-        return minimize_scalar(
-            self._f_min,
-            args=(self.x_ius, self.z_ius, x, z),
-            bounds=[0, 1],
-            method="bounded",
-            options={"xatol": 1e-8},
-        ).x
+        if is_num(x):
+            return self.geometry.parameter_at([x, 0, z], tolerance=VERY_BIG)
+
+        l_values = np.zeros(len(x))
+        for i, (xi, zi) in enumerate(zip(x, z)):
+            l_values[i] = self.geometry.parameter_at([xi, 0, zi], tolerance=VERY_BIG)
+        return l_values
 
 
 class RegionInterpolator(XZGeometryInterpolator):

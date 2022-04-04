@@ -28,45 +28,39 @@ from bluemira.utilities.positioning import PathInterpolator, RegionInterpolator
 
 
 class TestPathInterpolator:
-    def test_open(self):
+    @classmethod
+    def setup_class(cls):
         x = [0, 2, 4]
         z = [0, 1, 0]
-        # Note that we're making a CW polygon, which will get reversed to a CCW one
-        polygon = make_polygon({"x": x, "z": z})
-        interpolator = PathInterpolator(polygon)
+        cls.polygon = make_polygon({"x": x, "z": z})
+        cls.circle = make_circle(center=(0, 0, 0), axis=(0, -1, 0), radius=10)
 
-        x0, z0 = interpolator.to_xz(0)
-        assert np.isclose(x0, 4)
-        assert np.isclose(z0, 0)
-        assert np.isclose(interpolator.to_L(4, 0), 0)
+    @pytest.mark.parametrize(
+        "alpha, point", [(0.0, [0, 0]), (0.5, [2, 1]), (1.0, [4, 0])]
+    )
+    def test_open(self, alpha, point):
+        interpolator = PathInterpolator(self.polygon)
 
-        x05, z05 = interpolator.to_xz(0.5)
-        assert np.isclose(x05, 2)
-        assert np.isclose(z05, 1)
-        assert np.isclose(interpolator.to_L(2, 1), 0.5)
+        x0, z0 = interpolator.to_xz(alpha)
+        assert np.isclose(x0, point[0])
+        assert np.isclose(z0, point[1])
+        assert np.isclose(interpolator.to_L(*point), alpha)
 
-        x1, z1 = interpolator.to_xz(1)
-        assert np.isclose(x1, 0)
-        assert np.isclose(z1, 0)
-        assert np.isclose(interpolator.to_L(0, 0), 1)
-
-    def test_closed(self):
-        circle = make_circle(center=(0, 0, 0), axis=(0, 1, 0), radius=10)
-        interpolator = PathInterpolator(circle)
-        x0, z0 = interpolator.to_xz(0)
-        assert np.isclose(x0, 10)
-        assert np.isclose(z0, 0)
-        assert np.isclose(interpolator.to_L(10, 0), 0)
-
-        x90, z90 = interpolator.to_xz(0.25)
-        assert np.isclose(x90, 0)
-        assert np.isclose(z90, 10)
-        assert np.isclose(interpolator.to_L(0, 10), 0.25)
-
-        x180, z180 = interpolator.to_xz(0.5)
-        assert np.isclose(x180, -10)
-        assert np.isclose(z180, 0)
-        assert np.isclose(interpolator.to_L(-10, 0), 0.5)
+    @pytest.mark.parametrize(
+        "alpha, point",
+        [
+            (0.0, [10, 0]),
+            (0.25, [0, 10]),
+            (0.5, [-10, 0]),
+            (0.75, [0, -10]),
+        ],
+    )
+    def test_closed(self, alpha, point):
+        interpolator = PathInterpolator(self.circle)
+        x0, z0 = interpolator.to_xz(alpha)
+        assert np.isclose(x0, point[0])
+        assert np.isclose(z0, point[1])
+        assert np.isclose(interpolator.to_L(*point), alpha)
 
     def test_straight(self):
         line = make_polygon([[5, 10], [0, 0], [-10, 10]])

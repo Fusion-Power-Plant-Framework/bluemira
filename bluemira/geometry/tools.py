@@ -31,6 +31,7 @@ import numpy as np
 from scipy.spatial import ConvexHull
 
 import bluemira.mesh.meshing as meshing
+from bluemira.base.constants import EPS
 from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.codes import _freecadapi as cadapi
 from bluemira.geometry.base import BluemiraGeo, GeoMeshable
@@ -510,6 +511,41 @@ def distance_to(geo1: BluemiraGeo, geo2: BluemiraGeo):
     else:
         shape2 = geo2._shape
     return cadapi.dist_to_shape(shape1, shape2)
+
+
+def split_wire(wire: BluemiraWire, vertex: Iterable, tolerance: float = EPS):
+    """
+    Split a wire at a given vertex.
+
+    Parameters
+    ----------
+    wire: apiWire
+        Wire to be split
+    vertex: Iterable
+        Vertex at which to split the wire
+    tolerance: float
+        Tolerance within which to find the closest vertex on the wire
+
+    Returns
+    -------
+    wire_1: Optional[BluemiraWire]
+        First half of the wire. Will be None if the vertex is the start point of the wire
+    wire_2: Optional[BluemiraWire]
+        Last half of the wire. Will be None if the vertex is the start point of the wire
+
+    Raises
+    ------
+    GeometryError:
+        If the vertex is further away to the wire than the specified tolerance
+    """
+    wire_1, wire_2 = cadapi.split_wire(
+        wire.get_single_wire()._shape, vertex, tolerance=tolerance
+    )
+    if wire_1:
+        wire_1 = BluemiraWire(wire_1)
+    if wire_2:
+        wire_2 = BluemiraWire(wire_2)
+    return wire_1, wire_2
 
 
 def slice_shape(shape: BluemiraGeo, plane):

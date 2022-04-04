@@ -682,6 +682,125 @@ def wire_value_at(wire: apiWire, distance: float):
     return np.array(point)
 
 
+def wire_parameter_at(wire: apiWire, vertex: Iterable, tolerance=EPS):
+    """
+    Get the parameter value at a vertex along a wire.
+
+    Parameters
+    ----------
+    wire: apiWire
+        Wire along which to get the parameter
+    vertex: Iterable
+        Vertex for which to get the parameter
+    tolerance: float
+        Tolerance within which to get the parameter
+
+    Returns
+    -------
+    alpha: float
+        Parameter value along the wire at the vertex
+
+    Raises
+    ------
+    FreeCADError:
+        If the vertex is further away to the wire than the specified tolerance
+    """
+    split_wire_1, _ = split_wire(wire, vertex, tolerance)
+    if split_wire_1:
+        return split_wire_1.Length / wire.Length
+    else:
+        return 0.0
+
+
+def split_wire(wire, vertex, tolerance):
+    """
+    Split a wire at a given vertex.
+
+    Parameters
+    ----------
+    wire: apiWire
+        Wire to be split
+    vertex: Iterable
+        Vertex at which to split the wire
+    tolerance: float
+        Tolerance within which to find the closest vertex on the wire
+
+    Returns
+    -------
+    wire_1: Optional[apiWire]
+        First half of the wire. Will be None if the vertex is the start point of the wire
+    wire_2: Optional[apiWire]
+        Last half of the wire. Will be None if the vertex is the start point of the wire
+
+    Raises
+    ------
+    FreeCADError:
+        If the vertex is further away to the wire than the specified tolerance
+    """
+
+    def warning_msg():
+        bluemira_warn(
+            "Wire split operation only returning one wire; you are splitting at an end."
+        )
+
+    vertex = apiVertex(*vertex)
+    distance, points, _ = wire.distToShape(vertex)
+    if distance > tolerance:
+        raise FreeCADError(
+            f"Vertex is not close enough to the wire, with a distance: {distance} > {tolerance}"
+        )
+
+    edges = wire.OrderedEdges
+    idx = _get_closest_edge_idx(wire, vertex)
+
+    edges_1, edges_2 = [], []
+    for i, edge in enumerate(edges):
+        if i < idx:
+            edges_1.append(edge)
+        elif i == idx:
+            parameter = edge.Curve.parameter(points[0][0])
+            half_edge_1, half_edge_2 = _split_edge(edge, parameter)
+            if half_edge_1:
+                edges_1.append(half_edge_1)
+            if half_edge_2:
+                edges_2.append(half_edge_2)
+        else:
+            edges_2.append(edge)
+
+    if edges_1:
+        wire_1 = apiWire(edges_1)
+    else:
+        wire_1 = None
+        warning_msg()
+
+    if edges_2:
+        wire_2 = apiWire(edges_2)
+    else:
+        wire_2 = None
+        warning_msg()
+
+    return wire_1, wire_2
+
+
+def _split_edge(edge, parameter):
+    p0, p1 = edge.ParameterRange[0], edge.ParameterRange[1]
+    if parameter == p0:
+        return None, edge
+    if parameter == p1:
+        return edge, None
+
+    return edge.Curve.toShape(p0, parameter), edge.Curve.toShape(parameter, p1)
+
+
+def _get_closest_edge_idx(wire, vertex):
+    _, points, _ = wire.distToShape(vertex)
+    closest_vector = points[0][0]
+    closest_vertex = apiVertex(closest_vector)
+    distances = [edge.distToShape(closest_vertex)[0] for edge in wire.OrderedEdges]
+    idx = np.argmin(distances)
+    return idx
+
+
 def slice_shape(shape: apiShape, plane_origin: Iterable, plane_axis: Iterable):
     """
     Slice a shape along a given plane
