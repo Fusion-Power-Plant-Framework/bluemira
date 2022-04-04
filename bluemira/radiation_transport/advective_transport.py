@@ -249,9 +249,9 @@ class ChargedParticleSolver:
             self.flux_surfaces_ib_hfs,
         ]:
             if group:
-                for i, f_s in enumerate(group):
-                    f_s.clip(first_wall)
-                    if f_s.alpha is None:
+                for i, flux_surface in enumerate(group):
+                    flux_surface.clip(first_wall)
+                    if flux_surface.alpha is None:
                         # No intersection detected between flux surface and first wall
                         # Drop the flux surface from the group
                         group.pop(i)
