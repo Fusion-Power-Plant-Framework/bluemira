@@ -54,7 +54,7 @@ from bluemira.utilities.tools import is_num
 # from scipy.interpolate import RectBivariateSpline
 
 
-__all__ = ("CoilType", "Coil", "CoilSet", "Circuit", "SymmetricCircuit")
+__all__ = ["CoilType", "Coil", "CoilSet", "Circuit", "SymmetricCircuit"]
 
 
 class CoilTypeEnumMeta(EnumMeta):
@@ -790,6 +790,15 @@ class CoilGroup(CoilFieldsMixin, abc.ABC):
                     f"{name} does not contain {len_first} elements: {value}"
                 )
 
+    def _define_subgroup(self, *groups):
+        """
+        Create groups enum
+
+        be careful will make all previous uses uncomparible
+        """
+        groups = ["_all"] + list(groups)
+        self._SubGroup = enum.Enum("SubGroup", {g: auto() for g in groups})
+
     @property
     def x_boundary(self) -> np.array:
         """
@@ -916,8 +925,8 @@ class CoilGroup(CoilFieldsMixin, abc.ABC):
         """
         Set position of each coil
         """
-        self._x[:] = new_position[:, 0]
-        self._z[:] = new_position[:, 1]
+        self.x = new_position[:, 0]
+        self.z = new_position[:, 1]
         self.__sizer(self)
 
     def adjust_position(self, d_xz: __ITERABLE_FLOAT):
@@ -1142,28 +1151,25 @@ class Coil(CoilGroup):
         # Only to force type check correctness
         super().__init__(x, z, dx, dz, current, name, ctype, j_max, b_max)
 
-    def __setattr__(self, attr: str, value: Any) -> None:
-        """
-        Set attribute with some protection for singular values
-        """
-        with suppress(AttributeError):
-            old_attr = super().__getattribute__(attr)
-            if attr not in self.__safe_attrs:
-                if not isinstance(value, Iterable) and len(old_attr) == 1:
-                    if isinstance(value, (str, CoilType)):
-                        value = [value]
-                    else:
-                        value = np.atleast_2d(value, dtype=float)
+    # def __setattr__(self, attr: str, value: Any) -> None:
+    #     """
+    #     Set attribute with some protection for singular values
+    #     """
+    #     with suppress(AttributeError):
+    #         old_attr = super().__getattribute__(attr)
+    #         if attr not in self.__safe_attrs:
+    #             if not isinstance(value, Iterable) and len(old_attr) == 1:
+    #                 if isinstance(value, (str, CoilType)):
+    #                     value = [value]
+    #                 else:
+    #                     value = np.atleast_2d(value, dtype=float)
 
-        if attr in self.__safe_attrs or (
-            isinstance(value, Iterable) and len(value) == 1
-        ):
-            super().__setattr__(attr, value)
-        else:
-            raise ValueError(f"Length of value should be 1: {attr}={value}")
-
-
-# TODO or To remove (for imports)
+    #     if attr in self.__safe_attrs or (
+    #         isinstance(value, Iterable) and len(value) == 1
+    #     ):
+    #         super().__setattr__(attr, value)
+    #     else:
+    #         raise ValueError(f"Length of value should be 1: {attr}={value}")
 
 
 class Circuit(CoilGroup):
@@ -1171,23 +1177,205 @@ class Circuit(CoilGroup):
     Dummy
     """
 
-    pass
+    def __init__(self, *args, **kwargs):
+
+        super().__init__(*args, **kwargs)
 
 
-class SymmetricCircuit(Circuit):
+class PositionalSymmetricCircuit(Circuit):
     """
-    Dummy
+    Positionally symmetric coils everything else the same
+
+
+    Parameters
+    ----------
+    symmetry_axis: Tuple[float, float]:
+        x,z symmetry coordinate
+    x: float
+        Coil geometric centre x coordinate [m]
+    z: float
+        Coil geometric centre z coordinate [m]
+    dx: Optional[float]
+        Coil radial half-width [m] from coil centre to edge (either side)
+    dz: Optional[float]
+        Coil vertical half-width [m] from coil centre to edge (either side)
+    current: Optional[float] (default = 0)
+        Coil current [A]
+    name: Optional[str]
+        The name of the coil
+    ctype: Optional[Union[str, CoilType]]
+        Type of coil see CoilType enum
+    j_max: Optional[float]
+        Maximum current density in the coil [MA/m^2]
+    b_max: Optional[float]
+        Maximum magnetic field at the coil [T]
+
     """
 
-    pass
+    def __init__(
+        self,
+        symmetry_axis: Tuple[float, float],
+        x: float,
+        z: float,
+        dx: Optional[float] = None,
+        dz: Optional[float] = None,
+        current: Optional[float] = 0,
+        name: Optional[str] = None,
+        ctype: Optional[Union[str, CoilType]] = CoilType.PF,
+        j_max: Optional[float] = None,
+        b_max: Optional[float] = None,
+    ) -> None:
+        self._sx = symmetry_axis[0]
+        self._sz = symmetry_axis[1]
+        ones = np.ones(2)
+        x = np.array([x, self._sx - (x - self._sx)])
+        z = np.array([z, self._sz - (z - self._sz)])
+        current *= ones
+        ctype = [ctype, ctype]
+
+        if dx is not None:
+            dx *= ones
+        if dz is not None:
+            dz *= ones
+        if name is not None:
+            name = [f"{name}.1", f"{name}.2"]
+        if j_max is not None:
+            j_max *= ones
+        if b_max is not None:
+            b_max *= ones
+
+        super().__init__(x, z, dx, dz, current, name, ctype, j_max, b_max)
+
+    @x.setter
+    def x(self, new_x: __ITERABLE_FLOAT) -> None:
+        """
+        Set x coordinate of each coil
+        """
+        self._x[0] = new_x
+        self._x[1] = self._sx - (new_x - self._sx)
+        self.__sizer(self)
+
+    @z.setter
+    def z(self, new_z: __ITERABLE_FLOAT) -> None:
+        """
+        Set z coordinate of each coil
+        """
+        self._z[0] = new_z
+        self._z[1] = self._sz - (new_z - self._sz)
+        self.__sizer(self)
 
 
 class CoilSet(CoilGroup):
     """
-    Dummy
+    Coilset is the main interface for groups of coils in bluemira
+
     """
 
-    pass
+    def __init__(self, *coils: Union[CoilGroup, List, Dict]):
+
+        if not coils:
+            raise ValueError("No coils provided")
+
+        attributes = self._process_coilgroups(self._convert_to_coilgroup(coils))
+
+        for k, v in attributes.items():
+            setattr(self, k, v)
+
+        # TODO deal with sizing
+        # TODO deal with meshing
+        # TODO think whether this is the best way forward
+
+    def _convert_to_coilgroup(
+        coils: Tuple[Union[CoilGroup, List, Dict]]
+    ) -> List[CoilGroup]:
+        coils = list(coils)
+        for i, coil in enumerate(coils):
+            if isinstance(coil, List):
+                coils[i] = Coil(*coil)
+            elif isinstance(coil, Dict):
+                coils[i] = Coil(**coil)
+            elif not isinstance(coil, CoilGroup):
+                raise TypeError(f"Conversion to Coil unknown for type '{type(coil)}'")
+        return coils
+
+    def _process_coilgroups(coilgroups: List[CoilGroup]):
+        names = [
+            "_x",
+            "_z",
+            "_dx",
+            "_dz",
+            "_current",
+            "name",
+            "ctype",
+            "_j_max",
+            "_b_max",
+        ]
+        attributes = {k: [] for k in names}
+        indexes = {}
+        for name, attr_list in attributes.items():
+            no_coils = 0
+            for no, group in enumerate(coilgroups):
+                child_attr = getattr(group, name)
+                old_coils = no_coils
+                no_coils += len(child_attr)
+                indexes[no] = (old_coils, no_coils)
+                if len(child_attr) > 1:
+                    attributes[name].extend(child_attr)
+                else:
+                    attributes[name].append(child_attr)
+
+            if isinstance(getattr(group, name), np.ndarray):
+                attributes[name] = np.array(attributes[name], dtype=float)
+            for no, group in enumerate(coilgroups):
+                index_slice = slice(indexes[no][0], indexes[no][1])
+                setattr(coilgroup, name, attributes[name][index_slice])
+
+        return attributes
+
+    def get_coil(name_or_id):
+        """
+        Get an individual coil
+        """
+        # Actually all coils could just be attributes eg coilset.PF_1
+        # all groups coilset.PF.current = 5
+        pass
+
+    def define_subset(filters: Dict[str, Callable]):
+        # Create new subgroup of coils
+
+        filters = {
+            "PF": lambda coilgroup: np.array(
+                [ct is CoilType.PF for ct in coilgroup.ctype], dtype=bool
+            ),
+            "CS": lambda coilgroup: np.array(
+                [ct is CoilType.CS for ct in coilgroup.ctype], dtype=bool
+            ),
+            **filters,
+        }
+
+        self._define_subgroup(filters.keys())
+
+        self._groups = {
+            self._SubGroup._all: np.ones(self._x.shape[0], dtype=bool),
+            **{self._SubGroup[f_k]: filt(self) for f_k, filt in filters.items()},
+        }
+
+    def __getattribute__(self, attr):
+        # TODO catch return to base coilset from subset
+
+        try:
+            return super().__getattribute__(attr)
+        except AttributeError:
+            try:
+                self._group = self._groups[self._SubGroup(attr)]
+                return self
+            except KeyError:
+                raise AttributeError(
+                    f"{type(self)} object has no attribute {attr}"
+                ) from None
+
+
+# TODO or To remove (for imports)
 
 
 class PlasmaCoil:
