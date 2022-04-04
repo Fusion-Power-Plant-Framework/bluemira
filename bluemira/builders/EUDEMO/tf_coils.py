@@ -171,27 +171,7 @@ class TFCoilsBuilder(OptimisedShapeBuilder):
 
     def _derive_shape_params(self):
         shape_params = super()._derive_shape_params()
-        # PROCESS doesn't output the radius of the current centroid on the inboard
-        r_current_in_board = (
-            self._params.r_tf_in
-            + self._params.tk_tf_nose
-            + self._params.tk_tf_ins
-            + 0.5 * (self._params.tf_wp_width - 2 * self._params.tk_tf_ins)
-        )
-        self._params.add_parameter(
-            "r_tf_current_ib",
-            "Radius of the TF coil current centroid on the inboard",
-            r_current_in_board,
-            "m",
-            source="bluemira",
-        )
-        shape_params["x1"] = {"value": r_current_in_board, "fixed": True}
-        return shape_params
 
-    def _derive_params(self):
-        """
-        Some PROCESS reverse engineering to get to some values that we need.
-        """
         # Radial width of the winding pack with no insulation or insertion gap
         dr_wp = (
             self._params.tk_tf_wp.value
@@ -203,6 +183,23 @@ class TFCoilsBuilder(OptimisedShapeBuilder):
         # Toroidal width of the winding pack no insulation
         dy_wp = self._params.tf_wp_depth.value - 2 * self._params.tk_tf_ins
         self.params.add_parameter("tk_tf_wp_y", value=dy_wp, unit="m", source="bluemira")
+
+        # PROCESS doesn't output the radius of the current centroid on the inboard
+        r_current_in_board = (
+            self._params.r_tf_in
+            + self._params.tk_tf_nose
+            + self._params.tk_tf_ins
+            + 0.5 * dr_wp
+        )
+        self._params.add_parameter(
+            "r_tf_current_ib",
+            "Radius of the TF coil current centroid on the inboard",
+            r_current_in_board,
+            "m",
+            source="bluemira",
+        )
+        shape_params["x1"] = {"value": r_current_in_board, "fixed": True}
+        return shape_params
 
     def reinitialise(
         self,
@@ -561,8 +558,8 @@ class TFCoilsBuilder(OptimisedShapeBuilder):
         """
         circuit = ArbitraryPlanarRectangularXSCircuit(
             self._centreline.discretize(byedges=True, ndiscr=100),
-            breadth=0.5 * self.params.tf_wp_width - self.params.tk_tf_ins,
-            depth=0.5 * self.params.tf_wp_depth - self.params.tk_tf_ins,
+            breadth=0.5 * self.params.tk_tf_wp.value,
+            depth=0.5 * self.params.tk_tf_wp_y.value,
             current=1,
         )
         solver = HelmholtzCage(circuit, self.params.n_TF.value)
@@ -576,9 +573,8 @@ class TFCoilsBuilder(OptimisedShapeBuilder):
         Make the winding pack x-y cross-section wire
         """
         x_c = self.params.r_tf_current_ib
-        # PROCESS WP thickness includes insulation and insertion gap
-        d_xc = 0.5 * (self.params.tf_wp_width - 2 * self.params.tk_tf_ins)
-        d_yc = 0.5 * (self.params.tf_wp_depth - 2 * self.params.tk_tf_ins)
+        d_xc = 0.5 * self.params.tk_tf_wp.value
+        d_yc = 0.5 * self.params.tk_tf_wp_y.value
         wp_xs = make_polygon(
             [
                 [x_c - d_xc, x_c + d_xc, x_c + d_xc, x_c - d_xc],
@@ -606,7 +602,7 @@ class TFCoilsBuilder(OptimisedShapeBuilder):
         Make the casing x-y cross-section wires
         """
         x_in = self.params.r_tf_in
-        # Insulation included in WP width
+        # Insulation and insertion gap included in WP width
         x_out = (
             x_in
             + self.params.tk_tf_nose
