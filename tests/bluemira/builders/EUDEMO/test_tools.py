@@ -256,6 +256,7 @@ class TestMakeCircularRing:
         face = make_circular_xy_ring(r_in, r_out)
         np.testing.assert_almost_equal(face.area, np.pi * (r_out**2 - r_in**2))
 
+    @pytest.mark.parametrize("r_in, r_out", fixture)
     def test_annulus_area_reversed_radii(self, r_in, r_out):
         r_out, r_in = r_in, r_out
         face = make_circular_xy_ring(r_in, r_out)
