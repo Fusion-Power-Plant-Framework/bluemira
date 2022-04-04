@@ -46,7 +46,7 @@ class FemMagnetostatic2d:
 
     .. math::
         \\int_{D_p} {\\frac{1}{r}}{\\nabla}{\Psi}{\cdot}{\\nabla} v \,dr\,dz = 2
-        \pi r \mu_0 \\int_{D_p} J_{\Phi} v \,dr\,dz
+        \pi \mu_0 \\int_{D_p} J_{\Phi} v \,dr\,dz
 
     where :math:`v` is the basis element function of the defined functional subspace
     :math:`V`.
@@ -160,10 +160,10 @@ class FemMagnetostatic2d:
             dirichlet_bc = dolfin.DirichletBC(
                 self.V, dirichlet_bc_function, self.boundaries, dirichlet_marker
             )
-        bcs = [dirichlet_bc]
+        self.bcs = [dirichlet_bc]
 
         # solve the system taking into account the boundary conditions
-        dolfin.solve(self.a == self.L, self.psi, bcs)
+        dolfin.solve(self.a == self.L, self.psi, self.bcs)
 
         # return the solution
         return self.psi

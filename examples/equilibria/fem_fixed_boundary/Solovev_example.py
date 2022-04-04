@@ -54,14 +54,24 @@ A1 = -6.84256806e-02
 A2 = -6.52918977e-02
 
 solovev = Solovev(R0, a, kappa, delta, A1, A2)
-levels = np.linspace(0.0, 110.0, 20)
+levels = 50
+axis, cntr, cntrf, points, psi_exact = solovev.plot_psi(
+    6.0, -5, 6.0, 10.0, 100, 100, levels=levels
+)
+plt.show()
+
+levels_p = np.linspace(0.0, max(psi_exact) * 1.05, 10)
+levels_m = np.linspace(min(psi_exact) * 1.05, 0.0, 10)
+levels = sorted(np.unique(np.concatenate([levels_m, levels_p])))
+
 axis, cntr, cntrf, points, psi_exact = solovev.plot_psi(
     6.0, -5, 6.0, 10.0, 100, 100, levels=levels
 )
 plt.show()
 
 # ------------------------------------------------------------------------------
-Dp = cntr.collections[0].get_paths()[0].vertices
+ind0 = np.where(np.array(levels) == 0.0)[0][0]
+Dp = cntr.collections[ind0].get_paths()[0].vertices
 Dp = np.hstack((Dp, np.zeros((Dp.shape[0], 1), dtype=Dp.dtype)))
 
 curve1 = make_bspline(Dp[0 : int(len(Dp) / 2)], label="curve1")
@@ -135,3 +145,5 @@ axis, cntr, _ = plot_scalar_field(
     points1[:, 0], points1[:, 1], error, levels=levels, axis=None, tofill=True
 )
 plt.show()
+
+# L2_error_h = dolfin.errornorm(solovev.psi, gs_solver.psi)
