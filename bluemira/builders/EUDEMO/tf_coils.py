@@ -175,19 +175,24 @@ class TFCoilsBuilder(OptimisedShapeBuilder):
         dr_wp = (
             self._params.tf_wp_width.value
             - 2 * self._params.tk_tf_ins.value
-            - self._params.tk_tf_insgap.value
+            - 2 * self._params.tk_tf_insgap.value
         )
         self.params.add_parameter("tk_tf_wp", value=dr_wp, unit="m", source="bluemira")
 
         # Toroidal width of the winding pack no insulation
-        dy_wp = self._params.tf_wp_depth.value - 2 * self._params.tk_tf_ins
+        dy_wp = (
+            self._params.tf_wp_depth.value
+            - 2 * self._params.tk_tf_ins
+            - 2 * self._params.tk_tf_insgap
+        )
         self.params.add_parameter("tk_tf_wp_y", value=dy_wp, unit="m", source="bluemira")
 
         # PROCESS doesn't output the radius of the current centroid on the inboard
         r_current_in_board = (
-            self._params.r_tf_in
-            + self._params.tk_tf_nose
-            + self._params.tk_tf_ins
+            self._params.r_tf_in.value
+            + self._params.tk_tf_nose.value
+            + self._params.tk_tf_ins.value
+            + self._params.tk_tf_insgap.value
             + 0.5 * dr_wp
         )
         self._params.add_parameter(
