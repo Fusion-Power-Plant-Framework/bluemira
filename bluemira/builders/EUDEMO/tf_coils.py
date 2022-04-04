@@ -122,7 +122,6 @@ class TFCoilsBuilder(OptimisedShapeBuilder):
         "tk_tf_front_ib",
         "tk_tf_side",
         "tk_tf_ins",
-        # This isn't treated at the moment...
         "tk_tf_insgap",
         # Dubious WP depth from PROCESS (I used to tweak this when building the TF coils)
         "tf_wp_width",

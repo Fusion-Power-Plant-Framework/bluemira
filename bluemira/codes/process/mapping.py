@@ -123,6 +123,8 @@ OUT_mappings = {
     "tk_tf_inboard": ("tfcth", "m"),
     "tk_tf_nose": ("thkcas", "m"),
     "tk_tf_wp": ("dr_tf_wp", "m"),
+    "tk_tf_ins": ("tinstf", "m"),
+    "tk_tf_insgap": ("tfinsgap", "m"),
     "tk_cs": ("ohcth", "m"),
     "r_cp_top": ("r_cp_top", "m"),
     "r_cs_in": ("bore", "m"),
