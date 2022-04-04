@@ -27,7 +27,7 @@ from unittest.mock import patch
 
 import pytest
 
-import bluemira.utilities.prominence as prom
+import bluemira.codes._prominence as prom
 from bluemira.base.file import get_bluemira_path
 
 TEST_DATA = os.sep.join(
@@ -79,7 +79,3 @@ class TestProminenceDownloader:
 
         with open(os.sep.join([self.downloader._save_dir, "TESTFILE"]), "r") as tf:
             assert tf.readlines() == ["test"]
-
-
-if __name__ == "__main__":
-    pytest.main([__file__])

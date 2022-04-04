@@ -56,7 +56,7 @@ class ProminenceDownloader:
         self._save_dir = save_dir
         self._old_open = open
 
-        self._prom_bin = self._get_binary()
+        self._prom_bin = self._load_binary()
 
     def __call__(self):
         """
@@ -70,21 +70,31 @@ class ProminenceDownloader:
             with patch("builtins.open", new=self.captured_open):
                 self._prom_bin.command_download(self)
 
-    @staticmethod
-    def _get_binary():
+    def _load_binary(self):
         """
         Import the prominence binary directly.
 
         There are a lot of python functions
         that do not exist in the main module
         """
+        for path in self._get_binary_path():
+            try:
+                bluemira_debug("Loading {filepath}")
+                return get_module(str(path))
+            except ImportError:
+                continue
+
+    @staticmethod
+    def _get_binary_path():
+        """
+        Find all paths to prominence binaries
+        """
         for path in sys.path:
             filepath = Path(path, "prominence")
             if filepath.is_file():
-                bluemira_debug("Loading {filepath}")
-                return get_module(str(filepath))
+                yield filepath
 
-        raise ImportError("Prominence binary not found in sys.path")
+        raise ImportError("Valid prominence binary not found in sys.path")
 
     def captured_print(self, string, *args, **kwargs):
         """
