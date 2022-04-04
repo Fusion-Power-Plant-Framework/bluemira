@@ -294,7 +294,3 @@ class TestQBenchmark:
 
         assert 100 * np.median(abs_rel_difference(q, self.q_ref)) < 3.5
         assert 100 * np.mean(abs_rel_difference(q, self.q_ref)) < 4.0
-
-
-if __name__ == "__main__":
-    pytest.main([__file__])

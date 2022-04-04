@@ -315,7 +315,3 @@ class TestCariddiBenchmark:
             plt.show()
 
         assert np.max(np.abs(ripple - self.cariddi_ripple)) < 0.04
-
-
-if __name__ == "__main__":
-    pytest.main([__file__])

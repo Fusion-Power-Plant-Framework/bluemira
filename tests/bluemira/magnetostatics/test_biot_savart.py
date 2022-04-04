@@ -182,7 +182,3 @@ def test_inductance():
         cm = ax[3].contourf(xx, yy, diff, levels=np.linspace(-10, 10, 100))
         f.colorbar(cm)
         plt.show()
-
-
-if __name__ == "__main__":
-    pytest.main([__file__])

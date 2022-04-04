@@ -18,7 +18,6 @@
 #
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
-import pytest
 
 from bluemira.base.config import Configuration, SingleNull
 
@@ -69,7 +68,3 @@ class TestConfiguration:
         Check for duplicate variable names
         """
         assert len(set(self.c.keys())) == len(self.c.keys())
-
-
-if __name__ == "__main__":
-    pytest.main([__file__])

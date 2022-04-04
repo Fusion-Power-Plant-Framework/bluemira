@@ -20,7 +20,6 @@
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 
 import numpy as np
-import pytest
 from scipy.special import ellipe, ellipk
 
 from bluemira.base.constants import MU_0
@@ -61,7 +60,3 @@ class TestForceField:
         )
         assert np.isclose(fz / 1e6, np.abs(forces[0, 1]), 6)
         assert np.isclose(np.abs(forces[0, 1]), np.abs(forces[1, 1]))
-
-
-if __name__ == "__main__":
-    pytest.main([__file__])

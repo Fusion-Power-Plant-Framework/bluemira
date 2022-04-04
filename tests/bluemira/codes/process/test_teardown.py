@@ -40,7 +40,3 @@ class TestMFileReader:
         inp = list(self.mapping.values())
         out = self.bmfile.extract_outputs(inp)
         assert len(inp) == len(out)
-
-
-if __name__ == "__main__":
-    pytest.main([__file__])

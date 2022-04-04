@@ -129,7 +129,3 @@ class TestLiquids:
         s = make_serpent_material(self.water)
         s = s.splitlines()[0]
         assert float(s.split(" ")[2]) == pytest.approx(kgm3_to_gcm3(self.water.density))
-
-
-if __name__ == "__main__":
-    pytest.main([__file__])

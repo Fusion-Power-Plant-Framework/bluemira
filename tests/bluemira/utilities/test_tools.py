@@ -370,7 +370,3 @@ class TestGetModule:
         # Class not in module
         with pytest.raises(ImportError):
             get_class_from_module("Spam", default_module=self.test_mod)
-
-
-if __name__ == "__main__":
-    pytest.main([__file__])

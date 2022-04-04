@@ -194,7 +194,3 @@ class TestJohnerCAD:
         wire_neg = p_neg.create_shape()
 
         assert np.isclose(wire_pos.length, wire_neg.length)
-
-
-if __name__ == "__main__":
-    pytest.main([__file__])

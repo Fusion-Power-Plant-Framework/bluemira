@@ -873,7 +873,3 @@ class TestReactorSystem:
         ts = Dummy({"dP": 10})
 
         assert ts.params.dP == 10
-
-
-if __name__ == "__main__":
-    pytest.main([__file__])

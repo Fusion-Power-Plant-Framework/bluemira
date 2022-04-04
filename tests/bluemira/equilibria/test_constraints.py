@@ -22,7 +22,6 @@
 import os
 
 import numpy as np
-import pytest
 
 from bluemira.base.file import get_bluemira_path
 from bluemira.equilibria.eq_constraints import (
@@ -95,7 +94,3 @@ class TestWeightedConstraints:
                     optimiser._objective._args["a_mat"][i, :],
                     weight * constraint_set.A[i, :],
                 )
-
-
-if __name__ == "__main__":
-    pytest.main([__file__])

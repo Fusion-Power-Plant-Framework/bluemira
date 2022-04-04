@@ -21,7 +21,6 @@
 import os
 
 import numpy as np
-import pytest
 
 from bluemira.base.file import get_bluemira_path
 from BLUEPRINT.cad.vesselCAD import VesselCAD
@@ -40,7 +39,3 @@ class TestVVCAD:
         v = VesselCAD(self.vessel, neutronics=False)
         volume = v.get_properties()["vessel"]["Volume"]
         assert np.isclose(round(volume, 3), 101.243)
-
-
-if __name__ == "__main__":
-    pytest.main([__file__])

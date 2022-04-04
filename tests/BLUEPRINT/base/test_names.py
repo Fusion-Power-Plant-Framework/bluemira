@@ -18,7 +18,6 @@
 #
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
-import pytest
 
 from BLUEPRINT.base.names import name_long_short, name_short_long
 
@@ -41,7 +40,3 @@ class TestNamemapper:
             "DUMP": 4,
         }
         assert dd == ddtrue
-
-
-if __name__ == "__main__":
-    pytest.main([__file__])

@@ -26,7 +26,6 @@ from unittest.mock import patch
 
 import numpy as np
 import OCC
-import pytest
 
 from bluemira.base.file import get_bluemira_path
 from bluemira.utilities.tools import compare_dicts
@@ -524,7 +523,3 @@ class TestGetProperties:
         assert np.isclose(properties["CoG"]["x"], 0.0)
         assert np.isclose(properties["CoG"]["y"], 0.0)
         assert np.isclose(properties["CoG"]["z"], 0.5)
-
-
-if __name__ == "__main__":
-    pytest.main([__file__])

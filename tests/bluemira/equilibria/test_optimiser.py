@@ -294,7 +294,3 @@ class TestCoilsetOptimiser:
 
         # optimiser_maxima = 0.9
         # i_max = self.coilset.get_max_currents(max_currents)
-
-
-if __name__ == "__main__":
-    pytest.main([__file__])

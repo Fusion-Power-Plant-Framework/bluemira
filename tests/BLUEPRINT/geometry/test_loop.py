@@ -492,7 +492,3 @@ class Test3Dplotting:
         u_loop = Loop([0, 0, 1, 1, 0], [0, 0, 0, 0, 0], [2, 0, 0, 2, 2])
         u_loop.translate([3, 0, 0])
         u_loop.plot(ax)
-
-
-if __name__ == "__main__":
-    pytest.main([__file__])

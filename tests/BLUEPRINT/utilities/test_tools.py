@@ -22,7 +22,6 @@
 from collections import OrderedDict
 
 import numpy as np
-import pytest
 
 from BLUEPRINT.geometry.geomtools import polyarea
 from BLUEPRINT.utilities.tools import _apply_rule  # noqa
@@ -269,7 +268,3 @@ class TestEllipse:
         x, y = ellipse(a, b, n=200)
         area = polyarea(x, y)
         assert np.isclose(area, np.pi * a * b, 3)
-
-
-if __name__ == "__main__":
-    pytest.main([__file__])

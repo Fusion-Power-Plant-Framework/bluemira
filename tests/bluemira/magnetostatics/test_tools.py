@@ -20,7 +20,6 @@
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 
 import numpy as np
-import pytest
 
 from bluemira.magnetostatics.tools import process_xyz_array
 
@@ -59,7 +58,3 @@ def test_xyz_decorator():
             result2[:, i, j] = tester.func(x[i, j], x[i, j], x[i, j])
 
     assert np.allclose(result2, result)
-
-
-if __name__ == "__main__":
-    pytest.main([__file__])

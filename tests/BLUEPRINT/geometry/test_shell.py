@@ -305,7 +305,3 @@ def test_fail_if_intersect():
     with pytest.raises(GeometryError) as err:
         # Try to create a shell - should raise and error
         shell = Shell(loop_1, loop_2)
-
-
-if __name__ == "__main__":
-    pytest.main([__file__])

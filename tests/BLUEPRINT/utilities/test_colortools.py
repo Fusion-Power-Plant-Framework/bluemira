@@ -56,7 +56,3 @@ class TestshiftRGB:
         loop4.plot(ax, facecolor=c4)
         loop5.plot(ax, facecolor=c5)
         loop6.plot(ax, facecolor=c6)
-
-
-if __name__ == "__main__":
-    pytest.main([__file__])

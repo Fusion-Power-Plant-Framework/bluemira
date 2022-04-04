@@ -99,7 +99,3 @@ class TestFirstWallCAD_DN:
         with pytest.raises(NotImplementedError):
             # Currently throws NotYetImplemented
             assert FirstWallCAD(self.firstwall, neutronics=True)
-
-
-if __name__ == "__main__":
-    pytest.main([__file__])

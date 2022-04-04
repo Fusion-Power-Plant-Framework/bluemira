@@ -240,7 +240,3 @@ class Test3Dplotting:
         u_loop.translate([3, 0, 0])
         u_loop.plot(ax)
         plt.show()
-
-
-if __name__ == "__main__":
-    pytest.main([__file__])

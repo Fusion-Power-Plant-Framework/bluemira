@@ -21,7 +21,6 @@
 import os
 
 import numpy as np
-import pytest
 
 from bluemira.base.file import get_bluemira_path
 from BLUEPRINT.cad.shieldCAD import ThermalShieldCAD
@@ -41,7 +40,3 @@ class TestTSCAD:
         volume = v.get_properties()["thermal_shield"]["Volume"]
         # This will change if you change the build pattern in TSCAD
         assert np.isclose(round(volume, 2), 5.98)
-
-
-if __name__ == "__main__":
-    pytest.main([__file__])

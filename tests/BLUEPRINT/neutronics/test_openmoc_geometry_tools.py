@@ -197,7 +197,3 @@ class TestMeshing:
 
         assert len(centroid) == 2
         assert np.allclose(centroid, (5.0 / 3.0, 2.9 / 3.0))
-
-
-if __name__ == "__main__":
-    pytest.main([__file__])

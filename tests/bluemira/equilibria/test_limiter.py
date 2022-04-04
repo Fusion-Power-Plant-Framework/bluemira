@@ -21,7 +21,6 @@
 
 
 import numpy as np
-import pytest
 
 from bluemira.equilibria.limiter import Limiter
 
@@ -36,7 +35,3 @@ def test_limiter():
     lims = [[1, 0], [2, -2], [3, 0], [4, 2]]
     for i, lim in enumerate(limiter):
         assert (lim == np.array(lims[i])).all()
-
-
-if __name__ == "__main__":
-    pytest.main([__file__])

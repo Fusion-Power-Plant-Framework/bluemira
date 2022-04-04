@@ -23,7 +23,6 @@ import os
 
 import fortranformat as ff
 import numpy as np
-import pytest
 
 from bluemira.base.file import get_bluemira_path, get_files_by_ext
 from bluemira.equilibria.file import EQDSKInterface
@@ -162,7 +161,3 @@ class TestEQDSKInterface:
             assert compare_dicts(d1, d2, verbose=True)
             assert compare_dicts(d1, d3, verbose=True)
             assert compare_dicts(d2, d3, verbose=True)
-
-
-if __name__ == "__main__":
-    pytest.main([__file__])

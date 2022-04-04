@@ -22,7 +22,6 @@
 import os
 
 import numpy as np
-import pytest
 from matplotlib import pyplot as plt
 
 import tests
@@ -351,7 +350,3 @@ class TestCoilPositioner:
             if tests.PLOTTING:
                 coilset.plot()  # look good! cba TO test
                 plt.show()
-
-
-if __name__ == "__main__":
-    pytest.main([__file__])
