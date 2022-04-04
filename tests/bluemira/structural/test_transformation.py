@@ -22,7 +22,6 @@
 import itertools
 
 import numpy as np
-import pytest
 from matplotlib import pyplot as plt
 
 import tests
@@ -36,7 +35,7 @@ from bluemira.structural.transformation import (
 
 class TestLambdaTransformationMatrices:
     """
-    The absolute nightmare you had with these fucking dcms...
+    The absolute nightmare you had with these dcms...
     """
 
     global_cs = np.array([[1, 0, 0], [0, 1, 0], [0, 0, 1]])
@@ -174,7 +173,3 @@ class TestLambdaTransformationMatrices:
             self.assert_maths_good(dcm, msg=f"coords: {axis}")
 
             self.assert_works_good(dcm, local, msg=f"coords: {axis}")
-
-
-if __name__ == "__main__":
-    pytest.main([__file__])

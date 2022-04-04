@@ -237,7 +237,3 @@ class TestMove:
         g.move_node(5, dx=0.5)
         assert g.n_nodes == 5
         assert g.n_elements == 6
-
-
-if __name__ == "__main__":
-    pytest.main([__file__])

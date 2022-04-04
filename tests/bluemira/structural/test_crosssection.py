@@ -179,7 +179,3 @@ class TestRotation:
         r_beam = RectangularBeam(0.508, 0.254)
         r_beam.rotate(np.rad2deg(4))
         assert np.isclose(10**12 * r_beam.i_zz, 1582893390.424)
-
-
-if __name__ == "__main__":
-    pytest.main([__file__])
