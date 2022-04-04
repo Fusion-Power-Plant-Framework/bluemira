@@ -26,6 +26,7 @@ Supporting functions for the bluemira geometry module.
 from __future__ import annotations
 
 import math
+from copy import deepcopy
 
 # import typing
 from typing import Dict, Iterable, List, Optional, Tuple, Union
@@ -408,6 +409,9 @@ def offset_wire(
     wire: Part.Wire
         Offset wire
     """
+    if thickness == 0.0:
+        return deepcopy(wire)
+
     if _wire_is_straight(wire):
         raise FreeCADError("Cannot offset a straight line.")
 
