@@ -46,6 +46,13 @@ class ProminenceDownloader:
     force: bool
         overwrite existing files
 
+    Notes
+    -----
+    This is useful in the future for parameter scans are accessing remote data.
+    We do not currently use any kind of stable API.
+    Hopefully the prominence module will be updated in future to not have
+    the download function only exist within the 'binary' file. That would allow
+    us to use the module directly instead of this hack
     """
 
     BINARY = "prominence"
@@ -68,6 +75,9 @@ class ProminenceDownloader:
         and not in working directory.
 
         """
+        # Monkey patching in production code is obviously horrible
+        # there doesnt seem a nice way currently to modify where
+        # files are saved and printing verbosity and use in logging
         with patch("builtins.print", new=self.captured_print):
             with patch("builtins.open", new=self.captured_open):
                 self._prom_bin.command_download(self)
@@ -90,6 +100,8 @@ class ProminenceDownloader:
         """
         Find all paths to prominence binaries
         """
+        # emulates `which -a prominence` in the python path(s)
+        # shutil.which doesnt seem to have the all option
         for path in sys.path:
             filepath = Path(path, self.BINARY)
             if filepath.is_file():
