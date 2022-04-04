@@ -29,7 +29,7 @@ import bluemira.utilities.plot_tools as bm_plot_tools
 from bluemira.base.builder import BuildConfig, Builder
 from bluemira.base.components import Component, PhysicalComponent
 from bluemira.base.config import Configuration
-from bluemira.builders.EUDEMO.tools import varied_offset
+from bluemira.builders.EUDEMO.tools import make_circular_xy_ring, varied_offset
 from bluemira.display.palettes import BLUE_PALETTE
 from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.tools import make_circle, offset_wire, revolve_shape
@@ -125,23 +125,16 @@ class VacuumVesselBuilder(Builder):
         """
         Build the x-y components of the vacuum vessel.
         """
-        center = (0, 0, 0)
-        axis = (0, 0, 1)
-
         r_ib_out = self._params.r_vv_ib_in.value
         r_ib_in = r_ib_out - self._params.tk_vv_in.value
         r_ob_in = self._params.r_vv_ob_in.value
         r_ob_out = r_ob_in + self._params.tk_vv_out.value
 
-        ib_inner = make_circle(r_ib_in, center=center, axis=axis)
-        ib_outer = make_circle(r_ib_out, center=center, axis=axis)
-        inboard = BluemiraFace([ib_outer, ib_inner])
+        inboard = make_circular_xy_ring(r_ib_in, r_ib_out)
         vv_inboard = PhysicalComponent("inboard", inboard)
         vv_inboard.plot_options.face_options["color"] = BLUE_PALETTE["VV"][0]
 
-        ob_inner = make_circle(r_ob_in, center=center, axis=axis)
-        ob_outer = make_circle(r_ob_out, center=center, axis=axis)
-        outboard = BluemiraFace([ob_outer, ob_inner])
+        outboard = make_circular_xy_ring(r_ob_in, r_ob_out)
         vv_outboard = PhysicalComponent("outboard", outboard)
         vv_outboard.plot_options.face_options["color"] = BLUE_PALETTE["VV"][0]
 
