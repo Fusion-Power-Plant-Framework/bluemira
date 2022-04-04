@@ -147,7 +147,6 @@ class TFCoilsBuilder(OptimisedShapeBuilder):
         super().__init__(
             params, build_config, separatrix=separatrix, keep_out_zone=keep_out_zone
         )
-        self._derive_params()
 
     @property
     def geom_path(self) -> str:
@@ -174,8 +173,8 @@ class TFCoilsBuilder(OptimisedShapeBuilder):
 
         # Radial width of the winding pack with no insulation or insertion gap
         dr_wp = (
-            self._params.tk_tf_wp.value
-            - 2 * self._params.tk_tf_ins
+            self._params.tf_wp_width.value
+            - 2 * self._params.tk_tf_ins.value
             - self._params.tk_tf_insgap.value
         )
         self.params.add_parameter("tk_tf_wp", value=dr_wp, unit="m", source="bluemira")
@@ -227,7 +226,6 @@ class TFCoilsBuilder(OptimisedShapeBuilder):
             If the runmode is set to run but a separatrix is not provided.
         """
         super().reinitialise(params)
-        self._derive_params()
 
         if self.runmode == "run" and separatrix is None:
             raise BuilderError(
@@ -570,7 +568,8 @@ class TFCoilsBuilder(OptimisedShapeBuilder):
 
     def _make_wp_xs(self):
         """
-        Make the winding pack x-y cross-section wire
+        Make the winding pack x-y cross-section wire (excluding insulation and
+        insertion gap)
         """
         x_c = self.params.r_tf_current_ib
         d_xc = 0.5 * self.params.tk_tf_wp.value
