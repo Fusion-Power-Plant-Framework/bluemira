@@ -323,11 +323,12 @@ class TFCoilsBuilder(OptimisedShapeBuilder):
         winding_pack.plot_options.face_options["color"] = BLUE_PALETTE["TF"][1]
         component.add_child(winding_pack)
 
-        # Insulation
-        ins_o_outer = offset_wire(wp_outer, self.params.tk_tf_ins.value, join="arc")
+        # Insulation + Insertion gap
+        offset_tk = self._params.tk_tf_ins.value + self._params.tk_tf_insgap.value
+        ins_o_outer = offset_wire(wp_outer, offset_tk, join="arc")
         ins_outer = PhysicalComponent("inner", BluemiraFace([ins_o_outer, wp_outer]))
         ins_outer.plot_options.face_options["color"] = BLUE_PALETTE["TF"][2]
-        ins_i_inner = offset_wire(wp_inner, -self.params.tk_tf_ins, join="arc")
+        ins_i_inner = offset_wire(wp_inner, -offset_tk, join="arc")
         ins_inner = PhysicalComponent(
             "Insulation", BluemiraFace([wp_inner, ins_i_inner])
         )
@@ -497,9 +498,7 @@ class TFCoilsBuilder(OptimisedShapeBuilder):
         bb = boundary.bounding_box
         z_min = bb.z_min
         z_max = bb.z_max
-        y_in = 0.5 * (
-            self.params.tf_wp_depth + self.params.tk_tf_ins + self.params.tk_tf_side
-        )
+        y_in = 0.5 * (self.params.tf_wp_depth + self.params.tk_tf_side)
 
         inner_xs.translate((0, 0, z_min - inner_xs.center_of_mass[2]))
         inboard_casing = extrude_shape(BluemiraFace(inner_xs), (0, 0, z_max - z_min))
@@ -591,10 +590,13 @@ class TFCoilsBuilder(OptimisedShapeBuilder):
 
     def _make_ins_xs(self):
         """
-        Make the insulation x-y cross-section faces
+        Make the insulation + insertion gap x-y cross-section faces
         """
         x_out = self._centreline.bounding_box.x_max
-        ins_outer = offset_wire(self._wp_cross_section, self._params.tk_tf_ins.value)
+        ins_outer = offset_wire(
+            self._wp_cross_section,
+            self._params.tk_tf_ins.value + self._params.tk_tf_insgap.value,
+        )
         face = BluemiraFace([ins_outer, self._wp_cross_section])
 
         outer_face = deepcopy(face)
