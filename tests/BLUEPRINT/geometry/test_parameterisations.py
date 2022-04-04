@@ -85,7 +85,3 @@ class TestTaperedPictureFrame:
 
             # npoints<10:
             points = tapered_picture_frame(1, 2, 8, 0.2, 3, 5, 1, npoints=9)
-
-
-if __name__ == "__main__":
-    pytest.main([__file__])

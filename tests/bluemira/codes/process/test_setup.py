@@ -72,7 +72,3 @@ class TestSetup:
             for k, v in problem_settings.items():
                 if dat.startswith(k):
                     assert str(v) in dat
-
-
-if __name__ == "__main__":
-    pytest.main([__file__])

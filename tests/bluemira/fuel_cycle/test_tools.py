@@ -286,7 +286,3 @@ class TestGCSEPhysics:
         e_dd_kikuchi = np.array([1.01 + 3.02, 0.82 + 2.45]) * 1e6
         e, v = E_DD_fusion(), np.average(e_dd_kikuchi)
         assert np.isclose(e, v, rtol=1e-3), self._msg(e, v)
-
-
-if __name__ == "__main__":
-    pytest.main([__file__])

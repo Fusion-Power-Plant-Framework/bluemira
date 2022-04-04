@@ -18,7 +18,6 @@
 #
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
-import pytest
 
 from bluemira.equilibria.physics import calc_psib
 
@@ -29,7 +28,3 @@ class TestPhysics:
 
         assert round(abs(psib - 143), 0) == 0  # 142.66 ~ 143 V.s
         # CREATE DEMO 2015 test case
-
-
-if __name__ == "__main__":
-    pytest.main([__file__])

@@ -72,7 +72,3 @@ class TestKappaLaw:
         assert np.isclose(k95, 1.67, rtol=5e-2)
         k95 = estimate_kappa95(2.6, 0.3)
         assert np.isclose(k95, 1.725, rtol=5e-2)
-
-
-if __name__ == "__main__":
-    pytest.main([__file__])

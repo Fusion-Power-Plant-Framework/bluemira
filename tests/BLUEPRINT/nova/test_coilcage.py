@@ -24,7 +24,6 @@ import os
 
 import matplotlib.pyplot as plt
 import numpy as np
-import pytest
 
 import tests
 from bluemira.base.file import get_bluemira_path
@@ -156,7 +155,3 @@ class TestCariddiBenchmark:
             self.coil_loop.plot(ax2, fill=False)
             ax2.plot(self.x_rip[1:19], self.z_rip[1:19], "s", marker=".", color="r")
             plt.show()
-
-
-if __name__ == "__main__":
-    pytest.main([__file__])

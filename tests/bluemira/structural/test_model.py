@@ -772,7 +772,3 @@ class TestInterpolation:
         result = model.solve()
         if tests.PLOTTING:
             result.plot(stress=True)
-
-
-if __name__ == "__main__":
-    pytest.main([__file__])

@@ -21,8 +21,6 @@
 
 from unittest.mock import patch
 
-import pytest
-
 from bluemira.codes.process import api
 
 PROCESS_OBS_VAR = {
@@ -37,7 +35,3 @@ def test_update_obsolete_vars():
     str1 = api.update_obsolete_vars("ni")
     str2 = api.update_obsolete_vars("garden")
     assert str1 == "ni peng" and str2 == "shrubbery"
-
-
-if __name__ == "__main__":
-    pytest.main([__file__])

@@ -20,7 +20,6 @@
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 
 import numpy as np
-import pytest
 
 from bluemira.geometry._deprecated_base import Plane
 from bluemira.geometry._deprecated_loop import Loop
@@ -109,7 +108,3 @@ class TestPlane:
         o, z = p_xz4.intersect(p_yz4)
         assert np.allclose(o, np.array([4, 4, 0]))
         assert np.allclose(np.abs(z), np.array([0, 0, 1]))
-
-
-if __name__ == "__main__":
-    pytest.main([__file__])

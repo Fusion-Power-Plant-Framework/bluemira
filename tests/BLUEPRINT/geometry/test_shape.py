@@ -162,7 +162,3 @@ class TestShapeFitting:
         fitter = fit_shape_to_loop("P", reference)
 
         assert np.isclose(fitter.parameterisation.xo["x1"]["value"], 5, rtol=1e-3)
-
-
-if __name__ == "__main__":
-    pytest.main([__file__])

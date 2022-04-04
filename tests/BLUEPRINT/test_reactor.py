@@ -159,7 +159,3 @@ def test_duplicate_class_caught():
 
         class SmokeTestSingleNullReactor(Reactor):  # noqa
             default_params = []
-
-
-if __name__ == "__main__":
-    pytest.main([__file__])

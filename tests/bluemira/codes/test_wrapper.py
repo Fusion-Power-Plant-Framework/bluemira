@@ -22,6 +22,3 @@
 import pytest
 
 wrapper = pytest.importorskip("bluemira.codes.wrapper")
-
-if __name__ == "__main__":
-    pytest.main([__file__])

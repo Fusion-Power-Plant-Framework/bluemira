@@ -278,7 +278,3 @@ class TestFirstWallDN:
         assert prof_up.x[0] == profile.x[0]
         assert prof_up.x[-1] == profile.x[-1]
         assert len(prof_up.x) == len(profile.x)
-
-
-if __name__ == "__main__":
-    pytest.main([__file__])

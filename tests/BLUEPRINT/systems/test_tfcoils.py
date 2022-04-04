@@ -547,7 +547,3 @@ class TestResistiveCurvedPictureframeTF:
             "Toroidal field coils_case",
         ]
         assert CAD.component["names"] == expected_names
-
-
-if __name__ == "__main__":
-    pytest.main([__file__])

@@ -63,7 +63,3 @@ class TestPort:
         assert self.check_pass(port)
         if z_val is not None:
             assert port.inner.z[0] == z_val
-
-
-if __name__ == "__main__":
-    pytest.main([__file__])

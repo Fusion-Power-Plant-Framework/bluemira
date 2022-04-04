@@ -138,7 +138,3 @@ class TestImmersionBlanket:
         with pytest.raises(NotImplementedError):
             # Currently throws NotYetImplemented
             assert STBlanketCAD(self.blanket, neutronics=True)
-
-
-if __name__ == "__main__":
-    pytest.main([__file__])

@@ -307,7 +307,3 @@ class TestRun:
         assert (
             len(bad_recv) == 0
         ), "Parameters were marked as recv in PROCESS mapping but were not mapped back into bluemira."
-
-
-if __name__ == "__main__":
-    pytest.main([__file__])

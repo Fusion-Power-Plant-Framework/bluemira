@@ -215,7 +215,3 @@ class TestGetLegs:
 
     def assert_valid_leg(self, leg, x_point):
         assert np.isclose(leg.z[0], x_point.z)
-
-
-if __name__ == "__main__":
-    pytest.main([__file__])

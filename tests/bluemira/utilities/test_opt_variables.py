@@ -173,7 +173,3 @@ class TestOptVariables:
             new_vars._to_records() == self.vars._to_records()
         finally:
             shutil.rmtree(tempdir)
-
-
-if __name__ == "__main__":
-    pytest.main([__file__])

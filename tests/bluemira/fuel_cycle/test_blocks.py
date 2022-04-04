@@ -24,7 +24,6 @@ import os
 
 import matplotlib.pyplot as plt
 import numpy as np
-import pytest
 from scipy.interpolate import interp1d
 
 import tests
@@ -169,7 +168,3 @@ class TestSqrtFittedSinks:
             plt.show()
 
         assert np.all(np.array(r_2_values) > 0.9995)
-
-
-if __name__ == "__main__":
-    pytest.main([__file__])

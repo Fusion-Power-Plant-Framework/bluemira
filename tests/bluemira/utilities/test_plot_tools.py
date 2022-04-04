@@ -19,9 +19,6 @@
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 
-
-import pytest
-
 from bluemira.utilities.plot_tools import gsymbolify, str_to_latex
 
 
@@ -46,7 +43,3 @@ class TestGsymbolify:
     def test_nothing(self):
         string = gsymbolify("nothing")
         assert string == "nothing"
-
-
-if __name__ == "__main__":
-    pytest.main([__file__])

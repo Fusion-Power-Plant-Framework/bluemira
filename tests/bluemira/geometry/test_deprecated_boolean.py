@@ -326,7 +326,3 @@ class TestConvexHull:
         )
         with pytest.raises(GeometryError):
             convex_hull([loop1, loop2])
-
-
-if __name__ == "__main__":
-    pytest.main([__file__])

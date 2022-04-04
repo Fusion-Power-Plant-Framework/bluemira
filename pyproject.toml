@@ -32,3 +32,11 @@ profile = "black"
 skip_gitignore = true
 known_first_party = ["BLUEPRINT", "bluemira"]
 force_to_top = ["freecad"]
+
+[tool.pytest.ini_options]
+markers = [
+    "longrun",
+    "reactor",
+    "private"
+]
+addopts = "--html=report.html --self-contained-html --strict-markers"
