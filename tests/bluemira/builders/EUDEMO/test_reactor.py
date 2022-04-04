@@ -97,8 +97,10 @@ class TestEUDEMO:
         )
 
         lcfs = Coordinates(plasma_component.equilibrium.get_LCFS().xyz)
-        assert np.isclose(ref_lcfs.length, lcfs.length, rtol=1e-3)
-        assert np.isclose(ref_lcfs.center_of_mass[0], lcfs.center_of_mass[0], rtol=1e-3)
+        np.testing.assert_almost_equal(ref_lcfs.length, lcfs.length, rtol=1e-3)
+        np.testing.assert_almost_equal(
+            ref_lcfs.center_of_mass[0], lcfs.center_of_mass[0], rtol=1e-3
+        )
 
     def test_tf_build(self):
         """
