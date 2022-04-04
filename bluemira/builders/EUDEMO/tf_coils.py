@@ -311,11 +311,15 @@ class TFCoilsBuilder(OptimisedShapeBuilder):
         component = Component("xz")
 
         # Winding pack
-        x_min = self._wp_cross_section.bounding_box.x_min
-        x_centreline_in = self._centreline.bounding_box.x_min
-        dx = abs(x_min - x_centreline_in)
-        wp_outer = offset_wire(self._centreline, dx, join="arc")
-        wp_inner = offset_wire(self._centreline, -dx, join="arc")
+        # x_min = self._wp_cross_section.bounding_box.x_min
+        # x_centreline_in = self._centreline.bounding_box.x_min
+        # dx = abs(x_min - x_centreline_in)
+        wp_outer = offset_wire(
+            self._centreline, 0.5 * self._params.tk_tf_wp.value, join="arc"
+        )
+        wp_inner = offset_wire(
+            self._centreline, -0.5 * self._params.tk_tf_wp.value, join="arc"
+        )
 
         winding_pack = PhysicalComponent(
             "Winding pack", BluemiraFace([wp_outer, wp_inner])
