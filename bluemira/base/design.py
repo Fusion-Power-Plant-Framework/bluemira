@@ -281,7 +281,10 @@ class Design(DesignABC):
         component = super().run()
 
         for builder in self._builders.values():
-            component.add_child(self._build_stage(builder.name))
+            self.stage = builder.name
+            bluemira_print(f"Starting design stage: {self.stage}")
+            component.add_child(self._build_stage())
+            bluemira_print(f"Completed design stage: {self.stage}")
 
         bluemira_print("Design Complete!")
 
@@ -299,7 +302,8 @@ class Design(DesignABC):
             builder_class: Type[Builder] = get_class_from_module(
                 class_name, default_module="bluemira.builders"
             )
-            self.register_builder(builder_class(params, val), key)
+            self.stage = key
+            self.register_builder(builder_class(params, val))
             self._required_params |= set(self._builders[key]._required_params)
 
 
