@@ -51,7 +51,7 @@ class TestProminenceDownloader:
         # this is because of a pytest wontfix bug, workaround:
         # https://github.com/pytest-dev/pytest/issues/3778#issuecomment-411899446
         cls = type(self)
-        with patch.object(prom.ProminenceDownloader, "_get_binary"):
+        with patch.object(prom.ProminenceDownloader, "_load_binary"):
             cls.downloader = prom.ProminenceDownloader(jobid=555, save_dir=tempdir)
 
     def test_importer(self):
@@ -63,8 +63,8 @@ class TestProminenceDownloader:
         assert hasattr(prom_bin, "command_download")
 
     def test_captured_print(self):
-        with patch("bluemira.utilities.prominence.bluemira_print") as bp:
-            with patch("bluemira.utilities.prominence.bluemira_warn") as bw:
+        with patch("bluemira.codes._prominence.bluemira_print") as bp:
+            with patch("bluemira.codes._prominence.bluemira_warn") as bw:
                 with patch("builtins.print", new=self.downloader.captured_print):
                     print("hello")
                     print("Error hello")
