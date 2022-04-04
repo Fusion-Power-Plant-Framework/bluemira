@@ -200,6 +200,7 @@ class ConfigurationSchema:
     tk_tf_outboard: Parameter
     tk_tf_nose: Parameter
     tk_tf_wp: Parameter
+    tk_tf_wp_y: Parameter
     tk_tf_front_ib: Parameter
     tk_tf_ins: Parameter
     tk_tf_insgap: Parameter

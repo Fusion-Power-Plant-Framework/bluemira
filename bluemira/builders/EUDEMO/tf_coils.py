@@ -147,6 +147,7 @@ class TFCoilsBuilder(OptimisedShapeBuilder):
         super().__init__(
             params, build_config, separatrix=separatrix, keep_out_zone=keep_out_zone
         )
+        self._derive_params()
 
     @property
     def geom_path(self) -> str:
@@ -187,6 +188,22 @@ class TFCoilsBuilder(OptimisedShapeBuilder):
         shape_params["x1"] = {"value": r_current_in_board, "fixed": True}
         return shape_params
 
+    def _derive_params(self):
+        """
+        Some PROCESS reverse engineering to get to some values that we need.
+        """
+        # Radial width of the winding pack with no insulation or insertion gap
+        dr_wp = (
+            self._params.tk_tf_wp.value
+            - 2 * self._params.tk_tf_ins
+            - self._params.tk_tf_insgap.value
+        )
+        self.params.add_parameter("tk_tf_wp", value=dr_wp, unit="m", source="bluemira")
+
+        # Toroidal width of the winding pack no insulation
+        dy_wp = self._params.tf_wp_depth.value - 2 * self._params.tk_tf_ins
+        self.params.add_parameter("tk_tf_wp_y", value=dy_wp, unit="m", source="bluemira")
+
     def reinitialise(
         self,
         params,
@@ -213,6 +230,7 @@ class TFCoilsBuilder(OptimisedShapeBuilder):
             If the runmode is set to run but a separatrix is not provided.
         """
         super().reinitialise(params)
+        self._derive_params()
 
         if self.runmode == "run" and separatrix is None:
             raise BuilderError(
