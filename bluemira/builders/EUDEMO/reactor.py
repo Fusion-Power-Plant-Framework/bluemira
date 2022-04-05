@@ -127,9 +127,7 @@ class EUDEMOReactor(Reactor):
         builder = PlasmaBuilder(self._params.to_dict(), config)
         self.register_builder(builder)
 
-        component = super()._build_stage()
-
-        return component
+        return super()._build_stage()
 
     @Reactor.design_stage(TF_COILS)
     def build_TF_coils(self, component_tree: Component):
@@ -186,9 +184,7 @@ class EUDEMOReactor(Reactor):
         builder = TFCoilsBuilder(self._params.to_dict(), config, separatrix=sep_shape)
         self.register_builder(builder)
 
-        component = super()._build_stage()
-
-        return component
+        return super()._build_stage()
 
     @Reactor.design_stage(PF_COILS)
     def build_PF_coils(self, component_tree: Component):
@@ -209,9 +205,7 @@ class EUDEMOReactor(Reactor):
         builder = PFCoilsBuilder(self._params.to_dict(), config)
         self.register_builder(builder)
 
-        component = super()._build_stage()
-
-        return component
+        return super()._build_stage()
 
     @Reactor.design_stage(THERMAL_SHIELD)
     def build_thermal_shield(self, component_tree: Component):
@@ -239,9 +233,8 @@ class EUDEMOReactor(Reactor):
             vv_xz_koz=None,
         )
         self.register_builder(builder)
-        component = super()._build_stage()
 
-        return component
+        return super()._build_stage()
 
     @Reactor.design_stage(IVC)
     def build_in_vessel_component_shapes(self, component_tree: Component):
@@ -292,9 +285,8 @@ class EUDEMOReactor(Reactor):
             self._params.to_dict(), config, divertor_silhouette=divertor_face
         )
         self.register_builder(builder)
-        component = super()._build_stage()
 
-        return component
+        return super()._build_stage()
 
     @Reactor.design_stage(BLANKET)
     def build_blanket(self, component_tree: Component, blanket_face):
@@ -308,9 +300,8 @@ class EUDEMOReactor(Reactor):
             self._params.to_dict(), config, blanket_silhouette=blanket_face
         )
         self.register_builder(builder)
-        component = super()._build_stage()
 
-        return component
+        return super()._build_stage()
 
     @Reactor.design_stage(VACUUM_VESSEL)
     def build_vacuum_vessel(self, component_tree: Component, ivc_boundary):
@@ -341,9 +332,8 @@ class EUDEMOReactor(Reactor):
 
         builder = CryostatBuilder(self._params.to_dict(), config, cts_xz=cts)
         self.register_builder(builder)
-        component = super()._build_stage()
 
-        return component
+        return super()._build_stage()
 
     @Reactor.design_stage(RADIATION_SHIELD)
     def build_radiation_shield(self, component_tree: Component):
@@ -364,6 +354,5 @@ class EUDEMOReactor(Reactor):
             cryo_vv_xz=cryo_vv_xz,
         )
         self.register_builder(builder)
-        component = super()._build_stage()
 
-        return component
+        return super()._build_stage()
