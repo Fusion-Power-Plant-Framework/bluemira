@@ -198,8 +198,7 @@ class DesignABC(abc.ABC):
 
         return component
 
-    @staticmethod
-    def design_stage(name: str) -> Callable:
+    def design_stage(name: str) -> Callable:  # noqa: N805
         """
         Design stage decorator.
         Adds some printing to each stage and sets the 'stage' variable
@@ -281,10 +280,9 @@ class Design(DesignABC):
         component = super().run()
 
         for builder in self._builders.values():
-            self.stage = builder.name
-            bluemira_print(f"Starting design stage: {self.stage}")
-            component.add_child(self._build_stage())
-            bluemira_print(f"Completed design stage: {self.stage}")
+            component.add_child(
+                Design.design_stage(builder.name)(Design._build_stage)(self)
+            )
 
         bluemira_print("Design Complete!")
 
