@@ -64,26 +64,5 @@ class TestTE:
         assert np.isclose(te, 3.7, rtol=1e-3), f"{te:2f}"
 
 
-class TestKappaLaw:
-    """
-    As per the conclusions of the CREATE report 2L4NMJ
-    """
-
-    @pytest.mark.parametrize(
-        "A, m_s, expected",
-        [
-            [3.6, 0.3, 1.58],
-            [3.1, 0.3, 1.68],
-            [2.6, 0.3, 1.73],
-            [3.6, 0, 1.66],
-            [3.1, 0, 1.77],
-            [2.6, 0, 1.80],
-        ],
-    )
-    def test_kappa(self, A, m_s, expected):
-        k95 = estimate_kappa95(A, m_s)
-        np.testing.assert_allclose(k95, expected, rtol=5e-3)
-
-
 if __name__ == "__main__":
     pytest.main([__file__])
