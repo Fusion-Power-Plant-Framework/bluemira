@@ -20,7 +20,7 @@ procedure when creating an issue:
 * Write a fairly complete description of the bug/feature/problem in the issue, using
   the provided templates and adding the relevant tags
 * Tag the ``bluemira`` module(s) the issue concerns
-* If the issue is linked to a Milestone, please tag it
+* If the issue is linked to a [Project](https://github.com/Fusion-Power-Plant-Framework/bluemira/projects), please tag it
 
 ## Submitting a bug report
 
@@ -47,17 +47,13 @@ request is as follows:
   progress
 * Finally, as the author of the `new_feature` branch, you must submit a pull request
   onto the `develop` branch
-  * Link the relevant issue(s) and milestone(s)
+  * Link the relevant issue(s) and project(s)
   * Add an assignee, who will be responsible for reviewing and merging the PR. This
     should be the person you feel has the most relevant technical background and/or the
     most familiar with the underlying issue or code.
-  * Add a reviewer, who will be responsible for reviewing the PR
-  * In practice, during the transition phase, the reviewer and the assignee should be
-    from different review teams:
-    * MIRA review team: [Fabrizio Franza]
-    * BLUEPRINT review team: [Matti Coleman, James Cook, Dan Short]
+  * The reviewers will be automatically selected based on which module(s) of the code your pull request affects.
 
-The merge request will be reviewed by a core developer before potentially being accepted
+The merge request will be reviewed by the core development team before potentially being accepted
 .
 
 ## Python style guide
@@ -138,6 +134,12 @@ Abbreviations are allowed to be in capitals, e.g.:
 
 A full list of accepted abbreviations can be found in the `.flake8` file under
 `ignore_names`.
+
+We try to stick to descriptive `lower_case_snake_case` argument and local variable names with the general rule that names less than three characters should not be used. This is not a hard rule, and there are some notable exceptions:
+* `i`, `j`, `k` for integers (e.g. looping, indexing)
+* `m`, `n` for integers (e.g. array sizes)
+* `x`, `y`, `z`, `r` for floats or arrays describing coordinates
+* Where it makes sense to reflect mathematical notation (e.g. `R_0`)
 
 ## Documentation style guide
 

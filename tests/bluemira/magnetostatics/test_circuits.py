@@ -24,11 +24,17 @@ import json
 import matplotlib.pyplot as plt
 import numpy as np
 import pytest
+from scipy.interpolate import interp1d
 
 import tests
 from bluemira.base.file import get_bluemira_path
-from bluemira.geometry._deprecated_loop import Loop
-from bluemira.geometry._deprecated_tools import innocent_smoothie
+from bluemira.geometry._deprecated_tools import (
+    innocent_smoothie,
+    offset,
+    vector_lengthnorm,
+)
+from bluemira.geometry.coordinates import Coordinates
+from bluemira.geometry.parameterisations import PictureFrame, PrincetonD, TripleArc
 from bluemira.geometry.tools import make_circle
 from bluemira.magnetostatics.baseclass import SourceGroup
 from bluemira.magnetostatics.circuits import (
@@ -138,6 +144,96 @@ def test_mixedsourcesolver():
         ax.set_aspect("equal")
 
 
+class TestArbitraryPlanarXSCircuit:
+    pd_inputs = {"x1": {"value": 4}, "x2": {"value": 16}, "dz": {"value": 0}}
+
+    pf_inputs = {
+        "x1": {"value": 5},
+        "x2": {"value": 10},
+        "z1": {"value": 10},
+        "z2": {"value": -9},
+        "ri": {"value": 0.4},
+        "ro": {"value": 1},
+    }
+    ta_inputs = {
+        "x1": {"value": 4},
+        "dz": {"value": 0},
+        "sl": {"value": 6.5},
+        "f1": {"value": 3},
+        "f2": {"value": 4},
+        "a1": {"value": 20},
+        "a2": {"value": 40},
+    }
+
+    parameterisations = [
+        PrincetonD,
+        TripleArc,
+        PictureFrame,
+    ]
+    p_inputs = [pd_inputs, ta_inputs, pf_inputs]
+    clockwises = [False] * len(p_inputs) + [True] * len(p_inputs)
+    p_inputs = p_inputs * 2
+    parameterisations = parameterisations * 2
+
+    @pytest.mark.parametrize(
+        "parameterisation, inputs, clockwise",
+        zip(parameterisations, p_inputs, clockwises),
+    )
+    def test_circuits_are_continuous_and_chained(
+        self, parameterisation, inputs, clockwise
+    ):
+        shape = parameterisation(inputs).create_shape()
+        coords = shape.discretize(ndiscr=50, byedges=True)
+        coords.set_ccw((0, -1, 0))
+        if clockwise:
+            coords.set_ccw((0, 1, 0))
+        circuit = ArbitraryPlanarRectangularXSCircuit(
+            coords,
+            0.25,
+            0.5,
+            1.0,
+        )
+        open_circuit = ArbitraryPlanarRectangularXSCircuit(
+            coords[:, :25].T, 0.25, 0.5, 1.0
+        )
+        n_chain = int(self._calc_daisychain(circuit))
+        n_sources = len(circuit.sources) - 1
+        assert n_chain == n_sources
+        assert self._check_continuity(circuit.sources[-1], circuit.sources[0])
+        assert self._calc_daisychain(open_circuit) == len(open_circuit.sources) - 1
+
+    @pytest.mark.parametrize("clockwise", [False, True])
+    def test_a_circuit_from_a_clockwise_circle_is_continuous(self, clockwise):
+        shape = make_circle(5, (0, 9, 0), axis=(0, 0, 1))
+        coords = shape.discretize(ndiscr=30, byedges=True)
+        if clockwise:
+            coords.set_ccw((0, 0, 1))
+        else:
+            coords.set_ccw((0, 0, -1))
+        circuit = ArbitraryPlanarRectangularXSCircuit(
+            coords,
+            0.25,
+            0.5,
+            1.0,
+        )
+        assert self._calc_daisychain(circuit) == len(circuit.sources) - 1
+        assert self._check_continuity(circuit.sources[-1], circuit.sources[0])
+
+    def _calc_daisychain(self, circuit):
+        chain = []
+        for i, source_1 in enumerate(circuit.sources[:-1]):
+            source_2 = circuit.sources[i + 1]
+            daisy = self._check_continuity(source_1, source_2)
+            chain.append(daisy)
+        return sum(chain)
+
+    @staticmethod
+    def _check_continuity(source_1, source_2):
+        s1_rect = source_1.points[1][:4]
+        s2_rect = source_2.points[0][:4]
+        return np.allclose(s1_rect, s2_rect)
+
+
 class TestCariddiBenchmark:
     """
     This is a code comparison benchmark to some work from F. Villone (CREATE) in
@@ -166,14 +262,20 @@ class TestCariddiBenchmark:
             data = json.load(f)
             x = data["x"]
             z = data["z"]
-            coil_loop = Loop(x=x, z=z)
+            coil_loop = Coordinates({"x": x, "y": 0, "z": z})
             coil_loop.close()
-            coil_loop.interpolate(300)
-            coil_loop = coil_loop.offset(width / 2)
+            coil_loop.set_ccw((0, 1, 0))
+            linterp = np.linspace(0, 1, 300)
+            ll = vector_lengthnorm(*coil_loop)
+            x = interp1d(ll, coil_loop.x)(linterp)
+            z = interp1d(ll, coil_loop.z)(linterp)
+            x, z = offset(x, z, width / 2)
+
+            coil_loop = Coordinates({"x": x, "y": 0, "z": z})
 
         # Smooth out graphically determined TF centreline...
         x, z = innocent_smoothie(coil_loop.x, coil_loop.z, n=150, s=0.02)
-        coil_loop = Loop(x=x[:-10], z=z[:-10])
+        coil_loop = Coordinates({"x": x[:-10], "y": 0, "z": z[:-10]})
         coil_loop.close()
         cls.coil_loop = coil_loop
 
@@ -208,12 +310,8 @@ class TestCariddiBenchmark:
             ax.set_xlabel("Point index")
             ax.set_xticks(np.arange(1, 19, 2))
 
-            self.coil_loop.plot(ax2, fill=False)
+            ax2.plot(self.coil_loop.x, self.coil_loop.z, color="b")
             ax2.plot(self.x_rip[1:19], self.z_rip[1:19], "s", marker=".", color="r")
             plt.show()
 
         assert np.max(np.abs(ripple - self.cariddi_ripple)) < 0.04
-
-
-if __name__ == "__main__":
-    pytest.main([__file__])

@@ -240,7 +240,3 @@ def test_generated_data_dirs(file_manager_good: FileManager):
                 file_manager_good.reactor_name,
                 key,
             )
-
-
-if __name__ == "__main__":
-    pytest.main([__file__])

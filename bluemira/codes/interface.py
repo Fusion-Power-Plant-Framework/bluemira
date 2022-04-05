@@ -26,11 +26,13 @@ from __future__ import annotations
 
 import string
 import subprocess  # noqa :S404
+from abc import ABC, abstractmethod
 from enum import Enum
-from typing import Dict
+from typing import Callable, Dict, List, Optional, Union
 
-import bluemira.base as bm_base
+from bluemira.base.constants import raw_uc
 from bluemira.base.look_and_feel import bluemira_warn
+from bluemira.base.parameter import ParameterFrame
 from bluemira.codes.error import CodesError
 from bluemira.codes.utilities import (
     LogPipe,
@@ -119,8 +121,10 @@ class Setup(Task):
 
     """
 
-    def __init__(self, parent, *args, params=None, **kwargs):
+    def __init__(self, parent, *args, params=None, problem_settings=None, **kwargs):
         super().__init__(parent)
+
+        self._problem_settings = problem_settings if problem_settings is not None else {}
         self.set_parameters(params)
 
     def set_parameters(self, params):
@@ -135,9 +139,61 @@ class Setup(Task):
         NAME = self.parent.NAME
         self._parameter_mapping = get_recv_mapping(params, NAME, recv_all=True)
         self._params = type(params).from_template(self._parameter_mapping.values())
-        self._params.update_kw_parameters(params.to_dict(verbose=True))
+        self._params.update_kw_parameters(
+            {k: params.get_param(k) for k in self._params.keys()}
+        )
         self.__recv_mapping = get_recv_mapping(params, NAME)
         self.__send_mapping = get_send_mapping(params, NAME)
+
+    def get_new_inputs(self, remapper: Optional[Union[Callable, Dict]] = None):
+        """
+        Get new key mappings from the ParameterFrame.
+
+        Parameters
+        ----------
+        remapper: Optional[Union[callable, dict]]
+            a function or dictionary for remapping variable names.
+            Useful for renaming old variables
+
+        Returns
+        -------
+        _inputs: dict
+            key value pairs of external program variable names and values
+
+        TODO unit conversion
+        """
+        _inputs = {}
+
+        if not (callable(remapper) or isinstance(remapper, (type(None), Dict))):
+            raise TypeError("remapper is not callable or a dictionary")
+        elif isinstance(remapper, Dict):
+            orig_remap = remapper.copy()
+
+            def remapper(x):
+                return orig_remap[x]
+
+        elif remapper is None:
+
+            def remapper(x):
+                return x
+
+        for prog_key, bm_key in self._send_mapping.items():
+            prog_key = remapper(prog_key)
+            if isinstance(prog_key, list):
+                for key in prog_key:
+                    _inputs[key] = self._convert_units(self.params.get_param(bm_key))
+                continue
+
+            _inputs[prog_key] = self._convert_units(self.params.get_param(bm_key))
+
+        return _inputs
+
+    def _convert_units(self, param):
+        code_unit = param.mapping[self.parent.NAME].unit
+        if code_unit is not None:
+            return raw_uc(param.value, param.unit, code_unit)
+        else:
+            return param.value
 
     @property
     def _recv_mapping(self):
@@ -150,7 +206,7 @@ class Setup(Task):
         return self.__send_mapping
 
     @property
-    def params(self) -> bm_base.ParameterFrame:
+    def params(self) -> ParameterFrame:
         """
         The ParameterFrame corresponding to this run.
         """
@@ -192,8 +248,36 @@ class Teardown(Task):
     def __init__(self, parent, *args, **kwargs):
         super().__init__(parent)
 
+    def prepare_outputs(self, outputs: Dict, source: Optional[str] = None):
+        """
+        Prepare outputs for ParameterFrame
 
-class FileProgramInterface:
+        Implicitly converts to bluemira units in unit available
+
+        Parameters
+        ----------
+        outputs: Dict
+            key value pair of code outputs
+        source: Optional[str]
+            Set the source of all outputs, by default is code name
+
+        """
+        for bm_key, value in outputs.items():
+            try:
+                code_unit = (
+                    self.parent.params.get_param(bm_key).mapping[self.parent.NAME].unit
+                )
+            except AttributeError as exc:
+                raise AttributeError(f"No mapping found for {bm_key}") from exc
+            if code_unit is not None:
+                outputs[bm_key] = {"value": value, "unit": code_unit}
+
+        self.parent.params.update_kw_parameters(
+            outputs, source=source if source is not None else f"{self.parent.NAME}"
+        )
+
+
+class FileProgramInterface(ABC):
     """An external code wrapper"""
 
     _setup = Setup
@@ -210,6 +294,7 @@ class FileProgramInterface:
         run_dir=None,
         read_dir=None,
         mappings=None,
+        problem_settings=None,
         **kwargs,
     ):
         self.NAME = NAME
@@ -228,7 +313,9 @@ class FileProgramInterface:
 
         self._protect_tasks()
 
-        self.setup_obj = self._setup(self, *args, params=params, **kwargs)
+        self.setup_obj = self._setup(
+            self, *args, params=params, problem_settings=problem_settings, **kwargs
+        )
         self.run_obj = self._run(self, *args, **kwargs)
         self.teardown_obj = self._teardown(self, *args, **kwargs)
 
@@ -278,7 +365,7 @@ class FileProgramInterface:
         self._runner = self._runmode[mode]
 
     @property
-    def params(self) -> bm_base.ParameterFrame:
+    def params(self) -> ParameterFrame:
         """
         The ParameterFrame corresponding to this run.
         """
@@ -304,6 +391,13 @@ class FileProgramInterface:
         The ParameterFrame corresponding to this run.
         """
         return self.setup_obj._send_mapping
+
+    @property
+    def problem_settings(self):
+        """
+        Get problem settings dictionary
+        """
+        return self.setup_obj._problem_settings
 
     def modify_mappings(self, mappings: Dict[str, Dict[str, bool]]):
         """
@@ -337,3 +431,20 @@ class FileProgramInterface:
         self._runner(self.setup_obj, *args, **kwargs)
         self._runner(self.run_obj, *args, **kwargs)
         self._runner(self.teardown_obj, *args, **kwargs)
+
+    @abstractmethod
+    def get_raw_variables(self, params: Union[List, str]):
+        """
+        Get raw parameters from an external code
+        (mapped bluemira parameters will have bluemira names)
+
+        Parameters
+        ----------
+        params: Union[List, str]
+            parameter names to access
+
+        Returns
+        -------
+        values list
+        """
+        pass

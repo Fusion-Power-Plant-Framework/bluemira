@@ -21,7 +21,7 @@
 import numpy as np
 import pytest
 
-from bluemira.base.constants import E_I, E_IJ, E_IJK
+from bluemira.base.constants import E_I, E_IJ, E_IJK, raw_uc, to_celsius, to_kelvin
 from bluemira.utilities.tools import levi_civita_tensor
 
 
@@ -30,5 +30,34 @@ def test_lct_constants():
         np.testing.assert_equal(lct, levi_civita_tensor(dim=i))
 
 
-if __name__ == "__main__":
-    pytest.main([__file__])
+class TestTemperatureConverters:
+    params = ("unit", ["celsius", "kelvin", "rankine", "reaumur", "fahrenheit"])
+
+    @pytest.mark.parametrize(*params)
+    def test_to_kelvin_rasies_error(self, unit):
+        with pytest.raises(ValueError):
+            to_kelvin(-1000, unit)
+
+    @pytest.mark.parametrize(*params)
+    def test_to_celsius_raises_error(self, unit):
+        with pytest.raises(ValueError):
+            to_celsius(-1000, unit)
+
+
+class TestRawConverter:
+    def test_percentage_conversion(self):
+        assert raw_uc(1, "percent", "%") == 1
+        assert raw_uc(1, "count", "%") == 100
+
+    def test_flow_conversion(self):
+        assert np.isclose(raw_uc(1, "mol", "Pa m^3"), 2271.0954641485578)
+        assert np.isclose(raw_uc(1, "mol/s", "Pa m^3/s"), 2271.0954641485578)
+
+    def test_energy_temperature_conversion(self):
+        assert np.isclose(raw_uc(1, "eV", "K"), 11604.518121550082)
+        assert np.isclose(raw_uc(1, "eV/s", "K/s"), 11604.518121550082)
+
+    def test_units_with_scales(self):
+        # .....I know.....
+        assert np.isclose(raw_uc(1, "10^19/m^3", "um^-3"), 10)
+        assert np.isclose(raw_uc(1, "10^19/m^3", "10um^-3"), 1)

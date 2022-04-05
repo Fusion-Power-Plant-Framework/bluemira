@@ -62,7 +62,7 @@ __all__ = [
 ]
 
 
-class CoilsetOP(OptimisationProblem):
+class CoilsetOptimisationProblem(OptimisationProblem):
     """
     Abstract base class for OptimisationProblems for the coilset.
     Provides helper methods and utilities for OptimisationProblems
@@ -261,7 +261,7 @@ class CoilsetOP(OptimisationProblem):
         return self.optimise()
 
 
-class UnconstrainedCurrentCOP(CoilsetOP):
+class UnconstrainedCurrentCOP(CoilsetOptimisationProblem):
     """
     Unconstrained norm-2 optimisation of coil currents
     with Tikhonov regularisation.
@@ -322,7 +322,7 @@ class UnconstrainedCurrentCOP(CoilsetOP):
         return self.coilset
 
 
-class BoundedCurrentCOP(CoilsetOP):
+class BoundedCurrentCOP(CoilsetOptimisationProblem):
     """
     Coilset OptimisationProblem for coil currents subject to maximum current bounds.
 
@@ -423,7 +423,7 @@ class BoundedCurrentCOP(CoilsetOP):
         return self.coilset
 
 
-class CoilsetPositionCOP(CoilsetOP):
+class CoilsetPositionCOP(CoilsetOptimisationProblem):
     """
     Coilset OptimisationProblem for coil currents and positions
     subject to maximum current bounds and positions bounded within
@@ -623,7 +623,9 @@ class CoilsetPositionCOP(CoilsetOP):
         x_vals, z_vals = region_mapper.get_xz_arrays()
         coilset_state = np.concatenate((x_vals, z_vals, currents))
 
-        CoilsetOP.set_coilset_state(coilset, coilset_state, current_scale)
+        CoilsetOptimisationProblem.set_coilset_state(
+            coilset, coilset_state, current_scale
+        )
 
         # Update target
         eq._remap_greens()
@@ -638,7 +640,7 @@ class CoilsetPositionCOP(CoilsetOP):
         return fom
 
 
-class NestedCoilsetPositionCOP(CoilsetOP):
+class NestedCoilsetPositionCOP(CoilsetOptimisationProblem):
     """
     Coilset OptimisationProblem for coil currents and positions
     subject to maximum current bounds and positions bounded within
@@ -678,7 +680,7 @@ class NestedCoilsetPositionCOP(CoilsetOP):
 
     def __init__(
         self,
-        sub_opt: CoilsetOP,
+        sub_opt: CoilsetOptimisationProblem,
         eq: Equilibrium,
         targets: MagneticConstraintSet,
         pfregions: dict,
@@ -761,7 +763,7 @@ class NestedCoilsetPositionCOP(CoilsetOP):
         region_mapper: RegionMapper,
         current_scale: float,
         initial_currents,
-        sub_opt: CoilsetOP,
+        sub_opt: CoilsetOptimisationProblem,
     ):
         """
         Calculates figure of merit, returned from the current
@@ -801,7 +803,9 @@ class NestedCoilsetPositionCOP(CoilsetOP):
         x_vals, z_vals = region_mapper.get_xz_arrays()
         positions = np.concatenate((x_vals, z_vals))
         coilset_state = np.concatenate((positions, initial_currents))
-        CoilsetOP.set_coilset_state(coilset, coilset_state, current_scale)
+        CoilsetOptimisationProblem.set_coilset_state(
+            coilset, coilset_state, current_scale
+        )
 
         # Update targets
         eq._remap_greens()

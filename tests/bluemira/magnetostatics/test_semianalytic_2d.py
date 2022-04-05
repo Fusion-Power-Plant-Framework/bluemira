@@ -23,7 +23,6 @@ import json
 import os
 
 import numpy as np
-import pytest
 from matplotlib import pyplot as plt
 
 import tests
@@ -232,7 +231,3 @@ class TestPoloidalFieldBenchmark:
             ax.set_xlim([0, 8])
             ax.set_xlabel("x")
             ax.set_ylabel("$B_{p}$")
-
-
-if __name__ == "__main__":
-    pytest.main([__file__])

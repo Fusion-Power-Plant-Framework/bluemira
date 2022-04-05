@@ -25,8 +25,28 @@ A collection of tools used in the EU-DEMO design.
 
 import copy
 
+import numpy as np
+
 import bluemira.base.components as bm_comp
 import bluemira.geometry as bm_geo
+from bluemira.builders.EUDEMO._varied_offset import varied_offset
+from bluemira.geometry.face import BluemiraFace
+from bluemira.geometry.tools import (
+    boolean_cut,
+    boolean_fuse,
+    circular_pattern,
+    extrude_shape,
+    make_polygon,
+    revolve_shape,
+    sweep_shape,
+)
+
+__all__ = [
+    "circular_pattern_component",
+    "pattern_revolved_silhouette",
+    "pattern_lofted_silhouette",
+    "varied_offset",
+]
 
 
 def circular_pattern_component(
@@ -114,3 +134,144 @@ def circular_pattern_component(
     process_children(component)
 
     return sectors
+
+
+def pattern_revolved_silhouette(face, n_seg_p_sector, n_sectors, gap):
+    """
+    Pattern a silhouette with revolutions about the z-axis, inter-spaced with parallel
+    gaps between solids.
+
+    Parameters
+    ----------
+    face: BluemiraFace
+        x-z silhouette of the geometry to revolve and pattern
+    n_seg_p_sector: int
+        Number of segments per sector
+    n_sectors: int
+        Number of sectors
+    gap: float
+        Absolute distance between segments (parallel)
+
+    Returns
+    -------
+    shapes: List[BluemiraSolid]
+        List of solids for each segment (ordered anti-clockwise)
+    """
+    sector_degree = 360 / n_sectors
+
+    if gap <= 0.0:
+        # No gaps; just touching solids
+        segment_degree = sector_degree / n_seg_p_sector
+        shape = revolve_shape(
+            face, base=(0, 0, 0), direction=(0, 0, 1), degree=segment_degree
+        )
+        shapes = circular_pattern(
+            shape, origin=(0, 0, 0), degree=sector_degree, n_shapes=n_seg_p_sector
+        )
+    else:
+        volume = revolve_shape(
+            face, base=(0, 0, 0), direction=(0, 0, 1), degree=sector_degree
+        )
+        gaps = _generate_gap_volumes(face, n_seg_p_sector, n_sectors, gap)
+        shapes = boolean_cut(volume, gaps)
+    return _order_shapes_anticlockwise(shapes)
+
+
+def pattern_lofted_silhouette(face, n_seg_p_sector, n_sectors, gap):
+    """
+    Pattern a silhouette with lofts about the z-axis, inter-spaced with parallel
+    gaps between solids.
+
+    Parameters
+    ----------
+    face: BluemiraFace
+        x-z silhouette of the geometry to loft and pattern
+    n_seg_p_sector: int
+        Number of segments per sector
+    n_sectors: int
+        Number of sectors
+    gap: float
+        Absolute distance between segments (parallel)
+
+    Returns
+    -------
+    shapes: List[BluemiraSolid]
+        List of solids for each segment (ordered anti-clockwise)
+    """
+    sector_degree = 360 / n_sectors
+
+    degree = sector_degree * (1 + 1 / n_seg_p_sector)
+    faces = circular_pattern(
+        face,
+        origin=(0, 0, 0),
+        direction=(0, 0, 1),
+        degree=degree,
+        n_shapes=n_seg_p_sector + 1,
+    )
+    shapes = []
+    for i, r_face in enumerate(faces[:-1]):
+        com_1 = r_face.center_of_mass
+        com_2 = faces[i + 1].center_of_mass
+
+        wire = make_polygon(
+            {
+                "x": [com_1[0], com_2[0]],
+                "y": [com_1[1], com_2[1]],
+                "z": [com_1[2], com_2[2]],
+            }
+        )
+        volume = sweep_shape([r_face.boundary[0], faces[i + 1].boundary[0]], wire)
+        shapes.append(volume)
+
+    if gap > 0.0:
+
+        if len(shapes) > 1:
+            full_volume = boolean_fuse(shapes)
+        else:
+            full_volume = shapes[0]
+
+        gaps = _generate_gap_volumes(face, n_seg_p_sector, n_sectors, gap)
+        shapes = boolean_cut(full_volume, gaps)
+
+    return _order_shapes_anticlockwise(shapes)
+
+
+def _generate_gap_volumes(face, n_seg_p_sector, n_sectors, gap):
+    """
+    Generate the gap volumes
+    """
+    bb = face.bounding_box
+    delta = 1.0
+    x = np.array(
+        [bb.x_min - delta, bb.x_max + delta, bb.x_max + delta, bb.x_min - delta]
+    )
+    z = np.array(
+        [bb.z_min - delta, bb.z_min - delta, bb.z_max + delta, bb.z_max + delta]
+    )
+    poly = make_polygon({"x": x, "y": 0, "z": z}, closed=True)
+    bb_face = BluemiraFace(poly)
+    bb_face.translate((0, -0.5 * gap, 0))
+    gap_volume = extrude_shape(bb_face, (0, gap, 0))
+    degree = 360 / n_sectors
+    degree += degree / n_seg_p_sector
+    gap_volumes = circular_pattern(
+        gap_volume, degree=degree, n_shapes=n_seg_p_sector + 1
+    )
+    return gap_volumes
+
+
+def _order_shapes_anticlockwise(shapes):
+    """
+    Order shapes anti-clockwise about (0, 0, 1) by center of mass
+    """
+    x, y = np.zeros(len(shapes)), np.zeros(len(shapes))
+
+    for i, shape in enumerate(shapes):
+        com = shape.center_of_mass
+        x[i] = com[0]
+        y[i] = com[1]
+
+    r = np.hypot(x, y)
+    angles = np.where(y > 0, np.arccos(x / r), 2 * np.pi - np.arccos(x / r))
+    indices = np.argsort(angles)
+    return list(np.array(shapes)[indices])

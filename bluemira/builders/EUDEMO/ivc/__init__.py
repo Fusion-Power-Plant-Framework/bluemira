@@ -21,10 +21,6 @@
 """
 Module containing builders for the EUDEMO first wall components
 """
-from bluemira.builders.EUDEMO.first_wall.divertor import DivertorBuilder
-from bluemira.builders.EUDEMO.first_wall.first_wall import FirstWallBuilder
-from bluemira.builders.EUDEMO.first_wall.wall import (
-    WallBuilder,
-    WallPolySpline,
-    WallPrincetonD,
-)
+from bluemira.builders.EUDEMO.ivc.divertor import DivertorSilhouetteBuilder
+from bluemira.builders.EUDEMO.ivc.ivc import InVesselComponentBuilder
+from bluemira.builders.EUDEMO.ivc.wall import WallBuilder, WallPolySpline, WallPrincetonD

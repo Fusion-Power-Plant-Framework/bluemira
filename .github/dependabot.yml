@@ -12,3 +12,4 @@ updates:
       - dependency-name: "numpy"  # numba limited
       - dependency-name: "section-properties" # beams needs to be updated
       - dependency-name: "neutronics-material-maker" # incompatible upgrade path
+      - dependency-name: "nlopt"  # numpy limited

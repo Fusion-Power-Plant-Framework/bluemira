@@ -22,25 +22,15 @@
 import numpy as np
 import pytest
 
-from bluemira.geometry.optimisation import GeometryOptimisationProblem, MinimiseLength
+from bluemira.geometry.optimisation import (
+    GeometryOptimisationProblem,
+    constrain_koz,
+    minimise_length,
+)
 from bluemira.geometry.parameterisations import PictureFrame, TripleArc
 from bluemira.geometry.tools import make_circle
+from bluemira.utilities.opt_problems import OptimisationConstraint, OptimisationObjective
 from bluemira.utilities.optimiser import Optimiser
-
-
-class DummyOptimisationProblem(GeometryOptimisationProblem):
-    def calculate_length(self, x):
-        self.update_parameterisation(x)
-        return self.parameterisation.create_shape().length
-
-    def f_objective(self, x, grad):
-        value = self.calculate_length(x)
-
-        if grad.size > 0:
-            grad[:] = self.optimiser.approx_derivative(
-                self.calculate_length, x, f0=value
-            )
-        return value
 
 
 class TestGeometryOptimisationProblem:
@@ -67,9 +57,14 @@ class TestGeometryOptimisationProblem:
             "SLSQP",
             opt_conditions=cls.opt_conditions,
         )
-        problem = DummyOptimisationProblem(parameterisation, optimiser)
+
+        objective = OptimisationObjective(
+            minimise_length,
+            f_objective_args={"parameterisation": parameterisation},
+        )
+        problem = GeometryOptimisationProblem(parameterisation, optimiser, objective)
         problem.apply_shape_constraints()
-        problem.solve()
+        problem.optimise()
         cls.ref_length = parameterisation.create_shape().length
 
     def test_repetition(self):
@@ -88,12 +83,17 @@ class TestGeometryOptimisationProblem:
             "SLSQP",
             opt_conditions=self.opt_conditions,
         )
-        problem = DummyOptimisationProblem(parameterisation, optimiser)
-        problem.apply_shape_constraints()
-        assert problem.parameterisation.variables.n_free_variables == 7
-        assert problem.parameterisation.variables._fixed_variable_indices == []
 
-        problem.solve()
+        objective = OptimisationObjective(
+            minimise_length,
+            f_objective_args={"parameterisation": parameterisation},
+        )
+        problem = GeometryOptimisationProblem(parameterisation, optimiser, objective)
+        problem.apply_shape_constraints()
+        assert problem._parameterisation.variables.n_free_variables == 7
+        assert problem._parameterisation.variables._fixed_variable_indices == []
+
+        problem.optimise()
         length = parameterisation.create_shape().length
         assert np.isclose(length, self.ref_length)
 
@@ -113,12 +113,17 @@ class TestGeometryOptimisationProblem:
             "SLSQP",
             opt_conditions=self.opt_conditions,
         )
-        problem = DummyOptimisationProblem(parameterisation, optimiser)
-        problem.apply_shape_constraints()
-        assert problem.parameterisation.variables.n_free_variables == 6
-        assert problem.parameterisation.variables._fixed_variable_indices == [0]
 
-        problem.solve()
+        objective = OptimisationObjective(
+            minimise_length,
+            f_objective_args={"parameterisation": parameterisation},
+        )
+        problem = GeometryOptimisationProblem(parameterisation, optimiser, objective)
+        problem.apply_shape_constraints()
+        assert problem._parameterisation.variables.n_free_variables == 6
+        assert problem._parameterisation.variables._fixed_variable_indices == [0]
+
+        problem.optimise()
         length = parameterisation.create_shape().length
         assert np.isclose(length, self.ref_length)
 
@@ -139,14 +144,19 @@ class TestGeometryOptimisationProblem:
             "SLSQP",
             opt_conditions=self.opt_conditions,
         )
-        problem = DummyOptimisationProblem(parameterisation, optimiser)
 
-        assert problem.parameterisation.variables.n_free_variables == 5
-        assert problem.parameterisation.variables._fixed_variable_indices == [0, 5]
+        objective = OptimisationObjective(
+            minimise_length,
+            f_objective_args={"parameterisation": parameterisation},
+        )
+        problem = GeometryOptimisationProblem(parameterisation, optimiser, objective)
 
-        problem.solve()
+        assert problem._parameterisation.variables.n_free_variables == 5
+        assert problem._parameterisation.variables._fixed_variable_indices == [0, 5]
 
-        assert problem.parameterisation.variables["a1"].value == 100
+        problem.optimise()
+
+        assert problem._parameterisation.variables["a1"].value == 100
 
 
 class TestMinimiseLength:
@@ -180,13 +190,30 @@ class TestMinimiseLength:
                 "xtol_abs": 1e-8,
             },
         )
-        problem = MinimiseLength(
-            parameterisation, optimiser, keep_out_zone=keep_out_zone
+
+        objective = OptimisationObjective(
+            minimise_length,
+            f_objective_args={"parameterisation": parameterisation},
         )
 
-        problem.solve()
+        constraints = [
+            OptimisationConstraint(
+                constrain_koz,
+                f_constraint_args={
+                    "parameterisation": parameterisation,
+                    "n_shape_discr": 100,
+                    "koz_points": keep_out_zone.discretize(ndiscr=100, byedges=True).xz,
+                },
+                tolerance=1e-6 * np.ones(100),
+            )
+        ]
+        problem = GeometryOptimisationProblem(
+            parameterisation, optimiser, objective, constraints
+        )
 
-        optimised_shape = problem.parameterisation.create_shape()
+        problem.optimise()
+
+        optimised_shape = problem._parameterisation.create_shape()
         np.testing.assert_array_almost_equal(
             list(optimised_shape.center_of_mass), koz_center, decimal=2
         )

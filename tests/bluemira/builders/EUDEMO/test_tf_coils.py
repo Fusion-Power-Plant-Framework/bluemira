@@ -47,7 +47,7 @@ class TestTFCoils:
             "param_class": "TripleArc",
             "runmode": "read",
             "variables_map": {},
-            "problem_class": "bluemira.builders.tf_coils::RippleConstrainedLengthOpt",
+            "problem_class": "bluemira.builders.tf_coils::RippleConstrainedLengthGOP",
             "geom_path": DATA_PATH,
         }
         self.params = Configuration().to_dict()

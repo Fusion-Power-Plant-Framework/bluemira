@@ -89,7 +89,7 @@ params = Configuration(new_params)
 for param_name in params.keys():
     if param_name in new_params:
         param = params.get_param(param_name)
-        param.source = "input"
+        param.source = "Plasmod Example"
 
 # %%[markdown]
 # Some values are not linked into bluemira. These plasmod parameters can be set
@@ -153,7 +153,9 @@ def print_outputs(plasmod_solver):
     Print plasmod scalars
     """
     print(f"Fusion power [MW]: {plasmod_solver.params.P_fus/ 1E6}")
-    print(f"Additional heating power [MW]: {plasmod_solver.get_scalar('Paux') / 1E6}")
+    print(
+        f"Additional heating power [MW]: {plasmod_solver.get_raw_variables('Paux') / 1E6}"
+    )
     print(f"Radiation power [MW]: {plasmod_solver.params.P_rad / 1E6}")
     print(f"Transport power across separatrix [MW]: {plasmod_solver.params.P_sep / 1E6}")
     print(f"{plasmod_solver.params.q_95}")
@@ -161,18 +163,18 @@ def print_outputs(plasmod_solver):
     print(f"{plasmod_solver.params.l_i}")
     print(f"{plasmod_solver.params.v_burn}")
     print(f"{plasmod_solver.params.Z_eff}")
-    print(f"H-factor [-]: {plasmod_solver.get_scalar('Hfact')}")
+    print(f"H-factor [-]: {plasmod_solver.get_raw_variables('Hfact')}")
     print(
-        f"Divertor challenging criterion (P_sep * Bt /(q95 * R0 * A)) [-]: {plasmod_solver.get_scalar('psepb_q95AR')}"
+        f"Divertor challenging criterion (P_sep * Bt /(q95 * R0 * A)) [-]: {plasmod_solver.get_raw_variables('psepb_q95AR')}"
     )
     print(
         f"H-mode operating regime f_LH = P_sep/P_LH [-]: {plasmod_solver.params.P_sep /plasmod_solver.params.P_LH}"
     )
     print(f"{plasmod_solver.params.tau_e}")
-    print(f"Protium fraction [-]: {plasmod_solver.get_scalar('cprotium')}")
-    print(f"Helium fraction [-]: {plasmod_solver.get_scalar('che')}")
-    print(f"Xenon fraction [-]: {plasmod_solver.get_scalar('cxe')}")
-    print(f"Argon fraction [-]: {plasmod_solver.get_scalar('car')}")
+    print(f"Protium fraction [-]: {plasmod_solver.get_raw_variables('cprotium')}")
+    print(f"Helium fraction [-]: {plasmod_solver.get_raw_variables('che')}")
+    print(f"Xenon fraction [-]: {plasmod_solver.get_raw_variables('cxe')}")
+    print(f"Argon fraction [-]: {plasmod_solver.get_raw_variables('car')}")
 
 
 def plot_profile(plasmod_solver, var_name, var_unit):
@@ -204,7 +206,7 @@ plasmod_solver.run()
 #    all the bluemira linked parameters
 # 2. Profiles can be accessed through the `get_profile` function
 # 3. Unlinked plasmod parameters can be accessed through the
-#    `get_scalar` function
+#    `get_raw_variables` function
 #
 # The list of available profiles can be seen by running the below cell.
 # A good exercise would be to try showing a different profile in the plot.

@@ -23,18 +23,92 @@
 Geometry optimisation classes and tools
 """
 
-import abc
+
+from typing import List
 
 import numpy as np
 
+from bluemira.base.constants import EPS
 from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.geometry.parameterisations import GeometryParameterisation
 from bluemira.geometry.tools import signed_distance_2D_polygon
 from bluemira.geometry.wire import BluemiraWire
-from bluemira.utilities.optimiser import Optimiser
+from bluemira.utilities.opt_problems import (
+    OptimisationConstraint,
+    OptimisationObjective,
+    OptimisationProblem,
+)
+from bluemira.utilities.optimiser import Optimiser, approx_derivative
+
+__all__ = ["GeometryOptimisationProblem", "minimise_length"]
 
 
-class GeometryOptimisationProblem(abc.ABC):
+def calculate_length(vector, parameterisation):
+    """
+    Calculate the length of the parameterised shape for a given state vector.
+    """
+    parameterisation.variables.set_values_from_norm(vector)
+    return parameterisation.create_shape().length
+
+
+def minimise_length(vector, grad, parameterisation, ad_args=None):
+    """
+    Objective function for nlopt optimisation (minimisation) of length.
+
+    Parameters
+    ----------
+    vector: np.ndarray
+        State vector of the array of coil currents.
+    grad: np.ndarray
+        Local gradient of objective function used by LD NLOPT algorithms.
+        Updated in-place.
+
+    Returns
+    -------
+    fom: Value of objective function (figure of merit).
+    """
+    length = calculate_length(vector, parameterisation)
+    if grad.size > 0:
+        grad[:] = approx_derivative(
+            calculate_length, vector, f0=length, args=(parameterisation,), **ad_args
+        )
+
+    return length
+
+
+def calculate_signed_distance(vector, parameterisation, n_shape_discr, koz_points):
+    """
+    Calculate the signed distances from the parameterised shape to
+    the keep-out zone.
+    """
+    parameterisation.variables.set_values_from_norm(vector)
+
+    shape = parameterisation.create_shape()
+    s = shape.discretize(ndiscr=n_shape_discr).xz
+    return signed_distance_2D_polygon(s.T, koz_points.T).T
+
+
+def constrain_koz(
+    constraint, vector, grad, parameterisation, n_shape_discr, koz_points, ad_args=None
+):
+    """
+    Geometry constraint function to the keep-out-zone.
+    """
+    constraint[:] = calculate_signed_distance(
+        vector, parameterisation, n_shape_discr, koz_points
+    )
+    if grad.size > 0:
+        grad[:] = approx_derivative(
+            calculate_signed_distance,
+            vector,
+            f0=constraint,
+            args=(parameterisation, n_shape_discr, koz_points),
+            **ad_args,
+        )
+    return constraint
+
+
+class GeometryOptimisationProblem(OptimisationProblem):
     """
     Geometry optimisation problem class.
 
@@ -46,26 +120,36 @@ class GeometryOptimisationProblem(abc.ABC):
         Optimiser instance to use in the optimisation problem
     """
 
-    def __init__(self, parameterisation: GeometryParameterisation, optimiser: Optimiser):
-        self.parameterisation = parameterisation
-        self.optimiser = optimiser
-        self.optimiser.build_optimiser(parameterisation.variables.n_free_variables)
-        self.optimiser.set_lower_bounds(np.zeros(optimiser.n_variables))
-        self.optimiser.set_upper_bounds(np.ones(optimiser.n_variables))
-        self.optimiser.set_objective_function(self.f_objective)
+    def __init__(
+        self,
+        geometry_parameterisation: GeometryParameterisation,
+        optimiser: Optimiser = None,
+        objective: OptimisationObjective = None,
+        constraints: List[OptimisationConstraint] = None,
+    ):
+        super().__init__(geometry_parameterisation, optimiser, objective, constraints)
+
+        dimension = geometry_parameterisation.variables.n_free_variables
+        bounds = (np.zeros(dimension), np.ones(dimension))
+        self.set_up_optimiser(dimension, bounds)
+        self._objective._args["ad_args"] = {"bounds": bounds}
+        if constraints:
+            for constraint in self._constraints:
+                constraint._args["ad_args"] = {"bounds": bounds}
 
     def apply_shape_constraints(self):
         """
         Add shape constraints to the geometry parameterisation, if they exist.
         """
-        n_shape_ineq_cons = self.parameterisation.n_ineq_constraints
+        n_shape_ineq_cons = self._parameterisation.n_ineq_constraints
         if n_shape_ineq_cons > 0:
-            self.optimiser.add_ineq_constraints(
-                self.parameterisation.shape_ineq_constraints, np.zeros(n_shape_ineq_cons)
+            self.opt.add_ineq_constraints(
+                self._parameterisation.shape_ineq_constraints,
+                EPS * np.ones(n_shape_ineq_cons),
             )
         else:
             bluemira_warn(
-                f"GeometryParameterisation {self.parameterisation.__class.__name__} does"
+                f"GeometryParameterisation {self._parameterisation.__class.__name__} does"
                 "not have any shape constraints."
             )
 
@@ -73,23 +157,23 @@ class GeometryOptimisationProblem(abc.ABC):
         """
         Update the GeometryParameterisation.
         """
-        self.parameterisation.variables.set_values_from_norm(x)
+        self._parameterisation.variables.set_values_from_norm(x)
+        return self._parameterisation
 
-    f_objective = None
-
-    def solve(self, x0=None):
+    def optimise(self, x0=None):
         """
         Solve the GeometryOptimisationProblem.
         """
+        self._objective._args["parameterisation"] = self._parameterisation
         if x0 is None:
-            x0 = self.parameterisation.variables.get_normalised_values()
-        x_star = self.optimiser.optimise(x0)
-        self.update_parameterisation(x_star)
+            x0 = self._parameterisation.variables.get_normalised_values()
+        x_star = self.opt.optimise(x0)
+        return self.update_parameterisation(x_star)
 
 
-class MinimiseLength(GeometryOptimisationProblem):
+class MinimiseLengthGOP(GeometryOptimisationProblem):
     """
-    Optimiser to minimise the length of a geometry 2D parameterisation
+    Optimiser to minimise the length of a geometry 2-D parameterisation
     in the xz-plane, with optional constraints in the form of a
     "keep-out zone".
     """
@@ -102,63 +186,20 @@ class MinimiseLength(GeometryOptimisationProblem):
         n_koz_points: int = 100,
         koz_con_tol: float = 1e-3,
     ):
-        super().__init__(parameterisation, optimiser)
+        objective = OptimisationObjective(
+            minimise_length, {"parameterisation": parameterisation}
+        )
+        koz_points = keep_out_zone.discretize(n_koz_points, byedges=True).xz
+        koz_constraint = OptimisationConstraint(
+            constrain_koz,
+            f_constraint_args={
+                "parameterisation": parameterisation,
+                "n_shape_discr": n_koz_points,
+                "koz_points": koz_points,
+            },
+            tolerance=koz_con_tol * np.ones(n_koz_points),
+        )
 
-        self.n_koz_points = n_koz_points
-        self.keep_out_zone = keep_out_zone
-        if self.keep_out_zone is not None:
-            self.koz_points = self._make_koz_points(
-                self.keep_out_zone, self.n_koz_points
-            )
-            self.optimiser.add_ineq_constraints(
-                self.f_constrain_koz,
-                koz_con_tol * np.ones(self.n_koz_points),
-            )
-
-    def f_objective(self, x, grad):
-        """The objective function for the optimiser."""
-        length = self.calculate_length(x)
-        if grad.size > 0:
-            grad[:] = self.optimiser.approx_derivative(
-                self.calculate_length, x, f0=length
-            )
-        return length
-
-    def calculate_length(self, x):
-        """Calculate the length of the shape being optimised."""
-        self.update_parameterisation(x)
-        return self.parameterisation.create_shape().length
-
-    def f_constrain_koz(self, constraint, x, grad):
-        """
-        Geometry constraint function to the keep-out-zone.
-        """
-        constraint[:] = self.calculate_signed_distance(x)
-        if grad.size > 0:
-            grad[:] = self.optimiser.approx_derivative(
-                self.calculate_signed_distance, x, constraint
-            )
-        return constraint
-
-    def calculate_signed_distance(self, x):
-        """
-        Calculate the signed distances from the parameterised shape to
-        the keep-out zone.
-        """
-        self.update_parameterisation(x)
-
-        shape = self.parameterisation.create_shape()
-        s = shape.discretize(ndiscr=self.n_koz_points).xz
-        return signed_distance_2D_polygon(s.T, self.koz_points.T).T
-
-    def _make_koz_points(self, keep_out_zone: BluemiraWire, n_points: int) -> np.ndarray:
-        """
-        Generate a set of points that combine the given keep-out-zones,
-        to use as constraints in the optimisation problem.
-
-        Returns
-        -------
-        coords: np.ndarray[2, n_points]
-            Coordinates of the keep-out-zone points in the xz plane.
-        """
-        return keep_out_zone.discretize(byedges=True, ndiscr=n_points).xz
+        super().__init__(
+            parameterisation, optimiser, objective, constraints=[koz_constraint]
+        )

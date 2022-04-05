@@ -29,7 +29,7 @@ import json
 import pprint
 from enum import Enum, auto
 from pathlib import Path
-from typing import Dict, Iterable, Optional, Union
+from typing import Dict, Iterable, List, Optional, Union
 
 import fortranformat as ff
 import numpy as np
@@ -47,7 +47,7 @@ from bluemira.codes.plasmod.mapping import (
     Profiles,
     SOLModel,
     TransportModel,
-    create_mapping,
+    mappings,
 )
 from bluemira.utilities.tools import CommentJSONDecoder
 
@@ -336,29 +336,21 @@ class Setup(interface.Setup):
 
     """
 
-    def __init__(self, parent, *args, problem_settings=None, **kwargs):
+    def __init__(self, parent, *args, **kwargs):
         super().__init__(parent, *args, **kwargs)
 
-        self._problem_settings = problem_settings if problem_settings is not None else {}
         self.input_file = "plasmod_input.dat"
         self.output_file = "plasmod_outputs.dat"
         self.profiles_file = "plasmod_profiles.dat"
-        self.io_manager = Inputs({**self._get_new_inputs(), **self._problem_settings})
+        self.io_manager = Inputs(
+            {**self.get_new_inputs(), **self.parent.problem_settings}
+        )
 
     def update_inputs(self):
         """
         Update plasmod inputs
         """
-        self.io_manager.modify({**self._get_new_inputs(), **self._problem_settings})
-
-    def _get_new_inputs(self):
-        """
-        Get new key mappings from the ParameterFrame.
-        """
-        _inputs = {}
-        for pl_key, bm_key in self._send_mapping.items():
-            _inputs[pl_key] = self.params.get(bm_key)
-        return _inputs
+        self.io_manager.modify({**self.get_new_inputs(), **self.parent.problem_settings})
 
     def write_input(self):
         """
@@ -445,7 +437,7 @@ class Teardown(interface.Teardown):
         """
         Prepare outputs for ParameterFrame
         """
-        self.parent.params.update_kw_parameters(
+        super().prepare_outputs(
             {
                 bm_key: getattr(self.io_manager, pl_key)
                 for pl_key, bm_key in self.parent._recv_mapping.items()
@@ -493,18 +485,11 @@ class Solver(interface.FileProgramInterface):
             binary=build_config.get("binary", BINARY),
             run_dir=run_dir,
             read_dir=read_dir,
-            mappings=create_mapping(),
+            mappings=mappings,
             problem_settings=build_config.get("problem_settings", None),
         )
 
-    @property
-    def problem_settings(self):
-        """
-        Get problem settings dictionary
-        """
-        return self.setup_obj._problem_settings
-
-    def get_scalar(self, scalar):
+    def get_raw_variables(self, scalar: Union[List, str]):
         """
         Get scalar values for unmapped variables.
 
@@ -512,7 +497,7 @@ class Solver(interface.FileProgramInterface):
 
         Parameters
         ----------
-        scalar: str
+        scalar: Union[List, str])
             scalar value to get
 
         Returns
@@ -520,6 +505,8 @@ class Solver(interface.FileProgramInterface):
         scalar value
 
         """
+        if isinstance(scalar, list):
+            return [getattr(self.teardown_obj.io_manager, sc) for sc in scalar]
         return getattr(self.teardown_obj.io_manager, scalar)
 
     def get_profile(self, profile: str):

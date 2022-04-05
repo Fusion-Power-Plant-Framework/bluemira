@@ -27,7 +27,7 @@ from typing import Type
 import matplotlib.pyplot as plt
 import numpy as np
 
-from bluemira.base.constants import MU_0
+from bluemira.base.constants import MU_0, raw_uc
 from bluemira.base.parameter import ParameterFrame
 from BLUEPRINT.cad.plasmaCAD import PlasmaCAD
 from BLUEPRINT.geometry.geomtools import loop_volume
@@ -321,7 +321,12 @@ class Plasma(Meshable, ReactorSystem):
             The L-H transition power [MW]
         """
         a = self.params.R_0 / self.params.A
-        return P_LH(self.params.rho * 1e18, self.params.B_0, a, self.params.R_0)
+        return P_LH(
+            raw_uc(self.params.rho, self.params.rho.unit, "m^-3"),
+            self.params.B_0,
+            a,
+            self.params.R_0,
+        )
 
     @property
     def plasma_resistance(self):

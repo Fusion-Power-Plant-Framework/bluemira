@@ -160,7 +160,3 @@ class TestFieldLine:
         assert np.isclose(
             field_line.connection_length, field_line.loop.length, rtol=5e-2
         )
-
-
-if __name__ == "__main__":
-    pytest.main([__file__])

@@ -15,27 +15,13 @@
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 
-import os
 
 import pytest
 
 import bluemira.geometry.tools as tools
-from bluemira.base.file import get_bluemira_root
 from bluemira.geometry.face import BluemiraFace
 from bluemira.mesh import meshing
-from bluemira.utilities.tools import bluemira_warn
-
-HAS_MSH2XDMF = False
-try:
-    from bluemira.utilities.tools import get_module
-
-    msh2xdmf = get_module(
-        os.path.join(get_bluemira_root(), "..", "msh2xdmf", "msh2xdmf.py")
-    )
-
-    HAS_MSH2XDMF = True
-except ImportError as err:
-    bluemira_warn(f"Unable to import msh2xdmf, dolfin examples will not run: {err}")
+from bluemira.mesh.tools import import_mesh, msh_to_xdmf
 
 
 class TestMeshing:
@@ -53,11 +39,10 @@ class TestMeshing:
         m = meshing.Mesh()
         buffer = m(surf)
 
-        msh2xdmf.msh2xdmf("Mesh.msh", dim=2, directory=".")
+        msh_to_xdmf("Mesh.msh", dimensions=(0, 1), directory=".")
 
-        mesh, boundaries, subdomains, labels = msh2xdmf.import_mesh(
-            prefix="Mesh",
-            dim=2,
+        mesh, boundaries, subdomains, labels = import_mesh(
+            "Mesh",
             directory=".",
             subdomains=True,
         )
@@ -79,11 +64,10 @@ class TestMeshing:
         m = meshing.Mesh()
         buffer = m(surf)
 
-        msh2xdmf.msh2xdmf("Mesh.msh", dim=2, directory=".")
+        msh_to_xdmf("Mesh.msh", dimensions=(0, 1), directory=".")
 
-        mesh, boundaries, subdomains, labels = msh2xdmf.import_mesh(
-            prefix="Mesh",
-            dim=2,
+        mesh, boundaries, subdomains, labels = import_mesh(
+            "Mesh",
             directory=".",
             subdomains=True,
         )

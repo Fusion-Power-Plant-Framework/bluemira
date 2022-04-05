@@ -59,5 +59,11 @@ class TestTE:
         assert np.isclose(te, 3.7, rtol=1e-3), f"{te:2f}"
 
 
-if __name__ == "__main__":
-    pytest.main([__file__])
+class TestKappaLaw:
+    def test_kappa(self):
+        k95 = estimate_kappa95(3.6, 0.3)
+        assert np.isclose(k95, 1.58, rtol=5e-2)
+        k95 = estimate_kappa95(3.1, 0.3)
+        assert np.isclose(k95, 1.67, rtol=5e-2)
+        k95 = estimate_kappa95(2.6, 0.3)
+        assert np.isclose(k95, 1.725, rtol=5e-2)

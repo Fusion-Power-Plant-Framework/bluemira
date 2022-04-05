@@ -97,6 +97,13 @@ class ConfigurationSchema:
     p_ec: Parameter
     f_cd_aux: Parameter
     f_cd_ohm: Parameter
+    TF_res_bus: Parameter
+    TF_res_tot: Parameter
+    TF_E_stored: Parameter
+    TF_respc_ob: Parameter
+    TF_currpt_ob: Parameter
+    P_bd_in: Parameter
+    condrad_cryo_heat: Parameter
 
     # First wall profile
     fw_psi_n: Parameter
@@ -153,6 +160,8 @@ class ConfigurationSchema:
     tk_r_ob_bz: Parameter
     tk_r_ob_manifold: Parameter
     tk_r_ob_bss: Parameter
+    n_bb_inboard: Parameter
+    n_bb_outboard: Parameter
 
     # ST Breeding blanket
     g_bb_fw: Parameter
@@ -200,7 +209,8 @@ class ConfigurationSchema:
     tf_wp_width: Parameter
     tf_wp_depth: Parameter
     tk_cs: Parameter
-    sigma_tf_max: Parameter
+    sigma_tf_case_max: Parameter
+    sigma_tf_wp_max: Parameter
     h_cp_top: Parameter
     B_tf_peak: Parameter
     tf_taper_frac: Parameter

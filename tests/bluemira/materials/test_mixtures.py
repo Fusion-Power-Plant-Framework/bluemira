@@ -18,7 +18,6 @@
 #
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
-import pytest
 
 from tests.bluemira.materials.materials_helpers import MATERIAL_CACHE
 
@@ -36,7 +35,3 @@ class TestMatDict:
         assert isinstance(tf.rho(294), float)
         assert isinstance(tf.mu(294), float)
         assert isinstance(tf.Sy(294), float)
-
-
-if __name__ == "__main__":
-    pytest.main([__file__])

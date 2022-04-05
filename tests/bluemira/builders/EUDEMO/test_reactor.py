@@ -146,13 +146,6 @@ class TestEUDEMO:
         tf_component = self.component.get_component(EUDEMOReactor.PF_COILS)
         assert tf_component is not None
 
-    def test_first_wall_built(self):
-        wall_builder = self.reactor.get_builder(EUDEMOReactor.FIRST_WALL)
-        assert wall_builder is not None
-
-        wall_component = self.component.get_component(EUDEMOReactor.FIRST_WALL)
-        assert wall_component is not None
-
     @pytest.mark.skipif(not tests.PLOTTING, reason="plotting disabled")
     def test_plot_xz(self):
         """

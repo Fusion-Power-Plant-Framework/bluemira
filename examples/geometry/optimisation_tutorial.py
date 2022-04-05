@@ -22,50 +22,29 @@
 A quick tutorial on the optimisation of geometry in bluemira
 """
 
+# %%[markdown]
+# ## Introduction
+
+# We're going to set up some geometry optimisation problems and solve them with different
+# optimisastion algorithms.
+
+# %%
+
 import numpy as np
 
-from bluemira.geometry.optimisation import GeometryOptimisationProblem
+from bluemira.geometry.optimisation import GeometryOptimisationProblem, minimise_length
 from bluemira.geometry.parameterisations import PrincetonD
-from bluemira.utilities.optimiser import Optimiser
+from bluemira.utilities.opt_problems import OptimisationConstraint, OptimisationObjective
+from bluemira.utilities.optimiser import Optimiser, approx_derivative
 from bluemira.utilities.tools import set_random_seed
 
-set_random_seed(134365475)
+# %%[markdown]
+# Let's set up a simple GeometryOptimisationProblem, where we minimise the length of
+# parameterised geometry.
 
+# First, we set up the GeometryParameterisation, with some bounds on the variables.
 
-class MyProblem(GeometryOptimisationProblem):
-    """
-    A simple geometry optimisation problem
-    """
-
-    def calculate_length(self, x):
-        """
-        Calculate the length of the GeometryParameterisation
-        """
-        self.update_parameterisation(x)
-        return self.parameterisation.create_shape().length
-
-    def f_objective(self, x, grad):
-        """
-        Signature for an objective function.
-
-        If we use a gradient-based optimisation algorithm and we don't how to calculate
-        the gradient, we can approximate it numerically.
-
-        Note that this is not particularly robust in some cases... Probably best to
-        calculate the gradients analytically, or use a gradient-free algorithm.
-        """
-        length = self.calculate_length(x)
-
-        if grad.size > 0:
-            # Only called if a gradient-based optimiser is used
-            grad[:] = self.optimiser.approx_derivative(
-                self.calculate_length, x, f0=length
-            )
-
-        return length
-
-
-# Here we solve the problem with a gradient-based optimisation algorithm (SLSQP)
+# %%
 
 parameterisation_1 = PrincetonD(
     {
@@ -74,18 +53,52 @@ parameterisation_1 = PrincetonD(
         "dz": {"lower_bound": -0.5, "value": 0, "upper_bound": 0.5},
     }
 )
+
+# %%[markdown]
 # Here we're minimising the length, and we can work out that the dz variable will not
 # affect the optimisation, so let's just fix at some value and remove it from the problem
+
+# %%
 parameterisation_1.fix_variable("dz", value=0)
+
+# %%[markdown]
+
+# Now, we set up our optimiser. We'll start with a gradient-based optimisation algorithm
+
+# %%
+
 slsqp_optimiser = Optimiser(
     "SLSQP", opt_conditions={"max_eval": 100, "ftol_abs": 1e-12, "ftol_rel": 1e-12}
 )
-problem = MyProblem(parameterisation_1, slsqp_optimiser)
-problem.solve()
+
+# %%[markdown]
+
+# Next, we make our objective function, using in this case one of the ready-made ones.
+
+# NOTE: This `minimise_length` function includes automatic numerical calculation of the
+# objective function gradient, and expects a certain signature.
+
+# %%
+objective = OptimisationObjective(
+    minimise_length,
+    f_objective_args={"parameterisation": parameterisation_1},
+)
+
+# %%[markdown]
+
+# Finally, we initialise our `GeometryOptimisationProblem` and run it.
+
+# %%
+
+my_problem = GeometryOptimisationProblem(parameterisation_1, slsqp_optimiser, objective)
+my_problem.optimise()
+
+# %%[markdown]
 
 # Here we're minimising the length, within the bounds of our PrincetonD parameterisation,
 # so we'd expect that x1 goes to its upper bound, and x2 goes to its lower bound.
 
+# %%
 print(
     f"x1: value: {parameterisation_1.variables['x1'].value}, upper_bound: {parameterisation_1.variables['x1'].upper_bound}"
 )
@@ -93,9 +106,20 @@ print(
     f"x2: value: {parameterisation_1.variables['x2'].value}, lower_bound: {parameterisation_1.variables['x2'].lower_bound}"
 )
 
-# Now let's do the same with an optimisation algorithm that doesn't require gradients
-parameterisation_2 = PrincetonD()
-# Let's leave the dz variable in there this time...
+# %%[markdown]
+# Now let's do the same with an optimisation algorithm that doesn't require gradients.
+# The `minimise_length` function will not calculate the gradients numerically if the
+# optimisation algorithm does not require them.
+
+# %%
+parameterisation_2 = PrincetonD(
+    {
+        "x1": {"lower_bound": 2, "value": 4, "upper_bound": 6},
+        "x2": {"lower_bound": 10, "value": 14, "upper_bound": 16},
+        "dz": {"lower_bound": -0.5, "value": 0, "upper_bound": 0.5},
+    }
+)
+
 cobyla_optimiser = Optimiser(
     "COBYLA",
     opt_conditions={
@@ -105,18 +129,25 @@ cobyla_optimiser = Optimiser(
         "max_eval": 1000,
     },
 )
-problem = MyProblem(parameterisation_2, cobyla_optimiser)
-problem.solve()
+objective = OptimisationObjective(
+    minimise_length,
+    f_objective_args={"parameterisation": parameterisation_2},
+)
+problem = GeometryOptimisationProblem(parameterisation_2, cobyla_optimiser, objective)
+problem.optimise()
 
+# %%[markdown]
 # Again, let's check it's found the correct result:
 
+# %%
 print(
-    f"x1: value: {parameterisation_1.variables['x1'].value}, upper_bound: {parameterisation_1.variables['x1'].upper_bound}"
+    f"x1: value: {parameterisation_2.variables['x1'].value}, upper_bound: {parameterisation_2.variables['x1'].upper_bound}"
 )
 print(
-    f"x2: value: {parameterisation_1.variables['x2'].value}, lower_bound: {parameterisation_1.variables['x2'].lower_bound}"
+    f"x2: value: {parameterisation_2.variables['x2'].value}, lower_bound: {parameterisation_2.variables['x2'].lower_bound}"
 )
 
+# %%[markdown]
 
 # Now let's include a relatively arbitrary constraint:
 # We're going to minimise length again, but with a constraint that says that we don't
@@ -124,44 +155,51 @@ print(
 # There are much better ways of doing this, but this is to demonstrate the use of an
 # inequality constraint.
 
+# %%
 
-class MyConstrainedProblem(MyProblem):
+
+def calculate_constraint(vector, parameterisation, c_value):
     """
-    Now, a constraint is added in
+    Some arbitrary constraint function
     """
-
-    def __init__(self, parameterisation, optimiser, ineq_con_tolerances):
-        super().__init__(parameterisation, optimiser)
-        self.optimiser.add_ineq_constraints(self.f_ineq_constraints, ineq_con_tolerances)
-        self.some_arg_value = 50
-
-    def my_constraint(self, x):
-        """
-        Constraints are satisfied if the return value(s) are negative
-        """
-        self.update_parameterisation(x)
-        length = self.parameterisation.create_shape().length
-        return np.array([self.some_arg_value - length])
-
-    def f_ineq_constraints(self, constraint, x, grad):
-        """
-        Signature for an inequality constraint.
-
-        If we use a gradient-based optimisation algorithm and we don't how to calculate
-        the gradient, we can approximate it numerically.
-
-        Note that this is not particularly robust in some cases... Probably best to
-        calculate the gradients analytically, or use a gradient-free algorithm.
-        """
-        constraint[:] = self.my_constraint(x)
-
-        if grad.size > 0:
-            # Only called if a gradient-based optimiser is used
-            grad[:] = self.optimiser.approx_derivative(self.my_constraint, x, constraint)
-
-        return constraint
+    parameterisation.variables.set_values_from_norm(vector)
+    length = parameterisation.create_shape().length
+    return np.array([c_value - length])
 
 
+def my_constraint(constraint, vector, grad, parameterisation, c_value, ad_args=None):
+    """
+    Constraint function with numerical gradient calculation
+    """
+    value = calculate_constraint(vector, parameterisation, c_value)
+    constraint[:] = value
+
+    if grad.size > 0:
+        grad[:] = approx_derivative(
+            calculate_constraint,
+            vector,
+            f0=value,
+            args=(parameterisation, c_value),
+            **ad_args,
+        )
+
+    return constraint
+
+
+c_value = 50
+c_tolerance = 1e-6
+constraint_function = OptimisationConstraint(
+    my_constraint,
+    f_constraint_args={"parameterisation": parameterisation_2, "c_value": c_value},
+    tolerance=np.array([c_tolerance]),
+)
+
+# %%[markdown]
+
+# Setting up the problem with a constraint is the same as before, but with an additional
+# argument
+
+# %%
 parameterisation_3 = PrincetonD()
 slsqp_optimiser2 = Optimiser(
     "SLSQP",
@@ -172,27 +210,42 @@ slsqp_optimiser2 = Optimiser(
         "max_eval": 1000,
     },
 )
-problem = MyConstrainedProblem(parameterisation_3, slsqp_optimiser2, 1e-6 * np.ones(1))
-problem.solve()
+constraint_function = OptimisationConstraint(
+    my_constraint,
+    f_constraint_args={"parameterisation": parameterisation_3, "c_value": c_value},
+    tolerance=np.array([c_tolerance]),
+)
+objective = OptimisationObjective(
+    minimise_length,
+    f_objective_args={"parameterisation": parameterisation_3},
+)
+problem = GeometryOptimisationProblem(
+    parameterisation_3, slsqp_optimiser2, objective, constraints=[constraint_function]
+)
+problem.optimise()
+
+# %%[markdown]
 
 # Both x1 and x2 are free variables and between them they should be create a PrincetonD
 # shape of length exactly 50 (as the bounds on these variables surely allow it).
 # As we are minimising length, we'd expect to see a function value of 50 here (+/- the
 # tolerances)... but we don't!
 
-print(f"Theoretical optimum: {problem.some_arg_value-1e-6}")
+# %%
+print(f"Theoretical optimum: {c_value-c_tolerance}")
 print(f"Length with SLSQP: {parameterisation_3.create_shape().length}")
-print(f"n_evals: {problem.optimiser.n_evals}")
+print(f"n_evals: {problem.opt.n_evals}")
 
+# %%[markdown]
 # This is because we're using numerical gradients and jacobians for our objective and
 # inequality constraint functions. This can be faster than other approaches, but is less
 # robust and also less likely to find the best solution.
 
-# Let's try a few different optimisers, noting:
-#       The different termination conditions we can play with and their effect
-#       The fact that ISRES is a stochastic optimiser, and its results will vary if we
-#       don't always reset the random seed value.
+# Let's try a few different optimisers, noting the different termination conditions we
+# can play with and their effect.
 
+
+# %%
 parameterisation_4 = PrincetonD()
 cobyla_optimiser2 = Optimiser(
     "COBYLA",
@@ -203,12 +256,32 @@ cobyla_optimiser2 = Optimiser(
         "max_eval": 1000,
     },
 )
-problem = MyConstrainedProblem(parameterisation_4, cobyla_optimiser2, 1e-6 * np.ones(1))
-problem.solve()
+constraint_function = OptimisationConstraint(
+    my_constraint,
+    f_constraint_args={"parameterisation": parameterisation_4, "c_value": c_value},
+    tolerance=np.array([c_tolerance]),
+)
+objective = OptimisationObjective(
+    minimise_length,
+    f_objective_args={"parameterisation": parameterisation_4},
+)
+problem = GeometryOptimisationProblem(
+    parameterisation_4, cobyla_optimiser2, objective, constraints=[constraint_function]
+)
+problem.optimise()
 
-print(f"Theoretical optimum: {problem.some_arg_value-1e-6}")
+print(f"Theoretical optimum: {c_value - c_tolerance}")
 print(f"Length with COBYLA: {parameterisation_4.create_shape().length}")
-print(f"n_evals: {problem.optimiser.n_evals}")
+print(f"n_evals: {problem.opt.n_evals}")
+
+
+# %%[markdown]
+
+# ISRES is a stochastic optimisation algorithm; if we want to see the same results every
+# time, it's advisable to set the random seed to a known value.
+
+# %%
+set_random_seed(134365475)
 
 parameterisation_5 = PrincetonD()
 irses_optimiser = Optimiser(
@@ -220,14 +293,26 @@ irses_optimiser = Optimiser(
         "max_eval": 1000,
     },
 )
-problem = MyConstrainedProblem(parameterisation_5, irses_optimiser, 1e-6 * np.ones(1))
-problem.solve()
 
-print(f"Theoretical optimum: {problem.some_arg_value-1e-6}")
+objective = OptimisationObjective(
+    minimise_length,
+    f_objective_args={"parameterisation": parameterisation_5},
+)
+constraint_function = OptimisationConstraint(
+    my_constraint,
+    f_constraint_args={"parameterisation": parameterisation_5, "c_value": c_value},
+    tolerance=np.array([c_tolerance]),
+)
+problem = GeometryOptimisationProblem(
+    parameterisation_5, irses_optimiser, objective, constraints=[constraint_function]
+)
+problem.optimise()
+
+print(f"Theoretical optimum: {c_value - c_tolerance}")
 print(f"Length with ISRES: {parameterisation_5.create_shape().length}")
-print(f"n_evals: {problem.optimiser.n_evals}")
+print(f"n_evals: {problem.opt.n_evals}")
 
-
+# %%[markdown]
 # Horses for courses folks... YMMV. Best thing you can do is specify your optimisation
 # problem intelligently, using well-behaved objective and constraint functions, and smart
 # bounds. Trying out different optimisers doesn't hurt. There's a trade-off between speed

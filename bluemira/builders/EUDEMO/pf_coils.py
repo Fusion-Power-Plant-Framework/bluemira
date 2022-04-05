@@ -30,12 +30,13 @@ import numpy as np
 import bluemira.utilities.plot_tools as bm_plot_tools
 from bluemira.base.builder import BuildConfig, Builder
 from bluemira.base.components import Component
+from bluemira.base.config import Configuration
 from bluemira.base.error import BuilderError
 from bluemira.base.look_and_feel import bluemira_warn
-from bluemira.base.parameter import ParameterFrame
 from bluemira.builders.pf_coils import PFCoilBuilder
 from bluemira.equilibria.coils import CoilSet
-from bluemira.geometry.tools import boolean_cut, distance_to, make_bspline
+from bluemira.geometry.constants import VERY_BIG
+from bluemira.geometry.tools import boolean_cut, distance_to, split_wire
 from bluemira.magnetostatics.baseclass import SourceGroup
 from bluemira.magnetostatics.circular_arc import CircularArcCurrentSource
 from bluemira.utilities.positioning import PathInterpolator, PositionMapper
@@ -102,7 +103,7 @@ class PFCoilsBuilder(Builder):
         "r_cs_corner",
     ]
     _required_config: List[str] = []
-    _params: ParameterFrame
+    _params: Configuration
 
     def _extract_config(self, build_config: BuildConfig):
         super()._extract_config(build_config)
@@ -196,7 +197,7 @@ class PFCoilsBuilder(Builder):
         for comp in self.sub_components:
             xy_comps.append(comp.build_xy())
         component = Component("xy", children=xy_comps)
-        bm_plot_tools.set_component_plane(component, "xy")
+        bm_plot_tools.set_component_view(component, "xy")
         return component
 
     def build_xz(self):
@@ -213,7 +214,7 @@ class PFCoilsBuilder(Builder):
         for comp in self.sub_components:
             xz_comps.append(comp.build_xz())
         component = Component("xz", children=xz_comps)
-        bm_plot_tools.set_component_plane(component, "xz")
+        bm_plot_tools.set_component_view(component, "xz")
         return component
 
     def build_xyz(self, degree: float = 360.0):
@@ -292,28 +293,27 @@ def make_coil_mapper(track, exclusion_zones, coils):
     # Check if multiple coils are on the same segment and split the segments
     new_segments = []
     for segment, bin in zip(segments, coil_bins):
-        segment = PathInterpolator(segment)
         if len(bin) < 1:
             bluemira_warn("There is a segment of the track which has no coils on it.")
         elif len(bin) == 1:
-            new_segments.append(segment)
+            new_segments.append(PathInterpolator(segment))
         else:
-            # Split segment: Sub-divide into BSplines for now...
-            # TODO: Actual primitive sub-division less fun...
             coils = [coils[i] for i in bin]
-            l_values = [segment.to_L(c.x, c.z) for c in coils]
+            l_values = [
+                segment.parameter_at([c.x, 0, c.z], tolerance=VERY_BIG) for c in coils
+            ]
             split_values = l_values[:-1] + 0.5 * np.diff(l_values)
-            split_values = np.concatenate([[0.0], split_values, [1.0]])
 
-            # TODO: Treat start == stop
             sub_segs = []
-            for i in range(len(split_values) - 1):
-                start = split_values[i]
-                stop = split_values[i + 1]
-                l_range = np.linspace(start, stop, 500)
-                x, z = segment.to_xz(l_range)
-                y = np.zeros_like(x)
-                sub_segs.append(PathInterpolator(make_bspline([x, y, z])))
+            for i, split in enumerate(split_values):
+                sub_seg, segment = split_wire(segment, segment.value_at(alpha=split))
+                if sub_seg:
+                    sub_segs.append(PathInterpolator(sub_seg))
+
+                if i == len(split_values) - 1:
+                    if segment:
+                        sub_segs.append(PathInterpolator(segment))
+
             new_segments.extend(sub_segs)
 
     return PositionMapper(new_segments)

@@ -133,11 +133,11 @@ class TestParameter:
         "m",
         "marjogrgrbg",
         "Input",
-        {"PROCESS": ParameterMapping("rmajor", False, True, "m")},
+        {"PROCESS": ParameterMapping("rmajor", True, False, "m")},
     )
     p_str = (
         "Major radius [m]: r_0 = 9 (marjogrgrbg)\n"
-        "    {'PROCESS': {'name': 'rmajor', 'recv': False, 'send': True, 'unit': 'm'}}"
+        "    {'PROCESS': {'name': 'rmajor', 'send': True, 'recv': False, 'unit': 'm'}}"
     )
     g = Parameter(
         "B_0",
@@ -424,7 +424,7 @@ class TestParameterFrame:
             "dimensionless",
             None,
             "Input",
-            {"PROCESS": ParameterMapping("n_tf", True, False)},
+            {"PROCESS": ParameterMapping("n_tf", False, True)},
         ],
         ["n_PF", "Number of PF coils", 6, "dimensionless", None, "Input"],
         ["n_CS", "Number of CS coil divisions", 5, "dimensionless", None, "Input"],
@@ -435,7 +435,7 @@ class TestParameterFrame:
             "%",
             None,
             "Input",
-            {"PROCESS": ParameterMapping("ripmax", True, False)},
+            {"PROCESS": ParameterMapping("ripmax", False, True)},
         ],
         [
             "A",
@@ -444,7 +444,7 @@ class TestParameterFrame:
             "dimensionless",
             None,
             "Input",
-            {"PROCESS": ParameterMapping("aspect", True, False)},
+            {"PROCESS": ParameterMapping("aspect", False, True)},
         ],
         [
             "R_0",
@@ -453,7 +453,7 @@ class TestParameterFrame:
             "m",
             None,
             "Input",
-            {"PROCESS": ParameterMapping("rmajor", False, True)},
+            {"PROCESS": ParameterMapping("rmajor", True, False)},
         ],
         [
             "B_0",
@@ -462,7 +462,7 @@ class TestParameterFrame:
             "T",
             None,
             "Input",
-            {"PROCESS": ParameterMapping("bt", False, True)},
+            {"PROCESS": ParameterMapping("bt", True, False)},
         ],
     ]
 
@@ -873,7 +873,3 @@ class TestReactorSystem:
         ts = Dummy({"dP": 10})
 
         assert ts.params.dP == 10
-
-
-if __name__ == "__main__":
-    pytest.main([__file__])

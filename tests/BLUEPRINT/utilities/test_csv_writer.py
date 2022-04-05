@@ -22,7 +22,6 @@ import filecmp
 import os
 
 import numpy as np
-import pytest
 
 from bluemira.base.file import get_bluemira_path
 from BLUEPRINT.geometry.geomtools import make_box_xz
@@ -151,7 +150,3 @@ def test_reactor_system_write_to_csv():
         assert filecmp.cmp(test_file, compare_file)
         # Clean up
         os.remove(test_file)
-
-
-if __name__ == "__main__":
-    pytest.main([__file__])

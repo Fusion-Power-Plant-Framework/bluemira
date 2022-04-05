@@ -30,9 +30,10 @@ import subprocess  # noqa :S404
 from enum import auto
 from typing import Dict, List, Optional, Union
 
-import bluemira.base as bm_base
 import bluemira.codes.interface as interface
+from bluemira.base.builder import BuildConfig
 from bluemira.base.look_and_feel import bluemira_print
+from bluemira.base.parameter import ParameterFrame
 from bluemira.codes.error import CodesError
 from bluemira.codes.process.api import DEFAULT_INDAT, ENABLED
 from bluemira.codes.process.constants import BINARY
@@ -119,18 +120,12 @@ class Solver(interface.FileProgramInterface):
     template_indat: str
         Path to the template IN.DAT file to be used for the run.
         Default, the value specified by DEFAULT_INDAT.
-    params_to_update: list
-        A list of parameter names compatible with the ParameterFrame class.
-        If provided, parameters included in this list will be modified to write their
-        values to PROCESS inputs, while all others will be modified to not be written to
-        the PROCESS inputs. By default, None.
 
     Notes
     -----
     - "run": Run PROCESS within a bluemira run to generate an radial build.
         Creates a new input file from a template IN.DAT modified with updated parameters
-        from the bluemira run mapped with send=True. If params_to_update are provided
-        then these will be modified to have send=True.
+        from the bluemira run mapped with send=True.
     - "runinput": Run PROCESS from an unmodified input file (IN.DAT), generating the
         radial build to use as the input to the bluemira run. Overrides the send
         mapping of all parameters to be False.
@@ -151,11 +146,10 @@ class Solver(interface.FileProgramInterface):
         If PROCESS is not being mocked and is not installed.
     """
 
-    run_dir: str
-    read_dir: str
-    _params: bm_base.ParameterFrame
+    _params: ParameterFrame
+    _run_dir: str
+    _read_dir: str
     _template_indat: str
-    _params_to_update: List[str]
     _parameter_mapping: Dict[str, str]
     _recv_mapping: Dict[str, str]
     _send_mapping: Dict[str, str]
@@ -174,20 +168,14 @@ class Solver(interface.FileProgramInterface):
 
     def __init__(
         self,
-        params: bm_base.ParameterFrame,
-        build_config: bm_base.BuildConfig,
-        run_dir: str,
+        params: ParameterFrame,
+        build_config: BuildConfig,
+        run_dir: Optional[str] = None,
         read_dir: Optional[str] = None,
         template_indat: Optional[str] = None,
-        params_to_update: Optional[List[str]] = None,
     ):
 
         self.read_dir = read_dir
-        self._params_to_update = (
-            build_config.get("params_to_update", None)
-            if params_to_update is None
-            else params_to_update
-        )
 
         self._template_indat = (
             build_config.get("process_indat", DEFAULT_INDAT)
@@ -203,6 +191,7 @@ class Solver(interface.FileProgramInterface):
             run_dir=run_dir,
             read_dir=read_dir,
             mappings=mappings,
+            problem_settings=build_config.get("problem_settings", None),
         )
 
         self._enabled_check(build_config.get("mode", "run").lower())
@@ -212,9 +201,9 @@ class Solver(interface.FileProgramInterface):
         if (not ENABLED) and (mode != "mock"):
             raise CodesError(f"{PROCESS} not (properly) installed")
 
-    def get_process_parameters(self, params: Union[List, str]):
+    def get_raw_variables(self, params: Union[List, str]):
         """
-        Get raw parameters from an MFILE
+        Get raw variables from an MFILE
         (mapped bluemira parameters will have bluemira names)
 
         Parameters

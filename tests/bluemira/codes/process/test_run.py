@@ -215,43 +215,7 @@ class TestRun:
     @patch("bluemira.codes.process.run.Run._clear_PROCESS_output")
     @patch("bluemira.codes.process.setup.PROCESSInputWriter.add_parameter")
     @pytest.mark.skipif(PROCESS_ENABLED is not True, reason="PROCESS install required")
-    def test_run_with_params_to_update(
-        self,
-        mock_add_parameter,
-        mock_clear,
-        mock_run,
-        mock_check,
-        mock_load,
-    ):
-        """
-        Test in Rerun mode, that only parameters specified in params_to_update are called
-        to be written to IN.DAT and that the correct functions are called during the run.
-        """
-        self.params.add_parameters(FRAME_LIST)
-
-        self.build_config["params_to_update"] = ["d", "f"]
-        self.run_PROCESS("RUN")
-
-        # Check the right amount of calls were made to add_parameter.
-        assert mock_add_parameter.call_count == 2
-
-        # Check that the dummy values with send = True were written.
-        mock_add_parameter.assert_any_call("dp", 3)
-        mock_add_parameter.assert_any_call("fp", 5)
-
-        # Check that correct run calls were made.
-        assert mock_clear.call_count == 1
-        assert mock_run.call_count == 1
-        assert mock_check.call_count == 1
-        assert mock_load.call_count == 1
-
-    @patch("bluemira.codes.process.teardown.Teardown.load_PROCESS_run")
-    @patch("bluemira.codes.process.teardown.Teardown._check_PROCESS_output_files")
-    @patch("bluemira.codes.process.run.Run._run_subprocess")
-    @patch("bluemira.codes.process.run.Run._clear_PROCESS_output")
-    @patch("bluemira.codes.process.setup.PROCESSInputWriter.add_parameter")
-    @pytest.mark.skipif(PROCESS_ENABLED is not True, reason="PROCESS install required")
-    def test_run_without_params_to_update(
+    def test_run_assert_parameters_are_updated(
         self,
         mock_add_parameter,
         mock_clear,
@@ -266,7 +230,6 @@ class TestRun:
         """
         self.params.add_parameters(FRAME_LIST)
 
-        self.build_config["params_to_update"] = None
         self.run_PROCESS("RUN")
 
         # Check the right amount of calls were made to add_parameter.
@@ -344,7 +307,3 @@ class TestRun:
         assert (
             len(bad_recv) == 0
         ), "Parameters were marked as recv in PROCESS mapping but were not mapped back into bluemira."
-
-
-if __name__ == "__main__":
-    pytest.main([__file__])

@@ -216,7 +216,3 @@ class TestDefineSystemClass:
         my_system = TestDefineSystemClass.DummyReactorSystem({})
         with pytest.raises(BluemiraError):
             my_system.get_subsystem_class("DIVERTOR")
-
-
-if __name__ == "__main__":
-    pytest.main([__file__])

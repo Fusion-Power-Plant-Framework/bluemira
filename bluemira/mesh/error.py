@@ -26,9 +26,23 @@ Errors for meshing module
 from bluemira.base.error import BluemiraError
 
 
-class MeshOptionsError(BluemiraError):
+class MeshError(BluemiraError):
     """
-    Error class for use in the geometry module
+    Error class for use in the mesh module.
+    """
+
+
+class MeshOptionsError(MeshError):
+    """
+    Error class for use with meshing options.
+    """
+
+    pass
+
+
+class MeshConversionError(MeshError):
+    """
+    Error class for use with mesh conversions.
     """
 
     pass

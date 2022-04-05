@@ -33,7 +33,8 @@ import pytest
 import tests
 from bluemira.base.components import PhysicalComponent
 from bluemira.builders.shapes import MakeOptimisedShape, MakeParameterisedShape
-from bluemira.geometry.optimisation import GeometryOptimisationProblem
+from bluemira.geometry.optimisation import GeometryOptimisationProblem, minimise_length
+from bluemira.utilities.opt_problems import OptimisationObjective
 
 
 class TestMakeParameterisedShape:
@@ -99,37 +100,27 @@ class TestMakeParameterisedShape:
             shutil.rmtree(tempdir)
 
 
-class MinimiseLength(GeometryOptimisationProblem):
+class MinimiseLengthGOP(GeometryOptimisationProblem):
     """
     A simple geometry optimisation problem that minimises length without constraints.
     """
 
-    def calculate_length(self, x):
-        """
-        Calculate the length of the GeometryParameterisation
-        """
-        self.update_parameterisation(x)
-        return self.parameterisation.create_shape().length
-
-    def f_objective(self, x, grad):
-        """
-        Objective function is the length of the parameterised shape.
-        """
-        length = self.calculate_length(x)
-
-        if grad.size > 0:
-            # Only called if a gradient-based optimiser is used
-            grad[:] = self.optimiser.approx_derivative(
-                self.calculate_length, x, f0=length
-            )
-
-        return length
+    def __init__(
+        self,
+        parameterisation,
+        optimiser=None,
+        constraints=None,
+    ):
+        objective = OptimisationObjective(
+            minimise_length, {"parameterisation": parameterisation}
+        )
+        super().__init__(parameterisation, optimiser, objective, constraints)
 
 
 class TestMakeOptimisedShape:
     @pytest.mark.parametrize(
         "problem_class",
-        ["tests.bluemira.builders.test_shapes::MinimiseLength", MinimiseLength],
+        ["tests.bluemira.builders.test_shapes::MinimiseLengthGOP", MinimiseLengthGOP],
     )
     def test_builder(self, problem_class):
         params = {

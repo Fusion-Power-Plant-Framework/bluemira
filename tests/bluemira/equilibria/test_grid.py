@@ -105,7 +105,3 @@ def test_volume_integral():
     # NOTE: The integration is at the centre points of each grid cell
     true = 2 * np.pi * (nx - 1) * np.sum(x_centres)
     assert np.isclose(integral, true)
-
-
-if __name__ == "__main__":
-    pytest.main([__file__])

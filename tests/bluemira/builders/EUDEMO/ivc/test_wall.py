@@ -26,10 +26,10 @@ import copy
 
 import pytest
 
-from bluemira.builders.EUDEMO.first_wall import WallBuilder
+from bluemira.builders.EUDEMO.ivc import WallBuilder
 
 OPTIMISER_MODULE_REF = "bluemira.geometry.optimisation"
-WALL_MODULE_REF = "bluemira.builders.EUDEMO.first_wall.wall"
+WALL_MODULE_REF = "bluemira.builders.EUDEMO.ivc.wall"
 
 CONFIG = {
     "param_class": f"{WALL_MODULE_REF}::WallPolySpline",
@@ -43,7 +43,7 @@ CONFIG = {
     },
     "runmode": "mock",
     "name": "First Wall",
-    "problem_class": f"{OPTIMISER_MODULE_REF}::MinimiseLength",
+    "problem_class": f"{OPTIMISER_MODULE_REF}::MinimiseLengthGOP",
 }
 PARAMS = {
     "Name": "First Wall Example",

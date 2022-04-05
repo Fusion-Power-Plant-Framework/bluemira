@@ -99,7 +99,3 @@ class TestCentralColumnShieldCAD:
         # Normalise by the angle we rotated through
         vol /= self.ccs.params.n_TF
         return vol
-
-
-if __name__ == "__main__":
-    pytest.main([__file__])

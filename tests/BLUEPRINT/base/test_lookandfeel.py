@@ -89,7 +89,3 @@ class TestColors:
     def test_bluemira_print(self):
         print("\n")
         bluemira_print("test normal blue")
-
-
-if __name__ == "__main__":
-    pytest.main([__file__])

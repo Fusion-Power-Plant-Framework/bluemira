@@ -25,8 +25,9 @@ Wrapper for FreeCAD Part.Wire objects
 
 from __future__ import annotations
 
-from typing import List, Optional
+from typing import Iterable, List, Optional
 
+from bluemira.base.constants import EPS
 from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.codes._freecadapi import (
     apiWire,
@@ -39,8 +40,10 @@ from bluemira.codes._freecadapi import (
     start_point,
     translate_shape,
     wire_closure,
+    wire_parameter_at,
     wire_value_at,
 )
+from bluemira.codes.error import FreeCADError
 
 # import from bluemira
 from bluemira.geometry.base import BluemiraGeo, _Orientation
@@ -259,6 +262,36 @@ class BluemiraWire(BluemiraGeo):
             distance = alpha * self.length
 
         return wire_value_at(self.get_single_wire()._shape, distance)
+
+    def parameter_at(self, vertex: Iterable, tolerance: float = EPS):
+        """
+        Get the parameter value at a vertex along a wire.
+
+        Parameters
+        ----------
+        wire: apiWire
+            Wire along which to get the parameter
+        vertex: Iterable
+            Vertex for which to get the parameter
+        tolerance: float
+            Tolerance within which to get the parameter
+
+        Returns
+        -------
+        alpha: float
+            Parameter value along the wire at the vertex
+
+        Raises
+        ------
+        GeometryError:
+            If the vertex is further away to the wire than the specified tolerance
+        """
+        try:
+            return wire_parameter_at(
+                self.get_single_wire()._shape, vertex=vertex, tolerance=tolerance
+            )
+        except FreeCADError as e:
+            raise GeometryError(e.args[0])
 
     def start_point(self) -> Coordinates:
         """

@@ -31,6 +31,7 @@ import string
 from typing import Any, Dict, List, Literal, Optional, Union
 
 from bluemira.base.components import Component
+from bluemira.base.config import Configuration
 from bluemira.base.error import BuilderError
 from bluemira.base.look_and_feel import bluemira_debug, bluemira_print
 from bluemira.base.parameter import ParameterFrame
@@ -85,7 +86,7 @@ class Builder(abc.ABC):
     _default_runmode: Optional[str] = None
     _required_params: List[str] = []
     _required_config: List[str] = []
-    _params: ParameterFrame
+    _params: Configuration
     _design_problem = None
 
     def __init__(self, params: Dict[str, Any], build_config: BuildConfig, **kwargs):
@@ -93,7 +94,7 @@ class Builder(abc.ABC):
 
         self._validate_config(build_config)
         self._extract_config(build_config)
-        self._params = ParameterFrame.from_template(self._required_params)
+        self._params = Configuration.from_template(self._required_params)
         self.reinitialise(params, **kwargs)
 
     def __call__(self) -> Component:
@@ -225,7 +226,7 @@ class Builder(abc.ABC):
 
     def _reset_params(self, params):
         self._validate_params(params)
-        self._params.update_kw_parameters(params)
+        self._params.update_kw_parameters({k: params[k] for k in self._params.keys()})
 
     def _extract_config(self, build_config: BuildConfig):
         has_runmode = (

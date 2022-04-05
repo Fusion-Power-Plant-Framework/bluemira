@@ -32,14 +32,11 @@ class TestMFileReader:
     @classmethod
     def setup_class(cls):
         cls.mapping = {p_map.name: bm_key for bm_key, p_map in mappings.items()}
-        cls.bmfile = teardown.BMFile(INDIR, cls.mapping)
+        units = {p_map.name: p_map.unit for val, p_map in mappings.items()}
+        cls.bmfile = teardown.BMFile(INDIR, cls.mapping, units)
         return cls
 
     def test_extraction(self):
         inp = list(self.mapping.values())
         out = self.bmfile.extract_outputs(inp)
         assert len(inp) == len(out)
-
-
-if __name__ == "__main__":
-    pytest.main([__file__])

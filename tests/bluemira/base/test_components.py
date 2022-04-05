@@ -176,7 +176,3 @@ class TestMagneticComponent:
     def test_conductor(self):
         component = MagneticComponent("Dummy", shape="A shape", conductor="A conductor")
         assert component.conductor == "A conductor"
-
-
-if __name__ == "__main__":
-    pytest.main([__file__])

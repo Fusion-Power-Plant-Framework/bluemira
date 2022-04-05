@@ -583,7 +583,3 @@ class TestCoilSorting:
         sorted_names = list(sorted_coils)
         assert sorted_names[0] == "CS_2"
         assert sorted_names[1] == "CS_10"
-
-
-if __name__ == "__main__":
-    pytest.main([__file__])

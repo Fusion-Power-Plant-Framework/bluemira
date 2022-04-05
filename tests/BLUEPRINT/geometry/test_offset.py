@@ -398,7 +398,3 @@ class TestClipperOffset:
         loop = Loop(x=x, y=y)
         with pytest.raises(GeometryError):
             offset_clipper(loop, 1, method="fail")
-
-
-if __name__ == "__main__":
-    pytest.main([__file__])

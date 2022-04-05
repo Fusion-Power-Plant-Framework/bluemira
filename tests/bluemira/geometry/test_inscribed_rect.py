@@ -118,7 +118,3 @@ class TestInscribedRectangle:
 
     def test_zero(self):
         assert inscribed_rect_in_poly(self.diamond.x, self.diamond.z, 0, 0) == (0, 0)
-
-
-if __name__ == "__main__":
-    pytest.main([__file__])

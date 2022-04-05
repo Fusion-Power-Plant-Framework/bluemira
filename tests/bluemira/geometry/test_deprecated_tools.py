@@ -799,7 +799,3 @@ class TestDistance:
             distance_between_points([0, 0], [1])
         with pytest.raises(GeometryError):
             distance_between_points([0], [1])
-
-
-if __name__ == "__main__":
-    pytest.main([__file__])

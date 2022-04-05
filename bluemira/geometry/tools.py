@@ -31,6 +31,7 @@ import numpy as np
 from scipy.spatial import ConvexHull
 
 import bluemira.mesh.meshing as meshing
+from bluemira.base.constants import EPS
 from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.codes import _freecadapi as cadapi
 from bluemira.geometry.base import BluemiraGeo, GeoMeshable
@@ -512,13 +513,48 @@ def distance_to(geo1: BluemiraGeo, geo2: BluemiraGeo):
     return cadapi.dist_to_shape(shape1, shape2)
 
 
+def split_wire(wire: BluemiraWire, vertex: Iterable, tolerance: float = EPS):
+    """
+    Split a wire at a given vertex.
+
+    Parameters
+    ----------
+    wire: apiWire
+        Wire to be split
+    vertex: Iterable
+        Vertex at which to split the wire
+    tolerance: float
+        Tolerance within which to find the closest vertex on the wire
+
+    Returns
+    -------
+    wire_1: Optional[BluemiraWire]
+        First half of the wire. Will be None if the vertex is the start point of the wire
+    wire_2: Optional[BluemiraWire]
+        Last half of the wire. Will be None if the vertex is the start point of the wire
+
+    Raises
+    ------
+    GeometryError:
+        If the vertex is further away to the wire than the specified tolerance
+    """
+    wire_1, wire_2 = cadapi.split_wire(
+        wire.get_single_wire()._shape, vertex, tolerance=tolerance
+    )
+    if wire_1:
+        wire_1 = BluemiraWire(wire_1)
+    if wire_2:
+        wire_2 = BluemiraWire(wire_2)
+    return wire_1, wire_2
+
+
 def slice_shape(shape: BluemiraGeo, plane):
     """
     Calculate the plane intersection points with an object
 
     Parameters
     ----------
-    obj: Union[BluemiraWire, BluemiraFace, BluemiraSolid, BluemiraShell]
+    shape: Union[BluemiraWire, BluemiraFace, BluemiraSolid, BluemiraShell]
         obj to intersect with a plane
     plane: BluemiraPlacement
 
@@ -968,3 +1004,41 @@ def get_shape_by_name(shape: BluemiraGeo, name: str):
         for o in shape.boundary:
             shapes += get_shape_by_name(o, name)
     return shapes
+
+
+# ======================================================================================
+# Find operations
+# ======================================================================================
+def find_clockwise_angle_2d(base: np.ndarray, vector: np.ndarray) -> np.ndarray:
+    """
+    Find the clockwise angle between the 2D vectors ``base`` and
+    ``vector`` in the range [0°, 360°).
+
+    Parameters
+    ----------
+    base: np.ndarray[float, (2, N)]
+        The vector to start the angle from.
+    vector: np.ndarray[float, (2, N)]
+        The vector to end the angle at.
+
+    Returns
+    -------
+    angle: np.ndarray[float, (1, N)]
+        The clockwise angle between the two vectors in degrees.
+    """
+    if not isinstance(base, np.ndarray) or not isinstance(vector, np.ndarray):
+        raise TypeError(
+            f"Input vectors must have type np.ndarray, found '{type(base)}' and "
+            f"'{type(vector)}'."
+        )
+    if base.shape[0] != 2 or vector.shape[0] != 2:
+        raise ValueError(
+            f"Input vectors' axis 0 length must be 2, found shapes '{base.shape}' and "
+            f"'{vector.shape}'."
+        )
+    det = base[1] * vector[0] - base[0] * vector[1]
+    dot = np.dot(base, vector)
+    # Convert to array here in case arctan2 returns a scalar
+    angle = np.array(np.arctan2(det, dot))
+    angle[angle < 0] += 2 * np.pi
+    return np.degrees(angle)

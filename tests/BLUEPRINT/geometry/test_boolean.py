@@ -375,7 +375,3 @@ def test_single_difference_loop():
     box = make_box_xz(0, 1, 0, 1)
     with pytest.raises(GeometryError):
         common = boolean_2d_difference_loop(box, box)
-
-
-if __name__ == "__main__":
-    pytest.main([__file__])

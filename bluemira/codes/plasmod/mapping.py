@@ -22,24 +22,8 @@
 """
 PLASMOD mappings
 """
-from enum import Enum
 
-from bluemira.base.look_and_feel import bluemira_print
-from bluemira.base.parameter import ParameterMapping
-
-
-class Model(Enum):
-    """
-    Base Model Enum
-    """
-
-    @classmethod
-    def info(cls):
-        """
-        Show Model options
-        """
-        infostr = f"{cls.__doc__}\n" + "\n".join(repr(l_) for l_ in list(cls))
-        bluemira_print(infostr)
+from bluemira.codes.utilities import Model, create_mapping
 
 
 class ImpurityModel(Model):
@@ -116,480 +100,473 @@ class SOLModel(Model):
     SICCINIO = 1
 
 
-class Profiles(Enum):
+class Profiles(Model):
     """
-    Profile Selector
-    """
+    Profile Selector:
 
-    x = "x"  # [-] normalized toroidal flux coordinate (Phi/Phi_b)
-    ne = "n_e"  # [10¹⁹/m3] electron density profile
-    Te = "Te"  # [keV] Electron temperature profile
-    Ti = "Ti"  # [keV] Ion temperature profile
-    psi = "psi"  # [Wb] Poloidal flux profile
-    phi = "phi"  # [Wb] Toroidal flux profile
-    press = "pressure"  # [Pa] Plasma pressure profile
-    pprime = "pprime"  # [Pa/Wb] p' profile
-    ffprime = "ffprime"  # [(m*T) * (m*T) / Wb == T] FF' profile
-    kprof = "kappa"  # [-] Elongation profile
-    dprof = "delta"  # [-] Triangularity profile
-    shif = "GS"  # [m] Grad-Shafranov shift profile
-    g2 = "g2"  # [m²] < |grad V|²/r²> g2 metric coefficient's profile
-    g3 = "g3"  # [m⁻²] < 1/r²> g3 metric coefficient's profile
-    volprof = "V"  # [m³] Volume profile
-    vprime = "Vprime"  # [m³] Volume profile
-    ipol = "i_pol"  # [m*T] Poloidal current profile
-    qprof = "q"  # [-] Safety factor profile
-    jpar = "jpar"  # [A/m²] Parallel current density profile
-    jbs = "jbs"  # [A/m²] Bootstrap parallel current density profile
-    jcd = "jcd"  # [A/m²] CD parallel current density profile
-    nions = "n_ion"  # [10¹⁹/m³] ion density profile
-    nfuel = "n_fuel"  # [10¹⁹/m3] fuel density profile
-    ndeut = "n_D"  # [10¹⁹/m3] deuterium density profile
-    ntrit = "n_T"  # [10¹⁹/m3] tritium density profile
-    nalf = "n_He"  # [10¹⁹/m3] helium density profile
+    x       [-] normalized toroidal flux coordinate (Phi/Phi_b)
+    ne      [10¹⁹/m3] electron density profile
+    Te      [keV] Electron temperature profile
+    Ti      [keV] Ion temperature profile
+    psi     [Wb] Poloidal flux profile
+    phi     [Wb] Toroidal flux profile
+    press   [Pa] Plasma pressure profile
+    pprime  [Pa/Wb] p' profile
+    ffprime [(m*T) * (m*T) / Wb == T] FF' profile
+    kprof   [-] Elongation profile
+    dprof   [-] Triangularity profile
+    shif    [m] Grad-Shafranov shift profile
+    g2      [m²] < mod(grad V)²/r²> g2 metric coefficient's profile
+    g3      [m⁻²] < 1/r²> g3 metric coefficient's profile
+    volprof [m³] Volume profile
+    vprime  [m³] Volume profile
+    ipol    [m*T] Poloidal current profile
+    qprof   [-] Safety factor profile
+    jpar    [A/m²] Parallel current density profile
+    jbs     [A/m²] Bootstrap parallel current density profile
+    jcd     [A/m²] CD parallel current density profile
+    nions   [10¹⁹/m³] ion density profile
+    nfuel   [10¹⁹/m3] fuel density profile
+    ndeut   [10¹⁹/m3] deuterium density profile
+    ntrit   [10¹⁹/m3] tritium density profile
+    nalf    [10¹⁹/m3] helium density profile
+
     # Not yet enabled in plasmod
-    # qrad = "q_rad" # radiation density profile
-    # qneut = "q_neut" # nuetron fusion power density profile
+    # qrad   radiation density profile
+    # qneut  nuetron fusion power density profile
 
+    """
 
-# TODO
-# define all build tweaks properly
-# Link all BM parameters
-# Link all plasmod outputs
+    x = "x"
+    ne = "n_e"
+    Te = "Te"
+    Ti = "Ti"
+    psi = "psi"
+    phi = "phi"
+    press = "pressure"
+    pprime = "pprime"
+    ffprime = "ffprime"
+    kprof = "kappa"
+    dprof = "delta"
+    shif = "GS"
+    g2 = "g2"
+    g3 = "g3"
+    volprof = "V"
+    vprime = "Vprime"
+    ipol = "i_pol"
+    qprof = "q"
+    jpar = "jpar"
+    jbs = "jbs"
+    jcd = "jcd"
+    nions = "n_ion"
+    nfuel = "n_fuel"
+    ndeut = "n_D"
+    ntrit = "n_T"
+    nalf = "n_He"
+    # qrad = "q_rad"
+    # qneut = "q_neut"
+
 
 PLASMOD_INPUTS = {
     ############################
-    # list numerics properties
+    # Numeric properties
     #############################
     # [-] max iteration error between transport/equilibrium iterations
-    # ###### "BM_INP": "tol",
+    # ###### "BM_INP": ("tol", "dimensionless"),
     # [-] min time step between iterations
-    # ###### "BM_INP": "dtmin",
+    # ###### "BM_INP": ("dtmin", "dimensionless"),
     # [-] max time step between iterations
-    # ###### "BM_INP": "dtmax",
+    # ###### "BM_INP": ("dtmax", "dimensionless"),
     # [-] exponent of jipperdo2
-    # ###### "BM_INP": "dtmaxmin",
-    # [-] stabilizing diff for TGLF in m²/s
-    # ###### "BM_INP": "dtmaxmax",
+    # ###### "BM_INP": ("dtmaxmin", "dimensionless"),
+    # [m²/s] stabilizing diff for TGLF in
+    # ###### "BM_INP": ("dtmaxmax", "m^2/s"),
     # [-] tolerance above which TGLF should be always called
-    # ###### "BM_INP": "dtminmax",
+    # ###### "BM_INP": ("dtminmax", "dimensionless"),
     # [-] !time step
-    # ###### "BM_INP": "dt",
+    # ###### "BM_INP": ("dt", "s"),
     # [-] !decrease of dt
-    # ###### "BM_INP": "dtinc",
+    # ###### "BM_INP": ("dtinc", "s"),
     # [-] !increase of dt
-    # ###### "BM_INP": "Ainc",
+    # ###### "BM_INP": ("Ainc", "s"),
     # [-] max number of iteration
-    # ###### "BM_INP": "test",
+    # ###### "BM_INP": ("test", "dimensionless"),
     # [-] ! multiplier of etolm that should not be overcome
-    # ###### "BM_INP": "tolmin",
+    # ###### "BM_INP": ("tolmin", "dimensionless"),
     # [-] Newton differential
-    # ###### "BM_INP": "dgy",
+    # ###### "BM_INP": ("dgy", "dimensionless"),
     # [-] !exponent of jipperdo
-    # ###### "BM_INP": "eopt",
+    # ###### "BM_INP": ("eopt", "dimensionless"),
     # [-] first radial grid point
-    # ###### "BM_INP": "capA",
+    # ###### "BM_INP": ("capA", "dimensionless"),
     # [-] diagnostics for ASTRA (0 or 1)
-    # ###### "BM_INP": "i_diagz",
-    # [-] SOL model selector:
-    # ###### "BM_INP": "isiccir": 0,
+    # ###### "BM_INP": ("i_diagz", "dimensionless"),
     # [-] sawtooth correction of q
-    # ###### "BM_INP": "isawt",
+    # ###### "BM_INP": ("isawt, "dimensionless")",
     # [-] number of interpolated grid points
-    # ###### "BM_INP": "nx",
+    # ###### "BM_INP": ("nx", "dimensionless"),
     # [-] number of reduced grid points
-    # ###### "BM_INP": "nxt",
+    # ###### "BM_INP": ("nxt", "dimensionless"),
     # [-] number of unknowns in the transport solver
-    # ###### "BM_INP": "nchannels",
-    # [-] impurity model selector:
-    # ###### "BM_INP": "i_impmodel",
-    # [-] selector for transport model
-    # ###### "BM_INP": "i_modeltype",
-    # [-] equilibrium model selector:
-    # ###### "BM_INP": "i_equiltype",
-    # [-] pedestal model selector:
-    # ###### "BM_INP": "i_pedestal",
+    # ###### "BM_INP": ("nchannels", "dimensionless"),
     # [-] number of tglf points, below positions
-    # ###### "BM_INP": "ntglf",
+    # ###### "BM_INP": ("ntglf", "dimensionless"),
     # [-] tglf points, position 1
-    # ###### "BM_INP": "xtglf_1",
+    # ###### "BM_INP": ("xtglf_1", "dimensionless") ,
     # [-] tglf points, position 2
-    # ###### "BM_INP": "xtglf_2",
+    # ###### "BM_INP": ("xtglf_2", "dimensionless"),
     # [-] tglf points, position 3
-    # ###### "BM_INP": "xtglf_3",
+    # ###### "BM_INP": ("xtglf_3", "dimensionless"),
     # [-] tglf points, position 4,
-    # ###### "BM_INP": "xtglf_4",
+    # ###### "BM_INP": ("xtglf_4", "dimensionless"),
     # [-] tglf points, position 5
-    # ###### "BM_INP": "xtglf_5",
+    # ###### "BM_INP": ("xtglf_5", "dimensionless"),
     # [-] tglf points, position 6
-    # ###### "BM_INP": "xtglf_6",
+    # ###### "BM_INP": ("xtglf_6", "dimensionless"),
     # [-] tglf points, position 7
-    # ###### "BM_INP": "xtglf_7",
+    # ###### "BM_INP": ("xtglf_7", "dimensionless"),
     # [-] tglf points, position 8
-    # ###### "BM_INP": "xtglf_8",
+    # ###### "BM_INP": ("xtglf_8", "dimensionless"),
     # [-] tglf points, position 9
-    # ###### "BM_INP": "xtglf_9",
+    # ###### "BM_INP": ("xtglf_9", "dimensionless"),
     # [-] tglf points, position 10
-    # ###### "BM_INP": "xtglf_10",
+    # ###### "BM_INP": ("xtglf_10", "dimensionless"),
     # [-] tglf points, position 11
-    # ###### "BM_INP": "xtglf_11",
+    # ###### "BM_INP": ("xtglf_11", "dimensionless"),
     # ###########################
-    # list geometry properties
+    # Geometry properties
     # ###########################
     # [-] plasma aspect ratio
-    "A": "A",
+    "A": ("A", "dimensionless"),
     # [T] Toroidal field at plasma center
-    "B_0": "Bt",
+    "B_0": ("Bt", "T"),
     # [-] plasma triangularity at 95 % flux
-    "delta_95": "d95",
+    "delta_95": ("d95", "dimensionless"),
     # [-] plasma elongation at 95 % flux
-    "kappa_95": "k95",
+    "kappa_95": ("k95", "dimensionless"),
     # [m] plasma major radius
-    "R_0": "R",
+    "R_0": ("R", "m"),
     # [m3] constrained plasma volume (set zero to disable volume constraining)
-    "V_p": "volume_in",
+    "V_p": ("volume_in", "m^3"),
     # ###########################
-    # list composition properties
+    # Composition properties
     # ############################
     # [-] fuel mix D/T
-    # ###### "BM_INP": "fuelmix",
+    # ###### "BM_INP": ("fuelmix", "dimensionless"),
     # [-] He3 as fuel concentration
-    # ###### "BM_INP": "fuelhe3",
+    # ###### "BM_INP": ("fuelhe3", # TODO
     # [-] tauparticle / tauE for D
-    # ###### "BM_INP": "globtau_d",
+    # ###### "BM_INP": ("globtau_d", "dimensionless"),
     # [-] tauparticle / tauE for T
-    # ###### "BM_INP": "globtau_t",
+    # ###### "BM_INP": ("globtau_t", "dimensionless"),
     # [-] tauparticle / tauE for He
-    # ###### "BM_INP": "globtau_he",
+    # ###### "BM_INP": ("globtau_he", "dimensionless"),
     # [-] tauparticle / tauE for Xe
-    # ###### "BM_INP": "globtau_xe",
+    # ###### "BM_INP": ("globtau_xe", "dimensionless"),
     # [-] tauparticle / tauE for Ar
-    # ###### "BM_INP": "globtau_ar",
+    # ###### "BM_INP": ("globtau_ar", "dimensionless"),
     # [-] Tungsten concentration
-    # ##### "BM_INP": "cwol": 0.0,
+    # ##### "BM_INP": ("cwol": 0.0,
     # [-] min P_sep/P_LH. if Psep/PLH < Psep/PLH_max -> use heating
-    # ###### "BM_INP": "psepplh_inf",
+    # ###### "BM_INP": ("psepplh_inf", "dimensionless"),
     # [-] max P_sep/P_LH. if Psep/PLH > Psep/PLH_max -> use Xe
-    # ###### "BM_INP": "psepplh_sup",
+    # ###### "BM_INP": ("psepplh_sup", "dimensionless"),
     # [-] position after which radiation is "edge"
-    # ###### "BM_INP": "pradpos",
+    # ###### "BM_INP": ("pradpos", # TODO
     # [-] radiation fraction used for core transport
-    # ###### "BM_INP": "pradfrac",
+    # ###### "BM_INP": ("pradfrac", "dimensionless"),
     # [MW*T/m] Divertor challenging criterion Psep * Bt / (q95 * A R0)
     # if PsepBt_qAR > PsepBt_qAR_max seed Xenon
-    # ###### "BM_INP": "psepb_q95AR_sup",
+    # ###### "BM_INP": ("psepb_q95AR_sup", "MW.T/m"),
     # [MW/m] Divertor challenging criterion Psep / R0
     # if Psep/R0 > Psep_R0_max seed Xenon
-    # ###### "BM_INP": "psep_r_sup",
+    # ###### "BM_INP": ("psep_r_sup" "MW/m"),
     # [-] ratio of Pline(Xe)/(Psep0 - Psepcrit), or -1 to ignore
-    # ###### "BM_INP": "fcoreraditv",
+    # ###### "BM_INP": ("fcoreraditv", "dimensionless"),
     # [MW/m2] max divertor heat flux -->
     # if qdivt > qdivt_sup -> seed argon
-    # ###### "BM_INP": "qdivt_sup",
+    # ###### "BM_INP": ("qdivt_sup" "MW/m^2"),
     # [-] compression factor between sol and div
-    # ###### "BM_INP": "c_car",
+    # ###### "BM_INP": ("c_car", "dimensionless"),
     # ###########################
-    # list pedestal properties
+    # Pedestal properties
     # ############################
     # [-] normalized coordinate of pedestal density
-    # ###### "BM_INP": "rho_n",
+    # ###### "BM_INP": ("rho_n", "dimensionless"),
     # [-] normalized coordinate of pedestal temperature
-    # ###### "BM_INP": "rho_T",
+    # ###### "BM_INP": ("rho_T", "dimensionless"),
     # [keV] electrons/ions temperature at separatrix
-    # ###### "BM_INP": "Tesep",
+    # ###### "BM_INP": ("Tesep", "keV"),
     # [-] scaling factor for p_ped scaling formula
-    # ###### "BM_INP": "pedscal",
+    # ###### "BM_INP": ("pedscal", "dimensionless"),
     # ###########################
-    # list general inputs: control, confinement, B.C., etc
+    # General inputs: control, confinement, B.C., etc
     # ############################
     # [-] Greenwald density fraction at pedestal
-    # ###### "BM_INP": "f_gw",
+    # ###### "BM_INP": ("f_gw", "dimensionless"),
     # [-] Greenwald density fraction at separatrix
-    # ###### "BM_INP": "f_gws",
+    # ###### "BM_INP": ("f_gws", "dimensionless"),
     # [-] fraction of NBI power to ions
-    # ###### "BM_INP": "fpion",
-    # [m*MA/MW] Normalized CD efficiency
-    # ###### "BM_INP": "nbcdeff",  # tentative g_cd_nb but normalise wrt to what?
-    # [m*MA/MW] Normalized EC efficiency
-    # ###### "BM_INP": "eccdeff",  # tentative g_cd_nb but normalise wrt to what?
+    # ###### "BM_INP": ("fpion", "dimensionless"),
+    # [m*MA/MW] Normalized CD efficiency   # tentative g_cd_nb but normalise wrt to what?
+    # ###### "BM_INP": ("nbcdeff", "m.MA/MW"),
+    # [m*MA/MW] Normalized EC efficiency   # tentative g_cd_nb but normalise wrt to what?
+    # ###### "BM_INP": ("eccdeff", "m.MA/MW")
     # [-]  normalized mean location of fixed NBI heating
-    # ###### "BM_INP": "x_control_nbi",
+    # ###### "BM_INP": ("x_control_nbi", "dimensionless"),
     # [-]  normalized mean location of fixed EC heating
-    # ###### "BM_INP": "x_control_ech",
+    # ###### "BM_INP": ("x_control_ech", "dimensionless"),
     # [-] variance of heat deposition, assimung Gaussian distribution on
     # normalized coordinate x for fixed NBI heating
-    # ###### "BM_INP": "dx_control_nbi",
+    # ###### "BM_INP": ("dx_control_nbi", "dimensionless"),
     # [-] variance of heat deposition, assimung Gaussian distribution on
     # normalized coordinate x for fixed EC heating
-    # ###### "BM_INP": "dx_control_ech",
+    # ###### "BM_INP": ("dx_control_ech", "dimensionless"),
     # [-]  normalized mean location of NBI power for
     # controlling loop voltage or f_ni
-    # ###### "BM_INP": "x_cd_nbi",
+    # ###### "BM_INP": ("x_cd_nbi", "dimensionless"),
     # [-]  normalized mean location of NBI power for
     # controlling loop voltage or f_ni
-    # ###### "BM_INP": "x_cd_ech",
+    # ###### "BM_INP": ("x_cd_ech", "dimensionless"),
     # [-] variance of heat deposition, assimung Gaussian distribution on
     # normalized coordinate x for NBI heating (CD) to control Vloop or f_ni
-    # ###### "BM_INP": "dx_cd_nbi",
+    # ###### "BM_INP": ("dx_cd_nbi", "dimensionless"),
     # [-] variance of heat deposition, assimung Gaussian distribution on
     # normalized coordinate x for EC heating to control Vloop or f_ni
-    # ###### "BM_INP": "dx_cd_ech",
+    # ###### "BM_INP": ("dx_cd_ech", "dimensionless"),
     # [-]  normalized mean location of NBI heating for
     # controlling fusion power (Pfus = Pfus_req)
-    # ###### "BM_INP": "x_fus_nbi",
+    # ###### "BM_INP": ("x_fus_nbi", "dimensionless"),
     # [-]  normalized mean location of EC heating for
     # controlling fusion power (Pfus = Pfus_req)
-    # ###### "BM_INP": "x_fus_ech",
+    # ###### "BM_INP": ("x_fus_ech", "dimensionless"),
     # [-] variance of heat deposition, assimung Gaussian distribution on
     # normalized coordinate x, for NBI heating to control fusion power
-    # ###### "BM_INP": "dx_fus_nbi",
+    # ###### "BM_INP": ("dx_fus_nbi", "dimensionless"),
     # [-] variance of heat deposition, assimung Gaussian distribution on
     # normalized coordinate x, for EC heating to control fusion power
-    # ###### "BM_INP": "dx_fus_ech",
+    # ###### "BM_INP": ("dx_fus_ech", "dimensionless"),
     # [-]  normalized mean location of aux. NBI heating for
     # controlling H-mode operation (P_sep/P_LH > P_sep_P_LH_min)
-    # ###### "BM_INP": "x_heat_nbi",
+    # ###### "BM_INP": ("x_heat_nbi", "dimensionless"),
     # [-]  normalized mean location of aux. EC heating for
     # controlling H-mode operation (P_sep/P_LH > P_sep_P_LH_min)
-    # ###### "BM_INP": "x_heat_ech",
+    # ###### "BM_INP": ("x_heat_ech", "dimensionless"),
     # [-] variance of heat deposition, assimung Gaussian distribution on
     # normalized coordinate x, for NBI heating to control H-mode
-    # ###### "BM_INP": "dx_heat_nbi",
+    # ###### "BM_INP": ("dx_heat_nbi", "dimensionless"),
     # [-] variance of heat deposition, assimung Gaussian distribution on
     # normalized coordinate x, for EC heating to control H-mode
-    # ###### "BM_INP": "dx_heat_ech",
+    # ###### "BM_INP": ("dx_heat_ech", "dimensionless"),
     # [keV] NBI energy
-    # ###### "BM_INP": "nbi_energy",
+    # ###### "BM_INP": ("nbi_energy", "keV"),
     # [MW] required fusion power.
     # 0. - ignored
     # > 0 - Auxiliary heating is calculated to match Pfus_req
-    # ###### "BM_INP": "pfus_req",
+    # ###### "BM_INP": ("pfus_req", "MW")
     # [-] required fraction of non inductive current, if 0, dont use CD
-    "f_ni": "f_ni",
+    "f_ni": ("f_ni", "dimensionless"),
     # [MW] max allowed power for control (fusion power, H-mode)
-    # ###### "BM_INP": "pheat_max",
+    # ###### "BM_INP": ("pheat_max", "MW")
     # [MW] fixed auxiliary heating power required for control
-    "q_control": "q_control",
+    "q_control": ("q_control", "MW"),
     # [MW] total auxiliary power  (0.) DO NOT CHANGE
-    # ###### "BM_INP": "q_heat",
+    # ###### "BM_INP": ("q_heat", "MW"),
     # [MW] total auxiliary current drive power (0.) DO NOT CHANGE
-    # ###### "BM_INP": "q_cd",
+    # ###### "BM_INP": ("q_cd", "MW"),
     # [MW] total fusion power (0.) DO NOT CHANGE
-    # ###### "BM_INP": "q_fus",
+    # ###### "BM_INP": ("q_fus", "MW"),
     # [MW] ECH power (not used)
-    # ###### "BM_INP": "pech": 0.0,
+    # ###### "BM_INP": ("pech", "MW"),
     # [MW] NBI power (not used)
-    # ###### "BM_INP": "pnbi": 0.0,
+    # ###### "BM_INP": ("pnbi", "MW"),
     # [-] ratio of PCD-Pothers over Pmax - Pothers
-    # ###### "BM_INP": "fcdp": -1.0,
+    # ###### "BM_INP": ("fcdp": -1.0, "dimensionless"),
     # [-] maximum Paux/R allowed
-    # ###### "BM_INP": "maxpauxor",
+    # ###### "BM_INP": ("maxpauxor", "dimensionless"),
     # [-] type of PLH threshold.  6 - Martin scaling. Use 6 only
-    # ###### "BM_INP": "plh",
+    # ###### "BM_INP": ("plh", "dimensionless"),
     # [-] scaling factor for newton scheme on NBI (100.)
-    # ###### "BM_INP": "qnbi_psepfac",
+    # ###### "BM_INP": ("qnbi_psepfac", "dimensionless"),
     # [-] scale factor for newton scheme on Xe (1.e-3)
-    # ###### "BM_INP": "cxe_psepfac",
+    # ###### "BM_INP": ("cxe_psepfac", "dimensionless"),
     # [-] scale factor for newton scheme on Ar (1.e-4)
-    # ###### "BM_INP": "car_qdivt",
+    # ###### "BM_INP": ("car_qdivt", "dimensionless"),
     # [MW / m²] Pcontrol / S_lateral(0.)
-    # ###### "BM_INP": "contrpovs",
+    # ###### "BM_INP": ("contrpovs", "MW/m^2"),
     # [MW / m²] Pcontrol / R(0.)
-    # ###### "BM_INP": "contrpovr",
+    # ###### "BM_INP": ("contrpovr", "MW/m^2"),
 }
 
 
 PLASMOD_OUTPUTS = {
     # ###########################################
-    # list geometry properties (geom type)
+    # Geometry properties (geom type)
     # ###########################################
     # [m] plasma perimeter
-    # ##### "BM_OUT": "perim",
+    # ##### "BM_OUT": ("perim", "m"),
     # ###########################################
-    # list MHD equilibrium properties (MHD type)
+    # MHD equilibrium properties (MHD type)
     # ###########################################
     # [T] average poloidal field
-    # ##### "BM_OUT": "bpolavg",
+    # ##### "BM_OUT": ("bpolavg", "T"),
     # [-] toroidal beta
-    # ##### "BM_OUT": "betator",
+    # ##### "BM_OUT": ("betator", "dimensionless"),
     # [-] poloidal beta
-    "beta_p": "betapol",
+    "beta_p": ("betapol", "dimensionless"),
     # [-] normalized beta
-    "beta_N": "betan",
+    "beta_N": ("betan", "dimensionless"),
     # [-] plasma bootstrap current fraction
-    "f_bs": "fbs",
+    "f_bs": ("fbs", "dimensionless"),
     # [-] plasma current drive fraction
-    # ##### "BM_OUT": "fcd",
+    # ##### "BM_OUT": ("fcd", "dimensionless"),
     # [-] Edge safety factor
-    # ##### "BM_OUT": "q_sep",
+    # ##### "BM_OUT": ("q_sep", "dimensionless"),
     # [-] cylindrical safety factor
-    # ##### "BM_OUT": "qstar",
-    # [-] plasma internal inductance
-    "l_i": "rli",
+    # ##### "BM_OUT": ("qstar", "dimensionless"),
+    # [-] normalised plasma internal inductance
+    "l_i": ("rli", "dimensionless"),
     # [m²] plasma poloidal cross section area
-    # ##### "BM_OUT": "Sp",
+    # ##### "BM_OUT": ("Sp", "m^2"),
     # [m²] plasma toroidal surface
-    # ##### "BM_OUT": "torsurf",
+    # ##### "BM_OUT": ("torsurf", "m^2"),
     # [m³] plasma volume
-    # ##### "BM_OUT": "Vp",
+    # ##### "BM_OUT": ("Vp", "m^3"),
     # ###########################################
-    # list confinement properties (loss type)
+    # Confinement properties (loss type)
     # ###########################################
     # [-] radiation-corrected H-factor
-    "H_star": "Hcorr",
+    "H_star": ("Hcorr", "dimensionless"),
     # [s] global energy confinement time
-    "tau_e": "taueff",
+    "tau_e": ("taueff", "s"),
     # [s] electrons energy confinement time
-    # ##### "BM_OUT": "tauee",
+    # ##### "BM_OUT": ("tauee", "s"),
     # [s] ions energy confinement time
-    # ##### "BM_OUT": "tauei",
+    # ##### "BM_OUT": ("tauei", "s"),
     # [J] plasma thermal energy
-    # ##### "BM_OUT": "Wth",
+    # ##### "BM_OUT": ("Wth", "J"),
     # [Ohm] plasma resistance
-    "res_plasma": "rplas",
+    "res_plasma": ("rplas", "ohm"),
     # ###########################################
-    # list power properties (loss type)
+    # Power properties (loss type)
     # ###########################################
     # [W] DD fusion power
-    "P_fus_DD": "Pfusdd",
+    "P_fus_DD": ("Pfusdd", "W"),
     # [W] DT fusion power
-    "P_fus_DT": "Pfusdt",
+    "P_fus_DT": ("Pfusdt", "W"),
     # [W] Fusion power
-    "P_fus": "Pfus",
+    "P_fus": ("Pfus", "W"),
     # [W] neutron fusion power
-    # ##### "BM_OUT": "Pneut",
+    # ##### "BM_OUT": ("Pneut", "W"),
     # [W] total auxiliary heating power
-    # ##### "BM_OUT": "Paux",
+    # ##### "BM_OUT": ("Paux", "W"),
     # [W] auxiliary heating power to electrons
-    # ##### "BM_OUT": "Peaux",
+    # ##### "BM_OUT": ("Peaux", "W"),
     # [W] auxiliary heating power to ions
-    # ##### "BM_OUT": "Piaux",
+    # ##### "BM_OUT": ("Piaux", "W"),
     # [W] alpha power
-    # ##### "BM_OUT": "Palpha",
+    # ##### "BM_OUT": ("Palpha", "W"),
     # [W] total radiation power
-    "P_rad": "Prad",
+    "P_rad": ("Prad", "W"),
     # [W] core radiation power
-    # ##### "BM_OUT": "Pradcore",
+    # ##### "BM_OUT": ("Pradcore", "W"),
     # [W] core radiation power
-    # ##### "BM_OUT": "Pradedge",
+    # ##### "BM_OUT": ("Pradedge", "W"),
     # [W] total power across plasma separatrix
-    "P_sep": "Psep",
+    "P_sep": ("Psep", "W"),
     # [W] Synchrotron radiation power
-    "P_sync": "Psync",
+    "P_sync": ("Psync", "W"),
     # [W] Bremsstrahlung radiation power
-    "P_brehms": "Pbrehms",
+    "P_brehms": ("Pbrehms", "W"),
     # [W] Line radiation power
-    "P_line": "Pline",
+    "P_line": ("Pline", "W"),
     # [W] LH transition power
-    "P_LH": "PLH",
+    "P_LH": ("PLH", "W"),
     # [W] Ohimic heating power
-    "P_ohm": "Pohm",
+    "P_ohm": ("Pohm", "W"),
     # [W/m2] divertor heat flux
-    # ##### "BM_OUT": "qdivt",
+    # ##### "BM_OUT": ("qdivt", "W/m^2"),
     # [MW/m] Divertor challenging criterion Psep/R0
-    # ##### "BM_OUT": "psep_r",
+    # ##### "BM_OUT": ("psep_r", "MW/m"),
     # [MW * T/ m] Divertor challenging criterion Psep * Bt /(q95 * a)
-    # ##### "BM_OUT": "psepb_q95AR",
+    # ##### "BM_OUT": ("psepb_q95AR", "MW.T/m"),
     # ###########################
-    # list composition properties (type comp)
+    # Composition properties (type comp)
     # ############################
     # [-] plasma effective charge
-    "Z_eff": "Zeff",
+    "Z_eff": ("Zeff", "amu"),  # TODO check dimensionless?
     # ###########################
-    # list pedestal properties (type ped)
+    # Pedestal properties (type ped)
     # ############################
     # [1E19/m3] electron/ion density at pedestal height
-    # ##### "BM_OUT": "nped",
+    # ##### "BM_OUT": ("nped", # TODO
     # [1E19/m3] electron/ion density at separatrix
-    # ##### "BM_OUT": "nsep",
+    # ##### "BM_OUT": ("nsep", # TODO
     # ###########################
-    # list average properties for profiles (type radp)
+    # Average properties for profiles (type radp)
     # ############################
     # [1E19/m3] volume-averaged ion density
-    # ##### "BM_OUT": "av_ni",
+    # ##### "BM_OUT": ("av_ni", # TODO
     # [1E19/m3] volume-averaged fuel density
-    # ##### "BM_OUT": "av_nd",
+    # ##### "BM_OUT": ("av_nd", # TODO
     # [1E19/m3] volume-averaged plasma impurities density
-    # ##### "BM_OUT": "av_nz",
+    # ##### "BM_OUT": ("av_nz", # TODO
     # [1E19/m3] volume-averaged helium density
-    # ##### "BM_OUT": "av_nhe",
+    # ##### "BM_OUT": ("av_nhe", # TODO
     # [keV] volume-averaged ions temperature
-    # ##### "BM_OUT": "av_Ti"
+    # ##### "BM_OUT": ("av_Ti", "keV"),
     # [keV] volume-averaged electrons temperature
-    # ##### "BM_OUT": "av_Te",
+    # ##### "BM_OUT": ("av_Te", "keV"),
     # [keV] density-averaged electrons temperature
-    # ##### "BM_OUT": "av_Ten",
+    # ##### "BM_OUT": ("av_Ten", "keV"),
 }
 
 PLASMOD_INOUTS = {
     # ###########################################
-    # list geometry properties (geome type)
+    # Geometry properties (geome type)
     # ###########################################
     # [-] plasma edge triangularity (used only for first iteration,
     # then iterated to constrain delta95)
-    "delta": "d",
+    "delta": ("d", "dimensionless"),
     # [-] plasma edge elongation (used only for first iteration,
     # then iterated to constrain kappa95)
-    "kappa": "k",
+    "kappa": ("k", "dimensionless"),
     # [-] plasma minor radius
-    # "BM_INP": "amin",
+    # ##### "BM_IO": ("amin", "m"),
     # ###########################################
-    # list MHD equilibrium properties (mhd type)
+    # MHD equilibrium properties (mhd type)
     # ###########################################
     # [MA] plasma current
-    "I_p": "Ip",
+    "I_p": ("Ip", "MA"),
     # [-] safety factor at 95% flux surface
-    "q_95": "q95",
+    "q_95": ("q95", "dimensionless"),
     # [-] plasma current inductive fraction
-    # ##### "BM_OUT": "f_ni",
+    # ##### "BM_IO": ("f_ni", "dimensionless"),
     # [V] target loop voltage (if lower than -1e-3, ignored)-> plasma loop voltage
-    "v_burn": "v_loop",
+    "v_burn": ("v_loop", "V"),
     # ###########################
-    # list composition properties
+    # Composition properties
     # ############################
     # [-] Hydrogen concentration
-    # ##### "BM_OUT": "cprotium",
+    # ##### "BM_IO": ("cprotium", # TODO
     # [-] helium concentration
-    # ##### "BM_IO": "che",
+    # ##### "BM_IO": ("che", # TODO
     # [-] He3 concentration
-    # ##### "BM_IO": "che3",
+    # ##### "BM_IO": ("che3", # TODO
     # [-] Argon concentration
-    # ###### "BM_IO": "car",
+    # ###### "BM_IO": ("car", # TODO
     # [-] Xenon concentration
-    # #### "BM_IO": "cxe",
+    # #### "BM_IO": ("cxe", # TODO
     # ###########################
-    # list pedestal properties
+    # Pedestal properties
     # ############################
     # [keV] electrons/ions temperature at pedestal (ignored if i_pedestal = 2)
-    # ##### "BM_IO": "teped",
+    # ##### "BM_IO": ("teped", "keV"),
     # ###########################
-    # list onfinement properties (type loss)
+    # Confinement properties (type loss)
     # ############################
     # [-] H-factor:if i_modeltype > 1 H factor calculated
-    # ##### "BM_IO": "Hfact",
+    # ##### "BM_IO": ("Hfact", "dimensionless"),
 }
 
-
-def create_mapping():
-    """
-    Creates mappings for plasmod
-
-    Returns
-    -------
-    mappings: Dict
-        A mapping from bluemira names to a plasmod ParameterMapping
-
-    """
-    mappings = {}
-    ins = {"send": True, "recv": False}
-    outs = {"send": False, "recv": True}
-    inouts = {"send": True, "recv": True}
-    for puts, sr in [
-        [PLASMOD_INPUTS, ins],
-        [PLASMOD_OUTPUTS, outs],
-        [PLASMOD_INOUTS, inouts],
-    ]:
-        for bm_key, pl_key in puts.items():
-            mappings[bm_key] = ParameterMapping(pl_key, send=sr["send"], recv=sr["recv"])
-
-    return mappings
+mappings = create_mapping(PLASMOD_INPUTS, PLASMOD_OUTPUTS, PLASMOD_INOUTS)

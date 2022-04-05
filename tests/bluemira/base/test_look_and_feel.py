@@ -143,7 +143,3 @@ def test_print_banner(caplog):
     assert len(result) == 15
     assert ANSI_COLOR["blue"] in result[0]
     assert EXIT_COLOR in result[-1]
-
-
-if __name__ == "__main__":
-    pytest.main([__file__])

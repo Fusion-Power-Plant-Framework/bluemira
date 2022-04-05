@@ -25,14 +25,6 @@ Errors for sub-modules
 from bluemira.base.error import BluemiraError
 
 
-class BeamsError(BluemiraError):
-    """
-    Error class for use in the beams module
-    """
-
-    pass
-
-
 class NeutronicsError(BluemiraError):
     """
     Error class for use in the neutronics module

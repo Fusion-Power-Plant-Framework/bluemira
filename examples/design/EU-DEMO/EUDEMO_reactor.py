@@ -35,12 +35,14 @@ from bluemira.base.file import get_bluemira_root
 from bluemira.base.logs import set_log_level
 from bluemira.base.parameter import ParameterEncoder
 from bluemira.builders.cryostat import CryostatBuilder
+from bluemira.builders.EUDEMO.blanket import BlanketBuilder
+from bluemira.builders.EUDEMO.divertor import DivertorBuilder
 from bluemira.builders.EUDEMO.pf_coils import PFCoilsBuilder
 from bluemira.builders.EUDEMO.plasma import PlasmaBuilder, PlasmaComponent
 from bluemira.builders.EUDEMO.reactor import EUDEMOReactor
 from bluemira.builders.EUDEMO.tf_coils import TFCoilsBuilder
 from bluemira.builders.radiation_shield import RadiationShieldBuilder
-from bluemira.builders.tf_coils import RippleConstrainedLengthOpt
+from bluemira.builders.tf_coils import RippleConstrainedLengthGOP
 from bluemira.builders.thermal_shield import ThermalShieldBuilder
 from bluemira.codes import plot_radial_build
 from bluemira.codes.plasmod.mapping import (  # noqa: N812
@@ -143,7 +145,8 @@ config = {
     "Name": "EU-DEMO",
     "tau_flattop": 6900,
     "n_TF": 18,
-    "fw_psi_n": 1.06,
+    "fw_psi_n": 1.07,
+    "tk_sol_ib": 0.225,
     "tk_tf_front_ib": 0.04,
     "tk_tf_side": 0.1,
     "tk_tf_ins": 0.08,
@@ -221,7 +224,7 @@ build_config = {
         "runmode": "read",  # ["run", "read", "mock"]
     },
     "TF Coils": {
-        "runmode": "run",  # ["run", "read", "mock"]
+        "runmode": "read",  # ["run", "read", "mock"]
         "param_class": "TripleArc",
         "variables_map": {
             "x1": {
@@ -458,7 +461,7 @@ if tf_coils_builder.runmode == "run":
 # %%
 tf_coils_builder: TFCoilsBuilder = reactor.get_builder("TF Coils")
 if tf_coils_builder.runmode == "run":
-    design_problem: RippleConstrainedLengthOpt = tf_coils_builder.design_problem
+    design_problem: RippleConstrainedLengthGOP = tf_coils_builder.design_problem
     design_problem.plot()
     plt.show()
 
@@ -471,11 +474,17 @@ if tf_coils_builder.runmode == "run":
 # %%
 ax = tf_coils.get_component("xy").plot_2d(show=False)
 plasma.get_component("xy").plot_2d(ax=ax, show=False)
+blanket = component.get_component("Breeding Blanket")
+blanket.get_component("xy").plot_2d(ax=ax, show=False)
 pf_coils.get_component("xy").plot_2d(ax=ax)
 
 # %%
 ax = tf_coils.get_component("xz").plot_2d(show=False)
 plasma.get_component("xz").plot_2d(ax=ax, show=False)
+
+divertor = component.get_component("Divertor")
+divertor.get_component("xz").plot_2d(ax=ax, show=False)
+blanket.get_component("xz").plot_2d(ax=ax, show=False)
 pf_coils.get_component("xz").plot_2d(ax=ax, show=False)
 
 thermal_shield = component.get_component("Thermal Shield")
@@ -489,8 +498,10 @@ radiation_shield.get_component("xz").plot_2d(ax=ax)
 ComponentDisplayer().show_cad(component.get_component("xyz", first=False))
 
 # %%
-component = Component("Segment View")
+sector = Component("Segment View")
 plasma_builder: PlasmaBuilder = reactor.get_builder("Plasma")
+divertor_builder: DivertorBuilder = reactor.get_builder("Divertor")
+blanket_builder: BlanketBuilder = reactor.get_builder("Breeding Blanket")
 tf_coils_builder: TFCoilsBuilder = reactor.get_builder("TF Coils")
 pf_coils_builder: PFCoilsBuilder = reactor.get_builder("PF Coils")
 thermal_shield_builder: ThermalShieldBuilder = reactor.get_builder("Thermal Shield")
@@ -498,10 +509,12 @@ cryostat_builder: CryostatBuilder = reactor.get_builder("Cryostat")
 radiation_shield_builder: RadiationShieldBuilder = reactor.get_builder(
     "Radiation Shield"
 )
-component.add_child(plasma_builder.build_xyz(degree=270))
-component.add_child(tf_coils_builder.build_xyz(degree=270))
-component.add_child(pf_coils_builder.build_xyz(degree=270))
-component.add_child(thermal_shield_builder.build_xyz(degree=270))
-component.add_child(cryostat_builder.build_xyz(degree=270))
-component.add_child(radiation_shield_builder.build_xyz(degree=270))
-component.show_cad()
+sector.add_child(plasma_builder.build_xyz(degree=270))
+sector.add_child(divertor_builder.build_xyz(degree=270))
+sector.add_child(blanket_builder.build_xyz(degree=270))
+sector.add_child(tf_coils_builder.build_xyz(degree=270))
+sector.add_child(pf_coils_builder.build_xyz(degree=270))
+sector.add_child(thermal_shield_builder.build_xyz(degree=270))
+sector.add_child(cryostat_builder.build_xyz(degree=270))
+sector.add_child(radiation_shield_builder.build_xyz(degree=270))
+sector.show_cad()

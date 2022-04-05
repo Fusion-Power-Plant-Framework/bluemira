@@ -266,7 +266,3 @@ class TestSTEquilibrium:
         # Really you could just avoid adding the dummy plasma coil in the first place..
         # Perhaps the current centre is poorly estimated by R_0 + 0.5
         return coilset_temp.psi(grid.x, grid.z).copy() - dummy.psi(grid.x, grid.z)
-
-
-if __name__ == "__main__":
-    pytest.main([__file__])
