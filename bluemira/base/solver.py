@@ -21,111 +21,108 @@
 """
 General solver class.
 """
-
 import abc
 import enum
-
-from bluemira.base.parameter import ParameterFrame
-
-
-class TaskRunMode(enum.Enum):
-    """Enum defining the runmodes for a task."""
-
-    RUN = enum.auto()
-    MOCK = enum.auto()
-    READ = enum.auto()
+from typing import Any, Callable, Type
 
 
 class Task(abc.ABC):
     """
-    A general task to be called as part of a solver.
+    Base class for tasks to be run within a solver.
+
+    Children must override the 'run' method, but other methods, or
+    'run modes' can also be defined.
     """
 
-    _result = None
-
     @abc.abstractmethod
-    def run(self, params: ParameterFrame):
+    def run(self, *args, **kwargs):
         """Run the task."""
-        return
+        pass
 
-    @abc.abstractmethod
-    def mock(self, params: ParameterFrame):
-        """Return a mock value for the task."""
-        return
 
-    @abc.abstractmethod
-    def read(self, params: ParameterFrame):
-        """Return a saved result for the task, usually read from a file."""
-        return
+class RunMode(enum.Enum):
+    """Base enum class for defining run modes within a solver."""
 
-    @property
-    def result(self):
+    RUN = enum.auto()
+
+    def to_string(self) -> str:
         """
-        Holds the result of the task after it's been run. Is None if the
-        task has not been run.
+        Convert the enum value to a string; its name in lower-case.
         """
-        return self._result
+        return self.name.lower()
 
 
 class SolverABC(abc.ABC):
     """
     A base class for general solvers using setup, run and teardown
-    stages.
+    stages, using multiple runmodes.
 
     This interface gives a general way for callers to run external, or
     Bluemira, solvers.
 
     Parameters
     ----------
-    setup_task: Task
-        The task to run as setup
+    run_mode: RunMode
+        The enum value for which run mode to use. Typical values would
+        be 'run', 'mock' & 'read', but derived classes can define
+        arbitrary run modes.
     """
 
-    def __init__(self, setup_task: Task, run_task: Task, teardown_task: Task):
-        self._setup_task = setup_task
-        self._run_task = run_task
-        self._teardown_task = teardown_task
+    def __init__(self, run_mode: RunMode, *args, **kwargs) -> None:
+        super().__init__()
+        self._runmode = run_mode
+        self._setup = self.setup_cls(*args, **kwargs)
+        self._run = self.run_cls(*args, **kwargs)
+        self._teardown = self.teardown_cls(*args, **kwargs)
 
-    def setup(self, params: ParameterFrame, run_mode: TaskRunMode = TaskRunMode.RUN):
+    @abc.abstractproperty
+    def setup_cls(self) -> Type[Task]:
         """
-        Set up the solver.
+        Class defining the runmodes for the setup stage of the solver.
 
-        Typically, this method is used to perform parameter mappings for
-        some external code, or deriving dependent parameters. But it can
-        be used to perform any required non-computational set up.
+        Typically, this class performs parameter mappings for some
+        external code, or derives dependent parameters. But it can also
+        define any required non-computational set up.
         """
-        self._run_task_with_mode(self._setup_task, params, run_mode)
+        pass
 
-    def run(self, params: ParameterFrame, run_mode: TaskRunMode = TaskRunMode.RUN):
+    @abc.abstractproperty
+    def run_cls(self) -> Type[Task]:
         """
-        Run the solver.
+        Class defining the ru nmodes for the computational stage of the
+        solver.
 
-        This is where computations should be made. This may be something
-        like calling a Bluemira problem, or executing some external code
-        or process.
+        This class is where computations should be defined. This may be
+        something like calling a Bluemira problem, or executing some
+        external code or process.
         """
-        self._run_task_with_mode(self._run_task, params, run_mode)
+        pass
 
-    def teardown(self, params: ParameterFrame, run_mode: TaskRunMode = TaskRunMode.RUN):
+    @abc.abstractproperty
+    def teardown_cls(self) -> Type[Task]:
         """
-        Clean up the solver.
+        Class defining the run modes for the teardown stage of the
+        solver.
 
-        This method should perform any clean-up operations required by
+        This class should perform any clean-up operations required by
         the solver. This may be deleting temporary files, or could
         involve mapping parameters from some external code to Bluemira
         parameters.
         """
-        self._run_task_with_mode(self._teardown_task, params, run_mode)
+        pass
 
-    def _run_task_with_mode(
-        self, task: Task, params: ParameterFrame, run_mode: TaskRunMode
-    ):
-        """Run the given task using the given run mode."""
-        if run_mode == TaskRunMode.RUN:
-            task.run(params)
-        elif run_mode == TaskRunMode.MOCK:
-            task.mock(params)
-        elif run_mode == TaskRunMode.READ:
-            task.read(params)
-        else:
-            raise ValueError(f"Unrecognised solver run mode '{run_mode}'.")
+    def execute(self, *args, **kwargs) -> Any:
+        """Execute the setup, run, and teardown tasks, in order."""
+        self._get_execution_method(self._setup)(*args, **kwargs)
+        self._get_execution_method(self._run)(*args, **kwargs)
+        self._get_execution_method(self._teardown)(*args, **kwargs)
+
+    def _get_execution_method(self, task: Task) -> Callable:
+        """
+        Return the method on the task corresponding to this solver's run
+        mode (e.g., 'task.run').
+
+        If the method on the task does not exist, return a no-op
+        function.
+        """
+        return getattr(task, self._runmode.to_string(), lambda *args, **kwargs: None)
