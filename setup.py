@@ -65,6 +65,10 @@ process = [
     "toposort>=1.5",
 ]
 
+prominence = [
+    "prominence",
+]
+
 dev_requires = [
     "black",
     "flake8",
@@ -93,6 +97,7 @@ extras_require = {
     "process": process,
     "openmoc": openmoc,
     "openmc": openmc,
+    "prominence": prominence,
 }
 
 setup(
