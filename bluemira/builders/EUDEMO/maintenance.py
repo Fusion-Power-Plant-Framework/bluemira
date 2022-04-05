@@ -38,6 +38,13 @@ from bluemira.utilities.optimiser import Optimiser, approx_derivative
 
 
 class UpperPortOP(OptimisationProblem):
+    """
+    Reduced model optimisation problem for the vertical upper port size optimisation.
+
+    Parameters
+    ----------
+    """
+
     def __init__(
         self, parameterisation, optimiser: Optimiser, breeding_blanket_xz: BluemiraFace
     ):
@@ -67,52 +74,23 @@ class UpperPortOP(OptimisationProblem):
 
     @staticmethod
     def minimise_port_size(vector, grad):
+        """
+        Minimise the size of the port whilst maximising its outboard radius
+        """
         ri, ro, ci, gamma = vector
-        value = ro - ri
+        # Dual objective: minimise port (ro - ri) and maximise outer radius (-ro)
+        # ro - ri - ro
+        value = -ri
         if grad.size > 0:
             grad[0] = -1
-            grad[1] = 1
+            grad[1] = 0
             grad[2] = 0
             grad[3] = 0
         return value
 
     @staticmethod
-    def get_outer_cut_point(vector, bb):
-        ri, ro, ci, gamma = vector
-        cut_plane = BluemiraPlacement.from_3_points([ci, 0, 0], [ci, 0, 1], [ci, 1, 1])
-        # Get the first intersection with the vertical inner cut plane
-        intersections = slice_shape(bb.boundary[0], cut_plane)
-        intersections = intersections[intersections[:, -1] > 0.0]
-        intersection = sorted(intersections, key=lambda x: x[-1])[0]
-
-        x, y, z = intersection
-        x2 = x - np.sin(np.deg2rad(gamma))
-        y2 = y
-        z2 = z + np.cos(np.deg2rad(gamma))
-        angled_cut_plane = BluemiraPlacement.from_3_points(
-            intersection, [x2, y2, z2], [x, y + 1, z]
-        )
-        intersections = slice_shape(bb.boundary[0], angled_cut_plane)
-        intersections = intersections[intersections[:, -1] > z + EPS]
-        intersection = sorted(intersections, key=lambda x: x[-1])[0]
-        co, _, _ = intersection
-        return co
-
-    @staticmethod
-    def calculate_constraints(vector, bb, c_rm, r_ib_min, r_ob_max):
-        ri, ro, ci, gamma = vector
-
-        co = UpperPortOP.get_outer_cut_point(vector, bb)
-
-        return [
-            (r_ob_max - ci + 2 * c_rm) - (ro - co),
-            (ci - r_ib_min + 2 * c_rm) - (ro - ri),
-            (ro - ci + 2 * c_rm) - (ci - r_ib_min),
-        ]
-
-    @staticmethod
     def constrain_blanket_cut(constraint, vector, grad, bb, c_rm, r_ib_min, r_ob_max):
-
+        """ """
         constraint[:] = UpperPortOP.calculate_constraints(
             vector, bb, c_rm, r_ib_min, r_ob_max
         )
@@ -127,7 +105,51 @@ class UpperPortOP(OptimisationProblem):
 
         return constraint
 
+    @staticmethod
+    def calculate_constraints(vector, bb, c_rm, r_ib_min, r_ob_max):
+        """
+        Calculate the constraints on the upper port size.
+        """
+        ri, ro, ci, gamma = vector
+
+        co = UpperPortOP.get_outer_cut_point(bb, ci, gamma)
+
+        return [
+            (r_ob_max - ci + 2 * c_rm) - (ro - co),
+            (ci - r_ib_min + 2 * c_rm) - (ro - ri),
+            (ro - ci + 2 * c_rm) - (ci - r_ib_min),
+        ]
+
+    @staticmethod
+    def get_outer_cut_point(bb, ci, gamma):
+        """
+        Get the outer cut point radius of the cutting plane with the breeding blanket
+        geometry.
+        """
+        cut_plane = BluemiraPlacement.from_3_points([ci, 0, 0], [ci, 0, 1], [ci, 1, 1])
+        # Get the first intersection with the vertical inner cut plane
+        intersections = slice_shape(bb.boundary[0], cut_plane)
+        intersections = intersections[intersections[:, -1] > 0.0]
+        intersection = sorted(intersections, key=lambda x: x[-1])[0]
+
+        x, y, z = intersection
+        x2 = x - np.sin(np.deg2rad(gamma))
+        y2 = y
+        z2 = z + np.cos(np.deg2rad(gamma))
+        angled_cut_plane = BluemiraPlacement.from_3_points(
+            intersection, [x2, y2, z2], [x, y + 1, z]
+        )
+        # Get the last intersection with the angled cut plane and the outer
+        intersections = slice_shape(bb.boundary[0], angled_cut_plane)
+        intersections = intersections[intersections[:, -1] > z + EPS]
+        intersection = sorted(intersections, key=lambda x: x[-1])[0]
+        co, _, _ = intersection
+        return co
+
     def optimise(self, x0):
+        """
+        Solve the optimisation problem.
+        """
         return self.opt.optimise(x0)
 
 
@@ -138,7 +160,7 @@ if __name__ == "__main__":
         closed=True,
     )
     bb = BluemiraFace(bb)
-    optimiser = Optimiser("COBYLA", opt_conditions={"max_eval": 1000, "ftol_rel": 1e-8})
+    optimiser = Optimiser("SLSQP", opt_conditions={"max_eval": 1000, "ftol_rel": 1e-8})
 
     parameterisation = np.array([])
     design_problem = UpperPortOP(parameterisation, optimiser, bb)
