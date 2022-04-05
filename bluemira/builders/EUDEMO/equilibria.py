@@ -25,6 +25,7 @@ Equilibrium objects for EU-DEMO design
 
 import numpy as np
 
+from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.equilibria.eq_constraints import (
     DivertorLegCalculator,
     FieldNullConstraint,
