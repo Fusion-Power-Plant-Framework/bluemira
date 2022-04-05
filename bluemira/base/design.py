@@ -198,6 +198,7 @@ class DesignABC(abc.ABC):
 
         return component
 
+    @staticmethod
     def design_stage(name: str) -> Callable:  # noqa: N805
         """
         Design stage decorator.
