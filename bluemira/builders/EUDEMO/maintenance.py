@@ -113,7 +113,7 @@ class UpperPortOP(OptimisationProblem):
     @staticmethod
     def constrain_blanket_cut(constraint, vector, grad, bb, c_rm, r_ib_min, r_ob_max):
 
-        constraint[0] = UpperPortOP.calculate_constraints(
+        constraint[:] = UpperPortOP.calculate_constraints(
             vector, bb, c_rm, r_ib_min, r_ob_max
         )
 
@@ -138,7 +138,7 @@ if __name__ == "__main__":
         closed=True,
     )
     bb = BluemiraFace(bb)
-    optimiser = Optimiser("SLSQP", opt_conditions={"max_eval": 1000, "ftol_rel": 1e-8})
+    optimiser = Optimiser("COBYLA", opt_conditions={"max_eval": 1000, "ftol_rel": 1e-8})
 
     parameterisation = np.array([])
     design_problem = UpperPortOP(parameterisation, optimiser, bb)
