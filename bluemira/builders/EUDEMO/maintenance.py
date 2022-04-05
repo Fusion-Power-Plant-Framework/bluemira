@@ -43,11 +43,13 @@ class UpperPortOP(OptimisationProblem):
 
     Parameters
     ----------
+    optimiser: Optimiser
+        Optimiser object to use when solving this problem
+    breeding_blanket_xz: BluemiraFace
+        Unsegmentation breeding blanket x-z geometry
     """
 
-    def __init__(
-        self, parameterisation, optimiser: Optimiser, breeding_blanket_xz: BluemiraFace
-    ):
+    def __init__(self, optimiser: Optimiser, breeding_blanket_xz: BluemiraFace):
 
         objective = OptimisationObjective(self.minimise_port_size, f_objective_args={})
 
@@ -67,7 +69,7 @@ class UpperPortOP(OptimisationProblem):
                 tolerance=1e-6 * np.ones(3),
             )
         ]
-        super().__init__(parameterisation, optimiser, objective, constraints)
+        super().__init__(np.array([]), optimiser, objective, constraints)
         lower_bounds = [r_ib_min + 0.5, 9, r_ib_min + 1, 0]
         upper_bounds = [9, r_ob_max - 0.5, r_ob_max - 1, 30]
         self.set_up_optimiser(4, bounds=[lower_bounds, upper_bounds])
@@ -164,7 +166,6 @@ if __name__ == "__main__":
     bb = BluemiraFace(bb)
     optimiser = Optimiser("SLSQP", opt_conditions={"max_eval": 1000, "ftol_rel": 1e-8})
 
-    parameterisation = np.array([])
-    design_problem = UpperPortOP(parameterisation, optimiser, bb)
+    design_problem = UpperPortOP(optimiser, bb)
 
     result = design_problem.optimise([7, 10, 9, 0])
