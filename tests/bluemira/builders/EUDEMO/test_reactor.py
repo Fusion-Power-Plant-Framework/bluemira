@@ -68,6 +68,8 @@ class TestEUDEMO:
         set_log_level("DEBUG")
         try:
             self.reactor = EUDEMOReactor(params, build_config)
+            # print(self.reactor._file_manager.reference_data_dirs)
+            # raise ValueError
             self.component = self.reactor.run()
         finally:
             set_log_level(orig_log_level)
@@ -120,7 +122,7 @@ class TestEUDEMO:
             self.reactor.params.R_0.value, 0.0, self.reactor.params.z_0.value
         )
         assert field is not None
-        assert field == pytest.approx([0, -5.2742, 0])
+        assert field == pytest.approx([0, -5.0031, 0])
 
     def test_tf_save(self):
         """
