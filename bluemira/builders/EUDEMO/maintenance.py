@@ -19,21 +19,17 @@
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 
-from typing import List
-
 import numpy as np
 
 from bluemira.base.constants import EPS
 from bluemira.geometry.face import BluemiraFace
-from bluemira.geometry.parameterisations import GeometryParameterisation
 from bluemira.geometry.placement import BluemiraPlacement
-from bluemira.geometry.tools import boolean_cut, make_polygon, slice_shape
+from bluemira.geometry.tools import make_polygon, slice_shape
 from bluemira.utilities.opt_problems import (
     OptimisationConstraint,
     OptimisationObjective,
     OptimisationProblem,
 )
-from bluemira.utilities.opt_variables import BoundedVariable, OptVariables
 from bluemira.utilities.optimiser import Optimiser, approx_derivative
 
 
