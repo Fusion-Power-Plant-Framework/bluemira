@@ -19,6 +19,10 @@
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 
+"""
+Some crude EU-DEMO remote maintenance considerations
+"""
+
 import numpy as np
 
 from bluemira.base.constants import EPS
@@ -86,7 +90,9 @@ class UpperPortOP(OptimisationProblem):
 
     @staticmethod
     def constrain_blanket_cut(constraint, vector, grad, bb, c_rm, r_ib_min, r_ob_max):
-        """ """
+        """
+        Calculate the constraint and grad matrices.
+        """
         constraint[:] = UpperPortOP.calculate_constraints(
             vector, bb, c_rm, r_ib_min, r_ob_max
         )
