@@ -56,6 +56,7 @@ class DesignABC(abc.ABC):
     _build_config: Dict[str, BuildConfig]
     _builders: Dict[str, Builder]
     _solvers: Dict[str, FileProgramInterface]
+    stage: str = None
 
     def __init__(
         self,
@@ -221,6 +222,7 @@ class DesignABC(abc.ABC):
                 bluemira_print(f"Starting design stage: {name}")
                 self.stage = name
                 ret = func(self, *args, **kwargs)
+                self.stage = None
                 bluemira_print(f"Completed design stage: {name}")
                 return ret
 
@@ -253,6 +255,18 @@ class DesignABC(abc.ABC):
             raise DesignError(
                 f"Required parameters {', '.join(sorted(missing_params))} not provided to Design"
             )
+
+    def __getattribute__(self, attr):
+        """
+        Protect against undecorated design stages
+        """
+        val = super().__getattribute__(attr)
+        if attr == "stage" and val is None:
+            raise DesignError(
+                "Design stage not defined please use the design_stage decorator on your function"
+            )
+
+        return val
 
 
 class Design(DesignABC):
