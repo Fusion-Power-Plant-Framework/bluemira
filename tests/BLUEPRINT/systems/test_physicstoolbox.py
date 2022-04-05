@@ -21,12 +21,7 @@
 import numpy as np
 import pytest
 
-from BLUEPRINT.systems.physicstoolbox import (
-    E_DD_fusion,
-    E_DT_fusion,
-    IPB98y2,
-    estimate_kappa95,
-)
+from BLUEPRINT.systems.physicstoolbox import E_DD_fusion, E_DT_fusion, IPB98y2
 
 
 class TestGCSEPhysics:
