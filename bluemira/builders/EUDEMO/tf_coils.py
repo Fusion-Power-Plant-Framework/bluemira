@@ -672,9 +672,11 @@ class TFCoilsBuilder(OptimisedShapeBuilder):
         self._temp_casing = [inner, outer]
 
     def _make_centreline_koz(self, keep_out_zone):
-        """ """
+        """
+        Make a keep-out-zone for the TF coil centreline optimisation problem.
+        """
         # The keep-out zone is for the TF WP centreline, so we need add to it to prevent
-        # clashes
+        # clashes when the winding pack thickness and casing are added.
         tk_offset = 0.5 * self._params.tf_wp_width.value
         # Variable thickness of the casing is problematic...
         # TODO: Improve this estimate (or used variable offset here too..)
