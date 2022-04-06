@@ -68,6 +68,8 @@ class TestEUDEMO:
         set_log_level("DEBUG")
         try:
             self.reactor = EUDEMOReactor(params, build_config)
+            # print(self.reactor._file_manager.reference_data_dirs)
+            # raise ValueError
             self.component = self.reactor.run()
         finally:
             set_log_level(orig_log_level)
@@ -97,8 +99,10 @@ class TestEUDEMO:
         )
 
         lcfs = Coordinates(plasma_component.equilibrium.get_LCFS().xyz)
-        assert np.isclose(ref_lcfs.length, lcfs.length, rtol=1e-3)
-        assert np.isclose(ref_lcfs.center_of_mass[0], lcfs.center_of_mass[0], rtol=1e-3)
+        np.testing.assert_allclose(ref_lcfs.length, lcfs.length, rtol=1e-3)
+        np.testing.assert_allclose(
+            ref_lcfs.center_of_mass[0], lcfs.center_of_mass[0], rtol=1e-3
+        )
 
     def test_tf_build(self):
         """
@@ -118,7 +122,6 @@ class TestEUDEMO:
             self.reactor.params.R_0.value, 0.0, self.reactor.params.z_0.value
         )
         assert field is not None
-        print(field)
         assert field == pytest.approx([0, -5.0031, 0])
 
     def test_tf_save(self):

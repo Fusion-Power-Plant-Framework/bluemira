@@ -1460,7 +1460,14 @@
     "value": 0.76,
     "unit": "m",
     "source": "PROCESS",
-    "description": "Including insulation"
+    "description": "Including insulation",
+    "mapping": {
+      "PROCESS": {
+        "name": "dr_tf_wp",
+        "recv": true,
+        "send": false
+      }
+    }
   },
   "theta_inner_target": {
     "name": "Angle between flux line tangent at inner strike point and SOL side of inner target",
@@ -1881,14 +1888,7 @@
     "value": 0.5,
     "unit": "m",
     "source": "PROCESS",
-    "description": "Excluding insulation",
-    "mapping": {
-      "PROCESS": {
-        "name": "dr_tf_wp",
-        "recv": true,
-        "send": false
-      }
-    }
+    "description": "Excluding insulation"
   },
   "tk_ts": {
     "name": "TS thickness",

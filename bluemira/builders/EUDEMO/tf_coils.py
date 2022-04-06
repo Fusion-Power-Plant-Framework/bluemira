@@ -122,7 +122,6 @@ class TFCoilsBuilder(OptimisedShapeBuilder):
         "tk_tf_front_ib",
         "tk_tf_side",
         "tk_tf_ins",
-        # This isn't treated at the moment...
         "tk_tf_insgap",
         # Dubious WP depth from PROCESS (I used to tweak this when building the TF coils)
         "tf_wp_width",
@@ -171,12 +170,30 @@ class TFCoilsBuilder(OptimisedShapeBuilder):
 
     def _derive_shape_params(self):
         shape_params = super()._derive_shape_params()
+
+        # Radial width of the winding pack with no insulation or insertion gap
+        dr_wp = (
+            self._params.tf_wp_width.value
+            - 2 * self._params.tk_tf_ins.value
+            - 2 * self._params.tk_tf_insgap.value
+        )
+        self.params.add_parameter("tk_tf_wp", value=dr_wp, unit="m", source="bluemira")
+
+        # Toroidal width of the winding pack no insulation
+        dy_wp = (
+            self._params.tf_wp_depth.value
+            - 2 * self._params.tk_tf_ins
+            - 2 * self._params.tk_tf_insgap
+        )
+        self.params.add_parameter("tk_tf_wp_y", value=dy_wp, unit="m", source="bluemira")
+
         # PROCESS doesn't output the radius of the current centroid on the inboard
         r_current_in_board = (
-            self._params.r_tf_in
-            + self._params.tk_tf_nose
-            + self._params.tk_tf_ins
-            + 0.5 * (self._params.tf_wp_width - 2 * self._params.tk_tf_ins)
+            self._params.r_tf_in.value
+            + self._params.tk_tf_nose.value
+            + self._params.tk_tf_ins.value
+            + self._params.tk_tf_insgap.value
+            + 0.5 * dr_wp
         )
         self._params.add_parameter(
             "r_tf_current_ib",
@@ -294,11 +311,15 @@ class TFCoilsBuilder(OptimisedShapeBuilder):
         component = Component("xz")
 
         # Winding pack
-        x_min = self._wp_cross_section.bounding_box.x_min
-        x_centreline_in = self._centreline.bounding_box.x_min
-        dx = abs(x_min - x_centreline_in)
-        wp_outer = offset_wire(self._centreline, dx, join="arc")
-        wp_inner = offset_wire(self._centreline, -dx, join="arc")
+        # x_min = self._wp_cross_section.bounding_box.x_min
+        # x_centreline_in = self._centreline.bounding_box.x_min
+        # dx = abs(x_min - x_centreline_in)
+        wp_outer = offset_wire(
+            self._centreline, 0.5 * self._params.tk_tf_wp.value, join="arc"
+        )
+        wp_inner = offset_wire(
+            self._centreline, -0.5 * self._params.tk_tf_wp.value, join="arc"
+        )
 
         winding_pack = PhysicalComponent(
             "Winding pack", BluemiraFace([wp_outer, wp_inner])
@@ -306,11 +327,12 @@ class TFCoilsBuilder(OptimisedShapeBuilder):
         winding_pack.plot_options.face_options["color"] = BLUE_PALETTE["TF"][1]
         component.add_child(winding_pack)
 
-        # Insulation
-        ins_o_outer = offset_wire(wp_outer, self.params.tk_tf_ins.value, join="arc")
+        # Insulation + Insertion gap
+        offset_tk = self._params.tk_tf_ins.value + self._params.tk_tf_insgap.value
+        ins_o_outer = offset_wire(wp_outer, offset_tk, join="arc")
         ins_outer = PhysicalComponent("inner", BluemiraFace([ins_o_outer, wp_outer]))
         ins_outer.plot_options.face_options["color"] = BLUE_PALETTE["TF"][2]
-        ins_i_inner = offset_wire(wp_inner, -self.params.tk_tf_ins, join="arc")
+        ins_i_inner = offset_wire(wp_inner, -offset_tk, join="arc")
         ins_inner = PhysicalComponent(
             "Insulation", BluemiraFace([wp_inner, ins_i_inner])
         )
@@ -480,9 +502,7 @@ class TFCoilsBuilder(OptimisedShapeBuilder):
         bb = boundary.bounding_box
         z_min = bb.z_min
         z_max = bb.z_max
-        y_in = 0.5 * (
-            self.params.tf_wp_depth + self.params.tk_tf_ins + self.params.tk_tf_side
-        )
+        y_in = 0.5 * (self.params.tf_wp_depth + self.params.tk_tf_side)
 
         inner_xs.translate((0, 0, z_min - inner_xs.center_of_mass[2]))
         inboard_casing = extrude_shape(BluemiraFace(inner_xs), (0, 0, z_max - z_min))
@@ -544,8 +564,8 @@ class TFCoilsBuilder(OptimisedShapeBuilder):
         """
         circuit = ArbitraryPlanarRectangularXSCircuit(
             self._centreline.discretize(byedges=True, ndiscr=100),
-            breadth=0.5 * self.params.tf_wp_width - self.params.tk_tf_ins,
-            depth=0.5 * self.params.tf_wp_depth - self.params.tk_tf_ins,
+            breadth=0.5 * self.params.tk_tf_wp.value,
+            depth=0.5 * self.params.tk_tf_wp_y.value,
             current=1,
         )
         solver = HelmholtzCage(circuit, self.params.n_TF.value)
@@ -556,12 +576,12 @@ class TFCoilsBuilder(OptimisedShapeBuilder):
 
     def _make_wp_xs(self):
         """
-        Make the winding pack x-y cross-section wire
+        Make the winding pack x-y cross-section wire (excluding insulation and
+        insertion gap)
         """
         x_c = self.params.r_tf_current_ib
-        # PROCESS WP thickness includes insulation and insertion gap
-        d_xc = 0.5 * (self.params.tf_wp_width - 2 * self.params.tk_tf_ins)
-        d_yc = 0.5 * (self.params.tf_wp_depth - 2 * self.params.tk_tf_ins)
+        d_xc = 0.5 * self.params.tk_tf_wp.value
+        d_yc = 0.5 * self.params.tk_tf_wp_y.value
         wp_xs = make_polygon(
             [
                 [x_c - d_xc, x_c + d_xc, x_c + d_xc, x_c - d_xc],
@@ -574,10 +594,13 @@ class TFCoilsBuilder(OptimisedShapeBuilder):
 
     def _make_ins_xs(self):
         """
-        Make the insulation x-y cross-section faces
+        Make the insulation + insertion gap x-y cross-section faces
         """
         x_out = self._centreline.bounding_box.x_max
-        ins_outer = offset_wire(self._wp_cross_section, self._params.tk_tf_ins.value)
+        ins_outer = offset_wire(
+            self._wp_cross_section,
+            self._params.tk_tf_ins.value + self._params.tk_tf_insgap.value,
+        )
         face = BluemiraFace([ins_outer, self._wp_cross_section])
 
         outer_face = deepcopy(face)
@@ -589,7 +612,7 @@ class TFCoilsBuilder(OptimisedShapeBuilder):
         Make the casing x-y cross-section wires
         """
         x_in = self.params.r_tf_in
-        # Insulation included in WP width
+        # Insulation and insertion gap included in WP width
         x_out = (
             x_in
             + self.params.tk_tf_nose
