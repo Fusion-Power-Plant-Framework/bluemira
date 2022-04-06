@@ -216,7 +216,7 @@ class ChargedParticleSolver:
         self.flux_surfaces_ob_hfs = []
 
         x = self.x_sep_omp + self.dx_mp
-        while x < x_out_omp:
+        while x < x_out_omp - EPS:
             lfs, hfs = self._make_flux_surfaces(x, self._o_point.z)
             self.flux_surfaces_ob_lfs.append(lfs)
             self.flux_surfaces_ob_hfs.append(hfs)
@@ -231,11 +231,30 @@ class ChargedParticleSolver:
         self.flux_surfaces_ib_lfs = []
         self.flux_surfaces_ib_hfs = []
         x = self.x_sep_imp - self.dx_mp
-        while x > x_out_imp:
+        while x > x_out_imp + EPS:
             lfs, hfs = self._make_flux_surfaces(x, self._o_point.z)
             self.flux_surfaces_ib_lfs.append(lfs)
             self.flux_surfaces_ib_hfs.append(hfs)
             x -= self.dx_mp
+
+    def _clip_flux_surfaces(self, first_wall):
+        """
+        Clip the flux surfaces to a first wall. Catch the cases where no intersections
+        are found.
+        """
+        for group in [
+            self.flux_surfaces_ob_lfs,
+            self.flux_surfaces_ob_hfs,
+            self.flux_surfaces_ib_lfs,
+            self.flux_surfaces_ib_hfs,
+        ]:
+            if group:
+                for i, flux_surface in enumerate(group):
+                    flux_surface.clip(first_wall)
+                    if flux_surface.alpha is None:
+                        # No intersection detected between flux surface and first wall
+                        # Drop the flux surface from the group
+                        group.pop(i)
 
     def analyse(self, first_wall):
         """
@@ -273,8 +292,7 @@ class ChargedParticleSolver:
         self._make_flux_surfaces_ob()
 
         # Find the intersections of the flux surfaces with the first wall
-        for flux_surface in self.flux_surfaces:
-            flux_surface.clip(first_wall)
+        self._clip_flux_surfaces(first_wall)
 
         x_omp, z_omp, x_lfs_inter, z_lfs_inter, alpha_lfs = self._get_arrays(
             self.flux_surfaces_ob_lfs
@@ -322,8 +340,7 @@ class ChargedParticleSolver:
         self._make_flux_surfaces_ib()
 
         # Find the intersections of the flux surfaces with the first wall
-        for flux_surface in self.flux_surfaces:
-            flux_surface.clip(first_wall)
+        self._clip_flux_surfaces(first_wall)
 
         (
             x_omp,

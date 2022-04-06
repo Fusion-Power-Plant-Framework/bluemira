@@ -34,6 +34,7 @@ import numba as nb
 import numpy as np
 from scipy.integrate import solve_ivp
 
+from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.equilibria.constants import PSI_NORM_TOL
 from bluemira.equilibria.error import FluxSurfaceError
 from bluemira.equilibria.find import find_flux_surface_through_point
@@ -464,6 +465,13 @@ class PartialOpenFluxSurface(OpenFluxSurface):
         first_wall = first_wall.copy()
 
         args = join_intersect(self.loop, first_wall, get_arg=True)
+
+        if not args:
+            bluemira_warn(
+                "No intersection detected between flux surface and first_wall."
+            )
+            self.alpha = None
+            return
 
         # Because we oriented the loop the "right" way, the first intersection
         # is at the smallest argument

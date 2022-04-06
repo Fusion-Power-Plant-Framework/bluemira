@@ -181,3 +181,22 @@ class TestChargedParticleRecursionDN:
     def test_recursion(self):
         assert np.isclose(np.max(self.hf), 86.194, rtol=1e-2)
         assert np.isclose(np.sum(self.hf), 830.6, rtol=1e-2)
+
+    def test_analyse_DN(self, caplog):
+        fw = self.solver.first_wall.copy()
+        self.solver.flux_surfaces_ob_hfs = []
+        self.solver.flux_surfaces_ob_lfs = []
+        x_sep_omp, x_wall_limit = self.solver._get_sep_out_intersection(outboard=True)
+
+        x = x_sep_omp + 1e-3
+        while x < x_wall_limit + 2e-3:
+            lfs, hfs = self.solver._make_flux_surfaces(x, self.solver._o_point.z)
+            self.solver.flux_surfaces_ob_lfs.append(lfs)
+            self.solver.flux_surfaces_ob_hfs.append(hfs)
+            x += 1e-3
+
+        fs_before_pop = self.solver.flux_surfaces
+        self.solver._clip_flux_surfaces(fw)
+        fs_after_pop = self.solver.flux_surfaces
+        assert len(fs_before_pop) > len(fs_after_pop)
+        assert "No intersection detected" in caplog.text
