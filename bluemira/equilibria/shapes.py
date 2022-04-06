@@ -434,13 +434,6 @@ class JohnerLCFS(GeometryParameterisation):
                     descr="Lower triangularity",
                 ),
                 BoundedVariable(
-                    "delta_u",
-                    0.4,
-                    lower_bound=0.2,
-                    upper_bound=0.6,
-                    descr="Upper triangularity",
-                ),
-                BoundedVariable(
                     "phi_u_neg",
                     180,
                     lower_bound=160,
