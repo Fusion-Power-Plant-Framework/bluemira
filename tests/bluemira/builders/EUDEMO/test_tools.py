@@ -25,7 +25,9 @@ import numpy as np
 import pytest
 from scipy.interpolate import interp1d
 
+from bluemira.base.error import BuilderError
 from bluemira.builders.EUDEMO.tools import (
+    make_circular_xy_ring,
     pattern_lofted_silhouette,
     pattern_revolved_silhouette,
     varied_offset,
@@ -239,3 +241,27 @@ class TestPatterning:
         for i in range(len(shapes) - 1):
             distances.append(distance_to(shapes[i], shapes[i + 1])[0])
         return distances
+
+
+class TestMakeCircularRing:
+    fixture = [
+        (0.002, 0.003),
+        (3, 4),
+        (3.15, 3.16),
+        (1e5, 1e6),
+    ]
+
+    @pytest.mark.parametrize("r_in, r_out", fixture)
+    def test_annulus_area(self, r_in, r_out):
+        face = make_circular_xy_ring(r_in, r_out)
+        np.testing.assert_almost_equal(face.area, np.pi * (r_out**2 - r_in**2))
+
+    @pytest.mark.parametrize("r_in, r_out", fixture)
+    def test_annulus_area_reversed_radii(self, r_in, r_out):
+        r_out, r_in = r_in, r_out
+        face = make_circular_xy_ring(r_in, r_out)
+        np.testing.assert_almost_equal(face.area, np.pi * (r_in**2 - r_out**2))
+
+    def test_raises_error_on_equal_radii(self):
+        with pytest.raises(BuilderError):
+            make_circular_xy_ring(1, 1)

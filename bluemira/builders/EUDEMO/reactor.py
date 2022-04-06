@@ -36,6 +36,7 @@ from bluemira.builders.EUDEMO.ivc.ivc import build_ivc_xz_shapes
 from bluemira.builders.EUDEMO.pf_coils import PFCoilsBuilder
 from bluemira.builders.EUDEMO.plasma import PlasmaBuilder
 from bluemira.builders.EUDEMO.tf_coils import TFCoilsBuilder
+from bluemira.builders.EUDEMO.vacuum_vessel import VacuumVesselBuilder
 from bluemira.builders.radiation_shield import RadiationShieldBuilder
 from bluemira.builders.thermal_shield import ThermalShieldBuilder
 from bluemira.codes import systems_code_solver
@@ -54,6 +55,7 @@ class EUDEMOReactor(Reactor):
     TF_COILS = "TF Coils"
     PF_COILS = "PF Coils"
     IVC = "In-Vessel Components"
+    VACUUM_VESSEL = "Vacuum Vessel"
     THERMAL_SHIELD = "Thermal Shield"
     CRYOSTAT = "Cryostat"
     RADIATION_SHIELD = "Radiation Shield"
@@ -69,8 +71,9 @@ class EUDEMOReactor(Reactor):
         (
             blanket_face,
             divertor_face,
-            _,
+            ivc_boundary,
         ) = self.build_in_vessel_component_shapes(component)
+        component.add_child(self.build_vacuum_vessel(component, ivc_boundary))
         component.add_child(self.build_divertor(component, divertor_face))
         component.add_child(self.build_blanket(component, blanket_face))
         component.add_child(self.build_TF_coils(component))
@@ -337,6 +340,27 @@ class EUDEMOReactor(Reactor):
 
         builder = BlanketBuilder(
             self._params.to_dict(), config, blanket_silhouette=blanket_face
+        )
+        self.register_builder(builder, name)
+        component = super()._build_stage(name)
+
+        bluemira_print(f"Completed design stage: {name}")
+
+        return component
+
+    def build_vacuum_vessel(self, component_tree: Component, ivc_boundary):
+        """
+        Run the reactor vacuum vessel build.
+        """
+        name = EUDEMOReactor.VACUUM_VESSEL
+
+        bluemira_print(f"Starting design stage: {name}")
+
+        default_config = {}
+        config = self._process_design_stage_config(name, default_config)
+
+        builder = VacuumVesselBuilder(
+            self._params.to_dict(), config, ivc_koz=ivc_boundary
         )
         self.register_builder(builder, name)
         component = super()._build_stage(name)

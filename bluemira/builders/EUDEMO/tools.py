@@ -29,6 +29,8 @@ import numpy as np
 
 import bluemira.base.components as bm_comp
 import bluemira.geometry as bm_geo
+from bluemira.base.constants import EPS
+from bluemira.base.error import BuilderError
 from bluemira.builders.EUDEMO._varied_offset import varied_offset
 from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.tools import (
@@ -36,6 +38,7 @@ from bluemira.geometry.tools import (
     boolean_fuse,
     circular_pattern,
     extrude_shape,
+    make_circle,
     make_polygon,
     revolve_shape,
     sweep_shape,
@@ -275,3 +278,20 @@ def _order_shapes_anticlockwise(shapes):
     angles = np.where(y > 0, np.arccos(x / r), 2 * np.pi - np.arccos(x / r))
     indices = np.argsort(angles)
     return list(np.array(shapes)[indices])
+
+
+def make_circular_xy_ring(r_inner, r_outer):
+    """
+    Make a circular annulus in the x-y plane (z=0)
+    """
+    centre = (0, 0, 0)
+    axis = (0, 0, 1)
+    if np.isclose(r_inner, r_outer, rtol=0, atol=2 * EPS):
+        raise BuilderError(f"Cannot make an annulus where r_inner = r_outer = {r_inner}")
+
+    if r_inner > r_outer:
+        r_inner, r_outer = r_outer, r_inner
+
+    inner = make_circle(r_inner, center=centre, axis=axis)
+    outer = make_circle(r_outer, center=centre, axis=axis)
+    return BluemiraFace([outer, inner])
