@@ -102,6 +102,7 @@ class VacuumVesselBuilder(Builder):
         inner_vv = offset_wire(
             self._ivc_koz, self._params.g_vv_bb.value, join="arc", open_wire=False
         )
+        # TODO: Calculate these / get them from params
         angle_1 = 80
         angle_2 = 160
         outer_vv = varied_offset(
