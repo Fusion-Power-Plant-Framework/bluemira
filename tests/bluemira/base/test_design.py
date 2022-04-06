@@ -82,6 +82,16 @@ class TestDesign:
         if tests.PLOTTING:
             component.plot_2d()
 
+    def test_stage_usage(self):
+        design = Design(self.params, self.build_config)
+        with pytest.raises(DesignError):
+            design.stage
+
+        design._stage.append("test")
+        design._stage.append("test2")
+
+        assert design.stage == "test2"
+
     def test_params_validation(self):
         bad_params = copy.deepcopy(self.params)
         bad_params.pop("Name")

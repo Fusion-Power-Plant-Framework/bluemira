@@ -29,7 +29,7 @@ import abc
 import copy
 import functools
 import typing
-from typing import Callable, Dict, Optional, Set, Type, Union
+from typing import Callable, Dict, List, Optional, Set, Type, Union
 
 from bluemira.base.builder import BuildConfig, Builder
 from bluemira.base.components import Component
@@ -56,7 +56,7 @@ class DesignABC(abc.ABC):
     _build_config: Dict[str, BuildConfig]
     _builders: Dict[str, Builder]
     _solvers: Dict[str, FileProgramInterface]
-    stage: str = None
+    _stage: List = []
 
     def __init__(
         self,
@@ -90,6 +90,22 @@ class DesignABC(abc.ABC):
         The build configuration associated with this Design.
         """
         return self._build_config
+
+    @property
+    def stage(self):
+        """
+        Stage label
+
+        Raises
+        ------
+        DesignError when stage not registered
+        """
+        try:
+            return self._stage[-1]
+        except IndexError:
+            raise DesignError(
+                "Design stage not defined please use the design_stage decorator on your function"
+            ) from None
 
     @abc.abstractmethod
     def run(self) -> Component:
@@ -200,7 +216,7 @@ class DesignABC(abc.ABC):
         return component
 
     @staticmethod
-    def design_stage(name: str) -> Callable:  # noqa: N805
+    def design_stage(name: str) -> Callable:
         """
         Design stage decorator.
         Adds some printing to each stage and sets the 'stage' variable
@@ -220,9 +236,9 @@ class DesignABC(abc.ABC):
             @functools.wraps(func)
             def wrapper(self, *args, **kwargs):
                 bluemira_print(f"Starting design stage: {name}")
-                self.stage = name
+                self._stage.append(name)
                 ret = func(self, *args, **kwargs)
-                self.stage = None
+                self._stage.pop()
                 bluemira_print(f"Completed design stage: {name}")
                 return ret
 
@@ -256,18 +272,6 @@ class DesignABC(abc.ABC):
                 f"Required parameters {', '.join(sorted(missing_params))} not provided to Design"
             )
 
-    def __getattribute__(self, attr):
-        """
-        Protect against undecorated design stages
-        """
-        val = super().__getattribute__(attr)
-        if attr == "stage" and val is None:
-            raise DesignError(
-                "Design stage not defined please use the design_stage decorator on your function"
-            )
-
-        return val
-
 
 class Design(DesignABC):
     """
@@ -296,7 +300,7 @@ class Design(DesignABC):
 
         for builder in self._builders.values():
             component.add_child(
-                Design.design_stage(builder.name)(Design._build_stage)(self)
+                self.design_stage(builder.name)(Design._build_stage)(self)
             )
 
         bluemira_print("Design Complete!")
@@ -315,9 +319,10 @@ class Design(DesignABC):
             builder_class: Type[Builder] = get_class_from_module(
                 class_name, default_module="bluemira.builders"
             )
-            self.stage = key
+            self._stage.append(key)
             self.register_builder(builder_class(params, val))
             self._required_params |= set(self._builders[key]._required_params)
+            self._stage.pop()
 
 
 class Reactor(DesignABC):
