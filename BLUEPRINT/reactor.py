@@ -41,6 +41,7 @@ from bluemira.base.config import SingleNull
 from bluemira.base.file import BM_ROOT, FileManager, get_files_by_ext
 from bluemira.base.look_and_feel import bluemira_print, bluemira_warn, print_banner
 from bluemira.base.parameter import ParameterFrame
+from bluemira.builders.EUDEMO.equilibria import estimate_kappa95
 
 # PROCESS imports
 from bluemira.codes import systems_code_solver
@@ -107,12 +108,7 @@ from BLUEPRINT.systems.optimisation_callbacks import (
     FW_optimiser,
     TF_optimiser,
 )
-from BLUEPRINT.systems.physicstoolbox import (
-    estimate_kappa95,
-    lambda_q,
-    n_DD_reactions,
-    n_DT_reactions,
-)
+from BLUEPRINT.systems.physicstoolbox import lambda_q, n_DD_reactions, n_DT_reactions
 from BLUEPRINT.systems.plotting import ReactorPlotter
 from BLUEPRINT.utilities.colortools import force_rgb
 

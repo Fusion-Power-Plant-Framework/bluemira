@@ -44,63 +44,6 @@ from bluemira.base.look_and_feel import bluemira_warn
 from BLUEPRINT.utilities.tools import PowerLawScaling
 
 
-def estimate_kappa95(A, m_s_limit):
-    """
-    Estimate the maximum kappa_95 for a given aspect ratio and margin to
-    stability. It is always better to have as high a kappa_95 as possible, so
-    we maximise it here, for a specified margin to stability value.
-
-    Parameters
-    ----------
-    A: float
-        The aspect ratio of the plasma
-    m_s_limit: float
-        The margin to stability (typically ~0.3)
-
-    Returns
-    -------
-    kappa_95: float
-        The maximum elongation for the specified input values
-
-    Notes
-    -----
-    The model used here is a 2nd order polynomial surface fit, generated using
-    data from CREATE. A quadratic equation is then solved for kappa_95, based
-    on the polynomial surface fit.
-    The data are stored in: data/equilibria/vertical_stability_data.json
-
-    This is only a crude model, and is only relevant for EU-DEMO-like machines.
-
-    Furthermore, this is only for flat-top..! Ramp-up and ramp-down may be
-    design driving. Exercise caution.
-
-    \t:math:`m_{s} = a\\kappa_{95}^{2}+bA^{2}+c\\kappa A+d\\kappa+eA+f`\n
-    \t:math:`\\kappa_{95}(A, m_{s}) = \\dfrac{-d-cA-\\sqrt{(c^{2}-4ab)A^{2}+(2dc-4ae)A+d^{2}-4af+4am_{s})}}{2a}`
-    """  # noqa :W505
-    a = 8.39148185
-    b = -0.17713049
-    c = 1.9031585
-    d = -37.17364535
-    e = -2.54598909
-    f = 38.75101822
-
-    kappa_95 = (
-        -d
-        - c * A
-        - np.sqrt(
-            (c**2 - 4 * a * b) * A**2
-            + (2 * d * c - 4 * a * e) * A
-            + d**2
-            - 4 * a * f
-            + 4 * a * m_s_limit
-        )
-    ) / (2 * a)
-
-    # Include power correction for more conservative extrapolation from low
-    # number of data points
-    return kappa_95**0.98
-
-
 # TODO UPDATE:  EF says this is wrong or not the best
 def plasma_resistance(R_0, A, z_eff, kappa, t_e):
     """

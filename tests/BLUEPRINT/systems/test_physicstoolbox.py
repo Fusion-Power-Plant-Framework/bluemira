@@ -21,12 +21,7 @@
 import numpy as np
 import pytest
 
-from BLUEPRINT.systems.physicstoolbox import (
-    E_DD_fusion,
-    E_DT_fusion,
-    IPB98y2,
-    estimate_kappa95,
-)
+from BLUEPRINT.systems.physicstoolbox import E_DD_fusion, E_DT_fusion, IPB98y2
 
 
 class TestGCSEPhysics:
@@ -62,13 +57,3 @@ class TestTE:
         kappa = 1.85
         te = IPB98y2(i_p, b_t, p_sep, n19, r_0, a, kappa)
         assert np.isclose(te, 3.7, rtol=1e-3), f"{te:2f}"
-
-
-class TestKappaLaw:
-    def test_kappa(self):
-        k95 = estimate_kappa95(3.6, 0.3)
-        assert np.isclose(k95, 1.58, rtol=5e-2)
-        k95 = estimate_kappa95(3.1, 0.3)
-        assert np.isclose(k95, 1.67, rtol=5e-2)
-        k95 = estimate_kappa95(2.6, 0.3)
-        assert np.isclose(k95, 1.725, rtol=5e-2)

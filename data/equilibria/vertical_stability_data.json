@@ -15,7 +15,9 @@
         1.6519287833827891,
         1.6792284866468843,
         1.7077151335311571,
-	1.75,
+        1.66,
+        1.77,
+        1.8
     ],
     "A": [
         3.6,
@@ -33,7 +35,9 @@
         2.6,
         2.6,
         2.6,
-	2.6,
+	    3.6,
+        3.1,
+        2.6
     ],
     "m_stability": [
         0.6655172413793103,
@@ -51,10 +55,12 @@
         0.603448275862069,
         0.49310344827586194,
         0.3999999999999999,
-	0.2,
+	    0.0,
+        0.0,
+        0.0
     ],
     "source": "These data come from a CREATE report (2L4NMJ) commissioned by EUROfusion.",
     "author": "R. Albanese et al.",
     "date": "26/11/2014",
-    "comment": "The last data point is in fact not data, but a necessary extrapolation for the A=2.6 case.",
+    "comment": "The last three data points are in fact not data, but recommendation extrapolations, as specified in the conclusions of PPPT_Final-Report_WPMI_7.3.1.1_VS_Albanese_2M5CJJ_v1_0 for the A=2.6 case."
 }
