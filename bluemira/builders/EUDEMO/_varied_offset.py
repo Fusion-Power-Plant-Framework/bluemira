@@ -71,9 +71,6 @@ def varied_offset(
     offset_wire: BluemiraWire
         New wire at a variable offset to the input.
     """
-    from bluemira.display import show_cad
-
-    show_cad(wire)
     _throw_if_inputs_invalid(wire, inboard_offset_degree, outboard_offset_degree)
     coordinates = wire.discretize(num_points, byedges=True)
     if not np.all(coordinates.normal_vector == [0, 1, 0]):
