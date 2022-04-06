@@ -225,7 +225,7 @@ build_config = {
         "runmode": "read",  # ["run", "read", "mock"]
     },
     "TF Coils": {
-        "runmode": "run",  # ["run", "read", "mock"]
+        "runmode": "read",  # ["run", "read", "mock"]
         "param_class": "TripleArc",
         "variables_map": {
             "x1": {
