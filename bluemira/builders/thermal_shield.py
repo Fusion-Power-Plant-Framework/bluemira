@@ -52,7 +52,7 @@ from bluemira.geometry.tools import (
 from bluemira.geometry.wire import BluemiraWire
 
 
-class VVTSBuilder(Builder):
+class VacuumVesselThermalShieldBuilder(Builder):
     """
     Build for the vacuum vessel thermal shield (VVTS).
     """
@@ -156,7 +156,7 @@ class VVTSBuilder(Builder):
         return component
 
 
-class ThermalShieldBuilder(Builder):
+class CyrostatThermalShieldBuilder(Builder):
     """
     Builder for the thermal shield
     """

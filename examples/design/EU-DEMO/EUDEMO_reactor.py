@@ -44,7 +44,7 @@ from bluemira.builders.EUDEMO.tf_coils import TFCoilsBuilder
 from bluemira.builders.EUDEMO.vacuum_vessel import VacuumVesselBuilder
 from bluemira.builders.radiation_shield import RadiationShieldBuilder
 from bluemira.builders.tf_coils import RippleConstrainedLengthGOP
-from bluemira.builders.thermal_shield import ThermalShieldBuilder
+from bluemira.builders.thermal_shield import CyrostatThermalShieldBuilder
 from bluemira.codes import plot_radial_build
 from bluemira.codes.plasmod.mapping import (  # noqa: N812
     create_mapping as create_PLASMOD_mappings,
@@ -511,7 +511,7 @@ vessel_builder: VacuumVesselBuilder = reactor.get_builder(EUDEMOReactor.VACUUM_V
 blanket_builder: BlanketBuilder = reactor.get_builder(EUDEMOReactor.BLANKET)
 tf_coils_builder: TFCoilsBuilder = reactor.get_builder(EUDEMOReactor.TF_COILS)
 pf_coils_builder: PFCoilsBuilder = reactor.get_builder(EUDEMOReactor.PF_COILS)
-thermal_shield_builder: ThermalShieldBuilder = reactor.get_builder(
+thermal_shield_builder: CyrostatThermalShieldBuilder = reactor.get_builder(
     EUDEMOReactor.THERMAL_SHIELD
 )
 cryostat_builder: CryostatBuilder = reactor.get_builder(EUDEMOReactor.CRYOSTAT)
