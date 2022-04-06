@@ -24,6 +24,7 @@ Tests for the design module.
 """
 
 import copy
+from unittest.mock import MagicMock
 
 import pytest
 
@@ -91,6 +92,18 @@ class TestDesign:
         design._stage.append("test2")
 
         assert design.stage == "test2"
+
+    def test_design_stage_decorator(self):
+        fake_self = MagicMock()
+        fake_self._stage = []
+
+        @Design.design_stage("MOCK STAGE")
+        def func(self):
+            return self._stage.copy(), self._stage
+
+        stage_copy, stage = func(fake_self)
+        assert stage_copy == ["MOCK STAGE"]
+        assert stage == []
 
     def test_params_validation(self):
         bad_params = copy.deepcopy(self.params)
