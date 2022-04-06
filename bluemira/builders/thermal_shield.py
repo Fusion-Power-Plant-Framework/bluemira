@@ -284,14 +284,9 @@ class ThermalShieldBuilder(Builder):
         """
         # Cryostat thermal shield
         mid_plane = BluemiraPlacement()
-        intersections = slice_shape(self._cts_face.boundary[0], mid_plane)
-        r_values = np.array(intersections)[:, 0]
-        r_in = np.min(r_values)
-        r_out = np.max(r_values)
-        inner = make_circle(radius=r_in)
-        outer = make_circle(radius=r_out)
+        r_in, r_out = find_xy_plane_radii(self._cts_face.boundary[0], mid_plane)
 
-        cts = BluemiraFace([outer, inner])
+        cts = make_circular_xy_ring(r_in, r_out)
         cryostat_ts = PhysicalComponent("Cryostat TS", cts)
         cryostat_ts.plot_options.face_options["color"] = BLUE_PALETTE["TS"][0]
 
