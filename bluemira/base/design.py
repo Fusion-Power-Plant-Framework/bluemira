@@ -56,7 +56,7 @@ class DesignABC(abc.ABC):
     _build_config: Dict[str, BuildConfig]
     _builders: Dict[str, Builder]
     _solvers: Dict[str, FileProgramInterface]
-    _stage: List = []
+    _stage: List[str] = []
 
     def __init__(
         self,
