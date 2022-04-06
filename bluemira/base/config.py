@@ -135,6 +135,17 @@ class Configuration(ConfigurationSchema, ParameterFrame):
         ["f_lfs_upper_target", "Fraction of SOL power deposited on the LFS upper target (DN only)", 0.5, "dimensionless", None, "Input"],
         ["f_hfs_upper_target", "Fraction of SOL power deposited on the HFS upper target (DN only)", 0.5, "dimensionless", None, "Input"],
 
+        # Variables for radiation
+        ["p_sol", "power entering the SoL", 300e6, "W", None, "Input"],
+        ["lambda_q_n", "near SoL decay length", 0.01, "m", None, "Input"],
+        ["lambda_q_f", "far SoL decay length", 0.1, "m", None, "Input"],
+        ["k_0", "material's conductivity", 2000, "dimensionless", None, "Input"],
+        ["gamma", "sheat heat transmission coefficient", 7, "dimensionless", None, "Input"],
+        ["eps_cool", "electron energy loss", 25, "eV", None, "Input"],
+        ["f_ion_t", "Hydrogen first ionization", 10, "eV", None, "Input"],
+        ["lfs_p_fraction", "lfs fraction of SoL power", 0.8, "dimensionless", None, "Input"],
+        ["div_p_sharing", "Power fraction towards each divertor", 0.5, "dimensionless", None, "Input"],
+
         # Divertor profile
         ['div_L2D_ib', 'Inboard divertor leg length', 1.1, 'm', None, 'Input'],
         ['div_L2D_ob', 'Outboard divertor leg length', 1.45, 'm', None, 'Input'],

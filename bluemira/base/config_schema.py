@@ -125,6 +125,17 @@ class ConfigurationSchema:
     f_hfs_lower_target: Parameter
     f_hfs_upper_target: Parameter
 
+    # Variables for radiation
+    p_sol: Parameter
+    lambda_q_n: Parameter
+    lambda_q_f: Parameter
+    k_0: Parameter
+    gamma: Parameter
+    eps_cool: Parameter
+    f_ion_t: Parameter
+    lfs_p_fraction: Parameter
+    div_p_sharing: Parameter
+
     # Divertor profile
     div_L2D_ib: Parameter
     div_L2D_ob: Parameter
