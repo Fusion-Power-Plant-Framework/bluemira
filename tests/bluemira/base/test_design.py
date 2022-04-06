@@ -97,13 +97,18 @@ class TestDesign:
         fake_self = MagicMock()
         fake_self._stage = []
 
-        @Design.design_stage("MOCK STAGE")
+        @Design.design_stage("MOCK STAGE1")
         def func(self):
-            return self._stage.copy(), self._stage
+            return self._stage.copy(), self._stage, func2(self)
 
-        stage_copy, stage = func(fake_self)
-        assert stage_copy == ["MOCK STAGE"]
-        assert stage == []
+        @Design.design_stage("MOCK STAGE2")
+        def func2(self):
+            return self._stage.copy()
+
+        stage_copy1, stage1, stage_copy2 = func(fake_self)
+        assert stage_copy1 == ["MOCK STAGE1"]
+        assert stage_copy2 == ["MOCK STAGE1", "MOCK STAGE2"]
+        assert stage1 == []
 
     def test_params_validation(self):
         bad_params = copy.deepcopy(self.params)
