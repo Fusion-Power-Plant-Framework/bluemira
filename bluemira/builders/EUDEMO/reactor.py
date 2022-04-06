@@ -38,7 +38,10 @@ from bluemira.builders.EUDEMO.plasma import PlasmaBuilder
 from bluemira.builders.EUDEMO.tf_coils import TFCoilsBuilder
 from bluemira.builders.EUDEMO.vacuum_vessel import VacuumVesselBuilder
 from bluemira.builders.radiation_shield import RadiationShieldBuilder
-from bluemira.builders.thermal_shield import ThermalShieldBuilder, VVTSBuilder
+from bluemira.builders.thermal_shield import (
+    CyrostatThermalShieldBuilder,
+    VacuumVesselThermalShieldBuilder,
+)
 from bluemira.codes import systems_code_solver
 from bluemira.codes.process import NAME as PROCESS
 
@@ -252,7 +255,9 @@ class EUDEMOReactor(Reactor):
         default_config = {}
         config = self._process_design_stage_config(name, default_config)
 
-        builder = VVTSBuilder(self._params.to_dict(), config, vv_koz=vv_koz)
+        builder = VacuumVesselThermalShieldBuilder(
+            self._params.to_dict(), config, vv_koz=vv_koz
+        )
 
         self.register_builder(builder, name)
         component = super()._build_stage(name)
@@ -265,7 +270,7 @@ class EUDEMOReactor(Reactor):
         """
         Run the cryostat thermal shield build.
         """
-        name = self.THERMAL_SHIELD
+        name = "Cryostat " + self.THERMAL_SHIELD
 
         bluemira_print(f"Starting design stage: {name}")
 
@@ -282,7 +287,7 @@ class EUDEMOReactor(Reactor):
         default_config = {}
         config = self._process_design_stage_config(name, default_config)
 
-        builder = ThermalShieldBuilder(
+        builder = CyrostatThermalShieldBuilder(
             self._params.to_dict(),
             config,
             pf_coils_xz_kozs=pf_kozs,
