@@ -44,7 +44,6 @@ from bluemira.geometry.placement import BluemiraPlacement
 from bluemira.geometry.tools import (
     boolean_cut,
     boolean_fuse,
-    make_circle,
     make_polygon,
     offset_wire,
     revolve_shape,
