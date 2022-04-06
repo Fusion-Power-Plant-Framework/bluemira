@@ -159,13 +159,13 @@ class VacuumVesselBuilder(Builder):
             base=base,
             direction=direction,
             degree=degree
-            - 1,  # TODO: Put back `degree/ self._params.n_TF.value,` (#901)
+            - 1,  # TODO: Put back `degree/ self._params.n_TF.value,` (#902)
         )
 
         vv = PhysicalComponent("Body", vv_body)
         vv.display_cad_options.color = BLUE_PALETTE["VV"][0]
         component = Component("xyz", children=[vv])
-        # TODO: Put back sector segmentation (see #901 for details)
+        # TODO: Put back sector segmentation (see #902 for details)
         # n_vv_draw = max(1, int(degree // (360 // self._params.n_TF.value)))
         # degree = (360.0 / self._params.n_TF.value) * n_vv_draw
         # sectors = circular_pattern_component(vv, n_vv_draw, degree=degree)
