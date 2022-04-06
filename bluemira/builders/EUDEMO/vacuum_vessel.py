@@ -129,7 +129,6 @@ class VacuumVesselBuilder(Builder):
         """
         xy_plane = BluemiraPlacement.from_3_points([0, 0, 0], [1, 0, 0], [1, 1, 0])
         intersections = slice_shape(self._vv_face.boundary[0], xy_plane)
-        print(intersections)
         r_inters = sorted(intersections[:, 0])
         r_ib_out, r_ob_out = r_inters
         intersections = slice_shape(self._vv_face.boundary[1], xy_plane)
