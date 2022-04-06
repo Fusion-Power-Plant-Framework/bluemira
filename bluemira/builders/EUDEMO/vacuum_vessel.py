@@ -128,12 +128,12 @@ class VacuumVesselBuilder(Builder):
         Build the x-y components of the vacuum vessel.
         """
         xy_plane = BluemiraPlacement.from_3_points([0, 0, 0], [1, 0, 0], [1, 1, 0])
-        intersections = slice_shape(self._vv_face.boundary[0], xy_plane)
-        r_inters = sorted(intersections[:, 0])
-        r_ib_out, r_ob_out = r_inters
-        intersections = slice_shape(self._vv_face.boundary[1], xy_plane)
-        r_inters = sorted(intersections[:, 0])
-        r_ib_in, r_ob_in = r_inters
+        r_ib_out, r_ob_out = self._find_intersections_x_coord(
+            self._vv_face.boundary[0], xy_plane
+        )
+        r_ib_in, r_ob_in = self._find_intersections_x_coord(
+            self._vv_face.boundary[1], xy_plane
+        )
 
         inboard = make_circular_xy_ring(r_ib_in, r_ib_out)
         vv_inboard = PhysicalComponent("inboard", inboard)
@@ -173,3 +173,11 @@ class VacuumVesselBuilder(Builder):
         # component.add_children(sectors, merge_trees=True)
 
         return component
+
+    @staticmethod
+    def _find_intersections_x_coord(wire, plane):
+        """
+        Get the radial coordinates of a wire's intersection points with a plane.
+        """
+        intersections = slice_shape(wire, plane)
+        return sorted(intersections[:, 0])
