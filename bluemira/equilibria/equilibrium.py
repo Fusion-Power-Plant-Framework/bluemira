@@ -227,7 +227,7 @@ class MHDState:
             psi = e["psi"]
             e["dxc"] = e["dxc"] / 2
             e["dzc"] = e["dzc"] / 2
-        elif "Fiesta" in e["name"]:
+        elif "fiesta" in e["name"].lower():
             psi = e["psi"]
         else:  # CREATE
             psi = e["psi"] / (2 * np.pi)  # V.s as opposed to V.s/rad
