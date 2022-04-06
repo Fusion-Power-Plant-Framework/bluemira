@@ -126,6 +126,7 @@ class TFCoilsBuilder(OptimisedShapeBuilder):
         # Dubious WP depth from PROCESS (I used to tweak this when building the TF coils)
         "tf_wp_width",
         "tf_wp_depth",
+        "g_ts_tf",
     ]
     _required_config = OptimisedShapeBuilder._required_config + []
     _params: Configuration
@@ -681,7 +682,8 @@ class TFCoilsBuilder(OptimisedShapeBuilder):
         # Variable thickness of the casing is problematic...
         # TODO: Improve this estimate (or used variable offset here too..)
         tk_offset += 1.5 * self._params.tk_tf_front_ib
-        return offset_wire(keep_out_zone, tk_offset, open_wire=False)
+        tk_offset += self._params.g_ts_tf.value
+        return offset_wire(keep_out_zone, tk_offset, open_wire=False, join="arc")
 
     def save_shape(self, filename: str = None, **kwargs):
         """

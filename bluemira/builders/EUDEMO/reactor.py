@@ -415,15 +415,15 @@ class EUDEMOReactor(Reactor):
 
         bluemira_print(f"Starting design stage: {name}")
 
-        thermal_shield = component_tree.get_component(
-            EUDEMOReactor.THERMAL_SHIELD
-        ).get_component("xz")
-        cts = thermal_shield.get_component("Cryostat TS").shape.boundary[0]
+        cts = component_tree.get_component(EUDEMOReactor.THERMAL_SHIELD).get_component(
+            EUDEMOReactor.CTS
+        )
+        cts_xz = cts.get_component("xz").get_component("Cryostat TS").shape.boundary[0]
 
         default_config = {}
         config = self._process_design_stage_config(name, default_config)
 
-        builder = CryostatBuilder(self._params.to_dict(), config, cts_xz=cts)
+        builder = CryostatBuilder(self._params.to_dict(), config, cts_xz=cts_xz)
         self.register_builder(builder, name)
         component = super()._build_stage(name)
 
