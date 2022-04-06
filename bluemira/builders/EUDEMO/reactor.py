@@ -60,6 +60,8 @@ class EUDEMOReactor(Reactor):
     IVC = "In-Vessel Components"
     VACUUM_VESSEL = "Vacuum Vessel"
     THERMAL_SHIELD = "Thermal Shield"
+    VVTS = "Vacuum Vessel Thermal Shield"
+    CTS = "Cryostat Thermal Shield"
     CRYOSTAT = "Cryostat"
     RADIATION_SHIELD = "Radiation Shield"
 
@@ -79,10 +81,14 @@ class EUDEMOReactor(Reactor):
         component.add_child(self.build_vacuum_vessel(component, ivc_boundary))
         component.add_child(self.build_divertor(component, divertor_face))
         component.add_child(self.build_blanket(component, blanket_face))
-        component.add_child(self.build_VV_thermal_shield(component))
-        component.add_child(self.build_TF_coils(component))
+        thermal_shield = Component(EUDEMOReactor.THERMAL_SHIELD)
+        vvts = self.build_VV_thermal_shield(component)
+        thermal_shield.add_child(vvts)
+        component.add_child(self.build_TF_coils(component, vvts))
         component.add_child(self.build_PF_coils(component))
-        component.add_child(self.build_cryo_thermal_shield(component))
+        cts = self.build_cryo_thermal_shield(component)
+        thermal_shield.add_children(cts, merge_trees=True)
+        component.add_child(thermal_shield)
         component.add_child(self.build_cryostat(component))
         component.add_child(self.build_radiation_shield(component))
 
@@ -145,7 +151,7 @@ class EUDEMOReactor(Reactor):
 
         return component
 
-    def build_TF_coils(self, component_tree: Component):
+    def build_TF_coils(self, component_tree: Component, vvts):
         """
         Run the TF Coils build using the requested mode.
         """
@@ -199,10 +205,7 @@ class EUDEMOReactor(Reactor):
         plasma = component_tree.get_component(EUDEMOReactor.PLASMA)
         sep_comp: PhysicalComponent = plasma.get_component("xz").get_component("LCFS")
         sep_shape = sep_comp.shape.boundary[0]
-        thermal_shield = component_tree.get_component(EUDEMOReactor.THERMAL_SHIELD)
-        vvts_xz = (
-            thermal_shield.get_component("xz").get_component("VVTS").shape.boundary[0]
-        )
+        vvts_xz = vvts.get_component("xz").get_component("VVTS").shape.boundary[0]
 
         builder = TFCoilsBuilder(
             self._params.to_dict(), config, separatrix=sep_shape, keep_out_zone=vvts_xz
@@ -244,7 +247,7 @@ class EUDEMOReactor(Reactor):
         """
         Run the vacuum vessel thermal shield build.
         """
-        name = self.THERMAL_SHIELD
+        name = self.VVTS
 
         bluemira_print(f"Starting design stage: {name}")
 
@@ -270,7 +273,7 @@ class EUDEMOReactor(Reactor):
         """
         Run the cryostat thermal shield build.
         """
-        name = "Cryostat " + self.THERMAL_SHIELD
+        name = self.CTS
 
         bluemira_print(f"Starting design stage: {name}")
 
