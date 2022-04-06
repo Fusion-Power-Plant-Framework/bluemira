@@ -41,7 +41,12 @@ be set to the corresponding Task classes mentioned above.
 """
 import abc
 import enum
-from typing import Any, Callable, Type
+from typing import Any, Callable, Dict, Type
+
+from bluemira.base.error import BluemiraError
+
+# TODO(hsaunders1904): what happens if we want to different run modes
+# for different build stages? Is this a reasonable thing to do?
 
 
 class Task(abc.ABC):
@@ -52,16 +57,32 @@ class Task(abc.ABC):
     'run modes' can also be defined.
     """
 
+    _result: Any
+
+    def __init__(self, params: Dict[str, Any]) -> None:
+        self._params = params
+
     @abc.abstractmethod
     def run(self, *args, **kwargs):
         """Run the task."""
         pass
 
+    @property
+    def result(self) -> Any:
+        try:
+            return self._result
+        except AttributeError as attr_error:
+            raise BluemiraError(
+                "Task result is not set. A run mode method has likely not been called."
+            ) from attr_error
+
+    @result.setter
+    def result(self, result: Any):
+        self._result = result
+
 
 class RunMode(enum.Enum):
     """Base enum class for defining run modes within a solver."""
-
-    RUN = enum.auto()
 
     def to_string(self) -> str:
         """
@@ -86,17 +107,16 @@ class SolverABC(abc.ABC):
         arbitrary run modes.
     """
 
-    def __init__(self, run_mode: RunMode, *args, **kwargs) -> None:
+    def __init__(self, params: Dict[str, Any]):
         super().__init__()
-        self._runmode = run_mode
-        self._setup = self.setup_cls(*args, **kwargs)
-        self._run = self.run_cls(*args, **kwargs)
-        self._teardown = self.teardown_cls(*args, **kwargs)
+        self._setup = self.setup_cls(params)
+        self._run = self.run_cls(params)
+        self._teardown = self.teardown_cls(params)
 
     @abc.abstractproperty
     def setup_cls(self) -> Type[Task]:
         """
-        Class defining the runmodes for the setup stage of the solver.
+        Class defining the run modes for the setup stage of the solver.
 
         Typically, this class performs parameter mappings for some
         external code, or derives dependent parameters. But it can also
@@ -107,7 +127,7 @@ class SolverABC(abc.ABC):
     @abc.abstractproperty
     def run_cls(self) -> Type[Task]:
         """
-        Class defining the ru nmodes for the computational stage of the
+        Class defining the run modes for the computational stage of the
         solver.
 
         This class is where computations should be defined. This may be
@@ -129,18 +149,19 @@ class SolverABC(abc.ABC):
         """
         pass
 
-    def execute(self, *args, **kwargs) -> Any:
+    def execute(self, run_mode: RunMode) -> Any:
         """Execute the setup, run, and teardown tasks, in order."""
-        self._get_execution_method(self._setup)(*args, **kwargs)
-        self._get_execution_method(self._run)(*args, **kwargs)
-        self._get_execution_method(self._teardown)(*args, **kwargs)
+        self._get_execution_method(self._setup, run_mode)()
+        self._get_execution_method(self._run, run_mode)(self._setup.result)
+        self._get_execution_method(self._teardown, run_mode)(self._run.result)
+        return self._teardown.result
 
-    def _get_execution_method(self, task: Task) -> Callable:
+    def _get_execution_method(self, task: Task, run_mode: RunMode) -> Callable:
         """
         Return the method on the task corresponding to this solver's run
         mode (e.g., 'task.run').
 
-        If the method on the task does not exist, return a no-op
-        function.
+        If the method on the task does not exist, return a function that
+        simply returns its input.
         """
-        return getattr(task, self._runmode.to_string(), lambda *args, **kwargs: None)
+        return getattr(task, run_mode.to_string(), lambda *args: args)
