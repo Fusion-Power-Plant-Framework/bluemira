@@ -32,7 +32,11 @@ import bluemira.utilities.plot_tools as bm_plot_tools
 from bluemira.base.builder import BuildConfig, Builder
 from bluemira.base.components import Component, PhysicalComponent
 from bluemira.base.config import Configuration
-from bluemira.builders.EUDEMO.tools import circular_pattern_component
+from bluemira.builders.EUDEMO.tools import (
+    circular_pattern_component,
+    find_xy_plane_radii,
+    make_circular_xy_ring,
+)
 from bluemira.display.palettes import BLUE_PALETTE
 from bluemira.geometry.error import GeometryError
 from bluemira.geometry.face import BluemiraFace
@@ -44,7 +48,6 @@ from bluemira.geometry.tools import (
     make_polygon,
     offset_wire,
     revolve_shape,
-    slice_shape,
 )
 from bluemira.geometry.wire import BluemiraWire
 
@@ -62,13 +65,13 @@ class VVTSBuilder(Builder):
     _params: Configuration
     _vv_koz: Optional[BluemiraWire]
 
-    def reinitialise(self, params, vv_xz_koz) -> None:
+    def reinitialise(self, params, vv_koz) -> None:
         """
         Initialise the state of this builder ready for a new run.
         """
         super().reinitialise(params)
 
-        self._vv_koz = vv_xz_koz
+        self._vv_koz = vv_koz
 
     def build(self) -> Component:
         """
@@ -111,24 +114,16 @@ class VVTSBuilder(Builder):
         """
         Build the x-y components of the vacuum vessel thermal shield.
         """
-        x_min = self._vv_koz.bounding_box.x_min
-        r_in_ib = x_min - self._params.g_vv_ts.value
-        r_out_ib = r_in_ib - self._params.tk_ts.value
-        inner = make_circle(radius=r_in_ib)
-        outer = make_circle(radius=r_out_ib)
+        xy_plane = BluemiraPlacement.from_3_points([0, 0, 0], [1, 0, 0], [1, 1, 0])
+        r_ib_out, r_ob_out = find_xy_plane_radii(self._vvts_face.boundary[0], xy_plane)
+        r_ib_in, r_ob_in = find_xy_plane_radii(self._vvts_face.boundary[1], xy_plane)
 
-        vvts_ib_face = BluemiraFace([outer, inner])
-        vvts_ib = PhysicalComponent("inboard", vvts_ib_face)
+        inboard = make_circular_xy_ring(r_ib_in, r_ib_out)
+        vvts_ib = PhysicalComponent("inboard", inboard)
         vvts_ib.plot_options.face_options["color"] = BLUE_PALETTE["TS"][0]
 
-        x_max = self._vv_koz.bounding_box.x_max
-        r_in_ob = x_max + self._params.g_vv_ts.value
-        r_out_ob = r_in_ob + self._params.tk_ts.value
-        inner = make_circle(radius=r_in_ob)
-        outer = make_circle(radius=r_out_ob)
-
-        vvts_ob_face = BluemiraFace([outer, inner])
-        vvts_ob = PhysicalComponent("outboard", vvts_ob_face)
+        outboard = make_circular_xy_ring(r_ob_in, r_ob_out)
+        vvts_ob = PhysicalComponent("outboard", outboard)
         vvts_ob.plot_options.face_options["color"] = BLUE_PALETTE["TS"][0]
 
         component = Component("xy", children=[vvts_ib])
