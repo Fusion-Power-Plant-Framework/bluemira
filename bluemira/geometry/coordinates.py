@@ -350,9 +350,9 @@ def get_centroid(x, y, z=None):
     Parameters
     ----------
     x: np.array
-        x coordinates of the loop to calculate on
+        x coordinates of the coordinates to calculate on
     y: np.array
-        y coordinates of the loop to calculate on
+        y coordinates of the coordinates to calculate on
     z: Union[None, np.array]
 
     Returns
@@ -374,9 +374,9 @@ def get_centroid_2d(x, z):
     Parameters
     ----------
     x: np.array
-        x coordinates of the loop to calculate on
+        x coordinates of the coordinates to calculate on
     z: np.array
-        z coordinates of the loop to calculate on
+        z coordinates of the coordinates to calculate on
 
     Returns
     -------
