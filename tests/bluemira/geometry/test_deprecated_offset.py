@@ -19,6 +19,56 @@
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 
+import json
+import os
+
+import matplotlib.pyplot as plt
 import pytest
 
+import tests
+from bluemira.base.file import get_bluemira_path
 from bluemira.geometry._deprecated_offset import offset_clipper
+from bluemira.geometry.coordinates import Coordinates
+from bluemira.geometry.error import GeometryError
+
+
+class TestClipperOffset:
+    plot = tests.PLOTTING
+
+    # fmt: off
+    x_open = [-4, -3, -2, -1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 7, 6, 5, 4, 3, 2, 1, 0, -1, -2]
+    y_open = [0, -2, -4, -3, -4, -2, 0, 1, 2, 3, 4, 5, 6, 6, 6, 6, 4, 3, 2, 1, 2, 2, 1]
+    x_closed = x_open + [-3, -4, -3]
+    y_closed = y_open + [1, 0, -2]
+    # fmt: on
+
+    @pytest.mark.parametrize("x, y", [(x_open, y_open), (x_closed, y_closed)])
+    def test_complex_open(self, x, y):
+        coordinates = Coordinates({"x": x, "y": y, "z": 0})
+        c = offset_clipper(coordinates, 1)
+        if self.plot:
+            f, ax = plt.subplots()
+            ax.plot(x, y, "k")
+            ax.plot(c.x, c.y, "r", marker="o")
+            ax.set_aspect("equal")
+
+    def test_blanket_offset(self):
+        fp = get_bluemira_path("BLUEPRINT/geometry/test_data", subfolder="tests")
+        fn = os.sep.join([fp, "bb_offset_test.pkl"])
+        with open(fn, "rb") as file:
+            d = pickle.load(file)  # noqa :S301
+        coordinates = Coordinates(**d)
+        offsets = []
+        for m in ["square", "miter"]:  # round very slow...
+            offset_coordinates = offset_clipper(coordinates, 1.5, method=m)
+            offsets.append(offset_coordinates)
+        f, ax = plt.subplots()
+        coordinates.plot(ax)
+        colors = ["r", "g", "y"]
+        for offset_coordinates, c in zip(offsets, colors):
+            offset_coordinates.plot(ax, facecolor=c)
+
+    def test_raise_error(self):
+        coordinates = Coordinates({"x": [0, 1, 2], "y": [0, 0, 0]})
+        with pytest.raises(GeometryError):
+            offset_clipper(coordinates, 1, method="fail")
