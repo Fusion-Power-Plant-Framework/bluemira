@@ -54,6 +54,8 @@ optimisaiton algorithms, but will need to be updated or approximated for use
 in derivative based algorithms, such as those utilising gradient descent.
 """  # noqa (W505)
 
+import numpy as np
+
 
 def objective_constraint(constraint, vector, grad, objective_function, maximum_fom=1.0):
     """
@@ -92,4 +94,128 @@ def current_midplane_constraint(constraint, vector, grad, eq, radius, inboard=Tr
         constraint[:] = radius - min(lcfs.x)
     else:
         constraint[:] = max(lcfs.x) - radius
+    return constraint
+
+
+def coil_force_constraints(
+    constraint,
+    vector,
+    grad,
+    eq,
+    n_PF,
+    n_CS,
+    PF_Fz_max,
+    CS_Fz_sum_max,
+    CS_Fz_sep_max,
+    scale,
+):
+    """
+    Current optimisation force constraints on coils
+
+    Parameters
+    ----------
+    constraint: np.ndarray
+        Constraint array (modified in place)
+    vector: np.ndarray
+        Current vector
+    grad: np.ndarray
+        Constraint Jacobian (modified in place)
+    eq: Equilibrium
+        Equilibrium object with which to calculate constraints
+    n_PF: int
+        Number of PF coils
+    n_CS: int
+        Number of CS coils
+    PF_Fz_max: float
+        Maximum vertical force on each PF coil [MN]
+    CS_Fz_sum_max: float
+        Maximum total vertical force on the CS stack [MN]
+    CS_Fz_sep_max: float
+        Maximum vertical separation force in the CS stack [MN]
+    scale: float
+        Current scale with which to calculate the constraints
+
+    Returns
+    -------
+    constraint: np.ndarray
+        Updated constraint vector
+
+    Notes
+    -----
+    TODO: Presently only handles CoilSets with Coils (SymmetricCircuits not yet
+    supported)
+    """
+    # get coil force and jacobian
+    F, dF = eq.force_field.calc_force(vector * scale)  # noqa :N803
+    F /= scale  # Scale down to MN
+    # dF /= self.scale
+
+    # Absolute vertical force constraint on PF coils
+    constraint[:n_PF] = F[:n_PF, 1] ** 2 - PF_Fz_max**2
+
+    if n_CS != 0:
+        # vertical forces on CS coils
+        cs_fz = F[n_PF:, 1]
+        # vertical force on CS stack
+        cs_z_sum = np.sum(cs_fz)
+        # Absolute sum of vertical force constraint on entire CS stack
+        constraint[n_PF] = cs_z_sum**2 - CS_Fz_sum_max**2
+        for i in range(n_CS - 1):  # evaluate each gap in CS stack
+            # CS seperation constraints
+            f_sep = np.sum(cs_fz[: i + 1]) - np.sum(cs_fz[i + 1 :])
+            constraint[n_PF + 1 + i] = f_sep - CS_Fz_sep_max
+
+    # calculate constraint jacobian
+    if grad.size > 0:
+        # Absolute vertical force constraint on PF coils
+        grad[:n_PF] = 2 * dF[:n_PF, :, 1]
+
+        if n_CS != 0:
+            # Absolute sum of vertical force constraint on entire CS stack
+            grad[n_PF] = 2 * np.sum(dF[n_PF:, :, 1], axis=0)
+
+            for i in range(n_CS - 1):  # evaluate each gap in CS stack
+                # CS separation constraint Jacobians
+                f_up = np.sum(dF[n_PF : n_PF + i + 1, :, 1], axis=0)
+                f_down = np.sum(dF[n_PF + i + 1 :, :, 1], axis=0)
+                grad[n_PF + 1 + i] = f_up - f_down
+    return constraint
+
+
+def coil_field_constraints(constraint, vector, grad, eq, B_max, scale):
+    """
+    Current optimisation poloidal field constraints on coils
+
+    Parameters
+    ----------
+    constraint: np.ndarray
+        Constraint array (modified in place)
+    vector: np.ndarray
+        Current vector
+    grad: np.ndarray
+        Constraint Jacobian (modified in place)
+    eq: Equilibrium
+        Equilibrium object with which to calculate constraints
+    B_max: np.ndarray
+        Maximum fields inside the coils
+    scale: float
+        Current scale with which to calculate the constraints
+
+    Returns
+    -------
+    constraint: np.ndarray
+        Updated constraint vector
+
+    Notes
+    -----
+    TODO: Presently only handles CoilSets with Coils (SymmetricCircuits not yet
+    supported)
+    TODO: Presently only accounts for poloidal field contributions from PF coils and
+    plasma (TF from TF coils not accounted for if PF coils are inside the TF coils.)
+    """
+    B, dB = eq.force_field.calc_field(vector * scale)  # noqa :N803
+    dB /= scale**2
+    if grad.size > 0:
+        grad[:] = dB
+    constraint[:] = B - B_max
     return constraint
