@@ -39,7 +39,7 @@ from pyclipper import (
 )
 
 from bluemira.base.look_and_feel import bluemira_warn
-from bluemira.geometry.coordinates import Coordinates
+from bluemira.geometry.coordinates import Coordinates, rotation_matrix_v1v2
 from bluemira.geometry.error import GeometryError
 
 __all__ = ["offset_clipper"]
@@ -262,10 +262,8 @@ def offset_clipper(coordinates: Coordinates, delta, method="square", miter_limit
     if not coordinates.is_planar:
         raise GeometryError("Cannot offset non-planar coordinates.")
 
-    # Transform coordinates to x-y plane
-    t_coordinates = transform_coordinates(
-        coordinates, -np.array(coordinates.center_of_mass), (0.0, 1.0, 0.0)
-    )
+    # Transform coordinates to x-z plane
+    t_coordinates = transform_coordinates(coordinates, (0.0, 1.0, 0.0))
 
     if method == "square":
         tool = SquareOffset(t_coordinates, delta)
@@ -282,19 +280,14 @@ def offset_clipper(coordinates: Coordinates, delta, method="square", miter_limit
     result = tool.result[0]
 
     # Transform offset coordinates back to original plane
-    result = transform_coordinates(
-        result, np.array(coordinates.center_of_mass), coordinates.normal_vector
-    )
+    result = transform_coordinates(result, coordinates.normal_vector)
     return result
 
 
-from bluemira.geometry.coordinates import rotation_matrix_v1v2
-
-
-def transform_coordinates(coordinates, base, direction):
-    x = coordinates.x + base[0]
-    y = coordinates.y + base[1]
-    z = coordinates.z + base[2]
+def transform_coordinates(coordinates, direction):
+    """
+    Rotate coordinates to the x-z plane.
+    """
     r = rotation_matrix_v1v2(coordinates.normal_vector, np.array(direction))
-    x, y, z = r.T @ np.array([x, y, z])
+    x, y, z = r.T @ coordinates
     return Coordinates({"x": x, "y": y, "z": z})
