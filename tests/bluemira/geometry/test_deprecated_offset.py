@@ -51,6 +51,7 @@ class TestClipperOffset:
             ax.plot(x, y, "k")
             ax.plot(c.x, c.y, "r", marker="o")
             ax.set_aspect("equal")
+            plt.show()
 
     def test_blanket_offset(self):
         fp = get_bluemira_path("bluemira/geometry/test_data", subfolder="tests")
@@ -69,6 +70,8 @@ class TestClipperOffset:
             colors = ["r", "g", "y"]
             for offset_coordinates, c in zip(offsets, colors):
                 ax.plot(offset_coordinates.x, offset_coordinates.z, color=c)
+            ax.set_aspect("equal")
+            plt.show()
 
     def test_raise_error(self):
         coordinates = Coordinates({"x": [0, 1, 2], "y": [0, 0, 0]})
