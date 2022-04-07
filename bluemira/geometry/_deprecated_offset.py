@@ -49,6 +49,7 @@ from pyclipper import (
 
 from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.geometry.coordinates import Coordinates
+from bluemira.geometry.error import GeometryError
 
 # =============================================================================
 # Pyclipper utilities
@@ -187,8 +188,8 @@ class OffsetOperationManager(PyclipperMixin):
 
     Parameters
     ----------
-    loop: Coordinates
-        The base loop upon which to perform the offset operation
+    coordinates: Coordinates
+        The Coordinates upon which to perform the offset operation
     delta: float
         The value of the offset [m]. Positive for increasing size, negative for
         decreasing
@@ -254,3 +255,42 @@ class MiterOffset(OffsetOperationManager):
         super().__init__(loop, delta)
 
         self.tool.MiterLimit = miter_limit
+
+
+def offset_clipper(coordinates, delta, method="square", miter_limit=2.0):
+    """
+    Carries out an offset operation on the Loop using the ClipperLib library
+
+    Parameters
+    ----------
+    coordinates: Coordinates
+        The Coordinates upon which to perform the offset operation
+    delta: float
+        The value of the offset [m]. Positive for increasing size, negative for
+        decreasing
+    method: str from ['square', 'round', 'miter'] (default = 'square')
+        The type of offset to perform
+    miter_limit: float (default = 2.0)
+        The ratio of delta to used when mitering acute corners. Only used if
+        method == 'miter'
+
+    Returns
+    -------
+    result: Coordinates
+        The offset Coordinates result
+    """
+    if method == "square":
+        tool = SquareOffset(coordinates, delta)
+    elif method == "round":
+        bluemira_warn(
+            "Je ne sais pas pourquoi, mais c'est tres lent.. vaut mieux se"
+            " servir d'autre chose..."
+        )
+        tool = RoundOffset(coordinates, delta)
+    elif method == "miter":
+        tool = MiterOffset(coordinates, delta, miter_limit=miter_limit)
+    else:
+        raise GeometryError(
+            "Please choose an offset method from:\n" " round \n square \n miter"
+        )
+    return tool.result[0]
