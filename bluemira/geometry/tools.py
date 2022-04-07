@@ -319,9 +319,17 @@ def offset_wire(
     wire: BluemiraWire
         Offset wire
     """
-    return BluemiraWire(
-        cadapi.offset_wire(wire._shape, thickness, join, open_wire), label=label
-    )
+    try:
+        return BluemiraWire(
+            cadapi.offset_wire(wire._shape, thickness, join, open_wire), label=label
+        )
+    except cadapi.FreeCADError:
+        bluemira_warn(
+            "Primitive offsetting failed, falling back to discretised " "offsetting."
+        )
+        from bluemira.geometry._deprecated_offset import PyclipperOffset
+
+        pass
 
 
 def convex_hull_wires_2d(
