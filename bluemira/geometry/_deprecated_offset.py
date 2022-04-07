@@ -273,7 +273,7 @@ def offset_clipper(coordinates: Coordinates, delta, method="square", miter_limit
         The offset Coordinates result
     """
     if not coordinates.is_planar:
-        raise GeometryError("Cannot offset non-planar coordinates")
+        raise GeometryError("Cannot offset non-planar coordinates.")
 
     if method == "square":
         tool = SquareOffset(coordinates, delta)
