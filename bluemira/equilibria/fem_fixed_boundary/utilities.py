@@ -134,6 +134,17 @@ def plot_scalar_field(x, y, z, levels=20, axis=None, tofill=True, **kwargs):
     return axis, cntr, cntrf
 
 
+def plot_profile(x, prof, var_name, var_unit):
+    """
+    Plot profile
+    """
+    fig, ax = plt.subplots()
+    ax.plot(x, prof)
+    ax.set(xlabel="x (-)", ylabel=var_name + " (" + var_unit + ")")
+    ax.grid()
+    plt.show()
+
+
 class Solovev:
     def __init__(self, R0, a, kappa, delta, A1, A2):
         self.R0 = R0

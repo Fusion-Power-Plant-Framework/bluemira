@@ -69,6 +69,9 @@ class FemMagnetostatic2d:
     """  # noqa (W505)
 
     def __init__(self, mesh, boundaries=None, p_order=3):
+
+        self.p_order = p_order
+
         # ======================================================================
         # define the geometry
         if isinstance(
@@ -97,14 +100,14 @@ class FemMagnetostatic2d:
         # define the function space and bilinear forms
         # the Continuos Galerkin function space has been chosen as suitable for the
         # solution of the magnetostatic weak formulation in a Soblev Space H1(D)
-        self.V = dolfin.FunctionSpace(self.mesh, "CG", p_order)
+        self.V = dolfin.FunctionSpace(self.mesh, "CG", self.p_order)
 
         # define trial and test functions
         self.u = dolfin.TrialFunction(self.V)
         self.v = dolfin.TestFunction(self.V)
 
         # Define r
-        r = dolfin.Expression("x[0]", degree=p_order)
+        r = dolfin.Expression("x[0]", degree=self.p_order)
 
         self.a = (
             1
@@ -145,14 +148,14 @@ class FemMagnetostatic2d:
             the poloidal magnetic flux as solution of the magnetostatic problem
         """
         if neumann_bc_function is None:
-            neumann_bc_function = dolfin.Expression("0.0", degree=2)
+            neumann_bc_function = dolfin.Expression("0.0", degree=self.p_order)
 
         # define the right hand side
         self.L = g * self.v * dolfin.dx - neumann_bc_function * self.v * dolfin.ds
 
         # define the Dirichlet boundary conditions
         if dirichlet_bc_function is None:
-            dirichlet_bc_function = dolfin.Expression("0.0", degree=2)
+            dirichlet_bc_function = dolfin.Expression("0.0", degree=self.p_order)
             dirichlet_bc = dolfin.DirichletBC(
                 self.V, dirichlet_bc_function, "on_boundary"
             )
@@ -209,6 +212,7 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
 
     def __init__(self, mesh, boundaries=None, p_order=3):
         super().__init__(mesh, boundaries, p_order)
+        self.k = 1
 
     @property
     def _psi_ax(self):
@@ -225,7 +229,9 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
         """Normalized flux function in 2-D"""
 
         def myfunc(x):
-            return (self.psi(x) - self._psi_ax) / (self._psi_b - self._psi_ax)
+            value = np.sqrt(abs((self.psi(x) - self._psi_ax) / (self._psi_b -
+                                                              self._psi_ax)))
+            return value
 
         return myfunc
 
@@ -260,19 +266,27 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
                 x_psi = self._psi_norm_2d(x)
 
                 if callable(pprime):
-                    a = -MU_0 * r * pprime(x_psi)
+                    a = r * pprime(x_psi)
                 else:
-                    a = -MU_0 * r * pprime
+                    a = r * pprime
 
                 if callable(ffprime):
-                    b = -1 / r * ffprime(x_psi)
+                    b = 1 / MU_0 / r * ffprime(x_psi)
                 else:
-                    b = -1 / r * ffprime
+                    b = 1 / MU_0 / r * ffprime
 
-                return -1 / MU_0 * (a + b)
+                return self.k * (a + b)
 
         func = ScalarSubFunc(myfunc)
         return func
+
+    def _calculate_curr_tot(self, func):
+        dx = dolfin.Measure("dx", domain=self.mesh)
+        return dolfin.assemble(func * dx())
+
+    def _update_curr(self, curr_target):
+        self.k = 1
+        self.k = curr_target / self._calculate_curr_tot(self.g)
 
     def solve(
         self,
@@ -288,24 +302,26 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
         """Solves the GS problem given pprime and ffprime"""
         self.g = self._create_g(pprime, ffprime, curr_target)
         dx = dolfin.Measure("dx", domain=self.mesh)
-        curr_tot = dolfin.assemble(self.g * dx())
+        # curr_tot = dolfin.assemble(self.g * dx())
         super().solve(
             self.g, dirichlet_bc_function, dirichlet_marker, neumann_bc_function
         )
 
-        curr_tot = dolfin.assemble(self.g * dx())
-        self.g = curr_target / curr_tot * self.g
-
         eps = 1.0  # error measure ||u-u_k||
         i = 0  # iteration counter
         while eps > tol and i < max_iter:
+            self._update_curr(curr_target)
             prev = self.psi.compute_vertex_values()
+            # curr_tot = dolfin.assemble(self.g * dx())
+            # print(f"pre - curr_tot = {curr_tot} - curr_dens = {self.g}")
             i += 1
             super().solve(
                 self.g, dirichlet_bc_function, dirichlet_marker, neumann_bc_function
             )
             diff = self.psi.compute_vertex_values() - prev
             eps = np.linalg.norm(diff, ord=np.Inf)
-            print("iter = {} eps = {}".format(i, eps))
-            curr_tot = dolfin.assemble(self.g * dx())
-            self.g = curr_target / curr_tot * self.g
+            # curr_tot = dolfin.assemble(self.g * dx())
+            # print(f"post - curr_tot = {curr_tot} - curr_dens = {self.g}")
+            print(f"iter = {i} eps = {eps} psi_ax : {self._psi_ax}")
+
+        return self.psi

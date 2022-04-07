@@ -24,7 +24,8 @@ The bluemira transport solver module
 """
 from abc import ABC, abstractmethod
 
-import scipy
+import numpy as np
+from scipy.interpolate import UnivariateSpline, interp1d
 
 from bluemira.codes.plasmod.api import Solver
 
@@ -89,9 +90,25 @@ class PlasmodTransportSolver(TransportSolver):
         self._x = None
         self._pprime = None
         self._ffprime = None
+        self._psi = None
         self._kappa_95 = None
         self._delta_95 = None
-        self._psi = None
+        self._volume_in = None
+        self._I_p = None
+
+        # supporting variables
+        self.__x_phi = self.solver.get_profile('x')
+        self.__psi_plasmod = self.solver.get_profile('psi')
+        self.__x_psi = np.sqrt(self.__psi_plasmod / self.__psi_plasmod[-1])
+
+    def _from_phi_to_psi(self, profile):
+        """
+        Convert the profile to the magnetic coordinate sqrt((psi - psi_ax)/(psi_b -
+        psi_ax))
+        """
+        profile_data = self.solver.get_profile(profile)
+        interp_data = interp1d(self.__x_phi, profile_data, kind='linear')
+        return interp_data(self.__x_psi)
 
     @property
     def x(self):
@@ -104,35 +121,51 @@ class PlasmodTransportSolver(TransportSolver):
     def pprime(self):
         """Get pprime as function of the magnetic coordinate"""
         if self._pprime is None:
-            data = self.solver.get_profile("pprime")
-            self._pprime = scipy.interpolate.UnivariateSpline(self.x, data, ext=0)
+            data = self._from_phi_to_psi("pprime")*1e6
+            self._pprime = UnivariateSpline(self.x, data, ext=0)
         return self._pprime
 
     @property
     def ffprime(self):
         """Get ffprime as function of the magnetic coordinate"""
         if self._ffprime is None:
-            data = self.solver.get_profile("ffprime")
-            self._ffprime = scipy.interpolate.UnivariateSpline(self.x, data, ext=0)
+            data = self._from_phi_to_psi("ffprime")*1e6
+            self._ffprime = UnivariateSpline(self.x, data, ext=0)
         return self._ffprime
+
+    @property
+    def psi(self):
+        """Get the magnetic coordinate"""
+        if self._psi is None:
+            self._psi = self._from_phi_to_psi("psi")*1e6
+        return self._psi
 
     @property
     def kappa_95(self):
         """Get plasma elongation at 95 % flux surface"""
         if self._kappa_95 is None:
-            self._kappa_95 = self.solver.get_scalar("k95")
+            self._kappa_95 = self.solver.params["k95"]
         return self._kappa_95
 
     @property
     def delta_95(self):
         """Get plasma elongation at 95 % flux surface"""
         if self._delta_95 is None:
-            self._delta_95 = self.solver.get_scalar("d95")
+            self._delta_95 = self.solver.params["d95"]
         return self._delta_95
 
     @property
-    def psi(self):
-        """Get the magnetic coordinate"""
-        if self._psi is None:
-            self._psi = self.solver.get_profile("psi")
-        return self._psi
+    def volume_in(self):
+        """Get plasma elongation at 95 % flux surface"""
+        if self._volume_in is None:
+            self._volume_in = self.solver.params["V_p"]
+        return self._volume_in
+
+    @property
+    def I_p(self):
+        """Get plasma elongation at 95 % flux surface"""
+        if self._I_p is None:
+            self._I_p = self.solver.params["I_p"]*1e6
+        return self._I_p
+
+

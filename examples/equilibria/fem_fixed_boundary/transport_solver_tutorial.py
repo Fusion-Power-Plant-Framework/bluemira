@@ -37,7 +37,7 @@ binary = f"{PLASMOD_PATH}plasmod"
 new_params = {
     "A": 3.3,
     "R_0": 9.002,
-    "I_p": 17.75,
+    "I_p": 19.75,
     "B_0": 5.855,
     "V_p": -2500,
     "v_burn": -1.0e6,
@@ -64,4 +64,3 @@ plasmod_solver = PlasmodTransportSolver(
     build_config=build_config,
 )
 
-plasmod_solver.solver.params
