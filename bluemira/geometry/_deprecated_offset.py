@@ -198,13 +198,13 @@ class OffsetOperationManager(PyclipperMixin):
     closed_method = ET_CLOSEDPOLYGON
     open_method = NotImplementedError
 
-    def __init__(self, loop, delta):
-        self.dims = loop.plan_dims
+    def __init__(self, coordinates, delta):
+        self.dims = coordinates.plan_dims
         self.tool = PyclipperOffset()
-        path = coordinates_to_pyclippath(loop)
-        self._scale = path[0][0] / loop.d2[0][0]  # Store scale
+        path = coordinates_to_pyclippath(coordinates)
+        self._scale = path[0][0] / coordinates.d2[0][0]  # Store scale
 
-        if loop.closed:
+        if coordinates.closed:
             co_method = self.closed_method
         else:
             co_method = self.open_method
