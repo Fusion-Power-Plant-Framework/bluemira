@@ -20,57 +20,11 @@
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 
 import copy
-from typing import Type
 
 import pytest
 from pint import DimensionalityError, Unit
 
 from bluemira.base.parameter import Parameter, ParameterFrame, ParameterMapping, _unitify
-from BLUEPRINT.systems.baseclass import ReactorSystem
-
-
-class Dummy(ReactorSystem):
-    # Parameter DataFrame - automatically loaded as attributes: self.Var_name
-    # Var_name    Name    Value     Unit        Description        Source
-    inputs: dict
-    default_params = [
-        [
-            "coolant",
-            "Coolant",
-            "Water",
-            "dimensionless",
-            "Divertor coolant type",
-            "Common sense",
-        ],
-        ["T_in", "Coolant inlet T", 80, "°C", "Coolant inlet T", None],
-        ["T_out", "Coolant outlet T", 120, "°C", "Coolant inlet T", None],
-        ["P_in", "Coolant inlet P", 8, "MPa", "Coolant inlet P", None],
-        ["dP", "Coolant pressure drop", 1, "MPa", "Coolant pressure drop", None],
-        [
-            "rm_cl",
-            "RM clearance",
-            0.02,
-            "m",
-            "Radial and poloidal clearance between in-vessel components",
-            "Not so common sense",
-        ],
-    ]
-
-    def __init__(self, inputs):
-        self.inputs = inputs
-
-        self._init_params(self.inputs)
-
-
-class DummyPF(ReactorSystem):
-    inputs: Type[ParameterFrame]
-    default_params = [
-        ["T_out", "Coolant outlet T", 120, "°C", "Coolant inlet T", None],
-        ["dP", "Coolant pressure drop", 1, "MPa", "Coolant presdrop", None],
-    ]
-
-    def __init__(self):
-        self._init_params(self.inputs)
 
 
 class TestParameterMapping:
@@ -825,51 +779,3 @@ class TestParameterFrame:
         params_copy.set_parameter("n_CS", 10, source="hello")
         assert params_copy.n_CS.value == 10
         assert params_copy.n_CS.source == "hello"
-
-
-class TestReactorSystem:
-
-    # def setup(self):
-    #     self.params = ParameterFrame(with_defaults=True)
-
-    # @classmethod
-    # def teardown_class(cls):
-    #     ParameterFrame._clean()
-    DIV = Dummy({"T_in": {"value": 88, "unit": "celsius"}})
-
-    def test_input_handling(self):
-        assert self.DIV.params.T_in == 88
-
-    def test_add_parameter(self):
-        self.DIV.add_parameter("R_0", "Major radius", 8.8, "m", None, None)
-
-        assert self.DIV.params.R_0 == 8.8
-        assert self.DIV.params["R_0"] == 8.8
-
-        self.DIV.add_parameter(
-            "n_TF", "Number of TF coils", 17, "dimensionless", None, "Input"
-        )
-        assert self.DIV.params.n_TF == 17
-        assert self.DIV.params["n_TF"] == 17
-
-    def test_add_parameters(self):
-        p = [
-            ["n_TF", "Number of TF coils", 200, "dimensionless", None, "Input"],
-            ["n_PF", "Number of PF coils", 6, "dimensionless", None, "Input"],
-        ]
-        self.DIV.add_parameters(p)
-        assert self.DIV.params.n_TF == 200
-
-    def test_use_pf_to_call_rs(self):
-        self.DIV.add_parameter(
-            "dP", "Coolant pressure drop", 1.99, "MPa", "Coolant presdrop", None
-        )
-        assert self.DIV.params.dP != 1
-        assert self.DIV.params.dP == 1.99
-
-        assert not hasattr(self.DIV, "n_TF")
-
-    def test_use_interface_to_call_rs(self):
-        ts = Dummy({"dP": 10})
-
-        assert ts.params.dP == 10

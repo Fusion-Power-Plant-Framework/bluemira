@@ -29,7 +29,6 @@ from bluemira.base.file import get_bluemira_path
 from bluemira.equilibria.coils import Coil, CoilSet, SymmetricCircuit
 from bluemira.equilibria.positioner import CoilPositioner, RegionMapper, XZLMapper
 from bluemira.geometry._deprecated_loop import Loop
-from BLUEPRINT.geometry.parameterisations import flatD
 
 DATA_PATH = get_bluemira_path("geometry", subfolder="data")
 
@@ -325,28 +324,3 @@ class TestRegionMapper:
 
         assert np.allclose(x_init, x)
         assert np.allclose(z_init, z)
-
-
-class TestCoilPositioner:
-    def test_DEMO_CS(self):  # noqa :N802
-        for n in [3, 5, 7, 9]:
-            d_loop = flatD(4, 16, 0)
-            d_loop = Loop(x=d_loop[0], z=d_loop[1])
-            positioner = CoilPositioner(
-                9,
-                3.1,
-                0.3,
-                1.65,
-                d_loop,
-                2.5,
-                0.5,
-                6,
-                n,
-                0.1,
-                rtype="Normal",
-                cslayout="DEMO",
-            )
-            coilset = positioner.make_coilset()
-            if tests.PLOTTING:
-                coilset.plot()  # look good! cba TO test
-                plt.show()
