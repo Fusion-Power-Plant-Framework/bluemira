@@ -273,14 +273,17 @@ def offset_clipper(coordinates: Coordinates, delta, method="square", miter_limit
         raise GeometryError("Cannot offset non-planar coordinates.")
 
     # Transform coordinates to x-y plane
+    t_coordinates = transform_coordinates(
+        coordinates, -np.array(coordinates.center_of_mass), (0, 1, 0)
+    )
 
     if method == "square":
-        tool = SquareOffset(coordinates, delta)
+        tool = SquareOffset(t_coordinates, delta)
     elif method == "round":
         bluemira_warn("I don't know why, but this is very slow...")
-        tool = RoundOffset(coordinates, delta)
+        tool = RoundOffset(t_coordinates, delta)
     elif method == "miter":
-        tool = MiterOffset(coordinates, delta, miter_limit=miter_limit)
+        tool = MiterOffset(t_coordinates, delta, miter_limit=miter_limit)
     else:
         raise GeometryError(
             "Please choose an offset method from:\n" " round \n square \n miter"
@@ -289,4 +292,19 @@ def offset_clipper(coordinates: Coordinates, delta, method="square", miter_limit
     result = tool.result[0]
 
     # Transform offset coordinates back to original plane
+    result = transform_coordinates(
+        result, np.array(coordinates.center_of_mass), coordinates.normal_vector
+    )
     return result
+
+
+from bluemira.geometry.coordinates import rotation_matrix_v1v2
+
+
+def transform_coordinates(coordinates, base, direction):
+    x = coordinates.x + base[0]
+    y = coordinates.y + base[1]
+    z = coordinates.z + base[2]
+    r = rotation_matrix_v1v2(coordinates.normal_vector, np.array(direction))
+    x, y, z = r.T @ np.array([x, y, z])
+    return Coordinates({"x": x, "y": y, "z": z})
