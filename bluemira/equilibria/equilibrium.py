@@ -227,11 +227,13 @@ class MHDState:
             psi = e["psi"]
             e["dxc"] = e["dxc"] / 2
             e["dzc"] = e["dzc"] / 2
+        elif "fiesta" in e["name"].lower():
+            psi = e["psi"]
         else:  # CREATE
             psi = e["psi"] / (2 * np.pi)  # V.s as opposed to V.s/rad
             e["dxc"] = e["dxc"] / 2
             e["dzc"] = e["dzc"] / 2
-            e["cplasma"] = abs(e["cplasma"])  # Stupid current direction
+            e["cplasma"] = abs(e["cplasma"])
 
         coilset = CoilSet.from_group_vecs(e)
         if force_symmetry:
