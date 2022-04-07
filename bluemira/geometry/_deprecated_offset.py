@@ -219,3 +219,38 @@ class OffsetOperationManager(PyclipperMixin):
         delta = int(round(delta * self._scale))  # approximation
         solution = self.tool.Execute(delta)
         return self.handle_solution(solution)
+
+
+class RoundOffset(OffsetOperationManager):
+    """
+    Offset class for rounded offsets.
+    """
+
+    name = "Round Offset"
+    method = JT_ROUND
+    open_method = ET_OPENROUND
+
+
+class SquareOffset(OffsetOperationManager):
+    """
+    Offset class for squared offsets.
+    """
+
+    name = "Square Offset"
+    method = JT_SQUARE
+    open_method = ET_OPENSQUARE
+
+
+class MiterOffset(OffsetOperationManager):
+    """
+    Offset class for mitered offsets.
+    """
+
+    name = "Miter Offset"
+    method = JT_MITER
+    open_method = ET_OPENROUND
+
+    def __init__(self, loop, delta, miter_limit=2.0):
+        super().__init__(loop, delta)
+
+        self.tool.MiterLimit = miter_limit
