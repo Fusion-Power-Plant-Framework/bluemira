@@ -81,7 +81,7 @@ class TestClipperOffset:
             data = json.load(file)
         coordinates = Coordinates(data)
         offsets = []
-        for m in self.options:  # round very slow...
+        for m in ["miter", "square", "round"]:  # round very slow...
             offset_coordinates = offset_clipper(coordinates, 1.5, method=m)
             offsets.append(offset_coordinates)
 
@@ -99,16 +99,16 @@ class TestClipperOffset:
         with pytest.raises(GeometryError):
             offset_clipper(coordinates, 1, method="fail")
 
-    @pytest.mark.parametrize("method", [("round"), ("miter"), ("square")])
+    @pytest.mark.parametrize("method", options)
     def test_open_polygon_raises_error(self, method):
-        coordinates = Coordinates({"x": [0, 1, 2, 0], "y": [0, 1, -1, 0]})
+        coordinates = Coordinates({"x": [0, 1, 2], "y": [0, 1, -1]})
         with pytest.raises(GeometryError):
             offset_clipper(coordinates, 1, method=method)
 
-    @pytest.mark.parametrize("method", [options])
+    @pytest.mark.parametrize("method", options)
     def test_non_planar_polygon_raises_error(self, method):
         coordinates = Coordinates(
-            {"x": [0, 1, 2, 0], "y": [0, 1, -1, 0], "z": [0, 0, 1, 0]}
+            {"x": [0, 1, 2, 0], "y": [0, 1, -1, 0], "z": [1, 0, 1, 0]}
         )
         with pytest.raises(GeometryError):
             offset_clipper(coordinates, 1, method=method)

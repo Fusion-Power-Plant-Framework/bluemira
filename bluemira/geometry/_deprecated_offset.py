@@ -180,7 +180,7 @@ class OffsetOperationManager(PyclipperMixin):
     def __init__(self, coordinates: Coordinates, delta: float):
         self.tool = PyclipperOffset()
         path = coordinates_to_pyclippath(coordinates)
-        self._scale = path[0][0] / coordinates.x[0]  # Store scale
+        self._scale = self._calculate_scale(path, coordinates)  # Store scale
 
         if coordinates.closed:
             co_method = self.closed_method
@@ -197,6 +197,17 @@ class OffsetOperationManager(PyclipperMixin):
         delta = int(round(delta * self._scale))  # approximation
         solution = self.tool.Execute(delta)
         return self.handle_solution(solution)
+
+    @staticmethod
+    def _calculate_scale(path, coordinates):
+        """
+        Calculate the pyclipper scaling to integers
+        """
+        for i in range(len(path) - 1):
+            if not path[i][0] == 0:
+                return path[i][0] / coordinates.x[i]
+            if not path[i][1] == 0:
+                return path[i][1] / coordinates.z[i]
 
 
 class RoundOffset(OffsetOperationManager):
