@@ -25,11 +25,197 @@ Deprecated discretised offset operations.
 
 import numpy as np
 from pyclipper import (
+    CT_DIFFERENCE,
+    CT_INTERSECTION,
+    CT_UNION,
     ET_CLOSEDPOLYGON,
     ET_OPENROUND,
     ET_OPENSQUARE,
     JT_MITER,
     JT_ROUND,
     JT_SQUARE,
+    PFT_EVENODD,
+    PT_CLIP,
+    PT_SUBJECT,
+    CleanPolygon,
+    PolyTreeToPaths,
+    Pyclipper,
     PyclipperOffset,
+    PyPolyNode,
+    SimplifyPolygon,
+    scale_from_clipper,
+    scale_to_clipper,
 )
+
+from bluemira.base.look_and_feel import bluemira_warn
+from bluemira.geometry.coordinates import Coordinates
+
+# =============================================================================
+# Pyclipper utilities
+# =============================================================================
+
+
+def coordinates_to_pyclippath(coordinates):
+    """
+    Transforms a bluemira Coordinates object into a Path for use in pyclipper
+
+    Parameters
+    ----------
+    loop: Coordinates
+        The Coordinates to be used in pyclipper
+
+    Returns
+    -------
+    path: [(x1, z1), (x2, z2), ...]
+        The vertex polygon path formatting required by pyclipper
+    """
+    return scale_to_clipper(coordinates.xz.T)
+
+
+def pyclippath_to_coordinates(path, dims=None):
+    """
+    Transforms a pyclipper path into a bluemira Coordinates object
+
+    Parameters
+    ----------
+    path: [(x1, z1), (x2, z2), ...]
+        The vertex polygon path formatting used in pyclipper
+    dims: [str, str] (default = ['x', 'z'])
+        The planar dimensions of the Coordinates. Will default to X, Z
+
+    Returns
+    -------
+    coordinates: Coordinates
+        The Coordinates from the path object
+    """
+    if dims is None:
+        dims = ["x", "z"]
+    p2 = scale_from_clipper(np.array(path).T)
+    dict_ = {d: p for d, p in zip(dims, p2)}
+    return Coordinates(**dict_)
+
+
+def pyclippolytree_to_coordinates(polytree, dims=None):
+    """
+    Converts a ClipperLib PolyTree into a list of Coordinates
+
+    Parameters
+    ----------
+    polytree: ClipperLib::PolyTree
+        The polytree to convert to loops
+    dims: None or iterable(str, str)
+        The dimensions of the Loops
+    """
+    if dims is None:
+        dims = ["x", "z"]
+    paths = PolyTreeToPaths(polytree)
+    return [pyclippath_to_coordinates(path, dims) for path in paths]
+
+
+class PyclipperMixin:
+    """
+    Mixin class for typical pyclipper operations and processing
+    """
+
+    name = NotImplemented
+
+    def perform(self):
+        """
+        Perform the pyclipper operation
+        """
+        raise NotImplementedError
+
+    def raise_warning(self):
+        """
+        Raise a warning if None is to be returned.
+        """
+        bluemira_warn(
+            f"{self.name} operation on 2-D polygons returning None.\n"
+            "Nothing to perform."
+        )
+
+    def handle_solution(self, solution):
+        """
+        Handles the output of the Pyclipper.Execute(*) algorithms, turning them
+        into Loop objects. NOTE: These are closed by default.
+
+        Parameters
+        ----------
+        solution: Paths
+            The tuple of tuple of tuple of path vertices
+
+        Returns
+        -------
+        coords: List(Coordinates)
+            The list of Coordinates objects produced by the pyclipper operations
+        """
+        if not solution:
+            self.raise_warning()
+            return None
+        else:
+            coords = []
+            if isinstance(solution, PyPolyNode):
+                coords = pyclippolytree_to_coordinates(solution, dims=self.dims)
+            else:
+                for path in solution:
+                    c = pyclippath_to_coordinates(path, dims=self.dims)
+                    c.close()
+                    coords.append(c)
+
+        if coords[0].closed:
+            return sorted(coords, key=lambda x: -x.area)
+        else:
+            # Sort open loops by length
+            return sorted(coords, key=lambda x: -x.length)
+
+    @property
+    def result(self):
+        """
+        The result of the Pyclipper operation.
+        """
+        return self._result
+
+
+# =============================================================================
+# Offset operations
+# =============================================================================
+
+
+class OffsetOperationManager(PyclipperMixin):
+    """
+    Abstract base class for offset operations
+
+    Parameters
+    ----------
+    loop: Coordinates
+        The base loop upon which to perform the offset operation
+    delta: float
+        The value of the offset [m]. Positive for increasing size, negative for
+        decreasing
+    """
+
+    method = NotImplemented
+    closed_method = ET_CLOSEDPOLYGON
+    open_method = NotImplementedError
+
+    def __init__(self, loop, delta):
+        self.dims = loop.plan_dims
+        self.tool = PyclipperOffset()
+        path = coordinates_to_pyclippath(loop)
+        self._scale = path[0][0] / loop.d2[0][0]  # Store scale
+
+        if loop.closed:
+            co_method = self.closed_method
+        else:
+            co_method = self.open_method
+
+        self.tool.AddPath(path, self.method, co_method)
+        self._result = self.perform(delta)
+
+    def perform(self, delta):
+        """
+        Perform the offset operation.
+        """
+        delta = int(round(delta * self._scale))  # approximation
+        solution = self.tool.Execute(delta)
+        return self.handle_solution(solution)
