@@ -74,6 +74,3 @@ class TestClipperOffset:
         coordinates = Coordinates({"x": [0, 1, 2], "y": [0, 0, 0]})
         with pytest.raises(GeometryError):
             offset_clipper(coordinates, 1, method="fail")
-
-
-json.dump
