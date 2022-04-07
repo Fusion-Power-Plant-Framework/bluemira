@@ -282,10 +282,7 @@ def offset_clipper(coordinates, delta, method="square", miter_limit=2.0):
     if method == "square":
         tool = SquareOffset(coordinates, delta)
     elif method == "round":
-        bluemira_warn(
-            "Je ne sais pas pourquoi, mais c'est tres lent.. vaut mieux se"
-            " servir d'autre chose..."
-        )
+        bluemira_warn("I don't know why, but this is very slow...")
         tool = RoundOffset(coordinates, delta)
     elif method == "miter":
         tool = MiterOffset(coordinates, delta, miter_limit=miter_limit)
