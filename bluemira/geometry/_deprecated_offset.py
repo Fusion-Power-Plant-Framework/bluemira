@@ -53,7 +53,7 @@ def coordinates_to_pyclippath(coordinates):
 
     Parameters
     ----------
-    loop: Coordinates
+    coordinates: Coordinates
         The Coordinates to be used in pyclipper
 
     Returns
@@ -94,9 +94,9 @@ def pyclippolytree_to_coordinates(polytree, dims=None):
     Parameters
     ----------
     polytree: ClipperLib::PolyTree
-        The polytree to convert to loops
+        The polytree to convert to Coordinates
     dims: None or iterable(str, str)
-        The dimensions of the Loops
+        The dimensions of the Coordinates
     """
     if dims is None:
         dims = ["x", "z"]
@@ -129,7 +129,7 @@ class PyclipperMixin:
     def handle_solution(self, solution):
         """
         Handles the output of the Pyclipper.Execute(*) algorithms, turning them
-        into Loop objects. NOTE: These are closed by default.
+        into Coordaintes objects. NOTE: These are closed by default.
 
         Parameters
         ----------
@@ -157,7 +157,7 @@ class PyclipperMixin:
         if coords[0].closed:
             return sorted(coords, key=lambda x: -x.area)
         else:
-            # Sort open loops by length
+            # Sort open coordinates by length
             return sorted(coords, key=lambda x: -x.length)
 
     @property
@@ -242,15 +242,15 @@ class MiterOffset(OffsetOperationManager):
     method = JT_MITER
     open_method = ET_OPENROUND
 
-    def __init__(self, loop, delta, miter_limit=2.0):
-        super().__init__(loop, delta)
+    def __init__(self, coordinates, delta, miter_limit=2.0):
+        super().__init__(coordinates, delta)
 
         self.tool.MiterLimit = miter_limit
 
 
 def offset_clipper(coordinates, delta, method="square", miter_limit=2.0):
     """
-    Carries out an offset operation on the Loop using the ClipperLib library
+    Carries out an offset operation on the Coordinates using the ClipperLib library
 
     Parameters
     ----------
