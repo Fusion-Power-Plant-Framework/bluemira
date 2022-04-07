@@ -25,24 +25,15 @@ Deprecated discretised offset operations.
 
 import numpy as np
 from pyclipper import (
-    CT_DIFFERENCE,
-    CT_INTERSECTION,
-    CT_UNION,
     ET_CLOSEDPOLYGON,
     ET_OPENROUND,
     ET_OPENSQUARE,
     JT_MITER,
     JT_ROUND,
     JT_SQUARE,
-    PFT_EVENODD,
-    PT_CLIP,
-    PT_SUBJECT,
-    CleanPolygon,
     PolyTreeToPaths,
-    Pyclipper,
     PyclipperOffset,
     PyPolyNode,
-    SimplifyPolygon,
     scale_from_clipper,
     scale_to_clipper,
 )
