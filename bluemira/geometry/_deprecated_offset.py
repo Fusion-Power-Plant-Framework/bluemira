@@ -180,7 +180,7 @@ class OffsetOperationManager(PyclipperMixin):
     closed_method = ET_CLOSEDPOLYGON
     open_method = NotImplementedError
 
-    def __init__(self, coordinates, delta):
+    def __init__(self, coordinates: Coordinates, delta: float):
         self.tool = PyclipperOffset()
         path = coordinates_to_pyclippath(coordinates)
         self._scale = path[0][0] / coordinates.x[0]  # Store scale
@@ -239,7 +239,8 @@ class MiterOffset(OffsetOperationManager):
 
 def offset_clipper(coordinates: Coordinates, delta, method="square", miter_limit=2.0):
     """
-    Carries out an offset operation on the Coordinates using the ClipperLib library
+    Carries out an offset operation on the Coordinates using the ClipperLib library.
+    Only supports closed Coordinates.
 
     Parameters
     ----------
@@ -251,16 +252,25 @@ def offset_clipper(coordinates: Coordinates, delta, method="square", miter_limit
     method: str from ['square', 'round', 'miter'] (default = 'square')
         The type of offset to perform
     miter_limit: float (default = 2.0)
-        The ratio of delta to used when mitering acute corners. Only used if
+        The ratio of delta to use when mitering acute corners. Only used if
         method == 'miter'
 
     Returns
     -------
     result: Coordinates
         The offset Coordinates result
+
+    Raises
+    ------
+    GeometryError:
+        If the Coordinates are not planar
+        If the Coordinates are not closed
     """
     if not coordinates.is_planar:
         raise GeometryError("Cannot offset non-planar coordinates.")
+
+    if not coordinates.closed:
+        raise GeometryError("Open Coordinates are not supported by offset_clipper.")
 
     # Transform coordinates to x-z plane
     t_coordinates = transform_coordinates(coordinates, (0.0, 1.0, 0.0))

@@ -35,20 +35,18 @@ from bluemira.geometry.error import GeometryError
 class TestClipperOffset:
     plot = tests.PLOTTING
 
+    options = ["square", "miter", "round"]
+
     # fmt: off
-    x_open = [-4, -3, -2, -1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 7, 6, 5, 4, 3, 2, 1, 0, -1, -2]
-    y_open = [0, -2, -4, -3, -4, -2, 0, 1, 2, 3, 4, 5, 6, 6, 6, 6, 4, 3, 2, 1, 2, 2, 1]
-    x_closed = x_open + [-3, -4, -3]
-    y_closed = y_open + [1, 0, -2]
+    x = [-4, -3, -2, -1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 7, 6, 5, 4, 3, 2, 1, 0, -1, -2, -4]
+    y = [0, -2, -4, -3, -4, -2, 0, 1, 2, 3, 4, 5, 6, 6, 6, 6, 4, 3, 2, 1, 2, 2, 1, 0]
     # fmt: on
 
     @pytest.mark.parametrize(
         "x, y",
         [
-            (x_open, y_open),
-            (x_closed, y_closed),
-            (x_open[::-1], y_open[::-1]),
-            (x_closed[::-1], y_closed[::-1]),
+            (x, y),
+            (x[::-1], y[::-1]),
         ],
     )
     def test_complex_open(self, x, y):
@@ -68,7 +66,7 @@ class TestClipperOffset:
             data = json.load(file)
         coordinates = Coordinates(data)
         offsets = []
-        for m in ["square", "miter", "round"]:  # round very slow...
+        for m in self.options:  # round very slow...
             offset_coordinates = offset_clipper(coordinates, 1.5, method=m)
             offsets.append(offset_coordinates)
 
@@ -81,7 +79,20 @@ class TestClipperOffset:
             ax.set_aspect("equal")
             plt.show()
 
-    def test_raise_error(self):
-        coordinates = Coordinates({"x": [0, 1, 2], "y": [0, 0, 0]})
+    def test_wrong_method(self):
+        coordinates = Coordinates({"x": [0, 1, 2, 0], "y": [0, 1, -1, 0]})
         with pytest.raises(GeometryError):
             offset_clipper(coordinates, 1, method="fail")
+
+    @pytest.mark.parametrize("method", options)
+    def test_open_polygon_raises_error(self, method):
+        coordinates = Coordinates({"x": [0, 1, 2, 0], "y": [0, 1, -1, 0]})
+        with pytest.raises(GeometryError):
+            offset_clipper(coordinates, 1, method=method)
+
+    def test_non_planar_polygon_raises_error(self, method):
+        coordinates = Coordinates(
+            {"x": [0, 1, 2, 0], "y": [0, 1, -1, 0], "z": [0, 0, 1, 0]}
+        )
+        with pytest.raises(GeometryError):
+            offset_clipper(coordinates, 1, method=method)
