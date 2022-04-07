@@ -23,6 +23,7 @@ import json
 import os
 
 import matplotlib.pyplot as plt
+import numpy as np
 import pytest
 
 import tests
@@ -30,6 +31,7 @@ from bluemira.base.file import get_bluemira_path
 from bluemira.geometry._deprecated_offset import offset_clipper
 from bluemira.geometry.coordinates import Coordinates
 from bluemira.geometry.error import GeometryError
+from bluemira.geometry.tools import distance_to, make_polygon
 
 
 class TestClipperOffset:
@@ -43,21 +45,26 @@ class TestClipperOffset:
     # fmt: on
 
     @pytest.mark.parametrize(
-        "x, y",
+        "x, y, delta",
         [
-            (x, y),
-            (x[::-1], y[::-1]),
+            (x, y, 1.0),
+            (x[::-1], y[::-1], 1.0),
+            (x, y, -1.0),
+            (x[::-1], y[::-1], -1.0),
         ],
     )
-    def test_complex_open(self, x, y):
+    def test_complex_polygon(self, x, y, delta):
         coordinates = Coordinates({"x": x, "y": y, "z": 0})
-        c = offset_clipper(coordinates, 1)
+        c = offset_clipper(coordinates, delta)
         if self.plot:
             f, ax = plt.subplots()
             ax.plot(x, y, "k")
             ax.plot(c.x, c.y, "r", marker="o")
             ax.set_aspect("equal")
             plt.show()
+
+        distance = self._calculate_offset(coordinates, c)
+        np.testing.assert_almost_equal(distance, abs(delta))
 
     def test_blanket_offset(self):
         fp = get_bluemira_path("bluemira/geometry/test_data", subfolder="tests")
@@ -97,3 +104,9 @@ class TestClipperOffset:
         )
         with pytest.raises(GeometryError):
             offset_clipper(coordinates, 1, method=method)
+
+    @staticmethod
+    def _calculate_offset(coordinates, offset_coordinates):
+        p1 = make_polygon(coordinates)
+        p2 = make_polygon(offset_coordinates)
+        return distance_to(p1, p2)[0]
