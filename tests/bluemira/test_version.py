@@ -28,6 +28,6 @@ import bluemira
 
 def test_version():
     """
-    Test that we can get the version from BLUEPRINT.
+    Test that we can get the version from bluemira.
     """
     assert bluemira.__version__

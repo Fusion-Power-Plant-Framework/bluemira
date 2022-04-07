@@ -121,7 +121,7 @@ setup(
     install_requires=install_requires,
     extras_require=extras_require,
     entry_points={
-        "console_scripts": ["bluemira=BLUEPRINT.blueprint_cli:cli"],
+        "console_scripts": ["bluemira=bluemira.cli:cli"],
         "numba_extensions": ["init=numba_scipy:_init_extension"],
     },
 )

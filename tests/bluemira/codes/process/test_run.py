@@ -195,7 +195,7 @@ class TestRun:
     ):
         """
         Test in Run mode, that the correct functions are called during the run and that
-        no BLUEPRINT parameters are called to be written to IN.DAT, as this should only
+        no bluemira parameters are called to be written to IN.DAT, as this should only
         occur in Run mode.
         """
         self.run_PROCESS("RUNINPUT")

@@ -39,7 +39,7 @@ class TestPositionOptimiser:
 
     def _track_setup(self):
         # Stripped from
-        # BLUEPRINT.examples.equilibria.single_null
+        # examples.equilibria.single_null
         fp = get_bluemira_path("geometry", subfolder="data")
         TF = Loop.from_file(os.sep.join([fp, "TFreference.json"]))
         TF = TF.offset(2.4)
@@ -140,7 +140,7 @@ class TestPositionOptimiser:
             self.pos_dict[name] = (coil.x, coil.z)
 
         # Stripped from
-        # BLUEPRINT.equilibria.run.EquilibriumProblem.optimise_positions
+        # equilibria.run.EquilibriumProblem.optimise_positions
         solenoid = self.coilset.get_solenoid()
         CS_x = solenoid.radius
         CS_zmin = solenoid.z_min
@@ -148,7 +148,7 @@ class TestPositionOptimiser:
         CS_gap = solenoid.gap
 
         # Stripped from
-        # BLUEPRINT.examples.equilibria.single_null
+        # examples.equilibria.single_null
         max_PF_current = 25e6  # [A]
         PF_Fz_max = 400e6  # [N]
         CS_Fz_sum = 300e6  # [N]

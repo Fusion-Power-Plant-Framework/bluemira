@@ -10,7 +10,7 @@
  PROCESS_tag_number______________________________________________________ (tagno)_______________________     "v2.1-152-gf431eea5"
  PROCESS_git_branch_name_________________________________________________ (branch_name)_________________     "develop"
  PROCESS_last_commit_message_____________________________________________ (commsg)______________________     "Merge branch '1279-move-obsolete_vars-py-into-python-package-for-blueprint-use' into 'develop'"
- Input_filename__________________________________________________________ (fileprefix)__________________     "/home/user/code/BLUEPRINT/tests/syscodes/test_data/IN.DAT                                                                                                                                               "
+ Input_filename__________________________________________________________ (fileprefix)__________________     "/home/user/code/bluemira/tests/syscodes/test_data/IN.DAT                                                                                                                                               "
  # Numerics #
  VMCON_error_flag________________________________________________________ (ifail)_______________________              1
  # PROCESS found a feasible solution #

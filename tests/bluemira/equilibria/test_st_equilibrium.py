@@ -20,7 +20,7 @@
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 
 """
-BLUEPRINT -> bluemira ST equilibrium recursion test
+bluemira ST equilibrium recursion test
 """
 
 import copy
