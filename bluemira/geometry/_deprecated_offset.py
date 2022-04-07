@@ -86,7 +86,7 @@ def pyclippath_to_coordinates(path, dims=None):
         dims = ["x", "z"]
     p2 = scale_from_clipper(np.array(path).T)
     dict_ = {d: p for d, p in zip(dims, p2)}
-    return Coordinates(**dict_)
+    return Coordinates(dict_)
 
 
 def pyclippolytree_to_coordinates(polytree, dims=None):
@@ -156,9 +156,6 @@ class PyclipperMixin:
                     c.close()
                     coords.append(c)
 
-        if coords[0].closed:
-            return sorted(coords, key=lambda x: -x.area)
-        else:
             # Sort open coordinates by length
             return sorted(coords, key=lambda x: -x.length)
 
@@ -196,7 +193,7 @@ class OffsetOperationManager(PyclipperMixin):
         self.dims = coordinates.plan_dims
         self.tool = PyclipperOffset()
         path = coordinates_to_pyclippath(coordinates)
-        self._scale = path[0][0] / coordinates.d2[0][0]  # Store scale
+        self._scale = path[0][0] / coordinates.x[0]  # Store scale
 
         if coordinates.closed:
             co_method = self.closed_method
@@ -275,6 +272,8 @@ def offset_clipper(coordinates: Coordinates, delta, method="square", miter_limit
     if not coordinates.is_planar:
         raise GeometryError("Cannot offset non-planar coordinates.")
 
+    # Transform coordinates to x-y plane
+
     if method == "square":
         tool = SquareOffset(coordinates, delta)
     elif method == "round":
@@ -286,4 +285,8 @@ def offset_clipper(coordinates: Coordinates, delta, method="square", miter_limit
         raise GeometryError(
             "Please choose an offset method from:\n" " round \n square \n miter"
         )
-    return tool.result[0]
+
+    result = tool.result[0]
+
+    # Transform offset coordinates back to original plane
+    return result
