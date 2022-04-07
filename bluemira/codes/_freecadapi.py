@@ -261,6 +261,23 @@ def make_bspline(
     # left for consistency with other methods.
     pntslist = [Base.Vector(x) for x in points]
 
+    # Recreate checks that are made in freecad/src/MOD/Draft/draftmake/make_bspline.py
+    # function make_bspline, line 75
+
+    if len(pntslist) < 2:
+        _err = "make_bspline: not enough points"
+        raise FreeCADError(_err + "\n")
+    if pntslist[0] == pntslist[-1]:
+        if len(pntslist) > 2:
+            closed = True
+            pntslist.pop()
+            _err = "make_bspline: equal endpoints forced Closed"
+            bluemira_warn(_err)
+        else:
+            # len == 2 and first == last
+            _err = "make_bspline: Invalid pointslist (len == 2 and first == last)"
+            raise FreeCADError(_err)
+
     kwargs = {}
     if start_tangent and end_tangent:
         kwargs["InitialTangent"] = Base.Vector(start_tangent)
