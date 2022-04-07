@@ -59,7 +59,7 @@ class Task(abc.ABC):
         self._params = params
 
     @abc.abstractmethod
-    def run(self, *args, **kwargs):
+    def run(self, prev_result: Dict[str, Any]):
         """Run the task."""
         pass
 
