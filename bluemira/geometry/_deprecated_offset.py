@@ -203,6 +203,7 @@ class OffsetOperationManager(PyclipperMixin):
         """
         Calculate the pyclipper scaling to integers
         """
+        # Find the first non-zero dimension (low number of iterations)
         for i in range(len(path) - 1):
             if not path[i][0] == 0:
                 return path[i][0] / coordinates.x[i]
