@@ -140,10 +140,10 @@ class PyclipperMixin:
         else:
             coords = []
             if isinstance(solution, PyPolyNode):
-                coords = pyclippolytree_to_coordinates(solution, dims=self.dims)
+                coords = pyclippolytree_to_coordinates(solution)
             else:
                 for path in solution:
-                    c = pyclippath_to_coordinates(path, dims=self.dims)
+                    c = pyclippath_to_coordinates(path)
                     c.close()
                     coords.append(c)
 
@@ -181,7 +181,6 @@ class OffsetOperationManager(PyclipperMixin):
     open_method = NotImplementedError
 
     def __init__(self, coordinates, delta):
-        self.dims = coordinates.plan_dims
         self.tool = PyclipperOffset()
         path = coordinates_to_pyclippath(coordinates)
         self._scale = path[0][0] / coordinates.x[0]  # Store scale
