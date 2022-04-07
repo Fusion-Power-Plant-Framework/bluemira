@@ -24,7 +24,7 @@ Useful functions for bluemira geometries.
 """
 
 from copy import deepcopy
-from typing import Iterable, List, Sequence, Type, Union
+from typing import Iterable, List, Optional, Sequence, Type, Union
 
 import numba as nb
 import numpy as np
@@ -111,6 +111,8 @@ def make_bspline(
     points: Union[list, np.ndarray],
     label: str = "",
     closed: bool = False,
+    start_tangent: Optional[Iterable] = None,
+    end_tangent: Optional[Iterable] = None,
 ) -> BluemiraWire:
     """
     Make a bspline from a set of points.
@@ -125,6 +127,10 @@ def make_bspline(
     closed: bool, default = False
         if True, the first and last points will be connected in order to form a
         closed bspline. Defaults to False.
+    start_tangent: Optional[Iterable]
+        Tangency of the BSpline at the first pole. Must be specified with end_tangent
+    end_tangent: Optional[Iterable]
+        Tangency of the BSpline at the last pole. Must be specified with start_tangent
 
     Returns
     -------
@@ -132,7 +138,9 @@ def make_bspline(
         a bluemira wire that contains the bspline
     """
     points = Coordinates(points).T
-    return BluemiraWire(cadapi.make_bspline(points, closed), label=label)
+    return BluemiraWire(
+        cadapi.make_bspline(points, closed, start_tangent, end_tangent), label=label
+    )
 
 
 def make_bezier(

@@ -21,6 +21,7 @@
 
 import numpy as np
 import pytest
+from numpy.linalg import norm
 
 from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.parameterisations import PrincetonD
@@ -30,6 +31,7 @@ from bluemira.geometry.tools import (
     convex_hull_wires_2d,
     extrude_shape,
     find_clockwise_angle_2d,
+    make_bspline,
     make_circle,
     make_polygon,
     offset_wire,
@@ -413,6 +415,67 @@ class TestConvexHullWires2d:
 
         with pytest.raises(ValueError):
             convex_hull_wires_2d([circle], 10, plane=bad_plane)
+
+
+class TestMakeBSpline:
+    fixture = [
+        (None, None),
+        ([0, 0, 1], [0, 0, 1]),
+        ([0, 0, -1], [0, 0, -1]),
+        ([0, 0, -1], [0, 0, 1]),
+        ([0, 0, 1], [0, 0, -1]),
+    ]
+
+    @pytest.mark.parametrize("st, et", fixture)
+    def test_tangencies_open(self, st, et):
+        """
+        Open spline start and end tangencies.
+        """
+        points = {"x": np.linspace(0, 1, 4), "y": 0, "z": np.zeros(4)}
+        spline = make_bspline(points, closed=False, start_tangent=st, end_tangent=et)
+        # np.testing.assert_allclose(spline.length, expected_length)
+        if st and et:
+            assert spline.length > 1.0
+            e = spline._shape.Edges[0]
+            np.testing.assert_allclose(
+                e.tangentAt(e.FirstParameter), np.array(st) / norm(st)
+            )
+            np.testing.assert_allclose(
+                e.tangentAt(e.LastParameter), np.array(et) / norm(et)
+            )
+        else:
+            np.testing.assert_allclose(spline.length, 1.0)
+
+    @pytest.mark.parametrize("st, et", fixture)
+    def test_tangencies_closed(self, st, et):
+        points = {"x": [0, 1, 2, 1], "y": 0, "z": [0, -1, 0, 1]}
+        spline = make_bspline(points, closed=True, start_tangent=st, end_tangent=et)
+        if st and et:
+            e = spline._shape.Edges[0]
+            np.testing.assert_allclose(
+                e.tangentAt(e.FirstParameter), np.array(st) / norm(st)
+            )
+
+            # if the bspline is closed, end tangency is not considerd. Last point is
+            # equal to the first point, thus also its tangent.
+            np.testing.assert_allclose(
+                e.tangentAt(e.LastParameter), np.array(st) / norm(st)
+            )
+
+    def test_bspline_closed(self):
+        # first != last, closed = True
+        points = {"x": [0, 1, 1, 0], "y": 0, "z": [0, 0, 1, 1]}
+        spline = make_bspline(points, closed=True)
+        assert spline.length == 4.520741504557154
+
+        # first == last, closed = True
+        points = {"x": [0, 1, 1, 0, 0], "y": 0, "z": [0, 0, 1, 1, 0]}
+        spline = make_bspline(points, closed=True)
+        assert spline.length == 4.520741504557154
+
+        # first == last, closed = False (closed is enforced)
+        spline = make_bspline(points, closed=False)
+        assert spline.length == 4.520741504557154
 
 
 class TestFindClockwiseAngle2d:
