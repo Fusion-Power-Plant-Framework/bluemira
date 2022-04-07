@@ -42,7 +42,15 @@ class TestClipperOffset:
     y_closed = y_open + [1, 0, -2]
     # fmt: on
 
-    @pytest.mark.parametrize("x, y", [(x_open, y_open), (x_closed, y_closed)])
+    @pytest.mark.parametrize(
+        "x, y",
+        [
+            (x_open, y_open),
+            (x_closed, y_closed),
+            (x_open[::-1], y_open[::-1]),
+            (x_closed[::-1], y_closed[::-1]),
+        ],
+    )
     def test_complex_open(self, x, y):
         coordinates = Coordinates({"x": x, "y": y, "z": 0})
         c = offset_clipper(coordinates, 1)
@@ -60,7 +68,7 @@ class TestClipperOffset:
             data = json.load(file)
         coordinates = Coordinates(data)
         offsets = []
-        for m in ["square", "miter"]:  # round very slow...
+        for m in ["square", "miter", "round"]:  # round very slow...
             offset_coordinates = offset_clipper(coordinates, 1.5, method=m)
             offsets.append(offset_coordinates)
 
