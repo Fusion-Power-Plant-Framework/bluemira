@@ -41,9 +41,7 @@ be set to the corresponding Task classes mentioned above.
 """
 import abc
 import enum
-from typing import Any, Callable, Dict, Type
-
-from bluemira.base.error import BluemiraError
+from typing import Any, Callable, Dict, Optional, Type
 
 # TODO(hsaunders1904): what happens if we want to different run modes
 # for different build stages? Is this a reasonable thing to do?
@@ -57,8 +55,6 @@ class Task(abc.ABC):
     'run modes' can also be defined.
     """
 
-    _result: Any
-
     def __init__(self, params: Dict[str, Any]) -> None:
         self._params = params
 
@@ -66,19 +62,6 @@ class Task(abc.ABC):
     def run(self, *args, **kwargs):
         """Run the task."""
         pass
-
-    @property
-    def result(self) -> Any:
-        try:
-            return self._result
-        except AttributeError as attr_error:
-            raise BluemiraError(
-                "Task result is not set. A run mode method has likely not been called."
-            ) from attr_error
-
-    @result.setter
-    def result(self, result: Any):
-        self._result = result
 
 
 class RunMode(enum.Enum):
@@ -151,12 +134,22 @@ class SolverABC(abc.ABC):
 
     def execute(self, run_mode: RunMode) -> Any:
         """Execute the setup, run, and teardown tasks, in order."""
-        self._get_execution_method(self._setup, run_mode)()
-        self._get_execution_method(self._run, run_mode)(self._setup.result)
-        self._get_execution_method(self._teardown, run_mode)(self._run.result)
-        return self._teardown.result
+        result = None
+        setup = self._get_execution_method(self._setup, run_mode)
+        if setup:
+            result = setup()
 
-    def _get_execution_method(self, task: Task, run_mode: RunMode) -> Callable:
+        run = self._get_execution_method(self._run, run_mode)
+        if run:
+            result = run(result)
+
+        teardown = self._get_execution_method(self._teardown, run_mode)
+        if teardown:
+            result = teardown(result)
+
+        return result
+
+    def _get_execution_method(self, task: Task, run_mode: RunMode) -> Optional[Callable]:
         """
         Return the method on the task corresponding to this solver's run
         mode (e.g., 'task.run').
@@ -164,4 +157,4 @@ class SolverABC(abc.ABC):
         If the method on the task does not exist, return a function that
         simply returns its input.
         """
-        return getattr(task, run_mode.to_string(), lambda *args: args)
+        return getattr(task, run_mode.to_string(), None)
