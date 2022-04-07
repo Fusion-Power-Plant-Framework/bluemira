@@ -53,11 +53,11 @@ class TestClipperOffset:
             ax.set_aspect("equal")
 
     def test_blanket_offset(self):
-        fp = get_bluemira_path("BLUEPRINT/geometry/test_data", subfolder="tests")
-        fn = os.sep.join([fp, "bb_offset_test.pkl"])
+        fp = get_bluemira_path("bluemira/geometry/test_data", subfolder="tests")
+        fn = os.sep.join([fp, "bb_offset_test.json"])
         with open(fn, "rb") as file:
-            d = pickle.load(file)  # noqa :S301
-        coordinates = Coordinates(**d)
+            data = json.load(file)
+        coordinates = Coordinates(data)
         offsets = []
         for m in ["square", "miter"]:  # round very slow...
             offset_coordinates = offset_clipper(coordinates, 1.5, method=m)
@@ -72,3 +72,6 @@ class TestClipperOffset:
         coordinates = Coordinates({"x": [0, 1, 2], "y": [0, 0, 0]})
         with pytest.raises(GeometryError):
             offset_clipper(coordinates, 1, method="fail")
+
+
+json.dump
