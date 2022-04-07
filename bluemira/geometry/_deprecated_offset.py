@@ -42,6 +42,8 @@ from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.geometry.coordinates import Coordinates
 from bluemira.geometry.error import GeometryError
 
+__all__ = ["offset_clipper"]
+
 # =============================================================================
 # Pyclipper utilities
 # =============================================================================
