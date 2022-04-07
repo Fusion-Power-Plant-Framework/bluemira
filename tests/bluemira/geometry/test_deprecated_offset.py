@@ -62,11 +62,13 @@ class TestClipperOffset:
         for m in ["square", "miter"]:  # round very slow...
             offset_coordinates = offset_clipper(coordinates, 1.5, method=m)
             offsets.append(offset_coordinates)
-        f, ax = plt.subplots()
-        coordinates.plot(ax)
-        colors = ["r", "g", "y"]
-        for offset_coordinates, c in zip(offsets, colors):
-            offset_coordinates.plot(ax, facecolor=c)
+
+        if self.plot:
+            f, ax = plt.subplots()
+            ax.plot(coordinates.x, coordinates.z, color="k")
+            colors = ["r", "g", "y"]
+            for offset_coordinates, c in zip(offsets, colors):
+                ax.plot(offset_coordinates.x, offset_coordinates.z, color=c)
 
     def test_raise_error(self):
         coordinates = Coordinates({"x": [0, 1, 2], "y": [0, 0, 0]})
