@@ -114,10 +114,7 @@ class PyclipperMixin:
         """
         Raise a warning if None is to be returned.
         """
-        bluemira_warn(
-            f"{self.name} operation on 2-D polygons returning None.\n"
-            "Nothing to perform."
-        )
+        bluemira_warn(f"{self.name} operation on 2-D polygons returning None.\n")
 
     def handle_solution(self, solution):
         """
@@ -285,6 +282,14 @@ def offset_clipper(coordinates: Coordinates, delta, method="square", miter_limit
     else:
         raise GeometryError(
             "Please choose an offset method from:\n" " round \n square \n miter"
+        )
+
+    if tool.result is None:
+        return None
+
+    if len(tool.result) > 1:
+        bluemira_warn(
+            f"Offset operation with {delta} has produced multiple 'islands'; only returning the biggest one!"
         )
 
     result = tool.result[0]

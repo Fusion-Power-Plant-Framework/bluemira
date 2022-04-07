@@ -37,13 +37,15 @@ from bluemira.geometry.tools import distance_to, make_polygon
 class TestClipperOffset:
     plot = tests.PLOTTING
 
-    options = ["square", "miter", "round"]
+    options = [("square"), ("miter")]
+    # NOTE: "round" can be montrously slow..
 
     # fmt: off
     x = [-4, -3, -2, -1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 7, 6, 5, 4, 3, 2, 1, 0, -1, -2, -4]
     y = [0, -2, -4, -3, -4, -2, 0, 1, 2, 3, 4, 5, 6, 6, 6, 6, 4, 3, 2, 1, 2, 2, 1, 0]
     # fmt: on
 
+    @pytest.mark.parametrize("method", options)
     @pytest.mark.parametrize(
         "x, y, delta",
         [
@@ -53,9 +55,9 @@ class TestClipperOffset:
             (x[::-1], y[::-1], -1.0),
         ],
     )
-    def test_complex_polygon(self, x, y, delta):
+    def test_complex_polygon(self, x, y, delta, method):
         coordinates = Coordinates({"x": x, "y": y, "z": 0})
-        c = offset_clipper(coordinates, delta)
+        c = offset_clipper(coordinates, delta, method=method)
         if self.plot:
             f, ax = plt.subplots()
             ax.plot(x, y, "k")
@@ -65,6 +67,12 @@ class TestClipperOffset:
 
         distance = self._calculate_offset(coordinates, c)
         np.testing.assert_almost_equal(distance, abs(delta))
+
+    @pytest.mark.parametrize("method", options)
+    def test_complex_polygon_overoffset(self, method):
+        coordinates = Coordinates({"x": self.x, "y": self.y, "z": 0})
+        c = offset_clipper(coordinates, -30, method=method)
+        assert c is None
 
     def test_blanket_offset(self):
         fp = get_bluemira_path("bluemira/geometry/test_data", subfolder="tests")
@@ -91,7 +99,7 @@ class TestClipperOffset:
         with pytest.raises(GeometryError):
             offset_clipper(coordinates, 1, method="fail")
 
-    @pytest.mark.parametrize("method", [options])
+    @pytest.mark.parametrize("method", [("round"), ("miter"), ("square")])
     def test_open_polygon_raises_error(self, method):
         coordinates = Coordinates({"x": [0, 1, 2, 0], "y": [0, 1, -1, 0]})
         with pytest.raises(GeometryError):
