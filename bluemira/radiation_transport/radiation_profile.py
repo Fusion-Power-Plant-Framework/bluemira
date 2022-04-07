@@ -62,7 +62,7 @@ class Radiation:
             "rminor",
             "kappa",
         ]
-        parameter_values = process_solver.get_process_parameters(parameter_names)
+        parameter_values = process_solver.get_raw_variables(parameter_names)
         self.process_params = {k: v for k, v in zip(parameter_names, parameter_values)}
         # Impurities from the PROCESS database
         self.impurity_id = ["fimp(01", "fimp(02", "fimp(13", "fimp(14"]
@@ -812,7 +812,7 @@ class Mathematics(Radiation):
             species ion charge
         """
         species_data = Path(Path(imp_data.__file__).parent, species_file)
-        species_frac = self.process_solver.get_process_parameters(fimp_no)
+        species_frac = self.process_solver.get_raw_variables(fimp_no)
 
         t_ref, z_ref = np.genfromtxt(species_data).T[
             (0, 2),
@@ -871,7 +871,7 @@ class Mathematics(Radiation):
         rad_loss: np.array
             Line radiation losses [MW m^-3]
         """
-        species_frac = self.process_solver.get_process_parameters(fimp_id)
+        species_frac = self.process_solver.get_raw_variables(fimp_id)
         rad_loss = (species_frac * (ne**2) * p_loss_f) / 1e6
 
         return rad_loss
@@ -1092,7 +1092,7 @@ class ScrapeOffLayer(Radiation):
         entrance_x, entrance_z = sep_loop.x[i_in], sep_loop.z[i_in]
         exit_x, exit_z = sep_loop.x[i_out], sep_loop.z[i_out]
 
-        return entrance_x, entrance_z, exit_x, exit_z
+        return entrance_x[0], entrance_z[0], exit_x[0], exit_z[0]
 
     def radiation_region_points(self, flux_tube, z_main, z_pfr, lower=True):
         """
@@ -1431,212 +1431,332 @@ class StepScrapeOffLayer(ScrapeOffLayer, Mathematics):
         x_strike_hfs = flux_tubes_hfs_low[0].loop.x[-1]
         z_strike_hfs = flux_tubes_hfs_low[0].loop.z[-1]
 
-        # z distance from x-point and ion front
-        front_lfs = self.ion_front_distance(x_strike_lfs, z_strike_lfs, rec_ext=0.5)
-        front_hfs = self.ion_front_distance(x_strike_hfs, z_strike_hfs, rec_ext=0.5)
+        # z distance from x-point to the ion front
+        ion_front = {
+            "lfs": {
+                "x_strike": x_strike_lfs,
+                "z_strike": z_strike_lfs,
+                "rec_ext": 0.5,
+            },
+            "hfs": {
+                "x_strike": x_strike_hfs,
+                "z_strike": z_strike_hfs,
+                "rec_ext": 0.5,
+            },
+        }
+        for side, var in ion_front.items():
+            ion_front[side] = self.ion_front_distance(
+                var["x_strike"], var["z_strike"], rec_ext=var["rec_ext"]
+            )
 
-        # radiation region extension from the x-point towards main plasma and
-        # private flux region
-        z_main_lfs_low, z_pfr_lfs_low = self.x_point_radiation_z_ext(pfr_ext=front_lfs)
-        z_main_lfs_up, z_pfr_lfs_up = self.x_point_radiation_z_ext(
-            pfr_ext=front_lfs, low_div=False
-        )
-        # z_main_lfs_low, z_pfr_lfs_low = self.x_point_radiation_z_ext()
-        # z_main_lfs_up, z_pfr_lfs_up = self.x_point_radiation_z_ext(low_div=False)
-        z_main_hfs_low, z_pfr_hfs_low = self.x_point_radiation_z_ext(pfr_ext=front_hfs)
-        z_main_hfs_up, z_pfr_hfs_up = self.x_point_radiation_z_ext(
-            pfr_ext=front_hfs, low_div=False
-        )
+        # radiation region extension from the x-point towards main plasma
+        # and towards private flux region
+        z_limits = {
+            "lfs_low": {
+                "main_ext": 0.2,
+                "pfr_ext": ion_front["lfs"],
+                "low_div": True,
+            },
+            "lfs_up": {
+                "main_ext": 0.2,
+                "pfr_ext": ion_front["lfs"],
+                "low_div": False,
+            },
+            "hfs_low": {
+                "main_ext": 0.2,
+                "pfr_ext": ion_front["hfs"],
+                "low_div": True,
+            },
+            "hfs_up": {
+                "main_ext": 0.2,
+                "pfr_ext": ion_front["hfs"],
+                "low_div": False,
+            },
+        }
+        for side, var in z_limits.items():
+            z_limits[side] = self.x_point_radiation_z_ext(
+                var["main_ext"], var["pfr_ext"], var["low_div"]
+            )
 
-        # entrance and exit point on the separatrix
-        (
-            in_x_lfs_low,
-            in_z_lfs_low,
-            out_x_lfs_low,
-            out_z_lfs_low,
-        ) = self.radiation_region_ends(z_main_lfs_low, z_pfr_lfs_low)
-        (
-            in_x_lfs_up,
-            in_z_lfs_up,
-            out_x_lfs_up,
-            out_z_lfs_up,
-        ) = self.radiation_region_ends(z_main_lfs_up, z_pfr_lfs_up)
-        (
-            in_x_hfs_low,
-            in_z_hfs_low,
-            out_x_hfs_low,
-            out_z_hfs_low,
-        ) = self.radiation_region_ends(z_main_hfs_low, z_pfr_hfs_low, lfs=False)
-        (
-            in_x_hfs_up,
-            in_z_hfs_up,
-            out_x_hfs_up,
-            out_z_hfs_up,
-        ) = self.radiation_region_ends(z_main_hfs_up, z_pfr_hfs_up, lfs=False)
+        # entrance and exit points on the separatrix
+        in_out = {
+            "lfs_low": {
+                "z_main": z_limits["lfs_low"][0],
+                "z_pfr": z_limits["lfs_low"][1],
+                "lfs": True,
+            },
+            "lfs_up": {
+                "z_main": z_limits["lfs_up"][0],
+                "z_pfr": z_limits["lfs_up"][1],
+                "lfs": True,
+            },
+            "hfs_low": {
+                "z_main": z_limits["hfs_low"][0],
+                "z_pfr": z_limits["hfs_low"][1],
+                "lfs": False,
+            },
+            "hfs_up": {
+                "z_main": z_limits["hfs_up"][0],
+                "z_pfr": z_limits["hfs_up"][1],
+                "lfs": False,
+            },
+        }
+        for side, var in in_out.items():
+            in_out[side] = self.radiation_region_ends(
+                var["z_main"], var["z_pfr"], var["lfs"]
+            )
 
         # radiation and recycling regions - point indeces
-        reg_i_lfs_low = np.array(
-            [
-                self.radiation_region_points(ft.loop, z_main_lfs_low, z_pfr_lfs_low)
-                for ft in (flux_tubes_lfs_low)
-            ],
-            dtype=object,
-        )
-        reg_i_lfs_up = np.array(
-            [
-                self.radiation_region_points(
-                    ft.loop, z_main_lfs_up, z_pfr_lfs_up, lower=False
-                )
-                for ft in (flux_tubes_lfs_up)
-            ],
-            dtype=object,
-        )
-        reg_i_hfs_low = np.array(
-            [
-                self.radiation_region_points(ft.loop, z_main_hfs_low, z_pfr_hfs_low)
-                for ft in (flux_tubes_hfs_low)
-            ],
-            dtype=object,
-        )
-        reg_i_hfs_up = np.array(
-            [
-                self.radiation_region_points(
-                    ft.loop, z_main_hfs_up, z_pfr_hfs_up, lower=False
-                )
-                for ft in (flux_tubes_hfs_up)
-            ],
-            dtype=object,
-        )
+        reg_i = {
+            "lfs_low": {
+                "flux_tube": flux_tubes_lfs_low,
+                "z_main": z_limits["lfs_low"][0],
+                "z_pfr": z_limits["lfs_low"][1],
+                "lower": True,
+            },
+            "lfs_up": {
+                "flux_tube": flux_tubes_lfs_up,
+                "z_main": z_limits["lfs_up"][0],
+                "z_pfr": z_limits["lfs_up"][1],
+                "lower": False,
+            },
+            "hfs_low": {
+                "flux_tube": flux_tubes_hfs_low,
+                "z_main": z_limits["hfs_low"][0],
+                "z_pfr": z_limits["hfs_low"][1],
+                "lower": True,
+            },
+            "hfs_up": {
+                "flux_tube": flux_tubes_hfs_up,
+                "z_main": z_limits["hfs_up"][0],
+                "z_pfr": z_limits["hfs_up"][1],
+                "lower": False,
+            },
+        }
+        for side, ft in reg_i.items():
+            reg_i[side] = np.array(
+                [
+                    self.radiation_region_points(
+                        f.loop, ft["z_main"], ft["z_pfr"], ft["lower"]
+                    )
+                    for f in ft["flux_tube"]
+                ],
+                dtype=object,
+            )
 
         # upstream temperature and power density - on separatrix
         t_u, q_u = self.upstream_temperature(firstwall_loop)
         # temperature and density through the sol at the outer and inner mid-plane
-        t_mp_ob, n_mp_ob = self.mp_electron_density_temperature_profiles(te_sep=t_u)
-        t_mp_ib, n_mp_ib = self.mp_electron_density_temperature_profiles(
-            te_sep=t_u, omp=False
-        )
+        t_and_n_mid = {
+            "lfs": {
+                "t_sep": t_u,
+                "omp": True,
+            },
+            "hfs": {
+                "t_sep": t_u,
+                "omp": False,
+            },
+        }
+        for side, par in t_and_n_mid.items():
+            t_and_n_mid[side] = self.mp_electron_density_temperature_profiles(
+                par["t_sep"], par["omp"]
+            )
 
         # temperature at the entrance (above x-point) and exit (below x-point)
         # of the radiation region - on sepratrix
-        t_rad_in_lfs = self.random_point_temperature(
-            in_x_lfs_low[0], in_z_lfs_low[0], t_u, q_u, firstwall_loop
-        )
-        t_rad_in_hfs = self.random_point_temperature(
-            in_x_hfs_low[0], in_z_hfs_low[0], t_u, q_u, firstwall_loop, lfs=False
-        )
-        # t_rad_out_lfs = 0.01
-        t_rad_out_hfs = self.target_temperature(q_u, t_u, lfs=False)
-        # print(t_rad_out_hfs)
-        t_rad_out_lfs = self.target_temperature(q_u, t_u)
-        # print(t_rad_out_lfs)
-        # t_rad_out_hfs = self.target_temperature(q_u, t_u, lfs=False)
+        t_rad_in = {
+            "lfs": {
+                "x": in_out["lfs_low"][0],
+                "z": in_out["lfs_low"][1],
+                "t_upstream": t_u,
+                "q_upstream": q_u,
+                "first_wall": firstwall_loop,
+                "lfs": True,
+            },
+            "hfs": {
+                "x": in_out["hfs_low"][0],
+                "z": in_out["hfs_low"][1],
+                "t_upstream": t_u,
+                "q_upstream": q_u,
+                "first_wall": firstwall_loop,
+                "lfs": False,
+            },
+        }
+        for side, var in t_rad_in.items():
+            t_rad_in[side] = self.random_point_temperature(
+                var["x"],
+                var["z"],
+                var["t_upstream"],
+                var["q_upstream"],
+                var["first_wall"],
+                var["lfs"],
+            )
+
+        t_rad_out = {
+            "lfs": {
+                "t_upstream": t_u,
+                "q_upstream": q_u,
+                "lfs": True,
+            },
+            "hfs": {
+                "t_upstream": t_u,
+                "q_upstream": q_u,
+                "lfs": False,
+            },
+        }
+        for side, var in t_rad_out.items():
+            t_rad_out[side] = self.target_temperature(
+                var["q_upstream"],
+                var["t_upstream"],
+                var["lfs"],
+            )
 
         # temperature and density profiles at the entrance of the radiation region
         # decay through the SoL
-        t_in_lfs_low, n_in_lfs_low = self.any_point_n_t_profiles(
-            in_x_lfs_low[0],
-            in_z_lfs_low[0],
-            t_rad_in_lfs,
-            t_u,
-        )
-
-        t_in_lfs_up, n_in_lfs_up = self.any_point_n_t_profiles(
-            in_x_lfs_up[0],
-            in_z_lfs_up[0],
-            t_rad_in_lfs,
-            t_u,
-        )
-        t_in_hfs_low, n_in_hfs_low = self.any_point_n_t_profiles(
-            in_x_hfs_low[0],
-            in_z_hfs_low[0],
-            t_rad_in_hfs,
-            t_u,
-            lfs=False,
-        )
-        t_in_hfs_up, n_in_hfs_up = self.any_point_n_t_profiles(
-            in_x_hfs_up[0],
-            in_z_hfs_up[0],
-            t_rad_in_hfs,
-            t_u,
-            lfs=False,
-        )
+        t_and_n_profiles_in = {
+            "lfs_low": {
+                "in_x": in_out["lfs_low"][0],
+                "in_z": in_out["lfs_low"][1],
+                "t_rad_in": t_rad_in["lfs"],
+                "t_upstream": t_u,
+                "lfs": True,
+            },
+            "lfs_up": {
+                "in_x": in_out["lfs_up"][0],
+                "in_z": in_out["lfs_up"][1],
+                "t_rad_in": t_rad_in["lfs"],
+                "t_upstream": t_u,
+                "lfs": True,
+            },
+            "hfs_low": {
+                "in_x": in_out["hfs_low"][0],
+                "in_z": in_out["hfs_low"][1],
+                "t_rad_in": t_rad_in["hfs"],
+                "t_upstream": t_u,
+                "lfs": False,
+            },
+            "hfs_up": {
+                "in_x": in_out["hfs_up"][0],
+                "in_z": in_out["hfs_up"][1],
+                "t_rad_in": t_rad_in["hfs"],
+                "t_upstream": t_u,
+                "lfs": False,
+            },
+        }
+        for side, par in t_and_n_profiles_in.items():
+            t_and_n_profiles_in[side] = self.any_point_n_t_profiles(
+                par["in_x"],
+                par["in_z"],
+                par["t_rad_in"],
+                par["t_upstream"],
+                par["lfs"],
+            )
 
         # temperature and density profiles at the exit of the radiation region
         # decay through the SoL
-        t_out_lfs_low, n_out_lfs_low = self.any_point_n_t_profiles(
-            out_x_lfs_low[0],
-            out_z_lfs_low[0],
-            t_rad_out_lfs,
-            t_u,
-        )
-        t_out_lfs_up, n_out_lfs_up = self.any_point_n_t_profiles(
-            out_x_lfs_up[0],
-            out_z_lfs_up[0],
-            t_rad_out_lfs,
-            t_u,
-        )
-        t_out_hfs_low, n_out_hfs_low = self.any_point_n_t_profiles(
-            out_x_hfs_low[0], out_z_hfs_low[0], t_rad_out_hfs, t_u, lfs=False
-        )
-        t_out_hfs_up, n_out_hfs_up = self.any_point_n_t_profiles(
-            out_x_hfs_up[0], out_z_hfs_up[0], t_rad_out_hfs, t_u, lfs=False
-        )
+        t_and_n_profiles_out = {
+            "lfs_low": {
+                "out_x": in_out["lfs_low"][2],
+                "out_z": in_out["lfs_low"][3],
+                "t_rad_out": t_rad_out["lfs"],
+                "t_upstream": t_u,
+                "lfs": True,
+            },
+            "lfs_up": {
+                "out_x": in_out["lfs_up"][2],
+                "out_z": in_out["lfs_up"][3],
+                "t_rad_out": t_rad_out["lfs"],
+                "t_upstream": t_u,
+                "lfs": True,
+            },
+            "hfs_low": {
+                "out_x": in_out["hfs_low"][2],
+                "out_z": in_out["hfs_low"][3],
+                "t_rad_out": t_rad_out["hfs"],
+                "t_upstream": t_u,
+                "lfs": False,
+            },
+            "hfs_up": {
+                "out_x": in_out["hfs_up"][2],
+                "out_z": in_out["hfs_up"][3],
+                "t_rad_out": t_rad_out["hfs"],
+                "t_upstream": t_u,
+                "lfs": False,
+            },
+        }
+        for side, par in t_and_n_profiles_out.items():
+            t_and_n_profiles_out[side] = self.any_point_n_t_profiles(
+                par["out_x"],
+                par["out_z"],
+                par["t_rad_out"],
+                par["t_upstream"],
+                par["lfs"],
+            )
 
         # temperature and density profiles at the target - decay through the SoL
-        t_tar_lfs_low, n_tar_lfs_low = self.tar_electron_densitiy_temperature_profiles(
-            n_out_lfs_low, t_out_lfs_low
-        )
-
-        t_tar_lfs_up, n_tar_lfs_up = self.tar_electron_densitiy_temperature_profiles(
-            n_out_lfs_up, t_out_lfs_up
-        )
-        t_tar_hfs_low, n_tar_hfs_low = self.tar_electron_densitiy_temperature_profiles(
-            n_out_hfs_low, t_out_hfs_low
-        )
-        t_tar_hfs_up, n_tar_hfs_up = self.tar_electron_densitiy_temperature_profiles(
-            n_out_hfs_up, t_out_hfs_up
-        )
+        t_and_n_profiles_tar = {
+            "lfs_low": {
+                "n_div": t_and_n_profiles_out["lfs_low"][1],
+                "t_div": t_and_n_profiles_out["lfs_low"][0],
+            },
+            "lfs_up": {
+                "n_div": t_and_n_profiles_out["lfs_up"][1],
+                "t_div": t_and_n_profiles_out["lfs_up"][0],
+            },
+            "hfs_low": {
+                "n_div": t_and_n_profiles_out["hfs_low"][1],
+                "t_div": t_and_n_profiles_out["hfs_low"][0],
+            },
+            "hfs_up": {
+                "n_div": t_and_n_profiles_out["hfs_up"][1],
+                "t_div": t_and_n_profiles_out["hfs_up"][0],
+            },
+        }
+        for side, par in t_and_n_profiles_tar.items():
+            t_and_n_profiles_tar[side] = self.tar_electron_densitiy_temperature_profiles(
+                par["n_div"],
+                par["t_div"],
+            )
 
         # poloidal temperature distribution
         t_pol = {
             "lfs_low": {
                 "flux_tube": flux_tubes_lfs_low,
-                "t_mp": t_mp_ob,
-                "t_rad_in": t_in_lfs_low,
-                "t_rad_out": t_out_lfs_low,
-                "rad_i": reg_i_lfs_low,
-                "rec_i": reg_i_lfs_low,
-                "t_tar": t_tar_lfs_low,
+                "t_mp": t_and_n_mid["lfs"][0],
+                "t_rad_in": t_and_n_profiles_in["lfs_low"][0],
+                "t_rad_out": t_and_n_profiles_out["lfs_low"][0],
+                "rad_i": reg_i["lfs_low"],
+                "rec_i": reg_i["lfs_low"],
+                "t_tar": t_and_n_profiles_tar["lfs_low"][0],
             },
             "lfs_up": {
                 "flux_tube": flux_tubes_lfs_up,
-                "t_mp": t_mp_ob,
-                "t_rad_in": t_in_lfs_up,
-                "t_rad_out": t_out_lfs_up,
-                "rad_i": reg_i_lfs_up,
-                "rec_i": reg_i_lfs_up,
-                "t_tar": t_tar_lfs_up,
+                "t_mp": t_and_n_mid["lfs"][0],
+                "t_rad_in": t_and_n_profiles_in["lfs_up"][0],
+                "t_rad_out": t_and_n_profiles_out["lfs_up"][0],
+                "rad_i": reg_i["lfs_up"],
+                "rec_i": reg_i["lfs_up"],
+                "t_tar": t_and_n_profiles_tar["lfs_up"][0],
             },
             "hfs_low": {
                 "flux_tube": flux_tubes_hfs_low,
-                "t_mp": t_mp_ib,
-                "t_rad_in": t_in_hfs_low,
-                "t_rad_out": t_out_hfs_low,
-                "rad_i": reg_i_hfs_low,
-                "rec_i": reg_i_hfs_low,
-                "t_tar": t_tar_hfs_low,
+                "t_mp": t_and_n_mid["hfs"][0],
+                "t_rad_in": t_and_n_profiles_in["hfs_low"][0],
+                "t_rad_out": t_and_n_profiles_out["hfs_low"][0],
+                "rad_i": reg_i["hfs_low"],
+                "rec_i": reg_i["hfs_low"],
+                "t_tar": t_and_n_profiles_tar["hfs_low"][0],
             },
             "hfs_up": {
                 "flux_tube": flux_tubes_hfs_up,
-                "t_mp": t_mp_ib,
-                "t_rad_in": t_in_hfs_up,
-                "t_rad_out": t_out_hfs_up,
-                "rad_i": reg_i_hfs_up,
-                "rec_i": reg_i_hfs_up,
-                "t_tar": t_tar_hfs_up,
+                "t_mp": t_and_n_mid["hfs"][0],
+                "t_rad_in": t_and_n_profiles_in["hfs_up"][0],
+                "t_rad_out": t_and_n_profiles_out["hfs_up"][0],
+                "rad_i": reg_i["hfs_up"],
+                "rec_i": reg_i["hfs_up"],
+                "t_tar": t_and_n_profiles_tar["hfs_up"][0],
             },
         }
-
         for side, ft in t_pol.items():
             t_pol[side] = np.array(
                 [
@@ -1665,46 +1785,45 @@ class StepScrapeOffLayer(ScrapeOffLayer, Mathematics):
         n_pol = {
             "lfs_low": {
                 "flux_tube": flux_tubes_lfs_low,
-                "n_mp": n_mp_ob,
-                "n_rad_in": n_in_lfs_low,
-                "n_rad_out": n_out_lfs_low,
-                "rad_i": reg_i_lfs_low,
-                "rec_i": reg_i_lfs_low,
-                "n_tar": n_tar_lfs_low,
+                "n_mp": t_and_n_mid["lfs"][1],
+                "n_rad_in": t_and_n_profiles_in["lfs_low"][1],
+                "n_rad_out": t_and_n_profiles_out["lfs_low"][1],
+                "rad_i": reg_i["lfs_low"],
+                "rec_i": reg_i["lfs_low"],
+                "n_tar": t_and_n_profiles_tar["lfs_low"][1],
                 "x_point_rad": False,
             },
             "lfs_up": {
                 "flux_tube": flux_tubes_lfs_up,
-                "n_mp": n_mp_ob,
-                "n_rad_in": n_in_lfs_up,
-                "n_rad_out": n_out_lfs_up,
-                "rad_i": reg_i_lfs_up,
-                "rec_i": reg_i_lfs_up,
-                "n_tar": n_tar_lfs_up,
+                "n_mp": t_and_n_mid["lfs"][1],
+                "n_rad_in": t_and_n_profiles_in["lfs_up"][1],
+                "n_rad_out": t_and_n_profiles_out["lfs_up"][1],
+                "rad_i": reg_i["lfs_up"],
+                "rec_i": reg_i["lfs_up"],
+                "n_tar": t_and_n_profiles_tar["lfs_up"][1],
                 "x_point_rad": False,
             },
             "hfs_low": {
                 "flux_tube": flux_tubes_hfs_low,
-                "n_mp": n_mp_ib,
-                "n_rad_in": n_in_hfs_low,
-                "n_rad_out": n_out_hfs_low,
-                "rad_i": reg_i_hfs_low,
-                "rec_i": reg_i_hfs_low,
-                "n_tar": n_tar_hfs_low,
+                "n_mp": t_and_n_mid["hfs"][1],
+                "n_rad_in": t_and_n_profiles_in["hfs_low"][1],
+                "n_rad_out": t_and_n_profiles_out["hfs_low"][1],
+                "rad_i": reg_i["hfs_low"],
+                "rec_i": reg_i["hfs_low"],
+                "n_tar": t_and_n_profiles_tar["hfs_low"][1],
                 "x_point_rad": False,
             },
             "hfs_up": {
                 "flux_tube": flux_tubes_hfs_up,
-                "n_mp": n_mp_ib,
-                "n_rad_in": n_in_hfs_up,
-                "n_rad_out": n_out_hfs_up,
-                "rad_i": reg_i_hfs_up,
-                "rec_i": reg_i_hfs_up,
-                "n_tar": n_tar_hfs_up,
+                "n_mp": t_and_n_mid["hfs"][1],
+                "n_rad_in": t_and_n_profiles_in["hfs_up"][1],
+                "n_rad_out": t_and_n_profiles_out["hfs_up"][1],
+                "rad_i": reg_i["hfs_up"],
+                "rec_i": reg_i["hfs_up"],
+                "n_tar": t_and_n_profiles_tar["hfs_up"][1],
                 "x_point_rad": False,
             },
         }
-
         for side, ft in n_pol.items():
             n_pol[side] = np.array(
                 [
@@ -1737,7 +1856,6 @@ class StepScrapeOffLayer(ScrapeOffLayer, Mathematics):
             "hfs_low": t_pol["hfs_low"],
             "hfs_up": t_pol["hfs_up"],
         }
-
         for side, t_pol in loss.items():
             loss[side] = np.array(
                 [
@@ -1756,7 +1874,6 @@ class StepScrapeOffLayer(ScrapeOffLayer, Mathematics):
             "hfs_low": {"density": n_pol["hfs_low"], "loss": loss["hfs_low"]},
             "hfs_up": {"density": n_pol["hfs_up"], "loss": loss["hfs_up"]},
         }
-
         for side, ft in rad.items():
             rad[side] = np.array(
                 [
