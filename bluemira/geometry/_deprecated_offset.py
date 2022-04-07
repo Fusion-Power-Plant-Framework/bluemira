@@ -66,7 +66,7 @@ def coordinates_to_pyclippath(coordinates):
     return scale_to_clipper(coordinates.xz.T)
 
 
-def pyclippath_to_coordinates(path, dims=None):
+def pyclippath_to_coordinates(path):
     """
     Transforms a pyclipper path into a bluemira Coordinates object
 
@@ -74,22 +74,17 @@ def pyclippath_to_coordinates(path, dims=None):
     ----------
     path: [(x1, z1), (x2, z2), ...]
         The vertex polygon path formatting used in pyclipper
-    dims: [str, str] (default = ['x', 'z'])
-        The planar dimensions of the Coordinates. Will default to X, Z
 
     Returns
     -------
     coordinates: Coordinates
         The Coordinates from the path object
     """
-    if dims is None:
-        dims = ["x", "z"]
     p2 = scale_from_clipper(np.array(path).T)
-    dict_ = {d: p for d, p in zip(dims, p2)}
-    return Coordinates(dict_)
+    return Coordinates({"x": p2[0], "z": p2[1]})
 
 
-def pyclippolytree_to_coordinates(polytree, dims=None):
+def pyclippolytree_to_coordinates(polytree):
     """
     Converts a ClipperLib PolyTree into a list of Coordinates
 
@@ -97,13 +92,9 @@ def pyclippolytree_to_coordinates(polytree, dims=None):
     ----------
     polytree: ClipperLib::PolyTree
         The polytree to convert to Coordinates
-    dims: None or iterable(str, str)
-        The dimensions of the Coordinates
     """
-    if dims is None:
-        dims = ["x", "z"]
     paths = PolyTreeToPaths(polytree)
-    return [pyclippath_to_coordinates(path, dims) for path in paths]
+    return [pyclippath_to_coordinates(path) for path in paths]
 
 
 class PyclipperMixin:
@@ -274,7 +265,7 @@ def offset_clipper(coordinates: Coordinates, delta, method="square", miter_limit
 
     # Transform coordinates to x-y plane
     t_coordinates = transform_coordinates(
-        coordinates, -np.array(coordinates.center_of_mass), (0, 1, 0)
+        coordinates, -np.array(coordinates.center_of_mass), (0.0, 1.0, 0.0)
     )
 
     if method == "square":
