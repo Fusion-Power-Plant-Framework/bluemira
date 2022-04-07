@@ -250,7 +250,7 @@ class MiterOffset(OffsetOperationManager):
         self.tool.MiterLimit = miter_limit
 
 
-def offset_clipper(coordinates, delta, method="square", miter_limit=2.0):
+def offset_clipper(coordinates: Coordinates, delta, method="square", miter_limit=2.0):
     """
     Carries out an offset operation on the Coordinates using the ClipperLib library
 
@@ -272,6 +272,9 @@ def offset_clipper(coordinates, delta, method="square", miter_limit=2.0):
     result: Coordinates
         The offset Coordinates result
     """
+    if not coordinates.is_planar:
+        raise GeometryError("Cannot offset non-planar coordinates")
+
     if method == "square":
         tool = SquareOffset(coordinates, delta)
     elif method == "round":
