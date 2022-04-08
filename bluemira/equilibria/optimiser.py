@@ -223,7 +223,10 @@ class PositionOptimiser:
                 pfcoiltrack, CS_x, CS_zmin, CS_zmax, cs_gap=CS_gap, CS=CS
             )
             if pf_exclusions is not None:
-                self.XLmap.add_exclusion_zones(pf_exclusions)
+                # TODO: Re-build this!
+                raise NotImplementedError(
+                    "This functionality has been deprecated and will be re-built using primitive geometry."
+                )
         else:
             self.flag_PFT = False
 
