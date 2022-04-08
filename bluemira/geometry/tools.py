@@ -303,6 +303,7 @@ def offset_wire(
     byedges=True,
     ndiscr=200,
     spline=False,
+    **fallback_kwargs,
 ) -> BluemiraWire:
     """
     Make a planar offset from a planar wire.
@@ -361,7 +362,9 @@ def offset_wire(
 
             fallback_method = method_mapping[join]
 
-        result = offset_clipper(coordinates, thickness, method=fallback_method)
+        result = offset_clipper(
+            coordinates, thickness, method=fallback_method, **fallback_kwargs
+        )
 
         if spline:
             return make_bspline(result, closed=True)
