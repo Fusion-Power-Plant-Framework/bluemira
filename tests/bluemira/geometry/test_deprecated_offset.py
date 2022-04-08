@@ -56,7 +56,7 @@ class TestClipperOffset:
         ],
     )
     def test_complex_polygon(self, x, y, delta, method):
-        coordinates = Coordinates({"x": x, "y": y, "z": 10})
+        coordinates = Coordinates({"x": x, "y": y, "z": np.random.rand()})
         c = offset_clipper(coordinates, delta, method=method)
         if self.plot:
             f, ax = plt.subplots()
