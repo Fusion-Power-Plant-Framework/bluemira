@@ -148,18 +148,21 @@ class TestComponentClass:
 
         assert parent.get_component("Child1") is not None
 
-    def test_add_child_with_merge_given_1_shared_node(self):
-        parent_1 = _tree_from_dict({"parent_1": {"x": "leaf_1_x"}})
-        parent_2 = _tree_from_dict({"parent_2": {"x": "leaf_2_x"}})
+    def test_merge_children_merges_trees(self):
+        parent_1 = _tree_from_dict({"parent_1": {"x": "leaf_1_x", "y": {"leaf_1_y"}}})
+        parent_2 = _tree_from_dict({"parent_2": {"x": "leaf_2_x", "z": {"leaf_1_z"}}})
 
         parent_1.merge_children(parent_2)
 
         x_component = parent_1.get_component("x")
         assert isinstance(x_component, Component)
-        assert isinstance(x_component.get_component("leaf_1_x"), Component)
-        assert isinstance(x_component.get_component("leaf_2_x"), Component)
+        assert [ch.name for ch in x_component.children] == ["leaf_1_x", "leaf_2_x"]
+        y_component = parent_1.get_component("y")
+        assert [ch.name for ch in y_component.children] == ["leaf_1_y"]
+        z_component = parent_1.get_component("z")
+        assert [ch.name for ch in z_component.children] == ["leaf_1_z"]
 
-    def test_add_child_with_merge_given_2_shared_nodes(self):
+    def test_merge_children_given_2_shared_nodes(self):
         tree_1 = {"parent_1": {"x": "leaf_1_x", "y": "leaf_1_y"}}
         parent_1 = _tree_from_dict(tree_1)
         tree_2 = {"parent_2": {"x": "leaf_2_x", "y": "leaf_2_y"}}
@@ -176,7 +179,7 @@ class TestComponentClass:
         assert isinstance(y_component.get_component("leaf_1_y"), Component)
         assert isinstance(y_component.get_component("leaf_2_y"), Component)
 
-    def test_add_child_with_merge_given_shared_leaf(self):
+    def test_merge_children_given_shared_leaf(self):
         parent_1 = Component("parent_1")
         Component("x", parent=parent_1)
         parent_2 = Component("parent_2")
@@ -184,7 +187,7 @@ class TestComponentClass:
 
         parent_1.merge_children(parent_2)
 
-        assert isinstance(parent_1.get_component("x"), Component)
+        assert len(parent_1.get_component("x", first=False)) == 1
 
     def test_merge_children_ComponentError_given_multiple_common_nodes(self):
         parent_1 = _tree_from_dict({"parent_1": {"x": {"x2": "leaf_1"}}})
@@ -193,7 +196,7 @@ class TestComponentClass:
         with pytest.raises(ComponentError):
             parent_1.merge_children(parent_2)
 
-    def test_add_child_with_merge_does_not_merge_nodes_of_different_depth(self):
+    def test_merge_children_does_not_merge_nodes_of_different_depth(self):
         parent_1 = _tree_from_dict({"parent_1": {"x": "leaf_1_x"}})
         parent_2 = _tree_from_dict({"parent_1": {"inter": {"x": "leaf_1_x"}}})
 
@@ -203,17 +206,6 @@ class TestComponentClass:
         assert len(x_components) == 2
         assert x_components[0].depth == 1
         assert x_components[1].depth == 2
-
-    def test_merge_children_adds_not_common_children(self):
-        parent_1 = Component("parent_1")
-        Component("child_1", parent=parent_1)
-        parent_2 = Component("parent_2")
-        Component("child_2", parent=parent_2)
-
-        parent_1.merge_children(parent_2)
-
-        assert isinstance(parent_1.get_component("child_1"), Component)
-        assert isinstance(parent_1.get_component("child_2"), Component)
 
 
 class TestPhysicalComponent:

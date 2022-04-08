@@ -146,7 +146,45 @@ class Component(NodeMixin, Plottable, DisplayableCAD):
 
     def merge_children(self, other: Component):
         """
-        Merge the children the given component into this component.
+        Merge the children of the given component into this component.
+
+        For example, if this object has structure:
+
+        .. code-block::
+
+            parent_1 (Component)
+            ├── x (Component)
+            │   └── leaf_1_x (Component)
+            └── y (Component)
+                └── leaf_1_y (Component)
+
+        and the other has structure:
+
+        .. code-block::
+
+            parent_2 (Component)
+            ├── x (Component)
+            │   └── leaf_2_x (Component)
+            └── z (Component)
+                └── leaf_1_z (Component)
+
+        the new structure of this object will be:
+
+        .. code-block::
+
+            parent_1 (Component)
+            ├── x (Component)
+            │   └── leaf_1_x (Component)
+            │   └── leaf_2_x (Component)
+            ├── y (Component)
+            │   └── leaf_1_y (Component)
+            └── z (Component)
+                └── leaf_1_z (Component)
+
+        Parameters
+        ----------
+        other: Component
+            The component to merge the children from.
         """
         for other_child in other.children:
             common_child = [ch for ch in self.children if ch.name == other_child.name]
