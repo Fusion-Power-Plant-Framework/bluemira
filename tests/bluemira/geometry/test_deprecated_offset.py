@@ -69,10 +69,10 @@ class TestClipperOffset:
         np.testing.assert_almost_equal(distance, abs(delta))
 
     @pytest.mark.parametrize("method", options)
-    def test_complex_polygon_overoffset(self, method):
+    def test_complex_polygon_overoffset_raises_error(self, method):
         coordinates = Coordinates({"x": self.x, "y": self.y, "z": 0})
-        c = offset_clipper(coordinates, -30, method=method)
-        assert c is None
+        with pytest.raises(GeometryError):
+            offset_clipper(coordinates, -30, method=method)
 
     def test_blanket_offset(self):
         fp = get_bluemira_path("bluemira/geometry/test_data", subfolder="tests")
