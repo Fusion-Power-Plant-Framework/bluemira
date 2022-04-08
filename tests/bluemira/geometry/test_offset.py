@@ -22,7 +22,7 @@
 import numpy as np
 import pytest
 
-from bluemira.codes.error import FreeCADError, InvalidCADInputsError
+from bluemira.codes.error import InvalidCADInputsError
 from bluemira.geometry.error import GeometryError
 from bluemira.geometry.parameterisations import (
     PictureFrame,
