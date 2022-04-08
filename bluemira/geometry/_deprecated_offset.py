@@ -150,13 +150,6 @@ class PyclipperMixin:
             # Sort open coordinates by length
             return sorted(coords, key=lambda x: -x.length)
 
-    @property
-    def result(self):
-        """
-        The result of the Pyclipper operation.
-        """
-        return self._result
-
 
 # =============================================================================
 # Offset operations
@@ -171,16 +164,13 @@ class OffsetOperationManager(PyclipperMixin):
     ----------
     coordinates: Coordinates
         The Coordinates upon which to perform the offset operation
-    delta: float
-        The value of the offset [m]. Positive for increasing size, negative for
-        decreasing
     """
 
     method = NotImplemented
     closed_method = ET_CLOSEDPOLYGON
     open_method = NotImplementedError
 
-    def __init__(self, coordinates: Coordinates, delta: float):
+    def __init__(self, coordinates: Coordinates):
         self.tool = PyclipperOffset()
         path = coordinates_to_pyclippath(coordinates)
         self._scale = self._calculate_scale(path, coordinates)  # Store scale
@@ -191,11 +181,16 @@ class OffsetOperationManager(PyclipperMixin):
             co_method = self.open_method
 
         self.tool.AddPath(path, self.method, co_method)
-        self._result = self.perform(delta)
 
     def perform(self, delta):
         """
         Perform the offset operation.
+
+        Parameters
+        ----------
+        delta: float
+            The value of the offset [m]. Positive for increasing size, negative for
+            decreasing
         """
         delta = int(round(delta * self._scale))  # approximation
         solution = self.tool.Execute(delta)
@@ -243,8 +238,8 @@ class MiterOffset(OffsetOperationManager):
     method = JT_MITER
     open_method = ET_OPENROUND
 
-    def __init__(self, coordinates, delta, miter_limit=2.0):
-        super().__init__(coordinates, delta)
+    def __init__(self, coordinates, miter_limit=2.0):
+        super().__init__(coordinates)
 
         self.tool.MiterLimit = miter_limit
 
@@ -287,53 +282,45 @@ def offset_clipper(coordinates: Coordinates, delta, method="square", miter_limit
     # Transform coordinates to x-z plane
     coordinates = deepcopy(coordinates)
     com = coordinates.center_of_mass
-    coordinates.translate(-np.array(com))
 
-    t_coordinates = transform_coordinates_to_xz(coordinates, (0.0, 1.0, 0.0))
-    # t_coordinates.translate((0, -y_shift, 0))
+    t_coordinates = transform_coordinates_to_xz(
+        coordinates, -np.array(com), (0.0, 1.0, 0.0)
+    )
 
     if method == "square":
-        tool = SquareOffset(t_coordinates, delta)
+        tool = SquareOffset(t_coordinates)
     elif method == "round":
         bluemira_warn("I don't know why, but this is very slow...")
-        tool = RoundOffset(t_coordinates, delta)
+        tool = RoundOffset(t_coordinates)
     elif method == "miter":
-        tool = MiterOffset(t_coordinates, delta, miter_limit=miter_limit)
+        tool = MiterOffset(t_coordinates, miter_limit=miter_limit)
     else:
         raise GeometryError(
             "Please choose an offset method from:\n" " round \n square \n miter"
         )
 
-    if tool.result is None:
+    result = tool.perform(delta)
+    if result is None:
         return None
 
-    if len(tool.result) > 1:
+    if len(result) > 1:
         bluemira_warn(
             f"Offset operation with {delta} has produced multiple 'islands'; only returning the biggest one!"
         )
 
-    result = tool.result[0]
+    result = result[0]
 
     # Transform offset coordinates back to original plane
-    # result = transform_coords(result, matrix.T)
-    result = transform_coordinates_to_original(result, coordinates.normal_vector)
-    result.translate(com)
+    result = transform_coordinates_to_original(result, com, coordinates.normal_vector)
 
     return result
 
 
-def transform_coords(coordinates, matrix):
-
-    data = np.c_[coordinates.T, np.ones(len(coordinates.points))]
-    coordinates = Coordinates(data.dot(matrix).T[:3])
-    return coordinates
-
-
-def transform_coordinates_to_xz(coordinates, direction):
+def transform_coordinates_to_xz(coordinates, base, direction):
     """
     Rotate coordinates to the x-z plane.
     """
-    coordinates = deepcopy(coordinates)
+    coordinates.translate(base)
     if abs(coordinates.normal_vector[1]) == 1.0:
         return coordinates
 
@@ -344,11 +331,12 @@ def transform_coordinates_to_xz(coordinates, direction):
     return coordinates
 
 
-def transform_coordinates_to_original(coordinates, original_normal):
-    coordinates = deepcopy(coordinates)
-
+def transform_coordinates_to_original(coordinates, base, original_normal):
+    """
+    Rotate coordinates back to original plane
+    """
     r = rotation_matrix_v1v2(coordinates.normal_vector, np.array(original_normal))
     x, y, z = r.T @ coordinates
-
     coordinates = Coordinates({"x": x, "y": y, "z": z})
+    coordinates.translate(base)
     return coordinates
