@@ -367,9 +367,9 @@ def offset_wire(
         )
 
         if spline:
-            return make_bspline(result, closed=True)
+            return make_bspline(result, closed=True, label=label)
 
-        return make_polygon(result)
+        return make_polygon(result, label=label)
 
 
 def convex_hull_wires_2d(
