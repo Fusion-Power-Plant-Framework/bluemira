@@ -294,10 +294,11 @@ def wire_closure(bmwire: BluemiraWire, label="closure") -> BluemiraWire:
 def offset_wire(
     wire: BluemiraWire,
     thickness: float,
+    /,
     join: str = "intersect",
     open_wire: bool = True,
     label: str = "",
-    /,
+    *,
     **fallback_kwargs,
 ) -> BluemiraWire:
     """
