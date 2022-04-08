@@ -43,7 +43,6 @@ from pyclipper import (
 from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.geometry.coordinates import Coordinates, rotation_matrix_v1v2
 from bluemira.geometry.error import GeometryError
-from bluemira.geometry.placement import XZY, BluemiraPlacement
 
 __all__ = ["offset_clipper"]
 
