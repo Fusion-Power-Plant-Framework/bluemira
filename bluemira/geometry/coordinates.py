@@ -422,8 +422,14 @@ def get_centroid_3d(x, y, z):
         The x, y, z coordinates of the centroid [m]
     """
     cx, cy = get_centroid_2d(x, y)
+    if np.allclose(z, z[0]):
+        return [cx, cy, z[0]]
     cx2, cz = get_centroid_2d(x, z)
+    if np.allclose(y, y[0]):
+        return [cx2, y[0], cz]
     cy2, cz2 = get_centroid_2d(y, z)
+    if np.allclose(x.x[0]):
+        return [x[0], cy2, cz2]
 
     # The following is an "elegant" but computationally more expensive way of
     # dealing with the 0-area edge cases
@@ -431,6 +437,7 @@ def get_centroid_3d(x, y, z):
     cx = np.array([cx, cx2])
     cy = np.array([cy, cy2])
     cz = np.array([cz, cz2])
+    print(cy)
 
     def get_rational(i, array):
         """

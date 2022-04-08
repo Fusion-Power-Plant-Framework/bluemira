@@ -23,6 +23,8 @@
 Deprecated discretised offset operations.
 """
 
+from copy import deepcopy
+
 import numpy as np
 from pyclipper import (
     ET_CLOSEDPOLYGON,
@@ -41,6 +43,7 @@ from pyclipper import (
 from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.geometry.coordinates import Coordinates, rotation_matrix_v1v2
 from bluemira.geometry.error import GeometryError
+from bluemira.geometry.placement import XZY, BluemiraPlacement
 
 __all__ = ["offset_clipper"]
 
@@ -81,7 +84,7 @@ def pyclippath_to_coordinates(path):
         The Coordinates from the path object
     """
     p2 = scale_from_clipper(np.array(path).T)
-    return Coordinates({"x": p2[0], "z": p2[1]})
+    return Coordinates({"x": p2[0], "y": 0, "z": p2[1]})
 
 
 def pyclippolytree_to_coordinates(polytree):
@@ -282,7 +285,12 @@ def offset_clipper(coordinates: Coordinates, delta, method="square", miter_limit
         raise GeometryError("Open Coordinates are not supported by offset_clipper.")
 
     # Transform coordinates to x-z plane
-    t_coordinates = transform_coordinates(coordinates, (0.0, 1.0, 0.0))
+    coordinates = deepcopy(coordinates)
+    com = coordinates.center_of_mass
+    coordinates.translate(-np.array(com))
+
+    t_coordinates = transform_coordinates_to_xz(coordinates, (0.0, 1.0, 0.0))
+    # t_coordinates.translate((0, -y_shift, 0))
 
     if method == "square":
         tool = SquareOffset(t_coordinates, delta)
@@ -307,14 +315,40 @@ def offset_clipper(coordinates: Coordinates, delta, method="square", miter_limit
     result = tool.result[0]
 
     # Transform offset coordinates back to original plane
-    result = transform_coordinates(result, coordinates.normal_vector)
+    # result = transform_coords(result, matrix.T)
+    result = transform_coordinates_to_original(result, coordinates.normal_vector)
+    result.translate(com)
+
     return result
 
 
-def transform_coordinates(coordinates, direction):
+def transform_coords(coordinates, matrix):
+
+    data = np.c_[coordinates.T, np.ones(len(coordinates.points))]
+    coordinates = Coordinates(data.dot(matrix).T[:3])
+    return coordinates
+
+
+def transform_coordinates_to_xz(coordinates, direction):
     """
     Rotate coordinates to the x-z plane.
     """
+    coordinates = deepcopy(coordinates)
+    if abs(coordinates.normal_vector[1]) == 1.0:
+        return coordinates
+
     r = rotation_matrix_v1v2(coordinates.normal_vector, np.array(direction))
     x, y, z = r.T @ coordinates
-    return Coordinates({"x": x, "y": y, "z": z})
+
+    coordinates = Coordinates({"x": x, "y": y, "z": z})
+    return coordinates
+
+
+def transform_coordinates_to_original(coordinates, original_normal):
+    coordinates = deepcopy(coordinates)
+
+    r = rotation_matrix_v1v2(coordinates.normal_vector, np.array(original_normal))
+    x, y, z = r.T @ coordinates
+
+    coordinates = Coordinates({"x": x, "y": y, "z": z})
+    return coordinates

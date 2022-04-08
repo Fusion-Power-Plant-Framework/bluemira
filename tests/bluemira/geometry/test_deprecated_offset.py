@@ -56,7 +56,7 @@ class TestClipperOffset:
         ],
     )
     def test_complex_polygon(self, x, y, delta, method):
-        coordinates = Coordinates({"x": x, "y": y, "z": 0})
+        coordinates = Coordinates({"x": x, "y": y, "z": 10})
         c = offset_clipper(coordinates, delta, method=method)
         if self.plot:
             f, ax = plt.subplots()
@@ -84,6 +84,9 @@ class TestClipperOffset:
         for m in ["miter", "square", "round"]:  # round very slow...
             offset_coordinates = offset_clipper(coordinates, 1.5, method=m)
             offsets.append(offset_coordinates)
+            # Too damn slow!!
+            # distance = self._calculate_offset(coordinates, offset_coordinates)
+            # np.testing.assert_almost_equal(distance, 1.5)
 
         if self.plot:
             f, ax = plt.subplots()
