@@ -58,6 +58,7 @@ from bluemira.geometry._deprecated_tools import (
 from bluemira.geometry.constants import VERY_BIG
 from bluemira.geometry.error import GeometryError
 from bluemira.geometry.inscribed_rect import inscribed_rect_in_poly
+from bluemira.geometry.tools import make_polygon
 from bluemira.utilities import tools
 
 
@@ -486,8 +487,13 @@ class XZLMapper:
 
         joiner = self.pfloop.offset(-0.0001)
         joiner.close()
-        for zone in self.excl_zones:
-            joiner = boolean_2d_union(joiner, zone)[0]
+        from bluemira.geometry.face import BluemiraFace
+        from bluemira.geometry.tools import boolean_fuse, make_polygon
+
+        joiner = BluemiraFace(make_polygon(joiner.xyz))
+        zones = [BluemiraFace(make_polygon(zone.xyz)) for zone in self.excl_zones]
+
+        joiner = boolean_fuse([joiner] + zones)
 
         return joiner
 
@@ -501,9 +507,19 @@ class XZLMapper:
             List of Loop exclusion zones in x, z coordinates
         """
         excl_zone = self._get_unique_zone(zones)
+        from bluemira.geometry.face import BluemiraFace
+        from bluemira.geometry.tools import boolean_cut, offset_wire
 
-        self.incl_loops = boolean_2d_difference(self.pfloop, excl_zone)
-        self.excl_loops = boolean_2d_common(self.pfloop, excl_zone)
+        pf_wire = make_polygon(self.pfloop.xyz)
+        incl_wires = boolean_cut(pf_wire, excl_zone)
+        incl_loops = [Loop(*w.discretize(byedges=True, ndiscr=100)) for w in incl_wires]
+
+        outer_wire = offset_wire(excl_zone.boundary[0], 100)
+        negative = BluemiraFace([outer_wire, excl_zone.boundary[0]])
+        excl_wires = boolean_cut(pf_wire, negative)
+        excl_loops = [Loop(*w.discretize(byedges=True, ndiscr=100)) for w in excl_wires]
+        self.incl_loops = incl_loops
+        self.excl_loops = excl_loops
 
         # Track start and end points
         p0 = self.pfloop.d2.T[0]
