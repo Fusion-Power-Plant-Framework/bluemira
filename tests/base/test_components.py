@@ -54,7 +54,7 @@ class TestComponentClass:
     def test_get_component_from_node(self):
         parent = Component("Parent")
         child1 = Component("Child1", parent=parent)
-        child2 = Component("Child2", parent=parent)
+        Component("Child2", parent=parent)
         grandchild = Component("Grandchild", parent=child1)
 
         assert grandchild.get_component("Child2") is None
