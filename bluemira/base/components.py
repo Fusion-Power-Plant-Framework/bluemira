@@ -152,34 +152,34 @@ class Component(NodeMixin, Plottable, DisplayableCAD):
 
         .. code-block::
 
-            parent_1 (Component)
-            ├── x (Component)
-            │   └── leaf_1_x (Component)
-            └── y (Component)
-                └── leaf_1_y (Component)
+            parent_1
+            ├── x
+            │   └── leaf_1_x
+            └── y
+                └── leaf_1_y
 
         and the other has structure:
 
         .. code-block::
 
-            parent_2 (Component)
-            ├── x (Component)
-            │   └── leaf_2_x (Component)
-            └── z (Component)
-                └── leaf_1_z (Component)
+            parent_2
+            ├── x
+            │   └── leaf_2_x
+            └── z
+                └── leaf_1_z
 
         the new structure of this object will be:
 
         .. code-block::
 
-            parent_1 (Component)
-            ├── x (Component)
-            │   └── leaf_1_x (Component)
-            │   └── leaf_2_x (Component)
-            ├── y (Component)
-            │   └── leaf_1_y (Component)
-            └── z (Component)
-                └── leaf_1_z (Component)
+            parent_1
+            ├── x
+            │   └── leaf_1_x
+            │   └── leaf_2_x
+            ├── y
+            │   └── leaf_1_y
+            └── z
+                └── leaf_1_z
 
         Parameters
         ----------
