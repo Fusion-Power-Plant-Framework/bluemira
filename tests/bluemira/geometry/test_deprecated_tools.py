@@ -623,19 +623,6 @@ class TestMixedFaces:
                 },
             ),
             (
-                "div_test_mfm.json",
-                (0, 2, 0),
-                {
-                    "center_of_mass": (
-                        8.03233,
-                        0.990000,
-                        -6.44430,
-                    ),
-                    "volume": 4.58653,
-                    "area": 29.2239,
-                },
-            ),
-            (
                 "div_test_mfm2.json",
                 (0, 2, 0),
                 {

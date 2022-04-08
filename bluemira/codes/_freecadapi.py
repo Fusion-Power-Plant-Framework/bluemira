@@ -471,7 +471,7 @@ def offset_wire(
         )
         raise FreeCADError(msg)
 
-    fix_wire(wire)
+    fix_shape(wire)
     return wire
 
 
@@ -1377,20 +1377,23 @@ def _make_shapes_coaxis(shapes):
 # ======================================================================================
 
 
-def fix_wire(wire, precision=EPS, min_length=MINIMUM_LENGTH):
+def fix_shape(shape, precision=EPS, min_tol=MINIMUM_LENGTH, max_tol=5 * MINIMUM_LENGTH):
     """
-    Fix a wire by removing any small edges and joining the remaining edges.
+    Fix a shape by removing any small edges and joining the remaining edges.
 
     Parameters
     ----------
-    wire: apiWire
-        Wire to fix
+    shape: apiShape
+        Shape to fix
     precision: float
         General precision with which to work
-    min_length: float
+    min_tol: float
         Minimum edge length
+    max_tol: float
+        Maximum tolerance for fixing a detected problem. If the necessary fix exceeds the
+        maximum, the fix will not be performed
     """
-    wire.fix(precision, min_length, min_length)
+    shape.fix(precision, min_tol, max_tol)
 
 
 # ======================================================================================
