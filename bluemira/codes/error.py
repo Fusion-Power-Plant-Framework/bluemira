@@ -38,7 +38,7 @@ class CodesError(base_err.BluemiraError):
 
 class FreeCADError(base_err.BluemiraError):
     """
-    Error class for use in the geometry module where FreeCAD throws and error.
+    Error class for use in the geometry module where FreeCAD throws an error.
     """
 
     pass
