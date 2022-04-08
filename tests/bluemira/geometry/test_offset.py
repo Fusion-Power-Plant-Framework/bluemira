@@ -19,9 +19,13 @@
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 
+import json
+import os
+
 import numpy as np
 import pytest
 
+from bluemira.base.file import get_bluemira_path
 from bluemira.codes.error import InvalidCADInputsError
 from bluemira.geometry.error import GeometryError
 from bluemira.geometry.parameterisations import (
@@ -31,7 +35,7 @@ from bluemira.geometry.parameterisations import (
     TaperedPictureFrame,
     TripleArc,
 )
-from bluemira.geometry.tools import make_polygon, offset_wire
+from bluemira.geometry.tools import deserialize_shape, make_polygon, offset_wire
 
 
 class TestOffset:
@@ -123,7 +127,13 @@ class TestOffset:
         with pytest.raises(InvalidCADInputsError):
             offset_wire(non_planar, 1.0)
 
-    def test_freecad_failure(self):
+    def test_offset_destroyed_shape_error(self):
         with pytest.raises(GeometryError):
             # This will offset the triangle such that it no longer exists
             offset_wire(self.tri_wire, -1.0)
+
+    def test_primitive_offsetting_catch(self):
+        """
+        This is a test for offset operations on wires that have failed primitive
+        offsetting.
+        """
