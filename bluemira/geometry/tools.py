@@ -297,6 +297,8 @@ def offset_wire(
     join: str = "intersect",
     open_wire: bool = True,
     label: str = "",
+    /,
+    **fallback_kwargs,
 ) -> BluemiraWire:
     """
     Make a planar offset from a planar wire.
@@ -314,6 +316,25 @@ def offset_wire(
         wire, or a closed offset wire that encompasses the original wire. This is
         disabled for closed wires.
 
+    Other Parameters
+    ----------------
+    byedges: bool (default = True)
+        Whether or not to discretise the wire by edges
+    ndiscr: int (default = 200)
+        Number of points to discretise the wire to
+    method: str
+        Method to use in discretised offsetting, will default to `square` for
+        join=`intersect` and `round` for join=`arc`
+    spline: bool (default = False)
+        Whether or not to make a bspline from the discretised offset points, defaults
+        to a polygon
+
+    Notes
+    -----
+    If primitive offsetting failed, will fall back to a discretised offset
+    implementation, where the fallback_kwargs are used. Discretised offsetting is
+    only supported for closed wires.
+
     Returns
     -------
     wire: BluemiraWire
@@ -327,9 +348,21 @@ def offset_wire(
         bluemira_warn(
             "Primitive offsetting failed, falling back to discretised " "offsetting."
         )
-        from bluemira.geometry._deprecated_offset import PyclipperOffset
+        from bluemira.geometry._deprecated_offset import offset_clipper
 
-        pass
+        byedges = fallback_kwargs.pop("byedges", True)
+        ndiscr = fallback_kwargs.pop("ndiscr", 200)
+        coordinates = wire.discretize(byedges=byedges, ndiscr=ndiscr)
+        method_mapping = {"intersect": "square", "arc": "round"}
+
+        method = fallback_kwargs.pop("method", method_mapping[join])
+        spline_flag = fallback_kwargs.pop("spline", False)
+
+        result = offset_clipper(coordinates, thickness, method=method, **fallback_kwargs)
+        if spline_flag:
+            return make_bspline(result, closed=True)
+
+        return make_polygon(result)
 
 
 def convex_hull_wires_2d(
