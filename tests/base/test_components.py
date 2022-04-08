@@ -62,7 +62,7 @@ class TestComponentClass:
     def test_get_component_multiple_full_tree(self):
         parent = Component("Parent")
         child1 = Component("Child", parent=parent)
-        child2 = Component("Child", parent=parent)
+        Component("Child", parent=parent)
         grandchild = Component("Grandchild", parent=child1)
 
         components = grandchild.get_component("Child", first=False, full_tree=True)
@@ -115,6 +115,13 @@ class TestComponentClass:
         parent.add_children([child1, child2])
         assert parent.children == (child1, child2)
 
+    def test_add_children_does_nothing_given_empty_list(self):
+        parent = Component("parent")
+
+        parent.add_children([])
+
+        assert len(parent.children) == 0
+
     def test_fail_add_duplicate_children(self):
         parent = Component("Parent")
         child1 = Component("Child1", parent=parent)
@@ -140,6 +147,94 @@ class TestComponentClass:
         parent.prune_child("not_a_child")
 
         assert parent.get_component("Child1") is not None
+
+    def test_add_child_with_merge_given_1_shared_node(self):
+        parent_1 = Component("parent_1")
+        child_1_x = Component("x", parent=parent_1)
+        child_1_x.add_child(Component("leaf_1_x"))
+        parent_2 = Component("parent_2")
+        child_2_x = Component("x", parent=parent_2)
+        child_2_x.add_child(Component("leaf_2_x"))
+
+        parent_1.merge_children(parent_2)
+
+        x_component = parent_1.get_component("x")
+        assert isinstance(x_component, Component)
+        assert isinstance(x_component.get_component("leaf_1_x"), Component)
+        assert isinstance(x_component.get_component("leaf_2_x"), Component)
+
+    def test_add_child_with_merge_given_2_shared_nodes(self):
+        parent_1 = Component("parent_1")
+        child_1_x = Component("x", parent=parent_1)
+        child_1_x.add_child(Component("leaf_1_x"))
+        child_1_y = Component("y", parent=parent_1)
+        child_1_y.add_child(Component("leaf_1_y"))
+        parent_2 = Component("parent_2")
+        child_2_x = Component("x", parent=parent_2)
+        child_2_x.add_child(Component("leaf_2_x"))
+        child_2_y = Component("y", parent=parent_2)
+        child_2_y.add_child(Component("leaf_2_y"))
+
+        parent_1.merge_children(parent_2)
+
+        x_component = parent_1.get_component("x")
+        assert isinstance(x_component, Component)
+        assert isinstance(x_component.get_component("leaf_1_x"), Component)
+        assert isinstance(x_component.get_component("leaf_2_x"), Component)
+        y_component = parent_1.get_component("y")
+        assert isinstance(y_component, Component)
+        assert isinstance(y_component.get_component("leaf_1_y"), Component)
+        assert isinstance(y_component.get_component("leaf_2_y"), Component)
+
+    def test_add_child_with_merge_given_shared_leaf(self):
+        parent_1 = Component("parent_1")
+        Component("x", parent=parent_1)
+        parent_2 = Component("parent_2")
+        Component("x", parent=parent_2)
+
+        parent_1.merge_children(parent_2)
+
+        assert isinstance(parent_1.get_component("x"), Component)
+
+    def test_merge_children_ComponentError_given_multiple_common_nodes(self):
+        parent_1 = Component("parent_1")
+        child_1_x = Component("x", parent=parent_1)
+        child_1_x2 = child_1_x.add_child(Component("x2"))
+        child_1_x2.add_child(Component("leaf_1"))
+        parent_2 = Component("parent_2")
+        child_2_x = Component("x", parent=parent_2)
+        child_2_x2 = child_2_x.add_child(Component("x2"))
+        child_2_x2.add_child(Component("leaf_2"))
+
+        with pytest.raises(ComponentError):
+            parent_1.merge_children(parent_2)
+
+    def test_add_child_with_merge_does_not_merge_nodes_of_different_depth(self):
+        parent_1 = Component("parent_1")
+        child_1_x = Component("x", parent=parent_1)
+        child_1_x.add_child(Component("leaf_1_x"))
+        parent_2 = Component("parent_2")
+        intermediate = Component("inter", parent=parent_1)
+        child_2_x = Component("x", parent=intermediate)
+        child_2_x.add_child(Component("leaf_1_x"))
+
+        parent_1.merge_children(parent_2)
+
+        x_components = parent_1.get_component("x", first=False)
+        assert len(x_components) == 2
+        assert x_components[0].depth == 1
+        assert x_components[1].depth == 2
+
+    def test_merge_children_adds_not_common_children(self):
+        parent_1 = Component("parent_1")
+        Component("child_1", parent=parent_1)
+        parent_2 = Component("parent_2")
+        Component("child_2", parent=parent_2)
+
+        parent_1.merge_children(parent_2)
+
+        assert isinstance(parent_1.get_component("child_1"), Component)
+        assert isinstance(parent_1.get_component("child_2"), Component)
 
 
 class TestPhysicalComponent:

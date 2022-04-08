@@ -144,6 +144,17 @@ class Component(NodeMixin, Plottable, DisplayableCAD):
 
         return self
 
+    def merge_children(self, other: Component):
+        """
+        Merge the children the given component into this component.
+        """
+        for other_child in other.children:
+            common_child = [ch for ch in self.children if ch.name == other_child.name]
+            if common_child:
+                common_child[0].add_children(list(other_child.children))
+            else:
+                self.add_child(other_child)
+
     def add_children(self, children: List[Component], merge_trees=False):
         """
         Add multiple children to this node
@@ -158,7 +169,7 @@ class Component(NodeMixin, Plottable, DisplayableCAD):
         self: Component
             This component.
         """
-        if not isinstance(children, list) or len(children) == 0:
+        if not isinstance(children, list) or len(children) == 1:
             child = children[0] if isinstance(children, list) else children
             return self.add_child(child)
 
