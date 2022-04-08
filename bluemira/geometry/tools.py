@@ -299,7 +299,10 @@ def offset_wire(
     open_wire: bool = True,
     label: str = "",
     *,
-    **fallback_kwargs,
+    fallback_method=None,
+    byedges=True,
+    ndiscr=200,
+    spline=False,
 ) -> BluemiraWire:
     """
     Make a planar offset from a planar wire.
@@ -351,16 +354,16 @@ def offset_wire(
         )
         from bluemira.geometry._deprecated_offset import offset_clipper
 
-        byedges = fallback_kwargs.pop("byedges", True)
-        ndiscr = fallback_kwargs.pop("ndiscr", 200)
         coordinates = wire.discretize(byedges=byedges, ndiscr=ndiscr)
-        method_mapping = {"intersect": "square", "arc": "round"}
 
-        method = fallback_kwargs.pop("method", method_mapping[join])
-        spline_flag = fallback_kwargs.pop("spline", False)
+        if fallback_method is None:
+            method_mapping = {"intersect": "square", "arc": "round"}
 
-        result = offset_clipper(coordinates, thickness, method=method, **fallback_kwargs)
-        if spline_flag:
+            fallback_method = method_mapping[join]
+
+        result = offset_clipper(coordinates, thickness, method=fallback_method)
+
+        if spline:
             return make_bspline(result, closed=True)
 
         return make_polygon(result)
