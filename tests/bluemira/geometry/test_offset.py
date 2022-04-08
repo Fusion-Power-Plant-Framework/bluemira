@@ -22,7 +22,7 @@
 import numpy as np
 import pytest
 
-from bluemira.codes.error import FreeCADError
+from bluemira.codes.error import FreeCADError, InvalidCADInputsError
 from bluemira.geometry.parameterisations import (
     PictureFrame,
     PolySpline,
@@ -108,18 +108,18 @@ class TestOffset:
         assert o_rect.length == 6.0
 
     def test_errors(self):
-        with pytest.raises(FreeCADError):
+        with pytest.raises(InvalidCADInputsError):
             offset_wire(self.rect_wire, 1.0, join="bad")
 
     def test_straight_line(self):
         straight = make_polygon([[0, 0, 0], [0, 0, 1]], label="straight_line")
 
-        with pytest.raises(FreeCADError):
+        with pytest.raises(InvalidCADInputsError):
             offset_wire(straight, 1.0)
 
     def test_non_planar(self):
         non_planar = make_polygon([[0, 0, 0], [1, 0, 0], [2, 0, 1], [3, 1, 1]])
-        with pytest.raises(FreeCADError):
+        with pytest.raises(InvalidCADInputsError):
             offset_wire(non_planar, 1.0)
 
     def test_freecad_failure(self):

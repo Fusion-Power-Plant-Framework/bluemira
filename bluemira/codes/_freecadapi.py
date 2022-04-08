@@ -54,7 +54,7 @@ from bluemira.base.constants import EPS
 from bluemira.base.look_and_feel import bluemira_warn
 
 # import errors and warnings
-from bluemira.codes.error import FreeCADError
+from bluemira.codes.error import FreeCADError, InvalidCADInputsError
 from bluemira.geometry.constants import MINIMUM_LENGTH
 
 apiVertex = Part.Vertex  # noqa :N816
@@ -413,10 +413,10 @@ def offset_wire(
         return deepcopy(wire)
 
     if _wire_is_straight(wire):
-        raise FreeCADError("Cannot offset a straight line.")
+        raise InvalidCADInputsError("Cannot offset a straight line.")
 
     if not _wire_is_planar(wire):
-        raise FreeCADError("Cannot offset a non-planar wire.")
+        raise InvalidCADInputsError("Cannot offset a non-planar wire.")
 
     if join == "arc":
         f_join = 0
@@ -424,7 +424,7 @@ def offset_wire(
         f_join = 2
     else:
         # NOTE: The "tangent": 1 option misbehaves in FreeCAD
-        raise FreeCADError(
+        raise InvalidCADInputsError(
             f"Unrecognised join value: {join}. Please choose from ['arc', 'intersect']."
         )
 
