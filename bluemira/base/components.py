@@ -207,7 +207,13 @@ class Component(NodeMixin, Plottable, DisplayableCAD):
         self: Component
             This component.
         """
-        if not isinstance(children, list) or len(children) == 1:
+        if isinstance(children, list) and len(children) == 0:
+            # I'm not sure what the block of code below this is for, but
+            # I assume it does something useful. However, it will throw
+            # an IndexError on an empty list, avoid that here.
+            return self
+
+        if not isinstance(children, list) or len(children) == 0:
             child = children[0] if isinstance(children, list) else children
             return self.add_child(child)
 
