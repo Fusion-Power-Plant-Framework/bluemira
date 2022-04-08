@@ -428,7 +428,7 @@ def get_centroid_3d(x, y, z):
     if np.allclose(y, y[0]):
         return [cx2, y[0], cz]
     cy2, cz2 = get_centroid_2d(y, z)
-    if np.allclose(x.x[0]):
+    if np.allclose(x, x[0]):
         return [x[0], cy2, cz2]
 
     # The following is an "elegant" but computationally more expensive way of
