@@ -23,10 +23,11 @@ import numpy as np
 import pytest
 
 import tests
-from bluemira.geometry._deprecated_boolean import boolean_2d_difference
 from bluemira.geometry._deprecated_loop import Loop
 from bluemira.geometry._deprecated_tools import make_circle_arc
+from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.inscribed_rect import _rect, inscribed_rect_in_poly
+from bluemira.geometry.tools import boolean_cut, make_circle, make_polygon
 
 
 class TestInscribedRectangle:
@@ -36,10 +37,14 @@ class TestInscribedRectangle:
     circle = Loop(x=circle_xz[0], z=circle_xz[1])
     circle_xz_offset = make_circle_arc(0.6, 5, -5)
     circle_sm = Loop(x=circle_xz_offset[0], z=circle_xz_offset[1])
-    complex_shape = circle.copy()
-    for i in [[0, 0, 0], [-2, 0, 2], [-2, 0, 0], [0, 0, 2]]:
-        c_s = circle_sm.translate(i, update=False)
-        complex_shape = boolean_2d_difference(complex_shape, c_s)[0]
+    complex_shape = BluemiraFace(make_circle(2, center=(4, 0, -4), axis=(0, 1, 0)))
+    circle_sm = BluemiraFace(make_circle(0.6, center=(5, 0, -5), axis=(0, 1, 0)))
+    for i in [(0, 0, 0), (-2, 0, 2), (-2, 0, 0), (0, 0, 2)]:
+        c_s = circle_sm.deepcopy()
+        c_s.translate(i)
+        complex_shape = boolean_cut(complex_shape, c_s)[0]
+    # Convert back to Loop
+    complex_shape = Loop(*complex_shape.boundary[0].discretize(byedges=True, ndiscr=100))
 
     shapes = [square, diamond, circle, complex_shape]
     convex = [True, True, True, False]
@@ -61,6 +66,7 @@ class TestInscribedRectangle:
             f, ax = plt.subplots()
             shape.plot(ax, linewidth=0.1)
 
+        shape_face = BluemiraFace(make_polygon(shape.xyz))
         for i in range(x):
             for j in range(y):
                 point = points[:, i, j]
@@ -77,7 +83,13 @@ class TestInscribedRectangle:
                         sq = _rect(point[0], point[1], dx, dz)
                         assert len(sq.x) == 5
                         try:
-                            tf = boolean_2d_difference(sq, shape)
+                            tf = boolean_cut(
+                                BluemiraFace(make_polygon(sq.xyz)), shape_face
+                            )
+                            tf = [
+                                Loop(*seg.discretize(byedges=True, ndiscr=50))
+                                for seg in tf
+                            ]
                         except ValueError:
                             tf = None
 
