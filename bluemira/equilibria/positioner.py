@@ -44,11 +44,6 @@ from bluemira.equilibria.constants import NBTI_J_MAX
 from bluemira.equilibria.error import EquilibriaError
 from bluemira.equilibria.plotting import RegionPlotter, XZLPlotter
 from bluemira.geometry._deprecated_base import Plane
-from bluemira.geometry._deprecated_boolean import (
-    boolean_2d_common,
-    boolean_2d_difference,
-    boolean_2d_union,
-)
 from bluemira.geometry._deprecated_loop import Loop
 from bluemira.geometry._deprecated_tools import (
     join_intersect,
@@ -57,8 +52,9 @@ from bluemira.geometry._deprecated_tools import (
 )
 from bluemira.geometry.constants import VERY_BIG
 from bluemira.geometry.error import GeometryError
+from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.inscribed_rect import inscribed_rect_in_poly
-from bluemira.geometry.tools import make_polygon
+from bluemira.geometry.tools import boolean_cut, boolean_fuse, make_polygon, offset_wire
 from bluemira.utilities import tools
 
 
@@ -487,8 +483,6 @@ class XZLMapper:
 
         joiner = self.pfloop.offset(-0.0001)
         joiner.close()
-        from bluemira.geometry.face import BluemiraFace
-        from bluemira.geometry.tools import boolean_fuse, make_polygon
 
         joiner = BluemiraFace(make_polygon(joiner.xyz))
         zones = [BluemiraFace(make_polygon(zone.xyz)) for zone in self.excl_zones]
@@ -507,8 +501,6 @@ class XZLMapper:
             List of Loop exclusion zones in x, z coordinates
         """
         excl_zone = self._get_unique_zone(zones)
-        from bluemira.geometry.face import BluemiraFace
-        from bluemira.geometry.tools import boolean_cut, offset_wire
 
         pf_wire = make_polygon(self.pfloop.xyz)
         incl_wires = boolean_cut(pf_wire, excl_zone)
