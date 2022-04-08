@@ -35,7 +35,12 @@ from bluemira.geometry.parameterisations import (
     TaperedPictureFrame,
     TripleArc,
 )
-from bluemira.geometry.tools import deserialize_shape, make_polygon, offset_wire
+from bluemira.geometry.tools import (
+    deserialize_shape,
+    distance_to,
+    make_polygon,
+    offset_wire,
+)
 
 
 class TestOffset:
@@ -132,8 +137,24 @@ class TestOffset:
             # This will offset the triangle such that it no longer exists
             offset_wire(self.tri_wire, -1.0)
 
-    def test_primitive_offsetting_catch(self):
+
+class TestFallBackOffset:
+    @classmethod
+    def setup_class(cls):
+        fp = get_bluemira_path("bluemira/geometry/test_data", subfolder="tests")
+        fn = os.sep.join([fp, "offset_wire2022-04-08 10:19:27.json"])
+
+        with open(fn, "r") as file:
+            data = json.load(file)
+
+        cls.wire = deserialize_shape(data)
+
+    @pytest.mark.parametrize("delta", [0.75, -0.75])
+    def test_primitive_offsetting_catch(self, delta):
         """
         This is a test for offset operations on wires that have failed primitive
         offsetting.
         """
+        result = offset_wire(self.wire, delta, open_wire=False)
+
+        np.testing.assert_almost_equal(distance_to(self.wire, result), abs(delta))
