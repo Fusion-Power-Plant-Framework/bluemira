@@ -37,14 +37,14 @@ class TestInscribedRectangle:
     circle = Loop(x=circle_xz[0], z=circle_xz[1])
     circle_xz_offset = make_circle_arc(0.6, 5, -5)
     circle_sm = Loop(x=circle_xz_offset[0], z=circle_xz_offset[1])
-    complex_shape = BluemiraFace(make_circle(2, center=(4, 0, -4)))
-    circle_sm = BluemiraFace(make_circle(0.6, center=(5, 0, -5)))
-    for i in [[0, 0, 0], [-2, 0, 2], [-2, 0, 0], [0, 0, 2]]:
+    complex_shape = BluemiraFace(make_circle(2, center=(4, 0, -4), axis=(0, 1, 0)))
+    circle_sm = BluemiraFace(make_circle(0.6, center=(5, 0, -5), axis=(0, 1, 0)))
+    for i in [(0, 0, 0), (-2, 0, 2), (-2, 0, 0), (0, 0, 2)]:
         c_s = circle_sm.deepcopy()
-        c_s = c_s.translate(i)
+        c_s.translate(i)
         complex_shape = boolean_cut(complex_shape, c_s)[0]
     # Convert back to Loop
-    complex_shape = complex_shape.boundary[0].discretize(byedges=True, ndiscr=300)
+    complex_shape = Loop(*complex_shape.boundary[0].discretize(byedges=True, ndiscr=100))
 
     shapes = [square, diamond, circle, complex_shape]
     convex = [True, True, True, False]
@@ -86,7 +86,10 @@ class TestInscribedRectangle:
                             tf = boolean_cut(
                                 BluemiraFace(make_polygon(sq.xyz)), shape_face
                             )
-                            tf = Loop(*tf.discretize(byedges=True))
+                            tf = [
+                                Loop(*seg.discretize(byedges=True, ndiscr=50))
+                                for seg in tf
+                            ]
                         except ValueError:
                             tf = None
 
