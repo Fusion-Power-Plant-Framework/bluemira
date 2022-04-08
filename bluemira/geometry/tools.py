@@ -337,7 +337,7 @@ def offset_wire(
     Notes
     -----
     If primitive offsetting failed, will fall back to a discretised offset
-    implementation, where the fallback_kwargs are used. Discretised offsetting is
+    implementation, where the fallback kwargs are used. Discretised offsetting is
     only supported for closed wires.
 
     Returns

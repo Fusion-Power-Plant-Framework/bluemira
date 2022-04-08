@@ -437,7 +437,6 @@ def get_centroid_3d(x, y, z):
     cx = np.array([cx, cx2])
     cy = np.array([cy, cy2])
     cz = np.array([cz, cz2])
-    print(cy)
 
     def get_rational(i, array):
         """
