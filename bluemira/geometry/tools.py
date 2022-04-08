@@ -299,10 +299,9 @@ def offset_wire(
     open_wire: bool = True,
     label: str = "",
     *,
-    fallback_method=None,
+    fallback_method="square",
     byedges=True,
     ndiscr=200,
-    spline=False,
     **fallback_kwargs,
 ) -> BluemiraWire:
     """
@@ -327,12 +326,9 @@ def offset_wire(
         Whether or not to discretise the wire by edges
     ndiscr: int (default = 200)
         Number of points to discretise the wire to
-    method: str
-        Method to use in discretised offsetting, will default to `square` for
-        join=`intersect` and `round` for join=`arc`
-    spline: bool (default = False)
-        Whether or not to make a bspline from the discretised offset points, defaults
-        to a polygon
+    fallback_method: str
+        Method to use in discretised offsetting, will default to `square` as `round`
+        is know to be very slow
 
     Notes
     -----
@@ -357,18 +353,9 @@ def offset_wire(
 
         coordinates = wire.discretize(byedges=byedges, ndiscr=ndiscr)
 
-        if fallback_method is None:
-            method_mapping = {"intersect": "square", "arc": "round"}
-
-            fallback_method = method_mapping[join]
-
         result = offset_clipper(
             coordinates, thickness, method=fallback_method, **fallback_kwargs
         )
-
-        if spline:
-            return make_bspline(result, closed=True, label=label)
-
         return make_polygon(result, label=label)
 
 
