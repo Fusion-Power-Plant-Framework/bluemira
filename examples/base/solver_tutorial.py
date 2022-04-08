@@ -117,9 +117,9 @@ class GaussFitSetup(Task):
         self._x = params["x"]
         self._y = params["y"]
 
-    def run(self):
+    def run(self) -> Dict[str, float]:
         """
-        Set up the fitting problem; estimate some fitting parameters
+        Set up the fitting problem; estimate some fitting parameters.
         """
         return {
             "sigma": self._estimate_sigma(),
@@ -127,14 +127,14 @@ class GaussFitSetup(Task):
             "vertical_offset": self._estimate_vertical_offset(),
         }
 
-    def mock(self):
+    def mock(self) -> Dict[str, float]:
         """
-        Return a calculation-free estimate of fitting parameters
+        Return a calculation-free estimate of fitting parameters.
         """
         return {
-            "sigma": 1,
-            "mu": 1,
-            "vertical_offset": 0,
+            "sigma": 1.0,
+            "mu": 1.0,
+            "vertical_offset": 0.0,
         }
 
     def _estimate_mu(self) -> float:
@@ -148,7 +148,7 @@ class GaussFitSetup(Task):
         return abs(x_above_hh[0] - x_above_hh[-1]) / 2
 
     def _estimate_vertical_offset(self) -> float:
-        """The minimum value of y; only noise makes this not exact"""
+        """The minimum value of y; only noise makes this not exact."""
         return np.min(self._y)
 
 
@@ -164,7 +164,7 @@ class GaussFitRun(Task):
     def __init__(self, params: Dict[str, Any]):
         super().__init__(params)
 
-    def run(self, setup_result: Dict[str, float]):
+    def run(self, setup_result: Dict[str, float]) -> Dict[str, float]:
         """Run the fit."""
         initial_guess = (
             setup_result["sigma"],
