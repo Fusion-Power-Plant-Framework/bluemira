@@ -19,6 +19,8 @@
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 
+import os
+
 import numpy as np
 import pytest
 from numpy.linalg import norm
@@ -534,3 +536,11 @@ class TestDebugNaughtyGeometry:
 
     def test_file_is_made(self):
         wire = make_polygon({"x": [0, 2, 2, 0], "y": [-1, -1, 1, 1]}, closed=True)
+        wire = make_circle()
+        from bluemira.geometry.parameterisations import PrincetonD
+
+        wire = PrincetonD().create_shape()
+        listdir = os.listdir(self.path)
+        with pytest.raises(cadapi.FreeCADError):
+            naughty_function(wire)
+        assert len(os.listdir(self.path)) == len(listdir) + 1

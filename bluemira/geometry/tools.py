@@ -63,7 +63,7 @@ import inspect
 import json
 import os
 
-from bluemira.base.file import make_bluemira_path
+from bluemira.base.file import get_bluemira_path
 from bluemira.base.look_and_feel import bluemira_debug
 
 
@@ -74,7 +74,19 @@ class BluemiraGeoEncoder(json.JSONEncoder):
         """
         if isinstance(obj, BluemiraGeo):
             return serialize_shape(obj)
+        if isinstance(obj, cadapi.apiVector):
+            return list(obj)
         return super().default(obj)
+
+
+def _parse_arg_to_check_for_geos(arg):
+    if isinstance(arg, BluemiraGeo):
+        return serialize_shape(arg)
+    elif isinstance(arg, Iterable):
+        if isinstance(arg[0], BluemiraGeo):
+            return [serialize_shape(a) for a in arg]
+        return arg
+    return arg
 
 
 def debug_naughty_geometry(func):
@@ -91,15 +103,15 @@ def debug_naughty_geometry(func):
             data = {}
             for i, key in enumerate(signature.parameters.keys()):
                 if i < len(args):
-                    data[key] = args[i]
+                    data[key] = _parse_arg_to_check_for_geos(args[i])
                 else:
                     if key not in kwargs:
                         data[key] = signature.parameters[key].default
                     else:
-                        data[key] = kwargs[key]
+                        data[key] = _parse_arg_to_check_for_geos(kwargs[key])
 
             # Make a new file
-            path = make_bluemira_path("generated_data/naughty_geometry", subfolder="")
+            path = get_bluemira_path("generated_data/naughty_geometry", subfolder="")
             now = datetime.datetime.now()
             timestamp = now.strftime("%m-%d-%Y-%H-%M")
             fmt_string = "{}-{}{}.json"
