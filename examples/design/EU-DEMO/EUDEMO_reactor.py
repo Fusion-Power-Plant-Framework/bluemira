@@ -222,7 +222,7 @@ build_config = {
         "runmode": "mock",  # ["run", "read", "mock"]
     },
     "Plasma": {
-        "runmode": "run",  # ["run", "read", "mock"]
+        "runmode": "read",  # ["run", "read", "mock"]
     },
     "TF Coils": {
         "runmode": "run",  # ["run", "read", "mock"]
