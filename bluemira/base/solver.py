@@ -23,22 +23,28 @@ General solver class.
 
 To create a generic solver, one must implement:
 
-An Enum subclassing 'RunMode'. This should define the additional run
-modes for the solver, e.g., mock, read.
+1. An :code:`Enum` subclassing :code:`RunMode`.
+This should define the additional run modes for the solver,
+e.g., mock, read.
 
-Three classes subclassing 'Task':
-    - a 'setup' task
-    - a 'run' task
-    - a 'teardown' task
-Each task must implement a 'run' method, but can also implement an
+2. Three classes subclassing :code:`Task`:
+
+    * a "setup" task
+    * a "run" task
+    * a "teardown" task
+
+Each task must implement a :code:`run` method, but can also implement an
 arbitrary number of other run modes. The tasks do not need to implement
-every run mode in the subclassed 'RunMode' enum, but any tasks that do
-not implement the selected run mode are skipped.
+every run mode in the subclassed :code:`RunMode` enum,
+but any tasks that do not implement the selected run mode are skipped.
 
-A solver subclassing 'SolverABC'. The 'setup_cls', 'run_cls', and
-'teardown_cls' properties must be set on the class. These will usually
-be set to the corresponding Task classes mentioned above.
+3. A solver subclassing :code:`SolverABC`
+This must set the
+:code:`setup_cls`, :code:`run_cls`, and :code:`teardown_cls` properties.
+These will usually be the corresponding :code:`Task` classes mentioned
+above.
 """
+
 import abc
 import enum
 from typing import Any, Callable, Dict, Optional, Type
@@ -51,15 +57,15 @@ class Task(abc.ABC):
     """
     Base class for tasks to be run within a solver.
 
-    Children must override the 'run' method, but other methods, or
-    'run modes' can also be defined.
+    Children must override the :code:`run` method, but other methods, or
+    "run modes" can also be defined.
     """
 
     def __init__(self, params: Dict[str, Any]) -> None:
         self._params = params
 
     @abc.abstractmethod
-    def run(self, prev_result: Dict[str, Any]):
+    def run(self, *args, **kwargs):
         """Run the task."""
         pass
 
@@ -152,7 +158,7 @@ class SolverABC(abc.ABC):
     def _get_execution_method(self, task: Task, run_mode: RunMode) -> Optional[Callable]:
         """
         Return the method on the task corresponding to this solver's run
-        mode (e.g., 'task.run').
+        mode (e.g., :code:`task.run`).
 
         If the method on the task does not exist, return a function that
         simply returns its input.
