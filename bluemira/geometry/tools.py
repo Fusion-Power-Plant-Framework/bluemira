@@ -58,6 +58,74 @@ def convert(apiobj, label=""):
     return output
 
 
+import datetime
+import inspect
+import json
+import os
+
+from bluemira.base.file import make_bluemira_path
+from bluemira.base.look_and_feel import bluemira_debug
+
+
+class BluemiraGeoEncoder(json.JSONEncoder):
+    def default(self, obj):
+        """
+        Override the JSONEncoder default object handling behaviour for BluemiraGeo.
+        """
+        if isinstance(obj, BluemiraGeo):
+            return serialize_shape(obj)
+        return super().default(obj)
+
+
+def debug_naughty_geometry(func):
+    """
+    Decorator for debugging of failed geometry operations.
+    """
+    signature = inspect.signature(func)
+
+    def wrapper(*args, **kwargs):
+        try:
+            return func(*args, **kwargs)
+        except cadapi.FreeCADError as error:
+
+            data = {}
+            for i, key in enumerate(signature.parameters.keys()):
+                if i < len(args):
+                    data[key] = args[i]
+                else:
+                    if key not in kwargs:
+                        data[key] = signature.parameters[key].default
+                    else:
+                        data[key] = kwargs[key]
+
+            path = make_bluemira_path("generated_data/naughty_geometry", subfolder="")
+            now = datetime.datetime.now()
+            timestamp = now.strftime("%m-%d-%Y-%H-%M")
+            fmt_string = "{}-{}{}.json"
+            name = fmt_string.format(func.__name__, timestamp, "")
+            filename = os.sep.join([path, name])
+            is_new_file = False
+            i = 0
+            while not is_new_file:
+                if os.path.isfile(filename):
+                    i += 1
+                    increment = f"_{i}"
+                    name = fmt_string.format(func.__name__, timestamp, increment)
+                    filename = os.sep.join([path, name])
+                else:
+                    is_new_file = True
+
+            with open(filename, "w") as file:
+                json.dump(data, file, indent=4, cls=BluemiraGeoEncoder)
+
+            bluemira_debug(
+                f"Function call {func.__name__} failed. Debugging information was saved to: {filename}"
+            )
+            raise error
+
+    return wrapper
+
+
 # # =============================================================================
 # # Geometry creation
 # # =============================================================================
