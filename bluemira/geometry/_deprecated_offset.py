@@ -300,11 +300,13 @@ def offset_clipper(coordinates: Coordinates, delta, method="square", miter_limit
 
     result = tool.perform(delta)
     if result is None:
-        return None
+        raise GeometryError(
+            f"Offset operation with delta={delta} resulted in no geometry."
+        )
 
     if len(result) > 1:
         bluemira_warn(
-            f"Offset operation with {delta} has produced multiple 'islands'; only returning the biggest one!"
+            f"Offset operation with delta={delta} has produced multiple 'islands'; only returning the biggest one!"
         )
 
     result = result[0]

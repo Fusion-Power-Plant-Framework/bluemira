@@ -23,6 +23,7 @@ import numpy as np
 import pytest
 
 from bluemira.codes.error import FreeCADError, InvalidCADInputsError
+from bluemira.geometry.error import GeometryError
 from bluemira.geometry.parameterisations import (
     PictureFrame,
     PolySpline,
@@ -123,6 +124,6 @@ class TestOffset:
             offset_wire(non_planar, 1.0)
 
     def test_freecad_failure(self):
-        with pytest.raises(FreeCADError):
+        with pytest.raises(GeometryError):
             # This will offset the triangle such that it no longer exists
             offset_wire(self.tri_wire, -1.0)
