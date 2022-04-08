@@ -87,7 +87,7 @@ def debug_naughty_geometry(func):
         try:
             return func(*args, **kwargs)
         except cadapi.FreeCADError as error:
-
+            # Stash the function call inputs
             data = {}
             for i, key in enumerate(signature.parameters.keys()):
                 if i < len(args):
@@ -98,6 +98,7 @@ def debug_naughty_geometry(func):
                     else:
                         data[key] = kwargs[key]
 
+            # Make a new file
             path = make_bluemira_path("generated_data/naughty_geometry", subfolder="")
             now = datetime.datetime.now()
             timestamp = now.strftime("%m-%d-%Y-%H-%M")
@@ -115,6 +116,7 @@ def debug_naughty_geometry(func):
                 else:
                     is_new_file = True
 
+            # Dump the data in the file
             with open(filename, "w") as file:
                 json.dump(data, file, indent=4, cls=BluemiraGeoEncoder)
 
