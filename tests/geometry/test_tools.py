@@ -23,12 +23,15 @@ import numpy as np
 import pytest
 from numpy.linalg import norm
 
+import bluemira.codes._freecadapi as cadapi
+from bluemira.base.file import get_bluemira_path
 from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.parameterisations import PrincetonD
 from bluemira.geometry.placement import BluemiraPlacement
 from bluemira.geometry.tools import (
     _signed_distance_2D,
     convex_hull_wires_2d,
+    debug_naughty_geometry,
     extrude_shape,
     find_clockwise_angle_2d,
     make_bspline,
@@ -519,3 +522,15 @@ class TestFindClockwiseAngle2d:
 
         with pytest.raises(ValueError):
             find_clockwise_angle_2d(**params)
+
+
+@debug_naughty_geometry
+def naughty_function(wire, var=1, *, var2=[1, 2], **kwargs):
+    raise cadapi.FreeCADError
+
+
+class TestDebugNaughtyGeometry:
+    path = get_bluemira_path("generated_data/naughty_geometry", subfolder="")
+
+    def test_file_is_made(self):
+        wire = make_polygon({"x": [0, 2, 2, 0], "y": [-1, -1, 1, 1]}, closed=True)
