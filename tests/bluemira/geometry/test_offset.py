@@ -149,15 +149,15 @@ class TestFallBackOffset:
 
         cls.wire = deserialize_shape(data)
 
-    @pytest.mark.parametrize("method", ["arc", "intersect"])
+    @pytest.mark.parametrize("join", ["arc", "intersect"])
     @pytest.mark.parametrize("delta", [(0.75), (-0.75)])
-    def test_primitive_offsetting_catch(self, delta, method):
+    def test_primitive_offsetting_catch(self, delta, join, fallback_method="square"):
         """
         This is a test for offset operations on wires that have failed primitive
         offsetting.
         """
         result = offset_wire(
-            self.wire, delta, join=method, open_wire=False, spline=False
+            self.wire, delta, join, fallback_method=fallback_method, open_wire=False
         )
 
         np.testing.assert_allclose(
