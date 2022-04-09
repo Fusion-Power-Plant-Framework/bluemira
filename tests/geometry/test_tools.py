@@ -19,6 +19,7 @@
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 
+import json
 import os
 
 import numpy as np
@@ -39,6 +40,7 @@ from bluemira.geometry.tools import (
     find_clockwise_angle_2d,
     make_bspline,
     make_circle,
+    make_ellipse,
     make_polygon,
     offset_wire,
     point_inside_shape,
@@ -532,15 +534,13 @@ def naughty_function(wire, var=1, *, var2=[1, 2], **kwargs):
     raise cadapi.FreeCADError
 
 
-import json
-
-
 class TestDebugNaughtyGeometry:
     path = get_bluemira_path("generated_data/naughty_geometry", subfolder="")
 
     wires = [
         make_polygon({"x": [0, 2, 2, 0], "y": [-1, -1, 1, 1]}, closed=True),
         make_circle(),
+        make_ellipse(),
         PrincetonD().create_shape(),
     ]
 
