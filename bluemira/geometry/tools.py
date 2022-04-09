@@ -73,16 +73,6 @@ class BluemiraGeoEncoder(json.JSONEncoder):
         return super().default(obj)
 
 
-# def _parse_arg_to_check_for_geos(arg):
-#     if isinstance(arg, BluemiraGeo):
-#         return serialize_shape(arg)
-#     elif isinstance(arg, Iterable):
-#         if isinstance(arg[0], BluemiraGeo):
-#             return [serialize_shape(a) for a in arg]
-#         return arg
-#     return arg
-
-
 def debug_naughty_geometry(func):
     """
     Decorator for debugging of failed geometry operations.
@@ -117,16 +107,13 @@ def debug_naughty_geometry(func):
             fmt_string = "{}-{}{}.json"
             name = fmt_string.format(func.__name__, timestamp, "")
             filename = os.sep.join([path, name])
-            is_new_file = False
+
             i = 0
-            while not is_new_file:
-                if os.path.isfile(filename):
-                    i += 1
-                    increment = f"_{i}"
-                    name = fmt_string.format(func.__name__, timestamp, increment)
-                    filename = os.sep.join([path, name])
-                else:
-                    is_new_file = True
+            while os.path.isfile(filename):
+                i += 1
+                increment = f"_{i}"
+                name = fmt_string.format(func.__name__, timestamp, increment)
+                filename = os.sep.join([path, name])
 
             # Dump the data in the file
             with open(filename, "w") as file:
