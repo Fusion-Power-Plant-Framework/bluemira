@@ -64,6 +64,10 @@ def convert(apiobj, label=""):
 
 
 class BluemiraGeoEncoder(json.JSONEncoder):
+    """
+    JSON Encoder for BluemiraGeo.
+    """
+
     def default(self, obj):
         """
         Override the JSONEncoder default object handling behaviour for BluemiraGeo.
