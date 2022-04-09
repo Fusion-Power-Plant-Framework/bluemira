@@ -85,6 +85,8 @@ def debug_naughty_geometry(func):
         except cadapi.FreeCADError as error:
             # Stash the function call inputs
             data = {}
+
+            # Inspect the function call and reconstruct defaults
             for i, key in enumerate(signature.parameters.keys()):
                 if i < len(args):
                     data[key] = args[i]
@@ -96,6 +98,7 @@ def debug_naughty_geometry(func):
                     else:
                         data[key] = kwargs[key]
 
+            # Catch any kwargs not in signature
             for k, v in kwargs.items():
                 if k not in data:
                     data[k] = v
