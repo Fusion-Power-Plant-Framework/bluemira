@@ -23,6 +23,10 @@
 Useful functions for bluemira geometries.
 """
 
+import datetime
+import inspect
+import json
+import os
 from copy import deepcopy
 from typing import Iterable, List, Optional, Sequence, Type, Union
 
@@ -32,7 +36,8 @@ from scipy.spatial import ConvexHull
 
 import bluemira.mesh.meshing as meshing
 from bluemira.base.constants import EPS
-from bluemira.base.look_and_feel import bluemira_warn
+from bluemira.base.file import get_bluemira_path
+from bluemira.base.look_and_feel import bluemira_debug, bluemira_warn
 from bluemira.codes import _freecadapi as cadapi
 from bluemira.geometry.base import BluemiraGeo, GeoMeshable
 from bluemira.geometry.coordinates import Coordinates
@@ -58,15 +63,6 @@ def convert(apiobj, label=""):
     return output
 
 
-import datetime
-import inspect
-import json
-import os
-
-from bluemira.base.file import get_bluemira_path
-from bluemira.base.look_and_feel import bluemira_debug
-
-
 class BluemiraGeoEncoder(json.JSONEncoder):
     def default(self, obj):
         """
@@ -77,14 +73,14 @@ class BluemiraGeoEncoder(json.JSONEncoder):
         return super().default(obj)
 
 
-def _parse_arg_to_check_for_geos(arg):
-    if isinstance(arg, BluemiraGeo):
-        return serialize_shape(arg)
-    elif isinstance(arg, Iterable):
-        if isinstance(arg[0], BluemiraGeo):
-            return [serialize_shape(a) for a in arg]
-        return arg
-    return arg
+# def _parse_arg_to_check_for_geos(arg):
+#     if isinstance(arg, BluemiraGeo):
+#         return serialize_shape(arg)
+#     elif isinstance(arg, Iterable):
+#         if isinstance(arg[0], BluemiraGeo):
+#             return [serialize_shape(a) for a in arg]
+#         return arg
+#     return arg
 
 
 def debug_naughty_geometry(func):
@@ -101,18 +97,18 @@ def debug_naughty_geometry(func):
             data = {}
             for i, key in enumerate(signature.parameters.keys()):
                 if i < len(args):
-                    data[key] = _parse_arg_to_check_for_geos(args[i])
+                    data[key] = args[i]
                 else:
                     if key not in kwargs:
                         value = signature.parameters[key].default
                         if value != inspect._empty:
                             data[key] = value
                     else:
-                        data[key] = _parse_arg_to_check_for_geos(kwargs[key])
+                        data[key] = kwargs[key]
 
             for k, v in kwargs.items():
                 if k not in data:
-                    data[k] = _parse_arg_to_check_for_geos(v)
+                    data[k] = v
 
             # Make a new file
             path = get_bluemira_path("generated_data/naughty_geometry", subfolder="")
