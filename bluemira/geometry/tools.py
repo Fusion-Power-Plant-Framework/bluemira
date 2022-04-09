@@ -122,6 +122,7 @@ def debug_naughty_geometry(func):
             with open(filename, "w") as file:
                 json.dump(data, file, indent=4, cls=BluemiraGeoEncoder)
 
+            # Notify and raise error
             bluemira_debug(
                 f"Function call {func.__name__} failed. Debugging information was saved to: {filename}"
             )
