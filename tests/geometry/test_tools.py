@@ -34,6 +34,7 @@ from bluemira.geometry.tools import (
     _signed_distance_2D,
     convex_hull_wires_2d,
     debug_naughty_geometry,
+    deserialize_shape,
     extrude_shape,
     find_clockwise_angle_2d,
     make_bspline,
@@ -531,16 +532,38 @@ def naughty_function(wire, var=1, *, var2=[1, 2], **kwargs):
     raise cadapi.FreeCADError
 
 
+import json
+
+
 class TestDebugNaughtyGeometry:
     path = get_bluemira_path("generated_data/naughty_geometry", subfolder="")
 
-    def test_file_is_made(self):
-        wire = make_polygon({"x": [0, 2, 2, 0], "y": [-1, -1, 1, 1]}, closed=True)
-        wire = make_circle()
-        from bluemira.geometry.parameterisations import PrincetonD
+    wires = [
+        make_polygon({"x": [0, 2, 2, 0], "y": [-1, -1, 1, 1]}, closed=True),
+        make_circle(),
+        PrincetonD().create_shape(),
+    ]
 
-        wire = PrincetonD().create_shape()
+    @pytest.mark.parametrize("wire", wires)
+    def test_file_is_made(self, wire):
+        length = wire.length
+
         listdir = os.listdir(self.path)
         with pytest.raises(cadapi.FreeCADError):
-            naughty_function(wire)
-        assert len(os.listdir(self.path)) == len(listdir) + 1
+            naughty_function(wire, random_kwarg=np.pi)
+
+        files = os.listdir(self.path)
+        assert len(files) == len(listdir) + 1
+        paths = [os.path.join(self.path, basename) for basename in files]
+        newest = max(paths, key=os.path.getctime)
+
+        with open(newest, "r") as file:
+            data = json.load(file)
+
+        assert "random_kwarg" in data
+        assert np.isclose(data["random_kwarg"], np.pi)
+        saved_wire = deserialize_shape(data["wire"])
+        # TODO: Not exactly a high fidelity recreation..! To be investigated, could be
+        # a floating point size problem when converting vectors to lists?
+        np.testing.assert_almost_equal(saved_wire.length, length, decimal=3)
+        os.remove(newest)

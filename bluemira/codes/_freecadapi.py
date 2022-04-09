@@ -1702,8 +1702,8 @@ def serialize_shape(shape):
     if type_ == Part.Wire:
         output = []
         edges = shape.OrderedEdges
-        for count, e in enumerate(edges):
-            output.append(serialize_shape(e))
+        for edge in edges:
+            output.append(serialize_shape(edge))
         return {"Wire": output}
 
     if type_ == Part.Edge:
@@ -1712,7 +1712,10 @@ def serialize_shape(shape):
 
     if type_ in [Part.LineSegment, Part.Line]:
         output = {
-            "LineSegment": {"StartPoint": shape.StartPoint, "EndPoint": shape.EndPoint},
+            "LineSegment": {
+                "StartPoint": list(shape.StartPoint),
+                "EndPoint": list(shape.EndPoint),
+            },
         }
         return output
 
@@ -1740,12 +1743,12 @@ def serialize_shape(shape):
         output = {
             "ArcOfCircle": {
                 "Radius": shape.Radius,
-                "Center": shape.Center,
-                "Axis": shape.Axis,
+                "Center": list(shape.Center),
+                "Axis": list(shape.Axis),
                 "StartAngle": math.degrees(shape.FirstParameter),
                 "EndAngle": math.degrees(shape.LastParameter),
-                "StartPoint": shape.StartPoint,
-                "EndPoint": shape.EndPoint,
+                "StartPoint": list(shape.StartPoint),
+                "EndPoint": list(shape.EndPoint),
             }
         }
         return output
@@ -1753,7 +1756,7 @@ def serialize_shape(shape):
     if type_ == Part.ArcOfEllipse:
         output = {
             "ArcOfEllipse": {
-                "Center": shape.Center,
+                "Center": list(shape.Center),
                 "MajorRadius": shape.MajorRadius,
                 "MinorRadius": shape.MinorRadius,
                 "MajorAxis": shape.XAxis,
@@ -1761,8 +1764,8 @@ def serialize_shape(shape):
                 "StartAngle": math.degrees(shape.FirstParameter),
                 "EndAngle": math.degrees(shape.LastParameter),
                 "Focus1": shape.Ellipse.Focus1,
-                "StartPoint": shape.StartPoint,
-                "EndPoint": shape.EndPoint,
+                "StartPoint": list(shape.StartPoint),
+                "EndPoint": list(shape.EndPoint),
             }
         }
         return output

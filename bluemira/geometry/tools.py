@@ -74,8 +74,6 @@ class BluemiraGeoEncoder(json.JSONEncoder):
         """
         if isinstance(obj, BluemiraGeo):
             return serialize_shape(obj)
-        if isinstance(obj, cadapi.apiVector):
-            return list(obj)
         return super().default(obj)
 
 
@@ -106,9 +104,15 @@ def debug_naughty_geometry(func):
                     data[key] = _parse_arg_to_check_for_geos(args[i])
                 else:
                     if key not in kwargs:
-                        data[key] = signature.parameters[key].default
+                        value = signature.parameters[key].default
+                        if value != inspect._empty:
+                            data[key] = value
                     else:
                         data[key] = _parse_arg_to_check_for_geos(kwargs[key])
+
+            for k, v in kwargs.items():
+                if k not in data:
+                    data[k] = _parse_arg_to_check_for_geos(v)
 
             # Make a new file
             path = get_bluemira_path("generated_data/naughty_geometry", subfolder="")
