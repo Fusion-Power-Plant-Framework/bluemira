@@ -550,7 +550,7 @@ class TestDebugNaughtyGeometry:
 
         listdir = os.listdir(self.path)
         with pytest.raises(cadapi.FreeCADError):
-            naughty_function(wire, random_kwarg=np.pi)
+            naughty_function(wire, var2=[1, 2, 3], random_kwarg=np.pi)
 
         files = os.listdir(self.path)
         assert len(files) == len(listdir) + 1
@@ -560,6 +560,10 @@ class TestDebugNaughtyGeometry:
         with open(newest, "r") as file:
             data = json.load(file)
 
+        assert "var" in data
+        assert data["var"] == 1
+        assert "var2" in data
+        assert data["var2"] == [1, 2, 3]
         assert "random_kwarg" in data
         assert np.isclose(data["random_kwarg"], np.pi)
         saved_wire = deserialize_shape(data["wire"])
