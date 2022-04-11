@@ -39,4 +39,4 @@ class TestTSCAD:
         v = ThermalShieldCAD(self.thermal_shield, neutronics=False)
         volume = v.get_properties()["thermal_shield"]["Volume"]
         # This will change if you change the build pattern in TSCAD
-        assert np.isclose(round(volume, 2), 5.98)
+        assert np.isclose(round(volume, 2), 5.28)
