@@ -60,7 +60,7 @@ class TestPlotting:
         r_loop.translate([7.5, 0, 0])
 
         i_loop = Coordinates(
-            x=[0, 0.49, 0.49, 0, 1, 0.51, 0.51, 1], z=[0, 0, 2, 2, 2, 2, 0, 0]
+            {"x": [0, 0.49, 0.49, 0, 1, 0.51, 0.51, 1], "z": [0, 0, 2, 2, 2, 2, 0, 0]}
         )
         i_loop.translate([9, 0, 0])
         n_loop = Coordinates({"x": [0, 0, 1, 1], "z": [0, 2, 0, 2]})
@@ -69,7 +69,7 @@ class TestPlotting:
         t_loop.translate([12, 0, 0])
 
         for letter in [l_loop, u_loop, e_loop, p_loop, r_loop, i_loop, n_loop, t_loop]:
-            letter.rotate(30, p1=[0, 0, 0], p2=[0, 0, 1])
+            letter.rotate(base=(0, 0, 1), direction=(0, 0, 1), degree=30)
             geometry.add_coordinates(letter, rect_beam, SS316)
 
         fem.set_geometry(geometry)
