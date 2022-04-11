@@ -380,6 +380,7 @@ def wire_closure(bmwire: BluemiraWire, label="closure") -> BluemiraWire:
     return closure
 
 
+@debug_naughty_geometry
 def offset_wire(
     wire: BluemiraWire,
     thickness: float,
@@ -447,7 +448,7 @@ def offset_wire(
             coordinates, thickness, method=fallback_method, **fallback_kwargs
         )
         result = make_polygon(result, label=label)
-        raise _FallBackError(result)
+        raise _FallBackError(result=result)
 
 
 def convex_hull_wires_2d(

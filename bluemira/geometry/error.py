@@ -89,5 +89,5 @@ class _FallBackError(Exception):
     be logged.
     """
 
-    def __init__(result=None):
+    def __init__(self, *, result=None):
         self._result = result
