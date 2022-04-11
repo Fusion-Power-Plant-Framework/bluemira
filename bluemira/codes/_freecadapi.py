@@ -267,7 +267,7 @@ def make_bspline(
 
     if len(pntslist) < 2:
         _err = "make_bspline: not enough points"
-        raise FreeCADError(_err + "\n")
+        raise InvalidCADInputsError(_err + "\n")
     if np.allclose(pntslist[0], pntslist[-1], rtol=0, atol=EPS):
         if len(pntslist) > 2:
             closed = True
@@ -277,7 +277,7 @@ def make_bspline(
         else:
             # len == 2 and first == last
             _err = "make_bspline: Invalid pointslist (len == 2 and first == last)"
-            raise FreeCADError(_err)
+            raise InvalidCADInputsError(_err)
 
     kwargs = {}
     if start_tangent and end_tangent:
@@ -290,9 +290,18 @@ def make_bspline(
             "bspline. Start and end tangencies ignored."
         )
 
-    bsc = Part.BSplineCurve()
-    bsc.interpolate(pntslist, PeriodicFlag=closed, **kwargs)
-    wire = apiWire(bsc.toShape())
+    try:
+        bsc = Part.BSplineCurve()
+        bsc.interpolate(pntslist, PeriodicFlag=closed, **kwargs)
+        wire = apiWire(bsc.toShape())
+    except Base.FreeCADError as error:
+        msg = "\n".join(
+            [
+                "FreeCAD was unable to make an offset of wire:",
+                f"{error.args[0]['sErrMsg']}",
+            ]
+        )
+        raise FreeCADError(msg)
     return wire
 
 
