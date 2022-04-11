@@ -298,7 +298,7 @@ def make_bspline(
         msg = "\n".join(
             [
                 "FreeCAD was unable to make a spline:",
-                f"{error.args[0]['sErrMsg']}",
+                f"{error.args[0]}",
             ]
         )
         raise FreeCADError(msg)
