@@ -115,6 +115,14 @@ class TestComponentClass:
         parent.add_children([child1, child2])
         assert parent.children == (child1, child2)
 
+    def test_add_children_given_tuple_of_components(self):
+        parent = Component("Parent")
+        children = (Component("Child1"), Component("Child2"))
+
+        parent.add_children(children)
+
+        assert [ch.name for ch in parent.children] == ["Child1", "Child2"]
+
     def test_add_children_does_nothing_given_empty_list(self):
         parent = Component("parent")
 
