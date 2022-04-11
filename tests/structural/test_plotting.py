@@ -46,24 +46,26 @@ class TestPlotting:
         geometry.add_element(0, 3, rect_beam, SS316)
         geometry.add_element(2, 5, rect_beam, SS316)
 
-        l_loop = Coordinates([2.5, 1.5, 1.5], [0, 0, 0], [0, 0, 2])
-        u_loop = Coordinates([0, 0, 1, 1], [0, 0, 0, 0], [2, 0, 0, 2])
+        l_loop = Coordinates([[2.5, 1.5, 1.5], [0, 0, 0], [0, 0, 2]])
+        u_loop = Coordinates([[0, 0, 1, 1], [0, 0, 0, 0], [2, 0, 0, 2]])
         u_loop.translate([3, 0, 0])
-        e_loop = Coordinates(x=[1, 0, 0, 1, 0, 0, 1], z=[2, 2, 1.005, 1.005, 1, 0, 0])
+        e_loop = Coordinates(
+            {"x": [1, 0, 0, 1, 0, 0, 1], "z": [2, 2, 1.005, 1.005, 1, 0, 0]}
+        )
         e_loop.translate([4.5, 0, 0])
 
-        p_loop = Coordinates(x=[0, 0, 0, 1, 1, 0.01], z=[0, 1, 2, 2, 1, 1])
+        p_loop = Coordinates({"x": [0, 0, 0, 1, 1, 0.01], "z": [0, 1, 2, 2, 1, 1]})
         p_loop.translate([6, 0, 0])
-        r_loop = Coordinates(x=[0, 0, 0, 1, 1, 0.01, 1], z=[0, 1, 2, 2, 1, 1, 0])
+        r_loop = Coordinates({"x": [0, 0, 0, 1, 1, 0.01, 1], "z": [0, 1, 2, 2, 1, 1, 0]})
         r_loop.translate([7.5, 0, 0])
 
         i_loop = Coordinates(
             x=[0, 0.49, 0.49, 0, 1, 0.51, 0.51, 1], z=[0, 0, 2, 2, 2, 2, 0, 0]
         )
         i_loop.translate([9, 0, 0])
-        n_loop = Coordinates(x=[0, 0, 1, 1], z=[0, 2, 0, 2])
+        n_loop = Coordinates({"x": [0, 0, 1, 1], "z": [0, 2, 0, 2]})
         n_loop.translate([10.5, 0, 0])
-        t_loop = Coordinates(x=[0, 0.49, 0.5, 0.51, 1], z=[2, 2, 0, 2, 2])
+        t_loop = Coordinates({"x": [0, 0.49, 0.5, 0.51, 1], "z": [2, 2, 0, 2, 2]})
         t_loop.translate([12, 0, 0])
 
         for letter in [l_loop, u_loop, e_loop, p_loop, r_loop, i_loop, n_loop, t_loop]:
