@@ -41,7 +41,7 @@ from bluemira.builders.EUDEMO.reactor import EUDEMOReactor
 from bluemira.builders.EUDEMO.tf_coils import TFCoilsBuilder, TFCoilsComponent
 from bluemira.geometry.coordinates import Coordinates
 
-PARAMS_DIR = os.path.join(get_bluemira_root(), "tests", "bluemira", "builders", "EUDEMO")
+PARAMS_DIR = os.path.join(get_bluemira_root(), "tests", "builders", "EUDEMO")
 
 
 @pytest.mark.reactor

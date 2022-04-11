@@ -32,14 +32,14 @@ from bluemira.base.file import (
 
 REACTOR_NAME = "TEST_REACTOR"
 FILE_REF_PATH = os.path.join("data")
-FILE_GEN_PATH = os.path.join("tests", "bluemira", "base", "file_manager_gen")
+FILE_GEN_PATH = os.path.join("tests", "base", "file_manager_gen")
 
 
 @pytest.mark.parametrize(
     "path,subfolder,allow_missing,expect_none",  # noqa :N802
     [
-        ("bluemira", "tests", False, False),  # NOTE: Change "bluemira" to e.g. "base"
-        ("bluemira", "tests", True, False),  # NOTE: Change "bluemira" to e.g. "base"
+        ("base", "tests", False, False),
+        ("base", "tests", True, False),
         ("spam", "tests", True, True),
         ("spam", "ham", True, True),
     ],

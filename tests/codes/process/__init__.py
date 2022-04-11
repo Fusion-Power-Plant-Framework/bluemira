@@ -30,11 +30,9 @@ from bluemira.base.config_schema import ConfigurationSchema
 from bluemira.base.file import get_bluemira_root
 from bluemira.base.parameter import Parameter, ParameterMapping
 
-INDIR = os.path.join(
-    get_bluemira_root(), "tests", "bluemira", "codes", "process", "test_data"
-)
+INDIR = os.path.join(get_bluemira_root(), "tests", "codes", "process", "test_data")
 OUTDIR = os.path.join(
-    get_bluemira_root(), "tests", "bluemira", "codes", "process", "test_generated_data"
+    get_bluemira_root(), "tests", "codes", "process", "test_generated_data"
 )
 
 FRAME_LIST = [
