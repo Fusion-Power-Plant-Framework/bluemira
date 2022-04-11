@@ -28,6 +28,7 @@ import pytest
 
 import tests
 from bluemira.base.file import get_bluemira_path
+from bluemira.codes.error import FreeCADError
 from bluemira.geometry._deprecated_base import GeometryError, Plane
 from bluemira.geometry._deprecated_loop import Loop
 from bluemira.geometry._deprecated_tools import (
@@ -711,7 +712,7 @@ class TestMixedFaces:
         loop: Loop = Loop.from_file(fn)
         make_mixed_wire(*loop.xyz, allow_fallback=False)
 
-        with pytest.raises(RuntimeError):
+        with pytest.raises(FreeCADError):
             make_mixed_wire(*loop.xyz, allow_fallback=False, cleaning_atol=1e-8)
 
 
