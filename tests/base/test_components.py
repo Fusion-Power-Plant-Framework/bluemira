@@ -107,25 +107,6 @@ class TestComponentClass:
         with pytest.raises(ComponentError):
             parent.add_child(child)
 
-    def test_fail_add_duplicate_child_with_same_name(self):
-        parent = Component("Parent")
-        Component("Child", parent=parent)
-        child = Component("Child")
-
-        with pytest.raises(ComponentError):
-            parent.add_child(child)
-
-    def test_add_child_given_components_share_name_at_different_level(self):
-        parent = Component("Parent")
-        child_1 = Component("Child1", parent=parent)
-        Component("Child2", parent=parent)
-
-        child_1.add_child(Component("Child2"))
-
-        assert parent.get_component("Child1") is not None
-        assert parent.get_component("Child2") is not None
-        assert child_1.get_component("Child2") is not None
-
     def test_add_children(self):
         parent = Component("Parent")
         child1 = Component("Child1")
