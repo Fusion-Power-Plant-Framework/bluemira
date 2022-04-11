@@ -190,9 +190,15 @@ class EUDEMOReactor(Reactor):
         plasma = component_tree.get_component(EUDEMOReactor.PLASMA)
         sep_comp: PhysicalComponent = plasma.get_component("xz").get_component("LCFS")
         sep_shape = sep_comp.shape.boundary[0]
-        vvts_xz = vvts.get_component("xz").get_component("VVTS").shape.boundary[0]
+        thermal_shield = component_tree.get_component(self.THERMAL_SHIELD)
 
-        builder = TFCoilsBuilder(self._params.to_dict(), config, separatrix=sep_shape)
+        vvts_xz = (
+            thermal_shield.get_component("xz").get_component(self.VVTS).shape.boundary[0]
+        )
+
+        builder = TFCoilsBuilder(
+            self._params.to_dict(), config, separatrix=sep_shape, keep_out_zone=vvts_xz
+        )
         self.register_builder(builder)
 
         return super()._build_stage()
@@ -218,47 +224,41 @@ class EUDEMOReactor(Reactor):
 
         return super()._build_stage()
 
-    @Reactor.design_stage(THERMAL_SHIELD)
+    @Reactor.design_stage(VVTS)
     def build_thermal_shield(self, component_tree: Component):
         """
         Run the vacuum vessel thermal shield build.
         """
-        name = self.VVTS
-
-        bluemira_print(f"Starting design stage: {name}")
-
-        vessel = component_tree.get_component("Vacuum Vessel").get_component("xz")
+        vessel = component_tree.get_component(self.VACUUM_VESSEL).get_component("xz")
 
         vv_koz = vessel.get_component("Body").shape.boundary[0]
 
         default_config = {}
-        config = self._process_design_stage_config(name, default_config)
+        config = self._process_design_stage_config(default_config)
 
         builder = VacuumVesselThermalShieldBuilder(
             self._params.to_dict(), config, vv_koz=vv_koz
         )
 
-        self.register_builder(builder, name)
-        component = super()._build_stage(name)
+        self.register_builder(builder)
+        vvts = super()._build_stage()
 
-        bluemira_print(f"Completed design stage: {name}")
+        thermal_shield = Component(self.THERMAL_SHIELD)
+        thermal_shield.add_child(vvts)
 
-        return component
+        return thermal_shield
 
+    @Reactor.design_stage(CTS)
     def build_cryo_thermal_shield(self, component_tree: Component):
         """
         Run the cryostat thermal shield build.
         """
-        name = self.CTS
-
-        bluemira_print(f"Starting design stage: {name}")
-
         # Prepare inputs
-        pf_coils = component_tree.get_component("PF Coils").get_component("xz")
+        pf_coils = component_tree.get_component(self.PF_COILS).get_component("xz")
         pf_kozs = [
             coil.get_component("casing").shape.boundary[0] for coil in pf_coils.children
         ]
-        tf_coils = component_tree.get_component("TF Coils").get_component("xz")
+        tf_coils = component_tree.get_component(self.TF_COILS).get_component("xz")
         tf_koz = (
             tf_coils.get_component("Casing").get_component("outer").shape.boundary[0]
         )
@@ -274,7 +274,9 @@ class EUDEMOReactor(Reactor):
         )
         self.register_builder(builder)
 
-        return super()._build_stage()
+        cts = super()._build_stage()
+        thermal_shield = component_tree.get_component(self.THERMAL_SHIELD)
+        # thermal_shield.merge_children(cts)
 
     @Reactor.design_stage(IVC)
     def build_in_vessel_component_shapes(self, component_tree: Component):
@@ -362,10 +364,10 @@ class EUDEMOReactor(Reactor):
         """
         Run the cryostat vacuum vessel build.
         """
-        thermal_shield = component_tree.get_component(
-            EUDEMOReactor.THERMAL_SHIELD
-        ).get_component("xz")
-        cts = thermal_shield.get_component("Cryostat TS").shape.boundary[0]
+        thermal_shield = component_tree.get_component(self.THERMAL_SHIELD).get_component(
+            "xz"
+        )
+        cts = thermal_shield.get_component(self.CTS).shape.boundary[0]
 
         default_config = {}
         config = self._process_design_stage_config(default_config)
@@ -380,9 +382,7 @@ class EUDEMOReactor(Reactor):
         """
         Run the radiation shield build.
         """
-        cryostat = component_tree.get_component(EUDEMOReactor.CRYOSTAT).get_component(
-            "xz"
-        )
+        cryostat = component_tree.get_component(self.CRYOSTAT).get_component("xz")
         cryo_vv_xz = cryostat.get_component("Cryostat VV").shape
 
         default_config = {}
