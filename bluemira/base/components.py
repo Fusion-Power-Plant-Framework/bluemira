@@ -144,6 +144,40 @@ class Component(NodeMixin, Plottable, DisplayableCAD):
 
         return self
 
+    def add_children(self, children: List[Component], merge_trees=False):
+        """
+        Add multiple children to this node
+
+        Parameters
+        ----------
+        children: List[Component]
+            The children to be added
+
+        Returns
+        -------
+        self: Component
+            This component.
+        """
+        children = list(children)
+
+        duplicates = []
+        child: Component
+        for idx, child in reversed(list(enumerate(children))):
+            existing = self.get_component(child.name)
+            if existing is not None:
+                if merge_trees:
+                    existing.children = list(existing.children) + list(child.children)
+                    children.pop(idx)
+                else:
+                    duplicates += [child]
+        if duplicates != []:
+            raise ComponentError(
+                f"Components {duplicates} are already children of {self}"
+            )
+        self.children = list(self.children) + children
+
+        return self
+
     def merge_children(self, other: Component):
         """
         Merge the children of the given component into this component.
@@ -192,40 +226,6 @@ class Component(NodeMixin, Plottable, DisplayableCAD):
                 common_child[0].add_children(list(other_child.children))
             else:
                 self.add_child(other_child)
-
-    def add_children(self, children: List[Component], merge_trees=False):
-        """
-        Add multiple children to this node
-
-        Parameters
-        ----------
-        children: List[Component]
-            The children to be added
-
-        Returns
-        -------
-        self: Component
-            This component.
-        """
-        children = list(children)
-
-        duplicates = []
-        child: Component
-        for idx, child in reversed(list(enumerate(children))):
-            existing = self.get_component(child.name)
-            if existing is not None:
-                if merge_trees:
-                    existing.children = list(existing.children) + list(child.children)
-                    children.pop(idx)
-                else:
-                    duplicates += [child]
-        if duplicates != []:
-            raise ComponentError(
-                f"Components {duplicates} are already children of {self}"
-            )
-        self.children = list(self.children) + children
-
-        return self
 
     def prune_child(self, name: str):
         """
