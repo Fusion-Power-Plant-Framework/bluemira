@@ -109,7 +109,7 @@ class Setup(interface.Setup):
             for key, value in self.parent.problem_settings.items():
                 writer.add_parameter(key, value)
 
-        self._validate_models(writer)
+            self._validate_models(writer)
 
         filename = os.path.join(self.parent.run_dir, "IN.DAT")
         writer.write_in_dat(output_filename=filename)
