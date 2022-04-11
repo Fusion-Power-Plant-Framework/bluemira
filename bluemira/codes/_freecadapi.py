@@ -297,7 +297,7 @@ def make_bspline(
     except Base.FreeCADError as error:
         msg = "\n".join(
             [
-                "FreeCAD was unable to make an offset of wire:",
+                "FreeCAD was unable to make a spline:",
                 f"{error.args[0]['sErrMsg']}",
             ]
         )
