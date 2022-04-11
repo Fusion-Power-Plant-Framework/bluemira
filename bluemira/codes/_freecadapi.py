@@ -294,7 +294,7 @@ def make_bspline(
         bsc = Part.BSplineCurve()
         bsc.interpolate(pntslist, PeriodicFlag=closed, **kwargs)
         wire = apiWire(bsc.toShape())
-    except Base.FreeCADError as error:
+    except Part.OCCError as error:
         msg = "\n".join(
             [
                 "FreeCAD was unable to make a spline:",
