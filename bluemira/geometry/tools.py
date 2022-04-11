@@ -74,6 +74,8 @@ class BluemiraGeoEncoder(json.JSONEncoder):
         """
         if isinstance(obj, BluemiraGeo):
             return serialize_shape(obj)
+        if isinstance(obj, np.ndarray):
+            return obj.tolist()
         return super().default(obj)
 
 
@@ -188,6 +190,7 @@ def make_polygon(
     return BluemiraWire(cadapi.make_polygon(points, closed), label=label)
 
 
+@debug_naughty_geometry
 def make_bspline(
     points: Union[list, np.ndarray],
     label: str = "",
