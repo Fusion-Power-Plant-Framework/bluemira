@@ -268,7 +268,7 @@ def make_bspline(
     if len(pntslist) < 2:
         _err = "make_bspline: not enough points"
         raise FreeCADError(_err + "\n")
-    if pntslist[0] == pntslist[-1]:
+    if np.allclose(pntslist[0], pntslist[-1], rtol=0, atol=EPS):
         if len(pntslist) > 2:
             closed = True
             pntslist.pop()
