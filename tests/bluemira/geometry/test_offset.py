@@ -19,10 +19,15 @@
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 
+import json
+import os
+
 import numpy as np
 import pytest
 
-from bluemira.codes.error import FreeCADError
+from bluemira.base.file import get_bluemira_path
+from bluemira.codes.error import InvalidCADInputsError
+from bluemira.geometry.error import GeometryError
 from bluemira.geometry.parameterisations import (
     PictureFrame,
     PolySpline,
@@ -30,7 +35,12 @@ from bluemira.geometry.parameterisations import (
     TaperedPictureFrame,
     TripleArc,
 )
-from bluemira.geometry.tools import make_polygon, offset_wire
+from bluemira.geometry.tools import (
+    deserialize_shape,
+    distance_to,
+    make_polygon,
+    offset_wire,
+)
 
 
 class TestOffset:
@@ -108,21 +118,48 @@ class TestOffset:
         assert o_rect.length == 6.0
 
     def test_errors(self):
-        with pytest.raises(FreeCADError):
+        with pytest.raises(InvalidCADInputsError):
             offset_wire(self.rect_wire, 1.0, join="bad")
 
     def test_straight_line(self):
         straight = make_polygon([[0, 0, 0], [0, 0, 1]], label="straight_line")
 
-        with pytest.raises(FreeCADError):
+        with pytest.raises(InvalidCADInputsError):
             offset_wire(straight, 1.0)
 
     def test_non_planar(self):
         non_planar = make_polygon([[0, 0, 0], [1, 0, 0], [2, 0, 1], [3, 1, 1]])
-        with pytest.raises(FreeCADError):
+        with pytest.raises(InvalidCADInputsError):
             offset_wire(non_planar, 1.0)
 
-    def test_freecad_failure(self):
-        with pytest.raises(FreeCADError):
+    def test_offset_destroyed_shape_error(self):
+        with pytest.raises(GeometryError):
             # This will offset the triangle such that it no longer exists
             offset_wire(self.tri_wire, -1.0)
+
+
+class TestFallBackOffset:
+    @classmethod
+    def setup_class(cls):
+        fp = get_bluemira_path("bluemira/geometry/test_data", subfolder="tests")
+        fn = os.sep.join([fp, "offset_wire2022-04-08 10:19:27.json"])
+
+        with open(fn, "r") as file:
+            data = json.load(file)
+
+        cls.wire = deserialize_shape(data)
+
+    @pytest.mark.parametrize("join", ["arc", "intersect"])
+    @pytest.mark.parametrize("delta", [(0.75), (-0.75)])
+    def test_primitive_offsetting_catch(self, delta, join, fallback_method="square"):
+        """
+        This is a test for offset operations on wires that have failed primitive
+        offsetting.
+        """
+        result = offset_wire(
+            self.wire, delta, join, fallback_method=fallback_method, open_wire=False
+        )
+
+        np.testing.assert_allclose(
+            distance_to(self.wire, result)[0], abs(delta), rtol=1e-2
+        )

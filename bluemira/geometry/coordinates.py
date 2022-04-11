@@ -350,9 +350,9 @@ def get_centroid(x, y, z=None):
     Parameters
     ----------
     x: np.array
-        x coordinates of the loop to calculate on
+        x coordinates of the coordinates to calculate on
     y: np.array
-        y coordinates of the loop to calculate on
+        y coordinates of the coordinates to calculate on
     z: Union[None, np.array]
 
     Returns
@@ -374,9 +374,9 @@ def get_centroid_2d(x, z):
     Parameters
     ----------
     x: np.array
-        x coordinates of the loop to calculate on
+        x coordinates of the coordinates to calculate on
     z: np.array
-        z coordinates of the loop to calculate on
+        z coordinates of the coordinates to calculate on
 
     Returns
     -------
@@ -422,8 +422,14 @@ def get_centroid_3d(x, y, z):
         The x, y, z coordinates of the centroid [m]
     """
     cx, cy = get_centroid_2d(x, y)
+    if np.allclose(z, z[0]):
+        return [cx, cy, z[0]]
     cx2, cz = get_centroid_2d(x, z)
+    if np.allclose(y, y[0]):
+        return [cx2, y[0], cz]
     cy2, cz2 = get_centroid_2d(y, z)
+    if np.allclose(x, x[0]):
+        return [x[0], cy2, cz2]
 
     # The following is an "elegant" but computationally more expensive way of
     # dealing with the 0-area edge cases

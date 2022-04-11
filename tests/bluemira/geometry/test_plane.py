@@ -31,7 +31,7 @@ class TestPlacement:
         axis = np.random.random((1, 3))[0] + 0.01
         plane = BluemiraPlane(base, axis)
         np.testing.assert_equal(plane.base, base)
-        np.testing.assert_equal(plane.axis * np.linalg.norm(axis), axis)
+        np.testing.assert_almost_equal(plane.axis * np.linalg.norm(axis), axis)
 
     def test_instantiation_xy(self):
         xy_plane = BluemiraPlane([0, 0, 0], [0, 0, 1])
