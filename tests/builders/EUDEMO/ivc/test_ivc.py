@@ -35,7 +35,7 @@ from bluemira.builders.EUDEMO.ivc.wall import WallBuilder
 from bluemira.equilibria import Equilibrium
 from bluemira.equilibria.find import find_OX_points
 
-DATA = get_bluemira_path("bluemira/equilibria/test_data", subfolder="tests")
+DATA = get_bluemira_path("equilibria/test_data", subfolder="tests")
 OPTIMISER_MODULE_REF = "bluemira.geometry.optimisation"
 WALL_MODULE_REF = "bluemira.builders.EUDEMO.ivc.wall"
 

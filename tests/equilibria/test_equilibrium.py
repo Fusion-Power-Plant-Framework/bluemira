@@ -226,7 +226,7 @@ class TestFields:
 
 class TestEquilibrium:
     def test_double_null(self):
-        path = get_bluemira_path("bluemira/equilibria/test_data", subfolder="tests")
+        path = get_bluemira_path("equilibria/test_data", subfolder="tests")
         fn = os.sep.join([path, "DN-DEMO_eqref.json"])
         dn = Equilibrium.from_eqdsk(fn)
         assert dn.is_double_null
@@ -235,7 +235,7 @@ class TestEquilibrium:
         assert not sn.is_double_null
 
     def test_qpsi_calculation_modes(self):
-        path = get_bluemira_path("bluemira/equilibria/test_data", subfolder="tests")
+        path = get_bluemira_path("equilibria/test_data", subfolder="tests")
         fn = os.sep.join([path, "DN-DEMO_eqref.json"])
         dn = Equilibrium.from_eqdsk(fn)
         with patch.object(dn, "q") as eq_q:
@@ -256,7 +256,7 @@ class TestEquilibrium:
 class TestEqReadWrite:
     @pytest.mark.parametrize("qpsi_calcmode", [0, 1])
     def test_read_write(self, qpsi_calcmode):
-        data_path = get_bluemira_path("bluemira/equilibria/test_data", subfolder="tests")
+        data_path = get_bluemira_path("equilibria/test_data", subfolder="tests")
         file_name = "eqref_OOB.json"
         file_path = os.sep.join([data_path, file_name])
 

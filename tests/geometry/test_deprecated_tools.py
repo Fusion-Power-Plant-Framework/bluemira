@@ -54,7 +54,7 @@ from bluemira.geometry.base import BluemiraGeo
 from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.tools import extrude_shape, revolve_shape
 
-TEST_PATH = get_bluemira_path("bluemira/geometry/test_data", subfolder="tests")
+TEST_PATH = get_bluemira_path("geometry/test_data", subfolder="tests")
 
 
 class TestCheckLineSegment:

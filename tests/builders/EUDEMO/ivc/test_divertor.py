@@ -35,7 +35,7 @@ from bluemira.equilibria import Equilibrium
 from bluemira.equilibria.find import find_OX_points
 from bluemira.geometry.tools import make_polygon, signed_distance
 
-DATA = get_bluemira_path("bluemira/equilibria/test_data", subfolder="tests")
+DATA = get_bluemira_path("equilibria/test_data", subfolder="tests")
 
 
 def get_turning_point_idxs(z: np.ndarray):

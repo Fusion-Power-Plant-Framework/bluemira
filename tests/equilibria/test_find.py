@@ -35,7 +35,7 @@ from bluemira.equilibria.find import (
     inv_2x2_matrix,
 )
 
-DATA = get_bluemira_path("bluemira/equilibria/test_data", subfolder="tests")
+DATA = get_bluemira_path("equilibria/test_data", subfolder="tests")
 
 
 def test_find_local_minima():

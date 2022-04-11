@@ -30,7 +30,7 @@ from bluemira.base.error import BuilderError
 from bluemira.base.file import get_bluemira_path
 from bluemira.builders.EUDEMO.tf_coils import TFCoilsBuilder
 
-DATA_PATH = get_bluemira_path("bluemira/builders/EUDEMO/test_data", subfolder="tests")
+DATA_PATH = get_bluemira_path("builders/EUDEMO/test_data", subfolder="tests")
 """
 The path to data to be used in these tests.
 """

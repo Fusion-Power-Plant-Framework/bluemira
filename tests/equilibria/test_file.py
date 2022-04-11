@@ -30,7 +30,7 @@ from bluemira.utilities.tools import compare_dicts
 
 
 class TestEQDSKInterface:
-    path = get_bluemira_path("bluemira/equilibria/test_data", subfolder="tests")
+    path = get_bluemira_path("equilibria/test_data", subfolder="tests")
 
     @classmethod
     def setup_class(cls):

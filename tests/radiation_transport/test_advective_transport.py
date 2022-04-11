@@ -31,9 +31,7 @@ from bluemira.geometry._deprecated_loop import Loop
 from bluemira.radiation_transport.advective_transport import ChargedParticleSolver
 from bluemira.radiation_transport.error import AdvectionTransportError
 
-TEST_PATH = get_bluemira_path(
-    "bluemira/radiation_transport/test_data", subfolder="tests"
-)
+TEST_PATH = get_bluemira_path("radiation_transport/test_data", subfolder="tests")
 EQ_PATH = get_bluemira_path("equilibria", subfolder="data")
 
 

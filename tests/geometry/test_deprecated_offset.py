@@ -75,7 +75,7 @@ class TestClipperOffset:
             offset_clipper(coordinates, -30, method=method)
 
     def test_blanket_offset(self):
-        fp = get_bluemira_path("bluemira/geometry/test_data", subfolder="tests")
+        fp = get_bluemira_path("geometry/test_data", subfolder="tests")
         fn = os.sep.join([fp, "bb_offset_test.json"])
         with open(fn, "rb") as file:
             data = json.load(file)

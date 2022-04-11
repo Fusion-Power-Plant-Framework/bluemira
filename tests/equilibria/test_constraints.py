@@ -41,7 +41,7 @@ class TestWeightedConstraints:
         """
 
         # Generate a test equilibrium
-        path = get_bluemira_path("bluemira/equilibria/test_data", subfolder="tests")
+        path = get_bluemira_path("equilibria/test_data", subfolder="tests")
         fn = os.sep.join([path, "DN-DEMO_eqref.json"])
         eq = Equilibrium.from_eqdsk(fn)
 

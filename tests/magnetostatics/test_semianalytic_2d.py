@@ -151,9 +151,7 @@ class TestPoloidalFieldBenchmark:
         # cls.coil = Coil(4, 61, current=20e6, dx=0.5, dz=1.0)
         # cls.coil.mesh_coil(0.25)
 
-        cls.path = get_bluemira_path(
-            "bluemira/magnetostatics/test_data", subfolder="tests"
-        )
+        cls.path = get_bluemira_path("magnetostatics/test_data", subfolder="tests")
 
     @staticmethod
     def load_data(filename):

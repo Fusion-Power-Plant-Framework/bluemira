@@ -33,7 +33,7 @@ from bluemira.geometry._deprecated_loop import Loop
 from bluemira.geometry.error import GeometryError
 from bluemira.utilities.plot_tools import Plot3D
 
-TEST = get_bluemira_path("bluemira/geometry/test_data", subfolder="tests")
+TEST = get_bluemira_path("geometry/test_data", subfolder="tests")
 
 
 class TestLoop:

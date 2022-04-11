@@ -37,7 +37,7 @@ from bluemira.equilibria.flux_surfaces import (
 from bluemira.equilibria.shapes import flux_surface_cunningham, flux_surface_johner
 from bluemira.geometry._deprecated_loop import Loop
 
-TEST_PATH = get_bluemira_path("bluemira/equilibria/test_data", subfolder="tests")
+TEST_PATH = get_bluemira_path("equilibria/test_data", subfolder="tests")
 
 
 class TestOpenFluxSurfaceStuff:
