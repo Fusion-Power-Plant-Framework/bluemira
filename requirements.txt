@@ -7,7 +7,7 @@ asteval==0.9.26
 attrs==21.4.0
 Babel==2.9.1
 backcall==0.2.0
-bleach==4.1.0
+bleach==5.0.0
 cffi==1.15.0
 click==8.1.2
 CoolProp==6.4.1
@@ -22,7 +22,7 @@ imageio==2.16.1
 importlib-metadata==4.11.3
 importlib-resources==5.6.0
 iniconfig==1.1.1
-ipykernel==6.11.0
+ipykernel==6.12.1
 ipython==8.2.0
 ipython-genutils==0.2.0
 jedi==0.18.1
