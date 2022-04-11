@@ -28,7 +28,7 @@ from bluemira.base.file import get_bluemira_path
 from bluemira.mesh.error import MeshConversionError
 from bluemira.mesh.tools import import_mesh, msh_to_xdmf
 
-DATA_PATH = get_bluemira_path("mesh/test_data", subfolder="tests/bluemira")
+DATA_PATH = get_bluemira_path("mesh/test_data", subfolder="tests")
 
 
 class TestMSHtoXDMF:

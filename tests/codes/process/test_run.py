@@ -31,12 +31,7 @@ from bluemira.base.builder import BuildConfig
 from bluemira.codes.process import ENABLED as PROCESS_ENABLED
 from bluemira.codes.process import Solver
 from bluemira.codes.process.constants import NAME as PROCESS
-from tests.bluemira.codes.process import (
-    FRAME_LIST,
-    INDIR,
-    OUTDIR,
-    PROCESSTestConfiguration,
-)
+from tests.codes.process import FRAME_LIST, INDIR, OUTDIR, PROCESSTestConfiguration
 
 
 class TestRun:

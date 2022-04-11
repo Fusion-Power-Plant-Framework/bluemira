@@ -19,7 +19,7 @@
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 
-from tests.bluemira.materials.materials_helpers import MATERIAL_CACHE
+from tests.materials.materials_helpers import MATERIAL_CACHE
 
 # =============================================================================
 # Material mixture utility classes

@@ -120,7 +120,7 @@ class MinimiseLengthGOP(GeometryOptimisationProblem):
 class TestMakeOptimisedShape:
     @pytest.mark.parametrize(
         "problem_class",
-        ["tests.bluemira.builders.test_shapes::MinimiseLengthGOP", MinimiseLengthGOP],
+        ["tests.builders.test_shapes::MinimiseLengthGOP", MinimiseLengthGOP],
     )
     def test_builder(self, problem_class):
         params = {

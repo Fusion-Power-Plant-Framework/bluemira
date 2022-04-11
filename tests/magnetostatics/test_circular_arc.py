@@ -24,7 +24,7 @@ import numpy as np
 import tests
 from bluemira.magnetostatics.circular_arc import CircularArcCurrentSource
 from bluemira.magnetostatics.semianalytic_2d import semianalytic_Bx, semianalytic_Bz
-from tests.bluemira.magnetostatics.setup_methods import _plot_verification_test
+from tests.magnetostatics.setup_methods import _plot_verification_test
 
 
 class TestCircularArcCurrentSource:

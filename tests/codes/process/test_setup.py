@@ -28,7 +28,7 @@ from bluemira.codes.error import CodesError
 from bluemira.codes.process import setup as process_setup
 from bluemira.codes.process.api import DEFAULT_INDAT
 from bluemira.codes.process.api import ENABLED as PROCESS_ENABLED
-from tests.bluemira.codes.process import OUTDIR
+from tests.codes.process import OUTDIR
 
 
 @pytest.mark.skipif(PROCESS_ENABLED is not True, reason="PROCESS install required")

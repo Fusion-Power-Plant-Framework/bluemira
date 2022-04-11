@@ -29,7 +29,7 @@ from bluemira.equilibria.coils import PF_COIL_NAME, Coil, CoilSet, SymmetricCirc
 from bluemira.equilibria.opt_problems import CoilsetPositionCOP
 from bluemira.equilibria.optimiser import PositionOptimiser
 from bluemira.geometry._deprecated_loop import Loop
-from tests.bluemira.equilibria.setup_methods import _coilset_setup, _make_square
+from tests.equilibria.setup_methods import _coilset_setup, _make_square
 
 
 class TestPositionOptimiser:

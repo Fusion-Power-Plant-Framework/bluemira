@@ -30,9 +30,7 @@ import pytest
 import bluemira.codes._prominence as prom
 from bluemira.base.file import get_bluemira_path
 
-TEST_DATA = os.sep.join(
-    [get_bluemira_path("codes", "tests/bluemira"), "test_generated_data"]
-)
+TEST_DATA = os.sep.join([get_bluemira_path("codes", "tests"), "test_generated_data"])
 
 Path(TEST_DATA).mkdir(parents=True, exist_ok=True)
 
