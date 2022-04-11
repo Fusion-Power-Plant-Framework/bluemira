@@ -28,6 +28,7 @@ from numpy.linalg import norm
 
 import bluemira.codes._freecadapi as cadapi
 from bluemira.base.file import get_bluemira_path
+from bluemira.geometry.error import _FallBackError
 from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.parameterisations import PrincetonD
 from bluemira.geometry.placement import BluemiraPlacement
@@ -534,6 +535,15 @@ def naughty_function(wire, var=1, *, var2=[1, 2], **kwargs):
     raise cadapi.FreeCADError
 
 
+@debug_naughty_geometry
+def naughty_function_fallback(wire, var=1, *, var2=[1, 2], **kwargs):
+    try:
+        raise cadapi.FreeCADError
+    except cadapi.FreeCADError:
+        result = 42
+        raise _FallBackError(result=result)
+
+
 class TestDebugNaughtyGeometry:
     path = get_bluemira_path("generated_data/naughty_geometry", subfolder="")
 
@@ -554,8 +564,7 @@ class TestDebugNaughtyGeometry:
 
         files = os.listdir(self.path)
         assert len(files) == len(listdir) + 1
-        paths = [os.path.join(self.path, basename) for basename in files]
-        newest = max(paths, key=os.path.getctime)
+        newest = self._get_newest_file()
 
         with open(newest, "r") as file:
             data = json.load(file)
@@ -571,3 +580,18 @@ class TestDebugNaughtyGeometry:
         # a floating point size problem when converting vectors to lists?
         np.testing.assert_almost_equal(saved_wire.length, length, decimal=3)
         os.remove(newest)
+
+    def test_fallback_logs_and_returns(self):
+        listdir = os.listdir(self.path)
+        result = naughty_function_fallback(0)
+        files = os.listdir(self.path)
+        assert len(files) == len(listdir) + 1
+        assert result == 42
+        newest = self._get_newest_file()
+        os.remove(newest)
+
+    def _get_newest_file(self):
+        files = os.listdir(self.path)
+        paths = [os.path.join(self.path, basename) for basename in files]
+        newest = max(paths, key=os.path.getctime)
+        return newest
