@@ -60,7 +60,7 @@ Pillow==9.1.0
 Pint==0.18
 pluggy==1.0.0
 periodictable==1.6.0
-prometheus-client==0.13.1
+prometheus-client==0.14.1
 prompt-toolkit==3.0.29
 ptyprocess==0.7.0
 py==1.11.0
