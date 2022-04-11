@@ -31,7 +31,7 @@ joblib==1.1.0
 jsonschema==4.4.0
 jupyter-client==7.2.2
 jupyter-core==4.9.2
-jupyterlab-pygments==0.1.2
+jupyterlab-pygments==0.2.0
 kiwisolver==1.4.2
 llvmlite==0.38.0
 MarkupSafe==2.1.1
@@ -91,7 +91,7 @@ threadpoolctl==3.1.0
 toml==0.10.2
 tornado==6.1
 traitlets==5.1.1
-trimesh==3.10.7
+trimesh==3.10.8
 typing-extensions==4.1.1
 wcwidth==0.2.5
 webencodings==0.5.1
