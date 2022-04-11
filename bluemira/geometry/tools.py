@@ -41,7 +41,7 @@ from bluemira.base.look_and_feel import bluemira_debug, bluemira_warn
 from bluemira.codes import _freecadapi as cadapi
 from bluemira.geometry.base import BluemiraGeo, GeoMeshable
 from bluemira.geometry.coordinates import Coordinates
-from bluemira.geometry.error import GeometryError
+from bluemira.geometry.error import GeometryError, _FallBackError
 from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.shell import BluemiraShell
 from bluemira.geometry.solid import BluemiraSolid
@@ -86,7 +86,7 @@ def debug_naughty_geometry(func):
     def wrapper(*args, **kwargs):
         try:
             return func(*args, **kwargs)
-        except cadapi.FreeCADError as error:
+        except (cadapi.FreeCADError, _FallBackError) as error:
             # Stash the function call inputs
             data = {}
 
@@ -126,11 +126,15 @@ def debug_naughty_geometry(func):
             with open(filename, "w") as file:
                 json.dump(data, file, indent=4, cls=BluemiraGeoEncoder)
 
-            # Notify and raise error
+            # Notify
             bluemira_debug(
                 f"Function call {func.__name__} failed. Debugging information was saved to: {filename}"
             )
-            raise error
+            # and raise error if there is no viable fallback
+            if isinstance(error, _FallBackError):
+                return error._result
+            else:
+                raise error
 
     return wrapper
 
@@ -431,8 +435,9 @@ def offset_wire(
             cadapi.offset_wire(wire._shape, thickness, join, open_wire), label=label
         )
     except cadapi.FreeCADError:
+
         bluemira_warn(
-            "Primitive offsetting failed, falling back to discretised " "offsetting."
+            "Primitive offsetting failed, falling back to discretised offsetting."
         )
         from bluemira.geometry._deprecated_offset import offset_clipper
 
@@ -441,7 +446,8 @@ def offset_wire(
         result = offset_clipper(
             coordinates, thickness, method=fallback_method, **fallback_kwargs
         )
-        return make_polygon(result, label=label)
+        result = make_polygon(result, label=label)
+        raise _FallBackError(result)
 
 
 def convex_hull_wires_2d(
