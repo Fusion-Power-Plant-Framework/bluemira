@@ -102,7 +102,7 @@ jobs:
         pytest --cov=bluemira \
                --cov-report html:htmlcov_bluemira \
                --cov-report xml \
-               tests/bluemira --reactor --private
+               tests --reactor --private
 
     - name: "Upload coverage to Codecov"
       uses: codecov/codecov-action@v2
