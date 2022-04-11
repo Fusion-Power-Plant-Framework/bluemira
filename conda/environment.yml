@@ -30,7 +30,7 @@ dependencies:
   - mshr=2019.1.0
   - pythonocc-core=7.5.1
   - scipy=1.5.3
-  - dot
+  - graphviz  # required to install dot
   - pip
   - pip:
     - -r ../requirements.txt
