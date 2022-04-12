@@ -91,22 +91,10 @@ jobs:
         flake8 --count
         black --check .
 
-    - name: Build Documentation BLUEPRINT
-      shell: bash -l {0}
-      run: |
-        sphinx-build -W documentation/BLUEPRINT/source documentation/BLUEPRINT/build
-
     - name: Build Documentation bluemira
       shell: bash -l {0}
       run: |
         sphinx-build -W documentation/source documentation/build
-
-    - name: Run pytest BLUEPRINT
-      shell: bash -l {0}
-      run: |
-        pytest --cov=BLUEPRINT \
-               --cov-report html:htmlcov_BLUEPRINT \
-               tests/BLUEPRINT --reactor
 
     - name: Run pytest bluemira
       shell: bash -l {0}
@@ -114,7 +102,7 @@ jobs:
         pytest --cov=bluemira \
                --cov-report html:htmlcov_bluemira \
                --cov-report xml \
-               tests/bluemira --reactor --private
+               tests --reactor --private
 
     - name: "Upload coverage to Codecov"
       uses: codecov/codecov-action@v2

@@ -1039,9 +1039,7 @@ class Loop(GeomBase):
         """
         Check if something is a Loop.
         """
-        from BLUEPRINT.geometry.loop import Loop
-
-        if isinstance(instance, Loop):
+        if instance.__class__.__name__ == "Loop":
             return True
         else:
             return False

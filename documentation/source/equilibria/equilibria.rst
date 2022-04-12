@@ -576,7 +576,7 @@ the position and shape of the plasma. In order to design a tokamak’s
 magnetic cage, it is important to respect the design constraints
 inherent to the CS and PF coils. The CS coils form part of the radial
 build of the reactor, and for consistency with the rest of the reactor
-design in the BLUEPRINT code, the thickness of the CS coils is held
+design in the bluemira code, the thickness of the CS coils is held
 constant. Depending on the vertical extent of a CS coil, the maximum
 current, :math:`I_{max}`, that a coil can safely carry is determined by
 an indicative current density for a coil winding pack:
@@ -665,7 +665,7 @@ the total number of permutations that need to be explored.
 
 Here, we adopt a different approach, choosing instead to optimise the
 coil positions along a basis function. For this we take as an input from
-the BLUEPRINT code the outer edge of the TF coil shape (which has been
+the bluemira code the outer edge of the TF coil shape (which has been
 optimised to meet toroidal field ripple constraints), from which we take
 an offset spline as a basis along which to position the centre of the PF
 coils. This basis function is parameterised such that a PF coil position
@@ -689,7 +689,7 @@ reduces the breadth of the optimisation problem.
 .. figure:: L_constraints_crop.png
    :name: fig:L_constraints
 
-   Diagram depicting the implementation of the coil position optimisation procedures (left); with no exclusion zones, and (right); with exclusion zones. Each PF coil is assigned an :math:`L` value, with bounds :math:`L_{min}` and :math:`L_{max}`. The exclusion zones in this example were calculated in the BLUEPRINT code assuming a vertical maintenance approach.
+   Diagram depicting the implementation of the coil position optimisation procedures (left); with no exclusion zones, and (right); with exclusion zones. Each PF coil is assigned an :math:`L` value, with bounds :math:`L_{min}` and :math:`L_{max}`. The exclusion zones in this example were calculated in the bluemira code assuming a vertical maintenance approach.
 
 For the central solenoid, a similar approach to the one described above
 is taken, except that we use a straight vertical line as the
@@ -699,7 +699,7 @@ design decision here is that the solenoid is a single vertical stack of
 multiple modules (with only minimal gaps between modules). The radius
 and thickness of the central solenoid are taken from the radial build of
 a systems code solution, and the vertical position and extent of the
-solenoid are calculated within the BLUEPRINT framework based on the size
+solenoid are calculated within the bluemira framework based on the size
 of the toroidal field coils. Often, however, a fairly regular spacing of
 modules in the central solenoid is desirable and reduces the
 dimensionality of the optimisation problem significantly.
