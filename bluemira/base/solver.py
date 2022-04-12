@@ -49,9 +49,6 @@ import abc
 import enum
 from typing import Any, Callable, Dict, Optional, Type
 
-# TODO(hsaunders1904): what happens if we want to different run modes
-# for different build stages? Is this a reasonable thing to do?
-
 
 class Task(abc.ABC):
     """
