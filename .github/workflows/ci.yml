@@ -6,6 +6,7 @@ on:
     branches:
       - develop
       - main
+      - STEP_deprecated
 
 jobs:
   build-and-test:
