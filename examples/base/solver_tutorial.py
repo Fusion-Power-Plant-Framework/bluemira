@@ -104,6 +104,11 @@ class GaussFitRunMode(RunMode):
 # you should ideally be able to re-use the setup/teardown tasks
 # as the parameter mappings performed should be similar.
 
+# If a solver stage is not required,
+# for example if it needs no teardown stage,
+# you can assign the special `NoOpTask` class to the property.
+# This will skip the stage.
+
 # %%
 class GaussFitSetup(Task):
     """

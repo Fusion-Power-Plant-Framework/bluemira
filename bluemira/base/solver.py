@@ -67,6 +67,19 @@ class Task(abc.ABC):
         pass
 
 
+class NoOpTask(Task):
+    """
+    A task that does nothing.
+
+    This can be assigned to a solver to skip any of the setup, run, or
+    teardown stages.
+    """
+
+    def run(*_, **__) -> None:
+        """Do nothing."""
+        return
+
+
 class RunMode(enum.Enum):
     """Base enum class for defining run modes within a solver."""
 
