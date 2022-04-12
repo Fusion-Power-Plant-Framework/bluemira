@@ -79,7 +79,7 @@ class BluemiraGeoEncoder(json.JSONEncoder):
         return super().default(obj)
 
 
-def _reconstruct_function_call(signature, *args, **kwargs):
+def _reconstruct_function_call(signature, *args, **kwargs) -> dict:
     """
     Reconstruct the call of a function with inputs arguments and defaults.
     """
@@ -104,7 +104,7 @@ def _reconstruct_function_call(signature, *args, **kwargs):
     return data
 
 
-def _make_debug_file(name):
+def _make_debug_file(name) -> str:
     """
     Make a new file in the geometry debugging folder.
     """
