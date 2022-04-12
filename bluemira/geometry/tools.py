@@ -129,23 +129,29 @@ def log_geometry_on_failure(func):
     Decorator for debugging of failed geometry operations.
     """
     signature = inspect.signature(func)
+    func_name = func.__name__
 
     def wrapper(*args, **kwargs):
         try:
             return func(*args, **kwargs)
         except (cadapi.FreeCADError, _FallBackError) as error:
             data = _reconstruct_function_call(signature, *args, **kwargs)
-            filename = _make_debug_file(func.__name__)
+            filename = _make_debug_file(func_name)
 
             # Dump the data in the file
-            with open(filename, "w") as file:
-                json.dump(data, file, indent=4, cls=BluemiraGeoEncoder)
+            try:
+                with open(filename, "w") as file:
+                    json.dump(data, file, indent=4, cls=BluemiraGeoEncoder)
 
-            # Notify
-            bluemira_debug(
-                f"Function call {func.__name__} failed. Debugging information was saved to: {filename}"
-            )
-            # and raise error if there is no viable fallback
+                bluemira_debug(
+                    f"Function call {func_name} failed. Debugging information was saved to: {filename}"
+                )
+            except:
+                bluemira_warn(
+                    f"Failed to save the failed geometry operation {func_name} to JSON."
+                )
+
+            # Raise error if there is no viable fallback
             if isinstance(error, _FallBackError):
                 return error._result
             else:
