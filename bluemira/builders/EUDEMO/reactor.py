@@ -84,9 +84,7 @@ class EUDEMOReactor(Reactor):
         component.add_child(self.build_VV_thermal_shield(component))
         component.add_child(self.build_TF_coils(component))
         component.add_child(self.build_PF_coils(component))
-        cts = self.build_cryo_thermal_shield(component)
-        thermal_shield.add_children(cts, merge_trees=True)
-        component.add_child(thermal_shield)
+        self.build_cryo_thermal_shield(component)
         component.add_child(self.build_cryostat(component))
         component.add_child(self.build_radiation_shield(component))
 
