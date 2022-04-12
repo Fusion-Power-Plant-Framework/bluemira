@@ -301,7 +301,7 @@ def make_bspline(
                 f"{error.args[0]}",
             ]
         )
-        raise FreeCADError(msg)
+        raise FreeCADError(msg) from error
     return wire
 
 
