@@ -81,10 +81,8 @@ class EUDEMOReactor(Reactor):
         component.add_child(self.build_vacuum_vessel(component, ivc_boundary))
         component.add_child(self.build_divertor(component, divertor_face))
         component.add_child(self.build_blanket(component, blanket_face))
-        thermal_shield = Component(EUDEMOReactor.THERMAL_SHIELD)
-        vvts = self.build_VV_thermal_shield(component)
-        thermal_shield.add_child(vvts)
-        component.add_child(self.build_TF_coils(component, vvts))
+        component.add_child(self.build_VV_thermal_shield(component))
+        component.add_child(self.build_TF_coils(component))
         component.add_child(self.build_PF_coils(component))
         cts = self.build_cryo_thermal_shield(component)
         thermal_shield.add_children(cts, merge_trees=True)
@@ -225,7 +223,7 @@ class EUDEMOReactor(Reactor):
         return super()._build_stage()
 
     @Reactor.design_stage(VVTS)
-    def build_thermal_shield(self, component_tree: Component):
+    def build_VV_thermal_shield(self, component_tree: Component):
         """
         Run the vacuum vessel thermal shield build.
         """
@@ -276,6 +274,7 @@ class EUDEMOReactor(Reactor):
 
         cts = super()._build_stage()
         thermal_shield = component_tree.get_component(self.THERMAL_SHIELD)
+        thermal_shield.add_children(cts, merge_trees=True)
         # thermal_shield.merge_children(cts)
 
     @Reactor.design_stage(IVC)
