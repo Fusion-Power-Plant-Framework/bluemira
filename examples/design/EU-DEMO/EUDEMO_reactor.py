@@ -226,20 +226,20 @@ build_config = {
     },
     "TF Coils": {
         "runmode": "run",  # ["run", "read", "mock"]
-        "param_class": "TripleArc",
+        "param_class": "PrincetonD",
         "variables_map": {
             "x1": {
                 "value": "r_tf_in_centre",
                 "fixed": True,
             },
-            "f1": {
-                "value": 4,
-                "lower_bound": 4,
-            },
-            "f2": {
-                "value": 4,
-                "lower_bound": 4,
-            },
+            # "f1": {
+            #     "value": 4,
+            #     "lower_bound": 4,
+            # },
+            # "f2": {
+            #     "value": 4,
+            #     "lower_bound": 4,
+            # },
         },
         "algorithm_name": "COBYLA",
         "problem_settings": {

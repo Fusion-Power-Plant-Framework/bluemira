@@ -312,7 +312,7 @@ def offset_wire(
     *,
     fallback_method="square",
     byedges=True,
-    ndiscr=200,
+    ndiscr=400,
     **fallback_kwargs,
 ) -> BluemiraWire:
     """
