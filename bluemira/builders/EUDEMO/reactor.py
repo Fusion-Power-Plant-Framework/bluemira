@@ -189,7 +189,10 @@ class EUDEMOReactor(Reactor):
         thermal_shield = component_tree.get_component(self.THERMAL_SHIELD)
 
         vvts_xz = (
-            thermal_shield.get_component("xz").get_component(self.VVTS).shape.boundary[0]
+            thermal_shield.get_component(self.VVTS)
+            .get_component("xz")
+            .get_component("VVTS")
+            .shape.boundary[0]
         )
 
         builder = TFCoilsBuilder(
@@ -361,10 +364,13 @@ class EUDEMOReactor(Reactor):
         """
         Run the cryostat vacuum vessel build.
         """
-        thermal_shield = component_tree.get_component(self.THERMAL_SHIELD).get_component(
-            "xz"
+        thermal_shield = component_tree.get_component(self.THERMAL_SHIELD)
+        cts = (
+            thermal_shield.get_component(self.CTS)
+            .get_component("xz")
+            .get_component("Cryostat TS")
+            .shape.boundary[0]
         )
-        cts = thermal_shield.get_component(self.CTS).shape.boundary[0]
 
         default_config = {}
         config = self._process_design_stage_config(default_config)

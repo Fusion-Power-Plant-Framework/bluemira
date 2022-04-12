@@ -219,7 +219,7 @@ build_config = {
     "reference_data_root": "!BM_ROOT!/data",
     "generated_data_root": "!BM_ROOT!/generated_data",
     "PROCESS": {
-        "runmode": "run",  # ["run", "read", "mock"]
+        "runmode": "mock",  # ["run", "read", "mock"]
     },
     "Plasma": {
         "runmode": "run",  # ["run", "read", "mock"]
@@ -493,7 +493,9 @@ blanket.get_component("xz").plot_2d(ax=ax, show=False)
 vessel.get_component("xz").plot_2d(ax=ax, show=False)
 pf_coils.get_component("xz").plot_2d(ax=ax, show=False)
 
-thermal_shield = component.get_component(EUDEMOReactor.THERMAL_SHIELD)
+thermal_shield = component.get_component(EUDEMOReactor.VVTS)
+thermal_shield.get_component("xz").plot_2d(ax=ax, show=False)
+thermal_shield = component.get_component(EUDEMOReactor.CTS)
 thermal_shield.get_component("xz").plot_2d(ax=ax, show=False)
 cryostat = component.get_component(EUDEMOReactor.CRYOSTAT)
 cryostat.get_component("xz").plot_2d(ax=ax, show=False)
@@ -501,7 +503,7 @@ radiation_shield = component.get_component(EUDEMOReactor.RADIATION_SHIELD)
 radiation_shield.get_component("xz").plot_2d(ax=ax)
 
 # %%
-ComponentDisplayer().show_cad(component.get_component("xyz", first=False))
+# ComponentDisplayer().show_cad(component.get_component("xyz", first=False))
 
 # %%
 sector = Component("Segment View")
@@ -511,9 +513,8 @@ vessel_builder: VacuumVesselBuilder = reactor.get_builder(EUDEMOReactor.VACUUM_V
 blanket_builder: BlanketBuilder = reactor.get_builder(EUDEMOReactor.BLANKET)
 tf_coils_builder: TFCoilsBuilder = reactor.get_builder(EUDEMOReactor.TF_COILS)
 pf_coils_builder: PFCoilsBuilder = reactor.get_builder(EUDEMOReactor.PF_COILS)
-thermal_shield_builder: CyrostatThermalShieldBuilder = reactor.get_builder(
-    EUDEMOReactor.THERMAL_SHIELD
-)
+vvts_builder: CyrostatThermalShieldBuilder = reactor.get_builder(EUDEMOReactor.VVTS)
+cts_builder: CyrostatThermalShieldBuilder = reactor.get_builder(EUDEMOReactor.CTS)
 cryostat_builder: CryostatBuilder = reactor.get_builder(EUDEMOReactor.CRYOSTAT)
 radiation_shield_builder: RadiationShieldBuilder = reactor.get_builder(
     EUDEMOReactor.RADIATION_SHIELD
@@ -524,7 +525,8 @@ sector.add_child(blanket_builder.build_xyz(degree=270))
 sector.add_child(vessel_builder.build_xyz(degree=270))
 sector.add_child(tf_coils_builder.build_xyz(degree=270))
 sector.add_child(pf_coils_builder.build_xyz(degree=270))
-sector.add_child(thermal_shield_builder.build_xyz(degree=270))
+sector.add_child(vvts_builder.build_xyz(degree=270))
+sector.add_child(cts_builder.build_xyz(degree=270))
 sector.add_child(cryostat_builder.build_xyz(degree=270))
 sector.add_child(radiation_shield_builder.build_xyz(degree=270))
 sector.show_cad()

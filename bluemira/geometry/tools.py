@@ -137,10 +137,13 @@ def make_bspline(
     wire: BluemiraWire
         a bluemira wire that contains the bspline
     """
-    points = Coordinates(points).T
-    return BluemiraWire(
-        cadapi.make_bspline(points, closed, start_tangent, end_tangent), label=label
-    )
+    try:
+        points = Coordinates(points).T
+        return BluemiraWire(
+            cadapi.make_bspline(points, closed, start_tangent, end_tangent), label=label
+        )
+    except:
+        return make_polygon(points, closed=closed, label=label)
 
 
 def make_bezier(
