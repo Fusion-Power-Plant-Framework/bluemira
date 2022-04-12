@@ -146,7 +146,7 @@ def log_geometry_on_failure(func):
                 bluemira_debug(
                     f"Function call {func_name} failed. Debugging information was saved to: {filename}"
                 )
-            except:
+            except Exception:
                 bluemira_warn(
                     f"Failed to save the failed geometry operation {func_name} to JSON."
                 )
