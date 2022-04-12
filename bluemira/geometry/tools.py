@@ -79,6 +79,51 @@ class BluemiraGeoEncoder(json.JSONEncoder):
         return super().default(obj)
 
 
+def _reconstruct_function_call(signature, *args, **kwargs):
+    """
+    Reconstruct the call of a function with inputs arguments and defaults.
+    """
+    data = {}
+
+    # Inspect the function call and reconstruct defaults
+    for i, key in enumerate(signature.parameters.keys()):
+        if i < len(args):
+            data[key] = args[i]
+        else:
+            if key not in kwargs:
+                value = signature.parameters[key].default
+                if value != inspect._empty:
+                    data[key] = value
+            else:
+                data[key] = kwargs[key]
+
+    # Catch any kwargs not in signature
+    for k, v in kwargs.items():
+        if k not in data:
+            data[k] = v
+    return data
+
+
+def _make_debug_file(name):
+    """
+    Make a new file in the geometry debugging folder.
+    """
+    path = get_bluemira_path("generated_data/naughty_geometry", subfolder="")
+    now = datetime.datetime.now()
+    timestamp = now.strftime("%m-%d-%Y-%H-%M")
+    fmt_string = "{}-{}{}.json"
+    name = fmt_string.format(name, timestamp, "")
+    filename = os.sep.join([path, name])
+
+    i = 0
+    while os.path.isfile(filename):
+        i += 1
+        increment = f"_{i}"
+        name = fmt_string.format(name, timestamp, increment)
+        filename = os.sep.join([path, name])
+    return filename
+
+
 def log_geometry_on_failure(func):
     """
     Decorator for debugging of failed geometry operations.
@@ -89,40 +134,8 @@ def log_geometry_on_failure(func):
         try:
             return func(*args, **kwargs)
         except (cadapi.FreeCADError, _FallBackError) as error:
-            # Stash the function call inputs
-            data = {}
-
-            # Inspect the function call and reconstruct defaults
-            for i, key in enumerate(signature.parameters.keys()):
-                if i < len(args):
-                    data[key] = args[i]
-                else:
-                    if key not in kwargs:
-                        value = signature.parameters[key].default
-                        if value != inspect._empty:
-                            data[key] = value
-                    else:
-                        data[key] = kwargs[key]
-
-            # Catch any kwargs not in signature
-            for k, v in kwargs.items():
-                if k not in data:
-                    data[k] = v
-
-            # Make a new file
-            path = get_bluemira_path("generated_data/naughty_geometry", subfolder="")
-            now = datetime.datetime.now()
-            timestamp = now.strftime("%m-%d-%Y-%H-%M")
-            fmt_string = "{}-{}{}.json"
-            name = fmt_string.format(func.__name__, timestamp, "")
-            filename = os.sep.join([path, name])
-
-            i = 0
-            while os.path.isfile(filename):
-                i += 1
-                increment = f"_{i}"
-                name = fmt_string.format(func.__name__, timestamp, increment)
-                filename = os.sep.join([path, name])
+            data = _reconstruct_function_call(signature, *args, **kwargs)
+            filename = _make_debug_file(func.__name__)
 
             # Dump the data in the file
             with open(filename, "w") as file:
