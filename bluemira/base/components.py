@@ -137,7 +137,6 @@ class Component(NodeMixin, Plottable, DisplayableCAD):
         self: Component
             This component.
         """
-        # TODO: Support merge_trees here too.
         if child in self.children:
             raise ComponentError(f"Component {child} is already a child of {self}")
         self.children = list(self.children) + [child]
