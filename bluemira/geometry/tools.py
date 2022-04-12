@@ -113,14 +113,14 @@ def _make_debug_file(name):
     timestamp = now.strftime("%m-%d-%Y-%H-%M")
     fmt_string = "{}-{}{}.json"
     name = fmt_string.format(name, timestamp, "")
-    filename = os.sep.join([path, name])
+    filename = os.path.join([path, name])
 
     i = 0
     while os.path.isfile(filename):
         i += 1
         increment = f"_{i}"
         name = fmt_string.format(name, timestamp, increment)
-        filename = os.sep.join([path, name])
+        filename = os.path.join([path, name])
     return filename
 
 
