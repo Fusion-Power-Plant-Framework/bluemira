@@ -544,7 +544,7 @@ def naughty_function_fallback(wire, var=1, *, var2=[1, 2], **kwargs):
         raise _FallBackError(result=result)
 
 
-class TestDebugNaughtyGeometry:
+class TestLogFailedGeometryOperation:
     path = get_bluemira_path("generated_data/naughty_geometry", subfolder="")
 
     wires = [
