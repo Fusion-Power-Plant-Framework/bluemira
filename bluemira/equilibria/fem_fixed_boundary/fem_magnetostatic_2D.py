@@ -26,10 +26,13 @@ and toroidal current source using fenics FEM solver
 
 import dolfin
 import numpy as np
+import matplotlib.pyplot as plt
 
 from bluemira.base.constants import MU_0
 from bluemira.equilibria.fem_fixed_boundary.utilities import ScalarSubFunc
-
+from bluemira.equilibria.fem_fixed_boundary.utilities import (
+    plot_scalar_field,
+)
 
 class FemMagnetostatic2d:
     """
@@ -301,7 +304,7 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
     ):
         """Solves the GS problem given pprime and ffprime"""
         self.g = self._create_g(pprime, ffprime, curr_target)
-        dx = dolfin.Measure("dx", domain=self.mesh)
+        # dx = dolfin.Measure("dx", domain=self.mesh)
         # curr_tot = dolfin.assemble(self.g * dx())
         super().solve(
             self.g, dirichlet_bc_function, dirichlet_marker, neumann_bc_function
@@ -311,14 +314,28 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
         i = 0  # iteration counter
         while eps > tol and i < max_iter:
             self._update_curr(curr_target)
-            prev = self.psi.compute_vertex_values()
+
+            points = self.mesh.coordinates()
+            prev = np.array([self._psi_norm_2d(p) for p in points])
+
+            # prev = self.psi.compute_vertex_values()
             # curr_tot = dolfin.assemble(self.g * dx())
             # print(f"pre - curr_tot = {curr_tot} - curr_dens = {self.g}")
             i += 1
             super().solve(
                 self.g, dirichlet_bc_function, dirichlet_marker, neumann_bc_function
             )
-            diff = self.psi.compute_vertex_values() - prev
+
+            new = np.array([self._psi_norm_2d(p) for p in points])
+            diff = new - prev
+
+            axis, cntr, _ = plot_scalar_field(
+                points[:, 0], points[:, 1], diff, levels=20, axis=None,
+                tofill=True
+            )
+            plt.show()
+
+            # diff = self.psi.compute_vertex_values() - prev
             eps = np.linalg.norm(diff, ord=np.Inf)
             # curr_tot = dolfin.assemble(self.g * dx())
             # print(f"post - curr_tot = {curr_tot} - curr_dens = {self.g}")

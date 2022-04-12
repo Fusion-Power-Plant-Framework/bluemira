@@ -135,8 +135,8 @@ plot_profile(plasmod_solver.x, plasmod_solver.ffprime(plasmod_solver.x), "ffrime
 
 
 # ------------------------------------------------------------------------------
-plasma.shape.boundary[0].mesh_options = {"lcar": 0.5, "physical_group": "lcfs"}
-plasma.shape.mesh_options = {"lcar": 0.5, "physical_group": "plasma_face"}
+plasma.shape.boundary[0].mesh_options = {"lcar": 0.75, "physical_group": "lcfs"}
+plasma.shape.mesh_options = {"lcar": 0.75, "physical_group": "plasma_face"}
 
 m = meshing.Mesh()
 buffer = m(plasma)
@@ -153,7 +153,7 @@ plt.show()
 
 # ------------------------------------------------------------------------------
 # initialize the Grad-Shafranov solver
-p = 5
+p = 7
 gs_solver = FemGradShafranovFixedBoundary(mesh, p_order=p)
 
 print("\nSolving...")
@@ -168,6 +168,23 @@ psi = gs_solver.solve(
     max_iter=50,
 )
 solve_end = time.time()
+
+plasma.shape.boundary[0].mesh_options = {"lcar": 0.05, "physical_group": "lcfs"}
+plasma.shape.mesh_options = {"lcar": 0.05, "physical_group": "plasma_face"}
+
+m = meshing.Mesh()
+buffer = m(plasma)
+
+msh_to_xdmf("Mesh.msh", dimensions=(0, 2), directory=".", verbose=True)
+
+mesh, boundaries, subdomains, labels = import_mesh(
+    "Mesh",
+    directory=".",
+    subdomains=True,
+)
+
+dolfin.plot(mesh)
+plt.show()
 
 points = mesh.coordinates()
 psi_data = np.array([gs_solver.psi(x) for x in points])
