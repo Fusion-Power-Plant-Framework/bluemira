@@ -576,8 +576,7 @@ class TestDebugNaughtyGeometry:
         assert "random_kwarg" in data
         assert np.isclose(data["random_kwarg"], np.pi)
         saved_wire = deserialize_shape(data["wire"])
-        # TODO: Not exactly a high fidelity recreation..! To be investigated, could be
-        # a floating point size problem when converting vectors to lists?
+        # TODO: Spline serialisation / reconstruction issue
         np.testing.assert_almost_equal(saved_wire.length, length, decimal=3)
         os.remove(newest)
 
