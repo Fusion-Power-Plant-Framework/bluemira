@@ -93,13 +93,13 @@ class GaussFitRunMode(RunMode):
 # %%[markdown]
 # Next you must define a `Task` class for each of the setup, run,
 # and teardown stages of the problem.
-# Each task must define a method corresponding to each name in the enum
-# (written in lowercase) we just defined.
+# Each task must can define a method corresponding to each name in the
+# enum (written in lowercase) we just defined.
 # In this case, we've defined `RUN` and `MOCK` run modes,
 # so we should define methods `run` and `mock` in at least one of our tasks.
 # If a run mode is not defined for a given task, that stage is skipped.
 
-# Having a separate setup, run, and teardown classes can be useful.
+# Having separate setup, run, and teardown classes can be useful.
 # For example, writing a solver for an external program like PROCESS,
 # you should ideally be able to re-use the setup/teardown tasks
 # as the parameter mappings performed should be similar.
@@ -156,9 +156,9 @@ class GaussFitRun(Task):
     """
     Task to run the fitting algorithm.
 
-    This implements a "run" and "mock" run mode. The "run" mode executes
-    the fitting algorithm, the "mock" just outputs whatever initial
-    guess was passed from the setup task.
+    This implements a "run" method, this executes the fitting algorithm.
+    As no "mock" method is defined, when this task is called in "MOCK"
+    mode within a solver, it will do nothing.
     """
 
     def __init__(self, params: Dict[str, Any]):

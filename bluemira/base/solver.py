@@ -160,7 +160,6 @@ class SolverABC(abc.ABC):
         Return the method on the task corresponding to this solver's run
         mode (e.g., :code:`task.run`).
 
-        If the method on the task does not exist, return a function that
-        simply returns its input.
+        If the method on the task does not exist, return :code:`None`.
         """
         return getattr(task, run_mode.to_string(), None)
