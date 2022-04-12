@@ -35,10 +35,10 @@ from bluemira.geometry.placement import BluemiraPlacement
 from bluemira.geometry.tools import (
     _signed_distance_2D,
     convex_hull_wires_2d,
-    debug_naughty_geometry,
     deserialize_shape,
     extrude_shape,
     find_clockwise_angle_2d,
+    log_geometry_on_failure,
     make_bspline,
     make_circle,
     make_ellipse,
@@ -530,12 +530,12 @@ class TestFindClockwiseAngle2d:
             find_clockwise_angle_2d(**params)
 
 
-@debug_naughty_geometry
+@log_geometry_on_failure
 def naughty_function(wire, var=1, *, var2=[1, 2], **kwargs):
     raise cadapi.FreeCADError
 
 
-@debug_naughty_geometry
+@log_geometry_on_failure
 def naughty_function_fallback(wire, var=1, *, var2=[1, 2], **kwargs):
     try:
         raise cadapi.FreeCADError

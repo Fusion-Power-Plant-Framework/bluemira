@@ -79,7 +79,7 @@ class BluemiraGeoEncoder(json.JSONEncoder):
         return super().default(obj)
 
 
-def debug_naughty_geometry(func):
+def log_geometry_on_failure(func):
     """
     Decorator for debugging of failed geometry operations.
     """
@@ -190,7 +190,7 @@ def make_polygon(
     return BluemiraWire(cadapi.make_polygon(points, closed), label=label)
 
 
-@debug_naughty_geometry
+@log_geometry_on_failure
 def make_bspline(
     points: Union[list, np.ndarray],
     label: str = "",
@@ -383,7 +383,7 @@ def wire_closure(bmwire: BluemiraWire, label="closure") -> BluemiraWire:
     return closure
 
 
-@debug_naughty_geometry
+@log_geometry_on_failure
 def offset_wire(
     wire: BluemiraWire,
     thickness: float,
