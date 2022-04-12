@@ -182,6 +182,8 @@ class Component(NodeMixin, Plottable, DisplayableCAD):
         """
         Merge the children of the given component into this component.
 
+        If common children are leaves, then a ComponentError is raised.
+
         For example, if this object has structure:
 
         .. code-block::
@@ -223,6 +225,12 @@ class Component(NodeMixin, Plottable, DisplayableCAD):
         for other_child in other.children:
             common_child = [ch for ch in self.children if ch.name == other_child.name]
             if common_child:
+                if other_child.is_leaf and common_child[0].is_leaf:
+                    raise ComponentError(
+                        f"Cannot merge component '{other_child.name}' from "
+                        f"'{other_child.parent}' into '{self}'. '{other_child.name}' "
+                        "is a leaf component in both."
+                    )
                 common_child[0].add_children(list(other_child.children))
             else:
                 self.add_child(other_child)

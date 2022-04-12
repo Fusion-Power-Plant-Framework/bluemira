@@ -187,15 +187,14 @@ class TestComponentClass:
         assert isinstance(y_component.get_component("leaf_1_y"), Component)
         assert isinstance(y_component.get_component("leaf_2_y"), Component)
 
-    def test_merge_children_given_shared_leaf(self):
+    def test_merge_children_ComponentError_given_shared_leaf(self):
         parent_1 = Component("parent_1")
         Component("x", parent=parent_1)
         parent_2 = Component("parent_2")
         Component("x", parent=parent_2)
 
-        parent_1.merge_children(parent_2)
-
-        assert len(parent_1.get_component("x", first=False)) == 1
+        with pytest.raises(ComponentError):
+            parent_1.merge_children(parent_2)
 
     def test_merge_children_ComponentError_given_multiple_common_nodes(self):
         parent_1 = _tree_from_dict({"parent_1": {"x": {"x2": "leaf_1"}}})
