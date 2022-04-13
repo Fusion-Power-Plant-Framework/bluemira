@@ -27,7 +27,7 @@ import numpy as np
 
 from bluemira.base.constants import EPS
 from bluemira.geometry.face import BluemiraFace
-from bluemira.geometry.placement import BluemiraPlacement
+from bluemira.geometry.plane import BluemiraPlane
 from bluemira.geometry.tools import make_polygon, slice_shape
 from bluemira.utilities.opt_problems import (
     OptimisationConstraint,
@@ -46,7 +46,7 @@ class UpperPortOP(OptimisationProblem):
     optimiser: Optimiser
         Optimiser object to use when solving this problem
     breeding_blanket_xz: BluemiraFace
-        Unsegmentation breeding blanket x-z geometry
+        Unsegmented breeding blanket x-z geometry
     """
 
     def __init__(self, optimiser: Optimiser, breeding_blanket_xz: BluemiraFace):
@@ -130,7 +130,7 @@ class UpperPortOP(OptimisationProblem):
         Get the outer cut point radius of the cutting plane with the breeding blanket
         geometry.
         """
-        cut_plane = BluemiraPlacement.from_3_points([ci, 0, 0], [ci, 0, 1], [ci, 1, 1])
+        cut_plane = BluemiraPlane.from_3_points([ci, 0, 0], [ci, 0, 1], [ci, 1, 1])
         # Get the first intersection with the vertical inner cut plane
         intersections = slice_shape(bb.boundary[0], cut_plane)
         intersections = intersections[intersections[:, -1] > 0.0]
@@ -140,7 +140,7 @@ class UpperPortOP(OptimisationProblem):
         x2 = x - np.sin(np.deg2rad(gamma))
         y2 = y
         z2 = z + np.cos(np.deg2rad(gamma))
-        angled_cut_plane = BluemiraPlacement.from_3_points(
+        angled_cut_plane = BluemiraPlane.from_3_points(
             intersection, [x2, y2, z2], [x, y + 1, z]
         )
         # Get the last intersection with the angled cut plane and the outer
