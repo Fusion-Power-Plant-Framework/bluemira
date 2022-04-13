@@ -233,7 +233,9 @@ class TestRun:
             if param.mapping is not None and "PROCESS" in param.mapping:
                 if param.mapping["PROCESS"].send:
                     number_of_expected_calls += 1
-        assert mock_add_parameter.call_count == number_of_expected_calls
+        # +1 because models get a validation call if they exist
+        # there is one model in the default input file (of the ones we check)
+        assert mock_add_parameter.call_count == number_of_expected_calls + 1
 
         # Check that the dummy values with send = True were written.
         mock_add_parameter.assert_any_call("dp", 3)
