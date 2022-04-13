@@ -23,6 +23,10 @@
 Useful functions for bluemira geometries.
 """
 
+import datetime
+import inspect
+import json
+import os
 from copy import deepcopy
 from typing import Iterable, List, Optional, Sequence, Type, Union
 
@@ -32,11 +36,12 @@ from scipy.spatial import ConvexHull
 
 import bluemira.mesh.meshing as meshing
 from bluemira.base.constants import EPS
-from bluemira.base.look_and_feel import bluemira_warn
+from bluemira.base.file import get_bluemira_path
+from bluemira.base.look_and_feel import bluemira_debug, bluemira_warn
 from bluemira.codes import _freecadapi as cadapi
 from bluemira.geometry.base import BluemiraGeo, GeoMeshable
 from bluemira.geometry.coordinates import Coordinates
-from bluemira.geometry.error import GeometryError
+from bluemira.geometry.error import GeometryError, _FallBackError
 from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.plane import BluemiraPlane
 from bluemira.geometry.shell import BluemiraShell
@@ -57,6 +62,103 @@ def convert(apiobj, label=""):
     else:
         raise ValueError(f"Cannot convert {type(apiobj)} object into a BluemiraGeo.")
     return output
+
+
+class BluemiraGeoEncoder(json.JSONEncoder):
+    """
+    JSON Encoder for BluemiraGeo.
+    """
+
+    def default(self, obj):
+        """
+        Override the JSONEncoder default object handling behaviour for BluemiraGeo.
+        """
+        if isinstance(obj, BluemiraGeo):
+            return serialize_shape(obj)
+        if isinstance(obj, np.ndarray):
+            return obj.tolist()
+        return super().default(obj)
+
+
+def _reconstruct_function_call(signature, *args, **kwargs) -> dict:
+    """
+    Reconstruct the call of a function with inputs arguments and defaults.
+    """
+    data = {}
+
+    # Inspect the function call and reconstruct defaults
+    for i, key in enumerate(signature.parameters.keys()):
+        if i < len(args):
+            data[key] = args[i]
+        else:
+            if key not in kwargs:
+                value = signature.parameters[key].default
+                if value != inspect._empty:
+                    data[key] = value
+            else:
+                data[key] = kwargs[key]
+
+    # Catch any kwargs not in signature
+    for k, v in kwargs.items():
+        if k not in data:
+            data[k] = v
+    return data
+
+
+def _make_debug_file(name) -> str:
+    """
+    Make a new file in the geometry debugging folder.
+    """
+    path = get_bluemira_path("generated_data/naughty_geometry", subfolder="")
+    now = datetime.datetime.now()
+    timestamp = now.strftime("%m-%d-%Y-%H-%M")
+    fmt_string = "{}-{}{}.json"
+    name = fmt_string.format(name, timestamp, "")
+    filename = os.path.join(path, name)
+
+    i = 0
+    while os.path.isfile(filename):
+        i += 1
+        increment = f"_{i}"
+        name = fmt_string.format(name, timestamp, increment)
+        filename = os.path.join(path, name)
+    return filename
+
+
+def log_geometry_on_failure(func):
+    """
+    Decorator for debugging of failed geometry operations.
+    """
+    signature = inspect.signature(func)
+    func_name = func.__name__
+
+    def wrapper(*args, **kwargs):
+        try:
+            return func(*args, **kwargs)
+        except (cadapi.FreeCADError, _FallBackError) as error:
+            data = _reconstruct_function_call(signature, *args, **kwargs)
+            filename = _make_debug_file(func_name)
+
+            # Dump the data in the file
+            try:
+                with open(filename, "w") as file:
+                    json.dump(data, file, indent=4, cls=BluemiraGeoEncoder)
+
+                bluemira_debug(
+                    f"Function call {func_name} failed. Debugging information was saved to: {filename}"
+                )
+            except Exception:
+                bluemira_warn(
+                    f"Failed to save the failed geometry operation {func_name} to JSON."
+                )
+
+            # Raise error if there is no viable fallback
+            if isinstance(error, _FallBackError):
+                return error._result
+            else:
+                raise error
+
+    return wrapper
 
 
 # # =============================================================================
@@ -108,6 +210,7 @@ def make_polygon(
     return BluemiraWire(cadapi.make_polygon(points, closed), label=label)
 
 
+@log_geometry_on_failure
 def make_bspline(
     points: Union[list, np.ndarray],
     label: str = "",
@@ -300,6 +403,7 @@ def wire_closure(bmwire: BluemiraWire, label="closure") -> BluemiraWire:
     return closure
 
 
+@log_geometry_on_failure
 def offset_wire(
     wire: BluemiraWire,
     thickness: float,
@@ -355,8 +459,9 @@ def offset_wire(
             cadapi.offset_wire(wire._shape, thickness, join, open_wire), label=label
         )
     except cadapi.FreeCADError:
+
         bluemira_warn(
-            "Primitive offsetting failed, falling back to discretised " "offsetting."
+            "Primitive offsetting failed, falling back to discretised offsetting."
         )
         from bluemira.geometry._deprecated_offset import offset_clipper
 
@@ -365,7 +470,8 @@ def offset_wire(
         result = offset_clipper(
             coordinates, thickness, method=fallback_method, **fallback_kwargs
         )
-        return make_polygon(result, label=label)
+        result = make_polygon(result, label=label)
+        raise _FallBackError(result=result)
 
 
 def convex_hull_wires_2d(

@@ -267,7 +267,7 @@ def make_bspline(
 
     if len(pntslist) < 2:
         _err = "make_bspline: not enough points"
-        raise FreeCADError(_err + "\n")
+        raise InvalidCADInputsError(_err + "\n")
     if np.allclose(pntslist[0], pntslist[-1], rtol=0, atol=EPS):
         if len(pntslist) > 2:
             closed = True
@@ -277,7 +277,7 @@ def make_bspline(
         else:
             # len == 2 and first == last
             _err = "make_bspline: Invalid pointslist (len == 2 and first == last)"
-            raise FreeCADError(_err)
+            raise InvalidCADInputsError(_err)
 
     kwargs = {}
     if start_tangent and end_tangent:
@@ -290,9 +290,18 @@ def make_bspline(
             "bspline. Start and end tangencies ignored."
         )
 
-    bsc = Part.BSplineCurve()
-    bsc.interpolate(pntslist, PeriodicFlag=closed, **kwargs)
-    wire = apiWire(bsc.toShape())
+    try:
+        bsc = Part.BSplineCurve()
+        bsc.interpolate(pntslist, PeriodicFlag=closed, **kwargs)
+        wire = apiWire(bsc.toShape())
+    except Part.OCCError as error:
+        msg = "\n".join(
+            [
+                "FreeCAD was unable to make a spline:",
+                f"{error.args[0]}",
+            ]
+        )
+        raise FreeCADError(msg) from error
     return wire
 
 
@@ -1702,8 +1711,8 @@ def serialize_shape(shape):
     if type_ == Part.Wire:
         output = []
         edges = shape.OrderedEdges
-        for count, e in enumerate(edges):
-            output.append(serialize_shape(e))
+        for edge in edges:
+            output.append(serialize_shape(edge))
         return {"Wire": output}
 
     if type_ == Part.Edge:
@@ -1712,7 +1721,10 @@ def serialize_shape(shape):
 
     if type_ in [Part.LineSegment, Part.Line]:
         output = {
-            "LineSegment": {"StartPoint": shape.StartPoint, "EndPoint": shape.EndPoint},
+            "LineSegment": {
+                "StartPoint": list(shape.StartPoint),
+                "EndPoint": list(shape.EndPoint),
+            },
         }
         return output
 
@@ -1740,12 +1752,12 @@ def serialize_shape(shape):
         output = {
             "ArcOfCircle": {
                 "Radius": shape.Radius,
-                "Center": shape.Center,
-                "Axis": shape.Axis,
+                "Center": list(shape.Center),
+                "Axis": list(shape.Axis),
                 "StartAngle": math.degrees(shape.FirstParameter),
                 "EndAngle": math.degrees(shape.LastParameter),
-                "StartPoint": shape.StartPoint,
-                "EndPoint": shape.EndPoint,
+                "StartPoint": list(shape.StartPoint),
+                "EndPoint": list(shape.EndPoint),
             }
         }
         return output
@@ -1753,16 +1765,16 @@ def serialize_shape(shape):
     if type_ == Part.ArcOfEllipse:
         output = {
             "ArcOfEllipse": {
-                "Center": shape.Center,
+                "Center": list(shape.Center),
                 "MajorRadius": shape.MajorRadius,
                 "MinorRadius": shape.MinorRadius,
-                "MajorAxis": shape.XAxis,
-                "MinorAxis": shape.YAxis,
+                "MajorAxis": list(shape.XAxis),
+                "MinorAxis": list(shape.YAxis),
                 "StartAngle": math.degrees(shape.FirstParameter),
                 "EndAngle": math.degrees(shape.LastParameter),
-                "Focus1": shape.Ellipse.Focus1,
-                "StartPoint": shape.StartPoint,
-                "EndPoint": shape.EndPoint,
+                "Focus1": list(shape.Ellipse.Focus1),
+                "StartPoint": list(shape.StartPoint),
+                "EndPoint": list(shape.EndPoint),
             }
         }
         return output

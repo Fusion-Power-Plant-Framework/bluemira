@@ -19,20 +19,29 @@
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 
+import json
+import os
+from unittest import mock
+
 import numpy as np
 import pytest
 from numpy.linalg import norm
 
+import bluemira.codes._freecadapi as cadapi
+from bluemira.geometry.error import _FallBackError
 from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.parameterisations import PrincetonD
 from bluemira.geometry.plane import BluemiraPlane
 from bluemira.geometry.tools import (
     _signed_distance_2D,
     convex_hull_wires_2d,
+    deserialize_shape,
     extrude_shape,
     find_clockwise_angle_2d,
+    log_geometry_on_failure,
     make_bspline,
     make_circle,
+    make_ellipse,
     make_polygon,
     offset_wire,
     point_inside_shape,
@@ -517,3 +526,60 @@ class TestFindClockwiseAngle2d:
 
         with pytest.raises(ValueError):
             find_clockwise_angle_2d(**params)
+
+
+@log_geometry_on_failure
+def naughty_function(wire, var=1, *, var2=[1, 2], **kwargs):
+    raise cadapi.FreeCADError
+
+
+@log_geometry_on_failure
+def naughty_function_fallback(wire, var=1, *, var2=[1, 2], **kwargs):
+    try:
+        raise cadapi.FreeCADError
+    except cadapi.FreeCADError:
+        result = 42
+        raise _FallBackError(result=result)
+
+
+class TestLogFailedGeometryOperation:
+
+    wires = [
+        make_polygon({"x": [0, 2, 2, 0], "y": [-1, -1, 1, 1]}, closed=True),
+        make_circle(),
+        make_ellipse(),
+        PrincetonD().create_shape(),
+    ]
+
+    @mock.patch("builtins.open", new_callable=mock.mock_open)
+    @pytest.mark.parametrize("wire", wires)
+    def test_file_is_made(self, open_mock, wire):
+        length = wire.length
+
+        with pytest.raises(cadapi.FreeCADError):
+            naughty_function(wire, var2=[1, 2, 3], random_kwarg=np.pi)
+
+        open_mock.assert_called_once()
+        written_data = "".join([x.args[0] for x in open_mock().write.call_args_list])
+        data = json.loads(written_data)
+
+        # Check the serialization of the input shape
+        assert "var" in data
+        assert data["var"] == 1
+        assert "var2" in data
+        assert data["var2"] == [1, 2, 3]
+        assert "random_kwarg" in data
+        assert np.isclose(data["random_kwarg"], np.pi)
+        saved_wire = deserialize_shape(data["wire"])
+        # TODO: Spline serialisation / reconstruction issue
+        np.testing.assert_almost_equal(saved_wire.length, length, decimal=3)
+
+    @mock.patch("builtins.open", new_callable=mock.mock_open)
+    def test_fallback_logs_and_returns(self, open_mock):
+        result = naughty_function_fallback(0)
+
+        open_mock.assert_called_once()
+        call_args = open_mock.call_args[0]
+        assert os.path.basename(call_args[0]).startswith("naughty_function_fallback")
+        assert call_args[1] == "w"
+        assert result == 42
