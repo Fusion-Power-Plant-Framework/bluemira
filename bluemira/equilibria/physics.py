@@ -401,13 +401,6 @@ def beta(pressure, field):
     return np.mean(pressure) / (field**2 / 2 * MU_0)
 
 
-def beta_p(pressure, Bp):
-    """
-    The ratio of plasma pressure to poloidal magnetic pressure
-    """
-    return beta(pressure, Bp)
-
-
 def normalise_beta(beta, a, b_tor, Ip):
     """
     Converts beta to normalised beta
