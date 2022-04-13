@@ -19,8 +19,9 @@
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 
-import pytest
+import matplotlib.pyplot as plt
 
+import tests
 from bluemira.geometry.coordinates import Coordinates
 from bluemira.structural.crosssection import RectangularBeam
 from bluemira.structural.geometry import Geometry
@@ -30,9 +31,8 @@ from bluemira.structural.model import FiniteElementModel
 from bluemira.structural.plotting import GeometryPlotter
 
 
-@pytest.mark.longrun
 class TestPlotting:
-    def test_everything_looks_good(self):
+    def test_no_errors(self):
 
         fem = FiniteElementModel()
 
@@ -85,4 +85,6 @@ class TestPlotting:
 
         fem.apply_load_case(load_case)
 
-        GeometryPlotter(geometry)
+        if tests.PLOTTING:
+            GeometryPlotter(geometry)
+            plt.show()
