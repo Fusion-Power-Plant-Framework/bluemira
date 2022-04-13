@@ -25,7 +25,7 @@ from numpy.linalg import norm
 
 from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.parameterisations import PrincetonD
-from bluemira.geometry.placement import BluemiraPlacement
+from bluemira.geometry.plane import BluemiraPlane
 from bluemira.geometry.tools import (
     _signed_distance_2D,
     convex_hull_wires_2d,
@@ -123,7 +123,7 @@ class TestWirePlaneIntersect:
             [[0, 0, -1], [1, 0, -1], [2, 0, -1], [2, 0, 1], [0, 0, 1], [0, 0, -1]]
         )
 
-        xy_plane = BluemiraPlacement(axis=[0, 0, 1])
+        xy_plane = BluemiraPlane(base=(0, 0, 0), axis=(0, 0, 1))
         intersect = slice_shape(loop, xy_plane)
         e = np.array([[0, 0, 0], [2, 0, 0]])
         e.sort(axis=0)
@@ -151,22 +151,22 @@ class TestWirePlaneIntersect:
                 [0.0, 0.0, -1.0],
             ]
         )
-        xy_plane = BluemiraPlacement(axis=[0, 0, 1])
+        xy_plane = BluemiraPlane(base=(0, 0, 0), axis=(0, 0, 1))
         intersect = slice_shape(wire, xy_plane)
         assert intersect.shape[0] == 2
 
-        xy_plane = BluemiraPlacement(base=[0, 0, 2.7], axis=[0, 0, 1])
+        xy_plane = BluemiraPlane(base=(0, 0, 2.7), axis=(0, 0, 1))
         intersect = slice_shape(wire, xy_plane)
         print(intersect)
         assert intersect.shape[0] == 4
 
-        plane = BluemiraPlacement.from_3_points(
+        plane = BluemiraPlane.from_3_points(
             [0, 0, 4], [1, 0, 4], [0, 1, 4]
         )  # x-y offset
         intersect = slice_shape(wire, plane)
         assert intersect.shape[0] == 1
 
-        plane = BluemiraPlacement.from_3_points(
+        plane = BluemiraPlane.from_3_points(
             [0, 0, 4.0005], [1, 0, 4.0005], [0, 1, 4.0005]
         )  # x-y offset
         intersect = slice_shape(wire, plane)
@@ -175,17 +175,17 @@ class TestWirePlaneIntersect:
     def test_other_dims(self):
         shift = 0
         for plane in [
-            BluemiraPlacement.from_3_points(
+            BluemiraPlane.from_3_points(
                 [0, shift, 0], [1, shift, 0], [0, shift, 1]
             ),  # x-z
-            BluemiraPlacement(axis=[0, 1, 0]),
+            BluemiraPlane(axis=[0, 1, 0]),
         ]:
             intersect = slice_shape(generic_wire, plane)
             assert intersect.shape[0] == 2
 
         shift = 10
         for plane in [
-            BluemiraPlacement.from_3_points(
+            BluemiraPlane.from_3_points(
                 [0, shift, 0], [1, shift, 0], [0, shift, 1]
             ),  # x-z
         ]:
@@ -195,7 +195,7 @@ class TestWirePlaneIntersect:
     def test_xyzplane(self):
         wire = generic_wire.copy()
         wire.translate((-2, 0, 0))
-        plane = BluemiraPlacement.from_3_points([0, 0, 0], [1, 1, 1], [2, 0, 0])  # x-y-z
+        plane = BluemiraPlane.from_3_points([0, 0, 0], [1, 1, 1], [2, 0, 0])  # x-y-z
         intersect = slice_shape(wire, plane)
         assert intersect.shape[0] == 2
 
@@ -211,7 +211,7 @@ class TestWirePlaneIntersect:
             ]
         )
 
-        plane = BluemiraPlacement.from_3_points([0, 0, 1], [0, 1, 1], [1, 0, 1])
+        plane = BluemiraPlane.from_3_points([0, 0, 1], [0, 1, 1], [1, 0, 1])
         inter = slice_shape(wire, plane)
         true = np.array([[0, 0, 1], [2, 0, 1]])
         true.sort(axis=0)
@@ -241,7 +241,7 @@ class TestWirePlaneIntersect:
             ]
         )
 
-        plane = BluemiraPlacement.from_3_points([1, -2, -1], [6, 4, 0], [9, -2, 1])
+        plane = BluemiraPlane.from_3_points([1, -2, -1], [6, 4, 0], [9, -2, 1])
 
         intersect = slice_shape(wire, plane)
         assert intersect.shape[0] == 4
@@ -258,9 +258,9 @@ class TestSolidFacePlaneIntersect:
     cyl_rect = 2 * big + 2 * offset
     twopir = twopi * small
 
-    xz_plane = BluemiraPlacement(axis=[0, 1, 0])
-    xy_plane = BluemiraPlacement(axis=[0, 0, 1])
-    yz_plane = BluemiraPlacement(axis=[1, 0, 0])
+    xz_plane = BluemiraPlane(axis=[0, 1, 0])
+    xy_plane = BluemiraPlane(axis=[0, 0, 1])
+    yz_plane = BluemiraPlane(axis=[1, 0, 0])
 
     @pytest.mark.parametrize(
         "plane, length, hollow",
@@ -269,15 +269,15 @@ class TestSolidFacePlaneIntersect:
             (xz_plane, offset, True),
             (yz_plane, offset, True),
             (xy_plane, twopir, True),
-            (BluemiraPlacement(base=[0, 0, 0.5], axis=[0, 0, 1]), twopir, True),
-            (BluemiraPlacement(base=[0, 0, offset], axis=[0, 0, 1]), twopir, True),
+            (BluemiraPlane(base=[0, 0, 0.5], axis=[0, 0, 1]), twopir, True),
+            (BluemiraPlane(base=[0, 0, offset], axis=[0, 0, 1]), twopir, True),
             # solid
             (xz_plane, cyl_rect, False),
             (yz_plane, cyl_rect, False),
             # tangent intersecting plane doesnt work at solid base??
             pytest.param(xy_plane, twopir, False, marks=[pytest.mark.xfail]),
-            (BluemiraPlacement(base=[0, 0, 0.5], axis=[0, 0, 1]), twopir, False),
-            (BluemiraPlacement(base=[0, 0, offset], axis=[0, 0, 1]), twopir, False),
+            (BluemiraPlane(base=[0, 0, 0.5], axis=[0, 0, 1]), twopir, False),
+            (BluemiraPlane(base=[0, 0, offset], axis=[0, 0, 1]), twopir, False),
         ],
     )
     def test_cylinder(self, plane, length, hollow):
@@ -323,9 +323,7 @@ class TestSolidFacePlaneIntersect:
         extruded = extrude_shape(face, (0, 1, 0))
 
         _slice_xy = slice_shape(extruded, self.xy_plane)
-        _slice_xz = slice_shape(
-            extruded, BluemiraPlacement(base=[0, 1, 0], axis=[0, 1, 0])
-        )
+        _slice_xz = slice_shape(extruded, BluemiraPlane(base=[0, 1, 0], axis=[0, 1, 0]))
 
         assert len(_slice_xy) == 2
         assert len(_slice_xz) == 2
@@ -333,11 +331,11 @@ class TestSolidFacePlaneIntersect:
     def test_polygon_cut(self):
 
         face = BluemiraFace(generic_wire)
-        _slice_face = slice_shape(face, BluemiraPlacement())
+        _slice_face = slice_shape(face, BluemiraPlane())
         assert generic_wire.length == _slice_face[0].length
 
         solid = extrude_shape(face, (1, 2, 3))
-        _slice_solid = slice_shape(solid, BluemiraPlacement(axis=[3, 2, 1]))
+        _slice_solid = slice_shape(solid, BluemiraPlane(axis=[3, 2, 1]))
         assert len(_slice_solid) == 1
 
 

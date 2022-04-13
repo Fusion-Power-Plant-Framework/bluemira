@@ -851,7 +851,7 @@ def slice_shape(shape: apiShape, plane_origin: Iterable, plane_axis: Iterable):
     Notes
     -----
     Degenerate cases such as tangents to solid or faces do not return intersections
-    if the shape and plane are acting at the Placement base.
+    if the shape and plane are acting at the Plane base.
     Further investigation needed.
 
     """
