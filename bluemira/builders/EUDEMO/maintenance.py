@@ -26,6 +26,7 @@ Some crude EU-DEMO remote maintenance considerations
 import numpy as np
 
 from bluemira.base.constants import EPS
+from bluemira.base.error import BuilderError
 from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.geometry.constants import VERY_BIG
 from bluemira.geometry.face import BluemiraFace
@@ -220,8 +221,14 @@ def segment_blanket_xz(breeding_blanket_xz, r_inner_cut, cut_angle, cut_thicknes
 
     # Do cut
     cut_result = boolean_cut(breeding_blanket_xz, cut_zone)
-    if len(cut_result) != 2:
-        bluemira_warn("Something strange is going on with the BB poloidal segmentation")
+    if len(cut_result) < 2:
+        raise BuilderError(
+            f"BB poloidal segmentation only returning {len(cut_result)} faces."
+        )
+    if len(cut_result) > 2:
+        bluemira_warn(
+            f"The BB poloidal segmentation operation returned more than 2 faces ({len(cut_result)}); only taking the first two..."
+        )
     ib_silhouette, ob_silhouette = sorted(cut_result, key=lambda x: x.center_of_mass[0])[
         :2
     ]
