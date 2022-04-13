@@ -1187,12 +1187,18 @@ class Equilibrium(MHDState):
         """
         Get plasma pressure map.
         """
-        o_points, x_points = self.get_OX_points()
-        mask = in_plasma(
-            self.x, self.z, self.psi(), o_points=o_points, x_points=x_points
-        )
+        mask = self._get_core_mask()
         p = self.pressure(np.clip(self.psi_norm(), 0, 1))
         return p * mask
+
+    def _get_core_mask(self):
+        """
+        Get a 2-D masking array for the plasma core.
+        """
+        o_points, x_points = self.get_OX_points()
+        return in_plasma(
+            self.x, self.z, self.psi(), o_points=o_points, x_points=x_points
+        )
 
     def q(self, psinorm, o_points=None, x_points=None):
         """
