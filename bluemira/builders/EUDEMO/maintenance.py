@@ -23,16 +23,13 @@
 Some crude EU-DEMO remote maintenance considerations
 """
 
-from typing import Optional
-
 import numpy as np
 
 from bluemira.base.constants import EPS
-from bluemira.builders.shapes import OptimisedShapeBuilder
-from bluemira.geometry.constants import VERY_BIG
+from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.plane import BluemiraPlane
-from bluemira.geometry.tools import make_polygon, slice_shape
+from bluemira.geometry.tools import boolean_cut, make_polygon, slice_shape
 from bluemira.utilities.opt_problems import (
     OptimisationConstraint,
     OptimisationObjective,
@@ -70,11 +67,11 @@ class UpperPortOP(OptimisationProblem):
                     "r_ib_min": r_ib_min,
                     "r_ob_max": r_ob_max,
                 },
-                tolerance=1e-6 * np.ones(4),
+                tolerance=1e-6 * np.ones(3),
             )
         ]
         super().__init__(np.array([]), optimiser, objective, constraints)
-        lower_bounds = [r_ib_min - params.c_rm.value, 9, r_ib_min + 1, 1]
+        lower_bounds = [r_ib_min - params.c_rm.value, 9, r_ib_min + 1, 0]
         upper_bounds = [9, r_ob_max + params.c_rm.value, r_ob_max - 1, 30]
         self.set_up_optimiser(4, bounds=[lower_bounds, upper_bounds])
         self.bb_xz = breeding_blanket_xz
@@ -127,8 +124,8 @@ class UpperPortOP(OptimisationProblem):
         return [
             # The outboard blanket must fit through the port
             (r_ob_max - co + c_rm) - (ro - co),
-            # The inboard blanket must fit through the port
-            (ci - r_ib_min + c_rm) - (ro - ri),
+            # The inboard blanket must fit through the port (dominated by below)
+            # (ci - r_ib_min + c_rm) - (ro - ri),
             # The inboard blanket must squeeze past the other inboard blanket
             (ci - r_ib_min) - (ro - ci + c_rm),
             # There should be enough vertically accessible space on the inboard blanket
@@ -172,29 +169,32 @@ class UpperPortOP(OptimisationProblem):
         Solve the optimisation problem.
         """
         x0 = self.opt.optimise(x0)
-        print(x0)
         bb_cut = self._make_bb_cut_geometry(x0)
         up_zone = self._make_upper_port_zone(x0)
-        return bb_cut, up_zone
+        cut_result = boolean_cut(self.bb_xz, bb_cut)
+        if len(cut_result) != 2:
+            bluemira_warn(
+                "Something strange is going on with the BB poloidal segmentation"
+            )
+        ib_silhouette, ob_silhouette = sorted(
+            cut_result, key=lambda x: x.center_of_mass[0]
+        )[:2]
+        return ib_silhouette, ob_silhouette, up_zone
 
     def _make_bb_cut_geometry(self, vector):
         """
         Make the void geometry for the BB cut in the poloidal plane.
         """
         ri, ro, ci, gamma = vector
+        c_rm = self.params.c_rm.value
         p0 = self.get_inner_cut_point(self.bb_xz, ci)
-        gamma = np.deg2rad(gamma)
-        d = 10
-        p1x = p0[0] - d * np.sin(gamma)
-        p1z = p0[2] + d * np.cos(gamma)
-        p3z = p0[2] - self.params.c_rm.value / np.sin(gamma)
-        p3 = [p0[0], 0, p3z]
-        p1 = [p1x, 0, p1z]
-        p2x = p3[0] - d * np.sin(gamma)
-        p2z = p3[2] + d * np.cos(gamma)
-        p2 = [p2x, 0, p2z]
-
-        return make_polygon([p0, p1, p2, p3], closed=True)
+        p1 = [p0[0], 0, p0[2] + 2]
+        p2 = [p0[0] - c_rm, 0, p1[2]]
+        p3 = [p2[0], 0, p0[2] - np.sqrt(2) * c_rm]
+        cut_zone = BluemiraFace(make_polygon([p0, p1, p2, p3], closed=True))
+        if gamma != 0.0:
+            cut_zone.rotate(base=p0, direction=(0, 1, 0), degree=gamma)
+        return cut_zone
 
     @staticmethod
     def _make_upper_port_zone(vector):
@@ -202,7 +202,9 @@ class UpperPortOP(OptimisationProblem):
         Make the void geometry for the upper port in the poloidal plane.
         """
         ri, ro, ci, gamma = vector
-        return make_polygon({"x": [ri, ro, ro, ri], "z": [0, 0, 10, 10]}, closed=True)
+        return BluemiraFace(
+            make_polygon({"x": [ri, ro, ro, ri], "z": [0, 0, 10, 10]}, closed=True)
+        )
 
 
 if __name__ == "__main__":
@@ -220,5 +222,5 @@ if __name__ == "__main__":
 
     design_problem = UpperPortOP(params, optimiser, bb)
 
-    bb_cut, up_port = design_problem.optimise([7, 10, 9, 1])
-    show_cad([bb, bb_cut, up_port])
+    ib, ob, up_port = design_problem.optimise([7, 10, 9, 0])
+    show_cad([ib, ob, up_port])
