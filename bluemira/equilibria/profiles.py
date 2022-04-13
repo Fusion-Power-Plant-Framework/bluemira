@@ -548,6 +548,7 @@ class BetaIpProfile(Profile):
 
         if x_points != []:  # NOTE: Necessary unpythonic formulation
             # More accurate beta_p constraint calculation
+            # This is the Freidberg approximation
             lcfs, _ = find_LCFS_separatrix(
                 x, z, psi, o_points=o_points, x_points=x_points
             )

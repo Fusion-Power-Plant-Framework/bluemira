@@ -341,7 +341,8 @@ def calc_beta_p(eq):
 def calc_beta_p_approx(eq):
     """
     Calculate the ratio of plasma pressure to magnetic pressure. This is
-    following the definitions of Friedberg, Ideal MHD, pp. 68-69.
+    following the definitions of Friedberg, Ideal MHD, pp. 68-69, which is an
+    approximation.
 
     \t:math:`\\beta_p = \\dfrac{2\\mu_0\\langle p \\rangle}{B_p^2}`
 
