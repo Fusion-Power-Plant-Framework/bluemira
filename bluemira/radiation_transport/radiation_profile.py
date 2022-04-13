@@ -1757,8 +1757,7 @@ class StepScrapeOffLayer(ScrapeOffLayerSector, ScrapeOffLayer, Mathematics):
                 var["lfs"],
                 var["low_div"],
             )
-        print(t_and_n_pol["lfs_low"][1][0])
-        # print(t_and_n_pol["lfs_up"][0][0])
+
         return (
             t_and_n_pol["lfs_low"],
             t_and_n_pol["lfs_up"],
