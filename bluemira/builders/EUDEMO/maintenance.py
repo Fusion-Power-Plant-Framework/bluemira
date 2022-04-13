@@ -27,6 +27,7 @@ import numpy as np
 
 from bluemira.base.constants import EPS
 from bluemira.base.look_and_feel import bluemira_warn
+from bluemira.geometry.constants import VERY_BIG
 from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.plane import BluemiraPlane
 from bluemira.geometry.tools import boolean_cut, make_polygon, slice_shape
@@ -36,6 +37,20 @@ from bluemira.utilities.opt_problems import (
     OptimisationProblem,
 )
 from bluemira.utilities.optimiser import Optimiser, approx_derivative
+
+
+def _get_inner_cut_point(breeding_blanket_xz, r_inner_cut):
+    """
+    Get the inner cut point of the breeding blanket geometry.
+    """
+    cut_plane = BluemiraPlane.from_3_points(
+        [r_inner_cut, 0, 0], [r_inner_cut, 0, 1], [r_inner_cut, 1, 1]
+    )
+    # Get the first intersection with the vertical inner cut plane
+    intersections = slice_shape(breeding_blanket_xz.boundary[0], cut_plane)
+    intersections = intersections[intersections[:, -1] > 0.0]
+    intersection = sorted(intersections, key=lambda x: x[-1])[0]
+    return intersection
 
 
 class UpperPortOP(OptimisationProblem):
@@ -83,14 +98,13 @@ class UpperPortOP(OptimisationProblem):
         Minimise the size of the port whilst maximising its outboard radius
         """
         ri, ro, ci, gamma = vector
-        # Dual objective: minimise port (ro - ri) and maximise outer radius (-ro)
-        # ro - ri - ro
-        value = ro - ri
+        # Dual objective: minimise port (ro - ri) and minimise cut angle
+        value = ro - ri + gamma
         if grad.size > 0:
             grad[0] = -1
             grad[1] = 1
             grad[2] = 0
-            grad[3] = 0
+            grad[3] = 1
         return value
 
     @staticmethod
@@ -133,24 +147,12 @@ class UpperPortOP(OptimisationProblem):
         ]
 
     @staticmethod
-    def get_inner_cut_point(bb, ci):
-        """
-        Get the inner cut point of the breeding blanket geometry.
-        """
-        cut_plane = BluemiraPlane.from_3_points([ci, 0, 0], [ci, 0, 1], [ci, 1, 1])
-        # Get the first intersection with the vertical inner cut plane
-        intersections = slice_shape(bb.boundary[0], cut_plane)
-        intersections = intersections[intersections[:, -1] > 0.0]
-        intersection = sorted(intersections, key=lambda x: x[-1])[0]
-        return intersection
-
-    @staticmethod
     def get_outer_cut_point(bb, ci, gamma):
         """
         Get the outer cut point radius of the cutting plane with the breeding blanket
         geometry.
         """
-        intersection = UpperPortOP.get_inner_cut_point(bb, ci)
+        intersection = _get_inner_cut_point(bb, ci)
         x, y, z = intersection
         x2 = x - np.sin(np.deg2rad(gamma))
         y2 = y
@@ -168,46 +170,62 @@ class UpperPortOP(OptimisationProblem):
         """
         Solve the optimisation problem.
         """
-        x0 = self.opt.optimise(x0)
-        bb_cut = self._make_bb_cut_geometry(x0)
-        up_zone = self._make_upper_port_zone(x0)
-        cut_result = boolean_cut(self.bb_xz, bb_cut)
-        if len(cut_result) != 2:
-            bluemira_warn(
-                "Something strange is going on with the BB poloidal segmentation"
-            )
-        ib_silhouette, ob_silhouette = sorted(
-            cut_result, key=lambda x: x.center_of_mass[0]
-        )[:2]
-        return ib_silhouette, ob_silhouette, up_zone
+        return self.opt.optimise(x0)
 
-    def _make_bb_cut_geometry(self, vector):
-        """
-        Make the void geometry for the BB cut in the poloidal plane.
-        """
-        ri, ro, ci, gamma = vector
-        c_rm = self.params.c_rm.value
-        p0 = self.get_inner_cut_point(self.bb_xz, ci)
-        p1 = [p0[0], 0, p0[2] + 2]
-        p2 = [p0[0] - c_rm, 0, p1[2]]
-        p3 = [p2[0], 0, p0[2] - np.sqrt(2) * c_rm]
-        cut_zone = BluemiraFace(make_polygon([p0, p1, p2, p3], closed=True))
-        if gamma != 0.0:
-            cut_zone.rotate(base=p0, direction=(0, 1, 0), degree=gamma)
-        return cut_zone
 
-    @staticmethod
-    def _make_upper_port_zone(vector):
-        """
-        Make the void geometry for the upper port in the poloidal plane.
-        """
-        ri, ro, ci, gamma = vector
-        return BluemiraFace(
-            make_polygon({"x": [ri, ro, ro, ri], "z": [0, 0, 10, 10]}, closed=True)
-        )
+def segment_blanket_xz(breeding_blanket_xz, r_inner_cut, cut_angle, cut_thickness):
+    """
+    Segment the breeding blanket poloidal cross-section into inboard and outboard
+    segment silhouettes.
+
+    Parameters
+    ----------
+    breeding_blanket_xz: BluemiraFace
+        Breeding blanket poloidal cross-section (unsegmented)
+    r_inner_cut: float
+        Cut radius on the plasma-facing surface
+    cut_angle: float
+        Cut plane angle (off from vertical) [degrees]
+    cut_thickness: float
+        Thickness of the cut zone
+
+    Returns
+    -------
+    ib_silhouette: BluemiraFace
+        Inboard blanket segment silhouette
+    ob_silhouette: BluemiraFace
+        Outboard blanket segment silhouette
+    """
+    # Make cutting geometry
+    p0 = _get_inner_cut_point(breeding_blanket_xz, r_inner_cut)
+    p1 = [p0[0], 0, p0[2] + VERY_BIG]
+    p2 = [p0[0] - cut_thickness, 0, p1[2]]
+    p3 = [p2[0], 0, p0[2] - np.sqrt(2) * cut_thickness]
+    cut_zone = BluemiraFace(make_polygon([p0, p1, p2, p3], closed=True))
+    if cut_angle != 0.0:
+        cut_zone.rotate(base=p0, direction=(0, -1, 0), degree=cut_angle)
+
+    # Do cut
+    cut_result = boolean_cut(breeding_blanket_xz, cut_zone)
+    if len(cut_result) != 2:
+        bluemira_warn("Something strange is going on with the BB poloidal segmentation")
+    ib_silhouette, ob_silhouette = sorted(cut_result, key=lambda x: x.center_of_mass[0])[
+        :2
+    ]
+    return ib_silhouette, ob_silhouette
+
+
+def build_upper_port_zone(r_up_inner, r_up_outer, z_max=10, z_min=0):
+    """
+    Make the void geometry for the upper port in the poloidal plane.
+    """
+    x = [r_up_inner, r_up_outer, r_up_outer, r_up_inner]
+    z = [z_min, z_min, z_max, z_max]
+    return BluemiraFace(make_polygon({"x": x, "y": 0, "z": z}, closed=True))
 
 
 if __name__ == "__main__":
+    # TODO: Remove this once threaded into the reactor build
 
     from bluemira.base.config import Configuration
     from bluemira.display import show_cad
@@ -222,5 +240,8 @@ if __name__ == "__main__":
 
     design_problem = UpperPortOP(params, optimiser, bb)
 
-    ib, ob, up_port = design_problem.optimise([7, 10, 9, 0])
+    r_up_inner, r_up_outer, r_cut, cut_angle = design_problem.optimise([7, 10, 9, 30])
+
+    ib, ob = segment_blanket_xz(bb, r_cut, cut_angle, params.c_rm.value)
+    up_port = build_upper_port_zone(r_up_inner, r_up_outer, z_max=10)
     show_cad([ib, ob, up_port])
