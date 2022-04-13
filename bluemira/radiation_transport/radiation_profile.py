@@ -30,6 +30,7 @@ import process.data.impuritydata as imp_data
 import scipy.constants as sc
 from scipy.interpolate import interp1d
 
+from bluemira.base.error import BuilderError
 from bluemira.base.parameter import ParameterFrame
 from bluemira.equilibria.flux_surfaces import calculate_connection_length_flt
 from bluemira.geometry._deprecated_loop import Loop
@@ -215,7 +216,7 @@ class Radiation:
         rad_i=None,
         rec_i=None,
         n_tar=None,
-        x_point_rad=True,
+        x_point_rad=False,
     ):
         """
         Along a single flux tube, it assignes different density values.
@@ -255,11 +256,11 @@ class Radiation:
 
         # choosing between lower and upper divertor
         if rad_i is not None:
-            ne[rad_i] = self.exponential_decay(n_rad_in, n_rad_out, len(rad_i))
+            ne[rad_i] = self.exponential_decay(n_rad_out, n_rad_in, len(rad_i))
 
         # changing ne values according to the region
         if rec_i is not None and x_point_rad:
-            ne[rec_i] = 0
+            ne[rec_i] = self.gaussian_decay(n_rad_out, 0.1, len(rec_i))
         elif rec_i is not None and x_point_rad is False:
             ne[rec_i] = self.gaussian_decay(n_rad_out, n_tar, len(rec_i))
 
@@ -1325,6 +1326,7 @@ class ScrapeOffLayerSector(ScrapeOffLayer, Mathematics):
         pfr_ext=None,
         rec_ext=None,
         x_point_rad=False,
+        f_ion_t=0.01,
         lfs=True,
         low_div=True,
     ):
@@ -1354,7 +1356,9 @@ class ScrapeOffLayerSector(ScrapeOffLayer, Mathematics):
             along the separatrix, from the target
         x_point_rad: boolean
             if True, it assumes there is no radiation at all
-            in the recycling region
+            in the recycling region, and pfr_ext MUST be provided.
+        f_ion_t: float [keV]
+            Hydrogen first ionization energy
         lfs: boolean
             low field side. Default value True.
             If False it stands for high field side (hfs)
@@ -1371,10 +1375,18 @@ class ScrapeOffLayerSector(ScrapeOffLayer, Mathematics):
             density poloidal profile along each
             flux tube within the specified set
         """
-        if x_point_rad is False:
+        # Validity condition for not x-point radiative
+        if x_point_rad is False and rec_ext is None:
+            raise BuilderError(f"Required recycling region extention: rec_ext")
+        if x_point_rad is False and rec_ext is not None:
             ion_front_z = self.ion_front_distance(x_strike, z_strike, rec_ext=rec_ext)
             pfr_ext = ion_front_z
 
+        # Validity condition for x-point radiative
+        if x_point_rad is True and pfr_ext is None:
+            raise BuilderError(f"Required extention towards pfr: pfr_ext")
+
+        # setting radiation and recycling regions
         z_main, z_pfr = self.x_point_radiation_z_ext(main_ext, pfr_ext, low_div)
 
         in_x, in_z, out_x, out_z = self.radiation_region_ends(z_main, z_pfr, lfs)
@@ -1387,10 +1399,12 @@ class ScrapeOffLayerSector(ScrapeOffLayer, Mathematics):
             dtype=object,
         )
 
+        # mid-plane parameters
         t_mp_prof, n_mp_prof = self.mp_electron_density_temperature_profiles(
             self.t_u, lfs
         )
 
+        # entrance of radiation region
         t_rad_in = self.random_point_temperature(
             in_x,
             in_z,
@@ -1400,12 +1414,17 @@ class ScrapeOffLayerSector(ScrapeOffLayer, Mathematics):
             lfs,
         )
 
-        t_rad_out = self.target_temperature(
-            self.q_u,
-            self.t_u,
-            lfs,
-        )
+        # exit of radiation region
+        if x_point_rad is True and pfr_ext is not None:
+            t_rad_out = f_ion_t
+        else:
+            t_rad_out = self.target_temperature(
+                self.q_u,
+                self.t_u,
+                lfs,
+            )
 
+        # profiles through the SoL
         t_in_prof, n_in_prof = self.any_point_n_t_profiles(
             in_x,
             in_z,
@@ -1427,6 +1446,7 @@ class ScrapeOffLayerSector(ScrapeOffLayer, Mathematics):
             t_out_prof,
         )
 
+        # temperature poloidal distribution
         t_pol = np.array(
             [
                 self.flux_tube_pol_t(
@@ -1450,6 +1470,11 @@ class ScrapeOffLayerSector(ScrapeOffLayer, Mathematics):
             dtype=object,
         )
 
+        # condition for occurred detachment
+        if t_rad_out <= f_ion_t:
+            x_point_rad = True
+
+        # density poloidal distribution
         n_pol = np.array(
             [
                 self.flux_tube_pol_n(
@@ -1527,7 +1552,7 @@ class StepCore(Core, Mathematics):
         # For each flux tube, poloidal density profile.
         ne_pol = np.array(
             [
-                self.flux_tube_pol_n(ft, n, core=True, x_point_rad=False)
+                self.flux_tube_pol_n(ft, n, core=True)
                 for ft, n in zip(flux_tubes, self.ne_mp)
             ],
             dtype=object,
@@ -1674,6 +1699,7 @@ class StepScrapeOffLayer(ScrapeOffLayerSector, ScrapeOffLayer, Mathematics):
                 "pfr_ext": None,
                 "rec_ext": 0.5,
                 "x_point_rad": False,
+                "f_ion_t": 0.01,
                 "lfs": True,
                 "low_div": True,
             },
@@ -1686,6 +1712,7 @@ class StepScrapeOffLayer(ScrapeOffLayerSector, ScrapeOffLayer, Mathematics):
                 "pfr_ext": None,
                 "rec_ext": 0.5,
                 "x_point_rad": False,
+                "f_ion_t": 0.01,
                 "lfs": True,
                 "low_div": False,
             },
@@ -1698,6 +1725,7 @@ class StepScrapeOffLayer(ScrapeOffLayerSector, ScrapeOffLayer, Mathematics):
                 "pfr_ext": None,
                 "rec_ext": 0.5,
                 "x_point_rad": False,
+                "f_ion_t": 0.01,
                 "lfs": False,
                 "low_div": True,
             },
@@ -1710,6 +1738,7 @@ class StepScrapeOffLayer(ScrapeOffLayerSector, ScrapeOffLayer, Mathematics):
                 "pfr_ext": None,
                 "rec_ext": 0.5,
                 "x_point_rad": False,
+                "f_ion_t": 0.01,
                 "lfs": False,
                 "low_div": False,
             },
@@ -1724,10 +1753,12 @@ class StepScrapeOffLayer(ScrapeOffLayerSector, ScrapeOffLayer, Mathematics):
                 var["pfr_ext"],
                 var["rec_ext"],
                 var["x_point_rad"],
+                var["f_ion_t"],
                 var["lfs"],
                 var["low_div"],
             )
-
+        print(t_and_n_pol["lfs_low"][1][0])
+        # print(t_and_n_pol["lfs_up"][0][0])
         return (
             t_and_n_pol["lfs_low"],
             t_and_n_pol["lfs_up"],
