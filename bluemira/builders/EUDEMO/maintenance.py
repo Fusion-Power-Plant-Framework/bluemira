@@ -59,6 +59,8 @@ class UpperPortOP(OptimisationProblem):
 
     Parameters
     ----------
+    params: ParameterFrame
+        Parameter frame for the problem
     optimiser: Optimiser
         Optimiser object to use when solving this problem
     breeding_blanket_xz: BluemiraFace
@@ -98,7 +100,6 @@ class UpperPortOP(OptimisationProblem):
         lower_bounds = [r_ib_min - c_rm, R_0, r_ib_min + tk_bb_ib, 0]
         upper_bounds = [R_0, r_ob_max + c_rm, r_ob_max - tk_bb_ob, bb_min_angle]
         self.set_up_optimiser(n_variables, bounds=[lower_bounds, upper_bounds])
-        self.bb_xz = breeding_blanket_xz
         self.params = params
 
     @staticmethod
