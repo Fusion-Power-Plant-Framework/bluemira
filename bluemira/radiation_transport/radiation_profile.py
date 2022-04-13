@@ -306,7 +306,7 @@ class Mathematics(Radiation):
         ["k_0", "material's conductivity", 2000, "dimensionless", None, "Input"],
         ["gamma", "sheat heat transmission coefficient", 7, "dimensionless", None, "Input"],
         ["eps_cool", "electron energy loss", 25, "eV", None, "Input"],
-        ["f_ion_t", "Hydrogen first ionization", 10, "eV", None, "Input"],
+        ["f_ion_t", "Hydrogen first ionization", 0.01, "keV", None, "Input"],
         ["lfs_p_fraction", "lfs fraction of SoL power", 0.8, "dimensionless", None, "Input"],
         ["div_p_sharing", "Power fraction towards each divertor", 0.5, "dimensionless", None, "Input"],
     ]
@@ -419,7 +419,7 @@ class Mathematics(Radiation):
         coeff = [1, coeff_2, coeff_3]
         roots = np.roots(coeff)
         if roots.dtype == complex:
-            t_tar = self.params.f_ion_t
+            t_tar = self.params.f_ion_t * 1.0e3
         else:
             # Excluding unstable solution
             sol_i = np.where(roots > t_crit)[0][0]
@@ -1326,7 +1326,6 @@ class ScrapeOffLayerSector(ScrapeOffLayer, Mathematics):
         pfr_ext=None,
         rec_ext=None,
         x_point_rad=False,
-        f_ion_t=0.01,
         lfs=True,
         low_div=True,
     ):
@@ -1357,8 +1356,6 @@ class ScrapeOffLayerSector(ScrapeOffLayer, Mathematics):
         x_point_rad: boolean
             if True, it assumes there is no radiation at all
             in the recycling region, and pfr_ext MUST be provided.
-        f_ion_t: float [keV]
-            Hydrogen first ionization energy
         lfs: boolean
             low field side. Default value True.
             If False it stands for high field side (hfs)
@@ -1416,7 +1413,7 @@ class ScrapeOffLayerSector(ScrapeOffLayer, Mathematics):
 
         # exit of radiation region
         if x_point_rad is True and pfr_ext is not None:
-            t_rad_out = f_ion_t
+            t_rad_out = self.params.f_ion_t
         else:
             t_rad_out = self.target_temperature(
                 self.q_u,
@@ -1471,7 +1468,7 @@ class ScrapeOffLayerSector(ScrapeOffLayer, Mathematics):
         )
 
         # condition for occurred detachment
-        if t_rad_out <= f_ion_t:
+        if t_rad_out <= self.params.f_ion_t:
             x_point_rad = True
 
         # density poloidal distribution
@@ -1699,7 +1696,6 @@ class StepScrapeOffLayer(ScrapeOffLayerSector, ScrapeOffLayer, Mathematics):
                 "pfr_ext": None,
                 "rec_ext": 0.5,
                 "x_point_rad": False,
-                "f_ion_t": 0.01,
                 "lfs": True,
                 "low_div": True,
             },
@@ -1712,7 +1708,6 @@ class StepScrapeOffLayer(ScrapeOffLayerSector, ScrapeOffLayer, Mathematics):
                 "pfr_ext": None,
                 "rec_ext": 0.5,
                 "x_point_rad": False,
-                "f_ion_t": 0.01,
                 "lfs": True,
                 "low_div": False,
             },
@@ -1725,7 +1720,6 @@ class StepScrapeOffLayer(ScrapeOffLayerSector, ScrapeOffLayer, Mathematics):
                 "pfr_ext": None,
                 "rec_ext": 0.5,
                 "x_point_rad": False,
-                "f_ion_t": 0.01,
                 "lfs": False,
                 "low_div": True,
             },
@@ -1738,7 +1732,6 @@ class StepScrapeOffLayer(ScrapeOffLayerSector, ScrapeOffLayer, Mathematics):
                 "pfr_ext": None,
                 "rec_ext": 0.5,
                 "x_point_rad": False,
-                "f_ion_t": 0.01,
                 "lfs": False,
                 "low_div": False,
             },
@@ -1753,7 +1746,6 @@ class StepScrapeOffLayer(ScrapeOffLayerSector, ScrapeOffLayer, Mathematics):
                 var["pfr_ext"],
                 var["rec_ext"],
                 var["x_point_rad"],
-                var["f_ion_t"],
                 var["lfs"],
                 var["low_div"],
             )
