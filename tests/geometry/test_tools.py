@@ -21,6 +21,7 @@
 
 import json
 import os
+from unittest import mock
 
 import numpy as np
 import pytest
@@ -545,7 +546,6 @@ def naughty_function_fallback(wire, var=1, *, var2=[1, 2], **kwargs):
 
 
 class TestLogFailedGeometryOperation:
-    path = get_bluemira_path("generated_data/naughty_geometry", subfolder="")
 
     wires = [
         make_polygon({"x": [0, 2, 2, 0], "y": [-1, -1, 1, 1]}, closed=True),
@@ -554,21 +554,19 @@ class TestLogFailedGeometryOperation:
         PrincetonD().create_shape(),
     ]
 
+    @mock.patch("builtins.open", new_callable=mock.mock_open)
     @pytest.mark.parametrize("wire", wires)
-    def test_file_is_made(self, wire):
+    def test_file_is_made(self, open_mock, wire):
         length = wire.length
 
-        listdir = os.listdir(self.path)
         with pytest.raises(cadapi.FreeCADError):
             naughty_function(wire, var2=[1, 2, 3], random_kwarg=np.pi)
 
-        files = os.listdir(self.path)
-        assert len(files) == len(listdir) + 1
-        newest = self._get_newest_file()
+        open_mock.assert_called_once()
+        written_data = "".join([x.args[0] for x in open_mock().write.call_args_list])
+        data = json.loads(written_data)
 
-        with open(newest, "r") as file:
-            data = json.load(file)
-
+        # Check the serialization of the input shape
         assert "var" in data
         assert data["var"] == 1
         assert "var2" in data
@@ -578,19 +576,13 @@ class TestLogFailedGeometryOperation:
         saved_wire = deserialize_shape(data["wire"])
         # TODO: Spline serialisation / reconstruction issue
         np.testing.assert_almost_equal(saved_wire.length, length, decimal=3)
-        os.remove(newest)
 
-    def test_fallback_logs_and_returns(self):
-        listdir = os.listdir(self.path)
+    @mock.patch("builtins.open", new_callable=mock.mock_open)
+    def test_fallback_logs_and_returns(self, open_mock):
         result = naughty_function_fallback(0)
-        files = os.listdir(self.path)
-        assert len(files) == len(listdir) + 1
-        assert result == 42
-        newest = self._get_newest_file()
-        os.remove(newest)
 
-    def _get_newest_file(self):
-        files = os.listdir(self.path)
-        paths = [os.path.join(self.path, basename) for basename in files]
-        newest = max(paths, key=os.path.getctime)
-        return newest
+        open_mock.assert_called_once()
+        call_args = open_mock.call_args[0]
+        assert os.path.basename(call_args[0]).startswith("naughty_function_fallback")
+        assert call_args[1] == "w"
+        assert result == 42
