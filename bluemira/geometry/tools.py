@@ -263,8 +263,15 @@ def make_bspline(
         label=label,
     )
 
+def _make_polygon_fallback(points, label, closed, **kwargs) -> BluemiraWire:
+    """
+    Overloaded function signature for fallback option from make_bspline
+    """
+    return make_polygon(points, label, closed)
+
 
 @log_geometry_on_failure
+@fallback_to(_make_polygon_fallback)
 def interpolate_bspline(
     points: Union[list, np.ndarray],
     label: str = "",
@@ -296,10 +303,12 @@ def interpolate_bspline(
         a bluemira wire that contains the bspline
     """
     points = Coordinates(points).T
-    return BluemiraWire(
-        cadapi.interpolate_bspline(points, closed, start_tangent, end_tangent),
-        label=label,
-    )
+    try:
+        return BluemiraWire(
+            cadapi.make_bspline(points, closed, start_tangent, end_tangent), label=label
+        )
+    except cadapi.FreeCADError as error:
+        raise _FallBackError from error
 
 
 def make_bezier(
@@ -469,6 +478,9 @@ def _offset_wire_discretised(
     ndiscr=200,
     **fallback_kwargs,
 ) -> BluemiraWire:
+    """
+    Fallback function for discretised offsetting
+    """
     from bluemira.geometry._deprecated_offset import offset_clipper
 
     coordinates = wire.discretize(byedges=byedges, ndiscr=ndiscr)
@@ -479,8 +491,8 @@ def _offset_wire_discretised(
     return make_polygon(result, label=label)
 
 
-@log_geometry_on_failure
 @fallback_to(fallback_func=_offset_wire_discretised)
+@log_geometry_on_failure
 def offset_wire(
     wire: BluemiraWire,
     thickness: float,
@@ -537,19 +549,6 @@ def offset_wire(
         )
     except cadapi.FreeCADError as error:
         raise _FallBackError from error
-
-        bluemira_warn(
-            "Primitive offsetting failed, falling back to discretised offsetting."
-        )
-        from bluemira.geometry._deprecated_offset import offset_clipper
-
-        coordinates = wire.discretize(byedges=byedges, ndiscr=ndiscr)
-
-        result = offset_clipper(
-            coordinates, thickness, method=fallback_method, **fallback_kwargs
-        )
-        result = make_polygon(result, label=label)
-        raise _FallBackError(result=result)
 
 
 def convex_hull_wires_2d(
