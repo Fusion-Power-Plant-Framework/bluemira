@@ -314,9 +314,9 @@ def calc_beta_t(eq):
     return 2 * MU_0 * p_avg / eq._B_0**2
 
 
-def calc_betap(eq):
+def calc_beta_p(eq):
     """
-    Calculate the ratio of plasma pressure to magnetic pressure
+    Calculate the ratio of plasma pressure to poloidal magnetic pressure
 
     \t:math:`\\beta_p = \\dfrac{2\\mu_0\\langle p \\rangle}{B_p^2}`
 
@@ -338,7 +338,7 @@ def calc_betap(eq):
     return 2 * MU_0 * p_int / Bp2_int
 
 
-def calc_beta_p(eq):
+def calc_beta_p_approx(eq):
     """
     Calculate the ratio of plasma pressure to magnetic pressure. This is
     following the definitions of Friedberg, Ideal MHD, pp. 68-69.
@@ -373,7 +373,7 @@ def calc_summary(eq):
     li = 2 * li_true / (MU_0 * eq._R_0)
     li3 = 2 * bpavg / (eq._R_0 * (MU_0 * eq._Ip) ** 2)
     volume = calc_volume(eq)
-    beta_p = calc_betap(eq)
+    beta_p = calc_beta_p(eq)
     return {
         "W": energy,
         "Li": li_true,
