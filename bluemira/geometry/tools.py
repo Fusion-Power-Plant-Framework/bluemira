@@ -38,6 +38,7 @@ from bluemira.geometry.base import BluemiraGeo, GeoMeshable
 from bluemira.geometry.coordinates import Coordinates
 from bluemira.geometry.error import GeometryError
 from bluemira.geometry.face import BluemiraFace
+from bluemira.geometry.plane import BluemiraPlane
 from bluemira.geometry.shell import BluemiraShell
 from bluemira.geometry.solid import BluemiraSolid
 from bluemira.geometry.wire import BluemiraWire
@@ -591,7 +592,7 @@ def split_wire(wire: BluemiraWire, vertex: Iterable, tolerance: float = EPS):
     return wire_1, wire_2
 
 
-def slice_shape(shape: BluemiraGeo, plane):
+def slice_shape(shape: BluemiraGeo, plane: BluemiraPlane):
     """
     Calculate the plane intersection points with an object
 
@@ -599,7 +600,7 @@ def slice_shape(shape: BluemiraGeo, plane):
     ----------
     shape: Union[BluemiraWire, BluemiraFace, BluemiraSolid, BluemiraShell]
         obj to intersect with a plane
-    plane: BluemiraPlacement
+    plane: BluemiraPlane
 
     Returns
     -------
@@ -611,7 +612,7 @@ def slice_shape(shape: BluemiraGeo, plane):
     Notes
     -----
     Degenerate cases such as tangets to solid or faces do not return intersections
-    if the shape and plane are acting at the Placement base.
+    if the shape and plane are acting at the Plane base.
     Further investigation needed.
 
     """
