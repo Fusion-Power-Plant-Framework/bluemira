@@ -24,6 +24,7 @@ import pytest
 from matplotlib import pyplot as plt
 
 import tests
+from bluemira.geometry.coordinates import Coordinates
 from bluemira.structural.crosssection import IBeam
 from bluemira.structural.geometry import Geometry
 from bluemira.structural.material import SS316
@@ -237,3 +238,11 @@ class TestMove:
         g.move_node(5, dx=0.5)
         assert g.n_nodes == 5
         assert g.n_elements == 6
+
+    def test_add_coordinates(self):
+        x_section = IBeam(0.1, 0.1, 0.025, 0.05)
+        g = Geometry()
+        c = Coordinates({"x": [0, 1, 2, 3], "z": [0, -1, 1, -1]})
+        g.add_coordinates(c, x_section, SS316)
+        assert g.n_nodes == 4
+        assert g.n_elements == 3
