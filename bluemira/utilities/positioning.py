@@ -30,7 +30,7 @@ from scipy.spatial import ConvexHull
 
 from bluemira.base.constants import EPS
 from bluemira.geometry.constants import VERY_BIG
-from bluemira.geometry.placement import BluemiraPlacement
+from bluemira.geometry.plane import BluemiraPlane
 from bluemira.geometry.tools import slice_shape
 from bluemira.utilities.error import PositionerError
 from bluemira.utilities.tools import is_num
@@ -201,7 +201,7 @@ class RegionInterpolator(XZGeometryInterpolator):
         l_0, l_1 = l_values
         z = self.z_min + (self.z_max - self.z_min) * l_1
 
-        plane = BluemiraPlacement.from_3_points([0, 0, z], [1, 0, z], [0, 1, z])
+        plane = BluemiraPlane.from_3_points([0, 0, z], [1, 0, z], [0, 1, z])
 
         intersect = slice_shape(self.geometry, plane)
         if len(intersect) == 1:
@@ -241,7 +241,7 @@ class RegionInterpolator(XZGeometryInterpolator):
         l_1 = (z - self.z_min) / (self.z_max - self.z_min)
         l_1 = np.clip(l_1, 0.0, 1.0)
 
-        plane = BluemiraPlacement.from_3_points([x, 0, z], [x + 1, 0, z], [x, 1, z])
+        plane = BluemiraPlane.from_3_points([x, 0, z], [x + 1, 0, z], [x, 1, z])
         intersect = slice_shape(self.geometry, plane)
 
         return self._intersect_filter(x, l_1, intersect)
@@ -277,7 +277,7 @@ class RegionInterpolator(XZGeometryInterpolator):
             When geometry is not a convex
         """
         if intersect is None:
-            plane = BluemiraPlacement.from_3_points([x, 0, 0], [x + 1, 0, 0], [x, 1, 0])
+            plane = BluemiraPlane.from_3_points([x, 0, 0], [x + 1, 0, 0], [x, 1, 0])
             intersect = slice_shape(self.geometry, plane)
             l_0, l_1 = self._intersect_filter(
                 x, l_1, [False] if intersect is None else intersect

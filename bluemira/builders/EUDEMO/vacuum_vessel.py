@@ -32,7 +32,7 @@ from bluemira.base.config import Configuration
 from bluemira.builders.EUDEMO.tools import make_circular_xy_ring, varied_offset
 from bluemira.display.palettes import BLUE_PALETTE
 from bluemira.geometry.face import BluemiraFace
-from bluemira.geometry.placement import BluemiraPlacement
+from bluemira.geometry.plane import BluemiraPlane
 from bluemira.geometry.tools import offset_wire, revolve_shape, slice_shape
 from bluemira.geometry.wire import BluemiraWire
 
@@ -127,7 +127,7 @@ class VacuumVesselBuilder(Builder):
         """
         Build the x-y components of the vacuum vessel.
         """
-        xy_plane = BluemiraPlacement.from_3_points([0, 0, 0], [1, 0, 0], [1, 1, 0])
+        xy_plane = BluemiraPlane.from_3_points([0, 0, 0], [1, 0, 0], [1, 1, 0])
         r_ib_out, r_ob_out = self._find_intersections_x_coord(
             self._vv_face.boundary[0], xy_plane
         )
