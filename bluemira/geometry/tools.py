@@ -493,8 +493,8 @@ def _offset_wire_discretised(
     return make_polygon(result, label=label)
 
 
-@fallback_to(fallback_func=_offset_wire_discretised)
 @log_geometry_on_failure
+@fallback_to(fallback_func=_offset_wire_discretised)
 def offset_wire(
     wire: BluemiraWire,
     thickness: float,
