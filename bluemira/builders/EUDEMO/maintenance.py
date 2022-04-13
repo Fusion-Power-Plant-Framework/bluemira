@@ -78,6 +78,9 @@ class UpperPortOP(OptimisationProblem):
         tk_bb_ib = params.tk_bb_ib.value
         tk_bb_ob = params.tk_bb_ob.value
 
+        n_variables = 4
+        n_constraints = 3
+
         constraints = [
             OptimisationConstraint(
                 self.constrain_blanket_cut,
@@ -87,14 +90,14 @@ class UpperPortOP(OptimisationProblem):
                     "r_ib_min": r_ib_min,
                     "r_ob_max": r_ob_max,
                 },
-                tolerance=1e-6 * np.ones(3),
+                tolerance=1e-6 * np.ones(n_constraints),
             )
         ]
         super().__init__(np.array([]), optimiser, objective, constraints)
 
         lower_bounds = [r_ib_min - c_rm, R_0, r_ib_min + tk_bb_ib, 0]
         upper_bounds = [R_0, r_ob_max + c_rm, r_ob_max - tk_bb_ob, bb_min_angle]
-        self.set_up_optimiser(4, bounds=[lower_bounds, upper_bounds])
+        self.set_up_optimiser(n_variables, bounds=[lower_bounds, upper_bounds])
         self.bb_xz = breeding_blanket_xz
         self.params = params
 
