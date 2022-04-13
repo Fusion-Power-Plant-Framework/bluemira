@@ -231,14 +231,51 @@ def make_bezier(points: Union[list, np.ndarray], closed: bool = False) -> Part.W
     return wire
 
 
-def make_bspline(
+def make_bspline(poles, mults, knots, periodic, degree, weights, check_rational):
+    """
+    Builds a B-Spline by a lists of Poles, Mults, Knots
+
+    Parameters
+    ----------
+    poles: Union[list, np.ndarray]
+        list of poles.
+    multis: Union[list, np.ndarray]
+        list of integers for the multiplicity
+    knots: Union[list, np.ndarray]
+        list of knots
+    periodic: Bool
+    degree: int
+        bspline degree
+    weights: Union[list, np.ndarray]
+        sequence of float
+    check_rational: Optional[Iterable]
+        not sure
+
+    Returns
+    -------
+    wire: apiWire
+        a FreeCAD wire that contains the bspline curve
+
+    Notes
+    -----
+    This function wraps the FreeCAD function of bsplines buildFromPolesMultsKnots
+    """
+    poles = [Base.Vector(p) for p in poles]
+    bspline = Part.BSplineCurve()
+    bspline.buildFromPolesMultsKnots(
+        poles, mults, knots, periodic, degree, weights, check_rational
+    )
+    return bspline
+
+
+def interpolate_bspline(
     points: Union[list, np.ndarray],
     closed: bool = False,
     start_tangent: Optional[Iterable] = None,
     end_tangent: Optional[Iterable] = None,
 ) -> Part.Wire:
     """
-    Make a bezier curve from a set of points.
+    Make a B-Spline curve by interpolating a set of points.
 
     Parameters
     ----------
@@ -256,7 +293,7 @@ def make_bspline(
     Returns
     -------
     wire: apiWire
-        a FreeCAD wire that contains the bezier curve
+        a FreeCAD wire that contains the bspline curve
     """
     # In this case, it is not really necessary to convert points in FreeCAD vector. Just
     # left for consistency with other methods.
@@ -266,17 +303,17 @@ def make_bspline(
     # function make_bspline, line 75
 
     if len(pntslist) < 2:
-        _err = "make_bspline: not enough points"
+        _err = "interpolate_bspline: not enough points"
         raise InvalidCADInputsError(_err + "\n")
     if np.allclose(pntslist[0], pntslist[-1], rtol=0, atol=EPS):
         if len(pntslist) > 2:
             closed = True
             pntslist.pop()
-            _err = "make_bspline: equal endpoints forced Closed"
+            _err = "interpolate_bspline: equal endpoints forced Closed"
             bluemira_warn(_err)
         else:
             # len == 2 and first == last
-            _err = "make_bspline: Invalid pointslist (len == 2 and first == last)"
+            _err = "interpolate_bspline: Invalid pointslist (len == 2 and first == last)"
             raise InvalidCADInputsError(_err)
 
     kwargs = {}
@@ -1742,6 +1779,12 @@ def serialize_shape(shape):
         output = {
             "BSplineCurve": {
                 "Poles": vector_to_list(shape.getPoles()),
+                "Mults": shape.getMultiplicities(),
+                "Knots": shape.getKnots(),
+                "isPeriodic": shape.isPeriodic(),
+                "Degree": shape.Degree,
+                "Weights": shape.getWeights(),
+                "checkRational": shape.isRational(),
                 "FirstParameter": shape.FirstParameter,
                 "LastParameter": shape.LastParameter,
             }
@@ -1806,7 +1849,15 @@ def deserialize_shape(buffer):
         elif type_ == "BezierCurve":
             return make_bezier(v["Poles"])
         elif type_ == "BSplineCurve":
-            return make_bspline(v["Poles"])
+            return make_bspline(
+                v["Poles"],
+                v["Mults"],
+                v["Knots"],
+                v["isPeriodic"],
+                v["Degree"],
+                v["Weights"],
+                v["checkRational"],
+            )
         elif type_ == "ArcOfCircle":
             return make_circle(
                 v["Radius"], v["Center"], v["StartAngle"], v["EndAngle"], v["Axis"]

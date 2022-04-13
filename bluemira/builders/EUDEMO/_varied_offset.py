@@ -25,7 +25,7 @@ Module containing functions to generate variable offset curves
 import numpy as np
 
 from bluemira.geometry.error import GeometryError
-from bluemira.geometry.tools import find_clockwise_angle_2d, make_bspline
+from bluemira.geometry.tools import find_clockwise_angle_2d, interpolate_bspline
 from bluemira.geometry.wire import BluemiraWire
 
 
@@ -190,4 +190,4 @@ def _2d_coords_to_wire(coords_2d):
     # Final coordinate discarded for closed=True, see #923
     coords_3d = np.zeros((3, coords_2d.shape[1] - 1))
     coords_3d[(0, 2), :] = coords_2d[:, :-1]
-    return make_bspline(coords_3d, closed=True)
+    return interpolate_bspline(coords_3d, closed=True)

@@ -35,8 +35,8 @@ from scipy.special import iv as bessel
 from bluemira.geometry._deprecated_tools import distance_between_points
 from bluemira.geometry.error import GeometryParameterisationError
 from bluemira.geometry.tools import (
+    interpolate_bspline,
     make_bezier,
-    make_bspline,
     make_circle,
     make_circle_arc_3P,
     make_polygon,
@@ -296,7 +296,7 @@ class PrincetonD(GeometryParameterisation):
         )
         xyz = np.array([x, np.zeros(len(x)), z])
 
-        outer_arc = make_bspline(
+        outer_arc = interpolate_bspline(
             xyz.T,
             label="outer_arc",
             # start_tangent=[0, 0, 1],

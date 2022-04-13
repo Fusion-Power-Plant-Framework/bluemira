@@ -57,7 +57,7 @@ from bluemira.geometry.tools import (
     boolean_cut,
     boolean_fuse,
     extrude_shape,
-    make_bspline,
+    interpolate_bspline,
     make_circle,
     make_polygon,
     revolve_shape,
@@ -184,7 +184,7 @@ y = 0.5 * np.sin(x) + 3 * np.cos(x) ** 2
 z = np.zeros(1000)
 
 points = np.array([x, y, z])
-spline = make_bspline(points)
+spline = interpolate_bspline(points)
 points = np.array([x, y + 3, z])
 polygon = make_polygon(points)
 

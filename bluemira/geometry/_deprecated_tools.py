@@ -1401,7 +1401,7 @@ def make_wire(x, y, z, label="", spline=False):
     wire: BluemiraWire
         The BluemiraWire bound by the coordinates
     """
-    wire_func = cadapi.make_bspline if spline else cadapi.make_polygon
+    wire_func = cadapi.interpolate_bspline if spline else cadapi.make_polygon
     return BluemiraWire(wire_func(np.array([x, y, z]).T), label=label)
 
 

@@ -38,8 +38,8 @@ from bluemira.geometry.tools import (
     deserialize_shape,
     extrude_shape,
     find_clockwise_angle_2d,
+    interpolate_bspline,
     log_geometry_on_failure,
-    make_bspline,
     make_circle,
     make_ellipse,
     make_polygon,
@@ -439,7 +439,9 @@ class TestMakeBSpline:
         Open spline start and end tangencies.
         """
         points = {"x": np.linspace(0, 1, 4), "y": 0, "z": np.zeros(4)}
-        spline = make_bspline(points, closed=False, start_tangent=st, end_tangent=et)
+        spline = interpolate_bspline(
+            points, closed=False, start_tangent=st, end_tangent=et
+        )
         # np.testing.assert_allclose(spline.length, expected_length)
         if st and et:
             assert spline.length > 1.0
@@ -456,7 +458,9 @@ class TestMakeBSpline:
     @pytest.mark.parametrize("st, et", fixture)
     def test_tangencies_closed(self, st, et):
         points = {"x": [0, 1, 2, 1], "y": 0, "z": [0, -1, 0, 1]}
-        spline = make_bspline(points, closed=True, start_tangent=st, end_tangent=et)
+        spline = interpolate_bspline(
+            points, closed=True, start_tangent=st, end_tangent=et
+        )
         if st and et:
             e = spline._shape.Edges[0]
             np.testing.assert_allclose(
@@ -472,16 +476,16 @@ class TestMakeBSpline:
     def test_bspline_closed(self):
         # first != last, closed = True
         points = {"x": [0, 1, 1, 0], "y": 0, "z": [0, 0, 1, 1]}
-        spline = make_bspline(points, closed=True)
+        spline = interpolate_bspline(points, closed=True)
         assert spline.length == 4.520741504557154
 
         # first == last, closed = True
         points = {"x": [0, 1, 1, 0, 0], "y": 0, "z": [0, 0, 1, 1, 0]}
-        spline = make_bspline(points, closed=True)
+        spline = interpolate_bspline(points, closed=True)
         assert spline.length == 4.520741504557154
 
         # first == last, closed = False (closed is enforced)
-        spline = make_bspline(points, closed=False)
+        spline = interpolate_bspline(points, closed=False)
         assert spline.length == 4.520741504557154
 
 

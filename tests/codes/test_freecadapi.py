@@ -97,9 +97,9 @@ class TestFreecadapi:
         curve = bezier.Edges[0].Curve
         assert type(curve) == Part.BezierCurve
 
-    def test_make_bspline(self):
+    def test_interpolate_bspline(self):
         pntslist = self.square_points
-        bspline: Part.Wire = cadapi.make_bspline(pntslist)
+        bspline: Part.Wire = cadapi.interpolate_bspline(pntslist)
         curve = bspline.Edges[0].Curve
         assert type(curve) == Part.BSplineCurve
         # assert that the bspline pass through the points

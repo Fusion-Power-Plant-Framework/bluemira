@@ -210,8 +210,42 @@ def make_polygon(
     return BluemiraWire(cadapi.make_polygon(points, closed), label=label)
 
 
-@log_geometry_on_failure
 def make_bspline(
+    poles, mults, knots, periodic, degree, weights, check_rational, label: str = ""
+):
+    """
+    Builds a B-Spline by a lists of Poles, Mults, Knots
+
+    Parameters
+    ----------
+    poles: Union[list, np.ndarray]
+        list of poles.
+    multis: Union[list, np.ndarray]
+        list of integers for the multiplicity
+    knots: Union[list, np.ndarray]
+        list of knots
+    periodic: Bool
+    degree: int
+        bspline degree
+    weights: Union[list, np.ndarray]
+        sequence of float
+    check_rational: Optional[Iterable]
+        not sure
+
+    Returns
+    -------
+    wire: BluemiraWire
+    """
+    return BluemiraWire(
+        cadapi.make_bspline(
+            poles, mults, knots, periodic, degree, weights, check_rational
+        ),
+        label=label,
+    )
+
+
+@log_geometry_on_failure
+def interpolate_bspline(
     points: Union[list, np.ndarray],
     label: str = "",
     closed: bool = False,
@@ -243,7 +277,8 @@ def make_bspline(
     """
     points = Coordinates(points).T
     return BluemiraWire(
-        cadapi.make_bspline(points, closed, start_tangent, end_tangent), label=label
+        cadapi.interpolate_bspline(points, closed, start_tangent, end_tangent),
+        label=label,
     )
 
 
