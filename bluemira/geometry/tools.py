@@ -270,8 +270,8 @@ def _make_polygon_fallback(points, label, closed, **kwargs) -> BluemiraWire:
     return make_polygon(points, label, closed)
 
 
-@log_geometry_on_failure
 @fallback_to(_make_polygon_fallback)
+@log_geometry_on_failure
 def interpolate_bspline(
     points: Union[list, np.ndarray],
     label: str = "",
@@ -493,8 +493,8 @@ def _offset_wire_discretised(
     return make_polygon(result, label=label)
 
 
-@log_geometry_on_failure
 @fallback_to(fallback_func=_offset_wire_discretised)
+@log_geometry_on_failure
 def offset_wire(
     wire: BluemiraWire,
     thickness: float,
