@@ -155,11 +155,24 @@ def log_geometry_on_failure(func):
                     f"Failed to save the failed geometry operation {func_name} to JSON."
                 )
 
-            # Raise error if there is no viable fallback
-            if isinstance(error, _FallBackError):
-                return error._result
-            else:
-                raise error
+            raise error
+
+    return wrapper
+
+
+def fallback_to(func, fallback_func=None):
+    """
+    Decorator for a fallback to an alternative geometry operation.
+    """
+
+    def wrapper(*args, **kwargs):
+        try:
+            return func(*args, **kwargs)
+        except _FallBackError:
+            bluemira_warn(
+                f"{func.__name__} failed, falling back to {fallback_func.__name__}."
+            )
+            return fallback_func(*args, **kwargs)
 
     return wrapper
 
@@ -442,6 +455,28 @@ def wire_closure(bmwire: BluemiraWire, label="closure") -> BluemiraWire:
     return closure
 
 
+def _offset_wire_discretised(
+    wire,
+    thickness,
+    /,
+    label="",
+    *,
+    fallback_method="square",
+    byedges=True,
+    ndiscr=200,
+    **fallback_kwargs,
+):
+    from bluemira.geometry._deprecated_offset import offset_clipper
+
+    coordinates = wire.discretize(byedges=byedges, ndiscr=ndiscr)
+
+    result = offset_clipper(
+        coordinates, thickness, method=fallback_method, **fallback_kwargs
+    )
+    return make_polygon(result, label=label)
+
+
+@fallback_to(_offset_wire_discretised)
 @log_geometry_on_failure
 def offset_wire(
     wire: BluemiraWire,
@@ -497,7 +532,8 @@ def offset_wire(
         return BluemiraWire(
             cadapi.offset_wire(wire._shape, thickness, join, open_wire), label=label
         )
-    except cadapi.FreeCADError:
+    except cadapi.FreeCADError as error:
+        raise _FallBackError from error
 
         bluemira_warn(
             "Primitive offsetting failed, falling back to discretised offsetting."
