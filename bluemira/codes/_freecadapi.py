@@ -231,7 +231,9 @@ def make_bezier(points: Union[list, np.ndarray], closed: bool = False) -> Part.W
     return wire
 
 
-def make_bspline(poles, mults, knots, periodic, degree, weights, check_rational):
+def make_bspline(
+    poles, mults, knots, periodic, degree, weights, check_rational
+) -> Part.Wire:
     """
     Builds a B-Spline by a lists of Poles, Mults, Knots
 
@@ -265,7 +267,8 @@ def make_bspline(poles, mults, knots, periodic, degree, weights, check_rational)
     bspline.buildFromPolesMultsKnots(
         poles, mults, knots, periodic, degree, weights, check_rational
     )
-    return bspline
+    wire = apiWire(bspline.toShape())
+    return wire
 
 
 def interpolate_bspline(
@@ -1843,6 +1846,7 @@ def deserialize_shape(buffer):
             temp_list = []
             for edge in v:
                 temp_list.append(deserialize_shape(edge))
+            print(temp_list)
             return Part.Wire(temp_list)
         if type_ == "LineSegment":
             return make_polygon([v["StartPoint"], v["EndPoint"]])
