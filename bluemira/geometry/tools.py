@@ -160,21 +160,24 @@ def log_geometry_on_failure(func):
     return wrapper
 
 
-def fallback_to(func, fallback_func=None):
+def fallback_to(fallback_func):
     """
     Decorator for a fallback to an alternative geometry operation.
     """
 
-    def wrapper(*args, **kwargs):
-        try:
-            return func(*args, **kwargs)
-        except _FallBackError:
-            bluemira_warn(
-                f"{func.__name__} failed, falling back to {fallback_func.__name__}."
-            )
-            return fallback_func(*args, **kwargs)
+    def decorator(func):
+        def wrapper(*args, **kwargs):
+            try:
+                return func(*args, **kwargs)
+            except _FallBackError:
+                bluemira_warn(
+                    f"{func.__name__} failed, falling back to {fallback_func.__name__}."
+                )
+                return fallback_func(*args, **kwargs)
 
-    return wrapper
+        return wrapper
+
+    return decorator
 
 
 # # =============================================================================
@@ -465,7 +468,7 @@ def _offset_wire_discretised(
     byedges=True,
     ndiscr=200,
     **fallback_kwargs,
-):
+) -> BluemiraWire:
     from bluemira.geometry._deprecated_offset import offset_clipper
 
     coordinates = wire.discretize(byedges=byedges, ndiscr=ndiscr)
@@ -476,8 +479,8 @@ def _offset_wire_discretised(
     return make_polygon(result, label=label)
 
 
-@fallback_to(_offset_wire_discretised)
 @log_geometry_on_failure
+@fallback_to(fallback_func=_offset_wire_discretised)
 def offset_wire(
     wire: BluemiraWire,
     thickness: float,
