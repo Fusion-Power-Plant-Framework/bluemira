@@ -25,7 +25,6 @@ from numpy.linalg import norm
 
 from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.parameterisations import PrincetonD
-from bluemira.geometry.placement import BluemiraPlacement
 from bluemira.geometry.plane import BluemiraPlane
 from bluemira.geometry.tools import (
     _signed_distance_2D,
