@@ -28,7 +28,6 @@ import pytest
 from numpy.linalg import norm
 
 import bluemira.codes._freecadapi as cadapi
-from bluemira.base.file import get_bluemira_path
 from bluemira.geometry.error import _FallBackError
 from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.parameterisations import PrincetonD
