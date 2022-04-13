@@ -294,26 +294,6 @@ def calc_p_average(eq):
     return volume_integral(p, eq.x, eq.dx, eq.dz) / v_plasma
 
 
-def calc_betap(eq):
-    """
-    Calculate the ratio of plasma pressure to magnetic pressure
-
-    \t:math:`\\beta_p = \\dfrac{2\\mu_0\\langle p \\rangle}{B_p^2}`
-
-    Parameters
-    ----------
-    eq: Equilibrium
-        The Equilibrium object for which to calculate beta_p
-
-    Returns
-    -------
-    beta: float
-        Ratio of plasma to magnetic pressure
-    """
-    p = eq.pressure_map()
-    return 4 / (MU_0 * eq._R_0 * eq._Ip**2) * volume_integral(p, eq.x, eq.dx, eq.dz)
-
-
 def calc_beta_t(eq):
     """
     Calculate the ratio of plasma pressure to toroidal magnetic pressure.
@@ -332,6 +312,30 @@ def calc_beta_t(eq):
     """
     p_avg = calc_p_average(eq)
     return 2 * MU_0 * p_avg / eq._B_0**2
+
+
+def calc_betap(eq):
+    """
+    Calculate the ratio of plasma pressure to magnetic pressure
+
+    \t:math:`\\beta_p = \\dfrac{2\\mu_0\\langle p \\rangle}{B_p^2}`
+
+    Parameters
+    ----------
+    eq: Equilibrium
+        The Equilibrium object for which to calculate beta_p
+
+    Returns
+    -------
+    beta: float
+        Ratio of plasma to magnetic pressure
+    """
+    p = eq.pressure_map()
+    mask = eq._get_core_mask()
+    Bp = mask * eq.Bp()
+    p_int = volume_integral(p, eq.x, eq.dx, eq.dz)
+    Bp2_int = volume_integral(Bp**2, eq.x, eq.dx, eq.dz)
+    return 2 * MU_0 * p_int / Bp2_int
 
 
 def calc_beta_p(eq):
