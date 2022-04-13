@@ -471,6 +471,8 @@ def _offset_wire_discretised(
     wire,
     thickness,
     /,
+    join: str = "intersect",
+    open_wire: bool = True,
     label="",
     *,
     fallback_method="square",
