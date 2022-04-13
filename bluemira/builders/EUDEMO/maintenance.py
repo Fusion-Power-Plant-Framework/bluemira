@@ -72,13 +72,18 @@ class UpperPortOP(OptimisationProblem):
         box = breeding_blanket_xz.bounding_box
         r_ib_min = box.x_min
         r_ob_max = box.x_max
+        c_rm = params.c_rm.value
+        R_0 = params.R_0.value
+        bb_min_angle = 90 - params.bb_min_angle.value
+        tk_bb_ib = params.tk_bb_ib.value
+        tk_bb_ob = params.tk_bb_ob.value
 
         constraints = [
             OptimisationConstraint(
                 self.constrain_blanket_cut,
                 f_constraint_args={
                     "bb": breeding_blanket_xz,
-                    "c_rm": params.c_rm.value,
+                    "c_rm": c_rm,
                     "r_ib_min": r_ib_min,
                     "r_ob_max": r_ob_max,
                 },
@@ -86,8 +91,9 @@ class UpperPortOP(OptimisationProblem):
             )
         ]
         super().__init__(np.array([]), optimiser, objective, constraints)
-        lower_bounds = [r_ib_min - params.c_rm.value, 9, r_ib_min + 1, 0]
-        upper_bounds = [9, r_ob_max + params.c_rm.value, r_ob_max - 1, 30]
+
+        lower_bounds = [r_ib_min - c_rm, R_0, r_ib_min + tk_bb_ib, 0]
+        upper_bounds = [R_0, r_ob_max + c_rm, r_ob_max - tk_bb_ob, bb_min_angle]
         self.set_up_optimiser(4, bounds=[lower_bounds, upper_bounds])
         self.bb_xz = breeding_blanket_xz
         self.params = params
@@ -95,7 +101,7 @@ class UpperPortOP(OptimisationProblem):
     @staticmethod
     def minimise_port_size(vector, grad):
         """
-        Minimise the size of the port whilst maximising its outboard radius
+        Minimise the size of the port.
         """
         ri, ro, ci, gamma = vector
         # Dual objective: minimise port (ro - ri) and minimise cut angle
@@ -166,10 +172,13 @@ class UpperPortOP(OptimisationProblem):
         intersection = sorted(intersections, key=lambda x: x[-1])[0]
         return intersection
 
-    def optimise(self, x0):
+    def optimise(self, x0=None):
         """
         Solve the optimisation problem.
         """
+        if x0 is None:
+            R_0 = self.params.R_0.value
+            x0 = np.array([R_0, R_0, R_0, 0])
         return self.opt.optimise(x0)
 
 
@@ -240,7 +249,8 @@ if __name__ == "__main__":
 
     design_problem = UpperPortOP(params, optimiser, bb)
 
-    r_up_inner, r_up_outer, r_cut, cut_angle = design_problem.optimise([7, 10, 9, 30])
+    r_up_inner, r_up_outer, r_cut, cut_angle = design_problem.optimise()
+    print(r_up_inner, r_up_outer, r_cut, cut_angle)
 
     ib, ob = segment_blanket_xz(bb, r_cut, cut_angle, params.c_rm.value)
     up_port = build_upper_port_zone(r_up_inner, r_up_outer, z_max=10)
