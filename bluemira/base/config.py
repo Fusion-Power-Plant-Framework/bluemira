@@ -319,7 +319,7 @@ class Configuration(ConfigurationSchema, ParameterFrame):
         ['blk_2_dpa', 'Second blanket life limit (EUROfer)', 50, 'dpa', None, 'Input (https://iopscience.iop.org/article/10.1088/1741-4326/57/9/092002/pdf)'],
         ['div_dpa', 'Divertor life limit (CuCrZr)', 5, 'dpa', None, 'Input (https://iopscience.iop.org/article/10.1088/1741-4326/57/9/092002/pdf)'],
         ['vv_dpa', 'Vacuum vessel life limit (SS316-LN-IG)', 3.25, 'dpa', None, 'Input (RCC-Mx or whatever it is called)'],
-        ['tf_fluence', 'Insulation fluence limit for ITER equivalent to 10 MGy', 3.2e21, 'n/m^2', None, 'Input (https://ieeexplore.ieee.org/document/6374236/)'],
+        ['tf_fluence', 'Insulation fluence limit for ITER equivalent to 10 MGy', 3.2e21, '1/m^2', None, 'Input (https://ieeexplore.ieee.org/document/6374236/)'],
         ['e_decay_mult', 'Decay heat multiplication factor', 1.0175, 'dimensionless', "Quasi-instantaneous energy multiplication; still present when plasma is off", "Input (PPCS FWBL Helium Cooled Model P PPCS04 D5part1)"],
         ["e_mult", "Energy multiplication factor", 1.35, 'dimensionless', "Instantaneous energy multiplication due to neutron multiplication and the like", "Input (HCPB classic)"],
 
