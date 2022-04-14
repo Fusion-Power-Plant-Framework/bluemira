@@ -35,7 +35,10 @@ from bluemira.builders.EUDEMO.ivc import InVesselComponentBuilder
 from bluemira.builders.EUDEMO.ivc.ivc import build_ivc_xz_shapes
 from bluemira.builders.EUDEMO.pf_coils import PFCoilsBuilder
 from bluemira.builders.EUDEMO.plasma import PlasmaBuilder
-from bluemira.builders.EUDEMO.power_cycle import run_power_balance
+from bluemira.builders.EUDEMO.power_cycle import (
+    SteadyStatePowerCycleSolver,
+    run_power_balance,
+)
 from bluemira.builders.EUDEMO.tf_coils import TFCoilsBuilder
 from bluemira.builders.EUDEMO.vacuum_vessel import VacuumVesselBuilder
 from bluemira.builders.radiation_shield import RadiationShieldBuilder
@@ -65,6 +68,7 @@ class EUDEMOReactor(Reactor):
     CTS = "Cryostat Thermal Shield"
     CRYOSTAT = "Cryostat"
     RADIATION_SHIELD = "Radiation Shield"
+    POWER_CYCLE = "Power Cycle"
 
     def run(self) -> Component:
         """
@@ -73,6 +77,7 @@ class EUDEMOReactor(Reactor):
         component = super().run()
 
         self.run_systems_code()
+        self.run_power_cycle()
         component.add_child(self.build_plasma())
         (
             blanket_face,
@@ -395,7 +400,8 @@ class EUDEMOReactor(Reactor):
 
         return super()._build_stage()
 
-    def run_power_balance(self):
+    @Reactor.design_stage(POWER_CYCLE)
+    def run_power_cycle(self):
         """
         Run the power balance for the reactor.
         """
@@ -404,7 +410,7 @@ class EUDEMOReactor(Reactor):
 
         # TODO: register solver
         # TODO: hook up
-        run_power_balance(self._params)
-        # self._params.update_kw_parameters(output.to_dict())
-
-        bluemira_print(f"Completed design stage: {name}")
+        solver = SteadyStatePowerCycleSolver(self._params)
+        self.register_solver(solver)
+        result = solver.execute()
+        self._params.update_kw_parameters(result)
