@@ -74,7 +74,6 @@ class EUDEMOReactor(Reactor):
         component = super().run()
 
         self.run_systems_code()
-        self.run_power_cycle()
         component.add_child(self.build_plasma())
         (
             blanket_face,
@@ -401,11 +400,6 @@ class EUDEMOReactor(Reactor):
         """
         Run the power balance for the reactor.
         """
-        name = "Balance of Plant"
-        bluemira_print(f"Starting design stage: {name}")
-
-        # TODO: register solver
-        # TODO: hook up
         solver = SteadyStatePowerCycleSolver(self._params)
         self.register_solver(solver)
         result = solver.execute()
