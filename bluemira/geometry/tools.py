@@ -306,7 +306,8 @@ def interpolate_bspline(
     points = Coordinates(points).T
     try:
         return BluemiraWire(
-            cadapi.make_bspline(points, closed, start_tangent, end_tangent), label=label
+            cadapi.interpolate_bspline(points, closed, start_tangent, end_tangent),
+            label=label,
         )
     except cadapi.FreeCADError as error:
         raise _FallBackError from error
