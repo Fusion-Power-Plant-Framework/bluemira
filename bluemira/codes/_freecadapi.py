@@ -241,17 +241,18 @@ def make_bspline(
     ----------
     poles: Union[list, np.ndarray]
         list of poles.
-    multis: Union[list, np.ndarray]
+    mults: Union[list, np.ndarray]
         list of integers for the multiplicity
     knots: Union[list, np.ndarray]
         list of knots
-    periodic: Bool
+    periodic: bool
+        Whether or not the spline is periodic (closed with continuous curvature?)
     degree: int
         bspline degree
     weights: Union[list, np.ndarray]
         sequence of float
     check_rational: Optional[Iterable]
-        not sure
+        Where or not the weights should be applied to each control point (not sure)
 
     Returns
     -------
@@ -1846,7 +1847,7 @@ def deserialize_shape(buffer):
             temp_list = []
             for edge in v:
                 temp_list.append(deserialize_shape(edge))
-            print(temp_list)
+
             return Part.Wire(temp_list)
         if type_ == "LineSegment":
             return make_polygon([v["StartPoint"], v["EndPoint"]])
