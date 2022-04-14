@@ -29,7 +29,7 @@
   "T_e": 13,
   "V_p": 2400,
   "Z_eff": 2.2,
-  "bb_e_mult": 1.35,
+  "e_mult": 1.35,
   "beta": 0.030673,
   "beta_p": 1.2071,
   "condrad_cryo_heat": 0.0,
