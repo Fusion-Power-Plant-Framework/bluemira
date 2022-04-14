@@ -30,7 +30,12 @@ from numpy.linalg import norm
 import bluemira.codes._freecadapi as cadapi
 from bluemira.geometry.error import _FallBackError
 from bluemira.geometry.face import BluemiraFace
-from bluemira.geometry.parameterisations import PrincetonD
+from bluemira.geometry.parameterisations import (
+    PictureFrame,
+    PolySpline,
+    PrincetonD,
+    TripleArc,
+)
 from bluemira.geometry.plane import BluemiraPlane
 from bluemira.geometry.tools import (
     _signed_distance_2D,
@@ -546,13 +551,17 @@ def naughty_function_fallback(wire, var=1, *, var2=[1, 2], **kwargs):
         raise _FallBackError(result=result)
 
 
-class TestLogFailedGeometryOperation:
+class TestLogFailedGeometryOperationSerialisation:
 
     wires = [
         make_polygon({"x": [0, 2, 2, 0], "y": [-1, -1, 1, 1]}, closed=True),
         make_circle(),
         make_ellipse(),
         PrincetonD().create_shape(),
+        PolySpline().create_shape(),
+        PictureFrame().create_shape(),
+        # TODO: Fix serialisation for this (origin uncertain)
+        # TripleArc().create_shape(),
     ]
 
     @mock.patch("builtins.open", new_callable=mock.mock_open)
