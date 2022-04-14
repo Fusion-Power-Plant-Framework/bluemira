@@ -30,7 +30,7 @@ from numpy.linalg import norm
 import bluemira.codes._freecadapi as cadapi
 from bluemira.geometry.error import _FallBackError
 from bluemira.geometry.face import BluemiraFace
-from bluemira.geometry.parameterisations import PrincetonD
+from bluemira.geometry.parameterisations import PictureFrame, PolySpline, PrincetonD
 from bluemira.geometry.plane import BluemiraPlane
 from bluemira.geometry.tools import (
     _signed_distance_2D,
@@ -38,8 +38,8 @@ from bluemira.geometry.tools import (
     deserialize_shape,
     extrude_shape,
     find_clockwise_angle_2d,
+    interpolate_bspline,
     log_geometry_on_failure,
-    make_bspline,
     make_circle,
     make_ellipse,
     make_polygon,
@@ -439,7 +439,9 @@ class TestMakeBSpline:
         Open spline start and end tangencies.
         """
         points = {"x": np.linspace(0, 1, 4), "y": 0, "z": np.zeros(4)}
-        spline = make_bspline(points, closed=False, start_tangent=st, end_tangent=et)
+        spline = interpolate_bspline(
+            points, closed=False, start_tangent=st, end_tangent=et
+        )
         # np.testing.assert_allclose(spline.length, expected_length)
         if st and et:
             assert spline.length > 1.0
@@ -456,7 +458,9 @@ class TestMakeBSpline:
     @pytest.mark.parametrize("st, et", fixture)
     def test_tangencies_closed(self, st, et):
         points = {"x": [0, 1, 2, 1], "y": 0, "z": [0, -1, 0, 1]}
-        spline = make_bspline(points, closed=True, start_tangent=st, end_tangent=et)
+        spline = interpolate_bspline(
+            points, closed=True, start_tangent=st, end_tangent=et
+        )
         if st and et:
             e = spline._shape.Edges[0]
             np.testing.assert_allclose(
@@ -472,16 +476,16 @@ class TestMakeBSpline:
     def test_bspline_closed(self):
         # first != last, closed = True
         points = {"x": [0, 1, 1, 0], "y": 0, "z": [0, 0, 1, 1]}
-        spline = make_bspline(points, closed=True)
+        spline = interpolate_bspline(points, closed=True)
         assert spline.length == 4.520741504557154
 
         # first == last, closed = True
         points = {"x": [0, 1, 1, 0, 0], "y": 0, "z": [0, 0, 1, 1, 0]}
-        spline = make_bspline(points, closed=True)
+        spline = interpolate_bspline(points, closed=True)
         assert spline.length == 4.520741504557154
 
         # first == last, closed = False (closed is enforced)
-        spline = make_bspline(points, closed=False)
+        spline = interpolate_bspline(points, closed=False)
         assert spline.length == 4.520741504557154
 
 
@@ -542,13 +546,17 @@ def naughty_function_fallback(wire, var=1, *, var2=[1, 2], **kwargs):
         raise _FallBackError(result=result)
 
 
-class TestLogFailedGeometryOperation:
+class TestLogFailedGeometryOperationSerialisation:
 
     wires = [
         make_polygon({"x": [0, 2, 2, 0], "y": [-1, -1, 1, 1]}, closed=True),
         make_circle(),
         make_ellipse(),
         PrincetonD().create_shape(),
+        PolySpline().create_shape(),
+        PictureFrame().create_shape(),
+        # TODO: Fix serialisation for this (origin uncertain)
+        # TripleArc().create_shape(),
     ]
 
     @mock.patch("builtins.open", new_callable=mock.mock_open)
@@ -571,8 +579,7 @@ class TestLogFailedGeometryOperation:
         assert "random_kwarg" in data
         assert np.isclose(data["random_kwarg"], np.pi)
         saved_wire = deserialize_shape(data["wire"])
-        # TODO: Spline serialisation / reconstruction issue
-        np.testing.assert_almost_equal(saved_wire.length, length, decimal=3)
+        np.testing.assert_almost_equal(saved_wire.length, length, decimal=8)
 
     @mock.patch("builtins.open", new_callable=mock.mock_open)
     def test_fallback_logs_and_returns(self, open_mock):

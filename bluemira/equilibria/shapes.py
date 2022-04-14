@@ -27,7 +27,7 @@ import numpy as np
 
 from bluemira.geometry._deprecated_loop import Loop
 from bluemira.geometry.parameterisations import GeometryParameterisation
-from bluemira.geometry.tools import make_bspline
+from bluemira.geometry.tools import interpolate_bspline
 from bluemira.geometry.wire import BluemiraWire
 from bluemira.utilities.opt_variables import BoundedVariable, OptVariables
 
@@ -490,7 +490,9 @@ class JohnerLCFS(GeometryParameterisation):
         labels = ["upper_inner", "upper_outer", "lower_outer", "lower_inner"]
         for x_q, z_q, lab in zip(x_quadrants, z_quadrants, labels):
             wires.append(
-                make_bspline(np.array([x_q, np.zeros(len(x_q)), z_q]).T, label=lab)
+                interpolate_bspline(
+                    np.array([x_q, np.zeros(len(x_q)), z_q]).T, label=lab
+                )
             )
 
         return BluemiraWire(wires, label=label)
