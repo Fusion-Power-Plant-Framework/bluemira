@@ -28,6 +28,7 @@ from bluemira.codes.utilities import Model, create_mapping
 class CurrentDriveEfficiencyModel(Model):
     """
     Switch for current drive efficiency model:
+
     1 - Fenstermacher Lower Hybrid
     2 - Ion Cyclotron current drive
     3 - Fenstermacher ECH
@@ -39,6 +40,7 @@ class CurrentDriveEfficiencyModel(Model):
     10 - ECRH user input gamma
     11 - ECRH "HARE" model (E. Poli, Physics of Plasmas 2019)
     12 - EBW user scaling input. Scaling (S. Freethy)
+
     PROCESS variable name: "iefrf"
     """
 
@@ -58,9 +60,11 @@ class CurrentDriveEfficiencyModel(Model):
 class TFCoilConductorTechnology(Model):
     """
     Switch for TF coil conductor model:
+
     0 - copper
     1 - superconductor
     2 - Cryogenic aluminium
+
     PROCESS variable name: "i_tf_sup"
     """
 
