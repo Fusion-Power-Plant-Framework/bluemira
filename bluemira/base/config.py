@@ -118,11 +118,11 @@ class Configuration(ConfigurationSchema, ParameterFrame):
         ['condrad_cryo_heat', "Conduction and radiation heat loads on cryogenic components", 0, 'MW', None, 'Input'],
 
         # Radiation and charged particles
-        ['f_core_rad_fw', 'Fraction of core radiation power that is distributed to the blanket FW', 0.9, 'N/A', None, 'Input (MC guess)'],
-        ['f_sol_rad', 'Fraction of SOL power radiated', 0.75, 'N/A', 'The rest is assumed to be in the form of charged particles', 'Input (F. Maviglia standard)'],
-        ['f_sol_rad_fw', 'Fraction of radiated SOL power that is distributed to the blanket FW', 0.8, 'N/A', None, 'Input (MC guess)'],
-        ['f_sol_ch_fw', 'Fraction of SOL charged particle power that is distributed to the blanket FW', 0.8, 'N/A', None, 'Input (F. Maviglia standard)'],
-        ['f_fw_aux', 'Fraction of first wall power that goes into auxiliary systems', 0.09, 'N/A', None, 'Input (F. Maviglia standard)'],
+        ['f_core_rad_fw', 'Fraction of core radiation power that is distributed to the blanket FW', 0.9, 'dimensionless', None, 'Input (MC guess)'],
+        ['f_sol_rad', 'Fraction of SOL power radiated', 0.75, 'dimensionless', 'The rest is assumed to be in the form of charged particles', 'Input (F. Maviglia standard)'],
+        ['f_sol_rad_fw', 'Fraction of radiated SOL power that is distributed to the blanket FW', 0.8, 'dimensionless', None, 'Input (MC guess)'],
+        ['f_sol_ch_fw', 'Fraction of SOL charged particle power that is distributed to the blanket FW', 0.8, 'dimensionless', None, 'Input (F. Maviglia standard)'],
+        ['f_fw_aux', 'Fraction of first wall power that goes into auxiliary systems', 0.09, 'dimensionless', None, 'Input (F. Maviglia standard)'],
 
         # First wall profile
         ['fw_psi_n', 'Normalised psi boundary to fit FW to', 1.07, 'dimensionless', None, 'Input'],
@@ -152,8 +152,8 @@ class Configuration(ConfigurationSchema, ParameterFrame):
         ['div_open', 'Divertor open/closed configuration', False, 'dimensionless', None, 'Input'],
         ['g_vv_div_add', 'Additional divertor/VV gap', 0, 'm', None, 'Input'],
         ['LPangle', 'Lower port inclination angle', -30, '°', None, 'Input'],
-        ['n_div_cassettes', 'Number of divertor cassettes per sector', 3, 'N/A', None, 'Input'],
-        ['psi_norm', 'Normalised flux value of strike-point contours', 1, 'N/A', None, 'Input'],
+        ['n_div_cassettes', 'Number of divertor cassettes per sector', 3, 'dimensionless', None, 'Input'],
+        ['psi_norm', 'Normalised flux value of strike-point contours', 1, 'dimensionless', None, 'Input'],
         ['xpt_outer_gap', 'Gap between x-point and outer wall', 2, 'm', None, 'Input'],
         ['xpt_inner_gap', 'Gap between x-point and inner wall', 0.4, 'm', None, 'Input'],
         ['tk_outer_target_sol', 'Outer target length SOL side', 0.7, 'm', None, 'Input'],
@@ -178,13 +178,16 @@ class Configuration(ConfigurationSchema, ParameterFrame):
 
 
         # Blanket
+        ["bb_e_mult", "Energy multiplication factor", 1.35, "dimensionless", None, "HCPB classic"],
         ['bb_min_angle', 'Minimum module angle', 70, '°', 'Sharpest cut of a module possible', 'Input (Lorenzo Boccaccini said this in a meeting in 2015, Garching, Germany)'],
-        ["tk_r_ib_bz", "Thickness ratio of the inboard blanket breeding zone", 0.309, "N/A", None, "Input (HCPB 2015 design description document 2MHDNB)"],
-        ["tk_r_ib_manifold", "Thickness ratio of the inboard blanket manifold", 0.114, "N/A", None, "Input (HCPB 2015 design description document 2MHDNB)"],
-        ["tk_r_ib_bss", "Thickness ratio of the inboard blanket back supporting structure", 0.577, "N/A", None, "Input (HCPB 2015 design description document 2MHDNB)"],
-        ["tk_r_ob_bz", "Thickness ratio of the outboard blanket breeding zone", 0.431, "N/A", None, "Input (HCPB 2015 design description document 2MHDNB)"],
-        ["tk_r_ob_manifold", "Thickness ratio of the outboard blanket manifold", 0.071, "N/A", None, "Input (HCPB 2015 design description document 2MHDNB)"],
-        ["tk_r_ob_bss", "Thickness ratio of the outboard blanket back supporting structure", 0.498, "N/A", None, "Input (HCPB 2015 design description document 2MHDNB)"],
+        ["tk_r_ib_bz", "Thickness ratio of the inboard blanket breeding zone", 0.309, "dimensionless", None, "Input (HCPB 2015 design description document 2MHDNB)"],
+        ["tk_r_ib_manifold", "Thickness ratio of the inboard blanket manifold", 0.114, "dimensionless", None, "Input (HCPB 2015 design description document 2MHDNB)"],
+        ["tk_r_ib_bss", "Thickness ratio of the inboard blanket back supporting structure", 0.577, "dimensionless", None, "Input (HCPB 2015 design description document 2MHDNB)"],
+        ["tk_r_ob_bz", "Thickness ratio of the outboard blanket breeding zone", 0.431, "dimensionless", None, "Input (HCPB 2015 design description document 2MHDNB)"],
+        ["tk_r_ob_manifold", "Thickness ratio of the outboard blanket manifold", 0.071, "dimensionless", None, "Input (HCPB 2015 design description document 2MHDNB)"],
+        ["tk_r_ob_bss", "Thickness ratio of the outboard blanket back supporting structure", 0.498, "dimensionless", None, "Input (HCPB 2015 design description document 2MHDNB)"],
+        ["n_bb_inboard", "Number of inboard blanket segments", 2, "dimensionless", None, "Input"],
+        ["n_bb_outboard", "Number of outboard blanket segments", 3, "dimensionless", None, "Input"],
         ["bb_t_inlet", "Breeding blanket inlet temperature", 300, "°C", None, "Input (HCPB classic)"],
         ["bb_t_outlet", "Breeding blanket outlet temperature", 500, "°C", None, "Input (HCPB classic)"],
         ["bb_p_inlet", "Breeding blanket inlet pressure", 8e6, "Pa", None, "Input (HCPB classic)"],
