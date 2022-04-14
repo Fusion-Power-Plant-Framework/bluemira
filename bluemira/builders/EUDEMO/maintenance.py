@@ -262,7 +262,7 @@ def build_upper_port_zone(r_up_inner, r_up_outer, z_max=10, z_min=0):
 
 if __name__ == "__main__":
     # TODO: Remove this once threaded into the reactor build via some kind of builder
-
+    # See issues #906, #907
     from bluemira.base.config import Configuration
     from bluemira.display import show_cad
 
