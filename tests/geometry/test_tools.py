@@ -575,8 +575,7 @@ class TestLogFailedGeometryOperation:
         assert "random_kwarg" in data
         assert np.isclose(data["random_kwarg"], np.pi)
         saved_wire = deserialize_shape(data["wire"])
-        # TODO: Spline serialisation / reconstruction issue
-        np.testing.assert_almost_equal(saved_wire.length, length, decimal=3)
+        np.testing.assert_almost_equal(saved_wire.length, length, decimal=8)
 
     @mock.patch("builtins.open", new_callable=mock.mock_open)
     def test_fallback_logs_and_returns(self, open_mock):
