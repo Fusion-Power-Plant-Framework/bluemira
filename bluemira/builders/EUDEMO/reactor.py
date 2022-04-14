@@ -35,10 +35,7 @@ from bluemira.builders.EUDEMO.ivc import InVesselComponentBuilder
 from bluemira.builders.EUDEMO.ivc.ivc import build_ivc_xz_shapes
 from bluemira.builders.EUDEMO.pf_coils import PFCoilsBuilder
 from bluemira.builders.EUDEMO.plasma import PlasmaBuilder
-from bluemira.builders.EUDEMO.power_cycle import (
-    SteadyStatePowerCycleSolver,
-    run_power_balance,
-)
+from bluemira.builders.EUDEMO.power_cycle import SteadyStatePowerCycleSolver
 from bluemira.builders.EUDEMO.tf_coils import TFCoilsBuilder
 from bluemira.builders.EUDEMO.vacuum_vessel import VacuumVesselBuilder
 from bluemira.builders.radiation_shield import RadiationShieldBuilder
