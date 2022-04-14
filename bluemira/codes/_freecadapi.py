@@ -252,7 +252,7 @@ def make_bspline(
     weights: Union[list, np.ndarray]
         sequence of float
     check_rational: bool
-        Where or not the weights should be applied to each control point (not sure)
+        Whether or not to check if the BSpline is rational (not sure)
 
     Returns
     -------

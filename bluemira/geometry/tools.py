@@ -223,17 +223,17 @@ def make_bspline(
     ----------
     poles: Union[list, np.ndarray]
         list of poles.
-    multis: Union[list, np.ndarray]
+    mults: Union[list, np.ndarray]
         list of integers for the multiplicity
     knots: Union[list, np.ndarray]
         list of knots
-    periodic: Bool
+    periodic: bool
     degree: int
         bspline degree
     weights: Union[list, np.ndarray]
         sequence of float
-    check_rational: Optional[Iterable]
-        not sure
+    check_rational: bool
+        Whether or not to check if the BSpline is rational
 
     Returns
     -------
