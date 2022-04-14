@@ -216,6 +216,16 @@ class Optimiser(NLOPTOptimiser):
     def check_constraints(self, x):
         """
         Check that the constraints have been met.
+
+        Parameters
+        ----------
+        x: np.ndarray
+            Solution vector to check the constraints for
+
+        Returns
+        -------
+        check: bool
+            Whether or not the constraints have been satisfied within the tolerances
         """
         c_values = []
         tolerances = []
@@ -231,3 +241,5 @@ class Optimiser(NLOPTOptimiser):
                 "Some constraints have not been adequately satisfied.\n"
                 f"{pformat(c_values)} !< {pformat(tolerances)}"
             )
+            return False
+        return True
