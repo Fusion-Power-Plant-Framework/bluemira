@@ -22,6 +22,7 @@
 """
 PROCESS mappings
 """
+from bluemira.base.parameter import ParameterMapping
 from bluemira.codes.utilities import Model, create_mapping
 
 
@@ -74,26 +75,6 @@ class TFCoilConductorTechnology(Model):
 
 
 IN_mappings = {
-    "P_el_net": ("pnetelin", "MW"),
-    "n_TF": ("n_tf", "dimensionless"),
-    "TF_ripple_limit": ("ripmax", "%"),
-    "C_Ejima": ("gamma", "dimensionless"),
-    "e_nbi": ("enbeam", "keV"),
-    "P_hcd_ss": ("pinjalw", "MW"),
-    "eta_nb": ("etanbi", "dimensionless"),
-    "bb_e_mult": ("emult", "dimensionless"),
-    "tk_sh_out": ("shldoth", "m"),
-    "tk_sh_top": ("shldtth", "m"),
-    "tk_sh_bot": ("shldlth", "m"),
-    "tk_vv_out": ("d_vv_out", "m"),
-    "tk_vv_top": ("d_vv_top", "m"),
-    "tk_vv_bot": ("d_vv_bot", "m"),
-    "tk_cr_vv": ("ddwex", "m"),
-    "tk_tf_front_ib": ("casthi", "m"),
-    "tk_tf_side": ("casths", "m"),
-from bluemira.base.parameter import ParameterMapping
-
-mappings = {
     "P_el_net": ParameterMapping("pnetelin", False, True),
     "P_el_net_process": ParameterMapping("pnetelmw", True, False),
     "tau_flattop": ParameterMapping("tburn", False, False),
