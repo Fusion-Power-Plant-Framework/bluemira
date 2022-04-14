@@ -241,9 +241,9 @@ def build_upper_port_zone(r_up_inner, r_up_outer, z_max=10, z_min=0):
 
     Parameters
     ----------
-    r_up_inner: radius
+    r_up_inner: float
         Inner radius of the upper port void space
-    r_up_outer: radius
+    r_up_outer: float
         Outer radius of the upper port void space
     z_max: float
         Maximum vertical height of the upper port void space
