@@ -23,6 +23,8 @@
 Simple steady-state EU-DEMO balance of plant model
 """
 
+from distutils.command.config import config
+
 from bluemira.balance_of_plant.steady_state import (
     BalanceOfPlant,
     H2OPumping,
@@ -33,6 +35,7 @@ from bluemira.balance_of_plant.steady_state import (
     RadChargedPowerStrategy,
     SuperheatedRankine,
 )
+from bluemira.base.solver import SolverABC, Task
 
 __all__ = ["run_power_balance"]
 
@@ -59,6 +62,95 @@ class EUDEMOReferenceParasiticLoadStrategy(ParasiticLoadStrategy):
         p_t_plant = f_norm * self.p_t_plant
         p_other = f_norm * self.p_other
         return p_mag, p_cryo, p_t_plant, p_other
+
+
+class SteadyStatePowerCycleSetup(Task):
+    def run(self):
+        params = self._params
+        # TODO: Get remaining hard-coded values hooked up
+        neutron_power_strat = NeutronPowerStrategy(
+            f_blanket=0.9,
+            f_divertor=0.05,
+            f_vessel=params.vvpfrac.value,  # TODO: Change this parameter name
+            f_other=0.01,
+            energy_multiplication=params.e_mult.value,
+            decay_multiplication=params.e_decay_mult.value,
+        )
+        rad_sep_strat = RadChargedPowerStrategy(
+            f_core_rad_fw=params.f_core_rad_fw.value,
+            f_sol_rad=params.f_sol_rad.value,
+            f_sol_rad_fw=params.f_sol_rad_fw.value,
+            f_sol_ch_fw=params.f_sol_ch_fw.value,
+            f_fw_aux=params.f_fw_aux.value,
+        )
+
+        if params.blanket_type.value == "HCPB":
+            blanket_pump_strat = HePumping(
+                params.bb_p_inlet.value,
+                params.bb_p_outlet.value,
+                params.bb_t_inlet.value,
+                params.bb_t_outlet.value,
+                eta_isentropic=params.bb_pump_eta_isen.value,
+                eta_electric=params.bb_pump_eta_el.value,
+            )
+            bop_cycle = SuperheatedRankine(
+                bb_t_out=params.bb_t_outlet.value, delta_t_turbine=20
+            )
+        elif params.blanket_type.value == "WCLL":
+            blanket_pump_strat = H2OPumping(
+                0.005,
+                eta_isentropic=params.bb_pump_eta_isen.value,
+                eta_electric=params.bb_pump_eta_el.value,
+            )
+            bop_cycle = PredeterminedEfficiency(0.33)
+        else:
+            raise ValueError(f"Unrecognised blanket type {params.blanket_type.value}")
+
+        divertor_pump_strat = H2OPumping(
+            f_pump=0.05,
+            eta_isentropic=params.div_pump_eta_isen.value,
+            eta_electric=params.div_pump_eta_el.value,
+        )
+        parasitic_load_strat = EUDEMOReferenceParasiticLoadStrategy()
+        return (
+            rad_sep_strat,
+            neutron_power_strat,
+            blanket_pump_strat,
+            divertor_pump_strat,
+            bop_cycle,
+            parasitic_load_strat,
+        )
+
+
+class SteadyStatePowerCycleRun(Task):
+    def run(self, setup_result):
+        bop = BalanceOfPlant(self._params, *setup_result)
+        bop.build()
+        return bop
+
+
+class SteadyStatePowerCycleTeardown(Task):
+    def run(self, run_result):
+        power_cycle = run_result
+        flow_dict = power_cycle.flow_dict
+        electricity = flow_dict["Electricity"]
+        p_el_net = electricity[-1]
+        f_recirc = electricity[0] / sum(electricity[1:-1])
+        eta_ss = p_el_net / (flow_dict["Plasma"][0] + flow_dict["Neutrons"][1])
+        return {"P_el_net": p_el_net, "eta_ss": eta_ss, "f_recirc": f_recirc}
+
+
+class SteadyStatePowerCycleSolver(SolverABC):
+    """
+    Solver for the steady-state power cycle of an EU-DEMO reactor.
+    """
+
+    setup_cls = SteadyStatePowerCycleSetup
+    run_cls = SteadyStatePowerCycleRun
+    teardown_cls = SteadyStatePowerCycleTeardown
+
+    def execute(self):
+        return super().execute("run")
 
 
 def run_power_balance(params):
@@ -132,3 +224,11 @@ def run_power_balance(params):
     )
     bop.build()
     return bop
+
+
+if __name__ == "__main__":
+    from bluemira.base.config import Configuration
+
+    params = Configuration()
+    solver = SteadyStatePowerCycleSolver(params)
+    solver.execute()
