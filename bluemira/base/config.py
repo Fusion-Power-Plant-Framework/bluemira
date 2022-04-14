@@ -178,7 +178,6 @@ class Configuration(ConfigurationSchema, ParameterFrame):
 
 
         # Blanket
-        ["bb_e_mult", "Energy multiplication factor", 1.35, "dimensionless", None, "HCPB classic"],
         ['bb_min_angle', 'Minimum module angle', 70, '°', 'Sharpest cut of a module possible', 'Input (Lorenzo Boccaccini said this in a meeting in 2015, Garching, Germany)'],
         ["tk_r_ib_bz", "Thickness ratio of the inboard blanket breeding zone", 0.309, "dimensionless", None, "Input (HCPB 2015 design description document 2MHDNB)"],
         ["tk_r_ib_manifold", "Thickness ratio of the inboard blanket manifold", 0.114, "dimensionless", None, "Input (HCPB 2015 design description document 2MHDNB)"],
@@ -201,8 +200,8 @@ class Configuration(ConfigurationSchema, ParameterFrame):
         ['tk_bb_man', 'Breeding blanket manifold thickness', 0.2, 'm', None, 'Input'],
 
         # Divertor
-        ['div_pump_eta_el', 'Divertor pumping electrical efficiency', 0.87, 'N/A', None, 'Input (F. Cismondi)'],
-        ['div_pump_eta_isen', 'Divertor pumping isentropic efficiency', 0.99, 'N/A', None, 'Input (F. Cismondi)'],
+        ['div_pump_eta_el', 'Divertor pumping electrical efficiency', 0.87, "dimensionless", None, 'Input (F. Cismondi)'],
+        ['div_pump_eta_isen', 'Divertor pumping isentropic efficiency', 0.99, "dimensionless", None, 'Input (F. Cismondi)'],
 
         # Component radial thicknesses (some vertical)
         ['tk_bb_ib', 'Inboard blanket thickness', 0.8, 'm', None, 'Input'],
@@ -321,8 +320,8 @@ class Configuration(ConfigurationSchema, ParameterFrame):
         ['div_dpa', 'Divertor life limit (CuCrZr)', 5, 'dpa', None, 'Input (https://iopscience.iop.org/article/10.1088/1741-4326/57/9/092002/pdf)'],
         ['vv_dpa', 'Vacuum vessel life limit (SS316-LN-IG)', 3.25, 'dpa', None, 'Input (RCC-Mx or whatever it is called)'],
         ['tf_fluence', 'Insulation fluence limit for ITER equivalent to 10 MGy', 3.2e21, 'n/m^2', None, 'Input (https://ieeexplore.ieee.org/document/6374236/)'],
-        ['e_decay_mult', 'Decay heat multiplication factor', 1.0175, "N/A", "Quasi-instantaneous energy multiplication; still present when plasma is off", "Input (PPCS FWBL Helium Cooled Model P PPCS04 D5part1)"],
-        ["e_mult", "Energy multiplication factor", 1.35, "N/A", "Instantaneous energy multiplication due to neutron multiplication and the like", "Input (HCPB classic)"],
+        ['e_decay_mult', 'Decay heat multiplication factor', 1.0175, 'dimensionless', "Quasi-instantaneous energy multiplication; still present when plasma is off", "Input (PPCS FWBL Helium Cooled Model P PPCS04 D5part1)"],
+        ["e_mult", "Energy multiplication factor", 1.35, 'dimensionless', "Instantaneous energy multiplication due to neutron multiplication and the like", "Input (HCPB classic)"],
 
         # Central solenoid
         ['F_pf_zmax', 'Maximum vertical force on a single PF coil', 450, 'MN', None, 'Input'],
