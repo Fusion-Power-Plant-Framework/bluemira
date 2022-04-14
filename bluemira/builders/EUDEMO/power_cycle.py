@@ -27,7 +27,7 @@ import enum
 import numpy as np
 
 from bluemira.balance_of_plant.steady_state import (
-    BalanceOfPlant,
+    BalanceOfPlantModel,
     H2OPumping,
     HePumping,
     NeutronPowerStrategy,
@@ -131,7 +131,7 @@ class SteadyStatePowerCycleSetup(Task):
 
 class SteadyStatePowerCycleRun(Task):
     def run(self, setup_result):
-        bop = BalanceOfPlant(self._params, *setup_result)
+        bop = BalanceOfPlantModel(self._params, *setup_result)
         bop.build()
         return bop
 
@@ -144,7 +144,11 @@ class SteadyStatePowerCycleTeardown(Task):
         p_el_net = abs(electricity[-1])
         f_recirc = sum(np.abs(electricity[1:-1])) / abs(electricity[0])
         eta_ss = p_el_net / (flow_dict["Plasma"][0] + flow_dict["Neutrons"][1])
-        return {"P_el_net": p_el_net, "eta_ss": eta_ss, "f_recirc": f_recirc}
+        return power_cycle, {
+            "P_el_net": p_el_net,
+            "eta_ss": eta_ss,
+            "f_recirc": f_recirc,
+        }
 
 
 class SteadyStatePowerCycleSolver(SolverABC):
@@ -157,7 +161,9 @@ class SteadyStatePowerCycleSolver(SolverABC):
     teardown_cls = SteadyStatePowerCycleTeardown
 
     def execute(self):
-        return super().execute(SteadyStatePowerCycleRunMode.RUN)
+        power_cycle, result = super().execute(SteadyStatePowerCycleRunMode.RUN)
+        self.model = power_cycle
+        return result
 
 
 if __name__ == "__main__":

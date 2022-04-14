@@ -25,7 +25,7 @@ Simple example of a 0-D steady-state balance of plant view.
 
 # %%
 from bluemira.balance_of_plant.steady_state import (
-    BalanceOfPlant,
+    BalanceOfPlantModel,
     H2OPumping,
     HePumping,
     NeutronPowerStrategy,
@@ -124,7 +124,7 @@ parasitic_load_strat = EUDEMOReferenceParasiticLoadStrategy()
 # Now, we put everything together and build it
 
 # %%
-HCPB_bop = BalanceOfPlant(
+HCPB_bop = BalanceOfPlantModel(
     default_params,
     rad_sep_strat=rad_sep_strat,
     neutron_strat=neutron_power_strat,
@@ -162,7 +162,7 @@ neutron_power_strat = NeutronPowerStrategy(
 blanket_pump_strat = H2OPumping(0.005, eta_isentropic=0.99, eta_electric=0.87)
 bop_cycle = PredeterminedEfficiency(0.33)
 
-WCLL_bop = BalanceOfPlant(
+WCLL_bop = BalanceOfPlantModel(
     default_params,
     rad_sep_strat=rad_sep_strat,
     neutron_strat=neutron_power_strat,

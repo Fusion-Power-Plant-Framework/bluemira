@@ -394,7 +394,7 @@ class ParasiticLoadStrategy(abc.ABC):
         pass
 
 
-class BalanceOfPlant:
+class BalanceOfPlantModel:
     """
     Balance of plant calculator for a fusion power reactor
 

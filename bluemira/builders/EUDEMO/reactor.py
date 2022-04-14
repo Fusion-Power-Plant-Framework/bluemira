@@ -91,8 +91,7 @@ class EUDEMOReactor(Reactor):
         thermal_shield.add_child(self.build_cryo_thermal_shield(component))
         component.add_child(self.build_cryostat(component))
         component.add_child(self.build_radiation_shield(component))
-
-        self.run_power_balance()
+        self.run_power_cycle()
         bluemira_print("Reactor Design Complete!")
 
         return component
