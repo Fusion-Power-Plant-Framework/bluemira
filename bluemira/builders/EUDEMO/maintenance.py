@@ -238,6 +238,22 @@ def segment_blanket_xz(breeding_blanket_xz, r_inner_cut, cut_angle, cut_thicknes
 def build_upper_port_zone(r_up_inner, r_up_outer, z_max=10, z_min=0):
     """
     Make the void geometry for the upper port in the poloidal plane.
+
+    Parameters
+    ----------
+    r_up_inner: radius
+        Inner radius of the upper port void space
+    r_up_outer: radius
+        Outer radius of the upper port void space
+    z_max: float
+        Maximum vertical height of the upper port void space
+    z_min: float
+        Minimum vertical height of the upper port void space
+
+    Returns
+    -------
+    upper_port: BluemiraFace
+        Face representing the upper port void space in the x-z plane
     """
     x = [r_up_inner, r_up_outer, r_up_outer, r_up_inner]
     z = [z_min, z_min, z_max, z_max]
