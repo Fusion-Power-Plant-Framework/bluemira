@@ -228,6 +228,7 @@ def make_bspline(
     knots: Union[list, np.ndarray]
         list of knots
     periodic: bool
+        Whether or not the spline is periodic (closed with continuous curvature?)
     degree: int
         bspline degree
     weights: Union[list, np.ndarray]
