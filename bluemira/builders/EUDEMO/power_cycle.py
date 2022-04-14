@@ -38,7 +38,7 @@ from bluemira.balance_of_plant.steady_state import (
 )
 from bluemira.base.solver import RunMode, SolverABC, Task
 
-__all__ = ["run_power_balance"]
+__all__ = ["SteadyStatePowerCycleSolver"]
 
 
 class EUDEMOReferenceParasiticLoadStrategy(ParasiticLoadStrategy):
