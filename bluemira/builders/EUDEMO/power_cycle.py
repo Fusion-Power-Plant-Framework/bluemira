@@ -72,7 +72,14 @@ class SteadyStatePowerCycleRunMode(RunMode):
 
 
 class SteadyStatePowerCycleSetup(Task):
+    """
+    Setup task for the steady-state power cycle model.
+    """
+
     def run(self):
+        """
+        Run the setup task.
+        """
         params = self._params
         # TODO: Get remaining hard-coded values hooked up
         neutron_power_strat = NeutronPowerStrategy(
@@ -130,14 +137,28 @@ class SteadyStatePowerCycleSetup(Task):
 
 
 class SteadyStatePowerCycleRun(Task):
+    """
+    Run task for the steady-state power cycle model.
+    """
+
     def run(self, setup_result):
+        """
+        Run the run task. (o.O)
+        """
         bop = BalanceOfPlantModel(self._params, *setup_result)
         bop.build()
         return bop
 
 
 class SteadyStatePowerCycleTeardown(Task):
+    """
+    Teardown task for the steady-state power cycle model.
+    """
+
     def run(self, run_result):
+        """
+        Run the teardown task.
+        """
         power_cycle = run_result
         flow_dict = power_cycle.flow_dict
         electricity = flow_dict["Electricity"]
@@ -161,14 +182,9 @@ class SteadyStatePowerCycleSolver(SolverABC):
     teardown_cls = SteadyStatePowerCycleTeardown
 
     def execute(self):
+        """
+        Execute the solver.
+        """
         power_cycle, result = super().execute(SteadyStatePowerCycleRunMode.RUN)
         self.model = power_cycle
         return result
-
-
-if __name__ == "__main__":
-    from bluemira.base.config import Configuration
-
-    params = Configuration()
-    solver = SteadyStatePowerCycleSolver(params)
-    result = solver.execute()
