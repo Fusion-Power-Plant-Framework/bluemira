@@ -66,9 +66,17 @@ class UpperPortOP(OptimisationProblem):
         Optimiser object to use when solving this problem
     breeding_blanket_xz: BluemiraFace
         Unsegmented breeding blanket x-z geometry
+    constraint_tol: float
+        Constraint tolerance
     """
 
-    def __init__(self, params, optimiser: Optimiser, breeding_blanket_xz: BluemiraFace):
+    def __init__(
+        self,
+        params,
+        optimiser: Optimiser,
+        breeding_blanket_xz: BluemiraFace,
+        constraint_tol: float,
+    ):
 
         objective = OptimisationObjective(self.minimise_port_size, f_objective_args={})
 
@@ -93,7 +101,7 @@ class UpperPortOP(OptimisationProblem):
                     "r_ib_min": r_ib_min,
                     "r_ob_max": r_ob_max,
                 },
-                tolerance=1e-6 * np.ones(n_constraints),
+                tolerance=constraint_tol * np.ones(n_constraints),
             )
         ]
         super().__init__(np.array([]), optimiser, objective, constraints)
