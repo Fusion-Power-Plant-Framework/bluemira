@@ -125,6 +125,9 @@ def _make_debug_file(name) -> str:
     return filename
 
 
+# add comment to see how pre-commit fails
+
+
 def log_geometry_on_failure(func):
     """
     Decorator for debugging of failed geometry operations.
