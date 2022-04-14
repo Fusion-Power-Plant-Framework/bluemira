@@ -44,12 +44,14 @@ class TestInscribedRectangle:
         c_s.translate(i)
         complex_shape = boolean_cut(complex_shape, c_s)[0]
     # Convert back to Loop
-    complex_shape = Loop(*complex_shape.boundary[0].discretize(byedges=True, ndiscr=100))
+    complex_shape = Loop(
+        *complex_shape.boundary[0].discretize(byedges=True, ndiscr=100).xz
+    )
 
     shapes = [square, diamond, circle, complex_shape]
     convex = [True, True, True, False]
 
-    aspectratios = np.logspace(-1, 1, num=10)
+    aspectratios = np.logspace(-1, 1, num=5)
 
     @pytest.mark.parametrize("shape, convex", zip(shapes, convex))
     def test_inscribed_rectangle(self, shape, convex):
@@ -87,7 +89,7 @@ class TestInscribedRectangle:
                                 BluemiraFace(make_polygon(sq.xyz)), shape_face
                             )
                             tf = [
-                                Loop(*seg.discretize(byedges=True, ndiscr=50))
+                                Loop(*seg.discretize(byedges=True, ndiscr=50).xz)
                                 for seg in tf
                             ]
                         except ValueError:
