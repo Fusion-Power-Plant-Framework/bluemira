@@ -41,6 +41,7 @@ from bluemira.geometry.tools import (
     interpolate_bspline,
     log_geometry_on_failure,
     make_circle,
+    make_circle_arc_3P,
     make_ellipse,
     make_polygon,
     offset_wire,
@@ -590,3 +591,15 @@ class TestLogFailedGeometryOperationSerialisation:
         assert os.path.basename(call_args[0]).startswith("naughty_function_fallback")
         assert call_args[1] == "w"
         assert result == 42
+
+
+class TestMakeCircle:
+    def test_make_circle_arc_3P(self):
+        p1 = [1, 0, 2]
+        p2 = [2, 0, 3]
+        p3 = [0, 0, 3.2]
+
+        arc = make_circle_arc_3P(p1, p2, p3)
+        points = arc.discretize(2).points
+        np.testing.assert_allclose(np.array(p1), np.array(points[0]), atol=1e-15)
+        np.testing.assert_allclose(np.array(p3), np.array(points[1]), atol=1e-15)
