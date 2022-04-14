@@ -251,7 +251,7 @@ def make_bspline(
         bspline degree
     weights: Union[list, np.ndarray]
         sequence of float
-    check_rational: Optional[Iterable]
+    check_rational: bool
         Where or not the weights should be applied to each control point (not sure)
 
     Returns
