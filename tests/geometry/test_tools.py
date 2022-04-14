@@ -30,12 +30,7 @@ from numpy.linalg import norm
 import bluemira.codes._freecadapi as cadapi
 from bluemira.geometry.error import _FallBackError
 from bluemira.geometry.face import BluemiraFace
-from bluemira.geometry.parameterisations import (
-    PictureFrame,
-    PolySpline,
-    PrincetonD,
-    TripleArc,
-)
+from bluemira.geometry.parameterisations import PictureFrame, PolySpline, PrincetonD
 from bluemira.geometry.plane import BluemiraPlane
 from bluemira.geometry.tools import (
     _signed_distance_2D,
