@@ -75,7 +75,7 @@ class UpperPortOP(OptimisationProblem):
         params,
         optimiser: Optimiser,
         breeding_blanket_xz: BluemiraFace,
-        constraint_tol: float,
+        constraint_tol: float = 1e6,
     ):
 
         objective = OptimisationObjective(self.minimise_port_size, f_objective_args={})
