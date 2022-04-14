@@ -23,8 +23,6 @@
 Simple steady-state EU-DEMO balance of plant model
 """
 
-from distutils.command.config import config
-
 from bluemira.balance_of_plant.steady_state import (
     BalanceOfPlant,
     H2OPumping,
