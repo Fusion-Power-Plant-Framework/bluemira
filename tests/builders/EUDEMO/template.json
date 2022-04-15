@@ -1413,7 +1413,11 @@
   "m_gas": {
     "name": "Gas puff flow rate",
     "value": 50,
+<<<<<<< HEAD
     "unit": "Pa m^3/s",
+=======
+    "unit": "Pam^3/s",
+>>>>>>> Update template.json
     "source": "Input (Discussions with Chris Day and Yannick H\u00f6rstensmeyer)",
     "description": "To maintain detachment - no chance of fusion from gas injection"
   },
@@ -1805,7 +1809,11 @@
     "name": "Plasma resistance",
     "value": 0,
     "unit": "ohm",
+<<<<<<< HEAD
     "source": "Calculated",
+=======
+    "source": "Calculated"
+>>>>>>> Update template.json
     "mapping": {
       "PLASMOD": {
         "name": "rplas",
@@ -2176,31 +2184,51 @@
     "name": "Thickness ratio of the inboard blanket breeding zone",
     "value": 0.309,
     "unit": "dimensionless",
+<<<<<<< HEAD
     "source": "Input (HCPB 2015 design description document 2MHDNB)"
+=======
+    "source": "HCPB 2015 design description document"
+>>>>>>> Update template.json
   },
   "tk_r_ib_manifold": {
     "name": "Thickness ratio of the inboard blanket manifold",
     "value": 0.114,
     "unit": "dimensionless",
+<<<<<<< HEAD
     "source": "Input (HCPB 2015 design description document 2MHDNB)"
+=======
+    "source": "HCPB 2015 design description document"
+>>>>>>> Update template.json
   },
   "tk_r_ob_bss": {
     "name": "Thickness ratio of the outboard blanket back supporting structure",
     "value": 0.498,
     "unit": "dimensionless",
+<<<<<<< HEAD
     "source": "Input (HCPB 2015 design description document 2MHDNB)"
+=======
+    "source": "HCPB 2015 design description document"
+>>>>>>> Update template.json
   },
   "tk_r_ob_bz": {
     "name": "Thickness ratio of the outboard blanket breeding zone",
     "value": 0.431,
     "unit": "dimensionless",
+<<<<<<< HEAD
     "source": "Input (HCPB 2015 design description document 2MHDNB)"
+=======
+    "source": "HCPB 2015 design description document"
+>>>>>>> Update template.json
   },
   "tk_r_ob_manifold": {
     "name": "Thickness ratio of the outboard blanket manifold",
     "value": 0.071,
     "unit": "dimensionless",
+<<<<<<< HEAD
     "source": "Input (HCPB 2015 design description document 2MHDNB)"
+=======
+    "source": "HCPB 2015 design description document"
+>>>>>>> Update template.json
   },
   "tk_rs": {
     "name": "Radiation shield thickness",
