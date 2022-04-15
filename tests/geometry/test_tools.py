@@ -30,7 +30,12 @@ from numpy.linalg import norm
 import bluemira.codes._freecadapi as cadapi
 from bluemira.geometry.error import _FallBackError
 from bluemira.geometry.face import BluemiraFace
-from bluemira.geometry.parameterisations import PictureFrame, PolySpline, PrincetonD
+from bluemira.geometry.parameterisations import (
+    PictureFrame,
+    PolySpline,
+    PrincetonD,
+    TripleArc,
+)
 from bluemira.geometry.plane import BluemiraPlane
 from bluemira.geometry.tools import (
     _signed_distance_2D,
@@ -556,8 +561,7 @@ class TestLogFailedGeometryOperationSerialisation:
         PrincetonD().create_shape(),
         PolySpline().create_shape(),
         PictureFrame().create_shape(),
-        # TODO: Fix serialisation for this (origin uncertain)
-        # TripleArc().create_shape(),
+        TripleArc().create_shape(),
     ]
 
     @mock.patch("builtins.open", new_callable=mock.mock_open)
