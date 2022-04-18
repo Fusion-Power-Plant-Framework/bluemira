@@ -15,7 +15,7 @@ cycler==0.11.0
 decorator==5.1.1
 defusedxml==0.7.1
 entrypoints==0.4
-fluids==1.0.20
+fluids==1.0.21
 fortranformat==1.2.0
 gmsh-interop==2021.1.1
 imageio==2.16.1
