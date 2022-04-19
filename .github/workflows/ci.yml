@@ -94,7 +94,7 @@ jobs:
     - name: Build Documentation bluemira
       shell: bash -l {0}
       run: |
-        sudo apt install dot
+        sudo apt install graphviz
         sphinx-build -W documentation/source documentation/build
 
     - name: Run pytest bluemira
