@@ -29,7 +29,6 @@ from numpy.linalg import norm
 
 import bluemira.codes._freecadapi as cadapi
 from bluemira.base.constants import EPS
-from bluemira.geometry.error import _FallBackError
 from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.parameterisations import (
     PictureFrame,
@@ -43,6 +42,7 @@ from bluemira.geometry.tools import (
     convex_hull_wires_2d,
     deserialize_shape,
     extrude_shape,
+    fallback_to,
     find_clockwise_angle_2d,
     interpolate_bspline,
     log_geometry_on_failure,
@@ -544,13 +544,14 @@ def naughty_function(wire, var=1, *, var2=[1, 2], **kwargs):
     raise cadapi.FreeCADError
 
 
+def naughty_function_result(wire, *, var2=[1, 2], **kwargs):
+    return 41 + kwargs["missing_piece"]
+
+
+@fallback_to(naughty_function_result, cadapi.FreeCADError)
 @log_geometry_on_failure
 def naughty_function_fallback(wire, var=1, *, var2=[1, 2], **kwargs):
-    try:
-        raise cadapi.FreeCADError
-    except cadapi.FreeCADError:
-        result = 42
-        raise _FallBackError(result=result)
+    raise cadapi.FreeCADError
 
 
 class TestLogFailedGeometryOperationSerialisation:
@@ -589,7 +590,7 @@ class TestLogFailedGeometryOperationSerialisation:
 
     @mock.patch("builtins.open", new_callable=mock.mock_open)
     def test_fallback_logs_and_returns(self, open_mock):
-        result = naughty_function_fallback(0)
+        result = naughty_function_fallback(0, missing_piece=1)
 
         open_mock.assert_called_once()
         call_args = open_mock.call_args[0]

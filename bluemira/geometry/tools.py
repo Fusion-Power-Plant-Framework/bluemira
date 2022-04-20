@@ -41,7 +41,7 @@ from bluemira.base.look_and_feel import bluemira_debug, bluemira_warn
 from bluemira.codes import _freecadapi as cadapi
 from bluemira.geometry.base import BluemiraGeo, GeoMeshable
 from bluemira.geometry.coordinates import Coordinates
-from bluemira.geometry.error import GeometryError, _FallBackError
+from bluemira.geometry.error import GeometryError
 from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.plane import BluemiraPlane
 from bluemira.geometry.shell import BluemiraShell
@@ -125,9 +125,6 @@ def _make_debug_file(name) -> str:
     return filename
 
 
-# add comment to see how pre-commit fails
-
-
 def log_geometry_on_failure(func):
     """
     Decorator for debugging of failed geometry operations.
@@ -138,7 +135,7 @@ def log_geometry_on_failure(func):
     def wrapper(*args, **kwargs):
         try:
             return func(*args, **kwargs)
-        except (cadapi.FreeCADError, _FallBackError) as error:
+        except cadapi.FreeCADError as error:
             data = _reconstruct_function_call(signature, *args, **kwargs)
             filename = _make_debug_file(func_name)
 
@@ -155,13 +152,29 @@ def log_geometry_on_failure(func):
                     f"Failed to save the failed geometry operation {func_name} to JSON."
                 )
 
-            # Raise error if there is no viable fallback
-            if isinstance(error, _FallBackError):
-                return error._result
-            else:
-                raise error
+            raise error
 
     return wrapper
+
+
+def fallback_to(fallback_func, exception):
+    """
+    Decorator for a fallback to an alternative geometry operation.
+    """
+
+    def decorator(func):
+        def wrapper(*args, **kwargs):
+            try:
+                return func(*args, **kwargs)
+            except exception:
+                bluemira_warn(
+                    f"{func.__name__} failed, falling back to {fallback_func.__name__}."
+                )
+                return fallback_func(*args, **kwargs)
+
+        return wrapper
+
+    return decorator
 
 
 # # =============================================================================
@@ -248,6 +261,14 @@ def make_bspline(
     )
 
 
+def _make_polygon_fallback(points, label, closed, **kwargs) -> BluemiraWire:
+    """
+    Overloaded function signature for fallback option from interpolate_bspline
+    """
+    return make_polygon(points, label, closed)
+
+
+@fallback_to(_make_polygon_fallback, cadapi.FreeCADError)
 @log_geometry_on_failure
 def interpolate_bspline(
     points: Union[list, np.ndarray],
@@ -442,6 +463,33 @@ def wire_closure(bmwire: BluemiraWire, label="closure") -> BluemiraWire:
     return closure
 
 
+def _offset_wire_discretised(
+    wire,
+    thickness,
+    /,
+    join: str = "intersect",
+    open_wire: bool = True,
+    label="",
+    *,
+    fallback_method="square",
+    byedges=True,
+    ndiscr=200,
+    **fallback_kwargs,
+) -> BluemiraWire:
+    """
+    Fallback function for discretised offsetting
+    """
+    from bluemira.geometry._deprecated_offset import offset_clipper
+
+    coordinates = wire.discretize(byedges=byedges, ndiscr=ndiscr)
+
+    result = offset_clipper(
+        coordinates, thickness, method=fallback_method, **fallback_kwargs
+    )
+    return make_polygon(result, label=label)
+
+
+@fallback_to(_offset_wire_discretised, cadapi.FreeCADError)
 @log_geometry_on_failure
 def offset_wire(
     wire: BluemiraWire,
@@ -493,24 +541,9 @@ def offset_wire(
     wire: BluemiraWire
         Offset wire
     """
-    try:
-        return BluemiraWire(
-            cadapi.offset_wire(wire._shape, thickness, join, open_wire), label=label
-        )
-    except cadapi.FreeCADError:
-
-        bluemira_warn(
-            "Primitive offsetting failed, falling back to discretised offsetting."
-        )
-        from bluemira.geometry._deprecated_offset import offset_clipper
-
-        coordinates = wire.discretize(byedges=byedges, ndiscr=ndiscr)
-
-        result = offset_clipper(
-            coordinates, thickness, method=fallback_method, **fallback_kwargs
-        )
-        result = make_polygon(result, label=label)
-        raise _FallBackError(result=result)
+    return BluemiraWire(
+        cadapi.offset_wire(wire._shape, thickness, join, open_wire), label=label
+    )
 
 
 def convex_hull_wires_2d(
