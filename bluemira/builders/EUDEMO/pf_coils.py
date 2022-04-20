@@ -366,6 +366,10 @@ def make_solenoid(r_cs, tk_cs, z_min, z_max, g_cs, tk_cs_ins, tk_cs_cas, n_CS):
     total_height = z_max - z_min
     tk_inscas = tk_cs_ins + tk_cs_cas
     total_gaps = (n_CS - 1) * g_cs + n_CS * 2 * tk_inscas
+    if total_gaps >= total_height:
+        raise BuilderError(
+            "Cannot make a solenoid where the gaps and insulation + casing are larger than the height available."
+        )
 
     coils = []
     if n_CS == 1:
