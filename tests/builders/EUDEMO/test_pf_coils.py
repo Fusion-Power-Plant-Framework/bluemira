@@ -105,3 +105,7 @@ class TestMakeSolenoid:
     def test_error_on_too_large_gaps(self):
         with pytest.raises(BuilderError):
             make_solenoid(4, 1, 0, 10, 1, 1, 1, 10)
+
+    def test_error_on_equal_extrema(self):
+        with pytest.raises(BuilderError):
+            make_solenoid(4, 1, 1, 1, 0, 0, 0, 1)
