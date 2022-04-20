@@ -686,14 +686,14 @@
   "bb_t_inlet": {
     "name": "Breeding blanket inlet temperature",
     "value": 300,
-    "unit": "\u00b0C",
+    "unit": "°C",
     "source": "Input",
     "description": "HCPB classic"
   },
   "bb_t_outlet": {
     "name": "Breeding blanket outlet temperature",
     "value": 500,
-    "unit": "\u00b0C",
+    "unit": "°C",
     "source": "Input",
     "description": "HCPB classic"
   },
