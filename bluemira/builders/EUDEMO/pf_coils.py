@@ -417,11 +417,9 @@ def make_solenoid(r_cs, tk_cs, z_min, z_max, g_cs, tk_cs_ins, tk_cs_cas, n_CS):
     return coils
 
 
-def make_PF_coils(
-    tf_boundary, n_PF, R_0, kappa_u, kappa_l, delta_u, delta_l, j_max, b_max
-):
+def make_PF_coil_positions(tf_boundary, n_PF, R_0, kappa_u, kappa_l, delta_u, delta_l):
     """
-    Make a set of PF coils, positioning them crudely with respect to the intended plasma
+    Make a set of PF coil positions crudely with respect to the intended plasma
     shape.
     """
     # Project plasma centroid through plasma upper and lower extrema
@@ -431,7 +429,7 @@ def make_PF_coils(
 
     angles = np.linspace(scale * angle_upper, scale * angle_lower, n_PF)
 
-    coils = []
+    x_c, z_c = np.array(n_PF), np.array(n_PF)
     for i, angle in enumerate(angles):
         line = make_polygon(
             [
@@ -441,22 +439,8 @@ def make_PF_coils(
             ]
         )
         _, intersection = distance_to(tf_boundary, line)
-        x, _, z = intersection[0][0]
-
-        coil = Coil(
-            x,
-            z,
-            current=0,
-            ctype="PF",
-            control=True,
-            name=f"PF_{i+1}",
-            flag_sizefix=False,
-            j_max=j_max,
-            b_max=b_max,
-        )
-        coils.append(coil)
-
-    return coils
+        x_c[i], _, z_c[i] = intersection[0][0]
+    return x_c, z_c
 
 
 def make_coilset(
@@ -484,8 +468,9 @@ def make_coilset(
     bb = tf_boundary.bounding_box
     z_min = bb.z_min
     z_max = bb.z_max
+    solenoid = make_solenoid(r_cs, tk_cs, z_min, z_max, g_cs, tk_cs_ins, tk_cs_cas, n_CS)
 
-    pf_coils = make_PF_coils(
+    x_c, z_c = make_PF_coil_positions(
         tf_boundary,
         n_PF,
         R_0,
@@ -493,11 +478,22 @@ def make_coilset(
         kappa_l,
         delta_u,
         delta_l,
-        j_max=PF_jmax,
-        b_max=PF_bmax,
     )
-    solenoid = make_solenoid(r_cs, tk_cs, z_min, z_max, g_cs, tk_cs_ins, tk_cs_cas, n_CS)
-
+    pf_coils = []
+    for i, (x, z) in enumerate(zip(x_c, z_c)):
+        coil = Coil(
+            x,
+            z,
+            current=0,
+            ctype="PF",
+            control=True,
+            name=f"PF_{i+1}",
+            flag_sizefix=False,
+            j_max=PF_jmax,
+            b_max=PF_bmax,
+        )
+        pf_coils.append(coil)
     coilset = CoilSet(pf_coils + solenoid)
+    coilset.assign_coil_materials("PF", j_max=PF_jmax, b_max=PF_bmax)
     coilset.assign_coil_materials("CS", j_max=CS_jmax, b_max=CS_bmax)
     return coilset

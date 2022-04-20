@@ -23,7 +23,11 @@ import numpy as np
 import pytest
 
 from bluemira.base.error import BuilderError
-from bluemira.builders.EUDEMO.pf_coils import make_coil_mapper, make_solenoid
+from bluemira.builders.EUDEMO.pf_coils import (
+    make_coil_mapper,
+    make_coilset,
+    make_solenoid,
+)
 from bluemira.equilibria.coils import Coil
 from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.parameterisations import PictureFrame, PrincetonD, TripleArc
@@ -109,3 +113,36 @@ class TestMakeSolenoid:
     def test_error_on_equal_extrema(self):
         with pytest.raises(BuilderError):
             make_solenoid(4, 1, 1, 1, 0, 0, 0, 1)
+
+
+class TestMakeCoilset:
+    boundaries = [
+        PrincetonD().create_shape(label="PrincetonD"),
+        TripleArc().create_shape(label="TripleArc"),
+    ]
+
+    @pytest.mark.parametrize("boundary", boundaries)
+    def test_make_coilset(self, boundary):
+        n_CS = 5
+        n_PF = 6
+        coilset = make_coilset(
+            boundary,
+            9,
+            1.6,
+            1.8,
+            0.3,
+            0.4,
+            3,
+            0.2,
+            0.1,
+            0.1,
+            0.1,
+            n_CS,
+            n_PF,
+            10,
+            10,
+            10,
+            10,
+        )
+
+        assert len(coilset.coils) == n_PF + n_CS
