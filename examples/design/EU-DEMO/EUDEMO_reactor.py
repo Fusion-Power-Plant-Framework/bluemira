@@ -485,7 +485,7 @@ vessel = component.get_component(EUDEMOReactor.VACUUM_VESSEL)
 vessel.get_component("xy").plot_2d(ax=ax, show=False)
 thermal_shield = component.get_component(EUDEMOReactor.VVTS)
 thermal_shield.get_component("xy").plot_2d(ax=ax, show=False)
-thermal_shield = component.get_component(EUDEMOReactor.cTS)
+thermal_shield = component.get_component(EUDEMOReactor.CTS)
 thermal_shield.get_component("xy").plot_2d(ax=ax, show=False)
 pf_coils.get_component("xy").plot_2d(ax=ax)
 
