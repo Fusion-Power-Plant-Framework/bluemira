@@ -317,3 +317,153 @@ def make_coil_mapper(track, exclusion_zones, coils):
             new_segments.extend(sub_segs)
 
     return PositionMapper(new_segments)
+
+
+def make_solenoid(r_cs, tk_cs, z_min, z_max, g_cs, tk_cs_ins, tk_cs_cas, n_CS):
+    """
+    Make a set of solenoid coils.
+    """
+
+    def make_cs_coil(z_coil, dz_coil, i):
+        return Coil(
+            r_cs,
+            z_coil,
+            current=0,
+            dx=tk_cs,
+            dz=dz_coil,
+            control=True,
+            ctype="CS",
+            name=f"CS_{i+1}",
+            flag_sizefix=True,
+        )
+
+    total_height = z_max - z_min
+    tk_inscas = tk_cs_ins + tk_cs_cas
+
+    coils = []
+    if n_CS == 1:
+        # Single CS module solenoid
+        module_height = total_height - 2 * tk_inscas
+        coil = make_cs_coil(0.5 * total_height, 0.5 * module_height, 0)
+        coils.append(coil)
+
+    elif n_CS % 2 == 0:
+        # Equally-spaced CS modules for even numbers of CS coils
+        module_height = (total_height - (n_CS - 1) * g_cs - n_CS * 2 * tk_inscas) / n_CS
+        dz_coil = 0.5 * module_height
+        z_iter = z_max
+        for i in range(n_CS):
+            z_coil = z_iter - tk_inscas - dz_coil
+            coil = make_cs_coil(z_coil, dz_coil, i)
+            coils.append(coil)
+            z_iter = z_coil - dz_coil - tk_inscas - g_cs
+
+    else:
+        # Odd numbers of modules -> Make a central module that is twice the size of the
+        # others.
+        module_height = (total_height - (n_CS - 1) * g_cs - n_CS * 2 * tk_inscas) / (
+            n_CS + 1
+        )
+        z_iter = z_max
+        for i in range(n_CS):
+            if i == n_CS // 2:
+                # Central module
+                dz_coil = module_height
+                z_coil = z_iter - tk_inscas - dz_coil
+
+            else:
+                # All other modules
+                dz_coil = 0.5 * module_height
+                z_coil = z_iter - tk_inscas - dz_coil
+
+            coil = make_cs_coil(z_coil, dz_coil, i)
+            coils.append(coil)
+            z_iter = z_coil - dz_coil - tk_inscas - g_cs
+
+    return coils
+
+
+def make_pf_coils(
+    tf_boundary, n_PF, R_0, kappa_u, kappa_l, delta_u, delta_l, j_max, b_max
+):
+    """
+    Make a set of PF coils, positioning them crudely with respect to the intended plasma
+    shape.
+    """
+    # Project plasma centroid through plasma upper and lower extrema
+    angle_upper = np.arctan2(kappa_u, -delta_u)
+    angle_lower = np.arctan2(-kappa_l, -delta_l)
+    scale = 1.5
+
+    angles = np.linspace(scale * angle_upper, scale * angle_lower, n_PF)
+
+    coils = []
+    for i, angle in enumerate(angles):
+        line = make_polygon(
+            [
+                [R_0, R_0 + VERY_BIG * np.cos(angle)],
+                [0, 0],
+                [0, VERY_BIG * np.sin(angle)],
+            ]
+        )
+        _, intersection = distance_to(tf_boundary, line)
+        x, _, z = intersection[0][0]
+
+        coil = Coil(
+            x,
+            z,
+            current=0,
+            ctype="PF",
+            control=True,
+            name=f"PF_{i+1}",
+            flag_sizefix=False,
+            j_max=j_max,
+            b_max=b_max,
+        )
+        coils.append(coil)
+
+    return coils
+
+
+def make_coilset(
+    tf_boundary,
+    R_0,
+    kappa_u,
+    kappa_l,
+    delta_u,
+    delta_l,
+    r_cs,
+    tk_cs,
+    g_cs,
+    tk_cs_ins,
+    tk_cs_cas,
+    n_CS,
+    n_PF,
+    CS_jmax,
+    CS_bmax,
+    PF_jmax,
+    PF_bmax,
+):
+    """
+    Make an initial EU-DEMO-like coilset.
+    """
+    bb = tf_boundary.bounding_box
+    z_min = bb.z_min
+    z_max = bb.z_max
+
+    pf_coils = make_pf_coils(
+        tf_boundary,
+        n_PF,
+        R_0,
+        kappa_u,
+        kappa_l,
+        delta_u,
+        delta_l,
+        j_max=PF_jmax,
+        b_max=PF_bmax,
+    )
+    solenoid = make_solenoid(r_cs, tk_cs, z_min, z_max, g_cs, tk_cs_ins, tk_cs_cas, n_CS)
+
+    coilset = CoilSet(pf_coils + solenoid)
+    coilset.assign_coil_materials("CS", j_max=CS_jmax, b_max=CS_bmax)
+    return coilset
