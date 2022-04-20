@@ -22,6 +22,7 @@
 import numpy as np
 import pytest
 
+from bluemira.base.error import BuilderError
 from bluemira.builders.EUDEMO.pf_coils import make_coil_mapper, make_solenoid
 from bluemira.equilibria.coils import Coil
 from bluemira.geometry.face import BluemiraFace
@@ -100,3 +101,7 @@ class TestMakeSolenoid:
         assert len(coils) == n_CS
         dzs = [c.dz for c in coils]
         assert np.allclose(dzs, dzs[0])
+
+    def test_error_on_too_large_gaps(self):
+        with pytest.raises(BuilderError):
+            make_solenoid(4, 1, 0, 10, 1, 1, 1, 10)
