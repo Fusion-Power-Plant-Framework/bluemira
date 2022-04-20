@@ -680,7 +680,7 @@ class TFCoilsBuilder(OptimisedShapeBuilder):
         # clashes when the winding pack thickness and casing are added.
         tk_offset = 0.5 * self._params.tf_wp_width.value
         # Variable thickness of the casing is problematic...
-        # TODO: Improve this estimate (or used variable offset here too..)
+        # TODO: Improve this estimate (or use variable offset here too..)
         tk_offset += 1.5 * self._params.tk_tf_front_ib
         tk_offset += self._params.g_ts_tf.value
         return offset_wire(keep_out_zone, tk_offset, open_wire=False, join="arc")

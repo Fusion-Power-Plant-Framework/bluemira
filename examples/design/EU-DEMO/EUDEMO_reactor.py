@@ -44,13 +44,15 @@ from bluemira.builders.EUDEMO.tf_coils import TFCoilsBuilder
 from bluemira.builders.EUDEMO.vacuum_vessel import VacuumVesselBuilder
 from bluemira.builders.radiation_shield import RadiationShieldBuilder
 from bluemira.builders.tf_coils import RippleConstrainedLengthGOP
-from bluemira.builders.thermal_shield import CyrostatThermalShieldBuilder
+from bluemira.builders.thermal_shield import (
+    CyrostatThermalShieldBuilder,
+    VacuumVesselThermalShieldBuilder,
+)
 from bluemira.codes import plot_radial_build
 from bluemira.codes.plasmod.mapping import (  # noqa: N812
     create_mapping as create_PLASMOD_mappings,
 )
 from bluemira.codes.process.mapping import mappings as PROCESS_mappings  # noqa: N812
-from bluemira.display.displayer import ComponentDisplayer
 from bluemira.equilibria._deprecated_run import AbInitioEquilibriumProblem
 from bluemira.utilities.tools import json_writer
 
@@ -222,24 +224,24 @@ build_config = {
         "runmode": "mock",  # ["run", "read", "mock"]
     },
     "Plasma": {
-        "runmode": "run",  # ["run", "read", "mock"]
+        "runmode": "read",  # ["run", "read", "mock"]
     },
     "TF Coils": {
         "runmode": "run",  # ["run", "read", "mock"]
-        "param_class": "PrincetonD",
+        "param_class": "TripleArc",
         "variables_map": {
             "x1": {
                 "value": "r_tf_in_centre",
                 "fixed": True,
             },
-            # "f1": {
-            #     "value": 4,
-            #     "lower_bound": 4,
-            # },
-            # "f2": {
-            #     "value": 4,
-            #     "lower_bound": 4,
-            # },
+            "f1": {
+                "value": 4,
+                "lower_bound": 4,
+            },
+            "f2": {
+                "value": 4,
+                "lower_bound": 4,
+            },
         },
         "algorithm_name": "COBYLA",
         "problem_settings": {
@@ -481,6 +483,10 @@ blanket = component.get_component(EUDEMOReactor.BLANKET)
 blanket.get_component("xy").plot_2d(ax=ax, show=False)
 vessel = component.get_component(EUDEMOReactor.VACUUM_VESSEL)
 vessel.get_component("xy").plot_2d(ax=ax, show=False)
+thermal_shield = component.get_component(EUDEMOReactor.VVTS)
+thermal_shield.get_component("xy").plot_2d(ax=ax, show=False)
+thermal_shield = component.get_component(EUDEMOReactor.cTS)
+thermal_shield.get_component("xy").plot_2d(ax=ax, show=False)
 pf_coils.get_component("xy").plot_2d(ax=ax)
 
 # %%
@@ -513,7 +519,7 @@ vessel_builder: VacuumVesselBuilder = reactor.get_builder(EUDEMOReactor.VACUUM_V
 blanket_builder: BlanketBuilder = reactor.get_builder(EUDEMOReactor.BLANKET)
 tf_coils_builder: TFCoilsBuilder = reactor.get_builder(EUDEMOReactor.TF_COILS)
 pf_coils_builder: PFCoilsBuilder = reactor.get_builder(EUDEMOReactor.PF_COILS)
-vvts_builder: CyrostatThermalShieldBuilder = reactor.get_builder(EUDEMOReactor.VVTS)
+vvts_builder: VacuumVesselThermalShieldBuilder = reactor.get_builder(EUDEMOReactor.VVTS)
 cts_builder: CyrostatThermalShieldBuilder = reactor.get_builder(EUDEMOReactor.CTS)
 cryostat_builder: CryostatBuilder = reactor.get_builder(EUDEMOReactor.CRYOSTAT)
 radiation_shield_builder: RadiationShieldBuilder = reactor.get_builder(
