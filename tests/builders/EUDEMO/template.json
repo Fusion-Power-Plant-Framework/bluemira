@@ -202,7 +202,7 @@
       "PLASMOD": {
         "name": "PLH",
         "recv": true,
-        "send": false
+        "unit": "MW"
       }
     }
   },
@@ -350,17 +350,10 @@
     }
   },
   "P_ohm": {
-    "name": "Ohmic heating power",
+    "name": "Ohimic heating power",
     "value": 0,
     "unit": "W",
-    "source": "PLASMOD",
-    "mapping": {
-      "PLASMOD": {
-        "name": "Pohm",
-        "recv": true,
-        "send": false
-      }
-    }
+    "source": "Input"
   },
   "P_rad": {
     "name": "Radiation power",
@@ -661,41 +654,37 @@
     "name": "Breeding blanket inlet pressure",
     "value": 8000000.0,
     "unit": "Pa",
-    "source": "Input",
-    "description": "HCPB classic"
+    "source": "Input (HCPB classic)"
   },
   "bb_p_outlet": {
     "name": "Breeding blanket outlet pressure",
     "value": 7500000.0,
     "unit": "Pa",
-    "source": "Input",
-    "description": "HCPB classic"
+    "source": "Input (HCPB classic)"
   },
   "bb_pump_eta_el": {
     "name": "Breeding blanket pumping electrical efficiency",
     "value": 0.87,
-    "unit": "N/A",
+    "unit": "dimensionless",
     "source": "Input (D.J. Ward, W.E. Han. Results of system studies for DEMO. Report of DEMO study, Task TW6-TRP-002. July 2007)"
   },
   "bb_pump_eta_isen": {
     "name": "Breeding blanket pumping isentropic efficiency",
     "value": 0.9,
-    "unit": "N/A",
+    "unit": "dimensionless",
     "source": "Input (Fabio Cismondi 08/12/16)"
   },
   "bb_t_inlet": {
     "name": "Breeding blanket inlet temperature",
     "value": 300,
     "unit": "°C",
-    "source": "Input",
-    "description": "HCPB classic"
+    "source": "Input (HCPB classic)"
   },
   "bb_t_outlet": {
     "name": "Breeding blanket outlet temperature",
     "value": 500,
     "unit": "°C",
-    "source": "Input",
-    "description": "HCPB classic"
+    "source": "Input (HCPB classic)"
   },
   "beta": {
     "name": "Total ratio of plasma pressure to magnetic pressure",
@@ -878,13 +867,13 @@
   "div_pump_eta_el": {
     "name": "Divertor pumping electrical efficiency",
     "value": 0.87,
-    "unit": "N/A",
+    "unit": "dimensionless",
     "source": "Input (F. Cismondi)"
   },
   "div_pump_eta_isen": {
     "name": "Divertor pumping isentropic efficiency",
     "value": 0.99,
-    "unit": "N/A",
+    "unit": "dimensionless",
     "source": "Input (F. Cismondi)"
   },
   "dmd": {
@@ -897,21 +886,22 @@
   "e_decay_mult": {
     "name": "Decay heat multiplication factor",
     "value": 1.0175,
-    "unit": "N/A",
+    "unit": "dimensionless",
     "source": "Input (PPCS FWBL Helium Cooled Model P PPCS04 D5part1)",
     "description": "Quasi-instantaneous energy multiplication; still present when plasma is off"
   },
   "e_mult": {
     "name": "Energy multiplication factor",
     "value": 1.35,
-    "unit": "N/A",
+    "unit": "dimensionless",
     "source": "Input (HCPB classic)",
     "description": "Instantaneous energy multiplication due to neutron multiplication and the like",
     "mapping": {
       "PROCESS": {
         "name": "emult",
+        "send": true,
         "recv": false,
-        "send": true
+        "unit": "dimensionless"
       }
     }
   },
@@ -991,13 +981,13 @@
   "f_core_rad_fw": {
     "name": "Fraction of core radiation power that is distributed to the blanket FW",
     "value": 0.9,
-    "unit": "N/A",
+    "unit": "dimensionless",
     "source": "Input (MC guess)"
   },
   "f_fw_aux": {
     "name": "Fraction of first wall power that goes into auxiliary systems",
     "value": 0.09,
-    "unit": "N/A",
+    "unit": "dimensionless",
     "source": "Input (F. Maviglia standard)"
   },
   "f_hfs_lower_target": {
@@ -1052,20 +1042,20 @@
   "f_sol_ch_fw": {
     "name": "Fraction of SOL charged particle power that is distributed to the blanket FW",
     "value": 0.8,
-    "unit": "N/A",
+    "unit": "dimensionless",
     "source": "Input (F. Maviglia standard)"
   },
   "f_sol_rad": {
     "name": "Fraction of SOL power radiated",
     "value": 0.75,
-    "unit": "N/A",
+    "unit": "dimensionless",
     "source": "Input (F. Maviglia standard)",
     "description": "The rest is assumed to be in the form of charged particles"
   },
   "f_sol_rad_fw": {
     "name": "Fraction of radiated SOL power that is distributed to the blanket FW",
     "value": 0.8,
-    "unit": "N/A",
+    "unit": "dimensionless",
     "source": "Input (MC guess)"
   },
   "fw_a_max": {
@@ -1333,7 +1323,7 @@
     "name": "Plasma side TF coil min height",
     "value": -6.5,
     "unit": "m",
-    "source": "PROCESS"
+    "source": "Input"
   },
   "hf_limit": {
     "name": "heat flux material limit",
@@ -1413,11 +1403,7 @@
   "m_gas": {
     "name": "Gas puff flow rate",
     "value": 50,
-<<<<<<< HEAD
     "unit": "Pa m^3/s",
-=======
-    "unit": "Pam^3/s",
->>>>>>> Update template.json
     "source": "Input (Discussions with Chris Day and Yannick H\u00f6rstensmeyer)",
     "description": "To maintain detachment - no chance of fusion from gas injection"
   },
@@ -1582,14 +1568,7 @@
     "name": "Control HCD power",
     "value": 50,
     "unit": "MW",
-    "source": "Input",
-    "mapping": {
-      "PLASMOD": {
-        "name": "q_control",
-        "recv": false,
-        "send": true
-      }
-    }
+    "source": "Input"
   },
   "r_ccs": {
     "name": "Outer radius of the central column shield",
@@ -1809,11 +1788,7 @@
     "name": "Plasma resistance",
     "value": 0,
     "unit": "ohm",
-<<<<<<< HEAD
     "source": "Calculated",
-=======
-    "source": "Calculated"
->>>>>>> Update template.json
     "mapping": {
       "PLASMOD": {
         "name": "rplas",
@@ -1907,8 +1882,7 @@
     "name": "Insulation fluence limit for ITER equivalent to 10 MGy",
     "value": 3.2e+21,
     "unit": "1/m^2",
-    "source": "Input",
-    "description": "http://ieeexplore.ieee.org/document/6374236/"
+    "source": "Input (https://ieeexplore.ieee.org/document/6374236/)"
   },
   "tf_taper_frac": {
     "name": "Height of straight portion as fraction of total tapered section height",
@@ -2178,57 +2152,37 @@
     "name": "Thickness ratio of the inboard blanket back supporting structure",
     "value": 0.577,
     "unit": "dimensionless",
-    "source": "HCPB 2015 design description document"
+    "source": "Input (HCPB 2015 design description document 2MHDNB)"
   },
   "tk_r_ib_bz": {
     "name": "Thickness ratio of the inboard blanket breeding zone",
     "value": 0.309,
     "unit": "dimensionless",
-<<<<<<< HEAD
     "source": "Input (HCPB 2015 design description document 2MHDNB)"
-=======
-    "source": "HCPB 2015 design description document"
->>>>>>> Update template.json
   },
   "tk_r_ib_manifold": {
     "name": "Thickness ratio of the inboard blanket manifold",
     "value": 0.114,
     "unit": "dimensionless",
-<<<<<<< HEAD
     "source": "Input (HCPB 2015 design description document 2MHDNB)"
-=======
-    "source": "HCPB 2015 design description document"
->>>>>>> Update template.json
   },
   "tk_r_ob_bss": {
     "name": "Thickness ratio of the outboard blanket back supporting structure",
     "value": 0.498,
     "unit": "dimensionless",
-<<<<<<< HEAD
     "source": "Input (HCPB 2015 design description document 2MHDNB)"
-=======
-    "source": "HCPB 2015 design description document"
->>>>>>> Update template.json
   },
   "tk_r_ob_bz": {
     "name": "Thickness ratio of the outboard blanket breeding zone",
     "value": 0.431,
     "unit": "dimensionless",
-<<<<<<< HEAD
     "source": "Input (HCPB 2015 design description document 2MHDNB)"
-=======
-    "source": "HCPB 2015 design description document"
->>>>>>> Update template.json
   },
   "tk_r_ob_manifold": {
     "name": "Thickness ratio of the outboard blanket manifold",
     "value": 0.071,
     "unit": "dimensionless",
-<<<<<<< HEAD
     "source": "Input (HCPB 2015 design description document 2MHDNB)"
-=======
-    "source": "HCPB 2015 design description document"
->>>>>>> Update template.json
   },
   "tk_rs": {
     "name": "Radiation shield thickness",
