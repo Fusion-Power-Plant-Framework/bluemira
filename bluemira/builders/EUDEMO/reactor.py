@@ -277,8 +277,6 @@ class EUDEMOReactor(Reactor):
         thermal_shield = component_tree.get_component(self.THERMAL_SHIELD)
         thermal_shield.add_children(cts)
 
-        # thermal_shield.merge_children(cts)
-
     @Reactor.design_stage(IVC)
     def build_in_vessel_component_shapes(self, component_tree: Component):
         """
