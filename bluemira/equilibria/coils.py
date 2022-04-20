@@ -644,7 +644,7 @@ class CoilGroup(CoilFieldsMixin, abc.ABC):
     """
 
     __slots__ = (
-        "__sizer",
+        "_sizer",
         "_b_max",
         "_ctype",
         "_current",
@@ -714,8 +714,8 @@ class CoilGroup(CoilFieldsMixin, abc.ABC):
         }
 
         self._flag_sizefix = False
-        self.__sizer = CoilSizer(self)
-        self.__sizer(self)
+        self._sizer = CoilSizer(self)
+        self._sizer(self)
 
         # Meshing
         super().__init__(None)
@@ -929,14 +929,14 @@ class CoilGroup(CoilFieldsMixin, abc.ABC):
         """
         self.x = new_position[:, 0]
         self.z = new_position[:, 1]
-        self.__sizer(self)
+        self._sizer(self)
 
     def adjust_position(self, d_xz: __ITERABLE_FLOAT):
         """
         Adjust position of each coil
         """
         self.position = np.stack([self.x + d_xz[:, 0], self.z + d_xz[:, 1]], axis=1)
-        self.__sizer(self)
+        self._sizer(self)
 
     @property
     def x(self) -> np.array:
@@ -951,7 +951,7 @@ class CoilGroup(CoilFieldsMixin, abc.ABC):
         Set x coordinate of each coil
         """
         self._x[:] = new_x
-        self.__sizer(self)
+        self._sizer(self)
 
     @property
     def z(self) -> np.array:
@@ -966,7 +966,7 @@ class CoilGroup(CoilFieldsMixin, abc.ABC):
         Set z coordinate of each coil
         """
         self._z[:] = new_z
-        self.__sizer(self)
+        self._sizer(self)
 
     @property
     def dx(self) -> np.array:
@@ -981,7 +981,7 @@ class CoilGroup(CoilFieldsMixin, abc.ABC):
         Set dx coordinate of each coil
         """
         self._dx[:] = new_dx
-        self.__sizer(self)
+        self._sizer(self)
 
     @property
     def dz(self) -> np.array:
@@ -996,20 +996,20 @@ class CoilGroup(CoilFieldsMixin, abc.ABC):
         Set dz coordinate of each coil
         """
         self._dz[:] = new_dz
-        self.__sizer(self)
+        self._sizer(self)
 
     def make_size(self, current: Optional[__ITERABLE_FLOAT] = None) -> None:
         """
         Size the coil based on a current and a current density.
         """
-        self.__sizer(self, current)
+        self._sizer(self, current)
 
     def fix_size(self) -> None:
         """
         Fixes the size of all coils
         """
         self._flag_sizefix = True
-        self.__sizer.update(self)
+        self._sizer.update(self)
 
     def assign_material(
         self,
@@ -1035,7 +1035,7 @@ class CoilGroup(CoilFieldsMixin, abc.ABC):
 
         self.j_max = j_max
         self.b_max = b_max
-        self.__sizer.update(self)
+        self._sizer.update(self)
 
     def get_max_current(self) -> np.array:
         """
@@ -1046,7 +1046,7 @@ class CoilGroup(CoilFieldsMixin, abc.ABC):
         Imax: float
             The maximum current that can be produced by the coil [A]
         """
-        return self.__sizer.get_max_current(self)
+        return self._sizer.get_max_current(self)
 
     def to_dict(self):
         """
@@ -1136,7 +1136,7 @@ class Coil(CoilGroup):
 
     __slots__ = ()
 
-    __safe_attrs = ("_flag_sizefix", "_CoilGroup__sizer")
+    __safe_attrs = ("_flag_sizefix", "_sizer")
 
     def __init__(
         self,
