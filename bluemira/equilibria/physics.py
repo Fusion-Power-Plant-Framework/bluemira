@@ -294,26 +294,6 @@ def calc_p_average(eq):
     return volume_integral(p, eq.x, eq.dx, eq.dz) / v_plasma
 
 
-def calc_betap(eq):
-    """
-    Calculate the ratio of plasma pressure to magnetic pressure
-
-    \t:math:`\\beta_p = \\dfrac{2\\mu_0\\langle p \\rangle}{B_p^2}`
-
-    Parameters
-    ----------
-    eq: Equilibrium
-        The Equilibrium object for which to calculate beta_p
-
-    Returns
-    -------
-    beta: float
-        Ratio of plasma to magnetic pressure
-    """
-    p = eq.pressure_map()
-    return 4 / (MU_0 * eq._R_0 * eq._Ip**2) * volume_integral(p, eq.x, eq.dx, eq.dz)
-
-
 def calc_beta_t(eq):
     """
     Calculate the ratio of plasma pressure to toroidal magnetic pressure.
@@ -336,8 +316,33 @@ def calc_beta_t(eq):
 
 def calc_beta_p(eq):
     """
+    Calculate the ratio of plasma pressure to poloidal magnetic pressure
+
+    \t:math:`\\beta_p = \\dfrac{2\\mu_0\\langle p \\rangle}{B_p^2}`
+
+    Parameters
+    ----------
+    eq: Equilibrium
+        The Equilibrium object for which to calculate beta_p
+
+    Returns
+    -------
+    beta: float
+        Ratio of plasma to magnetic pressure
+    """
+    p = eq.pressure_map()
+    mask = eq._get_core_mask()
+    Bp = mask * eq.Bp()
+    p_int = volume_integral(p, eq.x, eq.dx, eq.dz)
+    Bp2_int = volume_integral(Bp**2, eq.x, eq.dx, eq.dz)
+    return 2 * MU_0 * p_int / Bp2_int
+
+
+def calc_beta_p_approx(eq):
+    """
     Calculate the ratio of plasma pressure to magnetic pressure. This is
-    following the definitions of Friedberg, Ideal MHD, pp. 68-69.
+    following the definitions of Friedberg, Ideal MHD, pp. 68-69, which is an
+    approximation.
 
     \t:math:`\\beta_p = \\dfrac{2\\mu_0\\langle p \\rangle}{B_p^2}`
 
@@ -369,7 +374,7 @@ def calc_summary(eq):
     li = 2 * li_true / (MU_0 * eq._R_0)
     li3 = 2 * bpavg / (eq._R_0 * (MU_0 * eq._Ip) ** 2)
     volume = calc_volume(eq)
-    beta_p = calc_betap(eq)
+    beta_p = calc_beta_p(eq)
     return {
         "W": energy,
         "Li": li_true,
@@ -399,13 +404,6 @@ def beta(pressure, field):
         Ratio of plasma to magnetic pressure
     """
     return np.mean(pressure) / (field**2 / 2 * MU_0)
-
-
-def beta_p(pressure, Bp):
-    """
-    The ratio of plasma pressure to poloidal magnetic pressure
-    """
-    return beta(pressure, Bp)
 
 
 def normalise_beta(beta, a, b_tor, Ip):

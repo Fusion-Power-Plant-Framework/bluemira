@@ -40,7 +40,7 @@ from bluemira.display.palettes import BLUE_PALETTE
 from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.optimisation import GeometryOptimisationProblem
 from bluemira.geometry.parameterisations import GeometryParameterisation
-from bluemira.geometry.placement import BluemiraPlacement
+from bluemira.geometry.plane import BluemiraPlane
 from bluemira.geometry.solid import BluemiraSolid
 from bluemira.geometry.tools import (
     boolean_cut,
@@ -496,7 +496,7 @@ class TFCoilsBuilder(OptimisedShapeBuilder):
 
         # This is because the bounding box of a solid is not to be trusted
         cut_wires = slice_shape(
-            solid, BluemiraPlacement.from_3_points([0, 0, 0], [1, 0, 0], [1, 0, 1])
+            solid, BluemiraPlane.from_3_points([0, 0, 0], [1, 0, 0], [1, 0, 1])
         )
         cut_wires.sort(key=lambda wire: wire.length)
         boundary = cut_wires[-1]
@@ -659,7 +659,7 @@ class TFCoilsBuilder(OptimisedShapeBuilder):
         Make the casing x-z cross-section from a 3-D volume.
         """
         wires = slice_shape(
-            solid, BluemiraPlacement.from_3_points([0, 0, 0], [1, 0, 0], [1, 0, 1])
+            solid, BluemiraPlane.from_3_points([0, 0, 0], [1, 0, 0], [1, 0, 1])
         )
         wires.sort(key=lambda wire: wire.length)
         if len(wires) != 4:

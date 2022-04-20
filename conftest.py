@@ -62,14 +62,6 @@ def pytest_addoption(parser):
         help="run tests that use private data",
     )
 
-    parser.addoption(
-        "--integration",
-        action="store_true",
-        dest="integration",
-        default=False,
-        help="enable tests for BLUEPRINT/bluemira integration",
-    )
-
 
 def pytest_configure(config):
     """
@@ -85,7 +77,6 @@ def pytest_configure(config):
         "longrun": config.option.longrun,
         "reactor": config.option.reactor,
         "private": config.option.private,
-        "integration": config.option.integration,
     }
     if options["private"] and try_get_bluemira_private_data_root() is None:
         raise ValueError("You cannot run private tests. Data directory not found")

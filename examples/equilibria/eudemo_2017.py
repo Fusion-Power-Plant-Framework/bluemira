@@ -45,7 +45,7 @@ from bluemira.equilibria.eq_constraints import AutoConstraints
 from bluemira.equilibria.equilibrium import Breakdown, Equilibrium
 from bluemira.equilibria.grid import Grid
 from bluemira.equilibria.optimiser import BreakdownOptimiser, FBIOptimiser
-from bluemira.equilibria.physics import calc_beta_p, calc_li, calc_psib
+from bluemira.equilibria.physics import calc_beta_p_approx, calc_li, calc_psib
 from bluemira.equilibria.profiles import BetaIpProfile, CustomProfile, DoublePowerFunc
 from bluemira.equilibria.solve import PicardAbsIterator, PicardLiAbsIterator
 
@@ -286,7 +286,9 @@ ax[1].set_title("$\\psi_{b}$ = " + f"{sof_psi:.2f} V.s")
 ax[2].set_title("$\\psi_{b}$ = " + f"{eof_psi:.2f} V.s")
 
 
-bluemira_print("SOF:\n" f"beta_p: {calc_beta_p(sof):.2f}\n" f"l_i: {calc_li(sof):.2f}")
+bluemira_print(
+    "SOF:\n" f"beta_p: {calc_beta_p_approx(sof):.2f}\n" f"l_i: {calc_li(sof):.2f}"
+)
 
 # TODO: Fix this example...
 # bluemira_print("EOF:\n" f"beta_p: {calc_beta_p(eof):.2f}\n" f"l_i: {calc_li(sof):.2f}")

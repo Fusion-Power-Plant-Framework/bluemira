@@ -42,7 +42,6 @@ from bluemira.equilibria.error import EquilibriaError
 from bluemira.equilibria.file import EQDSKInterface
 from bluemira.equilibria.find import (
     find_flux_surf,
-    find_flux_surfs,
     find_LCFS_separatrix,
     find_OX_points,
     in_plasma,
@@ -1188,12 +1187,18 @@ class Equilibrium(MHDState):
         """
         Get plasma pressure map.
         """
-        o_points, x_points = self.get_OX_points()
-        mask = in_plasma(
-            self.x, self.z, self.psi(), o_points=o_points, x_points=x_points
-        )
+        mask = self._get_core_mask()
         p = self.pressure(np.clip(self.psi_norm(), 0, 1))
         return p * mask
+
+    def _get_core_mask(self):
+        """
+        Get a 2-D masking array for the plasma core.
+        """
+        o_points, x_points = self.get_OX_points()
+        return in_plasma(
+            self.x, self.z, self.psi(), o_points=o_points, x_points=x_points
+        )
 
     def q(self, psinorm, o_points=None, x_points=None):
         """
@@ -1279,28 +1284,6 @@ class Equilibrium(MHDState):
             self.x, self.z, psi, psi_n, o_points=o_points, x_points=x_points
         )
         return Loop(x=f[0], z=f[1])
-
-    def get_flux_surface_through_point(self, x, z):
-        """
-        Get a flux surface loop passing through specified x, z coordinates.
-
-        Parameters
-        ----------
-        x, z: float
-
-        Returns
-        -------
-        flux surface: List[Loop]
-        """
-        # NOTE: You should use find.py::find_flux_surface_through_point, this is just
-        # wrong, but is still used in BLUEPRINT.systems.firstwall.py
-        bluemira_warn(
-            "This function does not do what it should do. You should not use it."
-        )
-        psi = self.psi(x, z)
-        psi_n = calc_psi_norm(psi, *self.get_OX_psis())
-        loops = find_flux_surfs(self.x, self.z, self.psi(), psi_n)
-        return [Loop(x=loop.T[0], z=loop.T[1]) for loop in loops]
 
     def get_LCFS(self, psi=None):
         """

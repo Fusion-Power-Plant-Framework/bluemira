@@ -40,7 +40,7 @@ from bluemira.builders.EUDEMO.tools import (
 from bluemira.display.palettes import BLUE_PALETTE
 from bluemira.geometry.error import GeometryError
 from bluemira.geometry.face import BluemiraFace
-from bluemira.geometry.placement import BluemiraPlacement
+from bluemira.geometry.plane import BluemiraPlane
 from bluemira.geometry.tools import (
     boolean_cut,
     boolean_fuse,
@@ -113,7 +113,7 @@ class VacuumVesselThermalShieldBuilder(Builder):
         """
         Build the x-y components of the vacuum vessel thermal shield.
         """
-        xy_plane = BluemiraPlacement.from_3_points([0, 0, 0], [1, 0, 0], [1, 1, 0])
+        xy_plane = BluemiraPlane.from_3_points([0, 0, 0], [1, 0, 0], [1, 1, 0])
         r_ib_out, r_ob_out = find_xy_plane_radii(self._vvts_face.boundary[0], xy_plane)
         r_ib_in, r_ob_in = find_xy_plane_radii(self._vvts_face.boundary[1], xy_plane)
 
@@ -282,7 +282,7 @@ class CyrostatThermalShieldBuilder(Builder):
         Build the x-y components of the thermal shield.
         """
         # Cryostat thermal shield
-        mid_plane = BluemiraPlacement()
+        mid_plane = BluemiraPlane.from_3_points([0, 0, 0], [1, 0, 0], [1, 1, 0])
         r_in, r_out = find_xy_plane_radii(self._cts_face.boundary[0], mid_plane)
 
         cts = make_circular_xy_ring(r_in, r_out)

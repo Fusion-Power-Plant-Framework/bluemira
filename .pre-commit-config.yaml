@@ -8,7 +8,6 @@ repos:
       exclude: |
             (?x)^(
                 tests/bluemira/utilities/test_data/testJSONEncoder.json |
-                tests/BLUEPRINT/cli/test_indir/SMOKE-TEST_template.json
             )$
 
     - id: mixed-line-ending
@@ -45,7 +44,6 @@ repos:
       exclude: |
             (?x)^(
                 examples/convert_py_to_ipynb.py |
-                examples/BLUEPRINT_integration.py
             )$
 
 -   repo: https://github.com/psf/black

@@ -324,7 +324,7 @@ class Geometry:
         material: Material
             The material of all the Elements in the Coordinates
         """
-        n_start = self.add_node(*coordinates[0])  # Add first Node
+        n_start = self.add_node(*coordinates.points[0])  # Add first Node
 
         n1 = n_start
         for point in coordinates.points[1:]:
