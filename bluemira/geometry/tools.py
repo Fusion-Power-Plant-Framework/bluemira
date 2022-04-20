@@ -41,7 +41,7 @@ from bluemira.base.look_and_feel import bluemira_debug, bluemira_warn
 from bluemira.codes import _freecadapi as cadapi
 from bluemira.geometry.base import BluemiraGeo, GeoMeshable
 from bluemira.geometry.coordinates import Coordinates
-from bluemira.geometry.error import GeometryError, _FallBackError
+from bluemira.geometry.error import GeometryError
 from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.plane import BluemiraPlane
 from bluemira.geometry.shell import BluemiraShell
