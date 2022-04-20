@@ -23,7 +23,7 @@
 EU-DEMO specific builder for PF coils
 """
 
-from typing import List, Optional
+from typing import List, Optional, Type
 
 import numpy as np
 
@@ -32,14 +32,17 @@ from bluemira.base.builder import BuildConfig, Builder
 from bluemira.base.components import Component
 from bluemira.base.config import Configuration
 from bluemira.base.error import BuilderError
-from bluemira.base.look_and_feel import bluemira_warn
+from bluemira.base.look_and_feel import bluemira_debug, bluemira_warn
 from bluemira.builders.pf_coils import PFCoilBuilder
 from bluemira.equilibria.coils import Coil, CoilSet
+from bluemira.equilibria.opt_problems import CoilsetOptimisationProblem
 from bluemira.geometry.constants import VERY_BIG
 from bluemira.geometry.tools import boolean_cut, distance_to, make_polygon, split_wire
 from bluemira.magnetostatics.baseclass import SourceGroup
 from bluemira.magnetostatics.circular_arc import CircularArcCurrentSource
+from bluemira.utilities.optimiser import Optimiser
 from bluemira.utilities.positioning import PathInterpolator, PositionMapper
+from bluemira.utilities.tools import get_class_from_module
 
 
 class PFCoilsComponent(Component):
@@ -104,6 +107,9 @@ class PFCoilsBuilder(Builder):
     ]
     _required_config: List[str] = []
     _params: Configuration
+    _param_class: Type[CoilSet]
+    _default_runmode: str = "read"
+    _design_problem: Optional[CoilsetOptimisationProblem] = None
 
     def _extract_config(self, build_config: BuildConfig):
         super()._extract_config(build_config)
@@ -114,6 +120,25 @@ class PFCoilsBuilder(Builder):
                     "Must supply eqdsk_path in build_config when using 'read' mode."
                 )
             self._eqdsk_path = build_config["eqdsk_path"]
+
+        if self._runmode.name.lower() == "run":
+            self._problem_settings = build_config.get("problem_settings", {})
+            self._algorithm_name = build_config.get("algorithm_name", "SLSQP")
+            self._opt_conditions = build_config.get("opt_conditions", {"max_eval": 100})
+            self._opt_parameters = build_config.get("opt_parameters", {})
+
+            problem_class = build_config["problem_class"]
+            if isinstance(problem_class, str):
+                self._problem_class = get_class_from_module(
+                    problem_class, default_module="bluemira.equilibria.opt_problems"
+                )
+            elif isinstance(problem_class, type):
+                self._problem_class = problem_class
+            else:
+                raise BuilderError(
+                    "problem_class must either be a str pointing to the class to be loaded "
+                    f"or the class itself - got {problem_class}."
+                )
 
     def reinitialise(self, params, **kwargs) -> None:
         """
@@ -134,7 +159,24 @@ class PFCoilsBuilder(Builder):
         """
         Build PF coils from a design optimisation problem.
         """
-        pass
+        bluemira_debug(
+            f"""Setting up design problem with:
+algorithm_name: {self._algorithm_name}
+n_variables: {self._coilset.n_control_coils}
+opt_conditions: {self._opt_conditions}
+opt_parameters: {self._opt_parameters}"""
+        )
+        optimiser = Optimiser(
+            self._algorithm_name,
+            self._coilset.n_control_coils,
+            self._opt_conditions,
+            self._opt_parameters,
+        )
+
+        if self._problem_settings != {}:
+            bluemira_debug(
+                f"Applying non-default settings to problem: {self._problem_settings}"
+            )
 
     def read(self, **kwargs):
         """
@@ -429,7 +471,7 @@ def make_PF_coil_positions(tf_boundary, n_PF, R_0, kappa_u, kappa_l, delta_u, de
 
     angles = np.linspace(scale * angle_upper, scale * angle_lower, n_PF)
 
-    x_c, z_c = np.array(n_PF), np.array(n_PF)
+    x_c, z_c = np.zeros(n_PF), np.zeros(n_PF)
     for i, angle in enumerate(angles):
         line = make_polygon(
             [
