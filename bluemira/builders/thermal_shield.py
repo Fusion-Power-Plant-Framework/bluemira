@@ -297,9 +297,6 @@ class CyrostatThermalShieldBuilder(Builder):
         """
         Build the x-y-z components of the thermal shield.
         """
-        n_ts_draw = max(1, int(degree // (360 // self._params.n_TF.value)))
-        degree = (360.0 / self._params.n_TF.value) * n_ts_draw
-        # Cryostat thermal shield
         component = Component("xyz")
         cts_face = self._cts_face.deepcopy()
         base = (0, 0, 0)
@@ -308,11 +305,16 @@ class CyrostatThermalShieldBuilder(Builder):
             cts_face,
             base=base,
             direction=direction,
-            degree=360 / self._params.n_TF.value,
+            degree=degree
+            - 1,  # TODO: Put back `degree/ self._params.n_TF.value,` (#902)
         )
         cryostat_ts = PhysicalComponent("Cryostat TS", cts)
-        cryostat_ts.display_cad_options.color = BLUE_PALETTE["TS"][0]
-        sectors = circular_pattern_component(cryostat_ts, n_ts_draw, degree=degree)
-        component.add_children(sectors, merge_trees=True)
+        component.add_child(cryostat_ts)
+        # TODO: Put back sector segmentation (see #902 for details)
+        # n_ts_draw = max(1, int(degree // (360 // self._params.n_TF.value)))
+        # degree = (360.0 / self._params.n_TF.value) * n_ts_draw
+        # cryostat_ts.display_cad_options.color = BLUE_PALETTE["TS"][0]
+        # sectors = circular_pattern_component(cryostat_ts, n_ts_draw, degree=degree)
+        # component.add_children(sectors, merge_trees=True)
 
         return component
