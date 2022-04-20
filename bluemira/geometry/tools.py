@@ -125,9 +125,6 @@ def _make_debug_file(name) -> str:
     return filename
 
 
-# add comment to see how pre-commit fails
-
-
 def log_geometry_on_failure(func):
     """
     Decorator for debugging of failed geometry operations.
@@ -138,7 +135,7 @@ def log_geometry_on_failure(func):
     def wrapper(*args, **kwargs):
         try:
             return func(*args, **kwargs)
-        except (cadapi.FreeCADError, _FallBackError) as error:
+        except cadapi.FreeCADError as error:
             data = _reconstruct_function_call(signature, *args, **kwargs)
             filename = _make_debug_file(func_name)
 
@@ -160,7 +157,7 @@ def log_geometry_on_failure(func):
     return wrapper
 
 
-def fallback_to(fallback_func):
+def fallback_to(fallback_func, exception):
     """
     Decorator for a fallback to an alternative geometry operation.
     """
@@ -169,7 +166,7 @@ def fallback_to(fallback_func):
         def wrapper(*args, **kwargs):
             try:
                 return func(*args, **kwargs)
-            except _FallBackError:
+            except exception:
                 bluemira_warn(
                     f"{func.__name__} failed, falling back to {fallback_func.__name__}."
                 )
@@ -271,7 +268,7 @@ def _make_polygon_fallback(points, label, closed, **kwargs) -> BluemiraWire:
     return make_polygon(points, label, closed)
 
 
-@fallback_to(_make_polygon_fallback)
+@fallback_to(_make_polygon_fallback, cadapi.FreeCADError)
 @log_geometry_on_failure
 def interpolate_bspline(
     points: Union[list, np.ndarray],
@@ -304,13 +301,10 @@ def interpolate_bspline(
         a bluemira wire that contains the bspline
     """
     points = Coordinates(points).T
-    try:
-        return BluemiraWire(
-            cadapi.interpolate_bspline(points, closed, start_tangent, end_tangent),
-            label=label,
-        )
-    except cadapi.FreeCADError as error:
-        raise _FallBackError from error
+    return BluemiraWire(
+        cadapi.interpolate_bspline(points, closed, start_tangent, end_tangent),
+        label=label,
+    )
 
 
 def make_bezier(
@@ -495,7 +489,7 @@ def _offset_wire_discretised(
     return make_polygon(result, label=label)
 
 
-@fallback_to(fallback_func=_offset_wire_discretised)
+@fallback_to(_offset_wire_discretised, cadapi.FreeCADError)
 @log_geometry_on_failure
 def offset_wire(
     wire: BluemiraWire,
@@ -547,12 +541,9 @@ def offset_wire(
     wire: BluemiraWire
         Offset wire
     """
-    try:
-        return BluemiraWire(
-            cadapi.offset_wire(wire._shape, thickness, join, open_wire), label=label
-        )
-    except cadapi.FreeCADError as error:
-        raise _FallBackError from error
+    return BluemiraWire(
+        cadapi.offset_wire(wire._shape, thickness, join, open_wire), label=label
+    )
 
 
 def convex_hull_wires_2d(

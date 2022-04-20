@@ -542,13 +542,10 @@ def naughty_function_result(wire, *, var2=[1, 2], **kwargs):
     return 41 + kwargs["missing_piece"]
 
 
-@fallback_to(naughty_function_result)
+@fallback_to(naughty_function_result, cadapi.FreeCADError)
 @log_geometry_on_failure
 def naughty_function_fallback(wire, var=1, *, var2=[1, 2], **kwargs):
-    try:
-        raise cadapi.FreeCADError
-    except cadapi.FreeCADError:
-        raise _FallBackError
+    raise cadapi.FreeCADError
 
 
 class TestLogFailedGeometryOperationSerialisation:

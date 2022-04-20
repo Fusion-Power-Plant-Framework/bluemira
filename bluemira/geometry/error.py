@@ -80,13 +80,3 @@ class CoordinatesError(GeometryError):
     """
 
     pass
-
-
-class _FallBackError(Exception):
-    """
-    Private error class for debugging and logging when a failed geometry
-    operation has a viable fallback but the failed operation should still
-    be logged.
-    """
-
-    pass
