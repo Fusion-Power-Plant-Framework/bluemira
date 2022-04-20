@@ -100,6 +100,3 @@ class TestMakeSolenoid:
         assert len(coils) == n_CS
         dzs = [c.dz for c in coils]
         assert np.allclose(dzs, dzs[0])
-        if n_CS != 1:
-            middle = n_CS // 2
-            assert np.isclose(coils[middle].z, -1 + 10 / 2)

@@ -365,17 +365,18 @@ def make_solenoid(r_cs, tk_cs, z_min, z_max, g_cs, tk_cs_ins, tk_cs_cas, n_CS):
 
     total_height = z_max - z_min
     tk_inscas = tk_cs_ins + tk_cs_cas
+    total_gaps = (n_CS - 1) * g_cs + n_CS * 2 * tk_inscas
 
     coils = []
     if n_CS == 1:
-        # Single CS module solenoid
+        # Single CS module solenoid (no gaps)
         module_height = total_height - 2 * tk_inscas
         coil = make_CS_coil(0.5 * total_height, 0.5 * module_height, 0)
         coils.append(coil)
 
     elif n_CS % 2 == 0:
         # Equally-spaced CS modules for even numbers of CS coils
-        module_height = (total_height - (n_CS - 1) * g_cs - n_CS * 2 * tk_inscas) / n_CS
+        module_height = (total_height - total_gaps) / n_CS
         dz_coil = 0.5 * module_height
         z_iter = z_max
         for i in range(n_CS):
@@ -387,9 +388,7 @@ def make_solenoid(r_cs, tk_cs, z_min, z_max, g_cs, tk_cs_ins, tk_cs_cas, n_CS):
     else:
         # Odd numbers of modules -> Make a central module that is twice the size of the
         # others.
-        module_height = (total_height - (n_CS - 1) * g_cs - n_CS * 2 * tk_inscas) / (
-            n_CS + 1
-        )
+        module_height = (total_height - total_gaps) / (n_CS + 1)
         z_iter = z_max
         for i in range(n_CS):
             if i == n_CS // 2:
