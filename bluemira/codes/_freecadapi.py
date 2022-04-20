@@ -408,6 +408,17 @@ def make_circle_arc_3P(p1, p2, p3):  # noqa: N802
     """
     # TODO: check what happens when the 3 points are in a line
     arc = Part.ArcOfCircle(Base.Vector(p1), Base.Vector(p2), Base.Vector(p3))
+
+    # next steps are made to create an arc of circle that is consistent with that
+    # created by 'make_circle'
+    output = Part.Circle()
+    output.Radius = arc.Radius
+    output.Center = arc.Center
+    output.Axis = arc.Axis
+    arc = Part.ArcOfCircle(
+        output, output.parameter(arc.StartPoint), output.parameter(arc.EndPoint)
+    )
+
     return Part.Wire(Part.Edge(arc))
 
 

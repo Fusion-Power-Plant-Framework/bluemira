@@ -28,19 +28,26 @@ import pytest
 from numpy.linalg import norm
 
 import bluemira.codes._freecadapi as cadapi
-from bluemira.geometry.error import _FallBackError
+from bluemira.base.constants import EPS
 from bluemira.geometry.face import BluemiraFace
-from bluemira.geometry.parameterisations import PictureFrame, PolySpline, PrincetonD
+from bluemira.geometry.parameterisations import (
+    PictureFrame,
+    PolySpline,
+    PrincetonD,
+    TripleArc,
+)
 from bluemira.geometry.plane import BluemiraPlane
 from bluemira.geometry.tools import (
     _signed_distance_2D,
     convex_hull_wires_2d,
     deserialize_shape,
     extrude_shape,
+    fallback_to,
     find_clockwise_angle_2d,
     interpolate_bspline,
     log_geometry_on_failure,
     make_circle,
+    make_circle_arc_3P,
     make_ellipse,
     make_polygon,
     offset_wire,
@@ -537,13 +544,14 @@ def naughty_function(wire, var=1, *, var2=[1, 2], **kwargs):
     raise cadapi.FreeCADError
 
 
+def naughty_function_result(wire, *, var2=[1, 2], **kwargs):
+    return 41 + kwargs["missing_piece"]
+
+
+@fallback_to(naughty_function_result, cadapi.FreeCADError)
 @log_geometry_on_failure
 def naughty_function_fallback(wire, var=1, *, var2=[1, 2], **kwargs):
-    try:
-        raise cadapi.FreeCADError
-    except cadapi.FreeCADError:
-        result = 42
-        raise _FallBackError(result=result)
+    raise cadapi.FreeCADError
 
 
 class TestLogFailedGeometryOperationSerialisation:
@@ -555,8 +563,7 @@ class TestLogFailedGeometryOperationSerialisation:
         PrincetonD().create_shape(),
         PolySpline().create_shape(),
         PictureFrame().create_shape(),
-        # TODO: Fix serialisation for this (origin uncertain)
-        # TripleArc().create_shape(),
+        TripleArc().create_shape(),
     ]
 
     @mock.patch("builtins.open", new_callable=mock.mock_open)
@@ -583,10 +590,22 @@ class TestLogFailedGeometryOperationSerialisation:
 
     @mock.patch("builtins.open", new_callable=mock.mock_open)
     def test_fallback_logs_and_returns(self, open_mock):
-        result = naughty_function_fallback(0)
+        result = naughty_function_fallback(0, missing_piece=1)
 
         open_mock.assert_called_once()
         call_args = open_mock.call_args[0]
         assert os.path.basename(call_args[0]).startswith("naughty_function_fallback")
         assert call_args[1] == "w"
         assert result == 42
+
+
+class TestMakeCircle:
+    def test_make_circle_arc_3P(self):
+        p1 = [1, 0, 2]
+        p2 = [2, 0, 3]
+        p3 = [0, 0, 3.2]
+
+        arc = make_circle_arc_3P(p1, p2, p3)
+        points = arc.discretize(2).points
+        np.testing.assert_allclose(np.array(p1), np.array(points[0]), atol=EPS)
+        np.testing.assert_allclose(np.array(p3), np.array(points[1]), atol=EPS)
