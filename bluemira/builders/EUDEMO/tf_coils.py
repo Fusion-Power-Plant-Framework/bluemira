@@ -242,7 +242,10 @@ class TFCoilsBuilder(OptimisedShapeBuilder):
         self._centreline = None
         self._wp_cross_section = self._make_wp_xs()
         self._separatrix = separatrix
-        self._keep_out_zone = self._make_centreline_koz(keep_out_zone)
+        if keep_out_zone:
+            self._keep_out_zone = self._make_centreline_koz(keep_out_zone)
+        else:
+            self._keep_out_zone = None
 
         if self._geom_path is not None and os.path.isdir(self._geom_path):
             default_file_name = (
