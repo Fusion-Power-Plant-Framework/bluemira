@@ -605,5 +605,5 @@ class TestMakeCircle:
 
         arc = make_circle_arc_3P(p1, p2, p3)
         points = arc.discretize(2).points
-        np.testing.assert_allclose(np.array(p1), np.array(points[0]), atol=1e-15)
-        np.testing.assert_allclose(np.array(p3), np.array(points[1]), atol=1e-15)
+        np.testing.assert_allclose(np.array(p1), np.array(points[0]), atol=EPS)
+        np.testing.assert_allclose(np.array(p3), np.array(points[1]), atol=EPS)
