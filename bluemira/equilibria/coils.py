@@ -32,7 +32,7 @@ from enum import Enum, EnumMeta, auto
 from functools import update_wrapper
 
 # from re import split
-from typing import Any, Dict, Iterable, List, Optional, Tuple, Union
+from typing import Any, Callable, Dict, Iterable, List, Optional, Tuple, Union
 
 # import matplotlib.pyplot as plt
 import numpy as np
@@ -799,7 +799,7 @@ class CoilGroup(CoilFieldsMixin, abc.ABC):
         be careful will make all previous uses uncomparible
         """
         groups = ["_all"] + list(groups)
-        self._SubGroup = enum.Enum("SubGroup", {g: auto() for g in groups})
+        self._SubGroup = Enum("SubGroup", {g: auto() for g in groups})
 
     @property
     def x_boundary(self) -> np.array:
@@ -1301,6 +1301,7 @@ class CoilSet(CoilGroup):
         # TODO deal with meshing
         # TODO think whether this is the best way forward
 
+    @staticmethod
     def _convert_to_coilgroup(
         coils: Tuple[Union[CoilGroup, List, Dict]]
     ) -> List[CoilGroup]:
@@ -1314,6 +1315,7 @@ class CoilSet(CoilGroup):
                 raise TypeError(f"Conversion to Coil unknown for type '{type(coil)}'")
         return coils
 
+    @staticmethod
     def _process_coilgroups(coilgroups: List[CoilGroup]):
         names = [
             "_x",
@@ -1344,11 +1346,11 @@ class CoilSet(CoilGroup):
                 attributes[name] = np.array(attributes[name], dtype=float)
             for no, group in enumerate(coilgroups):
                 index_slice = slice(indexes[no][0], indexes[no][1])
-                setattr(coilgroup, name, attributes[name][index_slice])
+                setattr(group, name, attributes[name][index_slice])
 
         return attributes
 
-    def get_coil(name_or_id):
+    def get_coil(self, name_or_id):
         """
         Get an individual coil
         """
@@ -1356,7 +1358,7 @@ class CoilSet(CoilGroup):
         # all groups coilset.PF.current = 5
         pass
 
-    def define_subset(filters: Dict[str, Callable]):
+    def define_subset(self, filters: Dict[str, Callable]):
         # Create new subgroup of coils
 
         filters = {
