@@ -79,3 +79,16 @@ class TestMakeCoilMapper:
     def test_simple(self, track):
         mapper = make_coil_mapper(track, self.exclusions, self.coils)
         assert len(mapper.interpolators) == len(self.coils)
+
+
+class TestMakeSolenoid:
+    @pytest.mark.parametrize("n_CS", [1, 3, 5, 7])
+    def test_odd(self, n_CS):
+        coils = make_solenoid(4, 1, -1, 9, 0.1, 0, 0.1, n_CS)
+        assert len(coils) == n_CS
+        dzs = [c.dz for c in coils]
+        if n_CS != 1:
+            middle = (n_CS - 1) // 2
+            dz_middle = dzs.pop(middle)
+            assert np.allclose(dzs, dzs[0])
+            assert np.isclose(dz_middle, dzs[0] * 2)
