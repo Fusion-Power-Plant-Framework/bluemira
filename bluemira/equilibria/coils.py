@@ -1193,8 +1193,8 @@ class PositionalSymmetricCircuit(Circuit):
 
     Parameters
     ----------
-    symmetry_axis: Tuple[float, float]:
-        x,z symmetry coordinate
+    symmetry_line: np.ndarray[[float, float], [float, float]]:
+        two points making a symmetry line
     x: float
         Coil geometric centre x coordinate [m]
     z: float
@@ -1216,11 +1216,11 @@ class PositionalSymmetricCircuit(Circuit):
 
     """
 
-    __slots__ = ("_sx", "_sz")
+    __slots__ = ("_uv", "_symmetry_point", "_point")
 
     def __init__(
         self,
-        symmetry_axis: Tuple[float, float],
+        symmetry_line: np.ndarray[[float, float], [float, float]],
         x: float,
         z: float,
         dx: Optional[float] = None,
@@ -1231,11 +1231,9 @@ class PositionalSymmetricCircuit(Circuit):
         j_max: Optional[float] = None,
         b_max: Optional[float] = None,
     ) -> None:
-        self._sx = symmetry_axis[0]
-        self._sz = symmetry_axis[1]
+
+        x, z = self.setup_symmetry(np.array([x, z]), symmetry_line)
         ones = np.ones(2)
-        x = np.array([x, self._sx - (x - self._sx)])
-        z = np.array([z, self._sz - (z - self._sz)])
         current *= ones
         ctype = [ctype, ctype]
 
@@ -1252,31 +1250,69 @@ class PositionalSymmetricCircuit(Circuit):
 
         super().__init__(x, z, dx, dz, current, name, ctype, j_max, b_max)
 
-    @property
-    def x(self):
-        return self._x
+    def _unit_vector(self, symmetry_line):
+        """
+        Create a unit vector for the symmetry of the coil
 
-    @x.setter
+        Parameters
+        ----------
+        symmetry_line: np.ndarray[[float, float], [float, float]]
+            two points making a symmetry line
+
+        """
+        self._uv = (symmetry_line[1] - symmetry_line[0]) / np.linalg.norm(
+            symmetry_line[1] - symmetry_line[0]
+        )
+        self._symmetry_point = symmetry_line[0]
+
+    def setup_symmetry(self, point, symmetry_line):
+        """
+        Setup the symmetry of the coil
+
+        Parameters
+        ----------
+        point: np.ndarray[float, float]
+            point to symmetrise
+        symmetry_line: np.ndarray[[float, float], [float, float]]
+            two points making a symmetry line
+
+        Returns
+        -------
+        x, z of the two coils
+
+        """
+        self._unit_vector(symmetry_line)
+        self._point = point
+        return np.array([self._point, self._point - self._symmetrise()]).T
+
+    def _symmetrise(self):
+        """
+        Calculate the change in position to the symmetric coil,
+        twice the distance to the line of symmetry.
+        """
+        return 2 * (
+            (self._point - self._symmetry_point)
+            - (np.dot(self._point - self._symmetry_point, self._uv) * self._uv)
+        )
+
+    @Circuit.x.setter
     def x(self, new_x: __ITERABLE_FLOAT) -> None:
         """
         Set x coordinate of each coil
         """
-        self._x[0] = new_x
-        self._x[1] = self._sx - (new_x - self._sx)
-        self.__sizer(self)
 
-    @property
-    def z(self):
-        return self._z
+        self._x[0] = self._point[0] = new_x
+        self._x[1] = new_x - self._symmetrise()[0]
+        self._sizer(self)
 
-    @z.setter
+    @Circuit.z.setter
     def z(self, new_z: __ITERABLE_FLOAT) -> None:
         """
         Set z coordinate of each coil
         """
-        self._z[0] = new_z
-        self._z[1] = self._sz - (new_z - self._sz)
-        self.__sizer(self)
+        self._z[0] = self._point[1] = new_z
+        self._z[1] = new_z - self._symmetrise()[1]
+        self._sizer(self)
 
 
 class CoilSet(CoilGroup):
