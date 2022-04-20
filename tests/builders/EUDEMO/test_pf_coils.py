@@ -83,7 +83,7 @@ class TestMakeCoilMapper:
 
 class TestMakeSolenoid:
     @pytest.mark.parametrize("n_CS", [1, 3, 5, 7])
-    def test_odd(self, n_CS):
+    def test_odd_module_numbers(self, n_CS):
         coils = make_solenoid(4, 1, -1, 9, 0.1, 0, 0.1, n_CS)
         assert len(coils) == n_CS
         dzs = [c.dz for c in coils]
@@ -92,3 +92,11 @@ class TestMakeSolenoid:
             dz_middle = dzs.pop(middle)
             assert np.allclose(dzs, dzs[0])
             assert np.isclose(dz_middle, dzs[0] * 2)
+            assert np.isclose(coils[middle].z, -1 + 10 / 2)
+
+    @pytest.mark.parametrize("n_CS", [2, 4, 6, 8])
+    def test_even_modules_numbers(self, n_CS):
+        coils = make_solenoid(4, 1, -1, 9, 0.1, 0, 0.1, n_CS)
+        assert len(coils) == n_CS
+        dzs = [c.dz for c in coils]
+        assert np.allclose(dzs, dzs[0])
