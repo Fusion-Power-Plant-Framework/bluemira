@@ -34,9 +34,9 @@ from bluemira.base.config import Configuration
 from bluemira.base.error import BuilderError
 from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.builders.pf_coils import PFCoilBuilder
-from bluemira.equilibria.coils import CoilSet
+from bluemira.equilibria.coils import Coil, CoilSet
 from bluemira.geometry.constants import VERY_BIG
-from bluemira.geometry.tools import boolean_cut, distance_to, split_wire
+from bluemira.geometry.tools import boolean_cut, distance_to, make_polygon, split_wire
 from bluemira.magnetostatics.baseclass import SourceGroup
 from bluemira.magnetostatics.circular_arc import CircularArcCurrentSource
 from bluemira.utilities.positioning import PathInterpolator, PositionMapper
@@ -321,10 +321,36 @@ def make_coil_mapper(track, exclusion_zones, coils):
 
 def make_solenoid(r_cs, tk_cs, z_min, z_max, g_cs, tk_cs_ins, tk_cs_cas, n_CS):
     """
-    Make a set of solenoid coils.
+    Make a set of solenoid coils in an EU-DEMO fashion. If n_CS is odd, the central
+    module is twice the size of the others. If n_CS is even, all the modules are the
+    same size.
+
+    Parameters
+    ----------
+    r_cs: float
+        Radius of the solenoid
+    tk_cs: float
+        Half-thickness of the solenoid in the radial direction
+    z_min: float
+        Minimum vertical position of the solenoid
+    z_max: float
+        Maximum vertical position of the solenoid
+    g_cs: float
+        Gap between modules
+    tk_cs_ins: float
+        Insulation thickness around modules
+    tk_cs_cas: float
+        Casing thickness around modules
+    n_CS: int
+        Number of modules in the solenoid
+
+    Returns
+    -------
+    coils: List[Coil]
+        List of solenoid coil(s)
     """
 
-    def make_cs_coil(z_coil, dz_coil, i):
+    def make_CS_coil(z_coil, dz_coil, i):
         return Coil(
             r_cs,
             z_coil,
@@ -344,7 +370,7 @@ def make_solenoid(r_cs, tk_cs, z_min, z_max, g_cs, tk_cs_ins, tk_cs_cas, n_CS):
     if n_CS == 1:
         # Single CS module solenoid
         module_height = total_height - 2 * tk_inscas
-        coil = make_cs_coil(0.5 * total_height, 0.5 * module_height, 0)
+        coil = make_CS_coil(0.5 * total_height, 0.5 * module_height, 0)
         coils.append(coil)
 
     elif n_CS % 2 == 0:
@@ -354,7 +380,7 @@ def make_solenoid(r_cs, tk_cs, z_min, z_max, g_cs, tk_cs_ins, tk_cs_cas, n_CS):
         z_iter = z_max
         for i in range(n_CS):
             z_coil = z_iter - tk_inscas - dz_coil
-            coil = make_cs_coil(z_coil, dz_coil, i)
+            coil = make_CS_coil(z_coil, dz_coil, i)
             coils.append(coil)
             z_iter = z_coil - dz_coil - tk_inscas - g_cs
 
@@ -376,14 +402,14 @@ def make_solenoid(r_cs, tk_cs, z_min, z_max, g_cs, tk_cs_ins, tk_cs_cas, n_CS):
                 dz_coil = 0.5 * module_height
                 z_coil = z_iter - tk_inscas - dz_coil
 
-            coil = make_cs_coil(z_coil, dz_coil, i)
+            coil = make_CS_coil(z_coil, dz_coil, i)
             coils.append(coil)
             z_iter = z_coil - dz_coil - tk_inscas - g_cs
 
     return coils
 
 
-def make_pf_coils(
+def make_PF_coils(
     tf_boundary, n_PF, R_0, kappa_u, kappa_l, delta_u, delta_l, j_max, b_max
 ):
     """
@@ -451,7 +477,7 @@ def make_coilset(
     z_min = bb.z_min
     z_max = bb.z_max
 
-    pf_coils = make_pf_coils(
+    pf_coils = make_PF_coils(
         tf_boundary,
         n_PF,
         R_0,
