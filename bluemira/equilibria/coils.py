@@ -920,7 +920,7 @@ class CoilGroup(CoilFieldsMixin, abc.ABC):
         """
         Set position of each coil
         """
-        return np.stack([self.x, self.z], axis=1)
+        return np.stack([self.x.ravel(), self.z.ravel()], axis=1)
 
     @position.setter
     def position(self, new_position: __ITERABLE_FLOAT):
@@ -929,14 +929,15 @@ class CoilGroup(CoilFieldsMixin, abc.ABC):
         """
         self.x = new_position[:, 0]
         self.z = new_position[:, 1]
-        self._sizer(self)
 
     def adjust_position(self, d_xz: __ITERABLE_FLOAT):
         """
         Adjust position of each coil
         """
-        self.position = np.stack([self.x + d_xz[:, 0], self.z + d_xz[:, 1]], axis=1)
-        self._sizer(self)
+        d_xz = np.atleast_2d(d_xz)
+        self.position = np.stack(
+            [self.x.ravel() + d_xz[:, 0], self.z.ravel() + d_xz[:, 1]], axis=1
+        )
 
     @property
     def x(self) -> np.ndarray:
@@ -1052,7 +1053,7 @@ class CoilGroup(CoilFieldsMixin, abc.ABC):
         """
         TODO
         """
-        pass
+        raise NotImplementedError
 
     def to_group_vecs(self) -> Iterable[np.array]:
         """
@@ -1083,7 +1084,7 @@ class CoilGroup(CoilFieldsMixin, abc.ABC):
         """
         TODO
         """
-        pass
+        raise NotImplementedError
 
     def __str__(self) -> str:
         """
@@ -1307,6 +1308,14 @@ class PositionalSymmetricCircuit(Circuit):
         self._z[0] = self._point[1] = new_z
         self._z[1] = new_z - self._symmetrise()[1]
         self._sizer(self)
+
+    @Circuit.position.setter
+    def position(self, new_position: __ITERABLE_FLOAT):
+        """
+        Set position of each coil
+        """
+        self.x = new_position[0, 0]
+        self.z = new_position[0, 1]
 
     @property
     def current(self):
