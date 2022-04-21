@@ -45,6 +45,7 @@ from bluemira.equilibria.coils import CoilSet
 from bluemira.equilibria.eq_constraints import MagneticConstraintSet
 from bluemira.equilibria.equilibrium import Equilibrium
 from bluemira.equilibria.error import EquilibriaError
+from bluemira.equilibria.opt_constraints import stray_field_constraints
 from bluemira.equilibria.positioner import RegionMapper
 from bluemira.utilities.opt_problems import (
     OptimisationConstraint,
@@ -845,7 +846,17 @@ class PremagnetisationCOP(CoilsetOptimisationProblem):
             coilset, x_premag_centre, z_premag_centre, r_premag_zone, n_B_stray_points
         )
 
-        stray_field_con = OptimisationConstraint()
+        stray_field_con = OptimisationConstraint(
+            stray_field_constraints,
+            f_constraint_args={
+                "cBx": cBx,
+                "cBz": cBz,
+                "B_max": B_stray_max,
+                "scale": self.scale,
+            },
+            tolerance=B_stray_con_tol,
+            constraint_type="inequality",
+        )
         if constraints:
             constraints.append(stray_field_con)
         else:
