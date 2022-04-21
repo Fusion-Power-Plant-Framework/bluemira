@@ -294,7 +294,7 @@ class CoilFieldsMixin:
         if False in lg_or:
             # if dx or dz is not 0 and x,z inside coil
             # TODO improve to remove inside coil calc if already known
-            inside = np.logical_and(self._points_inside_coil(x, z), not lg_or)
+            inside = np.logical_and(self._points_inside_coil(x, z), ~lg_or)
 
             response = np.zeros(x.shape)
 
@@ -514,7 +514,7 @@ class CoilSizer:
 
         if not self.flag_sizefix:
             # Adjust the size of the coil
-            coil.dx, coil.dz = self._make_size(current)
+            coil._dx, coil._dz = self._make_size(current)
             self._set_coil_attributes(coil)
 
     def _set_coil_attributes(self, coil):
