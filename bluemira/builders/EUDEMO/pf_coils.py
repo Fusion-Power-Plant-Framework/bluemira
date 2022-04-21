@@ -613,6 +613,8 @@ class PFSystemDesignProcedure:
 
 
 if __name__ == "__main__":
+    import matplotlib.pyplot as plt
+
     from bluemira.base.config import Configuration
     from bluemira.geometry.parameterisations import PrincetonD
 
@@ -625,5 +627,9 @@ if __name__ == "__main__":
         None,
         None,
     )
+
     breakdown = design.run_premagnetisation()
-    breakdown.plot()
+
+    f, ax = plt.subplots()
+    breakdown.coilset.plot(ax=ax)
+    breakdown.plot(ax=ax)
