@@ -1276,7 +1276,7 @@ class PositionalSymmetricCircuit(Circuit):
         x, z of the two coils
 
         """
-        self._unit_vector(symmetry_line)
+        self.modify_symmetry(symmetry_line)
         return np.array([self._point, self._point - self._symmetrise()]).T
 
     def _symmetrise(self):
