@@ -109,7 +109,7 @@ class PFCoilsBuilder(Builder):
     _params: Configuration
     _param_class: Type[CoilSet]
     _default_runmode: str = "read"
-    _design_problem: Optional[CoilsetOptimisationProblem] = None
+    _design_problem: None
 
     def _extract_config(self, build_config: BuildConfig):
         super()._extract_config(build_config)
@@ -159,26 +159,7 @@ class PFCoilsBuilder(Builder):
         """
         Build PF coils from a design optimisation problem.
         """
-        bluemira_debug(
-            f"""Setting up design problem with:
-algorithm_name: {self._algorithm_name}
-n_variables: {self._coilset.n_control_coils}
-opt_conditions: {self._opt_conditions}
-opt_parameters: {self._opt_parameters}"""
-        )
-        optimiser = Optimiser(
-            self._algorithm_name,
-            self._coilset.n_control_coils,
-            self._opt_conditions,
-            self._opt_parameters,
-        )
-
-        if self._problem_settings != {}:
-            bluemira_debug(
-                f"Applying non-default settings to problem: {self._problem_settings}"
-            )
-
-        self._design_problem = self._problem_class(optimiser)
+        self._design_problem = self._problem_class()
 
     def read(self, **kwargs):
         """
@@ -461,14 +442,14 @@ def make_solenoid(r_cs, tk_cs, z_min, z_max, g_cs, tk_cs_ins, tk_cs_cas, n_CS):
     return coils
 
 
-def make_PF_coil_positions(tf_boundary, n_PF, R_0, kappa_u, kappa_l, delta_u, delta_l):
+def make_PF_coil_positions(tf_boundary, n_PF, R_0, kappa, delta):
     """
     Make a set of PF coil positions crudely with respect to the intended plasma
     shape.
     """
     # Project plasma centroid through plasma upper and lower extrema
-    angle_upper = np.arctan2(kappa_u, -delta_u)
-    angle_lower = np.arctan2(-kappa_l, -delta_l)
+    angle_upper = np.arctan2(kappa, -delta)
+    angle_lower = np.arctan2(-kappa, -delta)
     scale = 1.5
 
     angles = np.linspace(scale * angle_upper, scale * angle_lower, n_PF)
@@ -490,10 +471,8 @@ def make_PF_coil_positions(tf_boundary, n_PF, R_0, kappa_u, kappa_l, delta_u, de
 def make_coilset(
     tf_boundary,
     R_0,
-    kappa_u,
-    kappa_l,
-    delta_u,
-    delta_l,
+    kappa,
+    delta,
     r_cs,
     tk_cs,
     g_cs,
@@ -518,10 +497,8 @@ def make_coilset(
         tf_boundary,
         n_PF,
         R_0,
-        kappa_u,
-        kappa_l,
-        delta_u,
-        delta_l,
+        kappa,
+        delta,
     )
     pf_coils = []
     for i, (x, z) in enumerate(zip(x_c, z_c)):
@@ -543,5 +520,20 @@ def make_coilset(
     return coilset
 
 
+from bluemira.equilibria.profiles import CustomProfile
+
+
 class PFSystemDesignProcedure:
-    pass
+    def __init__(self, params, tf_boundary, p_prime, ff_prime):
+        self.params = params
+        self.tf_boundary = tf_boundary
+        self.profiles = CustomProfile(
+            p_prime, ff_prime, params.R_0.value, params.B_0.value, Ip=params.I_p.value
+        )
+
+    def make_initial_coilset(self):
+        coilset = make_coilset(self.tf_boundary, self.params.R_0.value, self)
+        return coilset
+
+    def run_premagnetisation(self):
+        pass
