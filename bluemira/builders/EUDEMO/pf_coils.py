@@ -520,6 +520,9 @@ def make_coilset(
     return coilset
 
 
+from bluemira.equilibria.equilibrium import Breakdown
+from bluemira.equilibria.grid import Grid
+from bluemira.equilibria.opt_problems import PremagnetisationCOP
 from bluemira.equilibria.profiles import CustomProfile
 
 
@@ -530,8 +533,9 @@ class PFSystemDesignProcedure:
         self.profiles = CustomProfile(
             p_prime, ff_prime, params.R_0.value, params.B_0.value, Ip=params.I_p.value
         )
+        self.coilset = self._make_initial_coilset()
 
-    def make_initial_coilset(self):
+    def _make_initial_coilset(self):
         r_cs = self.params.r_cs_in.value + 0.5 * self.params.tk_cs.value
         coilset = make_coilset(
             self.tf_boundary,
@@ -542,9 +546,28 @@ class PFSystemDesignProcedure:
             tk_cs=self.params.tk_cs.value,
             tk_cs_ins=self.params.tk_cs_insulation.value,
             tk_cs_cas=self.params.tk_cs_casing.value,
-            PF_jmax=self.params.PF_j,
+            PF_jmax=self.params.PF_jmax.value,
+            PF_bmax=self.params.PF_bmax.value,
+            CS_jmax=self.params.CS_jmax.value,
+            CS_bmax=self.params.CS_bmax.value,
         )
         return coilset
 
     def run_premagnetisation(self):
+        R_0 = self.params.R_0.value
+        # Not really important; mostly for plotting
+        grid = Grid(0.1, R_0 * 2, -1.5 * R_0, 1.5 * R_0, 100, 100)
+        breakdown = Breakdown(self.coilset, grid, R_0=R_0)
+        problem = PremagnetisationCOP()
+
+    def calculate_sof_eof_fluxes(self):
+        pass
+
+    def optimise_positions(self):
+        pass
+
+    def consolidate_coilset(self):
+        pass
+
+    def consolidate_premagnetisation(self):
         pass
