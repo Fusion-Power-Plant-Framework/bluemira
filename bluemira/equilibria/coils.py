@@ -802,21 +802,21 @@ class CoilGroup(CoilFieldsMixin, abc.ABC):
         self._SubGroup = Enum("SubGroup", {g: auto() for g in groups})
 
     @property
-    def x_boundary(self) -> np.array:
+    def x_boundary(self) -> np.ndarray:
         """
         Get x boundary of coil
         """
         return self._x_boundary
 
     @property
-    def z_boundary(self) -> np.array:
+    def z_boundary(self) -> np.ndarray:
         """
         Get z boundary of coil
         """
         return self._z_boundary
 
     @property
-    def area(self) -> np.array:
+    def area(self) -> np.ndarray:
         """
         The cross-sectional area of the coil
 
@@ -828,7 +828,7 @@ class CoilGroup(CoilFieldsMixin, abc.ABC):
         return 4 * self.dx * self.dz
 
     @property
-    def volume(self) -> np.array:
+    def volume(self) -> np.ndarray:
         """
         The volume of the coil
 
@@ -896,7 +896,7 @@ class CoilGroup(CoilFieldsMixin, abc.ABC):
         self._b_max[:] = new_b_max
 
     @property
-    def current(self) -> np.array:
+    def current(self) -> np.ndarray:
         """
         Get coil current
         """
@@ -916,7 +916,7 @@ class CoilGroup(CoilFieldsMixin, abc.ABC):
         self.current += d_current
 
     @property
-    def position(self) -> np.array:
+    def position(self) -> np.ndarray:
         """
         Set position of each coil
         """
@@ -939,7 +939,7 @@ class CoilGroup(CoilFieldsMixin, abc.ABC):
         self._sizer(self)
 
     @property
-    def x(self) -> np.array:
+    def x(self) -> np.ndarray:
         """
         Get x coordinate of each coil
         """
@@ -954,7 +954,7 @@ class CoilGroup(CoilFieldsMixin, abc.ABC):
         self._sizer(self)
 
     @property
-    def z(self) -> np.array:
+    def z(self) -> np.ndarray:
         """
         Get z coordinate of each coil
         """
@@ -969,7 +969,7 @@ class CoilGroup(CoilFieldsMixin, abc.ABC):
         self._sizer(self)
 
     @property
-    def dx(self) -> np.array:
+    def dx(self) -> np.ndarray:
         """
         Get dx coordinate of each coil
         """
@@ -984,7 +984,7 @@ class CoilGroup(CoilFieldsMixin, abc.ABC):
         self._sizer(self)
 
     @property
-    def dz(self) -> np.array:
+    def dz(self) -> np.ndarray:
         """
         Get dz coordinate of each coil
         """
@@ -1037,7 +1037,7 @@ class CoilGroup(CoilFieldsMixin, abc.ABC):
         self.b_max = b_max
         self._sizer.update(self)
 
-    def get_max_current(self) -> np.array:
+    def get_max_current(self) -> np.ndarray:
         """
         Gets the maximum current for a coil with a specified size
 
