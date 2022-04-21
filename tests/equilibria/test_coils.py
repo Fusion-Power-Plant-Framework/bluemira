@@ -310,7 +310,8 @@ class TestPositionalSymmetricCircuit:
         cls.circuit = circuit
         cls.coils = [coil, mirror_coil]
 
-    def test_fields(self):
+    @pytest.mark.parametrize("fieldtype", ["control_", ""])
+    def test_fields(self, fieldtype):
         points = [
             [1, 1],
             [2, 2],
@@ -318,32 +319,19 @@ class TestPositionalSymmetricCircuit:
             [1.5, -6],
         ]
         for point in points:
-            coil_psi = sum([coil.psi(*point) for coil in self.coils])
-            coil_Bx = sum([coil.Bx(*point) for coil in self.coils])
-            coil_Bz = sum([coil.Bz(*point) for coil in self.coils])
+            coil_psi = sum(
+                [getattr(coil, f"{fieldtype}psi")(*point) for coil in self.coils]
+            )
+            coil_Bx = sum(
+                [getattr(coil, f"{fieldtype}Bx")(*point) for coil in self.coils]
+            )
+            coil_Bz = sum(
+                [getattr(coil, f"{fieldtype}Bz")(*point) for coil in self.coils]
+            )
 
-            circuit_psi = self.circuit.psi(*point)
-            circuit_Bx = self.circuit.Bx(*point)
-            circuit_Bz = self.circuit.Bz(*point)
-            assert np.isclose(coil_psi, circuit_psi)
-            assert np.isclose(coil_Bx, circuit_Bx)
-            assert np.isclose(coil_Bz, circuit_Bz)
-
-    def test_control(self):
-        points = [
-            [1, 1],
-            [2, 2],
-            [1.5, 6],
-            [1.5, -6],
-        ]
-        for point in points:
-            coil_psi = sum([coil.control_psi(*point) for coil in self.coils])
-            coil_Bx = sum([coil.control_Bx(*point) for coil in self.coils])
-            coil_Bz = sum([coil.control_Bz(*point) for coil in self.coils])
-
-            circuit_psi = self.circuit.control_psi(*point)
-            circuit_Bx = self.circuit.control_Bx(*point)
-            circuit_Bz = self.circuit.control_Bz(*point)
+            circuit_psi = getattr(self.circuit, f"{fieldtype}psi")(*point)
+            circuit_Bx = getattr(self.circuit, f"{fieldtype}Bx")(*point)
+            circuit_Bz = getattr(self.circuit, f"{fieldtype}Bz")(*point)
             assert np.isclose(coil_psi, circuit_psi)
             assert np.isclose(coil_Bx, circuit_Bx)
             assert np.isclose(coil_Bz, circuit_Bz)
@@ -352,7 +340,7 @@ class TestPositionalSymmetricCircuit:
         self.circuit.current = 2e6
         for coil in self.coils:
             coil.current = 2e6
-        self.test_fields()
+        self.test_fields("")
 
     def test_attributes(self):
         circ = copy.deepcopy(self.circuit)
@@ -371,15 +359,7 @@ class TestCoilSet:
     @classmethod
     def setup_class(cls):
         coil = Coil(
-            x=1.5,
-            z=6,
-            current=1e6,
-            dx=0.25,
-            dz=0.5,
-            j_max=10.0,
-            b_max=100,
-            ctype="PF",
-            name="PF_2",
+            x=4, z=10, current=2e6, dx=1, dz=0.5, j_max=5.0, b_max=50, name="PF_1"
         )
         circuit = PositionalSymmetricCircuit(
             np.array([[0, 0], [1, 0]]),
@@ -394,11 +374,7 @@ class TestCoilSet:
             name="PF_2",
         )
 
-        coil2 = Coil(
-            x=4, z=10, current=2e6, dx=1, dz=0.5, j_max=5.0, b_max=50, name="PF_1"
-        )
-
-        cls.coilset = CoilSet(coil2, circuit)
+        cls.coilset = CoilSet(coil, circuit)
 
     def test_group_vecs(self):
         x, z, dx, dz, currents = self.coilset.to_group_vecs()
