@@ -306,9 +306,13 @@ class Configuration(ConfigurationSchema, ParameterFrame):
         ['F_cs_ztotmax', 'Maximum total vertical force in the CS stack', 350, 'MN', None, 'Input'],
         ['F_cs_sepmax', 'Maximum separation force between CS modules', 300, 'MN', None, 'Input'],
         ['CS_material', 'Conducting material to use for the CS modules', 'Nb3Sn', 'dimensionless', None, 'Input'],
+        ["CS_jmax", "Maximum current density to use in CS modules", 16, "MA/m^2", None, "Input"],
+        ["CS_bmax", "Maximum peak field to use in CS modules", 13, "T", None, "Input"],
 
         # PF magnets
         ['PF_material', 'Conducting material to use for the PF coils', 'NbTi', 'dimensionless', None, 'Input'],
+        ["PF_jmax", "Maximum current density to use in PF modules", 12.5, "MA/m^2", None, "Input"],
+        ["PF_bmax", "Maximum peak field to use in PF modules", 11, "T", None, "Input"],
 
         # Cryostat
         ['n_cr_lab', 'Number of cryostat labyrinth levels', 2, 'dimensionless', None, 'Input'],

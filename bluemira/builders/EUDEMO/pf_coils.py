@@ -540,7 +540,9 @@ class PFSystemDesignProcedure:
             self.params.delta.value,
             r_cs=r_cs,
             tk_cs=self.params.tk_cs.value,
-            tk_cs_ins=self.params.tk_cs_ins.value,
+            tk_cs_ins=self.params.tk_cs_insulation.value,
+            tk_cs_cas=self.params.tk_cs_casing.value,
+            PF_jmax=self.params.PF_j,
         )
         return coilset
 
