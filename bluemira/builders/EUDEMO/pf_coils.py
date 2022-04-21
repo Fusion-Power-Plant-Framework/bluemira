@@ -532,7 +532,16 @@ class PFSystemDesignProcedure:
         )
 
     def make_initial_coilset(self):
-        coilset = make_coilset(self.tf_boundary, self.params.R_0.value, self)
+        r_cs = self.params.r_cs_in.value + 0.5 * self.params.tk_cs.value
+        coilset = make_coilset(
+            self.tf_boundary,
+            self.params.R_0.value,
+            self.params.kappa.value,
+            self.params.delta.value,
+            r_cs=r_cs,
+            tk_cs=self.params.tk_cs.value,
+            tk_cs_ins=self.params.tk_cs_ins.value,
+        )
         return coilset
 
     def run_premagnetisation(self):
