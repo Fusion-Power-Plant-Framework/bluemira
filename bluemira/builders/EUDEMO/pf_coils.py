@@ -32,12 +32,17 @@ from bluemira.base.builder import BuildConfig, Builder
 from bluemira.base.components import Component
 from bluemira.base.config import Configuration
 from bluemira.base.error import BuilderError
-from bluemira.base.look_and_feel import bluemira_debug, bluemira_warn
+from bluemira.base.look_and_feel import bluemira_print, bluemira_warn
 from bluemira.builders.pf_coils import PFCoilBuilder
 from bluemira.equilibria.coils import Coil, CoilSet
-from bluemira.equilibria.opt_problems import CoilsetOptimisationProblem
 from bluemira.geometry.constants import VERY_BIG
-from bluemira.geometry.tools import boolean_cut, distance_to, make_polygon, split_wire
+from bluemira.geometry.tools import (
+    boolean_cut,
+    distance_to,
+    make_polygon,
+    offset_wire,
+    split_wire,
+)
 from bluemira.magnetostatics.baseclass import SourceGroup
 from bluemira.magnetostatics.circular_arc import CircularArcCurrentSource
 from bluemira.utilities.optimiser import Optimiser
@@ -450,7 +455,7 @@ def make_PF_coil_positions(tf_boundary, n_PF, R_0, kappa, delta):
     # Project plasma centroid through plasma upper and lower extrema
     angle_upper = np.arctan2(kappa, -delta)
     angle_lower = np.arctan2(-kappa, -delta)
-    scale = 1.5
+    scale = 1.1
 
     angles = np.linspace(scale * angle_upper, scale * angle_lower, n_PF)
 
@@ -493,8 +498,9 @@ def make_coilset(
     z_max = bb.z_max
     solenoid = make_solenoid(r_cs, tk_cs, z_min, z_max, g_cs, tk_cs_ins, tk_cs_cas, n_CS)
 
+    tf_track = offset_wire(tf_boundary, 1, join="arc")
     x_c, z_c = make_PF_coil_positions(
-        tf_boundary,
+        tf_track,
         n_PF,
         R_0,
         kappa,
@@ -523,6 +529,7 @@ def make_coilset(
 from bluemira.equilibria.equilibrium import Breakdown
 from bluemira.equilibria.grid import Grid
 from bluemira.equilibria.opt_problems import (
+    InboardBreakdownZoneStrategy,
     OutboardBreakdownZoneStrategy,
     PremagnetisationCOP,
 )
@@ -534,20 +541,24 @@ class PFSystemDesignProcedure:
         self.params = params
         self.build_config = build_config
         self.tf_boundary = tf_boundary
-        self.profiles = CustomProfile(
-            p_prime, ff_prime, params.R_0.value, params.B_0.value, Ip=params.I_p.value
-        )
+        # self.profiles = CustomProfile(
+        #     p_prime, ff_prime, params.R_0.value, params.B_0.value, Ip=params.I_p.value
+        # )
         self.coilset = self._make_initial_coilset()
 
     def _make_initial_coilset(self):
-        r_cs = self.params.r_cs_in.value + 0.5 * self.params.tk_cs.value
+        tk_cs = 0.5 * self.params.tk_cs.value
+        r_cs = self.params.r_cs_in.value + tk_cs
         coilset = make_coilset(
             self.tf_boundary,
             self.params.R_0.value,
             self.params.kappa.value,
             self.params.delta.value,
             r_cs=r_cs,
-            tk_cs=self.params.tk_cs.value,
+            tk_cs=tk_cs,
+            g_cs=self.params.g_cs_mod.value,
+            n_CS=self.params.n_CS.value,
+            n_PF=self.params.n_PF.value,
             tk_cs_ins=self.params.tk_cs_insulation.value,
             tk_cs_cas=self.params.tk_cs_casing.value,
             PF_jmax=self.params.PF_jmax.value,
@@ -564,20 +575,29 @@ class PFSystemDesignProcedure:
             R_0, self.params.A.value, self.params.tk_sol_ib.value
         )
         grid = Grid(0.1, R_0 * 2, -1.5 * R_0, 1.5 * R_0, 100, 100)
-        breakdown = Breakdown(self.coilset, grid, R_0=R_0)
         optimiser = Optimiser(
             "SLSQP",
-            opt_conditions={"max_eval": 1000, "ftol_rel": 1e-3, "xtol_rel": 1e-6},
+            opt_conditions={"max_eval": 1000, "ftol_rel": 1e-6},
         )
+        self.coilset.mesh_coils(0.2)
         problem = PremagnetisationCOP(
             self.coilset,
             strategy,
             B_stray_max=self.params.B_premag_stray_max.value,
-            B_stray_con_tol=1e-6,
+            B_stray_con_tol=1e-8,
             n_B_stray_points=20,
             optimiser=optimiser,
+            max_currents=self.coilset.get_max_currents(
+                1.4 * 1e6 * self.params.I_p.value
+            ),
             constraints=None,
         )
+        self.coilset = problem.optimise()
+        breakdown = Breakdown(self.coilset, grid, R_0=R_0)
+        breakdown.set_breakdown_point(*strategy.breakdown_point)
+        psi_premag = breakdown.breakdown_psi
+        bluemira_print(f"Premagnetisation flux = {2*np.pi * psi_premag:.2f} V.s")
+        return breakdown
 
     def calculate_sof_eof_fluxes(self):
         pass
@@ -590,3 +610,20 @@ class PFSystemDesignProcedure:
 
     def consolidate_premagnetisation(self):
         pass
+
+
+if __name__ == "__main__":
+    from bluemira.base.config import Configuration
+    from bluemira.geometry.parameterisations import PrincetonD
+
+    params = Configuration()
+
+    design = PFSystemDesignProcedure(
+        params,
+        {},
+        PrincetonD({"x1": {"value": 4}, "x2": {"value": 16}}).create_shape(),
+        None,
+        None,
+    )
+    breakdown = design.run_premagnetisation()
+    breakdown.plot()

@@ -384,6 +384,7 @@ class BoundedCurrentCOP(CoilsetOptimisationProblem):
         super().__init__(coilset, optimiser, objective, opt_constraints)
 
         # Set up optimiser
+
         bounds = self.get_current_bounds(self.coilset, max_currents, self.scale)
         dimension = len(bounds[0])
         self.set_up_optimiser(dimension, bounds)
@@ -876,12 +877,14 @@ class InboardBreakdownZoneStrategy(CircularZoneStrategy):
     Inboard breakdown zone strategy.
     """
 
+    @property
     def breakdown_point(self) -> Tuple[float]:
         r_c = self.breakdown_radius
         x_c = self.R_0 - self.R_0 / self.A - self.tk_sol + r_c
         z_c = 0.0
         return x_c, z_c
 
+    @property
     def breakdown_radius(self) -> float:
         return 0.5 * self.R_0 / self.A
 
@@ -891,12 +894,14 @@ class OutboardBreakdownZoneStrategy(CircularZoneStrategy):
     Outboard breakdown zone strategy.
     """
 
+    @property
     def breakdown_point(self) -> Tuple[float]:
         r_c = self.breakdown_radius
         x_c = self.R_0 + self.R_0 / self.A + self.tk_sol - r_c
         z_c = 0.0
         return x_c, z_c
 
+    @property
     def breakdown_radius(self) -> float:
         return 0.7 * self.R_0 / self.A
 
@@ -911,9 +916,11 @@ class InputBreakdownZoneStrategy(CircularZoneStrategy):
         self.z_c = z_c
         self.r_c = r_c
 
+    @property
     def breakdown_point(self) -> Tuple[float]:
         return self.x_c, self.z_c
 
+    @property
     def breakdown_radius(self) -> float:
         return self.r_c
 
@@ -937,7 +944,9 @@ class PremagnetisationCOP(CoilsetOptimisationProblem):
         objective = OptimisationObjective(
             objectives.maximise_flux,
             f_objective_args={
-                "c_psi_mat": coilset.control_psi(*breakdown_strategy.breakdown_point),
+                "c_psi_mat": np.array(
+                    coilset.control_psi(*breakdown_strategy.breakdown_point)
+                ),
                 "scale": self.scale,
             },
         )
@@ -965,7 +974,7 @@ class PremagnetisationCOP(CoilsetOptimisationProblem):
         super().__init__(coilset, optimiser, objective, constraints)
 
         # Set up optimiser
-        bounds = self.get_current_bounds(self.coilset, max_currents, self.scale)
+        bounds = (-max_currents / self.scale, max_currents / self.scale)
         dimension = len(bounds[0])
         self.set_up_optimiser(dimension, bounds)
 
@@ -973,8 +982,8 @@ class PremagnetisationCOP(CoilsetOptimisationProblem):
         """
         Set up response matrices for the stray field zone
         """
-        cBx = np.zeros((len(x_zone), coilset.n_C))
-        cBz = np.zeros((len(x_zone), coilset.n_C))
+        cBx = np.zeros((len(x_zone), coilset.n_control))
+        cBz = np.zeros((len(x_zone), coilset.n_control))
         for i, (xi, zi) in enumerate(zip(x_zone, z_zone)):
             for j, coil in enumerate(coilset.coils.values()):
                 cBx[i, j] = coil.control_Bx(xi, zi)
@@ -983,6 +992,6 @@ class PremagnetisationCOP(CoilsetOptimisationProblem):
 
     def optimise(self):
         x0 = 1e-6 * np.ones(self.coilset.n_control)
-        x_star = self.opt.optimise(x0)
+        x_star = self.opt.optimise(x0) * self.scale
         self.coilset.set_control_currents(x_star)
         return self.coilset
