@@ -831,6 +831,7 @@ class PremagnetisationCOP(CoilsetOptimisationProblem):
         n_B_stray_points,
         coilset: CoilSet,
         optimiser: Optimiser = None,
+        max_currents=None,
         constraints: List[OptimisationConstraint] = None,
     ):
         self.scale = 1e6  # current_scale
@@ -863,13 +864,17 @@ class PremagnetisationCOP(CoilsetOptimisationProblem):
             constraints = [stray_field_con]
 
         super().__init__(coilset, optimiser, objective, constraints)
-        self.scale = 1e6  # current_scale
+
+        # Set up optimiser
+        bounds = self.get_current_bounds(self.coilset, max_currents, self.scale)
+        dimension = len(bounds[0])
+        self.set_up_optimiser(dimension, bounds)
 
     def _stray_field_matrices(self, coilset, x_c, z_c, r_c, n_points):
         """
         Set up response matrices for the stray field zone
         """
-        theta = np.linspace(0, 2 * np.pi, n_points)
+        theta = np.linspace(0, 2 * np.pi, n_points, endpoint=False)
         x = x_c + r_c * np.cos(theta)
         z = z_c + r_c * np.sin(theta)
         x = np.append(x, x_c)
@@ -883,4 +888,7 @@ class PremagnetisationCOP(CoilsetOptimisationProblem):
         return cBx, cBz
 
     def optimise(self):
-        return super().optimise()
+        x0 = 1e-6 * np.ones(self.coilset.n_control)
+        x_star = self.opt.optimise(x0)
+        self.coilset.set_control_currents(x_star)
+        return self.coilset

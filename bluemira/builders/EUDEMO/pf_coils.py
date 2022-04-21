@@ -541,3 +541,7 @@ def make_coilset(
     coilset.assign_coil_materials("PF", j_max=PF_jmax, b_max=PF_bmax)
     coilset.assign_coil_materials("CS", j_max=CS_jmax, b_max=CS_bmax)
     return coilset
+
+
+class PFSystemDesignProcedure:
+    pass
