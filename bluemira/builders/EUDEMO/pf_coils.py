@@ -178,6 +178,8 @@ opt_parameters: {self._opt_parameters}"""
                 f"Applying non-default settings to problem: {self._problem_settings}"
             )
 
+        self._design_problem = self._problem_class(optimiser)
+
     def read(self, **kwargs):
         """
         Build PF coils from a equilibrium file.

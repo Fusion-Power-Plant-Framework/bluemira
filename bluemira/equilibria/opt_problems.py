@@ -815,3 +815,61 @@ class NestedCoilsetPositionCOP(CoilsetOptimisationProblem):
         sub_opt()
         fom = sub_opt.opt.optimum_value
         return fom
+
+
+class PremagnetisationCOP(CoilsetOptimisationProblem):
+    """ """
+
+    def __init__(
+        self,
+        x_premag_centre,
+        z_premag_centre,
+        r_premag_zone,
+        B_stray_max,
+        B_stray_con_tol,
+        n_B_stray_points,
+        coilset: CoilSet,
+        optimiser: Optimiser = None,
+        constraints: List[OptimisationConstraint] = None,
+    ):
+        self.scale = 1e6  # current_scale
+        objective = OptimisationObjective(
+            objectives.maximise_flux,
+            f_objective_args={
+                "c_psi_mat": coilset.control_psi(x_premag_centre, z_premag_centre),
+                "scale": self.scale,
+            },
+        )
+
+        cBx, cBz = self._stray_field_matrices(
+            coilset, x_premag_centre, z_premag_centre, r_premag_zone, n_B_stray_points
+        )
+
+        stray_field_con = OptimisationConstraint()
+        if constraints:
+            constraints.append(stray_field_con)
+        else:
+            constraints = [stray_field_con]
+
+        super().__init__(coilset, optimiser, objective, constraints)
+        self.scale = 1e6  # current_scale
+
+    def _stray_field_matrices(self, coilset, x_c, z_c, r_c, n_points):
+        """
+        Set up response matrices for the stray field zone
+        """
+        theta = np.linspace(0, 2 * np.pi, n_points)
+        x = x_c + r_c * np.cos(theta)
+        z = z_c + r_c * np.sin(theta)
+        x = np.append(x, x_c)
+        z = np.append(z, z_c)
+        cBx = np.zeros((n_points + 1, coilset.n_C))
+        cBz = np.zeros((n_points + 1, coilset.n_C))
+        for i, (xi, zi) in enumerate(zip(x, z)):
+            for j, coil in enumerate(coilset.coils.values()):
+                cBx[i, j] = coil.control_Bx(xi, zi)
+                cBz[i, j] = coil.control_Bz(xi, zi)
+        return cBx, cBz
+
+    def optimise(self):
+        return super().optimise()
