@@ -36,7 +36,8 @@ the method used to map the coilset object to the state vector
 
 """
 
-from typing import List
+import abc
+from typing import List, Tuple
 
 import numpy as np
 
@@ -818,34 +819,132 @@ class NestedCoilsetPositionCOP(CoilsetOptimisationProblem):
         return fom
 
 
+class BreakdownZoneStrategy(abc.ABC):
+    """
+    Abstract base class for the definition of a breakdown zone strategy.
+    """
+
+    def __init__(self, R_0, A, tk_sol, **kwargs):
+        self.R_0 = R_0
+        self.A = A
+        self.tk_sol = tk_sol
+
+    @abc.abstractproperty
+    def breakdown_point(self) -> Tuple[float]:
+        """
+        The location of the breakdown point.
+
+         Returns
+         -------
+         x_c: float
+             Radial coordinate of the breakdown point
+         z_c: float
+             Vertical coordinate of the breakdown point
+        """
+        pass
+
+    @abc.abstractproperty
+    def breakdown_radius(self) -> float:
+        """
+        The radius of the breakdown zone
+        """
+        pass
+
+    @abc.abstractmethod
+    def calculate_zone_points(self, n_points: int) -> Tuple[np.ndarray]:
+        """
+        Discretised set of points representing the breakdown zone
+        """
+        pass
+
+
+class CircularZoneStrategy(BreakdownZoneStrategy):
+    def calculate_zone_points(self, n_points: int) -> Tuple[np.ndarray]:
+        """ """
+        x_c, z_c = self.breakdown_point
+        r_c = self.breakdown_radius
+        theta = np.linspace(0, 2 * np.pi, n_points - 1, endpoint=False)
+        x = x_c + r_c * np.cos(theta)
+        z = z_c + r_c * np.sin(theta)
+        x = np.append(x, x_c)
+        z = np.append(z, z_c)
+        return x, z
+
+
+class InboardBreakdownZoneStrategy(CircularZoneStrategy):
+    """
+    Inboard breakdown zone strategy.
+    """
+
+    def breakdown_point(self) -> Tuple[float]:
+        r_c = self.breakdown_radius
+        x_c = self.R_0 - self.R_0 / self.A - self.tk_sol + r_c
+        z_c = 0.0
+        return x_c, z_c
+
+    def breakdown_radius(self) -> float:
+        return 0.5 * self.R_0 / self.A
+
+
+class OutboardBreakdownZoneStrategy(CircularZoneStrategy):
+    """
+    Outboard breakdown zone strategy.
+    """
+
+    def breakdown_point(self) -> Tuple[float]:
+        r_c = self.breakdown_radius
+        x_c = self.R_0 + self.R_0 / self.A + self.tk_sol - r_c
+        z_c = 0.0
+        return x_c, z_c
+
+    def breakdown_radius(self) -> float:
+        return 0.7 * self.R_0 / self.A
+
+
+class InputBreakdownZoneStrategy(CircularZoneStrategy):
+    """
+    User input breakdown zone strategy.
+    """
+
+    def __init__(self, x_c, z_c, r_c):
+        self.x_c = x_c
+        self.z_c = z_c
+        self.r_c = r_c
+
+    def breakdown_point(self) -> Tuple[float]:
+        return self.x_c, self.z_c
+
+    def breakdown_radius(self) -> float:
+        return self.r_c
+
+
 class PremagnetisationCOP(CoilsetOptimisationProblem):
     """ """
 
     def __init__(
         self,
-        x_premag_centre,
-        z_premag_centre,
-        r_premag_zone,
+        coilset: CoilSet,
+        breakdown_strategy: BreakdownZoneStrategy,
         B_stray_max,
         B_stray_con_tol,
         n_B_stray_points,
-        coilset: CoilSet,
         optimiser: Optimiser = None,
         max_currents=None,
         constraints: List[OptimisationConstraint] = None,
     ):
         self.scale = 1e6  # current_scale
+
         objective = OptimisationObjective(
             objectives.maximise_flux,
             f_objective_args={
-                "c_psi_mat": coilset.control_psi(x_premag_centre, z_premag_centre),
+                "c_psi_mat": coilset.control_psi(*breakdown_strategy.breakdown_point),
                 "scale": self.scale,
             },
         )
 
-        cBx, cBz = self._stray_field_matrices(
-            coilset, x_premag_centre, z_premag_centre, r_premag_zone, n_B_stray_points
-        )
+        x_zone, z_zone = breakdown_strategy.calculate_zone_points(n_B_stray_points)
+
+        cBx, cBz = self._stray_field_matrices(coilset, x_zone, z_zone)
 
         stray_field_con = OptimisationConstraint(
             stray_field_constraints,
@@ -855,7 +954,7 @@ class PremagnetisationCOP(CoilsetOptimisationProblem):
                 "B_max": B_stray_max,
                 "scale": self.scale,
             },
-            tolerance=B_stray_con_tol,
+            tolerance=B_stray_con_tol * np.ones(n_B_stray_points),
             constraint_type="inequality",
         )
         if constraints:
@@ -870,18 +969,13 @@ class PremagnetisationCOP(CoilsetOptimisationProblem):
         dimension = len(bounds[0])
         self.set_up_optimiser(dimension, bounds)
 
-    def _stray_field_matrices(self, coilset, x_c, z_c, r_c, n_points):
+    def _stray_field_matrices(self, coilset, x_zone, z_zone):
         """
         Set up response matrices for the stray field zone
         """
-        theta = np.linspace(0, 2 * np.pi, n_points, endpoint=False)
-        x = x_c + r_c * np.cos(theta)
-        z = z_c + r_c * np.sin(theta)
-        x = np.append(x, x_c)
-        z = np.append(z, z_c)
-        cBx = np.zeros((n_points + 1, coilset.n_C))
-        cBz = np.zeros((n_points + 1, coilset.n_C))
-        for i, (xi, zi) in enumerate(zip(x, z)):
+        cBx = np.zeros((len(x_zone), coilset.n_C))
+        cBz = np.zeros((len(x_zone), coilset.n_C))
+        for i, (xi, zi) in enumerate(zip(x_zone, z_zone)):
             for j, coil in enumerate(coilset.coils.values()):
                 cBx[i, j] = coil.control_Bx(xi, zi)
                 cBz[i, j] = coil.control_Bz(xi, zi)

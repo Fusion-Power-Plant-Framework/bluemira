@@ -23,9 +23,6 @@
 Equilibrium objects for EU-DEMO design
 """
 
-import abc
-from typing import Tuple
-
 import numpy as np
 
 from bluemira.base.look_and_feel import bluemira_warn
@@ -229,65 +226,3 @@ class EUDEMODoubleNullConstraints(DivertorLegCalculator, MagneticConstraintSet):
         constraints.append(PsiBoundaryConstraint(x_s, z_s, psibval))
 
         super().__init__(constraints)
-
-
-class BreakdownZoneStrategy(abc.ABC):
-    """
-    Abstract base class for the definition of a breakdown zone strategy.
-    """
-
-    def __init__(self, R_0, A, tk_sol, **kwargs):
-        self.R_0 = R_0
-        self.A = A
-        self.tk_sol = tk_sol
-
-    @abc.abstractmethod
-    def calculate_breakdown_point(self) -> Tuple[float]:
-        """
-        Calculate the location of the breakdown point.
-
-        Returns
-        -------
-        x_c: float
-            Radial coordinate of the breakdown point
-        z_c: float
-            Vertical coordinate of the breakdown point
-        """
-        pass
-
-    @abc.abstractmethod
-    def calculate_breakdown_radius(self) -> float:
-        """
-        Calculate the radius of the breakdown zone
-        """
-        pass
-
-
-class InboardBreakdownZoneStrategy(BreakdownZoneStrategy):
-    """
-    Inboard breakdown zone strategy.
-    """
-
-    def calculate_breakdown_point(self) -> Tuple[float]:
-        r_c = self.calculate_breakdown_radius()
-        x_c = self.R_0 - self.R_0 / self.A - self.tk_sol + r_c
-        z_c = 0.0
-        return x_c, z_c
-
-    def calculate_breakdown_radius(self) -> float:
-        return 0.5 * self.R_0 / self.A
-
-
-class OutboardBreakdownZoneStrategy(BreakdownZoneStrategy):
-    """
-    Outboard breakdown zone strategy.
-    """
-
-    def calculate_breakdown_point(self) -> Tuple[float]:
-        r_c = self.calculate_breakdown_radius()
-        x_c = self.R_0 + self.R_0 / self.A + self.tk_sol - r_c
-        z_c = 0.0
-        return x_c, z_c
-
-    def calculate_breakdown_radius(self) -> float:
-        return 0.7 * self.R_0 / self.A
