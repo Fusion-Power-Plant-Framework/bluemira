@@ -522,13 +522,17 @@ def make_coilset(
 
 from bluemira.equilibria.equilibrium import Breakdown
 from bluemira.equilibria.grid import Grid
-from bluemira.equilibria.opt_problems import PremagnetisationCOP
+from bluemira.equilibria.opt_problems import (
+    OutboardBreakdownZoneStrategy,
+    PremagnetisationCOP,
+)
 from bluemira.equilibria.profiles import CustomProfile
 
 
 class PFSystemDesignProcedure:
-    def __init__(self, params, tf_boundary, p_prime, ff_prime):
+    def __init__(self, params, build_config, tf_boundary, p_prime, ff_prime):
         self.params = params
+        self.build_config = build_config
         self.tf_boundary = tf_boundary
         self.profiles = CustomProfile(
             p_prime, ff_prime, params.R_0.value, params.B_0.value, Ip=params.I_p.value
@@ -556,9 +560,24 @@ class PFSystemDesignProcedure:
     def run_premagnetisation(self):
         R_0 = self.params.R_0.value
         # Not really important; mostly for plotting
+        strategy = OutboardBreakdownZoneStrategy(
+            R_0, self.params.A.value, self.params.tk_sol_ib.value
+        )
         grid = Grid(0.1, R_0 * 2, -1.5 * R_0, 1.5 * R_0, 100, 100)
         breakdown = Breakdown(self.coilset, grid, R_0=R_0)
-        problem = PremagnetisationCOP()
+        optimiser = Optimiser(
+            "SLSQP",
+            opt_conditions={"max_eval": 1000, "ftol_rel": 1e-3, "xtol_rel": 1e-6},
+        )
+        problem = PremagnetisationCOP(
+            self.coilset,
+            strategy,
+            B_stray_max=self.params.B_premag_stray_max.value,
+            B_stray_con_tol=1e-6,
+            n_B_stray_points=20,
+            optimiser=optimiser,
+            constraints=None,
+        )
 
     def calculate_sof_eof_fluxes(self):
         pass

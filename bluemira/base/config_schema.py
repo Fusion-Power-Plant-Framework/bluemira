@@ -298,6 +298,9 @@ class ConfigurationSchema:
     PF_jmax: Parameter
     PF_bmax: Parameter
 
+    # Equilibria
+    B_premag_stray_max: Parameter
+
     # Cryostat
     n_cr_lab: Parameter
     cr_l_d: Parameter

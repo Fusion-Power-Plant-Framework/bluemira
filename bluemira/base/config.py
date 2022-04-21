@@ -314,6 +314,9 @@ class Configuration(ConfigurationSchema, ParameterFrame):
         ["PF_jmax", "Maximum current density to use in PF modules", 12.5, "MA/m^2", None, "Input"],
         ["PF_bmax", "Maximum peak field to use in PF modules", 11, "T", None, "Input"],
 
+        # Equilibria
+        ["B_premag_stray_max", "Maximum stray field inside the breakdown zone during premagnetisation", 0.003, "T", None, "Input"],
+
         # Cryostat
         ['n_cr_lab', 'Number of cryostat labyrinth levels', 2, 'dimensionless', None, 'Input'],
         ['cr_l_d', 'Cryostat labyrinth total delta', 0.2, 'm', None, 'Input'],
