@@ -29,7 +29,7 @@ from bluemira.equilibria.coils import (
     CoilGroup,
     CoilSet,
     CoilType,
-    SymmetricCircuit,
+    PositionalSymmetricCircuit,
     check_coilset_symmetric,
     make_mutual_inductance_matrix,
     symmetrise_coilset,
@@ -288,11 +288,20 @@ class TestCoilGroup:
             group.remove_coil("PF_1")
 
 
-class TestSymmetricCircuit:
+class TestPositionalSymmetricCircuit:
     @classmethod
     def setup_class(cls):
         coil = Coil(x=1.5, z=6, current=1e6, dx=0.25, dz=0.5, ctype="PF", name="TEST")
-        circuit = SymmetricCircuit(coil)
+        circuit = PositionalSymmetricCircuit(
+            np.array([[0, 0], [1, 0]]),
+            x=1.5,
+            z=6,
+            current=1e6,
+            dx=0.25,
+            dz=0.5,
+            ctype="PF",
+            name="TEST",
+        )
         mirror_coil = Coil(
             x=1.5, z=-6, current=1e6, dx=0.25, dz=0.5, ctype="PF", name="TEST_MIRROR"
         )
@@ -339,9 +348,9 @@ class TestSymmetricCircuit:
             assert np.isclose(coil_Bz, circuit_Bz)
 
     def test_current(self):
-        self.circuit.set_current(2e6)
+        self.circuit.current = 2e6
         for coil in self.coils:
-            coil.set_current(2e6)
+            coil.current = 2e6
         self.test_fields()
 
     def test_attributes(self):
@@ -370,13 +379,24 @@ class TestCoilSet:
             ctype="PF",
             name="PF_2",
         )
-        circuit = SymmetricCircuit(coil)
+        circuit = PositionalSymmetricCircuit(
+            np.array([[0, 0], [1, 0]]),
+            x=1.5,
+            z=6,
+            current=1e6,
+            dx=0.25,
+            dz=0.5,
+            j_max=10.0,
+            b_max=100,
+            ctype="PF",
+            name="PF_2",
+        )
 
         coil2 = Coil(
             x=4, z=10, current=2e6, dx=1, dz=0.5, j_max=5.0, b_max=50, name="PF_1"
         )
 
-        cls.coilset = CoilSet([coil2, circuit])
+        cls.coilset = CoilSet(coil2, circuit)
 
     def test_group_vecs(self):
         x, z, dx, dz, currents = self.coilset.to_group_vecs()
@@ -495,15 +515,13 @@ class TestCoilSetSymmetry:
         new = symmetrise_coilset(coilset)
         assert len(new.coils) == 1
         assert new.n_coils == 2
-        assert isinstance(list(new.coils.values())[0], SymmetricCircuit)
+        assert isinstance(list(new.coils.values())[0], PositionalSymmetricCircuit)
 
         coilset = CoilSet(
-            [
-                SymmetricCircuit(Coil(5, 5, 1e6, dx=1, dz=1)),
-                SymmetricCircuit(Coil(12, 7, 1e6, dx=1, dz=1)),
-                SymmetricCircuit(Coil(4, 9, 1e6, dx=1, dz=1)),
-                Coil(5, 0, 1e6, dx=1, dz=1),
-            ]
+            PositionalSymmetricCircuit(Coil(5, 5, 1e6, dx=1, dz=1)),
+            PositionalSymmetricCircuit(Coil(12, 7, 1e6, dx=1, dz=1)),
+            PositionalSymmetricCircuit(Coil(4, 9, 1e6, dx=1, dz=1)),
+            Coil(5, 0, 1e6, dx=1, dz=1),
         )
         new = symmetrise_coilset(coilset)
         assert len(new.coils) == len(coilset.coils)
@@ -550,7 +568,7 @@ class TestMutualInductances:
         coil1 = Coil(4, 4, j_max=1)
         coil2 = Coil(5, 5, j_max=1)
         coil3 = Coil(6, 6, j_max=1)
-        cls.coilset1 = CoilSet([coil1, coil2, coil3])
+        cls.coilset1 = CoilSet(coil1, coil2, coil3)
 
     def test_normal(self):
         """

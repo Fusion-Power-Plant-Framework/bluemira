@@ -156,7 +156,7 @@ def _array_dispatcher(func):
 
     def wrapper(xc, zc, x, z, d_xc, d_zc):
         # Handle floats
-        if is_num(x):
+        if not isinstance(x, np.ndarray) and is_num(x):
             return func(xc, zc, x, z, d_xc, d_zc)
 
         # Handle arrays
