@@ -18,6 +18,7 @@
 #
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
+import copy
 
 import numpy as np
 import pytest
@@ -354,13 +355,16 @@ class TestPositionalSymmetricCircuit:
         self.test_fields()
 
     def test_attributes(self):
-        self.circuit.x = 4
-        assert self.circuit.x[0] == 4
-        assert self.circuit.x[1] == 4
+        circ = copy.deepcopy(self.circuit)
+        circ.x = 4
+        assert circ.x[0] == 4
+        assert circ.x[1] == 4
 
-        self.circuit.z = 6
-        assert self.circuit.z[0] == 6
-        assert self.circuit.z[1] == -6
+        circ.z = 6
+        assert circ.z[0] == 6
+        assert circ.z[1] == -6
+
+        assert np.allclose(self.coils[0].volume, self.circuit.volume)
 
 
 class TestCoilSet:
