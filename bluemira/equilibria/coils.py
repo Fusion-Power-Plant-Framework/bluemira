@@ -1229,7 +1229,7 @@ class PositionalSymmetricCircuit(Circuit):
     ) -> None:
 
         self._point = np.array([x, z])
-        x, z = self.setup_symmetry(symmetry_line)
+        x, z = self._setup_symmetry(symmetry_line)
         ones = np.ones(2)
         current *= ones
         ctype = [ctype, ctype]
@@ -1247,7 +1247,7 @@ class PositionalSymmetricCircuit(Circuit):
 
         super().__init__(x, z, dx, dz, current, name, ctype, j_max, b_max)
 
-    def _unit_vector(self, symmetry_line):
+    def modify_symmetry(self, symmetry_line: np.ndarray[[float, float], [float, float]]):
         """
         Create a unit vector for the symmetry of the coil
 
@@ -1262,7 +1262,7 @@ class PositionalSymmetricCircuit(Circuit):
         )
         self._symmetry_point = symmetry_line[0]
 
-    def setup_symmetry(self, symmetry_line):
+    def _setup_symmetry(self, symmetry_line):
         """
         Setup the symmetry of the coil
 
