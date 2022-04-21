@@ -1091,9 +1091,9 @@ class CoilGroup(CoilFieldsMixin, abc.ABC):
         """
         return "".join(
             (
-                f"{name}: X={self.x[ind][0]:.2f} m,"
-                f" Z={self.z[ind][0]:.2f} m,"
-                f" I={self.current[ind][0]/1e6:.2f} MA\n"
+                f"{name}: X={self._x[ind][0]:.2f} m,"
+                f" Z={self._z[ind][0]:.2f} m,"
+                f" I={self._current[ind][0]/1e6:.2f} MA\n"
             )
             for ind, name in enumerate(self.name)
         )[:-1]
@@ -1176,14 +1176,10 @@ class Coil(CoilGroup):
 
 class Circuit(CoilGroup):
     """
-    Dummy
+    Base circuit class
     """
 
     __slots__ = ()
-
-    def __init__(self, *args, **kwargs):
-
-        super().__init__(*args, **kwargs)
 
 
 class PositionalSymmetricCircuit(Circuit):
@@ -1232,7 +1228,8 @@ class PositionalSymmetricCircuit(Circuit):
         b_max: Optional[float] = None,
     ) -> None:
 
-        x, z = self.setup_symmetry(np.array([x, z]), symmetry_line)
+        self._point = np.array([x, z])
+        x, z = self.setup_symmetry(symmetry_line)
         ones = np.ones(2)
         current *= ones
         ctype = [ctype, ctype]
@@ -1265,14 +1262,12 @@ class PositionalSymmetricCircuit(Circuit):
         )
         self._symmetry_point = symmetry_line[0]
 
-    def setup_symmetry(self, point, symmetry_line):
+    def setup_symmetry(self, symmetry_line):
         """
         Setup the symmetry of the coil
 
         Parameters
         ----------
-        point: np.ndarray[float, float]
-            point to symmetrise
         symmetry_line: np.ndarray[[float, float], [float, float]]
             two points making a symmetry line
 
@@ -1282,7 +1277,6 @@ class PositionalSymmetricCircuit(Circuit):
 
         """
         self._unit_vector(symmetry_line)
-        self._point = point
         return np.array([self._point, self._point - self._symmetrise()]).T
 
     def _symmetrise(self):
