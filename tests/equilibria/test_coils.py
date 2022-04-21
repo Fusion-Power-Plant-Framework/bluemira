@@ -354,6 +354,12 @@ class TestPositionalSymmetricCircuit:
 
         assert np.allclose(self.coils[0].volume, self.circuit.volume)
 
+    def test_position(self):
+        circ = copy.deepcopy(self.circuit)
+        before = circ.x.copy()
+        circ.adjust_position(np.array([[1, 0]]))
+        assert np.allclose(before + 1, circ.x)
+
 
 class TestCoilSet:
     @classmethod
