@@ -1296,7 +1296,7 @@ class PositionalSymmetricCircuit(Circuit):
         )
 
     @Circuit.x.setter
-    def x(self, new_x: __ITERABLE_FLOAT) -> None:
+    def x(self, new_x: float) -> None:
         """
         Set x coordinate of each coil
         """
@@ -1306,13 +1306,24 @@ class PositionalSymmetricCircuit(Circuit):
         self._sizer(self)
 
     @Circuit.z.setter
-    def z(self, new_z: __ITERABLE_FLOAT) -> None:
+    def z(self, new_z: float) -> None:
         """
         Set z coordinate of each coil
         """
         self._z[0] = self._point[1] = new_z
         self._z[1] = new_z - self._symmetrise()[1]
         self._sizer(self)
+
+    @property
+    def current(self):
+        return self._current[0]
+
+    @current.setter
+    def current(self, new_current: float) -> None:
+        """
+        Set coil current
+        """
+        Circuit.current.fset(self, new_current)
 
 
 class CoilSet(CoilGroup):

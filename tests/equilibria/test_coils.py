@@ -355,14 +355,12 @@ class TestPositionalSymmetricCircuit:
 
     def test_attributes(self):
         self.circuit.x = 4
-        assert self.circuit.x == 4
-        assert self.circuit["TEST.1"].x == 4
-        assert self.circuit["TEST.2"].x == 4
+        assert self.circuit.x[0] == 4
+        assert self.circuit.x[1] == 4
 
         self.circuit.z = 6
-        assert self.circuit.z == 6
-        assert self.circuit["TEST.1"].z == 6
-        assert self.circuit["TEST.2"].z == -6
+        assert self.circuit.z[0] == 6
+        assert self.circuit.z[1] == -6
 
 
 class TestCoilSet:
