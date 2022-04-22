@@ -27,10 +27,7 @@ import numba as nb
 import numpy as np
 
 from bluemira.base.constants import EPS
-from bluemira.magnetostatics.error import (
-    MagnetostaticsError,
-    MagnetostaticsIntegrationError,
-)
+from bluemira.magnetostatics.error import MagnetostaticsIntegrationError
 from bluemira.magnetostatics.tools import (
     integrate,
     jit_llc3,
@@ -127,6 +124,9 @@ def _full_z_integrand(phi, r1, r2, z1, z2):
 
 
 def _integrate_z_by_parts(r1, r2, z1, z2):
+    """
+    Fall back to integrating the Bz integrand by parts if integration fails.
+    """
     return (
         integrate(_partial_z_integrand_llc, (r1, z1), 0, np.pi)
         - integrate(_partial_z_integrand_llc, (r1, z2), 0, np.pi)
