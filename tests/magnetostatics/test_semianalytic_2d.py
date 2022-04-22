@@ -130,6 +130,16 @@ class TestSemiAnalyticBxBz:
             ax.set_ylabel("$B_{p}$ [T]")
             plt.show()
 
+    def test_tough_Bz_integration(self):
+        semianalytic_Bz(
+            4.389381920020457,
+            9.39108180525438,
+            4.3892405,
+            9.39108181,
+            0.0001414213562373095,
+            0.0001414213562373095,
+        )
+
 
 class TestPoloidalFieldBenchmark:
     """
