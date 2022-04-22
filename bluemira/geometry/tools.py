@@ -265,6 +265,7 @@ def _make_polygon_fallback(points, label="", closed=False, **kwargs) -> Bluemira
     """
     Overloaded function signature for fallback option from interpolate_bspline
     """
+    points = Coordinates(points).T
     return make_polygon(points, label, closed)
 
 
