@@ -256,6 +256,7 @@ def integrate(func, args, bound1, bound2):
     try:
         result = quad(func, bound1, bound2, args=args)[0]
     except IntegrationWarning:
+        # First attempt at fixing the integration problem
         points = [
             0.25 * (bound2 - bound1),
             0.5 * (bound2 - bound1),
