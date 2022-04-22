@@ -131,6 +131,10 @@ class TestSemiAnalyticBxBz:
             plt.show()
 
     def test_tough_Bz_integration(self):
+        """
+        This is a challenging integration, where evaluation of the single full integrand
+        is known to not converge / fail.
+        """
         semianalytic_Bz(
             4.389381920020457,
             9.39108180525438,
