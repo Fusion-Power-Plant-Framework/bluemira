@@ -314,7 +314,10 @@ def make_coil_mapper(track, exclusion_zones, coils):
         Position mapper for coil position interpolation
     """
     # Break down the track into subsegments
-    segments = boolean_cut(track, exclusion_zones)
+    if exclusion_zones:
+        segments = boolean_cut(track, exclusion_zones)
+    else:
+        segments = [track]
 
     # Sort the coils into the segments
     coil_bins = [[] for _ in range(len(segments))]
@@ -528,7 +531,7 @@ def make_coilset(
     return coilset
 
 
-from bluemira.equilibria.equilibrium import Breakdown
+from bluemira.equilibria.equilibrium import Breakdown, Equilibrium
 from bluemira.equilibria.grid import Grid
 from bluemira.equilibria.opt_constraints import (
     coil_field_constraints,
@@ -585,8 +588,10 @@ class PFSystemDesignProcedure:
             "COBYLA",
             opt_conditions={"max_eval": 5000, "ftol_rel": 1e-10},
         )
-        self.coilset.mesh_coils(0.2)
         scale = 1e6
+        # self.coilset.set_control_currents(self.coilset.get_max_currents(scale*self.params.I_p))
+        self.coilset.mesh_coils(0.1)
+
         breakdown = Breakdown(self.coilset, grid, R_0=R_0)
         constraints = [
             OptimisationConstraint(
@@ -613,7 +618,9 @@ class PFSystemDesignProcedure:
             # ),
         ]
         max_currents = self.coilset.get_max_currents(1.0 * scale * self.params.I_p.value)
-        problem = PremagnetisationCOP(
+        # TODO: Still the problem that the response matrices should in theory be
+        # changed when the PF currents (not size-fixed) change.
+        self.problem = PremagnetisationCOP(
             self.coilset,
             strategy,
             B_stray_max=self.params.B_premag_stray_max.value,
@@ -623,7 +630,7 @@ class PFSystemDesignProcedure:
             max_currents=max_currents,
             constraints=constraints,
         )
-        self.coilset = problem.optimise(max_currents / scale)
+        self.coilset = self.problem.optimise(max_currents / scale)
         breakdown = Breakdown(self.coilset, grid, R_0=R_0)
         breakdown.set_breakdown_point(*strategy.breakdown_point)
         psi_premag = breakdown.breakdown_psi
@@ -645,6 +652,14 @@ class PFSystemDesignProcedure:
         return psi_sof, psi_eof
 
     def optimise_positions(self):
+
+        eq = Equilibrium(
+            self.coilset,
+            force_symmetry=False,
+            vcontrol=None,
+            limiter=None,
+            profiles=self.profiles,
+        )
         pass
 
     def consolidate_coilset(self):
@@ -676,3 +691,9 @@ if __name__ == "__main__":
     f, ax = plt.subplots()
     breakdown.coilset.plot(ax=ax)
     breakdown.plot(ax=ax)
+
+    positioner = make_coil_mapper(
+        PrincetonD({"x1": {"value": 4}, "x2": {"value": 16}}).create_shape(),
+        None,
+        coils=breakdown.coilset.coils.values(),
+    )

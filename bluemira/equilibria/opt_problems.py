@@ -54,7 +54,8 @@ from bluemira.utilities.opt_problems import (
     OptimisationProblem,
 )
 from bluemira.utilities.opt_tools import regularised_lsq_fom, tikhonov
-from bluemira.utilities.optimiser import Optimiser
+from bluemira.utilities.optimiser import Optimiser, approx_derivative
+from bluemira.utilities.positioning import PositionMapper
 
 __all__ = [
     "UnconstrainedCurrentCOP",
@@ -926,7 +927,9 @@ class InputBreakdownZoneStrategy(CircularZoneStrategy):
 
 
 class PremagnetisationCOP(CoilsetOptimisationProblem):
-    """ """
+    """
+    Coilset optimisation problem for the premagnetisation / breakdown phase.
+    """
 
     def __init__(
         self,
@@ -991,8 +994,60 @@ class PremagnetisationCOP(CoilsetOptimisationProblem):
         return cBx, cBz
 
     def optimise(self, x0=None):
+        """
+        Solve the optimisation problem.
+        """
         if x0 is None:
             x0 = 1e-6 * np.ones(self.coilset.n_control)
         x_star = self.opt.optimise(x0) * self.scale
         self.coilset.set_control_currents(x_star)
         return self.coilset
+
+
+class NestedPositionCOP(CoilsetOptimisationProblem):
+    def __init__(
+        self,
+        sub_problems: List[CoilsetOptimisationProblem],
+        eq: Equilibrium,
+        positioner: PositionMapper,
+        optimiser=Optimiser(
+            algorithm_name="COBYLA",
+            opt_conditions={
+                "max_eval": 100,
+            },
+        ),
+        opt_constraints: List[OptimisationConstraint] = None,
+    ):
+        self.sub_problems = sub_problems
+
+        objective = OptimisationObjective(
+            self.get_max_fom, f_objective_args={"sub_problems": sub_problems}
+        )
+
+        super().__init__(eq.coilset, optimiser, objective, opt_constraints)
+        self.positioner = positioner
+        self.eq = eq
+
+    def update_positions(self, coilset, vector):
+        positions = self.positioner.to_xz(vector)
+        coilset.set_positions(positions)
+
+    @staticmethod
+    def get_max_fom(vector, grad, sub_problems):
+        """
+        Minimax
+        """
+        foms = []
+        for problem in sub_problems:
+            NestedPositionCOP.update_positions(problem.coilset, vector)
+            problem.eq.set_forcefield()
+            problem.optimise()
+            foms.append(problem.opt.optimum_value)
+
+        if grad.size > 0:
+            raise ValueError("You shouldn't use gradient-based optimisers here")
+
+        return max(foms)
+
+    def optimise(self):
+        return super().optimise()
