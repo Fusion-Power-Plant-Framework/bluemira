@@ -581,10 +581,11 @@ class PFSystemDesignProcedure:
         # Not really important; mostly for plotting
         grid = Grid(0.1, R_0 * 2, -1.5 * R_0, 1.5 * R_0, 100, 100)
         optimiser = Optimiser(
-            "COBYLA",
+            "SLSQP",
             opt_conditions={"max_eval": 10000, "ftol_rel": 1e-6},
         )
         self.coilset.mesh_coils(0.2)
+        scale = 1e6
         breakdown = Breakdown(self.coilset, grid, R_0=R_0)
         constraints = [
             OptimisationConstraint(
@@ -592,7 +593,7 @@ class PFSystemDesignProcedure:
                 f_constraint_args={
                     "eq": breakdown,
                     "B_max": self.coilset.get_max_fields(),
-                    "scale": 1e6,
+                    "scale": scale,
                 },
                 tolerance=1e-6 * np.ones(self.coilset.n_control),
             ),
@@ -602,7 +603,10 @@ class PFSystemDesignProcedure:
                     "eq": breakdown,
                     "n_PF": self.coilset.n_PF,
                     "n_CS": self.coilset.n_CS,
-                    "scale": self.scale,
+                    "PF_Fz_max": self.params.F_pf_zmax.value,
+                    "CS_Fz_sum_max": self.params.F_cs_ztotmax.value,
+                    "CS_Fz_sep_max": self.params.F_cs_sepmax.value,
+                    "scale": scale,
                 },
                 tolerance=1e-6 * np.ones(self.coilset.n_control),
             ),
