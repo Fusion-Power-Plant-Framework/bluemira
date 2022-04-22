@@ -35,6 +35,7 @@ from bluemira.base.error import BuilderError
 from bluemira.base.look_and_feel import bluemira_print, bluemira_warn
 from bluemira.builders.pf_coils import PFCoilBuilder
 from bluemira.equilibria.coils import Coil, CoilSet
+from bluemira.equilibria.physics import calc_psib
 from bluemira.geometry.constants import VERY_BIG
 from bluemira.geometry.tools import (
     boolean_cut,
@@ -581,8 +582,8 @@ class PFSystemDesignProcedure:
         # Not really important; mostly for plotting
         grid = Grid(0.1, R_0 * 2, -1.5 * R_0, 1.5 * R_0, 100, 100)
         optimiser = Optimiser(
-            "SLSQP",
-            opt_conditions={"max_eval": 10000, "ftol_rel": 1e-6},
+            "COBYLA",
+            opt_conditions={"max_eval": 5000, "ftol_rel": 1e-10},
         )
         self.coilset.mesh_coils(0.2)
         scale = 1e6
@@ -597,20 +598,21 @@ class PFSystemDesignProcedure:
                 },
                 tolerance=1e-6 * np.ones(self.coilset.n_control),
             ),
-            OptimisationConstraint(
-                coil_force_constraints,
-                f_constraint_args={
-                    "eq": breakdown,
-                    "n_PF": self.coilset.n_PF,
-                    "n_CS": self.coilset.n_CS,
-                    "PF_Fz_max": self.params.F_pf_zmax.value,
-                    "CS_Fz_sum_max": self.params.F_cs_ztotmax.value,
-                    "CS_Fz_sep_max": self.params.F_cs_sepmax.value,
-                    "scale": scale,
-                },
-                tolerance=1e-6 * np.ones(self.coilset.n_control),
-            ),
+            # OptimisationConstraint(
+            #     coil_force_constraints,
+            #     f_constraint_args={
+            #         "eq": breakdown,
+            #         "n_PF": self.coilset.n_PF,
+            #         "n_CS": self.coilset.n_CS,
+            #         "PF_Fz_max": self.params.F_pf_zmax.value,
+            #         "CS_Fz_sum_max": self.params.F_cs_ztotmax.value,
+            #         "CS_Fz_sep_max": self.params.F_cs_sepmax.value,
+            #         "scale": scale,
+            #     },
+            #     tolerance=1e-6 * np.ones(self.coilset.n_control),
+            # ),
         ]
+        max_currents = self.coilset.get_max_currents(1.0 * scale * self.params.I_p.value)
         problem = PremagnetisationCOP(
             self.coilset,
             strategy,
@@ -618,20 +620,29 @@ class PFSystemDesignProcedure:
             B_stray_con_tol=1e-8,
             n_B_stray_points=20,
             optimiser=optimiser,
-            max_currents=self.coilset.get_max_currents(
-                1.4 * 1e6 * self.params.I_p.value
-            ),
+            max_currents=max_currents,
             constraints=constraints,
         )
-        self.coilset = problem.optimise()
+        self.coilset = problem.optimise(max_currents / scale)
         breakdown = Breakdown(self.coilset, grid, R_0=R_0)
         breakdown.set_breakdown_point(*strategy.breakdown_point)
         psi_premag = breakdown.breakdown_psi
         bluemira_print(f"Premagnetisation flux = {2*np.pi * psi_premag:.2f} V.s")
         return breakdown
 
-    def calculate_sof_eof_fluxes(self):
-        pass
+    def calculate_sof_eof_fluxes(self, psi_premag: float):
+        """
+        Calculate the SOF and EOF plasma boundary fluxes.
+        """
+        psi_sof = calc_psib(
+            2 * np.pi * psi_premag,
+            self.params.R_0.value,
+            1e6 * self.params.I_p.value,
+            self.params.l_i.value,
+            self.params.C_Ejima.value,
+        )
+        psi_eof = psi_sof - self.params.tau_flattop.value * self.params.v_burn.value
+        return psi_sof, psi_eof
 
     def optimise_positions(self):
         pass
@@ -660,6 +671,7 @@ if __name__ == "__main__":
     )
 
     breakdown = design.run_premagnetisation()
+    psi_sof, psi_eof = design.calculate_sof_eof_fluxes(breakdown.breakdown_psi)
 
     f, ax = plt.subplots()
     breakdown.coilset.plot(ax=ax)

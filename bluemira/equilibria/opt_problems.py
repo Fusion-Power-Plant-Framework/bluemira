@@ -990,8 +990,9 @@ class PremagnetisationCOP(CoilsetOptimisationProblem):
                 cBz[i, j] = coil.control_Bz(xi, zi)
         return cBx, cBz
 
-    def optimise(self):
-        x0 = 1e-6 * np.ones(self.coilset.n_control)
+    def optimise(self, x0=None):
+        if x0 is None:
+            x0 = 1e-6 * np.ones(self.coilset.n_control)
         x_star = self.opt.optimise(x0) * self.scale
         self.coilset.set_control_currents(x_star)
         return self.coilset
