@@ -45,6 +45,7 @@ from bluemira.geometry.tools import (
 )
 from bluemira.magnetostatics.baseclass import SourceGroup
 from bluemira.magnetostatics.circular_arc import CircularArcCurrentSource
+from bluemira.utilities.opt_problems import OptimisationConstraint
 from bluemira.utilities.optimiser import Optimiser
 from bluemira.utilities.positioning import PathInterpolator, PositionMapper
 from bluemira.utilities.tools import get_class_from_module
@@ -528,6 +529,10 @@ def make_coilset(
 
 from bluemira.equilibria.equilibrium import Breakdown
 from bluemira.equilibria.grid import Grid
+from bluemira.equilibria.opt_constraints import (
+    coil_field_constraints,
+    coil_force_constraints,
+)
 from bluemira.equilibria.opt_problems import (
     InboardBreakdownZoneStrategy,
     OutboardBreakdownZoneStrategy,
@@ -570,16 +575,38 @@ class PFSystemDesignProcedure:
 
     def run_premagnetisation(self):
         R_0 = self.params.R_0.value
-        # Not really important; mostly for plotting
         strategy = OutboardBreakdownZoneStrategy(
             R_0, self.params.A.value, self.params.tk_sol_ib.value
         )
+        # Not really important; mostly for plotting
         grid = Grid(0.1, R_0 * 2, -1.5 * R_0, 1.5 * R_0, 100, 100)
         optimiser = Optimiser(
-            "SLSQP",
-            opt_conditions={"max_eval": 1000, "ftol_rel": 1e-6},
+            "COBYLA",
+            opt_conditions={"max_eval": 10000, "ftol_rel": 1e-6},
         )
         self.coilset.mesh_coils(0.2)
+        breakdown = Breakdown(self.coilset, grid, R_0=R_0)
+        constraints = [
+            OptimisationConstraint(
+                coil_field_constraints,
+                f_constraint_args={
+                    "eq": breakdown,
+                    "B_max": self.coilset.get_max_fields(),
+                    "scale": 1e6,
+                },
+                tolerance=1e-6 * np.ones(self.coilset.n_control),
+            ),
+            OptimisationConstraint(
+                coil_force_constraints,
+                f_constraint_args={
+                    "eq": breakdown,
+                    "n_PF": self.coilset.n_PF,
+                    "n_CS": self.coilset.n_CS,
+                    "scale": self.scale,
+                },
+                tolerance=1e-6 * np.ones(self.coilset.n_control),
+            ),
+        ]
         problem = PremagnetisationCOP(
             self.coilset,
             strategy,
@@ -590,7 +617,7 @@ class PFSystemDesignProcedure:
             max_currents=self.coilset.get_max_currents(
                 1.4 * 1e6 * self.params.I_p.value
             ),
-            constraints=None,
+            constraints=constraints,
         )
         self.coilset = problem.optimise()
         breakdown = Breakdown(self.coilset, grid, R_0=R_0)
