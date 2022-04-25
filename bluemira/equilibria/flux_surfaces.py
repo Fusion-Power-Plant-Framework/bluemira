@@ -513,6 +513,45 @@ class PartialOpenFluxSurface(OpenFluxSurface):
             / (self.x_end * eq.Bp(self.x_end, self.z_end))
         )
 
+    def calculate_poloidal_angle(self, eq, x_strike, z_strike, gamma):
+        """
+        From glancing angle to poloidal angle.
+
+        Parameters
+        ----------
+        eq: Equilibrium
+            Equilibrium from which to take magnetic fields
+            at the strike pointcalculate the flux expansion
+        x_strike: float
+            x coordinate of strike point
+        z_strike: float
+            z coordinate of strike point
+        gamma: float
+            Glancing angle at the strike point [deg]
+
+        Returns
+        -------
+        theta: float
+            Poloidal angle at the strike point [deg]
+        """
+        # From deg to rad
+        gamma_rad = np.radians(gamma)
+
+        # Poloidal and toroidal magnetic field at the strike point
+        Bp_strike = eq.Bp(x_strike, z_strike)
+        Bt_strike = eq.Bt(x_strike)
+
+        # Numerator and denominator of next operation
+        num = Bp_strike**2 - (Bt_strike**2 * (np.tan(gamma_rad)) ** 2)
+        den = Bp_strike**2 + (Bp_strike**2 * (np.tan(gamma_rad)) ** 2)
+
+        # Poloidal projection of the glancing angle
+        cos_theta = np.sqrt(num / den)
+
+        # Rad to deg
+        theta = np.rad2deg(np.arccos(cos_theta))
+        return theta
+
 
 def analyse_plasma_core(eq, n_points=50):
     """
