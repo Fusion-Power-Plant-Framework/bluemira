@@ -29,7 +29,7 @@ import abc
 import json
 from enum import Enum
 from functools import partial
-from typing import Dict, Optional, TextIO, Union
+from typing import Dict, Iterable, Optional, TextIO, Union
 
 import numpy as np
 from scipy.special import iv as bessel
@@ -998,14 +998,14 @@ class PictureFrameTools:
 
     @staticmethod
     def _make_domed_leg(
-        x_out,
-        x_curve_start,
-        x_mid,
-        z_top,
-        z_mid,
-        r_c,
-        axis=[0, -1, 0],
-        flip=False,
+        x_out: float,
+        x_curve_start: float,
+        x_mid: float,
+        z_top: float,
+        z_mid: float,
+        r_c: float,
+        axis: Iterable[float] = (0, -1, 0),
+        flip: bool = False,
     ):
         """
         Makes smooth dome for CP coils. This includes a initial straight section
@@ -1026,7 +1026,7 @@ class PictureFrameTools:
             Vertical position of flat section [m]
         r_c: float
             Radius of corner transition. Nominally 0 [m]
-        axis: np.ndarray
+        axis: Iterable[float]
             [x,y,z] vector normal to plane of parameterisation
         flip: bool
             True if limb is lower limb of section, False if upper
@@ -1145,7 +1145,15 @@ class PictureFrameTools:
         )
 
     @staticmethod
-    def _make_flat_leg(x_in, x_out, z, r_i, r_o, axis=[0, 1, 0], flip=False):
+    def _make_flat_leg(
+        x_in: float,
+        x_out: float,
+        z: float,
+        r_i: float,
+        r_o: float,
+        axis: Iterable[float] = (0, 1, 0),
+        flip: bool = False,
+    ):
         """
         Makes a flat leg (top/bottom limb) with the option of one end rounded.
 
@@ -1161,7 +1169,7 @@ class PictureFrameTools:
             Radius of inner corner [m]
         r_o: float
             Radius of outer corner [m]
-        axis: np.ndarray
+        axis: Iterable[float]
             [x,y,z] vector normal to plane of parameterisation
         flip: bool
             True if limb is lower limb of section, False if upper
@@ -1215,7 +1223,14 @@ class PictureFrameTools:
         return BluemiraWire(wires, label=f"{label}_limb")
 
     @staticmethod
-    def _make_tapered_inner_leg(x_in, x_mid, z_in, z1, z2, axis=[0, 1, 0]):
+    def _make_tapered_inner_leg(
+        x_in: float,
+        x_mid: float,
+        z_in: float,
+        z1: float,
+        z2: float,
+        axis: Iterable[float] = (0, 1, 0),
+    ):
         """
         Makes a tapered inboard leg using a circle arc taper, symmetric about the
         midplane with the tapering beginning at a certain height and reaching a
@@ -1233,7 +1248,7 @@ class PictureFrameTools:
             Vertical position of top of limb [m]
         z2: float
             Vertical position of bottom of limb [m]
-        axis: np.ndarray
+        axis: Iterable[float]
             [x,y,z] vector normal to plane of parameterisation
 
         Returns
