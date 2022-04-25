@@ -32,7 +32,6 @@ from bluemira.geometry.parameterisations import (
     PictureFrame,
     PolySpline,
     PrincetonD,
-    TaperedPictureFrame,
     TripleArc,
 )
 from bluemira.geometry.tools import (
@@ -51,7 +50,7 @@ class TestOffset:
         cls.p_wire = PrincetonD().create_shape(n_points=200, label="princeton")
         cls.pf_wire = PictureFrame().create_shape(label="pict_frame")
         cls.t_wire = TripleArc().create_shape(label="triple")
-        cls.tpf_wire = TaperedPictureFrame().create_shape(label="tpf")
+        cls.tpf_wire = PictureFrame(inner="TAPERED_INNER").create_shape(label="tpf")
         cls.ps_wire = PolySpline().create_shape(label="poly")
         cls.rect_wire = make_polygon(
             [[0, 0, 0], [1, 0, 0], [1, 0, 1], [0, 0, 1]], closed=True, label="sqaure"
