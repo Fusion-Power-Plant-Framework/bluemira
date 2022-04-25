@@ -31,6 +31,7 @@ from bluemira.equilibria.find import find_flux_surface_through_point
 from bluemira.equilibria.flux_surfaces import (
     ClosedFluxSurface,
     FieldLineTracer,
+    FluxSurface,
     OpenFluxSurface,
     PartialOpenFluxSurface,
 )
@@ -38,6 +39,44 @@ from bluemira.equilibria.shapes import flux_surface_cunningham, flux_surface_joh
 from bluemira.geometry._deprecated_loop import Loop
 
 TEST_PATH = get_bluemira_path("equilibria/test_data", subfolder="tests")
+
+
+class TestFluxSurface:
+    def setup_class(cls):
+        eq_name = "DN-DEMO_eqref.json"
+        filename = os.sep.join([TEST_PATH, eq_name])
+        cls.eq = Equilibrium.from_eqdsk(filename)
+
+    def test_calculate_poloidal_angle(self):
+        # Flux surface in the SoL
+        x_start, z_start = 14, 0
+        x_loop, z_loop = find_flux_surface_through_point(
+            self.eq.x,
+            self.eq.z,
+            self.eq.psi(),
+            x_start,
+            z_start,
+            self.eq.psi(x_start, z_start),
+        )
+        fs = FluxSurface(Loop(x=x_loop, z=z_loop))
+        # Glancing angle
+        gamma = 5
+        # Poloidal angle
+        theta = fs.calculate_poloidal_angle(
+            self.eq,
+            10,
+            -7.5,
+            gamma,
+        )
+        assert theta > gamma
+        # Testing the raise error
+        with pytest.raises(ValueError):
+            fs.calculate_poloidal_angle(
+                self.eq,
+                10,
+                -7.5,
+                2,
+            )
 
 
 class TestOpenFluxSurfaceStuff:
