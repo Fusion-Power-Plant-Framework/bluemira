@@ -140,7 +140,7 @@ class TestOffset:
 class TestFallBackOffset:
     @classmethod
     def setup_class(cls):
-        fp = get_bluemira_path("geometry/test_data", subfolder="tests")
+        fp = get_bluemira_path("bluemira/geometry/test_data", subfolder="tests")
         fn = os.sep.join([fp, "offset_wire2022-04-08_10-19-27.json"])
 
         with open(fn, "r") as file:
