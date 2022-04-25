@@ -1004,6 +1004,19 @@ class PremagnetisationCOP(CoilsetOptimisationProblem):
         return self.coilset
 
 
+class MinimalCurrentCOP(CoilsetOptimisationProblem):
+    def __init__(
+        self,
+        eq: Equilibrium,
+        optimiser=Optimiser(
+            "SLSQP", opt_conditions={"max_eval": 1000, "ftol_rel": 1e-6}
+        ),
+        opt_constraints: List[OptimisationConstraint] = None,
+    ):
+        objective = OptimisationObjective(objectives.minimise_coil_currents)
+        super().__init__(eq.coilset, optimiser, objective, opt_constraints)
+
+
 class NestedPositionCOP(CoilsetOptimisationProblem):
     def __init__(
         self,

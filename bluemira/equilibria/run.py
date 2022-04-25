@@ -24,13 +24,15 @@ Interface for building and loading equilibria and coilset designs
 """
 
 from copy import deepcopy
-from typing import List, Type
+from typing import List, Optional, Type
 
 import numpy as np
+from sympy import Eq
 
-from bluemira.base.look_and_feel import bluemira_print
-from bluemira.equilibria.coils import CoilSet
-from bluemira.equilibria.equilibrium import Breakdown
+from bluemira.base.look_and_feel import bluemira_print, bluemira_warn
+from bluemira.equilibria.coils import Coil, CoilSet
+from bluemira.equilibria.eq_constraints import MagneticConstraintSet
+from bluemira.equilibria.equilibrium import Breakdown, Equilibrium
 from bluemira.equilibria.grid import Grid
 from bluemira.equilibria.opt_constraints import (
     coil_field_constraints,
@@ -38,11 +40,16 @@ from bluemira.equilibria.opt_constraints import (
 )
 from bluemira.equilibria.opt_problems import (
     BreakdownZoneStrategy,
+    CoilsetOptimisationProblem,
+    InboardBreakdownZoneStrategy,
+    MinimalCurrentCOP,
     OutboardBreakdownZoneStrategy,
     PremagnetisationCOP,
+    UnconstrainedCurrentCOP,
 )
 from bluemira.equilibria.physics import calc_psib
 from bluemira.equilibria.profiles import Profile
+from bluemira.equilibria.solve import PicardCoilsetIterator
 from bluemira.utilities.opt_problems import OptimisationConstraint
 from bluemira.utilities.optimiser import Optimiser
 
@@ -105,6 +112,11 @@ class PulsedEquilibriumProblem:
     Procedural design for a pulsed tokamak.
     """
 
+    BREAKDOWN = "Breakdown"
+    EQ_REF = "Reference"
+    SOF = "SOF"
+    EOF = "EOF"
+
     def __init__(
         self,
         params,
@@ -112,16 +124,18 @@ class PulsedEquilibriumProblem:
         grid: Grid,
         coil_constraints: List[callable],
         profiles: Profile,
-        magnetic_targets,
+        magnetic_targets: MagneticConstraintSet,
         breakdown_strategy_cls: Type[BreakdownZoneStrategy],
         breakdown_problem_cls: Type[PremagnetisationCOP],
         breakdown_optimiser: Optimiser = Optimiser(
             "COBYLA", opt_conditions={"max_eval": 5000, "ftol_rel": 1e-10}
         ),
         breakdown_settings: dict = {"B_stray_con_tol": 1e-8, "n_B_stray_points": 20},
-        # equilibrium_problem_cls: type[],
-        # equilibrium_optimiser: Optimiser,
-        # equilibrium_settings: dict,
+        equilibrium_problem_cls: Type[CoilsetOptimisationProblem] = MinimalCurrentCOP,
+        equilibrium_optimiser: Optimiser = Optimiser(
+            "SLSQP", opt_conditions={"max_eval": 1000, "ftol_rel": 1e-6}
+        ),
+        equilibrium_settings: dict = {},
     ):
         self.params = params
         self.coilset = coilset
@@ -135,19 +149,38 @@ class PulsedEquilibriumProblem:
         self._bd_settings = breakdown_settings
         self._bd_opt = breakdown_optimiser
 
-        # self._eq_prob_cls = equilibrium_problem_cls
-        # self._eq_opt = equilibrium_optimiser
-        # self._eq_settings = equilibrium_settings
+        self._eq_prob_cls = equilibrium_problem_cls
+        self._eq_opt = equilibrium_optimiser
+        self._eq_settings = equilibrium_settings
         self._coil_cons = coil_constraints
 
+    def take_snapshot(self, name, eq, coilset, optimiser, problem):
+        """
+        Take a snapshot of the pulse.
+        """
+        if name in self.snapshots:
+            bluemira_warn(f"Over-writing snapshot {name}!")
+
+        self.snapshots[name] = {
+            "eq": eq,
+            "coilset": coilset,
+            "optimiser": optimiser,
+            "problem": problem,
+        }
+
     def run_premagnetisation(self):
+        """
+        Run the breakdown optimisation problem
+        """
         R_0 = self.params.R_0.value
         strategy = self._bd_strat_cls(
             R_0, self.params.A.value, self.params.tk_sol_ib.value
         )
         coilset = deepcopy(self.coilset)
 
-        def iterate_once(coilset):
+        relaxed = False
+        i = 0
+        while not relaxed:
             coilset.mesh_coils(0.1)
             breakdown = Breakdown(coilset, self.grid, R_0=R_0)
 
@@ -174,20 +207,40 @@ class PulsedEquilibriumProblem:
             breakdown.set_breakdown_point(*strategy.breakdown_point)
             psi_premag = breakdown.breakdown_psi
             bluemira_print(f"Premagnetisation flux = {2*np.pi * psi_premag:.2f} V.s")
-            return breakdown, psi_premag
 
-        breakdown, psi_1 = iterate_once(coilset)
-        breakdown, psi_2 = iterate_once(coilset)
-        while not np.isclose(psi_2, psi_1, rtol=1e-2):
-            psi_2 = psi_1
-            breakdown, psi_1 = iterate_once(coilset)
+            if i == 0:
+                psi_1 = psi_premag
+            else:
+                psi_2 = psi_1
+                psi_1 = psi_premag
+                relaxed = np.isclose(psi_2, psi_1, rtol=1e-2)
 
-        return breakdown
+        self.take_snapshot(self.BREAKDOWN, breakdown, coilset, self._bd_opt, problem)
 
-    def calculate_sof_eof_fluxes(self, psi_premag: float):
+    def run_reference_equilibrium(self):
+        coilset = deepcopy(coilset)
+        RB0 = self.params.R_0.value * self.params.B_0.value
+        eq = Equilibrium(
+            coilset, self.grid, Ip=self.params.I_p.value, RB0=RB0, profiles=self.profiles
+        )
+        optimiser = UnconstrainedCurrentCOP(coilset, eq, self.eq_targets, gamma=1e-8)
+        program = PicardCoilsetIterator(
+            eq,
+            self.profiles,
+            self.eq_targets,
+            optimiser,
+        )
+        program()
+        self.take_snapshot(self.EQ_REF, eq, coilset, optimiser, program)
+
+    def calculate_sof_eof_fluxes(self, psi_premag: Optional[float] = None):
         """
         Calculate the SOF and EOF plasma boundary fluxes.
         """
+        if psi_premag is None:
+            if self.BREAKDOWN not in self.snapshots:
+                self.run_premagnetisation()
+            psi_premag = self.snapshots[self.BREAKDOWN].eq.breakdown_psi
         psi_sof = calc_psib(
             2 * np.pi * psi_premag,
             self.params.R_0.value,
@@ -198,39 +251,73 @@ class PulsedEquilibriumProblem:
         psi_eof = psi_sof - self.params.tau_flattop.value * self.params.v_burn.value
         return psi_sof, psi_eof
 
+    def optimise_currents(self):
+        """ """
+        psi_sof, psi_eof = self.calculate_sof_eof_fluxes()
+        snapshots = [self.SOF, self.EOF]
+
+        for snap, psi in zip(snapshots, [psi_sof, psi_eof]):
+            self.eq_targets.update_psi_boundary(psi_sof)
+            problem = self._eq_prob_cls()
+
 
 if __name__ == "__main__":
     import matplotlib.pyplot as plt
 
     from bluemira.base.config import Configuration
-    from bluemira.builders.EUDEMO.pf_coils import make_coilset
-    from bluemira.geometry.parameterisations import PrincetonD
+    from bluemira.equilibria.profiles import CustomProfile
 
     params = Configuration()
 
-    tf_boundary = PrincetonD({"x1": {"value": 4}, "x2": {"value": 16}}).create_shape()
+    # EU DEMO 2015
+    x = [5.4, 14.0, 17.0, 17.01, 14.4, 7.0, 2.9, 2.9, 2.9, 2.9, 2.9]
+    z = [
+        8.82,
+        7.0,
+        2.5,
+        -2.5,
+        -8.4,
+        -10.45,
+        6.6574,
+        3.7503,
+        -0.6105,
+        -4.9713,
+        -7.8784,
+    ]
 
-    tk_cs = 0.5 * params.tk_cs.value
-    r_cs = params.r_cs_in.value + tk_cs
-    coilset = make_coilset(
-        tf_boundary,
-        params.R_0.value,
-        params.kappa.value,
-        params.delta.value,
-        r_cs=r_cs,
-        tk_cs=tk_cs,
-        g_cs=params.g_cs_mod.value,
-        n_CS=params.n_CS.value,
-        n_PF=params.n_PF.value,
-        tk_cs_ins=params.tk_cs_insulation.value,
-        tk_cs_cas=params.tk_cs_casing.value,
-        PF_jmax=params.PF_jmax.value,
-        PF_bmax=params.PF_bmax.value,
-        CS_jmax=params.CS_jmax.value,
-        CS_bmax=params.CS_bmax.value,
-    )
+    dx = [0.6, 0.4, 0.5, 0.5, 0.7, 1.0, 0.4, 0.4, 0.4, 0.4, 0.4]
+    dz = [0.6, 0.4, 0.5, 0.5, 0.7, 1.0, 1.4036, 1.4036, 2.85715, 1.4036, 1.4036]
+
+    names = [
+        "PF_1",
+        "PF_2",
+        "PF_3",
+        "PF_4",
+        "PF_5",
+        "PF_6",
+        "CS_1",
+        "CS_2",
+        "CS_3",
+        "CS_4",
+        "CS_5",
+    ]
+
+    coils = []
+    for name, xc, zc, dxc, dzc in zip(names, x, z, dx, dz):
+        ctype = name[:2]
+        coil = Coil(xc, zc, dx=dxc, dz=dzc, name=name, ctype=ctype)
+        coils.append(coil)
+    coilset = CoilSet(coils)
+
+    # Max PF currents / sizes don't stack up in the CREATE document...
+    coilset.assign_coil_materials("PF", j_max=12.5, b_max=11)
+    coilset.assign_coil_materials("CS", j_max=12.5, b_max=13)
+    coilset.fix_sizes()
 
     grid = Grid(0.1, 20, -10, 10, 100, 100)
+    profiles = CustomProfile(
+        R_0=params.R_0.value, B_0=params.B_0.value, Ip=params.I_p.value
+    )
 
     constraints = [
         OptimisationConstraint(
