@@ -30,15 +30,11 @@ import pytest
 from bluemira.codes._freecadapi import _wire_edges_tangent
 from bluemira.geometry.error import GeometryParameterisationError
 from bluemira.geometry.parameterisations import (
-    BotDomeCurvedPictureFrame,
-    FullDomeCurvedPictureFrame,
     GeometryParameterisation,
     PictureFrame,
     PolySpline,
     PrincetonD,
     SextupleArc,
-    TaperedPictureFrame,
-    TopDomeCurvedPictureFrame,
     TripleArc,
 )
 from bluemira.geometry.tools import make_polygon
@@ -54,7 +50,6 @@ from bluemira.utilities.opt_variables import BoundedVariable, OptVariables
         PolySpline,
         PrincetonD,
         SextupleArc,
-        TaperedPictureFrame,
         TripleArc,
     ],
 )
@@ -156,12 +151,22 @@ class TestPictureFrame:
 
     def test_no_corners(self):
         p = PictureFrame()
-        p.adjust_variable("x1", value=4)
-        p.adjust_variable("x2", value=16)
-        p.adjust_variable("z1", value=8)
-        p.adjust_variable("z2", value=-8)
-        p.adjust_variable("ri", value=0, lower_bound=0)
-        p.adjust_variable("ro", value=0, lower_bound=0)
+        p.adjust_variable("x1", value=4, lower_bound=4, upper_bound=5)
+        p.adjust_variable("x2", value=16, lower_bound=14, upper_bound=18)
+        p.adjust_variable(
+            "z1",
+            value=8,
+            lower_bound=5,
+            upper_bound=15,
+        )
+        p.adjust_variable(
+            "z2",
+            value=-8,
+            lower_bound=-15,
+            upper_bound=-5,
+        )
+        p.adjust_variable("ri", value=0, lower_bound=0, upper_bound=2)
+        p.adjust_variable("ro", value=0, lower_bound=0, upper_bound=5)
         wire = p.create_shape()
         assert len(wire._boundary) == 4
         length = 2 * (12 + 16)
@@ -180,6 +185,38 @@ class TestPictureFrame:
         )
         wire = p.create_shape()
         assert _wire_edges_tangent(wire._shape)
+
+
+class TestComplexPictureFrame:
+    @pytest.mark.parametrize(
+        "upper, lower, result",
+        [
+            ["CURVED", "CURVED", 57.6308],
+            ["CURVED", "FLAT", 56.829],
+            ["FLAT", "CURVED", 56.829],
+        ],
+    )
+    def test_length(self, upper, lower, result):
+        p = PictureFrame(upper=upper, lower=lower)
+        wire = p.create_shape()
+        assert np.isclose(wire.length, result, rtol=1e-4, atol=1e-5)
+
+    @pytest.mark.parametrize(
+        "upper, lower", [["CURVED", "CURVED"], ["CURVED", "FLAT"], ["FLAT", "CURVED"]]
+    )
+    def test_ordering(self, upper, lower):
+        p = PictureFrame(upper=upper, lower=lower)
+        wire = p.create_shape()
+        assert _wire_edges_tangent(wire._shape)
+
+    def test_tapered_segments(self):
+        p = PictureFrame(inner="TAPERED_INNER")
+        wire = p.create_shape()
+        assert len(wire._boundary) == 4
+        p.adjust_variable("ri", value=0, lower_bound=0, upper_bound=2)
+        p.adjust_variable("ro", value=0, lower_bound=0, upper_bound=5)
+        wire = p.create_shape()
+        assert len(wire._boundary) == 4
 
 
 class TestTripleArc:
@@ -209,53 +246,6 @@ class TestPolySpline:
 
         wire = p.create_shape()
         assert len(wire._boundary) == 6
-
-
-class TestTaperedPictureFrame:
-    def test_segments(self):
-        p = TaperedPictureFrame()
-        wire = p.create_shape()
-        assert len(wire._boundary) == 4
-        p.adjust_variable("ri", value=0)
-        p.adjust_variable("ro", value=0)
-        wire = p.create_shape()
-        assert len(wire._boundary) == 4
-
-
-class TestFullDomeCurvedPictureFrame:
-    def test_length(self):
-        p = FullDomeCurvedPictureFrame()
-        wire = p.create_shape()
-        assert np.isclose(wire.length, 57.6308, rtol=1e-4, atol=1e-5)
-
-    def test_ordering(self):
-        p = FullDomeCurvedPictureFrame()
-        wire = p.create_shape()
-        assert _wire_edges_tangent(wire._shape)
-
-
-class TestTopDomeCurvedPictureFrame:
-    def test_length(self):
-        p = TopDomeCurvedPictureFrame()
-        wire = p.create_shape()
-        assert np.isclose(wire.length, 56.829, rtol=1e-4, atol=1e-5)
-
-    def test_ordering(self):
-        p = TopDomeCurvedPictureFrame()
-        wire = p.create_shape()
-        assert _wire_edges_tangent(wire._shape)
-
-
-class TestBotDomeCurvedPictureFrame:
-    def test_length(self):
-        p = BotDomeCurvedPictureFrame()
-        wire = p.create_shape()
-        assert np.isclose(wire.length, 56.829, rtol=1e-4, atol=1e-5)
-
-    def test_ordering(self):
-        p = BotDomeCurvedPictureFrame()
-        wire = p.create_shape()
-        assert _wire_edges_tangent(wire._shape)
 
 
 class TestSextupleArc:

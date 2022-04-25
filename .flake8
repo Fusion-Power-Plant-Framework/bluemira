@@ -57,6 +57,9 @@ per-file-ignores =
    bluemira/codes/__init__.py:
         # FreeCAD message removal function above imports
         E402,
+    bluemira/geometry/parameterisations.py:
+        # Lambdas are probably cleaner here
+        E731,
     documentation/source/*:
         D100,
         D101,
