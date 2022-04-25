@@ -1016,6 +1016,13 @@ class MinimalCurrentCOP(CoilsetOptimisationProblem):
         objective = OptimisationObjective(objectives.minimise_coil_currents)
         super().__init__(eq.coilset, optimiser, objective, opt_constraints)
 
+    def optimise(self, x0=None):
+        if x0 is None:
+            x0 = 1e-6 * np.ones(self.coilset.n_control)
+        x_star = self.opt.optimise(x0) * self.scale
+        self.coilset.set_control_currents(x_star)
+        return self.coilset
+
 
 class NestedPositionCOP(CoilsetOptimisationProblem):
     def __init__(

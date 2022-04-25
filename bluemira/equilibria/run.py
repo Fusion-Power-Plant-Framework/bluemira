@@ -49,7 +49,7 @@ from bluemira.equilibria.opt_problems import (
 )
 from bluemira.equilibria.physics import calc_psib
 from bluemira.equilibria.profiles import Profile
-from bluemira.equilibria.solve import PicardCoilsetIterator
+from bluemira.equilibria.solve import PicardCoilsetIterator, PicardDeltaIterator
 from bluemira.utilities.opt_problems import OptimisationConstraint
 from bluemira.utilities.optimiser import Optimiser
 
@@ -89,7 +89,7 @@ class Snapshot:
         self.eq = deepcopy(eq)
         self.coilset = deepcopy(coilset)
         if constraints is not None:
-            self.constraints = deepcopy(constraints)
+            self.constraints = constraints
         else:
             self.constraints = None
         if profiles is not None:
@@ -101,7 +101,7 @@ class Snapshot:
         else:
             self.limiter = None
         if optimiser is not None:
-            self.optimiser = deepcopy(optimiser)
+            self.optimiser = optimiser
         else:
             self.optimiser = None
         self.tf = tfcoil
@@ -154,19 +154,14 @@ class PulsedEquilibriumProblem:
         self._eq_settings = equilibrium_settings
         self._coil_cons = coil_constraints
 
-    def take_snapshot(self, name, eq, coilset, optimiser, problem):
+    def take_snapshot(self, name, eq, coilset, optimiser, problem, profiles=None):
         """
         Take a snapshot of the pulse.
         """
         if name in self.snapshots:
             bluemira_warn(f"Over-writing snapshot {name}!")
 
-        self.snapshots[name] = {
-            "eq": eq,
-            "coilset": coilset,
-            "optimiser": optimiser,
-            "problem": problem,
-        }
+        self.snapshots[name] = Snapshot(eq, coilset, problem, profiles, optimiser)
 
     def run_premagnetisation(self):
         """
@@ -211,15 +206,18 @@ class PulsedEquilibriumProblem:
             if i == 0:
                 psi_1 = psi_premag
             else:
-                psi_2 = psi_1
+                relaxed = np.isclose(psi_premag, psi_1, rtol=1e-2)
                 psi_1 = psi_premag
-                relaxed = np.isclose(psi_2, psi_1, rtol=1e-2)
+            i += 1
 
         self.take_snapshot(self.BREAKDOWN, breakdown, coilset, self._bd_opt, problem)
 
     def run_reference_equilibrium(self):
-        coilset = deepcopy(coilset)
-        RB0 = self.params.R_0.value * self.params.B_0.value
+        """
+        Run a reference equilibrium.
+        """
+        coilset = deepcopy(self.coilset)
+        RB0 = [self.params.R_0.value, self.params.B_0.value]
         eq = Equilibrium(
             coilset, self.grid, Ip=self.params.I_p.value, RB0=RB0, profiles=self.profiles
         )
@@ -231,7 +229,7 @@ class PulsedEquilibriumProblem:
             optimiser,
         )
         program()
-        self.take_snapshot(self.EQ_REF, eq, coilset, optimiser, program)
+        self.take_snapshot(self.EQ_REF, eq, coilset, optimiser, self.eq_targets)
 
     def calculate_sof_eof_fluxes(self, psi_premag: Optional[float] = None):
         """
@@ -254,17 +252,31 @@ class PulsedEquilibriumProblem:
     def optimise_currents(self):
         """ """
         psi_sof, psi_eof = self.calculate_sof_eof_fluxes()
+        if self.EQ_REF not in self.snapshots:
+            self.run_reference_equilibrium()
+        eq = self.snapshots[self.EQ_REF].eq
+
         snapshots = [self.SOF, self.EOF]
 
-        for snap, psi in zip(snapshots, [psi_sof, psi_eof]):
-            self.eq_targets.update_psi_boundary(psi_sof)
-            problem = self._eq_prob_cls()
+        for snap, psi_boundary in zip(snapshots, [psi_sof, psi_eof]):
+            self.eq_targets.update_psi_boundary(psi_boundary)
+
+            optimiser = deepcopy(self._eq_opt)
+            constraints = deepcopy(self._coil_cons)
+            for constraint in constraints:
+                constraint._args["eq"] = eq
+            problem = self._eq_prob_cls(eq, optimiser, constraints)
+            coilset = problem.optimise()
+            self.take_snapshot(
+                snap, eq, coilset, optimiser, self.eq_targets, self.profiles
+            )
 
 
 if __name__ == "__main__":
     import matplotlib.pyplot as plt
 
     from bluemira.base.config import Configuration
+    from bluemira.builders.EUDEMO.equilibria import EUDEMOSingleNullConstraints
     from bluemira.equilibria.profiles import CustomProfile
 
     params = Configuration()
@@ -305,7 +317,7 @@ if __name__ == "__main__":
     coils = []
     for name, xc, zc, dxc, dzc in zip(names, x, z, dx, dz):
         ctype = name[:2]
-        coil = Coil(xc, zc, dx=dxc, dz=dzc, name=name, ctype=ctype)
+        coil = Coil(xc, zc, dx=dxc, dz=dzc, name=name, ctype=ctype, control=True)
         coils.append(coil)
     coilset = CoilSet(coils)
 
@@ -314,9 +326,31 @@ if __name__ == "__main__":
     coilset.assign_coil_materials("CS", j_max=12.5, b_max=13)
     coilset.fix_sizes()
 
-    grid = Grid(0.1, 20, -10, 10, 100, 100)
+    grid = Grid(5, 14, -10, 10, 100, 100)
     profiles = CustomProfile(
-        R_0=params.R_0.value, B_0=params.B_0.value, Ip=params.I_p.value
+        pprime_func=np.sqrt(np.linspace(1, 0, 50)),
+        ffprime_func=np.sqrt(np.linspace(1, 0, 50)),
+        R_0=params.R_0.value,
+        B_0=params.B_0.value,
+        Ip=params.I_p.value * 1e6,
+    )
+
+    targets = EUDEMOSingleNullConstraints(
+        params.R_0.value,
+        0.0,
+        params.A.value,
+        params.kappa.value,
+        params.kappa.value * 1.12,
+        params.delta.value,
+        params.delta.value,
+        0,
+        20,
+        120,
+        30,
+        1.0,
+        1.45,
+        0,
+        n=50,
     )
 
     constraints = [
@@ -336,10 +370,11 @@ if __name__ == "__main__":
         coilset,
         grid,
         constraints,
-        None,
-        None,
+        profiles,
+        targets,
         OutboardBreakdownZoneStrategy,
         PremagnetisationCOP,
     )
 
-    bd = problem.run_premagnetisation()
+    problem.run_premagnetisation()
+    problem.run_reference_equilibrium()
