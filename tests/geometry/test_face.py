@@ -24,9 +24,9 @@ import pytest
 
 from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.parameterisations import (
+    PictureFrame,
     PrincetonD,
     SextupleArc,
-    TaperedPictureFrame,
     TripleArc,
 )
 from bluemira.geometry.tools import make_polygon, offset_wire
@@ -42,7 +42,7 @@ class TestBluemiraFace:
         princeton = PrincetonD().create_shape(n_points=80)
         triple = TripleArc().create_shape()
         sextuple = SextupleArc().create_shape()
-        tapered = TaperedPictureFrame().create_shape()
+        tapered = PictureFrame(inner="TAPERED_INNER").create_shape()
         cls.shapes = [polygon, princeton, triple, sextuple, tapered]
 
     def test_single_complicated(self):
