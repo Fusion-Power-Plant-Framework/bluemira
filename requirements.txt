@@ -5,7 +5,7 @@ argon2-cffi==21.3.0
 argon2-cffi-bindings==21.2.0
 asteval==0.9.26
 attrs==21.4.0
-Babel==2.9.1
+Babel==2.10.1
 backcall==0.2.0
 bleach==5.0.0
 cffi==1.15.0
