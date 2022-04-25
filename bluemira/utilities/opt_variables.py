@@ -520,6 +520,19 @@ class OptVariables:
         return self._var_dict[name]
 
     def __getattribute__(self, attr):
+        """
+        Attribute access for variable values
+
+        Parameters
+        ----------
+        attr: str
+            attribute to access
+
+        Returns
+        -------
+        attribute value
+
+        """
         try:
             return super().__getattribute__(attr)
         except AttributeError:
