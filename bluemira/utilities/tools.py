@@ -24,7 +24,6 @@ A collection of miscellaneous tools.
 """
 
 import operator
-import re
 import string
 from collections.abc import Iterable
 from functools import partial
@@ -32,7 +31,7 @@ from importlib import import_module as imp
 from importlib import machinery as imp_mach
 from importlib import util as imp_u
 from itertools import permutations
-from json import JSONDecoder, JSONEncoder, dumps
+from json import JSONEncoder, dumps
 from json.encoder import _make_iterencode
 from os import listdir
 from types import ModuleType
@@ -48,33 +47,6 @@ from bluemira.base.look_and_feel import bluemira_debug, bluemira_warn
 # =====================================================
 # JSON utilities
 # =====================================================
-
-
-class CommentJSONDecoder(JSONDecoder):
-    """
-    Decode JSON with comments
-
-    Notes
-    -----
-    Regex does the following for comments:
-
-        - starts with // followed by most chr (not ")
-        - if not followed by " and any of (whitespace , }) and \\n
-
-    and removes extra commas from the end of dict like objects
-    """
-
-    comments = re.compile(r'[/]{2}(\s*\w*[#-/:-@{-~!^_`\[\]]*)*(?!["]\s*[,]*[\}]*\n)')
-    comma = re.compile(r"[,](\n*\s*)*[\}]")
-    eof = re.compile(r"[,](\n*\s*)*$")
-
-    def decode(self, s, *args, **kwargs):
-        """Return the Python representation of ``s`` (a ``str`` instance
-        containing a JSON document).
-        """
-        s = self.eof.sub("}", self.comma.sub("}", self.comments.sub("", s)).strip())
-        bluemira_debug("Comment stripped JSON\n" + s)
-        return super().decode(s, *args, **kwargs)
 
 
 class NumpyJSONEncoder(JSONEncoder):
