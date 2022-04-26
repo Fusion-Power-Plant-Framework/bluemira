@@ -1008,13 +1008,19 @@ class MinimalCurrentCOP(CoilsetOptimisationProblem):
     def __init__(
         self,
         eq: Equilibrium,
+        max_currents,
         optimiser=Optimiser(
             "SLSQP", opt_conditions={"max_eval": 1000, "ftol_rel": 1e-6}
         ),
         opt_constraints: List[OptimisationConstraint] = None,
     ):
-        objective = OptimisationObjective(objectives.minimise_coil_currents)
+        objective = OptimisationObjective(
+            objectives.minimise_coil_currents, f_objective_args={}
+        )
         super().__init__(eq.coilset, optimiser, objective, opt_constraints)
+
+        bounds = (-max_currents / self.scale, max_currents / self.scale)
+        self.set_up_optimiser(len(max_currents), bounds)
 
     def optimise(self, x0=None):
         if x0 is None:

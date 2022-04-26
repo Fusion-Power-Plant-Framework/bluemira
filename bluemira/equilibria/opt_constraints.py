@@ -228,9 +228,18 @@ def stray_field_constraints(constraint, vector, grad, cBx, cBz, B_max, scale):
 
     Parameters
     ----------
+    constraint: np.ndarray
+        Constraint array (modified in place)
+    vector: np.ndarray
+        Current vector
+    grad: np.ndarray
+        Constraint Jacobian (modified in place)
+
 
     Returns
     -------
+    constraint: np.ndarray
+        Updated constraint vector
     """
     B = scale * np.hypot((cBx @ vector), (cBz @ vector))
     constraint[:] = B - B_max
@@ -246,4 +255,36 @@ def stray_field_constraints(constraint, vector, grad, cBx, cBz, B_max, scale):
                     )
                     / B[i]
                 )
+    return constraint
+
+
+def L2_norm_constraint(constraint, vector, grad, a_mat, b_vec, value, scale):
+    """
+    Constrain the L2 norm of an Ax-b system of equations.
+
+    ||(Ax - b)||² < value
+
+    Parameters
+    ----------
+    constraint: np.ndarray
+        Constraint array (modified in place)
+    vector: np.ndarray
+        Current vector
+    grad: np.ndarray
+        Constraint Jacobian (modified in place)
+
+    Returns
+    -------
+    constraint: np.ndarray
+        Updated constraint vector
+    """
+    vector = scale * vector
+    residual = a_mat @ vector - b_vec
+    constraint[:] = residual.T @ residual - value
+
+    if grad.size > 0:
+        jac = 2 * a_mat.T @ a_mat @ vector - 2 * a_mat.T @ b_vec
+        jac *= scale
+        grad[:] = jac
+
     return constraint

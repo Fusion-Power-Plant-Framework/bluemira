@@ -35,6 +35,7 @@ from bluemira.equilibria.eq_constraints import MagneticConstraintSet
 from bluemira.equilibria.equilibrium import Breakdown, Equilibrium
 from bluemira.equilibria.grid import Grid
 from bluemira.equilibria.opt_constraints import (
+    L2_norm_constraint,
     coil_field_constraints,
     coil_force_constraints,
 )
@@ -258,14 +259,22 @@ class PulsedEquilibriumProblem:
 
         snapshots = [self.SOF, self.EOF]
 
+        max_currents = self.coilset.get_max_currents(0)
         for snap, psi_boundary in zip(snapshots, [psi_sof, psi_eof]):
             self.eq_targets.update_psi_boundary(psi_boundary)
+            _, A, b = self.eq_targets.get_weighted_arrays()
+
+            L2_target_constraint = OptimisationConstraint(
+                L2_norm_constraint,
+                f_constraint_args={"a_mat": A, "b_vec": b, "value": 0.05, "scale": 1e6},
+            )
 
             optimiser = deepcopy(self._eq_opt)
             constraints = deepcopy(self._coil_cons)
             for constraint in constraints:
                 constraint._args["eq"] = eq
-            problem = self._eq_prob_cls(eq, optimiser, constraints)
+            constraints.append(L2_target_constraint)
+            problem = self._eq_prob_cls(eq, max_currents, optimiser, constraints)
             coilset = problem.optimise()
             self.take_snapshot(
                 snap, eq, coilset, optimiser, self.eq_targets, self.profiles
@@ -378,3 +387,4 @@ if __name__ == "__main__":
 
     problem.run_premagnetisation()
     problem.run_reference_equilibrium()
+    problem.optimise_currents()
