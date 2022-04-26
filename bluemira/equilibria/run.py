@@ -391,7 +391,10 @@ if __name__ == "__main__":
         )
     ]
 
-    params.B_premag_stray_max = 0.001
+    breakdown_strategy = InputBreakdownZoneStrategy(9, 0, 3)
+    breakdown_strategy = InboardBreakdownZoneStrategy
+
+    params.B_premag_stray_max = 0.003
     problem = PulsedEquilibriumProblem(
         params,
         coilset,
@@ -399,10 +402,10 @@ if __name__ == "__main__":
         constraints,
         profiles,
         targets,
-        InboardBreakdownZoneStrategy,
-        PremagnetisationCOP,
+        breakdown_strategy_cls=breakdown_strategy,
+        breakdown_problem_cls=PremagnetisationCOP,
         breakdown_optimiser=Optimiser(
-            "COBYLA", opt_conditions={"max_eval": 5000, "ftol_rel": 1e-6}
+            "COBYLA", opt_conditions={"max_eval": 10000, "ftol_rel": 1e-6}
         ),
     )
 

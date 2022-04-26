@@ -912,6 +912,9 @@ class InputBreakdownZoneStrategy(CircularZoneStrategy):
     User input breakdown zone strategy.
     """
 
+    def __call__(self, *args, **kwargs):
+        return self
+
     def __init__(self, x_c, z_c, r_c):
         self.x_c = x_c
         self.z_c = z_c
