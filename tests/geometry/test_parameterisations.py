@@ -218,6 +218,21 @@ class TestComplexPictureFrame:
         wire = p.create_shape()
         assert len(wire._boundary) == 4
 
+    @pytest.mark.parametrize(
+        "vals",
+        [{"inner": "CURVED"}, {"upper": "TAPERED_INNER"}, {"lower": "TAPERED_INNER"}],
+    )
+    def test_bad_combinations_raise_ValueError(self, vals):
+        with pytest.raises(ValueError):
+            PictureFrame(**vals)
+
+    @pytest.mark.parametrize(
+        "vals", [{"inner": "hiiii"}, {"upper": "tpi"}, {"lower": "hello"}]
+    )
+    def test_unknown_keys_raise_KeyError(self, vals):
+        with pytest.raises(KeyError):
+            PictureFrame(**vals)
+
 
 class TestTripleArc:
     def test_circle(self):
