@@ -48,9 +48,14 @@ from bluemira.equilibria.opt_problems import (
     PremagnetisationCOP,
     UnconstrainedCurrentCOP,
 )
+from bluemira.equilibria.optimiser import Norm2Tikhonov
 from bluemira.equilibria.physics import calc_psib
 from bluemira.equilibria.profiles import Profile
-from bluemira.equilibria.solve import PicardCoilsetIterator, PicardDeltaIterator
+from bluemira.equilibria.solve import (
+    EquilibriumConverger,
+    PicardCoilsetIterator,
+    PicardDeltaIterator,
+)
 from bluemira.utilities.opt_problems import OptimisationConstraint
 from bluemira.utilities.optimiser import Optimiser
 
@@ -220,7 +225,11 @@ class PulsedEquilibriumProblem:
         coilset = deepcopy(self.coilset)
         RB0 = [self.params.R_0.value, self.params.B_0.value]
         eq = Equilibrium(
-            coilset, self.grid, Ip=self.params.I_p.value, RB0=RB0, profiles=self.profiles
+            coilset,
+            self.grid,
+            Ip=self.params.I_p.value * 1e6,
+            RB0=RB0,
+            profiles=self.profiles,
         )
         optimiser = UnconstrainedCurrentCOP(coilset, eq, self.eq_targets, gamma=1e-8)
         program = PicardCoilsetIterator(
@@ -228,6 +237,8 @@ class PulsedEquilibriumProblem:
             self.profiles,
             self.eq_targets,
             optimiser,
+            relaxation=0.1,
+            plot=False,
         )
         program()
         self.take_snapshot(self.EQ_REF, eq, coilset, optimiser, self.eq_targets)
@@ -261,7 +272,10 @@ class PulsedEquilibriumProblem:
 
         max_currents = self.coilset.get_max_currents(0)
         for snap, psi_boundary in zip(snapshots, [psi_sof, psi_eof]):
-            self.eq_targets.update_psi_boundary(psi_boundary)
+            eq = deepcopy(eq)
+            eq.coilset.mesh_coils(0.2)
+            self.eq_targets.update_psi_boundary(psi_boundary / (2 * np.pi))
+            self.eq_targets(eq, I_not_dI=True, fixed_coils=True)
             _, A, b = self.eq_targets.get_weighted_arrays()
 
             L2_target_constraint = OptimisationConstraint(
@@ -274,11 +288,12 @@ class PulsedEquilibriumProblem:
             for constraint in constraints:
                 constraint._args["eq"] = eq
             constraints.append(L2_target_constraint)
+            constraints = [L2_target_constraint]
             problem = self._eq_prob_cls(eq, max_currents, optimiser, constraints)
             coilset = problem.optimise()
-            self.take_snapshot(
-                snap, eq, coilset, optimiser, self.eq_targets, self.profiles
-            )
+            eq.coilset = coilset
+
+            self.take_snapshot(snap, eq, coilset, optimiser, self.eq_targets, profiles)
 
 
 if __name__ == "__main__":
@@ -286,7 +301,7 @@ if __name__ == "__main__":
 
     from bluemira.base.config import Configuration
     from bluemira.builders.EUDEMO.equilibria import EUDEMOSingleNullConstraints
-    from bluemira.equilibria.profiles import CustomProfile
+    from bluemira.equilibria.profiles import BetaIpProfile, CustomProfile
 
     params = Configuration()
 
@@ -338,11 +353,12 @@ if __name__ == "__main__":
     grid = Grid(5, 14, -10, 10, 100, 100)
     profiles = CustomProfile(
         pprime_func=np.sqrt(np.linspace(1, 0, 50)),
-        ffprime_func=np.sqrt(np.linspace(1, 0, 50)),
+        ffprime_func=3 * np.sqrt(np.linspace(1, 0, 50)),
         R_0=params.R_0.value,
         B_0=params.B_0.value,
         Ip=params.I_p.value * 1e6,
     )
+    # profiles = BetaIpProfile(1.1, params.I_p.value*1e6, params.R_0.value, params.B_0.value)
 
     targets = EUDEMOSingleNullConstraints(
         params.R_0.value,
@@ -354,7 +370,7 @@ if __name__ == "__main__":
         params.delta.value,
         0,
         20,
-        120,
+        60,
         30,
         1.0,
         1.45,
@@ -387,4 +403,14 @@ if __name__ == "__main__":
 
     problem.run_premagnetisation()
     problem.run_reference_equilibrium()
+    f, ax = plt.subplots()
+    problem.snapshots[problem.EQ_REF].eq.plot(ax=ax)
+    problem.snapshots[problem.EQ_REF].coilset.plot(ax=ax)
+
     problem.optimise_currents()
+
+    f, ax = plt.subplots(1, 2)
+    problem.snapshots["SOF"].eq.plot(ax=ax[0])
+    problem.snapshots["SOF"].coilset.plot(ax=ax[0])
+    problem.snapshots["EOF"].eq.plot(ax=ax[1])
+    problem.snapshots["EOF"].coilset.plot(ax=ax[1])
