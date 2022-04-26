@@ -157,10 +157,10 @@ class Configuration(ConfigurationSchema, ParameterFrame):
         # ad hoc DN variables
         ['outer_strike_r', 'Outer strike point major radius', 10.3, 'm', None, 'Input'],
         ['inner_strike_r', 'Inner strike point major radius', 8, 'm', None, 'Input'],
-        ['theta_outer_target', 'Poloidal angle between flux line tangent at outer strike point and SOL side of outer target', 20, 'deg', None, 'Input'],
-        ['theta_inner_target', 'Poloidal angle between flux line tangent at inner strike point and SOL side of inner target', 20, 'deg', None, 'Input'],
-        ['gamma_outer_target', 'Glancing angle between flux line tangent at outer strike point and SOL side of outer target', 3, 'deg', None, 'Input'],
-        ['gamma_inner_target', 'Glancing angle between flux line tangent at inner strike point and SOL side of inner target', 3, 'deg', None, 'Input'],
+        ['theta_outer_target', 'Angle between flux line and the outer divertor strike point projected in the poloidal plane', 20, 'deg', None, 'Input'],
+        ['theta_inner_target', 'Angle between flux line and the outer divertor strike point projected in the poloidal plane', 20, 'deg', None, 'Input'],
+        ['gamma_outer_target', 'Angle between flux line and the outer divertor strike point defined in the 3D space', 3, 'deg', None, 'Input'],
+        ['gamma_inner_target', 'Angle between flux line and the outer divertor strike point defined in the 3D space', 3, 'deg', None, 'Input'],
         ['xpt_height', 'x-point vertical_gap', 0.35, 'm', None, 'Input'],
         # Divertor cassette
         ['tk_div_cass', 'Minimum thickness between inner divertor profile and cassette', 0.3, 'm', None, 'Input'],

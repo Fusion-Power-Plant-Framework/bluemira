@@ -123,7 +123,7 @@ class FluxSurface:
         """
         return np.sum(self._dl(eq))
 
-    def calculate_poloidal_angle(self, eq, x_strike, z_strike, gamma):
+    def poloidal_angle(self, eq, x_strike, z_strike, gamma):
         """
         From glancing angle to poloidal angle.
 
@@ -144,12 +144,6 @@ class FluxSurface:
         theta: float
             Poloidal angle at the strike point [deg]
         """
-        # Technological limit
-        if gamma < 3:
-            raise ValueError(
-                "Glancing angle below the technological limit of 3 degrees."
-            )
-
         # From deg to rad
         gamma_rad = np.radians(gamma)
 
@@ -164,9 +158,7 @@ class FluxSurface:
         # Poloidal projection of the glancing angle
         cos_theta = np.sqrt(num / den)
 
-        # Rad to deg
-        theta = np.rad2deg(np.arccos(cos_theta))
-        return theta
+        return np.rad2deg(np.arccos(cos_theta))
 
     def plot(self, ax=None, **kwargs):
         """
