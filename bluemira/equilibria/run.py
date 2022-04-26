@@ -43,6 +43,7 @@ from bluemira.equilibria.opt_problems import (
     BreakdownZoneStrategy,
     CoilsetOptimisationProblem,
     InboardBreakdownZoneStrategy,
+    InputBreakdownZoneStrategy,
     MinimalCurrentCOP,
     OutboardBreakdownZoneStrategy,
     PremagnetisationCOP,
@@ -179,9 +180,9 @@ class PulsedEquilibriumProblem:
         )
         coilset = deepcopy(self.coilset)
 
-        relaxed = False
+        relaxed = all([c.flag_sizefix for c in coilset.coils.values()])
         i = 0
-        while not relaxed:
+        while i == 0 or not relaxed:
             coilset.mesh_coils(0.1)
             breakdown = Breakdown(coilset, self.grid, R_0=R_0)
 
@@ -350,7 +351,7 @@ if __name__ == "__main__":
     coilset.assign_coil_materials("CS", j_max=12.5, b_max=13)
     coilset.fix_sizes()
 
-    grid = Grid(5, 14, -10, 10, 100, 100)
+    grid = Grid(0.1, 20, -14, 10, 100, 100)
     profiles = CustomProfile(
         pprime_func=np.sqrt(np.linspace(1, 0, 50)),
         ffprime_func=3 * np.sqrt(np.linspace(1, 0, 50)),
@@ -390,6 +391,7 @@ if __name__ == "__main__":
         )
     ]
 
+    params.B_premag_stray_max = 0.001
     problem = PulsedEquilibriumProblem(
         params,
         coilset,
@@ -397,20 +399,26 @@ if __name__ == "__main__":
         constraints,
         profiles,
         targets,
-        OutboardBreakdownZoneStrategy,
+        InboardBreakdownZoneStrategy,
         PremagnetisationCOP,
+        breakdown_optimiser=Optimiser(
+            "COBYLA", opt_conditions={"max_eval": 5000, "ftol_rel": 1e-6}
+        ),
     )
 
     problem.run_premagnetisation()
-    problem.run_reference_equilibrium()
     f, ax = plt.subplots()
-    problem.snapshots[problem.EQ_REF].eq.plot(ax=ax)
-    problem.snapshots[problem.EQ_REF].coilset.plot(ax=ax)
+    problem.snapshots[problem.BREAKDOWN].eq.plot(ax=ax)
+    problem.snapshots[problem.BREAKDOWN].coilset.plot(ax=ax)
+    # problem.run_reference_equilibrium()
+    # f, ax = plt.subplots()
+    # problem.snapshots[problem.EQ_REF].eq.plot(ax=ax)
+    # problem.snapshots[problem.EQ_REF].coilset.plot(ax=ax)
 
-    problem.optimise_currents()
+    # problem.optimise_currents()
 
-    f, ax = plt.subplots(1, 2)
-    problem.snapshots["SOF"].eq.plot(ax=ax[0])
-    problem.snapshots["SOF"].coilset.plot(ax=ax[0])
-    problem.snapshots["EOF"].eq.plot(ax=ax[1])
-    problem.snapshots["EOF"].coilset.plot(ax=ax[1])
+    # f, ax = plt.subplots(1, 2)
+    # problem.snapshots["SOF"].eq.plot(ax=ax[0])
+    # problem.snapshots["SOF"].coilset.plot(ax=ax[0])
+    # problem.snapshots["EOF"].eq.plot(ax=ax[1])
+    # problem.snapshots["EOF"].coilset.plot(ax=ax[1])
