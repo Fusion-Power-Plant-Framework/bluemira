@@ -42,10 +42,10 @@ TEST_PATH = get_bluemira_path("equilibria/test_data", subfolder="tests")
 
 
 class TestFluxSurface:
-    def setup_class(cls):
+    def setup_class(self):
         eq_name = "DN-DEMO_eqref.json"
         filename = os.sep.join([TEST_PATH, eq_name])
-        cls.eq = Equilibrium.from_eqdsk(filename)
+        self.eq = Equilibrium.from_eqdsk(filename)
 
     def test_calculate_poloidal_angle(self):
         # Flux surface in the SoL
