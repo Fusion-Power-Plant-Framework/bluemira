@@ -116,7 +116,7 @@ class Snapshot:
 
 class PulsedEquilibriumProblem:
     """
-    Procedural design for a pulsed tokamak with a known coilset.
+    Procedural design for a pulsed tokamak with a known PF coilset.
     """
 
     BREAKDOWN = "Breakdown"
@@ -142,7 +142,11 @@ class PulsedEquilibriumProblem:
         equilibrium_optimiser: Optimiser = Optimiser(
             "SLSQP", opt_conditions={"max_eval": 1000, "ftol_rel": 1e-6}
         ),
-        equilibrium_settings: dict = {},
+        equilibrium_settings: dict = {
+            "gamma": 1e-8,
+            "target_rms_max": 0.5,
+            "target_rms_con_tol": 1e-6,
+        },
     ):
         self.params = params
         self.coilset = coilset
@@ -190,11 +194,9 @@ class PulsedEquilibriumProblem:
             for constraint in constraints:
                 constraint._args["eq"] = breakdown
 
-            # TODO: Ip is in MA already
-            max_currents = self.coilset.get_max_currents(
-                0
-                # 1.4 * 1e6 * self.params.I_p.value
-            )
+            # Coilset max currents known because the coilset geometry is fixed
+            max_currents = self.coilset.get_max_currents(0)
+
             problem = self._bd_prob_cls(
                 coilset,
                 strategy,
@@ -233,7 +235,9 @@ class PulsedEquilibriumProblem:
             RB0=RB0,
             profiles=self.profiles,
         )
-        optimiser = UnconstrainedCurrentCOP(coilset, eq, self.eq_targets, gamma=1e-8)
+        optimiser = UnconstrainedCurrentCOP(
+            coilset, eq, self.eq_targets, gamma=self._eq_settings["gamma"]
+        )
         program = PicardCoilsetIterator(
             eq,
             self.profiles,
@@ -264,7 +268,9 @@ class PulsedEquilibriumProblem:
         return psi_sof, psi_eof
 
     def optimise_currents(self):
-        """ """
+        """
+        Optimise the coil currents at the start and end of the current flat-top.
+        """
         psi_sof, psi_eof = self.calculate_sof_eof_fluxes()
         if self.EQ_REF not in self.snapshots:
             self.run_reference_equilibrium()
@@ -283,7 +289,13 @@ class PulsedEquilibriumProblem:
 
             L2_target_constraint = OptimisationConstraint(
                 L2_norm_constraint,
-                f_constraint_args={"a_mat": A, "b_vec": b, "value": 0.5, "scale": 1e6},
+                f_constraint_args={
+                    "a_mat": A,
+                    "b_vec": b,
+                    "value": self._eq_settings["target_rms_max"],
+                    "scale": 1e6,
+                },
+                tolerance=self._eq_settings["target_rms_con_tol"],
             )
 
             optimiser = deepcopy(self._eq_opt)
@@ -291,10 +303,8 @@ class PulsedEquilibriumProblem:
             for constraint in constraints:
                 constraint._args["eq"] = eq
             constraints.append(L2_target_constraint)
-            # constraints = [L2_target_constraint]
             problem = self._eq_prob_cls(eq, max_currents, optimiser, constraints)
             coilset = problem.optimise()
-
             self.take_snapshot(snap, eq, coilset, optimiser, self.eq_targets, profiles)
 
 
