@@ -36,6 +36,7 @@ from bluemira.base.look_and_feel import bluemira_print, bluemira_warn
 from bluemira.builders.pf_coils import PFCoilBuilder
 from bluemira.equilibria.coils import Coil, CoilSet
 from bluemira.equilibria.physics import calc_psib
+from bluemira.equilibria.run import PulsedEquilibriumProblem
 from bluemira.geometry.constants import VERY_BIG
 from bluemira.geometry.tools import (
     boolean_cut,
@@ -116,36 +117,11 @@ class PFCoilsBuilder(Builder):
     _params: Configuration
     _param_class: Type[CoilSet]
     _default_runmode: str = "read"
-    _design_problem: None
+    _problem_class: Type[PulsedEquilibriumProblem]
 
     def _extract_config(self, build_config: BuildConfig):
-        super()._extract_config(build_config)
-
-        if self._runmode.name.lower() == "read":
-            if build_config.get("eqdsk_path") is None:
-                raise BuilderError(
-                    "Must supply eqdsk_path in build_config when using 'read' mode."
-                )
-            self._eqdsk_path = build_config["eqdsk_path"]
-
-        if self._runmode.name.lower() == "run":
-            self._problem_settings = build_config.get("problem_settings", {})
-            self._algorithm_name = build_config.get("algorithm_name", "SLSQP")
-            self._opt_conditions = build_config.get("opt_conditions", {"max_eval": 100})
-            self._opt_parameters = build_config.get("opt_parameters", {})
-
-            problem_class = build_config["problem_class"]
-            if isinstance(problem_class, str):
-                self._problem_class = get_class_from_module(
-                    problem_class, default_module="bluemira.equilibria.opt_problems"
-                )
-            elif isinstance(problem_class, type):
-                self._problem_class = problem_class
-            else:
-                raise BuilderError(
-                    "problem_class must either be a str pointing to the class to be loaded "
-                    f"or the class itself - got {problem_class}."
-                )
+        # TODO: Process the build_config for the problem class
+        return super()._extract_config(build_config)
 
     def reinitialise(self, params, **kwargs) -> None:
         """
@@ -166,7 +142,8 @@ class PFCoilsBuilder(Builder):
         """
         Build PF coils from a design optimisation problem.
         """
-        self._design_problem = self._problem_class()
+        # TODO: Run the problem class correctly
+        self._design_problem = self._problem_class(self._params)
 
     def read(self, **kwargs):
         """
@@ -531,169 +508,5 @@ def make_coilset(
     return coilset
 
 
-from bluemira.equilibria.equilibrium import Breakdown, Equilibrium
-from bluemira.equilibria.grid import Grid
-from bluemira.equilibria.opt_constraints import (
-    coil_field_constraints,
-    coil_force_constraints,
-)
-from bluemira.equilibria.opt_problems import (
-    InboardBreakdownZoneStrategy,
-    OutboardBreakdownZoneStrategy,
-    PremagnetisationCOP,
-)
-from bluemira.equilibria.profiles import CustomProfile
-
-
-class PFSystemDesignProcedure:
-    def __init__(self, params, build_config, tf_boundary, p_prime, ff_prime):
-        self.params = params
-        self.build_config = build_config
-        self.tf_boundary = tf_boundary
-        # self.profiles = CustomProfile(
-        #     p_prime, ff_prime, params.R_0.value, params.B_0.value, Ip=params.I_p.value
-        # )
-        self.coilset = self._make_initial_coilset()
-
-    def _make_initial_coilset(self):
-        tk_cs = 0.5 * self.params.tk_cs.value
-        r_cs = self.params.r_cs_in.value + tk_cs
-        coilset = make_coilset(
-            self.tf_boundary,
-            self.params.R_0.value,
-            self.params.kappa.value,
-            self.params.delta.value,
-            r_cs=r_cs,
-            tk_cs=tk_cs,
-            g_cs=self.params.g_cs_mod.value,
-            n_CS=self.params.n_CS.value,
-            n_PF=self.params.n_PF.value,
-            tk_cs_ins=self.params.tk_cs_insulation.value,
-            tk_cs_cas=self.params.tk_cs_casing.value,
-            PF_jmax=self.params.PF_jmax.value,
-            PF_bmax=self.params.PF_bmax.value,
-            CS_jmax=self.params.CS_jmax.value,
-            CS_bmax=self.params.CS_bmax.value,
-        )
-        return coilset
-
-    def run_premagnetisation(self):
-        R_0 = self.params.R_0.value
-        strategy = OutboardBreakdownZoneStrategy(
-            R_0, self.params.A.value, self.params.tk_sol_ib.value
-        )
-        # Not really important; mostly for plotting
-        grid = Grid(0.1, R_0 * 2, -1.5 * R_0, 1.5 * R_0, 100, 100)
-        optimiser = Optimiser(
-            "COBYLA",
-            opt_conditions={"max_eval": 5000, "ftol_rel": 1e-10},
-        )
-        scale = 1e6
-        # self.coilset.set_control_currents(self.coilset.get_max_currents(scale*self.params.I_p))
-        self.coilset.mesh_coils(0.1)
-
-        breakdown = Breakdown(self.coilset, grid, R_0=R_0)
-        constraints = [
-            OptimisationConstraint(
-                coil_field_constraints,
-                f_constraint_args={
-                    "eq": breakdown,
-                    "B_max": self.coilset.get_max_fields(),
-                    "scale": scale,
-                },
-                tolerance=1e-6 * np.ones(self.coilset.n_control),
-            ),
-            # OptimisationConstraint(
-            #     coil_force_constraints,
-            #     f_constraint_args={
-            #         "eq": breakdown,
-            #         "n_PF": self.coilset.n_PF,
-            #         "n_CS": self.coilset.n_CS,
-            #         "PF_Fz_max": self.params.F_pf_zmax.value,
-            #         "CS_Fz_sum_max": self.params.F_cs_ztotmax.value,
-            #         "CS_Fz_sep_max": self.params.F_cs_sepmax.value,
-            #         "scale": scale,
-            #     },
-            #     tolerance=1e-6 * np.ones(self.coilset.n_control),
-            # ),
-        ]
-        max_currents = self.coilset.get_max_currents(1.0 * scale * self.params.I_p.value)
-        # TODO: Still the problem that the response matrices should in theory be
-        # changed when the PF currents (not size-fixed) change.
-        self.problem = PremagnetisationCOP(
-            self.coilset,
-            strategy,
-            B_stray_max=self.params.B_premag_stray_max.value,
-            B_stray_con_tol=1e-8,
-            n_B_stray_points=20,
-            optimiser=optimiser,
-            max_currents=max_currents,
-            constraints=constraints,
-        )
-        self.coilset = self.problem.optimise(max_currents / scale)
-        breakdown = Breakdown(self.coilset, grid, R_0=R_0)
-        breakdown.set_breakdown_point(*strategy.breakdown_point)
-        psi_premag = breakdown.breakdown_psi
-        bluemira_print(f"Premagnetisation flux = {2*np.pi * psi_premag:.2f} V.s")
-        return breakdown
-
-    def calculate_sof_eof_fluxes(self, psi_premag: float):
-        """
-        Calculate the SOF and EOF plasma boundary fluxes.
-        """
-        psi_sof = calc_psib(
-            2 * np.pi * psi_premag,
-            self.params.R_0.value,
-            1e6 * self.params.I_p.value,
-            self.params.l_i.value,
-            self.params.C_Ejima.value,
-        )
-        psi_eof = psi_sof - self.params.tau_flattop.value * self.params.v_burn.value
-        return psi_sof, psi_eof
-
-    def optimise_positions(self):
-
-        eq = Equilibrium(
-            self.coilset,
-            force_symmetry=False,
-            vcontrol=None,
-            limiter=None,
-            profiles=self.profiles,
-        )
-        pass
-
-    def consolidate_coilset(self):
-        pass
-
-    def consolidate_premagnetisation(self):
-        pass
-
-
 if __name__ == "__main__":
-    import matplotlib.pyplot as plt
-
-    from bluemira.base.config import Configuration
-    from bluemira.geometry.parameterisations import PrincetonD
-
-    params = Configuration()
-
-    design = PFSystemDesignProcedure(
-        params,
-        {},
-        PrincetonD({"x1": {"value": 4}, "x2": {"value": 16}}).create_shape(),
-        None,
-        None,
-    )
-
-    breakdown = design.run_premagnetisation()
-    psi_sof, psi_eof = design.calculate_sof_eof_fluxes(breakdown.breakdown_psi)
-
-    f, ax = plt.subplots()
-    breakdown.coilset.plot(ax=ax)
-    breakdown.plot(ax=ax)
-
-    positioner = make_coil_mapper(
-        PrincetonD({"x1": {"value": 4}, "x2": {"value": 16}}).create_shape(),
-        None,
-        coils=breakdown.coilset.coils.values(),
-    )
+    pass

@@ -107,7 +107,7 @@ class Snapshot:
 
 class PulsedEquilibriumProblem:
     """
-    Procedural design for a pulsed tokamak with a known PF coilset.
+    Procedural design for a pulsed tokamak.
     """
 
     BREAKDOWN = "Breakdown"
@@ -115,12 +115,43 @@ class PulsedEquilibriumProblem:
     SOF = "SOF"
     EOF = "EOF"
 
+    def __init__(self):
+        self.snapshots = {}
+
+    def take_snapshot(self, name, eq, coilset, optimiser, problem, profiles=None):
+        """
+        Take a snapshot of the pulse.
+        """
+        if name in self.snapshots:
+            bluemira_warn(f"Over-writing snapshot {name}!")
+
+        self.snapshots[name] = Snapshot(eq, coilset, problem, profiles, optimiser)
+
+    def plot(self):
+        n_snapshots = len(self.snapshots)
+        if n_snapshots == 0:
+            return
+
+        f, ax = plt.subplots(1, n_snapshots)
+        for i, (k, snap) in enumerate(self.snapshots.items()):
+            axi = ax[i]
+            snap.eq.plot(ax=axi)
+            snap.coilset.plot(ax=axi)
+            axi.set_title(k)
+        return f
+
+
+class FixedCoilsetPulsedEquilibriumProblem(PulsedEquilibriumProblem):
+    """
+    Procedural design for a pulsed tokamak with a known PF coilset.
+    """
+
     def __init__(
         self,
         params,
         coilset: CoilSet,
         grid: Grid,
-        coil_constraints: List[callable],
+        coil_constraints: List[OptimisationConstraint],
         profiles: Profile,
         magnetic_targets: MagneticConstraintSet,
         breakdown_strategy_cls: Type[BreakdownZoneStrategy],
@@ -144,7 +175,6 @@ class PulsedEquilibriumProblem:
         self.grid = grid
         self.profiles = profiles
         self.eq_targets = magnetic_targets
-        self.snapshots = {}
 
         self._bd_strat_cls = breakdown_strategy_cls
         self._bd_prob_cls = breakdown_problem_cls
@@ -156,14 +186,7 @@ class PulsedEquilibriumProblem:
         self._eq_settings = equilibrium_settings
         self._coil_cons = coil_constraints
 
-    def take_snapshot(self, name, eq, coilset, optimiser, problem, profiles=None):
-        """
-        Take a snapshot of the pulse.
-        """
-        if name in self.snapshots:
-            bluemira_warn(f"Over-writing snapshot {name}!")
-
-        self.snapshots[name] = Snapshot(eq, coilset, problem, profiles, optimiser)
+        super().__init__()
 
     def run_premagnetisation(self):
         """
@@ -286,7 +309,7 @@ class PulsedEquilibriumProblem:
                     "value": self._eq_settings["target_rms_max"],
                     "scale": 1e6,
                 },
-                tolerance=self._eq_settings["target_rms_con_tol"],
+                tolerance=np.array([self._eq_settings["target_rms_con_tol"]]),
             )
 
             optimiser = deepcopy(self._eq_opt)
@@ -398,7 +421,7 @@ if __name__ == "__main__":
     breakdown_strategy = OutboardBreakdownZoneStrategy
 
     params.B_premag_stray_max = 0.003
-    problem = PulsedEquilibriumProblem(
+    problem = FixedCoilsetPulsedEquilibriumProblem(
         params,
         coilset,
         grid,
@@ -425,9 +448,4 @@ if __name__ == "__main__":
     problem.snapshots[problem.EQ_REF].coilset.plot(ax=ax)
 
     problem.optimise_currents()
-
-    f, ax = plt.subplots(1, 2)
-    problem.snapshots["SOF"].eq.plot(ax=ax[0])
-    problem.snapshots["SOF"].coilset.plot(ax=ax[0])
-    problem.snapshots["EOF"].eq.plot(ax=ax[1])
-    problem.snapshots["EOF"].coilset.plot(ax=ax[1])
+    problem.plot()
