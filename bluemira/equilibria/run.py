@@ -278,7 +278,7 @@ class PulsedEquilibriumProblem:
             self.eq_targets.update_psi_boundary(psi_boundary / (2 * np.pi))
             _, A, b = self.eq_targets.get_weighted_arrays()
 
-            L2_target_constraint = OptimisationConstraint(
+            L2_target_constraint = OptimisationConstraint(  # noqa: N806
                 L2_norm_constraint,
                 f_constraint_args={
                     "a_mat": A,
