@@ -29,6 +29,7 @@ from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.equilibria.eq_constraints import (
     DivertorLegCalculator,
     FieldNullConstraint,
+    IsofluxConstraint,
     MagneticConstraintSet,
     PsiBoundaryConstraint,
 )
@@ -129,7 +130,7 @@ class EUDEMOSingleNullConstraints(DivertorLegCalculator, MagneticConstraintSet):
         psi_l_pos,
         div_l_ib,
         div_l_ob,
-        psibval,
+        psibval=None,
         lower=True,
         n=100,
     ):
@@ -161,19 +162,27 @@ class EUDEMOSingleNullConstraints(DivertorLegCalculator, MagneticConstraintSet):
         f_s.interpolate(n)
         x_s, z_s = f_s.x, f_s.z
 
-        constraints.append(PsiBoundaryConstraint(x_s, z_s, psibval))
+        idx_ref = np.argmin(x_s + abs(z_s))
+        x_ref = x_s[idx_ref]
+        z_ref = z_s[idx_ref]
+
+        # constraints.append(PsiBoundaryConstraint(x_s, z_s, psibval))
+        constraints.append(IsofluxConstraint(x_s, z_s, x_ref, z_ref, weights=n / 10))
 
         x_leg1, z_leg1 = self.calc_divertor_leg(
-            x_point, 50, div_l_ob, int(n / 10), loc="lower", pos="outer"
+            x_point, 50, div_l_ob, 2, loc="lower", pos="outer"
         )
 
         x_leg2, z_leg2 = self.calc_divertor_leg(
-            x_point, 40, div_l_ib, int(n / 10), loc="lower", pos="inner"
+            x_point, 40, div_l_ib, 2, loc="lower", pos="inner"
         )
 
         x_legs = np.append(x_leg1, x_leg2)
         z_legs = np.append(z_leg1, z_leg2)
-        constraints.append(PsiBoundaryConstraint(x_legs, z_legs, psibval))
+        # constraints.append(PsiBoundaryConstraint(x_legs, z_legs, psibval))
+        constraints.append(IsofluxConstraint(x_legs, z_legs, x_ref, z_ref))
+        if psibval:
+            constraints.append(PsiBoundaryConstraint(x_ref, z_ref, psibval))
 
         super().__init__(constraints)
 

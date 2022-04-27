@@ -274,9 +274,10 @@ class PulsedEquilibriumProblem:
         max_currents = self.coilset.get_max_currents(0)
         for snap, psi_boundary in zip(snapshots, [psi_sof, psi_eof]):
             eq = deepcopy(eq)
+            fixed_coils = all([c.flag_sizefix for c in eq.coilset.coils.values()])
             eq.coilset.mesh_coils(0.2)
             self.eq_targets.update_psi_boundary(psi_boundary / (2 * np.pi))
-            self.eq_targets(eq, I_not_dI=True, fixed_coils=True)
+            self.eq_targets(eq, I_not_dI=True, fixed_coils=fixed_coils)
             _, A, b = self.eq_targets.get_weighted_arrays()
 
             L2_target_constraint = OptimisationConstraint(
@@ -289,10 +290,9 @@ class PulsedEquilibriumProblem:
             for constraint in constraints:
                 constraint._args["eq"] = eq
             constraints.append(L2_target_constraint)
-            constraints = [L2_target_constraint]
+            # constraints = [L2_target_constraint]
             problem = self._eq_prob_cls(eq, max_currents, optimiser, constraints)
             coilset = problem.optimise()
-            eq.coilset = coilset
 
             self.take_snapshot(snap, eq, coilset, optimiser, self.eq_targets, profiles)
 
@@ -351,7 +351,7 @@ if __name__ == "__main__":
     coilset.assign_coil_materials("CS", j_max=12.5, b_max=13)
     coilset.fix_sizes()
 
-    grid = Grid(0.1, 20, -14, 10, 100, 100)
+    grid = Grid(4, 14, -10, 10, 100, 100)
     profiles = CustomProfile(
         pprime_func=np.sqrt(np.linspace(1, 0, 50)),
         ffprime_func=3 * np.sqrt(np.linspace(1, 0, 50)),
@@ -359,7 +359,9 @@ if __name__ == "__main__":
         B_0=params.B_0.value,
         Ip=params.I_p.value * 1e6,
     )
-    # profiles = BetaIpProfile(1.1, params.I_p.value*1e6, params.R_0.value, params.B_0.value)
+    profiles = BetaIpProfile(
+        1.1, params.I_p.value * 1e6, params.R_0.value, params.B_0.value
+    )
 
     targets = EUDEMOSingleNullConstraints(
         params.R_0.value,
@@ -369,13 +371,13 @@ if __name__ == "__main__":
         params.kappa.value * 1.12,
         params.delta.value,
         params.delta.value,
-        0,
         20,
+        0,
         60,
         30,
         1.0,
         1.45,
-        0,
+        None,
         n=50,
     )
 
@@ -391,8 +393,7 @@ if __name__ == "__main__":
         )
     ]
 
-    breakdown_strategy = InputBreakdownZoneStrategy(9, 0, 3)
-    breakdown_strategy = InboardBreakdownZoneStrategy
+    breakdown_strategy = OutboardBreakdownZoneStrategy
 
     params.B_premag_stray_max = 0.003
     problem = PulsedEquilibriumProblem(
@@ -407,21 +408,24 @@ if __name__ == "__main__":
         breakdown_optimiser=Optimiser(
             "COBYLA", opt_conditions={"max_eval": 10000, "ftol_rel": 1e-6}
         ),
+        equilibrium_optimiser=Optimiser(
+            "SLSQP", opt_conditions={"max_eval": 10000, "ftol_rel": 1e-6}
+        ),
     )
 
     problem.run_premagnetisation()
     f, ax = plt.subplots()
     problem.snapshots[problem.BREAKDOWN].eq.plot(ax=ax)
     problem.snapshots[problem.BREAKDOWN].coilset.plot(ax=ax)
-    # problem.run_reference_equilibrium()
-    # f, ax = plt.subplots()
-    # problem.snapshots[problem.EQ_REF].eq.plot(ax=ax)
-    # problem.snapshots[problem.EQ_REF].coilset.plot(ax=ax)
+    problem.run_reference_equilibrium()
+    f, ax = plt.subplots()
+    problem.snapshots[problem.EQ_REF].eq.plot(ax=ax)
+    problem.snapshots[problem.EQ_REF].coilset.plot(ax=ax)
 
-    # problem.optimise_currents()
+    problem.optimise_currents()
 
-    # f, ax = plt.subplots(1, 2)
-    # problem.snapshots["SOF"].eq.plot(ax=ax[0])
-    # problem.snapshots["SOF"].coilset.plot(ax=ax[0])
-    # problem.snapshots["EOF"].eq.plot(ax=ax[1])
-    # problem.snapshots["EOF"].coilset.plot(ax=ax[1])
+    f, ax = plt.subplots(1, 2)
+    problem.snapshots["SOF"].eq.plot(ax=ax[0])
+    problem.snapshots["SOF"].coilset.plot(ax=ax[0])
+    problem.snapshots["EOF"].eq.plot(ax=ax[1])
+    problem.snapshots["EOF"].coilset.plot(ax=ax[1])
