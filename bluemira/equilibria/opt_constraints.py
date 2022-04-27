@@ -20,10 +20,15 @@
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 import numpy as np
 from matplotlib import scale
+from matplotlib.pyplot import axis
 
-from bluemira.equilibria.winding_pack import generate_cable_current, select_temperature
+from bluemira.equilibria.winding_pack import (
+    generate_cable_current,
+    plot_2D_field_map,
+    select_temperature,
+)
 
-# from pyrsistent import T
+# from bluemira.magnetostatics.circuits import HelmholtzCage
 
 """
 Equilibrium optimisation constraint functions.
@@ -224,4 +229,60 @@ def coil_field_constraints(constraint, vector, grad, eq, B_max, scale):
     if grad.size > 0:
         grad[:] = dB
     constraint[:] = B - B_max
+    return constraint
+    
+def critical_current_constraint(
+    constraint,
+    vector,
+    grad,
+    eq,
+    tf_source,
+    tf,
+    tf_centerline,
+    hmc,
+    conductor_id,
+    temperature_id,
+    conductors,
+    scale,
+):  # tf_source after eq
+    
+    eq.coilset.set_control_currents(vector * scale)
+    x, z = eq.coilset.get_positions()  # arrays
+    y = np.zeros_like(x)
+    coords = np.stack([x, z], axis=0)
+    # import ipdb
+    # ipdb.set_trace()
+    Bx = eq.Bx(x, z)  # array
+    Bz = eq.Bz(x, z)  # array
+
+    # hmc = HelmholtzCage(tf_source,tf.params.n_TF)
+
+    if hmc == None:
+        B_tf = eq.Bt(x)
+        B = np.sqrt(Bx**2 + Bz**2 + B_tf**2)
+    else:
+        B_vec = hmc.field(x, y, z)  # HM cage
+        B_pf_plasma = np.stack([eq.Bx(x, z), eq.Bz(x, z)], axis=0)
+
+        B_vec[
+            (0, 2),
+        ] += B_pf_plasma  # stacked array
+        # import ipdb
+        # ipdb.set_trace()
+
+        B = np.sqrt(B_vec[0] ** 2 + B_vec[1] ** 2 + B_vec[2] ** 2)  # stacked array
+        import ipdb
+
+        ipdb.set_trace()
+        plot_2D_field_map(coords, B, eq.coilset, tf_centerline)
+        import ipdb
+
+        ipdb.set_trace()
+
+    # user imputed temperatures for HTS and LTS"
+    T = select_temperature(conductor_id[0], temperature_id)
+    I_crit = generate_cable_current(conductor_id[0], conductors, B, T)  # np.array
+
+    print("I_crit", I_crit)  # diagnostic
+    constraint[:] = abs(vector) - abs(I_crit)
     return constraint
