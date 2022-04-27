@@ -249,7 +249,9 @@ def stray_field_constraints(constraint, vector, grad, cBx, cBz, B_max, scale):
     return constraint
 
 
-def L2_norm_constraint(constraint, vector, grad, a_mat, b_vec, value, scale):
+def L2_norm_constraint(
+    constraint, vector, grad, a_mat, b_vec, value, scale
+):  # noqa: N802
     """
     Constrain the L2 norm of an Ax-b system of equations.
 

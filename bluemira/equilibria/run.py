@@ -116,7 +116,7 @@ class Snapshot:
 
 class PulsedEquilibriumProblem:
     """
-    Procedural design for a pulsed tokamak.
+    Procedural design for a pulsed tokamak with a known coilset.
     """
 
     BREAKDOWN = "Breakdown"
@@ -192,7 +192,8 @@ class PulsedEquilibriumProblem:
 
             # TODO: Ip is in MA already
             max_currents = self.coilset.get_max_currents(
-                1.0 * 1e6 * self.params.I_p.value
+                0
+                # 1.4 * 1e6 * self.params.I_p.value
             )
             problem = self._bd_prob_cls(
                 coilset,
@@ -267,22 +268,22 @@ class PulsedEquilibriumProblem:
         psi_sof, psi_eof = self.calculate_sof_eof_fluxes()
         if self.EQ_REF not in self.snapshots:
             self.run_reference_equilibrium()
-        eq = self.snapshots[self.EQ_REF].eq
+        eq_ref = self.snapshots[self.EQ_REF].eq
 
         snapshots = [self.SOF, self.EOF]
 
         max_currents = self.coilset.get_max_currents(0)
         for snap, psi_boundary in zip(snapshots, [psi_sof, psi_eof]):
-            eq = deepcopy(eq)
+            eq = deepcopy(eq_ref)
             fixed_coils = all([c.flag_sizefix for c in eq.coilset.coils.values()])
             eq.coilset.mesh_coils(0.2)
-            self.eq_targets.update_psi_boundary(psi_boundary / (2 * np.pi))
             self.eq_targets(eq, I_not_dI=True, fixed_coils=fixed_coils)
+            self.eq_targets.update_psi_boundary(psi_boundary / (2 * np.pi))
             _, A, b = self.eq_targets.get_weighted_arrays()
 
             L2_target_constraint = OptimisationConstraint(
                 L2_norm_constraint,
-                f_constraint_args={"a_mat": A, "b_vec": b, "value": 0.05, "scale": 1e6},
+                f_constraint_args={"a_mat": A, "b_vec": b, "value": 0.5, "scale": 1e6},
             )
 
             optimiser = deepcopy(self._eq_opt)
@@ -290,7 +291,7 @@ class PulsedEquilibriumProblem:
             for constraint in constraints:
                 constraint._args["eq"] = eq
             constraints.append(L2_target_constraint)
-            constraints = [L2_target_constraint]
+            # constraints = [L2_target_constraint]
             problem = self._eq_prob_cls(eq, max_currents, optimiser, constraints)
             coilset = problem.optimise()
 
@@ -359,9 +360,9 @@ if __name__ == "__main__":
         B_0=params.B_0.value,
         Ip=params.I_p.value * 1e6,
     )
-    profiles = BetaIpProfile(
-        1.1, params.I_p.value * 1e6, params.R_0.value, params.B_0.value
-    )
+    # profiles = BetaIpProfile(
+    #     1.1, params.I_p.value * 1e6, params.R_0.value, params.B_0.value
+    # )
 
     targets = EUDEMOSingleNullConstraints(
         params.R_0.value,

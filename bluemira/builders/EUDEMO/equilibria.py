@@ -158,6 +158,7 @@ class EUDEMOSingleNullConstraints(DivertorLegCalculator, MagneticConstraintSet):
         x_point = [f_s.x[arg_x], f_s.z[arg_x]]
 
         constraints = [FieldNullConstraint(*x_point)]
+        # constraints = []
 
         f_s.interpolate(n)
         x_s, z_s = f_s.x, f_s.z
@@ -182,7 +183,9 @@ class EUDEMOSingleNullConstraints(DivertorLegCalculator, MagneticConstraintSet):
         # constraints.append(PsiBoundaryConstraint(x_legs, z_legs, psibval))
         constraints.append(IsofluxConstraint(x_legs, z_legs, x_ref, z_ref))
         if psibval:
-            constraints.append(PsiBoundaryConstraint(x_ref, z_ref, psibval, weights=3))
+            constraints.append(PsiBoundaryConstraint(x_ref, z_ref, psibval))
+        else:
+            constraints.append(PsiBoundaryConstraint(x_ref, z_ref, 0.0))
 
         super().__init__(constraints)
 
