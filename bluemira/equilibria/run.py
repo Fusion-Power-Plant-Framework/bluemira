@@ -27,7 +27,6 @@ from copy import deepcopy
 from typing import List, Optional, Type
 
 import numpy as np
-from sympy import Eq
 
 from bluemira.base.look_and_feel import bluemira_print, bluemira_warn
 from bluemira.equilibria.coils import Coil, CoilSet
@@ -37,26 +36,18 @@ from bluemira.equilibria.grid import Grid
 from bluemira.equilibria.opt_constraints import (
     L2_norm_constraint,
     coil_field_constraints,
-    coil_force_constraints,
 )
 from bluemira.equilibria.opt_problems import (
     BreakdownZoneStrategy,
     CoilsetOptimisationProblem,
-    InboardBreakdownZoneStrategy,
-    InputBreakdownZoneStrategy,
     MinimalCurrentCOP,
     OutboardBreakdownZoneStrategy,
     PremagnetisationCOP,
     UnconstrainedCurrentCOP,
 )
-from bluemira.equilibria.optimiser import Norm2Tikhonov
 from bluemira.equilibria.physics import calc_psib
 from bluemira.equilibria.profiles import Profile
-from bluemira.equilibria.solve import (
-    EquilibriumConverger,
-    PicardCoilsetIterator,
-    PicardDeltaIterator,
-)
+from bluemira.equilibria.solve import PicardCoilsetIterator
 from bluemira.utilities.opt_problems import OptimisationConstraint
 from bluemira.utilities.optimiser import Optimiser
 
