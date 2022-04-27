@@ -167,7 +167,7 @@ class EUDEMOSingleNullConstraints(DivertorLegCalculator, MagneticConstraintSet):
         z_ref = z_s[idx_ref]
 
         # constraints.append(PsiBoundaryConstraint(x_s, z_s, psibval))
-        constraints.append(IsofluxConstraint(x_s, z_s, x_ref, z_ref, weights=n / 10))
+        constraints.append(IsofluxConstraint(x_s, z_s, x_ref, z_ref))
 
         x_leg1, z_leg1 = self.calc_divertor_leg(
             x_point, 50, div_l_ob, 2, loc="lower", pos="outer"
@@ -182,7 +182,7 @@ class EUDEMOSingleNullConstraints(DivertorLegCalculator, MagneticConstraintSet):
         # constraints.append(PsiBoundaryConstraint(x_legs, z_legs, psibval))
         constraints.append(IsofluxConstraint(x_legs, z_legs, x_ref, z_ref))
         if psibval:
-            constraints.append(PsiBoundaryConstraint(x_ref, z_ref, psibval))
+            constraints.append(PsiBoundaryConstraint(x_ref, z_ref, psibval, weights=3))
 
         super().__init__(constraints)
 

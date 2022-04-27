@@ -290,7 +290,7 @@ class PulsedEquilibriumProblem:
             for constraint in constraints:
                 constraint._args["eq"] = eq
             constraints.append(L2_target_constraint)
-            # constraints = [L2_target_constraint]
+            constraints = [L2_target_constraint]
             problem = self._eq_prob_cls(eq, max_currents, optimiser, constraints)
             coilset = problem.optimise()
 
@@ -406,10 +406,10 @@ if __name__ == "__main__":
         breakdown_strategy_cls=breakdown_strategy,
         breakdown_problem_cls=PremagnetisationCOP,
         breakdown_optimiser=Optimiser(
-            "COBYLA", opt_conditions={"max_eval": 10000, "ftol_rel": 1e-6}
+            "COBYLA", opt_conditions={"max_eval": 10000, "ftol_rel": 1e-10}
         ),
         equilibrium_optimiser=Optimiser(
-            "SLSQP", opt_conditions={"max_eval": 10000, "ftol_rel": 1e-6}
+            "SLSQP", opt_conditions={"max_eval": 10000, "ftol_rel": 1e-10}
         ),
     )
 

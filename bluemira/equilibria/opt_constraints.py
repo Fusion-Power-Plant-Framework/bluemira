@@ -243,18 +243,9 @@ def stray_field_constraints(constraint, vector, grad, cBx, cBz, B_max, scale):
     """
     B = scale * np.hypot((cBx @ vector), (cBz @ vector))
     constraint[:] = B - B_max
-    m, n = cBx.shape
     if grad.size > 0:
-        for i in range(m):
-            for j in range(n):
-                grad[i, j] = (
-                    scale
-                    * (
-                        cBx[i, j] * cBx[i, :] @ vector * scale
-                        + cBz[i, j] * cBz[i, :] @ vector * scale
-                    )
-                    / B[i]
-                )
+        grad[:] = cBx * cBx @ vector + cBz * cBz @ vector
+        grad[:] = scale * grad / B
     return constraint
 
 
