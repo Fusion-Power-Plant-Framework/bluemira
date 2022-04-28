@@ -113,6 +113,8 @@ class PlasmodParameters:
             for n_o in new_options:
                 if n_o in self._options:
                     self._options[n_o] = new_options[n_o]
+                else:
+                    bluemira_warn(f"{n_o} not known in input file")
 
     @staticmethod
     def _load_default_from_json(filepath: str):
@@ -342,9 +344,7 @@ class Setup(interface.Setup):
         self.input_file = "plasmod_input.dat"
         self.output_file = "plasmod_outputs.dat"
         self.profiles_file = "plasmod_profiles.dat"
-        self.io_manager = Inputs(
-            {**self.get_new_inputs(), **self.parent.problem_settings}
-        )
+        self.io_manager = Inputs({**self.get_new_inputs(), **self._problem_settings})
 
     def update_inputs(self):
         """
