@@ -24,12 +24,14 @@ Test for plasmod run
 """
 
 # %%
+import os
 from pprint import pprint
 
 import matplotlib.pyplot as plt
 
 import bluemira.codes.plasmod as plasmod
 from bluemira.base.config import Configuration
+from bluemira.base.file import get_bluemira_root
 from bluemira.base.logs import set_log_level
 
 # %%[markdown]
@@ -55,10 +57,6 @@ set_log_level("DEBUG")
 # binary location to the solver
 
 # %%
-import os
-
-from bluemira.base.file import get_bluemira_root
-
 PLASMOD_PATH = os.path.join(os.path.split(get_bluemira_root())[0], "plasmod")
 binary = os.path.join(PLASMOD_PATH, "bin", "plasmod")
 
