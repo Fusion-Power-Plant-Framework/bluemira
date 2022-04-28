@@ -125,24 +125,23 @@ class TestMakeCoilset:
     def test_make_coilset(self, boundary):
         n_CS = 5
         n_PF = 6
+
         coilset = make_coilset(
-            boundary,
-            9,
-            1.6,
-            1.8,
-            0.3,
-            0.4,
-            3,
-            0.2,
-            0.1,
-            0.1,
-            0.1,
-            n_CS,
-            n_PF,
-            10,
-            10,
-            10,
-            10,
+            tf_boundary=boundary,
+            R_0=9,
+            kappa=1.6,
+            delta=1.8,
+            r_cs=3,
+            tk_cs=0.4,
+            g_cs=0.1,
+            tk_cs_ins=0.1,
+            tk_cs_cas=0.1,
+            n_CS=n_CS,
+            n_PF=n_PF,
+            CS_jmax=10,
+            CS_bmax=10,
+            PF_jmax=10,
+            PF_bmax=10,
         )
 
         assert len(coilset.coils) == n_PF + n_CS
