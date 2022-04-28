@@ -32,10 +32,9 @@ from bluemira.base.builder import BuildConfig, Builder
 from bluemira.base.components import Component
 from bluemira.base.config import Configuration
 from bluemira.base.error import BuilderError
-from bluemira.base.look_and_feel import bluemira_print, bluemira_warn
+from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.builders.pf_coils import PFCoilBuilder
 from bluemira.equilibria.coils import Coil, CoilSet
-from bluemira.equilibria.physics import calc_psib
 from bluemira.equilibria.run import PulsedEquilibriumProblem
 from bluemira.geometry.constants import VERY_BIG
 from bluemira.geometry.tools import (
@@ -47,10 +46,7 @@ from bluemira.geometry.tools import (
 )
 from bluemira.magnetostatics.baseclass import SourceGroup
 from bluemira.magnetostatics.circular_arc import CircularArcCurrentSource
-from bluemira.utilities.opt_problems import OptimisationConstraint
-from bluemira.utilities.optimiser import Optimiser
 from bluemira.utilities.positioning import PathInterpolator, PositionMapper
-from bluemira.utilities.tools import get_class_from_module
 
 
 class PFCoilsComponent(Component):
