@@ -1,294 +1,117 @@
 {
-    // ############################
-    // # list numerics properties (num type)
-    // #############################
-    // # [-] max iteration error between transport/equilibrium iterations
     "tol": 1e-10,
-    // # [-] min time step between iterations
     "dtmin": 1e-2,
-    // # [-] max time step between iterations
     "dtmax": 1e-2,
-    // # [-] exponent of jipperdo2
     "dtmaxmin": 0.1,
-    // # [-] stabilizing diff for TGLF in m²/s
     "dtmaxmax": 1.0,
-    // # [-] tolerance above which TGLF should be always called
     "dtminmax": 5.0,
-    // # [-] !time step
     "dt": 0.01,
-    // # [-] !decrease of dt
     "dtinc": 2.0,
-    // # [-] !increase of dt
     "Ainc": 1.1,
-    // # [-] max number of iteration
     "test": 10000,
-    // # [-] ! multiplier of etolm that should not be overcome
     "tolmin": 10.1,
-    // # [-] Newton differential
     "dgy": 1e-5,
-    // # [-] exponent of jipperdo
     "eopt": 0.1,
-    // # [-] first radial grid point
     "capA": 0.1,
-    // # [-] diagnostics for ASTRA (0 or 1)
     "i_diagz": 0,
-    // # [-] SOL model selector:
-    // # 0 - fit based on Eich scaling
-    // # 1 - Mattia Siccinio's model
     "isiccir": 0,
-    // # [-] sawtooth correction of q
-    // (fix q = 1 if q below 1)
     "isawt": 1,
-    // # [-] number of interpolated grid points
     "nx": 41,
-    // # [-] number of reduced grid points
     "nxt": 5,
-    // # [-] number of unknowns in the transport solver
-    //(ne, Te, Ti) leave this equal to 3!
     "nchannels": 3,
-    // # [-] impurity model selector:
-    // # 0 - fixed concentration,
-    // # 1 - concentration fixed at pedestal top, then fixed density.
     "i_impmodel": 1,
-    // # [-] selector for transport model: (see trmodel.f90)
-    // # 1 - simple gyrobohm scaling with imposed H factor,
-    // # 555 - H factor scaling from F. Palermo
-    // # 111 - another model based on gyro-Bohm transport
-    // # 2 - no reference in the source code
     "i_modeltype": 1,
-    // # [-] equilibrium model selector:
-    // # 1 - EMEQ solves equilibrium with given q95, with sawteeth.
-    // # 2 - EMEQ solves with given Ip, with sawteeth
     "i_equiltype": 2,
-    // # [-] pedestal model selector:
-    // # 1 - fixed pedestal temperature (Teped_in),
-    // # 2 - Saarelma scaling
     "i_pedestal": 2,
-    // # [-] number of tglf points, below positions
     "ntglf": 11,
-    // # [-] tglf points, position 1
     "xtglf_1": 0.1,
-    // # [-] tglf points, position 2
     "xtglf_2": 0.15,
-    // # [-] tglf points, position 3
     "xtglf_3": 0.2,
-    // # [-] tglf points, position 4
     "xtglf_4": 0.25,
-    // # [-] tglf points, position 5
     "xtglf_5": 0.3,
-    // # [-] tglf points, position 6
     "xtglf_6": 0.4,
-    // # [-] tglf points, position 7
     "xtglf_7": 0.5,
-    // # [-] tglf points, position 8
     "xtglf_8": 0.6,
-    // # [-] tglf points, position 9
     "xtglf_9": 0.7,
-    // # [-] tglf points, position 10
     "xtglf_10": 0.75,
-    // # [-] tglf points, position 11
     "xtglf_11": 0.8,
-    // ############################
-    // # list geometry properties
-    // ############################
-    // # [m] plasma major radius
     "R": 9.002,
-    // # [MA] Plasma current
-    // (used if i_equiltype == 2. Otherwise Ip is calculated
-    // and q95 is used as input)
     "Ip": 17.75,
-    // # [-] plasma aspect ratio
     "A": 3.1,
-    // # [m3] constrained plasma volume (set negative value to disable volume constraining)
     "volume_in": -2500,
-    // # [m] plasma minor radius (just initial guess)
     "amin": 2.9039,
-    // # [T] Toroidal field at plasma center
     "Bt": 5.855,
-    // # [-] plasma edge triangularity (used only for first iteration,
-    // # then iterated to constrain delta95)
     "d": 0.38491934960310104,
-    // # [-] plasma triangularity at 95 % flux
     "d95": 0.333,
-    // # [-] plasma edge elongation (used only for first iteration,
-    // # then iterated to constrain kappa95)
     "k": 1.6969830041844367,
-    // # [-] plasma elongation at 95 % flux
     "k95": 1.652,
-    // # [-] safety factor at 95% flux surface
-    // (used if i_equiltype == 1. Otherwise q95 is calculated
-    // and Ip is used as input)
     "q95": 3.5,
-    // ############################
-    // # list composition properties (comp type)
-    // #############################
-    // # [-] fuel mix D/T
     "fuelmix": 0.5,
-    // # [-] He3 as a fuel concentration
     "fuehe3": 0.0,
-    // # [-] tauparticle / tauE for D
     "globtau_d": 10.0,
-    // # [-] tauparticle / tauE for T
     "globtau_t": 10.0,
-    // # [-] tauparticle / tauE for He
     "globtau_he": 10.0,
-    // # [-] tauparticle / tauE for Xe
     "globtau_xe": 10.0,
-    // # [-] tauparticle / tauE for Ar
     "globtau_ar": 10.0,
-    // # [-] Argon concentration
-    // (calculated if qdivt >= 0)
     "car": 0.0,
-    // # [-] Xenon concentration
-    // (calculated if <= 0.)
     "cxe": 0.0,
-    // # [-] helium concentration
-    // (used if  globtau_he = 0)
     "che": 0.0,
-    // # [-] helium3 concentration
     "che3": 0.0,
-    // # [-] protium concentration
     "cprotium": 0.0,
-    // # [-] Tungsten concentration
     "cwol": 0.0,
-    // # [-] min P_sep/P_LH. if Psep/PLH < Psep/PLH_max -> use heating
     "psepplh_inf": 0.1,
-    // # [-] max P_sep/P_LH. if Psep/PLH > Psep/PLH_max -> use Xe
     "psepplh_sup": 1000.0,
-    // # [-] position after which radiation is edge
     "pradpos": 0.7,
-    // # [-] radiation fraction used for core transport
     "pradfrac": 0.6,
-    // # [MW*T/m] Divertor challenging criterion Psep * Bt / (q95 * A R0)
-    // # if PsepBt_qAR > PsepBt_qAR_max seed Xenon
     "psepb_q95AR_sup": 9.2,
-    // # [MW/m] Divertor challenging criterion Psep / R0
-    // # if Psep/R0 > Psep_R0_max seed Xenon
     "psep_r_sup": 230.0,
-    // # [-] ratio of Pline(Xe)/(Psep0 - Psepcrit), or -1 to ignore
-    // Psep0 = Palpha + Paux - Pline(Ar) - Pbrehm - Psync
     "fcoreraditv": -1.0,
-    // # [MW/m2] max divertor heat flux -->
-    // # if qdivt > qdivt_sup -> seed argon
     "qdivt_sup": 0.0,
-    // [-] compression factor between sol and div: e.g. 10 means there is
-    // 10 more Argon concentration in the divertor than in the core
     "c_car": 10.0,
-    // ############################
-    // # list pedestal properties (ped type)
-    // #############################
-    // # [-] normalized coordinate of pedestal density
     "rho_n": 0.94,
-    // # [-] normalized coordinate of pedestal temperature
     "rho_T": 0.94,
-    // # [keV] electrons/ions temperature at pedestal (ignored if i_pedestal = 2)
     "teped": 5.5,
-    // # [keV] electrons/ions temperature at separatrix
     "tesep": 0.1,
-    // # [-] scaling factor for p_ped scaling formula
     "pedscal": 1.0,
-    // ############################
-    // # list general inputs: control, confinement, B.C., etc (inp type)
-    // #############################
-    // # [-] Greenwald density fraction at pedestal
     "f_gw": 0.85,
-    // # [-] Greenwald density fraction at separatrix
     "f_gws": 0.5,
-    // # [-] input H-factor:if i_modeltype > 1 H factor calculated
     "Hfact": 1.1,
-    // # [-] fraction of NBI power to ions
     "fpion": 0.5,
-    // # [m*MA/MW] Normalized CD efficiency
     "nbcdeff": 0.3,
-    // # [m*MA/MW] Normalized EC efficiency
     "eccdeff": 0.3,
-    // # [-]  normalized mean location of fixed NBI heating
     "x_control_nbi": 0.0,
-    // # [-]  normalized mean location of fixed EC heating
     "x_control_ech": 0.0,
-    // # [-] variance of heat deposition, assimung Gaussian distribution on
-    // # normalized coordinate x for fixed NBI heating
     "dx_control_nbi": 0.2,
-    // # [-] variance of heat deposition, assimung Gaussian distribution on
-    // # normalized coordinate x for fixed EC heating
     "dx_control_ech": 0.03,
-    // # [-]  normalized mean location of NBI power for
-    // # controlling loop voltage or f_ni
     "x_cd_nbi": 0.0,
-    // # [-]  normalized mean location of ECH power for
-    // # controlling loop voltage or f_ni
     "x_cd_ech": 0.0,
-    // # [-] variance of heat deposition, assimung Gaussian distribution on
-    // # normalized coordinate x for NBI heating (CD) to control Vloop or f_ni
     "dx_cd_nbi": 0.2,
-    // # [-] variance of heat deposition, assimung Gaussian distribution on
-    // # normalized coordinate x for NBI heating (CD) to control Vloop or f_ni
     "dx_cd_ech": 0.03,
-    // # [-]  normalized mean location of NBI heating for
-    // # controlling fusion power (Pfus = Pfus_req)
     "x_fus_nbi": 0.0,
-    // # [-]  normalized mean location of EC heating for
-    // # controlling fusion power (Pfus = Pfus_req)
     "x_fus_ech": 0.0,
-    // # [-] variance of heat deposition, assimung Gaussian distribution on
-    // # normalized coordinate x, for NBI heating to control fusion power
     "dx_fus_nbi": 0.2,
-    // # [-] variance of heat deposition, assimung Gaussian distribution on
-    // # normalized coordinate x, for NBI heating to control fusion power
     "dx_fus_ech": 0.03,
-    // # [-]  normalized mean location of aux. NBI heating for
-    // # controlling H-mode operation (P_sep/P_LH > P_sep_P_LH_min)
     "x_heat_nbi": 0.0,
-    // # [-]  normalized mean location of aux. EC heating for
-    // # controlling H-mode operation (P_sep/P_LH > P_sep_P_LH_min)
     "x_heat_ech": 0.0,
-    // # [-] variance of heat deposition, assimung Gaussian distribution on
-    // # normalized coordinate x, for NBI heating to control H-mode
     "dx_heat_nbi": 0.2,
-    // # [-] variance of heat deposition, assimung Gaussian distribution on
-    // # normalized coordinate x, for NBI heating to control H-mode
     "dx_heat_ech": 0.03,
-    // # [keV] NBI energy
     "nbi_energy": 1000.0,
-    // # [MW] required fusion power.
-    // # 0. - ignored
-    // # > 0 - Auxiliary heating is calculated to match Pfus_req
     "pfus_req": 0.0,
-    // # [-] required fraction of non inductive current, if 0, dont use CD
     "f_ni": 0.0,
-    // # [MW] max allowed power for control (fusion power, H-mode)
     "pheat_max": 130.0,
-    // #############################
-    // # [MW] fixed auxiliary heating power required for control
     "q_control": 130.0,
-    // #############################
-    // # [MW] total auxiliary power  (0.) DO NOT CHANGE
     "q_heat": 0.0,
-    // #############################
-    // # [MW] total auxiliary current drive power (0.) DO NOT CHANGE
     "q_cd": 0.0,
-    // # [MW] total fusion power (0.) DO NOT CHANGE
     "q_fus": 0.0,
-    // # [MW] ECH power (not used)
     "pech": 0.0,
-    // # [MW] NBI power (not used)
     "pnbi": 0.0,
-    // # [-] ratio of PCD-Pothers over Pmax - Pothers
     "fcdp": -1.0,
-    // # [-] maximum Paux/R allowed
     "maxpauxor": 20.0,
-    // # [V] target loop voltage (if lower than -1e-3, ignored)
     "v_loop": -1.0e-6,
-    // [-] type of PLH threshold. 6 - Martin scaling  . Use 6 only
     "plh": 6,
-    // [-] scale factor for newton scheme on NBI (100.)
     "qnbi_psepfac": 100.0,
-    // [-] scale factor for newton scheme on Xe (1.e-3)
     "cxe_psepfac": 1.0e-3,
-    // [-] scale factor for newton scheme on Ar (1.e-4)
     "car_qdivt": 1.0e-4,
-    // [MW/m²] Pcontrol/S_lateral (0.)
     "contrpovs": 0.0,
-    // [MW/m²] Pcontrol/R (0.)
     "contrpovr": 0.0
 }

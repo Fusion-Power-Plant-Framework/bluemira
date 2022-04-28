@@ -1,232 +1,96 @@
 {
-
-    // ############################################
-    // # list geometry properties (geom type)
-    // ############################################
-    // # [m] plasma minor radius (just initial guess)
     "amin": null,
-    // # [-] plasma edge triangularity (used only for first iteration,
-    // # then iterated to constrain delta95)
     "d": null,
-    // # [-] plasma edge elongation (used only for first iteration,
-    // # then iterated to constrain kappa95)
     "k": null,
-    // # [m] plasma perimeter
     "perim": null,
-
-    //############################################
-    // # list MHD equilibrium properties (MHD type)
-    // ############################################
-    // # [T] average poloidal field
     "bpolavg": null,
-    // # [-] toroidal beta
     "betator": null,
-    // # [-] poloidal beta
     "betapol": null,
-    // # [-] normalized beta
     "betan": null,
-    // # [-] Greenwald density at pedestal top
     "f_gwpedtop": null,
-    // # [-] plasma bootstrap current fraction
     "fbs": null,
-    // # [-] plasma current drive fraction
     "fcd": null,
-    // # [-] plasma current inductive fraction
     "f_ni": null,
-    // # [MA] plasma current
     "Ip": null,
-    // # [-] Safety factor 95 % flux
     "q95": null,
-    // # [-] Edge safety factor
     "q_sep": null,
-    // # [-] cylindrical safety factor
     "qstar": null,
-    // # [-] plasma internal inductance
     "rli": null,
-    // # [m²] plasma poloidal cross section area
     "Sp": null,
-    // # [m²] plasma toroidal surface
     "torsurf": null,
-    // # [m³] plasma volume
     "Vp": null,
-    // # [V] plasma loop voltage
     "v_loop": null,
-
-    // ############################
-    // # list energy confinement outputs (type loss)
-    // #############################
-    // # [-] H-factor
     "Hfact": null,
-    // # [-] H-factor (radiation corrected)
     "Hcorr": null,
-    // # [s] global energy confinement time
     "taueff": null,
-    // # [s] electrons energy confinement time
     "tauee": null,
-    // # [s] ions energy confinement time
     "tauei": null,
-    // # [J] plasma thermal energy
     "Wth": null,
-    // # [Ohm] plasma resistance
     "rplas": null,
-
-    // ############################################
-    // # list power properties (loss type)
-    // ############################################
-    // # [W] DT fusion power
     "Pfusdt": null,
-    // # [W] DD fusion power
     "Pfusdd": null,
-    // # [W] Fusion power
     "Pfus": null,
-    // # [W] neutron fusion power
     "Pneut": null,
-    // # [W] auxiliary heating power
     "Paux": null,
-    // # [W] auxiliary heating power to electrons
     "Peaux": null,
-    // # [W] auxiliary heating power to ions
     "Piaux": null,
-    // # [W] alpha power
     "Palpha": null,
-    // # [W] total radiation power
     "Prad": null,
-    // # [W] core radiation power
     "Pradcore": null,
-    // # [W] edge radiation power
     "Pradedge": null,
-    // # [W] total power across plasma separatrix
     "Psep": null,
-    // # [W] Synchrotron radiation power
     "Psync": null,
-    // # [W] Bremsstrahlung radiation power
     "Pbrehms": null,
-    // # [W] Line radiation power
     "Pline": null,
-    // # [W] LH transition power
     "PLH": null,
-    // # [W] Ohimic heating power
     "Pohm": null,
-    // # [W] Auxiliary heating power added to control f_ni or v_loop
     "qcd": null,
-    // # [W] Auxiliary heating power added to operate in H-mode
     "qheat": null,
-    // # [W] Auxiliary heating power added to control Pfus
     "qfus": null,
-    // # [W/m2] divertor heat flux
     "qdivt": null,
-    // # [MW/m] Divertor challenging criterion Psep/R0
     "psep_r": null,
-    // # [MW * T/ m] Divertor challenging criterion Psep * Bt /(q95 * a)
     "psepb_q95AR": null,
-
-    // ############################
-    // # list composition properties (type comp)
-    // #############################
-    // # [-] Hydrogen concentration
     "cprotium": null,
-    // # [-] total Helium concentration (he4 + He3)
     "che": null,
-    // # [-] He3 concentration
     "che3": null,
-    // # [-] Xenon concentration (ratio nH/ne)
     "cxe": null,
-    // # [-] Argon concentration (ratio nAr/ne)
     "car": null,
-    // # [-] plasma effective charge
     "Zeff": null,
-
-    // ############################
-    // # list pedestal properties (type ped)
-    // #############################
-    // # [1E19/m3] electron/ion density at pedestal height
     "nped": null,
-    // # [1E19/m3] electron/ion density at separatrix
     "nsep": null,
-    // # [keV] Ions/Electrons at pedestal
     "teped": null,
-
-    // #############################
-    // # [-] exit flag
-    // #  1: PLASMOD converged successfully
-    // # -1: Max number of iterations achieved
-    // # (equilibrium oscillating, pressure too high, reduce H)
-    // # 0: transport solver crashed (abnormal parameters
-    // # or too large dtmin and/or dtmin
-    // # -2: Equilibrium solver crashed: too high pressure
     "i_flag": null,
-
-    // ############################
-    // # list average properties for profiles (type radp)
-    // #############################
-    // # [1E19/m3] volume-averaged ion density
     "av_ni": null,
-    // # [1E19/m3] volume-averaged fuel density
     "av_nd": null,
-    // # [1E19/m3] volume-averaged plasma impurities density
     "av_nz": null,
-    // # [1E19/m3] volume-averaged helium density
     "av_nhe": null,
-    // # [keV] volume-averaged ions temperature
     "av_Ti": null,
-    // # [keV] volume-averaged electrons temperature
     "av_Te": null,
-    // # [keV] density-averaged electrons temperature
     "av_Ten": null,
-
-    // ############################
-    // # list properties (type radp)
-    // #############################
-    // # [-] Triangularity profile
     "dprof": null,
-    // # [(m*T) * (m*T) / Wb == T] FF' profile
     "ffprime": null,
-    // # [m²] < |grad V|²/r²> g2 metric coefficient's profile
     "g2": null,
-    // # [m^-2] < 1/r²> g3 metric coefficient's profile
     "g3": null,
-    // # [m*T] Poloidal current profile
     "ipol": null,
-    // # [A/m²] Bootstrap parallel current density profile
     "jbs": null,
-    // # [A/m²] CD parallel current density profile
     "jcd": null,
-    // # [A/m²] Parallel current density profile
     "jpar": null,
-    // # [-] Elongation profile
     "kprof": null,
-    // # [Pa/Wb] p' profile
     "pprime": null,
-    // # [10¹⁹/m3] deuterium density profile
     "ndeut": null,
-    // # [10¹⁹/m3] electron density profile
     "ne": null,
-    // # [10¹⁹/m3] fuel density profile
     "nfuel": null,
-    // # [10¹⁹/m3] helium density profile
     "nalf": null,
-    // # [10¹⁹/m³] ion density profile
     "nions": null,
-    // # [10¹⁹/m3] tritium density profile
     "ntrit": null,
-    // # [Wb] Toroidal flux profile
     "phi": null,
-    // # [Pa] Plasma pressure profile
     "press": null,
-    // # [Wb] Poloidal flux profile
     "psi": null,
-    // # [-] Safety factor profile
     "qprof": null,
-    // # [m] Grad-Shafranov shift profile
     "shif": null,
-    // # [keV] Electron temperature profile
     "Te": null,
-    // # [keV] Ion temperature profile
     "Ti": null,
-    // # [-] normalized toroidal flux coordinate (Phi/Phi_b)
     "x": null,
-    // # [m³] Volume profile
     "volprof": null,
-    // # [m2] V' profile (derivative w.r.t. radial coordinate)
     "vprime": null
 }
