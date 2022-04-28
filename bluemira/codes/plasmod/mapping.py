@@ -579,6 +579,7 @@ PLASMOD_INOUTS = {
     # Pedestal properties
     # ############################
     # [keV] electrons/ions temperature at pedestal (ignored if i_pedestal = 2)
+    "T_e_ped": ("teped", "k")
     # ##### "BM_IO": ("teped", "keV"),
     # ###########################
     # Confinement properties (type loss)
