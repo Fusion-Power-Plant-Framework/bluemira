@@ -33,7 +33,7 @@ from scipy.interpolate import interp1d
 from bluemira.base.error import BuilderError
 from bluemira.base.parameter import ParameterFrame
 from bluemira.equilibria.flux_surfaces import calculate_connection_length_flt
-from bluemira.geometry._deprecated_loop import Loop
+from bluemira.equilibria.grid import Grid
 
 
 class Radiation:
@@ -108,7 +108,6 @@ class Radiation:
         """
         Some parameters related to the separatrix
         """
-        # Loops
         self.separatrix = self.transport_solver.eq.get_separatrix()
         # The two halves
         self.sep_lfs = self.separatrix[0]
@@ -147,12 +146,10 @@ class Radiation:
 
         Returns
         -------
-        flux tubes
+        flux tubes: list
+            list of flux tubes
         """
-        return np.array(
-            [self.transport_solver.eq.get_flux_surface(psi) for psi in psi_n],
-            dtype=object,
-        )
+        return [self.transport_solver.eq.get_flux_surface(psi) for psi in psi_n]
 
     def flux_tube_pol_t(
         self,
@@ -318,14 +315,14 @@ class Mathematics(Radiation):
         self.params = ParameterFrame(self.base_default_params)
         self.params.update_kw_parameters(config, f"{self.__class__.__name__} input")
 
-    def upstream_temperature(self, firstwall_loop: Loop, n=2):
+    def upstream_temperature(self, firstwall_geom: Grid, n=2):
         """
         Calculation of the temperature at the upstream location according
         to PROCESS parameters and the total power crossing the separatrix.
 
         Parameters
         ----------
-        firstwall_loop: loop
+        firstwall_geom: grid
             first wall geometry
         n: float
             number of nulls
@@ -357,7 +354,7 @@ class Mathematics(Radiation):
             self.transport_solver.eq,
             self.r_sep_omp,
             self.z_mp,
-            first_wall=firstwall_loop,
+            first_wall=firstwall_geom,
         )
 
         # upstream temperature [keV]
@@ -387,11 +384,10 @@ class Mathematics(Radiation):
         t_tar: float
             target temperature. Unit [keV]
         """
-        if lfs:
-            q_u = self.params.lfs_p_fraction * q_u * self.params.div_p_sharing
-        else:
-            q_u = (1 - self.params.lfs_p_fraction) * q_u * self.params.div_p_sharing
-
+        p_fraction = (
+            self.params.lfs_p_fraction if lfs else 1 - self.params.lfs_p_fraction
+        )
+        q_u = p_fraction * q_u * self.params.div_p_sharing
         # Conversion factor from Joule to eV
         j_to_ev = sc.physical_constants["joule-electron volt relationship"][0]
         # Speed of light to convert kg to eV/c^2
@@ -429,7 +425,7 @@ class Mathematics(Radiation):
 
         return t_tar
 
-    def x_point_temperature(self, q_u, t_u, firstwall_loop: Loop):
+    def x_point_temperature(self, q_u, t_u, firstwall_geom: Grid):
         """
         Calculation of the temperature at the x-point
 
@@ -439,7 +435,7 @@ class Mathematics(Radiation):
             upstream power density [W/m^2]
         t_upstream: float
             upstream temperature. Unit [keV]
-        firstwall_loop: loop
+        firstwall_geom: grid
             first wall geometry
 
         Returns
@@ -455,7 +451,7 @@ class Mathematics(Radiation):
             self.transport_solver.eq,
             self.points["x_point"]["x"] + self.sep_corrector,
             self.points["x_point"]["z_low"],
-            first_wall=firstwall_loop,
+            first_wall=firstwall_geom,
         )
 
         # connection length from mp to x-point
@@ -469,7 +465,7 @@ class Mathematics(Radiation):
         return t_x
 
     def random_point_temperature(
-        self, x_p, z_p, t_u, q_u, firstwall_loop: Loop, lfs=True
+        self, x_p, z_p, t_u, q_u, firstwall_geom: Grid, lfs=True
     ):
         """
         Calculation of the temperature at a random point above the x-point
@@ -484,7 +480,7 @@ class Mathematics(Radiation):
             upstream temperature [keV]
         q_u: float
             upstream power density flux [W/m^2]
-        firstwall_loop: loop
+        firstwall_geom: grid
             first wall geometry
         lfs: boolean
             low (toroidal) field side (outer wall side). Default value True.
@@ -499,46 +495,48 @@ class Mathematics(Radiation):
         t_u = t_u * 1.0e3
 
         # Distinction between lfs and hfs
-        if lfs is True:
-            q_u = self.params.lfs_p_fraction * q_u * self.params.div_p_sharing
+        if lfs:
+            p_fraction = self.params.lfs_p_fraction
             d = self.sep_corrector
         else:
-            q_u = (1 - self.params.lfs_p_fraction) * q_u * self.params.div_p_sharing
+            p_fraction = 1 - self.params.lfs_p_fraction
             d = -self.sep_corrector
 
+        q_u = p_fraction * q_u * self.params.div_p_sharing
+
         # Distance between the chosen point and the the target
-        if lfs is True and z_p < self.points["o_point"]["z"]:
+        if lfs and z_p < self.points["o_point"]["z"]:
             l_p = calculate_connection_length_flt(
                 self.transport_solver.eq,
                 x_p + d,
                 z_p,
-                first_wall=firstwall_loop,
+                first_wall=firstwall_geom,
             )
 
-        elif lfs is True and z_p > self.points["o_point"]["z"]:
+        elif lfs and z_p > self.points["o_point"]["z"]:
             l_p = calculate_connection_length_flt(
                 self.transport_solver.eq,
                 x_p + d,
                 z_p,
                 forward=False,
-                first_wall=firstwall_loop,
+                first_wall=firstwall_geom,
             )
 
-        elif lfs is False and z_p < self.points["o_point"]["z"]:
+        elif not lfs and z_p < self.points["o_point"]["z"]:
             l_p = calculate_connection_length_flt(
                 self.transport_solver.eq,
                 x_p + d,
                 z_p,
                 forward=False,
-                first_wall=firstwall_loop,
+                first_wall=firstwall_geom,
             )
 
-        elif lfs is False and z_p > self.points["o_point"]["z"]:
+        elif not lfs and z_p > self.points["o_point"]["z"]:
             l_p = calculate_connection_length_flt(
                 self.transport_solver.eq,
                 x_p + d,
                 z_p,
-                first_wall=firstwall_loop,
+                first_wall=firstwall_geom,
             )
 
         # connection length from mp to p point
@@ -625,26 +623,6 @@ class Mathematics(Radiation):
 
         return te_sol, ne_sol
 
-    def linear_decay(self, max_value, min_value, no_points):
-        """
-        Generic linear decay to be applied between two extreme values and for a
-        given number of points.
-
-        Parameters
-        ----------
-        max_value: float
-            maximum value of the parameters
-        min_value: float
-            minimum value of the parameters
-        no_points: float
-            number of points through which make the parameter decay
-
-        Returns
-        -------
-        decayed parameter: np.array
-        """
-        return np.linspace(max_value, min_value, no_points)
-
     def gaussian_decay(self, max_value, min_value, no_points):
         """
         Generic gaussian decay to be applied between two extreme values and for a
@@ -664,8 +642,7 @@ class Mathematics(Radiation):
         dec_param: np.array
             decayed parameter
         """
-        if no_points == 0:
-            no_points = 1
+        no_points = max(no_points, 1)
 
         # setting values on the horizontal axis
         x = np.linspace(no_points, 0, no_points)
@@ -708,8 +685,7 @@ class Mathematics(Radiation):
         dec_param: np.array
             decayed parameter
         """
-        if no_points == 0:
-            no_points = 1
+        no_points = max(no_points, 1)
 
         x = np.linspace(1, no_points, no_points)
         a = np.array([x[0], min_value])
@@ -977,7 +953,6 @@ class Core(Radiation):
         p_min = min([np.amin(p) for p in power_density])
         p_max = max([np.amax(p) for p in power_density])
 
-        ax = plt.gca()
         separatrix = self.transport_solver.eq.get_separatrix()
         for sep in separatrix:
             sep.plot(ax, linewidth=2)
@@ -1076,10 +1051,7 @@ class ScrapeOffLayer(Radiation):
         exit: float, float
             x, z coordinates of the radiation region ending point
         """
-        if lfs:
-            sep_loop = self.sep_lfs
-        else:
-            sep_loop = self.sep_hfs
+        sep_loop = self.sep_lfs if lfs else self.sep_hfs
         if z_main > z_pfr:
             reg_i = np.where((sep_loop.z < z_main) & (sep_loop.z > z_pfr))[0]
             i_in = np.where(sep_loop.z == np.max(sep_loop.z[reg_i]))[0]
@@ -1152,14 +1124,9 @@ class ScrapeOffLayer(Radiation):
         if te_sep is None:
             te_sep = self.process_params["tesep"]
         ne_sep = self.process_params["nesep"]
-        if omp is True:
-            te_sol, ne_sol = self.electron_density_and_temperature_sol_decay(
-                te_sep, ne_sep
-            )
-        else:
-            te_sol, ne_sol = self.electron_density_and_temperature_sol_decay(
-                te_sep, ne_sep, lfs=False
-            )
+        te_sol, ne_sol = self.electron_density_and_temperature_sol_decay(
+            te_sep, ne_sep, lfs=omp
+        )
 
         return te_sol, ne_sol
 
@@ -1276,7 +1243,7 @@ class ScrapeOffLayer(Radiation):
             list of arrays containing the power radiation density of the
             points lying on the specified flux tubes.
             expected len(flux_tubes) = len(power_desnity)
-        firstwall: Loop
+        firstwall: Grid
             first wall geometry
         """
         if ax is None:
@@ -1290,7 +1257,6 @@ class ScrapeOffLayer(Radiation):
         p_min = min([np.amin(p) for p in power])
         p_max = max([np.amax(p) for p in power])
 
-        ax = plt.gca()
         firstwall.plot(ax, linewidth=0.5, fill=False)
         separatrix = self.transport_solver.eq.get_separatrix()
         for sep in separatrix:
@@ -1322,7 +1288,7 @@ class ScrapeOffLayerSector(ScrapeOffLayer, Mathematics):
         x_strike,
         z_strike,
         main_ext,
-        firstwall_loop,
+        firstwall_geom,
         pfr_ext=None,
         rec_ext=None,
         x_point_rad=False,
@@ -1345,7 +1311,7 @@ class ScrapeOffLayerSector(ScrapeOffLayer, Mathematics):
         main_ext: float [m]
             extention of the radiation region from the x-point
             towards the main plasma
-        firstwall_loop: loop
+        firstwall_geom: grid
             first wall geometry
         pfr_ext: float [m]
             extention of the radiation region from the x-point
@@ -1373,14 +1339,14 @@ class ScrapeOffLayerSector(ScrapeOffLayer, Mathematics):
             flux tube within the specified set
         """
         # Validity condition for not x-point radiative
-        if x_point_rad is False and rec_ext is None:
+        if not x_point_rad and rec_ext is None:
             raise BuilderError(f"Required recycling region extention: rec_ext")
-        if x_point_rad is False and rec_ext is not None:
+        if not x_point_rad and rec_ext is not None:
             ion_front_z = self.ion_front_distance(x_strike, z_strike, rec_ext=rec_ext)
             pfr_ext = ion_front_z
 
         # Validity condition for x-point radiative
-        if x_point_rad is True and pfr_ext is None:
+        if x_point_rad and pfr_ext is None:
             raise BuilderError(f"Required extention towards pfr: pfr_ext")
 
         # setting radiation and recycling regions
@@ -1388,13 +1354,10 @@ class ScrapeOffLayerSector(ScrapeOffLayer, Mathematics):
 
         in_x, in_z, out_x, out_z = self.radiation_region_ends(z_main, z_pfr, lfs)
 
-        reg_i = np.array(
-            [
-                self.radiation_region_points(f.loop, z_main, z_pfr, low_div)
-                for f in flux_tubes
-            ],
-            dtype=object,
-        )
+        reg_i = [
+            self.radiation_region_points(f.loop, z_main, z_pfr, low_div)
+            for f in flux_tubes
+        ]
 
         # mid-plane parameters
         t_mp_prof, n_mp_prof = self.mp_electron_density_temperature_profiles(
@@ -1407,12 +1370,12 @@ class ScrapeOffLayerSector(ScrapeOffLayer, Mathematics):
             in_z,
             self.t_u,
             self.q_u,
-            firstwall_loop,
+            firstwall_geom,
             lfs,
         )
 
         # exit of radiation region
-        if x_point_rad is True and pfr_ext is not None:
+        if x_point_rad and pfr_ext is not None:
             t_rad_out = self.params.f_ion_t
         else:
             t_rad_out = self.target_temperature(
@@ -1444,57 +1407,51 @@ class ScrapeOffLayerSector(ScrapeOffLayer, Mathematics):
         )
 
         # temperature poloidal distribution
-        t_pol = np.array(
-            [
-                self.flux_tube_pol_t(
-                    f.loop,
-                    t,
-                    t_rad_in=t_in,
-                    t_rad_out=t_out,
-                    rad_i=reg[0],
-                    rec_i=reg[1],
-                    t_tar=t_t,
-                )
-                for f, t, t_in, t_out, reg, t_t, in zip(
-                    flux_tubes,
-                    t_mp_prof,
-                    t_in_prof,
-                    t_out_prof,
-                    reg_i,
-                    t_tar_prof,
-                )
-            ],
-            dtype=object,
-        )
+        t_pol = [
+            self.flux_tube_pol_t(
+                f.loop,
+                t,
+                t_rad_in=t_in,
+                t_rad_out=t_out,
+                rad_i=reg[0],
+                rec_i=reg[1],
+                t_tar=t_t,
+            )
+            for f, t, t_in, t_out, reg, t_t, in zip(
+                flux_tubes,
+                t_mp_prof,
+                t_in_prof,
+                t_out_prof,
+                reg_i,
+                t_tar_prof,
+            )
+        ]
 
         # condition for occurred detachment
         if t_rad_out <= self.params.f_ion_t:
             x_point_rad = True
 
         # density poloidal distribution
-        n_pol = np.array(
-            [
-                self.flux_tube_pol_n(
-                    f.loop,
-                    n,
-                    n_rad_in=n_in,
-                    n_rad_out=n_out,
-                    rad_i=reg[0],
-                    rec_i=reg[1],
-                    n_tar=n_t,
-                    x_point_rad=x_point_rad,
-                )
-                for f, n, n_in, n_out, reg, n_t, in zip(
-                    flux_tubes,
-                    n_mp_prof,
-                    n_in_prof,
-                    n_out_prof,
-                    reg_i,
-                    n_tar_prof,
-                )
-            ],
-            dtype=object,
-        )
+        n_pol = [
+            self.flux_tube_pol_n(
+                f.loop,
+                n,
+                n_rad_in=n_in,
+                n_rad_out=n_out,
+                rad_i=reg[0],
+                rec_i=reg[1],
+                n_tar=n_t,
+                x_point_rad=x_point_rad,
+            )
+            for f, n, n_in, n_out, reg, n_t, in zip(
+                flux_tubes,
+                n_mp_prof,
+                n_in_prof,
+                n_out_prof,
+                reg_i,
+                n_tar_prof,
+            )
+        ]
 
         return t_pol, n_pol
 
@@ -1602,7 +1559,7 @@ class StepScrapeOffLayer(ScrapeOffLayerSector, ScrapeOffLayer, Mathematics):
     Specific class for the scrape-off layer emission of STEP
     """
 
-    def __init__(self, process_solver, transport_solver, config, firstwall_loop):
+    def __init__(self, process_solver, transport_solver, config, firstwall_geom):
         super().__init__(process_solver, transport_solver, config)
 
         self.params = ParameterFrame(self.base_default_params)
@@ -1628,7 +1585,7 @@ class StepScrapeOffLayer(ScrapeOffLayerSector, ScrapeOffLayer, Mathematics):
         self.z_strike_hfs = self.flux_tubes_hfs_low[0].loop.z[-1]
 
         # upstream temperature and power density
-        self.t_u, self.q_u = self.upstream_temperature(firstwall_loop)
+        self.t_u, self.q_u = self.upstream_temperature(firstwall_geom)
 
         # temperature and density profiles along the flux tubes
         (
@@ -1636,7 +1593,7 @@ class StepScrapeOffLayer(ScrapeOffLayerSector, ScrapeOffLayer, Mathematics):
             t_and_n_pol_lfs_up,
             t_and_n_pol_hfs_low,
             t_and_n_pol_hfs_up,
-        ) = self.build_sol_profiles(firstwall_loop)
+        ) = self.build_sol_profiles(firstwall_geom)
 
         # radiation distribution along the flux tubes
         (
@@ -1657,10 +1614,10 @@ class StepScrapeOffLayer(ScrapeOffLayerSector, ScrapeOffLayer, Mathematics):
             rad_lfs_up,
             rad_hfs_low,
             rad_hfs_up,
-            firstwall_loop,
+            firstwall_geom,
         )
 
-    def build_sol_profiles(self, firstwall_loop):
+    def build_sol_profiles(self, firstwall_geom):
         """
         Temperature and density profiles builder.
         For each scrape-off layer sector, it gives temperature
@@ -1668,7 +1625,7 @@ class StepScrapeOffLayer(ScrapeOffLayerSector, ScrapeOffLayer, Mathematics):
 
         Parameters
         ----------
-        firstwall_loop: loop
+        firstwall_geom: grid
             first wall geometry
 
         Returns
@@ -1687,55 +1644,22 @@ class StepScrapeOffLayer(ScrapeOffLayerSector, ScrapeOffLayer, Mathematics):
             flux tube within the hfs upper divertor set
         """
         t_and_n_pol = {
-            "lfs_low": {
-                "flux_tube": self.flux_tubes_lfs_low,
-                "x_strike": self.x_strike_lfs,
-                "z_strike": self.z_strike_lfs,
+            f"{side}_{low_up}": {
+                "flux_tube": getattr(self, f"flux_tubes_{side}_{low_up}"),
+                "x_strike": getattr(self, f"x_strike_{side}"),
+                "z_strike": getattr(self, f"z_strike_{side}"),
                 "main_ext": 0.2,
-                "wall_profile": firstwall_loop,
+                "wall_profile": firstwall_geom,
                 "pfr_ext": None,
                 "rec_ext": 0.5,
                 "x_point_rad": False,
-                "lfs": True,
-                "low_div": True,
-            },
-            "lfs_up": {
-                "flux_tube": self.flux_tubes_lfs_up,
-                "x_strike": self.x_strike_lfs,
-                "z_strike": self.z_strike_lfs,
-                "main_ext": 0.2,
-                "wall_profile": firstwall_loop,
-                "pfr_ext": None,
-                "rec_ext": 0.5,
-                "x_point_rad": False,
-                "lfs": True,
-                "low_div": False,
-            },
-            "hfs_low": {
-                "flux_tube": self.flux_tubes_hfs_low,
-                "x_strike": self.x_strike_hfs,
-                "z_strike": self.z_strike_hfs,
-                "main_ext": 0.2,
-                "wall_profile": firstwall_loop,
-                "pfr_ext": None,
-                "rec_ext": 0.5,
-                "x_point_rad": False,
-                "lfs": False,
-                "low_div": True,
-            },
-            "hfs_up": {
-                "flux_tube": self.flux_tubes_hfs_up,
-                "x_strike": self.x_strike_hfs,
-                "z_strike": self.z_strike_hfs,
-                "main_ext": 0.2,
-                "wall_profile": firstwall_loop,
-                "pfr_ext": None,
-                "rec_ext": 0.5,
-                "x_point_rad": False,
-                "lfs": False,
-                "low_div": False,
-            },
+                "lfs": side == "lfs",
+                "low_div": low_up == "low",
+            }
+            for side in ["lfs", "hfs"]
+            for low_up in ["low", "up"]
         }
+
         for side, var in t_and_n_pol.items():
             t_and_n_pol[side] = self.build_sector_profiles(
                 var["flux_tube"],
@@ -1841,7 +1765,7 @@ class StepScrapeOffLayer(ScrapeOffLayerSector, ScrapeOffLayer, Mathematics):
         return rad["lfs_low"], rad["lfs_up"], rad["hfs_low"], rad["hfs_up"]
 
     def build_sol_radiation_map(
-        self, rad_lfs_low, rad_lfs_up, rad_hfs_low, rad_hfs_up, firstwall_loop
+        self, rad_lfs_low, rad_lfs_up, rad_hfs_low, rad_hfs_up, firstwall_geom
     ):
         """
         Scrape off layer radiation map builder.
@@ -1860,7 +1784,7 @@ class StepScrapeOffLayer(ScrapeOffLayerSector, ScrapeOffLayer, Mathematics):
         rad["hfs_up"]: array
             radiation poloidal profile along each
             flux tube within the hfs upper divertor set
-        firstwall_loop: loop
+        firstwall_geom: grid
             first wall geometry
         """
         # total line radiation loss along the open flux tubes
@@ -1877,5 +1801,5 @@ class StepScrapeOffLayer(ScrapeOffLayerSector, ScrapeOffLayer, Mathematics):
                 self.flux_tubes_hfs_up,
             ],
             [total_rad_lfs_low, total_rad_hfs_low, total_rad_lfs_up, total_rad_hfs_up],
-            firstwall_loop,
+            firstwall_geom,
         )
