@@ -128,6 +128,9 @@ class PulsedEquilibriumProblem:
         self.snapshots[name] = Snapshot(eq, coilset, problem, profiles, optimiser)
 
     def plot(self):
+        """
+        Plot the pulsed equilibrium problem.
+        """
         n_snapshots = len(self.snapshots)
         if n_snapshots == 0:
             return
@@ -327,7 +330,7 @@ if __name__ == "__main__":
 
     from bluemira.base.config import Configuration
     from bluemira.builders.EUDEMO.equilibria import EUDEMOSingleNullConstraints
-    from bluemira.equilibria.profiles import BetaIpProfile, CustomProfile
+    from bluemira.equilibria.profiles import CustomProfile
 
     params = Configuration()
 
@@ -384,9 +387,6 @@ if __name__ == "__main__":
         B_0=params.B_0.value,
         Ip=params.I_p.value * 1e6,
     )
-    # profiles = BetaIpProfile(
-    #     1.1, params.I_p.value * 1e6, params.R_0.value, params.B_0.value
-    # )
 
     targets = EUDEMOSingleNullConstraints(
         params.R_0.value,
