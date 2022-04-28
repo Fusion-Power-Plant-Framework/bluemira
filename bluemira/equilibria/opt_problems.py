@@ -836,12 +836,12 @@ class BreakdownZoneStrategy(abc.ABC):
         """
         The location of the breakdown point.
 
-         Returns
-         -------
-         x_c: float
-             Radial coordinate of the breakdown point
-         z_c: float
-             Vertical coordinate of the breakdown point
+        Returns
+        -------
+        x_c: float
+            Radial coordinate of the breakdown point
+        z_c: float
+            Vertical coordinate of the breakdown point
         """
         pass
 
