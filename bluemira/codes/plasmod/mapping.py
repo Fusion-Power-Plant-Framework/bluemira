@@ -363,8 +363,7 @@ PLASMOD_INPUTS = {
     # [-] variance of heat deposition, assimung Gaussian distribution on
     # normalized coordinate x, for EC heating to control H-mode
     # ###### "BM_INP": ("dx_heat_ech", "dimensionless"),
-    # [keV] NBI energy
-    # ###### "BM_INP": ("nbi_energy", "keV"),
+    "e_nbi": ("nbi_energy", "keV"),
     # [MW] required fusion power.
     # 0. - ignored
     # > 0 - Auxiliary heating is calculated to match Pfus_req
