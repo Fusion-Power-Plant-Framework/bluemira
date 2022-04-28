@@ -55,10 +55,12 @@ set_log_level("DEBUG")
 # binary location to the solver
 
 # %%
+import os
 
-# PLASMOD_PATH = "/home/fabrizio/bwSS/plasmod/bin/"
-PLASMOD_PATH = ""
-binary = f"{PLASMOD_PATH}plasmod"
+from bluemira.base.file import get_bluemira_root
+
+PLASMOD_PATH = os.path.join(os.path.split(get_bluemira_root())[0], "plasmod")
+binary = os.path.join(PLASMOD_PATH, "bin", "plasmod")
 
 # %%[markdown]
 # ### Creating the solver object
