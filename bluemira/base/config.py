@@ -93,6 +93,7 @@ class Configuration(ConfigurationSchema, ParameterFrame):
         ['shaf_shift', 'Shafranov shift of plasma (geometric=>magnetic)', 0.5, 'm', None, 'equilibria'],
         ["C_Ejima", "Ejima constant", 0.4, "dimensionless", None, "Input (Ejima, et al., Volt-second analysis and consumption in Doublet III plasmas, Nuclear Fusion 22, 1313 (1982))"],
         ["m_s_limit", "Margin to vertical stability", 0.3, "dimensionless", None, "Input"],
+        ["T_e_ped", "Electron temperature at the pedestal", 5.5, "keV", "Used in PLASMOD if fixed temperature pedestal model used", "Input"],
 
         # Heating and current drive
         ['f_ni', 'Non-inductive current drive fraction', 0.1, 'dimensionless', None, 'Input'],
