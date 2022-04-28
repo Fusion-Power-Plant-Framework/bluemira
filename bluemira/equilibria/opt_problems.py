@@ -54,7 +54,7 @@ from bluemira.utilities.opt_problems import (
     OptimisationProblem,
 )
 from bluemira.utilities.opt_tools import regularised_lsq_fom, tikhonov
-from bluemira.utilities.optimiser import Optimiser, approx_derivative
+from bluemira.utilities.optimiser import Optimiser
 from bluemira.utilities.positioning import PositionMapper
 
 __all__ = [
@@ -848,21 +848,27 @@ class BreakdownZoneStrategy(abc.ABC):
     @abc.abstractproperty
     def breakdown_radius(self) -> float:
         """
-        The radius of the breakdown zone
+        The radius of the breakdown zone.
         """
         pass
 
     @abc.abstractmethod
     def calculate_zone_points(self, n_points: int) -> Tuple[np.ndarray]:
         """
-        Discretised set of points representing the breakdown zone
+        Calculate the discretised set of points representing the breakdown zone.
         """
         pass
 
 
 class CircularZoneStrategy(BreakdownZoneStrategy):
+    """
+    Circular breakdown zone strategy.
+    """
+
     def calculate_zone_points(self, n_points: int) -> Tuple[np.ndarray]:
-        """ """
+        """
+        Calculate the discretised set of points representing the breakdown zone.
+        """
         x_c, z_c = self.breakdown_point
         r_c = self.breakdown_radius
         theta = np.linspace(0, 2 * np.pi, n_points - 1, endpoint=False)

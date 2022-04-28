@@ -241,12 +241,12 @@ class FixedCoilsetPulsedEquilibriumProblem(PulsedEquilibriumProblem):
         Run a reference equilibrium.
         """
         coilset = deepcopy(self.coilset)
-        RB0 = [self.params.R_0.value, self.params.B_0.value]
+        rb0 = [self.params.R_0.value, self.params.B_0.value]
         eq = Equilibrium(
             coilset,
             self.grid,
             Ip=self.params.I_p.value * 1e6,
-            RB0=RB0,
+            RB0=rb0,
             profiles=self.profiles,
         )
         optimiser = UnconstrainedCurrentCOP(
