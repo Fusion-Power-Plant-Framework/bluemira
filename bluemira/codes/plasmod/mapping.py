@@ -363,6 +363,7 @@ PLASMOD_INPUTS = {
     # [-] variance of heat deposition, assimung Gaussian distribution on
     # normalized coordinate x, for EC heating to control H-mode
     # ###### "BM_INP": ("dx_heat_ech", "dimensionless"),
+    # [keV] NBI energy
     "e_nbi": ("nbi_energy", "keV"),
     # [MW] required fusion power.
     # 0. - ignored
@@ -580,7 +581,6 @@ PLASMOD_INOUTS = {
     # ############################
     # [keV] electrons/ions temperature at pedestal (ignored if i_pedestal = 2)
     "T_e_ped": ("teped", "keV")
-    # ##### "BM_IO": ("teped", "keV"),
     # ###########################
     # Confinement properties (type loss)
     # ############################
