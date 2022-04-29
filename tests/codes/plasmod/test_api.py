@@ -33,7 +33,6 @@ from bluemira.codes.plasmod.api import Run as PlasmodRun
 from bluemira.codes.plasmod.api import Setup as PlasmodSetup
 from bluemira.codes.plasmod.api import Solver as PlasmodSolver
 from bluemira.codes.plasmod.api import Teardown as PlasmodTeardown
-from bluemira.utilities.tools import CommentJSONDecoder
 
 
 @pytest.fixture(scope="module")
@@ -143,7 +142,7 @@ class TestOutputs:
         with open(
             Path(get_bluemira_path(), "codes/plasmod/PLASMOD_DEFAULT_OUT.json"), "r"
         ) as fh:
-            self.output = json.load(fh, cls=CommentJSONDecoder)
+            self.output = json.load(fh)
         self.p_out = PlasmodOutput()
 
     def _read_output_files(self):
