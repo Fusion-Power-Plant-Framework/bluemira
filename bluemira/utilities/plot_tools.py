@@ -184,7 +184,8 @@ class Plot3D(Axes3D):
 
     def __init__(self):
         fig = plt.figure(figsize=[14, 14])
-        super().__init__(fig)
+        super().__init__(fig, auto_add_to_figure=False)
+        fig.add_axes(self)
         # \n to offset labels from axes
         self.set_xlabel("\n\nx [m]")
         self.set_ylabel("\n\ny [m]")
