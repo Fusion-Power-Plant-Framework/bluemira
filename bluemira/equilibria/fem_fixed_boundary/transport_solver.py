@@ -97,7 +97,12 @@ class PlasmodTransportSolver(TransportSolver):
         self._I_p = None
 
         # supporting variables
+
+        # the normalization on x_phi is made because the x profile given by plasmod is
+        # not well normalized and it is given in a range slightly different than [0,1].
+
         self.__x_phi = self.solver.get_profile('x')
+        self.__x_phi /= np.max(self.__x_phi)
         self.__psi_plasmod = self.solver.get_profile('psi')
         self.__x_psi = np.sqrt(self.__psi_plasmod / self.__psi_plasmod[-1])
 
@@ -113,8 +118,11 @@ class PlasmodTransportSolver(TransportSolver):
     @property
     def x(self):
         """Get the magnetic coordinate"""
+        # This variable is "reduntant" since it is equale to the renormalized x_phi.
+        # However it is left to underline the meaning of the default magnetic
+        # coordinate of Plasmod.
         if self._x is None:
-            self._x = self.solver.get_profile("x")
+            self._x = self.__x_phi
         return self._x
 
     @property

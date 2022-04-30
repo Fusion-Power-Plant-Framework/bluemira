@@ -114,7 +114,7 @@ class FemMagnetostatic2d:
 
         self.a = (
             1
-            / (2.0 * dolfin.pi * 4 * dolfin.pi * 1e-7)
+            / (2.0 * dolfin.pi * MU_0)
             * (1 / r * dolfin.dot(dolfin.grad(self.u), dolfin.grad(self.v)))
             * dolfin.dx
         )
@@ -232,8 +232,8 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
         """Normalized flux function in 2-D"""
 
         def myfunc(x):
-            value = np.sqrt(abs((self.psi(x) - self._psi_ax) / (self._psi_b -
-                                                              self._psi_ax)))
+            value = np.sqrt(np.abs((self.psi(x) - self._psi_ax) / (self._psi_b -
+                                                                  self._psi_ax)))
             return value
 
         return myfunc
@@ -317,6 +317,7 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
 
             points = self.mesh.coordinates()
             prev = np.array([self._psi_norm_2d(p) for p in points])
+            # prev = np.array([self.psi(p) for p in points])
 
             # prev = self.psi.compute_vertex_values()
             # curr_tot = dolfin.assemble(self.g * dx())
@@ -327,6 +328,7 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
             )
 
             new = np.array([self._psi_norm_2d(p) for p in points])
+            # new = np.array([self.psi(p) for p in points])
             diff = new - prev
 
             axis, cntr, _ = plot_scalar_field(
@@ -336,7 +338,8 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
             plt.show()
 
             # diff = self.psi.compute_vertex_values() - prev
-            eps = np.linalg.norm(diff, ord=np.Inf)
+            eps = np.linalg.norm(diff, ord=2) / np.linalg.norm(new, ord=2)
+
             # curr_tot = dolfin.assemble(self.g * dx())
             # print(f"post - curr_tot = {curr_tot} - curr_dens = {self.g}")
             print(f"iter = {i} eps = {eps} psi_ax : {self._psi_ax}")

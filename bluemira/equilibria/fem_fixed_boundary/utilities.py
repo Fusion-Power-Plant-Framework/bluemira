@@ -27,6 +27,8 @@ import dolfin
 import matplotlib.pyplot as plt
 import numpy as np
 import scipy
+from bluemira.geometry.coordinates import Coordinates
+from bluemira.geometry.tools import make_bspline
 
 
 def b_coil_axis(r, z, pz, curr):
@@ -218,3 +220,59 @@ class Solovev:
             points[:, 0], points[:, 1], psi, levels=levels, axis=axis, tofill=tofill
         )
         return cplot + (points, psi)
+
+
+
+def calculate_plasma_shape_params(points, data, levels):
+    R_geo = np.zeros(len(levels))
+    kappa = np.zeros(len(levels))
+    delta = np.zeros(len(levels))
+
+    axis, cntr, _ = plot_scalar_field(
+        points[:, 0],
+        points[:, 1],
+        data,
+        levels=levels,
+        axis=None,
+        tofill=False,
+    )
+    plt.show()
+
+    for i in range(len(cntr.collections)):
+        vertices = cntr.collections[i].get_paths()[0].vertices
+        x = vertices.T[0]
+        y = x*0
+        z = vertices.T[1]
+        vertices = Coordinates({'x': x, 'y': y, 'z': z})
+        wire = make_bspline(vertices,"psi_95", True)
+        interp_points = wire.discretize(1000)
+
+        ind_z_max = np.argmax(interp_points.z)
+        PU = interp_points.T[ind_z_max]
+        ind_z_min = np.argmin(interp_points.z)
+        PL = interp_points.T[ind_z_min]
+        ind_x_max = np.argmax(interp_points.x)
+        PO = interp_points.T[ind_x_max]
+        ind_x_min = np.argmin(interp_points.x)
+        PI = interp_points.T[ind_x_min]
+
+        # geometric center of a magnetic flux surface
+        R_geo[i] = (PO[0] + PI[0])/2
+
+        # elongation
+        a = (PO[0] - PI[0])/2
+        b = (PU[2] - PL[2])/2
+        if a == 0:
+            kappa[i] = 1
+        else:
+            kappa[i] = b/a
+
+        # triangularity
+        c = R_geo[i] - PL[0]
+        d = R_geo[i] - PU[0]
+        if a == 0:
+            delta[i] = 0
+        else:
+            delta[i] = (c + d) / 2 / a
+
+        return R_geo, kappa, delta
