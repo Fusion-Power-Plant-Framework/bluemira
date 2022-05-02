@@ -105,9 +105,10 @@ class Snapshot:
         self.tf = tfcoil
 
 
-class PulsedEquilibriumProblem:
+class PulsedCoilsetProblem:
     """
-    Procedural design for a pulsed tokamak.
+    Abstract base class for the procedural design of a pulsed tokamak poloidal field
+    coilset.
     """
 
     BREAKDOWN = "Breakdown"
@@ -127,6 +128,51 @@ class PulsedEquilibriumProblem:
 
         self.snapshots[name] = Snapshot(eq, coilset, problem, profiles, optimiser)
 
+    def run_reference_equilibrium(self):
+        """
+        Run a reference equilibrium.
+        """
+        coilset = deepcopy(self.coilset)
+        rb0 = [self.params.R_0.value, self.params.B_0.value]
+        eq = Equilibrium(
+            coilset,
+            self.grid,
+            Ip=self.params.I_p.value * 1e6,
+            RB0=rb0,
+            profiles=self.profiles,
+        )
+        optimiser = UnconstrainedCurrentCOP(
+            coilset, eq, self.eq_targets, gamma=self._eq_settings["gamma"]
+        )
+        program = PicardCoilsetIterator(
+            eq,
+            self.profiles,
+            self.eq_targets,
+            optimiser,
+            relaxation=0.1,
+            plot=False,
+        )
+        program()
+        self.take_snapshot(self.EQ_REF, eq, coilset, optimiser, self.eq_targets)
+
+    def calculate_sof_eof_fluxes(self, psi_premag: Optional[float] = None):
+        """
+        Calculate the SOF and EOF plasma boundary fluxes.
+        """
+        if psi_premag is None:
+            if self.BREAKDOWN not in self.snapshots:
+                self.run_premagnetisation()
+            psi_premag = self.snapshots[self.BREAKDOWN].eq.breakdown_psi
+        psi_sof = calc_psib(
+            2 * np.pi * psi_premag,
+            self.params.R_0.value,
+            1e6 * self.params.I_p.value,
+            self.params.l_i.value,
+            self.params.C_Ejima.value,
+        )
+        psi_eof = psi_sof - self.params.tau_flattop.value * self.params.v_burn.value
+        return psi_sof, psi_eof
+
     def plot(self):
         """
         Plot the pulsed equilibrium problem.
@@ -144,9 +190,9 @@ class PulsedEquilibriumProblem:
         return f
 
 
-class FixedCoilsetPulsedEquilibriumProblem(PulsedEquilibriumProblem):
+class FixedPulsedCoilsetProblem(PulsedCoilsetProblem):
     """
-    Procedural design for a pulsed tokamak with a known PF coilset.
+    Procedural design for a pulsed tokamak with a known, fixed PF coilset.
     """
 
     def __init__(
@@ -167,11 +213,7 @@ class FixedCoilsetPulsedEquilibriumProblem(PulsedEquilibriumProblem):
         equilibrium_optimiser: Optimiser = Optimiser(
             "SLSQP", opt_conditions={"max_eval": 1000, "ftol_rel": 1e-6}
         ),
-        equilibrium_settings: dict = {
-            "gamma": 1e-8,
-            "target_rms_max": 0.5,
-            "target_rms_con_tol": 1e-6,
-        },
+        equilibrium_settings: Optional[dict] = None,
     ):
         self.params = params
         self.coilset = coilset
@@ -186,7 +228,13 @@ class FixedCoilsetPulsedEquilibriumProblem(PulsedEquilibriumProblem):
 
         self._eq_prob_cls = equilibrium_problem_cls
         self._eq_opt = equilibrium_optimiser
-        self._eq_settings = equilibrium_settings
+
+        defaults = {
+            "gamma": 1e-8,
+            "target_rms_max": 0.5,
+            "target_rms_con_tol": 1e-6,
+        }
+        self._eq_settings = {**defaults, **equilibrium_settings}
         self._coil_cons = coil_constraints
 
         super().__init__()
@@ -238,51 +286,6 @@ class FixedCoilsetPulsedEquilibriumProblem(PulsedEquilibriumProblem):
             i += 1
 
         self.take_snapshot(self.BREAKDOWN, breakdown, coilset, self._bd_opt, problem)
-
-    def run_reference_equilibrium(self):
-        """
-        Run a reference equilibrium.
-        """
-        coilset = deepcopy(self.coilset)
-        rb0 = [self.params.R_0.value, self.params.B_0.value]
-        eq = Equilibrium(
-            coilset,
-            self.grid,
-            Ip=self.params.I_p.value * 1e6,
-            RB0=rb0,
-            profiles=self.profiles,
-        )
-        optimiser = UnconstrainedCurrentCOP(
-            coilset, eq, self.eq_targets, gamma=self._eq_settings["gamma"]
-        )
-        program = PicardCoilsetIterator(
-            eq,
-            self.profiles,
-            self.eq_targets,
-            optimiser,
-            relaxation=0.1,
-            plot=False,
-        )
-        program()
-        self.take_snapshot(self.EQ_REF, eq, coilset, optimiser, self.eq_targets)
-
-    def calculate_sof_eof_fluxes(self, psi_premag: Optional[float] = None):
-        """
-        Calculate the SOF and EOF plasma boundary fluxes.
-        """
-        if psi_premag is None:
-            if self.BREAKDOWN not in self.snapshots:
-                self.run_premagnetisation()
-            psi_premag = self.snapshots[self.BREAKDOWN].eq.breakdown_psi
-        psi_sof = calc_psib(
-            2 * np.pi * psi_premag,
-            self.params.R_0.value,
-            1e6 * self.params.I_p.value,
-            self.params.l_i.value,
-            self.params.C_Ejima.value,
-        )
-        psi_eof = psi_sof - self.params.tau_flattop.value * self.params.v_burn.value
-        return psi_sof, psi_eof
 
     def optimise_currents(self):
         """
@@ -421,7 +424,7 @@ if __name__ == "__main__":
     breakdown_strategy = OutboardBreakdownZoneStrategy
 
     params.B_premag_stray_max = 0.003
-    problem = FixedCoilsetPulsedEquilibriumProblem(
+    problem = FixedPulsedCoilsetProblem(
         params,
         coilset,
         grid,
@@ -436,6 +439,7 @@ if __name__ == "__main__":
         equilibrium_optimiser=Optimiser(
             "SLSQP", opt_conditions={"max_eval": 10000, "ftol_rel": 1e-10}
         ),
+        equilibrium_settings={"target_rms_max": 1.5},
     )
 
     problem.run_premagnetisation()
