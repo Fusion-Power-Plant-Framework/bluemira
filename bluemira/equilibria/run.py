@@ -173,6 +173,13 @@ class PulsedCoilsetProblem:
         psi_eof = psi_sof - self.params.tau_flattop.value * self.params.v_burn.value
         return psi_sof, psi_eof
 
+    def converge_equilibrium(self, eq, problem):
+        """
+        Converge an equilibrium problem from a 'frozen' plasma optimised state.
+        """
+        # TODO: Converge equilibria
+        pass
+
     def plot(self):
         """
         Plot the pulsed equilibrium problem.
@@ -385,7 +392,7 @@ if __name__ == "__main__":
     grid = Grid(4, 14, -10, 10, 100, 100)
     profiles = CustomProfile(
         pprime_func=np.sqrt(np.linspace(1, 0, 50)),
-        ffprime_func=3 * np.sqrt(np.linspace(1, 0, 50)),
+        ffprime_func=30 * np.sqrt(np.linspace(1, 0, 50)),
         R_0=params.R_0.value,
         B_0=params.B_0.value,
         Ip=params.I_p.value * 1e6,
@@ -439,7 +446,7 @@ if __name__ == "__main__":
         equilibrium_optimiser=Optimiser(
             "SLSQP", opt_conditions={"max_eval": 10000, "ftol_rel": 1e-10}
         ),
-        equilibrium_settings={"target_rms_max": 1.5},
+        equilibrium_settings={"target_rms_max": 30},
     )
 
     problem.run_premagnetisation()
@@ -447,9 +454,6 @@ if __name__ == "__main__":
     problem.snapshots[problem.BREAKDOWN].eq.plot(ax=ax)
     problem.snapshots[problem.BREAKDOWN].coilset.plot(ax=ax)
     problem.run_reference_equilibrium()
-    f, ax = plt.subplots()
-    problem.snapshots[problem.EQ_REF].eq.plot(ax=ax)
-    problem.snapshots[problem.EQ_REF].coilset.plot(ax=ax)
 
     problem.optimise_currents()
     problem.plot()

@@ -276,8 +276,6 @@ def L2_norm_constraint(  # noqa: N802
     constraint[:] = residual.T @ residual - value
 
     if grad.size > 0:
-        jac = 2 * a_mat.T @ a_mat @ vector - 2 * a_mat.T @ b_vec
-        jac *= scale
-        grad[:] = jac
+        grad[:] = 2 * scale * (a_mat.T @ a_mat @ vector - a_mat.T @ b_vec)
 
     return constraint
