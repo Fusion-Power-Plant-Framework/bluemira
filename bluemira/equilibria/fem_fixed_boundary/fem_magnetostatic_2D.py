@@ -331,11 +331,11 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
             # new = np.array([self.psi(p) for p in points])
             diff = new - prev
 
-            axis, cntr, _ = plot_scalar_field(
-                points[:, 0], points[:, 1], diff, levels=20, axis=None,
-                tofill=True
-            )
-            plt.show()
+            # axis, cntr, _ = plot_scalar_field(
+            #     points[:, 0], points[:, 1], diff, levels=20, axis=None,
+            #     tofill=True
+            # )
+            # plt.show()
 
             # diff = self.psi.compute_vertex_values() - prev
             eps = np.linalg.norm(diff, ord=2) / np.linalg.norm(new, ord=2)

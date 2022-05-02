@@ -59,10 +59,10 @@ set_log_level("INFO")
 main_params = {
     "R_0": 8.983,
     "A": 3.1,
-    "kappa_u": 1.6,
-    "kappa_l": 1.8,
-    "delta_u": 0.5,
-    "delta_l": 0.5,
+    "kappa_u": 1.65,
+    "kappa_l": 1.85,
+    "delta_u": 0.6,
+    "delta_l": 0.55,
     "I_p": 17e6,
     "B_0": 4.96,
 }
@@ -121,7 +121,9 @@ while niter <= niter_max:
         .shape.volume
     )
 
-    print(builder_plasma._shape.variables)
+    print(f"plasma shape: {plasma._shape}")
+
+    # print(builder_plasma._shape.variables)
     # ------------------------------------------------------------------------------
     new_params['V_p'] = plasma_volume
     plasmod_params = Configuration(new_params)
@@ -161,8 +163,8 @@ while niter <= niter_max:
     )
 
     # ------------------------------------------------------------------------------
-    plasma.shape.boundary[0].mesh_options = {"lcar": 0.1, "physical_group": "lcfs"}
-    plasma.shape.mesh_options = {"lcar": 0.1, "physical_group": "plasma_face"}
+    plasma.shape.boundary[0].mesh_options = {"lcar": 0.5, "physical_group": "lcfs"}
+    plasma.shape.mesh_options = {"lcar": 0.5, "physical_group": "plasma_face"}
 
     m = meshing.Mesh()
     buffer = m(plasma)
@@ -179,7 +181,7 @@ while niter <= niter_max:
 
     # ------------------------------------------------------------------------------
     # initialize the Grad-Shafranov solver
-    p = 2
+    p = 7
     gs_solver = FemGradShafranovFixedBoundary(mesh, p_order=p)
 
     print("\nSolving...")
@@ -195,8 +197,8 @@ while niter <= niter_max:
     )
     solve_end = time.time()
 
-    plasma.shape.boundary[0].mesh_options = {"lcar": 0.5, "physical_group": "lcfs"}
-    plasma.shape.mesh_options = {"lcar": 0.5, "physical_group": "plasma_face"}
+    plasma.shape.boundary[0].mesh_options = {"lcar": 0.15, "physical_group": "lcfs"}
+    plasma.shape.mesh_options = {"lcar": 0.15, "physical_group": "plasma_face"}
 
     m = meshing.Mesh()
     buffer = m(plasma)
@@ -217,7 +219,7 @@ while niter <= niter_max:
     plt.title("Refined")
     plt.show()
 
-    points = mesh.coordinates()
+    points = new_mesh.coordinates()
     psi_data = np.array([gs_solver.psi(x) for x in points])
 
     levels = np.linspace(0.0, gs_solver._psi_ax, 25)
@@ -240,6 +242,9 @@ while niter <= niter_max:
     err_kappa = abs(kappa_95 - kappa95_t) / kappa95_t
     iter_err = max(err_delta, err_kappa)
 
+    print("/n previous shape parameters")
+    print(f"kappa_u: {main_params['kappa_u']}, delta_u: {main_params['delta_u']}")
+
     main_params["kappa_u"] = (
         theta * main_params["kappa_u"] * (kappa95_t / kappa_95)
         + (1 - theta) * main_params["kappa_u"]
@@ -248,6 +253,11 @@ while niter <= niter_max:
         theta * main_params["delta_u"] * (delta95_t / delta_95)
         + (1 - theta) * main_params["delta_u"]
     )
+
+    print("/n recalculated shape parameters")
+
+
+    print(f"kappa_u: {main_params['kappa_u']}, delta_u: {main_params['delta_u']}")
 
     print(" ")
     print(f"MIRA delta95 = {delta_95}")

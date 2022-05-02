@@ -27,87 +27,194 @@ from bluemira.base.config import Configuration
 from bluemira.mesh import meshing
 from bluemira.mesh.tools import import_mesh, msh_to_xdmf
 
-import dolfin
-import matplotlib.pyplot as plt
-
 from bluemira.equilibria.fem_fixed_boundary.fem_magnetostatic_2D import (
     FemGradShafranovFixedBoundary,
 )
+
 import time
 
-from bluemira.base.logs import set_log_level
+from bluemira.base.look_and_feel import bluemira_debug
 from bluemira.equilibria.fem_fixed_boundary.transport_solver import (
     PlasmodTransportSolver,
 )
 from bluemira.equilibria.fem_fixed_boundary.utilities import (
-    plot_scalar_field,
     plot_profile,
+    calculate_plasma_shape_params,
 )
 
 
-def solve_plasmod_fixed_boundary(plasma, plasmod_solver, delta95_t, kappa_95_t):
+def solve_plasmod_fixed_boundary(
+    builder_plasma,
+    plasmod_options,
+    gs_options,
+    delta95_t,
+    kappa95_t,
+    lcar_coarse=0.15,
+    lcar_fine=0.05,
+    niter_max=30,
+    iter_err_max=1e-5,
+    theta=0.8,
+):
 
-    m = meshing.Mesh()
-    buffer = m(plasma)
+    niter = 0
+    delta_95 = delta95_t
+    kappa_95 = kappa95_t
 
-    msh_to_xdmf("Mesh.msh", dimensions=(0, 2), directory=".", verbose=True)
+    while niter < niter_max:
+        # source string to be used in changed parameters
+        source = f"from equilibrium iteration {niter}"
 
-    mesh, boundaries, subdomains, labels = import_mesh(
-        "Mesh",
-        directory=".",
-        subdomains=True,
-    )
+        # build the plasma
+        # - xz - plasma toroidal cross section
+        # - xyz - to get the volume
+        plasma = builder_plasma.build_xz().get_component("xz").get_component("LCFS")
+        plasma_volume = (
+            builder_plasma.build_xyz()
+            .get_component("xyz")
+            .get_component("LCFS")
+            .shape.volume
+        )
+        plasma.plot_options.show_faces = False
+        plasma.plot_2d(show=True)
 
-    # initialize the Grad-Shafranov solver
-    p = 1
-    gs_solver = FemGradShafranovFixedBoundary(mesh, p_order=p)
+        kappa = (
+            builder_plasma.params.get_param("kappa_l")
+            + builder_plasma.params.get_param("kappa_u")
+        ) / 2
+        delta = (
+            builder_plasma.params.get_param("delta_l")
+            + builder_plasma.params.get_param("delta_u")
+        ) / 2
 
-    print("\nSolving...")
+        # initialize plasmod solver
+        # - V_p is set equal to plasma volume
+        plasmod_options["params"].set_parameter("V_p", plasma_volume, "m^3", source)
 
-    # solve the Grad-Shafranov equation
-    solve_start = time.time()  # compute the time it takes to solve
-    psi = gs_solver.solve(
-        plasmod_solver.pprime,
-        plasmod_solver.ffprime,
-        plasmod_solver.I_p,
-        tol=1e-3,
-        max_iter=50,
-    )
-    solve_end = time.time()
+        plasmod_options["params"].set_parameter("kappa", kappa, "dimensionless", source)
+        plasmod_options["params"].set_parameter("delta", delta, "dimensionless", source)
+        plasmod_options["params"].set_parameter(
+            "kappa_95", kappa_95, "dimensionless", source
+        )
+        plasmod_options["params"].set_parameter(
+            "delta_95", delta_95, "dimensionless", source
+        )
 
-    plasma.shape.boundary[0].mesh_options = {"lcar": 0.05, "physical_group": "lcfs"}
-    plasma.shape.mesh_options = {"lcar": 0.05, "physical_group": "plasma_face"}
+        plasmod_solver = PlasmodTransportSolver(
+            params=plasmod_options["params"],
+            build_config=plasmod_options["build_config"],
+        )
 
-    m = meshing.Mesh()
-    buffer = m(plasma)
+        plot_profile(
+            plasmod_solver.x, plasmod_solver.pprime(plasmod_solver.x), "pprime", "-"
+        )
+        plot_profile(
+            plasmod_solver.x, plasmod_solver.ffprime(plasmod_solver.x), "ffrime", "-"
+        )
 
-    msh_to_xdmf("Mesh.msh", dimensions=(0, 2), directory=".", verbose=True)
+        # generate mesh for the Grad-Shafranov solver
+        plasma.shape.boundary[0].mesh_options = {
+            "lcar": lcar_coarse,
+            "physical_group": "lcfs",
+        }
+        plasma.shape.mesh_options = {
+            "lcar": lcar_coarse,
+            "physical_group": "plasma_face",
+        }
 
-    mesh, boundaries, subdomains, labels = import_mesh(
-        "Mesh",
-        directory=".",
-        subdomains=True,
-    )
+        m = meshing.Mesh()
+        buffer = m(plasma)
 
-    dolfin.plot(mesh)
-    plt.show()
+        msh_to_xdmf("Mesh.msh", dimensions=(0, 2), directory=".", verbose=True)
 
-    points = mesh.coordinates()
-    psi_data = np.array([gs_solver.psi(x) for x in points])
+        mesh, boundaries, subdomains, labels = import_mesh(
+            "Mesh",
+            directory=".",
+            subdomains=True,
+        )
 
-    levels = np.linspace(0.0, gs_solver.psi_ax, 25)
+        # initialize the Grad-Shafranov solver
+        p_order = gs_options["p_order"]
+        gs_solver = FemGradShafranovFixedBoundary(mesh, p_order=p_order)
 
-    axis, cntr, _ = plot_scalar_field(
-        points[:, 0], points[:, 1], psi_data, levels=levels, axis=None, tofill=True
-    )
-    plt.show()
+        print("\nSolving Grad-Shafranov...")
 
-    axis, cntr, _ = plot_scalar_field(
-        points[:, 0],
-        points[:, 1],
-        psi_data,
-        levels=[gs_solver.psi_ax * 0.05],
-        axis=None,
-        tofill=False,
-    )
-    plt.show()
+        # solve the Grad-Shafranov equation
+        solve_start = time.time()
+        psi = gs_solver.solve(
+            plasmod_solver.pprime,
+            plasmod_solver.ffprime,
+            plasmod_solver.I_p,
+            tol=gs_options["tol"],
+            max_iter=gs_options["max_iter"],
+        )
+        solve_end = time.time()
+
+        # create the finer mesh to calculate the isofluxes
+        plasma.shape.boundary[0].mesh_options = {
+            "lcar": lcar_fine,
+            "physical_group": "lcfs",
+        }
+        plasma.shape.mesh_options = {"lcar": lcar_fine, "physical_group": "plasma_face"}
+
+        m = meshing.Mesh()
+        buffer = m(plasma)
+
+        msh_to_xdmf("Mesh.msh", dimensions=(0, 2), directory=".", verbose=True)
+
+        mesh, boundaries, subdomains, labels = import_mesh(
+            "Mesh",
+            directory=".",
+            subdomains=True,
+        )
+
+        points = mesh.coordinates()
+        psi_data = np.array([gs_solver.psi(x) for x in points])
+
+        # calculate kappa_95 and delta_95
+        R_geo, kappa_95, delta_95 = calculate_plasma_shape_params(
+            points, psi_data, [gs_solver._psi_ax * 0.05]
+        )
+        R_geo, kappa_95, delta_95 = R_geo[0], kappa_95[0], delta_95[0]
+
+        # calculate the iteration error
+        err_delta = abs(delta_95 - delta95_t) / delta95_t
+        err_kappa = abs(kappa_95 - kappa95_t) / kappa95_t
+        iter_err = max(err_delta, err_kappa)
+
+        # calculate the new kappa_u and delta_u
+        print("previous shape parameters")
+        kappa_u_0 = builder_plasma.params.get_param("kappa_u")
+        delta_u_0 = builder_plasma.params.get_param("delta_u")
+
+        print(f"{kappa_u_0}, {delta_u_0}")
+
+        kappa_u = theta * kappa_u_0 * (kappa95_t / kappa_95) + (1 - theta) * kappa_u_0
+        delta_u = theta * delta_u_0 * (delta95_t / delta_95) + (1 - theta) * delta_u_0
+
+        print("recalculated shape parameters")
+        print(f"{kappa_u}, {delta_u}")
+
+        print(" ")
+        print(f"bluemira delta95 = {delta_95}")
+        print(f"target delta95 = {delta95_t}")
+
+        print(f"|Target - bluemira|/Target = {err_delta}")
+
+        print(" ")
+        print(f"bluemira kappa95 = {kappa_95}")
+        print(f"target kappa95 = {kappa95_t}")
+
+        print(f"|Target - bluemira|/Target = {err_kappa}")
+
+        print(f"iter_err: {iter_err}, iter_err_max: {iter_err_max}")
+
+        if iter_err <= iter_err_max:
+            break
+
+        # increase iteration number
+        niter += 1
+
+        # update builder_plasma parameters
+        builder_plasma.params.set_parameter("kappa_u", kappa_u, "dimensionless", source)
+        builder_plasma.params.set_parameter("delta_u", delta_u, "dimensionless", source)
+        bluemira_debug(f"{builder_plasma.params}")
