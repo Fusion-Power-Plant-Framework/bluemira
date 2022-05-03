@@ -214,12 +214,14 @@ PLASMOD_INPUTS = {
     # [-] diagnostics for ASTRA (0 or 1)
     # ###### "BM_INP": ("i_diagz", "dimensionless"),
     # [-] sawtooth correction of q
+    # (fix q = 1 if q below 1)
     # ###### "BM_INP": ("isawt, "dimensionless")",
     # [-] number of interpolated grid points
     # ###### "BM_INP": ("nx", "dimensionless"),
     # [-] number of reduced grid points
     # ###### "BM_INP": ("nxt", "dimensionless"),
     # [-] number of unknowns in the transport solver
+    # (ne, Te, Ti) leave this equal to 3!
     # ###### "BM_INP": ("nchannels", "dimensionless"),
     # [-] number of tglf points, below positions
     # ###### "BM_INP": ("ntglf", "dimensionless"),
@@ -258,7 +260,7 @@ PLASMOD_INPUTS = {
     "kappa_95": ("k95", "dimensionless"),
     # [m] plasma major radius
     "R_0": ("R", "m"),
-    # [m3] constrained plasma volume (set zero to disable volume constraining)
+    # [m3] constrained plasma volume (set negative value to disable volume constraining)
     "V_p": ("volume_in", "m^3"),
     # ###########################
     # Composition properties
@@ -292,11 +294,14 @@ PLASMOD_INPUTS = {
     # if Psep/R0 > Psep_R0_max seed Xenon
     # ###### "BM_INP": ("psep_r_sup" "MW/m"),
     # [-] ratio of Pline(Xe)/(Psep0 - Psepcrit), or -1 to ignore
+    # Psep0 = Palpha + Paux - Pline(Ar) - Pbrehm - Psync
     # ###### "BM_INP": ("fcoreraditv", "dimensionless"),
     # [MW/m2] max divertor heat flux -->
     # if qdivt > qdivt_sup -> seed argon
     # ###### "BM_INP": ("qdivt_sup" "MW/m^2"),
     # [-] compression factor between sol and div
+    # e.g. 10 means there is
+    # 10 more Argon concentration in the divertor than in the core
     # ###### "BM_INP": ("c_car", "dimensionless"),
     # ###########################
     # Pedestal properties
@@ -306,7 +311,7 @@ PLASMOD_INPUTS = {
     # [-] normalized coordinate of pedestal temperature
     # ###### "BM_INP": ("rho_T", "dimensionless"),
     # [keV] electrons/ions temperature at separatrix
-    # ###### "BM_INP": ("Tesep", "keV"),
+    # ###### "BM_INP": ("tesep", "keV"),
     # [-] scaling factor for p_ped scaling formula
     # ###### "BM_INP": ("pedscal", "dimensionless"),
     # ###########################
@@ -424,6 +429,8 @@ PLASMOD_OUTPUTS = {
     "beta_p": ("betapol", "dimensionless"),
     # [-] normalized beta
     "beta_N": ("betan", "dimensionless"),
+    # [-] Greenwald density at pedestal top
+    # ##### "BM_OUT": (f_gwpedtop", "dimensionless),
     # [-] plasma bootstrap current fraction
     "f_bs": ("fbs", "dimensionless"),
     # [-] plasma current drive fraction
@@ -492,6 +499,12 @@ PLASMOD_OUTPUTS = {
     "P_LH": ("PLH", "W"),
     # [W] Ohimic heating power
     "P_ohm": ("Pohm", "W"),
+    # [W] Auxiliary heating power added to control f_ni or v_loop
+    # ##### "BM_OUT": ("qcd", "W"),
+    # [W] Auxiliary heating power added to operate in H-mode
+    # ##### "BM_OUT": ("qheat", "W"),
+    # [W] Auxiliary heating power added to control Pfus
+    # ##### "BM_OUT": ("qfus", "W"),
     # [W/m2] divertor heat flux
     # ##### "BM_OUT": ("qdivt", "W/m^2"),
     # [MW/m] Divertor challenging criterion Psep/R0
@@ -541,14 +554,18 @@ PLASMOD_INOUTS = {
     # [-] plasma edge elongation (used only for first iteration,
     # then iterated to constrain kappa95)
     "kappa": ("k", "dimensionless"),
-    # [-] plasma minor radius
+    # [-] plasma minor radius (just initial guess)
     # ##### "BM_IO": ("amin", "m"),
     # ###########################################
     # MHD equilibrium properties (mhd type)
     # ###########################################
     # [MA] plasma current
+    # (used if i_equiltype == 2. Otherwise Ip is calculated
+    # and q95 is used as input)
     "I_p": ("Ip", "MA"),
     # [-] safety factor at 95% flux surface
+    # (used if i_equiltype == 1. Otherwise q95 is calculated
+    # and Ip is used as input)
     "q_95": ("q95", "dimensionless"),
     # [-] plasma current inductive fraction
     # ##### "BM_IO": ("f_ni", "dimensionless"),
@@ -558,6 +575,8 @@ PLASMOD_INOUTS = {
     # [-] Hydrogen concentration
     # ##### "BM_IO": ("cprotium", # TODO
     # [-] helium concentration
+    # (used if  globtau_he = 0)
+    # total Helium concentration (he4 + He3)
     # ##### "BM_IO": ("che", # TODO
     # [-] He3 concentration
     # ##### "BM_IO": ("che3", # TODO
