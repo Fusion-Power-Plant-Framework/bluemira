@@ -75,7 +75,7 @@ def objective_constraint(constraint, vector, grad, objective_function, maximum_f
     return constraint
 
 
-def Ax_b_constraint(constraint, vector, grad, A_mat, b_vec):
+def Ax_b_constraint(constraint, vector, grad, a_mat, b_vec):  # noqa: N802
     """
     Constraint function of the form:
         A.x - b < 0.0
@@ -93,9 +93,9 @@ def Ax_b_constraint(constraint, vector, grad, A_mat, b_vec):
     b_vec: np.ndarray
         Target value vector
     """
-    constraint[:] = np.dot(A_mat, vector) - b_vec
+    constraint[:] = np.dot(a_mat, vector) - b_vec
     if grad.size > 0:
-        grad[:] = A_mat
+        grad[:] = a_mat
     return constraint
 
 
