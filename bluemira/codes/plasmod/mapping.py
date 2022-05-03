@@ -508,6 +508,8 @@ PLASMOD_OUTPUTS = {
     # ############################
     # [-] plasma effective charge
     "Z_eff": ("Zeff", "amu"),  # TODO check dimensionless?
+    # [V] target loop voltage (if lower than -1e-3, ignored)-> plasma loop voltage
+    "v_burn": ("v_loop", "V"),
     # ###########################
     # Pedestal properties (type ped)
     # ############################
@@ -559,8 +561,6 @@ PLASMOD_INOUTS = {
     "q_95": ("q95", "dimensionless"),
     # [-] plasma current inductive fraction
     # ##### "BM_IO": ("f_ni", "dimensionless"),
-    # [V] target loop voltage (if lower than -1e-3, ignored)-> plasma loop voltage
-    "v_burn": ("v_loop", "V"),
     # ###########################
     # Composition properties
     # ############################

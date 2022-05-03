@@ -12,16 +12,16 @@
                  dgy  0.100000000E-04
                 eopt  0.100000000E+00
                 capA  0.100000000E+00
-             i_diagz         0
+             i_diagz  0.000000000E+00
              isiccir         0
                isawt         1
                   nx        41
-                 nxt         5
+                 nxt        11
            nchannels         3
           i_impmodel         1
          i_modeltype         1
-         i_equiltype         1
-          i_pedestal         1
+         i_equiltype         2
+          i_pedestal         2
                ntglf        11
              xtglf_1  0.100000000E+00
              xtglf_2  0.150000000E+00
@@ -35,15 +35,15 @@
             xtglf_10  0.750000000E+00
             xtglf_11  0.800000000E+00
                    R  0.900200000E+01
-                  Ip        19
+                  Ip  0.177500000E+02
                    A  0.310000000E+01
-           volume_in     -2500
-                amin  0.290390000E+01
+           volume_in -0.250000000E+04
+                amin  0.290387097E+01
                   Bt  0.585500000E+01
                    d  0.384919350E+00
                  d95  0.333000000E+00
                    k  0.169698300E+01
-                 k95  0.165200000E+01
+                 k95  0.165000000E+01
                  q95  0.350000000E+01
              fuelmix  0.500000000E+00
               fuehe3  0.000000000E+00
@@ -59,7 +59,7 @@
             cprotium  0.000000000E+00
                 cwol  0.000000000E+00
          psepplh_inf  0.100000000E+00
-         psepplh_sup  0.100000000E+04
+         psepplh_sup  0.100020000E+04
              pradpos  0.700000000E+00
             pradfrac  0.600000000E+00
      psepb_q95AR_sup  0.920000000E+01
@@ -74,14 +74,14 @@
              pedscal  0.100000000E+01
                 f_gw  0.850000000E+00
                f_gws  0.500000000E+00
-               Hfact  0.100000000E+01
+               Hfact  0.110000000E+01
                fpion  0.500000000E+00
              nbcdeff  0.300000000E+00
              eccdeff  0.300000000E+00
        x_control_nbi  0.000000000E+00
        x_control_ech  0.000000000E+00
       dx_control_nbi  0.200000000E+00
-      dx_control_ech  0.300000000E-01
+      dx_control_ech  0.000000000E+00
             x_cd_nbi  0.000000000E+00
             x_cd_ech  0.000000000E+00
            dx_cd_nbi  0.200000000E+00
@@ -94,9 +94,9 @@
           x_heat_ech  0.000000000E+00
          dx_heat_nbi  0.200000000E+00
          dx_heat_ech  0.300000000E-01
-          nbi_energy      1000
+          nbi_energy  0.100000000E+04
             pfus_req  0.000000000E+00
-                f_ni  0.100000000E+00
+                f_ni  0.000000000E+00
            pheat_max  0.130000000E+03
            q_control  0.130000000E+03
               q_heat  0.000000000E+00
@@ -106,7 +106,7 @@
                 pnbi  0.000000000E+00
                 fcdp -0.100000000E+01
            maxpauxor  0.200000000E+02
-              v_loop -0.100000000E+07
+              v_loop -0.100000000E-05
                  plh         6
         qnbi_psepfac  0.100000000E+03
          cxe_psepfac  0.100000000E-02
