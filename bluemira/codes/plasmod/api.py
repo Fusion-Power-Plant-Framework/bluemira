@@ -50,7 +50,6 @@ from bluemira.codes.plasmod.mapping import (
     TransportModel,
     mappings,
 )
-from bluemira.utilities.tools import CommentJSONDecoder
 
 
 class PlasmodParameters:
@@ -131,7 +130,7 @@ class PlasmodParameters:
         """
         bluemira_debug(f"Loading default values from json: {filepath}")
         with open(filepath) as jfh:
-            return json.load(jfh, cls=CommentJSONDecoder)
+            return json.load(jfh)
 
     def as_dict(self):
         """
