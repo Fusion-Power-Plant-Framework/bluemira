@@ -245,3 +245,201 @@ def coil_field_constraints(constraint, vector, grad, eq, B_max, scale):
         grad[:] = dB
     constraint[:] = B - B_max
     return constraint
+
+
+from abc import ABC, abstractmethod
+from typing import Union
+
+
+class MagneticConstraint(ABC, OptimisationConstraint):
+    """
+    Abstract base class for a magnetic optimisation constraint.
+    """
+
+    def __init__(
+        self,
+        target_value=None,
+        weights: Union[float, np.ndarray] = 1.0,
+        tolerance=np.array([1e-6]),
+        constraint_type="inequality",
+    ):
+        self.target_value = target_value
+        self.weights = weights
+        args = {"a_mat": None, "b_vec": None}
+        super().__init__(
+            f_constraint=Ax_b_constraint,
+            f_constraint_args=args,
+            tolerance=tolerance,
+            constraint_type=constraint_type,
+        )
+
+    def prepare(self, equilibrium, I_not_dI=False, fixed_coils=False):  # noqa :N803
+        if I_not_dI:
+            # hack to change from dI to I optimiser (and keep both)
+            # When we do dI optimisation, the background vector includes the
+            # contributions from the whole coilset (including active coils)
+            # When we do I optimisation, the background vector only includes
+            # contributions from the passive coils (plasma)
+            # TODO: Add passive coil contributions here
+            dummy = equilibrium.plasma_coil()
+            dummy.coilset = equilibrium.coilset
+            equilibrium = dummy
+
+        # Re-build control response matrix
+        if not fixed_coils or (fixed_coils and self._args["a_mat"] is None):
+            self._args["a_mat"] = self.control_response(equilibrium.coilset)
+            self._args["b_vec"] = self.build_target(equilibrium)
+
+        self._args["b_vec"] -= self.evaluate(equilibrium)
+
+    def __call__(self, constraint, vector, grad):
+        super().__call__(constraint, vector, grad)
+
+    def build_target(self, equilibrium):
+        return self.target_value * np.ones(len(self))
+
+    @abstractmethod
+    def control_response(self, coilset):
+        """
+        Calculate control response of a CoilSet to the constraint.
+        """
+        pass
+
+    @abstractmethod
+    def evaluate(self, eq):
+        """
+        Calculate the value of the constraint in an Equilibrium.
+        """
+        pass
+
+    @abstractmethod
+    def plot(self, ax):
+        """
+        Plot the constraint onto an Axes.
+        """
+        pass
+
+    def __len__(self):
+        """
+        The mathematical size of the constraint.
+
+        Notes
+        -----
+        Length of the array if an array is specified, otherwise 1 for a float.
+        """
+        return len(self.x) if hasattr(self.x, "__len__") else 1
+
+
+class AbsoluteMagneticConstraint(MagneticConstraint):
+    def __init__(
+        self,
+        x,
+        z,
+        target_value,
+        weights: Union[float, np.ndarray] = 1.0,
+        tolerance=np.array([1e-6]),
+        constraint_type="inequality",
+    ):
+        self.x = x
+        self.z = z
+        super().__init__(
+            target_value, weights, tolerance=tolerance, constraint_type=constraint_type
+        )
+
+
+class RelativeMagneticConstraint(MagneticConstraint):
+    def __init__(
+        self,
+        x,
+        z,
+        ref_x,
+        ref_z,
+        target_value: float = 0.0,
+        weights: Union[float, np.ndarray] = 1.0,
+        tolerance=np.array([1e-6]),
+        constraint_type="inequality",
+    ):
+        self.x = x
+        self.z = z
+        self.ref_x = ref_x
+        self.ref_z = ref_z
+        super().__init__(
+            target_value, weights, tolerance=tolerance, constraint_type=constraint_type
+        )
+
+    @abstractmethod
+    def update(self, equilibrium):
+        pass
+
+    def build_target(self, equilibrium):
+        self.update(equilibrium)
+        return self.target_value
+
+
+class BxConstraint(AbsoluteMagneticConstraint):
+    """
+    Absolute Bx value constraint.
+    """
+
+    def control_response(self, coilset):
+        """
+        Calculate control response of a CoilSet to the constraint.
+        """
+        return coilset.control_Bx(self.x, self.z)
+
+    def evaluate(self, eq):
+        """
+        Calculate the value of the constraint in an Equilibrium.
+        """
+        return eq.Bx(self.x, self.z)
+
+    def plot(self, ax):
+        """
+        Plot the constraint onto an Axes.
+        """
+        kwargs = {"marker": 9, "markersize": 15, "color": "b", "zorder": 45}
+        ax.plot(self.x, self.z, "s", **kwargs)
+
+
+class IsofluxConstraint(RelativeMagneticConstraint):
+    """
+    Isoflux constraint for a set of points relative to a reference point.
+    """
+
+    def control_response(self, coilset):
+        """
+        Calculate control response of a CoilSet to the constraint.
+        """
+        c_ref = coilset.control_psi(self.ref_x, self.ref_z)
+        return (
+            np.array(coilset.control_psi(self.x, self.z))
+            - np.array(c_ref)[:, np.newaxis]
+        ).T
+
+    def evaluate(self, eq):
+        """
+        Calculate the value of the constraint in an Equilibrium.
+        """
+        return eq.psi(self.x, self.z)
+
+    def update(self, eq):
+        """
+        We need to update the target value, as it is a relative constraint.
+        """
+        self.target_value = eq.psi(self.ref_x, self.ref_z)
+
+    def plot(self, ax):
+        """
+        Plot the constraint onto an Axes.
+        """
+        kwargs = {
+            "marker": "o",
+            "fillstyle": "none",
+            "markeredgewidth": 3,
+            "markeredgecolor": "b",
+            "markersize": 10,
+            "zorder": 45,
+        }
+        ax.plot(self.x, self.z, "s", **kwargs)
+        kwargs["markeredgewidth"] = 5
+        ax.plot(self.ref_x, self.ref_z, "s", **kwargs)
