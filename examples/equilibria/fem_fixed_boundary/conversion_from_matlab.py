@@ -89,10 +89,10 @@ Configuration.set_template_parameters([["delta_l", "delta_l", "", "dimensionless
 PLASMOD_PATH = "/home/ivan/Desktop/bluemira_project/plasmod/bin/"
 binary = f"{PLASMOD_PATH}plasmod"
 
-theta = 0.8
+theta = 0.5
 iter_err_max = 1e-5
 niter = 1
-niter_max = 10
+niter_max = 30
 delta95_t = 0.333
 kappa95_t = 1.652
 
@@ -108,6 +108,8 @@ new_params = {
     "delta": main_params["delta_l"],
     "kappa": main_params["kappa_l"],
 }
+
+verbose_plot = False
 
 while niter <= niter_max:
 
@@ -163,8 +165,8 @@ while niter <= niter_max:
     )
 
     # ------------------------------------------------------------------------------
-    plasma.shape.boundary[0].mesh_options = {"lcar": 0.5, "physical_group": "lcfs"}
-    plasma.shape.mesh_options = {"lcar": 0.5, "physical_group": "plasma_face"}
+    plasma.shape.boundary[0].mesh_options = {"lcar": 0.25, "physical_group": "lcfs"}
+    plasma.shape.mesh_options = {"lcar": 0.25, "physical_group": "plasma_face"}
 
     m = meshing.Mesh()
     buffer = m(plasma)
@@ -181,10 +183,10 @@ while niter <= niter_max:
 
     # ------------------------------------------------------------------------------
     # initialize the Grad-Shafranov solver
-    p = 7
+    p = 3
     gs_solver = FemGradShafranovFixedBoundary(mesh, p_order=p)
 
-    print("\nSolving...")
+    print(f"\nSolving iteration {niter}...")
 
     # solve the Grad-Shafranov equation
     solve_start = time.time()  # compute the time it takes to solve
@@ -193,7 +195,8 @@ while niter <= niter_max:
         plasmod_solver.ffprime,
         plasmod_solver.I_p,
         tol=1e-4,
-        max_iter=10,
+        max_iter=50,
+        verbose_plot=verbose_plot
     )
     solve_end = time.time()
 
@@ -211,27 +214,30 @@ while niter <= niter_max:
         subdomains=True,
     )
 
-    dolfin.plot(mesh)
-    plt.show()
-
     new_mesh = dolfin.refine(mesh)
-    dolfin.plot(new_mesh)
-    plt.title("Refined")
-    plt.show()
+
+    if verbose_plot:
+        dolfin.plot(mesh)
+        plt.show()
+
+        dolfin.plot(new_mesh)
+        plt.title("Refined")
+        plt.show()
 
     points = new_mesh.coordinates()
     psi_data = np.array([gs_solver.psi(x) for x in points])
 
-    levels = np.linspace(0.0, gs_solver._psi_ax, 25)
+    if verbose_plot:
+        levels = np.linspace(0.0, gs_solver.psi_ax, 25)
 
-    axis, cntr, _ = plot_scalar_field(
-        points[:, 0], points[:, 1], psi_data, levels=levels, axis=None, tofill=True
-    )
-    plt.show()
+        axis, cntr, _ = plot_scalar_field(
+            points[:, 0], points[:, 1], psi_data, levels=levels, axis=None, tofill=True
+        )
+        plt.show()
 
     ###################################################
     R_geo, kappa_95, delta_95 = calculate_plasma_shape_params(
-        points, psi_data, [gs_solver._psi_ax * 0.05]
+        points, psi_data, [gs_solver.psi_ax * 0.05]
     )
 
     R_geo, kappa_95, delta_95 = R_geo[0], kappa_95[0], delta_95[0]
@@ -242,7 +248,7 @@ while niter <= niter_max:
     err_kappa = abs(kappa_95 - kappa95_t) / kappa95_t
     iter_err = max(err_delta, err_kappa)
 
-    print("/n previous shape parameters")
+    print("previous shape parameters")
     print(f"kappa_u: {main_params['kappa_u']}, delta_u: {main_params['delta_u']}")
 
     main_params["kappa_u"] = (
@@ -254,7 +260,7 @@ while niter <= niter_max:
         + (1 - theta) * main_params["delta_u"]
     )
 
-    print("/n recalculated shape parameters")
+    print("recalculated shape parameters")
 
 
     print(f"kappa_u: {main_params['kappa_u']}, delta_u: {main_params['delta_u']}")

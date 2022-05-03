@@ -155,7 +155,7 @@ for param_name in plasmod_params.keys():
 
 problem_settings = {
     "amin": new_params['R_0']/new_params['A'],
-    "pfus_req": 2000.0,
+    "pfus_req": 0, #2000.0,
     "pheat_max": 100.0,
     "q_control": 50.0,
     "i_impmodel": "PED_FIXED",
@@ -171,7 +171,7 @@ plasmod_build_config = {
 }
 
 plasmod_options = {"params": plasmod_params, "build_config": plasmod_build_config}
-gs_options = {"p_order": 1, "tol": 1e-4, "max_iter": 30, "verbose_plot": True}
+gs_options = {"p_order": 2, "tol": 1e-4, "max_iter": 30, "verbose_plot": True}
 
 # target values
 delta95_t = 0.333
@@ -183,9 +183,10 @@ solve_plasmod_fixed_boundary(
     gs_options,
     delta95_t,
     kappa95_t,
-    lcar_coarse=0.15,
+    lcar_coarse=0.1,
     lcar_fine=0.01,
     niter_max=5,
     iter_err_max=1e-5,
-    theta=1,
+    theta=0.8,
+    gs_i_theta=1,
 )

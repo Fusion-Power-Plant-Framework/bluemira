@@ -112,8 +112,8 @@ class PlasmodTransportSolver(TransportSolver):
         psi_ax))
         """
         profile_data = self.solver.get_profile(profile)
-        interp_data = interp1d(self.__x_phi, profile_data, kind='linear')
-        return interp_data(self.__x_psi)
+        interp_data = interp1d(self.__x_psi, profile_data, kind='linear')
+        return interp_data(self.__x_phi)
 
     @property
     def x(self):
@@ -130,7 +130,7 @@ class PlasmodTransportSolver(TransportSolver):
         """Get pprime as function of the magnetic coordinate"""
         if self._pprime is None:
             data = self._from_phi_to_psi("pprime")
-            self._pprime = UnivariateSpline(self.x, data, ext=0)
+            self._pprime = interp1d(self.x, data, kind='linear', fill_value='extrapolate')
         return self._pprime
 
     @property
@@ -138,7 +138,7 @@ class PlasmodTransportSolver(TransportSolver):
         """Get ffprime as function of the magnetic coordinate"""
         if self._ffprime is None:
             data = self._from_phi_to_psi("ffprime")
-            self._ffprime = UnivariateSpline(self.x, data, ext=0)
+            self._ffprime = interp1d(self.x, data, kind='linear', fill_value='extrapolate')
         return self._ffprime
 
     @property

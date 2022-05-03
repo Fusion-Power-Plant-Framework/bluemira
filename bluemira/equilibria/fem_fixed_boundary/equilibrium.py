@@ -54,6 +54,7 @@ def solve_plasmod_fixed_boundary(
     niter_max=30,
     iter_err_max=1e-5,
     theta=0.8,
+    gs_i_theta=0.5,
 ):
 
     niter = 0
@@ -145,6 +146,7 @@ def solve_plasmod_fixed_boundary(
             plasmod_solver.I_p,
             tol=gs_options["tol"],
             max_iter=gs_options["max_iter"],
+            i_theta=gs_i_theta,
             verbose_plot=gs_options["verbose_plot"],
         )
         solve_end = time.time()
@@ -215,6 +217,6 @@ def solve_plasmod_fixed_boundary(
         niter += 1
 
         # update builder_plasma parameters
-        builder_plasma.params.adjust_parameter("kappa_u", kappa_u)
-        builder_plasma.params.adjust_parameter("delta_u", delta_u)
+        builder_plasma.params.kappa_u = kappa_u
+        builder_plasma.params.delta_u = delta_u
         bluemira_debug(f"{builder_plasma.params}")

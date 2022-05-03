@@ -142,8 +142,6 @@ class GradShafranovLagrange:
         psi : the solution of the Grad-Shafranov problem
 
         """
-        self.g = g
-        print(g.compute_vertex_values()[1:10])
 
         if neumannBCFunction is None:
             neumannBCFunction = dolfin.Expression("0.0", degree=2)
@@ -188,6 +186,17 @@ class GradShafranovLagrange:
 
 def create_plasma(lcar=0.15):
     p = JohnerLCFS()
+    p.adjust_variable('r_0', 8.983)
+    p.adjust_variable('a', 8.983/3.1)
+    p.adjust_variable('kappa_u', 1.75)
+    p.adjust_variable('delta_u', 0.5)
+    p.adjust_variable('kappa_l', 1.85)
+    p.adjust_variable('delta_l', 0.5)
+    p.adjust_variable('phi_u_neg', 180)
+    p.adjust_variable('phi_u_pos', 0, -10, 10)
+    p.adjust_variable('phi_l_neg', -120)
+    p.adjust_variable('phi_l_pos', 30)
+
     lcfs = p.create_shape(label="LCFS")
     lcfs.mesh_options = {"lcar": lcar, "physical_group": "LCFS"}
     face = BluemiraFace(lcfs, label="plasma_surface")
@@ -311,42 +320,39 @@ def plasma_fixed_boundary(
 
     solver = GradShafranovLagrange(mesh, p=p)
 
-    j_plasma = PlasmaCurrent(transport_solver.pprime, transport_solver.ffprime,
-                             transport_solver.I_p, plasma.shape.area)
-
-    psi_data = solver.psi.compute_vertex_values()
-    psi_ax = np.max(psi_data)
-    psi_b = np.min(psi_data)
-    g = j_plasma.convert_to_dolfin(solver.V, solver.psi.compute_vertex_values(),
-                                   psi_ax, psi_b)
-
     dx = dolfin.Measure("dx", domain=mesh)
     points = mesh.coordinates()
+
+    print(transport_solver.I_p)
+
+    j_plasma = PlasmaCurrent(transport_solver.pprime, transport_solver.ffprime,
+                             transport_solver.I_p, plasma.shape.area)
+    psi_data = solver.psi.compute_vertex_values()
+    point_ax, psi_ax = find_psi_ax(points, psi_data)
+    psi_b = np.min(psi_data)
+    g = j_plasma.convert_to_dolfin(solver.V, psi_data, psi_ax, psi_b)
+    print('point_ax = {} psi_ax = {}'.format(point_ax, psi_ax))
+
+    solver.solve(g)
+
+    psi_data = solver.psi.compute_vertex_values()
+    point_ax, psi_ax = find_psi_ax(points, psi_data)
+    psi_b = np.min(psi_data)
+    g = j_plasma.convert_to_dolfin(solver.V, psi_data, psi_ax, psi_b)
+    point_ax, psi_ax = find_psi_ax(points, psi_data)
+    print('point_ax = {} psi_ax = {}'.format(point_ax, psi_ax))
 
     eps = 1.0  # error measure ||u-u_k||
     i = 0  # iteration counter
     while eps > tol and i < maxiter:
         i += 1
-        print(i)
-
         psi_data = solver.psi.compute_vertex_values()
-        psi_ax = np.max(psi_data)
-        psi_b = np.min(psi_data)
-        g_data_0 = g.compute_vertex_values()
-
-        print('PREV: psi_b = {} psi_ax = {}'.format(psi_b, psi_ax))
-
-        # axis, cntr, _ = plot_scalar_field(
-        #     points[:, 0], points[:, 1], psi_data, levels=20, axis=None,
-        #     tofill=True, contour=False,
-        # )
-        # plt.title(f'Psi at iteration {i-1}')
-        # plt.show()
+        # print('PREV: psi_b = {} psi_ax = {}'.format(psi_b, psi_ax))
 
         dolfin.plot(g, mesh)
         plt.title(f'J at iteration {i-1}')
         plt.show()
-        print(dolfin.assemble(g * dx))
+        # print(dolfin.assemble(g * dx))
 
         solver = GradShafranovLagrange(mesh, p=p)
         solver.solve(g)
@@ -357,10 +363,10 @@ def plasma_fixed_boundary(
         eps = np.linalg.norm(diff, ord=np.Inf)
         print('iter = {} eps = {}'.format(i, eps))
 
-        point_ax, psi_ax = find_psi_ax(points, psi_data)
-        print('point_ax = {} psi_ax = {}'.format(point_ax, psi_ax))
+        point_ax, psi_ax = find_psi_ax(points, new_psi_data)
+        # print('point_ax = {} psi_ax = {}'.format(point_ax, psi_ax))
 
-        psi_b = np.min(psi_data)
+        psi_b = np.min(new_psi_data)
 
         j_plasma.k = 1
         g = j_plasma.convert_to_dolfin(solver.V, solver.psi.compute_vertex_values(),
@@ -368,17 +374,6 @@ def plasma_fixed_boundary(
         j_plasma.k = j_plasma.target_curr / dolfin.assemble(g * dx)
         g = j_plasma.convert_to_dolfin(solver.V, solver.psi.compute_vertex_values(),
                                        psi_ax, psi_b)
-
-        theta = 0.1
-
-        g_data = g.compute_vertex_values()
-
-        g_data = theta * g_data + (1 - theta) * g_data_0
-
-        # g = convert_to_dolfin(solver.V, g_data)
-
-        print(dolfin.assemble(g * dx))
-        print(g)
 
     return solver
 
@@ -443,14 +438,16 @@ if __name__ == "__main__":
         plasmod_solver.x, plasmod_solver.ffprime(plasmod_solver.x), "ffprime", "-"
     )
 
+    plasma = create_plasma(0.5)
+
     gs_solver = plasma_fixed_boundary(
-        plasma=create_plasma(0.5),
+        plasma=plasma,
         createmesh=True,
         meshfile="Mesh.msh",
         meshdir=".",
         Pax=None,
         Pax_lcar=0.1,
-        maxiter=5,
+        maxiter=50,
         tol=1e-6,
         p=1,
         transport_solver=plasmod_solver,
