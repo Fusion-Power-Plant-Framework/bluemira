@@ -56,6 +56,8 @@ in derivative based algorithms, such as those utilising gradient descent.
 
 import numpy as np
 
+from bluemira.utilities.opt_problems import OptimisationConstraint
+
 
 def objective_constraint(constraint, vector, grad, objective_function, maximum_fom=1.0):
     """
@@ -70,6 +72,30 @@ def objective_constraint(constraint, vector, grad, objective_function, maximum_f
         Value to constrain the objective function by during optimisation.
     """
     constraint[:] = objective_function(vector, grad) - maximum_fom
+    return constraint
+
+
+def Ax_b_constraint(constraint, vector, grad, A_mat, b_vec):
+    """
+    Constraint function of the form:
+        A.x - b < 0.0
+
+    Parameters
+    ----------
+    constraint: np.ndarray
+        Constraint array (modified in place)
+    vector: np.ndarray
+        Current vector
+    grad: np.ndarray
+        Constraint Jacobian (modified in place)
+    A_mat: np.ndarray
+        Response matrix
+    b_vec: np.ndarray
+        Target value vector
+    """
+    constraint[:] = np.dot(A_mat, vector) - b_vec
+    if grad.size > 0:
+        grad[:] = A_mat
     return constraint
 
 
