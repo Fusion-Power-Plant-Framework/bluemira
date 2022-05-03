@@ -29,7 +29,6 @@ from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.equilibria.eq_constraints import (
     DivertorLegCalculator,
     FieldNullConstraint,
-    IsofluxConstraint,
     MagneticConstraintSet,
     PsiBoundaryConstraint,
 )
