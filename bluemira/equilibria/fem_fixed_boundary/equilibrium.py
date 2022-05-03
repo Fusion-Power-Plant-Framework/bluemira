@@ -136,8 +136,7 @@ def solve_plasmod_fixed_boundary(
         p_order = gs_options["p_order"]
         gs_solver = FemGradShafranovFixedBoundary(mesh, p_order=p_order)
 
-        print("\nSolving Grad-Shafranov...")
-
+        print("Solving Grad-Shafranov...")
         # solve the Grad-Shafranov equation
         solve_start = time.time()
         psi = gs_solver.solve(
@@ -146,6 +145,7 @@ def solve_plasmod_fixed_boundary(
             plasmod_solver.I_p,
             tol=gs_options["tol"],
             max_iter=gs_options["max_iter"],
+            verbose_plot=gs_options["verbose_plot"],
         )
         solve_end = time.time()
 
@@ -172,7 +172,7 @@ def solve_plasmod_fixed_boundary(
 
         # calculate kappa_95 and delta_95
         R_geo, kappa_95, delta_95 = calculate_plasma_shape_params(
-            points, psi_data, [gs_solver._psi_ax * 0.05]
+            points, psi_data, [gs_solver.psi_ax * 0.05]
         )
         R_geo, kappa_95, delta_95 = R_geo[0], kappa_95[0], delta_95[0]
 
@@ -215,6 +215,6 @@ def solve_plasmod_fixed_boundary(
         niter += 1
 
         # update builder_plasma parameters
-        builder_plasma.params.set_parameter("kappa_u", kappa_u, "dimensionless", source)
-        builder_plasma.params.set_parameter("delta_u", delta_u, "dimensionless", source)
+        builder_plasma.params.adjust_parameter("kappa_u", kappa_u)
+        builder_plasma.params.adjust_parameter("delta_u", delta_u)
         bluemira_debug(f"{builder_plasma.params}")

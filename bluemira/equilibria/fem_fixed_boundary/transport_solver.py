@@ -84,8 +84,8 @@ class PlasmodTransportSolver(TransportSolver):
     Plasmod transport solver class
     """
 
-    def __init__(self, params, build_config):
-        self.solver = Solver(params=params, build_config=build_config)
+    def __init__(self, **kwargs):
+        self.solver = Solver(**kwargs)
         self.solver.run()
         self._x = None
         self._pprime = None

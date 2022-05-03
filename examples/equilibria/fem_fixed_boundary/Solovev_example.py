@@ -36,7 +36,7 @@ from bluemira.equilibria.fem_fixed_boundary.fem_magnetostatic_2D import (
 )
 from bluemira.equilibria.fem_fixed_boundary.utilities import Solovev, plot_scalar_field
 from bluemira.geometry.face import BluemiraFace
-from bluemira.geometry.tools import make_bspline
+from bluemira.geometry.tools import interpolate_bspline
 from bluemira.geometry.wire import BluemiraWire
 from bluemira.mesh import meshing
 from bluemira.mesh.tools import import_mesh, msh_to_xdmf
@@ -74,8 +74,8 @@ ind0 = np.where(np.array(levels) == 0.0)[0][0]
 Dp = cntr.collections[ind0].get_paths()[0].vertices
 Dp = np.hstack((Dp, np.zeros((Dp.shape[0], 1), dtype=Dp.dtype)))
 
-curve1 = make_bspline(Dp[0 : int(len(Dp) / 2)], label="curve1")
-curve2 = make_bspline(Dp[int(len(Dp) / 2 - 1) : len(Dp)], label="curve2")
+curve1 = interpolate_bspline(Dp[0 : int(len(Dp) / 2)], label="curve1")
+curve2 = interpolate_bspline(Dp[int(len(Dp) / 2 - 1) : len(Dp)], label="curve2")
 lcfs = BluemiraWire([curve1, curve2], "LCFS")
 lcfs.mesh_options = {"lcar": 0.2, "physical_group": "lcfs"}
 

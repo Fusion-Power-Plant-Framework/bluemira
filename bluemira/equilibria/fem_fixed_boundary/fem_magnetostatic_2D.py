@@ -216,14 +216,16 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
     def __init__(self, mesh, boundaries=None, p_order=3):
         super().__init__(mesh, boundaries, p_order)
         self.k = 1
+        self._psi_ax = None
+        self._psi_b = None
 
     @property
-    def _psi_ax(self):
+    def psi_ax(self):
         """Poloidal flux on the magnetic axis"""
         return np.max(self.psi.vector()[:])
 
     @property
-    def _psi_b(self):
+    def psi_b(self):
         """Poloidal flux on the boundary"""
         return np.min(self.psi.vector()[:])
 
@@ -232,13 +234,13 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
         """Normalized flux function in 2-D"""
 
         def myfunc(x):
-            value = np.sqrt(np.abs((self.psi(x) - self._psi_ax) / (self._psi_b -
-                                                                  self._psi_ax)))
+            value = np.sqrt(np.abs((self.psi(x) - self.psi_ax) / (self.psi_b -
+                                                                  self.psi_ax)))
             return value
 
         return myfunc
 
-    def _create_g(self, pprime, ffprime, curr_target):
+    def _create_g_func(self, pprime, ffprime, curr_target):
         """
         Returns the density current function given pprime and ffprime.
 
@@ -262,7 +264,7 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
         j_target = curr_target / area
 
         def myfunc(x):
-            if self._psi_ax == 0:
+            if self.psi_ax == 0:
                 return j_target
             else:
                 r = x[0]
@@ -280,8 +282,31 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
 
                 return self.k * (a + b)
 
+        return myfunc
+
+    def _create_g(self, pprime, ffprime, curr_target):
+        """
+        Returns the density current DOLFIN function given pprime and ffprime.
+
+        Parameters
+        ----------
+        pprime: callable
+            pprime as function of psi_norm (1-D function)
+        ffprime: callable
+            ffprime as function of psi_norm (1-D function)
+        curr_target: float
+            target current (also used to initialize the solution in case self.psi is
+            still 0 and pprime and ffprime are, then, not defined)
+
+        Returns
+        -------
+        g: callble
+            source current to solve the magnetostatic problem
+        """
+        myfunc = self._create_g_func(pprime, ffprime, curr_target)
         func = ScalarSubFunc(myfunc)
         return func
+
 
     def _calculate_curr_tot(self, func):
         dx = dolfin.Measure("dx", domain=self.mesh)
@@ -301,28 +326,60 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
         neumann_bc_function=None,
         tol=1e-5,
         max_iter=10,
+        verbose=False,
+        verbose_plot=False
     ):
         """Solves the GS problem given pprime and ffprime"""
+        points = self.mesh.coordinates()
+
+        if verbose_plot:
+            self.g_func = self._create_g_func(pprime, ffprime, curr_target)
+            curr_data = np.array([self.g_func(p) for p in points])
+            axis, cntr, _ = plot_scalar_field(
+                points[:, 0], points[:, 1], curr_data, levels=20, axis=None,
+                tofill=True, contour=False,
+            )
+            plt.title(f'J current at iteration 0')
+            plt.show()
+
         self.g = self._create_g(pprime, ffprime, curr_target)
         # dx = dolfin.Measure("dx", domain=self.mesh)
         # curr_tot = dolfin.assemble(self.g * dx())
         super().solve(
             self.g, dirichlet_bc_function, dirichlet_marker, neumann_bc_function
         )
+        self._update_curr(curr_target)
 
-        eps = 1.0  # error measure ||u-u_k||
+        eps = 1.0
         i = 0  # iteration counter
         while eps > tol and i < max_iter:
-            self._update_curr(curr_target)
+            i += 1
 
-            points = self.mesh.coordinates()
+            if verbose_plot:
+                curr_data = np.array([self.g_func(p) for p in points])
+                axis, cntr, _ = plot_scalar_field(
+                    points[:, 0], points[:, 1], curr_data, levels=20, axis=None,
+                    tofill=True, contour=False,
+                )
+                plt.title(f'J current at iteration {i}')
+                plt.show()
+
             prev = np.array([self._psi_norm_2d(p) for p in points])
-            # prev = np.array([self.psi(p) for p in points])
 
+            if verbose_plot:
+                axis, cntr, _ = plot_scalar_field(
+                    points[:, 0], points[:, 1], prev, levels=20, axis=None,
+                    tofill=True
+                )
+                plt.title(f'Normalized magnetic coordinate at iteration {i}')
+                plt.show()
+            # print(f"Magnetic coordinate range = [{np.min(prev)}:{np.max(prev)}]")
+
+            # prev = np.array([self.psi(p) for p in points])
             # prev = self.psi.compute_vertex_values()
             # curr_tot = dolfin.assemble(self.g * dx())
             # print(f"pre - curr_tot = {curr_tot} - curr_dens = {self.g}")
-            i += 1
+
             super().solve(
                 self.g, dirichlet_bc_function, dirichlet_marker, neumann_bc_function
             )
@@ -331,17 +388,21 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
             # new = np.array([self.psi(p) for p in points])
             diff = new - prev
 
-            # axis, cntr, _ = plot_scalar_field(
-            #     points[:, 0], points[:, 1], diff, levels=20, axis=None,
-            #     tofill=True
-            # )
-            # plt.show()
+            if verbose_plot:
+                axis, cntr, _ = plot_scalar_field(
+                    points[:, 0], points[:, 1], diff, levels=20, axis=None,
+                    tofill=True
+                )
+                plt.title(f'GS error at iteration {i}')
+                plt.show()
 
             # diff = self.psi.compute_vertex_values() - prev
             eps = np.linalg.norm(diff, ord=2) / np.linalg.norm(new, ord=2)
 
             # curr_tot = dolfin.assemble(self.g * dx())
             # print(f"post - curr_tot = {curr_tot} - curr_dens = {self.g}")
-            print(f"iter = {i} eps = {eps} psi_ax : {self._psi_ax}")
+            print(f"iter = {i} eps = {eps} psi_ax : {self.psi_ax}")
+
+            self._update_curr(curr_target)
 
         return self.psi

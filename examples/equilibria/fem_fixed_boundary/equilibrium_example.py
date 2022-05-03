@@ -171,7 +171,7 @@ plasmod_build_config = {
 }
 
 plasmod_options = {"params": plasmod_params, "build_config": plasmod_build_config}
-gs_options = {"p_order": 2, "tol": 1e-4, "max_iter": 30}
+gs_options = {"p_order": 1, "tol": 1e-4, "max_iter": 30, "verbose_plot": True}
 
 # target values
 delta95_t = 0.333
@@ -183,8 +183,8 @@ solve_plasmod_fixed_boundary(
     gs_options,
     delta95_t,
     kappa95_t,
-    lcar_coarse=0.2,
-    lcar_fine=0.05,
+    lcar_coarse=0.15,
+    lcar_fine=0.01,
     niter_max=5,
     iter_err_max=1e-5,
     theta=1,

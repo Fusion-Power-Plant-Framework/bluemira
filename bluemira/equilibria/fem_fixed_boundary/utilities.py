@@ -28,7 +28,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import scipy
 from bluemira.geometry.coordinates import Coordinates
-from bluemira.geometry.tools import make_bspline
+from bluemira.geometry.tools import interpolate_bspline
 
 
 def b_coil_axis(r, z, pz, curr):
@@ -108,7 +108,8 @@ class ScalarSubFunc(dolfin.UserExpression):
         return ()
 
 
-def plot_scalar_field(x, y, z, levels=20, axis=None, tofill=True, **kwargs):
+def plot_scalar_field(x, y, z, levels=20, axis=None, contour=True, tofill=True,
+                      **kwargs):
 
     cntr = None
     cntrf = None
@@ -126,7 +127,9 @@ def plot_scalar_field(x, y, z, levels=20, axis=None, tofill=True, **kwargs):
     # # Directly supply the unordered, irregularly spaced coordinates
     # # to tricontour.
     # opts = {'linewidths': 0.5, 'colors':'k'}
-    cntr = axis.tricontour(x, y, z, levels=levels, **kwargs)
+    if contour:
+        cntr = axis.tricontour(x, y, z, levels=levels, **kwargs)
+
     if tofill:
         cntrf = axis.tricontourf(x, y, z, levels=levels, cmap="RdBu_r")
         plt.gcf().colorbar(cntrf, ax=axis)
@@ -244,7 +247,7 @@ def calculate_plasma_shape_params(points, data, levels):
         y = x*0
         z = vertices.T[1]
         vertices = Coordinates({'x': x, 'y': y, 'z': z})
-        wire = make_bspline(vertices,"psi_95", True)
+        wire = interpolate_bspline(vertices,"psi_95", True)
         interp_points = wire.discretize(1000)
 
         ind_z_max = np.argmax(interp_points.z)
