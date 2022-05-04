@@ -184,7 +184,8 @@ class Plot3D(Axes3D):
 
     def __init__(self):
         fig = plt.figure(figsize=[14, 14])
-        super().__init__(fig)
+        super().__init__(fig, auto_add_to_figure=False)
+        fig.add_axes(self)
         # \n to offset labels from axes
         self.set_xlabel("\n\nx [m]")
         self.set_ylabel("\n\ny [m]")
@@ -210,12 +211,15 @@ class BluemiraPathPatch3D(PathPatch3D):
     # Thank you StackOverflow
     # https://stackoverflow.com/questions/18228966/how-can-matplotlib-2d-patches-be-transformed-to-3d-with-arbitrary-normals
     def __init__(self, path, normal, translation=None, color="b", **kwargs):
+        # Initialise the patch first, or we can get into nasty recursive
+        # calls in __getattr__
+        self._patch2d = PathPatch(path, color=color, **kwargs)
+
         Patch.__init__(self, **kwargs)
 
         if translation is None:
             translation = [0, 0, 0]
 
-        self._patch2d = PathPatch(path, color=color, **kwargs)
         self._path2d = path
         self._code3d = path.codes
         self._facecolor3d = self._patch2d.get_facecolor
