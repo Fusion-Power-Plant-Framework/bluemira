@@ -125,7 +125,9 @@ def _full_z_integrand(phi, r1, r2, z1, z2):
 
 def _integrate_z_by_parts(r1, r2, z1, z2):
     """
-    Fall back to integrating the Bz integrand by parts if integration fails.
+    Integrate the Bz integrand by parts.
+
+    This can be used as a fall-kack if the full integration fails.
     """
     return (
         integrate(_partial_z_integrand_llc, (r1, z1), 0, np.pi)
