@@ -1036,41 +1036,10 @@ class PictureFrameTools:
         shape: BluemiraWire
             CAD Wire of the geometry
         """
-        # Labels
-        if flip:
-            label = "bottom"
-            z_top_r_leg = lambda: z_top + r_leg
-            z_mid_r_j = lambda: z_mid - r_j
-            z_trans_func = lambda: -(r_leg - r_j)
-            z_corner = lambda: z_mid + r_c
-            corner_angle_s = 90
-            corner_angle_e = 180
-            joint_angle_s = lambda: 90 - deg_theta_j
-            joint_angle_e = lambda: 90
-            leg_angle_s = tc_angle_e = lambda: deg_theta_trans
-            leg_angle_e = lambda: leg_angle
-            tc_angle_s = lambda: 0
-            ind = slice(None, None, -1)
-        else:
-            label = "top"
-            z_top_r_leg = lambda: z_top - r_leg
-            z_mid_r_j = lambda: z_mid + r_j
-            z_trans_func = lambda: (r_leg - r_j)
-            z_corner = lambda: z_mid - r_c
-            corner_angle_s = 180
-            corner_angle_e = 270
-            joint_angle_s = lambda: -90
-            joint_angle_e = lambda: deg_theta_j - 90
-            leg_angle_s = lambda: -leg_angle
-            leg_angle_e = tc_angle_s = lambda: -deg_theta_trans
-            tc_angle_e = lambda: 0
-            ind = slice(None)
-
         # Define the basic main curve (with no joint or transitions curves)
         alpha = np.arctan(0.5 * (x_out - x_curve_start) / abs(z_top - z_mid))
         theta_leg_basic = 2 * (np.pi - 2 * alpha)
         r_leg = 0.5 * (x_out - x_curve_start) / np.sin(theta_leg_basic * 0.5)
-        leg_centre = (x_out - 0.5 * (x_out - x_curve_start), 0, z_top_r_leg())
 
         # Transitioning Curves
         sin_a = np.sin(theta_leg_basic * 0.5)
@@ -1080,23 +1049,62 @@ class PictureFrameTools:
         r_j = min(x_curve_start - x_mid, 0.8)
         theta_j = np.arccos((r_leg * cos_a + r_j) / (r_leg + r_j))
         deg_theta_j = np.rad2deg(theta_j)
-        joint_curve_centre = (
-            leg_centre[0] - (r_leg + r_j) * np.sin(theta_j),
-            0,
-            z_mid_r_j(),
-        )
 
         # Corner Transitioning Curve
         theta_trans = np.arccos((r_j - r_leg * sin_a) / (r_j - r_leg))
         deg_theta_trans = np.rad2deg(theta_trans)
 
+        # Main leg curve angle
+        leg_angle = 90 + deg_theta_j
+
+        # Labels
+        if flip:
+            label = "bottom"
+            z_top_r_leg = z_top + r_leg
+            z_mid_r_j = z_mid - r_j
+            z_trans_diff = -(r_leg - r_j)
+            z_corner = z_mid + r_c
+            corner_angle_s = 90
+            corner_angle_e = 180
+            joint_angle_s = 90 - deg_theta_j
+            joint_angle_e = 90
+            leg_angle_s = tc_angle_e = deg_theta_trans
+            leg_angle_e = leg_angle
+            tc_angle_s = 0
+            ind = slice(None, None, -1)
+        else:
+            label = "top"
+            z_top_r_leg = z_top - r_leg
+            z_mid_r_j = z_mid + r_j
+            z_trans_diff = r_leg - r_j
+            z_corner = z_mid - r_c
+            corner_angle_s = 180
+            corner_angle_e = 270
+            joint_angle_s = -90
+            joint_angle_e = deg_theta_j - 90
+            leg_angle_s = -leg_angle
+            leg_angle_e = tc_angle_s = -deg_theta_trans
+            tc_angle_e = 0
+            ind = slice(None)
+
+        # Basic main curve centre
+        leg_centre = (x_out - 0.5 * (x_out - x_curve_start), 0, z_top_r_leg)
+
+        # Joint curve centre
+        joint_curve_centre = (
+            leg_centre[0] - (r_leg + r_j) * np.sin(theta_j),
+            0,
+            z_mid_r_j,
+        )
+
+        # Transition curve centre
         x_trans = leg_centre[0] + (r_leg - r_j) * np.cos(theta_trans)
-        z_trans = leg_centre[2] + z_trans_func() * np.sin(theta_trans)
+        z_trans = leg_centre[2] + z_trans_diff * np.sin(theta_trans)
 
         # Inner Corner
         corner_in = make_circle(
             r_c,
-            [x_mid + r_c, 0.0, z_corner()],
+            [x_mid + r_c, 0.0, z_corner],
             start_angle=corner_angle_s,
             end_angle=corner_angle_e,
             axis=[0, 1, 0],
@@ -1112,19 +1120,18 @@ class PictureFrameTools:
         joint_curve = make_circle(
             radius=r_j,
             center=joint_curve_centre,
-            start_angle=joint_angle_s(),
-            end_angle=joint_angle_e(),
+            start_angle=joint_angle_s,
+            end_angle=joint_angle_e,
             axis=axis,
             label=f"{label}_limb_joint",
         )
 
         # Main leg curve
-        leg_angle = 90 + deg_theta_j
         leg_curve = make_circle(
             radius=r_leg,
             center=leg_centre,
-            start_angle=leg_angle_s(),
-            end_angle=leg_angle_e(),
+            start_angle=leg_angle_s,
+            end_angle=leg_angle_e,
             axis=[0, 1, 0],
             label=f"{label}_limb_dome",
         )
@@ -1133,8 +1140,8 @@ class PictureFrameTools:
         transition_curve = make_circle(
             radius=r_j,
             center=[x_trans, 0, z_trans],
-            start_angle=tc_angle_s(),
-            end_angle=tc_angle_e(),
+            start_angle=tc_angle_s,
+            end_angle=tc_angle_e,
             axis=[0, 1, 0],
             label=f"{label}_limb_corner",
         )
