@@ -292,7 +292,7 @@ def run_subprocess(command: List[str], run_directory: str = ".", **kwargs) -> in
     stdout = LogPipe("print")
     stderr = LogPipe("error")
 
-    kwargs["cwd"] = kwargs.get("cwd", run_directory)
+    kwargs["cwd"] = run_directory
     kwargs.pop("shell", None)  # Protect against user input
 
     with subprocess.Popen(  # noqa :S603

@@ -109,3 +109,19 @@ class TestMappings:
     def test_get_send_mapping(self, code, send_all, expected):
         mapping = get_send_mapping(self.params, code, send_all=send_all)
         assert mapping == expected
+
+
+class TestRunSubprocess:
+
+    # TODO(hsaunders): write these tests
+    def test_passes_command_and_kwargs_to_Popen(self):
+        pass
+
+    def test_log_pipes_are_closed(self):
+        pass
+
+    def test_shell_is_always_False(self):
+        pass
+
+    def test_cwd_set_using_run_directory(self):
+        pass
