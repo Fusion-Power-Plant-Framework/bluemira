@@ -44,6 +44,7 @@ from bluemira.codes.plasmod.mapping import (
     EquilibriumModel,
     ImpurityModel,
     PedestalModel,
+    PLHModel,
     Profiles,
     SOLModel,
     TransportModel,
@@ -201,6 +202,7 @@ class Inputs(PlasmodParameters):
             ["i_equiltype", EquilibriumModel],
             ["i_pedestal", PedestalModel],
             ["isiccir", SOLModel],
+            ["plh", PLHModel],
         ]
 
         for name, model_cls in models:

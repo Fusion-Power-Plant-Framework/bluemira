@@ -100,6 +100,18 @@ class SOLModel(Model):
     SICCINIO = 1
 
 
+class PLHModel(Model):
+    """
+    L-H transition power scaling model
+
+    6 - Martin
+
+    Plasmod variable name: "plh"
+    """
+
+    MARTIN = 6
+
+
 class Profiles(Model):
     """
     Profile Selector:
@@ -389,8 +401,6 @@ PLASMOD_INPUTS = {
     # ###### "BM_INP": ("fcdp": -1.0, "dimensionless"),
     # [-] maximum Paux/R allowed
     # ###### "BM_INP": ("maxpauxor", "dimensionless"),
-    # [-] type of PLH threshold.  6 - Martin scaling. Use 6 only
-    # ###### "BM_INP": ("plh", "dimensionless"),
     # [-] scaling factor for newton scheme on NBI (100.)
     # ###### "BM_INP": ("qnbi_psepfac", "dimensionless"),
     # [-] scale factor for newton scheme on Xe (1.e-3)
@@ -508,6 +518,8 @@ PLASMOD_OUTPUTS = {
     # ############################
     # [-] plasma effective charge
     "Z_eff": ("Zeff", "amu"),  # TODO check dimensionless?
+    # [V] target loop voltage (if lower than -1e-3, ignored)-> plasma loop voltage
+    "v_burn": ("v_loop", "V"),
     # ###########################
     # Pedestal properties (type ped)
     # ############################
@@ -559,8 +571,6 @@ PLASMOD_INOUTS = {
     "q_95": ("q95", "dimensionless"),
     # [-] plasma current inductive fraction
     # ##### "BM_IO": ("f_ni", "dimensionless"),
-    # [V] target loop voltage (if lower than -1e-3, ignored)-> plasma loop voltage
-    "v_burn": ("v_loop", "V"),
     # ###########################
     # Composition properties
     # ############################
