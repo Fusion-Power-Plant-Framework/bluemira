@@ -168,3 +168,15 @@ class TestPlasmodRun:
 
         with pytest.raises(CodesError):
             run.run()
+
+
+class TestPlasmodTeardown:
+    def test_run_mode_function_updates_plasmod_params_from_file(self):
+        pass
+
+    def test_mock_updates_plasmod_params_with_defaults(self):
+        pass
+
+    def test_CodesError_if_input_file_cannot_be_read(self):
+        # we need to try both files!
+        pass
