@@ -23,10 +23,10 @@ importlib-metadata==4.11.3
 importlib-resources==5.7.1
 iniconfig==1.1.1
 ipykernel==6.13.0
-ipython==8.2.0
+ipython==8.3.0
 ipython-genutils==0.2.0
 jedi==0.18.1
-Jinja2==3.1.1
+Jinja2==3.1.2
 joblib==1.1.0
 jsonschema==4.4.0
 jupyter-client==7.3.0
@@ -91,7 +91,7 @@ threadpoolctl==3.1.0
 toml==0.10.2
 tornado==6.1
 traitlets==5.1.1
-trimesh==3.10.8
+trimesh==3.11.2
 typing-extensions==4.2.0
 wcwidth==0.2.5
 webencodings==0.5.1
