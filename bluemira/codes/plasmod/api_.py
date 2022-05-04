@@ -23,17 +23,19 @@
 API for the transport code PLASMOD and related functions
 """
 
+import os
 from enum import auto
 from typing import Any, Callable, Dict, Optional, Union
 
 from bluemira.base.constants import raw_uc
-from bluemira.base.look_and_feel import bluemira_warn
+from bluemira.base.look_and_feel import bluemira_debug, bluemira_warn
 from bluemira.base.parameter import ParameterFrame
 from bluemira.base.solver import RunMode, Task
 from bluemira.codes.error import CodesError
+from bluemira.codes.plasmod.constants import BINARY as PLASMOD_BINARY
 from bluemira.codes.plasmod.constants import NAME as PLASMOD_NAME
 from bluemira.codes.plasmod.params import PlasmodInputs
-from bluemira.codes.utilities import get_send_mapping
+from bluemira.codes.utilities import get_send_mapping, run_subprocess
 
 
 class PlasmodRunMode(RunMode):
@@ -48,7 +50,7 @@ class PlasmodRunMode(RunMode):
 
 class Setup(Task):
     """
-    Setup task for a Plasmod solver.
+    Setup task for a plasmod solver.
 
     On run, this task writes a plasmod input file using the input values
     defined in this class.
@@ -101,6 +103,7 @@ class Setup(Task):
         """
         Update plasmod inputs using the given values.
         """
+        # TODO(hsaunders1904): understand self.get_new_inputs()
         self._update_inputs_from_dict(self.get_new_inputs())
         if new_inputs:
             self._update_inputs_from_dict(new_inputs)
@@ -114,7 +117,7 @@ class Setup(Task):
                 self.inputs.write(io_stream)
         except OSError as os_error:
             raise CodesError(
-                f"Could not write Plasmod input file: '{self.input_file}': {os_error}"
+                f"Could not write plasmod input file: '{self.input_file}': {os_error}"
             ) from os_error
 
     def get_new_inputs(self, remapper: Optional[Union[Callable, Dict]] = None):
@@ -165,13 +168,13 @@ class Setup(Task):
         """
         Update inputs with the values in the input dictionary.
 
-        Warn if a given input is not known to Plasmod.
+        Warn if a given input is not known to plasmod.
         """
         for key, value in new_inputs.items():
             if hasattr(self.inputs, key):
                 setattr(self.inputs, key, value)
             else:
-                bluemira_warn(f"Plasmod input '{key}' not known.")
+                bluemira_warn(f"plasmod input '{key}' not known.")
 
     def _convert_units(self, param):
         code_unit = param.mapping[self.parent.NAME].unit
@@ -184,3 +187,54 @@ class Setup(Task):
     def _send_mapping(self) -> Dict[str, str]:
         self.__send_mapping = get_send_mapping(self.params, PLASMOD_NAME)
         return self.__send_mapping
+
+
+class Run(Task):
+    """
+    Run class for plasmod transport solver.
+    """
+
+    def __init__(
+        self,
+        params: ParameterFrame,
+        input_file: str,
+        output_file: str,
+        profiles_file: str,
+        binary=PLASMOD_BINARY,
+        run_dir: str = ".",
+    ):
+        super().__init__(params)
+        self.binary = binary
+        self.run_dir = run_dir
+        self.input_file = input_file
+        self.output_file = output_file
+        self.profiles_file = profiles_file
+
+    def run(self):
+        """
+        Run the plasmod shell task.
+
+        Runs plasmod on the command line using the given input files and
+        output path.
+
+        Raises
+        ------
+        CodesError
+            If the subprocess returns a non-zero exit code or raises an
+            OSError (e.g., the plasmod binary does not exist).
+        """
+        command = [self.binary, self.input_file, self.output_file, self.profiles_file]
+        bluemira_debug("Mode: run")
+        try:
+            self._run_subprocess(command)
+        except OSError as os_error:
+            raise CodesError(f"Failed to run plasmod: {os_error}") from os_error
+
+    def _run_subprocess(self, command, **kwargs):
+        """
+        Run a subprocess command and raise CodesError if it returns a
+        non-zero exit code.
+        """
+        return_code = run_subprocess(command, run_directory=self.run_dir, **kwargs)
+        if return_code != 0:
+            raise CodesError("plasmod 'Run' task exited with a non-zero error code.")
