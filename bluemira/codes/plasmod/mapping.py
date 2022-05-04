@@ -105,7 +105,7 @@ class PLHModel(Model):
     L-H transition power scaling model
 
     6 - Martin
-    
+
     Plasmod variable name: "plh"
     """
 
