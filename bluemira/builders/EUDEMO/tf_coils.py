@@ -679,8 +679,8 @@ class TFCoilsBuilder(OptimisedShapeBuilder):
         """
         Make a keep-out-zone for the TF coil centreline optimisation problem.
         """
-        # The keep-out zone is for the TF WP centreline, so we need add to it to prevent
-        # clashes when the winding pack thickness and casing are added.
+        # The keep-out zone is for the TF WP centreline, so we need to add to it to
+        # prevent clashes when the winding pack thickness and casing are added.
         tk_offset = 0.5 * self._params.tf_wp_width.value
         # Variable thickness of the casing is problematic...
         # TODO: Improve this estimate (or use variable offset here too..)
