@@ -25,7 +25,11 @@ import pytest
 from bluemira.builders.EUDEMO.pf_coils import make_coil_mapper
 from bluemira.equilibria.coils import Coil
 from bluemira.geometry.face import BluemiraFace
-from bluemira.geometry.parameterisations import PrincetonD, TripleArc
+from bluemira.geometry.parameterisations import (
+    PrincetonD,
+    TaperedPictureFrame,
+    TripleArc,
+)
 from bluemira.geometry.tools import boolean_cut, make_polygon
 
 
@@ -34,18 +38,17 @@ class TestMakeCoilMapper:
         PrincetonD(
             {"x1": {"value": 4}, "x2": {"value": 14}, "dz": {"value": 0}}
         ).create_shape(label="PrincetonD"),
-        # Waiting on #747
-        # TaperedPictureFrame(
-        #     {
-        #         "x1": {"value": 4, "upper_bound": 5},
-        #         "x2": {"value": 5, "upper_bound": 6},
-        #         "x3": {"value": 11.5, "upper_bound": 12},
-        #         "ri": {"value": 0},
-        #         "ro": {"value": 1},
-        #         "z1": {"value": 8},
-        #         "z2": {"value": 9, "upper_bound": 10},
-        #     }
-        # ).create_shape(label="TPFrame"),
+        TaperedPictureFrame(
+            {
+                "x1": {"value": 4, "upper_bound": 5},
+                "x2": {"value": 5, "upper_bound": 6},
+                "x3": {"value": 11.5, "upper_bound": 12},
+                "ri": {"value": 0},
+                "ro": {"value": 1},
+                "z1": {"value": 8},
+                "z2": {"value": 9, "upper_bound": 10},
+            }
+        ).create_shape(label="TPFrame"),
         TripleArc().create_shape(label="TripleArc"),
     ]
 
