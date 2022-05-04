@@ -18,7 +18,7 @@ entrypoints==0.4
 fluids==1.0.21
 fortranformat==1.2.0
 gmsh-interop==2021.1.1
-imageio==2.18.0
+imageio==2.19.0
 importlib-metadata==4.11.3
 importlib-resources==5.7.1
 iniconfig==1.1.1
@@ -39,7 +39,7 @@ matplotlib==3.5.1
 MeshPy==2020.1
 mistune==0.8.4
 natsort==8.1.0
-nbclient==0.6.0
+nbclient==0.6.2
 nbconvert==6.5.0
 nbformat==5.3.0
 nest-asyncio==1.5.5
