@@ -83,6 +83,7 @@ class ConfigurationSchema:
     shaf_shift: Parameter
     C_Ejima: Parameter
     m_s_limit: Parameter
+    T_e_ped: Parameter
 
     # Heating and current drive
     f_ni: Parameter

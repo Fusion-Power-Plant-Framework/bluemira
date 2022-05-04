@@ -19,10 +19,11 @@
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 
-import filecmp
 import os
+import tempfile
 
 import matplotlib.pyplot as plt
+from matplotlib.testing import compare as mpl_compare
 
 from bluemira.balance_of_plant.plotting import SuperSankey
 from bluemira.base.file import get_bluemira_path
@@ -35,7 +36,6 @@ class TestSuperSankey:
 
         scale = 0.001
         gap = 0.25
-        trunk_length = 0.0007 / scale
         l_standard = 0.0006 / scale  # standard arrow length
         l_medium = 0.001 / scale  # medium arrow length
         sankey = SuperSankey(scale=scale, gap=gap)
@@ -70,13 +70,12 @@ class TestSuperSankey:
             pathlengths=[l_medium, l_standard],
             connect=[(2, 0), (1, 1)],
         )
-
         sankey.finish()
+
         figure = plt.gcf()
+        new_file = tempfile.NamedTemporaryFile()
+        figure.savefig(new_file)
 
         path = get_bluemira_path("balance_of_plant/test_data", subfolder="tests")
-        name_new = os.sep.join([path, "sankey_test_new.png"])
-        figure.savefig(name_new)
-        name_old = os.sep.join([path, "sankey_test.png"])
-
-        assert filecmp.cmp(name_new, name_old, shallow=False)
+        reference_file = os.path.join(path, "sankey_test.png")
+        assert mpl_compare.compare_images(reference_file, new_file.name, 0.001) is None

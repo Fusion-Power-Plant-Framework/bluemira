@@ -199,7 +199,7 @@ class SuperSankey(Sankey):
             new_tip = self.diagrams[-1].tips[this_f_index].copy()
             # Clean sankey plot
             self.diagrams.pop()
-            self.ax.patches.pop()
+            self.ax.patches[-1].remove()
             return np.sum(np.abs(tip2 - new_tip))
 
         x0 = np.zeros(2)

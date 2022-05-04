@@ -445,7 +445,7 @@ def get_contours(x, z, array, value):
         The points of the value contour in the array
     """
     qcg = QuadContourGenerator(x, z, array, None, None, 0)
-    return qcg.create_contour(value)
+    return qcg.create_contour(value)[0]
 
 
 def find_flux_surfs(x, z, psi, psinorm, o_points=None, x_points=None):

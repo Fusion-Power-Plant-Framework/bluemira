@@ -20,9 +20,10 @@ install_requires = [
     "click",
     "CoolProp",
     "fortranformat",
+    "gmsh",
     "imageio",
     "ipykernel",
-    "matplotlib<=3.3.4",  # upgrade on BP removal
+    "matplotlib",
     "natsort",
     "neutronics-material-maker==0.1.11",  # Crash on upgrade
     "nlopt",
