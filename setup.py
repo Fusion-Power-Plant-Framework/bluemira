@@ -20,6 +20,7 @@ install_requires = [
     "click",
     "CoolProp",
     "fortranformat",
+    "gmsh",
     "imageio",
     "ipykernel",
     "matplotlib",
