@@ -49,6 +49,8 @@ import abc
 import enum
 from typing import Any, Callable, Dict, Optional, Type
 
+from bluemira.base.parameter import ParameterFrame
+
 
 class Task(abc.ABC):
     """
@@ -58,7 +60,7 @@ class Task(abc.ABC):
     "run modes" can also be defined.
     """
 
-    def __init__(self, params: Dict[str, Any]) -> None:
+    def __init__(self, params: ParameterFrame) -> None:
         self._params = params
 
     @abc.abstractmethod
