@@ -45,6 +45,7 @@ from bluemira.equilibria.coils import CoilSet
 from bluemira.equilibria.eq_constraints import MagneticConstraintSet
 from bluemira.equilibria.equilibrium import Equilibrium
 from bluemira.equilibria.error import EquilibriaError
+from bluemira.equilibria.opt_constraints import MagneticConstraint
 from bluemira.equilibria.positioner import RegionMapper
 from bluemira.utilities.opt_problems import (
     OptimisationConstraint,
@@ -815,3 +816,20 @@ class NestedCoilsetPositionCOP(CoilsetOptimisationProblem):
         sub_opt()
         fom = sub_opt.opt.optimum_value
         return fom
+
+
+class NewCurrentCOP(CoilsetOptimisationProblem):
+    def __init__(self, eq, optimiser, max_currents=None, constraints=None):
+        self.eq = eq
+        objective = OptimisationObjective(objectives.minimise_coil_currents)
+        super().__init__(eq.coilset, optimiser, objective, constraints)
+
+        bounds = self.get_current_bounds(self.coilset, max_currents, self.scale)
+        dimension = len(bounds[0])
+        self.set_up_optimiser(dimension, bounds)
+
+    def optimise(self):
+        for constraint in self._constraints:
+            if isinstance(constraint, MagneticConstraint):
+                constraint.prepare(self.eq, I_not_dI=False, fixed_coils=True)
+        return super().optimise()
