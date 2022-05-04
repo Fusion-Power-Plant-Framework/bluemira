@@ -18,7 +18,7 @@ entrypoints==0.4
 fluids==1.0.21
 fortranformat==1.2.0
 gmsh-interop==2021.1.1
-imageio==2.18.0
+imageio==2.19.0
 importlib-metadata==4.11.3
 importlib-resources==5.7.1
 iniconfig==1.1.1
