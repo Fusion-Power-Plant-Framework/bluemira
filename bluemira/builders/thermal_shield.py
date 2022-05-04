@@ -309,6 +309,7 @@ class CyrostatThermalShieldBuilder(Builder):
             - 1,  # TODO: Put back `degree/ self._params.n_TF.value,` (#902)
         )
         cryostat_ts = PhysicalComponent("Cryostat TS", cts)
+        cryostat_ts.display_cad_options.color = BLUE_PALETTE["TS"][0]
         component.add_child(cryostat_ts)
         # TODO: Put back sector segmentation (see #902 for details)
         # n_ts_draw = max(1, int(degree // (360 // self._params.n_TF.value)))
