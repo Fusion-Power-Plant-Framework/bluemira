@@ -82,6 +82,7 @@ exclude =
     generated_data,
     # versioneer is 3rd-party and we aren't liable for their code
     versioneer.py,
+    BLUEPRINT/_version.py,
     bluemira/_version.py,
     # Ignore mirapy for now
     mirapy,
