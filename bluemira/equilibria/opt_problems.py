@@ -828,8 +828,11 @@ class NewCurrentCOP(CoilsetOptimisationProblem):
         dimension = len(bounds[0])
         self.set_up_optimiser(dimension, bounds)
 
-    def optimise(self):
-        for constraint in self._constraints:
-            if isinstance(constraint, MagneticConstraint):
-                constraint.prepare(self.eq, I_not_dI=False, fixed_coils=True)
+    def optimise(self, I_not_dI=False, fixed_coils=True):
+        if self._constraints is not None:
+            for constraint in self._constraints:
+                if isinstance(constraint, MagneticConstraint):
+                    constraint.prepare(
+                        self.eq, I_not_dI=I_not_dI, fixed_coils=fixed_coils
+                    )
         return super().optimise()

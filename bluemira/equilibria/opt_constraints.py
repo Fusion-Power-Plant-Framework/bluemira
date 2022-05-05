@@ -250,6 +250,8 @@ def coil_field_constraints(constraint, vector, grad, eq, B_max, scale):
 from abc import ABC, abstractmethod
 from typing import Union
 
+from bluemira.utilities.tools import is_num
+
 
 class MagneticConstraint(ABC, OptimisationConstraint):
     """
@@ -260,10 +262,12 @@ class MagneticConstraint(ABC, OptimisationConstraint):
         self,
         target_value=None,
         weights: Union[float, np.ndarray] = 1.0,
-        tolerance=np.array([1e-6]),
+        tolerance=1e-6,
         constraint_type="inequality",
     ):
         self.target_value = target_value * np.ones(len(self))
+        if is_num(tolerance):
+            tolerance = tolerance * np.ones(len(self))
         self.weights = weights
         args = {"a_mat": None, "b_vec": None}
         super().__init__(
@@ -340,7 +344,7 @@ class AbsoluteMagneticConstraint(MagneticConstraint):
         z,
         target_value,
         weights: Union[float, np.ndarray] = 1.0,
-        tolerance=np.array([1e-6]),
+        tolerance=1e-6,
         constraint_type="inequality",
     ):
         self.x = x
@@ -359,7 +363,7 @@ class RelativeMagneticConstraint(MagneticConstraint):
         ref_z,
         target_value: float = 0.0,
         weights: Union[float, np.ndarray] = 1.0,
-        tolerance=np.array([1e-6]),
+        tolerance=1e-6,
         constraint_type="inequality",
     ):
         self.x = x
@@ -407,7 +411,12 @@ class FieldNullConstraint(AbsoluteMagneticConstraint):
     """
 
     def __init__(
-        self, x, z, weights, tolerance=np.array([1e-6]), constraint_type="equality"
+        self,
+        x,
+        z,
+        weights: Union[float, np.ndarray] = 1.0,
+        tolerance=1e-6,
+        constraint_type="equality",
     ):
         super().__init__(x, z, 0.0, weights, tolerance, constraint_type)
 
