@@ -29,7 +29,8 @@ from typing import Any, Callable, Dict, Optional, Union
 from bluemira.base.constants import raw_uc
 from bluemira.base.look_and_feel import bluemira_debug, bluemira_warn
 from bluemira.base.parameter import ParameterFrame
-from bluemira.base.solver import RunMode, Task
+from bluemira.base.solver import RunMode as _RunMode
+from bluemira.base.solver import SolverABC, Task
 from bluemira.codes.error import CodesError
 from bluemira.codes.plasmod.constants import BINARY as PLASMOD_BINARY
 from bluemira.codes.plasmod.constants import NAME as PLASMOD_NAME
@@ -43,7 +44,7 @@ from bluemira.codes.utilities import (
 )
 
 
-class PlasmodRunMode(RunMode):
+class RunMode(_RunMode):
     """
     RunModes for plasmod
     """
@@ -73,13 +74,13 @@ class Setup(PlasmodTask):
     defined in this class.
     """
 
-    DEFAULT_INPUT_FILE = "plasmod_input.dat"
-
     def __init__(
         self,
         params: ParameterFrame,
-        problem_settings: Dict[str, Any] = None,
-        input_file=DEFAULT_INPUT_FILE,
+        problem_settings: Dict[str, Any],
+        # TODO(hsaunders1904): rename this; input_file is confusing,
+        # because it's actually an output file of this task
+        input_file: str,
     ) -> None:
         super().__init__(params)
 
@@ -218,11 +219,9 @@ class Run(PlasmodTask):
         output_file: str,
         profiles_file: str,
         binary=PLASMOD_BINARY,
-        run_dir: str = ".",
     ):
         super().__init__(params)
         self.binary = binary
-        self.run_dir = run_dir
         self.input_file = input_file
         self.output_file = output_file
         self.profiles_file = profiles_file
@@ -252,7 +251,7 @@ class Run(PlasmodTask):
         Run a subprocess command and raise CodesError if it returns a
         non-zero exit code.
         """
-        return_code = run_subprocess(command, run_directory=self.run_dir, **kwargs)
+        return_code = run_subprocess(command, **kwargs)
         if return_code != 0:
             raise CodesError("plasmod 'Run' task exited with a non-zero error code.")
 
@@ -366,3 +365,88 @@ class Teardown(PlasmodTask):
                 bm_outputs[bm_key] = {"value": value, "unit": code_unit}
 
         self.params.update_kw_parameters(bm_outputs, source=source)
+
+
+class Solver(SolverABC):
+    """
+    Plasmod solver class.
+
+    Parameters
+    ----------
+    params: ParameterFrame
+        ParameterFrame for plasmod.
+    build_config: Dict[str, Any]
+        Build configuration dictionary.
+        Expected keys include:
+            - binary: str, path to the plasmod binary.
+            - problem_settings: Dict[str, Any], any plasmod specific
+              parameters (i.e., parameters that bluemira does not have
+              direct mappings to through the ParameterFrame).
+            - input_file: str, the path to write the plasmod input file
+              to, this can be a relative path.
+            - output_file: str, the path to write the plasmod scalar
+              output file to.
+            - profiles_file: str, the path to write the plasmod profiles
+              output file to.
+    """
+
+    setup_cls = Setup
+    run_cls = Run
+    teardown_cls = Teardown
+
+    DEFAULT_INPUT_FILE = "plasmod_input.dat"
+    DEFAULT_OUTPUT_FILE = "plasmod_output.dat"
+    DEFAULT_PROFILES_FILE = "plasmod_profiles.dat"
+
+    def __init__(self, params: ParameterFrame, build_config: Dict[str, Any] = None):
+        self.params = params
+        self.build_config = {} if build_config is None else build_config
+
+        self.binary = self.build_config.get("binary", PLASMOD_BINARY)
+        self.problem_settings = self.build_config.get("problem_settings", {})
+        self.input_file = self.build_config.get("input_file", self.DEFAULT_INPUT_FILE)
+        self.output_file = self.build_config.get("output_file", self.DEFAULT_OUTPUT_FILE)
+        self.profiles_file = self.build_config.get(
+            "profiles_file", self.DEFAULT_PROFILES_FILE
+        )
+
+        # TODO(hsaunders): sanity check file paths are not equal?
+
+        self._setup = Setup(self.params, self.problem_settings, self.input_file)
+        self._run = Run(
+            self.params,
+            self.input_file,
+            self.output_file,
+            self.profiles_file,
+            self.binary,
+        )
+        self._teardown = Teardown(self.params, self.output_file, self.profiles_file)
+
+    def execute(self, run_mode: RunMode) -> ParameterFrame:
+        """
+        Execute this plasmod solver.
+
+        This solver:
+            1. writes a plasmod input file using the given bluemira and
+               problem parameters.
+            2. processes that file using a shell call to plasmod.
+            3. reads the plasmod output files, and updates this object's
+               ParameterFrame with the results.
+
+        Parameters
+        ----------
+        run_mode: RunMode
+            The mode to execute this solver in.
+        """
+        setup = self._get_execution_method(self._setup, run_mode)
+        run = self._get_execution_method(self._run, run_mode)
+        teardown = self._get_execution_method(self._teardown, run_mode)
+
+        if setup:
+            setup()
+        if run:
+            run()
+        if teardown:
+            teardown()
+
+        return self.params

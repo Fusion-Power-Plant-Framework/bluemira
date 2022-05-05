@@ -26,7 +26,8 @@ import pytest
 
 from bluemira.base.config import Configuration
 from bluemira.codes.error import CodesError
-from bluemira.codes.plasmod.api_ import Run, Setup, Teardown
+from bluemira.codes.plasmod.api_ import Run, Setup, Solver, Teardown
+from bluemira.codes.plasmod.constants import BINARY as PLASMOD_BINARY
 from tests._helpers import combine_text_mock_write_calls
 
 _MODULE_REF = "bluemira.codes.plasmod.api_"
@@ -35,6 +36,7 @@ _MODULE_REF = "bluemira.codes.plasmod.api_"
 class TestPlasmodSetup:
     def setup_method(self):
         self.default_pf = Configuration()
+        self.input_file = "/path/to/input.dat"
 
     def test_inputs_updated_from_problem_settings_on_init(self):
         problem_settings = {
@@ -43,7 +45,7 @@ class TestPlasmodSetup:
             "nx": 25,
         }
 
-        setup = Setup(self.default_pf, problem_settings=problem_settings)
+        setup = Setup(self.default_pf, problem_settings, self.input_file)
 
         assert setup.inputs.v_loop == -1.5e-3
         assert setup.inputs.q_heat == 1.5
@@ -55,7 +57,7 @@ class TestPlasmodSetup:
             "q_heat": 1.5,
             "nx": 25,
         }
-        setup = Setup(self.default_pf)
+        setup = Setup(self.default_pf, {}, self.input_file)
 
         setup.update_inputs(new_inputs)
 
@@ -65,7 +67,7 @@ class TestPlasmodSetup:
 
     def test_update_inputs_shows_warning_if_input_unknown(self):
         new_inputs = {"not_a_param": -1.5e-3}
-        setup = Setup(self.default_pf)
+        setup = Setup(self.default_pf, {}, self.input_file)
 
         with mock.patch(f"{_MODULE_REF}.bluemira_warn") as bm_warn:
             setup.update_inputs(new_inputs)
@@ -74,11 +76,7 @@ class TestPlasmodSetup:
 
     def test_run_writes_plasmod_dat_file(self):
         problem_settings = {"v_loop": -1.5e-3, "q_heat": 1.5, "nx": 25}
-        setup = Setup(
-            self.default_pf,
-            problem_settings=problem_settings,
-            input_file="/some/file/path.dat",
-        )
+        setup = Setup(self.default_pf, problem_settings, "/some/file/path.dat")
 
         with mock.patch("builtins.open", new_callable=mock.mock_open) as open_mock:
             setup.run()
@@ -103,7 +101,7 @@ class TestPlasmodSetup:
             setup.run()
 
     def test_mock_does_not_write_dat_file(self):
-        setup = Setup(self.default_pf)
+        setup = Setup(self.default_pf, {}, self.input_file)
 
         with mock.patch("builtins.open", new_callable=mock.mock_open) as open_mock:
             setup.mock()
@@ -111,7 +109,7 @@ class TestPlasmodSetup:
         open_mock.assert_not_called()
 
     def test_read_does_not_write_dat_file(self):
-        setup = Setup(self.default_pf)
+        setup = Setup(self.default_pf, {}, self.input_file)
 
         with mock.patch("builtins.open", new_callable=mock.mock_open) as open_mock:
             setup.read()
@@ -245,3 +243,23 @@ class TestPlasmodTeardown:
         call_args = [call.args for call in open_mock.call_args_list]
         assert ("/path/to/output/file.csv", "r") in call_args
         assert ("/path/to/profiles/file.csv", "r") in call_args
+
+
+class TestPlasmodSolver:
+    def setup_method(self):
+        self.default_pf = Configuration()
+
+    @pytest.mark.parametrize(
+        "key, default",
+        [
+            ("binary", PLASMOD_BINARY),
+            ("problem_settings", {}),
+            ("input_file", Solver.DEFAULT_INPUT_FILE),
+            ("output_file", Solver.DEFAULT_OUTPUT_FILE),
+            ("profiles_file", Solver.DEFAULT_PROFILES_FILE),
+        ],
+    )
+    def test_init_sets_default_build_config_value(self, key, default):
+        solver = Solver(self.default_pf)
+
+        assert getattr(solver, key) == default
