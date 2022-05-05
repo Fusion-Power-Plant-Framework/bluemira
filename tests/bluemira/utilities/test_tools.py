@@ -21,12 +21,14 @@
 
 import json
 import os
+from io import StringIO
 
 import numpy as np
 import pytest
 
 from bluemira.base.file import get_bluemira_path
 from bluemira.utilities.tools import (
+    CommentJSONDecoder,
     NumpyJSONEncoder,
     asciistr,
     cartesian_to_polar,
@@ -41,6 +43,36 @@ from bluemira.utilities.tools import (
     norm,
     polar_to_cartesian,
 )
+
+
+class TestCommentJSONDecoder:
+    def test_decoder(self):
+        loaded = json.load(
+            StringIO(
+                """{
+                "reference_data_root": "",
+                "generated_data_root": "",
+                "plot_flag": {"abgc": false},
+                "process_mode": "run input",
+                "process_indat": "IN.DAT",
+                "plasma_mode": "mock",  //Thisis a comment @#$%^&*()_+|'
+                // hellloo
+                }
+            """
+            ),
+            cls=CommentJSONDecoder,
+        )
+
+        result = {
+            "reference_data_root": "",
+            "generated_data_root": "",
+            "plot_flag": {"abgc": False},
+            "process_mode": "run input",
+            "process_indat": "IN.DAT",
+            "plasma_mode": "mock",
+        }
+
+        assert loaded == result
 
 
 class TestNumpyJSONEncoder:
@@ -282,7 +314,7 @@ def test_polar_cartesian():
 class TestGetModule:
     test_mod = "bluemira.utilities.tools"
     test_mod_loc = get_bluemira_path("utilities") + "/tools.py"
-    test_class_name = "NumpyJSONEncoder"
+    test_class_name = "CommentJSONDecoder"
 
     def test_getmodule(self):
         for mod in [self.test_mod, self.test_mod_loc]:
@@ -321,13 +353,13 @@ class TestGetModule:
             assert the_class.__name__ == self.test_class_name
 
     def test_get_class_default(self):
-        class_name = "NumpyJSONEncoder"
+        class_name = "CommentJSONDecoder"
         for mod in [self.test_mod, self.test_mod_loc]:
             the_class = get_class_from_module(class_name, default_module=mod)
             assert the_class.__name__ == class_name
 
     def test_get_class_default_override(self):
-        class_name = "NumpyJSONEncoder"
+        class_name = "CommentJSONDecoder"
         for mod in [self.test_mod, self.test_mod_loc]:
             the_class = get_class_from_module(
                 f"{mod}::{self.test_class_name}", default_module="a_module"
