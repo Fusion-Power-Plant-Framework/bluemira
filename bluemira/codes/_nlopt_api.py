@@ -385,7 +385,7 @@ class NLOPTOptimiser:
         self._append_constraint_tols(f_constraint, tolerance)
 
     @_opt_inputs_ready
-    def add_eq_constraint(self, f_constraint, tolerance):
+    def add_eq_constraints(self, f_constraint, tolerance):
         """
         Add a vector-valued equality constraint.
 
