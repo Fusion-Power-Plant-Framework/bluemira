@@ -821,7 +821,9 @@ class NestedCoilsetPositionCOP(CoilsetOptimisationProblem):
 class NewCurrentCOP(CoilsetOptimisationProblem):
     def __init__(self, eq, optimiser, max_currents=None, constraints=None):
         self.eq = eq
-        objective = OptimisationObjective(objectives.minimise_coil_currents)
+        objective = OptimisationObjective(
+            objectives.minimise_coil_currents, f_objective_args={}
+        )
         super().__init__(eq.coilset, optimiser, objective, constraints)
 
         bounds = self.get_current_bounds(self.coilset, max_currents, self.scale)
@@ -835,4 +837,10 @@ class NewCurrentCOP(CoilsetOptimisationProblem):
                     constraint.prepare(
                         self.eq, I_not_dI=I_not_dI, fixed_coils=fixed_coils
                     )
-        return super().optimise()
+
+        initial_state, n_states = self.read_coilset_state(self.eq.coilset, self.scale)
+        _, _, initial_currents = np.array_split(initial_state, n_states)
+
+        state = self.opt.optimise(initial_currents)
+        self.set_coilset_state(self.eq.coilset, state, self.scale)
+        return self.coilset

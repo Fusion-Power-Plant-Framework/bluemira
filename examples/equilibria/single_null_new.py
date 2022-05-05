@@ -79,7 +79,7 @@ sof_zbdry = data["zbdry"]
 # Make the same CoilSet as CREATE
 
 # %%
-x = [5.4, 14, 17.75, 17.75, 14.0, 7, 2.77, 2.77, 2.77, 2.77, 2.77]
+x = [5.4, 14.0, 17.75, 17.75, 14.0, 7.0, 2.77, 2.77, 2.77, 2.77, 2.77]
 z = [9.26, 7.9, 2.5, -2.5, -7.9, -10.5, 7.07, 4.08, -0.4, -4.88, -7.86]
 dx = [0.6, 0.7, 0.5, 0.5, 0.7, 1.0, 0.4, 0.4, 0.4, 0.4, 0.4]
 dz = [0.6, 0.7, 0.5, 0.5, 0.7, 1.0, 2.99 / 2, 2.99 / 2, 5.97 / 2, 2.99 / 2, 2.99 / 2]
@@ -107,9 +107,9 @@ coilset = CoilSet(coils)
 
 # Assign current density and peak field constraints
 coilset.assign_coil_materials("CS", j_max=16.5, b_max=12.5)
-coilset.assign_coil_materials("PF", j_max=12.5, b_max=11)
+coilset.assign_coil_materials("PF", j_max=12.5, b_max=11.0)
 coilset.fix_sizes()
-coilset.mesh_coils(0.3)
+# coilset.mesh_coils(0.3)
 
 
 # %%[markdown]
@@ -128,13 +128,13 @@ B_0 = 4.8901  # ???
 A = 3.1
 kappa_95 = 1.65
 delta_95 = 0.33
-tau_flattop = 2 * 3600
+tau_flattop = 2 * 3600.0
 v_burn = 4.220e-2  # V
 c_ejima = 0.3
 
 
 isoflux = IsofluxConstraint(
-    sof_xbdry, sof_zbdry, sof_xbdry[0], sof_zbdry[0], tolerance=1e-6
+    np.array(sof_xbdry), np.array(sof_zbdry), sof_xbdry[0], sof_zbdry[0], tolerance=1e-6
 )
 
 xp_idx = np.argmin(sof_zbdry)
@@ -142,7 +142,7 @@ x_point = FieldNullConstraint(
     sof_xbdry[xp_idx], sof_zbdry[xp_idx], tolerance=1e-6, constraint_type="inequality"
 )
 
-grid = Grid(3, 13, -10, 10, 65, 65)
+grid = Grid(3.0, 13.0, -10.0, 10.0, 65, 65)
 profiles = CustomProfile(
     np.sqrt(np.linspace(1, 0)),
     np.sqrt(np.linspace(1, 0)),
@@ -154,6 +154,7 @@ eq = Equilibrium(coilset, grid, profiles=profiles, Ip=I_p, RB0=[R_0, B_0])
 opt_problem = NewCurrentCOP(
     eq,
     Optimiser("SLSQP", opt_conditions={"max_eval": 2000, "ftol_rel": 1e-6}),
+    max_currents=coilset.get_max_currents(0.0),
     constraints=[isoflux, x_point],
 )
 
