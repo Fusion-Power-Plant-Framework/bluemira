@@ -33,8 +33,14 @@ from bluemira.base.solver import RunMode, Task
 from bluemira.codes.error import CodesError
 from bluemira.codes.plasmod.constants import BINARY as PLASMOD_BINARY
 from bluemira.codes.plasmod.constants import NAME as PLASMOD_NAME
+from bluemira.codes.plasmod.mapping import mappings as plasmod_mappings
 from bluemira.codes.plasmod.params import PlasmodInputs, PlasmodOutputs
-from bluemira.codes.utilities import get_recv_mapping, get_send_mapping, run_subprocess
+from bluemira.codes.utilities import (
+    add_mapping,
+    get_recv_mapping,
+    get_send_mapping,
+    run_subprocess,
+)
 
 
 class PlasmodRunMode(RunMode):
@@ -47,7 +53,19 @@ class PlasmodRunMode(RunMode):
     MOCK = auto()
 
 
-class Setup(Task):
+class PlasmodTask(Task):
+    """
+    A task related to plasmod.
+
+    This adds plasmod parameter mappings to the input ParameterFrame.
+    """
+
+    def __init__(self, params: ParameterFrame) -> None:
+        super().__init__(params)
+        add_mapping(PLASMOD_NAME, self._params, plasmod_mappings)
+
+
+class Setup(PlasmodTask):
     """
     Setup task for a plasmod solver.
 
@@ -176,7 +194,7 @@ class Setup(Task):
                 bluemira_warn(f"plasmod input '{key}' not known.")
 
     def _convert_units(self, param):
-        code_unit = param.mapping[self.parent.NAME].unit
+        code_unit = param.mapping[PLASMOD_NAME].unit
         if code_unit is not None:
             return raw_uc(param.value, param.unit, code_unit)
         else:
@@ -188,7 +206,7 @@ class Setup(Task):
         return self.__send_mapping
 
 
-class Run(Task):
+class Run(PlasmodTask):
     """
     Run class for plasmod transport solver.
     """
@@ -239,7 +257,7 @@ class Run(Task):
             raise CodesError("plasmod 'Run' task exited with a non-zero error code.")
 
 
-class Teardown(Task):
+class Teardown(PlasmodTask):
     """
     Plasmod teardown task.
 
@@ -279,7 +297,7 @@ class Teardown(Task):
         """
         try:
             with open(self.output_file, "r") as scalar_file:
-                with open(self.profiles_file) as profiles_file:
+                with open(self.profiles_file, "r") as profiles_file:
                     self.outputs = PlasmodOutputs.from_files(scalar_file, profiles_file)
         except OSError as os_error:
             raise CodesError(
@@ -304,14 +322,19 @@ class Teardown(Task):
         Iterate over the plasmod-bluemira parameter mappings and map the
         bluemira parameter names to plasmod output values.
         """
-        bm_outputs = {}
+        bm_outputs: Dict[str, Any] = {}
         for plasmod_key, bm_key in self._recv_mapping.items():
             try:
-                bm_outputs[bm_key] = getattr(self.outputs, plasmod_key)
+                output_value = getattr(self.outputs, plasmod_key)
             except AttributeError as attr_error:
                 raise CodesError(
                     f"No plasmod output '{plasmod_key}' in plasmod outputs list."
                 ) from attr_error
+            if output_value is not None:
+                # Catches cases where parameters may be missing from the
+                # output file, in which case we get the default, which
+                # can be None.
+                bm_outputs[bm_key] = output_value
         return bm_outputs
 
     @property
