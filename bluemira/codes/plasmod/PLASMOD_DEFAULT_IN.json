@@ -47,7 +47,7 @@
     "k95": 1.652,
     "q95": 3.5,
     "fuelmix": 0.5,
-    "fuehe3": 0.0,
+    "fuelhe3": 0.0,
     "globtau_d": 10.0,
     "globtau_t": 10.0,
     "globtau_he": 10.0,
