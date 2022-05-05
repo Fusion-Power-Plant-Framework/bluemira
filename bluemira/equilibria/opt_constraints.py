@@ -300,7 +300,7 @@ class MagneticConstraint(ABC, OptimisationConstraint):
         self._args["b_vec"] = self.target_value - self.evaluate(equilibrium)
 
     def __call__(self, constraint, vector, grad):
-        super().__call__(constraint, vector, grad)
+        return super().__call__(constraint, vector, grad)
 
     def update_target(self, equilibrium):
         pass

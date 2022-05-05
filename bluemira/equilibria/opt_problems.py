@@ -841,6 +841,6 @@ class NewCurrentCOP(CoilsetOptimisationProblem):
         initial_state, n_states = self.read_coilset_state(self.eq.coilset, self.scale)
         _, _, initial_currents = np.array_split(initial_state, n_states)
 
-        state = self.opt.optimise(initial_currents)
-        self.set_coilset_state(self.eq.coilset, state, self.scale)
+        currents = self.opt.optimise(initial_currents)
+        self.coilset.set_control_currents(currents * self.scale)
         return self.coilset

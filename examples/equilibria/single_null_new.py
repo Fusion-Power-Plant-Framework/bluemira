@@ -160,3 +160,5 @@ opt_problem = NewCurrentCOP(
 
 program = PicardBaseIterator(eq, profiles, opt_problem, I_not_dI=True, fixed_coils=True)
 program()
+
+# %%
