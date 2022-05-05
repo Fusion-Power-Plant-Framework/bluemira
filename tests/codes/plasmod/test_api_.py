@@ -18,14 +18,15 @@
 #
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
+import copy
 import re
 from unittest import mock
 
 import pytest
 
-from bluemira.base.parameter import ParameterFrame
+from bluemira.base.config import Configuration
 from bluemira.codes.error import CodesError
-from bluemira.codes.plasmod.api_ import Run, Setup
+from bluemira.codes.plasmod.api_ import Run, Setup, Teardown
 from tests._helpers import combine_text_mock_write_calls
 
 _MODULE_REF = "bluemira.codes.plasmod.api_"
@@ -33,7 +34,7 @@ _MODULE_REF = "bluemira.codes.plasmod.api_"
 
 class TestPlasmodSetup:
     def setup_method(self):
-        self.default_pf = ParameterFrame()
+        self.default_pf = Configuration()
 
     def test_inputs_updated_from_problem_settings_on_init(self):
         problem_settings = {
@@ -126,7 +127,7 @@ class TestPlasmodRun:
         self._run_subprocess_patch = mock.patch(self.RUN_SUBPROCESS_REF)
         self.run_subprocess_mock = self._run_subprocess_patch.start()
         self.run_subprocess_mock.return_value = 0
-        self.default_pf = ParameterFrame()
+        self.default_pf = Configuration()
 
     def teardown_method(self):
         self._run_subprocess_patch.stop()
@@ -171,12 +172,76 @@ class TestPlasmodRun:
 
 
 class TestPlasmodTeardown:
-    def test_run_mode_function_updates_plasmod_params_from_file(self):
-        pass
 
-    def test_mock_updates_plasmod_params_with_defaults(self):
-        pass
+    plasmod_out_sample = (
+        "     betan      0.14092930140E+0002\n"
+        "      fbs       0.14366031154E+0002\n"
+        "      rli       0.16682353334E+0002\n"
+        " i_flag           1\n"
+    )
 
-    def test_CodesError_if_input_file_cannot_be_read(self):
-        # we need to try both files!
-        pass
+    def setup_method(self):
+        self.default_pf = Configuration()
+        self.default_pf
+
+    @pytest.mark.parametrize("run_mode_func", ["run", "read"])
+    def test_run_mode_function_updates_plasmod_params_from_file(self, run_mode_func):
+        teardown = Teardown(
+            self.default_pf, "/path/to/output/file.csv", "/path/to/profiles/file.csv"
+        )
+
+        with mock.patch(
+            "builtins.open",
+            new_callable=mock.mock_open,
+            read_data=self.plasmod_out_sample,
+        ):
+            getattr(teardown, run_mode_func)()
+
+        assert teardown.params["beta_N"] == pytest.approx(0.14092930140e2)
+        assert teardown.params["f_bs"] == pytest.approx(0.14366031154e2)
+        assert teardown.params["l_i"] == pytest.approx(0.16682353334e2)
+
+    def test_mock_leaves_plasmod_params_with_defaults(self):
+        default_pf_copy = copy.deepcopy(self.default_pf)
+        teardown = Teardown(
+            self.default_pf, "/path/to/output/file.csv", "/path/to/profiles/file.csv"
+        )
+
+        with mock.patch(
+            "builtins.open",
+            new_callable=mock.mock_open,
+            read_data=self.plasmod_out_sample,
+        ):
+            teardown.mock()
+
+        assert teardown.params["beta_N"] == default_pf_copy["beta_N"]
+        assert teardown.params["f_bs"] == default_pf_copy["f_bs"]
+        assert teardown.params["l_i"] == default_pf_copy["l_i"]
+
+    @pytest.mark.parametrize("run_mode_func", ["run", "read"])
+    def test_CodesError_if_output_files_cannot_be_read(self, run_mode_func):
+        teardown = Teardown(
+            self.default_pf, "/path/to/output/file.csv", "/path/to/profiles/file.csv"
+        )
+
+        with mock.patch("builtins.open", side_effect=OSError):
+            with pytest.raises(CodesError):
+                getattr(teardown, run_mode_func)()
+
+    @pytest.mark.parametrize("run_mode_func", ["run", "read"])
+    def test_run_mode_function_opens_both_output_files(self, run_mode_func):
+        teardown = Teardown(
+            self.default_pf, "/path/to/output/file.csv", "/path/to/profiles/file.csv"
+        )
+
+        with mock.patch(
+            "builtins.open",
+            new_callable=mock.mock_open,
+            read_data=self.plasmod_out_sample,
+        ) as open_mock:
+            getattr(teardown, run_mode_func)()
+
+        assert open_mock.call_count == 2
+        call_args = [call.args for call in open_mock.call_args_list]
+        assert ("/path/to/output/file.csv", "r") in call_args
+        assert ("/path/to/profiles/file.csv", "r") in call_args
