@@ -142,12 +142,17 @@ c_ejima = 0.3
 
 
 isoflux = IsofluxConstraint(
-    np.array(sof_xbdry), np.array(sof_zbdry), sof_xbdry[0], sof_zbdry[0], tolerance=1e-3
+    np.array(sof_xbdry),
+    np.array(sof_zbdry),
+    sof_xbdry[0],
+    sof_zbdry[0],
+    tolerance=1e-3,
+    target_value=1.5,
 )
 
 xp_idx = np.argmin(sof_zbdry)
 x_point = FieldNullConstraint(
-    sof_xbdry[xp_idx], sof_zbdry[xp_idx], tolerance=1e-6, constraint_type="inequality"
+    sof_xbdry[xp_idx], sof_zbdry[xp_idx], tolerance=1e-4, constraint_type="inequality"
 )
 
 grid = Grid(3.0, 13.0, -10.0, 10.0, 65, 65)
@@ -194,8 +199,54 @@ def init_equilibrium(grid, coilset):
 
 rho = np.linspace(0, 1, 30)
 profiles = CustomProfile(
-    1e6 * (1 - rho**2) ** 2,
-    -1e6 * (1 - rho**2) ** 2,
+    np.array(
+        [
+            86856.15730491,
+            86798.69790167,
+            86506.2865987,
+            85850.44673834,
+            84731.28548257,
+            83065.672385,
+            80784.08049904,
+            77829.90547563,
+            74159.99618766,
+            69746.01988715,
+            64576.59722565,
+            58660.327347,
+            52030.0139464,
+            44748.69633575,
+            36918.64903883,
+            28695.74759472,
+            20314.75855847,
+            12141.02112672,
+            4807.4423105,
+            0.0,
+        ]
+    ),
+    np.array(
+        [
+            -0.12515916,
+            -0.12507636,
+            -0.124655,
+            -0.12370994,
+            -0.12209723,
+            -0.1196971,
+            -0.11640934,
+            -0.11215239,
+            -0.10686407,
+            -0.10050356,
+            -0.09305446,
+            -0.08452915,
+            -0.07497491,
+            -0.06448258,
+            -0.05319953,
+            -0.04135039,
+            -0.02927344,
+            -0.01749513,
+            -0.00692749,
+            -0.0,
+        ]
+    ),
     R_0=R_0,
     B_0=B_0,
     Ip=I_p,

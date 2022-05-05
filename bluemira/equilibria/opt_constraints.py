@@ -119,11 +119,11 @@ def L2_norm_constraint(  # noqa: N802
         Updated constraint vector
     """
     vector = scale * vector
-    residual = a_mat @ vector - b_vec
-    constraint[:] = residual.T @ residual - value
+    residual = a_mat @ vector - b_vec - value
+    constraint[:] = residual.T @ residual
 
     if grad.size > 0:
-        grad[:] = 2 * scale * (a_mat.T @ a_mat @ vector - a_mat.T @ b_vec)
+        grad[:] = 2 * scale * (a_mat.T @ a_mat @ vector - a_mat.T @ (b_vec + value))
 
     return constraint
 
@@ -296,9 +296,9 @@ class MagneticConstraint(ABC, OptimisationConstraint):
     ):
         self.target_value = target_value * np.ones(len(self))
         if is_num(tolerance):
-            tolerance = np.array([tolerance])
+            tolerance = tolerance * np.ones(len(self))
         self.weights = weights
-        args = {"a_mat": None, "b_vec": None, "value": tolerance, "scale": 1e6}
+        args = {"a_mat": None, "b_vec": None, "value": 0.0, "scale": 1e6}
         super().__init__(
             f_constraint=L2_norm_constraint,
             f_constraint_args=args,
