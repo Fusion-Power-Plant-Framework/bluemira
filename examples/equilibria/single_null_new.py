@@ -29,9 +29,9 @@ Attempt at recreating the EU-DEMO 2017 reference equilibria from a known coilset
 
 # %%
 
+import copy
 import json
 import os
-from copy import deepcopy
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -44,8 +44,16 @@ from bluemira.equilibria.coils import Coil, CoilSet
 from bluemira.equilibria.eq_constraints import AutoConstraints
 from bluemira.equilibria.equilibrium import Breakdown, Equilibrium
 from bluemira.equilibria.grid import Grid
-from bluemira.equilibria.opt_constraints import FieldNullConstraint, IsofluxConstraint
-from bluemira.equilibria.opt_problems import NewCurrentCOP
+from bluemira.equilibria.opt_constraints import (
+    FieldNullConstraint,
+    IsofluxConstraint,
+    MagneticConstraintSet,
+)
+from bluemira.equilibria.opt_problems import (
+    NewCurrentCOP,
+    NewUnconstrainedCurrentCOP,
+    UnconstrainedCurrentCOP,
+)
 from bluemira.equilibria.optimiser import BreakdownOptimiser, FBIOptimiser
 from bluemira.equilibria.physics import calc_beta_p_approx, calc_li, calc_psib
 from bluemira.equilibria.profiles import CustomProfile
@@ -134,7 +142,7 @@ c_ejima = 0.3
 
 
 isoflux = IsofluxConstraint(
-    np.array(sof_xbdry), np.array(sof_zbdry), sof_xbdry[0], sof_zbdry[0], tolerance=1e-6
+    np.array(sof_xbdry), np.array(sof_zbdry), sof_xbdry[0], sof_zbdry[0], tolerance=1e-3
 )
 
 xp_idx = np.argmin(sof_zbdry)
@@ -143,14 +151,68 @@ x_point = FieldNullConstraint(
 )
 
 grid = Grid(3.0, 13.0, -10.0, 10.0, 65, 65)
+
+
+def init_equilibrium(grid, coilset):
+    """
+    Create an initial guess for the Equilibrium state.
+    Temporarily add a simple plasma coil to get a good starting guess for psi.
+    """
+    coilset_temp = copy.deepcopy(coilset)
+
+    coilset_temp.add_coil(
+        Coil(
+            R_0 + 0.5,
+            0.0,
+            dx=0.5,
+            dz=0.5,
+            current=I_p,
+            name="plasma_dummy",
+            control=False,
+        )
+    )
+
+    eq = Equilibrium(
+        coilset_temp,
+        grid,
+        force_symmetry=False,
+        limiter=None,
+        psi=None,
+        Ip=0,
+        li=None,
+    )
+    constraint_set = MagneticConstraintSet([isoflux, x_point])
+    constraint_set(eq)
+    optimiser = UnconstrainedCurrentCOP(coilset_temp, eq, constraint_set, gamma=1e-7)
+    coilset_temp = optimiser()
+
+    coilset.set_control_currents(coilset_temp.get_control_currents())
+
+    psi = coilset_temp.psi(grid.x, grid.z).copy()
+    return psi
+
+
+rho = np.linspace(0, 1, 30)
 profiles = CustomProfile(
-    np.sqrt(np.linspace(1, 0)),
-    np.sqrt(np.linspace(1, 0)),
+    1e6 * (1 - rho**2) ** 2,
+    -1e6 * (1 - rho**2) ** 2,
     R_0=R_0,
     B_0=B_0,
     Ip=I_p,
 )
-eq = Equilibrium(coilset, grid, profiles=profiles, Ip=I_p, RB0=[R_0, B_0])
+
+psi = init_equilibrium(grid, coilset)
+eq = Equilibrium(coilset, grid, psi=psi, profiles=profiles, Ip=I_p, RB0=[R_0, B_0])
+
+opt_problem = NewUnconstrainedCurrentCOP(
+    eq, MagneticConstraintSet([isoflux, x_point]), gamma=1e-7
+)
+
+program = PicardBaseIterator(
+    eq, profiles, opt_problem, I_not_dI=False, fixed_coils=True, relaxation=0.2
+)
+program()
+
 opt_problem = NewCurrentCOP(
     eq,
     Optimiser("SLSQP", opt_conditions={"max_eval": 2000, "ftol_rel": 1e-6}),

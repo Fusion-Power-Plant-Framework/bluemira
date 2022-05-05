@@ -818,19 +818,51 @@ class NestedCoilsetPositionCOP(CoilsetOptimisationProblem):
         return fom
 
 
+class NewUnconstrainedCurrentCOP(CoilsetOptimisationProblem):
+    def __init__(self, eq, targets, gamma):
+        self.eq = eq
+        self.targets = targets
+        self.gamma = gamma
+
+        super().__init__(self.eq.coilset)
+
+    def optimise(self, *args, **kwargs):
+        """
+        Optimise the prescribed problem.
+
+        Notes
+        -----
+        The weight vector is used to scale the response matrix and
+        constraint vector. The weights are assumed to be uncorrelated, such that the
+        weight matrix W_ij used to define (for example) the least-squares objective
+        function (Ax - b)ᵀ W (Ax - b), is diagonal, such that
+        weights[i] = w[i] = sqrt(W[i,i]).
+        """
+        # Scale the control matrix and magnetic field targets vector by weights.
+        self.targets(self.eq, I_not_dI=False)
+        _, a_mat, b_vec = self.targets.get_weighted_arrays()
+
+        # Optimise currents using analytic expression for optimum.
+        current_adjustment = tikhonov(a_mat, b_vec, self.gamma)
+
+        # Update parameterisation (coilset).
+        self.coilset.adjust_currents(current_adjustment)
+        return self.coilset
+
+
 class NewCurrentCOP(CoilsetOptimisationProblem):
     def __init__(self, eq, optimiser, max_currents=None, constraints=None):
         self.eq = eq
         objective = OptimisationObjective(
             objectives.minimise_coil_currents, f_objective_args={}
         )
-        super().__init__(eq.coilset, optimiser, objective, constraints)
+        super().__init__(self.eq.coilset, optimiser, objective, constraints)
 
         bounds = self.get_current_bounds(self.coilset, max_currents, self.scale)
         dimension = len(bounds[0])
         self.set_up_optimiser(dimension, bounds)
 
-    def optimise(self, I_not_dI=False, fixed_coils=True):
+    def optimise(self, I_not_dI=True, fixed_coils=True):
         if self._constraints is not None:
             for constraint in self._constraints:
                 if isinstance(constraint, MagneticConstraint):
@@ -841,6 +873,9 @@ class NewCurrentCOP(CoilsetOptimisationProblem):
         initial_state, n_states = self.read_coilset_state(self.eq.coilset, self.scale)
         _, _, initial_currents = np.array_split(initial_state, n_states)
 
+        initial_currents = np.clip(
+            initial_currents, self.opt.lower_bounds, self.opt.upper_bounds
+        )
         currents = self.opt.optimise(initial_currents)
         self.coilset.set_control_currents(currents * self.scale)
         return self.coilset

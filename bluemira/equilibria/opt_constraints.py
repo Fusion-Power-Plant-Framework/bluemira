@@ -75,7 +75,7 @@ def objective_constraint(constraint, vector, grad, objective_function, maximum_f
     return constraint
 
 
-def Ax_b_constraint(constraint, vector, grad, a_mat, b_vec):  # noqa: N802
+def Ax_b_constraint(constraint, vector, grad, a_mat, b_vec, scale):  # noqa: N802
     """
     Constraint function of the form:
         A.x - b < 0.0
@@ -93,9 +93,38 @@ def Ax_b_constraint(constraint, vector, grad, a_mat, b_vec):  # noqa: N802
     b_vec: np.ndarray
         Target value vector
     """
-    constraint[:] = np.dot(a_mat, vector) - b_vec
+    constraint[:] = np.dot(a_mat, scale * vector) - b_vec
     if grad.size > 0:
-        grad[:] = a_mat
+        grad[:] = scale * a_mat
+    return constraint
+
+
+def L2_norm_constraint(  # noqa: N802
+    constraint, vector, grad, a_mat, b_vec, value, scale
+):
+    """
+    Constrain the L2 norm of an Ax-b system of equations.
+    ||(Ax - b)||² < value
+    Parameters
+    ----------
+    constraint: np.ndarray
+        Constraint array (modified in place)
+    vector: np.ndarray
+        Current vector
+    grad: np.ndarray
+        Constraint Jacobian (modified in place)
+    Returns
+    -------
+    constraint: np.ndarray
+        Updated constraint vector
+    """
+    vector = scale * vector
+    residual = a_mat @ vector - b_vec
+    constraint[:] = residual.T @ residual - value
+
+    if grad.size > 0:
+        grad[:] = 2 * scale * (a_mat.T @ a_mat @ vector - a_mat.T @ b_vec)
+
     return constraint
 
 
@@ -248,7 +277,7 @@ def coil_field_constraints(constraint, vector, grad, eq, B_max, scale):
 
 
 from abc import ABC, abstractmethod
-from typing import Union
+from typing import List, Union
 
 from bluemira.utilities.tools import is_num
 
@@ -267,11 +296,11 @@ class MagneticConstraint(ABC, OptimisationConstraint):
     ):
         self.target_value = target_value * np.ones(len(self))
         if is_num(tolerance):
-            tolerance = tolerance * np.ones(len(self))
+            tolerance = np.array([tolerance])
         self.weights = weights
-        args = {"a_mat": None, "b_vec": None}
+        args = {"a_mat": None, "b_vec": None, "value": tolerance, "scale": 1e6}
         super().__init__(
-            f_constraint=Ax_b_constraint,
+            f_constraint=L2_norm_constraint,
             f_constraint_args=args,
             tolerance=tolerance,
             constraint_type=constraint_type,
@@ -490,3 +519,159 @@ class IsofluxConstraint(RelativeMagneticConstraint):
         ax.plot(self.x, self.z, "s", **kwargs)
         kwargs["markeredgewidth"] = 5
         ax.plot(self.ref_x, self.ref_z, "s", **kwargs)
+
+
+class MagneticConstraintSet(ABC):
+    """
+    A set of magnetic constraints to be applied to an equilibrium. The optimisation
+    problem is of the form:
+
+        [A][x] = [b]
+
+    where:
+
+        [b] = [target] - [background]
+
+    The target vector is the vector of desired values. The background vector
+    is the vector of values due to uncontrolled current terms (plasma and passive
+    coils).
+
+
+    Use of class:
+
+        - Inherit from this class
+        - Add a __init__(args) method
+        - Populate constraints with super().__init__(List[MagneticConstraint])
+    """
+
+    constraints: List[MagneticConstraint]
+    eq: object
+    A: np.array
+    target: np.array
+    background: np.array
+
+    __slots__ = ["constraints", "eq", "coilset", "A", "w", "target", "background"]
+
+    def __init__(self, constraints):
+        self.constraints = constraints
+
+    def __call__(self, equilibrium, I_not_dI=False, fixed_coils=False):  # noqa :N803
+
+        if I_not_dI:
+            # hack to change from dI to I optimiser (and keep both)
+            # When we do dI optimisation, the background vector includes the
+            # contributions from the whole coilset (including active coils)
+            # When we do I optimisation, the background vector only includes
+            # contributions from the passive coils (plasma)
+            # TODO: Add passive coil contributions here
+            dummy = equilibrium.plasma_coil()
+            dummy.coilset = equilibrium.coilset
+            equilibrium = dummy
+
+        self.eq = equilibrium
+        self.coilset = equilibrium.coilset
+
+        # Update relative magnetic constraints without updating A matrix
+        for constraint in self.constraints:
+            if isinstance(constraint, RelativeMagneticConstraint):
+                constraint.update_target(equilibrium)
+
+        # Re-build control response matrix
+        if not fixed_coils or (fixed_coils and self.A is None):
+            self.build_control_matrix()
+            self.build_target()
+
+        self.build_background()
+        self.build_weight_matrix()
+
+    def __len__(self):
+        """
+        The mathematical size of the constraint set.
+        """
+        return sum([len(c) for c in self.constraints])
+
+    def get_weighted_arrays(self):
+        """
+        Get [A] and [b] scaled by weight matrix.
+        Weight matrix assumed to be diagonal.
+        """
+        weights = self.w
+        weighted_a = weights[:, np.newaxis] * self.A
+        weighted_b = weights * self.b
+        return weights, weighted_a, weighted_b
+
+    def build_weight_matrix(self):
+        """
+        Build the weight matrix used in optimisation.
+        Assumed to be diagonal.
+        """
+        self.w = np.zeros(len(self))
+
+        i = 0
+        for constraint in self.constraints:
+            n = len(constraint)
+            self.w[i : i + n] = constraint.weights
+            i += n
+
+    def build_control_matrix(self):
+        """
+        Build the control response matrix used in optimisation.
+        """
+        self.A = np.zeros((len(self), len(self.coilset._ccoils)))
+
+        i = 0
+        for constraint in self.constraints:
+            n = len(constraint)
+            self.A[i : i + n, :] = constraint.control_response(self.coilset)
+            i += n
+
+    def build_target(self):
+        """
+        Build the target value vector.
+        """
+        self.target = np.zeros(len(self))
+
+        i = 0
+        for constraint in self.constraints:
+            n = len(constraint)
+            self.target[i : i + n] = constraint.target_value * np.ones(n)
+            i += n
+
+    def build_background(self):
+        """
+        Build the background value vector.
+        """
+        self.background = np.zeros(len(self))
+
+        i = 0
+        for constraint in self.constraints:
+            n = len(constraint)
+            self.background[i : i + n] = constraint.evaluate(self.eq)
+            i += n
+
+    @property
+    def b(self):
+        """
+        The b vector of target - background values.
+        """
+        return self.target - self.background
+
+    # def update_psi_boundary(self, psi_bndry):
+    #     """
+    #     Update the target value for all PsiBoundaryConstraints.
+
+    #     Parameters
+    #     ----------
+    #     psi_bndry: float
+    #         The target psi boundary value [V.s/rad]
+    #     """
+    #     for constraint in self.constraints:
+    #         if isinstance(constraint, PsiBoundaryConstraint):
+    #             constraint.target_value = psi_bndry
+    #     self.build_target()
+
+    # def plot(self, ax=None):
+    #     """
+    #     Plots constraints
+    #     """
+    #     return ConstraintPlotter(self, ax=ax)
