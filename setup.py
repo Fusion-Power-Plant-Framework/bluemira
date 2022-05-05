@@ -23,7 +23,7 @@ install_requires = [
     "gmsh",
     "imageio",
     "ipykernel",
-    "matplotlib",
+    "matplotlib<=3.3.4",  # upgrade on BP removal
     "natsort",
     "neutronics-material-maker==0.1.11",  # Crash on upgrade
     "nlopt",

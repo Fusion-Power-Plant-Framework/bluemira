@@ -7,7 +7,8 @@ updates:
       day: "monday"
       time: "07:00"
     ignore:
-      - dependency-name: "scipy"  # numba-scipy limit (<=1.6.2)
+      - dependency-name: "matplotlib" # Issue #234
+      - dependency-name: "scipy"  # section-properties and numba-scipy limit
       - dependency-name: "numpy"  # numba limited
       - dependency-name: "neutronics-material-maker" # incompatible upgrade path
       - dependency-name: "nlopt"  # numpy limited
