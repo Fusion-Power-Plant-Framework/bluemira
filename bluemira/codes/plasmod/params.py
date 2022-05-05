@@ -335,6 +335,6 @@ class PlasmodOutputs:
         """
         scalars = _read_plasmod_csv(scalar_stream)
         status_flag = scalars["i_flag"]
-        _check_plasmod_return_value(status_flag)
+        _check_plasmod_return_value(int(status_flag))
         profiles = _read_plasmod_csv(profile_stream)
-        return cls(**{**scalars, **profiles})
+        return cls(**scalars, **profiles)
