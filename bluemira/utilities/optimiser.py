@@ -129,7 +129,8 @@ class Optimiser(NLOPTOptimiser):
             x0 = 0.5 * np.ones(self.n_variables)
 
         x_star = super().optimise(x0)
-        self.check_constraints(x_star)
+        if self.constraints:
+            self.check_constraints(x_star)
         return x_star
 
     def approx_derivative(self, function, x, f0=None):
