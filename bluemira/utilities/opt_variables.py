@@ -519,6 +519,30 @@ class OptVariables:
         self._check_presence(name)
         return self._var_dict[name]
 
+    def __getattribute__(self, attr):
+        """
+        Attribute access for variable values
+
+        Parameters
+        ----------
+        attr: str
+            attribute to access
+
+        Returns
+        -------
+        attribute value
+
+        """
+        try:
+            return super().__getattribute__(attr)
+        except AttributeError:
+            try:
+                return self[attr].value
+            except KeyError:
+                raise AttributeError(
+                    f"'{self.__class__.__name__}' object has no attribute '{attr}'"
+                ) from None
+
     def _to_records(self):
         return sorted(
             [

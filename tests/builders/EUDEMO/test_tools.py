@@ -49,7 +49,14 @@ class TestVariedOffsetFunction:
     fixtures = [
         {
             "wire": PictureFrame(
-                {"ro": {"value": 6}, "ri": {"value": 3}}
+                {
+                    "x1": {"value": 4.5, "lower_bound": 4, "upper_bound": 5},
+                    "x2": {"value": 16, "lower_bound": 14, "upper_bound": 18},
+                    "z1": {"value": 8, "lower_bound": 5, "upper_bound": 15},
+                    "z2": {"value": -6, "lower_bound": -15, "upper_bound": -5},
+                    "ro": {"value": 6},
+                    "ri": {"value": 3},
+                }
             ).create_shape(),
             "inboard_offset": 1,
             "outboard_offset": 4,
