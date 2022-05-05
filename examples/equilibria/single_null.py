@@ -55,7 +55,7 @@ plot_defaults()
 # Make a TF coil shape and use it as an exclusion zone object
 
 # %%
-fp = get_bluemira_path("bluemira/geometry", subfolder="data")
+fp = get_bluemira_path("BLUEPRINT/Geometry", subfolder="data")
 TF = Loop.from_file(os.sep.join([fp, "TFreference.json"]))
 TF = TF.offset(2.4)
 clip = np.where(TF.x >= 3.5)

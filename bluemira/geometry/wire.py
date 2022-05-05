@@ -65,6 +65,9 @@ class BluemiraWire(BluemiraGeo):
         super().__init__(boundary, label, boundary_classes)
         self._check_orientations()
 
+        # connection variable with BLUEPRINT Loop
+        self._bp_loop = None
+
     def _check_orientations(self):
         orientations = []
         for boundary in self.boundary:

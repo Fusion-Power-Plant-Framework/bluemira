@@ -150,6 +150,11 @@ dmypy.json
 *.png
 !documentation/**/images/*.png
 !documentation/**/images/**/*.png
+!tests/BLUEPRINT/test_data/reactors/SMOKE-TEST/plots/*.png
+!tests/BLUEPRINT/utilities/test_data/*.png
+tests/BLUEPRINT/utilities/test_data/*_new.png
+!tests/BLUEPRINT/geometry/test_data/*.png
+tests/BLUEPRINT/geometry/test_data/*_new.png
 *.jpeg
 !documentation/**/images/*.jpeg
 !documentation/**/images/**/*.jpeg
