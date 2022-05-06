@@ -126,14 +126,6 @@ class FluxSurface:
     def poloidal_angle(self, eq, x_strike, z_strike, gamma):
         """
         From glancing angle (gamma) to poloidal angle.
-        Simplified formula.
-
-        \begin{align*}
-        sin\theta = \frac{B_{\perp,p}}{B_p}
-        \end{align*}
-        \begin{align*}
-        B_{\perp,p} = B_{tot}*sin\gamma
-        \end{align*}
 
         Parameters
         ----------
