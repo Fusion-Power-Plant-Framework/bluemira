@@ -286,22 +286,29 @@ from bluemira.utilities.tools import is_num
 class MagneticConstraint(ABC, OptimisationConstraint):
     """
     Abstract base class for a magnetic optimisation constraint.
+
+    Can be used as a standalone constraint for use in an optimisation problem. In which
+    case the constraint is of the form:
+        ||(Ax - b)||² < target_value
+
+    Can be used in a MagneticConstraintSet
     """
 
     def __init__(
         self,
-        target_value=None,
+        target_value: float = 0.0,
         weights: Union[float, np.ndarray] = 1.0,
         tolerance=1e-6,
+        f_constraint=L2_norm_constraint,
         constraint_type="inequality",
     ):
         self.target_value = target_value * np.ones(len(self))
         if is_num(tolerance):
             tolerance = tolerance * np.ones(1)
         self.weights = weights
-        args = {"a_mat": None, "b_vec": None, "value": target_value, "scale": 1.0}
+        args = {"a_mat": None, "b_vec": None, "value": 0.0, "scale": 1.0}
         super().__init__(
-            f_constraint=L2_norm_constraint,
+            f_constraint=f_constraint,
             f_constraint_args=args,
             tolerance=tolerance,
             constraint_type=constraint_type,
@@ -325,8 +332,8 @@ class MagneticConstraint(ABC, OptimisationConstraint):
         # Re-build control response matrix
         if not fixed_coils or (fixed_coils and self._args["a_mat"] is None):
             self._args["a_mat"] = self.control_response(equilibrium.coilset)
-        self.update_target(equilibrium)
 
+        self.update_target(equilibrium)
         self._args["b_vec"] = self.target_value - self.evaluate(equilibrium)
 
     def __call__(self, constraint, vector, grad):
@@ -378,12 +385,17 @@ class AbsoluteMagneticConstraint(MagneticConstraint):
         target_value,
         weights: Union[float, np.ndarray] = 1.0,
         tolerance=1e-6,
+        f_constraint=Ax_b_constraint,
         constraint_type="inequality",
     ):
         self.x = x
         self.z = z
         super().__init__(
-            target_value, weights, tolerance=tolerance, constraint_type=constraint_type
+            target_value,
+            weights,
+            tolerance=tolerance,
+            f_constraint=f_constraint,
+            constraint_type=constraint_type,
         )
 
 
@@ -394,9 +406,10 @@ class RelativeMagneticConstraint(MagneticConstraint):
         z,
         ref_x,
         ref_z,
-        target_value: float = 0.0,
+        constraint_value: float = 0.0,
         weights: Union[float, np.ndarray] = 1.0,
         tolerance=1e-6,
+        f_constraint=L2_norm_constraint,
         constraint_type="inequality",
     ):
         self.x = x
@@ -404,37 +417,17 @@ class RelativeMagneticConstraint(MagneticConstraint):
         self.ref_x = ref_x
         self.ref_z = ref_z
         super().__init__(
-            target_value, weights, tolerance=tolerance, constraint_type=constraint_type
+            0.0,
+            weights,
+            tolerance=tolerance,
+            f_constraint=f_constraint,
+            constraint_type=constraint_type,
         )
+        self._args["value"] = constraint_value
 
     @abstractmethod
     def update_target(self, equilibrium):
         pass
-
-
-class BxConstraint(AbsoluteMagneticConstraint):
-    """
-    Absolute Bx value constraint.
-    """
-
-    def control_response(self, coilset):
-        """
-        Calculate control response of a CoilSet to the constraint.
-        """
-        return coilset.control_Bx(self.x, self.z)
-
-    def evaluate(self, eq):
-        """
-        Calculate the value of the constraint in an Equilibrium.
-        """
-        return eq.Bx(self.x, self.z)
-
-    def plot(self, ax):
-        """
-        Plot the constraint onto an Axes.
-        """
-        kwargs = {"marker": 9, "markersize": 15, "color": "b", "zorder": 45}
-        ax.plot(self.x, self.z, "s", **kwargs)
 
 
 class FieldNullConstraint(AbsoluteMagneticConstraint):
@@ -481,10 +474,49 @@ class FieldNullConstraint(AbsoluteMagneticConstraint):
         return 2
 
 
+class PsiConstraint(AbsoluteMagneticConstraint):
+    """
+    Absolute psi value constraint.
+    """
+
+    def control_response(self, coilset):
+        """
+        Calculate control response of a CoilSet to the constraint.
+        """
+        return np.array(coilset.control_psi(self.x, self.z))
+
+    def evaluate(self, eq):
+        """
+        Calculate the value of the constraint in an Equilibrium.
+        """
+        return eq.psi(self.x, self.z)
+
+    def plot(self, ax):
+        """
+        Plot the constraint onto an Axes.
+        """
+        kwargs = {"marker": "s", "markersize": 8, "color": "b"}
+        ax.plot(self.x, self.z, "s", **kwargs)
+
+
 class IsofluxConstraint(RelativeMagneticConstraint):
     """
     Isoflux constraint for a set of points relative to a reference point.
     """
+
+    def __init__(self, x, z, ref_x, ref_z, constraint_value, weights, tolerance):
+
+        super().__init__(
+            x,
+            z,
+            ref_x,
+            ref_z,
+            constraint_value,
+            weights,
+            f_constraint=L2_norm_constraint,
+            tolerance=tolerance,
+            constraint_type="inequality",
+        )
 
     def control_response(self, coilset):
         """
@@ -525,61 +557,22 @@ class IsofluxConstraint(RelativeMagneticConstraint):
         ax.plot(self.ref_x, self.ref_z, "s", **kwargs)
 
 
-class BxConstraint(AbsoluteMagneticConstraint):
-    """
-    Absolute Bx value constraint.
-    """
-
-    def control_response(self, coilset):
-        """
-        Calculate control response of a CoilSet to the constraint.
-        """
-        return coilset.control_Bx(self.x, self.z)
-
-    def evaluate(self, eq):
-        """
-        Calculate the value of the constraint in an Equilibrium.
-        """
-        return eq.Bx(self.x, self.z)
-
-    def plot(self, ax):
-        """
-        Plot the constraint onto an Axes.
-        """
-        kwargs = {"marker": 9, "markersize": 15, "color": "b", "zorder": 45}
-        ax.plot(self.x, self.z, "s", **kwargs)
-
-
-class BzConstraint(AbsoluteMagneticConstraint):
-    """
-    Absolute Bz value constraint.
-    """
-
-    def control_response(self, coilset):
-        """
-        Calculate control response of a CoilSet to the constraint.
-        """
-        return coilset.control_Bz(self.x, self.z)
-
-    def evaluate(self, eq):
-        """
-        Calculate the value of the constraint in an Equilibrium.
-        """
-        return eq.Bz(self.x, self.z)
-
-    def plot(self, ax):
-        """
-        Plot the constraint onto an Axes.
-        """
-        kwargs = {"marker": 10, "markersize": 15, "color": "b", "zorder": 45}
-        ax.plot(self.x, self.z, "s", **kwargs)
-
-
 class PsiBoundaryConstraint(AbsoluteMagneticConstraint):
     """
     Absolute psi value constraint on the plasma boundary. Gets updated when
     the plasma boundary flux value is changed.
     """
+
+    def __init__(self, x, z, target_value, weights, tolerance):
+        super().__init__(
+            x,
+            z,
+            target_value,
+            weights,
+            tolerance,
+            f_constraint=Ax_b_constraint,
+            constraint_type="equality",
+        )
 
     def control_response(self, coilset):
         """
@@ -598,31 +591,6 @@ class PsiBoundaryConstraint(AbsoluteMagneticConstraint):
         Plot the constraint onto an Axes.
         """
         kwargs = {"marker": "o", "markersize": 8, "color": "b"}
-        ax.plot(self.x, self.z, "s", **kwargs)
-
-
-class PsiConstraint(AbsoluteMagneticConstraint):
-    """
-    Absolute psi value constraint.
-    """
-
-    def control_response(self, coilset):
-        """
-        Calculate control response of a CoilSet to the constraint.
-        """
-        return coilset.control_psi(self.x, self.z)
-
-    def evaluate(self, eq):
-        """
-        Calculate the value of the constraint in an Equilibrium.
-        """
-        return eq.psi(self.x, self.z)
-
-    def plot(self, ax):
-        """
-        Plot the constraint onto an Axes.
-        """
-        kwargs = {"marker": "s", "markersize": 8, "color": "b"}
         ax.plot(self.x, self.z, "s", **kwargs)
 
 

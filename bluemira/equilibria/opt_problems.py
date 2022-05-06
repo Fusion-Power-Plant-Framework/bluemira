@@ -823,8 +823,10 @@ class NestedCoilsetPositionCOP(CoilsetOptimisationProblem):
 
 class UnconstrainedMinimalErrorCOP(CoilsetOptimisationProblem):
     """
-    Unbounded, unconstrained, analytically optimised current vector for minimal error
-    to the L2-norm of a set of magnetic constraints (used here as targets).
+    Unbounded, unconstrained, analytically optimised current gradient vector for minimal
+    error to the L2-norm of a set of magnetic constraints (used here as targets).
+
+    This is useful for getting a preliminary Equilibrium
     """
 
     def __init__(self, eq, targets, gamma):

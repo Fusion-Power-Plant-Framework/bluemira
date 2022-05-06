@@ -29,32 +29,29 @@ Attempt at recreating the EU-DEMO 2017 reference equilibria from a known coilset
 
 # %%
 
-import copy
 import json
 import os
 
-import matplotlib.pyplot as plt
 import numpy as np
 from IPython import get_ipython
 
 from bluemira.base.file import get_bluemira_path
-from bluemira.base.look_and_feel import bluemira_print
 from bluemira.display import plot_defaults
 from bluemira.equilibria.coils import Coil, CoilSet
-from bluemira.equilibria.eq_constraints import AutoConstraints
-from bluemira.equilibria.equilibrium import Breakdown, Equilibrium
+from bluemira.equilibria.eq_constraints import PsiConstraint
+from bluemira.equilibria.equilibrium import Equilibrium
 from bluemira.equilibria.grid import Grid
 from bluemira.equilibria.opt_constraints import (
     FieldNullConstraint,
     IsofluxConstraint,
     MagneticConstraintSet,
+    PsiBoundaryConstraint,
+    PsiConstraint,
 )
 from bluemira.equilibria.opt_problems import (
     MinimalCurrentsCOP,
     UnconstrainedMinimalErrorCOP,
 )
-from bluemira.equilibria.optimiser import BreakdownOptimiser, FBIOptimiser
-from bluemira.equilibria.physics import calc_beta_p_approx, calc_li, calc_psib
 from bluemira.equilibria.profiles import CustomProfile
 from bluemira.equilibria.solve_new import DudsonConvergence, PicardBaseIterator
 from bluemira.utilities.optimiser import Optimiser
@@ -116,7 +113,7 @@ coilset = CoilSet(coils)
 coilset.assign_coil_materials("CS", j_max=16.5, b_max=12.5)
 coilset.assign_coil_materials("PF", j_max=12.5, b_max=11.0)
 coilset.fix_sizes()
-# coilset.mesh_coils(0.3)
+coilset.mesh_coils(0.3)
 
 
 # %%[markdown]
@@ -146,8 +143,14 @@ isoflux = IsofluxConstraint(
     sof_xbdry[0],
     sof_zbdry[0],
     tolerance=1e-3,
-    target_value=0.5,
+    constraint_value=0.5,  # Difficult to choose...
 )
+
+psi_boundary = PsiBoundaryConstraint(
+    np.array(sof_xbdry)[::10], np.array(sof_zbdry)[::10], -100 / (2 * np.pi)
+)
+
+psi_point = PsiConstraint(sof_xbdry[0], sof_zbdry[0], -100 / (2 * np.pi))
 
 xp_idx = np.argmin(sof_zbdry)
 x_point = FieldNullConstraint(
@@ -225,7 +228,7 @@ opt_problem = MinimalCurrentsCOP(
     eq,
     Optimiser("SLSQP", opt_conditions={"max_eval": 2000, "ftol_rel": 1e-6}),
     max_currents=coilset.get_max_currents(0.0),
-    constraints=[isoflux, x_point],
+    constraints=[isoflux, x_point, psi_point],
 )
 
 program = PicardBaseIterator(
@@ -239,4 +242,9 @@ program = PicardBaseIterator(
 )
 program()
 
+import matplotlib.pyplot as plt
+
+f, ax = plt.subplots()
+eq.plot(ax=ax)
+eq.coilset.plot(ax=ax)
 # %%
