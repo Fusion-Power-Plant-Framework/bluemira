@@ -65,6 +65,8 @@ class TestFluxSurface:
         # Poloidal angle
         theta = fs.poloidal_angle(self.eq, 10.0, -7.5, gamma)
         assert theta > gamma
+        # By hand, from a different calculation
+        assert round(theta, 1) == 20.6
 
 
 class TestOpenFluxSurfaceStuff:

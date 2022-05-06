@@ -150,15 +150,15 @@ class FluxSurface:
         # Poloidal and toroidal magnetic field at the strike point
         Bp_strike = eq.Bp(x_strike, z_strike)
         Bt_strike = eq.Bt(x_strike)
+        # Total magnetic field
+        Btot = np.sqrt(Bp_strike**2 + Bt_strike**2)
 
-        # Numerator and denominator of next operation
-        num = Bp_strike**2 - (Bt_strike**2 * (np.tan(gamma_rad)) ** 2)
-        den = Bp_strike**2 + (Bp_strike**2 * (np.tan(gamma_rad)) ** 2)
-
+        # Numerator of next operation
+        num = Btot * np.sin(gamma_rad)
         # Poloidal projection of the glancing angle
-        cos_theta = np.sqrt(num / den)
+        sin_theta = num / Bp_strike
 
-        return np.rad2deg(np.arccos(cos_theta))
+        return np.rad2deg(np.arcsin(sin_theta))
 
     def plot(self, ax=None, **kwargs):
         """
