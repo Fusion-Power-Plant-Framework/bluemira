@@ -141,8 +141,8 @@ c_ejima = 0.3
 
 
 isoflux = IsofluxConstraint(
-    np.array(sof_xbdry)[::5],
-    np.array(sof_zbdry)[::5],
+    np.array(sof_xbdry)[::10],
+    np.array(sof_zbdry)[::10],
     sof_xbdry[0],
     sof_zbdry[0],
     tolerance=1e-3,
@@ -156,47 +156,6 @@ x_point = FieldNullConstraint(
 
 grid = Grid(3.0, 13.0, -10.0, 10.0, 65, 65)
 
-
-def init_equilibrium(grid, coilset):
-    """
-    Create an initial guess for the Equilibrium state.
-    Temporarily add a simple plasma coil to get a good starting guess for psi.
-    """
-    coilset_temp = copy.deepcopy(coilset)
-
-    coilset_temp.add_coil(
-        Coil(
-            R_0 + 0.5,
-            0.0,
-            dx=0.5,
-            dz=0.5,
-            current=I_p,
-            name="plasma_dummy",
-            control=False,
-        )
-    )
-
-    eq = Equilibrium(
-        coilset_temp,
-        grid,
-        force_symmetry=False,
-        limiter=None,
-        psi=None,
-        Ip=0,
-        li=None,
-    )
-    constraint_set = MagneticConstraintSet([isoflux, x_point])
-    constraint_set(eq)
-    optimiser = UnconstrainedMinimalErrorCOP(eq, constraint_set, gamma=1e-7)
-    coilset_temp = optimiser()
-
-    coilset.set_control_currents(coilset_temp.get_control_currents())
-
-    psi = coilset_temp.psi(grid.x, grid.z).copy()
-    return psi
-
-
-rho = np.linspace(0, 1, 30)
 profiles = CustomProfile(
     np.array(
         [
@@ -251,8 +210,7 @@ profiles = CustomProfile(
     Ip=I_p,
 )
 
-psi = init_equilibrium(grid, coilset)
-eq = Equilibrium(coilset, grid, psi=psi, profiles=profiles, Ip=I_p, RB0=[R_0, B_0])
+eq = Equilibrium(coilset, grid, psi=None, profiles=profiles, Ip=I_p, RB0=[R_0, B_0])
 
 opt_problem = UnconstrainedMinimalErrorCOP(
     eq, MagneticConstraintSet([isoflux, x_point]), gamma=1e-7

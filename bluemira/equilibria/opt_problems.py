@@ -881,6 +881,7 @@ class MinimalCurrentsCOP(CoilsetOptimisationProblem):
                     constraint.prepare(
                         self.eq, I_not_dI=I_not_dI, fixed_coils=fixed_coils
                     )
+                constraint._args["scale"] = self.scale
 
     def optimise(self, I_not_dI=True, fixed_coils=True):
         self.update_magnetic_constraints(I_not_dI=I_not_dI, fixed_coils=fixed_coils)
