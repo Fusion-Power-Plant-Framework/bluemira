@@ -119,11 +119,11 @@ def L2_norm_constraint(  # noqa: N802
         Updated constraint vector
     """
     vector = scale * vector
-    residual = a_mat @ vector - b_vec - value
-    constraint[:] = residual.T @ residual
+    residual = a_mat @ vector - b_vec
+    constraint[:] = residual.T @ residual - value
 
     if grad.size > 0:
-        grad[:] = 2 * scale * (a_mat.T @ a_mat @ vector - a_mat.T @ (b_vec + value))
+        grad[:] = 2 * scale * (a_mat.T @ a_mat @ vector - a_mat.T @ b_vec)
 
     return constraint
 
@@ -296,9 +296,9 @@ class MagneticConstraint(ABC, OptimisationConstraint):
     ):
         self.target_value = target_value * np.ones(len(self))
         if is_num(tolerance):
-            tolerance = tolerance * np.ones(len(self))
+            tolerance = tolerance * np.ones(1)
         self.weights = weights
-        args = {"a_mat": None, "b_vec": None, "value": 0.0, "scale": 1e6}
+        args = {"a_mat": None, "b_vec": None, "value": target_value, "scale": 1e6}
         super().__init__(
             f_constraint=L2_norm_constraint,
             f_constraint_args=args,
@@ -324,7 +324,7 @@ class MagneticConstraint(ABC, OptimisationConstraint):
         # Re-build control response matrix
         if not fixed_coils or (fixed_coils and self._args["a_mat"] is None):
             self._args["a_mat"] = self.control_response(equilibrium.coilset)
-            self.update_target(equilibrium)
+        self.update_target(equilibrium)
 
         self._args["b_vec"] = self.target_value - self.evaluate(equilibrium)
 
@@ -502,7 +502,7 @@ class IsofluxConstraint(RelativeMagneticConstraint):
         """
         We need to update the target value, as it is a relative constraint.
         """
-        self.target_value = eq.psi(self.ref_x, self.ref_z)
+        self.target_value = float(eq.psi(self.ref_x, self.ref_z))
 
     def plot(self, ax):
         """

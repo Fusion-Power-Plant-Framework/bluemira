@@ -45,7 +45,10 @@ from bluemira.equilibria.coils import CoilSet
 from bluemira.equilibria.eq_constraints import MagneticConstraintSet
 from bluemira.equilibria.equilibrium import Equilibrium
 from bluemira.equilibria.error import EquilibriaError
-from bluemira.equilibria.opt_constraints import MagneticConstraint
+from bluemira.equilibria.opt_constraints import (
+    MagneticConstraint,
+    RelativeMagneticConstraint,
+)
 from bluemira.equilibria.positioner import RegionMapper
 from bluemira.utilities.opt_problems import (
     OptimisationConstraint,

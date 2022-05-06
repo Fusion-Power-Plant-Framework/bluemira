@@ -57,7 +57,7 @@ from bluemira.equilibria.opt_problems import (
 from bluemira.equilibria.optimiser import BreakdownOptimiser, FBIOptimiser
 from bluemira.equilibria.physics import calc_beta_p_approx, calc_li, calc_psib
 from bluemira.equilibria.profiles import CustomProfile
-from bluemira.equilibria.solve_new import PicardBaseIterator
+from bluemira.equilibria.solve_new import DudsonConvergence, PicardBaseIterator
 from bluemira.utilities.optimiser import Optimiser
 
 # %%[markdown]
@@ -142,17 +142,17 @@ c_ejima = 0.3
 
 
 isoflux = IsofluxConstraint(
-    np.array(sof_xbdry),
-    np.array(sof_zbdry),
+    np.array(sof_xbdry)[::5],
+    np.array(sof_zbdry)[::5],
     sof_xbdry[0],
     sof_zbdry[0],
     tolerance=1e-3,
-    target_value=1.5,
+    target_value=0.5,
 )
 
 xp_idx = np.argmin(sof_zbdry)
 x_point = FieldNullConstraint(
-    sof_xbdry[xp_idx], sof_zbdry[xp_idx], tolerance=1e-4, constraint_type="inequality"
+    sof_xbdry[xp_idx], sof_zbdry[xp_idx], tolerance=1e-3, constraint_type="inequality"
 )
 
 grid = Grid(3.0, 13.0, -10.0, 10.0, 65, 65)
@@ -271,7 +271,15 @@ opt_problem = NewCurrentCOP(
     constraints=[isoflux, x_point],
 )
 
-program = PicardBaseIterator(eq, profiles, opt_problem, I_not_dI=True, fixed_coils=True)
+program = PicardBaseIterator(
+    eq,
+    profiles,
+    opt_problem,
+    I_not_dI=True,
+    fixed_coils=True,
+    convergence=DudsonConvergence(1e-4),
+    relaxation=0.3,
+)
 program()
 
 # %%
