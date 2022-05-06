@@ -129,10 +129,10 @@ class FluxSurface:
         Simplified formula.
 
         \begin{align*}
-        sin\theta = B_{{\perp},p}/B_p
+        sin\theta = \frac{B_{\perp,p}}{B_p}
         \end{align*}
         \begin{align*}
-        B_{{\perp},p} = B_{tot}*sin\gamma
+        B_{\perp,p} = B_{tot}*sin\gamma
         \end{align*}
 
         Parameters
