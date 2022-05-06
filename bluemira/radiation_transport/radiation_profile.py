@@ -22,7 +22,10 @@
 1-D radiation model inspired by the PROCESS function "plot_radprofile" in plot_proc.py.
 """
 
+from __future__ import annotations
+
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -30,10 +33,15 @@ import process.data.impuritydata as imp_data
 import scipy.constants as sc
 from scipy.interpolate import interp1d
 
+from bluemira.base import constants
 from bluemira.base.error import BuilderError
 from bluemira.base.parameter import ParameterFrame
 from bluemira.equilibria.flux_surfaces import calculate_connection_length_flt
 from bluemira.equilibria.grid import Grid
+
+if TYPE_CHECKING:
+    from bluemira.codes.process.run import Solver
+    from bluemira.radiation_transport.advective_transport import ChargedParticleSolver
 
 
 class Radiation:
@@ -41,8 +49,7 @@ class Radiation:
     A simplified radiation model based on the line emission.
     """
 
-    def __init__(self, process_solver, transport_solver):
-
+    def __init__(self, process_solver: Solver, transport_solver: ChargedParticleSolver):
         self.process_solver = process_solver
         self.transport_solver = transport_solver
         # Useful parameters from MFILE.DAT
@@ -290,7 +297,7 @@ class Radiation:
             ax.plot(rho, rad_tot)
 
 
-class Mathematics(Radiation):
+class TwoPointModelTools(Radiation):
     """
     Equations from the Two Point Model and other used formulas
     """
@@ -309,7 +316,9 @@ class Mathematics(Radiation):
     ]
     # fmt: on
 
-    def __init__(self, process_solver, transport_solver, config):
+    def __init__(
+        self, process_solver: Solver, transport_solver: ChargedParticleSolver, config
+    ):
         super().__init__(process_solver, transport_solver)
 
         self.params = ParameterFrame(self.base_default_params)
@@ -358,9 +367,10 @@ class Mathematics(Radiation):
         )
 
         # upstream temperature [keV]
-        t_upstream = ((3.5 * (q_u / self.params.k_0) * self.l_tot) ** (2 / 7)) * 1.0e-3
+        t_upstream_ev = (3.5 * (q_u / self.params.k_0) * self.l_tot) ** (2 / 7)
+        t_upstream_kev = constants.raw_uc(t_upstream_ev, "eV", "keV")
 
-        return t_upstream, q_u
+        return t_upstream_kev, q_u
 
     def target_temperature(self, q_u, t_u, lfs=True):
         """
@@ -389,14 +399,16 @@ class Mathematics(Radiation):
         )
         q_u = p_fraction * q_u * self.params.div_p_sharing
         # Conversion factor from Joule to eV
-        j_to_ev = sc.physical_constants["joule-electron volt relationship"][0]
+        # j_to_ev = sc.physical_constants["joule-electron volt relationship"][0]
         # Speed of light to convert kg to eV/c^2
-        light_speed = sc.physical_constants["speed of light in vacuum"][0]
+        light_speed = constants.C_LIGHT
         # deuterium ion mass
-        m_i = sc.physical_constants["deuteron mass"][0]
-        m_i = m_i / (light_speed**2)
+        # m_i = sc.physical_constants["deuteron mass"][0]
+        m_i_amu = constants.D_MOLAR_MASS
+        m_i_kg = constants.raw_uc(m_i_amu, "amu", "kg")
+        m_i = m_i_kg / (light_speed**2)
         # From keV to eV
-        t_u = t_u * 1.0e3
+        t_u = constants.raw_uc(t_u, "keV", "eV")
         n_u = self.process_params["ne0"]
         # Numerator and denominator of the upstream forcing function
         num_f = m_i * 4 * (q_u**2)
@@ -404,24 +416,24 @@ class Mathematics(Radiation):
             2 * sc.e * (self.params.gamma**2) * (sc.e**2) * (n_u**2) * (t_u**2)
         )
         # Upstream forcing function
-        f = num_f / den_f
+        f_j = num_f / den_f
         # To address all the conversion from J to eV
-        f = f * j_to_ev
+        f_ev = constants.raw_uc(f_j, "J", "eV")
         # Critical target temperature
         t_crit = self.params.eps_cool / self.params.gamma
         # Finding roots of the target temperature quadratic equation
-        coeff_2 = 2 * (self.params.eps_cool / self.params.gamma) - f
+        coeff_2 = 2 * (self.params.eps_cool / self.params.gamma) - f_ev
         coeff_3 = (self.params.eps_cool**2) / (self.params.gamma**2)
         coeff = [1, coeff_2, coeff_3]
         roots = np.roots(coeff)
         if roots.dtype == complex:
-            t_tar = self.params.f_ion_t * 1.0e3
+            t_tar = constants.raw_uc(self.params.f_ion_t, "keV", "eV")
         else:
             # Excluding unstable solution
             sol_i = np.where(roots > t_crit)[0][0]
             # Target temperature
             t_tar = roots[sol_i]
-        t_tar = t_tar * 1.0e-3
+        t_tar = constants.raw_uc(t_tar, "eV", "keV")
 
         return t_tar
 
@@ -444,7 +456,7 @@ class Mathematics(Radiation):
             x-point temperature. Unit [keV]
         """
         # From keV to eV
-        t_u = t_u * 1.0e3
+        t_u = constants.raw_uc(t_u, "keV", "eV")
 
         # Distance between x-point and target
         s_x = calculate_connection_length_flt(
@@ -460,7 +472,7 @@ class Mathematics(Radiation):
         t_x = ((t_u**3.5) - 3.5 * (q_u / self.params.k_0) * l_x) ** (2 / 7)
 
         # From eV to keV
-        t_x = t_x * 1.0e-3
+        t_x = constants.raw_uc(t_x, "eV", "keV")
 
         return t_x
 
@@ -492,7 +504,7 @@ class Mathematics(Radiation):
             point temperature. Unit [keV]
         """
         # From keV to eV
-        t_u = t_u * 1.0e3
+        t_u = constants.raw_uc(t_u, "keV", "eV")
 
         # Distinction between lfs and hfs
         if lfs:
@@ -505,39 +517,19 @@ class Mathematics(Radiation):
         q_u = p_fraction * q_u * self.params.div_p_sharing
 
         # Distance between the chosen point and the the target
-        if lfs and z_p < self.points["o_point"]["z"]:
-            l_p = calculate_connection_length_flt(
-                self.transport_solver.eq,
-                x_p + d,
-                z_p,
-                first_wall=firstwall_geom,
-            )
-
-        elif lfs and z_p > self.points["o_point"]["z"]:
-            l_p = calculate_connection_length_flt(
-                self.transport_solver.eq,
-                x_p + d,
-                z_p,
-                forward=False,
-                first_wall=firstwall_geom,
-            )
-
-        elif not lfs and z_p < self.points["o_point"]["z"]:
-            l_p = calculate_connection_length_flt(
-                self.transport_solver.eq,
-                x_p + d,
-                z_p,
-                forward=False,
-                first_wall=firstwall_geom,
-            )
-
-        elif not lfs and z_p > self.points["o_point"]["z"]:
-            l_p = calculate_connection_length_flt(
-                self.transport_solver.eq,
-                x_p + d,
-                z_p,
-                first_wall=firstwall_geom,
-            )
+        if (lfs and z_p < self.points["o_point"]["z"]) or (
+            not lfs and z_p > self.points["o_point"]["z"]
+        ):
+            forward = True
+        else:
+            forward = False
+        l_p = calculate_connection_length_flt(
+            self.transport_solver.eq,
+            x_p + d,
+            z_p,
+            forward=forward,
+            first_wall=firstwall_geom,
+        )
 
         # connection length from mp to p point
         s_p = self.l_tot - l_p
@@ -546,7 +538,7 @@ class Mathematics(Radiation):
         t_p = ((t_u**3.5) - 3.5 * (q_u / self.params.k_0) * s_p) ** (2 / 7)
 
         # From eV to keV
-        t_p = t_p * 1.0e-3
+        t_p = constants.raw_uc(t_p, "eV", "keV")
 
         return t_p
 
@@ -595,10 +587,11 @@ class Mathematics(Radiation):
         lambda_q_f = self.params.lambda_q_f * f_exp
 
         # radial distance of flux tubes from the separatrix
-        if lfs is True:
-            dr = self.transport_solver.dx_omp * f_exp
-        else:
-            dr = self.transport_solver.dx_imp * f_exp
+        dr = (
+            self.transport_solver.dx_omp * f_exp
+            if lfs
+            else self.transport_solver.dx_imp * f_exp
+        )
 
         # Assuming conduction-limited regime.
         lambda_t_n = t_factor * lambda_q_n
@@ -739,10 +732,12 @@ class Mathematics(Radiation):
             z coordinate of the ionization front
         """
         # Speed of light to convert kg to eV/c^2
-        light_speed = sc.physical_constants["speed of light in vacuum"][0]
+        light_speed = constants.C_LIGHT
         # deuterium ion mass
-        m_i = sc.physical_constants["deuteron mass"][0]
-        m_i = m_i / (light_speed**2)
+        # m_i = sc.physical_constants["deuteron mass"][0]
+        m_i_amu = constants.D_MOLAR_MASS
+        m_i_kg = constants.raw_uc(m_i_amu, "amu", "kg")
+        m_i = m_i_kg / (light_speed**2)
 
         # Magnetic field at the strike point
         Bp = self.transport_solver.eq.Bp(x_strike, z_strike)
@@ -1276,7 +1271,7 @@ class ScrapeOffLayer(Radiation):
         fig.colorbar(cm, label="MW/m^3")
 
 
-class ScrapeOffLayerSector(ScrapeOffLayer, Mathematics):
+class ScrapeOffLayerSector(ScrapeOffLayer, TwoPointModelTools):
     """
     To build a single sector, from the upstream location
     to one of the targets.
@@ -1456,12 +1451,14 @@ class ScrapeOffLayerSector(ScrapeOffLayer, Mathematics):
         return t_pol, n_pol
 
 
-class StepCore(Core, Mathematics):
+class StepCore(Core, TwoPointModelTools):
     """
     Specific class for the core emission of STEP
     """
 
-    def __init__(self, process_solver, transport_solver, config):
+    def __init__(
+        self, process_solver: Solver, transport_solver: ChargedParticleSolver, config
+    ):
         super().__init__(process_solver, transport_solver, config)
 
         # Adimensional radius at the mid-plane.
@@ -1554,12 +1551,18 @@ class StepCore(Core, Mathematics):
         self.plot_2d_map(flux_tubes, total_rad)
 
 
-class StepScrapeOffLayer(ScrapeOffLayerSector, ScrapeOffLayer, Mathematics):
+class StepScrapeOffLayer(ScrapeOffLayerSector, ScrapeOffLayer, TwoPointModelTools):
     """
     Specific class for the scrape-off layer emission of STEP
     """
 
-    def __init__(self, process_solver, transport_solver, config, firstwall_geom):
+    def __init__(
+        self,
+        process_solver: Solver,
+        transport_solver: ChargedParticleSolver,
+        config,
+        firstwall_geom,
+    ):
         super().__init__(process_solver, transport_solver, config)
 
         self.params = ParameterFrame(self.base_default_params)
@@ -1803,3 +1806,6 @@ class StepScrapeOffLayer(ScrapeOffLayerSector, ScrapeOffLayer, Mathematics):
             [total_rad_lfs_low, total_rad_hfs_low, total_rad_lfs_up, total_rad_hfs_up],
             firstwall_geom,
         )
+
+        print(self.flux_tubes_lfs_low[0].loop.z)
+        print(self.flux_tubes_lfs_low[15].loop.z)
