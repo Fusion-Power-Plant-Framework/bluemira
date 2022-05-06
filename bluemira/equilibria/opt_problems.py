@@ -821,7 +821,12 @@ class NestedCoilsetPositionCOP(CoilsetOptimisationProblem):
         return fom
 
 
-class NewUnconstrainedCurrentCOP(CoilsetOptimisationProblem):
+class UnconstrainedMinimalErrorCOP(CoilsetOptimisationProblem):
+    """
+    Unbounded, unconstrained, analytically optimised current vector for minimal error
+    to the L2-norm of a set of magnetic constraints (used here as targets).
+    """
+
     def __init__(self, eq, targets, gamma):
         self.eq = eq
         self.targets = targets
@@ -853,7 +858,11 @@ class NewUnconstrainedCurrentCOP(CoilsetOptimisationProblem):
         return self.coilset
 
 
-class NewCurrentCOP(CoilsetOptimisationProblem):
+class MinimalCurrentsCOP(CoilsetOptimisationProblem):
+    """
+    Bounded, constrained, minimal current optimisation problem.
+    """
+
     def __init__(self, eq, optimiser, max_currents=None, constraints=None):
         self.eq = eq
         objective = OptimisationObjective(
@@ -865,13 +874,16 @@ class NewCurrentCOP(CoilsetOptimisationProblem):
         dimension = len(bounds[0])
         self.set_up_optimiser(dimension, bounds)
 
-    def optimise(self, I_not_dI=True, fixed_coils=True):
+    def update_magnetic_constraints(self, I_not_dI=True, fixed_coils=True):
         if self._constraints is not None:
             for constraint in self._constraints:
                 if isinstance(constraint, MagneticConstraint):
                     constraint.prepare(
                         self.eq, I_not_dI=I_not_dI, fixed_coils=fixed_coils
                     )
+
+    def optimise(self, I_not_dI=True, fixed_coils=True):
+        self.update_magnetic_constraints(I_not_dI=I_not_dI, fixed_coils=fixed_coils)
 
         initial_state, n_states = self.read_coilset_state(self.eq.coilset, self.scale)
         _, _, initial_currents = np.array_split(initial_state, n_states)

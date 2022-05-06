@@ -50,9 +50,8 @@ from bluemira.equilibria.opt_constraints import (
     MagneticConstraintSet,
 )
 from bluemira.equilibria.opt_problems import (
-    NewCurrentCOP,
-    NewUnconstrainedCurrentCOP,
-    UnconstrainedCurrentCOP,
+    MinimalCurrentsCOP,
+    UnconstrainedMinimalErrorCOP,
 )
 from bluemira.equilibria.optimiser import BreakdownOptimiser, FBIOptimiser
 from bluemira.equilibria.physics import calc_beta_p_approx, calc_li, calc_psib
@@ -188,7 +187,7 @@ def init_equilibrium(grid, coilset):
     )
     constraint_set = MagneticConstraintSet([isoflux, x_point])
     constraint_set(eq)
-    optimiser = UnconstrainedCurrentCOP(coilset_temp, eq, constraint_set, gamma=1e-7)
+    optimiser = UnconstrainedMinimalErrorCOP(eq, constraint_set, gamma=1e-7)
     coilset_temp = optimiser()
 
     coilset.set_control_currents(coilset_temp.get_control_currents())
@@ -255,7 +254,7 @@ profiles = CustomProfile(
 psi = init_equilibrium(grid, coilset)
 eq = Equilibrium(coilset, grid, psi=psi, profiles=profiles, Ip=I_p, RB0=[R_0, B_0])
 
-opt_problem = NewUnconstrainedCurrentCOP(
+opt_problem = UnconstrainedMinimalErrorCOP(
     eq, MagneticConstraintSet([isoflux, x_point]), gamma=1e-7
 )
 
@@ -264,7 +263,7 @@ program = PicardBaseIterator(
 )
 program()
 
-opt_problem = NewCurrentCOP(
+opt_problem = MinimalCurrentsCOP(
     eq,
     Optimiser("SLSQP", opt_conditions={"max_eval": 2000, "ftol_rel": 1e-6}),
     max_currents=coilset.get_max_currents(0.0),

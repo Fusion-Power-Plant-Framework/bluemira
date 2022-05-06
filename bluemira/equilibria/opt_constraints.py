@@ -56,6 +56,7 @@ in derivative based algorithms, such as those utilising gradient descent.
 
 import numpy as np
 
+from bluemira.equilibria.plotting import ConstraintPlotter
 from bluemira.utilities.opt_problems import OptimisationConstraint
 
 
@@ -670,8 +671,8 @@ class MagneticConstraintSet(ABC):
     #             constraint.target_value = psi_bndry
     #     self.build_target()
 
-    # def plot(self, ax=None):
-    #     """
-    #     Plots constraints
-    #     """
-    #     return ConstraintPlotter(self, ax=ax)
+    def plot(self, ax=None):
+        """
+        Plots constraints
+        """
+        return ConstraintPlotter(self, ax=ax)
