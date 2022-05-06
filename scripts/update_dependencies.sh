@@ -20,8 +20,8 @@ REPO_HTTPS_URL="https://github.com/Fusion-Power-Plant-Framework/bluemira.git"
 [ "$CURRENT_REPO" = "$REPO_GIT_URL" ] || [ "$CURRENT_REPO" = "$REPO_HTTPS_URL" ] || { echo "Not in bluemira git repo, exiting" && exit 1; }
 
 # check that the requirements files havent changed
-git diff --exit-code requirements.txt
-git diff --exit-code requirements-develop.txt
+git diff --exit-code requirements.txt || { echo "requirements.txt modified on this branch, exiting" && exit 1; }
+git diff --exit-code requirements-develop.txt || { echo "requirements-develop.txt modified on this branch, exiting" && exit 1; }
 
 # checkout dependencies from develop
 git checkout $REQ_BRANCH requirements.txt requirements-develop.txt
