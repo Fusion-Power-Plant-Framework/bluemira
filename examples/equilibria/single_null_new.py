@@ -53,7 +53,7 @@ from bluemira.equilibria.opt_problems import (
     UnconstrainedMinimalErrorCOP,
 )
 from bluemira.equilibria.profiles import CustomProfile
-from bluemira.equilibria.solve_new import DudsonConvergence, PicardBaseIterator
+from bluemira.equilibria.solve_new import DudsonConvergence, PicardIterator
 from bluemira.utilities.optimiser import Optimiser
 
 # %%[markdown]
@@ -147,7 +147,10 @@ isoflux = IsofluxConstraint(
 )
 
 psi_boundary = PsiBoundaryConstraint(
-    np.array(sof_xbdry)[::10], np.array(sof_zbdry)[::10], -100 / (2 * np.pi)
+    np.array(sof_xbdry)[::10],
+    np.array(sof_zbdry)[::10],
+    -100 / (2 * np.pi),
+    tolerance=1.0,
 )
 
 psi_point = PsiConstraint(sof_xbdry[0], sof_zbdry[0], -100 / (2 * np.pi))
@@ -216,10 +219,10 @@ profiles = CustomProfile(
 eq = Equilibrium(coilset, grid, psi=None, profiles=profiles, Ip=I_p, RB0=[R_0, B_0])
 
 opt_problem = UnconstrainedMinimalErrorCOP(
-    eq, MagneticConstraintSet([isoflux, x_point]), gamma=1e-7
+    eq, MagneticConstraintSet([psi_boundary, x_point]), gamma=1e-7
 )
 
-program = PicardBaseIterator(
+program = PicardIterator(
     eq, profiles, opt_problem, I_not_dI=False, fixed_coils=True, relaxation=0.2
 )
 program()
@@ -228,10 +231,10 @@ opt_problem = MinimalCurrentsCOP(
     eq,
     Optimiser("SLSQP", opt_conditions={"max_eval": 2000, "ftol_rel": 1e-6}),
     max_currents=coilset.get_max_currents(0.0),
-    constraints=[isoflux, x_point, psi_point],
+    constraints=[psi_boundary, x_point],
 )
 
-program = PicardBaseIterator(
+program = PicardIterator(
     eq,
     profiles,
     opt_problem,

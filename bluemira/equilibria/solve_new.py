@@ -391,118 +391,9 @@ class JsourceConvergence(ConvergenceCriterion):
         return self.check_converged(conv)
 
 
-class CurrentOptimiser:
+class PicardIterator:
     """
-    Mixin class for performing optimisation of currents
-    """
-
-    def _optimise_currents(self, psib=None, update_size=True):
-        """
-        Finds optimal currents for the coilset
-
-        Parameters
-        ----------
-        psib: List[float], optional
-            The boundary psi values, by default None.
-        update_size: bool, optional
-            If True then update the coilset size, by default True.
-        """
-        self.constraints(self.eq, I_not_dI=True)
-        try:
-            currents = self.optimiser(self.eq, self.constraints, psib)
-            self.store.append(currents)
-        except ExternalOptError:
-            currents = self.store[-1]
-        self.coilset.set_control_currents(currents, update_size)
-
-    def _initial_optimise_currents(self, psib=None, update_size=True):
-        """
-        Finds optimal currents for the coilset for optimiser initialisation
-
-        Parameters
-        ----------
-        psib: List[float], optional
-            The boundary psi values, by default None.
-        update_size: bool, optional
-            If True then update the coilset size, by default True.
-        """
-        return self._optimise_currents(psib, update_size)
-
-
-class CoilsetPropertiesOptimiser:
-    """
-    Mixin class for performing optimisation of currents
-    """
-
-    def _optimise_currents(self, psib=None, update_size=True):
-        """
-        Finds optimal currents for the coilset
-
-        Parameters
-        ----------
-        psib: List[float], optional
-            The boundary psi values, by default None.
-        update_size: bool, optional
-            If True then update the coilset size, by default True.
-        """
-        try:
-            coilset = self.optimiser(self.eq, self.constraints, psib)
-            self.store.append(coilset)
-        except ExternalOptError:
-            coilset = self.store[-1]
-        self.coilset = coilset
-
-    def _initial_optimise_currents(self, psib=None, update_size=True):
-        """
-        Finds optimal currents for the coilset for optimiser initialisation
-
-        Parameters
-        ----------
-        psib: List[float], optional
-            The boundary psi values, by default None.
-        update_size: bool, optional
-            If True then update the coilset size, by default True.
-        """
-        return self._optimise_currents(psib, update_size)
-
-
-class CurrentGradientOptimiser:
-    """
-    Mixin class for performing optimisation of current gradients
-    """
-
-    def _optimise_currents(self, fixed_coils=False):
-        """
-        Finds an optimal dI for the coilset
-
-        Parameters
-        ----------
-        fixed_coils: bool, optional
-            If True then applies a fixed-coil constraint, by default False.
-        """
-        self.constraints(self.eq, fixed_coils=fixed_coils)
-        try:
-            d_current = self.optimiser(self.eq, self.constraints)
-            self.store.append(d_current)
-        except ExternalOptError:
-            d_current = self.store[-1]
-        self.coilset.adjust_currents(d_current)
-
-    def _initial_optimise_currents(self, fixed_coils=False):
-        """
-        Finds an optimal dI for the coilset for optimiser initialisation
-
-        Parameters
-        ----------
-        fixed_coils: bool, optional
-            If True then applies a fixed-coil constraint, by default False.
-        """
-        return self._optimise_currents(fixed_coils)
-
-
-class PicardBaseIterator(ABC):
-    """
-    Abstract base class for Picard iterative solvers
+    A Picard iterative solver.
 
     Child classes must provide a __call__ method which carries out the
     iteration process(es)
@@ -521,8 +412,6 @@ class PicardBaseIterator(ABC):
         The convergence criterion to use
     relaxation: float
         The relaxation parameter to use between iterations
-    miniter: int
-        The minimum number of iterations before using li optimisation
     maxiter: int
         The maximum number of iterations
     plot: bool
@@ -544,7 +433,6 @@ class PicardBaseIterator(ABC):
         I_not_dI: bool = False,
         fixed_coils: bool = False,
         relaxation: int = 0,
-        miniter: int = 5,
         maxiter: int = 30,
         plot=True,
         gif=False,
@@ -565,7 +453,6 @@ class PicardBaseIterator(ABC):
         self.fixed_coils = fixed_coils
 
         self.relaxation = relaxation
-        self.miniter = miniter
         self.maxiter = maxiter
         self.plot_flag = plot
         self.gif_flag = gif

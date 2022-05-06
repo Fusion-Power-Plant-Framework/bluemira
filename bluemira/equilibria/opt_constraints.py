@@ -76,7 +76,7 @@ def objective_constraint(constraint, vector, grad, objective_function, maximum_f
     return constraint
 
 
-def Ax_b_constraint(constraint, vector, grad, a_mat, b_vec, scale):  # noqa: N802
+def Ax_b_constraint(constraint, vector, grad, a_mat, b_vec, value, scale):  # noqa: N802
     """
     Constraint function of the form:
         A.x - b < 0.0
@@ -94,7 +94,7 @@ def Ax_b_constraint(constraint, vector, grad, a_mat, b_vec, scale):  # noqa: N80
     b_vec: np.ndarray
         Target value vector
     """
-    constraint[:] = np.dot(a_mat, scale * vector) - b_vec
+    constraint[:] = np.dot(a_mat, scale * vector) - b_vec - value
     if grad.size > 0:
         grad[:] = scale * a_mat
     return constraint
@@ -283,6 +283,24 @@ from typing import List, Union
 from bluemira.utilities.tools import is_num
 
 
+def _get_dummy_equilibrium(equilibrium, I_not_dI):
+    """
+    Get a dummy equilibrium for current optimisation where the background response is
+    solely due to the plasma and passive coils.
+    """
+    if I_not_dI:
+        # hack to change from dI to I optimiser (and keep both)
+        # When we do dI optimisation, the background vector includes the
+        # contributions from the whole coilset (including active coils)
+        # When we do I optimisation, the background vector only includes
+        # contributions from the passive coils (plasma)
+        # TODO: Add passive coil contributions here
+        dummy = equilibrium.plasma_coil()
+        dummy.coilset = equilibrium.coilset
+        equilibrium = dummy
+    return equilibrium
+
+
 class MagneticConstraint(ABC, OptimisationConstraint):
     """
     Abstract base class for a magnetic optimisation constraint.
@@ -304,7 +322,10 @@ class MagneticConstraint(ABC, OptimisationConstraint):
     ):
         self.target_value = target_value * np.ones(len(self))
         if is_num(tolerance):
-            tolerance = tolerance * np.ones(1)
+            if f_constraint == L2_norm_constraint:
+                tolerance = tolerance * np.ones(1)
+            else:
+                tolerance = tolerance * np.ones(len(self))
         self.weights = weights
         args = {"a_mat": None, "b_vec": None, "value": 0.0, "scale": 1.0}
         super().__init__(
@@ -318,16 +339,7 @@ class MagneticConstraint(ABC, OptimisationConstraint):
         """
         Prepare the constraint for use in an equilibrium optimisation problem.
         """
-        if I_not_dI:
-            # hack to change from dI to I optimiser (and keep both)
-            # When we do dI optimisation, the background vector includes the
-            # contributions from the whole coilset (including active coils)
-            # When we do I optimisation, the background vector only includes
-            # contributions from the passive coils (plasma)
-            # TODO: Add passive coil contributions here
-            dummy = equilibrium.plasma_coil()
-            dummy.coilset = equilibrium.coilset
-            equilibrium = dummy
+        equilibrium = _get_dummy_equilibrium(equilibrium, I_not_dI)
 
         # Re-build control response matrix
         if not fixed_coils or (fixed_coils and self._args["a_mat"] is None):
@@ -386,7 +398,7 @@ class AbsoluteMagneticConstraint(MagneticConstraint):
         weights: Union[float, np.ndarray] = 1.0,
         tolerance=1e-6,
         f_constraint=Ax_b_constraint,
-        constraint_type="inequality",
+        constraint_type="equality",
     ):
         self.x = x
         self.z = z
@@ -444,7 +456,15 @@ class FieldNullConstraint(AbsoluteMagneticConstraint):
         tolerance=1e-6,
         constraint_type="equality",
     ):
-        super().__init__(x, z, 0.0, weights, tolerance, constraint_type)
+        super().__init__(
+            x,
+            z,
+            0.0,
+            weights,
+            tolerance=tolerance,
+            constraint_type=constraint_type,
+            f_constraint=L2_norm_constraint,
+        )
 
     def control_response(self, coilset):
         """
@@ -534,7 +554,7 @@ class IsofluxConstraint(RelativeMagneticConstraint):
             ref_x,
             ref_z,
             constraint_value,
-            weights,
+            weights=weights,
             f_constraint=L2_norm_constraint,
             tolerance=tolerance,
             constraint_type="inequality",
@@ -640,17 +660,7 @@ class MagneticConstraintSet(ABC):
         self.constraints = constraints
 
     def __call__(self, equilibrium, I_not_dI=False, fixed_coils=False):  # noqa :N803
-
-        if I_not_dI:
-            # hack to change from dI to I optimiser (and keep both)
-            # When we do dI optimisation, the background vector includes the
-            # contributions from the whole coilset (including active coils)
-            # When we do I optimisation, the background vector only includes
-            # contributions from the passive coils (plasma)
-            # TODO: Add passive coil contributions here
-            dummy = equilibrium.plasma_coil()
-            dummy.coilset = equilibrium.coilset
-            equilibrium = dummy
+        equilibrium = _get_dummy_equilibrium(equilibrium, I_not_dI)
 
         self.eq = equilibrium
         self.coilset = equilibrium.coilset
