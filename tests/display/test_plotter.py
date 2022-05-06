@@ -25,7 +25,9 @@ Tests for the plotter module.
 
 import numpy as np
 
-import bluemira.geometry as geo
+import bluemira.geometry.face as face
+import bluemira.geometry.placement as placement
+import bluemira.geometry.tools as tools
 from bluemira.base.components import Component, PhysicalComponent
 from bluemira.display import plot_3d, plotter
 from bluemira.utilities.plot_tools import Plot3D
@@ -65,7 +67,7 @@ class TestPlotOptions:
         """
         Check the options can be obtained as a dictionary with a BluemiraPlacement
         """
-        the_placement = geo.placement.BluemiraPlacement()
+        the_placement = placement.BluemiraPlacement()
         the_options = plotter.PlotOptions(view=the_placement)
         options_dict = the_options.as_dict()
         for key, val in options_dict.items():
@@ -103,7 +105,7 @@ class TestPlotOptions:
         the_options.wire_options = {}
         the_options.face_options = {}
         the_options.view = "xyz"
-        the_options.view = geo.placement.BluemiraPlacement()
+        the_options.view = placement.BluemiraPlacement()
         the_options.ndiscr = 20
         the_options.byedges = not plotter.DEFAULT_PLOT_OPTIONS["byedges"]
 
@@ -118,16 +120,16 @@ class TestPlot3d:
 
     def test_plot_3d_same_axis(self):
         ax_orig = Plot3D()
-        ax_1 = plot_3d(geo.tools.make_circle(), show=False, ax=ax_orig)
-        ax_2 = plot_3d(geo.tools.make_circle(radius=2), show=False, ax=ax_1)
+        ax_1 = plot_3d(tools.make_circle(), show=False, ax=ax_orig)
+        ax_2 = plot_3d(tools.make_circle(radius=2), show=False, ax=ax_1)
 
         assert ax_1 is ax_orig
         assert ax_2 is ax_orig
 
     def test_plot_3d_new_axis(self):
         ax_orig = Plot3D()
-        ax_1 = plot_3d(geo.tools.make_circle(), show=False)
-        ax_2 = plot_3d(geo.tools.make_circle(radius=2), show=False)
+        ax_1 = plot_3d(tools.make_circle(), show=False)
+        ax_2 = plot_3d(tools.make_circle(radius=2), show=False)
 
         assert ax_1 is not ax_2
         assert ax_1 is not ax_orig
@@ -144,7 +146,7 @@ class TestPointsPlotter:
 
 class TestWirePlotter:
     def setup_method(self):
-        self.wire = geo.tools.make_polygon(SQUARE_POINTS)
+        self.wire = tools.make_polygon(SQUARE_POINTS)
 
     def test_plotting_2d(self):
         plotter.WirePlotter().plot_2d(self.wire)
@@ -161,9 +163,9 @@ class TestWirePlotter:
 
 class TestFacePlotter:
     def setup_method(self):
-        wire = geo.tools.make_polygon(SQUARE_POINTS)
+        wire = tools.make_polygon(SQUARE_POINTS)
         wire.close()
-        self.face = geo.face.BluemiraFace(wire)
+        self.face = face.BluemiraFace(wire)
 
     def test_plotting_2d(self):
         plotter.FacePlotter().plot_2d(self.face)
@@ -180,10 +182,10 @@ class TestFacePlotter:
 
 class TestComponentPlotter:
     def setup_method(self):
-        wire1 = geo.tools.make_polygon(SQUARE_POINTS, closed=True)
-        wire2 = geo.tools.make_polygon(SQUARE_POINTS + 2.0, closed=True)
-        face1 = geo.face.BluemiraFace(wire1)
-        face2 = geo.face.BluemiraFace(wire2)
+        wire1 = tools.make_polygon(SQUARE_POINTS, closed=True)
+        wire2 = tools.make_polygon(SQUARE_POINTS + 2.0, closed=True)
+        face1 = face.BluemiraFace(wire1)
+        face2 = face.BluemiraFace(wire2)
 
         self.group = Component("Parent")
         self.child1 = PhysicalComponent("Child1", shape=face1, parent=self.group)
