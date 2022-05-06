@@ -479,6 +479,19 @@ class PsiConstraint(AbsoluteMagneticConstraint):
     Absolute psi value constraint.
     """
 
+    def __init__(
+        self, x, z, target_value, weights: Union[float, np.ndarray] = 1.0, tolerance=1e-6
+    ):
+        super().__init__(
+            x,
+            z,
+            target_value,
+            weights,
+            tolerance,
+            f_constraint=Ax_b_constraint,
+            constraint_type="equality",
+        )
+
     def control_response(self, coilset):
         """
         Calculate control response of a CoilSet to the constraint.
@@ -504,7 +517,16 @@ class IsofluxConstraint(RelativeMagneticConstraint):
     Isoflux constraint for a set of points relative to a reference point.
     """
 
-    def __init__(self, x, z, ref_x, ref_z, constraint_value, weights, tolerance):
+    def __init__(
+        self,
+        x,
+        z,
+        ref_x,
+        ref_z,
+        constraint_value,
+        weights: Union[float, np.ndarray] = 1.0,
+        tolerance: float = 1e-6,
+    ):
 
         super().__init__(
             x,
@@ -562,17 +584,6 @@ class PsiBoundaryConstraint(AbsoluteMagneticConstraint):
     Absolute psi value constraint on the plasma boundary. Gets updated when
     the plasma boundary flux value is changed.
     """
-
-    def __init__(self, x, z, target_value, weights, tolerance):
-        super().__init__(
-            x,
-            z,
-            target_value,
-            weights,
-            tolerance,
-            f_constraint=Ax_b_constraint,
-            constraint_type="equality",
-        )
 
     def control_response(self, coilset):
         """
