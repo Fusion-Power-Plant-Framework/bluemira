@@ -29,7 +29,6 @@ from abc import ABC, abstractmethod
 from typing import TYPE_CHECKING, Dict, Iterable, List, Optional, Tuple, Union
 
 import matplotlib.colors as colors
-import numpy as np
 import polyscope as ps
 
 from bluemira.base.look_and_feel import bluemira_debug
@@ -267,8 +266,8 @@ def add_features(
 
         m = ps.register_surface_mesh(
             clean_name(part.label, shape_i),
-            np.vstack(verts),
-            np.vstack(faces),
+            verts,
+            faces,
         )
         m.set_color(option["color"])
         m.set_transparency(option["transparency"])
