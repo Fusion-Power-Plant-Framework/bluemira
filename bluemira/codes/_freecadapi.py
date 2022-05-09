@@ -30,7 +30,6 @@ from copy import deepcopy
 from typing import Dict, Iterable, List, Optional, Tuple, Union
 
 import freecad  # noqa: F401
-import FreeCAD
 import BOPTools
 import BOPTools.GeneralFuseResult
 import BOPTools.JoinAPI
@@ -39,7 +38,6 @@ import BOPTools.ShapeMerge
 import BOPTools.SplitAPI
 import BOPTools.SplitFeatures
 import BOPTools.Utils
-import FreeCADGui
 import numpy as np
 import Part
 from FreeCAD import Base
@@ -1815,81 +1813,39 @@ def placement_from_plane(plane):
 # ======================================================================================
 # Geometry visualisation
 # ======================================================================================
-def _colourise(
-    node: coin.SoNode,
-    options: Dict,
-):
-    if isinstance(node, coin.SoMaterial):
-        rgb = options["color"]
-        transparency = options["transparency"]
-        node.ambientColor.setValue(coin.SbColor(*rgb))
-        node.diffuseColor.setValue(coin.SbColor(*rgb))
-        node.transparency.setValue(transparency)
-    for child in node.getChildren() or []:
-        _colourise(child, options)
-
-
-def show_cad(
-    parts: Union[Part.Shape, List[Part.Shape]],
-    options: Optional[Union[Dict, List[Dict]]] = None,
-):
+def collect_verts_faces(
+    solid: Part.Shape, tesselation: float = 0.1
+) -> (np.ndarray, np.ndarray):
     """
-    The implementation of the display API for FreeCAD parts.
+    Collects verticies and faces of parts and tessellates them
+    for the CAD viewer
 
     Parameters
     ----------
-    parts: Union[Part.Shape, List[Part.Shape]]
-        The parts to display.
-    options: Optional[Union[_PlotCADOptions, List[_PlotCADOptions]]]
-        The options to use to display the parts.
+    solid: Part.Shape
+        FreeCAD Part
+    tesselation: float
+        amount of tesselation for the mesh
+
+    Returns
+    -------
+    vertices, faces
+
     """
-    if not isinstance(parts, list):
-        parts = [parts]
+    verts = []
+    faces = []
+    voffset = 0
 
-    if options is None:
-        from bluemira.display.displayer import get_default_options
+    # collect
+    for face in solid.Faces:
+        # tesselation is likely to be the most expensive part of this
+        v, f = face.tessellate(tesselation)
 
-        dict_options = get_default_options()
-        options = [dict_options] * len(parts)
+        verts.append(np.array(v))
+        faces.append(np.array(f) + voffset)
+        voffset += len(v)
 
-    elif not isinstance(options, list):
-        options = [options] * len(parts)
-
-    if len(options) != len(parts):
-        raise FreeCADError(
-            "If options for display are provided then there must be as many options as "
-            "there are parts to display."
-        )
-
-    app = QApplication.instance()
-    if app is None:
-        app = QApplication([])
-
-    if not hasattr(FreeCADGui, "subgraphFromObject"):
-        FreeCADGui.setupWithoutGUI()
-
-    doc = FreeCAD.newDocument()
-
-    root = coin.SoSeparator()
-
-    for part, option in zip(parts, options):
-        new_part = part.copy()
-        new_part.rotate((0.0, 0.0, 0.0), (1.0, 0.0, 0.0), -90.0)
-        obj = doc.addObject("Part::Feature")
-        obj.Shape = new_part
-        doc.recompute()
-        subgraph = FreeCADGui.subgraphFromObject(obj)
-        _colourise(subgraph, option)
-        root.addChild(subgraph)
-
-    viewer = quarter.QuarterWidget()
-    viewer.setBackgroundColor(coin.SbColor(1, 1, 1))
-    viewer.setTransparencyType(coin.SoGLRenderAction.SCREEN_DOOR)
-    viewer.setSceneGraph(root)
-
-    viewer.setWindowTitle("Bluemira Display")
-    viewer.show()
-    app.exec_()
+    return np.vstack(verts), np.vstack(faces)
 
 
 # # =============================================================================

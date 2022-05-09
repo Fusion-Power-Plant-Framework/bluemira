@@ -33,6 +33,7 @@ dependencies = [
     "numpy",
     "pint",
     "periodictable",
+    "polyscope",
     "pyclipper",
     "pypet",
     "pyquaternion",

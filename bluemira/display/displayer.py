@@ -26,10 +26,13 @@ from __future__ import annotations
 
 import copy
 from abc import ABC, abstractmethod
-from typing import TYPE_CHECKING, List, Optional, Tuple, Union
+from typing import TYPE_CHECKING, Dict, Iterable, List, Optional, Tuple, Union
 
 import matplotlib.colors as colors
+import numpy as np
+import polyscope as ps
 
+from bluemira.base.look_and_feel import bluemira_debug
 from bluemira.codes import _freecadapi as cadapi
 from bluemira.display.error import DisplayError
 from bluemira.display.palettes import BLUE_PALETTE
@@ -40,7 +43,9 @@ if TYPE_CHECKING:
 
 DEFAULT_DISPLAY_OPTIONS = {
     "color": (0.5, 0.5, 0.5),
-    "transparency": 0.0,
+    "transparency": 1.0,
+    "material": "candy",
+    "tesselation": 0.1,
 }
 
 
@@ -100,6 +105,28 @@ class DisplayCADOptions(DisplayOptions):
     def transparency(self, val: float):
         self._options["transparency"] = val
 
+    @property
+    def material(self):
+        """
+        The Polyscope material to set for component
+        """
+        return self._options["material"]
+
+    @material.setter
+    def material(self, val: str):
+        self._options["material"] = val
+
+    @property
+    def tesselation(self):
+        """
+        The Polyscope tesselation to set for component
+        """
+        return self._options["tesselation"]
+
+    @tesselation.setter
+    def tesselation(self, val: str):
+        self._options["tesselation"] = val
+
 
 # =======================================================================================
 # Visualisation
@@ -123,11 +150,15 @@ def _validate_display_inputs(parts, options):
     """
     Validate the lists of parts and options, applying some default options.
     """
+    if parts is None:
+        bluemira_debug("No new parts to display")
+        return [], []
+
     if not isinstance(parts, list):
         parts = [parts]
 
     if options is None:
-        options = [None] * len(parts)
+        options = [get_default_options()] * len(parts)
     elif not isinstance(options, list):
         options = [options] * len(parts)
 
@@ -140,16 +171,16 @@ def _validate_display_inputs(parts, options):
 
 
 def show_cad(
-    parts: Union[BluemiraGeo, List[BluemiraGeo]],
+    parts: Optional[Union[BluemiraGeo, List[BluemiraGeo]]] = None,
     options: Optional[Union[DisplayCADOptions, List[DisplayCADOptions]]] = None,
     **kwargs,
 ):
     """
-    The implementation of the display API for FreeCAD parts.
+    The CAD display API using Polyscope.
 
     Parameters
     ----------
-    parts: Union[BluemiraGeo, List[BluemiraGeo]]
+    parts: Optional[Union[BluemiraGeo, List[BluemiraGeo]]]
         The parts to display.
     options: Optional[Union[_PlotCADOptions, List[_PlotCADOptions]]]
         The options to use to display the parts.
@@ -163,13 +194,113 @@ def show_cad(
             temp.modify(**kwargs)
             new_options.append(temp)
         else:
-            temp = DisplayCADOptions(**kwargs)
-            new_options.append(temp)
+            new_options.append(DisplayCADOptions(**kwargs))
 
-    shapes = [part.shape for part in parts]
-    freecad_options = [o.as_dict() for o in new_options]
+    part_options = [o.as_dict() for o in new_options]
 
-    cadapi.show_cad(shapes, freecad_options)
+    polyscope_setup(
+        up_direction=kwargs.get("up_direction", "z_up"),
+        fps=kwargs.get("fps", 60),
+        aa=kwargs.get("aa", 1),
+    )
+
+    add_features(parts, part_options)
+
+    ps.show()
+
+
+def polyscope_setup(up_direction: str = "z_up", fps: int = 60, aa: int = 1):
+    """
+    Setup Polyscope default scene
+
+    Parameters
+    ----------
+    up_direction: str
+        'x_up' The positive X-axis is up.
+        'neg_x_up' The negative X-axis is up.
+        'y_up' The positive Y-axis is up.
+        'neg_y_up' The negative Y-axis is up.
+        'z_up' The positive Z-axis is up.
+        'neg_z_up' The negative Z-axis is up.
+    fps: int
+        maximum frames per second of viewer (-1 == infinite)
+    aa: int
+        anti aliasing amount, 1 is off, 2 is usually enough
+    """
+    ps.set_program_name("Bluemira Display")
+    ps.set_max_fps(fps)
+    ps.set_SSAA_factor(aa)
+    ps.set_up_dir(up_direction)
+
+    # initialize
+    ps.init()
+    ps.remove_all_structures()
+
+
+def add_features(
+    parts: Union[BluemiraGeo, List[BluemiraGeo]],
+    options: Optional[Union[Dict, List[Dict]]] = None,
+) -> List[ps.SurfaceMesh]:
+    """
+    Grab meshes of all parts to be displayed by Polyscope
+
+    Parameters
+    ----------
+    parts: Union[BluemiraGeo, List[BluemiraGeo]]
+        parts to be displayed
+    options: Optional[Union[Dict, List[Dict]]]
+        display options
+
+    Returns
+    -------
+    meshes: List[ps.SurfaceMesh]
+        Registered Polyspline surface meshes
+
+    """
+    meshes = []
+    if not isinstance(parts, list):
+        parts = [parts]
+
+    # loop over every face adding their meshes to polyscope
+    for shape_i, (part, option) in enumerate(zip(parts, options)):
+        verts, faces = cadapi.collect_verts_faces(part._shape, option["tesselation"])
+
+        m = ps.register_surface_mesh(
+            clean_name(part.label, shape_i),
+            np.vstack(verts),
+            np.vstack(faces),
+        )
+        m.set_color(option["color"])
+        m.set_transparency(option["transparency"])
+        m.set_material(option["material"])
+        meshes.append(m)
+
+    return meshes
+
+
+def clean_name(name: str, number: int) -> str:
+    """
+    Cleans or creates name.
+    Polyscope doesn't like hashes in names,
+    repeat names overwrite existing component.
+
+    Parameters
+    ----------
+    name: str
+        name to be cleaned
+    number: int
+        if name is empty <NO LABEL num >
+
+    Returns
+    -------
+    name: str
+
+    """
+    name = name.replace("#", "_")
+    if len(name) == 0 or name == "_":
+        return f"<NO LABEL {number}>"
+    else:
+        return name
 
 
 class BaseDisplayer(ABC):

@@ -86,7 +86,7 @@ class TestDisplayCADOptions:
             the_options.transparency == displayer.DEFAULT_DISPLAY_OPTIONS["transparency"]
         )
 
-        the_options.transparency = 1.0
+        the_options.transparency = 0.0
         assert the_options.color != displayer.DEFAULT_DISPLAY_OPTIONS["color"]
         assert (
             the_options.transparency != displayer.DEFAULT_DISPLAY_OPTIONS["transparency"]
@@ -159,7 +159,10 @@ class TestGeometryDisplayer:
                     ],
                 )
                 displayer.show_cad(
-                    [wire1, box1], color=(1.0, 0.0, 0.0), transparency=0.2
+                    [wire1, box1],
+                    color=(1.0, 0.0, 0.0),
+                    transparency=0.2,
+                    material="wax",
                 )
 
                 with pytest.raises(DisplayError):
