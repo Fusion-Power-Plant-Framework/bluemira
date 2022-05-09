@@ -542,7 +542,7 @@ def estimate_loop_voltage(R_0, B_t, Z_eff, T_e, q_0, ln_lambda=17):
     -----
     H. Zohm, W. Morris (2022)
 
-    \t:math:`v_{loop}=2\\pi R_{0}\\dfrac{4\\pi B_{t}}{\\mu_{0}q_{0}\\sigma_{0}R_{0}}`
+    \t:math:`v_{loop}=2\\pi R_{0}\\dfrac{2\\pi B_{t}}{\\mu_{0}q_{0}\\sigma_{0}R_{0}}`
 
     Assumes no non-inductive current on axis
     Assumes a circular cross-section on axis
