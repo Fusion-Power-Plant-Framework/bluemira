@@ -146,6 +146,7 @@ ignore_names =
     Ip,
     A,
     F,
+    Z_eff,
     B*,
     *B_*,
     *Bt*,
