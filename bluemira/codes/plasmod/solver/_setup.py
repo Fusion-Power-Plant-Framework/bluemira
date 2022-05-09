@@ -22,6 +22,8 @@
 Defines the 'Setup' stage of the plasmod solver.
 """
 
+import copy
+import dataclasses
 from typing import Any, Callable, Dict, Optional, Union
 
 from bluemira.base.constants import raw_uc
@@ -89,12 +91,30 @@ class Setup(PlasmodTask):
         """
         Update plasmod inputs using the given values.
         """
-        # Create a new PlasmodInputs objects so we still benefit from
+        # Create a new PlasmodInputs object so we still benefit from
         # the __post_init__ processing (converts models to enums)
         new_inputs = {} if new_inputs is None else new_inputs
+        new_inputs = self._remove_non_plasmod_inputs(new_inputs)
         new = self.get_new_inputs()
         new.update(new_inputs)
         self.inputs = PlasmodInputs(**new)
+
+    @staticmethod
+    def _remove_non_plasmod_inputs(_inputs: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        Remove non-plasmod inputs from a dictionary. Warn that the
+        removed inputs will be ignored.
+
+        This copies the original dictionary, the input dictionary is not
+        modified.
+        """
+        inputs = copy.deepcopy(_inputs)
+        fields = set(field.name for field in dataclasses.fields(PlasmodInputs))
+        for input_name in list(inputs.keys()):
+            if input_name not in fields:
+                bluemira_warn(f"Ignoring unknown plasmod input '{input_name}'.")
+                inputs.pop(input_name)
+        return inputs
 
     def _write_input(self):
         """
