@@ -79,7 +79,7 @@ def objective_constraint(constraint, vector, grad, objective_function, maximum_f
 def Ax_b_constraint(constraint, vector, grad, a_mat, b_vec, value, scale):  # noqa: N802
     """
     Constraint function of the form:
-        A.x - b < 0.0
+        A.x - b < value
 
     Parameters
     ----------
@@ -390,6 +390,11 @@ class MagneticConstraint(ABC, OptimisationConstraint):
 
 
 class AbsoluteMagneticConstraint(MagneticConstraint):
+    """
+    Abstract base class for absolute magnetic constraints, where the target
+    value is prescribed in absolute terms.
+    """
+
     def __init__(
         self,
         x,
@@ -412,6 +417,11 @@ class AbsoluteMagneticConstraint(MagneticConstraint):
 
 
 class RelativeMagneticConstraint(MagneticConstraint):
+    """
+    Abstract base class for relative magnetic constraints, where the target
+    value is prescribed with respect to a reference point.
+    """
+
     def __init__(
         self,
         x,
