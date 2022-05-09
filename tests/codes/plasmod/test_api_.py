@@ -247,6 +247,23 @@ class TestPlasmodTeardown:
         assert ("/path/to/output/file.csv", "r") in call_args
         assert ("/path/to/profiles/file.csv", "r") in call_args
 
+    @pytest.mark.parametrize("i_flag", [2, 0, -1, -2, 100, -100])
+    def test_CodesError_if_plasmod_status_flag_ne_1(self, i_flag):
+        output_sample = (
+            "     betan      0.14092930140E+0002\n"
+            "      fbs       0.14366031154E+0002\n"
+            "      rli       0.16682353334E+0002\n"
+            f" i_flag           {i_flag}\n"
+        )
+        open_mock = mock.mock_open(read_data=output_sample)
+        teardown = Teardown(
+            self.default_pf, "/path/to/output/file.csv", "/path/to/profiles/file.csv"
+        )
+
+        with mock.patch("builtins.open", new=open_mock):
+            with pytest.raises(CodesError):
+                teardown.run()
+
 
 def _plasmod_run_subprocess_fake(command: List[str], **_):
     """
