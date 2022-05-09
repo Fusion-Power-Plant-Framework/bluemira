@@ -18,148 +18,314 @@
 #
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
-
-import json
-from pathlib import Path
-from unittest.mock import MagicMock, patch
+import copy
+import os
+import re
+import tempfile
+from typing import List
+from unittest import mock
 
 import pytest
 
-from bluemira.base.file import get_bluemira_path
-from bluemira.base.parameter import ParameterFrame
+from bluemira.base.config import Configuration
 from bluemira.codes.error import CodesError
-from bluemira.codes.plasmod.api import Outputs as PlasmodOutput
-from bluemira.codes.plasmod.api import Run as PlasmodRun
-from bluemira.codes.plasmod.api import Setup as PlasmodSetup
-from bluemira.codes.plasmod.api import Solver as PlasmodSolver
-from bluemira.codes.plasmod.api import Teardown as PlasmodTeardown
+from bluemira.codes.plasmod.api import Run, RunMode, Setup, Solver, Teardown
+from bluemira.codes.plasmod.constants import BINARY as PLASMOD_BINARY
+from tests._helpers import combine_text_mock_write_calls
+
+_MODULE_REF = "bluemira.codes.plasmod.api"
 
 
-@pytest.fixture(scope="module")
-def fake_parent():
-    # Make parent class for solver tasks
-    f_p = MagicMock()
-    f_p.run_dir = "OUTDIR"
-    return f_p
+class TestPlasmodSetup:
+    def setup_method(self):
+        self.default_pf = Configuration()
+        self.input_file = "/path/to/input.dat"
+
+    def test_inputs_updated_from_problem_settings_on_init(self):
+        problem_settings = {
+            "v_loop": -1.5e-3,
+            "q_heat": 1.5,
+            "nx": 25,
+        }
+
+        setup = Setup(self.default_pf, problem_settings, self.input_file)
+
+        assert setup.inputs.v_loop == -1.5e-3
+        assert setup.inputs.q_heat == 1.5
+        assert setup.inputs.nx == 25
+
+    def test_update_inputs_changes_input_values(self):
+        new_inputs = {
+            "v_loop": -1.5e-3,
+            "q_heat": 1.5,
+            "nx": 25,
+        }
+        setup = Setup(self.default_pf, {}, self.input_file)
+
+        setup.update_inputs(new_inputs)
+
+        assert setup.inputs.v_loop == -1.5e-3
+        assert setup.inputs.q_heat == 1.5
+        assert setup.inputs.nx == 25
+
+    def test_update_inputs_shows_warning_if_input_unknown(self):
+        new_inputs = {"not_a_param": -1.5e-3}
+        setup = Setup(self.default_pf, {}, self.input_file)
+
+        with mock.patch(f"{_MODULE_REF}.bluemira_warn") as bm_warn:
+            setup.update_inputs(new_inputs)
+
+        bm_warn.assert_called_once()
+
+    def test_run_writes_plasmod_dat_file(self):
+        problem_settings = {"v_loop": -1.5e-3, "q_heat": 1.5, "nx": 25}
+        setup = Setup(self.default_pf, problem_settings, "/some/file/path.dat")
+
+        with mock.patch("builtins.open", new_callable=mock.mock_open) as open_mock:
+            setup.run()
+
+        open_mock.assert_called_once_with("/some/file/path.dat", "w")
+        output = combine_text_mock_write_calls(open_mock)
+        assert re.search(r"^ *v_loop +-0.150+E-02\n", output, re.MULTILINE)
+        assert re.search(r"^ *q_heat +0.150+E\+01\n", output, re.MULTILINE)
+        assert re.search(r"^ *nx +25\n", output, re.MULTILINE)
+
+    @mock.patch("builtins.open", new_callable=mock.mock_open)
+    def test_CodesError_if_writing_to_plasmod_dat_file_fails(self, open_mock):
+        problem_settings = {"v_loop": -1.5e-3, "q_heat": 1.5, "nx": 25}
+        setup = Setup(
+            self.default_pf,
+            problem_settings=problem_settings,
+            input_file="/some/file/path.dat",
+        )
+        open_mock.side_effect = OSError
+
+        with pytest.raises(CodesError):
+            setup.run()
+
+    def test_mock_does_not_write_dat_file(self):
+        setup = Setup(self.default_pf, {}, self.input_file)
+
+        with mock.patch("builtins.open", new_callable=mock.mock_open) as open_mock:
+            setup.mock()
+
+        open_mock.assert_not_called()
+
+    def test_read_does_not_write_dat_file(self):
+        setup = Setup(self.default_pf, {}, self.input_file)
+
+        with mock.patch("builtins.open", new_callable=mock.mock_open) as open_mock:
+            setup.read()
+
+        open_mock.assert_not_called()
 
 
-class TestSetup:
-    @pytest.fixture(autouse=True, scope="class")
-    def setup(self, fake_parent):
-        cls = type(self)
-        cls.fake_parent = fake_parent
-        cls.plasmod_setup = PlasmodSetup(cls.fake_parent, params=ParameterFrame())
+class TestPlasmodRun:
 
-    def test_update_inputs(self):
-        # test bad variable
-        self.fake_parent.problem_settings = {"new_fake_input": 5}
-        self.plasmod_setup.update_inputs()
-        with pytest.raises(KeyError):
-            self.plasmod_setup.io_manager._options["new_fake_input"]
-        assert self.plasmod_setup.io_manager._options["contrpovr"] == 0.0
+    RUN_SUBPROCESS_REF = f"{_MODULE_REF}.run_subprocess"
 
-        # test good variable
-        self.fake_parent.problem_settings["contrpovr"] = 5
-        self.plasmod_setup.update_inputs()
-        assert self.plasmod_setup.io_manager._options["contrpovr"] == 5
+    def setup_method(self):
+        self._run_subprocess_patch = mock.patch(self.RUN_SUBPROCESS_REF)
+        self.run_subprocess_mock = self._run_subprocess_patch.start()
+        self.run_subprocess_mock.return_value = 0
+        self.default_pf = Configuration()
 
-        # test models
-        self.fake_parent.problem_settings["isiccir"] = 0
-        self.plasmod_setup.update_inputs()
-        assert self.plasmod_setup.io_manager._options["isiccir"].value == 0
+    def teardown_method(self):
+        self._run_subprocess_patch.stop()
 
-        self.fake_parent.problem_settings["isiccir"] = 2
-        with pytest.raises(ValueError):
-            self.plasmod_setup.update_inputs()
+    @pytest.mark.parametrize(
+        "arg, arg_num",
+        [
+            ("plasmod_binary", 0),
+            ("input.dat", 1),
+            ("output.dat", 2),
+            ("profiles.dat", 3),
+        ],
+    )
+    def test_run_calls_subprocess_with_argument_in_position(self, arg, arg_num):
+        run = Run(
+            self.default_pf,
+            "input.dat",
+            "output.dat",
+            "profiles.dat",
+            binary="plasmod_binary",
+        )
 
+        run.run()
 
-class TestRun:
-    @pytest.fixture(autouse=True, scope="class")
-    def setup(self, fake_parent):
-        cls = type(self)
-        cls.fake_parent = fake_parent
-        cls.fake_parent.setup_obj.input_file = "IN"
-        cls.fake_parent.setup_obj.output_file = "OUT"
-        cls.fake_parent.setup_obj.profiles_file = "PROF"
-        cls.runner = PlasmodRun(cls.fake_parent)
+        self.run_subprocess_mock.assert_called_once()
+        args, _ = self.run_subprocess_mock.call_args
+        assert args[0][arg_num] == arg
 
-    def test_run(self):
-        with patch("bluemira.codes.plasmod.api.interface.Run._run_subprocess") as rsp:
-            self.runner._run()
+    def test_run_raises_CodesError_given_run_subprocess_raises_OSError(self):
+        self.run_subprocess_mock.side_effect = OSError
+        run = Run(self.default_pf, "input.dat", "output.dat", "profiles.dat")
 
-        assert [str(aa) for aa in rsp.call_args[0][0]] == [
-            "plasmod",
-            "OUTDIR/IN",
-            "OUTDIR/OUT",
-            "OUTDIR/PROF",
-        ]
+        with pytest.raises(CodesError):
+            run.run()
 
+    def test_run_raises_CodesError_given_run_process_returns_non_zero_exit_code(self):
+        self.run_subprocess_mock.return_value = 1
+        run = Run(self.default_pf, "input.dat", "output.dat", "profiles.dat")
 
-class TestTeardown:
-    @pytest.fixture(autouse=True, scope="class")
-    def setup(self, fake_parent):
-        cls = type(self)
-        cls.fake_parent = fake_parent
-        cls.plasmod_teardown = PlasmodTeardown(cls.fake_parent)
-
-    def test_prepare_outputs(self):
-        self.fake_parent._recv_mapping = {"plasmod": "bluemira"}
-        self.plasmod_teardown.io_manager = MagicMock()
-        self.plasmod_teardown.io_manager.plasmod = True
-        with patch(
-            "bluemira.codes.plasmod.api.interface.Teardown.prepare_outputs"
-        ) as ppo:
-            self.plasmod_teardown.prepare_outputs()
-
-        assert ppo.call_args[0][0] == {"bluemira": True}
-        assert ppo.call_args[1]["source"] == "PLASMOD"
+        with pytest.raises(CodesError):
+            run.run()
 
 
-class TestSolver:
-    def test_get_raw_variables(self):
-        fakeself = MagicMock()
-        fakeself.teardown_obj.io_manager.test1 = 5
-        fakeself.teardown_obj.io_manager.test2 = 10
+class TestPlasmodTeardown:
 
-        assert PlasmodSolver.get_raw_variables(fakeself, "test1") == 5
-        assert PlasmodSolver.get_raw_variables(fakeself, ["test1", "test2"]) == [5, 10]
+    plasmod_out_sample = (
+        "     betan      0.14092930140E+0002\n"
+        "      fbs       0.14366031154E+0002\n"
+        "      rli       0.16682353334E+0002\n"
+        " i_flag           1\n"
+    )
 
-    def test_get_profile(self):
+    def setup_method(self):
+        self.default_pf = Configuration()
+        self.default_pf
 
-        fakeself = MagicMock()
-        fakeself.teardown_obj.io_manager.x = 5
-        fakeself.teardown_obj.io_manager.ne = 10
+    @pytest.mark.parametrize("run_mode_func", ["run", "read"])
+    def test_run_mode_function_updates_plasmod_params_from_file(self, run_mode_func):
+        teardown = Teardown(
+            self.default_pf, "/path/to/output/file.csv", "/path/to/profiles/file.csv"
+        )
 
-        assert PlasmodSolver.get_profile(fakeself, "x") == 5
-        assert PlasmodSolver.get_profile(fakeself, "n_e") == 10
-
-        with pytest.raises(ValueError):
-            PlasmodSolver.get_profile(fakeself, "myprofile")
-
-
-class TestOutputs:
-    def setup(self):
-        with open(
-            Path(get_bluemira_path(), "codes/plasmod/PLASMOD_DEFAULT_OUT.json"), "r"
-        ) as fh:
-            self.output = json.load(fh)
-        self.p_out = PlasmodOutput()
-
-    def _read_output_files(self):
-        with patch(
-            "bluemira.codes.plasmod.api.Outputs.read_file", return_value=self.output
+        with mock.patch(
+            "builtins.open",
+            new_callable=mock.mock_open,
+            read_data=self.plasmod_out_sample,
         ):
-            self.p_out.read_output_files(None, None)
+            getattr(teardown, run_mode_func)()
 
-    def test_read_output_files(self):
+        assert teardown.params["beta_N"] == pytest.approx(0.14092930140e2)
+        assert teardown.params["f_bs"] == pytest.approx(0.14366031154e2)
+        assert teardown.params["l_i"] == pytest.approx(0.16682353334e2)
 
-        for i in [0, -1, -2, -3]:
-            self.output["i_flag"] = i
+    def test_mock_leaves_plasmod_params_with_defaults(self):
+        default_pf_copy = copy.deepcopy(self.default_pf)
+        teardown = Teardown(
+            self.default_pf, "/path/to/output/file.csv", "/path/to/profiles/file.csv"
+        )
+
+        with mock.patch(
+            "builtins.open",
+            new_callable=mock.mock_open,
+            read_data=self.plasmod_out_sample,
+        ):
+            teardown.mock()
+
+        assert teardown.params["beta_N"] == default_pf_copy["beta_N"]
+        assert teardown.params["f_bs"] == default_pf_copy["f_bs"]
+        assert teardown.params["l_i"] == default_pf_copy["l_i"]
+
+    @pytest.mark.parametrize("run_mode_func", ["run", "read"])
+    def test_CodesError_if_output_files_cannot_be_read(self, run_mode_func):
+        teardown = Teardown(
+            self.default_pf, "/path/to/output/file.csv", "/path/to/profiles/file.csv"
+        )
+
+        with mock.patch("builtins.open", side_effect=OSError):
             with pytest.raises(CodesError):
-                self._read_output_files()
+                getattr(teardown, run_mode_func)()
 
-        # no error
-        self.output["i_flag"] = 1
-        self._read_output_files()
+    @pytest.mark.parametrize("run_mode_func", ["run", "read"])
+    def test_run_mode_function_opens_both_output_files(self, run_mode_func):
+        teardown = Teardown(
+            self.default_pf, "/path/to/output/file.csv", "/path/to/profiles/file.csv"
+        )
 
-        assert self.p_out._options["i_flag"] == 1
+        with mock.patch(
+            "builtins.open",
+            new_callable=mock.mock_open,
+            read_data=self.plasmod_out_sample,
+        ) as open_mock:
+            getattr(teardown, run_mode_func)()
+
+        assert open_mock.call_count == 2
+        call_args = [call.args for call in open_mock.call_args_list]
+        assert ("/path/to/output/file.csv", "r") in call_args
+        assert ("/path/to/profiles/file.csv", "r") in call_args
+
+    @pytest.mark.parametrize("i_flag", [2, 0, -1, -2, 100, -100])
+    def test_CodesError_if_plasmod_status_flag_ne_1(self, i_flag):
+        output_sample = (
+            "     betan      0.14092930140E+0002\n"
+            "      fbs       0.14366031154E+0002\n"
+            "      rli       0.16682353334E+0002\n"
+            f" i_flag           {i_flag}\n"
+        )
+        open_mock = mock.mock_open(read_data=output_sample)
+        teardown = Teardown(
+            self.default_pf, "/path/to/output/file.csv", "/path/to/profiles/file.csv"
+        )
+
+        with mock.patch("builtins.open", new=open_mock):
+            with pytest.raises(CodesError):
+                teardown.run()
+
+
+def _plasmod_run_subprocess_fake(command: List[str], **_):
+    """
+    Fake a run of plasmod, outputting some sample results files.
+    """
+
+    def write_file(file_path: str, content: str):
+        with open(file_path, "w") as f:
+            f.write(content)
+
+    output_file = command[2]
+    output_file_content = TestPlasmodSolver.read_data_file("sample_output.dat")
+    profiles_file = command[3]
+    profiles_file_content = TestPlasmodSolver.read_data_file("sample_profiles.dat")
+
+    write_file(output_file, output_file_content)
+    write_file(profiles_file, profiles_file_content)
+    return 0
+
+
+class TestPlasmodSolver:
+    def setup_method(self):
+        self.default_pf = Configuration()
+
+    @pytest.mark.parametrize(
+        "key, default",
+        [
+            ("binary", PLASMOD_BINARY),
+            ("problem_settings", {}),
+            ("input_file", Solver.DEFAULT_INPUT_FILE),
+            ("output_file", Solver.DEFAULT_OUTPUT_FILE),
+            ("profiles_file", Solver.DEFAULT_PROFILES_FILE),
+        ],
+    )
+    def test_init_sets_default_build_config_value(self, key, default):
+        solver = Solver(self.default_pf)
+
+        assert getattr(solver, key) == default
+
+    @mock.patch(f"{_MODULE_REF}.run_subprocess", wraps=_plasmod_run_subprocess_fake)
+    def test_execute_in_run_mode_sets_expected_params(self, run_subprocess_mock):
+        build_config = {
+            "input_file": tempfile.NamedTemporaryFile("w").name,
+            "output_file": tempfile.NamedTemporaryFile("w").name,
+            "profiles_file": tempfile.NamedTemporaryFile("w").name,
+        }
+
+        solver = Solver(self.default_pf, build_config)
+        pf = solver.execute(RunMode.RUN)
+
+        run_subprocess_mock.assert_called_once_with(
+            [
+                PLASMOD_BINARY,
+                build_config["input_file"],
+                build_config["output_file"],
+                build_config["profiles_file"],
+            ]
+        )
+        assert pf.beta_N == pytest.approx(3.0007884293)
+
+    @staticmethod
+    def read_data_file(file_name):
+        data_dir = os.path.join(os.path.dirname(__file__), "data")
+        with open(os.path.join(data_dir, file_name), "r") as f:
+            return f.read()

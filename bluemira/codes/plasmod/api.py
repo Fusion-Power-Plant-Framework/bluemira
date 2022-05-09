@@ -23,296 +23,28 @@
 API for the transport code PLASMOD and related functions
 """
 
-import copy
-import csv
-import json
-import pprint
-from enum import Enum, auto
-from pathlib import Path
-from typing import Dict, Iterable, List, Optional, Union
+from enum import auto
+from typing import Any, Callable, Dict, Optional, Union
 
-import fortranformat as ff
-import numpy as np
-
-import bluemira.codes.interface as interface
-from bluemira.base.file import get_bluemira_path
+from bluemira.base.constants import raw_uc
 from bluemira.base.look_and_feel import bluemira_debug, bluemira_warn
+from bluemira.base.parameter import ParameterFrame
+from bluemira.base.solver import RunMode as _RunMode
+from bluemira.base.solver import SolverABC, Task
 from bluemira.codes.error import CodesError
-from bluemira.codes.plasmod.constants import BINARY
-from bluemira.codes.plasmod.constants import NAME as PLASMOD
-from bluemira.codes.plasmod.mapping import (
-    EquilibriumModel,
-    ImpurityModel,
-    PedestalModel,
-    PLHModel,
-    Profiles,
-    SOLModel,
-    TransportModel,
-    mappings,
+from bluemira.codes.plasmod.constants import BINARY as PLASMOD_BINARY
+from bluemira.codes.plasmod.constants import NAME as PLASMOD_NAME
+from bluemira.codes.plasmod.mapping import mappings as plasmod_mappings
+from bluemira.codes.plasmod.params import PlasmodInputs, PlasmodOutputs
+from bluemira.codes.utilities import (
+    add_mapping,
+    get_recv_mapping,
+    get_send_mapping,
+    run_subprocess,
 )
 
 
-class PlasmodParameters:
-    """
-    A class to manage plasmod parameters
-    """
-
-    filepath = get_bluemira_path("codes/plasmod")
-    def_outfile = Path(filepath, "PLASMOD_DEFAULT_OUT.json")
-    def_infile = Path(filepath, "PLASMOD_DEFAULT_IN.json")
-    _options = None
-
-    def __getattribute__(self, attr):
-        """
-        Get attribute but look in _options if not found.
-
-        Avoids pollution of namespace but parameters still accessible
-
-        Parameters
-        ----------
-        attr: str
-            Attribute to get
-
-        Returns
-        -------
-        requested attribute
-
-        """
-        try:
-            return super().__getattribute__(attr)
-        except AttributeError:
-            try:
-                return self._options[attr]
-            except KeyError as k:
-                raise AttributeError(k)
-
-    def __setattr__(self, attr, value):
-        """
-        Sets attribute if it already exists otherwise
-        add it to _options dictionary
-
-        Parameters
-        ----------
-        attr: str
-            attribute name
-        value:
-            value to set for attribute
-
-        """
-        try:
-            super().__getattribute__(attr)
-            super().__setattr__(attr, value)
-        except AttributeError:
-            self._options[attr] = value
-
-    def modify(self, new_options):
-        """
-        Function to override parameters value.
-        """
-        if new_options:
-            for n_o in new_options:
-                if n_o in self._options:
-                    self._options[n_o] = new_options[n_o]
-                else:
-                    bluemira_warn(
-                        f"{n_o} not known in {self.__class__.__name__[:-1].lower()} file"
-                    )
-
-    @staticmethod
-    def _load_default_from_json(filepath: str):
-        """
-        Load json file
-
-        Parameters
-        ----------
-        filepath: str
-            json file to load
-        """
-        bluemira_debug(f"Loading default values from json: {filepath}")
-        with open(filepath) as jfh:
-            return json.load(jfh)
-
-    def as_dict(self):
-        """
-        Returns the instance as a dictionary.
-        """
-        return copy.deepcopy(self._options)
-
-    def __repr__(self):
-        """
-        Representation string of the PlasmodParameters.
-        """
-        return f"{self.__class__.__name__}({pprint.pformat(self._options)}" + "\n)"
-
-
-class Inputs(PlasmodParameters):
-    """
-    Class for Plasmod inputs
-    """
-
-    f_int = ff.FortranRecordWriter("a20,  i10")
-    f_float = ff.FortranRecordWriter("a20, e17.9")
-
-    def __init__(self, new_inputs=None):
-        self._options = self.get_default_plasmod_inputs()
-
-        self.modify(new_inputs)
-
-    def modify(self, new_inputs):
-        """
-        Modify and check models
-
-        Parameters
-        ----------
-        new_inputs: dict
-        """
-        super().modify(new_inputs)
-        self._check_models()
-
-    def _write(self, filename):
-        """
-        Plasmod input file writer
-
-        Parameters
-        ----------
-        params: Dict
-            dictionary to write
-        filename: str
-            file location
-        """
-        with open(filename, "w") as fid:
-            for k, v in self._options.items():
-                if isinstance(v, Enum):
-                    line = self.f_int.write([k, v.value])
-                elif isinstance(v, int):
-                    line = self.f_int.write([k, v])
-                elif isinstance(v, float):
-                    line = self.f_float.write([k, v])
-                else:
-                    bluemira_warn(f"May produce fortran read errors, type: {type(v)}")
-                    line = f"{k} {v}"
-                fid.write(line)
-                fid.write("\n")
-
-    def _check_models(self):
-        """
-        Check selected plasmod models are known
-        """
-        models = [
-            ["i_impmodel", ImpurityModel],
-            ["i_modeltype", TransportModel],
-            ["i_equiltype", EquilibriumModel],
-            ["i_pedestal", PedestalModel],
-            ["isiccir", SOLModel],
-            ["plh", PLHModel],
-        ]
-
-        for name, model_cls in models:
-            val = getattr(self, name)
-            model = model_cls[val] if isinstance(val, str) else model_cls(val)
-            setattr(self, name, model)
-
-    def get_default_plasmod_inputs(self):
-        """
-        Returns a copy of the default plasmod inputs
-        """
-        return self._load_default_from_json(self.def_infile)
-
-
-class Outputs(PlasmodParameters):
-    """Class for Plasmod outputs"""
-
-    def __init__(self, use_defaults=False):
-        self._options = self.get_default_plasmod_outputs()
-        if not use_defaults:
-            for k in self._options.keys():
-                self._options[k] = None
-
-    def get_default_plasmod_outputs(self):
-        """
-        Returns a copy of the defaults plasmod outputs.
-        """
-        return self._load_default_from_json(self.def_outfile)
-
-    def read_output_files(self, scalar_file, profile_file):
-        """
-        Read and process plasmod output files
-
-        Parameters
-        ----------
-        scalar_file: str
-            scalar filename
-        profile_file: str
-            profile filename
-
-        """
-        scalars = self.read_file(scalar_file)
-        self.modify(scalars)
-        self._check_return_value(self.i_flag)
-        profiles = self.read_file(profile_file)
-        self.modify(profiles)
-
-    @staticmethod
-    def read_file(output_file: str) -> Dict[str, Union[float, np.ndarray]]:
-        """
-        Read the Plasmod output parameters from the output file
-
-        Parameters
-        ----------
-        output_file: str
-            Read a plasmod output filename
-
-        Returns
-        -------
-        output: dict
-
-        """
-        output = {}
-        with open(output_file, "r") as fd:
-            for row in csv.reader(fd, delimiter="\t"):
-                output_key, *output_value = row[0].split()
-                output[output_key] = (
-                    np.array(output_value, dtype=float)
-                    if len(output_value) > 1
-                    else float(output_value[0])
-                )
-        return output
-
-    @staticmethod
-    def _check_return_value(exit_flag: int):
-        """
-        Check the return value of plasmod
-
-         1: PLASMOD converged successfully
-        -1: Max number of iterations achieved
-            (equilibrium oscillating, pressure too high, reduce H)
-         0: transport solver crashed (abnormal parameters
-            or too large dtmin and/or dtmin
-        -2: Equilibrium solver crashed: too high pressure
-
-        """
-        if exit_flag == 1:
-            bluemira_debug(f"{PLASMOD} converged successfully")
-        elif exit_flag == -2:
-            raise CodesError(
-                f"{PLASMOD} error: Equilibrium solver crashed: too high pressure"
-            )
-        elif exit_flag == -1:
-            raise CodesError(
-                f"{PLASMOD} error: "
-                "Max number of iterations reached "
-                "equilibrium oscillating probably as a result of the pressure being too high "
-                "reducing H may help"
-            )
-        elif not exit_flag:
-            raise CodesError(
-                f"{PLASMOD} error: " "Abnormal paramters, possibly dtmax/dtmin too large"
-            )
-        else:
-            raise CodesError(f"{PLASMOD} error: Unknown error code {exit_flag}")
-
-
-class RunMode(interface.RunMode):
+class RunMode(_RunMode):
     """
     RunModes for plasmod
     """
@@ -322,227 +54,389 @@ class RunMode(interface.RunMode):
     MOCK = auto()
 
 
-class Setup(interface.Setup):
+class PlasmodTask(Task):
     """
-    Setup class for Plasmod
+    A task related to plasmod.
 
-    Parameters
-    ----------
-    parent
-        Parent solver class instance
-    input_file: str
-        input file save location
-    output_file: str
-        output file save location
-    profiles_file: str
-        profiles file save location
-    kwargs: Dict
-        passed to parent setup task
-
+    This adds plasmod parameter mappings to the input ParameterFrame.
     """
 
-    def __init__(self, parent, *args, **kwargs):
-        super().__init__(parent, *args, **kwargs)
-
-        self.input_file = "plasmod_input.dat"
-        self.output_file = "plasmod_outputs.dat"
-        self.profiles_file = "plasmod_profiles.dat"
-        self.io_manager = Inputs({**self.get_new_inputs(), **self._problem_settings})
-
-    def update_inputs(self):
-        """
-        Update plasmod inputs
-        """
-        self.io_manager.modify({**self.get_new_inputs(), **self.parent.problem_settings})
-
-    def write_input(self):
-        """
-        Write input file
-        """
-        self.io_manager._write(Path(self.parent.run_dir, self.input_file))
-
-    def _run(self):
-        """
-        Run plasmod setup
-        """
-        self.update_inputs()
-        self.write_input()
+    def __init__(self, params: ParameterFrame) -> None:
+        super().__init__(params)
+        add_mapping(PLASMOD_NAME, self._params, plasmod_mappings)
 
 
-class Run(interface.Run):
+class Setup(PlasmodTask):
     """
-    Run class for plasmod
+    Setup task for a plasmod solver.
 
-    Parameters
-    ----------
-    parent
-        Parent solver class instance
-    kwargs: Dict
-        passed to parent setup task
-
+    On run, this task writes a plasmod input file using the input values
+    defined in this class.
     """
 
-    _binary = BINARY
+    def __init__(
+        self,
+        params: ParameterFrame,
+        problem_settings: Dict[str, Any],
+        # TODO(hsaunders1904): rename this; input_file is confusing,
+        # because it's actually an output file of this task
+        input_file: str,
+    ) -> None:
+        super().__init__(params)
 
-    def __init__(self, parent, *args, **kwargs):
-        super().__init__(parent, kwargs.pop("binary", self._binary), *args, **kwargs)
+        self.inputs = PlasmodInputs()
+        self.input_file = input_file
 
-    def _run(self):
+        self.update_inputs(problem_settings)
+
+    @property
+    def params(self) -> ParameterFrame:
+        """Return the parameters associated with this task."""
+        return self._params
+
+    def run(self):
         """
-        Run plasmod runner
+        Run plasmod setup.
         """
+        self._write_input()
+
+    def mock(self):
+        """
+        Run plasmod setup in mock mode.
+
+        No need to generate an input file as results will be mocked.
+        """
+        pass
+
+    def read(self):
+        """
+        Run plasmod setup in read mode.
+
+        No need to generate an input file as results will be read from
+        file.
+        """
+        pass
+
+    def update_inputs(self, new_inputs: Dict[str, Any] = None):
+        """
+        Update plasmod inputs using the given values.
+        """
+        # Create a new PlasmodInputs objects so we still benefit from
+        # the __post_init__ processing (converts models to enums)
+        new_inputs = {} if new_inputs is None else new_inputs
+        new = self.get_new_inputs()
+        new.update(new_inputs)
+        self.inputs = PlasmodInputs(**new)
+
+    def _write_input(self):
+        """
+        Write inputs to file to be read by plasmod.
+        """
+        try:
+            with open(self.input_file, "w") as io_stream:
+                self.inputs.write(io_stream)
+        except OSError as os_error:
+            raise CodesError(
+                f"Could not write plasmod input file: '{self.input_file}': {os_error}"
+            ) from os_error
+
+    def get_new_inputs(self, remapper: Optional[Union[Callable, Dict]] = None):
+        """
+        Get new key mappings from the ParameterFrame.
+
+        Parameters
+        ----------
+        remapper: Optional[Union[callable, dict]]
+            a function or dictionary for remapping variable names.
+            Useful for renaming old variables
+
+        Returns
+        -------
+        _inputs: dict
+            key value pairs of external program variable names and values
+
+        TODO unit conversion
+        """
+        # TODO(hsaunders): refactor out to base class, make private?
+        _inputs = {}
+
+        if not (callable(remapper) or isinstance(remapper, (type(None), Dict))):
+            raise TypeError("remapper is not callable or a dictionary")
+        elif isinstance(remapper, Dict):
+            orig_remap = remapper.copy()
+
+            def remapper(x):
+                return orig_remap[x]
+
+        elif remapper is None:
+
+            def remapper(x):
+                return x
+
+        for prog_key, bm_key in self._send_mapping.items():
+            prog_key = remapper(prog_key)
+            if isinstance(prog_key, list):
+                for key in prog_key:
+                    _inputs[key] = self._convert_units(self.params.get_param(bm_key))
+                continue
+
+            _inputs[prog_key] = self._convert_units(self.params.get_param(bm_key))
+
+        return _inputs
+
+    def _convert_units(self, param):
+        code_unit = param.mapping[PLASMOD_NAME].unit
+        if code_unit is not None:
+            return raw_uc(param.value, param.unit, code_unit)
+        else:
+            return param.value
+
+    @property
+    def _send_mapping(self) -> Dict[str, str]:
+        self.__send_mapping = get_send_mapping(self.params, PLASMOD_NAME)
+        return self.__send_mapping
+
+
+class Run(PlasmodTask):
+    """
+    Run class for plasmod transport solver.
+    """
+
+    def __init__(
+        self,
+        params: ParameterFrame,
+        input_file: str,
+        output_file: str,
+        profiles_file: str,
+        binary=PLASMOD_BINARY,
+    ):
+        super().__init__(params)
+        self.binary = binary
+        self.input_file = input_file
+        self.output_file = output_file
+        self.profiles_file = profiles_file
+
+    def run(self):
+        """
+        Run the plasmod shell task.
+
+        Runs plasmod on the command line using the given input files and
+        output path.
+
+        Raises
+        ------
+        CodesError
+            If the subprocess returns a non-zero exit code or raises an
+            OSError (e.g., the plasmod binary does not exist).
+        """
+        command = [self.binary, self.input_file, self.output_file, self.profiles_file]
         bluemira_debug("Mode: run")
-        super()._run_subprocess(
-            [
-                self._binary,
-                Path(self.parent.run_dir, self.parent.setup_obj.input_file),
-                Path(self.parent.run_dir, self.parent.setup_obj.output_file),
-                Path(self.parent.run_dir, self.parent.setup_obj.profiles_file),
-            ]
-        )
+        try:
+            self._run_subprocess(command)
+        except OSError as os_error:
+            raise CodesError(f"Failed to run plasmod: {os_error}") from os_error
+
+    def _run_subprocess(self, command, **kwargs):
+        """
+        Run a subprocess command and raise CodesError if it returns a
+        non-zero exit code.
+        """
+        return_code = run_subprocess(command, **kwargs)
+        if return_code != 0:
+            raise CodesError("plasmod 'Run' task exited with a non-zero error code.")
 
 
-class Teardown(interface.Teardown):
+class Teardown(PlasmodTask):
     """
-    Plasmod Teardown Task
+    Plasmod teardown task.
+
+    In "RUN" and "READ" mode, this loads in plasmod results files and
+    updates :code:`params` with the values.
     """
 
-    def _run(self):
-        """
-        Run plasmod teardown
-        """
-        self.io_manager = Outputs()
-        self.io_manager.read_output_files(
-            Path(self.parent.run_dir, self.parent.setup_obj.output_file),
-            Path(self.parent.run_dir, self.parent.setup_obj.profiles_file),
-        )
-        self.prepare_outputs()
+    def __init__(self, params: ParameterFrame, output_file: str, profiles_file: str):
+        super().__init__(params)
+        self.outputs = PlasmodOutputs()
+        self.output_file = output_file
+        self.profiles_file = profiles_file
 
-    def _mock(self):
+    def run(self):
         """
-        Mock plasmod teardown
+        Load the plasmod results files and update this object's params
+        with the read values.
         """
-        self.io_manager = Outputs(use_defaults=True)
-        self.prepare_outputs()
+        self.read()
 
-    def _read(self):
+    def mock(self):
         """
-        Read plasmod teardown
+        Update this object's plasmod params with default values.
         """
-        self.io_manager = Outputs()
-        self.io_manager.read_output_files(
-            Path(self.parent.read_dir, self.parent.setup_obj.output_file),
-            Path(self.parent.read_dir, self.parent.setup_obj.profiles_file),
-        )
-        self.prepare_outputs()
+        self.outputs = PlasmodOutputs()
+        self._update_params_from_outputs()
 
-    def prepare_outputs(self):
+    def read(self):
         """
-        Prepare outputs for ParameterFrame
+        Load the plasmod results files and update this object's params
+        with the read values.
+
+        Raises
+        ------
+        CodesError
+            If any of the plasmod files cannot be opened.
         """
-        super().prepare_outputs(
-            {
-                bm_key: getattr(self.io_manager, pl_key)
-                for pl_key, bm_key in self.parent._recv_mapping.items()
-            },
-            source=PLASMOD,
-        )
+        try:
+            with open(self.output_file, "r") as scalar_file:
+                with open(self.profiles_file, "r") as profiles_file:
+                    self.outputs = PlasmodOutputs.from_files(scalar_file, profiles_file)
+        except OSError as os_error:
+            raise CodesError(
+                f"Could not read plasmod output file: {os_error}."
+            ) from os_error
+        self._update_params_from_outputs()
+
+    @property
+    def params(self) -> ParameterFrame:
+        """Return the Bluemira parameters associated with this task."""
+        return self._params
+
+    def _update_params_from_outputs(self):
+        """
+        Update this object's ParameterFrame with plasmod outputs.
+        """
+        bm_outputs = self._map_outputs_to_bluemira()
+        self._prepare_outputs(bm_outputs, source=PLASMOD_NAME)
+
+    def _map_outputs_to_bluemira(self) -> Dict[str, Any]:
+        """
+        Iterate over the plasmod-bluemira parameter mappings and map the
+        bluemira parameter names to plasmod output values.
+        """
+        bm_outputs: Dict[str, Any] = {}
+        for plasmod_key, bm_key in self._recv_mapping.items():
+            try:
+                output_value = getattr(self.outputs, plasmod_key)
+            except AttributeError as attr_error:
+                raise CodesError(
+                    f"No plasmod output '{plasmod_key}' in plasmod outputs list."
+                ) from attr_error
+            if output_value is not None:
+                # Catches cases where parameters may be missing from the
+                # output file, in which case we get the default, which
+                # can be None.
+                bm_outputs[bm_key] = output_value
+        return bm_outputs
+
+    @property
+    def _recv_mapping(self):
+        """Return the plasmod-to-bluemira parameter mappings."""
+        self.__recv_mapping = get_recv_mapping(self.params, PLASMOD_NAME)
+        return self.__recv_mapping
+
+    def _prepare_outputs(self, bm_outputs: Dict[str, Any], source: str):
+        """
+        Update this object's ParameterFrame with the given outputs.
+
+        Implicitly converts to bluemira units if unit available.
+
+        Parameters
+        ----------
+        outputs: Dict
+            key value pair of code outputs
+        source: Optional[str]
+            Set the source of all outputs, by default is code name
+
+        """
+        for bm_key, value in bm_outputs.items():
+            try:
+                code_unit = self.params.get_param(bm_key).mapping[PLASMOD_NAME].unit
+            except AttributeError as exc:
+                raise CodesError(f"No mapping found for {bm_key}") from exc
+            if code_unit is not None:
+                bm_outputs[bm_key] = {"value": value, "unit": code_unit}
+
+        self.params.update_kw_parameters(bm_outputs, source=source)
 
 
-class Solver(interface.FileProgramInterface):
+class Solver(SolverABC):
     """
-    Plasmod solver class
+    Plasmod solver class.
 
     Parameters
     ----------
     params: ParameterFrame
-        ParameterFrame for plasmod
-    build_config: Dict
-        build configuration dictionary
-    run_dir: str
-        Plasmod run directory
-    read_dir: str
-        Directory to read in previous run
-
-    Notes
-    -----
-    build config keys: mode, binary, problem_settings
+        ParameterFrame for plasmod.
+    build_config: Dict[str, Any]
+        Build configuration dictionary.
+        Expected keys include:
+            - binary: str, path to the plasmod binary.
+            - problem_settings: Dict[str, Any], any plasmod specific
+              parameters (i.e., parameters that bluemira does not have
+              direct mappings to through the ParameterFrame).
+            - input_file: str, the path to write the plasmod input file
+              to, this can be a relative path.
+            - output_file: str, the path to write the plasmod scalar
+              output file to.
+            - profiles_file: str, the path to write the plasmod profiles
+              output file to.
     """
 
-    _setup = Setup
-    _run = Run
-    _teardown = Teardown
-    _runmode = RunMode
+    setup_cls = Setup
+    run_cls = Run
+    teardown_cls = Teardown
 
-    def __init__(
-        self,
-        params,
-        build_config=None,
-        run_dir: Optional[str] = None,
-        read_dir: Optional[str] = None,
-    ):
-        super().__init__(
-            PLASMOD,
-            params,
-            build_config.get("mode", "run"),
-            binary=build_config.get("binary", BINARY),
-            run_dir=run_dir,
-            read_dir=read_dir,
-            mappings=mappings,
-            problem_settings=build_config.get("problem_settings", None),
+    DEFAULT_INPUT_FILE = "plasmod_input.dat"
+    DEFAULT_OUTPUT_FILE = "plasmod_output.dat"
+    DEFAULT_PROFILES_FILE = "plasmod_profiles.dat"
+
+    def __init__(self, params: ParameterFrame, build_config: Dict[str, Any] = None):
+        self.params = params
+        self.build_config = {} if build_config is None else build_config
+
+        self.binary = self.build_config.get("binary", PLASMOD_BINARY)
+        self.problem_settings = self.build_config.get("problem_settings", {})
+        self.input_file = self.build_config.get("input_file", self.DEFAULT_INPUT_FILE)
+        self.output_file = self.build_config.get("output_file", self.DEFAULT_OUTPUT_FILE)
+        self.profiles_file = self.build_config.get(
+            "profiles_file", self.DEFAULT_PROFILES_FILE
         )
 
-    def get_raw_variables(self, scalar: Union[List, str]):
-        """
-        Get scalar values for unmapped variables.
+        # TODO(hsaunders): sanity check file paths are not equal?
 
-        Please use params for mapped variables
+        self._setup = Setup(self.params, self.problem_settings, self.input_file)
+        self._run = Run(
+            self.params,
+            self.input_file,
+            self.output_file,
+            self.profiles_file,
+            self.binary,
+        )
+        self._teardown = Teardown(self.params, self.output_file, self.profiles_file)
+
+    def execute(self, run_mode: RunMode) -> ParameterFrame:
+        """
+        Execute this plasmod solver.
+
+        This solver:
+            1. writes a plasmod input file using the given bluemira and
+               problem parameters.
+            2. processes that file using a shell call to plasmod.
+            3. reads the plasmod output files, and updates this object's
+               ParameterFrame with the results.
 
         Parameters
         ----------
-        scalar: Union[List, str])
-            scalar value to get
-
-        Returns
-        -------
-        scalar value
-
+        run_mode: RunMode
+            The mode to execute this solver in.
         """
-        if isinstance(scalar, list):
-            return [getattr(self.teardown_obj.io_manager, sc) for sc in scalar]
-        return getattr(self.teardown_obj.io_manager, scalar)
+        setup = self._get_execution_method(self._setup, run_mode)
+        run = self._get_execution_method(self._run, run_mode)
+        teardown = self._get_execution_method(self._teardown, run_mode)
 
-    def get_profile(self, profile: str):
-        """
-        Get a single profile
+        if setup:
+            setup()
+        if run:
+            run()
+        if teardown:
+            teardown()
 
-        Parameters
-        ----------
-        profile: str
-            A profile to get the data for
-
-        Returns
-        -------
-        A profile data
-
-        """
-        return getattr(self.teardown_obj.io_manager, Profiles(profile).name)
-
-    def get_profiles(self, profiles: Iterable):
-        """
-        Get list of profiles
-
-        Parameters
-        ----------
-        profiles: Iterable
-            A list of profiles to get data for
-
-        Returns
-        -------
-        dictionary of the profiles request
-
-        """
-        profiles_dict = {}
-        for profile in profiles:
-            profiles_dict[profile] = self.get_profile(profile)
-        return profiles_dict
+        return self.params
