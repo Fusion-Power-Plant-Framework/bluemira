@@ -287,13 +287,13 @@ def _get_dummy_equilibrium(equilibrium, I_not_dI):
     """
     Get a dummy equilibrium for current optimisation where the background response is
     solely due to the plasma and passive coils.
+
+    When we do dI (current gradient) optimisation, the background vector includes the
+    contributions from the whole coilset (including active coils)
+    When we do I (current vector) optimisation, the background vector only includes
+    contributions from the passive coils (plasma)
     """
     if I_not_dI:
-        # hack to change from dI to I optimiser (and keep both)
-        # When we do dI optimisation, the background vector includes the
-        # contributions from the whole coilset (including active coils)
-        # When we do I optimisation, the background vector only includes
-        # contributions from the passive coils (plasma)
         # TODO: Add passive coil contributions here
         dummy = equilibrium.plasma_coil()
         dummy.coilset = equilibrium.coilset
