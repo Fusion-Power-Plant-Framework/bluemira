@@ -339,15 +339,28 @@ class TestPlasmodSolver:
             "output_file": tempfile.NamedTemporaryFile("w").name,
             "profiles_file": tempfile.NamedTemporaryFile("w").name,
         }
-
         solver = Solver(self.default_pf, build_config)
         solver.execute(RunMode.RUN)
 
+        profile = solver.get_profile("Te")
+
         # Expected values taken from 'data/sample_profiles.dat'
         expected_values = [43.9383, 44.7500, 45.3127, 45.6264, 45.6912, 45.5069, 45.0737]
-        np.testing.assert_almost_equal(
-            solver.get_profile("Te"), np.array(expected_values), decimal=4
-        )
+        np.testing.assert_almost_equal(profile, np.array(expected_values), decimal=4)
+
+    def test_get_profiles_returns_dict_of_profiles(self):
+        build_config = {
+            "input_file": tempfile.NamedTemporaryFile("w").name,
+            "output_file": tempfile.NamedTemporaryFile("w").name,
+            "profiles_file": tempfile.NamedTemporaryFile("w").name,
+        }
+        solver = Solver(self.default_pf, build_config)
+        solver.execute(RunMode.RUN)
+
+        profiles = solver.get_profiles(["Te", "g3"])
+
+        assert all(profile in profiles.keys() for profile in ["Te", "g3"])
+        assert all(isinstance(profile, np.ndarray) for profile in profiles.values())
 
     @staticmethod
     def read_data_file(file_name):

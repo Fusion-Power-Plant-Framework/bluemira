@@ -23,7 +23,7 @@ The API for the plasmod solver.
 """
 
 from enum import auto
-from typing import Any, Dict
+from typing import Any, Dict, Iterable, List
 
 import numpy as np
 
@@ -145,7 +145,26 @@ class Solver(SolverABC):
 
         Returns
         -------
-        profile: Profiles
+        profile_values: np.ndarray
             A plasmod profile.
         """
         return getattr(self._teardown.outputs, Profiles(profile).name)
+
+    def get_profiles(self, profiles: Iterable[str]) -> Dict[str, np.ndarray]:
+        """
+        Get a set of plasmod profiles.
+
+        Parameters
+        ----------
+        profiles: Iterable[str]
+            An iterable of profile names.
+
+        Returns
+        -------
+        profiles_dict: Dict[str, np.ndarray]
+            A dictionary mapping profile names to values.
+        """
+        profiles_dict = {}
+        for profile in profiles:
+            profiles_dict[profile] = self.get_profile(profile)
+        return profiles_dict
