@@ -20,7 +20,10 @@
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 import io
 
-from bluemira.codes.plasmod.params import PlasmodInputs
+import pytest
+
+from bluemira.codes.error import CodesError
+from bluemira.codes.plasmod.params import MODEL_MAP, PlasmodInputs
 
 
 class TestPlasmodInputs:
@@ -37,3 +40,20 @@ class TestPlasmodInputs:
         assert len(lines) == len(params_dict)
         for param in params_dict:
             assert any([param in line for line in lines])
+
+    @pytest.mark.parametrize("model, enum_cls", MODEL_MAP.items())
+    def test_model_is_converted_to_enum_on_init(self, model, enum_cls):
+        # Just get the first member of the enum to test with
+        enum_member = list(enum_cls.__members__.values())[0]
+        values = {model: enum_member.value}
+
+        params = PlasmodInputs(**values)
+
+        assert getattr(params, model) == getattr(enum_cls, enum_member.name)
+
+    @pytest.mark.parametrize("model, enum_cls", MODEL_MAP.items())
+    def test_CodesError_if_model_not_convertible_to_enum(self, model, enum_cls):
+        values = {model: "NOT_AN_ENUM_VALUE"}
+
+        with pytest.raises(CodesError):
+            PlasmodInputs(**values)

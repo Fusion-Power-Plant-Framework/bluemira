@@ -24,43 +24,37 @@ Parameters classes/structures for Plasmod
 from __future__ import annotations
 
 import csv
+import enum
 from dataclasses import dataclass
-from typing import Dict, Optional, TextIO, Union
+from typing import Dict, Mapping, Optional, TextIO, Type, Union
 
 import fortranformat as ff
 import numpy as np
 
 from bluemira.base.look_and_feel import bluemira_debug, bluemira_warn
 from bluemira.codes.error import CodesError
+from bluemira.codes.plasmod.mapping import (
+    EquilibriumModel,
+    ImpurityModel,
+    PedestalModel,
+    PLHModel,
+    SOLModel,
+    TransportModel,
+)
+
+MODEL_MAP: Mapping[str, enum.Enum] = {
+    "i_impmodel": ImpurityModel,
+    "i_modeltype": TransportModel,
+    "i_equiltype": EquilibriumModel,
+    "i_pedestal": PedestalModel,
+    "isiccir": SOLModel,
+    "plh": PLHModel,
+}
 
 
 @dataclass
 class PlasmodInputs:
     """Plasmod parameters with defaults."""
-
-    FORTRAN_INT_FORMAT = "a20,  i10"
-    FORTRAN_FLOAT_FORMAT = "a20, e17.9"
-
-    def check_model(self):
-        """Check selected plasmod models are known"""
-        # TODO(hsaunders1904)
-        pass
-
-    def write(self, io_stream: TextIO):
-        """Write Plasmod input."""
-        f_int = ff.FortranRecordWriter(self.FORTRAN_INT_FORMAT)
-        f_float = ff.FortranRecordWriter(self.FORTRAN_FLOAT_FORMAT)
-
-        for k, v in vars(self).items():
-            if isinstance(v, int):
-                line = f_int.write([k, v])
-            elif isinstance(v, float):
-                line = f_float.write([k, v])
-            else:
-                bluemira_warn(f"May produce fortran read errors, type: {type(v)}")
-                line = f"{k} {v}"
-            io_stream.write(line)
-            io_stream.write("\n")
 
     A: float = 3.1
     Ainc: float = 1.1
@@ -113,13 +107,13 @@ class PlasmodInputs:
     globtau_xe: float = 10.0
     Hfact: float = 1.1
     i_diagz: int = 0
-    i_equiltype: int = 2
-    i_impmodel: int = 1
-    i_modeltype: int = 1
-    i_pedestal: int = 2
+    i_equiltype: EquilibriumModel = EquilibriumModel.Ip_sawtooth
+    i_impmodel: ImpurityModel = ImpurityModel.PED_FIXED
+    i_modeltype: TransportModel = TransportModel.GYROBOHM_1
+    i_pedestal: PedestalModel = PedestalModel.SAARELMA
     Ip: float = 17.75
     isawt: int = 1
-    isiccir: int = 0
+    isiccir: SOLModel = SOLModel.EICH_FIT
     k: float = 1.6969830041844367
     k95: float = 1.652
     maxpauxor: float = 20.0
@@ -133,7 +127,7 @@ class PlasmodInputs:
     pedscal: float = 1.0
     pfus_req: float = 0.0
     pheat_max: float = 130.0
-    plh: int = 6
+    plh: PLHModel = PLHModel.MARTIN
     pnbi: float = 0.0
     pradfrac: float = 0.6
     pradpos: float = 0.7
@@ -177,6 +171,79 @@ class PlasmodInputs:
     xtglf_7: float = 0.5
     xtglf_8: float = 0.6
     xtglf_9: float = 0.7
+
+    _FORTRAN_INT_FORMAT = "a20,  i10"
+    _FORTRAN_FLOAT_FORMAT = "a20, e17.9"
+
+    def __post_init__(self):
+        """
+        Perform post-init processing.
+
+        Convert some parameters to their corresponding enum type. This
+        allows us to load values from a config file stored as fortran
+        types, then convert the integers to their respective enums.
+        """
+        self._convert_models_to_enums()
+
+    def write(self, io_stream: TextIO):
+        """
+        Write plasmod inputs to stream in a format plasmod can read.
+
+        Parameters
+        ----------
+        io_stream: TextIO
+            A text stream. Usually created using :code:`open(..., "r")`.
+        """
+        f_int = ff.FortranRecordWriter(self._FORTRAN_INT_FORMAT)
+        f_float = ff.FortranRecordWriter(self._FORTRAN_FLOAT_FORMAT)
+
+        for k, v in vars(self).items():
+            if isinstance(v, enum.Enum):
+                line = f_int.write([k, v.value])
+            elif isinstance(v, int):
+                line = f_int.write([k, v])
+            elif isinstance(v, float):
+                line = f_float.write([k, v])
+            else:
+                bluemira_warn(
+                    f"Plasmod input '{k}' has unknown type, this may produce fortran "
+                    f"read errors, type: {type(v)}"
+                )
+                line = f"{k} {v}"
+            io_stream.write(line)
+            io_stream.write("\n")
+
+    def _convert_models_to_enums(self):
+        """
+        Convert plasmod model fortran values to their corresponding enum
+        values.
+        """
+        for model, enum_cls in MODEL_MAP.items():
+            current_value = getattr(self, model)
+            if isinstance(current_value, enum_cls):
+                continue
+            try:
+                enum_value = self._convert_value_to_enum(enum_cls, current_value)
+            except ValueError as value_error:
+                raise CodesError(
+                    f"Invalid value found for plasmod input '{model}': {value_error}"
+                )
+            setattr(self, model, enum_value)
+
+    @staticmethod
+    def _convert_value_to_enum(enum_cls: Type[enum.Enum], value) -> enum.Enum:
+        """
+        Attempts to convert a value to an enum value of the given class.
+
+        Throw a value error if the given value does not correspond to an
+        enumeration value in the enum class.
+        """
+        for enum_val in enum_cls:
+            if enum_val.value == value:
+                return enum_val
+        raise ValueError(
+            f"Cannot convert '{value}' to value enumerated by '{enum_cls.__name__}'."
+        )
 
 
 def _read_plasmod_csv(io_stream: TextIO) -> Dict[str, Union[np.ndarray, float]]:
