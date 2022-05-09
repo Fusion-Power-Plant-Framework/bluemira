@@ -25,7 +25,7 @@ from __future__ import annotations
 
 import enum
 from dataclasses import dataclass
-from typing import Mapping, TextIO, Type
+from typing import Any, Mapping, TextIO, Type
 
 import fortranformat as ff
 
@@ -229,7 +229,7 @@ class PlasmodInputs:
             setattr(self, model, enum_value)
 
     @staticmethod
-    def _convert_value_to_enum(enum_cls: Type[enum.Enum], value) -> enum.Enum:
+    def _convert_value_to_enum(enum_cls: Type[enum.Enum], value: Any) -> enum.Enum:
         """
         Attempts to convert a value to an enum value of the given class.
 
@@ -237,7 +237,11 @@ class PlasmodInputs:
         enumeration value in the enum class.
         """
         for enum_val in enum_cls:
+            # Let's us specify using the enum value (usually an int)
             if enum_val.value == value:
+                return enum_val
+            # Let's us specify using the enum's name (e.g., q95_sawtooth)
+            if enum_val.name == value:
                 return enum_val
         raise ValueError(
             f"Cannot convert '{value}' to value enumerated by '{enum_cls.__name__}'."

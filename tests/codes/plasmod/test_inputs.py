@@ -52,6 +52,16 @@ class TestPlasmodInputs:
         assert getattr(params, model) == getattr(enum_cls, enum_member.name)
 
     @pytest.mark.parametrize("model, enum_cls", MODEL_MAP.items())
+    def test_model_is_converted_to_enum_on_init_using_name(self, model, enum_cls):
+        # Just get the first member enum name to test with
+        enum_name = list(enum_cls.__members__.keys())[0]
+        values = {model: enum_name}
+
+        params = PlasmodInputs(**values)
+
+        assert getattr(params, model) == getattr(enum_cls, enum_name)
+
+    @pytest.mark.parametrize("model, enum_cls", MODEL_MAP.items())
     def test_CodesError_if_model_not_convertible_to_enum(self, model, enum_cls):
         values = {model: "NOT_AN_ENUM_VALUE"}
 
