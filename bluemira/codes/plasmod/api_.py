@@ -121,10 +121,12 @@ class Setup(PlasmodTask):
         """
         Update plasmod inputs using the given values.
         """
-        # TODO(hsaunders1904): understand self.get_new_inputs()
-        self._update_inputs_from_dict(self.get_new_inputs())
-        if new_inputs:
-            self._update_inputs_from_dict(new_inputs)
+        # Create a new PlasmodInputs objects so we still benefit from
+        # the __post_init__ processing (converts models to enums)
+        new_inputs = {} if new_inputs is None else new_inputs
+        new = self.get_new_inputs()
+        new.update(new_inputs)
+        self.inputs = PlasmodInputs(**new)
 
     def _write_input(self):
         """
@@ -181,18 +183,6 @@ class Setup(PlasmodTask):
             _inputs[prog_key] = self._convert_units(self.params.get_param(bm_key))
 
         return _inputs
-
-    def _update_inputs_from_dict(self, new_inputs: Dict[str, Any]):
-        """
-        Update inputs with the values in the input dictionary.
-
-        Warn if a given input is not known to plasmod.
-        """
-        for key, value in new_inputs.items():
-            if hasattr(self.inputs, key):
-                setattr(self.inputs, key, value)
-            else:
-                bluemira_warn(f"plasmod input '{key}' not known.")
 
     def _convert_units(self, param):
         code_unit = param.mapping[PLASMOD_NAME].unit
