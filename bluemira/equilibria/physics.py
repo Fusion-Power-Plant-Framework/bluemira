@@ -525,7 +525,7 @@ def estimate_loop_voltage(R_0, B_t, Z_eff, T_e, q_0, ln_lambda=17):
     R_0: float
         Major radius [m]
     B_t: float
-        Toroidal field [T]
+        Toroidal field on axis [T]
     Z_eff: float
         Effective charge
     T_e: float
