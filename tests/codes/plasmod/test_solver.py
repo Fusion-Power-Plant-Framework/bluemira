@@ -25,12 +25,13 @@ import tempfile
 from typing import List
 from unittest import mock
 
+import numpy as np
 import pytest
 
 from bluemira.base.config import Configuration
 from bluemira.codes.error import CodesError
 from bluemira.codes.plasmod.constants import BINARY as PLASMOD_BINARY
-from bluemira.codes.plasmod.solver import Run, RunMode, Setup, Solver, Teardown
+from bluemira.codes.plasmod.solver import Profiles, Run, RunMode, Setup, Solver, Teardown
 from tests._helpers import combine_text_mock_write_calls
 
 SOLVER_MODULE_REF = "bluemira.codes.plasmod.solver"
@@ -281,28 +282,21 @@ class TestPlasmodTeardown:
         assert "No value for plasmod parameter" in bm_warn_mock.call_args[0][0]
 
 
-def _plasmod_run_subprocess_fake(command: List[str], **_):
-    """
-    Fake a run of plasmod, outputting some sample results files.
-    """
-
-    def write_file(file_path: str, content: str):
-        with open(file_path, "w") as f:
-            f.write(content)
-
-    output_file = command[2]
-    output_file_content = TestPlasmodSolver.read_data_file("sample_output.dat")
-    profiles_file = command[3]
-    profiles_file_content = TestPlasmodSolver.read_data_file("sample_profiles.dat")
-
-    write_file(output_file, output_file_content)
-    write_file(profiles_file, profiles_file_content)
-    return 0
-
-
 class TestPlasmodSolver:
     def setup_method(self):
         self.default_pf = Configuration()
+
+    @classmethod
+    def setup_class(cls):
+        cls._run_subprocess_patch = mock.patch(
+            f"{SOLVER_MODULE_REF}._run.run_subprocess",
+            wraps=cls._plasmod_run_subprocess_fake,
+        )
+        cls.run_subprocess_mock = cls._run_subprocess_patch.start()
+
+    @classmethod
+    def teardown_class(cls):
+        cls._run_subprocess_patch.stop()
 
     @pytest.mark.parametrize(
         "key, default",
@@ -319,10 +313,7 @@ class TestPlasmodSolver:
 
         assert getattr(solver, key) == default
 
-    @mock.patch(
-        f"{SOLVER_MODULE_REF}._run.run_subprocess", wraps=_plasmod_run_subprocess_fake
-    )
-    def test_execute_in_run_mode_sets_expected_params(self, run_subprocess_mock):
+    def test_execute_in_run_mode_sets_expected_params(self):
         build_config = {
             "input_file": tempfile.NamedTemporaryFile("w").name,
             "output_file": tempfile.NamedTemporaryFile("w").name,
@@ -332,7 +323,7 @@ class TestPlasmodSolver:
         solver = Solver(self.default_pf, build_config)
         pf = solver.execute(RunMode.RUN)
 
-        run_subprocess_mock.assert_called_once_with(
+        self.run_subprocess_mock.assert_called_once_with(
             [
                 PLASMOD_BINARY,
                 build_config["input_file"],
@@ -342,8 +333,46 @@ class TestPlasmodSolver:
         )
         assert pf.beta_N == pytest.approx(3.0007884293)
 
+    def test_get_profile_returns_profile_array(self):
+        build_config = {
+            "input_file": tempfile.NamedTemporaryFile("w").name,
+            "output_file": tempfile.NamedTemporaryFile("w").name,
+            "profiles_file": tempfile.NamedTemporaryFile("w").name,
+        }
+
+        solver = Solver(self.default_pf, build_config)
+        solver.execute(RunMode.RUN)
+
+        # Expected values taken from 'data/sample_profiles.dat'
+        expected_values = [43.9383, 44.7500, 45.3127, 45.6264, 45.6912, 45.5069, 45.0737]
+        np.testing.assert_almost_equal(
+            solver.get_profile("Te"), np.array(expected_values), decimal=4
+        )
+
     @staticmethod
     def read_data_file(file_name):
         data_dir = os.path.join(os.path.dirname(__file__), "data")
         with open(os.path.join(data_dir, file_name), "r") as f:
             return f.read()
+
+    @staticmethod
+    def _plasmod_run_subprocess_fake(command: List[str], **_):
+        """
+        Fake a run of plasmod, outputting some sample results files.
+
+        This replaces the run_subprocess call for plasmod in this test
+        class.
+        """
+
+        def write_file(file_path: str, content: str):
+            with open(file_path, "w") as f:
+                f.write(content)
+
+        output_file = command[2]
+        output_file_content = TestPlasmodSolver.read_data_file("sample_output.dat")
+        profiles_file = command[3]
+        profiles_file_content = TestPlasmodSolver.read_data_file("sample_profiles.dat")
+
+        write_file(output_file, output_file_content)
+        write_file(profiles_file, profiles_file_content)
+        return 0

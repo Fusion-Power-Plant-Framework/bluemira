@@ -25,16 +25,19 @@ The API for the plasmod solver.
 from enum import auto
 from typing import Any, Dict
 
+import numpy as np
+
 from bluemira.base.parameter import ParameterFrame
-from bluemira.base.solver import RunMode as _RunMode
+from bluemira.base.solver import RunMode as BaseRunMode
 from bluemira.base.solver import SolverABC
 from bluemira.codes.plasmod.constants import BINARY as PLASMOD_BINARY
+from bluemira.codes.plasmod.mapping import Profiles
 from bluemira.codes.plasmod.solver._run import Run
 from bluemira.codes.plasmod.solver._setup import Setup
 from bluemira.codes.plasmod.solver._teardown import Teardown
 
 
-class RunMode(_RunMode):
+class RunMode(BaseRunMode):
     """
     RunModes for plasmod
     """
@@ -89,15 +92,17 @@ class Solver(SolverABC):
 
         # TODO(hsaunders): sanity check file paths are not equal?
 
-        self._setup = Setup(self.params, self.problem_settings, self.input_file)
-        self._run = Run(
+        self._setup: Setup = Setup(self.params, self.problem_settings, self.input_file)
+        self._run: Run = Run(
             self.params,
             self.input_file,
             self.output_file,
             self.profiles_file,
             self.binary,
         )
-        self._teardown = Teardown(self.params, self.output_file, self.profiles_file)
+        self._teardown: Teardown = Teardown(
+            self.params, self.output_file, self.profiles_file
+        )
 
     def execute(self, run_mode: RunMode) -> ParameterFrame:
         """
@@ -127,3 +132,20 @@ class Solver(SolverABC):
             teardown()
 
         return self.params
+
+    def get_profile(self, profile: str) -> np.ndarray:
+        # TODO(hsaunders1904): should this use the Profiles enum?
+        """
+        Get a single plasmod profile.
+
+        Parameters
+        ----------
+        profile: str
+            A profile to get the data for.
+
+        Returns
+        -------
+        profile: Profiles
+            A plasmod profile.
+        """
+        return getattr(self._teardown.outputs, Profiles(profile).name)

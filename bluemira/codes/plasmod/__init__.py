@@ -22,5 +22,15 @@
 """
 Importer for Plasmod runner constants and functions
 """
+from bluemira.codes.plasmod import mapping
 from bluemira.codes.plasmod.constants import NAME
-from bluemira.codes.plasmod.solver import Solver
+from bluemira.codes.plasmod.mapping import (
+    EquilibriumModel,
+    ImpurityModel,
+    PedestalModel,
+    PLHModel,
+    Profiles,
+    SOLModel,
+    TransportModel,
+)
+from bluemira.codes.plasmod.solver import RunMode, Solver
