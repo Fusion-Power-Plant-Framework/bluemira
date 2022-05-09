@@ -34,7 +34,6 @@ from bluemira.base.look_and_feel import (
     bluemira_warn,
 )
 from bluemira.equilibria.constants import DPI_GIF, PLT_PAUSE, PSI_REL_TOL
-from bluemira.equilibria.opt_constraints import MagneticConstraint
 from bluemira.utilities.error import ExternalOptError
 from bluemira.utilities.plot_tools import make_gif, save_figure
 
