@@ -19,7 +19,7 @@ fluids==1.0.21
 fortranformat==1.2.0
 gmsh==4.9.3
 gmsh-interop==2021.1.1
-imageio==2.19.0
+imageio==2.19.1
 importlib-metadata==4.11.3
 importlib-resources==5.7.1
 iniconfig==1.1.1
@@ -29,7 +29,7 @@ ipython-genutils==0.2.0
 jedi==0.18.1
 Jinja2==3.1.2
 joblib==1.1.0
-jsonschema==4.4.0
+jsonschema==4.5.1
 jupyter-client==7.3.0
 jupyter-core==4.10.0
 jupyterlab-pygments==0.2.2
