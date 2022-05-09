@@ -1367,14 +1367,27 @@ class CoilSet(CoilGroup):
 
     @staticmethod
     def _process_coilgroups(coilgroups: List[CoilGroup]):
+        self.__coilgroups = coilgroups
+
+        filters = {
+            group.name: partial(
+                lambda name, coilgroup: np.array(
+                    [c_n == name for c_n in coilgroup.name], dtype=bool
+                ),
+                group.name,
+            )
+            for group in coilgroups
+        }
+
+        self.define_subset(filters)
+        self._finalise_groups()
+
         names = [
             "_x",
             "_z",
             "_dx",
             "_dz",
             "_current",
-            "name",
-            "ctype",
             "_j_max",
             "_b_max",
         ]
@@ -1408,10 +1421,10 @@ class CoilSet(CoilGroup):
         # all groups coilset.PF.current = 5
         pass
 
-    def define_subset(self, filters: Dict[str, Callable]):
+    def _define_subset(self, filters: Dict[str, Callable]):
         # Create new subgroup of coils
 
-        filters = {
+        self._filters = {
             "PF": lambda coilgroup: np.array(
                 [ct is CoilType.PF for ct in coilgroup.ctype], dtype=bool
             ),
@@ -1421,26 +1434,30 @@ class CoilSet(CoilGroup):
             **filters,
         }
 
-        self._define_subgroup(filters.keys())
+    def add_subset(self, filters: Dict[str, Callable]):
+        self._filters = {**self._filters, **filters}
 
-        self._groups = {
-            self._SubGroup._all: np.ones(self._x.shape[0], dtype=bool),
-            **{self._SubGroup[f_k]: filt(self) for f_k, filt in filters.items()},
+        self._finalise_groups()
+
+    def _finalise_groups(self):
+        self._define_subgroup(self._filters.keys())
+
+        self._group_ind = {
+            self._SubGroup._all: slice(None),
+            **{self._SubGroup[f_k]: filt(self) for f_k, filt in self._filters.items()},
         }
 
     def __getattribute__(self, attr):
-        # TODO catch return to base coilset from subset
-
         try:
             return super().__getattribute__(attr)
-        except AttributeError:
+        except AttributeError as ae:
             try:
-                self._group = self._groups[self._SubGroup(attr)]
-                return self
+                return self.__coilgroups[attr]
             except KeyError:
-                raise AttributeError(
-                    f"{type(self)} object has no attribute {attr}"
-                ) from None
+                try:
+                    return self.__coilgroups[self._group_ind[self._SubGroup[attr]]]
+                except KeyError:
+                    raise ae from None
 
 
 # TODO or To remove (for imports)
