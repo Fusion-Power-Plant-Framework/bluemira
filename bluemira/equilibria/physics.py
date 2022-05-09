@@ -487,3 +487,68 @@ def beta_N_to_beta(beta_N, a, Btor, I_p):  # noqa :N802
 
     """
     return beta_N * I_p / (a * Btor)
+
+
+def spitzer_conductivity(Z_eff, T_e, ln_lambda=17):
+    """
+    Formula for conductivity as per L. Spitzer
+
+    Parameters
+    ----------
+    Z_eff: float
+        Effective charge [a.m.u.]
+    T_e: float
+        Electron temperature on axis [eV]
+    ln_lambda: float
+        Coulomb logarithm value (for tokamaks ~ 15 - 20)
+
+    Returns
+    -------
+    sigma: float
+        Plasma resistivity [1/Ohm/m]
+
+    Notes
+    -----
+    Spitzer and Haerm, 1953
+    """
+    return 1.92e4 * (2 - Z_eff ** (-1 / 3)) * T_e**1.5 / ln_lambda
+
+
+def estimate_loop_voltage(R_0, B_t, Z_eff, T_e, q_0, ln_lambda=17):
+    """
+    A 0-D estimate of the loop voltage during burn
+
+    Parameters
+    ----------
+    R_0: float
+        Major radius [m]
+    B_t: float
+        Toroidal field [T]
+    Z_eff: float
+        Effective charge [a.m.u.]
+    T_e: float
+        Electron temperature on axis [eV]
+    q_0: float
+        Safety factor on axis
+    ln_lambda: float
+        Coulomb logarithm value (for tokamaks ~ 15 - 20)
+
+    Returns
+    -------
+    v_loop: float
+        Loop voltage during burn [V]
+
+    Notes
+    -----
+    H. Zohm, W. Morris (2022)
+
+    Assumes no non-inductive current on axis
+    Assumes a circular cross-section on axis
+    There is no neo-classical resistivity on axis because there are no trapped particles
+    """
+    sigma = spitzer_conductivity(Z_eff, T_e, ln_lambda)
+
+    # Current density on axis
+    j_0 = 2 * B_t / (MU_0 * q_0 * R_0)
+    v_loop = 2 * np.pi * R_0 * j_0 / sigma
+    return v_loop
