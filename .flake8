@@ -147,6 +147,7 @@ ignore_names =
     A,
     F,
     Z_eff,
+    T_e*,
     B*,
     *B_*,
     *Bt*,
