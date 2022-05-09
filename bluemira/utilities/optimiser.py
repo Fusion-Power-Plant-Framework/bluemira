@@ -190,36 +190,6 @@ class Optimiser(NLOPTOptimiser):
             tolerance = np.array([tolerance])
         super().add_eq_constraints(f_constraint, tolerance)
 
-    def add_eq_constraints(self, f_constraint, tolerance):
-        """
-        Add a vector-valued equality constraint.
-
-        Parameters
-        ----------
-        f_constraint: callable
-            Constraint function
-        tolerance: float
-            Tolerance with which to enforce the constraint
-        """
-        if f_constraint is None:
-            return
-        super().add_eq_constraints(f_constraint, tolerance)
-
-    def add_ineq_constraint(self, f_constraint, tolerance):
-        """
-        Add a single-valued inequality constraint.
-
-        Parameters
-        ----------
-        f_constraint: callable
-            Constraint function
-        tolerance: float
-            Tolerance with which to enforce the constraint
-        """
-        if f_constraint is None:
-            return
-        super().add_ineq_constraint(f_constraint, tolerance)
-
     def add_ineq_constraints(self, f_constraint, tolerance):
         """
         Add a vector-valued inequality constraint.

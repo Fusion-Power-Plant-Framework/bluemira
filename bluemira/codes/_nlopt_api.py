@@ -381,47 +381,7 @@ class NLOPTOptimiser:
                 f"{self.algorithm_name} does not support equality constraints."
             )
 
-        self._opt.add_equality_constraint(f_constraint, tolerance)
-        self._append_constraint_tols(f_constraint, tolerance)
-
-    @_opt_inputs_ready
-    def add_eq_constraints(self, f_constraint, tolerance):
-        """
-        Add a vector-valued equality constraint.
-
-        Parameters
-        ----------
-        f_constraint: callable
-            Constraint function
-        tolerance: float
-            Tolerance with which to enforce the constraint
-        """
-        if self.algorithm_name not in EQ_CON_ALGS:
-            raise OptUtilitiesError(
-                f"{self.algorithm_name} does not support equality constraints."
-            )
-
         self._opt.add_equality_mconstraint(f_constraint, tolerance)
-        self._append_constraint_tols(f_constraint, tolerance)
-
-    @_opt_inputs_ready
-    def add_ineq_constraint(self, f_constraint, tolerance):
-        """
-        Add a single-valued inequality constraint.
-
-        Parameters
-        ----------
-        f_constraint: callable
-            Constraint function
-        tolerance: float
-            Tolerance with which to enforce the constraint
-        """
-        if self.algorithm_name not in INEQ_CON_ALGS:
-            raise OptUtilitiesError(
-                f"{self.algorithm_name} does not support inequality constraints."
-            )
-
-        self._opt.add_inequality_constraint(f_constraint, tolerance)
         self._append_constraint_tols(f_constraint, tolerance)
 
     @_opt_inputs_ready
