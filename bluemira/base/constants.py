@@ -211,6 +211,9 @@ SIGMA_BOLTZMANN = ureg.Quantity("sigma").to_base_units().magnitude  # [W/(m^2.K^
 # Boltzmann constant kB = R/N_a
 K_BOLTZMANN = ureg.Quantity("k_B").to_base_units().magnitude  # [J/K]
 
+# Coulomb constant = ke = 1/(4 * PI * EPS_0)
+K_COULOMB = ureg.Quantity("k_C").to_base_units().magnitude  # [kg.m^3/A^2/s^4]
+
 # neutron molar mass, [u] or [g/mol]
 NEUTRON_MOLAR_MASS = (
     ureg.Quantity("m_n").to("g") * ureg.Quantity("avogadro_constant").to_base_units()

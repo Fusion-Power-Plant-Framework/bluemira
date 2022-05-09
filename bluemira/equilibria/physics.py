@@ -26,7 +26,7 @@ A collection of simple equilibrium physics calculations
 import numpy as np
 from scipy.interpolate import RectBivariateSpline
 
-from bluemira.base.constants import MU_0
+from bluemira.base.constants import EPS_0, EV_TO_J, J_TO_EV, K_BOLTZMANN, K_COULOMB, MU_0
 from bluemira.equilibria.find import in_plasma
 from bluemira.equilibria.grid import revolved_volume, volume_integral
 
@@ -487,6 +487,13 @@ def beta_N_to_beta(beta_N, a, Btor, I_p):  # noqa :N802
 
     """
     return beta_N * I_p / (a * Btor)
+
+
+def debye_length(T, n):
+    """
+    Debye length
+    """
+    return np.sqrt(EPS_0 * T / (EV_TO_J * n))
 
 
 def spitzer_conductivity(Z_eff, T_e, ln_lambda=17):
