@@ -19,14 +19,17 @@
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 import copy
+import os
 import re
+import tempfile
+from typing import List
 from unittest import mock
 
 import pytest
 
 from bluemira.base.config import Configuration
 from bluemira.codes.error import CodesError
-from bluemira.codes.plasmod.api_ import Run, Setup, Solver, Teardown
+from bluemira.codes.plasmod.api_ import Run, RunMode, Setup, Solver, Teardown
 from bluemira.codes.plasmod.constants import BINARY as PLASMOD_BINARY
 from tests._helpers import combine_text_mock_write_calls
 
@@ -245,6 +248,25 @@ class TestPlasmodTeardown:
         assert ("/path/to/profiles/file.csv", "r") in call_args
 
 
+def _plasmod_run_subprocess_fake(command: List[str], **_):
+    """
+    Fake a run of plasmod, outputting some sample results files.
+    """
+
+    def write_file(file_path: str, content: str):
+        with open(file_path, "w") as f:
+            f.write(content)
+
+    output_file = command[2]
+    output_file_content = TestPlasmodSolver.read_data_file("sample_output.dat")
+    profiles_file = command[3]
+    profiles_file_content = TestPlasmodSolver.read_data_file("sample_profiles.dat")
+
+    write_file(output_file, output_file_content)
+    write_file(profiles_file, profiles_file_content)
+    return 0
+
+
 class TestPlasmodSolver:
     def setup_method(self):
         self.default_pf = Configuration()
@@ -263,3 +285,30 @@ class TestPlasmodSolver:
         solver = Solver(self.default_pf)
 
         assert getattr(solver, key) == default
+
+    @mock.patch(f"{_MODULE_REF}.run_subprocess", wraps=_plasmod_run_subprocess_fake)
+    def test_execute_in_run_mode_sets_expected_params(self, run_subprocess_mock):
+        build_config = {
+            "input_file": tempfile.NamedTemporaryFile("w").name,
+            "output_file": tempfile.NamedTemporaryFile("w").name,
+            "profiles_file": tempfile.NamedTemporaryFile("w").name,
+        }
+
+        solver = Solver(self.default_pf, build_config)
+        pf = solver.execute(RunMode.RUN)
+
+        run_subprocess_mock.assert_called_once_with(
+            [
+                PLASMOD_BINARY,
+                build_config["input_file"],
+                build_config["output_file"],
+                build_config["profiles_file"],
+            ]
+        )
+        assert pf.beta_N == pytest.approx(3.0007884293)
+
+    @staticmethod
+    def read_data_file(file_name):
+        data_dir = os.path.join(os.path.dirname(__file__), "data")
+        with open(os.path.join(data_dir, file_name), "r") as f:
+            return f.read()
