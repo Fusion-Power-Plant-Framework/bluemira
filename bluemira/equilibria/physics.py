@@ -510,8 +510,10 @@ def spitzer_conductivity(Z_eff, T_e, ln_lambda=17):
     Notes
     -----
     Spitzer and Haerm, 1953
+
+    \t:math:`\\sigma = 1.92e4 (2-Z_{eff}^{-1/3}) \dfrac{T_{e}^{3/2}}{Z_{eff}ln\\Lambda}`
     """
-    return 1.92e4 * (2 - Z_eff ** (-1 / 3)) * T_e**1.5 / ln_lambda
+    return 1.92e4 * (2 - Z_eff ** (-1 / 3)) * T_e**1.5 / (Z_eff * ln_lambda)
 
 
 def estimate_loop_voltage(R_0, B_t, Z_eff, T_e, q_0, ln_lambda=17):
@@ -544,8 +546,13 @@ def estimate_loop_voltage(R_0, B_t, Z_eff, T_e, q_0, ln_lambda=17):
 
     \t:math:`v_{loop}=2\\pi R_{0}\\dfrac{2\\pi B_{t}}{\\mu_{0}q_{0}\\sigma_{0}R_{0}}`
 
+    where :math:`\\sigma_{0}` is the Spitzer conductivity on axis:
+    \t:math:`\\sigma_{0} = 1.92e4 (2-Z_{eff}^{-1/3}) \dfrac{T_{e}^{3/2}}{Z_{eff}ln\\Lambda}`
+
     Assumes no non-inductive current on axis
+
     Assumes a circular cross-section on axis
+
     There is no neo-classical resistivity on axis because there are no trapped particles
     """
     sigma = spitzer_conductivity(Z_eff, T_e, ln_lambda)
