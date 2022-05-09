@@ -42,7 +42,7 @@ from bluemira.codes.plasmod.mapping import (
     TransportModel,
 )
 
-MODEL_MAP: Mapping[str, enum.Enum] = {
+MODEL_MAP: Mapping[str, Type[enum.Enum]] = {
     "i_impmodel": ImpurityModel,
     "i_modeltype": TransportModel,
     "i_equiltype": EquilibriumModel,
