@@ -615,6 +615,19 @@ class PsiBoundaryConstraint(AbsoluteMagneticConstraint):
     the plasma boundary flux value is changed.
     """
 
+    def __init__(
+        self, x, z, target_value, weights: Union[float, np.ndarray] = 1.0, tolerance=1e-6
+    ):
+        super().__init__(
+            x,
+            z,
+            target_value,
+            weights,
+            tolerance,
+            f_constraint=L2_norm_constraint,
+            constraint_type="inequality",
+        )
+
     def control_response(self, coilset):
         """
         Calculate control response of a CoilSet to the constraint.
