@@ -319,10 +319,14 @@ class Teardown(PlasmodTask):
                 raise CodesError(
                     f"No plasmod output '{plasmod_key}' in plasmod outputs list."
                 ) from attr_error
-            if output_value is not None:
+            if output_value is None:
                 # Catches cases where parameters may be missing from the
                 # output file, in which case we get the default, which
                 # can be None.
+                bluemira_warn(
+                    f"No value for plasmod parameter '{bm_key}' found in output."
+                )
+            else:
                 bm_outputs[bm_key] = output_value
         return bm_outputs
 
@@ -350,7 +354,7 @@ class Teardown(PlasmodTask):
             try:
                 code_unit = self.params.get_param(bm_key).mapping[PLASMOD_NAME].unit
             except AttributeError as exc:
-                raise CodesError(f"No mapping found for {bm_key}") from exc
+                raise CodesError(f"No mapping found for '{bm_key}'.") from exc
             if code_unit is not None:
                 bm_outputs[bm_key] = {"value": value, "unit": code_unit}
 

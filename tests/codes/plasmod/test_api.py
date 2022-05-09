@@ -264,6 +264,19 @@ class TestPlasmodTeardown:
             with pytest.raises(CodesError):
                 teardown.run()
 
+    @mock.patch(f"{_MODULE_REF}.bluemira_warn")
+    def test_warning_issued_if_output_param_is_missing(self, bm_warn_mock):
+        open_mock = mock.mock_open(read_data=self.plasmod_out_sample)
+        teardown = Teardown(
+            self.default_pf, "/path/to/output/file.csv", "/path/to/profiles/file.csv"
+        )
+
+        with mock.patch("builtins.open", new=open_mock):
+            teardown.run()
+
+        assert bm_warn_mock.call_count > 0
+        assert "No value for plasmod parameter" in bm_warn_mock.call_args[0][0]
+
 
 def _plasmod_run_subprocess_fake(command: List[str], **_):
     """
