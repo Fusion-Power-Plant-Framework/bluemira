@@ -525,7 +525,7 @@ def estimate_loop_voltage(R_0, B_t, Z_eff, T_e, q_0, ln_lambda=17):
     B_t: float
         Toroidal field [T]
     Z_eff: float
-        Effective charge [a.m.u.]
+        Effective charge
     T_e: float
         Electron temperature on axis [eV]
     q_0: float
@@ -541,6 +541,8 @@ def estimate_loop_voltage(R_0, B_t, Z_eff, T_e, q_0, ln_lambda=17):
     Notes
     -----
     H. Zohm, W. Morris (2022)
+
+    \t:math:`v_{loop}=2\\pi R_{0}\\dfrac{4\\pi B_{t}}{\\mu_{0}q_{0}\\sigma_{0}R_{0}}`
 
     Assumes no non-inductive current on axis
     Assumes a circular cross-section on axis
