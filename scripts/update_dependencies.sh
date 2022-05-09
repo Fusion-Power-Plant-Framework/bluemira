@@ -30,5 +30,5 @@ git checkout $REQ_BRANCH requirements.txt requirements-develop.txt
 pip install -r requirements.txt || { echo "pip update failed" && exit 1; }
 pip install -r requirements-develop.txt || { echo "pip update failed" && exit 1; }
 
-# revert checkout of dependicies files
+# revert checkout of dependencies files
 git checkout $(git rev-parse --abbrev-ref HEAD) requirements.txt requirements-develop.txt
