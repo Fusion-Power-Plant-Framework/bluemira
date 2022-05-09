@@ -44,11 +44,7 @@ __all__ = [
     "JsourceConvergence",
     "JeonConvergence",
     "JrelConvergence",
-    "PicardLiAbsIterator",
-    "PicardAbsIterator",
-    "PicardCoilsetIterator",
-    "PicardDeltaIterator",
-    "PicardLiDeltaIterator",
+    "PicardIterator",
 ]
 
 

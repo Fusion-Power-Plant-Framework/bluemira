@@ -827,6 +827,15 @@ class UnconstrainedMinimalErrorCOP(CoilsetOptimisationProblem):
     error to the L2-norm of a set of magnetic constraints (used here as targets).
 
     This is useful for getting a preliminary Equilibrium
+
+    Parameters
+    ----------
+    eq: Equilibrium
+        Equilibrium object to optimise the currents for
+    targets: MagneticConstraintSet
+        Set of magnetic constraints to minimise the error for
+    gamma: float
+        Tikhonov regularisation parameter [1/A]
     """
 
     def __init__(self, eq, targets, gamma):
@@ -863,6 +872,17 @@ class UnconstrainedMinimalErrorCOP(CoilsetOptimisationProblem):
 class MinimalCurrentsCOP(CoilsetOptimisationProblem):
     """
     Bounded, constrained, minimal current optimisation problem.
+
+    Parameters
+    ----------
+    eq: Equilibrium
+        Equilibrium object to optimise the currents for
+    optimiser: Optimiser
+        Optimiser object to use
+    max_currents: np.ndarray
+        Current bounds vector [A]
+    constraints: Optional[List[OptimisationConstraint]]
+        List of optimisation constraints to apply to the optimisation problem
     """
 
     def __init__(self, eq, optimiser, max_currents=None, constraints=None):
@@ -877,6 +897,9 @@ class MinimalCurrentsCOP(CoilsetOptimisationProblem):
         self.set_up_optimiser(dimension, bounds)
 
     def update_magnetic_constraints(self, I_not_dI=True, fixed_coils=True):
+        """
+        Update the magnetic optimisation constraints with the state of the Equilibrium
+        """
         if self._constraints is not None:
             for constraint in self._constraints:
                 if isinstance(constraint, MagneticConstraint):
@@ -886,6 +909,21 @@ class MinimalCurrentsCOP(CoilsetOptimisationProblem):
                 constraint._args["scale"] = self.scale
 
     def optimise(self, I_not_dI=True, fixed_coils=True):
+        """
+        Solve the optimisation problem
+
+        Parameters
+        ----------
+        I_not_dI: bool
+            Whether or not to optimisation the current or the current gradient vector
+        fixed_coils: True
+            Whether or not to update to coilset response matrices
+
+        Returns
+        -------
+        coilset: CoilSet
+            Optimised CoilSet
+        """
         self.update_magnetic_constraints(I_not_dI=I_not_dI, fixed_coils=fixed_coils)
 
         initial_state, n_states = self.read_coilset_state(self.eq.coilset, self.scale)
