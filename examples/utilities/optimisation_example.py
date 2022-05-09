@@ -28,6 +28,12 @@ import numpy as np
 
 from bluemira.utilities.optimiser import Optimiser, approx_derivative
 
+# %%[markdown]
+
+# Optimisation example
+
+# %%
+
 
 def f_rosenbrock(x, grad):
     """
@@ -76,7 +82,7 @@ pprint(results)
 
 def f_constraint(constraint, x, grad):
     """
-    Let's say that we only want to seach the space in which some combinations of
+    Let's say that we only want to search the space in which some combinations of
     variables are not allowed. We can't implement this using just bounds, hence we need
     to add some constraints in.
 
@@ -133,7 +139,7 @@ pprint(results)
 
 def f_eggholder(x):
     """
-    The multi-dimensional Egghoolder function. It is strongly multi-modal.
+    The multi-dimensional Eggholder function. It is strongly multi-modal.
 
     For the 2-D case bounded at +/- 512, the optimum is at:
         f(512, 404.2319..) = -959.6407..

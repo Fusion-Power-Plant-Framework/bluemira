@@ -23,12 +23,14 @@
 Static API to optimisation library
 """
 from pprint import pformat
+from typing import Union
 
 import numpy as np
 from scipy.optimize._numdiff import approx_derivative as _approx_derivative  # noqa
 
 from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.codes._nlopt_api import NLOPTOptimiser
+from bluemira.utilities.tools import is_num
 
 __all__ = ["approx_derivative", "Optimiser"]
 
@@ -129,7 +131,8 @@ class Optimiser(NLOPTOptimiser):
             x0 = 0.5 * np.ones(self.n_variables)
 
         x_star = super().optimise(x0)
-        self.check_constraints(x_star)
+        if self.constraints:
+            self.check_constraints(x_star)
         return x_star
 
     def approx_derivative(self, function, x, f0=None):
@@ -168,37 +171,28 @@ class Optimiser(NLOPTOptimiser):
 
         super().set_objective_function(f_objective)
 
-    def add_eq_constraint(self, f_constraint, tolerance):
+    def add_eq_constraints(
+        self, f_constraint: callable, tolerance: Union[float, np.ndarray]
+    ):
         """
-        Add a single-valued equality constraint.
+        Add a vector-valued equality constraint.
 
         Parameters
         ----------
         f_constraint: callable
             Constraint function
-        tolerance: float
+        tolerance: Union[float, np.ndarray]
             Tolerance with which to enforce the constraint
         """
         if f_constraint is None:
             return
-        super().add_eq_constraint(f_constraint, tolerance)
+        if is_num(tolerance) and not isinstance(tolerance, np.ndarray):
+            tolerance = np.array([tolerance])
+        super().add_eq_constraints(f_constraint, tolerance)
 
-    def add_ineq_constraint(self, f_constraint, tolerance):
-        """
-        Add a single-valued inequality constraint.
-
-        Parameters
-        ----------
-        f_constraint: callable
-            Constraint function
-        tolerance: float
-            Tolerance with which to enforce the constraint
-        """
-        if f_constraint is None:
-            return
-        super().add_ineq_constraint(f_constraint, tolerance)
-
-    def add_ineq_constraints(self, f_constraint, tolerance):
+    def add_ineq_constraints(
+        self, f_constraint: callable, tolerance: Union[float, np.ndarray]
+    ):
         """
         Add a vector-valued inequality constraint.
 
@@ -206,11 +200,13 @@ class Optimiser(NLOPTOptimiser):
         ----------
         f_constraint: callable
             Constraint function
-        tolerance: np.ndarray
+        tolerance: Union[float, np.ndarray]
             Tolerance array with which to enforce the constraint
         """
         if f_constraint is None:
             return
+        if is_num(tolerance) and not isinstance(tolerance, np.ndarray):
+            tolerance = np.array([tolerance])
         super().add_ineq_constraints(f_constraint, tolerance)
 
     def check_constraints(self, x):
