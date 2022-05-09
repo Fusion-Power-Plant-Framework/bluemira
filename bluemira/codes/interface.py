@@ -269,8 +269,12 @@ class Teardown(Task):
                 )
             except AttributeError as exc:
                 raise AttributeError(f"No mapping found for {bm_key}") from exc
-            if code_unit is not None:
-                outputs[bm_key] = {"value": value, "unit": code_unit}
+
+            if value is None:
+                bluemira_warn(f"No value for {bm_key} found in output.")
+            else:
+                if code_unit is not None:
+                    outputs[bm_key] = {"value": value, "unit": code_unit}
 
         self.parent.params.update_kw_parameters(
             outputs, source=source if source is not None else f"{self.parent.NAME}"
