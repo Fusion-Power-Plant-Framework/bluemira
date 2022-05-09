@@ -249,6 +249,7 @@ class PlasmodOutputs:
     che: Optional[float] = None
     che3: Optional[float] = None
     cprotium: Optional[float] = None
+    cwol: Optional[float] = None
     cxe: Optional[float] = None
     d: Optional[float] = None
     dprof: Optional[float] = None
