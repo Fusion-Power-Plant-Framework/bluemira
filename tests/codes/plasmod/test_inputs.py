@@ -23,7 +23,7 @@ import io
 import pytest
 
 from bluemira.codes.error import CodesError
-from bluemira.codes.plasmod.params import MODEL_MAP, PlasmodInputs
+from bluemira.codes.plasmod.solver._inputs import MODEL_MAP, PlasmodInputs
 
 
 class TestPlasmodInputs:

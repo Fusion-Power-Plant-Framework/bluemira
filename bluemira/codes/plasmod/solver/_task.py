@@ -18,9 +18,24 @@
 #
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
+"""
+Defines the base Task for plasmod
+"""
 
-"""
-Importer for Plasmod runner constants and functions
-"""
-from bluemira.codes.plasmod.constants import NAME
-from bluemira.codes.plasmod.solver import Solver
+from bluemira.base.parameter import ParameterFrame
+from bluemira.base.solver import Task
+from bluemira.codes.plasmod.constants import NAME as PLASMOD_NAME
+from bluemira.codes.plasmod.mapping import mappings as plasmod_mappings
+from bluemira.codes.utilities import add_mapping
+
+
+class PlasmodTask(Task):
+    """
+    A task related to plasmod.
+
+    This adds plasmod parameter mappings to the input ParameterFrame.
+    """
+
+    def __init__(self, params: ParameterFrame) -> None:
+        super().__init__(params)
+        add_mapping(PLASMOD_NAME, self._params, plasmod_mappings)

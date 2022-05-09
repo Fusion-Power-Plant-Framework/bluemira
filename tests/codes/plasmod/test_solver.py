@@ -29,14 +29,17 @@ import pytest
 
 from bluemira.base.config import Configuration
 from bluemira.codes.error import CodesError
-from bluemira.codes.plasmod.api import Run, RunMode, Setup, Solver, Teardown
 from bluemira.codes.plasmod.constants import BINARY as PLASMOD_BINARY
+from bluemira.codes.plasmod.solver import Run, RunMode, Setup, Solver, Teardown
 from tests._helpers import combine_text_mock_write_calls
 
-_MODULE_REF = "bluemira.codes.plasmod.api"
+SOLVER_MODULE_REF = "bluemira.codes.plasmod.solver"
 
 
 class TestPlasmodSetup:
+
+    MODULE_REF = f"{SOLVER_MODULE_REF}._setup"
+
     def setup_method(self):
         self.default_pf = Configuration()
         self.input_file = "/path/to/input.dat"
@@ -72,7 +75,7 @@ class TestPlasmodSetup:
         new_inputs = {"not_a_param": -1.5e-3}
         setup = Setup(self.default_pf, {}, self.input_file)
 
-        with mock.patch(f"{_MODULE_REF}.bluemira_warn") as bm_warn:
+        with mock.patch(f"{self.MODULE_REF}.bluemira_warn") as bm_warn:
             setup.update_inputs(new_inputs)
 
         bm_warn.assert_called_once()
@@ -122,7 +125,7 @@ class TestPlasmodSetup:
 
 class TestPlasmodRun:
 
-    RUN_SUBPROCESS_REF = f"{_MODULE_REF}.run_subprocess"
+    RUN_SUBPROCESS_REF = f"{SOLVER_MODULE_REF}._run.run_subprocess"
 
     def setup_method(self):
         self._run_subprocess_patch = mock.patch(self.RUN_SUBPROCESS_REF)
@@ -264,7 +267,7 @@ class TestPlasmodTeardown:
             with pytest.raises(CodesError):
                 teardown.run()
 
-    @mock.patch(f"{_MODULE_REF}.bluemira_warn")
+    @mock.patch(f"{SOLVER_MODULE_REF}._teardown.bluemira_warn")
     def test_warning_issued_if_output_param_is_missing(self, bm_warn_mock):
         open_mock = mock.mock_open(read_data=self.plasmod_out_sample)
         teardown = Teardown(
@@ -316,7 +319,9 @@ class TestPlasmodSolver:
 
         assert getattr(solver, key) == default
 
-    @mock.patch(f"{_MODULE_REF}.run_subprocess", wraps=_plasmod_run_subprocess_fake)
+    @mock.patch(
+        f"{SOLVER_MODULE_REF}._run.run_subprocess", wraps=_plasmod_run_subprocess_fake
+    )
     def test_execute_in_run_mode_sets_expected_params(self, run_subprocess_mock):
         build_config = {
             "input_file": tempfile.NamedTemporaryFile("w").name,
