@@ -32,6 +32,7 @@ from bluemira.base.solver import RunMode as BaseRunMode
 from bluemira.base.solver import SolverABC
 from bluemira.codes.plasmod.constants import BINARY as PLASMOD_BINARY
 from bluemira.codes.plasmod.mapping import Profiles
+from bluemira.codes.plasmod.solver._outputs import PlasmodOutputs
 from bluemira.codes.plasmod.solver._run import Run
 from bluemira.codes.plasmod.solver._setup import Setup
 from bluemira.codes.plasmod.solver._teardown import Teardown
@@ -152,7 +153,7 @@ class Solver(SolverABC):
 
     def get_profiles(self, profiles: Iterable[str]) -> Dict[str, np.ndarray]:
         """
-        Get a set of plasmod profiles.
+        Get a dictionary of plasmod profiles.
 
         Parameters
         ----------
@@ -168,3 +169,16 @@ class Solver(SolverABC):
         for profile in profiles:
             profiles_dict[profile] = self.get_profile(profile)
         return profiles_dict
+
+    def scalar_outputs(self) -> PlasmodOutputs:
+        """
+        Return a structure of unmapped plasmod outputs.
+
+        Please use :code:`params` for mapped outputs.
+
+        Returns
+        -------
+        outputs: PlasmodOutputs
+            The scalar plasmod outputs.
+        """
+        return self._teardown.outputs

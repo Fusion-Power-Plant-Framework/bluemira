@@ -362,6 +362,20 @@ class TestPlasmodSolver:
         assert all(profile in profiles.keys() for profile in ["Te", "g3"])
         assert all(isinstance(profile, np.ndarray) for profile in profiles.values())
 
+    def test_scalar_outputs_contains_unmapped_param(self):
+        build_config = {
+            "input_file": tempfile.NamedTemporaryFile("w").name,
+            "output_file": tempfile.NamedTemporaryFile("w").name,
+            "profiles_file": tempfile.NamedTemporaryFile("w").name,
+        }
+        solver = Solver(self.default_pf, build_config)
+        solver.execute(RunMode.RUN)
+
+        outputs = solver.scalar_outputs()
+
+        # Expected value taken from 'data/sample_output.dat'
+        assert outputs.cprotium == pytest.approx(0.77034698659)
+
     @staticmethod
     def read_data_file(file_name):
         data_dir = os.path.join(os.path.dirname(__file__), "data")
