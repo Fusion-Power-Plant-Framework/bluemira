@@ -30,6 +30,7 @@ import numpy as np
 from bluemira.base.parameter import ParameterFrame
 from bluemira.base.solver import RunMode as BaseRunMode
 from bluemira.base.solver import SolverABC
+from bluemira.codes.error import CodesError
 from bluemira.codes.plasmod.constants import BINARY as PLASMOD_BINARY
 from bluemira.codes.plasmod.mapping import Profiles
 from bluemira.codes.plasmod.solver._outputs import PlasmodOutputs
@@ -80,6 +81,12 @@ class Solver(SolverABC):
     DEFAULT_PROFILES_FILE = "plasmod_profiles.dat"
 
     def __init__(self, params: ParameterFrame, build_config: Dict[str, Any] = None):
+        # Init tasks on execution so parameters can be edited between
+        # separate 'execute' calls.
+        self._setup: Setup
+        self._run: Run
+        self._teardown: Teardown
+
         self.params = params
         self.build_config = {} if build_config is None else build_config
 
@@ -92,18 +99,6 @@ class Solver(SolverABC):
         )
 
         # TODO(hsaunders): sanity check file paths are not equal?
-
-        self._setup: Setup = Setup(self.params, self.problem_settings, self.input_file)
-        self._run: Run = Run(
-            self.params,
-            self.input_file,
-            self.output_file,
-            self.profiles_file,
-            self.binary,
-        )
-        self._teardown: Teardown = Teardown(
-            self.params, self.output_file, self.profiles_file
-        )
 
     def execute(self, run_mode: RunMode) -> ParameterFrame:
         """
@@ -121,6 +116,16 @@ class Solver(SolverABC):
         run_mode: RunMode
             The mode to execute this solver in.
         """
+        self._setup = Setup(self.params, self.problem_settings, self.input_file)
+        self._run = Run(
+            self.params,
+            self.input_file,
+            self.output_file,
+            self.profiles_file,
+            self.binary,
+        )
+        self._teardown = Teardown(self.params, self.output_file, self.profiles_file)
+
         setup = self._get_execution_method(self._setup, run_mode)
         run = self._get_execution_method(self._run, run_mode)
         teardown = self._get_execution_method(self._teardown, run_mode)
@@ -149,7 +154,7 @@ class Solver(SolverABC):
         profile_values: np.ndarray
             A plasmod profile.
         """
-        return getattr(self._teardown.outputs, Profiles(profile).name)
+        return getattr(self.plasmod_outputs(), Profiles(profile).name)
 
     def get_profiles(self, profiles: Iterable[str]) -> Dict[str, np.ndarray]:
         """
@@ -170,15 +175,20 @@ class Solver(SolverABC):
             profiles_dict[profile] = self.get_profile(profile)
         return profiles_dict
 
-    def scalar_outputs(self) -> PlasmodOutputs:
+    def plasmod_outputs(self) -> PlasmodOutputs:
         """
         Return a structure of unmapped plasmod outputs.
 
-        Please use :code:`params` for mapped outputs.
+        Use :code:`params` attribute for mapped outputs.
 
         Returns
         -------
         outputs: PlasmodOutputs
             The scalar plasmod outputs.
         """
-        return self._teardown.outputs
+        try:
+            return self._teardown.outputs
+        except AttributeError as attr_error:
+            raise CodesError(
+                "Cannot get outputs before the solver has been executed."
+            ) from attr_error

@@ -285,6 +285,11 @@ class TestPlasmodTeardown:
 class TestPlasmodSolver:
     def setup_method(self):
         self.default_pf = Configuration()
+        self.build_config = {
+            "input_file": tempfile.NamedTemporaryFile("w").name,
+            "output_file": tempfile.NamedTemporaryFile("w").name,
+            "profiles_file": tempfile.NamedTemporaryFile("w").name,
+        }
 
     @classmethod
     def setup_class(cls):
@@ -314,32 +319,22 @@ class TestPlasmodSolver:
         assert getattr(solver, key) == default
 
     def test_execute_in_run_mode_sets_expected_params(self):
-        build_config = {
-            "input_file": tempfile.NamedTemporaryFile("w").name,
-            "output_file": tempfile.NamedTemporaryFile("w").name,
-            "profiles_file": tempfile.NamedTemporaryFile("w").name,
-        }
+        solver = Solver(self.default_pf, self.build_config)
 
-        solver = Solver(self.default_pf, build_config)
         pf = solver.execute(RunMode.RUN)
 
         self.run_subprocess_mock.assert_called_once_with(
             [
                 PLASMOD_BINARY,
-                build_config["input_file"],
-                build_config["output_file"],
-                build_config["profiles_file"],
+                self.build_config["input_file"],
+                self.build_config["output_file"],
+                self.build_config["profiles_file"],
             ]
         )
         assert pf.beta_N == pytest.approx(3.0007884293)
 
     def test_get_profile_returns_profile_array(self):
-        build_config = {
-            "input_file": tempfile.NamedTemporaryFile("w").name,
-            "output_file": tempfile.NamedTemporaryFile("w").name,
-            "profiles_file": tempfile.NamedTemporaryFile("w").name,
-        }
-        solver = Solver(self.default_pf, build_config)
+        solver = Solver(self.default_pf, self.build_config)
         solver.execute(RunMode.RUN)
 
         profile = solver.get_profile("Te")
@@ -349,12 +344,7 @@ class TestPlasmodSolver:
         np.testing.assert_almost_equal(profile, np.array(expected_values), decimal=4)
 
     def test_get_profiles_returns_dict_of_profiles(self):
-        build_config = {
-            "input_file": tempfile.NamedTemporaryFile("w").name,
-            "output_file": tempfile.NamedTemporaryFile("w").name,
-            "profiles_file": tempfile.NamedTemporaryFile("w").name,
-        }
-        solver = Solver(self.default_pf, build_config)
+        solver = Solver(self.default_pf, self.build_config)
         solver.execute(RunMode.RUN)
 
         profiles = solver.get_profiles(["Te", "g3"])
@@ -362,19 +352,29 @@ class TestPlasmodSolver:
         assert all(profile in profiles.keys() for profile in ["Te", "g3"])
         assert all(isinstance(profile, np.ndarray) for profile in profiles.values())
 
-    def test_scalar_outputs_contains_unmapped_param(self):
-        build_config = {
-            "input_file": tempfile.NamedTemporaryFile("w").name,
-            "output_file": tempfile.NamedTemporaryFile("w").name,
-            "profiles_file": tempfile.NamedTemporaryFile("w").name,
-        }
-        solver = Solver(self.default_pf, build_config)
+    def test_plasmod_outputs_contains_unmapped_param(self):
+        solver = Solver(self.default_pf, self.build_config)
         solver.execute(RunMode.RUN)
 
-        outputs = solver.scalar_outputs()
+        outputs = solver.plasmod_outputs()
 
         # Expected value taken from 'data/sample_output.dat'
         assert outputs.cprotium == pytest.approx(0.77034698659)
+
+    def test_execute_after_updating_settings_runs_with_new_config(self):
+        # Run the solver once, edit the problem settings, then run it
+        # again. Then verify it was run with the new settings.
+        solver = Solver(self.default_pf, self.build_config)
+        solver.execute(RunMode.RUN)
+
+        solver.problem_settings["qdivt_sup"] = 10.0
+        solver.execute(RunMode.RUN)
+
+        with open(self.build_config["input_file"], "r") as f:
+            input_file = f.read()
+        param_regex = r"qdivt_sup +([0-9]\.[0-9]+E[\+-][0-9]+)"
+        match = re.search(param_regex, input_file, re.MULTILINE)
+        assert float(match.group(1)) == 10.0
 
     @staticmethod
     def read_data_file(file_name):
