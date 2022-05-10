@@ -279,8 +279,6 @@ PLASMOD_INPUTS = {
     # ###### "BM_INP": ("globtau_xe", "dimensionless"),
     # [-] tauparticle / tauE for Ar
     # ###### "BM_INP": ("globtau_ar", "dimensionless"),
-    # [-] Tungsten concentration
-    # ##### "BM_INP": ("cwol": 0.0,
     # [-] min P_sep/P_LH. if Psep/PLH < Psep/PLH_max -> use heating
     # ###### "BM_INP": ("psepplh_inf", "dimensionless"),
     # [-] max P_sep/P_LH. if Psep/PLH > Psep/PLH_max -> use Xe
@@ -586,6 +584,8 @@ PLASMOD_INOUTS = {
     # ###### "BM_IO": ("car", # TODO
     # [-] Xenon concentration
     # #### "BM_IO": ("cxe", # TODO
+    # [-] Tungsten concentration
+    # ##### "BM_IO": ("cwol": 0.0,
     # ###########################
     # Pedestal properties
     # ############################

@@ -114,7 +114,9 @@ class PlasmodParameters:
                 if n_o in self._options:
                     self._options[n_o] = new_options[n_o]
                 else:
-                    bluemira_warn(f"{n_o} not known in input file")
+                    bluemira_warn(
+                        f"{n_o} not known in {self.__class__.__name__[:-1].lower()} file"
+                    )
 
     @staticmethod
     def _load_default_from_json(filepath: str):
