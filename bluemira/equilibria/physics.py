@@ -540,7 +540,7 @@ def b90_goldston(T):
     b_perp = EV_TO_J**2 / (4 * np.pi * EPS_0 * mu_12 * v**2)
     b90 = b_perp
     # de Broglie wavelength
-    lambda_de_broglie = H_PLANCK * J_TO_EV / (m1 * v)
+    lambda_de_broglie = H_PLANCK * J_TO_EV / (mu_12 * v)
     print(b90 / lambda_de_broglie)
     return max(b90, lambda_de_broglie)
 
