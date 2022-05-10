@@ -518,17 +518,34 @@ def debye_length(T, n):
     return np.sqrt(EPS_0 * T / (EV_TO_J * n))
 
 
-def b90(T):
+def b90_NRL(T):
+    r_min_nrl = EV_TO_J / (3 * T * EPS_0)
+
+    m1 = ELECTRON_MOLAR_MASS
+    m2 = PROTON_MOLAR_MASS
+    mu_12 = m1 * m2 / (m1 + m2)
+    v = np.sqrt(3 * T * EV_TO_J / mu_12)
+    lambda_de_broglie = H_PLANCK / (2 * mu_12 * v) / EPS_0
+    print(r_min_nrl / lambda_de_broglie)
+    return np.sqrt(4 * np.pi) * max(r_min_nrl, lambda_de_broglie)
+
+
+def b90_goldston(T):
     b90 = EV_TO_J / (4 * np.pi * EPS_0 * 3 * T)
     m1 = ELECTRON_MOLAR_MASS
     m2 = PROTON_MOLAR_MASS
     mu_12 = m1 * m2 / (m1 + m2)
-    v = np.sqrt(3 * T / mu_12 / EV_TO_J)
+    v = np.sqrt(3 * T * EV_TO_J / mu_12)
+
+    b_perp = EV_TO_J**2 / (4 * np.pi * EPS_0 * mu_12 * v**2)
+    b90 = b_perp
     # de Broglie wavelength
-    lambda_de_broglie = H_PLANCK * J_TO_EV / (mu_12 * v)
-    print(f"{lambda_de_broglie=:.6E}")
-    print(f"{b90=:.6E}")
+    lambda_de_broglie = H_PLANCK * J_TO_EV / (m1 * v)
+    print(b90 / lambda_de_broglie)
     return max(b90, lambda_de_broglie)
+
+
+b90 = b90_goldston
 
 
 def ln_lambda(T, n):
@@ -624,8 +641,11 @@ if __name__ == "__main__":
     df.loc[5] = ["Process plasma", 10.0**18, 10.0**2, 15, 0]
     df.loc[6] = ["Fusion experiment", 10.0**19, 10.0**3, 17, 0]
     df.loc[7] = ["Fusion reactor", 10.0**20, 10.0**4, 18, 0]
+    df.loc[8] = ["Hartmut's case", 10.0**20, 1000.0, 16.5, 0]
 
-    for i in range(8):
-        df.loc[i, "ln_lambda"] = ln_lambda(df.loc[i, "T [eV]"], df.loc[i, "n [1/m^3]"])
+    for i in range(9):
+        df.loc[i, "ln_lambda"] = round(
+            ln_lambda(df.loc[i, "T [eV]"], df.loc[i, "n [1/m^3]"]), 1
+        )
 
     print(df)
