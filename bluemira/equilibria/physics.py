@@ -26,7 +26,17 @@ A collection of simple equilibrium physics calculations
 import numpy as np
 from scipy.interpolate import RectBivariateSpline
 
-from bluemira.base.constants import EPS_0, EV_TO_J, MU_0
+from bluemira.base.constants import (
+    C_LIGHT,
+    ELECTRON_MOLAR_MASS,
+    EPS_0,
+    EV_TO_J,
+    H_PLANCK,
+    J_TO_EV,
+    MU_0,
+    PROTON_MOLAR_MASS,
+    T_MOLAR_MASS,
+)
 from bluemira.equilibria.find import in_plasma
 from bluemira.equilibria.grid import revolved_volume, volume_integral
 
@@ -509,12 +519,20 @@ def debye_length(T, n):
 
 
 def b90(T):
-    m_2_v_2 = 1.5 * T * 11604.518121550082
-    return 2.5 * EV_TO_J**2 / (4 * np.pi * EPS_0 * m_2_v_2 * 2) * np.arctan(np.pi / 2)
+    b90 = EV_TO_J / (4 * np.pi * EPS_0 * 3 * T)
+    m1 = ELECTRON_MOLAR_MASS
+    m2 = PROTON_MOLAR_MASS
+    mu_12 = m1 * m2 / (m1 + m2)
+    v = np.sqrt(3 * T / mu_12 / EV_TO_J)
+    # de Broglie wavelength
+    lambda_de_broglie = H_PLANCK * J_TO_EV / (mu_12 * v)
+    print(f"{lambda_de_broglie=:.6E}")
+    print(f"{b90=:.6E}")
+    return max(b90, lambda_de_broglie)
 
 
 def ln_lambda(T, n):
-    return np.log(4 * np.pi * EPS_0 * 3 * T * debye_length(T, n) / (1.5 * EV_TO_J))
+    return np.log(np.sqrt(1 + (debye_length(T, n) / b90(T)) ** 2))
 
 
 def spitzer_conductivity(Z_eff, T_e, ln_lambda=17):
@@ -589,3 +607,25 @@ def estimate_loop_voltage(R_0, B_t, Z_eff, T_e, q_0, ln_lambda=17):
     j_0 = 2 * B_t / (MU_0 * q_0 * R_0)
     v_loop = 2 * np.pi * R_0 * j_0 / sigma
     return v_loop
+
+
+if __name__ == "__main__":
+    import pandas as pd
+
+    df = pd.DataFrame(
+        columns=["Case", "n [1/m^3]", "T [eV]", "ln Lambda (Goldston)", "ln_lambda"]
+    )
+
+    df.loc[0] = ["Solar wind", 10.0**7, 10.0, 26, 0]
+    df.loc[1] = ["Van Allen belts", 10.0**9, 10.0**2, 26, 0]
+    df.loc[2] = ["Earth's ionosphere", 10.0**11, 10.0**-1, 14, 0]
+    df.loc[3] = ["Solar corona", 10.0**13, 10.0**2, 21, 0]
+    df.loc[4] = ["Gas discharge", 10.0**16, 10.0**0, 12, 0]
+    df.loc[5] = ["Process plasma", 10.0**18, 10.0**2, 15, 0]
+    df.loc[6] = ["Fusion experiment", 10.0**19, 10.0**3, 17, 0]
+    df.loc[7] = ["Fusion reactor", 10.0**20, 10.0**4, 18, 0]
+
+    for i in range(8):
+        df.loc[i, "ln_lambda"] = ln_lambda(df.loc[i, "T [eV]"], df.loc[i, "n [1/m^3]"])
+
+    print(df)
