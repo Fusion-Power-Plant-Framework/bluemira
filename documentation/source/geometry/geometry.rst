@@ -61,6 +61,9 @@ A basic example for the creation of the geometrical objects:
 
     .. code-block:: pycon
 
+        >>> from bluemira.geometry.tools import make_polygon
+        >>> from bluemira.geometry.face import BluemiraFace
+
         >>> pntslist_out = [(1.0, 1.0, 0.0), (0.0, 1.0, 0.0), (0.0, 0.0, 0.0), (1.0, 0.0,0.0)]
         >>> delta = 0.25
         >>> pntslist_in = [ (1.0 - delta, 1.0 - delta, 0.0),
@@ -68,11 +71,11 @@ A basic example for the creation of the geometrical objects:
                             (0.0 + delta, 0.0 + delta, 0.0),
                             (1.0 - delta, 0.0 + delta, 0.0),
                           ]
-        >>> wire_out = geo.tools.make_polygon(pntslist_out, label="wire_out",closed=True)
-        >>> bmface = geo.face.BluemiraFace(wire_out)
+        >>> wire_out = make_polygon(pntslist_out, label="wire_out",closed=True)
+        >>> bmface = BluemiraFace(wire_out)
         Out: ([BluemiraFace] = Label: wire_out,  length: 4.0,  area: 1.0,  volume: 0.0, )
-        >>> wire_in = geo.tools.make_polygon(pntslist_in, label="wire_in", closed=True)
-        >>> bmface_with_hole = geo.face.BluemiraFace([wire_out, wire_in],label="face_with_hole")
+        >>> wire_in = make_polygon(pntslist_in, label="wire_in", closed=True)
+        >>> bmface_with_hole = BluemiraFace([wire_out, wire_in],label="face_with_hole")
         Out: ([BluemiraFace] = Label: face_with_hole,  length: 6.0,  area: 0.75,volume: 0.0, )
 
     .. note:: the length of the face is equal to the total length of the boundary.
