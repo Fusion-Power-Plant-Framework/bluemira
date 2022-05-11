@@ -38,6 +38,7 @@ install_requires = [
     "pyquaternion",
     "scikit-learn",
     "seaborn",
+    "sectionproperties",  # 1.0.8dev (with scipy < 1.6)
     "Shapely",
     "tables",
     "tabulate",
