@@ -27,7 +27,14 @@ import numba as nb
 import numpy as np
 
 from bluemira.base.constants import EPS
-from bluemira.magnetostatics.tools import integrate, jit_llc5, jit_llc7, n_integrate
+from bluemira.magnetostatics.error import MagnetostaticsIntegrationError
+from bluemira.magnetostatics.tools import (
+    integrate,
+    jit_llc3,
+    jit_llc5,
+    jit_llc7,
+    n_integrate,
+)
 from bluemira.utilities.tools import is_num
 
 __all__ = ["semianalytic_Bx", "semianalytic_Bz", "semianalytic_psi"]
@@ -69,8 +76,7 @@ def _full_x_integrand(phi, r1, r2, z1, z2):
     )
 
 
-@nb.jit(nopython=True, cache=True)
-def _partial_z_integrand(phi, rr, zz):
+def _partial_z_integrand_nojit(phi, rr, zz):
     """
     Integrand edge cases derived to constant integrals. Much faster than
     splitting up the integrands.
@@ -96,6 +102,10 @@ def _partial_z_integrand(phi, rr, zz):
     return result
 
 
+_partial_z_integrand = nb.jit(_partial_z_integrand_nojit, nopython=True, cache=True)
+_partial_z_integrand_llc = jit_llc3(_partial_z_integrand_nojit)
+
+
 @jit_llc5
 def _full_z_integrand(phi, r1, r2, z1, z2):
     """
@@ -110,6 +120,20 @@ def _full_z_integrand(phi, r1, r2, z1, z2):
         - _partial_z_integrand(phi, r1, z2)
         - _partial_z_integrand(phi, r2, z1)
         + _partial_z_integrand(phi, r2, z2)
+    )
+
+
+def _integrate_z_by_parts(r1, r2, z1, z2):
+    """
+    Integrate the Bz integrand by parts.
+
+    This can be used as a fall-kack if the full integration fails.
+    """
+    return (
+        integrate(_partial_z_integrand_llc, (r1, z1), 0, np.pi)
+        - integrate(_partial_z_integrand_llc, (r1, z2), 0, np.pi)
+        - integrate(_partial_z_integrand_llc, (r2, z1), 0, np.pi)
+        + integrate(_partial_z_integrand_llc, (r2, z2), 0, np.pi)
     )
 
 
@@ -233,8 +257,11 @@ def semianalytic_Bz(xc, zc, x, z, d_xc, d_zc):
     """
     r1, r2, z1, z2, j_tor = _get_working_coords(xc, zc, x, z, d_xc, d_zc)
 
-    Bz = integrate(_full_z_integrand, (r1, r2, z1, z2), 0, np.pi)
-
+    try:
+        Bz = integrate(_full_z_integrand, (r1, r2, z1, z2), 0, np.pi)
+    except MagnetostaticsIntegrationError:
+        # If all else fails, fall back to integration by parts
+        Bz = _integrate_z_by_parts(r1, r2, z1, z2)
     fac = 2e-7 * j_tor * x  # MU_0/(2*np.pi)
     return fac * Bz
 

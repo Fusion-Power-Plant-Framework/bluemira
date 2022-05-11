@@ -32,7 +32,10 @@ from scipy.integrate import IntegrationWarning, nquad, quad
 
 from bluemira.geometry._deprecated_loop import Loop
 from bluemira.geometry.coordinates import Coordinates
-from bluemira.magnetostatics.error import MagnetostaticsError
+from bluemira.magnetostatics.error import (
+    MagnetostaticsError,
+    MagnetostaticsIntegrationError,
+)
 
 __all__ = [
     "jit_llc3",
@@ -256,12 +259,16 @@ def integrate(func, args, bound1, bound2):
     try:
         result = quad(func, bound1, bound2, args=args)[0]
     except IntegrationWarning:
+        # First attempt at fixing the integration problem
         points = [
             0.25 * (bound2 - bound1),
             0.5 * (bound2 - bound1),
             0.75 * (bound2 - bound1),
         ]
-        result = quad(func, bound1, bound2, args=args, points=points, limit=200)[0]
+        try:
+            result = quad(func, bound1, bound2, args=args, points=points, limit=200)[0]
+        except IntegrationWarning as error:
+            raise MagnetostaticsIntegrationError from error
 
     warnings.filterwarnings("default", category=IntegrationWarning)
     return result
