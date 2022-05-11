@@ -53,11 +53,11 @@ set_log_level("DEBUG")
 
 # %%[markdown]
 # ### Binary Location
-# Firstly if plasmod is not in your system path we need to provide the
-# binary location to the solver
+# Firstly if plasmod is not on your system path, we need to provide the
+# binary location to the solver.
 
 # %%
-PLASMOD_PATH = os.path.join(os.path.split(get_bluemira_root())[0], "plasmod")
+PLASMOD_PATH = os.path.join(os.path.dirname(get_bluemira_root()), "plasmod")
 binary = os.path.join(PLASMOD_PATH, "bin", "plasmod")
 
 # %%[markdown]
@@ -95,7 +95,7 @@ for param_name in params.keys():
 # Some values are not linked into bluemira. These plasmod parameters can be set
 # directly in `problem_settings`.
 # H-factor is set here as input therefore we will force plasmod to
-# optimse to that H-factor.
+# optimise to that H-factor.
 
 # %%
 problem_settings = {
@@ -126,7 +126,6 @@ for var_name in dir(plasmod.mapping):
 # %%
 build_config = {
     "problem_settings": problem_settings,
-    "mode": "run",
     "binary": binary,
 }
 
@@ -135,10 +134,7 @@ build_config = {
 
 # %%
 
-plasmod_solver = plasmod.Solver(
-    params=params,
-    build_config=build_config,
-)
+solver = plasmod.Solver(params=params, build_config=build_config)
 
 # %%[markdown]
 # These few functions are helpers to simplify the remainder of the tutorial.
@@ -148,42 +144,41 @@ plasmod_solver = plasmod.Solver(
 # %%
 
 
-def print_outputs(plasmod_solver):
+def print_outputs(solver):
     """
     Print plasmod scalars
     """
-    print(f"Fusion power [MW]: {plasmod_solver.params.P_fus/ 1E6}")
+    outputs = solver.plasmod_outputs()
+    print(f"Fusion power [MW]: {solver.params.P_fus/ 1E6}")
+    print(f"Additional heating power [MW]: {outputs.Paux / 1E6}")
+    print(f"Radiation power [MW]: {solver.params.P_rad / 1E6}")
+    print(f"Transport power across separatrix [MW]: {solver.params.P_sep / 1E6}")
+    print(f"{solver.params.q_95}")
+    print(f"{solver.params.I_p}")
+    print(f"{solver.params.l_i}")
+    print(f"{solver.params.v_burn}")
+    print(f"{solver.params.Z_eff}")
+    print(f"H-factor [-]: {outputs.Hfact}")
     print(
-        f"Additional heating power [MW]: {plasmod_solver.get_raw_variables('Paux') / 1E6}"
-    )
-    print(f"Radiation power [MW]: {plasmod_solver.params.P_rad / 1E6}")
-    print(f"Transport power across separatrix [MW]: {plasmod_solver.params.P_sep / 1E6}")
-    print(f"{plasmod_solver.params.q_95}")
-    print(f"{plasmod_solver.params.I_p}")
-    print(f"{plasmod_solver.params.l_i}")
-    print(f"{plasmod_solver.params.v_burn}")
-    print(f"{plasmod_solver.params.Z_eff}")
-    print(f"H-factor [-]: {plasmod_solver.get_raw_variables('Hfact')}")
-    print(
-        f"Divertor challenging criterion (P_sep * Bt /(q95 * R0 * A)) [-]: {plasmod_solver.get_raw_variables('psepb_q95AR')}"
+        f"Divertor challenging criterion (P_sep * Bt /(q95 * R0 * A)) [-]: {outputs.psepb_q95AR}"
     )
     print(
-        f"H-mode operating regime f_LH = P_sep/P_LH [-]: {plasmod_solver.params.P_sep /plasmod_solver.params.P_LH}"
+        f"H-mode operating regime f_LH = P_sep/P_LH [-]: {solver.params.P_sep / solver.params.P_LH}"
     )
-    print(f"{plasmod_solver.params.tau_e}")
-    print(f"Protium fraction [-]: {plasmod_solver.get_raw_variables('cprotium')}")
-    print(f"Helium fraction [-]: {plasmod_solver.get_raw_variables('che')}")
-    print(f"Xenon fraction [-]: {plasmod_solver.get_raw_variables('cxe')}")
-    print(f"Argon fraction [-]: {plasmod_solver.get_raw_variables('car')}")
+    print(f"{solver.params.tau_e}")
+    print(f"Protium fraction [-]: {outputs.cprotium}")
+    print(f"Helium fraction [-]: {outputs.che}")
+    print(f"Xenon fraction [-]: {outputs.cxe}")
+    print(f"Argon fraction [-]: {outputs.car}")
 
 
-def plot_profile(plasmod_solver, var_name, var_unit):
+def plot_profile(solver, var_name, var_unit):
     """
     Plot plasmod profile
     """
-    prof = plasmod_solver.get_profile(var_name)
-    x = plasmod_solver.get_profile("x")
-    fig, ax = plt.subplots()
+    prof = solver.get_profile(var_name)
+    x = solver.get_profile("x")
+    _, ax = plt.subplots()
     ax.plot(x, prof)
     ax.set(xlabel="x (-)", ylabel=var_name + " (" + var_unit + ")")
     ax.grid()
@@ -196,7 +191,7 @@ def plot_profile(plasmod_solver, var_name, var_unit):
 
 # %%
 
-plasmod_solver.run()
+solver.execute(plasmod.RunMode.RUN)
 
 # %%[markdown]
 # ### Using the results
@@ -216,17 +211,17 @@ print("Profiles")
 pprint(list(plasmod.mapping.Profiles))
 
 # %%
-plot_profile(plasmod_solver, "Te", "keV")
-print_outputs(plasmod_solver)
+plot_profile(solver, "Te", "keV")
+print_outputs(solver)
 
 # %%[markdown]
 # ### Rerunning with modified settings
 # #### Changing the transport model
 
 # %%
-plasmod_solver.problem_settings["i_modeltype"] = "GYROBOHM_2"
-plasmod_solver.run()
-print_outputs(plasmod_solver)
+solver.problem_settings["i_modeltype"] = plasmod.TransportModel.GYROBOHM_1
+solver.execute(plasmod.RunMode.RUN)
+print_outputs(solver)
 
 
 # %%[markdown]
@@ -234,33 +229,34 @@ print_outputs(plasmod_solver)
 # Plasmod calculates the additional heating power and the plasma current
 
 # %%
-plasmod_solver.params.q_95 = (3.5, "input")
+solver.params.q_95 = (3.5, "input")
 
-plasmod_solver.problem_settings["pfus_req"] = 2000.0
-plasmod_solver.problem_settings["i_equiltype"] = "q95_sawtooth"
-plasmod_solver.problem_settings["q_control"] = 50.0
+solver.problem_settings["pfus_req"] = 2000.0
+solver.problem_settings["i_equiltype"] = plasmod.EquilibriumModel.q95_sawtooth
+solver.problem_settings["q_control"] = 50.0
 
-plasmod_solver.run()
-print_outputs(plasmod_solver)
+solver.execute(plasmod.RunMode.RUN)
+print_outputs(solver)
 
 # %%[markdown]
 # #### Setting heat flux on divertor target to 10 MW/m²
 # plasmod calculates the argon concentration to fulfill the constraint
 
 # %%
-plasmod_solver.problem_settings["qdivt_sup"] = 10.0
-plasmod_solver.run()
-print_outputs(plasmod_solver)
+solver.problem_settings["qdivt_sup"] = 10.0
+solver.execute(plasmod.RunMode.RUN)
+print_outputs(solver)
 
 # %%[markdown]
-# #### Changing the mapping sending or recieving
+# #### Changing the mapping sending or receiving
 # The mapping can be changed on a given parameter or set of parameters.
-# Notice how the value of `q_95` doesn't change in the output
+# Notice how the value of `q_95` doesn't change in the output,
 # even though its value has in the parameter (the previous value of 3.5 is used).
 
+# TODO(hsaunders): modify_mappings
 # %%
-plasmod_solver.modify_mappings({"q_95": {"send": False}})
-plasmod_solver.params.q_95 = (5, "input")
-plasmod_solver.run()
-print_outputs(plasmod_solver)
-print("\nq_95 value history\n", plasmod_solver.params.q_95.history())
+solver.modify_mappings({"q_95": {"send": False}})
+solver.params.q_95 = (5, "input")
+solver.execute(plasmod.RunMode.RUN)
+print_outputs(solver)
+print("\nq_95 value history\n", solver.params.q_95.history())
