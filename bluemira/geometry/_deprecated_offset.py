@@ -313,7 +313,7 @@ def offset_clipper(coordinates: Coordinates, delta, method="square", miter_limit
 
     # Transform offset coordinates back to original plane
     result = transform_coordinates_to_original(result, com, coordinates.normal_vector)
-    result.points[-1] = result.points[0]
+    result.close()
 
     return result
 
