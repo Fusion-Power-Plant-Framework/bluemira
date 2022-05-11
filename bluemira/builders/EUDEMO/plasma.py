@@ -477,6 +477,5 @@ class PlasmaBuilder(Builder):
         component = PhysicalComponent("LCFS", shell)
         component.display_cad_options.color = BLUE_PALETTE["PL"]
         component.display_cad_options.transparency = 0.75
-        component.display_cad_options.material = "wax"
 
         return Component("xyz").add_child(component)
