@@ -385,7 +385,7 @@ def make_solenoid(r_cs, tk_cs, z_min, z_max, g_cs, tk_cs_ins, tk_cs_cas, n_CS):
 
     if z_max < z_min:
         z_min, z_max = z_max, z_min
-    if z_max == z_min:
+    if np.isclose(z_max, z_min):
         raise BuilderError(f"Cannot make a solenoid with z_min==z_max=={z_min}")
 
     total_height = z_max - z_min
