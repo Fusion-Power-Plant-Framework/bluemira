@@ -94,7 +94,7 @@ class ConfigurationSchema:
     alpha_t: Parameter
     t_beta: Parameter
     n_el_sep: Parameter
-    t_el_sep: Parameter
+    T_el_sep: Parameter
     r_minor: Parameter
 
     # Heating and current drive

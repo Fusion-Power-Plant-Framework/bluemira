@@ -51,17 +51,17 @@ class Radiation:
 
     # fmt: off
     plasma_params = [
-        ["n_el_0", "Electron density on axis", 1.81e+20, "/m3", None, "Input"],
+        ["n_el_0", "Electron density on axis", 1.81e+20, "1/m^3", None, "Input"],
         ["T_el_0", "Electron temperature on axis", 2.196e+01, "keV", None, "Input"],
         ["rho_ped_n", "Density pedestal r/a location", 9.4e-01, "dimensionless", None, "Input"],
         ["rho_ped_t", "Temperature pedestal r/a location", 9.76e-01 , "dimensionless", None, "Input"],
-        ["n_el_ped", "Electron density pedestal height", 1.086e+20, "/m3", None, "Input"],
+        ["n_el_ped", "Electron density pedestal height", 1.086e+20, "1/m^3", None, "Input"],
         ["T_el_ped", "Electron temperature pedestal height", 3.74, "keV", None, "Input"],
         ["alpha_n", "Density profile factor", 1.15, "dimensionless", None, "Input"],
         ["alpha_t", "Temperature profile index", 1.905, "dimensionless", None, "Input"],
         ["t_beta", "Temperature profile index beta", 2, "dimensionless", None, "Input"],
-        ["n_el_sep", "Electron density at separatrix", 1.5515e+19, "/m3", None, "Input"],
-        ["t_el_sep", "Electron temperature at separatrix", 4.8e-01, "keV", None, "Input"],
+        ["n_el_sep", "Electron density at separatrix", 1.5515e+19, "1/m^3", None, "Input"],
+        ["T_el_sep", "Electron temperature at separatrix", 4.8e-01, "keV", None, "Input"],
         ["q_95", "Safety factor at 0.95 flux_surface", 4.9517, "dimensionless", None, "Input"],
         ["r_minor", "Minor_radius", 2.183, "m", None, "Input"],
         ["kappa", "Elongation", 2.8, "dimensionless", None, "Input"],
@@ -374,7 +374,7 @@ class TwoPointModelTools(Radiation):
             upstream power density [W/m^2]
         """
         # minor radius
-        a = self.params.rminor
+        a = self.params.r_minor
         # elongation
         k = self.params.kappa
         # safety factor
@@ -436,7 +436,7 @@ class TwoPointModelTools(Radiation):
         m_i = m_i_kg / (light_speed**2)
         # From keV to eV
         t_u = constants.raw_uc(t_u, "keV", "eV")
-        n_u = self.params.ne0
+        n_u = self.params.n_el_0
         # Numerator and denominator of the upstream forcing function
         num_f = m_i * 4 * (q_u**2)
         den_f = (
@@ -447,10 +447,8 @@ class TwoPointModelTools(Radiation):
             * (n_u**2)
             * (t_u**2)
         )
-        # Upstream forcing function
-        f_j = num_f / den_f
         # To address all the conversion from J to eV
-        f_ev = constants.raw_uc(f_j, "J", "eV")
+        f_ev = constants.raw_uc(num_f / den_f, "J", "eV")
         # Critical target temperature
         t_crit = self.params.eps_cool / self.params.gamma
         # Finding roots of the target temperature quadratic equation
@@ -891,7 +889,7 @@ class Core(Radiation):
         """
         # The plasma bulk is divided into plasma core and plasma mantle according to rho
         # rho is a nondimensional radial coordinate: rho = r/a (r varies from 0 to a)
-        self.rho_ped = (self.params.rhopedn + self.params.rhopedt) / 2.0
+        self.rho_ped = (self.params["rho_ped_n"] + self.params.rho_ped_t) / 2.0
 
         # Plasma core for rho < rho_core
         rho_core1 = np.linspace(0, 0.95 * self.rho_ped)
@@ -924,33 +922,33 @@ class Core(Radiation):
         """
         i_interior = np.where((rho_core >= 0) & (rho_core <= self.rho_ped))[0]
 
-        n_grad_ped0 = self.params.ne0 - self.params.neped
-        t_grad_ped0 = self.params.te0 - self.params.teped
+        n_grad_ped0 = self.params.n_el_0 - self.params.n_el_ped
+        t_grad_ped0 = self.params.T_el_0 - self.params.T_el_ped
 
         rho_ratio_n = (
             1 - ((rho_core[i_interior] ** 2) / (self.rho_ped**2))
-        ) ** self.params.alphan
+        ) ** self.params.alpha_n
 
         rho_ratio_t = (
             1
             - (
-                (rho_core[i_interior] ** self.params.tbeta)
-                / (self.rho_ped**self.params.tbeta)
+                (rho_core[i_interior] ** self.params.t_beta)
+                / (self.rho_ped**self.params.t_beta)
             )
-        ) ** self.params.alphat
+        ) ** self.params.alpha_t
 
-        ne_i = self.params.neped + (n_grad_ped0 * rho_ratio_n)
-        te_i = self.params.teped + (t_grad_ped0 * rho_ratio_t)
+        ne_i = self.params.n_el_ped + (n_grad_ped0 * rho_ratio_n)
+        te_i = self.params.T_el_ped + (t_grad_ped0 * rho_ratio_t)
 
         i_exterior = np.where((rho_core > self.rho_ped) & (rho_core <= 1))[0]
 
-        n_grad_sepped = self.params.neped - self.params.nesep
-        t_grad_sepped = self.params.teped - self.params.tesep
+        n_grad_sepped = self.params.n_el_ped - self.params.n_el_sep
+        t_grad_sepped = self.params.T_el_ped - self.params.T_el_sep
 
         rho_ratio = (1 - rho_core[i_exterior]) / (1 - self.rho_ped)
 
-        ne_e = self.params.nesep + (n_grad_sepped * rho_ratio)
-        te_e = self.params.tesep + (t_grad_sepped * rho_ratio)
+        ne_e = self.params.n_el_sep + (n_grad_sepped * rho_ratio)
+        te_e = self.params.T_el_sep + (t_grad_sepped * rho_ratio)
 
         ne_core = np.append(ne_i, ne_e)
         te_core = np.append(te_i, te_e)
@@ -1146,8 +1144,8 @@ class ScrapeOffLayer(Radiation):
             radial decayed densities through the SoL at the mid-plane. Unit [1/m^3]
         """
         if te_sep is None:
-            te_sep = self.params.tesep
-        ne_sep = self.params.nesep
+            te_sep = self.params.T_el_sep
+        ne_sep = self.params.n_el_sep
         te_sol, ne_sol = self.electron_density_and_temperature_sol_decay(
             te_sep, ne_sep, lfs=omp
         )
@@ -1211,7 +1209,7 @@ class ScrapeOffLayer(Radiation):
         f_t = t_u / t_p
 
         # Local electron temperature
-        n_p = self.params.nesep * f_t
+        n_p = self.params.n_el_sep * f_t
 
         # Temperature and density profiles across the SoL
         te_prof, ne_prof = self.electron_density_and_temperature_sol_decay(
@@ -1480,7 +1478,7 @@ class ScrapeOffLayerSector(ScrapeOffLayer, TwoPointModelTools):
         return t_pol, n_pol
 
 
-class StepCore(Core, TwoPointModelTools):
+class STCore(Core, TwoPointModelTools):
     """
     Specific class for the core emission of STEP
     """
@@ -1584,7 +1582,7 @@ class StepCore(Core, TwoPointModelTools):
         self.plot_2d_map(flux_tubes, total_rad)
 
 
-class StepScrapeOffLayer(ScrapeOffLayerSector, ScrapeOffLayer, TwoPointModelTools):
+class STScrapeOffLayer(ScrapeOffLayerSector, ScrapeOffLayer, TwoPointModelTools):
     """
     Specific class for the scrape-off layer emission of STEP
     """
