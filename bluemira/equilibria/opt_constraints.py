@@ -119,6 +119,7 @@ def L2_norm_constraint(  # noqa: N802
         Current vector
     grad: np.ndarray
         Constraint Jacobian (modified in place)
+
     Returns
     -------
     constraint: np.ndarray
