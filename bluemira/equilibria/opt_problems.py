@@ -252,6 +252,18 @@ class CoilsetOptimisationProblem(OptimisationProblem):
 
         return current_bounds
 
+    def update_magnetic_constraints(self, I_not_dI=True, fixed_coils=True):
+        """
+        Update the magnetic optimisation constraints with the state of the Equilibrium
+        """
+        if self._constraints is not None:
+            for constraint in self._constraints:
+                if isinstance(constraint, MagneticConstraint):
+                    constraint.prepare(
+                        self.eq, I_not_dI=I_not_dI, fixed_coils=fixed_coils
+                    )
+                constraint._args["scale"] = self.scale
+
     def __call__(self, eq=None, targets=None, psi_bndry=None):
         """
         Parameters
@@ -910,18 +922,6 @@ class MinimalCurrentsCOP(CoilsetOptimisationProblem):
         bounds = self.get_current_bounds(self.coilset, max_currents, self.scale)
         dimension = len(bounds[0])
         self.set_up_optimiser(dimension, bounds)
-
-    def update_magnetic_constraints(self, I_not_dI=True, fixed_coils=True):
-        """
-        Update the magnetic optimisation constraints with the state of the Equilibrium
-        """
-        if self._constraints is not None:
-            for constraint in self._constraints:
-                if isinstance(constraint, MagneticConstraint):
-                    constraint.prepare(
-                        self.eq, I_not_dI=I_not_dI, fixed_coils=fixed_coils
-                    )
-                constraint._args["scale"] = self.scale
 
     def optimise(self, I_not_dI=True, fixed_coils=True):
         """
