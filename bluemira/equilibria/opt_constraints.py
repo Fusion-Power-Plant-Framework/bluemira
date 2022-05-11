@@ -110,6 +110,7 @@ def L2_norm_constraint(  # noqa: N802
     """
     Constrain the L2 norm of an Ax-b system of equations.
     ||(Ax - b)||² < value
+
     Parameters
     ----------
     constraint: np.ndarray
@@ -349,9 +350,6 @@ class MagneticConstraint(ABC, OptimisationConstraint):
         self.update_target(equilibrium)
         self._args["b_vec"] = self.target_value - self.evaluate(equilibrium)
 
-    def __call__(self, constraint, vector, grad):
-        return super().__call__(constraint, vector, grad)
-
     def update_target(self, equilibrium):
         """
         Update the target value of the magnetic constraint.
@@ -450,6 +448,9 @@ class RelativeMagneticConstraint(MagneticConstraint):
 
     @abstractmethod
     def update_target(self, equilibrium):
+        """
+        Update the target value of the magnetic constraint.
+        """
         pass
 
 
