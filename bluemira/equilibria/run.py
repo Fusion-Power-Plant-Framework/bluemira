@@ -29,21 +29,17 @@ from typing import Dict, List, Optional, Type
 import numpy as np
 
 from bluemira.base.look_and_feel import bluemira_print, bluemira_warn
-from bluemira.equilibria.coils import Coil, CoilSet
+from bluemira.equilibria.coils import CoilSet
 from bluemira.equilibria.eq_constraints import MagneticConstraintSet
 from bluemira.equilibria.equilibrium import Breakdown, Equilibrium
 from bluemira.equilibria.error import EquilibriaError
 from bluemira.equilibria.grid import Grid
-from bluemira.equilibria.opt_constraints import (
-    L2_norm_constraint,
-    coil_field_constraints,
-)
+from bluemira.equilibria.opt_constraints import L2_norm_constraint
 from bluemira.equilibria.opt_problems import (
     BreakdownCOP,
     BreakdownZoneStrategy,
     CoilsetOptimisationProblem,
     MinimalCurrentCOP,
-    OutboardBreakdownZoneStrategy,
     UnconstrainedCurrentCOP,
 )
 from bluemira.equilibria.physics import calc_psib
