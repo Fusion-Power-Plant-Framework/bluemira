@@ -26,6 +26,7 @@ Interface for building and loading equilibria and coilset designs
 from copy import deepcopy
 from typing import Dict, List, Optional, Type
 
+import matplotlib.pyplot as plt
 import numpy as np
 
 from bluemira.base.look_and_feel import bluemira_print, bluemira_warn
