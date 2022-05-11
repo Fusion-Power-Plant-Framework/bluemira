@@ -54,7 +54,7 @@ class TestComponentClass:
     def test_get_component_from_node(self):
         parent = Component("Parent")
         child1 = Component("Child1", parent=parent)
-        child2 = Component("Child2", parent=parent)
+        Component("Child2", parent=parent)
         grandchild = Component("Grandchild", parent=child1)
 
         assert grandchild.get_component("Child2") is None
@@ -62,7 +62,7 @@ class TestComponentClass:
     def test_get_component_multiple_full_tree(self):
         parent = Component("Parent")
         child1 = Component("Child", parent=parent)
-        child2 = Component("Child", parent=parent)
+        Component("Child", parent=parent)
         grandchild = Component("Grandchild", parent=child1)
 
         components = grandchild.get_component("Child", first=False, full_tree=True)
@@ -115,6 +115,21 @@ class TestComponentClass:
         parent.add_children([child1, child2])
         assert parent.children == (child1, child2)
 
+    def test_add_children_given_tuple_of_components(self):
+        parent = Component("Parent")
+        children = (Component("Child1"), Component("Child2"))
+
+        parent.add_children(children)
+
+        assert [ch.name for ch in parent.children] == ["Child1", "Child2"]
+
+    def test_add_children_does_nothing_given_empty_list(self):
+        parent = Component("parent")
+
+        parent.add_children([])
+
+        assert len(parent.children) == 0
+
     def test_fail_add_duplicate_children(self):
         parent = Component("Parent")
         child1 = Component("Child1", parent=parent)
@@ -140,6 +155,64 @@ class TestComponentClass:
         parent.prune_child("not_a_child")
 
         assert parent.get_component("Child1") is not None
+
+    def test_merge_children_merges_trees(self):
+        parent_1 = _tree_from_dict({"parent_1": {"x": "leaf_1_x", "y": {"leaf_1_y"}}})
+        parent_2 = _tree_from_dict({"parent_2": {"x": "leaf_2_x", "z": {"leaf_1_z"}}})
+
+        parent_1.merge_children(parent_2)
+
+        x_component = parent_1.get_component("x")
+        assert isinstance(x_component, Component)
+        assert [ch.name for ch in x_component.children] == ["leaf_1_x", "leaf_2_x"]
+        y_component = parent_1.get_component("y")
+        assert [ch.name for ch in y_component.children] == ["leaf_1_y"]
+        z_component = parent_1.get_component("z")
+        assert [ch.name for ch in z_component.children] == ["leaf_1_z"]
+
+    def test_merge_children_given_2_shared_nodes(self):
+        tree_1 = {"parent_1": {"x": "leaf_1_x", "y": "leaf_1_y"}}
+        parent_1 = _tree_from_dict(tree_1)
+        tree_2 = {"parent_2": {"x": "leaf_2_x", "y": "leaf_2_y"}}
+        parent_2 = _tree_from_dict(tree_2)
+
+        parent_1.merge_children(parent_2)
+
+        x_component = parent_1.get_component("x")
+        assert isinstance(x_component, Component)
+        assert isinstance(x_component.get_component("leaf_1_x"), Component)
+        assert isinstance(x_component.get_component("leaf_2_x"), Component)
+        y_component = parent_1.get_component("y")
+        assert isinstance(y_component, Component)
+        assert isinstance(y_component.get_component("leaf_1_y"), Component)
+        assert isinstance(y_component.get_component("leaf_2_y"), Component)
+
+    def test_merge_children_ComponentError_given_shared_leaf(self):
+        parent_1 = Component("parent_1")
+        Component("x", parent=parent_1)
+        parent_2 = Component("parent_2")
+        Component("x", parent=parent_2)
+
+        with pytest.raises(ComponentError):
+            parent_1.merge_children(parent_2)
+
+    def test_merge_children_ComponentError_given_multiple_common_nodes(self):
+        parent_1 = _tree_from_dict({"parent_1": {"x": {"x2": "leaf_1"}}})
+        parent_2 = _tree_from_dict({"parent_2": {"x": {"x2", "leaf_2"}}})
+
+        with pytest.raises(ComponentError):
+            parent_1.merge_children(parent_2)
+
+    def test_merge_children_does_not_merge_nodes_of_different_depth(self):
+        parent_1 = _tree_from_dict({"parent_1": {"x": "leaf_1_x"}})
+        parent_2 = _tree_from_dict({"parent_1": {"inter": {"x": "leaf_1_x"}}})
+
+        parent_1.merge_children(parent_2)
+
+        x_components = parent_1.get_component("x", first=False)
+        assert len(x_components) == 2
+        assert x_components[0].depth == 1
+        assert x_components[1].depth == 2
 
 
 class TestPhysicalComponent:
@@ -176,3 +249,22 @@ class TestMagneticComponent:
     def test_conductor(self):
         component = MagneticComponent("Dummy", shape="A shape", conductor="A conductor")
         assert component.conductor == "A conductor"
+
+
+def _tree_from_dict(item, component_parent=None) -> Component:
+    """
+    Build a component tree from a dictionary.
+
+    Defining larger component trees in a dictionary is far more
+    readable than lines and lines of `add_child` calls.
+    """
+    for parent, children in item.items():
+        component = Component(parent, parent=component_parent)
+        if isinstance(children, dict):
+            _tree_from_dict(children, component_parent=component)
+        elif isinstance(children, str):
+            component.add_child(Component(children))
+        else:
+            for child in children:
+                component.add_child(Component(child))
+    return component

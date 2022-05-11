@@ -137,7 +137,6 @@ class Component(NodeMixin, Plottable, DisplayableCAD):
         self: Component
             This component.
         """
-        # TODO: Support merge_trees here too.
         if child in self.children:
             raise ComponentError(f"Component {child} is already a child of {self}")
         self.children = list(self.children) + [child]
@@ -158,9 +157,7 @@ class Component(NodeMixin, Plottable, DisplayableCAD):
         self: Component
             This component.
         """
-        if not isinstance(children, list) or len(children) == 0:
-            child = children[0] if isinstance(children, list) else children
-            return self.add_child(child)
+        children = list(children)
 
         duplicates = []
         child: Component
@@ -179,6 +176,63 @@ class Component(NodeMixin, Plottable, DisplayableCAD):
         self.children = list(self.children) + children
 
         return self
+
+    def merge_children(self, other: Component):
+        """
+        Merge the children of the given component into this component.
+
+        If common children are leaves, then a ComponentError is raised.
+
+        For example, if this object has structure:
+
+        .. code-block::
+
+            parent_1
+            ├── x
+            │   └── leaf_1_x
+            └── y
+                └── leaf_1_y
+
+        and the other has structure:
+
+        .. code-block::
+
+            parent_2
+            ├── x
+            │   └── leaf_2_x
+            └── z
+                └── leaf_1_z
+
+        the new structure of this object will be:
+
+        .. code-block::
+
+            parent_1
+            ├── x
+            │   └── leaf_1_x
+            │   └── leaf_2_x
+            ├── y
+            │   └── leaf_1_y
+            └── z
+                └── leaf_1_z
+
+        Parameters
+        ----------
+        other: Component
+            The component to merge the children from.
+        """
+        for other_child in other.children:
+            common_child = [ch for ch in self.children if ch.name == other_child.name]
+            if common_child:
+                if other_child.is_leaf and common_child[0].is_leaf:
+                    raise ComponentError(
+                        f"Cannot merge component '{other_child.name}' from "
+                        f"'{other_child.parent}' into '{self}'. '{other_child.name}' "
+                        "is a leaf component in both."
+                    )
+                common_child[0].add_children(list(other_child.children))
+            else:
+                self.add_child(other_child)
 
     def prune_child(self, name: str):
         """
