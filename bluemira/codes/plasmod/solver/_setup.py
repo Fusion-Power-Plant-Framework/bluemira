@@ -42,6 +42,17 @@ class Setup(Task):
 
     On run, this task writes a plasmod input file using the input values
     defined in this class.
+
+    Parameters
+    ----------
+    params: ParameterFrame
+        The bluemira parameters for the task. Note that this task does
+        not apply any mappings to the ParameterFrame, so they should
+        already be set. Most likely by a solver.
+    problem_settings: Dict[str, Any]
+        Any non-bluemira parameters that should be passed to plasmod.
+    input_file: str
+        The path where the plasmod input file should be written.
     """
 
     def __init__(

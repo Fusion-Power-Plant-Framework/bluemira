@@ -34,6 +34,24 @@ from bluemira.codes.utilities import run_subprocess
 class Run(Task):
     """
     The 'Run' class for plasmod transport solver.
+
+    Parameters
+    ----------
+    params: ParameterFrame
+        The bluemira parameters for the task. Note that this task does
+        not apply any mappings to the ParameterFrame, so they should
+        already be set. Most likely by a solver.
+    input_file: str
+        The path to the plasmod input file.
+    output_file: str
+        The path to which the plasmod scalar output file should be
+        written.
+    profiles_file: str
+        The path to which the plasmod profiles output file should be
+        written.
+    binary: str
+        The name of, or path to, the plasmod binary. If this is not an
+        absolute path, the binary must be on the system path.
     """
 
     def __init__(

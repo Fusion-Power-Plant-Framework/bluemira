@@ -39,6 +39,17 @@ class Teardown(Task):
 
     In "RUN" and "READ" mode, this loads in plasmod results files and
     updates :code:`params` with the values.
+
+    Parameters
+    ----------
+    params: ParameterFrame
+        The bluemira parameters for the task. Note that this task does
+        not apply any mappings to the ParameterFrame, so they should
+        already be set. Most likely by a solver.
+    output_file: str
+        The path to the plasmod output file.
+    profiles_file: str
+        The path to the plasmod profiles file.
     """
 
     def __init__(self, params: ParameterFrame, output_file: str, profiles_file: str):
