@@ -41,6 +41,7 @@ install_requires = [
     "Shapely",
     "tables",
     "tabulate",
+    "trimesh",
     "scipy<=1.5.3",
     "wrapt",
 ]
