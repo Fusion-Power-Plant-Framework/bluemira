@@ -94,10 +94,18 @@ class VacuumVesselThermalShieldBuilder(Builder):
         Build the x-z components of the vacuum vessel thermal shield.
         """
         vvts_inner_wire = offset_wire(
-            self._vv_koz, self._params.g_vv_ts.value, join="arc", open_wire=False
+            self._vv_koz,
+            self._params.g_vv_ts.value,
+            join="arc",
+            open_wire=False,
+            ndiscr=600,
         )
         vvts_outer_wire = offset_wire(
-            vvts_inner_wire, self._params.tk_ts.value, join="arc", open_wire=False
+            vvts_inner_wire,
+            self._params.tk_ts.value,
+            join="arc",
+            open_wire=False,
+            ndiscr=600,
         )
         vvts_face = BluemiraFace([vvts_outer_wire, vvts_inner_wire])
         self._vvts_face = vvts_face
@@ -243,11 +251,15 @@ class CyrostatThermalShieldBuilder(Builder):
         x, z = np.array(x), np.array(z)
         hull_idx = ConvexHull(np.array([x, z]).T).vertices
         wire = make_polygon({"x": x[hull_idx], "y": 0, "z": z[hull_idx]}, closed=True)
-        wire = offset_wire(wire, self.params.g_ts_pf, open_wire=False)
-        pf_o_wire = offset_wire(wire, self.params.tk_ts, open_wire=False)
+        wire = offset_wire(wire, self.params.g_ts_pf, open_wire=False, ndiscr=600)
+        pf_o_wire = offset_wire(wire, self.params.tk_ts, open_wire=False, ndiscr=600)
 
         tf_o_wire = offset_wire(
-            self._tf_koz, self.params.g_ts_tf, join="arc", open_wire=False
+            self._tf_koz,
+            self.params.g_ts_tf,
+            join="arc",
+            open_wire=False,
+            ndiscr=600,
         )
 
         try:
@@ -259,7 +271,7 @@ class CyrostatThermalShieldBuilder(Builder):
             # the TF offset face is probably enclosed by the PF offset face
             cts_inner = pf_o_wire
 
-        cts_outer = offset_wire(cts_inner, self.params.tk_ts)
+        cts_outer = offset_wire(cts_inner, self.params.tk_ts, ndiscr=600)
         cts_face = BluemiraFace([cts_outer, cts_inner])
         bound_box = cts_face.bounding_box
         z_min, z_max = bound_box.z_min, bound_box.z_max
