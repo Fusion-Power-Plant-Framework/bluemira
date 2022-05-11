@@ -895,6 +895,34 @@ class MinimalErrorCOP(CoilsetOptimisationProblem):
         dimension = len(bounds[0])
         self.set_up_optimiser(dimension, bounds)
 
+    def optimise(self, I_not_dI=True, fixed_coils=True):
+        """
+        Solve the optimisation problem
+
+        Parameters
+        ----------
+        I_not_dI: bool
+            Whether or not to optimisation the current or the current gradient vector
+        fixed_coils: True
+            Whether or not to update to coilset response matrices
+
+        Returns
+        -------
+        coilset: CoilSet
+            Optimised CoilSet
+        """
+        self.update_magnetic_constraints(I_not_dI=I_not_dI, fixed_coils=fixed_coils)
+
+        initial_state, n_states = self.read_coilset_state(self.eq.coilset, self.scale)
+        _, _, initial_currents = np.array_split(initial_state, n_states)
+
+        initial_currents = np.clip(
+            initial_currents, self.opt.lower_bounds, self.opt.upper_bounds
+        )
+        currents = self.opt.optimise(initial_currents)
+        self.coilset.set_control_currents(currents * self.scale)
+        return self.coilset
+
 
 class MinimalCurrentsCOP(CoilsetOptimisationProblem):
     """

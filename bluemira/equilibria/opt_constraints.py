@@ -60,8 +60,9 @@ from typing import List, Union
 import numpy as np
 
 from bluemira.equilibria.plotting import ConstraintPlotter
+from bluemira.geometry._deprecated_loop import Loop
 from bluemira.utilities.opt_problems import OptimisationConstraint
-from bluemira.utilities.tools import is_num
+from bluemira.utilities.tools import abs_rel_difference, is_num
 
 
 def objective_constraint(constraint, vector, grad, objective_function, maximum_fom=1.0):
@@ -795,3 +796,67 @@ class MagneticConstraintSet(ABC):
         Plots constraints
         """
         return ConstraintPlotter(self, ax=ax)
+
+
+class AutoConstraints(MagneticConstraintSet):
+    """
+    Utility class for crude reconstruction of magnetic constraints from a
+    specified LCFS set of coordinates.
+
+    Parameters
+    ----------
+    x: np.array
+        The x coordinates of the LCFS
+    z: np.array
+        The z coordinates of the LCFS
+    psi_boundary: Union[None, float]
+        The psi boundary value to use as a constraint. If None, an
+        isoflux constraint is used.
+    n_points: int
+        The number of interpolated points to use
+    """
+
+    def __init__(self, x, z, psi_boundary=None, n_points=40):
+        x = np.array(x)
+        z = np.array(z)
+        z_max = max(z)
+        z_min = min(z)
+        x_z_max = x[np.argmax(z)]
+        x_z_min = x[np.argmin(z)]
+
+        # Determine if we are dealing with SN or DN
+        single_null = abs_rel_difference(abs(z_min), z_max) > 0.05
+
+        if single_null:
+            # Determine if it is an upper or lower SN
+            lower = abs(z_min) > z_max
+
+            if lower:
+                constraints = [FieldNullConstraint(x_z_min, z_min)]
+            else:
+                constraints = [FieldNullConstraint(x_z_max, z_max)]
+
+        else:
+            constraints = [
+                FieldNullConstraint(x_z_min, z_min),
+                FieldNullConstraint(x_z_max, z_max),
+            ]
+
+        # Interpolate some points on the LCFS
+        loop = Loop(x=x, z=z)
+        loop.interpolate(n_points)
+        x_boundary, z_boundary = loop.x, loop.z
+
+        # Apply an appropriate constraint on the LCFS
+        if psi_boundary is None:
+            arg_inner = np.argmin(x_boundary**2 + z_boundary**2)
+            ref_x = x_boundary[arg_inner]
+            ref_z = z_boundary[arg_inner]
+
+            constraints.append(IsofluxConstraint(x_boundary, z_boundary, ref_x, ref_z))
+
+        else:
+            constraints.append(
+                PsiBoundaryConstraint(x_boundary, z_boundary, psi_boundary)
+            )
+        super().__init__(constraints)
