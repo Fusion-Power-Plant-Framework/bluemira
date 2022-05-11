@@ -76,10 +76,10 @@ class FemMagnetostatic2d:
         self.p_order = p_order
 
         # ======================================================================
-        # define the geometry
+        # check whether mesh is a filename or a mesh, then load it or use it
         if isinstance(
             mesh, str
-        ):  # check wether mesh is a filename or a mesh, then load it or use it
+        ):
             self.mesh = dolfin.Mesh(mesh)  # define the mesh
         else:
             self.mesh = mesh  # use the mesh
@@ -87,9 +87,10 @@ class FemMagnetostatic2d:
         # ======================================================================
         # define boundaries
         if boundaries is None:
+            # initialize the MeshFunction
             self.boundaries = dolfin.MeshFunction(
                 "size_t", mesh, mesh.topology().dim() - 1
-            )  # initialize the MeshFunction
+            )
         elif isinstance(boundaries, str):
             # check wether boundaries is a filename or a MeshFunction,
             # then load it or use it

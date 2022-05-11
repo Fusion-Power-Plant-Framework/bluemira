@@ -397,7 +397,7 @@ def plasma_fixed_boundary(
         print('iter = {} eps = {}'.format(i, eps))
 
         diff = convert_to_dolfin(solver.V, diff)
-        eps = dolfin.assemble(diff * dx) #/dolfin.assemble(convert_to_dolfin(
+        eps = np.sqrt(dolfin.assemble(diff * dx)) #/dolfin.assemble(convert_to_dolfin(
         # solver.V, x2D) * dx)
         print('iter = {} eps = {}'.format(i, eps))
 
@@ -459,7 +459,7 @@ if __name__ == "__main__":
 
     plasmod_build_config = {
         "problem_settings": problem_settings,
-        "mode": "read",
+        "mode": "run",
         "binary": binary,
     }
 
