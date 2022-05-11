@@ -935,7 +935,7 @@ class InputBreakdownZoneStrategy(CircularZoneStrategy):
         return self.r_c
 
 
-class PremagnetisationCOP(CoilsetOptimisationProblem):
+class BreakdownCOP(CoilsetOptimisationProblem):
     """
     Coilset optimisation problem for the premagnetisation / breakdown phase.
     """

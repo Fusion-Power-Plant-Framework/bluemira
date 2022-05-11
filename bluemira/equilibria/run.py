@@ -38,11 +38,11 @@ from bluemira.equilibria.opt_constraints import (
     coil_field_constraints,
 )
 from bluemira.equilibria.opt_problems import (
+    BreakdownCOP,
     BreakdownZoneStrategy,
     CoilsetOptimisationProblem,
     MinimalCurrentCOP,
     OutboardBreakdownZoneStrategy,
-    PremagnetisationCOP,
     UnconstrainedCurrentCOP,
 )
 from bluemira.equilibria.physics import calc_psib
@@ -211,7 +211,7 @@ class FixedPulsedCoilsetProblem(PulsedCoilsetProblem):
         profiles: Profile,
         magnetic_targets: MagneticConstraintSet,
         breakdown_strategy_cls: Type[BreakdownZoneStrategy],
-        breakdown_problem_cls: Type[PremagnetisationCOP],
+        breakdown_problem_cls: Type[BreakdownCOP],
         breakdown_optimiser: Optimiser = Optimiser(
             "COBYLA", opt_conditions={"max_eval": 5000, "ftol_rel": 1e-10}
         ),
@@ -440,7 +440,7 @@ if __name__ == "__main__":
         profiles,
         targets,
         breakdown_strategy_cls=breakdown_strategy,
-        breakdown_problem_cls=PremagnetisationCOP,
+        breakdown_problem_cls=BreakdownCOP,
         breakdown_optimiser=Optimiser(
             "COBYLA", opt_conditions={"max_eval": 10000, "ftol_rel": 1e-10}
         ),
