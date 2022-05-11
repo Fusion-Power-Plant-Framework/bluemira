@@ -866,6 +866,24 @@ class UnconstrainedMinimalErrorCOP(CoilsetOptimisationProblem):
         return self.coilset
 
 
+class MinimalErrorCOP(CoilsetOptimisationProblem):
+    """
+    Bounded, constrained, minimal error current optimisation problem.
+    """
+
+    def __init__(self, eq, optimiser, max_currents=None, constraints=None):
+        self.eq = eq
+        objective = OptimisationObjective(
+            objectives.regularised_lsq_objective, f_objective_args={}
+        )
+
+        super().__init__(self.eq.coilset, optimiser, objective, constraints=constraints)
+
+        bounds = self.get_current_bounds(self.coilset, max_currents, self.scale)
+        dimension = len(bounds[0])
+        self.set_up_optimiser(dimension, bounds)
+
+
 class MinimalCurrentsCOP(CoilsetOptimisationProblem):
     """
     Bounded, constrained, minimal current optimisation problem.
