@@ -31,7 +31,10 @@ import pytest
 from bluemira.base.config import Configuration
 from bluemira.codes.error import CodesError
 from bluemira.codes.plasmod.constants import BINARY as PLASMOD_BINARY
-from bluemira.codes.plasmod.solver import Profiles, Run, RunMode, Setup, Solver, Teardown
+from bluemira.codes.plasmod.constants import NAME as PLASMOD_NAME
+from bluemira.codes.plasmod.mapping import mappings as plasmod_mappings
+from bluemira.codes.plasmod.solver import Run, RunMode, Setup, Solver, Teardown
+from bluemira.codes.utilities import add_mapping
 from tests._helpers import combine_text_mock_write_calls
 
 SOLVER_MODULE_REF = "bluemira.codes.plasmod.solver"
@@ -43,6 +46,7 @@ class TestPlasmodSetup:
 
     def setup_method(self):
         self.default_pf = Configuration()
+        add_mapping(PLASMOD_NAME, self.default_pf, plasmod_mappings)
         self.input_file = "/path/to/input.dat"
 
     def test_inputs_updated_from_problem_settings_on_init(self):
@@ -132,7 +136,9 @@ class TestPlasmodRun:
         self._run_subprocess_patch = mock.patch(self.RUN_SUBPROCESS_REF)
         self.run_subprocess_mock = self._run_subprocess_patch.start()
         self.run_subprocess_mock.return_value = 0
+
         self.default_pf = Configuration()
+        add_mapping(PLASMOD_NAME, self.default_pf, plasmod_mappings)
 
     def teardown_method(self):
         self._run_subprocess_patch.stop()
@@ -187,7 +193,7 @@ class TestPlasmodTeardown:
 
     def setup_method(self):
         self.default_pf = Configuration()
-        self.default_pf
+        add_mapping(PLASMOD_NAME, self.default_pf, plasmod_mappings)
 
     @pytest.mark.parametrize("run_mode_func", ["run", "read"])
     def test_run_mode_function_updates_plasmod_params_from_file(self, run_mode_func):
@@ -370,11 +376,31 @@ class TestPlasmodSolver:
         solver.problem_settings["qdivt_sup"] = 10.0
         solver.execute(RunMode.RUN)
 
-        with open(self.build_config["input_file"], "r") as f:
-            input_file = f.read()
-        param_regex = r"qdivt_sup +([0-9]\.[0-9]+E[\+-][0-9]+)"
-        match = re.search(param_regex, input_file, re.MULTILINE)
-        assert float(match.group(1)) == 10.0
+        param_value = self._get_value_from_input_file(
+            "qdivt_sup", self.build_config["input_file"]
+        )
+        assert param_value == 10.0
+
+    def test_param_not_modified_in_plasmod_input_if_modify_mapping_send_is_False(self):
+        solver = Solver(self.default_pf, self.build_config)
+        solver.params.q_95 = (5, "Input")
+
+        solver.modify_mappings({"q_95": {"send": False}})
+        solver.execute(RunMode.RUN)
+
+        param_value = self._get_value_from_input_file(
+            "q95", self.build_config["input_file"]
+        )
+        assert param_value != 5
+
+    def test_output_param_not_modified_if_modify_mappings_recv_set_to_False(self):
+        solver = Solver(self.default_pf, self.build_config)
+        original_beta_N = solver.params.beta_N.value
+
+        solver.modify_mappings({"beta_N": {"recv": False}})
+        solver.execute(RunMode.RUN)
+
+        assert solver.params.beta_N == original_beta_N
 
     @staticmethod
     def read_data_file(file_name):
@@ -403,3 +429,15 @@ class TestPlasmodSolver:
         write_file(output_file, output_file_content)
         write_file(profiles_file, profiles_file_content)
         return 0
+
+    def _get_value_from_input_file(self, param: str, file_path: str):
+        """
+        Find a parameter value from a plasmod input file via a regex.
+        This should work with floats and ints.
+        """
+        with open(file_path, "r") as f:
+            input_file = f.read()
+        param_regex = param + r" +([0-9]+(\.[0-9]+E[\+-][0-9]+)?)"
+        match = re.search(param_regex, input_file, re.MULTILINE)
+        if match:
+            return float(match.group(1))

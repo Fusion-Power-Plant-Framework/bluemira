@@ -29,14 +29,14 @@ from typing import Any, Callable, Dict, Optional, Union
 from bluemira.base.constants import raw_uc
 from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.base.parameter import ParameterFrame
+from bluemira.base.solver import Task
 from bluemira.codes.error import CodesError
 from bluemira.codes.plasmod.constants import NAME as PLASMOD_NAME
 from bluemira.codes.plasmod.solver._inputs import PlasmodInputs
-from bluemira.codes.plasmod.solver._task import PlasmodTask
 from bluemira.codes.utilities import get_send_mapping
 
 
-class Setup(PlasmodTask):
+class Setup(Task):
     """
     Setup task for a plasmod solver.
 

@@ -25,13 +25,13 @@ Defines the 'Run' stage of the plasmod solver.
 
 from bluemira.base.look_and_feel import bluemira_debug
 from bluemira.base.parameter import ParameterFrame
+from bluemira.base.solver import Task
 from bluemira.codes.error import CodesError
 from bluemira.codes.plasmod.constants import BINARY as PLASMOD_BINARY
-from bluemira.codes.plasmod.solver._task import PlasmodTask
 from bluemira.codes.utilities import run_subprocess
 
 
-class Run(PlasmodTask):
+class Run(Task):
     """
     The 'Run' class for plasmod transport solver.
     """

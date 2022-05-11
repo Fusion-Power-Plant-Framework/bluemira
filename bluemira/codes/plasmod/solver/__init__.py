@@ -27,16 +27,20 @@ from typing import Any, Dict, Iterable, List
 
 import numpy as np
 
+from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.base.parameter import ParameterFrame
 from bluemira.base.solver import RunMode as BaseRunMode
 from bluemira.base.solver import SolverABC
 from bluemira.codes.error import CodesError
 from bluemira.codes.plasmod.constants import BINARY as PLASMOD_BINARY
+from bluemira.codes.plasmod.constants import NAME as PLASMOD_NAME
 from bluemira.codes.plasmod.mapping import Profiles
+from bluemira.codes.plasmod.mapping import mappings as plasmod_mappings
 from bluemira.codes.plasmod.solver._outputs import PlasmodOutputs
 from bluemira.codes.plasmod.solver._run import Run
 from bluemira.codes.plasmod.solver._setup import Setup
 from bluemira.codes.plasmod.solver._teardown import Teardown
+from bluemira.codes.utilities import add_mapping
 
 
 class RunMode(BaseRunMode):
@@ -81,13 +85,15 @@ class Solver(SolverABC):
     DEFAULT_PROFILES_FILE = "plasmod_profiles.dat"
 
     def __init__(self, params: ParameterFrame, build_config: Dict[str, Any] = None):
-        # Init tasks on execution so parameters can be edited between
-        # separate 'execute' calls.
+        # Init task objects on execution so parameters can be edited
+        # between separate 'execute' calls.
         self._setup: Setup
         self._run: Run
         self._teardown: Teardown
 
         self.params = params
+        add_mapping(PLASMOD_NAME, self.params, plasmod_mappings)
+
         self.build_config = {} if build_config is None else build_config
 
         self.binary = self.build_config.get("binary", PLASMOD_BINARY)
@@ -192,3 +198,30 @@ class Solver(SolverABC):
             raise CodesError(
                 "Cannot get outputs before the solver has been executed."
             ) from attr_error
+
+    def modify_mappings(self, send_recv: Dict[str, Dict[str, bool]]):
+        """
+        Modify the send/receive truth values of a parameter.
+
+        If a parameter's 'send' is set to False, its value will not be
+        passed to plasmod (a default will be used). Likewise, if a
+        parameter's 'recv' is False, its value will not be updated from
+        plasmod's outputs.
+
+        Parameters
+        ----------
+        mappings: dict
+            A dictionary of variables to change mappings.
+        Notes
+        -----
+            Only one of send or recv is needed. The mappings dictionary could look like:
+               {"var1": {"send": False, "recv": True}, "var2": {"recv": False}}
+        """
+        for key, val in send_recv.items():
+            try:
+                p_map = getattr(self.params, key).mapping[PLASMOD_NAME]
+            except (AttributeError, KeyError):
+                bluemira_warn(f"No mapping known for {key} in {PLASMOD_NAME}")
+            else:
+                for sr_key, sr_val in val.items():
+                    setattr(p_map, sr_key, sr_val)
