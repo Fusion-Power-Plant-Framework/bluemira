@@ -24,7 +24,7 @@ Interface for building and loading equilibria and coilset designs
 """
 
 from copy import deepcopy
-from typing import List, Optional, Type
+from typing import Dict, List, Optional, Type
 
 import numpy as np
 
@@ -215,12 +215,12 @@ class FixedPulsedCoilsetProblem(PulsedCoilsetProblem):
         breakdown_optimiser: Optimiser = Optimiser(
             "COBYLA", opt_conditions={"max_eval": 5000, "ftol_rel": 1e-10}
         ),
-        breakdown_settings: dict = {"B_stray_con_tol": 1e-8, "n_B_stray_points": 20},
+        breakdown_settings: Dict = {"B_stray_con_tol": 1e-8, "n_B_stray_points": 20},
         equilibrium_problem_cls: Type[CoilsetOptimisationProblem] = MinimalCurrentCOP,
         equilibrium_optimiser: Optimiser = Optimiser(
             "SLSQP", opt_conditions={"max_eval": 1000, "ftol_rel": 1e-6}
         ),
-        equilibrium_settings: Optional[dict] = None,
+        equilibrium_settings: Optional[Dict] = None,
     ):
         self.params = params
         self.coilset = coilset
