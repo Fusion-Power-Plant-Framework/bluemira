@@ -221,7 +221,7 @@ build_config = {
     "reference_data_root": "!BM_ROOT!/data",
     "generated_data_root": "!BM_ROOT!/generated_data",
     "PROCESS": {
-        "runmode": "run",  # ["run", "read", "mock"]
+        "runmode": "mock",  # ["run", "read", "mock"]
     },
     "Plasma": {
         "runmode": "read",  # ["run", "read", "mock"]
