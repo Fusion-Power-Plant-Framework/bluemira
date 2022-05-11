@@ -824,6 +824,15 @@ class NestedCoilsetPositionCOP(CoilsetOptimisationProblem):
 class BreakdownZoneStrategy(abc.ABC):
     """
     Abstract base class for the definition of a breakdown zone strategy.
+
+    Parameters
+    ----------
+    R_0: float
+        Major radius of the reference plasma
+    A: float
+        Aspect ratio of the reference plasma
+    tk_sol: float
+        Thickness of the scrape-off layer
     """
 
     def __init__(self, R_0, A, tk_sol, **kwargs):
