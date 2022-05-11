@@ -30,7 +30,6 @@ from typing import TYPE_CHECKING
 import matplotlib.pyplot as plt
 import numpy as np
 import process.data.impuritydata as imp_data
-import scipy.constants as sc
 from scipy.interpolate import interp1d
 
 from bluemira.base import constants
@@ -38,6 +37,7 @@ from bluemira.base.error import BuilderError
 from bluemira.base.parameter import ParameterFrame
 from bluemira.equilibria.flux_surfaces import calculate_connection_length_flt
 from bluemira.equilibria.grid import Grid
+from bluemira.radiation_transport.constants import SEP_CORRECTOR
 
 if TYPE_CHECKING:
     from bluemira.codes.process.run import Solver
@@ -49,29 +49,56 @@ class Radiation:
     A simplified radiation model based on the line emission.
     """
 
-    def __init__(self, process_solver: Solver, transport_solver: ChargedParticleSolver):
+    # fmt: off
+    plasma_params = [
+        ["n_el_0", "Electron density on axis", 1.81e+20, "/m3", None, "Input"],
+        ["T_el_0", "Electron temperature on axis", 2.196e+01, "keV", None, "Input"],
+        ["rho_ped_n", "Density pedestal r/a location", 9.4e-01, "dimensionless", None, "Input"],
+        ["rho_ped_t", "Temperature pedestal r/a location", 9.76e-01 , "dimensionless", None, "Input"],
+        ["n_el_ped", "Electron density pedestal height", 1.086e+20, "/m3", None, "Input"],
+        ["T_el_ped", "Electron temperature pedestal height", 3.74, "keV", None, "Input"],
+        ["alpha_n", "Density profile factor", 1.15, "dimensionless", None, "Input"],
+        ["alpha_t", "Temperature profile index", 1.905, "dimensionless", None, "Input"],
+        ["t_beta", "Temperature profile index beta", 2, "dimensionless", None, "Input"],
+        ["n_el_sep", "Electron density at separatrix", 1.5515e+19, "/m3", None, "Input"],
+        ["t_el_sep", "Electron temperature at separatrix", 4.8e-01, "keV", None, "Input"],
+        ["q_95", "Safety factor at 0.95 flux_surface", 4.9517, "dimensionless", None, "Input"],
+        ["r_minor", "Minor_radius", 2.183, "m", None, "Input"],
+        ["kappa", "Elongation", 2.8, "dimensionless", None, "Input"],
+    ]
+    # fmt: on
+
+    def __init__(
+        self,
+        process_solver: Solver,
+        transport_solver: ChargedParticleSolver,
+        params: ParameterFrame,
+    ):
+        self.params = ParameterFrame(self.plasma_params)
+        self.params.update_kw_parameters(params, f"{self.__class__.__name__} input")
+
         self.process_solver = process_solver
         self.transport_solver = transport_solver
-        # Useful parameters from MFILE.DAT
-        # Some of these parameters might be worth to re-calculate (e.g. tesep)
-        parameter_names = [
-            "ne0",
-            "te0",
-            "rhopedn",
-            "rhopedt",
-            "neped",
-            "teped",
-            "alphan",
-            "alphat",
-            "tbeta",
-            "nesep",
-            "tesep",
-            "q95",
-            "rminor",
-            "kappa",
-        ]
-        parameter_values = process_solver.get_raw_variables(parameter_names)
-        self.process_params = {k: v for k, v in zip(parameter_names, parameter_values)}
+        # # Useful parameters from MFILE.DAT
+        # # Some of these parameters might be worth to re-calculate (e.g. tesep)
+        # parameter_names = [
+        #     "ne0",
+        #     "te0",
+        #     "rhopedn",
+        #     "rhopedt",
+        #     "neped",
+        #     "teped",
+        #     "alphan",
+        #     "alphat",
+        #     "tbeta",
+        #     "nesep",
+        #     "tesep",
+        #     "q95",
+        #     "rminor",
+        #     "kappa",
+        # ]
+        # parameter_values = process_solver.get_raw_variables(parameter_names)
+        # self.process_params = {k: v for k, v in zip(parameter_names, parameter_values)}
         # Impurities from the PROCESS database
         self.impurity_id = ["fimp(01", "fimp(02", "fimp(13", "fimp(14"]
         impurity_data = [
@@ -124,9 +151,8 @@ class Radiation:
         self.x_sep_imp = self.transport_solver.x_sep_imp
         # To move away from the mathematical separatrix which would
         # give infinite connection length
-        self.sep_corrector = 0.004
-        self.r_sep_omp = self.x_sep_omp + self.sep_corrector
-        self.r_sep_imp = self.x_sep_imp - self.sep_corrector
+        self.r_sep_omp = self.x_sep_omp + SEP_CORRECTOR
+        self.r_sep_imp = self.x_sep_imp - SEP_CORRECTOR
         # Mid-plane z coordinate
         self.z_mp = self.points["o_point"]["z"]
         # magnetic field components at the midplane
@@ -303,7 +329,7 @@ class TwoPointModelTools(Radiation):
     """
 
     # fmt: off
-    base_default_params = [
+    default_params = [
         ["p_sol", "power entering the SoL", 300e6, "W", None, "Input"],
         ["lambda_q_n", "near SoL decay length", 0.01, "m", None, "Input"],
         ["lambda_q_f", "far SoL decay length", 0.1, "m", None, "Input"],
@@ -317,11 +343,15 @@ class TwoPointModelTools(Radiation):
     # fmt: on
 
     def __init__(
-        self, process_solver: Solver, transport_solver: ChargedParticleSolver, config
+        self,
+        process_solver: Solver,
+        transport_solver: ChargedParticleSolver,
+        params,
+        config,
     ):
-        super().__init__(process_solver, transport_solver)
+        super().__init__(process_solver, transport_solver, params)
 
-        self.params = ParameterFrame(self.base_default_params)
+        self.params = ParameterFrame(self.default_params)
         self.params.update_kw_parameters(config, f"{self.__class__.__name__} input")
 
     def upstream_temperature(self, firstwall_geom: Grid, n=2):
@@ -344,9 +374,9 @@ class TwoPointModelTools(Radiation):
             upstream power density [W/m^2]
         """
         # minor radius
-        a = self.process_params["rminor"]
+        a = self.params.rminor
         # elongation
-        k = self.process_params["kappa"]
+        k = self.params.kappa
         # safety factor
         # q_95 = self.params["q95"]
         q_95 = 3.5
@@ -398,22 +428,24 @@ class TwoPointModelTools(Radiation):
             self.params.lfs_p_fraction if lfs else 1 - self.params.lfs_p_fraction
         )
         q_u = p_fraction * q_u * self.params.div_p_sharing
-        # Conversion factor from Joule to eV
-        # j_to_ev = sc.physical_constants["joule-electron volt relationship"][0]
         # Speed of light to convert kg to eV/c^2
         light_speed = constants.C_LIGHT
         # deuterium ion mass
-        # m_i = sc.physical_constants["deuteron mass"][0]
         m_i_amu = constants.D_MOLAR_MASS
         m_i_kg = constants.raw_uc(m_i_amu, "amu", "kg")
         m_i = m_i_kg / (light_speed**2)
         # From keV to eV
         t_u = constants.raw_uc(t_u, "keV", "eV")
-        n_u = self.process_params["ne0"]
+        n_u = self.params.ne0
         # Numerator and denominator of the upstream forcing function
         num_f = m_i * 4 * (q_u**2)
         den_f = (
-            2 * sc.e * (self.params.gamma**2) * (sc.e**2) * (n_u**2) * (t_u**2)
+            2
+            * constants.E_CHARGE
+            * (self.params.gamma**2)
+            * (constants.E_CHARGE**2)
+            * (n_u**2)
+            * (t_u**2)
         )
         # Upstream forcing function
         f_j = num_f / den_f
@@ -461,7 +493,7 @@ class TwoPointModelTools(Radiation):
         # Distance between x-point and target
         s_x = calculate_connection_length_flt(
             self.transport_solver.eq,
-            self.points["x_point"]["x"] + self.sep_corrector,
+            self.points["x_point"]["x"] + SEP_CORRECTOR,
             self.points["x_point"]["z_low"],
             first_wall=firstwall_geom,
         )
@@ -509,10 +541,10 @@ class TwoPointModelTools(Radiation):
         # Distinction between lfs and hfs
         if lfs:
             p_fraction = self.params.lfs_p_fraction
-            d = self.sep_corrector
+            d = SEP_CORRECTOR
         else:
             p_fraction = 1 - self.params.lfs_p_fraction
-            d = -self.sep_corrector
+            d = -SEP_CORRECTOR
 
         q_u = p_fraction * q_u * self.params.div_p_sharing
 
@@ -734,7 +766,6 @@ class TwoPointModelTools(Radiation):
         # Speed of light to convert kg to eV/c^2
         light_speed = constants.C_LIGHT
         # deuterium ion mass
-        # m_i = sc.physical_constants["deuteron mass"][0]
         m_i_amu = constants.D_MOLAR_MASS
         m_i_kg = constants.raw_uc(m_i_amu, "amu", "kg")
         m_i = m_i_kg / (light_speed**2)
@@ -860,9 +891,7 @@ class Core(Radiation):
         """
         # The plasma bulk is divided into plasma core and plasma mantle according to rho
         # rho is a nondimensional radial coordinate: rho = r/a (r varies from 0 to a)
-        self.rho_ped = (
-            self.process_params["rhopedn"] + self.process_params["rhopedt"]
-        ) / 2.0
+        self.rho_ped = (self.params.rhopedn + self.params.rhopedt) / 2.0
 
         # Plasma core for rho < rho_core
         rho_core1 = np.linspace(0, 0.95 * self.rho_ped)
@@ -895,33 +924,33 @@ class Core(Radiation):
         """
         i_interior = np.where((rho_core >= 0) & (rho_core <= self.rho_ped))[0]
 
-        n_grad_ped0 = self.process_params["ne0"] - self.process_params["neped"]
-        t_grad_ped0 = self.process_params["te0"] - self.process_params["teped"]
+        n_grad_ped0 = self.params.ne0 - self.params.neped
+        t_grad_ped0 = self.params.te0 - self.params.teped
 
         rho_ratio_n = (
             1 - ((rho_core[i_interior] ** 2) / (self.rho_ped**2))
-        ) ** self.process_params["alphan"]
+        ) ** self.params.alphan
 
         rho_ratio_t = (
             1
             - (
-                (rho_core[i_interior] ** self.process_params["tbeta"])
-                / (self.rho_ped ** self.process_params["tbeta"])
+                (rho_core[i_interior] ** self.params.tbeta)
+                / (self.rho_ped**self.params.tbeta)
             )
-        ) ** self.process_params["alphat"]
+        ) ** self.params.alphat
 
-        ne_i = self.process_params["neped"] + (n_grad_ped0 * rho_ratio_n)
-        te_i = self.process_params["teped"] + (t_grad_ped0 * rho_ratio_t)
+        ne_i = self.params.neped + (n_grad_ped0 * rho_ratio_n)
+        te_i = self.params.teped + (t_grad_ped0 * rho_ratio_t)
 
         i_exterior = np.where((rho_core > self.rho_ped) & (rho_core <= 1))[0]
 
-        n_grad_sepped = self.process_params["neped"] - self.process_params["nesep"]
-        t_grad_sepped = self.process_params["teped"] - self.process_params["tesep"]
+        n_grad_sepped = self.params.neped - self.params.nesep
+        t_grad_sepped = self.params.teped - self.params.tesep
 
         rho_ratio = (1 - rho_core[i_exterior]) / (1 - self.rho_ped)
 
-        ne_e = self.process_params["nesep"] + (n_grad_sepped * rho_ratio)
-        te_e = self.process_params["tesep"] + (t_grad_sepped * rho_ratio)
+        ne_e = self.params.nesep + (n_grad_sepped * rho_ratio)
+        te_e = self.params.tesep + (t_grad_sepped * rho_ratio)
 
         ne_core = np.append(ne_i, ne_e)
         te_core = np.append(te_i, te_e)
@@ -1117,8 +1146,8 @@ class ScrapeOffLayer(Radiation):
             radial decayed densities through the SoL at the mid-plane. Unit [1/m^3]
         """
         if te_sep is None:
-            te_sep = self.process_params["tesep"]
-        ne_sep = self.process_params["nesep"]
+            te_sep = self.params.tesep
+        ne_sep = self.params.nesep
         te_sol, ne_sol = self.electron_density_and_temperature_sol_decay(
             te_sep, ne_sep, lfs=omp
         )
@@ -1182,7 +1211,7 @@ class ScrapeOffLayer(Radiation):
         f_t = t_u / t_p
 
         # Local electron temperature
-        n_p = self.process_params["nesep"] * f_t
+        n_p = self.params.nesep * f_t
 
         # Temperature and density profiles across the SoL
         te_prof, ne_prof = self.electron_density_and_temperature_sol_decay(
@@ -1457,9 +1486,13 @@ class StepCore(Core, TwoPointModelTools):
     """
 
     def __init__(
-        self, process_solver: Solver, transport_solver: ChargedParticleSolver, config
+        self,
+        process_solver: Solver,
+        transport_solver: ChargedParticleSolver,
+        params,
+        config,
     ):
-        super().__init__(process_solver, transport_solver, config)
+        super().__init__(process_solver, transport_solver, params, config)
 
         # Adimensional radius at the mid-plane.
         # From the core to the last closed flux surface
@@ -1560,12 +1593,13 @@ class StepScrapeOffLayer(ScrapeOffLayerSector, ScrapeOffLayer, TwoPointModelTool
         self,
         process_solver: Solver,
         transport_solver: ChargedParticleSolver,
+        params,
         config,
         firstwall_geom,
     ):
-        super().__init__(process_solver, transport_solver, config)
+        super().__init__(process_solver, transport_solver, params, config)
 
-        self.params = ParameterFrame(self.base_default_params)
+        self.params = ParameterFrame(self.default_params)
         self.params.update_kw_parameters(config, f"{self.__class__.__name__} input")
 
         """
@@ -1806,6 +1840,3 @@ class StepScrapeOffLayer(ScrapeOffLayerSector, ScrapeOffLayer, TwoPointModelTool
             [total_rad_lfs_low, total_rad_hfs_low, total_rad_lfs_up, total_rad_hfs_up],
             firstwall_geom,
         )
-
-        print(self.flux_tubes_lfs_low[0].loop.z)
-        print(self.flux_tubes_lfs_low[15].loop.z)

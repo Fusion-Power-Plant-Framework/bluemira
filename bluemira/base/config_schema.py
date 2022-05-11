@@ -84,6 +84,18 @@ class ConfigurationSchema:
     C_Ejima: Parameter
     m_s_limit: Parameter
     T_e_ped: Parameter
+    n_el_0: Parameter
+    T_el_0: Parameter
+    rho_ped_n: Parameter
+    rho_ped_t: Parameter
+    n_el_ped: Parameter
+    T_el_ped: Parameter
+    alpha_n: Parameter
+    alpha_t: Parameter
+    t_beta: Parameter
+    n_el_sep: Parameter
+    t_el_sep: Parameter
+    r_minor: Parameter
 
     # Heating and current drive
     f_ni: Parameter
