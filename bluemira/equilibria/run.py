@@ -32,6 +32,7 @@ from bluemira.base.look_and_feel import bluemira_print, bluemira_warn
 from bluemira.equilibria.coils import Coil, CoilSet
 from bluemira.equilibria.eq_constraints import MagneticConstraintSet
 from bluemira.equilibria.equilibrium import Breakdown, Equilibrium
+from bluemira.equilibria.error import EquilibriaError
 from bluemira.equilibria.grid import Grid
 from bluemira.equilibria.opt_constraints import (
     L2_norm_constraint,
@@ -258,6 +259,7 @@ class FixedPulsedCoilsetProblem(PulsedCoilsetProblem):
 
         relaxed = all([c.flag_sizefix for c in coilset.coils.values()])
         i = 0
+        i_max = 30
         while i == 0 or not relaxed:
             coilset.mesh_coils(0.1)
             breakdown = Breakdown(coilset, self.grid, R_0=R_0)
@@ -291,6 +293,10 @@ class FixedPulsedCoilsetProblem(PulsedCoilsetProblem):
                 relaxed = np.isclose(psi_premag, psi_1, rtol=1e-2)
                 psi_1 = psi_premag
             i += 1
+            if i == i_max:
+                raise EquilibriaError(
+                    "Unable to relax the breakdown optimisation for coil sizes."
+                )
 
         self.take_snapshot(self.BREAKDOWN, breakdown, coilset, self._bd_opt, problem)
 
