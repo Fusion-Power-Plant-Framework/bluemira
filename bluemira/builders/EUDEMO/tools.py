@@ -294,7 +294,7 @@ def find_xy_plane_radii(wire, plane):
 
     Returns
     -------
-    radii: np.ndarray
+    radii: list
         The array of radii of intersections, sorted from smallest to largest
     """
     intersections = slice_shape(wire, plane)
