@@ -43,8 +43,8 @@ if TYPE_CHECKING:
 DEFAULT_DISPLAY_OPTIONS = {
     "color": (0.5, 0.5, 0.5),
     "transparency": 1.0,
-    "material": "candy",
-    "tesselation": 0.1,
+    "material": "wax",
+    "tesselation": 0.05,
 }
 
 
@@ -197,10 +197,19 @@ def show_cad(
 
     part_options = [o.as_dict() for o in new_options]
 
+    transparency = "none"
+    for opt in part_options:
+        if opt["transparency"] < 1:
+            transparency = "pretty"
+            break
+
     polyscope_setup(
         up_direction=kwargs.get("up_direction", "z_up"),
         fps=kwargs.get("fps", 60),
         aa=kwargs.get("aa", 1),
+        transparency=transparency,
+        render_passes=kwargs.get("render_passes", 2),
+        gplane=kwargs.get("gplane", "none"),
     )
 
     add_features(parts, part_options)
@@ -208,7 +217,14 @@ def show_cad(
     ps.show()
 
 
-def polyscope_setup(up_direction: str = "z_up", fps: int = 60, aa: int = 1):
+def polyscope_setup(
+    up_direction: str = "z_up",
+    fps: int = 60,
+    aa: int = 1,
+    transparency: str = "pretty",
+    render_passes: int = 2,
+    gplane: str = "none",
+):
     """
     Setup Polyscope default scene
 
@@ -225,10 +241,20 @@ def polyscope_setup(up_direction: str = "z_up", fps: int = 60, aa: int = 1):
         maximum frames per second of viewer (-1 == infinite)
     aa: int
         anti aliasing amount, 1 is off, 2 is usually enough
+    transparency: str
+        the transparency mode (none, simple, pretty)
+    render_passes: int
+        for transparent shapes how many render passes to undertake
+    gplane: str
+        the ground plane mode (none, tile, tile_reflection, shadon_only)
     """
     ps.set_program_name("Bluemira Display")
     ps.set_max_fps(fps)
     ps.set_SSAA_factor(aa)
+    ps.set_transparency_mode(transparency)
+    if transparency != "none":
+        ps.set_transparency_render_passes(render_passes)
+    ps.set_ground_plane_mode(gplane)
     ps.set_up_dir(up_direction)
 
     # initialize
@@ -257,6 +283,7 @@ def add_features(
 
     """
     meshes = []
+    curves = []
     if not isinstance(parts, list):
         parts = [parts]
 
@@ -264,17 +291,30 @@ def add_features(
     for shape_i, (part, option) in enumerate(zip(parts, options)):
         verts, faces = cadapi.collect_verts_faces(part._shape, option["tesselation"])
 
-        m = ps.register_surface_mesh(
-            clean_name(part.label, shape_i),
-            verts,
-            faces,
-        )
-        m.set_color(option["color"])
-        m.set_transparency(option["transparency"])
-        m.set_material(option["material"])
-        meshes.append(m)
+        if not (verts is None or faces is None):
+            m = ps.register_surface_mesh(
+                clean_name(part.label, shape_i),
+                verts,
+                faces,
+            )
+            m.set_color(option["color"])
+            m.set_transparency(option["transparency"])
+            m.set_material(option["material"])
+            meshes.append(m)
 
-    return meshes
+        verts, edges = cadapi.collect_wires(part._shape, Deflection=0.01)
+        c = ps.register_curve_network(
+            clean_name(part.label, f"{shape_i}_wire"),
+            verts,
+            edges,
+            radius=0.001,
+        )
+        c.set_color(option["color"])
+        c.set_transparency(option["transparency"])
+        c.set_material(option["material"])
+        curves.append(c)
+
+    return meshes, curves
 
 
 def clean_name(name: str, number: int) -> str:

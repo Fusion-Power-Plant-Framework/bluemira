@@ -1845,7 +1845,37 @@ def collect_verts_faces(
         faces.append(np.array(f) + voffset)
         voffset += len(v)
 
-    return np.vstack(verts), np.vstack(faces)
+    if len(solid.Faces) > 0:
+        return np.vstack(verts), np.vstack(faces)
+    else:
+        return None, None
+
+
+def collect_wires(solid: Part.Shape, **kwds) -> (np.ndarray, np.ndarray):
+    """
+    Collects verticies and edges of parts and discretizes them
+    for the CAD viewer
+
+    Parameters
+    ----------
+    solid: Part.Shape
+        FreeCAD Part
+
+    Returns
+    -------
+    vertices, edges
+
+    """
+    verts = []
+    edges = []
+    voffset = 0
+    for wire in solid.Wires:
+        v = wire.discretize(**kwds)
+        verts.append(np.array(v))
+        edges.append(np.arange(voffset, voffset + len(v) - 1))
+        voffset += len(v)
+    edges = np.concatenate(edges)[:, None]
+    return np.vstack(verts), np.hstack([edges, edges + 1])
 
 
 # # =============================================================================
