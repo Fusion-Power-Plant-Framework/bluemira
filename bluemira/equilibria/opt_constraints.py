@@ -54,10 +54,14 @@ optimisaiton algorithms, but will need to be updated or approximated for use
 in derivative based algorithms, such as those utilising gradient descent.
 """  # noqa (W505)
 
+from abc import ABC, abstractmethod
+from typing import List, Union
+
 import numpy as np
 
 from bluemira.equilibria.plotting import ConstraintPlotter
 from bluemira.utilities.opt_problems import OptimisationConstraint
+from bluemira.utilities.tools import is_num
 
 
 def objective_constraint(constraint, vector, grad, objective_function, maximum_fom=1.0):
@@ -277,21 +281,18 @@ def coil_field_constraints(constraint, vector, grad, eq, B_max, scale):
     return constraint
 
 
-from abc import ABC, abstractmethod
-from typing import List, Union
-
-from bluemira.utilities.tools import is_num
-
-
 def _get_dummy_equilibrium(equilibrium, I_not_dI):
     """
     Get a dummy equilibrium for current optimisation where the background response is
     solely due to the plasma and passive coils.
 
+    Notes
+    -----
     When we do dI (current gradient) optimisation, the background vector includes the
-    contributions from the whole coilset (including active coils)
+    contributions from the whole coilset (including active coils).
+
     When we do I (current vector) optimisation, the background vector only includes
-    contributions from the passive coils (plasma)
+    contributions from the passive coils (plasma).
     """
     if I_not_dI:
         # TODO: Add passive coil contributions here
