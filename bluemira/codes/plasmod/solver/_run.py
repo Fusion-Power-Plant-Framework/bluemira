@@ -25,13 +25,13 @@ Defines the 'Run' stage of the plasmod solver.
 
 from bluemira.base.look_and_feel import bluemira_debug
 from bluemira.base.parameter import ParameterFrame
-from bluemira.base.solver import Task
 from bluemira.codes.error import CodesError
+from bluemira.codes.interface_ import CodesTask
 from bluemira.codes.plasmod.constants import BINARY as PLASMOD_BINARY
-from bluemira.codes.utilities import run_subprocess
+from bluemira.codes.plasmod.constants import NAME as PLASMOD_NAME
 
 
-class Run(Task):
+class Run(CodesTask):
     """
     The 'Run' class for plasmod transport solver.
 
@@ -62,7 +62,7 @@ class Run(Task):
         profiles_file: str,
         binary=PLASMOD_BINARY,
     ):
-        super().__init__(params)
+        super().__init__(params, PLASMOD_NAME)
         self.binary = binary
         self.input_file = input_file
         self.output_file = output_file
@@ -87,12 +87,3 @@ class Run(Task):
             self._run_subprocess(command)
         except OSError as os_error:
             raise CodesError(f"Failed to run plasmod: {os_error}") from os_error
-
-    def _run_subprocess(self, command, **kwargs):
-        """
-        Run a subprocess command and raise CodesError if it returns a
-        non-zero exit code.
-        """
-        return_code = run_subprocess(command, **kwargs)
-        if return_code != 0:
-            raise CodesError("plasmod 'Run' task exited with a non-zero error code.")

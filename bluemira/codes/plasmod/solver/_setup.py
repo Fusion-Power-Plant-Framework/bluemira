@@ -70,11 +70,6 @@ class Setup(Task):
 
         self.update_inputs(problem_settings)
 
-    @property
-    def params(self) -> ParameterFrame:
-        """Return the parameters associated with this task."""
-        return self._params
-
     def run(self):
         """
         Run plasmod setup.

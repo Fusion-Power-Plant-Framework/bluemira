@@ -38,6 +38,7 @@ from bluemira.codes.utilities import add_mapping
 from tests._helpers import combine_text_mock_write_calls
 
 SOLVER_MODULE_REF = "bluemira.codes.plasmod.solver"
+RUN_SUBPROCESS_REF = "bluemira.codes.interface_.run_subprocess"
 
 
 class TestPlasmodSetup:
@@ -129,11 +130,8 @@ class TestPlasmodSetup:
 
 
 class TestPlasmodRun:
-
-    RUN_SUBPROCESS_REF = f"{SOLVER_MODULE_REF}._run.run_subprocess"
-
     def setup_method(self):
-        self._run_subprocess_patch = mock.patch(self.RUN_SUBPROCESS_REF)
+        self._run_subprocess_patch = mock.patch(RUN_SUBPROCESS_REF)
         self.run_subprocess_mock = self._run_subprocess_patch.start()
         self.run_subprocess_mock.return_value = 0
 
@@ -274,7 +272,7 @@ class TestPlasmodTeardown:
             with pytest.raises(CodesError):
                 teardown.run()
 
-    @mock.patch(f"{SOLVER_MODULE_REF}._teardown.bluemira_warn")
+    @mock.patch("bluemira.codes.interface_.bluemira_warn")
     def test_warning_issued_if_output_param_is_missing(self, bm_warn_mock):
         open_mock = mock.mock_open(read_data=self.plasmod_out_sample)
         teardown = Teardown(
@@ -285,7 +283,9 @@ class TestPlasmodTeardown:
             teardown.run()
 
         assert bm_warn_mock.call_count > 0
-        assert "No value for plasmod parameter" in bm_warn_mock.call_args[0][0]
+        assert bm_warn_mock.call_count > 0
+        assert "No value for output parameter" in bm_warn_mock.call_args[0][0]
+        assert "PLASMOD" in bm_warn_mock.call_args[0][0]
 
 
 class TestPlasmodSolver:
@@ -300,7 +300,7 @@ class TestPlasmodSolver:
     @classmethod
     def setup_class(cls):
         cls._run_subprocess_patch = mock.patch(
-            f"{SOLVER_MODULE_REF}._run.run_subprocess",
+            RUN_SUBPROCESS_REF,
             wraps=cls._plasmod_run_subprocess_fake,
         )
         cls.run_subprocess_mock = cls._run_subprocess_patch.start()
