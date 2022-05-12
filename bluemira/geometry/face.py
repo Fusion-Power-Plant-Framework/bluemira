@@ -99,9 +99,6 @@ class BluemiraFace(BluemiraGeo):
             if len(face.Faces) == 1:
                 face = face.Faces[0]
             else:
-                from bluemira.display import plot_2d
-
-                plot_2d(self.boundary)
                 raise DisjointedFace("Any or more than one face has been created.")
 
         if check_reverse:
