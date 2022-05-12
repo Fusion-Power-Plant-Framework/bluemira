@@ -32,6 +32,7 @@ from bluemira.base.parameter import ParameterFrame
 from bluemira.base.solver import RunMode as BaseRunMode
 from bluemira.base.solver import SolverABC
 from bluemira.codes.error import CodesError
+from bluemira.codes.interface_ import CodesSolver
 from bluemira.codes.plasmod.constants import BINARY as PLASMOD_BINARY
 from bluemira.codes.plasmod.constants import NAME as PLASMOD_NAME
 from bluemira.codes.plasmod.mapping import Profiles
@@ -53,7 +54,7 @@ class RunMode(BaseRunMode):
     MOCK = auto()
 
 
-class Solver(SolverABC):
+class Solver(CodesSolver):
     """
     Plasmod solver class.
 
@@ -76,6 +77,7 @@ class Solver(SolverABC):
               output file to.
     """
 
+    name = PLASMOD_NAME
     setup_cls = Setup
     run_cls = Run
     teardown_cls = Teardown
@@ -198,30 +200,3 @@ class Solver(SolverABC):
             raise CodesError(
                 "Cannot get outputs before the solver has been executed."
             ) from attr_error
-
-    def modify_mappings(self, send_recv: Dict[str, Dict[str, bool]]):
-        """
-        Modify the send/receive truth values of a parameter.
-
-        If a parameter's 'send' is set to False, its value will not be
-        passed to plasmod (a default will be used). Likewise, if a
-        parameter's 'recv' is False, its value will not be updated from
-        plasmod's outputs.
-
-        Parameters
-        ----------
-        mappings: dict
-            A dictionary of variables to change mappings.
-        Notes
-        -----
-            Only one of send or recv is needed. The mappings dictionary could look like:
-               {"var1": {"send": False, "recv": True}, "var2": {"recv": False}}
-        """
-        for key, val in send_recv.items():
-            try:
-                p_map = getattr(self.params, key).mapping[PLASMOD_NAME]
-            except (AttributeError, KeyError):
-                bluemira_warn(f"No mapping known for {key} in {PLASMOD_NAME}")
-            else:
-                for sr_key, sr_val in val.items():
-                    setattr(p_map, sr_key, sr_val)
