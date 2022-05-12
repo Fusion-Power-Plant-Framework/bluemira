@@ -145,7 +145,7 @@ class VacuumVesselThermalShieldBuilder(Builder):
         degree = (360.0 / self._params.n_TF.value) * n_ts_draw
 
         component = Component("xyz")
-        vvts_face = self._vvts_face.deepcopy()
+        vvts_face = self._vvts_face
         base = (0, 0, 0)
         direction = (0, 0, 1)
         shape = revolve_shape(
