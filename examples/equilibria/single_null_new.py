@@ -32,13 +32,13 @@ Attempt at recreating the EU-DEMO 2017 reference equilibria from a known coilset
 import json
 import os
 
+import matplotlib.pyplot as plt
 import numpy as np
 from IPython import get_ipython
 
 from bluemira.base.file import get_bluemira_path
 from bluemira.display import plot_defaults
 from bluemira.equilibria.coils import Coil, CoilSet
-from bluemira.equilibria.eq_constraints import PsiConstraint
 from bluemira.equilibria.equilibrium import Equilibrium
 from bluemira.equilibria.grid import Grid
 from bluemira.equilibria.opt_constraints import (
@@ -253,8 +253,6 @@ program = PicardIterator(
     relaxation=0.3,
 )
 program()
-
-import matplotlib.pyplot as plt
 
 f, ax = plt.subplots()
 eq.plot(ax=ax)
