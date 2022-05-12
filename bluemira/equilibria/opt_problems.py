@@ -883,10 +883,13 @@ class MinimalErrorCOP(CoilsetOptimisationProblem):
     Bounded, constrained, minimal error current optimisation problem.
     """
 
-    def __init__(self, eq, optimiser, max_currents=None, constraints=None):
+    def __init__(
+        self, eq, targets, gamma, optimiser, max_currents=None, constraints=None
+    ):
         self.eq = eq
+        self.targets = targets
         objective = OptimisationObjective(
-            objectives.regularised_lsq_objective, f_objective_args={}
+            objectives.regularised_lsq_objective, f_objective_args={"gamma": gamma}
         )
 
         super().__init__(self.eq.coilset, optimiser, objective, constraints=constraints)
@@ -911,6 +914,14 @@ class MinimalErrorCOP(CoilsetOptimisationProblem):
         coilset: CoilSet
             Optimised CoilSet
         """
+        # Scale the control matrix and magnetic field targets vector by weights.
+        self.targets(self.eq, I_not_dI=I_not_dI, fixed_coils=fixed_coils)
+        _, a_mat, b_vec = self.targets.get_weighted_arrays()
+
+        self._objective._args["scale"] = self.scale
+        self._objective._args["a_mat"] = a_mat
+        self._objective._args["b_vec"] = b_vec
+
         self.update_magnetic_constraints(I_not_dI=I_not_dI, fixed_coils=fixed_coils)
 
         initial_state, n_states = self.read_coilset_state(self.eq.coilset, self.scale)

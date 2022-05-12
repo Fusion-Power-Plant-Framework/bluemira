@@ -675,16 +675,14 @@ class MagneticConstraintSet(ABC):
         - Populate constraints with super().__init__(List[MagneticConstraint])
     """
 
-    constraints: List[MagneticConstraint]
-    eq: object
-    A: np.array
-    target: np.array
-    background: np.array
-
     __slots__ = ["constraints", "eq", "coilset", "A", "w", "target", "background"]
 
-    def __init__(self, constraints):
+    def __init__(self, constraints: List[MagneticConstraint]):
         self.constraints = constraints
+        self.eq = None
+        self.A = None
+        self.target = None
+        self.background = None
 
     def __call__(self, equilibrium, I_not_dI=False, fixed_coils=False):  # noqa :N803
         equilibrium = _get_dummy_equilibrium(equilibrium, I_not_dI)

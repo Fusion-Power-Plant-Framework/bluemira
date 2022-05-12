@@ -51,6 +51,7 @@ from bluemira.equilibria.opt_constraints import (
 )
 from bluemira.equilibria.opt_problems import (
     MinimalCurrentsCOP,
+    MinimalErrorCOP,
     UnconstrainedMinimalErrorCOP,
 )
 from bluemira.equilibria.profiles import CustomProfile
@@ -151,11 +152,9 @@ isoflux = IsofluxConstraint(
 psi_boundary = PsiBoundaryConstraint(
     np.array(sof_xbdry)[::10],
     np.array(sof_zbdry)[::10],
-    -100 / (2 * np.pi),
+    100 / (2 * np.pi),
     tolerance=1.0,
 )
-
-psi_point = PsiConstraint(sof_xbdry[0], sof_zbdry[0], -100 / (2 * np.pi))
 
 xp_idx = np.argmin(sof_zbdry)
 x_point = FieldNullConstraint(
@@ -167,50 +166,50 @@ grid = Grid(3.0, 13.0, -10.0, 10.0, 65, 65)
 profiles = CustomProfile(
     np.array(
         [
-            86856.15730491,
-            86798.69790167,
-            86506.2865987,
-            85850.44673834,
-            84731.28548257,
-            83065.672385,
-            80784.08049904,
-            77829.90547563,
-            74159.99618766,
-            69746.01988715,
-            64576.59722565,
-            58660.327347,
-            52030.0139464,
-            44748.69633575,
-            36918.64903883,
-            28695.74759472,
-            20314.75855847,
-            12141.02112672,
-            4807.4423105,
+            86856,
+            86798,
+            86506,
+            85850,
+            84731,
+            83065,
+            80784,
+            77829,
+            74159,
+            69746,
+            64576,
+            58660,
+            52030,
+            44748,
+            36918,
+            28695,
+            20314,
+            12141,
+            4807,
             0.0,
         ]
     ),
-    np.array(
+    -np.array(
         [
-            -0.12515916,
-            -0.12507636,
-            -0.124655,
-            -0.12370994,
-            -0.12209723,
-            -0.1196971,
-            -0.11640934,
-            -0.11215239,
-            -0.10686407,
-            -0.10050356,
-            -0.09305446,
-            -0.08452915,
-            -0.07497491,
-            -0.06448258,
-            -0.05319953,
-            -0.04135039,
-            -0.02927344,
-            -0.01749513,
-            -0.00692749,
-            -0.0,
+            0.1251,
+            0.1250,
+            0.1246,
+            0.1237,
+            0.1220,
+            0.1196,
+            0.1164,
+            0.1121,
+            0.1068,
+            0.1005,
+            0.0930,
+            0.0845,
+            0.0749,
+            0.0644,
+            0.0531,
+            0.0413,
+            0.0292,
+            0.0174,
+            0.0069,
+            0.0,
         ]
     ),
     R_0=R_0,
@@ -257,4 +256,24 @@ program()
 f, ax = plt.subplots()
 eq.plot(ax=ax)
 eq.coilset.plot(ax=ax)
-# %%
+
+
+opt_problem = MinimalErrorCOP(
+    eq,
+    targets=MagneticConstraintSet([psi_boundary, x_point]),
+    gamma=1e-8,
+    optimiser=Optimiser("SLSQP", opt_conditions={"max_eval": 2000, "ftol_rel": 1e-6}),
+    max_currents=coilset.get_max_currents(0.0),
+    constraints=[field_constraints],
+)
+
+program = PicardIterator(
+    eq,
+    profiles,
+    opt_problem,
+    I_not_dI=True,
+    fixed_coils=True,
+    convergence=DudsonConvergence(1e-4),
+    relaxation=0.3,
+)
+program()
