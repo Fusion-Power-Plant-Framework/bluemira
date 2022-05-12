@@ -173,8 +173,8 @@ x_point = FieldNullConstraint(
 # This is done by using the magnetic constraints in a "set" for which the error is then
 # minimised with an L2 norm and a Tikhonov regularisation on the currents.
 
-# We can use this to optimise the current gradients during the solution of the equilibrium
-# until convergence.
+# We can use this to optimise the current gradients during the solution of the
+# equilibrium until convergence.
 
 # %%
 
@@ -197,7 +197,8 @@ program()
 # some additional constraints (e.g. on the field in the coils), and solve a new
 # optimisation problem, using the previously converged equilibrium as a starting point.
 
-# Note that here we are optimising the current vector and not the current gradient vector.
+# Note that here we are optimising the current vector and not the current gradient
+# vector.
 
 # %%
 
