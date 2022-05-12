@@ -46,7 +46,6 @@ from bluemira.equilibria.opt_constraints import (
     IsofluxConstraint,
     MagneticConstraintSet,
     PsiBoundaryConstraint,
-    PsiConstraint,
     coil_field_constraints,
 )
 from bluemira.equilibria.opt_problems import (
@@ -164,35 +163,9 @@ x_point = FieldNullConstraint(
 grid = Grid(3.0, 13.0, -10.0, 10.0, 65, 65)
 
 profiles = CustomProfile(
-    np.array(
-        [
-            86856,
-            86506,
-            84731,
-            80784,
-            74159,
-            64576,
-            52030,
-            36918,
-            20314,
-            4807,
-            0.0,
-        ]
-    ),
+    np.array([86856, 86506, 84731, 80784, 74159, 64576, 52030, 36918, 20314, 4807, 0.0]),
     -np.array(
-        [
-            0.1251,
-            0.1246,
-            0.1220,
-            0.1164,
-            0.1068,
-            0.0930,
-            0.0749,
-            0.0531,
-            0.0292,
-            0.0069,
-            0.0,
-        ]
+        [0.125, 0.124, 0.122, 0.116, 0.106, 0.093, 0.074, 0.053, 0.029, 0.007, 0.0]
     ),
     R_0=R_0,
     B_0=B_0,
