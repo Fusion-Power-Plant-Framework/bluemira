@@ -25,7 +25,8 @@ Attempt at recreating the EU-DEMO 2017 reference equilibria from a known coilset
 
 # %%[markdown]
 
-# # EU-DEMO 2017 reference breakdown and equilibrium benchmark
+# An example on how to produce an equilibrium from a known coilset, profiles, and
+# plasma shape.
 
 # %%
 
@@ -58,12 +59,6 @@ from bluemira.equilibria.solve_new import DudsonConvergence, PicardIterator
 from bluemira.utilities.opt_problems import OptimisationConstraint
 from bluemira.utilities.optimiser import Optimiser
 
-# %%[markdown]
-
-# Load the reference equilibria from EFDA_D_2MUW9R
-
-# %%
-
 plot_defaults()
 
 try:
@@ -71,18 +66,9 @@ try:
 except AttributeError:
     pass
 
-path = get_bluemira_path("equilibria", subfolder="examples")
-name = "EUDEMO_2017_CREATE_SOF_separatrix.json"
-filename = os.sep.join([path, name])
-with open(filename, "r") as file:
-    data = json.load(file)
-
-sof_xbdry = data["xbdry"]
-sof_zbdry = data["zbdry"]
-
 # %%[markdown]
 
-# Make the same CoilSet as CREATE
+# First let's create our coilset.
 
 # %%
 x = [5.4, 14.0, 17.75, 17.75, 14.0, 7.0, 2.77, 2.77, 2.77, 2.77, 2.77]
@@ -115,29 +101,48 @@ coilset = CoilSet(coils)
 coilset.assign_coil_materials("CS", j_max=16.5, b_max=12.5)
 coilset.assign_coil_materials("PF", j_max=12.5, b_max=11.0)
 coilset.fix_sizes()
-coilset.mesh_coils(0.3)
-
 
 # %%[markdown]
 
-# Define parameters
+# Now, we set up our grid, equilibrium, and profiles
 
 # %%
 
 # Machine parameters
 I_p = 19.07e6  # A
-beta_p = 1.141
-l_i = 0.8
 R_0 = 8.938
-Z_0 = 0.027454
-B_0 = 4.8901  # ???
-A = 3.1
-kappa_95 = 1.65
-delta_95 = 0.33
-tau_flattop = 2 * 3600.0
-v_burn = 4.220e-2  # V
-c_ejima = 0.3
+B_0 = 4.8901  # T
 
+grid = Grid(3.0, 13.0, -10.0, 10.0, 65, 65)
+
+profiles = CustomProfile(
+    np.array([86856, 86506, 84731, 80784, 74159, 64576, 52030, 36918, 20314, 4807, 0.0]),
+    -np.array(
+        [0.125, 0.124, 0.122, 0.116, 0.106, 0.093, 0.074, 0.053, 0.029, 0.007, 0.0]
+    ),
+    R_0=R_0,
+    B_0=B_0,
+    Ip=I_p,
+)
+
+eq = Equilibrium(coilset, grid, psi=None, profiles=profiles, Ip=I_p, RB0=[R_0, B_0])
+
+# %%[markdown]
+
+# Now we need to specify some constraints on the plasma
+
+# We'll load up a known plasma boundary and use that to specify some constraints on the
+# plasma
+
+# %%
+path = get_bluemira_path("equilibria", subfolder="examples")
+name = "EUDEMO_2017_CREATE_SOF_separatrix.json"
+filename = os.sep.join([path, name])
+with open(filename, "r") as file:
+    data = json.load(file)
+
+sof_xbdry = data["xbdry"]
+sof_zbdry = data["zbdry"]
 
 isoflux = IsofluxConstraint(
     np.array(sof_xbdry)[::10],
@@ -160,19 +165,18 @@ x_point = FieldNullConstraint(
     sof_xbdry[xp_idx], sof_zbdry[xp_idx], tolerance=1e-3, constraint_type="inequality"
 )
 
-grid = Grid(3.0, 13.0, -10.0, 10.0, 65, 65)
+# %%[markdown]
 
-profiles = CustomProfile(
-    np.array([86856, 86506, 84731, 80784, 74159, 64576, 52030, 36918, 20314, 4807, 0.0]),
-    -np.array(
-        [0.125, 0.124, 0.122, 0.116, 0.106, 0.093, 0.074, 0.053, 0.029, 0.007, 0.0]
-    ),
-    R_0=R_0,
-    B_0=B_0,
-    Ip=I_p,
-)
+# It's often very useful to solve an unconstrained optimised problem in order to get
+# an initial guess for the equilibrium result.
 
-eq = Equilibrium(coilset, grid, psi=None, profiles=profiles, Ip=I_p, RB0=[R_0, B_0])
+# This is done by using the magnetic constraints in a "set" for which the error is then
+# minimised with an L2 norm and a Tikhonov regularisation on the currents.
+
+# We can use this to optimise the current gradients during the solution of the equilibrium
+# until convergence.
+
+# %%
 
 opt_problem = UnconstrainedMinimalErrorCOP(
     eq, MagneticConstraintSet([psi_boundary, x_point]), gamma=1e-7
@@ -184,11 +188,54 @@ program = PicardIterator(
 program()
 
 
+# %%[markdown]
+
+# Now say we want to use bounds on our current vector, and that we want to solve a
+# constrained optimisation problem.
+
+# We can minimise the error on our target set with some bounds on the current vector,
+# some additional constraints (e.g. on the field in the coils), and solve a new
+# optimisation problem, using the previously converged equilibrium as a starting point.
+
+# Note that here we are optimising the current vector and not the current gradient vector.
+
+# %%
+
 field_constraints = OptimisationConstraint(
     coil_field_constraints,
     f_constraint_args={"eq": eq, "B_max": eq.coilset.get_max_fields(), "scale": 1e6},
     tolerance=1e-6 * np.ones(11),
 )
+
+
+opt_problem = MinimalErrorCOP(
+    eq,
+    targets=MagneticConstraintSet([psi_boundary, x_point]),
+    gamma=1e-8,
+    optimiser=Optimiser("SLSQP", opt_conditions={"max_eval": 2000, "ftol_rel": 1e-6}),
+    max_currents=coilset.get_max_currents(0.0),
+    constraints=[field_constraints],
+)
+
+program = PicardIterator(
+    eq,
+    profiles,
+    opt_problem,
+    I_not_dI=True,
+    fixed_coils=True,
+    convergence=DudsonConvergence(1e-4),
+    relaxation=0.3,
+)
+program()
+
+
+# %%[markdown]
+
+# Now let's say we don't actually want to minimise the error, but we want to minimise the
+# coil currents, and use the constraints that we specified above as actual constraints
+# in the optimisation problem (rather than in the objective function as above)
+
+# %%
 
 opt_problem = MinimalCurrentsCOP(
     eq,
@@ -211,24 +258,3 @@ program()
 f, ax = plt.subplots()
 eq.plot(ax=ax)
 eq.coilset.plot(ax=ax)
-
-
-opt_problem = MinimalErrorCOP(
-    eq,
-    targets=MagneticConstraintSet([psi_boundary, x_point]),
-    gamma=1e-8,
-    optimiser=Optimiser("SLSQP", opt_conditions={"max_eval": 2000, "ftol_rel": 1e-6}),
-    max_currents=coilset.get_max_currents(0.0),
-    constraints=[field_constraints],
-)
-
-program = PicardIterator(
-    eq,
-    profiles,
-    opt_problem,
-    I_not_dI=True,
-    fixed_coils=True,
-    convergence=DudsonConvergence(1e-4),
-    relaxation=0.3,
-)
-program()
