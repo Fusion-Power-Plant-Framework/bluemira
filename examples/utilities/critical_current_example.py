@@ -160,7 +160,7 @@ tf_source = BiotSavartFilament(arrays, radius, current)
 hmc = HelmholtzCage(tf_source, tf.params.n_TF)
 
 temperature_id = {
-    "T_lts": 5,  # converged with 20 iterations at 7.75 ; 40 @ 8 ; 16 @ 8.25 ;
+    "T_lts": 7.7,  # converged with 37 iterations at 7.75 ; 32 Iterations @ 7.7
     "T_hts": 20,
 }
 
@@ -173,7 +173,7 @@ conductor_id = (
 
 
 conductors = Settings.getDefaultConductors()
-# Optimiser
+## Optimiser
 
 optimiser = Optimiser(
     algorithm_name="COBYLA",
@@ -189,7 +189,7 @@ opt_constraints = [
         # f_constraint_args={"eq": eq, "radius": 1.0},
         f_constraint_args={
             "eq": eq,
-            "tf_source": tf_source,
+            # "tf_source": tf_source,
             "tf": tf,
             "tf_centerline": tf_centerline,
             "hmc": hmc,
@@ -241,7 +241,7 @@ unconstrained_iterator = PicardCoilsetIterator(
 
 
 unconstrained_iterator()
-print(eq.coilset)
+# print(eq.coilset)
 
 constrained_iterator()
 print(eq.coilset)
