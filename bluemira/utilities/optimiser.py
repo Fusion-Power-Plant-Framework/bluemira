@@ -190,7 +190,9 @@ class Optimiser(NLOPTOptimiser):
             tolerance = np.array([tolerance])
         super().add_eq_constraints(f_constraint, tolerance)
 
-    def add_ineq_constraints(self, f_constraint, tolerance):
+    def add_ineq_constraints(
+        self, f_constraint: callable, tolerance: Union[float, np.ndarray]
+    ):
         """
         Add a vector-valued inequality constraint.
 
