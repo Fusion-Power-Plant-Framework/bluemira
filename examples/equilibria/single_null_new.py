@@ -47,6 +47,7 @@ from bluemira.equilibria.opt_constraints import (
     MagneticConstraintSet,
     PsiBoundaryConstraint,
     PsiConstraint,
+    coil_field_constraints,
 )
 from bluemira.equilibria.opt_problems import (
     MinimalCurrentsCOP,
@@ -54,6 +55,7 @@ from bluemira.equilibria.opt_problems import (
 )
 from bluemira.equilibria.profiles import CustomProfile
 from bluemira.equilibria.solve_new import DudsonConvergence, PicardIterator
+from bluemira.utilities.opt_problems import OptimisationConstraint
 from bluemira.utilities.optimiser import Optimiser
 
 # %%[markdown]
@@ -227,11 +229,18 @@ program = PicardIterator(
 )
 program()
 
+
+field_constraints = OptimisationConstraint(
+    coil_field_constraints,
+    f_constraint_args={"eq": eq, "B_max": eq.coilset.get_max_fields(), "scale": 1e6},
+    tolerance=1e-6 * np.ones(11),
+)
+
 opt_problem = MinimalCurrentsCOP(
     eq,
     Optimiser("SLSQP", opt_conditions={"max_eval": 2000, "ftol_rel": 1e-6}),
     max_currents=coilset.get_max_currents(0.0),
-    constraints=[psi_boundary, x_point],
+    constraints=[psi_boundary, x_point, field_constraints],
 )
 
 program = PicardIterator(
