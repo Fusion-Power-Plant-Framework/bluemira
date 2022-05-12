@@ -177,12 +177,6 @@ def fallback_to(fallback_func, exception):
     return decorator
 
 
-def _manage_closure(points, closed: bool):
-    if closed and points.closed:
-        points = Coordinates(points.points[:-1])
-    return points
-
-
 # # =============================================================================
 # # Geometry creation
 # # =============================================================================
@@ -228,7 +222,9 @@ def make_polygon(
     wire: BluemiraWire
         a bluemira wire that contains the polygon
     """
-    points = _manage_closure(Coordinates(points), closed)
+    points = Coordinates(points)
+    if closed and points.closed:
+        points = Coordinates(points.points[:-1])
     return BluemiraWire(cadapi.make_polygon(points.T, closed), label=label)
 
 
@@ -306,7 +302,7 @@ def interpolate_bspline(
     wire: BluemiraWire
         a bluemira wire that contains the bspline
     """
-    points = _manage_closure(Coordinates(points), closed)
+    points = Coordinates(points)
     return BluemiraWire(
         cadapi.interpolate_bspline(points.T, closed, start_tangent, end_tangent),
         label=label,
