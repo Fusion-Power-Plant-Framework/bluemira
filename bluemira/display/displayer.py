@@ -76,7 +76,9 @@ class DisplayCADOptions(DisplayOptions):
         self.modify(**kwargs)
 
     def __setattr__(self, attr, val):
-
+        """
+        Set attributes in options dictionary
+        """
         if (
             hasattr(self, "_options")
             and self._options is not None
