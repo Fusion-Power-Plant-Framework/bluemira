@@ -57,10 +57,10 @@ per-file-ignores =
    bluemira/codes/__init__.py:
         # FreeCAD message removal function above imports
         E402,
-    bluemira/codes/plasmod/solver/_inputs.py:
+    bluemira/codes/plasmod/api/_inputs.py:
         # We don't control the names of plasmod inputs
         N815,
-    bluemira/codes/plasmod/solver/_outputs.py:
+    bluemira/codes/plasmod/api/_outputs.py:
         # We don't control the names of plasmod outputs
         N815,
     bluemira/geometry/parameterisations.py:
