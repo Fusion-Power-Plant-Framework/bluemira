@@ -405,6 +405,7 @@ constrained_iterator = PicardIterator(
     plot=False,
     relaxation=0.3,
     maxiter=400,
+    I_not_dI=True,
     convergence=DudsonConvergence(1e-4),
 )
 
@@ -462,7 +463,7 @@ unconstrained_iterator()
 
 f, ax = plt.subplots()
 eq.plot(ax=ax)
-unconstrained_cop.targets.plot(ax=ax)
+magnetic_targets.plot(ax=ax)
 plt.show()
 
 # %%[markdown]
@@ -477,5 +478,5 @@ constrained_iterator()
 
 f, ax = plt.subplots()
 eq.plot(ax=ax)
-opt_problem._constraints.plot(ax=ax)
+magnetic_targets.plot(ax=ax)
 plt.show()
