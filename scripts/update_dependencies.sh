@@ -21,11 +21,11 @@ readonly BLUEMIRA_ROOT="$(realpath "$(dirname "$0")"/..)"
 echo 'Bluemira directory is '$BLUEMIRA_ROOT
 
 OLD_DIR=$(pwd)
-cd $BLUEMIRA_ROOT
+cd $BLUEMIRA_ROOT # git commands dont work when not in a git directory
 
 # check that the requirements files havent changed
 git diff --exit-code $BLUEMIRA_ROOT"/requirements.txt" || { cd $OLD_DIR && echo "requirements.txt modified on this branch, exiting" && exit 1; }
-git diff --exit-code requirements-develop.txt || { cd $OLD_DIR && echo "requirements-develop.txt modified on this branch, exiting" && exit 1; }
+git diff --exit-code $BLUEMIRA_ROOT"/requirements-develop.txt" || { cd $OLD_DIR && echo "requirements-develop.txt modified on this branch, exiting" && exit 1; }
 
 # checkout dependencies from develop
 git checkout $REQ_BRANCH requirements.txt requirements-develop.txt
