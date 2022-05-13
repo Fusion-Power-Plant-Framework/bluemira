@@ -325,7 +325,38 @@ def _get_dummy_equilibrium(equilibrium, I_not_dI):
     return equilibrium
 
 
-class MagneticConstraint(ABC, OptimisationConstraint):
+class UpdateableConstraint(ABC):
+    @abstractmethod
+    def prepare(self, equilibrium, I_not_dI=False, fixed_coils=False):  # noqa :N803
+        """
+        Prepare the constraint for use in an equilibrium optimisation problem.
+        """
+        pass
+
+    @abstractmethod
+    def control_response(self, coilset):
+        """
+        Calculate control response of a CoilSet to the constraint.
+        """
+        pass
+
+    @abstractmethod
+    def evaluate(self, equilibrium):
+        """
+        Calculate the value of the constraint in an Equilibrium.
+        """
+        pass
+
+
+class CoilFieldConstraints(UpdateableConstraint, OptimisationConstraint):
+    """
+    Constraints on the poloidal field inside the coils.
+    """
+
+    pass
+
+
+class MagneticConstraint(UpdateableConstraint, OptimisationConstraint):
     """
     Abstract base class for a magnetic optimisation constraint.
 
@@ -375,20 +406,6 @@ class MagneticConstraint(ABC, OptimisationConstraint):
     def update_target(self, equilibrium):
         """
         Update the target value of the magnetic constraint.
-        """
-        pass
-
-    @abstractmethod
-    def control_response(self, coilset):
-        """
-        Calculate control response of a CoilSet to the constraint.
-        """
-        pass
-
-    @abstractmethod
-    def evaluate(self, eq):
-        """
-        Calculate the value of the constraint in an Equilibrium.
         """
         pass
 
