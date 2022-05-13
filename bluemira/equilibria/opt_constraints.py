@@ -602,15 +602,15 @@ class IsofluxConstraint(RelativeMagneticConstraint):
         """
         kwargs = {
             "marker": "o",
-            "fillstyle": "none",
+            "facecolors": "none",
             "markeredgewidth": 3,
             "markeredgecolor": "b",
             "markersize": 10,
             "zorder": 45,
         }
-        ax.plot(self.x, self.z, "s", **kwargs)
+        ax.scatter(self.x, self.z, **kwargs)
         kwargs["markeredgewidth"] = 5
-        ax.plot(self.ref_x, self.ref_z, "s", **kwargs)
+        ax.scatter(self.ref_x, self.ref_z, **kwargs)
 
 
 class PsiBoundaryConstraint(AbsoluteMagneticConstraint):

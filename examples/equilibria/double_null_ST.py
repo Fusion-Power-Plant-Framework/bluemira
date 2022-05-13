@@ -40,18 +40,20 @@ import numpy as np
 
 from bluemira.display.auto_config import plot_defaults
 from bluemira.equilibria.coils import Coil, CoilSet, SymmetricCircuit
-from bluemira.equilibria.eq_constraints import IsofluxConstraint, MagneticConstraintSet
 from bluemira.equilibria.equilibrium import Equilibrium
 from bluemira.equilibria.grid import Grid
+from bluemira.equilibria.opt_constraints import IsofluxConstraint, MagneticConstraintSet
 from bluemira.equilibria.opt_problems import (
     BoundedCurrentCOP,
     CoilsetPositionCOP,
     NestedCoilsetPositionCOP,
     UnconstrainedCurrentCOP,
+    UnconstrainedMinimalErrorCOP,
 )
 from bluemira.equilibria.optimiser import Norm2Tikhonov
 from bluemira.equilibria.profiles import CustomProfile
 from bluemira.equilibria.solve import PicardCoilsetIterator, PicardDeltaIterator
+from bluemira.equilibria.solve_new import PicardIterator
 from bluemira.geometry._deprecated_loop import Loop
 from bluemira.utilities.optimiser import Optimiser
 
@@ -198,7 +200,9 @@ def init_targets():
     x_lcfs = np.array([1.0, 1.67, 4.0, 1.73])
     z_lcfs = np.array([0, 4.19, 0, -4.19])
 
-    lcfs_isoflux = IsofluxConstraint(x_lcfs, z_lcfs, ref_x=x_lcfs[2], ref_z=z_lcfs[2])
+    lcfs_isoflux = IsofluxConstraint(
+        x_lcfs, z_lcfs, ref_x=x_lcfs[2], ref_z=z_lcfs[2], constraint_value=0.1
+    )
 
     x_lfs = np.array([1.86, 2.24, 2.53, 2.90, 3.43, 4.28, 5.80, 6.70])
     z_lfs = np.array([4.80, 5.38, 5.84, 6.24, 6.60, 6.76, 6.71, 6.71])
@@ -208,7 +212,9 @@ def init_targets():
     x_legs = np.concatenate([x_lfs, x_lfs, x_hfs, x_hfs])
     z_legs = np.concatenate([z_lfs, -z_lfs, z_hfs, -z_hfs])
 
-    legs_isoflux = IsofluxConstraint(x_legs, z_legs, ref_x=x_lcfs[2], ref_z=z_lcfs[2])
+    legs_isoflux = IsofluxConstraint(
+        x_legs, z_legs, ref_x=x_lcfs[2], ref_z=z_lcfs[2], constraint_value=0.1
+    )
 
     constraint_set = MagneticConstraintSet([lcfs_isoflux, legs_isoflux])
     core_constraints = MagneticConstraintSet([lcfs_isoflux])
@@ -310,7 +316,7 @@ def init_equilibrium(grid, coilset, constraint_set):
         li=None,
     )
     constraint_set(eq)
-    optimiser = UnconstrainedCurrentCOP(coilset_temp, eq, constraint_set, gamma=1e-7)
+    optimiser = UnconstrainedMinimalErrorCOP(eq, constraint_set, gamma=1e-7)
     coilset_temp = optimiser()
 
     coilset.set_control_currents(coilset_temp.get_control_currents())
@@ -367,16 +373,16 @@ def pre_optimise(eq, profile, constraint_set):
     Run a simple unconstrained optimisation to improve the
     initial equilibrium for the main optimiser.
     """
-    optimiser = UnconstrainedCurrentCOP(eq.coilset, eq, constraint_set, gamma=1e-8)
+    optimiser = UnconstrainedMinimalErrorCOP(eq, constraint_set, gamma=1e-8)
 
-    program = PicardCoilsetIterator(
+    program = PicardIterator(
         eq,
         profile,  # jetto
-        constraint_set,
         optimiser,
         plot=True,
         gif=False,
         relaxation=0.3,
+        I_not_dI=False,
         # convergence=CunninghamConvergence(),
         maxiter=400,
     )
