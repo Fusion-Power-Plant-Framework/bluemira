@@ -414,7 +414,7 @@ def set_coilset_optimiser(
     if optimiser_name in ["Norm2Tikhonov"]:
         optimiser = Norm2Tikhonov(**optimisation_options)
     if optimiser_name in ["UnconstrainedCurrentCOP"]:
-        optimiser = UnconstrainedCurrentCOP(coilset, eq, targets, **optimisation_options)
+        optimiser = UnconstrainedMinimalErrorCOP(eq, targets, **optimisation_options)
     elif optimiser_name in ["BoundedCurrentCOP"]:
         optimiser = BoundedCurrentCOP(coilset, eq, targets, **optimisation_options)
     elif optimiser_name in ["CoilsetPositionCOP"]:
@@ -456,10 +456,12 @@ def set_iterator(eq, profile, constraint_set, optimiser):
         "NestedCoilsetPositionCOP",
         "UnconstrainedCurrentCOP",
     ]:
-        program = PicardCoilsetIterator(*iterator_args, **iterator_kwargs)
-    else:
-        program = PicardDeltaIterator(*iterator_args, **iterator_kwargs)
+        iterator_kwargs["I_not_dI"] = True
 
+    else:
+        iterator_kwargs["I_not_dI"] = False
+
+    program = PicardIterator(*iterator_args, **iterator_kwargs)
     return program
 
 
