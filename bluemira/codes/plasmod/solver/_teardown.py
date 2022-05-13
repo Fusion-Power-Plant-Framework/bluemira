@@ -22,6 +22,7 @@
 Defines the 'Teardown' stage for the plasmod solver.
 """
 
+from bluemira.base.look_and_feel import bluemira_debug
 from bluemira.base.parameter import ParameterFrame
 from bluemira.codes.error import CodesError
 from bluemira.codes.interface_ import CodesTeardown
@@ -86,4 +87,42 @@ class Teardown(CodesTeardown):
             raise CodesError(
                 f"Could not read plasmod output file: {os_error}."
             ) from os_error
+        self._raise_on_plasmod_error_code(self.outputs.i_flag)
         self._update_params_with_outputs(vars(self.outputs))
+
+    @staticmethod
+    def _raise_on_plasmod_error_code(exit_code: int):
+        """
+        Check the returned exit code of plasmod.
+
+        1: PLASMOD converged successfully
+        -1: Max number of iterations achieved
+            (equilibrium oscillating, pressure too high, reduce H)
+            0: transport solver crashed (abnormal parameters
+            or too large dtmin and/or dtmin
+        -2: Equilibrium solver crashed: too high pressure
+
+        Raises
+        ------
+        CodesError
+            If the exit flag is an error code, or its value is not a known
+            code.
+        """
+        if exit_code == 1:
+            bluemira_debug("plasmod converged successfully.")
+        elif exit_code == -2:
+            raise CodesError(
+                "plasmod error: Equilibrium solver crashed: too high pressure."
+            )
+        elif exit_code == -1:
+            raise CodesError(
+                "plasmod error: "
+                "Max number of iterations reached equilibrium oscillating probably as a "
+                "result of the pressure being too high reducing H may help."
+            )
+        elif not exit_code:
+            raise CodesError(
+                "plasmod error: Abnormal parameters, possibly dtmax/dtmin too large."
+            )
+        else:
+            raise CodesError(f"plasmod error: Unknown error code '{exit_code}'.")

@@ -19,7 +19,7 @@
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 """
-Parameters classes/structures for Plasmod
+Parameters classes/structures for plasmod outputs.
 """
 from __future__ import annotations
 
@@ -28,9 +28,6 @@ from dataclasses import dataclass
 from typing import Dict, Optional, TextIO, Union
 
 import numpy as np
-
-from bluemira.base.look_and_feel import bluemira_debug
-from bluemira.codes.error import CodesError
 
 
 @dataclass
@@ -145,8 +142,6 @@ class PlasmodOutputs:
         Initialize outputs from a scalar and a profiles file.
         """
         scalars = read_plasmod_output(scalar_stream)
-        status_flag = scalars["i_flag"]
-        _check_plasmod_return_value(int(status_flag))
         profiles = read_plasmod_output(profile_stream)
         return cls(**scalars, **profiles)
 
@@ -161,39 +156,3 @@ def read_plasmod_output(io_stream: TextIO) -> Dict[str, Union[np.ndarray, float]
         else:
             output[output_key] = float(output_value[0])
     return output
-
-
-def _check_plasmod_return_value(exit_flag: int):
-    """
-    Check the return value of plasmod
-
-     1: PLASMOD converged successfully
-    -1: Max number of iterations achieved
-        (equilibrium oscillating, pressure too high, reduce H)
-        0: transport solver crashed (abnormal parameters
-        or too large dtmin and/or dtmin
-    -2: Equilibrium solver crashed: too high pressure
-
-    Raises
-    ------
-    CodesError
-        If the exit flag is an error code, or its value is not a known
-        code.
-    """
-    if exit_flag == 1:
-        bluemira_debug("plasmod converged successfully")
-    elif exit_flag == -2:
-        raise CodesError("plasmod error: Equilibrium solver crashed: too high pressure")
-    elif exit_flag == -1:
-        raise CodesError(
-            "plasmod error: "
-            "Max number of iterations reached "
-            "equilibrium oscillating probably as a result of the pressure being too high "
-            "reducing H may help"
-        )
-    elif not exit_flag:
-        raise CodesError(
-            "plasmod error: " "Abnormal parameters, possibly dtmax/dtmin too large"
-        )
-    else:
-        raise CodesError(f"plasmod error: Unknown error code {exit_flag}")
