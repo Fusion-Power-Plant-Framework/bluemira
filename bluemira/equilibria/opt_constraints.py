@@ -498,8 +498,14 @@ class FieldNullConstraint(AbsoluteMagneticConstraint):
         """
         Plot the constraint onto an Axes.
         """
-        kwargs = {"marker": "X", "color": "b", "markersize": 10, "zorder": 45}
-        ax.plot(self.x, self.z, "s", **kwargs)
+        kwargs = {
+            "marker": "X",
+            "color": "b",
+            "markersize": 10,
+            "zorder": 45,
+            "linestyle": "None",
+        }
+        ax.plot(self.x, self.z, **kwargs)
 
     def __len__(self):
         """
@@ -542,8 +548,8 @@ class PsiConstraint(AbsoluteMagneticConstraint):
         """
         Plot the constraint onto an Axes.
         """
-        kwargs = {"marker": "s", "markersize": 8, "color": "b"}
-        ax.plot(self.x, self.z, "s", **kwargs)
+        kwargs = {"marker": "s", "markersize": 8, "color": "b", "linestyle": "None"}
+        ax.plot(self.x, self.z, **kwargs)
 
 
 class IsofluxConstraint(RelativeMagneticConstraint):
@@ -602,15 +608,16 @@ class IsofluxConstraint(RelativeMagneticConstraint):
         """
         kwargs = {
             "marker": "o",
-            "facecolors": "none",
             "markeredgewidth": 3,
             "markeredgecolor": "b",
             "markersize": 10,
+            "linestyle": "None",
+            "markerfacecolor": "None",
             "zorder": 45,
         }
-        ax.scatter(self.x, self.z, **kwargs)
+        ax.plot(self.x, self.z, **kwargs)
         kwargs["markeredgewidth"] = 5
-        ax.scatter(self.ref_x, self.ref_z, **kwargs)
+        ax.plot(self.ref_x, self.ref_z, **kwargs)
 
 
 class PsiBoundaryConstraint(AbsoluteMagneticConstraint):
@@ -648,8 +655,8 @@ class PsiBoundaryConstraint(AbsoluteMagneticConstraint):
         """
         Plot the constraint onto an Axes.
         """
-        kwargs = {"marker": "o", "markersize": 8, "color": "b"}
-        ax.plot(self.x, self.z, "s", **kwargs)
+        kwargs = {"marker": "o", "markersize": 8, "color": "b", "linestyle": "None"}
+        ax.plot(self.x, self.z, **kwargs)
 
 
 class MagneticConstraintSet(ABC):
