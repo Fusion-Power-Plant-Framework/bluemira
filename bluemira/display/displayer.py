@@ -45,6 +45,8 @@ DEFAULT_DISPLAY_OPTIONS = {
     "transparency": 1.0,
     "material": "wax",
     "tesselation": 0.05,
+    "wires_on": False,
+    "wire_radius": 0.001,
 }
 
 
@@ -67,9 +69,22 @@ class DisplayCADOptions(DisplayOptions):
         The transparency to display the object, by default 0.0.
     """
 
+    __slots__ = ("_options",)
+
     def __init__(self, **kwargs):
         self._options = get_default_options()
         self.modify(**kwargs)
+
+    def __setattr__(self, attr, val):
+
+        if (
+            hasattr(self, "_options")
+            and self._options is not None
+            and attr in self._options
+        ):
+            self._options[attr] = val
+        else:
+            super().__setattr__(attr, val)
 
     def as_dict(self):
         """
@@ -88,43 +103,6 @@ class DisplayCADOptions(DisplayOptions):
         # NOTE: We only convert to (R,G,B) at the last minute, so that the reprs are
         # legible.
         return colors.to_rgb(self._options["color"])
-
-    @color.setter
-    def color(self, val: Union[str, Tuple[float, float, float]]):
-        self._options["color"] = val
-
-    @property
-    def transparency(self) -> float:
-        """
-        The transparency to display the object.
-        """
-        return self._options["transparency"]
-
-    @transparency.setter
-    def transparency(self, val: float):
-        self._options["transparency"] = val
-
-    @property
-    def material(self):
-        """
-        The Polyscope material to set for component
-        """
-        return self._options["material"]
-
-    @material.setter
-    def material(self, val: str):
-        self._options["material"] = val
-
-    @property
-    def tesselation(self):
-        """
-        The Polyscope tesselation to set for component
-        """
-        return self._options["tesselation"]
-
-    @tesselation.setter
-    def tesselation(self, val: str):
-        self._options["tesselation"] = val
 
 
 # =======================================================================================
@@ -183,6 +161,8 @@ def show_cad(
         The parts to display.
     options: Optional[Union[_PlotCADOptions, List[_PlotCADOptions]]]
         The options to use to display the parts.
+    kwargs: Dict
+        Passed on to polyscope_setup
     """
     parts, options = _validate_display_inputs(parts, options)
 
@@ -302,17 +282,18 @@ def add_features(
             m.set_material(option["material"])
             meshes.append(m)
 
-        verts, edges = cadapi.collect_wires(part._shape, Deflection=0.01)
-        c = ps.register_curve_network(
-            clean_name(part.label, f"{shape_i}_wire"),
-            verts,
-            edges,
-            radius=0.001,
-        )
-        c.set_color(option["color"])
-        c.set_transparency(option["transparency"])
-        c.set_material(option["material"])
-        curves.append(c)
+        if option["wires_on"] or (verts is None or faces is None):
+            verts, edges = cadapi.collect_wires(part._shape, Deflection=0.01)
+            c = ps.register_curve_network(
+                clean_name(part.label, f"{shape_i}_wire"),
+                verts,
+                edges,
+                radius=option["wire_radius"],
+            )
+            c.set_color(option["color"])
+            c.set_transparency(option["transparency"])
+            c.set_material(option["material"])
+            curves.append(c)
 
     return meshes, curves
 
