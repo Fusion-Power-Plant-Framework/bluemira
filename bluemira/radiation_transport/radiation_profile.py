@@ -40,7 +40,6 @@ from bluemira.equilibria.grid import Grid
 from bluemira.radiation_transport.constants import SEP_CORRECTOR
 
 if TYPE_CHECKING:
-    from bluemira.codes.process.run import Solver
     from bluemira.radiation_transport.advective_transport import ChargedParticleSolver
 
 
@@ -70,37 +69,16 @@ class Radiation:
 
     def __init__(
         self,
-        process_solver: Solver,
         transport_solver: ChargedParticleSolver,
-        params: ParameterFrame,
+        plasma_params: ParameterFrame,
     ):
-        self.params = ParameterFrame(self.plasma_params)
-        self.params.update_kw_parameters(params, f"{self.__class__.__name__} input")
+        self.plasma_params = ParameterFrame(self.plasma_params)
+        self.plasma_params.update_kw_parameters(
+            plasma_params, f"{self.__class__.__name__} input"
+        )
 
-        self.process_solver = process_solver
         self.transport_solver = transport_solver
-        # # Useful parameters from MFILE.DAT
-        # # Some of these parameters might be worth to re-calculate (e.g. tesep)
-        # parameter_names = [
-        #     "ne0",
-        #     "te0",
-        #     "rhopedn",
-        #     "rhopedt",
-        #     "neped",
-        #     "teped",
-        #     "alphan",
-        #     "alphat",
-        #     "tbeta",
-        #     "nesep",
-        #     "tesep",
-        #     "q95",
-        #     "rminor",
-        #     "kappa",
-        # ]
-        # parameter_values = process_solver.get_raw_variables(parameter_names)
-        # self.process_params = {k: v for k, v in zip(parameter_names, parameter_values)}
-        # Impurities from the PROCESS database
-        self.impurity_id = ["fimp(01", "fimp(02", "fimp(13", "fimp(14"]
+
         impurity_data = [
             "H_Lzdata.dat",
             "HeLzdata.dat",
@@ -329,7 +307,7 @@ class TwoPointModelTools(Radiation):
     """
 
     # fmt: off
-    default_params = [
+    rad_params = [
         ["p_sol", "power entering the SoL", 300e6, "W", None, "Input"],
         ["lambda_q_n", "near SoL decay length", 0.01, "m", None, "Input"],
         ["lambda_q_f", "far SoL decay length", 0.1, "m", None, "Input"],
@@ -344,15 +322,16 @@ class TwoPointModelTools(Radiation):
 
     def __init__(
         self,
-        process_solver: Solver,
         transport_solver: ChargedParticleSolver,
-        params,
-        config,
+        plasma_params,
+        rad_params,
     ):
-        super().__init__(process_solver, transport_solver, params)
+        super().__init__(transport_solver, plasma_params)
 
-        self.params = ParameterFrame(self.default_params)
-        self.params.update_kw_parameters(config, f"{self.__class__.__name__} input")
+        self.rad_params = ParameterFrame(self.rad_params)
+        self.rad_params.update_kw_parameters(
+            rad_params, f"{self.__class__.__name__} input"
+        )
 
     def upstream_temperature(self, firstwall_geom: Grid, n=2):
         """
@@ -374,18 +353,18 @@ class TwoPointModelTools(Radiation):
             upstream power density [W/m^2]
         """
         # minor radius
-        a = self.params.r_minor
+        a = self.plasma_params.r_minor
         # elongation
-        k = self.params.kappa
+        k = self.plasma_params.kappa
         # safety factor
         # q_95 = self.params["q95"]
         q_95 = 3.5
 
         # SoL cross-section at the midplane (???)
-        a_par = 4 * np.pi * a * (k ** (1 / 2)) * n * self.params.lambda_q_f
+        a_par = 4 * np.pi * a * (k ** (1 / 2)) * n * self.rad_params.lambda_q_f
         # a_par_test = 4 * np.pi * self.x_sep_omp * lambda_q
         # power density at the upstream (???)
-        q_u = (self.params.p_sol * q_95) / a_par
+        q_u = (self.rad_params.p_sol * q_95) / a_par
         # q_u_test = (p_sol * self.pitch_angle_omp) / a_par_test
 
         # connection length from the midplane to the target
@@ -397,7 +376,7 @@ class TwoPointModelTools(Radiation):
         )
 
         # upstream temperature [keV]
-        t_upstream_ev = (3.5 * (q_u / self.params.k_0) * self.l_tot) ** (2 / 7)
+        t_upstream_ev = (3.5 * (q_u / self.rad_params.k_0) * self.l_tot) ** (2 / 7)
         t_upstream_kev = constants.raw_uc(t_upstream_ev, "eV", "keV")
 
         return t_upstream_kev, q_u
@@ -425,9 +404,9 @@ class TwoPointModelTools(Radiation):
             target temperature. Unit [keV]
         """
         p_fraction = (
-            self.params.lfs_p_fraction if lfs else 1 - self.params.lfs_p_fraction
+            self.rad_params.lfs_p_fraction if lfs else 1 - self.rad_params.lfs_p_fraction
         )
-        q_u = p_fraction * q_u * self.params.div_p_sharing
+        q_u = p_fraction * q_u * self.rad_params.div_p_sharing
         # Speed of light to convert kg to eV/c^2
         light_speed = constants.C_LIGHT
         # deuterium ion mass
@@ -436,13 +415,13 @@ class TwoPointModelTools(Radiation):
         m_i = m_i_kg / (light_speed**2)
         # From keV to eV
         t_u = constants.raw_uc(t_u, "keV", "eV")
-        n_u = self.params.n_el_0
+        n_u = self.plasma_params.n_el_0
         # Numerator and denominator of the upstream forcing function
         num_f = m_i * 4 * (q_u**2)
         den_f = (
             2
             * constants.E_CHARGE
-            * (self.params.gamma**2)
+            * (self.rad_params.gamma**2)
             * (constants.E_CHARGE**2)
             * (n_u**2)
             * (t_u**2)
@@ -450,14 +429,14 @@ class TwoPointModelTools(Radiation):
         # To address all the conversion from J to eV
         f_ev = constants.raw_uc(num_f / den_f, "J", "eV")
         # Critical target temperature
-        t_crit = self.params.eps_cool / self.params.gamma
+        t_crit = self.rad_params.eps_cool / self.rad_params.gamma
         # Finding roots of the target temperature quadratic equation
-        coeff_2 = 2 * (self.params.eps_cool / self.params.gamma) - f_ev
-        coeff_3 = (self.params.eps_cool**2) / (self.params.gamma**2)
+        coeff_2 = 2 * (self.rad_params.eps_cool / self.rad_params.gamma) - f_ev
+        coeff_3 = (self.rad_params.eps_cool**2) / (self.rad_params.gamma**2)
         coeff = [1, coeff_2, coeff_3]
         roots = np.roots(coeff)
         if roots.dtype == complex:
-            t_tar = constants.raw_uc(self.params.f_ion_t, "keV", "eV")
+            t_tar = constants.raw_uc(self.rad_params.f_ion_t, "keV", "eV")
         else:
             # Excluding unstable solution
             sol_i = np.where(roots > t_crit)[0][0]
@@ -499,7 +478,7 @@ class TwoPointModelTools(Radiation):
         # connection length from mp to x-point
         l_x = self.l_tot - s_x
         # poca differe
-        t_x = ((t_u**3.5) - 3.5 * (q_u / self.params.k_0) * l_x) ** (2 / 7)
+        t_x = ((t_u**3.5) - 3.5 * (q_u / self.rad_params.k_0) * l_x) ** (2 / 7)
 
         # From eV to keV
         t_x = constants.raw_uc(t_x, "eV", "keV")
@@ -538,13 +517,13 @@ class TwoPointModelTools(Radiation):
 
         # Distinction between lfs and hfs
         if lfs:
-            p_fraction = self.params.lfs_p_fraction
+            p_fraction = self.rad_params.lfs_p_fraction
             d = SEP_CORRECTOR
         else:
-            p_fraction = 1 - self.params.lfs_p_fraction
+            p_fraction = 1 - self.rad_params.lfs_p_fraction
             d = -SEP_CORRECTOR
 
-        q_u = p_fraction * q_u * self.params.div_p_sharing
+        q_u = p_fraction * q_u * self.rad_params.div_p_sharing
 
         # Distance between the chosen point and the the target
         if (lfs and z_p < self.points["o_point"]["z"]) or (
@@ -565,7 +544,7 @@ class TwoPointModelTools(Radiation):
         s_p = self.l_tot - l_p
 
         # Local temperature
-        t_p = ((t_u**3.5) - 3.5 * (q_u / self.params.k_0) * s_p) ** (2 / 7)
+        t_p = ((t_u**3.5) - 3.5 * (q_u / self.rad_params.k_0) * s_p) ** (2 / 7)
 
         # From eV to keV
         t_p = constants.raw_uc(t_p, "eV", "keV")
@@ -613,8 +592,8 @@ class TwoPointModelTools(Radiation):
         n_factor = 1
 
         # power decay length modified according to the flux expansion
-        lambda_q_n = self.params.lambda_q_n * f_exp
-        lambda_q_f = self.params.lambda_q_f * f_exp
+        lambda_q_n = self.rad_params.lambda_q_n * f_exp
+        lambda_q_f = self.rad_params.lambda_q_f * f_exp
 
         # radial distance of flux tubes from the separatrix
         dr = (
@@ -786,7 +765,7 @@ class TwoPointModelTools(Radiation):
 
         return z_front
 
-    def calculate_z_species(self, species_file, fimp_no, te):
+    def calculate_z_species(self, species_file, species_frac, te):
         """
         Calculation of species ion charge, in condition of quasi-neutrality.
 
@@ -808,7 +787,7 @@ class TwoPointModelTools(Radiation):
             species ion charge
         """
         species_data = Path(Path(imp_data.__file__).parent, species_file)
-        species_frac = self.process_solver.get_raw_variables(fimp_no)
+        # species_frac = self.process_solver.get_raw_variables(fimp_no)
 
         t_ref, z_ref = np.genfromtxt(species_data).T[
             (0, 2),
@@ -847,7 +826,7 @@ class TwoPointModelTools(Radiation):
 
         return l_val
 
-    def calculate_line_radiation_loss(self, ne, p_loss_f, fimp_id):
+    def calculate_line_radiation_loss(self, ne, p_loss_f, species_frac):
         """
         Calculation of Line radiation losses.
         For a given impurity this is the total power lost, per unit volume,
@@ -867,7 +846,7 @@ class TwoPointModelTools(Radiation):
         rad_loss: np.array
             Line radiation losses [MW m^-3]
         """
-        species_frac = self.process_solver.get_raw_variables(fimp_id)
+        # species_frac = self.process_solver.get_raw_variables(fimp_id)
         rad_loss = (species_frac * (ne**2) * p_loss_f) / 1e6
 
         return rad_loss
@@ -889,7 +868,9 @@ class Core(Radiation):
         """
         # The plasma bulk is divided into plasma core and plasma mantle according to rho
         # rho is a nondimensional radial coordinate: rho = r/a (r varies from 0 to a)
-        self.rho_ped = (self.params["rho_ped_n"] + self.params.rho_ped_t) / 2.0
+        self.rho_ped = (
+            self.plasma_params["rho_ped_n"] + self.plasma_params.rho_ped_t
+        ) / 2.0
 
         # Plasma core for rho < rho_core
         rho_core1 = np.linspace(0, 0.95 * self.rho_ped)
@@ -922,33 +903,33 @@ class Core(Radiation):
         """
         i_interior = np.where((rho_core >= 0) & (rho_core <= self.rho_ped))[0]
 
-        n_grad_ped0 = self.params.n_el_0 - self.params.n_el_ped
-        t_grad_ped0 = self.params.T_el_0 - self.params.T_el_ped
+        n_grad_ped0 = self.plasma_params.n_el_0 - self.plasma_params.n_el_ped
+        t_grad_ped0 = self.plasma_params.T_el_0 - self.plasma_params.T_el_ped
 
         rho_ratio_n = (
             1 - ((rho_core[i_interior] ** 2) / (self.rho_ped**2))
-        ) ** self.params.alpha_n
+        ) ** self.plasma_params.alpha_n
 
         rho_ratio_t = (
             1
             - (
-                (rho_core[i_interior] ** self.params.t_beta)
-                / (self.rho_ped**self.params.t_beta)
+                (rho_core[i_interior] ** self.plasma_params.t_beta)
+                / (self.rho_ped**self.plasma_params.t_beta)
             )
-        ) ** self.params.alpha_t
+        ) ** self.plasma_params.alpha_t
 
-        ne_i = self.params.n_el_ped + (n_grad_ped0 * rho_ratio_n)
-        te_i = self.params.T_el_ped + (t_grad_ped0 * rho_ratio_t)
+        ne_i = self.plasma_params.n_el_ped + (n_grad_ped0 * rho_ratio_n)
+        te_i = self.plasma_params.T_el_ped + (t_grad_ped0 * rho_ratio_t)
 
         i_exterior = np.where((rho_core > self.rho_ped) & (rho_core <= 1))[0]
 
-        n_grad_sepped = self.params.n_el_ped - self.params.n_el_sep
-        t_grad_sepped = self.params.T_el_ped - self.params.T_el_sep
+        n_grad_sepped = self.plasma_params.n_el_ped - self.plasma_params.n_el_sep
+        t_grad_sepped = self.plasma_params.T_el_ped - self.plasma_params.T_el_sep
 
         rho_ratio = (1 - rho_core[i_exterior]) / (1 - self.rho_ped)
 
-        ne_e = self.params.n_el_sep + (n_grad_sepped * rho_ratio)
-        te_e = self.params.T_el_sep + (t_grad_sepped * rho_ratio)
+        ne_e = self.plasma_params.n_el_sep + (n_grad_sepped * rho_ratio)
+        te_e = self.plasma_params.T_el_sep + (t_grad_sepped * rho_ratio)
 
         ne_core = np.append(ne_i, ne_e)
         te_core = np.append(te_i, te_e)
@@ -1144,8 +1125,8 @@ class ScrapeOffLayer(Radiation):
             radial decayed densities through the SoL at the mid-plane. Unit [1/m^3]
         """
         if te_sep is None:
-            te_sep = self.params.T_el_sep
-        ne_sep = self.params.n_el_sep
+            te_sep = self.plasma_params.T_el_sep
+        ne_sep = self.plasma_params.n_el_sep
         te_sol, ne_sol = self.electron_density_and_temperature_sol_decay(
             te_sep, ne_sep, lfs=omp
         )
@@ -1191,16 +1172,13 @@ class ScrapeOffLayer(Radiation):
         if lfs is True:
             r_sep_mp = self.r_sep_omp
             Bp_sep_mp = self.Bp_sep_omp
-            Btot_sep_mp = self.Btot_sep_omp
         else:
             r_sep_mp = self.r_sep_imp
             Bp_sep_mp = self.Bp_sep_imp
-            Btot_sep_mp = self.Btot_sep_imp
 
         # magnetic field components at the local point
         Bp_p = self.transport_solver.eq.Bp(x_p, z_p)
         Bt_p = self.transport_solver.eq.Bt(x_p)
-        B_p = np.hypot(Bp_p, Bt_p)
 
         # flux expansion
         f_p = (r_sep_mp * Bp_sep_mp) / (x_p * Bp_p)
@@ -1209,7 +1187,7 @@ class ScrapeOffLayer(Radiation):
         f_t = t_u / t_p
 
         # Local electron temperature
-        n_p = self.params.n_el_sep * f_t
+        n_p = self.plasma_params.n_el_sep * f_t
 
         # Temperature and density profiles across the SoL
         te_prof, ne_prof = self.electron_density_and_temperature_sol_decay(
@@ -1398,7 +1376,7 @@ class ScrapeOffLayerSector(ScrapeOffLayer, TwoPointModelTools):
 
         # exit of radiation region
         if x_point_rad and pfr_ext is not None:
-            t_rad_out = self.params.f_ion_t
+            t_rad_out = self.rad_params.f_ion_t
         else:
             t_rad_out = self.target_temperature(
                 self.q_u,
@@ -1450,7 +1428,7 @@ class ScrapeOffLayerSector(ScrapeOffLayer, TwoPointModelTools):
         ]
 
         # condition for occurred detachment
-        if t_rad_out <= self.params.f_ion_t:
+        if t_rad_out <= self.rad_params.f_ion_t:
             x_point_rad = True
 
         # density poloidal distribution
@@ -1485,12 +1463,14 @@ class STCore(Core, TwoPointModelTools):
 
     def __init__(
         self,
-        process_solver: Solver,
         transport_solver: ChargedParticleSolver,
-        params,
-        config,
+        impurity_content,
+        plasma_params,
+        rad_params,
     ):
-        super().__init__(process_solver, transport_solver, params, config)
+        super().__init__(transport_solver, plasma_params, rad_params)
+
+        self.impurity_id = impurity_content.values()
 
         # Adimensional radius at the mid-plane.
         # From the core to the last closed flux surface
@@ -1589,16 +1569,15 @@ class STScrapeOffLayer(ScrapeOffLayerSector, ScrapeOffLayer, TwoPointModelTools)
 
     def __init__(
         self,
-        process_solver: Solver,
         transport_solver: ChargedParticleSolver,
-        params,
-        config,
+        impurity_content,
+        plasma_params,
+        rad_params,
         firstwall_geom,
     ):
-        super().__init__(process_solver, transport_solver, params, config)
+        super().__init__(transport_solver, plasma_params, rad_params)
 
-        self.params = ParameterFrame(self.default_params)
-        self.params.update_kw_parameters(config, f"{self.__class__.__name__} input")
+        self.impurity_id = impurity_content.values()
 
         """
         2D map of the line radiation loss in the scrape-off layer.
