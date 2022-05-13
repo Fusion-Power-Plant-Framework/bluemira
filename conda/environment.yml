@@ -21,7 +21,7 @@ variables:
 dependencies:
   - python=3.8
   - freecad=0.19.3
-  - pivy=0.6.5
+  - pivy=0.6.5 # later pivy versions (0.6.7 at the time of writing) crash our FreeCAD CAD viewer
   - numpy=1.21.5
   - fenics=2019.1.0
   - MeshPy=2020.1
