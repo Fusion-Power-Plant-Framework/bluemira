@@ -395,12 +395,12 @@ class TestPlasmodSolver:
 
     def test_output_param_not_modified_if_modify_mappings_recv_set_to_False(self):
         solver = plasmod.Solver(self.default_pf, self.build_config)
-        original_beta_N = solver.params.beta_N.value
+        original_beta_n = solver.params.beta_N.value
 
         solver.modify_mappings({"beta_N": {"recv": False}})
         solver.execute(plasmod.RunMode.RUN)
 
-        assert solver.params.beta_N == original_beta_N
+        assert solver.params.beta_N == original_beta_n
 
     @staticmethod
     def read_data_file(file_name):
