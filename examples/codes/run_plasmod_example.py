@@ -219,7 +219,7 @@ print_outputs(solver)
 # #### Changing the transport model
 
 # %%
-solver.problem_settings["i_modeltype"] = plasmod.TransportModel.GYROBOHM_1
+solver.problem_settings["i_modeltype"] = plasmod.TransportModel.GYROBOHM_2
 solver.execute(plasmod.RunMode.RUN)
 print_outputs(solver)
 
