@@ -168,12 +168,11 @@ class CodesTeardown(CodesTask):
             output_value = self._get_output_or_raise(external_outputs, external_key)
             if output_value is None:
                 continue
-            bluemira_param = self._get_parameter_or_raise(bluemira_key)
-            codes_unit = bluemira_param.mapping[self._name].unit
-            if codes_unit is not None:
+            param_mapping = self._get_parameter_mapping_or_raise(bluemira_key)
+            if param_mapping.unit is not None:
                 mapped_outputs[bluemira_key] = {
                     "value": output_value,
-                    "unit": codes_unit,
+                    "unit": param_mapping.unit,
                 }
         return mapped_outputs
 
@@ -194,9 +193,9 @@ class CodesTeardown(CodesTask):
             )
         return output_value
 
-    def _get_parameter_or_raise(self, bluemira_param_name: str):
+    def _get_parameter_mapping_or_raise(self, bluemira_param_name: str):
         try:
-            return self.params.get_param(bluemira_param_name)
+            return self.params.get_param(bluemira_param_name).mapping[self._name]
         except AttributeError as attr_error:
             raise CodesError(
                 f"No mapping defined between parameter '{bluemira_param_name}' and "
