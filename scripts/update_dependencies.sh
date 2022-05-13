@@ -13,28 +13,29 @@ else
     REQ_BRANCH="develop"
 fi
 
+
 # make sure bluemira is in the current environment
 BM_INSTALLED=$(pip list | grep bluemira | awk 'NR==1 {print $1}')
 [ "$BM_INSTALLED" = "bluemira" ] || { echo "bluemira not found in the current python environment, exiting" && exit 1; }
 
 readonly BLUEMIRA_ROOT="$(realpath "$(dirname "$0")"/..)"
-echo 'Bluemira directory is '$BLUEMIRA_ROOT
+echo "Bluemira directory is $BLUEMIRA_ROOT"
 
-OLD_DIR=$(pwd)
-cd $BLUEMIRA_ROOT # git commands dont work when not in a git directory
+GIT_CMD="git -C ""$BLUEMIRA_ROOT"
 
 # check that the requirements files havent changed
-git diff --exit-code $BLUEMIRA_ROOT"/requirements.txt" || { cd $OLD_DIR && echo "requirements.txt modified on this branch, exiting" && exit 1; }
-git diff --exit-code $BLUEMIRA_ROOT"/requirements-develop.txt" || { cd $OLD_DIR && echo "requirements-develop.txt modified on this branch, exiting" && exit 1; }
+$GIT_CMD diff --exit-code requirements.txt \
+     || { echo "requirements.txt modified on this branch, exiting" && exit 1; }
+$GIT_CMD diff --exit-code requirements-develop.txt \
+     || { echo "requirements-develop.txt modified on this branch, exiting" && exit 1; }
 
 # checkout dependencies from develop
-git checkout $REQ_BRANCH requirements.txt requirements-develop.txt
+$GIT_CMD checkout $REQ_BRANCH requirements.txt requirements-develop.txt
 
 # install dependencies
-pip install -r requirements.txt || { cd $OLD_DIR &&  echo "pip update failed" && exit 1; }
-pip install -r requirements-develop.txt || { cd $OLD_DIR &&  echo "pip update failed" && exit 1; }
+pip install -r "$BLUEMIRA_ROOT/requirements.txt" || { echo "pip update failed" && exit 1; }
+pip install -r "$BLUEMIRA_ROOT/requirements-develop.txt" || { echo "pip update failed" && exit 1; }
 
+CURR_BRANCH=$($GIT_CMD rev-parse --abbrev-ref HEAD)
 # revert checkout of dependencies files
-git checkout $(git rev-parse --abbrev-ref HEAD) requirements.txt requirements-develop.txt
-
-cd $OLD_DIR
+$GIT_CMD checkout $CURR_BRANCH requirements.txt requirements-develop.txt
