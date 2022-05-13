@@ -18,9 +18,7 @@
 #
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
-"""
-The API for the plasmod solver.
-"""
+"""The API for the plasmod solver."""
 
 from enum import auto
 from typing import Any, Dict, Iterable
@@ -63,6 +61,7 @@ class Solver(CodesSolver):
     build_config: Dict[str, Any]
         Build configuration dictionary.
         Expected keys include:
+
             - binary: str, path to the plasmod binary.
             - problem_settings: Dict[str, Any], any plasmod specific
               parameters (i.e., parameters that bluemira does not have
@@ -109,6 +108,7 @@ class Solver(CodesSolver):
         Execute this plasmod solver.
 
         This solver:
+
             1. writes a plasmod input file using the given bluemira and
                problem parameters.
             2. processes that file using a shell call to plasmod.
