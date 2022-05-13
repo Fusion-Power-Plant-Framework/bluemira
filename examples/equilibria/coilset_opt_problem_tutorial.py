@@ -46,9 +46,12 @@ from bluemira.equilibria.coils import Coil, CoilSet, SymmetricCircuit
 from bluemira.equilibria.equilibrium import Equilibrium
 from bluemira.equilibria.grid import Grid
 from bluemira.equilibria.opt_constraints import IsofluxConstraint, MagneticConstraintSet
-from bluemira.equilibria.opt_problems import BoundedCurrentCOP, UnconstrainedCurrentCOP
+from bluemira.equilibria.opt_problems import (
+    MinimalErrorCOP,
+    UnconstrainedMinimalErrorCOP,
+)
 from bluemira.equilibria.profiles import CustomProfile
-from bluemira.equilibria.solve import DudsonConvergence, PicardCoilsetIterator
+from bluemira.equilibria.solve_new import DudsonConvergence, PicardIterator
 from bluemira.utilities.opt_problems import OptimisationConstraint
 from bluemira.utilities.optimiser import Optimiser
 
@@ -185,8 +188,8 @@ legs_isoflux = IsofluxConstraint(
     x_legs, z_legs, ref_x=x_lcfs[2], ref_z=z_lcfs[2], constraint_value=0.1
 )
 
-constraint_set = MagneticConstraintSet([lcfs_isoflux, legs_isoflux])
-core_constraints = MagneticConstraintSet([lcfs_isoflux])
+magnetic_targets = MagneticConstraintSet([lcfs_isoflux, legs_isoflux])
+magnetic_core_targets = MagneticConstraintSet([lcfs_isoflux])
 
 # %%[markdown]
 
@@ -195,6 +198,12 @@ core_constraints = MagneticConstraintSet([lcfs_isoflux])
 # For this we need a Grid and some plasma profiles
 
 # %%
+
+# Intialise some parameters
+R_0 = 2.6
+Z_0 = 0
+B_t = 1.9
+I_p = 16e6
 
 r0, r1 = 0.2, 8
 z0, z1 = -8, 8
@@ -269,7 +278,7 @@ ffprime = np.array(
         0.28,
     ]
 )
-profile = CustomProfile(pprime, ffprime, R_0=R0, B_0=Bt, Ip=Ip)
+profile = CustomProfile(pprime, ffprime, R_0=R_0, B_0=B_t, Ip=I_p)
 eq = Equilibrium(
     coilset,
     grid,
@@ -277,7 +286,7 @@ eq = Equilibrium(
     vcontrol=None,
     psi=None,
     profiles=profile,
-    Ip=16e6,
+    Ip=I_p,
     li=None,
 )
 
@@ -365,8 +374,7 @@ opt_constraints = [
 
 # %%
 
-opt_problem = BoundedCurrentCOP(
-    coilset,
+opt_problem = MinimalErrorCOP(
     eq,
     magnetic_targets,
     gamma=1e-8,
@@ -390,10 +398,9 @@ opt_problem = BoundedCurrentCOP(
 
 # %%
 
-constrained_iterator = PicardCoilsetIterator(
+constrained_iterator = PicardIterator(
     eq,
     profile,
-    magnetic_core_targets,
     opt_problem,
     plot=False,
     relaxation=0.3,
@@ -411,13 +418,13 @@ constrained_iterator = PicardCoilsetIterator(
 
 # %%
 
-unconstrained_cop = UnconstrainedCurrentCOP(eq.coilset, eq, magnetic_targets, gamma=1e-8)
-unconstrained_iterator = PicardCoilsetIterator(
+unconstrained_cop = UnconstrainedMinimalErrorCOP(eq, magnetic_targets, gamma=1e-8)
+unconstrained_iterator = PicardIterator(
     eq,
     profile,  # jetto
-    magnetic_core_targets,
     unconstrained_cop,
     plot=False,
+    I_not_dI=True,
     relaxation=0.3,
     convergence=DudsonConvergence(1e-2),
     maxiter=400,
@@ -462,9 +469,7 @@ plt.show()
 
 # ### Constrained Optimisation
 
-# Now we have a better starting `Equilibrium` for our constrained optimisation
-# scheme, we can apply it to try to find a solution that satisfies the
-# optimisation problem including our additional constraints.
+# Now we have a better starting `Equilibrium` for our constrained optimisation6e6
 
 # %%
 
