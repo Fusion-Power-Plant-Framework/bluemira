@@ -29,16 +29,16 @@ import numpy as np
 
 from bluemira.base.parameter import ParameterFrame
 from bluemira.base.solver import RunMode as BaseRunMode
-from bluemira.codes import plasmod
 from bluemira.codes.error import CodesError
 from bluemira.codes.interface_ import CodesSolver
+from bluemira.codes.plasmod.api._outputs import PlasmodOutputs
+from bluemira.codes.plasmod.api._run import Run
+from bluemira.codes.plasmod.api._setup import Setup
+from bluemira.codes.plasmod.api._teardown import Teardown
 from bluemira.codes.plasmod.constants import BINARY as PLASMOD_BINARY
+from bluemira.codes.plasmod.constants import NAME as PLASMOD_NAME
 from bluemira.codes.plasmod.mapping import Profiles
 from bluemira.codes.plasmod.mapping import mappings as plasmod_mappings
-from bluemira.codes.plasmod.solver._outputs import PlasmodOutputs
-from bluemira.codes.plasmod.solver._run import Run
-from bluemira.codes.plasmod.solver._setup import Setup
-from bluemira.codes.plasmod.solver._teardown import Teardown
 from bluemira.codes.utilities import add_mapping
 
 
@@ -75,7 +75,7 @@ class Solver(CodesSolver):
               output file to.
     """
 
-    name = plasmod.NAME
+    name = PLASMOD_NAME
     setup_cls = Setup
     run_cls = Run
     teardown_cls = Teardown
@@ -92,7 +92,7 @@ class Solver(CodesSolver):
         self._teardown: Teardown
 
         self.params = params
-        add_mapping(plasmod.NAME, self.params, plasmod_mappings)
+        add_mapping(PLASMOD_NAME, self.params, plasmod_mappings)
 
         self.build_config = {} if build_config is None else build_config
 

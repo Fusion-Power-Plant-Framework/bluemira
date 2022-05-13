@@ -31,12 +31,12 @@ import pytest
 from bluemira.base.config import Configuration
 from bluemira.codes import plasmod
 from bluemira.codes.error import CodesError
+from bluemira.codes.plasmod.api import Run, Setup, Teardown
 from bluemira.codes.plasmod.mapping import mappings as plasmod_mappings
-from bluemira.codes.plasmod.solver import Run, Setup, Teardown
 from bluemira.codes.utilities import add_mapping
 from tests._helpers import combine_text_mock_write_calls
 
-SOLVER_MODULE_REF = "bluemira.codes.plasmod.solver"
+SOLVER_MODULE_REF = "bluemira.codes.plasmod.api"
 RUN_SUBPROCESS_REF = "bluemira.codes.interface_.run_subprocess"
 
 

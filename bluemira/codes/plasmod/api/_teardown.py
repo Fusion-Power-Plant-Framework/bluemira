@@ -26,8 +26,8 @@ from bluemira.base.look_and_feel import bluemira_debug
 from bluemira.base.parameter import ParameterFrame
 from bluemira.codes.error import CodesError
 from bluemira.codes.interface_ import CodesTeardown
+from bluemira.codes.plasmod.api._outputs import PlasmodOutputs
 from bluemira.codes.plasmod.constants import NAME as PLASMOD_NAME
-from bluemira.codes.plasmod.solver._outputs import PlasmodOutputs
 
 
 class Teardown(CodesTeardown):
