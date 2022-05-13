@@ -25,7 +25,7 @@ Utility functions for interacting with external codes
 
 
 import os
-import subprocess
+import subprocess  # noqa: S404
 import threading
 from enum import Enum
 from typing import Dict, List, Literal
