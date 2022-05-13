@@ -425,23 +425,36 @@ class CoilFieldConstraints(UpdateableConstraint, OptimisationConstraint):
 
         # Re-build control response matrix
         if not fixed_coils or (fixed_coils and self._args["a_mat"] is None):
-            self._args["a_mat"] = self.control_response(equilibrium.coilset)
+            ax_mat, az_mat = self.control_response(equilibrium.coilset)
+            self._args["ax_mat"] = ax_mat
+            self._args["az_mat"] = az_mat
 
-        self._args["b_vec"] = -self.evaluate(equilibrium)
+        bxp_vec, bzp_vec = self.evaluate(equilibrium)
+        self._args["bxp_vec"] = bxp_vec
+        self._args["bzp_vec"] = bzp_vec
 
     def control_response(self, coilset):
         """
         Calculate control response of a CoilSet to the constraint.
         """
-        Ba = np.zeros((coilset.n_coils, coilset.n_coils, 2))  # noqa :N803
+        Bx = np.zeros((coilset.n_coils, coilset.n_coils))
+        Bz = np.zeros((coilset.n_coils, coilset.n_coils))
         for i, coil1 in enumerate(coilset.coils.values()):
             for j, coil2 in enumerate(coilset.coils.values()):
-                Ba[i, j, 0] = np.array(coil2.control_Bx(coil1.x - coil1.dx, coil1.z))
-                Ba[i, j, 1] = np.array(coil2.control_Bz(coil1.x - coil1.dx, coil1.z))
-        return Ba
+                Bx[i, j] = np.array(coil2.control_Bx(coil1.x - coil1.dx, coil1.z))
+                Bz[i, j] = np.array(coil2.control_Bz(coil1.x - coil1.dx, coil1.z))
+        return Bx, Bz
 
     def evaluate(self, equilibrium):
-        pass
+        """
+        Calculate the value of the constraint in an Equilibrium.
+        """
+        n_coils = equilibrium.coilset.n_coils
+        Bx, Bz = np.zeros(n_coils), np.zeros(n_coils)
+        for i, coil in enumerate(self.coils.values()):
+            Bx[i] = equilibrium.Bx(coil.x - coil.dx, coil.z)
+            Bz[i] = equilibrium.Bz(coil.x - coil.dx, coil.z)
+        return Bx, Bz
 
 
 class MagneticConstraint(UpdateableConstraint, OptimisationConstraint):
