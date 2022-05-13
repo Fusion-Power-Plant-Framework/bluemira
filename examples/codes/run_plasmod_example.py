@@ -253,7 +253,6 @@ print_outputs(solver)
 # Notice how the value of `q_95` doesn't change in the output,
 # even though its value has in the parameter (the previous value of 3.5 is used).
 
-# TODO(hsaunders): modify_mappings
 # %%
 solver.modify_mappings({"q_95": {"send": False}})
 solver.params.q_95 = (5, "input")
