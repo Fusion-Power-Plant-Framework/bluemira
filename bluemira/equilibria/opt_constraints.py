@@ -310,11 +310,6 @@ def coil_force_constraints_new(
     -------
     constraint: np.ndarray
         Updated constraint vector
-
-    Notes
-    -----
-    TODO: Presently only handles CoilSets with Coils (SymmetricCircuits not yet
-    supported)
     """
     n_coils = len(vector)
     currents = scale * vector
@@ -586,13 +581,18 @@ class CoilFieldConstraints(UpdateableConstraint, OptimisationConstraint):
 
 class CoilForceConstraints(UpdateableConstraint, OptimisationConstraint):
     """
-    Inequality constraints on the vertical forces in the PF coils.
+    Inequality constraints on the vertical forces in the PF and CS coils.
 
     Parameters
     ----------
     coilset: CoilSet
         Coilset for which to constrain the fields in the coils
-
+    PF_Fz_max: float
+        Maximum absolute vertical force in a PF coil [MN]
+    CS_Fz_sum_max: float
+        Maximum absolute vertical force sum in the CS stack [MN]
+    CS_Fz_sep_max: float
+        Maximum separation vertical force between two CS modules [MN]
     tolerance: Union[float, np.ndarray]
         Tolerance with which the inequality constraints will be met
 
@@ -600,8 +600,6 @@ class CoilForceConstraints(UpdateableConstraint, OptimisationConstraint):
     -----
     TODO: Presently only handles CoilSets with Coils (SymmetricCircuits not yet
     supported)
-    TODO: Presently only accounts for poloidal field contributions from PF coils and
-    plasma (TF from TF coils not accounted for if PF coils are inside the TF coils.)
     """
 
     def __init__(
@@ -617,6 +615,9 @@ class CoilForceConstraints(UpdateableConstraint, OptimisationConstraint):
 
         if is_num(tolerance):
             tolerance = tolerance * np.ones(n_f_constraints)
+        elif len(tolerance) != n_f_constraints:
+            raise ValueError(f"Tolerance vector not of length {n_f_constraints}")
+
         super().__init__(
             f_constraint=coil_force_constraints_new,
             f_constraint_args={
@@ -658,11 +659,10 @@ class CoilForceConstraints(UpdateableConstraint, OptimisationConstraint):
         """
         Calculate the value of the constraint in an Equilibrium.
         """
-        plasma = equilibrium.plasma_coil()
         Fp = np.zeros((self.n_coils, 2))  # noqa :N803
         for i, coil in enumerate(self.coils.values()):
             if coil.current != 0:
-                Fp[i, :] = coil.F(plasma) / coil.current
+                Fp[i, :] = coil.F(equilibrium) / coil.current
             else:
                 Fp[i, :] = np.zeros(2)
         return Fp
