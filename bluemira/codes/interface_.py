@@ -21,18 +21,19 @@
 """Base classes for solvers using external codes."""
 
 import abc
-from typing import Any, Dict
+from typing import Any, Callable, Dict, Union
 
+from bluemira.base.constants import raw_uc
 from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.base.parameter import ParameterFrame
 from bluemira.base.solver import SolverABC, Task
 from bluemira.codes.error import CodesError
-from bluemira.codes.utilities import get_recv_mapping, run_subprocess
+from bluemira.codes.utilities import get_recv_mapping, get_send_mapping, run_subprocess
 
 
 class CodesTask(Task):
     """
-    Base task for an external codes Solver.
+    Base class for a task used by a solver for an external code.
     """
 
     def __init__(self, params: ParameterFrame, codes_name: str) -> None:
@@ -47,14 +48,73 @@ class CodesTask(Task):
         return_code = run_subprocess(command, **kwargs)
         if return_code != 0:
             raise CodesError(
-                f"'{self._name} subprocess task exited with non-zero error code "
+                f"'{self._name}' subprocess task exited with non-zero error code "
                 f"'{return_code}'."
             )
 
 
+class CodesSetup(CodesTask):
+    """
+    Base class for setup tasks of a solver for an external code.
+    """
+
+    def _get_new_inputs(self, remapper: Union[Callable, Dict[str, str]] = None):
+        """
+        Retrieve inputs values to the external code from this tasks'
+        ParameterFrame.
+
+        Convert the inputs' units to those used by the external code.
+
+        Parameters
+        ----------
+        remapper: Optional[Union[Callable, Dict[str, str]]]
+            A function or dictionary for remapping variable names.
+            Useful for renaming old variables
+
+        Returns
+        -------
+        _inputs: dict
+            Keys are external code parameter names, values are the input
+            values for those parameters.
+        """
+        _inputs = {}
+
+        if not (callable(remapper) or isinstance(remapper, (type(None), Dict))):
+            raise TypeError("remapper is not callable or a dictionary")
+        if isinstance(remapper, Dict):
+            orig_remap = remapper.copy()
+
+            def remapper(x):
+                return orig_remap[x]
+
+        elif remapper is None:
+
+            def remapper(x):
+                return x
+
+        send_mappings = get_send_mapping(self.params, self._name)
+        for external_key, bm_key in send_mappings.items():
+            external_key = remapper(external_key)
+            if isinstance(external_key, list):
+                for key in external_key:
+                    _inputs[key] = self._convert_units(self.params.get_param(bm_key))
+                continue
+
+            _inputs[external_key] = self._convert_units(self.params.get_param(bm_key))
+
+        return _inputs
+
+    def _convert_units(self, param):
+        code_unit = param.mapping[self._name].unit
+        if code_unit is not None:
+            return raw_uc(param.value, param.unit, code_unit)
+        else:
+            return param.value
+
+
 class CodesTeardown(CodesTask):
     """
-    Base teardown task for an external codes Solver.
+    Base class for teardown tasks of a solver for an external code.
 
     Parameters
     ----------

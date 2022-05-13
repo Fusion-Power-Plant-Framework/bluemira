@@ -24,19 +24,17 @@ Defines the 'Setup' stage of the plasmod solver.
 
 import copy
 import dataclasses
-from typing import Any, Callable, Dict, Optional, Union
+from typing import Any, Dict
 
-from bluemira.base.constants import raw_uc
 from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.base.parameter import ParameterFrame
-from bluemira.base.solver import Task
 from bluemira.codes.error import CodesError
+from bluemira.codes.interface_ import CodesSetup
 from bluemira.codes.plasmod.constants import NAME as PLASMOD_NAME
 from bluemira.codes.plasmod.solver._inputs import PlasmodInputs
-from bluemira.codes.utilities import get_send_mapping
 
 
-class Setup(Task):
+class Setup(CodesSetup):
     """
     Setup task for a plasmod solver.
 
@@ -63,7 +61,7 @@ class Setup(Task):
         # because it's actually an output file of this task
         input_file: str,
     ) -> None:
-        super().__init__(params)
+        super().__init__(params, PLASMOD_NAME)
 
         self.inputs = PlasmodInputs()
         self.input_file = input_file
@@ -97,12 +95,12 @@ class Setup(Task):
         """
         Update plasmod inputs using the given values.
         """
-        # Create a new PlasmodInputs object so we still benefit from
-        # the __post_init__ processing (converts models to enums)
         new_inputs = {} if new_inputs is None else new_inputs
         new_inputs = self._remove_non_plasmod_inputs(new_inputs)
-        new = self.get_new_inputs()
+        new = self._get_new_inputs()
         new.update(new_inputs)
+        # Create a new PlasmodInputs object so we still benefit from
+        # the __post_init__ processing (converts models to enums)
         self.inputs = PlasmodInputs(**new)
 
     @staticmethod
@@ -116,6 +114,8 @@ class Setup(Task):
         """
         inputs = copy.deepcopy(_inputs)
         fields = set(field.name for field in dataclasses.fields(PlasmodInputs))
+        # Convert to list to copy the keys, as we are changing the size
+        # of the dict during iteration.
         for input_name in list(inputs.keys()):
             if input_name not in fields:
                 bluemira_warn(f"Ignoring unknown plasmod input '{input_name}'.")
@@ -133,59 +133,3 @@ class Setup(Task):
             raise CodesError(
                 f"Could not write plasmod input file: '{self.input_file}': {os_error}"
             ) from os_error
-
-    def get_new_inputs(self, remapper: Optional[Union[Callable, Dict]] = None):
-        """
-        Get new key mappings from the ParameterFrame.
-
-        Parameters
-        ----------
-        remapper: Optional[Union[callable, dict]]
-            a function or dictionary for remapping variable names.
-            Useful for renaming old variables
-
-        Returns
-        -------
-        _inputs: dict
-            key value pairs of external program variable names and values
-
-        TODO unit conversion
-        """
-        # TODO(hsaunders): refactor out to base class, make private?
-        _inputs = {}
-
-        if not (callable(remapper) or isinstance(remapper, (type(None), Dict))):
-            raise TypeError("remapper is not callable or a dictionary")
-        elif isinstance(remapper, Dict):
-            orig_remap = remapper.copy()
-
-            def remapper(x):
-                return orig_remap[x]
-
-        elif remapper is None:
-
-            def remapper(x):
-                return x
-
-        for prog_key, bm_key in self._send_mapping.items():
-            prog_key = remapper(prog_key)
-            if isinstance(prog_key, list):
-                for key in prog_key:
-                    _inputs[key] = self._convert_units(self.params.get_param(bm_key))
-                continue
-
-            _inputs[prog_key] = self._convert_units(self.params.get_param(bm_key))
-
-        return _inputs
-
-    def _convert_units(self, param):
-        code_unit = param.mapping[PLASMOD_NAME].unit
-        if code_unit is not None:
-            return raw_uc(param.value, param.unit, code_unit)
-        else:
-            return param.value
-
-    @property
-    def _send_mapping(self) -> Dict[str, str]:
-        self.__send_mapping = get_send_mapping(self.params, PLASMOD_NAME)
-        return self.__send_mapping
