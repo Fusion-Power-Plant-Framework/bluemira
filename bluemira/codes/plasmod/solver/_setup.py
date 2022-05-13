@@ -49,7 +49,7 @@ class Setup(CodesSetup):
         already be set. Most likely by a solver.
     problem_settings: Dict[str, Any]
         Any non-bluemira parameters that should be passed to plasmod.
-    input_file: str
+    plasmod_input_file: str
         The path where the plasmod input file should be written.
     """
 
@@ -57,14 +57,12 @@ class Setup(CodesSetup):
         self,
         params: ParameterFrame,
         problem_settings: Dict[str, Any],
-        # TODO(hsaunders1904): rename this; input_file is confusing,
-        # because it's actually an output file of this task
-        input_file: str,
-    ) -> None:
+        plasmod_input_file: str,
+    ):
         super().__init__(params, PLASMOD_NAME)
 
         self.inputs = PlasmodInputs()
-        self.input_file = input_file
+        self.plasmod_input_file = plasmod_input_file
 
         self.update_inputs(problem_settings)
 
@@ -127,9 +125,9 @@ class Setup(CodesSetup):
         Write inputs to file to be read by plasmod.
         """
         try:
-            with open(self.input_file, "w") as io_stream:
+            with open(self.plasmod_input_file, "w") as io_stream:
                 self.inputs.write(io_stream)
         except OSError as os_error:
             raise CodesError(
-                f"Could not write plasmod input file: '{self.input_file}': {os_error}"
+                f"Could not write plasmod input file: '{self.plasmod_input_file}': {os_error}"
             ) from os_error

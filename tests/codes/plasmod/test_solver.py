@@ -104,7 +104,7 @@ class TestPlasmodSetup:
         setup = Setup(
             self.default_pf,
             problem_settings=problem_settings,
-            input_file="/some/file/path.dat",
+            plasmod_input_file="/some/file/path.dat",
         )
         open_mock.side_effect = OSError
 
