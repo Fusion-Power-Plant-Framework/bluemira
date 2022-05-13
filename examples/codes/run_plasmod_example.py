@@ -29,10 +29,10 @@ from pprint import pprint
 
 import matplotlib.pyplot as plt
 
-import bluemira.codes.plasmod as plasmod
 from bluemira.base.config import Configuration
 from bluemira.base.file import get_bluemira_root
 from bluemira.base.logs import set_log_level
+from bluemira.codes import plasmod
 
 # %%[markdown]
 # # Configuring the PLASMOD solver
