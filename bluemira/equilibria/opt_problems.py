@@ -45,7 +45,7 @@ from bluemira.equilibria.coils import CoilSet
 from bluemira.equilibria.eq_constraints import MagneticConstraintSet
 from bluemira.equilibria.equilibrium import Equilibrium
 from bluemira.equilibria.error import EquilibriaError
-from bluemira.equilibria.opt_constraints import MagneticConstraint
+from bluemira.equilibria.opt_constraints import MagneticConstraint, UpdateableConstraint
 from bluemira.equilibria.positioner import RegionMapper
 from bluemira.utilities.opt_problems import (
     OptimisationConstraint,
@@ -258,7 +258,7 @@ class CoilsetOptimisationProblem(OptimisationProblem):
         """
         if self._constraints is not None:
             for constraint in self._constraints:
-                if isinstance(constraint, MagneticConstraint):
+                if isinstance(constraint, UpdateableConstraint):
                     constraint.prepare(
                         self.eq, I_not_dI=I_not_dI, fixed_coils=fixed_coils
                     )

@@ -405,7 +405,19 @@ class CoilFieldConstraints(UpdateableConstraint, OptimisationConstraint):
     Constraints on the poloidal field inside the coils.
     """
 
-    def __init__(self, B_max, tolerance=1.0e-6):
+    def __init__(self, coilset, B_max, tolerance=1.0e-6):
+        if is_num(B_max):
+            B_max = B_max * np.ones(coilset.n_coils)
+        if len(B_max) != coilset.n_coils:
+            raise ValueError(
+                "Maximum field vector length not equal to the number of coils."
+            )
+
+        if is_num(tolerance):
+            tolerance = tolerance * np.ones(coilset.n_coils)
+        if len(B_max) != coilset.n_coils:
+            raise ValueError("Tolerance vector length not equal to the number of coils.")
+
         super().__init__(
             f_constraint=coil_field_constraints_new,
             f_constraint_args={
@@ -424,7 +436,7 @@ class CoilFieldConstraints(UpdateableConstraint, OptimisationConstraint):
         equilibrium = _get_dummy_equilibrium(equilibrium, I_not_dI)
 
         # Re-build control response matrix
-        if not fixed_coils or (fixed_coils and self._args["a_mat"] is None):
+        if not fixed_coils or (fixed_coils and self._args["ax_mat"] is None):
             ax_mat, az_mat = self.control_response(equilibrium.coilset)
             self._args["ax_mat"] = ax_mat
             self._args["az_mat"] = az_mat
@@ -451,7 +463,7 @@ class CoilFieldConstraints(UpdateableConstraint, OptimisationConstraint):
         """
         n_coils = equilibrium.coilset.n_coils
         Bx, Bz = np.zeros(n_coils), np.zeros(n_coils)
-        for i, coil in enumerate(self.coils.values()):
+        for i, coil in enumerate(equilibrium.coilset.coils.values()):
             Bx[i] = equilibrium.Bx(coil.x - coil.dx, coil.z)
             Bz[i] = equilibrium.Bz(coil.x - coil.dx, coil.z)
         return Bx, Bz

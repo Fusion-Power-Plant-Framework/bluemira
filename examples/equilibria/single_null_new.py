@@ -43,6 +43,7 @@ from bluemira.equilibria.coils import Coil, CoilSet
 from bluemira.equilibria.equilibrium import Equilibrium
 from bluemira.equilibria.grid import Grid
 from bluemira.equilibria.opt_constraints import (
+    CoilFieldConstraints,
     FieldNullConstraint,
     IsofluxConstraint,
     MagneticConstraintSet,
@@ -208,6 +209,10 @@ field_constraints = OptimisationConstraint(
     tolerance=1e-6 * np.ones(11),
 )
 
+field_constraints_new = CoilFieldConstraints(
+    eq.coilset, eq.coilset.get_max_fields(), tolerance=1e-6
+)
+
 
 opt_problem = MinimalErrorCOP(
     eq,
@@ -215,7 +220,7 @@ opt_problem = MinimalErrorCOP(
     gamma=1e-8,
     optimiser=Optimiser("SLSQP", opt_conditions={"max_eval": 2000, "ftol_rel": 1e-6}),
     max_currents=coilset.get_max_currents(0.0),
-    constraints=[field_constraints],
+    constraints=[field_constraints, field_constraints_new],
 )
 
 program = PicardIterator(
@@ -236,26 +241,26 @@ program()
 # coil currents, and use the constraints that we specified above as actual constraints
 # in the optimisation problem (rather than in the objective function as above)
 
-# %%
+# # %%
 
-opt_problem = MinimalCurrentsCOP(
-    eq,
-    Optimiser("SLSQP", opt_conditions={"max_eval": 2000, "ftol_rel": 1e-6}),
-    max_currents=coilset.get_max_currents(0.0),
-    constraints=[psi_boundary, x_point, field_constraints],
-)
+# opt_problem = MinimalCurrentsCOP(
+#     eq,
+#     Optimiser("SLSQP", opt_conditions={"max_eval": 2000, "ftol_rel": 1e-6}),
+#     max_currents=coilset.get_max_currents(0.0),
+#     constraints=[psi_boundary, x_point, field_constraints],
+# )
 
-program = PicardIterator(
-    eq,
-    profiles,
-    opt_problem,
-    I_not_dI=True,
-    fixed_coils=True,
-    convergence=DudsonConvergence(1e-4),
-    relaxation=0.3,
-)
-program()
+# program = PicardIterator(
+#     eq,
+#     profiles,
+#     opt_problem,
+#     I_not_dI=True,
+#     fixed_coils=True,
+#     convergence=DudsonConvergence(1e-4),
+#     relaxation=0.3,
+# )
+# program()
 
-f, ax = plt.subplots()
-eq.plot(ax=ax)
-eq.coilset.plot(ax=ax)
+# f, ax = plt.subplots()
+# eq.plot(ax=ax)
+# eq.coilset.plot(ax=ax)
