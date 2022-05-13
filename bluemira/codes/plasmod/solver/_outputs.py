@@ -69,6 +69,7 @@ class PlasmodOutputs:
     Hcorr: Optional[float] = None
     Hfact: Optional[float] = None
     i_flag: Optional[int] = None
+    jiter: Optional[int] = None
     Ip: Optional[float] = None
     ipol: Optional[float] = None
     jbs: Optional[float] = None
