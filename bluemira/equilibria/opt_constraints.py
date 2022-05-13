@@ -342,11 +342,11 @@ def coil_field_constraints_new(
     Bz_a = az_mat @ currents
 
     B = np.hypot(Bx_a + bxp_vec, Bz_a + bzp_vec)
-    dB = Bx_a * (Bx_a @ currents + bxp_vec) + Bz_a * (Bz_a @ currents + bzp_vec)
-    dB /= B
-    dB /= scale**2
     if grad.size > 0:
-        grad[:] = dB
+        grad[:] = (
+            Bx_a * (Bx_a @ currents + bxp_vec) + Bz_a * (Bz_a @ currents + bzp_vec)
+        ) / (B * scale**2)
+
     constraint[:] = B - B_max
     return constraint
 
