@@ -1,3 +1,9 @@
+# Pip dependency update script
+# Usage:
+# bash <path to script> [Optional branch name]
+#
+# If the branch name is specified install the requirements from that branch
+# otherwise install from develop
 set -e
 
 if [ "$1" ]
@@ -16,6 +22,7 @@ echo 'Bluemira directory is '$BLUEMIRA_ROOT
 
 OLD_DIR=$(pwd)
 cd $BLUEMIRA_ROOT
+
 # check that the requirements files havent changed
 git diff --exit-code $BLUEMIRA_ROOT"/requirements.txt" || { cd $OLD_DIR && echo "requirements.txt modified on this branch, exiting" && exit 1; }
 git diff --exit-code requirements-develop.txt || { cd $OLD_DIR && echo "requirements-develop.txt modified on this branch, exiting" && exit 1; }
