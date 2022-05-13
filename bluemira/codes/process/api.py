@@ -23,6 +23,7 @@
 PROCESS api
 """
 import os
+from pathlib import Path
 
 from bluemira.base.file import get_bluemira_path
 from bluemira.base.look_and_feel import bluemira_print, bluemira_warn
@@ -48,10 +49,15 @@ class InDat:
         self.filename = filename
 
 
+class imp_data:  # noqa: N801, D101
+    __file__ = "./"
+
+
 OBS_VARS = dict()
 PROCESS_DICT = dict()
 
 try:
+    import process.data.impuritydata as imp_data  # noqa: F401, F811
     from process.io.in_dat import InDat  # noqa: F401, F811
     from process.io.mfile import MFile  # noqa: F401, F811
     from process.io.python_fortran_dicts import get_dicts
@@ -76,6 +82,29 @@ if ENABLED:
 DEFAULT_INDAT = os.path.join(
     get_bluemira_path("codes/process"), "PROCESS_DEFAULT_IN.DAT"
 )
+
+IMPURITIES = {
+    "H": 1,
+    "He": 2,
+    "Be": 3,
+    "C": 4,
+    "N": 5,
+    "O": 6,
+    "Ne": 7,
+    "Si": 8,
+    "Ar": 9,
+    "Fe": 10,
+    "Ni": 11,
+    "Kr": 12,
+    "Xe": 13,
+    "W ": 14,
+}
+
+IMPURITY_FILES = {
+    imp: Path(Path(imp_data.__file__).parent, f"{imp:_<2}Lzdata.dat")
+    for imp in IMPURITIES.keys()
+}
+IMPURITY_ID = {imp: f"fimp({id_:02}" for imp, id_ in IMPURITIES.items()}
 
 
 def update_obsolete_vars(process_map_name: str) -> str:
