@@ -23,18 +23,16 @@ The API for the plasmod solver.
 """
 
 from enum import auto
-from typing import Any, Dict, Iterable, List
+from typing import Any, Dict, Iterable
 
 import numpy as np
 
-from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.base.parameter import ParameterFrame
 from bluemira.base.solver import RunMode as BaseRunMode
-from bluemira.base.solver import SolverABC
+from bluemira.codes import plasmod
 from bluemira.codes.error import CodesError
 from bluemira.codes.interface_ import CodesSolver
 from bluemira.codes.plasmod.constants import BINARY as PLASMOD_BINARY
-from bluemira.codes.plasmod.constants import NAME as PLASMOD_NAME
 from bluemira.codes.plasmod.mapping import Profiles
 from bluemira.codes.plasmod.mapping import mappings as plasmod_mappings
 from bluemira.codes.plasmod.solver._outputs import PlasmodOutputs
@@ -77,7 +75,7 @@ class Solver(CodesSolver):
               output file to.
     """
 
-    name = PLASMOD_NAME
+    name = plasmod.NAME
     setup_cls = Setup
     run_cls = Run
     teardown_cls = Teardown
@@ -94,7 +92,7 @@ class Solver(CodesSolver):
         self._teardown: Teardown
 
         self.params = params
-        add_mapping(PLASMOD_NAME, self.params, plasmod_mappings)
+        add_mapping(plasmod.NAME, self.params, plasmod_mappings)
 
         self.build_config = {} if build_config is None else build_config
 
@@ -105,8 +103,6 @@ class Solver(CodesSolver):
         self.profiles_file = self.build_config.get(
             "profiles_file", self.DEFAULT_PROFILES_FILE
         )
-
-        # TODO(hsaunders): sanity check file paths are not equal?
 
     def execute(self, run_mode: RunMode) -> ParameterFrame:
         """
@@ -147,8 +143,7 @@ class Solver(CodesSolver):
 
         return self.params
 
-    def get_profile(self, profile: str) -> np.ndarray:
-        # TODO(hsaunders1904): should this use the Profiles enum?
+    def get_profile(self, profile: Profiles) -> np.ndarray:
         """
         Get a single plasmod profile.
 
@@ -162,21 +157,21 @@ class Solver(CodesSolver):
         profile_values: np.ndarray
             A plasmod profile.
         """
-        return getattr(self.plasmod_outputs(), Profiles(profile).name)
+        return getattr(self.plasmod_outputs(), profile.name)
 
-    def get_profiles(self, profiles: Iterable[str]) -> Dict[str, np.ndarray]:
+    def get_profiles(self, profiles: Iterable[Profiles]) -> Dict[Profiles, np.ndarray]:
         """
         Get a dictionary of plasmod profiles.
 
         Parameters
         ----------
-        profiles: Iterable[str]
-            An iterable of profile names.
+        profiles: Iterable[Profiles]
+            An iterable of Profiles enum values.
 
         Returns
         -------
-        profiles_dict: Dict[str, np.ndarray]
-            A dictionary mapping profile names to values.
+        profiles_dict: Dict[Profiles, np.ndarray]
+            A dictionary mapping profile enum to values.
         """
         profiles_dict = {}
         for profile in profiles:

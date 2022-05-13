@@ -29,11 +29,10 @@ import numpy as np
 import pytest
 
 from bluemira.base.config import Configuration
+from bluemira.codes import plasmod
 from bluemira.codes.error import CodesError
-from bluemira.codes.plasmod.constants import BINARY as PLASMOD_BINARY
-from bluemira.codes.plasmod.constants import NAME as PLASMOD_NAME
 from bluemira.codes.plasmod.mapping import mappings as plasmod_mappings
-from bluemira.codes.plasmod.solver import Run, RunMode, Setup, Solver, Teardown
+from bluemira.codes.plasmod.solver import Run, Setup, Teardown
 from bluemira.codes.utilities import add_mapping
 from tests._helpers import combine_text_mock_write_calls
 
@@ -47,7 +46,7 @@ class TestPlasmodSetup:
 
     def setup_method(self):
         self.default_pf = Configuration()
-        add_mapping(PLASMOD_NAME, self.default_pf, plasmod_mappings)
+        add_mapping(plasmod.NAME, self.default_pf, plasmod_mappings)
         self.input_file = "/path/to/input.dat"
 
     def test_inputs_updated_from_problem_settings_on_init(self):
@@ -136,7 +135,7 @@ class TestPlasmodRun:
         self.run_subprocess_mock.return_value = 0
 
         self.default_pf = Configuration()
-        add_mapping(PLASMOD_NAME, self.default_pf, plasmod_mappings)
+        add_mapping(plasmod.NAME, self.default_pf, plasmod_mappings)
 
     def teardown_method(self):
         self._run_subprocess_patch.stop()
@@ -191,7 +190,7 @@ class TestPlasmodTeardown:
 
     def setup_method(self):
         self.default_pf = Configuration()
-        add_mapping(PLASMOD_NAME, self.default_pf, plasmod_mappings)
+        add_mapping(plasmod.NAME, self.default_pf, plasmod_mappings)
 
     @pytest.mark.parametrize("run_mode_func", ["run", "read"])
     def test_run_mode_function_updates_plasmod_params_from_file(self, run_mode_func):
@@ -312,26 +311,26 @@ class TestPlasmodSolver:
     @pytest.mark.parametrize(
         "key, default",
         [
-            ("binary", PLASMOD_BINARY),
+            ("binary", plasmod.BINARY),
             ("problem_settings", {}),
-            ("input_file", Solver.DEFAULT_INPUT_FILE),
-            ("output_file", Solver.DEFAULT_OUTPUT_FILE),
-            ("profiles_file", Solver.DEFAULT_PROFILES_FILE),
+            ("input_file", plasmod.Solver.DEFAULT_INPUT_FILE),
+            ("output_file", plasmod.Solver.DEFAULT_OUTPUT_FILE),
+            ("profiles_file", plasmod.Solver.DEFAULT_PROFILES_FILE),
         ],
     )
     def test_init_sets_default_build_config_value(self, key, default):
-        solver = Solver(self.default_pf)
+        solver = plasmod.Solver(self.default_pf)
 
         assert getattr(solver, key) == default
 
     def test_execute_in_run_mode_sets_expected_params(self):
-        solver = Solver(self.default_pf, self.build_config)
+        solver = plasmod.Solver(self.default_pf, self.build_config)
 
-        pf = solver.execute(RunMode.RUN)
+        pf = solver.execute(plasmod.RunMode.RUN)
 
         self.run_subprocess_mock.assert_called_once_with(
             [
-                PLASMOD_BINARY,
+                plasmod.BINARY,
                 self.build_config["input_file"],
                 self.build_config["output_file"],
                 self.build_config["profiles_file"],
@@ -340,27 +339,28 @@ class TestPlasmodSolver:
         assert pf.beta_N == pytest.approx(3.0007884293)
 
     def test_get_profile_returns_profile_array(self):
-        solver = Solver(self.default_pf, self.build_config)
-        solver.execute(RunMode.RUN)
+        solver = plasmod.Solver(self.default_pf, self.build_config)
+        solver.execute(plasmod.RunMode.RUN)
 
-        profile = solver.get_profile("Te")
+        profile = solver.get_profile(plasmod.Profiles.Te)
 
         # Expected values taken from 'data/sample_profiles.dat'
         expected_values = [43.9383, 44.7500, 45.3127, 45.6264, 45.6912, 45.5069, 45.0737]
         np.testing.assert_almost_equal(profile, np.array(expected_values), decimal=4)
 
     def test_get_profiles_returns_dict_of_profiles(self):
-        solver = Solver(self.default_pf, self.build_config)
-        solver.execute(RunMode.RUN)
+        solver = plasmod.Solver(self.default_pf, self.build_config)
+        solver.execute(plasmod.RunMode.RUN)
+        profile_keys = [plasmod.Profiles.Te, plasmod.Profiles.g3]
 
-        profiles = solver.get_profiles(["Te", "g3"])
+        profiles = solver.get_profiles(profile_keys)
 
-        assert all(profile in profiles.keys() for profile in ["Te", "g3"])
+        assert all(profile in profiles.keys() for profile in profile_keys)
         assert all(isinstance(profile, np.ndarray) for profile in profiles.values())
 
     def test_plasmod_outputs_contains_unmapped_param(self):
-        solver = Solver(self.default_pf, self.build_config)
-        solver.execute(RunMode.RUN)
+        solver = plasmod.Solver(self.default_pf, self.build_config)
+        solver.execute(plasmod.RunMode.RUN)
 
         outputs = solver.plasmod_outputs()
 
@@ -370,11 +370,11 @@ class TestPlasmodSolver:
     def test_execute_after_updating_settings_runs_with_new_config(self):
         # Run the solver once, edit the problem settings, then run it
         # again. Then verify it was run with the new settings.
-        solver = Solver(self.default_pf, self.build_config)
-        solver.execute(RunMode.RUN)
+        solver = plasmod.Solver(self.default_pf, self.build_config)
+        solver.execute(plasmod.RunMode.RUN)
 
         solver.problem_settings["qdivt_sup"] = 10.0
-        solver.execute(RunMode.RUN)
+        solver.execute(plasmod.RunMode.RUN)
 
         param_value = self._get_value_from_input_file(
             "qdivt_sup", self.build_config["input_file"]
@@ -382,11 +382,11 @@ class TestPlasmodSolver:
         assert param_value == 10.0
 
     def test_param_not_modified_in_plasmod_input_if_modify_mapping_send_is_False(self):
-        solver = Solver(self.default_pf, self.build_config)
+        solver = plasmod.Solver(self.default_pf, self.build_config)
         solver.params.q_95 = (5, "Input")
 
         solver.modify_mappings({"q_95": {"send": False}})
-        solver.execute(RunMode.RUN)
+        solver.execute(plasmod.RunMode.RUN)
 
         param_value = self._get_value_from_input_file(
             "q95", self.build_config["input_file"]
@@ -394,11 +394,11 @@ class TestPlasmodSolver:
         assert param_value != 5
 
     def test_output_param_not_modified_if_modify_mappings_recv_set_to_False(self):
-        solver = Solver(self.default_pf, self.build_config)
+        solver = plasmod.Solver(self.default_pf, self.build_config)
         original_beta_N = solver.params.beta_N.value
 
         solver.modify_mappings({"beta_N": {"recv": False}})
-        solver.execute(RunMode.RUN)
+        solver.execute(plasmod.RunMode.RUN)
 
         assert solver.params.beta_N == original_beta_N
 
