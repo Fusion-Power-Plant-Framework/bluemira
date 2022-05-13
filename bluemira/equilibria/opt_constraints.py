@@ -94,7 +94,7 @@ def Ax_b_constraint(constraint, vector, grad, a_mat, b_vec, value, scale):  # no
         Current vector
     grad: np.ndarray
         Constraint Jacobian (modified in place)
-    A_mat: np.ndarray
+    a_mat: np.ndarray
         Response matrix
     b_vec: np.ndarray
         Target value vector
@@ -269,7 +269,8 @@ def coil_force_constraints_new(
     constraint,
     vector,
     grad,
-    eq,
+    a_mat,
+    b_vec,
     n_PF,
     n_CS,
     PF_Fz_max,
@@ -288,8 +289,10 @@ def coil_force_constraints_new(
         Current vector
     grad: np.ndarray
         Constraint Jacobian (modified in place)
-    eq: Equilibrium
-        Equilibrium object with which to calculate constraints
+    a_mat: np.ndarray
+        Response matrix
+    b_vec: np.ndarray
+        Target value vector
     n_PF: int
         Number of PF coils
     n_CS: int
@@ -313,10 +316,24 @@ def coil_force_constraints_new(
     TODO: Presently only handles CoilSets with Coils (SymmetricCircuits not yet
     supported)
     """
+    n_coils = len(vector)
+    currents = scale * vector
+
     # get coil force and jacobian
-    F, dF = eq.force_field.calc_force(vector * scale)  # noqa :N803
+    F = np.zeros((n_coils, 2))
+    dF = np.zeros((n_coils, n_coils, 2))  # noqa :N803
+    im = currents.reshape(-1, 1) @ np.ones((1, n_coils))  # current matrix
+
+    for i in range(2):  # coil force
+        # NOTE: * Hadamard matrix product
+        F[:, i] = currents * (a_mat[:, :, i] @ currents + b_vec[:, i])
+        dF[:, :, i] = im * a_mat[:, :, i]
+        diag = (
+            a_mat[:, :, i] @ currents + currents * np.diag(a_mat[:, :, i]) + b_vec[:, i]
+        )
+        np.fill_diagonal(dF[:, :, i], diag)
+
     F /= scale  # Scale down to MN
-    # dF /= self.scale
 
     # Absolute vertical force constraint on PF coils
     constraint[:n_PF] = F[:n_PF, 1] ** 2 - PF_Fz_max**2
@@ -403,8 +420,10 @@ def coil_field_constraints_new(
         Current vector
     grad: np.ndarray
         Constraint Jacobian (modified in place)
-    eq: Equilibrium
-        Equilibrium object with which to calculate constraints
+    a_mat: np.ndarray
+        Response matrix
+    b_vec: np.ndarray
+        Target value vector
     B_max: np.ndarray
         Maximum fields inside the coils
     scale: float
@@ -585,11 +604,31 @@ class CoilForceConstraints(UpdateableConstraint, OptimisationConstraint):
     plasma (TF from TF coils not accounted for if PF coils are inside the TF coils.)
     """
 
-    def __init__(self, coilset, B_max, tolerance=1.0e-6):
+    def __init__(
+        self, coilset, PF_Fz_max, CS_Fz_sum_max, CS_Fz_sep_max, tolerance=1.0e-6
+    ):
 
+        n_PF = coilset.n_PF
+        n_CS = coilset.n_CS
+        if self.n_CS == 0:
+            n_f_constraints = n_PF
+        else:
+            n_f_constraints = n_PF + n_CS + 1
+
+        if is_num(tolerance):
+            tolerance = tolerance * np.ones(n_f_constraints)
         super().__init__(
             f_constraint=coil_force_constraints_new,
-            f_constraint_args={},
+            f_constraint_args={
+                "a_mat": None,
+                "b_vec": None,
+                "scale": 1.0,
+                "PF_Fz_max": PF_Fz_max,
+                "CS_Fz_sum_max": CS_Fz_sum_max,
+                "CS_Fz_sep_max": CS_Fz_sep_max,
+                "n_PF": n_PF,
+                "n_CS": n_CS,
+            },
             tolerance=tolerance,
         )
 
@@ -600,14 +639,10 @@ class CoilForceConstraints(UpdateableConstraint, OptimisationConstraint):
         equilibrium = _get_dummy_equilibrium(equilibrium, I_not_dI)
 
         # Re-build control response matrix
-        if not fixed_coils or (fixed_coils and self._args["ax_mat"] is None):
-            ax_mat, az_mat = self.control_response(equilibrium.coilset)
-            self._args["ax_mat"] = ax_mat
-            self._args["az_mat"] = az_mat
+        if not fixed_coils or (fixed_coils and self._args["a_mat"] is None):
+            self._args["a_mat"] = self.control_response(equilibrium.coilset)
 
-        bxp_vec, bzp_vec = self.evaluate(equilibrium)
-        self._args["bxp_vec"] = bxp_vec
-        self._args["bzp_vec"] = bzp_vec
+        self._args["b_vec"] = self.evaluate(equilibrium)
 
     def control_response(self, coilset):
         """
