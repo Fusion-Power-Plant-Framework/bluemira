@@ -222,8 +222,10 @@ def make_polygon(
     wire: BluemiraWire
         a bluemira wire that contains the polygon
     """
-    points = Coordinates(points).T
-    return BluemiraWire(cadapi.make_polygon(points, closed), label=label)
+    points = Coordinates(points)
+    if closed and points.closed:
+        points = Coordinates(points.points[:-1])
+    return BluemiraWire(cadapi.make_polygon(points.T, closed), label=label)
 
 
 def make_bspline(
@@ -265,7 +267,6 @@ def _make_polygon_fallback(points, label="", closed=False, **kwargs) -> Bluemira
     """
     Overloaded function signature for fallback option from interpolate_bspline
     """
-    points = Coordinates(points).T
     return make_polygon(points, label, closed)
 
 
@@ -301,9 +302,9 @@ def interpolate_bspline(
     wire: BluemiraWire
         a bluemira wire that contains the bspline
     """
-    points = Coordinates(points).T
+    points = Coordinates(points)
     return BluemiraWire(
-        cadapi.interpolate_bspline(points, closed, start_tangent, end_tangent),
+        cadapi.interpolate_bspline(points.T, closed, start_tangent, end_tangent),
         label=label,
     )
 
@@ -479,6 +480,10 @@ def _offset_wire_discretised(
 ) -> BluemiraWire:
     """
     Fallback function for discretised offsetting
+
+    Notes
+    -----
+    Can only handle closed wires
     """
     from bluemira.geometry._deprecated_offset import offset_clipper
 
@@ -487,7 +492,7 @@ def _offset_wire_discretised(
     result = offset_clipper(
         coordinates, thickness, method=fallback_method, **fallback_kwargs
     )
-    return make_polygon(result, label=label)
+    return make_polygon(result, label=label, closed=True)
 
 
 @fallback_to(_offset_wire_discretised, cadapi.FreeCADError)
@@ -502,7 +507,7 @@ def offset_wire(
     *,
     fallback_method="square",
     byedges=True,
-    ndiscr=200,
+    ndiscr=400,
     **fallback_kwargs,
 ) -> BluemiraWire:
     """

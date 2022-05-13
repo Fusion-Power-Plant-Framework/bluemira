@@ -41,6 +41,7 @@ from bluemira.geometry.tools import (
     make_circle,
     make_polygon,
     revolve_shape,
+    slice_shape,
     sweep_shape,
 )
 
@@ -278,6 +279,26 @@ def _order_shapes_anticlockwise(shapes):
     angles = np.where(y > 0, np.arccos(x / r), 2 * np.pi - np.arccos(x / r))
     indices = np.argsort(angles)
     return list(np.array(shapes)[indices])
+
+
+def find_xy_plane_radii(wire, plane):
+    """
+    Get the radial coordinates of a wire's intersection points with a plane.
+
+    Parameters
+    ----------
+    wire: BluemiraWire
+        Wire to get the radii for in the plane
+    plane: BluemiraPlacement
+        Plane to slice with
+
+    Returns
+    -------
+    radii: list
+        The array of radii of intersections, sorted from smallest to largest
+    """
+    intersections = slice_shape(wire, plane)
+    return sorted(intersections[:, 0])
 
 
 def make_circular_xy_ring(r_inner, r_outer):

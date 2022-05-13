@@ -187,7 +187,6 @@ def _2d_coords_to_wire(coords_2d):
     """
     Build a wire from a 2D array of coordinates using a bspline.
     """
-    # Final coordinate discarded for closed=True, see #923
-    coords_3d = np.zeros((3, coords_2d.shape[1] - 1))
-    coords_3d[(0, 2), :] = coords_2d[:, :-1]
+    coords_3d = np.zeros((3, coords_2d.shape[1]))
+    coords_3d[(0, 2), :] = coords_2d
     return interpolate_bspline(coords_3d, closed=True)
