@@ -262,7 +262,8 @@ class CoilsetOptimisationProblem(OptimisationProblem):
                     constraint.prepare(
                         self.eq, I_not_dI=I_not_dI, fixed_coils=fixed_coils
                     )
-                constraint._args["scale"] = self.scale
+                if "scale" in constraint._args:
+                    constraint._args["scale"] = self.scale
 
     def __call__(self, eq=None, targets=None, psi_bndry=None):
         """

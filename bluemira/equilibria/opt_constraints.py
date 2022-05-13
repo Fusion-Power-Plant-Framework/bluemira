@@ -98,6 +98,10 @@ def Ax_b_constraint(constraint, vector, grad, a_mat, b_vec, value, scale):  # no
         Response matrix
     b_vec: np.ndarray
         Target value vector
+    value: float
+        Target constraint value
+    scale: float
+        Current scale with which to calculate the constraints
     """
     constraint[:] = np.dot(a_mat, scale * vector) - b_vec - value
     if grad.size > 0:
@@ -120,6 +124,12 @@ def L2_norm_constraint(  # noqa: N802
         Current vector
     grad: np.ndarray
         Constraint Jacobian (modified in place)
+    A_mat: np.ndarray
+        Response matrix
+    b_vec: np.ndarray
+        Target value vector
+    scale: float
+        Current scale with which to calculate the constraints
 
     Returns
     -------
@@ -136,22 +146,32 @@ def L2_norm_constraint(  # noqa: N802
     return constraint
 
 
-def current_midplane_constraint(constraint, vector, grad, eq, radius, inboard=True):
+def current_midplane_constraint(
+    constraint, vector, grad, eq, radius, scale, inboard=True
+):
     """
     Constraint function to constrain the inboard or outboard midplane
     of the plasma during optimisation.
 
     Parameters
     ----------
+    constraint: np.ndarray
+        Constraint array (modified in place)
+    vector: np.ndarray
+        Current vector
+    grad: np.ndarray
+        Constraint Jacobian (modified in place)
     eq: Equilibrium
         Equilibrium to use to fetch last closed flux surface from.
     radius: float
         Toroidal radius at which to constrain the plasma midplane.
+    scale: float
+        Current scale with which to calculate the constraints
     inboard: bool (default=True)
         Boolean controlling whether to constrain the inboard (if True) or
         outboard (if False) side of the plasma midplane.
     """
-    eq.coilset.set_control_currents(vector * 1e6)
+    eq.coilset.set_control_currents(vector * scale)
     lcfs = eq.get_LCFS()
     if inboard:
         constraint[:] = radius - min(lcfs.x)

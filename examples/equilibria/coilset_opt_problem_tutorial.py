@@ -362,7 +362,7 @@ eq = Equilibrium(
 opt_constraints = [
     OptimisationConstraint(
         f_constraint=opt_constraints.current_midplane_constraint,
-        f_constraint_args={"eq": eq, "radius": 1.0},
+        f_constraint_args={"eq": eq, "radius": 1.0, "scale": 1e6},
         tolerance=np.array([1e-4]),
         constraint_type="inequality",
     )
@@ -380,7 +380,7 @@ opt_problem = MinimalErrorCOP(
     gamma=1e-8,
     max_currents=3.0e7,
     optimiser=optimiser,
-    opt_constraints=opt_constraints,
+    constraints=opt_constraints,
 )
 
 # %%[markdown]
@@ -443,7 +443,7 @@ unconstrained_iterator = PicardIterator(
 
 f, ax = plt.subplots()
 eq.plot(ax=ax)
-unconstrained_iterator.constraints.plot(ax=ax)
+unconstrained_cop.targets.plot(ax=ax)
 
 # %%[markdown]
 
@@ -462,7 +462,7 @@ unconstrained_iterator()
 
 f, ax = plt.subplots()
 eq.plot(ax=ax)
-unconstrained_iterator.constraints.plot(ax=ax)
+unconstrained_cop.targets.plot(ax=ax)
 plt.show()
 
 # %%[markdown]
@@ -477,5 +477,5 @@ constrained_iterator()
 
 f, ax = plt.subplots()
 eq.plot(ax=ax)
-constrained_iterator.constraints.plot(ax=ax)
+opt_problem._constraints.plot(ax=ax)
 plt.show()
