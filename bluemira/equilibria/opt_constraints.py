@@ -613,13 +613,23 @@ class CoilForceConstraints(UpdateableConstraint, OptimisationConstraint):
         """
         Calculate control response of a CoilSet to the constraint.
         """
-        pass
+        Fa = np.zeros((coilset.n_coils, coilset.n_coils, 2))  # noqa :N803
+        for i, coil1 in enumerate(coilset.coils.values()):
+            for j, coil2 in enumerate(coilset.coils.values()):
+                Fa[i, j, :] = coil1.control_F(coil2)
+        return Fa
 
     def evaluate(self, equilibrium):
         """
         Calculate the value of the constraint in an Equilibrium.
         """
-        pass
+        Fp = np.zeros((self.n_coils, 2))  # noqa :N803
+        for i, coil in enumerate(self.coils.values()):
+            if coil.current != 0:
+                Fp[i, :] = coil.F(plasmacoil) / coil.current
+            else:
+                Fp[i, :] = np.zeros(2)
+        return Fp
 
 
 class MagneticConstraint(UpdateableConstraint, OptimisationConstraint):
