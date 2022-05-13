@@ -88,6 +88,21 @@ class DisplayCADOptions(DisplayOptions):
         else:
             super().__setattr__(attr, val)
 
+    def __getattribute__(self, attr):
+        """
+        Get attributes or from "_options" dict
+        """
+        try:
+            return super().__getattribute__(attr)
+        except AttributeError as ae:
+            if attr != "_options":
+                try:
+                    return self._options[attr]
+                except KeyError:
+                    raise ae
+            else:
+                raise ae
+
     def as_dict(self):
         """
         Returns the instance as a dictionary.
