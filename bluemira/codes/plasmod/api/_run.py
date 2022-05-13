@@ -22,7 +22,6 @@
 Defines the 'Run' stage of the plasmod solver.
 """
 
-
 from bluemira.base.look_and_feel import bluemira_debug
 from bluemira.base.parameter import ParameterFrame
 from bluemira.codes.error import CodesError

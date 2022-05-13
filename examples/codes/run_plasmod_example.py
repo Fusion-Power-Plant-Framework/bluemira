@@ -172,15 +172,15 @@ def print_outputs(solver):
     print(f"Argon fraction [-]: {outputs.car}")
 
 
-def plot_profile(solver, var_name, var_unit):
+def plot_profile(solver, profile, var_unit):
     """
     Plot plasmod profile
     """
-    prof = solver.get_profile(var_name)
-    x = solver.get_profile("x")
+    prof = solver.get_profile(profile)
+    x = solver.get_profile(plasmod.Profiles.x)
     _, ax = plt.subplots()
     ax.plot(x, prof)
-    ax.set(xlabel="x (-)", ylabel=var_name + " (" + var_unit + ")")
+    ax.set(xlabel="x (-)", ylabel=profile.name + " (" + var_unit + ")")
     ax.grid()
     plt.show()
 
@@ -199,9 +199,10 @@ solver.execute(plasmod.RunMode.RUN)
 # linking mechanism.
 # 1. Through the `params` attribute which contains
 #    all the bluemira linked parameters
-# 2. Profiles can be accessed through the `get_profile` function
+# 2. Profiles can be accessed through the `get_profile` function, using
+#    a value form the `plasmod.Profile` enum
 # 3. Unlinked plasmod parameters can be accessed through the
-#    `get_raw_variables` function
+#    `plasmod_outputs` function
 #
 # The list of available profiles can be seen by running the below cell.
 # A good exercise would be to try showing a different profile in the plot.
@@ -211,7 +212,7 @@ print("Profiles")
 pprint(list(plasmod.mapping.Profiles))
 
 # %%
-plot_profile(solver, "Te", "keV")
+plot_profile(solver, plasmod.Profiles.Te, "keV")
 print_outputs(solver)
 
 # %%[markdown]
