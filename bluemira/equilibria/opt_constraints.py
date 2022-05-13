@@ -219,3 +219,63 @@ def coil_field_constraints(constraint, vector, grad, eq, B_max, scale):
         grad[:] = dB
     constraint[:] = B - B_max
     return constraint
+
+
+def stray_field_constraints(constraint, vector, grad, cBx, cBz, B_max, scale):
+    """
+    Current optimisation poloidal field constraints on predefined locations. Should be
+    used for stray field constraints in plasma-less scenarios (i.e. premagnetisation).
+
+    Parameters
+    ----------
+    constraint: np.ndarray
+        Constraint array (modified in place)
+    vector: np.ndarray
+        Current vector
+    grad: np.ndarray
+        Constraint Jacobian (modified in place)
+
+
+    Returns
+    -------
+    constraint: np.ndarray
+        Updated constraint vector
+    """
+    B = scale * np.hypot((cBx @ vector), (cBz @ vector))
+    constraint[:] = B - B_max
+    if grad.size > 0:
+        grad[:] = cBx * cBx @ vector + cBz * cBz @ vector
+        grad[:] = scale * grad / B
+    return constraint
+
+
+def L2_norm_constraint(  # noqa: N802
+    constraint, vector, grad, a_mat, b_vec, value, scale
+):
+    """
+    Constrain the L2 norm of an Ax-b system of equations.
+
+    ||(Ax - b)||² < value
+
+    Parameters
+    ----------
+    constraint: np.ndarray
+        Constraint array (modified in place)
+    vector: np.ndarray
+        Current vector
+    grad: np.ndarray
+        Constraint Jacobian (modified in place)
+
+    Returns
+    -------
+    constraint: np.ndarray
+        Updated constraint vector
+    """
+    vector = scale * vector
+    residual = a_mat @ vector - b_vec
+    constraint[:] = residual.T @ residual - value
+
+    if grad.size > 0:
+        grad[:] = 2 * scale * (a_mat.T @ a_mat @ vector - a_mat.T @ b_vec)
+
+    return constraint
