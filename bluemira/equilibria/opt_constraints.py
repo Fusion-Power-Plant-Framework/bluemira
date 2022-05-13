@@ -623,10 +623,11 @@ class CoilForceConstraints(UpdateableConstraint, OptimisationConstraint):
         """
         Calculate the value of the constraint in an Equilibrium.
         """
+        plasma = equilibrium.plasma_coil()
         Fp = np.zeros((self.n_coils, 2))  # noqa :N803
         for i, coil in enumerate(self.coils.values()):
             if coil.current != 0:
-                Fp[i, :] = coil.F(plasmacoil) / coil.current
+                Fp[i, :] = coil.F(plasma) / coil.current
             else:
                 Fp[i, :] = np.zeros(2)
         return Fp
