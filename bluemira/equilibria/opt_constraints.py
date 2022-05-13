@@ -304,6 +304,53 @@ def coil_field_constraints(constraint, vector, grad, eq, B_max, scale):
     return constraint
 
 
+def coil_field_constraints_new(
+    constraint, vector, grad, ax_mat, az_mat, bxp_vec, bzp_vec, B_max, scale
+):
+    """
+    Current optimisation poloidal field constraints on coils
+
+    Parameters
+    ----------
+    constraint: np.ndarray
+        Constraint array (modified in place)
+    vector: np.ndarray
+        Current vector
+    grad: np.ndarray
+        Constraint Jacobian (modified in place)
+    eq: Equilibrium
+        Equilibrium object with which to calculate constraints
+    B_max: np.ndarray
+        Maximum fields inside the coils
+    scale: float
+        Current scale with which to calculate the constraints
+
+    Returns
+    -------
+    constraint: np.ndarray
+        Updated constraint vector
+
+    Notes
+    -----
+    TODO: Presently only handles CoilSets with Coils (SymmetricCircuits not yet
+    supported)
+    TODO: Presently only accounts for poloidal field contributions from PF coils and
+    plasma (TF from TF coils not accounted for if PF coils are inside the TF coils.)
+    """
+    currents = scale * vector
+    Bx_a = ax_mat @ currents
+    Bz_a = az_mat @ currents
+
+    B = np.hypot(Bx_a + bxp_vec, Bz_a + bzp_vec)
+    dB = Bx_a * (Bx_a @ currents + bxp_vec) + Bz_a * (Bz_a @ currents + bzp_vec)
+    dB /= B
+    dB /= scale**2
+    if grad.size > 0:
+        grad[:] = dB
+    constraint[:] = B - B_max
+    return constraint
+
+
 def _get_dummy_equilibrium(equilibrium, I_not_dI):
     """
     Get a dummy equilibrium for current optimisation where the background response is
@@ -326,6 +373,11 @@ def _get_dummy_equilibrium(equilibrium, I_not_dI):
 
 
 class UpdateableConstraint(ABC):
+    """
+    Abstract base mixin class for an equilibrium optimisation constraint that is
+    updateable.
+    """
+
     @abstractmethod
     def prepare(self, equilibrium, I_not_dI=False, fixed_coils=False):  # noqa :N803
         """
@@ -353,7 +405,43 @@ class CoilFieldConstraints(UpdateableConstraint, OptimisationConstraint):
     Constraints on the poloidal field inside the coils.
     """
 
-    pass
+    def __init__(self, B_max, tolerance=1.0e-6):
+        super().__init__(
+            f_constraint=coil_field_constraints_new,
+            f_constraint_args={
+                "ax_mat": None,
+                "az_mat": None,
+                "bxp_vec": None,
+                "bzp_vec": None,
+                "B_max": B_max,
+                "scale": 1.0,
+            },
+            tolerance=tolerance,
+        )
+
+    def prepare(self, equilibrium, I_not_dI=False, fixed_coils=False):
+        """ """
+        equilibrium = _get_dummy_equilibrium(equilibrium, I_not_dI)
+
+        # Re-build control response matrix
+        if not fixed_coils or (fixed_coils and self._args["a_mat"] is None):
+            self._args["a_mat"] = self.control_response(equilibrium.coilset)
+
+        self._args["b_vec"] = -self.evaluate(equilibrium)
+
+    def control_response(self, coilset):
+        """
+        Calculate control response of a CoilSet to the constraint.
+        """
+        Ba = np.zeros((coilset.n_coils, coilset.n_coils, 2))  # noqa :N803
+        for i, coil1 in enumerate(coilset.coils.values()):
+            for j, coil2 in enumerate(coilset.coils.values()):
+                Ba[i, j, 0] = np.array(coil2.control_Bx(coil1.x - coil1.dx, coil1.z))
+                Ba[i, j, 1] = np.array(coil2.control_Bz(coil1.x - coil1.dx, coil1.z))
+        return Ba
+
+    def evaluate(self, equilibrium):
+        pass
 
 
 class MagneticConstraint(UpdateableConstraint, OptimisationConstraint):
