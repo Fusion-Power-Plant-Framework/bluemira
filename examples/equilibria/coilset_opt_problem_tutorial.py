@@ -375,6 +375,7 @@ opt_constraints = [
 # %%
 
 opt_problem = TikhonovCurrentCOP(
+    coilset,
     eq,
     magnetic_targets,
     gamma=1e-8,
@@ -419,7 +420,9 @@ constrained_iterator = PicardIterator(
 
 # %%
 
-unconstrained_cop = UnconstrainedTikhonovCurrentCOP(eq, magnetic_targets, gamma=1e-8)
+unconstrained_cop = UnconstrainedTikhonovCurrentCOP(
+    coilset, eq, magnetic_targets, gamma=1e-8
+)
 unconstrained_iterator = PicardIterator(
     eq,
     profile,  # jetto
