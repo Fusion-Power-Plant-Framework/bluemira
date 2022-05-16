@@ -47,7 +47,7 @@ from bluemira.equilibria.grid import Grid
 from bluemira.equilibria.optimiser import BreakdownOptimiser, FBIOptimiser
 from bluemira.equilibria.physics import calc_beta_p_approx, calc_li, calc_psib
 from bluemira.equilibria.profiles import BetaIpProfile, CustomProfile, DoublePowerFunc
-from bluemira.equilibria.solve import PicardAbsIterator, PicardLiAbsIterator
+from bluemira.equilibria.solve import PicardIterator
 
 # %%[markdown]
 

@@ -51,8 +51,7 @@ from bluemira.equilibria.opt_problems import (
 )
 from bluemira.equilibria.optimiser import Norm2Tikhonov
 from bluemira.equilibria.profiles import CustomProfile
-from bluemira.equilibria.solve import PicardCoilsetIterator, PicardDeltaIterator
-from bluemira.equilibria.solve_new import PicardIterator
+from bluemira.equilibria.solve import PicardIterator
 from bluemira.geometry._deprecated_loop import Loop
 from bluemira.utilities.optimiser import Optimiser
 
