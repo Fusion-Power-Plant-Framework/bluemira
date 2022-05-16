@@ -26,9 +26,9 @@ in mira implemented in matlab (i.e. with Plasmod coupling + Grad-Shafranov)
 
 import numpy as np
 
-from bluemira.builders.plasma import MakeParameterisedPlasma
 from bluemira.base.config import Configuration
 from bluemira.base.logs import set_log_level
+from bluemira.builders.plasma import MakeParameterisedPlasma
 from bluemira.equilibria.fem_fixed_boundary.equilibrium import (
     solve_plasmod_fixed_boundary,
 )
@@ -95,10 +95,10 @@ dx_heat = 2.0000e-01
 main_params = {
     "R_0": 8.9830e00,
     "A": 3.1,
-    "kappa_u": 1.65,
-    "kappa_l": 1.85,
-    "delta_u": 0.6,
-    "delta_l": 0.55,
+    "kappa_u": 1.6,
+    "kappa_l": 1.75,
+    "delta_u": 0.33,
+    "delta_l": 0.45,
     "I_p": 19e6,
     "B_0": 5.31,
 }
@@ -135,8 +135,8 @@ new_params = {
     "v_burn": -1.0e6,
     "kappa_95": 1.652,
     "delta_95": 0.333,
-    "delta": (main_params["delta_l"] + main_params["delta_u"])/2,
-    "kappa": (main_params["kappa_l"] + main_params["kappa_u"])/2,
+    "delta": (main_params["delta_l"] + main_params["delta_u"]) / 2,
+    "kappa": (main_params["kappa_l"] + main_params["kappa_u"]) / 2,
     "q_95": 3.25,
     "f_ni": 0,
 }
@@ -154,7 +154,7 @@ for param_name in plasmod_params.keys():
         param.source = "Plasmod Example"
 
 problem_settings = {
-    "amin": new_params['R_0']/new_params['A'],
+    "amin": new_params["R_0"] / new_params["A"],
     "pfus_req": 2000.0,
     "pheat_max": 100.0,
     "q_control": 50.0,
@@ -185,8 +185,8 @@ solve_plasmod_fixed_boundary(
     kappa95_t,
     lcar_coarse=0.3,
     lcar_fine=0.05,
-    niter_max=5,
+    niter_max=15,
     iter_err_max=1e-5,
-    theta=0.8,
+    theta=1,
     gs_i_theta=1,
 )

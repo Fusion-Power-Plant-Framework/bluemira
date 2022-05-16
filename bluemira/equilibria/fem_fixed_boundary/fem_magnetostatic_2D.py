@@ -25,14 +25,15 @@ and toroidal current source using fenics FEM solver
 """
 
 import dolfin
-import numpy as np
 import matplotlib.pyplot as plt
+import numpy as np
 
 from bluemira.base.constants import MU_0
-from bluemira.equilibria.fem_fixed_boundary.utilities import ScalarSubFunc
 from bluemira.equilibria.fem_fixed_boundary.utilities import (
+    ScalarSubFunc,
     plot_scalar_field,
 )
+
 
 class FemMagnetostatic2d:
     """
@@ -77,9 +78,7 @@ class FemMagnetostatic2d:
 
         # ======================================================================
         # check whether mesh is a filename or a mesh, then load it or use it
-        if isinstance(
-            mesh, str
-        ):
+        if isinstance(mesh, str):
             self.mesh = dolfin.Mesh(mesh)  # define the mesh
         else:
             self.mesh = mesh  # use the mesh
@@ -229,12 +228,13 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
         return np.min(self.psi.vector()[:])
 
     @property
-    def _psi_norm_2d(self):
+    def psi_norm_2d(self):
         """Normalized flux function in 2-D"""
 
         def myfunc(x):
-            value = np.sqrt(np.abs((self.psi(x) - self.psi_ax) / (self.psi_b -
-                                                                  self.psi_ax)))
+            value = np.sqrt(
+                np.abs((self.psi(x) - self.psi_ax) / (self.psi_b - self.psi_ax))
+            )
             return value
 
         return myfunc
@@ -267,7 +267,7 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
                 return j_target
             else:
                 r = x[0]
-                x_psi = self._psi_norm_2d(x)
+                x_psi = self.psi_norm_2d(x)
 
                 if callable(pprime):
                     a = r * pprime(x_psi)
@@ -306,7 +306,6 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
         func = ScalarSubFunc(myfunc)
         return func
 
-
     def _calculate_curr_tot(self, func):
         dx = dolfin.Measure("dx", domain=self.mesh)
         return dolfin.assemble(func * dx())
@@ -327,7 +326,7 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
         max_iter=10,
         i_theta=1,
         verbose=False,
-        verbose_plot=False
+        verbose_plot=False,
     ):
         """Solves the GS problem given pprime and ffprime"""
         points = self.mesh.coordinates()
@@ -336,10 +335,15 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
             self.g_func = self._create_g_func(pprime, ffprime, curr_target)
             curr_data = np.array([self.g_func(p) for p in points])
             axis, cntr, _ = plot_scalar_field(
-                points[:, 0], points[:, 1], curr_data, levels=20, axis=None,
-                tofill=True, contour=False,
+                points[:, 0],
+                points[:, 1],
+                curr_data,
+                levels=20,
+                axis=None,
+                tofill=True,
+                contour=False,
             )
-            plt.title(f'J current at iteration 0')
+            plt.title(f"J current at iteration 0")
             plt.show()
 
         self.g = self._create_g(pprime, ffprime, curr_target)
@@ -360,20 +364,24 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
             if verbose_plot:
                 curr_data = np.array([self.g_func(p) for p in points])
                 axis, cntr, _ = plot_scalar_field(
-                    points[:, 0], points[:, 1], curr_data, levels=20, axis=None,
-                    tofill=True, contour=False,
+                    points[:, 0],
+                    points[:, 1],
+                    curr_data,
+                    levels=20,
+                    axis=None,
+                    tofill=True,
+                    contour=False,
                 )
-                plt.title(f'J current at iteration {i}')
+                plt.title(f"J current at iteration {i}")
                 plt.show()
 
-            prev = np.array([self._psi_norm_2d(p) for p in points])
+            prev = np.array([self.psi_norm_2d(p) for p in points])
 
             if verbose_plot:
                 axis, cntr, _ = plot_scalar_field(
-                    points[:, 0], points[:, 1], prev, levels=20, axis=None,
-                    tofill=True
+                    points[:, 0], points[:, 1], prev, levels=20, axis=None, tofill=True
                 )
-                plt.title(f'Normalized magnetic coordinate at iteration {i}')
+                plt.title(f"Normalized magnetic coordinate at iteration {i}")
                 plt.show()
             # print(f"Magnetic coordinate range = [{np.min(prev)}:{np.max(prev)}]")
 
@@ -386,16 +394,15 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
                 self.g, dirichlet_bc_function, dirichlet_marker, neumann_bc_function
             )
 
-            new = np.array([self._psi_norm_2d(p) for p in points])
+            new = np.array([self.psi_norm_2d(p) for p in points])
             # new = np.array([self.psi(p) for p in points])
             diff = new - prev
 
             if verbose_plot:
                 axis, cntr, _ = plot_scalar_field(
-                    points[:, 0], points[:, 1], diff, levels=20, axis=None,
-                    tofill=True
+                    points[:, 0], points[:, 1], diff, levels=20, axis=None, tofill=True
                 )
-                plt.title(f'GS error at iteration {i}')
+                plt.title(f"GS error at iteration {i}")
                 plt.show()
 
             # diff = self.psi.compute_vertex_values() - prev
@@ -408,8 +415,9 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
             new_psi = dolfin.Function(self.V)
             new_psi.set_allow_extrapolation(True)
 
-            self.psi.vector()[:] = i_theta * self.psi.vector()[:] + (1 - i_theta) * \
-                                   prev_psi
+            self.psi.vector()[:] = (
+                i_theta * self.psi.vector()[:] + (1 - i_theta) * prev_psi
+            )
 
             self._update_curr(curr_target)
 

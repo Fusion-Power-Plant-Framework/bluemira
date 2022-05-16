@@ -20,27 +20,25 @@
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 
 """Fixed boundary equilibrium class"""
+import time
+
 import numpy as np
 
-from bluemira.builders.plasma import MakeParameterisedPlasma
 from bluemira.base.config import Configuration
-from bluemira.mesh import meshing
-from bluemira.mesh.tools import import_mesh, msh_to_xdmf
-
+from bluemira.base.look_and_feel import bluemira_debug
+from bluemira.builders.plasma import MakeParameterisedPlasma
 from bluemira.equilibria.fem_fixed_boundary.fem_magnetostatic_2D import (
     FemGradShafranovFixedBoundary,
 )
-
-import time
-
-from bluemira.base.look_and_feel import bluemira_debug
 from bluemira.equilibria.fem_fixed_boundary.transport_solver import (
     PlasmodTransportSolver,
 )
 from bluemira.equilibria.fem_fixed_boundary.utilities import (
-    plot_profile,
     calculate_plasma_shape_params,
+    plot_profile,
 )
+from bluemira.mesh import meshing
+from bluemira.mesh.tools import import_mesh, msh_to_xdmf
 
 
 def solve_plasmod_fixed_boundary(
@@ -75,17 +73,22 @@ def solve_plasmod_fixed_boundary(
             .get_component("LCFS")
             .shape.volume
         )
+
         plasma.plot_options.show_faces = False
         plasma.plot_2d(show=True)
 
-        kappa = (
-            builder_plasma.params.get_param("kappa_l")
-            + builder_plasma.params.get_param("kappa_u")
-        ) / 2
-        delta = (
-            builder_plasma.params.get_param("delta_l")
-            + builder_plasma.params.get_param("delta_u")
-        ) / 2
+        kappa_u = builder_plasma.params.get_param("kappa_u")
+        kappa_l = builder_plasma.params.get_param("kappa_l")
+        delta_u = builder_plasma.params.get_param("delta_u")
+        delta_l = builder_plasma.params.get_param("delta_l")
+
+        kappa = (kappa_u + kappa_l) / 2
+        delta = (delta_u + delta_l) / 2
+
+        print(f"kappa_u: {kappa_u}, delta: {delta_u}")
+        print(f"kappa_l: {kappa_l}, delta: {delta_l}")
+        print(f"kappa: {kappa}, delta: {delta}")
+        print(f"volume: {plasma_volume}")
 
         # initialize plasmod solver
         # - V_p is set equal to plasma volume
@@ -170,11 +173,11 @@ def solve_plasmod_fixed_boundary(
         )
 
         points = mesh.coordinates()
-        psi_data = np.array([gs_solver.psi(x) for x in points])
+        x2d_data = np.array([gs_solver.psi_norm_2d(x) for x in points])
 
         # calculate kappa_95 and delta_95
         R_geo, kappa_95, delta_95 = calculate_plasma_shape_params(
-            points, psi_data, [gs_solver.psi_ax * 0.05]
+            points, x2d_data, [np.sqrt(0.95)]
         )
         R_geo, kappa_95, delta_95 = R_geo[0], kappa_95[0], delta_95[0]
 
