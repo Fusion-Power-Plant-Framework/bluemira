@@ -21,7 +21,7 @@
 """Base classes for solvers using external codes."""
 
 import abc
-from typing import Any, Callable, Dict, List, Union
+from typing import Any, Callable, Dict, List, Optional, Union
 
 from bluemira.base.constants import raw_uc
 from bluemira.base.look_and_feel import bluemira_warn
@@ -58,7 +58,9 @@ class CodesSetup(CodesTask):
     Base class for setup tasks of a solver for an external code.
     """
 
-    def _get_new_inputs(self, remapper: Union[Callable, Dict[str, str]] = None):
+    def _get_new_inputs(
+        self, remapper: Optional[Union[Callable, Dict[str, str]]] = None
+    ):
         """
         Retrieve inputs values to the external code from this tasks'
         ParameterFrame.
