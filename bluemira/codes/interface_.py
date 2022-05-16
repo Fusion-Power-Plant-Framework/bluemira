@@ -21,7 +21,7 @@
 """Base classes for solvers using external codes."""
 
 import abc
-from typing import Any, Callable, Dict, Union
+from typing import Any, Callable, Dict, List, Union
 
 from bluemira.base.constants import raw_uc
 from bluemira.base.look_and_feel import bluemira_warn
@@ -40,7 +40,7 @@ class CodesTask(Task):
         super().__init__(params)
         self._name = codes_name
 
-    def _run_subprocess(self, command, **kwargs):
+    def _run_subprocess(self, command: List[str], **kwargs):
         """
         Run a subprocess command and raise a CodesError if it returns a
         non-zero exit code.
