@@ -69,7 +69,7 @@ pybind11==2.9.2
 pyclipper==1.3.0.post2
 pycparser==2.21
 Pygments==2.12.0
-pyparsing==3.0.8
+pyparsing==3.0.9
 pypet==0.6.0
 pyquaternion==0.9.9
 pyrsistent==0.18.1
