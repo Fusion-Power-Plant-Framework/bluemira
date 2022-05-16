@@ -473,7 +473,7 @@ plt.show()
 
 # ### Constrained Optimisation
 
-# Now we have a better starting `Equilibrium` for our constrained optimisation6e6
+# Now we have a better starting `Equilibrium` for our constrained optimisation
 
 # %%
 
