@@ -3,7 +3,7 @@
 # codes, to carry out a range of typical conceptual fusion reactor design
 # activities.
 #
-# Copyright (C) 2021 M. Coleman, J. Cook, F. Franza, I.A. Maione, S. McIntosh, J. Morris,
+# Copyright (C) 2022 M. Coleman, J. Cook, F. Franza, I.A. Maione, S. McIntosh, J. Morris,
 #                    D. Short
 #
 # bluemira is free software; you can redistribute it and/or
@@ -43,11 +43,7 @@ __all__ = [
     "JsourceConvergence",
     "JeonConvergence",
     "JrelConvergence",
-    "PicardLiAbsIterator",
-    "PicardAbsIterator",
-    "PicardCoilsetIterator",
-    "PicardDeltaIterator",
-    "PicardLiDeltaIterator",
+    "PicardIterator",
 ]
 
 
@@ -390,118 +386,9 @@ class JsourceConvergence(ConvergenceCriterion):
         return self.check_converged(conv)
 
 
-class CurrentOptimiser:
+class PicardIterator:
     """
-    Mixin class for performing optimisation of currents
-    """
-
-    def _optimise_currents(self, psib=None, update_size=True):
-        """
-        Finds optimal currents for the coilset
-
-        Parameters
-        ----------
-        psib: List[float], optional
-            The boundary psi values, by default None.
-        update_size: bool, optional
-            If True then update the coilset size, by default True.
-        """
-        self.constraints(self.eq, I_not_dI=True)
-        try:
-            currents = self.optimiser(self.eq, self.constraints, psib)
-            self.store.append(currents)
-        except ExternalOptError:
-            currents = self.store[-1]
-        self.coilset.set_control_currents(currents, update_size)
-
-    def _initial_optimise_currents(self, psib=None, update_size=True):
-        """
-        Finds optimal currents for the coilset for optimiser initialisation
-
-        Parameters
-        ----------
-        psib: List[float], optional
-            The boundary psi values, by default None.
-        update_size: bool, optional
-            If True then update the coilset size, by default True.
-        """
-        return self._optimise_currents(psib, update_size)
-
-
-class CoilsetPropertiesOptimiser:
-    """
-    Mixin class for performing optimisation of currents
-    """
-
-    def _optimise_currents(self, psib=None, update_size=True):
-        """
-        Finds optimal currents for the coilset
-
-        Parameters
-        ----------
-        psib: List[float], optional
-            The boundary psi values, by default None.
-        update_size: bool, optional
-            If True then update the coilset size, by default True.
-        """
-        try:
-            coilset = self.optimiser(self.eq, self.constraints, psib)
-            self.store.append(coilset)
-        except ExternalOptError:
-            coilset = self.store[-1]
-        self.coilset = coilset
-
-    def _initial_optimise_currents(self, psib=None, update_size=True):
-        """
-        Finds optimal currents for the coilset for optimiser initialisation
-
-        Parameters
-        ----------
-        psib: List[float], optional
-            The boundary psi values, by default None.
-        update_size: bool, optional
-            If True then update the coilset size, by default True.
-        """
-        return self._optimise_currents(psib, update_size)
-
-
-class CurrentGradientOptimiser:
-    """
-    Mixin class for performing optimisation of current gradients
-    """
-
-    def _optimise_currents(self, fixed_coils=False):
-        """
-        Finds an optimal dI for the coilset
-
-        Parameters
-        ----------
-        fixed_coils: bool, optional
-            If True then applies a fixed-coil constraint, by default False.
-        """
-        self.constraints(self.eq, fixed_coils=fixed_coils)
-        try:
-            d_current = self.optimiser(self.eq, self.constraints)
-            self.store.append(d_current)
-        except ExternalOptError:
-            d_current = self.store[-1]
-        self.coilset.adjust_currents(d_current)
-
-    def _initial_optimise_currents(self, fixed_coils=False):
-        """
-        Finds an optimal dI for the coilset for optimiser initialisation
-
-        Parameters
-        ----------
-        fixed_coils: bool, optional
-            If True then applies a fixed-coil constraint, by default False.
-        """
-        return self._optimise_currents(fixed_coils)
-
-
-class PicardBaseIterator(ABC):
-    """
-    Abstract base class for Picard iterative solvers
+    A Picard iterative solver.
 
     Child classes must provide a __call__ method which carries out the
     iteration process(es)
@@ -520,8 +407,6 @@ class PicardBaseIterator(ABC):
         The convergence criterion to use
     relaxation: float
         The relaxation parameter to use between iterations
-    miniter: int
-        The minimum number of iterations before using li optimisation
     maxiter: int
         The maximum number of iterations
     plot: bool
@@ -538,12 +423,12 @@ class PicardBaseIterator(ABC):
         self,
         eq,
         profiles,
-        constraints,
-        optimiser,
+        optimisation_problem,
         convergence=DudsonConvergence(),
-        relaxation=0,
-        miniter=5,
-        maxiter=30,
+        I_not_dI: bool = False,
+        fixed_coils: bool = False,
+        relaxation: int = 0,
+        maxiter: int = 30,
         plot=True,
         gif=False,
         figure_folder=None,
@@ -552,16 +437,17 @@ class PicardBaseIterator(ABC):
         self.eq = eq
         self.coilset = self.eq.coilset
         self.profiles = profiles
-        self.constraints = constraints
-        self.optimiser = optimiser
+        self.opt_prob = optimisation_problem
         if isinstance(convergence, ConvergenceCriterion):
             self.convergence = convergence
         else:
             raise ValueError(
                 "Optimiser convergence specification must be a sub-class of ConvergenceCriterion."
             )
+        self.I_not_dI = I_not_dI
+        self.fixed_coils = fixed_coils
+
         self.relaxation = relaxation
-        self.miniter = miniter
         self.maxiter = maxiter
         self.plot_flag = plot
         self.gif_flag = gif
@@ -576,18 +462,13 @@ class PicardBaseIterator(ABC):
             self.pname = plot_name
             self.f, self.ax = plt.subplots()
 
-    @property
-    @abstractmethod
-    def current_optimiser_kwargs(self):
-        """
-        Get the kwargs for the current optimiser.
-
-        Returns
-        -------
-        kwargs: dict
-            The keyword arguments to use in the current optimiser.
-        """
-        return {}
+    def _optimise_coilset(self):
+        try:
+            coilset = self.opt_prob.optimise(self.I_not_dI, self.fixed_coils)
+            self.store.append(coilset)
+        except ExternalOptError:
+            coilset = self.store[-1]
+        self.coilset = coilset
 
     @property
     def psi(self):
@@ -666,7 +547,7 @@ class PicardBaseIterator(ABC):
                 if self.gif_flag:
                     make_gif(self.figure_folder, self.pname)
                 raise StopIteration
-            self._optimise_currents(**self.current_optimiser_kwargs)
+            self._optimise_coilset()
             self._psi = (
                 1 - self.relaxation
             ) * self.eq.psi() + self.relaxation * self._psi_old
@@ -721,26 +602,20 @@ class PicardBaseIterator(ABC):
         )
         plt.pause(PLT_PAUSE)
 
-    @abstractmethod
     def _solve(self):
         """
         Solve for this iteration.
         """
-        pass
+        self.eq.solve(self.profiles, psi=self.psi)
 
-    @abstractmethod
-    def _optimise_currents(self, **kwargs):
-        pass
-
-    @abstractmethod
-    def _initial_optimise_currents(self, **kwargs):
-        pass
+    def _initial_optimise_coilset(self, **kwargs):
+        self._optimise_coilset(**kwargs)
 
     def _setup(self):
         """
         Initialise psi and toroidal current values.
         """
-        self._initial_optimise_currents(**self.current_optimiser_kwargs)
+        self._initial_optimise_coilset()
         self._psi = self.eq.psi()
         self._j_tor = self.eq._jtor
         if self._j_tor is None:
@@ -758,153 +633,3 @@ class PicardBaseIterator(ABC):
             self.eq.x, self.eq.z, self.eq.psi(), o_points, x_points
         )
         self.eq._reassign_profiles(self.profiles)
-
-
-class PicardDeltaIterator(CurrentGradientOptimiser, PicardBaseIterator):
-    """
-    Picard solver for unconstrained li using dI iteration
-    """
-
-    @property
-    def current_optimiser_kwargs(self):
-        """
-        Get the kwargs for the current optimiser.
-        """
-        return {"fixed_coils": False}
-
-    def _solve(self):
-        """
-        Solve for this iteration.
-        """
-        self.eq.solve(self.profiles, psi=self.psi)
-
-
-class PicardLiDeltaIterator(CurrentGradientOptimiser, PicardBaseIterator):
-    """
-    Picard solver for constrained plasma profiles (li) using dI iteration
-    """
-
-    @property
-    def current_optimiser_kwargs(self):
-        """
-        Get the kwargs for the current optimiser.
-        """
-        return {"fixed_coils": False}
-
-    def _solve(self):
-        """
-        Solve for this iteration.
-        """
-        if self.i < self.miniter:  # free internal plasma control
-            self.eq.solve(self.profiles, psi=self.psi)
-        else:  # constrain plasma li
-            # This is still required because the l_i requires an updated Bp field
-            # which changes with moving coils
-            # TODO: Remove Li iterators altogether, and get the profiles from fixed
-            # boundary equilibria, without optimising profiles at each G-S iteration...
-            self.coilset.mesh_coils(d_coil=0.4)
-            self.eq._remap_greens()
-            self.eq.solve_li(self.profiles, psi=self.psi)
-
-
-class PicardAbsIterator(CurrentOptimiser, PicardBaseIterator):
-    """
-    Picard solver for unconstrained plasma profiles (li) using I iteration.
-    Best used for constrained coil optimisation
-    """
-
-    @property
-    def current_optimiser_kwargs(self):
-        """
-        Get the kwargs for the current optimiser.
-        """
-        return {"psib": None, "update_size": True}
-
-    def _solve(self):
-        """
-        Solve for this iteration.
-        """
-        self.eq.solve(self.profiles, psi=self.psi)
-
-
-class PicardCoilsetIterator(CoilsetPropertiesOptimiser, PicardBaseIterator):
-    """
-    Picard solver for unconstrained plasma profiles (li) using I iteration.
-    Best used for constrained coil optimisation
-    """
-
-    @property
-    def current_optimiser_kwargs(self):
-        """
-        Get the kwargs for the current optimiser.
-        """
-        return {"psib": None, "update_size": True}
-
-    def _solve(self):
-        """
-        Solve for this iteration.
-        """
-        self.eq.solve(self.profiles, psi=self.psi)
-
-
-class PicardLiAbsIterator(CurrentOptimiser, PicardBaseIterator):
-    """
-    Picard solver for constrained plasma profiles (li) using I iteration.
-    Best used for constrained coil optimisation
-    """
-
-    @property
-    def current_optimiser_kwargs(self):
-        """
-        Get the kwargs for the current optimiser.
-        """
-        return {"psib": None, "update_size": True}
-
-    def _solve(self):
-        """
-        Solve for this iteration.
-        """
-        if self.i < self.miniter:  # free internal plasma control
-            self.eq.solve(self.profiles, psi=self.psi)
-        else:  # constrain plasma li
-            # This is still required because the l_i requires an updated Bp field
-            # which changes with moving coils
-            # TODO: Remove Li iterators altogether, and get the profiles from fixed
-            # boundary equilibria, without optimising profiles at each G-S iteration...
-            self.coilset.mesh_coils(d_coil=0.4)
-            self.eq._remap_greens()
-            self.eq.solve_li(self.profiles, psi=self.psi)
-
-
-class EquilibriumConverger(CurrentOptimiser, PicardBaseIterator):
-    """
-    Tool used to converge equilibria with fixed coil sizes for a given boundary
-    flux
-    """
-
-    @property
-    def current_optimiser_kwargs(self):
-        """
-        Get the kwargs for the current optimiser.
-        """
-        return {"update_size": False}
-
-    def __call__(self, psib):
-        """
-        The iteration object call handle.
-        """
-        self.psib = psib
-        super().__call__()
-        return self.eq, self.profiles
-
-    def _solve(self):
-        """
-        Solve for this iteration.
-        """
-        self.eq.solve_li(self.profiles, psi=self.psi)
-
-    def _optimise_currents(self, **kwargs):
-        super()._optimise_currents(self.psib, **self.current_optimiser_kwargs)
-
-    def _initial_optimise_currents(self, **kwargs):
-        super()._optimise_currents(self.psib, update_size=False)
