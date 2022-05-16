@@ -18,19 +18,8 @@
 #
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
-
 """
-Importer for plasmod's constants, enums, and solver
+The API for the plasmod solver.
 """
 
-from bluemira.codes.plasmod.api import RunMode, Solver
-from bluemira.codes.plasmod.constants import BINARY, NAME
-from bluemira.codes.plasmod.mapping import (
-    EquilibriumModel,
-    ImpurityModel,
-    PedestalModel,
-    PLHModel,
-    Profiles,
-    SOLModel,
-    TransportModel,
-)
+from bluemira.codes.plasmod.api._solver import Run, RunMode, Setup, Solver, Teardown

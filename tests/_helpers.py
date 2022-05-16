@@ -20,17 +20,28 @@
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 
 """
-Importer for plasmod's constants, enums, and solver
+A collection of general helper functions for tests.
 """
 
-from bluemira.codes.plasmod.api import RunMode, Solver
-from bluemira.codes.plasmod.constants import BINARY, NAME
-from bluemira.codes.plasmod.mapping import (
-    EquilibriumModel,
-    ImpurityModel,
-    PedestalModel,
-    PLHModel,
-    Profiles,
-    SOLModel,
-    TransportModel,
-)
+from unittest import mock
+
+
+def combine_text_mock_write_calls(open_mock: mock.MagicMock) -> str:
+    """
+    Combine the 'write' calls made on a mock created using the
+    unittest.mock.mock_open function.
+
+    You may have created a suitable mock object using the following
+
+    .. code-block:: python
+
+        with mock.patch("builtins.open", new_callable=mock.mock_open) as open_mock:
+            # write a file
+
+        text_written_to_file = combine_text_mock_write_calls(open_mock)
+
+    """
+    write_call_args = open_mock.return_value.write.call_args_list
+    if len(write_call_args) == 0:
+        return ""
+    return "".join([call.args[0] for call in write_call_args])

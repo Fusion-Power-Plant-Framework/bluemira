@@ -143,9 +143,9 @@ class Profiles(Model):
     ntrit   [10¹⁹/m3] tritium density profile
     nalf    [10¹⁹/m3] helium density profile
 
-    # Not yet enabled in plasmod
-    # qrad   radiation density profile
-    # qneut  nuetron fusion power density profile
+    Not yet enabled in plasmod:
+     * qrad   radiation density profile
+     * qneut  neutron fusion power density profile
 
     """
 
