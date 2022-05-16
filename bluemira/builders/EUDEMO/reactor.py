@@ -39,7 +39,7 @@ from bluemira.builders.EUDEMO.tf_coils import TFCoilsBuilder
 from bluemira.builders.EUDEMO.vacuum_vessel import VacuumVesselBuilder
 from bluemira.builders.radiation_shield import RadiationShieldBuilder
 from bluemira.builders.thermal_shield import (
-    CyrostatThermalShieldBuilder,
+    CryostatThermalShieldBuilder,
     VacuumVesselThermalShieldBuilder,
 )
 from bluemira.codes import systems_code_solver
@@ -261,7 +261,7 @@ class EUDEMOReactor(Reactor):
         default_config = {}
         config = self._process_design_stage_config(default_config)
 
-        builder = CyrostatThermalShieldBuilder(
+        builder = CryostatThermalShieldBuilder(
             self._params.to_dict(),
             config,
             pf_coils_xz_kozs=pf_kozs,
