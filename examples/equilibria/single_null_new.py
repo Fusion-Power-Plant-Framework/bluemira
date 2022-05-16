@@ -49,7 +49,6 @@ from bluemira.equilibria.opt_constraints import (
     IsofluxConstraint,
     MagneticConstraintSet,
     PsiBoundaryConstraint,
-    coil_force_constraints,
 )
 from bluemira.equilibria.opt_problems import (
     MinimalCurrentsCOP,
@@ -58,7 +57,6 @@ from bluemira.equilibria.opt_problems import (
 )
 from bluemira.equilibria.profiles import CustomProfile
 from bluemira.equilibria.solve_new import DudsonConvergence, PicardIterator
-from bluemira.utilities.opt_problems import OptimisationConstraint
 from bluemira.utilities.optimiser import Optimiser
 
 plot_defaults()
