@@ -1,4 +1,4 @@
-set -e
+set -euxo pipefail
 
 NJOBS=$(nproc --ignore=2)
 FORCE="false"
@@ -12,21 +12,18 @@ do
   esac
 done
 
-if [[ $(basename $PWD) == *"bluemira"* ]]; then
-  cd ..
-fi
-
-if [ ! -d qt5 ]; then
-  git clone https://code.qt.io/qt/qt5.git
-  cd qt5
-  git checkout 5.14.2
-  cd ..
-fi
-
-cd qt5
-perl init-repository -f --module-subset=essential,qtxmlpatterns,qtsvg
-export LLVM_INSTALL_DIR=/usr/lib/llvm-6.0
 cd ..
+
+export LLVM_INSTALL_DIR=/usr/lib/llvm-14
+PATCH_DIR=/opt/bluemira/scripts/qt5/step2
+cd qt5/qtbase
+patch -p 1 -f < "$PATCH_DIR/gcc11_patch1.patch"
+patch -p 1 -f < "$PATCH_DIR/gcc11_patch2.patch"
+
+cd ../qtdeclarative
+patch -p 1 -f < "$PATCH_DIR/gcc11_patch3.patch"
+
+cd ../../
 
 if [ -d qt5-build ]; then
   if ${FORCE}; then
@@ -39,5 +36,5 @@ if [ -d qt5-build ]; then
 fi
 
 mkdir qt5-build && cd qt5-build
-../qt5/configure -opensource -confirm-license -nomake examples -nomake tests
+../qt5/configure -opensource -platform linux-g++ -confirm-license -nomake examples -nomake tests
 make -j$NJOBS
