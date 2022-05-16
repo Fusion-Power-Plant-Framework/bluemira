@@ -316,17 +316,10 @@ def coil_force_constraints_new(
 
     # get coil force and jacobian
     F = np.zeros((n_coils, 2))
-    dF = np.zeros((n_coils, n_coils, 2))  # noqa :N803
-    im = currents.reshape(-1, 1) @ np.ones((1, n_coils))  # current matrix
 
     for i in range(2):  # coil force
         # NOTE: * Hadamard matrix product
         F[:, i] = currents * (a_mat[:, :, i] @ currents + b_vec[:, i])
-        dF[:, :, i] = im * a_mat[:, :, i]
-        diag = (
-            a_mat[:, :, i] @ currents + currents * np.diag(a_mat[:, :, i]) + b_vec[:, i]
-        )
-        np.fill_diagonal(dF[:, :, i], diag)
 
     F /= scale  # Scale down to MN
 
@@ -347,6 +340,17 @@ def coil_force_constraints_new(
 
     # calculate constraint jacobian
     if grad.size > 0:
+        dF = np.zeros((n_coils, n_coils, 2))  # noqa :N803
+        im = currents.reshape(-1, 1) @ np.ones((1, n_coils))  # current matrix
+        for i in range(2):
+            dF[:, :, i] = im * a_mat[:, :, i]
+            diag = (
+                a_mat[:, :, i] @ currents
+                + currents * np.diag(a_mat[:, :, i])
+                + b_vec[:, i]
+            )
+            np.fill_diagonal(dF[:, :, i], diag)
+
         # Absolute vertical force constraint on PF coils
         grad[:n_PF] = 2 * dF[:n_PF, :, 1]
 
