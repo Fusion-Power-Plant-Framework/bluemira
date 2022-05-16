@@ -90,7 +90,7 @@ testpath==0.6.0
 threadpoolctl==3.1.0
 toml==0.10.2
 tornado==6.1
-traitlets==5.1.1
+traitlets==5.2.0
 typing-extensions==4.2.0
 wcwidth==0.2.5
 webencodings==0.5.1
