@@ -41,7 +41,7 @@ and on the position of the inboard midplane.
 import matplotlib.pyplot as plt
 import numpy as np
 
-import bluemira.equilibria.opt_constraints as opt_constraints
+import bluemira.equilibria.opt_constraint_funcs as opt_constraint_funcs
 from bluemira.equilibria.coils import Coil, CoilSet, SymmetricCircuit
 from bluemira.equilibria.equilibrium import Equilibrium
 from bluemira.equilibria.grid import Grid
@@ -359,9 +359,9 @@ eq = Equilibrium(
 
 # %%
 
-opt_constraints = [
+opt_constraint_funcs = [
     OptimisationConstraint(
-        f_constraint=opt_constraints.current_midplane_constraint,
+        f_constraint=opt_constraint_funcs.current_midplane_constraint,
         f_constraint_args={"eq": eq, "radius": 1.0, "scale": 1e6},
         tolerance=np.array([1e-4]),
         constraint_type="inequality",
@@ -380,7 +380,7 @@ opt_problem = MinimalErrorCOP(
     gamma=1e-8,
     max_currents=3.0e7,
     optimiser=optimiser,
-    constraints=opt_constraints,
+    constraints=opt_constraint_funcs,
 )
 
 # %%[markdown]
