@@ -425,7 +425,6 @@ class PicardIterator:
         profiles,
         optimisation_problem,
         convergence=DudsonConvergence(),
-        I_not_dI: bool = False,
         fixed_coils: bool = False,
         relaxation: int = 0,
         maxiter: int = 30,
@@ -444,7 +443,6 @@ class PicardIterator:
             raise ValueError(
                 "Optimiser convergence specification must be a sub-class of ConvergenceCriterion."
             )
-        self.I_not_dI = I_not_dI
         self.fixed_coils = fixed_coils
 
         self.relaxation = relaxation
@@ -464,7 +462,7 @@ class PicardIterator:
 
     def _optimise_coilset(self):
         try:
-            coilset = self.opt_prob.optimise(self.I_not_dI, self.fixed_coils)
+            coilset = self.opt_prob.optimise(self.fixed_coils)
             self.store.append(coilset)
         except ExternalOptError:
             coilset = self.store[-1]
