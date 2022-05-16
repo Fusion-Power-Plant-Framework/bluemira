@@ -81,10 +81,11 @@ class EUDEMOReactor(Reactor):
         component.add_child(self.build_vacuum_vessel(component, ivc_boundary))
         component.add_child(self.build_divertor(component, divertor_face))
         component.add_child(self.build_blanket(component, blanket_face))
-        component.add_child(self.build_VV_thermal_shield(component))
+        thermal_shield = Component(self.THERMAL_SHIELD, parent=component)
+        thermal_shield.add_child(self.build_VV_thermal_shield(component))
         component.add_child(self.build_TF_coils(component))
         component.add_child(self.build_PF_coils(component))
-        self.build_cryo_thermal_shield(component)
+        thermal_shield.add_child(self.build_cryo_thermal_shield(component))
         component.add_child(self.build_cryostat(component))
         component.add_child(self.build_radiation_shield(component))
 
@@ -240,12 +241,7 @@ class EUDEMOReactor(Reactor):
         )
 
         self.register_builder(builder)
-        vvts = super()._build_stage()
-
-        thermal_shield = Component(self.THERMAL_SHIELD)
-        thermal_shield.add_child(vvts)
-
-        return thermal_shield
+        return super()._build_stage()
 
     @Reactor.design_stage(CTS)
     def build_cryo_thermal_shield(self, component_tree: Component):
@@ -273,9 +269,7 @@ class EUDEMOReactor(Reactor):
         )
         self.register_builder(builder)
 
-        cts = super()._build_stage()
-        thermal_shield = component_tree.get_component(self.THERMAL_SHIELD)
-        thermal_shield.add_children(cts)
+        return super()._build_stage()
 
     @Reactor.design_stage(IVC)
     def build_in_vessel_component_shapes(self, component_tree: Component):
