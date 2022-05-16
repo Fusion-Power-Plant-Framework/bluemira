@@ -77,8 +77,8 @@ cmake -DBUILD_QT5=TRUE \
       -DBUILD_CLOUD=FALSE \
       -DPYTHON_EXECUTABLE=$(which python) \
       -DPYSIDE_INCLUDE_DIR=$PYTHON_PACKAGES_DIR/PySide2/include \
-      -DPYSIDE_LIBRARY=$PYTHON_PACKAGES_DIR/PySide2/libpyside2.cpython-38-x86_64-linux-gnu.so.5.14 \
-      -DCMAKE_PREFIX_PATH=/usr/local/Qt-5.14.2/lib/cmake \
+      -DPYSIDE_LIBRARY=$PYTHON_PACKAGES_DIR/PySide2/libpyside2.abi3.so.5.15 \
+      -DCMAKE_PREFIX_PATH=/usr/local/Qt-5.15.2/lib/cmake \
       -DPYSIDE2UICBINARY=$PYTHON_PACKAGES_DIR/PySide2/uic \
       -DPYSIDE2RCCBINARY=$PYTHON_PACKAGES_DIR/PySide2/rcc \
       ../freecad-source
