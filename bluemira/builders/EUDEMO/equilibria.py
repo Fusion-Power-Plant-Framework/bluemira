@@ -26,8 +26,7 @@ Equilibrium objects for EU-DEMO design
 import numpy as np
 
 from bluemira.base.look_and_feel import bluemira_warn
-from bluemira.equilibria.eq_constraints import (
-    DivertorLegCalculator,
+from bluemira.equilibria.opt_constraints import (
     FieldNullConstraint,
     MagneticConstraintSet,
     PsiBoundaryConstraint,
@@ -106,6 +105,37 @@ def estimate_kappa95(A, m_s_limit):
         kappa_95 = kappa_95 ** (ratio) + corner_fudge
 
     return kappa_95
+
+
+class DivertorLegCalculator:
+    @staticmethod
+    def calc_line(p1, p2, n):
+        """
+        Calculate a linearly spaced series of points on a line between p1 and p2.
+        """
+        xn = np.linspace(p1[0], p2[0], int(n))
+        zn = np.linspace(p1[1], p2[1], int(n))
+        return xn, zn
+
+    def calc_divertor_leg(
+        self, x_point, angle, length, n, loc="lower", pos="outer"
+    ):  # noqa :N802
+        """
+        Calculate the position of a straight line divertor leg.
+        """
+        if loc == "upper":
+            z = x_point[1] + length * np.sin(np.deg2rad(angle))
+        elif loc == "lower":
+            z = x_point[1] - length * np.sin(np.deg2rad(angle))
+        else:
+            raise ValueError('Please specify loc: "upper" or "lower" X-point.')
+        if pos == "inner":
+            x = x_point[0] - length * np.cos(np.deg2rad(angle))
+        elif pos == "outer":
+            x = x_point[0] + length * np.cos(np.deg2rad(angle))
+        else:
+            raise ValueError('Please specify pos: "inner" or "outer" X leg.')
+        return self.calc_line(x_point, (x, z), n)
 
 
 class EUDEMOSingleNullConstraints(DivertorLegCalculator, MagneticConstraintSet):
