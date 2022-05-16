@@ -462,7 +462,7 @@ class PicardIterator:
             self.pname = plot_name
             self.f, self.ax = plt.subplots()
 
-    def _optimise_currents(self):
+    def _optimise_coilset(self):
         try:
             coilset = self.opt_prob.optimise(self.I_not_dI, self.fixed_coils)
             self.store.append(coilset)
@@ -547,7 +547,7 @@ class PicardIterator:
                 if self.gif_flag:
                     make_gif(self.figure_folder, self.pname)
                 raise StopIteration
-            self._optimise_currents()
+            self._optimise_coilset()
             self._psi = (
                 1 - self.relaxation
             ) * self.eq.psi() + self.relaxation * self._psi_old
@@ -608,14 +608,14 @@ class PicardIterator:
         """
         self.eq.solve(self.profiles, psi=self.psi)
 
-    def _initial_optimise_currents(self, **kwargs):
-        self._optimise_currents(**kwargs)
+    def _initial_optimise_coilset(self, **kwargs):
+        self._optimise_coilset(**kwargs)
 
     def _setup(self):
         """
         Initialise psi and toroidal current values.
         """
-        self._initial_optimise_currents()
+        self._initial_optimise_coilset()
         self._psi = self.eq.psi()
         self._j_tor = self.eq._jtor
         if self._j_tor is None:
