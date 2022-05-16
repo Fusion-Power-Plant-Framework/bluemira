@@ -108,6 +108,10 @@ def estimate_kappa95(A, m_s_limit):
 
 
 class DivertorLegCalculator:
+    """
+    Straight line divertor leg mixin claculator.
+    """
+
     @staticmethod
     def calc_line(p1, p2, n):
         """
