@@ -406,7 +406,6 @@ constrained_iterator = PicardIterator(
     plot=False,
     relaxation=0.3,
     maxiter=400,
-    I_not_dI=True,
     convergence=DudsonConvergence(1e-4),
 )
 
@@ -428,7 +427,6 @@ unconstrained_iterator = PicardIterator(
     profile,  # jetto
     unconstrained_cop,
     plot=False,
-    I_not_dI=True,
     relaxation=0.3,
     convergence=DudsonConvergence(1e-2),
     maxiter=400,
