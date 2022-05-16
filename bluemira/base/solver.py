@@ -47,7 +47,9 @@ above.
 
 import abc
 import enum
-from typing import Any, Callable, Dict, Optional, Type
+from typing import Any, Callable, Optional, Type
+
+from bluemira.base.parameter import ParameterFrame
 
 
 class Task(abc.ABC):
@@ -58,11 +60,11 @@ class Task(abc.ABC):
     "run modes" can also be defined.
     """
 
-    def __init__(self, params: Dict[str, Any]) -> None:
-        self._params = params
+    def __init__(self, params: ParameterFrame) -> None:
+        self.params = params
 
     @abc.abstractmethod
-    def run(self, *args, **kwargs):
+    def run(self):
         """Run the task."""
         pass
 
@@ -75,13 +77,18 @@ class NoOpTask(Task):
     teardown stages.
     """
 
-    def run(*_, **__) -> None:
+    def run(self) -> None:
         """Do nothing."""
         return
 
 
 class RunMode(enum.Enum):
-    """Base enum class for defining run modes within a solver."""
+    """
+    Base enum class for defining run modes within a solver.
+
+    Note that no two enumeration's names should be case-insensitively
+    equal.
+    """
 
     def to_string(self) -> str:
         """
@@ -106,11 +113,12 @@ class SolverABC(abc.ABC):
         arbitrary run modes.
     """
 
-    def __init__(self, params: Dict[str, Any]):
+    def __init__(self, params: ParameterFrame):
         super().__init__()
-        self._setup = self.setup_cls(params)
-        self._run = self.run_cls(params)
-        self._teardown = self.teardown_cls(params)
+        self.params = params
+        self._setup = self.setup_cls(self.params)
+        self._run = self.run_cls(self.params)
+        self._teardown = self.teardown_cls(self.params)
 
     @abc.abstractproperty
     def setup_cls(self) -> Type[Task]:
