@@ -56,7 +56,7 @@ from bluemira.utilities.opt_tools import regularised_lsq_fom, tikhonov
 from bluemira.utilities.optimiser import Optimiser
 
 __all__ = [
-    "UnconstrainedTikhonovCurrentCOP",
+    "UnconstrainedTikhonovCurrentGradientCOP",
     "BoundedCurrentCOP",
     "CoilsetPositionCOP",
     "NestedCoilsetPositionCOP",
@@ -770,7 +770,7 @@ class NestedCoilsetPositionCOP(CoilsetOptimisationProblem):
         return fom
 
 
-class UnconstrainedTikhonovCurrentCOP(CoilsetOptimisationProblem):
+class UnconstrainedTikhonovCurrentGradientCOP(CoilsetOptimisationProblem):
     """
     Unbounded, unconstrained, analytically optimised current gradient vector for minimal
     error to the L2-norm of a set of magnetic constraints (used here as targets).
@@ -841,14 +841,12 @@ class TikhonovCurrentCOP(CoilsetOptimisationProblem):
         dimension = len(bounds[0])
         self.set_up_optimiser(dimension, bounds)
 
-    def optimise(self, I_not_dI=True, fixed_coils=True):
+    def optimise(self, fixed_coils=True):
         """
         Solve the optimisation problem
 
         Parameters
         ----------
-        I_not_dI: bool
-            Whether or not to optimisation the current or the current gradient vector
         fixed_coils: True
             Whether or not to update to coilset response matrices
 
@@ -858,14 +856,14 @@ class TikhonovCurrentCOP(CoilsetOptimisationProblem):
             Optimised CoilSet
         """
         # Scale the control matrix and magnetic field targets vector by weights.
-        self.targets(self.eq, I_not_dI=I_not_dI, fixed_coils=fixed_coils)
+        self.targets(self.eq, I_not_dI=True, fixed_coils=fixed_coils)
         _, a_mat, b_vec = self.targets.get_weighted_arrays()
 
         self._objective._args["scale"] = self.scale
         self._objective._args["a_mat"] = a_mat
         self._objective._args["b_vec"] = b_vec
 
-        self.update_magnetic_constraints(I_not_dI=I_not_dI, fixed_coils=fixed_coils)
+        self.update_magnetic_constraints(I_not_dI=True, fixed_coils=fixed_coils)
 
         initial_state, n_states = self.read_coilset_state(self.coilset, self.scale)
         _, _, initial_currents = np.array_split(initial_state, n_states)
@@ -905,14 +903,12 @@ class MinimalCurrentCOP(CoilsetOptimisationProblem):
         dimension = len(bounds[0])
         self.set_up_optimiser(dimension, bounds)
 
-    def optimise(self, I_not_dI=True, fixed_coils=True):
+    def optimise(self, fixed_coils=True):
         """
         Solve the optimisation problem
 
         Parameters
         ----------
-        I_not_dI: bool
-            Whether or not to optimisation the current or the current gradient vector
         fixed_coils: True
             Whether or not to update to coilset response matrices
 
@@ -921,7 +917,7 @@ class MinimalCurrentCOP(CoilsetOptimisationProblem):
         coilset: CoilSet
             Optimised CoilSet
         """
-        self.update_magnetic_constraints(I_not_dI=I_not_dI, fixed_coils=fixed_coils)
+        self.update_magnetic_constraints(I_not_dI=True, fixed_coils=fixed_coils)
 
         initial_state, n_states = self.read_coilset_state(self.eq.coilset, self.scale)
         _, _, initial_currents = np.array_split(initial_state, n_states)

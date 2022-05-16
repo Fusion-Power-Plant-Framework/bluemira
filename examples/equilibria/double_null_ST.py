@@ -47,7 +47,7 @@ from bluemira.equilibria.opt_problems import (
     BoundedCurrentCOP,
     CoilsetPositionCOP,
     NestedCoilsetPositionCOP,
-    UnconstrainedTikhonovCurrentCOP,
+    UnconstrainedTikhonovCurrentGradientCOP,
 )
 from bluemira.equilibria.optimiser import Norm2Tikhonov
 from bluemira.equilibria.profiles import CustomProfile
@@ -315,7 +315,7 @@ def init_equilibrium(grid, coilset, constraint_set):
         li=None,
     )
     constraint_set(eq)
-    optimiser = UnconstrainedTikhonovCurrentCOP(eq, constraint_set, gamma=1e-7)
+    optimiser = UnconstrainedTikhonovCurrentGradientCOP(eq, constraint_set, gamma=1e-7)
     coilset_temp = optimiser()
 
     coilset.set_control_currents(coilset_temp.get_control_currents())
@@ -372,7 +372,7 @@ def pre_optimise(eq, profile, constraint_set):
     Run a simple unconstrained optimisation to improve the
     initial equilibrium for the main optimiser.
     """
-    optimiser = UnconstrainedTikhonovCurrentCOP(eq, constraint_set, gamma=1e-8)
+    optimiser = UnconstrainedTikhonovCurrentGradientCOP(eq, constraint_set, gamma=1e-8)
 
     program = PicardIterator(
         eq,
@@ -413,7 +413,9 @@ def set_coilset_optimiser(
     if optimiser_name in ["Norm2Tikhonov"]:
         optimiser = Norm2Tikhonov(**optimisation_options)
     if optimiser_name in ["UnconstrainedCurrentCOP"]:
-        optimiser = UnconstrainedTikhonovCurrentCOP(eq, targets, **optimisation_options)
+        optimiser = UnconstrainedTikhonovCurrentGradientCOP(
+            eq, targets, **optimisation_options
+        )
     elif optimiser_name in ["BoundedCurrentCOP"]:
         optimiser = BoundedCurrentCOP(coilset, eq, targets, **optimisation_options)
     elif optimiser_name in ["CoilsetPositionCOP"]:
