@@ -47,7 +47,7 @@ from bluemira.equilibria.equilibrium import Equilibrium
 from bluemira.equilibria.grid import Grid
 from bluemira.equilibria.opt_constraints import IsofluxConstraint, MagneticConstraintSet
 from bluemira.equilibria.opt_problems import (
-    MinimalErrorCOP,
+    TikhonovCurrentCOP,
     UnconstrainedTikhonovCurrentCOP,
 )
 from bluemira.equilibria.profiles import CustomProfile
@@ -374,7 +374,7 @@ opt_constraints = [
 
 # %%
 
-opt_problem = MinimalErrorCOP(
+opt_problem = TikhonovCurrentCOP(
     eq,
     magnetic_targets,
     gamma=1e-8,

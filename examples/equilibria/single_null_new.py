@@ -50,8 +50,8 @@ from bluemira.equilibria.opt_constraints import (
     coil_field_constraints,
 )
 from bluemira.equilibria.opt_problems import (
-    MinimalCurrentsCOP,
-    MinimalErrorCOP,
+    MinimalCurrentCOP,
+    TikhonovCurrentCOP,
     UnconstrainedTikhonovCurrentCOP,
 )
 from bluemira.equilibria.profiles import CustomProfile
@@ -209,7 +209,8 @@ field_constraints = OptimisationConstraint(
 )
 
 
-opt_problem = MinimalErrorCOP(
+opt_problem = TikhonovCurrentCOP(
+    coilset,
     eq,
     targets=MagneticConstraintSet([psi_boundary, x_point]),
     gamma=1e-8,
@@ -238,7 +239,7 @@ program()
 
 # %%
 
-opt_problem = MinimalCurrentsCOP(
+opt_problem = MinimalCurrentCOP(
     eq,
     Optimiser("SLSQP", opt_conditions={"max_eval": 2000, "ftol_rel": 1e-6}),
     max_currents=coilset.get_max_currents(0.0),

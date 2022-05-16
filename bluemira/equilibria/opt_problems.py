@@ -779,8 +779,10 @@ class UnconstrainedTikhonovCurrentCOP(CoilsetOptimisationProblem):
 
     Parameters
     ----------
+    coilset: CoilSet
+        CoilSet object to optimise with
     eq: Equilibrium
-        Equilibrium object to optimise the currents for
+        Equilibrium object to optimise for
     targets: MagneticConstraintSet
         Set of magnetic constraints to minimise the error for
     gamma: float
@@ -818,13 +820,14 @@ class UnconstrainedTikhonovCurrentCOP(CoilsetOptimisationProblem):
         return self.coilset
 
 
-class MinimalErrorCOP(CoilsetOptimisationProblem):
+class TikhonovCurrentCOP(CoilsetOptimisationProblem):
     """
-    Bounded, constrained, minimal error current optimisation problem.
+    Bounded, constrained, minimal error on the Tikhonov-regularised L2 norm current
+    optimisation problem.
     """
 
     def __init__(
-        self, eq, targets, gamma, optimiser, max_currents=None, constraints=None
+        self, coilset, eq, targets, gamma, optimiser, max_currents=None, constraints=None
     ):
         self.eq = eq
         self.targets = targets
@@ -832,7 +835,7 @@ class MinimalErrorCOP(CoilsetOptimisationProblem):
             objectives.regularised_lsq_objective, f_objective_args={"gamma": gamma}
         )
 
-        super().__init__(self.eq.coilset, optimiser, objective, constraints=constraints)
+        super().__init__(coilset, optimiser, objective, constraints=constraints)
 
         bounds = self.get_current_bounds(self.coilset, max_currents, self.scale)
         dimension = len(bounds[0])
@@ -864,7 +867,7 @@ class MinimalErrorCOP(CoilsetOptimisationProblem):
 
         self.update_magnetic_constraints(I_not_dI=I_not_dI, fixed_coils=fixed_coils)
 
-        initial_state, n_states = self.read_coilset_state(self.eq.coilset, self.scale)
+        initial_state, n_states = self.read_coilset_state(self.coilset, self.scale)
         _, _, initial_currents = np.array_split(initial_state, n_states)
 
         initial_currents = np.clip(
@@ -875,7 +878,7 @@ class MinimalErrorCOP(CoilsetOptimisationProblem):
         return self.coilset
 
 
-class MinimalCurrentsCOP(CoilsetOptimisationProblem):
+class MinimalCurrentCOP(CoilsetOptimisationProblem):
     """
     Bounded, constrained, minimal current optimisation problem.
 
@@ -891,12 +894,12 @@ class MinimalCurrentsCOP(CoilsetOptimisationProblem):
         List of optimisation constraints to apply to the optimisation problem
     """
 
-    def __init__(self, eq, optimiser, max_currents=None, constraints=None):
+    def __init__(self, coilset, eq, optimiser, max_currents=None, constraints=None):
         self.eq = eq
         objective = OptimisationObjective(
             objectives.minimise_coil_currents, f_objective_args={}
         )
-        super().__init__(self.eq.coilset, optimiser, objective, constraints)
+        super().__init__(coilset, optimiser, objective, constraints)
 
         bounds = self.get_current_bounds(self.coilset, max_currents, self.scale)
         dimension = len(bounds[0])
