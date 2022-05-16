@@ -160,13 +160,20 @@ class MHDState:
         F: np.array(n_coils, 2)
             [Fx, Fz] array of forces on coils [MN]
         """
-        x = [c.x for c in self.coilset.coils.values()]
-        z = [c.z for c in self.coilset.coils.values()]
-        forces = self.coilset.get_control_currents() * self.coilset.control_F(x, z)
+        coils = list(self.coilset.coils.values())
+        x = np.array([c.x for c in coils])
+        z = np.array([c.z for c in coils])
+        currents = self.coilset.get_control_currents()
+        forces = np.zeros((len(coils), 2))
+        for i, coil in enumerate(coils):
+            response = self.coilset.control_F(coil)
+            forces[i, 0] = sum(currents * response[:, 0])
+            forces[i, 1] = sum(currents * response[:, 1])
         plasma = self.plasma_coil()
         plasma_Bx = plasma.Bx(x, z)
         plasma_Bz = plasma.Bz(x, z)
-        forces += 2 * np.pi * x * np.array([plasma_Bz, -plasma_Bx])
+        forces[:, 0] = 2 * np.pi * x * currents * plasma_Bz
+        forces[:, 1] = -2 * np.pi * x * currents * plasma_Bx
         return forces / 1e6
 
     def get_fields(self):
