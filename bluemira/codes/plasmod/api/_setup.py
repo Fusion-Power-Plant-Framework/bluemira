@@ -24,7 +24,8 @@ Defines the 'Setup' stage of the plasmod solver.
 
 import copy
 import dataclasses
-from typing import Any, Dict
+import enum
+from typing import Any, Dict, Optional, Union
 
 from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.base.parameter import ParameterFrame
@@ -89,9 +90,24 @@ class Setup(CodesSetup):
         """
         pass
 
-    def update_inputs(self, new_inputs: Dict[str, Any] = None):
+    def update_inputs(
+        self, new_inputs: Optional[Dict[str, Union[float, enum.Enum]]] = None
+    ):
         """
         Update plasmod inputs using the given values.
+
+        This also pulls input values from the task's ParameterFrame and
+        uses them to update the inputs attributes. The inputs to this
+        method take precedence over inputs in the ParameterFrame.
+
+        Parameters
+        ----------
+        new_inputs: Optional[Dict[str, Union[float, enum.Enum]]]
+            The new inputs to update with.
+
+        Notes
+        -----
+        Updates this class's :code:`inputs` attribute.
         """
         new_inputs = {} if new_inputs is None else new_inputs
         new_inputs = self._remove_non_plasmod_inputs(new_inputs)

@@ -60,7 +60,7 @@ class CodesSetup(CodesTask):
 
     def _get_new_inputs(
         self, remapper: Optional[Union[Callable, Dict[str, str]]] = None
-    ):
+    ) -> Dict[str, float]:
         """
         Retrieve inputs values to the external code from this tasks'
         ParameterFrame.
@@ -75,7 +75,7 @@ class CodesSetup(CodesTask):
 
         Returns
         -------
-        _inputs: dict
+        _inputs: Dict[str, float]
             Keys are external code parameter names, values are the input
             values for those parameters.
         """
