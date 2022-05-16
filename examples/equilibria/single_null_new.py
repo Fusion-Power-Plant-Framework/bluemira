@@ -208,25 +208,10 @@ field_constraints = CoilFieldConstraints(
     eq.coilset, eq.coilset.get_max_fields(), tolerance=1e-6
 )
 
-
 PF_Fz_max = 450
 CS_Fz_sum_max = 300
 CS_Fz_sep_max = 250
-force_constraints = OptimisationConstraint(
-    coil_force_constraints,
-    f_constraint_args={
-        "eq": eq,
-        "n_PF": eq.coilset.n_PF,
-        "n_CS": eq.coilset.n_CS,
-        "PF_Fz_max": PF_Fz_max,
-        "CS_Fz_sum_max": CS_Fz_sum_max,
-        "CS_Fz_sep_max": CS_Fz_sep_max,
-        "scale": 1e6,
-    },
-    tolerance=1e-6 * np.ones(11),
-)
-
-force_constraints_new = CoilForceConstraints(
+force_constraints = CoilForceConstraints(
     eq.coilset,
     PF_Fz_max=PF_Fz_max,
     CS_Fz_sum_max=CS_Fz_sum_max,
@@ -264,24 +249,24 @@ program()
 
 # %%
 
-# opt_problem = MinimalCurrentsCOP(
-#     eq,
-#     Optimiser("SLSQP", opt_conditions={"max_eval": 2000, "ftol_rel": 1e-6}),
-#     max_currents=coilset.get_max_currents(0.0),
-#     constraints=[psi_boundary, x_point, field_constraints],
-# )
+opt_problem = MinimalCurrentsCOP(
+    eq,
+    Optimiser("SLSQP", opt_conditions={"max_eval": 2000, "ftol_rel": 1e-6}),
+    max_currents=coilset.get_max_currents(0.0),
+    constraints=[psi_boundary, x_point, field_constraints, force_constraints],
+)
 
-# program = PicardIterator(
-#     eq,
-#     profiles,
-#     opt_problem,
-#     I_not_dI=True,
-#     fixed_coils=True,
-#     convergence=DudsonConvergence(1e-4),
-#     relaxation=0.3,
-# )
-# program()
+program = PicardIterator(
+    eq,
+    profiles,
+    opt_problem,
+    I_not_dI=True,
+    fixed_coils=True,
+    convergence=DudsonConvergence(1e-4),
+    relaxation=0.3,
+)
+program()
 
-# f, ax = plt.subplots()
-# eq.plot(ax=ax)
-# eq.coilset.plot(ax=ax)
+f, ax = plt.subplots()
+eq.plot(ax=ax)
+eq.coilset.plot(ax=ax)
