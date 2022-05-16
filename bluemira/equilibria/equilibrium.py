@@ -88,7 +88,6 @@ class MHDState:
         self._psi_green = None
         self._bx_green = None
         self._bz_green = None
-        self.force_field = None
         self.grid = None
         self.coilset = None
         self.limiter = None
@@ -151,13 +150,6 @@ class MHDState:
         self._psi_green = self.coilset.map_psi_greens(self.x, self.z)
         self._bx_green = self.coilset.map_Bx_greens(self.x, self.z)
         self._bz_green = self.coilset.map_Bz_greens(self.x, self.z)
-        self.set_forcefield()
-
-    def set_forcefield(self):
-        """
-        Set a ForceField object for the MHDState.
-        """
-        self.force_field = ForceField(self.coilset, self.plasma_coil())
 
     def get_forces(self):
         """
@@ -168,7 +160,14 @@ class MHDState:
         F: np.array(n_coils, 2)
             [Fx, Fz] array of forces on coils [MN]
         """
-        return self.force_field.calc_force(self.coilset.get_control_currents())[0] / 1e6
+        x = [c.x for c in self.coilset.coils.values()]
+        z = [c.z for c in self.coilset.coils.values()]
+        forces = self.coilset.get_control_currents() * self.coilset.control_F(x, z)
+        plasma = self.plasma_coil()
+        plasma_Bx = plasma.Bx(x, z)
+        plasma_Bz = plasma.Bz(x, z)
+        forces += 2 * np.pi * x * np.array([plasma_Bz, -plasma_Bx])
+        return forces / 1e6
 
     def get_fields(self):
         """
@@ -180,7 +179,9 @@ class MHDState:
         B: np.array(n_coils)
             The Bp array of fields on coils [T]
         """
-        return self.force_field.calc_field(self.coilset.get_control_currents())[0]
+        x = [c.x - c.dx for c in self.coilset.coils.values()]
+        z = [c.z for c in self.coilset.coils.values()]
+        return self.Bp(x, z)
 
     def plasma_coil(self):
         """
