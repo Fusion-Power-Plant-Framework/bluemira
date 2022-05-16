@@ -221,8 +221,9 @@ force_constraints = OptimisationConstraint(
         "PF_Fz_max": PF_Fz_max,
         "CS_Fz_sum_max": CS_Fz_sum_max,
         "CS_Fz_sep_max": CS_Fz_sep_max,
+        "scale": 1e6,
     },
-    tolerance=1e-6,
+    tolerance=1e-6 * np.ones(11),
 )
 
 force_constraints_new = CoilForceConstraints(

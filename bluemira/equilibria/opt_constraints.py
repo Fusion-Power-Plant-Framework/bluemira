@@ -612,10 +612,10 @@ class CoilForceConstraints(UpdateableConstraint, OptimisationConstraint):
 
         n_PF = coilset.n_PF
         n_CS = coilset.n_CS
-        if self.n_CS == 0:
+        if n_CS == 0:
             n_f_constraints = n_PF
         else:
-            n_f_constraints = n_PF + n_CS + 1
+            n_f_constraints = n_PF + n_CS
 
         if is_num(tolerance):
             tolerance = tolerance * np.ones(n_f_constraints)
@@ -663,7 +663,7 @@ class CoilForceConstraints(UpdateableConstraint, OptimisationConstraint):
         """
         Calculate the value of the constraint in an Equilibrium.
         """
-        Fp = np.zeros((self.n_coils, 2))  # noqa :N803
+        Fp = np.zeros((equilibrium.coilset.n_coils, 2))  # noqa :N803
         for i, coil in enumerate(self.coils.values()):
             if coil.current != 0:
                 Fp[i, :] = coil.F(equilibrium) / coil.current
