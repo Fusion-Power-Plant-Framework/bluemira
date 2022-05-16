@@ -91,7 +91,7 @@ def Ax_b_constraint(constraint, vector, grad, a_mat, b_vec, value, scale):  # no
     constraint: np.ndarray
         Constraint array (modified in place)
     vector: np.ndarray
-        Current vector
+        Variable vector
     grad: np.ndarray
         Constraint Jacobian (modified in place)
     A_mat: np.ndarray
@@ -121,7 +121,7 @@ def L2_norm_constraint(  # noqa: N802
     constraint: np.ndarray
         Constraint array (modified in place)
     vector: np.ndarray
-        Current vector
+        Variable vector
     grad: np.ndarray
         Constraint Jacobian (modified in place)
     A_mat: np.ndarray
