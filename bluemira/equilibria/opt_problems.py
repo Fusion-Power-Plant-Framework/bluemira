@@ -56,7 +56,7 @@ from bluemira.utilities.opt_tools import regularised_lsq_fom, tikhonov
 from bluemira.utilities.optimiser import Optimiser
 
 __all__ = [
-    "UnconstrainedCurrentCOP",
+    "UnconstrainedTikhonovCurrentCOP",
     "BoundedCurrentCOP",
     "CoilsetPositionCOP",
     "NestedCoilsetPositionCOP",
@@ -273,67 +273,6 @@ class CoilsetOptimisationProblem(OptimisationProblem):
         in Iterators.
         """
         return self.optimise()
-
-
-class UnconstrainedCurrentCOP(CoilsetOptimisationProblem):
-    """
-    Unconstrained norm-2 optimisation of coil currents
-    with Tikhonov regularisation.
-
-    Intended to replace Norm2Tikhonov as a CoilsetOP.
-
-    Parameters
-    ----------
-    coilset: CoilSet
-        Coilset to optimise.
-    eq: Equilibrium
-        Equilibrium object used to update magnetic field targets.
-    targets: MagneticConstraintSet
-        Set of magnetic field targets to use in objective function.
-    gamma: float (default = 1e-12)
-        Tikhonov regularisation parameter in units of [A⁻¹].
-    """
-
-    def __init__(
-        self,
-        coilset: CoilSet,
-        eq: Equilibrium,
-        targets: MagneticConstraintSet,
-        gamma=1e-12,
-    ):
-        # Initialise. As an unconstrained optimisation scheme is
-        # used, there is no need for NLOpt, and the objective
-        # can be specified in the optimise method directly.
-        super().__init__(coilset)
-
-        # Save additional parameters used to generate remaining
-        # objective/constraint arguments at runtime
-        self.eq = eq
-        self.targets = targets
-        self.gamma = gamma
-
-    def optimise(self):
-        """
-        Optimise the prescribed problem.
-
-        Notes
-        -----
-        The weight vector is used to scale the response matrix and
-        constraint vector. The weights are assumed to be uncorrelated, such that the
-        weight matrix W_ij used to define (for example) the least-squares objective
-        function (Ax - b)ᵀ W (Ax - b), is diagonal, such that
-        weights[i] = w[i] = sqrt(W[i,i]).
-        """
-        # Scale the control matrix and magnetic field targets vector by weights.
-        self.targets(self.eq, I_not_dI=False)
-        _, a_mat, b_vec = self.targets.get_weighted_arrays()
-
-        # Optimise currents using analytic expression for optimum.
-        current_adjustment = tikhonov(a_mat, b_vec, self.gamma)
-
-        # Update parameterisation (coilset).
-        self.coilset.adjust_currents(current_adjustment)
-        return self.coilset
 
 
 class BoundedCurrentCOP(CoilsetOptimisationProblem):
@@ -831,7 +770,7 @@ class NestedCoilsetPositionCOP(CoilsetOptimisationProblem):
         return fom
 
 
-class UnconstrainedMinimalErrorCOP(CoilsetOptimisationProblem):
+class UnconstrainedTikhonovCurrentCOP(CoilsetOptimisationProblem):
     """
     Unbounded, unconstrained, analytically optimised current gradient vector for minimal
     error to the L2-norm of a set of magnetic constraints (used here as targets).
@@ -848,12 +787,12 @@ class UnconstrainedMinimalErrorCOP(CoilsetOptimisationProblem):
         Tikhonov regularisation parameter [1/A]
     """
 
-    def __init__(self, eq, targets, gamma):
+    def __init__(self, coilset, eq, targets, gamma):
         self.eq = eq
         self.targets = targets
         self.gamma = gamma
 
-        super().__init__(self.eq.coilset)
+        super().__init__(coilset)
 
     def optimise(self, *args, **kwargs):
         """
