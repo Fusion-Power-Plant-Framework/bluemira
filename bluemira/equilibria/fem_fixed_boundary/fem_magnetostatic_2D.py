@@ -29,9 +29,10 @@ from typing import Callable, Union
 import dolfin
 import matplotlib.pyplot as plt
 import numpy as np
-from utilities import ScalarSubFunc, contour_scalar_field_2d, contourf_scalar_field_2d
 
 from bluemira.base.constants import MU_0
+
+from .utilities import ScalarSubFunc, contour_scalar_field_2d, contourf_scalar_field_2d
 
 
 class FemMagnetostatic2d:
