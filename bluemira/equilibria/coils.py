@@ -858,7 +858,7 @@ class CoilGroup(CoilFieldsMixin, abc.ABC):
         """
         Get names of coils
         """
-        return self._name_map.keys()
+        return list(self._name_map.keys())
 
     @property
     def rc(self):
@@ -1090,22 +1090,23 @@ class CoilGroup(CoilFieldsMixin, abc.ABC):
         """
         Pretty coil printing.
         """
-        return "".join(
+        x = self._x.flatten()
+        z = self._z.flatten()
+        c = self._current.flatten()
+        return " | ".join(
             (
-                f"{name}: X={self._x[ind][0]:.2f} m,"
-                f" Z={self._z[ind][0]:.2f} m,"
-                f" I={self._current[ind][0]/1e6:.2f} MA\n"
+                f"{name}: X={x[ind]:.2f} m,"
+                f" Z={z[ind]:.2f} m,"
+                f" I={c[ind]/1e6:.2f} MA"
             )
-            for ind, name in enumerate(self.name)
-        )[:-1]
+            for ind, name in enumerate(self._name_map.keys())
+        )
 
     def __repr__(self) -> str:
         """
         Pretty console coil rendering.
         """
-        newline = "\n" + " " * (len(self.__class__.__name__) + 1)
-        _str = self.__str__().replace("\n", newline)
-        return f"{self.__class__.__name__}({_str})"
+        return f"{self.__class__.__name__}({self.__str__()})"
 
 
 class Coil(CoilGroup):
@@ -1154,6 +1155,10 @@ class Coil(CoilGroup):
         # Only to force type check correctness
         super().__init__(x, z, dx, dz, current, name, ctype, j_max, b_max)
 
+    @property
+    def name(self):
+        return list(self._name_map.keys())[0]
+
     # def __setattr__(self, attr: str, value: Any) -> None:
     #     """
     #     Set attribute with some protection for singular values
@@ -1180,7 +1185,14 @@ class Circuit(CoilGroup):
     Base circuit class
     """
 
-    __slots__ = ()
+    __num_circuit = 0
+
+    __slots__ = "_circuit_name"
+
+    @staticmethod
+    def _namer():
+        Circuit.__num_circuit += 1
+        return f"CIRC_{Circuit.__num_circuit}"
 
 
 class PositionalSymmetricCircuit(Circuit):
@@ -1229,6 +1241,7 @@ class PositionalSymmetricCircuit(Circuit):
         b_max: Optional[float] = None,
     ) -> None:
 
+        self._circuit_name = self._namer()
         self._point = np.array([x, z])
         x, z = self._setup_symmetry(symmetry_line)
         ones = np.ones(2)
@@ -1247,6 +1260,10 @@ class PositionalSymmetricCircuit(Circuit):
             b_max *= ones
 
         super().__init__(x, z, dx, dz, current, name, ctype, j_max, b_max)
+
+    @property
+    def name(self):
+        return self._circuit_name
 
     def modify_symmetry(self, symmetry_line: np.ndarray[[float, float], [float, float]]):
         """
@@ -1335,7 +1352,7 @@ class CoilSet(CoilGroup):
 
     """
 
-    __slots__ = ()
+    __slots__ = ("__coilgroups",)
 
     def __init__(self, *coils: Union[CoilGroup, List, Dict]):
 
@@ -1351,6 +1368,17 @@ class CoilSet(CoilGroup):
         # TODO deal with meshing
         # TODO think whether this is the best way forward
 
+    def __init_subclass__(self, *args, **kwargs):
+        raise EquilibriaError("class not designed to be subclassed")
+
+    def __str__(self) -> str:
+        return ", ".join(
+            sorted(
+                [f"{v.__class__.__name__}({v})" for v in self.__coilgroups.values()],
+                key=lambda k: k.split("(")[1].split(":")[0],
+            )
+        )
+
     @staticmethod
     def _convert_to_coilgroup(
         coils: Tuple[Union[CoilGroup, List, Dict]]
@@ -1365,22 +1393,21 @@ class CoilSet(CoilGroup):
                 raise TypeError(f"Conversion to Coil unknown for type '{type(coil)}'")
         return coils
 
-    @staticmethod
-    def _process_coilgroups(coilgroups: List[CoilGroup]):
-        self.__coilgroups = coilgroups
+    def _process_coilgroups(self, coilgroups: List[CoilGroup]):
+        self.__coilgroups = {cg.name: cg for cg in coilgroups}
 
-        filters = {
-            group.name: partial(
-                lambda name, coilgroup: np.array(
-                    [c_n == name for c_n in coilgroup.name], dtype=bool
-                ),
-                group.name,
-            )
-            for group in coilgroups
-        }
+        # filters = {
+        #     group.name: partial(
+        #         lambda name, coilgroup: np.array(
+        #             [c_n == name for c_n in coilgroup.name], dtype=bool
+        #         ),
+        #         group.name,
+        #     )
+        #     for group in coilgroups
+        # }
 
-        self.define_subset(filters)
-        self._finalise_groups()
+        # self.define_subset(filters)
+        # self._finalise_groups()
 
         names = [
             "_x",
@@ -1390,6 +1417,7 @@ class CoilSet(CoilGroup):
             "_current",
             "_j_max",
             "_b_max",
+            "_ctype",
         ]
         attributes = {k: [] for k in names}
         indexes = {}
@@ -1398,15 +1426,20 @@ class CoilSet(CoilGroup):
             for no, group in enumerate(coilgroups):
                 child_attr = getattr(group, name)
                 old_coils = no_coils
-                no_coils += len(child_attr)
+                no_coils += 1 if isinstance(child_attr, str) else len(child_attr)
                 indexes[no] = (old_coils, no_coils)
-                if len(child_attr) > 1:
+                if (
+                    len(child_attr) > 1 and not isinstance(child_attr, str)
+                ) or isinstance(child_attr, list):
                     attributes[name].extend(child_attr)
                 else:
                     attributes[name].append(child_attr)
 
             if isinstance(getattr(group, name), np.ndarray):
                 attributes[name] = np.array(attributes[name], dtype=float)
+            else:
+                attributes[name] = np.array(attributes[name], dtype=object)
+
             for no, group in enumerate(coilgroups):
                 index_slice = slice(indexes[no][0], indexes[no][1])
                 setattr(group, name, attributes[name][index_slice])
@@ -1451,13 +1484,16 @@ class CoilSet(CoilGroup):
         try:
             return super().__getattribute__(attr)
         except AttributeError as ae:
-            try:
-                return self.__coilgroups[attr]
-            except KeyError:
+            if attr != "__coilgroups":
                 try:
-                    return self.__coilgroups[self._group_ind[self._SubGroup[attr]]]
+                    return self.__coilgroups[attr]
                 except KeyError:
-                    raise ae from None
+                    # try:
+                    #     return self.__coilgroups[self._group_ind[self._SubGroup[attr]]]
+                    # except KeyError:
+                    raise ae
+            else:
+                raise ae
 
 
 # TODO or To remove (for imports)
