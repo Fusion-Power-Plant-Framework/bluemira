@@ -1,6 +1,6 @@
 import numpy as np
 
-from bluemira.equilibria.eq_constraints import (
+from bluemira.equilibria.opt_constraints import (
     FieldNullConstraint,
     IsofluxConstraint,
     MagneticConstraintSet,

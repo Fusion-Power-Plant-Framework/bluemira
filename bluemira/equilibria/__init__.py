@@ -24,14 +24,6 @@ The bluemira equilibria module
 """
 
 from bluemira.equilibria.coils import Coil, CoilSet, SymmetricCircuit
-from bluemira.equilibria.eq_constraints import (
-    AutoConstraints,
-    FieldNullConstraint,
-    IsofluxConstraint,
-    MagneticConstraintSet,
-    PsiBoundaryConstraint,
-    PsiConstraint,
-)
 from bluemira.equilibria.equilibrium import Breakdown, Equilibrium
 from bluemira.equilibria.find import (
     find_flux_surfs,
@@ -40,6 +32,14 @@ from bluemira.equilibria.find import (
 )
 from bluemira.equilibria.grid import Grid
 from bluemira.equilibria.limiter import Limiter
+from bluemira.equilibria.opt_constraints import (
+    AutoConstraints,
+    FieldNullConstraint,
+    IsofluxConstraint,
+    MagneticConstraintSet,
+    PsiBoundaryConstraint,
+    PsiConstraint,
+)
 from bluemira.equilibria.opt_problems import (
     BoundedCurrentCOP,
     CoilsetPositionCOP,
@@ -53,10 +53,4 @@ from bluemira.equilibria.shapes import (
     flux_surface_johner,
     flux_surface_manickam,
 )
-from bluemira.equilibria.solve import (
-    PicardAbsIterator,
-    PicardCoilsetIterator,
-    PicardDeltaIterator,
-    PicardLiAbsIterator,
-    PicardLiDeltaIterator,
-)
+from bluemira.equilibria.solve import PicardIterator
