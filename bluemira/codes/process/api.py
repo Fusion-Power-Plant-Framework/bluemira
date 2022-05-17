@@ -104,7 +104,7 @@ class Impurities(Enum):
 
     def file(self):
         """
-        Get PROCESS imprity data file
+        Get PROCESS impurity data file path
         """
         try:
             return Path(Path(imp_data.__file__).parent, f"{self.name:_<2}Lzdata.dat")
