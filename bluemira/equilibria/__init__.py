@@ -44,7 +44,7 @@ from bluemira.equilibria.opt_problems import (
     BoundedCurrentCOP,
     CoilsetPositionCOP,
     NestedCoilsetPositionCOP,
-    UnconstrainedCurrentCOP,
+    UnconstrainedTikhonovCurrentCOP,
 )
 from bluemira.equilibria.optimiser import FBIOptimiser, Norm2Tikhonov, PositionOptimiser
 from bluemira.equilibria.profiles import BetaIpProfile, CustomProfile

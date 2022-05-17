@@ -47,8 +47,8 @@ from bluemira.equilibria.equilibrium import Equilibrium
 from bluemira.equilibria.grid import Grid
 from bluemira.equilibria.opt_constraints import IsofluxConstraint, MagneticConstraintSet
 from bluemira.equilibria.opt_problems import (
-    MinimalErrorCOP,
-    UnconstrainedMinimalErrorCOP,
+    TikhonovCurrentCOP,
+    UnconstrainedTikhonovCurrentCOP,
 )
 from bluemira.equilibria.profiles import CustomProfile
 from bluemira.equilibria.solve_new import DudsonConvergence, PicardIterator
@@ -374,7 +374,8 @@ opt_constraints = [
 
 # %%
 
-opt_problem = MinimalErrorCOP(
+opt_problem = TikhonovCurrentCOP(
+    coilset,
     eq,
     magnetic_targets,
     gamma=1e-8,
@@ -419,7 +420,9 @@ constrained_iterator = PicardIterator(
 
 # %%
 
-unconstrained_cop = UnconstrainedMinimalErrorCOP(eq, magnetic_targets, gamma=1e-8)
+unconstrained_cop = UnconstrainedTikhonovCurrentCOP(
+    coilset, eq, magnetic_targets, gamma=1e-8
+)
 unconstrained_iterator = PicardIterator(
     eq,
     profile,  # jetto
@@ -470,7 +473,7 @@ plt.show()
 
 # ### Constrained Optimisation
 
-# Now we have a better starting `Equilibrium` for our constrained optimisation6e6
+# Now we have a better starting `Equilibrium` for our constrained optimisation
 
 # %%
 

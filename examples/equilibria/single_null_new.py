@@ -50,9 +50,9 @@ from bluemira.equilibria.opt_constraints import (
     coil_field_constraints,
 )
 from bluemira.equilibria.opt_problems import (
-    MinimalCurrentsCOP,
-    MinimalErrorCOP,
-    UnconstrainedMinimalErrorCOP,
+    MinimalCurrentCOP,
+    TikhonovCurrentCOP,
+    UnconstrainedTikhonovCurrentCOP,
 )
 from bluemira.equilibria.profiles import CustomProfile
 from bluemira.equilibria.solve_new import DudsonConvergence, PicardIterator
@@ -178,8 +178,8 @@ x_point = FieldNullConstraint(
 
 # %%
 
-opt_problem = UnconstrainedMinimalErrorCOP(
-    eq, MagneticConstraintSet([psi_boundary, x_point]), gamma=1e-7
+opt_problem = UnconstrainedTikhonovCurrentCOP(
+    coilset, eq, MagneticConstraintSet([psi_boundary, x_point]), gamma=1e-7
 )
 
 program = PicardIterator(
@@ -209,7 +209,8 @@ field_constraints = OptimisationConstraint(
 )
 
 
-opt_problem = MinimalErrorCOP(
+opt_problem = TikhonovCurrentCOP(
+    coilset,
     eq,
     targets=MagneticConstraintSet([psi_boundary, x_point]),
     gamma=1e-8,
@@ -238,7 +239,8 @@ program()
 
 # %%
 
-opt_problem = MinimalCurrentsCOP(
+opt_problem = MinimalCurrentCOP(
+    coilset,
     eq,
     Optimiser("SLSQP", opt_conditions={"max_eval": 2000, "ftol_rel": 1e-6}),
     max_currents=coilset.get_max_currents(0.0),
