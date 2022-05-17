@@ -21,7 +21,10 @@
 
 """Module to support the fem_fixed_boundary implementation"""
 
+from typing import Union
+
 import dolfin
+import matplotlib.pyplot as plt
 import numpy as np
 
 
@@ -86,3 +89,114 @@ class ScalarSubFunc(dolfin.UserExpression):
         https://fenicsproject.discourse.group/t/problems-interpolating-a-userexpression-and-plotting-it/1303
         """
         return ()
+
+
+def contour_scalar_field_2d(
+    x: np.ndarray,
+    y: np.ndarray,
+    data: np.ndarray,
+    levels: Union[list[float, int], np.ndarray, int] = 20,
+    axis=None,
+    **kwargs,
+):
+    """
+    2D Plot the countour of a scalar field given a set of levels
+
+    Parameters
+    ----------
+    x: np.ndarray
+        x coordinates of the cloud of points in which the scalar field is given
+    y: np.ndarray
+        y coordinates of the cloud of points in which the scalar field is given
+    data: np.ndarray
+        scalar field data
+    levels: Union[list[float, int], np.ndarray, int]
+        countour levels. Default 20.
+    axis:
+        plot axis. Default None.
+    **kwargs:
+        any other argument to be passed to the contour plot.
+        Default {"linewidths": 2, "colors": "k"}
+
+    Returns
+    -------
+    axis: matplotlib.pyplot.Axis
+    cntr: matplotlib.pyplot.tricontourf
+        Matplotlib contour object
+
+    """
+    cntr = None
+
+    if axis is None:
+        fig = plt.figure()
+        axis = fig.add_subplot()
+
+    if not kwargs:
+        kwargs = {"linewidths": 2, "colors": "k"}
+
+    cntr = axis.tricontour(x, y, data, levels=levels, **kwargs)
+
+    plt.gca().set_aspect("equal")
+
+    return axis, cntr
+
+
+def contourf_scalar_field_2d(
+    x: np.ndarray,
+    y: np.ndarray,
+    data: np.ndarray,
+    levels: Union[list[float, int], np.ndarray, int] = 20,
+    axis=None,
+    **kwargs,
+):
+    """
+    2D Plot filled contours of a scalar field given a set of levels
+
+    Parameters
+    ----------
+    x: np.ndarray
+        x coordinates of the cloud of points in which the scalar field is given
+    y: np.ndarray
+        y coordinates of the cloud of points in which the scalar field is given
+    data: np.ndarray
+        scalar field data
+    levels: Union[list[float, int], np.ndarray, int]
+        countour levels. Default 20.
+    axis:
+        plot axis. Default None.
+    **kwargs:
+        any other argument to be passed to the filled contour plot.
+        Default {}
+
+    Returns
+    -------
+    axis: matplotlib.pyplot.Axis
+    cntrf: matplotlib.pyplot.tricontourf
+        Matplotlib filled contour object
+    """
+    cntrf = None
+
+    if axis is None:
+        fig = plt.figure()
+        axis = fig.add_subplot()
+
+    if not kwargs:
+        kwargs = {"cmpa": "RdBu_r"}
+
+    cntrf = axis.tricontourf(x, y, data, levels=levels, **kwargs)
+    plt.gcf().colorbar(cntrf, ax=axis)
+
+    plt.gca().set_aspect("equal")
+
+    return axis, cntrf
+
+
+def plot_profile(x, prof, var_name, var_unit):
+    """
+    Plot a profile
+    """
+    fig, ax = plt.subplots()
+    ax.plot(x, prof)
+    ax.set(xlabel="x (-)", ylabel=var_name + " (" + var_unit + ")")
+    ax.grid()
+    plt.show()
