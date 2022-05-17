@@ -37,12 +37,7 @@ from bluemira.base.builder import BuildConfig
 from bluemira.base.look_and_feel import bluemira_print
 from bluemira.base.parameter import ParameterFrame
 from bluemira.codes.error import CodesError
-from bluemira.codes.process.api import (
-    DEFAULT_INDAT,
-    ENABLED,
-    IMPURITY_FILES,
-    IMPURITY_ID,
-)
+from bluemira.codes.process.api import DEFAULT_INDAT, ENABLED, Impurities
 from bluemira.codes.process.constants import BINARY
 from bluemira.codes.process.constants import NAME as PROCESS
 from bluemira.codes.process.mapping import mappings
@@ -230,7 +225,7 @@ class Solver(interface.FileProgramInterface):
         Get species data from process section of OPEN-ADAS database
         """
         # T[keV] Lz[W m^3] Z_av
-        t_ref, l_ref, z_ref = np.genfromtxt(IMPURITY_FILES[impurity]).T
+        t_ref, l_ref, z_ref = np.genfromtxt(Impurities[impurity].file()).T
 
         return t_ref, l_ref, z_ref
 
@@ -238,4 +233,4 @@ class Solver(interface.FileProgramInterface):
         """
         Get species fraction
         """
-        return self.get_raw_variables(IMPURITY_ID[impurity])
+        return self.get_raw_variables(Impurities[impurity].id())

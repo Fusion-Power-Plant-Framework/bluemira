@@ -23,10 +23,12 @@
 PROCESS api
 """
 import os
+from enum import Enum
 from pathlib import Path
 
 from bluemira.base.file import get_bluemira_path
 from bluemira.base.look_and_feel import bluemira_print, bluemira_warn
+from bluemira.codes.error import CodesError
 from bluemira.utilities.tools import flatten_iterable
 
 
@@ -47,10 +49,6 @@ class InDat:
 
     def __init__(self, filename):
         self.filename = filename
-
-
-class imp_data:  # noqa: N801, D101
-    __file__ = "./"
 
 
 OBS_VARS = dict()
@@ -83,28 +81,41 @@ DEFAULT_INDAT = os.path.join(
     get_bluemira_path("codes/process"), "PROCESS_DEFAULT_IN.DAT"
 )
 
-IMPURITIES = {
-    "H": 1,
-    "He": 2,
-    "Be": 3,
-    "C": 4,
-    "N": 5,
-    "O": 6,
-    "Ne": 7,
-    "Si": 8,
-    "Ar": 9,
-    "Fe": 10,
-    "Ni": 11,
-    "Kr": 12,
-    "Xe": 13,
-    "W ": 14,
-}
 
-IMPURITY_FILES = {
-    imp: Path(Path(imp_data.__file__).parent, f"{imp:_<2}Lzdata.dat")
-    for imp in IMPURITIES.keys()
-}
-IMPURITY_ID = {imp: f"fimp({id_:02}" for imp, id_ in IMPURITIES.items()}
+class Impurities(Enum):
+    """
+    PROCESS impurities Enum
+    """
+
+    H = 1
+    He = 2
+    Be = 3
+    C = 4
+    N = 5
+    O = 6  # noqa: E741
+    Ne = 7
+    Si = 8
+    Ar = 9
+    Fe = 10
+    Ni = 11
+    Kr = 12
+    Xe = 13
+    W = 14
+
+    def file(self):
+        """
+        Get PROCESS imprity data file
+        """
+        try:
+            return Path(Path(imp_data.__file__).parent, f"{self.name:_<2}Lzdata.dat")
+        except NameError:
+            raise CodesError("PROCESS impurity data directory not found")
+
+    def id(self):
+        """
+        Get variable string for impurity fraction
+        """
+        return f"fimp({self.value:02}"
 
 
 def update_obsolete_vars(process_map_name: str) -> str:
