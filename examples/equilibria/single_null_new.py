@@ -56,7 +56,7 @@ from bluemira.equilibria.opt_problems import (
     UnconstrainedTikhonovCurrentGradientCOP,
 )
 from bluemira.equilibria.profiles import CustomProfile
-from bluemira.equilibria.solve_new import DudsonConvergence, PicardIterator
+from bluemira.equilibria.solve import DudsonConvergence, PicardIterator
 from bluemira.utilities.optimiser import Optimiser
 
 plot_defaults()

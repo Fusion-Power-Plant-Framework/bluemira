@@ -24,12 +24,12 @@ import os
 import numpy as np
 
 from bluemira.base.file import get_bluemira_path
-from bluemira.equilibria.eq_constraints import (
+from bluemira.equilibria.equilibrium import Equilibrium
+from bluemira.equilibria.opt_constraints import (
     IsofluxConstraint,
     MagneticConstraintSet,
     PsiBoundaryConstraint,
 )
-from bluemira.equilibria.equilibrium import Equilibrium
 from bluemira.equilibria.opt_problems import BoundedCurrentCOP
 
 

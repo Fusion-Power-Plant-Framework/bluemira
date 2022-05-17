@@ -39,7 +39,7 @@ from bluemira.equilibria import (
     IsofluxConstraint,
     MagneticConstraintSet,
     Norm2Tikhonov,
-    PicardDeltaIterator,
+    PicardIterator,
     SymmetricCircuit,
 )
 from bluemira.equilibria.file import EQDSKInterface
@@ -168,7 +168,7 @@ class TestSTEquilibrium:
 
         criterion = DudsonConvergence(build_tweaks["fbe_convergence_crit"])
 
-        fbe_iterator = PicardDeltaIterator(
+        fbe_iterator = PicardIterator(
             eq,
             self.profiles,
             constraint_set,
