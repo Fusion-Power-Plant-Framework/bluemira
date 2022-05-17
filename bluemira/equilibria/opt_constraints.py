@@ -41,7 +41,7 @@ from bluemira.utilities.opt_problems import OptimisationConstraint
 from bluemira.utilities.tools import abs_rel_difference, is_num
 
 
-def _get_dummy_equilibrium(equilibrium, I_not_dI):
+def _get_dummy_equilibrium(equilibrium):
     """
     Get a dummy equilibrium for current optimisation where the background response is
     solely due to the plasma and passive coils.
@@ -54,11 +54,10 @@ def _get_dummy_equilibrium(equilibrium, I_not_dI):
     When we do I (current vector) optimisation, the background vector only includes
     contributions from the passive coils (plasma).
     """
-    if I_not_dI:
-        # TODO: Add passive coil contributions here
-        dummy = equilibrium.plasma_coil()
-        dummy.coilset = deepcopy(equilibrium.coilset)
-        equilibrium = dummy
+    # TODO: Add passive coil contributions here
+    dummy = equilibrium.plasma_coil()
+    dummy.coilset = deepcopy(equilibrium.coilset)
+    equilibrium = dummy
     return equilibrium
 
 
@@ -141,7 +140,8 @@ class CoilFieldConstraints(UpdateableConstraint, OptimisationConstraint):
         """
         Prepare the constraint for use in an equilibrium optimisation problem.
         """
-        equilibrium = _get_dummy_equilibrium(equilibrium, I_not_dI)
+        if I_not_dI:
+            equilibrium = _get_dummy_equilibrium(equilibrium)
 
         # Re-build control response matrix
         if not fixed_coils or (fixed_coils and self._args["ax_mat"] is None):
@@ -235,7 +235,8 @@ class CoilForceConstraints(UpdateableConstraint, OptimisationConstraint):
         """
         Prepare the constraint for use in an equilibrium optimisation problem.
         """
-        equilibrium = _get_dummy_equilibrium(equilibrium, I_not_dI)
+        if I_not_dI:
+            equilibrium = _get_dummy_equilibrium(equilibrium)
 
         # Re-build control response matrix
         if not fixed_coils or (fixed_coils and self._args["a_mat"] is None):
@@ -304,7 +305,8 @@ class MagneticConstraint(UpdateableConstraint, OptimisationConstraint):
         """
         Prepare the constraint for use in an equilibrium optimisation problem.
         """
-        equilibrium = _get_dummy_equilibrium(equilibrium, I_not_dI)
+        if I_not_dI:
+            equilibrium = _get_dummy_equilibrium(equilibrium)
 
         # Re-build control response matrix
         if not fixed_coils or (fixed_coils and self._args["a_mat"] is None):
@@ -639,7 +641,8 @@ class MagneticConstraintSet(ABC):
         self.background = None
 
     def __call__(self, equilibrium, I_not_dI=False, fixed_coils=False):  # noqa :N803
-        equilibrium = _get_dummy_equilibrium(equilibrium, I_not_dI)
+        if I_not_dI:
+            equilibrium = _get_dummy_equilibrium(equilibrium)
 
         self.eq = equilibrium
         self.coilset = equilibrium.coilset
