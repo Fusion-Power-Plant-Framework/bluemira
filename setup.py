@@ -38,7 +38,6 @@ install_requires = [
     "pyquaternion",
     "scikit-learn",
     "seaborn",
-    "Shapely",
     "tables",
     "tabulate",
     "scipy<=1.5.3",
