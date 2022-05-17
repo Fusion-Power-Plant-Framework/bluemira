@@ -185,7 +185,7 @@ bd_opt_problem = BreakdownCOP(
     breakdown.coilset,
     breakdown,
     OutboardBreakdownZoneStrategy(R_0, A, 0.225),
-    optimiser=Optimiser("COBYLA", opt_conditions={"max_eval": 1000, "ftol_rel": 1e-6}),
+    optimiser=Optimiser("COBYLA", opt_conditions={"max_eval": 3000, "ftol_rel": 1e-6}),
     max_currents=max_currents,
     B_stray_max=1e-3,
     B_stray_con_tol=1e-6,
@@ -234,7 +234,6 @@ sof = Equilibrium(
     deepcopy(coilset),
     grid,
     Ip=I_p / 1e6,
-    li=l_i,
     profiles=None,
     RB0=[R_0, B_0],
 )
@@ -242,7 +241,6 @@ eof = Equilibrium(
     deepcopy(coilset),
     grid,
     Ip=I_p / 1e6,
-    li=l_i,
     profiles=None,
     RB0=[R_0, B_0],
 )
@@ -278,10 +276,10 @@ sof_opt_problem = TikhonovCurrentCOP(
     constraints=[field_constraints, force_constraints],
 )
 
-iterator = PicardIterator(sof, profile, sof_opt_problem, plot=True)
+iterator = PicardIterator(sof, profile, sof_opt_problem, plot=True, fixed_coils=True)
 iterator()
 
-profile_eof = CustomProfile(p_shape, ff_shape, R_0, B_0, Ip=I_p)
+profile_eof = CustomProfile(p_shape, ff_shape, R_0, B_0, Ip=I_p / 1e6)
 
 eof_opt_problem = TikhonovCurrentCOP(
     eof.coilset,
@@ -294,7 +292,9 @@ eof_opt_problem = TikhonovCurrentCOP(
 )
 
 
-iterator = PicardIterator(eof, profile_eof, eof_opt_problem, plot=True, relaxation=0.2)
+iterator = PicardIterator(
+    eof, profile_eof, eof_opt_problem, plot=True, relaxation=0.2, fixed_coils=True
+)
 iterator()
 
 # %%[markdown]
