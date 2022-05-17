@@ -38,9 +38,8 @@ def test_update_obsolete_vars():
     assert str1 == "ni peng" and str2 == "shrubbery"
 
 
-@patch("bluemira.codes.process.api.imp_data")
-def test_impurities(imp_data):
-    imp_data.__file__ = "./__init__.py"
+def test_impurities():
+    api.imp_data.__file__ = "./__init__.py"
     assert api.Impurities["H"] == api.Impurities.H
     assert api.Impurities(1) == api.Impurities.H
     assert api.Impurities(1).id() == "fimp(01"
