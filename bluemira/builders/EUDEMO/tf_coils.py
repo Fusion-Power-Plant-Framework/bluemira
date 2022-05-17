@@ -126,6 +126,7 @@ class TFCoilsBuilder(OptimisedShapeBuilder):
         # Dubious WP depth from PROCESS (I used to tweak this when building the TF coils)
         "tf_wp_width",
         "tf_wp_depth",
+        "g_ts_tf",
     ]
     _required_config = OptimisedShapeBuilder._required_config + []
     _params: Configuration
@@ -241,7 +242,10 @@ class TFCoilsBuilder(OptimisedShapeBuilder):
         self._centreline = None
         self._wp_cross_section = self._make_wp_xs()
         self._separatrix = separatrix
-        self._keep_out_zone = keep_out_zone
+        if keep_out_zone:
+            self._keep_out_zone = self._make_centreline_koz(keep_out_zone)
+        else:
+            self._keep_out_zone = None
 
         if self._geom_path is not None and os.path.isdir(self._geom_path):
             default_file_name = (
@@ -670,6 +674,19 @@ class TFCoilsBuilder(OptimisedShapeBuilder):
         inner = BluemiraFace([wires[1], wires[0]])
         outer = BluemiraFace([wires[3], wires[2]])
         self._temp_casing = [inner, outer]
+
+    def _make_centreline_koz(self, keep_out_zone):
+        """
+        Make a keep-out-zone for the TF coil centreline optimisation problem.
+        """
+        # The keep-out zone is for the TF WP centreline, so we need to add to it to
+        # prevent clashes when the winding pack thickness and casing are added.
+        tk_offset = 0.5 * self._params.tf_wp_width.value
+        # Variable thickness of the casing is problematic...
+        # TODO: Improve this estimate (or use variable offset here too..)
+        tk_offset += 1.5 * self._params.tk_tf_front_ib
+        tk_offset += self._params.g_ts_tf.value
+        return offset_wire(keep_out_zone, tk_offset, open_wire=False, join="arc")
 
     def save_shape(self, filename: str = None, **kwargs):
         """

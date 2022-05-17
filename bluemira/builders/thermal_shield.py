@@ -32,7 +32,11 @@ import bluemira.utilities.plot_tools as bm_plot_tools
 from bluemira.base.builder import BuildConfig, Builder
 from bluemira.base.components import Component, PhysicalComponent
 from bluemira.base.config import Configuration
-from bluemira.builders.EUDEMO.tools import circular_pattern_component
+from bluemira.builders.EUDEMO.tools import (
+    circular_pattern_component,
+    find_xy_plane_radii,
+    make_circular_xy_ring,
+)
 from bluemira.display.palettes import BLUE_PALETTE
 from bluemira.geometry.error import GeometryError
 from bluemira.geometry.face import BluemiraFace
@@ -40,16 +44,126 @@ from bluemira.geometry.plane import BluemiraPlane
 from bluemira.geometry.tools import (
     boolean_cut,
     boolean_fuse,
-    make_circle,
     make_polygon,
     offset_wire,
     revolve_shape,
-    slice_shape,
 )
 from bluemira.geometry.wire import BluemiraWire
 
 
-class ThermalShieldBuilder(Builder):
+class VacuumVesselThermalShieldBuilder(Builder):
+    """
+    Build for the vacuum vessel thermal shield (VVTS).
+    """
+
+    _required_params: List[str] = [
+        "tk_ts",
+        "g_vv_ts",
+        "n_TF",
+    ]
+    _params: Configuration
+    _vv_koz: Optional[BluemiraWire]
+
+    def reinitialise(self, params, vv_koz) -> None:
+        """
+        Initialise the state of this builder ready for a new run.
+        """
+        super().reinitialise(params)
+
+        self._vv_koz = vv_koz
+
+    def build(self) -> Component:
+        """
+        Build the vacuum vessel thermal shield component.
+
+        Returns
+        -------
+        component: Component
+            The Component built by this builder.
+        """
+        super().build()
+
+        component = Component(name=self.name)
+        component.add_child(self.build_xz())
+        component.add_child(self.build_xy())
+        component.add_child(self.build_xyz())
+        return component
+
+    def build_xz(self):
+        """
+        Build the x-z components of the vacuum vessel thermal shield.
+        """
+        vvts_inner_wire = offset_wire(
+            self._vv_koz,
+            self._params.g_vv_ts.value,
+            join="arc",
+            open_wire=False,
+            ndiscr=600,
+        )
+        vvts_outer_wire = offset_wire(
+            vvts_inner_wire,
+            self._params.tk_ts.value,
+            join="arc",
+            open_wire=False,
+            ndiscr=600,
+        )
+        vvts_face = BluemiraFace([vvts_outer_wire, vvts_inner_wire])
+        self._vvts_face = vvts_face
+        vvts = PhysicalComponent("VVTS", vvts_face)
+
+        vvts.plot_options.face_options["color"] = BLUE_PALETTE["TS"][0]
+
+        component = Component("xz", children=[vvts])
+        bm_plot_tools.set_component_view(component, "xz")
+        return component
+
+    def build_xy(self):
+        """
+        Build the x-y components of the vacuum vessel thermal shield.
+        """
+        xy_plane = BluemiraPlane.from_3_points([0, 0, 0], [1, 0, 0], [1, 1, 0])
+        r_ib_out, r_ob_out = find_xy_plane_radii(self._vvts_face.boundary[0], xy_plane)
+        r_ib_in, r_ob_in = find_xy_plane_radii(self._vvts_face.boundary[1], xy_plane)
+
+        inboard = make_circular_xy_ring(r_ib_in, r_ib_out)
+        vvts_ib = PhysicalComponent("inboard", inboard)
+        vvts_ib.plot_options.face_options["color"] = BLUE_PALETTE["TS"][0]
+
+        outboard = make_circular_xy_ring(r_ob_in, r_ob_out)
+        vvts_ob = PhysicalComponent("outboard", outboard)
+        vvts_ob.plot_options.face_options["color"] = BLUE_PALETTE["TS"][0]
+
+        component = Component("xy", children=[vvts_ib])
+        bm_plot_tools.set_component_view(component, "xy")
+        return component
+
+    def build_xyz(self, degree=360.0):
+        """
+        Build the x-y-z components of the vacuum vessel thermal shield
+        """
+        n_ts_draw = max(1, int(degree // (360 // self._params.n_TF.value)))
+        degree = (360.0 / self._params.n_TF.value) * n_ts_draw
+
+        component = Component("xyz")
+        vvts_face = self._vvts_face
+        base = (0, 0, 0)
+        direction = (0, 0, 1)
+        shape = revolve_shape(
+            vvts_face,
+            base=base,
+            direction=direction,
+            degree=360 / self._params.n_TF.value,
+        )
+
+        vvts_body = PhysicalComponent("VVTS", shape)
+        vvts_body.display_cad_options.color = BLUE_PALETTE["TS"][0]
+        sectors = circular_pattern_component(vvts_body, n_ts_draw, degree=degree)
+        component.add_children(sectors, merge_trees=True)
+
+        return component
+
+
+class CryostatThermalShieldBuilder(Builder):
     """
     Builder for the thermal shield
     """
@@ -64,7 +178,6 @@ class ThermalShieldBuilder(Builder):
     _params: Configuration
     _pf_kozs: List[BluemiraWire]
     _tf_koz: BluemiraWire
-    _vv_koz: Optional[BluemiraWire]
     _cts_face: BluemiraFace
 
     def __init__(
@@ -80,18 +193,16 @@ class ThermalShieldBuilder(Builder):
             build_config,
             pf_coils_xz_kozs=pf_coils_xz_kozs,
             tf_xz_koz=tf_xz_koz,
-            vv_xz_koz=vv_xz_koz,
         )
         self._cts_face = None
 
-    def reinitialise(self, params, pf_coils_xz_kozs, tf_xz_koz, vv_xz_koz=None) -> None:
+    def reinitialise(self, params, pf_coils_xz_kozs, tf_xz_koz) -> None:
         """
         Initialise the state of this builder ready for a new run.
         """
         super().reinitialise(params)
         self._pf_kozs = pf_coils_xz_kozs
         self._tf_koz = tf_xz_koz
-        self._vv_koz = vv_xz_koz
 
     def build(self) -> Component:
         """
@@ -140,11 +251,15 @@ class ThermalShieldBuilder(Builder):
         x, z = np.array(x), np.array(z)
         hull_idx = ConvexHull(np.array([x, z]).T).vertices
         wire = make_polygon({"x": x[hull_idx], "y": 0, "z": z[hull_idx]}, closed=True)
-        wire = offset_wire(wire, self.params.g_ts_pf, open_wire=False)
-        pf_o_wire = offset_wire(wire, self.params.tk_ts, open_wire=False)
+        wire = offset_wire(wire, self.params.g_ts_pf, open_wire=False, ndiscr=600)
+        pf_o_wire = offset_wire(wire, self.params.tk_ts, open_wire=False, ndiscr=600)
 
         tf_o_wire = offset_wire(
-            self._tf_koz, self.params.g_ts_tf, join="arc", open_wire=False
+            self._tf_koz,
+            self.params.g_ts_tf,
+            join="arc",
+            open_wire=False,
+            ndiscr=600,
         )
 
         try:
@@ -156,7 +271,7 @@ class ThermalShieldBuilder(Builder):
             # the TF offset face is probably enclosed by the PF offset face
             cts_inner = pf_o_wire
 
-        cts_outer = offset_wire(cts_inner, self.params.tk_ts)
+        cts_outer = offset_wire(cts_inner, self.params.tk_ts, ndiscr=600)
         cts_face = BluemiraFace([cts_outer, cts_inner])
         bound_box = cts_face.bounding_box
         z_min, z_max = bound_box.z_min, bound_box.z_max
@@ -179,15 +294,10 @@ class ThermalShieldBuilder(Builder):
         Build the x-y components of the thermal shield.
         """
         # Cryostat thermal shield
-        mid_plane = BluemiraPlane()
-        intersections = slice_shape(self._cts_face.boundary[0], mid_plane)
-        r_values = np.array(intersections)[:, 0]
-        r_in = np.min(r_values)
-        r_out = np.max(r_values)
-        inner = make_circle(radius=r_in)
-        outer = make_circle(radius=r_out)
+        mid_plane = BluemiraPlane.from_3_points([0, 0, 0], [1, 0, 0], [1, 1, 0])
+        r_in, r_out = find_xy_plane_radii(self._cts_face.boundary[0], mid_plane)
 
-        cts = BluemiraFace([outer, inner])
+        cts = make_circular_xy_ring(r_in, r_out)
         cryostat_ts = PhysicalComponent("Cryostat TS", cts)
         cryostat_ts.plot_options.face_options["color"] = BLUE_PALETTE["TS"][0]
 
@@ -199,9 +309,6 @@ class ThermalShieldBuilder(Builder):
         """
         Build the x-y-z components of the thermal shield.
         """
-        n_ts_draw = max(1, int(degree // (360 // self._params.n_TF.value)))
-        degree = (360.0 / self._params.n_TF.value) * n_ts_draw
-        # Cryostat thermal shield
         component = Component("xyz")
         cts_face = self._cts_face.deepcopy()
         base = (0, 0, 0)
@@ -210,11 +317,17 @@ class ThermalShieldBuilder(Builder):
             cts_face,
             base=base,
             direction=direction,
-            degree=360 / self._params.n_TF.value,
+            degree=degree
+            - 1,  # TODO: Put back `degree/ self._params.n_TF.value,` (#902)
         )
         cryostat_ts = PhysicalComponent("Cryostat TS", cts)
         cryostat_ts.display_cad_options.color = BLUE_PALETTE["TS"][0]
-        sectors = circular_pattern_component(cryostat_ts, n_ts_draw, degree=degree)
-        component.add_children(sectors, merge_trees=True)
+        component.add_child(cryostat_ts)
+        # TODO: Put back sector segmentation (see #902 for details)
+        # n_ts_draw = max(1, int(degree // (360 // self._params.n_TF.value)))
+        # degree = (360.0 / self._params.n_TF.value) * n_ts_draw
+        # cryostat_ts.display_cad_options.color = BLUE_PALETTE["TS"][0]
+        # sectors = circular_pattern_component(cryostat_ts, n_ts_draw, degree=degree)
+        # component.add_children(sectors, merge_trees=True)
 
         return component

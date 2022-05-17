@@ -290,9 +290,16 @@ class ConfigurationSchema:
     F_cs_ztotmax: Parameter
     F_cs_sepmax: Parameter
     CS_material: Parameter
+    CS_jmax: Parameter
+    CS_bmax: Parameter
 
     # PF magnets
     PF_material: Parameter
+    PF_jmax: Parameter
+    PF_bmax: Parameter
+
+    # Equilibria
+    B_premag_stray_max: Parameter
 
     # Cryostat
     n_cr_lab: Parameter

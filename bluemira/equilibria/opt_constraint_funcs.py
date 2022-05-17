@@ -313,3 +313,31 @@ def coil_field_constraints(
 
     constraint[:] = B - B_max
     return constraint
+
+
+def stray_field_constraints(constraint, vector, grad, cBx, cBz, B_max, scale):
+    """
+    Current optimisation poloidal field constraints on predefined locations. Should be
+    used for stray field constraints in plasma-less scenarios (i.e. premagnetisation).
+
+    Parameters
+    ----------
+    constraint: np.ndarray
+        Constraint array (modified in place)
+    vector: np.ndarray
+        Current vector
+    grad: np.ndarray
+        Constraint Jacobian (modified in place)
+
+
+    Returns
+    -------
+    constraint: np.ndarray
+        Updated constraint vector
+    """
+    B = scale * np.hypot((cBx @ vector), (cBz @ vector))
+    constraint[:] = B - B_max
+    if grad.size > 0:
+        grad[:] = cBx * cBx @ vector + cBz * cBz @ vector
+        grad[:] = scale * grad / B
+    return constraint

@@ -44,13 +44,15 @@ from bluemira.builders.EUDEMO.tf_coils import TFCoilsBuilder
 from bluemira.builders.EUDEMO.vacuum_vessel import VacuumVesselBuilder
 from bluemira.builders.radiation_shield import RadiationShieldBuilder
 from bluemira.builders.tf_coils import RippleConstrainedLengthGOP
-from bluemira.builders.thermal_shield import ThermalShieldBuilder
+from bluemira.builders.thermal_shield import (
+    CryostatThermalShieldBuilder,
+    VacuumVesselThermalShieldBuilder,
+)
 from bluemira.codes import plot_radial_build
 from bluemira.codes.plasmod.mapping import (  # noqa: N812
     create_mapping as create_PLASMOD_mappings,
 )
 from bluemira.codes.process.mapping import mappings as PROCESS_mappings  # noqa: N812
-from bluemira.display.displayer import ComponentDisplayer
 from bluemira.equilibria._deprecated_run import AbInitioEquilibriumProblem
 from bluemira.utilities.tools import json_writer
 
@@ -481,6 +483,10 @@ blanket = component.get_component(EUDEMOReactor.BLANKET)
 blanket.get_component("xy").plot_2d(ax=ax, show=False)
 vessel = component.get_component(EUDEMOReactor.VACUUM_VESSEL)
 vessel.get_component("xy").plot_2d(ax=ax, show=False)
+thermal_shield = component.get_component(EUDEMOReactor.VVTS)
+thermal_shield.get_component("xy").plot_2d(ax=ax, show=False)
+thermal_shield = component.get_component(EUDEMOReactor.CTS)
+thermal_shield.get_component("xy").plot_2d(ax=ax, show=False)
 pf_coils.get_component("xy").plot_2d(ax=ax)
 
 # %%
@@ -493,7 +499,9 @@ blanket.get_component("xz").plot_2d(ax=ax, show=False)
 vessel.get_component("xz").plot_2d(ax=ax, show=False)
 pf_coils.get_component("xz").plot_2d(ax=ax, show=False)
 
-thermal_shield = component.get_component(EUDEMOReactor.THERMAL_SHIELD)
+thermal_shield = component.get_component(EUDEMOReactor.VVTS)
+thermal_shield.get_component("xz").plot_2d(ax=ax, show=False)
+thermal_shield = component.get_component(EUDEMOReactor.CTS)
 thermal_shield.get_component("xz").plot_2d(ax=ax, show=False)
 cryostat = component.get_component(EUDEMOReactor.CRYOSTAT)
 cryostat.get_component("xz").plot_2d(ax=ax, show=False)
@@ -501,7 +509,7 @@ radiation_shield = component.get_component(EUDEMOReactor.RADIATION_SHIELD)
 radiation_shield.get_component("xz").plot_2d(ax=ax)
 
 # %%
-ComponentDisplayer().show_cad(component.get_component("xyz", first=False))
+# ComponentDisplayer().show_cad(component.get_component("xyz", first=False))
 
 # %%
 sector = Component("Segment View")
@@ -511,9 +519,8 @@ vessel_builder: VacuumVesselBuilder = reactor.get_builder(EUDEMOReactor.VACUUM_V
 blanket_builder: BlanketBuilder = reactor.get_builder(EUDEMOReactor.BLANKET)
 tf_coils_builder: TFCoilsBuilder = reactor.get_builder(EUDEMOReactor.TF_COILS)
 pf_coils_builder: PFCoilsBuilder = reactor.get_builder(EUDEMOReactor.PF_COILS)
-thermal_shield_builder: ThermalShieldBuilder = reactor.get_builder(
-    EUDEMOReactor.THERMAL_SHIELD
-)
+vvts_builder: VacuumVesselThermalShieldBuilder = reactor.get_builder(EUDEMOReactor.VVTS)
+cts_builder: CryostatThermalShieldBuilder = reactor.get_builder(EUDEMOReactor.CTS)
 cryostat_builder: CryostatBuilder = reactor.get_builder(EUDEMOReactor.CRYOSTAT)
 radiation_shield_builder: RadiationShieldBuilder = reactor.get_builder(
     EUDEMOReactor.RADIATION_SHIELD
@@ -524,7 +531,8 @@ sector.add_child(blanket_builder.build_xyz(degree=270))
 sector.add_child(vessel_builder.build_xyz(degree=270))
 sector.add_child(tf_coils_builder.build_xyz(degree=270))
 sector.add_child(pf_coils_builder.build_xyz(degree=270))
-sector.add_child(thermal_shield_builder.build_xyz(degree=270))
+sector.add_child(vvts_builder.build_xyz(degree=270))
+sector.add_child(cts_builder.build_xyz(degree=270))
 sector.add_child(cryostat_builder.build_xyz(degree=270))
 sector.add_child(radiation_shield_builder.build_xyz(degree=270))
 sector.show_cad()

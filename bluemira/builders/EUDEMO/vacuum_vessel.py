@@ -29,11 +29,15 @@ import bluemira.utilities.plot_tools as bm_plot_tools
 from bluemira.base.builder import BuildConfig, Builder
 from bluemira.base.components import Component, PhysicalComponent
 from bluemira.base.config import Configuration
-from bluemira.builders.EUDEMO.tools import make_circular_xy_ring, varied_offset
+from bluemira.builders.EUDEMO.tools import (
+    find_xy_plane_radii,
+    make_circular_xy_ring,
+    varied_offset,
+)
 from bluemira.display.palettes import BLUE_PALETTE
 from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.plane import BluemiraPlane
-from bluemira.geometry.tools import offset_wire, revolve_shape, slice_shape
+from bluemira.geometry.tools import offset_wire, revolve_shape
 from bluemira.geometry.wire import BluemiraWire
 
 
@@ -116,7 +120,7 @@ class VacuumVesselBuilder(Builder):
         face = BluemiraFace([outer_vv, inner_vv])
         self._vv_face = face
 
-        body = PhysicalComponent("body", face)
+        body = PhysicalComponent("Body", face)
         body.plot_options.face_options["color"] = BLUE_PALETTE["VV"][0]
 
         component = Component("xz", children=[body])
@@ -128,12 +132,8 @@ class VacuumVesselBuilder(Builder):
         Build the x-y components of the vacuum vessel.
         """
         xy_plane = BluemiraPlane.from_3_points([0, 0, 0], [1, 0, 0], [1, 1, 0])
-        r_ib_out, r_ob_out = self._find_intersections_x_coord(
-            self._vv_face.boundary[0], xy_plane
-        )
-        r_ib_in, r_ob_in = self._find_intersections_x_coord(
-            self._vv_face.boundary[1], xy_plane
-        )
+        r_ib_out, r_ob_out = find_xy_plane_radii(self._vv_face.boundary[0], xy_plane)
+        r_ib_in, r_ob_in = find_xy_plane_radii(self._vv_face.boundary[1], xy_plane)
 
         inboard = make_circular_xy_ring(r_ib_in, r_ib_out)
         vv_inboard = PhysicalComponent("inboard", inboard)
@@ -173,11 +173,3 @@ class VacuumVesselBuilder(Builder):
         # component.add_children(sectors, merge_trees=True)
 
         return component
-
-    @staticmethod
-    def _find_intersections_x_coord(wire, plane):
-        """
-        Get the radial coordinates of a wire's intersection points with a plane.
-        """
-        intersections = slice_shape(wire, plane)
-        return sorted(intersections[:, 0])
