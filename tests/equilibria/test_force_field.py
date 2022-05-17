@@ -47,7 +47,7 @@ class TestForceField:
         Check the vertical forces between a Helmholtz pair.
         Verbose: https://ieeexplore.ieee.org/stamp/stamp.jsp?arnumber=6472319
         """
-        forces = self.eq.get_forces()
+        forces = self.eq.get_coil_forces()
         x, z = self.coilset.coils["PF_1"].x, self.coilset.coils["PF_1"].z
         xc, zc = self.coilset.coils["PF_2"].x, self.coilset.coils["PF_2"].z
         i1 = i2 = 10e6

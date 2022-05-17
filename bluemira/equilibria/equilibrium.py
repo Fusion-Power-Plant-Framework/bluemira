@@ -150,7 +150,7 @@ class MHDState:
         self._bx_green = self.coilset.map_Bx_greens(self.x, self.z)
         self._bz_green = self.coilset.map_Bz_greens(self.x, self.z)
 
-    def get_forces(self):
+    def get_coil_forces(self):
         """
         Returns the Fx and Fz force on the control coils
 
@@ -176,7 +176,7 @@ class MHDState:
 
         return forces / 1e6
 
-    def get_fields(self):
+    def get_coil_fields(self):
         """
         Returns the poloidal magnetic fields on the control coils
         (approximate peak)
@@ -1507,8 +1507,8 @@ class Equilibrium(MHDState):
         """
         c_names = self.coilset.get_control_names()
         currents = self.coilset.get_control_currents() / 1e6
-        fields = self.get_fields()
-        forces = self.get_forces() / 1e6
+        fields = self.get_coil_fields()
+        forces = self.get_coil_forces() / 1e6
         fz = forces.T[1]
         fz_cs = fz[self.coilset.n_PF :]
         fz_c_stot = sum(fz_cs)
