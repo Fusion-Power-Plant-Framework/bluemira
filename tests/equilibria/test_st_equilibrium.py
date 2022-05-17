@@ -38,7 +38,6 @@ from bluemira.equilibria import (
     Grid,
     IsofluxConstraint,
     MagneticConstraintSet,
-    Norm2Tikhonov,
     PicardIterator,
     SymmetricCircuit,
 )
@@ -173,7 +172,6 @@ class TestSTEquilibrium:
         )
 
         eq = Equilibrium(coilset, grid, force_symmetry=True, psi=initial_psi, Ip=i_p)
-        optimiser = Norm2Tikhonov(build_tweaks["tikhonov_gamma"])
         opt_problem = UnconstrainedTikhonovCurrentGradientCOP(
             eq.coilset, eq, constraint_set, gamma=build_tweaks["tikhonov_gamma"]
         )
