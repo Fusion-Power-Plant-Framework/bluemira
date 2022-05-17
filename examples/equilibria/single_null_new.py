@@ -53,7 +53,7 @@ from bluemira.equilibria.opt_constraints import (
 from bluemira.equilibria.opt_problems import (
     MinimalCurrentCOP,
     TikhonovCurrentCOP,
-    UnconstrainedTikhonovCurrentCOP,
+    UnconstrainedTikhonovCurrentGradientCOP,
 )
 from bluemira.equilibria.profiles import CustomProfile
 from bluemira.equilibria.solve import DudsonConvergence, PicardIterator
@@ -178,13 +178,11 @@ x_point = FieldNullConstraint(
 
 # %%
 
-opt_problem = UnconstrainedTikhonovCurrentCOP(
+opt_problem = UnconstrainedTikhonovCurrentGradientCOP(
     coilset, eq, MagneticConstraintSet([psi_boundary, x_point]), gamma=1e-7
 )
 
-program = PicardIterator(
-    eq, profiles, opt_problem, I_not_dI=False, fixed_coils=True, relaxation=0.2
-)
+program = PicardIterator(eq, profiles, opt_problem, fixed_coils=True, relaxation=0.2)
 program()
 
 
@@ -232,7 +230,6 @@ program = PicardIterator(
     eq,
     profiles,
     opt_problem,
-    I_not_dI=True,
     fixed_coils=True,
     convergence=DudsonConvergence(1e-4),
     relaxation=0.3,
@@ -260,7 +257,6 @@ program = PicardIterator(
     eq,
     profiles,
     opt_problem,
-    I_not_dI=True,
     fixed_coils=True,
     convergence=DudsonConvergence(1e-4),
     relaxation=0.3,

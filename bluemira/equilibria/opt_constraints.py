@@ -24,6 +24,7 @@ Equilibrium optimisation constraint classes
 """  # noqa (W505)
 
 from abc import ABC, abstractmethod
+from copy import deepcopy
 from typing import List, Union
 
 import numpy as np
@@ -56,7 +57,7 @@ def _get_dummy_equilibrium(equilibrium, I_not_dI):
     if I_not_dI:
         # TODO: Add passive coil contributions here
         dummy = equilibrium.plasma_coil()
-        dummy.coilset = equilibrium.coilset
+        dummy.coilset = deepcopy(equilibrium.coilset)
         equilibrium = dummy
     return equilibrium
 

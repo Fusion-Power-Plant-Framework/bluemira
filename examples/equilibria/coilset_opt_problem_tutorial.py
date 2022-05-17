@@ -48,7 +48,7 @@ from bluemira.equilibria.grid import Grid
 from bluemira.equilibria.opt_constraints import IsofluxConstraint, MagneticConstraintSet
 from bluemira.equilibria.opt_problems import (
     TikhonovCurrentCOP,
-    UnconstrainedTikhonovCurrentCOP,
+    UnconstrainedTikhonovCurrentGradientCOP,
 )
 from bluemira.equilibria.profiles import CustomProfile
 from bluemira.equilibria.solve import DudsonConvergence, PicardIterator
@@ -406,7 +406,6 @@ constrained_iterator = PicardIterator(
     plot=False,
     relaxation=0.3,
     maxiter=400,
-    I_not_dI=True,
     convergence=DudsonConvergence(1e-4),
 )
 
@@ -420,7 +419,7 @@ constrained_iterator = PicardIterator(
 
 # %%
 
-unconstrained_cop = UnconstrainedTikhonovCurrentCOP(
+unconstrained_cop = UnconstrainedTikhonovCurrentGradientCOP(
     coilset, eq, magnetic_targets, gamma=1e-8
 )
 unconstrained_iterator = PicardIterator(
@@ -428,7 +427,6 @@ unconstrained_iterator = PicardIterator(
     profile,  # jetto
     unconstrained_cop,
     plot=False,
-    I_not_dI=True,
     relaxation=0.3,
     convergence=DudsonConvergence(1e-2),
     maxiter=400,
