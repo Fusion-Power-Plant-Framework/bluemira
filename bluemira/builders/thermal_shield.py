@@ -163,7 +163,7 @@ class VacuumVesselThermalShieldBuilder(Builder):
         return component
 
 
-class CyrostatThermalShieldBuilder(Builder):
+class CryostatThermalShieldBuilder(Builder):
     """
     Builder for the thermal shield
     """
