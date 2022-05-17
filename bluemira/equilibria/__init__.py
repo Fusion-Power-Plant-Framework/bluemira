@@ -53,10 +53,4 @@ from bluemira.equilibria.shapes import (
     flux_surface_johner,
     flux_surface_manickam,
 )
-from bluemira.equilibria.solve import (
-    PicardAbsIterator,
-    PicardCoilsetIterator,
-    PicardDeltaIterator,
-    PicardLiAbsIterator,
-    PicardLiDeltaIterator,
-)
+from bluemira.equilibria.solve import PicardIterator
