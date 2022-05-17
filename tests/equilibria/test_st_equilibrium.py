@@ -41,8 +41,10 @@ from bluemira.equilibria import (
     Norm2Tikhonov,
     PicardIterator,
     SymmetricCircuit,
+    opt_problems,
 )
 from bluemira.equilibria.file import EQDSKInterface
+from bluemira.equilibria.opt_problems import UnconstrainedTikhonovCurrentGradientCOP
 from bluemira.equilibria.solve import DudsonConvergence
 
 
@@ -165,14 +167,16 @@ class TestSTEquilibrium:
 
         eq = Equilibrium(coilset, grid, force_symmetry=True, psi=initial_psi, Ip=i_p)
         optimiser = Norm2Tikhonov(build_tweaks["tikhonov_gamma"])
+        opt_problem = UnconstrainedTikhonovCurrentGradientCOP(
+            eq.coilset, eq, constraint_set, gamma=build_tweaks["tikhonov_gamma"]
+        )
 
         criterion = DudsonConvergence(build_tweaks["fbe_convergence_crit"])
 
         fbe_iterator = PicardIterator(
             eq,
             self.profiles,
-            constraint_set,
-            optimiser,
+            opt_problem,
             plot=False,
             gif=False,
             relaxation=0.3,
@@ -254,10 +258,11 @@ class TestSTEquilibrium:
         coilset_temp.add_coil(dummy)
 
         eq = Equilibrium(coilset_temp, grid, force_symmetry=True, psi=None, Ip=0)
-        constraint_set(eq)
-        optimiser = Norm2Tikhonov(tikhonov_gamma)
-        currents = optimiser(eq, constraint_set)
-        coilset_temp.set_control_currents(currents)
+        opt_problem = UnconstrainedTikhonovCurrentGradientCOP(
+            coilset_temp, eq, constraint_set, gamma=tikhonov_gamma
+        )
+        opt_problem.optimise()
+
         # Note that this for some reason (incorrectly) only includes the psi from the
         # controlled coils and the plasma dummy psi contribution is not included...
         # which for some reason works better than with it.
