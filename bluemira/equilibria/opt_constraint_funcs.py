@@ -287,8 +287,14 @@ def coil_field_constraints(
         Current vector
     grad: np.ndarray
         Constraint Jacobian (modified in place)
-    a_mat: np.ndarray
-        Response matrix
+    ax_mat: np.ndarray
+        Response matrix for Bx
+    az_mat: np.ndarray
+        Response matrix for Bz
+    bxp_vec: np.ndarray
+        Background vector for Bx
+    bzp_vec: np.ndarray
+        Background vector for Bz
     b_vec: np.ndarray
         Target value vector
     B_max: np.ndarray
