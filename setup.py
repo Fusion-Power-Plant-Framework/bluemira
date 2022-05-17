@@ -15,6 +15,7 @@ with open("README.md", "r") as f:
     long = f.read()
 
 install_requires = [
+    "anytree",
     "asteval",
     "Babel",
     "click",
