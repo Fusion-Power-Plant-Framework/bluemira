@@ -43,11 +43,20 @@ from bluemira.display import plot_defaults
 from bluemira.equilibria.coils import Coil, CoilSet
 from bluemira.equilibria.equilibrium import Breakdown, Equilibrium
 from bluemira.equilibria.grid import Grid
-from bluemira.equilibria.opt_constraints import AutoConstraints
-from bluemira.equilibria.optimiser import BreakdownOptimiser, FBIOptimiser
+from bluemira.equilibria.opt_constraints import (
+    AutoConstraints,
+    CoilFieldConstraints,
+    CoilForceConstraints,
+)
+from bluemira.equilibria.opt_problems import (
+    BreakdownCOP,
+    OutboardBreakdownZoneStrategy,
+    TikhonovCurrentCOP,
+)
 from bluemira.equilibria.physics import calc_beta_p_approx, calc_li, calc_psib
-from bluemira.equilibria.profiles import BetaIpProfile, CustomProfile, DoublePowerFunc
+from bluemira.equilibria.profiles import CustomProfile, DoublePowerFunc
 from bluemira.equilibria.solve import PicardIterator
+from bluemira.utilities.optimiser import Optimiser
 
 # %%[markdown]
 
@@ -158,6 +167,13 @@ grid = Grid(2, 16.0, -9.0, 9.0, 100, 100)
 
 # %%
 
+field_constraints = CoilFieldConstraints(
+    coilset, coilset.get_max_fields(), tolerance=1e-6
+)
+force_constraints = CoilForceConstraints(
+    coilset, PF_Fz_max, CS_Fz_sum, CS_Fz_sep, tolerance=1e-6
+)
+
 max_currents = coilset.get_max_currents(0)
 coilset.set_control_currents(max_currents, update_size=False)
 
@@ -165,20 +181,18 @@ coilset.set_control_currents(max_currents, update_size=False)
 breakdown = Breakdown(deepcopy(coilset), grid, R_0=R_0)
 breakdown.set_breakdown_point(x_zone, z_zone)
 
-optimiser = BreakdownOptimiser(
-    x_zone,
-    z_zone,
-    r_zone,
-    b_zone_max,
-    max_currents,
-    coilset.get_max_fields(),
-    PF_Fz_max=PF_Fz_max,
-    CS_Fz_sum=CS_Fz_sum,
-    CS_Fz_sep=CS_Fz_sep,
+bd_opt_problem = BreakdownCOP(
+    coilset,
+    breakdown,
+    OutboardBreakdownZoneStrategy(R_0, A, 0.225),
+    optimiser=Optimiser("COBYLA", opt_conditions={"max_eval": 1000, "ftol_rel": 1e-6}),
+    B_stray_max=1e-3,
+    B_stray_con_tol=1e-6,
+    n_B_stray_points=10,
+    constraints=[field_constraints, force_constraints],
 )
 
-currents = optimiser(breakdown)
-breakdown.coilset.set_control_currents(currents)
+coilset = bd_opt_problem.optimise()
 
 bluemira_print(f"Breakdown psi: {breakdown.breakdown_psi*2*np.pi:.2f} V.s")
 
@@ -200,8 +214,9 @@ psi_eof -= 10
 # Set up a parameterised profile
 
 # %%
-shape = DoublePowerFunc([2, 2])
-profile = BetaIpProfile(beta_p, I_p, R_0, B_0, shape=shape)
+shape = DoublePowerFunc([0.99975459, 0.7580799])
+profile = CustomProfile(shape, shape, R_0, B_0, Ip=I_p)
+# profile = BetaIpProfile(beta_p, I_p, R_0, B_0, shape=shape)
 
 
 # %%[markdown]
@@ -245,27 +260,35 @@ eof_constraints = AutoConstraints(
     n_points=50,
 )
 
+optimiser = Optimiser("SLSQP", opt_conditions={"max_eval": 1000, "ftol_rel": 1e-6})
 
-optimiser = FBIOptimiser(
-    coilset.get_max_fields(),
-    PF_Fz_max,
-    CS_Fz_sum,
-    CS_Fz_sep,
+sof_opt_problem = TikhonovCurrentCOP(
+    coilset,
+    sof,
+    sof_constraints,
+    gamma=1e-7,
+    optimser=optimiser,
+    max_currents=coilset.get_max_currents(0.0),
+    constraints=[field_constraints, force_constraints],
 )
-optimiser.update_current_constraint(coilset.get_max_currents(0))
 
-
-iterator = PicardLiAbsIterator(sof, profile, sof_constraints, optimiser, plot=True)
+iterator = PicardIterator(sof, profile, sof_opt_problem, plot=True)
 iterator()
 
-profile_eof = CustomProfile(
-    profile.pprime(np.linspace(0, 1)), profile.ffprime(np.linspace(0, 1)), R_0, B_0
+profile_eof = CustomProfile(shape, shape, R_0, B_0, Ip=I_p)
+
+eof_opt_problem = TikhonovCurrentCOP(
+    coilset,
+    eof,
+    eof_constraints,
+    gamma=1e-7,
+    optimser=optimiser,
+    max_currents=coilset.get_max_currents(0.0),
+    constraints=[field_constraints, force_constraints],
 )
 
 
-iterator = PicardAbsIterator(
-    eof, profile_eof, eof_constraints, optimiser, plot=True, relaxation=0.2
-)
+iterator = PicardIterator(eof, profile_eof, eof_opt_problem, plot=True, relaxation=0.2)
 iterator()
 
 # %%[markdown]
