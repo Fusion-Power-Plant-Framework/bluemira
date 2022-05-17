@@ -41,7 +41,6 @@ from bluemira.equilibria import (
     Norm2Tikhonov,
     PicardIterator,
     SymmetricCircuit,
-    opt_problems,
 )
 from bluemira.equilibria.file import EQDSKInterface
 from bluemira.equilibria.opt_problems import UnconstrainedTikhonovCurrentGradientCOP
@@ -152,7 +151,15 @@ class TestSTEquilibrium:
         zz = np.concatenate([z_core, z_div])
 
         constraint_set = MagneticConstraintSet(
-            [IsofluxConstraint(xx, zz, ref_x=inboard_iso[0], ref_z=inboard_iso[1])]
+            [
+                IsofluxConstraint(
+                    xx,
+                    zz,
+                    ref_x=inboard_iso[0],
+                    ref_z=inboard_iso[1],
+                    constraint_value=0.0,
+                )
+            ]
         )
 
         initial_psi = self._make_initial_psi(
