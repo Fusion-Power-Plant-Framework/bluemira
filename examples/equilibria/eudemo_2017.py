@@ -55,7 +55,6 @@ from bluemira.equilibria.opt_problems import (
     BreakdownCOP,
     MinimalCurrentCOP,
     OutboardBreakdownZoneStrategy,
-    TikhonovCurrentCOP,
     UnconstrainedTikhonovCurrentGradientCOP,
 )
 from bluemira.equilibria.physics import calc_beta_p_approx, calc_li, calc_psib
