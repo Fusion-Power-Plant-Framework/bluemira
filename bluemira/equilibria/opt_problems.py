@@ -43,12 +43,12 @@ import numpy as np
 
 import bluemira.equilibria.opt_objectives as objectives
 from bluemira.equilibria.coils import CoilSet
-from bluemira.equilibria.equilibrium import Equilibrium
+from bluemira.equilibria.equilibrium import Breakdown, Equilibrium
 from bluemira.equilibria.error import EquilibriaError
+from bluemira.equilibria.opt_constraint_funcs import stray_field_constraints
 from bluemira.equilibria.opt_constraints import (
     MagneticConstraintSet,
     UpdateableConstraint,
-    stray_field_constraints,
 )
 from bluemira.equilibria.positioner import RegionMapper
 from bluemira.utilities.opt_problems import (
@@ -1067,6 +1067,7 @@ class BreakdownCOP(CoilsetOptimisationProblem):
     def __init__(
         self,
         coilset: CoilSet,
+        breakdown: Breakdown,
         breakdown_strategy: BreakdownZoneStrategy,
         B_stray_max,
         B_stray_con_tol,
@@ -1075,6 +1076,7 @@ class BreakdownCOP(CoilsetOptimisationProblem):
         max_currents=None,
         constraints: List[OptimisationConstraint] = None,
     ):
+        self.eq = breakdown
         self.scale = 1e6  # current_scale
 
         objective = OptimisationObjective(
@@ -1126,14 +1128,25 @@ class BreakdownCOP(CoilsetOptimisationProblem):
                 cBz[i, j] = coil.control_Bz(xi, zi)
         return cBx, cBz
 
-    def optimise(self, x0=None):
+    def optimise(self, x0=None, fixed_coils=True):
         """
         Solve the optimisation problem.
         """
         if x0 is None:
             x0 = 1e-6 * np.ones(self.coilset.n_control)
-        x_star = self.opt.optimise(x0) * self.scale
-        self.coilset.set_control_currents(x_star)
+        else:
+            x0 = np.array(x0) / self.scale
+
+        self.update_magnetic_constraints(I_not_dI=True, fixed_coils=fixed_coils)
+
+        initial_state, n_states = self.read_coilset_state(self.coilset, self.scale)
+        _, _, initial_currents = np.array_split(initial_state, n_states)
+
+        initial_currents = np.clip(
+            initial_currents, self.opt.lower_bounds, self.opt.upper_bounds
+        )
+        currents = self.opt.optimise(initial_currents)
+        self.coilset.set_control_currents(currents * self.scale)
         return self.coilset
 
 
@@ -1161,52 +1174,3 @@ class MinimalCurrentCOP(CoilsetOptimisationProblem):
         x_star = self.opt.optimise(x0) * self.scale
         self.coilset.set_control_currents(x_star)
         return self.coilset
-
-
-class NestedPositionCOP(CoilsetOptimisationProblem):
-    def __init__(
-        self,
-        sub_problems: List[CoilsetOptimisationProblem],
-        eq: Equilibrium,
-        positioner: PositionMapper,
-        optimiser=Optimiser(
-            algorithm_name="COBYLA",
-            opt_conditions={
-                "max_eval": 100,
-            },
-        ),
-        opt_constraints: List[OptimisationConstraint] = None,
-    ):
-        self.sub_problems = sub_problems
-
-        objective = OptimisationObjective(
-            self.get_max_fom, f_objective_args={"sub_problems": sub_problems}
-        )
-
-        super().__init__(eq.coilset, optimiser, objective, opt_constraints)
-        self.positioner = positioner
-        self.eq = eq
-
-    def update_positions(self, coilset, vector):
-        positions = self.positioner.to_xz(vector)
-        coilset.set_positions(positions)
-
-    @staticmethod
-    def get_max_fom(vector, grad, sub_problems):
-        """
-        Minimax
-        """
-        foms = []
-        for problem in sub_problems:
-            NestedPositionCOP.update_positions(problem.coilset, vector)
-            problem.eq.set_forcefield()
-            problem.optimise()
-            foms.append(problem.opt.optimum_value)
-
-        if grad.size > 0:
-            raise ValueError("You shouldn't use gradient-based optimisers here")
-
-        return max(foms)
-
-    def optimise(self):
-        return super().optimise()

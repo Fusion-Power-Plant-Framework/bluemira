@@ -121,7 +121,7 @@ class CoilFieldConstraints(UpdateableConstraint, OptimisationConstraint):
 
         if is_num(tolerance):
             tolerance = tolerance * np.ones(coilset.n_coils)
-        if len(B_max) != coilset.n_coils:
+        if len(tolerance) != coilset.n_coils:
             raise ValueError("Tolerance vector length not equal to the number of coils.")
 
         super().__init__(

@@ -182,18 +182,23 @@ breakdown = Breakdown(deepcopy(coilset), grid, R_0=R_0)
 breakdown.set_breakdown_point(x_zone, z_zone)
 
 bd_opt_problem = BreakdownCOP(
-    coilset,
+    breakdown.coilset,
     breakdown,
     OutboardBreakdownZoneStrategy(R_0, A, 0.225),
     optimiser=Optimiser("COBYLA", opt_conditions={"max_eval": 1000, "ftol_rel": 1e-6}),
+    max_currents=max_currents,
     B_stray_max=1e-3,
     B_stray_con_tol=1e-6,
     n_B_stray_points=10,
     constraints=[field_constraints, force_constraints],
 )
 
-coilset = bd_opt_problem.optimise()
+coilset = bd_opt_problem.optimise(x0=max_currents)
 
+f, ax = plt.subplots()
+breakdown.plot(ax=ax)
+breakdown.coilset.plot(ax=ax)
+plt.show()
 bluemira_print(f"Breakdown psi: {breakdown.breakdown_psi*2*np.pi:.2f} V.s")
 
 # %%[markdown]
@@ -214,8 +219,9 @@ psi_eof -= 10
 # Set up a parameterised profile
 
 # %%
-shape = DoublePowerFunc([0.99975459, 0.7580799])
-profile = CustomProfile(shape, shape, R_0, B_0, Ip=I_p)
+p_shape = DoublePowerFunc([0.99975459, 0.7580799])
+ff_shape = DoublePowerFunc([0.99975459, 0.7580799])
+profile = CustomProfile(p_shape, ff_shape, R_0, B_0, Ip=I_p)
 # profile = BetaIpProfile(beta_p, I_p, R_0, B_0, shape=shape)
 
 
@@ -263,11 +269,11 @@ eof_constraints = AutoConstraints(
 optimiser = Optimiser("SLSQP", opt_conditions={"max_eval": 1000, "ftol_rel": 1e-6})
 
 sof_opt_problem = TikhonovCurrentCOP(
-    coilset,
+    sof.coilset,
     sof,
     sof_constraints,
     gamma=1e-7,
-    optimser=optimiser,
+    optimiser=optimiser,
     max_currents=coilset.get_max_currents(0.0),
     constraints=[field_constraints, force_constraints],
 )
@@ -275,14 +281,14 @@ sof_opt_problem = TikhonovCurrentCOP(
 iterator = PicardIterator(sof, profile, sof_opt_problem, plot=True)
 iterator()
 
-profile_eof = CustomProfile(shape, shape, R_0, B_0, Ip=I_p)
+profile_eof = CustomProfile(p_shape, ff_shape, R_0, B_0, Ip=I_p)
 
 eof_opt_problem = TikhonovCurrentCOP(
-    coilset,
+    eof.coilset,
     eof,
     eof_constraints,
     gamma=1e-7,
-    optimser=optimiser,
+    optimiser=optimiser,
     max_currents=coilset.get_max_currents(0.0),
     constraints=[field_constraints, force_constraints],
 )
