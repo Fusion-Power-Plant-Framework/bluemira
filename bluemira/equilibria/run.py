@@ -31,21 +31,20 @@ import numpy as np
 
 from bluemira.base.look_and_feel import bluemira_print, bluemira_warn
 from bluemira.equilibria.coils import CoilSet
-from bluemira.equilibria.eq_constraints import MagneticConstraintSet
 from bluemira.equilibria.equilibrium import Breakdown, Equilibrium
 from bluemira.equilibria.error import EquilibriaError
 from bluemira.equilibria.grid import Grid
-from bluemira.equilibria.opt_constraints import L2_norm_constraint
+from bluemira.equilibria.opt_constraints import L2_norm_constraint, MagneticConstraintSet
 from bluemira.equilibria.opt_problems import (
     BreakdownCOP,
     BreakdownZoneStrategy,
     CoilsetOptimisationProblem,
     MinimalCurrentCOP,
-    UnconstrainedCurrentCOP,
+    UnconstrainedTikhonovCurrentGradientCOP,
 )
 from bluemira.equilibria.physics import calc_psib
 from bluemira.equilibria.profiles import Profile
-from bluemira.equilibria.solve import PicardCoilsetIterator
+from bluemira.equilibria.solve import PicardIterator
 from bluemira.utilities.opt_problems import OptimisationConstraint
 from bluemira.utilities.optimiser import Optimiser
 
@@ -139,10 +138,10 @@ class PulsedCoilsetProblem:
             RB0=rb0,
             profiles=self.profiles,
         )
-        optimiser = UnconstrainedCurrentCOP(
+        optimiser = UnconstrainedTikhonovCurrentGradientCOP(
             coilset, eq, self.eq_targets, gamma=self._eq_settings["gamma"]
         )
-        program = PicardCoilsetIterator(
+        program = PicardIterator(
             eq,
             self.profiles,
             self.eq_targets,
