@@ -179,7 +179,7 @@ class MHDState:
     def get_coil_fields(self):
         """
         Returns the poloidal magnetic fields on the control coils
-        (approximate peak)
+        (approximate peak at the middle inner radius of the coil)
 
         Returns
         -------
