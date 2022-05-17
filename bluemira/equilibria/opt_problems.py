@@ -1148,29 +1148,3 @@ class BreakdownCOP(CoilsetOptimisationProblem):
         currents = self.opt.optimise(initial_currents)
         self.coilset.set_control_currents(currents * self.scale)
         return self.coilset
-
-
-class MinimalCurrentCOP(CoilsetOptimisationProblem):
-    def __init__(
-        self,
-        eq: Equilibrium,
-        max_currents,
-        optimiser=Optimiser(
-            "SLSQP", opt_conditions={"max_eval": 1000, "ftol_rel": 1e-6}
-        ),
-        opt_constraints: List[OptimisationConstraint] = None,
-    ):
-        objective = OptimisationObjective(
-            objectives.minimise_coil_currents, f_objective_args={}
-        )
-        super().__init__(eq.coilset, optimiser, objective, opt_constraints)
-
-        bounds = (-max_currents / self.scale, max_currents / self.scale)
-        self.set_up_optimiser(len(max_currents), bounds)
-
-    def optimise(self, x0=None):
-        if x0 is None:
-            x0 = 1e-6 * np.ones(self.coilset.n_control)
-        x_star = self.opt.optimise(x0) * self.scale
-        self.coilset.set_control_currents(x_star)
-        return self.coilset
