@@ -55,13 +55,7 @@ openmc = [
 ]
 
 process = [
-    "beautifulsoup4>=4.8",
-    "cmake>=3.12.0",
-    "graphviz>=0.13",
-    "markdown>=3.2",
-    "markdown_include>=0.5",
-    "md-environ>=0.1",
-    "toposort>=1.5",
+    "cmake>=3.13.0",
 ]
 
 prominence = [
