@@ -156,7 +156,7 @@ OUT_mappings = {
     "t_beta": ("tbeta", "dimensionless"),
     "n_el_sep": ("nesep", "1/m^3"),
     "T_el_sep": ("tesep", "keV"),
-    "r_minor": ("rminor", "m"),
+    "rminor": ("rminor", "m"),
 }
 
 IO_mappings = {

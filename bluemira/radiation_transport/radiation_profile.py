@@ -24,12 +24,10 @@
 
 from __future__ import annotations
 
-from pathlib import Path
 from typing import TYPE_CHECKING
 
 import matplotlib.pyplot as plt
 import numpy as np
-import process.data.impuritydata as imp_data
 from scipy.interpolate import interp1d
 
 from bluemira.base import constants
@@ -62,7 +60,7 @@ class Radiation:
         ["n_el_sep", "Electron density at separatrix", 1.5515e+19, "1/m^3", None, "Input"],
         ["T_el_sep", "Electron temperature at separatrix", 4.8e-01, "keV", None, "Input"],
         ["q_95", "Safety factor at 0.95 flux_surface", 4.9517, "dimensionless", None, "Input"],
-        ["r_minor", "Minor_radius", 2.183, "m", None, "Input"],
+        ["rminor", "Minor_radius", 2.183, "m", None, "Input"],
         ["kappa", "Elongation", 2.8, "dimensionless", None, "Input"],
     ]
     # fmt: on
@@ -338,7 +336,7 @@ class TwoPointModelTools(Radiation):
             upstream power density [W/m^2]
         """
         # minor radius
-        a = self.plasma_params.r_minor
+        a = self.plasma_params.rminor
         # elongation
         k = self.plasma_params.kappa
         # safety factor
@@ -1305,14 +1303,14 @@ class ScrapeOffLayerSector(ScrapeOffLayer, TwoPointModelTools):
         """
         # Validity condition for not x-point radiative
         if not x_point_rad and rec_ext is None:
-            raise BuilderError(f"Required recycling region extention: rec_ext")
+            raise BuilderError("Required recycling region extention: rec_ext")
         if not x_point_rad and rec_ext is not None:
             ion_front_z = self.ion_front_distance(x_strike, z_strike, rec_ext=rec_ext)
             pfr_ext = ion_front_z
 
         # Validity condition for x-point radiative
         if x_point_rad and pfr_ext is None:
-            raise BuilderError(f"Required extention towards pfr: pfr_ext")
+            raise BuilderError("Required extention towards pfr: pfr_ext")
 
         # setting radiation and recycling regions
         z_main, z_pfr = self.x_point_radiation_z_ext(main_ext, pfr_ext, low_div)

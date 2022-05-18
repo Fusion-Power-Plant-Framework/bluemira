@@ -364,20 +364,20 @@ class ChargedParticleSolver:
         )
 
         # Calculate values at OMP
-        dx_omp = x_omp - self.x_sep_omp
+        self.dx_omp = x_omp - self.x_sep_omp
         Bp_omp = self.eq.Bp(x_omp, z_omp)
         Bt_omp = self.eq.Bt(x_omp)
         B_omp = np.hypot(Bp_omp, Bt_omp)
 
         # Calculate values at IMP
-        dx_imp = abs(x_imp - self.x_sep_imp)
+        self.dx_imp = abs(x_imp - self.x_sep_imp)
         Bp_imp = self.eq.Bp(x_imp, z_imp)
         Bt_imp = self.eq.Bt(x_imp)
         B_imp = np.hypot(Bp_imp, Bt_imp)
 
         # Parallel power at the outboard and inboard midplane
-        q_par_omp = self._q_par(x_omp, dx_omp, B_omp, Bp_omp)
-        q_par_imp = self._q_par(x_imp, dx_imp, B_imp, Bp_imp, outboard=False)
+        q_par_omp = self._q_par(x_omp, self.dx_omp, B_omp, Bp_omp)
+        q_par_imp = self._q_par(x_imp, self.dx_imp, B_imp, Bp_imp, outboard=False)
 
         # Calculate poloidal field at intersections
         Bp_lfs_down = self.eq.Bp(x_lfs_down_inter, z_lfs_down_inter)

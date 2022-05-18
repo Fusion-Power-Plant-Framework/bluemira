@@ -105,7 +105,7 @@ class Configuration(ConfigurationSchema, ParameterFrame):
         ["t_beta", "Temperature profile index beta", 2, "dimensionless", None, "Input"],
         ["n_el_sep", "Electron density at separatrix", 1.5515e+19, "1/m^3", None, "Input"],
         ["T_el_sep", "Electron temperature at separatrix", 0.48, "keV", None, "Input"],
-        ["r_minor", "Minor radius", 2.183, "m", None, "Input"],
+        ["rminor", "Minor radius", 2.183, "m", None, "Input"],
 
         # Heating and current drive
         ['f_ni', 'Non-inductive current drive fraction', 0.1, 'dimensionless', None, 'Input'],
