@@ -47,6 +47,8 @@ from bluemira.equilibria.equilibrium import Breakdown, Equilibrium
 from bluemira.equilibria.error import EquilibriaError
 from bluemira.equilibria.opt_constraint_funcs import stray_field_constraints
 from bluemira.equilibria.opt_constraints import (
+    FieldConstraints,
+    FieldNullConstraint,
     MagneticConstraintSet,
     UpdateableConstraint,
 )
@@ -1093,21 +1095,24 @@ class BreakdownCOP(CoilsetOptimisationProblem):
 
         cBx, cBz = self._stray_field_matrices(coilset, x_zone, z_zone)
 
-        stray_field_con = OptimisationConstraint(
-            stray_field_constraints,
-            f_constraint_args={
-                "cBx": cBx,
-                "cBz": cBz,
-                "B_max": B_stray_max,
-                "scale": self.scale,
-            },
-            tolerance=B_stray_con_tol * np.ones(n_B_stray_points),
-            constraint_type="inequality",
+        stray_field_cons = FieldConstraints(
+            x_zone, z_zone, B_max=B_stray_max, tolerance=B_stray_con_tol
         )
+        # stray_field_con = OptimisationConstraint(
+        #     stray_field_constraints,
+        #     f_constraint_args={
+        #         "cBx": cBx,
+        #         "cBz": cBz,
+        #         "B_max": B_stray_max,
+        #         "scale": self.scale,
+        #     },
+        #     tolerance=B_stray_con_tol * np.ones(n_B_stray_points),
+        #     constraint_type="inequality",
+        # )
         if constraints:
-            constraints.append(stray_field_con)
+            constraints.append(stray_field_cons)
         else:
-            constraints = [stray_field_con]
+            constraints = [stray_field_cons]
 
         super().__init__(coilset, optimiser, objective, constraints)
 
