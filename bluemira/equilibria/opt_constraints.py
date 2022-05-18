@@ -32,8 +32,8 @@ import numpy as np
 from bluemira.equilibria.opt_constraint_funcs import (
     Ax_b_constraint,
     L2_norm_constraint,
-    coil_field_constraints,
     coil_force_constraints,
+    field_constraints,
 )
 from bluemira.equilibria.plotting import ConstraintPlotter
 from bluemira.geometry._deprecated_loop import Loop
@@ -129,7 +129,7 @@ class FieldConstraints(UpdateableConstraint, OptimisationConstraint):
         self.x = x
         self.z = z
         super().__init__(
-            f_constraint=coil_field_constraints,
+            f_constraint=field_constraints,
             f_constraint_args={
                 "ax_mat": None,
                 "az_mat": None,

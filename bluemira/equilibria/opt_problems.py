@@ -1093,22 +1093,10 @@ class BreakdownCOP(CoilsetOptimisationProblem):
 
         x_zone, z_zone = breakdown_strategy.calculate_zone_points(n_B_stray_points)
 
-        cBx, cBz = self._stray_field_matrices(coilset, x_zone, z_zone)
-
         stray_field_cons = FieldConstraints(
             x_zone, z_zone, B_max=B_stray_max, tolerance=B_stray_con_tol
         )
-        # stray_field_con = OptimisationConstraint(
-        #     stray_field_constraints,
-        #     f_constraint_args={
-        #         "cBx": cBx,
-        #         "cBz": cBz,
-        #         "B_max": B_stray_max,
-        #         "scale": self.scale,
-        #     },
-        #     tolerance=B_stray_con_tol * np.ones(n_B_stray_points),
-        #     constraint_type="inequality",
-        # )
+
         if constraints:
             constraints.append(stray_field_cons)
         else:
@@ -1120,18 +1108,6 @@ class BreakdownCOP(CoilsetOptimisationProblem):
         bounds = (-max_currents / self.scale, max_currents / self.scale)
         dimension = len(bounds[0])
         self.set_up_optimiser(dimension, bounds)
-
-    def _stray_field_matrices(self, coilset, x_zone, z_zone):
-        """
-        Set up response matrices for the stray field zone
-        """
-        cBx = np.zeros((len(x_zone), coilset.n_control))
-        cBz = np.zeros((len(x_zone), coilset.n_control))
-        for i, (xi, zi) in enumerate(zip(x_zone, z_zone)):
-            for j, coil in enumerate(coilset.coils.values()):
-                cBx[i, j] = coil.control_Bx(xi, zi)
-                cBz[i, j] = coil.control_Bz(xi, zi)
-        return cBx, cBz
 
     def optimise(self, x0=None, fixed_coils=True):
         """
