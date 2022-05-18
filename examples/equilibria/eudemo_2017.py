@@ -339,9 +339,9 @@ ax[1].set_title("$\\psi_{b}$ = " + f"{sof_psi:.2f} V.s")
 ax[2].set_title("$\\psi_{b}$ = " + f"{eof_psi:.2f} V.s")
 
 
-bluemira_print(
-    "SOF:\n" f"beta_p: {calc_beta_p_approx(sof):.2f}\n" f"l_i: {calc_li(sof):.2f}"
-)
-
 # TODO: Fix this example...
+# bluemira_print(
+#     "SOF:\n" f"beta_p: {calc_beta_p_approx(sof):.2f}\n" f"l_i: {calc_li(sof):.2f}"
+# )
+
 # bluemira_print("EOF:\n" f"beta_p: {calc_beta_p(eof):.2f}\n" f"l_i: {calc_li(sof):.2f}")
