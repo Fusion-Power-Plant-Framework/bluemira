@@ -45,10 +45,8 @@ import bluemira.equilibria.opt_objectives as objectives
 from bluemira.equilibria.coils import CoilSet
 from bluemira.equilibria.equilibrium import Breakdown, Equilibrium
 from bluemira.equilibria.error import EquilibriaError
-from bluemira.equilibria.opt_constraint_funcs import stray_field_constraints
 from bluemira.equilibria.opt_constraints import (
     FieldConstraints,
-    FieldNullConstraint,
     MagneticConstraintSet,
     UpdateableConstraint,
 )
