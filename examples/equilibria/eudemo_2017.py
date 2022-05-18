@@ -57,7 +57,7 @@ from bluemira.equilibria.opt_problems import (
     OutboardBreakdownZoneStrategy,
     UnconstrainedTikhonovCurrentGradientCOP,
 )
-from bluemira.equilibria.physics import calc_beta_p_approx, calc_li, calc_psib
+from bluemira.equilibria.physics import calc_psib
 from bluemira.equilibria.profiles import CustomProfile
 from bluemira.equilibria.solve import PicardIterator
 from bluemira.utilities.optimiser import Optimiser
