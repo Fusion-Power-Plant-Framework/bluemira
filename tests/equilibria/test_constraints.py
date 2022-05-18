@@ -83,15 +83,20 @@ class TestWeightedConstraints:
             constraint_set(eq)
 
             # Test that weights have been applied
-            optimiser = TikhonovCurrentCOP.optimise(
-                eq.coilset, eq, constraint_set, gamma=1e-8
+
+            problem = TikhonovCurrentCOP(
+                eq.coilset,
+                eq,
+                constraint_set,
+                gamma=1e-8,
             )
+            problem.optimise(fixed_coils=True)
 
             assert np.allclose(
-                optimiser._objective._args["b_vec"], weights * constraint_set.b
+                problem._objective._args["b_vec"], weights * constraint_set.b
             )
             for (i, weight) in enumerate(weights):
                 assert np.allclose(
-                    optimiser._objective._args["a_mat"][i, :],
+                    problem._objective._args["a_mat"][i, :],
                     weight * constraint_set.A[i, :],
                 )

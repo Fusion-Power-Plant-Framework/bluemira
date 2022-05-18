@@ -823,7 +823,24 @@ class TikhonovCurrentCOP(CoilsetOptimisationProblem):
     """
 
     def __init__(
-        self, coilset, eq, targets, gamma, optimiser, max_currents=None, constraints=None
+        self,
+        coilset,
+        eq,
+        targets,
+        gamma,
+        optimiser: Optimiser = Optimiser(
+            algorithm_name="SLSQP",
+            opt_conditions={
+                "xtol_rel": 1e-4,
+                "xtol_abs": 1e-4,
+                "ftol_rel": 1e-4,
+                "ftol_abs": 1e-4,
+                "max_eval": 100,
+            },
+            opt_parameters={"initial_step": 0.03},
+        ),
+        max_currents=None,
+        constraints=None,
     ):
         self.eq = eq
         self.targets = targets
