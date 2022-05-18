@@ -71,9 +71,9 @@ prominence = [
 dev_requires = [
     "black",
     "flake8",
+    "flake8-absolute-import",
     "flake8-bandit",
     "flake8-docstrings",
-    "flake8-absolute-import",
     "pep8-naming",
     "pre-commit",
     "pytest",
