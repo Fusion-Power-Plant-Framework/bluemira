@@ -558,7 +558,7 @@ class IsofluxConstraint(RelativeMagneticConstraint):
         z,
         ref_x,
         ref_z,
-        constraint_value,
+        constraint_value: float = 0.0,
         weights: Union[float, np.ndarray] = 1.0,
         tolerance: float = 1e-6,
     ):

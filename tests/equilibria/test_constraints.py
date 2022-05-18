@@ -30,7 +30,7 @@ from bluemira.equilibria.opt_constraints import (
     MagneticConstraintSet,
     PsiBoundaryConstraint,
 )
-from bluemira.equilibria.opt_problems import BoundedCurrentCOP
+from bluemira.equilibria.opt_problems import BoundedCurrentCOP, TikhonovCurrentCOP
 
 
 # @pytest.mark.longrun
@@ -83,8 +83,9 @@ class TestWeightedConstraints:
             constraint_set(eq)
 
             # Test that weights have been applied
-            optimiser = BoundedCurrentCOP(eq.coilset, eq, constraint_set, gamma=1e-8)
-            optimiser()
+            optimiser = TikhonovCurrentCOP.optimise(
+                eq.coilset, eq, constraint_set, gamma=1e-8
+            )
 
             assert np.allclose(
                 optimiser._objective._args["b_vec"], weights * constraint_set.b
