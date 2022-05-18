@@ -365,7 +365,6 @@ class FixedPulsedCoilsetProblem(PulsedCoilsetProblem):
 
 if __name__ == "__main__":
     # TODO: Remove once equilibrium converger is added
-    import matplotlib.pyplot as plt
 
     from bluemira.base.config import Configuration
     from bluemira.builders.EUDEMO.equilibria import EUDEMOSingleNullConstraints
