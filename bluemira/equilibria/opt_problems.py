@@ -270,15 +270,6 @@ class CoilsetOptimisationProblem(OptimisationProblem):
                 if "scale" in constraint._args:
                     constraint._args["scale"] = self.scale
 
-    def __call__(self, eq=None, targets=None, psi_bndry=None):
-        """
-        Parameters
-        ----------
-        Dummy input parameters for consistency with deprecated interface
-        in Iterators.
-        """
-        return self.optimise()
-
 
 class BoundedCurrentCOP(CoilsetOptimisationProblem):
     """

@@ -255,7 +255,7 @@ isoflux = IsofluxConstraint(
     sof_xbdry[0],
     sof_zbdry[0],
     tolerance=1e-3,
-    constraint_value=0.5,  # Difficult to choose...
+    constraint_value=0.25,  # Difficult to choose...
 )
 xp_idx = np.argmin(sof_zbdry)
 x_point = FieldNullConstraint(
