@@ -39,12 +39,14 @@ from bluemira.equilibria.opt_constraints import (
     L2_norm_constraint,
     MagneticConstraint,
     MagneticConstraintSet,
+    PsiConstraint,
 )
 from bluemira.equilibria.opt_problems import (
     BreakdownCOP,
     BreakdownZoneStrategy,
     CoilsetOptimisationProblem,
     MinimalCurrentCOP,
+    TikhonovCurrentCOP,
     UnconstrainedTikhonovCurrentGradientCOP,
 )
 from bluemira.equilibria.physics import calc_psib
@@ -155,6 +157,7 @@ class PulsedCoilsetProblem:
             eq,
             self.profiles,
             opt_problem,
+            convergence=self._eq_convergence,
             relaxation=0.1,
             fixed_coils=True,
             plot=False,
@@ -226,7 +229,7 @@ class FixedPulsedCoilsetProblem(PulsedCoilsetProblem):
         coilset: CoilSet,
         grid: Grid,
         coil_constraints: Optional[List[OptimisationConstraint]],
-        equilibrium_constraints: List[MagneticConstraint],
+        equilibrium_constraints: MagneticConstraintSet,
         profiles: Profile,
         breakdown_strategy_cls: Type[BreakdownZoneStrategy],
         breakdown_problem_cls: Type[BreakdownCOP],
@@ -282,7 +285,6 @@ class FixedPulsedCoilsetProblem(PulsedCoilsetProblem):
         i = 0
         i_max = 30
         while i == 0 or not relaxed:
-            coilset.mesh_coils(0.1)
             breakdown = Breakdown(coilset, self.grid, R_0=R_0)
 
             constraints = deepcopy(self._coil_cons)
@@ -332,35 +334,41 @@ class FixedPulsedCoilsetProblem(PulsedCoilsetProblem):
         snapshots = [self.SOF, self.EOF]
 
         max_currents = self.coilset.get_max_currents(0)
+
         for snap, psi_boundary in zip(snapshots, [psi_sof, psi_eof]):
             eq = deepcopy(eq_ref)
-            fixed_coils = all([c.flag_sizefix for c in eq.coilset.coils.values()])
-            eq.coilset.mesh_coils(0.2)
-            self.eq_targets(eq, I_not_dI=True, fixed_coils=fixed_coils)
-            self.eq_targets.update_psi_boundary(psi_boundary / (2 * np.pi))
-            _, A, b = self.eq_targets.get_weighted_arrays()
-
-            L2_target_constraint = OptimisationConstraint(  # noqa: N806
-                L2_norm_constraint,
-                f_constraint_args={
-                    "a_mat": A,
-                    "b_vec": b,
-                    "value": self._eq_settings["target_rms_max"],
-                    "scale": 1e6,
-                },
-                tolerance=np.array([self._eq_settings["target_rms_con_tol"]]),
-            )
 
             optimiser = deepcopy(self._eq_opt)
-            constraints = deepcopy(self._coil_cons)
-            for constraint in constraints:
-                constraint._args["eq"] = eq
-            constraints.append(L2_target_constraint)
-            problem = self._eq_prob_cls(eq, max_currents, optimiser, constraints)
-            coilset = problem.optimise()
-            self.take_snapshot(
-                snap, eq, coilset, optimiser, self.eq_targets, self.profiles
+            coil_constraints = deepcopy(self._coil_cons)
+            eq_constraints = deepcopy(self.eq_constraints)
+
+            for con in eq_constraints:
+                if isinstance(con, (PsiBoundaryConstraint, PsiConstraint)):
+                    con.target_value = psi_boundary / (2 * np.pi)
+
+            constraints = eq_constraints
+            if coil_constraints:
+                constraints += coil_constraints
+
+            problem = self._eq_prob_cls(
+                eq.coilset,
+                eq,
+                optimiser,
+                max_currents=max_currents,
+                constraints=constraints,
             )
+
+            program = PicardIterator(
+                eq,
+                self.profiles,
+                problem,
+                convergence=self._eq_convergence,
+                relaxation=0.1,
+                fixed_coils=True,
+                plot=False,
+            )
+            program()
+            self.take_snapshot(snap, eq, eq.coilset, problem, self.profiles)
 
 
 if __name__ == "__main__":
@@ -368,10 +376,19 @@ if __name__ == "__main__":
 
     from bluemira.base.config import Configuration
     from bluemira.builders.EUDEMO.equilibria import EUDEMOSingleNullConstraints
+    from bluemira.display import plot_defaults
     from bluemira.equilibria.coils import Coil, CoilSet
-    from bluemira.equilibria.opt_constraints import CoilFieldConstraints
+    from bluemira.equilibria.opt_constraints import (
+        CoilFieldConstraints,
+        FieldNullConstraint,
+        IsofluxConstraint,
+        PsiBoundaryConstraint,
+    )
     from bluemira.equilibria.opt_problems import OutboardBreakdownZoneStrategy
     from bluemira.equilibria.profiles import CustomProfile
+    from bluemira.equilibria.shapes import flux_surface_johner
+
+    plot_defaults()
 
     params = Configuration()
 
@@ -419,35 +436,56 @@ if __name__ == "__main__":
     coilset.assign_coil_materials("PF", j_max=12.5, b_max=11)
     coilset.assign_coil_materials("CS", j_max=12.5, b_max=13)
     coilset.fix_sizes()
+    coilset.mesh_coils(0.3)
 
-    grid = Grid(4, 14, -10, 10, 100, 100)
+    grid = Grid(2, 16, -12, 12, 100, 100)
     profiles = CustomProfile(
-        pprime_func=np.sqrt(np.linspace(1, 0, 50)),
-        ffprime_func=30 * np.sqrt(np.linspace(1, 0, 50)),
+        np.array(
+            [86856, 86506, 84731, 80784, 74159, 64576, 52030, 36918, 20314, 4807, 0.0]
+        ),
+        -np.array(
+            [0.125, 0.124, 0.122, 0.116, 0.106, 0.093, 0.074, 0.053, 0.029, 0.007, 0.0]
+        ),
         R_0=params.R_0.value,
         B_0=params.B_0.value,
         Ip=params.I_p.value * 1e6,
     )
 
-    targets = EUDEMOSingleNullConstraints(
+    lcfs_shape = flux_surface_johner(
         params.R_0.value,
         0.0,
         params.A.value,
         params.kappa.value,
-        params.kappa.value * 1.12,
-        params.delta.value,
-        params.delta.value,
+        params.kappa.value * 1.05,
+        0.4,
+        0.4,
         20,
         0,
         60,
         30,
-        1.0,
-        1.45,
-        psibval=0.0,
         n=50,
     )
 
-    constraints = [
+    isoflux = IsofluxConstraint(
+        lcfs_shape.x, lcfs_shape.z, lcfs_shape.x[0], lcfs_shape.z[0], 1.0
+    )
+    psi_constraint = PsiConstraint(
+        lcfs_shape.x[0], lcfs_shape.z[0], target_value=100, tolerance=1e-2
+    )
+
+    psi_boundary = PsiBoundaryConstraint(
+        lcfs_shape.x, lcfs_shape.z, target_value=100, tolerance=1.0
+    )
+
+    x_arg = np.argmin(lcfs_shape.z)
+    x_point = FieldNullConstraint(
+        lcfs_shape.x[x_arg], lcfs_shape.z[x_arg], tolerance=1e-4
+    )
+
+    eq_constraints = [psi_boundary, x_point]
+    # eq_constraints=[isoflux, x_point, psi_constraint]
+
+    coil_constraints = [
         CoilFieldConstraints(coilset, coilset.get_max_fields(), tolerance=1e-6)
     ]
 
@@ -458,9 +496,9 @@ if __name__ == "__main__":
         params,
         coilset,
         grid,
-        constraints,
+        coil_constraints,
+        eq_constraints,
         profiles,
-        targets,
         breakdown_strategy_cls=breakdown_strategy,
         breakdown_problem_cls=BreakdownCOP,
         breakdown_optimiser=Optimiser(
@@ -469,13 +507,11 @@ if __name__ == "__main__":
         equilibrium_optimiser=Optimiser(
             "SLSQP", opt_conditions={"max_eval": 10000, "ftol_rel": 1e-10}
         ),
-        equilibrium_settings={"target_rms_max": 30},
+        equilibrium_settings={"target_rms_max": 150},
+        equilibrium_convergence=DudsonConvergence(1e-3),
     )
 
     problem.run_premagnetisation()
-    f, ax = plt.subplots()
-    problem.snapshots[problem.BREAKDOWN].eq.plot(ax=ax)
-    problem.snapshots[problem.BREAKDOWN].coilset.plot(ax=ax)
     problem.run_reference_equilibrium()
 
     problem.optimise_currents()

@@ -777,19 +777,19 @@ class MagneticConstraintSet(ABC):
         """
         return self.target - self.background
 
-    # def update_psi_boundary(self, psi_bndry):
-    #     """
-    #     Update the target value for all PsiBoundaryConstraints.
+    def update_psi_boundary(self, psi_bndry):
+        """
+        Update the target value for all PsiBoundaryConstraints.
 
-    #     Parameters
-    #     ----------
-    #     psi_bndry: float
-    #         The target psi boundary value [V.s/rad]
-    #     """
-    #     for constraint in self.constraints:
-    #         if isinstance(constraint, PsiBoundaryConstraint):
-    #             constraint.target_value = psi_bndry
-    #     self.build_target()
+        Parameters
+        ----------
+        psi_bndry: float
+            The target psi boundary value [V.s/rad]
+        """
+        for constraint in self.constraints:
+            if isinstance(constraint, PsiBoundaryConstraint):
+                constraint.target_value = psi_bndry
+        self.build_target()
 
     def plot(self, ax=None):
         """
