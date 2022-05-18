@@ -61,7 +61,7 @@ from bluemira.utilities.optimiser import Optimiser
 
 __all__ = [
     "UnconstrainedTikhonovCurrentGradientCOP",
-    "BoundedCurrentCOP",
+    "TikhonovCurrentCOP",
     "CoilsetPositionCOP",
     "NestedCoilsetPositionCOP",
 ]
