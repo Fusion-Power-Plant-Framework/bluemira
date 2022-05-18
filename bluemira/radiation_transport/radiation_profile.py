@@ -79,21 +79,6 @@ class Radiation:
 
         self.transport_solver = transport_solver
 
-        impurity_data = [
-            "H_Lzdata.dat",
-            "HeLzdata.dat",
-            "XeLzdata.dat",
-            "W_Lzdata.dat",
-        ]
-
-        # Radiative loss function data values for each impurity
-        self.species_data = np.array(
-            [
-                Path(Path(imp_data.__file__).parent, impurity)
-                for impurity in impurity_data
-            ]
-        )
-
         self.collect_x_and_o_point_coordinates()
 
         # Separatrix parameters
@@ -357,15 +342,12 @@ class TwoPointModelTools(Radiation):
         # elongation
         k = self.plasma_params.kappa
         # safety factor
-        # q_95 = self.params["q95"]
-        q_95 = 3.5
+        q_95 = self.plasma_params.q_95
 
         # SoL cross-section at the midplane (???)
         a_par = 4 * np.pi * a * (k ** (1 / 2)) * n * self.rad_params.lambda_q_f
-        # a_par_test = 4 * np.pi * self.x_sep_omp * lambda_q
         # power density at the upstream (???)
         q_u = (self.rad_params.p_sol * q_95) / a_par
-        # q_u_test = (p_sol * self.pitch_angle_omp) / a_par_test
 
         # connection length from the midplane to the target
         self.l_tot = calculate_connection_length_flt(
@@ -765,19 +747,18 @@ class TwoPointModelTools(Radiation):
 
         return z_front
 
-    def calculate_z_species(self, species_file, species_frac, te):
+    def calculate_z_species(self, t_ref, z_ref, species_frac, te):
         """
         Calculation of species ion charge, in condition of quasi-neutrality.
 
         Parameters
         ----------
-        species_file: string
-            impurity data file (.dat)
-            currently located in process/process/data/impuritydata (__Lzdata.dat)
-            e.g. 1 letter acronym: Hydrogen -> H_Lzdata.dat
-            e.g. 2 letters acronym: Helium -> HeLzdata.dat
-        fimp_no: string
-            impurity fraction to find in MFILE.dat: fimp(no -> no = [01,14]
+        t_ref: np.array
+            temperature reference
+        z_ref: np.array
+            effective charge reference
+        species_frac: float
+            fraction of relevant impurity
         te: array
             electron temperature
 
@@ -786,45 +767,33 @@ class TwoPointModelTools(Radiation):
         species_frac*z_val**2: np.array
             species ion charge
         """
-        species_data = Path(Path(imp_data.__file__).parent, species_file)
-        # species_frac = self.process_solver.get_raw_variables(fimp_no)
-
-        t_ref, z_ref = np.genfromtxt(species_data).T[
-            (0, 2),
-        ]
-
         z_interp = interp1d(t_ref, z_ref)
-
         z_val = z_interp(te)
 
         return species_frac * z_val**2
 
-    def radiative_loss_function_values(self, te, species_file):
+    def radiative_loss_function_values(self, te, t_ref, l_ref):
         """
-        From the impurity data file, by interpolation, it returns the values
-        relative to the radiative power loss function.
-        For each impurity species, the radiative power loss function is
-        calculated from quantum mechanics codes and tabulated in the ADAS database.
+        By interpolation, from reference values, it returns the
+        radiative power loss values for a given set of electron temperature.
 
         Parameters
         ----------
         te: np.array
             electron temperature
-        species_file: string
-            impurity data file (.dat)
+        t_ref: np.array
+            temperature reference
+        l_ref: np.array
+            radiative power loss reference
 
         Returns
         -------
         l_val: np.array [W m^3]
             local values of the radiative power loss function
         """
-        t_ref, l_ref = np.genfromtxt(species_file).T[
-            (0, 1),
-        ]
         interp_func = interp1d(t_ref, l_ref)
-        l_val = interp_func(te)
 
-        return l_val
+        return interp_func(te)
 
     def calculate_line_radiation_loss(self, ne, p_loss_f, species_frac):
         """
@@ -838,18 +807,15 @@ class TwoPointModelTools(Radiation):
             electron density
         p_loss_f: np.array
             local values of the radiative power loss function
-        fimp_no: string
-            impurity fraction to find in MFILE.dat
+        species_frac: float
+            fraction of relevant impurity
 
         Returns
         -------
         rad_loss: np.array
             Line radiation losses [MW m^-3]
         """
-        # species_frac = self.process_solver.get_raw_variables(fimp_id)
-        rad_loss = (species_frac * (ne**2) * p_loss_f) / 1e6
-
-        return rad_loss
+        return (species_frac * (ne**2) * p_loss_f) / 1e6
 
 
 class Core(Radiation):
@@ -1049,9 +1015,9 @@ class ScrapeOffLayer(Radiation):
 
         Returns
         -------
-        entrance: float, float
+        entrance_x, entrance_z: float, float
             x, z coordinates of the radiation region starting point
-        exit: float, float
+        exit_x, exit_z: float, float
             x, z coordinates of the radiation region ending point
         """
         sep_loop = self.sep_lfs if lfs else self.sep_hfs
@@ -1178,7 +1144,6 @@ class ScrapeOffLayer(Radiation):
 
         # magnetic field components at the local point
         Bp_p = self.transport_solver.eq.Bp(x_p, z_p)
-        Bt_p = self.transport_solver.eq.Bt(x_p)
 
         # flux expansion
         f_p = (r_sep_mp * Bp_sep_mp) / (x_p * Bp_p)
@@ -1465,12 +1430,17 @@ class STCore(Core, TwoPointModelTools):
         self,
         transport_solver: ChargedParticleSolver,
         impurity_content,
+        impurity_data,
         plasma_params,
         rad_params,
     ):
         super().__init__(transport_solver, plasma_params, rad_params)
 
-        self.impurity_id = impurity_content.values()
+        self.H_content = impurity_content["H"]
+        self.impurities_content = impurity_content.values()
+
+        self.imp_data_t_ref = [data["T_ref"] for key, data in impurity_data.items()]
+        self.imp_data_l_ref = [data["L_ref"] for key, data in impurity_data.items()]
 
         # Adimensional radius at the mid-plane.
         # From the core to the last closed flux surface
@@ -1489,8 +1459,8 @@ class STCore(Core, TwoPointModelTools):
         # Radiative loss function values for each impurity species
         loss_f = np.array(
             [
-                self.radiative_loss_function_values(self.te_mp, data)
-                for data in self.species_data
+                self.radiative_loss_function_values(self.te_mp, t_ref, l_ref)
+                for t_ref, l_ref in zip(self.imp_data_t_ref, self.imp_data_l_ref)
             ]
         )
 
@@ -1498,7 +1468,7 @@ class STCore(Core, TwoPointModelTools):
         rad = np.array(
             [
                 self.calculate_line_radiation_loss(self.ne_mp, loss, fi)
-                for loss, fi in zip(loss_f, self.impurity_id)
+                for loss, fi in zip(loss_f, self.impurities_content)
             ]
         )
 
@@ -1512,49 +1482,33 @@ class STCore(Core, TwoPointModelTools):
         flux_tubes = self.collect_flux_tubes(self.rho_core)
 
         # For each flux tube, poloidal density profile.
-        ne_pol = np.array(
-            [
-                self.flux_tube_pol_n(ft, n, core=True)
-                for ft, n in zip(flux_tubes, self.ne_mp)
-            ],
-            dtype=object,
-        )
+        ne_pol = [
+            self.flux_tube_pol_n(ft, n, core=True)
+            for ft, n in zip(flux_tubes, self.ne_mp)
+        ]
 
         # For each flux tube, poloidal temperature profile.
-        te_pol = np.array(
-            [
-                self.flux_tube_pol_t(ft, t, core=True)
-                for ft, t in zip(flux_tubes, self.te_mp)
-            ],
-            dtype=object,
-        )
+        te_pol = [
+            self.flux_tube_pol_t(ft, t, core=True)
+            for ft, t in zip(flux_tubes, self.te_mp)
+        ]
 
         # For each impurity species and for each flux tube,
         # poloidal distribution of the radiative power loss function.
-        loss_f = np.array(
-            [
-                np.array(
-                    [self.radiative_loss_function_values(t, data) for t in te_pol],
-                    dtype=object,
-                )
-                for data in self.species_data
-            ]
-        )
+        loss_f = [
+            [self.radiative_loss_function_values(t, t_ref, l_ref) for t in te_pol]
+            for t_ref, l_ref in zip(self.imp_data_t_ref, self.imp_data_l_ref)
+        ]
 
         # For each impurity species and for each flux tube,
         # poloidal distribution of the line radiation loss.
-        rad = np.array(
+        rad = [
             [
-                np.array(
-                    [
-                        self.calculate_line_radiation_loss(n, l_f, fi)
-                        for n, l_f in zip(ne_pol, ft)
-                    ],
-                    dtype=object,
-                )
-                for ft, fi in zip(loss_f, self.impurity_id)
+                self.calculate_line_radiation_loss(n, l_f, fi)
+                for n, l_f in zip(ne_pol, ft)
             ]
-        )
+            for ft, fi in zip(loss_f, self.impurities_content)
+        ]
 
         # Total line radiation loss along each flux tube
         total_rad = np.sum(rad, axis=0)
@@ -1564,24 +1518,32 @@ class STCore(Core, TwoPointModelTools):
 
 class STScrapeOffLayer(ScrapeOffLayerSector, ScrapeOffLayer, TwoPointModelTools):
     """
-    Specific class for the scrape-off layer emission of STEP
+    Specific class for the scrape-off layer emission of ST
     """
 
     def __init__(
         self,
         transport_solver: ChargedParticleSolver,
         impurity_content,
+        impurity_data,
         plasma_params,
         rad_params,
         firstwall_geom,
     ):
         super().__init__(transport_solver, plasma_params, rad_params)
 
-        self.impurity_id = impurity_content.values()
+        self.H_content = impurity_content["H"]
+        self.impurities_content = [
+            frac for key, frac in impurity_content.items() if key != "H"
+        ]
 
-        """
-        2D map of the line radiation loss in the scrape-off layer.
-        """
+        self.imp_data_t_ref = [
+            data["T_ref"] for key, data in impurity_data.items() if key != "H"
+        ]
+        self.imp_data_l_ref = [
+            data["L_ref"] for key, data in impurity_data.items() if key != "H"
+        ]
+
         # Flux tubes from the particle solver
         # partial flux tube from the mp to the target at the
         # outboard and inboard - lower divertor
@@ -1745,15 +1707,10 @@ class STScrapeOffLayer(ScrapeOffLayerSector, ScrapeOffLayer, TwoPointModelTools)
             "hfs_up": t_and_n_pol_hfs_up[0],
         }
         for side, t_pol in loss.items():
-            loss[side] = np.array(
-                [
-                    np.array(
-                        [self.radiative_loss_function_values(t, data) for t in t_pol],
-                        dtype=object,
-                    )
-                    for data in self.species_data
-                ]
-            )
+            loss[side] = [
+                [self.radiative_loss_function_values(t, t_ref, l_ref) for t in t_pol]
+                for t_ref, l_ref in zip(self.imp_data_t_ref, self.imp_data_l_ref)
+            ]
 
         # line radiation loss along the open flux tubes
         rad = {
@@ -1763,18 +1720,13 @@ class STScrapeOffLayer(ScrapeOffLayerSector, ScrapeOffLayer, TwoPointModelTools)
             "hfs_up": {"density": t_and_n_pol_hfs_up[1], "loss": loss["hfs_up"]},
         }
         for side, ft in rad.items():
-            rad[side] = np.array(
+            rad[side] = [
                 [
-                    np.array(
-                        [
-                            self.calculate_line_radiation_loss(n, l_f, fi)
-                            for n, l_f in zip(ft["density"], f)
-                        ],
-                        dtype=object,
-                    )
-                    for f, fi in zip(ft["loss"], self.impurity_id)
+                    self.calculate_line_radiation_loss(n, l_f, fi)
+                    for n, l_f in zip(ft["density"], f)
                 ]
-            )
+                for f, fi in zip(ft["loss"], self.impurities_content)
+            ]
 
         return rad["lfs_low"], rad["lfs_up"], rad["hfs_low"], rad["hfs_up"]
 
