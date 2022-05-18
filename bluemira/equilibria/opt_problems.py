@@ -270,108 +270,6 @@ class CoilsetOptimisationProblem(OptimisationProblem):
                     constraint._args["scale"] = self.scale
 
 
-class BoundedCurrentCOP(CoilsetOptimisationProblem):
-    """
-    Coilset OptimisationProblem for coil currents subject to maximum current bounds.
-
-    Coilset currents optimised using objectives.regularised_lsq_objective as
-    objective function.
-
-    Parameters
-    ----------
-    coilset: CoilSet
-        Coilset to optimise.
-    eq: Equilibrium
-        Equilibrium object used to update magnetic field targets.
-    targets: MagneticConstraintSet
-        Set of magnetic field targets to use in objective function.
-    gamma: float (default = 1e-8)
-        Tikhonov regularisation parameter in units of [A⁻¹].
-    max_currents float or np.array(len(coilset._ccoils)) (default = None)
-        Maximum allowed current for each independent coil current in coilset [A].
-        If specified as a float, the float will set the maximum allowed current
-        for all coils.
-    optimiser: Optimiser
-        Optimiser object to use for constrained optimisation.
-    constraints: List[OptimisationConstraint] (default: None)
-        Optional list of OptimisationConstraint objects storing
-        information about constraints that must be satisfied
-        during the coilset optimisation, to be provided to the
-        optimiser.
-    """
-
-    def __init__(
-        self,
-        coilset: CoilSet,
-        eq: Equilibrium,
-        targets: MagneticConstraintSet,
-        gamma=1e-8,
-        max_currents=None,
-        optimiser: Optimiser = Optimiser(
-            algorithm_name="SLSQP",
-            opt_conditions={
-                "xtol_rel": 1e-4,
-                "xtol_abs": 1e-4,
-                "ftol_rel": 1e-4,
-                "ftol_abs": 1e-4,
-                "max_eval": 100,
-            },
-            opt_parameters={"initial_step": 0.03},
-        ),
-        opt_constraints: List[OptimisationConstraint] = None,
-    ):
-        # noqa :N803
-
-        # Set objective function for this OptimisationProblem,
-        # and initialise
-        objective = OptimisationObjective(
-            objectives.regularised_lsq_objective, {"gamma": gamma}
-        )
-        super().__init__(coilset, optimiser, objective, opt_constraints)
-
-        # Set up optimiser
-
-        bounds = self.get_current_bounds(self.coilset, max_currents, self.scale)
-        dimension = len(bounds[0])
-        self.set_up_optimiser(dimension, bounds)
-
-        # Save additional parameters used to generate remaining
-        # objective/constraint arguments at runtime
-        self.eq = eq
-        self.targets = targets
-
-    def optimise(self):
-        """
-        Optimiser handle. Used in __call__
-
-        Returns
-        -------
-        self.coilset: CoilSet
-            Optimised CoilSet object.
-        """
-        # Get initial currents.
-        initial_currents = self.coilset.get_control_currents() / self.scale
-        initial_currents = np.clip(
-            initial_currents, self.opt.lower_bounds, self.opt.upper_bounds
-        )
-
-        # Set up data needed in FoM evaluation.
-        # Scale the control matrix and constraint vector by weights.
-        self.targets(self.eq, I_not_dI=True)
-        _, a_mat, b_vec = self.targets.get_weighted_arrays()
-
-        self._objective._args["scale"] = self.scale
-        self._objective._args["a_mat"] = a_mat
-        self._objective._args["b_vec"] = b_vec
-
-        # Optimise
-        currents = self.opt.optimise(initial_currents)
-
-        coilset_state = np.concatenate((self.x0, self.z0, currents))
-        self.set_coilset_state(self.coilset, coilset_state, self.scale)
-        return self.coilset
-
-
 class CoilsetPositionCOP(CoilsetOptimisationProblem):
     """
     Coilset OptimisationProblem for coil currents and positions
@@ -818,8 +716,32 @@ class UnconstrainedTikhonovCurrentGradientCOP(CoilsetOptimisationProblem):
 
 class TikhonovCurrentCOP(CoilsetOptimisationProblem):
     """
-    Bounded, constrained, minimal error on the Tikhonov-regularised L2 norm current
-    optimisation problem.
+    Coilset OptimisationProblem for coil currents subject to maximum current bounds.
+
+    Coilset currents optimised using objectives.regularised_lsq_objective as
+    objective function.
+
+    Parameters
+    ----------
+    coilset: CoilSet
+        Coilset to optimise.
+    eq: Equilibrium
+        Equilibrium object used to update magnetic field targets.
+    targets: MagneticConstraintSet
+        Set of magnetic field targets to use in objective function.
+    gamma: float (default = 1e-8)
+        Tikhonov regularisation parameter in units of [A⁻¹].
+    max_currents float or np.array(len(coilset._ccoils)) (default = None)
+        Maximum allowed current for each independent coil current in coilset [A].
+        If specified as a float, the float will set the maximum allowed current
+        for all coils.
+    optimiser: Optimiser
+        Optimiser object to use for constrained optimisation.
+    constraints: List[OptimisationConstraint] (default: None)
+        Optional list of OptimisationConstraint objects storing
+        information about constraints that must be satisfied
+        during the coilset optimisation, to be provided to the
+        optimiser.
     """
 
     def __init__(
