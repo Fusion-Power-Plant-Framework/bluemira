@@ -53,7 +53,6 @@ from bluemira.codes.plasmod.mapping import (  # noqa: N812
     create_mapping as create_PLASMOD_mappings,
 )
 from bluemira.codes.process.mapping import mappings as PROCESS_mappings  # noqa: N812
-from bluemira.equilibria._deprecated_run import AbInitioEquilibriumProblem
 from bluemira.utilities.tools import json_writer
 
 # %%[markdown]
@@ -224,7 +223,7 @@ build_config = {
         "runmode": "mock",  # ["run", "read", "mock"]
     },
     "Plasma": {
-        "runmode": "read",  # ["run", "read", "mock"]
+        "runmode": "run",  # ["run", "read", "mock"]
     },
     "TF Coils": {
         "runmode": "run",  # ["run", "read", "mock"]
@@ -419,9 +418,7 @@ plasma.get_component("xyz").show_cad()
 # %%
 plasma_builder = reactor.get_builder(EUDEMOReactor.PLASMA)
 if plasma_builder.runmode == "run":
-    eq_problem: AbInitioEquilibriumProblem = reactor.get_builder(
-        EUDEMOReactor.PLASMA
-    ).design_problem
+    eq_problem = reactor.get_builder(EUDEMOReactor.PLASMA).design_problem
     _, ax = plt.subplots()
     eq_problem.eq.plot(ax=ax)
     eq_problem.constraints.plot(ax=ax)

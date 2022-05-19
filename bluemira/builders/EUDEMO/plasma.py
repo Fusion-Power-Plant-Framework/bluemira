@@ -41,6 +41,7 @@ from bluemira.display.palettes import BLUE_PALETTE
 from bluemira.equilibria.equilibrium import Equilibrium
 from bluemira.equilibria.grid import Grid
 from bluemira.equilibria.opt_problems import UnconstrainedTikhonovCurrentGradientCOP
+from bluemira.equilibria.profiles import BetaIpProfile
 from bluemira.equilibria.shapes import JohnerLCFS
 from bluemira.equilibria.solve import DudsonConvergence, PicardIterator
 from bluemira.geometry.face import BluemiraFace
@@ -235,7 +236,7 @@ class PlasmaBuilder(Builder):
         # TODO: Avoid converting to (deprecated) Loop
         # TODO: Agree on numpy array dimensionality
         x, z = flatten_shape(*tf_boundary.discretize(200, byedges=True).xz)
-        tf_boundary = make_polygon(x=x, z=z)
+        tf_boundary = make_polygon({"x": x, "z": z})
 
         kappa = 1.12 * self._params.kappa_95.value
 
@@ -248,7 +249,7 @@ class PlasmaBuilder(Builder):
             tk_cs=self._params.tk_cs.value / 2,
             g_cs=self._params.g_cs_mod.value,
             tk_cs_ins=self._params.tk_cs_insulation.value,
-            tk_cs_cas=self._params.tf_cs_casing.value,
+            tk_cs_cas=self._params.tk_cs_casing.value,
             n_CS=self._params.n_CS.value,
             n_PF=self._params.n_PF.value,
             CS_jmax=self._params.CS_jmax.value,
@@ -280,7 +281,13 @@ class PlasmaBuilder(Builder):
             lower=True,
             n=100,
         )
-        profiles = None
+
+        profiles = BetaIpProfile(
+            self._params.beta_p.value,
+            self._params.I_p.value * 1e6,
+            self._params.R_0.value,
+            self._params.B_0.value,
+        )
 
         sx, sz = 1.6, 1.7  # grid scales from plasma
         nx, nz = 65, 65
@@ -303,11 +310,11 @@ class PlasmaBuilder(Builder):
             eq.coilset,
             eq,
             eq_targets,
-            gamma=self._eq_settings["gamma"],
+            gamma=1e-8,
         )
         program = PicardIterator(
             eq,
-            self.profiles,
+            profiles,
             opt_problem,
             convergence=DudsonConvergence(),
             relaxation=0.2,
@@ -315,7 +322,7 @@ class PlasmaBuilder(Builder):
             plot=self._plot_flag,
         )
         program()
-
+        self._design_problem = opt_problem
         return eq
 
     def _analyse_equilibrium(self, eq: Equilibrium):
