@@ -39,7 +39,6 @@ class TestSetup:
     def setup_method(self):
         self.default_pf = Configuration()
         add_mapping(process.NAME, self.default_pf, process_mappings)
-        self.problem_settings = {}
 
         self._writer_patch = mock.patch(f"{self.MODULE_REF}.InDat")
         self.writer_cls_mock = self._writer_patch.start()
