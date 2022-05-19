@@ -46,7 +46,6 @@ from bluemira.equilibria.opt_problems import (
     TikhonovCurrentCOP,
     UnconstrainedTikhonovCurrentGradientCOP,
 )
-from bluemira.equilibria.optimiser import FBIOptimiser, Norm2Tikhonov, PositionOptimiser
 from bluemira.equilibria.profiles import BetaIpProfile, CustomProfile
 from bluemira.equilibria.shapes import (
     flux_surface_cunningham,
