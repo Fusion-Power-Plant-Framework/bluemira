@@ -181,7 +181,7 @@ class FieldConstraints(UpdateableConstraint, OptimisationConstraint):
 
     def __len__(self):
         """
-        Length of field constraints
+        Length of field constraints.
         """
         return len(self.x)
 
@@ -322,8 +322,7 @@ class MagneticConstraint(UpdateableConstraint, OptimisationConstraint):
     Abstract base class for a magnetic optimisation constraint.
 
     Can be used as a standalone constraint for use in an optimisation problem. In which
-    case the constraint is of the form:
-        ||(Ax - b)||² < target_value
+    case the constraint is of the form: ||(Ax - b)||² < target_value
 
     Can be used in a MagneticConstraintSet
     """
