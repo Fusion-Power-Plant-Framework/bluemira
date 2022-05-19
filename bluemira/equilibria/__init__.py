@@ -41,9 +41,9 @@ from bluemira.equilibria.opt_constraints import (
     PsiConstraint,
 )
 from bluemira.equilibria.opt_problems import (
-    BoundedCurrentCOP,
     CoilsetPositionCOP,
     NestedCoilsetPositionCOP,
+    TikhonovCurrentCOP,
     UnconstrainedTikhonovCurrentGradientCOP,
 )
 from bluemira.equilibria.optimiser import FBIOptimiser, Norm2Tikhonov, PositionOptimiser
