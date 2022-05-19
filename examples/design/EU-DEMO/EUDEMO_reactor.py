@@ -421,7 +421,7 @@ if plasma_builder.runmode == "run":
     eq_problem = reactor.get_builder(EUDEMOReactor.PLASMA).design_problem
     _, ax = plt.subplots()
     eq_problem.eq.plot(ax=ax)
-    eq_problem.constraints.plot(ax=ax)
+    eq_problem.targets.plot(ax=ax)
     eq_problem.coilset.plot(ax=ax)
     plt.show()
 
