@@ -261,12 +261,10 @@ class FixedPulsedCoilsetProblem(PulsedCoilsetProblem):
         self._eq_opt = equilibrium_optimiser
         self._eq_convergence = equilibrium_convergence
 
-        defaults = {
-            "gamma": 1e-8,
-            "target_rms_max": 0.5,
-            "target_rms_con_tol": 1e-6,
-        }
-        self._eq_settings = {**defaults, **equilibrium_settings}
+        self._eq_settings = {"gamma": 1e-8}
+        if equilibrium_settings:
+            self._eq_settings = {**self._eq_settings, **equilibrium_settings}
+
         self._coil_cons = coil_constraints
 
         super().__init__()
@@ -375,13 +373,11 @@ if __name__ == "__main__":
     # TODO: Remove once equilibrium converger is added
 
     from bluemira.base.config import Configuration
-    from bluemira.builders.EUDEMO.equilibria import EUDEMOSingleNullConstraints
     from bluemira.display import plot_defaults
     from bluemira.equilibria.coils import Coil, CoilSet
     from bluemira.equilibria.opt_constraints import (
         CoilFieldConstraints,
         FieldNullConstraint,
-        IsofluxConstraint,
         PsiBoundaryConstraint,
     )
     from bluemira.equilibria.opt_problems import OutboardBreakdownZoneStrategy
@@ -438,7 +434,7 @@ if __name__ == "__main__":
     coilset.fix_sizes()
     coilset.mesh_coils(0.3)
 
-    grid = Grid(2, 16, -12, 12, 100, 100)
+    grid = Grid(4, 14, -10, 10, 100, 100)
     profiles = CustomProfile(
         np.array(
             [86856, 86506, 84731, 80784, 74159, 64576, 52030, 36918, 20314, 4807, 0.0]
@@ -452,29 +448,22 @@ if __name__ == "__main__":
     )
 
     lcfs_shape = flux_surface_johner(
-        params.R_0.value,
+        8.9,
         0.0,
-        params.A.value,
-        params.kappa.value,
-        params.kappa.value * 1.05,
+        3.1,
+        1.7,
+        1.7 * 1.05,
         0.4,
         0.4,
-        20,
+        0,
         0,
         60,
         30,
         n=50,
     )
 
-    isoflux = IsofluxConstraint(
-        lcfs_shape.x, lcfs_shape.z, lcfs_shape.x[0], lcfs_shape.z[0], 1.0
-    )
-    psi_constraint = PsiConstraint(
-        lcfs_shape.x[0], lcfs_shape.z[0], target_value=100, tolerance=1e-2
-    )
-
     psi_boundary = PsiBoundaryConstraint(
-        lcfs_shape.x, lcfs_shape.z, target_value=100, tolerance=1.0
+        lcfs_shape.x, lcfs_shape.z, target_value=0.0, tolerance=1.0
     )
 
     x_arg = np.argmin(lcfs_shape.z)
@@ -483,7 +472,6 @@ if __name__ == "__main__":
     )
 
     eq_constraints = [psi_boundary, x_point]
-    # eq_constraints=[isoflux, x_point, psi_constraint]
 
     coil_constraints = [
         CoilFieldConstraints(coilset, coilset.get_max_fields(), tolerance=1e-6)
@@ -507,7 +495,6 @@ if __name__ == "__main__":
         equilibrium_optimiser=Optimiser(
             "SLSQP", opt_conditions={"max_eval": 10000, "ftol_rel": 1e-10}
         ),
-        equilibrium_settings={"target_rms_max": 150},
         equilibrium_convergence=DudsonConvergence(1e-3),
     )
 
