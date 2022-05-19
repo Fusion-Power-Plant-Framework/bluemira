@@ -30,7 +30,7 @@ from bluemira.equilibria.opt_constraints import (
     MagneticConstraintSet,
     PsiBoundaryConstraint,
 )
-from bluemira.equilibria.opt_problems import BoundedCurrentCOP, TikhonovCurrentCOP
+from bluemira.equilibria.opt_problems import TikhonovCurrentCOP
 
 
 # @pytest.mark.longrun
