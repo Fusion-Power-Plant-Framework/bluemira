@@ -35,18 +35,12 @@ from bluemira.equilibria.equilibrium import Breakdown, Equilibrium
 from bluemira.equilibria.error import EquilibriaError
 from bluemira.equilibria.grid import Grid
 from bluemira.equilibria.limiter import Limiter
-from bluemira.equilibria.opt_constraints import (
-    L2_norm_constraint,
-    MagneticConstraint,
-    MagneticConstraintSet,
-    PsiConstraint,
-)
+from bluemira.equilibria.opt_constraints import MagneticConstraintSet, PsiConstraint
 from bluemira.equilibria.opt_problems import (
     BreakdownCOP,
     BreakdownZoneStrategy,
     CoilsetOptimisationProblem,
     MinimalCurrentCOP,
-    TikhonovCurrentCOP,
     UnconstrainedTikhonovCurrentGradientCOP,
 )
 from bluemira.equilibria.physics import calc_psib
@@ -158,7 +152,7 @@ class PulsedCoilsetProblem:
             self.profiles,
             opt_problem,
             convergence=self._eq_convergence,
-            relaxation=0.1,
+            relaxation=self._eq_settings["relaxation"],
             fixed_coils=True,
             plot=False,
         )
@@ -261,7 +255,7 @@ class FixedPulsedCoilsetProblem(PulsedCoilsetProblem):
         self._eq_opt = equilibrium_optimiser
         self._eq_convergence = equilibrium_convergence
 
-        self._eq_settings = {"gamma": 1e-8}
+        self._eq_settings = {"gamma": 1e-8, "relaxation": 0.1}
         if equilibrium_settings:
             self._eq_settings = {**self._eq_settings, **equilibrium_settings}
 
@@ -361,7 +355,7 @@ class FixedPulsedCoilsetProblem(PulsedCoilsetProblem):
                 self.profiles,
                 problem,
                 convergence=self._eq_convergence,
-                relaxation=0.1,
+                relaxation=self._eq_settings["relaxation"],
                 fixed_coils=True,
                 plot=False,
             )
