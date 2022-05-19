@@ -940,11 +940,11 @@ class CoilGroup(CoilFieldsMixin, abc.ABC):
         )
 
     @property
-    def x(self) -> np.ndarray:
+    def x(self) -> tuple:
         """
         Get x coordinate of each coil
         """
-        return self._x
+        return tuple(self._x.flatten())
 
     @x.setter
     def x(self, new_x: __ITERABLE_FLOAT) -> None:
@@ -955,11 +955,11 @@ class CoilGroup(CoilFieldsMixin, abc.ABC):
         self._sizer(self)
 
     @property
-    def z(self) -> np.ndarray:
+    def z(self) -> tuple:
         """
         Get z coordinate of each coil
         """
-        return self._z
+        return tuple(self._x.flatten())
 
     @z.setter
     def z(self, new_z: __ITERABLE_FLOAT) -> None:
@@ -970,11 +970,11 @@ class CoilGroup(CoilFieldsMixin, abc.ABC):
         self._sizer(self)
 
     @property
-    def dx(self) -> np.ndarray:
+    def dx(self) -> tuple:
         """
         Get dx coordinate of each coil
         """
-        return self._dx
+        return tuple(self._dx.flatten())
 
     @dx.setter
     def dx(self, new_dx: __ITERABLE_FLOAT) -> None:
@@ -989,7 +989,7 @@ class CoilGroup(CoilFieldsMixin, abc.ABC):
         """
         Get dz coordinate of each coil
         """
-        return self._dz
+        return tuple(self._dz.flatten())
 
     @dz.setter
     def dz(self, new_dz: __ITERABLE_FLOAT) -> None:
