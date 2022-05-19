@@ -19,19 +19,32 @@
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 
-"""
-Importer for PROCESS runner constants and functions
-"""
+from unittest import mock
 
-from bluemira.codes.process.api import ENABLED
-from bluemira.codes.process.constants import BINARY, NAME
-from bluemira.codes.process.run import Solver
-from bluemira.codes.process.teardown import plot_radial_build
+import pytest
 
-__all__ = [
-    "BINARY",
-    "ENABLED",
-    "NAME",
-    "Solver",
-    "plot_radial_build",
-]
+from bluemira.base.config import ParameterFrame
+from bluemira.codes import process
+from bluemira.codes.process.run_ import Run
+
+
+class TestRun:
+    def setup_method(self):
+        self.default_pf = ParameterFrame()
+
+        self._subprocess_patch = mock.patch("bluemira.codes.interface_.run_subprocess")
+        self.run_subprocess_mock = self._subprocess_patch.start()
+        self.run_subprocess_mock.return_value = 0
+
+    def teardown_method(self):
+        self.run_subprocess_mock.stop()
+
+    @pytest.mark.parametrize("run_func", ["run", "runinput"])
+    def test_run_func_calls_subprocess_with_in_dat_path(self, run_func):
+        run = Run(self.default_pf, "input/path_IN.DAT")
+
+        getattr(run, run_func)()
+
+        self.run_subprocess_mock.assert_called_once_with(
+            [process.BINARY, "-i", "input/path_IN.DAT"]
+        )

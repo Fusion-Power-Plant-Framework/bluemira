@@ -280,7 +280,8 @@ def run_subprocess(command: List[str], run_directory: str = ".", **kwargs) -> in
     command: List[str]
         The arguments of the command to run.
     run_directory: str
-        The directory to run the command in.
+        The directory to run the command in. Default is current working
+        directory.
     **kwargs: Dict[str, Any]
         Arguments passed directly to subprocess.Popen.
 
