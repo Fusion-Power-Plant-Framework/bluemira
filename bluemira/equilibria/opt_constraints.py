@@ -180,6 +180,9 @@ class FieldConstraints(UpdateableConstraint, OptimisationConstraint):
         return Bx, Bz
 
     def __len__(self):
+        """
+        Length of field constraints
+        """
         return len(self.x)
 
 
