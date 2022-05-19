@@ -70,6 +70,9 @@ class VacuumVesselThermalShieldBuilder(Builder):
         """
         super().reinitialise(params)
 
+        if vv_koz:
+            vv_koz.close()
+
         self._vv_koz = vv_koz
 
     def build(self) -> Component:
