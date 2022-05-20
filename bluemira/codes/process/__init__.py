@@ -23,15 +23,14 @@
 Importer for PROCESS runner constants and functions
 """
 
+from bluemira.codes.process._solver import RunMode, Solver
 from bluemira.codes.process.api import ENABLED
 from bluemira.codes.process.constants import BINARY, NAME
-from bluemira.codes.process.run import Solver
-from bluemira.codes.process.teardown import plot_radial_build
 
 __all__ = [
     "BINARY",
     "ENABLED",
     "NAME",
-    "Solver",
-    "plot_radial_build",
+    "RunMode" "Solver",
+    # "plot_radial_build",
 ]

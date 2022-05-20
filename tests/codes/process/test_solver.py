@@ -29,25 +29,25 @@ import pytest
 from bluemira.base.config import Configuration
 from bluemira.base.parameter import ParameterFrame
 from bluemira.codes.process import ENABLED
-from bluemira.codes.process.solver_ import ProcessSolver, RunMode
+from bluemira.codes.process._solver import RunMode, Solver
 
 
-class TestProcessSolver:
+class TestSolver:
 
-    MODULE_REF = "bluemira.codes.process.solver_"
+    MODULE_REF = "bluemira.codes.process._solver"
 
     @mock.patch(f"{MODULE_REF}.bluemira_warn")
     def test_bluemira_warning_if_build_config_has_unknown_arg(self, bm_warn_mock):
         build_config = {"not_an_arg": 0}
 
-        ProcessSolver(ParameterFrame(), build_config)
+        Solver(ParameterFrame(), build_config)
 
         bm_warn_mock.assert_called_once()
 
 
 @pytest.mark.longrun
 @pytest.mark.skipif(not ENABLED, reason="PROCESS is not installed on the system.")
-class TestProcessSolverSystem:
+class TestSolverSystem:
 
     DATA_DIR = os.path.join(os.path.dirname(__file__), "test_data")
 
@@ -55,7 +55,7 @@ class TestProcessSolverSystem:
         params = Configuration()
         run_dir = tempfile.TemporaryDirectory()
         build_config = {"run_dir": run_dir.name}
-        solver = ProcessSolver(params, build_config)
+        solver = Solver(params, build_config)
 
         solver.execute(RunMode.RUN)
 
@@ -65,10 +65,9 @@ class TestProcessSolverSystem:
     def test_run_mode_read_updates_params_from_mfile(self):
         params = Configuration()
         assert params.r_tf_in_centre != pytest.approx(2.6354)
-
         build_config = {"run_dir": self.DATA_DIR}
 
-        solver = ProcessSolver(params, build_config)
+        solver = Solver(params, build_config)
         solver.execute(RunMode.READ)
 
         # Expected value comes from ./test_data/MFILE.DAT
@@ -82,8 +81,8 @@ class TestProcessSolverSystem:
             "run_dir": run_dir.name,
             "template_in_dir": template_path,
         }
-        solver = ProcessSolver(params, build_config)
 
+        solver = Solver(params, build_config)
         solver.execute(RunMode.RUN)
 
         assert os.path.isfile(os.path.join(run_dir.name, "IN.DAT"))

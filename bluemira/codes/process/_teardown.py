@@ -30,8 +30,8 @@ from bluemira.base.look_and_feel import bluemira_print, bluemira_warn
 from bluemira.base.parameter import ParameterFrame
 from bluemira.codes.error import CodesError
 from bluemira.codes.interface_ import CodesTeardown
-from bluemira.codes.process import NAME as PROCESS_NAME
 from bluemira.codes.process.api import PROCESS_DICT, MFile, update_obsolete_vars
+from bluemira.codes.process.constants import NAME as PROCESS_NAME
 from bluemira.codes.utilities import get_recv_mapping
 
 

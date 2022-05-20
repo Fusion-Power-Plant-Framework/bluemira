@@ -28,13 +28,13 @@ from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.base.parameter import ParameterFrame
 from bluemira.base.solver import RunMode as BaseRunMode
 from bluemira.codes.interface_ import CodesSolver
+from bluemira.codes.process._run import Run
+from bluemira.codes.process._setup import Setup
+from bluemira.codes.process._teardown import Teardown
 from bluemira.codes.process.api import DEFAULT_INDAT
 from bluemira.codes.process.constants import BINARY as PROCESS_BINARY
 from bluemira.codes.process.constants import NAME as PROCESS_NAME
 from bluemira.codes.process.mapping import mappings as process_mappings
-from bluemira.codes.process.run_ import Run
-from bluemira.codes.process.setup_ import Setup
-from bluemira.codes.process.teardown_ import Teardown
 from bluemira.codes.utilities import add_mapping
 
 BuildConfig = Dict[str, Union[float, str, "BuildConfig"]]
@@ -53,7 +53,7 @@ class RunMode(BaseRunMode):
     NONE = auto()
 
 
-class ProcessSolver(CodesSolver):
+class Solver(CodesSolver):
     """
     PROCESS solver. Runs, loads or mocks PROCESS to generate a reactor's
     radial build.
