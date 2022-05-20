@@ -487,6 +487,10 @@ def _offset_wire_discretised(
     """
     from bluemira.geometry._deprecated_offset import offset_clipper
 
+    if not open_wire:
+        wire = wire.deepcopy()
+        wire.close()
+
     coordinates = wire.discretize(byedges=byedges, ndiscr=ndiscr)
 
     result = offset_clipper(
@@ -547,9 +551,6 @@ def offset_wire(
     wire: BluemiraWire
         Offset wire
     """
-    if not open_wire:
-        wire = wire.deepcopy()
-        wire.close()
     return BluemiraWire(
         cadapi.offset_wire(wire._shape, thickness, join, open_wire), label=label
     )
