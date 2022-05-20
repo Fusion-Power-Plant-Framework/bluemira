@@ -31,42 +31,14 @@ from bluemira.equilibria.find import find_flux_surface_through_point
 from bluemira.equilibria.flux_surfaces import (
     ClosedFluxSurface,
     FieldLineTracer,
-    FluxSurface,
     OpenFluxSurface,
     PartialOpenFluxSurface,
+    poloidal_angle,
 )
 from bluemira.equilibria.shapes import flux_surface_cunningham, flux_surface_johner
 from bluemira.geometry._deprecated_loop import Loop
 
 TEST_PATH = get_bluemira_path("equilibria/test_data", subfolder="tests")
-
-
-class TestFluxSurface:
-    @classmethod
-    def setup_class(cls):
-        eq_name = "DN-DEMO_eqref.json"
-        filename = os.path.join(TEST_PATH, eq_name)
-        cls.eq = Equilibrium.from_eqdsk(filename)
-
-    def test_poloidal_angle(self):
-        # Flux surface in the SoL
-        x_start, z_start = 14.0, 0.0
-        x_loop, z_loop = find_flux_surface_through_point(
-            self.eq.x,
-            self.eq.z,
-            self.eq.psi(),
-            x_start,
-            z_start,
-            self.eq.psi(x_start, z_start),
-        )
-        fs = FluxSurface(Loop(x=x_loop, z=z_loop))
-        # Glancing angle
-        gamma = 5.0
-        # Poloidal angle
-        theta = fs.poloidal_angle(self.eq, 10.0, -7.5, gamma)
-        assert theta > gamma
-        # By hand, from a different calculation
-        assert round(theta, 1) == 20.6
 
 
 class TestOpenFluxSurfaceStuff:
@@ -189,3 +161,21 @@ class TestFieldLine:
         assert np.isclose(
             field_line.connection_length, field_line.loop.length, rtol=5e-2
         )
+
+
+def test_poloidal_angle():
+    eq_name = "DN-DEMO_eqref.json"
+    filename = os.path.join(TEST_PATH, eq_name)
+    eq = Equilibrium.from_eqdsk(filename)
+    # Building inputs
+    x_strike = 10.0
+    z_strike = -7.5
+    Bp_strike = eq.Bp(x_strike, z_strike)
+    Bt_strike = eq.Bt(x_strike)
+    # Glancing angle
+    gamma = 5.0
+    # Poloidal angle
+    theta = poloidal_angle(Bp_strike, Bt_strike, gamma)
+    assert theta > gamma
+    # By hand, from a different calculation
+    assert round(theta, 1) == 20.6
