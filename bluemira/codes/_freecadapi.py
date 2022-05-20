@@ -660,6 +660,9 @@ def discretize(w: Part.Wire, ndiscr: int = 10, dl: float = None):
     # discretization points array
     output = w.discretize(ndiscr)
     output = vector_to_numpy(output)
+
+    if w.isClosed():
+        output[-1] = output[0]
     return output
 
 
