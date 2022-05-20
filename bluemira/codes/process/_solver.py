@@ -70,7 +70,7 @@ class Solver(CodesSolver):
         * binary: str
             The path to the PROCESS binary. The default assumes the
             PROCESS executable is on the system path.
-        * run_directory: str
+        * run_dir: str
             The directory in which to run PROCESS. It is also the
             directory in which to look for PROCESS input and output
             files. Default is current working directory.
