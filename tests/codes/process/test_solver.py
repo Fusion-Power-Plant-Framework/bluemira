@@ -79,7 +79,7 @@ class TestSolverSystem:
         template_path = os.path.join(self.DATA_DIR, "IN.DAT")
         build_config = {
             "run_dir": run_dir.name,
-            "template_in_dir": template_path,
+            "template_in_dat": template_path,
         }
 
         solver = Solver(params, build_config)
