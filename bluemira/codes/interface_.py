@@ -126,24 +126,35 @@ class CodesTeardown(CodesTask):
         The name of the external code the task is associated with.
     """
 
-    def _update_params_with_outputs(self, outputs: Dict[str, Any]):
+    def _update_params_with_outputs(
+        self, outputs: Dict[str, float], recv_all: bool = False
+    ):
         """
         Update this task's parameters with the external code's outputs.
 
-        This performs implicitly performs any unit conversions.
+        This implicitly performs any unit conversions.
+
+        Parameters
+        ----------
+        outputs: Dict[str, float]
+            Key are the external code's parameter names, the values are
+            the values for those parameters.
+        recv_all: bool
+            Whether to ignore the 'recv' attribute on the parameter
+            mapping, and update all output parameter values.
 
         Raises
         ------
         CodesError
-            If any outputs do not have a mapping to bluemira, or the
-            mapping points to a parameter name that does not exist in
-            this object's ParameterFrame.
+            If any output does not have a mapping to a bluemira
+            parameter, or the output maps to a bluemira parameter that
+            does not exist in this object's ParameterFrame.
         """
-        mapped_outputs = self._map_external_outputs_to_bluemira_params(outputs)
+        mapped_outputs = self._map_external_outputs_to_bluemira_params(outputs, recv_all)
         self.params.update_kw_parameters(mapped_outputs, source=self._name)
 
     def _map_external_outputs_to_bluemira_params(
-        self, external_outputs: Dict[str, Any]
+        self, external_outputs: Dict[str, Any], recv_all: bool
     ) -> Dict[str, Dict[str, Any]]:
         """
         Loop through external outputs, find the corresponding bluemira
@@ -155,6 +166,9 @@ class CodesTeardown(CodesTask):
             An output produced by an external code. The keys are the
             outputs' names (not the bluemira version of the name), the
             values are the output's value (in the external code's unit).
+        recv_all: bool
+            Whether to ignore the 'recv' attribute on the parameter
+            mapping, and update all output parameter values.
 
         Returns
         -------
@@ -165,7 +179,7 @@ class CodesTeardown(CodesTask):
             external code's unit.
         """
         mapped_outputs = {}
-        recv_mappings = get_recv_mapping(self.params, self._name)
+        recv_mappings = get_recv_mapping(self.params, self._name, recv_all)
         for external_key, bluemira_key in recv_mappings.items():
             output_value = self._get_output_or_raise(external_outputs, external_key)
             if output_value is None:

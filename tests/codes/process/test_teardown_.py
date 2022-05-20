@@ -61,32 +61,32 @@ class TestTeardown:
 
     @pytest.mark.parametrize("run_func", ["run", "runinput", "read", "readall"])
     def test_run_func_updates_bluemira_params_from_mfile(self, run_func):
-        teardown = Teardown(self.default_pf, "./run/dir")
+        teardown = Teardown(self.default_pf, self.DATA_DIR)
 
         getattr(teardown, run_func)()
 
-        updated_value = 0
-        assert teardown.params["some_param"] == updated_value
+        # Expected value comes from ./test_data/MFILE.DAT
+        assert teardown.params["tau_e"] == pytest.approx(4.3196)
 
     @pytest.mark.parametrize("run_func", ["runinput", "readall"])
-    def test_run_func_updates_params_from_mfile_given_recv_False(self, run_func):
-        teardown = Teardown(self.default_pf, "./run/dir")
-        teardown.params.get_param("some_param").mapping[process.NAME] = {"recv": False}
+    def test_run_mode_updates_params_from_mfile_given_recv_False(self, run_func):
+        teardown = Teardown(self.default_pf, self.DATA_DIR)
+        teardown.params.get_param("r_tf_in_centre").mapping[process.NAME].recv = False
 
         getattr(teardown, run_func)()
 
-        updated_value = 0
-        assert teardown.params["some_param"] == updated_value
+        # Expected value comes from ./test_data/MFILE.DAT
+        assert teardown.params["r_tf_in_centre"] == pytest.approx(2.6354)
 
     @pytest.mark.parametrize("run_func", ["run", "read"])
-    def test_run_func_does_not_update_params_from_mfile_given_recv_False(self, run_func):
-        teardown = Teardown(self.default_pf, "./run/dir")
-        teardown.params.get_param("some_param").mapping[process.NAME] = {"recv": False}
+    def test_run_mode_does_not_update_params_from_mfile_given_recv_False(self, run_func):
+        teardown = Teardown(self.default_pf, self.DATA_DIR)
+        teardown.params.get_param("r_tf_in_centre").mapping[process.NAME].recv = False
 
         getattr(teardown, run_func)()
 
-        updated_value = 0
-        assert teardown.params["some_param"] != updated_value
+        # Non-expected value comes from ./test_data/MFILE.DAT
+        assert teardown.params["r_tf_in_centre"] != pytest.approx(2.6354)
 
     def test_mock_updates_params_from_mockPROCESS_json_file(self):
         teardown = Teardown(self.default_pf, self.DATA_DIR)
@@ -94,9 +94,16 @@ class TestTeardown:
         teardown.mock()
 
         # Expected values come from ./test_data/mockPROCESS.json
-        assert teardown.params.delta_95 == pytest.approx(1 / 3)
+        assert teardown.params.delta_95 == pytest.approx(0.33333)
+        assert teardown.params.B_0 == pytest.approx(5.2742)
         assert teardown.params.r_fw_ib_in == pytest.approx(5.953487)
         assert teardown.params.v_burn == pytest.approx(0.032175)
+
+    def test_mock_raises_CodesError_if_mock_file_does_not_exist(self):
+        teardown = Teardown(self.default_pf, "./not/a/dir")
+
+        with pytest.raises(CodesError):
+            teardown.mock()
 
     @pytest.mark.parametrize("run_func", ["run", "runinput", "read", "readall"])
     def test_run_func_raises_CodesError_given_mfile_does_not_exist(self, run_func):
@@ -122,7 +129,7 @@ class TestTeardown:
         self, open_mock, run_func, i_fail
     ):
         teardown = Teardown(self.default_pf, "./some/dir")
-        open_mock.read_data = _INFEASIBLE_PROCESS_MFILE.format(i_fail)
+        open_mock.read_data = _INFEASIBLE_PROCESS_MFILE.format(i_fail=i_fail)
 
         with file_exists("./some/dir/MFILE.DAT", f"{self.MODULE_REF}.os.path.isfile"):
             with pytest.raises(CodesError):
