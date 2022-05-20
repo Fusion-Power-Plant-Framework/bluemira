@@ -847,13 +847,10 @@ def poloidal_angle(Bp_strike, Bt_strike, gamma):
 
     Parameters
     ----------
-    eq: Equilibrium
-        Equilibrium from which to take magnetic fields
-        at the strike pointcalculate the flux expansion
-    x_strike: float
-        x coordinate of strike point
-    z_strike: float
-        z coordinate of strike point
+    Bp_strike: float
+        Poloidal magnetic field value at the desired point
+    Bt_strike: float
+        Toroidal magnetic field value at the desired point
     gamma: float
         Glancing angle at the strike point [deg]
 
@@ -865,9 +862,6 @@ def poloidal_angle(Bp_strike, Bt_strike, gamma):
     # From deg to rad
     gamma_rad = np.radians(gamma)
 
-    # Poloidal and toroidal magnetic field at the strike point
-    # Bp_strike = eq.Bp(x_strike, z_strike)
-    # Bt_strike = eq.Bt(x_strike)
     # Total magnetic field
     Btot = np.sqrt(Bp_strike**2 + Bt_strike**2)
 
