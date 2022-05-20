@@ -129,9 +129,6 @@ class VacuumVesselBuilder(Builder):
 
         component = Component("xz", children=[body])
         bm_plot_tools.set_component_view(component, "xz")
-        from bluemira.display import plot_2d
-
-        plot_2d([inner_vv, outer_vv])
         return component
 
     def build_xy(self):
