@@ -137,6 +137,16 @@ class Solver(CodesSolver):
             )
 
     def execute(self, run_mode: RunMode) -> ParameterFrame:
+        """
+        Execute the solver in the given run mode.
+
+        Parameters
+        ----------
+        run_mode: RunMode
+            The run mode to execute the solver in. See the
+            :func:`~bluemira.codes.process._solver.Solver.__init__`
+            docstring for details of the behaviour of each run mode.
+        """
         self._setup = Setup(
             self.params, self.in_dat_path, self.problem_settings, self.template_in_dat
         )

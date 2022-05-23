@@ -19,6 +19,7 @@
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 
+import copy
 import filecmp
 import os
 import tempfile
@@ -44,6 +45,14 @@ class TestSolver:
 
         bm_warn_mock.assert_called_once()
 
+    def test_none_mode_does_not_alter_parameters(self):
+        params = Configuration()
+        solver = Solver(copy.deepcopy(params), {})
+
+        solver.execute(RunMode.NONE)
+
+        assert solver.params.to_dict() == params.to_dict()
+
 
 @pytest.mark.longrun
 @pytest.mark.skipif(not ENABLED, reason="PROCESS is not installed on the system.")
@@ -51,7 +60,7 @@ class TestSolverSystem:
 
     DATA_DIR = os.path.join(os.path.dirname(__file__), "test_data")
 
-    def test_run_mode_run_outputs_process_files(self):
+    def test_run_mode_outputs_process_files(self):
         params = Configuration()
         run_dir = tempfile.TemporaryDirectory()
         build_config = {"run_dir": run_dir.name}
@@ -62,18 +71,20 @@ class TestSolverSystem:
         assert os.path.isfile(os.path.join(run_dir.name, "IN.DAT"))
         assert os.path.isfile(os.path.join(run_dir.name, "MFILE.DAT"))
 
-    def test_run_mode_read_updates_params_from_mfile(self):
+    @pytest.mark.parametrize("run_mode", [RunMode.READ, RunMode.READALL])
+    def test_read_mode_updates_params_from_mfile(self, run_mode):
         params = Configuration()
+        # Assert here to check the parameter is actually changing
         assert params.r_tf_in_centre != pytest.approx(2.6354)
         build_config = {"run_dir": self.DATA_DIR}
 
         solver = Solver(params, build_config)
-        solver.execute(RunMode.READ)
+        solver.execute(run_mode)
 
         # Expected value comes from ./test_data/MFILE.DAT
         assert solver.params.r_tf_in_centre == pytest.approx(2.6354)
 
-    def test_run_mode_runinput_does_not_edit_template(self):
+    def test_runinput_mode_does_not_edit_template(self):
         params = Configuration()
         run_dir = tempfile.TemporaryDirectory()
         template_path = os.path.join(self.DATA_DIR, "IN.DAT")
