@@ -497,15 +497,15 @@ def beta_N_to_beta(beta_N, a, Btor, I_p):  # noqa :N802
     return beta_N * I_p / (a * Btor)
 
 
-def debye_length(T, n):
+def debye_length(temperature, density):
     """
     Debye length
 
     Parameters
     ----------
-    T: float
+    temperature: float
         Temperature [K]
-    n: float
+    density: float
         Density [m^-3]
 
     Returns
@@ -513,7 +513,7 @@ def debye_length(T, n):
     debye_length: float
         Debye length [m]
     """
-    return np.sqrt(EPS_0 * K_BOLTZMANN * T / (EV_TO_J**2 * n))
+    return np.sqrt(EPS_0 * K_BOLTZMANN * temperature / (EV_TO_J**2 * density))
 
 
 def reduced_mass(mass_1, mass_2):
@@ -680,7 +680,7 @@ def estimate_loop_voltage(R_0, B_t, Z_eff, T_e, q_0, ln_lambda=17):
     Assumes a circular cross-section on axis
 
     There is no neo-classical resistivity on axis because there are no trapped particles
-    """
+    """  # noqa: N803
     sigma = spitzer_conductivity(Z_eff, T_e, ln_lambda)
 
     # Current density on axis
