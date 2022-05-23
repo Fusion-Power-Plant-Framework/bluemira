@@ -28,12 +28,16 @@ from scipy.interpolate import RectBivariateSpline
 
 from bluemira.base.constants import (
     C_LIGHT,
+    ELECTRON_MASS,
     ELECTRON_MOLAR_MASS,
     EPS_0,
     EV_TO_J,
     H_PLANCK,
     J_TO_EV,
+    K_BOLTZMANN,
     MU_0,
+    N_AVOGADRO,
+    PROTON_MASS,
     PROTON_MOLAR_MASS,
     T_MOLAR_MASS,
 )
@@ -506,7 +510,7 @@ def debye_length(T, n):
     Parameters
     ----------
     T: float
-        Temperature [eV]
+        Temperature [K]
     n: float
         Density [m^-3]
 
@@ -515,41 +519,102 @@ def debye_length(T, n):
     debye_length: float
         Debye length [m]
     """
-    return np.sqrt(EPS_0 * T / (EV_TO_J * n))
+    return np.sqrt(EPS_0 * K_BOLTZMANN * T / (EV_TO_J**2 * n))
 
 
-def b90_NRL(T):
-    r_min_nrl = EV_TO_J / (3 * T * EPS_0)
+def reduced_mass(mass_1, mass_2):
+    """
+    Calculate the reduced mass of a two-particle system
 
-    m1 = ELECTRON_MOLAR_MASS
-    m2 = PROTON_MOLAR_MASS
-    mu_12 = m1 * m2 / (m1 + m2)
-    v = np.sqrt(3 * T * EV_TO_J / mu_12)
-    lambda_de_broglie = H_PLANCK / (2 * mu_12 * v) / EPS_0
-    print(r_min_nrl / lambda_de_broglie)
-    return np.sqrt(4 * np.pi) * max(r_min_nrl, lambda_de_broglie)
+    Parameters
+    ----------
+    mass_1: float
+        Mass of the first particle
+    mass_2: float
+        Mass of the second particle
 
-
-def b90_goldston(T):
-    b90 = EV_TO_J / (4 * np.pi * EPS_0 * 3 * T)
-    m1 = ELECTRON_MOLAR_MASS
-    m2 = PROTON_MOLAR_MASS
-    mu_12 = m1 * m2 / (m1 + m2)
-    v = np.sqrt(3 * T * EV_TO_J / mu_12)
-
-    b_perp = EV_TO_J**2 / (4 * np.pi * EPS_0 * mu_12 * v**2)
-    b90 = b_perp
-    # de Broglie wavelength
-    lambda_de_broglie = H_PLANCK * J_TO_EV / (mu_12 * v)
-    print(b90 / lambda_de_broglie)
-    return max(b90, lambda_de_broglie)
+    Returns
+    -------
+    mu_12: float
+        Reduced mass
+    """
+    return (mass_1 * mass_2) / (mass_1 + mass_2)
 
 
-b90 = b90_goldston
+def thermal_velocity(T, mass):
+    """
+    Parameters
+    ----------
+    T: float
+        Temperature [K]
+    mass: float
+        Mass of the particle [kg]
+
+    Notes
+    -----
+    The sqrt(2) term is for a 3-dimensional system and the most probable velocity in
+    the particle velocity distribution.
+    """
+    return np.sqrt(2) * np.sqrt(K_BOLTZMANN * T / mass)
 
 
-def ln_lambda(T, n):
-    return np.log(np.sqrt(1 + (debye_length(T, n) / b90(T)) ** 2))
+def de_broglie_length(v, mu_12):
+    """
+    Calculate the de Broglie wavelength
+
+    Parameters
+    ----------
+    v: float
+        Velocity [m/s]
+    mu_12: float
+        Reduced mass [kg]
+
+    Returns
+    -------
+    lambda_de_broglie: float
+        De Broglie wavelength [m]
+    """
+    return H_PLANCK / (2 * mu_12 * v)
+
+
+def impact_parameter_perp(v, mu_12):
+    """
+    Calculate the perpendicular impact parameter
+
+    Parameters
+    ----------
+
+    Returns
+    -------
+    b90: float
+        Perpendicular impact parameter [m]
+    """
+    return EV_TO_J**2 / (4 * np.pi * EPS_0 * mu_12 * v**2)
+
+
+def coulomb_logarithm(T, n):
+    """
+    Calculate the value of the Coulomb logarithm
+
+    Parameters
+    ----------
+    T: float
+        Temperature [eV]
+    n: float
+        Density
+
+    Returns
+    -------
+    ln_lambda: float
+        Coulomb logarithm value
+    """
+    lambda_debye = debye_length(T, n)
+    mu_12 = reduced_mass(ELECTRON_MASS, PROTON_MASS)
+    v = thermal_velocity(T, ELECTRON_MASS)
+    lambda_de_broglie = de_broglie_length(v, mu_12)
+    b_perp = impact_parameter_perp(v, mu_12)
+    b_min = max(lambda_de_broglie, b_perp)
+    return np.log(np.sqrt(1 + (lambda_debye / b_min) ** 2))
 
 
 def spitzer_conductivity(Z_eff, T_e, ln_lambda=17):
@@ -645,7 +710,10 @@ if __name__ == "__main__":
 
     for i in range(9):
         df.loc[i, "ln_lambda"] = round(
-            ln_lambda(df.loc[i, "T [eV]"], df.loc[i, "n [1/m^3]"]), 1
+            coulomb_logarithm(
+                df.loc[i, "T [eV]"] * 1.160451812 * 10**4, df.loc[i, "n [1/m^3]"]
+            ),
+            1,
         )
 
     print(df)
