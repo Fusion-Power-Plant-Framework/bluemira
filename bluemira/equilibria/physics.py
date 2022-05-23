@@ -535,11 +535,11 @@ def reduced_mass(mass_1, mass_2):
     return (mass_1 * mass_2) / (mass_1 + mass_2)
 
 
-def thermal_velocity(T, mass):
+def thermal_velocity(temperature, mass):
     """
     Parameters
     ----------
-    T: float
+    temperature: float
         Temperature [K]
     mass: float
         Mass of the particle [kg]
@@ -549,16 +549,16 @@ def thermal_velocity(T, mass):
     The sqrt(2) term is for a 3-dimensional system and the most probable velocity in
     the particle velocity distribution.
     """
-    return np.sqrt(2) * np.sqrt(K_BOLTZMANN * T / mass)
+    return np.sqrt(2) * np.sqrt(K_BOLTZMANN * temperature / mass)
 
 
-def de_broglie_length(v, mu_12):
+def de_broglie_length(velocity, mu_12):
     """
     Calculate the de Broglie wavelength
 
     Parameters
     ----------
-    v: float
+    velocity: float
         Velocity [m/s]
     mu_12: float
         Reduced mass [kg]
@@ -568,43 +568,47 @@ def de_broglie_length(v, mu_12):
     lambda_de_broglie: float
         De Broglie wavelength [m]
     """
-    return H_PLANCK / (2 * mu_12 * v)
+    return H_PLANCK / (2 * mu_12 * velocity)
 
 
-def impact_parameter_perp(v, mu_12):
+def impact_parameter_perp(velocity, mu_12):
     """
     Calculate the perpendicular impact parameter
 
     Parameters
     ----------
+    velocity: float
+        Velocity [m/s]
+    mu_12: float
+        Reduced mass [kg]
 
     Returns
     -------
     b90: float
         Perpendicular impact parameter [m]
     """
-    return EV_TO_J**2 / (4 * np.pi * EPS_0 * mu_12 * v**2)
+    return EV_TO_J**2 / (4 * np.pi * EPS_0 * mu_12 * velocity**2)
 
 
-def coulomb_logarithm(T, n):
+def coulomb_logarithm(temperature, density):
     """
-    Calculate the value of the Coulomb logarithm
+    Calculate the value of the Coulomb logarithm for an electron hitting a proton.
 
     Parameters
     ----------
-    T: float
-        Temperature [eV]
-    n: float
-        Density
+    temperature: float
+        Temperature [K]
+    density: float
+        Density [1/m^3]
 
     Returns
     -------
     ln_lambda: float
         Coulomb logarithm value
     """
-    lambda_debye = debye_length(T, n)
+    lambda_debye = debye_length(temperature, density)
     mu_12 = reduced_mass(ELECTRON_MASS, PROTON_MASS)
-    v = thermal_velocity(T, ELECTRON_MASS)
+    v = thermal_velocity(temperature, ELECTRON_MASS)
     lambda_de_broglie = de_broglie_length(v, mu_12)
     b_perp = impact_parameter_perp(v, mu_12)
     b_min = max(lambda_de_broglie, b_perp)
