@@ -37,7 +37,7 @@ class TestRun:
         self.run_subprocess_mock.return_value = 0
 
     def teardown_method(self):
-        self.run_subprocess_mock.stop()
+        self._subprocess_patch.stop()
 
     @pytest.mark.parametrize("run_func", ["run", "runinput"])
     def test_run_func_calls_subprocess_with_in_dat_path(self, run_func):
