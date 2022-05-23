@@ -689,31 +689,3 @@ def estimate_loop_voltage(R_0, B_t, Z_eff, T_e, q_0, ln_lambda=17):
     j_0 = 2 * B_t / (MU_0 * q_0 * R_0)
     v_loop = 2 * np.pi * R_0 * j_0 / sigma
     return v_loop
-
-
-if __name__ == "__main__":
-    import pandas as pd
-
-    df = pd.DataFrame(
-        columns=["Case", "n [1/m^3]", "T [eV]", "ln Lambda (Goldston)", "ln_lambda"]
-    )
-
-    df.loc[0] = ["Solar wind", 10.0**7, 10.0, 26, 0]
-    df.loc[1] = ["Van Allen belts", 10.0**9, 10.0**2, 26, 0]
-    df.loc[2] = ["Earth's ionosphere", 10.0**11, 10.0**-1, 14, 0]
-    df.loc[3] = ["Solar corona", 10.0**13, 10.0**2, 21, 0]
-    df.loc[4] = ["Gas discharge", 10.0**16, 10.0**0, 12, 0]
-    df.loc[5] = ["Process plasma", 10.0**18, 10.0**2, 15, 0]
-    df.loc[6] = ["Fusion experiment", 10.0**19, 10.0**3, 17, 0]
-    df.loc[7] = ["Fusion reactor", 10.0**20, 10.0**4, 18, 0]
-    df.loc[8] = ["Hartmut's case", 10.0**20, 1000.0, 16.5, 0]
-
-    for i in range(9):
-        df.loc[i, "ln_lambda"] = round(
-            coulomb_logarithm(
-                df.loc[i, "T [eV]"] * 1.160451812 * 10**4, df.loc[i, "n [1/m^3]"]
-            ),
-            1,
-        )
-
-    print(df)

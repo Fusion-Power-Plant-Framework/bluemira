@@ -22,6 +22,7 @@
 import numpy as np
 import pandas as pd
 
+from bluemira.base.constants import EV_TO_J, K_BOLTZMANN
 from bluemira.equilibria.physics import calc_psib, coulomb_logarithm
 
 
@@ -37,7 +38,7 @@ class TestCoulombLogarithm:
     @classmethod
     def setup_class(cls):
         df = pd.DataFrame(
-            columns=["Case", "n [1/m^3]", "T [eV]", "ln Lambda (Goldston)", "ln_lambda"]
+            columns=["Case", "n [1/m^3]", "T [eV]", "ln Lambda (Goldston)"]
         )
 
         df.loc[0] = ["Solar wind", 10.0**7, 10.0, 26]
@@ -53,8 +54,8 @@ class TestCoulombLogarithm:
 
     def test_coulomb_logarithm_values(self):
         for i in range(9):
-            T = self.data.loc[i, "T [eV]"]
+            T = self.data.loc[i, "T [eV]"] * EV_TO_J / K_BOLTZMANN
             n = self.data.loc[i, "n [1/m^3]"]
             value = round(coulomb_logarithm(T, n), 1)
             reference_value = self.data.loc[i, "ln Lambda (Goldston)"]
-            np.testing.assert_allclose(value, reference_value, rtol=0.1)
+            np.testing.assert_allclose(value, reference_value, rtol=0.054)
