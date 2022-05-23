@@ -54,8 +54,8 @@ class TestCoulombLogarithm:
 
     def test_coulomb_logarithm_values(self):
         for i in range(9):
-            T = self.data.loc[i, "T [eV]"] * EV_TO_J / K_BOLTZMANN
-            n = self.data.loc[i, "n [1/m^3]"]
-            value = round(coulomb_logarithm(T, n), 1)
+            temp_in_K = self.data.loc[i, "T [eV]"] * EV_TO_J / K_BOLTZMANN
+            density = self.data.loc[i, "n [1/m^3]"]
+            value = round(coulomb_logarithm(temp_in_K, density), 1)
             reference_value = self.data.loc[i, "ln Lambda (Goldston)"]
             np.testing.assert_allclose(value, reference_value, rtol=0.054)

@@ -27,19 +27,13 @@ import numpy as np
 from scipy.interpolate import RectBivariateSpline
 
 from bluemira.base.constants import (
-    C_LIGHT,
     ELECTRON_MASS,
-    ELECTRON_MOLAR_MASS,
     EPS_0,
     EV_TO_J,
     H_PLANCK,
-    J_TO_EV,
     K_BOLTZMANN,
     MU_0,
-    N_AVOGADRO,
     PROTON_MASS,
-    PROTON_MOLAR_MASS,
-    T_MOLAR_MASS,
 )
 from bluemira.equilibria.find import in_plasma
 from bluemira.equilibria.grid import revolved_volume, volume_integral
