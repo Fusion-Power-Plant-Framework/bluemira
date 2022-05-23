@@ -680,7 +680,7 @@ def estimate_loop_voltage(R_0, B_t, Z_eff, T_e, q_0, ln_lambda=17):
     Assumes a circular cross-section on axis
 
     There is no neo-classical resistivity on axis because there are no trapped particles
-    """  # noqa: N803
+    """  # noqa: W505
     sigma = spitzer_conductivity(Z_eff, T_e, ln_lambda)
 
     # Current density on axis
