@@ -19,7 +19,7 @@
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 """
-PROCESS_NAME teardown functions
+PROCESS teardown functions
 """
 
 import json
@@ -37,7 +37,7 @@ from bluemira.codes.utilities import get_recv_mapping
 
 class Teardown(CodesTeardown):
     """
-    Teardown task for PROCESS_NAME solver.
+    Teardown task for PROCESS solver.
 
     Parameters
     ----------
@@ -258,7 +258,7 @@ class _BMFile(MFile):
                 out.append(0.0)
                 bluemira_warn(
                     f'bluemira variable "{bluemira_var}" a.k.a. '
-                    f'PROCESS_NAME variable "{process_var}" '
+                    f'PROCESS variable "{process_var}" '
                     "not found in PROCESS output. Value set to 0.0."
                 )
         return out
@@ -290,12 +290,12 @@ class _BMFile(MFile):
 
 def _raise_on_infeasible_solution(m_file) -> None:
     """
-    Check that PROCESS_NAME found a feasible solution.
+    Check that PROCESS found a feasible solution.
 
     Parameters
     ----------
     m_file: _BMFile
-        The PROCESS_NAME MFILE to check for a feasible solution
+        The PROCESS MFILE to check for a feasible solution
 
     Raises
     ------
@@ -305,8 +305,8 @@ def _raise_on_infeasible_solution(m_file) -> None:
     error_code = m_file.params["Numerics"]["ifail"]
     if error_code != 1:
         message = (
-            f"PROCESS_NAME did not find a feasible solution. ifail = {error_code}."
-            " Check PROCESS_NAME logs."
+            f"PROCESS did not find a feasible solution. ifail = {error_code}."
+            " Check PROCESS logs."
         )
         raise CodesError(message)
 
