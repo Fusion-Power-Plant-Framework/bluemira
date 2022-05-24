@@ -615,9 +615,9 @@ def coulomb_logarithm(temperature, density):
     return np.log(np.sqrt(1 + (lambda_debye / b_min) ** 2))
 
 
-def spitzer_conductivity(Z_eff, T_e, ln_lambda=17):
+def spitzer_conductivity(Z_eff, T_e, ln_lambda):
     """
-    Formula for conductivity as per L. Spitzer
+    Formula for electrical conductivity in a plasma as per L. Spitzer.
 
     Parameters
     ----------
@@ -626,7 +626,7 @@ def spitzer_conductivity(Z_eff, T_e, ln_lambda=17):
     T_e: float
         Electron temperature on axis [eV]
     ln_lambda: float
-        Coulomb logarithm value (for tokamaks ~ 15 - 20)
+        Coulomb logarithm value
 
     Returns
     -------
@@ -642,7 +642,7 @@ def spitzer_conductivity(Z_eff, T_e, ln_lambda=17):
     return 1.92e4 * (2 - Z_eff ** (-1 / 3)) * T_e**1.5 / (Z_eff * ln_lambda)
 
 
-def estimate_loop_voltage(R_0, B_t, Z_eff, T_e, q_0, ln_lambda=17):
+def estimate_loop_voltage(R_0, B_t, Z_eff, T_e, n_e, q_0):
     """
     A 0-D estimate of the loop voltage during burn
 
@@ -656,10 +656,10 @@ def estimate_loop_voltage(R_0, B_t, Z_eff, T_e, q_0, ln_lambda=17):
         Effective charge
     T_e: float
         Electron temperature on axis [eV]
+    n_e: float
+        Electron density [1/m^3]
     q_0: float
         Safety factor on axis
-    ln_lambda: float
-        Coulomb logarithm value (for tokamaks ~ 15 - 20)
 
     Returns
     -------
@@ -681,6 +681,7 @@ def estimate_loop_voltage(R_0, B_t, Z_eff, T_e, q_0, ln_lambda=17):
 
     There is no neo-classical resistivity on axis because there are no trapped particles
     """  # noqa: W505
+    ln_lambda = coulomb_logarithm(T_e * EV_TO_J / K_BOLTZMANN, n_e)
     sigma = spitzer_conductivity(Z_eff, T_e, ln_lambda)
 
     # Current density on axis
