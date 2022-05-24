@@ -20,7 +20,7 @@
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 
 import numpy as np
-import pandas as pd
+import pytest
 
 from bluemira.base.constants import EV_TO_J, K_BOLTZMANN
 from bluemira.equilibria.physics import calc_psib, coulomb_logarithm
@@ -35,27 +35,30 @@ class TestPhysics:
 
 
 class TestCoulombLogarithm:
-    @classmethod
-    def setup_class(cls):
-        df = pd.DataFrame(
-            columns=["Case", "n [1/m^3]", "T [eV]", "ln Lambda (Goldston)"]
-        )
-
-        df.loc[0] = ["Solar wind", 10.0**7, 10.0, 26]
-        df.loc[1] = ["Van Allen belts", 10.0**9, 10.0**2, 26]
-        df.loc[2] = ["Earth's ionosphere", 10.0**11, 10.0**-1, 14]
-        df.loc[3] = ["Solar corona", 10.0**13, 10.0**2, 21]
-        df.loc[4] = ["Gas discharge", 10.0**16, 10.0**0, 12]
-        df.loc[5] = ["Process plasma", 10.0**18, 10.0**2, 15]
-        df.loc[6] = ["Fusion experiment", 10.0**19, 10.0**3, 17]
-        df.loc[7] = ["Fusion reactor", 10.0**20, 10.0**4, 18]
-        df.loc[8] = ["Hartmut's case", 10.0**20, 1000.0, 16.5]
-        cls.data = df
-
-    def test_coulomb_logarithm_values(self):
-        for i in range(9):
-            temp_in_k = self.data.loc[i, "T [eV]"] * EV_TO_J / K_BOLTZMANN
-            density = self.data.loc[i, "n [1/m^3]"]
-            value = round(coulomb_logarithm(temp_in_k, density), 1)
-            reference_value = self.data.loc[i, "ln Lambda (Goldston)"]
-            np.testing.assert_allclose(value, reference_value, rtol=0.054)
+    @pytest.mark.parametrize(
+        "density, temp_in_ev, ref_value",
+        [
+            # Solar wind
+            (10.0**7, 10.0, 26),
+            # Van Allen belts
+            (10.0**9, 10.0**2, 26),
+            # Earth's ionosphere
+            (10.0**11, 10.0**-1, 14),
+            # Solar corona
+            (10.0**13, 10.0**2, 21),
+            # Gas discharge
+            (10.0**16, 10.0**0, 12),
+            # Process plasma
+            (10.0**18, 10.0**2, 15),
+            # Fusion experiment
+            (10.0**19, 10.0**3, 17),
+            # Fusion reactor
+            (10.0**20, 10.0**4, 18),
+            # Hartmut's case
+            (10.0**20, 1000.0, 16.5),
+        ],
+    )
+    def test_coulomb_logarithm_values(self, density, temp_in_ev, ref_value):
+        temp_in_k = temp_in_ev * EV_TO_J / K_BOLTZMANN
+        value = round(coulomb_logarithm(temp_in_k, density), 1)
+        np.testing.assert_allclose(value, ref_value, rtol=0.054)
