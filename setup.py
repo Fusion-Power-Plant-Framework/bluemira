@@ -28,7 +28,7 @@ install_requires = [
     "nlopt",
     "numba",
     "numba-scipy",
-    "numpy<=1.21.5",  # numba's highest numpy
+    "numpy",
     "pandas",
     "pint",
     "periodictable",
@@ -39,7 +39,7 @@ install_requires = [
     "seaborn",
     "tables",
     "tabulate",
-    "scipy<=1.5.3",
+    "scipy",
     "wrapt",
 ]
 
@@ -58,6 +58,15 @@ process = [
 
 prominence = [
     "prominence",
+]
+
+pinned = [
+    "nlopt==2.7.0",
+    "numba==0.55.1",
+    "numba-scipy==0.3.0",
+    "numpy==1.21.6",
+    "matplotlib==3.5.2",
+    "scipy==1.5.3",
 ]
 
 dev_requires = [
@@ -84,6 +93,7 @@ examples = [
 
 extras_require = {
     "dev": dev_requires,
+    "pinned": pinned,
     "examples": examples,
     "process": process,
     "openmoc": openmoc,
