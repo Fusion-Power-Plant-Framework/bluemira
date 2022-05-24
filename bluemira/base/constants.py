@@ -231,10 +231,10 @@ ELECTRON_MOLAR_MASS = (
 
 
 # electron mass [kg]
-ELECTRON_MASS = ureg.Quantity("m_e").to("g").to_base_units().magnitude
+ELECTRON_MASS = ureg.Quantity("m_e").to_base_units().magnitude
 
 # proton mass [kg]
-PROTON_MASS = ureg.Quantity("m_p").to("g").to_base_units().magnitude
+PROTON_MASS = ureg.Quantity("m_p").to_base_units().magnitude
 
 # Tritium half-life
 # https://www.nist.gov/pml/radiation-physics/radioactivity/radionuclide-half-life-measurements
