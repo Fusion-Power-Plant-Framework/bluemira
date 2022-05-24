@@ -1,0 +1,21 @@
+name: bluemira release
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        type: string
+        description: "New semantic version string"
+        required: true
+
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Create a release
+      run: |
+        pip install packaging
+        VERSION=$(python scripts/version_checker.py ${{ github.event.inputs.version }})
+        git checkout main
+        git tag -a v${{ VERSION }} -m "🍻 Version ${{ VERSION }}"
