@@ -35,6 +35,11 @@ class TestPhysics:
 
 
 class TestCoulombLogarithm:
+    """
+    Reference values taken from:
+        Goldston and Rutherford, "Introduction to Plasma Physics", 1995, Table 11.1
+    """
+
     @pytest.mark.parametrize(
         "density, temp_in_ev, ref_value",
         [
