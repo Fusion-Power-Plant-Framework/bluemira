@@ -211,9 +211,6 @@ SIGMA_BOLTZMANN = ureg.Quantity("sigma").to_base_units().magnitude  # [W/(m^2.K^
 # Boltzmann constant kB = R/N_a
 K_BOLTZMANN = ureg.Quantity("k_B").to_base_units().magnitude  # [J/K]
 
-# Coulomb constant ke = 1/(4 * PI * EPS_0)
-K_COULOMB = ureg.Quantity("k_C").to_base_units().magnitude  # [kg.m^3/A^2/s^4]
-
 # Plank constant
 H_PLANCK = ureg.Quantity("hbar").to_base_units().magnitude
 
