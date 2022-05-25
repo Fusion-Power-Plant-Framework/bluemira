@@ -20,11 +20,13 @@
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 
 """
-Example core and scraper-off layer radiation
+Example core and scraper-off layer radiation source calculation
 """
 
 # %%
 import os
+
+import matplotlib.pyplot as plt
 
 import bluemira.codes.process as process
 from bluemira.base.config import Configuration
@@ -35,24 +37,36 @@ from bluemira.geometry._deprecated_loop import Loop
 from bluemira.radiation_transport.advective_transport import ChargedParticleSolver
 from bluemira.radiation_transport.radiation_profile import STCore, STScrapeOffLayer
 
-# Equilibrium
+# %%[markdown]
+# Read equilibrium
+
+# %%
 read_path = get_bluemira_path("equilibria", subfolder="data")
 eq_name = "DN-DEMO_eqref.json"
 eq_name = os.sep.join([read_path, eq_name])
 eq = Equilibrium.from_eqdsk(eq_name, load_large_file=True)
 
-# First Wall Shape
+# %%[markdown]
+# Get first wall shape
+
+# %%
 read_path = get_bluemira_path("radiation_transport/test_data", subfolder="tests")
 fw_name = "DN_fw_shape.json"
 fw_name = os.sep.join([read_path, fw_name])
 fw_shape = Loop.from_file(fw_name)
 
+# %%[markdown]
 # Run particle solver
+
+# %%
 p_solver_params = ParameterFrame()
 solver = ChargedParticleSolver(p_solver_params, eq, dx_mp=0.001)
 x, z, hf = solver.analyse(first_wall=fw_shape)
 
+# %%[markdown]
 # Run PROCESS solver
+
+# %%
 PROCESS_PATH = ""
 binary = f"{PROCESS_PATH}process"
 
@@ -72,13 +86,22 @@ process_solver = process.Solver(
 )
 process_solver.run()
 
-# Impurities
+# %%[markdown]
+# Get impurity fractions
+
+# %%
 impurity_content = {
     "H": process_solver.get_species_fraction("H"),
     "He": process_solver.get_species_fraction("He"),
     "Xe": process_solver.get_species_fraction("Xe"),
     "W": process_solver.get_species_fraction("W"),
 }
+
+# %%[markdown]
+# Get impurity data: temperature reference
+# and radiative loss function reference
+
+# %%
 impurity_data = {
     "H": {
         "T_ref": process_solver.get_species_data("H")[0],
@@ -98,8 +121,10 @@ impurity_data = {
     },
 }
 
-# Customising plasma and radiation params
-# as input in the radiation model
+# %%[markdown]
+# Eventually customise plasma parameters to deviate from default values
+
+# %%
 plasma_params = ParameterFrame(
     # fmt: off
     [
@@ -107,6 +132,11 @@ plasma_params = ParameterFrame(
     ]
     # fmt: on
 )
+
+# %%[markdown]
+# Eventually customise radiation parameters to deviate from default values
+
+# %%
 rad_params = ParameterFrame(
     # fmt: off
     [
@@ -115,12 +145,50 @@ rad_params = ParameterFrame(
     # fmt: on
 )
 
-# Spherical Tokamak core radiation
-stcore = STCore(solver, impurity_content, impurity_data, plasma_params, rad_params)
-stcore.build_core_radiation_map()
-stcore.build_mp_rad_profile()
+# %%[markdown]
+# Run core radiation source calculation for Spherical Tokamak
 
-# Spherical Tokamak scrape-off layer radiation
+# %%
+stcore = STCore(solver, impurity_content, impurity_data, plasma_params, rad_params)
+
+# %%[markdown]
+# Build radiation profile at the midplane and 2D core radiation map
+
+# %%
+stcore.build_mp_rad_profile()
+stcore.build_core_radiation_map()
+
+# %%[markdown]
+# Run scrape-off layer radiation source calculation for Spherical Tokamak
+
+# %%
 stsol = STScrapeOffLayer(
     solver, impurity_content, impurity_data, plasma_params, rad_params, fw_shape
 )
+
+# %%[markdown]
+# Build temperature and density poloidal profiles for the scrape-off layer.
+# The output contains for lists for the four sectors: LFS lower divertor, LFS upper divertor,
+# HFS lower divertor, HFS upper divertor
+
+# %%
+t_and_n_sol_profiles = stsol.build_sol_profiles(fw_shape)
+
+# %%[markdown]
+# Build radiation source profiles for the scrape-off layer.
+# The output contains for lists for the four sectors.
+
+# %%
+rad_sector_profiles = stsol.build_sol_rad_distribution(*t_and_n_sol_profiles)
+
+# %%[markdown]
+# Build 2D scrape-off layer radiation map
+
+# %%
+stsol.build_sol_radiation_map(*rad_sector_profiles, fw_shape)
+
+# %%[markdown]
+# Plot results
+
+# %%
+plt.show()

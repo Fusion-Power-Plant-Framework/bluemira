@@ -186,10 +186,13 @@ class Radiation:
             poloidal distribution of electron temperature
         """
         te = np.array([te_mp] * len(flux_tube))
+
         if core is True:
             return te
 
-        if rad_i is not None:
+        if rad_i is not None and len(rad_i) == 1:
+            te[rad_i] = t_rad_in
+        elif rad_i is not None and len(rad_i) > 1:
             te[rad_i] = self.exponential_decay(
                 t_rad_in, t_rad_out, len(rad_i), decay=True
             )
@@ -245,11 +248,11 @@ class Radiation:
         if core is True:
             return ne
 
-        # choosing between lower and upper divertor
-        if rad_i is not None:
+        if rad_i is not None and len(rad_i) == 1:
+            ne[rad_i] = n_rad_in
+        elif rad_i is not None and len(rad_i) > 1:
             ne[rad_i] = self.exponential_decay(n_rad_out, n_rad_in, len(rad_i))
 
-        # changing ne values according to the region
         if rec_i is not None and x_point_rad:
             ne[rec_i] = self.gaussian_decay(n_rad_out, 0.1, len(rec_i))
         elif rec_i is not None and x_point_rad is False:
@@ -276,12 +279,14 @@ class Radiation:
             plt.xlabel("rho")
             plt.ylabel("MW/m^3")
 
-        if rad_power.ndim == 1:
+        if len(rad_power) == 1:
             ax.plot(rho, rad_power)
         else:
             [ax.plot(rho, rad_part) for rad_part in rad_power]
-            rad_tot = np.sum(rad_power, axis=0)
+            rad_tot = np.sum(np.array(rad_power, dtype=object), axis=0).tolist()
             ax.plot(rho, rad_tot)
+
+        return ax
 
 
 class TwoPointModelTools(Radiation):
@@ -330,7 +335,7 @@ class TwoPointModelTools(Radiation):
 
         Returns
         -------
-        t_upstream: float
+        t_upstream_kev: float
             upstream temperature. Unit [keV]
         q_u: float
             upstream power density [W/m^2]
@@ -667,8 +672,6 @@ class TwoPointModelTools(Radiation):
         dec_param: np.array
             decayed parameter
         """
-        no_points = max(no_points, 1)
-
         x = np.linspace(1, no_points, no_points)
         a = np.array([x[0], min_value])
         b = np.array([x[-1], max_value])
@@ -678,7 +681,9 @@ class TwoPointModelTools(Radiation):
         else:
             arg = x / a[0]
             base = b[0] / a[0]
+
         my_log = np.log(arg) / np.log(base)
+
         f = a[1] + (b[1] - a[1]) * my_log
 
         return f
@@ -786,7 +791,7 @@ class TwoPointModelTools(Radiation):
 
         Returns
         -------
-        l_val: np.array [W m^3]
+        interp_func(te): np.array [W m^3]
             local values of the radiative power loss function
         """
         interp_func = interp1d(t_ref, l_ref)
@@ -810,10 +815,10 @@ class TwoPointModelTools(Radiation):
 
         Returns
         -------
-        rad_loss: np.array
+        (species_frac[0] * (ne**2) * p_loss_f) / 1e6: np.array
             Line radiation losses [MW m^-3]
         """
-        return (species_frac * (ne**2) * p_loss_f) / 1e6
+        return (species_frac[0] * (ne**2) * p_loss_f) / 1e6
 
 
 class Core(Radiation):
@@ -857,6 +862,11 @@ class Core(Radiation):
         outer layer, named pedestal, is referred as "interior".
         The region that extends from the pedestal to the separatrix
         is referred as "exterior".
+
+        Parameters
+        ----------
+        rho_core: np.array
+            dimensionless core radius. Values between 0 and 1
 
         Returns
         -------
@@ -936,6 +946,8 @@ class Core(Radiation):
             )
 
         fig.colorbar(cm, label="MW/m^3")
+
+        return ax
 
 
 class ScrapeOffLayer(Radiation):
@@ -1078,6 +1090,8 @@ class ScrapeOffLayer(Radiation):
 
         Parameters
         ----------
+        te_sep: float
+            electron temperature at the separatrix [keV]
         omp: boolean
             outer mid-plane. Default value True. If False it stands for inner mid-plane
 
@@ -1214,11 +1228,11 @@ class ScrapeOffLayer(Radiation):
         else:
             fig = ax.figure
 
-        tubes = np.concatenate(flux_tubes)
-        power = np.concatenate(power_density)
+        tubes = sum(flux_tubes, [])
+        power = sum(power_density, [])
 
-        p_min = min([np.amin(p) for p in power])
-        p_max = max([np.amax(p) for p in power])
+        p_min = min([min(p) for p in power])
+        p_max = max([max(p) for p in power])
 
         firstwall.plot(ax, linewidth=0.5, fill=False)
         separatrix = self.transport_solver.eq.get_separatrix()
@@ -1237,6 +1251,8 @@ class ScrapeOffLayer(Radiation):
             )
 
         fig.colorbar(cm, label="MW/m^3")
+
+        return ax
 
 
 class ScrapeOffLayerSector(ScrapeOffLayer, TwoPointModelTools):
@@ -1421,7 +1437,7 @@ class ScrapeOffLayerSector(ScrapeOffLayer, TwoPointModelTools):
 
 class STCore(Core, TwoPointModelTools):
     """
-    Specific class for the core emission of STEP
+    Specific class for the core emission of Spherical Tokamak
     """
 
     def __init__(
@@ -1455,22 +1471,18 @@ class STCore(Core, TwoPointModelTools):
         through the scrape-off layer
         """
         # Radiative loss function values for each impurity species
-        loss_f = np.array(
-            [
-                self.radiative_loss_function_values(self.te_mp, t_ref, l_ref)
-                for t_ref, l_ref in zip(self.imp_data_t_ref, self.imp_data_l_ref)
-            ]
-        )
+        loss_f = [
+            self.radiative_loss_function_values(self.te_mp, t_ref, l_ref)
+            for t_ref, l_ref in zip(self.imp_data_t_ref, self.imp_data_l_ref)
+        ]
 
         # Line radiation loss. Mid-plane distribution through the SoL
-        rad = np.array(
-            [
-                self.calculate_line_radiation_loss(self.ne_mp, loss, fi)
-                for loss, fi in zip(loss_f, self.impurities_content)
-            ]
-        )
+        rad = [
+            self.calculate_line_radiation_loss(self.ne_mp, loss, fi)
+            for loss, fi in zip(loss_f, self.impurities_content)
+        ]
 
-        self.plot_1d_profile(self.rho_core, rad)
+        return self.plot_1d_profile(self.rho_core, rad)
 
     def build_core_radiation_map(self):
         """
@@ -1509,14 +1521,14 @@ class STCore(Core, TwoPointModelTools):
         ]
 
         # Total line radiation loss along each flux tube
-        total_rad = np.sum(rad, axis=0)
+        total_rad = np.sum(np.array(rad, dtype=object), axis=0).tolist()
 
-        self.plot_2d_map(flux_tubes, total_rad)
+        return self.plot_2d_map(flux_tubes, total_rad)
 
 
 class STScrapeOffLayer(ScrapeOffLayerSector, ScrapeOffLayer, TwoPointModelTools):
     """
-    Specific class for the scrape-off layer emission of ST
+    Specific class for the scrape-off layer emission of Spherical Tokamak
     """
 
     def __init__(
@@ -1560,36 +1572,6 @@ class STScrapeOffLayer(ScrapeOffLayerSector, ScrapeOffLayer, TwoPointModelTools)
 
         # upstream temperature and power density
         self.t_u, self.q_u = self.upstream_temperature(firstwall_geom)
-
-        # temperature and density profiles along the flux tubes
-        (
-            t_and_n_pol_lfs_low,
-            t_and_n_pol_lfs_up,
-            t_and_n_pol_hfs_low,
-            t_and_n_pol_hfs_up,
-        ) = self.build_sol_profiles(firstwall_geom)
-
-        # radiation distribution along the flux tubes
-        (
-            rad_lfs_low,
-            rad_lfs_up,
-            rad_hfs_low,
-            rad_hfs_up,
-        ) = self.build_sol_rad_distribution(
-            t_and_n_pol_lfs_low,
-            t_and_n_pol_lfs_up,
-            t_and_n_pol_hfs_low,
-            t_and_n_pol_hfs_up,
-        )
-
-        # scrape off layer radiation map
-        self.build_sol_radiation_map(
-            rad_lfs_low,
-            rad_lfs_up,
-            rad_hfs_low,
-            rad_hfs_up,
-            firstwall_geom,
-        )
 
     def build_sol_profiles(self, firstwall_geom):
         """
@@ -1704,6 +1686,7 @@ class STScrapeOffLayer(ScrapeOffLayerSector, ScrapeOffLayer, TwoPointModelTools)
             "hfs_low": t_and_n_pol_hfs_low[0],
             "hfs_up": t_and_n_pol_hfs_up[0],
         }
+
         for side, t_pol in loss.items():
             loss[side] = [
                 [self.radiative_loss_function_values(t, t_ref, l_ref) for t in t_pol]
@@ -1752,12 +1735,12 @@ class STScrapeOffLayer(ScrapeOffLayerSector, ScrapeOffLayer, TwoPointModelTools)
             first wall geometry
         """
         # total line radiation loss along the open flux tubes
-        total_rad_lfs_low = np.sum(rad_lfs_low, axis=0)
-        total_rad_lfs_up = np.sum(rad_lfs_up, axis=0)
-        total_rad_hfs_low = np.sum(rad_hfs_low, axis=0)
-        total_rad_hfs_up = np.sum(rad_hfs_up, axis=0)
+        total_rad_lfs_low = np.sum(np.array(rad_lfs_low, dtype=object), axis=0).tolist()
+        total_rad_lfs_up = np.sum(np.array(rad_lfs_up, dtype=object), axis=0).tolist()
+        total_rad_hfs_low = np.sum(np.array(rad_hfs_low, dtype=object), axis=0).tolist()
+        total_rad_hfs_up = np.sum(np.array(rad_hfs_up, dtype=object), axis=0).tolist()
 
-        self.plot_2d_map(
+        map = self.plot_2d_map(
             [
                 self.flux_tubes_lfs_low,
                 self.flux_tubes_hfs_low,
@@ -1767,3 +1750,5 @@ class STScrapeOffLayer(ScrapeOffLayerSector, ScrapeOffLayer, TwoPointModelTools)
             [total_rad_lfs_low, total_rad_hfs_low, total_rad_lfs_up, total_rad_hfs_up],
             firstwall_geom,
         )
+
+        return map
