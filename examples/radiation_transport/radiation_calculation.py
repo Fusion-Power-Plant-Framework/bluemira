@@ -168,8 +168,8 @@ stsol = STScrapeOffLayer(
 
 # %%[markdown]
 # Build temperature and density poloidal profiles for the scrape-off layer.
-# The output contains for lists for the four sectors: LFS lower divertor, LFS upper divertor,
-# HFS lower divertor, HFS upper divertor
+# The output contains for lists for the four sectors: LFS lower divertor,
+# LFS upper divertor, HFS lower divertor, HFS upper divertor
 
 # %%
 t_and_n_sol_profiles = stsol.build_sol_profiles(fw_shape)
