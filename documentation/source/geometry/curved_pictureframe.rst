@@ -10,7 +10,7 @@ coils with either one or both of the top and bottom legs domed. This is mainly t
 room for a long-legged divertor, while keeping the PF coils as close as possible to the
 plasma.
 
-.. figure:: ../images/CP_coils_params.png
+.. figure:: ./images/CP_coils_params.png
 
 
     CP Coil Parameterisation
@@ -72,7 +72,7 @@ therefore construct these arcs from the given inputs. The maths for this is desc
 Parameterising a Circle from a Chord Length
 -------------------------------------------
 
-.. figure:: ../images/chord_arc.PNG
+.. figure:: ./images/chord_arc.PNG
 
 
     Chord Parameters
@@ -108,7 +108,7 @@ This, alone, would result in a sharp corner between the straight portion at the 
 of the top/bottom leg and the curved section  as show in Fig. xa. A second curve must be defined to
 smooth out this corner , resulting in a smooth curve like in Fig xb.
 
-.. figure:: ../images/transitioning_curve.PNG
+.. figure:: ./images/transitioning_curve.PNG
 
 
     Base Arc (a) Arc with transitioning (b)
