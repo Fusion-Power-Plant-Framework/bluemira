@@ -5,36 +5,37 @@ on:
     - cron 15 6 0 00-00 * * MON
 
 jobs:
-  runs-on: ubuntu-latest
+  open-pr:
+    runs-on: ubuntu-latest
     steps:
-      - name: Check Date
-        outputs:
-          release_date: ${{ steps.check.release_date }}
-        id: check
-        run: |
-          INITIAL_RELEASE_DATE="$(date --date="220530" +%s)"
-          CURRENT_DATE="$(date --date="$(date +'%y%m%d')" +%s)"
-          DAYS_DIFF=$(( ("${INITIAL_RELEASE_DATE}" - "${CURRENT_DATE}")/(60*60*24) ))
-          if [ $(("${DAYS_DIFF}" % 42)) -eq 0 ]; then
-            ::set-output name=release_date::true
-          else
-            ::set-output name=release_date::false
-          fi
+    - name: Check Date
+      outputs:
+        release_date: ${{ steps.check.release_date }}
+      id: check
+      run: |
+        INITIAL_RELEASE_DATE="$(date --date="220530" +%s)"
+        CURRENT_DATE="$(date --date="$(date +'%y%m%d')" +%s)"
+        DAYS_DIFF=$(( ("${INITIAL_RELEASE_DATE}" - "${CURRENT_DATE}")/(60*60*24) ))
+        if [ $(("${DAYS_DIFF}" % 42)) -eq 0 ]; then
+          ::set-output name=release_date::true
+        else
+          ::set-output name=release_date::false
+        fi
 
-      - name: Open Pull Request
-        needs: check
-        if: ${{ needs.check.outputs.release_date == 'true' }}
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: >
-          HEAD="develop" &&
-          BASE="main" &&
-          git pull origin "${HEAD}" "${BASE}" &&
-          gh pr create
-            --head "${HEAD}"
-            --base "${BASE}"
-            --title "Prepare main for new release"
-            --body "Update main with changes on develop in preparation for a release."
-            --reviewer "@Fusion-Power-Plant-Framework/repo-review"
-            --label "automatic"
-            --label "release"
+    - name: Open Pull Request
+      needs: check
+      if: ${{ needs.check.outputs.release_date == 'true' }}
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      run: >
+        HEAD="develop" &&
+        BASE="main" &&
+        git pull origin "${HEAD}" "${BASE}" &&
+        gh pr create
+          --head "${HEAD}"
+          --base "${BASE}"
+          --title "Prepare main for new release"
+          --body "Update main with changes on develop in preparation for a release."
+          --reviewer "@Fusion-Power-Plant-Framework/repo-review"
+          --label "automatic"
+          --label "release"
