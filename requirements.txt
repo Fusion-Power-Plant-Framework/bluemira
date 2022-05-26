@@ -60,7 +60,7 @@ pickleshare==0.7.5
 Pillow==9.1.0
 Pint==0.19.2
 pluggy==1.0.0
-periodictable==1.6.0
+periodictable==1.6.1
 prometheus-client==0.14.1
 prompt-toolkit==3.0.29
 ptyprocess==0.7.0
@@ -85,7 +85,7 @@ Shapely==1.8.2
 six==1.16.0
 tables==3.7.0
 tabulate==0.8.9
-terminado==0.13.3
+terminado==0.15.0
 testpath==0.6.0
 threadpoolctl==3.1.0
 toml==0.10.2
