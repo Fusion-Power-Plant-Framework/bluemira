@@ -42,13 +42,13 @@ jobs:
         run: >
           HEAD="develop" &&
           BASE="main" &&
-          gh pr create
-            --head "${HEAD}"
-            --base "${BASE}"
-            --title "Merge develop into main for a new release"
-            --body "Update main with changes on develop in preparation for a release.\n"
-            --reviewer "@Fusion-Power-Plant-Framework/repo-review"
-            --label "automatic"
-            --label "release"
+          gh pr create \
+            --head "${HEAD}" \
+            --base "${BASE}" \
+            --title "Merge develop into main for a new release" \
+            --body "Update main with changes on develop in preparation for a release.\n" \
+            --reviewer "@Fusion-Power-Plant-Framework/repo-review" \
+            --label "automatic" \
+            --label "release" \
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
