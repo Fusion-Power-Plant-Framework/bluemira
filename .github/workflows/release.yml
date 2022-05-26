@@ -8,7 +8,6 @@ on:
         description: "New semantic version string"
         required: true
 
-
 jobs:
   release:
     runs-on: ubuntu-latest
@@ -17,5 +16,24 @@ jobs:
       run: |
         pip install packaging
         VERSION=$(python scripts/version_checker.py ${{ github.event.inputs.version }})
+        TAG="v${VERSION}"
         git checkout main
-        git tag -a v${{ VERSION }} -m "🍻 Version ${{ VERSION }}"
+        git tag -s -a "${TAG}" -m "🍻 Version ${VERSION}"
+        git push origin "${TAG}"
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    - name: Create PR to update dependencies
+      run: >
+        HEAD="develop_dependencies" &&
+        BASE="develop" &&
+        git pull origin "${HEAD}" "${BASE}" &&
+        LOGS="$(git log ${BASE}..${HEAD} --pretty=format:'%h %aN %s')" &&
+        gh pr create
+          --head "${HEAD}"
+          --base "${BASE}"
+          --title "Dependency update after v${{ VERSION }}"
+          --body "Update develop's dependencies for a new release cycle.\n\n${LOGS}"
+          --reviewer "@Fusion-Power-Plant-Framework/repo-review"
+          --label "dependencies"
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
