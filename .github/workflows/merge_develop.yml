@@ -2,7 +2,7 @@ name: PR develop -> main
 
 on:
   schedule:
-    - cron 15 6 0 00-00 * * MON
+    - cron: "15 6 0 00-00 * * MON"
 
 jobs:
   open-pr:
