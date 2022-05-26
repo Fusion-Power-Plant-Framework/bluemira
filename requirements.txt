@@ -60,7 +60,7 @@ pickleshare==0.7.5
 Pillow==9.1.0
 Pint==0.19.2
 pluggy==1.0.0
-periodictable==1.6.0
+periodictable==1.6.1
 prometheus-client==0.14.1
 prompt-toolkit==3.0.29
 ptyprocess==0.7.0
