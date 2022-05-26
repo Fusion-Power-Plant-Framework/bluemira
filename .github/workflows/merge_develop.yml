@@ -47,7 +47,6 @@ jobs:
             --base "${BASE}" \
             --title "Merge develop into main for a new release" \
             --body "Update main with changes on develop in preparation for a release.\n" \
-            --reviewer "@Fusion-Power-Plant-Framework/repo-review" \
             --label "automatic" \
             --label "release" \
         env:
