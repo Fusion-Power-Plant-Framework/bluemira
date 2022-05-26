@@ -47,3 +47,5 @@ jobs:
             --reviewer "@Fusion-Power-Plant-Framework/repo-review"
             --label "automatic"
             --label "release"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
