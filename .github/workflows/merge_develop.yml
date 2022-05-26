@@ -42,12 +42,11 @@ jobs:
         run: >
           HEAD="develop" &&
           BASE="main" &&
-          LOGS="$(git log origin/${BASE}..origin/${HEAD} --pretty=format:'%h %aN %s')" &&
           gh pr create
             --head "${HEAD}"
             --base "${BASE}"
             --title "Merge develop into main for a new release"
-            --body "Update main with changes on develop in preparation for a release.\n\n<details><summary>Commits</summary>${LOGS}</details>"
+            --body "Update main with changes on develop in preparation for a release.\n"
             --reviewer "@Fusion-Power-Plant-Framework/repo-review"
             --label "automatic"
             --label "release"
