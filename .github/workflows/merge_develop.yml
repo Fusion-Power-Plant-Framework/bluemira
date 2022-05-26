@@ -46,7 +46,7 @@ jobs:
             --head "${HEAD}" \
             --base "${BASE}" \
             --title "Merge develop into main for a new release" \
-            --body "Update main with changes on develop in preparation for a release.\n" \
+            --body "Update main with changes on develop in preparation for a release." \
             --label "automatic" \
             --label "release" \
         env:
