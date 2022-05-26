@@ -1,9 +1,12 @@
 name: PR develop -> main
 
 on:
-  schedule:
-    # Runs every Monday at 06:15
-    - cron: "15 6 * * 0"
+  push:
+    branches:
+      - james/release_workflow
+  # schedule:
+  #   # Runs every Monday at 06:15
+  #   - cron: "15 6 * * 0"
 
 jobs:
   check-release-date:
@@ -18,7 +21,8 @@ jobs:
       - name: Check Date
         id: check-release-due
         run: |
-          INITIAL_RELEASE_DATE="$(date --date="220530" +%s)"
+          INITIAL_RELEASE_DATE="$(date --date="220414" +%s)"
+          # INITIAL_RELEASE_DATE="$(date --date="220530" +%s)"
           CURRENT_DATE="$(date --date="$(date +'%y%m%d')" +%s)"
           DAYS_DIFF=$(( ("${INITIAL_RELEASE_DATE}" - "${CURRENT_DATE}")/(60*60*24) ))
           if [ $(("${DAYS_DIFF}" % 42)) -eq 0 ]; then
