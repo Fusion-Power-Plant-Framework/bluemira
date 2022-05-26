@@ -52,10 +52,14 @@ RUN bash scripts/coin/install-coin-deps.sh \
     && bash scripts/coin/build-coin.sh \
     && bash scripts/coin/install-coin.sh
 
-# Build and install pivy (0.6.5)
-COPY scripts/pivy/ ./scripts/pivy/
-RUN bash scripts/pivy/install-pivy-deps.sh \
-    && bash scripts/pivy/install-pivy.sh
+# Build and install pivy (0.6.7)
+COPY scripts/pivy/step1 ./scripts/pivy/step1
+RUN bash scripts/pivy/step1/clone_pivy.sh && \
+ bash scripts/pivy/step1/install-pivy-deps.sh
+
+# Build and install pivy (0.6.7)
+COPY scripts/pivy/step2 ./scripts/pivy/step2
+RUN bash scripts/pivy/step2/install-pivy.sh
 
 # Build and install freecad (0.19.3)
 COPY scripts/freecad/step1 ./scripts/freecad/step1
