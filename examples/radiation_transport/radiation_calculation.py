@@ -61,7 +61,7 @@ fw_shape = Loop.from_file(fw_name)
 # %%
 p_solver_params = ParameterFrame()
 solver = ChargedParticleSolver(p_solver_params, eq, dx_mp=0.001)
-x, z, hf = solver.analyse(first_wall=fw_shape)
+solver.analyse(first_wall=fw_shape)
 
 # %%[markdown]
 # Run PROCESS solver

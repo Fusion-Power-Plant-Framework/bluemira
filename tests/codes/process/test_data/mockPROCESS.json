@@ -91,5 +91,17 @@
   "tk_vv_in": 0.3,
   "tk_vv_out": 0.8,
   "tk_vv_top": 0.3,
-  "v_burn": 0.032175
+  "v_burn": 0.032175,
+  "n_el_0": 0,
+  "T_el_0": 0,
+  "rho_ped_n": 0,
+  "rho_ped_t": 0,
+  "n_el_ped": 0,
+  "T_el_ped": 0,
+  "alpha_n": 0,
+  "alpha_t": 0,
+  "t_beta": 0,
+  "n_el_sep": 0,
+  "T_el_sep": 0,
+  "rminor": 0
 }
