@@ -3,7 +3,7 @@ appdirs==1.4.4
 appnope==0.1.3
 argon2-cffi==21.3.0
 argon2-cffi-bindings==21.2.0
-asteval==0.9.26
+asteval==0.9.27
 attrs==21.4.0
 Babel==2.10.1
 backcall==0.2.0
@@ -20,7 +20,7 @@ fortranformat==1.2.0
 gmsh==4.9.3
 gmsh-interop==2021.1.1
 imageio==2.19.2
-importlib-metadata==4.11.3
+importlib-metadata==4.11.4
 importlib-resources==5.7.1
 iniconfig==1.1.1
 ipykernel==6.13.0
@@ -34,7 +34,7 @@ jupyter-client==7.3.1
 jupyter-core==4.10.0
 jupyterlab-pygments==0.2.2
 kiwisolver==1.4.2
-llvmlite==0.38.0
+llvmlite==0.38.1
 MarkupSafe==2.1.1
 matplotlib==3.5.2
 MeshPy==2020.1
@@ -57,7 +57,7 @@ pandocfilters==1.5.0
 parso==0.8.3
 pexpect==4.8.0
 pickleshare==0.7.5
-Pillow==9.1.0
+Pillow==9.1.1
 Pint==0.19.2
 pluggy==1.0.0
 periodictable==1.6.1
@@ -77,7 +77,7 @@ pytest==7.1.2
 python-dateutil==2.8.2
 pytools==2022.1.7
 pytz==2022.1
-pyzmq==22.3.0
+pyzmq==23.0.0
 scikit-learn==1.1.0
 seaborn==0.11.2
 Send2Trash==1.8.0
