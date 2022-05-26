@@ -4,46 +4,46 @@ on:
   schedule:
     # Runs every Monday at 06:15
     - cron: "15 6 * * 0"
-  workflow_dispatch:
 
 jobs:
-  check-date:
-    # We want to run the 'open-pr' job every 6 weeks, but I don't know of a way
-    # to do this through the cron standard used. Instead, use this job to
-    # decide whether the current date is a multiple of 6 weeks from our first
-    # release date.
+  check-release-date:
+    # We want to run the 'open-pr-develop-into-main' job every 6 weeks, but I
+    # don't know of a way to do this through the cron standard used. Instead,
+    # use this job to decide whether the current date is a multiple of 6 weeks
+    # from our initial release date.
     outputs:
-      release_date: ${{ steps.check.a_release_date }}
+      release_due: ${{ steps.check-release-due.outputs.release_due }}
     runs-on: ubuntu-latest
     steps:
       - name: Check Date
-        id: check
+        id: check-release-due
         run: |
           INITIAL_RELEASE_DATE="$(date --date="220530" +%s)"
           CURRENT_DATE="$(date --date="$(date +'%y%m%d')" +%s)"
           DAYS_DIFF=$(( ("${INITIAL_RELEASE_DATE}" - "${CURRENT_DATE}")/(60*60*24) ))
           if [ $(("${DAYS_DIFF}" % 42)) -eq 0 ]; then
-            ::set-output name=a_release_date::true
+            echo ::set-output name=release_due::true
           else
-            ::set-output name=a_release_date::false
+            echo ::set-output name=release_due::false
           fi
 
-  open-pr:
+  open-pr-develop-into-main:
     runs-on: ubuntu-latest
-    needs: check-date
-    if: ${{ needs.check.outputs.a_release_date == 'true' }}
+    needs: check-release-date
+    if: ${{ needs.check-release-date.outputs.release_due == 'true' }}
     steps:
-      - env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Create pull request
         run: >
           HEAD="develop" &&
           BASE="main" &&
-          git pull origin "${HEAD}" "${BASE}" &&
+          LOGS="$(git log origin/${BASE}..origin/${HEAD} --pretty=format:'%h %aN %s')" &&
           gh pr create
             --head "${HEAD}"
             --base "${BASE}"
-            --title "Prepare main for new release"
-            --body "Update main with changes on develop in preparation for a release."
+            --title "Merge develop into main for a new release"
+            --body "Update main with changes on develop in preparation for a release.\n\n<details><summary>Commits</summary>${LOGS}</details>"
             --reviewer "@Fusion-Power-Plant-Framework/repo-review"
             --label "automatic"
             --label "release"
