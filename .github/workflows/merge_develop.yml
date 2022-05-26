@@ -6,10 +6,10 @@ on:
 
 jobs:
   runs-on: ubuntu-latest
-    outputs:
-      release_date: ${{ steps.check.release_date }}
     steps:
       - name: Check Date
+        outputs:
+          release_date: ${{ steps.check.release_date }}
         id: check
         run: |
           INITIAL_RELEASE_DATE="$(date --date="220530" +%s)"
