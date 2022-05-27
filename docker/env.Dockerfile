@@ -12,8 +12,14 @@ RUN apt-get update \
         cmake \
         git
 
-ENV VIRTUAL_ENV=/opt/venv
-RUN python3 -m venv ${VIRTUAL_ENV}
+
+RUN git clone https://github.com/pyenv/pyenv.git /opt/venv
+
+ENV PYENV_ROOT=/opt/venv
+ENV PATH=$PYENV_ROOT/bin:$PATH
+RUN eval "$(pyenv init -)" \
+  && pyenv install 3.9.13
+ENV VIRTUAL_ENV=/opt/venv/versions/3.9.13
 ENV PATH "${VIRTUAL_ENV}/bin:$PATH"
 
 WORKDIR /opt/bluemira

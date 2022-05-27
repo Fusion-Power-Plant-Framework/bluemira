@@ -4,6 +4,7 @@ Babel==2.10.3
 cftime==1.6.1
 click==8.1.3
 commonmark==0.9.1
+CoolProp==6.4.1
 cycler==0.11.0
 fonttools==4.34.4
 fortranformat==1.2.1
