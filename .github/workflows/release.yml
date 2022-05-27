@@ -32,8 +32,8 @@ jobs:
           VERSION="$(python -c "from packaging import version; print(version.Version(\"${{ github.event.inputs.version }}\"))")"
           TAG="v${VERSION}"
           git checkout main
-          git config user.email "someemail@provider.com"
-          git config user.name "github[bot]"
+          git config user.email "fusion-power-plant-framework@protonmail.com"
+          git config user.name "fusion-power-plant-framework"
           git tag -a "${TAG}" -m "🍻 Version ${VERSION}"
           git push origin "${TAG}"
 
