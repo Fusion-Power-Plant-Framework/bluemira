@@ -12,30 +12,39 @@ jobs:
   release:
     runs-on: ubuntu-latest
     steps:
-      - name: Create a release
-        id: create_a_release
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Update main
+        id: update-main
+        run: |
+          git fetch origin main develop
+          git checkout main
+          git merge origin/develop --ff-only
+          git push origin main
+
+      - name: Tag release
+        id: tag-release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           pip install packaging
-          VERSION=$(python scripts/version_checker.py ${{ version }})
+          VERSION="$(python -c "from packaging import version; print(version.Version(\"${{ github.event.inputs.version }}\"))")"
           TAG="v${VERSION}"
           git checkout main
-          git tag -s -a "${TAG}" -m "🍻 Version ${VERSION}"
+          git config user.email "someemail@provider.com"
+          git config user.name "github[bot]"
+          git tag -a "${TAG}" -m "🍻 Version ${VERSION}"
           git push origin "${TAG}"
 
           echo ::set-output name=tag::${TAG}
+
+      - name: Create PR to update dependencies
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      - name: Create PR to update dependencies
-        with:
-          tag: ${{ steps.create_a_release.outputs.tag }}
         run: >
           gh pr create \
             --head develop_dependencies \
             --base develop \
-            --title "Dependency update after ${INPUT_TAG}" \
+            --title "Dependency update after ${{ steps.tag-release.outputs.tag }}" \
             --body "Update develop's dependencies for the next development cycle." \
-            --reviewer "repo-review" \
-            --label "automatic" \
-            --label "dependencies"
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
