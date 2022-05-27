@@ -12,28 +12,30 @@ jobs:
   release:
     runs-on: ubuntu-latest
     steps:
-    - name: Create a release
-      run: |
-        pip install packaging
-        VERSION=$(python scripts/version_checker.py ${{ github.event.inputs.version }})
-        TAG="v${VERSION}"
-        git checkout main
-        git tag -s -a "${TAG}" -m "🍻 Version ${VERSION}"
-        git push origin "${TAG}"
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-    - name: Create PR to update dependencies
-      run: >
-        HEAD="develop_dependencies" &&
-        BASE="develop" &&
-        git pull origin "${HEAD}" "${BASE}" &&
-        LOGS="$(git log ${BASE}..${HEAD} --pretty=format:'%h %aN %s')" &&
-        gh pr create
-          --head "${HEAD}"
-          --base "${BASE}"
-          --title "Dependency update after v${{ VERSION }}"
-          --body "Update develop's dependencies for a new release cycle.\n\n${LOGS}"
-          --reviewer "@Fusion-Power-Plant-Framework/repo-review"
-          --label "dependencies"
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Create a release
+        id: create_a_release
+        run: |
+          pip install packaging
+          VERSION=$(python scripts/version_checker.py ${{ version }})
+          TAG="v${VERSION}"
+          git checkout main
+          git tag -s -a "${TAG}" -m "🍻 Version ${VERSION}"
+          git push origin "${TAG}"
+
+          echo ::set-output name=tag::${TAG}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Create PR to update dependencies
+        with:
+          tag: ${{ steps.create_a_release.outputs.tag }}
+        run: >
+          gh pr create \
+            --head develop_dependencies \
+            --base develop \
+            --title "Dependency update after ${INPUT_TAG}" \
+            --body "Update develop's dependencies for the next development cycle." \
+            --reviewer "repo-review" \
+            --label "automatic" \
+            --label "dependencies"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
