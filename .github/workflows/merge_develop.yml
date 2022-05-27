@@ -1,12 +1,9 @@
 name: PR develop -> main
 
 on:
-  push:
-    branches:
-      - james/release_workflow
-  # schedule:
-  #   # Runs every Monday at 06:15
-  #   - cron: "15 6 * * 0"
+  schedule:
+    # Runs every Monday at 06:15
+    - cron: "15 6 * * 0"
 
 jobs:
   check-release-date:
@@ -21,8 +18,7 @@ jobs:
       - name: Check Date
         id: check-release-due
         run: |
-          INITIAL_RELEASE_DATE="$(date --date="220414" +%s)"
-          # INITIAL_RELEASE_DATE="$(date --date="220530" +%s)"
+          INITIAL_RELEASE_DATE="$(date --date="220530" +%s)"
           CURRENT_DATE="$(date --date="$(date +'%y%m%d')" +%s)"
           DAYS_DIFF=$(( ("${INITIAL_RELEASE_DATE}" - "${CURRENT_DATE}")/(60*60*24) ))
           if [ $(("${DAYS_DIFF}" % 42)) -eq 0 ]; then
@@ -40,12 +36,10 @@ jobs:
         uses: actions/checkout@v2
       - name: Create pull request
         run: >
-          HEAD="develop" &&
-          BASE="main" &&
           gh pr create \
-            --head "${HEAD}" \
-            --base "${BASE}" \
-            --title "Merge develop into main for a new release" \
+            --head develop \
+            --base main \
+            --title "Merge develop into main for a scheduled release" \
             --body "Update main with changes on develop in preparation for a release." \
             --label "automatic" \
             --label "release" \
