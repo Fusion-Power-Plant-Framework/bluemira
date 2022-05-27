@@ -12,14 +12,18 @@ RUN apt-get update \
         cmake \
         git
 
+RUN apt-get install -y \
+    build-essential libssl-dev zlib1g-dev \
+    libbz2-dev libreadline-dev libsqlite3-dev wget curl llvm \
+    libncursesw5-dev xz-utils tk-dev libxml2-dev libxmlsec1-dev libffi-dev liblzma-dev
 
 RUN git clone https://github.com/pyenv/pyenv.git /opt/venv
 
 ENV PYENV_ROOT=/opt/venv
 ENV PATH=$PYENV_ROOT/bin:$PATH
 RUN eval "$(pyenv init -)" \
-  && pyenv install 3.9.13
-ENV VIRTUAL_ENV=/opt/venv/versions/3.9.13
+  && pyenv install 3.8.13
+ENV VIRTUAL_ENV=/opt/venv/versions/3.8.13
 ENV PATH "${VIRTUAL_ENV}/bin:$PATH"
 
 WORKDIR /opt/bluemira

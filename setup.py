@@ -65,7 +65,7 @@ pinned = [
     "numba-scipy==0.3.1",
     "numpy==1.22.4",
     "matplotlib==3.5.2",
-    "scipy==1.7.3",
+    "scipy==1.6.2",
 ]
 
 dev_requires = [
