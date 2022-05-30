@@ -203,7 +203,7 @@ class TestSTEquilibrium:
         self._test_profiles_good(eq)
 
     def _test_equilibrium_good(self, eq):
-        assert np.isclose(eq._Ip, abs(self.jeq_dict["cplasma"]))
+        assert np.isclose(eq._I_p, abs(self.jeq_dict["cplasma"]))
         lcfs = eq.get_LCFS()
         assert np.isclose(self.eq_blueprint.get_LCFS().area, lcfs.area, rtol=1e-2)
         assert np.isclose(lcfs.centroid[-1], 0.0)

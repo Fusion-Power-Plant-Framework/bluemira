@@ -534,7 +534,7 @@ class Equilibrium(MHDState):
         Limiter conditions to apply to equilibrium
     psi: None or 2-D numpy array (optional) default = None
         Magnetic flux [V.s] applied to X, Z grid
-    Ip: Optional[float]
+    I_p: Optional[float]
         Plasma current [A] (default = 0.0)
     R_0: Optional[float]
         Plasma major radius [m] (used when loading eqdsks)
@@ -660,7 +660,7 @@ class Equilibrium(MHDState):
             vcontrol=None,
             limiter=limiter,
             psi=psi,
-            Ip=e["cplasma"],
+            I_p=e["cplasma"],
             R_0=e["xcentre"],
             B_0=e["bcentre"],
             jtor=jtor,
@@ -863,7 +863,7 @@ class Equilibrium(MHDState):
         Modifies the following in-place:
             .plasma_psi
             .psi_func
-            ._Ip
+            ._I_p
             ._Jtor
         """
         self._reassign_profiles(profiles)
@@ -908,7 +908,7 @@ class Equilibrium(MHDState):
         Modifies the following in-place:
             .plasma_psi                                                          \n
             .psi_func                                                            \n
-            ._Ip                                                                 \n
+            ._I_p                                                                 \n
             ._Jtor
         """
         if self._li is None:
