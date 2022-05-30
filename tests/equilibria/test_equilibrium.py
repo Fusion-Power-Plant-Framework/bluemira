@@ -50,7 +50,7 @@ class TestFields:
         grid = Grid(4.5, 14, -9, 9, 65, 65)
 
         profiles = CustomProfile(
-            np.linspace(1, 0), -np.linspace(1, 0), R_0=9, B_0=6, Ip=10e6
+            np.linspace(1, 0), -np.linspace(1, 0), R_0=9, B_0=6, I_p=10e6
         )
 
         eq = Equilibrium(cls.coilset, grid, R_0=9, B_0=6, I_p=10e6)

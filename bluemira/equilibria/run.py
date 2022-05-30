@@ -437,7 +437,7 @@ if __name__ == "__main__":
         ),
         R_0=params.R_0.value,
         B_0=params.B_0.value,
-        Ip=params.I_p.value * 1e6,
+        I_p=params.I_p.value * 1e6,
     )
 
     lcfs_shape = flux_surface_johner(

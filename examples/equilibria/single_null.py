@@ -122,7 +122,7 @@ profiles = CustomProfile(
     ),
     R_0=R_0,
     B_0=B_0,
-    Ip=I_p,
+    I_p=I_p,
 )
 
 eq = Equilibrium(coilset, grid, psi=None, profiles=profiles, I_p=I_p, R_0=R_0, B_0=B_0)

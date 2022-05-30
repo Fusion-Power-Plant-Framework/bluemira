@@ -225,7 +225,7 @@ profile = CustomProfile(
     ),
     R_0=R_0,
     B_0=B_0,
-    Ip=I_p,
+    I_p=I_p,
 )
 # profile = BetaIpProfile(beta_p, I_p, R_0, B_0, shape=shape)
 

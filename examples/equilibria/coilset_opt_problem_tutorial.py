@@ -278,7 +278,7 @@ ffprime = np.array(
         0.28,
     ]
 )
-profile = CustomProfile(pprime, ffprime, R_0=R_0, B_0=B_t, Ip=I_p)
+profile = CustomProfile(pprime, ffprime, R_0=R_0, B_0=B_t, I_p=I_p)
 eq = Equilibrium(
     coilset,
     grid,
