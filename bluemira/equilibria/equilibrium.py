@@ -850,7 +850,7 @@ class Equilibrium(MHDState):
             ._I_p
             ._Jtor
         """
-        self._profiles = profiles
+        self._reassign_profiles(profiles)
         self._clear_OX_points()
 
         if jtor is None:
@@ -871,7 +871,7 @@ class Equilibrium(MHDState):
 
         self._I_p = self._int_dxdz(jtor)
         self._jtor = jtor
-        self._profiles = profiles
+        self._reassign_profiles(profiles)
 
     def solve_li(self, profiles, jtor=None, psi=None):
         """
@@ -899,7 +899,7 @@ class Equilibrium(MHDState):
             raise EquilibriaError(
                 "Need to specify a normalised internal inductance to solve an Equilibrium with solve_li."
             )
-        self._profiles = profiles
+        self._reassign_profiles(profiles)
         self._clear_OX_points()
         if psi is None:
             psi = self.psi()
@@ -956,8 +956,15 @@ class Equilibrium(MHDState):
         except StopIteration:
             pass
 
-        self._profiles = profiles
+        self._reassign_profiles(profiles)
         self._I_p = self._int_dxdz(self._jtor)
+
+    def _reassign_profiles(self, profiles):
+        """
+        Utility function for storing useful auxiliary information within
+        Equilibrium class
+        """
+        self._profiles = profiles
 
     def _update_plasma_psi(self, plasma_psi):
         """

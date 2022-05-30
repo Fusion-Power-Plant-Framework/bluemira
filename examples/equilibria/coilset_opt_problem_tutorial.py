@@ -278,15 +278,14 @@ ffprime = np.array(
         0.28,
     ]
 )
-profile = CustomProfile(pprime, ffprime, R_0=R_0, B_0=B_t, I_p=I_p)
+profiles = CustomProfile(pprime, ffprime, R_0=R_0, B_0=B_t, I_p=I_p)
 eq = Equilibrium(
     coilset,
     grid,
+    profiles,
     force_symmetry=True,
     vcontrol=None,
     psi=None,
-    profiles=profile,
-    I_p=I_p,
     li=None,
 )
 
@@ -401,7 +400,7 @@ opt_problem = TikhonovCurrentCOP(
 
 constrained_iterator = PicardIterator(
     eq,
-    profile,
+    profiles,
     opt_problem,
     plot=False,
     relaxation=0.3,
@@ -424,7 +423,7 @@ unconstrained_cop = UnconstrainedTikhonovCurrentGradientCOP(
 )
 unconstrained_iterator = PicardIterator(
     eq,
-    profile,  # jetto
+    profiles,  # jetto
     unconstrained_cop,
     plot=False,
     relaxation=0.3,
