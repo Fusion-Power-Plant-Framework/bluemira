@@ -534,12 +534,14 @@ class Equilibrium(MHDState):
         Limiter conditions to apply to equilibrium
     psi: None or 2-D numpy array (optional) default = None
         Magnetic flux [V.s] applied to X, Z grid
-    Ip: float (optional) default = 0
-        Plasma current [A]
+    Ip: Optional[float]
+        Plasma current [A] (default = 0.0)
+    R_0: Optional[float]
+        Plasma major radius [m] (used when loading eqdsks)
+    B_0: Optional[float]
+        Toroidal field at R_0 [T] (used when loading eqdsks)
     li: None or float (default None)
         Normalised plasma internal inductance [-]
-    RB0: float (optional) default = None
-        Major radius vacuum R_0*B_T,0 - used when loading eqdsks
     jtor: np.array or None
         The toroidal current density array of the plasma. Default = None will
         cause the jtor array to be constructed later as necessary.
@@ -559,8 +561,9 @@ class Equilibrium(MHDState):
         limiter=None,
         psi=None,
         Ip=0,
+        R_0=None,
+        B_0=None,
         li=None,
-        RB0=None,  # noqa :N803
         jtor=None,
         profiles=None,
         filename=None,
@@ -594,10 +597,15 @@ class Equilibrium(MHDState):
         self.boundary = FreeBoundary(self.grid)
         self.set_vcontrol(vcontrol)
         self.limiter = limiter
-        if RB0 is not None:
-            self._fvac = RB0[0] * RB0[1]
-            self._R_0 = RB0[0]
-            self._B_0 = RB0[1]
+
+        if R_0 is not None and B_0 is not None:
+            self._R_0 = R_0
+            self._B_0 = B_0
+            self._fvac = R_0 * B_0
+        else:
+            self._R_0 = None
+            self._B_0 = None
+            self._fvac = None
 
         self.filename = filename
 
@@ -653,7 +661,8 @@ class Equilibrium(MHDState):
             limiter=limiter,
             psi=psi,
             Ip=e["cplasma"],
-            RB0=[e["xcentre"], e["bcentre"]],
+            R_0=e["xcentre"],
+            B_0=e["bcentre"],
             jtor=jtor,
             profiles=profiles,
             filename=filename,
