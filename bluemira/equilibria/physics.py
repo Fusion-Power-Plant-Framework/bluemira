@@ -366,13 +366,14 @@ def calc_summary(eq):
     """
     Calculates interesting values in one go
     """
+    R_0, I_p = eq._profiles.R_0, eq._profiles._I_p
     mask = in_plasma(eq.x, eq.z, eq.psi())
     Bp = eq.Bp()
     bpavg = volume_integral(Bp**2 * mask, eq.x, eq.dx, eq.dz)
     energy = bpavg / (2 * MU_0)
-    li_true = 2 * energy / eq._I_p**2
-    li = 2 * li_true / (MU_0 * eq._R_0)
-    li3 = 2 * bpavg / (eq._R_0 * (MU_0 * eq._I_p) ** 2)
+    li_true = 2 * energy / I_p**2
+    li = 2 * li_true / (MU_0 * R_0)
+    li3 = 2 * bpavg / (R_0 * (MU_0 * R_0) ** 2)
     volume = calc_volume(eq)
     beta_p = calc_beta_p(eq)
     return {
