@@ -125,7 +125,7 @@ profiles = CustomProfile(
     Ip=I_p,
 )
 
-eq = Equilibrium(coilset, grid, psi=None, profiles=profiles, Ip=I_p, RB0=[R_0, B_0])
+eq = Equilibrium(coilset, grid, psi=None, profiles=profiles, Ip=I_p, R_0=R_0, B_0=B_0)
 
 # %%[markdown]
 

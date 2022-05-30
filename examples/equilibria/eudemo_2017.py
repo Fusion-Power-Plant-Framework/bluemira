@@ -239,8 +239,9 @@ reference_eq = Equilibrium(
     deepcopy(coilset),
     grid,
     Ip=I_p,
+    R_0=R_0,
+    B_0=B_0,
     profiles=None,
-    RB0=[R_0, B_0],
 )
 
 # Make a set of magnetic constraints for the equilibria... I got lazy here,
