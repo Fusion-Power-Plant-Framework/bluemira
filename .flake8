@@ -143,6 +143,7 @@ ignore_names =
     Z_0,
     B_0,
     I_p,
+    Ip,
     A,
     F,
     B*,
