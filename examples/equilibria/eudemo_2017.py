@@ -218,7 +218,7 @@ psi_eof -= 10
 # Set up a parameterised profile
 
 # %%
-profile = CustomProfile(
+profiles = CustomProfile(
     np.array([86856, 86506, 84731, 80784, 74159, 64576, 52030, 36918, 20314, 4807, 0.0]),
     -np.array(
         [0.125, 0.124, 0.122, 0.116, 0.106, 0.093, 0.074, 0.053, 0.029, 0.007, 0.0]
@@ -238,10 +238,7 @@ profile = CustomProfile(
 reference_eq = Equilibrium(
     deepcopy(coilset),
     grid,
-    I_p=I_p,
-    R_0=R_0,
-    B_0=B_0,
-    profiles=None,
+    profiles,
 )
 
 # Make a set of magnetic constraints for the equilibria... I got lazy here,
@@ -271,7 +268,7 @@ ref_opt_problem = UnconstrainedTikhonovCurrentGradientCOP(
 )
 
 program = PicardIterator(
-    reference_eq, profile, ref_opt_problem, fixed_coils=True, relaxation=0.2
+    reference_eq, profiles, ref_opt_problem, fixed_coils=True, relaxation=0.2
 )
 program()
 
@@ -295,7 +292,7 @@ sof_opt_problem = MinimalCurrentCOP(
 )
 
 iterator = PicardIterator(
-    sof, profile, sof_opt_problem, plot=True, fixed_coils=True, relaxation=0.2
+    sof, profiles, sof_opt_problem, plot=True, fixed_coils=True, relaxation=0.2
 )
 iterator()
 
@@ -318,7 +315,7 @@ eof_opt_problem = MinimalCurrentCOP(
 
 
 iterator = PicardIterator(
-    eof, profile, eof_opt_problem, plot=True, relaxation=0.2, fixed_coils=True
+    eof, profiles, eof_opt_problem, plot=True, relaxation=0.2, fixed_coils=True
 )
 iterator()
 
