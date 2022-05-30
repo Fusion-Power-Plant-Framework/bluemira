@@ -158,6 +158,10 @@ class MHDState:
         -------
         F: np.array(n_coils, 2)
             [Fx, Fz] array of forces on coils [MN]
+
+        Notes
+        -----
+        Will not work for symmetric circuits
         """
         coils = list(self.coilset.coils.values())
         currents = self.coilset.get_control_currents()
