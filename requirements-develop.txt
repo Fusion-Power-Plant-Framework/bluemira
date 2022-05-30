@@ -11,7 +11,7 @@ pytest==7.1.2
 pytest-cov==3.0.0
 pytest-html==3.1.1
 pytest-metadata==2.0.1
-sphinx==4.5.0
+sphinx==5.0.0
 sphinx-autoapi==1.8.4
 sphinx-rtd-theme==1.0.0
 versioneer==0.22
