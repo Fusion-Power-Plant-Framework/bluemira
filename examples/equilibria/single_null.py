@@ -3,7 +3,7 @@
 # codes, to carry out a range of typical conceptual fusion reactor design
 # activities.
 #
-# Copyright (C) 2021 M. Coleman, J. Cook, F. Franza, I.A. Maione, S. McIntosh, J. Morris,
+# Copyright (C) 2022 M. Coleman, J. Cook, F. Franza, I.A. Maione, S. McIntosh, J. Morris,
 #                    D. Short
 #
 # bluemira is free software; you can redistribute it and/or
@@ -18,26 +18,48 @@
 #
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
+
 """
-SN pulsed equilibrium example
+Attempt at recreating the EU-DEMO 2017 reference equilibria from a known coilset.
 """
 
 # %%[markdown]
-# # Single Null example pulsed equilibrium problem
 
+# An example on how to produce an equilibrium from a known coilset, profiles, and
+# plasma shape.
+
+# %%
+
+import json
 import os
 
 import matplotlib.pyplot as plt
 import numpy as np
-
-# %%
 from IPython import get_ipython
 
 from bluemira.base.file import get_bluemira_path
-from bluemira.display.auto_config import plot_defaults
-from bluemira.equilibria._deprecated_run import AbInitioEquilibriumProblem
-from bluemira.equilibria.profiles import DoublePowerFunc
-from bluemira.geometry._deprecated_loop import Loop
+from bluemira.display import plot_defaults
+from bluemira.equilibria.coils import Coil, CoilSet
+from bluemira.equilibria.equilibrium import Equilibrium
+from bluemira.equilibria.grid import Grid
+from bluemira.equilibria.opt_constraints import (
+    CoilFieldConstraints,
+    CoilForceConstraints,
+    FieldNullConstraint,
+    IsofluxConstraint,
+    MagneticConstraintSet,
+    PsiBoundaryConstraint,
+)
+from bluemira.equilibria.opt_problems import (
+    MinimalCurrentCOP,
+    TikhonovCurrentCOP,
+    UnconstrainedTikhonovCurrentGradientCOP,
+)
+from bluemira.equilibria.profiles import CustomProfile
+from bluemira.equilibria.solve import DudsonConvergence, PicardIterator
+from bluemira.utilities.optimiser import Optimiser
+
+plot_defaults()
 
 try:
     get_ipython().run_line_magic("matplotlib", "qt")
@@ -45,150 +67,202 @@ except AttributeError:
     pass
 
 # %%[markdown]
-# Set some plotting defaults
+
+# First let's create our coilset.
 
 # %%
-plt.close("all")
-plot_defaults()
+x = [5.4, 14.0, 17.75, 17.75, 14.0, 7.0, 2.77, 2.77, 2.77, 2.77, 2.77]
+z = [9.26, 7.9, 2.5, -2.5, -7.9, -10.5, 7.07, 4.08, -0.4, -4.88, -7.86]
+dx = [0.6, 0.7, 0.5, 0.5, 0.7, 1.0, 0.4, 0.4, 0.4, 0.4, 0.4]
+dz = [0.6, 0.7, 0.5, 0.5, 0.7, 1.0, 2.99 / 2, 2.99 / 2, 5.97 / 2, 2.99 / 2, 2.99 / 2]
 
-# %%[markdown]
-# Make a TF coil shape and use it as an exclusion zone object
-
-# %%
-fp = get_bluemira_path("bluemira/geometry", subfolder="data")
-TF = Loop.from_file(os.sep.join([fp, "TFreference.json"]))
-TF = TF.offset(2.4)
-clip = np.where(TF.x >= 3.5)
-TF = Loop(TF.x[clip], z=TF.z[clip])
-TF.interpolate(200)
-
-# %%[markdown]
-# Choose a flux function parameterisation (with some initial values)
-# The shape function parameters will be optimised to meet the integral plasma
-# parameters we specify later on
-
-# %%
-p = DoublePowerFunc([2, 2])
-
-# %%[markdown]
-# Set up an equilibrium problem (a typical sized pulsed EU-DEMO like machine)
-
-# %%
-SN = AbInitioEquilibriumProblem(
-    R_0=9,  # [m]
-    B_0=5.8,  # [T]
-    A=3.1,
-    Ip=19e6,  # [A]
-    betap=1.3,
-    li=0.8,
-    kappa_u=1.65,
-    kappa_l=1.8,
-    delta_u=0.4,
-    delta_l=0.4,
-    psi_u_neg=180,
-    psi_u_pos=0,
-    psi_l_neg=-120,
-    psi_l_pos=30,
-    div_l_ib=1.0,
-    div_l_ob=1.45,
-    r_cs=2.85,  # [m]
-    tk_cs=0.3,  # [m]
-    tfbnd=TF,
-    n_PF=6,
-    n_CS=5,
-    eqtype="SN",
-    rtype="Normal",
-    profile=p,
-    psi=None,
-)
-
-# %%[markdown]
-# Get an initial unconstrained solution
-
-# %%
-eqref = SN.solve()
-
-# %%[markdown]
-# Make all coils use by making regions for coils
-
-# %%
-pf_coilregions = {}
-region_coils = {
-    1: {"x": 6.01, "z": 10.09},
-    3: {"x": 19.00, "z": 3.67},
-    5: {"x": 10.92, "z": -10.77},
-}
-for coil in SN.coilset.coils.values():
-    coil_number = int(coil.name.split("_")[-1])
-    if coil.ctype != "PF" or coil_number not in region_coils:
-        continue
-    dx, dz = coil.dx * 4, coil.dz * 4  # Arbitrarily sized region
-    pf_coilregions[coil.name] = Loop(
-        x=region_coils[coil_number]["x"] + np.array([-dx, dx, dx, -dx, -dx]),
-        z=region_coils[coil_number]["z"] + np.array([-dz, -dz, dz, dz, -dz]),
+coils = []
+j = 1
+for i, (xi, zi, dxi, dzi) in enumerate(zip(x, z, dx, dz)):
+    if j > 6:
+        j = 1
+    ctype = "PF" if i < 6 else "CS"
+    coil = Coil(
+        xi,
+        zi,
+        current=0,
+        dx=dxi,
+        dz=dzi,
+        ctype=ctype,
+        control=True,
+        name=f"{ctype}_{j}",
     )
+    coils.append(coil)
+    j += 1
+
+coilset = CoilSet(coils)
+
+# Assign current density and peak field constraints
+coilset.assign_coil_materials("CS", j_max=16.5, b_max=12.5)
+coilset.assign_coil_materials("PF", j_max=12.5, b_max=11.0)
+coilset.fix_sizes()
 
 # %%[markdown]
-# Let's look at the coilset on its own
+
+# Now, we set up our grid, equilibrium, and profiles
 
 # %%
-SN.coilset.plot()
 
-# %%[markdown]
-# Define some exclusion zones for the PF coils
+# Machine parameters
+I_p = 19.07e6  # A
+R_0 = 8.938
+B_0 = 4.8901  # T
 
-# %%
-UP = Loop(x=[7.5, 14, 14, 7.5, 7.5], z=[3, 3, 14.5, 14.5, 3])
-LP = Loop(x=[10, 10, 15, 22, 22, 15, 10], z=[-6, -10, -13, -13, -8, -8, -6])
-EQ = Loop(x=[14, 22, 22, 14, 14], z=[-1.4, -1.4, 1.4, 1.4, -1.4])
+grid = Grid(3.0, 13.0, -10.0, 10.0, 65, 65)
 
-# %%[markdown]
-# Look at the "track" for the PF coil locations, and the exclusion zones:
-
-# %%
-f, ax = plt.subplots()
-
-TF.plot(ax, fill=False)
-UP.plot(ax, edgecolor="r", facecolor="r", alpha=0.5)
-LP.plot(ax, edgecolor="r", facecolor="r", alpha=0.5)
-EQ.plot(ax, edgecolor="r", facecolor="r", alpha=0.5)
-
-# %%[markdown]
-# Now let's optimise:
-# *  positions of the PF coils
-# *  currents of the PF and CS coils
-#
-# constraining:
-# *  plasma shape
-# *  plasma integral values (I_p, beta_p, l_i)
-# *  coil positions         (L)
-# *  coil currents          (I)
-# *  coil forces            (F)
-# *  field at coils         (B)
-# *  pulse length           (tau_flattop)
-#
-# The resulting equilibria will automatically be converged once the coil sizes
-# have been fixed at their maximum
-# (sometimes problematic for end of flattop)
-
-# The following method will:
-# *  calculate the breakdown flux for this reactor
-# *  optimise the coil positions for the start and end of flat-top
-# *  converge the resulting SOF and EOF equilibria
-
-# %%
-SN.optimise_positions(
-    max_PF_current=25e6,  # [A]
-    PF_Fz_max=400e6,  # [N]
-    CS_Fz_sum=300e6,  # [N]
-    CS_Fz_sep=250e6,  # [N]
-    tau_flattop=1.5 * 3600,  # [s]
-    v_burn=0.04,  # [V]
-    psi_bd=None,
-    pfcoiltrack=TF,
-    pf_exclusions=[LP, EQ, UP],
-    pf_coilregions=pf_coilregions,
-    CS=False,
-    plot=False,
-    gif=False,
+profiles = CustomProfile(
+    np.array([86856, 86506, 84731, 80784, 74159, 64576, 52030, 36918, 20314, 4807, 0.0]),
+    -np.array(
+        [0.125, 0.124, 0.122, 0.116, 0.106, 0.093, 0.074, 0.053, 0.029, 0.007, 0.0]
+    ),
+    R_0=R_0,
+    B_0=B_0,
+    Ip=I_p,
 )
+
+eq = Equilibrium(coilset, grid, psi=None, profiles=profiles, Ip=I_p, RB0=[R_0, B_0])
+
+# %%[markdown]
+
+# Now we need to specify some constraints on the plasma
+
+# We'll load up a known plasma boundary and use that to specify some constraints on the
+# plasma
+
+# %%
+path = get_bluemira_path("equilibria", subfolder="examples")
+name = "EUDEMO_2017_CREATE_SOF_separatrix.json"
+filename = os.sep.join([path, name])
+with open(filename, "r") as file:
+    data = json.load(file)
+
+sof_xbdry = data["xbdry"]
+sof_zbdry = data["zbdry"]
+
+isoflux = IsofluxConstraint(
+    np.array(sof_xbdry)[::10],
+    np.array(sof_zbdry)[::10],
+    sof_xbdry[0],
+    sof_zbdry[0],
+    tolerance=1e-3,
+    constraint_value=0.5,  # Difficult to choose...
+)
+
+psi_boundary = PsiBoundaryConstraint(
+    np.array(sof_xbdry)[::10],
+    np.array(sof_zbdry)[::10],
+    100 / (2 * np.pi),
+    tolerance=1.0,
+)
+
+xp_idx = np.argmin(sof_zbdry)
+x_point = FieldNullConstraint(
+    sof_xbdry[xp_idx], sof_zbdry[xp_idx], tolerance=1e-3, constraint_type="inequality"
+)
+
+# %%[markdown]
+
+# It's often very useful to solve an unconstrained optimised problem in order to get
+# an initial guess for the equilibrium result.
+
+# This is done by using the magnetic constraints in a "set" for which the error is then
+# minimised with an L2 norm and a Tikhonov regularisation on the currents.
+
+# We can use this to optimise the current gradients during the solution of the
+# equilibrium until convergence.
+
+# %%
+
+opt_problem = UnconstrainedTikhonovCurrentGradientCOP(
+    coilset, eq, MagneticConstraintSet([psi_boundary, x_point]), gamma=1e-7
+)
+
+program = PicardIterator(eq, profiles, opt_problem, fixed_coils=True, relaxation=0.2)
+program()
+
+
+# %%[markdown]
+
+# Now say we want to use bounds on our current vector, and that we want to solve a
+# constrained optimisation problem.
+
+# We can minimise the error on our target set with some bounds on the current vector,
+# some additional constraints (e.g. on the field in the coils), and solve a new
+# optimisation problem, using the previously converged equilibrium as a starting point.
+
+# Note that here we are optimising the current vector and not the current gradient
+# vector.
+
+# %%
+
+field_constraints = CoilFieldConstraints(
+    eq.coilset, eq.coilset.get_max_fields(), tolerance=1e-6
+)
+
+PF_Fz_max = 450
+CS_Fz_sum_max = 300
+CS_Fz_sep_max = 250
+force_constraints = CoilForceConstraints(
+    eq.coilset,
+    PF_Fz_max=PF_Fz_max,
+    CS_Fz_sum_max=CS_Fz_sum_max,
+    CS_Fz_sep_max=CS_Fz_sep_max,
+    tolerance=1e-6,
+)
+
+
+opt_problem = TikhonovCurrentCOP(
+    coilset,
+    eq,
+    targets=MagneticConstraintSet([psi_boundary, x_point]),
+    gamma=1e-8,
+    optimiser=Optimiser("SLSQP", opt_conditions={"max_eval": 2000, "ftol_rel": 1e-6}),
+    max_currents=coilset.get_max_currents(0.0),
+    constraints=[field_constraints, force_constraints],
+)
+
+program = PicardIterator(
+    eq,
+    profiles,
+    opt_problem,
+    fixed_coils=True,
+    convergence=DudsonConvergence(1e-4),
+    relaxation=0.3,
+)
+program()
+
+
+# %%[markdown]
+
+# Now let's say we don't actually want to minimise the error, but we want to minimise the
+# coil currents, and use the constraints that we specified above as actual constraints
+# in the optimisation problem (rather than in the objective function as above)
+
+# %%
+
+opt_problem = MinimalCurrentCOP(
+    coilset,
+    eq,
+    Optimiser("SLSQP", opt_conditions={"max_eval": 2000, "ftol_rel": 1e-6}),
+    max_currents=coilset.get_max_currents(0.0),
+    constraints=[psi_boundary, x_point, field_constraints, force_constraints],
+)
+
+program = PicardIterator(
+    eq,
+    profiles,
+    opt_problem,
+    fixed_coils=True,
+    convergence=DudsonConvergence(1e-4),
+    relaxation=0.3,
+)
+program()
+
+f, ax = plt.subplots()
+eq.plot(ax=ax)
+eq.coilset.plot(ax=ax)

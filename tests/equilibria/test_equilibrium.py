@@ -27,56 +27,48 @@ import pytest
 from matplotlib import pyplot as plt
 
 from bluemira.base.file import get_bluemira_path, try_get_bluemira_private_data_root
-from bluemira.equilibria._deprecated_run import AbInitioEquilibriumProblem
 from bluemira.equilibria.equilibrium import Equilibrium
 from bluemira.equilibria.file import EQDSKInterface
 from bluemira.equilibria.grid import Grid
-from bluemira.equilibria.profiles import DoublePowerFunc
-from bluemira.geometry._deprecated_loop import Loop
+from bluemira.equilibria.opt_constraints import (
+    FieldNullConstraint,
+    IsofluxConstraint,
+    MagneticConstraintSet,
+)
+from bluemira.equilibria.opt_problems import UnconstrainedTikhonovCurrentGradientCOP
+from bluemira.equilibria.profiles import CustomProfile
+from bluemira.equilibria.solve import PicardIterator
 from bluemira.utilities.tools import abs_rel_difference, compare_dicts
+from tests.equilibria.setup_methods import _coilset_setup
 
 
 class TestFields:
     @classmethod
     def setup_class(cls):
-        # Let's make a complete equilibrium..
-        fp = get_bluemira_path(os.sep.join(["geometry"]), subfolder="data")
-        tf = Loop.from_file(os.sep.join([fp, "TFreference.json"]))
-        tf = tf.offset(2)
-        tf = Loop(x=tf.x, z=tf.z)
-        tf = tf.offset(0.4)
-        clip = np.where(tf.x >= 3.5)
-        tf = Loop(tf.x[clip], z=tf.z[clip])
-        profile = DoublePowerFunc([2, 2])
+        # Let's make a complete **** equilibrium..
+        _coilset_setup(cls)
+        grid = Grid(4.5, 14, -9, 9, 65, 65)
 
-        a = AbInitioEquilibriumProblem(
-            9,
-            5.834,
-            3.1,
-            18.6679e6,
-            1.14,
-            li=None,
-            kappa_u=1.65,
-            kappa_l=1.8,
-            delta_u=0.4,
-            delta_l=0.4,
-            psi_u_neg=180,
-            psi_u_pos=0,
-            psi_l_neg=-120,
-            psi_l_pos=30,
-            div_l_ib=1.0,
-            div_l_ob=1.45,
-            r_cs=2.55,
-            tk_cs=0.4,
-            tfbnd=tf,
-            n_PF=6,
-            n_CS=5,
-            eqtype="SN",
-            rtype="Normal",
-            profile=profile,
-            psi=None,
+        profiles = CustomProfile(
+            np.linspace(1, 0), -np.linspace(1, 0), R_0=9, B_0=6, Ip=10e6
         )
-        cls.eq = a.solve(plot=False)
+
+        eq = Equilibrium(cls.coilset, grid, RB0=[9, 6], Ip=10e6)
+
+        isoflux = IsofluxConstraint(
+            np.array([6, 8, 12, 6]), np.array([0, 7, 0, -8]), 6, 0, 0
+        )
+        x_point = FieldNullConstraint(8, -8)
+
+        targets = MagneticConstraintSet([isoflux, x_point])
+
+        opt_problem = UnconstrainedTikhonovCurrentGradientCOP(
+            eq.coilset, eq, targets, gamma=1e-8
+        )
+
+        program = PicardIterator(eq, profiles, opt_problem, relaxation=0.1, plot=False)
+        program()
+        cls.eq = eq
 
     def callable_tester(self, f_callable):
         """

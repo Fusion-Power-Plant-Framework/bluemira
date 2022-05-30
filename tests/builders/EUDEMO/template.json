@@ -7,8 +7,9 @@
     "mapping": {
       "PROCESS": {
         "name": "aspect",
+        "send": true,
         "recv": true,
-        "send": true
+        "unit": "dimensionless"
       }
     }
   },
@@ -26,16 +27,43 @@
     "mapping": {
       "PROCESS": {
         "name": "bt",
+        "send": false,
         "recv": true,
-        "send": false
+        "unit": "T"
       }
     }
+  },
+  "B_premag_stray_max": {
+    "name": "Maximum stray field inside the breakdown zone during premagnetisation",
+    "value": 0.003,
+    "unit": "T",
+    "source": "Input"
   },
   "B_tf_peak": {
     "name": "Peak field inside the TF coil winding pack",
     "value": 12,
     "unit": "T",
-    "source": "PROCESS"
+    "source": "Input",
+    "mapping": {
+      "PROCESS": {
+        "name": "bmaxtfrp",
+        "send": false,
+        "recv": false,
+        "unit": "T"
+      }
+    }
+  },
+  "CS_bmax": {
+    "name": "Maximum peak field to use in CS modules",
+    "value": 13,
+    "unit": "T",
+    "source": "Input"
+  },
+  "CS_jmax": {
+    "name": "Maximum current density to use in CS modules",
+    "value": 16,
+    "unit": "MA/m^2",
+    "source": "Input"
   },
   "CS_material": {
     "name": "Conducting material to use for the CS modules",
@@ -47,12 +75,13 @@
     "name": "Ejima constant",
     "value": 0.4,
     "unit": "dimensionless",
-    "source": "Ejima, et al., Volt-second analysis and consumption in Doublet III plasmas, Nuclear Fusion 22, 1313 (1982)",
+    "source": "Input (Ejima, et al., Volt-second analysis and consumption in Doublet III plasmas, Nuclear Fusion 22, 1313 (1982))",
     "mapping": {
       "PROCESS": {
         "name": "gamma",
+        "send": true,
         "recv": false,
-        "send": true
+        "unit": "dimensionless"
       }
     }
   },
@@ -78,12 +107,13 @@
     "name": "H factor (radiation corrected)",
     "value": 1,
     "unit": "dimensionless",
-    "source": "PLASMOD",
+    "source": "Input",
     "mapping": {
       "PROCESS": {
         "name": "hfact",
+        "send": false,
         "recv": true,
-        "send": false
+        "unit": "dimensionless"
       }
     }
   },
@@ -91,19 +121,20 @@
     "name": "Plasma current",
     "value": 19,
     "unit": "MA",
-    "source": "PLASMOD",
+    "source": "Input",
     "mapping": {
       "PROCESS": {
         "name": "plascur/1d6",
+        "send": false,
         "recv": true,
-        "send": false
+        "unit": "MA"
       }
     }
   },
   "LPangle": {
     "name": "Lower port inclination angle",
     "value": -30,
-    "unit": "°",
+    "unit": "\u00b0",
     "source": "Input"
   },
   "Name": {
@@ -112,22 +143,55 @@
     "unit": "dimensionless",
     "source": "Input"
   },
+  "PF_bmax": {
+    "name": "Maximum peak field to use in PF modules",
+    "value": 11,
+    "unit": "T",
+    "source": "Input"
+  },
+  "PF_jmax": {
+    "name": "Maximum current density to use in PF modules",
+    "value": 12.5,
+    "unit": "MA/m^2",
+    "source": "Input"
+  },
   "PF_material": {
     "name": "Conducting material to use for the PF coils",
     "value": "NbTi",
     "unit": "dimensionless",
     "source": "Input"
   },
+  "P_LH": {
+    "name": "LH transition power",
+    "value": 0,
+    "unit": "W",
+    "source": "Input"
+  },
+  "P_bd_in": {
+    "name": "total auxiliary injected power",
+    "value": 0,
+    "unit": "MW",
+    "source": "Input",
+    "mapping": {
+      "PROCESS": {
+        "name": "pinjmw",
+        "send": false,
+        "recv": true,
+        "unit": "MW"
+      }
+    }
+  },
   "P_brehms": {
     "name": "Bremsstrahlung",
     "value": 80,
     "unit": "MW",
-    "source": "PLASMOD",
+    "source": "Input",
     "mapping": {
       "PROCESS": {
         "name": "pbrempv*vol",
+        "send": false,
         "recv": true,
-        "send": false
+        "unit": "MW"
       }
     }
   },
@@ -139,8 +203,9 @@
     "mapping": {
       "PROCESS": {
         "name": "pnetelin",
+        "send": true,
         "recv": false,
-        "send": true
+        "unit": "MW"
       }
     }
   },
@@ -148,12 +213,13 @@
     "name": "Net electrical power output as provided by PROCESS",
     "value": null,
     "unit": "MW",
-    "source": "PROCESS",
+    "source": "Input",
     "mapping": {
       "PROCESS": {
         "name": "pnetelmw",
+        "send": false,
         "recv": true,
-        "send": false
+        "unit": "MW"
       }
     }
   },
@@ -161,12 +227,13 @@
     "name": "Total fusion power",
     "value": 2000,
     "unit": "MW",
-    "source": "PLASMOD",
+    "source": "Input",
     "mapping": {
       "PROCESS": {
         "name": "powfmw",
+        "send": false,
         "recv": true,
-        "send": false
+        "unit": "MW"
       }
     }
   },
@@ -174,12 +241,13 @@
     "name": "D-D fusion power",
     "value": 5,
     "unit": "MW",
-    "source": "PLASMOD",
+    "source": "Input",
     "mapping": {
       "PROCESS": {
         "name": "pdd",
+        "send": false,
         "recv": true,
-        "send": false
+        "unit": "MW"
       }
     }
   },
@@ -187,12 +255,13 @@
     "name": "D-T fusion power",
     "value": 1995,
     "unit": "MW",
-    "source": "PLASMOD",
+    "source": "Input",
     "mapping": {
       "PROCESS": {
         "name": "pdt",
+        "send": false,
         "recv": true,
-        "send": false
+        "unit": "MW"
       }
     }
   },
@@ -204,8 +273,9 @@
     "mapping": {
       "PROCESS": {
         "name": "pinjalw",
+        "send": true,
         "recv": false,
-        "send": true
+        "unit": "MW"
       }
     }
   },
@@ -213,25 +283,33 @@
     "name": "Line radiation",
     "value": 30,
     "unit": "MW",
-    "source": "PLASMOD",
+    "source": "Input",
     "mapping": {
       "PROCESS": {
         "name": "plinepv*vol",
+        "send": false,
         "recv": true,
-        "send": false
+        "unit": "MW"
       }
     }
+  },
+  "P_ohm": {
+    "name": "Ohimic heating power",
+    "value": 0,
+    "unit": "W",
+    "source": "Input"
   },
   "P_rad": {
     "name": "Radiation power",
     "value": 400,
     "unit": "MW",
-    "source": "PLASMOD",
+    "source": "Input",
     "mapping": {
       "PROCESS": {
         "name": "pradmw",
+        "send": false,
         "recv": true,
-        "send": false
+        "unit": "MW"
       }
     }
   },
@@ -239,12 +317,13 @@
     "name": "Core radiation power",
     "value": 0,
     "unit": "MW",
-    "source": "PLASMOD",
+    "source": "Input",
     "mapping": {
       "PROCESS": {
         "name": "pcoreradmw",
+        "send": false,
         "recv": true,
-        "send": false
+        "unit": "MW"
       }
     }
   },
@@ -252,12 +331,13 @@
     "name": "Edge radiation power",
     "value": 400,
     "unit": "MW",
-    "source": "PLASMOD",
+    "source": "Input",
     "mapping": {
       "PROCESS": {
         "name": "pedgeradmw",
+        "send": false,
         "recv": true,
-        "send": false
+        "unit": "MW"
       }
     }
   },
@@ -265,12 +345,13 @@
     "name": "Separatrix power",
     "value": 150,
     "unit": "MW",
-    "source": "PLASMOD",
+    "source": "Input",
     "mapping": {
       "PROCESS": {
         "name": "pdivt",
+        "send": false,
         "recv": true,
-        "send": false
+        "unit": "MW"
       }
     }
   },
@@ -284,12 +365,13 @@
     "name": "Synchrotron radiation",
     "value": 50,
     "unit": "MW",
-    "source": "PLASMOD",
+    "source": "Input",
     "mapping": {
       "PROCESS": {
         "name": "psyncpv*vol",
+        "send": false,
         "recv": true,
-        "send": false
+        "unit": "MW"
       }
     }
   },
@@ -308,8 +390,79 @@
     "mapping": {
       "PROCESS": {
         "name": "rmajor",
+        "send": false,
         "recv": true,
-        "send": false
+        "unit": "m"
+      }
+    }
+  },
+  "TF_E_stored": {
+    "name": "total stored energy in the toroidal field",
+    "value": 0,
+    "unit": "GJ",
+    "source": "Input",
+    "mapping": {
+      "PROCESS": {
+        "name": "estotftgj",
+        "send": false,
+        "recv": true,
+        "unit": "GJ"
+      }
+    }
+  },
+  "TF_currpt_ob": {
+    "name": "TF coil current per turn",
+    "value": 0,
+    "unit": "A",
+    "source": "Input",
+    "mapping": {
+      "PROCESS": {
+        "name": "cpttf",
+        "send": false,
+        "recv": true,
+        "unit": "A"
+      }
+    }
+  },
+  "TF_res_bus": {
+    "name": "TF Bus resistance",
+    "value": 0,
+    "unit": "m",
+    "source": "Input",
+    "mapping": {
+      "PROCESS": {
+        "name": "tfbusres",
+        "send": false,
+        "recv": true,
+        "unit": "m"
+      }
+    }
+  },
+  "TF_res_tot": {
+    "name": "Total resistance for TF coil set",
+    "value": 0,
+    "unit": "ohm",
+    "source": "Input",
+    "mapping": {
+      "PROCESS": {
+        "name": "ztot",
+        "send": false,
+        "recv": true,
+        "unit": "ohm"
+      }
+    }
+  },
+  "TF_respc_ob": {
+    "name": "TF coil leg resistance",
+    "value": 0,
+    "unit": "ohm",
+    "source": "Input",
+    "mapping": {
+      "PROCESS": {
+        "name": "tflegres",
+        "send": false,
+        "recv": true,
+        "unit": "ohm"
       }
     }
   },
@@ -321,8 +474,9 @@
     "mapping": {
       "PROCESS": {
         "name": "ripmax",
+        "send": true,
         "recv": false,
-        "send": true
+        "unit": "%"
       }
     }
   },
@@ -334,10 +488,18 @@
     "mapping": {
       "PROCESS": {
         "name": "te",
+        "send": false,
         "recv": false,
-        "send": false
+        "unit": "keV"
       }
     }
+  },
+  "T_e_ped": {
+    "name": "Electron temperature at the pedestal",
+    "value": 5.5,
+    "unit": "keV",
+    "source": "Input",
+    "description": "Used in PLASMOD if fixed temperature pedestal model used"
   },
   "V_p": {
     "name": "Plasma volume",
@@ -347,8 +509,9 @@
     "mapping": {
       "PROCESS": {
         "name": "vol",
+        "send": false,
         "recv": false,
-        "send": false
+        "unit": "m^3"
       }
     }
   },
@@ -360,8 +523,9 @@
     "mapping": {
       "PROCESS": {
         "name": "zeff",
+        "send": false,
         "recv": false,
-        "send": false
+        "unit": "amu"
       }
     }
   },
@@ -387,28 +551,30 @@
     "mapping": {
       "PROCESS": {
         "name": "emult",
+        "send": true,
         "recv": false,
-        "send": true
+        "unit": "dimensionless"
       }
     }
   },
   "bb_min_angle": {
     "name": "Minimum module angle",
     "value": 70,
-    "unit": "°",
-    "source": "Lorenzo Boccaccini said this in a meeting in 2015, Garching, Germany",
+    "unit": "\u00b0",
+    "source": "Input (Lorenzo Boccaccini said this in a meeting in 2015, Garching, Germany)",
     "description": "Sharpest cut of a module possible"
   },
   "beta": {
     "name": "Total ratio of plasma pressure to magnetic pressure",
     "value": 0.04,
     "unit": "dimensionless",
-    "source": "PLASMOD",
+    "source": "Input",
     "mapping": {
       "PROCESS": {
         "name": "beta",
+        "send": false,
         "recv": true,
-        "send": false
+        "unit": "dimensionless"
       }
     }
   },
@@ -416,18 +582,19 @@
     "name": "Normalised ratio of plasma pressure to magnetic pressure",
     "value": 2.7,
     "unit": "dimensionless",
-    "source": "PLASMOD"
+    "source": "Input"
   },
   "beta_p": {
     "name": "Ratio of plasma pressure to poloidal magnetic pressure",
     "value": 0.04,
     "unit": "dimensionless",
-    "source": "PLASMOD",
+    "source": "Input",
     "mapping": {
       "PROCESS": {
         "name": "betap",
+        "send": false,
         "recv": true,
-        "send": false
+        "unit": "dimensionless"
       }
     }
   },
@@ -441,15 +608,13 @@
     "name": "Starter blanket life limit (EUROfer)",
     "value": 20,
     "unit": "dpa",
-    "source": "Input",
-    "description": "http://iopscience.iop.org/article/10.1088/1741-4326/57/9/092002/pdf"
+    "source": "Input (https://iopscience.iop.org/article/10.1088/1741-4326/57/9/092002/pdf)"
   },
   "blk_2_dpa": {
     "name": "Second blanket life limit (EUROfer)",
     "value": 50,
     "unit": "dpa",
-    "source": "Input",
-    "description": "http://iopscience.iop.org/article/10.1088/1741-4326/57/9/092002/pdf"
+    "source": "Input (https://iopscience.iop.org/article/10.1088/1741-4326/57/9/092002/pdf)"
   },
   "bmd": {
     "name": "Blanket maintenance duration",
@@ -465,6 +630,20 @@
     "source": "Input",
     "description": "Distance between IVCs"
   },
+  "condrad_cryo_heat": {
+    "name": "Conduction and radiation heat loads on cryogenic components",
+    "value": 0,
+    "unit": "MW",
+    "source": "Input",
+    "mapping": {
+      "PROCESS": {
+        "name": "qss/1.0D6",
+        "send": false,
+        "recv": true,
+        "unit": "MW"
+      }
+    }
+  },
   "cr_l_d": {
     "name": "Cryostat labyrinth total delta",
     "value": 0.2,
@@ -479,8 +658,9 @@
     "mapping": {
       "PROCESS": {
         "name": "triang",
+        "send": false,
         "recv": true,
-        "send": false
+        "unit": "dimensionless"
       }
     }
   },
@@ -492,8 +672,9 @@
     "mapping": {
       "PROCESS": {
         "name": "triang95",
+        "send": false,
         "recv": true,
-        "send": false
+        "unit": "dimensionless"
       }
     }
   },
@@ -519,13 +700,12 @@
     "name": "Divertor life limit (CuCrZr)",
     "value": 5,
     "unit": "dpa",
-    "source": "Input",
-    "description": "http://iopscience.iop.org/article/10.1088/1741-4326/57/9/092002/pdf"
+    "source": "Input (https://iopscience.iop.org/article/10.1088/1741-4326/57/9/092002/pdf)"
   },
   "div_graze_angle": {
     "name": "Divertor SOL grazing angle",
     "value": 1.5,
-    "unit": "°",
+    "unit": "\u00b0",
     "source": "Input"
   },
   "div_open": {
@@ -555,8 +735,9 @@
     "mapping": {
       "PROCESS": {
         "name": "enbeam",
+        "send": true,
         "recv": false,
-        "send": true
+        "unit": "keV"
       }
     }
   },
@@ -576,8 +757,9 @@
     "mapping": {
       "PROCESS": {
         "name": "etanbi",
+        "send": true,
         "recv": false,
-        "send": true
+        "unit": "dimensionless"
       }
     }
   },
@@ -585,18 +767,19 @@
     "name": "Fraction of D-D fusion in total fusion",
     "value": 0.0025,
     "unit": "dimensionless",
-    "source": "PLASMOD"
+    "source": "Input"
   },
   "f_bs": {
     "name": "Bootstrap fraction",
     "value": 0.5,
     "unit": "dimensionless",
-    "source": "PLASMOD",
+    "source": "Input",
     "mapping": {
       "PROCESS": {
         "name": "bootipf",
+        "send": false,
         "recv": true,
-        "send": false
+        "unit": "dimensionless"
       }
     }
   },
@@ -644,8 +827,9 @@
     "mapping": {
       "PROCESS": {
         "name": "faccd",
+        "send": false,
         "recv": false,
-        "send": false
+        "unit": "dimensionless"
       }
     }
   },
@@ -658,7 +842,7 @@
   "fw_a_max": {
     "name": "Maximum angle between FW modules",
     "value": 25,
-    "unit": "°",
+    "unit": "\u00b0",
     "source": "Input"
   },
   "fw_dL_max": {
@@ -780,8 +964,9 @@
     "mapping": {
       "PROCESS": {
         "name": "gapoh",
+        "send": true,
         "recv": true,
-        "send": true
+        "unit": "m"
       }
     }
   },
@@ -829,8 +1014,9 @@
     "mapping": {
       "PROCESS": {
         "name": "tftsgap",
+        "send": true,
         "recv": true,
-        "send": true
+        "unit": "m"
       }
     }
   },
@@ -848,8 +1034,9 @@
     "mapping": {
       "PROCESS": {
         "name": "vvblgap",
+        "send": true,
         "recv": true,
-        "send": true
+        "unit": "m"
       }
     }
   },
@@ -867,8 +1054,9 @@
     "mapping": {
       "PROCESS": {
         "name": "gapds",
+        "send": false,
         "recv": true,
-        "send": false
+        "unit": "m"
       }
     }
   },
@@ -882,12 +1070,13 @@
     "name": "Height of the TF coil inboard Tapered section end",
     "value": 6.0,
     "unit": "m",
-    "source": "PROCESS",
+    "source": "Input",
     "mapping": {
       "PROCESS": {
         "name": "h_cp_top",
+        "send": false,
         "recv": false,
-        "send": false
+        "unit": "m"
       }
     }
   },
@@ -901,54 +1090,19 @@
     "name": "Plasma side TF coil maximum height",
     "value": 6.5,
     "unit": "m",
-    "source": "PROCESS",
+    "source": "Input",
     "mapping": {
       "PROCESS": {
         "name": "hmax",
+        "send": false,
         "recv": false,
-        "send": false
+        "unit": "m"
       }
     }
   },
   "h_tf_min_in": {
     "name": "Plasma side TF coil min height",
     "value": -6.5,
-    "unit": "m",
-    "source": "PROCESS"
-  },
-  "r_pf_corner": {
-    "name": "Corner radius of the PF coil winding pack",
-    "value": 0.05,
-    "unit": "m",
-    "source": "Input"
-  },
-  "tk_pf_insulation": {
-    "name": "Thickness of the PF coil insulation",
-    "value": 0.05,
-    "unit": "m",
-    "source": "Input"
-  },
-  "tk_pf_casing": {
-    "name": "Thickness of the PF coil casing",
-    "value": 0.07,
-    "unit": "m",
-    "source": "Input"
-  },
-  "r_cs_corner": {
-    "name": "Corner radius of the CS coil winding pack",
-    "value": 0.05,
-    "unit": "m",
-    "source": "Input"
-  },
-  "tk_cs_insulation": {
-    "name": "Thickness of the CS coil insulation",
-    "value": 0.05,
-    "unit": "m",
-    "source": "Input"
-  },
-  "tk_cs_casing": {
-    "name": "Thickness of the CS coil casing",
-    "value": 0.07,
     "unit": "m",
     "source": "Input"
   },
@@ -978,8 +1132,9 @@
     "mapping": {
       "PROCESS": {
         "name": "kappa",
+        "send": false,
         "recv": true,
-        "send": false
+        "unit": "dimensionless"
       }
     }
   },
@@ -991,8 +1146,9 @@
     "mapping": {
       "PROCESS": {
         "name": "kappa95",
+        "send": false,
         "recv": true,
-        "send": false
+        "unit": "dimensionless"
       }
     }
   },
@@ -1004,8 +1160,9 @@
     "mapping": {
       "PROCESS": {
         "name": "rli",
+        "send": false,
         "recv": false,
-        "send": false
+        "unit": "dimensionless"
       }
     }
   },
@@ -1013,7 +1170,7 @@
     "name": "Gas puff flow rate",
     "value": 50,
     "unit": "Pa m^3/s",
-    "source": "Discussions with Chris Day and Yannick H\u00f6rstenmeyer",
+    "source": "Input (Discussions with Chris Day and Yannick H\u00f6rstensmeyer)",
     "description": "To maintain detachment - no chance of fusion from gas injection"
   },
   "m_s_limit": {
@@ -1062,8 +1219,9 @@
     "mapping": {
       "PROCESS": {
         "name": "n_tf",
+        "send": true,
         "recv": false,
-        "send": true
+        "unit": "dimensionless"
       }
     }
   },
@@ -1089,7 +1247,7 @@
     "name": "Number of divertor cassettes per sector",
     "value": 3,
     "unit": "dimensionless",
-    "source": "Common decision"
+    "source": "Input"
   },
   "n_rs_lab": {
     "name": "Number of radiation shield labyrinth levels",
@@ -1161,8 +1319,9 @@
     "mapping": {
       "PROCESS": {
         "name": "q95",
+        "send": false,
         "recv": false,
-        "send": false
+        "unit": "dimensionless"
       }
     }
   },
@@ -1182,12 +1341,13 @@
     "name": "Radial Position of Top of TF coil taper",
     "value": 0.8934,
     "unit": "m",
-    "source": "PROCESS",
+    "source": "Input",
     "mapping": {
       "PROCESS": {
         "name": "r_cp_top",
+        "send": false,
         "recv": true,
-        "send": false
+        "unit": "m"
       }
     }
   },
@@ -1197,16 +1357,23 @@
     "unit": "m",
     "source": "Input"
   },
+  "r_cs_corner": {
+    "name": "Corner radius of the CS coil winding pack",
+    "value": 0.05,
+    "unit": "m",
+    "source": "Input"
+  },
   "r_cs_in": {
     "name": "Central Solenoid inner radius",
     "value": 2.2,
     "unit": "m",
-    "source": "PROCESS",
+    "source": "Input",
     "mapping": {
       "PROCESS": {
         "name": "bore",
+        "send": false,
         "recv": true,
-        "send": false
+        "unit": "m"
       }
     }
   },
@@ -1214,12 +1381,13 @@
     "name": "Inboard first wall inner radius",
     "value": 5.8,
     "unit": "m",
-    "source": "PROCESS",
+    "source": "Input",
     "mapping": {
       "PROCESS": {
         "name": "r_fw_ib_in",
+        "send": false,
         "recv": true,
-        "send": false
+        "unit": "m"
       }
     }
   },
@@ -1227,14 +1395,21 @@
     "name": "Outboard first wall inner radius",
     "value": 12.1,
     "unit": "m",
-    "source": "PROCESS",
+    "source": "Input",
     "mapping": {
       "PROCESS": {
         "name": "r_fw_ob_in",
+        "send": false,
         "recv": true,
-        "send": false
+        "unit": "m"
       }
     }
+  },
+  "r_pf_corner": {
+    "name": "Corner radius of the PF coil winding pack",
+    "value": 0.05,
+    "unit": "m",
+    "source": "Input"
   },
   "r_tf_curve": {
     "name": "Start of the upper curve of domed picture frame shale",
@@ -1246,12 +1421,13 @@
     "name": "Inboard radius of the TF coil inboard leg",
     "value": 3.2,
     "unit": "m",
-    "source": "PROCESS",
+    "source": "Input",
     "mapping": {
       "PROCESS": {
         "name": "rtfin",
+        "send": false,
         "recv": true,
-        "send": false
+        "unit": "m"
       }
     }
   },
@@ -1259,12 +1435,13 @@
     "name": "Inboard TF leg centre radius",
     "value": 3.7,
     "unit": "m",
-    "source": "PROCESS",
+    "source": "Input",
     "mapping": {
       "PROCESS": {
         "name": "r_tf_inboard_mid",
+        "send": false,
         "recv": true,
-        "send": false
+        "unit": "m"
       }
     }
   },
@@ -1278,12 +1455,13 @@
     "name": "Outboard Radius of the TF coil inboard leg tapered region",
     "value": 0.6265,
     "unit": "m",
-    "source": "PROCESS",
+    "source": "Input",
     "mapping": {
       "PROCESS": {
         "name": "r_tf_inboard_out",
+        "send": false,
         "recv": false,
-        "send": false
+        "unit": "m"
       }
     }
   },
@@ -1291,12 +1469,13 @@
     "name": "Outboard TF leg centre radius",
     "value": 16.2,
     "unit": "m",
-    "source": "PROCESS",
+    "source": "Input",
     "mapping": {
       "PROCESS": {
         "name": "r_tf_outboard_mid",
+        "send": false,
         "recv": true,
-        "send": false
+        "unit": "m"
       }
     }
   },
@@ -1310,12 +1489,13 @@
     "name": "Inboard TS inner radius",
     "value": 4.3,
     "unit": "m",
-    "source": "PROCESS",
+    "source": "Input",
     "mapping": {
       "PROCESS": {
         "name": "r_ts_ib_in",
+        "send": false,
         "recv": true,
-        "send": false
+        "unit": "m"
       }
     }
   },
@@ -1329,12 +1509,13 @@
     "name": "Inboard vessel inner radius",
     "value": 5.1,
     "unit": "m",
-    "source": "PROCESS",
+    "source": "Input",
     "mapping": {
       "PROCESS": {
         "name": "r_vv_ib_in",
+        "send": false,
         "recv": true,
-        "send": false
+        "unit": "m"
       }
     }
   },
@@ -1348,12 +1529,13 @@
     "name": "Outboard vessel inner radius",
     "value": 14.5,
     "unit": "m",
-    "source": "PROCESS",
+    "source": "Input",
     "mapping": {
       "PROCESS": {
         "name": "r_vv_ob_in",
+        "send": false,
         "recv": true,
-        "send": false
+        "unit": "m"
       }
     }
   },
@@ -1389,16 +1571,31 @@
     "unit": "m",
     "source": "equilibria"
   },
-  "sigma_tf_max": {
-    "name": "Maximum von Mises stress in the TF coil nose",
+  "sigma_tf_case_max": {
+    "name": "Maximum von Mises stress in the TF coil case nose",
     "value": 550000000.0,
     "unit": "Pa",
     "source": "Input",
     "mapping": {
       "PROCESS": {
-        "name": "alstrtf",
+        "name": "sig_tf_case_max",
+        "send": false,
         "recv": false,
-        "send": false
+        "unit": "Pa"
+      }
+    }
+  },
+  "sigma_tf_wp_max": {
+    "name": "Maximum von Mises stress in the TF coil winding pack nose",
+    "value": 550000000.0,
+    "unit": "Pa",
+    "source": "Input",
+    "mapping": {
+      "PROCESS": {
+        "name": "sig_tf_wp_max",
+        "send": false,
+        "recv": false,
+        "unit": "Pa"
       }
     }
   },
@@ -1406,12 +1603,13 @@
     "name": "Energy confinement time",
     "value": 3,
     "unit": "s",
-    "source": "PLASMOD",
+    "source": "Input",
     "mapping": {
       "PROCESS": {
         "name": "taueff",
+        "send": false,
         "recv": true,
-        "send": false
+        "unit": "s"
       }
     }
   },
@@ -1423,8 +1621,9 @@
     "mapping": {
       "PROCESS": {
         "name": "tburn",
+        "send": false,
         "recv": false,
-        "send": false
+        "unit": "s"
       }
     }
   },
@@ -1432,8 +1631,7 @@
     "name": "Insulation fluence limit for ITER equivalent to 10 MGy",
     "value": 3.2e+21,
     "unit": "1/m^2",
-    "source": "Input",
-    "description": "http://ieeexplore.ieee.org/document/6374236/"
+    "source": "Input (https://ieeexplore.ieee.org/document/6374236/)"
   },
   "tf_taper_frac": {
     "name": "Height of straight portion as fraction of total tapered section height",
@@ -1445,13 +1643,14 @@
     "name": "TF coil winding pack depth (in y)",
     "value": 1.05,
     "unit": "m",
-    "source": "PROCESS",
+    "source": "Input",
     "description": "Including insulation",
     "mapping": {
       "PROCESS": {
         "name": "wwp1",
-        "recv": false,
-        "send": false
+        "send": false,
+        "recv": true,
+        "unit": "m"
       }
     }
   },
@@ -1459,13 +1658,14 @@
     "name": "TF coil winding pack radial width",
     "value": 0.76,
     "unit": "m",
-    "source": "PROCESS",
+    "source": "Input",
     "description": "Including insulation",
     "mapping": {
       "PROCESS": {
         "name": "dr_tf_wp",
+        "send": false,
         "recv": true,
-        "send": false
+        "unit": "m"
       }
     }
   },
@@ -1507,8 +1707,9 @@
     "mapping": {
       "PROCESS": {
         "name": "blnkith",
+        "send": true,
         "recv": true,
-        "send": true
+        "unit": "m"
       }
     }
   },
@@ -1526,8 +1727,9 @@
     "mapping": {
       "PROCESS": {
         "name": "blnkoth",
+        "send": true,
         "recv": true,
-        "send": true
+        "unit": "m"
       }
     }
   },
@@ -1545,8 +1747,9 @@
     "mapping": {
       "PROCESS": {
         "name": "ddwex",
+        "send": true,
         "recv": false,
-        "send": true
+        "unit": "m"
       }
     }
   },
@@ -1560,14 +1763,27 @@
     "name": "Central Solenoid radial thickness",
     "value": 0.8,
     "unit": "m",
-    "source": "PROCESS",
+    "source": "Input",
     "mapping": {
       "PROCESS": {
         "name": "ohcth",
+        "send": false,
         "recv": true,
-        "send": false
+        "unit": "m"
       }
     }
+  },
+  "tk_cs_casing": {
+    "name": "Thickness of the CS coil casing",
+    "value": 0.07,
+    "unit": "m",
+    "source": "Input"
+  },
+  "tk_cs_insulation": {
+    "name": "Thickness of the CS coil insulation",
+    "value": 0.05,
+    "unit": "m",
+    "source": "Input"
   },
   "tk_div": {
     "name": "Divertor thickness",
@@ -1601,8 +1817,9 @@
     "mapping": {
       "PROCESS": {
         "name": "fwith",
+        "send": false,
         "recv": true,
-        "send": false
+        "unit": "m"
       }
     }
   },
@@ -1614,8 +1831,9 @@
     "mapping": {
       "PROCESS": {
         "name": "fwoth",
+        "send": false,
         "recv": true,
-        "send": false
+        "unit": "m"
       }
     }
   },
@@ -1661,6 +1879,18 @@
     "unit": "m",
     "source": "Input"
   },
+  "tk_pf_casing": {
+    "name": "Thickness of the PF coil casing",
+    "value": 0.07,
+    "unit": "m",
+    "source": "Input"
+  },
+  "tk_pf_insulation": {
+    "name": "Thickness of the PF coil insulation",
+    "value": 0.05,
+    "unit": "m",
+    "source": "Input"
+  },
   "tk_pf_support": {
     "name": "PF coil support plate thickness",
     "value": 0.15,
@@ -1671,37 +1901,37 @@
     "name": "Thickness ratio of the inboard blanket back supporting structure",
     "value": 0.577,
     "unit": "dimensionless",
-    "source": "HCPB 2015 design description document"
+    "source": "Input (HCPB 2015 design description document 2MHDNB)"
   },
   "tk_r_ib_bz": {
     "name": "Thickness ratio of the inboard blanket breeding zone",
     "value": 0.309,
     "unit": "dimensionless",
-    "source": "HCPB 2015 design description document"
+    "source": "Input (HCPB 2015 design description document 2MHDNB)"
   },
   "tk_r_ib_manifold": {
     "name": "Thickness ratio of the inboard blanket manifold",
     "value": 0.114,
     "unit": "dimensionless",
-    "source": "HCPB 2015 design description document"
+    "source": "Input (HCPB 2015 design description document 2MHDNB)"
   },
   "tk_r_ob_bss": {
     "name": "Thickness ratio of the outboard blanket back supporting structure",
     "value": 0.498,
     "unit": "dimensionless",
-    "source": "HCPB 2015 design description document"
+    "source": "Input (HCPB 2015 design description document 2MHDNB)"
   },
   "tk_r_ob_bz": {
     "name": "Thickness ratio of the outboard blanket breeding zone",
     "value": 0.431,
     "unit": "dimensionless",
-    "source": "HCPB 2015 design description document"
+    "source": "Input (HCPB 2015 design description document 2MHDNB)"
   },
   "tk_r_ob_manifold": {
     "name": "Thickness ratio of the outboard blanket manifold",
     "value": 0.071,
     "unit": "dimensionless",
-    "source": "HCPB 2015 design description document"
+    "source": "Input (HCPB 2015 design description document 2MHDNB)"
   },
   "tk_rs": {
     "name": "Radiation shield thickness",
@@ -1711,53 +1941,61 @@
   },
   "tk_sh_bot": {
     "name": "Lower shield thickness",
-    "value": 0.3,
+    "value": 1e-06,
     "unit": "m",
     "source": "Input",
+    "description": "DO NOT USE - PROCESS has VV = VV + shield",
     "mapping": {
       "PROCESS": {
         "name": "shldlth",
+        "send": true,
         "recv": false,
-        "send": true
+        "unit": "m"
       }
     }
   },
   "tk_sh_in": {
     "name": "Inboard shield thickness",
-    "value": 0.3,
+    "value": 1e-06,
     "unit": "m",
     "source": "Input",
+    "description": "DO NOT USE - PROCESS has VV = VV + shield",
     "mapping": {
       "PROCESS": {
         "name": "shldith",
+        "send": true,
         "recv": true,
-        "send": true
+        "unit": "m"
       }
     }
   },
   "tk_sh_out": {
     "name": "Outboard shield thickness",
-    "value": 0.3,
+    "value": 1e-06,
     "unit": "m",
     "source": "Input",
+    "description": "DO NOT USE - PROCESS has VV = VV + shield",
     "mapping": {
       "PROCESS": {
         "name": "shldoth",
+        "send": true,
         "recv": false,
-        "send": true
+        "unit": "m"
       }
     }
   },
   "tk_sh_top": {
     "name": "Upper shield thickness",
-    "value": 0.3,
+    "value": 1e-06,
     "unit": "m",
     "source": "Input",
+    "description": "DO NOT USE - PROCESS has VV = VV + shield",
     "mapping": {
       "PROCESS": {
         "name": "shldtth",
+        "send": true,
         "recv": false,
-        "send": true
+        "unit": "m"
       }
     }
   },
@@ -1769,8 +2007,9 @@
     "mapping": {
       "PROCESS": {
         "name": "scrapli",
+        "send": true,
         "recv": true,
-        "send": true
+        "unit": "m"
       }
     }
   },
@@ -1782,8 +2021,9 @@
     "mapping": {
       "PROCESS": {
         "name": "scraplo",
+        "send": true,
         "recv": true,
-        "send": true
+        "unit": "m"
       }
     }
   },
@@ -1807,8 +2047,9 @@
     "mapping": {
       "PROCESS": {
         "name": "casthi",
+        "send": true,
         "recv": false,
-        "send": true
+        "unit": "m"
       }
     }
   },
@@ -1820,8 +2061,9 @@
     "mapping": {
       "PROCESS": {
         "name": "tfcth",
+        "send": false,
         "recv": true,
-        "send": false
+        "unit": "m"
       }
     }
   },
@@ -1829,14 +2071,30 @@
     "name": "TF coil ground insulation thickness",
     "value": 0.08,
     "unit": "m",
-    "source": "Input"
+    "source": "Input",
+    "mapping": {
+      "PROCESS": {
+        "name": "tinstf",
+        "send": false,
+        "recv": true,
+        "unit": "m"
+      }
+    }
   },
   "tk_tf_insgap": {
     "name": "TF coil WP insertion gap",
     "value": 0.1,
     "unit": "m",
     "source": "Input",
-    "description": "Backfilled with epoxy resin (impregnation)"
+    "description": "Backfilled with epoxy resin (impregnation). This is an average value; can be less or more due to manufacturing tolerances",
+    "mapping": {
+      "PROCESS": {
+        "name": "tfinsgap",
+        "send": false,
+        "recv": true,
+        "unit": "m"
+      }
+    }
   },
   "tk_tf_nose": {
     "name": "TF coil inboard nose thickness",
@@ -1846,8 +2104,9 @@
     "mapping": {
       "PROCESS": {
         "name": "thkcas",
+        "send": false,
         "recv": true,
-        "send": false
+        "unit": "m"
       }
     }
   },
@@ -1855,7 +2114,7 @@
     "name": "TF leg conductor casing general thickness",
     "value": 0.02,
     "unit": "m",
-    "source": "PROCESS"
+    "source": "Input"
   },
   "tk_tf_outboard": {
     "name": "TF coil outboard thickness",
@@ -1865,8 +2124,9 @@
     "mapping": {
       "PROCESS": {
         "name": "tfthko",
+        "send": false,
         "recv": false,
-        "send": false
+        "unit": "m"
       }
     }
   },
@@ -1878,16 +2138,24 @@
     "mapping": {
       "PROCESS": {
         "name": "casths",
+        "send": true,
         "recv": false,
-        "send": true
+        "unit": "m"
       }
     }
   },
   "tk_tf_wp": {
-    "name": "TF coil winding pack thickness",
+    "name": "TF coil winding pack radial thickness",
     "value": 0.5,
     "unit": "m",
-    "source": "PROCESS",
+    "source": "Input",
+    "description": "Excluding insulation"
+  },
+  "tk_tf_wp_y": {
+    "name": "TF coil winding pack toroidal thickness",
+    "value": 0.5,
+    "unit": "m",
+    "source": "Input",
     "description": "Excluding insulation"
   },
   "tk_ts": {
@@ -1898,60 +2166,65 @@
     "mapping": {
       "PROCESS": {
         "name": "thshield",
+        "send": true,
         "recv": true,
-        "send": true
+        "unit": "m"
       }
     }
   },
   "tk_vv_bot": {
     "name": "Lower vacuum vessel thickness",
-    "value": 0.3,
+    "value": 0.6,
     "unit": "m",
     "source": "Input",
     "mapping": {
       "PROCESS": {
         "name": "d_vv_bot",
+        "send": true,
         "recv": false,
-        "send": true
+        "unit": "m"
       }
     }
   },
   "tk_vv_in": {
     "name": "Inboard vacuum vessel thickness",
-    "value": 0.3,
+    "value": 0.6,
     "unit": "m",
     "source": "Input",
     "mapping": {
       "PROCESS": {
         "name": "d_vv_in",
+        "send": true,
         "recv": true,
-        "send": true
+        "unit": "m"
       }
     }
   },
   "tk_vv_out": {
     "name": "Outboard vacuum vessel thickness",
-    "value": 0.8,
+    "value": 1.1,
     "unit": "m",
     "source": "Input",
     "mapping": {
       "PROCESS": {
         "name": "d_vv_out",
+        "send": true,
         "recv": false,
-        "send": true
+        "unit": "m"
       }
     }
   },
   "tk_vv_top": {
     "name": "Upper vacuum vessel thickness",
-    "value": 0.3,
+    "value": 0.6,
     "unit": "m",
     "source": "Input",
     "mapping": {
       "PROCESS": {
         "name": "d_vv_top",
+        "send": true,
         "recv": false,
-        "send": true
+        "unit": "m"
       }
     }
   },
@@ -1959,12 +2232,13 @@
     "name": "Loop voltage during burn",
     "value": 0.05,
     "unit": "V",
-    "source": "PROCESS",
+    "source": "Input",
     "mapping": {
       "PROCESS": {
         "name": "vburn",
+        "send": false,
         "recv": true,
-        "send": false
+        "unit": "V"
       }
     }
   },
@@ -1972,8 +2246,7 @@
     "name": "Vacuum vessel life limit (SS316-LN-IG)",
     "value": 3.25,
     "unit": "dpa",
-    "source": "Input",
-    "description": "RCC-Mx or whatever it is called"
+    "source": "Input (RCC-Mx or whatever it is called)"
   },
   "vv_dtk": {
     "name": "VV double-walled thickness",
@@ -1991,7 +2264,7 @@
     "name": "Fraction of neutrons deposited in VV",
     "value": 0.04,
     "unit": "dimensionless",
-    "source": "Bachmanns only value",
+    "source": "Input (Bachmann, probably thanks to P. Pereslavtsev)",
     "description": "simpleneutrons needs a correction for VV n absorbtion"
   },
   "w_g_support": {

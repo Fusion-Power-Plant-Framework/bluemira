@@ -41,12 +41,11 @@ from bluemira.equilibria.opt_constraints import (
     PsiConstraint,
 )
 from bluemira.equilibria.opt_problems import (
-    BoundedCurrentCOP,
     CoilsetPositionCOP,
     NestedCoilsetPositionCOP,
+    TikhonovCurrentCOP,
     UnconstrainedTikhonovCurrentGradientCOP,
 )
-from bluemira.equilibria.optimiser import FBIOptimiser, Norm2Tikhonov, PositionOptimiser
 from bluemira.equilibria.profiles import BetaIpProfile, CustomProfile
 from bluemira.equilibria.shapes import (
     flux_surface_cunningham,

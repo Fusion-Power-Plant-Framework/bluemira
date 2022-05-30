@@ -32,8 +32,8 @@ import numpy as np
 from bluemira.equilibria.opt_constraint_funcs import (
     Ax_b_constraint,
     L2_norm_constraint,
-    coil_field_constraints,
     coil_force_constraints,
+    field_constraints,
 )
 from bluemira.equilibria.plotting import ConstraintPlotter
 from bluemira.geometry._deprecated_loop import Loop
@@ -89,7 +89,104 @@ class UpdateableConstraint(ABC):
         pass
 
 
-class CoilFieldConstraints(UpdateableConstraint, OptimisationConstraint):
+class FieldConstraints(UpdateableConstraint, OptimisationConstraint):
+    """
+    Inequality constraints for the poloidal field at certain locations.
+
+    Parameters
+    ----------
+    x: Union[float, np.ndarray]
+        Radial coordinate(s) at which to constrain the poloidal field
+    z: Union[float, np.ndarray]
+        Vertical coordinate(s) at which to constrain the poloidal field
+    B_max: Union[float, np.ndarray]
+        Maximum poloidal field value(s) at location(s)
+    tolerance: Union[float, np.ndarray]
+        Tolerance with which the constraint(s) will be met
+    constraint_type: str
+        Type of constraint
+    """
+
+    def __init__(self, x, z, B_max, tolerance=1.0e-6, constraint_type="inequality"):
+        if is_num(x):
+            x = np.array([x])
+        if is_num(z):
+            z = np.array([z])
+
+        if is_num(B_max):
+            B_max = B_max * np.ones(len(x))
+        if len(B_max) != len(x):
+            raise ValueError(
+                "Maximum field vector length not equal to the number of points."
+            )
+
+        if is_num(tolerance):
+            tolerance = tolerance * np.ones(len(x))
+        if len(tolerance) != len(x):
+            raise ValueError("Tolerance vector length not equal to the number of coils.")
+
+        self.x = x
+        self.z = z
+        super().__init__(
+            f_constraint=field_constraints,
+            f_constraint_args={
+                "ax_mat": None,
+                "az_mat": None,
+                "bxp_vec": None,
+                "bzp_vec": None,
+                "B_max": B_max,
+                "scale": 1.0,
+            },
+            tolerance=tolerance,
+            constraint_type=constraint_type,
+        )
+
+    def prepare(self, equilibrium, I_not_dI=False, fixed_coils=False):
+        """
+        Prepare the constraint for use in an equilibrium optimisation problem.
+        """
+        if I_not_dI:
+            equilibrium = _get_dummy_equilibrium(equilibrium)
+
+        # Re-build control response matrix
+        if not fixed_coils or (fixed_coils and self._args["ax_mat"] is None):
+            ax_mat, az_mat = self.control_response(equilibrium.coilset)
+            self._args["ax_mat"] = ax_mat
+            self._args["az_mat"] = az_mat
+
+        bxp_vec, bzp_vec = self.evaluate(equilibrium)
+        self._args["bxp_vec"] = bxp_vec
+        self._args["bzp_vec"] = bzp_vec
+
+    def control_response(self, coilset):
+        """
+        Calculate control response of a CoilSet to the constraint.
+        """
+        Bx = np.zeros((len(self), coilset.n_coils))
+        Bz = np.zeros((len(self), coilset.n_coils))
+        for i, (x, z) in enumerate(zip(self.x, self.z)):
+            for j, coil in enumerate(coilset.coils.values()):
+                Bx[i, j] = np.array(coil.control_Bx(x, z))
+                Bz[i, j] = np.array(coil.control_Bz(x, z))
+        return Bx, Bz
+
+    def evaluate(self, equilibrium):
+        """
+        Calculate the value of the constraint in an Equilibrium.
+        """
+        Bx, Bz = np.zeros(len(self)), np.zeros(len(self))
+        Bx = equilibrium.Bx(self.x, self.z)
+        Bz = equilibrium.Bz(self.x, self.z)
+        return Bx, Bz
+
+    def __len__(self):
+        """
+        Length of field constraints.
+        """
+        return len(self.x)
+
+
+class CoilFieldConstraints(FieldConstraints):
     """
     Inequality constraints on the poloidal field inside the coils.
 
@@ -120,61 +217,15 @@ class CoilFieldConstraints(UpdateableConstraint, OptimisationConstraint):
 
         if is_num(tolerance):
             tolerance = tolerance * np.ones(coilset.n_coils)
-        if len(B_max) != coilset.n_coils:
+        if len(tolerance) != coilset.n_coils:
             raise ValueError("Tolerance vector length not equal to the number of coils.")
 
-        super().__init__(
-            f_constraint=coil_field_constraints,
-            f_constraint_args={
-                "ax_mat": None,
-                "az_mat": None,
-                "bxp_vec": None,
-                "bzp_vec": None,
-                "B_max": B_max,
-                "scale": 1.0,
-            },
-            tolerance=tolerance,
-        )
+        x, z = np.zeros(coilset.n_coils), np.zeros(coilset.n_coils)
+        for i, coil in enumerate(coilset.coils.values()):
+            x[i] = coil.x - coil.dx
+            z[i] = coil.z
 
-    def prepare(self, equilibrium, I_not_dI=False, fixed_coils=False):
-        """
-        Prepare the constraint for use in an equilibrium optimisation problem.
-        """
-        if I_not_dI:
-            equilibrium = _get_dummy_equilibrium(equilibrium)
-
-        # Re-build control response matrix
-        if not fixed_coils or (fixed_coils and self._args["ax_mat"] is None):
-            ax_mat, az_mat = self.control_response(equilibrium.coilset)
-            self._args["ax_mat"] = ax_mat
-            self._args["az_mat"] = az_mat
-
-        bxp_vec, bzp_vec = self.evaluate(equilibrium)
-        self._args["bxp_vec"] = bxp_vec
-        self._args["bzp_vec"] = bzp_vec
-
-    def control_response(self, coilset):
-        """
-        Calculate control response of a CoilSet to the constraint.
-        """
-        Bx = np.zeros((coilset.n_coils, coilset.n_coils))
-        Bz = np.zeros((coilset.n_coils, coilset.n_coils))
-        for i, coil1 in enumerate(coilset.coils.values()):
-            for j, coil2 in enumerate(coilset.coils.values()):
-                Bx[i, j] = np.array(coil2.control_Bx(coil1.x - coil1.dx, coil1.z))
-                Bz[i, j] = np.array(coil2.control_Bz(coil1.x - coil1.dx, coil1.z))
-        return Bx, Bz
-
-    def evaluate(self, equilibrium):
-        """
-        Calculate the value of the constraint in an Equilibrium.
-        """
-        n_coils = equilibrium.coilset.n_coils
-        Bx, Bz = np.zeros(n_coils), np.zeros(n_coils)
-        for i, coil in enumerate(equilibrium.coilset.coils.values()):
-            Bx[i] = equilibrium.Bx(coil.x - coil.dx, coil.z)
-            Bz[i] = equilibrium.Bz(coil.x - coil.dx, coil.z)
-        return Bx, Bz
+        super().__init__(x, z, B_max, tolerance=tolerance, constraint_type="inequality")
 
 
 class CoilForceConstraints(UpdateableConstraint, OptimisationConstraint):
@@ -272,8 +323,7 @@ class MagneticConstraint(UpdateableConstraint, OptimisationConstraint):
     Abstract base class for a magnetic optimisation constraint.
 
     Can be used as a standalone constraint for use in an optimisation problem. In which
-    case the constraint is of the form:
-        ||(Ax - b)||² < target_value
+    case the constraint is of the form: ||(Ax - b)||² < target_value
 
     Can be used in a MagneticConstraintSet
     """
@@ -422,8 +472,8 @@ class FieldNullConstraint(AbsoluteMagneticConstraint):
         super().__init__(
             x,
             z,
-            0.0,
-            weights,
+            target_value=0.0,
+            weights=weights,
             tolerance=tolerance,
             constraint_type=constraint_type,
             f_constraint=L2_norm_constraint,
@@ -512,7 +562,7 @@ class IsofluxConstraint(RelativeMagneticConstraint):
         z,
         ref_x,
         ref_z,
-        constraint_value,
+        constraint_value: float = 0.0,
         weights: Union[float, np.ndarray] = 1.0,
         tolerance: float = 1e-6,
     ):
@@ -732,19 +782,19 @@ class MagneticConstraintSet(ABC):
         """
         return self.target - self.background
 
-    # def update_psi_boundary(self, psi_bndry):
-    #     """
-    #     Update the target value for all PsiBoundaryConstraints.
+    def update_psi_boundary(self, psi_bndry):
+        """
+        Update the target value for all PsiBoundaryConstraints.
 
-    #     Parameters
-    #     ----------
-    #     psi_bndry: float
-    #         The target psi boundary value [V.s/rad]
-    #     """
-    #     for constraint in self.constraints:
-    #         if isinstance(constraint, PsiBoundaryConstraint):
-    #             constraint.target_value = psi_bndry
-    #     self.build_target()
+        Parameters
+        ----------
+        psi_bndry: float
+            The target psi boundary value [V.s/rad]
+        """
+        for constraint in self.constraints:
+            if isinstance(constraint, PsiBoundaryConstraint):
+                constraint.target_value = psi_bndry
+        self.build_target()
 
     def plot(self, ax=None):
         """

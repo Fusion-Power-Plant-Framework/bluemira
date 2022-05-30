@@ -19,7 +19,7 @@ fluids==1.0.21
 fortranformat==1.2.0
 gmsh==4.9.3
 gmsh-interop==2021.1.1
-imageio==2.19.1
+imageio==2.19.2
 importlib-metadata==4.11.3
 importlib-resources==5.7.1
 iniconfig==1.1.1
@@ -69,7 +69,7 @@ pybind11==2.9.2
 pyclipper==1.3.0.post2
 pycparser==2.21
 Pygments==2.12.0
-pyparsing==3.0.8
+pyparsing==3.0.9
 pypet==0.6.0
 pyquaternion==0.9.9
 pyrsistent==0.18.1
@@ -78,7 +78,7 @@ python-dateutil==2.8.2
 pytools==2022.1.7
 pytz==2022.1
 pyzmq==22.3.0
-scikit-learn==1.0.2
+scikit-learn==1.1.0
 seaborn==0.11.2
 Send2Trash==1.8.0
 Shapely==1.8.2
@@ -90,7 +90,7 @@ testpath==0.6.0
 threadpoolctl==3.1.0
 toml==0.10.2
 tornado==6.1
-traitlets==5.1.1
+traitlets==5.2.0
 typing-extensions==4.2.0
 wcwidth==0.2.5
 webencodings==0.5.1

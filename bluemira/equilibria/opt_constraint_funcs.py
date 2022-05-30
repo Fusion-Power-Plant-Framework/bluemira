@@ -273,11 +273,11 @@ def coil_force_constraints(
     return constraint
 
 
-def coil_field_constraints(
+def field_constraints(
     constraint, vector, grad, ax_mat, az_mat, bxp_vec, bzp_vec, B_max, scale
 ):
     """
-    Current optimisation poloidal field constraints on coils
+    Current optimisation poloidal field constraints at prescribed locations
 
     Parameters
     ----------
