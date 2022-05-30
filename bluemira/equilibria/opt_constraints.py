@@ -145,7 +145,8 @@ class FieldConstraints(UpdateableConstraint, OptimisationConstraint):
         """
         Prepare the constraint for use in an equilibrium optimisation problem.
         """
-        equilibrium = _get_dummy_equilibrium(equilibrium, I_not_dI)
+        if I_not_dI:
+            equilibrium = _get_dummy_equilibrium(equilibrium)
 
         # Re-build control response matrix
         if not fixed_coils or (fixed_coils and self._args["ax_mat"] is None):
@@ -285,7 +286,8 @@ class CoilForceConstraints(UpdateableConstraint, OptimisationConstraint):
         """
         Prepare the constraint for use in an equilibrium optimisation problem.
         """
-        equilibrium = _get_dummy_equilibrium(equilibrium, I_not_dI)
+        if I_not_dI:
+            equilibrium = _get_dummy_equilibrium(equilibrium)
 
         # Re-build control response matrix
         if not fixed_coils or (fixed_coils and self._args["a_mat"] is None):
