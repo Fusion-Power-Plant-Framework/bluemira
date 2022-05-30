@@ -556,16 +556,13 @@ class Equilibrium(MHDState):
         self,
         coilset,
         grid,
+        profiles,
         force_symmetry=False,
         vcontrol=None,
         limiter=None,
         psi=None,
-        I_p=0,
-        R_0=None,
-        B_0=None,
         li=None,
         jtor=None,
-        profiles=None,
         filename=None,
     ):
         super().__init__()
@@ -577,7 +574,7 @@ class Equilibrium(MHDState):
         self._x_points = None
         self._solver = None
         self._eqdsk = None
-        self._I_p = I_p  # target plasma current
+        self._I_p = None
         self._li = li  # target plasma normalised inductance
         self._li_iter = 0  # li iteration count
         self._li_temp = None
@@ -597,16 +594,6 @@ class Equilibrium(MHDState):
         self.boundary = FreeBoundary(self.grid)
         self.set_vcontrol(vcontrol)
         self.limiter = limiter
-
-        if R_0 is not None and B_0 is not None:
-            self._R_0 = R_0
-            self._B_0 = B_0
-            self._fvac = R_0 * B_0
-        else:
-            self._R_0 = None
-            self._B_0 = None
-            self._fvac = None
-
         self.filename = filename
 
         self._kwargs = {"vcontrol": vcontrol}
@@ -657,14 +644,11 @@ class Equilibrium(MHDState):
         return cls(
             coilset,
             grid,
+            profiles=profiles,
             vcontrol=None,
             limiter=limiter,
             psi=psi,
-            I_p=e["cplasma"],
-            R_0=e["xcentre"],
-            B_0=e["bcentre"],
             jtor=jtor,
-            profiles=profiles,
             filename=filename,
         )
 
@@ -713,8 +697,8 @@ class Equilibrium(MHDState):
             "zdim": self.grid.z_size,
             "x": self.grid.x_1d,
             "z": self.grid.z_1d,
-            "xcentre": self._R_0,
-            "bcentre": self._B_0,
+            "xcentre": self._profiles.R_0,
+            "bcentre": self._profiles._B_0,
             "xgrid1": self.grid.x_min,
             "zmid": self.grid.z_mid,
             "xmag": opoint[0],
@@ -866,7 +850,7 @@ class Equilibrium(MHDState):
             ._I_p
             ._Jtor
         """
-        self._reassign_profiles(profiles)
+        self._profiles = profiles
         self._clear_OX_points()
 
         if jtor is None:
@@ -887,7 +871,7 @@ class Equilibrium(MHDState):
 
         self._I_p = self._int_dxdz(jtor)
         self._jtor = jtor
-        self._reassign_profiles(profiles)
+        self._profiles = profiles
 
     def solve_li(self, profiles, jtor=None, psi=None):
         """
@@ -915,7 +899,7 @@ class Equilibrium(MHDState):
             raise EquilibriaError(
                 "Need to specify a normalised internal inductance to solve an Equilibrium with solve_li."
             )
-        self._reassign_profiles(profiles)
+        self._profiles = profiles
         self._clear_OX_points()
         if psi is None:
             psi = self.psi()
@@ -941,8 +925,8 @@ class Equilibrium(MHDState):
                 self.z,
                 self.psi(),
                 self.Bp(),
-                self._R_0,
-                self._I_p,
+                profiles.R_0,
+                profiles.I_p,
                 self.dx,
                 self.dz,
                 mask=mask,
@@ -972,17 +956,8 @@ class Equilibrium(MHDState):
         except StopIteration:
             pass
 
-        self._reassign_profiles(profiles)
-        self._I_p = self._int_dxdz(self._jtor)
-
-    def _reassign_profiles(self, profiles):
-        """
-        Utility function for storing useful auxiliary information within
-        Equilibrium class
-        """
         self._profiles = profiles
-        self._R_0 = profiles.R_0
-        self._B_0 = profiles._B_0
+        self._I_p = self._int_dxdz(self._jtor)
 
     def _update_plasma_psi(self, plasma_psi):
         """
