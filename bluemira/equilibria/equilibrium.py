@@ -48,7 +48,6 @@ from bluemira.equilibria.find import (
     in_zone,
 )
 from bluemira.equilibria.flux_surfaces import ClosedFluxSurface, analyse_plasma_core
-from bluemira.equilibria.force_field import ForceField
 from bluemira.equilibria.grad_shafranov import GSSolver
 from bluemira.equilibria.grid import Grid, integrate_dx_dz
 from bluemira.equilibria.limiter import Limiter
@@ -88,7 +87,6 @@ class MHDState:
         self._psi_green = None
         self._bx_green = None
         self._bz_green = None
-        self.force_field = None
         self.grid = None
         self.coilset = None
         self.limiter = None
@@ -151,36 +149,50 @@ class MHDState:
         self._psi_green = self.coilset.map_psi_greens(self.x, self.z)
         self._bx_green = self.coilset.map_Bx_greens(self.x, self.z)
         self._bz_green = self.coilset.map_Bz_greens(self.x, self.z)
-        self.set_forcefield()
 
-    def set_forcefield(self):
+    def get_coil_forces(self):
         """
-        Set a ForceField object for the MHDState.
-        """
-        self.force_field = ForceField(self.coilset, self.plasma_coil())
-
-    def get_forces(self):
-        """
-        Returns the Fx and Fz force on the control coils
+        Returns the Fx and Fz force at the centre of the control coils
 
         Returns
         -------
         F: np.array(n_coils, 2)
             [Fx, Fz] array of forces on coils [MN]
-        """
-        return self.force_field.calc_force(self.coilset.get_control_currents())[0] / 1e6
 
-    def get_fields(self):
+        Notes
+        -----
+        Will not work for symmetric circuits
+        """
+        coils = list(self.coilset.coils.values())
+        currents = self.coilset.get_control_currents()
+        plasma = self.plasma_coil()
+        response = np.zeros((len(coils), len(coils), 2))
+        background = np.zeros((len(coils), 2))
+        for i, coil1 in enumerate(coils):
+            for j, coil2 in enumerate(coils):
+                response[i, j, :] = coil1.control_F(coil2)
+            if coil1.current != 0.0:
+                background[i, :] = coil1.F(plasma) / coil1.current
+
+        forces = np.zeros((len(coils), 2))
+        forces[:, 0] = currents * (response[:, :, 0] @ currents + background[:, 0])
+        forces[:, 1] = currents * (response[:, :, 1] @ currents + background[:, 1])
+
+        return forces / 1e6
+
+    def get_coil_fields(self):
         """
         Returns the poloidal magnetic fields on the control coils
-        (approximate peak)
+        (approximate peak at the middle inner radius of the coil)
 
         Returns
         -------
         B: np.array(n_coils)
             The Bp array of fields on coils [T]
         """
-        return self.force_field.calc_field(self.coilset.get_control_currents())[0]
+        x = [c.x - c.dx for c in self.coilset.coils.values()]
+        z = [c.z for c in self.coilset.coils.values()]
+        return self.Bp(x, z)
 
     def plasma_coil(self):
         """
@@ -1499,8 +1511,8 @@ class Equilibrium(MHDState):
         """
         c_names = self.coilset.get_control_names()
         currents = self.coilset.get_control_currents() / 1e6
-        fields = self.get_fields()
-        forces = self.get_forces() / 1e6
+        fields = self.get_coil_fields()
+        forces = self.get_coil_forces() / 1e6
         fz = forces.T[1]
         fz_cs = fz[self.coilset.n_PF :]
         fz_c_stot = sum(fz_cs)

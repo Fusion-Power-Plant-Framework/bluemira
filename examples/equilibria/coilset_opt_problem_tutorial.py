@@ -41,14 +41,14 @@ and on the position of the inboard midplane.
 import matplotlib.pyplot as plt
 import numpy as np
 
-import bluemira.equilibria.opt_constraints as opt_constraints
+import bluemira.equilibria.opt_constraint_funcs as opt_constraint_funcs
 from bluemira.equilibria.coils import Coil, CoilSet, SymmetricCircuit
 from bluemira.equilibria.equilibrium import Equilibrium
 from bluemira.equilibria.grid import Grid
 from bluemira.equilibria.opt_constraints import IsofluxConstraint, MagneticConstraintSet
 from bluemira.equilibria.opt_problems import (
     TikhonovCurrentCOP,
-    UnconstrainedTikhonovCurrentCOP,
+    UnconstrainedTikhonovCurrentGradientCOP,
 )
 from bluemira.equilibria.profiles import CustomProfile
 from bluemira.equilibria.solve import DudsonConvergence, PicardIterator
@@ -359,9 +359,9 @@ eq = Equilibrium(
 
 # %%
 
-opt_constraints = [
+opt_constraint_funcs = [
     OptimisationConstraint(
-        f_constraint=opt_constraints.current_midplane_constraint,
+        f_constraint=opt_constraint_funcs.current_midplane_constraint,
         f_constraint_args={"eq": eq, "radius": 1.0, "scale": 1e6},
         tolerance=np.array([1e-4]),
         constraint_type="inequality",
@@ -381,7 +381,7 @@ opt_problem = TikhonovCurrentCOP(
     gamma=1e-8,
     max_currents=3.0e7,
     optimiser=optimiser,
-    constraints=opt_constraints,
+    constraints=opt_constraint_funcs,
 )
 
 # %%[markdown]
@@ -406,7 +406,6 @@ constrained_iterator = PicardIterator(
     plot=False,
     relaxation=0.3,
     maxiter=400,
-    I_not_dI=True,
     convergence=DudsonConvergence(1e-4),
 )
 
@@ -420,7 +419,7 @@ constrained_iterator = PicardIterator(
 
 # %%
 
-unconstrained_cop = UnconstrainedTikhonovCurrentCOP(
+unconstrained_cop = UnconstrainedTikhonovCurrentGradientCOP(
     coilset, eq, magnetic_targets, gamma=1e-8
 )
 unconstrained_iterator = PicardIterator(
@@ -428,7 +427,6 @@ unconstrained_iterator = PicardIterator(
     profile,  # jetto
     unconstrained_cop,
     plot=False,
-    I_not_dI=True,
     relaxation=0.3,
     convergence=DudsonConvergence(1e-2),
     maxiter=400,

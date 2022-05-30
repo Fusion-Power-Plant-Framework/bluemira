@@ -43,20 +43,20 @@ from bluemira.equilibria.coils import Coil, CoilSet
 from bluemira.equilibria.equilibrium import Equilibrium
 from bluemira.equilibria.grid import Grid
 from bluemira.equilibria.opt_constraints import (
+    CoilFieldConstraints,
+    CoilForceConstraints,
     FieldNullConstraint,
     IsofluxConstraint,
     MagneticConstraintSet,
     PsiBoundaryConstraint,
-    coil_field_constraints,
 )
 from bluemira.equilibria.opt_problems import (
     MinimalCurrentCOP,
     TikhonovCurrentCOP,
-    UnconstrainedTikhonovCurrentCOP,
+    UnconstrainedTikhonovCurrentGradientCOP,
 )
 from bluemira.equilibria.profiles import CustomProfile
 from bluemira.equilibria.solve import DudsonConvergence, PicardIterator
-from bluemira.utilities.opt_problems import OptimisationConstraint
 from bluemira.utilities.optimiser import Optimiser
 
 plot_defaults()
@@ -178,13 +178,11 @@ x_point = FieldNullConstraint(
 
 # %%
 
-opt_problem = UnconstrainedTikhonovCurrentCOP(
+opt_problem = UnconstrainedTikhonovCurrentGradientCOP(
     coilset, eq, MagneticConstraintSet([psi_boundary, x_point]), gamma=1e-7
 )
 
-program = PicardIterator(
-    eq, profiles, opt_problem, I_not_dI=False, fixed_coils=True, relaxation=0.2
-)
+program = PicardIterator(eq, profiles, opt_problem, fixed_coils=True, relaxation=0.2)
 program()
 
 
@@ -202,10 +200,19 @@ program()
 
 # %%
 
-field_constraints = OptimisationConstraint(
-    coil_field_constraints,
-    f_constraint_args={"eq": eq, "B_max": eq.coilset.get_max_fields(), "scale": 1e6},
-    tolerance=1e-6 * np.ones(11),
+field_constraints = CoilFieldConstraints(
+    eq.coilset, eq.coilset.get_max_fields(), tolerance=1e-6
+)
+
+PF_Fz_max = 450
+CS_Fz_sum_max = 300
+CS_Fz_sep_max = 250
+force_constraints = CoilForceConstraints(
+    eq.coilset,
+    PF_Fz_max=PF_Fz_max,
+    CS_Fz_sum_max=CS_Fz_sum_max,
+    CS_Fz_sep_max=CS_Fz_sep_max,
+    tolerance=1e-6,
 )
 
 
@@ -216,14 +223,13 @@ opt_problem = TikhonovCurrentCOP(
     gamma=1e-8,
     optimiser=Optimiser("SLSQP", opt_conditions={"max_eval": 2000, "ftol_rel": 1e-6}),
     max_currents=coilset.get_max_currents(0.0),
-    constraints=[field_constraints],
+    constraints=[field_constraints, force_constraints],
 )
 
 program = PicardIterator(
     eq,
     profiles,
     opt_problem,
-    I_not_dI=True,
     fixed_coils=True,
     convergence=DudsonConvergence(1e-4),
     relaxation=0.3,
@@ -244,14 +250,13 @@ opt_problem = MinimalCurrentCOP(
     eq,
     Optimiser("SLSQP", opt_conditions={"max_eval": 2000, "ftol_rel": 1e-6}),
     max_currents=coilset.get_max_currents(0.0),
-    constraints=[psi_boundary, x_point, field_constraints],
+    constraints=[psi_boundary, x_point, field_constraints, force_constraints],
 )
 
 program = PicardIterator(
     eq,
     profiles,
     opt_problem,
-    I_not_dI=True,
     fixed_coils=True,
     convergence=DudsonConvergence(1e-4),
     relaxation=0.3,
