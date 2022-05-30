@@ -302,10 +302,7 @@ class PlasmaBuilder(Builder):
         eq = Equilibrium(
             coilset,
             grid,
-            I_p=self._params.I_p.value * 1e6,
-            R_0=R_0,
-            B_0=self._params.B_0.value,
-            profiles=profiles,
+            profiles,
         )
         opt_problem = UnconstrainedTikhonovCurrentGradientCOP(
             eq.coilset,
