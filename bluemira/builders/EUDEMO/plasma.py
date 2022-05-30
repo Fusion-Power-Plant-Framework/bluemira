@@ -303,7 +303,8 @@ class PlasmaBuilder(Builder):
             coilset,
             grid,
             Ip=self._params.I_p.value * 1e6,
-            RB0=[R_0, self._params.B_0.value],
+            R_0=R_0,
+            B_0=self._params.B_0.value,
             profiles=profiles,
         )
         opt_problem = UnconstrainedTikhonovCurrentGradientCOP(

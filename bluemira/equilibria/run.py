@@ -132,12 +132,12 @@ class PulsedCoilsetProblem:
         Run a reference equilibrium.
         """
         coilset = deepcopy(self.coilset)
-        rb0 = [self.params.R_0.value, self.params.B_0.value]
         eq = Equilibrium(
             coilset,
             self.grid,
             Ip=self.params.I_p.value * 1e6,
-            RB0=rb0,
+            R_0=self.params.R_0.value,
+            B_0=self.params.B_0.value,
             profiles=self.profiles,
         )
         opt_problem = UnconstrainedTikhonovCurrentGradientCOP(
