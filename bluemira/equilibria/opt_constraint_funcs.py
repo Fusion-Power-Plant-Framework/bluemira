@@ -288,13 +288,13 @@ def coil_field_constraints(
     grad: np.ndarray
         Constraint Jacobian (modified in place)
     ax_mat: np.ndarray
-        Response matrix for Bx
+        Response matrix for Bx (active coil contributions)
     az_mat: np.ndarray
-        Response matrix for Bz
+        Response matrix for Bz (active coil contributions)
     bxp_vec: np.ndarray
-        Background vector for Bx
+        Background vector for Bx (passive coil contributions)
     bzp_vec: np.ndarray
-        Background vector for Bz
+        Background vector for Bz (passive coil contributions)
     B_max: np.ndarray
         Maximum fields inside the coils
     scale: float
