@@ -44,7 +44,7 @@ class TestForceField:
         cls.eq = Equilibrium(
             cls.coilset,
             Grid(0.1, 10, -10, 10, 10, 10),
-            CustomProfile(np.linspace(0, 1, 10), np.linspace(1, 0, 10), 9, 6),
+            CustomProfile(np.linspace(0, 1, 10), np.linspace(1, 0, 10), 9, 6, I_p=0.0),
         )
 
     def test_Fz(self):  # noqa :N802

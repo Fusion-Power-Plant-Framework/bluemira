@@ -171,7 +171,9 @@ class TestSTEquilibrium:
             build_tweaks["tikhonov_gamma"],
         )
 
-        eq = Equilibrium(coilset, grid, force_symmetry=True, psi=initial_psi, I_p=i_p)
+        eq = Equilibrium(
+            coilset, grid, self.profiles, force_symmetry=True, psi=initial_psi
+        )
         opt_problem = UnconstrainedTikhonovCurrentGradientCOP(
             eq.coilset, eq, constraint_set, gamma=build_tweaks["tikhonov_gamma"]
         )
@@ -262,7 +264,9 @@ class TestSTEquilibrium:
         )
         coilset_temp.add_coil(dummy)
 
-        eq = Equilibrium(coilset_temp, grid, force_symmetry=True, psi=None, I_p=0)
+        eq = Equilibrium(
+            coilset_temp, grid, self.profiles, force_symmetry=True, psi=None
+        )
         opt_problem = UnconstrainedTikhonovCurrentGradientCOP(
             coilset_temp, eq, constraint_set, gamma=tikhonov_gamma
         )
