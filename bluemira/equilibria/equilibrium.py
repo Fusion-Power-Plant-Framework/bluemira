@@ -152,7 +152,7 @@ class MHDState:
 
     def get_coil_forces(self):
         """
-        Returns the Fx and Fz force on the control coils
+        Returns the Fx and Fz force at the centre of the control coils
 
         Returns
         -------
