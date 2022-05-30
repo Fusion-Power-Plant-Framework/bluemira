@@ -33,6 +33,7 @@ from bluemira.equilibria.flux_surfaces import (
     FieldLineTracer,
     OpenFluxSurface,
     PartialOpenFluxSurface,
+    poloidal_angle,
 )
 from bluemira.equilibria.shapes import flux_surface_cunningham, flux_surface_johner
 from bluemira.geometry._deprecated_loop import Loop
@@ -160,3 +161,21 @@ class TestFieldLine:
         assert np.isclose(
             field_line.connection_length, field_line.loop.length, rtol=5e-2
         )
+
+
+def test_poloidal_angle():
+    eq_name = "DN-DEMO_eqref.json"
+    filename = os.path.join(TEST_PATH, eq_name)
+    eq = Equilibrium.from_eqdsk(filename)
+    # Building inputs
+    x_strike = 10.0
+    z_strike = -7.5
+    Bp_strike = eq.Bp(x_strike, z_strike)
+    Bt_strike = eq.Bt(x_strike)
+    # Glancing angle
+    gamma = 5.0
+    # Poloidal angle
+    theta = poloidal_angle(Bp_strike, Bt_strike, gamma)
+    assert theta > gamma
+    # By hand, from a different calculation
+    assert round(theta, 1) == 20.6

@@ -150,6 +150,8 @@ class ConfigurationSchema:
     inner_strike_r: Parameter
     theta_outer_target: Parameter
     theta_inner_target: Parameter
+    gamma_outer_target: Parameter
+    gamma_inner_target: Parameter
     xpt_height: Parameter
 
     # Blanket

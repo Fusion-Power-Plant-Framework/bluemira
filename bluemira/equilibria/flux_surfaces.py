@@ -839,3 +839,35 @@ def calculate_connection_length_fs(eq, x, z, forward=True, first_wall=None):
 
     fs.clip(first_wall)
     return fs.connection_length(eq)
+
+
+def poloidal_angle(Bp_strike, Bt_strike, gamma):
+    """
+    From glancing angle (gamma) to poloidal angle.
+
+    Parameters
+    ----------
+    Bp_strike: float
+        Poloidal magnetic field value at the desired point
+    Bt_strike: float
+        Toroidal magnetic field value at the desired point
+    gamma: float
+        Glancing angle at the strike point [deg]
+
+    Returns
+    -------
+    theta: float
+        Poloidal angle at the strike point [deg]
+    """
+    # From deg to rad
+    gamma_rad = np.radians(gamma)
+
+    # Total magnetic field
+    Btot = np.sqrt(Bp_strike**2 + Bt_strike**2)
+
+    # Numerator of next operation
+    num = Btot * np.sin(gamma_rad)
+    # Poloidal projection of the glancing angle
+    sin_theta = num / Bp_strike
+
+    return np.rad2deg(np.arcsin(sin_theta))
