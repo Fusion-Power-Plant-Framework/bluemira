@@ -525,6 +525,8 @@ class Equilibrium(MHDState):
         The set of coil objects which the equilibrium will be solved with
     grid: Grid object
         The grid on which to calculate the Equilibrium
+    profiles: Profile or
+        The plasma profiles to use in the Equilibrium
     force_symmetry: bool in (optional) default = False
         Controls whether symmetry of the plasma contribution to psi across z=0
         is strictly enforced in the linear system formed during solve step.
@@ -534,20 +536,11 @@ class Equilibrium(MHDState):
         Limiter conditions to apply to equilibrium
     psi: None or 2-D numpy array (optional) default = None
         Magnetic flux [V.s] applied to X, Z grid
-    I_p: Optional[float]
-        Plasma current [A] (default = 0.0)
-    R_0: Optional[float]
-        Plasma major radius [m] (used when loading eqdsks)
-    B_0: Optional[float]
-        Toroidal field at R_0 [T] (used when loading eqdsks)
     li: None or float (default None)
         Normalised plasma internal inductance [-]
     jtor: np.array or None
         The toroidal current density array of the plasma. Default = None will
         cause the jtor array to be constructed later as necessary.
-    profiles: Profile or None
-        The plasma profiles to use in the Equilibrium. Default = None means the
-        profiles can be input at a later stage.
     filename: str or None
         The filename of the Equilibrium. Default = None (no file)
     """
@@ -574,7 +567,7 @@ class Equilibrium(MHDState):
         self._x_points = None
         self._solver = None
         self._eqdsk = None
-        self._I_p = None
+        self._I_p = profiles.I_p
         self._li = li  # target plasma normalised inductance
         self._li_iter = 0  # li iteration count
         self._li_temp = None

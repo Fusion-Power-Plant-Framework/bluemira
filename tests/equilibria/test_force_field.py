@@ -26,6 +26,7 @@ from bluemira.base.constants import MU_0
 from bluemira.equilibria.coils import Coil, CoilSet
 from bluemira.equilibria.equilibrium import Equilibrium
 from bluemira.equilibria.grid import Grid
+from bluemira.equilibria.profiles import CustomProfile
 
 
 class TestForceField:
@@ -40,7 +41,11 @@ class TestForceField:
 
             coils.append(c)
         cls.coilset = CoilSet(coils)
-        cls.eq = Equilibrium(cls.coilset, Grid(0.1, 10, -10, 10, 10, 10))
+        cls.eq = Equilibrium(
+            cls.coilset,
+            Grid(0.1, 10, -10, 10, 10, 10),
+            CustomProfile(np.linspace(0, 1, 10), np.linspace(1, 0, 10), 9, 6),
+        )
 
     def test_Fz(self):  # noqa :N802
         """

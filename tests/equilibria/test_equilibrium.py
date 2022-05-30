@@ -53,7 +53,7 @@ class TestFields:
             np.linspace(1, 0), -np.linspace(1, 0), R_0=9, B_0=6, I_p=10e6
         )
 
-        eq = Equilibrium(cls.coilset, grid, R_0=9, B_0=6, I_p=10e6)
+        eq = Equilibrium(cls.coilset, grid, profiles)
 
         isoflux = IsofluxConstraint(
             np.array([6, 8, 12, 6]), np.array([0, 7, 0, -8]), 6, 0, 0
