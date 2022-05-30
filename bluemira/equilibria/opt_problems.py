@@ -58,6 +58,7 @@ from bluemira.utilities.opt_problems import (
 )
 from bluemira.utilities.opt_tools import regularised_lsq_fom, tikhonov
 from bluemira.utilities.optimiser import Optimiser
+from bluemira.utilities.positioning import PositionMapper
 
 __all__ = [
     "UnconstrainedTikhonovCurrentGradientCOP",

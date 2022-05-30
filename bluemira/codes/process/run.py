@@ -30,12 +30,14 @@ import subprocess  # noqa :S404
 from enum import auto
 from typing import Dict, List, Optional, Union
 
+import numpy as np
+
 import bluemira.codes.interface as interface
 from bluemira.base.builder import BuildConfig
 from bluemira.base.look_and_feel import bluemira_print
 from bluemira.base.parameter import ParameterFrame
 from bluemira.codes.error import CodesError
-from bluemira.codes.process.api import DEFAULT_INDAT, ENABLED
+from bluemira.codes.process.api import DEFAULT_INDAT, ENABLED, Impurities
 from bluemira.codes.process.constants import BINARY
 from bluemira.codes.process.constants import NAME as PROCESS
 from bluemira.codes.process.mapping import mappings
@@ -216,3 +218,19 @@ class Solver(interface.FileProgramInterface):
         values list
         """
         return self.teardown_obj.bm_file.extract_outputs(params)
+
+    @staticmethod
+    def get_species_data(impurity: str):
+        """
+        Get species data from process section of OPEN-ADAS database
+        """
+        # T[keV] Lz[W m^3] Z_av
+        t_ref, l_ref, z_ref = np.genfromtxt(Impurities[impurity].file()).T
+
+        return t_ref, l_ref, z_ref
+
+    def get_species_fraction(self, impurity: str):
+        """
+        Get species fraction
+        """
+        return self.get_raw_variables(Impurities[impurity].id())

@@ -99,7 +99,6 @@ class Snapshot:
             self.limiter = deepcopy(limiter)
         else:
             self.limiter = None
-
         self.tf = tfcoil
 
 
