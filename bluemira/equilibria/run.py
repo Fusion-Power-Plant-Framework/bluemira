@@ -135,7 +135,7 @@ class PulsedCoilsetProblem:
         eq = Equilibrium(
             coilset,
             self.grid,
-            Ip=self.params.I_p.value * 1e6,
+            I_p=self.params.I_p.value * 1e6,
             R_0=self.params.R_0.value,
             B_0=self.params.B_0.value,
             profiles=self.profiles,

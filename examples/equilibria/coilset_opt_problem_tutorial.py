@@ -286,7 +286,7 @@ eq = Equilibrium(
     vcontrol=None,
     psi=None,
     profiles=profile,
-    Ip=I_p,
+    I_p=I_p,
     li=None,
 )
 
