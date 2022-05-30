@@ -197,9 +197,9 @@ def coil_force_constraints(
     grad: np.ndarray
         Constraint Jacobian (modified in place)
     a_mat: np.ndarray
-        Response matrix
+        Response matrix block for Fx and Fz
     b_vec: np.ndarray
-        Target value vector
+        Background value vector block for Fx and Fz
     n_PF: int
         Number of PF coils
     n_CS: int
@@ -287,12 +287,16 @@ def field_constraints(
         Current vector
     grad: np.ndarray
         Constraint Jacobian (modified in place)
-    a_mat: np.ndarray
-        Response matrix
-    b_vec: np.ndarray
-        Target value vector
+    ax_mat: np.ndarray
+        Response matrix for Bx (active coil contributions)
+    az_mat: np.ndarray
+        Response matrix for Bz (active coil contributions)
+    bxp_vec: np.ndarray
+        Background vector for Bx (passive coil contributions)
+    bzp_vec: np.ndarray
+        Background vector for Bz (passive coil contributions)
     B_max: np.ndarray
-        Maximum fields  at prescribed locations
+        Maximum fields inside the coils
     scale: float
         Current scale with which to calculate the constraints
 
