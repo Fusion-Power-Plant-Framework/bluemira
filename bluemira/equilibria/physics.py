@@ -24,6 +24,7 @@ A collection of simple equilibrium physics calculations
 """
 
 import numpy as np
+from scipy.interpolate import RectBivariateSpline
 
 from bluemira.base.constants import MU_0
 from bluemira.equilibria.find import in_plasma
@@ -173,31 +174,61 @@ def calc_k0(psi_xx0, psi_zz0):
     return np.sqrt(psi_xx0 / psi_zz0)
 
 
-def calc_q0(R_0, B_0, jp0, psi_xx0, psi_zz0):
+def calc_q0(eq):
     """
     Calculates the plasma MHD safety factor on the plasma axis (rho=0).
     Freidberg, Ideal MHD, eq 6.42, p 134
 
     Parameters
     ----------
-    R_0: float
-        Plasma axis radius
-    B_0: float
-        Toroidal field at plasma axis
-    jp0: float
-        Toroidal current density at plasma axis
-    psi_xx0: float
-        Second derivative of psi in X at the plasma axis (R_0, Z_0)
-    psi_zz0: float
-        Second derivative of psi in Z at the plasma axis (R_0, Z_0)
+    eq: Equilibrium
+        Equilibrium for which to calculate the safety factor on axis
 
     Returns
     -------
     q_0: float
         The MHD safety factor on the plasma axis
     """
+    opoint = eq.get_OX_points()[0][0]
+    psi_xx0 = eq.psi_func(opoint.x, opoint.z, dx=2, grid=False)
+    psi_zz0 = eq.psi_func(opoint.x, opoint.z, dy=2, grid=False)
+    b_0 = eq.Bt(opoint.x)
+    jfunc = RectBivariateSpline(eq.x[:, 0], eq.z[0, :], eq._jtor)
+    j_0 = jfunc(opoint.x, opoint.z, grid=False)
     k_0 = calc_k0(psi_xx0, psi_zz0)
-    return (B_0 / (MU_0 * R_0 * jp0)) * (1 + k_0**2) / k_0
+    return (b_0 / (MU_0 * opoint.x * j_0)) * (1 + k_0**2) / k_0
+
+
+def calc_dx_sep(eq):
+    """
+    Calculate the magnitude of the minimum separation between the flux
+    surfaces of null points in the equilibrium at the outboard midplane.
+
+    Parameters
+    ----------
+    eq: Equilibrium
+        Equilibrium for which to calculate dx_sep
+
+    Returns
+    -------
+    dx_sep: float
+        Separation distance at the outboard midplane between the active
+        null and the next closest flux surface with a null [m]
+    """
+    o_points, x_points = eq.get_OX_points()
+    x, z = eq.get_LCFS().d2
+    lfs = np.argmax(x)
+    lfp = eq.get_midplane(x[lfs], z[lfs], x_points[0].psi)
+    d_x = []
+    count = 0  # Necessary because of retrieval of eqdsks with limiters
+    for xp in x_points:
+        if "Xpoint" in xp.__class__.__name__:
+            if count > 0:
+                psinorm = calc_psi_norm(xp.psi, o_points[0].psi, x_points[0].psi)
+                if psinorm > 1:
+                    d_x.append(eq.get_midplane(*lfp, xp.psi)[0])
+            count += 1
+    return np.min(d_x) - lfp[0]
 
 
 def calc_volume(eq):

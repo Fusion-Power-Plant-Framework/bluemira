@@ -52,13 +52,7 @@ from bluemira.equilibria.grad_shafranov import GSSolver
 from bluemira.equilibria.grid import Grid, integrate_dx_dz
 from bluemira.equilibria.limiter import Limiter
 from bluemira.equilibria.num_control import DummyController, VirtualController
-from bluemira.equilibria.physics import (
-    calc_li,
-    calc_li3minargs,
-    calc_psi_norm,
-    calc_q0,
-    calc_summary,
-)
+from bluemira.equilibria.physics import calc_li3minargs, calc_psi_norm, calc_summary
 from bluemira.equilibria.plotting import (
     BreakdownPlotter,
     CorePlotter,
@@ -1407,55 +1401,6 @@ class Equilibrium(MHDState):
             options={"xatol": 1e-7, "disp": False},
         )
         return res.x[0], z
-
-    def calc_dx_sep(self):
-        """
-        Calculate the magnitude of the minimum separation between the flux
-        surfaces of null points in the equilibrium at the outboard midplane.
-
-        Returns
-        -------
-        dXsep: float
-            Separation distance at the outboard midplane between the active
-            null and the next closest flux surface with a null [m]
-        """
-        o_points, x_points = self.get_OX_points()
-        x, z = self.get_LCFS().d2
-        lfs = np.argmax(x)
-        lfp = self.get_midplane(x[lfs], z[lfs], x_points[0].psi)
-        d_x = []
-        count = 0  # Necessary because of retrieval of eqdsks with limiters
-        for xp in x_points:
-            if "Xpoint" in xp.__class__.__name__:
-                if count > 0:
-                    psinorm = calc_psi_norm(xp.psi, o_points[0].psi, x_points[0].psi)
-                    if psinorm > 1:
-                        d_x.append(self.get_midplane(*lfp, xp.psi)[0])
-                count += 1
-        return np.min(d_x) - lfp[0]
-
-    def calc_li(self):
-        """
-        Calculate the normalised internal inductance of the plasma.
-
-        Returns
-        -------
-        li: float
-            Nnormalised internal inductance of the plasma
-        """
-        return calc_li(self)
-
-    def calc_q0(self):
-        """
-        Calculate the MHD safety factor on the plasma axis.
-        """
-        opoint = self.get_OX_points()[0][0]
-        psi_xx = self.psi_func(opoint.x, opoint.z, dx=2, grid=False)
-        psi_zz = self.psi_func(opoint.x, opoint.z, dy=2, grid=False)
-        b_0 = self.Bt(opoint.x)
-        jfunc = RectBivariateSpline(self.x[:, 0], self.z[0, :], self._jtor)
-        j_0 = jfunc(opoint.x, opoint.z, grid=False)
-        return calc_q0(opoint.x, b_0, j_0, psi_xx, psi_zz)
 
     def analyse_core(self, n_points=50, plot=True):
         """
