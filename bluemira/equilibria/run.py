@@ -132,13 +132,10 @@ class PulsedCoilsetProblem:
         Run a reference equilibrium.
         """
         coilset = deepcopy(self.coilset)
-        rb0 = [self.params.R_0.value, self.params.B_0.value]
         eq = Equilibrium(
             coilset,
             self.grid,
-            Ip=self.params.I_p.value * 1e6,
-            RB0=rb0,
-            profiles=self.profiles,
+            self.profiles,
         )
         opt_problem = UnconstrainedTikhonovCurrentGradientCOP(
             coilset,
@@ -148,7 +145,6 @@ class PulsedCoilsetProblem:
         )
         program = PicardIterator(
             eq,
-            self.profiles,
             opt_problem,
             convergence=self._eq_convergence,
             relaxation=self._eq_settings["relaxation"],
@@ -276,7 +272,7 @@ class FixedPulsedCoilsetProblem(PulsedCoilsetProblem):
         i = 0
         i_max = 30
         while i == 0 or not relaxed:
-            breakdown = Breakdown(coilset, self.grid, R_0=R_0)
+            breakdown = Breakdown(coilset, self.grid)
 
             constraints = deepcopy(self._coil_cons)
 
@@ -295,7 +291,7 @@ class FixedPulsedCoilsetProblem(PulsedCoilsetProblem):
                 constraints=constraints,
             )
             coilset = problem.optimise(max_currents / 1e6)
-            breakdown = Breakdown(coilset, self.grid, R_0=R_0)
+            breakdown = Breakdown(coilset, self.grid)
             breakdown.set_breakdown_point(*strategy.breakdown_point)
             psi_premag = breakdown.breakdown_psi
             bluemira_print(f"Premagnetisation flux = {2*np.pi * psi_premag:.2f} V.s")
@@ -351,7 +347,6 @@ class FixedPulsedCoilsetProblem(PulsedCoilsetProblem):
 
             program = PicardIterator(
                 eq,
-                self.profiles,
                 problem,
                 convergence=self._eq_convergence,
                 relaxation=self._eq_settings["relaxation"],
@@ -359,7 +354,7 @@ class FixedPulsedCoilsetProblem(PulsedCoilsetProblem):
                 plot=False,
             )
             program()
-            self.take_snapshot(snap, eq, eq.coilset, problem, self.profiles)
+            self.take_snapshot(snap, eq, eq.coilset, problem, eq.profiles)
 
 
 if __name__ == "__main__":
@@ -437,7 +432,7 @@ if __name__ == "__main__":
         ),
         R_0=params.R_0.value,
         B_0=params.B_0.value,
-        Ip=params.I_p.value * 1e6,
+        I_p=params.I_p.value * 1e6,
     )
 
     lcfs_shape = flux_surface_johner(

@@ -302,9 +302,7 @@ class PlasmaBuilder(Builder):
         eq = Equilibrium(
             coilset,
             grid,
-            Ip=self._params.I_p.value * 1e6,
-            RB0=[R_0, self._params.B_0.value],
-            profiles=profiles,
+            profiles,
         )
         opt_problem = UnconstrainedTikhonovCurrentGradientCOP(
             eq.coilset,
@@ -314,7 +312,6 @@ class PlasmaBuilder(Builder):
         )
         program = PicardIterator(
             eq,
-            profiles,
             opt_problem,
             convergence=DudsonConvergence(),
             relaxation=0.2,

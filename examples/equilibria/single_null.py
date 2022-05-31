@@ -122,10 +122,10 @@ profiles = CustomProfile(
     ),
     R_0=R_0,
     B_0=B_0,
-    Ip=I_p,
+    I_p=I_p,
 )
 
-eq = Equilibrium(coilset, grid, psi=None, profiles=profiles, Ip=I_p, RB0=[R_0, B_0])
+eq = Equilibrium(coilset, grid, profiles, psi=None)
 
 # %%[markdown]
 
@@ -182,7 +182,7 @@ opt_problem = UnconstrainedTikhonovCurrentGradientCOP(
     coilset, eq, MagneticConstraintSet([psi_boundary, x_point]), gamma=1e-7
 )
 
-program = PicardIterator(eq, profiles, opt_problem, fixed_coils=True, relaxation=0.2)
+program = PicardIterator(eq, opt_problem, fixed_coils=True, relaxation=0.2)
 program()
 
 
@@ -228,7 +228,6 @@ opt_problem = TikhonovCurrentCOP(
 
 program = PicardIterator(
     eq,
-    profiles,
     opt_problem,
     fixed_coils=True,
     convergence=DudsonConvergence(1e-4),
@@ -255,7 +254,6 @@ opt_problem = MinimalCurrentCOP(
 
 program = PicardIterator(
     eq,
-    profiles,
     opt_problem,
     fixed_coils=True,
     convergence=DudsonConvergence(1e-4),

@@ -50,10 +50,10 @@ class TestFields:
         grid = Grid(4.5, 14, -9, 9, 65, 65)
 
         profiles = CustomProfile(
-            np.linspace(1, 0), -np.linspace(1, 0), R_0=9, B_0=6, Ip=10e6
+            np.linspace(1, 0), -np.linspace(1, 0), R_0=9, B_0=6, I_p=10e6
         )
 
-        eq = Equilibrium(cls.coilset, grid, RB0=[9, 6], Ip=10e6)
+        eq = Equilibrium(cls.coilset, grid, profiles)
 
         isoflux = IsofluxConstraint(
             np.array([6, 8, 12, 6]), np.array([0, 7, 0, -8]), 6, 0, 0
@@ -66,7 +66,7 @@ class TestFields:
             eq.coilset, eq, targets, gamma=1e-8
         )
 
-        program = PicardIterator(eq, profiles, opt_problem, relaxation=0.1, plot=False)
+        program = PicardIterator(eq, opt_problem, relaxation=0.1, plot=False)
         program()
         cls.eq = eq
 

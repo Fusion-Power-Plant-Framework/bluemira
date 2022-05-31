@@ -397,8 +397,6 @@ class PicardIterator:
     ----------
     eq: Equilibrium object
         The equilibrium to solve for
-    profiles: Profile object
-        The plasma profile object to solve with
     constraints: Constraint object
         The constraint to solve for
     optimiser: EquilibriumOptimiser object
@@ -422,7 +420,6 @@ class PicardIterator:
     def __init__(
         self,
         eq,
-        profiles,
         optimisation_problem,
         convergence=DudsonConvergence(),
         fixed_coils: bool = False,
@@ -435,7 +432,6 @@ class PicardIterator:
     ):
         self.eq = eq
         self.coilset = self.eq.coilset
-        self.profiles = profiles
         self.opt_prob = optimisation_problem
         if isinstance(convergence, ConvergenceCriterion):
             self.convergence = convergence
@@ -604,7 +600,7 @@ class PicardIterator:
         """
         Solve for this iteration.
         """
-        self.eq.solve(self.profiles, psi=self.psi)
+        self.eq.solve(psi=self.psi)
 
     def _initial_optimise_coilset(self, **kwargs):
         self._optimise_coilset(**kwargs)
@@ -627,7 +623,6 @@ class PicardIterator:
         reasonable understanding of the final state.
         """
         o_points, x_points = self.eq.get_OX_points(force_update=True)
-        self.eq._jtor = self.profiles.jtor(
+        self.eq._jtor = self.eq.profiles.jtor(
             self.eq.x, self.eq.z, self.eq.psi(), o_points, x_points
         )
-        self.eq._reassign_profiles(self.profiles)

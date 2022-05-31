@@ -478,7 +478,7 @@ class BetaIpProfile(Profile):
     ----------
     betap: float
         Plasma poloidal beta constraint
-    Ip: float
+    I_p: float
         Plasma current constraint [Amps]
     R_0: float
         Reactor major radius [m] (used in p' and ff' components)
@@ -494,10 +494,10 @@ class BetaIpProfile(Profile):
 
     # NOTE: For high betap >= 2, this can lead to there being no plasma current
     # on the high field side...
-    def __init__(self, betap, Ip, R_0, B_0, shape=None):
+    def __init__(self, betap, I_p, R_0, B_0, shape=None):
 
         self.betap = betap
-        self.Ip = Ip
+        self.I_p = I_p
         self._fvac = R_0 * B_0
         self.R_0 = R_0
         self._B_0 = B_0  # Store for eqdsk only
@@ -507,7 +507,7 @@ class BetaIpProfile(Profile):
             self.shape = DoublePowerFunc([1, 0.8])
         else:
             self.shape = shape
-        if Ip < 0:  # Reverse Ip
+        if I_p < 0:  # Reverse I_p
             self.shape *= -1
 
     def jtor(self, x, z, psi, o_points, x_points):
@@ -553,7 +553,7 @@ class BetaIpProfile(Profile):
                 x, z, psi, o_points=o_points, x_points=x_points
             )
             v_plasma = revolved_volume(*lcfs.d2)
-            Bp = MU_0 * self.Ip / lcfs.length
+            Bp = MU_0 * self.I_p / lcfs.length
             p_avg = volume_integral(pfunc, x, self.dx, self.dz) / v_plasma
             beta_p_actual = 2 * MU_0 * p_avg / Bp**2
 
@@ -563,7 +563,7 @@ class BetaIpProfile(Profile):
             # If there are no X-points, use less accurate beta_p constraint
             lambd_beta0 = (
                 -self.betap
-                * self.Ip**2
+                * self.I_p**2
                 * self.R_0
                 * MU_0
                 / (8 * np.pi)
@@ -572,7 +572,7 @@ class BetaIpProfile(Profile):
 
         part_a = self.int2d(jtorshape * x / self.R_0)
         part_b = self.int2d(jtorshape * self.R_0 / x)
-        lambd = (self.Ip + lambd_beta0 * (part_b - part_a)) / part_b
+        lambd = (self.I_p + lambd_beta0 * (part_b - part_a)) / part_b
         beta0 = lambd_beta0 / lambd
         jtor = lambd * (beta0 * x / self.R_0 + (1 - beta0) * self.R_0 / x) * jtorshape
         self.lambd = lambd
@@ -607,13 +607,13 @@ class CustomProfile(Profile):
         Reactor major radius [m]
     B_0: float
         Field at major radius [T]
-    Ip: Optional[float]
+    I_p: Optional[float]
         Plasma current [A]. If None, the plasma current will be calculated
         from p' and ff'.
     """
 
     def __init__(
-        self, pprime_func, ffprime_func, R_0, B_0, p_func=None, f_func=None, Ip=None
+        self, pprime_func, ffprime_func, R_0, B_0, p_func=None, f_func=None, I_p=None
     ):
         self._pprime_in = self.parse_to_callable(pprime_func)
         self._ffprime_in = self.parse_to_callable(ffprime_func)
@@ -622,7 +622,7 @@ class CustomProfile(Profile):
         self._fvac = R_0 * B_0
         self.R_0 = R_0
         self._B_0 = B_0
-        self.Ip = Ip
+        self.I_p = I_p
         self.scale = 1.0
 
         # Fit a shape function to the pprime profile (mostly for plotting)
@@ -670,10 +670,10 @@ class CustomProfile(Profile):
         jtor = x * self._pprime_in(psi_norm) + self._ffprime_in(psi_norm) / (x * MU_0)
         if mask is not None:
             jtor *= mask
-        if self.Ip is not None:
+        if self.I_p is not None:
             # This is a simple way to prescribe the plasma current
-            Ip = self.int2d(jtor)
-            self.scale = self.Ip / Ip
+            I_p = self.int2d(jtor)
+            self.scale = self.I_p / I_p
             jtor *= self.scale
         return jtor
 
@@ -707,5 +707,5 @@ class CustomProfile(Profile):
             B_0=abs(e["bcentre"]),
             p_func=e["pressure"],
             f_func=e["fpol"],
-            Ip=abs(e["cplasma"]),
+            I_p=abs(e["cplasma"]),
         )
