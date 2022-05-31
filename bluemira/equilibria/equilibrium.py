@@ -304,18 +304,16 @@ class Breakdown(MHDState):
         The grid which to solve over
     """
 
-    def __init__(self, coilset, grid, R_0=None, psi=None, filename=None, **kwargs):
+    def __init__(self, coilset, grid, psi=None, filename=None, **kwargs):
         super().__init__()
-        # Constructors
-        self._Ip = 0
-
         self.coilset = coilset
-        self.R_0 = R_0
         self.set_grid(grid)
         self._set_init_psi(grid, psi)
         self.limiter = kwargs.get("limiter", None)
-        # Set default breakdown point to machine centre
-        self.breakdown_point = kwargs.get("breakdown_point", (R_0, 0))
+
+        # Set default breakdown point to grid centre
+        x_mid = grid.x_min + 0.5 * (grid.x_max + grid.x_min)
+        self.breakdown_point = kwargs.get("breakdown_point", (x_mid, 0))
         self.filename = filename
 
     @classmethod
@@ -355,7 +353,7 @@ class Breakdown(MHDState):
             "z": self.grid.z_1d,
             "xgrid1": self.grid.x_min,
             "zmid": self.grid.z_mid,
-            "cplasma": 0,
+            "cplasma": 0.0,
             "psi": self.psi(),
             "Bx": self.Bx(),
             "Bz": self.Bz(),

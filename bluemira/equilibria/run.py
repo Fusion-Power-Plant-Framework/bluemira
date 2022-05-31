@@ -273,7 +273,7 @@ class FixedPulsedCoilsetProblem(PulsedCoilsetProblem):
         i = 0
         i_max = 30
         while i == 0 or not relaxed:
-            breakdown = Breakdown(coilset, self.grid, R_0=R_0)
+            breakdown = Breakdown(coilset, self.grid)
 
             constraints = deepcopy(self._coil_cons)
 
@@ -292,7 +292,7 @@ class FixedPulsedCoilsetProblem(PulsedCoilsetProblem):
                 constraints=constraints,
             )
             coilset = problem.optimise(max_currents / 1e6)
-            breakdown = Breakdown(coilset, self.grid, R_0=R_0)
+            breakdown = Breakdown(coilset, self.grid)
             breakdown.set_breakdown_point(*strategy.breakdown_point)
             psi_premag = breakdown.breakdown_psi
             bluemira_print(f"Premagnetisation flux = {2*np.pi * psi_premag:.2f} V.s")
