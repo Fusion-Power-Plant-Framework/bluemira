@@ -1,6 +1,6 @@
 services:
   bluemira:
-    image: bluemira:pyenv
+    image: bluemira:latest
     volumes:
         - /tmp/.X11-unix:/tmp/.X11-unix  # X11 forwarding
         - $HOME/.Xauthority:/user/.Xauthority  # X11 forwarding
@@ -9,11 +9,10 @@ services:
       DISPLAY: $DISPLAY
     network_mode: host
 
-  #bluemira_dev:
-  #  image: bluemira:dev
-  #  extends:
-  #    service: bluemira
-  #  profiles: ['develop']
-  #  volumes:
-  #    - ./bluemira:/home/user/bluemira
-  #    - ./process:/home/user/process
+  bluemira-develop:
+   image: bluemira:develop
+   extends:
+     service: bluemira
+   volumes:
+     - <bluemira_dir>:/home/user/bluemira
+     - <process_dir>:/home/user/process
