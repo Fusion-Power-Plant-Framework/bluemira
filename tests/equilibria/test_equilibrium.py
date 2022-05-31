@@ -66,7 +66,7 @@ class TestFields:
             eq.coilset, eq, targets, gamma=1e-8
         )
 
-        program = PicardIterator(eq, profiles, opt_problem, relaxation=0.1, plot=False)
+        program = PicardIterator(eq, opt_problem, relaxation=0.1, plot=False)
         program()
         cls.eq = eq
 
