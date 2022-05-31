@@ -19,6 +19,5 @@ fi
 
 # >0.6.6
 mkdir build && cd build
-cmake ..
-make -j$NJOBS
-make install
+cmake -G Ninja ..
+ninja install -j$NJOBS

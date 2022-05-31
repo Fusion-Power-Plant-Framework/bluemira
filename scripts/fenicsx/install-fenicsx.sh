@@ -7,7 +7,7 @@ git clone https://github.com/FEniCS/dolfinx.git
 cd dolfinx/cpp
 mkdir build
 cd build
-cmake ..
-make install
+cmake -G Ninja ..
+ninja install
 cd ../..
 pip install python/

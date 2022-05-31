@@ -9,4 +9,4 @@ apt-get install -y \
     libboost-thread-dev libeigen3-dev libgts-bin libgts-dev libkdtree++-dev \
     libmedc-dev libocct-data-exchange-dev libocct-ocaf-dev libocct-visualization-dev \
     libopencv-dev libproj-dev libspnav-dev libvtk9-dev libx11-dev libxerces-c-dev \
-    libzipios++-dev occt-draw python3-dev libclang-dev llvm
+    libzipios++-dev occt-draw python3-dev libclang-dev llvm ninja-build

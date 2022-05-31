@@ -34,7 +34,8 @@ PYTHON_FREECAD_DIR=$PYTHON_PACKAGES_DIR/freecad
 mkdir freecad-build
 cd freecad-build
 
-cmake -DBUILD_QT5=TRUE \
+cmake -G Ninja \
+      -DBUILD_QT5=TRUE \
       -DBUILD_GUI=TRUE \
       -DBUILD_FEM=FALSE \
       -DBUILD_SANDBOX=FALSE \
@@ -85,7 +86,7 @@ cmake -DBUILD_QT5=TRUE \
 
 # Crashes for me if I try to use more than one core (possibly OOM).
 # Also shouldn't force a specific number of build threads.
-make -j$NJOBS
+ninja -j$NJOBS
 
 # FreeCAD doesn't give us much help when putting files into python, so mock up some
 # infrastructure in out site-packages directory.

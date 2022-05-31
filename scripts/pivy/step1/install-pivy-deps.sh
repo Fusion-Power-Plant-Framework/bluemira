@@ -1,4 +1,4 @@
 set -e
 
 apt-get update
-apt-get install -y swig
+apt-get install -y swig ninja-build
