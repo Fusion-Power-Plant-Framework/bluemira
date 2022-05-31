@@ -1,16 +1,4 @@
-set -e
-
-NJOBS=$(nproc --ignore=2)
-FORCE="false"
-
-while getopts j:f option
-do
-  case "${option}"
-  in
-    j) NJOBS=${OPTARG};;
-    f) FORCE="true";;
-  esac
-done
+set -euxo
 
 if [[ $(basename $PWD) == *"bluemira"* ]]; then
   cd ..

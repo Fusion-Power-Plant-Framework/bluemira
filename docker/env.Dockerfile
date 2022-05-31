@@ -21,6 +21,7 @@ RUN git clone https://github.com/pyenv/pyenv.git /opt/venv
 
 ENV PYENV_ROOT=/opt/venv
 ENV PATH=$PYENV_ROOT/bin:$PATH
+ENV PYTHON_CONFIGURE_OPTS="--enable-shared"
 RUN eval "$(pyenv init -)" \
   && pyenv install 3.8.13
 ENV VIRTUAL_ENV=/opt/venv/versions/3.8.13
