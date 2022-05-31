@@ -312,7 +312,6 @@ class PlasmaBuilder(Builder):
         )
         program = PicardIterator(
             eq,
-            profiles,
             opt_problem,
             convergence=DudsonConvergence(),
             relaxation=0.2,
