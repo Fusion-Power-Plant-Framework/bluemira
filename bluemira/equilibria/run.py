@@ -35,7 +35,11 @@ from bluemira.equilibria.equilibrium import Breakdown, Equilibrium
 from bluemira.equilibria.error import EquilibriaError
 from bluemira.equilibria.grid import Grid
 from bluemira.equilibria.limiter import Limiter
-from bluemira.equilibria.opt_constraints import MagneticConstraintSet, PsiConstraint
+from bluemira.equilibria.opt_constraints import (
+    MagneticConstraintSet,
+    PsiBoundaryConstraint,
+    PsiConstraint,
+)
 from bluemira.equilibria.opt_problems import (
     BreakdownCOP,
     BreakdownZoneStrategy,
