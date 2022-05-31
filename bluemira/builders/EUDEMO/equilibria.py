@@ -123,7 +123,7 @@ class DivertorLegCalculator:
 
     def calc_divertor_leg(
         self, x_point, angle, length, n, loc="lower", pos="outer"
-    ):  # noqa :N802
+    ):  # noqa: N802
         """
         Calculate the position of a straight line divertor leg.
         """
