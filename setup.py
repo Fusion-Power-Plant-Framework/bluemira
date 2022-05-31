@@ -64,7 +64,7 @@ pinned = [
     "nlopt==2.7.0",
     "numba==0.55.1",
     "numba-scipy==0.3.0",
-    "numpy==1.21.6",
+    "numpy==1.22.4",
     "matplotlib==3.5.2",
     "scipy==1.5.3",
 ]
