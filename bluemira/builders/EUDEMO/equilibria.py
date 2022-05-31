@@ -121,9 +121,7 @@ class DivertorLegCalculator:
         zn = np.linspace(p1[1], p2[1], int(n))
         return xn, zn
 
-    def calc_divertor_leg(
-        self, x_point, angle, length, n, loc="lower", pos="outer"
-    ):  # noqa: N802
+    def calc_divertor_leg(self, x_point, angle, length, n, loc="lower", pos="outer"):
         """
         Calculate the position of a straight line divertor leg.
         """
