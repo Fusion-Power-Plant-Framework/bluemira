@@ -400,7 +400,6 @@ opt_problem = TikhonovCurrentCOP(
 
 constrained_iterator = PicardIterator(
     eq,
-    profiles,
     opt_problem,
     plot=False,
     relaxation=0.3,
@@ -423,7 +422,6 @@ unconstrained_cop = UnconstrainedTikhonovCurrentGradientCOP(
 )
 unconstrained_iterator = PicardIterator(
     eq,
-    profiles,  # jetto
     unconstrained_cop,
     plot=False,
     relaxation=0.3,

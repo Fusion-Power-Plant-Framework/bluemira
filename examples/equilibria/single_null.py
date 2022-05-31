@@ -182,7 +182,7 @@ opt_problem = UnconstrainedTikhonovCurrentGradientCOP(
     coilset, eq, MagneticConstraintSet([psi_boundary, x_point]), gamma=1e-7
 )
 
-program = PicardIterator(eq, profiles, opt_problem, fixed_coils=True, relaxation=0.2)
+program = PicardIterator(eq, opt_problem, fixed_coils=True, relaxation=0.2)
 program()
 
 
@@ -228,7 +228,6 @@ opt_problem = TikhonovCurrentCOP(
 
 program = PicardIterator(
     eq,
-    profiles,
     opt_problem,
     fixed_coils=True,
     convergence=DudsonConvergence(1e-4),
@@ -255,7 +254,6 @@ opt_problem = MinimalCurrentCOP(
 
 program = PicardIterator(
     eq,
-    profiles,
     opt_problem,
     fixed_coils=True,
     convergence=DudsonConvergence(1e-4),

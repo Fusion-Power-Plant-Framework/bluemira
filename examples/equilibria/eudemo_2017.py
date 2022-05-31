@@ -267,9 +267,7 @@ ref_opt_problem = UnconstrainedTikhonovCurrentGradientCOP(
     gamma=1e-7,
 )
 
-program = PicardIterator(
-    reference_eq, profiles, ref_opt_problem, fixed_coils=True, relaxation=0.2
-)
+program = PicardIterator(reference_eq, ref_opt_problem, fixed_coils=True, relaxation=0.2)
 program()
 
 
@@ -292,7 +290,7 @@ sof_opt_problem = MinimalCurrentCOP(
 )
 
 iterator = PicardIterator(
-    sof, profiles, sof_opt_problem, plot=True, fixed_coils=True, relaxation=0.2
+    sof, sof_opt_problem, plot=True, fixed_coils=True, relaxation=0.2
 )
 iterator()
 
@@ -315,7 +313,7 @@ eof_opt_problem = MinimalCurrentCOP(
 
 
 iterator = PicardIterator(
-    eof, profiles, eof_opt_problem, plot=True, relaxation=0.2, fixed_coils=True
+    eof, eof_opt_problem, plot=True, relaxation=0.2, fixed_coils=True
 )
 iterator()
 

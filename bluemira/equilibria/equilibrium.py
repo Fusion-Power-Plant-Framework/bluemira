@@ -817,7 +817,7 @@ class Equilibrium(MHDState):
                 ' from: 1) "virtual" \n 2) "feedback" 3) None.'
             )
 
-    def solve(self, profiles, jtor=None, psi=None):
+    def solve(self, jtor=None, psi=None):
         """
         Re-calculates the plasma equilibrium given new profiles
 
@@ -825,8 +825,6 @@ class Equilibrium(MHDState):
 
         Parameters
         ----------
-        profiles: equilibria Profile object
-            The plasma profiles to solve the G-S equation with
         jtor: numpy.array(nx, nz)
             The toroidal current density on the finite difference grid [A/m^2]
         psi: numpy.array(nx, nz)
@@ -840,7 +838,6 @@ class Equilibrium(MHDState):
             ._I_p
             ._Jtor
         """
-        self._reassign_profiles(profiles)
         self._clear_OX_points()
 
         if jtor is None:
@@ -850,7 +847,7 @@ class Equilibrium(MHDState):
 
             if not o_points:
                 raise EquilibriaError("No O-point found in equilibrium.")
-            jtor = profiles.jtor(self.x, self.z, psi, o_points, x_points)
+            jtor = self._profiles.jtor(self.x, self.z, psi, o_points, x_points)
 
         self.boundary(self.plasma_psi, jtor)
         rhs = -MU_0 * self.x * jtor  # RHS of GS equation
@@ -860,9 +857,8 @@ class Equilibrium(MHDState):
         self._update_plasma_psi(plasma_psi)
 
         self._jtor = jtor
-        self._reassign_profiles(profiles)
 
-    def solve_li(self, profiles, jtor=None, psi=None):
+    def solve_li(self, jtor=None, psi=None):
         """
         Optimises profiles to match input li
         Re-calculates the plasma equilibrium given new profiles
@@ -871,8 +867,6 @@ class Equilibrium(MHDState):
 
         Parameters
         ----------
-        profiles: Equilibria::Profile object
-            The Profile object to use when solving the G-S problem
         jtor: np.array(nx, nz) or None
             The 2-D array toroidal current at each (x, z) point (optional)
 
@@ -888,7 +882,6 @@ class Equilibrium(MHDState):
             raise EquilibriaError(
                 "Need to specify a normalised internal inductance to solve an Equilibrium with solve_li."
             )
-        self._reassign_profiles(profiles)
         self._clear_OX_points()
         if psi is None:
             psi = self.psi()
@@ -901,8 +894,8 @@ class Equilibrium(MHDState):
             """
             The minimisation function to obtain the correct l_i
             """
-            profiles.shape.adjust_parameters(x)
-            jtor_opt = profiles.jtor(self.x, self.z, psi, o_points, x_points)
+            self._profiles.shape.adjust_parameters(x)
+            jtor_opt = self._profiles.jtor(self.x, self.z, psi, o_points, x_points)
             self.boundary(self.plasma_psi, jtor_opt)
             rhs = -MU_0 * self.x * jtor_opt  # RHS of GS equation
             apply_boundary(rhs, self.plasma_psi)
@@ -914,8 +907,8 @@ class Equilibrium(MHDState):
                 self.z,
                 self.psi(),
                 self.Bp(),
-                profiles.R_0,
-                profiles.I_p,
+                self._profiles.R_0,
+                self._profiles.I_p,
                 self.dx,
                 self.dz,
                 mask=mask,
@@ -931,28 +924,19 @@ class Equilibrium(MHDState):
             return abs(self._li - li)
 
         try:  # Kein physischer Grund dafür, ist aber nützlich
-            bounds = [[-1, 3] for _ in range(len(profiles.shape.coeffs))]
+            bounds = [[-1, 3] for _ in range(len(self._profiles.shape.coeffs))]
             res = minimize(
                 minimise_dli,
-                profiles.shape.coeffs,
+                self._profiles.shape.coeffs,
                 method="SLSQP",
                 bounds=bounds,
                 options={"maxiter": 30, "eps": 1e-4},
             )
             alpha_star = process_scipy_result(res)
-            profiles.shape.adjust_parameters(alpha_star)
+            self._profiles.shape.adjust_parameters(alpha_star)
 
         except StopIteration:
             pass
-
-        self._reassign_profiles(profiles)
-
-    def _reassign_profiles(self, profiles):
-        """
-        Utility function for storing useful auxiliary information within
-        Equilibrium class
-        """
-        self._profiles = profiles
 
     def _update_plasma_psi(self, plasma_psi):
         """

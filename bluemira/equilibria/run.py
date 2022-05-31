@@ -145,7 +145,6 @@ class PulsedCoilsetProblem:
         )
         program = PicardIterator(
             eq,
-            self.profiles,
             opt_problem,
             convergence=self._eq_convergence,
             relaxation=self._eq_settings["relaxation"],
@@ -348,7 +347,6 @@ class FixedPulsedCoilsetProblem(PulsedCoilsetProblem):
 
             program = PicardIterator(
                 eq,
-                self.profiles,
                 problem,
                 convergence=self._eq_convergence,
                 relaxation=self._eq_settings["relaxation"],
@@ -356,7 +354,7 @@ class FixedPulsedCoilsetProblem(PulsedCoilsetProblem):
                 plot=False,
             )
             program()
-            self.take_snapshot(snap, eq, eq.coilset, problem, self.profiles)
+            self.take_snapshot(snap, eq, eq.coilset, problem, eq._profiles)
 
 
 if __name__ == "__main__":
