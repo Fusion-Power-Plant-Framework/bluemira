@@ -247,7 +247,7 @@ def coil_force_constraints(
 
     # calculate constraint jacobian
     if grad.size > 0:
-        dF = np.zeros((n_coils, n_coils, 2))  # noqa: N803
+        dF = np.zeros((n_coils, n_coils, 2))  # noqa: N806
         im = currents.reshape(-1, 1) @ np.ones((1, n_coils))  # current matrix
         for i in range(2):
             dF[:, :, i] = im * a_mat[:, :, i]
