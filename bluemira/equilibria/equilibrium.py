@@ -1402,32 +1402,6 @@ class Equilibrium(MHDState):
         )
         return res.x[0], z
 
-    def calc_dx_sep(self):
-        """
-        Calculate the magnitude of the minimum separation between the flux
-        surfaces of null points in the equilibrium at the outboard midplane.
-
-        Returns
-        -------
-        dXsep: float
-            Separation distance at the outboard midplane between the active
-            null and the next closest flux surface with a null [m]
-        """
-        o_points, x_points = self.get_OX_points()
-        x, z = self.get_LCFS().d2
-        lfs = np.argmax(x)
-        lfp = self.get_midplane(x[lfs], z[lfs], x_points[0].psi)
-        d_x = []
-        count = 0  # Necessary because of retrieval of eqdsks with limiters
-        for xp in x_points:
-            if "Xpoint" in xp.__class__.__name__:
-                if count > 0:
-                    psinorm = calc_psi_norm(xp.psi, o_points[0].psi, x_points[0].psi)
-                    if psinorm > 1:
-                        d_x.append(self.get_midplane(*lfp, xp.psi)[0])
-                count += 1
-        return np.min(d_x) - lfp[0]
-
     def analyse_core(self, n_points=50, plot=True):
         """
         Analyse the shape and characteristics of the plasma core.

@@ -199,6 +199,38 @@ def calc_q0(eq):
     return (b_0 / (MU_0 * opoint.x * j_0)) * (1 + k_0**2) / k_0
 
 
+def calc_dx_sep(eq):
+    """
+    Calculate the magnitude of the minimum separation between the flux
+    surfaces of null points in the equilibrium at the outboard midplane.
+
+    Parameters
+    ----------
+    eq: Equilibrium
+        Equilibrium for which to calculate dx_sep
+
+    Returns
+    -------
+    dx_sep: float
+        Separation distance at the outboard midplane between the active
+        null and the next closest flux surface with a null [m]
+    """
+    o_points, x_points = eq.get_OX_points()
+    x, z = eq.get_LCFS().d2
+    lfs = np.argmax(x)
+    lfp = eq.get_midplane(x[lfs], z[lfs], x_points[0].psi)
+    d_x = []
+    count = 0  # Necessary because of retrieval of eqdsks with limiters
+    for xp in x_points:
+        if "Xpoint" in xp.__class__.__name__:
+            if count > 0:
+                psinorm = calc_psi_norm(xp.psi, o_points[0].psi, x_points[0].psi)
+                if psinorm > 1:
+                    d_x.append(eq.get_midplane(*lfp, xp.psi)[0])
+            count += 1
+    return np.min(d_x) - lfp[0]
+
+
 def calc_volume(eq):
     """
     Calculates plasma volume [m^3]
