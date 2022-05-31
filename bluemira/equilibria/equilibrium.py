@@ -559,7 +559,7 @@ class Equilibrium(MHDState):
         super().__init__()
         # Constructors
         self._jtor = jtor
-        self._profiles = profiles
+        self.profiles = profiles
         self._plasmacoil = None  # Only calculate if necessary
         self._o_points = None
         self._x_points = None
@@ -687,15 +687,15 @@ class Equilibrium(MHDState):
             "zdim": self.grid.z_size,
             "x": self.grid.x_1d,
             "z": self.grid.z_1d,
-            "xcentre": self._profiles.R_0,
-            "bcentre": self._profiles._B_0,
+            "xcentre": self.profiles.R_0,
+            "bcentre": self.profiles._B_0,
             "xgrid1": self.grid.x_min,
             "zmid": self.grid.z_mid,
             "xmag": opoint[0],
             "zmag": opoint[1],
             "psimag": opoint[2],
             "psibdry": psi_bndry,
-            "cplasma": self._profiles.I_p,
+            "cplasma": self.profiles.I_p,
             "psi": psi,
             "fpol": self.fRBpol(psinorm),
             "ffprime": self.ffprime(psinorm),
@@ -847,7 +847,7 @@ class Equilibrium(MHDState):
 
             if not o_points:
                 raise EquilibriaError("No O-point found in equilibrium.")
-            jtor = self._profiles.jtor(self.x, self.z, psi, o_points, x_points)
+            jtor = self.profiles.jtor(self.x, self.z, psi, o_points, x_points)
 
         self.boundary(self.plasma_psi, jtor)
         rhs = -MU_0 * self.x * jtor  # RHS of GS equation
@@ -894,8 +894,8 @@ class Equilibrium(MHDState):
             """
             The minimisation function to obtain the correct l_i
             """
-            self._profiles.shape.adjust_parameters(x)
-            jtor_opt = self._profiles.jtor(self.x, self.z, psi, o_points, x_points)
+            self.profiles.shape.adjust_parameters(x)
+            jtor_opt = self.profiles.jtor(self.x, self.z, psi, o_points, x_points)
             self.boundary(self.plasma_psi, jtor_opt)
             rhs = -MU_0 * self.x * jtor_opt  # RHS of GS equation
             apply_boundary(rhs, self.plasma_psi)
@@ -907,8 +907,8 @@ class Equilibrium(MHDState):
                 self.z,
                 self.psi(),
                 self.Bp(),
-                self._profiles.R_0,
-                self._profiles.I_p,
+                self.profiles.R_0,
+                self.profiles.I_p,
                 self.dx,
                 self.dz,
                 mask=mask,
@@ -924,16 +924,16 @@ class Equilibrium(MHDState):
             return abs(self._li - li)
 
         try:  # Kein physischer Grund dafür, ist aber nützlich
-            bounds = [[-1, 3] for _ in range(len(self._profiles.shape.coeffs))]
+            bounds = [[-1, 3] for _ in range(len(self.profiles.shape.coeffs))]
             res = minimize(
                 minimise_dli,
-                self._profiles.shape.coeffs,
+                self.profiles.shape.coeffs,
                 method="SLSQP",
                 bounds=bounds,
                 options={"maxiter": 30, "eps": 1e-4},
             )
             alpha_star = process_scipy_result(res)
-            self._profiles.shape.adjust_parameters(alpha_star)
+            self.profiles.shape.adjust_parameters(alpha_star)
 
         except StopIteration:
             pass
@@ -991,7 +991,7 @@ class Equilibrium(MHDState):
                 return Coil(
                     x,
                     z,
-                    current=self._profiles.I_p,
+                    current=self.profiles.I_p,
                     control=False,
                     ctype="Plasma",
                     j_max=None,
@@ -1004,7 +1004,7 @@ class Equilibrium(MHDState):
         plasma = Coil(
             x,
             z,
-            current=self._profiles.I_p,
+            current=self.profiles.I_p,
             control=False,
             ctype="Plasma",
             j_max=None,
@@ -1040,8 +1040,8 @@ class Equilibrium(MHDState):
         zcur: float
             The vertical position of the effective current centre
         """  # noqa :W505
-        xcur = np.sqrt(1 / self._profiles.I_p * self._int_dxdz(self.x**2 * self._jtor))
-        zcur = 1 / self._profiles.I_p * self._int_dxdz(self.z * self._jtor)
+        xcur = np.sqrt(1 / self.profiles.I_p * self._int_dxdz(self.x**2 * self._jtor))
+        zcur = 1 / self.profiles.I_p * self._int_dxdz(self.z * self._jtor)
         return xcur, zcur
 
     def plasmaBx(self, x, z):
@@ -1208,14 +1208,14 @@ class Equilibrium(MHDState):
         """
         Get f = R*Bt at specified values of normalised psi.
         """
-        return self._profiles.fRBpol(psinorm)
+        return self.profiles.fRBpol(psinorm)
 
     def fvac(self):
         """
         Get vacuum f = R*Bt.
         """
         try:
-            return self._profiles.fvac()
+            return self.profiles.fvac()
         except AttributeError:  # When loading from eqdsks
             return self._fvac
 
@@ -1223,19 +1223,19 @@ class Equilibrium(MHDState):
         """
         Return p' at given normalised psi
         """
-        return self._profiles.pprime(psinorm)
+        return self.profiles.pprime(psinorm)
 
     def ffprime(self, psinorm):
         """
         Return ff' at given normalised psi
         """
-        return self._profiles.ffprime(psinorm)
+        return self.profiles.ffprime(psinorm)
 
     def pressure(self, psinorm):
         """
         Returns plasma pressure at specified values of normalised psi
         """
-        return self._profiles.pressure(psinorm)
+        return self.profiles.pressure(psinorm)
 
     def get_flux_surface(self, psi_n, psi=None, o_points=None, x_points=None):
         """
@@ -1463,7 +1463,7 @@ class Equilibrium(MHDState):
         d["A"] = f100.aspect_ratio
         d["a"] = f100.area
         # d['dXsep'] = self.calc_dXsep()
-        d["Ip"] = self._profiles.I_p
+        d["Ip"] = self.profiles.I_p
         d["dx_shaf"], d["dz_shaf"] = f100.shafranov_shift(self)
         return d
 
