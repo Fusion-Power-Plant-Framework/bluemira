@@ -21,7 +21,7 @@
 
 """
 Equilibrium optimisation constraint classes
-"""  # noqa (W505)
+"""
 
 from abc import ABC, abstractmethod
 from copy import deepcopy
@@ -68,7 +68,7 @@ class UpdateableConstraint(ABC):
     """
 
     @abstractmethod
-    def prepare(self, equilibrium, I_not_dI=False, fixed_coils=False):  # noqa :N803
+    def prepare(self, equilibrium, I_not_dI=False, fixed_coils=False):
         """
         Prepare the constraint for use in an equilibrium optimisation problem.
         """
