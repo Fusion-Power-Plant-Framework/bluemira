@@ -53,7 +53,6 @@ from bluemira.equilibria.grid import Grid, integrate_dx_dz
 from bluemira.equilibria.limiter import Limiter
 from bluemira.equilibria.num_control import DummyController, VirtualController
 from bluemira.equilibria.physics import (
-    calc_li,
     calc_li3minargs,
     calc_psi_norm,
     calc_q0,
