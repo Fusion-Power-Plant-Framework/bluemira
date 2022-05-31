@@ -1434,17 +1434,6 @@ class Equilibrium(MHDState):
                 count += 1
         return np.min(d_x) - lfp[0]
 
-    def calc_li(self):
-        """
-        Calculate the normalised internal inductance of the plasma.
-
-        Returns
-        -------
-        li: float
-            Nnormalised internal inductance of the plasma
-        """
-        return calc_li(self)
-
     def calc_q0(self):
         """
         Calculate the MHD safety factor on the plasma axis.
