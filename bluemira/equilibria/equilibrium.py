@@ -565,7 +565,6 @@ class Equilibrium(MHDState):
         self._x_points = None
         self._solver = None
         self._eqdsk = None
-        self._I_p = profiles.I_p
         self._li = li  # target plasma normalised inductance
         self._li_iter = 0  # li iteration count
         self._li_temp = None
@@ -696,7 +695,7 @@ class Equilibrium(MHDState):
             "zmag": opoint[1],
             "psimag": opoint[2],
             "psibdry": psi_bndry,
-            "cplasma": self._I_p,
+            "cplasma": self._profiles.I_p,
             "psi": psi,
             "fpol": self.fRBpol(psinorm),
             "ffprime": self.ffprime(psinorm),
@@ -860,7 +859,6 @@ class Equilibrium(MHDState):
         plasma_psi = self._solver(rhs)
         self._update_plasma_psi(plasma_psi)
 
-        self._I_p = self._int_dxdz(jtor)
         self._jtor = jtor
         self._reassign_profiles(profiles)
 
@@ -948,7 +946,6 @@ class Equilibrium(MHDState):
             pass
 
         self._reassign_profiles(profiles)
-        self._I_p = self._int_dxdz(self._jtor)
 
     def _reassign_profiles(self, profiles):
         """
@@ -1010,7 +1007,7 @@ class Equilibrium(MHDState):
                 return Coil(
                     x,
                     z,
-                    current=self._I_p,
+                    current=self._profiles.I_p,
                     control=False,
                     ctype="Plasma",
                     j_max=None,
@@ -1023,7 +1020,7 @@ class Equilibrium(MHDState):
         plasma = Coil(
             x,
             z,
-            current=self._I_p,
+            current=self._profiles.I_p,
             control=False,
             ctype="Plasma",
             j_max=None,
@@ -1059,8 +1056,8 @@ class Equilibrium(MHDState):
         zcur: float
             The vertical position of the effective current centre
         """  # noqa :W505
-        xcur = np.sqrt(1 / self._I_p * self._int_dxdz(self.x**2 * self._jtor))
-        zcur = 1 / self._I_p * self._int_dxdz(self.z * self._jtor)
+        xcur = np.sqrt(1 / self._profiles.I_p * self._int_dxdz(self.x**2 * self._jtor))
+        zcur = 1 / self._profiles.I_p * self._int_dxdz(self.z * self._jtor)
         return xcur, zcur
 
     def plasmaBx(self, x, z):
@@ -1482,7 +1479,7 @@ class Equilibrium(MHDState):
         d["A"] = f100.aspect_ratio
         d["a"] = f100.area
         # d['dXsep'] = self.calc_dXsep()
-        d["Ip"] = self._I_p
+        d["Ip"] = self._profiles.I_p
         d["dx_shaf"], d["dz_shaf"] = f100.shafranov_shift(self)
         return d
 
