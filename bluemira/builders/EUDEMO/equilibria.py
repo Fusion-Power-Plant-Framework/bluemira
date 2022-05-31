@@ -125,18 +125,20 @@ class DivertorLegCalculator:
         """
         Calculate the position of a straight line divertor leg.
         """
-        if loc == "upper":
-            z = x_point[1] + length * np.sin(np.deg2rad(angle))
-        elif loc == "lower":
-            z = x_point[1] - length * np.sin(np.deg2rad(angle))
-        else:
-            raise ValueError('Please specify loc: "upper" or "lower" X-point.')
-        if pos == "inner":
-            x = x_point[0] - length * np.cos(np.deg2rad(angle))
-        elif pos == "outer":
-            x = x_point[0] + length * np.cos(np.deg2rad(angle))
-        else:
-            raise ValueError('Please specify pos: "inner" or "outer" X leg.')
+        if loc not in ["upper", "lower"]:
+            raise ValueError(
+                f"Please specify loc: 'upper' or 'lower' X-point, not: {loc}"
+            )
+        if pos not in ["inner", "outer"]:
+            raise ValueError(f"Please specify pos: 'inner' or 'outer' X leg, not: {pos}")
+
+        loc_sign = 1 if loc == "upper" else -1
+        pos_sign = 1 if pos == "outer" else -1
+
+        angle = np.deg2rad(angle)
+        x = x_point[0] + pos_sign * length * np.cos(angle)
+        z = x_point[1] + loc_sign * length * np.sin(angle)
+
         return self.calc_line(x_point, (x, z), n)
 
 
