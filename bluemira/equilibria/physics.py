@@ -204,8 +204,7 @@ def calc_q0(eq):
     jfunc = RectBivariateSpline(eq.x[:, 0], eq.z[0, :], eq._jtor)
     j_0 = jfunc(opoint.x, opoint.z, grid=False)
     k_0 = calc_k0(psi_xx0, psi_zz0)
-    R_0, B_0 = eq._profiles.R_0, eq._profiles._B_0
-    return (B_0 / (MU_0 * R_0 * j_0)) * (1 + k_0**2) / k_0
+    return (b_0 / (MU_0 * opoint.x * j_0)) * (1 + k_0**2) / k_0
 
 
 def calc_volume(eq):
