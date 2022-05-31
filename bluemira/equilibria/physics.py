@@ -24,6 +24,7 @@ A collection of simple equilibrium physics calculations
 """
 
 import numpy as np
+from scipy.interpolate import RectBivariateSpline
 
 from bluemira.base.constants import MU_0
 from bluemira.equilibria.find import in_plasma
@@ -173,7 +174,7 @@ def calc_k0(psi_xx0, psi_zz0):
     return np.sqrt(psi_xx0 / psi_zz0)
 
 
-def calc_q0(R_0, B_0, jp0, psi_xx0, psi_zz0):
+def calc_q0(eq):
     """
     Calculates the plasma MHD safety factor on the plasma axis (rho=0).
     Freidberg, Ideal MHD, eq 6.42, p 134
@@ -196,8 +197,15 @@ def calc_q0(R_0, B_0, jp0, psi_xx0, psi_zz0):
     q_0: float
         The MHD safety factor on the plasma axis
     """
+    opoint = eq.get_OX_points()[0][0]
+    psi_xx0 = eq.psi_func(opoint.x, opoint.z, dx=2, grid=False)
+    psi_zz0 = eq.psi_func(opoint.x, opoint.z, dy=2, grid=False)
+    b_0 = eq.Bt(opoint.x)
+    jfunc = RectBivariateSpline(eq.x[:, 0], eq.z[0, :], eq._jtor)
+    j_0 = jfunc(opoint.x, opoint.z, grid=False)
     k_0 = calc_k0(psi_xx0, psi_zz0)
-    return (B_0 / (MU_0 * R_0 * jp0)) * (1 + k_0**2) / k_0
+    R_0, B_0 = eq._profiles.R_0, eq._profiles._B_0
+    return (B_0 / (MU_0 * R_0 * j_0)) * (1 + k_0**2) / k_0
 
 
 def calc_volume(eq):
