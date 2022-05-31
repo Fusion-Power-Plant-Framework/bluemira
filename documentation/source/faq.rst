@@ -18,6 +18,21 @@ The ``pip install -U -e .[dev]`` command has a cryptic error "zsh: no matches fo
     On zsh the square brackets need to be escaped this can either be achieved with
     backslashes ``\[dev\]`` or quotes ``"[dev]"``
 
+How do I update my dependencies?
+    For dependencies installed with pip (which are the majority of the dependencies) use the following script::
+
+        bash scripts/update_dependencies.sh
+
+    This script is a wrapper around the below command with some safety checks::
+
+        pip install -r requirements.txt && pip install -r requirements-develop.txt
+
+    Both commands will install the pip dependencies as run in the CI system.
+    To update the conda environment completely (only relevent when we update the conda environment
+    which is less frequently)::
+
+        conda env update --file conda/environment.yml
+
 On MacOS the ``envsubst`` command cannot be found
     MacOS is not currently a supported OS (it is not part of our CI system)
     however we do have some MacOS users. If you want to use MacOS,
