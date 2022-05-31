@@ -181,16 +181,8 @@ def calc_q0(eq):
 
     Parameters
     ----------
-    R_0: float
-        Plasma axis radius
-    B_0: float
-        Toroidal field at plasma axis
-    jp0: float
-        Toroidal current density at plasma axis
-    psi_xx0: float
-        Second derivative of psi in X at the plasma axis (R_0, Z_0)
-    psi_zz0: float
-        Second derivative of psi in Z at the plasma axis (R_0, Z_0)
+    eq: Equilibrium
+        Equilibrium for which to calculate the safety factor on axis
 
     Returns
     -------
