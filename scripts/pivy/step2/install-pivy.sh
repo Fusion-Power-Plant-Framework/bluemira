@@ -1,4 +1,4 @@
-set -e
+set -euxo
 
 cd /opt/pivy
 
