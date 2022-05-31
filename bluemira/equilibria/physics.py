@@ -366,7 +366,7 @@ def calc_summary(eq):
     """
     Calculates interesting values in one go
     """
-    R_0, I_p = eq._profiles.R_0, eq._profiles.I_p
+    R_0, I_p = eq.profiles.R_0, eq.profiles.I_p
     mask = in_plasma(eq.x, eq.z, eq.psi())
     Bp = eq.Bp()
     bpavg = volume_integral(Bp**2 * mask, eq.x, eq.dx, eq.dz)

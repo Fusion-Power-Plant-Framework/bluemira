@@ -204,7 +204,7 @@ class TestSTEquilibrium:
         self._test_profiles_good(eq)
 
     def _test_equilibrium_good(self, eq):
-        assert np.isclose(eq._profiles.I_p, abs(self.jeq_dict["cplasma"]))
+        assert np.isclose(eq.profiles.I_p, abs(self.jeq_dict["cplasma"]))
         lcfs = eq.get_LCFS()
         assert np.isclose(self.eq_blueprint.get_LCFS().area, lcfs.area, rtol=1e-2)
         assert np.isclose(lcfs.centroid[-1], 0.0)
@@ -225,12 +225,12 @@ class TestSTEquilibrium:
         bm_pprime_p = self.profiles.pprime(psi_n)
         bm_ffprime_p = self.profiles.ffprime(psi_n)
 
-        bm_pprime = eq._profiles.pprime(psi_n)
-        bm_ffprime = eq._profiles.ffprime(psi_n)
+        bm_pprime = eq.profiles.pprime(psi_n)
+        bm_ffprime = eq.profiles.ffprime(psi_n)
         assert np.allclose(bm_pprime, bm_pprime_p)
         assert np.allclose(bm_ffprime, bm_ffprime_p)
-        assert np.isclose(max(bm_ffprime) / max(jetto_ffprime), abs(eq._profiles.scale))
-        assert np.isclose(max(bm_pprime) / max(jetto_pprime), abs(eq._profiles.scale))
+        assert np.isclose(max(bm_ffprime) / max(jetto_ffprime), abs(eq.profiles.scale))
+        assert np.isclose(max(bm_pprime) / max(jetto_pprime), abs(eq.profiles.scale))
 
         jetto_pprime = scale(jetto_pprime)
         jetto_ffprime = scale(jetto_ffprime)

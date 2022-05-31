@@ -354,7 +354,7 @@ class FixedPulsedCoilsetProblem(PulsedCoilsetProblem):
                 plot=False,
             )
             program()
-            self.take_snapshot(snap, eq, eq.coilset, problem, eq._profiles)
+            self.take_snapshot(snap, eq, eq.coilset, problem, eq.profiles)
 
 
 if __name__ == "__main__":
