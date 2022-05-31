@@ -257,10 +257,7 @@ class CoilForceConstraints(UpdateableConstraint, OptimisationConstraint):
 
         n_PF = coilset.n_PF
         n_CS = coilset.n_CS
-        if n_CS == 0:
-            n_f_constraints = n_PF
-        else:
-            n_f_constraints = n_PF + n_CS
+        n_f_constraints = n_PF + n_CS
 
         if is_num(tolerance):
             tolerance = tolerance * np.ones(n_f_constraints)
