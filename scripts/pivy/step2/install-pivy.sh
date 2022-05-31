@@ -16,5 +16,5 @@ fi
 
 # >0.6.6
 mkdir build && cd build
-cmake -G Ninja ..
+cmake -G Ninja -D Python_EXECUTABLE:FILEPATH=/opt/venv/versions/3.8.13/bin/python ..
 ninja install -j$NJOBS
