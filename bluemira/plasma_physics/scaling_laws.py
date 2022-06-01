@@ -210,22 +210,24 @@ def P_LH(n_e, B_t, A, R_0, error=False):  # noqa: N802
         return value
 
 
-def IPB98y2(Ip, b_tor, p_sep, n19, R_0, A, kappa):  # noqa :N802
+def IPB98y2(I_p, B_t, P_sep, n, mass, R_0, A, kappa):  # noqa: N802
     """
-    ITER IPB98(y, 2) Confinement time scaling [2]
+    ITER IPB98(y, 2) Confinement time scaling foir ELMy H-mode [2]
 
     Parameters
     ----------
-    Ip: float
-        Plasma current [MA]
-    b_tor: float
+    I_p: float
+        Plasma current [A]
+    B_t: float
         Toroidal field at R_0 [T]
-    p_sep: float
-        Separatrix power [MW]
-    n19: float
-        Line average plasma density [10^19 1/m^3]
+    P_sep: float
+        Separatrix power [W]
+    n: float
+        Line average plasma density [1/m^3]
     R_0: float
         Major radius [m]
+    mass: float
+        Average ion mass [a.m.u.]
     A: float
         Aspect ratio
     kappa: float
@@ -242,12 +244,10 @@ def IPB98y2(Ip, b_tor, p_sep, n19, R_0, A, kappa):  # noqa :N802
 
     \t:math:`\\tau_{E}=0.0562I_p^{0.93}B_t^{0.15}P_{sep}^{-0.69}n^{0.41}M^{0.19}R_0^{1.97}A^{-0.57}\\kappa^{0.78}`
     """  # noqa :W505
-    bluemira_warn("IPB98y2 parameterisation possibly incorrect!")
-    m_t = T_MOLAR_MASS - ELECTRON_MOLAR_MASS
-    m_d = D_MOLAR_MASS - ELECTRON_MOLAR_MASS
-    m_he = HE_MOLAR_MASS - 2 * ELECTRON_MOLAR_MASS
-    mass = np.average([m_t, m_d, m_he])
+    I_p = I_p * 1e6  # [MA]
+    P_sep = P_sep * 1e6  # [MW]
+    n = n * 1e19  # [10^19/m^3]
     law = PowerLawScaling(
         c=0.0562, exponents=[0.93, 0.15, -0.69, 0.41, 0.19, 1.97, -0.58, 0.78]
     )
-    return law(Ip, b_tor, p_sep, n19, mass, R_0, A, kappa)
+    return law(I_p, B_t, P_sep, n, mass, R_0, A, kappa)
