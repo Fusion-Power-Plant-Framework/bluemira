@@ -48,23 +48,23 @@ class PowerLawScaling:
         The exponent error on the constant (cannot be specified with cerr)
     exponents: Union[np.array, List, None]
         The ordered list of exponents
-    err: Union[np.array, List, None]
+    exp_errs: Union[np.array, List, None]
         The ordered list of errors of the exponents
     """  # noqa: W505
 
     def __init__(
         self,
         constant=1.0,
-        constant_error=0.0,
+        constant_err=0.0,
         constant_exp_err=None,
         exponents=None,
-        err=None,
+        exp_errs=None,
     ):
         self.c = constant
-        self.cerr = constant_error
+        self.cerr = constant_err
         self.cexperr = constant_exp_err
         self.exponents = np.array(exponents)
-        self.errors = np.array(err)
+        self.errors = np.array(exp_errs)
 
     def __call__(self, *args):
         """
@@ -97,7 +97,7 @@ class PowerLawScaling:
             c = [np.exp(self.cexperr), np.exp(-self.cexperr)]
         up = max(c) * self.calculate(*args, exponents=self.exponents + self.errors)
         down = min(c) * self.calculate(*args, exponents=self.exponents - self.errors)
-        return self.calculate(*args), min(down, up), max(down, up)
+        return [self.calculate(*args), min(down, up), max(down, up)]
 
     def __len__(self):
         """
@@ -106,22 +106,26 @@ class PowerLawScaling:
         return len(self.exponents)
 
 
-def lambda_q(Bt: float, q_95: float, p_sol: float, R_0: float, error=False):
+def lambda_q(B_t: float, q_cyl: float, p_sol: float, R_0: float, error: bool = False):
     """
-    Scrape-off layer power width scaling (Eich, 2013) [4]
+    Scrape-off layer power width scaling (Eich et al., 2011) [4]
 
-    \t:math:`\\lambda_q=(0.7\\pm0.2)B_t^{-0.77\\pm0.14}q_{95}^{1.05\\pm0.13}P_{SOL}^{0.09\\pm0.08}R_{0}^{0\\pm0.14}`
+    \t:math:`\\lambda_q=(0.73\\pm0.38)B_t^{-0.78\\pm0.25}q_{95}^{1.2\\pm0.27}P_{SOL}^{0.1\\pm0.11}R_{0}^{0.02\\pm0.2}`
 
     Parameters
     ----------
-    Bt: float
+    B_t: float
         Toroidal field [T]
-    q_95: float
-        Safety factor at the 95th percentile
+    q_cyl: float
+        Cylindrical safety factor
     p_sol: float
         Power in the scrape-off layer [MW]
     R_0: float
         Major radius [m]
+    method: str
+        Scaling to use when calculating lambda_q
+    error: bool
+        Whether or not to report the value with +/- errors
 
     Returns
     -------
@@ -130,16 +134,16 @@ def lambda_q(Bt: float, q_95: float, p_sol: float, R_0: float, error=False):
 
     Notes
     -----
-    [4] Eich, 2013, <https://iopscience.iop.org/article/10.1088/0029-5515/53/9/093031/meta>
-    For conventional aspect ratios
+    [4] Eich et al., 2011
+        <https://journals.aps.org/prl/pdf/10.1103/PhysRevLett.107.215001>
     """  # noqa: W505
     law = PowerLawScaling(
-        c=0.0007,
-        cerr=0.0002,
-        exponents=[-0.77, 1.05, 0.09, 0],
-        err=[0.14, 0.13, 0.08, 0.14],
+        constant=0.73e-3,
+        constant_err=0.38e-3,
+        exponents=[-0.78, 1.2, 0.1, 0.02],
+        exp_errs=[0.25, 0.27, 0.11, 0.20],
     )
     if error:
-        return list(law.error(Bt, q_95, p_sol, R_0))
+        return law.error(B_t, q_cyl, p_sol, R_0)
     else:
-        return law(Bt, q_95, p_sol, R_0)
+        return law(B_t, q_cyl, p_sol, R_0)
