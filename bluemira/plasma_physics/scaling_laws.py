@@ -54,8 +54,8 @@ class PowerLawScaling:
 
     def __init__(
         self,
-        constant=1,
-        constant_error=0,
+        constant=1.0,
+        constant_error=0.0,
         constant_exp_err=None,
         exponents=None,
         err=None,
