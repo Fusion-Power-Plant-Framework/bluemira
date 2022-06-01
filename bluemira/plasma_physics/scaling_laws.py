@@ -221,7 +221,8 @@ def IPB98y2(I_p, B_t, P_sep, n, mass, R_0, A, kappa):  # noqa: N802
     B_t: float
         Toroidal field at R_0 [T]
     P_sep: float
-        Separatrix power [W]
+        Separatrix power [W]  (a.k.a. loss power (corrected for charge exchange and
+        orbit losses))
     n: float
         Line average plasma density [1/m^3]
     R_0: float
