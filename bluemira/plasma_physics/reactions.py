@@ -19,6 +19,10 @@
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 
+"""
+Fusion reactions
+"""
+
 import numpy as np
 
 from bluemira.base.constants import (
