@@ -291,7 +291,6 @@ class PlasmaBuilder(Builder):
 
         sx, sz = 1.6, 1.7  # grid scales from plasma
         nx, nz = 65, 65
-        kappa = 1.12 * self._params.kappa_95.value
         R_0 = self._params.R_0.value
         A = self._params.A.value
         x_min, x_max = R_0 - sx * (R_0 / A), R_0 + sx * (R_0 / A)
