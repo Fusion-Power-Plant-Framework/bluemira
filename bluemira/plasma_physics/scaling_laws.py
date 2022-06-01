@@ -50,7 +50,7 @@ class PowerLawScaling:
         The ordered list of exponents
     err: Union[np.array, List, None]
         The ordered list of errors of the exponents
-    """  # noqa :W505
+    """  # noqa: W505
 
     def __init__(
         self,
@@ -104,3 +104,42 @@ class PowerLawScaling:
         Get the length of the PowerLawScaling object.
         """
         return len(self.exponents)
+
+
+def lambda_q(Bt: float, q_95: float, p_sol: float, R_0: float, error=False):
+    """
+    Scrape-off layer power width scaling (Eich, 2013) [4]
+
+    \t:math:`\\lambda_q=(0.7\\pm0.2)B_t^{-0.77\\pm0.14}q_{95}^{1.05\\pm0.13}P_{SOL}^{0.09\\pm0.08}R_{0}^{0\\pm0.14}`
+
+    Parameters
+    ----------
+    Bt: float
+        Toroidal field [T]
+    q_95: float
+        Safety factor at the 95th percentile
+    p_sol: float
+        Power in the scrape-off layer [MW]
+    R_0: float
+        Major radius [m]
+
+    Returns
+    -------
+    lambda_q: float
+        Scrape-off layer width at the outboard midplane [m]
+
+    Notes
+    -----
+    [4] Eich, 2013, <https://iopscience.iop.org/article/10.1088/0029-5515/53/9/093031/meta>
+    For conventional aspect ratios
+    """  # noqa: W505
+    law = PowerLawScaling(
+        c=0.0007,
+        cerr=0.0002,
+        exponents=[-0.77, 1.05, 0.09, 0],
+        err=[0.14, 0.13, 0.08, 0.14],
+    )
+    if error:
+        return list(law.error(Bt, q_95, p_sol, R_0))
+    else:
+        return law(Bt, q_95, p_sol, R_0)
