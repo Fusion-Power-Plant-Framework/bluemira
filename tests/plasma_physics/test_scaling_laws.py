@@ -29,7 +29,7 @@ class TestLambdaQScaling:
         """
         As per https://journals.aps.org/prl/pdf/10.1103/PhysRevLett.107.215001
         """
-        lambda_q_value, min_v, max_v = lambda_q(5.3, 2.42, 120, 6.2, error=True)
+        lambda_q_value, min_v, max_v = lambda_q(5.3, 2.42, 120e6, 6.2, error=True)
         # In the paper above, the conclusions section give 0.94 mm for the extrapolation,
         # which I do not find (~ 0.96 mm) but there are additional terms which are not
         # listed in the regression (elongation, Z_eff, I_p)

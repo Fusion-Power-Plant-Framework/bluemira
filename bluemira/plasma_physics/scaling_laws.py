@@ -130,7 +130,7 @@ def lambda_q(B_t: float, q_cyl: float, p_sol: float, R_0: float, error: bool = F
     q_cyl: float
         Cylindrical safety factor
     p_sol: float
-        Power in the scrape-off layer [MW]
+        Power in the scrape-off layer [W]
     R_0: float
         Major radius [m]
     method: str
@@ -154,6 +154,7 @@ def lambda_q(B_t: float, q_cyl: float, p_sol: float, R_0: float, error: bool = F
         exponents=[-0.78, 1.2, 0.1, 0.02],
         exp_errs=[0.25, 0.27, 0.11, 0.20],
     )
+    p_sol /= 1e6
     value = law(B_t, q_cyl, p_sol, R_0)
     if error:
         min_value, max_value = law.calculate_range(B_t, q_cyl, p_sol, R_0)
@@ -207,3 +208,46 @@ def P_LH(n_e, B_t, A, R_0, error=False):  # noqa: N802
         return value, min_value, max_value
     else:
         return value
+
+
+def IPB98y2(Ip, b_tor, p_sep, n19, R_0, A, kappa):  # noqa :N802
+    """
+    ITER IPB98(y, 2) Confinement time scaling [2]
+
+    Parameters
+    ----------
+    Ip: float
+        Plasma current [MA]
+    b_tor: float
+        Toroidal field at R_0 [T]
+    p_sep: float
+        Separatrix power [MW]
+    n19: float
+        Line average plasma density [10^19 1/m^3]
+    R_0: float
+        Major radius [m]
+    A: float
+        Aspect ratio
+    kappa: float
+        Plasma elongation
+
+    Returns
+    -------
+    tau_E: float
+        The energy confinement time [s]
+
+    Notes
+    -----
+    [2] ITER Physics Expert Group, Nucl. Fus. 39, 12, <https://iopscience.iop.org/article/10.1088/0029-5515/39/12/302/pdf>
+
+    \t:math:`\\tau_{E}=0.0562I_p^{0.93}B_t^{0.15}P_{sep}^{-0.69}n^{0.41}M^{0.19}R_0^{1.97}A^{-0.57}\\kappa^{0.78}`
+    """  # noqa :W505
+    bluemira_warn("IPB98y2 parameterisation possibly incorrect!")
+    m_t = T_MOLAR_MASS - ELECTRON_MOLAR_MASS
+    m_d = D_MOLAR_MASS - ELECTRON_MOLAR_MASS
+    m_he = HE_MOLAR_MASS - 2 * ELECTRON_MOLAR_MASS
+    mass = np.average([m_t, m_d, m_he])
+    law = PowerLawScaling(
+        c=0.0562, exponents=[0.93, 0.15, -0.69, 0.41, 0.19, 1.97, -0.58, 0.78]
+    )
+    return law(Ip, b_tor, p_sep, n19, mass, R_0, A, kappa)
