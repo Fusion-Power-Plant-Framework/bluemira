@@ -210,7 +210,7 @@ def P_LH(n_e, B_t, A, R_0, error=False):  # noqa: N802
         return value
 
 
-def IPB98y2(I_p, B_t, P_sep, n, mass, R_0, A, kappa):  # noqa: N802
+def IPB98y2(I_p, B_t, p_sep, n, mass, R_0, A, kappa):  # noqa: N802
     """
     ITER IPB98(y, 2) Confinement time scaling foir ELMy H-mode [2]
 
@@ -220,7 +220,7 @@ def IPB98y2(I_p, B_t, P_sep, n, mass, R_0, A, kappa):  # noqa: N802
         Plasma current [A]
     B_t: float
         Toroidal field at R_0 [T]
-    P_sep: float
+    p_sep: float
         Separatrix power [W]  (a.k.a. loss power (corrected for charge exchange and
         orbit losses))
     n: float
@@ -246,9 +246,9 @@ def IPB98y2(I_p, B_t, P_sep, n, mass, R_0, A, kappa):  # noqa: N802
     \t:math:`\\tau_{E}=0.0562I_p^{0.93}B_t^{0.15}P_{sep}^{-0.69}n^{0.41}M^{0.19}R_0^{1.97}A^{-0.57}\\kappa^{0.78}`
     """  # noqa :W505
     I_p = I_p * 1e6  # [MA]
-    P_sep = P_sep * 1e6  # [MW]
+    p_sep = p_sep * 1e6  # [MW]
     n = n * 1e19  # [10^19/m^3]
     law = PowerLawScaling(
         c=0.0562, exponents=[0.93, 0.15, -0.69, 0.41, 0.19, 1.97, -0.58, 0.78]
     )
-    return law(I_p, B_t, P_sep, n, mass, R_0, A, kappa)
+    return law(I_p, B_t, p_sep, n, mass, R_0, A, kappa)
