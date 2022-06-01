@@ -212,7 +212,7 @@ def P_LH(n_e, B_t, A, R_0, error=False):  # noqa: N802
 
 def IPB98y2(I_p, B_t, p_sep, n, mass, R_0, A, kappa):  # noqa: N802
     """
-    ITER IPB98(y, 2) Confinement time scaling foir ELMy H-mode [2]
+    ITER IPB98(y, 2) Confinement time scaling for ELMy H-mode [2]
 
     Parameters
     ----------
@@ -242,6 +242,7 @@ def IPB98y2(I_p, B_t, p_sep, n, mass, R_0, A, kappa):  # noqa: N802
     Notes
     -----
     [2] ITER Physics Expert Group, Nucl. Fus. 39, 12, <https://iopscience.iop.org/article/10.1088/0029-5515/39/12/302/pdf>
+    equation (20)
 
     \t:math:`\\tau_{E}=0.0562I_p^{0.93}B_t^{0.15}P_{sep}^{-0.69}n^{0.41}M^{0.19}R_0^{1.97}A^{-0.57}\\kappa^{0.78}`
     """  # noqa :W505
