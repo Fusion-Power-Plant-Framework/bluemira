@@ -43,7 +43,7 @@ class TestPLH:
         """
         As per https://infoscience.epfl.ch/record/135655/files/1742-6596_123_1_012033.pdf
         """
-        P_LH_value, min_v, max_v = P_LH(1e20, 5.3, 3.1, 6.2, error=True)
+        p_lh_threshold, min_v, max_v = P_LH(1e20, 5.3, 3.1, 6.2, error=True)
         # No value provided for this scaling (3), but ballpark is right
-        np.testing.assert_approx_equal(P_LH_value, 90e6, significant=1)
-        assert min_v < P_LH_value < max_v
+        np.testing.assert_approx_equal(p_lh_threshold, 90e6, significant=1)
+        assert min_v < p_lh_threshold < max_v

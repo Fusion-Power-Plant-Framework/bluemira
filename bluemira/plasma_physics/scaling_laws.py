@@ -25,8 +25,6 @@ A collection of common 0-D plasma physics scaling laws.
 
 import numpy as np
 
-from bluemira.base.look_and_feel import bluemira_warn
-
 
 class PowerLawScaling:
     """
@@ -188,6 +186,7 @@ def P_LH(n_e, B_t, A, R_0, error=False):  # noqa: N802
     -----
     [3] Martin et al., 2008,
     <https://infoscience.epfl.ch/record/135655/files/1742-6596_123_1_012033.pdf>
+    equation (3)
 
     \t:math:`P_{LH}=2.15e^{\\pm 0.107}n_{e20}^{0.782 \\pm 0.037}`
     \t:math:`B_{T}^{0.772 \\pm 0.031}a^{0.975 \\pm 0.08}R_{0}^{0.999 \\pm 0.101}`
