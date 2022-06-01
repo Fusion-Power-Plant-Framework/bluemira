@@ -18,6 +18,9 @@
 #
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
+
+import numpy as np
+
 from bluemira.base.constants import (
     AMU_TO_KG,
     C_LIGHT,
@@ -27,8 +30,10 @@ from bluemira.base.constants import (
     HE3_MOLAR_MASS,
     HE_MOLAR_MASS,
     J_TO_EV,
+    N_AVOGADRO,
     NEUTRON_MOLAR_MASS,
     PROTON_MOLAR_MASS,
+    T_MOLAR_MASS,
 )
 
 
