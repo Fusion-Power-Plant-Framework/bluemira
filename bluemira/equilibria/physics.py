@@ -24,6 +24,7 @@ A collection of simple equilibrium physics calculations
 """
 
 import numpy as np
+from scipy.interpolate import RectBivariateSpline
 
 from bluemira.base.constants import MU_0
 from bluemira.equilibria.find import in_plasma
@@ -95,7 +96,7 @@ def calc_tau_flattop(psi_sof, psi_eof, v_burn):
     return (psi_sof - psi_eof) / v_burn
 
 
-def calc_psib(psi_bd, R_0, Ip, li, c_ejima=0.4):
+def calc_psib(psi_bd, R_0, I_p, li, c_ejima=0.4):
     """
     Calculates the boundary flux at start of flat-top, after the breakdown
 
@@ -112,7 +113,7 @@ def calc_psib(psi_bd, R_0, Ip, li, c_ejima=0.4):
         The flux at the breakdown [V.s]
     R_0: float
         The machine major radius [m]
-    Ip: float
+    I_p: float
         The desired flat-top plasma current [A]
     li: float
         The normalised plasma inductance
@@ -122,10 +123,10 @@ def calc_psib(psi_bd, R_0, Ip, li, c_ejima=0.4):
     psi_b: float
         The flux at the boundary at start of flat-top [V.s]
     """
-    return psi_bd - 0.5 * MU_0 * R_0 * li * Ip - c_ejima * MU_0 * R_0 * Ip
+    return psi_bd - 0.5 * MU_0 * R_0 * li * I_p - c_ejima * MU_0 * R_0 * I_p
 
 
-def calc_qstar(R_0, A, B_0, kappa, Ip):
+def calc_qstar(R_0, A, B_0, kappa, I_p):
     """
     Calculates the kink safety factor at the plasma edge
 
@@ -143,7 +144,7 @@ def calc_qstar(R_0, A, B_0, kappa, Ip):
         Toroidal field at major radius [T]
     kappa: float
         Plasma elongation
-    Ip: float
+    I_p: float
         Plasma current [A]
 
     Returns
@@ -151,7 +152,7 @@ def calc_qstar(R_0, A, B_0, kappa, Ip):
     q_star: float
         Kink safety factor
     """
-    return np.pi * (R_0 / A) ** 2 * B_0 * (1 + kappa**2) / (MU_0 * R_0 * Ip)
+    return np.pi * (R_0 / A) ** 2 * B_0 * (1 + kappa**2) / (MU_0 * R_0 * I_p)
 
 
 def calc_k0(psi_xx0, psi_zz0):
@@ -173,31 +174,61 @@ def calc_k0(psi_xx0, psi_zz0):
     return np.sqrt(psi_xx0 / psi_zz0)
 
 
-def calc_q0(R_0, B_0, jp0, psi_xx0, psi_zz0):
+def calc_q0(eq):
     """
     Calculates the plasma MHD safety factor on the plasma axis (rho=0).
     Freidberg, Ideal MHD, eq 6.42, p 134
 
     Parameters
     ----------
-    R_0: float
-        Plasma axis radius
-    B_0: float
-        Toroidal field at plasma axis
-    jp0: float
-        Toroidal current density at plasma axis
-    psi_xx0: float
-        Second derivative of psi in X at the plasma axis (R_0, Z_0)
-    psi_zz0: float
-        Second derivative of psi in Z at the plasma axis (R_0, Z_0)
+    eq: Equilibrium
+        Equilibrium for which to calculate the safety factor on axis
 
     Returns
     -------
     q_0: float
         The MHD safety factor on the plasma axis
     """
+    opoint = eq.get_OX_points()[0][0]
+    psi_xx0 = eq.psi_func(opoint.x, opoint.z, dx=2, grid=False)
+    psi_zz0 = eq.psi_func(opoint.x, opoint.z, dy=2, grid=False)
+    b_0 = eq.Bt(opoint.x)
+    jfunc = RectBivariateSpline(eq.x[:, 0], eq.z[0, :], eq._jtor)
+    j_0 = jfunc(opoint.x, opoint.z, grid=False)
     k_0 = calc_k0(psi_xx0, psi_zz0)
-    return (B_0 / (MU_0 * R_0 * jp0)) * (1 + k_0**2) / k_0
+    return (b_0 / (MU_0 * opoint.x * j_0)) * (1 + k_0**2) / k_0
+
+
+def calc_dx_sep(eq):
+    """
+    Calculate the magnitude of the minimum separation between the flux
+    surfaces of null points in the equilibrium at the outboard midplane.
+
+    Parameters
+    ----------
+    eq: Equilibrium
+        Equilibrium for which to calculate dx_sep
+
+    Returns
+    -------
+    dx_sep: float
+        Separation distance at the outboard midplane between the active
+        null and the next closest flux surface with a null [m]
+    """
+    o_points, x_points = eq.get_OX_points()
+    x, z = eq.get_LCFS().d2
+    lfs = np.argmax(x)
+    lfp = eq.get_midplane(x[lfs], z[lfs], x_points[0].psi)
+    d_x = []
+    count = 0  # Necessary because of retrieval of eqdsks with limiters
+    for xp in x_points:
+        if "Xpoint" in xp.__class__.__name__:
+            if count > 0:
+                psinorm = calc_psi_norm(xp.psi, o_points[0].psi, x_points[0].psi)
+                if psinorm > 1:
+                    d_x.append(eq.get_midplane(*lfp, xp.psi)[0])
+            count += 1
+    return np.min(d_x) - lfp[0]
 
 
 def calc_volume(eq):
@@ -226,7 +257,7 @@ def calc_Li(eq):  # noqa :N802
     \t:math:`L_i=\\dfrac{2W}{I_{p}^{2}}`
     """
     p_energy = calc_energy(eq)
-    return 2 * p_energy / eq._Ip**2
+    return 2 * p_energy / eq._I_p**2
 
 
 def calc_li(eq):
@@ -256,11 +287,11 @@ def calc_li3(eq):
     mask = in_plasma(eq.x, eq.z, eq.psi())
     Bp = eq.Bp()
     bpavg = volume_integral(Bp**2 * mask, eq.x, eq.dx, eq.dz)
-    return 2 * bpavg / (eq._R_0 * (MU_0 * eq._Ip) ** 2)
+    return 2 * bpavg / (eq._R_0 * (MU_0 * eq._I_p) ** 2)
 
 
 def calc_li3minargs(
-    x, z, psi, Bp, R_0, Ip, dx, dz, mask=None, o_points=None, x_points=None
+    x, z, psi, Bp, R_0, I_p, dx, dz, mask=None, o_points=None, x_points=None
 ):
     """
     Calculate the normalised plasma internal inductance with arguments only.
@@ -270,7 +301,7 @@ def calc_li3minargs(
     if mask is None:
         mask = in_plasma(x, z, psi, o_points=o_points, x_points=x_points)
     bpavg = volume_integral(Bp**2 * mask, x, dx, dz)
-    return 2 * bpavg / (R_0 * (MU_0 * Ip) ** 2)
+    return 2 * bpavg / (R_0 * (MU_0 * I_p) ** 2)
 
 
 def calc_p_average(eq):
@@ -358,7 +389,7 @@ def calc_beta_p_approx(eq):
     """
     p_avg = calc_p_average(eq)
     circumference = eq.get_LCFS().length
-    Bp = MU_0 * eq._Ip / circumference
+    Bp = MU_0 * eq._I_p / circumference
     return 2 * MU_0 * p_avg / Bp**2
 
 
@@ -366,13 +397,14 @@ def calc_summary(eq):
     """
     Calculates interesting values in one go
     """
+    R_0, I_p = eq.profiles.R_0, eq.profiles.I_p
     mask = in_plasma(eq.x, eq.z, eq.psi())
     Bp = eq.Bp()
     bpavg = volume_integral(Bp**2 * mask, eq.x, eq.dx, eq.dz)
     energy = bpavg / (2 * MU_0)
-    li_true = 2 * energy / eq._Ip**2
-    li = 2 * li_true / (MU_0 * eq._R_0)
-    li3 = 2 * bpavg / (eq._R_0 * (MU_0 * eq._Ip) ** 2)
+    li_true = 2 * energy / I_p**2
+    li = 2 * li_true / (MU_0 * R_0)
+    li3 = 2 * bpavg / (R_0 * (MU_0 * R_0) ** 2)
     volume = calc_volume(eq)
     beta_p = calc_beta_p(eq)
     return {
@@ -406,7 +438,7 @@ def beta(pressure, field):
     return np.mean(pressure) / (field**2 / 2 * MU_0)
 
 
-def normalise_beta(beta, a, b_tor, Ip):
+def normalise_beta(beta, a, b_tor, I_p):
     """
     Converts beta to normalised beta
 
@@ -420,7 +452,7 @@ def normalise_beta(beta, a, b_tor, Ip):
         Plasma minor radius [m]
     b_tor: float
         Toroidal field [T]
-    Ip: float
+    I_p: float
         Plasma current [MA]
 
     Returns
@@ -428,10 +460,10 @@ def normalise_beta(beta, a, b_tor, Ip):
     beta_N: float
         Normalised ratio of plasma to magnetic pressure (Troyon factor)
     """
-    return beta * a * b_tor / Ip
+    return beta * a * b_tor / I_p
 
 
-def beta_N_to_beta(beta_N, a, Btor, Ip):  # noqa :N802
+def beta_N_to_beta(beta_N, a, Btor, I_p):  # noqa :N802
     """
     Converts normalised beta to beta
 
@@ -445,7 +477,7 @@ def beta_N_to_beta(beta_N, a, Btor, Ip):  # noqa :N802
         Plasma minor radius [m]
     b_tor: float
         Toroidal field [T]
-    Ip: float
+    I_p: float
         Plasma current [MA]
 
     Returns
@@ -454,4 +486,4 @@ def beta_N_to_beta(beta_N, a, Btor, Ip):  # noqa :N802
         Ratio of plasma to magnetic pressure
 
     """
-    return beta_N * Ip / (a * Btor)
+    return beta_N * I_p / (a * Btor)

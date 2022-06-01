@@ -35,17 +35,15 @@ from bluemira.base.components import Component, PhysicalComponent
 from bluemira.base.config import Configuration
 from bluemira.base.error import BuilderError
 from bluemira.base.look_and_feel import bluemira_print
+from bluemira.builders.EUDEMO.equilibria import EUDEMOSingleNullConstraints
+from bluemira.builders.EUDEMO.pf_coils import make_coilset
 from bluemira.display.palettes import BLUE_PALETTE
-from bluemira.equilibria._deprecated_run import AbInitioEquilibriumProblem
-from bluemira.equilibria.constants import (
-    NB3SN_B_MAX,
-    NB3SN_J_MAX,
-    NBTI_B_MAX,
-    NBTI_J_MAX,
-)
 from bluemira.equilibria.equilibrium import Equilibrium
+from bluemira.equilibria.grid import Grid
+from bluemira.equilibria.opt_problems import UnconstrainedTikhonovCurrentGradientCOP
+from bluemira.equilibria.profiles import BetaIpProfile
 from bluemira.equilibria.shapes import JohnerLCFS
-from bluemira.geometry._deprecated_loop import Loop
+from bluemira.equilibria.solve import DudsonConvergence, PicardIterator
 from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.parameterisations import PrincetonD
 from bluemira.geometry.tools import make_circle, make_polygon, offset_wire, revolve_shape
@@ -101,10 +99,15 @@ class PlasmaBuilder(Builder):
         "r_tf_in_centre",
         "r_tf_out_centre",
         "tk_cs",
+        "g_cs_mod",
+        "tk_cs_insulation",
+        "tk_cs_casing",
         "n_PF",
         "n_CS",
-        "PF_material",
-        "CS_material",
+        "PF_jmax",
+        "PF_bmax",
+        "CS_jmax",
+        "CS_bmax",
         "C_Ejima",
         "reactor_type",
         "plasma_type",
@@ -233,62 +236,90 @@ class PlasmaBuilder(Builder):
         # TODO: Avoid converting to (deprecated) Loop
         # TODO: Agree on numpy array dimensionality
         x, z = flatten_shape(*tf_boundary.discretize(200, byedges=True).xz)
-        tf_boundary = Loop(x=x, z=z)
+        tf_boundary = make_polygon({"x": x, "z": z})
 
-        profile = None
+        kappa = 1.12 * self._params.kappa_95.value
 
-        self._design_problem = AbInitioEquilibriumProblem(
-            self._params.R_0.value,
-            self._params.B_0.value,
-            self._params.A.value,
-            self._params.I_p.value * 1e6,  # MA to A
-            self._params.beta_p.value / 1.3,  # TODO: beta_N vs beta_p here?
-            self._params.l_i.value,
-            # TODO: 100/95 problem
-            # TODO: This is a parameter patch... switch to strategy pattern
-            self._params.kappa_95.value,
-            1.2 * self._params.kappa_95.value,
-            self._params.delta_95.value,
-            1.2 * self._params.delta_95.value,
-            -20,
-            5,
-            60,
-            30,
-            self._params.div_L2D_ib.value,
-            self._params.div_L2D_ob.value,
-            self._params.r_cs_in.value + self._params.tk_cs.value / 2,
-            self._params.tk_cs.value / 2,
+        coilset = make_coilset(
             tf_boundary,
-            self._params.n_PF.value,
-            self._params.n_CS.value,
-            c_ejima=self._params.C_Ejima.value,
-            eqtype=self._params.plasma_type.value,
-            rtype=self._params.reactor_type.value,
-            profile=profile,
+            R_0=self._params.R_0.value,
+            kappa=kappa,
+            delta=self._params.delta_95.value,
+            r_cs=self._params.r_cs_in.value + self._params.tk_cs.value / 2,
+            tk_cs=self._params.tk_cs.value / 2,
+            g_cs=self._params.g_cs_mod.value,
+            tk_cs_ins=self._params.tk_cs_insulation.value,
+            tk_cs_cas=self._params.tk_cs_casing.value,
+            n_CS=self._params.n_CS.value,
+            n_PF=self._params.n_PF.value,
+            CS_jmax=self._params.CS_jmax.value,
+            CS_bmax=self._params.CS_bmax.value,
+            PF_jmax=self._params.PF_jmax.value,
+            PF_bmax=self._params.PF_bmax.value,
         )
 
-        # TODO: Handle these through properties on actual materials.
-        if self._params.PF_material.value == "NbTi":
-            j_pf = NBTI_J_MAX
-            b_pf = NBTI_B_MAX
-        elif self._params.PF_material.value == "Nb3Sn":
-            j_pf = NB3SN_J_MAX
-            b_pf = NB3SN_B_MAX
-        else:
-            raise ValueError("Unrecognised material string")
+        kappa_ul_tweak = 0.05
+        kappa_u = (1 - kappa_ul_tweak) * kappa
+        kappa_l = (1 + kappa_ul_tweak) * kappa
 
-        if self._params.CS_material.value == "NbTi":
-            j_cs = NBTI_J_MAX
-            b_pf = NBTI_B_MAX
-        elif self._params.CS_material.value == "Nb3Sn":
-            j_cs = NB3SN_J_MAX
-            b_cs = NB3SN_B_MAX
+        eq_targets = EUDEMOSingleNullConstraints(
+            R_0=self._params.R_0.value,
+            Z_0=0.0,
+            A=self._params.A.value,
+            kappa_u=kappa_u,
+            kappa_l=kappa_l,
+            delta_u=self._params.delta_95.value,
+            delta_l=self._params.delta_95.value,
+            psi_u_neg=0.0,
+            psi_u_pos=0.0,
+            psi_l_neg=60.0,
+            psi_l_pos=30.0,
+            div_l_ib=self._params.div_L2D_ib.value,
+            div_l_ob=self._params.div_L2D_ob.value,
+            psibval=0.0,
+            psibtol=1.0e-3,
+            lower=True,
+            n=100,
+        )
 
-        self._design_problem.coilset.assign_coil_materials("PF", j_max=j_pf, b_max=b_pf)
-        self._design_problem.coilset.assign_coil_materials("CS", j_max=j_cs, b_max=b_cs)
-        self._design_problem.solve(plot=self._plot_flag)
+        profiles = BetaIpProfile(
+            self._params.beta_p.value,
+            self._params.I_p.value * 1e6,
+            self._params.R_0.value,
+            self._params.B_0.value,
+        )
 
-        return self._design_problem.eq
+        sx, sz = 1.6, 1.7  # grid scales from plasma
+        nx, nz = 65, 65
+        R_0 = self._params.R_0.value
+        A = self._params.A.value
+        x_min, x_max = R_0 - sx * (R_0 / A), R_0 + sx * (R_0 / A)
+        z_min, z_max = -sz * (kappa * R_0 / A), sz * (kappa * R_0 / A)
+
+        grid = Grid(x_min, x_max, z_min, z_max, nx, nz)
+
+        eq = Equilibrium(
+            coilset,
+            grid,
+            profiles,
+        )
+        opt_problem = UnconstrainedTikhonovCurrentGradientCOP(
+            eq.coilset,
+            eq,
+            eq_targets,
+            gamma=1e-8,
+        )
+        program = PicardIterator(
+            eq,
+            opt_problem,
+            convergence=DudsonConvergence(),
+            relaxation=0.2,
+            fixed_coils=True,
+            plot=self._plot_flag,
+        )
+        program()
+        self._design_problem = opt_problem
+        return eq
 
     def _analyse_equilibrium(self, eq: Equilibrium):
         """

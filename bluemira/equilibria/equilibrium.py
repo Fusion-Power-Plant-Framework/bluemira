@@ -48,18 +48,11 @@ from bluemira.equilibria.find import (
     in_zone,
 )
 from bluemira.equilibria.flux_surfaces import ClosedFluxSurface, analyse_plasma_core
-from bluemira.equilibria.force_field import ForceField
 from bluemira.equilibria.grad_shafranov import GSSolver
 from bluemira.equilibria.grid import Grid, integrate_dx_dz
 from bluemira.equilibria.limiter import Limiter
 from bluemira.equilibria.num_control import DummyController, VirtualController
-from bluemira.equilibria.physics import (
-    calc_li,
-    calc_li3minargs,
-    calc_psi_norm,
-    calc_q0,
-    calc_summary,
-)
+from bluemira.equilibria.physics import calc_li3minargs, calc_psi_norm, calc_summary
 from bluemira.equilibria.plotting import (
     BreakdownPlotter,
     CorePlotter,
@@ -88,7 +81,6 @@ class MHDState:
         self._psi_green = None
         self._bx_green = None
         self._bz_green = None
-        self.force_field = None
         self.grid = None
         self.coilset = None
         self.limiter = None
@@ -151,36 +143,50 @@ class MHDState:
         self._psi_green = self.coilset.map_psi_greens(self.x, self.z)
         self._bx_green = self.coilset.map_Bx_greens(self.x, self.z)
         self._bz_green = self.coilset.map_Bz_greens(self.x, self.z)
-        self.set_forcefield()
 
-    def set_forcefield(self):
+    def get_coil_forces(self):
         """
-        Set a ForceField object for the MHDState.
-        """
-        self.force_field = ForceField(self.coilset, self.plasma_coil())
-
-    def get_forces(self):
-        """
-        Returns the Fx and Fz force on the control coils
+        Returns the Fx and Fz force at the centre of the control coils
 
         Returns
         -------
         F: np.array(n_coils, 2)
             [Fx, Fz] array of forces on coils [MN]
-        """
-        return self.force_field.calc_force(self.coilset.get_control_currents())[0] / 1e6
 
-    def get_fields(self):
+        Notes
+        -----
+        Will not work for symmetric circuits
+        """
+        coils = list(self.coilset.coils.values())
+        currents = self.coilset.get_control_currents()
+        plasma = self.plasma_coil()
+        response = np.zeros((len(coils), len(coils), 2))
+        background = np.zeros((len(coils), 2))
+        for i, coil1 in enumerate(coils):
+            for j, coil2 in enumerate(coils):
+                response[i, j, :] = coil1.control_F(coil2)
+            if coil1.current != 0.0:
+                background[i, :] = coil1.F(plasma) / coil1.current
+
+        forces = np.zeros((len(coils), 2))
+        forces[:, 0] = currents * (response[:, :, 0] @ currents + background[:, 0])
+        forces[:, 1] = currents * (response[:, :, 1] @ currents + background[:, 1])
+
+        return forces / 1e6
+
+    def get_coil_fields(self):
         """
         Returns the poloidal magnetic fields on the control coils
-        (approximate peak)
+        (approximate peak at the middle inner radius of the coil)
 
         Returns
         -------
         B: np.array(n_coils)
             The Bp array of fields on coils [T]
         """
-        return self.force_field.calc_field(self.coilset.get_control_currents())[0]
+        x = [c.x - c.dx for c in self.coilset.coils.values()]
+        z = [c.z for c in self.coilset.coils.values()]
+        return self.Bp(x, z)
 
     def plasma_coil(self):
         """
@@ -292,18 +298,16 @@ class Breakdown(MHDState):
         The grid which to solve over
     """
 
-    def __init__(self, coilset, grid, R_0=None, psi=None, filename=None, **kwargs):
+    def __init__(self, coilset, grid, psi=None, filename=None, **kwargs):
         super().__init__()
-        # Constructors
-        self._Ip = 0
-
         self.coilset = coilset
-        self.R_0 = R_0
         self.set_grid(grid)
         self._set_init_psi(grid, psi)
         self.limiter = kwargs.get("limiter", None)
-        # Set default breakdown point to machine centre
-        self.breakdown_point = kwargs.get("breakdown_point", (R_0, 0))
+
+        # Set default breakdown point to grid centre
+        x_mid = grid.x_min + 0.5 * (grid.x_max + grid.x_min)
+        self.breakdown_point = kwargs.get("breakdown_point", (x_mid, 0))
         self.filename = filename
 
     @classmethod
@@ -343,7 +347,7 @@ class Breakdown(MHDState):
             "z": self.grid.z_1d,
             "xgrid1": self.grid.x_min,
             "zmid": self.grid.z_mid,
-            "cplasma": 0,
+            "cplasma": 0.0,
             "psi": self.psi(),
             "Bx": self.Bx(),
             "Bz": self.Bz(),
@@ -513,6 +517,8 @@ class Equilibrium(MHDState):
         The set of coil objects which the equilibrium will be solved with
     grid: Grid object
         The grid on which to calculate the Equilibrium
+    profiles: Profile or
+        The plasma profiles to use in the Equilibrium
     force_symmetry: bool in (optional) default = False
         Controls whether symmetry of the plasma contribution to psi across z=0
         is strictly enforced in the linear system formed during solve step.
@@ -522,18 +528,11 @@ class Equilibrium(MHDState):
         Limiter conditions to apply to equilibrium
     psi: None or 2-D numpy array (optional) default = None
         Magnetic flux [V.s] applied to X, Z grid
-    Ip: float (optional) default = 0
-        Plasma current [A]
     li: None or float (default None)
         Normalised plasma internal inductance [-]
-    RB0: float (optional) default = None
-        Major radius vacuum R_0*B_T,0 - used when loading eqdsks
     jtor: np.array or None
         The toroidal current density array of the plasma. Default = None will
         cause the jtor array to be constructed later as necessary.
-    profiles: Profile or None
-        The plasma profiles to use in the Equilibrium. Default = None means the
-        profiles can be input at a later stage.
     filename: str or None
         The filename of the Equilibrium. Default = None (no file)
     """
@@ -542,27 +541,24 @@ class Equilibrium(MHDState):
         self,
         coilset,
         grid,
+        profiles,
         force_symmetry=False,
         vcontrol=None,
         limiter=None,
         psi=None,
-        Ip=0,
         li=None,
-        RB0=None,  # noqa :N803
         jtor=None,
-        profiles=None,
         filename=None,
     ):
         super().__init__()
         # Constructors
         self._jtor = jtor
-        self._profiles = profiles
+        self.profiles = profiles
         self._plasmacoil = None  # Only calculate if necessary
         self._o_points = None
         self._x_points = None
         self._solver = None
         self._eqdsk = None
-        self._Ip = Ip  # target plasma current
         self._li = li  # target plasma normalised inductance
         self._li_iter = 0  # li iteration count
         self._li_temp = None
@@ -582,11 +578,6 @@ class Equilibrium(MHDState):
         self.boundary = FreeBoundary(self.grid)
         self.set_vcontrol(vcontrol)
         self.limiter = limiter
-        if RB0 is not None:
-            self._fvac = RB0[0] * RB0[1]
-            self._R_0 = RB0[0]
-            self._B_0 = RB0[1]
-
         self.filename = filename
 
         self._kwargs = {"vcontrol": vcontrol}
@@ -637,13 +628,11 @@ class Equilibrium(MHDState):
         return cls(
             coilset,
             grid,
+            profiles=profiles,
             vcontrol=None,
             limiter=limiter,
             psi=psi,
-            Ip=e["cplasma"],
-            RB0=[e["xcentre"], e["bcentre"]],
             jtor=jtor,
-            profiles=profiles,
             filename=filename,
         )
 
@@ -692,15 +681,15 @@ class Equilibrium(MHDState):
             "zdim": self.grid.z_size,
             "x": self.grid.x_1d,
             "z": self.grid.z_1d,
-            "xcentre": self._R_0,
-            "bcentre": self._B_0,
+            "xcentre": self.profiles.R_0,
+            "bcentre": self.profiles._B_0,
             "xgrid1": self.grid.x_min,
             "zmid": self.grid.z_mid,
             "xmag": opoint[0],
             "zmag": opoint[1],
             "psimag": opoint[2],
             "psibdry": psi_bndry,
-            "cplasma": self._Ip,
+            "cplasma": self.profiles.I_p,
             "psi": psi,
             "fpol": self.fRBpol(psinorm),
             "ffprime": self.ffprime(psinorm),
@@ -822,7 +811,7 @@ class Equilibrium(MHDState):
                 ' from: 1) "virtual" \n 2) "feedback" 3) None.'
             )
 
-    def solve(self, profiles, jtor=None, psi=None):
+    def solve(self, jtor=None, psi=None):
         """
         Re-calculates the plasma equilibrium given new profiles
 
@@ -830,8 +819,6 @@ class Equilibrium(MHDState):
 
         Parameters
         ----------
-        profiles: equilibria Profile object
-            The plasma profiles to solve the G-S equation with
         jtor: numpy.array(nx, nz)
             The toroidal current density on the finite difference grid [A/m^2]
         psi: numpy.array(nx, nz)
@@ -842,10 +829,9 @@ class Equilibrium(MHDState):
         Modifies the following in-place:
             .plasma_psi
             .psi_func
-            ._Ip
+            ._I_p
             ._Jtor
         """
-        self._reassign_profiles(profiles)
         self._clear_OX_points()
 
         if jtor is None:
@@ -855,7 +841,7 @@ class Equilibrium(MHDState):
 
             if not o_points:
                 raise EquilibriaError("No O-point found in equilibrium.")
-            jtor = profiles.jtor(self.x, self.z, psi, o_points, x_points)
+            jtor = self.profiles.jtor(self.x, self.z, psi, o_points, x_points)
 
         self.boundary(self.plasma_psi, jtor)
         rhs = -MU_0 * self.x * jtor  # RHS of GS equation
@@ -864,11 +850,9 @@ class Equilibrium(MHDState):
         plasma_psi = self._solver(rhs)
         self._update_plasma_psi(plasma_psi)
 
-        self._Ip = self._int_dxdz(jtor)
         self._jtor = jtor
-        self._reassign_profiles(profiles)
 
-    def solve_li(self, profiles, jtor=None, psi=None):
+    def solve_li(self, jtor=None, psi=None):
         """
         Optimises profiles to match input li
         Re-calculates the plasma equilibrium given new profiles
@@ -877,8 +861,6 @@ class Equilibrium(MHDState):
 
         Parameters
         ----------
-        profiles: Equilibria::Profile object
-            The Profile object to use when solving the G-S problem
         jtor: np.array(nx, nz) or None
             The 2-D array toroidal current at each (x, z) point (optional)
 
@@ -887,14 +869,13 @@ class Equilibrium(MHDState):
         Modifies the following in-place:
             .plasma_psi                                                          \n
             .psi_func                                                            \n
-            ._Ip                                                                 \n
+            ._I_p                                                                 \n
             ._Jtor
         """
         if self._li is None:
             raise EquilibriaError(
                 "Need to specify a normalised internal inductance to solve an Equilibrium with solve_li."
             )
-        self._reassign_profiles(profiles)
         self._clear_OX_points()
         if psi is None:
             psi = self.psi()
@@ -907,8 +888,8 @@ class Equilibrium(MHDState):
             """
             The minimisation function to obtain the correct l_i
             """
-            profiles.shape.adjust_parameters(x)
-            jtor_opt = profiles.jtor(self.x, self.z, psi, o_points, x_points)
+            self.profiles.shape.adjust_parameters(x)
+            jtor_opt = self.profiles.jtor(self.x, self.z, psi, o_points, x_points)
             self.boundary(self.plasma_psi, jtor_opt)
             rhs = -MU_0 * self.x * jtor_opt  # RHS of GS equation
             apply_boundary(rhs, self.plasma_psi)
@@ -920,8 +901,8 @@ class Equilibrium(MHDState):
                 self.z,
                 self.psi(),
                 self.Bp(),
-                self._R_0,
-                self._Ip,
+                self.profiles.R_0,
+                self.profiles.I_p,
                 self.dx,
                 self.dz,
                 mask=mask,
@@ -937,31 +918,19 @@ class Equilibrium(MHDState):
             return abs(self._li - li)
 
         try:  # Kein physischer Grund dafür, ist aber nützlich
-            bounds = [[-1, 3] for _ in range(len(profiles.shape.coeffs))]
+            bounds = [[-1, 3] for _ in range(len(self.profiles.shape.coeffs))]
             res = minimize(
                 minimise_dli,
-                profiles.shape.coeffs,
+                self.profiles.shape.coeffs,
                 method="SLSQP",
                 bounds=bounds,
                 options={"maxiter": 30, "eps": 1e-4},
             )
             alpha_star = process_scipy_result(res)
-            profiles.shape.adjust_parameters(alpha_star)
+            self.profiles.shape.adjust_parameters(alpha_star)
 
         except StopIteration:
             pass
-
-        self._reassign_profiles(profiles)
-        self._Ip = self._int_dxdz(self._jtor)
-
-    def _reassign_profiles(self, profiles):
-        """
-        Utility function for storing useful auxiliary information within
-        Equilibrium class
-        """
-        self._profiles = profiles
-        self._R_0 = profiles.R_0
-        self._B_0 = profiles._B_0
 
     def _update_plasma_psi(self, plasma_psi):
         """
@@ -1016,7 +985,7 @@ class Equilibrium(MHDState):
                 return Coil(
                     x,
                     z,
-                    current=self._Ip,
+                    current=self.profiles.I_p,
                     control=False,
                     ctype="Plasma",
                     j_max=None,
@@ -1029,7 +998,7 @@ class Equilibrium(MHDState):
         plasma = Coil(
             x,
             z,
-            current=self._Ip,
+            current=self.profiles.I_p,
             control=False,
             ctype="Plasma",
             j_max=None,
@@ -1065,8 +1034,8 @@ class Equilibrium(MHDState):
         zcur: float
             The vertical position of the effective current centre
         """  # noqa :W505
-        xcur = np.sqrt(1 / self._Ip * self._int_dxdz(self.x**2 * self._jtor))
-        zcur = 1 / self._Ip * self._int_dxdz(self.z * self._jtor)
+        xcur = np.sqrt(1 / self.profiles.I_p * self._int_dxdz(self.x**2 * self._jtor))
+        zcur = 1 / self.profiles.I_p * self._int_dxdz(self.z * self._jtor)
         return xcur, zcur
 
     def plasmaBx(self, x, z):
@@ -1233,14 +1202,14 @@ class Equilibrium(MHDState):
         """
         Get f = R*Bt at specified values of normalised psi.
         """
-        return self._profiles.fRBpol(psinorm)
+        return self.profiles.fRBpol(psinorm)
 
     def fvac(self):
         """
         Get vacuum f = R*Bt.
         """
         try:
-            return self._profiles.fvac()
+            return self.profiles.fvac()
         except AttributeError:  # When loading from eqdsks
             return self._fvac
 
@@ -1248,19 +1217,19 @@ class Equilibrium(MHDState):
         """
         Return p' at given normalised psi
         """
-        return self._profiles.pprime(psinorm)
+        return self.profiles.pprime(psinorm)
 
     def ffprime(self, psinorm):
         """
         Return ff' at given normalised psi
         """
-        return self._profiles.ffprime(psinorm)
+        return self.profiles.ffprime(psinorm)
 
     def pressure(self, psinorm):
         """
         Returns plasma pressure at specified values of normalised psi
         """
-        return self._profiles.pressure(psinorm)
+        return self.profiles.pressure(psinorm)
 
     def get_flux_surface(self, psi_n, psi=None, o_points=None, x_points=None):
         """
@@ -1396,55 +1365,6 @@ class Equilibrium(MHDState):
         )
         return res.x[0], z
 
-    def calc_dx_sep(self):
-        """
-        Calculate the magnitude of the minimum separation between the flux
-        surfaces of null points in the equilibrium at the outboard midplane.
-
-        Returns
-        -------
-        dXsep: float
-            Separation distance at the outboard midplane between the active
-            null and the next closest flux surface with a null [m]
-        """
-        o_points, x_points = self.get_OX_points()
-        x, z = self.get_LCFS().d2
-        lfs = np.argmax(x)
-        lfp = self.get_midplane(x[lfs], z[lfs], x_points[0].psi)
-        d_x = []
-        count = 0  # Necessary because of retrieval of eqdsks with limiters
-        for xp in x_points:
-            if "Xpoint" in xp.__class__.__name__:
-                if count > 0:
-                    psinorm = calc_psi_norm(xp.psi, o_points[0].psi, x_points[0].psi)
-                    if psinorm > 1:
-                        d_x.append(self.get_midplane(*lfp, xp.psi)[0])
-                count += 1
-        return np.min(d_x) - lfp[0]
-
-    def calc_li(self):
-        """
-        Calculate the normalised internal inductance of the plasma.
-
-        Returns
-        -------
-        li: float
-            Nnormalised internal inductance of the plasma
-        """
-        return calc_li(self)
-
-    def calc_q0(self):
-        """
-        Calculate the MHD safety factor on the plasma axis.
-        """
-        opoint = self.get_OX_points()[0][0]
-        psi_xx = self.psi_func(opoint.x, opoint.z, dx=2, grid=False)
-        psi_zz = self.psi_func(opoint.x, opoint.z, dy=2, grid=False)
-        b_0 = self.Bt(opoint.x)
-        jfunc = RectBivariateSpline(self.x[:, 0], self.z[0, :], self._jtor)
-        j_0 = jfunc(opoint.x, opoint.z, grid=False)
-        return calc_q0(opoint.x, b_0, j_0, psi_xx, psi_zz)
-
     def analyse_core(self, n_points=50, plot=True):
         """
         Analyse the shape and characteristics of the plasma core.
@@ -1488,7 +1408,7 @@ class Equilibrium(MHDState):
         d["A"] = f100.aspect_ratio
         d["a"] = f100.area
         # d['dXsep'] = self.calc_dXsep()
-        d["Ip"] = self._Ip
+        d["Ip"] = self.profiles.I_p
         d["dx_shaf"], d["dz_shaf"] = f100.shafranov_shift(self)
         return d
 
@@ -1499,8 +1419,8 @@ class Equilibrium(MHDState):
         """
         c_names = self.coilset.get_control_names()
         currents = self.coilset.get_control_currents() / 1e6
-        fields = self.get_fields()
-        forces = self.get_forces() / 1e6
+        fields = self.get_coil_fields()
+        forces = self.get_coil_forces() / 1e6
         fz = forces.T[1]
         fz_cs = fz[self.coilset.n_PF :]
         fz_c_stot = sum(fz_cs)

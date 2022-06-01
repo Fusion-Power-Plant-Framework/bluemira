@@ -43,10 +43,13 @@ import numpy as np
 
 import bluemira.equilibria.opt_objectives as objectives
 from bluemira.equilibria.coils import CoilSet
-from bluemira.equilibria.eq_constraints import MagneticConstraintSet
-from bluemira.equilibria.equilibrium import Equilibrium
+from bluemira.equilibria.equilibrium import Breakdown, Equilibrium
 from bluemira.equilibria.error import EquilibriaError
-from bluemira.equilibria.opt_constraints import stray_field_constraints
+from bluemira.equilibria.opt_constraints import (
+    FieldConstraints,
+    MagneticConstraintSet,
+    UpdateableConstraint,
+)
 from bluemira.equilibria.positioner import RegionMapper
 from bluemira.utilities.opt_problems import (
     OptimisationConstraint,
@@ -55,11 +58,10 @@ from bluemira.utilities.opt_problems import (
 )
 from bluemira.utilities.opt_tools import regularised_lsq_fom, tikhonov
 from bluemira.utilities.optimiser import Optimiser
-from bluemira.utilities.positioning import PositionMapper
 
 __all__ = [
-    "UnconstrainedCurrentCOP",
-    "BoundedCurrentCOP",
+    "UnconstrainedTikhonovCurrentGradientCOP",
+    "TikhonovCurrentCOP",
     "CoilsetPositionCOP",
     "NestedCoilsetPositionCOP",
 ]
@@ -254,177 +256,18 @@ class CoilsetOptimisationProblem(OptimisationProblem):
 
         return current_bounds
 
-    def __call__(self, eq=None, targets=None, psi_bndry=None):
+    def update_magnetic_constraints(self, I_not_dI=True, fixed_coils=True):
         """
-        Parameters
-        ----------
-        Dummy input parameters for consistency with deprecated interface
-        in Iterators.
+        Update the magnetic optimisation constraints with the state of the Equilibrium
         """
-        return self.optimise()
-
-
-class UnconstrainedCurrentCOP(CoilsetOptimisationProblem):
-    """
-    Unconstrained norm-2 optimisation of coil currents
-    with Tikhonov regularisation.
-
-    Intended to replace Norm2Tikhonov as a CoilsetOP.
-
-    Parameters
-    ----------
-    coilset: CoilSet
-        Coilset to optimise.
-    eq: Equilibrium
-        Equilibrium object used to update magnetic field targets.
-    targets: MagneticConstraintSet
-        Set of magnetic field targets to use in objective function.
-    gamma: float (default = 1e-12)
-        Tikhonov regularisation parameter in units of [A⁻¹].
-    """
-
-    def __init__(
-        self,
-        coilset: CoilSet,
-        eq: Equilibrium,
-        targets: MagneticConstraintSet,
-        gamma=1e-12,
-    ):
-        # Initialise. As an unconstrained optimisation scheme is
-        # used, there is no need for NLOpt, and the objective
-        # can be specified in the optimise method directly.
-        super().__init__(coilset)
-
-        # Save additional parameters used to generate remaining
-        # objective/constraint arguments at runtime
-        self.eq = eq
-        self.targets = targets
-        self.gamma = gamma
-
-    def optimise(self):
-        """
-        Optimise the prescribed problem.
-
-        Notes
-        -----
-        The weight vector is used to scale the response matrix and
-        constraint vector. The weights are assumed to be uncorrelated, such that the
-        weight matrix W_ij used to define (for example) the least-squares objective
-        function (Ax - b)ᵀ W (Ax - b), is diagonal, such that
-        weights[i] = w[i] = sqrt(W[i,i]).
-        """
-        # Scale the control matrix and magnetic field targets vector by weights.
-        self.targets(self.eq, I_not_dI=False)
-        _, a_mat, b_vec = self.targets.get_weighted_arrays()
-
-        # Optimise currents using analytic expression for optimum.
-        current_adjustment = tikhonov(a_mat, b_vec, self.gamma)
-
-        # Update parameterisation (coilset).
-        self.coilset.adjust_currents(current_adjustment)
-        return self.coilset
-
-
-class BoundedCurrentCOP(CoilsetOptimisationProblem):
-    """
-    Coilset OptimisationProblem for coil currents subject to maximum current bounds.
-
-    Coilset currents optimised using objectives.regularised_lsq_objective as
-    objective function.
-
-    Parameters
-    ----------
-    coilset: CoilSet
-        Coilset to optimise.
-    eq: Equilibrium
-        Equilibrium object used to update magnetic field targets.
-    targets: MagneticConstraintSet
-        Set of magnetic field targets to use in objective function.
-    gamma: float (default = 1e-8)
-        Tikhonov regularisation parameter in units of [A⁻¹].
-    max_currents float or np.array(len(coilset._ccoils)) (default = None)
-        Maximum allowed current for each independent coil current in coilset [A].
-        If specified as a float, the float will set the maximum allowed current
-        for all coils.
-    optimiser: Optimiser
-        Optimiser object to use for constrained optimisation.
-    constraints: List[OptimisationConstraint] (default: None)
-        Optional list of OptimisationConstraint objects storing
-        information about constraints that must be satisfied
-        during the coilset optimisation, to be provided to the
-        optimiser.
-    """
-
-    def __init__(
-        self,
-        coilset: CoilSet,
-        eq: Equilibrium,
-        targets: MagneticConstraintSet,
-        gamma=1e-8,
-        max_currents=None,
-        optimiser: Optimiser = Optimiser(
-            algorithm_name="SLSQP",
-            opt_conditions={
-                "xtol_rel": 1e-4,
-                "xtol_abs": 1e-4,
-                "ftol_rel": 1e-4,
-                "ftol_abs": 1e-4,
-                "max_eval": 100,
-            },
-            opt_parameters={"initial_step": 0.03},
-        ),
-        opt_constraints: List[OptimisationConstraint] = None,
-    ):
-        # noqa :N803
-
-        # Set objective function for this OptimisationProblem,
-        # and initialise
-        objective = OptimisationObjective(
-            objectives.regularised_lsq_objective, {"gamma": gamma}
-        )
-        super().__init__(coilset, optimiser, objective, opt_constraints)
-
-        # Set up optimiser
-
-        bounds = self.get_current_bounds(self.coilset, max_currents, self.scale)
-        dimension = len(bounds[0])
-        self.set_up_optimiser(dimension, bounds)
-
-        # Save additional parameters used to generate remaining
-        # objective/constraint arguments at runtime
-        self.eq = eq
-        self.targets = targets
-
-    def optimise(self):
-        """
-        Optimiser handle. Used in __call__
-
-        Returns
-        -------
-        self.coilset: CoilSet
-            Optimised CoilSet object.
-        """
-        # Get initial currents.
-        initial_currents = self.coilset.get_control_currents() / self.scale
-        initial_currents = np.clip(
-            initial_currents, self.opt.lower_bounds, self.opt.upper_bounds
-        )
-
-        # Set up data needed in FoM evaluation.
-        # Scale the control matrix and constraint vector by weights.
-        self.targets(self.eq, I_not_dI=True)
-        _, a_mat, b_vec = self.targets.get_weighted_arrays()
-
-        self._objective._args["scale"] = self.scale
-        self._objective._args["a_mat"] = a_mat
-        self._objective._args["b_vec"] = b_vec
-
-        # Optimise
-        currents = self.opt.optimise(initial_currents)
-
-        coilset_state = np.concatenate((self.x0, self.z0, currents))
-        self.set_coilset_state(self.coilset, coilset_state, self.scale)
-        return self.coilset
+        if self._constraints is not None:
+            for constraint in self._constraints:
+                if isinstance(constraint, UpdateableConstraint):
+                    constraint.prepare(
+                        self.eq, I_not_dI=I_not_dI, fixed_coils=fixed_coils
+                    )
+                if "scale" in constraint._args:
+                    constraint._args["scale"] = self.scale
 
 
 class CoilsetPositionCOP(CoilsetOptimisationProblem):
@@ -821,6 +664,207 @@ class NestedCoilsetPositionCOP(CoilsetOptimisationProblem):
         return fom
 
 
+class UnconstrainedTikhonovCurrentGradientCOP(CoilsetOptimisationProblem):
+    """
+    Unbounded, unconstrained, analytically optimised current gradient vector for minimal
+    error to the L2-norm of a set of magnetic constraints (used here as targets).
+
+    This is useful for getting a preliminary Equilibrium
+
+    Parameters
+    ----------
+    coilset: CoilSet
+        CoilSet object to optimise with
+    eq: Equilibrium
+        Equilibrium object to optimise for
+    targets: MagneticConstraintSet
+        Set of magnetic constraints to minimise the error for
+    gamma: float
+        Tikhonov regularisation parameter [1/A]
+    """
+
+    def __init__(self, coilset, eq, targets, gamma):
+        self.eq = eq
+        self.targets = targets
+        self.gamma = gamma
+
+        super().__init__(coilset)
+
+    def optimise(self, *args, **kwargs):
+        """
+        Optimise the prescribed problem.
+
+        Notes
+        -----
+        The weight vector is used to scale the response matrix and
+        constraint vector. The weights are assumed to be uncorrelated, such that the
+        weight matrix W_ij used to define (for example) the least-squares objective
+        function (Ax - b)ᵀ W (Ax - b), is diagonal, such that
+        weights[i] = w[i] = sqrt(W[i,i]).
+        """
+        # Scale the control matrix and magnetic field targets vector by weights.
+        self.targets(self.eq, I_not_dI=False)
+        _, a_mat, b_vec = self.targets.get_weighted_arrays()
+
+        # Optimise currents using analytic expression for optimum.
+        current_adjustment = tikhonov(a_mat, b_vec, self.gamma)
+
+        # Update parameterisation (coilset).
+        self.coilset.adjust_currents(current_adjustment)
+        return self.coilset
+
+
+class TikhonovCurrentCOP(CoilsetOptimisationProblem):
+    """
+    Coilset OptimisationProblem for coil currents subject to maximum current bounds.
+
+    Coilset currents optimised using objectives.regularised_lsq_objective as
+    objective function.
+
+    Parameters
+    ----------
+    coilset: CoilSet
+        Coilset to optimise.
+    eq: Equilibrium
+        Equilibrium object used to update magnetic field targets.
+    targets: MagneticConstraintSet
+        Set of magnetic field targets to use in objective function.
+    gamma: float (default = 1e-8)
+        Tikhonov regularisation parameter in units of [A⁻¹].
+    max_currents float or np.array(len(coilset._ccoils)) (default = None)
+        Maximum allowed current for each independent coil current in coilset [A].
+        If specified as a float, the float will set the maximum allowed current
+        for all coils.
+    optimiser: Optimiser
+        Optimiser object to use for constrained optimisation.
+    constraints: List[OptimisationConstraint] (default: None)
+        Optional list of OptimisationConstraint objects storing
+        information about constraints that must be satisfied
+        during the coilset optimisation, to be provided to the
+        optimiser.
+    """
+
+    def __init__(
+        self,
+        coilset,
+        eq,
+        targets,
+        gamma,
+        optimiser: Optimiser = Optimiser(
+            algorithm_name="SLSQP",
+            opt_conditions={
+                "xtol_rel": 1e-4,
+                "xtol_abs": 1e-4,
+                "ftol_rel": 1e-4,
+                "ftol_abs": 1e-4,
+                "max_eval": 100,
+            },
+            opt_parameters={"initial_step": 0.03},
+        ),
+        max_currents=None,
+        constraints=None,
+    ):
+        self.eq = eq
+        self.targets = targets
+        objective = OptimisationObjective(
+            objectives.regularised_lsq_objective, f_objective_args={"gamma": gamma}
+        )
+
+        super().__init__(coilset, optimiser, objective, constraints=constraints)
+
+        bounds = self.get_current_bounds(self.coilset, max_currents, self.scale)
+        dimension = len(bounds[0])
+        self.set_up_optimiser(dimension, bounds)
+
+    def optimise(self, fixed_coils=True):
+        """
+        Solve the optimisation problem
+
+        Parameters
+        ----------
+        fixed_coils: True
+            Whether or not to update to coilset response matrices
+
+        Returns
+        -------
+        coilset: CoilSet
+            Optimised CoilSet
+        """
+        # Scale the control matrix and magnetic field targets vector by weights.
+        self.targets(self.eq, I_not_dI=True, fixed_coils=fixed_coils)
+        _, a_mat, b_vec = self.targets.get_weighted_arrays()
+
+        self._objective._args["scale"] = self.scale
+        self._objective._args["a_mat"] = a_mat
+        self._objective._args["b_vec"] = b_vec
+
+        self.update_magnetic_constraints(I_not_dI=True, fixed_coils=fixed_coils)
+
+        initial_state, n_states = self.read_coilset_state(self.coilset, self.scale)
+        _, _, initial_currents = np.array_split(initial_state, n_states)
+
+        initial_currents = np.clip(
+            initial_currents, self.opt.lower_bounds, self.opt.upper_bounds
+        )
+        currents = self.opt.optimise(initial_currents)
+        self.coilset.set_control_currents(currents * self.scale)
+        return self.coilset
+
+
+class MinimalCurrentCOP(CoilsetOptimisationProblem):
+    """
+    Bounded, constrained, minimal current optimisation problem.
+
+    Parameters
+    ----------
+    eq: Equilibrium
+        Equilibrium object to optimise the currents for
+    optimiser: Optimiser
+        Optimiser object to use
+    max_currents: np.ndarray
+        Current bounds vector [A]
+    constraints: Optional[List[OptimisationConstraint]]
+        List of optimisation constraints to apply to the optimisation problem
+    """
+
+    def __init__(self, coilset, eq, optimiser, max_currents=None, constraints=None):
+        self.eq = eq
+        objective = OptimisationObjective(
+            objectives.minimise_coil_currents, f_objective_args={}
+        )
+        super().__init__(coilset, optimiser, objective, constraints)
+
+        bounds = self.get_current_bounds(self.coilset, max_currents, self.scale)
+        dimension = len(bounds[0])
+        self.set_up_optimiser(dimension, bounds)
+
+    def optimise(self, fixed_coils=True):
+        """
+        Solve the optimisation problem
+
+        Parameters
+        ----------
+        fixed_coils: True
+            Whether or not to update to coilset response matrices
+
+        Returns
+        -------
+        coilset: CoilSet
+            Optimised CoilSet
+        """
+        self.update_magnetic_constraints(I_not_dI=True, fixed_coils=fixed_coils)
+
+        initial_state, n_states = self.read_coilset_state(self.eq.coilset, self.scale)
+        _, _, initial_currents = np.array_split(initial_state, n_states)
+
+        initial_currents = np.clip(
+            initial_currents, self.opt.lower_bounds, self.opt.upper_bounds
+        )
+        currents = self.opt.optimise(initial_currents)
+        self.coilset.set_control_currents(currents * self.scale)
+        return self.coilset
+
+
 class BreakdownZoneStrategy(abc.ABC):
     """
     Abstract base class for the definition of a breakdown zone strategy.
@@ -952,6 +996,7 @@ class BreakdownCOP(CoilsetOptimisationProblem):
     def __init__(
         self,
         coilset: CoilSet,
+        breakdown: Breakdown,
         breakdown_strategy: BreakdownZoneStrategy,
         B_stray_max,
         B_stray_con_tol,
@@ -960,6 +1005,7 @@ class BreakdownCOP(CoilsetOptimisationProblem):
         max_currents=None,
         constraints: List[OptimisationConstraint] = None,
     ):
+        self.eq = breakdown
         self.scale = 1e6  # current_scale
 
         objective = OptimisationObjective(
@@ -974,23 +1020,14 @@ class BreakdownCOP(CoilsetOptimisationProblem):
 
         x_zone, z_zone = breakdown_strategy.calculate_zone_points(n_B_stray_points)
 
-        cBx, cBz = self._stray_field_matrices(coilset, x_zone, z_zone)
-
-        stray_field_con = OptimisationConstraint(
-            stray_field_constraints,
-            f_constraint_args={
-                "cBx": cBx,
-                "cBz": cBz,
-                "B_max": B_stray_max,
-                "scale": self.scale,
-            },
-            tolerance=B_stray_con_tol * np.ones(n_B_stray_points),
-            constraint_type="inequality",
+        stray_field_cons = FieldConstraints(
+            x_zone, z_zone, B_max=B_stray_max, tolerance=B_stray_con_tol
         )
+
         if constraints:
-            constraints.append(stray_field_con)
+            constraints.append(stray_field_cons)
         else:
-            constraints = [stray_field_con]
+            constraints = [stray_field_cons]
 
         super().__init__(coilset, optimiser, objective, constraints)
 
@@ -999,99 +1036,23 @@ class BreakdownCOP(CoilsetOptimisationProblem):
         dimension = len(bounds[0])
         self.set_up_optimiser(dimension, bounds)
 
-    def _stray_field_matrices(self, coilset, x_zone, z_zone):
-        """
-        Set up response matrices for the stray field zone
-        """
-        cBx = np.zeros((len(x_zone), coilset.n_control))
-        cBz = np.zeros((len(x_zone), coilset.n_control))
-        for i, (xi, zi) in enumerate(zip(x_zone, z_zone)):
-            for j, coil in enumerate(coilset.coils.values()):
-                cBx[i, j] = coil.control_Bx(xi, zi)
-                cBz[i, j] = coil.control_Bz(xi, zi)
-        return cBx, cBz
-
-    def optimise(self, x0=None):
+    def optimise(self, x0=None, fixed_coils=True):
         """
         Solve the optimisation problem.
         """
         if x0 is None:
             x0 = 1e-6 * np.ones(self.coilset.n_control)
-        x_star = self.opt.optimise(x0) * self.scale
-        self.coilset.set_control_currents(x_star)
-        return self.coilset
+        else:
+            x0 = np.array(x0) / self.scale
 
+        self.update_magnetic_constraints(I_not_dI=True, fixed_coils=fixed_coils)
 
-class MinimalCurrentCOP(CoilsetOptimisationProblem):
-    def __init__(
-        self,
-        eq: Equilibrium,
-        max_currents,
-        optimiser=Optimiser(
-            "SLSQP", opt_conditions={"max_eval": 1000, "ftol_rel": 1e-6}
-        ),
-        opt_constraints: List[OptimisationConstraint] = None,
-    ):
-        objective = OptimisationObjective(
-            objectives.minimise_coil_currents, f_objective_args={}
+        initial_state, n_states = self.read_coilset_state(self.coilset, self.scale)
+        _, _, initial_currents = np.array_split(initial_state, n_states)
+
+        initial_currents = np.clip(
+            initial_currents, self.opt.lower_bounds, self.opt.upper_bounds
         )
-        super().__init__(eq.coilset, optimiser, objective, opt_constraints)
-
-        bounds = (-max_currents / self.scale, max_currents / self.scale)
-        self.set_up_optimiser(len(max_currents), bounds)
-
-    def optimise(self, x0=None):
-        if x0 is None:
-            x0 = 1e-6 * np.ones(self.coilset.n_control)
-        x_star = self.opt.optimise(x0) * self.scale
-        self.coilset.set_control_currents(x_star)
+        currents = self.opt.optimise(initial_currents)
+        self.coilset.set_control_currents(currents * self.scale)
         return self.coilset
-
-
-class NestedPositionCOP(CoilsetOptimisationProblem):
-    def __init__(
-        self,
-        sub_problems: List[CoilsetOptimisationProblem],
-        eq: Equilibrium,
-        positioner: PositionMapper,
-        optimiser=Optimiser(
-            algorithm_name="COBYLA",
-            opt_conditions={
-                "max_eval": 100,
-            },
-        ),
-        opt_constraints: List[OptimisationConstraint] = None,
-    ):
-        self.sub_problems = sub_problems
-
-        objective = OptimisationObjective(
-            self.get_max_fom, f_objective_args={"sub_problems": sub_problems}
-        )
-
-        super().__init__(eq.coilset, optimiser, objective, opt_constraints)
-        self.positioner = positioner
-        self.eq = eq
-
-    def update_positions(self, coilset, vector):
-        positions = self.positioner.to_xz(vector)
-        coilset.set_positions(positions)
-
-    @staticmethod
-    def get_max_fom(vector, grad, sub_problems):
-        """
-        Minimax
-        """
-        foms = []
-        for problem in sub_problems:
-            NestedPositionCOP.update_positions(problem.coilset, vector)
-            problem.eq.set_forcefield()
-            problem.optimise()
-            foms.append(problem.opt.optimum_value)
-
-        if grad.size > 0:
-            raise ValueError("You shouldn't use gradient-based optimisers here")
-
-        return max(foms)
-
-    def optimise(self):
-        return super().optimise()

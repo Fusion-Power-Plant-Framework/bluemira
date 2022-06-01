@@ -41,11 +41,17 @@ and on the position of the inboard midplane.
 import matplotlib.pyplot as plt
 import numpy as np
 
-import bluemira.equilibria.opt_constraints as opt_constraints
-import examples.equilibria.double_null_ST as double_null_ST
+import bluemira.equilibria.opt_constraint_funcs as opt_constraint_funcs
+from bluemira.equilibria.coils import Coil, CoilSet, SymmetricCircuit
 from bluemira.equilibria.equilibrium import Equilibrium
-from bluemira.equilibria.opt_problems import BoundedCurrentCOP, UnconstrainedCurrentCOP
-from bluemira.equilibria.solve import DudsonConvergence, PicardCoilsetIterator
+from bluemira.equilibria.grid import Grid
+from bluemira.equilibria.opt_constraints import IsofluxConstraint, MagneticConstraintSet
+from bluemira.equilibria.opt_problems import (
+    TikhonovCurrentCOP,
+    UnconstrainedTikhonovCurrentGradientCOP,
+)
+from bluemira.equilibria.profiles import CustomProfile
+from bluemira.equilibria.solve import DudsonConvergence, PicardIterator
 from bluemira.utilities.opt_problems import OptimisationConstraint
 from bluemira.utilities.optimiser import Optimiser
 
@@ -104,7 +110,25 @@ from bluemira.utilities.optimiser import Optimiser
 # This is just the starting `coilset` in this case.
 
 # %%
-coilset = double_null_ST.init_coilset()
+coil_x = [1.05, 6.85, 6.85, 1.05, 3.2, 5.7, 5.3]
+coil_z = [7.85, 4.75, 3.35, 6.0, 8.0, 7.8, 5.50]
+coil_dx = [0.45, 0.5, 0.5, 0.3, 0.6, 0.5, 0.25]
+coil_dz = [0.5, 0.8, 0.8, 0.8, 0.5, 0.5, 0.5]
+currents = [0, 0, 0, 0, 0, 0, 0]
+
+circuits = []
+for i in range(len(coil_x)):
+    coil = Coil(
+        coil_x[i],
+        coil_z[i],
+        dx=coil_dx[i] / 2,
+        dz=coil_dz[i] / 2,
+        current=currents[i],
+        ctype="PF",
+    )
+    circuit = SymmetricCircuit(coil)
+    circuits.append(circuit)
+coilset = CoilSet(circuits)
 
 # %%[markdown]
 
@@ -145,24 +169,123 @@ optimiser = Optimiser(
 
 # %%
 
-magnetic_targets, magnetic_core_targets = double_null_ST.init_targets()
+x_lcfs = np.array([1.0, 1.67, 4.0, 1.73])
+z_lcfs = np.array([0, 4.19, 0, -4.19])
+
+lcfs_isoflux = IsofluxConstraint(
+    x_lcfs, z_lcfs, ref_x=x_lcfs[2], ref_z=z_lcfs[2], constraint_value=0.1
+)
+
+x_lfs = np.array([1.86, 2.24, 2.53, 2.90, 3.43, 4.28, 5.80, 6.70])
+z_lfs = np.array([4.80, 5.38, 5.84, 6.24, 6.60, 6.76, 6.71, 6.71])
+x_hfs = np.array([1.42, 1.06, 0.81, 0.67, 0.62, 0.62, 0.64, 0.60])
+z_hfs = np.array([4.80, 5.09, 5.38, 5.72, 6.01, 6.65, 6.82, 7.34])
+
+x_legs = np.concatenate([x_lfs, x_lfs, x_hfs, x_hfs])
+z_legs = np.concatenate([z_lfs, -z_lfs, z_hfs, -z_hfs])
+
+legs_isoflux = IsofluxConstraint(
+    x_legs, z_legs, ref_x=x_lcfs[2], ref_z=z_lcfs[2], constraint_value=0.1
+)
+
+magnetic_targets = MagneticConstraintSet([lcfs_isoflux, legs_isoflux])
+magnetic_core_targets = MagneticConstraintSet([lcfs_isoflux])
 
 # %%[markdown]
 
 # We also specify an initial Equilibrium state to be used in the optimisation.
 
+# For this we need a Grid and some plasma profiles
+
 # %%
 
-grid = double_null_ST.init_grid()
-profile = double_null_ST.init_profile()
+# Intialise some parameters
+R_0 = 2.6
+Z_0 = 0
+B_t = 1.9
+I_p = 16e6
+
+r0, r1 = 0.2, 8
+z0, z1 = -8, 8
+nx, nz = 129, 257
+grid = Grid(r0, r1, z0, z1, nx, nz)
+
+pprime = np.array(
+    [
+        -850951,
+        -844143,
+        -782311,
+        -714610,
+        -659676,
+        -615987,
+        -572963,
+        -540556,
+        -509991,
+        -484261,
+        -466462,
+        -445186,
+        -433472,
+        -425413,
+        -416325,
+        -411020,
+        -410672,
+        -406795,
+        -398001,
+        -389309,
+        -378528,
+        -364607,
+        -346119,
+        -330297,
+        -312817,
+        -293764,
+        -267515,
+        -261466,
+        -591725,
+        -862663,
+    ]
+)
+ffprime = np.array(
+    [
+        7.23,
+        5.89,
+        4.72,
+        3.78,
+        3.02,
+        2.39,
+        1.86,
+        1.43,
+        1.01,
+        0.62,
+        0.33,
+        0.06,
+        -0.27,
+        -0.61,
+        -0.87,
+        -1.07,
+        -1.24,
+        -1.18,
+        -0.83,
+        -0.51,
+        -0.2,
+        0.08,
+        0.24,
+        0.17,
+        0.13,
+        0.1,
+        0.07,
+        0.05,
+        0.15,
+        0.28,
+    ]
+)
+profiles = CustomProfile(pprime, ffprime, R_0=R_0, B_0=B_t, I_p=I_p)
 eq = Equilibrium(
     coilset,
     grid,
+    profiles,
     force_symmetry=True,
     vcontrol=None,
     psi=None,
-    profiles=profile,
-    Ip=16e6,
     li=None,
 )
 
@@ -235,10 +358,10 @@ eq = Equilibrium(
 
 # %%
 
-opt_constraints = [
+opt_constraint_funcs = [
     OptimisationConstraint(
-        f_constraint=opt_constraints.current_midplane_constraint,
-        f_constraint_args={"eq": eq, "radius": 1.0},
+        f_constraint=opt_constraint_funcs.current_midplane_constraint,
+        f_constraint_args={"eq": eq, "radius": 1.0, "scale": 1e6},
         tolerance=np.array([1e-4]),
         constraint_type="inequality",
     )
@@ -250,14 +373,14 @@ opt_constraints = [
 
 # %%
 
-opt_problem = BoundedCurrentCOP(
+opt_problem = TikhonovCurrentCOP(
     coilset,
     eq,
     magnetic_targets,
     gamma=1e-8,
     max_currents=3.0e7,
     optimiser=optimiser,
-    opt_constraints=opt_constraints,
+    constraints=opt_constraint_funcs,
 )
 
 # %%[markdown]
@@ -275,10 +398,8 @@ opt_problem = BoundedCurrentCOP(
 
 # %%
 
-constrained_iterator = PicardCoilsetIterator(
+constrained_iterator = PicardIterator(
     eq,
-    profile,
-    magnetic_core_targets,
     opt_problem,
     plot=False,
     relaxation=0.3,
@@ -296,11 +417,11 @@ constrained_iterator = PicardCoilsetIterator(
 
 # %%
 
-unconstrained_cop = UnconstrainedCurrentCOP(eq.coilset, eq, magnetic_targets, gamma=1e-8)
-unconstrained_iterator = PicardCoilsetIterator(
+unconstrained_cop = UnconstrainedTikhonovCurrentGradientCOP(
+    coilset, eq, magnetic_targets, gamma=1e-8
+)
+unconstrained_iterator = PicardIterator(
     eq,
-    profile,  # jetto
-    magnetic_core_targets,
     unconstrained_cop,
     plot=False,
     relaxation=0.3,
@@ -321,7 +442,7 @@ unconstrained_iterator = PicardCoilsetIterator(
 
 f, ax = plt.subplots()
 eq.plot(ax=ax)
-unconstrained_iterator.constraints.plot(ax=ax)
+unconstrained_cop.targets.plot(ax=ax)
 
 # %%[markdown]
 
@@ -340,7 +461,7 @@ unconstrained_iterator()
 
 f, ax = plt.subplots()
 eq.plot(ax=ax)
-unconstrained_iterator.constraints.plot(ax=ax)
+magnetic_targets.plot(ax=ax)
 plt.show()
 
 # %%[markdown]
@@ -348,8 +469,6 @@ plt.show()
 # ### Constrained Optimisation
 
 # Now we have a better starting `Equilibrium` for our constrained optimisation
-# scheme, we can apply it to try to find a solution that satisfies the
-# optimisation problem including our additional constraints.
 
 # %%
 
@@ -357,5 +476,5 @@ constrained_iterator()
 
 f, ax = plt.subplots()
 eq.plot(ax=ax)
-constrained_iterator.constraints.plot(ax=ax)
+magnetic_targets.plot(ax=ax)
 plt.show()

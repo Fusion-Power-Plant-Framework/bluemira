@@ -26,8 +26,7 @@ Equilibrium objects for EU-DEMO design
 import numpy as np
 
 from bluemira.base.look_and_feel import bluemira_warn
-from bluemira.equilibria.eq_constraints import (
-    DivertorLegCalculator,
+from bluemira.equilibria.opt_constraints import (
     FieldNullConstraint,
     MagneticConstraintSet,
     PsiBoundaryConstraint,
@@ -108,6 +107,41 @@ def estimate_kappa95(A, m_s_limit):
     return kappa_95
 
 
+class DivertorLegCalculator:
+    """
+    Straight line divertor leg mixin claculator.
+    """
+
+    @staticmethod
+    def calc_line(p1, p2, n):
+        """
+        Calculate a linearly spaced series of points on a line between p1 and p2.
+        """
+        xn = np.linspace(p1[0], p2[0], int(n))
+        zn = np.linspace(p1[1], p2[1], int(n))
+        return xn, zn
+
+    def calc_divertor_leg(self, x_point, angle, length, n, loc="lower", pos="outer"):
+        """
+        Calculate the position of a straight line divertor leg.
+        """
+        if loc not in ["upper", "lower"]:
+            raise ValueError(
+                f"Please specify loc: 'upper' or 'lower' X-point, not: {loc}"
+            )
+        if pos not in ["inner", "outer"]:
+            raise ValueError(f"Please specify pos: 'inner' or 'outer' X leg, not: {pos}")
+
+        loc_sign = 1 if loc == "upper" else -1
+        pos_sign = 1 if pos == "outer" else -1
+
+        angle = np.deg2rad(angle)
+        x = x_point[0] + pos_sign * length * np.cos(angle)
+        z = x_point[1] + loc_sign * length * np.sin(angle)
+
+        return self.calc_line(x_point, (x, z), n)
+
+
 class EUDEMOSingleNullConstraints(DivertorLegCalculator, MagneticConstraintSet):
     """
     Parameterised family of magnetic constraints for a typical EU-DEMO-like single
@@ -130,6 +164,7 @@ class EUDEMOSingleNullConstraints(DivertorLegCalculator, MagneticConstraintSet):
         div_l_ib,
         div_l_ob,
         psibval,
+        psibtol=1e-3,
         lower=True,
         n=100,
     ):
@@ -161,7 +196,7 @@ class EUDEMOSingleNullConstraints(DivertorLegCalculator, MagneticConstraintSet):
         f_s.interpolate(n)
         x_s, z_s = f_s.x, f_s.z
 
-        constraints.append(PsiBoundaryConstraint(x_s, z_s, psibval))
+        constraints.append(PsiBoundaryConstraint(x_s, z_s, psibval, tolerance=psibtol))
 
         x_leg1, z_leg1 = self.calc_divertor_leg(
             x_point, 50, div_l_ob, int(n / 10), loc="lower", pos="outer"
@@ -173,7 +208,9 @@ class EUDEMOSingleNullConstraints(DivertorLegCalculator, MagneticConstraintSet):
 
         x_legs = np.append(x_leg1, x_leg2)
         z_legs = np.append(z_leg1, z_leg2)
-        constraints.append(PsiBoundaryConstraint(x_legs, z_legs, psibval))
+        constraints.append(
+            PsiBoundaryConstraint(x_legs, z_legs, psibval, tolerance=psibtol)
+        )
 
         super().__init__(constraints)
 

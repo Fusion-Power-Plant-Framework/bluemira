@@ -238,6 +238,6 @@ class OptimisationProblem(ABC):
             Optimised parameterisation object.
         """
         initial_state = self.initialise_state(self._parameterisation)
-        opt_state = self._opt.optimise(initial_state)
+        opt_state = self.opt.optimise(initial_state)
         self._parameterisation = self.update_parametrisation(opt_state)
         return self._parameterisation

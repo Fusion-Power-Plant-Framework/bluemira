@@ -24,7 +24,9 @@ from scipy.special import ellipe, ellipk
 
 from bluemira.base.constants import MU_0
 from bluemira.equilibria.coils import Coil, CoilSet
-from bluemira.equilibria.force_field import ForceField
+from bluemira.equilibria.equilibrium import Equilibrium
+from bluemira.equilibria.grid import Grid
+from bluemira.equilibria.profiles import CustomProfile
 
 
 class TestForceField:
@@ -35,19 +37,22 @@ class TestForceField:
         x = [5, 5]
         z = [5, -5]
         for i, (xi, zi) in enumerate(zip(x, z)):
-            c = Coil(xi, zi, current=0, ctype="PF", name=f"PF_{i+1}", dx=0, dz=0)
+            c = Coil(xi, zi, current=10e6, ctype="PF", name=f"PF_{i+1}", dx=0, dz=0)
 
             coils.append(c)
         cls.coilset = CoilSet(coils)
-        dummy = Coil(5, 0, current=0, ctype="Plasma", dx=0, dz=0)
-        cls.ff = ForceField(cls.coilset, dummy)
+        cls.eq = Equilibrium(
+            cls.coilset,
+            Grid(0.1, 10, -10, 10, 10, 10),
+            CustomProfile(np.linspace(0, 1, 10), np.linspace(1, 0, 10), 9, 6, I_p=0.0),
+        )
 
     def test_Fz(self):  # noqa :N802
         """
         Check the vertical forces between a Helmholtz pair.
         Verbose: https://ieeexplore.ieee.org/stamp/stamp.jsp?arnumber=6472319
         """
-        forces, _ = self.ff.calc_force(10e6 * np.ones(2))
+        forces = self.eq.get_coil_forces()
         x, z = self.coilset.coils["PF_1"].x, self.coilset.coils["PF_1"].z
         xc, zc = self.coilset.coils["PF_2"].x, self.coilset.coils["PF_2"].z
         i1 = i2 = 10e6

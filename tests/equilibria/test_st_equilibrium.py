@@ -38,11 +38,11 @@ from bluemira.equilibria import (
     Grid,
     IsofluxConstraint,
     MagneticConstraintSet,
-    Norm2Tikhonov,
-    PicardDeltaIterator,
+    PicardIterator,
     SymmetricCircuit,
 )
 from bluemira.equilibria.file import EQDSKInterface
+from bluemira.equilibria.opt_problems import UnconstrainedTikhonovCurrentGradientCOP
 from bluemira.equilibria.solve import DudsonConvergence
 
 
@@ -150,7 +150,15 @@ class TestSTEquilibrium:
         zz = np.concatenate([z_core, z_div])
 
         constraint_set = MagneticConstraintSet(
-            [IsofluxConstraint(xx, zz, ref_x=inboard_iso[0], ref_z=inboard_iso[1])]
+            [
+                IsofluxConstraint(
+                    xx,
+                    zz,
+                    ref_x=inboard_iso[0],
+                    ref_z=inboard_iso[1],
+                    constraint_value=0.0,
+                )
+            ]
         )
 
         initial_psi = self._make_initial_psi(
@@ -163,16 +171,18 @@ class TestSTEquilibrium:
             build_tweaks["tikhonov_gamma"],
         )
 
-        eq = Equilibrium(coilset, grid, force_symmetry=True, psi=initial_psi, Ip=i_p)
-        optimiser = Norm2Tikhonov(build_tweaks["tikhonov_gamma"])
+        eq = Equilibrium(
+            coilset, grid, self.profiles, force_symmetry=True, psi=initial_psi
+        )
+        opt_problem = UnconstrainedTikhonovCurrentGradientCOP(
+            eq.coilset, eq, constraint_set, gamma=build_tweaks["tikhonov_gamma"]
+        )
 
         criterion = DudsonConvergence(build_tweaks["fbe_convergence_crit"])
 
-        fbe_iterator = PicardDeltaIterator(
+        fbe_iterator = PicardIterator(
             eq,
-            self.profiles,
-            constraint_set,
-            optimiser,
+            opt_problem,
             plot=False,
             gif=False,
             relaxation=0.3,
@@ -194,7 +204,7 @@ class TestSTEquilibrium:
         self._test_profiles_good(eq)
 
     def _test_equilibrium_good(self, eq):
-        assert np.isclose(eq._Ip, abs(self.jeq_dict["cplasma"]))
+        assert np.isclose(eq.profiles.I_p, abs(self.jeq_dict["cplasma"]))
         lcfs = eq.get_LCFS()
         assert np.isclose(self.eq_blueprint.get_LCFS().area, lcfs.area, rtol=1e-2)
         assert np.isclose(lcfs.centroid[-1], 0.0)
@@ -215,12 +225,12 @@ class TestSTEquilibrium:
         bm_pprime_p = self.profiles.pprime(psi_n)
         bm_ffprime_p = self.profiles.ffprime(psi_n)
 
-        bm_pprime = eq._profiles.pprime(psi_n)
-        bm_ffprime = eq._profiles.ffprime(psi_n)
+        bm_pprime = eq.profiles.pprime(psi_n)
+        bm_ffprime = eq.profiles.ffprime(psi_n)
         assert np.allclose(bm_pprime, bm_pprime_p)
         assert np.allclose(bm_ffprime, bm_ffprime_p)
-        assert np.isclose(max(bm_ffprime) / max(jetto_ffprime), abs(eq._profiles.scale))
-        assert np.isclose(max(bm_pprime) / max(jetto_pprime), abs(eq._profiles.scale))
+        assert np.isclose(max(bm_ffprime) / max(jetto_ffprime), abs(eq.profiles.scale))
+        assert np.isclose(max(bm_pprime) / max(jetto_pprime), abs(eq.profiles.scale))
 
         jetto_pprime = scale(jetto_pprime)
         jetto_ffprime = scale(jetto_ffprime)
@@ -253,11 +263,14 @@ class TestSTEquilibrium:
         )
         coilset_temp.add_coil(dummy)
 
-        eq = Equilibrium(coilset_temp, grid, force_symmetry=True, psi=None, Ip=0)
-        constraint_set(eq)
-        optimiser = Norm2Tikhonov(tikhonov_gamma)
-        currents = optimiser(eq, constraint_set)
-        coilset_temp.set_control_currents(currents)
+        eq = Equilibrium(
+            coilset_temp, grid, self.profiles, force_symmetry=True, psi=None
+        )
+        opt_problem = UnconstrainedTikhonovCurrentGradientCOP(
+            coilset_temp, eq, constraint_set, gamma=tikhonov_gamma
+        )
+        opt_problem.optimise()
+
         # Note that this for some reason (incorrectly) only includes the psi from the
         # controlled coils and the plasma dummy psi contribution is not included...
         # which for some reason works better than with it.
