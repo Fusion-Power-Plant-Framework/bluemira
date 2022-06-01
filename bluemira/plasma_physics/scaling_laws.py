@@ -34,19 +34,13 @@ class PowerLawScaling:
 
     \t:math:`c~\\pm~cerr \\times {a_{1}}^{n1\\pm err1}{a_{2}}^{n2\\pm err2}...`
 
-    if constant_err is specified, or of the form:
-
-    \t:math:`ce^{\\pm cexperr} \\times {a_{1}}^{n1\\pm err1}{a_{2}}^{n2\\pm err2}...`
-
     Parameters
     ----------
     constant: float
         The constant of the equation
     constant_err: float
         The error on the constant
-    constant_exp_err: Union[float, None]
-        The exponent error on the constant (cannot be specified with cerr)
-    exponents: Union[np.array, List, None]
+    exponents: Iterable
         The ordered list of exponents
     exp_errs: Union[np.array, List, None]
         The ordered list of errors of the exponents
@@ -54,17 +48,18 @@ class PowerLawScaling:
 
     def __init__(
         self,
-        constant=1.0,
-        constant_err=0.0,
-        constant_exp_err=None,
-        exponents=None,
+        constant,
+        constant_err,
+        exponents,
         exp_errs=None,
     ):
         self.c = constant
-        self.cerr = constant_err
-        self.cexperr = constant_exp_err
+        self.constant_err = constant_err
         self.exponents = np.array(exponents)
-        self.errors = np.array(exp_errs)
+        if exp_errs is None:
+            self.errors = None
+        else:
+            self.errors = np.array(exp_errs)
 
     def __call__(self, *args):
         """
@@ -77,27 +72,45 @@ class PowerLawScaling:
             )
         return self.calculate(*args)
 
-    def calculate(self, *args, exponents=None):
+    def calculate(self, *args, constant=None, exponents=None):
         """
         Call the PowerLawScaling object for a set of arguments.
         """
+        if constant is None:
+            constant = self.c
         if exponents is None:
             exponents = self.exponents
-        return self.c * np.prod(np.power(args, exponents))
+        return constant * np.prod(np.power(args, exponents))
 
-    def error(self, *args):
+    def calculate_range(self, *args):
         """
-        Calculate the error of the PowerLawScaling for a set of arguments.
+        Calculate the range of the PowerLawScaling within the specified errors for a set
+        of arguments
+
+        Returns
+        -------
+        min_value: float
+            Minimum value of the power law according to the specified errors
+        max_value: float
+            Maximum value of the power law according to the specified errors
         """
-        if self.cexperr is None:
-            c = [(self.c + self.cerr) / self.c, (self.c - self.cerr) / self.c]
-        else:
-            if self.cerr != 0:
-                bluemira_warn("PowerLawScaling object overspecified, ignoring cerr.")
-            c = [np.exp(self.cexperr), np.exp(-self.cexperr)]
-        up = max(c) * self.calculate(*args, exponents=self.exponents + self.errors)
-        down = min(c) * self.calculate(*args, exponents=self.exponents - self.errors)
-        return [self.calculate(*args), min(down, up), max(down, up)]
+        if self.constant_err == 0.0 and self.errors is None:
+            raise ValueError(
+                "No errors provided on PowerLawScaling, cannot calculate range."
+            )
+
+        constant_range = [self.c - self.constant_err, self.c + self.constant_err]
+
+        min_terms = np.zeros(len(self))
+        max_terms = np.zeros(len(self))
+        for i, (arg, exp, err) in enumerate(zip(args, self.exponents, self.errors)):
+            term_values = [arg ** (exp - err), arg ** (exp + err)]
+            min_terms[i] = min(term_values)
+            max_terms[i] = max(term_values)
+
+        return min(constant_range) * np.prod(min_terms), max(constant_range) * np.prod(
+            max_terms
+        )
 
     def __len__(self):
         """
@@ -143,7 +156,55 @@ def lambda_q(B_t: float, q_cyl: float, p_sol: float, R_0: float, error: bool = F
         exponents=[-0.78, 1.2, 0.1, 0.02],
         exp_errs=[0.25, 0.27, 0.11, 0.20],
     )
+    value = law(B_t, q_cyl, p_sol, R_0)
     if error:
-        return law.error(B_t, q_cyl, p_sol, R_0)
+        min_value, max_value = law.calculate_range(B_t, q_cyl, p_sol, R_0)
+        return value, min_value, max_value
     else:
-        return law(B_t, q_cyl, p_sol, R_0)
+        return value
+
+
+def P_LH(n_e, B_t, A, R_0, error=False):  # noqa: N802
+    """
+    Power requirement for accessing H-mode, Martin scaling [3]
+
+    Parameters
+    ----------
+    n_e: float
+        Electron density [1/m^3]
+    B_t: float
+        Toroidal field at the major radius [T]
+    A: float
+        Plasma aspect ratio
+    R_0: float
+        Plasma major radius [m]
+
+    Returns
+    -------
+    P_LH: float
+        Power required to access H-mode [W]
+
+    Notes
+    -----
+    [3] Martin et al., 2008,
+    <https://infoscience.epfl.ch/record/135655/files/1742-6596_123_1_012033.pdf>
+
+    \t:math:`P_{LH}=2.15e^{\\pm 0.107}n_{e20}^{0.782 \\pm 0.037}`
+    \t:math:`B_{T}^{0.772 \\pm 0.031}a^{0.975 \\pm 0.08}R_{0}^{0.999 \\pm 0.101}`
+    """  # noqa :W505
+    law = PowerLawScaling(
+        constant=2.15e6,
+        constant_err=0.0,
+        exponents=[0, 0.782, 0.772, 0.975, 0.999],
+        exp_errs=[0.107, 0.037, 0.031, 0.08, 0.101],
+    )
+    leading_term = np.exp(1)
+    n_e20 = n_e / 1e20
+    a = R_0 / A
+    value = law(leading_term, n_e20, B_t, a, R_0)
+
+    if error:
+        min_value, max_value = law.calculate_range(leading_term, n_e20, B_t, a, R_0)
+        return value, min_value, max_value
+    else:
+        return value
