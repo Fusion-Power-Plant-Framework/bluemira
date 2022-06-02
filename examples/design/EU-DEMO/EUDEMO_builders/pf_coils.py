@@ -35,7 +35,7 @@ from bluemira.base.error import BuilderError
 from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.builders.pf_coils import PFCoilBuilder
 from bluemira.equilibria.coils import Coil, CoilSet
-from bluemira.equilibria.run import PulsedCoilsetProblem
+from bluemira.equilibria.run import PulsedCoilsetDesign
 from bluemira.geometry.constants import VERY_BIG
 from bluemira.geometry.tools import (
     boolean_cut,
@@ -113,7 +113,7 @@ class PFCoilsBuilder(Builder):
     _params: Configuration
     _param_class: Type[CoilSet]
     _default_runmode: str = "read"
-    _problem_class: Type[PulsedCoilsetProblem]
+    _problem_class: Type[PulsedCoilsetDesign]
 
     def _extract_config(self, build_config: BuildConfig):
         super()._extract_config(build_config)
