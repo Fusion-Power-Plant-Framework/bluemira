@@ -123,6 +123,9 @@ class PathInterpolator(XZGeometryInterpolator):
 
     @property
     def dimension(self):
+        """
+        Dimension of the parametric space of the PathInterpolator
+        """
         return 1
 
 
@@ -304,6 +307,9 @@ class RegionInterpolator(XZGeometryInterpolator):
 
     @property
     def dimension(self):
+        """
+        Dimension of the parametric space of the RegionInterpolator
+        """
         return 2
 
 
@@ -386,4 +392,7 @@ class PositionMapper:
 
     @property
     def dimension(self):
+        """
+        The total dimension of the parametric space
+        """
         return sum([interp.dimension for interp in self.interpolators])
