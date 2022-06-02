@@ -267,7 +267,18 @@ eq.coilset.plot(ax=ax)
 
 # %%[markdown]
 
-# Coil position optimisation
+## Coil position optimisation
+
+# First we set up a position mapping of the regions in which we would like the PF coils
+# to be.
+
+# Then we specify the position optimisation problem for a single current sub-optimisation
+# problem. This is what we refer to as a `nested` optimisation, in other words that the
+# positions and the currents are being optimised separately.
+
+# For each set of positions, we treat the plasma contribution as being "frozen" and
+# optimise the coil currents (with the various constraints). This works as for relatively
+# good starting guesses the plasma contribution to the various constraints is limited.
 # %%
 
 from copy import deepcopy
@@ -297,3 +308,29 @@ position_opt_problem = PulsedNestedPositionCOP(
 )
 
 optimised_coilset = position_opt_problem.optimise()
+
+
+# %%[markdown]
+
+# Now that we've optimised the coil positions for a fixed plasma, we can run the
+# Grad-Shafranov solve again to converge an equilibrium for the optimised coil positions.
+
+# %%
+
+eq.coilset = optimised_coilset
+
+program = PicardIterator(
+    eq,
+    current_opt_problem,
+    fixed_coils=True,
+    convergence=DudsonConvergence(1e-4),
+    relaxation=0.3,
+)
+program()
+
+# %%[markdown]
+
+# Note that one could converge the Grad-Shafranov equation for each set of coil positions
+# but this would be much slower and probably less robust. Personally, I don't think it is
+# worthwhile, but were it to succeed it would be fair to say it would be a better
+# optimum.
