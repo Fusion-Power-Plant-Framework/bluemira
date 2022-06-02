@@ -57,7 +57,7 @@ from bluemira.utilities.opt_problems import (
     OptimisationProblem,
 )
 from bluemira.utilities.opt_tools import regularised_lsq_fom, tikhonov
-from bluemira.utilities.optimiser import Optimiser
+from bluemira.utilities.optimiser import Optimiser, approx_derivative
 
 __all__ = [
     "UnconstrainedTikhonovCurrentGradientCOP",
@@ -874,6 +874,17 @@ class PulsedNestedPositionCOP(CoilsetOptimisationProblem):
 
     Parameters
     ----------
+    coilset: Coilset
+        Coilset for which to optimise positions
+    position_mapper: PositionMapper
+        Position mapper tool to parameterise coil positions
+    sub_opt_problems: List[CoilsetOptimisationProblem]
+        The list of sub-optimisation problems to solve
+    optimiser: Optimiser
+        Optimiser object to use
+    constrant: Optional[List[OptimisationConstraint]]
+        Constraints to use. Note these should be applicable to the parametric position
+        vector
     """
 
     def __init__(
@@ -884,7 +895,6 @@ class PulsedNestedPositionCOP(CoilsetOptimisationProblem):
         optimiser: Optimiser = Optimiser(
             "COBYLA", opt_conditions={"max_eval": 100, "ftol_rel": 1e-6}
         ),
-        max_currents=None,
         constraints=None,
     ):
         self.position_mapper = position_mapper
@@ -910,7 +920,7 @@ class PulsedNestedPositionCOP(CoilsetOptimisationProblem):
             Position vector
         """
         positions = self.position_mapper.to_xz(vector)
-        self.coilset.set_positions(positions)
+        self.coilset.set_positions(*positions)
 
     def get_sub_opt_foms(self, vector):
         """
@@ -922,11 +932,17 @@ class PulsedNestedPositionCOP(CoilsetOptimisationProblem):
         for sub_opt_prob in self.sub_opt_probs:
             sub_opt_prob.optimise(I_not_dI=True, fixed_coils=False)
             fom_values.append(sub_opt_prob.opt.optimum_value)
-        return fom_values
+        return max(fom_values)
 
     @staticmethod
-    def get_state_fom(vector, grad, *args):
-        return max(PulsedNestedPositionCOP.get_sub_opt_foms(vector))
+    def get_state_fom(vector, grad):
+        fom_value = PulsedNestedPositionCOP.get_sub_opt_foms(vector)
+
+        if grad.size > 0:
+            grad[:] = approx_derivative(
+                PulsedNestedPositionCOP.get_sub_opt_foms, vector, f0=fom_value
+            )
+        return fom_value
 
 
 class BreakdownZoneStrategy(abc.ABC):
