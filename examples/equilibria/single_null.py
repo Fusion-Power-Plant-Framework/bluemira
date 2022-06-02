@@ -178,11 +178,11 @@ x_point = FieldNullConstraint(
 
 # %%
 
-opt_problem = UnconstrainedTikhonovCurrentGradientCOP(
+current_opt_problem = UnconstrainedTikhonovCurrentGradientCOP(
     coilset, eq, MagneticConstraintSet([psi_boundary, x_point]), gamma=1e-7
 )
 
-program = PicardIterator(eq, opt_problem, fixed_coils=True, relaxation=0.2)
+program = PicardIterator(eq, current_opt_problem, fixed_coils=True, relaxation=0.2)
 program()
 
 
@@ -216,7 +216,7 @@ force_constraints = CoilForceConstraints(
 )
 
 
-opt_problem = TikhonovCurrentCOP(
+current_opt_problem = TikhonovCurrentCOP(
     coilset,
     eq,
     targets=MagneticConstraintSet([psi_boundary, x_point]),
@@ -228,7 +228,7 @@ opt_problem = TikhonovCurrentCOP(
 
 program = PicardIterator(
     eq,
-    opt_problem,
+    current_opt_problem,
     fixed_coils=True,
     convergence=DudsonConvergence(1e-4),
     relaxation=0.3,
@@ -244,7 +244,7 @@ program()
 
 # %%
 
-opt_problem = MinimalCurrentCOP(
+current_opt_problem = MinimalCurrentCOP(
     coilset,
     eq,
     Optimiser("SLSQP", opt_conditions={"max_eval": 2000, "ftol_rel": 1e-6}),
@@ -254,7 +254,7 @@ opt_problem = MinimalCurrentCOP(
 
 program = PicardIterator(
     eq,
-    opt_problem,
+    current_opt_problem,
     fixed_coils=True,
     convergence=DudsonConvergence(1e-4),
     relaxation=0.3,
@@ -264,3 +264,32 @@ program()
 f, ax = plt.subplots()
 eq.plot(ax=ax)
 eq.coilset.plot(ax=ax)
+
+# %%[markdown]
+
+# Coil position optimisation
+# %%
+
+from bluemira.equilibria.opt_problems import PulsedNestedPositionCOP
+from bluemira.geometry.tools import make_polygon
+from bluemira.utilities.positioning import PositionMapper, RegionInterpolator
+
+region_interpolators = []
+for coil in coilset.coils.values():
+    x, z = coil.x, coil.z
+    region = make_polygon(
+        {"x": [x - 1, x + 1, x + 1, x - 1], "z": [z - 1, z - 1, z + 1, z + 1]},
+        closed=True,
+    )
+    region_interpolators.append(RegionInterpolator(region))
+
+position_mapper = PositionMapper(region_interpolators)
+
+position_opt_problem = PulsedNestedPositionCOP(
+    coilset,
+    position_mapper,
+    sub_opt_problems=[current_opt_problem],
+    optimiser=Optimiser("COBYLA", opt_conditions={"max_eval": 100}),
+)
+
+optimised_coilset = position_opt_problem.optimise()
