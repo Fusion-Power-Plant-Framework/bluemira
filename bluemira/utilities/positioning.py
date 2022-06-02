@@ -319,7 +319,7 @@ class PositionMapper:
 
     Parameters
     ----------
-    interpolators: List[XZGeometryInterpolator]
+    interpolators: Dict[str: XZGeometryInterpolator]
         The ordered list of geometry interpolators
     """
 
@@ -340,7 +340,7 @@ class PositionMapper:
         Convert a vector of l_values into a ragged list if necessary
         """
         list_values = []
-        for i, interpolator in enumerate(self.interpolators):
+        for i, interpolator in enumerate(self.interpolators.values()):
             values = l_values[i : i + interpolator.dimension]
             list_values.append(values)
         return list_values
@@ -364,8 +364,19 @@ class PositionMapper:
         l_values = self._vector_to_list(l_values)
         self._check_length(l_values)
         return np.array(
-            [tool.to_xz(l_values[i]) for i, tool, in enumerate(self.interpolators)]
+            [
+                tool.to_xz(l_values[i])
+                for i, tool, in enumerate(self.interpolators.values())
+            ]
         ).T
+
+    def to_xz_dict(self, l_values):
+        l_values = self._vector_to_list(l_values)
+        self._check_length(l_values)
+        xz_dict = {}
+        for i, (key, tool) in enumerate(self.interpolators.items()):
+            xz_dict[key] = tool.to_xz(l_values[i])
+        return xz_dict
 
     def to_L(self, x, z):
         """
@@ -386,7 +397,7 @@ class PositionMapper:
         self._check_length(x)
         self._check_length(z)
         l_values = np.zeros(self.dimension)
-        for i, tool in enumerate(self.interpolators):
+        for i, tool in enumerate(self.interpolators.values()):
             l_values[i : i + tool.dimension] = tool.to_L(x[i], z[i])
         return np.array(l_values)
 
@@ -395,4 +406,4 @@ class PositionMapper:
         """
         The total dimension of the parametric space
         """
-        return sum([interp.dimension for interp in self.interpolators])
+        return sum([interp.dimension for interp in self.interpolators.values()])

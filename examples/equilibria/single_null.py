@@ -270,18 +270,22 @@ eq.coilset.plot(ax=ax)
 # Coil position optimisation
 # %%
 
+from copy import deepcopy
+
 from bluemira.equilibria.opt_problems import PulsedNestedPositionCOP
 from bluemira.geometry.tools import make_polygon
 from bluemira.utilities.positioning import PositionMapper, RegionInterpolator
 
-region_interpolators = []
+old_coilset = deepcopy(coilset)
+region_interpolators = {}
 for coil in coilset.coils.values():
-    x, z = coil.x, coil.z
-    region = make_polygon(
-        {"x": [x - 1, x + 1, x + 1, x - 1], "z": [z - 1, z - 1, z + 1, z + 1]},
-        closed=True,
-    )
-    region_interpolators.append(RegionInterpolator(region))
+    if coil.ctype == "PF":
+        x, z = coil.x, coil.z
+        region = make_polygon(
+            {"x": [x - 1, x + 1, x + 1, x - 1], "z": [z - 1, z - 1, z + 1, z + 1]},
+            closed=True,
+        )
+        region_interpolators[coil.name] = RegionInterpolator(region)
 
 position_mapper = PositionMapper(region_interpolators)
 
