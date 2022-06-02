@@ -45,6 +45,7 @@ from bluemira.equilibria.opt_problems import (
     BreakdownZoneStrategy,
     CoilsetOptimisationProblem,
     MinimalCurrentCOP,
+    PulsedNestedPositionCOP,
     UnconstrainedTikhonovCurrentGradientCOP,
 )
 from bluemira.equilibria.physics import calc_psib
@@ -56,6 +57,7 @@ from bluemira.equilibria.solve import (
 )
 from bluemira.utilities.opt_problems import OptimisationConstraint
 from bluemira.utilities.optimiser import Optimiser
+from bluemira.utilities.positioning import PositionMapper
 
 
 class Snapshot:
@@ -106,7 +108,7 @@ class Snapshot:
         self.tf = tfcoil
 
 
-class PulsedCoilsetProblem:
+class PulsedCoilsetDesign:
     """
     Abstract base class for the procedural design of a pulsed tokamak poloidal field
     coilset.
@@ -130,137 +132,6 @@ class PulsedCoilsetProblem:
         self.snapshots[name] = Snapshot(
             eq, coilset, problem, profiles, limiter=self.limiter
         )
-
-    def run_reference_equilibrium(self):
-        """
-        Run a reference equilibrium.
-        """
-        coilset = deepcopy(self.coilset)
-        eq = Equilibrium(
-            coilset,
-            self.grid,
-            self.profiles,
-        )
-        opt_problem = UnconstrainedTikhonovCurrentGradientCOP(
-            coilset,
-            eq,
-            MagneticConstraintSet(self.eq_constraints),
-            gamma=self._eq_settings["gamma"],
-        )
-        program = PicardIterator(
-            eq,
-            opt_problem,
-            convergence=self._eq_convergence,
-            relaxation=self._eq_settings["relaxation"],
-            fixed_coils=True,
-            plot=False,
-        )
-        program()
-        self.take_snapshot(self.EQ_REF, eq, coilset, opt_problem, self.profiles)
-
-    def calculate_sof_eof_fluxes(self, psi_premag: Optional[float] = None):
-        """
-        Calculate the SOF and EOF plasma boundary fluxes.
-        """
-        if psi_premag is None:
-            if self.BREAKDOWN not in self.snapshots:
-                self.run_premagnetisation()
-            psi_premag = self.snapshots[self.BREAKDOWN].eq.breakdown_psi
-        psi_sof = calc_psib(
-            2 * np.pi * psi_premag,
-            self.params.R_0.value,
-            1e6 * self.params.I_p.value,
-            self.params.l_i.value,
-            self.params.C_Ejima.value,
-        )
-        psi_eof = psi_sof - self.params.tau_flattop.value * self.params.v_burn.value
-        return psi_sof, psi_eof
-
-    def converge_equilibrium(self, eq, problem):
-        """
-        Converge an equilibrium problem from a 'frozen' plasma optimised state.
-        """
-        # TODO: Converge equilibria
-        pass
-
-    def plot(self):
-        """
-        Plot the pulsed equilibrium problem.
-        """
-        n_snapshots = len(self.snapshots)
-        if n_snapshots == 0:
-            return
-
-        f, ax = plt.subplots(1, n_snapshots)
-        for i, (k, snap) in enumerate(self.snapshots.items()):
-            axi = ax[i]
-            snap.eq.plot(ax=axi)
-            snap.coilset.plot(ax=axi)
-            axi.set_title(k)
-        return f
-
-
-class FixedPulsedCoilsetProblem(PulsedCoilsetProblem):
-    """
-    Procedural design for a pulsed tokamak with a known, fixed PF coilset.
-
-    Parameters
-    ----------
-    params: ParameterFrame
-        Parameter frame with which to perform the problem
-    coilset: CoilSet
-        PF coilset to use in the equilibrium design
-    grid: Grid
-        Grid to use in the equilibrium design
-    coil_constraints:
-        pass
-    """
-
-    def __init__(
-        self,
-        params,
-        coilset: CoilSet,
-        grid: Grid,
-        coil_constraints: Optional[List[OptimisationConstraint]],
-        equilibrium_constraints: MagneticConstraintSet,
-        profiles: Profile,
-        breakdown_strategy_cls: Type[BreakdownZoneStrategy],
-        breakdown_problem_cls: Type[BreakdownCOP],
-        breakdown_optimiser: Optimiser = Optimiser(
-            "COBYLA", opt_conditions={"max_eval": 5000, "ftol_rel": 1e-10}
-        ),
-        breakdown_settings: Dict = {"B_stray_con_tol": 1e-8, "n_B_stray_points": 20},
-        equilibrium_problem_cls: Type[CoilsetOptimisationProblem] = MinimalCurrentCOP,
-        equilibrium_optimiser: Optimiser = Optimiser(
-            "SLSQP", opt_conditions={"max_eval": 1000, "ftol_rel": 1e-6}
-        ),
-        equilibrium_convergence: ConvergenceCriterion = DudsonConvergence(1e-2),
-        equilibrium_settings: Optional[Dict] = None,
-        limiter: Optional[Limiter] = None,
-    ):
-        self.params = params
-        self.coilset = coilset
-        self.grid = grid
-        self.profiles = profiles
-        self.limiter = limiter
-        self.eq_constraints = equilibrium_constraints
-
-        self._bd_strat_cls = breakdown_strategy_cls
-        self._bd_prob_cls = breakdown_problem_cls
-        self._bd_settings = breakdown_settings
-        self._bd_opt = breakdown_optimiser
-
-        self._eq_prob_cls = equilibrium_problem_cls
-        self._eq_opt = equilibrium_optimiser
-        self._eq_convergence = equilibrium_convergence
-
-        self._eq_settings = {"gamma": 1e-8, "relaxation": 0.1}
-        if equilibrium_settings:
-            self._eq_settings = {**self._eq_settings, **equilibrium_settings}
-
-        self._coil_cons = coil_constraints
-
-        super().__init__()
 
     def run_premagnetisation(self):
         """
@@ -313,20 +184,59 @@ class FixedPulsedCoilsetProblem(PulsedCoilsetProblem):
 
         self.take_snapshot(self.BREAKDOWN, breakdown, coilset, problem)
 
-    def optimise_currents(self):
+    def run_reference_equilibrium(self):
         """
-        Optimise the coil currents at the start and end of the current flat-top.
+        Run a reference equilibrium.
         """
-        psi_sof, psi_eof = self.calculate_sof_eof_fluxes()
-        if self.EQ_REF not in self.snapshots:
-            self.run_reference_equilibrium()
-        eq_ref = self.snapshots[self.EQ_REF].eq
+        coilset = deepcopy(self.coilset)
+        eq = Equilibrium(
+            coilset,
+            self.grid,
+            self.profiles,
+        )
+        opt_problem = UnconstrainedTikhonovCurrentGradientCOP(
+            coilset,
+            eq,
+            MagneticConstraintSet(self.eq_constraints),
+            gamma=self._eq_settings["gamma"],
+        )
+        program = PicardIterator(
+            eq,
+            opt_problem,
+            convergence=self._eq_convergence,
+            relaxation=self._eq_settings["relaxation"],
+            fixed_coils=True,
+            plot=False,
+        )
+        program()
+        self.take_snapshot(self.EQ_REF, eq, coilset, opt_problem, self.profiles)
 
-        snapshots = [self.SOF, self.EOF]
+    def calculate_sof_eof_fluxes(self, psi_premag: Optional[float] = None):
+        """
+        Calculate the SOF and EOF plasma boundary fluxes.
+        """
+        if psi_premag is None:
+            if self.BREAKDOWN not in self.snapshots:
+                self.run_premagnetisation()
+            psi_premag = self.snapshots[self.BREAKDOWN].eq.breakdown_psi
+        psi_sof = calc_psib(
+            2 * np.pi * psi_premag,
+            self.params.R_0.value,
+            1e6 * self.params.I_p.value,
+            self.params.l_i.value,
+            self.params.C_Ejima.value,
+        )
+        psi_eof = psi_sof - self.params.tau_flattop.value * self.params.v_burn.value
+        return psi_sof, psi_eof
+
+    def _get_sof_eof_opt_problems(self, psi_sof, psi_eof):
+
+        eq_ref = self.snapshots[self.EQ_REF].eq
 
         max_currents = self.coilset.get_max_currents(0)
 
-        for snap, psi_boundary in zip(snapshots, [psi_sof, psi_eof]):
+        opt_problems = []
+        for psi_boundary in [psi_sof, psi_eof]:
             eq = deepcopy(eq_ref)
 
             optimiser = deepcopy(self._eq_opt)
@@ -348,20 +258,34 @@ class FixedPulsedCoilsetProblem(PulsedCoilsetProblem):
                 max_currents=max_currents,
                 constraints=constraints,
             )
+            opt_problems.append(problem)
+        return opt_problems
 
-            program = PicardIterator(
-                eq,
-                problem,
-                convergence=self._eq_convergence,
-                relaxation=self._eq_settings["relaxation"],
-                fixed_coils=True,
-                plot=False,
-            )
-            program()
-            self.take_snapshot(snap, eq, eq.coilset, problem, eq.profiles)
+    def converge_equilibrium(self, eq, problem):
+        """
+        Converge an equilibrium problem from a 'frozen' plasma optimised state.
+        """
+        # TODO: Converge equilibria
+        pass
+
+    def plot(self):
+        """
+        Plot the pulsed equilibrium problem.
+        """
+        n_snapshots = len(self.snapshots)
+        if n_snapshots == 0:
+            return
+
+        f, ax = plt.subplots(1, n_snapshots)
+        for i, (k, snap) in enumerate(self.snapshots.items()):
+            axi = ax[i]
+            snap.eq.plot(ax=axi)
+            snap.coilset.plot(ax=axi)
+            axi.set_title(k)
+        return f
 
 
-class FixedPulsedCoilsetProblem(PulsedCoilsetProblem):
+class FixedPulsedCoilsetDesign(PulsedCoilsetDesign):
     """
     Procedural design for a pulsed tokamak with a known, fixed PF coilset.
 
@@ -422,3 +346,137 @@ class FixedPulsedCoilsetProblem(PulsedCoilsetProblem):
         self._coil_cons = coil_constraints
 
         super().__init__()
+
+    def optimise_currents(self):
+        """
+        Optimise the coil currents at the start and end of the current flat-top.
+        """
+        psi_sof, psi_eof = self.calculate_sof_eof_fluxes()
+        if self.EQ_REF not in self.snapshots:
+            self.run_reference_equilibrium()
+
+        sof_opt_problem, eof_opt_problem = self._get_sof_eof_opt_problems(
+            psi_sof, psi_eof
+        )
+
+        for snap, problem in zip(
+            [self.SOF, self.EOF], [sof_opt_problem, eof_opt_problem]
+        ):
+            eq = problem.eq
+
+            program = PicardIterator(
+                eq,
+                problem,
+                convergence=self._eq_convergence,
+                relaxation=self._eq_settings["relaxation"],
+                fixed_coils=True,
+                plot=False,
+            )
+            program()
+            self.take_snapshot(snap, eq, eq.coilset, problem, eq.profiles)
+
+
+class OptimisedPulsedCoilsetDesign(PulsedCoilsetDesign):
+    """
+    Procedural design for a pulsed tokamak with no prescribed coilset.
+
+    Parameters
+    ----------
+    params: ParameterFrame
+        Parameter frame with which to perform the problem
+    coilset: CoilSet
+        PF coilset to use in the equilibrium design
+    grid: Grid
+        Grid to use in the equilibrium design
+    coil_constraints:
+        pass
+    """
+
+    def __init__(
+        self,
+        params,
+        coilset: CoilSet,
+        position_mapper: PositionMapper,
+        grid: Grid,
+        coil_constraints: Optional[List[OptimisationConstraint]],
+        equilibrium_constraints: MagneticConstraintSet,
+        profiles: Profile,
+        breakdown_strategy_cls: Type[BreakdownZoneStrategy],
+        breakdown_problem_cls: Type[BreakdownCOP],
+        breakdown_optimiser: Optimiser = Optimiser(
+            "COBYLA", opt_conditions={"max_eval": 5000, "ftol_rel": 1e-10}
+        ),
+        breakdown_settings: Dict = {"B_stray_con_tol": 1e-8, "n_B_stray_points": 20},
+        equilibrium_problem_cls: Type[CoilsetOptimisationProblem] = MinimalCurrentCOP,
+        equilibrium_optimiser: Optimiser = Optimiser(
+            "SLSQP", opt_conditions={"max_eval": 1000, "ftol_rel": 1e-6}
+        ),
+        equilibrium_convergence: ConvergenceCriterion = DudsonConvergence(1e-2),
+        equilibrium_settings: Optional[Dict] = None,
+        position_problem_cls: Type[PulsedNestedPositionCOP] = PulsedNestedPositionCOP,
+        position_optimiser: Optimiser = Optimiser(
+            "COBYLA", opt_conditions={"max_eval": 100, "ftol_rel": 1e-4}
+        ),
+        limiter: Optional[Limiter] = None,
+    ):
+        self.params = params
+        self.coilset = coilset
+        self.position_mapper = position_mapper
+        self.grid = grid
+        self.profiles = profiles
+        self.limiter = limiter
+        self.eq_constraints = equilibrium_constraints
+
+        self._bd_strat_cls = breakdown_strategy_cls
+        self._bd_prob_cls = breakdown_problem_cls
+        self._bd_settings = breakdown_settings
+        self._bd_opt = breakdown_optimiser
+
+        self._eq_prob_cls = equilibrium_problem_cls
+        self._eq_opt = equilibrium_optimiser
+        self._eq_convergence = equilibrium_convergence
+
+        self._pos_prob_cls = position_problem_cls
+        self._pos_opt = position_optimiser
+
+        self._eq_settings = {"gamma": 1e-8, "relaxation": 0.1}
+        if equilibrium_settings:
+            self._eq_settings = {**self._eq_settings, **equilibrium_settings}
+
+        self._coil_cons = coil_constraints
+
+        super().__init__()
+
+    def optimise_positions(self):
+        """
+        Optimise the coil positions for the start and end of the current flat-top.
+        """
+        psi_sof, psi_eof = self.calculate_sof_eof_fluxes()
+        if self.EQ_REF not in self.snapshots:
+            self.run_reference_equilibrium()
+
+        sub_opt_problems = self._get_sof_eof_opt_problems(psi_sof, psi_eof)
+
+        pos_opt_problem = self._pos_prob_cls(
+            self.coilset,
+            self.position_mapper,
+            sub_opt_problems,
+            self._pos_opt,
+            constraints=None,
+        )
+        optimised_coilset = pos_opt_problem.optimise()
+
+        for snap, problem in zip([self.SOF, self.EOF], sub_opt_problems):
+            eq = problem.eq
+            eq.coilset = optimised_coilset
+
+            program = PicardIterator(
+                eq,
+                problem,
+                convergence=self._eq_convergence,
+                relaxation=self._eq_settings["relaxation"],
+                fixed_coils=True,
+                plot=False,
+            )
+            program()
+            self.take_snapshot(snap, eq, eq.coilset, problem, eq.profiles)
