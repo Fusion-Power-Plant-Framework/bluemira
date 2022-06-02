@@ -75,6 +75,13 @@ class XZGeometryInterpolator(abc.ABC):
         """
         pass
 
+    @abc.abstractproperty
+    def dimension(self):
+        """
+        The dimension of the parametric space
+        """
+        pass
+
 
 class PathInterpolator(XZGeometryInterpolator):
     """
@@ -113,6 +120,10 @@ class PathInterpolator(XZGeometryInterpolator):
         for i, (xi, zi) in enumerate(zip(x, z)):
             l_values[i] = self.geometry.parameter_at([xi, 0, zi], tolerance=VERY_BIG)
         return l_values
+
+    @property
+    def dimension(self):
+        return 1
 
 
 class RegionInterpolator(XZGeometryInterpolator):
@@ -173,7 +184,7 @@ class RegionInterpolator(XZGeometryInterpolator):
         if not np.allclose(hull.area, geometry.length, atol=EPS):
             raise PositionerError(
                 "RegionInterpolator can only handle convex geometries. Perimeter "
-                f"difference between convex hull and geometry: {hull.volume - geometry.area}"
+                f"difference between convex hull and geometry: {hull.area - geometry.length}"
             )
 
     def to_xz(self, l_values):
@@ -291,6 +302,10 @@ class RegionInterpolator(XZGeometryInterpolator):
             raise PositionerError("Unexpected number of intersections in L conversion.")
         return l_0, l_1
 
+    @property
+    def dimension(self):
+        return 2
+
 
 class PositionMapper:
     """
@@ -314,17 +329,23 @@ class PositionMapper:
                 f"Object of length: {len(thing)} not of length {len(self.interpolators)}"
             )
 
+    def _vector_to_list(self, l_values):
+        """
+        Convert a vector of l_values into a ragged list if necessary
+        """
+        list_values = []
+        for i, interpolator in enumerate(self.interpolators):
+            values = l_values[i : i + interpolator.dimension]
+            list_values.append(values)
+        return list_values
+
     def to_xz(self, l_values):
         """
         Convert a set of parametric-space values to physical x-z coordinates.
 
         Parameters
         ----------
-        l_values: Union[List[float],
-                        List[Tuple[float]],
-                        List[Union[float,
-                        Tuple[float]]]]
-
+        l_values: np.ndarray
             The set of parametric-space values to convert
 
         Returns
@@ -334,6 +355,7 @@ class PositionMapper:
         z: np.ndarray
             Array of z coordinates
         """
+        l_values = self._vector_to_list(l_values)
         self._check_length(l_values)
         return np.array(
             [tool.to_xz(l_values[i]) for i, tool, in enumerate(self.interpolators)]
@@ -352,13 +374,16 @@ class PositionMapper:
 
         Returns
         -------
-        l_values: Union[List[float],
-                        List[Tuple[float]],
-                        List[Union[float,
-                        Tuple[float]]]]
-
+        l_values: np.ndarray
             The set of parametric-space values
         """
         self._check_length(x)
         self._check_length(z)
-        return [tool.to_L(x[i], z[i]) for i, tool in enumerate(self.interpolators)]
+        l_values = np.zeros(self.dimension)
+        for i, tool in enumerate(self.interpolators):
+            l_values[i : i + tool.dimension] = tool.to_L(x[i], z[i])
+        return np.array(l_values)
+
+    @property
+    def dimension(self):
+        return sum([interp.dimension for interp in self.interpolators])

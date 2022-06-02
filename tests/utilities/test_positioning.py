@@ -24,7 +24,11 @@ import pytest
 
 from bluemira.geometry.tools import make_circle, make_polygon
 from bluemira.utilities.error import PositionerError
-from bluemira.utilities.positioning import PathInterpolator, RegionInterpolator
+from bluemira.utilities.positioning import (
+    PathInterpolator,
+    PositionMapper,
+    RegionInterpolator,
+)
 
 
 class TestPathInterpolator:
@@ -94,3 +98,33 @@ class TestRegionInterpolator:
         l0, l1 = interpolator.to_L(0, 0)
         assert np.isclose(l0, 0.5)
         assert np.isclose(l1, 0.5)
+
+
+class TestPositionMapper:
+    @classmethod
+    def setup_class(cls):
+        x = [2, 4, 4, 2]
+        z = [1, 1, 2, 2]
+        convex_polygon = make_polygon({"x": x, "z": z}, closed=True)
+        circle = make_circle(center=(0, 0, 0), axis=(0, -1, 0), radius=10)
+
+        interpolators = [
+            PathInterpolator(circle),
+            RegionInterpolator(circle),
+            RegionInterpolator(convex_polygon),
+        ]
+        cls.mapper = PositionMapper(interpolators)
+
+    def test_dimensionality(self):
+        assert self.mapper.dimension == 5
+
+    def test_to_xz(self):
+        l_values = [0.5, 0.5, 0.5, 0.5, 0.5]
+        positions = np.array(self.mapper.to_xz(l_values))
+        assert positions.shape == (2, 3)
+
+    def test_to_L(self):
+        x = [10, 3, 0]
+        z = [3, 1.5, 0]
+        l_values = self.mapper.to_L(x, z)
+        assert len(l_values) == 5

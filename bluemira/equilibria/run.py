@@ -359,3 +359,66 @@ class FixedPulsedCoilsetProblem(PulsedCoilsetProblem):
             )
             program()
             self.take_snapshot(snap, eq, eq.coilset, problem, eq.profiles)
+
+
+class FixedPulsedCoilsetProblem(PulsedCoilsetProblem):
+    """
+    Procedural design for a pulsed tokamak with a known, fixed PF coilset.
+
+    Parameters
+    ----------
+    params: ParameterFrame
+        Parameter frame with which to perform the problem
+    coilset: CoilSet
+        PF coilset to use in the equilibrium design
+    grid: Grid
+        Grid to use in the equilibrium design
+    coil_constraints:
+        pass
+    """
+
+    def __init__(
+        self,
+        params,
+        coilset: CoilSet,
+        grid: Grid,
+        coil_constraints: Optional[List[OptimisationConstraint]],
+        equilibrium_constraints: MagneticConstraintSet,
+        profiles: Profile,
+        breakdown_strategy_cls: Type[BreakdownZoneStrategy],
+        breakdown_problem_cls: Type[BreakdownCOP],
+        breakdown_optimiser: Optimiser = Optimiser(
+            "COBYLA", opt_conditions={"max_eval": 5000, "ftol_rel": 1e-10}
+        ),
+        breakdown_settings: Dict = {"B_stray_con_tol": 1e-8, "n_B_stray_points": 20},
+        equilibrium_problem_cls: Type[CoilsetOptimisationProblem] = MinimalCurrentCOP,
+        equilibrium_optimiser: Optimiser = Optimiser(
+            "SLSQP", opt_conditions={"max_eval": 1000, "ftol_rel": 1e-6}
+        ),
+        equilibrium_convergence: ConvergenceCriterion = DudsonConvergence(1e-2),
+        equilibrium_settings: Optional[Dict] = None,
+        limiter: Optional[Limiter] = None,
+    ):
+        self.params = params
+        self.coilset = coilset
+        self.grid = grid
+        self.profiles = profiles
+        self.limiter = limiter
+        self.eq_constraints = equilibrium_constraints
+
+        self._bd_strat_cls = breakdown_strategy_cls
+        self._bd_prob_cls = breakdown_problem_cls
+        self._bd_settings = breakdown_settings
+        self._bd_opt = breakdown_optimiser
+
+        self._eq_prob_cls = equilibrium_problem_cls
+        self._eq_opt = equilibrium_optimiser
+        self._eq_convergence = equilibrium_convergence
+
+        self._eq_settings = {"gamma": 1e-8, "relaxation": 0.1}
+        if equilibrium_settings:
+            self._eq_settings = {**self._eq_settings, **equilibrium_settings}
+
+        self._coil_cons = coil_constraints
+
+        super().__init__()

@@ -865,6 +865,70 @@ class MinimalCurrentCOP(CoilsetOptimisationProblem):
         return self.coilset
 
 
+from bluemira.utilities.positioning import PositionMapper
+
+
+class PulsedNestedPositionCOP(CoilsetOptimisationProblem):
+    """
+    Coilset position optimisation problem for multiple sub-optimisation problems.
+
+    Parameters
+    ----------
+    """
+
+    def __init__(
+        self,
+        coilset,
+        position_mapper: PositionMapper,
+        sub_opt_problems: List[CoilsetOptimisationProblem],
+        optimiser: Optimiser = Optimiser(
+            "COBYLA", opt_conditions={"max_eval": 100, "ftol_rel": 1e-6}
+        ),
+        max_currents=None,
+        constraints=None,
+    ):
+        self.position_mapper = position_mapper
+        self.sub_opt_probs = sub_opt_problems
+
+        objective = OptimisationObjective(
+            f_objective=self.get_state_fom,
+            f_objective_args={},
+        )
+        super().__init__(coilset, optimiser, objective, constraints)
+
+        dimension = self.position_mapper.dimension
+        bounds = (np.zeros(dimension), np.ones(dimension))
+        self.set_up_optimiser(dimension, bounds)
+
+    def update_positions(self, vector):
+        """
+        Update the positions of the coilset
+
+        Parameters
+        ----------
+        vector: np.ndarray
+            Position vector
+        """
+        positions = self.position_mapper.to_xz(vector)
+        self.coilset.set_positions(positions)
+
+    def get_sub_opt_foms(self, vector):
+        """
+        Run the sub-optimisation problems for a given position vector and return the
+        objective function values
+        """
+        self.update_positions(vector)
+        fom_values = []
+        for sub_opt_prob in self.sub_opt_probs:
+            sub_opt_prob.optimise(I_not_dI=True, fixed_coils=False)
+            fom_values.append(sub_opt_prob.opt.optimum_value)
+        return fom_values
+
+    @staticmethod
+    def get_state_fom(vector, grad, *args):
+        return max(PulsedNestedPositionCOP.get_sub_opt_foms(vector))
+
+
 class BreakdownZoneStrategy(abc.ABC):
     """
     Abstract base class for the definition of a breakdown zone strategy.
