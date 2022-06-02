@@ -924,8 +924,8 @@ class PulsedNestedPositionCOP(CoilsetOptimisationProblem):
         vector: np.ndarray
             Position vector
         """
-        positions = position_mapper.to_xz(vector)
-        coilset.set_positions(positions.T.tolist())
+        positions = position_mapper.to_xz_dict(vector)
+        coilset.set_positions(positions)
 
     @staticmethod
     def get_sub_opt_foms(vector, coilset, position_mapper, sub_opt_problems):
@@ -952,10 +952,11 @@ class PulsedNestedPositionCOP(CoilsetOptimisationProblem):
             )
         return fom_value
 
-    def optimise(self):
-        optimal_positions = self.opt.optimise(
-            self.position_mapper.to_L(*self.coilset.get_positions())
-        )
+    def optimise(self, x0=None):
+
+        if x0 is None:
+            x0 = 0.5 * np.ones(self.opt.n_variables)
+        optimal_positions = self.opt.optimise(x0)
         self.update_positions(optimal_positions, self.coilset, self.position_mapper)
         return self.coilset
 
