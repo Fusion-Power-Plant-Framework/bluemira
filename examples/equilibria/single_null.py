@@ -317,27 +317,27 @@ position_mapper = PositionMapper(region_interpolators)
 
 lcfs = eq.get_LCFS()
 x, z = lcfs.x, lcfs.z
-arg_inner = np.argmin(x)
-xp_idx = np.argmin(z)
+arg_inner = np.argmin(sof_xbdry)
+xp_idx = np.argmin(sof_zbdry)
 isoflux = IsofluxConstraint(
-    x,
-    z,
-    x[arg_inner],
-    z[arg_inner],
+    sof_xbdry,
+    sof_zbdry,
+    sof_xbdry[arg_inner],
+    sof_zbdry[arg_inner],
     tolerance=1e-3,
     constraint_value=0.25,  # Difficult to choose...
 )
 
 xp_idx = np.argmin(sof_zbdry)
 x_point = FieldNullConstraint(
-    x[xp_idx], z[xp_idx], tolerance=1e-4, constraint_type="inequality"
+    sof_xbdry[xp_idx], sof_zbdry[xp_idx], tolerance=1e-4, constraint_type="inequality"
 )
 
 current_opt_problem_new = TikhonovCurrentCOP(
     coilset,
     eq,
     targets=MagneticConstraintSet([isoflux, x_point]),
-    gamma=1e-7,
+    gamma=0.0,
     optimiser=Optimiser("SLSQP", opt_conditions={"max_eval": 2000, "ftol_rel": 1e-6}),
     max_currents=coilset.get_max_currents(I_p),
     constraints=[field_constraints, force_constraints],
@@ -348,7 +348,7 @@ position_opt_problem = PulsedNestedPositionCOP(
     coilset,
     position_mapper,
     sub_opt_problems=[current_opt_problem_new],
-    optimiser=Optimiser("COBYLA", opt_conditions={"max_eval": 10, "ftol_rel": 1e-4}),
+    optimiser=Optimiser("COBYLA", opt_conditions={"max_eval": 100, "ftol_rel": 1e-4}),
     debug=True,
 )
 
@@ -390,8 +390,12 @@ optimised_coilset.plot(ax=ax_2)
 
 f, ax = plt.subplots()
 
+x_old, z_old = old_coilset.get_positions()
+x_new, z_new = optimised_coilset.get_positions()
 old_eq.get_LCFS().plot(ax=ax, edgecolor="b", fill=False)
 eq.get_LCFS().plot(ax=ax, edgecolor="r", fill=False)
+ax.plot(x_old, z_old, linewidth=0, marker="o", color="b")
+ax.plot(x_new, z_new, linewidth=0, marker="+", color="r")
 isoflux.plot(ax=ax)
 plt.show()
 

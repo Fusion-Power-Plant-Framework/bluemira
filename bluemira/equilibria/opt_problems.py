@@ -938,7 +938,7 @@ class PulsedNestedPositionCOP(CoilsetOptimisationProblem):
             i = max(list(debug.keys())) + 1
             value = sub_opt_prob.opt.optimum_value
             sub_opt_prob.eq._remap_greens()
-            print(sub_opt_prob.coilset.get_control_currents())
+            sub_opt_prob.eq._clear_OX_points()
             lcfs = sub_opt_prob.eq.get_LCFS()
             debug[i] = [lcfs, value]
 
