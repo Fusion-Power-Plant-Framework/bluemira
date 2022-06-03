@@ -57,8 +57,7 @@ def _get_dummy_equilibrium(equilibrium):
     # TODO: Add passive coil contributions here
     dummy = equilibrium.plasma_coil()
     dummy.coilset = deepcopy(equilibrium.coilset)
-    equilibrium = dummy
-    return equilibrium
+    return dummy
 
 
 class UpdateableConstraint(ABC):

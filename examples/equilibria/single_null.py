@@ -196,8 +196,11 @@ current_opt_problem = UnconstrainedTikhonovCurrentGradientCOP(
     coilset, eq, MagneticConstraintSet([isoflux, x_point]), gamma=1e-7
 )
 
-program = PicardIterator(eq, current_opt_problem, fixed_coils=True, relaxation=0.2)
+program = PicardIterator(
+    eq, current_opt_problem, fixed_coils=True, relaxation=0.2, plot=True
+)
 program()
+plt.close("all")
 
 
 # %%[markdown]
@@ -247,6 +250,7 @@ program = PicardIterator(
     fixed_coils=True,
     convergence=DudsonConvergence(1e-4),
     relaxation=0.1,
+    plot=False,
 )
 program()
 
@@ -301,7 +305,7 @@ old_eq = deepcopy(eq)
 region_interpolators = {}
 for coil in coilset.coils.values():
     if coil.ctype == "PF":
-        coil.flag_sizefix = False
+        # coil.flag_sizefix = False
         x, z = coil.x, coil.z
         region = make_polygon(
             {"x": [x - 1, x + 1, x + 1, x - 1], "z": [z - 1, z - 1, z + 1, z + 1]},
@@ -311,10 +315,28 @@ for coil in coilset.coils.values():
 
 position_mapper = PositionMapper(region_interpolators)
 
+lcfs = eq.get_LCFS()
+x, z = lcfs.x, lcfs.z
+arg_inner = np.argmin(x)
+xp_idx = np.argmin(z)
+isoflux = IsofluxConstraint(
+    x,
+    z,
+    x[arg_inner],
+    z[arg_inner],
+    tolerance=1e-3,
+    constraint_value=0.25,  # Difficult to choose...
+)
+
+xp_idx = np.argmin(sof_zbdry)
+x_point = FieldNullConstraint(
+    x[xp_idx], z[xp_idx], tolerance=1e-4, constraint_type="inequality"
+)
+
 current_opt_problem_new = TikhonovCurrentCOP(
     coilset,
     eq,
-    targets=magnetic_targets,
+    targets=MagneticConstraintSet([isoflux, x_point]),
     gamma=1e-7,
     optimiser=Optimiser("SLSQP", opt_conditions={"max_eval": 2000, "ftol_rel": 1e-6}),
     max_currents=coilset.get_max_currents(I_p),
@@ -325,8 +347,9 @@ current_opt_problem_new = TikhonovCurrentCOP(
 position_opt_problem = PulsedNestedPositionCOP(
     coilset,
     position_mapper,
-    sub_opt_problems=[current_opt_problem],
-    optimiser=Optimiser("COBYLA", opt_conditions={"max_eval": 100, "ftol_rel": 1e-4}),
+    sub_opt_problems=[current_opt_problem_new],
+    optimiser=Optimiser("COBYLA", opt_conditions={"max_eval": 10, "ftol_rel": 1e-4}),
+    debug=True,
 )
 
 optimised_coilset = position_opt_problem.optimise()
@@ -347,6 +370,7 @@ program = PicardIterator(
     fixed_coils=True,
     convergence=DudsonConvergence(1e-4),
     relaxation=0.1,
+    plot=True,
 )
 program()
 
