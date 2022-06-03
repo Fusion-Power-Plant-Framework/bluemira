@@ -58,6 +58,7 @@ from bluemira.utilities.opt_problems import (
 )
 from bluemira.utilities.opt_tools import regularised_lsq_fom, tikhonov
 from bluemira.utilities.optimiser import Optimiser, approx_derivative
+from bluemira.utilities.positioning import PositionMapper
 
 __all__ = [
     "UnconstrainedTikhonovCurrentGradientCOP",
@@ -864,9 +865,6 @@ class MinimalCurrentCOP(CoilsetOptimisationProblem):
         currents = self.opt.optimise(initial_currents)
         self.coilset.set_control_currents(currents * self.scale)
         return self.coilset
-
-
-from bluemira.utilities.positioning import PositionMapper
 
 
 class PulsedNestedPositionCOP(CoilsetOptimisationProblem):
