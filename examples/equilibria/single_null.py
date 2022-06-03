@@ -230,10 +230,11 @@ force_constraints = CoilForceConstraints(
 )
 
 
+magnetic_targets = MagneticConstraintSet([isoflux, x_point])
 current_opt_problem = TikhonovCurrentCOP(
     coilset,
     eq,
-    targets=MagneticConstraintSet([isoflux, x_point]),
+    targets=magnetic_targets,
     gamma=0.0,
     optimiser=Optimiser("SLSQP", opt_conditions={"max_eval": 2000, "ftol_rel": 1e-6}),
     max_currents=coilset.get_max_currents(0.0),
@@ -245,7 +246,7 @@ program = PicardIterator(
     current_opt_problem,
     fixed_coils=True,
     convergence=DudsonConvergence(1e-4),
-    relaxation=0.3,
+    relaxation=0.1,
 )
 program()
 
@@ -258,22 +259,22 @@ program()
 
 # %%
 
-minimal_current_opt_problem = MinimalCurrentCOP(
-    coilset,
-    eq,
-    Optimiser("SLSQP", opt_conditions={"max_eval": 2000, "ftol_rel": 1e-6}),
-    max_currents=coilset.get_max_currents(0.0),
-    constraints=[psi_boundary, x_point, field_constraints, force_constraints],
-)
+# minimal_current_opt_problem = MinimalCurrentCOP(
+#     coilset,
+#     eq,
+#     Optimiser("SLSQP", opt_conditions={"max_eval": 2000, "ftol_rel": 1e-6}),
+#     max_currents=coilset.get_max_currents(0.0),
+#     constraints=[psi_boundary, x_point, field_constraints, force_constraints],
+# )
 
-program = PicardIterator(
-    eq,
-    minimal_current_opt_problem,
-    fixed_coils=True,
-    convergence=DudsonConvergence(1e-4),
-    relaxation=0.1,
-)
-program()
+# program = PicardIterator(
+#     eq,
+#     minimal_current_opt_problem,
+#     fixed_coils=True,
+#     convergence=DudsonConvergence(1e-4),
+#     relaxation=0.1,
+# )
+# program()
 
 
 # %%[markdown]
@@ -310,21 +311,22 @@ for coil in coilset.coils.values():
 
 position_mapper = PositionMapper(region_interpolators)
 
-current_opt_problem = TikhonovCurrentCOP(
+current_opt_problem_new = TikhonovCurrentCOP(
     coilset,
     eq,
-    targets=MagneticConstraintSet([isoflux, x_point]),
-    gamma=0.0,
+    targets=magnetic_targets,
+    gamma=1e-7,
     optimiser=Optimiser("SLSQP", opt_conditions={"max_eval": 2000, "ftol_rel": 1e-6}),
     max_currents=coilset.get_max_currents(I_p),
-    constraints=[force_constraints, field_constraints],
+    constraints=[field_constraints, force_constraints],
 )
+
 
 position_opt_problem = PulsedNestedPositionCOP(
     coilset,
     position_mapper,
     sub_opt_problems=[current_opt_problem],
-    optimiser=Optimiser("COBYLA", opt_conditions={"max_eval": 30}),
+    optimiser=Optimiser("COBYLA", opt_conditions={"max_eval": 100, "ftol_rel": 1e-4}),
 )
 
 optimised_coilset = position_opt_problem.optimise()
@@ -338,7 +340,6 @@ optimised_coilset = position_opt_problem.optimise()
 # %%
 
 eq.coilset = optimised_coilset
-current_opt_problem.eq = eq
 
 program = PicardIterator(
     eq,
