@@ -28,6 +28,13 @@ Attempt at recreating the EU-DEMO 2017 reference equilibria from a known coilset
 # An example on how to produce an equilibrium from a known coilset, profiles, and
 # plasma shape.
 
+# We also explore how to optimise coil positions.
+
+# There are many ways of optimising equilibria, and this example shows just one
+# relatively crude approach. The choice of constraints, optimisation algorithms, and even
+# the sequence of operations has a big influence on the outcome. It is a bit of a dark
+# art, and over time you will hopefully find an approach that works for your problem.
+
 # %%
 
 import json
@@ -145,28 +152,27 @@ filename = os.sep.join([path, name])
 with open(filename, "r") as file:
     data = json.load(file)
 
-sof_xbdry = data["xbdry"]
-sof_zbdry = data["zbdry"]
+sof_xbdry = np.array(data["xbdry"])[::10]
+sof_zbdry = np.array(data["zbdry"])[::10]
+
+arg_inner = np.argmin(sof_xbdry)
 
 isoflux = IsofluxConstraint(
-    np.array(sof_xbdry)[::10],
-    np.array(sof_zbdry)[::10],
-    sof_xbdry[0],
-    sof_zbdry[0],
+    sof_xbdry,
+    sof_zbdry,
+    sof_xbdry[arg_inner],
+    sof_zbdry[arg_inner],
     tolerance=1e-3,
-    constraint_value=0.5,  # Difficult to choose...
+    constraint_value=0.05,  # Difficult to choose...
 )
 
 psi_boundary = PsiBoundaryConstraint(
-    np.array(sof_xbdry)[::10],
-    np.array(sof_zbdry)[::10],
-    100 / (2 * np.pi),
-    tolerance=1.0,
+    sof_xbdry, sof_zbdry, target_value=100 / 2 / np.pi, tolerance=1.0
 )
 
 xp_idx = np.argmin(sof_zbdry)
 x_point = FieldNullConstraint(
-    sof_xbdry[xp_idx], sof_zbdry[xp_idx], tolerance=1e-3, constraint_type="inequality"
+    sof_xbdry[xp_idx], sof_zbdry[xp_idx], tolerance=1e-4, constraint_type="inequality"
 )
 
 # %%[markdown]
@@ -183,7 +189,7 @@ x_point = FieldNullConstraint(
 # %%
 
 current_opt_problem = UnconstrainedTikhonovCurrentGradientCOP(
-    coilset, eq, MagneticConstraintSet([psi_boundary, x_point]), gamma=1e-7
+    coilset, eq, MagneticConstraintSet([isoflux, x_point]), gamma=1e-7
 )
 
 program = PicardIterator(eq, current_opt_problem, fixed_coils=True, relaxation=0.2)
@@ -223,8 +229,8 @@ force_constraints = CoilForceConstraints(
 current_opt_problem = TikhonovCurrentCOP(
     coilset,
     eq,
-    targets=MagneticConstraintSet([psi_boundary, x_point]),
-    gamma=1e-8,
+    targets=MagneticConstraintSet([isoflux, x_point]),
+    gamma=0.0,
     optimiser=Optimiser("SLSQP", opt_conditions={"max_eval": 2000, "ftol_rel": 1e-6}),
     max_currents=coilset.get_max_currents(0.0),
     constraints=[field_constraints, force_constraints],
@@ -248,7 +254,7 @@ program()
 
 # %%
 
-current_opt_problem = MinimalCurrentCOP(
+minimal_current_opt_problem = MinimalCurrentCOP(
     coilset,
     eq,
     Optimiser("SLSQP", opt_conditions={"max_eval": 2000, "ftol_rel": 1e-6}),
@@ -258,10 +264,10 @@ current_opt_problem = MinimalCurrentCOP(
 
 program = PicardIterator(
     eq,
-    current_opt_problem,
+    minimal_current_opt_problem,
     fixed_coils=True,
     convergence=DudsonConvergence(1e-4),
-    relaxation=0.3,
+    relaxation=0.1,
 )
 program()
 
@@ -320,13 +326,14 @@ optimised_coilset = position_opt_problem.optimise()
 # %%
 
 eq.coilset = optimised_coilset
+current_opt_problem.eq = eq
 
 program = PicardIterator(
     eq,
     current_opt_problem,
     fixed_coils=True,
     convergence=DudsonConvergence(1e-4),
-    relaxation=0.3,
+    relaxation=0.1,
 )
 program()
 
@@ -343,6 +350,13 @@ old_coilset.plot(ax=ax_1)
 
 eq.plot(ax=ax_2)
 optimised_coilset.plot(ax=ax_2)
+
+f, ax = plt.subplots()
+
+old_eq.get_LCFS().plot(ax=ax, edgecolor="b", fill=False)
+eq.get_LCFS().plot(ax=ax, edgecolor="r", fill=False)
+isoflux.plot(ax=ax)
+plt.show()
 
 # %%[markdown]
 
