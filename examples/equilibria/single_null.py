@@ -348,8 +348,8 @@ position_opt_problem = PulsedNestedPositionCOP(
     coilset,
     position_mapper,
     sub_opt_problems=[current_opt_problem_new],
-    optimiser=Optimiser("COBYLA", opt_conditions={"max_eval": 100, "ftol_rel": 1e-4}),
-    debug=True,
+    optimiser=Optimiser("COBYLA", opt_conditions={"max_eval": 50, "ftol_rel": 1e-4}),
+    debug=False,
 )
 
 optimised_coilset = position_opt_problem.optimise()
