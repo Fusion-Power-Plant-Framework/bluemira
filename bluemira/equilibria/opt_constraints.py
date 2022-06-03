@@ -220,12 +220,36 @@ class CoilFieldConstraints(FieldConstraints):
         if len(tolerance) != coilset.n_coils:
             raise ValueError("Tolerance vector length not equal to the number of coils.")
 
+        x, z = self._get_constraint_points(coilset)
+
+        super().__init__(x, z, B_max, tolerance=tolerance, constraint_type="inequality")
+
+    @staticmethod
+    def _get_constraint_points(coilset):
         x, z = np.zeros(coilset.n_coils), np.zeros(coilset.n_coils)
         for i, coil in enumerate(coilset.coils.values()):
             x[i] = coil.x - coil.dx
             z[i] = coil.z
+        return x, z
 
-        super().__init__(x, z, B_max, tolerance=tolerance, constraint_type="inequality")
+    def prepare(self, equilibrium, I_not_dI=False, fixed_coils=False):
+        """
+        Prepare the constraint for use in an equilibrium optimisation problem.
+        """
+        if I_not_dI:
+            equilibrium = _get_dummy_equilibrium(equilibrium)
+
+        # Re-build control response matrix
+        if not fixed_coils or (fixed_coils and self._args["ax_mat"] is None):
+            # Update the target points for the constraints (the coils may be moving)
+            self.x, self.z = self._get_constraint_points(equilibrium.coilset)
+            ax_mat, az_mat = self.control_response(equilibrium.coilset)
+            self._args["ax_mat"] = ax_mat
+            self._args["az_mat"] = az_mat
+
+        bxp_vec, bzp_vec = self.evaluate(equilibrium)
+        self._args["bxp_vec"] = bxp_vec
+        self._args["bzp_vec"] = bzp_vec
 
 
 class CoilForceConstraints(UpdateableConstraint, OptimisationConstraint):
