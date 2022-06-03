@@ -35,6 +35,10 @@ Attempt at recreating the EU-DEMO 2017 reference equilibria from a known coilset
 # the sequence of operations has a big influence on the outcome. It is a bit of a dark
 # art, and over time you will hopefully find an approach that works for your problem.
 
+# Heavily constraining the plasma shape as we do here is not particularly robust, or
+# even philosophically "right". It's however a common approach and comes in useful when
+# one wants to optimise coil positions without affecting the plasma too much.
+
 # %%
 
 import json
@@ -163,7 +167,7 @@ isoflux = IsofluxConstraint(
     sof_xbdry[arg_inner],
     sof_zbdry[arg_inner],
     tolerance=1e-3,
-    constraint_value=0.05,  # Difficult to choose...
+    constraint_value=0.25,  # Difficult to choose...
 )
 
 psi_boundary = PsiBoundaryConstraint(
@@ -271,9 +275,6 @@ program = PicardIterator(
 )
 program()
 
-f, ax = plt.subplots()
-eq.plot(ax=ax)
-eq.coilset.plot(ax=ax)
 
 # %%[markdown]
 
@@ -299,6 +300,7 @@ old_eq = deepcopy(eq)
 region_interpolators = {}
 for coil in coilset.coils.values():
     if coil.ctype == "PF":
+        coil.flag_sizefix = False
         x, z = coil.x, coil.z
         region = make_polygon(
             {"x": [x - 1, x + 1, x + 1, x - 1], "z": [z - 1, z - 1, z + 1, z + 1]},
@@ -307,6 +309,16 @@ for coil in coilset.coils.values():
         region_interpolators[coil.name] = RegionInterpolator(region)
 
 position_mapper = PositionMapper(region_interpolators)
+
+current_opt_problem = TikhonovCurrentCOP(
+    coilset,
+    eq,
+    targets=MagneticConstraintSet([isoflux, x_point]),
+    gamma=0.0,
+    optimiser=Optimiser("SLSQP", opt_conditions={"max_eval": 2000, "ftol_rel": 1e-6}),
+    max_currents=coilset.get_max_currents(I_p),
+    constraints=[force_constraints, field_constraints],
+)
 
 position_opt_problem = PulsedNestedPositionCOP(
     coilset,
