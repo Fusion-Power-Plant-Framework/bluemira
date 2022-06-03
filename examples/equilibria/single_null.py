@@ -32,6 +32,7 @@ Attempt at recreating the EU-DEMO 2017 reference equilibria from a known coilset
 
 import json
 import os
+from copy import deepcopy
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -52,12 +53,15 @@ from bluemira.equilibria.opt_constraints import (
 )
 from bluemira.equilibria.opt_problems import (
     MinimalCurrentCOP,
+    PulsedNestedPositionCOP,
     TikhonovCurrentCOP,
     UnconstrainedTikhonovCurrentGradientCOP,
 )
 from bluemira.equilibria.profiles import CustomProfile
 from bluemira.equilibria.solve import DudsonConvergence, PicardIterator
+from bluemira.geometry.tools import make_polygon
 from bluemira.utilities.optimiser import Optimiser
+from bluemira.utilities.positioning import PositionMapper, RegionInterpolator
 
 plot_defaults()
 
@@ -269,6 +273,9 @@ eq.coilset.plot(ax=ax)
 
 ## Coil position optimisation
 
+# Now, say that we want to optimise the positions the PF coils, and the currents of the
+# entire CoilSet.
+
 # First we set up a position mapping of the regions in which we would like the PF coils
 # to be.
 
@@ -281,13 +288,8 @@ eq.coilset.plot(ax=ax)
 # good starting guesses the plasma contribution to the various constraints is limited.
 # %%
 
-from copy import deepcopy
-
-from bluemira.equilibria.opt_problems import PulsedNestedPositionCOP
-from bluemira.geometry.tools import make_polygon
-from bluemira.utilities.positioning import PositionMapper, RegionInterpolator
-
 old_coilset = deepcopy(coilset)
+old_eq = deepcopy(eq)
 region_interpolators = {}
 for coil in coilset.coils.values():
     if coil.ctype == "PF":
@@ -327,6 +329,20 @@ program = PicardIterator(
     relaxation=0.3,
 )
 program()
+
+# %%[markdown]
+
+# Now let's compare the old equilibrium and coilset to the one with optimised positions.
+
+# %%
+
+f, (ax_1, ax_2) = plt.subplots(1, 2)
+
+old_eq.plot(ax=ax_1)
+old_coilset.plot(ax=ax_1)
+
+eq.plot(ax=ax_2)
+optimised_coilset.plot(ax=ax_2)
 
 # %%[markdown]
 
