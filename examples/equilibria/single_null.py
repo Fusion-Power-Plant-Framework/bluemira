@@ -271,7 +271,7 @@ eq.coilset.plot(ax=ax)
 
 # %%[markdown]
 
-## Coil position optimisation
+# Coil position optimisation
 
 # Now, say that we want to optimise the positions the PF coils, and the currents of the
 # entire CoilSet.
