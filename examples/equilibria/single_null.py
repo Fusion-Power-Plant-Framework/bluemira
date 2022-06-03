@@ -349,11 +349,26 @@ position_opt_problem = PulsedNestedPositionCOP(
     position_mapper,
     sub_opt_problems=[current_opt_problem_new],
     optimiser=Optimiser("COBYLA", opt_conditions={"max_eval": 50, "ftol_rel": 1e-4}),
-    debug=False,
+    debug=True,
 )
+
 
 optimised_coilset = position_opt_problem.optimise()
 
+# import matplotlib
+# from matplotlib.colors import Normalize
+# debug = position_opt_problem._debug
+# items = list(debug.values())[1:]
+# lcfss = [item[0] for item in items]
+# foms = [item[1] for item in items]
+# normer = Normalize(min(foms), max(foms))
+# cm = matplotlib.cm.get_cmap("RdBu")
+# colors = cm(normer(foms))
+# f, ax = plt.subplots()
+# for i, (fom, l) in enumerate(zip(foms, lcfss)):
+#     l.plot(ax=ax, fill=False, edgecolor=colors[i])
+
+# isoflux.plot(ax=ax)
 
 # %%[markdown]
 
