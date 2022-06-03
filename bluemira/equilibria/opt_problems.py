@@ -978,6 +978,9 @@ class PulsedNestedPositionCOP(CoilsetOptimisationProblem):
             x0 = 0.5 * np.ones(self.opt.n_variables)
         optimal_positions = self.opt.optimise(x0)
         self.update_positions(optimal_positions, self.coilset, self.position_mapper)
+        for sub_opt in self.sub_opt_probs:
+            sub_opt.eq._remap_greens()
+            sub_opt.eq._clear_OX_points()
         return self.coilset
 
 
