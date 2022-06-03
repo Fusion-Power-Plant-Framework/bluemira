@@ -934,6 +934,9 @@ class PulsedNestedPositionCOP(CoilsetOptimisationProblem):
 
     @staticmethod
     def _run_diagnostics(debug, sub_opt_prob):
+        """
+        I am sorry...
+        """
         if debug[0]:
             i = max(list(debug.keys())) + 1
             value = sub_opt_prob.opt.optimum_value
