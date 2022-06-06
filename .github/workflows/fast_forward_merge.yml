@@ -1,0 +1,37 @@
+# This workflow is used to complete a pull request using a fast-forward merge.
+# To trigger it, make a comment on the target PR that starts with '/fast-forward'.
+
+name: Fast Forward Merge
+
+on:
+  issue_comment:
+    types: [created]
+
+jobs:
+  ff-merge:
+    runs-on: ubuntu-latest
+    if: github.event.issue.pull_request && startsWith(github.event.comment.body, '/fast-forward')
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+      - name: Fast Forward PR
+        uses: endre-spotlab/fast-forward-js-action@2.1
+        with:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          success_message: "Success! Fast forwarded ***target_base*** to ***source_head***! ```git checkout target_base && git merge source_head --ff-only``` "
+          failure_message: "Failed! Could not fast-forward merge!"
+      - name: Update Commit Status
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          COMMIT_SHA="$(gh pr view ${{ github.event.issue.number }} --json commits --jq '.commits[-1].oid')"
+          gh api \
+            --method POST \
+            -H "Authorization: token ${GITHUB_TOKEN}" \
+            "/repos/${{ github.repository }}/statuses/${COMMIT_SHA}" \
+            -f state='success' \
+            -f description='This commit was fast-forward merged.' \
+            -f target_url='${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}' \
+            -f context='bluemira/ff-merge'
