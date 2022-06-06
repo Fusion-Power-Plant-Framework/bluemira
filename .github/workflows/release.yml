@@ -39,6 +39,15 @@ jobs:
 
           echo ::set-output name=tag::${TAG}
 
+      - name: Update develop dependencies
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          git fetch origin develop_dependencies
+          git switch develop_dependencies --force
+          git rebase origin/develop -S
+          git push origin develop_dependencies --force-with-lease
+
       - name: Create PR to update dependencies
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -47,4 +56,7 @@ jobs:
             --head develop_dependencies \
             --base develop \
             --title "Dependency update after ${{ steps.tag-release.outputs.tag }}" \
-            --body "Update develop's dependencies for the next development cycle." \
+            --body "Update develop's dependencies for the next development cycle."
+          gh pr review \
+            --request-changes
+            --body "This is an auto-generated PR that requires a fast-forward merge. Please comment '/fast-forward' to trigger the merge."
