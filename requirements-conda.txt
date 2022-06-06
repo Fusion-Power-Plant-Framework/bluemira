@@ -13,5 +13,5 @@ Shapely==1.8.2
 shiboken2==5.13.2
 sympy==1.10.1
 typing_extensions==4.2.0
-vtk==9.0.1
+vtk==9.1.0
 zipp==3.8.0
