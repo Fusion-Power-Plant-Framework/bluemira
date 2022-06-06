@@ -62,6 +62,7 @@ jobs:
             'conda/environment.yml',
             'requirements.txt',
             'requirements-develop.txt',
+            'requirements-conda.txt',
             'setup.py'
           ) }}
 
