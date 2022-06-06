@@ -60,6 +60,12 @@ jobs:
             --base develop \
             --title "Dependency update after ${{ steps.tag-release.outputs.tag }}" \
             --body "Update develop's dependencies for the next development cycle."
-          gh pr review \
-            --request-changes
-            --body "This is an auto-generated PR that requires a fast-forward merge. Please comment '/fast-forward' to trigger the merge."
+          # Prevent merging by posting a failure status to the PR's HEAD
+          gh api \
+            --method POST \
+            -H "Authorization: token ${GITHUB_TOKEN}" \
+            /repos/${{ github.repository }}/statuses/${{ steps.update-develop-dependencies.outputs.sha }} \
+            -f state='failure' \
+            -f description='This commit must be fast-forward merged.' \
+            -f target_url='${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}' \
+            -f context='bluemira/ff-merge'
