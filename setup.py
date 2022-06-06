@@ -15,6 +15,7 @@ with open("README.md", "r") as f:
     long = f.read()
 
 install_requires = [
+    "anytree",
     "asteval",
     "Babel",
     "click",
@@ -22,14 +23,12 @@ install_requires = [
     "fortranformat",
     "gmsh",
     "imageio",
-    "ipykernel",
     "matplotlib>=3.5",
-    "natsort",
     "neutronics-material-maker==0.1.11",  # Crash on upgrade
     "nlopt",
     "numba",
     "numba-scipy",
-    "numpy<=1.21.5",  # numba's highest numpy
+    "numpy",
     "pandas",
     "pint",
     "periodictable",
@@ -38,10 +37,9 @@ install_requires = [
     "pyquaternion",
     "scikit-learn",
     "seaborn",
-    "Shapely",
     "tables",
     "tabulate",
-    "scipy<=1.5.3",
+    "scipy",
     "wrapt",
 ]
 
@@ -55,25 +53,28 @@ openmc = [
 ]
 
 process = [
-    "beautifulsoup4>=4.8",
-    "cmake>=3.12.0",
-    "graphviz>=0.13",
-    "markdown>=3.2",
-    "markdown_include>=0.5",
-    "md-environ>=0.1",
-    "toposort>=1.5",
+    "cmake>=3.13.0",
 ]
 
 prominence = [
     "prominence",
 ]
 
+pinned = [
+    "nlopt==2.7.1",
+    "numba==0.55.2",
+    "numba-scipy==0.3.0",
+    "numpy==1.22.4",
+    "matplotlib==3.5.2",
+    "scipy==1.5.3",
+]
+
 dev_requires = [
     "black",
     "flake8",
+    "flake8-absolute-import",
     "flake8-bandit",
     "flake8-docstrings",
-    "flake8-absolute-import",
     "pep8-naming",
     "pre-commit",
     "pytest",
@@ -92,6 +93,7 @@ examples = [
 
 extras_require = {
     "dev": dev_requires,
+    "pinned": pinned,
     "examples": examples,
     "process": process,
     "openmoc": openmoc,
