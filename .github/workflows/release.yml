@@ -1,4 +1,4 @@
-name: bluemira release
+name: Bluemira Release
 
 on:
   workflow_dispatch:
@@ -11,6 +11,8 @@ on:
 jobs:
   release:
     runs-on: ubuntu-latest
+    env:
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     steps:
       - name: Checkout
         uses: actions/checkout@v3
@@ -25,8 +27,6 @@ jobs:
 
       - name: Tag release
         id: tag-release
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           pip install packaging
           VERSION="$(python -c "from packaging import version; print(version.Version(\"${{ github.event.inputs.version }}\"))")"
@@ -40,18 +40,21 @@ jobs:
           echo ::set-output name=tag::${TAG}
 
       - name: Update develop dependencies
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        id: update-develop-dependencies
         run: |
+          # Perform a fast-forward merge here rather than rebasing in order to
+          # keep the signed commits
+          git switch develop --force
+          git checkout -b develop_with_deps
           git fetch origin develop_dependencies
-          git switch develop_dependencies --force
-          git rebase origin/develop -S
-          git push origin develop_dependencies --force-with-lease
+          git merge origin/develop_dependencies --ff-only
+          git push --set-upstream origin develop_with_deps:develop_dependencies
+
+          HEAD_SHA="$(git rev-parse HEAD)"
+          echo ::set-output name=sha::${HEAD_SHA}
 
       - name: Create PR to update dependencies
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: >
+        run: |
           gh pr create \
             --head develop_dependencies \
             --base develop \
