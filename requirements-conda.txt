@@ -6,7 +6,7 @@ h5py==3.3.0
 importlib-metadata==4.11.3
 pybind11==2.9.2
 pybind11-global==2.9.2
-PySide2==5.13.2
+PySide2==5.15.2.1
 pytools==2022.1.7
 PyYAML==6.0
 Shapely==1.8.2
