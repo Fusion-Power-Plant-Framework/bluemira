@@ -173,7 +173,9 @@ isoflux = IsofluxConstraint(
 
 xp_idx = np.argmin(sof_zbdry)
 x_point = FieldNullConstraint(
-    sof_xbdry[xp_idx], sof_zbdry[xp_idx], tolerance=1e-4, constraint_type="inequality"
+    sof_xbdry[xp_idx],
+    sof_zbdry[xp_idx],
+    tolerance=1e-4,
 )
 
 # %%[markdown]
@@ -336,11 +338,6 @@ eof_psi_boundary = PsiConstraint(
     sof_zbdry[arg_inner],
     target_value=-100 / 2 / np.pi,
     tolerance=1e-1,
-)
-
-xp_idx = np.argmin(sof_zbdry)
-x_point = FieldNullConstraint(
-    sof_xbdry[xp_idx], sof_zbdry[xp_idx], tolerance=1e-4, constraint_type="inequality"
 )
 
 current_opt_problem_sof = TikhonovCurrentCOP(
