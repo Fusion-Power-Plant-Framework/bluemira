@@ -346,13 +346,13 @@ x_point = FieldNullConstraint(
 current_opt_problem_sof = TikhonovCurrentCOP(
     sof.coilset,
     sof,
-    targets=MagneticConstraintSet([isoflux, x_point]),
+    targets=MagneticConstraintSet([isoflux]),
     gamma=0.0,
     optimiser=Optimiser(
         "SLSQP", opt_conditions={"max_eval": 2000, "ftol_rel": 1e-6, "xtol_rel": 1e-6}
     ),
     max_currents=coilset.get_max_currents(I_p),
-    constraints=[field_constraints, sof_psi_boundary, force_constraints],
+    constraints=[field_constraints, sof_psi_boundary, force_constraints, x_point],
 )
 
 current_opt_problem_eof = TikhonovCurrentCOP(
@@ -364,7 +364,7 @@ current_opt_problem_eof = TikhonovCurrentCOP(
         "COBYLA", opt_conditions={"max_eval": 5000, "ftol_rel": 1e-6, "xtol_rel": 1e-6}
     ),
     max_currents=coilset.get_max_currents(I_p),
-    constraints=[field_constraints, eof_psi_boundary, force_constraints],
+    constraints=[field_constraints, eof_psi_boundary, force_constraints, x_point],
 )
 
 position_opt_problem = PulsedNestedPositionCOP(
