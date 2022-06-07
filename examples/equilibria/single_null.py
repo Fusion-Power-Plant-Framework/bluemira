@@ -116,7 +116,7 @@ coilset = CoilSet(coils)
 coilset.assign_coil_materials("CS", j_max=16.5, b_max=12.5)
 coilset.assign_coil_materials("PF", j_max=12.5, b_max=11.0)
 coilset.fix_sizes()
-coilset.mesh_coils(0.3)
+# coilset.mesh_coils(0.3)
 
 # %%[markdown]
 
@@ -242,7 +242,7 @@ current_opt_problem = TikhonovCurrentCOP(
     gamma=0.0,
     optimiser=Optimiser("SLSQP", opt_conditions={"max_eval": 2000, "ftol_rel": 1e-6}),
     max_currents=coilset.get_max_currents(0.0),
-    constraints=[field_constraints, force_constraints],
+    constraints=[deepcopy(field_constraints), deepcopy(force_constraints)],
 )
 
 program = PicardIterator(
@@ -330,7 +330,7 @@ sof = deepcopy(eq)
 sof_psi_boundary = PsiConstraint(
     sof_xbdry[arg_inner],
     sof_zbdry[arg_inner],
-    target_value=100 / 2 / np.pi,
+    target_value=50 / 2 / np.pi,
     tolerance=1e-6,
 )
 
@@ -350,21 +350,21 @@ x_point = FieldNullConstraint(
 current_opt_problem_sof = TikhonovCurrentCOP(
     sof.coilset,
     sof,
-    targets=MagneticConstraintSet([isoflux, x_point]),
+    targets=MagneticConstraintSet([deepcopy(isoflux), deepcopy(x_point)]),
     gamma=0.0,
     optimiser=Optimiser("SLSQP", opt_conditions={"max_eval": 2000, "ftol_rel": 1e-6}),
     max_currents=coilset.get_max_currents(I_p),
-    constraints=[field_constraints, force_constraints, sof_psi_boundary],
+    constraints=[sof_psi_boundary],
 )
 
 current_opt_problem_eof = TikhonovCurrentCOP(
     eof.coilset,
     eof,
-    targets=MagneticConstraintSet([isoflux, x_point]),
+    targets=MagneticConstraintSet([deepcopy(isoflux), deepcopy(x_point)]),
     gamma=0.0,
     optimiser=Optimiser("SLSQP", opt_conditions={"max_eval": 2000, "ftol_rel": 1e-6}),
     max_currents=coilset.get_max_currents(I_p),
-    constraints=[field_constraints, force_constraints, eof_psi_boundary],
+    constraints=[eof_psi_boundary],
 )
 
 position_opt_problem = PulsedNestedPositionCOP(
@@ -372,7 +372,7 @@ position_opt_problem = PulsedNestedPositionCOP(
     position_mapper,
     sub_opt_problems=[current_opt_problem_sof, current_opt_problem_eof],
     optimiser=Optimiser("COBYLA", opt_conditions={"max_eval": 50, "ftol_rel": 1e-6}),
-    debug=True,
+    debug=False,
 )
 
 
@@ -386,11 +386,10 @@ optimised_coilset = position_opt_problem.optimise(verbose=True)
 # %%
 
 optimised_coilset.mesh_coils(0.3)
-sof.coilset = deepcopy(optimised_coilset)
 
 program = PicardIterator(
-    sof,
-    current_opt_problem_sof,
+    eof,
+    current_opt_problem_eof,
     fixed_coils=False,
     convergence=DudsonConvergence(1e-4),
     relaxation=0.1,
@@ -398,13 +397,10 @@ program = PicardIterator(
 )
 program()
 
-
-eof.coilset = deepcopy(optimised_coilset)
-
 program = PicardIterator(
-    eof,
-    current_opt_problem_eof,
-    fixed_coils=True,
+    sof,
+    current_opt_problem_sof,
+    fixed_coils=False,
     convergence=DudsonConvergence(1e-4),
     relaxation=0.1,
     plot=True,
