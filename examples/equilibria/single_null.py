@@ -335,7 +335,7 @@ eof_psi_boundary = PsiConstraint(
     sof_xbdry[arg_inner],
     sof_zbdry[arg_inner],
     target_value=-100 / 2 / np.pi,
-    tolerance=1e-6,
+    tolerance=1e-1,
 )
 
 xp_idx = np.argmin(sof_zbdry)
@@ -350,7 +350,7 @@ current_opt_problem_sof = TikhonovCurrentCOP(
     gamma=0.0,
     optimiser=Optimiser("SLSQP", opt_conditions={"max_eval": 2000, "ftol_rel": 1e-6}),
     max_currents=coilset.get_max_currents(I_p),
-    constraints=[field_constraints, sof_psi_boundary],
+    constraints=[field_constraints, sof_psi_boundary, force_constraints],
 )
 
 current_opt_problem_eof = TikhonovCurrentCOP(
@@ -358,9 +358,9 @@ current_opt_problem_eof = TikhonovCurrentCOP(
     eof,
     targets=MagneticConstraintSet([isoflux, x_point]),
     gamma=0.0,
-    optimiser=Optimiser("SLSQP", opt_conditions={"max_eval": 2000, "ftol_rel": 1e-6}),
+    optimiser=Optimiser("COBYLA", opt_conditions={"max_eval": 10000, "ftol_rel": 1e-6}),
     max_currents=coilset.get_max_currents(I_p),
-    constraints=[field_constraints, eof_psi_boundary],
+    constraints=[field_constraints, eof_psi_boundary, force_constraints],
 )
 
 position_opt_problem = PulsedNestedPositionCOP(
