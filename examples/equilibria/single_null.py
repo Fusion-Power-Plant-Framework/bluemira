@@ -60,7 +60,6 @@ from bluemira.equilibria.opt_constraints import (
     FieldNullConstraint,
     IsofluxConstraint,
     MagneticConstraintSet,
-    PsiBoundaryConstraint,
     PsiConstraint,
 )
 from bluemira.equilibria.opt_problems import (
@@ -263,22 +262,32 @@ program()
 
 # %%
 
-# minimal_current_opt_problem = MinimalCurrentCOP(
-#     coilset,
-#     eq,
-#     Optimiser("SLSQP", opt_conditions={"max_eval": 2000, "ftol_rel": 1e-6}),
-#     max_currents=coilset.get_max_currents(0.0),
-#     constraints=[psi_boundary, x_point, field_constraints, force_constraints],
-# )
+minimal_current_eq = deepcopy(eq)
+minimal_current_coilset = deepcopy(coilset)
+minimal_current_opt_problem = MinimalCurrentCOP(
+    minimal_current_coilset,
+    minimal_current_eq,
+    Optimiser("SLSQP", opt_conditions={"max_eval": 2000, "ftol_rel": 1e-6}),
+    max_currents=coilset.get_max_currents(0.0),
+    constraints=[isoflux, x_point, field_constraints, force_constraints],
+)
 
-# program = PicardIterator(
-#     eq,
-#     minimal_current_opt_problem,
-#     fixed_coils=True,
-#     convergence=DudsonConvergence(1e-4),
-#     relaxation=0.1,
-# )
-# program()
+program = PicardIterator(
+    minimal_current_eq,
+    minimal_current_opt_problem,
+    fixed_coils=True,
+    convergence=DudsonConvergence(1e-4),
+    relaxation=0.1,
+    plot=False,
+)
+program()
+
+print(
+    f"Total currents from minimal error optimisation problem: {np.sum(np.abs(coilset.get_control_currents()))/1e6:.2f} MA"
+)
+print(
+    f"Total currents from minimal current optimisation problem: {np.sum(np.abs(minimal_current_coilset.get_control_currents()))/1e6:.2f} MA"
+)
 
 
 # %%[markdown]
