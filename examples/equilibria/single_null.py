@@ -315,10 +315,7 @@ for coil in coilset.coils.values():
 
 position_mapper = PositionMapper(region_interpolators)
 
-lcfs = eq.get_LCFS()
-x, z = lcfs.x, lcfs.z
-arg_inner = np.argmin(sof_xbdry)
-xp_idx = np.argmin(sof_zbdry)
+
 isoflux = IsofluxConstraint(
     sof_xbdry,
     sof_zbdry,
@@ -353,7 +350,7 @@ position_opt_problem = PulsedNestedPositionCOP(
 )
 
 
-optimised_coilset = position_opt_problem.optimise()
+optimised_coilset = position_opt_problem.optimise(verbose=True)
 
 # import matplotlib
 # from matplotlib.colors import Normalize
