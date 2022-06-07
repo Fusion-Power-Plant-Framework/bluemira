@@ -61,6 +61,7 @@ from bluemira.equilibria.opt_constraints import (
     IsofluxConstraint,
     MagneticConstraintSet,
     PsiBoundaryConstraint,
+    PsiConstraint,
 )
 from bluemira.equilibria.opt_problems import (
     MinimalCurrentCOP,
@@ -322,7 +323,6 @@ isoflux = IsofluxConstraint(
     sof_zbdry[arg_inner],
     tolerance=1e-3,
 )
-from bluemira.equilibria.opt_constraints import PsiConstraint
 
 sof = deepcopy(eq)
 sof_psi_boundary = PsiConstraint(
@@ -340,6 +340,7 @@ eof_psi_boundary = PsiConstraint(
     tolerance=1e-1,
 )
 
+sof.coilset.mesh_coils(0.3)
 current_opt_problem_sof = TikhonovCurrentCOP(
     sof.coilset,
     sof,
@@ -352,6 +353,7 @@ current_opt_problem_sof = TikhonovCurrentCOP(
     constraints=[field_constraints, sof_psi_boundary, force_constraints, x_point],
 )
 
+eof.coilset.mesh_coils(0.3)
 current_opt_problem_eof = TikhonovCurrentCOP(
     eof.coilset,
     eof,
@@ -389,7 +391,7 @@ optimised_coilset.mesh_coils(0.3)
 program = PicardIterator(
     eof,
     current_opt_problem_eof,
-    fixed_coils=False,
+    fixed_coils=True,
     convergence=DudsonConvergence(1e-4),
     relaxation=0.1,
     plot=True,
@@ -399,7 +401,7 @@ program()
 program = PicardIterator(
     sof,
     current_opt_problem_sof,
-    fixed_coils=False,
+    fixed_coils=True,
     convergence=DudsonConvergence(1e-4),
     relaxation=0.1,
     plot=True,
