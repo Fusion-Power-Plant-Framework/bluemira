@@ -171,10 +171,6 @@ isoflux = IsofluxConstraint(
     constraint_value=0.25,  # Difficult to choose...
 )
 
-psi_boundary = PsiBoundaryConstraint(
-    sof_xbdry, sof_zbdry, target_value=100 / 2 / np.pi, tolerance=1.0
-)
-
 xp_idx = np.argmin(sof_zbdry)
 x_point = FieldNullConstraint(
     sof_xbdry[xp_idx], sof_zbdry[xp_idx], tolerance=1e-4, constraint_type="inequality"
@@ -350,21 +346,21 @@ x_point = FieldNullConstraint(
 current_opt_problem_sof = TikhonovCurrentCOP(
     sof.coilset,
     sof,
-    targets=MagneticConstraintSet([deepcopy(isoflux), deepcopy(x_point)]),
+    targets=MagneticConstraintSet([isoflux, x_point]),
     gamma=0.0,
     optimiser=Optimiser("SLSQP", opt_conditions={"max_eval": 2000, "ftol_rel": 1e-6}),
     max_currents=coilset.get_max_currents(I_p),
-    constraints=[sof_psi_boundary],
+    constraints=[field_constraints, sof_psi_boundary],
 )
 
 current_opt_problem_eof = TikhonovCurrentCOP(
     eof.coilset,
     eof,
-    targets=MagneticConstraintSet([deepcopy(isoflux), deepcopy(x_point)]),
+    targets=MagneticConstraintSet([isoflux, x_point]),
     gamma=0.0,
     optimiser=Optimiser("SLSQP", opt_conditions={"max_eval": 2000, "ftol_rel": 1e-6}),
     max_currents=coilset.get_max_currents(I_p),
-    constraints=[eof_psi_boundary],
+    constraints=[field_constraints, eof_psi_boundary],
 )
 
 position_opt_problem = PulsedNestedPositionCOP(
