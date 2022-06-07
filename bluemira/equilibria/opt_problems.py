@@ -42,6 +42,7 @@ from typing import List, Tuple
 import numpy as np
 
 import bluemira.equilibria.opt_objectives as objectives
+from bluemira.base.look_and_feel import bluemira_print_flush
 from bluemira.equilibria.coils import CoilSet
 from bluemira.equilibria.equilibrium import Breakdown, Equilibrium
 from bluemira.equilibria.error import EquilibriaError
@@ -900,6 +901,7 @@ class PulsedNestedPositionCOP(CoilsetOptimisationProblem):
         self.position_mapper = position_mapper
         self.sub_opt_probs = sub_opt_problems
         self._debug = {0: debug}
+        self._iter = {0: 0.0}
 
         objective = OptimisationObjective(
             f_objective=self.get_state_fom,
@@ -907,7 +909,9 @@ class PulsedNestedPositionCOP(CoilsetOptimisationProblem):
                 "coilset": coilset,
                 "sub_opt_problems": sub_opt_problems,
                 "position_mapper": position_mapper,
+                "iter": self._iter,
                 "debug": self._debug,
+                "verbose": False,
             },
         )
         super().__init__(coilset, optimiser, objective, constraints)
@@ -931,6 +935,17 @@ class PulsedNestedPositionCOP(CoilsetOptimisationProblem):
         return coilset
 
     @staticmethod
+    def _run_reporting(iter, max_fom, verbose):
+        """
+        Also sorry...
+        """
+        i = max(list(iter.keys())) + 1
+        iter[i] = max_fom
+
+        if verbose:
+            bluemira_print_flush(f"Coil position iteration {i} FOM value: {max_fom:.4e}")
+
+    @staticmethod
     def _run_diagnostics(debug, sub_opt_prob):
         """
         I am sorry...
@@ -944,7 +959,9 @@ class PulsedNestedPositionCOP(CoilsetOptimisationProblem):
             debug[i] = [lcfs, value]
 
     @staticmethod
-    def get_sub_opt_foms(vector, coilset, position_mapper, sub_opt_problems, debug):
+    def get_sub_opt_foms(
+        vector, coilset, position_mapper, sub_opt_problems, iter, verbose, debug
+    ):
         """
         Run the sub-optimisation problems for a given position vector and return the
         objective function values
@@ -958,21 +975,31 @@ class PulsedNestedPositionCOP(CoilsetOptimisationProblem):
             sub_opt_prob.optimise(fixed_coils=False)
             PulsedNestedPositionCOP._run_diagnostics(debug, sub_opt_prob)
             fom_values.append(sub_opt_prob.opt.optimum_value)
-        return max(fom_values)
+        max_fom = max(fom_values)
+
+        PulsedNestedPositionCOP._run_reporting(iter, max_fom, verbose)
+
+        return max_fom
 
     @staticmethod
-    def get_state_fom(vector, grad, coilset, sub_opt_problems, position_mapper, debug):
+    def get_state_fom(
+        vector, grad, coilset, sub_opt_problems, position_mapper, iter, verbose, debug
+    ):
         fom_value = PulsedNestedPositionCOP.get_sub_opt_foms(
-            vector, coilset, position_mapper, sub_opt_problems, debug
+            vector, coilset, position_mapper, sub_opt_problems, iter, verbose, debug
         )
 
         if grad.size > 0:
             grad[:] = approx_derivative(
                 PulsedNestedPositionCOP.get_sub_opt_foms, vector, f0=fom_value
             )
+
         return fom_value
 
-    def optimise(self, x0=None):
+    def optimise(self, x0=None, verbose=False):
+
+        if verbose:
+            self._objective._args["verbose"] = True
 
         if x0 is None:
             x0 = 0.5 * np.ones(self.opt.n_variables)
