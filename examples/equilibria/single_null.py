@@ -345,7 +345,7 @@ current_opt_problem_sof = TikhonovCurrentCOP(
     sof.coilset,
     sof,
     targets=MagneticConstraintSet([isoflux]),
-    gamma=0.0,
+    gamma=1e-12,
     optimiser=Optimiser(
         "SLSQP", opt_conditions={"max_eval": 2000, "ftol_rel": 1e-6, "xtol_rel": 1e-6}
     ),
@@ -357,8 +357,8 @@ eof.coilset.mesh_coils(0.3)
 current_opt_problem_eof = TikhonovCurrentCOP(
     eof.coilset,
     eof,
-    targets=MagneticConstraintSet([isoflux, x_point]),
-    gamma=0.0,
+    targets=MagneticConstraintSet([isoflux]),
+    gamma=1e-12,
     optimiser=Optimiser(
         "COBYLA", opt_conditions={"max_eval": 5000, "ftol_rel": 1e-6, "xtol_rel": 1e-6}
     ),
