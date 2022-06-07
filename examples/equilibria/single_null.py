@@ -348,7 +348,9 @@ current_opt_problem_sof = TikhonovCurrentCOP(
     sof,
     targets=MagneticConstraintSet([isoflux, x_point]),
     gamma=0.0,
-    optimiser=Optimiser("SLSQP", opt_conditions={"max_eval": 2000, "ftol_rel": 1e-6}),
+    optimiser=Optimiser(
+        "SLSQP", opt_conditions={"max_eval": 2000, "ftol_rel": 1e-6, "xtol_rel": 1e-6}
+    ),
     max_currents=coilset.get_max_currents(I_p),
     constraints=[field_constraints, sof_psi_boundary, force_constraints],
 )
@@ -358,7 +360,9 @@ current_opt_problem_eof = TikhonovCurrentCOP(
     eof,
     targets=MagneticConstraintSet([isoflux, x_point]),
     gamma=0.0,
-    optimiser=Optimiser("COBYLA", opt_conditions={"max_eval": 10000, "ftol_rel": 1e-6}),
+    optimiser=Optimiser(
+        "COBYLA", opt_conditions={"max_eval": 5000, "ftol_rel": 1e-6, "xtol_rel": 1e-6}
+    ),
     max_currents=coilset.get_max_currents(I_p),
     constraints=[field_constraints, eof_psi_boundary, force_constraints],
 )
@@ -367,7 +371,9 @@ position_opt_problem = PulsedNestedPositionCOP(
     coilset,
     position_mapper,
     sub_opt_problems=[current_opt_problem_sof, current_opt_problem_eof],
-    optimiser=Optimiser("COBYLA", opt_conditions={"max_eval": 50, "ftol_rel": 1e-6}),
+    optimiser=Optimiser(
+        "COBYLA", opt_conditions={"max_eval": 50, "ftol_rel": 1e-6, "xtol_rel": 1e-6}
+    ),
     debug=False,
 )
 
