@@ -951,12 +951,12 @@ class PulsedNestedPositionCOP(CoilsetOptimisationProblem):
         I am sorry...
         """
         if debug[0]:
-            i = max(list(debug.keys())) + 1
+            entry = max(list(debug.keys()))
             value = sub_opt_prob.opt.optimum_value
             sub_opt_prob.eq._remap_greens()
             sub_opt_prob.eq._clear_OX_points()
             lcfs = sub_opt_prob.eq.get_LCFS()
-            debug[i] = [lcfs, value]
+            debug[entry].append([lcfs, value])
 
     @staticmethod
     def get_sub_opt_foms(
@@ -969,6 +969,12 @@ class PulsedNestedPositionCOP(CoilsetOptimisationProblem):
         coilset = PulsedNestedPositionCOP.update_positions(
             vector, coilset, position_mapper
         )
+
+        if debug[0]:
+            # Increment debug dictionary
+            i = max(list(debug.keys())) + 1
+            debug[i] = []
+
         fom_values = []
         for sub_opt_prob in sub_opt_problems:
             sub_opt_prob._parameterisation = coilset

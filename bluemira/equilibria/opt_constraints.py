@@ -383,7 +383,7 @@ class MagneticConstraint(UpdateableConstraint, OptimisationConstraint):
             self._args["a_mat"] = self.control_response(equilibrium.coilset)
 
         self.update_target(equilibrium)
-        self._args["b_vec"] = self.target_value - self.evaluate(equilibrium)
+        self._args["b_vec"] = self.evaluate(equilibrium) - self.target_value
 
     def update_target(self, equilibrium):
         """
