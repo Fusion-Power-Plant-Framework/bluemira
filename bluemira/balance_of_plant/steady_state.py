@@ -526,6 +526,7 @@ class BalanceOfPlant:
         """
         Perform a series of sanity checks.
         """
+        delta_truth = 0
         # Per block check
         for label, flow in self.flow_dict.items():
             delta = sum(flow)
@@ -533,9 +534,9 @@ class BalanceOfPlant:
                 bluemira_warn(
                     f"Power block {label} is not self-consistent.. {delta:.2f} MW are missing"
                 )
+            delta_truth += delta
 
         # Global check
-        delta_truth = sum(np.sum(list(self.flow_dict.values())))
         if round(delta_truth) != 0:
             bluemira_warn(
                 f"The balance of plant model is inconsistent: {delta_truth:.2f} MW are lost somewhere."
