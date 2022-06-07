@@ -371,6 +371,20 @@ class PositionMapper:
         ).T
 
     def to_xz_dict(self, l_values):
+        """
+        Convert a set of parametric space values to physical coordinates in a dictionary
+        form.
+
+        Parameters
+        ----------
+        l_values: np.ndarray
+            The set of parametric-space values to convert
+
+        Returns
+        -------
+        xz_dict: dict
+            Dictionary of x-z values corresponding to each interpolator
+        """
         l_values = self._vector_to_list(l_values)
         self._check_length(l_values)
         xz_dict = {}
