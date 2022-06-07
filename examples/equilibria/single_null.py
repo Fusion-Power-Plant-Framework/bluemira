@@ -116,6 +116,7 @@ coilset = CoilSet(coils)
 coilset.assign_coil_materials("CS", j_max=16.5, b_max=12.5)
 coilset.assign_coil_materials("PF", j_max=12.5, b_max=11.0)
 coilset.fix_sizes()
+coilset.mesh_coils(0.3)
 
 # %%[markdown]
 
@@ -156,8 +157,8 @@ filename = os.sep.join([path, name])
 with open(filename, "r") as file:
     data = json.load(file)
 
-sof_xbdry = np.array(data["xbdry"])[::10]
-sof_zbdry = np.array(data["zbdry"])[::10]
+sof_xbdry = np.array(data["xbdry"])[::15]
+sof_zbdry = np.array(data["zbdry"])[::15]
 
 arg_inner = np.argmin(sof_xbdry)
 
@@ -322,7 +323,23 @@ isoflux = IsofluxConstraint(
     sof_xbdry[arg_inner],
     sof_zbdry[arg_inner],
     tolerance=1e-3,
-    constraint_value=0.25,  # Difficult to choose...
+)
+from bluemira.equilibria.opt_constraints import PsiConstraint
+
+sof = deepcopy(eq)
+sof_psi_boundary = PsiConstraint(
+    sof_xbdry[arg_inner],
+    sof_zbdry[arg_inner],
+    target_value=100 / 2 / np.pi,
+    tolerance=1e-6,
+)
+
+eof = deepcopy(eq)
+eof_psi_boundary = PsiConstraint(
+    sof_xbdry[arg_inner],
+    sof_zbdry[arg_inner],
+    target_value=-100 / 2 / np.pi,
+    tolerance=1e-6,
 )
 
 xp_idx = np.argmin(sof_zbdry)
@@ -330,42 +347,36 @@ x_point = FieldNullConstraint(
     sof_xbdry[xp_idx], sof_zbdry[xp_idx], tolerance=1e-4, constraint_type="inequality"
 )
 
-current_opt_problem_new = TikhonovCurrentCOP(
-    coilset,
-    eq,
+current_opt_problem_sof = TikhonovCurrentCOP(
+    sof.coilset,
+    sof,
     targets=MagneticConstraintSet([isoflux, x_point]),
     gamma=0.0,
     optimiser=Optimiser("SLSQP", opt_conditions={"max_eval": 2000, "ftol_rel": 1e-6}),
     max_currents=coilset.get_max_currents(I_p),
-    constraints=[field_constraints, force_constraints],
+    constraints=[field_constraints, force_constraints, sof_psi_boundary],
 )
 
+current_opt_problem_eof = TikhonovCurrentCOP(
+    eof.coilset,
+    eof,
+    targets=MagneticConstraintSet([isoflux, x_point]),
+    gamma=0.0,
+    optimiser=Optimiser("SLSQP", opt_conditions={"max_eval": 2000, "ftol_rel": 1e-6}),
+    max_currents=coilset.get_max_currents(I_p),
+    constraints=[field_constraints, force_constraints, eof_psi_boundary],
+)
 
 position_opt_problem = PulsedNestedPositionCOP(
     coilset,
     position_mapper,
-    sub_opt_problems=[current_opt_problem_new],
-    optimiser=Optimiser("COBYLA", opt_conditions={"max_eval": 50, "ftol_rel": 1e-4}),
+    sub_opt_problems=[current_opt_problem_sof, current_opt_problem_eof],
+    optimiser=Optimiser("COBYLA", opt_conditions={"max_eval": 50, "ftol_rel": 1e-6}),
     debug=True,
 )
 
 
 optimised_coilset = position_opt_problem.optimise(verbose=True)
-
-# import matplotlib
-# from matplotlib.colors import Normalize
-# debug = position_opt_problem._debug
-# items = list(debug.values())[1:]
-# lcfss = [item[0] for item in items]
-# foms = [item[1] for item in items]
-# normer = Normalize(min(foms), max(foms))
-# cm = matplotlib.cm.get_cmap("RdBu")
-# colors = cm(normer(foms))
-# f, ax = plt.subplots()
-# for i, (fom, l) in enumerate(zip(foms, lcfss)):
-#     l.plot(ax=ax, fill=False, edgecolor=colors[i])
-
-# isoflux.plot(ax=ax)
 
 # %%[markdown]
 
@@ -374,38 +385,55 @@ optimised_coilset = position_opt_problem.optimise(verbose=True)
 
 # %%
 
-eq.coilset = optimised_coilset
+optimised_coilset.mesh_coils(0.3)
+sof.coilset = deepcopy(optimised_coilset)
 
 program = PicardIterator(
-    eq,
-    current_opt_problem,
-    fixed_coils=True,
+    sof,
+    current_opt_problem_sof,
+    fixed_coils=False,
     convergence=DudsonConvergence(1e-4),
     relaxation=0.1,
     plot=True,
 )
 program()
 
+
+eof.coilset = deepcopy(optimised_coilset)
+
+program = PicardIterator(
+    eof,
+    current_opt_problem_eof,
+    fixed_coils=True,
+    convergence=DudsonConvergence(1e-4),
+    relaxation=0.1,
+    plot=True,
+)
+program()
 # %%[markdown]
 
 # Now let's compare the old equilibrium and coilset to the one with optimised positions.
 
 # %%
 
-f, (ax_1, ax_2) = plt.subplots(1, 2)
+f, (ax_1, ax_2, ax_3) = plt.subplots(1, 3)
 
 old_eq.plot(ax=ax_1)
 old_coilset.plot(ax=ax_1)
 
-eq.plot(ax=ax_2)
-optimised_coilset.plot(ax=ax_2)
+sof.plot(ax=ax_2)
+sof.coilset.plot(ax=ax_2)
 
+
+eof.plot(ax=ax_3)
+eof.coilset.plot(ax=ax_3)
 f, ax = plt.subplots()
 
 x_old, z_old = old_coilset.get_positions()
 x_new, z_new = optimised_coilset.get_positions()
 old_eq.get_LCFS().plot(ax=ax, edgecolor="b", fill=False)
-eq.get_LCFS().plot(ax=ax, edgecolor="r", fill=False)
+sof.get_LCFS().plot(ax=ax, edgecolor="r", fill=False)
+eof.get_LCFS().plot(ax=ax, edgecolor="g", fill=False)
 ax.plot(x_old, z_old, linewidth=0, marker="o", color="b")
 ax.plot(x_new, z_new, linewidth=0, marker="+", color="r")
 isoflux.plot(ax=ax)
