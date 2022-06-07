@@ -487,7 +487,6 @@ class FieldNullConstraint(AbsoluteMagneticConstraint):
         z,
         weights: Union[float, np.ndarray] = 1.0,
         tolerance=1e-6,
-        constraint_type="equality",
     ):
         super().__init__(
             x,
@@ -495,7 +494,7 @@ class FieldNullConstraint(AbsoluteMagneticConstraint):
             target_value=0.0,
             weights=weights,
             tolerance=tolerance,
-            constraint_type=constraint_type,
+            constraint_type="inequality",
             f_constraint=L2_norm_constraint,
         )
 

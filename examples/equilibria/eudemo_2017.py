@@ -257,7 +257,9 @@ isoflux = IsofluxConstraint(
 )
 xp_idx = np.argmin(sof_zbdry)
 x_point = FieldNullConstraint(
-    sof_xbdry[xp_idx], sof_zbdry[xp_idx], tolerance=1e-3, constraint_type="inequality"
+    sof_xbdry[xp_idx],
+    sof_zbdry[xp_idx],
+    tolerance=1e-3,
 )
 
 ref_opt_problem = UnconstrainedTikhonovCurrentGradientCOP(
