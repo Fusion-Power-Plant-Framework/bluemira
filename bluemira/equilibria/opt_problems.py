@@ -943,7 +943,7 @@ class PulsedNestedPositionCOP(CoilsetOptimisationProblem):
         iter[i] = max_fom
 
         if verbose:
-            bluemira_print_flush(f"Coil position iteration {i} FOM value: {max_fom:.4e}")
+            bluemira_print_flush(f"Coil position iteration {i} FOM value: {max_fom:.6e}")
 
     @staticmethod
     def _run_diagnostics(debug, sub_opt_prob):
@@ -977,7 +977,6 @@ class PulsedNestedPositionCOP(CoilsetOptimisationProblem):
 
         fom_values = []
         for sub_opt_prob in sub_opt_problems:
-            sub_opt_prob._parameterisation = coilset
             sub_opt_prob.optimise(fixed_coils=False)
             PulsedNestedPositionCOP._run_diagnostics(debug, sub_opt_prob)
             fom_values.append(sub_opt_prob.opt.optimum_value)
