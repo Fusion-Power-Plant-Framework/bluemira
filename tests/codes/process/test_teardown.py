@@ -18,6 +18,7 @@
 #
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
+import json
 import os
 from unittest import mock
 
@@ -30,6 +31,8 @@ from bluemira.codes.process._teardown import Teardown
 from bluemira.codes.process.mapping import mappings as process_mappings
 from bluemira.codes.utilities import add_mapping
 from tests._helpers import file_exists
+
+DATA_DIR = os.path.join(os.path.dirname(__file__), "test_data")
 
 _INFEASIBLE_PROCESS_MFILE = (
     "# PROCESS #\n"
@@ -48,12 +51,46 @@ _INFEASIBLE_PROCESS_MFILE = (
     "# Numerics #\n"
     "VMCON_error_flag________________________________________________________ (ifail)_______________________              {i_fail}\n"
 )
+FAKE_PROCESS_DICT = {  # Fake for the output of PROCESS's `get_dicts()`
+    "DICT_DESCRIPTIONS": {
+        "some_property": "its description",
+    }
+}
+
+
+class FakeMFile:
+    """
+    A fake of PROCESS's MFile class.
+
+    It replicates the :code:`.data` attribute with some PROCESS results
+    data. This allows us to test the logic in our API without having
+    PROCESS installed.
+    """
+
+    def __init__(self, filename):
+        self.filename = filename
+        with open(os.path.join(DATA_DIR, "mfile_data.json"), "r") as f:
+            self.data = json.load(f)
 
 
 class TestTeardown:
 
-    DATA_DIR = os.path.join(os.path.dirname(__file__), "test_data")
     MODULE_REF = "bluemira.codes.process._teardown"
+
+    @classmethod
+    def setup_class(cls):
+        cls._mfile_patch = mock.patch(f"{cls.MODULE_REF}.MFile", new=FakeMFile)
+        cls.mfile_mock = cls._mfile_patch.start()
+
+        cls._process_dict_patch = mock.patch(
+            f"{cls.MODULE_REF}.PROCESS_DICT", new=FAKE_PROCESS_DICT
+        )
+        cls.process_mock = cls._process_dict_patch.start()
+
+    @classmethod
+    def teardown_class(cls):
+        cls._mfile_patch.stop()
+        cls._process_dict_patch.stop()
 
     def setup_method(self):
         self.default_pf = Configuration()
@@ -61,7 +98,7 @@ class TestTeardown:
 
     @pytest.mark.parametrize("run_func", ["run", "runinput", "read", "readall"])
     def test_run_func_updates_bluemira_params_from_mfile(self, run_func):
-        teardown = Teardown(self.default_pf, self.DATA_DIR)
+        teardown = Teardown(self.default_pf, DATA_DIR)
 
         getattr(teardown, run_func)()
 
@@ -70,7 +107,7 @@ class TestTeardown:
 
     @pytest.mark.parametrize("run_func", ["runinput", "readall"])
     def test_run_mode_updates_params_from_mfile_given_recv_False(self, run_func):
-        teardown = Teardown(self.default_pf, self.DATA_DIR)
+        teardown = Teardown(self.default_pf, DATA_DIR)
         teardown.params.get_param("r_tf_in_centre").mapping[process.NAME].recv = False
 
         getattr(teardown, run_func)()
@@ -80,7 +117,7 @@ class TestTeardown:
 
     @pytest.mark.parametrize("run_func", ["run", "read"])
     def test_run_mode_does_not_update_params_from_mfile_given_recv_False(self, run_func):
-        teardown = Teardown(self.default_pf, self.DATA_DIR)
+        teardown = Teardown(self.default_pf, DATA_DIR)
         teardown.params.get_param("r_tf_in_centre").mapping[process.NAME].recv = False
 
         getattr(teardown, run_func)()
@@ -89,7 +126,7 @@ class TestTeardown:
         assert teardown.params["r_tf_in_centre"] != pytest.approx(2.6354)
 
     def test_mock_updates_params_from_mockPROCESS_json_file(self):
-        teardown = Teardown(self.default_pf, self.DATA_DIR)
+        teardown = Teardown(self.default_pf, DATA_DIR)
 
         teardown.mock()
 

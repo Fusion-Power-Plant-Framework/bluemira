@@ -88,24 +88,23 @@ class Teardown(CodesTeardown):
 
     def _read_mfile(self, path: str, param_mappings: Dict[str, str]):
         unit_mappings = _get_unit_mappings(self.params, param_mappings.values())
-        return _BMFile(path, param_mappings, unit_mappings)
+        return _MFileWrapper(path, param_mappings, unit_mappings)
 
 
-class _BMFile(MFile):
+class _MFileWrapper:
     """
-    Bluemira MFile reader for PROCESS_NAME output
-
-    Sub-classed from PROCESS utilities.
-    Builds ParameterFrames of output in logical chunks.
+    Utility class to wrap a PROCESS MFile object, and map its data to
+    bluemira parameters.
     """
 
-    def __init__(self, file_path, parameter_mapping, units):
-        if not os.path.isfile(file_path):
-            raise CodesError(f"Path '{file_path}' is not a file.")
-        if _file_is_empty(file_path):
-            raise CodesError(f"Could not read PROCESS results: '{file_path}' is empty.")
+    def __init__(self, filename, parameter_mapping, units):
+        if not os.path.isfile(filename):
+            raise CodesError(f"Path '{filename}' is not a file.")
+        if _file_is_empty(filename):
+            raise CodesError(f"Could not read PROCESS results: '{filename}' is empty.")
 
-        super().__init__(filename=file_path)
+        self.filename = filename
+        self.params = {}  # ParameterFrame dictionary
 
         self.defs = self.get_defs(PROCESS_DICT["DICT_DESCRIPTIONS"])
 
@@ -117,6 +116,7 @@ class _BMFile(MFile):
             {val: key for key, val in parameter_mapping.items()}
         )
 
+        self.mfile = MFile(filename)
         self.read()
 
     @staticmethod
@@ -139,7 +139,8 @@ class _BMFile(MFile):
             new_mappings[key] = update_obsolete_vars(val)
         return new_mappings
 
-    def get_defs(self, dictionary):
+    @staticmethod
+    def get_defs(dictionary):
         """
         Get value definitions
         """
@@ -169,12 +170,12 @@ class _BMFile(MFile):
         Read the data.
         """
         var_mod = set()
-        for val in self.data.values():
+        for val in self.mfile.data.values():
             var_mod.add(val["var_mod"])
 
         dic = {key: {} for key in var_mod}  # Nested dictionary
-        self.params = {}  # ParameterFrame dictionary
-        for key, val in self.data.items():
+        self.params = {}
+        for key, val in self.mfile.data.items():
             dic[val["var_mod"]][self.ptob_mapping.get(key, key)] = val["scan01"]
         for key in dic.keys():
             self.params[key] = self.build_parameter_frame(dic[key])
@@ -193,7 +194,8 @@ class _BMFile(MFile):
         """
         # TODO: Handle case of interrupted run causing a half-written to be
         # re-read into memory in the next run and not having the right keys
-        rb, tf = self.params["Radial Build"], self.params["TF coils"]
+        rb = self.params["Radial Build"]
+        tf = self.params["TF coils"]
         pl = self.params["Plasma"]
         # TODO: Handle ST case (copper coil breakdown not as detailed)
         for val in ["tk_tf_wp", "tk_tf_front_ib", "tk_tf_nose"]:
@@ -294,7 +296,7 @@ def _raise_on_infeasible_solution(m_file) -> None:
 
     Parameters
     ----------
-    m_file: _BMFile
+    m_file: _MFileWrapper
         The PROCESS MFILE to check for a feasible solution
 
     Raises
