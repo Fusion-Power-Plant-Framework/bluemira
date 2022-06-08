@@ -247,8 +247,7 @@ class _MFileWrapper:
         for var in outputs:
             if isinstance(var, list):
                 for v in var:
-                    # TODO(hsaunders1904): v is not used here
-                    found = self._find_var_in_frame(var, out)
+                    found = self._find_var_in_frame(v, out)
                     if found:
                         break
             else:
