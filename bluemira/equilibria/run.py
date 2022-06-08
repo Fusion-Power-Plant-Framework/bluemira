@@ -149,7 +149,7 @@ class PulsedCoilsetDesign:
         while i == 0 or not relaxed:
             breakdown = Breakdown(coilset, self.grid)
 
-            constraints = deepcopy(self._coil_cons)
+            constraints = deepcopy(self._current_opt_cons)
 
             # Coilset max currents known because the coilset geometry is fixed
             max_currents = self.coilset.get_max_currents(0)
@@ -240,7 +240,7 @@ class PulsedCoilsetDesign:
             eq = deepcopy(eq_ref)
 
             optimiser = deepcopy(self._eq_opt)
-            coil_constraints = deepcopy(self._coil_cons)
+            current_constraints = deepcopy(self._current_opt_cons)
             eq_constraints = deepcopy(self.eq_constraints)
 
             for con in eq_constraints:
@@ -248,8 +248,8 @@ class PulsedCoilsetDesign:
                     con.target_value = psi_boundary / (2 * np.pi)
 
             constraints = eq_constraints
-            if coil_constraints:
-                constraints += coil_constraints
+            if current_constraints:
+                constraints += current_constraints
 
             problem = self._eq_prob_cls(
                 eq.coilset,
@@ -306,7 +306,7 @@ class FixedPulsedCoilsetDesign(PulsedCoilsetDesign):
         params,
         coilset: CoilSet,
         grid: Grid,
-        coil_constraints: Optional[List[OptimisationConstraint]],
+        current_opt_constraints: Optional[List[OptimisationConstraint]],
         equilibrium_constraints: MagneticConstraintSet,
         profiles: Profile,
         breakdown_strategy_cls: Type[BreakdownZoneStrategy],
@@ -343,7 +343,7 @@ class FixedPulsedCoilsetDesign(PulsedCoilsetDesign):
         if equilibrium_settings:
             self._eq_settings = {**self._eq_settings, **equilibrium_settings}
 
-        self._coil_cons = coil_constraints
+        self._current_opt_cons = current_opt_constraints
 
         super().__init__()
 
@@ -398,7 +398,7 @@ class OptimisedPulsedCoilsetDesign(PulsedCoilsetDesign):
         coilset: CoilSet,
         position_mapper: PositionMapper,
         grid: Grid,
-        coil_constraints: Optional[List[OptimisationConstraint]],
+        current_opt_constraints: Optional[List[OptimisationConstraint]],
         equilibrium_constraints: MagneticConstraintSet,
         profiles: Profile,
         breakdown_strategy_cls: Type[BreakdownZoneStrategy],
@@ -443,7 +443,7 @@ class OptimisedPulsedCoilsetDesign(PulsedCoilsetDesign):
         if equilibrium_settings:
             self._eq_settings = {**self._eq_settings, **equilibrium_settings}
 
-        self._coil_cons = coil_constraints
+        self._current_opt_cons = current_opt_constraints
 
         super().__init__()
 

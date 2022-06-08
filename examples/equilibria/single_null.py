@@ -380,7 +380,7 @@ eof = deepcopy(eq)
 eof_psi_boundary = PsiConstraint(
     x_bdry[arg_inner],
     z_bdry[arg_inner],
-    target_value=-100 / 2 / np.pi,
+    target_value=-150 / 2 / np.pi,
     tolerance=1e-3,
 )
 
@@ -490,7 +490,7 @@ program = PicardIterator(
     current_opt_problem_eof,
     fixed_coils=True,
     convergence=DudsonConvergence(1e-4),
-    relaxation=0.1,
+    relaxation=0.05,
     plot=True,
 )
 program()
