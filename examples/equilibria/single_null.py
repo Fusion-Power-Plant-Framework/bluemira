@@ -69,6 +69,7 @@ from bluemira.equilibria.opt_problems import (
     UnconstrainedTikhonovCurrentGradientCOP,
 )
 from bluemira.equilibria.profiles import CustomProfile
+from bluemira.equilibria.shapes import JohnerLCFS
 from bluemira.equilibria.solve import DudsonConvergence, PicardIterator
 from bluemira.geometry.tools import make_polygon
 from bluemira.utilities.optimiser import Optimiser
@@ -116,7 +117,7 @@ coilset = CoilSet(coils)
 coilset.assign_coil_materials("CS", j_max=16.5, b_max=12.5)
 coilset.assign_coil_materials("PF", j_max=12.5, b_max=11.0)
 coilset.fix_sizes()
-# coilset.mesh_coils(0.3)
+coilset.mesh_coils(0.3)
 
 # %%[markdown]
 
@@ -145,21 +146,34 @@ eq = Equilibrium(coilset, grid, profiles, psi=None)
 
 # %%[markdown]
 
-# Now we need to specify some constraints on the plasma
+# Now we need to specify some constraints on the plasma.
 
-# We'll load up a known plasma boundary and use that to specify some constraints on the
-# plasma
+# We'll instantiate a parameterisation for the last closed flux surface (LCFS) which
+# tends to do a good job at describing an EU-DEMO-like single plasma.
+
+# We'll use this to specify some constraints on the plasma equilibrium problem.
 
 # %%
-path = get_bluemira_path("equilibria", subfolder="examples")
-name = "EUDEMO_2017_CREATE_SOF_separatrix.json"
-filename = os.sep.join([path, name])
-with open(filename, "r") as file:
-    data = json.load(file)
 
-sof_xbdry = np.array(data["xbdry"])[::15]
-sof_zbdry = np.array(data["zbdry"])[::15]
+lcfs_parameterisation = JohnerLCFS(
+    {
+        "r_0": {"value": 8.93},
+        "z_0": {"value": 0.0},
+        "a": {"value": 8.93 / 3.1},
+        "kappa_u": {"value": 1.6},
+        "kappa_l": {"value": 1.9},
+        "delta_u": {"value": 0.4},
+        "delta_l": {"value": 0.4},
+        "phi_u_neg": {"value": 0.0},
+        "phi_u_pos": {"value": 0.0},
+        "phi_l_neg": {"value": 45.0},
+        "phi_l_pos": {"value": 30.0},
+    }
+)
 
+lcfs = lcfs_parameterisation.create_shape().discretize(byedges=True, ndiscr=50)
+
+sof_xbdry, sof_zbdry = lcfs.x, lcfs.z
 arg_inner = np.argmin(sof_xbdry)
 
 isoflux = IsofluxConstraint(
@@ -228,11 +242,11 @@ force_constraints = CoilForceConstraints(
     PF_Fz_max=PF_Fz_max,
     CS_Fz_sum_max=CS_Fz_sum_max,
     CS_Fz_sep_max=CS_Fz_sep_max,
-    tolerance=1e-6,
+    tolerance=5e-5,
 )
 
 
-magnetic_targets = MagneticConstraintSet([isoflux, x_point])
+magnetic_targets = MagneticConstraintSet([isoflux])
 current_opt_problem = TikhonovCurrentCOP(
     coilset,
     eq,
@@ -240,7 +254,7 @@ current_opt_problem = TikhonovCurrentCOP(
     gamma=0.0,
     optimiser=Optimiser("SLSQP", opt_conditions={"max_eval": 2000, "ftol_rel": 1e-6}),
     max_currents=coilset.get_max_currents(0.0),
-    constraints=[deepcopy(field_constraints), deepcopy(force_constraints)],
+    constraints=[x_point, field_constraints, force_constraints],
 )
 
 program = PicardIterator(
@@ -338,7 +352,7 @@ sof_psi_boundary = PsiConstraint(
     sof_xbdry[arg_inner],
     sof_zbdry[arg_inner],
     target_value=50 / 2 / np.pi,
-    tolerance=1e-6,
+    tolerance=1e-3,
 )
 
 eof = deepcopy(eq)
@@ -346,7 +360,7 @@ eof_psi_boundary = PsiConstraint(
     sof_xbdry[arg_inner],
     sof_zbdry[arg_inner],
     target_value=-100 / 2 / np.pi,
-    tolerance=1e-1,
+    tolerance=1e-3,
 )
 
 sof.coilset.mesh_coils(0.3)
@@ -359,7 +373,7 @@ current_opt_problem_sof = TikhonovCurrentCOP(
         "SLSQP", opt_conditions={"max_eval": 2000, "ftol_rel": 1e-6, "xtol_rel": 1e-6}
     ),
     max_currents=coilset.get_max_currents(I_p),
-    constraints=[field_constraints, sof_psi_boundary, force_constraints, x_point],
+    constraints=[sof_psi_boundary, x_point, field_constraints, force_constraints],
 )
 
 eof.coilset.mesh_coils(0.3)
@@ -372,7 +386,7 @@ current_opt_problem_eof = TikhonovCurrentCOP(
         "COBYLA", opt_conditions={"max_eval": 5000, "ftol_rel": 1e-6, "xtol_rel": 1e-6}
     ),
     max_currents=coilset.get_max_currents(I_p),
-    constraints=[field_constraints, eof_psi_boundary, force_constraints, x_point],
+    constraints=[eof_psi_boundary, x_point, field_constraints, force_constraints],
 )
 
 position_opt_problem = PulsedNestedPositionCOP(

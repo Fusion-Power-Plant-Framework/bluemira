@@ -463,7 +463,7 @@ class JohnerLCFS(GeometryParameterisation):
                 ),
             ]
         )
-        variables.adjust_variables(var_dict)
+        variables.adjust_variables(var_dict, strict_bounds=False)
         super().__init__(variables)
 
     def create_shape(self, label="LCFS", n_points=1000):
