@@ -46,6 +46,7 @@ from bluemira.equilibria.opt_problems import (
     CoilsetOptimisationProblem,
     MinimalCurrentCOP,
     PulsedNestedPositionCOP,
+    TikhonovCurrentCOP,
     UnconstrainedTikhonovCurrentGradientCOP,
 )
 from bluemira.equilibria.physics import calc_psib
@@ -238,28 +239,54 @@ class PulsedCoilsetDesign:
         opt_problems = []
         for psi_boundary in [psi_sof, psi_eof]:
             eq = deepcopy(eq_ref)
-
             optimiser = deepcopy(self._eq_opt)
             current_constraints = deepcopy(self._current_opt_cons)
             eq_constraints = deepcopy(self.eq_constraints)
-
             for con in eq_constraints:
                 if isinstance(con, (PsiBoundaryConstraint, PsiConstraint)):
                     con.target_value = psi_boundary / (2 * np.pi)
 
-            constraints = eq_constraints
-            if current_constraints:
-                constraints += current_constraints
-
-            problem = self._eq_prob_cls(
-                eq.coilset,
-                eq,
-                optimiser,
-                max_currents=max_currents,
-                constraints=constraints,
-            )
+            if isinstance(self._eq_prob_cls, MinimalCurrentCOP):
+                problem = self._make_min_current_opt_problem(
+                    eq, optimiser, max_currents, current_constraints, eq_constraints
+                )
+            elif isinstance(self._eq_prob_cls, TikhonovCurrentCOP):
+                problem = self._make_tikh_current_opt_problem(
+                    eq, optimiser, max_currents, current_constraints, eq_constraints
+                )
             opt_problems.append(problem)
+
         return opt_problems
+
+    def _make_min_current_opt_problem(
+        self, eq, optimiser, max_currents, current_constraints, eq_constraints
+    ):
+        constraints = eq_constraints
+        if current_constraints:
+            constraints += current_constraints
+
+        problem = self._eq_prob_cls(
+            eq.coilset,
+            eq,
+            optimiser,
+            max_currents=max_currents,
+            constraints=constraints,
+        )
+        return problem
+
+    def _make_tikh_current_opt_problem(
+        self, eq, optimiser, max_currents, current_constraints, eq_constraints
+    ):
+
+        problem = self._eq_prob_cls(
+            eq.coilset,
+            eq,
+            MagneticConstraintSet(eq_constraints),
+            optimiser,
+            max_currents=max_currents,
+            constraints=current_constraints,
+        )
+        return problem
 
     def converge_equilibrium(self, eq, problem):
         """
