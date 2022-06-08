@@ -2,6 +2,8 @@ set -e
 
 cd /opt/pivy
 
+NJOBS=$(nproc --ignore=2)
+
 PATCH_DIR=/opt/bluemira/scripts/pivy/step2/
 # pivy#91 changes some interface that produces
 # "SystemError: <built-in function cast> returned NULL without setting an exception"
