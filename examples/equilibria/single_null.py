@@ -41,15 +41,12 @@ Attempt at recreating the EU-DEMO 2017 reference equilibria from a known coilset
 
 # %%
 
-import json
-import os
 from copy import deepcopy
 
 import matplotlib.pyplot as plt
 import numpy as np
 from IPython import get_ipython
 
-from bluemira.base.file import get_bluemira_path
 from bluemira.display import plot_defaults
 from bluemira.equilibria.coils import Coil, CoilSet
 from bluemira.equilibria.equilibrium import Equilibrium
