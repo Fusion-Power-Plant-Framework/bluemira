@@ -50,6 +50,37 @@ from bluemira.geometry.tools import make_circle, make_polygon, offset_wire, revo
 from bluemira.geometry.wire import BluemiraWire
 
 
+def make_grid(R_0, A, kappa, scale_x=1.6, scale_z=1.7, nx=65, nz=65):
+    """
+    Make a finite difference Grid for an Equilibrium.
+
+    Parameters
+    ----------
+    R_0: float
+        Major radius
+    A: float
+        Aspect ratio
+    kappa: float
+        Elongation
+    scale_x: float
+        Scaling factor to "grow" the grid away from the plasma in the x direction
+    scale_z: float
+        Scaling factor to "grow" the grid away from the plasma in the z direction
+    nx: int
+        Grid discretisation in the x direction
+    nz: int
+        Grid discretisation in the z direction
+
+    Returns
+    -------
+    grid: Grid
+        Finite difference grid for an Equilibrium
+    """
+    x_min, x_max = R_0 - scale_x * (R_0 / A), R_0 + scale_x * (R_0 / A)
+    z_min, z_max = -scale_z * (kappa * R_0 / A), scale_z * (kappa * R_0 / A)
+    return Grid(x_min, x_max, z_min, z_max, nx, nz)
+
+
 class PlasmaComponent(Component):
     """
     A component containing the equilibrium used to build a plasma.
@@ -289,14 +320,9 @@ class PlasmaBuilder(Builder):
             self._params.B_0.value,
         )
 
-        sx, sz = 1.6, 1.7  # grid scales from plasma
-        nx, nz = 65, 65
         R_0 = self._params.R_0.value
         A = self._params.A.value
-        x_min, x_max = R_0 - sx * (R_0 / A), R_0 + sx * (R_0 / A)
-        z_min, z_max = -sz * (kappa * R_0 / A), sz * (kappa * R_0 / A)
-
-        grid = Grid(x_min, x_max, z_min, z_max, nx, nz)
+        grid = make_grid(R_0, A, kappa, scale_x=1.6, scale_z=1.7, nx=65, nz=65)
 
         eq = Equilibrium(
             coilset,
