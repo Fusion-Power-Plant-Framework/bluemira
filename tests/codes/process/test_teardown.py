@@ -67,10 +67,11 @@ class FakeMFile:
     PROCESS installed.
     """
 
+    with open(os.path.join(DATA_DIR, "mfile_data.json"), "r") as f:
+        data = json.load(f)
+
     def __init__(self, filename):
         self.filename = filename
-        with open(os.path.join(DATA_DIR, "mfile_data.json"), "r") as f:
-            self.data = json.load(f)
 
 
 class TestTeardown:
@@ -147,18 +148,19 @@ class TestTeardown:
         teardown = Teardown(self.default_pf, "./not/a/dir")
 
         assert not os.path.isfile("./not/a/dir/MFILE.DAT")
-        with pytest.raises(CodesError):
+        with pytest.raises(CodesError) as codes_err:
             getattr(teardown, run_func)()
+        assert "is not a file" in str(codes_err)
 
     @pytest.mark.parametrize("run_func", ["run", "runinput", "read", "readall"])
     @pytest.mark.parametrize("i_fail", [-1, 0, 2, 100])
-    @mock.patch("builtins.open", new_callable=mock.mock_open)
     def test_run_func_raises_CodesError_given_process_infeasible_soln(
-        self, open_mock, run_func, i_fail
+        self, run_func, i_fail
     ):
+        self.mfile_mock.data["ifail"]["scan01"] = i_fail
         teardown = Teardown(self.default_pf, "./some/dir")
-        open_mock.read_data = _INFEASIBLE_PROCESS_MFILE.format(i_fail=i_fail)
 
         with file_exists("./some/dir/MFILE.DAT", f"{self.MODULE_REF}.os.path.isfile"):
-            with pytest.raises(CodesError):
+            with pytest.raises(CodesError) as codes_err:
                 getattr(teardown, run_func)()
+            assert "did not find a feasible solution" in str(codes_err)
