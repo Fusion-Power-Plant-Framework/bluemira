@@ -25,10 +25,11 @@ Attempt at recreating the EU-DEMO 2017 reference equilibria from a known coilset
 
 # %%[markdown]
 
-# An example on how to produce an equilibrium from a known coilset, profiles, and
-# plasma shape.
+# Here we explore how to optimise equilibria, coil currents, and coil positions.
 
-# We also explore how to optimise coil positions.
+# This is an in-depth example walking you through many of the objects, approaches,
+# and optimisation problems that are often used when designing plasma equilibria and
+# poloidal field coils.
 
 # There are many ways of optimising equilibria, and this example shows just one
 # relatively crude approach. The choice of constraints, optimisation algorithms, and even
@@ -81,7 +82,8 @@ except AttributeError:
 
 # %%[markdown]
 
-# First let's create our coilset.
+# First let's create our inital coilset. This is taken from a reference EU-DEMO design
+# but as you will see we will change this later on.
 
 # %%
 x = [5.4, 14.0, 17.75, 17.75, 14.0, 7.0, 2.77, 2.77, 2.77, 2.77, 2.77]
@@ -110,7 +112,19 @@ for i, (xi, zi, dxi, dzi) in enumerate(zip(x, z, dx, dz)):
 
 coilset = CoilSet(coils)
 
-# Assign current density and peak field constraints
+# %%[markdown]
+
+# Now we can also specify our coilset a little further, by assigning maximum current
+# densities and peak fields. This can then be used in the constraints for our
+# optimisation problems.
+
+# We also fix the sizes of our coils for this example, and 'mesh' them. Unless otherwise
+# specified a `Coil` is represented by a single current filament. `mesh`ing here refers
+# to the sub-division of this coil filament into several filaments equi-spaced around
+# the coil cross-section.
+
+# %%
+
 coilset.assign_coil_materials("CS", j_max=16.5, b_max=12.5)
 coilset.assign_coil_materials("PF", j_max=12.5, b_max=11.0)
 coilset.fix_sizes()
@@ -123,8 +137,9 @@ coilset.mesh_coils(0.3)
 # %%
 
 # Machine parameters
-I_p = 19.07e6  # A
 R_0 = 8.938
+A = 3.1
+I_p = 19.07e6  # A
 B_0 = 4.8901  # T
 
 grid = Grid(3.0, 13.0, -10.0, 10.0, 65, 65)
@@ -154,9 +169,9 @@ eq = Equilibrium(coilset, grid, profiles, psi=None)
 
 lcfs_parameterisation = JohnerLCFS(
     {
-        "r_0": {"value": 8.93},
+        "r_0": {"value": R_0},
         "z_0": {"value": 0.0},
-        "a": {"value": 8.93 / 3.1},
+        "a": {"value": R_0 / A},
         "kappa_u": {"value": 1.6},
         "kappa_l": {"value": 1.9},
         "delta_u": {"value": 0.4},
