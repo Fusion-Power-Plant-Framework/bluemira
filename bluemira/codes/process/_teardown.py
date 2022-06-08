@@ -56,11 +56,6 @@ class Teardown(CodesTeardown):
         self._mfile_path = os.path.join(run_directory, "MFILE.DAT")
 
     def run(self):
-        # TODO(hsaunders1904): do we need the below? We already check
-        # that the MFile exists, and that's all we use.
-        # Indeed, if we're using 'read', why should the user need to
-        # have the other output PROCESS files?
-        # self._check_PROCESS_output_files()
         self._load_mfile(self._mfile_path, recv_all=False)
 
     def runinput(self):
