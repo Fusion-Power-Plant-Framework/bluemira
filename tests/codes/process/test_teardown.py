@@ -33,28 +33,8 @@ from bluemira.codes.utilities import add_mapping
 from tests._helpers import file_exists
 
 DATA_DIR = os.path.join(os.path.dirname(__file__), "test_data")
-
-_INFEASIBLE_PROCESS_MFILE = (
-    "# PROCESS #\n"
-    "# Power Reactor Optimisation Code #\n"
-    "# PROCESS #\n"
-    "# Power Reactor Optimisation Code #\n"
-    'PROCESS_version_number__________________________________________________ (procver)_____________________     "2.1.0   R"\n'
-    'Date_of_run_____________________________________________________________ (date)________________________     ""\n'
-    'Time_of_run_____________________________________________________________ (time)________________________     ""\n'
-    'User____________________________________________________________________ (username)____________________     ""\n'
-    'PROCESS_run_title_______________________________________________________ (runtitle)____________________     ""\n'
-    'PROCESS_tag_number______________________________________________________ (tagno)_______________________     ""\n'
-    'PROCESS_git_branch_name_________________________________________________ (branch_name)_________________     ""\n'
-    'PROCESS_last_commit_message_____________________________________________ (commsg)______________________     ""\n'
-    'Input_filename__________________________________________________________ (fileprefix)__________________     ""\n'
-    "# Numerics #\n"
-    "VMCON_error_flag________________________________________________________ (ifail)_______________________              {i_fail}\n"
-)
 FAKE_PROCESS_DICT = {  # Fake for the output of PROCESS's `get_dicts()`
-    "DICT_DESCRIPTIONS": {
-        "some_property": "its description",
-    }
+    "DICT_DESCRIPTIONS": {"some_property": "its description"}
 }
 
 
