@@ -544,8 +544,8 @@ class PsiConstraint(AbsoluteMagneticConstraint):
             x,
             z,
             target_value,
-            weights,
-            tolerance,
+            weights=weights,
+            tolerance=tolerance,
             f_constraint=Ax_b_constraint,
             constraint_type="equality",
         )
