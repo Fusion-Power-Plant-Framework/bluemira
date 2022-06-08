@@ -19,4 +19,3 @@ cd bluemira
 # git checkout new_displayer
 sed -i s/"\"neutronics-material-maker==0.1.11\""/"#\"neutronics-material-maker==0.1.11\""/g setup.py
 sed -i s/"\"numpy<=1.21.5\""/"#\"numpy<=1.21.5\""/g setup.py
-sed -i s/"\"scipy<=1.5.3\""/"#\"scipy<=1.5.3\""/g setup.py
