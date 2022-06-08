@@ -108,11 +108,11 @@ class TestPositionMapper:
         convex_polygon = make_polygon({"x": x, "z": z}, closed=True)
         circle = make_circle(center=(0, 0, 0), axis=(0, -1, 0), radius=10)
 
-        interpolators = [
-            PathInterpolator(circle),
-            RegionInterpolator(circle),
-            RegionInterpolator(convex_polygon),
-        ]
+        interpolators = {
+            "circle_path": PathInterpolator(circle),
+            "circle_region": RegionInterpolator(circle),
+            "polygon_region": RegionInterpolator(convex_polygon),
+        }
         cls.mapper = PositionMapper(interpolators)
 
     def test_dimensionality(self):
