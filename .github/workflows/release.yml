@@ -1,3 +1,10 @@
+# This workflow creates a new release from the HEAD of the 'develop' branch.
+# The branch is merged into 'main' and a release is created using the version
+# number that was inputted when the workflow was triggered.
+# Once the release is created, a PR to merge 'develop_dependencies'->'develop'
+# is created, this reminds us to update our dependencies for the next
+# development cycle.
+
 name: Make Release
 
 on:

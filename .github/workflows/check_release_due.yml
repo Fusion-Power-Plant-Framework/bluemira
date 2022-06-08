@@ -1,3 +1,4 @@
+# Checks if a release of Bluemira is due, and opens an issue if it is.
 name: Check If Release Due
 
 on:
