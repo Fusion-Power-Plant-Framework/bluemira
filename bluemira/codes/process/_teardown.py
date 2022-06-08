@@ -56,18 +56,48 @@ class Teardown(CodesTeardown):
         self._mfile_path = os.path.join(run_directory, "MFILE.DAT")
 
     def run(self):
+        """
+        Teardown the PROCESS solver.
+
+        This loads the MFile in the run directory and maps its outputs
+        to bluemira parameters.
+        """
         self._load_mfile(self._mfile_path, recv_all=False)
 
     def runinput(self):
+        """
+        Teardown the PROCESS solver.
+
+        This loads the MFile in the run directory and maps its outputs
+        to bluemira parameters.
+        """
         self._load_mfile(self._mfile_path, recv_all=True)
 
     def read(self):
+        """
+        Teardown the PROCESS solver.
+
+        This loads the MFile in the run directory and maps its outputs
+        to bluemira parameters.
+        """
         self._load_mfile(self._mfile_path, recv_all=False)
 
     def readall(self):
+        """
+        Teardown the PROCESS solver.
+
+        This loads the MFile in the run directory and maps its outputs
+        to bluemira parameters.
+        """
         self._load_mfile(self._mfile_path, recv_all=True)
 
     def mock(self):
+        """
+        Mock teardown the PROCESS solver.
+
+        This loads a mockProcess.json file from the run directory and
+        loads the values into this task's params.
+        """
         bluemira_print("Mocking PROCESS systems code run")
         mock_file_path = os.path.join(self.run_directory, self.MOCK_JSON_NAME)
         outputs = _read_json_file_or_raise(mock_file_path)
