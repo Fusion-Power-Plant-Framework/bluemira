@@ -221,10 +221,20 @@ class EUDEMOReactor(Reactor):
 
         config = self._process_design_stage_config(default_config)
 
-        # Get TF coil path boundary
-        # Get exclusion zones
+        tf_coil_boundary = (
+            component_tree.get_component(EUDEMOReactor.TF_COILS)
+            .get_component("xz")
+            .get_component("Casing")
+            .boundary[0]
+        )
+        keep_out_zones = self.make_PF_coil_exclusions()
 
-        builder = PFCoilsBuilder(self._params.to_dict(), config)
+        builder = PFCoilsBuilder(
+            self._params.to_dict(),
+            config,
+            tf_coil_boundary=tf_coil_boundary,
+            keep_out_zones=keep_out_zones,
+        )
         self.register_builder(builder)
 
         return super()._build_stage()
@@ -407,3 +417,15 @@ class EUDEMOReactor(Reactor):
         self.register_solver(solver)
         result = solver.execute()
         self._params.update_kw_parameters(result)
+    def make_PF_coil_exclusions(self):
+        """
+        Calculate the keep out zones for PF coils
+
+        Returns
+        -------
+        keep_out_zones: List[BluemiraFace]
+            List of keep-out zone geometries
+        """
+        # TODO: Thread this in properly (UpperPortOP)
+        keep_out_zones = []
+        return keep_out_zones

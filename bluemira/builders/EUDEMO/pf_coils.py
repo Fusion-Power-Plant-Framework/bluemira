@@ -139,13 +139,13 @@ class PFCoilsBuilder(Builder):
         self,
         params,
         build_config: BuildConfig,
-        pf_coil_path: Optional[BluemiraWire] = None,
+        tf_coil_boundary: Optional[BluemiraWire] = None,
         keep_out_zones: Optional[List[BluemiraFace]] = None,
     ):
         super().__init__(
             params,
             build_config,
-            pf_coil_path=pf_coil_path,
+            tf_coil_boundary=tf_coil_boundary,
             keep_out_zones=keep_out_zones,
         )
 
@@ -168,7 +168,7 @@ class PFCoilsBuilder(Builder):
     def reinitialise(
         self,
         params,
-        pf_coil_path: Optional[BluemiraWire] = None,
+        tf_coil_boundary: Optional[BluemiraWire] = None,
         keep_out_zones: Optional[List[BluemiraFace]] = None,
         **kwargs,
     ) -> None:
@@ -185,18 +185,16 @@ class PFCoilsBuilder(Builder):
 
         self._reset_params(params)
         self._coilset = None
-        self._pf_coil_path = pf_coil_path
+        self._tf_coil_boundary = tf_coil_boundary
         self._keep_out_zones = keep_out_zones
 
     def run(self, *args):
         """
         Build PF coils from a design optimisation problem.
         """
-        # TODO: Run the problem class correctType[PulsedNestedPositionCOP] ly
-
         # Make initial CoilSet
         coilset = make_coilset(
-            self._pf_coil_path,
+            self._tf_coil_boundary,
             R_0=self._params.R_0.value,
             kappa=self._params.kappa.value,
             delta=self._params.delta_95.value,
@@ -213,7 +211,7 @@ class PFCoilsBuilder(Builder):
             PF_bmax=self._params.PF_bmax.value,
         )
 
-        position_mapper = make_coil_mapper(self._pf_coil_path, self._keep_out_zones)
+        position_mapper = make_coil_mapper(self._tf_coil_boundary, self._keep_out_zones)
 
         grid = make_grid(
             self._params.R_0.value, self._params.A.value, self._params.kappa.value
@@ -268,7 +266,7 @@ class PFCoilsBuilder(Builder):
         ]
 
         equilibrium_constraints = MagneticConstraintSet([isoflux])
-        # Make Optimisers
+
         self._design_problem = self._problem_class(
             self._params,
             coilset,
@@ -298,7 +296,7 @@ class PFCoilsBuilder(Builder):
         bluemira_print(
             f"Solving design problem: {self._design_problem.__class__.__name__}"
         )
-        self._coilset = self._design_problem.optimise()
+        self._coilset = self._design_problem.optimise_positions()
 
     def read(self, **kwargs):
         """
