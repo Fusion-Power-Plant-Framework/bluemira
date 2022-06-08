@@ -28,7 +28,7 @@ import numpy as np
 from bluemira.base.parameter import ParameterFrame
 from bluemira.base.solver import RunMode as BaseRunMode
 from bluemira.codes.error import CodesError
-from bluemira.codes.interface_ import CodesSolver
+from bluemira.codes.interface import CodesSolver
 from bluemira.codes.plasmod.api._outputs import PlasmodOutputs
 from bluemira.codes.plasmod.api._run import Run
 from bluemira.codes.plasmod.api._setup import Setup

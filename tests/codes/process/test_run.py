@@ -32,7 +32,7 @@ class TestRun:
     def setup_method(self):
         self.default_pf = ParameterFrame()
 
-        self._subprocess_patch = mock.patch("bluemira.codes.interface_.run_subprocess")
+        self._subprocess_patch = mock.patch("bluemira.codes.interface.run_subprocess")
         self.run_subprocess_mock = self._subprocess_patch.start()
         self.run_subprocess_mock.return_value = 0
 

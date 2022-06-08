@@ -26,7 +26,7 @@ from typing import Dict, Union
 
 from bluemira.base.parameter import ParameterFrame
 from bluemira.codes.error import CodesError
-from bluemira.codes.interface_ import CodesSetup
+from bluemira.codes.interface import CodesSetup
 from bluemira.codes.process.api import DEFAULT_INDAT, InDat, update_obsolete_vars
 from bluemira.codes.process.constants import NAME as PROCESS_NAME
 from bluemira.codes.process.mapping import (

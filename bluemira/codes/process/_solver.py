@@ -27,7 +27,7 @@ from typing import Dict, Union
 from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.base.parameter import ParameterFrame
 from bluemira.base.solver import RunMode as BaseRunMode
-from bluemira.codes.interface_ import CodesSolver
+from bluemira.codes.interface import CodesSolver
 from bluemira.codes.process._run import Run
 from bluemira.codes.process._setup import Setup
 from bluemira.codes.process._teardown import Teardown

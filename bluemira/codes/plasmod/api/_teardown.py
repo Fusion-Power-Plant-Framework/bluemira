@@ -25,7 +25,7 @@ Defines the 'Teardown' stage for the plasmod solver.
 from bluemira.base.look_and_feel import bluemira_debug
 from bluemira.base.parameter import ParameterFrame
 from bluemira.codes.error import CodesError
-from bluemira.codes.interface_ import CodesTeardown
+from bluemira.codes.interface import CodesTeardown
 from bluemira.codes.plasmod.api._outputs import PlasmodOutputs
 from bluemira.codes.plasmod.constants import NAME as PLASMOD_NAME
 
