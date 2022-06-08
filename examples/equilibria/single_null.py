@@ -66,7 +66,7 @@ from bluemira.equilibria.opt_problems import (
     TikhonovCurrentCOP,
     UnconstrainedTikhonovCurrentGradientCOP,
 )
-from bluemira.equilibria.profiles import BetaIpProfile, CustomProfile, DoublePowerFunc
+from bluemira.equilibria.profiles import CustomProfile
 from bluemira.equilibria.shapes import JohnerLCFS
 from bluemira.equilibria.solve import DudsonConvergence, PicardIterator
 from bluemira.geometry.tools import make_polygon
