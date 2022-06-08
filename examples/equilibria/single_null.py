@@ -139,8 +139,8 @@ coilset.mesh_coils(0.3)
 # Machine parameters
 R_0 = 8.938
 A = 3.1
-I_p = 19.07e6  # A
 B_0 = 4.8901  # T
+I_p = 19.07e6  # A
 
 grid = Grid(3.0, 13.0, -10.0, 10.0, 65, 65)
 
@@ -161,7 +161,7 @@ eq = Equilibrium(coilset, grid, profiles, psi=None)
 # Now we need to specify some constraints on the plasma.
 
 # We'll instantiate a parameterisation for the last closed flux surface (LCFS) which
-# tends to do a good job at describing an EU-DEMO-like single plasma.
+# tends to do a good job at describing an EU-DEMO-like single null plasma.
 
 # We'll use this to specify some constraints on the plasma equilibrium problem.
 
@@ -185,29 +185,30 @@ lcfs_parameterisation = JohnerLCFS(
 
 lcfs = lcfs_parameterisation.create_shape().discretize(byedges=True, ndiscr=50)
 
-sof_xbdry, sof_zbdry = lcfs.x, lcfs.z
-arg_inner = np.argmin(sof_xbdry)
+x_bdry, z_bdry = lcfs.x, lcfs.z
+arg_inner = np.argmin(x_bdry)
 
 isoflux = IsofluxConstraint(
-    sof_xbdry,
-    sof_zbdry,
-    sof_xbdry[arg_inner],
-    sof_zbdry[arg_inner],
+    x_bdry,
+    z_bdry,
+    x_bdry[arg_inner],
+    z_bdry[arg_inner],
     tolerance=1e-3,
     constraint_value=0.25,  # Difficult to choose...
 )
 
-xp_idx = np.argmin(sof_zbdry)
+xp_idx = np.argmin(z_bdry)
 x_point = FieldNullConstraint(
-    sof_xbdry[xp_idx],
-    sof_zbdry[xp_idx],
+    x_bdry[xp_idx],
+    z_bdry[xp_idx],
     tolerance=1e-4,
 )
 
 # %%[markdown]
 
 # It's often very useful to solve an unconstrained optimised problem in order to get
-# an initial guess for the equilibrium result.
+# an initial guess for the equilibrium result. The initial equilibrium can be used as
+# the "starting guess" for subsequent constrained optimisation problems.
 
 # This is done by using the magnetic constraints in a "set" for which the error is then
 # minimised with an L2 norm and a Tikhonov regularisation on the currents.
@@ -246,23 +247,18 @@ field_constraints = CoilFieldConstraints(
     eq.coilset, eq.coilset.get_max_fields(), tolerance=1e-6
 )
 
-PF_Fz_max = 450
-CS_Fz_sum_max = 300
-CS_Fz_sep_max = 250
 force_constraints = CoilForceConstraints(
     eq.coilset,
-    PF_Fz_max=PF_Fz_max,
-    CS_Fz_sum_max=CS_Fz_sum_max,
-    CS_Fz_sep_max=CS_Fz_sep_max,
+    PF_Fz_max=450,
+    CS_Fz_sum_max=300,
+    CS_Fz_sep_max=250,
     tolerance=5e-5,
 )
 
-
-magnetic_targets = MagneticConstraintSet([isoflux])
 current_opt_problem = TikhonovCurrentCOP(
     coilset,
     eq,
-    targets=magnetic_targets,
+    targets=MagneticConstraintSet([isoflux]),
     gamma=0.0,
     optimiser=Optimiser("SLSQP", opt_conditions={"max_eval": 2000, "ftol_rel": 1e-6}),
     max_currents=coilset.get_max_currents(0.0),
@@ -352,25 +348,25 @@ position_mapper = PositionMapper(region_interpolators)
 
 
 isoflux = IsofluxConstraint(
-    sof_xbdry,
-    sof_zbdry,
-    sof_xbdry[arg_inner],
-    sof_zbdry[arg_inner],
+    x_bdry,
+    z_bdry,
+    x_bdry[arg_inner],
+    z_bdry[arg_inner],
     tolerance=1e-3,
 )
 
 sof = deepcopy(eq)
 sof_psi_boundary = PsiConstraint(
-    sof_xbdry[arg_inner],
-    sof_zbdry[arg_inner],
+    x_bdry[arg_inner],
+    z_bdry[arg_inner],
     target_value=50 / 2 / np.pi,
     tolerance=1e-3,
 )
 
 eof = deepcopy(eq)
 eof_psi_boundary = PsiConstraint(
-    sof_xbdry[arg_inner],
-    sof_zbdry[arg_inner],
+    x_bdry[arg_inner],
+    z_bdry[arg_inner],
     target_value=-100 / 2 / np.pi,
     tolerance=1e-3,
 )
