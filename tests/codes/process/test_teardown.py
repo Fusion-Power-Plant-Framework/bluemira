@@ -151,15 +151,6 @@ class TestTeardown:
             getattr(teardown, run_func)()
 
     @pytest.mark.parametrize("run_func", ["run", "runinput", "read", "readall"])
-    @mock.patch("builtins.open", new_callable=mock.mock_open, read_data="")
-    def test_run_func_raises_CodesError_given_mfile_empty(self, _, run_func):
-        teardown = Teardown(self.default_pf, "./some/dir")
-
-        with file_exists("./some/dir/MFILE.DAT", f"{self.MODULE_REF}.os.path.isfile"):
-            with pytest.raises(CodesError):
-                getattr(teardown, run_func)()
-
-    @pytest.mark.parametrize("run_func", ["run", "runinput", "read", "readall"])
     @pytest.mark.parametrize("i_fail", [-1, 0, 2, 100])
     @mock.patch("builtins.open", new_callable=mock.mock_open)
     def test_run_func_raises_CodesError_given_process_infeasible_soln(

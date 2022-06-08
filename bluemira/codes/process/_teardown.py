@@ -95,8 +95,6 @@ class _MFileWrapper:
     def __init__(self, filename, parameter_mapping, units):
         if not os.path.isfile(filename):
             raise CodesError(f"Path '{filename}' is not a file.")
-        if _file_is_empty(filename):
-            raise CodesError(f"Could not read PROCESS results: '{filename}' is empty.")
 
         self.filename = filename
         self.params = {}  # ParameterFrame dictionary
@@ -339,10 +337,3 @@ def _read_json_file_or_raise(file_path: str) -> Dict[str, float]:
         raise CodesError(
             f"Cannot open mock PROCESS results file '{file_path}'."
         ) from os_error
-
-
-def _file_is_empty(file_path: str) -> bool:
-    # TODO(hsaunders): this is a very bad way to tell if a file is empty
-    with open(file_path, "r") as f:
-        content = f.read()
-        return not bool(content)
