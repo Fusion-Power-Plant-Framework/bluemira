@@ -1,6 +1,5 @@
 set -e
 
-cd
 pip install -i https://test.pypi.org/simple/ CoolProp==6.4.2.dev0
 
 git clone https://github.com/numba/numba-scipy.git
