@@ -211,6 +211,8 @@ class PFCoilsBuilder(Builder):
             PF_bmax=self._params.PF_bmax.value,
         )
 
+        # TODO: Treat the TF coil boundary to make a PF coil path (chop, offset, open)
+
         position_mapper = make_coil_mapper(self._tf_coil_boundary, self._keep_out_zones)
 
         grid = make_grid(
