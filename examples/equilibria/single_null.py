@@ -432,6 +432,10 @@ current_opt_problem_eof = TikhonovCurrentCOP(
 # good starting guesses (converged equilibria) the plasma contribution to the various
 # constraints does not change much when the equilibrium is subsequently converged.
 
+# For the sake of brevity, we set the maximum number of iterations for the position
+# optimisation to 50. This is unlikely to find the best solution given our specified
+# coil regions, but demonstrates the principle with acceptable run-times.
+
 # %%
 
 old_coilset = deepcopy(coilset)
