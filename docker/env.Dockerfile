@@ -18,18 +18,6 @@ ENV PATH "${VIRTUAL_ENV}/bin:$PATH"
 
 WORKDIR /opt/bluemira
 
-COPY requirements.txt .
-
-# Update and install dependencies available through pip
-RUN python -m pip install --upgrade pip setuptools wheel pybind11 \
-    && python -m pip install -r requirements.txt
-# Coolprop numba-scipy neutronics-materal-maker
-
-# Build and install fenicsx
-COPY scripts/fenicsx ./scripts/fenicsx/
-RUN bash scripts/fenicsx/install-fenicsx-deps.sh \
-    && bash scripts/fenicsx/install-fenicsx.sh
-
 # Build and install Qt5 (5.15.2)
 COPY scripts/qt5/step1 ./scripts/qt5/step1
 RUN bash scripts/qt5/step1/install-qt5-deps.sh \
@@ -69,10 +57,16 @@ RUN bash scripts/freecad/step1/install-freecad-deps.sh \
 COPY scripts/freecad/install-freecad.sh ./scripts/freecad/install-freecad.sh
 RUN bash scripts/freecad/install-freecad.sh
 
-# Build and install pythonocc (approx 7.5.2)
-# COPY scripts/occ/ ./scripts/occ/
-# RUN bash scripts/occ/install-occ-deps.sh \
-#     && bash scripts/occ/install-occ.sh
+COPY requirements.txt .
+# Update and install dependencies available through pip
+RUN python -m pip install --upgrade pip setuptools wheel pybind11 \
+    && python -m pip install -r requirements.txt
+# Coolprop numba-scipy neutronics-materal-maker
+
+# Build and install fenicsx
+COPY scripts/fenicsx ./scripts/fenicsx/
+RUN bash scripts/fenicsx/install-fenicsx-deps.sh \
+    && bash scripts/fenicsx/install-fenicsx.sh
 
 FROM base as dev-base
 

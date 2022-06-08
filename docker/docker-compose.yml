@@ -14,5 +14,5 @@ services:
    extends:
      service: bluemira
    volumes:
-     - <bluemira_dir>:/home/user/bluemira
-     - <process_dir>:/home/user/process
+     - ../:/home/user/bluemira
+     - ../../process_dev:/home/user/process
