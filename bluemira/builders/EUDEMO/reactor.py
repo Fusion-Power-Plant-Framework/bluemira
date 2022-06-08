@@ -221,6 +221,9 @@ class EUDEMOReactor(Reactor):
 
         config = self._process_design_stage_config(default_config)
 
+        # Get TF coil path boundary
+        # Get exclusion zones
+
         builder = PFCoilsBuilder(self._params.to_dict(), config)
         self.register_builder(builder)
 

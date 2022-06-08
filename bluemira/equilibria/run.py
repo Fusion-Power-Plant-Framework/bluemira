@@ -292,8 +292,15 @@ class PulsedCoilsetDesign:
         """
         Converge an equilibrium problem from a 'frozen' plasma optimised state.
         """
-        # TODO: Converge equilibria
-        pass
+        program = PicardIterator(
+            eq,
+            problem,
+            fixed_coils=True,
+            convergence=self._eq_convergence,
+            relaxation=self._eq_settings["relaxation"],
+            plot=False,
+        )
+        program()
 
     def plot(self):
         """
@@ -390,16 +397,7 @@ class FixedPulsedCoilsetDesign(PulsedCoilsetDesign):
             [self.SOF, self.EOF], [sof_opt_problem, eof_opt_problem]
         ):
             eq = problem.eq
-
-            program = PicardIterator(
-                eq,
-                problem,
-                convergence=self._eq_convergence,
-                relaxation=self._eq_settings["relaxation"],
-                fixed_coils=True,
-                plot=False,
-            )
-            program()
+            self.converge_equilibrium(eq, problem)
             self.take_snapshot(snap, eq, eq.coilset, problem, eq.profiles)
 
 
@@ -496,14 +494,5 @@ class OptimisedPulsedCoilsetDesign(PulsedCoilsetDesign):
         for snap, problem in zip([self.SOF, self.EOF], sub_opt_problems):
             eq = problem.eq
             eq.coilset = optimised_coilset
-
-            program = PicardIterator(
-                eq,
-                problem,
-                convergence=self._eq_convergence,
-                relaxation=self._eq_settings["relaxation"],
-                fixed_coils=True,
-                plot=False,
-            )
-            program()
+            self.converge_equilibrium(eq, problem)
             self.take_snapshot(snap, eq, eq.coilset, problem, eq.profiles)
