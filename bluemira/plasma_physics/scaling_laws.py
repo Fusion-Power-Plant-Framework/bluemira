@@ -253,6 +253,8 @@ def IPB98y2(I_p, B_t, p_sep, n, mass, R_0, A, kappa):  # noqa: N802
     n = raw_uc(n, "1/m^3", "1e19/m^3")
 
     law = PowerLawScaling(
-        constant=0.0562, exponents=[0.93, 0.15, -0.69, 0.41, 0.19, 1.97, -0.58, 0.78]
+        constant=0.0562,
+        constant_err=0.0,
+        exponents=[0.93, 0.15, -0.69, 0.41, 0.19, 1.97, -0.58, 0.78],
     )
     return law(I_p, B_t, p_sep, n, mass, R_0, A, kappa)
