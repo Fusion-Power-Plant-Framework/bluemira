@@ -127,8 +127,14 @@ coilset = CoilSet(coils)
 
 coilset.assign_coil_materials("CS", j_max=16.5, b_max=12.5)
 coilset.assign_coil_materials("PF", j_max=12.5, b_max=11.0)
-coilset.fix_sizes()
-coilset.mesh_coils(0.3)
+
+# Later on, we will optimise the PF coil positions, but for the CS coils we can fix sizes
+# and mesh them already.
+
+for coil in coilset.coils.values():
+    if coil.ctype == "CS":
+        coil.flag_sizefix = True
+        coil.mesh_coil(0.3)
 
 # %%[markdown]
 
@@ -443,7 +449,6 @@ old_eq = deepcopy(eq)
 region_interpolators = {}
 for coil in coilset.coils.values():
     if coil.ctype == "PF":
-        # coil.flag_sizefix = False
         x, z = coil.x, coil.z
         region = make_polygon(
             {"x": [x - 1, x + 1, x + 1, x - 1], "z": [z - 1, z - 1, z + 1, z + 1]},
@@ -467,13 +472,34 @@ optimised_coilset = position_opt_problem.optimise(verbose=True)
 
 # %%[markdown]
 
+# We've just optimised the PF coil positions using a single current filament at the
+# centre of each PF coil. This is a reasonable approximation when performing a position
+# optimisation, but really we probably want to do better. We will figure out the
+# appropriate sizes of the PF coils, and fix them and mesh them accordingly.
+
+# %%
+
+sof_pf_currents = sof.coilset.get_control_currents()[: sof.coilset.n_PF]
+eof_pf_currents = eof.coilset.get_control_currents()[: sof.coilset.n_PF]
+max_pf_currents = np.max(np.abs([sof_pf_currents, eof_pf_currents]), axis=0)
+pf_coil_names = optimised_coilset.get_PF_names()
+
+for pf_name, max_current in zip(pf_coil_names, max_pf_currents):
+    sof.coilset.coils[pf_name].make_size(max_current)
+    sof.coilset.coils[pf_name].fix_size()
+    sof.coilset.coils[pf_name].mesh_coil(0.3)
+    eof.coilset.coils[pf_name].make_size(max_current)
+    eof.coilset.coils[pf_name].fix_size()
+    eof.coilset.coils[pf_name].mesh_coil(0.3)
+
+# %%[markdown]
+
 # Now that we've optimised the coil positions for a fixed plasma, we can run the
 # Grad-Shafranov solve again to converge the equilibria for the optimised coil positions
 # at SOF and EOF.
 
 # %%
 
-optimised_coilset.mesh_coils(0.3)
 
 program = PicardIterator(
     sof,
@@ -514,10 +540,11 @@ ax_2.set_title("SOF $\\Psi_{b} = $" + f"{sof.get_OX_psis()[1] * 2*np.pi:.2f} V.s
 eof.plot(ax=ax_3)
 eof.coilset.plot(ax=ax_3)
 ax_3.set_title("EOF $\\Psi_{b} = $" + f"{eof.get_OX_psis()[1] * 2*np.pi:.2f} V.s")
-f, ax = plt.subplots()
 
+
+f, ax = plt.subplots()
 x_old, z_old = old_coilset.get_positions()
-x_new, z_new = optimised_coilset.get_positions()
+x_new, z_new = sof.coilset.get_positions()
 old_eq.get_LCFS().plot(ax=ax, edgecolor="b", fill=False)
 sof.get_LCFS().plot(ax=ax, edgecolor="r", fill=False)
 eof.get_LCFS().plot(ax=ax, edgecolor="g", fill=False)

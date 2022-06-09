@@ -966,9 +966,10 @@ class PulsedNestedPositionCOP(CoilsetOptimisationProblem):
         Run the sub-optimisation problems for a given position vector and return the
         objective function values
         """
-        coilset = PulsedNestedPositionCOP.update_positions(
-            vector, coilset, position_mapper
-        )
+        # coilset = PulsedNestedPositionCOP.update_positions(
+        #     vector, coilset, position_mapper
+        # )
+        positions = position_mapper.to_xz_dict(vector)
 
         if debug[0]:
             # Increment debug dictionary
@@ -977,6 +978,7 @@ class PulsedNestedPositionCOP(CoilsetOptimisationProblem):
 
         fom_values = []
         for sub_opt_prob in sub_opt_problems:
+            sub_opt_prob.coilset.set_positions(positions)
             sub_opt_prob.optimise(fixed_coils=False)
             PulsedNestedPositionCOP._run_diagnostics(debug, sub_opt_prob)
             fom_values.append(sub_opt_prob.opt.optimum_value)
