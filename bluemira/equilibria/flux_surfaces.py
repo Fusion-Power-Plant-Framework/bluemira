@@ -32,7 +32,9 @@ from typing import Iterable
 import matplotlib.pyplot as plt
 import numba as nb
 import numpy as np
+import scipy.constants as const
 from scipy.integrate import solve_ivp
+from scipy.special import lpmv
 
 from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.equilibria.constants import PSI_NORM_TOL
@@ -871,3 +873,102 @@ def poloidal_angle(Bp_strike, Bt_strike, gamma):
     sin_theta = num / Bp_strike
 
     return np.rad2deg(np.arcsin(sin_theta))
+
+
+def harmonic_amplitude(x_f, z_f, I_f, max_degree, r_t, cylindrical=False):
+    """
+
+    Parameters
+    ----------
+    x_f: np.array
+        X coordinates of filaments (coils)
+    z_f: np.array
+        Z coordinates of filaments (coils)
+    I_f: np.array
+        Filament currents
+    max_degree: integer
+        Maximum degree of harmonic to calculate up to
+    r_t: float
+        Typical length scale (e.g. radius at outer midplane)
+    cylindrical: boolean
+        Check to see if use of cylindrical coordinates are desired
+        # NOTE: unsure exactly how to implement
+
+    Returns
+    -------
+    amplitudes: np.array
+        Array of spherical harmonic amplitudes for each harmonic from given currents
+    """
+
+    r_f = np.sqrt(x_f**2 + z_f**2)
+    theta_f = np.arctan2(x_f, z_f)
+
+    currents2harmonics = np.zeros((max_degree, np.size(x_f)))
+    for degree in np.arange(max_degree):
+        currents2harmonics[degree, :] = (
+            0.5
+            * const.mu_0
+            * (r_t / r_f) ** degree
+            * np.sin(theta_f)
+            * lpmv(1, degree, np.cos(theta_f))
+            / np.sqrt(degree * (degree + 1))
+        )
+
+    amplitudes = np.matmul(currents2harmonics, I_f)
+
+    return amplitudes
+
+
+def psi_vac(x_p, z_p, x_f, z_f, I_f, r_t, max_degree, cylindrical=False):
+    """
+    Parameters
+    ----------
+    x_p: float
+        X coordinates of points at which to measure psi_vac
+    z_p: float
+        Z coordinates of points at which to measure psi_vac
+    x_f: np.array
+        X coordinates of filaments (coils)
+    z_f: np.array
+        Z coordinates of filaments (coils)
+    I_f: np.array
+        Filament currents
+    max_degree: integer
+        Maximum degree of harmonic to calculate up to
+    r_t: float
+        Typical length scale (e.g. radius at outer midplane)
+    cylindrical: boolean
+        Check to see if use of cylindrical coordinates are desired
+        # NOTE: unsure exactly how to implement
+
+    Returns
+    -------
+    psi_vac: np.array
+        Array of vacuum psi contributions from filaments
+    max_valid_r: float
+        Maximum spherical radius at which the spherical harmonics apply
+    """
+
+    r_f = np.sqrt(x_f**2 + z_f**2)
+    theta_f = np.arctan2(x_f, z_f)
+
+    r_p = np.sqrt(x_p**2 + z_p**2)
+    theta_p = np.arctan2(x_p, z_p)
+
+    psi_vac = np.array([])
+    harmonics2collocation = np.zeros(np.size(x_p))
+    harmonics2collocation[:, 1] = 1
+
+    for degree in np.arange(max_degree):
+        harmonics2collocation[:, degree + 1] = (
+            r_p ** (degree + 1)
+            * np.sin(theta_p)
+            * lpmv(1, degree, np.cos(theta_p))
+            / ((r_t**degree) * np.sqrt(degree * (degree + 1)))
+        )
+
+    psi_vac = np.matmul(
+        harmonics2collocation, harmonic_amplitude(x_f, z_f, I_f, max_degree, r_t)
+    )
+    max_valid_r = np.amin(r_f)  # Maxmimum r value of sphere within which harmonics apply
+    return psi_vac, max_valid_r

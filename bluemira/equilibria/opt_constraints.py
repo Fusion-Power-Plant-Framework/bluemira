@@ -29,6 +29,7 @@ from typing import List, Union
 
 import numpy as np
 
+import bluemira.equilibria.flux_surfaces as fs
 from bluemira.equilibria.opt_constraint_funcs import (
     Ax_b_constraint,
     L2_norm_constraint,
@@ -59,6 +60,44 @@ def _get_dummy_equilibrium(equilibrium):
     dummy.coilset = deepcopy(equilibrium.coilset)
     equilibrium = dummy
     return equilibrium
+
+
+def spherical_harmonics_constraint(
+    constraint, vector, grad, eq, r_t, initial_harmonics, max_degree
+):
+    """
+    Constraint function to constrain spherical harmonics starting from initial
+    coil currents and associated core plasma.
+
+    Parameters
+    ----------
+    eq: Equilibrium
+        Equilibrium used to for coilset.
+    r_t: float
+        Typical length scale of the problem (e.g. radius at outer midplane)
+    initial_harmonics: np.ndarry
+        Initial harmonic amplitudes obtained from desired core plasma
+    max_degree: float
+        Maximum degree of spherical harmonics desired to constrain.
+    """
+    # Does the eq get updated at each iteration, requiring I_f as input or can
+    # we just extract I_f from the eq object within the function?
+
+    # Could look at a way of adding harmonics until a desired precision in core
+    # plasma is reached.
+    for coil in eq.coilset:
+        x_f, z_f = coil.x, coil.z
+
+    vector_harmonics = fs.harmonic_amplitude(
+        x_f,
+        z_f,
+        vector,
+        max_degree,
+        r_t,
+    )
+    constraint[:] = initial_harmonics - vector_harmonics
+
+    return constraint
 
 
 class UpdateableConstraint(ABC):
