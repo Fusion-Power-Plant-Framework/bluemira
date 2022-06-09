@@ -462,25 +462,17 @@ for coil in coilset.coils.values():
 
 position_mapper = PositionMapper(region_interpolators)
 
-import cProfile
+position_opt_problem = PulsedNestedPositionCOP(
+    coilset,
+    position_mapper,
+    sub_opt_problems=[current_opt_problem_sof, current_opt_problem_eof],
+    optimiser=Optimiser(
+        "COBYLA", opt_conditions={"max_eval": 50, "ftol_rel": 1e-6, "xtol_rel": 1e-6}
+    ),
+    debug=False,
+)
 
-
-def main():
-    position_opt_problem = PulsedNestedPositionCOP(
-        coilset,
-        position_mapper,
-        sub_opt_problems=[current_opt_problem_sof, current_opt_problem_eof],
-        optimiser=Optimiser(
-            "COBYLA", opt_conditions={"max_eval": 50, "ftol_rel": 1e-6, "xtol_rel": 1e-6}
-        ),
-        debug=False,
-    )
-    optimised_coilset = position_opt_problem.optimise(verbose=True)
-    return optimised_coilset
-
-
-cProfile.run("main()", filename="out.prof")
-
+optimised_coilset = position_opt_problem.optimise(verbose=True)
 
 # %%[markdown]
 
