@@ -464,7 +464,7 @@ class OptimisedPulsedCoilsetDesign(PulsedCoilsetDesign):
         self._pos_prob_cls = position_problem_cls
         self._pos_opt = position_optimiser
 
-        self._eq_settings = {"gamma": 1e-8, "relaxation": 0.1}
+        self._eq_settings = {"gamma": 1e-8, "relaxation": 0.1, "coil_mesh_size": 0.3}
         if equilibrium_settings:
             self._eq_settings = {**self._eq_settings, **equilibrium_settings}
 
@@ -491,8 +491,36 @@ class OptimisedPulsedCoilsetDesign(PulsedCoilsetDesign):
         )
         optimised_coilset = pos_opt_problem.optimise()
 
+        self._consolidate_coilset(optimised_coilset, sub_opt_problems)
+
         for snap, problem in zip([self.SOF, self.EOF], sub_opt_problems):
             eq = problem.eq
             eq.coilset = optimised_coilset
             self.converge_equilibrium(eq, problem)
             self.take_snapshot(snap, eq, eq.coilset, problem, eq.profiles)
+
+    def _consolidate_coilset(self, coilset, sub_opt_problems):
+        """
+        Set the current bounds on the current optimisation problems, fix coil sizes, and
+        mesh.
+        """
+        pf_current_vectors = []
+        pf_coil_names = coilset.get_PF_names()
+        n_PF = coilset.n_PF
+
+        for problem in sub_opt_problems:
+            pf_currents = sub_opt_problems.eq.coilset.get_control_currents()[:n_PF]
+            pf_current_vectors.append(pf_currents)
+
+        max_pf_currents = np.max(np.abs(pf_current_vectors), axis=0)
+        max_cs_currents = coilset.get_max_currents(0.0)[n_PF:]
+        max_currents = np.concatenate([max_pf_currents, max_cs_currents])
+
+        for problem in sub_opt_problems:
+            for pf_name, max_current in zip(pf_coil_names, max_pf_currents):
+                problem.eq.coilset.coils[pf_name].make_size(max_current)
+                problem.eq.coilset.coils[pf_name].fix_size()
+                problem.eq.coilset.coils[pf_name].mesh_coil(
+                    self._eq_settings["coil_mesh_size"]
+                )
+            problem.set_current_bounds(max_currents)

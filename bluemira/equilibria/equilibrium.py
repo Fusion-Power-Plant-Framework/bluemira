@@ -851,6 +851,7 @@ class Equilibrium(MHDState):
         self._update_plasma_psi(plasma_psi)
 
         self._jtor = jtor
+        self._plasmacoil = None
 
     def solve_li(self, jtor=None, psi=None):
         """
@@ -977,9 +978,11 @@ class Equilibrium(MHDState):
             Coil representation of the plasma. Discretised if Jtor exists.
         """
         if self._jtor is not None:
-
             if discretised:
-                return PlasmaCoil(self._jtor, self.grid)
+                if self._plasmacoil is None:
+                    self._plasmacoil = PlasmaCoil(self._jtor, self.grid)
+                return self._plasmacoil
+
             else:
                 x, z = self.effective_centre()
                 return Coil(

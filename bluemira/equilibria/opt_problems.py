@@ -986,9 +986,6 @@ class PulsedNestedPositionCOP(CoilsetOptimisationProblem):
         Run the sub-optimisation problems for a given position vector and return the
         objective function values
         """
-        # coilset = PulsedNestedPositionCOP.update_positions(
-        #     vector, coilset, position_mapper
-        # )
         positions = position_mapper.to_xz_dict(vector)
 
         if debug[0]:
@@ -1012,6 +1009,9 @@ class PulsedNestedPositionCOP(CoilsetOptimisationProblem):
     def get_state_fom(
         vector, grad, coilset, sub_opt_problems, position_mapper, iter, verbose, debug
     ):
+        """
+        Get the figure of merit for a single sub-optimisation problem.
+        """
         fom_value = PulsedNestedPositionCOP.get_sub_opt_foms(
             vector, coilset, position_mapper, sub_opt_problems, iter, verbose, debug
         )
@@ -1024,6 +1024,21 @@ class PulsedNestedPositionCOP(CoilsetOptimisationProblem):
         return fom_value
 
     def optimise(self, x0=None, verbose=False):
+        """
+        Run the PulsedNestedPositionCOP
+
+        Parameters
+        ----------
+        x0: Optional[np.ndarray]
+            Initial solution vector (parameterised positions)
+        verbose: bool
+            Whether or not to print progress information
+
+        Returns
+        -------
+        coilset: CoilSet
+            Optimised CoilSet
+        """
 
         if verbose:
             self._objective._args["verbose"] = True
