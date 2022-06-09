@@ -20,7 +20,7 @@
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 
 """
-Attempt at recreating the EU-DEMO 2017 reference equilibria from a known coilset.
+Equilibrium and coilset optimisation - developer tutorial
 """
 
 # %%[markdown]
