@@ -477,6 +477,8 @@ optimised_coilset = position_opt_problem.optimise(verbose=True)
 # optimisation, but really we probably want to do better. We will figure out the
 # appropriate sizes of the PF coils, and fix them and mesh them accordingly.
 
+# We also need to remember to update the bounds of the current optimisation problem!
+
 # %%
 
 sof_pf_currents = sof.coilset.get_control_currents()[: sof.coilset.n_PF]
@@ -485,12 +487,15 @@ max_pf_currents = np.max(np.abs([sof_pf_currents, eof_pf_currents]), axis=0)
 pf_coil_names = optimised_coilset.get_PF_names()
 
 for pf_name, max_current in zip(pf_coil_names, max_pf_currents):
-    sof.coilset.coils[pf_name].make_size(max_current)
-    sof.coilset.coils[pf_name].fix_size()
-    sof.coilset.coils[pf_name].mesh_coil(0.3)
-    eof.coilset.coils[pf_name].make_size(max_current)
-    eof.coilset.coils[pf_name].fix_size()
-    eof.coilset.coils[pf_name].mesh_coil(0.3)
+    optimised_coilset.coils[pf_name].make_size(max_current)
+    optimised_coilset.coils[pf_name].fix_size()
+    optimised_coilset.coils[pf_name].mesh_coil(0.3)
+
+max_cs_currents = optimised_coilset.get_max_currents(0.0)[optimised_coilset.n_PF :]
+
+max_currents = np.concatenate([max_pf_currents, max_cs_currents])
+current_opt_problem_sof.set_current_bounds(max_currents)
+current_opt_problem_eof.set_current_bounds(max_currents)
 
 # %%[markdown]
 
