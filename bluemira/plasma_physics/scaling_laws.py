@@ -42,7 +42,7 @@ class PowerLawScaling:
         The error on the constant
     exponents: Iterable
         The ordered list of exponents
-    exp_errs: Union[np.array, List, None]
+    exp_errs: Union[np.ndarray, List, None]
         The ordered list of errors of the exponents
     """  # noqa: W505
 
