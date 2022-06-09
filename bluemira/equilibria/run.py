@@ -495,7 +495,6 @@ class OptimisedPulsedCoilsetDesign(PulsedCoilsetDesign):
 
         for snap, problem in zip([self.SOF, self.EOF], sub_opt_problems):
             eq = problem.eq
-            eq.coilset = optimised_coilset
             self.converge_equilibrium(eq, problem)
             self.take_snapshot(snap, eq, eq.coilset, problem, eq.profiles)
 
