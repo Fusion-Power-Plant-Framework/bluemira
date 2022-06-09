@@ -472,8 +472,9 @@ optimised_coilset = position_opt_problem.optimise(verbose=True)
 
 # We've just optimised the PF coil positions using a single current filament at the
 # centre of each PF coil. This is a reasonable approximation when performing a position
-# optimisation, but really we probably want to do better. We will figure out the
-# appropriate sizes of the PF coils, and fix them and mesh them accordingly.
+# optimisation, but we probably want to do better when it comes to our final equilbria.
+# We will figure out the appropriate sizes of the PF coils, and fix them and mesh them
+# accordingly.
 
 # We also need to remember to update the bounds of the current optimisation problem!
 
@@ -484,16 +485,18 @@ eof_pf_currents = eof.coilset.get_control_currents()[: sof.coilset.n_PF]
 max_pf_currents = np.max(np.abs([sof_pf_currents, eof_pf_currents]), axis=0)
 pf_coil_names = optimised_coilset.get_PF_names()
 
-for pf_name, max_current in zip(pf_coil_names, max_pf_currents):
-    optimised_coilset.coils[pf_name].make_size(max_current)
-    optimised_coilset.coils[pf_name].fix_size()
-    optimised_coilset.coils[pf_name].mesh_coil(0.3)
-
 max_cs_currents = optimised_coilset.get_max_currents(0.0)[optimised_coilset.n_PF :]
 
 max_currents = np.concatenate([max_pf_currents, max_cs_currents])
-current_opt_problem_sof.set_current_bounds(max_currents)
-current_opt_problem_eof.set_current_bounds(max_currents)
+
+for problem in [current_opt_problem_sof, current_opt_problem_eof]:
+    for pf_name, max_current in zip(pf_coil_names, max_pf_currents):
+        problem.eq.coilset.coils[pf_name].make_size(max_current)
+        problem.eq.coilset.coils[pf_name].fix_size()
+        problem.eq.coilset.coils[pf_name].mesh_coil(0.3)
+
+    problem.set_current_bounds(max_currents)
+
 
 # %%[markdown]
 
