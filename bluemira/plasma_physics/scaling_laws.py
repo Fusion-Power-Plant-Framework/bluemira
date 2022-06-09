@@ -25,6 +25,8 @@ A collection of common 0-D plasma physics scaling laws.
 
 import numpy as np
 
+from bluemira.base.constants import raw_uc
+
 
 class PowerLawScaling:
     """
@@ -154,7 +156,7 @@ def lambda_q(B_t: float, q_cyl: float, p_sol: float, R_0: float, error: bool = F
         exponents=[-0.78, 1.2, 0.1, 0.02],
         exp_errs=[0.25, 0.27, 0.11, 0.20],
     )
-    p_sol /= 1e6
+    p_sol = raw_uc(p_sol, "W", "MW")
     value = law(B_t, q_cyl, p_sol, R_0)
     if error:
         min_value, max_value = law.calculate_range(B_t, q_cyl, p_sol, R_0)
@@ -199,7 +201,7 @@ def P_LH(n_e, B_t, A, R_0, error=False):  # noqa: N802
         exp_errs=[0.107, 0.037, 0.031, 0.08, 0.101],
     )
     leading_term = np.exp(1)
-    n_e20 = n_e / 1e20
+    n_e20 = raw_uc(n_e, "1/m^3", "1e20/m^3")
     a = R_0 / A
     value = law(leading_term, n_e20, B_t, a, R_0)
 
@@ -246,10 +248,11 @@ def IPB98y2(I_p, B_t, p_sep, n, mass, R_0, A, kappa):  # noqa: N802
 
     \t:math:`\\tau_{E}=0.0562I_p^{0.93}B_t^{0.15}P_{sep}^{-0.69}n^{0.41}M^{0.19}R_0^{1.97}A^{-0.57}\\kappa^{0.78}`
     """  # noqa :W505
-    I_p = I_p * 1e6  # [MA]
-    p_sep = p_sep * 1e6  # [MW]
-    n = n * 1e19  # [10^19/m^3]
+    I_p = raw_uc(I_p, "A", "MA")
+    p_sep = raw_uc(p_sep, "W", "MW")
+    n = raw_uc(n, "1/m^3", "1e19/m^3")
+
     law = PowerLawScaling(
-        c=0.0562, exponents=[0.93, 0.15, -0.69, 0.41, 0.19, 1.97, -0.58, 0.78]
+        constant=0.0562, exponents=[0.93, 0.15, -0.69, 0.41, 0.19, 1.97, -0.58, 0.78]
     )
     return law(I_p, B_t, p_sep, n, mass, R_0, A, kappa)

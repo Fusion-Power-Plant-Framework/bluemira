@@ -21,7 +21,7 @@
 
 import numpy as np
 
-from bluemira.plasma_physics.scaling_laws import P_LH, lambda_q
+from bluemira.plasma_physics.scaling_laws import P_LH, IPB98y2, lambda_q
 
 
 class TestLambdaQScaling:
@@ -47,3 +47,12 @@ class TestPLH:
         # No value provided for this scaling (3), but ballpark is right
         np.testing.assert_approx_equal(p_lh_threshold, 90e6, significant=1)
         assert min_v < p_lh_threshold < max_v
+
+
+class TestIPB98y2:
+    def test_ITER(self):
+        """
+        As per I dunno
+        """
+
+        value = IPB98y2()

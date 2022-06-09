@@ -38,6 +38,7 @@ from bluemira.base.constants import (
     NEUTRON_MOLAR_MASS,
     PROTON_MOLAR_MASS,
     T_MOLAR_MASS,
+    raw_uc,
 )
 
 
@@ -109,7 +110,7 @@ def n_DT_reactions(p_fus) -> float:
         Number of D-T reactions per second [1/s]
     """
     e_dt = E_DT_fusion()
-    return float(p_fus * 1e6 / (e_dt * EV_TO_J))
+    return raw_uc(p_fus, "MW", "W") / (e_dt * EV_TO_J)
 
 
 def n_DD_reactions(p_fus) -> float:  # noqa :N802
@@ -130,7 +131,7 @@ def n_DD_reactions(p_fus) -> float:  # noqa :N802
         Number of D-D reactions per second [1/s]
     """
     e_dd = E_DD_fusion()
-    return float(p_fus * 1e6 / (e_dd * EV_TO_J))
+    return raw_uc(p_fus, "MW", "W") / (e_dd * EV_TO_J)
 
 
 def r_T_burn(p_fus):  # noqa :N802
