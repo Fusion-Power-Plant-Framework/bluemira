@@ -49,10 +49,10 @@ Dependency Updates
 ------------------
 
 After a release is created, a pull request is automatically created to merge
-the `develop_dependencies` branch into `develop`.
+the ``develop_dependencies`` branch into ``develop``.
 This is a reminder to update our dependencies for the next development cycle.
 
-In order for the `develop_dependencies` and `develop` branch to not diverge,
+In order for the ``develop_dependencies`` and ``develop`` branch to not diverge,
 the pull request must be merged using GitHub's 'Merge commit' option.
 GitHub does not provide a way to perform
 `fast-forward merges <https://github.com/github-community/community/discussions/4618>`__,
