@@ -532,21 +532,6 @@ program()
 
 # %%
 
-f, (ax_1, ax_2, ax_3) = plt.subplots(1, 3)
-
-old_eq.plot(ax=ax_1)
-old_coilset.plot(ax=ax_1)
-
-sof.plot(ax=ax_2)
-sof.coilset.plot(ax=ax_2)
-ax_2.set_title("SOF $\\Psi_{b} = $" + f"{sof.get_OX_psis()[1] * 2*np.pi:.2f} V.s")
-
-
-eof.plot(ax=ax_3)
-eof.coilset.plot(ax=ax_3)
-ax_3.set_title("EOF $\\Psi_{b} = $" + f"{eof.get_OX_psis()[1] * 2*np.pi:.2f} V.s")
-
-
 f, ax = plt.subplots()
 x_old, z_old = old_coilset.get_positions()
 x_new, z_new = sof.coilset.get_positions()
@@ -564,3 +549,21 @@ plt.show()
 # but this would be much slower and probably less robust. Personally, I don't think it is
 # worthwhile, but were it to succeed it would be fair to say it would be a better
 # optimum.
+
+# Let's look at the full result: reference equilibrium, SOF, and EOF
+
+# %%
+f, (ax_1, ax_2, ax_3) = plt.subplots(1, 3)
+
+old_eq.plot(ax=ax_1)
+old_coilset.plot(ax=ax_1)
+
+sof.plot(ax=ax_2)
+sof.coilset.plot(ax=ax_2)
+ax_2.set_title("SOF $\\Psi_{b} = $" + f"{sof.get_OX_psis()[1] * 2*np.pi:.2f} V.s")
+
+
+eof.plot(ax=ax_3)
+eof.coilset.plot(ax=ax_3)
+ax_3.set_title("EOF $\\Psi_{b} = $" + f"{eof.get_OX_psis()[1] * 2*np.pi:.2f} V.s")
+plt.show()
