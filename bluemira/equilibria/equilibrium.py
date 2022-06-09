@@ -832,6 +832,7 @@ class Equilibrium(MHDState):
         self._update_plasma(plasma_psi, jtor)
 
         self._jtor = jtor
+        self._plasmacoil = None
 
     def solve_li(self, jtor=None, psi=None):
         """
