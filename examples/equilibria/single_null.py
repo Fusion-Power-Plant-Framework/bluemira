@@ -390,7 +390,6 @@ eof_psi_boundary = PsiConstraint(
     tolerance=1e-3,
 )
 
-sof.coilset.mesh_coils(0.3)
 current_opt_problem_sof = TikhonovCurrentCOP(
     sof.coilset,
     sof,
@@ -403,7 +402,6 @@ current_opt_problem_sof = TikhonovCurrentCOP(
     constraints=[sof_psi_boundary, x_point, field_constraints, force_constraints],
 )
 
-eof.coilset.mesh_coils(0.3)
 current_opt_problem_eof = TikhonovCurrentCOP(
     eof.coilset,
     eof,
