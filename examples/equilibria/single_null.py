@@ -27,7 +27,8 @@ Equilibrium and coilset optimisation - developer tutorial
 
 # Here we explore how to optimise equilibria, coil currents, and coil positions.
 
-# This is an in-depth example walking you through many of the objects, approaches,
+# This is an in-depth example, intended for developers and people familiar with plasma
+# equilibrium problems, walking you through many of the objects, approaches,
 # and optimisation problems that are often used when designing plasma equilibria and
 # poloidal field coils.
 
