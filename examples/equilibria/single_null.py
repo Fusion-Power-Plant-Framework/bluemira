@@ -115,13 +115,13 @@ coilset = CoilSet(coils)
 # %%[markdown]
 
 # Now we can also specify our coilset a little further, by assigning maximum current
-# densities and peak fields. This can then be used in the constraints for our
+# densities and peak fields. This can then be used in the bounds and constraints for our
 # optimisation problems.
 
-# We also fix the sizes of our coils for this example, and 'mesh' them. Unless otherwise
-# specified a `Coil` is represented by a single current filament. `mesh`ing here refers
-# to the sub-division of this coil filament into several filaments equi-spaced around
-# the coil cross-section.
+# We also fix the sizes of our CS coils for this example, and 'mesh' them. Unless
+# otherwise specified a `Coil` is represented by a single current filament. `mesh`ing
+# here refers to the sub-division of this coil filament into several filaments
+# equi-spaced around the coil cross-section.
 
 # %%
 
@@ -141,7 +141,7 @@ for coil in coilset.coils.values():
 # Now, we set up our grid, equilibrium, and profiles.
 
 # We'll just use a `CustomProfile` for now, but you can also use a `BetaIpProfile` with
-# flux function parameterisation if you want to directly constrain poloidal beta
+# a flux function parameterisation if you want to directly constrain poloidal beta
 # values in your equilibrium optimisation.
 
 # %%
@@ -173,7 +173,9 @@ eq = Equilibrium(coilset, grid, profiles, psi=None)
 # We'll instantiate a parameterisation for the last closed flux surface (LCFS) which
 # tends to do a good job at describing an EU-DEMO-like single null plasma.
 
-# We'll use this to specify some constraints on the plasma equilibrium problem.
+# We'll use this to specify some constraints on the plasma equilibrium problem:
+#       An `IsofluxConstraint` forces the flux at a set of points to be equal
+#       A `FieldNullConstraint` forces the poloidal field at a point to be zero.
 
 # %%
 
@@ -442,8 +444,10 @@ current_opt_problem_eof = TikhonovCurrentCOP(
 
 # %%
 
+# We'll store these so that we can look at them again later
 old_coilset = deepcopy(coilset)
 old_eq = deepcopy(eq)
+
 region_interpolators = {}
 for coil in coilset.coils.values():
     if coil.ctype == "PF":
@@ -472,7 +476,7 @@ optimised_coilset = position_opt_problem.optimise(verbose=True)
 
 # We've just optimised the PF coil positions using a single current filament at the
 # centre of each PF coil. This is a reasonable approximation when performing a position
-# optimisation, but we probably want to do better when it comes to our final equilbria.
+# optimisation, but we probably want to do better when it comes to our final equilibria.
 # We will figure out the appropriate sizes of the PF coils, and fix them and mesh them
 # accordingly.
 
@@ -500,9 +504,14 @@ for problem in [current_opt_problem_sof, current_opt_problem_eof]:
 
 # %%[markdown]
 
-# Now that we've optimised the coil positions for a fixed plasma, we can run the
-# Grad-Shafranov solve again to converge the equilibria for the optimised coil positions
-# at SOF and EOF.
+# Now that we've:
+#   * optimised the coil positions for a fixed plasma,
+#   * fixed our PF coil sizes,
+#   * meshed our PF coils,
+#   * updated the bounds of the current optimisation problems,
+#
+# we can run the Grad-Shafranov solve again to converge the equilibria for the optimised
+# coil positions at SOF and EOF.
 
 # %%
 
