@@ -367,6 +367,7 @@ print(
 # Then we specify the position optimisation problem for a single current sub-optimisation
 # problem.
 
+# %%
 
 isoflux = IsofluxConstraint(
     x_bdry,
