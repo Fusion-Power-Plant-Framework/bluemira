@@ -246,11 +246,11 @@ class PulsedCoilsetDesign:
                 if isinstance(con, (PsiBoundaryConstraint, PsiConstraint)):
                     con.target_value = psi_boundary / (2 * np.pi)
 
-            if isinstance(self._eq_prob_cls, MinimalCurrentCOP):
+            if self._eq_prob_cls == MinimalCurrentCOP:
                 problem = self._make_min_current_opt_problem(
                     eq, optimiser, max_currents, current_constraints, eq_constraints
                 )
-            elif isinstance(self._eq_prob_cls, TikhonovCurrentCOP):
+            elif self._eq_prob_cls == TikhonovCurrentCOP:
                 problem = self._make_tikh_current_opt_problem(
                     eq, optimiser, max_currents, current_constraints, eq_constraints
                 )
