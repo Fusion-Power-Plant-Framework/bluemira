@@ -1040,7 +1040,6 @@ class PulsedNestedPositionCOP(CoilsetOptimisationProblem):
         coilset: CoilSet
             Optimised CoilSet
         """
-
         if verbose:
             self._objective._args["verbose"] = True
 
