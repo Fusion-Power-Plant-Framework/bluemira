@@ -41,7 +41,6 @@ from bluemira.equilibria.opt_constraints import (
     CoilForceConstraints,
     FieldNullConstraint,
     IsofluxConstraint,
-    MagneticConstraintSet,
 )
 from bluemira.equilibria.opt_problems import (
     BreakdownCOP,
