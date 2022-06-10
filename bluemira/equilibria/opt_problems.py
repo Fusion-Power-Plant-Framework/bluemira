@@ -820,6 +820,7 @@ class TikhonovCurrentCOP(CoilsetOptimisationProblem):
         self._objective._args["scale"] = self.scale
         self._objective._args["a_mat"] = a_mat
         self._objective._args["b_vec"] = b_vec
+        self._objective.apply_objective(self)
 
         self.update_magnetic_constraints(I_not_dI=True, fixed_coils=fixed_coils)
 
