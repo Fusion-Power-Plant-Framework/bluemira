@@ -55,6 +55,6 @@ class TestIPB98y2:
         As per I dunno
         """
 
-        value = IPB98y2(15e6, 5, 100e6, 1e19, 2.5, 6.2, 3.1, 1.59)
+        value = IPB98y2(15e6, 5.3, 100e6, 1e20, 2.5, 6.2, 3.1, 1.59)
 
-        assert round(value, 0) == 1.0
+        assert round(value, 0) == 3.0
