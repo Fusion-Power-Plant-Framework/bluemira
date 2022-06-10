@@ -6,7 +6,7 @@ black==22.3.0
 certifi==2021.10.8
 cfgv==3.3.1
 charset-normalizer==2.0.12
-coverage[toml]==6.4
+coverage[toml]==6.4.1
 distlib==0.3.4
 docutils==0.17.1
 filelock==3.7.0
