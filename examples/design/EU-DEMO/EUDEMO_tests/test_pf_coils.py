@@ -154,7 +154,7 @@ class TestMakePfCoilPath:
         PictureFrame().create_shape(),
     ]
 
-    @pytest.mark.parametrize("wire", [fixtures])
+    @pytest.mark.parametrize("wire", fixtures)
     def test_make_pf_coil_path(self, wire):
         result = make_pf_coil_path(wire, offset_value=1.0)
 
