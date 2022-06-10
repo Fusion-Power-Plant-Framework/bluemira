@@ -144,6 +144,9 @@ class PFCoilsBuilder(Builder):
         "PF_jmax",
         "CS_bmax",
         "PF_bmax",
+        "F_pf_zmax",
+        "F_cs_ztotmax",
+        "F_cs_sepmax",
     ]
     _required_config: List[str] = []
     _params: Configuration
@@ -231,7 +234,7 @@ class PFCoilsBuilder(Builder):
         # current equal to Ip
         offset_value = 0.5 * np.sqrt(self._params.I_p.value / self._params.PF_jmax.value)
         pf_coil_path = make_pf_coil_path(self._tf_coil_boundary, offset_value)
-        position_mapper = make_coil_mapper(pf_coil_path, self._keep_out_zones)
+        position_mapper = make_coil_mapper(pf_coil_path, self._keep_out_zones, coilset)
 
         grid = make_grid(
             self._params.R_0.value, self._params.A.value, self._params.kappa.value
@@ -278,9 +281,9 @@ class PFCoilsBuilder(Builder):
             CoilFieldConstraints(coilset, coilset.get_max_fields(), tolerance=1e-6),
             CoilForceConstraints(
                 coilset,
-                self._params.PF_Fz_max.value,
-                self._params.CS_Fz_sum_max.value,
-                self._params.CS_Fz_sep_max.value,
+                self._params.F_pf_zmax.value,
+                self._params.F_cs_ztotmax.value,
+                self._params.F_cs_sepmax.value,
                 tolerance=1e-3,
             ),
         ]
