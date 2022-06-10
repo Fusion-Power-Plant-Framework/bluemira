@@ -17,6 +17,13 @@ on:
 
 jobs:
   release:
+    if: >
+      github.actor == 'CoronelBuendia' ||
+      github.actor == 'DanShort12' ||
+      github.actor == 'hsaunders1904' ||
+      github.actor == 'ivanmaione' ||
+      github.actor == 'je-cook'
+
     runs-on: ubuntu-latest
     env:
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
