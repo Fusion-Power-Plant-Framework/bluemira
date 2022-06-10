@@ -521,14 +521,12 @@ def make_coil_mapper(track, exclusion_zones, coils):
 
     # Check if multiple coils are on the same segment and split the segments and make
     # PathInterpolators
-    new_segments = []
     interpolator_dict = {}
     for segment, bin in zip(segments, coil_bins):
         if len(bin) < 1:
             bluemira_warn("There is a segment of the track which has no coils on it.")
         elif len(bin) == 1:
             interpolator_dict[coil_names[bin[0]]] = PathInterpolator(segment)
-            new_segments.append(PathInterpolator(segment))
         else:
             coils = [coils[i] for i in bin]
             l_values = [
@@ -541,14 +539,10 @@ def make_coil_mapper(track, exclusion_zones, coils):
                 sub_seg, segment = split_wire(segment, segment.value_at(alpha=split))
                 if sub_seg:
                     interpolator_dict[coil_names[bin[i]]] = PathInterpolator(sub_seg)
-                    sub_segs.append(PathInterpolator(sub_seg))
 
                 if i == len(split_values) - 1:
                     if segment:
                         interpolator_dict[coil_names[bin[i]]] = PathInterpolator(segment)
-                        sub_segs.append(PathInterpolator(segment))
-
-            new_segments.extend(sub_segs)
 
     return PositionMapper(interpolator_dict)
 
