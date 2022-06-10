@@ -225,7 +225,8 @@ class EUDEMOReactor(Reactor):
             component_tree.get_component(EUDEMOReactor.TF_COILS)
             .get_component("xz")
             .get_component("Casing")
-            .boundary[0]
+            .get_component("outer")
+            .shape.boundary[0]
         )
         keep_out_zones = self.make_PF_coil_exclusions()
 

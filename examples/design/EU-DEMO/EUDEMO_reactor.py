@@ -223,10 +223,10 @@ build_config = {
         "runmode": "mock",  # ["run", "read", "mock"]
     },
     "Plasma": {
-        "runmode": "run",  # ["run", "read", "mock"]
+        "runmode": "read",  # ["run", "read", "mock"]
     },
     "TF Coils": {
-        "runmode": "run",  # ["run", "read", "mock"]
+        "runmode": "read",  # ["run", "read", "mock"]
         "param_class": "TripleArc",
         "variables_map": {
             "x1": {
@@ -250,7 +250,7 @@ build_config = {
         },
     },
     "PF Coils": {
-        "runmode": "read",
+        "runmode": "run",  # ["run", "read"]
     },
 }
 

@@ -128,6 +128,22 @@ class PFCoilsBuilder(Builder):
         "tk_cs_casing",
         "r_pf_corner",
         "r_cs_corner",
+        "r_cs_in",
+        "tk_cs",
+        "g_cs_mod",
+        "R_0",
+        "A",
+        "I_p",
+        "B_0",
+        "beta_p",
+        "kappa",
+        "delta",
+        "n_CS",
+        "n_PF",
+        "CS_jmax",
+        "PF_jmax",
+        "CS_bmax",
+        "PF_bmax",
     ]
     _required_config: List[str] = []
     _params: Configuration
@@ -188,7 +204,7 @@ class PFCoilsBuilder(Builder):
         self._tf_coil_boundary = tf_coil_boundary
         self._keep_out_zones = keep_out_zones
 
-    def run(self, *args):
+    def run(self):
         """
         Build PF coils from a design optimisation problem.
         """
@@ -197,7 +213,7 @@ class PFCoilsBuilder(Builder):
             self._tf_coil_boundary,
             R_0=self._params.R_0.value,
             kappa=self._params.kappa.value,
-            delta=self._params.delta_95.value,
+            delta=self._params.delta.value,
             r_cs=self._params.r_cs_in.value + self._params.tk_cs.value / 2,
             tk_cs=self._params.tk_cs.value / 2,
             g_cs=self._params.g_cs_mod.value,
