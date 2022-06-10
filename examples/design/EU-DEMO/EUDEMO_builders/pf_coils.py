@@ -50,7 +50,7 @@ from bluemira.equilibria.opt_problems import (
     TikhonovCurrentCOP,
 )
 from bluemira.equilibria.profiles import BetaIpProfile
-from bluemira.equilibria.run import PulsedCoilsetDesign
+from bluemira.equilibria.run import OptimisedPulsedCoilsetDesign, PulsedCoilsetDesign
 from bluemira.equilibria.shapes import JohnerLCFS
 from bluemira.equilibria.solve import DudsonConvergence
 from bluemira.geometry.constants import VERY_BIG
@@ -130,12 +130,18 @@ class PFCoilsBuilder(Builder):
         "r_cs_corner",
         "r_cs_in",
         "tk_cs",
+        "tk_sol_ib",
+        "tk_sol_ob",
         "g_cs_mod",
         "R_0",
         "A",
         "I_p",
         "B_0",
         "beta_p",
+        "l_i",
+        "C_Ejima",
+        "tau_flattop",
+        "v_burn",
         "kappa",
         "delta",
         "n_CS",
@@ -147,12 +153,13 @@ class PFCoilsBuilder(Builder):
         "F_pf_zmax",
         "F_cs_ztotmax",
         "F_cs_sepmax",
+        "B_premag_stray_max",
     ]
     _required_config: List[str] = []
     _params: Configuration
     _param_class: Type[CoilSet]
     _default_runmode: str = "read"
-    _problem_class: Type[PulsedCoilsetDesign]
+    _problem_class: Type[PulsedCoilsetDesign] = OptimisedPulsedCoilsetDesign
 
     def __init__(
         self,
@@ -234,7 +241,9 @@ class PFCoilsBuilder(Builder):
         # current equal to Ip
         offset_value = 0.5 * np.sqrt(self._params.I_p.value / self._params.PF_jmax.value)
         pf_coil_path = make_pf_coil_path(self._tf_coil_boundary, offset_value)
-        position_mapper = make_coil_mapper(pf_coil_path, self._keep_out_zones, coilset)
+        pf_coil_names = coilset.get_PF_names()
+        pf_coils = [coilset.coils[name] for name in pf_coil_names]
+        position_mapper = make_coil_mapper(pf_coil_path, self._keep_out_zones, pf_coils)
 
         grid = make_grid(
             self._params.R_0.value, self._params.A.value, self._params.kappa.value
