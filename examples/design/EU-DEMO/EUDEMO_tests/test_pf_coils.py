@@ -21,7 +21,12 @@
 
 import numpy as np
 import pytest
-from EUDEMO_builders.pf_coils import make_coil_mapper, make_coilset, make_solenoid
+from EUDEMO_builders.pf_coils import (
+    make_coil_mapper,
+    make_coilset,
+    make_pf_coil_path,
+    make_solenoid,
+)
 
 from bluemira.base.error import BuilderError
 from bluemira.equilibria.coils import Coil
@@ -141,3 +146,16 @@ class TestMakeCoilset:
         )
 
         assert len(coilset.coils) == n_PF + n_CS
+
+
+class TestMakePfCoilPath:
+    fixtures = [
+        PrincetonD().create_shape(),
+        PictureFrame().create_shape(),
+    ]
+
+    @pytest.mark.parametrize("wire", [fixtures])
+    def test_make_pf_coil_path(self, wire):
+        result = make_pf_coil_path(wire, offset_value=1.0)
+
+        assert not result.is_closed()
