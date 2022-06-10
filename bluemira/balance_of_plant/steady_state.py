@@ -295,9 +295,9 @@ class NeutronPowerStrategy(FractionSplitStrategy):
         aux_power: float
             Neutron power to auxiliary systems
         mult_power: float
-            Energy multiplication power (in the blanket, sort of..)
+            Energy multiplication power which is assumed to come solely from the blanket
         decay_power: float
-            Decay power (in the blanket, sort of..)
+            Decay power which is assumed to come solely from the blanket
         """
         blk_power = self.f_blanket * self.nrg_mult * neutron_power
         div_power = self.f_divertor * neutron_power
