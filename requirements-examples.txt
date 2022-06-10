@@ -29,14 +29,14 @@ nbclient==0.6.4
 nbconvert==6.5.0
 nbformat==5.4.0
 nest-asyncio==1.5.5
-notebook==6.4.11
+notebook==6.4.12
 pandocfilters==1.5.0
 parso==0.8.3
 pexpect==4.8.0
 pickleshare==0.7.5
 prometheus-client==0.14.1
 prompt-toolkit==3.0.29
-psutil==5.9.0
+psutil==5.9.1
 ptyprocess==0.7.0
 pure-eval==0.2.2
 pycparser==2.21
