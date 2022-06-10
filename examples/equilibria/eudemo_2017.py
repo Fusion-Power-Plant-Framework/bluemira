@@ -179,7 +179,6 @@ force_constraints = CoilForceConstraints(
 )
 
 max_currents = coilset.get_max_currents(0)
-coilset.set_control_currents(max_currents, update_size=False)
 
 
 breakdown = Breakdown(deepcopy(coilset), grid)

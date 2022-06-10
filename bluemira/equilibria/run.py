@@ -142,21 +142,24 @@ class PulsedCoilsetDesign:
         strategy = self._bd_strat_cls(
             R_0, self.params.A.value, self.params.tk_sol_ib.value
         )
-        coilset = deepcopy(self.coilset)
 
-        relaxed = all([c.flag_sizefix for c in coilset.coils.values()])
+        relaxed = all([c.flag_sizefix for c in self.coilset.coils.values()])
         i = 0
         i_max = 30
         while i == 0 or not relaxed:
+            coilset = deepcopy(self.coilset)
             breakdown = Breakdown(coilset, self.grid)
 
-            constraints = deepcopy(self._current_opt_cons)
-
-            # Coilset max currents known because the coilset geometry is fixed
-            max_currents = self.coilset.get_max_currents(0)
-
+            constraints = deepcopy(self._coil_cons)
+            if relaxed:
+                # Coilset max currents known because the coilset geometry is fixed
+                max_currents = self.coilset.get_max_currents(0)
+            else:
+                max_currents = self.coilset.get_max_currents(1e6 * self.params.I_p.value)
+                coilset.set_control_currents(max_currents, update_size=True)
+                coilset.mesh_coils(0.3)
             problem = self._bd_prob_cls(
-                coilset,
+                breakdown.coilset,
                 breakdown,
                 strategy,
                 B_stray_max=self.params.B_premag_stray_max.value,
@@ -166,8 +169,7 @@ class PulsedCoilsetDesign:
                 max_currents=max_currents,
                 constraints=constraints,
             )
-            coilset = problem.optimise(max_currents / 1e6)
-            breakdown = Breakdown(coilset, self.grid)
+            coilset = problem.optimise(x0=max_currents)
             breakdown.set_breakdown_point(*strategy.breakdown_point)
             psi_premag = breakdown.breakdown_psi
             bluemira_print(f"Premagnetisation flux = {2*np.pi * psi_premag:.2f} V.s")
@@ -220,6 +222,7 @@ class PulsedCoilsetDesign:
             if self.BREAKDOWN not in self.snapshots:
                 self.run_premagnetisation()
             psi_premag = self.snapshots[self.BREAKDOWN].eq.breakdown_psi
+            # psi_premag = 300 / 2/ np.pi
         psi_sof = calc_psib(
             2 * np.pi * psi_premag,
             self.params.R_0.value,
@@ -234,13 +237,19 @@ class PulsedCoilsetDesign:
 
         eq_ref = self.snapshots[self.EQ_REF].eq
 
-        max_currents = self.coilset.get_max_currents(0)
+        max_currents = self.coilset.get_max_currents(1e6 * self.params.I_p.value)
 
         opt_problems = []
         for psi_boundary in [psi_sof, psi_eof]:
             eq = deepcopy(eq_ref)
             optimiser = deepcopy(self._eq_opt)
-            current_constraints = deepcopy(self._current_opt_cons)
+
+            current_constraints = []
+            if self._current_opt_cons:
+                current_constraints += deepcopy(self._current_opt_cons)
+            if self._coil_cons:
+                current_constraints += deepcopy(self._coil_cons)
+
             eq_constraints = deepcopy(self.eq_constraints)
             for con in eq_constraints:
                 if isinstance(con, (PsiBoundaryConstraint, PsiConstraint)):
@@ -416,6 +425,7 @@ class OptimisedPulsedCoilsetDesign(PulsedCoilsetDesign):
         position_mapper: PositionMapper,
         grid: Grid,
         current_opt_constraints: Optional[List[OptimisationConstraint]],
+        coil_constraints: Optional[List[OptimisationConstraint]],
         equilibrium_constraints: MagneticConstraintSet,
         profiles: Profile,
         breakdown_strategy_cls: Type[BreakdownZoneStrategy],
@@ -461,10 +471,11 @@ class OptimisedPulsedCoilsetDesign(PulsedCoilsetDesign):
             self._eq_settings = {**self._eq_settings, **equilibrium_settings}
 
         self._current_opt_cons = current_opt_constraints
+        self._coil_cons = coil_constraints
 
         super().__init__()
 
-    def optimise_positions(self):
+    def optimise_positions(self, verbose=False):
         """
         Optimise the coil positions for the start and end of the current flat-top.
         """
@@ -481,7 +492,7 @@ class OptimisedPulsedCoilsetDesign(PulsedCoilsetDesign):
             self._pos_opt,
             constraints=None,
         )
-        optimised_coilset = pos_opt_problem.optimise()
+        optimised_coilset = pos_opt_problem.optimise(verbose=verbose)
 
         optimised_coilset = self._consolidate_coilset(
             optimised_coilset, sub_opt_problems
@@ -521,6 +532,6 @@ class OptimisedPulsedCoilsetDesign(PulsedCoilsetDesign):
             problem.set_current_bounds(max_currents)
         consolidated_coilset = deepcopy(problem.eq.coilset)
         consolidated_coilset.set_control_currents(
-            np.zeros(len(consolidated_coilset._ccoils))
+            np.zeros(len(consolidated_coilset._ccoils)), update_size=False
         )
         return consolidated_coilset

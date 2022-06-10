@@ -325,8 +325,8 @@ class Configuration(ConfigurationSchema, ParameterFrame):
 
         # Central solenoid
         ['F_pf_zmax', 'Maximum vertical force on a single PF coil', 450, 'MN', None, 'Input'],
-        ['F_cs_ztotmax', 'Maximum total vertical force in the CS stack', 350, 'MN', None, 'Input'],
-        ['F_cs_sepmax', 'Maximum separation force between CS modules', 300, 'MN', None, 'Input'],
+        ['F_cs_ztotmax', 'Maximum total vertical force in the CS stack', 300, 'MN', None, 'Input'],
+        ['F_cs_sepmax', 'Maximum separation force between CS modules', 350, 'MN', None, 'Input'],
         ['CS_material', 'Conducting material to use for the CS modules', 'Nb3Sn', 'dimensionless', None, 'Input'],
         ["CS_jmax", "Maximum current density to use in CS modules", 16, "MA/m^2", None, "Input"],
         ["CS_bmax", "Maximum peak field to use in CS modules", 13, "T", None, "Input"],

@@ -41,6 +41,7 @@ from bluemira.equilibria.opt_constraints import (
     CoilForceConstraints,
     FieldNullConstraint,
     IsofluxConstraint,
+    PsiConstraint,
 )
 from bluemira.equilibria.opt_problems import (
     BreakdownCOP,
@@ -245,7 +246,13 @@ class PFCoilsBuilder(Builder):
         position_mapper = make_coil_mapper(pf_coil_path, self._keep_out_zones, pf_coils)
 
         grid = make_grid(
-            self._params.R_0.value, self._params.A.value, self._params.kappa.value
+            self._params.R_0.value,
+            self._params.A.value,
+            self._params.kappa.value,
+            scale_x=2.0,
+            scale_z=2.0,
+            nx=65,
+            nz=65,
         )
 
         # TODO: Make a CustomProfile from flux functions coming from PLASMOD and fixed
@@ -283,9 +290,11 @@ class PFCoilsBuilder(Builder):
         arg_xp = np.argmin(z_lcfs)
 
         isoflux = IsofluxConstraint(x_lcfs, z_lcfs, x_lcfs[arg_inner], z_lcfs[arg_inner])
+        psi_inner = PsiConstraint(
+            x_lcfs[arg_inner], z_lcfs[arg_inner], target_value=0.0, tolerance=1e-3
+        )
         x_point = FieldNullConstraint(x_lcfs[arg_xp], z_lcfs[arg_xp], tolerance=1e-4)
-        current_opt_constraints = [
-            x_point,
+        coil_constraints = [
             CoilFieldConstraints(coilset, coilset.get_max_fields(), tolerance=1e-6),
             CoilForceConstraints(
                 coilset,
@@ -296,6 +305,8 @@ class PFCoilsBuilder(Builder):
             ),
         ]
 
+        current_opt_constraints = [x_point, psi_inner]
+
         equilibrium_constraints = [isoflux]
 
         self._design_problem = self._problem_class(
@@ -303,21 +314,22 @@ class PFCoilsBuilder(Builder):
             coilset,
             position_mapper,
             grid,
+            coil_constraints,
             current_opt_constraints,
             equilibrium_constraints,
             profiles=profiles,
             breakdown_strategy_cls=OutboardBreakdownZoneStrategy,
             breakdown_problem_cls=BreakdownCOP,
             breakdown_optimiser=Optimiser(
-                "COBYLA", opt_conditions={"max_eval": 5000, "ftol_rel": 1e-10}
+                "COBYLA", opt_conditions={"max_eval": 5000, "ftol_rel": 1e-6}
             ),
-            breakdown_settings={"B_stray_con_tol": 1e-8, "n_B_stray_points": 20},
+            breakdown_settings={"B_stray_con_tol": 1e-6, "n_B_stray_points": 10},
             equilibrium_problem_cls=TikhonovCurrentCOP,
             equilibrium_optimiser=Optimiser(
                 "SLSQP", opt_conditions={"max_eval": 1000, "ftol_rel": 1e-6}
             ),
             equilibrium_convergence=DudsonConvergence(1e-3),
-            equilibrium_settings={"gamma": 0.0, "relaxation": 0.1},
+            equilibrium_settings={"gamma": 1e-8, "relaxation": 0.1},
             position_problem_cls=PulsedNestedPositionCOP,
             position_optimiser=Optimiser(
                 "COBYLA", opt_conditions={"max_eval": 100, "ftol_rel": 1e-4}
@@ -327,7 +339,7 @@ class PFCoilsBuilder(Builder):
         bluemira_print(
             f"Solving design problem: {self._design_problem.__class__.__name__}"
         )
-        self._coilset = self._design_problem.optimise_positions()
+        self._coilset = self._design_problem.optimise_positions(verbose=True)
 
     def read(self, **kwargs):
         """
