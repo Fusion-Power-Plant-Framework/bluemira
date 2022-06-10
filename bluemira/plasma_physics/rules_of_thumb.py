@@ -19,6 +19,10 @@
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 
+"""
+A collection of simple 0-D rules of thumb for tokamak plasmas.
+"""
+
 import numpy as np
 
 from bluemira.base.constants import EV_TO_J, K_BOLTZMANN, MU_0
