@@ -33,9 +33,9 @@ from bluemira.base.components import Component
 from bluemira.base.config import Configuration
 from bluemira.base.error import BuilderError
 from bluemira.base.look_and_feel import bluemira_print, bluemira_warn
-from bluemira.builders.EUDEMO.plasma import make_grid
 from bluemira.builders.pf_coils import PFCoilBuilder
 from bluemira.equilibria.coils import Coil, CoilSet
+from bluemira.equilibria.grid import Grid
 from bluemira.equilibria.opt_constraints import (
     CoilFieldConstraints,
     CoilForceConstraints,
@@ -211,9 +211,8 @@ class PFCoilsBuilder(Builder):
             PF_bmax=self._params.PF_bmax.value,
         )
 
-        # TODO: Treat the TF coil boundary to make a PF coil path (chop, offset, open)
-
-        position_mapper = make_coil_mapper(self._tf_coil_boundary, self._keep_out_zones)
+        pf_coil_path = make_pf_coil_path(self._tf_coil_boundary)
+        position_mapper = make_coil_mapper(pf_coil_path, self._keep_out_zones)
 
         grid = make_grid(
             self._params.R_0.value, self._params.A.value, self._params.kappa.value
@@ -424,6 +423,37 @@ class PFCoilsBuilder(Builder):
 
         field_solver = SourceGroup(sources)
         return field_solver
+
+
+def make_grid(R_0, A, kappa, scale_x=1.6, scale_z=1.7, nx=65, nz=65):
+    """
+    Make a finite difference Grid for an Equilibrium.
+
+    Parameters
+    ----------
+    R_0: float
+        Major radius
+    A: float
+        Aspect ratio
+    kappa: float
+        Elongation
+    scale_x: float
+        Scaling factor to "grow" the grid away from the plasma in the x direction
+    scale_z: float
+        Scaling factor to "grow" the grid away from the plasma in the z direction
+    nx: int
+        Grid discretisation in the x direction
+    nz: int
+        Grid discretisation in the z direction
+
+    Returns
+    -------
+    grid: Grid
+        Finite difference grid for an Equilibrium
+    """
+    x_min, x_max = R_0 - scale_x * (R_0 / A), R_0 + scale_x * (R_0 / A)
+    z_min, z_max = -scale_z * (kappa * R_0 / A), scale_z * (kappa * R_0 / A)
+    return Grid(x_min, x_max, z_min, z_max, nx, nz)
 
 
 def make_coil_mapper(track, exclusion_zones, coils):
@@ -661,3 +691,47 @@ def make_coilset(
     coilset.assign_coil_materials("PF", j_max=PF_jmax, b_max=PF_bmax)
     coilset.assign_coil_materials("CS", j_max=CS_jmax, b_max=CS_bmax)
     return coilset
+
+
+def make_pf_coil_path(tf_boundary: BluemiraWire, offset_value: float) -> BluemiraWire:
+    """
+    Make an open wire along which the PF coils can move.
+
+    Parameters
+    ----------
+    tf_boundary: BluemiraWire
+        Outside edge of the TF coil in the x-z plane
+    offset_value: float
+        Offset value from the TF coil edge
+
+    Returns
+    -------
+    pf_coil_path: BluemiraWire
+        Path along which the PF coil centroids should be positioned
+    """
+    tf_offset = offset_wire(tf_boundary, offset_value)
+
+    # Find top-left and bottom-left "corners"
+    coordinates = tf_offset.discretize(byedges=True, ndiscr=200)
+    x_min = np.min(coordinates.x)
+    idx_inner = np.where(np.isclose(coordinates.x, x_min))[0]
+    z_min = np.min(coordinates.z[idx_inner])
+    z_max = np.max(coordinates.z[idx_inner])
+
+    if np.isclose(z_min, z_max):
+        return tf_offset
+
+    top_left = [x_min, 0, z_max]
+    bot_left = [x_min, 0, z_min]
+    # Split the wire
+    wire_parts_1 = split_wire(tf_offset, top_left, tolerance=1e-2)
+    outer = sorted(wire_parts_1, key=lambda wire: wire.center_of_mass[0])[-1]
+    wire_parts_2 = split_wire(outer, bot_left, tolerance=1e-2)
+    outer = sorted(wire_parts_2, key=lambda wire: wire.center_of_mass[0])[-1]
+
+    # Re-join if necessary
+
+    # Clip at z-axis if necessary
+
+    pf_coil_path = outer
+    return pf_coil_path

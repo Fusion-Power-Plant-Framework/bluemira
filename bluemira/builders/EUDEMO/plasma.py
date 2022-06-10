@@ -36,10 +36,9 @@ from bluemira.base.config import Configuration
 from bluemira.base.error import BuilderError
 from bluemira.base.look_and_feel import bluemira_print
 from bluemira.builders.EUDEMO.equilibria import EUDEMOSingleNullConstraints
-from bluemira.builders.EUDEMO.pf_coils import make_coilset
+from bluemira.builders.EUDEMO.pf_coils import make_coilset, make_grid
 from bluemira.display.palettes import BLUE_PALETTE
 from bluemira.equilibria.equilibrium import Equilibrium
-from bluemira.equilibria.grid import Grid
 from bluemira.equilibria.opt_problems import UnconstrainedTikhonovCurrentGradientCOP
 from bluemira.equilibria.profiles import BetaIpProfile
 from bluemira.equilibria.shapes import JohnerLCFS
@@ -48,37 +47,6 @@ from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.parameterisations import PrincetonD
 from bluemira.geometry.tools import make_circle, make_polygon, offset_wire, revolve_shape
 from bluemira.geometry.wire import BluemiraWire
-
-
-def make_grid(R_0, A, kappa, scale_x=1.6, scale_z=1.7, nx=65, nz=65):
-    """
-    Make a finite difference Grid for an Equilibrium.
-
-    Parameters
-    ----------
-    R_0: float
-        Major radius
-    A: float
-        Aspect ratio
-    kappa: float
-        Elongation
-    scale_x: float
-        Scaling factor to "grow" the grid away from the plasma in the x direction
-    scale_z: float
-        Scaling factor to "grow" the grid away from the plasma in the z direction
-    nx: int
-        Grid discretisation in the x direction
-    nz: int
-        Grid discretisation in the z direction
-
-    Returns
-    -------
-    grid: Grid
-        Finite difference grid for an Equilibrium
-    """
-    x_min, x_max = R_0 - scale_x * (R_0 / A), R_0 + scale_x * (R_0 / A)
-    z_min, z_max = -scale_z * (kappa * R_0 / A), scale_z * (kappa * R_0 / A)
-    return Grid(x_min, x_max, z_min, z_max, nx, nz)
 
 
 class PlasmaComponent(Component):
