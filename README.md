@@ -39,6 +39,7 @@ Below is an overview of our development roadmap for 2022:
 * `geometry`: the geometry "engine" of the ``bluemira`` framework
 * `magnetostatics`: magnetostatics solvers
 * `materials`: materials module
+* `plasma_physics`: 0-D plasma physics tools
 * `radiation_transport` **[WIP]**: radiation and advection transport solvers
 * `structural` **[WIP]**: beam finite element structural solver
 * `utilities`: collection of utility toolboxes for file IO, databases,
