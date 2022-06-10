@@ -6,6 +6,7 @@
 
 # Module responsibility
 
+*/balance_of_plant/ @Fusion-Power-Plant-Framework/power-cycle-review
 */base/ @Fusion-Power-Plant-Framework/base-review
 */builders/ @Fusion-Power-Plant-Framework/builders-review
 */codes/ @Fusion-Power-Plant-Framework/codes-review
@@ -16,22 +17,22 @@
 */magnetostatics/ @Fusion-Power-Plant-Framework/magnetostatics-review
 */materials/ @Fusion-Power-Plant-Framework/materials-review
 */mesh/ @Fusion-Power-Plant-Framework/mesh-review
-*/balance_of_plant/ @Fusion-Power-Plant-Framework/power-cycle-review
+*/plasma_physics/ @Fusion-Power-Plant-Framework/plasma-physics-review
 */radiation_transport/ @Fusion-Power-Plant-Framework/radiation-transport-review
-*/utilities/  @Fusion-Power-Plant-Framework/utilities-review
 */structural/  @Fusion-Power-Plant-Framework/structural-review
+*/utilities/  @Fusion-Power-Plant-Framework/utilities-review
 
 # Repository responsibility
 
 /.* @Fusion-Power-Plant-Framework/repo-review
 /.github/ @Fusion-Power-Plant-Framework/repo-review
-/scripts/ @Fusion-Power-Plant-Framework/repo-review
 /conda/ @Fusion-Power-Plant-Framework/repo-review
 /conftest.py @Fusion-Power-Plant-Framework/repo-review
-/setup.* @Fusion-Power-Plant-Framework/repo-review
-/requirements* @Fusion-Power-Plant-Framework/repo-review
+/LICENSE @Fusion-Power-Plant-Framework/repo-review
+/MANIFEST.in @Fusion-Power-Plant-Framework/repo-review
 /pyproject.toml @Fusion-Power-Plant-Framework/repo-review
 /pytest.ini @Fusion-Power-Plant-Framework/repo-review
-/MANIFEST.in @Fusion-Power-Plant-Framework/repo-review
-/LICENSE @Fusion-Power-Plant-Framework/repo-review
+/requirements* @Fusion-Power-Plant-Framework/repo-review
+/scripts/ @Fusion-Power-Plant-Framework/repo-review
+/setup.* @Fusion-Power-Plant-Framework/repo-review
 /versioneer.py @Fusion-Power-Plant-Framework/repo-review
