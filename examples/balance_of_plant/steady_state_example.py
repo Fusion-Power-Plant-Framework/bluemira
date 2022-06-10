@@ -76,7 +76,7 @@ rad_sep_strat = RadChargedPowerStrategy(
 
 # %%[markdown]
 
-# Now we to specify how the in-vessel components are being cooled, to calculate pumping
+# Now we specify how the in-vessel components are being cooled, to calculate pumping
 # powers, and the balance of plant cycle design.
 
 # %%
