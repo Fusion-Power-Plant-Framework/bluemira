@@ -714,24 +714,28 @@ def make_pf_coil_path(tf_boundary: BluemiraWire, offset_value: float) -> Bluemir
     # Find top-left and bottom-left "corners"
     coordinates = tf_offset.discretize(byedges=True, ndiscr=200)
     x_min = np.min(coordinates.x)
-    idx_inner = np.where(np.isclose(coordinates.x, x_min))[0]
-    z_min = np.min(coordinates.z[idx_inner])
-    z_max = np.max(coordinates.z[idx_inner])
+    z_min, z_min = 0.0, 0.0
+    eps = 0.0
+    while np.isclose(z_min, z_max):
+        # This is unlikely, but if so, shifting x_min a little ensures the boolean cut
+        # can be performed and that an open wire will be returned
+        idx_inner = np.where(np.isclose(coordinates.x, x_min))[0]
+        z_min = np.min(coordinates.z[idx_inner])
+        z_max = np.max(coordinates.z[idx_inner])
+        x_min += eps
+        eps += 1e-3
 
-    if np.isclose(z_min, z_max):
-        return tf_offset
+    cutter = BluemiraFace(
+        make_polygon(
+            {"x": [0, x_min, x_min, 0], "z": [z_min, z_min, z_max, z_max]}, closed=True
+        )
+    )
 
-    top_left = [x_min, 0, z_max]
-    bot_left = [x_min, 0, z_min]
-    # Split the wire
-    wire_parts_1 = split_wire(tf_offset, top_left, tolerance=1e-2)
-    outer = sorted(wire_parts_1, key=lambda wire: wire.center_of_mass[0])[-1]
-    wire_parts_2 = split_wire(outer, bot_left, tolerance=1e-2)
-    outer = sorted(wire_parts_2, key=lambda wire: wire.center_of_mass[0])[-1]
-
-    # Re-join if necessary
-
-    # Clip at z-axis if necessary
-
-    pf_coil_path = outer
+    result = boolean_cut(tf_offset, cutter)
+    if len(result) > 1:
+        bluemira_warn(
+            "Boolean cut of the TF boundary resulted in more than one wire.. returning the longest one. Fingers crossed."
+        )
+        result.sort(key=lambda wire: -wire.length)
+    pf_coil_path = result[0]
     return pf_coil_path
