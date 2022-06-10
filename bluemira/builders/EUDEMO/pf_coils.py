@@ -533,7 +533,6 @@ def make_coil_mapper(track, exclusion_zones, coils):
             ]
             split_values = l_values[:-1] + 0.5 * np.diff(l_values)
 
-            sub_segs = []
             for i, split in enumerate(split_values):
                 sub_seg, segment = split_wire(segment, segment.value_at(alpha=split))
                 if sub_seg:
