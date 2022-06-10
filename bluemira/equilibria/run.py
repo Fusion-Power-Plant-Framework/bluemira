@@ -251,8 +251,14 @@ class PulsedCoilsetDesign:
                     eq, optimiser, max_currents, current_constraints, eq_constraints
                 )
             elif self._eq_prob_cls == TikhonovCurrentCOP:
-                problem = self._make_tikh_current_opt_problem(
-                    eq, optimiser, max_currents, current_constraints, eq_constraints
+                problem = self._eq_prob_cls(
+                    eq.coilset,
+                    eq,
+                    MagneticConstraintSet(eq_constraints),
+                    gamma=self._eq_settings["gamma"],
+                    optimiser=optimiser,
+                    max_currents=max_currents,
+                    constraints=current_constraints,
                 )
             opt_problems.append(problem)
 
@@ -271,20 +277,6 @@ class PulsedCoilsetDesign:
             optimiser,
             max_currents=max_currents,
             constraints=constraints,
-        )
-        return problem
-
-    def _make_tikh_current_opt_problem(
-        self, eq, optimiser, max_currents, current_constraints, eq_constraints
-    ):
-
-        problem = self._eq_prob_cls(
-            eq.coilset,
-            eq,
-            MagneticConstraintSet(eq_constraints),
-            optimiser,
-            max_currents=max_currents,
-            constraints=current_constraints,
         )
         return problem
 
@@ -508,7 +500,7 @@ class OptimisedPulsedCoilsetDesign(PulsedCoilsetDesign):
         n_PF = coilset.n_PF
 
         for problem in sub_opt_problems:
-            pf_currents = sub_opt_problems.eq.coilset.get_control_currents()[:n_PF]
+            pf_currents = problem.eq.coilset.get_control_currents()[:n_PF]
             pf_current_vectors.append(pf_currents)
 
         max_pf_currents = np.max(np.abs(pf_current_vectors), axis=0)
