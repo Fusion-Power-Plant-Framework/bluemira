@@ -211,7 +211,10 @@ class PFCoilsBuilder(Builder):
             PF_bmax=self._params.PF_bmax.value,
         )
 
-        pf_coil_path = make_pf_coil_path(self._tf_coil_boundary)
+        # Get an offset from the TF that corresponds to a PF coil half-width of a
+        # current equal to Ip
+        offset_value = 0.5 * np.sqrt(self._params.I_p.value / self._params.PF_jmax.value)
+        pf_coil_path = make_pf_coil_path(self._tf_coil_boundary, offset_value)
         position_mapper = make_coil_mapper(pf_coil_path, self._keep_out_zones)
 
         grid = make_grid(
