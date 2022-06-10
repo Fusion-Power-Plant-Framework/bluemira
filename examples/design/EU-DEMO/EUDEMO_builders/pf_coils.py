@@ -297,7 +297,7 @@ class PFCoilsBuilder(Builder):
             ),
         ]
 
-        equilibrium_constraints = MagneticConstraintSet([isoflux])
+        equilibrium_constraints = [isoflux]
 
         self._design_problem = self._problem_class(
             self._params,
@@ -513,17 +513,21 @@ def make_coil_mapper(track, exclusion_zones, coils):
         segments = [track]
 
     # Sort the coils into the segments
+    coil_names = [coil.name for coil in coils]
     coil_bins = [[] for _ in range(len(segments))]
     for i, coil in enumerate(coils):
         distances = [distance_to([coil.x, 0, coil.z], seg)[0] for seg in segments]
         coil_bins[np.argmin(distances)].append(i)
 
-    # Check if multiple coils are on the same segment and split the segments
+    # Check if multiple coils are on the same segment and split the segments and make
+    # PathInterpolators
     new_segments = []
+    interpolator_dict = {}
     for segment, bin in zip(segments, coil_bins):
         if len(bin) < 1:
             bluemira_warn("There is a segment of the track which has no coils on it.")
         elif len(bin) == 1:
+            interpolator_dict[coil_names[bin[0]]] = PathInterpolator(segment)
             new_segments.append(PathInterpolator(segment))
         else:
             coils = [coils[i] for i in bin]
@@ -536,15 +540,17 @@ def make_coil_mapper(track, exclusion_zones, coils):
             for i, split in enumerate(split_values):
                 sub_seg, segment = split_wire(segment, segment.value_at(alpha=split))
                 if sub_seg:
+                    interpolator_dict[coil_names[bin[i]]] = PathInterpolator(sub_seg)
                     sub_segs.append(PathInterpolator(sub_seg))
 
                 if i == len(split_values) - 1:
                     if segment:
+                        interpolator_dict[coil_names[bin[i]]] = PathInterpolator(segment)
                         sub_segs.append(PathInterpolator(segment))
 
             new_segments.extend(sub_segs)
 
-    return PositionMapper(new_segments)
+    return PositionMapper(interpolator_dict)
 
 
 def make_solenoid(r_cs, tk_cs, z_min, z_max, g_cs, tk_cs_ins, tk_cs_cas, n_CS):
