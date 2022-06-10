@@ -483,12 +483,16 @@ class OptimisedPulsedCoilsetDesign(PulsedCoilsetDesign):
         )
         optimised_coilset = pos_opt_problem.optimise()
 
-        self._consolidate_coilset(optimised_coilset, sub_opt_problems)
+        optimised_coilset = self._consolidate_coilset(
+            optimised_coilset, sub_opt_problems
+        )
 
         for snap, problem in zip([self.SOF, self.EOF], sub_opt_problems):
             eq = problem.eq
             self.converge_equilibrium(eq, problem)
             self.take_snapshot(snap, eq, eq.coilset, problem, eq.profiles)
+
+        return optimised_coilset
 
     def _consolidate_coilset(self, coilset, sub_opt_problems):
         """
@@ -515,3 +519,8 @@ class OptimisedPulsedCoilsetDesign(PulsedCoilsetDesign):
                     self._eq_settings["coil_mesh_size"]
                 )
             problem.set_current_bounds(max_currents)
+        consolidated_coilset = deepcopy(problem.eq.coilset)
+        consolidated_coilset.set_control_currents(
+            np.zeros(len(consolidated_coilset._ccoils))
+        )
+        return consolidated_coilset
