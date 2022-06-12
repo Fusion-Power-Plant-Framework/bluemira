@@ -23,7 +23,6 @@
 Bluemira module for the solution of a 2D magnetostatic problem with cylindrical symmetry
 and toroidal current source using fenics FEM solver
 """
-
 from typing import Callable, Union
 
 import dolfin
@@ -31,8 +30,10 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 from bluemira.base.constants import MU_0
-
-from .utilities import ScalarSubFunc, contour_scalar_field_2d, contourf_scalar_field_2d
+from bluemira.equilibria.fem_fixed_boundary.utilities import (
+    ScalarSubFunc,
+    plot_scalar_field,
+)
 
 
 class FemMagnetostatic2d:
@@ -73,21 +74,23 @@ class FemMagnetostatic2d:
     """  # noqa (W505)
 
     def __init__(self, mesh, boundaries=None, p_order=3):
+
+        self.p_order = p_order
+
         # ======================================================================
-        # define the geometry
-        if isinstance(
-            mesh, str
-        ):  # check wether mesh is a filename or a mesh, then load it or use it
+        # check whether mesh is a filename or a mesh, then load it or use it
+        if isinstance(mesh, str):
             self.mesh = dolfin.Mesh(mesh)  # define the mesh
         else:
             self.mesh = mesh  # use the mesh
 
         # ======================================================================
         # define boundaries
-        if boundaries is None:  # Dirichlet B.C. are defined
+        if boundaries is None:
+            # initialize the MeshFunction
             self.boundaries = dolfin.MeshFunction(
                 "size_t", mesh, mesh.topology().dim() - 1
-            )  # initialize the MeshFunction
+            )
         elif isinstance(boundaries, str):
             # check wether boundaries is a filename or a MeshFunction,
             # then load it or use it
@@ -101,24 +104,25 @@ class FemMagnetostatic2d:
         # define the function space and bilinear forms
         # the Continuos Galerkin function space has been chosen as suitable for the
         # solution of the magnetostatic weak formulation in a Soblev Space H1(D)
-        self.V = dolfin.FunctionSpace(self.mesh, "CG", p_order)
+        self.V = dolfin.FunctionSpace(self.mesh, "CG", self.p_order)
 
         # define trial and test functions
         self.u = dolfin.TrialFunction(self.V)
         self.v = dolfin.TestFunction(self.V)
 
         # Define r
-        r = dolfin.Expression("x[0]", degree=p_order)
+        r = dolfin.Expression("x[0]", degree=self.p_order)
 
         self.a = (
             1
-            / (2.0 * dolfin.pi * 4 * dolfin.pi * 1e-7)
+            / (2.0 * dolfin.pi * MU_0)
             * (1 / r * dolfin.dot(dolfin.grad(self.u), dolfin.grad(self.v)))
             * dolfin.dx
         )
 
         # initialize solution
         self.psi = dolfin.Function(self.V)
+        self.psi.set_allow_extrapolation(True)
 
     def solve(
         self,
@@ -148,14 +152,14 @@ class FemMagnetostatic2d:
             the poloidal magnetic flux as solution of the magnetostatic problem
         """
         if neumann_bc_function is None:
-            neumann_bc_function = dolfin.Expression("0.0", degree=2)
+            neumann_bc_function = dolfin.Expression("0.0", degree=self.p_order)
 
         # define the right hand side
         self.L = g * self.v * dolfin.dx - neumann_bc_function * self.v * dolfin.ds
 
         # define the Dirichlet boundary conditions
         if dirichlet_bc_function is None:
-            dirichlet_bc_function = dolfin.Expression("0.0", degree=2)
+            dirichlet_bc_function = dolfin.Expression("0.0", degree=self.p_order)
             dirichlet_bc = dolfin.DirichletBC(
                 self.V, dirichlet_bc_function, "on_boundary"
             )
@@ -163,10 +167,10 @@ class FemMagnetostatic2d:
             dirichlet_bc = dolfin.DirichletBC(
                 self.V, dirichlet_bc_function, self.boundaries, dirichlet_marker
             )
-        bcs = [dirichlet_bc]
+        self.bcs = [dirichlet_bc]
 
         # solve the system taking into account the boundary conditions
-        dolfin.solve(self.a == self.L, self.psi, bcs)
+        dolfin.solve(self.a == self.L, self.psi, self.bcs)
 
         # return the solution
         return self.psi
@@ -208,12 +212,11 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
                  or a MeshFunction that defines the boundaries
     p_order : int
         the order of the approximating polynomial basis functions
-    """
+    """  # noqa (W505)
 
     def __init__(self, mesh, boundaries=None, p_order=3):
         super().__init__(mesh, boundaries, p_order)
-        # internal parameter to scale the current
-        self._j_factor = 1
+        self.k = 1
 
     @property
     def psi_ax(self):
@@ -227,13 +230,7 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
 
     @property
     def psi_norm_2d(self):
-        """
-        Function to calculate the normalized flux in 2-D defined as:
-
-        .. math::
-            \\sqrt{\\frac{\Psi - \Psi_{ax}}{\Psi_b - \Psi_{ax}}}
-
-        """  # noqa (W505)
+        """Normalized flux function in 2-D"""
 
         def myfunc(x):
             value = np.sqrt(
@@ -245,20 +242,20 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
 
     def _create_g_func(
         self,
-        pprime: Union[Callable, float, int],
-        ffprime: Union[Callable, float, int],
-        curr_target: Union[float, int],
+        pprime: Union[Callable, float],
+        ffprime: Union[Callable, float],
+        curr_target: float,
     ):
         """
         Returns the density current function given pprime and ffprime.
 
         Parameters
         ----------
-        pprime: Union[Callable, float, int]
+        pprime: Union[Callable, float]
             pprime as function of psi_norm (1-D function)
-        ffprime: Union[Callable, float, int]
+        ffprime: Union[Callable, float]
             ffprime as function of psi_norm (1-D function)
-        curr_target: Union[float, int]
+        curr_target: float
             target current (also used to initialize the solution in case self.psi is
             still 0 and pprime and ffprime are, then, not defined)
 
@@ -268,12 +265,10 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
             source current to solve the magnetostatic problem
         """
         dx = dolfin.Measure("dx", domain=self.mesh)
-
-        # calculate the target constant current
         area = dolfin.assemble(dolfin.Constant(1) * dx())
         j_target = curr_target / area
 
-        def myfunc(x):
+        def g(x):
             if self.psi_ax == 0:
                 return j_target
             else:
@@ -290,26 +285,26 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
                 else:
                     b = 1 / MU_0 / r * ffprime
 
-                return self._j_factor * (a + b)
+                return self.k * (a + b)
 
-        return myfunc
+        return g
 
     def _create_g(
         self,
-        pprime: Union[Callable, float, int],
-        ffprime: Union[Callable, float, int],
-        curr_target: Union[float, int],
+        pprime: Union[Callable, float],
+        ffprime: Union[Callable, float],
+        curr_target: float,
     ):
         """
         Returns the density current DOLFIN function given pprime and ffprime.
 
         Parameters
         ----------
-        pprime: Union[Callable, float, int]
+        pprime: Union[Callable, float]
             pprime as function of psi_norm (1-D function)
-        ffprime: Union[Callable, float, int]
+        ffprime: Union[Callable, float]
             ffprime as function of psi_norm (1-D function)
-        curr_target: Union[float, int]
+        curr_target: float
             target current (also used to initialize the solution in case self.psi is
             still 0 and pprime and ffprime are, then, not defined)
 
@@ -322,37 +317,20 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
         func = ScalarSubFunc(myfunc)
         return func
 
-    def _calculate_curr_tot(
-        self, dens_curr_func: Union[dolfin.Expression, dolfin.Function]
-    ):
-        """
-        Calculate the total current given a density current applied to the domain.
-
-        Parameters
-        ----------
-        dens_curr_func: Union[dolfin.Expression, dolfin.Function]
-            dolfin function or expression that represents the density current into
-            the specified domain
-
-        Returns
-        -------
-            i_tot: float
-                total current
-        """
+    def _calculate_curr_tot(self):
+        """Calculate the total current into the domain"""
         dx = dolfin.Measure("dx", domain=self.mesh)
-        i_tot = dolfin.assemble(dens_curr_func * dx())
-        return i_tot
+        return dolfin.assemble(self.g * dx())
 
     def _update_curr(self, curr_target):
-        """Update the"""
-        self._j_factor = 1
-        self._j_factor = curr_target / self._calculate_curr_tot(self.g)
+        self.k = 1
+        self.k = curr_target / self._calculate_curr_tot()
 
     def solve(
         self,
-        pprime: Union[Callable, float, int],
-        ffprime: Union[Callable, float, int],
-        curr_target: Union[float, int],
+        pprime,
+        ffprime,
+        curr_target,
         dirichlet_bc_function=None,
         dirichlet_marker=None,
         neumann_bc_function=None,
@@ -362,57 +340,27 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
         verbose=False,
         verbose_plot=False,
     ):
-        """
-        Solves the GS problem given pprime and ffprime
-
-        Parameters
-        ----------
-        pprime: Union[Callable, float, int]
-            pprime as function of psi_norm (1-D function)
-        ffprime: Union[Callable, float, int]
-            ffprime as function of psi_norm (1-D function)
-        curr_target: Union[float, int]
-            target current (also used to initialize the solution in case self.psi is
-            still 0 and pprime and ffprime are, then, not defined)
-        dirichlet_bc_function : dolfin.Expression o dolfin.Function
-                              the Dirichlet boundary condition function
-        neumann_bc_function : dolfin.Expression or dolfin.Function
-                            the Neumann boundary condition function
-        dirichlet_marker : int
-                           the identification number for the dirichlet boundary
-        tol: float
-            convergence error tolerance. Default 1e-5
-        max_iter: int
-            number of maximum iterations
-        i_theta:
-            smoothing factor used into the convergence loop.
-        verbose: bool
-            verbose flag
-        verbose_plot: bool
-            verbose flag for plot
-
-        Returns
-        -------
-        psi:
-            Solution of the differential equation.
-        """
+        """Solves the GS problem given pprime and ffprime"""
         points = self.mesh.coordinates()
 
         if verbose_plot:
             self.g_func = self._create_g_func(pprime, ffprime, curr_target)
             curr_data = np.array([self.g_func(p) for p in points])
-            axis, cntr = contour_scalar_field_2d(
+            axis, cntr, _ = plot_scalar_field(
                 points[:, 0],
                 points[:, 1],
                 curr_data,
                 levels=20,
                 axis=None,
+                tofill=True,
+                contour=False,
             )
-            plt.title("Density current at iteration 0")
+            plt.title("J current at iteration 0")
             plt.show()
 
         self.g = self._create_g(pprime, ffprime, curr_target)
-
+        # dx = dolfin.Measure("dx", domain=self.mesh)
+        # curr_tot = dolfin.assemble(self.g * dx())
         super().solve(
             self.g, dirichlet_bc_function, dirichlet_marker, neumann_bc_function
         )
@@ -427,8 +375,14 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
 
             if verbose_plot:
                 curr_data = np.array([self.g_func(p) for p in points])
-                axis, _ = contourf_scalar_field_2d(
-                    points[:, 0], points[:, 1], curr_data, levels=20, axis=None
+                axis, cntr, _ = plot_scalar_field(
+                    points[:, 0],
+                    points[:, 1],
+                    curr_data,
+                    levels=20,
+                    axis=None,
+                    tofill=True,
+                    contour=False,
                 )
                 plt.title(f"J current at iteration {i}")
                 plt.show()
@@ -436,27 +390,38 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
             prev = np.array([self.psi_norm_2d(p) for p in points])
 
             if verbose_plot:
-                axis, _ = contourf_scalar_field_2d(
-                    points[:, 0], points[:, 1], prev, levels=20, axis=None
+                axis, cntr, _ = plot_scalar_field(
+                    points[:, 0], points[:, 1], prev, levels=20, axis=None, tofill=True
                 )
                 plt.title(f"Normalized magnetic coordinate at iteration {i}")
                 plt.show()
+            # print(f"Magnetic coordinate range = [{np.min(prev)}:{np.max(prev)}]")
+
+            # prev = np.array([self.psi(p) for p in points])
+            # prev = self.psi.compute_vertex_values()
+            # curr_tot = dolfin.assemble(self.g * dx())
+            # print(f"pre - curr_tot = {curr_tot} - curr_dens = {self.g}")
 
             super().solve(
                 self.g, dirichlet_bc_function, dirichlet_marker, neumann_bc_function
             )
 
             new = np.array([self.psi_norm_2d(p) for p in points])
+            # new = np.array([self.psi(p) for p in points])
             diff = new - prev
 
             if verbose_plot:
-                axis, _ = contourf_scalar_field_2d(
-                    points[:, 0], points[:, 1], diff, levels=20, axis=None
+                axis, cntr, _ = plot_scalar_field(
+                    points[:, 0], points[:, 1], diff, levels=20, axis=None, tofill=True
                 )
                 plt.title(f"GS error at iteration {i}")
                 plt.show()
 
+            # diff = self.psi.compute_vertex_values() - prev
             eps = np.linalg.norm(diff, ord=2) / np.linalg.norm(new, ord=2)
+
+            # curr_tot = dolfin.assemble(self.g * dx())
+            # print(f"post - curr_tot = {curr_tot} - curr_dens = {self.g}")
             print(f"iter = {i} eps = {eps} psi_ax : {self.psi_ax}")
 
             new_psi = dolfin.Function(self.V)
