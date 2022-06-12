@@ -21,11 +21,14 @@
 
 """Module to support the fem_fixed_boundary implementation"""
 
-from typing import Union
+from typing import Callable
 
 import dolfin
 import matplotlib.pyplot as plt
 import numpy as np
+
+from bluemira.geometry.coordinates import Coordinates
+from bluemira.geometry.tools import interpolate_bspline
 
 
 def b_coil_axis(r, z, pz, curr):
@@ -62,26 +65,41 @@ class ScalarSubFunc(dolfin.UserExpression):
         the whole subdomains mesh function
     """
 
-    def __init__(self, func_list, mark_list, subdomains, **kwargs):
+    def __init__(self, func_list, mark_list=None, subdomains=None, **kwargs):
         super().__init__(**kwargs)
-        self.subdomains = subdomains
-        self.functions = func_list
+        self.functions = self.check_functions(func_list)
         self.markers = mark_list
+        self.subdomains = subdomains
+
+    def check_functions(self, functions):
+        """Check if the argument is a function or a list of fuctions"""
+        if isinstance(functions, (int, float, Callable)):
+            return [functions]
+        if isinstance(functions, list):
+            if all(isinstance(f, (int, float, Callable)) for f in functions):
+                return functions
+        raise ValueError(
+            "Accepted functions are instance of (int, float, Callable)"
+            "or alist of them."
+        )
 
     def eval_cell(self, values, x, cell):
         """Evaluate the value on each cell"""
-        m = self.subdomains[cell.index]
-        if m in self.markers:
-            index = np.where(np.array(self.markers) == m)
-            func = self.functions[index[0][0]]
-            if callable(func):
-                values[0] = func(x)
-            elif isinstance(func, (int, float)):
-                values[0] = func
-            else:
-                raise ValueError(f"{func} is not callable or is not a constant")
+        if self.markers is None or self.subdomains is None:
+            func = self.functions[0]
         else:
-            values[0] = 0
+            m = self.subdomains[cell.index]
+            if m in self.markers:
+                index = np.where(np.array(self.markers) == m)
+                func = self.functions[index[0][0]]
+            else:
+                func = 0
+        if callable(func):
+            values[0] = func(x)
+        elif isinstance(func, (int, float)):
+            values[0] = func
+        else:
+            raise ValueError(f"{func} is not callable or is not a constant")
 
     def value_shape(self):
         """
@@ -91,41 +109,19 @@ class ScalarSubFunc(dolfin.UserExpression):
         return ()
 
 
-def contour_scalar_field_2d(
-    x: np.ndarray,
-    y: np.ndarray,
-    data: np.ndarray,
-    levels: Union[list[float, int], np.ndarray, int] = 20,
-    axis=None,
-    **kwargs,
+def plot_scalar_field(
+    x, y, data, levels=20, axis=None, contour=True, tofill=True, **kwargs
 ):
     """
-    2D Plot the countour of a scalar field given a set of levels
+    Plot a scalar field
 
     Parameters
     ----------
-    x: np.ndarray
-        x coordinates of the cloud of points in which the scalar field is given
-    y: np.ndarray
-        y coordinates of the cloud of points in which the scalar field is given
-    data: np.ndarray
-        scalar field data
-    levels: Union[list[float, int], np.ndarray, int]
-        countour levels. Default 20.
-    axis:
-        plot axis. Default None.
-    **kwargs:
-        any other argument to be passed to the contour plot.
-        Default {"linewidths": 2, "colors": "k"}
-
-    Returns
-    -------
-    axis: matplotlib.pyplot.Axis
-    cntr: matplotlib.pyplot.tricontourf
-        Matplotlib contour object
-
+    x: Iterable
+        x coordinate of the points in which
     """
     cntr = None
+    cntrf = None
 
     if axis is None:
         fig = plt.figure()
@@ -134,69 +130,108 @@ def contour_scalar_field_2d(
     if not kwargs:
         kwargs = {"linewidths": 2, "colors": "k"}
 
-    cntr = axis.tricontour(x, y, data, levels=levels, **kwargs)
+    # # ----------
+    # # Tricontour
+    # # ----------
+    # # Directly supply the unordered, irregularly spaced coordinates
+    # # to tricontour.
+    # opts = {'linewidths': 0.5, 'colors':'k'}
+    if contour:
+        cntr = axis.tricontour(x, y, data, levels=levels, **kwargs)
+
+    if tofill:
+        cntrf = axis.tricontourf(x, y, data, levels=levels, cmap="RdBu_r")
+        plt.gcf().colorbar(cntrf, ax=axis)
 
     plt.gca().set_aspect("equal")
 
-    return axis, cntr
-
-
-def contourf_scalar_field_2d(
-    x: np.ndarray,
-    y: np.ndarray,
-    data: np.ndarray,
-    levels: Union[list[float, int], np.ndarray, int] = 20,
-    axis=None,
-    **kwargs,
-):
-    """
-    2D Plot filled contours of a scalar field given a set of levels
-
-    Parameters
-    ----------
-    x: np.ndarray
-        x coordinates of the cloud of points in which the scalar field is given
-    y: np.ndarray
-        y coordinates of the cloud of points in which the scalar field is given
-    data: np.ndarray
-        scalar field data
-    levels: Union[list[float, int], np.ndarray, int]
-        countour levels. Default 20.
-    axis:
-        plot axis. Default None.
-    **kwargs:
-        any other argument to be passed to the filled contour plot.
-        Default {}
-
-    Returns
-    -------
-    axis: matplotlib.pyplot.Axis
-    cntrf: matplotlib.pyplot.tricontourf
-        Matplotlib filled contour object
-    """
-    cntrf = None
-
-    if axis is None:
-        fig = plt.figure()
-        axis = fig.add_subplot()
-
-    if not kwargs:
-        kwargs = {"cmpa": "RdBu_r"}
-
-    cntrf = axis.tricontourf(x, y, data, levels=levels, **kwargs)
-    plt.gcf().colorbar(cntrf, ax=axis)
-
-    plt.gca().set_aspect("equal")
-
-    return axis, cntrf
+    return axis, cntr, cntrf
 
 
 def plot_profile(x, prof, var_name, var_unit):
     """
-    Plot a profile
+    Plot profile
     """
     fig, ax = plt.subplots()
     ax.plot(x, prof)
     ax.set(xlabel="x (-)", ylabel=var_name + " (" + var_unit + ")")
     ax.grid()
     plt.show()
+
+
+def calculate_plasma_shape_params(points, psi, levels):
+    """
+    Calculate the plasma parameters (Rgeo, kappa, delta) for a given magnetic
+    isoflux.
+
+    Parameters
+    ----------
+    points: Iterable
+        2D points on which psi has been calculated
+    psi: Iterable
+        scalar value of the plasma magnetic poloidal flux at points
+    levels: Iterable
+        values that identify the isoflux curve at which the plasma parameters are
+        calculated
+
+    Returns
+    -------
+    r_geo: Iterable
+        array of averaged radial coordinate of the isoflux curves
+    kappa:
+        array of the kappa value of the isoflux curves
+    delta:
+        array of the delta value of the isoflux curves
+    """
+    r_geo = np.zeros(len(levels))
+    kappa = np.zeros(len(levels))
+    delta = np.zeros(len(levels))
+
+    axis, cntr, _ = plot_scalar_field(
+        points[:, 0],
+        points[:, 1],
+        psi,
+        levels=levels,
+        axis=None,
+        tofill=False,
+    )
+    plt.show()
+
+    for i in range(len(cntr.collections)):
+        vertices = cntr.collections[i].get_paths()[0].vertices
+        x = vertices.T[0]
+        y = x * 0
+        z = vertices.T[1]
+        vertices = Coordinates({"x": x, "y": y, "z": z})
+        wire = interpolate_bspline(vertices, "psi_95", True)
+        interp_points = wire.discretize(1000)
+
+        ind_z_max = np.argmax(interp_points.z)
+        pu = interp_points.T[ind_z_max]
+        ind_z_min = np.argmin(interp_points.z)
+        pl = interp_points.T[ind_z_min]
+        ind_x_max = np.argmax(interp_points.x)
+        po = interp_points.T[ind_x_max]
+        ind_x_min = np.argmin(interp_points.x)
+        pi = interp_points.T[ind_x_min]
+
+        # geometric center of a magnetic flux surface
+        r_geo[i] = (po[0] + pi[0]) / 2
+
+        # elongation
+        a = (po[0] - pi[0]) / 2
+        b = (pu[2] - pl[2]) / 2
+        if a == 0:
+            kappa[i] = 1
+        else:
+            kappa[i] = b / a
+
+        # triangularity
+        c = r_geo[i] - pl[0]
+        d = r_geo[i] - pu[0]
+        if a == 0:
+            delta[i] = 0
+        else:
+            delta[i] = (c + d) / 2 / a
+
+        return r_geo, kappa, delta
