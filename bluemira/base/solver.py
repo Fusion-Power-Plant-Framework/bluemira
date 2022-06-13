@@ -92,9 +92,24 @@ class RunMode(enum.Enum):
 
     def to_string(self) -> str:
         """
-        Convert the enum value to a string; its name in lower-case.
+        Convert the enum name to a string; its name in lower-case.
         """
         return self.name.lower()
+
+    @classmethod
+    def from_string(cls, mode_str: str):
+        """
+        Retrieve an enum value from a case-insensitive string.
+
+        Parameters
+        ----------
+        mode_str: str
+            The run mode's name.
+        """
+        for run_mode_str, enum_value in cls.__members__.items():
+            if run_mode_str.lower() == mode_str.lower():
+                return enum_value
+        raise ValueError(f"Unknown run mode '{mode_str}'.")
 
 
 class SolverABC(abc.ABC):

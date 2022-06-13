@@ -98,24 +98,15 @@ class EUDEMOReactor(Reactor):
         """
         Run the systems code module in the requested run mode.
         """
-        default_config = {"process_mode": "run"}
-
+        default_config = {
+            "run_dir": self._file_manager.generated_data_dirs["systems_code"],
+        }
         config = self._process_design_stage_config(default_config)
-
-        # TODO: This is needed to support backward compatibility with the old
-        # process_mode configuration at the top level. Can be removed when the
-        # run_systems_code interface is updated to have a more general runmode value.
-        config["process_mode"] = config.pop("runmode")
-
-        solver = systems_code_solver(
-            self._params,
-            config,
-            self._file_manager.generated_data_dirs["systems_code"],
-            self._file_manager.reference_data_dirs["systems_code"],
-        )
+        run_mode = config.pop("runmode")
+        solver = systems_code_solver(self._params, config)
 
         self.register_solver(solver)
-        solver.run()
+        solver.execute(solver.run_mode_cls.from_string(run_mode))
         self._params.update_kw_parameters(solver.params.to_dict())
 
     @Reactor.design_stage(PLASMA)

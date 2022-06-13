@@ -286,8 +286,8 @@ class _MFileWrapper:
                 bluemira_var = "N/A" if var == process_var else var
                 out.append(0.0)
                 bluemira_warn(
-                    f'bluemira variable "{bluemira_var}" a.k.a. '
-                    f'PROCESS variable "{process_var}" '
+                    f"bluemira variable '{bluemira_var}' a.k.a. "
+                    f"PROCESS variable '{process_var}' "
                     "not found in PROCESS output. Value set to 0.0."
                 )
         return out
