@@ -314,14 +314,14 @@ class PFCoilsBuilder(Builder):
             coilset,
             position_mapper,
             grid,
-            coil_constraints,
             current_opt_constraints,
+            coil_constraints,
             equilibrium_constraints,
             profiles=profiles,
             breakdown_strategy_cls=OutboardBreakdownZoneStrategy,
             breakdown_problem_cls=BreakdownCOP,
             breakdown_optimiser=Optimiser(
-                "COBYLA", opt_conditions={"max_eval": 5000, "ftol_rel": 1e-6}
+                "COBYLA", opt_conditions={"max_eval": 5000, "ftol_rel": 1e-10}
             ),
             breakdown_settings={"B_stray_con_tol": 1e-6, "n_B_stray_points": 10},
             equilibrium_problem_cls=TikhonovCurrentCOP,
