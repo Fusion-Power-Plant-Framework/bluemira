@@ -7,7 +7,7 @@ importlib-metadata==4.11.3
 pybind11==2.9.2
 pybind11-global==2.9.2
 PySide2==5.13.2
-pytools==2022.1.7
+pytools==2022.1.9
 PyYAML==6.0
 Shapely==1.8.2
 shiboken2==5.13.2
