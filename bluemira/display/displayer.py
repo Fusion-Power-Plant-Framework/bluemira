@@ -26,7 +26,7 @@ from __future__ import annotations
 
 import copy
 from abc import ABC, abstractmethod
-from typing import TYPE_CHECKING, Iterable, List, Optional, Tuple, Union
+from typing import TYPE_CHECKING, List, Optional, Tuple, Union
 
 import matplotlib.colors as colors
 
@@ -215,23 +215,12 @@ class ComponentDisplayer(BaseDisplayer):
         """
         import bluemira.base.components as bm_comp
 
-        self._shapes = []
-        self._options = []
-
-        if not isinstance(comps, Iterable):
-            comps = [comps]
-
-        def populate_data(comp: bm_comp.Component):
-            if comp.is_leaf and isinstance(comp, bm_comp.PhysicalComponent):
-                self._shapes.append(comp.shape)
-                self._options.append(comp.display_cad_options)
-            else:
-                for child in comp.children:
-                    populate_data(child)
-
-        for comp in comps:
-            populate_data(comp)
-        show_cad(self._shapes, self._options, **kwargs)
+        show_cad(
+            *bm_comp.get_properties_from_components(
+                comps, ("shape", "display_cad_options")
+            ),
+            **kwargs,
+        )
 
 
 class DisplayableCAD:

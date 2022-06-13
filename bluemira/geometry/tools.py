@@ -35,6 +35,7 @@ import numpy as np
 from scipy.spatial import ConvexHull
 
 import bluemira.mesh.meshing as meshing
+from bluemira.base.components import get_properties_from_components
 from bluemira.base.constants import EPS
 from bluemira.base.file import get_bluemira_path
 from bluemira.base.look_and_feel import bluemira_debug, bluemira_warn
@@ -880,6 +881,24 @@ def save_as_STEP(shapes, filename="test", scale=1):
 
     freecad_shapes = [s._shape for s in shapes]
     cadapi.save_as_STEP(freecad_shapes, filename, scale)
+
+
+def save_cad(components, filename="test", scale=1):
+    """
+    Save the CAD of a component (eg a reactor) or a list of components
+
+    Parameters
+    ----------
+    components: Union[Component, Iterable[Component]])
+        components to save
+    filename: str, default = "test"
+        Full path filename of the STP assembly
+    scale: float, default = 1.0
+        The scale in which to save the Shape objects
+    """
+    shapes = get_properties_from_components(components, "shape")
+
+    save_as_STEP(shapes, filename, scale)
 
 
 # ======================================================================================
