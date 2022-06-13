@@ -169,7 +169,7 @@ class PulsedCoilsetDesign:
                 max_currents=max_currents,
                 constraints=constraints,
             )
-            coilset = problem.optimise(x0=max_currents)
+            coilset = problem.optimise(x0=max_currents, fixed_coils=False)
             breakdown.set_breakdown_point(*strategy.breakdown_point)
             psi_premag = breakdown.breakdown_psi
             bluemira_print(f"Premagnetisation flux = {2*np.pi * psi_premag:.2f} V.s")
@@ -252,6 +252,9 @@ class PulsedCoilsetDesign:
 
             eq_constraints = deepcopy(self.eq_constraints)
             for con in eq_constraints:
+                if isinstance(con, (PsiBoundaryConstraint, PsiConstraint)):
+                    con.target_value = psi_boundary / (2 * np.pi)
+            for con in current_constraints:
                 if isinstance(con, (PsiBoundaryConstraint, PsiConstraint)):
                     con.target_value = psi_boundary / (2 * np.pi)
 
