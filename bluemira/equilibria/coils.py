@@ -370,7 +370,7 @@ class CoilFieldsMixin:
         current using Green's functions.
         """
         return np.add.reduceat(
-            greens_Bx(self._quad_x, self._quad_z, x, z) * self._quad_weighting,
+            greens_Bx(self._quad_x, self._quad_z, x, z).ravel() * self._quad_weighting,
             self._no_quads,
         )
 
@@ -381,7 +381,7 @@ class CoilFieldsMixin:
         Calculate vertical magnetic field Bz at (x, z) due to a unit current
         """
         return np.add.reduceat(
-            greens_Bz(self._quad_x, self._quad_z, x, z) * self._quad_weighting,
+            greens_Bz(self._quad_x, self._quad_z, x, z).ravel() * self._quad_weighting,
             self._no_quads,
         )
 
@@ -392,14 +392,14 @@ class CoilFieldsMixin:
         Calculate radial magnetic field Bx response at (x, z) due to a unit
         current using semi-analytic method.
         """
-        return semianalytic_Bx(self.x, self.z, x, z, d_xc=self.dx, d_zc=self.dz)
+        return semianalytic_Bx(self._x, self._z, x, z, d_xc=self._dx, d_zc=self._dz)
 
     def _control_Bz_analytical(self, x, z):
         """
         Calculate vertical magnetic field Bz response at (x, z) due to a unit
         current using semi-analytic method.
         """
-        return semianalytic_Bz(self.x, self.z, x, z, d_xc=self.dx, d_zc=self.dz)
+        return semianalytic_Bz(self._x, self._z, x, z, d_xc=self._dx, d_zc=self._dz)
 
     def F(self, eqcoil):  # noqa :N802
         """
@@ -410,17 +410,17 @@ class CoilFieldsMixin:
         \t:math:`F_x = IB_z+\\dfrac{\\mu_0I^2}{4\\pi X}\\textrm{ln}\\bigg(\\dfrac{8X}{r_c}-1+\\xi/2\\bigg)`\n
         \t:math:`F_z = -IBx`
         """  # noqa :W505
-        Bx, Bz = eqcoil.Bx(self.x, self.z), eqcoil.Bz(self.x, self.z)
+        Bx, Bz = eqcoil.Bx(self._x, self._z), eqcoil.Bz(self._x, self._z)
         if self.rc != 0:  # true divide errors for zero current coils
-            a = MU_0 * self.current**2 / (4 * np.pi * self.x)
-            fx = a * (np.log(8 * self.x / self.rc) - 1 + 0.25)
+            a = MU_0 * self.current**2 / (4 * np.pi * self._x)
+            fx = a * (np.log(8 * self._x / self.rc) - 1 + 0.25)
 
         else:
             fx = 0
         return np.array(
             [
-                (self.current * Bz + fx) * 2 * np.pi * self.x,
-                -self.current * Bx * 2 * np.pi * self.x,
+                (self.current * Bz + fx) * 2 * np.pi * self._x,
+                -self.current * Bx * 2 * np.pi * self._x,
             ]
         )
 
@@ -430,19 +430,19 @@ class CoilFieldsMixin:
 
         \t:math:`Fz_{i,j}=-2\\pi X_i\\mathcal{G}(X_j,Z_j,X_i,Z_i)`
         """
-        if coil.x == self.x and coil.z == self.z:
+        if coil._x == self._x and coil._z == self._z:
             # self inductance
             if self.rc != 0:
-                a = MU_0 / (4 * np.pi * self.x)
-                Bz = a * (np.log(8 * self.x / self.rc) - 1 + 0.25)
+                a = MU_0 / (4 * np.pi * self._x)
+                Bz = a * (np.log(8 * self._x / self.rc) - 1 + 0.25)
             else:
                 Bz = 0
             Bx = 0  # Should be 0 anyway
 
         else:
-            Bz = coil.control_Bz(self.x, self.z)
-            Bx = coil.control_Bx(self.x, self.z)
-        return 2 * np.pi * self.x * np.array([Bz, -Bx])  # 1 cross B
+            Bz = coil.control_Bz(self._x, self._z)
+            Bx = coil.control_Bx(self._x, self._z)
+        return 2 * np.pi * self._x * np.array([Bz, -Bx])  # 1 cross B
 
 
 def get_max_current(dx, dz, j_max):
@@ -484,8 +484,8 @@ class CoilSizer:
     def __init__(self, coil):
         self.update(coil)
 
-        dx_specified = np.array([is_num(self.dx)], dtype=bool)
-        dz_specified = np.array([is_num(self.dz)], dtype=bool)
+        dx_specified = np.array([is_num(self._dx)], dtype=bool)
+        dz_specified = np.array([is_num(self._dz)], dtype=bool)
         dxdz_specified = np.logical_and(dx_specified, dz_specified)
 
         if any(
@@ -535,9 +535,9 @@ class CoilSizer:
             self._set_coil_attributes(coil)
 
     def _set_coil_attributes(self, coil):
-        coil._rc = 0.5 * np.hypot(coil.dx, coil.dz)
+        coil._rc = 0.5 * np.hypot(coil._dx, coil._dz)
         coil._x_boundary, coil._z_boundary = self._make_boundary(
-            coil.x, coil.z, coil.dx, coil.dz
+            coil._x, coil._z, coil._dx, coil._dz
         )
 
     def update(self, coil):
@@ -549,8 +549,8 @@ class CoilSizer:
         coil: Coil
             Coil to size
         """
-        self.dx = coil.dx
-        self.dz = coil.dz
+        self._dx = coil._dx
+        self._dz = coil._dz
         self.current = coil.current
         self.j_max = coil.j_max
         self.flag_sizefix = coil._flag_sizefix
@@ -582,7 +582,7 @@ class CoilSizer:
             )
 
         return np.where(
-            self.j_max == np.nan, np.inf, get_max_current(self.dx, self.dz, self.j_max)
+            self.j_max == np.nan, np.inf, get_max_current(self._dx, self._dz, self.j_max)
         )
 
     def _make_size(self, current=None):
@@ -620,9 +620,9 @@ class CoilSizer:
         Only rectangular coils
 
         """
-        xx, zz = np.ones((1, 4)) * x_c, np.ones((1, 4)) * z_c
-        x_boundary = xx + dx * np.atleast_2d([-1, 1, 1, -1])
-        z_boundary = zz + dz * np.atleast_2d([-1, -1, 1, 1])
+        xx, zz = (np.ones((4, 1)) * x_c).T, (np.ones((4, 1)) * z_c).T
+        x_boundary = xx + (dx * np.array([-1, 1, 1, -1])[:, None]).T
+        z_boundary = zz + (dz * np.array([-1, -1, 1, 1])[:, None]).T
         return x_boundary, z_boundary
 
 
@@ -1211,8 +1211,17 @@ class Circuit(CoilGroup):
         Circuit.__num_circuit += 1
         return f"CIRC_{Circuit.__num_circuit}"
 
+    @CoilGroup.current.setter
+    def current(self, new_current: float) -> None:
+        """
+        Set coil current
+        """
+        if isinstance(new_current, Iterable):
+            new_current = new_current[0]
+        self._current[:] = new_current
 
-class PositionalSymmetricCircuit(Circuit):
+
+class SymmetricCircuit(Circuit):
     """
     Positionally symmetric coils everything else the same
 
@@ -1351,17 +1360,6 @@ class PositionalSymmetricCircuit(Circuit):
         self.x = new_position[0, 0]
         self.z = new_position[0, 1]
 
-    @property
-    def current(self):
-        return self._current[0]
-
-    @current.setter
-    def current(self, new_current: float) -> None:
-        """
-        Set coil current
-        """
-        Circuit.current.fset(self, new_current)
-
 
 class CoilSet(CoilGroup):
     """
@@ -1369,7 +1367,7 @@ class CoilSet(CoilGroup):
 
     """
 
-    __slots__ = ("__coilgroups",)
+    __slots__ = ("__coilgroups", "_circuits")
 
     def __init__(self, *coils: Union[CoilGroup, List, Dict]):
 
@@ -1514,8 +1512,6 @@ class CoilSet(CoilGroup):
 
 
 # TODO or To remove (for imports)
-class SymmetricCircuit:
-    pass
 
 
 class PlasmaCoil:
