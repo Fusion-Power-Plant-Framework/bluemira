@@ -134,6 +134,19 @@ class PulsedCoilsetDesign:
             eq, coilset, problem, profiles, limiter=self.limiter
         )
 
+    def estimate_premag_flux(self):
+        """
+        Maximum flux from an inifinite solenoid
+        """
+        cs1_name = self.coilset.get_CS_names()[0]
+        cs_coil = self.coilset.coils[cs1_name]
+
+        r_min = cs_coil.x - cs_coil.dx
+        r_max = cs_coil.x + cs_coil.dx
+        B_max = cs_coil.b_max
+        psi_premag = B_max * np.pi / 3 * (r_max**2 + r_min**2 + r_max * r_min)
+        return psi_premag
+
     def run_premagnetisation(self):
         """
         Run the breakdown optimisation problem
@@ -173,6 +186,9 @@ class PulsedCoilsetDesign:
             breakdown.set_breakdown_point(*strategy.breakdown_point)
             psi_premag = breakdown.breakdown_psi
             bluemira_print(f"Premagnetisation flux = {2*np.pi * psi_premag:.2f} V.s")
+            bluemira_print(
+                f"Premagnetisation estimate = {self.estimate_premag_flux():.2f} V.s"
+            )
 
             if i == 0:
                 psi_1 = psi_premag
