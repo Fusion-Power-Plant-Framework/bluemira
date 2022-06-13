@@ -111,6 +111,7 @@ class Solver(CodesSolver):
     setup_cls = Setup
     run_cls = Run
     teardown_cls = Teardown
+    run_mode_cls = RunMode
 
     def __init__(self, params: ParameterFrame, build_config: BuildConfig):
         # Init task objects on execution so parameters can be edited

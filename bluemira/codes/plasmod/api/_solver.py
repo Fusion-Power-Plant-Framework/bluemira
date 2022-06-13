@@ -78,6 +78,7 @@ class Solver(CodesSolver):
     setup_cls = Setup
     run_cls = Run
     teardown_cls = Teardown
+    run_mode_cls = RunMode
 
     DEFAULT_INPUT_FILE = "plasmod_input.dat"
     DEFAULT_OUTPUT_FILE = "plasmod_output.dat"

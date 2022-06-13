@@ -156,6 +156,15 @@ class SolverABC(abc.ABC):
         """
         pass
 
+    @abc.abstractproperty
+    def run_mode_cls(self) -> Type[RunMode]:
+        """
+        Class enumerating the run modes for this solver.
+
+        Common run modes are RUN, MOCK, READ, etc,.
+        """
+        pass
+
     def execute(self, run_mode: RunMode) -> Any:
         """Execute the setup, run, and teardown tasks, in order."""
         result = None
