@@ -961,14 +961,16 @@ class CoilGroup(CoilFieldsMixin, abc.ABC):
         """
         Get x coordinate of each coil
         """
-        return tuple(self._x.flatten())
+        _x = self._x[:]
+        _x.flags.writeable = False
+        return _x
 
     @x.setter
     def x(self, new_x: __ITERABLE_FLOAT) -> None:
         """
         Set x coordinate of each coil
         """
-        self._x[:] = new_x
+        self._x[:] = np.atleast_2d(new_x.T).T
         self._sizer(self)
 
     @property
@@ -976,14 +978,16 @@ class CoilGroup(CoilFieldsMixin, abc.ABC):
         """
         Get z coordinate of each coil
         """
-        return tuple(self._x.flatten())
+        _z = self._z[:]
+        _z.flags.writeable = False
+        return _z
 
     @z.setter
     def z(self, new_z: __ITERABLE_FLOAT) -> None:
         """
         Set z coordinate of each coil
         """
-        self._z[:] = new_z
+        self._z[:] = np.atleast_2d(new_z.T).T
         self._sizer(self)
 
     @property
@@ -991,14 +995,16 @@ class CoilGroup(CoilFieldsMixin, abc.ABC):
         """
         Get dx coordinate of each coil
         """
-        return tuple(self._dx.flatten())
+        _dx = self._dx[:]
+        _dx.flags.writeable = False
+        return _dx
 
     @dx.setter
     def dx(self, new_dx: __ITERABLE_FLOAT) -> None:
         """
         Set dx coordinate of each coil
         """
-        self._dx[:] = new_dx
+        self._dx[:] = np.atleast_2d(new_dx.T).T
         self._sizer(self)
 
     @property
@@ -1006,14 +1012,16 @@ class CoilGroup(CoilFieldsMixin, abc.ABC):
         """
         Get dz coordinate of each coil
         """
-        return tuple(self._dz.flatten())
+        _dz = self._dz[:]
+        _dz.flags.writeable = False
+        return _dz
 
     @dz.setter
     def dz(self, new_dz: __ITERABLE_FLOAT) -> None:
         """
         Set dz coordinate of each coil
         """
-        self._dz[:] = new_dz
+        self._dz[:] = np.atleast_2d(new_dz.T).T
         self._sizer(self)
 
     def make_size(self, current: Optional[__ITERABLE_FLOAT] = None) -> None:
@@ -1290,6 +1298,21 @@ class SymmetricCircuit(Circuit):
     @property
     def name(self):
         return self._circuit_name
+
+    # def mesh_coil(self, weighting = None ):
+
+    #     if weighting is None:
+    #         self._quad_x = self.x.copy()[None]
+    #         self._quad_dx = self.dx.copy()[None]
+    #         self._quad_z = self.z.copy()[None]
+    #         self._quad_dz = self.dz.copy()[None]
+
+    #         self._no_quads = np.arange(self.x.shape[0])
+
+    #     else:
+    #         raise NotImplementedError("TODO meshing")
+
+    #     self._set_quad_weighting(weighting)
 
     def modify_symmetry(self, symmetry_line: np.ndarray[[float, float], [float, float]]):
         """
