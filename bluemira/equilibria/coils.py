@@ -216,7 +216,9 @@ class CoilFieldsMixin:
         """
         Calculate poloidal flux at (x, z) due to a unit current
         """
-        gpsi = greens_psi(self._quad_x, self._quad_z, x, z, self._quad_dx, self._quad_dz)
+        gpsi = greens_psi(
+            self._quad_x, self._quad_z, x, z, self._quad_dx, self._quad_dz
+        ).ravel()
 
         # number of quadratures 5 for the first coil 6 for the second
         # self._noquads = [0, 5, 11]
@@ -302,30 +304,60 @@ class CoilFieldsMixin:
         with the semi-analytic function responses, as a function of position
         outside/inside the coil boundary.
         """
-        x, z = np.ascontiguousarray(np.atleast_2d(x)), np.ascontiguousarray(
-            np.atleast_2d(z)
-        )
+        x, z = np.ascontiguousarray(x), np.ascontiguousarray(z)
 
         lg_or = np.logical_or(self._quad_dx == 0, self._quad_dz == 0)
-
+        # if greens_func == self._control_Bz_greens:
+        #     import ipdb
+        #     ipdb.set_trace()
         if False in lg_or:
             # if dx or dz is not 0 and x,z inside coil
             # TODO improve to remove inside coil calc if already known
             inside = np.logical_and(self._points_inside_coil(x, z), ~lg_or)
+            response = np.zeros(self._x.shape)
 
-            response = np.zeros(x.shape)
-
-            resp = response.reshape(-1)
-            ins = inside.reshape(-1)
-
-            if np.any(~inside):
-                resp[~ins] = greens_func(x[~inside], z[~inside]).reshape(-1)
-            if np.any(inside):
-                resp[ins] = semianalytic_func(x[inside], z[inside]).reshape(-1)
+            self._my_mix(inside, response, x, z, greens_func, semianalytic_func)
         else:
             response = greens_func(x, z)
 
+        print(self.__class__.__name__, response)
+
         return response
+
+    def _my_mix(self, inside, response, x, z, greens_func, semianalytic_func):
+        if np.all(~inside):
+            response[:] = greens_func(x, z).reshape(-1)
+        elif np.all(inside):
+            response[:] = semianalytic_func(x, z).reshape(-1)
+        else:
+            # if np.any(~inside):
+            if "Circuit" in self.__class__.__name__:
+                import ipdb
+
+                ipdb.set_trace()
+
+            # for the quad index you set which coils you want to calculate for
+            # for the point index the same
+            _sav_quad_x = self._quad_x.copy()
+            _sav_quad_z = self._quad_z.copy()
+            self._quad_x = self._quad_x[~inside]
+            self._quad_z = self._quad_z[~inside]
+            response[~inside] = greens_func(x, z).reshape(-1)[~inside]
+            self._quad_x, self._quad_z = _sav_quad_x, _sav_quad_z
+            _sav_x = self._x.copy()
+            _sav_dx = self._dx.copy()
+            _sav_dz = self._dz.copy()
+            _sav_z = self._z.copy()
+            self._x = self._x[inside]
+            self._z = self._z[inside]
+            self._dx = self._dx[inside]
+            self._dz = self._dz[inside]
+            # if np.any(inside):
+            response[inside] = semianalytic_func(x, z).reshape(-1)
+            self._x = _sav_x
+            self._z = _sav_z
+            self._dx = _sav_dx
+            self._dz = _sav_dz
 
     def _points_inside_coil(
         self,
