@@ -10,6 +10,11 @@
         "send": true,
         "recv": true,
         "unit": "dimensionless"
+      },
+      "PLASMOD": {
+        "name": "A",
+        "recv": false,
+        "send": true
       }
     }
   },
@@ -30,6 +35,11 @@
         "send": false,
         "recv": true,
         "unit": "T"
+      },
+      "PLASMOD": {
+        "name": "Bt",
+        "recv": false,
+        "send": true
       }
     }
   },
@@ -114,6 +124,11 @@
         "send": false,
         "recv": true,
         "unit": "dimensionless"
+      },
+      "PLASMOD": {
+        "name": "Hcorr",
+        "recv": true,
+        "send": false
       }
     }
   },
@@ -128,6 +143,11 @@
         "send": false,
         "recv": true,
         "unit": "MA"
+      },
+      "PLASMOD": {
+        "name": "Ip",
+        "recv": true,
+        "send": true
       }
     }
   },
@@ -178,6 +198,11 @@
         "send": false,
         "recv": true,
         "unit": "MW"
+      },
+      "PLASMOD": {
+        "name": "PLH",
+        "recv": true,
+        "unit": "MW"
       }
     }
   },
@@ -192,6 +217,11 @@
         "send": false,
         "recv": true,
         "unit": "MW"
+      },
+      "PLASMOD": {
+        "name": "Pbrehms",
+        "recv": true,
+        "send": false
       }
     }
   },
@@ -234,6 +264,11 @@
         "send": false,
         "recv": true,
         "unit": "MW"
+      },
+      "PLASMOD": {
+        "name": "Pfus",
+        "recv": true,
+        "send": false
       }
     }
   },
@@ -248,6 +283,11 @@
         "send": false,
         "recv": true,
         "unit": "MW"
+      },
+      "PLASMOD": {
+        "name": "Pfusdd",
+        "recv": true,
+        "send": false
       }
     }
   },
@@ -262,6 +302,11 @@
         "send": false,
         "recv": true,
         "unit": "MW"
+      },
+      "PLASMOD": {
+        "name": "Pfusdt",
+        "recv": true,
+        "send": false
       }
     }
   },
@@ -279,6 +324,12 @@
       }
     }
   },
+  "P_hcd_ss_el": {
+    "name": "Steady-state heating and current drive electrical power",
+    "value": 150,
+    "unit": "MW",
+    "source": "PROCESS"
+  },
   "P_line": {
     "name": "Line radiation",
     "value": 30,
@@ -290,6 +341,11 @@
         "send": false,
         "recv": true,
         "unit": "MW"
+      },
+      "PLASMOD": {
+        "name": "Pline",
+        "recv": true,
+        "send": false
       }
     }
   },
@@ -310,6 +366,11 @@
         "send": false,
         "recv": true,
         "unit": "MW"
+      },
+      "PLASMOD": {
+        "name": "Prad",
+        "recv": true,
+        "send": false
       }
     }
   },
@@ -352,6 +413,11 @@
         "send": false,
         "recv": true,
         "unit": "MW"
+      },
+      "PLASMOD": {
+        "name": "Psep",
+        "recv": true,
+        "send": false
       }
     }
   },
@@ -372,6 +438,11 @@
         "send": false,
         "recv": true,
         "unit": "MW"
+      },
+      "PLASMOD": {
+        "name": "Psync",
+        "recv": true,
+        "send": false
       }
     }
   },
@@ -463,6 +534,11 @@
         "send": false,
         "recv": true,
         "unit": "ohm"
+      },
+      "PLASMOD": {
+        "name": "R",
+        "recv": false,
+        "send": true
       }
     }
   },
@@ -512,6 +588,11 @@
         "send": false,
         "recv": false,
         "unit": "m^3"
+      },
+      "PLASMOD": {
+        "name": "volume_in",
+        "recv": false,
+        "send": true
       }
     }
   },
@@ -526,6 +607,11 @@
         "send": false,
         "recv": false,
         "unit": "amu"
+      },
+      "PLASMOD": {
+        "name": "Zeff",
+        "recv": true,
+        "send": false
       }
     }
   },
@@ -564,6 +650,42 @@
     "source": "Input (Lorenzo Boccaccini said this in a meeting in 2015, Garching, Germany)",
     "description": "Sharpest cut of a module possible"
   },
+  "bb_p_inlet": {
+    "name": "Breeding blanket inlet pressure",
+    "value": 8000000.0,
+    "unit": "Pa",
+    "source": "Input (HCPB classic)"
+  },
+  "bb_p_outlet": {
+    "name": "Breeding blanket outlet pressure",
+    "value": 7500000.0,
+    "unit": "Pa",
+    "source": "Input (HCPB classic)"
+  },
+  "bb_pump_eta_el": {
+    "name": "Breeding blanket pumping electrical efficiency",
+    "value": 0.87,
+    "unit": "dimensionless",
+    "source": "Input (D.J. Ward, W.E. Han. Results of system studies for DEMO. Report of DEMO study, Task TW6-TRP-002. July 2007)"
+  },
+  "bb_pump_eta_isen": {
+    "name": "Breeding blanket pumping isentropic efficiency",
+    "value": 0.9,
+    "unit": "dimensionless",
+    "source": "Input (Fabio Cismondi 08/12/16)"
+  },
+  "bb_t_inlet": {
+    "name": "Breeding blanket inlet temperature",
+    "value": 300,
+    "unit": "°C",
+    "source": "Input (HCPB classic)"
+  },
+  "bb_t_outlet": {
+    "name": "Breeding blanket outlet temperature",
+    "value": 500,
+    "unit": "°C",
+    "source": "Input (HCPB classic)"
+  },
   "beta": {
     "name": "Total ratio of plasma pressure to magnetic pressure",
     "value": 0.04,
@@ -582,7 +704,14 @@
     "name": "Normalised ratio of plasma pressure to magnetic pressure",
     "value": 2.7,
     "unit": "dimensionless",
-    "source": "Input"
+    "source": "Input",
+    "mapping": {
+      "PLASMOD": {
+        "name": "betan",
+        "recv": true,
+        "send": false
+      }
+    }
   },
   "beta_p": {
     "name": "Ratio of plasma pressure to poloidal magnetic pressure",
@@ -595,6 +724,11 @@
         "send": false,
         "recv": true,
         "unit": "dimensionless"
+      },
+      "PLASMOD": {
+        "name": "betapol",
+        "recv": true,
+        "send": false
       }
     }
   },
@@ -661,6 +795,11 @@
         "send": false,
         "recv": true,
         "unit": "dimensionless"
+      },
+      "PLASMOD": {
+        "name": "d",
+        "recv": true,
+        "send": true
       }
     }
   },
@@ -675,6 +814,11 @@
         "send": false,
         "recv": true,
         "unit": "dimensionless"
+      },
+      "PLASMOD": {
+        "name": "d95",
+        "recv": false,
+        "send": true
       }
     }
   },
@@ -720,12 +864,46 @@
     "unit": "m",
     "source": "Input"
   },
+  "div_pump_eta_el": {
+    "name": "Divertor pumping electrical efficiency",
+    "value": 0.87,
+    "unit": "dimensionless",
+    "source": "Input (F. Cismondi)"
+  },
+  "div_pump_eta_isen": {
+    "name": "Divertor pumping isentropic efficiency",
+    "value": 0.99,
+    "unit": "dimensionless",
+    "source": "Input (F. Cismondi)"
+  },
   "dmd": {
     "name": "Divertor maintenance duration",
     "value": 90,
     "unit": "days",
     "source": "Input",
     "description": "Full replacement intervention duration"
+  },
+  "e_decay_mult": {
+    "name": "Decay heat multiplication factor",
+    "value": 1.0175,
+    "unit": "dimensionless",
+    "source": "Input (PPCS FWBL Helium Cooled Model P PPCS04 D5part1)",
+    "description": "Quasi-instantaneous energy multiplication; still present when plasma is off"
+  },
+  "e_mult": {
+    "name": "Energy multiplication factor",
+    "value": 1.35,
+    "unit": "dimensionless",
+    "source": "Input (HCPB classic)",
+    "description": "Instantaneous energy multiplication due to neutron multiplication and the like",
+    "mapping": {
+      "PROCESS": {
+        "name": "emult",
+        "send": true,
+        "recv": false,
+        "unit": "dimensionless"
+      }
+    }
   },
   "e_nbi": {
     "name": "Neutral beam energy",
@@ -780,6 +958,11 @@
         "send": false,
         "recv": true,
         "unit": "dimensionless"
+      },
+      "PLASMOD": {
+        "name": "fbs",
+        "recv": true,
+        "send": false
       }
     }
   },
@@ -794,6 +977,18 @@
     "value": 0.1,
     "unit": "dimensionless",
     "source": "Input"
+  },
+  "f_core_rad_fw": {
+    "name": "Fraction of core radiation power that is distributed to the blanket FW",
+    "value": 0.9,
+    "unit": "dimensionless",
+    "source": "Input (MC guess)"
+  },
+  "f_fw_aux": {
+    "name": "Fraction of first wall power that goes into auxiliary systems",
+    "value": 0.09,
+    "unit": "dimensionless",
+    "source": "Input (F. Maviglia standard)"
   },
   "f_hfs_lower_target": {
     "name": "Fraction of SOL power deposited on the HFS lower target",
@@ -830,6 +1025,11 @@
         "send": false,
         "recv": false,
         "unit": "dimensionless"
+      },
+      "PLASMOD": {
+        "name": "f_ni",
+        "recv": false,
+        "send": true
       }
     }
   },
@@ -838,6 +1038,25 @@
     "value": 0.65,
     "unit": "dimensionless",
     "source": "Input"
+  },
+  "f_sol_ch_fw": {
+    "name": "Fraction of SOL charged particle power that is distributed to the blanket FW",
+    "value": 0.8,
+    "unit": "dimensionless",
+    "source": "Input (F. Maviglia standard)"
+  },
+  "f_sol_rad": {
+    "name": "Fraction of SOL power radiated",
+    "value": 0.75,
+    "unit": "dimensionless",
+    "source": "Input (F. Maviglia standard)",
+    "description": "The rest is assumed to be in the form of charged particles"
+  },
+  "f_sol_rad_fw": {
+    "name": "Fraction of radiated SOL power that is distributed to the blanket FW",
+    "value": 0.8,
+    "unit": "dimensionless",
+    "source": "Input (MC guess)"
   },
   "fw_a_max": {
     "name": "Maximum angle between FW modules",
@@ -1135,6 +1354,11 @@
         "send": false,
         "recv": true,
         "unit": "dimensionless"
+      },
+      "PLASMOD": {
+        "name": "k",
+        "recv": true,
+        "send": true
       }
     }
   },
@@ -1149,6 +1373,11 @@
         "send": false,
         "recv": true,
         "unit": "dimensionless"
+      },
+      "PLASMOD": {
+        "name": "k95",
+        "recv": false,
+        "send": true
       }
     }
   },
@@ -1163,6 +1392,11 @@
         "send": false,
         "recv": false,
         "unit": "dimensionless"
+      },
+      "PLASMOD": {
+        "name": "rli",
+        "recv": true,
+        "send": false
       }
     }
   },
@@ -1322,6 +1556,11 @@
         "send": false,
         "recv": false,
         "unit": "dimensionless"
+      },
+      "PLASMOD": {
+        "name": "q95",
+        "recv": true,
+        "send": true
       }
     }
   },
@@ -1549,7 +1788,14 @@
     "name": "Plasma resistance",
     "value": 0,
     "unit": "ohm",
-    "source": "Calculated"
+    "source": "Calculated",
+    "mapping": {
+      "PLASMOD": {
+        "name": "rplas",
+        "recv": true,
+        "send": false
+      }
+    }
   },
   "rs_l_d": {
     "name": "Radiation shield labyrinth delta",
@@ -1610,6 +1856,11 @@
         "send": false,
         "recv": true,
         "unit": "s"
+      },
+      "PLASMOD": {
+        "name": "taueff",
+        "recv": true,
+        "send": false
       }
     }
   },
@@ -2239,6 +2490,11 @@
         "send": false,
         "recv": true,
         "unit": "V"
+      },
+      "PLASMOD": {
+        "name": "v_loop",
+        "recv": true,
+        "send": true
       }
     }
   },

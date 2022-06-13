@@ -68,5 +68,5 @@
     "eta_nb": 0.4,
     "sigma_tf_max": 550000000.0,
     "C_Ejima": 0.3,
-    "bb_e_mult": 1.269
+    "e_mult": 1.269
 }

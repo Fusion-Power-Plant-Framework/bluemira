@@ -89,6 +89,7 @@ class ConfigurationSchema:
     f_ni: Parameter
     e_nbi: Parameter
     P_hcd_ss: Parameter
+    P_hcd_ss_el: Parameter
     q_control: Parameter
     g_cd_nb: Parameter
     eta_nb: Parameter
@@ -105,6 +106,13 @@ class ConfigurationSchema:
     TF_currpt_ob: Parameter
     P_bd_in: Parameter
     condrad_cryo_heat: Parameter
+
+    # Radiation and charged particles
+    f_core_rad_fw: Parameter
+    f_sol_rad: Parameter
+    f_sol_rad_fw: Parameter
+    f_sol_ch_fw: Parameter
+    f_fw_aux: Parameter
 
     # First wall profile
     fw_psi_n: Parameter
@@ -155,7 +163,6 @@ class ConfigurationSchema:
     xpt_height: Parameter
 
     # Blanket
-    bb_e_mult: Parameter
     bb_min_angle: Parameter
     tk_r_ib_bz: Parameter
     tk_r_ib_manifold: Parameter
@@ -165,11 +172,21 @@ class ConfigurationSchema:
     tk_r_ob_bss: Parameter
     n_bb_inboard: Parameter
     n_bb_outboard: Parameter
+    bb_t_inlet: Parameter
+    bb_t_outlet: Parameter
+    bb_p_inlet: Parameter
+    bb_p_outlet: Parameter
+    bb_pump_eta_el: Parameter
+    bb_pump_eta_isen: Parameter
 
     # ST Breeding blanket
     g_bb_fw: Parameter
     tk_bb_bz: Parameter
     tk_bb_man: Parameter
+
+    # Divertor
+    div_pump_eta_el: Parameter
+    div_pump_eta_isen: Parameter
 
     # Component radial thicknesses (some vertical)
     tk_bb_ib: Parameter
@@ -286,6 +303,8 @@ class ConfigurationSchema:
     div_dpa: Parameter
     vv_dpa: Parameter
     tf_fluence: Parameter
+    e_mult: Parameter
+    e_decay_mult: Parameter
 
     # Central solenoid
     F_pf_zmax: Parameter

@@ -246,9 +246,19 @@ class NeutronPowerStrategy(FractionSplitStrategy):
         Fraction of neutron power going to other systems
     energy_multiplication: float
         Energy multiplication factor applied to blanket neutron power
+    decay_multiplication: float
+        Decay energy multiplication applied to the blanket neutron power
     """
 
-    def __init__(self, f_blanket, f_divertor, f_vessel, f_other, energy_multiplication):
+    def __init__(
+        self,
+        f_blanket,
+        f_divertor,
+        f_vessel,
+        f_other,
+        energy_multiplication,
+        decay_multiplication,
+    ):
         self.check_fractions([f_blanket, f_divertor, f_vessel, f_other])
         self.f_blanket = f_blanket
         self.f_divertor = f_divertor
@@ -258,7 +268,12 @@ class NeutronPowerStrategy(FractionSplitStrategy):
             raise BalanceOfPlantError(
                 "Energy multiplication factor cannot be less than 1.0"
             )
+        if decay_multiplication < 1.0:
+            raise BalanceOfPlantError(
+                "Decay multiplication factor cannot be less than 1.0"
+            )
         self.nrg_mult = energy_multiplication
+        self.dec_mult = decay_multiplication
 
     def split(self, neutron_power):
         """
@@ -280,14 +295,17 @@ class NeutronPowerStrategy(FractionSplitStrategy):
         aux_power: float
             Neutron power to auxiliary systems
         mult_power: float
-            Energy multiplication power (in the blanket, sort of..)
+            Energy multiplication power which is assumed to come solely from the blanket
+        decay_power: float
+            Decay power which is assumed to come solely from the blanket
         """
         blk_power = self.f_blanket * self.nrg_mult * neutron_power
         div_power = self.f_divertor * neutron_power
         vv_power = self.f_vessel * neutron_power
         aux_power = self.f_other * neutron_power
         mult_power = blk_power - self.f_blanket * neutron_power
-        return blk_power, div_power, vv_power, aux_power, mult_power
+        decay_power = (self.dec_mult - 1.0) * neutron_power
+        return blk_power, div_power, vv_power, aux_power, mult_power, decay_power
 
 
 class RadChargedPowerStrategy(FractionSplitStrategy):
@@ -305,16 +323,16 @@ class RadChargedPowerStrategy(FractionSplitStrategy):
         Fraction of radiated SOL power that is distributed to the first wall
     f_sol_ch_fw: float
         Fraction of SOL charged particle power that is distributed to the first wall
-    f_fw_blk: float
+    f_fw_aux: float
         Fraction of first power that actually goes into auxiliary systems
     """
 
-    def __init__(self, f_core_rad_fw, f_sol_rad, f_sol_rad_fw, f_sol_ch_fw, f_fw_blk):
+    def __init__(self, f_core_rad_fw, f_sol_rad, f_sol_rad_fw, f_sol_ch_fw, f_fw_aux):
         self.f_core_rad_fw = f_core_rad_fw
         self.f_sol_rad = f_sol_rad
         self.f_sol_rad_fw = f_sol_rad_fw
         self.f_sol_ch_fw = f_sol_ch_fw
-        self.f_fw_blk = f_fw_blk
+        self.f_fw_aux = f_fw_aux
 
     def split(self, p_radiation, p_separatrix):
         """
@@ -343,37 +361,40 @@ class RadChargedPowerStrategy(FractionSplitStrategy):
 
         # Split first wall into blanket and auxiliary
         p_rad_sep_fw = p_core_rad_fw + p_sol_rad_fw + p_sol_charged_fw
-        p_rad_sep_blk = p_rad_sep_fw * self.f_fw_blk
+        p_rad_sep_blk = p_rad_sep_fw * (1 - self.f_fw_aux)
         p_rad_sep_aux = p_rad_sep_fw - p_rad_sep_blk
         p_rad_sep_div = p_core_rad_div + p_sol_rad_div + p_sol_charged_div
         return p_rad_sep_blk, p_rad_sep_div, p_rad_sep_aux
 
 
-class ParasiticLoadStrategy:
+class ParasiticLoadStrategy(abc.ABC):
     """
-    Ciattaglia reference point from the mid 2010's...
+    Strategy for calculating the parasitic loads
     """
 
-    def __init__(self):
-        self.p_fusion_ref = 2037
-        self.p_cryo = 44
-        self.p_mag = 44
-        self.p_t_plant = 15.5
-        self.p_other = 31
+    def __init__(self, *args, **kwargs):
+        pass
 
-    def calculate(self, p_fusion):
+    @abc.abstractmethod
+    def calculate(*args, **kwargs):
         """
-        Because we were told to do this. Nobody trusts models.
+        Calculate the parasitic loads somehow
+
+        Returns
+        -------
+        p_mag: float
+            Parasitic loads to power the magnets
+        p_cryo: float
+            Parasitic loads to power the cryoplant
+        p_t_plant: float
+            Parasitic loads to power the tritium plant
+        p_other: float
+            Parasitic loads to power other miscellaneous things
         """
-        f_norm = p_fusion / self.p_fusion_ref
-        p_mag = f_norm * self.p_mag
-        p_cryo = f_norm * self.p_cryo
-        p_t_plant = f_norm * self.p_t_plant
-        p_other = f_norm * self.p_other
-        return p_mag, p_cryo, p_t_plant, p_other
+        pass
 
 
-class BalanceOfPlant:
+class BalanceOfPlantModel:
     """
     Balance of plant calculator for a fusion power reactor
 
@@ -443,16 +464,22 @@ class BalanceOfPlant:
         p_charged = self.params.P_fus_DT.value + self.params.P_fus_DD.value - p_neutron
 
         p_radiation = self.params.P_rad.value
-        p_hcd = self.params.P_hcd.value
-        p_hcd_el = self.params.P_hcd_el.value
+        p_hcd = self.params.P_hcd_ss.value
+        p_hcd_el = self.params.P_hcd_ss_el.value
         p_separatrix = p_charged - p_radiation + p_hcd
-        p_n_blk, p_n_div, p_n_vv, p_n_aux, p_nrgm = self.neutron_strat.split(p_neutron)
+        (
+            p_n_blk,
+            p_n_div,
+            p_n_vv,
+            p_n_aux,
+            p_nrgm,
+            p_blk_decay,
+        ) = self.neutron_strat.split(p_neutron)
         p_rad_sep_blk, p_rad_sep_div, p_rad_sep_aux = self.rad_sep_strat.split(
             p_radiation, p_separatrix
         )
         p_rad_sep_fw = p_rad_sep_blk + p_rad_sep_aux
 
-        p_blk_decay = self.params.P_bb_decay.value
         p_blanket = p_n_blk + p_blk_decay + p_rad_sep_blk
         p_blk_pump, p_blk_pump_el = self.blanket_pump_strat.pump(p_blanket)
         p_blanket += p_blk_pump

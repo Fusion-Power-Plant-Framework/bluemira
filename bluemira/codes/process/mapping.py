@@ -81,7 +81,7 @@ IN_mappings = {
     "e_nbi": ("enbeam", "keV"),
     "P_hcd_ss": ("pinjalw", "MW"),
     "eta_nb": ("etanbi", "dimensionless"),
-    "bb_e_mult": ("emult", "dimensionless"),
+    "e_mult": ("emult", "dimensionless"),
     "tk_sh_out": ("shldoth", "m"),
     "tk_sh_top": ("shldtth", "m"),
     "tk_sh_bot": ("shldlth", "m"),

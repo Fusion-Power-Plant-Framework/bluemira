@@ -533,3 +533,13 @@ sector.add_child(cts_builder.build_xyz(degree=270))
 sector.add_child(cryostat_builder.build_xyz(degree=270))
 sector.add_child(radiation_shield_builder.build_xyz(degree=270))
 sector.show_cad()
+
+# %%[markdown]
+# ### Inspecting the power cycle
+
+# We can get an overview of the reactor power cycle as follows:
+
+# %%
+
+power_cycle_solver = reactor.get_solver(EUDEMOReactor.POWER_CYCLE)
+power_cycle_solver.model.plot()
