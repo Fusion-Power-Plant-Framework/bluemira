@@ -763,18 +763,15 @@ class CoilGroup(CoilFieldsMixin, abc.ABC):
 
         n_c = len(kwargs["x"]) if isinstance(kwargs["x"], Iterable) else 1
         for name, arg in kwargs.items():
-            if isinstance(arg, (str, CoilType, type(None))) and name in [
-                "name",
-                "ctype",
-            ]:
-                arg = [arg for _ in range(n_c)]
-            elif isinstance(arg, np.ndarray) and arg.ndim != 2:
-                arg = arg[:, None]
-            elif isinstance(arg, Iterable):
-                if isinstance(arg[0], (int, float, complex)):
-                    arg = np.array(arg)[:, None]
+            if name in ["name", "ctype"]:
+                if isinstance(arg, (str, type(None), CoilType)):
+                    arg = [arg for _ in range(n_c)]
+            elif isinstance(arg, Iterable) and isinstance(
+                arg[0], (int, float, complex, CoilType)
+            ):
+                arg = np.array(arg)
             else:
-                arg = np.array([arg for _ in range(n_c)], dtype=float)[:, None]
+                arg = np.array([arg for _ in range(n_c)], dtype=float)
             ret[name] = arg
 
         return ret
@@ -1356,14 +1353,21 @@ class SymmetricCircuit(Circuit):
             - (np.dot(self._point - self._symmetry_point, self._uv) * self._uv)
         )
 
+    def _resymmetrise_x(self):
+        self._point[0] = self._x[0]
+        self._x[1] = self._point[0] - self._symmetrise()[0]
+
+    def _resymmetrise_z(self):
+        self._point[1] = self._z[0]
+        self._z[1] = self._point[1] - self._symmetrise()[1]
+
     @Circuit.x.setter
     def x(self, new_x: float) -> None:
         """
         Set x coordinate of each coil
         """
-
         self._x[0] = self._point[0] = new_x
-        self._x[1] = new_x - self._symmetrise()[0]
+        self._x[1] = self._point[0] - self._symmetrise()[0]
         self._sizer(self)
 
     @Circuit.z.setter
@@ -1372,7 +1376,7 @@ class SymmetricCircuit(Circuit):
         Set z coordinate of each coil
         """
         self._z[0] = self._point[1] = new_z
-        self._z[1] = new_z - self._symmetrise()[1]
+        self._z[1] = self._point[1] - self._symmetrise()[1]
         self._sizer(self)
 
     @Circuit.position.setter
@@ -1417,6 +1421,26 @@ class CoilSet(CoilGroup):
             )
         )
 
+    # @CoilGroup.x.setter
+    # def x(self, new_x: __ITERABLE_FLOAT):
+    #     self._x[:] = np.atleast_2d(new_x.T).T
+    #     self._ensure_symmetry('x')
+
+    # @CoilGroup.z.setter
+    # def z(self, new_z: __ITERABLE_FLOAT):
+    #     self._z[:] = np.atleast_2d(new_z.T).T
+    #     self._ensure_symmetry('z')
+    @staticmethod
+    def _sizer(self):
+        for cg in self.__coilgroups.values():
+            cg._sizer(cg)
+
+    def _ensure_symmetry(self, prop):
+        for no, cg in enumerate(self.__coilgroups.values()):
+            if self._circuits[no]:
+                getattr(cg, f"_resymmetrise_{prop}")()
+            cg._sizer(cg)
+
     @staticmethod
     def _convert_to_coilgroup(
         coils: Tuple[Union[CoilGroup, List, Dict]]
@@ -1433,6 +1457,7 @@ class CoilSet(CoilGroup):
 
     def _process_coilgroups(self, coilgroups: List[CoilGroup]):
         self.__coilgroups = {cg.name: cg for cg in coilgroups}
+        self._circuits = [isinstance(cg, Circuit) for cg in coilgroups]
 
         # filters = {
         #     group.name: partial(
@@ -1483,6 +1508,10 @@ class CoilSet(CoilGroup):
                 setattr(group, name, attributes[name][index_slice])
 
         return attributes
+
+    @property
+    def name(self):
+        return list(self.__coilgroups.keys())
 
     def get_coil(self, name_or_id):
         """
