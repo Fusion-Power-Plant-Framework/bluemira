@@ -164,22 +164,39 @@ class CoilFieldsMixin:
 
     def _set_quad_weighting(self, weighting=None):
         self._quad_weighting = (
-            np.ones(self.x.shape[0]) if weighting is None else weighting
+            np.ones(self._x.shape[0]) if weighting is None else weighting
         )
 
-    def mesh_coil(self, weighting=None):
+    def mesh_coil(self, weighting: Optional[np.ndarray] = None):
         # each quadrature array = (quadrature, (x,z))
 
         if weighting is None:
-            self._quad_x = self.x.copy()
-            self._quad_dx = self.dx.copy()
-            self._quad_z = self.z.copy()
-            self._quad_dz = self.dz.copy()
+            self._quad_x = self._x.copy()
+            self._quad_dx = self._dx.copy()
+            self._quad_z = self._z.copy()
+            self._quad_dz = self._dz.copy()
 
-            self._no_quads = np.arange(self.x.shape[0])
+            self._no_quads = np.arange(self._x.shape[0])
 
         else:
-            raise NotImplementedError("TODO meshing")
+            # How fancy do we want the mesh or just smaller rectangles?
+            # Smaller rectangles
+            for i, (coil_x, coil_z) in enumerate(zip(self._x, self._z)):
+
+                nx, nz = weighting[i]
+                dx, dz = self._dx[i] / nx, self._dz[i] / nz
+
+                # Calculate sub-coil centroids
+                x_sc = (coil_x - self._dx[i]) + dx * np.arange(1, 2 * nx, 2)
+                z_sc = (coil_z - self._dz[i]) + dz * np.arange(1, 2 * nz, 2)
+                x_sc, z_sc = np.meshgrid(x_sc, z_sc)
+
+                # Obviously wont work need to do array stuff
+                current = self.current / (nx * nz)  # Current per coil filament
+                self._quad_x = x_sc.flat
+                self._quad_z = z_sc.flat
+                self._quad_dx = dx
+                self._quad_dz = dz
 
         self._set_quad_weighting(weighting)
 
