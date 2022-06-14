@@ -44,16 +44,19 @@ class Teardown(CodesTeardown):
     params: ParameterFrame
         The parameters for this task.
     run_directory: str
-        The PROCESS run directory containing PROCESS's output files.
+        The directory in which to run PROCESS. Used in run, and runinput
+        functions.
+    read_directory: str
+        The directory to read PROCESS output files from. Used in read,
+        readall, and mock functions.
     """
 
     MOCK_JSON_NAME = "mockPROCESS.json"
 
-    def __init__(self, params: ParameterFrame, run_directory: str) -> None:
+    def __init__(self, params: ParameterFrame, run_directory: str, read_directory: str):
         super().__init__(params, PROCESS_NAME)
-
         self.run_directory = run_directory
-        self._mfile_path = os.path.join(run_directory, "MFILE.DAT")
+        self.read_directory = read_directory
 
     def run(self):
         """
@@ -62,7 +65,7 @@ class Teardown(CodesTeardown):
         This loads the MFile in the run directory and maps its outputs
         to bluemira parameters.
         """
-        self._load_mfile(self._mfile_path, recv_all=False)
+        self._load_mfile(os.path.join(self.run_directory, "MFILE.DAT"), recv_all=False)
 
     def runinput(self):
         """
@@ -71,7 +74,7 @@ class Teardown(CodesTeardown):
         This loads the MFile in the run directory and maps its outputs
         to bluemira parameters.
         """
-        self._load_mfile(self._mfile_path, recv_all=True)
+        self._load_mfile(os.path.join(self.run_directory, "MFILE.DAT"), recv_all=True)
 
     def read(self):
         """
@@ -80,7 +83,7 @@ class Teardown(CodesTeardown):
         This loads the MFile in the run directory and maps its outputs
         to bluemira parameters.
         """
-        self._load_mfile(self._mfile_path, recv_all=False)
+        self._load_mfile(os.path.join(self.read_directory, "MFILE.DAT"), recv_all=False)
 
     def readall(self):
         """
@@ -89,7 +92,7 @@ class Teardown(CodesTeardown):
         This loads the MFile in the run directory and maps its outputs
         to bluemira parameters.
         """
-        self._load_mfile(self._mfile_path, recv_all=True)
+        self._load_mfile(os.path.join(self.read_directory, "MFILE.DAT"), recv_all=True)
 
     def mock(self):
         """
@@ -99,7 +102,7 @@ class Teardown(CodesTeardown):
         loads the values into this task's params.
         """
         bluemira_print("Mocking PROCESS systems code run")
-        mock_file_path = os.path.join(self.run_directory, self.MOCK_JSON_NAME)
+        mock_file_path = os.path.join(self.read_directory, self.MOCK_JSON_NAME)
         outputs = _read_json_file_or_raise(mock_file_path)
         self.params.update_kw_parameters(outputs)
 

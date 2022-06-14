@@ -62,8 +62,7 @@ def file_exists(good_file_path: str, isfile_ref: str):
 
     .. code-block:: python
 
-        isfile_ref = "module.under.test.os.path.isfile"
-        with file_exists("some/file", isfile_ref):
+        with file_exists("some/file", "module.under.test.os.path.isfile"):
             # do some work pretending "some/file" is a file
 
     """
@@ -71,7 +70,7 @@ def file_exists(good_file_path: str, isfile_ref: str):
     def new_isfile(path: str) -> bool:
         if Path(good_file_path).resolve() == Path(path).resolve():
             return True
-        return os.path.isfile(path)
+        return os.path.exists(path) and not os.path.isdir(path)
 
     with mock.patch(isfile_ref, new=new_isfile) as is_file_mock:
         yield is_file_mock

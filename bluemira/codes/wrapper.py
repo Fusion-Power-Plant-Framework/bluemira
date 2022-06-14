@@ -90,8 +90,6 @@ def plot_radial_build(
 def transport_code_solver(
     params: ParameterFrame,
     build_config: BuildConfig,
-    run_dir: Optional[str] = None,
-    read_dir: Optional[str] = None,
     module: Optional[str] = "PLASMOD",
 ) -> CodesSolver:
     """
@@ -103,10 +101,6 @@ def transport_code_solver(
         ParameterFrame for plasmod
     build_config: Dict
         build configuration dictionary
-    run_dir: str
-        Plasmod run directory
-    read_dir: str
-        Directory to read in previous run
 
     Returns
     -------
@@ -114,4 +108,4 @@ def transport_code_solver(
         The solver object to be run
     """
     transp = get_code_interface(module)
-    return transp.Solver(params, build_config, run_dir, read_dir)
+    return transp.Solver(params, build_config)

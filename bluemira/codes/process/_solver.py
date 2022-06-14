@@ -126,6 +126,7 @@ class Solver(CodesSolver):
         _build_config = copy.deepcopy(build_config)
         self.binary = _build_config.pop("binary", PROCESS_BINARY)
         self.run_directory = _build_config.pop("run_dir", os.getcwd())
+        self.read_directory = _build_config.pop("read_dir", os.getcwd())
         self.template_in_dat = _build_config.pop("template_in_dat", DEFAULT_INDAT)
         self.problem_settings = _build_config.pop("problem_settings", {})
         self.in_dat_path = _build_config.pop(
@@ -152,7 +153,7 @@ class Solver(CodesSolver):
             self.params, self.in_dat_path, self.problem_settings, self.template_in_dat
         )
         self._run = Run(self.params, self.in_dat_path, self.binary)
-        self._teardown = Teardown(self.params, self.run_directory)
+        self._teardown = Teardown(self.params, self.run_directory, self.read_directory)
 
         setup = self._get_execution_method(self._setup, run_mode)
         run = self._get_execution_method(self._run, run_mode)

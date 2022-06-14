@@ -98,7 +98,10 @@ class EUDEMOReactor(Reactor):
         """
         Run the systems code module in the requested run mode.
         """
+        # Use the generated/reference data dirs as read/run defaults,
+        # but these can be overridden for the specific systems code.
         default_config = {
+            "read_dir": self._file_manager.reference_data_dirs["systems_code"],
             "run_dir": self._file_manager.generated_data_dirs["systems_code"],
         }
         config = self._process_design_stage_config(default_config)
