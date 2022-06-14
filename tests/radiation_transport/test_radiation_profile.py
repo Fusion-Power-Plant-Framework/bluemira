@@ -22,13 +22,16 @@
 import os
 
 import numpy as np
+import pytest
 
+from bluemira.base.error import BuilderError
 from bluemira.base.file import get_bluemira_path
 from bluemira.base.parameter import ParameterFrame
 from bluemira.equilibria.equilibrium import Equilibrium
 from bluemira.geometry._deprecated_loop import Loop
 from bluemira.radiation_transport.advective_transport import ChargedParticleSolver
 from bluemira.radiation_transport.radiation_profile import (
+    Core,
     Radiation,
     ScrapeOffLayer,
     STScrapeOffLayer,
@@ -81,6 +84,7 @@ class TestRadiation:
 
         cls.rad = Radiation(cls.solver, plasma_params)
         cls.tpm = TwoPointModelTools(cls.solver, plasma_params, rad_params)
+        cls.core = Core(cls.solver, plasma_params)
         cls.sol = ScrapeOffLayer(cls.solver, plasma_params)
         cls.st_sol = STScrapeOffLayer(
             cls.solver,
@@ -91,11 +95,23 @@ class TestRadiation:
             cls.fw,
         )
 
+    def test_collect_flux_tubes(self):
+        psi = np.linspace(1, 1.5, 5)
+        ft = self.rad.collect_flux_tubes(psi)
+        assert len(ft) == 5
+
     def test_core_flux_tube_pol_t(self):
         flux_tube = self.solver.eq.get_flux_surface(0.99)
         te = self.rad.flux_tube_pol_t(flux_tube, 100, True)
         assert te[0] == te[-1]
         assert len(te) == len(flux_tube)
+
+    def test_core_flux_tube_pol_n(self):
+        flux_tube = self.solver.eq.get_flux_surface(0.99)
+        ne_mp = 2e20
+        ne = self.rad.flux_tube_pol_n(flux_tube, ne_mp, True)
+        assert ne[0] == ne[-1]
+        assert len(ne) == len(flux_tube)
 
     def test_key_temperatures(self):
         self.t_u, q_u = self.tpm.upstream_temperature(self.fw)
@@ -128,11 +144,63 @@ class TestRadiation:
         gap_3 = decayed_val[-2] - decayed_val[-1]
         assert gap_1 > gap_2 > gap_3
 
+    def test_ion_front_distance(self):
+        distance = self.tpm.ion_front_distance(6, -9, 1e-3, 1, 1, 2e20)
+        assert distance is not None
+        assert np.round(distance, 1) == 2.6
+
+    def test_calculate_z_species(self):
+        t_ref = np.array([0, 10])
+        z_ref = np.array([10, 20])
+        frac = 0.1
+        t_test = 5
+        z = self.tpm.calculate_z_species(t_ref, z_ref, frac, t_test)
+        assert z == 22.5
+
+    def test_rho_core(self):
+        rho_core = self.core.collect_rho_core_values()
+        assert rho_core[0] == 0
+        assert rho_core[-1] < 1
+
+    def test_core_electron_density_temperature_profile(self):
+        rho = np.linspace(0, 1, 10)
+        ne_core, te_core = self.core.core_electron_density_temperature_profile(rho)
+        assert len(ne_core) == len(te_core)
+        assert ne_core[0] > ne_core[-1]
+        assert te_core[0] > te_core[-1]
+
+    def test_rho_sol(self):
+        rho_sol = self.sol.collect_rho_sol_values()
+        assert rho_sol[0] > 1
+
     def test_rad_region_extention(self):
         z_main_low, z_pfr_low = self.sol.x_point_radiation_z_ext()
         z_main_up, z_pfr_up = self.sol.x_point_radiation_z_ext(low_div=False)
         assert z_main_low > z_pfr_low
         assert z_main_up < z_pfr_up
+
+    def test_mp_electron_density_temperature_profiles(self):
+        te_sol, ne_sol = self.st_sol.mp_electron_density_temperature_profiles()
+        assert len(te_sol) == len(ne_sol)
+        assert te_sol[0] < self.st_sol.plasma_params.T_el_sep
+        assert te_sol[0] > te_sol[-1]
+
+    def test_build_sector_profiles(self):
+        tubes = self.st_sol.flux_tubes_lfs_low
+        x_strike = self.st_sol.x_strike_lfs
+        z_strike = self.st_sol.z_strike_lfs
+
+        with pytest.raises(
+            BuilderError, match="Required recycling region extention: rec_ext"
+        ):
+            self.st_sol.build_sector_profiles(tubes, x_strike, z_strike, 0.5, self.fw)
+
+        with pytest.raises(
+            BuilderError, match="Required extention towards pfr: pfr_ext"
+        ):
+            self.st_sol.build_sector_profiles(
+                tubes, x_strike, z_strike, 0.5, self.fw, x_point_rad=True
+            )
 
     def test_ST_sectors(self):
         # sol flux tubes temperature and density
