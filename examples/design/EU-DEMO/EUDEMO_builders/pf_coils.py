@@ -329,10 +329,10 @@ class PFCoilsBuilder(Builder):
                 "SLSQP", opt_conditions={"max_eval": 1000, "ftol_rel": 1e-6}
             ),
             equilibrium_convergence=DudsonConvergence(1e-3),
-            equilibrium_settings={"gamma": 1e-8, "relaxation": 0.1},
+            equilibrium_settings={"gamma": 0.0, "relaxation": 0.1},
             position_problem_cls=PulsedNestedPositionCOP,
             position_optimiser=Optimiser(
-                "COBYLA", opt_conditions={"max_eval": 100, "ftol_rel": 1e-4}
+                "COBYLA", opt_conditions={"max_eval": 100, "ftol_rel": 1e-6}
             ),
             limiter=None,
         )

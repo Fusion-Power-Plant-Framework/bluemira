@@ -1024,6 +1024,13 @@ class PulsedNestedPositionCOP(CoilsetOptimisationProblem):
 
         return fom_value
 
+    def _get_initial_vector(self):
+        x, z = [], []
+        for name in self.position_mapper.interpolators:
+            x.append(self.coilset.coils[name].x)
+            z.append(self.coilset.coils[name].z)
+        return self.position_mapper.to_L(x, z)
+
     def optimise(self, x0=None, verbose=False):
         """
         Run the PulsedNestedPositionCOP
@@ -1040,11 +1047,10 @@ class PulsedNestedPositionCOP(CoilsetOptimisationProblem):
         coilset: CoilSet
             Optimised CoilSet
         """
-        if verbose:
-            self._objective._args["verbose"] = True
+        self._objective._args["verbose"] = verbose
 
         if x0 is None:
-            x0 = 0.5 * np.ones(self.opt.n_variables)
+            x0 = self._get_initial_vector()
         optimal_positions = self.opt.optimise(x0)
         self.update_positions(optimal_positions, self.coilset, self.position_mapper)
         for sub_opt in self.sub_opt_probs:
