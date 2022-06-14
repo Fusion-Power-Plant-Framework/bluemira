@@ -545,18 +545,27 @@ def make_coil_mapper(track, exclusion_zones, coils):
                 segment.parameter_at([c.x, 0, c.z], tolerance=VERY_BIG) for c in coils
             ]
             split_values = l_values[:-1] + 0.5 * np.diff(l_values)
+            idx = np.argsort(split_values)
+            split_values = split_values[idx]
+            sorted_coils = []
+            for i in idx:
+                sorted_coils.append(coils.pop(i))
+            sorted_coils.append(coils[-1])
+
+            coils = sorted_coils
+            split_positions = [segment.value_at(alpha=split) for split in split_values]
 
             sub_segs = []
-            for i, split in enumerate(split_values):
-                sub_seg, segment = split_wire(
+            for i, split_pos in enumerate(split_positions):
+                split = segment.parameter_at(split_pos, tolerance=10 * EPS)
+                sub_seg_1, segment = split_wire(
                     segment, segment.value_at(alpha=split), tolerance=10 * EPS
                 )
-                if sub_seg:
-                    sub_segs.append(sub_seg)
+                if sub_seg_1:
+                    sub_segs.append(sub_seg_1)
                 else:
                     bluemira_warn("Sub-segment of 0 length!")
-                if i == len(split_values) - 1:
-                    sub_segs.append(segment)
+            sub_segs.append(segment)
 
             for coil, sub_seg in zip(coils, sub_segs):
                 interpolator_dict[coil.name] = PathInterpolator(sub_seg)
