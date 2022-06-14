@@ -76,7 +76,7 @@ class TestSolverSystem:
         params = Configuration()
         # Assert here to check the parameter is actually changing
         assert params.r_tf_in_centre != pytest.approx(2.6354)
-        build_config = {"run_dir": self.DATA_DIR}
+        build_config = {"read_dir": self.DATA_DIR}
 
         solver = Solver(params, build_config)
         solver.execute(run_mode)
