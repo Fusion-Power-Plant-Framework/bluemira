@@ -47,7 +47,7 @@ from bluemira.builders.EUDEMO.equilibria import estimate_kappa95
 from bluemira.codes import systems_code_solver
 
 # Equilibria imports
-from bluemira.equilibria._deprecated_run import AbInitioEquilibriumProblem
+# from bluemira.equilibria.run import AbInitioEquilibriumProblem
 from bluemira.equilibria.constants import (
     NB3SN_B_MAX,
     NB3SN_J_MAX,
@@ -156,7 +156,7 @@ class Reactor(ReactorSystem):
     ATEC: Type[CoilArchitect]
 
     # Construction and calculation class declarations
-    EQ: Type[AbInitioEquilibriumProblem]
+    # EQ: Type[AbInitioEquilibriumProblem]
     RB: Type[ReactorCrossSection]
     CAD: Type[ReactorCAD]
     n_CAD: Type[ReactorCAD]
