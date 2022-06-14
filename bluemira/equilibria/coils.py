@@ -319,7 +319,7 @@ class CoilFieldsMixin:
         if False in zero_coil_size:
             # if dx or dz is not 0 and x,z inside coil
             inside = np.logical_and(
-                self._points_inside_coil(x, z), ~zero_coil_size[None, :]
+                self._points_inside_coil(x, z), ~zero_coil_size[None]
             )
             import ipdb
 
@@ -395,7 +395,7 @@ class CoilFieldsMixin:
         inside: np.array(dtype=bool)
             The Boolean array of point indices inside/outside the coil boundary
         """
-        x, z = np.ascontiguousarray(x)[:, None], np.ascontiguousarray(z)[:, None]
+        x, z = np.ascontiguousarray(x)[..., None], np.ascontiguousarray(z)[..., None]
 
         x_min, x_max = (
             self._quad_x - self._quad_dx - atol,
@@ -421,12 +421,12 @@ class CoilFieldsMixin:
             greens_Bx(
                 (self._quad_x_ins or self._quad_x)[None],
                 (self._quad_z_ins or self._quad_z)[None],
-                x[:, None],
-                z[:, None],
+                x[..., None],
+                z[..., None],
             )
             * self._quad_weighting,
             self._no_quads,
-            axis=1,
+            axis=-1,
         )
 
         # return sum(gx) / self.n_filaments
@@ -439,12 +439,12 @@ class CoilFieldsMixin:
             greens_Bz(
                 (self._quad_x_ins or self._quad_x)[None],
                 (self._quad_z_ins or self._quad_z)[None],
-                x[:, None],
-                z[:, None],
+                x[..., None],
+                z[..., None],
             )
             * self._quad_weighting,
             self._no_quads,
-            axis=1,
+            axis=-1,
         )
 
         # return sum(gz) / self.n_filaments
