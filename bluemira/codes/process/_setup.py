@@ -93,7 +93,7 @@ class Setup(CodesSetup):
 
         Parameters
         ----------
-        use_bp_inputs: bool, optional
+        use_bp_inputs: bool
             Option to use bluemira values as PROCESS inputs. Used to re-run PROCESS
             within a bluemira run. If False, runs PROCESS without modifying inputs.
             Default, True
@@ -117,6 +117,10 @@ class Setup(CodesSetup):
         writer.write_in_dat(output_filename=self.in_dat_path)
 
     def _validate_models(self, writer):
+        """
+        Loop through known models, find the PROCESS output value for the
+        model, and convert the type to its corresponding Enum value.
+        """
         for name, model_cls in self.MODELS.items():
             try:
                 val = writer.data[name].get_value

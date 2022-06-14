@@ -107,6 +107,15 @@ class Teardown(CodesTeardown):
         self.params.update_kw_parameters(outputs)
 
     def _load_mfile(self, path: str, recv_all: bool):
+        """
+        Load the MFile at the given path, and update this object's
+        params with the MFile's values.
+
+        If recv_all, then ignore existing mappings and update all the
+        params that correspond to a PROCESS output. If recv_all is
+        False, then only update a parameter if its mapping has
+        ``recv == True``.
+        """
         param_mappings = get_recv_mapping(self.params, PROCESS_NAME, recv_all)
         mfile = self._read_mfile(path, param_mappings)
         _raise_on_infeasible_solution(mfile)
@@ -115,6 +124,10 @@ class Teardown(CodesTeardown):
         self._update_params_with_outputs(dict(zip(param_names, param_values)), recv_all)
 
     def _read_mfile(self, path: str, param_mappings: Dict[str, str]):
+        """
+        Read an MFile, applying the given mappings, and performing unit
+        conversions.
+        """
         unit_mappings = _get_unit_mappings(self.params, param_mappings.values())
         return _MFileWrapper(path, param_mappings, unit_mappings)
 
