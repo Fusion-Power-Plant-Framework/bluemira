@@ -17,7 +17,7 @@ jobs:
       - name: Check Date
         id: check-date
         run: |
-          INITIAL_RELEASE_DATE="$(date --date="220530" +%s)"
+          INITIAL_RELEASE_DATE="$(date --date="220704" +%s)"
           CURRENT_DATE="$(date --date="$(date +'%y%m%d')" +%s)"
           DAYS_DIFF=$(( ("${INITIAL_RELEASE_DATE}" - "${CURRENT_DATE}")/(60*60*24) ))
           if [ $(("${DAYS_DIFF}" % 42)) -eq 0 ]; then
