@@ -37,7 +37,6 @@ from bluemira.base.config import Configuration
 from bluemira.base.error import DesignError
 from bluemira.base.file import BM_ROOT, FileManager
 from bluemira.base.look_and_feel import bluemira_print, print_banner
-from bluemira.codes.interface import CodesSolver
 from bluemira.utilities.tools import get_class_from_module
 
 if typing.TYPE_CHECKING:
