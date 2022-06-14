@@ -335,7 +335,17 @@ class PulsedCoilsetDesign:
             axi = ax[i]
             snap.eq.plot(ax=axi)
             snap.coilset.plot(ax=axi)
-            axi.set_title(k)
+            if k == "Breakdown":
+                title = (
+                    k + " $\\Psi_{bd}$: " + f"{2*np.pi * snap.eq.breakdown_psi:.2f} V.s"
+                )
+            else:
+                title = (
+                    k
+                    + " $\\Psi_{b}$: "
+                    + f"{2*np.pi * snap.eq.get_OX_points()[1][0].psi:.2f} V.s"
+                )
+            axi.set_title(title)
         return f
 
 
