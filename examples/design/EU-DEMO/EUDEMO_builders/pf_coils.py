@@ -326,7 +326,7 @@ class PFCoilsBuilder(Builder):
             breakdown_settings={"B_stray_con_tol": 1e-6, "n_B_stray_points": 10},
             equilibrium_problem_cls=TikhonovCurrentCOP,
             equilibrium_optimiser=Optimiser(
-                "SLSQP", opt_conditions={"max_eval": 1000, "ftol_rel": 1e-6}
+                "COBYLA", opt_conditions={"max_eval": 2000, "ftol_rel": 1e-6}
             ),
             equilibrium_convergence=DudsonConvergence(1e-3),
             equilibrium_settings={"gamma": 0.0, "relaxation": 0.1},
@@ -524,11 +524,10 @@ def make_coil_mapper(track, exclusion_zones, coils):
         segments = [track]
 
     # Sort the coils into the segments
-    coil_names = [coil.name for coil in coils]
     coil_bins = [[] for _ in range(len(segments))]
     for i, coil in enumerate(coils):
         distances = [distance_to([coil.x, 0, coil.z], seg)[0] for seg in segments]
-        coil_bins[np.argmin(distances)].append(i)
+        coil_bins[np.argmin(distances)].append(coil)
 
     # Check if multiple coils are on the same segment and split the segments and make
     # PathInterpolators
@@ -537,9 +536,10 @@ def make_coil_mapper(track, exclusion_zones, coils):
         if len(bin) < 1:
             bluemira_warn("There is a segment of the track which has no coils on it.")
         elif len(bin) == 1:
-            interpolator_dict[coil_names[bin[0]]] = PathInterpolator(segment)
+            coil = bin[0]
+            interpolator_dict[coil.name] = PathInterpolator(segment)
         else:
-            coils = [coils[i] for i in bin]
+            coils = bin
             l_values = [
                 segment.parameter_at([c.x, 0, c.z], tolerance=VERY_BIG) for c in coils
             ]
@@ -548,11 +548,11 @@ def make_coil_mapper(track, exclusion_zones, coils):
             for i, split in enumerate(split_values):
                 sub_seg, segment = split_wire(segment, segment.value_at(alpha=split))
                 if sub_seg:
-                    interpolator_dict[coil_names[bin[i]]] = PathInterpolator(sub_seg)
+                    interpolator_dict[coils[i].name] = PathInterpolator(sub_seg)
 
                 if i == len(split_values) - 1:
                     if segment:
-                        interpolator_dict[coil_names[bin[i]]] = PathInterpolator(segment)
+                        interpolator_dict[coils[i].name] = PathInterpolator(segment)
 
     return PositionMapper(interpolator_dict)
 
