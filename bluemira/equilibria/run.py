@@ -170,7 +170,7 @@ class PulsedCoilsetDesign:
             else:
                 max_currents = self.coilset.get_max_currents(1e6 * self.params.I_p.value)
                 coilset.set_control_currents(max_currents, update_size=True)
-                coilset.mesh_coils(0.3)
+                coilset.mesh_coils(self._eq_settings["coil_mesh_size"])
             problem = self._bd_prob_cls(
                 breakdown.coilset,
                 breakdown,
@@ -185,10 +185,6 @@ class PulsedCoilsetDesign:
             coilset = problem.optimise(x0=max_currents, fixed_coils=False)
             breakdown.set_breakdown_point(*strategy.breakdown_point)
             psi_premag = breakdown.breakdown_psi
-            bluemira_print(f"Premagnetisation flux = {2*np.pi * psi_premag:.2f} V.s")
-            bluemira_print(
-                f"Premagnetisation estimate = {self.estimate_premag_flux():.2f} V.s"
-            )
 
             if i == 0:
                 psi_1 = psi_premag
@@ -201,6 +197,10 @@ class PulsedCoilsetDesign:
                     "Unable to relax the breakdown optimisation for coil sizes."
                 )
 
+        bluemira_print(f"Premagnetisation flux = {2*np.pi * psi_premag:.2f} V.s")
+        bluemira_print(
+            f"Premagnetisation estimate = {self.estimate_premag_flux():.2f} V.s"
+        )
         self.take_snapshot(self.BREAKDOWN, breakdown, coilset, problem)
 
     def run_reference_equilibrium(self):
@@ -238,7 +238,7 @@ class PulsedCoilsetDesign:
             if self.BREAKDOWN not in self.snapshots:
                 self.run_premagnetisation()
             psi_premag = self.snapshots[self.BREAKDOWN].eq.breakdown_psi
-            # psi_premag = 300 / 2/ np.pi
+
         psi_sof = calc_psib(
             2 * np.pi * psi_premag,
             self.params.R_0.value,
@@ -393,7 +393,7 @@ class FixedPulsedCoilsetDesign(PulsedCoilsetDesign):
         self._eq_opt = equilibrium_optimiser
         self._eq_convergence = equilibrium_convergence
 
-        self._eq_settings = {"gamma": 1e-8, "relaxation": 0.1}
+        self._eq_settings = {"gamma": 1e-8, "relaxation": 0.1, "coil_mesh_size": 0.3}
         if equilibrium_settings:
             self._eq_settings = {**self._eq_settings, **equilibrium_settings}
 
