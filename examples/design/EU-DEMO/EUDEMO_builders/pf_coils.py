@@ -31,6 +31,7 @@ import bluemira.utilities.plot_tools as bm_plot_tools
 from bluemira.base.builder import BuildConfig, Builder
 from bluemira.base.components import Component
 from bluemira.base.config import Configuration
+from bluemira.base.constants import EPS
 from bluemira.base.error import BuilderError
 from bluemira.base.look_and_feel import bluemira_print, bluemira_warn
 from bluemira.builders.pf_coils import PFCoilBuilder
@@ -545,14 +546,24 @@ def make_coil_mapper(track, exclusion_zones, coils):
             ]
             split_values = l_values[:-1] + 0.5 * np.diff(l_values)
 
+            sub_segs = []
             for i, split in enumerate(split_values):
-                sub_seg, segment = split_wire(segment, segment.value_at(alpha=split))
+                sub_seg, segment = split_wire(
+                    segment, segment.value_at(alpha=split), tolerance=10 * EPS
+                )
                 if sub_seg:
-                    interpolator_dict[coils[i].name] = PathInterpolator(sub_seg)
-
+                    sub_segs.append(sub_seg)
+                else:
+                    bluemira_warn("Sub-segment of 0 length!")
                 if i == len(split_values) - 1:
-                    if segment:
-                        interpolator_dict[coils[i].name] = PathInterpolator(segment)
+                    sub_segs.append(segment)
+
+            for coil, sub_seg in zip(coils, sub_segs):
+                interpolator_dict[coil.name] = PathInterpolator(sub_seg)
+
+                # if i == len(split_values) - 1:
+                #     if segment:
+                #         interpolator_dict[coils[i].name] = PathInterpolator(segment)
 
     return PositionMapper(interpolator_dict)
 
