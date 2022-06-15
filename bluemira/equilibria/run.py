@@ -253,7 +253,7 @@ class PulsedCoilsetDesign:
 
         eq_ref = self.snapshots[self.EQ_REF].eq
 
-        max_currents = self.coilset.get_max_currents(1e6 * self.params.I_p.value)
+        max_currents = self.coilset.get_max_currents(1.5 * 1e6 * self.params.I_p.value)
 
         opt_problems = []
         for psi_boundary in [psi_sof, psi_eof]:
@@ -288,6 +288,7 @@ class PulsedCoilsetDesign:
                     max_currents=max_currents,
                     constraints=current_constraints,
                 )
+            problem.eq.coilset.adjust_sizes(max_currents)
             opt_problems.append(problem)
 
         return opt_problems

@@ -265,7 +265,7 @@ class PFCoilsBuilder(Builder):
             self._params.B_0.value,
         )
 
-        # Make Constraints - a tomar por culo que lo hago todo aqui y que se jodan
+        # Make Constraints
         kappa = self._params.kappa.value
         kappa_ul_tweak = 0.05
         kappa_u = (1 - kappa_ul_tweak) * kappa
