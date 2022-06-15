@@ -54,6 +54,7 @@ class InDat:
 
 OBS_VARS = dict()
 PROCESS_DICT = dict()
+imp_data = None  # placeholder for PROCESS module
 
 try:
     import process.data.impuritydata as imp_data  # noqa: F401, F811

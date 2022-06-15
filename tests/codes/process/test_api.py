@@ -20,7 +20,7 @@
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 
 from pathlib import Path
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
 from bluemira.codes.process import api
 
@@ -38,9 +38,9 @@ def test_update_obsolete_vars():
     assert str1 == "ni peng" and str2 == "shrubbery"
 
 
-def test_impurities():
-    api.imp_data = MagicMock()
-    api.imp_data.__file__ = "./__init__.py"
+@patch.object(api, "imp_data")
+def test_impurities(imp_data_mock):
+    imp_data_mock.__file__ = "./__init__.py"
     assert api.Impurities["H"] == api.Impurities.H
     assert api.Impurities(1) == api.Impurities.H
     assert api.Impurities(1).id() == "fimp(01"
