@@ -19,8 +19,9 @@
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 """
-Parameters classes/structures for Plasmod
+Parameter classes/structures for Plasmod
 """
+
 from __future__ import annotations
 
 import enum

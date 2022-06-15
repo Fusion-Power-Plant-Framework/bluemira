@@ -30,7 +30,7 @@ from typing import Any, Dict, Optional, Union
 from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.base.parameter import ParameterFrame
 from bluemira.codes.error import CodesError
-from bluemira.codes.interface_ import CodesSetup
+from bluemira.codes.interface import CodesSetup
 from bluemira.codes.plasmod.api._inputs import PlasmodInputs
 from bluemira.codes.plasmod.constants import NAME as PLASMOD_NAME
 

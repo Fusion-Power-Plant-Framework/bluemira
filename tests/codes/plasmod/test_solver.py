@@ -37,7 +37,7 @@ from bluemira.codes.utilities import add_mapping
 from tests._helpers import combine_text_mock_write_calls
 
 SOLVER_MODULE_REF = "bluemira.codes.plasmod.api"
-RUN_SUBPROCESS_REF = "bluemira.codes.interface_.run_subprocess"
+RUN_SUBPROCESS_REF = "bluemira.codes.interface.run_subprocess"
 
 
 class TestPlasmodSetup:
@@ -271,7 +271,7 @@ class TestPlasmodTeardown:
             with pytest.raises(CodesError):
                 teardown.run()
 
-    @mock.patch("bluemira.codes.interface_.bluemira_warn")
+    @mock.patch("bluemira.codes.interface.bluemira_warn")
     def test_warning_issued_if_output_param_is_missing(self, bm_warn_mock):
         open_mock = mock.mock_open(read_data=self.plasmod_out_sample)
         teardown = Teardown(

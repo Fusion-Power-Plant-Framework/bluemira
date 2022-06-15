@@ -939,7 +939,7 @@ class ParameterFrame:
         unit: Union[Unit, str, None] = None,
         description: Union[str, None] = None,
         source: Union[str, None] = None,
-        mapping=None,
+        mapping: Optional[Dict[str, ParameterMapping]] = None,
         value_history: Union[list, None] = None,
         source_history: Union[list, None] = None,
     ):
@@ -961,7 +961,7 @@ class ParameterFrame:
             The long description of the parameter, by default None.
         source: Union[str, None]
             The source (reference and/or code) of the parameter, by default None.
-        mapping: Union[Dict[str, ParameterMapping], None]
+        mapping: Optional[Dict[str, ParameterMapping]]
             The names used for this parameter in external software, and whether
             that parameter should be written to and/or read from the external tool,
             by default, None.

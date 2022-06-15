@@ -27,7 +27,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Optional
 
-from bluemira.codes.interface import FileProgramInterface
+from bluemira.codes.interface import CodesSolver
 from bluemira.codes.utilities import get_code_interface
 
 if TYPE_CHECKING:
@@ -38,11 +38,8 @@ if TYPE_CHECKING:
 def systems_code_solver(
     params: ParameterFrame,
     build_config: BuildConfig,
-    run_dir: Optional[str] = None,
-    read_dir: Optional[str] = None,
-    template_indat=None,
-    module: Optional[str] = "PROCESS",
-) -> FileProgramInterface:
+    module: str = "PROCESS",
+) -> CodesSolver:
     """
     Runs, reads or mocks systems code according to the build configuration dictionary.
 
@@ -52,32 +49,20 @@ def systems_code_solver(
         ParameterFrame for code
     build_config: Dict
         build configuration dictionary
-    run_dir: str
-        Path to the run directory, where the main executable is located
-        and the input/output files will be written.
-    read_dir: str
-        Path to the read directory, where the output files from a run are
-        read in
-    template_indat: str
-        Path to the template file to be used for the run.
 
     Returns
     -------
-    Solver object: FileProgramInterface
+    Solver object: CodesSolver
         The solver that has been run.
 
     Raises
     ------
     CodesError
-        If PROCESS is not being mocked and is not installed.
-
+        If the system code is not being mocked and is not installed, or
+        there is a problem running the system code.
     """
-    # Remove me, temp compatibility layer
-    build_config["mode"] = build_config.get("mode", build_config["process_mode"])
-    # #####################################
     syscode = get_code_interface(module)
-
-    return syscode.Solver(params, build_config, run_dir, read_dir, template_indat)
+    return syscode.Solver(params, build_config)
 
 
 def plot_radial_build(
@@ -105,10 +90,8 @@ def plot_radial_build(
 def transport_code_solver(
     params: ParameterFrame,
     build_config: BuildConfig,
-    run_dir: Optional[str] = None,
-    read_dir: Optional[str] = None,
     module: Optional[str] = "PLASMOD",
-) -> FileProgramInterface:
+) -> CodesSolver:
     """
     Transport solver
 
@@ -118,16 +101,11 @@ def transport_code_solver(
         ParameterFrame for plasmod
     build_config: Dict
         build configuration dictionary
-    run_dir: str
-        Plasmod run directory
-    read_dir: str
-        Directory to read in previous run
 
     Returns
     -------
-    Solver object: FileProgramInterface
-
+    solver: CodesSolver
+        The solver object to be run
     """
     transp = get_code_interface(module)
-
-    return transp.Solver(params, build_config, run_dir, read_dir)
+    return transp.Solver(params, build_config)

@@ -22,10 +22,10 @@
 Defines the 'Run' stage of the plasmod solver.
 """
 
-from bluemira.base.look_and_feel import bluemira_debug
+from bluemira.base.look_and_feel import bluemira_print
 from bluemira.base.parameter import ParameterFrame
 from bluemira.codes.error import CodesError
-from bluemira.codes.interface_ import CodesTask
+from bluemira.codes.interface import CodesTask
 from bluemira.codes.plasmod.constants import BINARY as PLASMOD_BINARY
 from bluemira.codes.plasmod.constants import NAME as PLASMOD_NAME
 
@@ -80,8 +80,8 @@ class Run(CodesTask):
             If the subprocess returns a non-zero exit code or raises an
             OSError (e.g., the plasmod binary does not exist).
         """
+        bluemira_print(f"Running '{PLASMOD_NAME}' systems code")
         command = [self.binary, self.input_file, self.output_file, self.profiles_file]
-        bluemira_debug("Mode: run")
         try:
             self._run_subprocess(command)
         except OSError as os_error:
