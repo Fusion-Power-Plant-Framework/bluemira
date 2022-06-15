@@ -166,14 +166,14 @@ class CoilFieldsMixin:
         # setup initial meshing
         # quadratures
 
-        self.mesh_coil(weighting)
+        self.descritise(weighting)
 
     def _set_quad_weighting(self, weighting=None):
         self._quad_weighting = (
             np.ones(self._x.shape[0]) if weighting is None else weighting
         )
 
-    def mesh_coil(self, weighting: Optional[np.ndarray] = None):
+    def descritise(self, weighting: Optional[np.ndarray] = None):
         # each quadrature array = (quadrature, (x,z))
 
         if weighting is None:
@@ -1372,7 +1372,7 @@ class SymmetricCircuit(Circuit):
     def name(self):
         return self._circuit_name
 
-    # def mesh_coil(self, weighting = None ):
+    # def descritise(self, weighting = None ):
 
     #     if weighting is None:
     #         self._quad_x = self.x.copy()[None]
