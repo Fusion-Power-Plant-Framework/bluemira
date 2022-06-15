@@ -115,11 +115,13 @@ class TestRadiation:
 
     def test_key_temperatures(self):
         self.t_u, q_u = self.tpm.upstream_temperature(self.fw)
-        t_tar = self.tpm.target_temperature(q_u, self.t_u)
+        t_tar_det = self.tpm.target_temperature(q_u, self.t_u)
+        t_tar_no_det = self.tpm.target_temperature(3e10, self.t_u)
         t_x = self.tpm.x_point_temperature(q_u, self.t_u, self.fw)
         assert self.t_u < 5e-1
-        assert t_tar < self.t_u * 1e-1
-        assert self.t_u > t_x > t_tar
+        assert t_tar_det < self.t_u * 1e-1
+        assert self.t_u > t_x > t_tar_det
+        assert t_tar_no_det * 1e-3 > self.tpm.rad_params.f_ion_t
 
     def test_sol_decay(self):
         t_u = self.tpm.plasma_params.T_el_sep
@@ -184,6 +186,19 @@ class TestRadiation:
         assert len(te_sol) == len(ne_sol)
         assert te_sol[0] < self.st_sol.plasma_params.T_el_sep
         assert te_sol[0] > te_sol[-1]
+
+    def test_sol_flux_tube_pol_n(self):
+        tube = self.st_sol.flux_tubes_lfs_low[0].loop
+        ne_mp = 1.8e20
+        n_out = 2e22
+        n_tar = 2e20
+        rec_i = np.arange(10, 20)
+        ne = self.st_sol.flux_tube_pol_n(
+            tube, ne_mp, n_rad_out=n_out, rec_i=rec_i, n_tar=n_tar
+        )
+        assert ne[0] == ne[9]
+        assert ne[9] < ne[10]
+        assert ne[10] > ne[20]
 
     def test_build_sector_profiles(self):
         tubes = self.st_sol.flux_tubes_lfs_low
