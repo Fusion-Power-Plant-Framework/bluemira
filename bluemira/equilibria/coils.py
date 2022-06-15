@@ -321,17 +321,15 @@ class CoilFieldsMixin:
             inside = np.logical_and(
                 self._points_inside_coil(x, z), ~zero_coil_size[None]
             )
-            import ipdb
-
-            ipdb.set_trace()
-
-            response = self._my_mix(inside, x, z, greens_func, semianalytic_func)
+            if np.all(~inside):
+                return greens_func(x, z)
+            elif np.all(inside):
+                # Not called for circuits as they will always be a mixture
+                return semianalytic_func(x, z)
+            else:
+                return self._my_mix(inside, x, z, greens_func, semianalytic_func)
         else:
-            response = greens_func(x, z)
-
-        print(self.__class__.__name__, response)
-
-        return response
+            return greens_func(x, z)
 
     def _my_mix(self, inside, x, z, greens_func, semianalytic_func):
         self._quad_x_ins = None
@@ -341,32 +339,36 @@ class CoilFieldsMixin:
         self._dx_nins = None
         self._dz_nins = None
 
-        if np.all(~inside):
-            return greens_func(x, z)
-        elif np.all(inside):
-            # Not called for circuits (and unlikely to be called), wont work for them either
-            return semianalytic_func(x, z)
-        else:
-            # Works for <=2 coils 1 point only
-            # for the quad index you set which coils you want to calculate for
-            # for the point index the same
+        import ipdb
 
-            self._quad_x_ins = self._quad_x[~inside[1]]
-            self._quad_z_ins = self._quad_z[~inside[1]]
-            response[~inside] = greens_func(x, z).reshape(-1)[~inside]
-            self._quad_x_ins, self._quad_z_ins = None, None
-            self._x_nins = self._x[inside]
-            self._z_nins = self._z[inside]
-            self._dx_nins = self._dx[inside]
-            self._dz_nins = self._dz[inside]
-            # if np.any(inside):
-            response[inside] = semianalytic_func(x, z).reshape(-1)
-            self._x_nins, self._z_nins, self._dx_nins, self._dz_nins = (
-                None,
-                None,
-                None,
-                None,
-            )
+        ipdb.set_trace()
+        # Works for <=2 coils 1 point only
+        # for the quad index you set which coils you want to calculate for
+        # for the poi nt index the same
+        point_ind_true, coil_ind_true = np.where(inside)
+        point_ind_false, coil_ind_false = np.where(~inside)
+        response = np.zeros_like(inside)
+
+        self._quad_x_ins = self._quad_x[coil_ind_false]
+        self._quad_z_ins = self._quad_z[coil_ind_false]
+        resp = greens_func(x[point_ind_false], z[point_ind_false])
+        self._quad_x_ins, self._quad_z_ins = None, None
+        self._x_nins = self._x[coil_ind_true]
+        self._z_nins = self._z[coil_ind_true]
+        self._dx_nins = self._dx[coil_ind_true]
+        self._dz_nins = self._dz[coil_ind_true]
+
+        ipdb.set_trace()
+        # if np.any(inside):
+        response[inside] = semianalytic_func(x[point_ind_true], z[point_ind_true])
+        self._x_nins, self._z_nins, self._dx_nins, self._dz_nins = (
+            None,
+            None,
+            None,
+            None,
+        )
+        ipdb.set_trace()
+        print("hello")
 
         return response
 
@@ -419,8 +421,8 @@ class CoilFieldsMixin:
         """
         return np.add.reduceat(
             greens_Bx(
-                (self._quad_x_ins or self._quad_x)[None],
-                (self._quad_z_ins or self._quad_z)[None],
+                (self._quad_x if self._quad_x_ins is None else self._quad_x_ins)[None],
+                (self._quad_z if self._quad_z_ins is None else self._quad_z_ins)[None],
                 x[..., None],
                 z[..., None],
             )
@@ -455,12 +457,12 @@ class CoilFieldsMixin:
         current using semi-analytic method.
         """
         return semianalytic_Bx(
-            self._x_nins or self._x,
-            self._z_nins or self._z,
-            x,
-            z,
-            d_xc=self._dx_nins or self._dx,
-            d_zc=self._dz_nins or self._dz,
+            (self._x_nins or self._x)[None],
+            (self._z_nins or self._z)[None],
+            x[..., None],
+            z[..., None],
+            d_xc=(self._dx_nins or self._dx)[None],
+            d_zc=(self._dz_nins or self._dz)[None],
         )
 
     def _control_Bz_analytical(self, x, z):
@@ -469,12 +471,12 @@ class CoilFieldsMixin:
         current using semi-analytic method.
         """
         return semianalytic_Bz(
-            self._x_nins or self._x,
-            self._z_nins or self._z,
-            x,
-            z,
-            d_xc=self._dx_nins or self._dx,
-            d_zc=self._dz_nins or self._dz,
+            (self._x_nins or self._x)[None],
+            (self._z_nins or self._z)[None],
+            x[..., None],
+            z[..., None],
+            d_xc=(self._dx_nins or self._dx)[None],
+            d_zc=(self._dz_nins or self._dz)[None],
         )
 
     def F(self, eqcoil):  # noqa :N802
