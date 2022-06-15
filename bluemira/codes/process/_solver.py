@@ -22,16 +22,19 @@
 import copy
 import os
 from enum import auto
-from typing import Dict, Union
+from typing import Dict, List, Tuple, Union
+
+import numpy as np
 
 from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.base.parameter import ParameterFrame
 from bluemira.base.solver import RunMode as BaseRunMode
-from bluemira.codes.interface import CodesSolver
+from bluemira.codes.error import CodesError
+from bluemira.codes.interface import CodesSetup, CodesSolver
 from bluemira.codes.process._run import Run
 from bluemira.codes.process._setup import Setup
 from bluemira.codes.process._teardown import Teardown
-from bluemira.codes.process.api import DEFAULT_INDAT
+from bluemira.codes.process.api import DEFAULT_INDAT, Impurities
 from bluemira.codes.process.constants import BINARY as PROCESS_BINARY
 from bluemira.codes.process.constants import NAME as PROCESS_NAME
 from bluemira.codes.process.mapping import mappings as process_mappings
@@ -116,9 +119,9 @@ class Solver(CodesSolver):
     def __init__(self, params: ParameterFrame, build_config: BuildConfig):
         # Init task objects on execution so parameters can be edited
         # between separate 'execute' calls.
-        self._setup: Setup
-        self._run: Run
-        self._teardown: Teardown
+        self._setup: Union[Setup, None] = None
+        self._run: Union[Run, None] = None
+        self._teardown: Union[Teardown, None] = None
 
         self.params = params
         add_mapping(PROCESS_NAME, self.params, process_mappings)
@@ -167,3 +170,72 @@ class Solver(CodesSolver):
             teardown()
 
         return self.params
+
+    def get_raw_variables(self, params: Union[List, str]):
+        """
+        Get raw variables from this solver's associate MFile.
+
+        Mapped bluemira parameters will have bluemira names.
+
+        Parameters
+        ----------
+        params: Union[List, str]
+            Names of parameters to access.
+
+        Returns
+        -------
+        values: List[float]
+            The parameter values.
+        """
+        if self._teardown:
+            return self._teardown.get_raw_outputs(params)
+        raise CodesError(
+            "Cannot retrieve output from PROCESS MFile. "
+            "The solver has not been run, so no MFile is available to read."
+        )
+
+    @staticmethod
+    def get_species_data(impurity: str) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
+        """
+        Get species data from PROCESS section of OPEN-ADAS database.
+
+        The data is taken with density $n_e = 10^{19} m^{-3}$.
+
+        Parameters
+        ----------
+        impurity: str
+            The impurity to get the species data for. This string should
+            be one of the names in the
+            :class:`~bluemira.codes.process.api.Impurities` Enum.
+
+        Returns
+        -------
+        tref: np.ndarray
+            The temperature in keV.
+        l_ref: np.ndarray
+            The loss function value $L_z(n_e, T_e)$ in W.m3.
+        z_ref: np.ndarray
+            Average effective charge.
+        """
+        # T[keV] Lz[W m^3] Z_av
+        t_ref, lz_ref, z_av_ref = np.genfromtxt(Impurities[impurity].file()).T
+        return t_ref, lz_ref, z_av_ref
+
+    def get_species_fraction(self, impurity: str) -> float:
+        """
+        Get species fraction for the given impurity.
+
+        Parameters
+        ----------
+        impurity: str
+            The impurity to get the species data for. This string should
+            be one of the names in the
+            :class:`~bluemira.codes.process.api.Impurities` Enum.
+
+        Returns
+        -------
+        species_fraction: float
+            The species fraction for the impurity taken from the PROCESS
+            output MFile.
+        """
+        return self.get_raw_variables(Impurities[impurity].id())[0]

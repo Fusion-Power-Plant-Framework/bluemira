@@ -31,29 +31,7 @@ from bluemira.codes.process._teardown import Teardown
 from bluemira.codes.process.mapping import mappings as process_mappings
 from bluemira.codes.utilities import add_mapping
 from tests._helpers import file_exists
-
-DATA_DIR = os.path.join(os.path.dirname(__file__), "test_data")
-READ_DIR = os.path.join(DATA_DIR, "read")
-RUN_DIR = os.path.join(DATA_DIR, "run")
-FAKE_PROCESS_DICT = {  # Fake for the output of PROCESS's `get_dicts()`
-    "DICT_DESCRIPTIONS": {"some_property": "its description"}
-}
-
-
-class FakeMFile:
-    """
-    A fake of PROCESS's MFile class.
-
-    It replicates the :code:`.data` attribute with some PROCESS results
-    data. This allows us to test the logic in our API without having
-    PROCESS installed.
-    """
-
-    with open(os.path.join(DATA_DIR, "mfile_data.json"), "r") as f:
-        data = json.load(f)
-
-    def __init__(self, filename):
-        self.filename = filename
+from tests.codes.process import utilities as utils
 
 
 class TestTeardown:
@@ -63,11 +41,11 @@ class TestTeardown:
 
     @classmethod
     def setup_class(cls):
-        cls._mfile_patch = mock.patch(f"{cls.MODULE_REF}.MFile", new=FakeMFile)
+        cls._mfile_patch = mock.patch(f"{cls.MODULE_REF}.MFile", new=utils.FakeMFile)
         cls.mfile_mock = cls._mfile_patch.start()
 
         cls._process_dict_patch = mock.patch(
-            f"{cls.MODULE_REF}.PROCESS_DICT", new=FAKE_PROCESS_DICT
+            f"{cls.MODULE_REF}.PROCESS_DICT", new=utils.FAKE_PROCESS_DICT
         )
         cls.process_mock = cls._process_dict_patch.start()
 
@@ -82,9 +60,9 @@ class TestTeardown:
 
     @pytest.mark.parametrize("run_func", ["run", "runinput"])
     def test_run_func_updates_bluemira_params_from_mfile(self, run_func):
-        teardown = Teardown(self.default_pf, RUN_DIR, None)
+        teardown = Teardown(self.default_pf, utils.RUN_DIR, None)
 
-        with file_exists(os.path.join(RUN_DIR, "MFILE.DAT"), self.IS_FILE_REF):
+        with file_exists(os.path.join(utils.RUN_DIR, "MFILE.DAT"), self.IS_FILE_REF):
             getattr(teardown, run_func)()
 
         # Expected value comes from ./test_data/mfile_data.json
@@ -92,23 +70,23 @@ class TestTeardown:
 
     @pytest.mark.parametrize("run_func", ["read", "readall"])
     def test_read_func_updates_bluemira_params_from_mfile(self, run_func):
-        teardown = Teardown(self.default_pf, None, READ_DIR)
+        teardown = Teardown(self.default_pf, None, utils.READ_DIR)
 
-        with file_exists(os.path.join(READ_DIR, "MFILE.DAT"), self.IS_FILE_REF):
+        with file_exists(os.path.join(utils.READ_DIR, "MFILE.DAT"), self.IS_FILE_REF):
             getattr(teardown, run_func)()
 
         # Expected value comes from ./test_data/mfile_data.json
         assert teardown.params["tau_e"] == pytest.approx(4.3196)
 
     @pytest.mark.parametrize(
-        "run_func, data_dir", [("runinput", RUN_DIR), ("readall", READ_DIR)]
+        "run_func, data_dir", [("runinput", utils.RUN_DIR), ("readall", utils.READ_DIR)]
     )
     def test_run_mode_updates_params_from_mfile_given_recv_False(
         self, run_func, data_dir
     ):
         # The two run modes in this test are expected to ignore the
         # 'recv = False' Parameter attribute
-        teardown = Teardown(self.default_pf, RUN_DIR, READ_DIR)
+        teardown = Teardown(self.default_pf, utils.RUN_DIR, utils.READ_DIR)
         teardown.params.get_param("r_tf_in_centre").mapping[process.NAME].recv = False
 
         with file_exists(os.path.join(data_dir, "MFILE.DAT"), self.IS_FILE_REF):
@@ -118,12 +96,12 @@ class TestTeardown:
         assert teardown.params["r_tf_in_centre"] == pytest.approx(2.6354)
 
     @pytest.mark.parametrize(
-        "run_func, data_dir", [("run", RUN_DIR), ("read", READ_DIR)]
+        "run_func, data_dir", [("run", utils.RUN_DIR), ("read", utils.READ_DIR)]
     )
     def test_run_mode_does_not_update_params_from_mfile_given_recv_False(
         self, run_func, data_dir
     ):
-        teardown = Teardown(self.default_pf, RUN_DIR, READ_DIR)
+        teardown = Teardown(self.default_pf, utils.RUN_DIR, utils.READ_DIR)
         teardown.params.get_param("r_tf_in_centre").mapping[process.NAME].recv = False
 
         with file_exists(os.path.join(data_dir, "MFILE.DAT"), self.IS_FILE_REF):
@@ -133,7 +111,7 @@ class TestTeardown:
         assert teardown.params["r_tf_in_centre"] != pytest.approx(2.6354)
 
     def test_mock_updates_params_from_mockPROCESS_json_file(self):
-        teardown = Teardown(self.default_pf, None, READ_DIR)
+        teardown = Teardown(self.default_pf, None, utils.READ_DIR)
 
         teardown.mock()
 

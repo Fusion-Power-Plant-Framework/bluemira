@@ -57,6 +57,7 @@ class Teardown(CodesTeardown):
         super().__init__(params, PROCESS_NAME)
         self.run_directory = run_directory
         self.read_directory = read_directory
+        self._mfile_wrapper: _MFileWrapper = None
 
     def run(self):
         """
@@ -106,6 +107,29 @@ class Teardown(CodesTeardown):
         outputs = _read_json_file_or_raise(mock_file_path)
         self.params.update_kw_parameters(outputs)
 
+    def get_raw_outputs(self, params: Union[List, str]) -> List[float]:
+        """
+        Get raw variables from an MFILE.
+
+        Mapped bluemira parameters will have bluemira names.
+
+        Parameters
+        ----------
+        params: Union[List, str]
+            Names of parameters to access.
+
+        Returns
+        -------
+        values: List[float]
+            The parameter values.
+        """
+        if self._mfile_wrapper:
+            return self._mfile_wrapper.extract_outputs(params)
+        raise CodesError(
+            "Cannot retrieve output from PROCESS MFile. "
+            "The solver has not been run, so no MFile is available to read."
+        )
+
     def _load_mfile(self, path: str, recv_all: bool):
         """
         Load the MFile at the given path, and update this object's
@@ -117,10 +141,10 @@ class Teardown(CodesTeardown):
         ``recv == True``.
         """
         param_mappings = get_recv_mapping(self.params, PROCESS_NAME, recv_all)
-        mfile = self._read_mfile(path, param_mappings)
-        _raise_on_infeasible_solution(mfile)
+        self._mfile_wrapper = self._read_mfile(path, param_mappings)
+        _raise_on_infeasible_solution(self._mfile_wrapper)
         param_names = param_mappings.keys()
-        param_values = mfile.extract_outputs(param_mappings.values())
+        param_values = self._mfile_wrapper.extract_outputs(param_mappings.values())
         self._update_params_with_outputs(dict(zip(param_names, param_values)), recv_all)
 
     def _read_mfile(self, path: str, param_mappings: Dict[str, str]):

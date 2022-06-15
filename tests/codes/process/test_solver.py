@@ -29,13 +29,32 @@ import pytest
 
 from bluemira.base.config import Configuration
 from bluemira.base.parameter import ParameterFrame
+from bluemira.codes.error import CodesError
 from bluemira.codes.process import ENABLED
 from bluemira.codes.process._solver import RunMode, Solver
+from tests.codes.process import utilities as utils
 
 
 class TestSolver:
 
     MODULE_REF = "bluemira.codes.process._solver"
+
+    @classmethod
+    def setup_class(cls):
+        cls._mfile_patch = mock.patch(
+            "bluemira.codes.process._teardown.MFile", new=utils.FakeMFile
+        )
+        cls.mfile_mock = cls._mfile_patch.start()
+
+        cls._process_dict_patch = mock.patch(
+            "bluemira.codes.process._teardown.PROCESS_DICT", new=utils.FAKE_PROCESS_DICT
+        )
+        cls.process_mock = cls._process_dict_patch.start()
+
+    @classmethod
+    def teardown_class(cls):
+        cls._mfile_patch.stop()
+        cls._process_dict_patch.stop()
 
     @mock.patch(f"{MODULE_REF}.bluemira_warn")
     def test_bluemira_warning_if_build_config_has_unknown_arg(self, bm_warn_mock):
@@ -53,13 +72,35 @@ class TestSolver:
 
         assert solver.params.to_dict() == params.to_dict()
 
+    def test_get_raw_variables_retrieves_parameters(self):
+        params = Configuration()
+        solver = Solver(copy.deepcopy(params), {"read_dir": utils.DATA_DIR})
+        solver.execute(RunMode.READ)
 
-@pytest.mark.longrun
+        assert solver.get_raw_variables("kappa_95") == [1.65]
+
+    def test_get_raw_variables_CodesError_given_solver_not_run(self):
+        params = Configuration()
+        solver = Solver(copy.deepcopy(params), {"read_dir": utils.DATA_DIR})
+
+        with pytest.raises(CodesError):
+            solver.get_raw_variables("kappa_95")
+
+    def test_get_species_fraction_retrieves_parameter_value(self):
+        params = Configuration()
+        solver = Solver(copy.deepcopy(params), {"read_dir": utils.DATA_DIR})
+        solver.execute(RunMode.READ)
+
+        assert solver.get_species_fraction("H") == pytest.approx(0.74267)
+        assert solver.get_species_fraction("W") == pytest.approx(5e-5)
+
+
 @pytest.mark.skipif(not ENABLED, reason="PROCESS is not installed on the system.")
 class TestSolverSystem:
 
     DATA_DIR = os.path.join(os.path.dirname(__file__), "test_data")
 
+    @pytest.mark.longrun
     def test_run_mode_outputs_process_files(self):
         params = Configuration()
         run_dir = tempfile.TemporaryDirectory()
@@ -84,6 +125,7 @@ class TestSolverSystem:
         # Expected value comes from ./test_data/MFILE.DAT
         assert solver.params.r_tf_in_centre == pytest.approx(2.6354)
 
+    @pytest.mark.longrun
     def test_runinput_mode_does_not_edit_template(self):
         params = Configuration()
         run_dir = tempfile.TemporaryDirectory()
@@ -99,3 +141,12 @@ class TestSolverSystem:
         assert os.path.isfile(os.path.join(run_dir.name, "IN.DAT"))
         filecmp.cmp(os.path.join(run_dir.name, "IN.DAT"), template_path)
         assert os.path.isfile(os.path.join(run_dir.name, "MFILE.DAT"))
+
+    def test_get_species_data_returns_row_vectors(self):
+        # imp_data.__file__ is returning './__init__.py' for some reason
+        # god knows why
+        temp, loss_f, z_eff = Solver.get_species_data("H")
+
+        assert isinstance(temp.size, int) == 1 and temp.size > 0
+        assert isinstance(loss_f.size, int) == 1 and loss_f.size > 0
+        assert isinstance(z_eff.size, int) == 1 and z_eff.size > 0
