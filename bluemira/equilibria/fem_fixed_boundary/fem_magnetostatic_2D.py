@@ -311,6 +311,7 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
         return dolfin.assemble(func * dx())
 
     def _update_curr(self, curr_target):
+        print("updating curr")
         self.k = 1
         self.k = curr_target / self._calculate_curr_tot(self.g)
 

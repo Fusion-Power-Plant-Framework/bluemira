@@ -98,7 +98,7 @@ gs_solver.solve(1, 0, Ic, max_iter=20)
 points = mesh.coordinates()
 psi_data = np.array([gs_solver.psi(x) for x in points])
 
-levels = np.linspace(0.0, gs_solver._psi_ax, 25)
+levels = np.linspace(0.0, gs_solver.psi_ax, 25)
 
 axis, cntr, _ = plot_scalar_field(
     points[:, 0], points[:, 1], psi_data, levels=levels, axis=None, tofill=True
@@ -106,7 +106,7 @@ axis, cntr, _ = plot_scalar_field(
 plt.show()
 
 axis, cntr, _ = plot_scalar_field(
-    points[:, 0], points[:, 1], psi_data, levels=[gs_solver._psi_ax * 0.05], axis=None,
+    points[:, 0], points[:, 1], psi_data, levels=[gs_solver.psi_ax * 0.05], axis=None,
     tofill=False
 )
 plt.show()

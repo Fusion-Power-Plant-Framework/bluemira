@@ -65,7 +65,7 @@ levels_m = np.linspace(min(psi_exact) * 1.05, 0.0, 10)
 levels = sorted(np.unique(np.concatenate([levels_m, levels_p])))
 
 axis, cntr, cntrf, points, psi_exact = solovev.plot_psi(
-    6.0, -5, 6.0, 10.0, 100, 100, levels=levels
+    6.0, -5, 6.0, 10.0, 1000, 1000, levels=levels
 )
 plt.show()
 
@@ -77,7 +77,7 @@ Dp = np.hstack((Dp, np.zeros((Dp.shape[0], 1), dtype=Dp.dtype)))
 curve1 = interpolate_bspline(Dp[0 : int(len(Dp) / 2)], label="curve1")
 curve2 = interpolate_bspline(Dp[int(len(Dp) / 2 - 1) : len(Dp)], label="curve2")
 lcfs = BluemiraWire([curve1, curve2], "LCFS")
-lcfs.mesh_options = {"lcar": 0.2, "physical_group": "lcfs"}
+lcfs.mesh_options = {"lcar": 0.025, "physical_group": "lcfs"}
 
 plasma_face = BluemiraFace(lcfs, "plasma_face")
 plasma_face.mesh_options = {"lcar": 0.2, "physical_group": "plasma_face"}
@@ -102,12 +102,12 @@ plt.show()
 
 # ------------------------------------------------------------------------------
 # initialize the Grad-Shafranov solver
-p = 3
+p = 2
 gs_solver = FemMagnetostatic2d(mesh, p_order=p)
 
 # Set the right hand side of the Grad-Shafranov equation, as a function of psi
 g = dolfin.Expression(
-    "1/mu0*(-x[0]*A1 + A2/x[0])", A1=solovev.A1, A2=solovev.A2, mu0=MU_0, degree=2
+    "1/mu0*(-x[0]*A1 + A2/x[0])", A1=solovev.A1, A2=solovev.A2, mu0=MU_0, degree=p
 )
 # ------------------------------------------------------------------------------
 # Solve the equation
@@ -147,3 +147,7 @@ axis, cntr, _ = plot_scalar_field(
 plt.show()
 
 # L2_error_h = dolfin.errornorm(solovev.psi, gs_solver.psi)
+
+diff = psi1_data - psi1_exact
+eps = np.linalg.norm(diff, ord=2) / np.linalg.norm(psi1_exact, ord=2)
+print(eps)
