@@ -214,7 +214,7 @@ xp_idx = np.argmin(z_bdry)
 x_point = FieldNullConstraint(
     x_bdry[xp_idx],
     z_bdry[xp_idx],
-    tolerance=1e-4,
+    tolerance=1e-4,  # [T]
 )
 
 # %%[markdown]
@@ -353,7 +353,7 @@ print(
 # the start of flat-top (SOF) and end of flat-top (EOF) as they represent the most
 # challenging conditions for the coils and plasma shape.
 
-# Here we set the flux at the desired LCFS to be 50 V.s and -100 V.s for the SOF and EOF,
+# Here we set the flux at the desired LCFS to be 50 V.s and -150 V.s for the SOF and EOF,
 # respectively. In this example, this is an arbitrary decision. In reality, this would
 # relate to the desired pulse duration for a given machine.
 
