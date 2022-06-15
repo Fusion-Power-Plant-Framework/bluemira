@@ -217,7 +217,6 @@ class Solver(CodesSolver):
         z_ref: np.ndarray
             Average effective charge.
         """
-        # T[keV] Lz[W m^3] Z_av
         t_ref, lz_ref, z_av_ref = np.genfromtxt(Impurities[impurity].file()).T
         return t_ref, lz_ref, z_av_ref
 
