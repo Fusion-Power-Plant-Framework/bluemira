@@ -478,7 +478,11 @@ class OptimisedPulsedCoilsetDesign(PulsedCoilsetDesign):
         limiter: Optional[Limiter] = None,
     ):
         self.params = params
-        self.coilset = coilset
+        self._eq_settings = {"gamma": 1e-8, "relaxation": 0.1, "coil_mesh_size": 0.3}
+        if equilibrium_settings:
+            self._eq_settings = {**self._eq_settings, **equilibrium_settings}
+
+        self.coilset = self._prepare_coilset(coilset)
         self.position_mapper = position_mapper
         self.grid = grid
         self.profiles = profiles
@@ -497,14 +501,17 @@ class OptimisedPulsedCoilsetDesign(PulsedCoilsetDesign):
         self._pos_prob_cls = position_problem_cls
         self._pos_opt = position_optimiser
 
-        self._eq_settings = {"gamma": 1e-8, "relaxation": 0.1, "coil_mesh_size": 0.3}
-        if equilibrium_settings:
-            self._eq_settings = {**self._eq_settings, **equilibrium_settings}
-
         self._current_opt_cons = current_opt_constraints
         self._coil_cons = coil_constraints
 
         super().__init__()
+
+    def _prepare_coilset(self, coilset):
+        coilset = deepcopy(coilset)
+        for coil in coilset.coils.values():
+            if coil.flag_sizefix:
+                coil.mesh_coil(self._eq_settings["coil_mesh_size"])
+        return coilset
 
     def optimise_positions(self, verbose=False):
         """
