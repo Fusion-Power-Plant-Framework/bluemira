@@ -267,7 +267,7 @@ class PFCoilsBuilder(Builder):
 
         # Make Constraints
         kappa = self._params.kappa.value
-        kappa_ul_tweak = 0.05
+        kappa_ul_tweak = 0.085
         kappa_u = (1 - kappa_ul_tweak) * kappa
         kappa_l = (1 + kappa_ul_tweak) * kappa
         lcfs_parameterisation = JohnerLCFS(

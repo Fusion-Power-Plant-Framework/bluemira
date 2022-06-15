@@ -467,6 +467,18 @@ if tf_coils_builder.runmode == "run":
     design_problem.plot()
     plt.show()
 
+
+# %%[markdown]
+# ### Plotting the PF Coils Design Problem
+#
+# Similarly, we can also look at the design problem for the PF coil build.
+
+# %%
+pf_coils_builder = reactor.get_builder(EUDEMOReactor.PF_COILS)
+if pf_coils_builder.runmode == "run":
+    pf_coils_builder.design_problem.plot()
+    plt.show()
+
 # %%[markdown]
 # ### Visualising the Reactor
 #
