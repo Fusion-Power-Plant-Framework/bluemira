@@ -1,0 +1,40 @@
+# Checks if a release of Bluemira is due, and opens an issue if it is.
+name: Check If Release Due
+
+on:
+  schedule:
+    # Runs every Monday at 06:12
+    - cron: "12 6 * * 0"
+
+jobs:
+  check-release-due:
+    # We want to create a new release every 6 weeks. I can't work out a way to
+    # do this with the schedule step's cron syntax. Instead, trigger this job
+    # every Monday, then check if the current date is a multiple of 6 weeks
+    # from the very first release date.
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check Date
+        id: check-date
+        run: |
+          INITIAL_RELEASE_DATE="$(date --date="220704" +%s)"
+          CURRENT_DATE="$(date --date="$(date +'%y%m%d')" +%s)"
+          DAYS_DIFF=$(( ("${INITIAL_RELEASE_DATE}" - "${CURRENT_DATE}")/(60*60*24) ))
+          if [ $(("${DAYS_DIFF}" % 42)) -eq 0 ]; then
+            echo ::set-output name=release_due::true
+          else
+            echo "Release is not due"
+          fi
+      - name: Checkout
+        uses: actions/checkout@v3
+        if: ${{ steps.check-date.outputs.release_due == 'true' }}
+      - name: Create Issue
+        id: create-issue
+        if: ${{ steps.check-date.outputs.release_due == 'true' }}
+        run: |
+          gh issue create \
+            --body "A bluemira release is due." \
+            --label "release" \
+            --title "Create new release"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -1,0 +1,81 @@
+# This workflow creates a new release from the HEAD of the 'develop' branch.
+# The branch is merged into 'main' and a release is created using the version
+# number that was inputted when the workflow was triggered.
+# Once the release is created, a PR to merge 'develop_dependencies'->'develop'
+# is created, this reminds us to update our dependencies for the next
+# development cycle.
+
+name: Make Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        type: string
+        description: "New semantic version string"
+        required: true
+
+jobs:
+  release:
+    if: >
+      github.actor == 'CoronelBuendia' ||
+      github.actor == 'DanShort12' ||
+      github.actor == 'hsaunders1904' ||
+      github.actor == 'ivanmaione' ||
+      github.actor == 'je-cook'
+
+    runs-on: ubuntu-latest
+    env:
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Validate
+        id: validate
+        run: |
+          # Check, and format, input version
+          pip install packaging
+          VERSION="$(python -c "from packaging import version; print(version.Version(\"${{ github.event.inputs.version }}\"))")"
+          TAG="v${VERSION}"
+
+          # Check the tag doesn't already exist
+          if gh release view "${TAG}" &> /dev/null; then
+            echo "Release with tag '${TAG}' already exists.";
+            exit 1;
+          fi
+
+          echo ::set-output name=tag::${TAG}
+
+      - name: Update main
+        id: update-main
+        run: |
+          git fetch origin main develop
+          git checkout main
+          git merge origin/develop --ff-only
+          git push origin main
+
+      - name: Create release
+        id: create-release
+        run: |
+          gh release create "${{ steps.validate.outputs.tag }}" \
+            --generate-notes \
+            --target main
+
+      - name: Rebase develop_dependencies
+        run: |
+          # Rebase develop_dependencies on develop, so that it's up-to-date and
+          # we don't run into conflicts next time we merge.
+          git switch develop_dependencies --force
+          git rebase origin/develop
+          git push --force-with-lease origin develop_dependencies:develop_dependencies
+
+      - name: Create PR to update dependencies
+        run: |
+          PR_URL=$(gh pr create \
+            --head develop_dependencies \
+            --base develop \
+            --title "Dependency update after ${{ steps.validate.outputs.tag }}" \
+            --body "Update develop's dependencies for the next development cycle.")
+          gh pr comment "${PR_URL}" \
+            --body "**Reminder that this PR must be merged using a merge commit!**"
