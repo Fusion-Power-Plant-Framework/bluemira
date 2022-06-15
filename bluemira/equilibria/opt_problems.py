@@ -242,9 +242,11 @@ class CoilsetOptimisationProblem(OptimisationProblem):
                 )
 
         # Get the current limits from coil current densities
-        # TODO: Ensure consistent scaling when fetching from coilset
-        # TODO: This is screwing with size unfixing! Ouch!
-        coilset_current_limits = coilset.get_max_currents(0.0)
+        coilset_current_limits = np.infty * np.ones(n_control_currents)
+        for i, coil in enumerate(coilset._ccoils):
+            if coil.flag_sizefix:
+                coilset_current_limits[i] = coil.get_max_current()
+
         if len(coilset_current_limits) != n_control_currents:
             raise EquilibriaError(
                 "Length of array containing coilset current limits"

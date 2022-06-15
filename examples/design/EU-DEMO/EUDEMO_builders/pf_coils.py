@@ -292,7 +292,7 @@ class PFCoilsBuilder(Builder):
 
         isoflux = IsofluxConstraint(x_lcfs, z_lcfs, x_lcfs[arg_inner], z_lcfs[arg_inner])
         psi_inner = PsiConstraint(
-            x_lcfs[arg_inner], z_lcfs[arg_inner], target_value=0.0, tolerance=1e-3
+            x_lcfs[arg_inner], z_lcfs[arg_inner], target_value=0.0, tolerance=1e-1
         )
         x_point = FieldNullConstraint(x_lcfs[arg_xp], z_lcfs[arg_xp], tolerance=1e-4)
         coil_constraints = [
@@ -306,7 +306,7 @@ class PFCoilsBuilder(Builder):
             ),
         ]
 
-        current_opt_constraints = [x_point, psi_inner]
+        current_opt_constraints = [psi_inner, x_point]
 
         equilibrium_constraints = [isoflux]
 
@@ -330,7 +330,7 @@ class PFCoilsBuilder(Builder):
                 "COBYLA", opt_conditions={"max_eval": 2000, "ftol_rel": 1e-6}
             ),
             equilibrium_convergence=DudsonConvergence(1e-3),
-            equilibrium_settings={"gamma": 0.0, "relaxation": 0.1},
+            equilibrium_settings={"gamma": 1e-12, "relaxation": 0.2},
             position_problem_cls=PulsedNestedPositionCOP,
             position_optimiser=Optimiser(
                 "COBYLA", opt_conditions={"max_eval": 100, "ftol_rel": 1e-6}
