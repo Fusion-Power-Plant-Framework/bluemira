@@ -189,7 +189,12 @@ def arguments():
     if args.files == [] and not args.check:
         files = list(Path(__file__).parent.rglob("*.py"))
         try:
-            files.pop(files.index(__file__))
+            pop = [
+                __file__,
+                "examples/BLUEPRINT_integration.py",
+            ]
+            for file in pop:
+                files.pop(files.index(file))
         except ValueError:
             pass
     else:
