@@ -258,6 +258,7 @@ class PulsedCoilsetDesign:
         opt_problems = []
         for psi_boundary in [psi_sof, psi_eof]:
             eq = deepcopy(eq_ref)
+            eq.coilset.adjust_sizes(max_currents)
             optimiser = deepcopy(self._eq_opt)
 
             current_constraints = []
@@ -288,7 +289,7 @@ class PulsedCoilsetDesign:
                     max_currents=max_currents,
                     constraints=current_constraints,
                 )
-            problem.eq.coilset.adjust_sizes(max_currents)
+
             opt_problems.append(problem)
 
         return opt_problems
@@ -516,7 +517,7 @@ class OptimisedPulsedCoilsetDesign(PulsedCoilsetDesign):
         sub_opt_problems = self._get_sof_eof_opt_problems(psi_sof, psi_eof)
 
         pos_opt_problem = self._pos_prob_cls(
-            self.coilset,
+            sub_opt_problems[0].eq.coilset,
             self.position_mapper,
             sub_opt_problems,
             self._pos_opt,
@@ -562,6 +563,6 @@ class OptimisedPulsedCoilsetDesign(PulsedCoilsetDesign):
             problem.set_current_bounds(max_currents)
         consolidated_coilset = deepcopy(problem.eq.coilset)
         consolidated_coilset.set_control_currents(
-            np.zeros(len(consolidated_coilset._ccoils)), update_size=False
+            np.zeros(consolidated_coilset.n_control), update_size=False
         )
         return consolidated_coilset
