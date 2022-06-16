@@ -150,7 +150,6 @@ class CoilFieldsMixin:
         "_quad_x",
         "_quad_z",
         "_quad_weighting",
-        "_no_quads",
         "_quad_x_ins",
         "_quad_z_ins",
         "_x_nins",
@@ -170,7 +169,7 @@ class CoilFieldsMixin:
 
     def _set_quad_weighting(self, weighting=None):
         self._quad_weighting = (
-            np.ones(self._x.shape[0]) if weighting is None else weighting
+            np.ones((self._x.shape[0], 1)) if weighting is None else weighting
         )
 
     def descritise(self, weighting: Optional[np.ndarray] = None):
@@ -181,8 +180,6 @@ class CoilFieldsMixin:
             self._quad_dx = self._dx.copy()
             self._quad_z = self._z.copy()
             self._quad_dz = self._dz.copy()
-
-            self._no_quads = np.arange(self._x.shape[0])
 
         else:
             # How fancy do we want the mesh or just smaller rectangles?
@@ -223,12 +220,15 @@ class CoilFieldsMixin:
         Calculate poloidal flux at (x, z) due to a unit current
         """
         gpsi = greens_psi(
-            self._quad_x, self._quad_z, x, z, self._quad_dx, self._quad_dz
-        ).ravel()
+            self._quad_x[None],
+            self._quad_z[None],
+            np.array(x)[..., None],
+            np.array(z)[..., None],
+            self._quad_dx[None],
+            self._quad_dz[None],
+        )
 
-        # number of quadratures 5 for the first coil 6 for the second
-        # self._noquads = [0, 5, 11]
-        return np.add.reduceat(gpsi * self._quad_weighting, self._no_quads)
+        return np.einsum("..., ...j-> ...", gpsi, self._quad_weighting[None])
 
     def Bx(self, x, z):
         """
@@ -310,8 +310,6 @@ class CoilFieldsMixin:
         with the semi-analytic function responses, as a function of position
         outside/inside the coil boundary.
         """
-        # Works for 1 point only
-
         x, z = np.ascontiguousarray(x), np.ascontiguousarray(z)
 
         zero_coil_size = np.logical_or(self._quad_dx == 0, self._quad_dz == 0)
@@ -327,48 +325,35 @@ class CoilFieldsMixin:
                 # Not called for circuits as they will always be a mixture
                 return semianalytic_func(x, z)
             else:
-                return self._my_mix(inside, x, z, greens_func, semianalytic_func)
+                return self._combined_control(
+                    inside, x, z, greens_func, semianalytic_func
+                )
         else:
             return greens_func(x, z)
 
-    def _my_mix(self, inside, x, z, greens_func, semianalytic_func):
-        self._quad_x_ins = None
-        self._quad_z_ins = None
-        self._x_nins = None
-        self._z_nins = None
-        self._dx_nins = None
-        self._dz_nins = None
+    def _combined_control(self, inside, x, z, greens_func, semianalytic_func):
 
-        import ipdb
-
-        ipdb.set_trace()
-        # Works for <=2 coils 1 point only
-        # for the quad index you set which coils you want to calculate for
-        # for the poi nt index the same
-        point_ind_true, coil_ind_true = np.where(inside)
-        point_ind_false, coil_ind_false = np.where(~inside)
-        response = np.zeros_like(inside)
-
-        self._quad_x_ins = self._quad_x[coil_ind_false]
-        self._quad_z_ins = self._quad_z[coil_ind_false]
-        resp = greens_func(x[point_ind_false], z[point_ind_false])
-        self._quad_x_ins, self._quad_z_ins = None, None
-        self._x_nins = self._x[coil_ind_true]
-        self._z_nins = self._z[coil_ind_true]
-        self._dx_nins = self._dx[coil_ind_true]
-        self._dz_nins = self._dz[coil_ind_true]
-
-        ipdb.set_trace()
-        # if np.any(inside):
-        response[inside] = semianalytic_func(x[point_ind_true], z[point_ind_true])
-        self._x_nins, self._z_nins, self._dx_nins, self._dz_nins = (
-            None,
-            None,
-            None,
-            None,
-        )
-        ipdb.set_trace()
-        print("hello")
+        response = np.zeros_like(inside, dtype=float)
+        for coil, (points, qx, qz, qw, cx, cz, cdx, cdz) in enumerate(
+            zip(
+                inside.T,
+                self._quad_x,
+                self._quad_z,
+                self._quad_weighting,
+                self._x,
+                self._z,
+                self._dx,
+                self._dz,
+            )
+        ):
+            if np.any(~points):
+                response[~points, coil] = np.squeeze(
+                    greens_func(x[~points], z[~points], True, qx, qz, qw)
+                )
+            if np.any(points):
+                response[points, coil] = np.squeeze(
+                    semianalytic_func(x[points], z[points], True, cx, cz, cdx, cdz)
+                )
 
         return response
 
@@ -400,12 +385,12 @@ class CoilFieldsMixin:
         x, z = np.ascontiguousarray(x)[..., None], np.ascontiguousarray(z)[..., None]
 
         x_min, x_max = (
-            self._quad_x - self._quad_dx - atol,
-            self._quad_x + self._quad_dx + atol,
+            self._x - self._dx - atol,
+            self._x + self._dx + atol,
         )
         z_min, z_max = (
-            self._quad_z - self._quad_dz - atol,
-            self._quad_z + self._quad_dz + atol,
+            self._z - self._dz - atol,
+            self._z + self._dz + atol,
         )
         return (
             (x >= x_min[None])
@@ -414,69 +399,93 @@ class CoilFieldsMixin:
             & (z <= z_max[None])
         )
 
-    def _control_Bx_greens(self, x, z):
+    def _control_Bx_greens(
+        self, x, z, split=False, _quad_x=None, _quad_z=None, _quad_weight=None
+    ):
         """
         Calculate radial magnetic field Bx respose at (x, z) due to a unit
         current using Green's functions.
         """
-        return np.add.reduceat(
+        if not split:
+            _quad_x = self._quad_x
+            _quad_z = self._quad_z
+            _quad_weight = self._quad_weighting
+
+        return np.einsum(
+            "..., ...j -> ...",
             greens_Bx(
-                (self._quad_x if self._quad_x_ins is None else self._quad_x_ins)[None],
-                (self._quad_z if self._quad_z_ins is None else self._quad_z_ins)[None],
+                _quad_x[None],
+                _quad_z[None],
                 x[..., None],
                 z[..., None],
-            )
-            * self._quad_weighting,
-            self._no_quads,
-            axis=-1,
+            ),
+            _quad_weight[None],
         )
 
-        # return sum(gx) / self.n_filaments
-
-    def _control_Bz_greens(self, x, z):
+    def _control_Bz_greens(
+        self, x, z, split=False, _quad_x=None, _quad_z=None, _quad_weight=None
+    ):
         """
         Calculate vertical magnetic field Bz at (x, z) due to a unit current
         """
-        return np.add.reduceat(
+        if not split:
+            _quad_x = self._quad_x
+            _quad_z = self._quad_z
+            _quad_weight = self._quad_weighting
+
+        return np.einsum(
+            "..., ...j -> ...",
             greens_Bz(
-                (self._quad_x_ins or self._quad_x)[None],
-                (self._quad_z_ins or self._quad_z)[None],
+                _quad_x[None],
+                _quad_z[None],
                 x[..., None],
                 z[..., None],
-            )
-            * self._quad_weighting,
-            self._no_quads,
-            axis=-1,
+            ),
+            _quad_weight[None],
         )
 
-        # return sum(gz) / self.n_filaments
-
-    def _control_Bx_analytical(self, x, z):
+    def _control_Bx_analytical(
+        self, x, z, split=False, coil_x=None, coil_z=None, coil_dx=None, coil_dz=None
+    ):
         """
         Calculate radial magnetic field Bx response at (x, z) due to a unit
         current using semi-analytic method.
         """
+        if not split:
+            coil_x = self._x
+            coil_z = self._z
+            coil_dx = self._dx
+            coil_dz = self._dz
+
         return semianalytic_Bx(
-            (self._x_nins or self._x)[None],
-            (self._z_nins or self._z)[None],
+            coil_x[None],
+            coil_z[None],
             x[..., None],
             z[..., None],
-            d_xc=(self._dx_nins or self._dx)[None],
-            d_zc=(self._dz_nins or self._dz)[None],
+            d_xc=coil_dx[None],
+            d_zc=coil_dz[None],
         )
 
-    def _control_Bz_analytical(self, x, z):
+    def _control_Bz_analytical(
+        self, x, z, split=False, coil_x=None, coil_z=None, coil_dx=None, coil_dz=None
+    ):
         """
         Calculate vertical magnetic field Bz response at (x, z) due to a unit
         current using semi-analytic method.
         """
+        if not split:
+            coil_x = self._x
+            coil_z = self._z
+            coil_dx = self._dx
+            coil_dz = self._dz
+
         return semianalytic_Bz(
-            (self._x_nins or self._x)[None],
-            (self._z_nins or self._z)[None],
+            coil_x[None],
+            coil_z[None],
             x[..., None],
             z[..., None],
-            d_xc=(self._dx_nins or self._dx)[None],
-            d_zc=(self._dz_nins or self._dz)[None],
+            d_xc=coil_dx[None],
+            d_zc=coil_dz[None],
         )
 
     def F(self, eqcoil):  # noqa :N802
@@ -1488,7 +1497,7 @@ class CoilSet(CoilGroup):
         # TODO deal with meshing
         # TODO think whether this is the best way forward
 
-    def __init_subclass__(self, *args, **kwargs):
+    def __init_subclass__(cls, *args, **kwargs):
         raise EquilibriaError("class not designed to be subclassed")
 
     def __str__(self) -> str:
