@@ -30,7 +30,7 @@ from bluemira.equilibria.coils import (
     CoilGroup,
     CoilSet,
     CoilType,
-    PositionalSymmetricCircuit,
+    SymmetricCircuit,
     check_coilset_symmetric,
     make_mutual_inductance_matrix,
     symmetrise_coilset,
@@ -153,7 +153,7 @@ class TestCoil:
 
         b1 = f_callable(x, z)
 
-        assert np.allclose(b, b1)
+        assert np.allclose(b, b1.flat)
 
     def test_bx(self):
         self.callable_tester(self.coil.Bx)
@@ -293,7 +293,7 @@ class TestPositionalSymmetricCircuit:
     @classmethod
     def setup_class(cls):
         coil = Coil(x=1.5, z=6, current=1e6, dx=0.25, dz=0.5, ctype="PF", name="TEST")
-        circuit = PositionalSymmetricCircuit(
+        circuit = SymmetricCircuit(
             np.array([[0, 0], [1, 0]]),
             x=1.5,
             z=6,
@@ -318,6 +318,8 @@ class TestPositionalSymmetricCircuit:
             [1.5, 6],
             [1.5, -6],
         ]
+        # circuit_Bx = getattr(self.circuit, f"{fieldtype}Bx")(*np.array(points).T)
+
         for point in points:
             coil_psi = sum(
                 [getattr(coil, f"{fieldtype}psi")(*point) for coil in self.coils]
@@ -332,9 +334,10 @@ class TestPositionalSymmetricCircuit:
             circuit_psi = getattr(self.circuit, f"{fieldtype}psi")(*point)
             circuit_Bx = getattr(self.circuit, f"{fieldtype}Bx")(*point)
             circuit_Bz = getattr(self.circuit, f"{fieldtype}Bz")(*point)
-            assert np.isclose(coil_psi, circuit_psi)
-            assert np.isclose(coil_Bx, circuit_Bx)
-            assert np.isclose(coil_Bz, circuit_Bz)
+
+            assert np.allclose(coil_psi, np.sum(circuit_psi))
+            assert np.allclose(coil_Bx, np.sum(circuit_Bx))
+            assert np.allclose(coil_Bz, np.sum(circuit_Bz))
 
     def test_current(self):
         self.circuit.current = 2e6
@@ -367,7 +370,7 @@ class TestCoilSet:
         coil = Coil(
             x=4, z=10, current=2e6, dx=1, dz=0.5, j_max=5.0, b_max=50, name="PF_1"
         )
-        circuit = PositionalSymmetricCircuit(
+        circuit = SymmetricCircuit(
             np.array([[0, 0], [1, 0]]),
             x=1.5,
             z=6,
@@ -447,32 +450,30 @@ class TestCoilSet:
 
 class TestCoilSetSymmetry:
     def test_symmetry_check(self):
-        coilset = CoilSet(
-            [Coil(5, 5, 0, dx=1.0, dz=1.0), Coil(5, -5, 0, dx=1.0, dz=1.0)]
-        )
+        coilset = CoilSet([Coil(5, 5, dx=1.0, dz=1.0), Coil(5, -5, dx=1.0, dz=1.0)])
 
         assert check_coilset_symmetric(coilset)
 
         coilset = CoilSet(
-            [Coil(5, 5, 0, dx=1.0, dz=1.0), Coil(5, -5, dx=1.0, dz=1.0, current=1e6)]
+            [Coil(5, 5, dx=1.0, dz=1.0), Coil(5, -5, dx=1.0, dz=1.0, current=1e6)]
         )
 
         assert not check_coilset_symmetric(coilset)
 
         coilset = CoilSet(
             [
-                Coil(5, 5, 0, dx=1.0, dz=1.0),
-                Coil(5, 0, 0, dx=1.0, dz=1.0),
-                Coil(5, -5, 0, dx=1.0, dz=1.0),
+                Coil(5, 5, dx=1.0, dz=1.0),
+                Coil(5, 0, dx=1.0, dz=1.0),
+                Coil(5, -5, dx=1.0, dz=1.0),
             ]
         )
         assert check_coilset_symmetric(coilset)
 
         coilset = CoilSet(
             [
-                Coil(5, 5, 0, dx=1.0, dz=1.0),
-                Coil(5, 1, 0, dx=1.0, dz=1.0),
-                Coil(5, -5, 0, dx=1.0, dz=1.0),
+                Coil(5, 5, dx=1.0, dz=1.0),
+                Coil(5, 1, dx=1.0, dz=1.0),
+                Coil(5, -5, dx=1.0, dz=1.0),
             ]
         )
 
@@ -480,10 +481,10 @@ class TestCoilSetSymmetry:
 
         coilset = CoilSet(
             [
-                Coil(5, 5, 0, dx=1.0, dz=1.0),
-                Coil(5, 0, 0, dx=1.0, dz=1.0),
-                Coil(5, 1, 0, dx=1.0, dz=1.0),
-                Coil(5, -5, 0, dx=1.0, dz=1.0),
+                Coil(5, 5, dx=1.0, dz=1.0),
+                Coil(5, 0, dx=1.0, dz=1.0),
+                Coil(5, 1, dx=1.0, dz=1.0),
+                Coil(5, -5, dx=1.0, dz=1.0),
             ]
         )
 
@@ -492,20 +493,20 @@ class TestCoilSetSymmetry:
     def test_symmetrise(self):
         coilset = CoilSet(
             [
-                Coil(5, 5, 1e6, dx=1, dz=1),
-                Coil(5, -5, 1e6, dx=1, dz=1),
+                Coil(5, 5, current=1e6, dx=1, dz=1),
+                Coil(5, -5, current=1e6, dx=1, dz=1),
             ]
         )
         new = symmetrise_coilset(coilset)
         assert len(new.coils) == 1
         assert new.n_coils == 2
-        assert isinstance(list(new.coils.values())[0], PositionalSymmetricCircuit)
+        assert isinstance(list(new.coils.values())[0], SymmetricCircuit)
 
         coilset = CoilSet(
-            PositionalSymmetricCircuit(Coil(5, 5, 1e6, dx=1, dz=1)),
-            PositionalSymmetricCircuit(Coil(12, 7, 1e6, dx=1, dz=1)),
-            PositionalSymmetricCircuit(Coil(4, 9, 1e6, dx=1, dz=1)),
-            Coil(5, 0, 1e6, dx=1, dz=1),
+            SymmetricCircuit(Coil(5, 5, current=1e6, dx=1, dz=1)),
+            SymmetricCircuit(Coil(12, 7, current=1e6, dx=1, dz=1)),
+            SymmetricCircuit(Coil(4, 9, current=1e6, dx=1, dz=1)),
+            Coil(5, 0, current=1e6, dx=1, dz=1),
         )
         new = symmetrise_coilset(coilset)
         assert len(new.coils) == len(coilset.coils)
@@ -576,8 +577,8 @@ class TestCoilSorting:
     def test_sorting_coilset(self):
         """Ensure sorting of coils properly handles numbers in the coil name."""
         coils = [
-            Coil(5, 5, 0, dx=1.0, dz=1.0, name="CS_2"),
-            Coil(5, 5, 0, dx=1.0, dz=1.0, name="CS_10"),
+            Coil(5, 5, current=0, dx=1.0, dz=1.0, name="CS_2"),
+            Coil(5, 5, current=0, dx=1.0, dz=1.0, name="CS_10"),
         ]
         sorted_coils = CoilGroup.sort_coils(coils)
         sorted_names = list(sorted_coils)
