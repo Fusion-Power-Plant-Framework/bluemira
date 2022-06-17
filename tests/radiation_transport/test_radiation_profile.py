@@ -20,6 +20,7 @@
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 
 import os
+from unittest.mock import patch
 
 import numpy as np
 import pytest
@@ -34,6 +35,7 @@ from bluemira.radiation_transport.radiation_profile import (
     Core,
     Radiation,
     ScrapeOffLayer,
+    STCore,
     STScrapeOffLayer,
     TwoPointModelTools,
 )
@@ -86,6 +88,13 @@ class TestRadiation:
         cls.tpm = TwoPointModelTools(cls.solver, plasma_params, rad_params)
         cls.core = Core(cls.solver, plasma_params)
         cls.sol = ScrapeOffLayer(cls.solver, plasma_params)
+        cls.st_core = STCore(
+            cls.solver,
+            impurity_content,
+            impurity_data,
+            plasma_params,
+            rad_params,
+        )
         cls.st_sol = STScrapeOffLayer(
             cls.solver,
             impurity_content,
@@ -181,6 +190,19 @@ class TestRadiation:
         assert z_main_low > z_pfr_low
         assert z_main_up < z_pfr_up
 
+    def test_core_plot_1d(self):
+        with patch.object(self.st_core, "plot_1d_profile") as plot_mock:
+            self.st_core.build_mp_rad_profile()
+        assert len(plot_mock.call_args[0][0]) == len(self.st_core.rho_core)
+        assert plot_mock.call_args[0][0][-1] == self.st_core.rho_core[-1]
+
+    def test_core_plot_2d(self):
+        flux_tubes = self.st_core.collect_flux_tubes(self.st_core.rho_core)
+        with patch.object(self.st_core, "plot_2d_map") as plot_mock:
+            self.st_core.build_core_radiation_map()
+        assert len(plot_mock.call_args[0][0]) == len(flux_tubes)
+        assert len(plot_mock.call_args[0][0][0]) == len(flux_tubes[0])
+
     def test_mp_electron_density_temperature_profiles(self):
         te_sol, ne_sol = self.st_sol.mp_electron_density_temperature_profiles()
         assert len(te_sol) == len(ne_sol)
@@ -235,3 +257,9 @@ class TestRadiation:
         assert len(rad_profiles[0][0]) != 0
         # number of radiative points
         assert len(rad_profiles[0][0][0]) != 0
+        # sol radiation map builder
+        with patch.object(self.st_sol, "plot_2d_map") as plot_mock:
+            self.st_sol.build_sol_radiation_map(*rad_profiles, self.fw)
+        assert len(plot_mock.call_args[0][0]) == 4
+        assert len(plot_mock.call_args[0][1]) == 4
+        assert len(plot_mock.call_args[0][0][0]) == len(self.st_sol.flux_tubes_lfs_low)

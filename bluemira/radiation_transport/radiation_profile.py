@@ -1740,7 +1740,7 @@ class STScrapeOffLayer(ScrapeOffLayerSector, ScrapeOffLayer, TwoPointModelTools)
         total_rad_hfs_low = np.sum(np.array(rad_hfs_low, dtype=object), axis=0).tolist()
         total_rad_hfs_up = np.sum(np.array(rad_hfs_up, dtype=object), axis=0).tolist()
 
-        map = self.plot_2d_map(
+        return self.plot_2d_map(
             [
                 self.flux_tubes_lfs_low,
                 self.flux_tubes_hfs_low,
@@ -1750,5 +1750,3 @@ class STScrapeOffLayer(ScrapeOffLayerSector, ScrapeOffLayer, TwoPointModelTools)
             [total_rad_lfs_low, total_rad_hfs_low, total_rad_lfs_up, total_rad_hfs_up],
             firstwall_geom,
         )
-
-        return map
