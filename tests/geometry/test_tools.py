@@ -19,8 +19,10 @@
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 
+import difflib
 import json
 import os
+from datetime import datetime
 from unittest import mock
 
 import numpy as np
@@ -29,6 +31,7 @@ from numpy.linalg import norm
 
 import bluemira.codes._freecadapi as cadapi
 from bluemira.base.constants import EPS
+from bluemira.base.file import get_bluemira_path
 from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.parameterisations import (
     PictureFrame,
@@ -53,6 +56,7 @@ from bluemira.geometry.tools import (
     offset_wire,
     point_inside_shape,
     revolve_shape,
+    save_as_STEP,
     signed_distance,
     signed_distance_2D_polygon,
     slice_shape,
@@ -609,3 +613,37 @@ class TestMakeCircle:
         points = arc.discretize(2).points
         np.testing.assert_allclose(np.array(p1), np.array(points[0]), atol=EPS)
         np.testing.assert_allclose(np.array(p3), np.array(points[1]), atol=EPS)
+
+
+class TestSavingCAD:
+    def test_save_as_STEP(self):
+        fp = get_bluemira_path("geometry/test_data", subfolder="tests")
+        test_file = os.path.join(fp, "test_circ.stp")
+        generated_file = "test_generated_circ.stp"
+
+        # Can't mock out as written by freecad not python
+        circ = make_circle(5)
+        save_as_STEP(circ, filename=generated_file.split(".")[0])
+
+        with open(test_file, "r") as tf:
+            lines1 = tf.readlines()
+
+        with open(generated_file, "r") as gf:
+            lines2 = gf.readlines()
+
+        # Dont care about date/time differences
+        lines = []
+        for line in difflib.unified_diff(
+            lines1, lines2, fromfile="", tofile="", lineterm="", n=0
+        ):
+            for prefix in ("---", "+++", "@@"):
+                if line.startswith(prefix):
+                    break
+            else:
+                try:
+                    datetime.fromisoformat(line.split(",")[1].strip("'"))
+                except (ValueError, IndexError):
+                    lines += [line]
+
+        assert lines == []
+        os.remove(generated_file)
