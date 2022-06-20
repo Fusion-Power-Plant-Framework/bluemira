@@ -52,8 +52,8 @@ def debye_length(temperature, density):
     debye_length: float
         Debye length [m]
     """
-    temperature = raw_uc(temperature, "celsius", "eV")
-    return np.sqrt(EPS_0 * temperature / (EV_TO_J**2 * density))
+    temperature = raw_uc(temperature, "celsius", "kelvin")
+    return np.sqrt(EPS_0 * K_BOLTZMANN * temperature / (EV_TO_J**2 * density))
 
 
 def reduced_mass(mass_1, mass_2):
