@@ -331,10 +331,11 @@ class PFCoilsBuilder(Builder):
                 opt_conditions={"max_eval": 5000, "ftol_rel": 1e-6, "xtol_rel": 1e-6},
             ),
             equilibrium_convergence=DudsonConvergence(1e-3),
-            equilibrium_settings={"gamma": 1e-12, "relaxation": 0.2},
+            equilibrium_settings={"gamma": 1e-7, "relaxation": 0.2},
             position_problem_cls=PulsedNestedPositionCOP,
             position_optimiser=Optimiser(
-                "COBYLA", opt_conditions={"max_eval": 100, "ftol_rel": 1e-6}
+                "COBYLA",
+                opt_conditions={"max_eval": 50, "ftol_rel": 1e-6, "xtol_rel": 1e-4},
             ),
             limiter=None,
         )
@@ -542,16 +543,15 @@ def make_coil_mapper(track, exclusion_zones, coils):
             interpolator_dict[coil.name] = PathInterpolator(segment)
         else:
             coils = bin
-            l_values = [
-                segment.parameter_at([c.x, 0, c.z], tolerance=VERY_BIG) for c in coils
-            ]
+            l_values = np.array(
+                [segment.parameter_at([c.x, 0, c.z], tolerance=VERY_BIG) for c in coils]
+            )
+            idx = np.argsort(l_values)
+            l_values = l_values[idx]
             split_values = l_values[:-1] + 0.5 * np.diff(l_values)
-            idx = np.argsort(split_values)
-            split_values = split_values[idx]
             sorted_coils = []
             for i in idx:
                 sorted_coils.append(coils.pop(i))
-            sorted_coils.append(coils[-1])
 
             coils = sorted_coils
             split_positions = [segment.value_at(alpha=split) for split in split_values]
