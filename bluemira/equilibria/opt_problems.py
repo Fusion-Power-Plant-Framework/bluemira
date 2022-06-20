@@ -1054,7 +1054,16 @@ class PulsedNestedPositionCOP(CoilsetOptimisationProblem):
         if x0 is None:
             x0 = self._get_initial_vector()
         optimal_positions = self.opt.optimise(x0)
-        self.update_positions(optimal_positions, self.coilset, self.position_mapper)
+        # Call the objective one last time
+        self.get_sub_opt_foms(
+            optimal_positions,
+            self.coilset,
+            self.position_mapper,
+            self.sub_opt_probs,
+            iter=self._iter,
+            verbose=verbose,
+            debug=self._debug,
+        )
         for sub_opt in self.sub_opt_probs:
             sub_opt.eq._remap_greens()
             sub_opt.eq._clear_OX_points()
