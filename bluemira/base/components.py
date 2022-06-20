@@ -25,7 +25,17 @@ Module containing the base Component class.
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, Callable, Iterable, List, Optional, Sized, Union
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    Callable,
+    Iterable,
+    List,
+    Optional,
+    Sized,
+    Tuple,
+    Union,
+)
 
 import anytree
 from anytree import NodeMixin, RenderTree
@@ -116,7 +126,7 @@ class Component(NodeMixin, Plottable, DisplayableCAD):
 
     def get_component_properties(
         self, properties: Union[Sized[str], str], first=True, full_tree=False
-    ):
+    ) -> Union[Tuple[List[Any]], List[Any], Any]:
         """
         Get properties from a component
 
@@ -132,7 +142,10 @@ class Component(NodeMixin, Plottable, DisplayableCAD):
 
         Returns
         -------
-        Lists of properties of components
+        properties: Union[Tuple[List[Any]], List[Any], Any]
+            If multiple properties specified returns a tuple of the list of properties,
+            otherwise returns a list of the property.
+            If only one node has the property returns the value(s).
 
         Notes
         -----
