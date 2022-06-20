@@ -80,7 +80,7 @@ class SteadyStatePowerCycleSetup(Task):
         """
         Run the setup task.
         """
-        params = self._params
+        params = self.params  # avoid constant 'self' lookup
         # TODO: Get remaining hard-coded values hooked up
         neutron_power_strat = NeutronPowerStrategy(
             f_blanket=0.9,
@@ -145,7 +145,7 @@ class SteadyStatePowerCycleRun(Task):
         """
         Run the run task. (o.O)
         """
-        bop = BalanceOfPlantModel(self._params, *setup_result)
+        bop = BalanceOfPlantModel(self.params, *setup_result)
         bop.build()
         return bop
 
@@ -180,6 +180,7 @@ class SteadyStatePowerCycleSolver(SolverABC):
     setup_cls = SteadyStatePowerCycleSetup
     run_cls = SteadyStatePowerCycleRun
     teardown_cls = SteadyStatePowerCycleTeardown
+    run_mode_cls = SteadyStatePowerCycleRunMode
 
     def execute(self):
         """
