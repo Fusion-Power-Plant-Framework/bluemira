@@ -336,10 +336,11 @@ def get_properties_from_components(
 
     Returns
     -------
-    shapes: List[BluemiraGeo]
-        List of shapes in components
-    options: List[DisplayCADOptions]
-        List of display options for shapes
+    properties: Union[Tuple[List[Any]], List[Any], Any]
+        If multiple properties specified returns a tuple of the list of properties,
+        otherwise returns a list of the property.
+        If only one node has the property returns the value(s).
+
     """
     if isinstance(properties, str):
         properties = [properties]
