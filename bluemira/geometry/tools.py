@@ -875,8 +875,14 @@ def save_as_STEP(
     scale: float, default = 1.0
         The scale in which to save the Shape objects
     """
-    if not filename.endswith(".STP"):
-        filename += ".STP"
+    if not filename.endswith(
+        tuple(
+            getattr(fe, func)()
+            for func in ("upper", "lower")
+            for fe in (".stp", ".step")
+        )
+    ):
+        filename += ".stp"
 
     if not isinstance(shapes, list):
         shapes = [shapes]
