@@ -896,9 +896,7 @@ def save_cad(components, filename="test", scale=1):
     scale: float, default = 1.0
         The scale in which to save the Shape objects
     """
-    shapes = get_properties_from_components(components, "shape")
-
-    save_as_STEP(shapes, filename, scale)
+    save_as_STEP(get_properties_from_components(components, "shape"), filename, scale)
 
 
 # ======================================================================================
