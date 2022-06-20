@@ -308,7 +308,7 @@ class PFCoilsBuilder(Builder):
 
         current_opt_constraints = [psi_inner, x_point]
 
-        equilibrium_constraints = [isoflux]
+        equilibrium_constraints = [isoflux, x_point]
 
         self._design_problem = self._problem_class(
             self._params,
@@ -549,12 +549,12 @@ def make_coil_mapper(track, exclusion_zones, coils):
             idx = np.argsort(l_values)
             l_values = l_values[idx]
             split_values = l_values[:-1] + 0.5 * np.diff(l_values)
+            split_positions = [segment.value_at(alpha=split) for split in split_values]
+
             sorted_coils = []
             for i in idx:
                 sorted_coils.append(coils.pop(i))
-
             coils = sorted_coils
-            split_positions = [segment.value_at(alpha=split) for split in split_values]
 
             sub_segs = []
             for i, split_pos in enumerate(split_positions):
@@ -570,10 +570,6 @@ def make_coil_mapper(track, exclusion_zones, coils):
 
             for coil, sub_seg in zip(coils, sub_segs):
                 interpolator_dict[coil.name] = PathInterpolator(sub_seg)
-
-                # if i == len(split_values) - 1:
-                #     if segment:
-                #         interpolator_dict[coils[i].name] = PathInterpolator(segment)
 
     return PositionMapper(interpolator_dict)
 

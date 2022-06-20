@@ -232,10 +232,10 @@ class PulsedCoilsetDesign:
             eq.coilset,
             eq,
             MagneticConstraintSet(self.eq_constraints),
-            gamma=self._eq_settings["gamma"],
+            gamma=0.0,
             optimiser=deepcopy(self._eq_opt),
             max_currents=eq.coilset.get_max_currents(1.5 * 1e6 * self.params.I_p.value),
-            constraints=deepcopy(self._coil_cons),
+            constraints=None,
         )
         program = PicardIterator(
             eq,
