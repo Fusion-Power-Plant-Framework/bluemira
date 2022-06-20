@@ -324,13 +324,18 @@ def is_num(thing):
         return False
     if thing is np.nan:
         return False
-    if isinstance(thing, np.ndarray) and thing.dtype in [float, int, complex]:
-        return ~np.isnan(thing)
     try:
         float(thing)
         return True
     except (ValueError, TypeError):
         return False
+
+
+def is_num_array(thing):
+    if isinstance(thing, np.ndarray) and thing.dtype in [float, int, complex]:
+        return ~np.isnan(thing)
+    else:
+        return is_num(thing)
 
 
 def abs_rel_difference(v2, v1_ref):

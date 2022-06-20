@@ -29,7 +29,8 @@ from bluemira.geometry.coordinates import Coordinates
 class TestCoilsetOptimiser:
     @classmethod
     def setup_class(cls):
-        coil = Coil(
+        circuit = SymmetricCircuit(
+            np.array([[0, 0], [1, 0]]),
             x=1.5,
             z=6.0,
             current=1e6,
@@ -40,7 +41,6 @@ class TestCoilsetOptimiser:
             ctype="PF",
             name="PF_2",
         )
-        circuit = SymmetricCircuit(coil)
 
         coil2 = Coil(
             x=4.0,

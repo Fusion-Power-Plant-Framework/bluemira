@@ -84,7 +84,7 @@ class TestCoil:
         assert np.round(abs(c.Bx(0.001, z) - Bx), 4) == 0
         assert np.round(abs(c.Bz(0.001, z) - Bz), 5) == 0
         psi_single = c.psi(15, 15)
-        c.mesh_coil(0.1)
+        c.discretise(0.1)
         assert np.round(abs(c.Bx(0.001, z) - Bx), 4) == 0
         assert np.round(abs(c.Bz(0.001, z) - Bz), 3) == 0
         psi_multi = c.psi(15, 15)
@@ -113,7 +113,7 @@ class TestCoil:
         ax.set_xlim([2, 6])
         ax.set_ylim([-3, 3])
 
-        c.mesh_coil(0.1)
+        c.discretise(0.1)
 
         gbxn = c.control_Bx(x, z)
         _ = c.control_Bz(x, z)
@@ -193,7 +193,7 @@ class TestSemiAnalytic:
     @classmethod
     def setup_class(cls):
         cls.coil = Coil(x=4, z=4, current=10e6, dx=1, dz=2)
-        cls.coil.mesh_coil(0.2)
+        cls.coil.discretise(0.2)
         cls.grid = Grid(0.1, 8, 0, 8, 100, 100)
         cls.x_boundary = np.append(cls.coil.x_boundary, cls.coil.x_boundary[0])
         cls.z_boundary = np.append(cls.coil.z_boundary, cls.coil.z_boundary[0])
