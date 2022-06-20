@@ -108,15 +108,15 @@ class Component(NodeMixin, Plottable, DisplayableCAD):
 
         Notes
         -----
-            This function is just a wrapper of the anytree.search.findall or find
-            functions.
+            This function is just a wrapper of the anytree.search.findall
+            function.
         """
         return self._get_thing(
             lambda n: anytree.search._filter_by_name(n, "name", name), first, full_tree
         )
 
     def get_component_properties(
-        self, properties: Union[Iterable[str], str], first=False, full_tree=False
+        self, properties: Union[Iterable[str], str], first=True, full_tree=False
     ):
         """
         Get properties from a component
@@ -150,19 +150,32 @@ class Component(NodeMixin, Plottable, DisplayableCAD):
 
         if found_nodes is None:
             return tuple([] for _ in properties)
+
+        if not isinstance(found_nodes, Iterable):
+            if len(properties) == 1:
+                return getattr(found_nodes, properties[0])
+            return [getattr(found_nodes, prop) for prop in properties]
         else:
             return tuple(
                 obj.tolist()
                 for obj in np.array(
-                    ([node.prop for prop in properties] for node in found_nodes),
+                    [
+                        [getattr(node, prop) for prop in properties]
+                        for node in found_nodes
+                    ],
                     dtype=object,
                 ).T
             )
 
     def _get_thing(self, filter_: Callable, first: bool, full_tree: bool):
-        find_cmd = getattr(anytree.search, "find" if first else "findall")
-
-        return find_cmd(self.root if full_tree else self, filter_=filter_)
+        found_nodes = anytree.search.findall(
+            self.root if full_tree else self, filter_=filter_
+        )
+        if found_nodes in (None, ()):
+            return None
+        if first and isinstance(found_nodes, Iterable):
+            found_nodes = found_nodes[0]
+        return found_nodes
 
     def add_child(self, child: Component) -> Component:
         """
@@ -329,9 +342,16 @@ def get_properties_from_components(
 
     for comp in comps:
 
-        props = comp.get_component_properties(properties)
-
+        props = comp.get_component_properties(properties, first=False)
+        if not isinstance(props, tuple):
+            props = tuple(props)
         for i, prop in enumerate(props):
             property_lists[i].extend(prop)
+
+    if len(property_lists[0]) == 1:
+        property_lists = [p[0] for p in property_lists]
+
+    if len(property_lists) == 1:
+        property_lists = property_lists[0]
 
     return property_lists
