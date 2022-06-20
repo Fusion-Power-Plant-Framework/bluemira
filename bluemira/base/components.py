@@ -25,9 +25,10 @@ Module containing the base Component class.
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, List, Optional, Union
+from typing import TYPE_CHECKING, Any, Callable, Iterable, List, Optional, Union
 
 import anytree
+import numpy as np
 from anytree import NodeMixin, RenderTree
 
 from bluemira.base.error import ComponentError
@@ -107,21 +108,61 @@ class Component(NodeMixin, Plottable, DisplayableCAD):
 
         Notes
         -----
-            This function is just a wrapper of the anytree.search.findall_by_attr
-            function.
+            This function is just a wrapper of the anytree.search.findall or find
+            functions.
         """
-        if full_tree:
-            found_components = anytree.search.findall_by_attr(self.root, name)
+        return self._get_thing(
+            lambda n: anytree.search._filter_by_name(n, "name", name), first, full_tree
+        )
+
+    def get_component_properties(
+        self, properties: Union[Iterable[str], str], first=False, full_tree=False
+    ):
+        """
+        Get properties from a component
+
+        Parameters
+        ----------
+        name: str
+            The name of the component to search for.
+        first: bool
+            If True, only the first element is returned, by default True.
+        full_tree: bool
+            If True, searches the tree from the root, else searches from this node, by
+            default False.
+
+        Returns
+        -------
+        Lists of properties of components
+
+        Notes
+        -----
+            This function is just a wrapper of the anytree.search.findall or find
+            functions.
+        """
+        if isinstance(properties, str):
+            properties = [properties]
+
+        def filter_(node, properties):
+            return all(hasattr(node, prop) for prop in properties)
+
+        found_nodes = self._get_thing(lambda n: filter_(n, properties), first, full_tree)
+
+        if found_nodes is None:
+            return tuple([] for _ in properties)
         else:
-            found_components = anytree.search.findall_by_attr(self, name)
+            return tuple(
+                obj.tolist()
+                for obj in np.array(
+                    ([node.prop for prop in properties] for node in found_nodes),
+                    dtype=object,
+                ).T
+            )
 
-        if len(found_components) == 0:
-            return None
+    def _get_thing(self, filter_: Callable, first: bool, full_tree: bool):
+        find_cmd = getattr(anytree.search, "find" if first else "findall")
 
-        if first:
-            return found_components[0]
-
-        return found_components
+        return find_cmd(self.root if full_tree else self, filter_=filter_)
 
     def add_child(self, child: Component) -> Component:
         """
@@ -258,3 +299,39 @@ class MagneticComponent(PhysicalComponent):
     @conductor.setter
     def conductor(self, value):
         self._conductor = value
+
+
+def get_properties_from_components(
+    comps: Union[Component, Iterable[Component]], properties: Union[str, Iterable[str]]
+):
+    """
+    Get internal shapes and display options from Components
+
+    Parameters
+    ----------
+    comps: Union[Component, Iterable[Component]])
+        A component or list of components
+
+    Returns
+    -------
+    shapes: List[BluemiraGeo]
+        List of shapes in components
+    options: List[DisplayCADOptions]
+        List of display options for shapes
+    """
+    if isinstance(properties, str):
+        properties = [properties]
+
+    property_lists = tuple([] for _ in properties)
+
+    if not isinstance(comps, Iterable):
+        comps = [comps]
+
+    for comp in comps:
+
+        props = comp.get_component_properties(properties)
+
+        for i, prop in enumerate(props):
+            property_lists[i].extend(prop)
+
+    return property_lists
