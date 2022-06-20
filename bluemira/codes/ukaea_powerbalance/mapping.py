@@ -18,10 +18,30 @@
 #
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
-
 """
-Constants for the UKAEA PowerBalance integration.
+UKAEA Power Balance Models mappings
 """
 
-NAME = "UKAEA_POWERBALANCE"
-MODEL_NAME = "Tokamak.Interdependencies"
+from bluemira.base.parameter import ParameterMapping
+from bluemira.codes.ukaea_powerbalance.constants import MODEL_NAME
+
+mappings = {
+    "TF_res_bus": ParameterMapping(
+        f"{MODEL_NAME}.magnetpower.magnetTF.Rfeeder", True, False
+    ),
+    "TF_E_stored": ParameterMapping(
+        f"{MODEL_NAME}.magnetpower.magnetTF.magEnergy", True, False
+    ),
+    "TF_res_tot": ParameterMapping(
+        f"{MODEL_NAME}.magnetpower.magnetTF.Rtot", True, False
+    ),
+    "TF_currpt_ob": ParameterMapping("profiles.TFCoil.max_current", True, False),
+    "TF_respc_ob": ParameterMapping(
+        f"{MODEL_NAME}.magnetpower.magnetTF.Roleg", True, False
+    ),
+    "P_bd_in": ParameterMapping("profiles.Heat.max_power", True, False),
+    "condrad_cryo_heat": ParameterMapping(
+        f"{MODEL_NAME}.cryogenicpower.PFcrMW", True, False
+    ),
+    "tk_tp_tot": ParameterMapping("profiles.ThermalPowerOut.max_power", True, False),
+}

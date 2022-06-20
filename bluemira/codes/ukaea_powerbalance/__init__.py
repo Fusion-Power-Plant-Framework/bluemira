@@ -22,5 +22,5 @@
 """
 Importer for UKAEA PowerBalance runner constants and functions
 """
-# from bluemira.codes.ukaea_powerbalance.api import Solver
-# from bluemira.codes.ukaea_powerbalance.constants import NAME
+from bluemira.codes.ukaea_powerbalance.api import Solver
+from bluemira.codes.ukaea_powerbalance.constants import NAME
