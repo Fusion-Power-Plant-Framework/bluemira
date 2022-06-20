@@ -3,15 +3,13 @@ repos:
     rev: v4.1.0
     hooks:
     - id: trailing-whitespace
+      exclude: test_data
     - id: check-merge-conflict
     - id: end-of-file-fixer
-      exclude: |
-            (?x)^(
-                tests/bluemira/utilities/test_data/testJSONEncoder.json |
-            )$
-
+      exclude: test_data
     - id: mixed-line-ending
       args: [--fix=lf]
+      exclude: test_data
 
 -   repo: https://github.com/pycqa/isort
     rev: 5.10.1
