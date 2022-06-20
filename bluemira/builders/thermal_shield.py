@@ -99,14 +99,14 @@ class VacuumVesselThermalShieldBuilder(Builder):
         vvts_inner_wire = offset_wire(
             self._vv_koz,
             self._params.g_vv_ts.value,
-            join="arc",
+            join="intersect",
             open_wire=False,
             ndiscr=600,
         )
         vvts_outer_wire = offset_wire(
             vvts_inner_wire,
             self._params.tk_ts.value,
-            join="arc",
+            join="intersect",
             open_wire=False,
             ndiscr=600,
         )

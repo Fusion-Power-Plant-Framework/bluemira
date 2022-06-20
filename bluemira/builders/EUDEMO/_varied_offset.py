@@ -72,7 +72,7 @@ def varied_offset(
         New wire at a variable offset to the input.
     """
     _throw_if_inputs_invalid(wire, inboard_offset_degree, outboard_offset_degree)
-    coordinates = wire.discretize(num_points, byedges=False)
+    coordinates = wire.discretize(num_points, byedges=True)
     if not np.all(coordinates.normal_vector == [0, 1, 0]):
         raise GeometryError(
             "Cannot create a variable offset from a wire that is not xz planar."

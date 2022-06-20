@@ -481,11 +481,22 @@ def _offset_wire_discretised(
     """
     Fallback function for discretised offsetting
 
-    Notes
-    -----
-    Can only handle closed wires
+    Raises
+    ------
+    GeometryError
+        If the wire is not closed. This function cannot handle the offet of an open
+        wire.
     """
     from bluemira.geometry._deprecated_offset import offset_clipper
+
+    if not wire.is_closed() and not open_wire:
+        wire = wire.deepcopy()
+        wire.close()
+
+    if not wire.is_closed() and open_wire:
+        raise GeometryError(
+            "Fallback function _offset_wire_discretised cannot handle open wires."
+        )
 
     coordinates = wire.discretize(byedges=byedges, ndiscr=ndiscr)
 

@@ -23,6 +23,7 @@
 Builder for making a parameterised EU-DEMO vacuum vessel.
 """
 
+from copy import deepcopy
 from typing import List
 
 import bluemira.utilities.plot_tools as bm_plot_tools
@@ -80,6 +81,9 @@ class VacuumVesselBuilder(Builder):
         """
         super().reinitialise(params)
 
+        if not ivc_koz.is_closed():
+            ivc_koz = deepcopy(ivc_koz)
+            ivc_koz.close()
         self._ivc_koz = ivc_koz
 
     def build(self) -> Component:
