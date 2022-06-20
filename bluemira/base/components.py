@@ -25,7 +25,7 @@ Module containing the base Component class.
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, Callable, Iterable, List, Optional, Union
+from typing import TYPE_CHECKING, Any, Callable, Iterable, List, Optional, Sized, Union
 
 import anytree
 from anytree import NodeMixin, RenderTree
@@ -115,7 +115,7 @@ class Component(NodeMixin, Plottable, DisplayableCAD):
         )
 
     def get_component_properties(
-        self, properties: Union[Iterable[str], str], first=True, full_tree=False
+        self, properties: Union[Sized[str], str], first=True, full_tree=False
     ):
         """
         Get properties from a component
@@ -309,7 +309,7 @@ class MagneticComponent(PhysicalComponent):
 
 
 def get_properties_from_components(
-    comps: Union[Component, Iterable[Component]], properties: Union[str, Iterable[str]]
+    comps: Union[Component, Iterable[Component]], properties: Union[str, Sized[str]]
 ):
     """
     Get internal shapes and display options from Components
@@ -318,6 +318,8 @@ def get_properties_from_components(
     ----------
     comps: Union[Component, Iterable[Component]])
         A component or list of components
+    properties: Union[str, Sized[str]]
+        properties to collect
 
     Returns
     -------
