@@ -875,7 +875,7 @@ def save_as_STEP(
     scale: float, default = 1.0
         The scale in which to save the Shape objects
     """
-    filename = force_file_extension([".stp", ".step"])
+    filename = force_file_extension(filename, [".stp", ".step"])
 
     if not isinstance(shapes, list):
         shapes = [shapes]
