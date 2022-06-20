@@ -190,6 +190,9 @@ C_LIGHT = ureg.Quantity("c").to_base_units().magnitude  # [m/s]
 # Vacuum permeability
 MU_0 = ureg.Quantity("mu_0").to_base_units().magnitude  # [T.m/A] or [V.s/(A.m)]
 
+# Vacuum permittivity
+EPS_0 = ureg.Quantity("eps_0").to_base_units().magnitude  # [A^2.s^4/kg/m^3]
+
 # Commonly used..
 MU_0_4PI = 1e-7  # [T.m/A] or [V.s/(A.m)]
 
@@ -208,6 +211,9 @@ SIGMA_BOLTZMANN = ureg.Quantity("sigma").to_base_units().magnitude  # [W/(m^2.K^
 # Boltzmann constant kB = R/N_a
 K_BOLTZMANN = ureg.Quantity("k_B").to_base_units().magnitude  # [J/K]
 
+# Plank constant
+H_PLANCK = ureg.Quantity("hbar").to_base_units().magnitude
+
 # neutron molar mass, [u] or [g/mol]
 NEUTRON_MOLAR_MASS = (
     ureg.Quantity("m_n").to("g") * ureg.Quantity("avogadro_constant").to_base_units()
@@ -222,6 +228,13 @@ PROTON_MOLAR_MASS = (
 ELECTRON_MOLAR_MASS = (
     ureg.Quantity("m_e").to("g") * ureg.Quantity("avogadro_constant").to_base_units()
 ).magnitude
+
+
+# electron mass [kg]
+ELECTRON_MASS = ureg.Quantity("m_e").to_base_units().magnitude
+
+# proton mass [kg]
+PROTON_MASS = ureg.Quantity("m_p").to_base_units().magnitude
 
 # Tritium half-life
 # https://www.nist.gov/pml/radiation-physics/radioactivity/radionuclide-half-life-measurements
