@@ -636,10 +636,7 @@ class TestSavingCAD:
         for line in difflib.unified_diff(
             lines1, lines2, fromfile="", tofile="", lineterm="", n=0
         ):
-            for prefix in ("---", "+++", "@@"):
-                if line.startswith(prefix):
-                    break
-            else:
+            if not line.startswith(("---", "+++", "@@")):
                 try:
                     datetime.fromisoformat(line.split(",")[1].strip("'"))
                 except (ValueError, IndexError):
