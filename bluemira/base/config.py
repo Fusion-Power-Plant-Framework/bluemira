@@ -257,10 +257,10 @@ class Configuration(ConfigurationSchema, ParameterFrame):
 
         # PF coils
         ['r_pf_corner', 'Corner radius of the PF coil winding pack', 0.05, 'm', None, 'Input'],
-        ['tk_pf_insulation', 'Thickness of the PF coil insulation', 0.05, 'm', None, 'Input'],
+        ['tk_pf_insulation', 'Thickness of the PF coil insulation', 0.005, 'm', None, 'Input'],
         ['tk_pf_casing', 'Thickness of the PF coil casing', 0.07, 'm', None, 'Input'],
         ['r_cs_corner', 'Corner radius of the CS coil winding pack', 0.05, 'm', None, 'Input'],
-        ['tk_cs_insulation', 'Thickness of the CS coil insulation', 0.05, 'm', None, 'Input'],
+        ['tk_cs_insulation', 'Thickness of the CS coil insulation', 0.005, 'm', None, 'Input'],
         ['tk_cs_casing', 'Thickness of the CS coil casing', 0.07, 'm', None, 'Input'],
 
         # Coil structures
@@ -288,7 +288,7 @@ class Configuration(ConfigurationSchema, ParameterFrame):
         ['r_vv_joint', 'Radius of inboard/outboard VV joint', 2., 'm', None, 'Input'],
 
         # Gaps and clearances
-        ['g_cs_mod', 'Gap between CS modules', 0.1, 'm', None, 'Input'],
+        ['g_cs_mod', 'Gap between CS modules', 0.05, 'm', None, 'Input'],
         ['g_vv_ts', 'Gap between VV and TS', 0.05, 'm', None, 'Input'],
         ['g_ib_vv_ts', 'Inboard gap between VV and TS', 0.05, 'm', None, 'Input'],
         ['g_ob_vv_ts', 'Outboard gap between VV and TS', 0.05, 'm', None, 'Input'],
