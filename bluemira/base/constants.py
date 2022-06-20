@@ -223,6 +223,9 @@ ELECTRON_MOLAR_MASS = (
     ureg.Quantity("m_e").to("g") * ureg.Quantity("avogadro_constant").to_base_units()
 ).magnitude
 
+# elementary charge, [C]
+E_CHARGE = ureg.Quantity("e").to_base_units().magnitude
+
 # Tritium half-life
 # https://www.nist.gov/pml/radiation-physics/radioactivity/radionuclide-half-life-measurements
 # http://www.lnhb.fr/nuclear-data/nuclear-data-table/

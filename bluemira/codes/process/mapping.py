@@ -145,6 +145,18 @@ OUT_mappings = {
     "TF_currpt_ob": ("cpttf", "A"),
     "P_bd_in": ("pinjmw", "MW"),
     "condrad_cryo_heat": ("qss/1.0D6", "MW"),
+    "n_el_0": ("ne0", "1/m^3"),
+    "T_el_0": ("te0", "keV"),
+    "rho_ped_n": ("rhopedn", "dimensionless"),
+    "rho_ped_t": ("rhopedt", "dimensionless"),
+    "n_el_ped": ("neped", "1/m^3"),
+    "T_el_ped": ("teped", "keV"),
+    "alpha_n": ("alphan", "dimensionless"),
+    "alpha_t": ("alphat", "dimensionless"),
+    "t_beta": ("tbeta", "dimensionless"),
+    "n_el_sep": ("nesep", "1/m^3"),
+    "T_el_sep": ("tesep", "keV"),
+    "rminor": ("rminor", "m"),
 }
 
 IO_mappings = {
