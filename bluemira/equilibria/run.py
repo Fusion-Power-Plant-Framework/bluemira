@@ -228,6 +228,25 @@ class PulsedCoilsetDesign:
             plot=False,
         )
         program()
+        opt_problem = self._eq_prob_cls(
+            eq.coilset,
+            eq,
+            MagneticConstraintSet(self.eq_constraints),
+            gamma=self._eq_settings["gamma"],
+            optimiser=deepcopy(self._eq_opt),
+            max_currents=eq.coilset.get_max_currents(1.5 * 1e6 * self.params.I_p.value),
+            constraints=deepcopy(self._coil_cons),
+        )
+        program = PicardIterator(
+            eq,
+            opt_problem,
+            convergence=self._eq_convergence,
+            relaxation=self._eq_settings["relaxation"],
+            fixed_coils=True,
+            plot=False,
+        )
+        program()
+
         self.take_snapshot(self.EQ_REF, eq, coilset, opt_problem, self.profiles)
 
     def calculate_sof_eof_fluxes(self, psi_premag: Optional[float] = None):

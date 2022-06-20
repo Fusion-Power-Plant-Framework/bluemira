@@ -327,7 +327,7 @@ class PFCoilsBuilder(Builder):
             breakdown_settings={"B_stray_con_tol": 1e-6, "n_B_stray_points": 10},
             equilibrium_problem_cls=TikhonovCurrentCOP,
             equilibrium_optimiser=Optimiser(
-                "COBYLA",
+                "SLSQP",
                 opt_conditions={"max_eval": 5000, "ftol_rel": 1e-6, "xtol_rel": 1e-6},
             ),
             equilibrium_convergence=DudsonConvergence(1e-3),
@@ -335,7 +335,7 @@ class PFCoilsBuilder(Builder):
             position_problem_cls=PulsedNestedPositionCOP,
             position_optimiser=Optimiser(
                 "COBYLA",
-                opt_conditions={"max_eval": 50, "ftol_rel": 1e-6, "xtol_rel": 1e-4},
+                opt_conditions={"max_eval": 500, "ftol_rel": 1e-6, "xtol_rel": 1e-4},
             ),
             limiter=None,
         )
