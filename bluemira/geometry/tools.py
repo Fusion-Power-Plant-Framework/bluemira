@@ -35,7 +35,7 @@ import numpy as np
 from scipy.spatial import ConvexHull
 
 import bluemira.mesh.meshing as meshing
-from bluemira.base.components import get_properties_from_components
+from bluemira.base.components import Component, get_properties_from_components
 from bluemira.base.constants import EPS
 from bluemira.base.file import get_bluemira_path
 from bluemira.base.look_and_feel import bluemira_debug, bluemira_warn
@@ -860,7 +860,9 @@ def circular_pattern(
 # # =============================================================================
 # # Save functions
 # # =============================================================================
-def save_as_STEP(shapes, filename="test", scale=1):
+def save_as_STEP(
+    shapes: Union[BluemiraGeo, Iterable[BluemiraGeo]], filename: str, scale: float = 1
+):
     """
     Saves a series of Shape objects as a STEP assembly
 
@@ -868,7 +870,7 @@ def save_as_STEP(shapes, filename="test", scale=1):
     ----------
     shapes: Iterable (BluemiraGeo, ...)
         List of shape objects to be saved
-    filename: str, default = "test"
+    filename: str
         Full path filename of the STP assembly
     scale: float, default = 1.0
         The scale in which to save the Shape objects
@@ -883,15 +885,17 @@ def save_as_STEP(shapes, filename="test", scale=1):
     cadapi.save_as_STEP(freecad_shapes, filename, scale)
 
 
-def save_cad(components, filename="test", scale=1):
+def save_cad(
+    components: Union[Component, Iterable[Component]], filename: str, scale: float = 1
+):
     """
     Save the CAD of a component (eg a reactor) or a list of components
 
     Parameters
     ----------
-    components: Union[Component, Iterable[Component]])
+    components: Union[Component, Iterable[Component]]
         components to save
-    filename: str, default = "test"
+    filename: str
         Full path filename of the STP assembly
     scale: float, default = 1.0
         The scale in which to save the Shape objects
