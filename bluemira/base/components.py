@@ -28,7 +28,6 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Any, Callable, Iterable, List, Optional, Union
 
 import anytree
-import numpy as np
 from anytree import NodeMixin, RenderTree
 
 from bluemira.base.error import ComponentError
@@ -156,16 +155,11 @@ class Component(NodeMixin, Plottable, DisplayableCAD):
                 return getattr(found_nodes, properties[0])
             return [getattr(found_nodes, prop) for prop in properties]
         else:
-            return tuple(
-                obj.tolist()
-                for obj in np.array(
-                    [
-                        [getattr(node, prop) for prop in properties]
-                        for node in found_nodes
-                    ],
-                    dtype=object,
-                ).T
-            )
+            # Collect values by property instead of by node
+            node_properties = [
+                [getattr(node, prop) for prop in properties] for node in found_nodes
+            ]
+            return tuple(map(list, zip(*node_properties)))
 
     def _get_thing(self, filter_: Callable, first: bool, full_tree: bool):
         found_nodes = anytree.search.findall(
