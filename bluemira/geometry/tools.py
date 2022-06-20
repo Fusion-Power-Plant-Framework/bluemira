@@ -37,7 +37,7 @@ from scipy.spatial import ConvexHull
 import bluemira.mesh.meshing as meshing
 from bluemira.base.components import Component, get_properties_from_components
 from bluemira.base.constants import EPS
-from bluemira.base.file import get_bluemira_path
+from bluemira.base.file import force_file_extension, get_bluemira_path
 from bluemira.base.look_and_feel import bluemira_debug, bluemira_warn
 from bluemira.codes import _freecadapi as cadapi
 from bluemira.geometry.base import BluemiraGeo, GeoMeshable
@@ -875,14 +875,7 @@ def save_as_STEP(
     scale: float, default = 1.0
         The scale in which to save the Shape objects
     """
-    if not filename.endswith(
-        tuple(
-            getattr(fe, func)()
-            for func in ("upper", "lower")
-            for fe in (".stp", ".step")
-        )
-    ):
-        filename += ".stp"
+    filename = force_file_extension([".stp", ".step"])
 
     if not isinstance(shapes, list):
         shapes = [shapes]

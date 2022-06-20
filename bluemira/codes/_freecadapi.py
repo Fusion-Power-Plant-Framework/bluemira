@@ -51,6 +51,7 @@ from pivy import coin, quarter
 from PySide2.QtWidgets import QApplication
 
 from bluemira.base.constants import EPS
+from bluemira.base.file import force_file_extension
 from bluemira.base.look_and_feel import bluemira_warn
 
 # import errors and warnings
@@ -963,14 +964,7 @@ def save_as_STEP(shapes, filename="test", scale=1):
     scale: float (default 1)
         The scale in which to save the Shape objects
     """
-    if not filename.endswith(
-        tuple(
-            getattr(fe, func)()
-            for func in ("upper", "lower")
-            for fe in (".stp", ".step")
-        )
-    ):
-        filename += ".stp"
+    filename = force_file_extension([".stp", ".step"])
 
     if not isinstance(shapes, list):
         shapes = [shapes]
