@@ -25,7 +25,17 @@ Module containing the base Component class.
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, List, Optional, Union
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    Callable,
+    Iterable,
+    List,
+    Optional,
+    Sized,
+    Tuple,
+    Union,
+)
 
 import anytree
 from anytree import NodeMixin, RenderTree
@@ -107,21 +117,72 @@ class Component(NodeMixin, Plottable, DisplayableCAD):
 
         Notes
         -----
-            This function is just a wrapper of the anytree.search.findall_by_attr
+            This function is just a wrapper of the anytree.search.findall
             function.
         """
-        if full_tree:
-            found_components = anytree.search.findall_by_attr(self.root, name)
+        return self._get_thing(
+            lambda n: anytree.search._filter_by_name(n, "name", name), first, full_tree
+        )
+
+    def get_component_properties(
+        self, properties: Union[Sized[str], str], first=True, full_tree=False
+    ) -> Union[Tuple[List[Any]], List[Any], Any]:
+        """
+        Get properties from a component
+
+        Parameters
+        ----------
+        name: str
+            The name of the component to search for.
+        first: bool
+            If True, only the first element is returned, by default True.
+        full_tree: bool
+            If True, searches the tree from the root, else searches from this node, by
+            default False.
+
+        Returns
+        -------
+        properties: Union[Tuple[List[Any]], List[Any], Any]
+            If multiple properties specified returns a tuple of the list of properties,
+            otherwise returns a list of the property.
+            If only one node has the property returns the value(s).
+
+        Notes
+        -----
+            This function is just a wrapper of the anytree.search.findall or find
+            functions.
+        """
+        if isinstance(properties, str):
+            properties = [properties]
+
+        def filter_(node, properties):
+            return all(hasattr(node, prop) for prop in properties)
+
+        found_nodes = self._get_thing(lambda n: filter_(n, properties), first, full_tree)
+
+        if found_nodes is None:
+            return tuple([] for _ in properties)
+
+        if not isinstance(found_nodes, Iterable):
+            if len(properties) == 1:
+                return getattr(found_nodes, properties[0])
+            return [getattr(found_nodes, prop) for prop in properties]
         else:
-            found_components = anytree.search.findall_by_attr(self, name)
+            # Collect values by property instead of by node
+            node_properties = [
+                [getattr(node, prop) for prop in properties] for node in found_nodes
+            ]
+            return tuple(map(list, zip(*node_properties)))
 
-        if len(found_components) == 0:
+    def _get_thing(self, filter_: Callable, first: bool, full_tree: bool):
+        found_nodes = anytree.search.findall(
+            self.root if full_tree else self, filter_=filter_
+        )
+        if found_nodes in (None, ()):
             return None
-
-        if first:
-            return found_components[0]
-
-        return found_components
+        if first and isinstance(found_nodes, Iterable):
+            found_nodes = found_nodes[0]
+        return found_nodes
 
     def add_child(self, child: Component) -> Component:
         """
@@ -258,3 +319,48 @@ class MagneticComponent(PhysicalComponent):
     @conductor.setter
     def conductor(self, value):
         self._conductor = value
+
+
+def get_properties_from_components(
+    comps: Union[Component, Iterable[Component]], properties: Union[str, Sized[str]]
+):
+    """
+    Get properties from Components
+
+    Parameters
+    ----------
+    comps: Union[Component, Iterable[Component]])
+        A component or list of components
+    properties: Union[str, Sized[str]]
+        properties to collect
+
+    Returns
+    -------
+    shapes: List[BluemiraGeo]
+        List of shapes in components
+    options: List[DisplayCADOptions]
+        List of display options for shapes
+    """
+    if isinstance(properties, str):
+        properties = [properties]
+
+    property_lists = tuple([] for _ in properties)
+
+    if not isinstance(comps, Iterable):
+        comps = [comps]
+
+    for comp in comps:
+
+        props = comp.get_component_properties(properties, first=False)
+        if not isinstance(props, tuple):
+            props = tuple(props)
+        for i, prop in enumerate(props):
+            property_lists[i].extend(prop)
+
+    if len(property_lists[0]) == 1:
+        property_lists = [p[0] for p in property_lists]
+
+    if len(property_lists) == 1:
+        property_lists = property_lists[0]
+
+    return property_lists

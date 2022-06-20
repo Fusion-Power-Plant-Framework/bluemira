@@ -21,7 +21,12 @@
 
 import pytest
 
-from bluemira.base.components import Component, MagneticComponent, PhysicalComponent
+from bluemira.base.components import (
+    Component,
+    MagneticComponent,
+    PhysicalComponent,
+    get_properties_from_components,
+)
 from bluemira.base.error import ComponentError
 
 
@@ -147,6 +152,38 @@ class TestPhysicalComponent:
     Tests for the PhysicalComponent class.
     """
 
+    def test_get_component_property(self):
+        component = PhysicalComponent("Dummy", shape="A shape")
+        shape = component.get_component_properties("shape")
+        assert shape == "A shape"
+
+    def test_get_component_properties(self):
+        component = PhysicalComponent("Dummy", shape="A shape", material="A material")
+        shape, material = component.get_component_properties(("shape", "material"))
+        assert shape == "A shape"
+        assert material == "A material"
+
+    @pytest.mark.parametrize(
+        "first, result",
+        [
+            [True, ("A shape", "A material")],
+            [False, (["A shape"] * 2, ["A material"] * 2)],
+        ],
+    )
+    def test_get_components_properties(self, first, result):
+        parent = Component("Parent")
+        component = PhysicalComponent(
+            "Dummy", shape="A shape", material="A material", parent=parent
+        )
+        component2 = PhysicalComponent(
+            "Dummy", shape="A shape", material="A material", parent=parent
+        )
+        shape, material = parent.get_component_properties(
+            ("shape", "material"), first=first
+        )
+        assert shape == result[0]
+        assert material == result[1]
+
     def test_shape(self):
         component = PhysicalComponent("Dummy", shape="A shape")
         assert component.shape == "A shape"
@@ -176,3 +213,32 @@ class TestMagneticComponent:
     def test_conductor(self):
         component = MagneticComponent("Dummy", shape="A shape", conductor="A conductor")
         assert component.conductor == "A conductor"
+
+
+class TestGetProperties:
+    """
+    Tests for the get_properties_from_components function
+    """
+
+    def test_get_properties_from_components_single_single(self):
+        comps = MagneticComponent("Dummy", shape="A shape")
+
+        shape = get_properties_from_components(comps, "shape")
+
+        assert shape == "A shape"
+
+    def test_get_properties_from_components_complex(self):
+        parent = Component("Parent")
+        component = PhysicalComponent(
+            "Dummy", shape="A shape", material="A material", parent=parent
+        )
+        component2 = PhysicalComponent(
+            "Dummy1", shape="A shape", material="A material", parent=parent
+        )
+        component3 = PhysicalComponent("Dummy", shape="A shape", material="A material")
+        component4 = Component("Dummy")
+        shape, material = get_properties_from_components(
+            [parent, component3, component4], ("shape", "material")
+        )
+        assert shape == ["A shape"] * 3
+        assert material == ["A material"] * 3
