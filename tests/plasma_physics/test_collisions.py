@@ -22,7 +22,7 @@
 import numpy as np
 import pytest
 
-from bluemira.base.constants import EV_TO_J, K_BOLTZMANN
+from bluemira.base.constants import raw_uc
 from bluemira.plasma_physics.collisions import coulomb_logarithm
 
 
@@ -56,6 +56,6 @@ class TestCoulombLogarithm:
         ],
     )
     def test_coulomb_logarithm_values(self, density, temp_in_ev, ref_value):
-        temp_in_k = temp_in_ev * EV_TO_J / K_BOLTZMANN
-        value = round(coulomb_logarithm(temp_in_k, density), 1)
+        temp_in_c = raw_uc(temp_in_ev, "eV", "celsius")
+        value = round(coulomb_logarithm(temp_in_c, density), 1)
         np.testing.assert_allclose(value, ref_value, rtol=0.054)
