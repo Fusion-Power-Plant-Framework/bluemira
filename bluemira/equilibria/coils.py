@@ -659,7 +659,7 @@ class Coil:
         outside/inside the coil boundary.
         """
         x, z = np.ascontiguousarray(x), np.ascontiguousarray(z)
-        if self.dx == 0 or self.dz == 0:
+        if np.isclose(self.dx, 0.0) or np.isclose(self.dz, 0.0):
             response = greens_func(x, z)
 
         else:
