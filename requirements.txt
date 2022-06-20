@@ -9,7 +9,7 @@ fortranformat==1.2.0
 gmsh==4.10.4
 imageio==2.19.3
 joblib==1.1.0
-kiwisolver==1.4.2
+kiwisolver==1.4.3
 llvmlite==0.38.1
 matplotlib==3.5.2
 neutronics-material-maker==0.1.11
