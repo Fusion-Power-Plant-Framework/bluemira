@@ -327,7 +327,8 @@ class PFCoilsBuilder(Builder):
             breakdown_settings={"B_stray_con_tol": 1e-6, "n_B_stray_points": 10},
             equilibrium_problem_cls=TikhonovCurrentCOP,
             equilibrium_optimiser=Optimiser(
-                "COBYLA", opt_conditions={"max_eval": 2000, "ftol_rel": 1e-6}
+                "COBYLA",
+                opt_conditions={"max_eval": 5000, "ftol_rel": 1e-6, "xtol_rel": 1e-6},
             ),
             equilibrium_convergence=DudsonConvergence(1e-3),
             equilibrium_settings={"gamma": 1e-12, "relaxation": 0.2},
@@ -588,7 +589,8 @@ def make_solenoid(r_cs, tk_cs, z_min, z_max, g_cs, tk_cs_ins, tk_cs_cas, n_CS):
     r_cs: float
         Radius of the solenoid
     tk_cs: float
-        Half-thickness of the solenoid in the radial direction
+        Half-thickness of the solenoid in the radial direction (including insulation and
+        casing)
     z_min: float
         Minimum vertical position of the solenoid
     z_max: float
@@ -613,7 +615,7 @@ def make_solenoid(r_cs, tk_cs, z_min, z_max, g_cs, tk_cs_ins, tk_cs_cas, n_CS):
             r_cs,
             z_coil,
             current=0,
-            dx=tk_cs,
+            dx=tk_cs - tk_inscas,
             dz=dz_coil,
             control=True,
             ctype="CS",
