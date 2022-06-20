@@ -274,7 +274,8 @@ class TestZLMapperEdges:
 class TestRegionMapper:
     @classmethod
     def setup_class(cls):
-        coil = Coil(
+        circuit = SymmetricCircuit(
+            np.array([[0, 0], [1, 0]]),
             x=1.5,
             z=6,
             current=1e6,
@@ -282,16 +283,14 @@ class TestRegionMapper:
             dz=0.5,
             j_max=1e7,
             b_max=100,
-            ctype="PF",
             name="PF_2",
         )
-        circuit = SymmetricCircuit(coil)
 
-        coil2 = Coil(
+        coil = Coil(
             x=4, z=10, current=2e6, dx=1, dz=0.5, j_max=5e6, b_max=50, name="PF_1"
         )
 
-        cls.coilset = CoilSet([coil2, circuit])
+        cls.coilset = CoilSet([coil, circuit])
 
     def create_rectangular_region(self):
         max_coil_shifts = {

@@ -50,7 +50,7 @@ from bluemira.magnetostatics.greens import (
     greens_psi,
 )
 from bluemira.magnetostatics.semianalytic_2d import semianalytic_Bx, semianalytic_Bz
-from bluemira.utilities.tools import is_num
+from bluemira.utilities.tools import is_num_array
 
 # from scipy.interpolate import RectBivariateSpline
 
@@ -150,12 +150,6 @@ class CoilFieldsMixin:
         "_quad_x",
         "_quad_z",
         "_quad_weighting",
-        "_quad_x_ins",
-        "_quad_z_ins",
-        "_x_nins",
-        "_z_nins",
-        "_dx_nins",
-        "_dz_nins",
     )
 
     def __init__(self, weighting=None):
@@ -165,41 +159,69 @@ class CoilFieldsMixin:
         # setup initial meshing
         # quadratures
 
-        self.descritise(weighting)
+        self.discretise(weighting)
 
     def _set_quad_weighting(self, weighting=None):
         self._quad_weighting = (
             np.ones((self._x.shape[0], 1)) if weighting is None else weighting
         )
 
-    def descritise(self, weighting: Optional[np.ndarray] = None):
-        # each quadrature array = (quadrature, (x,z))
+    def _pad_discretisation(self, _quad_x, _quad_z, _quad_dx, _quad_dz):
+        all_len = np.array([len(q) for q in _quad_x])
+        max_len = max(all_len)
+        diff = max_len - all_len
 
-        if weighting is None:
-            self._quad_x = self._x.copy()
-            self._quad_dx = self._dx.copy()
-            self._quad_z = self._z.copy()
-            self._quad_dz = self._dz.copy()
+        for i, d in enumerate(diff):
+            for val in [_quad_x, _quad_z, _quad_dx, _quad_dz]:
+                val[i] = np.pad(val[i], (0, d))
 
-        else:
+        self._quad_x = np.array(_quad_x)
+        self._quad_z = np.array(_quad_z)
+        self._quad_dx = np.array(_quad_dx)
+        self._quad_dz = np.array(_quad_dz)
+        weighting = np.ones((self._x.shape[0], max_len)) / all_len[:, None]
+        weighting[self._quad_dx == 0] = 0
+
+        return weighting
+
+    def discretise(self, d_coil=None):
+
+        weighting = None
+        self._quad_x = self._x.copy()[..., None]
+        self._quad_dx = self._dx.copy()[..., None]
+        self._quad_z = self._z.copy()[..., None]
+        self._quad_dz = self._dz.copy()[..., None]
+
+        if d_coil is not None:
             # How fancy do we want the mesh or just smaller rectangles?
             # Smaller rectangles
-            for i, (coil_x, coil_z) in enumerate(zip(self._x, self._z)):
+            nx = np.maximum(1, np.ceil(self._dx * 2 / d_coil))
+            nz = np.maximum(1, np.ceil(self._dz * 2 / d_coil))
 
-                nx, nz = weighting[i]
-                dx, dz = self._dx[i] / nx, self._dz[i] / nz
+            if not all(nx * nz == 1):
+                dx, dz = self._dx / nx, self._dz / nz
+                _quad_x = []
+                _quad_z = []
+                _quad_dx = []
+                _quad_dz = []
 
-                # Calculate sub-coil centroids
-                x_sc = (coil_x - self._dx[i]) + dx * np.arange(1, 2 * nx, 2)
-                z_sc = (coil_z - self._dz[i]) + dz * np.arange(1, 2 * nz, 2)
-                x_sc, z_sc = np.meshgrid(x_sc, z_sc)
+                for i, (coil_x, coil_z, sc_dx, sc_dz, _nx, _nz) in enumerate(
+                    zip(self._x, self._z, dx, dz, nx, nz)
+                ):
 
-                # Obviously wont work need to do array stuff
-                current = self.current / (nx * nz)  # Current per coil filament
-                self._quad_x = x_sc.flat
-                self._quad_z = z_sc.flat
-                self._quad_dx = dx
-                self._quad_dz = dz
+                    # Calculate sub-coil centroids
+                    x_sc = (coil_x - self._dx[i]) + sc_dx * np.arange(1, 2 * _nx, 2)
+                    z_sc = (coil_z - self._dz[i]) + sc_dz * np.arange(1, 2 * _nz, 2)
+                    x_sc, z_sc = np.meshgrid(x_sc, z_sc)
+
+                    _quad_x += [x_sc.flat]
+                    _quad_z += [z_sc.flat]
+                    _quad_dx += [np.ones(x_sc.size) * sc_dx]
+                    _quad_dz += [np.ones(x_sc.size) * sc_dz]
+
+                weighting = self._pad_discretisation(
+                    _quad_x, _quad_z, _quad_dx, _quad_dz
+                )
 
         self._set_quad_weighting(weighting)
 
@@ -227,8 +249,7 @@ class CoilFieldsMixin:
             self._quad_dx[None],
             self._quad_dz[None],
         )
-
-        return np.einsum("..., ...j-> ...", gpsi, self._quad_weighting[None])
+        return np.einsum("...j, ...j-> ...", gpsi, self._quad_weighting[None])
 
     def Bx(self, x, z):
         """
@@ -312,7 +333,7 @@ class CoilFieldsMixin:
         """
         x, z = np.ascontiguousarray(x), np.ascontiguousarray(z)
 
-        zero_coil_size = np.logical_or(self._quad_dx == 0, self._quad_dz == 0)
+        zero_coil_size = np.logical_or(self._dx == 0, self._dz == 0)
 
         if False in zero_coil_size:
             # if dx or dz is not 0 and x,z inside coil
@@ -399,11 +420,11 @@ class CoilFieldsMixin:
             & (z <= z_max[None])
         )
 
-    def _control_Bx_greens(
-        self, x, z, split=False, _quad_x=None, _quad_z=None, _quad_weight=None
+    def _control_B_greens(
+        self, greens, x, z, split=False, _quad_x=None, _quad_z=None, _quad_weight=None
     ):
         """
-        Calculate radial magnetic field Bx respose at (x, z) due to a unit
+        Calculate radial magnetic field B respose at (x, z) due to a unit
         current using Green's functions.
         """
         if not split:
@@ -412,14 +433,25 @@ class CoilFieldsMixin:
             _quad_weight = self._quad_weighting
 
         return np.einsum(
-            "..., ...j -> ...",
-            greens_Bx(
+            "...j, ...j -> ...",
+            greens(
                 _quad_x[None],
                 _quad_z[None],
                 x[..., None],
                 z[..., None],
             ),
             _quad_weight[None],
+        )
+
+    def _control_Bx_greens(
+        self, x, z, split=False, _quad_x=None, _quad_z=None, _quad_weight=None
+    ):
+        """
+        Calculate radial magnetic field Bx respose at (x, z) due to a unit
+        current using Green's functions.
+        """
+        return self._control_B_greens(
+            greens_Bx, x, z, split, _quad_x, _quad_z, _quad_weight
         )
 
     def _control_Bz_greens(
@@ -428,24 +460,20 @@ class CoilFieldsMixin:
         """
         Calculate vertical magnetic field Bz at (x, z) due to a unit current
         """
-        if not split:
-            _quad_x = self._quad_x
-            _quad_z = self._quad_z
-            _quad_weight = self._quad_weighting
-
-        return np.einsum(
-            "..., ...j -> ...",
-            greens_Bz(
-                _quad_x[None],
-                _quad_z[None],
-                x[..., None],
-                z[..., None],
-            ),
-            _quad_weight[None],
+        return self._control_B_greens(
+            greens_Bz, x, z, split, _quad_x, _quad_z, _quad_weight
         )
 
-    def _control_Bx_analytical(
-        self, x, z, split=False, coil_x=None, coil_z=None, coil_dx=None, coil_dz=None
+    def _control_B_analytical(
+        self,
+        semianalytic,
+        x,
+        z,
+        split=False,
+        coil_x=None,
+        coil_z=None,
+        coil_dx=None,
+        coil_dz=None,
     ):
         """
         Calculate radial magnetic field Bx response at (x, z) due to a unit
@@ -457,13 +485,24 @@ class CoilFieldsMixin:
             coil_dx = self._dx
             coil_dz = self._dz
 
-        return semianalytic_Bx(
+        return semianalytic(
             coil_x[None],
             coil_z[None],
             x[..., None],
             z[..., None],
             d_xc=coil_dx[None],
             d_zc=coil_dz[None],
+        )
+
+    def _control_Bx_analytical(
+        self, x, z, split=False, coil_x=None, coil_z=None, coil_dx=None, coil_dz=None
+    ):
+        """
+        Calculate vertical magnetic field Bx response at (x, z) due to a unit
+        current using semi-analytic method.
+        """
+        return self._control_B_analytical(
+            semianalytic_Bx, x, z, split, coil_x, coil_z, coil_dx, coil_dz
         )
 
     def _control_Bz_analytical(
@@ -473,19 +512,8 @@ class CoilFieldsMixin:
         Calculate vertical magnetic field Bz response at (x, z) due to a unit
         current using semi-analytic method.
         """
-        if not split:
-            coil_x = self._x
-            coil_z = self._z
-            coil_dx = self._dx
-            coil_dz = self._dz
-
-        return semianalytic_Bz(
-            coil_x[None],
-            coil_z[None],
-            x[..., None],
-            z[..., None],
-            d_xc=coil_dx[None],
-            d_zc=coil_dz[None],
+        return self._control_B_analytical(
+            semianalytic_Bz, x, z, split, coil_x, coil_z, coil_dx, coil_dz
         )
 
     def F(self, eqcoil):  # noqa :N802
@@ -571,8 +599,8 @@ class CoilSizer:
     def __init__(self, coil):
         self.update(coil)
 
-        dx_specified = np.array([is_num(self._dx)], dtype=bool)
-        dz_specified = np.array([is_num(self._dz)], dtype=bool)
+        dx_specified = np.array([is_num_array(self._dx)], dtype=bool)
+        dz_specified = np.array([is_num_array(self._dz)], dtype=bool)
         dxdz_specified = np.logical_and(dx_specified, dz_specified)
 
         if any(
@@ -592,7 +620,7 @@ class CoilSizer:
             self._set_coil_attributes(coil)
 
         else:
-            if any(~is_num(self.j_max)):
+            if any(~is_num_array(self.j_max)):
                 # Check there is a viable way to size the coil
                 raise EquilibriaError("Must specify either dx and dz or j_max.")
 
@@ -776,6 +804,7 @@ class CoilGroup(CoilFieldsMixin, abc.ABC):
         ctype: Optional[__ITERABLE_COILTYPE] = CoilType.PF,
         j_max: Optional[__ITERABLE_FLOAT] = None,
         b_max: Optional[__ITERABLE_FLOAT] = None,
+        d_coil: Optional[int] = None,
     ) -> None:
 
         _inputs = {
@@ -822,7 +851,7 @@ class CoilGroup(CoilFieldsMixin, abc.ABC):
         self._sizer(self)
 
         # Meshing
-        super().__init__(None)
+        super().__init__(d_coil)
 
     @staticmethod
     def _make_iterable(
@@ -1138,9 +1167,9 @@ class CoilGroup(CoilFieldsMixin, abc.ABC):
 
         """
         for jm, bm in zip(j_max, b_max):
-            if not is_num(j_max):
+            if not is_num_array(j_max):
                 raise EquilibriaError(f"j_max must be specified as a number, not: {jm}")
-            if not is_num(b_max):
+            if not is_num_array(b_max):
                 raise EquilibriaError(f"b_max must be specified as a number, not: {bm}")
 
         self.j_max = j_max
@@ -1260,9 +1289,10 @@ class Coil(CoilGroup):
         ctype: Optional[Union[str, CoilType]] = CoilType.PF,
         j_max: Optional[float] = None,
         b_max: Optional[float] = None,
+        d_coil: Optional[int] = None,
     ) -> None:
         # Only to force type check correctness
-        super().__init__(x, z, dx, dz, current, name, ctype, j_max, b_max)
+        super().__init__(x, z, dx, dz, current, name, ctype, j_max, b_max, d_coil)
 
     @property
     def name(self):
@@ -1357,6 +1387,7 @@ class SymmetricCircuit(Circuit):
         ctype: Optional[Union[str, CoilType]] = CoilType.PF,
         j_max: Optional[float] = None,
         b_max: Optional[float] = None,
+        d_coil: Optional[int] = None,
     ) -> None:
 
         self._circuit_name = self._namer()
@@ -1377,26 +1408,11 @@ class SymmetricCircuit(Circuit):
         if b_max is not None:
             b_max *= ones
 
-        super().__init__(x, z, dx, dz, current, name, ctype, j_max, b_max)
+        super().__init__(x, z, dx, dz, current, name, ctype, j_max, b_max, d_coil)
 
     @property
     def name(self):
         return self._circuit_name
-
-    # def descritise(self, weighting = None ):
-
-    #     if weighting is None:
-    #         self._quad_x = self.x.copy()[None]
-    #         self._quad_dx = self.dx.copy()[None]
-    #         self._quad_z = self.z.copy()[None]
-    #         self._quad_dz = self.dz.copy()[None]
-
-    #         self._no_quads = np.arange(self.x.shape[0])
-
-    #     else:
-    #         raise NotImplementedError("TODO meshing")
-
-    #     self._set_quad_weighting(weighting)
 
     def modify_symmetry(self, symmetry_line: np.ndarray[[float, float], [float, float]]):
         """
