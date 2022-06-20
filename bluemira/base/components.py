@@ -312,7 +312,7 @@ def get_properties_from_components(
     comps: Union[Component, Iterable[Component]], properties: Union[str, Sized[str]]
 ):
     """
-    Get internal shapes and display options from Components
+    Get properties from Components
 
     Parameters
     ----------
