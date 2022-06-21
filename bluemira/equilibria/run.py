@@ -201,6 +201,7 @@ class PulsedCoilsetDesign:
         bluemira_print(
             f"Premagnetisation estimate = {self.estimate_premag_flux():.2f} V.s"
         )
+        self._psi_premag = psi_premag
         self.take_snapshot(self.BREAKDOWN, breakdown, coilset, problem)
 
     def run_reference_equilibrium(self):
@@ -560,6 +561,14 @@ class OptimisedPulsedCoilsetDesign(PulsedCoilsetDesign):
             self.converge_equilibrium(eq, problem)
             self.take_snapshot(snap, eq, eq.coilset, problem, eq.profiles)
 
+        # Re-run breakdown
+        psi_bd_orig = self._psi_premag
+        self.coilset = optimised_coilset
+        self.run_premagnetisation()
+        if not self._psi_premag >= psi_bd_orig - 2.0:
+            bluemira_warn(
+                f"Breakdown flux significantly lower with optimised coil positions: {self._psi_premag:.2f} < {psi_bd_orig:.2f}"
+            )
         return optimised_coilset
 
     def _consolidate_coilset(self, coilset, sub_opt_problems):
