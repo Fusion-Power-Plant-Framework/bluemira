@@ -290,9 +290,16 @@ class PFCoilsBuilder(Builder):
         arg_inner = np.argmin(x_lcfs)
         arg_xp = np.argmin(z_lcfs)
 
-        isoflux = IsofluxConstraint(x_lcfs, z_lcfs, x_lcfs[arg_inner], z_lcfs[arg_inner])
+        isoflux = IsofluxConstraint(
+            x_lcfs,
+            z_lcfs,
+            x_lcfs[arg_inner],
+            z_lcfs[arg_inner],
+            tolerance=0.5,
+            constraint_value=0.0,
+        )
         psi_inner = PsiConstraint(
-            x_lcfs[arg_inner], z_lcfs[arg_inner], target_value=0.0, tolerance=1e-1
+            x_lcfs[arg_inner], z_lcfs[arg_inner], target_value=0.0, tolerance=1e-3
         )
         x_point = FieldNullConstraint(x_lcfs[arg_xp], z_lcfs[arg_xp], tolerance=1e-4)
         coil_constraints = [
@@ -308,7 +315,7 @@ class PFCoilsBuilder(Builder):
 
         current_opt_constraints = [psi_inner, x_point]
 
-        equilibrium_constraints = [isoflux, x_point]
+        equilibrium_constraints = [isoflux]
 
         self._design_problem = self._problem_class(
             self._params,
@@ -330,12 +337,12 @@ class PFCoilsBuilder(Builder):
                 "SLSQP",
                 opt_conditions={"max_eval": 5000, "ftol_rel": 1e-6, "xtol_rel": 1e-6},
             ),
-            equilibrium_convergence=DudsonConvergence(1e-3),
-            equilibrium_settings={"gamma": 1e-7, "relaxation": 0.2},
+            equilibrium_convergence=DudsonConvergence(1e-4),
+            equilibrium_settings={"gamma": 0.0, "relaxation": 0.2},
             position_problem_cls=PulsedNestedPositionCOP,
             position_optimiser=Optimiser(
                 "COBYLA",
-                opt_conditions={"max_eval": 500, "ftol_rel": 1e-6, "xtol_rel": 1e-4},
+                opt_conditions={"max_eval": 500, "ftol_rel": 1e-6, "xtol_rel": 1e-6},
             ),
             limiter=None,
         )

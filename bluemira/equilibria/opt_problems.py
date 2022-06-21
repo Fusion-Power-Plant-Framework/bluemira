@@ -801,7 +801,7 @@ class TikhonovCurrentCOP(CoilsetOptimisationProblem):
         dimension = len(bounds[0])
         self.set_up_optimiser(dimension, bounds)
 
-    def optimise(self, fixed_coils=True):
+    def optimise(self, x0=None, fixed_coils=True):
         """
         Solve the optimisation problem
 
@@ -826,13 +826,12 @@ class TikhonovCurrentCOP(CoilsetOptimisationProblem):
 
         self.update_magnetic_constraints(I_not_dI=True, fixed_coils=fixed_coils)
 
-        initial_state, n_states = self.read_coilset_state(self.coilset, self.scale)
-        _, _, initial_currents = np.array_split(initial_state, n_states)
+        if x0 is None:
+            initial_state, n_states = self.read_coilset_state(self.coilset, self.scale)
+            _, _, initial_currents = np.array_split(initial_state, n_states)
 
-        initial_currents = np.clip(
-            initial_currents, self.opt.lower_bounds, self.opt.upper_bounds
-        )
-        currents = self.opt.optimise(initial_currents)
+            x0 = np.clip(initial_currents, self.opt.lower_bounds, self.opt.upper_bounds)
+        currents = self.opt.optimise(x0)
         self.coilset.set_control_currents(currents * self.scale)
         return self.coilset
 
@@ -864,7 +863,7 @@ class MinimalCurrentCOP(CoilsetOptimisationProblem):
         dimension = len(bounds[0])
         self.set_up_optimiser(dimension, bounds)
 
-    def optimise(self, fixed_coils=True):
+    def optimise(self, x0=None, fixed_coils=True):
         """
         Solve the optimisation problem
 
@@ -880,13 +879,15 @@ class MinimalCurrentCOP(CoilsetOptimisationProblem):
         """
         self.update_magnetic_constraints(I_not_dI=True, fixed_coils=fixed_coils)
 
-        initial_state, n_states = self.read_coilset_state(self.eq.coilset, self.scale)
-        _, _, initial_currents = np.array_split(initial_state, n_states)
+        if x0 is None:
+            initial_state, n_states = self.read_coilset_state(
+                self.eq.coilset, self.scale
+            )
+            _, _, initial_currents = np.array_split(initial_state, n_states)
 
-        initial_currents = np.clip(
-            initial_currents, self.opt.lower_bounds, self.opt.upper_bounds
-        )
-        currents = self.opt.optimise(initial_currents)
+            x0 = np.clip(initial_currents, self.opt.lower_bounds, self.opt.upper_bounds)
+
+        currents = self.opt.optimise(x0)
         self.coilset.set_control_currents(currents * self.scale)
         return self.coilset
 
