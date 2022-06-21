@@ -19,6 +19,8 @@
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 
+import os
+
 import dolfin
 import matplotlib.pyplot as plt
 import numpy as np
@@ -32,6 +34,8 @@ from bluemira.equilibria.fem_fixed_boundary.utilities import ScalarSubFunc, b_co
 from bluemira.geometry.face import BluemiraFace
 from bluemira.mesh import meshing
 from bluemira.mesh.tools import import_mesh, msh_to_xdmf
+
+DATA_DIR = os.path.join(os.path.dirname(__file__), "test_generated_data")
 
 
 class TestGetNormal:
@@ -81,14 +85,17 @@ class TestGetNormal:
         c_enclo = PhysicalComponent(name="enclosure", shape=enclosure, parent=c_universe)
         c_coil = PhysicalComponent(name="coil", shape=coil, parent=c_universe)
 
-        m = meshing.Mesh()
+        meshfiles = [
+            os.path.join(DATA_DIR, p) for p in ["Mesh.geo_unrolled", "Mesh.msh"]
+        ]
+        m = meshing.Mesh(meshfile=meshfiles)
         m(c_universe, dim=2)
 
-        msh_to_xdmf("Mesh.msh", dimensions=(0, 2), directory=".")
+        msh_to_xdmf("Mesh.msh", dimensions=(0, 2), directory=DATA_DIR)
 
         mesh, boundaries, subdomains, labels = import_mesh(
             "Mesh",
-            directory=".",
+            directory=DATA_DIR,
             subdomains=True,
         )
         dolfin.plot(mesh)
