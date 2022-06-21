@@ -16,12 +16,16 @@
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 
 
+import os
+
 import pytest
 
 import bluemira.geometry.tools as tools
 from bluemira.geometry.face import BluemiraFace
 from bluemira.mesh import meshing
 from bluemira.mesh.tools import import_mesh, msh_to_xdmf
+
+DATA_DIR = os.path.join(os.path.dirname(__file__), "test_generated_data")
 
 
 class TestMeshing:
@@ -36,14 +40,17 @@ class TestMeshing:
         surf = BluemiraFace(poly, label="surf")
         surf.mesh_options = {"physical_group": "coil"}
 
-        m = meshing.Mesh()
-        buffer = m(surf)
+        meshfiles = [
+            os.path.join(DATA_DIR, p) for p in ["Mesh.geo_unrolled", "Mesh.msh"]
+        ]
+        m = meshing.Mesh(meshfile=meshfiles)
+        m(surf)
 
-        msh_to_xdmf("Mesh.msh", dimensions=(0, 1), directory=".")
+        msh_to_xdmf("Mesh.msh", dimensions=(0, 1), directory=DATA_DIR)
 
-        mesh, boundaries, subdomains, labels = import_mesh(
+        _, boundaries, _, labels = import_mesh(
             "Mesh",
-            directory=".",
+            directory=DATA_DIR,
             subdomains=True,
         )
 
@@ -61,14 +68,17 @@ class TestMeshing:
         surf = BluemiraFace(poly, label="surf")
         surf.mesh_options = {"lcar": lcar / 2, "physical_group": "coil"}
 
-        m = meshing.Mesh()
-        buffer = m(surf)
+        meshfiles = [
+            os.path.join(DATA_DIR, p) for p in ["Mesh.geo_unrolled", "Mesh.msh"]
+        ]
+        m = meshing.Mesh(meshfile=meshfiles)
+        m(surf)
 
-        msh_to_xdmf("Mesh.msh", dimensions=(0, 1), directory=".")
+        msh_to_xdmf("Mesh.msh", dimensions=(0, 1), directory=DATA_DIR)
 
-        mesh, boundaries, subdomains, labels = import_mesh(
+        _, boundaries, _, labels = import_mesh(
             "Mesh",
-            directory=".",
+            directory=DATA_DIR,
             subdomains=True,
         )
 
