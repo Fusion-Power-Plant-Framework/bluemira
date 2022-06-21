@@ -311,7 +311,7 @@ class TestCariddiBenchmark:
             ax.set_xticks(np.arange(1, 19, 2))
 
             ax2.plot(self.coil_loop.x, self.coil_loop.z, color="b")
-            ax2.plot(self.x_rip[1:19], self.z_rip[1:19], "s", marker=".", color="r")
+            ax2.plot(self.x_rip[1:19], self.z_rip[1:19], marker=".", color="r")
             plt.show()
 
         assert np.max(np.abs(ripple - self.cariddi_ripple)) < 0.04

@@ -122,9 +122,9 @@ class TestSemiAnalyticBxBz:
         if tests.PLOTTING:
             plot_defaults()
             f, ax = plt.subplots()
-            ax.plot(bp_fe, "s", marker="s", label="FE", ms=20)
-            ax.plot(bp_paper, "s", marker="^", label="Paper", ms=20)
-            ax.plot(bp, "s", marker="X", label="New", ms=20)
+            ax.plot(bp_fe, marker="s", label="FE", ms=20)
+            ax.plot(bp_paper, marker="^", label="Paper", ms=20)
+            ax.plot(bp, marker="X", label="New", ms=20)
             ax.legend()
             ax.set_xlabel("Point number")
             ax.set_ylabel("$B_{p}$ [T]")

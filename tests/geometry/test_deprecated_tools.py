@@ -508,8 +508,8 @@ class TestIntersections:
         if tests.PLOTTING:
             for loop in [tf, up, eq, lp]:
                 loop.plot(ax, fill=False, points=True)
-            ax.plot(*tf.d2.T[args].T, "s", marker="o", color="r")
-            ax.plot(intx, intz, "s", marker="^", color="k")
+            ax.plot(*tf.d2.T[args].T, marker="o", color="r")
+            ax.plot(intx, intz, marker="^", color="k")
         assert len(intx) == len(args), f"{len(intx)} != {len(args)}"
         assert np.allclose(np.sort(intx), np.sort(tf.x[args]))
         assert np.allclose(np.sort(intz), np.sort(tf.z[args]))
@@ -533,8 +533,8 @@ class TestIntersections:
             intx.extend(i[0])
             intz.extend(i[1])
         if tests.PLOTTING:
-            ax.plot(*tf.d2.T[args].T, "s", marker="o", color="r")
-            ax.plot(intx, intz, "s", marker="^", color="k")
+            ax.plot(*tf.d2.T[args].T, marker="o", color="r")
+            ax.plot(intx, intz, marker="^", color="k")
         assert len(intx) == len(args), f"{len(intx)} != {len(args)}"
         assert np.allclose(np.sort(intx), np.sort(tf.x[args])), f"{intx} != {tf.x[args]}"
         assert np.allclose(np.sort(intz), np.sort(tf.z[args])), f"{intz} != {tf.z[args]}"
