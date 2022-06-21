@@ -335,10 +335,10 @@ class PFCoilsBuilder(Builder):
             equilibrium_problem_cls=TikhonovCurrentCOP,
             equilibrium_optimiser=Optimiser(
                 "SLSQP",
-                opt_conditions={"max_eval": 5000, "ftol_rel": 1e-6, "xtol_rel": 1e-6},
+                opt_conditions={"max_eval": 5000, "ftol_rel": 1e-10},
             ),
             equilibrium_convergence=DudsonConvergence(1e-4),
-            equilibrium_settings={"gamma": 0.0, "relaxation": 0.2},
+            equilibrium_settings={"gamma": 1e-12, "relaxation": 0.2},
             position_problem_cls=PulsedNestedPositionCOP,
             position_optimiser=Optimiser(
                 "COBYLA",

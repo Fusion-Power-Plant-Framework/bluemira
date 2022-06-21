@@ -925,7 +925,7 @@ class PulsedNestedPositionCOP(CoilsetOptimisationProblem):
         self.position_mapper = position_mapper
         self.sub_opt_probs = sub_opt_problems
         self._initial_currents = (
-            coilset.get_control_currents() / self.sub_opt_probs[0].scale
+            0 * coilset.get_control_currents() / self.sub_opt_probs[0].scale
         )
         self._debug = {0: debug}
         self._iter = {0: 0.0}
