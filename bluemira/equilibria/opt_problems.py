@@ -327,7 +327,7 @@ class CoilsetPositionCOP(CoilsetOptimisationProblem):
                 "max_eval": 100,
             },
         ),
-        opt_constraints=None,
+        constraints=None,
     ):
         # noqa :N803
 
@@ -344,7 +344,7 @@ class CoilsetPositionCOP(CoilsetOptimisationProblem):
             objectives.ad_objective,
             {"objective": self.get_state_figure_of_merit, "objective_args": {}},
         )
-        super().__init__(coilset, optimiser, objective, opt_constraints)
+        super().__init__(coilset, optimiser, objective, constraints)
 
         # Set up bounds
         bounds = self.get_mapped_state_bounds(self.region_mapper, max_currents)
@@ -538,7 +538,7 @@ class NestedCoilsetPositionCOP(CoilsetOptimisationProblem):
                 "max_eval": 100,
             },
         ),
-        opt_constraints: List[OptimisationConstraint] = None,
+        constraints: List[OptimisationConstraint] = None,
     ):
         # noqa :N803
 
@@ -555,7 +555,7 @@ class NestedCoilsetPositionCOP(CoilsetOptimisationProblem):
             objectives.ad_objective,
             {"objective": self.get_state_figure_of_merit, "objective_args": {}},
         )
-        super().__init__(sub_opt.coilset, optimiser, objective, opt_constraints)
+        super().__init__(sub_opt.coilset, optimiser, objective, constraints)
 
         # Set up bounds
         _, lower_bounds, upper_bounds = self.region_mapper.get_Lmap(self.coilset)
