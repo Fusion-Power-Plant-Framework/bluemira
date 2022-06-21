@@ -831,7 +831,7 @@ class TikhonovCurrentCOP(CoilsetOptimisationProblem):
             _, _, initial_currents = np.array_split(initial_state, n_states)
 
             x0 = np.clip(initial_currents, self.opt.lower_bounds, self.opt.upper_bounds)
-        currents = self.opt.optimise(x0)
+        currents = self.opt.optimise(x0=x0)
         self.coilset.set_control_currents(currents * self.scale)
         return self.coilset
 
@@ -887,7 +887,7 @@ class MinimalCurrentCOP(CoilsetOptimisationProblem):
 
             x0 = np.clip(initial_currents, self.opt.lower_bounds, self.opt.upper_bounds)
 
-        currents = self.opt.optimise(x0)
+        currents = self.opt.optimise(x0=x0)
         self.coilset.set_control_currents(currents * self.scale)
         return self.coilset
 
@@ -906,7 +906,7 @@ class PulsedNestedPositionCOP(CoilsetOptimisationProblem):
         The list of sub-optimisation problems to solve
     optimiser: Optimiser
         Optimiser object to use
-    constrant: Optional[List[OptimisationConstraint]]
+    constraint: Optional[List[OptimisationConstraint]]
         Constraints to use. Note these should be applicable to the parametric position
         vector
     """
@@ -924,6 +924,9 @@ class PulsedNestedPositionCOP(CoilsetOptimisationProblem):
     ):
         self.position_mapper = position_mapper
         self.sub_opt_probs = sub_opt_problems
+        self._initial_currents = (
+            coilset.get_control_currents() / self.sub_opt_probs[0].scale
+        )
         self._debug = {0: debug}
         self._iter = {0: 0.0}
 
@@ -933,6 +936,7 @@ class PulsedNestedPositionCOP(CoilsetOptimisationProblem):
                 "coilset": coilset,
                 "sub_opt_problems": sub_opt_problems,
                 "position_mapper": position_mapper,
+                "initial_currents": self._initial_currents,
                 "iter": self._iter,
                 "debug": self._debug,
                 "verbose": False,
@@ -984,7 +988,14 @@ class PulsedNestedPositionCOP(CoilsetOptimisationProblem):
 
     @staticmethod
     def get_sub_opt_foms(
-        vector, coilset, position_mapper, sub_opt_problems, iter, verbose, debug
+        vector,
+        coilset,
+        position_mapper,
+        sub_opt_problems,
+        initial_currents,
+        iter,
+        verbose,
+        debug,
     ):
         """
         Run the sub-optimisation problems for a given position vector and return the
@@ -1000,7 +1011,7 @@ class PulsedNestedPositionCOP(CoilsetOptimisationProblem):
         fom_values = []
         for sub_opt_prob in sub_opt_problems:
             sub_opt_prob.coilset.set_positions(positions)
-            sub_opt_prob.optimise(fixed_coils=False)
+            sub_opt_prob.optimise(x0=initial_currents, fixed_coils=False)
             PulsedNestedPositionCOP._run_diagnostics(debug, sub_opt_prob)
             fom_values.append(sub_opt_prob.opt.optimum_value)
         max_fom = max(fom_values)
@@ -1011,18 +1022,35 @@ class PulsedNestedPositionCOP(CoilsetOptimisationProblem):
 
     @staticmethod
     def get_state_fom(
-        vector, grad, coilset, sub_opt_problems, position_mapper, iter, verbose, debug
+        vector,
+        grad,
+        coilset,
+        sub_opt_problems,
+        position_mapper,
+        initial_currents,
+        iter,
+        verbose,
+        debug,
     ):
         """
         Get the figure of merit for a single sub-optimisation problem.
         """
         fom_value = PulsedNestedPositionCOP.get_sub_opt_foms(
-            vector, coilset, position_mapper, sub_opt_problems, iter, verbose, debug
+            vector,
+            coilset,
+            position_mapper,
+            sub_opt_problems,
+            initial_currents,
+            iter,
+            verbose,
+            debug,
         )
 
         if grad.size > 0:
             grad[:] = approx_derivative(
-                PulsedNestedPositionCOP.get_sub_opt_foms, vector, f0=fom_value
+                PulsedNestedPositionCOP.get_sub_opt_foms,
+                vector,
+                f0=fom_value,
             )
 
         return fom_value
@@ -1054,13 +1082,14 @@ class PulsedNestedPositionCOP(CoilsetOptimisationProblem):
 
         if x0 is None:
             x0 = self._get_initial_vector()
-        optimal_positions = self.opt.optimise(x0)
+        optimal_positions = self.opt.optimise(x0=x0)
         # Call the objective one last time
         self.get_sub_opt_foms(
             optimal_positions,
             self.coilset,
             self.position_mapper,
             self.sub_opt_probs,
+            self._initial_currents,
             iter=self._iter,
             verbose=verbose,
             debug=self._debug,
@@ -1259,6 +1288,6 @@ class BreakdownCOP(CoilsetOptimisationProblem):
         initial_currents = np.clip(
             initial_currents, self.opt.lower_bounds, self.opt.upper_bounds
         )
-        currents = self.opt.optimise(initial_currents)
+        currents = self.opt.optimise(x0=initial_currents)
         self.coilset.set_control_currents(currents * self.scale)
         return self.coilset
