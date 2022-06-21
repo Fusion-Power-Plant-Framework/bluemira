@@ -32,10 +32,10 @@ from typing import Iterable
 import matplotlib.pyplot as plt
 import numba as nb
 import numpy as np
-import scipy.constants as const
 from scipy.integrate import solve_ivp
 from scipy.special import lpmv
 
+from bluemira.base.constants import MU_0
 from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.equilibria.constants import PSI_NORM_TOL
 from bluemira.equilibria.error import FluxSurfaceError
@@ -877,6 +877,8 @@ def poloidal_angle(Bp_strike, Bt_strike, gamma):
 
 def harmonic_amplitude(x_f, z_f, I_f, max_degree, r_t, cylindrical=False):
     """
+    Returns coefficients (amplitudes) of spherical harmonics for use in
+    generating / optimising equilibria.
 
     Parameters
     ----------
@@ -907,20 +909,21 @@ def harmonic_amplitude(x_f, z_f, I_f, max_degree, r_t, cylindrical=False):
     for degree in np.arange(max_degree):
         currents2harmonics[degree, :] = (
             0.5
-            * const.mu_0
+            * MU_0
             * (r_t / r_f) ** degree
             * np.sin(theta_f)
             * lpmv(1, degree, np.cos(theta_f))
             / np.sqrt(degree * (degree + 1))
         )
 
-    amplitudes = np.matmul(currents2harmonics, I_f)
-
-    return amplitudes
+    return currents2harmonics @ I_f
 
 
 def psi_vac(x_p, z_p, x_f, z_f, I_f, r_t, max_degree, cylindrical=False):
     """
+    Calculates the vacuum (coil) contribution to the psi map at a given set
+    of points.
+
     Parameters
     ----------
     x_p: float
@@ -956,19 +959,19 @@ def psi_vac(x_p, z_p, x_f, z_f, I_f, r_t, max_degree, cylindrical=False):
     theta_p = np.arctan2(x_p, z_p)
 
     psi_vac = np.array([])
-    harmonics2collocation = np.zeros(np.size(x_p))
-    harmonics2collocation[:, 1] = 1
+    harmonics2collocation = np.zeros(np.size(x_p), max_degree)
+    harmonics2collocation[:, 0] = 1
 
-    for degree in np.arange(max_degree):
-        harmonics2collocation[:, degree + 1] = (
+    # Oli sets n_harmonics (max degree) to be x_p - 1
+    for degree in np.arange(1, max_degree):
+        harmonics2collocation[:, degree] = (
             r_p ** (degree + 1)
             * np.sin(theta_p)
             * lpmv(1, degree, np.cos(theta_p))
             / ((r_t**degree) * np.sqrt(degree * (degree + 1)))
         )
 
-    psi_vac = np.matmul(
-        harmonics2collocation, harmonic_amplitude(x_f, z_f, I_f, max_degree, r_t)
-    )
+    psi_vac = harmonics2collocation @ harmonic_amplitude(x_f, z_f, I_f, max_degree, r_t)
+
     max_valid_r = np.amin(r_f)  # Maxmimum r value of sphere within which harmonics apply
     return psi_vac, max_valid_r
