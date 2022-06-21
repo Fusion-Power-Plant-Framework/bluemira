@@ -312,10 +312,10 @@ class BasePlotter:
             y = [element.node_1.y, element.node_2.y]
             z = [element.node_1.z, element.node_2.z]
 
-            if self.options["show_stress"]:
+            if self.options["show_stress"] and self.color_normer:
                 color = STRESS_COLOR(self.color_normer(element.max_stress))
-            elif self.options["show_deflection"]:
-                color = DEFLECT_COLOR(self.color_normer(element.max_deflection))
+            elif self.options["show_deflection"] and self.color_normer:
+                color = DEFLECT_COLOR(self.color_normer(element.max_displacement))
             else:
                 color = default_color
 

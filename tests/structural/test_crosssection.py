@@ -24,6 +24,7 @@ import numpy as np
 import pytest
 
 import tests
+from bluemira.display import plot_2d
 from bluemira.structural.crosssection import (
     AnalyticalCrossSection,
     CircularBeam,
@@ -46,7 +47,7 @@ class TestIbeam:
     @pytest.mark.skipif(not tests.PLOTTING, reason="plotting disabled")
     def test_plot(self):
         i_beam = IBeam(1, 1, 0.25, 0.5)
-        i_beam.geometry.plot(points=True)
+        plot_2d(i_beam.geometry, show_points=True)
 
     def test_errors(self):
         props = [
