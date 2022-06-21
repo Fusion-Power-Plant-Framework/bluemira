@@ -130,16 +130,11 @@ class Solver(CodesSolver):
             self.binary,
         )
         self._teardown = Teardown(self.params, self.output_file, self.profiles_file)
-
-        setup = self._get_execution_method(self._setup, run_mode)
-        run = self._get_execution_method(self._run, run_mode)
-        teardown = self._get_execution_method(self._teardown, run_mode)
-
-        if setup:
+        if setup := self._get_execution_method(self._setup, run_mode):
             setup()
-        if run:
+        if run := self._get_execution_method(self._run, run_mode):
             run()
-        if teardown:
+        if teardown := self._get_execution_method(self._teardown, run_mode):
             teardown()
 
         return self.params
