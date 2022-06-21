@@ -201,7 +201,7 @@ class PulsedCoilsetDesign:
         bluemira_print(
             f"Premagnetisation estimate = {self.estimate_premag_flux():.2f} V.s"
         )
-        self._psi_premag = psi_premag
+        self._psi_premag = 2 * np.pi * psi_premag
         self.take_snapshot(self.BREAKDOWN, breakdown, coilset, problem)
 
     def run_reference_equilibrium(self):
@@ -600,4 +600,5 @@ class OptimisedPulsedCoilsetDesign(PulsedCoilsetDesign):
         consolidated_coilset.set_control_currents(
             np.zeros(consolidated_coilset.n_control), update_size=False
         )
+        consolidated_coilset.fix_sizes()
         return consolidated_coilset
