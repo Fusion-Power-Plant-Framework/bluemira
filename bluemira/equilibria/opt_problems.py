@@ -920,13 +920,16 @@ class PulsedNestedPositionCOP(CoilsetOptimisationProblem):
             "COBYLA", opt_conditions={"max_eval": 100, "ftol_rel": 1e-6}
         ),
         constraints=None,
+        initial_currents=None,
         debug=False,
     ):
         self.position_mapper = position_mapper
         self.sub_opt_probs = sub_opt_problems
-        self._initial_currents = (
-            0 * coilset.get_control_currents() / self.sub_opt_probs[0].scale
-        )
+
+        if initial_currents:
+            self._initial_currents = initial_currents / self.sub_opt_probs[0].scale
+        else:
+            self._initial_currents = np.zeros(coilset.n_control)
         self._debug = {0: debug}
         self._iter = {0: 0.0}
 
