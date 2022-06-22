@@ -145,6 +145,7 @@ dmypy.json
 *.ini
 *.h5
 *.xdmf
+Mesh_linkfile.json
 
 # Images
 *.png

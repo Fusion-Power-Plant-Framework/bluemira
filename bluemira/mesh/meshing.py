@@ -188,7 +188,7 @@ class Mesh:
             obj = create_compound_from_component(obj)
 
         if isinstance(obj, Meshable):
-            # gmsh is inizialized
+            # gmsh is initialized
             _FreeCADGmsh._initialize_mesh(self.terminal, self.modelname)
             # Mesh the object. A dictionary with the geometrical and internal
             # information that are used by gmsh is returned. In particular,

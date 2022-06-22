@@ -19,8 +19,8 @@
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 
+import copy
 import json
-import os
 
 import numpy as np
 import pytest
@@ -44,21 +44,20 @@ from bluemira.utilities.tools import (
 
 
 class TestNumpyJSONEncoder:
-    def test_childclass(self):
-        fp = get_bluemira_path("utilities/test_data", subfolder="tests")
-        fn = os.sep.join([fp, "testJSONEncoder.json"])
-        d = {"x": np.array([1, 2, 3.4, 4]), "y": [1, 3], "z": 3, "a": "aryhfdhsdf"}
-        with open(fn, "w") as file:
-            json.dump(d, file, cls=NumpyJSONEncoder)
-        with open(fn, "r") as file:
-            dd = json.load(file)
-        for k, v in d.items():
-            for kk, vv in dd.items():
-                if k == kk:
-                    if isinstance(v, np.ndarray):
-                        assert v.tolist() == vv
-                    else:
-                        assert v == vv
+    def test_save_and_load_returns_original_dict(self):
+        original_dict = {
+            "x": np.array([1, 2, 3.4, 4]),
+            "y": [1, 3],
+            "z": 3,
+            "a": "aryhfdhsdf",
+        }
+
+        json_out = json.dumps(original_dict, cls=NumpyJSONEncoder)
+        loaded_dict = json.loads(json_out)
+
+        expected = copy.deepcopy(original_dict)
+        expected["x"] = original_dict["x"].tolist()
+        assert loaded_dict == expected
 
 
 def test_is_num():
