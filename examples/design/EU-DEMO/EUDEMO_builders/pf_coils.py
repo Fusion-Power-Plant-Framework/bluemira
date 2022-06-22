@@ -338,7 +338,11 @@ class PFCoilsBuilder(Builder):
                 opt_conditions={"max_eval": 5000, "ftol_rel": 1e-6},
             ),
             equilibrium_convergence=DudsonConvergence(1e-4),
-            equilibrium_settings={"gamma": 1e-12, "relaxation": 0.2},
+            equilibrium_settings={
+                "gamma": 1e-12,
+                "relaxation": 0.2,
+                "peak_PF_current_factor": 1.5,
+            },
             position_problem_cls=PulsedNestedPositionCOP,
             position_optimiser=Optimiser(
                 "COBYLA",
