@@ -565,7 +565,7 @@ def make_coil_mapper(track, exclusion_zones, coils):
 
             sorted_coils = []
             for i in idx:
-                sorted_coils.append(coils.pop(i))
+                sorted_coils.append(coils[i])
             coils = sorted_coils
 
             sub_segs = []
