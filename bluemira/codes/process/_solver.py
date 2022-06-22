@@ -136,9 +136,10 @@ class Solver(CodesSolver):
             "in_dat_path", os.path.join(self.run_directory, "IN.DAT")
         )
         if len(_build_config) > 0:
+            quoted_delim = "', '"
             bluemira_warn(
                 f"'{self.name}' solver received unknown build_config arguments: "
-                f"'{''', '''.join(_build_config.keys())}'."
+                f"'{quoted_delim.join(_build_config.keys())}'."
             )
 
     def execute(self, run_mode: RunMode) -> ParameterFrame:

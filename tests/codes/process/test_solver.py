@@ -22,6 +22,7 @@
 import copy
 import filecmp
 import os
+import re
 import tempfile
 from unittest import mock
 
@@ -58,11 +59,15 @@ class TestSolver:
 
     @mock.patch(f"{MODULE_REF}.bluemira_warn")
     def test_bluemira_warning_if_build_config_has_unknown_arg(self, bm_warn_mock):
-        build_config = {"not_an_arg": 0}
+        build_config = {"not_an_arg": 0, "also_not_an_arg": 0}
 
         Solver(ParameterFrame(), build_config)
 
         bm_warn_mock.assert_called_once()
+        call_args, _ = bm_warn_mock.call_args
+        assert re.match(
+            ".* unknown .* arguments: 'not_an_arg', 'also_not_an_arg'", call_args[0]
+        )
 
     def test_none_mode_does_not_alter_parameters(self):
         params = Configuration()
