@@ -265,6 +265,7 @@ class PFCoilsBuilder(Builder):
             self._params.B_0.value,
         )
 
+        # TODO: Make LCFS constraints from fixed boundary k_95 / d_95 optimisation
         # Make Constraints
         kappa = self._params.kappa.value
         kappa_ul_tweak = 0.085
@@ -346,7 +347,7 @@ class PFCoilsBuilder(Builder):
             position_problem_cls=PulsedNestedPositionCOP,
             position_optimiser=Optimiser(
                 "COBYLA",
-                opt_conditions={"max_eval": 500, "ftol_rel": 1e-6, "xtol_rel": 1e-6},
+                opt_conditions={"max_eval": 200, "ftol_rel": 1e-6, "xtol_rel": 1e-6},
             ),
             limiter=None,
         )
