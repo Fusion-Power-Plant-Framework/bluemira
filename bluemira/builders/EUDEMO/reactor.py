@@ -418,6 +418,7 @@ class EUDEMOReactor(Reactor):
         self.register_solver(solver)
         result = solver.execute()
         self._params.update_kw_parameters(result)
+
     def make_PF_coil_exclusions(self):
         """
         Calculate the keep out zones for PF coils

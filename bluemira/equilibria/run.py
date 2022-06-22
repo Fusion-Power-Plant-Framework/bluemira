@@ -229,11 +229,17 @@ class PulsedCoilsetDesign:
             plot=False,
         )
         program()
+
+        eq_constraints = deepcopy(self.eq_constraints)
+        for con in eq_constraints:
+            if isinstance(con, (PsiConstraint, PsiBoundaryConstraint)):
+                eq_constraints.remove(con)
         opt_problem = self._make_opt_problem(
             eq,
             deepcopy(self._eq_opt),
             eq.coilset.get_max_currents(1.5 * 1e6 * self.params.I_p.value),
-            constraints=None,
+            current_constraints=None,
+            eq_constraints=eq_constraints,
         )
 
         program = PicardIterator(
@@ -274,10 +280,14 @@ class PulsedCoilsetDesign:
         max_currents = self.coilset.get_max_currents(1.5 * 1e6 * self.params.I_p.value)
 
         opt_problems = []
-        for psi_boundary in [psi_sof, psi_eof]:
+        optimisers = [
+            Optimiser("SLSQP", opt_conditions={"max_eval": 5000, "ftol_rel": 1e-6}),
+            Optimiser("SLSQP", opt_conditions={"max_eval": 5000, "ftol_rel": 1e-6}),
+        ]
+        for psi_boundary, optimiser in zip([psi_sof, psi_eof], optimisers):
             eq = deepcopy(eq_ref)
             eq.coilset.adjust_sizes(max_currents)
-            optimiser = deepcopy(self._eq_opt)
+            # optimiser = deepcopy(self._eq_opt)
 
             current_constraints = []
             if self._current_opt_cons:
