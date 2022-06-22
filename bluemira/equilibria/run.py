@@ -280,14 +280,11 @@ class PulsedCoilsetDesign:
         max_currents = self.coilset.get_max_currents(1.5 * 1e6 * self.params.I_p.value)
 
         opt_problems = []
-        optimisers = [
-            Optimiser("SLSQP", opt_conditions={"max_eval": 5000, "ftol_rel": 1e-6}),
-            Optimiser("SLSQP", opt_conditions={"max_eval": 5000, "ftol_rel": 1e-6}),
-        ]
-        for psi_boundary, optimiser in zip([psi_sof, psi_eof], optimisers):
+
+        for psi_boundary in [psi_sof, psi_eof]:
             eq = deepcopy(eq_ref)
             eq.coilset.adjust_sizes(max_currents)
-            # optimiser = deepcopy(self._eq_opt)
+            optimiser = deepcopy(self._eq_opt)
 
             current_constraints = []
             if self._current_opt_cons:
