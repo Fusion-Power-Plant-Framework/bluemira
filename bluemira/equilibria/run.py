@@ -134,19 +134,6 @@ class PulsedCoilsetDesign:
             eq, coilset, problem, profiles, limiter=self.limiter
         )
 
-    def estimate_premag_flux(self):
-        """
-        Maximum flux from an infinite solenoid
-        """
-        cs1_name = self.coilset.get_CS_names()[0]
-        cs_coil = self.coilset.coils[cs1_name]
-
-        r_min = cs_coil.x - cs_coil.dx
-        r_max = cs_coil.x + cs_coil.dx
-        B_max = cs_coil.b_max
-        psi_premag = B_max * np.pi / 3 * (r_max**2 + r_min**2 + r_max * r_min)
-        return psi_premag
-
     def run_premagnetisation(self):
         """
         Run the breakdown optimisation problem
@@ -198,9 +185,7 @@ class PulsedCoilsetDesign:
                 )
 
         bluemira_print(f"Premagnetisation flux = {2*np.pi * psi_premag:.2f} V.s")
-        bluemira_print(
-            f"Premagnetisation estimate = {self.estimate_premag_flux():.2f} V.s"
-        )
+
         self._psi_premag = 2 * np.pi * psi_premag
         self.take_snapshot(self.BREAKDOWN, breakdown, coilset, problem)
 
@@ -477,8 +462,36 @@ class OptimisedPulsedCoilsetDesign(PulsedCoilsetDesign):
         PF coilset to use in the equilibrium design
     grid: Grid
         Grid to use in the equilibrium design
-    coil_constraints:
-        pass
+    current_opt_constraints: Optional[List[OptimisationConstraint]]
+        List of current optimisation constraints for equilibria
+    coil_constraints: Optional[List[OptimisationConstraint]]
+        List of coil current optimisation constraints for all snapshots (including
+        breakdown)
+    equilibrium_constraints: List[OptimisationConstraint]
+        List of magnetic constraints to use for equilibria. Depending on the optimisation
+        problem, these may be used in the objective function or constraints
+    profiles: Profile
+        Plasma profile object to use when solving equilibria
+    breakdown_strategy_cls: Type[BreakdownZoneStrategy]
+        BreakdownZoneStrategy class to use when determining breakdown constraints
+    breakdown_problem_cls: Type[BreakdownCOP]
+        Coilset optimisation problem class for the breakdown phase
+    breakdown_optimiser: Optimiser
+        Optimiser for the breakdown
+    equilibrium_problem_cls: Type[CoilsetOptimisationProblem]
+        Coilset optimisation problem class for the equilibria and current vector
+    equilibrium_optimiser: Optimiser
+        Optimiser for the equilibria and current vector
+    equilibrium_convergence: ConvergenceCriterion
+        Convergence criteria to use when solving equilibria
+    equilibrium_settings: Optional[Dict]
+        Settings for the solution of equilibria
+    position_problem_cls: Type[PulsedNestedPositionCOP]
+        Coilset optimisation problem class for the coil positions
+    position_optimiser: Optimiser
+        Optimiser for the coil positions
+    limiter: Optional[Limiter]
+        Limiter to use when solving equilibria
     """
 
     def __init__(
@@ -489,7 +502,7 @@ class OptimisedPulsedCoilsetDesign(PulsedCoilsetDesign):
         grid: Grid,
         current_opt_constraints: Optional[List[OptimisationConstraint]],
         coil_constraints: Optional[List[OptimisationConstraint]],
-        equilibrium_constraints: MagneticConstraintSet,
+        equilibrium_constraints: List[OptimisationConstraint],
         profiles: Profile,
         breakdown_strategy_cls: Type[BreakdownZoneStrategy],
         breakdown_problem_cls: Type[BreakdownCOP],
