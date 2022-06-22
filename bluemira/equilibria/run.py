@@ -229,15 +229,13 @@ class PulsedCoilsetDesign:
             plot=False,
         )
         program()
-        opt_problem = self._eq_prob_cls(
-            eq.coilset,
+        opt_problem = self._make_opt_problem(
             eq,
-            MagneticConstraintSet(self.eq_constraints),
-            gamma=0.0,
-            optimiser=deepcopy(self._eq_opt),
-            max_currents=eq.coilset.get_max_currents(1.5 * 1e6 * self.params.I_p.value),
+            deepcopy(self._eq_opt),
+            eq.coilset.get_max_currents(1.5 * 1e6 * self.params.I_p.value),
             constraints=None,
         )
+
         program = PicardIterator(
             eq,
             opt_problem,
@@ -295,39 +293,39 @@ class PulsedCoilsetDesign:
                 if isinstance(con, (PsiBoundaryConstraint, PsiConstraint)):
                     con.target_value = psi_boundary / (2 * np.pi)
 
-            if self._eq_prob_cls == MinimalCurrentCOP:
-                problem = self._make_min_current_opt_problem(
-                    eq, optimiser, max_currents, current_constraints, eq_constraints
-                )
-            elif self._eq_prob_cls == TikhonovCurrentCOP:
-                problem = self._eq_prob_cls(
-                    eq.coilset,
-                    eq,
-                    MagneticConstraintSet(eq_constraints),
-                    gamma=self._eq_settings["gamma"],
-                    optimiser=optimiser,
-                    max_currents=max_currents,
-                    constraints=current_constraints,
-                )
+            problem = self._make_opt_problem(
+                eq, optimiser, max_currents, current_constraints, eq_constraints
+            )
 
             opt_problems.append(problem)
 
         return opt_problems
 
-    def _make_min_current_opt_problem(
+    def _make_opt_problem(
         self, eq, optimiser, max_currents, current_constraints, eq_constraints
     ):
-        constraints = eq_constraints
-        if current_constraints:
-            constraints += current_constraints
+        if self._eq_prob_cls == MinimalCurrentCOP:
+            constraints = eq_constraints
+            if current_constraints:
+                constraints += current_constraints
 
-        problem = self._eq_prob_cls(
-            eq.coilset,
-            eq,
-            optimiser,
-            max_currents=max_currents,
-            constraints=constraints,
-        )
+            problem = self._eq_prob_cls(
+                eq.coilset,
+                eq,
+                optimiser,
+                max_currents=max_currents,
+                constraints=constraints,
+            )
+        elif self._eq_prob_cls == TikhonovCurrentCOP:
+            problem = self._eq_prob_cls(
+                eq.coilset,
+                eq,
+                MagneticConstraintSet(eq_constraints),
+                gamma=self._eq_settings["gamma"],
+                optimiser=optimiser,
+                max_currents=max_currents,
+                constraints=current_constraints,
+            )
         return problem
 
     def converge_equilibrium(self, eq, problem):
