@@ -296,7 +296,7 @@ class PFCoilsBuilder(Builder):
             z_lcfs,
             x_lcfs[arg_inner],
             z_lcfs[arg_inner],
-            tolerance=0.5,
+            tolerance=1.0,
             constraint_value=0.0,
         )
         psi_inner = PsiConstraint(
@@ -314,9 +314,9 @@ class PFCoilsBuilder(Builder):
             ),
         ]
 
-        current_opt_constraints = [psi_inner, x_point]
+        current_opt_constraints = [psi_inner]
 
-        equilibrium_constraints = [isoflux]
+        equilibrium_constraints = [isoflux, x_point]
 
         self._design_problem = self._problem_class(
             self._params,
@@ -333,7 +333,7 @@ class PFCoilsBuilder(Builder):
                 "COBYLA", opt_conditions={"max_eval": 5000, "ftol_rel": 1e-10}
             ),
             breakdown_settings={"B_stray_con_tol": 1e-6, "n_B_stray_points": 10},
-            equilibrium_problem_cls=MinimalCurrentCOP,
+            equilibrium_problem_cls=TikhonovCurrentCOP,
             equilibrium_optimiser=Optimiser(
                 "SLSQP",
                 opt_conditions={"max_eval": 5000, "ftol_rel": 1e-6},
