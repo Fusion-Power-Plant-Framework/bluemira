@@ -906,9 +906,13 @@ class PulsedNestedPositionCOP(CoilsetOptimisationProblem):
         The list of sub-optimisation problems to solve
     optimiser: Optimiser
         Optimiser object to use
-    constraint: Optional[List[OptimisationConstraint]]
+    constraints: Optional[List[OptimisationConstraint]]
         Constraints to use. Note these should be applicable to the parametric position
         vector
+    initial_currents: Optional[np.ndarray]
+        Initial currents to use when solving the current sub-optimisation problems
+    debug: bool
+        Whether or not to run in debug mode (will affect run-time noticeably)
     """
 
     def __init__(
@@ -952,23 +956,9 @@ class PulsedNestedPositionCOP(CoilsetOptimisationProblem):
         self.set_up_optimiser(dimension, bounds)
 
     @staticmethod
-    def update_positions(vector, coilset, position_mapper):
-        """
-        Update the positions of the coilset
-
-        Parameters
-        ----------
-        vector: np.ndarray
-            Position vector
-        """
-        positions = position_mapper.to_xz_dict(vector)
-        coilset.set_positions(positions)
-        return coilset
-
-    @staticmethod
     def _run_reporting(iter, max_fom, verbose):
         """
-        Also sorry...
+        Keep track of objective function value over iterations.
         """
         i = max(list(iter.keys())) + 1
         iter[i] = max_fom
@@ -979,7 +969,12 @@ class PulsedNestedPositionCOP(CoilsetOptimisationProblem):
     @staticmethod
     def _run_diagnostics(debug, sub_opt_prob):
         """
-        I am sorry...
+        In debug mode, store the LCFS at each iteration for each of the sub-optimisation
+        problems.
+
+        Notes
+        -----
+        This can significantly impact run-time.
         """
         if debug[0]:
             entry = max(list(debug.keys()))
@@ -1059,6 +1054,9 @@ class PulsedNestedPositionCOP(CoilsetOptimisationProblem):
         return fom_value
 
     def _get_initial_vector(self):
+        """
+        Get a vector representation of the initial coilset state from the PositionMapper.
+        """
         x, z = [], []
         for name in self.position_mapper.interpolators:
             x.append(self.coilset.coils[name].x)
@@ -1097,6 +1095,8 @@ class PulsedNestedPositionCOP(CoilsetOptimisationProblem):
             verbose=verbose,
             debug=self._debug,
         )
+
+        # Clean up state of Equilibrium objects
         for sub_opt in self.sub_opt_probs:
             sub_opt.eq._remap_greens()
             sub_opt.eq._clear_OX_points()
