@@ -100,11 +100,14 @@ jobs:
 
     - name: Run pytest bluemira
       shell: bash -l {0}
+      env:
+        # https://github.com/actions/runner/issues/409#issuecomment-752775072
+        PYTEST_LONGRUN: ${{ github.ref_name == "develop_dependencies" && "--longrun" || "" }}
       run: |
         pytest --cov=bluemira \
                --cov-report html:htmlcov_bluemira \
                --cov-report xml \
-               tests examples/design/EU-DEMO --reactor --private
+               tests examples/design/EU-DEMO --reactor --private ${PYTEST_LONGRUN}
 
     - name: "Upload coverage to Codecov"
       uses: codecov/codecov-action@v2
