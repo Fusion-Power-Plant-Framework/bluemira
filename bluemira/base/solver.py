@@ -183,18 +183,12 @@ class SolverABC(abc.ABC):
     def execute(self, run_mode: RunMode) -> Any:
         """Execute the setup, run, and teardown tasks, in order."""
         result = None
-        setup = self._get_execution_method(self._setup, run_mode)
-        if setup:
+        if setup := self._get_execution_method(self._setup, run_mode):
             result = setup()
-
-        run = self._get_execution_method(self._run, run_mode)
-        if run:
+        if run := self._get_execution_method(self._run, run_mode):
             result = run(result)
-
-        teardown = self._get_execution_method(self._teardown, run_mode)
-        if teardown:
+        if teardown := self._get_execution_method(self._teardown, run_mode):
             result = teardown(result)
-
         return result
 
     def _get_execution_method(self, task: Task, run_mode: RunMode) -> Optional[Callable]:
