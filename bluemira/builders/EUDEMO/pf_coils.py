@@ -46,7 +46,6 @@ from bluemira.equilibria.opt_constraints import (
 )
 from bluemira.equilibria.opt_problems import (
     BreakdownCOP,
-    MinimalCurrentCOP,
     OutboardBreakdownZoneStrategy,
     PulsedNestedPositionCOP,
     TikhonovCurrentCOP,
