@@ -136,7 +136,7 @@ class PulsedCoilsetDesign:
 
     def estimate_premag_flux(self):
         """
-        Maximum flux from an inifinite solenoid
+        Maximum flux from an infinite solenoid
         """
         cs1_name = self.coilset.get_CS_names()[0]
         cs_coil = self.coilset.coils[cs1_name]
@@ -237,7 +237,7 @@ class PulsedCoilsetDesign:
         opt_problem = self._make_opt_problem(
             eq,
             deepcopy(self._eq_opt),
-            eq.coilset.get_max_currents(1.5 * 1e6 * self.params.I_p.value),
+            self._get_max_currents(eq.coilset),
             current_constraints=None,
             eq_constraints=eq_constraints,
         )
@@ -273,14 +273,16 @@ class PulsedCoilsetDesign:
         psi_eof = psi_sof - self.params.tau_flattop.value * self.params.v_burn.value
         return psi_sof, psi_eof
 
+    def _get_max_currents(self, coilset):
+        factor = self._eq_settings["peak_PF_current_factor"]
+        return coilset.get_max_currents(factor * 1e6 * self.params.I_p.value)
+
     def _get_sof_eof_opt_problems(self, psi_sof, psi_eof):
 
         eq_ref = self.snapshots[self.EQ_REF].eq
-
-        max_currents = self.coilset.get_max_currents(1.5 * 1e6 * self.params.I_p.value)
+        max_currents = self._get_max_currents(self.coilset)
 
         opt_problems = []
-
         for psi_boundary in [psi_sof, psi_eof]:
             eq = deepcopy(eq_ref)
             eq.coilset.adjust_sizes(max_currents)
@@ -430,7 +432,12 @@ class FixedPulsedCoilsetDesign(PulsedCoilsetDesign):
         self._eq_opt = equilibrium_optimiser
         self._eq_convergence = equilibrium_convergence
 
-        self._eq_settings = {"gamma": 1e-8, "relaxation": 0.1, "coil_mesh_size": 0.3}
+        self._eq_settings = {
+            "gamma": 1e-8,
+            "relaxation": 0.1,
+            "coil_mesh_size": 0.3,
+            "peak_PF_current_factor": 1.5,
+        }
         if equilibrium_settings:
             self._eq_settings = {**self._eq_settings, **equilibrium_settings}
 
@@ -460,7 +467,7 @@ class FixedPulsedCoilsetDesign(PulsedCoilsetDesign):
 
 class OptimisedPulsedCoilsetDesign(PulsedCoilsetDesign):
     """
-    Procedural design for a pulsed tokamak with no prescribed coilset.
+    Procedural design for a pulsed tokamak with no prescribed PF coil positions.
 
     Parameters
     ----------
@@ -503,7 +510,12 @@ class OptimisedPulsedCoilsetDesign(PulsedCoilsetDesign):
         limiter: Optional[Limiter] = None,
     ):
         self.params = params
-        self._eq_settings = {"gamma": 1e-8, "relaxation": 0.1, "coil_mesh_size": 0.3}
+        self._eq_settings = {
+            "gamma": 1e-8,
+            "relaxation": 0.1,
+            "coil_mesh_size": 0.3,
+            "peak_PF_current_factor": 1.5,
+        }
         if equilibrium_settings:
             self._eq_settings = {**self._eq_settings, **equilibrium_settings}
 
