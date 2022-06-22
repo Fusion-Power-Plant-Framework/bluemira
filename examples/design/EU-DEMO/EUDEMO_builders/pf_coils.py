@@ -46,6 +46,7 @@ from bluemira.equilibria.opt_constraints import (
 )
 from bluemira.equilibria.opt_problems import (
     BreakdownCOP,
+    MinimalCurrentCOP,
     OutboardBreakdownZoneStrategy,
     PulsedNestedPositionCOP,
     TikhonovCurrentCOP,
@@ -332,7 +333,7 @@ class PFCoilsBuilder(Builder):
                 "COBYLA", opt_conditions={"max_eval": 5000, "ftol_rel": 1e-10}
             ),
             breakdown_settings={"B_stray_con_tol": 1e-6, "n_B_stray_points": 10},
-            equilibrium_problem_cls=TikhonovCurrentCOP,
+            equilibrium_problem_cls=MinimalCurrentCOP,
             equilibrium_optimiser=Optimiser(
                 "SLSQP",
                 opt_conditions={"max_eval": 5000, "ftol_rel": 1e-6},
