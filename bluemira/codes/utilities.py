@@ -25,9 +25,10 @@ Utility functions for interacting with external codes
 
 
 import os
+import subprocess  # noqa: S404
 import threading
 from enum import Enum
-from typing import Dict, Literal
+from typing import Dict, List, Literal
 
 from bluemira.base.look_and_feel import (
     _bluemira_clean_flush,
@@ -267,3 +268,38 @@ class LogPipe(threading.Thread):
         Close the write end of the pipe.
         """
         os.close(self.fd_write)
+
+
+def run_subprocess(command: List[str], run_directory: str = ".", **kwargs) -> int:
+    """
+    Run a subprocess terminal command piping the output into bluemira's
+    logs.
+
+    Parameters
+    ----------
+    command: List[str]
+        The arguments of the command to run.
+    run_directory: str
+        The directory to run the command in. Default is current working
+        directory.
+    **kwargs: Dict[str, Any]
+        Arguments passed directly to subprocess.Popen.
+
+    Returns
+    -------
+    return_code: int
+        The return code of the subprocess.
+    """
+    stdout = LogPipe("print")
+    stderr = LogPipe("error")
+
+    kwargs["cwd"] = run_directory
+    kwargs.pop("shell", None)  # Protect against user input
+
+    with subprocess.Popen(  # noqa :S603
+        command, stdout=stdout, stderr=stderr, shell=False, **kwargs  # noqa :S603
+    ) as s:
+        stdout.close()
+        stderr.close()
+
+    return s.returncode

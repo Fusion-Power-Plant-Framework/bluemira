@@ -18,38 +18,28 @@
 #
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
+import json
+import os
 
-from bluemira.base.config import ParameterFrame
-from bluemira.base.parameter import ParameterMapping
-from bluemira.base.solver import NoOpTask, RunMode
-from bluemira.codes import interface
-
-
-class NoOpRunMode(RunMode):
-    RUN = 0
-
-
-class NoOpSolver(interface.CodesSolver):
-
-    name = "MyTestSolver"
-    setup_cls = NoOpTask
-    run_cls = NoOpTask
-    teardown_cls = NoOpTask
-    run_mode_cls = NoOpRunMode
+DATA_DIR = os.path.join(os.path.dirname(__file__), "test_data")
+READ_DIR = os.path.join(DATA_DIR, "read")
+RUN_DIR = os.path.join(DATA_DIR, "run")
+FAKE_PROCESS_DICT = {  # Fake for the output of PROCESS's `get_dicts()`
+    "DICT_DESCRIPTIONS": {"some_property": "its description"}
+}
 
 
-class TestCodesSolver:
-    def test_modify_mappings_updates_send_recv_values_of_params(self):
-        params = ParameterFrame()
-        params.add_parameter(
-            "param1",
-            unit="dimensionless",
-            value=1,
-            mapping={NoOpSolver.name: ParameterMapping("param1", recv=False, send=True)},
-        )
-        solver = NoOpSolver(params)
+class FakeMFile:
+    """
+    A fake of PROCESS's MFile class.
 
-        solver.modify_mappings({"param1": {"recv": True, "send": False}})
+    It replicates the :code:`.data` attribute with some PROCESS results
+    data. This allows us to test the logic in our API without having
+    PROCESS installed.
+    """
 
-        assert solver.params.param1.mapping[solver.name].recv is True
-        assert solver.params.param1.mapping[solver.name].send is False
+    with open(os.path.join(DATA_DIR, "mfile_data.json"), "r") as f:
+        data = json.load(f)
+
+    def __init__(self, filename):
+        self.filename = filename

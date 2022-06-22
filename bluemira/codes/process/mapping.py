@@ -70,7 +70,7 @@ class TFCoilConductorTechnology(Model):
 
     COPPER = 0
     SC = 1
-    CYRO_AL = 2
+    CRYO_AL = 2
 
 
 IN_mappings = {

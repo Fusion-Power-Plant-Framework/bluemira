@@ -32,7 +32,8 @@ from bluemira.codes.error import CodesError
 from bluemira.utilities.tools import flatten_iterable
 
 
-# Create dummy PROCESS objects.required here for docs to build properly
+# Create dummy PROCESS objects. Required for docs to build properly and
+# for testing.
 class MFile:
     """
     Dummy  MFile Class. Replaced by PROCESS import if PROCESS installed.
@@ -53,6 +54,7 @@ class InDat:
 
 OBS_VARS = dict()
 PROCESS_DICT = dict()
+imp_data = None  # placeholder for PROCESS module
 
 try:
     import process.data.impuritydata as imp_data  # noqa: F401, F811

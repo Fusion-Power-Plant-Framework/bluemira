@@ -1,0 +1,1382 @@
+{
+    "procver": {
+        "var_mod": "Power Reactor Optimisation Code",
+        "scan01": "2.1.0"
+    },
+    "date": {
+        "var_mod": "Power Reactor Optimisation Code",
+        "scan01": "11/03/2021"
+    },
+    "time": {
+        "var_mod": "Power Reactor Optimisation Code",
+        "scan01": "15:41"
+    },
+    "username": {
+        "var_mod": "Power Reactor Optimisation Code",
+        "scan01": "username"
+    },
+    "runtitle": {
+        "var_mod": "Power Reactor Optimisation Code",
+        "scan01": "\"Run Title (change this line using input variable 'runtitle')"
+    },
+    "tagno": {
+        "var_mod": "Power Reactor Optimisation Code",
+        "scan01": "v2.1-152-gf431eea5"
+    },
+    "branch_name": {
+        "var_mod": "Power Reactor Optimisation Code",
+        "scan01": "develop"
+    },
+    "commsg": {
+        "var_mod": "Power Reactor Optimisation Code",
+        "scan01": "Merge"
+    },
+    "fileprefix": {
+        "var_mod": "Power Reactor Optimisation Code",
+        "scan01": "/home/user/code/bluemira/tests/syscodes/test_data/IN.DAT"
+    },
+    "ifail": {
+        "var_mod": "Numerics",
+        "scan01": 1.0
+    },
+    "itart": {
+        "var_mod": "Plasma",
+        "scan01": 0.0
+    },
+    "rmajor": {
+        "var_mod": "Plasma",
+        "scan01": 8.7841
+    },
+    "rminor": {
+        "var_mod": "Plasma",
+        "scan01": 3.6678
+    },
+    "aspect": {
+        "var_mod": "Plasma",
+        "scan01": 2.395
+    },
+    "kappa": {
+        "var_mod": "Plasma",
+        "scan01": 1.848
+    },
+    "kappa95": {
+        "var_mod": "Plasma",
+        "scan01": 1.65
+    },
+    "kappaa": {
+        "var_mod": "Plasma",
+        "scan01": 1.7172
+    },
+    "triang": {
+        "var_mod": "Plasma",
+        "scan01": 0.5
+    },
+    "triang95": {
+        "var_mod": "Plasma",
+        "scan01": 0.33333
+    },
+    "pperim": {
+        "var_mod": "Plasma",
+        "scan01": 33.098
+    },
+    "xarea": {
+        "var_mod": "Plasma",
+        "scan01": 72.574
+    },
+    "sarea": {
+        "var_mod": "Plasma",
+        "scan01": 1757.6
+    },
+    "vol": {
+        "var_mod": "Plasma",
+        "scan01": 3896.6
+    },
+    "icurr": {
+        "var_mod": "Plasma",
+        "scan01": 4.0
+    },
+    "plascur/1d6": {
+        "var_mod": "Plasma",
+        "scan01": 25.022
+    },
+    "alphaj": {
+        "var_mod": "Plasma",
+        "scan01": 1.6552
+    },
+    "rli": {
+        "var_mod": "Plasma",
+        "scan01": 1.1388
+    },
+    "bvert": {
+        "var_mod": "Plasma",
+        "scan01": -0.95509
+    },
+    "bt": {
+        "var_mod": "Plasma",
+        "scan01": 4.1253
+    },
+    "bp": {
+        "var_mod": "Plasma",
+        "scan01": 0.95001
+    },
+    "btot": {
+        "var_mod": "Plasma",
+        "scan01": 4.2333
+    },
+    "q0": {
+        "var_mod": "Plasma",
+        "scan01": 1.0
+    },
+    "q95": {
+        "var_mod": "Plasma",
+        "scan01": 3.5
+    },
+    "qstar": {
+        "var_mod": "Plasma",
+        "scan01": 2.6552
+    },
+    "beta": {
+        "var_mod": "Plasma",
+        "scan01": 0.067018
+    },
+    "betap": {
+        "var_mod": "Plasma",
+        "scan01": 1.3307
+    },
+    "total_toroidal_beta": {
+        "var_mod": "Plasma",
+        "scan01": 0.070573
+    },
+    "betaft": {
+        "var_mod": "Plasma",
+        "scan01": 0.010009
+    },
+    "betanb": {
+        "var_mod": "Plasma",
+        "scan01": 0.0
+    },
+    "gammaft": {
+        "var_mod": "Plasma",
+        "scan01": 0.17556
+    },
+    "thermal_beta": {
+        "var_mod": "Plasma",
+        "scan01": 0.05701
+    },
+    "thermal_poloidal_beta": {
+        "var_mod": "Plasma",
+        "scan01": 1.132
+    },
+    "thermal_toroidal_beta_(=_beta-exp)": {
+        "var_mod": "Plasma",
+        "scan01": 0.060033
+    },
+    "eps*betap": {
+        "var_mod": "Plasma",
+        "scan01": 0.55564
+    },
+    "epbetmax": {
+        "var_mod": "Plasma",
+        "scan01": 1.38
+    },
+    "dnbeta": {
+        "var_mod": "Plasma",
+        "scan01": 4.5554
+    },
+    "normalised_thermal_beta": {
+        "var_mod": "Plasma",
+        "scan01": 3.4474
+    },
+    "normalised_total_beta": {
+        "var_mod": "Plasma",
+        "scan01": 4.0526
+    },
+    "betalim": {
+        "var_mod": "Plasma",
+        "scan01": 0.075333
+    },
+    "plasma_thermal_energy_(j)": {
+        "var_mod": "Plasma",
+        "scan01": 2376000000.0
+    },
+    "total_plasma_internal_energy": {
+        "var_mod": "Plasma",
+        "scan01": 2793100000.0
+    },
+    "te": {
+        "var_mod": "Plasma",
+        "scan01": 19.197
+    },
+    "te0": {
+        "var_mod": "Plasma",
+        "scan01": 43.343
+    },
+    "ti": {
+        "var_mod": "Plasma",
+        "scan01": 19.197
+    },
+    "ti0": {
+        "var_mod": "Plasma",
+        "scan01": 43.343
+    },
+    "ten": {
+        "var_mod": "Plasma",
+        "scan01": 21.516
+    },
+    "dene": {
+        "var_mod": "Plasma",
+        "scan01": 6.4154e+19
+    },
+    "ne0": {
+        "var_mod": "Plasma",
+        "scan01": 8.4384e+19
+    },
+    "dnla": {
+        "var_mod": "Plasma",
+        "scan01": 7.1047e+19
+    },
+    "dnla_gw": {
+        "var_mod": "Plasma",
+        "scan01": 1.2
+    },
+    "dnitot": {
+        "var_mod": "Plasma",
+        "scan01": 5.3766e+19
+    },
+    "deni": {
+        "var_mod": "Plasma",
+        "scan01": 4.7623e+19
+    },
+    "dnz": {
+        "var_mod": "Plasma",
+        "scan01": 8.7155e+16
+    },
+    "dnalp": {
+        "var_mod": "Plasma",
+        "scan01": 6.0339e+18
+    },
+    "dnprot": {
+        "var_mod": "Plasma",
+        "scan01": 2.2157e+16
+    },
+    "dnbeam": {
+        "var_mod": "Plasma",
+        "scan01": 0.0
+    },
+    "dnelimt": {
+        "var_mod": "Plasma",
+        "scan01": 5.9206e+19
+    },
+    "boundu(9)": {
+        "var_mod": "Plasma",
+        "scan01": 7.1047e+19
+    },
+    "ralpne": {
+        "var_mod": "Plasma",
+        "scan01": 0.094054
+    },
+    "fimp(01": {
+        "var_mod": "Plasma",
+        "scan01": 0.74267
+    },
+    "fimp(02": {
+        "var_mod": "Plasma",
+        "scan01": 0.094054
+    },
+    "fimp(03": {
+        "var_mod": "Plasma",
+        "scan01": 0.0
+    },
+    "fimp(04": {
+        "var_mod": "Plasma",
+        "scan01": 0.0
+    },
+    "fimp(05": {
+        "var_mod": "Plasma",
+        "scan01": 0.0
+    },
+    "fimp(06": {
+        "var_mod": "Plasma",
+        "scan01": 0.0
+    },
+    "fimp(07": {
+        "var_mod": "Plasma",
+        "scan01": 0.0
+    },
+    "fimp(08": {
+        "var_mod": "Plasma",
+        "scan01": 0.0
+    },
+    "fimp(09": {
+        "var_mod": "Plasma",
+        "scan01": 0.0
+    },
+    "fimp(10": {
+        "var_mod": "Plasma",
+        "scan01": 0.0
+    },
+    "fimp(11": {
+        "var_mod": "Plasma",
+        "scan01": 0.0
+    },
+    "fimp(12": {
+        "var_mod": "Plasma",
+        "scan01": 0.0
+    },
+    "fimp(13": {
+        "var_mod": "Plasma",
+        "scan01": 0.0013085
+    },
+    "fimp(14": {
+        "var_mod": "Plasma",
+        "scan01": 5e-05
+    },
+    "aion": {
+        "var_mod": "Plasma",
+        "scan01": 2.8796
+    },
+    "zeff": {
+        "var_mod": "Plasma",
+        "scan01": 4.6519
+    },
+    "alphan": {
+        "var_mod": "Plasma",
+        "scan01": 1.0
+    },
+    "ipedestal": {
+        "var_mod": "Plasma",
+        "scan01": 1.0
+    },
+    "rhopedn": {
+        "var_mod": "Plasma",
+        "scan01": 0.94
+    },
+    "neped": {
+        "var_mod": "Plasma",
+        "scan01": 5.0325e+19
+    },
+    "fgwped_out": {
+        "var_mod": "Plasma",
+        "scan01": 0.85
+    },
+    "rhopedt": {
+        "var_mod": "Plasma",
+        "scan01": 0.94
+    },
+    "ieped": {
+        "var_mod": "Plasma",
+        "scan01": 1.0
+    },
+    "teped": {
+        "var_mod": "Plasma",
+        "scan01": 6.129
+    },
+    "tesep": {
+        "var_mod": "Plasma",
+        "scan01": 0.1
+    },
+    "nesep": {
+        "var_mod": "Plasma",
+        "scan01": 2.9603e+19
+    },
+    "fgwsep_out": {
+        "var_mod": "Plasma",
+        "scan01": 0.5
+    },
+    "alphat": {
+        "var_mod": "Plasma",
+        "scan01": 1.45
+    },
+    "tbeta": {
+        "var_mod": "Plasma",
+        "scan01": 2.0
+    },
+    "dlimit(1)": {
+        "var_mod": "Plasma",
+        "scan01": 3.9995e+19
+    },
+    "dlimit(2)": {
+        "var_mod": "Plasma",
+        "scan01": 8.1095e+19
+    },
+    "dlimit(3)": {
+        "var_mod": "Plasma",
+        "scan01": 3.1983e+19
+    },
+    "dlimit(4)": {
+        "var_mod": "Plasma",
+        "scan01": 2.0596e+21
+    },
+    "dlimit(5)": {
+        "var_mod": "Plasma",
+        "scan01": 3.0909e+20
+    },
+    "dlimit(6)": {
+        "var_mod": "Plasma",
+        "scan01": 5.3061e+19
+    },
+    "dlimit(7)": {
+        "var_mod": "Plasma",
+        "scan01": 5.9206e+19
+    },
+    "fdeut": {
+        "var_mod": "Plasma",
+        "scan01": 0.5
+    },
+    "ftrit": {
+        "var_mod": "Plasma",
+        "scan01": 0.5
+    },
+    "powfmw": {
+        "var_mod": "Plasma",
+        "scan01": 3072.9
+    },
+    "pdt": {
+        "var_mod": "Plasma",
+        "scan01": 3068.0
+    },
+    "pdd": {
+        "var_mod": "Plasma",
+        "scan01": 4.9193
+    },
+    "pdhe3": {
+        "var_mod": "Plasma",
+        "scan01": 0.0
+    },
+    "palpmw": {
+        "var_mod": "Plasma",
+        "scan01": 613.6
+    },
+    "palpnb": {
+        "var_mod": "Plasma",
+        "scan01": 0.0
+    },
+    "pneutmw": {
+        "var_mod": "Plasma",
+        "scan01": 2456.2
+    },
+    "pchargemw": {
+        "var_mod": "Plasma",
+        "scan01": 3.1657
+    },
+    "total_power_deposited_in_plasma_(mw)": {
+        "var_mod": "Plasma",
+        "scan01": 811.09
+    },
+    "pbrempv*vol": {
+        "var_mod": "Plasma",
+        "scan01": 193.25
+    },
+    "plinepv*vol": {
+        "var_mod": "Plasma",
+        "scan01": 402.27
+    },
+    "psyncpv*vol": {
+        "var_mod": "Plasma",
+        "scan01": 51.362
+    },
+    "ssync": {
+        "var_mod": "Plasma",
+        "scan01": 0.6
+    },
+    "coreradius": {
+        "var_mod": "Plasma",
+        "scan01": 0.75
+    },
+    "coreradiationfraction": {
+        "var_mod": "Plasma",
+        "scan01": 0.6
+    },
+    "pcoreradmw": {
+        "var_mod": "Plasma",
+        "scan01": 261.1
+    },
+    "pedgeradmw": {
+        "var_mod": "Plasma",
+        "scan01": 385.78
+    },
+    "pradmw": {
+        "var_mod": "Plasma",
+        "scan01": 646.88
+    },
+    "rad_fraction_core": {
+        "var_mod": "Plasma",
+        "scan01": 0.79754
+    },
+    "rad_fraction_sol": {
+        "var_mod": "Plasma",
+        "scan01": 0.8
+    },
+    "rad_fraction": {
+        "var_mod": "Plasma",
+        "scan01": 0.95951
+    },
+    "photon_wall": {
+        "var_mod": "Plasma",
+        "scan01": 0.3386
+    },
+    "peakfactrad": {
+        "var_mod": "Plasma",
+        "scan01": 3.33
+    },
+    "maxradwallload": {
+        "var_mod": "Plasma",
+        "scan01": 1.0
+    },
+    "peakradwallload": {
+        "var_mod": "Plasma",
+        "scan01": 1.1275
+    },
+    "wallmw": {
+        "var_mod": "Plasma",
+        "scan01": 1.2856
+    },
+    "ptarmw": {
+        "var_mod": "Plasma",
+        "scan01": 32.842
+    },
+    "ftar": {
+        "var_mod": "Plasma",
+        "scan01": 1.0
+    },
+    "lambdaio": {
+        "var_mod": "Plasma",
+        "scan01": 0.00157
+    },
+    "fio": {
+        "var_mod": "Plasma",
+        "scan01": 0.41
+    },
+    "fli": {
+        "var_mod": "Plasma",
+        "scan01": 0.41
+    },
+    "flo": {
+        "var_mod": "Plasma",
+        "scan01": 0.59
+    },
+    "plimw": {
+        "var_mod": "Plasma",
+        "scan01": 13.465
+    },
+    "plomw": {
+        "var_mod": "Plasma",
+        "scan01": 19.377
+    },
+    "pohmmw": {
+        "var_mod": "Plasma",
+        "scan01": 1.4837e-10
+    },
+    "falpha": {
+        "var_mod": "Plasma",
+        "scan01": 0.95
+    },
+    "falpe": {
+        "var_mod": "Plasma",
+        "scan01": 0.64064
+    },
+    "falpi": {
+        "var_mod": "Plasma",
+        "scan01": 0.35936
+    },
+    "ptrimw": {
+        "var_mod": "Plasma",
+        "scan01": 250.77
+    },
+    "ptremw": {
+        "var_mod": "Plasma",
+        "scan01": 299.22
+    },
+    "pinjimw": {
+        "var_mod": "Plasma",
+        "scan01": 0.0
+    },
+    "pinjemw": {
+        "var_mod": "Plasma",
+        "scan01": 225.0
+    },
+    "ignite": {
+        "var_mod": "Plasma",
+        "scan01": 0.0
+    },
+    "pdivt": {
+        "var_mod": "Plasma",
+        "scan01": 164.21
+    },
+    "pdivt/rmajor": {
+        "var_mod": "Plasma",
+        "scan01": 18.694
+    },
+    "pdivtbt/qar": {
+        "var_mod": "Plasma",
+        "scan01": 9.2
+    },
+    "pthrmw(1)": {
+        "var_mod": "Plasma",
+        "scan01": 102.68
+    },
+    "pthrmw(2)": {
+        "var_mod": "Plasma",
+        "scan01": 223.94
+    },
+    "pthrmw(3)": {
+        "var_mod": "Plasma",
+        "scan01": 46.452
+    },
+    "pthrmw(4)": {
+        "var_mod": "Plasma",
+        "scan01": 171.04
+    },
+    "pthrmw(5)": {
+        "var_mod": "Plasma",
+        "scan01": 137.74
+    },
+    "pthrmw(6)": {
+        "var_mod": "Plasma",
+        "scan01": 93.616
+    },
+    "pthrmw(7)": {
+        "var_mod": "Plasma",
+        "scan01": 123.57
+    },
+    "pthrmw(8)": {
+        "var_mod": "Plasma",
+        "scan01": 63.658
+    },
+    "pthrmw(9)": {
+        "var_mod": "Plasma",
+        "scan01": 65.075
+    },
+    "pthrmw(10)": {
+        "var_mod": "Plasma",
+        "scan01": 96.769
+    },
+    "pthrmw(11)": {
+        "var_mod": "Plasma",
+        "scan01": 43.411
+    },
+    "pthrmw(12)": {
+        "var_mod": "Plasma",
+        "scan01": 26.408
+    },
+    "pthrmw(13)": {
+        "var_mod": "Plasma",
+        "scan01": 35.972
+    },
+    "pthrmw(14)": {
+        "var_mod": "Plasma",
+        "scan01": 19.25
+    },
+    "pthrmw(15)": {
+        "var_mod": "Plasma",
+        "scan01": 34.85
+    },
+    "pthrmw(16)": {
+        "var_mod": "Plasma",
+        "scan01": 17.113
+    },
+    "pthrmw(17)": {
+        "var_mod": "Plasma",
+        "scan01": 70.971
+    },
+    "pthrmw(18)": {
+        "var_mod": "Plasma",
+        "scan01": 292.42
+    },
+    "pthrmw(19)": {
+        "var_mod": "Plasma",
+        "scan01": 94.519
+    },
+    "pthrmw(20)": {
+        "var_mod": "Plasma",
+        "scan01": 124.77
+    },
+    "pthrmw(21)": {
+        "var_mod": "Plasma",
+        "scan01": 64.271
+    },
+    "boundl(103)": {
+        "var_mod": "Plasma",
+        "scan01": 94.519
+    },
+    "plhthresh": {
+        "var_mod": "Plasma",
+        "scan01": 94.519
+    },
+    "tauelaw": {
+        "var_mod": "Plasma",
+        "scan01": "IPB98(y,2)"
+    },
+    "hfact": {
+        "var_mod": "Plasma",
+        "scan01": 1.4
+    },
+    "taueff": {
+        "var_mod": "Plasma",
+        "scan01": 4.3196
+    },
+    "tauei": {
+        "var_mod": "Plasma",
+        "scan01": 4.3196
+    },
+    "tauee": {
+        "var_mod": "Plasma",
+        "scan01": 4.3196
+    },
+    "dntau": {
+        "var_mod": "Plasma",
+        "scan01": 2.7712e+20
+    },
+    "dntau*te": {
+        "var_mod": "Plasma",
+        "scan01": 5.3197e+21
+    },
+    "powerht": {
+        "var_mod": "Plasma",
+        "scan01": 549.98
+    },
+    "iradloss": {
+        "var_mod": "Plasma",
+        "scan01": 1.0
+    },
+    "radiation_power_subtracted_from_plasma_power_balance_(mw)": {
+        "var_mod": "Plasma",
+        "scan01": 261.1
+    },
+    "taup": {
+        "var_mod": "Plasma",
+        "scan01": 21.598
+    },
+    "taup/taueff": {
+        "var_mod": "Plasma",
+        "scan01": 5.0
+    },
+    "taulimit": {
+        "var_mod": "Plasma",
+        "scan01": 5.0
+    },
+    "total_energy_conf_time": {
+        "var_mod": "Plasma",
+        "scan01": 3.4437
+    },
+    "beta_mcdonald": {
+        "var_mod": "Plasma",
+        "scan01": 0.070573
+    },
+    "rho_star": {
+        "var_mod": "Plasma",
+        "scan01": 0.0023479
+    },
+    "nu_star": {
+        "var_mod": "Plasma",
+        "scan01": 0.00087682
+    },
+    "kappaa_ipb": {
+        "var_mod": "Plasma",
+        "scan01": 1.6705
+    },
+    "vsstt": {
+        "var_mod": "Plasma",
+        "scan01": 401.46
+    },
+    "vsind": {
+        "var_mod": "Plasma",
+        "scan01": 318.6
+    },
+    "gamma": {
+        "var_mod": "Plasma",
+        "scan01": 0.3
+    },
+    "vsres": {
+        "var_mod": "Plasma",
+        "scan01": 82.86
+    },
+    "vsbrn": {
+        "var_mod": "Plasma",
+        "scan01": 5.9355e-08
+    },
+    "cboot": {
+        "var_mod": "Plasma",
+        "scan01": 1.0
+    },
+    "bscf_iter89": {
+        "var_mod": "Plasma",
+        "scan01": 0.45241
+    },
+    "bscf_sauter": {
+        "var_mod": "Plasma",
+        "scan01": 0.525
+    },
+    "bscf_nevins": {
+        "var_mod": "Plasma",
+        "scan01": 0.48466
+    },
+    "bscf_wilson": {
+        "var_mod": "Plasma",
+        "scan01": 0.48155
+    },
+    "diacf_hender": {
+        "var_mod": "Plasma",
+        "scan01": 0.023935
+    },
+    "diacf_scene": {
+        "var_mod": "Plasma",
+        "scan01": 0.021919
+    },
+    "pscf_scene": {
+        "var_mod": "Plasma",
+        "scan01": -0.0060317
+    },
+    "bootipf.": {
+        "var_mod": "Plasma",
+        "scan01": 0.525
+    },
+    "diaipf.": {
+        "var_mod": "Plasma",
+        "scan01": 0.0
+    },
+    "psipf.": {
+        "var_mod": "Plasma",
+        "scan01": 0.0
+    },
+    "vburn": {
+        "var_mod": "Plasma",
+        "scan01": 5.9296e-12
+    },
+    "rplas": {
+        "var_mod": "Plasma",
+        "scan01": 2.3698e-09
+    },
+    "res_time": {
+        "var_mod": "Plasma",
+        "scan01": 5646.1
+    },
+    "rlp": {
+        "var_mod": "Plasma",
+        "scan01": 1.2733e-05
+    },
+    "csawth": {
+        "var_mod": "Plasma",
+        "scan01": 1.0
+    },
+    "tauratio": {
+        "var_mod": "Plasma",
+        "scan01": 1.0
+    },
+    "qfuel": {
+        "var_mod": "Plasma",
+        "scan01": 5.4265e+21
+    },
+    "rndfuel": {
+        "var_mod": "Plasma",
+        "scan01": 1.0971e+21
+    },
+    "burnup": {
+        "var_mod": "Plasma",
+        "scan01": 0.20217
+    },
+    "bore": {
+        "var_mod": "Radial Build",
+        "scan01": 1.2384
+    },
+    "ohcth": {
+        "var_mod": "Radial Build",
+        "scan01": 0.5
+    },
+    "precomp": {
+        "var_mod": "Radial Build",
+        "scan01": 0.10396
+    },
+    "gapoh": {
+        "var_mod": "Radial Build",
+        "scan01": 0.05
+    },
+    "tfcth": {
+        "var_mod": "Radial Build",
+        "scan01": 1.486
+    },
+    "tftsgap": {
+        "var_mod": "Radial Build",
+        "scan01": 0.05
+    },
+    "thshield": {
+        "var_mod": "Radial Build",
+        "scan01": 0.05
+    },
+    "gapds": {
+        "var_mod": "Radial Build",
+        "scan01": 0.02
+    },
+    "d_vv_in": {
+        "var_mod": "Radial Build",
+        "scan01": 0.3
+    },
+    "shldith": {
+        "var_mod": "Radial Build",
+        "scan01": 0.3
+    },
+    "vvblgap": {
+        "var_mod": "Radial Build",
+        "scan01": 0.02
+    },
+    "blnkith": {
+        "var_mod": "Radial Build",
+        "scan01": 0.755
+    },
+    "fwith": {
+        "var_mod": "Radial Build",
+        "scan01": 0.018
+    },
+    "scrapli": {
+        "var_mod": "Radial Build",
+        "scan01": 0.225
+    },
+    "scraplo": {
+        "var_mod": "Radial Build",
+        "scan01": 0.225
+    },
+    "fwoth": {
+        "var_mod": "Radial Build",
+        "scan01": 0.018
+    },
+    "blnkoth": {
+        "var_mod": "Radial Build",
+        "scan01": 0.982
+    },
+    "shldoth": {
+        "var_mod": "Radial Build",
+        "scan01": 0.8
+    },
+    "d_vv_out": {
+        "var_mod": "Radial Build",
+        "scan01": 0.3
+    },
+    "gapsto": {
+        "var_mod": "Radial Build",
+        "scan01": 1.9036
+    },
+    "tfthko": {
+        "var_mod": "Radial Build",
+        "scan01": 1.486
+    },
+    "alstrtf": {
+        "var_mod": "TF coils",
+        "scan01": 580000000.0
+    },
+    "eyoung_wp_t*1.0d-9": {
+        "var_mod": "TF coils",
+        "scan01": 23.673
+    },
+    "eyoung_wp_z*1.0d-9": {
+        "var_mod": "TF coils",
+        "scan01": 96.556
+    },
+    "sig_tf_r_max(1)": {
+        "var_mod": "TF coils",
+        "scan01": 7.3273e-08
+    },
+    "sig_tf_t_max(1)": {
+        "var_mod": "TF coils",
+        "scan01": -381390000.0
+    },
+    "sig_tf_z_max(1)": {
+        "var_mod": "TF coils",
+        "scan01": 166800000.0
+    },
+    "sig_tf_vmises_max(1)": {
+        "var_mod": "TF coils",
+        "scan01": 486720000.0
+    },
+    "sig_tf_tresca_max(1)": {
+        "var_mod": "TF coils",
+        "scan01": 548190000.0
+    },
+    "sig_tf_r_max(2)": {
+        "var_mod": "TF coils",
+        "scan01": -132080000.0
+    },
+    "sig_tf_t_max(2)": {
+        "var_mod": "TF coils",
+        "scan01": -413200000.0
+    },
+    "sig_tf_z_max(2)": {
+        "var_mod": "TF coils",
+        "scan01": 166800000.0
+    },
+    "sig_tf_vmises_max(2)": {
+        "var_mod": "TF coils",
+        "scan01": 517180000.0
+    },
+    "sig_tf_tresca_max(2)": {
+        "var_mod": "TF coils",
+        "scan01": 580000000.0
+    },
+    "deflect": {
+        "var_mod": "TF coils",
+        "scan01": -0.0033932
+    },
+    "casestr": {
+        "var_mod": "TF coils",
+        "scan01": 0.00081368
+    },
+    "windstrain": {
+        "var_mod": "TF coils",
+        "scan01": 0.0017814
+    },
+    "insstrain": {
+        "var_mod": "TF coils",
+        "scan01": -0.0095905
+    },
+    "i_tf_sup": {
+        "var_mod": "TF coils",
+        "scan01": 1.0
+    },
+    "i_tf_sc_mat": {
+        "var_mod": "TF coils",
+        "scan01": 5.0
+    },
+    "i_tf_bucking": {
+        "var_mod": "TF coils",
+        "scan01": 1.0
+    },
+    "n_tf": {
+        "var_mod": "TF coils",
+        "scan01": 16.0
+    },
+    "r_tf_inboard_mid": {
+        "var_mod": "TF coils",
+        "scan01": 2.6354
+    },
+    "r_tf_outboard_mid": {
+        "var_mod": "TF coils",
+        "scan01": 17.544
+    },
+    "tftort": {
+        "var_mod": "TF coils",
+        "scan01": 1.3182
+    },
+    "hmax": {
+        "var_mod": "TF coils",
+        "scan01": 10.551
+    },
+    "tfleng": {
+        "var_mod": "TF coils",
+        "scan01": 59.097
+    },
+    "i_tf_shape": {
+        "var_mod": "TF coils",
+        "scan01": 1.0
+    },
+    "xarc(1)": {
+        "var_mod": "TF coils",
+        "scan01": 3.3784
+    },
+    "yarc(1)": {
+        "var_mod": "TF coils",
+        "scan01": 5.4207
+    },
+    "xarc(2)": {
+        "var_mod": "TF coils",
+        "scan01": 8.0506
+    },
+    "yarc(2)": {
+        "var_mod": "TF coils",
+        "scan01": 9.0345
+    },
+    "xarc(3)": {
+        "var_mod": "TF coils",
+        "scan01": 16.801
+    },
+    "yarc(3)": {
+        "var_mod": "TF coils",
+        "scan01": 0.0
+    },
+    "xarc(4)": {
+        "var_mod": "TF coils",
+        "scan01": 8.0506
+    },
+    "yarc(4)": {
+        "var_mod": "TF coils",
+        "scan01": -10.551
+    },
+    "xarc(5)": {
+        "var_mod": "TF coils",
+        "scan01": 3.3784
+    },
+    "yarc(5)": {
+        "var_mod": "TF coils",
+        "scan01": -6.3309
+    },
+    "tfareain": {
+        "var_mod": "TF coils",
+        "scan01": 24.606
+    },
+    "a_tf_steel*n_tf": {
+        "var_mod": "TF coils",
+        "scan01": 17.546
+    },
+    "f_tf_steel": {
+        "var_mod": "TF coils",
+        "scan01": 0.71309
+    },
+    "a_tf_ins*n_tf": {
+        "var_mod": "TF coils",
+        "scan01": 17.546
+    },
+    "f_tf_ins": {
+        "var_mod": "TF coils",
+        "scan01": 0.087543
+    },
+    "acasetf": {
+        "var_mod": "TF coils",
+        "scan01": 0.72861
+    },
+    "casthi": {
+        "var_mod": "TF coils",
+        "scan01": 0.06
+    },
+    "thkcas": {
+        "var_mod": "TF coils",
+        "scan01": 0.32795
+    },
+    "casths": {
+        "var_mod": "TF coils",
+        "scan01": 0.05
+    },
+    "whtcas": {
+        "var_mod": "TF coils",
+        "scan01": 1195600.0
+    },
+    "awpc": {
+        "var_mod": "TF coils",
+        "scan01": 0.80924
+    },
+    "aswp": {
+        "var_mod": "TF coils",
+        "scan01": 0.74515
+    },
+    "dr_tf_wp": {
+        "var_mod": "TF coils",
+        "scan01": 1.0331
+    },
+    "wwp1": {
+        "var_mod": "TF coils",
+        "scan01": 0.78331
+    },
+    "tinstf": {
+        "var_mod": "TF coils",
+        "scan01": 0.008
+    },
+    "tfinsgap": {
+        "var_mod": "TF coils",
+        "scan01": 0.01
+    },
+    "aswp*n_tf": {
+        "var_mod": "TF coils",
+        "scan01": 5.8884
+    },
+    "aswp/awpc": {
+        "var_mod": "TF coils",
+        "scan01": 0.45478
+    },
+    "aiwp/awpc": {
+        "var_mod": "TF coils",
+        "scan01": 0.13156
+    },
+    "awpc-aswp-aiwp)": {
+        "var_mod": "TF coils",
+        "scan01": 0.41367
+    },
+    "i_tf_turns_integer": {
+        "var_mod": "TF coils",
+        "scan01": 1.0
+    },
+    "n_tf_turn": {
+        "var_mod": "TF coils",
+        "scan01": 200.0
+    },
+    "n_pancake": {
+        "var_mod": "TF coils",
+        "scan01": 20.0
+    },
+    "n_layer": {
+        "var_mod": "TF coils",
+        "scan01": 10.0
+    },
+    "t_turn_radial": {
+        "var_mod": "TF coils",
+        "scan01": 0.09971
+    },
+    "t_turn_toroidal": {
+        "var_mod": "TF coils",
+        "scan01": 0.037366
+    },
+    "elonductor_radial": {
+        "var_mod": "TF coils",
+        "scan01": 0.09571
+    },
+    "t_conductor_toroidal": {
+        "var_mod": "TF coils",
+        "scan01": 0.033366
+    },
+    "t_cable_radial": {
+        "var_mod": "TF coils",
+        "scan01": 0.07971
+    },
+    "t_cable_toroidal": {
+        "var_mod": "TF coils",
+        "scan01": 0.017366
+    },
+    "thwcndut": {
+        "var_mod": "TF coils",
+        "scan01": 0.008
+    },
+    "thicndut": {
+        "var_mod": "TF coils",
+        "scan01": 0.002
+    },
+    "dhecoil": {
+        "var_mod": "TF coils",
+        "scan01": 0.01
+    },
+    "acstf": {
+        "var_mod": "TF coils",
+        "scan01": 0.0013533
+    },
+    "vftf": {
+        "var_mod": "TF coils",
+        "scan01": 0.3
+    },
+    "fcutfsu": {
+        "var_mod": "TF coils",
+        "scan01": 0.84199
+    },
+    "1-fcutfsu": {
+        "var_mod": "TF coils",
+        "scan01": 0.15801
+    },
+    "check_total_area_fractions_in_winding_pack_=_1": {
+        "var_mod": "TF coils",
+        "scan01": 1.0
+    },
+    "tmargmin_tf": {
+        "var_mod": "TF coils",
+        "scan01": 1.5
+    },
+    "tmargtf": {
+        "var_mod": "TF coils",
+        "scan01": 1.5
+    },
+    "whtconsc": {
+        "var_mod": "TF coils",
+        "scan01": 7568.4
+    },
+    "whtconcu": {
+        "var_mod": "TF coils",
+        "scan01": 75643.0
+    },
+    "whtconsh": {
+        "var_mod": "TF coils",
+        "scan01": 169640.0
+    },
+    "whtconin": {
+        "var_mod": "TF coils",
+        "scan01": 11325.0
+    },
+    "whtcon": {
+        "var_mod": "TF coils",
+        "scan01": 264180.0
+    },
+    "whttf/n_tf": {
+        "var_mod": "TF coils",
+        "scan01": 1466600.0
+    },
+    "whttf": {
+        "var_mod": "TF coils",
+        "scan01": 23466000.0
+    },
+    "bmaxtf": {
+        "var_mod": "TF coils",
+        "scan01": 11.2
+    },
+    "ritfc/1.d6": {
+        "var_mod": "TF coils",
+        "scan01": 181.19
+    },
+    "ritfc": {
+        "var_mod": "TF coils",
+        "scan01": 181190000.0
+    },
+    "bmaxtfrp": {
+        "var_mod": "TF coils",
+        "scan01": 11.716
+    },
+    "jwptf": {
+        "var_mod": "TF coils",
+        "scan01": 15197000.0
+    },
+    "oacdcp": {
+        "var_mod": "TF coils",
+        "scan01": 7363600.0
+    },
+    "estotftgj": {
+        "var_mod": "TF coils",
+        "scan01": 130.84
+    },
+    "vforce": {
+        "var_mod": "TF coils",
+        "scan01": 182920000.0
+    },
+    "vforce_outboard": {
+        "var_mod": "TF coils",
+        "scan01": 182920000.0
+    },
+    "f_vforce_inboard": {
+        "var_mod": "TF coils",
+        "scan01": 0.5
+    },
+    "cforce": {
+        "var_mod": "TF coils",
+        "scan01": 63415000.0
+    },
+    "ripmax": {
+        "var_mod": "TF coils",
+        "scan01": 0.6
+    },
+    "ripple": {
+        "var_mod": "TF coils",
+        "scan01": 0.6
+    },
+    "sigvvall": {
+        "var_mod": "TF coils",
+        "scan01": 93000000.0
+    },
+    "taucq": {
+        "var_mod": "TF coils",
+        "scan01": 28.464
+    },
+    "tdmptf": {
+        "var_mod": "TF coils",
+        "scan01": 28.886
+    },
+    "vdalw": {
+        "var_mod": "TF coils",
+        "scan01": 10.0
+    },
+    "vtfskv": {
+        "var_mod": "TF coils",
+        "scan01": 10.0
+    },
+    "tmaxpro": {
+        "var_mod": "TF coils",
+        "scan01": 150.0
+    },
+    "error_status": {
+        "var_mod": "Errors and Warnings",
+        "scan01": 2.0
+    },
+    "error_id": {
+        "var_mod": "Errors and Warnings",
+        "scan01": 145.0
+    }
+}

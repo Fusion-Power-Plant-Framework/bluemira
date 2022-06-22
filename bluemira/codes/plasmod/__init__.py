@@ -20,7 +20,31 @@
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 
 """
-Importer for Plasmod runner constants and functions
+Importer for plasmod's constants, enums, and solver
 """
-from bluemira.codes.plasmod.api import Solver
-from bluemira.codes.plasmod.constants import NAME
+
+from bluemira.codes.plasmod.api import RunMode, Solver
+from bluemira.codes.plasmod.constants import BINARY, NAME
+from bluemira.codes.plasmod.mapping import (
+    EquilibriumModel,
+    ImpurityModel,
+    PedestalModel,
+    PLHModel,
+    Profiles,
+    SOLModel,
+    TransportModel,
+)
+
+__all__ = [
+    "EquilibriumModel",
+    "ImpurityModel",
+    "PedestalModel",
+    "PLHModel",
+    "Profiles",
+    "SOLModel",
+    "TransportModel",
+    "BINARY",
+    "NAME",
+    "RunMode",
+    "Solver",
+]

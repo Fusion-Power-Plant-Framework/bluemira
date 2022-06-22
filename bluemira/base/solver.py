@@ -47,7 +47,9 @@ above.
 
 import abc
 import enum
-from typing import Any, Callable, Dict, Optional, Type
+from typing import Any, Callable, Optional, Type
+
+from bluemira.base.parameter import ParameterFrame
 
 
 class Task(abc.ABC):
@@ -58,11 +60,11 @@ class Task(abc.ABC):
     "run modes" can also be defined.
     """
 
-    def __init__(self, params: Dict[str, Any]) -> None:
-        self._params = params
+    def __init__(self, params: ParameterFrame) -> None:
+        self.params = params
 
     @abc.abstractmethod
-    def run(self, *args, **kwargs):
+    def run(self):
         """Run the task."""
         pass
 
@@ -75,19 +77,39 @@ class NoOpTask(Task):
     teardown stages.
     """
 
-    def run(*_, **__) -> None:
+    def run(self) -> None:
         """Do nothing."""
         return
 
 
 class RunMode(enum.Enum):
-    """Base enum class for defining run modes within a solver."""
+    """
+    Base enum class for defining run modes within a solver.
+
+    Note that no two enumeration's names should be case-insensitively
+    equal.
+    """
 
     def to_string(self) -> str:
         """
-        Convert the enum value to a string; its name in lower-case.
+        Convert the enum name to a string; its name in lower-case.
         """
         return self.name.lower()
+
+    @classmethod
+    def from_string(cls, mode_str: str):
+        """
+        Retrieve an enum value from a case-insensitive string.
+
+        Parameters
+        ----------
+        mode_str: str
+            The run mode's name.
+        """
+        for run_mode_str, enum_value in cls.__members__.items():
+            if run_mode_str.lower() == mode_str.lower():
+                return enum_value
+        raise ValueError(f"Unknown run mode '{mode_str}'.")
 
 
 class SolverABC(abc.ABC):
@@ -106,11 +128,12 @@ class SolverABC(abc.ABC):
         arbitrary run modes.
     """
 
-    def __init__(self, params: Dict[str, Any]):
+    def __init__(self, params: ParameterFrame):
         super().__init__()
-        self._setup = self.setup_cls(params)
-        self._run = self.run_cls(params)
-        self._teardown = self.teardown_cls(params)
+        self.params = params
+        self._setup = self.setup_cls(self.params)
+        self._run = self.run_cls(self.params)
+        self._teardown = self.teardown_cls(self.params)
 
     @abc.abstractproperty
     def setup_cls(self) -> Type[Task]:
@@ -148,21 +171,24 @@ class SolverABC(abc.ABC):
         """
         pass
 
+    @abc.abstractproperty
+    def run_mode_cls(self) -> Type[RunMode]:
+        """
+        Class enumerating the run modes for this solver.
+
+        Common run modes are RUN, MOCK, READ, etc,.
+        """
+        pass
+
     def execute(self, run_mode: RunMode) -> Any:
         """Execute the setup, run, and teardown tasks, in order."""
         result = None
-        setup = self._get_execution_method(self._setup, run_mode)
-        if setup:
+        if setup := self._get_execution_method(self._setup, run_mode):
             result = setup()
-
-        run = self._get_execution_method(self._run, run_mode)
-        if run:
+        if run := self._get_execution_method(self._run, run_mode):
             result = run(result)
-
-        teardown = self._get_execution_method(self._teardown, run_mode)
-        if teardown:
+        if teardown := self._get_execution_method(self._teardown, run_mode):
             result = teardown(result)
-
         return result
 
     def _get_execution_method(self, task: Task, run_mode: RunMode) -> Optional[Callable]:

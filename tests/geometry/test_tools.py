@@ -57,6 +57,7 @@ from bluemira.geometry.tools import (
     signed_distance_2D_polygon,
     slice_shape,
 )
+from tests._helpers import combine_text_mock_write_calls
 
 generic_wire = make_polygon(
     [
@@ -575,7 +576,7 @@ class TestLogFailedGeometryOperationSerialisation:
             naughty_function(wire, var2=[1, 2, 3], random_kwarg=np.pi)
 
         open_mock.assert_called_once()
-        written_data = "".join([x.args[0] for x in open_mock().write.call_args_list])
+        written_data = combine_text_mock_write_calls(open_mock)
         data = json.loads(written_data)
 
         # Check the serialization of the input shape

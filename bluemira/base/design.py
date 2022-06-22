@@ -40,7 +40,7 @@ from bluemira.base.look_and_feel import bluemira_print, print_banner
 from bluemira.utilities.tools import get_class_from_module
 
 if typing.TYPE_CHECKING:
-    from bluemira.codes.interface import FileProgramInterface
+    from bluemira.codes.interface import CodesSolver
 
 
 class DesignABC(abc.ABC):
@@ -55,7 +55,7 @@ class DesignABC(abc.ABC):
     _params: Configuration
     _build_config: Dict[str, BuildConfig]
     _builders: Dict[str, Builder]
-    _solvers: Dict[str, FileProgramInterface]
+    _solvers: Dict[str, CodesSolver]
     _stage: List[str] = []
 
     def __init__(
@@ -122,7 +122,7 @@ class DesignABC(abc.ABC):
         component = Component(self._params.Name)
         return component
 
-    def get_solver(self, solver_name: str) -> FileProgramInterface:
+    def get_solver(self, solver_name: str) -> CodesSolver:
         """
         Get the solver with the corresponding solver_name.
 
@@ -133,18 +133,18 @@ class DesignABC(abc.ABC):
 
         Returns
         -------
-        solver: FileProgramInterface
+        solver: CodesSolver
             The solver corresponding to the provided name.
         """
         return self._solvers[solver_name]
 
-    def register_solver(self, solver: FileProgramInterface):
+    def register_solver(self, solver: CodesSolver):
         """
         Add this solver to the internal solver registry.
 
         Parameters
         ----------
-        solver: FileProgramInterface
+        solver: CodesSolver
             The solver to be registered.
         name: str
             The name to register this solver with.

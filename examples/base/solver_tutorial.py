@@ -37,12 +37,13 @@ An example/tutorial of how to write a Solver and Task classes.
 
 # %%
 import enum
-from typing import Any, Dict
+from typing import Dict
 
 import matplotlib.pyplot as plt
 import numpy as np
 from scipy.optimize import curve_fit
 
+from bluemira.base.parameter import ParameterFrame
 from bluemira.base.solver import RunMode, SolverABC, Task
 
 # %%[markdown]
@@ -50,27 +51,47 @@ from bluemira.base.solver import RunMode, SolverABC, Task
 
 
 # %%
-def gaussian(x, sigma, mu, vertical_offset):
+def gaussian(x: np.ndarray, sigma: float, mu: float, vertical_offset: float):
     """Apply the Gaussian function to x."""
     exponent = -1 / 2 * ((x - mu) / sigma) ** 2
     return 1 / (sigma * np.sqrt(2 * np.pi)) * np.exp(exponent) + vertical_offset
 
 
-def generate_noisy_gaussian(x: np.ndarray, gauss_params: Dict[str, float], rng_seed=0):
+def generate_noisy_gaussian(
+    x: np.ndarray, sigma: float, mu: float, vertical_offset: float, rng_seed: int = 0
+):
     """Generate some gaussian data with random noise."""
-    gauss_y = gaussian(x, **gauss_params)
+    gauss_y = gaussian(x, sigma, mu, vertical_offset)
     rng = np.random.default_rng(rng_seed)
     return gauss_y + rng.uniform(-0.05, 0.05, len(x))
 
 
 # %%
 x = np.linspace(-10, 10, 200)
-gauss_params = {
-    "sigma": 2,
-    "mu": 1,
-    "vertical_offset": 1.5,
-}
-gauss_data = generate_noisy_gaussian(x, gauss_params)
+gauss_data = generate_noisy_gaussian(x, 2, 1.8, 1.5)
+gauss_params = ParameterFrame(
+    [
+        ["sigma", "sigma", 1.0, "dimensionless", "Standard Deviation", "Input"],
+        ["mu", "mu", 1.0, "dimensionless", "Expectation value", "Input"],
+        [
+            "vertical_offset",
+            "vertical_offset",
+            0.0,
+            "dimensionless",
+            "The vertical offset",
+            "Input",
+        ],
+        ["x", "x", x, "dimensionless", "Problem space", "Input"],
+        [
+            "gauss_data",
+            "gauss_data",
+            gauss_data,
+            "dimensionless",
+            "Gauss signal",
+            "Input",
+        ],
+    ]
+)
 
 plt.plot(x, gauss_data)
 
@@ -117,10 +138,10 @@ class GaussFitSetup(Task):
     This makes some estimates for the fitting parameters.
     """
 
-    def __init__(self, params: Dict[str, Any]):
+    def __init__(self, params: ParameterFrame):
         super().__init__(params)
-        self._x = params["x"]
-        self._y = params["y"]
+        self._x = self.params["x"]
+        self._y = self.params["y"]
 
     def run(self) -> Dict[str, float]:
         """
@@ -166,7 +187,7 @@ class GaussFitRun(Task):
     mode within a solver, it will do nothing.
     """
 
-    def __init__(self, params: Dict[str, Any]):
+    def __init__(self, params: ParameterFrame):
         super().__init__(params)
 
     def run(self, setup_result: Dict[str, float]) -> Dict[str, float]:
@@ -177,7 +198,7 @@ class GaussFitRun(Task):
             setup_result["vertical_offset"],
         )
         opt, _ = curve_fit(
-            gaussian, self._params["x"], self._params["y"], p0=initial_guess
+            gaussian, self.params["x"], self.params["y"], p0=initial_guess
         )
         return {
             "sigma": opt[0],
@@ -196,12 +217,12 @@ class GaussFitTeardown(Task):
     original data.
     """
 
-    def __init__(self, params: Dict[str, Any]):
+    def __init__(self, params: ParameterFrame):
         super().__init__(params)
 
     def run(self, run_result: Dict[str, float]) -> np.ndarray:
         """Run the teardown procedure."""
-        return gaussian(self._params["x"], **run_result)
+        return gaussian(self.params["x"], **run_result)
 
     def mock(self, run_result: Dict[str, float]) -> np.ndarray:
         """
@@ -227,6 +248,7 @@ class GaussFitSolver(SolverABC):
     setup_cls = GaussFitSetup
     run_cls = GaussFitRun
     teardown_cls = GaussFitTeardown
+    run_mode_cls = GaussFitRunMode
 
     def execute(self, run_mode: RunMode) -> np.ndarray:
         """

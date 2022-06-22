@@ -18,38 +18,16 @@
 #
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
+"""
+The API for the plasmod solver.
+"""
 
-from bluemira.base.config import ParameterFrame
-from bluemira.base.parameter import ParameterMapping
-from bluemira.base.solver import NoOpTask, RunMode
-from bluemira.codes import interface
+from bluemira.codes.plasmod.api._solver import Run, RunMode, Setup, Solver, Teardown
 
-
-class NoOpRunMode(RunMode):
-    RUN = 0
-
-
-class NoOpSolver(interface.CodesSolver):
-
-    name = "MyTestSolver"
-    setup_cls = NoOpTask
-    run_cls = NoOpTask
-    teardown_cls = NoOpTask
-    run_mode_cls = NoOpRunMode
-
-
-class TestCodesSolver:
-    def test_modify_mappings_updates_send_recv_values_of_params(self):
-        params = ParameterFrame()
-        params.add_parameter(
-            "param1",
-            unit="dimensionless",
-            value=1,
-            mapping={NoOpSolver.name: ParameterMapping("param1", recv=False, send=True)},
-        )
-        solver = NoOpSolver(params)
-
-        solver.modify_mappings({"param1": {"recv": True, "send": False}})
-
-        assert solver.params.param1.mapping[solver.name].recv is True
-        assert solver.params.param1.mapping[solver.name].send is False
+__all__ = [
+    "Run",
+    "RunMode",
+    "Setup",
+    "Solver",
+    "Teardown",
+]
