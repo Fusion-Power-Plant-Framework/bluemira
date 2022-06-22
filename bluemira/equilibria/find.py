@@ -370,7 +370,7 @@ def find_OX_points(x, z, psi, limiter=None, *, field_cut_off=1.0):  # noqa :N802
     for xp in x_points:
         x_xp, z_xp, psix = xp
         d_l = np.hypot(x_xp - x_op, z_xp - z_op)
-        n_line = int(d_l // radius) + 1
+        n_line = max(2, int(d_l // radius) + 1)
         xx, zz = np.linspace(x_op, x_xp, n_line), np.linspace(z_op, z_xp, n_line)
         if psix < psio:
             psi_ox = -f_psi(xx, zz, grid=False)
