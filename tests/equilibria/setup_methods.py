@@ -82,7 +82,7 @@ def _coilset_setup(self, materials=False):
         ctype = name[:2]
         coil = Coil(xc, zc, dx=dxc, dz=dzc, name=name, ctype=ctype)
         coils.append(coil)
-    self.coilset = CoilSet(coils)
+    self.coilset = CoilSet(*coils)
 
     if materials:
         # Max PF currents / sizes don't stack up in the CREATE document...

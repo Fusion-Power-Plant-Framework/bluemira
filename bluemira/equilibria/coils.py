@@ -245,7 +245,7 @@ class CoilFieldsMixin:
                 _quad_dx += [np.ones(x_sc.size) * sc_dx]
                 _quad_dz += [np.ones(x_sc.size) * sc_dz]
 
-        return self._pad_discretisation(_quad_x, _quad_z, _quad_dx, _quad_dz)
+            return self._pad_discretisation(_quad_x, _quad_z, _quad_dx, _quad_dz)
 
     def discretise(self, d_coil=None):
         """
@@ -1425,6 +1425,14 @@ class CoilGroup(CoilFieldsMixin, abc.ABC):
             self.current,
         )
 
+    @classmethod
+    def from_group_vecs(cls, groupvecs):
+        raise NotImplementedError
+
+    @classmethod
+    def from_coils(cls, coils):
+        raise NotImplementedError
+
     def plot(self):
         """
         TODO
@@ -1755,7 +1763,8 @@ class CoilSet(CoilGroup):
     def _convert_to_coilgroup(
         coils: Tuple[Union[CoilGroup, List, Dict]]
     ) -> List[CoilGroup]:
-        coils = list(coils)
+        # Overly complex data structure of coils not dealt with
+        # eg Tuple(List(CoilGroup), List(List), Dict(List))
         for i, coil in enumerate(coils):
             if isinstance(coil, List):
                 coils[i] = Coil(*coil)
