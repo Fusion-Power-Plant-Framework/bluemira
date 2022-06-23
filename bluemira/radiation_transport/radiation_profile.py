@@ -34,7 +34,7 @@ from bluemira.base import constants
 from bluemira.base.error import BuilderError
 from bluemira.base.parameter import ParameterFrame
 from bluemira.equilibria.flux_surfaces import calculate_connection_length_flt
-from bluemira.equilibria.grid import Grid
+from bluemira.geometry.wire import BluemiraWire
 from bluemira.radiation_transport.constants import SEP_CORRECTOR
 
 if TYPE_CHECKING:
@@ -157,7 +157,7 @@ class Radiation:
         t_tar=None,
     ):
         """
-        Along a single flux tube, it assignes different temperature values.
+        Along a single flux tube, it assigns different temperature values.
 
         Parameters
         ----------
@@ -213,7 +213,7 @@ class Radiation:
         x_point_rad=False,
     ):
         """
-        Along a single flux tube, it assignes different density values.
+        Along a single flux tube, it assigns different density values.
 
         Parameters
         ----------
@@ -321,7 +321,7 @@ class TwoPointModelTools(Radiation):
             rad_params, f"{self.__class__.__name__} input"
         )
 
-    def upstream_temperature(self, firstwall_geom: Grid, n=2):
+    def upstream_temperature(self, firstwall_geom: BluemiraWire, n=2):
         """
         Calculation of the temperature at the upstream location according
         to PROCESS parameters and the total power crossing the separatrix.
@@ -431,7 +431,7 @@ class TwoPointModelTools(Radiation):
 
         return t_tar
 
-    def x_point_temperature(self, q_u, t_u, firstwall_geom: Grid):
+    def x_point_temperature(self, q_u, t_u, firstwall_geom: BluemiraWire):
         """
         Calculation of the temperature at the x-point
 
@@ -471,7 +471,7 @@ class TwoPointModelTools(Radiation):
         return t_x
 
     def random_point_temperature(
-        self, x_p, z_p, t_u, q_u, firstwall_geom: Grid, lfs=True
+        self, x_p, z_p, t_u, q_u, firstwall_geom: BluemiraWire, lfs=True
     ):
         """
         Calculation of the temperature at a random point above the x-point
@@ -1220,7 +1220,7 @@ class ScrapeOffLayer(Radiation):
             list of arrays containing the power radiation density of the
             points lying on the specified flux tubes.
             expected len(flux_tubes) = len(power_desnity)
-        firstwall: Grid
+        firstwall: BluemiraWire
             first wall geometry
         """
         if ax is None:

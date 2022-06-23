@@ -152,7 +152,7 @@ class Configuration(ConfigurationSchema, ParameterFrame):
         ["lambda_q_n", "near SoL decay length", 0.01, "m", None, "Input"],
         ["lambda_q_f", "far SoL decay length", 0.1, "m", None, "Input"],
         ["k_0", "material's conductivity", 2000, "dimensionless", None, "Input"],
-        ["gamma", "sheat heat transmission coefficient", 7, "dimensionless", None, "Input"],
+        ["gamma", "sheath heat transmission coefficient", 7, "dimensionless", None, "Input"],
         ["eps_cool", "electron energy loss", 25, "eV", None, "Input"],
         ["f_ion_t", "Hydrogen first ionization", 10, "eV", None, "Input"],
         ["lfs_p_fraction", "lfs fraction of SoL power", 0.8, "dimensionless", None, "Input"],
