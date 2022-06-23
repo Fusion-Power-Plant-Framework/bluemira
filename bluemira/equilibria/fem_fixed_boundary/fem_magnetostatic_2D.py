@@ -42,7 +42,7 @@ class FemMagnetostatic2d:
 
     .. math::
         \\int_{D_p} {\\frac{1}{r}}{\\nabla}{\Psi}{\cdot}{\\nabla} v \,dr\,dz = 2
-        \pi r \mu_0 \\int_{D_p} J_{\\Phi} v \,dr\,dz
+        \pi \mu_0 \\int_{D_p} J_{\\Phi} v \,dr\,dz
 
     where :math:`v` is the basis element function of the defined functional subspace
     :math:`V`.
