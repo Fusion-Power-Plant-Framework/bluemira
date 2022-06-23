@@ -563,16 +563,3 @@ class TestMutualInductances:
         diag = np.diag_indices(3)
         m[diag] = 0.0
         assert np.allclose(m, test_m)
-
-
-class TestCoilSorting:
-    def test_sorting_coilset(self):
-        """Ensure sorting of coils properly handles numbers in the coil name."""
-        coils = [
-            Coil(5, 5, current=0, dx=1.0, dz=1.0, name="CS_2"),
-            Coil(5, 5, current=0, dx=1.0, dz=1.0, name="CS_10"),
-        ]
-        sorted_coils = CoilGroup.sort_coils(coils)
-        sorted_names = list(sorted_coils)
-        assert sorted_names[0] == "CS_2"
-        assert sorted_names[1] == "CS_10"
