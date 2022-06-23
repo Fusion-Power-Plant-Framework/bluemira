@@ -63,7 +63,7 @@ class TestCoilsetOptimiser:
             b_max=50.0,
             name="PF_3",
         )
-        cls.coilset = CoilSet([circuit, coil2, coil3])
+        cls.coilset = CoilSet(circuit, coil2, coil3)
 
         max_coil_shifts = {
             "x_shifts_lower": -2.0,

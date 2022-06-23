@@ -450,52 +450,44 @@ class TestCoilSet:
 
 class TestCoilSetSymmetry:
     def test_symmetry_check(self):
-        coilset = CoilSet([Coil(5, 5, dx=1.0, dz=1.0), Coil(5, -5, dx=1.0, dz=1.0)])
+        coilset = CoilSet(Coil(5, 5, dx=1.0, dz=1.0), Coil(5, -5, dx=1.0, dz=1.0))
 
         assert check_coilset_symmetric(coilset)
 
         coilset = CoilSet(
-            [Coil(5, 5, dx=1.0, dz=1.0), Coil(5, -5, dx=1.0, dz=1.0, current=1e6)]
+            Coil(5, 5, dx=1.0, dz=1.0), Coil(5, -5, dx=1.0, dz=1.0, current=1e6)
         )
 
         assert not check_coilset_symmetric(coilset)
 
         coilset = CoilSet(
-            [
-                Coil(5, 5, dx=1.0, dz=1.0),
-                Coil(5, 0, dx=1.0, dz=1.0),
-                Coil(5, -5, dx=1.0, dz=1.0),
-            ]
+            Coil(5, 5, dx=1.0, dz=1.0),
+            Coil(5, 0, dx=1.0, dz=1.0),
+            Coil(5, -5, dx=1.0, dz=1.0),
         )
         assert check_coilset_symmetric(coilset)
 
         coilset = CoilSet(
-            [
-                Coil(5, 5, dx=1.0, dz=1.0),
-                Coil(5, 1, dx=1.0, dz=1.0),
-                Coil(5, -5, dx=1.0, dz=1.0),
-            ]
+            Coil(5, 5, dx=1.0, dz=1.0),
+            Coil(5, 1, dx=1.0, dz=1.0),
+            Coil(5, -5, dx=1.0, dz=1.0),
         )
 
         assert not check_coilset_symmetric(coilset)
 
         coilset = CoilSet(
-            [
-                Coil(5, 5, dx=1.0, dz=1.0),
-                Coil(5, 0, dx=1.0, dz=1.0),
-                Coil(5, 1, dx=1.0, dz=1.0),
-                Coil(5, -5, dx=1.0, dz=1.0),
-            ]
+            Coil(5, 5, dx=1.0, dz=1.0),
+            Coil(5, 0, dx=1.0, dz=1.0),
+            Coil(5, 1, dx=1.0, dz=1.0),
+            Coil(5, -5, dx=1.0, dz=1.0),
         )
 
         assert not check_coilset_symmetric(coilset)
 
     def test_symmetrise(self):
         coilset = CoilSet(
-            [
-                Coil(5, 5, current=1e6, dx=1, dz=1),
-                Coil(5, -5, current=1e6, dx=1, dz=1),
-            ]
+            Coil(5, 5, current=1e6, dx=1, dz=1),
+            Coil(5, -5, current=1e6, dx=1, dz=1),
         )
         new = symmetrise_coilset(coilset)
         assert len(new.coils) == 1
