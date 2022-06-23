@@ -35,8 +35,8 @@ class FemMagnetostatic2d:
     magnetic flux (:math:`\Psi`), are then reduced to the form ([Zohm]_, page 25):
 
     .. math::
-        r^2 {\\nabla}{\cdot}{\\left(}{\\frac{{\\nabla}{\psi}}{r^2}}{\\right)} = 2
-        \pi r \mu_0 J_{\Phi}
+        r^2 \\nabla\cdot\\left(\\frac{\\nabla}{\\psi}r^2\\right) = 2
+        \\pi r \\mu_0 J_{\\Phi}
 
     whose weak formulation is defined as ([Villone]_):
 
