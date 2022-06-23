@@ -332,6 +332,9 @@ def is_num(thing):
 
 
 def is_num_array(thing):
+    """
+    :func:is_num but also includes arrays
+    """
     if isinstance(thing, np.ndarray) and thing.dtype in [float, int, complex]:
         return ~np.isnan(thing)
     else:

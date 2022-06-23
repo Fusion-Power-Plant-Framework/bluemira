@@ -25,14 +25,13 @@ Coil and coil grouping objects
 from __future__ import annotations
 
 import abc
-from contextlib import suppress
 
 # from copy import deepcopy
 from enum import Enum, EnumMeta, auto
 from functools import update_wrapper
 
 # from re import split
-from typing import Any, Callable, Dict, Iterable, List, Optional, Tuple, Union
+from typing import Callable, Dict, Iterable, List, Optional, Tuple, Union
 
 # import matplotlib.pyplot as plt
 import numpy as np
@@ -261,7 +260,6 @@ class CoilFieldsMixin:
         Only discretisation method currently implemented is rectangular fraction
 
         """
-
         weighting = None
         self._quad_x = self._x.copy()[..., None]
         self._quad_dx = self._dx.copy()[..., None]
@@ -440,7 +438,6 @@ class CoilFieldsMixin:
         response: np.ndarray
 
         """
-
         response = np.zeros_like(inside, dtype=float)
         for coil, (points, qx, qz, qw, cx, cz, cdx, cdz) in enumerate(
             zip(
@@ -1511,6 +1508,9 @@ class Coil(CoilGroup):
 
     @property
     def name(self):
+        """
+        Name of coil
+        """
         return list(self._name_map.keys())[0]
 
     # def __setattr__(self, attr: str, value: Any) -> None:
@@ -1627,6 +1627,9 @@ class SymmetricCircuit(Circuit):
 
     @property
     def name(self):
+        """
+        Name of circuit
+        """
         return self._circuit_name
 
     def modify_symmetry(self, symmetry_line: np.ndarray[[float, float], [float, float]]):
@@ -1726,13 +1729,18 @@ class CoilSet(CoilGroup):
 
         self.discretise(d_coil)
         # TODO deal with sizing
-        # TODO deal with meshing
         # TODO think whether this is the best way forward
 
     def __init_subclass__(cls, *args, **kwargs):
+        """
+        Subclassing protection
+        """
         raise EquilibriaError("class not designed to be subclassed")
 
     def __str__(self) -> str:
+        """
+        Pretty pront Coilset
+        """
         return ", ".join(
             sorted(
                 [f"{v.__class__.__name__}({v})" for v in self.__coilgroups.values()],
@@ -1835,6 +1843,9 @@ class CoilSet(CoilGroup):
 
     @property
     def name(self):
+        """
+        Names of Coilset
+        """
         return list(self.__coilgroups.keys())
 
     def get_coil(self, name_or_id):
@@ -1859,6 +1870,9 @@ class CoilSet(CoilGroup):
         }
 
     def add_subset(self, filters: Dict[str, Callable]):
+        """
+        Subset filtering
+        """
         self._filters = {**self._filters, **filters}
 
         self._finalise_groups()
@@ -1872,6 +1886,9 @@ class CoilSet(CoilGroup):
         }
 
     def __getattribute__(self, attr):
+        """
+        Get attribute with extra for subgroups
+        """
         try:
             return super().__getattribute__(attr)
         except AttributeError as ae:
