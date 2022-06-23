@@ -156,17 +156,39 @@ class CoilFieldsMixin:
         if type(self) == CoilFieldsMixin:
             raise TypeError("Can't be initialised directly")
 
-        # setup initial meshing
-        # quadratures
-
         self.discretise(weighting)
 
-    def _set_quad_weighting(self, weighting=None):
-        self._quad_weighting = (
-            np.ones((self._x.shape[0], 1)) if weighting is None else weighting
-        )
+    def _pad_discretisation(
+        self,
+        _quad_x: List[np.ndarray],
+        _quad_z: List[np.ndarray],
+        _quad_dx: List[np.ndarray],
+        _quad_dz: List[np.ndarray],
+    ):
+        """
+        Convert quadrature list of array to rectuangualr arrays.
+        Padding quadrature arrays with zeros to allow array operations
+        on rectangular matricies.
 
-    def _pad_discretisation(self, _quad_x, _quad_z, _quad_dx, _quad_dz):
+        Parameters
+        ----------
+        _quad_x: List[np.ndarray]
+            x quadratures
+        _quad_z: List[np.ndarray]
+            z quadratures
+        _quad_dx: List[np.ndarray]
+            dx quadratures
+        _quad_dz: List[np.ndarray]
+            dz quadratures
+
+        Notes
+        -----
+        In reality this is just a nicety for storing as padding only
+        exists for multiple coils in a :class:CoilGroup that are different shapes.
+        There is no extra calculation on the elements set to zero because
+        of the mechanics of the :func:_combined_control method.
+
+        """
         all_len = np.array([len(q) for q in _quad_x])
         max_len = max(all_len)
         diff = max_len - all_len
@@ -184,7 +206,61 @@ class CoilFieldsMixin:
 
         return weighting
 
+    def _rectangular_discretisation(self, d_coil):
+        """
+        Discretise a coil into smaller rectangles based on fraction of
+        coil dimensions
+
+        Parameters
+        ----------
+        d_coil: float
+            Target discretisation fraction
+
+        Returns
+        -------
+        weighting: np.ndarray
+
+        """
+        nx = np.maximum(1, np.ceil(self._dx * 2 / d_coil))
+        nz = np.maximum(1, np.ceil(self._dz * 2 / d_coil))
+
+        if not all(nx * nz == 1):
+            dx, dz = self._dx / nx, self._dz / nz
+            _quad_x = []
+            _quad_z = []
+            _quad_dx = []
+            _quad_dz = []
+
+            for i, (coil_x, coil_z, sc_dx, sc_dz, _nx, _nz) in enumerate(
+                zip(self._x, self._z, dx, dz, nx, nz)
+            ):
+
+                # Calculate sub-coil centroids
+                x_sc = (coil_x - self._dx[i]) + sc_dx * np.arange(1, 2 * _nx, 2)
+                z_sc = (coil_z - self._dz[i]) + sc_dz * np.arange(1, 2 * _nz, 2)
+                x_sc, z_sc = np.meshgrid(x_sc, z_sc)
+
+                _quad_x += [x_sc.flat]
+                _quad_z += [z_sc.flat]
+                _quad_dx += [np.ones(x_sc.size) * sc_dx]
+                _quad_dz += [np.ones(x_sc.size) * sc_dz]
+
+        return self._pad_discretisation(_quad_x, _quad_z, _quad_dx, _quad_dz)
+
     def discretise(self, d_coil=None):
+        """
+        Discretise a coil for greens function magnetic field calculations
+
+        Parameters
+        ----------
+        d_coil: float
+            Target discretisation fraction
+
+        Notes
+        -----
+        Only discretisation method currently implemented is rectangular fraction
+
+        """
 
         weighting = None
         self._quad_x = self._x.copy()[..., None]
@@ -194,36 +270,11 @@ class CoilFieldsMixin:
 
         if d_coil is not None:
             # How fancy do we want the mesh or just smaller rectangles?
-            # Smaller rectangles
-            nx = np.maximum(1, np.ceil(self._dx * 2 / d_coil))
-            nz = np.maximum(1, np.ceil(self._dz * 2 / d_coil))
+            weighting = self._rectangular_discretisation(d_coil)
 
-            if not all(nx * nz == 1):
-                dx, dz = self._dx / nx, self._dz / nz
-                _quad_x = []
-                _quad_z = []
-                _quad_dx = []
-                _quad_dz = []
-
-                for i, (coil_x, coil_z, sc_dx, sc_dz, _nx, _nz) in enumerate(
-                    zip(self._x, self._z, dx, dz, nx, nz)
-                ):
-
-                    # Calculate sub-coil centroids
-                    x_sc = (coil_x - self._dx[i]) + sc_dx * np.arange(1, 2 * _nx, 2)
-                    z_sc = (coil_z - self._dz[i]) + sc_dz * np.arange(1, 2 * _nz, 2)
-                    x_sc, z_sc = np.meshgrid(x_sc, z_sc)
-
-                    _quad_x += [x_sc.flat]
-                    _quad_z += [z_sc.flat]
-                    _quad_dx += [np.ones(x_sc.size) * sc_dx]
-                    _quad_dz += [np.ones(x_sc.size) * sc_dz]
-
-                weighting = self._pad_discretisation(
-                    _quad_x, _quad_z, _quad_dx, _quad_dz
-                )
-
-        self._set_quad_weighting(weighting)
+        self._quad_weighting = (
+            np.ones((self._x.shape[0], 1)) if weighting is None else weighting
+        )
 
     def psi(self, x, z):
         """
@@ -330,6 +381,20 @@ class CoilFieldsMixin:
         Boiler-plate helper function to mixed the Green's function responses
         with the semi-analytic function responses, as a function of position
         outside/inside the coil boundary.
+
+        Parameters
+        ----------
+        x,z: Union[float, int, np.array]
+            Points to calculate field at
+        greens_func: Callable
+            greens function
+        semianalytic_func: Callable
+            semianalytic function
+
+        Returns
+        -------
+        response: np.ndarray
+
         """
         x, z = np.ascontiguousarray(x), np.ascontiguousarray(z)
 
@@ -353,6 +418,28 @@ class CoilFieldsMixin:
             return greens_func(x, z)
 
     def _combined_control(self, inside, x, z, greens_func, semianalytic_func):
+        """
+        Combine semianalytic and greens function calculation of magnetic field
+
+        Used for situation where there are calculation points both inside and
+        outside the coil boundaries.
+
+        Parameters
+        ----------
+        inside: np.ndarray[bool]
+            array of if the point is inside a coil
+        x,z: Union[float, int, np.array]
+            Points to calculate field at
+        greens_func: Callable
+            greens function
+        semianalytic_func: Callable
+            semianalytic function
+
+        Returns
+        -------
+        response: np.ndarray
+
+        """
 
         response = np.zeros_like(inside, dtype=float)
         for coil, (points, qx, qz, qw, cx, cz, cdx, cdz) in enumerate(
@@ -426,6 +513,26 @@ class CoilFieldsMixin:
         """
         Calculate radial magnetic field B respose at (x, z) due to a unit
         current using Green's functions.
+
+        Parameters
+        ----------
+        greens: Callable
+            greens function
+        x,z: Union[float, int, np.array]
+            Points to calculate field at
+        split: bool
+            Flag for if :func:_combined_control is used
+        _quad_x: Optional[np.ndarray]
+            :func:_combined_control x positions
+        _quad_z: Optional[np.ndarray]
+            :func:_combined_control z positions
+        _quad_weight: Optional[np.ndarray]
+            :func:_combined_control weighting
+
+        Returns
+        -------
+        response: np.ndarray
+
         """
         if not split:
             _quad_x = self._quad_x
@@ -449,6 +556,26 @@ class CoilFieldsMixin:
         """
         Calculate radial magnetic field Bx respose at (x, z) due to a unit
         current using Green's functions.
+
+        Parameters
+        ----------
+        greens: Callable
+            greens function
+        x,z: Union[float, int, np.array]
+            Points to calculate field at
+        split: bool
+            Flag for if :func:_combined_control is used
+        _quad_x: Optional[np.ndarray]
+            :func:_combined_control x positions
+        _quad_z: Optional[np.ndarray]
+            :func:_combined_control z positions
+        _quad_weight: Optional[np.ndarray]
+            :func:_combined_control weighting
+
+        Returns
+        -------
+        response: np.ndarray
+
         """
         return self._control_B_greens(
             greens_Bx, x, z, split, _quad_x, _quad_z, _quad_weight
@@ -459,6 +586,26 @@ class CoilFieldsMixin:
     ):
         """
         Calculate vertical magnetic field Bz at (x, z) due to a unit current
+
+        Parameters
+        ----------
+        greens: Callable
+            greens function
+        x,z: Union[float, int, np.array]
+            Points to calculate field at
+        split: bool
+            Flag for if :func:_combined_control is used
+        _quad_x: Optional[np.ndarray]
+            :func:_combined_control x positions
+        _quad_z: Optional[np.ndarray]
+            :func:_combined_control z positions
+        _quad_weight: Optional[np.ndarray]
+            :func:_combined_control weighting
+
+        Returns
+        -------
+        response: np.ndarray
+
         """
         return self._control_B_greens(
             greens_Bz, x, z, split, _quad_x, _quad_z, _quad_weight
@@ -478,6 +625,28 @@ class CoilFieldsMixin:
         """
         Calculate radial magnetic field Bx response at (x, z) due to a unit
         current using semi-analytic method.
+
+        Parameters
+        ----------
+        semianalytic: Callable
+            semianalytic function
+        x,z: Union[float, int, np.array]
+            Points to calculate field at
+        split: bool
+            Flag for if :func:_combined_control is used
+        coil_x: Optional[np.ndarray]
+            :func:_combined_control x positions
+        coil_z: Optional[np.ndarray]
+            :func:_combined_control z positions
+        coil_dx: Optional[np.ndarray]
+            :func:_combined_control x positions
+        coil_dz: Optional[np.ndarray]
+            :func:_combined_control z positions
+
+        Returns
+        -------
+        response: np.ndarray
+
         """
         if not split:
             coil_x = self._x
@@ -500,6 +669,25 @@ class CoilFieldsMixin:
         """
         Calculate vertical magnetic field Bx response at (x, z) due to a unit
         current using semi-analytic method.
+
+        Parameters
+        ----------
+        x,z: Union[float, int, np.array]
+            Points to calculate field at
+        split: bool
+            Flag for if :func:_combined_control is used
+        coil_x: Optional[np.ndarray]
+            :func:_combined_control x positions
+        coil_z: Optional[np.ndarray]
+            :func:_combined_control z positions
+        coil_dx: Optional[np.ndarray]
+            :func:_combined_control x positions
+        coil_dz: Optional[np.ndarray]
+            :func:_combined_control z positions
+
+        Returns
+        -------
+        response: np.ndarray
         """
         return self._control_B_analytical(
             semianalytic_Bx, x, z, split, coil_x, coil_z, coil_dx, coil_dz
@@ -511,6 +699,25 @@ class CoilFieldsMixin:
         """
         Calculate vertical magnetic field Bz response at (x, z) due to a unit
         current using semi-analytic method.
+
+        Parameters
+        ----------
+        x,z: Union[float, int, np.array]
+            Points to calculate field at
+        split: bool
+            Flag for if :func:_combined_control is used
+        coil_x: Optional[np.ndarray]
+            :func:_combined_control x positions
+        coil_z: Optional[np.ndarray]
+            :func:_combined_control z positions
+        coil_dx: Optional[np.ndarray]
+            :func:_combined_control x positions
+        coil_dz: Optional[np.ndarray]
+            :func:_combined_control z positions
+
+        Returns
+        -------
+        response: np.ndarray
         """
         return self._control_B_analytical(
             semianalytic_Bz, x, z, split, coil_x, coil_z, coil_dx, coil_dz
