@@ -1714,7 +1714,7 @@ class CoilSet(CoilGroup):
 
     __slots__ = ("__coilgroups", "_circuits")
 
-    def __init__(self, *coils: Union[CoilGroup, List, Dict]):
+    def __init__(self, *coils: Union[CoilGroup, List, Dict], d_coil=None):
 
         if not coils:
             raise ValueError("No coils provided")
@@ -1724,6 +1724,7 @@ class CoilSet(CoilGroup):
         for k, v in attributes.items():
             setattr(self, k, v)
 
+        self.discretise(d_coil)
         # TODO deal with sizing
         # TODO deal with meshing
         # TODO think whether this is the best way forward
@@ -1817,8 +1818,12 @@ class CoilSet(CoilGroup):
                 else:
                     attributes[name].append(child_attr)
 
-            if isinstance(getattr(group, name), np.ndarray):
-                attributes[name] = np.array(attributes[name], dtype=float)
+            if isinstance(getattr(group, name), np.ndarray) and (
+                attributes[name][0].dtype == float
+                if isinstance(attributes[name][0], np.ndarray)
+                else True
+            ):
+                attributes[name] = np.squeeze(np.array(attributes[name], dtype=float))
             else:
                 attributes[name] = np.array(attributes[name], dtype=object)
 
