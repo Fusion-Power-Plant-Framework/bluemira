@@ -519,9 +519,14 @@ def flatten_iterable(iters):
     Yields
     ------
         elements of iterable
+
+    Notes
+    -----
+    Does not cater for nested dictionaries
+
     """
     for _iter in iters:
-        if isinstance(_iter, Iterable) and not isinstance(_iter, (str, bytes)):
+        if isinstance(_iter, Iterable) and not isinstance(_iter, (str, bytes, dict)):
             for _it in flatten_iterable(_iter):
                 yield _it
         else:
