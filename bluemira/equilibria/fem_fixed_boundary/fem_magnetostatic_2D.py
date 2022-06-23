@@ -32,7 +32,7 @@ class FemMagnetostatic2d:
     A 2D magnetostic solver. The solver is thought as support for the fem fixed
     boundary module and it is limited to axisymmetric magnetostatic problem
     with toroidal current sources. The Maxwell equations, as function of the poloidal
-    magnetic flux (:math:`\Psi`), are then reduced to the form ([Zohm]_, page 25):
+    magnetic flux (:math:`\\Psi`), are then reduced to the form ([Zohm]_, page 25):
 
     .. math::
         r^2 \\nabla\cdot\\left(\\frac{\\nabla}{\\psi}r^2\\right) = 2
