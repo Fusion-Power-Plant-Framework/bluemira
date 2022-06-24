@@ -38,10 +38,13 @@ class Warning:
 
 def parse_args(sys_args: List[str]) -> argparse.Namespace:
     """Parse command line options."""
-    parser = argparse.ArgumentParser(PROG)
+    parser = argparse.ArgumentParser(PROG, description=__doc__)
     parser.add_argument("report_file", help="path to .report.json to parse")
     parser.add_argument(
-        "--compare", default=None, help="path to .report.json to compare warnings to"
+        "--compare",
+        default=None,
+        help="path to .report.json to compare warnings to",
+        metavar="baseline_report_file",
     )
     return parser.parse_args(sys_args)
 
