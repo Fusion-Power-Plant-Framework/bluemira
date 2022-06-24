@@ -34,7 +34,7 @@ from bluemira.radiation_transport.advective_transport import ChargedParticleSolv
 read_path = get_bluemira_path("equilibria", subfolder="data")
 eq_name = "DN-DEMO_eqref.json"
 eq_name = os.sep.join([read_path, eq_name])
-eq = Equilibrium.from_eqdsk(eq_name, load_large_file=True)
+eq = Equilibrium.from_eqdsk(eq_name)
 
 read_path = get_bluemira_path(
     "bluemira/radiation_transport/test_data", subfolder="tests"
