@@ -860,7 +860,7 @@ def circular_pattern(
 # # =============================================================================
 # # Save functions
 # # =============================================================================
-def save_as_STEP(
+def save_as_STP(
     shapes: Union[BluemiraGeo, Iterable[BluemiraGeo]], filename: str, scale: float = 1
 ):
     """
@@ -881,7 +881,7 @@ def save_as_STEP(
         shapes = [shapes]
 
     freecad_shapes = [s._shape for s in shapes]
-    cadapi.save_as_STEP(freecad_shapes, filename, scale)
+    cadapi.save_as_STP(freecad_shapes, filename, scale)
 
 
 def save_cad(
@@ -899,7 +899,7 @@ def save_cad(
     scale: float, default = 1.0
         The scale in which to save the Shape objects
     """
-    save_as_STEP(get_properties_from_components(components, "shape"), filename, scale)
+    save_as_STP(get_properties_from_components(components, "shape"), filename, scale)
 
 
 # ======================================================================================

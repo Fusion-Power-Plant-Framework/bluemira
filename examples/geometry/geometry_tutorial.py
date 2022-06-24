@@ -61,7 +61,7 @@ from bluemira.geometry.tools import (
     make_circle,
     make_polygon,
     revolve_shape,
-    save_as_STEP,
+    save_as_STP,
     sweep_shape,
 )
 
@@ -318,4 +318,4 @@ show_cad([cut_box_1, new_cut_box_1], options=blue_red_options)
 my_shapes = [cut_box_1]
 # Modify this file path to where you want to save the data.
 my_file_path = "my_tutorial_assembly.STP"
-save_as_STEP(my_shapes, filename=my_file_path, scale=1)
+save_as_STP(my_shapes, filename=my_file_path, scale=1)

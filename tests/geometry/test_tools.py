@@ -56,7 +56,7 @@ from bluemira.geometry.tools import (
     offset_wire,
     point_inside_shape,
     revolve_shape,
-    save_as_STEP,
+    save_as_STP,
     signed_distance,
     signed_distance_2D_polygon,
     slice_shape,
@@ -616,14 +616,14 @@ class TestMakeCircle:
 
 
 class TestSavingCAD:
-    def test_save_as_STEP(self):
+    def test_save_as_STP(self):
         fp = get_bluemira_path("geometry/test_data", subfolder="tests")
         test_file = os.path.join(fp, "test_circ.stp")
         generated_file = "test_generated_circ.stp"
 
         # Can't mock out as written by freecad not python
         circ = make_circle(5)
-        save_as_STEP(circ, filename=generated_file.split(".")[0])
+        save_as_STP(circ, filename=generated_file.split(".")[0])
 
         with open(test_file, "r") as tf:
             lines1 = tf.readlines()

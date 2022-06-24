@@ -951,7 +951,7 @@ def _slice_solid(obj, normal_plane, shift):
 # ======================================================================================
 # Save functions
 # ======================================================================================
-def save_as_STEP(shapes, filename="test", scale=1):
+def save_as_STP(shapes, filename="test", scale=1):
     """
     Saves a series of Shape objects as a STEP assembly
 
