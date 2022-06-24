@@ -67,7 +67,7 @@ class PlasmaCoil:
     ----------
     plasma_psi: np.ndarray
         Psi contribution from the plasma on the grid
-    j_tor: np.ndarray
+    j_tor: Optional[np.ndarray]
         Toroidal current density distribution from the plasma on the grid
     grid: Grid
         Grid object on which the finite difference representation of the plasma should be
@@ -81,7 +81,10 @@ class PlasmaCoil:
 
     def _set_j_tor(self, j_tor):
         self._j_tor = j_tor
-        self._ii, self._jj = np.where(j_tor > J_TOR_MIN)
+        if j_tor is not None:
+            self._ii, self._jj = np.where(j_tor > J_TOR_MIN)
+        else:
+            self._ii, self._jj = None, None
 
     def _set_funcs(self, plasma_psi):
         self._plasma_psi = plasma_psi
@@ -106,6 +109,11 @@ class PlasmaCoil:
         Map a Green's function across the grid at a point, without crashing or
         running out of memory.
         """
+        if self._j_tor is None:
+            raise EquilibriaError(
+                "Cannot calculate value off grid; there is no known toroidal current distribution."
+            )
+
         array = np.zeros_like(x, dtype=float)
         for i, j in zip(self._ii, self._jj):
             current = self._j_tor[i, j] * self._grid.dx * self._grid.dz

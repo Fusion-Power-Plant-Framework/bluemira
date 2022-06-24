@@ -111,9 +111,9 @@ class MHDState:
             Initial psi array to use
         """
         self.set_grid(grid)
-        self._set_init_psi(grid, psi)
+        self._set_init_plasma(grid, psi)
 
-    def _set_init_psi(self, grid, psi):
+    def _set_init_plasma(self, grid, psi):
         zm = 1 - grid.z_max / (grid.z_max - grid.z_min)
         if psi is None:  # Initial psi guess
             # Normed 0-1 grid
@@ -302,7 +302,7 @@ class Breakdown(MHDState):
         super().__init__()
         self.coilset = coilset
         self.set_grid(grid)
-        self._set_init_psi(grid, psi)
+        self._set_init_plasma(grid, psi)
         self.limiter = kwargs.get("limiter", None)
 
         # Set default breakdown point to grid centre
@@ -554,7 +554,6 @@ class Equilibrium(MHDState):
         # Constructors
         self._jtor = jtor
         self.profiles = profiles
-        self._plasmacoil = None  # Only calculate if necessary
         self._o_points = None
         self._x_points = None
         self._solver = None
@@ -570,7 +569,7 @@ class Equilibrium(MHDState):
         self.coilset = coilset
 
         self.set_grid(grid)
-        self._set_init_psi(grid, psi)
+        self._set_init_plasma(grid, psi, jtor)
         self.boundary = FreeBoundary(self.grid)
         self.set_vcontrol(vcontrol)
         self.limiter = limiter
@@ -778,13 +777,13 @@ class Equilibrium(MHDState):
         self.set_vcontrol(vcontrol)
         # TODO: reinit psi and jtor?
 
-    def _set_init_psi(self, grid, psi):
-        psi = super()._set_init_psi(grid, psi)
+    def _set_init_plasma(self, grid, psi, j_tor):
+        psi = super()._set_init_plasma(grid, psi)
 
         # This is necessary when loading an equilibrium from an EQDSK file (we
         # hide the coils to get the plasma psi)
         psi -= self.coilset.psi(self.x, self.z)
-        self._update_plasma(psi)
+        self._update_plasma(psi, j_tor)
 
     def set_vcontrol(self, vcontrol):
         """
@@ -800,7 +799,7 @@ class Equilibrium(MHDState):
         elif vcontrol == "feedback":
             raise NotImplementedError
         elif vcontrol is None:
-            self.controller = DummyController(self.plasma_psi)
+            self.controller = DummyController(self.plasma.psi())
         else:
             raise ValueError(
                 "Please select a numerical stabilisation strategy"
@@ -839,9 +838,10 @@ class Equilibrium(MHDState):
                 raise EquilibriaError("No O-point found in equilibrium.")
             jtor = self.profiles.jtor(self.x, self.z, psi, o_points, x_points)
 
-        self.boundary(self.plasma_psi, jtor)
+        plasma_psi = self.plasma.psi()
+        self.boundary(plasma_psi, jtor)
         rhs = -MU_0 * self.x * jtor  # RHS of GS equation
-        apply_boundary(rhs, self.plasma_psi)
+        apply_boundary(rhs, plasma_psi)
 
         plasma_psi = self._solver(rhs)
         self._update_plasma(plasma_psi, jtor)
@@ -886,12 +886,13 @@ class Equilibrium(MHDState):
             """
             self.profiles.shape.adjust_parameters(x)
             jtor_opt = self.profiles.jtor(self.x, self.z, psi, o_points, x_points)
-            self.boundary(self.plasma_psi, jtor_opt)
+            plasma_psi = self.plasma.psi()
+            self.boundary(plasma_psi, jtor_opt)
             rhs = -MU_0 * self.x * jtor_opt  # RHS of GS equation
-            apply_boundary(rhs, self.plasma_psi)
+            apply_boundary(rhs, plasma_psi)
 
             plasma_psi = self._solver(rhs)
-            self._update_plasma(plasma_psi)
+            self._update_plasma(plasma_psi, jtor_opt)
             li = calc_li3minargs(
                 self.x,
                 self.z,
