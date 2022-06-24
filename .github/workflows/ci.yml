@@ -103,7 +103,7 @@ jobs:
       env:
         # Flag to run longrun tests when merging dependency updates
         # https://github.com/actions/runner/issues/409#issuecomment-752775072
-        PYTEST_LONGRUN: ${{ github.event.pull_request.head == "develop_dependencies" && "--longrun" || "" }}
+        PYTEST_LONGRUN: ${{ github.event.pull_request.head.ref == 'develop_dependencies' && '--longrun' || '' }}
       run: |
         pytest --cov=bluemira \
                --cov-report html:htmlcov_bluemira \
