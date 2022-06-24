@@ -578,7 +578,7 @@ class Equilibrium(MHDState):
         self._kwargs = {"vcontrol": vcontrol}
 
     @classmethod
-    def from_eqdsk(cls, filename, load_large_file=False, force_symmetry=False):
+    def from_eqdsk(cls, filename, force_symmetry=False):
         """
         Initialises an Equilibrium Object from an eqdsk file. Note that this
         will involve recalculation of the magnetic flux. Because of the nature
@@ -591,8 +591,6 @@ class Equilibrium(MHDState):
         ----------
         filename: str
             Filename
-        load_large_file: bool (default = False)
-            Whether or not to reconstruct the plasma psi with coil a representation
         force_symmetry: bool (default = False)
             Whether or not to force symmetrisation in the CoilSet
         """
@@ -604,21 +602,8 @@ class Equilibrium(MHDState):
 
         cls._eqdsk = e
 
-        if e["nx"] * e["nz"] > 10000 and not load_large_file:
-            bluemira_warn(
-                "This is a large eqdsk file you are loading: disabling jtor "
-                "reconstruction by default. You can enable this (slow) behaviour "
-                "with load_large_file=True."
-            )
-            # CREATE eqdsks are often dense and it takes a long time to work
-            # out the plasma contribution for such high resolution files...
-            # We can include the contribution of the plasma later if need be.
-            jtor = None
-        else:
-            o_points, x_points = find_OX_points(grid.x, grid.z, psi, limiter=limiter)
-            jtor = profiles.jtor(
-                grid.x, grid.z, psi, o_points=o_points, x_points=x_points
-            )
+        o_points, x_points = find_OX_points(grid.x, grid.z, psi, limiter=limiter)
+        jtor = profiles.jtor(grid.x, grid.z, psi, o_points=o_points, x_points=x_points)
 
         return cls(
             coilset,
