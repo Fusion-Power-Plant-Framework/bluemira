@@ -36,7 +36,7 @@ from bluemira.base.constants import MU_0
 from bluemira.base.file import get_bluemira_path
 from bluemira.base.look_and_feel import bluemira_print_flush, bluemira_warn
 from bluemira.equilibria.boundary import FreeBoundary, apply_boundary
-from bluemira.equilibria.coils import Coil, CoilSet, PlasmaCoil, symmetrise_coilset
+from bluemira.equilibria.coils import Coil, CoilSet, symmetrise_coilset
 from bluemira.equilibria.constants import LI_REL_TOL, PSI_NORM_TOL
 from bluemira.equilibria.error import EquilibriaError
 from bluemira.equilibria.file import EQDSKInterface
@@ -53,6 +53,7 @@ from bluemira.equilibria.grid import Grid, integrate_dx_dz
 from bluemira.equilibria.limiter import Limiter
 from bluemira.equilibria.num_control import DummyController, VirtualController
 from bluemira.equilibria.physics import calc_li3minargs, calc_psi_norm, calc_summary
+from bluemira.equilibria.plasma import PlasmaCoil
 from bluemira.equilibria.plotting import (
     BreakdownPlotter,
     CorePlotter,
@@ -426,12 +427,12 @@ class Breakdown(MHDState):
         Total poloidal magnetic field at point (x, z) from coils and plasma
         """
         if x is None and z is None:
-            return np.sqrt(
-                self.coilset.Bx_greens(self._bx_green) ** 2
-                + self.coilset.Bz_greens(self._bz_green) ** 2
+            return np.hypot(
+                self.coilset.Bx_greens(self._bx_green),
+                self.coilset.Bz_greens(self._bz_green),
             )
 
-        return (self.Bx(x, z) ** 2 + self.Bz(x, z) ** 2) ** 0.5
+        return np.hypot(self.Bx(x, z), self.Bz(x, z))
 
     def psi(self, x=None, z=None):
         """
@@ -563,11 +564,7 @@ class Equilibrium(MHDState):
         self._li_iter = 0  # li iteration count
         self._li_temp = None
 
-        self.plasma_psi = None
-        self.psi_func = None
-        self.plasma_Bx = None
-        self.plasma_Bz = None
-        self.plasma_Bp = None
+        self.plasma = None
 
         self.force_symmetry = force_symmetry
         self.controller = None
@@ -788,7 +785,7 @@ class Equilibrium(MHDState):
         # This is necessary when loading an equilibrium from an EQDSK file (we
         # hide the coils to get the plasma psi)
         psi -= self.coilset.psi(self.x, self.z)
-        self._update_plasma_psi(psi)
+        self._update_plasma(psi)
 
     def set_vcontrol(self, vcontrol):
         """
@@ -848,7 +845,7 @@ class Equilibrium(MHDState):
         apply_boundary(rhs, self.plasma_psi)
 
         plasma_psi = self._solver(rhs)
-        self._update_plasma_psi(plasma_psi)
+        self._update_plasma(plasma_psi, jtor)
 
         self._jtor = jtor
 
@@ -895,7 +892,7 @@ class Equilibrium(MHDState):
             apply_boundary(rhs, self.plasma_psi)
 
             plasma_psi = self._solver(rhs)
-            self._update_plasma_psi(plasma_psi)
+            self._update_plasma(plasma_psi)
             li = calc_li3minargs(
                 self.x,
                 self.z,
@@ -932,15 +929,11 @@ class Equilibrium(MHDState):
         except StopIteration:
             pass
 
-    def _update_plasma_psi(self, plasma_psi):
+    def _update_plasma(self, plasma_psi, j_tor):
         """
-        Sets the plasma psi data, updates spline interpolation coefficients
+        Update the plasma
         """
-        self.plasma_psi = plasma_psi
-        self.psi_func = RectBivariateSpline(self.x[:, 0], self.z[0, :], plasma_psi)
-        self.plasma_Bx = self.plasmaBx(self.x, self.z)
-        self.plasma_Bz = self.plasmaBz(self.x, self.z)
-        self.plasma_Bp = np.sqrt(self.plasma_Bx**2 + self.plasma_Bz**2)
+        self.plasma = PlasmaCoil(plasma_psi, j_tor, self.grid)
 
     def _int_dxdz(self, func):
         """
@@ -976,49 +969,7 @@ class Equilibrium(MHDState):
         plasmacoil: PlasmaCoil object
             Coil representation of the plasma. Discretised if Jtor exists.
         """
-        if self._jtor is not None:
-
-            if discretised:
-                return PlasmaCoil(self._jtor, self.grid)
-            else:
-                x, z = self.effective_centre()
-                return Coil(
-                    x,
-                    z,
-                    current=self.profiles.I_p,
-                    control=False,
-                    ctype="Plasma",
-                    j_max=None,
-                    dx=5 * self.dx,
-                    dz=5 * self.dz,
-                )
-
-        # Guess a single coil location (no R_0 info)
-        x, z = (self.grid.x_max - self.grid.x_min) / 2.2, 0
-        plasma = Coil(
-            x,
-            z,
-            current=self.profiles.I_p,
-            control=False,
-            ctype="Plasma",
-            j_max=None,
-            dx=5 * self.dx,
-            dz=5 * self.dz,
-        )
-        return plasma
-
-    def _in_bounds_check(self, x, z):
-        """
-        Checks if point within interpolation grid, and then build plasmacoil
-        if it doesn't already exist
-        """
-        inside = self.grid.point_inside(x, z)
-        if not inside:
-
-            if self._plasmacoil is None:
-                self._plasmacoil = self.plasma_coil(discretised=False)
-
-        return inside
+        return self.plasma
 
     def effective_centre(self):
         """
@@ -1038,61 +989,29 @@ class Equilibrium(MHDState):
         zcur = 1 / self.profiles.I_p * self._int_dxdz(self.z * self._jtor)
         return xcur, zcur
 
-    def plasmaBx(self, x, z):
-        """
-        Radial magnetic field due to plasma:
-        \t:math:`B_{x}=-\\dfrac{1}{X}\\dfrac{\\partial\\psi}{\\partial Z}`
-        """
-        if not isinstance(x, np.ndarray):
-            if not self._in_bounds_check(x, z):
-                return self._plasmacoil.Bx(x, z)
-        return -self.psi_func(x, z, dy=1, grid=False) / x
-
-    def plasmaBz(self, x, z):
-        """
-        Vertical magnetic field due to plasma:
-        \t:math:`B_{z}=\\dfrac{1}{X}\\dfrac{\\partial\\psi}{\\partial X}`
-        """
-        if not isinstance(x, np.ndarray):
-            if not self._in_bounds_check(x, z):
-                return self._plasmacoil.Bz(x, z)
-        return self.psi_func(x, z, dx=1, grid=False) / x
-
     def Bx(self, x=None, z=None):
         """
         Total radial magnetic field at point (x, z) from coils and plasma
         """
         if x is None and z is None:
-            return self.plasma_Bx + self.coilset.Bx_greens(self._bx_green)
+            return self.plasma.Bx() + self.coilset.Bx_greens(self._bx_green)
 
-        if isinstance(x, np.ndarray):
-            return self._treat_array(x, z, self.Bx)
-
-        if not self._in_bounds_check(x, z):
-            return self._plasmacoil.Bx(x, z) + self.coilset.Bx(x, z)
-
-        return self.plasmaBx(x, z) + self.coilset.Bx(x, z)
+        return self.plasma.Bx(x, z) + self.coilset.Bx(x, z)
 
     def Bz(self, x=None, z=None):
         """
         Total vertical magnetic field at point (x, z) from coils and plasma
         """
         if x is None and z is None:
-            return self.plasma_Bz + self.coilset.Bz_greens(self._bz_green)
+            return self.plasma.Bz() + self.coilset.Bz_greens(self._bz_green)
 
-        if isinstance(x, np.ndarray):
-            return self._treat_array(x, z, self.Bz)
-
-        if not self._in_bounds_check(x, z):
-            return self._plasmacoil.Bz(x, z) + self.coilset.Bz(x, z)
-
-        return self.plasmaBz(x, z) + self.coilset.Bz(x, z)
+        return self.plasma.Bz(x, z) + self.coilset.Bz(x, z)
 
     def Bp(self, x=None, z=None):
         """
         Total poloidal magnetic field at point (x, z) from coils and plasma
         """
-        return np.sqrt(self.Bx(x, z) ** 2 + self.Bz(x, z) ** 2)
+        return np.hypot(self.Bx(x, z), self.Bz(x, z))
 
     def Bt(self, x):
         """
@@ -1121,29 +1040,12 @@ class Equilibrium(MHDState):
             if self._jtor is not None:
                 self.controller.stabilise()
             return (
-                self.plasma_psi
+                self.plasma.psi()
                 + self.coilset.psi_greens(self._psi_green)
                 + self.controller.psi()
             )
 
-        if isinstance(x, np.ndarray):
-            return self._treat_array(x, z, self.psi)
-
-        if not self._in_bounds_check(x, z):
-            return self._plasmacoil.psi(x, z) + self.coilset.psi(x, z)
-
-        return self.psi_func(x, z) + self.coilset.psi(x, z)
-
-    @staticmethod
-    def _treat_array(x, z, f_callable):
-        values = np.zeros(x.shape)
-        values = values.flatten()
-
-        for i, (xx, zz) in enumerate(zip(x.flatten(), z.flatten())):
-            values[i] = f_callable(xx, zz)
-
-        values = values.reshape(x.shape)
-        return values
+        return self.plasma.psi(x, z) + self.coilset.psi(x, z)
 
     def psi_norm(self):
         """
