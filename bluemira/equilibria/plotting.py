@@ -304,14 +304,14 @@ class PlasmaCoilPlotter(Plotter):
     def __init__(self, plasma_coil, ax=None, **kwargs):
         super().__init__(ax)
         self.plasma_coil = plasma_coil
-        if self.plasma_coil.j_tor is None:
+        if self.plasma_coil._j_tor is None:
             # No coils to plot
             pass
         else:
             contour = get_contours(
-                self.plasma_coil.grid.x,
-                self.plasma_coil.grid.z,
-                self.plasma_coil.j_tor,
+                self.plasma_coil._grid.x,
+                self.plasma_coil._grid.z,
+                self.plasma_coil._j_tor,
                 J_TOR_MIN,
             )
             x, z = contour[0].T
@@ -320,11 +320,11 @@ class PlasmaCoilPlotter(Plotter):
             nlevels = kwargs.pop("nlevels", PLOT_DEFAULTS["current"]["nlevels"])
             cmap = kwargs.pop("cmap", PLOT_DEFAULTS["current"]["cmap"])
 
-            levels = np.linspace(J_TOR_MIN, np.amax(self.plasma_coil.j_tor), nlevels)
+            levels = np.linspace(J_TOR_MIN, np.amax(self.plasma_coil._j_tor), nlevels)
             self.ax.contourf(
-                self.plasma_coil.grid.x,
-                self.plasma_coil.grid.z,
-                self.plasma_coil.j_tor,
+                self.plasma_coil._grid.x,
+                self.plasma_coil._grid.z,
+                self.plasma_coil._j_tor,
                 cmap=cmap,
                 levels=levels,
             )

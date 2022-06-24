@@ -27,6 +27,7 @@ from scipy.interpolate import RectBivariateSpline
 
 from bluemira.equilibria.constants import J_TOR_MIN
 from bluemira.equilibria.error import EquilibriaError
+from bluemira.equilibria.plotting import PlasmaCoilPlotter
 from bluemira.magnetostatics.greens import greens_Bx, greens_Bz, greens_psi
 
 
@@ -72,6 +73,11 @@ class PlasmaCoil:
     grid: Grid
         Grid object on which the finite difference representation of the plasma should be
         constructed
+
+    Notes
+    -----
+    Uses direct summing of Green's functions to avoid SIGKILL and MemoryErrors
+    when using very dense grids (e.g. CREATE).
     """
 
     def __init__(self, plasma_psi, j_tor, grid):
@@ -167,3 +173,21 @@ class PlasmaCoil:
             return self._plasma_Bp
         else:
             return np.hypot(self.Bx(x, z), self.Bz(x, z))
+
+    def plot(self, ax=None):
+        """
+        Plot the PlasmaCoil.
+
+        Parameters
+        ----------
+        ax: Axes object
+            The matplotlib axes on which to plot the Loop
+        """
+        return PlasmaCoilPlotter(self, ax=ax)
+
+    def __repr__(self):
+        """
+        Get a simple string representation of the PlasmaCoil.
+        """
+        n_filaments = len(np.where(self.j_tor > 0)[0])
+        return f"{self.__class__.__name__}: {n_filaments} filaments"
