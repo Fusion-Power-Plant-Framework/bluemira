@@ -29,20 +29,13 @@ from typing import Any, Optional
 
 import matplotlib.pyplot as plt
 import numpy as np
-from scipy.interpolate import RectBivariateSpline
 
 from bluemira.base.constants import MU_0
 from bluemira.base.look_and_feel import bluemira_warn
-from bluemira.equilibria.constants import (
-    I_MIN,
-    J_TOR_MIN,
-    NBTI_B_MAX,
-    NBTI_J_MAX,
-    X_TOLERANCE,
-)
+from bluemira.equilibria.constants import I_MIN, NBTI_B_MAX, NBTI_J_MAX, X_TOLERANCE
 from bluemira.equilibria.error import EquilibriaError
 from bluemira.equilibria.file import EQDSKInterface
-from bluemira.equilibria.plotting import CoilPlotter, CoilSetPlotter, PlasmaCoilPlotter
+from bluemira.equilibria.plotting import CoilPlotter, CoilSetPlotter
 from bluemira.magnetostatics.greens import (
     circular_coil_inductance_elliptic,
     greens_Bx,
