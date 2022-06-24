@@ -821,12 +821,12 @@ class CoilSizer:
         if any(
             np.logical_and(
                 ~dxdz_specified, np.logical_xor(dx_specified, dz_specified)
-            ).flatten()
+            ).flat
         ):
             # Check that we don't have dx = None and dz = float or vice versa
             raise EquilibriaError("Must specify either dx and dz or neither.")
 
-        if any(dxdz_specified.flatten()):
+        if any(dxdz_specified.flat):
             if not self.flag_sizefix:
                 # If dx and dz are specified, we presume the coil size should
                 # remain fixed
