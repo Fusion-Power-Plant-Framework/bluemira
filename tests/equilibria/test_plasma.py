@@ -19,21 +19,58 @@
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 
+import numpy as np
+import pytest
+
 from bluemira.equilibria.grid import Grid
 from bluemira.equilibria.plasma import PlasmaCoil
 
 
 class TestPlasmaCoil:
+    points = [
+        [6, 0],
+        [6.0, 0.0],
+        [np.array([6, 7]), np.array([0, 0])],
+        [np.array([6.0, 7.0]), np.array([0.0, 0.0])],
+        [[16, 17], [16, 17]],
+        [np.array([[16, 17], [5, 6]]), np.array([[16, 17], [0, 0]])],
+    ]
+
     @classmethod
     def setup_class(cls):
-        grid = Grid(4, 10, -5, -5, 50, 50)
-        cls.plasma_coil = PlasmaCoil(grid=grid)
+        grid = Grid(4, 10, -5, 5, 50, 50)
+        plasma_psi = np.zeros((50, 50))
+        j_tor = np.zeros((50, 50))
+        plasma_psi[25, 25] = 1.0
+        j_tor[25, 25] = 1.0
+        cls.plasma_coil = PlasmaCoil(plasma_psi, j_tor, grid=grid)
 
-    def test_psi(self):
-        pass
+    @pytest.mark.parametrize("x, z", points)
+    def test_psi(self, x, z):
+        result = self.plasma_coil.psi(x, z)
+        assert result.shape == np.array(x).shape
 
-    def test_Bx(self):
-        pass
+    @pytest.mark.parametrize("x, z", points)
+    def test_Bx(self, x, z):
+        result = self.plasma_coil.Bx(x, z)
+        assert result.shape == np.array(x).shape
 
-    def test_Bz(self):
-        pass
+    @pytest.mark.parametrize("x, z", points)
+    def test_Bz(self, x, z):
+        result = self.plasma_coil.Bx(x, z)
+        assert result.shape == np.array(x).shape
+
+    @pytest.mark.parametrize("x, z", points)
+    def test_Bp(self, x, z):
+        result = self.plasma_coil.Bp(x, z)
+        assert result.shape == np.array(x).shape
+
+    def test_none_call(self):
+        psi = self.plasma_coil.psi()
+        Bx = self.plasma_coil.Bx()
+        Bz = self.plasma_coil.Bz()
+        Bp = self.plasma_coil.Bp()
+        assert psi.shape == (50, 50)
+        assert Bx.shape == (50, 50)
+        assert Bz.shape == (50, 50)
+        assert Bp.shape == (50, 50)

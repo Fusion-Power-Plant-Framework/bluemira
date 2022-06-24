@@ -35,10 +35,10 @@ def treat_xz_array(func):
     Decorator for handling array calls to PlasmaCoil methods.
     """
 
-    def wrapper(self, x, z):
-        if None in [x, z]:
-            if x is None and z is None:
-                return func(x, z)
+    def wrapper(self, x=None, z=None):
+        if x is None or z is None:
+            if z is None or x is None:
+                return func(self, x, z)
             else:
                 raise EquilibriaError("Only one of x and z specified.")
 
@@ -51,7 +51,7 @@ def treat_xz_array(func):
         values = values.flatten()
 
         for i, (xx, zz) in enumerate(zip(x.flatten(), z.flatten())):
-            values[i] = func(xx, zz)
+            values[i] = func(self, xx, zz)
 
         return values.reshape(x.shape)
 
