@@ -119,7 +119,7 @@ class TestFields:
         eq = self.eq
         f, (ax, ax2, ax3, ax4) = plt.subplots(1, 4)
         psi = eq.psi()
-        psi = eq.plasma_psi
+        psi = eq.plasma.psi()
 
         newgrid = Grid(1, 15, -15, 15, 100, 100)  # bigger grid
 
@@ -128,13 +128,10 @@ class TestFields:
         # NOTE: _plasmacoil should not be accessed directly, this is just to
         # check. also why we have to do the following useless call to init
         # the _plasmacoil
-        eq.plasmaBz(0.1, 0)
+        eq.plasma.Bz(0.1, 0)
         for i, x in enumerate(newgrid.x_1d):
             for j, z in enumerate(newgrid.z_1d):
-                if not eq.grid.point_inside(x, z):
-                    newpsi[i, j] = eq._plasmacoil.psi(x, z)
-                else:
-                    newpsi[i, j] = eq.psi_func(x, z)
+                newpsi[i, j] = eq.plasma.psi(x, z)
 
         levels = np.linspace(np.amin(newpsi), np.amax(newpsi), 20)
         ax.plot(*eq.grid.bounds, color="r")
@@ -150,13 +147,13 @@ class TestFields:
         ax.set_aspect("equal")
         ax.set_title("plasma_psi")
 
-        Bx = eq.plasma_Bx
+        Bx = eq.plasma.Bx()
 
         new_bx = np.zeros((newgrid.nx, newgrid.nz))
 
         for i, x in enumerate(newgrid.x_1d):
             for j, z in enumerate(newgrid.z_1d):
-                new_bx[i, j] = eq.plasmaBx(x, z)
+                new_bx[i, j] = eq.plasma.Bx(x, z)
 
         levels = np.linspace(np.amin(new_bx), np.amax(new_bx), 20)
 
@@ -173,13 +170,13 @@ class TestFields:
         ax2.set_aspect("equal")
         ax2.set_title("plasma_Bx")
 
-        Bz = eq.plasma_Bz
+        Bz = eq.plasma.Bz()
 
         new_bz = np.zeros((newgrid.nx, newgrid.nz))
 
         for i, x in enumerate(newgrid.x_1d):
             for j, z in enumerate(newgrid.z_1d):
-                new_bz[i, j] = eq.plasmaBz(x, z)
+                new_bz[i, j] = eq.plasma.Bz(x, z)
 
         levels = np.linspace(np.amin(new_bz), np.amax(new_bz), 20)
 
@@ -196,7 +193,7 @@ class TestFields:
         ax3.set_aspect("equal")
         ax3.set_title("plasma_Bz")
 
-        Bp = eq.plasma_Bp
+        Bp = eq.plasma.Bp()
 
         new_bp = np.sqrt(new_bx**2 + new_bz**2)
 
