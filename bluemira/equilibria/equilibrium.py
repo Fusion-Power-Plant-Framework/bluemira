@@ -141,9 +141,9 @@ class MHDState:
             .bzgreen: dict
                 Greens function coil mapping for Bz
         """
-        self._psi_green = self.coilset.map_psi_greens(self.x, self.z)
-        self._bx_green = self.coilset.map_Bx_greens(self.x, self.z)
-        self._bz_green = self.coilset.map_Bz_greens(self.x, self.z)
+        self._psi_green = self.coilset.control_psi(self.x, self.z)
+        self._bx_green = self.coilset.control_Bx(self.x, self.z)
+        self._bz_green = self.coilset.control_Bz(self.x, self.z)
 
     def get_coil_forces(self):
         """
