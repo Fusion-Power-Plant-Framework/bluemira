@@ -149,6 +149,7 @@ class CoilFieldsMixin:
         "_quad_x",
         "_quad_z",
         "_quad_weighting",
+        "_einsum_str",
     )
 
     def __init__(self, weighting=None):
@@ -261,18 +262,21 @@ class CoilFieldsMixin:
 
         """
         weighting = None
-        self._quad_x = self._x.copy()[..., None]
-        self._quad_dx = self._dx.copy()[..., None]
-        self._quad_z = self._z.copy()[..., None]
-        self._quad_dz = self._dz.copy()[..., None]
+        self._quad_x = self._x.copy()
+        self._quad_dx = self._dx.copy()
+        self._quad_z = self._z.copy()
+        self._quad_dz = self._dz.copy()
 
         if d_coil is not None:
             # How fancy do we want the mesh or just smaller rectangles?
             weighting = self._rectangular_discretisation(d_coil)
 
-        self._quad_weighting = (
-            np.ones((self._x.shape[0], 1)) if weighting is None else weighting
-        )
+        if weighting is None:
+            self._einsum_str = "..., ...j -> ..."
+            self._quad_weighting = np.ones((self._x.shape[0], 1))
+        else:
+            self._einsum_str = "...j, ...j -> ..."
+            self._quad_weighting = weighting
 
     def psi(self, x, z):
         """
@@ -290,15 +294,20 @@ class CoilFieldsMixin:
         """
         Calculate poloidal flux at (x, z) due to a unit current
         """
-        gpsi = greens_psi(
-            self._quad_x[None],
-            self._quad_z[None],
-            np.array(x)[..., None],
-            np.array(z)[..., None],
-            self._quad_dx[None],
-            self._quad_dz[None],
+        x, z = np.ascontiguousarray(x), np.ascontiguousarray(z)
+
+        return np.einsum(
+            self._einsum_str,
+            greens_psi(
+                self._quad_x[None],
+                self._quad_z[None],
+                x[..., None],
+                z[..., None],
+                self._quad_dx[None],
+                self._quad_dz[None],
+            ),
+            self._quad_weighting[None],
         )
-        return np.einsum("...j, ...j-> ...", gpsi, self._quad_weighting[None])
 
     def Bx(self, x, z):
         """
@@ -537,7 +546,7 @@ class CoilFieldsMixin:
             _quad_weight = self._quad_weighting
 
         return np.einsum(
-            "...j, ...j -> ...",
+            self._einsum_str,
             greens(
                 _quad_x[None],
                 _quad_z[None],
@@ -743,12 +752,13 @@ class CoilFieldsMixin:
             ]
         )
 
-    def control_F(self, coil):  # noqa :N802
+    def control_F(self, coil: CoilGroup = None):  # noqa :N802
         """
         Returns the Green's matrix element for the coil mutual force.
 
         \t:math:`Fz_{i,j}=-2\\pi X_i\\mathcal{G}(X_j,Z_j,X_i,Z_i)`
         """
+
         if coil._x == self._x and coil._z == self._z:
             # self inductance
             if self.rc != 0:
@@ -761,6 +771,7 @@ class CoilFieldsMixin:
         else:
             Bz = coil.control_Bz(self._x, self._z)
             Bx = coil.control_Bx(self._x, self._z)
+
         return 2 * np.pi * self._x * np.array([Bz, -Bx])  # 1 cross B
 
 
@@ -1254,7 +1265,7 @@ class CoilGroup(CoilFieldsMixin, abc.ABC):
         """
         Set position of each coil
         """
-        return np.stack([self.x.ravel(), self.z.ravel()], axis=1)
+        return self.x.ravel(), self.z.ravel()
 
     @position.setter
     def position(self, new_position: __ITERABLE_FLOAT):
@@ -1902,6 +1913,9 @@ class CoilSet(CoilGroup):
                     raise ae
             else:
                 raise ae
+
+    def psi(self, x, z):
+        return np.sum(super().psi(x, z), axis=-1)
 
 
 # TODO or To remove (for imports)
