@@ -38,7 +38,7 @@ def treat_xz_array(func):
 
     def wrapper(self, x=None, z=None):
         if x is None or z is None:
-            if z is None or x is None:
+            if z is None and x is None:
                 return func(self, x, z)
             else:
                 raise EquilibriaError("Only one of x and z specified.")
