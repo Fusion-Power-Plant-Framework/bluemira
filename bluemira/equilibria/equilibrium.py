@@ -29,14 +29,13 @@ from typing import Iterable
 import numpy as np
 import tabulate
 from pandas import DataFrame
-from scipy.interpolate import RectBivariateSpline
 from scipy.optimize import minimize
 
 from bluemira.base.constants import MU_0
 from bluemira.base.file import get_bluemira_path
 from bluemira.base.look_and_feel import bluemira_print_flush, bluemira_warn
 from bluemira.equilibria.boundary import FreeBoundary, apply_boundary
-from bluemira.equilibria.coils import Coil, CoilSet, symmetrise_coilset
+from bluemira.equilibria.coils import CoilSet, symmetrise_coilset
 from bluemira.equilibria.constants import LI_REL_TOL, PSI_NORM_TOL
 from bluemira.equilibria.error import EquilibriaError
 from bluemira.equilibria.file import EQDSKInterface
