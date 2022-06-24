@@ -112,7 +112,7 @@ def format_warning_report(sys_args: List[str]) -> int:
     if inputs.compare is not None:
         ref_warnings = load_warnings(inputs.compare)
         new, fixed = compare_warnings(warnings, ref_warnings)
-        tada = " 🎉" if len(new) == 0 and len(fixed) >= 0 else ""
+        tada = " 🎉" if len(new) == 0 else ""
         report.append(
             f"Found {len(new)} new warning{'' if len(new) == 1 else 's'}, "
             f"{len(fixed)} fixed warning{'' if len(fixed) == 1 else 's'}.{tada}\n"
