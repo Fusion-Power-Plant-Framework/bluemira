@@ -130,6 +130,22 @@ class PlasmaCoil:
     def psi(self, x=None, z=None):
         """
         Poloidal magnetic flux at x, z
+
+        Parameters
+        ----------
+        x: Optional[Union[float, np.ndarray]]
+            Radial coordinates at which to calculate
+        z: Optional[Union[float, np.ndarray]]
+            Vertical coordinates at which to calculate.
+
+        Notes
+        -----
+        If both x and z are None, defaults to the full map on the grid.
+
+        Returns
+        -------
+        psi: Union[float, np.ndarray]
+            Poloidal magnetic flux at the points [V.s/rad]
         """
         if x is None and z is None:
             return self._plasma_psi
@@ -142,7 +158,23 @@ class PlasmaCoil:
     @treat_xz_array
     def Bx(self, x=None, z=None):
         """
-        Horizontal magnetic field at x, z
+        Radial magnetic field at x, z
+
+        Parameters
+        ----------
+        x: Optional[Union[float, np.ndarray]]
+            Radial coordinates at which to calculate
+        z: Optional[Union[float, np.ndarray]]
+            Vertical coordinates at which to calculate.
+
+        Notes
+        -----
+        If both x and z are None, defaults to the full map on the grid.
+
+        Returns
+        -------
+        Bx: Union[float, np.ndarray]
+            Radial magnetic field at the points [T]
         """
         if x is None and z is None:
             return self._plasma_Bx
@@ -156,6 +188,22 @@ class PlasmaCoil:
     def Bz(self, x=None, z=None):
         """
         Vertical magnetic field at x, z
+
+        Parameters
+        ----------
+        x: Optional[Union[float, np.ndarray]]
+            Radial coordinates at which to calculate
+        z: Optional[Union[float, np.ndarray]]
+            Vertical coordinates at which to calculate.
+
+        Notes
+        -----
+        If both x and z are None, defaults to the full map on the grid.
+
+        Returns
+        -------
+        Bz: Union[float, np.ndarray]
+            Vertical magnetic field at the points [T]
         """
         if x is None and z is None:
             return self._plasma_Bz
@@ -168,6 +216,22 @@ class PlasmaCoil:
     def Bp(self, x=None, z=None):
         """
         Poloidal magnetic field at x, z
+
+        Parameters
+        ----------
+        x: Optional[Union[float, np.ndarray]]
+            Radial coordinates at which to calculate
+        z: Optional[Union[float, np.ndarray]]
+            Vertical coordinates at which to calculate.
+
+        Notes
+        -----
+        If both x and z are None, defaults to the full map on the grid.
+
+        Returns
+        -------
+        Bp: Union[float, np.ndarray]
+            Poloidal magnetic field at the points [T]
         """
         if x is None and z is None:
             return self._plasma_Bp
@@ -189,5 +253,5 @@ class PlasmaCoil:
         """
         Get a simple string representation of the PlasmaCoil.
         """
-        n_filaments = len(np.where(self.j_tor > 0)[0])
+        n_filaments = len(np.where(self._j_tor > 0)[0])
         return f"{self.__class__.__name__}: {n_filaments} filaments"
