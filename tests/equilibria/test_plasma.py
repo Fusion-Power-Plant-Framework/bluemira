@@ -19,4 +19,21 @@
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 
+from bluemira.equilibria.grid import Grid
 from bluemira.equilibria.plasma import PlasmaCoil
+
+
+class TestPlasmaCoil:
+    @classmethod
+    def setup_class(cls):
+        grid = Grid(4, 10, -5, -5, 50, 50)
+        cls.plasma_coil = PlasmaCoil(grid=grid)
+
+    def test_psi(self):
+        pass
+
+    def test_Bx(self):
+        pass
+
+    def test_Bz(self):
+        pass
