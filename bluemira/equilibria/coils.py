@@ -29,20 +29,13 @@ from typing import Any, Optional
 
 import matplotlib.pyplot as plt
 import numpy as np
-from scipy.interpolate import RectBivariateSpline
 
 from bluemira.base.constants import MU_0
 from bluemira.base.look_and_feel import bluemira_warn
-from bluemira.equilibria.constants import (
-    I_MIN,
-    J_TOR_MIN,
-    NBTI_B_MAX,
-    NBTI_J_MAX,
-    X_TOLERANCE,
-)
+from bluemira.equilibria.constants import I_MIN, NBTI_B_MAX, NBTI_J_MAX, X_TOLERANCE
 from bluemira.equilibria.error import EquilibriaError
 from bluemira.equilibria.file import EQDSKInterface
-from bluemira.equilibria.plotting import CoilPlotter, CoilSetPlotter, PlasmaCoilPlotter
+from bluemira.equilibria.plotting import CoilPlotter, CoilSetPlotter
 from bluemira.magnetostatics.greens import (
     circular_coil_inductance_elliptic,
     greens_Bx,
@@ -1332,119 +1325,6 @@ class Solenoid(CoilGroup):
         for current, coil in zip(old_currents, self.coils):
             coil.current = current
         return 2 * np.pi * psimax
-
-
-class PlasmaCoil:
-    """
-    PlasmaCoil object for finite difference representation of toroidal current
-    carrying plasma
-
-    Parameters
-    ----------
-    j_tor: np.array(n, m)
-        The toroidal current density array from which to make a PlasmaCoil
-    grid: Grid object
-        The grid on which the values will be calculated
-
-    Notes
-    -----
-    Uses direct summing of Green's functions to avoid SIGKILL and MemoryErrors
-    when using very dense grids (e.g. CREATE).
-    """
-
-    def __init__(self, j_tor, grid):
-        self.j_tor = j_tor
-        self.grid = grid
-        self.plasma_psi = None
-
-        if j_tor is not None:
-            self._ii, self._jj = np.where(j_tor > J_TOR_MIN)
-            self.plasma_psi = self._convolve(greens_psi, self.grid.x, self.grid.z)
-
-            # Everything past here used to pretend PlasmaCoil is an EqObject
-            self.psi_func = RectBivariateSpline(
-                grid.x[:, 0], grid.z[0, :], self.plasma_psi
-            )
-            Bx = -self.psi_func(grid.x, grid.z, dy=1, grid=False) / grid.x
-            Bz = self.psi_func(grid.x, grid.z, dx=1, grid=False) / grid.x
-            self.plasma_Bx = Bx
-            self.plasma_Bz = Bz
-            self.plasma_Bp = np.hypot(Bx, Bz)
-
-        else:  # Breakdown state (no plasma at all)
-            self._ii, self._jj = [], []
-            self.plasma_psi = np.zeros([self.grid.nx, self.grid.nz])
-            self.psi_func = RectBivariateSpline(
-                grid.x[:, 0], grid.z[0, :], self.plasma_psi
-            )
-            self.plasma_Bx = np.zeros([self.grid.nx, self.grid.nz])
-            self.plasma_Bz = np.zeros([self.grid.nx, self.grid.nz])
-            self.plasma_Bp = np.zeros([self.grid.nx, self.grid.nz])
-
-    def _convolve(self, func, x, z):
-        """
-        Map a Green's function across the grid at a point, without crashing or
-        running out of memory.
-        """
-        array = np.zeros_like(x, dtype=float)
-        for i, j in zip(self._ii, self._jj):
-            current = self.j_tor[i, j] * self.grid.dx * self.grid.dz
-            array += current * func(self.grid.x[i, j], self.grid.z[i, j], x, z)
-        return array
-
-    def psi(self, x=None, z=None):
-        """
-        Poloidal magnetic flux at x, z
-        """
-        if x is None and z is None:
-            return self.plasma_psi
-        else:
-            return self._convolve(greens_psi, x, z)
-
-    def Bx(self, x=None, z=None):
-        """
-        Horizontal magnetic field at x, z
-        """
-        if x is None and z is None:
-            return self.plasma_Bx
-        else:
-            return self._convolve(greens_Bx, x, z)
-
-    def Bz(self, x=None, z=None):
-        """
-        Vertical magnetic field at x, z
-        """
-        if x is None and z is None:
-            return self.plasma_Bx
-        else:
-            return self._convolve(greens_Bz, x, z)
-
-    def Bp(self, x=None, z=None):
-        """
-        Poloidal magnetic field at x, z
-        """
-        if x is None and z is None:
-            return self.plasma_Bx
-        else:
-            return np.hypot(self.Bx(x, z), self.Bz(x, z))
-
-    def plot(self, ax=None):
-        """
-        Plot the PlasmaCoil.
-
-        Parameters
-        ----------
-        ax: Axes object
-            The matplotlib axes on which to plot the Loop
-        """
-        return PlasmaCoilPlotter(self, ax=ax)
-
-    def __repr__(self):
-        """
-        Get a simple string representation of the PlasmaCoil.
-        """
-        n_filaments = len(np.where(self.j_tor > 0)[0])
-        return f"{self.__class__.__name__}: {n_filaments} filaments"
 
 
 class Circuit(CoilGroup):
