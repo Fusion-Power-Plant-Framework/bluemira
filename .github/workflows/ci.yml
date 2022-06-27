@@ -116,7 +116,7 @@ jobs:
       if: ${{ github.event_name == 'push' }}
       uses: actions/upload-artifact@v3
       env:
-        GITHUB_TOKEN: FPPF_BOT_AUTH_KEY
+        GITHUB_TOKEN: ${{ secrets.FPPF_BOT_AUTH_KEY }}
       with:
         name: report-json
         path: .report.json
@@ -129,7 +129,7 @@ jobs:
       continue-on-error: true
       uses: dawidd6/action-download-artifact@v2
       env:
-        GITHUB_TOKEN: FPPF_BOT_AUTH_KEY
+        GITHUB_TOKEN: ${{ secrets.FPPF_BOT_AUTH_KEY }}
       with:
         workflow: ci.yml
         name: report-json
@@ -141,7 +141,7 @@ jobs:
       if: ${{ github.event_name == 'pull_request' }}
       id: warning-report
       env:
-        GITHUB_TOKEN: FPPF_BOT_AUTH_KEY
+        GITHUB_TOKEN: ${{ secrets.FPPF_BOT_AUTH_KEY }}
       run: |
         if [ -f "ref_report/.report.json" ]; then
           compare_args="--compare ref_report/.report.json"
@@ -157,7 +157,7 @@ jobs:
       uses: peter-evans/find-comment@v2
       id: find-warning-report-comment
       env:
-        GITHUB_TOKEN: FPPF_BOT_AUTH_KEY
+        GITHUB_TOKEN: ${{ secrets.FPPF_BOT_AUTH_KEY }}
       with:
         issue-number: ${{ github.event.pull_request.number }}
         comment-author: "github-actions[bot]"
@@ -168,7 +168,7 @@ jobs:
       if: ${{ github.event_name == 'pull_request' }}
       uses: peter-evans/create-or-update-comment@v2
       env:
-        GITHUB_TOKEN: FPPF_BOT_AUTH_KEY
+        GITHUB_TOKEN: ${{ secrets.FPPF_BOT_AUTH_KEY }}
       with:
         comment-id: ${{ steps.find-warning-report-comment.outputs.comment-id }}
         issue-number: ${{ github.event.pull_request.number }}
