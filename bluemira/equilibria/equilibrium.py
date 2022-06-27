@@ -159,7 +159,7 @@ class MHDState:
         """
         coils = list(self.coilset.coils.values())
         currents = self.coilset.get_control_currents()
-        plasma = self.plasma_coil()
+        plasma = self.plasma
         response = np.zeros((len(coils), len(coils), 2))
         background = np.zeros((len(coils), 2))
         for i, coil1 in enumerate(coils):
