@@ -51,6 +51,7 @@ from pivy import coin, quarter
 from PySide2.QtWidgets import QApplication
 
 from bluemira.base.constants import EPS
+from bluemira.base.file import force_file_extension
 from bluemira.base.look_and_feel import bluemira_warn
 
 # import errors and warnings
@@ -950,7 +951,7 @@ def _slice_solid(obj, normal_plane, shift):
 # ======================================================================================
 # Save functions
 # ======================================================================================
-def save_as_STEP(shapes, filename="test", scale=1):
+def save_as_STP(shapes, filename="test", scale=1):
     """
     Saves a series of Shape objects as a STEP assembly
 
@@ -963,8 +964,7 @@ def save_as_STEP(shapes, filename="test", scale=1):
     scale: float (default 1)
         The scale in which to save the Shape objects
     """
-    if not filename.endswith(".STP"):
-        filename += ".STP"
+    filename = force_file_extension(filename, [".stp", ".step"])
 
     if not isinstance(shapes, list):
         shapes = [shapes]

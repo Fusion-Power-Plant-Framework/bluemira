@@ -25,7 +25,7 @@ File I/O functions and some path operations
 
 import os
 import pathlib
-from typing import Dict
+from typing import Dict, List, Union
 
 BM_ROOT = "!BM_ROOT!"
 SUB_DIRS = ["equilibria", "neutronics", "systems_code", "CAD", "plots", "geometry"]
@@ -159,6 +159,32 @@ def make_bluemira_path(path: str = "", subfolder: str = "bluemira"):
     except ValueError:
         os.makedirs(os.sep.join([bpath, path]))
         return _get_relpath(bpath, path)
+
+
+def force_file_extension(file_path: str, valid_extensions: Union[str, List[str]]) -> str:
+    """
+    If the file path does not have one of the valid extensions, append the first
+    valid one
+
+    Parameters
+    ----------
+    file_path: str
+        path to file
+    valid_extensions: Union[str, List[str]]
+        collection of valid extensions
+
+    Returns
+    -------
+    file_path: str
+
+    """
+    if isinstance(valid_extensions, str):
+        valid_extensions = [valid_extensions]
+
+    if not os.path.splitext(file_path)[1].casefold() in valid_extensions:
+        file_path += valid_extensions[0]
+
+    return file_path
 
 
 def get_files_by_ext(folder: str, extension: str):

@@ -35,8 +35,9 @@ import numpy as np
 from scipy.spatial import ConvexHull
 
 import bluemira.mesh.meshing as meshing
+from bluemira.base.components import Component, get_properties_from_components
 from bluemira.base.constants import EPS
-from bluemira.base.file import get_bluemira_path
+from bluemira.base.file import force_file_extension, get_bluemira_path
 from bluemira.base.look_and_feel import bluemira_debug, bluemira_warn
 from bluemira.codes import _freecadapi as cadapi
 from bluemira.geometry.base import BluemiraGeo, GeoMeshable
@@ -859,7 +860,9 @@ def circular_pattern(
 # # =============================================================================
 # # Save functions
 # # =============================================================================
-def save_as_STEP(shapes, filename="test", scale=1):
+def save_as_STP(
+    shapes: Union[BluemiraGeo, Iterable[BluemiraGeo]], filename: str, scale: float = 1
+):
     """
     Saves a series of Shape objects as a STEP assembly
 
@@ -867,19 +870,36 @@ def save_as_STEP(shapes, filename="test", scale=1):
     ----------
     shapes: Iterable (BluemiraGeo, ...)
         List of shape objects to be saved
-    filename: str, default = "test"
+    filename: str
         Full path filename of the STP assembly
     scale: float, default = 1.0
         The scale in which to save the Shape objects
     """
-    if not filename.endswith(".STP"):
-        filename += ".STP"
+    filename = force_file_extension(filename, [".stp", ".step"])
 
     if not isinstance(shapes, list):
         shapes = [shapes]
 
     freecad_shapes = [s._shape for s in shapes]
-    cadapi.save_as_STEP(freecad_shapes, filename, scale)
+    cadapi.save_as_STP(freecad_shapes, filename, scale)
+
+
+def save_cad(
+    components: Union[Component, Iterable[Component]], filename: str, scale: float = 1
+):
+    """
+    Save the CAD of a component (eg a reactor) or a list of components
+
+    Parameters
+    ----------
+    components: Union[Component, Iterable[Component]]
+        components to save
+    filename: str
+        Full path filename of the STP assembly
+    scale: float, default = 1.0
+        The scale in which to save the Shape objects
+    """
+    save_as_STP(get_properties_from_components(components, "shape"), filename, scale)
 
 
 # ======================================================================================

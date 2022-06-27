@@ -26,6 +26,7 @@ import pytest
 from bluemira.base.file import (
     SUB_DIRS,
     FileManager,
+    force_file_extension,
     get_bluemira_path,
     try_get_bluemira_path,
 )
@@ -240,3 +241,12 @@ def test_generated_data_dirs(file_manager_good: FileManager):
                 file_manager_good.reactor_name,
                 key,
             )
+
+
+def test_force_file_extension():
+
+    file_path = "/path/to/a/file"
+
+    assert force_file_extension(file_path, [".mf", ".mo"]) == file_path + ".mf"
+    assert force_file_extension(file_path + ".mf", [".mf", ".mo"]) == file_path + ".mf"
+    assert force_file_extension(file_path, ".mf") == file_path + ".mf"

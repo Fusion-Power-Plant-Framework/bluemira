@@ -140,8 +140,8 @@ exported as a single compound):
 
     .. code-block:: pycon
 
-        bluemira.geometry.tools.save_as_STEP(bmface, "face.step")
-        bluemira.geometry.tools.save_as_STEP([bmface1, bmface2], "compound.step")
+        bluemira.geometry.tools.save_as_STP(bmface, "face.step")
+        bluemira.geometry.tools.save_as_STP([bmface1, bmface2], "compound.step")
 
 
 FreeCAD objects

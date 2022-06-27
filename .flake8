@@ -110,7 +110,7 @@ ignore_names =
     *NAME*,
     *BINARY*,
     *CAD*,
-    *STEP*,
+    *STP*,
     *STL*,
     *0D*,
     *1D*,
