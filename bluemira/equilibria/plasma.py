@@ -48,10 +48,9 @@ def treat_xz_array(func):
         if x.shape != z.shape:
             raise EquilibriaError("x and z arrays of different dimension.")
 
-        values = np.zeros(x.shape)
-        values = values.flatten()
+        values = np.zeros(x.size)
 
-        for i, (xx, zz) in enumerate(zip(x.flatten(), z.flatten())):
+        for i, (xx, zz) in enumerate(zip(x.flat, z.flat)):
             values[i] = func(self, xx, zz)
 
         return values.reshape(x.shape)
