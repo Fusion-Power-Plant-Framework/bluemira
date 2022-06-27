@@ -188,17 +188,6 @@ class MHDState:
         z = [c.z for c in self.coilset.coils.values()]
         return self.Bp(x, z)
 
-    def plasma_coil(self):
-        """
-        Build a coil emulating a plasma.
-
-        Returns
-        -------
-        plasmacoil: PlasmaCoil object
-            Coil representation of the plasma
-        """
-        raise NotImplementedError
-
     @classmethod
     def _get_eqdsk(cls, filename, force_symmetry=False):
         """
@@ -469,17 +458,6 @@ class Breakdown(MHDState):
             else:
                 b[i] = np.amax(self.Bp(coil.x, coil.z))
         return b
-
-    def plasma_coil(self):
-        """
-        Builds a coil emulating an Equilibrium object with no plasma
-
-        Returns
-        -------
-        plasmacoil: PlasmaCoil object
-            Coil representation of nothing.
-        """
-        return PlasmaCoil(None, self.grid)
 
     def plot(self, ax=None, Bp=False):
         """
@@ -938,24 +916,6 @@ class Equilibrium(MHDState):
             The integral value of the field in 2-D
         """
         return integrate_dx_dz(func, self.dx, self.dz)
-
-    def plasma_coil(self, discretised=True):
-        """
-        Builds a coil representing the plasma passive object. If there is no
-        Jtor field then a single guesstimate coil is returned.
-
-        Parameters
-        ----------
-        discretised: bool
-            Whether or not to make a detailed plasma coil (100's of coils) or
-            to make a single I_p coil at the effective current centre.
-
-        Returns
-        -------
-        plasmacoil: PlasmaCoil object
-            Coil representation of the plasma. Discretised if Jtor exists.
-        """
-        return self.plasma
 
     def effective_centre(self):
         """
