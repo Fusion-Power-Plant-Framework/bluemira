@@ -55,7 +55,7 @@ def _get_dummy_equilibrium(equilibrium):
     contributions from the passive coils (plasma).
     """
     # TODO: Add passive coil contributions here
-    dummy = equilibrium.plasma_coil()
+    dummy = equilibrium.plasma
     dummy.coilset = deepcopy(equilibrium.coilset)
     return dummy
 
