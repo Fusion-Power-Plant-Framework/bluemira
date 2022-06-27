@@ -52,7 +52,7 @@ from bluemira.equilibria.grid import Grid, integrate_dx_dz
 from bluemira.equilibria.limiter import Limiter
 from bluemira.equilibria.num_control import DummyController, VirtualController
 from bluemira.equilibria.physics import calc_li3minargs, calc_psi_norm, calc_summary
-from bluemira.equilibria.plasma import PlasmaCoil
+from bluemira.equilibria.plasma import NoPlasmaCoil, PlasmaCoil
 from bluemira.equilibria.plotting import (
     BreakdownPlotter,
     CorePlotter,
@@ -292,6 +292,7 @@ class Breakdown(MHDState):
         self.coilset = coilset
         self.set_grid(grid)
         self._set_init_plasma(grid, psi)
+        self.plasma = NoPlasmaCoil(grid)
         self.limiter = kwargs.get("limiter", None)
 
         # Set default breakdown point to grid centre

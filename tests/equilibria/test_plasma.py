@@ -85,3 +85,7 @@ class TestPlasmaCoil:
     def test_bad_input_shapes(self):
         with pytest.raises(EquilibriaError):
             self.plasma_coil.psi(np.zeros(3), np.zeros(4))
+
+    def test_blank_plasma(self):
+        dummy = PlasmaCoil(np.zeros(1), None, self.plasma_coil._grid)
+        assert dummy.psi(dummy.grid.x, dummy.grid.z).shape == (50, 50)

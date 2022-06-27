@@ -254,3 +254,36 @@ class PlasmaCoil:
         """
         n_filaments = len(np.where(self._j_tor > 0)[0])
         return f"{self.__class__.__name__}: {n_filaments} filaments"
+
+
+class NoPlasmaCoil:
+    """
+    NoPlasmaCoil object for dummy representation of a plasma-less state.
+
+    Parameters
+    ----------
+    grid: Grid
+        Grid object on which the finite difference representation of the plasma should be
+        constructed
+    """
+
+    def __init__(self, grid):
+        self.grid = grid
+
+    def psi(self, x=None, z=None):
+        return self._return_zeros(x, z)
+
+    def Bx(self, x=None, z=None):
+        return self._return_zeros(x, z)
+
+    def Bz(self, x=None, z=None):
+        return self._return_zeros(x, z)
+
+    def Bp(self, x=None, z=None):
+        return self._return_zeros(x, z)
+
+    def _return_zeros(self, x, z):
+        if x is None and z is None:
+            return np.zeros_like(self.grid.x)
+
+        return np.zeros_like(x)
