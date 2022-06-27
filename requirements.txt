@@ -19,7 +19,7 @@ numba-scipy==0.3.0
 numexpr==2.8.1
 numpy==1.22.4
 packaging==21.3
-pandas==1.4.2
+pandas==1.4.3
 periodictable==1.6.1
 Pillow==9.1.1
 Pint==0.19.2
