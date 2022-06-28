@@ -35,7 +35,10 @@ from bluemira.base.parameter import ParameterFrame
 from bluemira.equilibria import Equilibrium
 from bluemira.geometry._deprecated_loop import Loop
 from bluemira.radiation_transport.advective_transport import ChargedParticleSolver
-from bluemira.radiation_transport.radiation_profile import STCore, STScrapeOffLayer
+from bluemira.radiation_transport.radiation_profile import (
+    CoreRadiation,
+    STScrapeOffLayerRadiation,
+)
 
 # %%[markdown]
 # Read equilibrium
@@ -134,22 +137,10 @@ plasma_params = ParameterFrame(
 )
 
 # %%[markdown]
-# Eventually customise radiation parameters to deviate from default values
-
-# %%
-rad_params = ParameterFrame(
-    # fmt: off
-    [
-        ["p_sol", "power entering the SoL", 300e6, "W", None, "Input"],
-    ]
-    # fmt: on
-)
-
-# %%[markdown]
 # Run core radiation source calculation for Spherical Tokamak
 
 # %%
-stcore = STCore(solver, impurity_content, impurity_data, plasma_params, rad_params)
+stcore = CoreRadiation(solver, impurity_content, impurity_data, plasma_params)
 
 # %%[markdown]
 # Build radiation profile at the midplane and 2D core radiation map
@@ -162,8 +153,8 @@ stcore.build_core_radiation_map()
 # Run scrape-off layer radiation source calculation for Spherical Tokamak
 
 # %%
-stsol = STScrapeOffLayer(
-    solver, impurity_content, impurity_data, plasma_params, rad_params, fw_shape
+stsol = STScrapeOffLayerRadiation(
+    solver, impurity_content, impurity_data, plasma_params, fw_shape
 )
 
 # %%[markdown]

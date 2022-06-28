@@ -32,12 +32,20 @@ from bluemira.equilibria.equilibrium import Equilibrium
 from bluemira.geometry._deprecated_loop import Loop
 from bluemira.radiation_transport.advective_transport import ChargedParticleSolver
 from bluemira.radiation_transport.radiation_profile import (
-    Core,
+    CoreRadiation,
     Radiation,
-    ScrapeOffLayer,
-    STCore,
-    STScrapeOffLayer,
-    TwoPointModelTools,
+    STScrapeOffLayerRadiation,
+    calculate_line_radiation_loss,
+    calculate_z_species,
+    electron_density_and_temperature_sol_decay,
+    exponential_decay,
+    gaussian_decay,
+    ion_front_distance,
+    radiative_loss_function_values,
+    random_point_temperature,
+    target_temperature,
+    upstream_temperature,
+    x_point_temperature,
 )
 
 TEST_PATH = get_bluemira_path("radiation_transport/test_data", subfolder="tests")
@@ -65,12 +73,6 @@ class TestRadiation:
         ])
         # fmt: on
 
-        # fmt: off
-        rad_params = ParameterFrame([
-            ["p_sol", "power entering the SoL", 300e6, "W", None, "Input"],
-        ])
-        # fmt: on
-
         impurity_content = {
             "H": [8.6794e-01],
             "He": [5.1674e-02],
@@ -85,22 +87,17 @@ class TestRadiation:
         }
 
         cls.rad = Radiation(cls.solver, plasma_params)
-        cls.tpm = TwoPointModelTools(cls.solver, plasma_params, rad_params)
-        cls.core = Core(cls.solver, plasma_params)
-        cls.sol = ScrapeOffLayer(cls.solver, plasma_params)
-        cls.st_core = STCore(
+        cls.st_core = CoreRadiation(
             cls.solver,
             impurity_content,
             impurity_data,
             plasma_params,
-            rad_params,
         )
-        cls.st_sol = STScrapeOffLayer(
+        cls.st_sol = STScrapeOffLayerRadiation(
             cls.solver,
             impurity_content,
             impurity_data,
             plasma_params,
-            rad_params,
             cls.fw,
         )
 
@@ -123,40 +120,87 @@ class TestRadiation:
         assert len(ne) == len(flux_tube)
 
     def test_key_temperatures(self):
-        self.t_u, q_u = self.tpm.upstream_temperature(self.fw)
-        t_tar_det = self.tpm.target_temperature(q_u, self.t_u)
-        t_tar_no_det = self.tpm.target_temperature(3e10, self.t_u)
-        t_x = self.tpm.x_point_temperature(q_u, self.t_u, self.fw)
+        self.t_u, q_u = upstream_temperature(
+            self.rad.plasma_params.A,
+            self.rad.plasma_params.R_0,
+            self.rad.plasma_params.kappa,
+            self.rad.plasma_params.q_95,
+            self.rad.plasma_params.fw_lambda_q_far_omp,
+            self.rad.plasma_params.P_rad,
+            self.solver.eq,
+            self.rad.r_sep_omp,
+            self.rad.z_mp,
+            self.rad.plasma_params.k_0,
+            self.fw,
+        )
+        t_tar_det = target_temperature(
+            q_u,
+            self.t_u,
+            self.rad.plasma_params.lfs_p_fraction,
+            self.rad.plasma_params.div_p_sharing,
+            self.rad.plasma_params.n_el_0,
+            self.rad.plasma_params.gamma_sheath,
+            self.rad.plasma_params.eps_cool,
+            self.rad.plasma_params.f_ion_t,
+        )
+        t_tar_no_det = target_temperature(
+            3e10,
+            self.t_u,
+            self.rad.plasma_params.lfs_p_fraction,
+            self.rad.plasma_params.div_p_sharing,
+            self.rad.plasma_params.n_el_0,
+            self.rad.plasma_params.gamma_sheath,
+            self.rad.plasma_params.eps_cool,
+            self.rad.plasma_params.f_ion_t,
+        )
+        t_x = x_point_temperature(
+            q_u,
+            self.t_u,
+            self.solver.eq,
+            self.rad.points["x_point"]["x"],
+            self.rad.points["x_point"]["z_low"],
+            self.rad.plasma_params.k_0,
+            self.rad.r_sep_omp,
+            self.rad.z_mp,
+            self.fw,
+        )
         assert self.t_u < 5e-1
         assert t_tar_det < self.t_u * 1e-1
         assert self.t_u > t_x > t_tar_det
-        assert t_tar_no_det * 1e-3 > self.tpm.rad_params.f_ion_t
+        assert t_tar_no_det * 1e-3 > self.rad.plasma_params.f_ion_t
 
     def test_sol_decay(self):
-        t_u = self.tpm.plasma_params.T_el_sep
-        n_u = self.tpm.plasma_params.n_el_sep
-        decayed_t, decayed_n = self.tpm.electron_density_and_temperature_sol_decay(
-            t_u, n_u
+        t_u = self.rad.plasma_params.T_el_sep
+        n_u = self.rad.plasma_params.n_el_sep
+        decayed_t, decayed_n = electron_density_and_temperature_sol_decay(
+            t_u,
+            n_u,
+            self.rad.plasma_params.fw_lambda_q_near_omp,
+            self.rad.plasma_params.fw_lambda_q_far_omp,
+            self.solver.dx_omp,
+            self.solver.dx_imp,
         )
         assert decayed_t[0] > decayed_t[-1]
         assert decayed_n[0] > decayed_n[-1]
 
     def test_gaussian_decay(self):
-        decayed_val = self.tpm.gaussian_decay(10, 1, 50)
+        decayed_val = gaussian_decay(10, 1, 50)
         gap_1 = decayed_val[0] - decayed_val[1]
         gap_2 = decayed_val[1] - decayed_val[2]
         gap_3 = decayed_val[-2] - decayed_val[-1]
         assert gap_1 < gap_2 < gap_3
 
     def test_exponential_decay(self):
-        decayed_val = self.tpm.exponential_decay(10, 1, 50, True)
+        decayed_val = exponential_decay(10, 1, 50, True)
         gap_1 = decayed_val[0] - decayed_val[1]
         gap_2 = decayed_val[1] - decayed_val[2]
         gap_3 = decayed_val[-2] - decayed_val[-1]
         assert gap_1 > gap_2 > gap_3
 
     def test_ion_front_distance(self):
-        distance = self.tpm.ion_front_distance(6, -9, 1e-3, 1, 1, 2e20)
+        distance = ion_front_distance(
+            6, -9, self.solver.eq, self.rad.points["x_point"]["z_low"], 1e-3, 1, 1, 2e20
+        )
         assert distance is not None
         assert np.round(distance, 1) == 2.6
 
@@ -165,28 +209,28 @@ class TestRadiation:
         z_ref = np.array([10, 20])
         frac = 0.1
         t_test = 5
-        z = self.tpm.calculate_z_species(t_ref, z_ref, frac, t_test)
+        z = calculate_z_species(t_ref, z_ref, frac, t_test)
         assert z == 22.5
 
     def test_rho_core(self):
-        rho_core = self.core.collect_rho_core_values()
+        rho_core = self.st_core.collect_rho_core_values()
         assert rho_core[0] == 0
         assert rho_core[-1] < 1
 
     def test_core_electron_density_temperature_profile(self):
         rho = np.linspace(0, 1, 10)
-        ne_core, te_core = self.core.core_electron_density_temperature_profile(rho)
+        ne_core, te_core = self.st_core.core_electron_density_temperature_profile(rho)
         assert len(ne_core) == len(te_core)
         assert ne_core[0] > ne_core[-1]
         assert te_core[0] > te_core[-1]
 
     def test_rho_sol(self):
-        rho_sol = self.sol.collect_rho_sol_values()
+        rho_sol = self.st_sol.collect_rho_sol_values()
         assert rho_sol[0] > 1
 
     def test_rad_region_extention(self):
-        z_main_low, z_pfr_low = self.sol.x_point_radiation_z_ext()
-        z_main_up, z_pfr_up = self.sol.x_point_radiation_z_ext(low_div=False)
+        z_main_low, z_pfr_low = self.st_sol.x_point_radiation_z_ext()
+        z_main_up, z_pfr_up = self.st_sol.x_point_radiation_z_ext(low_div=False)
         assert z_main_low > z_pfr_low
         assert z_main_up < z_pfr_up
 

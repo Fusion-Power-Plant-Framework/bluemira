@@ -97,11 +97,10 @@
   "rho_ped_n": 0,
   "rho_ped_t": 0,
   "n_el_ped": 0,
-  "T_el_ped": 0,
+  "T_e_ped": 0,
   "alpha_n": 0,
   "alpha_t": 0,
   "t_beta": 0,
   "n_el_sep": 0,
-  "T_el_sep": 0,
-  "rminor": 0
+  "T_el_sep": 0
 }

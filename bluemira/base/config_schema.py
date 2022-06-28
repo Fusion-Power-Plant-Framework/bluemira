@@ -89,13 +89,11 @@ class ConfigurationSchema:
     rho_ped_n: Parameter
     rho_ped_t: Parameter
     n_el_ped: Parameter
-    T_el_ped: Parameter
     alpha_n: Parameter
     alpha_t: Parameter
     t_beta: Parameter
     n_el_sep: Parameter
     T_el_sep: Parameter
-    rminor: Parameter
 
     # Heating and current drive
     f_ni: Parameter
@@ -138,11 +136,8 @@ class ConfigurationSchema:
     f_hfs_upper_target: Parameter
 
     # Variables for radiation
-    p_sol: Parameter
-    lambda_q_n: Parameter
-    lambda_q_f: Parameter
     k_0: Parameter
-    gamma: Parameter
+    gamma_sheath: Parameter
     eps_cool: Parameter
     f_ion_t: Parameter
     lfs_p_fraction: Parameter

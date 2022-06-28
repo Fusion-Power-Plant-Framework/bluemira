@@ -99,13 +99,11 @@ class Configuration(ConfigurationSchema, ParameterFrame):
         ["rho_ped_n", "Density pedestal r/a location", 0.94, "dimensionless", None, "Input"],
         ["rho_ped_t", "Temperature pedestal r/a location", 0.976 , "dimensionless", None, "Input"],
         ["n_el_ped", "Electron density pedestal height", 1.086e+20, "1/m^3", None, "Input"],
-        ["T_el_ped", "Electron temperature pedestal height", 3.74, "keV", None, "Input"],
         ["alpha_n", "Density profile factor", 1.15, "dimensionless", None, "Input"],
         ["alpha_t", "Temperature profile index", 1.905, "dimensionless", None, "Input"],
         ["t_beta", "Temperature profile index beta", 2, "dimensionless", None, "Input"],
         ["n_el_sep", "Electron density at separatrix", 1.5515e+19, "1/m^3", None, "Input"],
         ["T_el_sep", "Electron temperature at separatrix", 0.48, "keV", None, "Input"],
-        ["rminor", "Minor radius", 2.183, "m", None, "Input"],
 
         # Heating and current drive
         ['f_ni', 'Non-inductive current drive fraction', 0.1, 'dimensionless', None, 'Input'],
@@ -148,11 +146,8 @@ class Configuration(ConfigurationSchema, ParameterFrame):
         ["f_hfs_upper_target", "Fraction of SOL power deposited on the HFS upper target (DN only)", 0.5, "dimensionless", None, "Input"],
 
         # Variables for radiation
-        ["p_sol", "power entering the SoL", 300e6, "W", None, "Input"],
-        ["lambda_q_n", "near SoL decay length", 0.01, "m", None, "Input"],
-        ["lambda_q_f", "far SoL decay length", 0.1, "m", None, "Input"],
         ["k_0", "material's conductivity", 2000, "dimensionless", None, "Input"],
-        ["gamma", "sheath heat transmission coefficient", 7, "dimensionless", None, "Input"],
+        ["gamma_sheath", "sheath heat transmission coefficient", 7, "dimensionless", None, "Input"],
         ["eps_cool", "electron energy loss", 25, "eV", None, "Input"],
         ["f_ion_t", "Hydrogen first ionization", 10, "eV", None, "Input"],
         ["lfs_p_fraction", "lfs fraction of SoL power", 0.8, "dimensionless", None, "Input"],

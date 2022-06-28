@@ -150,13 +150,12 @@ OUT_mappings = {
     "rho_ped_n": ("rhopedn", "dimensionless"),
     "rho_ped_t": ("rhopedt", "dimensionless"),
     "n_el_ped": ("neped", "1/m^3"),
-    "T_el_ped": ("teped", "keV"),
+    "T_e_ped": ("teped", "keV"),
     "alpha_n": ("alphan", "dimensionless"),
     "alpha_t": ("alphat", "dimensionless"),
     "t_beta": ("tbeta", "dimensionless"),
     "n_el_sep": ("nesep", "1/m^3"),
     "T_el_sep": ("tesep", "keV"),
-    "rminor": ("rminor", "m"),
 }
 
 IO_mappings = {

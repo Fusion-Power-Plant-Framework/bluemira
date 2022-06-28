@@ -34,11 +34,625 @@ from bluemira.base import constants
 from bluemira.base.error import BuilderError
 from bluemira.base.parameter import ParameterFrame
 from bluemira.equilibria.flux_surfaces import calculate_connection_length_flt
-from bluemira.geometry.wire import BluemiraWire
+from bluemira.equilibria.grid import Grid
 from bluemira.radiation_transport.constants import SEP_CORRECTOR
 
 if TYPE_CHECKING:
     from bluemira.radiation_transport.advective_transport import ChargedParticleSolver
+
+
+def upstream_temperature(
+    a_ratio,
+    R_0,
+    k,
+    q_95,
+    lambda_q_f,
+    p_rad,
+    eq,
+    r_sep_omp,
+    z_mp,
+    k_0,
+    firstwall_geom: Grid,
+    n=2,
+):
+    """
+    Calculation of the temperature at the upstream location according
+    to PROCESS parameters and the total power crossing the separatrix.
+
+    Parameters
+    ----------
+    a_ratio: float
+        Plasma aspect ratio
+    R_0: float
+        Major radius [m]
+    k: float
+        Plasma elongation
+    q_95: float
+        Plasma safety factor
+    lambda_q_f: float
+        Power decay length in the far SOL
+    p_rad: float
+        Radiation power [MW]
+    eq: Equilibrium
+        Equilibrium in which to calculate the upstream temperature
+    r_sep_omp: float
+        Upstream location radial coordinate [m]
+    z_mp: float
+        Upstream location z coordinate [m]
+    k_0: float
+        Material's conductivity
+    firstwall_geom: grid
+        First wall geometry
+    n: float
+        Number of nulls
+
+    Returns
+    -------
+    t_upstream_kev: float
+        upstream temperature. Unit [keV]
+    q_u: float
+        upstream power density [W/m^2]
+    """
+    # minor radius
+    a = R_0 / a_ratio
+    p_rad = constants.raw_uc(p_rad, "MW", "W")
+
+    # SoL cross-section at the midplane
+    a_par = 4 * np.pi * a * (k ** (1 / 2)) * n * lambda_q_f
+    # power density at the upstream
+    q_u = (p_rad * q_95) / a_par
+
+    # connection length from the midplane to the target
+    l_tot = calculate_connection_length_flt(
+        eq,
+        r_sep_omp,
+        z_mp,
+        first_wall=firstwall_geom,
+    )
+
+    # upstream temperature [keV]
+    t_upstream_ev = (3.5 * (q_u / k_0) * l_tot) ** (2 / 7)
+    t_upstream_kev = constants.raw_uc(t_upstream_ev, "eV", "keV")
+
+    return t_upstream_kev, q_u
+
+
+def target_temperature(
+    q_u, t_u, lfs_p_fraction, div_p_sharing, n_el_0, gamma, eps_cool, f_ion_t, lfs=True
+):
+    """
+    Calculation of the temperature at the target location.
+    Extended 2PM. It includes hydrogen recycle loss energy.
+    Ref. Stangeby, "The Plasma Boundary of Magnetic Fusion
+    Devices", 2000.
+
+    Parameters
+    ----------
+    q_u: float
+        Upstream power density [W/m^2]
+    t_u: float
+        Upstream temperature. Unit [keV]
+    lfs_p_fraction: float
+        lfs fraction of rad power
+    div_p_sharing: float
+        Power fraction towards each divertor
+    n_el_0: float
+        Electron density on axis [1/m^3]
+    gamma: float
+        Sheath heat transmission coefficient
+    eps_cool: float
+        Electron energy loss [eV]
+    f_ion_t: float
+        Hydrogen first ionization [eV]
+    lfs: boolean
+        low field side. Default value True.
+        If False it stands for high field side (hfs).
+
+    Returns
+    -------
+    t_tar: float
+        target temperature. Unit [keV]
+    """
+    p_fraction = lfs_p_fraction if lfs else 1 - lfs_p_fraction
+    q_u = p_fraction * q_u * div_p_sharing
+    # Speed of light to convert kg to eV/c^2
+    light_speed = constants.C_LIGHT
+    # deuterium ion mass
+    m_i_amu = constants.D_MOLAR_MASS
+    m_i_kg = constants.raw_uc(m_i_amu, "amu", "kg")
+    m_i = m_i_kg / (light_speed**2)
+    # From keV to eV
+    t_u = constants.raw_uc(t_u, "keV", "eV")
+    n_u = n_el_0
+    # Numerator and denominator of the upstream forcing function
+    num_f = m_i * 4 * (q_u**2)
+    den_f = (
+        2
+        * constants.E_CHARGE
+        * (gamma**2)
+        * (constants.E_CHARGE**2)
+        * (n_u**2)
+        * (t_u**2)
+    )
+    # To address all the conversion from J to eV
+    f_ev = constants.raw_uc(num_f / den_f, "J", "eV")
+    # Critical target temperature
+    t_crit = eps_cool / gamma
+    # Finding roots of the target temperature quadratic equation
+    coeff_2 = 2 * (eps_cool / gamma) - f_ev
+    coeff_3 = (eps_cool**2) / (gamma**2)
+    coeff = [1, coeff_2, coeff_3]
+    roots = np.roots(coeff)
+    if roots.dtype == complex:
+        t_tar = constants.raw_uc(f_ion_t, "keV", "eV")
+    else:
+        # Excluding unstable solution
+        sol_i = np.where(roots > t_crit)[0][0]
+        # Target temperature
+        t_tar = roots[sol_i]
+    t_tar = constants.raw_uc(t_tar, "eV", "keV")
+
+    return t_tar
+
+
+def x_point_temperature(
+    q_u, t_u, eq, x_pt_x, x_pt_z, k_0, r_sep_omp, z_mp, firstwall_geom: Grid
+):
+    """
+    Calculation of the temperature at the x-point
+
+    Parameters
+    ----------
+    q_u: float
+        upstream power density [W/m^2]
+    t_upstream: float
+        upstream temperature. Unit [keV]
+    eq: Equilibrium
+        Equilibrium in which to calculate the x-point temperature
+    x_pt_x: float
+        x-point location radial coordinate [m]
+    x_pt_z: float
+        x-point location z coordinate [m]
+    k_0: float
+        Material's conductivity
+    r_sep_omp: float
+        Upstream location radial coordinate [m]
+    z_mp: float
+        Upstream location z coordinate [m]
+    firstwall_geom: grid
+        first wall geometry
+
+    Returns
+    -------
+    t_x: float
+        x-point temperature. Unit [keV]
+    """
+    # From keV to eV
+    t_u = constants.raw_uc(t_u, "keV", "eV")
+
+    # Distance between x-point and target
+    s_x = calculate_connection_length_flt(
+        eq,
+        x_pt_x + SEP_CORRECTOR,
+        x_pt_z,
+        first_wall=firstwall_geom,
+    )
+
+    l_tot = calculate_connection_length_flt(
+        eq,
+        r_sep_omp,
+        z_mp,
+        first_wall=firstwall_geom,
+    )
+
+    # connection length from mp to x-point
+    l_x = l_tot - s_x
+    t_x = ((t_u**3.5) - 3.5 * (q_u / k_0) * l_x) ** (2 / 7)
+
+    # From eV to keV
+    t_x = constants.raw_uc(t_x, "eV", "keV")
+
+    return t_x
+
+
+def random_point_temperature(
+    x_p,
+    z_p,
+    t_u,
+    q_u,
+    eq,
+    r_sep_omp,
+    z_mp,
+    lfs_p_fraction,
+    div_p_sharing,
+    o_pt_z,
+    k_0,
+    firstwall_geom: Grid,
+    lfs=True,
+):
+    """
+    Calculation of the temperature at a random point above the x-point
+
+    Parameters
+    ----------
+    x_p: float
+        x coordinate of the point
+    z_p: float
+        z coordinate of the point
+    t_u: float
+        upstream temperature [keV]
+    q_u: float
+        upstream power density flux [W/m^2]
+    eq: Equilibrium
+        Equilibrium in which to calculate the point temperature
+    r_sep_omp: float
+        Upstream location radial coordinate [m]
+    z_mp: float
+        Upstream location z coordinate [m]
+    lfs_p_fraction: float
+        lfs fraction of rad power
+    div_p_sharing: float
+        Power fraction towards each divertor
+    o_pt_z: float
+        Magnetic axis height [m]
+    k_0: float
+        Material's conductivity
+    firstwall_geom: grid
+        first wall geometry
+    lfs: boolean
+        low (toroidal) field side (outer wall side). Default value True.
+        If False it stands for high field side (hfs).
+
+    Returns
+    -------
+    t_p: float
+        point temperature. Unit [keV]
+    """
+    # From keV to eV
+    t_u = constants.raw_uc(t_u, "keV", "eV")
+
+    # Distinction between lfs and hfs
+    if lfs:
+        p_fraction = lfs_p_fraction
+        d = SEP_CORRECTOR
+    else:
+        p_fraction = 1 - lfs_p_fraction
+        d = -SEP_CORRECTOR
+
+    q_u = p_fraction * q_u * div_p_sharing
+
+    # Distance between the chosen point and the the target
+    if (lfs and z_p < o_pt_z) or (not lfs and z_p > o_pt_z):
+        forward = True
+    else:
+        forward = False
+    l_p = calculate_connection_length_flt(
+        eq,
+        x_p + d,
+        z_p,
+        forward=forward,
+        first_wall=firstwall_geom,
+    )
+    l_tot = calculate_connection_length_flt(
+        eq,
+        r_sep_omp,
+        z_mp,
+        first_wall=firstwall_geom,
+    )
+
+    # connection length from mp to p point
+    s_p = l_tot - l_p
+
+    # Local temperature
+    t_p = ((t_u**3.5) - 3.5 * (q_u / k_0) * s_p) ** (2 / 7)
+
+    # From eV to keV
+    t_p = constants.raw_uc(t_p, "eV", "keV")
+
+    return t_p
+
+
+def electron_density_and_temperature_sol_decay(
+    t_sep: float,
+    n_sep: float,
+    lambda_q_n,
+    lambda_q_f,
+    dx_omp,
+    dx_imp,
+    f_exp=1,
+    lfs=True,
+):
+    """
+    Generic radial esponential decay to be applied from a generic starting point
+    at the separatrix (not only at the mid-plane).
+    The vertical location is dictated by the choice of the flux expansion f_exp.
+    By default f_exp = 1, meaning mid-plane.
+    The boolean "omp" set by default as "True", gives the option of choosing
+    either outer mid-plane (True) or inner mid-plane (False)
+    From the power decay length it calculates the temperature decay length and the
+    density decay length.
+
+    Parameters
+    ----------
+    t_sep: float
+        initial temperature value at the separatrix [keV]
+    n_sep: float
+        initial density value at the separatrix [1/m^3]
+    lambda_q_n: float
+        Power decay length in the near SOL
+    lambda_q_f: float
+        Power decay length in the far SOL
+    dx_omp: [list]
+        Gaps between flux tubes at the omp
+    dx_imp: [list]
+        Gaps between flux tubes at the imp
+    f_exp: float
+        flux expansion. Default value=1 referred to the mid-plane
+    lfs: boolean
+        low (toroidal) field side (outer wall side). Default value True.
+        If False it stands for high field side (hfs).
+
+    Returns
+    -------
+    te_sol: np.array
+        radial decayed temperatures through the SoL. Unit [keV]
+    ne_sol: np.array
+        radial decayed densities through the SoL. unit [1/m^3]
+    """
+    # temperature and density decay factors
+    t_factor = 7 / 2
+    n_factor = 1
+
+    # power decay length modified according to the flux expansion
+    lambda_q_n = lambda_q_n * f_exp
+    lambda_q_f = lambda_q_f * f_exp
+
+    # radial distance of flux tubes from the separatrix
+    dr = dx_omp * f_exp if lfs else dx_imp * f_exp
+
+    # Assuming conduction-limited regime.
+    lambda_t_n = t_factor * lambda_q_n
+    lambda_t_f = t_factor * lambda_q_f
+    lambda_n_n = n_factor * lambda_t_n
+    lambda_n_f = n_factor * lambda_t_f
+
+    # dividing between near and far SoL
+    i_sol_near = np.where(dr < lambda_q_n)
+    i_sol_far = np.where(dr > lambda_q_n)
+
+    te_sol_near = t_sep * np.exp(-dr / lambda_t_n)
+    ne_sol_near = n_sep * np.exp(-dr / lambda_n_n)
+    te_sol_near = t_sep * np.exp(-dr[i_sol_near] / lambda_t_n)
+    ne_sol_near = n_sep * np.exp(-dr[i_sol_near] / lambda_n_n)
+
+    te_sol_far = te_sol_near[-1] * np.exp(-dr[i_sol_far] / lambda_t_f)
+    ne_sol_far = ne_sol_near[-1] * np.exp(-dr[i_sol_far] / lambda_n_f)
+
+    te_sol = np.append(te_sol_near, te_sol_far)
+    ne_sol = np.append(ne_sol_near, ne_sol_far)
+
+    return te_sol, ne_sol
+
+
+def gaussian_decay(max_value, min_value, no_points):
+    """
+    Generic gaussian decay to be applied between two extreme values and for a
+    given number of points.
+
+    Parameters
+    ----------
+    max_value: float
+        maximum value of the parameters
+    min_value: float
+        minimum value of the parameters
+    no_points: float
+        number of points through which make the parameter decay
+
+    Returns
+    -------
+    dec_param: np.array
+        decayed parameter
+    """
+    no_points = max(no_points, 1)
+
+    # setting values on the horizontal axis
+    x = np.linspace(no_points, 0, no_points)
+
+    # centering the gaussian on its highest value
+    mu = max(x)
+
+    # setting sigma to be consistent with min_value
+    frac = max_value / min_value
+    lg = np.log(frac)
+    denominator = 2 * lg * (1 / (mu**2))
+    sigma = np.sqrt(1 / denominator)
+    h = 1 / np.sqrt(2 * sigma**2)
+
+    # decaying param
+    dec_param = max_value * (np.exp((-(h**2)) * ((x - mu) ** 2)))
+    i_near_minimum = np.where(dec_param < min_value)
+    dec_param[i_near_minimum[0]] = min_value
+
+    return dec_param
+
+
+def exponential_decay(max_value, min_value, no_points, decay=False):
+    """
+    Generic exponential decay to be applied between two extreme values and for a
+    given number of points.
+
+    Parameters
+    ----------
+    max_value: float
+        maximum value of the parameters
+    min_value: float
+        minimum value of the parameters
+    no_points: float
+        number of points through which make the parameter decay
+    decay: boolean
+        to define either a decay or increment
+
+    Returns
+    -------
+    dec_param: np.array
+        decayed parameter
+    """
+    x = np.linspace(1, no_points, no_points)
+    a = np.array([x[0], min_value])
+    b = np.array([x[-1], max_value])
+    if decay:
+        arg = x / b[0]
+        base = a[0] / b[0]
+    else:
+        arg = x / a[0]
+        base = b[0] / a[0]
+
+    my_log = np.log(arg) / np.log(base)
+
+    f = a[1] + (b[1] - a[1]) * my_log
+
+    return f
+
+
+def ion_front_distance(
+    x_strike,
+    z_strike,
+    eq,
+    x_pt_z,
+    t_tar=None,
+    sv_i=None,
+    sv_m=None,
+    n_r=None,
+    rec_ext=None,
+):
+    """
+    Manual definition of penetration depth.
+    TODO: Find sv_i and sv_m
+
+    Parameters
+    ----------
+    x_strike: float [m]
+        x coordinate of the strike point
+    z_strike: float [m]
+        z coordinate of the strike point
+    eq: Equilibrium
+        Equilibrium in which to calculate the x-point temperature
+    x_pt_z: float
+        x-point location z coordinate [m]
+    t_tar: float [keV]
+        target temperature
+    sv_i: float
+        average ion loss coefficient
+    sv_m: float
+        average momentum loss coefficient
+    n_r: float
+        density at the recycling region entrance
+    rec_ext: float [m]
+        recycling region extention (along the field line)
+        from the target
+
+    Returns
+    -------
+    z_front: float [m]
+        z coordinate of the ionization front
+    """
+    # Speed of light to convert kg to eV/c^2
+    light_speed = constants.C_LIGHT
+    # deuterium ion mass
+    m_i_amu = constants.D_MOLAR_MASS
+    m_i_kg = constants.raw_uc(m_i_amu, "amu", "kg")
+    m_i = m_i_kg / (light_speed**2)
+
+    # Magnetic field at the strike point
+    Bp = eq.Bp(x_strike, z_strike)
+    Bt = eq.Bt(x_strike)
+    Btot = np.hypot(Bp, Bt)
+
+    # From total length to poloidal length
+    pitch_angle = Btot / Bp
+    if rec_ext is None:
+        den_lambda = 3 * np.pi * m_i * sv_i * sv_m
+        z_ext = np.sqrt((8 * t_tar) / den_lambda) ** (1 / n_r)
+    else:
+        z_ext = rec_ext * np.sin(pitch_angle)
+
+    # z coordinate (from the midplane)
+    z_front = abs(z_strike - x_pt_z) - z_ext
+
+    return z_front
+
+
+def calculate_z_species(t_ref, z_ref, species_frac, te):
+    """
+    Calculation of species ion charge, in condition of quasi-neutrality.
+
+    Parameters
+    ----------
+    t_ref: np.array
+        temperature reference
+    z_ref: np.array
+        effective charge reference
+    species_frac: float
+        fraction of relevant impurity
+    te: array
+        electron temperature
+
+    Returns
+    -------
+    species_frac*z_val**2: np.array
+        species ion charge
+    """
+    z_interp = interp1d(t_ref, z_ref)
+    z_val = z_interp(te)
+
+    return species_frac * z_val**2
+
+
+def radiative_loss_function_values(te, t_ref, l_ref):
+    """
+    By interpolation, from reference values, it returns the
+    radiative power loss values for a given set of electron temperature.
+
+    Parameters
+    ----------
+    te: np.array
+        electron temperature
+    t_ref: np.array
+        temperature reference
+    l_ref: np.array
+        radiative power loss reference
+
+    Returns
+    -------
+    interp_func(te): np.array [W m^3]
+        local values of the radiative power loss function
+    """
+    interp_func = interp1d(t_ref, l_ref)
+
+    return interp_func(te)
+
+
+def calculate_line_radiation_loss(ne, p_loss_f, species_frac):
+    """
+    Calculation of Line radiation losses.
+    For a given impurity this is the total power lost, per unit volume,
+    by all line-radiation processes INCLUDING Bremsstrahlung.
+
+    Parameters
+    ----------
+    ne: np.array
+        electron density
+    p_loss_f: np.array
+        local values of the radiative power loss function
+    species_frac: float
+        fraction of relevant impurity
+
+    Returns
+    -------
+    (species_frac[0] * (ne**2) * p_loss_f) / 1e6: np.array
+        Line radiation losses [MW m^-3]
+    """
+    return (species_frac[0] * (ne**2) * p_loss_f) / 1e6
 
 
 class Radiation:
@@ -53,15 +667,25 @@ class Radiation:
         ["rho_ped_n", "Density pedestal r/a location", 9.4e-01, "dimensionless", None, "Input"],
         ["rho_ped_t", "Temperature pedestal r/a location", 9.76e-01 , "dimensionless", None, "Input"],
         ["n_el_ped", "Electron density pedestal height", 1.086e+20, "1/m^3", None, "Input"],
-        ["T_el_ped", "Electron temperature pedestal height", 3.74, "keV", None, "Input"],
+        ["T_e_ped", "Electron temperature pedestal height", 3.74, "keV", None, "Input"],
         ["alpha_n", "Density profile factor", 1.15, "dimensionless", None, "Input"],
         ["alpha_t", "Temperature profile index", 1.905, "dimensionless", None, "Input"],
         ["t_beta", "Temperature profile index beta", 2, "dimensionless", None, "Input"],
         ["n_el_sep", "Electron density at separatrix", 1.5515e+19, "1/m^3", None, "Input"],
         ["T_el_sep", "Electron temperature at separatrix", 4.8e-01, "keV", None, "Input"],
         ["q_95", "Safety factor at 0.95 flux_surface", 4.9517, "dimensionless", None, "Input"],
-        ["rminor", "Minor_radius", 2.183, "m", None, "Input"],
+        ['A', 'Plasma aspect ratio', 1.667, 'dimensionless', None, 'Input'],
+        ['R_0', 'Major radius', 3.639, 'm', None, 'Input'],
         ["kappa", "Elongation", 2.8, "dimensionless", None, "Input"],
+        ['P_rad', 'Radiation power', 400, 'MW', None, 'Input'],
+        ['fw_lambda_q_near_omp', 'Lambda_q near SOL omp', 0.003, 'm', None, 'Input'],
+        ['fw_lambda_q_far_omp', 'Lambda_q far SOL omp', 0.1, 'm', None, 'Input'],
+        ["k_0", "material's conductivity", 2000, "dimensionless", None, "Input"],
+        ["gamma_sheath", "sheath heat transmission coefficient", 7, "dimensionless", None, "Input"],
+        ["eps_cool", "electron energy loss", 25, "eV", None, "Input"],
+        ["f_ion_t", "Hydrogen first ionization", 0.01, "keV", None, "Input"],
+        ["lfs_p_fraction", "lfs fraction of SoL power", 0.8, "dimensionless", None, "Input"],
+        ["div_p_sharing", "Power fraction towards each divertor", 0.5, "dimensionless", None, "Input"],
     ]
     # fmt: on
 
@@ -193,9 +817,7 @@ class Radiation:
         if rad_i is not None and len(rad_i) == 1:
             te[rad_i] = t_rad_in
         elif rad_i is not None and len(rad_i) > 1:
-            te[rad_i] = self.exponential_decay(
-                t_rad_in, t_rad_out, len(rad_i), decay=True
-            )
+            te[rad_i] = exponential_decay(t_rad_in, t_rad_out, len(rad_i), decay=True)
             te[rec_i] = t_tar
 
         return te
@@ -251,12 +873,12 @@ class Radiation:
         if rad_i is not None and len(rad_i) == 1:
             ne[rad_i] = n_rad_in
         elif rad_i is not None and len(rad_i) > 1:
-            ne[rad_i] = self.exponential_decay(n_rad_out, n_rad_in, len(rad_i))
+            ne[rad_i] = exponential_decay(n_rad_out, n_rad_in, len(rad_i))
 
         if rec_i is not None and x_point_rad:
-            ne[rec_i] = self.gaussian_decay(n_rad_out, 0.1, len(rec_i))
+            ne[rec_i] = gaussian_decay(n_rad_out, 0.1, len(rec_i))
         elif rec_i is not None and x_point_rad is False:
-            ne[rec_i] = self.gaussian_decay(n_rad_out, n_tar, len(rec_i))
+            ne[rec_i] = gaussian_decay(n_rad_out, n_tar, len(rec_i))
 
         return ne
 
@@ -289,542 +911,34 @@ class Radiation:
         return ax
 
 
-class TwoPointModelTools(Radiation):
+class CoreRadiation(Radiation):
     """
-    Equations from the Two Point Model and other used formulas
+    Specific class for the core emission of Spherical Tokamak
     """
-
-    # fmt: off
-    rad_params = [
-        ["p_sol", "power entering the SoL", 300e6, "W", None, "Input"],
-        ["lambda_q_n", "near SoL decay length", 0.01, "m", None, "Input"],
-        ["lambda_q_f", "far SoL decay length", 0.1, "m", None, "Input"],
-        ["k_0", "material's conductivity", 2000, "dimensionless", None, "Input"],
-        ["gamma", "sheat heat transmission coefficient", 7, "dimensionless", None, "Input"],
-        ["eps_cool", "electron energy loss", 25, "eV", None, "Input"],
-        ["f_ion_t", "Hydrogen first ionization", 0.01, "keV", None, "Input"],
-        ["lfs_p_fraction", "lfs fraction of SoL power", 0.8, "dimensionless", None, "Input"],
-        ["div_p_sharing", "Power fraction towards each divertor", 0.5, "dimensionless", None, "Input"],
-    ]
-    # fmt: on
 
     def __init__(
         self,
         transport_solver: ChargedParticleSolver,
+        impurity_content,
+        impurity_data,
         plasma_params,
-        rad_params,
     ):
         super().__init__(transport_solver, plasma_params)
 
-        self.rad_params = ParameterFrame(self.rad_params)
-        self.rad_params.update_kw_parameters(
-            rad_params, f"{self.__class__.__name__} input"
+        self.H_content = impurity_content["H"]
+        self.impurities_content = impurity_content.values()
+
+        self.imp_data_t_ref = [data["T_ref"] for key, data in impurity_data.items()]
+        self.imp_data_l_ref = [data["L_ref"] for key, data in impurity_data.items()]
+
+        # Adimensional radius at the mid-plane.
+        # From the core to the last closed flux surface
+        self.rho_core = self.collect_rho_core_values()
+
+        # For each flux tube, density and temperature at the mid-plane
+        self.ne_mp, self.te_mp = self.core_electron_density_temperature_profile(
+            self.rho_core
         )
-
-    def upstream_temperature(self, firstwall_geom: BluemiraWire, n=2):
-        """
-        Calculation of the temperature at the upstream location according
-        to PROCESS parameters and the total power crossing the separatrix.
-
-        Parameters
-        ----------
-        firstwall_geom: grid
-            first wall geometry
-        n: float
-            number of nulls
-
-        Returns
-        -------
-        t_upstream_kev: float
-            upstream temperature. Unit [keV]
-        q_u: float
-            upstream power density [W/m^2]
-        """
-        # minor radius
-        a = self.plasma_params.rminor
-        # elongation
-        k = self.plasma_params.kappa
-        # safety factor
-        q_95 = self.plasma_params.q_95
-
-        # SoL cross-section at the midplane (???)
-        a_par = 4 * np.pi * a * (k ** (1 / 2)) * n * self.rad_params.lambda_q_f
-        # power density at the upstream (???)
-        q_u = (self.rad_params.p_sol * q_95) / a_par
-
-        # connection length from the midplane to the target
-        self.l_tot = calculate_connection_length_flt(
-            self.transport_solver.eq,
-            self.r_sep_omp,
-            self.z_mp,
-            first_wall=firstwall_geom,
-        )
-
-        # upstream temperature [keV]
-        t_upstream_ev = (3.5 * (q_u / self.rad_params.k_0) * self.l_tot) ** (2 / 7)
-        t_upstream_kev = constants.raw_uc(t_upstream_ev, "eV", "keV")
-
-        return t_upstream_kev, q_u
-
-    def target_temperature(self, q_u, t_u, lfs=True):
-        """
-        Calculation of the temperature at the target location.
-        Extended 2PM. It includes hydrogen recycle loss energy.
-        Ref. Stangeby, "The Plasma Boundary of Magnetic Fusion
-        Devices", 2000.
-
-        Parameters
-        ----------
-        q_u: float
-            upstream power density [W/m^2]
-        t_u: float
-            upstream temperature. Unit [keV]
-        lfs: boolean
-            low field side. Default value True.
-            If False it stands for high field side (hfs).
-
-        Returns
-        -------
-        t_tar: float
-            target temperature. Unit [keV]
-        """
-        p_fraction = (
-            self.rad_params.lfs_p_fraction if lfs else 1 - self.rad_params.lfs_p_fraction
-        )
-        q_u = p_fraction * q_u * self.rad_params.div_p_sharing
-        # Speed of light to convert kg to eV/c^2
-        light_speed = constants.C_LIGHT
-        # deuterium ion mass
-        m_i_amu = constants.D_MOLAR_MASS
-        m_i_kg = constants.raw_uc(m_i_amu, "amu", "kg")
-        m_i = m_i_kg / (light_speed**2)
-        # From keV to eV
-        t_u = constants.raw_uc(t_u, "keV", "eV")
-        n_u = self.plasma_params.n_el_0
-        # Numerator and denominator of the upstream forcing function
-        num_f = m_i * 4 * (q_u**2)
-        den_f = (
-            2
-            * constants.E_CHARGE
-            * (self.rad_params.gamma**2)
-            * (constants.E_CHARGE**2)
-            * (n_u**2)
-            * (t_u**2)
-        )
-        # To address all the conversion from J to eV
-        f_ev = constants.raw_uc(num_f / den_f, "J", "eV")
-        # Critical target temperature
-        t_crit = self.rad_params.eps_cool / self.rad_params.gamma
-        # Finding roots of the target temperature quadratic equation
-        coeff_2 = 2 * (self.rad_params.eps_cool / self.rad_params.gamma) - f_ev
-        coeff_3 = (self.rad_params.eps_cool**2) / (self.rad_params.gamma**2)
-        coeff = [1, coeff_2, coeff_3]
-        roots = np.roots(coeff)
-        if roots.dtype == complex:
-            t_tar = constants.raw_uc(self.rad_params.f_ion_t, "keV", "eV")
-        else:
-            # Excluding unstable solution
-            sol_i = np.where(roots > t_crit)[0][0]
-            # Target temperature
-            t_tar = roots[sol_i]
-        t_tar = constants.raw_uc(t_tar, "eV", "keV")
-
-        return t_tar
-
-    def x_point_temperature(self, q_u, t_u, firstwall_geom: BluemiraWire):
-        """
-        Calculation of the temperature at the x-point
-
-        Parameters
-        ----------
-        q_u: float
-            upstream power density [W/m^2]
-        t_upstream: float
-            upstream temperature. Unit [keV]
-        firstwall_geom: grid
-            first wall geometry
-
-        Returns
-        -------
-        t_x: float
-            x-point temperature. Unit [keV]
-        """
-        # From keV to eV
-        t_u = constants.raw_uc(t_u, "keV", "eV")
-
-        # Distance between x-point and target
-        s_x = calculate_connection_length_flt(
-            self.transport_solver.eq,
-            self.points["x_point"]["x"] + SEP_CORRECTOR,
-            self.points["x_point"]["z_low"],
-            first_wall=firstwall_geom,
-        )
-
-        # connection length from mp to x-point
-        l_x = self.l_tot - s_x
-        # poca differe
-        t_x = ((t_u**3.5) - 3.5 * (q_u / self.rad_params.k_0) * l_x) ** (2 / 7)
-
-        # From eV to keV
-        t_x = constants.raw_uc(t_x, "eV", "keV")
-
-        return t_x
-
-    def random_point_temperature(
-        self, x_p, z_p, t_u, q_u, firstwall_geom: BluemiraWire, lfs=True
-    ):
-        """
-        Calculation of the temperature at a random point above the x-point
-
-        Parameters
-        ----------
-        x_p: float
-            x coordinate of the point
-        z_p: float
-            z coordinate of the point
-        t_u: float
-            upstream temperature [keV]
-        q_u: float
-            upstream power density flux [W/m^2]
-        firstwall_geom: grid
-            first wall geometry
-        lfs: boolean
-            low (toroidal) field side (outer wall side). Default value True.
-            If False it stands for high field side (hfs).
-
-        Returns
-        -------
-        t_p: float
-            point temperature. Unit [keV]
-        """
-        # From keV to eV
-        t_u = constants.raw_uc(t_u, "keV", "eV")
-
-        # Distinction between lfs and hfs
-        if lfs:
-            p_fraction = self.rad_params.lfs_p_fraction
-            d = SEP_CORRECTOR
-        else:
-            p_fraction = 1 - self.rad_params.lfs_p_fraction
-            d = -SEP_CORRECTOR
-
-        q_u = p_fraction * q_u * self.rad_params.div_p_sharing
-
-        # Distance between the chosen point and the the target
-        if (lfs and z_p < self.points["o_point"]["z"]) or (
-            not lfs and z_p > self.points["o_point"]["z"]
-        ):
-            forward = True
-        else:
-            forward = False
-        l_p = calculate_connection_length_flt(
-            self.transport_solver.eq,
-            x_p + d,
-            z_p,
-            forward=forward,
-            first_wall=firstwall_geom,
-        )
-
-        # connection length from mp to p point
-        s_p = self.l_tot - l_p
-
-        # Local temperature
-        t_p = ((t_u**3.5) - 3.5 * (q_u / self.rad_params.k_0) * s_p) ** (2 / 7)
-
-        # From eV to keV
-        t_p = constants.raw_uc(t_p, "eV", "keV")
-
-        return t_p
-
-    def electron_density_and_temperature_sol_decay(
-        self,
-        t_sep: float,
-        n_sep: float,
-        f_exp=1,
-        lfs=True,
-    ):
-        """
-        Generic radial esponential decay to be applied from a generic starting point
-        at the separatrix (not only at the mid-plane).
-        The vertical location is dictated by the choice of the flux expansion f_exp.
-        By default f_exp = 1, meaning mid-plane.
-        The boolean "omp" set by default as "True", gives the option of choosing
-        either outer mid-plane (True) or inner mid-plane (False)
-        From the power decay length it calculates the temperature decay length and the
-        density decay length.
-
-        Parameters
-        ----------
-        t_sep: float
-            initial temperature value at the separatrix [keV]
-        n_sep: float
-            initial density value at the separatrix [1/m^3]
-        f_exp: float
-            flux expansion. Default value=1 referred to the mid-plane
-        lfs: boolean
-            low (toroidal) field side (outer wall side). Default value True.
-            If False it stands for high field side (hfs).
-
-        Returns
-        -------
-        te_sol: np.array
-            radial decayed temperatures through the SoL. Unit [keV]
-        ne_sol: np.array
-            radial decayed densities through the SoL. unit [1/m^3]
-        """
-        # temperature and density decay factors
-        t_factor = 7 / 2
-        n_factor = 1
-
-        # power decay length modified according to the flux expansion
-        lambda_q_n = self.rad_params.lambda_q_n * f_exp
-        lambda_q_f = self.rad_params.lambda_q_f * f_exp
-
-        # radial distance of flux tubes from the separatrix
-        dr = (
-            self.transport_solver.dx_omp * f_exp
-            if lfs
-            else self.transport_solver.dx_imp * f_exp
-        )
-
-        # Assuming conduction-limited regime.
-        lambda_t_n = t_factor * lambda_q_n
-        lambda_t_f = t_factor * lambda_q_f
-        lambda_n_n = n_factor * lambda_t_n
-        lambda_n_f = n_factor * lambda_t_f
-
-        # dividing between near and far SoL
-        i_sol_near = np.where(dr < lambda_q_n)
-        i_sol_far = np.where(dr > lambda_q_n)
-
-        te_sol_near = t_sep * np.exp(-dr / lambda_t_n)
-        ne_sol_near = n_sep * np.exp(-dr / lambda_n_n)
-        te_sol_near = t_sep * np.exp(-dr[i_sol_near] / lambda_t_n)
-        ne_sol_near = n_sep * np.exp(-dr[i_sol_near] / lambda_n_n)
-
-        te_sol_far = te_sol_near[-1] * np.exp(-dr[i_sol_far] / lambda_t_f)
-        ne_sol_far = ne_sol_near[-1] * np.exp(-dr[i_sol_far] / lambda_n_f)
-
-        te_sol = np.append(te_sol_near, te_sol_far)
-        ne_sol = np.append(ne_sol_near, ne_sol_far)
-
-        return te_sol, ne_sol
-
-    def gaussian_decay(self, max_value, min_value, no_points):
-        """
-        Generic gaussian decay to be applied between two extreme values and for a
-        given number of points.
-
-        Parameters
-        ----------
-        max_value: float
-            maximum value of the parameters
-        min_value: float
-            minimum value of the parameters
-        no_points: float
-            number of points through which make the parameter decay
-
-        Returns
-        -------
-        dec_param: np.array
-            decayed parameter
-        """
-        no_points = max(no_points, 1)
-
-        # setting values on the horizontal axis
-        x = np.linspace(no_points, 0, no_points)
-
-        # centering the gaussian on its highest value
-        mu = max(x)
-
-        # setting sigma to be consistent with min_value
-        frac = max_value / min_value
-        lg = np.log(frac)
-        denominator = 2 * lg * (1 / (mu**2))
-        sigma = np.sqrt(1 / denominator)
-        h = 1 / np.sqrt(2 * sigma**2)
-
-        # decaying param
-        dec_param = max_value * (np.exp((-(h**2)) * ((x - mu) ** 2)))
-        i_near_minimum = np.where(dec_param < min_value)
-        dec_param[i_near_minimum[0]] = min_value
-
-        return dec_param
-
-    def exponential_decay(self, max_value, min_value, no_points, decay=False):
-        """
-        Generic exponential decay to be applied between two extreme values and for a
-        given number of points.
-
-        Parameters
-        ----------
-        max_value: float
-            maximum value of the parameters
-        min_value: float
-            minimum value of the parameters
-        no_points: float
-            number of points through which make the parameter decay
-        decay: boolean
-            to define either a decay or increment
-
-        Returns
-        -------
-        dec_param: np.array
-            decayed parameter
-        """
-        x = np.linspace(1, no_points, no_points)
-        a = np.array([x[0], min_value])
-        b = np.array([x[-1], max_value])
-        if decay:
-            arg = x / b[0]
-            base = a[0] / b[0]
-        else:
-            arg = x / a[0]
-            base = b[0] / a[0]
-
-        my_log = np.log(arg) / np.log(base)
-
-        f = a[1] + (b[1] - a[1]) * my_log
-
-        return f
-
-    def ion_front_distance(
-        self,
-        x_strike,
-        z_strike,
-        t_tar=None,
-        sv_i=None,
-        sv_m=None,
-        n_r=None,
-        rec_ext=None,
-    ):
-        """
-        Manual definition of penetration depth.
-        TODO: Find sv_i and sv_m
-
-        Parameters
-        ----------
-        x_strike: float [m]
-            x coordinate of the strike point
-        z_strike: float [m]
-            z coordinate of the strike point
-        t_tar: float [keV]
-            target temperature
-        sv_i: float
-            average ion loss coefficient
-        sv_m: float
-            average momentum loss coefficient
-        n_r: float
-            density at the recycling region entrance
-        rec_ext: float [m]
-            recycling region extention (along the field line)
-            from the target
-
-        Returns
-        -------
-        z_front: float [m]
-            z coordinate of the ionization front
-        """
-        # Speed of light to convert kg to eV/c^2
-        light_speed = constants.C_LIGHT
-        # deuterium ion mass
-        m_i_amu = constants.D_MOLAR_MASS
-        m_i_kg = constants.raw_uc(m_i_amu, "amu", "kg")
-        m_i = m_i_kg / (light_speed**2)
-
-        # Magnetic field at the strike point
-        Bp = self.transport_solver.eq.Bp(x_strike, z_strike)
-        Bt = self.transport_solver.eq.Bt(x_strike)
-        Btot = np.hypot(Bp, Bt)
-
-        # From total length to poloidal length
-        pitch_angle = Btot / Bp
-        if rec_ext is None:
-            den_lambda = 3 * np.pi * m_i * sv_i * sv_m
-            z_ext = np.sqrt((8 * t_tar) / den_lambda) ** (1 / n_r)
-        else:
-            z_ext = rec_ext * np.sin(pitch_angle)
-
-        # z coordinate (from the midplane)
-        z_front = abs(z_strike - self.points["x_point"]["z_low"]) - z_ext
-
-        return z_front
-
-    def calculate_z_species(self, t_ref, z_ref, species_frac, te):
-        """
-        Calculation of species ion charge, in condition of quasi-neutrality.
-
-        Parameters
-        ----------
-        t_ref: np.array
-            temperature reference
-        z_ref: np.array
-            effective charge reference
-        species_frac: float
-            fraction of relevant impurity
-        te: array
-            electron temperature
-
-        Returns
-        -------
-        species_frac*z_val**2: np.array
-            species ion charge
-        """
-        z_interp = interp1d(t_ref, z_ref)
-        z_val = z_interp(te)
-
-        return species_frac * z_val**2
-
-    def radiative_loss_function_values(self, te, t_ref, l_ref):
-        """
-        By interpolation, from reference values, it returns the
-        radiative power loss values for a given set of electron temperature.
-
-        Parameters
-        ----------
-        te: np.array
-            electron temperature
-        t_ref: np.array
-            temperature reference
-        l_ref: np.array
-            radiative power loss reference
-
-        Returns
-        -------
-        interp_func(te): np.array [W m^3]
-            local values of the radiative power loss function
-        """
-        interp_func = interp1d(t_ref, l_ref)
-
-        return interp_func(te)
-
-    def calculate_line_radiation_loss(self, ne, p_loss_f, species_frac):
-        """
-        Calculation of Line radiation losses.
-        For a given impurity this is the total power lost, per unit volume,
-        by all line-radiation processes INCLUDING Bremsstrahlung.
-
-        Parameters
-        ----------
-        ne: np.array
-            electron density
-        p_loss_f: np.array
-            local values of the radiative power loss function
-        species_frac: float
-            fraction of relevant impurity
-
-        Returns
-        -------
-        (species_frac[0] * (ne**2) * p_loss_f) / 1e6: np.array
-            Line radiation losses [MW m^-3]
-        """
-        return (species_frac[0] * (ne**2) * p_loss_f) / 1e6
-
-
-class Core(Radiation):
-    """
-    Specific for the core emission.
-    """
 
     def collect_rho_core_values(self):
         """
@@ -878,7 +992,7 @@ class Core(Radiation):
         i_interior = np.where((rho_core >= 0) & (rho_core <= self.rho_ped))[0]
 
         n_grad_ped0 = self.plasma_params.n_el_0 - self.plasma_params.n_el_ped
-        t_grad_ped0 = self.plasma_params.T_el_0 - self.plasma_params.T_el_ped
+        t_grad_ped0 = self.plasma_params.T_el_0 - self.plasma_params.T_e_ped
 
         rho_ratio_n = (
             1 - ((rho_core[i_interior] ** 2) / (self.rho_ped**2))
@@ -893,12 +1007,12 @@ class Core(Radiation):
         ) ** self.plasma_params.alpha_t
 
         ne_i = self.plasma_params.n_el_ped + (n_grad_ped0 * rho_ratio_n)
-        te_i = self.plasma_params.T_el_ped + (t_grad_ped0 * rho_ratio_t)
+        te_i = self.plasma_params.T_e_ped + (t_grad_ped0 * rho_ratio_t)
 
         i_exterior = np.where((rho_core > self.rho_ped) & (rho_core <= 1))[0]
 
         n_grad_sepped = self.plasma_params.n_el_ped - self.plasma_params.n_el_sep
-        t_grad_sepped = self.plasma_params.T_el_ped - self.plasma_params.T_el_sep
+        t_grad_sepped = self.plasma_params.T_e_ped - self.plasma_params.T_el_sep
 
         rho_ratio = (1 - rho_core[i_exterior]) / (1 - self.rho_ped)
 
@@ -909,6 +1023,63 @@ class Core(Radiation):
         te_core = np.append(te_i, te_e)
 
         return ne_core, te_core
+
+    def build_mp_rad_profile(self):
+        """
+        1D profile of the line radiation loss at the mid-plane
+        through the scrape-off layer
+        """
+        # Radiative loss function values for each impurity species
+        loss_f = [
+            radiative_loss_function_values(self.te_mp, t_ref, l_ref)
+            for t_ref, l_ref in zip(self.imp_data_t_ref, self.imp_data_l_ref)
+        ]
+
+        # Line radiation loss. Mid-plane distribution through the SoL
+        rad = [
+            calculate_line_radiation_loss(self.ne_mp, loss, fi)
+            for loss, fi in zip(loss_f, self.impurities_content)
+        ]
+
+        return self.plot_1d_profile(self.rho_core, rad)
+
+    def build_core_radiation_map(self):
+        """
+        2D map of the line radiation loss in the plasma core.
+        """
+        # Closed flux tubes within the separatrix
+        flux_tubes = self.collect_flux_tubes(self.rho_core)
+
+        # For each flux tube, poloidal density profile.
+        ne_pol = [
+            self.flux_tube_pol_n(ft, n, core=True)
+            for ft, n in zip(flux_tubes, self.ne_mp)
+        ]
+
+        # For each flux tube, poloidal temperature profile.
+        te_pol = [
+            self.flux_tube_pol_t(ft, t, core=True)
+            for ft, t in zip(flux_tubes, self.te_mp)
+        ]
+
+        # For each impurity species and for each flux tube,
+        # poloidal distribution of the radiative power loss function.
+        loss_f = [
+            [radiative_loss_function_values(t, t_ref, l_ref) for t in te_pol]
+            for t_ref, l_ref in zip(self.imp_data_t_ref, self.imp_data_l_ref)
+        ]
+
+        # For each impurity species and for each flux tube,
+        # poloidal distribution of the line radiation loss.
+        rad = [
+            [calculate_line_radiation_loss(n, l_f, fi) for n, l_f in zip(ne_pol, ft)]
+            for ft, fi in zip(loss_f, self.impurities_content)
+        ]
+
+        # Total line radiation loss along each flux tube
+        total_rad = np.sum(np.array(rad, dtype=object), axis=0).tolist()
+
+        return self.plot_2d_map(flux_tubes, total_rad)
 
     def plot_2d_map(self, flux_tubes, power_density, ax=None):
         """
@@ -950,7 +1121,7 @@ class Core(Radiation):
         return ax
 
 
-class ScrapeOffLayer(Radiation):
+class ScrapeOffLayerRadiation(Radiation):
     """
     Specific for the SoL emission.
     """
@@ -1105,8 +1276,14 @@ class ScrapeOffLayer(Radiation):
         if te_sep is None:
             te_sep = self.plasma_params.T_el_sep
         ne_sep = self.plasma_params.n_el_sep
-        te_sol, ne_sol = self.electron_density_and_temperature_sol_decay(
-            te_sep, ne_sep, lfs=omp
+        te_sol, ne_sol = electron_density_and_temperature_sol_decay(
+            te_sep,
+            ne_sep,
+            self.plasma_params.fw_lambda_q_near_omp,
+            self.plasma_params.fw_lambda_q_far_omp,
+            self.transport_solver.dx_omp,
+            self.transport_solver.dx_imp,
+            lfs=omp,
         )
 
         return te_sol, ne_sol
@@ -1167,8 +1344,14 @@ class ScrapeOffLayer(Radiation):
         n_p = self.plasma_params.n_el_sep * f_t
 
         # Temperature and density profiles across the SoL
-        te_prof, ne_prof = self.electron_density_and_temperature_sol_decay(
-            t_p, n_p, f_exp=f_p
+        te_prof, ne_prof = electron_density_and_temperature_sol_decay(
+            t_p,
+            n_p,
+            self.plasma_params.fw_lambda_q_near_omp,
+            self.plasma_params.fw_lambda_q_far_omp,
+            self.transport_solver.dx_omp,
+            self.transport_solver.dx_imp,
+            f_exp=f_p,
         )
 
         return te_prof, ne_prof
@@ -1220,7 +1403,7 @@ class ScrapeOffLayer(Radiation):
             list of arrays containing the power radiation density of the
             points lying on the specified flux tubes.
             expected len(flux_tubes) = len(power_desnity)
-        firstwall: BluemiraWire
+        firstwall: Grid
             first wall geometry
         """
         if ax is None:
@@ -1253,13 +1436,6 @@ class ScrapeOffLayer(Radiation):
         fig.colorbar(cm, label="MW/m^3")
 
         return ax
-
-
-class ScrapeOffLayerSector(ScrapeOffLayer, TwoPointModelTools):
-    """
-    To build a single sector, from the upstream location
-    to one of the targets.
-    """
 
     def build_sector_profiles(
         self,
@@ -1321,7 +1497,13 @@ class ScrapeOffLayerSector(ScrapeOffLayer, TwoPointModelTools):
         if not x_point_rad and rec_ext is None:
             raise BuilderError("Required recycling region extention: rec_ext")
         if not x_point_rad and rec_ext is not None:
-            ion_front_z = self.ion_front_distance(x_strike, z_strike, rec_ext=rec_ext)
+            ion_front_z = ion_front_distance(
+                x_strike,
+                z_strike,
+                self.transport_solver.eq,
+                self.points["x_point"]["z_low"],
+                rec_ext=rec_ext,
+            )
             pfr_ext = ion_front_z
 
         # Validity condition for x-point radiative
@@ -1344,22 +1526,35 @@ class ScrapeOffLayerSector(ScrapeOffLayer, TwoPointModelTools):
         )
 
         # entrance of radiation region
-        t_rad_in = self.random_point_temperature(
+        t_rad_in = random_point_temperature(
             in_x,
             in_z,
             self.t_u,
             self.q_u,
+            self.transport_solver.eq,
+            self.r_sep_omp,
+            self.z_mp,
+            self.plasma_params.lfs_p_fraction,
+            self.plasma_params.div_p_sharing,
+            self.points["o_point"]["z"],
+            self.plasma_params.k_0,
             firstwall_geom,
             lfs,
         )
 
         # exit of radiation region
         if x_point_rad and pfr_ext is not None:
-            t_rad_out = self.rad_params.f_ion_t
+            t_rad_out = self.plasma_params.f_ion_t
         else:
-            t_rad_out = self.target_temperature(
+            t_rad_out = target_temperature(
                 self.q_u,
                 self.t_u,
+                self.plasma_params.lfs_p_fraction,
+                self.plasma_params.div_p_sharing,
+                self.plasma_params.n_el_0,
+                self.plasma_params.gamma_sheath,
+                self.plasma_params.eps_cool,
+                self.plasma_params.f_ion_t,
                 lfs,
             )
 
@@ -1407,7 +1602,7 @@ class ScrapeOffLayerSector(ScrapeOffLayer, TwoPointModelTools):
         ]
 
         # condition for occurred detachment
-        if t_rad_out <= self.rad_params.f_ion_t:
+        if t_rad_out <= self.plasma_params.f_ion_t:
             x_point_rad = True
 
         # density poloidal distribution
@@ -1435,98 +1630,7 @@ class ScrapeOffLayerSector(ScrapeOffLayer, TwoPointModelTools):
         return t_pol, n_pol
 
 
-class STCore(Core, TwoPointModelTools):
-    """
-    Specific class for the core emission of Spherical Tokamak
-    """
-
-    def __init__(
-        self,
-        transport_solver: ChargedParticleSolver,
-        impurity_content,
-        impurity_data,
-        plasma_params,
-        rad_params,
-    ):
-        super().__init__(transport_solver, plasma_params, rad_params)
-
-        self.H_content = impurity_content["H"]
-        self.impurities_content = impurity_content.values()
-
-        self.imp_data_t_ref = [data["T_ref"] for key, data in impurity_data.items()]
-        self.imp_data_l_ref = [data["L_ref"] for key, data in impurity_data.items()]
-
-        # Adimensional radius at the mid-plane.
-        # From the core to the last closed flux surface
-        self.rho_core = self.collect_rho_core_values()
-
-        # For each flux tube, density and temperature at the mid-plane
-        self.ne_mp, self.te_mp = self.core_electron_density_temperature_profile(
-            self.rho_core
-        )
-
-    def build_mp_rad_profile(self):
-        """
-        1D profile of the line radiation loss at the mid-plane
-        through the scrape-off layer
-        """
-        # Radiative loss function values for each impurity species
-        loss_f = [
-            self.radiative_loss_function_values(self.te_mp, t_ref, l_ref)
-            for t_ref, l_ref in zip(self.imp_data_t_ref, self.imp_data_l_ref)
-        ]
-
-        # Line radiation loss. Mid-plane distribution through the SoL
-        rad = [
-            self.calculate_line_radiation_loss(self.ne_mp, loss, fi)
-            for loss, fi in zip(loss_f, self.impurities_content)
-        ]
-
-        return self.plot_1d_profile(self.rho_core, rad)
-
-    def build_core_radiation_map(self):
-        """
-        2D map of the line radiation loss in the plasma core.
-        """
-        # Closed flux tubes within the separatrix
-        flux_tubes = self.collect_flux_tubes(self.rho_core)
-
-        # For each flux tube, poloidal density profile.
-        ne_pol = [
-            self.flux_tube_pol_n(ft, n, core=True)
-            for ft, n in zip(flux_tubes, self.ne_mp)
-        ]
-
-        # For each flux tube, poloidal temperature profile.
-        te_pol = [
-            self.flux_tube_pol_t(ft, t, core=True)
-            for ft, t in zip(flux_tubes, self.te_mp)
-        ]
-
-        # For each impurity species and for each flux tube,
-        # poloidal distribution of the radiative power loss function.
-        loss_f = [
-            [self.radiative_loss_function_values(t, t_ref, l_ref) for t in te_pol]
-            for t_ref, l_ref in zip(self.imp_data_t_ref, self.imp_data_l_ref)
-        ]
-
-        # For each impurity species and for each flux tube,
-        # poloidal distribution of the line radiation loss.
-        rad = [
-            [
-                self.calculate_line_radiation_loss(n, l_f, fi)
-                for n, l_f in zip(ne_pol, ft)
-            ]
-            for ft, fi in zip(loss_f, self.impurities_content)
-        ]
-
-        # Total line radiation loss along each flux tube
-        total_rad = np.sum(np.array(rad, dtype=object), axis=0).tolist()
-
-        return self.plot_2d_map(flux_tubes, total_rad)
-
-
-class STScrapeOffLayer(ScrapeOffLayerSector, ScrapeOffLayer, TwoPointModelTools):
+class STScrapeOffLayerRadiation(ScrapeOffLayerRadiation):
     """
     Specific class for the scrape-off layer emission of Spherical Tokamak
     """
@@ -1537,10 +1641,9 @@ class STScrapeOffLayer(ScrapeOffLayerSector, ScrapeOffLayer, TwoPointModelTools)
         impurity_content,
         impurity_data,
         plasma_params,
-        rad_params,
         firstwall_geom,
     ):
-        super().__init__(transport_solver, plasma_params, rad_params)
+        super().__init__(transport_solver, plasma_params)
 
         self.H_content = impurity_content["H"]
         self.impurities_content = [
@@ -1571,7 +1674,19 @@ class STScrapeOffLayer(ScrapeOffLayerSector, ScrapeOffLayer, TwoPointModelTools)
         self.z_strike_hfs = self.flux_tubes_hfs_low[0].loop.z[-1]
 
         # upstream temperature and power density
-        self.t_u, self.q_u = self.upstream_temperature(firstwall_geom)
+        self.t_u, self.q_u = upstream_temperature(
+            self.plasma_params.A,
+            self.plasma_params.R_0,
+            self.plasma_params.kappa,
+            self.plasma_params.q_95,
+            self.plasma_params.fw_lambda_q_far_omp,
+            self.plasma_params.P_rad,
+            self.transport_solver.eq,
+            self.r_sep_omp,
+            self.z_mp,
+            self.plasma_params.k_0,
+            firstwall_geom,
+        )
 
     def build_sol_profiles(self, firstwall_geom):
         """
@@ -1689,7 +1804,7 @@ class STScrapeOffLayer(ScrapeOffLayerSector, ScrapeOffLayer, TwoPointModelTools)
 
         for side, t_pol in loss.items():
             loss[side] = [
-                [self.radiative_loss_function_values(t, t_ref, l_ref) for t in t_pol]
+                [radiative_loss_function_values(t, t_ref, l_ref) for t in t_pol]
                 for t_ref, l_ref in zip(self.imp_data_t_ref, self.imp_data_l_ref)
             ]
 
@@ -1703,7 +1818,7 @@ class STScrapeOffLayer(ScrapeOffLayerSector, ScrapeOffLayer, TwoPointModelTools)
         for side, ft in rad.items():
             rad[side] = [
                 [
-                    self.calculate_line_radiation_loss(n, l_f, fi)
+                    calculate_line_radiation_loss(n, l_f, fi)
                     for n, l_f in zip(ft["density"], f)
                 ]
                 for f, fi in zip(ft["loss"], self.impurities_content)
