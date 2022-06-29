@@ -47,7 +47,7 @@ def upstream_temperature(
     k,
     q_95,
     lambda_q_f,
-    p_rad,
+    p_sol,
     eq,
     r_sep_omp,
     z_mp,
@@ -56,8 +56,9 @@ def upstream_temperature(
     n=2,
 ):
     """
-    Calculation of the temperature at the upstream location according
-    to PROCESS parameters and the total power crossing the separatrix.
+    Calculate the upstream temperature, as suggested from "Pitcher, 1997".
+    Knowing the power entering the SOL, and assuming large temperature gradient
+    between upstream and target.
 
     Parameters
     ----------
@@ -71,8 +72,8 @@ def upstream_temperature(
         Plasma safety factor
     lambda_q_f: float
         Power decay length in the far SOL
-    p_rad: float
-        Radiation power [MW]
+    p_sol: float
+        Total power entering the SOL [MW]
     eq: Equilibrium
         Equilibrium in which to calculate the upstream temperature
     r_sep_omp: float
@@ -95,12 +96,12 @@ def upstream_temperature(
     """
     # minor radius
     a = R_0 / a_ratio
-    p_rad = constants.raw_uc(p_rad, "MW", "W")
+    p_sol = constants.raw_uc(p_sol, "MW", "W")
 
     # SoL cross-section at the midplane
     a_par = 4 * np.pi * a * (k ** (1 / 2)) * n * lambda_q_f
     # power density at the upstream
-    q_u = (p_rad * q_95) / a_par
+    q_u = (p_sol * q_95) / a_par
 
     # connection length from the midplane to the target
     l_tot = calculate_connection_length_flt(
@@ -121,8 +122,8 @@ def target_temperature(
     q_u, t_u, lfs_p_fraction, div_p_sharing, n_el_0, gamma, eps_cool, f_ion_t, lfs=True
 ):
     """
-    Calculation of the temperature at the target location.
-    Extended 2PM. It includes hydrogen recycle loss energy.
+    Calculate the target as suggested from the 2PM.
+    It includes hydrogen recycle loss energy.
     Ref. Stangeby, "The Plasma Boundary of Magnetic Fusion
     Devices", 2000.
 
@@ -133,7 +134,7 @@ def target_temperature(
     t_u: float
         Upstream temperature. Unit [keV]
     lfs_p_fraction: float
-        lfs fraction of rad power
+        lfs fraction of power entering the SOL
     div_p_sharing: float
         Power fraction towards each divertor
     n_el_0: float
@@ -199,7 +200,8 @@ def x_point_temperature(
     q_u, t_u, eq, x_pt_x, x_pt_z, k_0, r_sep_omp, z_mp, firstwall_geom: Grid
 ):
     """
-    Calculation of the temperature at the x-point
+    Calculate the temperature at the x-point.
+    Following the basic 2PM. No heat sink until the x-point.
 
     Parameters
     ----------
@@ -271,7 +273,7 @@ def random_point_temperature(
     lfs=True,
 ):
     """
-    Calculation of the temperature at a random point above the x-point
+    Calculate the temperature at a random point above the x-point.
 
     Parameters
     ----------
@@ -526,7 +528,7 @@ def ion_front_distance(
     rec_ext=None,
 ):
     """
-    Manual definition of penetration depth.
+    Manual definition of ion penetration depth.
     TODO: Find sv_i and sv_m
 
     Parameters
@@ -657,7 +659,8 @@ def calculate_line_radiation_loss(ne, p_loss_f, species_frac):
 
 class Radiation:
     """
-    A simplified radiation model based on the line emission.
+    Initial and generic class (no distinction between core and SOL)
+    to calculate radiation source within the flux tubes.
     """
 
     # fmt: off
@@ -677,7 +680,7 @@ class Radiation:
         ['A', 'Plasma aspect ratio', 1.667, 'dimensionless', None, 'Input'],
         ['R_0', 'Major radius', 3.639, 'm', None, 'Input'],
         ["kappa", "Elongation", 2.8, "dimensionless", None, "Input"],
-        ['P_rad', 'Radiation power', 400, 'MW', None, 'Input'],
+        ['P_sep', 'Radiation power', 150, 'MW', None, 'Input'],
         ['fw_lambda_q_near_omp', 'Lambda_q near SOL omp', 0.003, 'm', None, 'Input'],
         ['fw_lambda_q_far_omp', 'Lambda_q far SOL omp', 0.1, 'm', None, 'Input'],
         ["k_0", "material's conductivity", 2000, "dimensionless", None, "Input"],
@@ -725,7 +728,7 @@ class Radiation:
 
     def collect_separatrix_parameters(self):
         """
-        Some parameters related to the separatrix
+        Radiation source relevant parameters at the separatrix
         """
         self.separatrix = self.transport_solver.eq.get_separatrix()
         # The two halves
@@ -913,7 +916,9 @@ class Radiation:
 
 class CoreRadiation(Radiation):
     """
-    Specific class for the core emission of Spherical Tokamak
+    Specific class to calculate the core radiation source.
+    Temperature and density are assumed to be constant along a
+    single flux tube.
     """
 
     def __init__(
@@ -1123,7 +1128,10 @@ class CoreRadiation(Radiation):
 
 class ScrapeOffLayerRadiation(Radiation):
     """
-    Specific for the SoL emission.
+    Specific class to calculate the SOL radiation source.
+    In the SOL is assumed a conduction dominated regime until the
+    x-point, with no heat sinks, and a convection dominated regime
+    between x-point and target.
     """
 
     def collect_rho_sol_values(self):
@@ -1632,7 +1640,10 @@ class ScrapeOffLayerRadiation(Radiation):
 
 class STScrapeOffLayerRadiation(ScrapeOffLayerRadiation):
     """
-    Specific class for the scrape-off layer emission of Spherical Tokamak
+    Specific class to build the SOL radiation source for a Spherical Tokamak.
+    Here the SOL is divided into for regions. From the outer midplane to the
+    outer lower target; from the omp to the outer upper target; from the inboard
+    midplane to the inner lower target; from the imp to the inner upper target.
     """
 
     def __init__(
@@ -1680,7 +1691,7 @@ class STScrapeOffLayerRadiation(ScrapeOffLayerRadiation):
             self.plasma_params.kappa,
             self.plasma_params.q_95,
             self.plasma_params.fw_lambda_q_far_omp,
-            self.plasma_params.P_rad,
+            self.plasma_params.P_sep,
             self.transport_solver.eq,
             self.r_sep_omp,
             self.z_mp,
