@@ -1638,9 +1638,9 @@ class ScrapeOffLayerRadiation(Radiation):
         return t_pol, n_pol
 
 
-class STScrapeOffLayerRadiation(ScrapeOffLayerRadiation):
+class DNScrapeOffLayerRadiation(ScrapeOffLayerRadiation):
     """
-    Specific class to build the SOL radiation source for a Spherical Tokamak.
+    Specific class to build the SOL radiation source for a double null configuration.
     Here the SOL is divided into for regions. From the outer midplane to the
     outer lower target; from the omp to the outer upper target; from the inboard
     midplane to the inner lower target; from the imp to the inner upper target.
