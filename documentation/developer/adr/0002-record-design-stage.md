@@ -1,4 +1,4 @@
-# 1. Record architecture decisions
+# 1. `DesignStage` architectural decision
 
 Date: 2022-06-30
 
@@ -21,17 +21,19 @@ We want `Builder` to have a minimum set of `Parameters`.
 
 Options:
 * Do nothing
-* Add a `DesignStage` class which handles the `["run", "read", "mock"]` logic.
-    * Only for `Builder`
-    * For `Builder` and `Solver`
+* Add a `DesignStage` class which handles the `["run", "read", "mock"]` logic for `Builder`
+
 * Should every `DesignStage` be a `Solver` where `["run", "read", "mock"]` logic is also
 handled.
-
-
 
 ## Decision
 
 We add a `DesignStage` class to handles the  `["run", "read", "mock"]` logic for
 `Builder` only.
 
+We will trial the two options above taking e.g. the EUDEMO `PlasmaBuilder` as an example
+to inform our decision.
+
 ## Consequences
+
+The consequences of this decision are to be explored.
