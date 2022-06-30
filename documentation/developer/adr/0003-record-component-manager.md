@@ -15,19 +15,18 @@ Options:
 * `Component` is more "active" and directly has e.g. properties and methods to retrieve information
 * `ComponentManager` is used to provide access to information relating to an abstract `Component`
     * At the `ReactorDesigner` level or `Component` level.
-* `Builder` does everything
+* `Builder` does everything (builds the `Component` and logic + access methods to extract information + store the `Component`)
+
+It will be quite difficult to have a totally "general" `ComponentManager`.
+
+Many of the properties are not specific to a `Component` but maye require access to "external"
+information present in the `Reactor` or other `Component`s.
 
 ## Decision
 
-We will use Architecture Decision Records,
-as [described by Michael Nygard](http://thinkrelevance.com/blog/2011/11/15/documenting-architecture-decisions).
-
-The templates can be adapted to include other relevant headers
-(e.g. 'Alternative Solutions Considered'),
-but each document should contain the headers used in this ADR.
+We will trial the three options above taking e.g. the EUDEMO plasma `Component` as an example
+to inform our decision.
 
 ## Consequences
 
-See Michael Nygard's article, linked above.
-For a lightweight ADR toolset,
-see Nat Pryce's [adr-tools](https://github.com/npryce/adr-tools).
+The consequences of this decision are to be explored.
