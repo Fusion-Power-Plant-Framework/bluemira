@@ -31,7 +31,7 @@ import bluemira.base.components as bm_comp
 import bluemira.geometry as bm_geo
 from bluemira.base.constants import EPS
 from bluemira.base.error import BuilderError
-from bluemira.builders.EUDEMO._varied_offset import varied_offset
+from bluemira.builders._varied_offset import varied_offset
 from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.tools import (
     boolean_cut,

@@ -25,19 +25,20 @@ Perform the EU-DEMO design.
 
 import os
 
+from EUDEMO_builders.blanket import BlanketBuilder
+from EUDEMO_builders.divertor import DivertorBuilder
+from EUDEMO_builders.ivc import InVesselComponentBuilder
+from EUDEMO_builders.ivc.ivc import build_ivc_xz_shapes
+from EUDEMO_builders.pf_coils import PFCoilsBuilder
+from EUDEMO_builders.plasma import PlasmaBuilder
+from EUDEMO_builders.power_cycle import SteadyStatePowerCycleSolver
+from EUDEMO_builders.tf_coils import TFCoilsBuilder
+from EUDEMO_builders.vacuum_vessel import VacuumVesselBuilder
+
 from bluemira.base.components import Component, PhysicalComponent
 from bluemira.base.design import ReactorDesign
 from bluemira.base.look_and_feel import bluemira_print
 from bluemira.builders.cryostat import CryostatBuilder
-from bluemira.builders.EUDEMO.blanket import BlanketBuilder
-from bluemira.builders.EUDEMO.divertor import DivertorBuilder
-from bluemira.builders.EUDEMO.ivc import InVesselComponentBuilder
-from bluemira.builders.EUDEMO.ivc.ivc import build_ivc_xz_shapes
-from bluemira.builders.EUDEMO.pf_coils import PFCoilsBuilder
-from bluemira.builders.EUDEMO.plasma import PlasmaBuilder
-from bluemira.builders.EUDEMO.power_cycle import SteadyStatePowerCycleSolver
-from bluemira.builders.EUDEMO.tf_coils import TFCoilsBuilder
-from bluemira.builders.EUDEMO.vacuum_vessel import VacuumVesselBuilder
 from bluemira.builders.radiation_shield import RadiationShieldBuilder
 from bluemira.builders.thermal_shield import (
     CryostatThermalShieldBuilder,
@@ -286,7 +287,7 @@ class EUDEMOReactorDesign(ReactorDesign):
                 "xtol_abs": 1e-8,
                 "xtol_rel": 1e-8,
             },
-            "param_class": "bluemira.builders.EUDEMO.ivc::WallPolySpline",
+            "param_class": "EUDEMO_builders.ivc::WallPolySpline",
             "problem_class": "bluemira.geometry.optimisation::MinimiseLengthGOP",
             "runmode": "run",
             "variables_map": default_variables_map,

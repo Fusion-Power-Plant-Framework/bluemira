@@ -32,7 +32,7 @@ import bluemira.utilities.plot_tools as bm_plot_tools
 from bluemira.base.builder import BuildConfig, Builder
 from bluemira.base.components import Component, PhysicalComponent
 from bluemira.base.config import Configuration
-from bluemira.builders.EUDEMO.tools import (
+from bluemira.builders.tools import (
     circular_pattern_component,
     find_xy_plane_radii,
     make_circular_xy_ring,

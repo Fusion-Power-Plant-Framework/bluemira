@@ -26,13 +26,13 @@ from copy import deepcopy
 from typing import Any, Dict, Tuple
 
 import numpy as np
+from EUDEMO_builders.ivc.blanket import BlanketThicknessBuilder
+from EUDEMO_builders.ivc.divertor import DivertorSilhouetteBuilder
+from EUDEMO_builders.ivc.wall import WallBuilder
 
 from bluemira.base.builder import BuildConfig
 from bluemira.base.components import Component, PhysicalComponent
 from bluemira.base.error import BuilderError
-from bluemira.builders.EUDEMO.ivc.blanket import BlanketThicknessBuilder
-from bluemira.builders.EUDEMO.ivc.divertor import DivertorSilhouetteBuilder
-from bluemira.builders.EUDEMO.ivc.wall import WallBuilder
 from bluemira.builders.shapes import Builder
 from bluemira.equilibria import Equilibrium
 from bluemira.equilibria.find import find_OX_points, get_legs

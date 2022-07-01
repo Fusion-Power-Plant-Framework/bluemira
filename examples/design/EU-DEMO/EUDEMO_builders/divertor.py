@@ -28,7 +28,7 @@ import bluemira.utilities.plot_tools as bm_plot_tools
 from bluemira.base.builder import BuildConfig, Builder, Component
 from bluemira.base.components import PhysicalComponent
 from bluemira.base.config import Configuration
-from bluemira.builders.EUDEMO.tools import (
+from bluemira.builders.tools import (
     circular_pattern_component,
     pattern_revolved_silhouette,
 )

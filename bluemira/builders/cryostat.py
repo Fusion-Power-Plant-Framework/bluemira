@@ -31,7 +31,7 @@ import bluemira.utilities.plot_tools as bm_plot_tools
 from bluemira.base.builder import BuildConfig, Builder
 from bluemira.base.components import Component, PhysicalComponent
 from bluemira.base.config import Configuration
-from bluemira.builders.EUDEMO.tools import circular_pattern_component
+from bluemira.builders.tools import circular_pattern_component
 from bluemira.display.palettes import BLUE_PALETTE
 from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.tools import make_circle, make_polygon, revolve_shape
