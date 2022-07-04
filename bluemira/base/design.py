@@ -325,13 +325,14 @@ class Design(DesignABC):
             self._stage.pop()
 
 
-class Reactor(DesignABC):
+class ReactorDesign(DesignABC):
     """
-    The Reactor class allows a Design to be implemented directly in the code. This can
-    simplify some of logic when compared with the configurable Design class, in
-    particular when passing around Component information. As such, individual Reactor
-    instances must implement their own `run` method. The Reactor class also provides
-    managed output via a FileManager to aid the persistence of input and output data.
+    The ReactorDesign class allows a Design to be implemented directly in the code. This
+    can simplify some of logic when compared with the configurable Design class, in
+    particular when passing around Component information. As such, individual
+    ReactorDesign instances must implement their own `run` method. The ReactorDesign
+    class also provides managed output via a FileManager to aid the persistence of input
+    and output data.
     """
 
     _required_params: Set[str]
