@@ -27,22 +27,9 @@ from __future__ import annotations
 
 from typing import Iterable, List, Optional
 
+import bluemira.codes._freecadapi as cadapi
 from bluemira.base.constants import EPS
 from bluemira.base.look_and_feel import bluemira_warn
-from bluemira.codes._freecadapi import (
-    apiWire,
-    change_placement,
-    discretize,
-    discretize_by_edges,
-    end_point,
-    rotate_shape,
-    scale_shape,
-    start_point,
-    translate_shape,
-    wire_closure,
-    wire_parameter_at,
-    wire_value_at,
-)
 from bluemira.codes.error import FreeCADError
 
 # import from bluemira
@@ -61,14 +48,14 @@ class BluemiraWire(BluemiraGeo):
     """Bluemira Wire class."""
 
     def __init__(self, boundary, label: str = ""):
-        boundary_classes = [self.__class__, apiWire]
+        boundary_classes = [self.__class__, cadapi.apiWire]
         super().__init__(boundary, label, boundary_classes)
         self._check_orientations()
 
     def _check_orientations(self):
         orientations = []
         for boundary in self.boundary:
-            if isinstance(boundary, apiWire):
+            if isinstance(boundary, cadapi.apiWire):
                 orient = boundary.Orientation
             elif isinstance(boundary, self.__class__):
                 orient = boundary._shape.Orientation
@@ -84,38 +71,38 @@ class BluemiraWire(BluemiraGeo):
     def _converter(func):
         def wrapper(*args, **kwargs):
             output = func(*args, **kwargs)
-            if isinstance(output, apiWire):
+            if isinstance(output, cadapi.apiWire):
                 output = BluemiraWire(output)
             return output
 
         return wrapper
 
     @property
-    def _shape(self) -> apiWire:
+    def _shape(self) -> cadapi.apiWire:
         """apiWire: shape of the object as a single wire"""
         return self._create_wire()
 
     def _create_wire(self, check_reverse=True):
-        wire = apiWire(self._wires)
+        wire = cadapi.apiWire(self._wires)
         if check_reverse:
             return self._check_reverse(wire)
         else:
             return wire
 
     @property
-    def _wires(self) -> List[apiWire]:
+    def _wires(self) -> List[cadapi.apiWire]:
         """list(apiWire): list of wires of which the shape consists of."""
         wires = []
         for o in self.boundary:
-            if isinstance(o, apiWire):
+            if isinstance(o, cadapi.apiWire):
                 for w in o.Wires:
-                    wire = apiWire(w.OrderedEdges)
+                    wire = cadapi.apiWire(w.OrderedEdges)
                     if self._orientation != _Orientation(wire.Orientation):
                         edges = []
                         for edge in wire.OrderedEdges:
                             edge.reverse()
                             edges.append(edge)
-                        wire = apiWire(edges)
+                        wire = cadapi.apiWire(edges)
                     wires += [wire]
             else:
                 wires += o._wires
@@ -140,8 +127,8 @@ class BluemiraWire(BluemiraGeo):
         This function modifies the object boundary.
         """
         if not self.is_closed():
-            closure = wire_closure(self._shape)
-            if isinstance(self.boundary[0], apiWire):
+            closure = cadapi.wire_closure(self._shape)
+            if isinstance(self.boundary[0], cadapi.apiWire):
                 self.boundary.append(closure)
             else:
                 self.boundary.append(BluemiraWire(closure))
@@ -165,9 +152,9 @@ class BluemiraWire(BluemiraGeo):
             a np array with the x,y,z coordinates of the discretized points.
         """
         if byedges:
-            points = discretize_by_edges(self._shape, ndiscr=ndiscr, dl=dl)
+            points = cadapi.discretize_by_edges(self._shape, ndiscr=ndiscr, dl=dl)
         else:
-            points = discretize(self._shape, ndiscr=ndiscr, dl=dl)
+            points = cadapi.discretize(self._shape, ndiscr=ndiscr, dl=dl)
         return Coordinates(points)
 
     def scale(self, factor) -> None:
@@ -176,8 +163,8 @@ class BluemiraWire(BluemiraGeo):
         object.
         """
         for o in self.boundary:
-            if isinstance(o, apiWire):
-                scale_shape(o, factor)
+            if isinstance(o, cadapi.apiWire):
+                cadapi.scale_shape(o, factor)
             else:
                 o.scale(factor)
 
@@ -187,8 +174,8 @@ class BluemiraWire(BluemiraGeo):
         object.
         """
         for o in self.boundary:
-            if isinstance(o, apiWire):
-                translate_shape(o, vector)
+            if isinstance(o, cadapi.apiWire):
+                cadapi.translate_shape(o, vector)
             else:
                 o.translate(vector)
 
@@ -211,16 +198,16 @@ class BluemiraWire(BluemiraGeo):
             rotation angle
         """
         for o in self.boundary:
-            if isinstance(o, apiWire):
-                rotate_shape(o, base, direction, degree)
+            if isinstance(o, cadapi.apiWire):
+                cadapi.rotate_shape(o, base, direction, degree)
             else:
                 o.rotate(base, direction, degree)
 
     def change_placement(self, placement):
         """Changes the object placement"""
         for o in self.boundary:
-            if isinstance(o, apiWire):
-                change_placement(o, placement._shape)
+            if isinstance(o, cadapi.apiWire):
+                cadapi.change_placement(o, placement._shape)
             else:
                 o.change_placement(placement)
 
@@ -258,7 +245,7 @@ class BluemiraWire(BluemiraGeo):
                 alpha = 1.0
             distance = alpha * self.length
 
-        return wire_value_at(self.get_single_wire()._shape, distance)
+        return cadapi.wire_value_at(self.get_single_wire()._shape, distance)
 
     def parameter_at(self, vertex: Iterable, tolerance: float = EPS):
         """
@@ -284,7 +271,7 @@ class BluemiraWire(BluemiraGeo):
             If the vertex is further away to the wire than the specified tolerance
         """
         try:
-            return wire_parameter_at(
+            return cadapi.wire_parameter_at(
                 self.get_single_wire()._shape, vertex=vertex, tolerance=tolerance
             )
         except FreeCADError as e:
@@ -294,10 +281,10 @@ class BluemiraWire(BluemiraGeo):
         """
         Get the coordinates of the start of the wire.
         """
-        return Coordinates(start_point(self._shape))
+        return Coordinates(cadapi.start_point(self._shape))
 
     def end_point(self) -> Coordinates:
         """
         Get the coordinates of the end of the wire.
         """
-        return Coordinates(end_point(self._shape))
+        return Coordinates(cadapi.end_point(self._shape))
