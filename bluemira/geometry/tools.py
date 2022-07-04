@@ -230,6 +230,10 @@ def make_polygon(
     """
     points = Coordinates(points)
     if points.closed:
+        if closed is False:
+            bluemira_warn(
+                "make_polygon: input points are closed but closed=False, defaulting to closed=True."
+            )
         closed = True
         points = Coordinates(points.points[:-1])
 
