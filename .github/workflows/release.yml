@@ -26,10 +26,12 @@ jobs:
 
     runs-on: ubuntu-latest
     env:
-      GITHUB_TOKEN: ${{ secrets.FPPF_BOT_AUTH_KEY }}
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     steps:
       - name: Checkout
         uses: actions/checkout@v3
+        with:
+          token: ${{ secrets.FPPF_BOT_AUTH_KEY }}
 
       - name: Validate
         id: validate
