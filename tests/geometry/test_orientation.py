@@ -32,7 +32,7 @@ class TestOrientation:
     def test_wire(self):
 
         wire = cadapi.make_polygon(
-            [[0, 0, 0], [1, 0, 0], [1, 0, 1], [0, 0, 1]], closed=True
+            [[0, 0, 0], [1, 0, 0], [1, 0, 1], [0, 0, 1], [0, 0, 0]],
         )
 
         bm_wire = BluemiraWire(wire)
@@ -47,7 +47,7 @@ class TestOrientation:
 
     def test_face(self):
         wire = cadapi.make_polygon(
-            [[0, 0, 0], [1, 0, 0], [1, 0, 1], [0, 0, 1]], closed=True
+            [[0, 0, 0], [1, 0, 0], [1, 0, 1], [0, 0, 1], [0, 0, 0]],
         )
         face = cadapi.apiFace(wire)
         bm_face = BluemiraFace._create(face)
@@ -61,7 +61,7 @@ class TestOrientation:
 
     def test_face_with_hole(self):
         wire = cadapi.make_polygon(
-            [[0, 0, 0], [1, 0, 0], [1, 0, 1], [0, 0, 1]], closed=True
+            [[0, 0, 0], [1, 0, 0], [1, 0, 1], [0, 0, 1], [0, 0, 0]],
         )
         circle = cadapi.make_circle(radius=10, axis=[0, 1, 0])
         face = cadapi.apiFace([circle, wire])
@@ -89,15 +89,21 @@ class ExtrudeOrientation:
     Helper class for testing orientations are respected after an extrude operation.
     """
 
-    VERTS = [[0.5, 0, -0.5], [1.5, 0, -0.5], [1.5, 0, 0.5], [0.5, 0, 0.5]]
+    VERTS = [
+        [0.5, 0, -0.5],
+        [1.5, 0, -0.5],
+        [1.5, 0, 0.5],
+        [0.5, 0, 0.5],
+        [0.5, 0, -0.5],
+    ]
     _extrusion: float
 
     def setup_method(self):
-        profile = cadapi.make_polygon(self.VERTS, closed=True)
+        profile = cadapi.make_polygon(self.VERTS)
         face = cadapi.apiFace(profile)
         self.solid_fc = cadapi.extrude_shape(face, (0, self._extrusion, 0))
 
-        profile = geo_tools.make_polygon(self.VERTS, closed=True)
+        profile = geo_tools.make_polygon(self.VERTS)
         face = BluemiraFace(profile)
         self.solid_bm = geo_tools.extrude_shape(face, (0, self._extrusion, 0))
 
