@@ -53,8 +53,8 @@ jobs:
           git fetch origin main
           git checkout main
           # The 'Checkout' action performs a shallow checkout of develop.
-          # We need the history up to the HEAD of main in order to do the merge.
-          git fetch origin develop --shallow-since=$(git log -1 --format=%ct)
+          # We need the history in order to do the merge with main.
+          git fetch origin develop --unshallow
           git merge origin/develop --ff-only
           git push origin main:main
 
