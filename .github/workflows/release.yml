@@ -49,6 +49,9 @@ jobs:
 
       - name: Update main
         id: update-main
+        env:
+          GITHUB_TOKEN: ${{ secrets.FPPF_BOT_AUTH_KEY }}
+
         run: |
           git fetch origin main
           git checkout main
