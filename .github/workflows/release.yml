@@ -26,7 +26,7 @@ jobs:
 
     runs-on: ubuntu-latest
     env:
-      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      GITHUB_TOKEN: ${{ secrets.FPPF_BOT_AUTH_KEY }}
     steps:
       - name: Checkout
         uses: actions/checkout@v3
@@ -49,10 +49,9 @@ jobs:
 
       - name: Update main
         id: update-main
-        env:
-          GITHUB_TOKEN: ${{ secrets.FPPF_BOT_AUTH_KEY }}
-
         run: |
+          git config user.email "107038218+fppf-bot@users.noreply.github.com"
+          git config user.name "fppf-bot"
           git fetch origin main
           git checkout main
           # The 'Checkout' action performs a shallow checkout of develop.
@@ -72,8 +71,7 @@ jobs:
         run: |
           # Rebase develop_dependencies on develop, so that it's up-to-date and
           # we don't run into conflicts next time we merge.
-          git config user.email "107038218+fppf-bot@users.noreply.github.com"
-          git config user.name "fppf-bot"
+
           git fetch origin develop_dependencies
           git switch develop_dependencies --force
           git rebase origin/develop
