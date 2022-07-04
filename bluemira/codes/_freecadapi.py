@@ -178,7 +178,7 @@ def make_compound(shapes):
     return Part.makeCompound(shapes)
 
 
-def make_polygon(points: Union[list, np.ndarray], closed: bool = False) -> Part.Wire:
+def make_polygon(points: Union[list, np.ndarray]) -> Part.Wire:
     """
     Make a polygon from a set of points.
 
@@ -187,9 +187,6 @@ def make_polygon(points: Union[list, np.ndarray], closed: bool = False) -> Part.
     points: Union[list, np.ndarray]
         list of points. It can be given as a list of 3D tuples, a 3D numpy array,
         or similar.
-    closed: bool, default = False
-        if True, the first and last points will be connected in order to form a
-        closed shape.
 
     Returns
     -------
@@ -199,8 +196,6 @@ def make_polygon(points: Union[list, np.ndarray], closed: bool = False) -> Part.
     # Points must be converted into FreeCAD Vectors
     pntslist = [Base.Vector(x) for x in points]
     wire = Part.makePolygon(pntslist)
-    if closed:
-        wire = close_wire(wire)
     return wire
 
 

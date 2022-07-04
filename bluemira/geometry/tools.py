@@ -222,11 +222,22 @@ def make_polygon(
     -------
     wire: BluemiraWire
         a bluemira wire that contains the polygon
+
+    Notes
+    -----
+    If the input points are closed, but closed is True, the returned BluemiraWire will be
+    closed.
     """
     points = Coordinates(points)
-    if closed and points.closed:
+    if points.closed:
+        closed = True
         points = Coordinates(points.points[:-1])
-    return BluemiraWire(cadapi.make_polygon(points.T, closed), label=label)
+
+    wire = cadapi.make_polygon(points.T)
+
+    if closed:
+        wire = cadapi.close_wire(wire)
+    return BluemiraWire(wire, label=label)
 
 
 def make_bspline(
