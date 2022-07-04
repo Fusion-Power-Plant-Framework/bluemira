@@ -38,6 +38,13 @@ class TestFreecadapi:
             (1.0, 1.0, 0.0),
             (0.0, 1.0, 0.0),
         ]
+        cls.closed_square_points = [
+            (0.0, 0.0, 0.0),
+            (1.0, 0.0, 0.0),
+            (1.0, 1.0, 0.0),
+            (0.0, 1.0, 0.0),
+            (0.0, 0.0, 0.0),
+        ]
 
     def test_fail_vector_to_numpy(self):
         with pytest.raises(TypeError):
@@ -83,7 +90,7 @@ class TestFreecadapi:
         assert comparison.all()
         assert not open_wire.isClosed()
         # closed wire
-        closed_wire: Part.Wire = cadapi.make_polygon(self.square_points, closed=True)
+        closed_wire: Part.Wire = cadapi.make_polygon(self.closed_square_points)
         vertexes = closed_wire.Vertexes
         assert len(vertexes) == 4
         assert len(closed_wire.Edges) == 4
@@ -116,17 +123,17 @@ class TestFreecadapi:
     def test_length(self):
         open_wire: Part.Wire = cadapi.make_polygon(self.square_points)
         assert cadapi.length(open_wire) == open_wire.Length == 3.0
-        closed_wire: Part.Wire = cadapi.make_polygon(self.square_points, True)
+        closed_wire: Part.Wire = cadapi.make_polygon(self.closed_square_points)
         assert cadapi.length(closed_wire) == closed_wire.Length == 4.0
 
     def test_area(self):
-        wire: Part.Wire = cadapi.make_polygon(self.square_points, True)
+        wire: Part.Wire = cadapi.make_polygon(self.closed_square_points)
         assert cadapi.area(wire) == wire.Area == 0.0
         face: Part.Face = Part.Face(wire)
         assert cadapi.area(face) == face.Area == 1.0
 
     def test_center_of_mass(self):
-        wire: Part.Wire = cadapi.make_polygon(self.square_points, True)
+        wire: Part.Wire = cadapi.make_polygon(self.closed_square_points)
         face: Part.Face = Part.Face(wire)
         com = cadapi.center_of_mass(wire)
         comparison = com == np.array((0.5, 0.5, 0.0))
@@ -135,7 +142,7 @@ class TestFreecadapi:
 
     def test_scale_shape(self):
         factor = 2.0
-        wire: Part.Wire = cadapi.make_polygon(self.square_points, True)
+        wire: Part.Wire = cadapi.make_polygon(self.closed_square_points)
         scaled_wire = cadapi.scale_shape(wire.copy(), factor)
         face: Part.Face = Part.Face(scaled_wire)
         assert cadapi.area(face) == 1.0 * factor**2
@@ -146,7 +153,7 @@ class TestFreecadapi:
         assert cadapi.area(scaled_face) == cadapi.area(face)
 
     def test_discretize(self):
-        wire: Part.Wire = cadapi.make_polygon(self.square_points, True)
+        wire: Part.Wire = cadapi.make_polygon(self.closed_square_points)
         ndiscr = 10
         points = cadapi.discretize(wire, ndiscr)
         assert len(points) == ndiscr
@@ -156,7 +163,7 @@ class TestFreecadapi:
         assert len(points) == ndiscr
 
     def test_discretize_by_edges(self):
-        wire: Part.Wire = cadapi.make_polygon(self.square_points, True)
+        wire: Part.Wire = cadapi.make_polygon(self.closed_square_points)
         ndiscr = 10
         points = cadapi.discretize_by_edges(wire, ndiscr)
 
