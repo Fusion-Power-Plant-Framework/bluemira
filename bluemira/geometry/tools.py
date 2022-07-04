@@ -345,9 +345,26 @@ def make_bezier(
     -------
     wire: BluemiraWire
         a bluemira wire that contains the bspline
+
+    Notes
+    -----
+    If the input points are closed, but closed is True, the returned BluemiraWire will be
+    closed.
     """
-    points = Coordinates(points).T
-    return BluemiraWire(cadapi.make_bezier(points, closed), label=label)
+    points = Coordinates(points)
+    if points.closed:
+        if closed is False:
+            bluemira_warn(
+                "make_bezier: input points are closed but closed=False, defaulting to closed=True."
+            )
+        closed = True
+
+    wire = cadapi.make_bezier(points.T)
+
+    if closed:
+        wire = cadapi.close_wire(wire)
+
+    return BluemiraWire(wire, label=label)
 
 
 def make_circle(
