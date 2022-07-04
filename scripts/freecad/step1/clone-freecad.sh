@@ -7,6 +7,6 @@ fi
 if [ ! -d freecad-source ]; then
   git clone https://github.com/FreeCAD/FreeCAD.git freecad-source
   cd freecad-source
-  git checkout 0.19.3
+  git checkout 0.20
   cd ..
 fi
