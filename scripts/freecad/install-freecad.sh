@@ -27,7 +27,8 @@ if [ -d freecad-build ]; then
 fi
 
 PYTHON_VERSION=`python -c 'import sys; version=sys.version_info[:2]; print("{0}.{1}".format(*version))'`
-PYTHON_BIN_DIR=$(dirname $(which python))
+PYTHON_BIN=$(which python)
+PYTHON_BIN_DIR=$(dirname $PYTHON_BIN)
 PYTHON_PACKAGES_DIR=$(readlink --canonicalize $PYTHON_BIN_DIR/../lib/python$PYTHON_VERSION/site-packages)
 PYTHON_FREECAD_DIR=$PYTHON_PACKAGES_DIR/freecad
 
@@ -35,6 +36,7 @@ mkdir freecad-build
 cd freecad-build
 
 cmake -G Ninja \
+      -DCMAKE_BUILD_TYPE=Release \
       -DBUILD_QT5=TRUE \
       -DBUILD_GUI=TRUE \
       -DBUILD_FEM=FALSE \
@@ -76,7 +78,7 @@ cmake -G Ninja \
       -DBUILD_SURFACE=FALSE \
       -DBUILD_VR=FALSE \
       -DBUILD_CLOUD=FALSE \
-      -DPYTHON_EXECUTABLE=$(which python) \
+      -DPYTHON_EXECUTABLE=$PYTHON_BIN \
       -DPYSIDE_INCLUDE_DIR=$PYTHON_PACKAGES_DIR/PySide2/include \
       -DPYSIDE_LIBRARY=$PYTHON_PACKAGES_DIR/PySide2/libpyside2.abi3.so.5.15 \
       -DCMAKE_PREFIX_PATH=/usr/local/Qt-5.15.2/lib/cmake \
