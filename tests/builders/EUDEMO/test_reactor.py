@@ -37,7 +37,7 @@ from bluemira.base.file import get_bluemira_root
 from bluemira.base.logs import get_log_level, set_log_level
 from bluemira.builders.EUDEMO.pf_coils import PFCoilsBuilder
 from bluemira.builders.EUDEMO.plasma import PlasmaBuilder, PlasmaComponent
-from bluemira.builders.EUDEMO.reactor import EUDEMOReactor
+from bluemira.builders.EUDEMO.reactor import EUDEMOReactorDesign
 from bluemira.builders.EUDEMO.tf_coils import TFCoilsBuilder, TFCoilsComponent
 from bluemira.geometry.coordinates import Coordinates
 
@@ -67,7 +67,7 @@ class TestEUDEMO:
         orig_log_level = get_log_level()
         set_log_level("DEBUG")
         try:
-            self.reactor = EUDEMOReactor(params, build_config)
+            self.reactor = EUDEMOReactorDesign(params, build_config)
             # print(self.reactor._file_manager.reference_data_dirs)
             # raise ValueError
             self.component = self.reactor.run()
@@ -78,12 +78,12 @@ class TestEUDEMO:
         """
         Test the results of the plasma build.
         """
-        plasma_builder = self.reactor.get_builder(EUDEMOReactor.PLASMA)
+        plasma_builder = self.reactor.get_builder(EUDEMOReactorDesign.PLASMA)
         assert plasma_builder is not None
         assert plasma_builder.design_problem is not None
 
         plasma_component: PlasmaComponent = self.component.get_component(
-            EUDEMOReactor.PLASMA
+            EUDEMOReactorDesign.PLASMA
         )
         assert plasma_component is not None
         assert plasma_component.equilibrium is not None
@@ -108,12 +108,14 @@ class TestEUDEMO:
         """
         Test the results of the TF build.
         """
-        tf_builder: TFCoilsBuilder = self.reactor.get_builder(EUDEMOReactor.TF_COILS)
+        tf_builder: TFCoilsBuilder = self.reactor.get_builder(
+            EUDEMOReactorDesign.TF_COILS
+        )
         assert tf_builder is not None
         assert tf_builder.design_problem is not None
 
         tf_component: TFCoilsComponent = self.component.get_component(
-            EUDEMOReactor.TF_COILS
+            EUDEMOReactorDesign.TF_COILS
         )
         assert tf_component is not None
 
@@ -143,10 +145,10 @@ class TestEUDEMO:
         """
         Test the results of the PF build.
         """
-        tf_builder = self.reactor.get_builder(EUDEMOReactor.PF_COILS)
+        tf_builder = self.reactor.get_builder(EUDEMOReactorDesign.PF_COILS)
         assert tf_builder is not None
 
-        tf_component = self.component.get_component(EUDEMOReactor.PF_COILS)
+        tf_component = self.component.get_component(EUDEMOReactorDesign.PF_COILS)
         assert tf_component is not None
 
     @pytest.mark.skipif(not tests.PLOTTING, reason="plotting disabled")
@@ -157,8 +159,12 @@ class TestEUDEMO:
         Component(
             "xz view",
             children=[
-                self.component.get_component(EUDEMOReactor.PLASMA).get_component("xz"),
-                self.component.get_component(EUDEMOReactor.TF_COILS).get_component("xz"),
+                self.component.get_component(EUDEMOReactorDesign.PLASMA).get_component(
+                    "xz"
+                ),
+                self.component.get_component(EUDEMOReactorDesign.TF_COILS).get_component(
+                    "xz"
+                ),
             ],
         ).plot_2d()
 
@@ -170,8 +176,12 @@ class TestEUDEMO:
         Component(
             "xy view",
             children=[
-                self.component.get_component(EUDEMOReactor.PLASMA).get_component("xy"),
-                self.component.get_component(EUDEMOReactor.TF_COILS).get_component("xy"),
+                self.component.get_component(EUDEMOReactorDesign.PLASMA).get_component(
+                    "xy"
+                ),
+                self.component.get_component(EUDEMOReactorDesign.TF_COILS).get_component(
+                    "xy"
+                ),
             ],
         ).plot_2d()
 
@@ -183,8 +193,10 @@ class TestEUDEMO:
         Component(
             "xyz view",
             children=[
-                self.component.get_component(EUDEMOReactor.PLASMA).get_component("xyz"),
-                self.component.get_component(EUDEMOReactor.TF_COILS).get_component(
+                self.component.get_component(EUDEMOReactorDesign.PLASMA).get_component(
+                    "xyz"
+                ),
+                self.component.get_component(EUDEMOReactorDesign.TF_COILS).get_component(
                     "xyz"
                 ),
             ],

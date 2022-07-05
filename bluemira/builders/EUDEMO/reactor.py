@@ -26,7 +26,7 @@ Perform the EU-DEMO design.
 import os
 
 from bluemira.base.components import Component, PhysicalComponent
-from bluemira.base.design import Reactor
+from bluemira.base.design import ReactorDesign
 from bluemira.base.look_and_feel import bluemira_print
 from bluemira.builders.cryostat import CryostatBuilder
 from bluemira.builders.EUDEMO.blanket import BlanketBuilder
@@ -47,10 +47,10 @@ from bluemira.codes import systems_code_solver
 from bluemira.codes.process import NAME as PROCESS
 
 
-class EUDEMOReactor(Reactor):
+class EUDEMOReactorDesign(ReactorDesign):
     """
-    The EU-DEMO Reactor object encapsulates the logic for performing an EU-DEMO tokamak
-    design.
+    The EU-DEMO ReactorDesign object encapsulates the logic for performing an EU-DEMO
+    tokamak design.
     """
 
     PLASMA = "Plasma"
@@ -95,7 +95,7 @@ class EUDEMOReactor(Reactor):
 
         return component
 
-    @Reactor.design_stage(PROCESS)
+    @ReactorDesign.design_stage(PROCESS)
     def run_systems_code(self):
         """
         Run the systems code module in the requested run mode.
@@ -114,7 +114,7 @@ class EUDEMOReactor(Reactor):
         solver.execute(solver.run_mode_cls.from_string(run_mode))
         self._params.update_kw_parameters(solver.params.to_dict())
 
-    @Reactor.design_stage(PLASMA)
+    @ReactorDesign.design_stage(PLASMA)
     def build_plasma(self):
         """
         Run the plasma build using the requested equilibrium problem.
@@ -132,7 +132,7 @@ class EUDEMOReactor(Reactor):
 
         return super()._build_stage()
 
-    @Reactor.design_stage(TF_COILS)
+    @ReactorDesign.design_stage(TF_COILS)
     def build_TF_coils(self, component_tree: Component):
         """
         Run the TF Coils build using the requested mode.
@@ -180,7 +180,7 @@ class EUDEMOReactor(Reactor):
 
             config["geom_path"] = geom_path
 
-        plasma = component_tree.get_component(EUDEMOReactor.PLASMA)
+        plasma = component_tree.get_component(EUDEMOReactorDesign.PLASMA)
         sep_comp: PhysicalComponent = plasma.get_component("xz").get_component("LCFS")
         sep_shape = sep_comp.shape.boundary[0]
         thermal_shield = component_tree.get_component(self.THERMAL_SHIELD)
@@ -199,7 +199,7 @@ class EUDEMOReactor(Reactor):
 
         return super()._build_stage()
 
-    @Reactor.design_stage(PF_COILS)
+    @ReactorDesign.design_stage(PF_COILS)
     def build_PF_coils(self, component_tree: Component):
         """
         Run the PF Coils build using the requested mode.
@@ -220,7 +220,7 @@ class EUDEMOReactor(Reactor):
 
         return super()._build_stage()
 
-    @Reactor.design_stage(VVTS)
+    @ReactorDesign.design_stage(VVTS)
     def build_VV_thermal_shield(self, component_tree: Component):
         """
         Run the vacuum vessel thermal shield build.
@@ -239,7 +239,7 @@ class EUDEMOReactor(Reactor):
         self.register_builder(builder)
         return super()._build_stage()
 
-    @Reactor.design_stage(CTS)
+    @ReactorDesign.design_stage(CTS)
     def build_cryo_thermal_shield(self, component_tree: Component):
         """
         Run the cryostat thermal shield build.
@@ -267,7 +267,7 @@ class EUDEMOReactor(Reactor):
 
         return super()._build_stage()
 
-    @Reactor.design_stage(IVC)
+    @ReactorDesign.design_stage(IVC)
     def build_in_vessel_component_shapes(self, component_tree: Component):
         """
         Run the in-vessel component builder.
@@ -304,7 +304,7 @@ class EUDEMOReactor(Reactor):
 
         return build_ivc_xz_shapes(component, self._params.c_rm.value)
 
-    @Reactor.design_stage(DIVERTOR)
+    @ReactorDesign.design_stage(DIVERTOR)
     def build_divertor(self, component_tree: Component, divertor_face):
         """
         Run the divertor build.
@@ -319,7 +319,7 @@ class EUDEMOReactor(Reactor):
 
         return super()._build_stage()
 
-    @Reactor.design_stage(BLANKET)
+    @ReactorDesign.design_stage(BLANKET)
     def build_blanket(self, component_tree: Component, blanket_face):
         """
         Run the breeding blanket build.
@@ -334,7 +334,7 @@ class EUDEMOReactor(Reactor):
 
         return super()._build_stage()
 
-    @Reactor.design_stage(VACUUM_VESSEL)
+    @ReactorDesign.design_stage(VACUUM_VESSEL)
     def build_vacuum_vessel(self, component_tree: Component, ivc_boundary):
         """
         Run the reactor vacuum vessel build.
@@ -348,7 +348,7 @@ class EUDEMOReactor(Reactor):
         self.register_builder(builder)
         return super()._build_stage()
 
-    @Reactor.design_stage(CRYOSTAT)
+    @ReactorDesign.design_stage(CRYOSTAT)
     def build_cryostat(self, component_tree: Component):
         """
         Run the cryostat vacuum vessel build.
@@ -369,7 +369,7 @@ class EUDEMOReactor(Reactor):
 
         return super()._build_stage()
 
-    @Reactor.design_stage(RADIATION_SHIELD)
+    @ReactorDesign.design_stage(RADIATION_SHIELD)
     def build_radiation_shield(self, component_tree: Component):
         """
         Run the radiation shield build.
@@ -389,7 +389,7 @@ class EUDEMOReactor(Reactor):
 
         return super()._build_stage()
 
-    @Reactor.design_stage(POWER_CYCLE)
+    @ReactorDesign.design_stage(POWER_CYCLE)
     def run_power_cycle(self):
         """
         Run the power balance for the reactor.
