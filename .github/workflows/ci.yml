@@ -72,6 +72,8 @@ jobs:
         environment-file: conda/environment.yml
         miniforge-version: "latest"
         use-only-tar-bz2: true
+        miniforge-variant: Mambaforge
+        use-mamba: true
 
     - name: Freeze conda env
       shell: bash -l {0}
