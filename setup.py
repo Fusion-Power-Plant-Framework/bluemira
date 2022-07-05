@@ -63,7 +63,7 @@ prominence = [
 pinned = [
     "nlopt==2.7.1",
     "numba==0.55.2",
-    "numba-scipy==0.3.0",
+    "numba-scipy==0.3.1",
     "numpy==1.22.4",
     "matplotlib==3.5.2",
     "scipy==1.6.2",
