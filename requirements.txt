@@ -15,7 +15,7 @@ matplotlib==3.5.2
 neutronics-material-maker==0.1.11
 nlopt==2.7.1
 numba==0.55.2
-numba-scipy==0.3.0
+numba-scipy==0.3.1
 numexpr==2.8.3
 numpy==1.22.4
 packaging==21.3
