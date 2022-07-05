@@ -33,6 +33,7 @@ install_requires = [
     "pandas",
     "pint",
     "periodictable",
+    "polyscope",
     "pyclipper",
     "pypet",
     "pyquaternion",

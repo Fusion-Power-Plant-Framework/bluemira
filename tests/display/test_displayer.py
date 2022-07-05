@@ -34,7 +34,6 @@ from bluemira.base.components import Component, PhysicalComponent
 from bluemira.display import displayer
 from bluemira.display.error import DisplayError
 from bluemira.geometry.tools import extrude_shape, make_polygon
-from tests.display.helpers import PatchQApp, PatchQuarterWidget
 
 
 class TestDisplayCADOptions:
@@ -85,7 +84,7 @@ class TestDisplayCADOptions:
             the_options.transparency == displayer.DEFAULT_DISPLAY_OPTIONS["transparency"]
         )
 
-        the_options.transparency = 1.0
+        the_options.transparency = 0.0
         assert the_options.color != displayer.DEFAULT_DISPLAY_OPTIONS["color"]
         assert (
             the_options.transparency != displayer.DEFAULT_DISPLAY_OPTIONS["transparency"]
@@ -116,10 +115,11 @@ class TestComponentDisplayer:
         child2 = PhysicalComponent("Child2", shape=wire2, parent=group)
 
         with contextlib.nullcontext() if tests.PLOTTING else patch(
-            "bluemira.codes._freecadapi.QApplication", PatchQApp
+            "bluemira.display.displayer.ps"
         ):
             with contextlib.nullcontext() if tests.PLOTTING else patch(
-                "bluemira.codes._freecadapi.quarter.QuarterWidget", PatchQuarterWidget
+                "bluemira.display.displayer.cadapi.collect_verts_faces",
+                return_value=[np.zeros(1), np.zeros(1)],
             ):
                 child1.show_cad()
                 group.show_cad()
@@ -147,11 +147,13 @@ class TestGeometryDisplayer:
         box1 = extrude_shape(wire1, vec=(0.0, 0.0, 1.0), label="box1")
 
         with contextlib.nullcontext() if tests.PLOTTING else patch(
-            "bluemira.codes._freecadapi.QApplication", PatchQApp
+            "bluemira.display.displayer.ps"
         ):
             with contextlib.nullcontext() if tests.PLOTTING else patch(
-                "bluemira.codes._freecadapi.quarter.QuarterWidget", PatchQuarterWidget
+                "bluemira.display.displayer.cadapi.collect_verts_faces",
+                return_value=[np.zeros(1), np.zeros(1)],
             ):
+                displayer.show_cad()
                 displayer.show_cad(wire1)
                 displayer.show_cad(
                     box1, displayer.DisplayCADOptions(color=(1.0, 0.0, 1.0))
@@ -170,7 +172,10 @@ class TestGeometryDisplayer:
                     ],
                 )
                 displayer.show_cad(
-                    [wire1, box1], color=(1.0, 0.0, 0.0), transparency=0.2
+                    [wire1, box1],
+                    color=(1.0, 0.0, 0.0),
+                    transparency=0.2,
+                    material="wax",
                 )
 
                 with pytest.raises(DisplayError):
