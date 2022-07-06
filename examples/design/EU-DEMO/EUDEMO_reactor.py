@@ -31,7 +31,7 @@ from EUDEMO_builders.blanket import BlanketBuilder
 from EUDEMO_builders.divertor import DivertorBuilder
 from EUDEMO_builders.pf_coils import PFCoilsBuilder
 from EUDEMO_builders.plasma import PlasmaBuilder, PlasmaComponent
-from EUDEMO_builders.reactor import EUDEMOReactor
+from EUDEMO_builders.reactor import EUDEMOReactorDesign
 from EUDEMO_builders.tf_coils import TFCoilsBuilder
 from EUDEMO_builders.vacuum_vessel import VacuumVesselBuilder
 
