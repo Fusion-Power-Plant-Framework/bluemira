@@ -217,7 +217,7 @@ class EUDEMOReactorDesign(ReactorDesign):
         config = self._process_design_stage_config(default_config)
 
         tf_coil_boundary = (
-            component_tree.get_component(EUDEMOReactor.TF_COILS)
+            component_tree.get_component(EUDEMOReactorDesign.TF_COILS)
             .get_component("xz")
             .get_component("Casing")
             .get_component("outer")
