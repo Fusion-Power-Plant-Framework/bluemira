@@ -26,6 +26,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 import bluemira.geometry.tools as tools
+import tests
 from bluemira.base.components import Component, PhysicalComponent
 from bluemira.equilibria.fem_fixed_boundary.fem_magnetostatic_2D import (
     FemMagnetostatic2d,
@@ -99,7 +100,9 @@ class TestGetNormal:
             subdomains=True,
         )
         dolfin.plot(mesh)
-        plt.show()
+
+        if tests.PLOTTING:
+            plt.show()
 
         em_solver = FemMagnetostatic2d(mesh, boundaries, 3)
 
