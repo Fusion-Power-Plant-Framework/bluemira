@@ -175,8 +175,8 @@ eq = Equilibrium(coilset, grid, profiles, psi=None)
 # tends to do a good job at describing an EU-DEMO-like single null plasma.
 
 # We'll use this to specify some constraints on the plasma equilibrium problem:
-#       * An `IsofluxConstraint` forces the flux at a set of points to be equal
-#       * A `FieldNullConstraint` forces the poloidal field at a point to be zero.
+# * An `IsofluxConstraint` forces the flux at a set of points to be equal
+# * A `FieldNullConstraint` forces the poloidal field at a point to be zero.
 
 # %%
 
