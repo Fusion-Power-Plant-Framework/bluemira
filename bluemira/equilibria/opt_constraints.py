@@ -187,7 +187,8 @@ class FieldConstraints(UpdateableConstraint, OptimisationConstraint):
 
 class CoilFieldConstraints(FieldConstraints):
     """
-    Inequality constraints on the poloidal field inside the coils.
+    Inequality constraints on the poloidal field at the middle of the inside edge
+    of the coils, where the field is usually highest.
 
     Parameters
     ----------
@@ -200,6 +201,8 @@ class CoilFieldConstraints(FieldConstraints):
 
     Notes
     -----
+    This is a fast approximation constraint, and does not solve for the peak field
+    at all points in the coils. Use with caution.
     TODO: Presently only handles CoilSets with Coils (SymmetricCircuits not yet
     supported)
     TODO: Presently only accounts for poloidal field contributions from PF coils and
