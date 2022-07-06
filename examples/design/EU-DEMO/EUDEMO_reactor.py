@@ -474,7 +474,7 @@ if tf_coils_builder.runmode == "run":
 # Similarly, we can also look at the design problem for the PF coil build.
 
 # %%
-pf_coils_builder = reactor.get_builder(EUDEMOReactor.PF_COILS)
+pf_coils_builder = reactor.get_builder(EUDEMOReactorDesign.PF_COILS)
 if pf_coils_builder.runmode == "run":
     pf_coils_builder.design_problem.plot()
     plt.show()
