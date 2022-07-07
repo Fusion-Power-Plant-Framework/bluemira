@@ -251,7 +251,7 @@ def solve_plasmod_fixed_boundary(
             print(f"|Target - bluemira|/Target = {err_kappa}")
 
         print("\n")
-        bluemira_print(f"iter_err: {iter_err}, iter_err_max: {iter_err_max}")
+        bluemira_print(f"iter_err: {iter_err:.3E}, iter_err_max: {iter_err_max:.3E}")
         print("\n")
 
         if iter_err <= iter_err_max:
