@@ -22,7 +22,11 @@
 """Fixed boundary equilibrium class"""
 import numpy as np
 
-from bluemira.base.look_and_feel import bluemira_debug
+from bluemira.base.look_and_feel import (
+    bluemira_debug,
+    bluemira_print,
+    bluemira_print_flush,
+)
 from bluemira.equilibria.fem_fixed_boundary.fem_magnetostatic_2D import (
     FemGradShafranovFixedBoundary,
 )
@@ -49,6 +53,8 @@ def solve_plasmod_fixed_boundary(
     iter_err_max=1e-5,
     theta=0.8,
     gs_i_theta=0.5,
+    plot=False,
+    verbose=False,
 ):
     """
     Solve the plasma fixed boundary problem using delta95 and kappa95 as target
@@ -80,10 +86,10 @@ def solve_plasmod_fixed_boundary(
         iteration relaxing factor
     gs_i_theta: float
         FemGradShafranovFixedBoundary iteration relaxing factor
-
-    Returns
-    -------
-    None
+    plot: bool
+        Whether or not to plot
+    verbose: bool
+        Whether or not to print
 
     Notes
     -----
@@ -108,8 +114,9 @@ def solve_plasmod_fixed_boundary(
             .shape.volume
         )
 
-        plasma.plot_options.show_faces = False
-        plasma.plot_2d(show=True)
+        if plot:
+            plasma.plot_options.show_faces = False
+            plasma.plot_2d(show=True)
 
         kappa_u = builder_plasma.params.get_param("kappa_u")
         kappa_l = builder_plasma.params.get_param("kappa_l")
@@ -119,10 +126,11 @@ def solve_plasmod_fixed_boundary(
         kappa = (kappa_u + kappa_l) / 2
         delta = (delta_u + delta_l) / 2
 
-        print(f"kappa_u: {kappa_u}, delta: {delta_u}")
-        print(f"kappa_l: {kappa_l}, delta: {delta_l}")
-        print(f"kappa: {kappa}, delta: {delta}")
-        print(f"volume: {plasma_volume}")
+        if verbose:
+            print(f"kappa_u: {kappa_u}, delta_u: {delta_u}")
+            print(f"kappa_l: {kappa_l}, delta_l: {delta_l}")
+            print(f"kappa: {kappa}, delta: {delta}")
+            print(f"volume: {plasma_volume}")
 
         # initialize plasmod solver
         # - V_p is set equal to plasma volume
@@ -143,12 +151,13 @@ def solve_plasmod_fixed_boundary(
         )
         plasmod_solver.execute()
 
-        plot_profile(
-            plasmod_solver.x, plasmod_solver.pprime(plasmod_solver.x), "pprime", "-"
-        )
-        plot_profile(
-            plasmod_solver.x, plasmod_solver.ffprime(plasmod_solver.x), "ffrime", "-"
-        )
+        if plot:
+            plot_profile(
+                plasmod_solver.x, plasmod_solver.pprime(plasmod_solver.x), "pprime", "-"
+            )
+            plot_profile(
+                plasmod_solver.x, plasmod_solver.ffprime(plasmod_solver.x), "ffrime", "-"
+            )
 
         # generate mesh for the Grad-Shafranov solver
         plasma.shape.boundary[0].mesh_options = {
@@ -175,7 +184,7 @@ def solve_plasmod_fixed_boundary(
         p_order = gs_options["p_order"]
         gs_solver = FemGradShafranovFixedBoundary(mesh, p_order=p_order)
 
-        print("Solving Grad-Shafranov...")
+        bluemira_print("Solving fixed boundary Grad-Shafranov...")
         # solve the Grad-Shafranov equation
         gs_solver.solve(
             plasmod_solver.pprime,
@@ -197,7 +206,7 @@ def solve_plasmod_fixed_boundary(
         m = meshing.Mesh()
         m(plasma)
 
-        msh_to_xdmf("Mesh.msh", dimensions=(0, 2), directory=".", verbose=True)
+        msh_to_xdmf("Mesh.msh", dimensions=(0, 2), directory=".", verbose=verbose)
 
         mesh, boundaries, subdomains, labels = import_mesh(
             "Mesh",
@@ -220,31 +229,34 @@ def solve_plasmod_fixed_boundary(
         iter_err = max(err_delta, err_kappa)
 
         # calculate the new kappa_u and delta_u
-        print("previous shape parameters")
         kappa_u_0 = builder_plasma.params.get_param("kappa_u")
         delta_u_0 = builder_plasma.params.get_param("delta_u")
-
-        print(f"{kappa_u_0}, {delta_u_0}")
 
         kappa_u = theta * kappa_u_0 * (kappa95_t / kappa_95) + (1 - theta) * kappa_u_0
         delta_u = theta * delta_u_0 * (delta95_t / delta_95) + (1 - theta) * delta_u_0
 
-        print("recalculated shape parameters")
-        print(f"{kappa_u}, {delta_u}")
+        if verbose:
+            print("previous shape parameters")
+            print(f"{kappa_u_0}, {delta_u_0}")
 
-        print(" ")
-        print(f"bluemira delta95 = {delta_95}")
-        print(f"target delta95 = {delta95_t}")
+            print("recalculated shape parameters")
+            print(f"{kappa_u}, {delta_u}")
 
-        print(f"|Target - bluemira|/Target = {err_delta}")
+            print(" ")
+            print(f"bluemira delta95 = {delta_95}")
+            print(f"target delta95 = {delta95_t}")
 
-        print(" ")
-        print(f"bluemira kappa95 = {kappa_95}")
-        print(f"target kappa95 = {kappa95_t}")
+            print(f"|Target - bluemira|/Target = {err_delta}")
 
-        print(f"|Target - bluemira|/Target = {err_kappa}")
+            print(" ")
+            print(f"bluemira kappa95 = {kappa_95}")
+            print(f"target kappa95 = {kappa95_t}")
 
-        print(f"iter_err: {iter_err}, iter_err_max: {iter_err_max}")
+            print(f"|Target - bluemira|/Target = {err_kappa}")
+
+        print("\n")
+        bluemira_print(f"iter_err: {iter_err}, iter_err_max: {iter_err_max}")
+        print("\n")
 
         if iter_err <= iter_err_max:
             break
