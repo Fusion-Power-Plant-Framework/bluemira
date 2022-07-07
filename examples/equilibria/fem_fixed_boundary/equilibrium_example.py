@@ -33,7 +33,7 @@ from bluemira.equilibria.fem_fixed_boundary.equilibrium import (
 )
 
 # ------------------------------------------------------------------------------
-set_log_level("INFO")
+set_log_level("DEBUG")
 # ------------------------------------------------------------------------------
 
 main_params = {
