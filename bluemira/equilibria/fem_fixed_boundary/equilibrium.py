@@ -137,6 +137,7 @@ def solve_plasmod_fixed_boundary(
             params=plasmod_options["params"],
             build_config=plasmod_options["build_config"],
         )
+        plasmod_solver.execute()
 
         plot_profile(
             plasmod_solver.x, plasmod_solver.pprime(plasmod_solver.x), "pprime", "-"

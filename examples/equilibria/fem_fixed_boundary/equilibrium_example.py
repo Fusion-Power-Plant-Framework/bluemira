@@ -22,8 +22,10 @@
 """
 An example that shows how to set up the problem for the fixed boundary equilibrium.
 """
+import os
 
 from bluemira.base.config import Configuration
+from bluemira.base.file import get_bluemira_root
 from bluemira.base.logs import set_log_level
 from bluemira.builders.plasma import MakeParameterisedPlasma
 from bluemira.equilibria.fem_fixed_boundary.equilibrium import (
@@ -85,7 +87,10 @@ new_params = {
 
 # plasmod options
 PLASMOD_PATH = "/home/ivan/Desktop/bluemira_project/plasmod/bin/"
-binary = f"{PLASMOD_PATH}plasmod"
+PLASMOD_PATH = PLASMOD_PATH = os.path.join(
+    os.path.split(get_bluemira_root())[:-1][0], "plasmod/bin"
+)
+binary = os.path.join(PLASMOD_PATH, "plasmod")
 
 plasmod_params = Configuration(new_params)
 

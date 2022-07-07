@@ -22,6 +22,7 @@
 """
 Test for transport solver
 """
+
 import os
 
 from bluemira.base.config import Configuration
