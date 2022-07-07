@@ -54,36 +54,40 @@ def solve_plasmod_fixed_boundary(
     Solve the plasma fixed boundary problem using delta95 and kappa95 as target
     values and iterating on plasmod to have consistency with pprime and ffprime.
 
-    Paramters:
-        builder_plasma: bluemira.base.builder
-            plasma poloidal cross section builder object
-        plasmod_options: dict
-            set of options used to set up and run plasmod
-        gs_options: dict
-            set of options used to set up and run the FemGradShafranovFixedBoundary
-        delta95_t: float
-            target value for delta at 95%
-        kappa95_t: float
-            target value for kappa at 95%
-        lcar_coarse: float
-            value of the characteristic length used to generate the mesh to solve the
-            Grad-Shafranov problem
-        lcar_fine: float
-            value of the characteristic length used to extrapolate the isoflux for the
-            calculation of kappa and delta at 95%
-        niter_max: int
-            maximum number of iteration between Grad-Shafranov and Plasmod
-        iter_err_max: float
-            convergence maximum error to stop the iteration
-        theta: float
-            iteration relaxing factor
-        gs_i_theta: float
-            FemGradShafranovFixedBoundary iteration relaxing factor
+    Parameters
+    ----------
+    builder_plasma: bluemira.base.builder
+        plasma poloidal cross section builder object
+    plasmod_options: dict
+        set of options used to set up and run plasmod
+    gs_options: dict
+        set of options used to set up and run the FemGradShafranovFixedBoundary
+    delta95_t: float
+        target value for delta at 95%
+    kappa95_t: float
+        target value for kappa at 95%
+    lcar_coarse: float
+        value of the characteristic length used to generate the mesh to solve the
+        Grad-Shafranov problem
+    lcar_fine: float
+        value of the characteristic length used to extrapolate the isoflux for the
+        calculation of kappa and delta at 95%
+    niter_max: int
+        maximum number of iteration between Grad-Shafranov and Plasmod
+    iter_err_max: float
+        convergence maximum error to stop the iteration
+    theta: float
+        iteration relaxing factor
+    gs_i_theta: float
+        FemGradShafranovFixedBoundary iteration relaxing factor
 
     Returns
     -------
-        None
-        This function directly modifies the parameters of builder_plasma
+    None
+
+    Notes
+    -----
+    This function directly modifies the parameters of builder_plasma
     """
     niter = 0
     delta_95 = delta95_t
