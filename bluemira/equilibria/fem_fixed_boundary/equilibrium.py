@@ -22,11 +22,7 @@
 """Fixed boundary equilibrium class"""
 import numpy as np
 
-from bluemira.base.look_and_feel import (
-    bluemira_debug,
-    bluemira_print,
-    bluemira_print_flush,
-)
+from bluemira.base.look_and_feel import bluemira_debug, bluemira_print
 from bluemira.equilibria.fem_fixed_boundary.fem_magnetostatic_2D import (
     FemGradShafranovFixedBoundary,
 )
