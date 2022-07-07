@@ -332,7 +332,7 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
             points, curr_data, "J current at iteration", i_iter, contour=False
         )
 
-    def _plot_array(points, array, title, i_iter, contour=True):
+    def _plot_array(self, points, array, title, i_iter, contour=True):
         axis, cntr, _ = plot_scalar_field(
             points[:, 0],
             points[:, 1],
@@ -340,7 +340,7 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
             levels=20,
             axis=None,
             tofill=True,
-            contour=False,
+            contour=contour,
         )
         plt.title(f"{title} {i_iter}")
         plt.show()
