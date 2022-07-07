@@ -24,13 +24,15 @@ Tests for EU-DEMO TF Coils build.
 """
 
 import pytest
+from EUDEMO_builders.tf_coils import TFCoilsBuilder
 
 from bluemira.base.config import Configuration
 from bluemira.base.error import BuilderError
 from bluemira.base.file import get_bluemira_path
-from bluemira.builders.EUDEMO.tf_coils import TFCoilsBuilder
 
-DATA_PATH = get_bluemira_path("builders/EUDEMO/test_data", subfolder="tests")
+DATA_PATH = get_bluemira_path(
+    "test_data", subfolder="examples/design/EU-DEMO/EUDEMO_tests"
+)
 """
 The path to data to be used in these tests.
 """

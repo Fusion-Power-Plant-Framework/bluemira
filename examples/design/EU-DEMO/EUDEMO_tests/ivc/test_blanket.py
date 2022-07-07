@@ -19,9 +19,9 @@
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 import pytest
+from EUDEMO_builders.ivc.blanket import BlanketThicknessBuilder
 
 from bluemira.base.error import BuilderError
-from bluemira.builders.EUDEMO.ivc.blanket import BlanketThicknessBuilder
 from bluemira.geometry.parameterisations import PictureFrame
 from bluemira.geometry.tools import make_circle, signed_distance
 

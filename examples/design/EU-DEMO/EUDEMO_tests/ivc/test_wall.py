@@ -25,11 +25,10 @@ Tests for EUDEMO wall builder (without a divertor).
 import copy
 
 import pytest
-
-from bluemira.builders.EUDEMO.ivc import WallBuilder
+from EUDEMO_builders.ivc import WallBuilder
 
 OPTIMISER_MODULE_REF = "bluemira.geometry.optimisation"
-WALL_MODULE_REF = "bluemira.builders.EUDEMO.ivc.wall"
+WALL_MODULE_REF = "EUDEMO_builders.ivc.wall"
 
 CONFIG = {
     "param_class": f"{WALL_MODULE_REF}::WallPolySpline",

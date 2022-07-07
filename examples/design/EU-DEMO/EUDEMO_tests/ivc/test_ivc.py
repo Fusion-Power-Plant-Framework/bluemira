@@ -27,17 +27,17 @@ import os
 
 import numpy as np
 import pytest
+from EUDEMO_builders.ivc import InVesselComponentBuilder
+from EUDEMO_builders.ivc.wall import WallBuilder
 
 from bluemira.base.error import BuilderError
 from bluemira.base.file import get_bluemira_path
-from bluemira.builders.EUDEMO.ivc import InVesselComponentBuilder
-from bluemira.builders.EUDEMO.ivc.wall import WallBuilder
 from bluemira.equilibria import Equilibrium
 from bluemira.equilibria.find import find_OX_points
 
 DATA = get_bluemira_path("equilibria/test_data", subfolder="tests")
 OPTIMISER_MODULE_REF = "bluemira.geometry.optimisation"
-WALL_MODULE_REF = "bluemira.builders.EUDEMO.ivc.wall"
+WALL_MODULE_REF = "EUDEMO_builders.ivc.wall"
 
 
 class TestInVesselComponentBuilder:

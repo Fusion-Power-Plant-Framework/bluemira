@@ -28,6 +28,8 @@ from __future__ import annotations
 from typing import List, Optional
 
 import numpy as np
+from EUDEMO_builders.equilibria import EUDEMOSingleNullConstraints
+from EUDEMO_builders.pf_coils import make_coilset
 
 import bluemira.utilities.plot_tools as bm_plot_tools
 from bluemira.base.builder import BuildConfig, Builder
@@ -35,8 +37,6 @@ from bluemira.base.components import Component, PhysicalComponent
 from bluemira.base.config import Configuration
 from bluemira.base.error import BuilderError
 from bluemira.base.look_and_feel import bluemira_print
-from bluemira.builders.EUDEMO.equilibria import EUDEMOSingleNullConstraints
-from bluemira.builders.EUDEMO.pf_coils import make_coilset
 from bluemira.display.palettes import BLUE_PALETTE
 from bluemira.equilibria.equilibrium import Equilibrium
 from bluemira.equilibria.grid import Grid

@@ -26,7 +26,7 @@ import pytest
 from scipy.interpolate import interp1d
 
 from bluemira.base.error import BuilderError
-from bluemira.builders.EUDEMO.tools import (
+from bluemira.builders.tools import (
     make_circular_xy_ring,
     pattern_lofted_silhouette,
     pattern_revolved_silhouette,

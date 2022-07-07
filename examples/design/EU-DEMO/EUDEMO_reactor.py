@@ -27,6 +27,13 @@ Perform the EU-DEMO reactor design.
 import pprint as pprint
 
 import matplotlib.pyplot as plt
+from EUDEMO_builders.blanket import BlanketBuilder
+from EUDEMO_builders.divertor import DivertorBuilder
+from EUDEMO_builders.pf_coils import PFCoilsBuilder
+from EUDEMO_builders.plasma import PlasmaBuilder, PlasmaComponent
+from EUDEMO_builders.reactor import EUDEMOReactorDesign
+from EUDEMO_builders.tf_coils import TFCoilsBuilder
+from EUDEMO_builders.vacuum_vessel import VacuumVesselBuilder
 
 from bluemira.base.components import Component
 from bluemira.base.config import Configuration
@@ -35,13 +42,6 @@ from bluemira.base.file import get_bluemira_root
 from bluemira.base.logs import set_log_level
 from bluemira.base.parameter import ParameterEncoder
 from bluemira.builders.cryostat import CryostatBuilder
-from bluemira.builders.EUDEMO.blanket import BlanketBuilder
-from bluemira.builders.EUDEMO.divertor import DivertorBuilder
-from bluemira.builders.EUDEMO.pf_coils import PFCoilsBuilder
-from bluemira.builders.EUDEMO.plasma import PlasmaBuilder, PlasmaComponent
-from bluemira.builders.EUDEMO.reactor import EUDEMOReactorDesign
-from bluemira.builders.EUDEMO.tf_coils import TFCoilsBuilder
-from bluemira.builders.EUDEMO.vacuum_vessel import VacuumVesselBuilder
 from bluemira.builders.radiation_shield import RadiationShieldBuilder
 from bluemira.builders.tf_coils import RippleConstrainedLengthGOP
 from bluemira.builders.thermal_shield import (

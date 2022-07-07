@@ -26,11 +26,11 @@ import os
 
 import numpy as np
 import pytest
+from EUDEMO_builders.ivc import DivertorSilhouetteBuilder
+from EUDEMO_builders.ivc.divertor import LegPosition
 
 from bluemira.base.error import BuilderError
 from bluemira.base.file import get_bluemira_path
-from bluemira.builders.EUDEMO.ivc import DivertorSilhouetteBuilder
-from bluemira.builders.EUDEMO.ivc.divertor import LegPosition
 from bluemira.equilibria import Equilibrium
 from bluemira.equilibria.find import find_OX_points
 from bluemira.geometry.tools import make_polygon, signed_distance

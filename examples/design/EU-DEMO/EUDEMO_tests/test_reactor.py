@@ -30,15 +30,15 @@ import tempfile
 
 import numpy as np
 import pytest
+from EUDEMO_builders.pf_coils import PFCoilsBuilder
+from EUDEMO_builders.plasma import PlasmaBuilder, PlasmaComponent
+from EUDEMO_builders.reactor import EUDEMOReactorDesign
+from EUDEMO_builders.tf_coils import TFCoilsBuilder, TFCoilsComponent
 
 import tests
 from bluemira.base.components import Component
 from bluemira.base.file import get_bluemira_root
 from bluemira.base.logs import get_log_level, set_log_level
-from bluemira.builders.EUDEMO.pf_coils import PFCoilsBuilder
-from bluemira.builders.EUDEMO.plasma import PlasmaBuilder, PlasmaComponent
-from bluemira.builders.EUDEMO.reactor import EUDEMOReactorDesign
-from bluemira.builders.EUDEMO.tf_coils import TFCoilsBuilder, TFCoilsComponent
 from bluemira.geometry.coordinates import Coordinates
 
 PARAMS_DIR = os.path.join(get_bluemira_root(), "tests", "builders", "EUDEMO")

@@ -21,13 +21,9 @@
 
 import numpy as np
 import pytest
+from EUDEMO_builders.pf_coils import make_coil_mapper, make_coilset, make_solenoid
 
 from bluemira.base.error import BuilderError
-from bluemira.builders.EUDEMO.pf_coils import (
-    make_coil_mapper,
-    make_coilset,
-    make_solenoid,
-)
 from bluemira.equilibria.coils import Coil
 from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.parameterisations import PictureFrame, PrincetonD, TripleArc

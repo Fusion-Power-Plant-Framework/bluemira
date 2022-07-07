@@ -26,7 +26,7 @@ from typing import Any, Dict
 from bluemira.base.builder import BuildConfig, Builder, Component
 from bluemira.base.components import PhysicalComponent
 from bluemira.base.error import BuilderError
-from bluemira.builders.EUDEMO.tools import varied_offset
+from bluemira.builders.tools import varied_offset
 from bluemira.geometry.wire import BluemiraWire
 
 

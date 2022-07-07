@@ -39,10 +39,7 @@ repos:
       args: [--check]
       types: [python]
       files: ^examples/
-      exclude: |
-            (?x)^(
-                examples/convert_py_to_ipynb.py |
-            )$
+      exclude: ^(examples/design/EU-DEMO/EUDEMO_builders/|examples/design/EU-DEMO/EUDEMO_tests/|examples/convert_py_to_ipynb.py)
 
 -   repo: https://github.com/psf/black
     rev: 22.3.0
