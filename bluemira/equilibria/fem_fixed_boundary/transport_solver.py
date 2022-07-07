@@ -86,7 +86,7 @@ class PlasmodTransportSolver(TransportSolver):
 
     def __init__(self, **kwargs):
         self.solver = Solver(**kwargs)
-        self.solver.run()
+        self.solver.execute()
         self._x = None
         self._pprime = None
         self._ffprime = None
