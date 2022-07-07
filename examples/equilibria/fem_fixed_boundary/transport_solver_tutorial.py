@@ -22,7 +22,10 @@
 """
 Test for transport solver
 """
+import os
+
 from bluemira.base.config import Configuration
+from bluemira.base.file import get_bluemira_root
 from bluemira.base.logs import set_log_level
 from bluemira.equilibria.fem_fixed_boundary.transport_solver import (
     PlasmodTransportSolver,
@@ -31,7 +34,10 @@ from bluemira.equilibria.fem_fixed_boundary.transport_solver import (
 set_log_level("DEBUG")
 
 PLASMOD_PATH = "/home/ivan/Desktop/bluemira_project/plasmod/bin/"
-binary = f"{PLASMOD_PATH}plasmod"
+PLASMOD_PATH = PLASMOD_PATH = os.path.join(
+    os.path.split(get_bluemira_root())[:-1][0], "plasmod/bin"
+)
+binary = os.path.join(PLASMOD_PATH, "plasmod")
 
 new_params = {
     "A": 3.3,
@@ -54,7 +60,6 @@ for param_name in params.keys():
         param.source = "Plasmod Example"
 
 build_config = {
-    "mode": "run",
     "binary": binary,
 }
 
@@ -62,3 +67,4 @@ plasmod_solver = PlasmodTransportSolver(
     params=params,
     build_config=build_config,
 )
+plasmod_solver.execute()

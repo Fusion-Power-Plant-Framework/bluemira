@@ -27,7 +27,8 @@ from abc import ABC, abstractmethod
 import numpy as np
 from scipy.interpolate import interp1d
 
-from bluemira.codes.plasmod.api import Solver
+from bluemira.codes.plasmod.api import RunMode, Solver
+from bluemira.codes.plasmod.mapping import Profiles
 
 
 class TransportSolver(ABC):
@@ -81,12 +82,11 @@ class NoneTransportSolver(TransportSolver):
 
 class PlasmodTransportSolver(TransportSolver):
     """
-    Plasmod transport solver class
+    PLASMOD transport solver class
     """
 
-    def __init__(self, **kwargs):
-        self.solver = Solver(**kwargs)
-        self.solver.execute()
+    def __init__(self, params, build_config):
+        self.solver = Solver(params, build_config)
         self._x = None
         self._pprime = None
         self._ffprime = None
@@ -96,14 +96,19 @@ class PlasmodTransportSolver(TransportSolver):
         self._volume_in = None
         self._I_p = None
 
+    def execute(self):
+        """
+        Run the PLASMOD transport solver
+        """
+        self.solver.execute(RunMode.RUN)
         # supporting variables
 
         # the normalization on x_phi is made because the x profile given by plasmod is
         # not well normalized and it is given in a range slightly different than [0,1].
 
-        self.__x_phi = self.solver.get_profile("x")
+        self.__x_phi = self.solver.get_profile(Profiles.x)
         self.__x_phi /= np.max(self.__x_phi)
-        self.__psi_plasmod = self.solver.get_profile("psi")
+        self.__psi_plasmod = self.solver.get_profile(Profiles.psi)
         self.__x_psi = np.sqrt(self.__psi_plasmod / self.__psi_plasmod[-1])
 
     def _from_phi_to_psi(self, profile):
@@ -129,7 +134,7 @@ class PlasmodTransportSolver(TransportSolver):
     def pprime(self):
         """Get pprime as function of the magnetic coordinate"""
         if self._pprime is None:
-            data = self._from_phi_to_psi("pprime")
+            data = self._from_phi_to_psi(Profiles.pprime)
             self._pprime = interp1d(
                 self.x, data, kind="linear", fill_value="extrapolate"
             )
@@ -139,7 +144,7 @@ class PlasmodTransportSolver(TransportSolver):
     def ffprime(self):
         """Get ffprime as function of the magnetic coordinate"""
         if self._ffprime is None:
-            data = self._from_phi_to_psi("ffprime")
+            data = self._from_phi_to_psi(Profiles.ffprime)
             self._ffprime = interp1d(
                 self.x, data, kind="linear", fill_value="extrapolate"
             )
@@ -149,7 +154,7 @@ class PlasmodTransportSolver(TransportSolver):
     def psi(self):
         """Get the magnetic coordinate"""
         if self._psi is None:
-            self._psi = self._from_phi_to_psi("psi")
+            self._psi = self._from_phi_to_psi(Profiles.psi)
         return self._psi
 
     @property
