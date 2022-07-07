@@ -30,6 +30,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 from bluemira.base.constants import MU_0
+from bluemira.base.look_and_feel import bluemira_print_flush
 from bluemira.equilibria.fem_fixed_boundary.utilities import (
     ScalarSubFunc,
     plot_scalar_field,
@@ -412,7 +413,9 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
 
             # curr_tot = dolfin.assemble(self.g * dx())
             # print(f"post - curr_tot = {curr_tot} - curr_dens = {self.g}")
-            print(f"iter = {i} eps = {eps} psi_ax : {self.psi_ax}")
+            bluemira_print_flush(
+                f"iter = {i} eps = {eps:.3E} psi_ax : {self.psi_ax:.2f}"
+            )
 
             new_psi = dolfin.Function(self.V)
             new_psi.set_allow_extrapolation(True)

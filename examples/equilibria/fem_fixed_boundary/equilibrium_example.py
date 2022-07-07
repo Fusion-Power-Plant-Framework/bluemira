@@ -61,12 +61,16 @@ build_config = {
     },
 }
 
-Configuration.set_template_parameters([["kappa_u", "kappa_u", "", "dimensionless"]])
-Configuration.set_template_parameters([["kappa_l", "kappa_l", "", "dimensionless"]])
-Configuration.set_template_parameters([["delta_u", "delta_u", "", "dimensionless"]])
-Configuration.set_template_parameters([["delta_l", "delta_l", "", "dimensionless"]])
-Configuration.set_template_parameters([["kappa_95", "kappa_95", "", "dimensionless"]])
-Configuration.set_template_parameters([["delta_95", "delta_95", "", "dimensionless"]])
+Configuration.set_template_parameters(
+    [
+        ["kappa_u", "kappa_u", "", "dimensionless"],
+        ["kappa_l", "kappa_l", "", "dimensionless"],
+        ["delta_u", "delta_u", "", "dimensionless"],
+        ["delta_l", "delta_l", "", "dimensionless"],
+        ["kappa_95", "kappa_95", "", "dimensionless"],
+        ["delta_95", "delta_95", "", "dimensionless"],
+    ]
+)
 
 builder_plasma = MakeParameterisedPlasma(main_params, build_config)
 
@@ -136,4 +140,6 @@ solve_plasmod_fixed_boundary(
     iter_err_max=1e-5,
     theta=1,
     gs_i_theta=1,
+    plot=False,
+    verbose=False,
 )
