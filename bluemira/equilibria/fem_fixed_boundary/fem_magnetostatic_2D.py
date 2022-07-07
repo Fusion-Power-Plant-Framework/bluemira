@@ -326,6 +326,25 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
         self.k = 1
         self.k = curr_target / self._calculate_curr_tot()
 
+    def _plot_current_iteration(self, points, title, i_iter):
+        curr_data = np.array([self.g_func(p) for p in points])
+        self._plot_array(
+            points, curr_data, "J current at iteration", i_iter, contour=False
+        )
+
+    def _plot_array(points, array, title, i_iter, contour=True):
+        axis, cntr, _ = plot_scalar_field(
+            points[:, 0],
+            points[:, 1],
+            array,
+            levels=20,
+            axis=None,
+            tofill=True,
+            contour=False,
+        )
+        plt.title(f"{title} {i_iter}")
+        plt.show()
+
     def solve(
         self,
         pprime,
@@ -345,18 +364,7 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
 
         if verbose_plot:
             self.g_func = self._create_g_func(pprime, ffprime, curr_target)
-            curr_data = np.array([self.g_func(p) for p in points])
-            axis, cntr, _ = plot_scalar_field(
-                points[:, 0],
-                points[:, 1],
-                curr_data,
-                levels=20,
-                axis=None,
-                tofill=True,
-                contour=False,
-            )
-            plt.title("J current at iteration 0")
-            plt.show()
+            self._plot_current_iteration(points, 0)
 
         self.g = self._create_g(pprime, ffprime, curr_target)
         # dx = dolfin.Measure("dx", domain=self.mesh)
@@ -374,27 +382,13 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
             prev_psi = self.psi.vector()[:]
 
             if verbose_plot:
-                curr_data = np.array([self.g_func(p) for p in points])
-                axis, cntr, _ = plot_scalar_field(
-                    points[:, 0],
-                    points[:, 1],
-                    curr_data,
-                    levels=20,
-                    axis=None,
-                    tofill=True,
-                    contour=False,
-                )
-                plt.title(f"J current at iteration {i}")
-                plt.show()
+                self._plot_current_iteration(points, i)
 
             prev = np.array([self.psi_norm_2d(p) for p in points])
 
             if verbose_plot:
-                axis, cntr, _ = plot_scalar_field(
-                    points[:, 0], points[:, 1], prev, levels=20, axis=None, tofill=True
-                )
-                plt.title(f"Normalized magnetic coordinate at iteration {i}")
-                plt.show()
+                self._plot_array(prev, "Normalized magnetic coordinate at iteration", i)
+
             # print(f"Magnetic coordinate range = [{np.min(prev)}:{np.max(prev)}]")
 
             # prev = np.array([self.psi(p) for p in points])
@@ -411,11 +405,7 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
             diff = new - prev
 
             if verbose_plot:
-                axis, cntr, _ = plot_scalar_field(
-                    points[:, 0], points[:, 1], diff, levels=20, axis=None, tofill=True
-                )
-                plt.title(f"GS error at iteration {i}")
-                plt.show()
+                self._plot_array(diff, "GS error at iteration", i)
 
             # diff = self.psi.compute_vertex_values() - prev
             eps = np.linalg.norm(diff, ord=2) / np.linalg.norm(new, ord=2)
