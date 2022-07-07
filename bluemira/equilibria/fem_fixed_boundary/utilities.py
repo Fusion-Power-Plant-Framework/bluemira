@@ -159,6 +159,107 @@ def plot_profile(x, prof, var_name, var_unit):
     plt.show()
 
 
+from matplotlib._tri import TriContourGenerator
+from matplotlib.tri.triangulation import Triangulation
+
+
+def get_tricontours(x, z, array, value):
+    """
+    Get the contours of a value in a triangular set of points.
+
+    Parameters
+    ----------
+    x: np.array(n, m)
+        The x value array
+    z: np.array(n, m)
+        The z value array
+    array: np.array(n, m)
+        The value array
+    value: float
+        The value of the desired contour in the array
+
+    Returns
+    -------
+    value_loop: np.array(ni, mi)
+        The points of the value contour in the array
+    """
+
+    tri = Triangulation(x, z)
+    tcg = TriContourGenerator(tri.get_cpp_triangulation(), array)
+    return tcg.create_contour(value)[0][0]
+
+
+def calculate_plasma_shape_params_new(points, psi, levels):
+    """
+    Calculate the plasma parameters (Rgeo, kappa, delta) for a given magnetic
+    isoflux.
+
+    Parameters
+    ----------
+    points: Iterable
+        2D points on which psi has been calculated
+    psi: Iterable
+        scalar value of the plasma magnetic poloidal flux at points
+    levels: Iterable
+        values that identify the isoflux curve at which the plasma parameters are
+        calculated
+
+    Returns
+    -------
+    r_geo: Iterable
+        array of averaged radial coordinate of the isoflux curves
+    kappa:
+        array of the kappa value of the isoflux curves
+    delta:
+        array of the delta value of the isoflux curves
+    """
+    r_geo = np.zeros(len(levels))
+    kappa = np.zeros(len(levels))
+    delta = np.zeros(len(levels))
+
+    tri = Triangulation(points[:, 0], points[:, 1])
+    tcg = TriContourGenerator(tri.get_cpp_triangulation(), psi)
+
+    for i, value in enumerate(levels):
+        vertices = tcg.create_contour(value)[0][0]
+        x = vertices.T[0]
+        y = x * 0
+        z = vertices.T[1]
+        vertices = Coordinates({"x": x, "y": y, "z": z})
+        wire = interpolate_bspline(vertices, "psi_95", True)
+        interp_points = wire.discretize(1000)
+
+        ind_z_max = np.argmax(interp_points.z)
+        pu = interp_points.T[ind_z_max]
+        ind_z_min = np.argmin(interp_points.z)
+        pl = interp_points.T[ind_z_min]
+        ind_x_max = np.argmax(interp_points.x)
+        po = interp_points.T[ind_x_max]
+        ind_x_min = np.argmin(interp_points.x)
+        pi = interp_points.T[ind_x_min]
+
+        # geometric center of a magnetic flux surface
+        r_geo[i] = (po[0] + pi[0]) / 2
+
+        # elongation
+        a = (po[0] - pi[0]) / 2
+        b = (pu[2] - pl[2]) / 2
+        if a == 0:
+            kappa[i] = 1
+        else:
+            kappa[i] = b / a
+
+        # triangularity
+        c = r_geo[i] - pl[0]
+        d = r_geo[i] - pu[0]
+        if a == 0:
+            delta[i] = 0
+        else:
+            delta[i] = (c + d) / 2 / a
+
+    return r_geo, kappa, delta
+
+
 def calculate_plasma_shape_params(points, psi, levels):
     """
     Calculate the plasma parameters (Rgeo, kappa, delta) for a given magnetic
@@ -199,6 +300,9 @@ def calculate_plasma_shape_params(points, psi, levels):
 
     for i in range(len(cntr.collections)):
         vertices = cntr.collections[i].get_paths()[0].vertices
+        check = get_tricontours(points[:, 0], points[:, 1], psi, levels[i])
+        print(np.average(vertices.T[0]))
+        print(np.average(check.T[0]))
         x = vertices.T[0]
         y = x * 0
         z = vertices.T[1]

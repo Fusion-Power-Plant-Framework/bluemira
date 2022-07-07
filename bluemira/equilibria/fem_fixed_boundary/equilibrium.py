@@ -181,7 +181,7 @@ def solve_plasmod_fixed_boundary(
         gs_solver = FemGradShafranovFixedBoundary(mesh, p_order=p_order)
 
         bluemira_print("Solving fixed boundary Grad-Shafranov...")
-        # solve the Grad-Shafranov equation
+
         gs_solver.solve(
             plasmod_solver.pprime,
             plasmod_solver.ffprime,
