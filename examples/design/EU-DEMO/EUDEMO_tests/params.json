@@ -8,9 +8,6 @@
   "tk_tf_ins": 0.08,
   "tk_bb_ib": 0.755,
   "tk_bb_ob": 1.275,
-  "g_tf_pf": 0.05,
   "C_Ejima": 0.3,
-  "eta_nb": 0.4,
-  "LPangle": -15,
-  "w_g_support": 1.5
+  "eta_nb": 0.4
 }
