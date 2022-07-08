@@ -22,6 +22,8 @@
 """
 An example that shows how to set up the problem for the fixed boundary equilibrium.
 """
+
+# %%
 import os
 
 from bluemira.base.config import Configuration
@@ -32,10 +34,9 @@ from bluemira.equilibria.fem_fixed_boundary.equilibrium import (
     solve_plasmod_fixed_boundary,
 )
 
-# ------------------------------------------------------------------------------
 set_log_level("DEBUG")
-# ------------------------------------------------------------------------------
 
+# %%
 main_params = {
     "R_0": 8.9830e00,
     "A": 3.1,
@@ -139,7 +140,7 @@ solve_plasmod_fixed_boundary(
     niter_max=15,
     iter_err_max=1e-5,
     theta=1,
-    gs_relaxation=0.2,
+    gs_relaxation=0.05,
     plot=False,
     verbose=False,
 )
