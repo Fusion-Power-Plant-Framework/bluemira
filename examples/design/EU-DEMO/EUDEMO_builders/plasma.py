@@ -108,7 +108,6 @@ class PlasmaBuilder(Builder):
         "CS_jmax",
         "CS_bmax",
         "C_Ejima",
-        "reactor_type",
         "plasma_type",
     ]
 

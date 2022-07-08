@@ -198,9 +198,8 @@ class TFCoilsBuilder(OptimisedShapeBuilder):
         )
         self._params.add_parameter(
             "r_tf_current_ib",
-            "Radius of the TF coil current centroid on the inboard",
-            r_current_in_board,
-            "m",
+            value=r_current_in_board,
+            unit="m",
             source="bluemira",
         )
         shape_params["x1"] = {"value": r_current_in_board, "fixed": True}
