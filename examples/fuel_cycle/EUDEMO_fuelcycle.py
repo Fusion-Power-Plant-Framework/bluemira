@@ -23,6 +23,8 @@
 A typical fuel cycle result for an EU-DEMO reference point
 """
 
+# %%
+
 from bluemira.base.parameter import ParameterFrame
 from bluemira.display.auto_config import plot_defaults
 from bluemira.fuel_cycle.analysis import FuelCycleAnalysis
@@ -32,21 +34,19 @@ from bluemira.fuel_cycle.timeline_tools import (
     GompertzLearningStrategy,
     LogNormalAvailabilityStrategy,
 )
-from bluemira.fuel_cycle.tools import (
-    convert_flux_to_flow,
-    n_DD_reactions,
-    n_DT_reactions,
-)
+from bluemira.fuel_cycle.tools import convert_flux_to_flow
+from bluemira.plasma_physics.reactions import n_DD_reactions, n_DT_reactions
 from bluemira.utilities.tools import set_random_seed
 
 plot_defaults()
 
-# First let's get a reactor configuration (EU-DEMO 2015) and make a LifeCycle object
+# %%[markdown]
+
+# First let's set up a configuration with some values (a la EU-DEMO 2015)
+
+# %%
 p_fus_DT = 2037
 p_fus_DD = 3
-
-
-# Select the reactor, blanket, and flux scenario values to use:
 
 baseline_not_critical = True
 HCPB_not_WCLL = True
@@ -60,7 +60,6 @@ else:
     A_global = 0.2
     TBR = 1.02
     f_dir = 0.6
-
 
 # fmt:off
 lifecycle_config = ParameterFrame([
@@ -88,6 +87,18 @@ lifecycle_config = ParameterFrame([
 ])
 # fmt:on
 
+# %%[markdown]
+
+# Now we set a LifeCycle object in order generate some pseudo-randomised timelines.
+
+# We're going to define a LearningStrategy to determine how the operational availability
+# of our reactor improves over time.
+
+# We're going to define an AvailabilityStrategy to determine how the durations in
+# between pulses are distributed.
+
+# %%
+
 lifecycle_inputs = {}
 
 # We need to define some stragies to define the pseudo-random timelines
@@ -103,8 +114,12 @@ lifecycle = LifeCycle(
     lifecycle_config, learning_strategy, availability_strategy, lifecycle_inputs
 )
 
-# We can use this LifeCycle to make pseudo-randomised timelines. Let's set a
+# %%[markdown]
+
+# Now we use the LifeCycle to generate pseudo-randomised timelines. Let's set a
 # random seed number first to get repeatable results
+
+# %%
 set_random_seed(2358203947)
 
 # Let's do 50 runs Monte Carlo
@@ -112,12 +127,16 @@ set_random_seed(2358203947)
 n = 50
 time_dicts = [lifecycle.make_timeline().to_dict() for _ in range(n)]
 
+# %%[markdown]
+
 # Now let's set up a TFVSystem
 
 # First we need to get some input parameters
 
 # Some conversions from inventories to residence times
 # (as discussed with Jonas Schwenzer, KIT)
+
+# %%
 m_exhaust_systems = 0.11
 exhaust_influx = 3.28229059e-05
 t_exh = m_exhaust_systems / exhaust_influx
@@ -195,21 +214,35 @@ tfv_config = ParameterFrame([
 ])
 # fmt:on
 
+# %%[markdown]
+
+# Now we set up a fuel cycle model
 
 # We can run a single model and look at a typical result
+
+# %%
+
 model = EUDEMOFuelCycleModel(tfv_config, {})
 model.run(time_dicts[0])
 model.plot()
 
+# %%[markdown]
 # Now, let's run the fuel cycle model for all the timelines we generated
+
+# %%
 tfv_analysis = FuelCycleAnalysis(model)
 tfv_analysis.run_model(time_dicts)
 
+# %%[markdown]
 # And the distributions for the start-up inventory and doubling time:
+
+# %%
 tfv_analysis.plot()
 
+# %%[markdown]
 # And finally, you can get the desired statistical results:
 
+# %%
 m_T_start_95 = tfv_analysis.get_startup_inventory("95th")
 t_d_95 = tfv_analysis.get_doubling_time("95th")
 
