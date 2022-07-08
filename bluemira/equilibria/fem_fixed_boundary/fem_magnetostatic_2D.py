@@ -368,8 +368,7 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
             self._plot_current_iteration(points, 0)
 
         self.g = self._create_g(pprime, ffprime, curr_target)
-        # dx = dolfin.Measure("dx", domain=self.mesh)
-        # curr_tot = dolfin.assemble(self.g * dx())
+
         super().solve(
             self.g, dirichlet_bc_function, dirichlet_marker, neumann_bc_function
         )
@@ -402,7 +401,6 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
             )
 
             new = np.array([self.psi_norm_2d(p) for p in points])
-            # new = np.array([self.psi(p) for p in points])
             diff = new - prev
 
             if verbose_plot:
