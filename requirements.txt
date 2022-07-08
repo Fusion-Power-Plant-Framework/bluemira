@@ -11,6 +11,7 @@ joblib==1.1.0
 kiwisolver==1.4.3
 llvmlite==0.38.1
 matplotlib==3.5.2
+meshio[all]==5.3.4
 nlopt==2.7.1
 numba==0.55.2
 numba-scipy==0.3.1
