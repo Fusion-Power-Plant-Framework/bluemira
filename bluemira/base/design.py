@@ -71,7 +71,7 @@ class DesignABC(abc.ABC):
         self._params.update_kw_parameters(params)
 
     @abc.abstractproperty
-    def configuation(self) -> type(Configuration):
+    def configuration(self) -> type(Configuration):
         """
         Configuration
         """
@@ -348,7 +348,7 @@ class ReactorDesign(DesignABC):
     _build_config: BuildConfig
     _builders: Dict[str, Builder]
     _file_manager: FileManager
-    configuation: Configuration = Configuration
+    configuration: Configuration = Configuration
 
     def __init__(
         self,
@@ -376,7 +376,7 @@ class ReactorDesign(DesignABC):
         # For now the params can come from any parameters defined in Configuration.
         # In the future we probably want to register the Builders early and get the
         # parameters that the Builders need.
-        self._required_params |= set(self.configuation().keys())
+        self._required_params |= set(self.configuration().keys())
 
         self._reference_data_root: str = self._build_config.get(
             "reference_data_root", f"{BM_ROOT}/data"
