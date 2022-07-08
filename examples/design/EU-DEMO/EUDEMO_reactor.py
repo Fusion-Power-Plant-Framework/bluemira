@@ -28,6 +28,7 @@ import pprint as pprint
 
 import matplotlib.pyplot as plt
 from EUDEMO_builders.blanket import BlanketBuilder
+from EUDEMO_builders.config import EUDEMOConfiguration
 from EUDEMO_builders.divertor import DivertorBuilder
 from EUDEMO_builders.pf_coils import PFCoilsBuilder
 from EUDEMO_builders.plasma import PlasmaBuilder, PlasmaComponent
@@ -36,7 +37,6 @@ from EUDEMO_builders.tf_coils import TFCoilsBuilder
 from EUDEMO_builders.vacuum_vessel import VacuumVesselBuilder
 
 from bluemira.base.components import Component
-from bluemira.base.config import Configuration
 from bluemira.base.error import ParameterError
 from bluemira.base.file import get_bluemira_root
 from bluemira.base.logs import set_log_level
@@ -89,7 +89,7 @@ set_log_level("DEBUG")
 
 # %%
 params = {}
-for param in Configuration.params:
+for param in EUDEMOConfiguration.params:
     params[param[0]] = {}
     params[param[0]]["name"] = param[1]
     params[param[0]]["value"] = param[2]
@@ -154,11 +154,11 @@ config = {
     "tk_tf_ins": 0.08,
     "tk_bb_ib": 0.755,
     "tk_bb_ob": 1.275,
-    "g_tf_pf": 0.05,
+    # "g_tf_pf": 0.05,
     "C_Ejima": 0.3,
     "eta_nb": 0.4,
-    "LPangle": -15,
-    "w_g_support": 1.5,
+    # "LPangle": -15,
+    # "w_g_support": 1.5,
 }
 
 for key, val in config.items():

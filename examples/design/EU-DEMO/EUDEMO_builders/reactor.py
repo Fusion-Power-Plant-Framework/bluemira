@@ -26,6 +26,7 @@ Perform the EU-DEMO design.
 import os
 
 from EUDEMO_builders.blanket import BlanketBuilder
+from EUDEMO_builders.config import EUDEMOConfiguration
 from EUDEMO_builders.divertor import DivertorBuilder
 from EUDEMO_builders.ivc import InVesselComponentBuilder
 from EUDEMO_builders.ivc.ivc import build_ivc_xz_shapes
@@ -67,6 +68,7 @@ class EUDEMOReactorDesign(ReactorDesign):
     CRYOSTAT = "Cryostat"
     RADIATION_SHIELD = "Radiation Shield"
     POWER_CYCLE = "Power Cycle"
+    configuration = EUDEMOConfiguration
 
     def run(self) -> Component:
         """
