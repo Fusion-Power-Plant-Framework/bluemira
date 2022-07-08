@@ -139,7 +139,7 @@ solve_plasmod_fixed_boundary(
     niter_max=15,
     iter_err_max=1e-5,
     theta=1,
-    gs_i_theta=1,
+    gs_relaxation=0.2,
     plot=False,
     verbose=False,
 )
