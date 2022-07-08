@@ -1136,9 +1136,9 @@
         "unit": "dimensionless"
       },
       "PLASMOD": {
-        "name": "rli",
+        "name": "k",
         "recv": true,
-        "send": false
+        "send": true
       }
     }
   },
@@ -1172,6 +1172,11 @@
         "send": true,
         "recv": false,
         "unit": "dimensionless"
+      },
+      "PLASMOD": {
+        "name": "k95",
+        "recv": false,
+        "send": true
       }
     }
   },
@@ -1441,12 +1446,6 @@
     "source": "Input",
     "description": "Gap between plug and radiation shield"
   },
-  "shaf_shift": {
-    "name": "Shafranov shift of plasma (geometric=>magnetic)",
-    "value": 0.5,
-    "unit": "m",
-    "source": "equilibria"
-  },
   "sigma_tf_case_max": {
     "name": "Maximum von Mises stress in the TF coil case nose",
     "value": 550000000.0,
@@ -1486,11 +1485,6 @@
         "send": false,
         "recv": true,
         "unit": "s"
-      },
-      "PLASMOD": {
-        "name": "taueff",
-        "recv": true,
-        "send": false
       }
     }
   },
@@ -1505,6 +1499,11 @@
         "send": false,
         "recv": false,
         "unit": "s"
+      },
+      "PLASMOD": {
+        "name": "taueff",
+        "recv": true,
+        "send": false
       }
     }
   },
