@@ -48,7 +48,7 @@ def solve_plasmod_fixed_boundary(
     niter_max=30,
     iter_err_max=1e-5,
     theta=0.8,
-    gs_i_theta=0.5,
+    gs_relaxation=0.5,
     plot=False,
     verbose=False,
 ):
@@ -80,7 +80,7 @@ def solve_plasmod_fixed_boundary(
         convergence maximum error to stop the iteration
     theta: float
         iteration relaxing factor
-    gs_i_theta: float
+    gs_relaxation: float
         FemGradShafranovFixedBoundary iteration relaxing factor
     plot: bool
         Whether or not to plot
@@ -188,7 +188,7 @@ def solve_plasmod_fixed_boundary(
             plasmod_solver.I_p,
             tol=gs_options["tol"],
             max_iter=gs_options["max_iter"],
-            i_theta=gs_i_theta,
+            relaxation=gs_relaxation,
             verbose_plot=gs_options["verbose_plot"],
         )
 

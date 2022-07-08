@@ -23,11 +23,11 @@
 Example on the application of the GS solver for a Johner plasma parametrization
 """
 
+# %%
 import dolfin
 import matplotlib.pyplot as plt
 import numpy as np
 
-# %%
 from bluemira.builders.plasma import MakeParameterisedPlasma
 from bluemira.equilibria.fem_fixed_boundary.fem_magnetostatic_2D import (
     FemGradShafranovFixedBoundary,

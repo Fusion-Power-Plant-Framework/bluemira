@@ -327,7 +327,7 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
         self.k = 1
         self.k = curr_target / self._calculate_curr_tot()
 
-    def _plot_current_iteration(self, points, title, i_iter):
+    def _plot_current_iteration(self, points, i_iter):
         curr_data = np.array([self.g_func(p) for p in points])
         self._plot_array(
             points, curr_data, "J current at iteration", i_iter, contour=False
@@ -356,7 +356,7 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
         neumann_bc_function=None,
         tol=1e-5,
         max_iter=10,
-        i_theta=1,
+        relaxation=1,
         verbose=False,
         verbose_plot=False,
     ):
@@ -420,9 +420,9 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
             new_psi = dolfin.Function(self.V)
             new_psi.set_allow_extrapolation(True)
 
-            self.psi.vector()[:] = (
-                i_theta * self.psi.vector()[:] + (1 - i_theta) * prev_psi
-            )
+            self.psi.vector()[:] = (1 - relaxation) * self.psi.vector()[
+                :
+            ] + relaxation * prev_psi
 
             self._update_curr(curr_target)
 
