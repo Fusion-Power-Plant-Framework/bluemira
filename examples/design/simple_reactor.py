@@ -19,6 +19,11 @@
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 
+"""
+A simple user-facing reactor example, showing some of the building blocks, and how to
+combine them.
+"""
+
 # %%
 from bluemira.base.builder import Builder
 from bluemira.base.components import Component, PhysicalComponent
@@ -37,11 +42,6 @@ from bluemira.geometry.tools import (
 from bluemira.geometry.wire import BluemiraWire
 from bluemira.utilities.opt_problems import OptimisationConstraint, OptimisationObjective
 from bluemira.utilities.optimiser import Optimiser, approx_derivative
-
-"""
-A simple user-facing reactor example, showing some of the building blocks, and how to
-combine them.
-"""
 
 # %%[markdown]
 
@@ -126,7 +126,7 @@ class PlasmaBuilder(Builder):
 
     def reinitialise(self, params, lcfs_wire: BluemiraWire) -> None:
         """
-        This is hopefully not going to be a problem for much longer. Please ignore.
+        Hopefully not going to be a problem for much longer. Please ignore.
         """
         self.wire = lcfs_wire
         return super().reinitialise(params)
@@ -171,7 +171,7 @@ class TFCoilBuilder(Builder):
 
     def reinitialise(self, params, centreline) -> None:
         """
-        This is hopefully not going to be a problem for much longer. Please ignore.
+        Hopefully not going to be a problem for much longer. Please ignore.
         """
         super().reinitialise(params)
         self.centreline = centreline
