@@ -176,10 +176,11 @@ class TFCoilBuilder(Builder):
     def build_xz(self):
         inner = offset_wire(self.centreline, -0.5 * self.params.tf_wp_width.value)
         outer = offset_wire(self.centreline, 0.5 * self.params.tf_wp_width.value)
-        return PhysicalComponent("Winding pack", BluemiraFace(outer, inner))
+        return PhysicalComponent("Winding pack", BluemiraFace([outer, inner]))
 
     def build_xyz(self):
         wp_xs = self.make_tf_wp_xs()
+        wp_xs.translate((self.centreline.bounding_box.x_min, 0, 0))
         volume = sweep_shape(wp_xs, self.centreline)
         return PhysicalComponent("Winding pack", volume)
 
@@ -192,7 +193,7 @@ class TFCoilBuilder(Builder):
 
 
 class MyTFCoilOptProblem(GeometryOptimisationProblem):
-    def __init__(self, geometry_parameterisation, lcfs, optimiser):
+    def __init__(self, geometry_parameterisation, lcfs, optimiser, min_distance):
         objective = OptimisationObjective(
             minimise_length,
             f_objective_args={"parameterisation": geometry_parameterisation},
@@ -203,7 +204,7 @@ class MyTFCoilOptProblem(GeometryOptimisationProblem):
                 f_constraint_args={
                     "parameterisation": geometry_parameterisation,
                     "lcfs": lcfs,
-                    "min_distance": 1.0,
+                    "min_distance": min_distance,
                     "ad_args": {},
                 },
                 tolerance=1e-6,
@@ -218,7 +219,7 @@ class MyTFCoilOptProblem(GeometryOptimisationProblem):
     def constraint_value(vector, parameterisation, lcfs, min_distance):
         parameterisation.variables.set_values_from_norm(vector)
         shape = parameterisation.create_shape()
-        return distance_to(shape, lcfs)[0] - min_distance
+        return min_distance - distance_to(shape, lcfs)[0]
 
     @staticmethod
     def f_constraint(
@@ -232,13 +233,12 @@ class MyTFCoilOptProblem(GeometryOptimisationProblem):
                 vector,
                 f0=constraint,
                 args=(parameterisation, lcfs, min_distance),
+                bounds=[0, 1],
             )
         return constraint
 
     def optimise(self, x0=None):
         return super().optimise(x0)
-
-        return self._parameterisation
 
 
 # %%[markdown]
@@ -277,12 +277,19 @@ lcfs = (
     .shape.boundary[0]
 )
 
-parameterisation = PrincetonD(var_dict={"x1": {"value": 4.0, "fixed": True}})
+parameterisation = PrincetonD(
+    var_dict={
+        "x1": {"value": 3.0, "fixed": True},
+        "x2": {"value": 15, "lower_bound": 12},
+    }
+)
 my_tf_coil_opt_problem = MyTFCoilOptProblem(
     parameterisation,
     lcfs,
     optimiser=Optimiser("SLSQP", opt_conditions={"max_eval": 5000, "ftol_rel": 1e-6}),
+    min_distance=1.0,
 )
-tf_centreline = my_tf_coil_opt_problem.optimise()
-tf_coil_builder = TFCoilBuilder(params, tf_centreline.create_shape())
+tf_centreline = my_tf_coil_opt_problem.optimise().create_shape()
+tf_coil_builder = TFCoilBuilder(params, tf_centreline)
 my_reactor.add_child(tf_coil_builder.build())
+my_reactor.show_cad()
