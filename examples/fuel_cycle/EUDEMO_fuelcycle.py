@@ -34,11 +34,8 @@ from bluemira.fuel_cycle.timeline_tools import (
     GompertzLearningStrategy,
     LogNormalAvailabilityStrategy,
 )
-from bluemira.fuel_cycle.tools import (
-    convert_flux_to_flow,
-    n_DD_reactions,
-    n_DT_reactions,
-)
+from bluemira.fuel_cycle.tools import convert_flux_to_flow
+from bluemira.plasma_physics.reactions import n_DD_reactions, n_DT_reactions
 from bluemira.utilities.tools import set_random_seed
 
 plot_defaults()
