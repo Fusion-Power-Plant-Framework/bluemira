@@ -23,8 +23,18 @@ from bluemira.base.builder import Builder
 from bluemira.base.components import Component, PhysicalComponent
 from bluemira.base.parameter import ParameterFrame
 from bluemira.geometry.face import BluemiraFace
-from bluemira.geometry.tools import make_polygon, offset_wire, revolve_shape, sweep_shape
+from bluemira.geometry.optimisation import GeometryOptimisationProblem
+from bluemira.geometry.parameterisations import GeometryParameterisation
+from bluemira.geometry.tools import (
+    distance_to,
+    make_polygon,
+    offset_wire,
+    revolve_shape,
+    sweep_shape,
+)
 from bluemira.geometry.wire import BluemiraWire
+from bluemira.utilities.opt_problems import OptimisationConstraint, OptimisationObjective
+from bluemira.utilities.optimiser import approx_derivative
 
 """
 A simple user-facing reactor example, showing some of the building blocks, and how to
@@ -132,3 +142,78 @@ class TFCoilBuilder(Builder):
         wp_xs = self.make_tf_wp_xs()
         volume = sweep_shape(wp_xs, self.centreline)
         return PhysicalComponent("Winding pack", volume)
+
+
+# %%[markdown]
+
+# Now we want to define a way to optimise the TF coil shape.
+
+# %%
+
+
+class MyTFCoilOptProblem(GeometryOptimisationProblem):
+    def __init__(self, geometry_parameterisation, lcfs, optimiser):
+        objective = OptimisationObjective(
+            self.f_objective,
+            f_objective_args={"parameterisation": geometry_parameterisation},
+        )
+        constraints = [
+            OptimisationConstraint(
+                self.f_constraint,
+                f_constraint_args={
+                    "parameterisation": geometry_parameterisation,
+                    "lcfs": lcfs,
+                    "min_distance": 1.0,
+                },
+                tolerance=1e-6,
+                constraint_type="inequality",
+            )
+        ]
+        super().__init__(
+            geometry_parameterisation, optimiser, objective, constraints=constraints
+        )
+
+    @staticmethod
+    def objective_value(vector, parameterisation: GeometryParameterisation):
+        parameterisation.variables.set_values_from_norm(vector)
+        shape = parameterisation.create_shape()
+        value = shape.length
+        return value
+
+    @staticmethod
+    def f_objective(vector, grad, parameterisation):
+        function = MyTFCoilOptProblem.objective_value
+        value = function(vector, parameterisation)
+        if grad.size > 0:
+            grad[:] = approx_derivative(
+                function,
+                vector,
+                f0=value,
+                args=(parameterisation),
+            )
+
+        return value
+
+    @staticmethod
+    def constraint_value(vector, parameterisation, lcfs, min_distance):
+        parameterisation.variables.set_values_from_norm(vector)
+        shape = parameterisation.create_shape()
+        return distance_to(shape, lcfs)[0] - min_distance
+
+    @staticmethod
+    def f_constraint(constraint, vector, grad, parameterisation, lcfs, min_distance):
+        function = MyTFCoilOptProblem.constraint_value
+        constraint[:] = function(vector, parameterisation, lcfs, min_distance)
+        if grad.size > 0:
+            grad[:] = approx_derivative(
+                function,
+                vector,
+                f0=constraint,
+                args=(parameterisation, lcfs, min_distance),
+            )
+        return constraint
+
+    def optimise(self, x0=None):
+        x_star = super().optimise(x0)
+        self._parameterisation.variables.set_values_from_norm(x_star)
+        return self._parameterisation
