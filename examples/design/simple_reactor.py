@@ -24,7 +24,7 @@ from bluemira.base.components import Component, PhysicalComponent
 from bluemira.base.parameter import ParameterFrame
 from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.optimisation import GeometryOptimisationProblem
-from bluemira.geometry.parameterisations import GeometryParameterisation
+from bluemira.geometry.parameterisations import GeometryParameterisation, PrincetonD
 from bluemira.geometry.tools import (
     distance_to,
     make_polygon,
@@ -34,7 +34,7 @@ from bluemira.geometry.tools import (
 )
 from bluemira.geometry.wire import BluemiraWire
 from bluemira.utilities.opt_problems import OptimisationConstraint, OptimisationObjective
-from bluemira.utilities.optimiser import approx_derivative
+from bluemira.utilities.optimiser import Optimiser, approx_derivative
 
 """
 A simple user-facing reactor example, showing some of the building blocks, and how to
@@ -217,3 +217,42 @@ class MyTFCoilOptProblem(GeometryOptimisationProblem):
         x_star = super().optimise(x0)
         self._parameterisation.variables.set_values_from_norm(x_star)
         return self._parameterisation
+
+
+R_0 = 9.0
+
+
+build_config = {
+    "Plasma": {
+        "runmode": "run",
+        "class": "",
+        "local_params": {"radius": 4.0},
+    },
+    "TF coils": {
+        "runmode": "run",  # ["read", "read", "mock"]
+        "param_class": "PrincetonD",
+        "params": {"R_0": 9.0},
+    },
+    "PF coils": {},
+}
+
+
+my_reactor = Component()
+
+plasma_builder = PlasmaBuilder(params.to_dict(), build_config["Plasma"])
+my_reactor.add_child(plasma_builder.build())
+
+lcfs = (
+    my_reactor.get_component("Plasma")
+    .get_component("xz")
+    .get_component("LCFS")
+    .boundary[0]
+)
+my_tf_coil_opt_problem = MyTFCoilOptProblem(
+    PrincetonD(),
+    lcfs,
+    optimiser=Optimiser("SLSQP", opt_conditions={"max_eval": 5000, "ftol_rel": 1e-6}),
+)
+tf_centreline = my_tf_coil_opt_problem.optimise()
+tf_coil_builder = TFCoilBuilder(params, build_config["TF coils"], tf_centreline)
+my_reactor.add_child(tf_coil_builder.build())
