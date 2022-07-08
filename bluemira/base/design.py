@@ -292,7 +292,7 @@ class Design(DesignABC):
     _params: Configuration
     _build_config: Dict[str, BuildConfig]
     _builders: Dict[str, Builder]
-    configuation: Configuration = Configuration
+    configuration: Configuration = Configuration
 
     def run(self) -> Component:
         """
