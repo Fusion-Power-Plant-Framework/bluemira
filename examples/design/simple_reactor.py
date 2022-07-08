@@ -23,8 +23,19 @@ from bluemira.base.builder import Builder
 from bluemira.base.components import Component, PhysicalComponent
 from bluemira.base.parameter import ParameterFrame
 from bluemira.geometry.face import BluemiraFace
-from bluemira.geometry.tools import revolve_shape
+from bluemira.geometry.tools import make_polygon, offset_wire, revolve_shape, sweep_shape
 from bluemira.geometry.wire import BluemiraWire
+
+"""
+A simple user-facing reactor example, showing some of the building blocks, and how to
+combine them.
+"""
+
+# %%[markdown]
+
+# Let's set up some parameters that we're going to use in our `ReactorDesign`.
+
+# %%
 
 params = ParameterFrame.from_list(
     [
@@ -50,6 +61,13 @@ params = ParameterFrame.from_list(
 # fmt: on
 
 
+# %%[markdown]
+
+# We need to define some `Builder`s for our various `Components`.
+
+# %%
+
+
 class PlasmaBuilder(Builder):
     _name = "PlasmaComponent"
 
@@ -73,3 +91,44 @@ class PlasmaBuilder(Builder):
         lcfs = self.build_xz().shape
         shape = revolve_shape(lcfs, degree=359)
         return PhysicalComponent("LCFS", shape)
+
+
+class TFCoilBuilder(Builder):
+    _required_params = ["tf_wp_width", "tf_wp_depth"]
+
+    def __init__(self, params, build_config, centreline):
+        super().__init__(params, build_config, centreline)
+
+    def reinitialise(self, params, centreline) -> None:
+        super().reinitialise(params)
+        self.centreline = centreline
+
+    def make_tf_wp_xs(self):
+        width = 0.5 * self.params.tf_wp_width.value
+        depth = 0.5 * self.params.tf_wp_depth.value
+        wire = make_polygon(
+            {
+                "x": [-width, width, width, -width],
+                "y": [-depth, -depth, depth, depth],
+                "z": 0.0,
+            },
+            closed=True,
+        )
+        return wire
+
+    def build(self) -> Component:
+        component = super().build()
+        component.add_child(self.build_xz())
+        component.add_child(self.build_xyz())
+
+        return component
+
+    def build_xz(self):
+        inner = offset_wire(self.centreline, -0.5 * self.params.tk_tf_wp)
+        outer = offset_wire(self.centreline, 0.5 * self.params.tk_tf_wp)
+        return PhysicalComponent("Winding pack", BluemiraFace(outer, inner))
+
+    def build_xyz(self):
+        wp_xs = self.make_tf_wp_xs()
+        volume = sweep_shape(wp_xs, self.centreline)
+        return PhysicalComponent("Winding pack", volume)
