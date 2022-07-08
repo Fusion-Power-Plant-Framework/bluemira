@@ -19,11 +19,13 @@
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 
+# %%
 from bluemira.base.builder import Builder
 from bluemira.base.components import Component, PhysicalComponent
 from bluemira.base.parameter import ParameterFrame
+from bluemira.equilibria.shapes import JohnerLCFS
 from bluemira.geometry.face import BluemiraFace
-from bluemira.geometry.optimisation import GeometryOptimisationProblem
+from bluemira.geometry.optimisation import GeometryOptimisationProblem, minimise_length
 from bluemira.geometry.parameterisations import GeometryParameterisation, PrincetonD
 from bluemira.geometry.tools import (
     distance_to,
@@ -61,8 +63,7 @@ params = ParameterFrame.from_list(
         ["phi_neg_u", "", 0, "degree", None, "Input", None],
         ["phi_pos_u", "", 0, "degree", None, "Input", None],
         ["phi_neg_l", "", 0, "degree", None, "Input", None],
-        ["phi_pos_u", "", 0, "degree", None, "Input", None],
-        ["phi_pos_u", "", 0, "degree", None, "Input", None],
+        ["phi_pos_l", "", 0, "degree", None, "Input", None],
         # TF coil parameters
         ["tf_wp_width", "Width of TF coil winding pack", 0.6, "m", None, "Input", None],
         ["tf_wp_depth", "Depth of TF coil winding pack", 0.8, "m", None, "Input", None],
@@ -80,9 +81,44 @@ params = ParameterFrame.from_list(
 
 class PlasmaBuilder(Builder):
     _name = "PlasmaComponent"
+    _required_params = [
+        "R_0",
+        "A",
+        "z_0",
+        "kappa_u",
+        "kappa_l",
+        "delta_u",
+        "delta_l",
+        "phi_neg_u",
+        "phi_pos_u",
+        "phi_pos_l",
+        "phi_neg_l",
+    ]
 
-    def __init__(self, lcfs_wire: BluemiraWire):
-        self.wire = lcfs_wire
+    def __init__(self, params):
+        self.wire = self._build_wire(params)
+
+    @staticmethod
+    def _build_wire(params):
+        return JohnerLCFS(
+            var_dict={
+                "r_0": {"value": params["R_0"]},
+                "z_0": {"value": params["z_0"]},
+                "a": {"value": params["R_0"] / params["A"]},
+                "kappa_u": {"value": params["kappa_u"]},
+                "kappa_l": {"value": params["kappa_l"]},
+                "delta_u": {"value": params["delta_u"]},
+                "delta_l": {"value": params["delta_l"]},
+                "phi_u_pos": {"value": params["phi_pos_u"], "lower_bound": 0.0},
+                "phi_u_neg": {"value": params["phi_neg_u"], "lower_bound": 0.0},
+                "phi_l_pos": {"value": params["phi_pos_l"], "lower_bound": 0.0},
+                "phi_l_neg": {
+                    "value": params["phi_neg_l"],
+                    "lower_bound": 0.0,
+                    "upper_bound": 90,
+                },
+            }
+        ).create_shape()
 
     def reinitialise(self, params, lcfs_wire: BluemiraWire) -> None:
         self.wire = lcfs_wire
@@ -95,19 +131,23 @@ class PlasmaBuilder(Builder):
         return component
 
     def build_xz(self):
-        return PhysicalComponent("LCFS", BluemiraFace(self.wire))
+        return Component(
+            "xz", children=[PhysicalComponent("LCFS", BluemiraFace(self.wire))]
+        )
 
     def build_xyz(self):
-        lcfs = self.build_xz().shape
+        lcfs = self.build_xz().get_component("xz").get_component("LCFS").shape
         shape = revolve_shape(lcfs, degree=359)
-        return PhysicalComponent("LCFS", shape)
+        return Component("xyz", children=[PhysicalComponent("LCFS", shape)])
 
 
 class TFCoilBuilder(Builder):
+    _name = "TFCoilComponent"
     _required_params = ["tf_wp_width", "tf_wp_depth"]
 
-    def __init__(self, params, build_config, centreline):
-        super().__init__(params, build_config, centreline)
+    def __init__(self, params, centreline):
+        self._params = params
+        self.centreline = centreline
 
     def reinitialise(self, params, centreline) -> None:
         super().reinitialise(params)
@@ -134,8 +174,8 @@ class TFCoilBuilder(Builder):
         return component
 
     def build_xz(self):
-        inner = offset_wire(self.centreline, -0.5 * self.params.tk_tf_wp)
-        outer = offset_wire(self.centreline, 0.5 * self.params.tk_tf_wp)
+        inner = offset_wire(self.centreline, -0.5 * self.params.tf_wp_width.value)
+        outer = offset_wire(self.centreline, 0.5 * self.params.tf_wp_width.value)
         return PhysicalComponent("Winding pack", BluemiraFace(outer, inner))
 
     def build_xyz(self):
@@ -154,7 +194,7 @@ class TFCoilBuilder(Builder):
 class MyTFCoilOptProblem(GeometryOptimisationProblem):
     def __init__(self, geometry_parameterisation, lcfs, optimiser):
         objective = OptimisationObjective(
-            self.f_objective,
+            minimise_length,
             f_objective_args={"parameterisation": geometry_parameterisation},
         )
         constraints = [
@@ -164,6 +204,7 @@ class MyTFCoilOptProblem(GeometryOptimisationProblem):
                     "parameterisation": geometry_parameterisation,
                     "lcfs": lcfs,
                     "min_distance": 1.0,
+                    "ad_args": {},
                 },
                 tolerance=1e-6,
                 constraint_type="inequality",
@@ -174,34 +215,15 @@ class MyTFCoilOptProblem(GeometryOptimisationProblem):
         )
 
     @staticmethod
-    def objective_value(vector, parameterisation: GeometryParameterisation):
-        parameterisation.variables.set_values_from_norm(vector)
-        shape = parameterisation.create_shape()
-        value = shape.length
-        return value
-
-    @staticmethod
-    def f_objective(vector, grad, parameterisation):
-        function = MyTFCoilOptProblem.objective_value
-        value = function(vector, parameterisation)
-        if grad.size > 0:
-            grad[:] = approx_derivative(
-                function,
-                vector,
-                f0=value,
-                args=(parameterisation),
-            )
-
-        return value
-
-    @staticmethod
     def constraint_value(vector, parameterisation, lcfs, min_distance):
         parameterisation.variables.set_values_from_norm(vector)
         shape = parameterisation.create_shape()
         return distance_to(shape, lcfs)[0] - min_distance
 
     @staticmethod
-    def f_constraint(constraint, vector, grad, parameterisation, lcfs, min_distance):
+    def f_constraint(
+        constraint, vector, grad, parameterisation, lcfs, min_distance, ad_args=None
+    ):
         function = MyTFCoilOptProblem.constraint_value
         constraint[:] = function(vector, parameterisation, lcfs, min_distance)
         if grad.size > 0:
@@ -214,10 +236,16 @@ class MyTFCoilOptProblem(GeometryOptimisationProblem):
         return constraint
 
     def optimise(self, x0=None):
-        x_star = super().optimise(x0)
-        self._parameterisation.variables.set_values_from_norm(x_star)
+        return super().optimise(x0)
+
         return self._parameterisation
 
+
+# %%[markdown]
+
+# Now let us run our setup.
+
+# %%
 
 R_0 = 9.0
 
@@ -230,29 +258,31 @@ build_config = {
     },
     "TF coils": {
         "runmode": "run",  # ["read", "read", "mock"]
-        "param_class": "PrincetonD",
-        "params": {"R_0": 9.0},
+        "param_class": PrincetonD,
+        "params": {"R_0": R_0},
     },
     "PF coils": {},
 }
 
 
-my_reactor = Component()
+my_reactor = Component("My Simple Reactor")
 
-plasma_builder = PlasmaBuilder(params.to_dict(), build_config["Plasma"])
+plasma_builder = PlasmaBuilder(params)
 my_reactor.add_child(plasma_builder.build())
 
 lcfs = (
-    my_reactor.get_component("Plasma")
+    my_reactor.get_component("PlasmaComponent")
     .get_component("xz")
     .get_component("LCFS")
-    .boundary[0]
+    .shape.boundary[0]
 )
+
+parameterisation = PrincetonD(var_dict={"x1": {"value": 4.0, "fixed": True}})
 my_tf_coil_opt_problem = MyTFCoilOptProblem(
-    PrincetonD(),
+    parameterisation,
     lcfs,
     optimiser=Optimiser("SLSQP", opt_conditions={"max_eval": 5000, "ftol_rel": 1e-6}),
 )
 tf_centreline = my_tf_coil_opt_problem.optimise()
-tf_coil_builder = TFCoilBuilder(params, build_config["TF coils"], tf_centreline)
+tf_coil_builder = TFCoilBuilder(params, tf_centreline.create_shape())
 my_reactor.add_child(tf_coil_builder.build())
