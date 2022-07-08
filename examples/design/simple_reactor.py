@@ -26,7 +26,7 @@ from bluemira.base.parameter import ParameterFrame
 from bluemira.equilibria.shapes import JohnerLCFS
 from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.optimisation import GeometryOptimisationProblem, minimise_length
-from bluemira.geometry.parameterisations import GeometryParameterisation, PrincetonD
+from bluemira.geometry.parameterisations import PrincetonD
 from bluemira.geometry.tools import (
     distance_to,
     make_polygon,
@@ -80,6 +80,10 @@ params = ParameterFrame.from_list(
 
 
 class PlasmaBuilder(Builder):
+    """
+    Our PlasmaBuilder
+    """
+
     _name = "PlasmaComponent"
     _required_params = [
         "R_0",
@@ -121,27 +125,43 @@ class PlasmaBuilder(Builder):
         ).create_shape()
 
     def reinitialise(self, params, lcfs_wire: BluemiraWire) -> None:
+        """
+        This is hopefully not going to be a problem for much longer. Please ignore.
+        """
         self.wire = lcfs_wire
         return super().reinitialise(params)
 
     def build(self) -> Component:
+        """
+        Run the full build of the Plasma
+        """
         component = super().build()
         component.add_child(self.build_xz())
         component.add_child(self.build_xyz())
         return component
 
     def build_xz(self):
+        """
+        Build the xz Component of the Plasma
+        """
         return Component(
             "xz", children=[PhysicalComponent("LCFS", BluemiraFace(self.wire))]
         )
 
     def build_xyz(self):
+        """
+        Build the xyz Component of the Plasma
+        """
         lcfs = self.build_xz().get_component("xz").get_component("LCFS").shape
         shape = revolve_shape(lcfs, degree=359)
         return Component("xyz", children=[PhysicalComponent("LCFS", shape)])
 
 
 class TFCoilBuilder(Builder):
+    """
+    Our TF Coil builder.
+    """
+
     _name = "TFCoilComponent"
     _required_params = ["tf_wp_width", "tf_wp_depth"]
 
@@ -150,10 +170,16 @@ class TFCoilBuilder(Builder):
         self.centreline = centreline
 
     def reinitialise(self, params, centreline) -> None:
+        """
+        This is hopefully not going to be a problem for much longer. Please ignore.
+        """
         super().reinitialise(params)
         self.centreline = centreline
 
     def make_tf_wp_xs(self):
+        """
+        Make a wire for the cross-section of the winding pack in xy.
+        """
         width = 0.5 * self.params.tf_wp_width.value
         depth = 0.5 * self.params.tf_wp_depth.value
         wire = make_polygon(
@@ -167,6 +193,9 @@ class TFCoilBuilder(Builder):
         return wire
 
     def build(self) -> Component:
+        """
+        Run the full build for the TF coils.
+        """
         component = super().build()
         component.add_child(self.build_xz())
         component.add_child(self.build_xyz())
@@ -174,11 +203,17 @@ class TFCoilBuilder(Builder):
         return component
 
     def build_xz(self):
+        """
+        Build the xz Component of the TF coils.
+        """
         inner = offset_wire(self.centreline, -0.5 * self.params.tf_wp_width.value)
         outer = offset_wire(self.centreline, 0.5 * self.params.tf_wp_width.value)
         return PhysicalComponent("Winding pack", BluemiraFace([outer, inner]))
 
     def build_xyz(self):
+        """
+        Build the xyz Component of the TF coils.
+        """
         wp_xs = self.make_tf_wp_xs()
         wp_xs.translate((self.centreline.bounding_box.x_min, 0, 0))
         volume = sweep_shape(wp_xs, self.centreline)
@@ -193,6 +228,16 @@ class TFCoilBuilder(Builder):
 
 
 class MyTFCoilOptProblem(GeometryOptimisationProblem):
+    """
+    A simple geometry optimisation problem for the TF coil current centreline
+
+    Here we:
+
+    minimise: length
+        subject to:
+            min_distance_to_LCFS >= min_distance
+    """
+
     def __init__(self, geometry_parameterisation, lcfs, optimiser, min_distance):
         objective = OptimisationObjective(
             minimise_length,
@@ -217,6 +262,9 @@ class MyTFCoilOptProblem(GeometryOptimisationProblem):
 
     @staticmethod
     def constraint_value(vector, parameterisation, lcfs, min_distance):
+        """
+        The constraint evaluation function
+        """
         parameterisation.variables.set_values_from_norm(vector)
         shape = parameterisation.create_shape()
         return min_distance - distance_to(shape, lcfs)[0]
@@ -225,6 +273,9 @@ class MyTFCoilOptProblem(GeometryOptimisationProblem):
     def f_constraint(
         constraint, vector, grad, parameterisation, lcfs, min_distance, ad_args=None
     ):
+        """
+        Constraint function
+        """
         function = MyTFCoilOptProblem.constraint_value
         constraint[:] = function(vector, parameterisation, lcfs, min_distance)
         if grad.size > 0:
@@ -238,6 +289,9 @@ class MyTFCoilOptProblem(GeometryOptimisationProblem):
         return constraint
 
     def optimise(self, x0=None):
+        """
+        Run the optimisation problem.
+        """
         return super().optimise(x0)
 
 
