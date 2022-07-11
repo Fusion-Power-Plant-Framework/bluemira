@@ -142,5 +142,5 @@ solve_plasmod_fixed_boundary(
     relaxation=0.0,
     gs_relaxation=0.05,
     plot=False,
-    verbose=True,
+    verbose=False,
 )
