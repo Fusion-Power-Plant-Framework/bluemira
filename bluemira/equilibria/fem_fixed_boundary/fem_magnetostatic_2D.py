@@ -404,8 +404,6 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
             # diff = self.psi.compute_vertex_values() - prev
             eps = np.linalg.norm(diff, ord=2) / np.linalg.norm(new, ord=2)
 
-            # curr_tot = dolfin.assemble(self.g * dx())
-            # print(f"post - curr_tot = {curr_tot} - curr_dens = {self.g}")
             bluemira_print_flush(
                 f"iter = {i} eps = {eps:.3E} psi_ax : {self.psi_ax:.2f}"
             )
