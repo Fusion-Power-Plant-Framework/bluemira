@@ -58,7 +58,7 @@ def solve_plasmod_fixed_boundary(
 
     Parameters
     ----------
-    builder_plasma: bluemira.base.builder
+    builder_plasma: Builder
         plasma poloidal cross section builder object
     plasmod_options: dict
         set of options used to set up and run plasmod
