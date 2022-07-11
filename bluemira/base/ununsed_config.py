@@ -22,10 +22,11 @@
 """
 Unused params
 """
-Parameter = None
+from bluemira.base.config_schema import ConfigurationSchema
+from bluemira.base.parameter import Parameter
 
 
-class UnusedConfigurationSchema:
+class UnusedConfigurationSchema(ConfigurationSchema):
     """
     Unused config
     """
