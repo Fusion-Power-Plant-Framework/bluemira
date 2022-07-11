@@ -41,7 +41,9 @@ from bluemira.base.file import get_bluemira_root
 from bluemira.base.logs import get_log_level, set_log_level
 from bluemira.geometry.coordinates import Coordinates
 
-PARAMS_DIR = os.path.join(get_bluemira_root(), "tests", "builders", "EUDEMO")
+PARAMS_DIR = os.path.join(
+    get_bluemira_root(), "examples", "design", "EU-DEMO", "EUDEMO_tests"
+)
 
 
 @pytest.mark.reactor

@@ -67,8 +67,20 @@ class DesignABC(abc.ABC):
         self._build_config = copy.deepcopy(build_config)
         self._extract_build_config(params)
         self._validate_params(params)
-        self._params = Configuration.from_template(self._required_params)
+        self._params = self.configuration.from_template(self._required_params)
         self._params.update_kw_parameters(params)
+
+    @abc.abstractproperty
+    def configuration(self) -> Type[Configuration]:
+        """
+        Configuration
+
+        Reactor global configuration
+
+        currently all parameters of a reactor will be stripped down to just the global
+        ones
+        """
+        pass
 
     @property
     def required_params(self) -> Set[str]:
@@ -285,6 +297,7 @@ class Design(DesignABC):
     _params: Configuration
     _build_config: Dict[str, BuildConfig]
     _builders: Dict[str, Builder]
+    configuration: Type[Configuration] = Configuration
 
     def run(self) -> Component:
         """
@@ -340,6 +353,7 @@ class ReactorDesign(DesignABC):
     _build_config: BuildConfig
     _builders: Dict[str, Builder]
     _file_manager: FileManager
+    configuration: Type[Configuration] = Configuration
 
     def __init__(
         self,
@@ -367,7 +381,7 @@ class ReactorDesign(DesignABC):
         # For now the params can come from any parameters defined in Configuration.
         # In the future we probably want to register the Builders early and get the
         # parameters that the Builders need.
-        self._required_params |= set(Configuration().keys())
+        self._required_params |= set(self.configuration().keys())
 
         self._reference_data_root: str = self._build_config.get(
             "reference_data_root", f"{BM_ROOT}/data"

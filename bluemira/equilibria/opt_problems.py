@@ -42,6 +42,7 @@ from typing import List, Tuple
 import numpy as np
 
 import bluemira.equilibria.opt_objectives as objectives
+from bluemira.base.look_and_feel import bluemira_print_flush
 from bluemira.equilibria.coils import CoilSet
 from bluemira.equilibria.equilibrium import Breakdown, Equilibrium
 from bluemira.equilibria.error import EquilibriaError
@@ -57,7 +58,8 @@ from bluemira.utilities.opt_problems import (
     OptimisationProblem,
 )
 from bluemira.utilities.opt_tools import regularised_lsq_fom, tikhonov
-from bluemira.utilities.optimiser import Optimiser
+from bluemira.utilities.optimiser import Optimiser, approx_derivative
+from bluemira.utilities.positioning import PositionMapper
 
 __all__ = [
     "UnconstrainedTikhonovCurrentGradientCOP",
@@ -240,8 +242,11 @@ class CoilsetOptimisationProblem(OptimisationProblem):
                 )
 
         # Get the current limits from coil current densities
-        # TODO: Ensure consistent scaling when fetching from coilset
-        coilset_current_limits = coilset.get_max_currents(0.0)
+        coilset_current_limits = np.infty * np.ones(n_control_currents)
+        for i, coil in enumerate(coilset._ccoils):
+            if coil.flag_sizefix:
+                coilset_current_limits[i] = coil.get_max_current()
+
         if len(coilset_current_limits) != n_control_currents:
             raise EquilibriaError(
                 "Length of array containing coilset current limits"
@@ -255,6 +260,26 @@ class CoilsetOptimisationProblem(OptimisationProblem):
         current_bounds = (-control_current_limits, control_current_limits)
 
         return current_bounds
+
+    def set_current_bounds(self, max_currents):
+        """
+        Set the current bounds on a CoilsetOptimisationProblem
+
+        Parameters
+        ----------
+        max_currents: np.ndarray
+            Vector of maximum currents [A]
+        """
+        n_control_currents = len(self.coilset.get_control_currents())
+        if len(max_currents) != n_control_currents:
+            raise ValueError(
+                "Length of maximum current vector must be equal to the number of controls."
+            )
+
+        upper_bounds = np.abs(max_currents) / self.scale
+        lower_bounds = -upper_bounds
+        self.opt.set_lower_bounds(lower_bounds)
+        self.opt.set_upper_bounds(upper_bounds)
 
     def update_magnetic_constraints(self, I_not_dI=True, fixed_coils=True):
         """
@@ -776,7 +801,7 @@ class TikhonovCurrentCOP(CoilsetOptimisationProblem):
         dimension = len(bounds[0])
         self.set_up_optimiser(dimension, bounds)
 
-    def optimise(self, fixed_coils=True):
+    def optimise(self, x0=None, fixed_coils=True):
         """
         Solve the optimisation problem
 
@@ -797,16 +822,16 @@ class TikhonovCurrentCOP(CoilsetOptimisationProblem):
         self._objective._args["scale"] = self.scale
         self._objective._args["a_mat"] = a_mat
         self._objective._args["b_vec"] = b_vec
+        self._objective.apply_objective(self)
 
         self.update_magnetic_constraints(I_not_dI=True, fixed_coils=fixed_coils)
 
-        initial_state, n_states = self.read_coilset_state(self.coilset, self.scale)
-        _, _, initial_currents = np.array_split(initial_state, n_states)
+        if x0 is None:
+            initial_state, n_states = self.read_coilset_state(self.coilset, self.scale)
+            _, _, initial_currents = np.array_split(initial_state, n_states)
 
-        initial_currents = np.clip(
-            initial_currents, self.opt.lower_bounds, self.opt.upper_bounds
-        )
-        currents = self.opt.optimise(initial_currents)
+            x0 = np.clip(initial_currents, self.opt.lower_bounds, self.opt.upper_bounds)
+        currents = self.opt.optimise(x0=x0)
         self.coilset.set_control_currents(currents * self.scale)
         return self.coilset
 
@@ -838,7 +863,7 @@ class MinimalCurrentCOP(CoilsetOptimisationProblem):
         dimension = len(bounds[0])
         self.set_up_optimiser(dimension, bounds)
 
-    def optimise(self, fixed_coils=True):
+    def optimise(self, x0=None, fixed_coils=True):
         """
         Solve the optimisation problem
 
@@ -854,14 +879,227 @@ class MinimalCurrentCOP(CoilsetOptimisationProblem):
         """
         self.update_magnetic_constraints(I_not_dI=True, fixed_coils=fixed_coils)
 
-        initial_state, n_states = self.read_coilset_state(self.eq.coilset, self.scale)
-        _, _, initial_currents = np.array_split(initial_state, n_states)
+        if x0 is None:
+            initial_state, n_states = self.read_coilset_state(
+                self.eq.coilset, self.scale
+            )
+            _, _, initial_currents = np.array_split(initial_state, n_states)
 
-        initial_currents = np.clip(
-            initial_currents, self.opt.lower_bounds, self.opt.upper_bounds
-        )
-        currents = self.opt.optimise(initial_currents)
+            x0 = np.clip(initial_currents, self.opt.lower_bounds, self.opt.upper_bounds)
+
+        currents = self.opt.optimise(x0=x0)
         self.coilset.set_control_currents(currents * self.scale)
+        return self.coilset
+
+
+class PulsedNestedPositionCOP(CoilsetOptimisationProblem):
+    """
+    Coilset position optimisation problem for multiple sub-optimisation problems.
+
+    Parameters
+    ----------
+    coilset: Coilset
+        Coilset for which to optimise positions
+    position_mapper: PositionMapper
+        Position mapper tool to parameterise coil positions
+    sub_opt_problems: List[CoilsetOptimisationProblem]
+        The list of sub-optimisation problems to solve
+    optimiser: Optimiser
+        Optimiser object to use
+    constraints: Optional[List[OptimisationConstraint]]
+        Constraints to use. Note these should be applicable to the parametric position
+        vector
+    initial_currents: Optional[np.ndarray]
+        Initial currents to use when solving the current sub-optimisation problems
+    debug: bool
+        Whether or not to run in debug mode (will affect run-time noticeably)
+    """
+
+    def __init__(
+        self,
+        coilset: CoilSet,
+        position_mapper: PositionMapper,
+        sub_opt_problems: List[CoilsetOptimisationProblem],
+        optimiser: Optimiser = Optimiser(
+            "COBYLA", opt_conditions={"max_eval": 100, "ftol_rel": 1e-6}
+        ),
+        constraints=None,
+        initial_currents=None,
+        debug=False,
+    ):
+        self.position_mapper = position_mapper
+        self.sub_opt_probs = sub_opt_problems
+
+        if initial_currents:
+            self._initial_currents = initial_currents / self.sub_opt_probs[0].scale
+        else:
+            self._initial_currents = np.zeros(coilset.n_control)
+        self._debug = {0: debug}
+        self._iter = {0: 0.0}
+
+        objective = OptimisationObjective(
+            f_objective=self.get_state_fom,
+            f_objective_args={
+                "coilset": coilset,
+                "sub_opt_problems": sub_opt_problems,
+                "position_mapper": position_mapper,
+                "initial_currents": self._initial_currents,
+                "iter": self._iter,
+                "debug": self._debug,
+                "verbose": False,
+            },
+        )
+        super().__init__(coilset, optimiser, objective, constraints)
+
+        dimension = self.position_mapper.dimension
+        bounds = (np.zeros(dimension), np.ones(dimension))
+        self.set_up_optimiser(dimension, bounds)
+
+    @staticmethod
+    def _run_reporting(iter, max_fom, verbose):
+        """
+        Keep track of objective function value over iterations.
+        """
+        i = max(list(iter.keys())) + 1
+        iter[i] = max_fom
+
+        if verbose:
+            bluemira_print_flush(f"Coil position iteration {i} FOM value: {max_fom:.6e}")
+
+    @staticmethod
+    def _run_diagnostics(debug, sub_opt_prob):
+        """
+        In debug mode, store the LCFS at each iteration for each of the sub-optimisation
+        problems.
+
+        Notes
+        -----
+        This can significantly impact run-time.
+        """
+        if debug[0]:
+            entry = max(list(debug.keys()))
+            value = sub_opt_prob.opt.optimum_value
+            sub_opt_prob.eq._remap_greens()
+            sub_opt_prob.eq._clear_OX_points()
+            lcfs = sub_opt_prob.eq.get_LCFS()
+            debug[entry].append([lcfs, value])
+
+    @staticmethod
+    def get_sub_opt_foms(
+        vector,
+        coilset,
+        position_mapper,
+        sub_opt_problems,
+        initial_currents,
+        iter,
+        verbose,
+        debug,
+    ):
+        """
+        Run the sub-optimisation problems for a given position vector and return the
+        objective function values
+        """
+        positions = position_mapper.to_xz_dict(vector)
+
+        if debug[0]:
+            # Increment debug dictionary
+            i = max(list(debug.keys())) + 1
+            debug[i] = []
+
+        fom_values = []
+        for sub_opt_prob in sub_opt_problems:
+            sub_opt_prob.coilset.set_positions(positions)
+            sub_opt_prob.optimise(x0=initial_currents, fixed_coils=False)
+            PulsedNestedPositionCOP._run_diagnostics(debug, sub_opt_prob)
+            fom_values.append(sub_opt_prob.opt.optimum_value)
+        max_fom = max(fom_values)
+
+        PulsedNestedPositionCOP._run_reporting(iter, max_fom, verbose)
+
+        return max_fom
+
+    @staticmethod
+    def get_state_fom(
+        vector,
+        grad,
+        coilset,
+        sub_opt_problems,
+        position_mapper,
+        initial_currents,
+        iter,
+        verbose,
+        debug,
+    ):
+        """
+        Get the figure of merit for a single sub-optimisation problem.
+        """
+        fom_value = PulsedNestedPositionCOP.get_sub_opt_foms(
+            vector,
+            coilset,
+            position_mapper,
+            sub_opt_problems,
+            initial_currents,
+            iter,
+            verbose,
+            debug,
+        )
+
+        if grad.size > 0:
+            grad[:] = approx_derivative(
+                PulsedNestedPositionCOP.get_sub_opt_foms,
+                vector,
+                f0=fom_value,
+            )
+
+        return fom_value
+
+    def _get_initial_vector(self):
+        """
+        Get a vector representation of the initial coilset state from the PositionMapper.
+        """
+        x, z = [], []
+        for name in self.position_mapper.interpolators:
+            x.append(self.coilset.coils[name].x)
+            z.append(self.coilset.coils[name].z)
+        return self.position_mapper.to_L(x, z)
+
+    def optimise(self, x0=None, verbose=False):
+        """
+        Run the PulsedNestedPositionCOP
+
+        Parameters
+        ----------
+        x0: Optional[np.ndarray]
+            Initial solution vector (parameterised positions)
+        verbose: bool
+            Whether or not to print progress information
+
+        Returns
+        -------
+        coilset: CoilSet
+            Optimised CoilSet
+        """
+        self._objective._args["verbose"] = verbose
+
+        if x0 is None:
+            x0 = self._get_initial_vector()
+        optimal_positions = self.opt.optimise(x0=x0)
+        # Call the objective one last time
+        self.get_sub_opt_foms(
+            optimal_positions,
+            self.coilset,
+            self.position_mapper,
+            self.sub_opt_probs,
+            self._initial_currents,
+            iter=self._iter,
+            verbose=verbose,
+            debug=self._debug,
+        )
+
+        # Clean up state of Equilibrium objects
+        for sub_opt in self.sub_opt_probs:
+            sub_opt.eq._remap_greens()
+            sub_opt.eq._clear_OX_points()
         return self.coilset
 
 
@@ -1053,6 +1291,6 @@ class BreakdownCOP(CoilsetOptimisationProblem):
         initial_currents = np.clip(
             initial_currents, self.opt.lower_bounds, self.opt.upper_bounds
         )
-        currents = self.opt.optimise(initial_currents)
+        currents = self.opt.optimise(x0=initial_currents)
         self.coilset.set_control_currents(currents * self.scale)
         return self.coilset

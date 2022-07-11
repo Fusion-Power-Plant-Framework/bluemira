@@ -28,6 +28,7 @@ import pprint as pprint
 
 import matplotlib.pyplot as plt
 from EUDEMO_builders.blanket import BlanketBuilder
+from EUDEMO_builders.config import EUDEMOConfiguration
 from EUDEMO_builders.divertor import DivertorBuilder
 from EUDEMO_builders.pf_coils import PFCoilsBuilder
 from EUDEMO_builders.plasma import PlasmaBuilder, PlasmaComponent
@@ -36,7 +37,6 @@ from EUDEMO_builders.tf_coils import TFCoilsBuilder
 from EUDEMO_builders.vacuum_vessel import VacuumVesselBuilder
 
 from bluemira.base.components import Component
-from bluemira.base.config import Configuration
 from bluemira.base.error import ParameterError
 from bluemira.base.file import get_bluemira_root
 from bluemira.base.logs import set_log_level
@@ -89,7 +89,7 @@ set_log_level("DEBUG")
 
 # %%
 params = {}
-for param in Configuration.params:
+for param in EUDEMOConfiguration.params:
     params[param[0]] = {}
     params[param[0]]["name"] = param[1]
     params[param[0]]["value"] = param[2]
@@ -154,11 +154,11 @@ config = {
     "tk_tf_ins": 0.08,
     "tk_bb_ib": 0.755,
     "tk_bb_ob": 1.275,
-    "g_tf_pf": 0.05,
+    # "g_tf_pf": 0.05,
     "C_Ejima": 0.3,
     "eta_nb": 0.4,
-    "LPangle": -15,
-    "w_g_support": 1.5,
+    # "LPangle": -15,
+    # "w_g_support": 1.5,
 }
 
 for key, val in config.items():
@@ -220,7 +220,7 @@ build_config = {
     "reference_data_root": "!BM_ROOT!/data",
     "generated_data_root": "!BM_ROOT!/generated_data",
     "PROCESS": {
-        "runmode": "mock",  # ["run", "read", "mock"]
+        "runmode": "run",  # ["run", "read", "mock"]
     },
     "Plasma": {
         "runmode": "run",  # ["run", "read", "mock"]
@@ -250,7 +250,7 @@ build_config = {
         },
     },
     "PF Coils": {
-        "runmode": "read",
+        "runmode": "run",  # ["run", "read"]
     },
 }
 
@@ -465,6 +465,18 @@ tf_coils_builder: TFCoilsBuilder = reactor.get_builder(EUDEMOReactorDesign.TF_CO
 if tf_coils_builder.runmode == "run":
     design_problem: RippleConstrainedLengthGOP = tf_coils_builder.design_problem
     design_problem.plot()
+    plt.show()
+
+
+# %%[markdown]
+# ### Plotting the PF Coils Design Problem
+#
+# Similarly, we can also look at the design problem for the PF coil build.
+
+# %%
+pf_coils_builder = reactor.get_builder(EUDEMOReactorDesign.PF_COILS)
+if pf_coils_builder.runmode == "run":
+    pf_coils_builder.design_problem.plot()
     plt.show()
 
 # %%[markdown]

@@ -180,7 +180,8 @@ class CoilSizer:
         if not self.flag_sizefix:
             # Adjust the size of the coil
             coil.dx, coil.dz = self._make_size(current)
-            self._set_coil_attributes(coil)
+
+        self._set_coil_attributes(coil)
 
     def _set_coil_attributes(self, coil):
         coil.rc = 0.5 * np.hypot(coil.dx, coil.dz)
@@ -658,7 +659,7 @@ class Coil:
         outside/inside the coil boundary.
         """
         x, z = np.ascontiguousarray(x), np.ascontiguousarray(z)
-        if self.dx == 0 or self.dz == 0:
+        if np.isclose(self.dx, 0.0) or np.isclose(self.dz, 0.0):
             response = greens_func(x, z)
 
         else:

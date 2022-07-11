@@ -487,3 +487,24 @@ def beta_N_to_beta(beta_N, a, Btor, I_p):  # noqa :N802
 
     """
     return beta_N * I_p / (a * Btor)
+
+
+def calc_infinite_solenoid_flux(r_cs_min, r_cs_max, B_max):
+    """
+    Calculate the maximum flux achievable from an infinite solenoid given a peak field.
+
+    Parameters
+    ----------
+    r_cs_min: float
+        Inner radius of the infinite solenoid [m]
+    r_cs_max: float
+        Outer radius of the infinite solenoid [m]
+    B_max: float
+        Peak allowable field in the solenoid [T]
+
+    Returns
+    -------
+    psi_max: float
+        Maximum achievable flux from an infinite solenoid [V.s]
+    """
+    return B_max * np.pi / 3 * (r_cs_max**2 + r_cs_min**2 + r_cs_max * r_cs_min)

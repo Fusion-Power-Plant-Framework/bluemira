@@ -26,6 +26,7 @@ Perform the EU-DEMO design.
 import os
 
 from EUDEMO_builders.blanket import BlanketBuilder
+from EUDEMO_builders.config import EUDEMOConfiguration
 from EUDEMO_builders.divertor import DivertorBuilder
 from EUDEMO_builders.ivc import InVesselComponentBuilder
 from EUDEMO_builders.ivc.ivc import build_ivc_xz_shapes
@@ -67,6 +68,7 @@ class EUDEMOReactorDesign(ReactorDesign):
     CRYOSTAT = "Cryostat"
     RADIATION_SHIELD = "Radiation Shield"
     POWER_CYCLE = "Power Cycle"
+    configuration = EUDEMOConfiguration
 
     def run(self) -> Component:
         """
@@ -216,7 +218,21 @@ class EUDEMOReactorDesign(ReactorDesign):
 
         config = self._process_design_stage_config(default_config)
 
-        builder = PFCoilsBuilder(self._params.to_dict(), config)
+        tf_coil_boundary = (
+            component_tree.get_component(EUDEMOReactorDesign.TF_COILS)
+            .get_component("xz")
+            .get_component("Casing")
+            .get_component("outer")
+            .shape.boundary[0]
+        )
+        keep_out_zones = self.make_PF_coil_exclusions()
+
+        builder = PFCoilsBuilder(
+            self._params.to_dict(),
+            config,
+            tf_coil_boundary=tf_coil_boundary,
+            keep_out_zones=keep_out_zones,
+        )
         self.register_builder(builder)
 
         return super()._build_stage()
@@ -399,3 +415,16 @@ class EUDEMOReactorDesign(ReactorDesign):
         self.register_solver(solver)
         result = solver.execute()
         self._params.update_kw_parameters(result)
+
+    def make_PF_coil_exclusions(self):
+        """
+        Calculate the keep out zones for PF coils
+
+        Returns
+        -------
+        keep_out_zones: List[BluemiraFace]
+            List of keep-out zone geometries
+        """
+        # TODO: Thread this in properly (UpperPortOP)
+        keep_out_zones = []
+        return keep_out_zones
