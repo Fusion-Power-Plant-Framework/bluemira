@@ -71,7 +71,7 @@ class DesignABC(abc.ABC):
         self._params.update_kw_parameters(params)
 
     @abc.abstractproperty
-    def configuration(self) -> type(Configuration):
+    def configuration(self) -> Type[Configuration]:
         """
         Configuration
         """
@@ -292,7 +292,7 @@ class Design(DesignABC):
     _params: Configuration
     _build_config: Dict[str, BuildConfig]
     _builders: Dict[str, Builder]
-    configuration: Configuration = Configuration
+    configuration: Type[Configuration] = Configuration
 
     def run(self) -> Component:
         """
@@ -348,7 +348,7 @@ class ReactorDesign(DesignABC):
     _build_config: BuildConfig
     _builders: Dict[str, Builder]
     _file_manager: FileManager
-    configuration: Configuration = Configuration
+    configuration: Type[Configuration] = Configuration
 
     def __init__(
         self,
