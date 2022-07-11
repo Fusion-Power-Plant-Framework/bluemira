@@ -241,14 +241,6 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
 
         return myfunc
 
-    def _create_initial_guess(self, curr_target):
-        x = dolfin.Measure("x", domain=self.mesh)
-        z = dolfin.Measure("y", domain=self.mesh)
-        dx = dolfin.Measure("dx", domain=self.mesh)
-        area = dolfin.assemble(dolfin.Constant(1) * dx())
-        j_target = curr_target / area
-        return j_target
-
     def _create_g_func(
         self,
         pprime: Union[Callable, float],
@@ -273,7 +265,10 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
         g: Callable
             source current to solve the magnetostatic problem
         """
-        j_target = self._create_initial_guess(curr_target)
+
+        dx = dolfin.Measure("dx", domain=self.mesh)
+        area = dolfin.assemble(dolfin.Constant(1) * dx())
+        j_target = curr_target / area
 
         def g(x):
             if self.psi_ax == 0:
