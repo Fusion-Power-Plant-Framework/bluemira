@@ -181,7 +181,6 @@ def get_tricontours(x, z, array, value):
     value_loop: np.array(ni, mi)
         The points of the value contour in the array
     """
-
     tri = Triangulation(x, z)
     tcg = TriContourGenerator(tri.get_cpp_triangulation(), array)
     return tcg.create_contour(value)[0][0]
