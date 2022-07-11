@@ -55,10 +55,9 @@ def _get_dummy_equilibrium(equilibrium):
     contributions from the passive coils (plasma).
     """
     # TODO: Add passive coil contributions here
-    dummy = equilibrium.plasma_coil()
+    dummy = equilibrium.plasma
     dummy.coilset = deepcopy(equilibrium.coilset)
-    equilibrium = dummy
-    return equilibrium
+    return dummy
 
 
 class UpdateableConstraint(ABC):
@@ -188,7 +187,8 @@ class FieldConstraints(UpdateableConstraint, OptimisationConstraint):
 
 class CoilFieldConstraints(FieldConstraints):
     """
-    Inequality constraints on the poloidal field inside the coils.
+    Inequality constraints on the poloidal field at the middle of the inside edge
+    of the coils, where the field is usually highest.
 
     Parameters
     ----------
@@ -201,6 +201,8 @@ class CoilFieldConstraints(FieldConstraints):
 
     Notes
     -----
+    This is a fast approximation constraint, and does not solve for the peak field
+    at all points in the coils. Use with caution.
     TODO: Presently only handles CoilSets with Coils (SymmetricCircuits not yet
     supported)
     TODO: Presently only accounts for poloidal field contributions from PF coils and
@@ -220,12 +222,36 @@ class CoilFieldConstraints(FieldConstraints):
         if len(tolerance) != coilset.n_coils:
             raise ValueError("Tolerance vector length not equal to the number of coils.")
 
+        x, z = self._get_constraint_points(coilset)
+
+        super().__init__(x, z, B_max, tolerance=tolerance, constraint_type="inequality")
+
+    @staticmethod
+    def _get_constraint_points(coilset):
         x, z = np.zeros(coilset.n_coils), np.zeros(coilset.n_coils)
         for i, coil in enumerate(coilset.coils.values()):
             x[i] = coil.x - coil.dx
             z[i] = coil.z
+        return x, z
 
-        super().__init__(x, z, B_max, tolerance=tolerance, constraint_type="inequality")
+    def prepare(self, equilibrium, I_not_dI=False, fixed_coils=False):
+        """
+        Prepare the constraint for use in an equilibrium optimisation problem.
+        """
+        if I_not_dI:
+            equilibrium = _get_dummy_equilibrium(equilibrium)
+
+        # Re-build control response matrix
+        if not fixed_coils or (fixed_coils and self._args["ax_mat"] is None):
+            # Update the target points for the constraints (the coils may be moving)
+            self.x, self.z = self._get_constraint_points(equilibrium.coilset)
+            ax_mat, az_mat = self.control_response(equilibrium.coilset)
+            self._args["ax_mat"] = ax_mat
+            self._args["az_mat"] = az_mat
+
+        bxp_vec, bzp_vec = self.evaluate(equilibrium)
+        self._args["bxp_vec"] = bxp_vec
+        self._args["bzp_vec"] = bzp_vec
 
 
 class CoilForceConstraints(UpdateableConstraint, OptimisationConstraint):
@@ -464,7 +490,6 @@ class FieldNullConstraint(AbsoluteMagneticConstraint):
         z,
         weights: Union[float, np.ndarray] = 1.0,
         tolerance=1e-6,
-        constraint_type="equality",
     ):
         super().__init__(
             x,
@@ -472,7 +497,7 @@ class FieldNullConstraint(AbsoluteMagneticConstraint):
             target_value=0.0,
             weights=weights,
             tolerance=tolerance,
-            constraint_type=constraint_type,
+            constraint_type="inequality",
             f_constraint=L2_norm_constraint,
         )
 
@@ -522,8 +547,8 @@ class PsiConstraint(AbsoluteMagneticConstraint):
             x,
             z,
             target_value,
-            weights,
-            tolerance,
+            weights=weights,
+            tolerance=tolerance,
             f_constraint=Ax_b_constraint,
             constraint_type="equality",
         )

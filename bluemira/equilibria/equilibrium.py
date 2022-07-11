@@ -52,7 +52,7 @@ from bluemira.equilibria.grid import Grid, integrate_dx_dz
 from bluemira.equilibria.limiter import Limiter
 from bluemira.equilibria.num_control import DummyController, VirtualController
 from bluemira.equilibria.physics import calc_li3minargs, calc_psi_norm, calc_summary
-from bluemira.equilibria.plasma import PlasmaCoil
+from bluemira.equilibria.plasma import NoPlasmaCoil, PlasmaCoil
 from bluemira.equilibria.plotting import (
     BreakdownPlotter,
     CorePlotter,
@@ -159,7 +159,7 @@ class MHDState:
         """
         coils = list(self.coilset.coils.values())
         currents = self.coilset.get_control_currents()
-        plasma = self.plasma_coil()
+        plasma = self.plasma
         response = np.zeros((len(coils), len(coils), 2))
         background = np.zeros((len(coils), 2))
         for i, coil1 in enumerate(coils):
@@ -187,17 +187,6 @@ class MHDState:
         x = [c.x - c.dx for c in self.coilset.coils.values()]
         z = [c.z for c in self.coilset.coils.values()]
         return self.Bp(x, z)
-
-    def plasma_coil(self):
-        """
-        Build a coil emulating a plasma.
-
-        Returns
-        -------
-        plasmacoil: PlasmaCoil object
-            Coil representation of the plasma
-        """
-        raise NotImplementedError
 
     @classmethod
     def _get_eqdsk(cls, filename, force_symmetry=False):
@@ -303,6 +292,7 @@ class Breakdown(MHDState):
         self.coilset = coilset
         self.set_grid(grid)
         self._set_init_plasma(grid, psi)
+        self.plasma = NoPlasmaCoil(grid)
         self.limiter = kwargs.get("limiter", None)
 
         # Set default breakdown point to grid centre
@@ -469,17 +459,6 @@ class Breakdown(MHDState):
             else:
                 b[i] = np.amax(self.Bp(coil.x, coil.z))
         return b
-
-    def plasma_coil(self):
-        """
-        Builds a coil emulating an Equilibrium object with no plasma
-
-        Returns
-        -------
-        plasmacoil: PlasmaCoil object
-            Coil representation of nothing.
-        """
-        return PlasmaCoil(None, self.grid)
 
     def plot(self, ax=None, Bp=False):
         """
@@ -832,6 +811,7 @@ class Equilibrium(MHDState):
         self._update_plasma(plasma_psi, jtor)
 
         self._jtor = jtor
+        self._plasmacoil = None
 
     def solve_li(self, jtor=None, psi=None):
         """
@@ -937,24 +917,6 @@ class Equilibrium(MHDState):
             The integral value of the field in 2-D
         """
         return integrate_dx_dz(func, self.dx, self.dz)
-
-    def plasma_coil(self, discretised=True):
-        """
-        Builds a coil representing the plasma passive object. If there is no
-        Jtor field then a single guesstimate coil is returned.
-
-        Parameters
-        ----------
-        discretised: bool
-            Whether or not to make a detailed plasma coil (100's of coils) or
-            to make a single I_p coil at the effective current centre.
-
-        Returns
-        -------
-        plasmacoil: PlasmaCoil object
-            Coil representation of the plasma. Discretised if Jtor exists.
-        """
-        return self.plasma
 
     def effective_centre(self):
         """

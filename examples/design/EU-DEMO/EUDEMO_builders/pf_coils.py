@@ -31,12 +31,31 @@ import bluemira.utilities.plot_tools as bm_plot_tools
 from bluemira.base.builder import BuildConfig, Builder
 from bluemira.base.components import Component
 from bluemira.base.config import Configuration
+from bluemira.base.constants import EPS
 from bluemira.base.error import BuilderError
-from bluemira.base.look_and_feel import bluemira_warn
+from bluemira.base.look_and_feel import bluemira_print, bluemira_warn
 from bluemira.builders.pf_coils import PFCoilBuilder
 from bluemira.equilibria.coils import Coil, CoilSet
-from bluemira.equilibria.run import PulsedCoilsetProblem
+from bluemira.equilibria.grid import Grid
+from bluemira.equilibria.opt_constraints import (
+    CoilFieldConstraints,
+    CoilForceConstraints,
+    FieldNullConstraint,
+    IsofluxConstraint,
+    PsiConstraint,
+)
+from bluemira.equilibria.opt_problems import (
+    BreakdownCOP,
+    OutboardBreakdownZoneStrategy,
+    PulsedNestedPositionCOP,
+    TikhonovCurrentCOP,
+)
+from bluemira.equilibria.profiles import BetaIpProfile
+from bluemira.equilibria.run import OptimisedPulsedCoilsetDesign, PulsedCoilsetDesign
+from bluemira.equilibria.shapes import JohnerLCFS
+from bluemira.equilibria.solve import DudsonConvergence
 from bluemira.geometry.constants import VERY_BIG
+from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.tools import (
     boolean_cut,
     distance_to,
@@ -44,8 +63,10 @@ from bluemira.geometry.tools import (
     offset_wire,
     split_wire,
 )
+from bluemira.geometry.wire import BluemiraWire
 from bluemira.magnetostatics.baseclass import SourceGroup
 from bluemira.magnetostatics.circular_arc import CircularArcCurrentSource
+from bluemira.utilities.optimiser import Optimiser
 from bluemira.utilities.positioning import PathInterpolator, PositionMapper
 
 
@@ -108,12 +129,52 @@ class PFCoilsBuilder(Builder):
         "tk_cs_casing",
         "r_pf_corner",
         "r_cs_corner",
+        "r_cs_in",
+        "tk_cs",
+        "tk_sol_ib",
+        "tk_sol_ob",
+        "g_cs_mod",
+        "R_0",
+        "A",
+        "I_p",
+        "B_0",
+        "beta_p",
+        "l_i",
+        "C_Ejima",
+        "tau_flattop",
+        "v_burn",
+        "kappa",
+        "delta",
+        "n_CS",
+        "n_PF",
+        "CS_jmax",
+        "PF_jmax",
+        "CS_bmax",
+        "PF_bmax",
+        "F_pf_zmax",
+        "F_cs_ztotmax",
+        "F_cs_sepmax",
+        "B_premag_stray_max",
     ]
     _required_config: List[str] = []
     _params: Configuration
     _param_class: Type[CoilSet]
     _default_runmode: str = "read"
-    _problem_class: Type[PulsedCoilsetProblem]
+    _problem_class: Type[PulsedCoilsetDesign] = OptimisedPulsedCoilsetDesign
+
+    def __init__(
+        self,
+        params,
+        build_config: BuildConfig,
+        tf_coil_boundary: Optional[BluemiraWire] = None,
+        keep_out_zones: Optional[List[BluemiraFace]] = None,
+    ):
+        super().__init__(
+            params,
+            build_config,
+            tf_coil_boundary=tf_coil_boundary,
+            keep_out_zones=keep_out_zones,
+        )
 
     def _extract_config(self, build_config: BuildConfig):
         super()._extract_config(build_config)
@@ -131,7 +192,13 @@ class PFCoilsBuilder(Builder):
 
         return super()._extract_config(build_config)
 
-    def reinitialise(self, params, **kwargs) -> None:
+    def reinitialise(
+        self,
+        params,
+        tf_coil_boundary: Optional[BluemiraWire] = None,
+        keep_out_zones: Optional[List[BluemiraFace]] = None,
+        **kwargs,
+    ) -> None:
         """
         Initialise the state of this builder ready for a new run.
 
@@ -145,13 +212,149 @@ class PFCoilsBuilder(Builder):
 
         self._reset_params(params)
         self._coilset = None
+        self._tf_coil_boundary = tf_coil_boundary
+        self._keep_out_zones = keep_out_zones
 
-    def run(self, *args):
+    def run(self):
         """
         Build PF coils from a design optimisation problem.
         """
-        # TODO: Run the problem class correctly
-        self._design_problem = self._problem_class(self._params)
+        # Make initial CoilSet
+        coilset = make_coilset(
+            self._tf_coil_boundary,
+            R_0=self._params.R_0.value,
+            kappa=self._params.kappa.value,
+            delta=self._params.delta.value,
+            r_cs=self._params.r_cs_in.value + self._params.tk_cs.value / 2,
+            tk_cs=self._params.tk_cs.value / 2,
+            g_cs=self._params.g_cs_mod.value,
+            tk_cs_ins=self._params.tk_cs_insulation.value,
+            tk_cs_cas=self._params.tk_cs_casing.value,
+            n_CS=self._params.n_CS.value,
+            n_PF=self._params.n_PF.value,
+            CS_jmax=self._params.CS_jmax.value,
+            CS_bmax=self._params.CS_bmax.value,
+            PF_jmax=self._params.PF_jmax.value,
+            PF_bmax=self._params.PF_bmax.value,
+        )
+
+        # Get an offset from the TF that corresponds to a PF coil half-width of a
+        # current equal to Ip
+        offset_value = 0.5 * np.sqrt(self._params.I_p.value / self._params.PF_jmax.value)
+        pf_coil_path = make_pf_coil_path(self._tf_coil_boundary, offset_value)
+        pf_coil_names = coilset.get_PF_names()
+        pf_coils = [coilset.coils[name] for name in pf_coil_names]
+        position_mapper = make_coil_mapper(pf_coil_path, self._keep_out_zones, pf_coils)
+
+        grid = make_grid(
+            self._params.R_0.value,
+            self._params.A.value,
+            self._params.kappa.value,
+            scale_x=2.0,
+            scale_z=2.0,
+            nx=65,
+            nz=65,
+        )
+
+        # TODO: Make a CustomProfile from flux functions coming from PLASMOD and fixed
+        # boundary optimisation
+        profiles = BetaIpProfile(
+            self._params.beta_p.value,
+            self._params.I_p.value * 1e6,
+            self._params.R_0.value,
+            self._params.B_0.value,
+        )
+
+        # TODO: Make LCFS constraints from fixed boundary k_95 / d_95 optimisation
+        # Make Constraints
+        kappa = self._params.kappa.value
+        kappa_ul_tweak = 0.085
+        kappa_u = (1 - kappa_ul_tweak) * kappa
+        kappa_l = (1 + kappa_ul_tweak) * kappa
+        lcfs_parameterisation = JohnerLCFS(
+            {
+                "r_0": {"value": self._params.R_0.value},
+                "z_0": {"value": 0.0},
+                "a": {"value": self._params.R_0.value / self._params.A.value},
+                "kappa_u": {"value": kappa_u},
+                "kappa_l": {"value": kappa_l},
+                "delta_u": {"value": self._params.delta.value},
+                "delta_l": {"value": self._params.delta.value},
+                "phi_u_neg": {"value": 0.0},
+                "phi_u_pos": {"value": 0.0},
+                "phi_l_neg": {"value": 45.0},
+                "phi_l_pos": {"value": 30.0},
+            }
+        )
+        lcfs = lcfs_parameterisation.create_shape().discretize(byedges=True, ndiscr=50)
+        x_lcfs, z_lcfs = lcfs.x, lcfs.z
+        arg_inner = np.argmin(x_lcfs)
+        arg_xp = np.argmin(z_lcfs)
+
+        isoflux = IsofluxConstraint(
+            x_lcfs,
+            z_lcfs,
+            x_lcfs[arg_inner],
+            z_lcfs[arg_inner],
+            tolerance=1.0,
+            constraint_value=0.0,
+        )
+        psi_inner = PsiConstraint(
+            x_lcfs[arg_inner], z_lcfs[arg_inner], target_value=0.0, tolerance=1e-3
+        )
+        x_point = FieldNullConstraint(x_lcfs[arg_xp], z_lcfs[arg_xp], tolerance=1e-4)
+        coil_constraints = [
+            CoilFieldConstraints(coilset, coilset.get_max_fields(), tolerance=1e-6),
+            CoilForceConstraints(
+                coilset,
+                self._params.F_pf_zmax.value,
+                self._params.F_cs_ztotmax.value,
+                self._params.F_cs_sepmax.value,
+                tolerance=1e-3,
+            ),
+        ]
+
+        current_opt_constraints = [psi_inner]
+
+        equilibrium_constraints = [isoflux, x_point]
+
+        self._design_problem = self._problem_class(
+            self._params,
+            coilset,
+            position_mapper,
+            grid,
+            current_opt_constraints,
+            coil_constraints,
+            equilibrium_constraints,
+            profiles=profiles,
+            breakdown_strategy_cls=OutboardBreakdownZoneStrategy,
+            breakdown_problem_cls=BreakdownCOP,
+            breakdown_optimiser=Optimiser(
+                "COBYLA", opt_conditions={"max_eval": 5000, "ftol_rel": 1e-10}
+            ),
+            breakdown_settings={"B_stray_con_tol": 1e-6, "n_B_stray_points": 10},
+            equilibrium_problem_cls=TikhonovCurrentCOP,
+            equilibrium_optimiser=Optimiser(
+                "SLSQP",
+                opt_conditions={"max_eval": 5000, "ftol_rel": 1e-6},
+            ),
+            equilibrium_convergence=DudsonConvergence(1e-4),
+            equilibrium_settings={
+                "gamma": 1e-12,
+                "relaxation": 0.2,
+                "peak_PF_current_factor": 1.5,
+            },
+            position_problem_cls=PulsedNestedPositionCOP,
+            position_optimiser=Optimiser(
+                "COBYLA",
+                opt_conditions={"max_eval": 200, "ftol_rel": 1e-6, "xtol_rel": 1e-6},
+            ),
+            limiter=None,
+        )
+        bluemira_print(
+            f"Solving design problem: {self._design_problem.__class__.__name__}"
+        )
+        self._coilset = self._design_problem.optimise_positions(verbose=True)
 
     def read(self, **kwargs):
         """
@@ -279,6 +482,37 @@ class PFCoilsBuilder(Builder):
         return field_solver
 
 
+def make_grid(R_0, A, kappa, scale_x=1.6, scale_z=1.7, nx=65, nz=65):
+    """
+    Make a finite difference Grid for an Equilibrium.
+
+    Parameters
+    ----------
+    R_0: float
+        Major radius
+    A: float
+        Aspect ratio
+    kappa: float
+        Elongation
+    scale_x: float
+        Scaling factor to "grow" the grid away from the plasma in the x direction
+    scale_z: float
+        Scaling factor to "grow" the grid away from the plasma in the z direction
+    nx: int
+        Grid discretisation in the x direction
+    nz: int
+        Grid discretisation in the z direction
+
+    Returns
+    -------
+    grid: Grid
+        Finite difference grid for an Equilibrium
+    """
+    x_min, x_max = R_0 - scale_x * (R_0 / A), R_0 + scale_x * (R_0 / A)
+    z_min, z_max = -scale_z * (kappa * R_0 / A), scale_z * (kappa * R_0 / A)
+    return Grid(x_min, x_max, z_min, z_max, nx, nz)
+
+
 def make_coil_mapper(track, exclusion_zones, coils):
     """
     Break a track down into individual interpolator segments, incorporating exclusion
@@ -308,35 +542,48 @@ def make_coil_mapper(track, exclusion_zones, coils):
     coil_bins = [[] for _ in range(len(segments))]
     for i, coil in enumerate(coils):
         distances = [distance_to([coil.x, 0, coil.z], seg)[0] for seg in segments]
-        coil_bins[np.argmin(distances)].append(i)
+        coil_bins[np.argmin(distances)].append(coil)
 
-    # Check if multiple coils are on the same segment and split the segments
-    new_segments = []
+    # Check if multiple coils are on the same segment and split the segments and make
+    # PathInterpolators
+    interpolator_dict = {}
     for segment, bin in zip(segments, coil_bins):
         if len(bin) < 1:
             bluemira_warn("There is a segment of the track which has no coils on it.")
         elif len(bin) == 1:
-            new_segments.append(PathInterpolator(segment))
+            coil = bin[0]
+            interpolator_dict[coil.name] = PathInterpolator(segment)
         else:
-            coils = [coils[i] for i in bin]
-            l_values = [
-                segment.parameter_at([c.x, 0, c.z], tolerance=VERY_BIG) for c in coils
-            ]
+            coils = bin
+            l_values = np.array(
+                [segment.parameter_at([c.x, 0, c.z], tolerance=VERY_BIG) for c in coils]
+            )
+            idx = np.argsort(l_values)
+            l_values = l_values[idx]
             split_values = l_values[:-1] + 0.5 * np.diff(l_values)
+            split_positions = [segment.value_at(alpha=split) for split in split_values]
+
+            sorted_coils = []
+            for i in idx:
+                sorted_coils.append(coils[i])
+            coils = sorted_coils
 
             sub_segs = []
-            for i, split in enumerate(split_values):
-                sub_seg, segment = split_wire(segment, segment.value_at(alpha=split))
-                if sub_seg:
-                    sub_segs.append(PathInterpolator(sub_seg))
+            for i, split_pos in enumerate(split_positions):
+                split = segment.parameter_at(split_pos, tolerance=10 * EPS)
+                sub_seg_1, segment = split_wire(
+                    segment, segment.value_at(alpha=split), tolerance=10 * EPS
+                )
+                if sub_seg_1:
+                    sub_segs.append(sub_seg_1)
+                else:
+                    bluemira_warn("Sub-segment of 0 length!")
+            sub_segs.append(segment)
 
-                if i == len(split_values) - 1:
-                    if segment:
-                        sub_segs.append(PathInterpolator(segment))
+            for coil, sub_seg in zip(coils, sub_segs):
+                interpolator_dict[coil.name] = PathInterpolator(sub_seg)
 
-            new_segments.extend(sub_segs)
-
-    return PositionMapper(new_segments)
+    return PositionMapper(interpolator_dict)
 
 
 def make_solenoid(r_cs, tk_cs, z_min, z_max, g_cs, tk_cs_ins, tk_cs_cas, n_CS):
@@ -350,7 +597,8 @@ def make_solenoid(r_cs, tk_cs, z_min, z_max, g_cs, tk_cs_ins, tk_cs_cas, n_CS):
     r_cs: float
         Radius of the solenoid
     tk_cs: float
-        Half-thickness of the solenoid in the radial direction
+        Half-thickness of the solenoid in the radial direction (including insulation and
+        casing)
     z_min: float
         Minimum vertical position of the solenoid
     z_max: float
@@ -375,7 +623,7 @@ def make_solenoid(r_cs, tk_cs, z_min, z_max, g_cs, tk_cs_ins, tk_cs_cas, n_CS):
             r_cs,
             z_coil,
             current=0,
-            dx=tk_cs,
+            dx=tk_cs - tk_inscas,
             dz=dz_coil,
             control=True,
             ctype="CS",
@@ -516,5 +764,49 @@ def make_coilset(
     return coilset
 
 
-if __name__ == "__main__":
-    pass
+def make_pf_coil_path(tf_boundary: BluemiraWire, offset_value: float) -> BluemiraWire:
+    """
+    Make an open wire along which the PF coils can move.
+
+    Parameters
+    ----------
+    tf_boundary: BluemiraWire
+        Outside edge of the TF coil in the x-z plane
+    offset_value: float
+        Offset value from the TF coil edge
+
+    Returns
+    -------
+    pf_coil_path: BluemiraWire
+        Path along which the PF coil centroids should be positioned
+    """
+    tf_offset = offset_wire(tf_boundary, offset_value)
+
+    # Find top-left and bottom-left "corners"
+    coordinates = tf_offset.discretize(byedges=True, ndiscr=200)
+    x_min = np.min(coordinates.x)
+    z_min, z_max = 0.0, 0.0
+    eps = 0.0
+    while np.isclose(z_min, z_max):
+        # This is unlikely, but if so, shifting x_min a little ensures the boolean cut
+        # can be performed and that an open wire will be returned
+        idx_inner = np.where(np.isclose(coordinates.x, x_min))[0]
+        z_min = np.min(coordinates.z[idx_inner])
+        z_max = np.max(coordinates.z[idx_inner])
+        x_min += eps
+        eps += 1e-3
+
+    cutter = BluemiraFace(
+        make_polygon(
+            {"x": [0, x_min, x_min, 0], "z": [z_min, z_min, z_max, z_max]}, closed=True
+        )
+    )
+
+    result = boolean_cut(tf_offset, cutter)
+    if len(result) > 1:
+        bluemira_warn(
+            "Boolean cut of the TF boundary resulted in more than one wire.. returning the longest one. Fingers crossed."
+        )
+        result.sort(key=lambda wire: -wire.length)
+    pf_coil_path = result[0]
+    return pf_coil_path

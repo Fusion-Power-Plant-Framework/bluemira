@@ -257,10 +257,10 @@ class Configuration(ConfigurationSchema, ParameterFrame):
 
         # PF coils
         ['r_pf_corner', 'Corner radius of the PF coil winding pack', 0.05, 'm', None, 'Input'],
-        ['tk_pf_insulation', 'Thickness of the PF coil insulation', 0.05, 'm', None, 'Input'],
+        ['tk_pf_insulation', 'Thickness of the PF coil insulation', 0.005, 'm', None, 'Input'],
         ['tk_pf_casing', 'Thickness of the PF coil casing', 0.07, 'm', None, 'Input'],
         ['r_cs_corner', 'Corner radius of the CS coil winding pack', 0.05, 'm', None, 'Input'],
-        ['tk_cs_insulation', 'Thickness of the CS coil insulation', 0.05, 'm', None, 'Input'],
+        ['tk_cs_insulation', 'Thickness of the CS coil insulation', 0.005, 'm', None, 'Input'],
         ['tk_cs_casing', 'Thickness of the CS coil casing', 0.07, 'm', None, 'Input'],
 
         # Coil structures
@@ -288,7 +288,7 @@ class Configuration(ConfigurationSchema, ParameterFrame):
         ['r_vv_joint', 'Radius of inboard/outboard VV joint', 2., 'm', None, 'Input'],
 
         # Gaps and clearances
-        ['g_cs_mod', 'Gap between CS modules', 0.1, 'm', None, 'Input'],
+        ['g_cs_mod', 'Gap between CS modules', 0.05, 'm', None, 'Input'],
         ['g_vv_ts', 'Gap between VV and TS', 0.05, 'm', None, 'Input'],
         ['g_ib_vv_ts', 'Inboard gap between VV and TS', 0.05, 'm', None, 'Input'],
         ['g_ob_vv_ts', 'Outboard gap between VV and TS', 0.05, 'm', None, 'Input'],
@@ -325,8 +325,8 @@ class Configuration(ConfigurationSchema, ParameterFrame):
 
         # Central solenoid
         ['F_pf_zmax', 'Maximum vertical force on a single PF coil', 450, 'MN', None, 'Input'],
-        ['F_cs_ztotmax', 'Maximum total vertical force in the CS stack', 350, 'MN', None, 'Input'],
-        ['F_cs_sepmax', 'Maximum separation force between CS modules', 300, 'MN', None, 'Input'],
+        ['F_cs_ztotmax', 'Maximum total vertical force in the CS stack', 300, 'MN', None, 'Input'],
+        ['F_cs_sepmax', 'Maximum separation force between CS modules', 350, 'MN', None, 'Input'],
         ['CS_material', 'Conducting material to use for the CS modules', 'Nb3Sn', 'dimensionless', None, 'Input'],
         ["CS_jmax", "Maximum current density to use in CS modules", 16, "MA/m^2", None, "Input"],
         ["CS_bmax", "Maximum peak field to use in CS modules", 13, "T", None, "Input"],

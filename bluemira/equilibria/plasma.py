@@ -254,3 +254,112 @@ class PlasmaCoil:
         """
         n_filaments = len(np.where(self._j_tor > 0)[0])
         return f"{self.__class__.__name__}: {n_filaments} filaments"
+
+
+class NoPlasmaCoil:
+    """
+    NoPlasmaCoil object for dummy representation of a plasma-less state.
+
+    Parameters
+    ----------
+    grid: Grid
+        Grid object on which the finite difference representation of the plasma should be
+        constructed
+    """
+
+    def __init__(self, grid):
+        self.grid = grid
+
+    def psi(self, x=None, z=None):
+        """
+        Poloidal magnetic flux at x, z
+
+        Parameters
+        ----------
+        x: Optional[Union[float, np.ndarray]]
+            Radial coordinates at which to calculate
+        z: Optional[Union[float, np.ndarray]]
+            Vertical coordinates at which to calculate.
+
+        Notes
+        -----
+        If both x and z are None, defaults to the full map on the grid.
+
+        Returns
+        -------
+        psi: Union[float, np.ndarray]
+            Poloidal magnetic flux at the points [V.s/rad]
+        """
+        return self._return_zeros(x, z)
+
+    def Bx(self, x=None, z=None):
+        """
+        Radial magnetic field at x, z
+
+        Parameters
+        ----------
+        x: Optional[Union[float, np.ndarray]]
+            Radial coordinates at which to calculate
+        z: Optional[Union[float, np.ndarray]]
+            Vertical coordinates at which to calculate.
+
+        Notes
+        -----
+        If both x and z are None, defaults to the full map on the grid.
+
+        Returns
+        -------
+        Bx: Union[float, np.ndarray]
+            Radial magnetic field at the points [T]
+        """
+        return self._return_zeros(x, z)
+
+    def Bz(self, x=None, z=None):
+        """
+        Vertical magnetic field at x, z
+
+        Parameters
+        ----------
+        x: Optional[Union[float, np.ndarray]]
+            Radial coordinates at which to calculate
+        z: Optional[Union[float, np.ndarray]]
+            Vertical coordinates at which to calculate.
+
+        Notes
+        -----
+        If both x and z are None, defaults to the full map on the grid.
+
+        Returns
+        -------
+        Bz: Union[float, np.ndarray]
+            Vertical magnetic field at the points [T]
+        """
+        return self._return_zeros(x, z)
+
+    def Bp(self, x=None, z=None):
+        """
+        Poloidal magnetic field at x, z
+
+        Parameters
+        ----------
+        x: Optional[Union[float, np.ndarray]]
+            Radial coordinates at which to calculate
+        z: Optional[Union[float, np.ndarray]]
+            Vertical coordinates at which to calculate.
+
+        Notes
+        -----
+        If both x and z are None, defaults to the full map on the grid.
+
+        Returns
+        -------
+        Bp: Union[float, np.ndarray]
+            Poloidal magnetic field at the points [T]
+        """
+        return self._return_zeros(x, z)
+
+    def _return_zeros(self, x, z):
+        if x is None and z is None:
+            return np.zeros_like(self.grid.x)
+
+        return np.zeros_like(x)

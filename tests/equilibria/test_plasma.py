@@ -24,7 +24,7 @@ import pytest
 
 from bluemira.equilibria.error import EquilibriaError
 from bluemira.equilibria.grid import Grid
-from bluemira.equilibria.plasma import PlasmaCoil
+from bluemira.equilibria.plasma import NoPlasmaCoil, PlasmaCoil
 
 
 class TestPlasmaCoil:
@@ -85,3 +85,21 @@ class TestPlasmaCoil:
     def test_bad_input_shapes(self):
         with pytest.raises(EquilibriaError):
             self.plasma_coil.psi(np.zeros(3), np.zeros(4))
+
+
+class TestNoPlasmaCoil:
+    def test_call(self):
+        grid = Grid(4, 10, -5, 5, 100, 100)
+        nocoil = NoPlasmaCoil(grid)
+
+        assert nocoil.psi().shape == (100, 100)
+        assert nocoil.Bx().shape == (100, 100)
+        assert nocoil.Bz().shape == (100, 100)
+        assert nocoil.Bp().shape == (100, 100)
+
+        x = np.array([1, 2, 3, 4])
+        z = np.array([1, 2, 3, 4])
+        assert nocoil.psi(x, z).shape == (4,)
+        assert nocoil.Bx(x, z).shape == (4,)
+        assert nocoil.Bz(x, z).shape == (4,)
+        assert nocoil.Bp(x, z).shape == (4,)

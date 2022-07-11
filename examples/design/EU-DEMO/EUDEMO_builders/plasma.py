@@ -29,7 +29,7 @@ from typing import List, Optional
 
 import numpy as np
 from EUDEMO_builders.equilibria import EUDEMOSingleNullConstraints
-from EUDEMO_builders.pf_coils import make_coilset
+from EUDEMO_builders.pf_coils import make_coilset, make_grid
 
 import bluemira.utilities.plot_tools as bm_plot_tools
 from bluemira.base.builder import BuildConfig, Builder
@@ -39,7 +39,6 @@ from bluemira.base.error import BuilderError
 from bluemira.base.look_and_feel import bluemira_print
 from bluemira.display.palettes import BLUE_PALETTE
 from bluemira.equilibria.equilibrium import Equilibrium
-from bluemira.equilibria.grid import Grid
 from bluemira.equilibria.opt_problems import UnconstrainedTikhonovCurrentGradientCOP
 from bluemira.equilibria.profiles import BetaIpProfile
 from bluemira.equilibria.shapes import JohnerLCFS
@@ -289,14 +288,9 @@ class PlasmaBuilder(Builder):
             self._params.B_0.value,
         )
 
-        sx, sz = 1.6, 1.7  # grid scales from plasma
-        nx, nz = 65, 65
         R_0 = self._params.R_0.value
         A = self._params.A.value
-        x_min, x_max = R_0 - sx * (R_0 / A), R_0 + sx * (R_0 / A)
-        z_min, z_max = -sz * (kappa * R_0 / A), sz * (kappa * R_0 / A)
-
-        grid = Grid(x_min, x_max, z_min, z_max, nx, nz)
+        grid = make_grid(R_0, A, kappa, scale_x=1.6, scale_z=1.7, nx=65, nz=65)
 
         eq = Equilibrium(
             coilset,

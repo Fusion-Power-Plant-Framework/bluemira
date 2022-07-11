@@ -220,7 +220,7 @@ build_config = {
     "reference_data_root": "!BM_ROOT!/data",
     "generated_data_root": "!BM_ROOT!/generated_data",
     "PROCESS": {
-        "runmode": "mock",  # ["run", "read", "mock"]
+        "runmode": "run",  # ["run", "read", "mock"]
     },
     "Plasma": {
         "runmode": "run",  # ["run", "read", "mock"]
@@ -250,7 +250,7 @@ build_config = {
         },
     },
     "PF Coils": {
-        "runmode": "read",
+        "runmode": "run",  # ["run", "read"]
     },
 }
 
@@ -465,6 +465,18 @@ tf_coils_builder: TFCoilsBuilder = reactor.get_builder(EUDEMOReactorDesign.TF_CO
 if tf_coils_builder.runmode == "run":
     design_problem: RippleConstrainedLengthGOP = tf_coils_builder.design_problem
     design_problem.plot()
+    plt.show()
+
+
+# %%[markdown]
+# ### Plotting the PF Coils Design Problem
+#
+# Similarly, we can also look at the design problem for the PF coil build.
+
+# %%
+pf_coils_builder = reactor.get_builder(EUDEMOReactorDesign.PF_COILS)
+if pf_coils_builder.runmode == "run":
+    pf_coils_builder.design_problem.plot()
     plt.show()
 
 # %%[markdown]

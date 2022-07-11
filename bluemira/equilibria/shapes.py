@@ -436,14 +436,14 @@ class JohnerLCFS(GeometryParameterisation):
                 BoundedVariable(
                     "phi_u_neg",
                     180,
-                    lower_bound=160,
+                    lower_bound=0,
                     upper_bound=190,
                     descr="Upper inner angle [°]",
                 ),
                 BoundedVariable(
                     "phi_u_pos",
                     10,
-                    lower_bound=5,
+                    lower_bound=0,
                     upper_bound=20,
                     descr="Upper outer angle [°]",
                 ),
@@ -451,19 +451,19 @@ class JohnerLCFS(GeometryParameterisation):
                     "phi_l_neg",
                     -120,
                     lower_bound=-130,
-                    upper_bound=-110,
+                    upper_bound=45,
                     descr="Lower inner angle [°]",
                 ),
                 BoundedVariable(
                     "phi_l_pos",
                     30,
-                    lower_bound=20,
-                    upper_bound=35,
+                    lower_bound=0,
+                    upper_bound=45,
                     descr="Lower outer angle [°]",
                 ),
             ]
         )
-        variables.adjust_variables(var_dict)
+        variables.adjust_variables(var_dict, strict_bounds=False)
         super().__init__(variables)
 
     def create_shape(self, label="LCFS", n_points=1000):
