@@ -334,7 +334,7 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
         )
 
     def _plot_array(self, points, array, title, i_iter, contour=True):
-        axis, cntr, _ = plot_scalar_field(
+        plot_scalar_field(
             points[:, 0],
             points[:, 1],
             array,
@@ -390,13 +390,6 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
                 self._plot_array(
                     points, prev, "Normalized magnetic coordinate at iteration", i
                 )
-
-            # print(f"Magnetic coordinate range = [{np.min(prev)}:{np.max(prev)}]")
-
-            # prev = np.array([self.psi(p) for p in points])
-            # prev = self.psi.compute_vertex_values()
-            # curr_tot = dolfin.assemble(self.g * dx())
-            # print(f"pre - curr_tot = {curr_tot} - curr_dens = {self.g}")
 
             super().solve(
                 self.g, dirichlet_bc_function, dirichlet_marker, neumann_bc_function
