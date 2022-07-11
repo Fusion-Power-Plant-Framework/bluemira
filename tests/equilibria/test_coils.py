@@ -305,7 +305,7 @@ class TestPositionalSymmetricCircuit:
         cls.circuit = circuit
         cls.coils = [coil, mirror_coil]
 
-    @pytest.mark.parametrize("fieldtype", ["control_", ""])
+    @pytest.mark.parametrize("fieldtype", ["unit_", ""])
     def test_fields(self, fieldtype):
         points = [
             [1, 1],

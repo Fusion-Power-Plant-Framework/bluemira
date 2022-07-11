@@ -332,16 +332,16 @@ class TestRegionMapper:
         zup = self.coilset.z[self.coilset._control] + max_coil_shifts["z_shifts_upper"]
         zlo = self.coilset.z[self.coilset._control] + max_coil_shifts["z_shifts_lower"]
 
-        for xl, xu, zl, zu in zip(xup, xlo, zup, zlo):
+        for name, xl, xu, zl, zu in zip(self.coilset.name, xup, xlo, zup, zlo):
             rect = Coordinates({"x": [xl, xu, xu, xl, xl], "z": [zl, zl, zu, zu, zl]})
-            pfregions[coil.name] = rect
+            pfregions[name] = rect
 
         return pfregions
 
     def test_region_mapper(self):
         pfregions = self.create_rectangular_region()
         region_mapper = RegionMapper(pfregions)
-        x_init, z_init = self.coilset.get_positions()
+        x_init, z_init = self.coilset.position
 
         mapped_positions = region_mapper.get_Lmap(self.coilset)[0]
         region_mapper.set_Lmap(mapped_positions)
