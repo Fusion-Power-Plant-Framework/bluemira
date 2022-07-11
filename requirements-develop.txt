@@ -8,7 +8,7 @@ cfgv==3.3.1
 charset-normalizer==2.0.12
 coverage[toml]==6.4.1
 distlib==0.3.4
-docutils==0.17.1
+docutils==0.19
 filelock==3.7.1
 flake8==4.0.1
 flake8-absolute-import==1.0.0.1
