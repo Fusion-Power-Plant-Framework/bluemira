@@ -31,6 +31,7 @@ from matplotlib.tri.triangulation import Triangulation
 
 from bluemira.geometry.coordinates import Coordinates
 from bluemira.geometry.tools import interpolate_bspline
+from bluemira.utilities.tools import is_num
 
 
 def b_coil_axis(r, z, pz, curr):
@@ -173,7 +174,7 @@ def get_tricontours(x, z, array, value):
         The z value array
     array: np.array(n, m)
         The value array
-    value: float
+    value: Union[float, Iterable]
         The value of the desired contour in the array
 
     Returns
@@ -183,7 +184,16 @@ def get_tricontours(x, z, array, value):
     """
     tri = Triangulation(x, z)
     tcg = TriContourGenerator(tri.get_cpp_triangulation(), array)
-    return tcg.create_contour(value)[0][0]
+    if is_num(value):
+        value = [value]
+
+    contours = []
+    for val in value:
+        contours.append(tcg.create_contour(val)[0][0])
+
+    if len(contours) == 1:
+        return contours[0]
+    return contours
 
 
 def calculate_plasma_shape_params(points, psi, levels):
@@ -214,14 +224,12 @@ def calculate_plasma_shape_params(points, psi, levels):
     kappa = np.zeros(len(levels))
     delta = np.zeros(len(levels))
 
-    tri = Triangulation(points[:, 0], points[:, 1])
-    tcg = TriContourGenerator(tri.get_cpp_triangulation(), psi)
+    contours = get_tricontours(points[:, 0], points[:, 1], psi, levels)
 
-    for i, value in enumerate(levels):
-        vertices = tcg.create_contour(value)[0][0]
-        x = vertices.T[0]
+    for i, (value, contour) in enumerate(zip(levels, contours)):
+        x = contour.T[0]
         y = x * 0
-        z = vertices.T[1]
+        z = contour.T[1]
         vertices = Coordinates({"x": x, "y": y, "z": z})
         wire = interpolate_bspline(vertices, f"psi_{value:.2f}", True)
         interp_points = wire.discretize(1000)
