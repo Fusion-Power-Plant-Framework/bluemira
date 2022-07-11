@@ -74,6 +74,11 @@ class DesignABC(abc.ABC):
     def configuration(self) -> Type[Configuration]:
         """
         Configuration
+
+        Reactor global configuration
+
+        currently all parameters of a reactor will be stripped down to just the global
+        ones
         """
         pass
 
