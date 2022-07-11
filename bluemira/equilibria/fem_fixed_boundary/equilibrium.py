@@ -22,7 +22,7 @@
 """Fixed boundary equilibrium class"""
 import numpy as np
 
-from bluemira.base.look_and_feel import bluemira_debug, bluemira_print
+from bluemira.base.look_and_feel import bluemira_debug, bluemira_print, bluemira_warn
 from bluemira.equilibria.fem_fixed_boundary.fem_magnetostatic_2D import (
     FemGradShafranovFixedBoundary,
 )
@@ -251,7 +251,9 @@ def solve_plasmod_fixed_boundary(
             print(f"|Target - bluemira|/Target = {err_kappa}")
 
         print("\n")
-        bluemira_print(f"iter_err: {iter_err:.3E}, iter_err_max: {iter_err_max:.3E}")
+        bluemira_print(
+            f"PLASMOD <-> Fixed boundary equilibrium iter {iter} : {iter_err:.3E}, iter_err_max: {iter_err_max:.3E}"
+        )
         print("\n")
 
         if iter_err <= iter_err_max:
@@ -265,3 +267,8 @@ def solve_plasmod_fixed_boundary(
         builder_plasma.params.delta_u = delta_u
         builder_plasma.reinitialise(builder_plasma.params)
         bluemira_debug(f"{builder_plasma.params}")
+
+    if niter == niter_max:
+        bluemira_warn(
+            f"PLASMOD <-> Fixed boundary equilibrium did not converge within {niter_max} iterations."
+        )

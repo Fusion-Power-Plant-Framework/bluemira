@@ -229,7 +229,7 @@ def calculate_plasma_shape_params(points, psi, levels):
         y = x * 0
         z = contour.T[1]
         vertices = Coordinates({"x": x, "y": y, "z": z})
-        wire = interpolate_bspline(vertices, f"psi_{value:.2f}", True)
+        wire = interpolate_bspline(vertices, f"psi_{value:.2f}", closed=True)
         interp_points = wire.discretize(1000)
 
         ind_z_max = np.argmax(interp_points.z)
