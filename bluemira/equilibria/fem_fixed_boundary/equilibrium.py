@@ -47,7 +47,7 @@ def solve_plasmod_fixed_boundary(
     lcar_fine=0.05,
     niter_max=30,
     iter_err_max=1e-5,
-    theta=0.8,
+    relaxation=0.2,
     gs_relaxation=0.5,
     plot=False,
     verbose=False,
@@ -78,7 +78,7 @@ def solve_plasmod_fixed_boundary(
         maximum number of iteration between Grad-Shafranov and Plasmod
     iter_err_max: float
         convergence maximum error to stop the iteration
-    theta: float
+    relaxation: float
         iteration relaxing factor
     gs_relaxation: float
         FemGradShafranovFixedBoundary iteration relaxing factor
@@ -228,8 +228,12 @@ def solve_plasmod_fixed_boundary(
         kappa_u_0 = builder_plasma.params.get_param("kappa_u")
         delta_u_0 = builder_plasma.params.get_param("delta_u")
 
-        kappa_u = theta * kappa_u_0 * (kappa95_t / kappa_95) + (1 - theta) * kappa_u_0
-        delta_u = theta * delta_u_0 * (delta95_t / delta_95) + (1 - theta) * delta_u_0
+        kappa_u = (1 - relaxation) * kappa_u_0 * (
+            kappa95_t / kappa_95
+        ) + relaxation * kappa_u_0
+        delta_u = (1 - relaxation) * delta_u_0 * (
+            delta95_t / delta_95
+        ) + relaxation * delta_u_0
 
         if verbose:
             print("previous shape parameters")
