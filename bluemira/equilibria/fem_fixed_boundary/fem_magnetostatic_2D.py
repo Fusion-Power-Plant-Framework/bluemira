@@ -265,7 +265,6 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
         g: Callable
             source current to solve the magnetostatic problem
         """
-
         dx = dolfin.Measure("dx", domain=self.mesh)
         area = dolfin.assemble(dolfin.Constant(1) * dx())
         j_target = curr_target / area
