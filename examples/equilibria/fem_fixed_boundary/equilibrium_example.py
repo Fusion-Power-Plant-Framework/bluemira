@@ -34,7 +34,7 @@ from bluemira.equilibria.fem_fixed_boundary.equilibrium import (
     solve_plasmod_fixed_boundary,
 )
 
-# set_log_level("DEBUG")
+set_log_level("NOTSET")
 
 # %%
 main_params = {
