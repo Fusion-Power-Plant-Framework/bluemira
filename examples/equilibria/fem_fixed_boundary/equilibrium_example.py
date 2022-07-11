@@ -137,7 +137,7 @@ solve_plasmod_fixed_boundary(
     kappa95_t,
     lcar_coarse=0.3,
     lcar_fine=0.05,
-    niter_max=15,
+    niter_max=2,
     iter_err_max=1e-5,
     theta=1,
     gs_relaxation=0.05,

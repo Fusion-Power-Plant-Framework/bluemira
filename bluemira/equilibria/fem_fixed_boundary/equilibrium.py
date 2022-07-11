@@ -251,9 +251,7 @@ def solve_plasmod_fixed_boundary(
             print(f"|Target - bluemira|/Target = {err_kappa}")
 
         print("\n")
-        bluemira_print(
-            f"PLASMOD <-> Fixed boundary equilibrium iter {iter} : {iter_err:.3E}, iter_err_max: {iter_err_max:.3E}"
-        )
+        bluemira_print(f"PLASMOD <-> Fixed boundary G-S iter {niter} : {iter_err:.3E}")
         print("\n")
 
         if iter_err <= iter_err_max:
@@ -270,5 +268,10 @@ def solve_plasmod_fixed_boundary(
 
     if niter == niter_max:
         bluemira_warn(
-            f"PLASMOD <-> Fixed boundary equilibrium did not converge within {niter_max} iterations."
+            f"PLASMOD <-> Fixed boundary G-S did not converge within {niter_max} iterations:\n"
+            f"\t Target kappa_95: {kappa95_t:.3f}\n"
+            f"\t Actual kappa_95: {kappa_95:.3f}\n"
+            f"\t Target delta_95: {delta95_t:.3f}\n"
+            f"\t Actual delta_95: {delta_95:.3f}\n"
+            f"\t Error: {iter_err:.3E} > {iter_err_max:.3E}\n"
         )
