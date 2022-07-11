@@ -263,4 +263,5 @@ def solve_plasmod_fixed_boundary(
         # update builder_plasma parameters
         builder_plasma.params.kappa_u = kappa_u
         builder_plasma.params.delta_u = delta_u
+        builder_plasma.reinitialise(builder_plasma.params)
         bluemira_debug(f"{builder_plasma.params}")
