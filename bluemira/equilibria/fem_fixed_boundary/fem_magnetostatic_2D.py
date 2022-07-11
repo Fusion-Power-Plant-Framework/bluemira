@@ -330,10 +330,10 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
     def _plot_current_iteration(self, points, i_iter):
         curr_data = np.array([self.g_func(p) for p in points])
         self._plot_array(
-            points, curr_data, "J current at iteration", i_iter, contour=False
+            points, curr_data, f"J current at iteration {i_iter}", contour=False
         )
 
-    def _plot_array(self, points, array, title, i_iter, contour=True):
+    def _plot_array(self, points, array, title, contour=True):
         plot_scalar_field(
             points[:, 0],
             points[:, 1],
@@ -343,7 +343,7 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
             tofill=True,
             contour=contour,
         )
-        plt.title(f"{title} {i_iter}")
+        plt.title(title)
         plt.show()
 
     def solve(
@@ -388,7 +388,7 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
 
             if verbose_plot:
                 self._plot_array(
-                    points, prev, "Normalized magnetic coordinate at iteration", i
+                    points, prev, f"Normalized magnetic coordinate at iteration {i}"
                 )
 
             super().solve(
@@ -399,9 +399,8 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
             diff = new - prev
 
             if verbose_plot:
-                self._plot_array(points, diff, "GS error at iteration", i)
+                self._plot_array(points, diff, f"G-S error at iteration {i}")
 
-            # diff = self.psi.compute_vertex_values() - prev
             eps = np.linalg.norm(diff, ord=2) / np.linalg.norm(new, ord=2)
 
             bluemira_print_flush(
