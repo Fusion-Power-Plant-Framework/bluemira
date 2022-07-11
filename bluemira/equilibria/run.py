@@ -598,7 +598,7 @@ class OptimisedPulsedCoilsetDesign(PulsedCoilsetDesign):
         psi_bd_orig = self._psi_premag
         self.coilset = optimised_coilset
         self.run_premagnetisation()
-        if not self._psi_premag >= psi_bd_orig - 2.0:
+        if self._psi_premag < psi_bd_orig - 2.0:
             bluemira_warn(
                 f"Breakdown flux significantly lower with optimised coil positions: {self._psi_premag:.2f} < {psi_bd_orig:.2f}"
             )
