@@ -103,12 +103,8 @@ def solve_plasmod_fixed_boundary(
         # - xz - plasma toroidal cross section
         # - xyz - to get the volume
         plasma = builder_plasma.build_xz().get_component("xz").get_component("LCFS")
-        plasma_volume = (
-            builder_plasma.build_xyz()
-            .get_component("xyz")
-            .get_component("LCFS")
-            .shape.volume
-        )
+        lcfs = plasma.shape
+        plasma_volume = 2 * np.pi * lcfs.center_of_mass[0] * lcfs.area
 
         if plot:
             plasma.plot_options.show_faces = False
