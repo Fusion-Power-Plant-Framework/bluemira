@@ -168,7 +168,7 @@ def solve_plasmod_fixed_boundary(
         m = meshing.Mesh()
         m(plasma)
 
-        msh_to_xdmf("Mesh.msh", dimensions=(0, 2), directory=".", verbose=True)
+        msh_to_xdmf("Mesh.msh", dimensions=(0, 2), directory=".", verbose=verbose)
 
         mesh, boundaries, subdomains, labels = import_mesh(
             "Mesh",
@@ -222,7 +222,7 @@ def solve_plasmod_fixed_boundary(
         # calculate the iteration error
         err_delta = abs(delta_95 - delta95_t) / delta95_t
         err_kappa = abs(kappa_95 - kappa95_t) / kappa95_t
-        iter_err = max(err_delta, err_kappa)
+        iter_err = np.hypot(err_delta, err_kappa)
 
         # calculate the new kappa_u and delta_u
         kappa_u_0 = builder_plasma.params.get_param("kappa_u")
