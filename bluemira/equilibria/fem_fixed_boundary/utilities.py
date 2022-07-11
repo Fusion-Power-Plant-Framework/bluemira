@@ -179,7 +179,7 @@ def get_tricontours(x, z, array, value):
 
     Returns
     -------
-    value_loop: np.array(ni, mi)
+    value_loop: List[np.array(ni, mi)]
         The points of the value contour in the array
     """
     tri = Triangulation(x, z)
@@ -191,8 +191,6 @@ def get_tricontours(x, z, array, value):
     for val in value:
         contours.append(tcg.create_contour(val)[0][0])
 
-    if len(contours) == 1:
-        return contours[0]
     return contours
 
 

@@ -387,7 +387,9 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
             prev = np.array([self.psi_norm_2d(p) for p in points])
 
             if verbose_plot:
-                self._plot_array(prev, "Normalized magnetic coordinate at iteration", i)
+                self._plot_array(
+                    points, prev, "Normalized magnetic coordinate at iteration", i
+                )
 
             # print(f"Magnetic coordinate range = [{np.min(prev)}:{np.max(prev)}]")
 
@@ -404,7 +406,7 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
             diff = new - prev
 
             if verbose_plot:
-                self._plot_array(diff, "GS error at iteration", i)
+                self._plot_array(points, diff, "GS error at iteration", i)
 
             # diff = self.psi.compute_vertex_values() - prev
             eps = np.linalg.norm(diff, ord=2) / np.linalg.norm(new, ord=2)
