@@ -225,7 +225,7 @@ def make_polygon(
 
     Notes
     -----
-    If the input points are closed, but closed is True, the returned BluemiraWire will be
+    If the input points are closed, but closed is False, the returned BluemiraWire will be
     closed.
     """
     points = Coordinates(points)
@@ -267,7 +267,7 @@ def make_bezier(
 
     Notes
     -----
-    If the input points are closed, but closed is True, the returned BluemiraWire will be
+    If the input points are closed, but closed is False, the returned BluemiraWire will be
     closed.
     """
     points = Coordinates(points)
