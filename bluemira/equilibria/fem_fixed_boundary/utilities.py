@@ -261,3 +261,101 @@ def calculate_plasma_shape_params(points, psi, levels):
             delta[i] = (c + d) / 2 / a
 
     return r_geo, kappa, delta
+
+
+def calculate_plasma_shape_params_opt(points, psi, gs_solver, psi_norm):
+    mesh = points
+    points = mesh.coordinates()
+
+    contour = get_tricontours(points[:, 0], points[:, 1], psi, psi_norm)[0]
+    x, z = contour.T
+    ind_z_max = np.argmax(z)
+    pu = contour[ind_z_max]
+    ind_z_min = np.argmin(z)
+    pl = contour[ind_z_min]
+    ind_x_max = np.argmax(x)
+    po = contour[ind_x_max]
+    ind_x_min = np.argmin(x)
+    pi = contour[ind_x_min]
+
+    from dolfin import plot
+
+    f, ax = plt.subplots()
+    plot(mesh)
+    ax.tricontour(points[:, 0], points[:, 1], psi)
+    ax.plot(x, z, color="r")
+    ax.plot(*po, marker="o", color="r")
+    ax.plot(*pi, marker="o", color="r")
+    ax.plot(*pu, marker="o", color="r")
+    ax.plot(*pl, marker="o", color="r")
+
+    def f_obj_lower_extremum(x):
+        return x[1]
+
+    def f_obj_upper_extremum(x):
+        return -x[1]
+
+    def f_obj_inner_extremum(x):
+        return x[0]
+
+    def f_obj_outer_extremum(x):
+        return -x[0]
+
+    def f_constrain_p95(x):
+        return (gs_solver.psi_norm_2d(x) - psi_norm) ** 2
+
+    def find_extremum(func, x0):
+        delta = 0.1
+        bounds = [(xi - delta, xi + delta) for xi in x0]
+        print("Point: ", x0)
+        x_star = minimize(
+            func,
+            x0,
+            constraints=({"fun": f_constrain_p95, "type": "eq"}),
+            method="SLSQP",
+            bounds=bounds,
+            options={"disp": True, "ftol": 1e-10, "maxiter": 1000},
+        ).x
+        print("Opt point: ", x_star)
+        return x_star
+
+    pl = find_extremum(f_obj_lower_extremum, pl)
+
+    pu = find_extremum(f_obj_upper_extremum, pu)
+
+    pi = find_extremum(f_obj_inner_extremum, pi)
+
+    po = find_extremum(f_obj_outer_extremum, po)
+
+    ax.plot(*po, marker="o", color="b")
+    ax.plot(*pi, marker="o", color="b")
+    ax.plot(*pu, marker="o", color="b")
+    ax.plot(*pl, marker="o", color="b")
+    ax.set_aspect("equal")
+    plt.show()
+
+    # geometric center of a magnetic flux surface
+    r_geo = (po[0] + pi[0]) / 2
+
+    # elongation
+    a = (po[0] - pi[0]) / 2
+    b = (pu[1] - pl[1]) / 2
+    if a == 0:
+        kappa = 1
+    else:
+        kappa = b / a
+
+    # triangularity
+    c = r_geo - pl[0]
+    d = r_geo - pu[0]
+    if a == 0:
+        delta = 0
+    else:
+        delta = (c + d) / 2 / a
+
+    return r_geo, kappa, delta
+
+    return r_geo, kappa, delta
+
+
+from scipy.optimize import minimize

@@ -31,6 +31,7 @@ from bluemira.equilibria.fem_fixed_boundary.transport_solver import (
 )
 from bluemira.equilibria.fem_fixed_boundary.utilities import (
     calculate_plasma_shape_params,
+    calculate_plasma_shape_params_opt,
     plot_profile,
 )
 from bluemira.mesh import meshing
@@ -188,6 +189,16 @@ def solve_plasmod_fixed_boundary(
             verbose_plot=gs_options["verbose_plot"],
         )
 
+        points = mesh.coordinates()
+        x2d_data = np.array([gs_solver.psi_norm_2d(x) for x in points])
+        r_geo, kappa_95, delta_95 = calculate_plasma_shape_params(
+            points, x2d_data, [np.sqrt(0.95)]
+        )
+        r_geo_o, kappa_95_o, delta_95_o = calculate_plasma_shape_params_opt(
+            mesh, x2d_data, gs_solver, 0.95
+        )
+        print("Coarse Mesh find", r_geo, kappa_95, delta_95)
+        print("Coarse mesh opt: ", r_geo_o, kappa_95_o, delta_95_o)
         # create the finer mesh to calculate the isofluxes
         plasma.shape.boundary[0].mesh_options = {
             "lcar": lcar_fine,
@@ -213,12 +224,16 @@ def solve_plasmod_fixed_boundary(
         r_geo, kappa_95, delta_95 = calculate_plasma_shape_params(
             points, x2d_data, [np.sqrt(0.95)]
         )
-        r_geo, kappa_95, delta_95 = r_geo[0], kappa_95[0], delta_95[0]
-
+        r_geo, kappa_95, delta_95 = calculate_plasma_shape_params_opt(
+            mesh, x2d_data, gs_solver, 0.95
+        )
+        # r_geo, kappa_95, delta_95 = r_geo[0], kappa_95[0], delta_95[0]
+        # print("Fine Mesh find", r_geo, kappa_95, delta_95)
+        # print("Fine mesh opt", r_geo_o, kappa_95_o, delta_95_o)
         # calculate the iteration error
         err_delta = abs(delta_95 - delta95_t) / delta95_t
         err_kappa = abs(kappa_95 - kappa95_t) / kappa95_t
-        iter_err = np.hypot(err_delta, err_kappa)
+        iter_err = max(err_delta, err_kappa)
 
         # calculate the new kappa_u and delta_u
         kappa_u_0 = builder_plasma.params.get_param("kappa_u")
