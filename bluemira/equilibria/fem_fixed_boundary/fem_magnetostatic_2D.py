@@ -242,6 +242,8 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
         return myfunc
 
     def _create_initial_guess(self, curr_target):
+        x = dolfin.Measure("x", domain=self.mesh)
+        z = dolfin.Measure("y", domain=self.mesh)
         dx = dolfin.Measure("dx", domain=self.mesh)
         area = dolfin.assemble(dolfin.Constant(1) * dx())
         j_target = curr_target / area
