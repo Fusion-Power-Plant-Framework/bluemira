@@ -237,6 +237,65 @@ class TestZLMapper:
         self.xzl_map.plot(ax=self.ax)
 
 
+class TestZLMapperEdges:
+    @classmethod
+    def setup_class(cls):
+        """
+        Sets up an XZLMapper that will trigger edge cases where a zone covers
+        the start or end of a track
+        """
+
+        tf = Coordinates.from_json(os.sep.join([DATA_PATH, "TFreference.json"]))
+        x_off, z_off = offset(*tf.xz, 2.5)
+        tf = Coordinates({"x": x_off, "z": z_off})
+        clip = np.where(tf.x >= 3.5)
+        tf = Coordinates({"x": tf.x[clip], "z": tf.z[clip]})
+        up = Coordinates({"x": [0, 14, 14, 0, 0], "z": [3, 3, 15, 15, 3]})
+        lp = Coordinates(
+            {"x": [10, 10, 15, 22, 22, 15, 10], "z": [-6, -10, -13, -13, -8, -8, -6]}
+        )
+        eq = Coordinates({"x": [14, 22, 22, 14, 14], "z": [-1.4, -1.4, 1.4, 1.4, -1.4]})
+        cls.TF = tf
+        cls.zones = [eq, lp, up]
+        positioner = CoilPositioner(9, 3.1, 0.33, 1.59, tf, 2.6, 0.5, 6, 5)
+        cls.coilset = positioner.make_coilset()
+        cls.coilset.current = 1e6
+        solenoid = cls.coilset.get_solenoid()
+        cls.xz_map = XZLMapper(
+            tf, solenoid.radius, solenoid.z_min, solenoid.z_max, solenoid.gap, CS=True
+        )
+
+        _, cls.ax = plt.subplots()
+        cls.ax.plot(up.x, up.z, linestyle="-", color="r")
+        cls.ax.plot(lp.x, lp.z, linestyle="-", color="r")
+        cls.ax.plot(eq.x, eq.z, linestyle="-", color="r")
+
+    @classmethod
+    def teardown_cls(cls):
+        plt.close("all")
+
+    def test_cs_zl(self):
+
+        l_pos, lb, ub = self.xz_map.get_Lmap(
+            self.coilset, set(self.coilset.get_PF_names())
+        )
+        self.xz_map.add_exclusion_zones(self.zones)  # au cas ou
+        _, _ = self.xz_map.L_to_xz(l_pos[: self.coilset.n_PF])
+        xcs, zcs, dzcs = self.xz_map.L_to_zdz(l_pos[self.coilset.n_PF :])
+        l_cs = self.xz_map.z_to_L(zcs)
+        assert np.allclose(l_cs, l_pos[self.coilset.n_PF :])
+        solenoid = self.coilset.get_solenoid()
+        z = []
+        for c in solenoid.coils:
+            z.append(c.z)
+        z = np.sort(z)  # [::-1]  # Fixed somewhere else jcrois
+        assert np.allclose(z, zcs), z - zcs
+
+        self.xz_map.plot(ax=self.ax)
+        plt.show()
+>>>>>>> e2524d0a (🎨 initial control setup)
+
+
 class TestRegionMapper:
     @classmethod
     def setup_class(cls):
@@ -267,15 +326,16 @@ class TestRegionMapper:
         }
 
         pfregions = {}
-        for coil in self.coilset._ccoils:
-            xu = coil.x + max_coil_shifts["x_shifts_upper"]
-            xl = coil.x + max_coil_shifts["x_shifts_lower"]
-            zu = coil.z + max_coil_shifts["z_shifts_upper"]
-            zl = coil.z + max_coil_shifts["z_shifts_lower"]
 
+        xup = self.coilset.x[self.coilset._control] + max_coil_shifts["x_shifts_upper"]
+        xlo = self.coilset.x[self.coilset._control] + max_coil_shifts["x_shifts_lower"]
+        zup = self.coilset.z[self.coilset._control] + max_coil_shifts["z_shifts_upper"]
+        zlo = self.coilset.z[self.coilset._control] + max_coil_shifts["z_shifts_lower"]
+
+        for xl, xu, zl, zu in zip(xup, xlo, zup, zlo):
             rect = Coordinates({"x": [xl, xu, xu, xl, xl], "z": [zl, zl, zu, zu, zl]})
-
             pfregions[coil.name] = rect
+
         return pfregions
 
     def test_region_mapper(self):

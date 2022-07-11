@@ -202,9 +202,9 @@ class TestSemiAnalytic:
         plt.close("all")
 
     def test_bx(self):
-        gp = self.coil.control_Bx(self.grid.x, self.grid.z)
-        gp_greens = self.coil._control_Bx_greens(self.grid.x, self.grid.z)
-        gp_analytic = self.coil._control_Bx_analytical(self.grid.x, self.grid.z)
+        gp = self.coil.unit_Bx(self.grid.x, self.grid.z)
+        gp_greens = self.coil._unit_Bx_greens(self.grid.x, self.grid.z)
+        gp_analytic = self.coil._unit_Bx_analytical(self.grid.x, self.grid.z)
 
         _, ax = plt.subplots(1, 3)
         levels = np.linspace(np.amin(gp), np.amax(gp), 20)
@@ -219,9 +219,9 @@ class TestSemiAnalytic:
         ax[2].set_title("Semi-analytic method")
 
     def test_bz(self):
-        gp = self.coil.control_Bz(self.grid.x, self.grid.z)
-        gp_greens = self.coil._control_Bz_greens(self.grid.x, self.grid.z)
-        gp_analytic = self.coil._control_Bz_analytical(self.grid.x, self.grid.z)
+        gp = self.coil.unit_Bz(self.grid.x, self.grid.z)
+        gp_greens = self.coil._unit_Bz_greens(self.grid.x, self.grid.z)
+        gp_analytic = self.coil._unit_Bz_analytical(self.grid.x, self.grid.z)
 
         _, ax = plt.subplots(1, 3)
         levels = np.linspace(np.amin(gp), np.amax(gp), 20)
@@ -427,8 +427,8 @@ class TestCoilSet:
 
     def test_currents(self):
         set_currents = np.array([3e6, 4e6])
-        self.coilset.set_control_currents(set_currents)
-        currents = self.coilset.get_control_currents()
+        self.coilset.control_currents = set_currents
+        currents = self.coilset.control_currents
         assert np.allclose(set_currents, currents)
 
     def test_material_assignment(self):
