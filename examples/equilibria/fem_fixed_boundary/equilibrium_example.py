@@ -123,7 +123,7 @@ plasmod_build_config = {
 }
 
 plasmod_options = {"params": plasmod_params, "build_config": plasmod_build_config}
-gs_options = {"p_order": 2, "tol": 1e-3, "max_iter": 30, "verbose_plot": False}
+gs_options = {"p_order": 2, "tol": 1e-5, "max_iter": 30, "verbose_plot": False}
 
 # target values
 delta95_t = 0.333

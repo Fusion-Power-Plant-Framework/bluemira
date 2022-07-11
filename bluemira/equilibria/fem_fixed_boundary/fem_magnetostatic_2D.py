@@ -171,7 +171,12 @@ class FemMagnetostatic2d:
         self.bcs = [dirichlet_bc]
 
         # solve the system taking into account the boundary conditions
-        dolfin.solve(self.a == self.L, self.psi, self.bcs)
+        dolfin.solve(
+            self.a == self.L,
+            self.psi,
+            self.bcs,
+            solver_parameters={"linear_solver": "default"},
+        )
 
         # return the solution
         return self.psi
