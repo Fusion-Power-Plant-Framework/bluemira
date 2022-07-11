@@ -201,6 +201,33 @@ def _make_vertex(point):
     return cadapi.apiVertex(*point)
 
 
+def closed_wire_wrapper(drop_closure_point=False):
+    """
+    Decorator for checking / enforcing closures on wire creation functions.
+    """
+
+    def decorator(func):
+        def wrapper(points, label="", closed=False):
+            points = Coordinates(points)
+            if points.closed:
+                if closed is False:
+                    bluemira_warn(
+                        f"{func.__name__}: input points are closed but closed=False, defaulting to closed=True."
+                    )
+                closed = True
+                if drop_closure_point:
+                    points = Coordinates(points.points[:-1])
+            wire = func(points, label=label, closed=closed)
+            if closed:
+                wire = cadapi.close_wire(wire)
+            return BluemiraWire(wire, label=label)
+
+        return wrapper
+
+    return decorator
+
+
+@closed_wire_wrapper(drop_closure_point=True)
 def make_polygon(
     points: Union[list, np.ndarray], label: str = "", closed: bool = False
 ) -> BluemiraWire:
@@ -228,22 +255,10 @@ def make_polygon(
     If the input points are closed, but closed is False, the returned BluemiraWire will
     be closed.
     """
-    points = Coordinates(points)
-    if points.closed:
-        if closed is False:
-            bluemira_warn(
-                "make_polygon: input points are closed but closed=False, defaulting to closed=True."
-            )
-        closed = True
-        points = Coordinates(points.points[:-1])
-
-    wire = cadapi.make_polygon(points.T)
-
-    if closed:
-        wire = cadapi.close_wire(wire)
-    return BluemiraWire(wire, label=label)
+    return cadapi.make_polygon(points.T)
 
 
+@closed_wire_wrapper
 def make_bezier(
     points: Union[list, np.ndarray], label: str = "", closed: bool = False
 ) -> BluemiraWire:
@@ -270,20 +285,7 @@ def make_bezier(
     If the input points are closed, but closed is False, the returned BluemiraWire will
     be closed.
     """
-    points = Coordinates(points)
-    if points.closed:
-        if closed is False:
-            bluemira_warn(
-                "make_bezier: input points are closed but closed=False, defaulting to closed=True."
-            )
-        closed = True
-
-    wire = cadapi.make_bezier(points.T)
-
-    if closed:
-        wire = cadapi.close_wire(wire)
-
-    return BluemiraWire(wire, label=label)
+    return cadapi.make_bezier(points.T)
 
 
 def make_bspline(
