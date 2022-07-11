@@ -280,12 +280,11 @@ def solve_plasmod_fixed_boundary(
             f"\t Error: {iter_err:.3E} > {iter_err_max:.3E}\n"
         )
     else:
-        if verbose:
-            bluemira_print(
-                f"PLASMOD <-> Fixed boundary G-S successfully converged within {niter} iterations:\n"
-                f"\t Target kappa_95: {kappa95_t:.3f}\n"
-                f"\t Actual kappa_95: {kappa_95:.3f}\n"
-                f"\t Target delta_95: {delta95_t:.3f}\n"
-                f"\t Actual delta_95: {delta_95:.3f}\n"
-                f"\t Error: {iter_err:.3E} > {iter_err_max:.3E}\n"
-            )
+        bluemira_print(
+            f"PLASMOD <-> Fixed boundary G-S successfully converged within {niter} iterations:\n"
+            f"\t Target kappa_95: {kappa95_t:.3f}\n"
+            f"\t Actual kappa_95: {kappa_95:.3f}\n"
+            f"\t Target delta_95: {delta95_t:.3f}\n"
+            f"\t Actual delta_95: {delta_95:.3f}\n"
+            f"\t Error: {iter_err:.3E} > {iter_err_max:.3E}\n"
+        )
