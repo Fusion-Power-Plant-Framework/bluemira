@@ -28,7 +28,7 @@ import abc
 
 # from copy import deepcopy
 from enum import Enum, EnumMeta, auto
-from functools import update_wrapper
+from functools import update_wrapper, wraps
 
 # from re import split
 from typing import Callable, Dict, Iterable, List, Optional, Tuple, Union
@@ -283,7 +283,7 @@ class CoilFieldsMixin:
         """
         Calculate poloidal flux at (x, z)
         """
-        return self.control_psi(x, z) * self.current
+        return self.unit_psi(x, z) * self.current
 
     def psi_greens(self, pgreen):
         """
@@ -291,7 +291,7 @@ class CoilFieldsMixin:
         """
         return self.current * pgreen
 
-    def control_psi(self, x, z):
+    def unit_psi(self, x, z):
         """
         Calculate poloidal flux at (x, z) due to a unit current
         """
@@ -314,7 +314,7 @@ class CoilFieldsMixin:
         """
         Calculate radial magnetic field Bx at (x, z)
         """
-        return self.control_Bx(x, z) * self.current
+        return self.unit_Bx(x, z) * self.current
 
     def Bx_greens(self, bgreen):
         """
@@ -322,7 +322,7 @@ class CoilFieldsMixin:
         """
         return self.current * bgreen
 
-    def control_Bx(self, x, z):
+    def unit_Bx(self, x, z):
         """
         Calculate the radial magnetic field response at (x, z) due to a unit
         current. Green's functions are used outside the coil, and a semianalytic
@@ -341,14 +341,14 @@ class CoilFieldsMixin:
             The radial magnetic field response at the x, z coordinates.
         """
         return self._mix_control_method(
-            x, z, self._control_Bx_greens, self._control_Bx_analytical
+            x, z, self._unit_Bx_greens, self._unit_Bx_analytical
         )
 
     def Bz(self, x, z):
         """
         Calculate vertical magnetic field Bz at (x, z)
         """
-        return self.control_Bz(x, z) * self.current
+        return self.unit_Bz(x, z) * self.current
 
     def Bz_greens(self, bgreen):
         """
@@ -356,7 +356,7 @@ class CoilFieldsMixin:
         """
         return self.current * bgreen
 
-    def control_Bz(self, x, z):
+    def unit_Bz(self, x, z):
         """
         Calculate the vertical magnetic field response at (x, z) due to a unit
         current. Green's functions are used outside the coil, and a semianalytic
@@ -375,7 +375,7 @@ class CoilFieldsMixin:
             The vertical magnetic field response at the x, z coordinates.
         """
         return self._mix_control_method(
-            x, z, self._control_Bz_greens, self._control_Bz_analytical
+            x, z, self._unit_Bz_greens, self._unit_Bz_analytical
         )
 
     def Bp(self, x, z):
@@ -514,7 +514,7 @@ class CoilFieldsMixin:
             & (z <= z_max[None])
         )
 
-    def _control_B_greens(
+    def _unit_B_greens(
         self, greens, x, z, split=False, _quad_x=None, _quad_z=None, _quad_weight=None
     ):
         """
@@ -557,7 +557,7 @@ class CoilFieldsMixin:
             _quad_weight[None],
         )
 
-    def _control_Bx_greens(
+    def _unit_Bx_greens(
         self, x, z, split=False, _quad_x=None, _quad_z=None, _quad_weight=None
     ):
         """
@@ -584,11 +584,11 @@ class CoilFieldsMixin:
         response: np.ndarray
 
         """
-        return self._control_B_greens(
+        return self._unit_B_greens(
             greens_Bx, x, z, split, _quad_x, _quad_z, _quad_weight
         )
 
-    def _control_Bz_greens(
+    def _unit_Bz_greens(
         self, x, z, split=False, _quad_x=None, _quad_z=None, _quad_weight=None
     ):
         """
@@ -614,11 +614,11 @@ class CoilFieldsMixin:
         response: np.ndarray
 
         """
-        return self._control_B_greens(
+        return self._unit_B_greens(
             greens_Bz, x, z, split, _quad_x, _quad_z, _quad_weight
         )
 
-    def _control_B_analytical(
+    def _unit_B_analytical(
         self,
         semianalytic,
         x,
@@ -670,7 +670,7 @@ class CoilFieldsMixin:
             d_zc=coil_dz[None],
         )
 
-    def _control_Bx_analytical(
+    def _unit_Bx_analytical(
         self, x, z, split=False, coil_x=None, coil_z=None, coil_dx=None, coil_dz=None
     ):
         """
@@ -696,11 +696,11 @@ class CoilFieldsMixin:
         -------
         response: np.ndarray
         """
-        return self._control_B_analytical(
+        return self._unit_B_analytical(
             semianalytic_Bx, x, z, split, coil_x, coil_z, coil_dx, coil_dz
         )
 
-    def _control_Bz_analytical(
+    def _unit_Bz_analytical(
         self, x, z, split=False, coil_x=None, coil_z=None, coil_dx=None, coil_dz=None
     ):
         """
@@ -726,7 +726,7 @@ class CoilFieldsMixin:
         -------
         response: np.ndarray
         """
-        return self._control_B_analytical(
+        return self._unit_B_analytical(
             semianalytic_Bz, x, z, split, coil_x, coil_z, coil_dx, coil_dz
         )
 
@@ -770,8 +770,8 @@ class CoilFieldsMixin:
             Bx = 0  # Should be 0 anyway
 
         else:
-            Bz = coil.control_Bz(self._x, self._z)
-            Bx = coil.control_Bx(self._x, self._z)
+            Bz = coil.unit_Bz(self._x, self._z)
+            Bx = coil.unit_Bx(self._x, self._z)
 
         return 2 * np.pi * self._x * np.array([Bz, -Bx])  # 1 cross B
 
@@ -1730,7 +1730,11 @@ class CoilSet(CoilGroup):
 
     """
 
-    __slots__ = ("__coilgroups", "_circuits")
+    __slots__ = (
+        "__coilgroups",
+        "_circuits",
+        "_control",
+    )
 
     def __init__(self, *coils: Union[CoilGroup, List, Dict], d_coil=None):
 
@@ -1743,6 +1747,8 @@ class CoilSet(CoilGroup):
             setattr(self, k, v)
 
         self.discretise(d_coil)
+
+        self._control = np.ones_like(self._x, dtype=bool)
 
     def __init_subclass__(cls, *args, **kwargs):
         """
@@ -1761,6 +1767,72 @@ class CoilSet(CoilGroup):
             )
         )
 
+    @property
+    def control_current(self) -> np.ndarray:
+        """
+        Get coil current
+        """
+        return self.current[self._control]
+
+    @control_current.setter
+    def control_current(self, new_current: __ITERABLE_FLOAT) -> None:
+        """
+        Set coil current
+        """
+        self.current[self._control] = new_current
+
+    @property
+    def control_x(self) -> np.ndarray:
+        """
+        Get control coil x positions
+        """
+        return self.x[self._control]
+
+    @control_x.setter
+    def control_x(self, new_x: __ITERABLE_FLOAT) -> None:
+        """
+        Set coil control_x
+        """
+        self.x[self._control] = new_x
+
+    @property
+    def control_z(self) -> np.ndarray:
+        """
+        Get control coil z positions
+        """
+        return self.z[self._control]
+
+    @control_z.setter
+    def control_z(self, new_z: __ITERABLE_FLOAT) -> None:
+        """
+        Set coil control_z
+        """
+        self.z[self._control] = new_z
+
+    def _controller(func):
+        @wraps(func)
+        def _control_wrapper(self, *args, **kwargs):
+            return func(self, *args, **kwargs)[..., self._control]
+
+        return _control_wrapper
+
+    control_Bx = _controller(CoilGroup.unit_Bx)
+    control_Bz = _controller(CoilGroup.unit_Bz)
+    control_psi = _controller(CoilGroup.unit_psi)
+
+    def _summer(func):
+        @wraps(func)
+        def _sum_wrapper(self, *args, **kwargs):
+            return np.squeeze(np.sum(func(self, *args, **kwargs), axis=-1))
+
+        return _sum_wrapper
+
+    Bx = _summer(CoilGroup.Bx)
+    Bz = _summer(CoilGroup.Bz)
+    psi = _summer(CoilGroup.psi)
+    Bx_greens = _summer(CoilGroup.Bx_greens)
+    Bz_greens = _summer(CoilGroup.Bz_greens)
+    psi_greens = _summer(CoilGroup.psi_greens)
     # @CoilGroup.x.setter
     # def x(self, new_x: __ITERABLE_FLOAT):
     #     self._x[:] = np.atleast_2d(new_x.T).T

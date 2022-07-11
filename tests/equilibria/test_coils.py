@@ -97,10 +97,10 @@ class TestCoil:
         x, z = np.meshgrid(x_1_d, z_1_d, indexing="ij")
         c = Coil(x=4, z=0, current=1591550, dx=0.3, dz=1)
 
-        gbx = c.control_Bx(x, z)
-        gbz = c.control_Bz(x, z)
+        gbx = c.unit_Bx(x, z)
+        gbz = c.unit_Bz(x, z)
         gbp = np.sqrt(gbx**2 + gbz**2)
-        gp = c.control_psi(x, z)
+        gp = c.unit_psi(x, z)
 
         if tests.PLOTTING:
             f, ax = plt.subplots()
@@ -113,10 +113,10 @@ class TestCoil:
 
         c.discretise(0.1)
 
-        gbxn = c.control_Bx(x, z)
-        gbzn = c.control_Bz(x, z)
+        gbxn = c.unit_Bx(x, z)
+        gbzn = c.unit_Bz(x, z)
         gbpn = np.sqrt(gbx**2 + gbz**2)
-        gpn = c.control_psi(x, z)
+        gpn = c.unit_psi(x, z)
 
         if tests.PLOTTING:
             f, ax = plt.subplots()
@@ -198,9 +198,9 @@ class TestSemiAnalytic:
         cls.z_boundary = np.append(cls.coil.z_boundary, cls.coil.z_boundary[0])
 
     def test_bx(self):
-        gp = self.coil.control_Bx(self.grid.x, self.grid.z)
-        gp_greens = self.coil._control_Bx_greens(self.grid.x, self.grid.z)
-        gp_analytic = self.coil._control_Bx_analytical(self.grid.x, self.grid.z)
+        gp = self.coil.unit_Bx(self.grid.x, self.grid.z)
+        gp_greens = self.coil._unit_Bx_greens(self.grid.x, self.grid.z)
+        gp_analytic = self.coil._unit_Bx_analytical(self.grid.x, self.grid.z)
 
         if tests.PLOTTING:
             f, ax = plt.subplots(1, 3)
@@ -216,9 +216,9 @@ class TestSemiAnalytic:
             ax[2].set_title("Semi-analytic method")
 
     def test_bz(self):
-        gp = self.coil.control_Bz(self.grid.x, self.grid.z)
-        gp_greens = self.coil._control_Bz_greens(self.grid.x, self.grid.z)
-        gp_analytic = self.coil._control_Bz_analytical(self.grid.x, self.grid.z)
+        gp = self.coil.unit_Bz(self.grid.x, self.grid.z)
+        gp_greens = self.coil._unit_Bz_greens(self.grid.x, self.grid.z)
+        gp_analytic = self.coil._unit_Bz_analytical(self.grid.x, self.grid.z)
 
         if tests.PLOTTING:
             f, ax = plt.subplots(1, 3)
@@ -425,8 +425,8 @@ class TestCoilSet:
 
     def test_currents(self):
         set_currents = np.array([3e6, 4e6])
-        self.coilset.set_control_currents(set_currents)
-        currents = self.coilset.get_control_currents()
+        self.coilset.control_currents = set_currents
+        currents = self.coilset.control_currents
         assert np.allclose(set_currents, currents)
 
     def test_material_assignment(self):

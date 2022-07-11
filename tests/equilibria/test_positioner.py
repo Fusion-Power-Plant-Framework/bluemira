@@ -52,7 +52,7 @@ class TestXZLMapper:
         positioner = CoilPositioner(9, 3.1, 0.33, 1.59, tf, 2.6, 0.5, 6, 5)
         cls.coilset = positioner.make_coilset()
         solenoid = cls.coilset.get_solenoid()
-        cls.coilset.set_control_currents(1e6 * np.ones(cls.coilset.n_coils))
+        cls.coilset.current = 1e6
         cls.xzl_map = XZLMapper(tf, solenoid.radius, -10, 10, 0.1, CS=False)
 
     def test_xzl(self):
@@ -187,7 +187,7 @@ class TestZLMapper:
         cls.zones = [eq, lp, up]
         positioner = CoilPositioner(9, 3.1, 0.33, 1.59, tf, 2.6, 0.5, 6, 5)
         cls.coilset = positioner.make_coilset()
-        cls.coilset.set_control_currents(1e6 * np.ones(cls.coilset.n_coils))
+        cls.coilset.current = 1e6
         solenoid = cls.coilset.get_solenoid()
         cls.xz_map = XZLMapper(
             tf, solenoid.radius, solenoid.z_min, solenoid.z_max, solenoid.gap, CS=True
@@ -238,7 +238,7 @@ class TestZLMapperEdges:
         cls.zones = [eq, lp, up]
         positioner = CoilPositioner(9, 3.1, 0.33, 1.59, tf, 2.6, 0.5, 6, 5)
         cls.coilset = positioner.make_coilset()
-        cls.coilset.set_control_currents(1e6 * np.ones(cls.coilset.n_coils))
+        cls.coilset.current = 1e6
         solenoid = cls.coilset.get_solenoid()
         cls.xz_map = XZLMapper(
             tf, solenoid.radius, solenoid.z_min, solenoid.z_max, solenoid.gap, CS=True
@@ -301,12 +301,11 @@ class TestRegionMapper:
         }
 
         pfregions = {}
-        for coil in self.coilset._ccoils:
-            xu = coil.x + max_coil_shifts["x_shifts_upper"]
-            xl = coil.x + max_coil_shifts["x_shifts_lower"]
-            zu = coil.z + max_coil_shifts["z_shifts_upper"]
-            zl = coil.z + max_coil_shifts["z_shifts_lower"]
-
+        xup = self.coilset.x[self.coilset._control] + max_coil_shifts["x_shifts_upper"]
+        xlo = self.coilset.x[self.coilset._control] + max_coil_shifts["x_shifts_lower"]
+        zup = self.coilset.z[self.coilset._control] + max_coil_shifts["z_shifts_upper"]
+        zlo = self.coilset.z[self.coilset._control] + max_coil_shifts["z_shifts_lower"]
+        for xl, xu, zl, zu in zip(xup, xlo, zup, zlo):
             rect = Loop(x=[xl, xu, xu, xl, xl], z=[zl, zl, zu, zu, zl])
 
             pfregions[coil.name] = rect
