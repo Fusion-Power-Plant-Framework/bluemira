@@ -268,7 +268,7 @@ params = [
     ['r_vv_joint', 'Radius of inboard/outboard VV joint', 2., 'm', None, 'Input'],
 
     # Gaps and clearances
-    ['g_cs_mod', 'Gap between CS modules', 0.1, 'm', None, 'Input'],
+    ['g_cs_mod', 'Gap between CS modules', 0.05, 'm', None, 'Input'],
     ['g_ib_ts_tf', 'Inboard gap between TS and TF', 0.05, 'm', None, 'Input'],
     ['g_ib_vv_ts', 'Inboard gap between VV and TS', 0.05, 'm', None, 'Input'],
     ['g_ob_ts_tf', 'Outboard gap between TS and TF', 0.05, 'm', None, 'Input'],
@@ -289,8 +289,8 @@ params = [
 
     # Central solenoid
     ['CS_material', 'Conducting material to use for the CS modules', 'Nb3Sn', 'dimensionless', None, 'Input'],
-    ['F_cs_sepmax', 'Maximum separation force between CS modules', 300, 'MN', None, 'Input'],
-    ['F_cs_ztotmax', 'Maximum total vertical force in the CS stack', 350, 'MN', None, 'Input'],
+    ['F_cs_sepmax', 'Maximum separation force between CS modules', 350, 'MN', None, 'Input'],
+    ['F_cs_ztotmax', 'Maximum total vertical force in the CS stack', 300, 'MN', None, 'Input'],
     ['F_pf_zmax', 'Maximum vertical force on a single PF coil', 450, 'MN', None, 'Input'],
 
     # PF magnets

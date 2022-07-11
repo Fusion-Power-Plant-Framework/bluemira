@@ -179,9 +179,9 @@ class EUDEMOConfiguration(Configuration, EUDEMOConfigurationSchema):
         ["r_cs_corner", "Corner radius of the CS coil winding pack", 0.05, "m", None, "Input"],
         ["r_pf_corner", "Corner radius of the PF coil winding pack", 0.05, "m", None, "Input"],
         ["tk_cs_casing", "Thickness of the CS coil casing", 0.07, "m", None, "Input"],
-        ["tk_cs_insulation", "Thickness of the CS coil insulation", 0.05, "m", None, "Input"],
+        ["tk_cs_insulation", "Thickness of the CS coil insulation", 0.005, "m", None, "Input"],
         ["tk_pf_casing", "Thickness of the PF coil casing", 0.07, "m", None, "Input"],
-        ["tk_pf_insulation", "Thickness of the PF coil insulation", 0.05, "m", None, "Input"],
+        ["tk_pf_insulation", "Thickness of the PF coil insulation", 0.005, "m", None, "Input"],
 
         # Neutronics
         ["e_decay_mult", "Decay heat multiplication factor", 1.0175, "dimensionless", "Quasi-instantaneous energy multiplication; still present when plasma is off", "Input (PPCS FWBL Helium Cooled Model P PPCS04 D5part1)"],
