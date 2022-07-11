@@ -201,7 +201,7 @@ def _make_vertex(point):
     return cadapi.apiVertex(*point)
 
 
-def closed_wire_wrapper(drop_closure_point=False):
+def closed_wire_wrapper(drop_closure_point):
     """
     Decorator for checking / enforcing closures on wire creation functions.
     """
@@ -258,7 +258,7 @@ def make_polygon(
     return cadapi.make_polygon(points.T)
 
 
-@closed_wire_wrapper
+@closed_wire_wrapper(drop_closure_point=False)
 def make_bezier(
     points: Union[list, np.ndarray], label: str = "", closed: bool = False
 ) -> BluemiraWire:
