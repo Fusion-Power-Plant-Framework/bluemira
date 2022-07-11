@@ -85,6 +85,26 @@ generic_wire = make_polygon(
 )
 
 
+class TestMakePolygon:
+    def test_open_wire(self):
+        wire = make_polygon({"x": [0, 1, 1], "y": 0, "z": [1, 1, 2]})
+        assert not wire.is_closed()
+        assert np.isclose(wire.length, 2.0, rtol=0.0, atol=EPS)
+
+    def test_closed_wire_with_closed(self):
+        wire = make_polygon({"x": [0, 1, 1], "y": 0, "z": [1, 1, 2]}, closed=True)
+        assert wire.is_closed()
+        assert np.isclose(wire.length, 2.0 + np.sqrt(2), rtol=0.0, atol=EPS)
+
+    @pytest.mark.parametrize("closed", [True, False])
+    def test_closed_wire_with_points(self, closed):
+        wire = make_polygon(
+            {"x": [1, 2, 2, 1, 1], "y": 0, "z": [1, 1, 2, 2, 1]}, closed=closed
+        )
+        assert wire.is_closed()
+        assert np.isclose(wire.length, 4.0)
+
+
 class TestSignedDistanceFunctions:
     @classmethod
     def setup_class(cls):
