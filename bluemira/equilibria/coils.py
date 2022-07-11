@@ -183,10 +183,9 @@ class CoilFieldsMixin:
 
         Notes
         -----
-        In reality this is just a nicety for storing as padding only
-        exists for multiple coils in a :class:CoilGroup that are different shapes.
-        There is no extra calculation on the elements set to zero because
-        of the mechanics of the :func:_combined_control method.
+        Padding exists for coils with different discretisations or sizes within a coilgroup.
+        There are a few extra calculations of the greens functions where padding exists in
+        the :func:_combined_control method.
 
         """
         all_len = np.array([len(q) for q in _quad_x])
@@ -202,7 +201,7 @@ class CoilFieldsMixin:
         self._quad_dx = np.array(_quad_dx)
         self._quad_dz = np.array(_quad_dz)
         weighting = np.ones((self._x.shape[0], max_len)) / all_len[:, None]
-        weighting[self._quad_dx == 0] = 0
+        weighting[np.isclose(self._quad_dx, 0)] = 0
 
         return weighting
 
@@ -259,6 +258,8 @@ class CoilFieldsMixin:
         Notes
         -----
         Only discretisation method currently implemented is rectangular fraction
+
+        Possible improvement: multiple discretisations for different coils
 
         """
         weighting = None
@@ -405,7 +406,7 @@ class CoilFieldsMixin:
         """
         x, z = np.ascontiguousarray(x), np.ascontiguousarray(z)
 
-        zero_coil_size = np.logical_or(self._dx == 0, self._dz == 0)
+        zero_coil_size = np.logical_or(np.isclose(self._dx, 0), np.isclose(self._dz, 0))
 
         if False in zero_coil_size:
             # if dx or dz is not 0 and x,z inside coil
@@ -865,7 +866,7 @@ class CoilSizer:
             self._set_coil_attributes(coil)
 
     def _set_coil_attributes(self, coil):
-        coil._rc = 0.5 * np.hypot(coil._dx, coil._dz)
+        coil._current_radius = 0.5 * np.hypot(coil._dx, coil._dz)
         coil._x_boundary, coil._z_boundary = self._make_boundary(
             coil._x, coil._z, coil._dx, coil._dz
         )
@@ -1001,7 +1002,7 @@ class CoilGroup(CoilFieldsMixin, abc.ABC):
         "_index",
         "_j_max",
         "_name_map",
-        "_rc",
+        "_current_radius",
         "_x",
         "_x_boundary",
         "_z",
@@ -1054,12 +1055,6 @@ class CoilGroup(CoilFieldsMixin, abc.ABC):
             else CoilType[ct.upper()]
             for ct in _inputs["ctype"]
         ]
-        self._index = [CoilNumber.generate(ct) for ct in self.ctype]
-
-        self._name_map = {
-            f"{self._ctype[en].name}_{ind}" if n is None else n: ind
-            for en, (n, ind) in enumerate(zip(_inputs["name"], self._index))
-        }
 
         self._flag_sizefix = False
         self._sizer = CoilSizer(self)
@@ -1067,6 +1062,15 @@ class CoilGroup(CoilFieldsMixin, abc.ABC):
 
         # Meshing
         super().__init__(d_coil)
+
+        # Lastly number coils to minimise incrementing coil numbers
+        # on failing initialisation.
+        self._index = [CoilNumber.generate(ct) for ct in self.ctype]
+
+        self._name_map = {
+            f"{self._ctype[en].name}_{ind}" if n is None else n: ind
+            for en, (n, ind) in enumerate(zip(_inputs["name"], self._index))
+        }
 
     @staticmethod
     def _make_iterable(
@@ -1206,11 +1210,11 @@ class CoilGroup(CoilFieldsMixin, abc.ABC):
         return list(self._name_map.keys())
 
     @property
-    def rc(self):
+    def current_radius(self):
         """
         TODO
         """
-        return self._rc
+        return self._current_radius
 
     @property
     def j_max(self):
@@ -1739,8 +1743,6 @@ class CoilSet(CoilGroup):
             setattr(self, k, v)
 
         self.discretise(d_coil)
-        # TODO deal with sizing
-        # TODO think whether this is the best way forward
 
     def __init_subclass__(cls, *args, **kwargs):
         """
@@ -1919,14 +1921,6 @@ class CoilSet(CoilGroup):
 
 
 # TODO or To remove (for imports)
-
-
-class PlasmaCoil:
-    """
-    Dummy
-    """
-
-    pass
 
 
 class Solenoid:
