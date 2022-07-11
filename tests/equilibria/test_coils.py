@@ -242,7 +242,6 @@ class TestCoilGroup:
         coils = [
             Coil(6, 6, ctype="CS", name="CS_8", j_max=NBTI_J_MAX),
             Coil(7, 7, ctype="CS", name="CS_0", j_max=NBTI_J_MAX),
-            Coil(8, 8, ctype="plasma", name="plasma_1", j_max=NBTI_J_MAX),
             Coil(4, 4, ctype="PF", name="PF_1", j_max=NBTI_J_MAX),
             Coil(4, 5, ctype="PF", name="PF_0", j_max=NBTI_J_MAX),
         ]
@@ -257,13 +256,11 @@ class TestCoilGroup:
         assert coil_list[1].name == "PF_1"
         assert coil_list[2].name == "CS_0"
         assert coil_list[3].name == "CS_8"
-        assert coil_list[4].name == "plasma_1"
 
     def test_add(self):
         group = self.make_coilgroup()
         group.add_coil(Coil(3, 3, ctype="PF", name="PF_3", j_max=NBTI_J_MAX))
         group.add_coil(Coil(9, 9, ctype="CS", name="CS_9", j_max=NBTI_J_MAX))
-        group.add_coil(Coil(10, 10, ctype="plasma", name="plasma_10", j_max=NBTI_J_MAX))
 
         coil_list = list(group.coils.values())
         assert len(coil_list) == 8
@@ -273,8 +270,6 @@ class TestCoilGroup:
         assert coil_list[3].name == "CS_0"
         assert coil_list[4].name == "CS_8"
         assert coil_list[5].name == "CS_9"
-        assert coil_list[6].name == "plasma_1"
-        assert coil_list[7].name == "plasma_10"
 
     def test_remove(self):
         group = self.make_coilgroup()

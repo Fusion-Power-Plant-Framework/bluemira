@@ -158,18 +158,19 @@ class MHDState:
         -----
         Will not work for symmetric circuits
         """
+        no_coils = len(self.coilset.x)
         coils = list(self.coilset.coils.values())
         currents = self.coilset.get_control_currents()
         plasma = self.plasma
-        response = np.zeros((len(coils), len(coils), 2))
-        background = np.zeros((len(coils), 2))
+        response = np.zeros((no_coils, no_coils, 2))
+        background = np.zeros((no_coils, 2))
         for i, coil1 in enumerate(coils):
             for j, coil2 in enumerate(coils):
                 response[i, j, :] = coil1.control_F(coil2)
             if coil1.current != 0.0:
                 background[i, :] = coil1.F(plasma) / coil1.current
 
-        forces = np.zeros((len(coils), 2))
+        forces = np.zeros((no_coils, 2))
         forces[:, 0] = currents * (response[:, :, 0] @ currents + background[:, 0])
         forces[:, 1] = currents * (response[:, :, 1] @ currents + background[:, 1])
 
