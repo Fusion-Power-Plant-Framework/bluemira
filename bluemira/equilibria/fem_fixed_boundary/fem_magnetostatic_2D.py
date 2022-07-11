@@ -412,6 +412,7 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
                 f"iter = {i} eps = {eps:.3E} psi_ax : {self.psi_ax:.2f}"
             )
 
+            # Update psi in-place (Fenics handles this with the below syntax)
             self.psi.vector()[:] = (1 - relaxation) * self.psi.vector()[
                 :
             ] + relaxation * prev_psi
