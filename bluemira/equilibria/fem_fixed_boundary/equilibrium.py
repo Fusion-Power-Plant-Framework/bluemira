@@ -129,8 +129,8 @@ def solve_plasmod_fixed_boundary(
         # - V_p is set equal to plasma volume
         plasmod_options["params"].set_parameter("V_p", plasma_volume, "m^3", source)
 
-        plasmod_options["params"].set_parameter("kappa", kappa, "dimensionless", source)
-        plasmod_options["params"].set_parameter("delta", delta, "dimensionless", source)
+        # plasmod_options["params"].set_parameter("kappa", kappa, "dimensionless", source)
+        # plasmod_options["params"].set_parameter("delta", delta, "dimensionless", source)
         plasmod_options["params"].set_parameter(
             "kappa_95", kappa_95, "dimensionless", source
         )
@@ -191,14 +191,13 @@ def solve_plasmod_fixed_boundary(
 
         points = mesh.coordinates()
         x2d_data = np.array([gs_solver.psi_norm_2d(x) for x in points])
-        r_geo, kappa_95, delta_95 = calculate_plasma_shape_params(
-            points, x2d_data, [np.sqrt(0.95)]
-        )
-        r_geo_o, kappa_95_o, delta_95_o = calculate_plasma_shape_params_opt(
+        # r_geo, kappa_95, delta_95 = calculate_plasma_shape_params(
+        #     points, x2d_data, [np.sqrt(0.95)]
+        # )
+        r_geo, kappa_95, delta_95 = calculate_plasma_shape_params_opt(
             mesh, x2d_data, gs_solver, 0.95
         )
-        print("Coarse Mesh find", r_geo, kappa_95, delta_95)
-        print("Coarse mesh opt: ", r_geo_o, kappa_95_o, delta_95_o)
+
         # create the finer mesh to calculate the isofluxes
         plasma.shape.boundary[0].mesh_options = {
             "lcar": lcar_fine,
@@ -221,15 +220,12 @@ def solve_plasmod_fixed_boundary(
         x2d_data = np.array([gs_solver.psi_norm_2d(x) for x in points])
 
         # calculate kappa_95 and delta_95
-        r_geo, kappa_95, delta_95 = calculate_plasma_shape_params(
+        r_geo_m, kappa_95_m, delta_95_m = calculate_plasma_shape_params(
             points, x2d_data, [np.sqrt(0.95)]
         )
-        r_geo, kappa_95, delta_95 = calculate_plasma_shape_params_opt(
-            mesh, x2d_data, gs_solver, 0.95
-        )
         # r_geo, kappa_95, delta_95 = r_geo[0], kappa_95[0], delta_95[0]
-        # print("Fine Mesh find", r_geo, kappa_95, delta_95)
-        # print("Fine mesh opt", r_geo_o, kappa_95_o, delta_95_o)
+        print("Fine Mesh find", r_geo_m, kappa_95_m, delta_95_m)
+        print("Coarse mesh opt", r_geo, kappa_95, delta_95)
         # calculate the iteration error
         err_delta = abs(delta_95 - delta95_t) / delta95_t
         err_kappa = abs(kappa_95 - kappa95_t) / kappa95_t
