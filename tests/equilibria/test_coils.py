@@ -239,14 +239,13 @@ class TestSemiAnalytic:
 class TestCoilGroup:
     @staticmethod
     def make_coilgroup():
-        coils = [
-            Coil(6, 6, ctype="CS", name="CS_8", j_max=NBTI_J_MAX),
-            Coil(7, 7, ctype="CS", name="CS_0", j_max=NBTI_J_MAX),
-            Coil(4, 4, ctype="PF", name="PF_1", j_max=NBTI_J_MAX),
-            Coil(4, 5, ctype="PF", name="PF_0", j_max=NBTI_J_MAX),
-        ]
+        x = [6, 7, 4, 4]
+        z = [6, 7, 4, 5]
+        ctype = ["CS", "CS", "PF", "PF"]
+        name = ["CS_8", "CS_0", "PF_1", "PF_0"]
+        j_max = NBTI_J_MAX
 
-        return CoilGroup(coils)
+        return CoilGroup(x=x, z=z, name=name, ctype=ctype, j_max=j_max)
 
     def test_init_sort(self):
         group = self.make_coilgroup()
@@ -427,8 +426,8 @@ class TestCoilSet:
 
     def test_currents(self):
         set_currents = np.array([3e6, 4e6])
-        self.coilset.control_currents = set_currents
-        currents = self.coilset.control_currents
+        self.coilset.control_current = set_currents
+        currents = self.coilset.control_current
         assert np.allclose(set_currents, currents)
 
     def test_material_assignment(self):

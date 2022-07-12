@@ -237,7 +237,7 @@ class CoilPositioner:
                 )
             else:
                 raise ValueError("Elige entre ITER y DEMO. " "Mas opciones no hay.")
-        return CoilSet(coils, d_coil=d_coil)
+        return CoilSet(*coils, d_coil=d_coil)
 
 
 class XZLMapper:
