@@ -31,7 +31,6 @@ from bluemira.equilibria.fem_fixed_boundary.transport_solver import (
 )
 from bluemira.equilibria.fem_fixed_boundary.utilities import (
     calculate_plasma_shape_params,
-    calculate_plasma_shape_params_opt,
     plot_profile,
 )
 from bluemira.mesh import meshing
@@ -129,8 +128,8 @@ def solve_plasmod_fixed_boundary(
         # - V_p is set equal to plasma volume
         plasmod_options["params"].set_parameter("V_p", plasma_volume, "m^3", source)
 
-        # plasmod_options["params"].set_parameter("kappa", kappa, "dimensionless", source)
-        # plasmod_options["params"].set_parameter("delta", delta, "dimensionless", source)
+        plasmod_options["params"].set_parameter("kappa", kappa, "dimensionless", source)
+        plasmod_options["params"].set_parameter("delta", delta, "dimensionless", source)
         plasmod_options["params"].set_parameter(
             "kappa_95", kappa_95, "dimensionless", source
         )
