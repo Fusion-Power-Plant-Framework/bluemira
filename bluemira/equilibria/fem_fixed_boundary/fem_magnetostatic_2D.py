@@ -30,7 +30,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 from bluemira.base.constants import MU_0
-from bluemira.base.look_and_feel import bluemira_print_flush
+from bluemira.base.look_and_feel import bluemira_critical, bluemira_print_flush
 from bluemira.equilibria.fem_fixed_boundary.utilities import (
     ScalarSubFunc,
     plot_scalar_field,
@@ -363,12 +363,12 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
         max_iter=10,
         relaxation=1,
         verbose=False,
-        verbose_plot=False,
+        plot=False,
     ):
         """Solves the GS problem given pprime and ffprime"""
         points = self.mesh.coordinates()
 
-        if verbose_plot:
+        if plot:
             self.g_func = self._create_g_func(pprime, ffprime, curr_target)
             self._plot_current_iteration(points, 0)
 
@@ -386,12 +386,12 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
 
             prev_psi = self.psi.vector()[:]
 
-            if verbose_plot:
+            if plot:
                 self._plot_current_iteration(points, i)
 
             prev = np.array([self.psi_norm_2d(p) for p in points])
 
-            if verbose_plot:
+            if plot:
                 self._plot_array(
                     points, prev, f"Normalized magnetic coordinate at iteration {i}"
                 )
@@ -404,7 +404,7 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
             new = np.array([self.psi_norm_2d(p) for p in points])
             diff = new - prev
 
-            if verbose_plot:
+            if plot:
                 self._plot_array(points, diff, f"G-S error at iteration {i}")
 
             eps = np.linalg.norm(diff, ord=2) / np.linalg.norm(new, ord=2)
