@@ -399,6 +399,7 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
             super().solve(
                 self.g, dirichlet_bc_function, dirichlet_marker, neumann_bc_function
             )
+            self._update_curr(curr_target)
 
             new = np.array([self.psi_norm_2d(p) for p in points])
             diff = new - prev
@@ -416,7 +417,5 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
             self.psi.vector()[:] = (1 - relaxation) * self.psi.vector()[
                 :
             ] + relaxation * prev_psi
-
-            self._update_curr(curr_target)
 
         return self.psi
