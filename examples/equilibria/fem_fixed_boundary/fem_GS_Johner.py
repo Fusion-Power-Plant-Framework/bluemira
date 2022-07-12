@@ -88,7 +88,7 @@ plt.show()
 Ic = 18e6
 
 gs_solver = FemGradShafranovFixedBoundary(mesh)
-gs_solver.solve(1, 0, Ic, max_iter=20, verbose_plot=True)
+gs_solver.solve(1, 0, Ic, max_iter=20, plot=True)
 
 points = mesh.coordinates()
 psi_data = np.array([gs_solver.psi(x) for x in points])

@@ -185,7 +185,7 @@ def solve_plasmod_fixed_boundary(
             tol=gs_options["tol"],
             max_iter=gs_options["max_iter"],
             relaxation=gs_relaxation,
-            verbose_plot=gs_options["verbose_plot"],
+            plot=gs_options["verbose_plot"],
         )
 
         # TODO: Try harder to get this working!
