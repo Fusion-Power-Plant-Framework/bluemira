@@ -30,7 +30,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 from bluemira.base.constants import MU_0
-from bluemira.base.look_and_feel import bluemira_critical, bluemira_print_flush
+from bluemira.base.look_and_feel import bluemira_print_flush
 from bluemira.equilibria.fem_fixed_boundary.utilities import (
     ScalarSubFunc,
     plot_scalar_field,
