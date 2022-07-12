@@ -287,7 +287,7 @@ def calculate_plasma_shape_params_opt(points, psi, gs_solver, psi_norm, plot=Fal
     delta:
         array of the delta value of the isoflux curves
     """
-    from scipy.optimize import minimize
+    from scipy.optimize import minimize  # noqa
 
     mesh = points
     points = mesh.coordinates()
@@ -342,7 +342,7 @@ def calculate_plasma_shape_params_opt(points, psi, gs_solver, psi_norm, plot=Fal
     po_opt = find_extremum(f_obj_outer_extremum, po)
 
     if plot:
-        from dolfin import plot
+        from dolfin import plot  # noqa
 
         f, ax = plt.subplots()
         plot(mesh)
