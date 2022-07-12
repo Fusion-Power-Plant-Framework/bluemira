@@ -1734,6 +1734,7 @@ class CoilSet(CoilGroup):
         "__coilgroups",
         "_circuits",
         "_control",
+        "_has_circuits",
     )
 
     def __init__(self, *coils: Union[CoilGroup, List, Dict], d_coil=None):
@@ -1745,6 +1746,8 @@ class CoilSet(CoilGroup):
 
         for k, v in attributes.items():
             setattr(self, k, v)
+
+        self._circuit_mechanics()
 
         self.discretise(d_coil)
 
@@ -1767,6 +1770,56 @@ class CoilSet(CoilGroup):
             )
         )
 
+    def _circuit_mechanics(self):
+        self._circuits = np.array(
+            [isinstance(cg, Circuit) for cg in self.__coilgroups.values()], dtype=bool
+        )
+
+        self._has_circuits = any(self._circuits)
+
+        return
+        no_coils = len(self._x)
+        _circuit_index = [0]
+        for c in range(no_coils):
+            if not (self._circuits[c] and c):
+                _circuit_index.append(no + 1)
+            else:
+                pass
+        self._circuit_index = np.array(_circuit_index)
+
+    @CoilGroup.x.setter
+    def x(self, new_x):
+        """
+        https://stackoverflow.com/questions/10810369/python-super-and-setting-parent-class-property
+        """
+        if self._has_circuits:
+            raise NotImplementedError
+        super(CoilSet, self.__class__).x.fset(self, new_x)
+
+    @CoilGroup.z.setter
+    def z(self, new_z):
+        if self._has_circuits:
+            raise NotImplementedError
+        super(CoilSet, self.__class__).z.fset(self, new_z)
+
+    @CoilGroup.dx.setter
+    def dx(self, new_dx):
+        if self._has_circuits:
+            raise NotImplementedError
+        super(CoilSet, self.__class__).dx.fset(self, new_dx)
+
+    @CoilGroup.dz.setter
+    def dz(self, new_dz):
+        if self._has_circuits:
+            raise NotImplementedError
+        super(CoilSet, self.__class__).dz.fset(self, new_dz)
+
+    @CoilGroup.current.setter
+    def current(self, new_current):
+        if self._has_circuits:
+            raise NotImplementedError
+        super(CoilSet, self.__class__).current.fset(self, new_current)
+
     @property
     def control_current(self) -> np.ndarray:
         """
@@ -1779,6 +1832,8 @@ class CoilSet(CoilGroup):
         """
         Set coil current
         """
+        if self._has_circuits:
+            raise NotImplementedError
         self.current[self._control] = new_current
 
     @property
@@ -1793,6 +1848,8 @@ class CoilSet(CoilGroup):
         """
         Set coil control_x
         """
+        if self._has_circuits:
+            raise NotImplementedError
         self.x[self._control] = new_x
 
     @property
@@ -1807,6 +1864,8 @@ class CoilSet(CoilGroup):
         """
         Set coil control_z
         """
+        if self._has_circuits:
+            raise NotImplementedError
         self.z[self._control] = new_z
 
     def _controller(func):
@@ -1870,7 +1929,6 @@ class CoilSet(CoilGroup):
 
     def _process_coilgroups(self, coilgroups: List[CoilGroup]):
         self.__coilgroups = {cg.name: cg for cg in coilgroups}
-        self._circuits = [isinstance(cg, Circuit) for cg in coilgroups]
 
         # filters = {
         #     group.name: partial(
