@@ -263,7 +263,32 @@ def calculate_plasma_shape_params(points, psi, levels):
     return r_geo, kappa, delta
 
 
-def calculate_plasma_shape_params_opt(points, psi, gs_solver, psi_norm):
+def calculate_plasma_shape_params_opt(points, psi, gs_solver, psi_norm, plot=False):
+    """
+    Calculate the plasma parameters (Rgeo, kappa, delta) for a given magnetic
+    isoflux using optimisation.
+
+    Parameters
+    ----------
+    points: Iterable
+        2D points on which psi has been calculated
+    psi: Iterable
+        scalar value of the plasma magnetic poloidal flux at points
+    levels: Iterable
+        values that identify the isoflux curve at which the plasma parameters are
+        calculated
+
+    Returns
+    -------
+    r_geo: Iterable
+        array of averaged radial coordinate of the isoflux curves
+    kappa:
+        array of the kappa value of the isoflux curves
+    delta:
+        array of the delta value of the isoflux curves
+    """
+    from scipy.optimize import minimize
+
     mesh = points
     points = mesh.coordinates()
 
@@ -277,17 +302,6 @@ def calculate_plasma_shape_params_opt(points, psi, gs_solver, psi_norm):
     po = contour[ind_x_max]
     ind_x_min = np.argmin(x)
     pi = contour[ind_x_min]
-
-    from dolfin import plot
-
-    f, ax = plt.subplots()
-    plot(mesh)
-    ax.tricontour(points[:, 0], points[:, 1], psi)
-    ax.plot(x, z, color="r")
-    ax.plot(*po, marker="o", color="r")
-    ax.plot(*pi, marker="o", color="r")
-    ax.plot(*pu, marker="o", color="r")
-    ax.plot(*pl, marker="o", color="r")
 
     def f_obj_lower_extremum(x):
         return x[1]
@@ -319,20 +333,32 @@ def calculate_plasma_shape_params_opt(points, psi, gs_solver, psi_norm):
         print("Opt point: ", x_star)
         return x_star
 
-    pl = find_extremum(f_obj_lower_extremum, pl)
+    pl_opt = find_extremum(f_obj_lower_extremum, pl)
 
-    pu = find_extremum(f_obj_upper_extremum, pu)
+    pu_opt = find_extremum(f_obj_upper_extremum, pu)
 
-    pi = find_extremum(f_obj_inner_extremum, pi)
+    pi_opt = find_extremum(f_obj_inner_extremum, pi)
 
-    po = find_extremum(f_obj_outer_extremum, po)
+    po_opt = find_extremum(f_obj_outer_extremum, po)
 
-    ax.plot(*po, marker="o", color="b")
-    ax.plot(*pi, marker="o", color="b")
-    ax.plot(*pu, marker="o", color="b")
-    ax.plot(*pl, marker="o", color="b")
-    ax.set_aspect("equal")
-    plt.show()
+    if plot:
+        from dolfin import plot
+
+        f, ax = plt.subplots()
+        plot(mesh)
+        ax.tricontour(points[:, 0], points[:, 1], psi)
+        ax.plot(x, z, color="r")
+        ax.plot(*po, marker="o", color="r")
+        ax.plot(*pi, marker="o", color="r")
+        ax.plot(*pu, marker="o", color="r")
+        ax.plot(*pl, marker="o", color="r")
+
+        ax.plot(*po_opt, marker="o", color="b")
+        ax.plot(*pi_opt, marker="o", color="b")
+        ax.plot(*pu_opt, marker="o", color="b")
+        ax.plot(*pl_opt, marker="o", color="b")
+        ax.set_aspect("equal")
+        plt.show()
 
     # geometric center of a magnetic flux surface
     r_geo = (po[0] + pi[0]) / 2
@@ -354,8 +380,3 @@ def calculate_plasma_shape_params_opt(points, psi, gs_solver, psi_norm):
         delta = (c + d) / 2 / a
 
     return r_geo, kappa, delta
-
-    return r_geo, kappa, delta
-
-
-from scipy.optimize import minimize
