@@ -48,8 +48,7 @@ def solve_plasmod_fixed_boundary(
     gs_options,
     delta95_t,
     kappa95_t,
-    lcar_coarse=0.15,
-    lcar_fine=0.05,
+    lcar_mesh=0.15,
     niter_max=30,
     iter_err_max=1e-5,
     relaxation=0.2,
@@ -73,12 +72,9 @@ def solve_plasmod_fixed_boundary(
         target value for delta at 95%
     kappa95_t: float
         target value for kappa at 95%
-    lcar_coarse: float
+    lcar_mesh: float
         value of the characteristic length used to generate the mesh to solve the
         Grad-Shafranov problem
-    lcar_fine: float
-        value of the characteristic length used to extrapolate the isoflux for the
-        calculation of kappa and delta at 95%
     niter_max: int
         maximum number of iteration between Grad-Shafranov and Plasmod
     iter_err_max: float
@@ -158,11 +154,11 @@ def solve_plasmod_fixed_boundary(
 
         # generate mesh for the Grad-Shafranov solver
         plasma.shape.boundary[0].mesh_options = {
-            "lcar": lcar_coarse,
+            "lcar": lcar_mesh,
             "physical_group": "lcfs",
         }
         plasma.shape.mesh_options = {
-            "lcar": lcar_coarse,
+            "lcar": lcar_mesh,
             "physical_group": "plasma_face",
         }
 

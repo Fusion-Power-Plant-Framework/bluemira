@@ -28,9 +28,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 from matplotlib._tri import TriContourGenerator
 from matplotlib.tri.triangulation import Triangulation
+from scipy.optimize import minimize
 
-from bluemira.geometry.coordinates import Coordinates
-from bluemira.geometry.tools import interpolate_bspline
 from bluemira.utilities.tools import is_num
 
 
@@ -218,8 +217,6 @@ def calculate_plasma_shape_params(points, psi, gs_solver, psi_norm, plot=False):
     delta:
         array of the delta value of the isoflux curves
     """
-    from scipy.optimize import minimize  # noqa
-
     mesh = points
     points = mesh.coordinates()
 
