@@ -146,17 +146,11 @@ def plot_scalar_field(
     else:
         fig = plt.gcf()
 
-    if not kwargs:
-        kwargs = {"linewidths": 2, "colors": "k"}
+    defaults = {"linewidths": 2, "colors": "k"}
+    contour_kwargs = {**defaults, **kwargs}
 
-    # # ----------
-    # # Tricontour
-    # # ----------
-    # # Directly supply the unordered, irregularly spaced coordinates
-    # # to tricontour.
-    # opts = {'linewidths': 0.5, 'colors':'k'}
     if contour:
-        axis.tricontour(x, y, data, levels=levels, **kwargs)
+        axis.tricontour(x, y, data, levels=levels, **contour_kwargs)
 
     if tofill:
         cntrf = axis.tricontourf(x, y, data, levels=levels, cmap="RdBu_r")
