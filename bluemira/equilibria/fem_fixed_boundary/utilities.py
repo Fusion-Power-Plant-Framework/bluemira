@@ -140,9 +140,6 @@ def plot_scalar_field(
     axis: Axis
         Matplotlib axis on which the plot ocurred
     """
-    cntr = None
-    cntrf = None
-
     if axis is None:
         fig = plt.figure()
         axis = fig.add_subplot()
@@ -159,7 +156,7 @@ def plot_scalar_field(
     # # to tricontour.
     # opts = {'linewidths': 0.5, 'colors':'k'}
     if contour:
-        cntr = axis.tricontour(x, y, data, levels=levels, **kwargs)
+        axis.tricontour(x, y, data, levels=levels, **kwargs)
 
     if tofill:
         cntrf = axis.tricontourf(x, y, data, levels=levels, cmap="RdBu_r")
