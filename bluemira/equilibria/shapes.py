@@ -389,7 +389,7 @@ class JohnerLCFS(GeometryParameterisation):
 
     __slots__ = ()
 
-    def __init__(self, var_dict={}):
+    def __init__(self, var_dict=None):
         variables = OptVariables(
             [
                 BoundedVariable(
@@ -461,7 +461,8 @@ class JohnerLCFS(GeometryParameterisation):
                     upper_bound=45,
                     descr="Lower outer angle [°]",
                 ),
-            ]
+            ],
+            frozen=True,
         )
         variables.adjust_variables(var_dict, strict_bounds=False)
         super().__init__(variables)
