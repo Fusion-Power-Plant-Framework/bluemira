@@ -36,7 +36,6 @@ from bluemira.equilibria.fem_fixed_boundary.transport_solver import (
 )
 from bluemira.equilibria.fem_fixed_boundary.utilities import (
     calculate_plasma_shape_params,
-    calculate_plasma_shape_params_opt,
     plot_profile,
 )
 from bluemira.mesh import meshing
@@ -195,7 +194,7 @@ def solve_plasmod_fixed_boundary(
         )
 
         points = mesh.coordinates()
-        r_geo, kappa_95, delta_95 = calculate_plasma_shape_params_opt(
+        r_geo, kappa_95, delta_95 = calculate_plasma_shape_params(
             mesh,
             np.array([gs_solver.psi_norm_2d(x) for x in points]),
             gs_solver,
