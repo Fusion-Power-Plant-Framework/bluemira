@@ -123,19 +123,16 @@ jobs:
 
     - name: Download reference test report (PR only)
       if: ${{ github.event_name == 'pull_request' }}
-      # Do not fail if the report is not found. It may not exist if the
-      # artifact has expired, or there is a build of develop in progress.
-      # In case we don't find an old report, we just report all the warnings.
-      continue-on-error: true
-      uses: dawidd6/action-download-artifact@v2
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        workflow: ci.ymls
-        name: report-json
-        commit: ${{ github.event.pull_request.ref.sha }}
-        path: ref_report
-        search_artifacts: true
+      run: |
+        artifact_url="$( \
+          gh api repos/${{ github.repository }}/actions/artifacts --jq '.artifacts[] | select(.name == "report-json") | select(.workflow_run.head_sha == "${{ github.event.pull_request.base.sha }}") | .archive_download_url')"
+        if [ ! -z "${artifact_url}" ]; then
+          gh api ${artifact_url} > report-json.zip
+          mkdir ref_report
+          unzip report-json.zip -d ref_report
+        fi
 
     - name: Generate warning report
       if: ${{ github.event_name == 'pull_request' }}
