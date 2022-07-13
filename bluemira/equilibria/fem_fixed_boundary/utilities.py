@@ -120,8 +120,25 @@ def plot_scalar_field(
 
     Parameters
     ----------
-    x: Iterable
-        x coordinate of the points in which
+    x: np.array(n, m)
+        x coordinate array
+    z: np.array(n, m)
+        z coordinate array
+    data: np.array(n, m)
+        value array
+    levels: int
+        Number of contour levels to plot
+    axis: Optional[Axis]
+        axis onto which to plot
+    contour: bool
+        Whether or not to plot contour lines
+    tofill: bool
+        Whether or not to plot filled contours
+
+    Returns
+    -------
+    axis: Axis
+        Matplotlib axis on which the plot ocurred
     """
     cntr = None
     cntrf = None
@@ -129,6 +146,8 @@ def plot_scalar_field(
     if axis is None:
         fig = plt.figure()
         axis = fig.add_subplot()
+    else:
+        fig = plt.gcf()
 
     if not kwargs:
         kwargs = {"linewidths": 2, "colors": "k"}
@@ -144,11 +163,13 @@ def plot_scalar_field(
 
     if tofill:
         cntrf = axis.tricontourf(x, y, data, levels=levels, cmap="RdBu_r")
-        plt.gcf().colorbar(cntrf, ax=axis)
+        fig.colorbar(cntrf, ax=axis)
 
-    plt.gca().set_aspect("equal")
+    axis.set_xlabel("x [m]")
+    axis.set_ylabel("z [m]")
+    axis.set_aspect("equal")
 
-    return axis, cntr, cntrf
+    return axis
 
 
 def plot_profile(x, prof, var_name, var_unit):

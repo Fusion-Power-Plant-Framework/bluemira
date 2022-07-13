@@ -95,12 +95,12 @@ psi_data = np.array([gs_solver.psi(x) for x in points])
 
 levels = np.linspace(0.0, gs_solver.psi_ax, 25)
 
-axis, cntr, _ = plot_scalar_field(
+axis = plot_scalar_field(
     points[:, 0], points[:, 1], psi_data, levels=levels, axis=None, tofill=True
 )
 plt.show()
 
-axis, cntr, _ = plot_scalar_field(
+axis = plot_scalar_field(
     points[:, 0],
     points[:, 1],
     psi_data,
