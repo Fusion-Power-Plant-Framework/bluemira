@@ -64,14 +64,13 @@ class FemMagnetostatic2d:
 
     Parameters
     ----------
-    mesh : dolfin.mesh or string
-           the filename of the xml file with the mesh definition
-           or a dolfin mesh
-    boundaries : dolfin.MeshFunction or string
-                 the filename of the xml file with the boundaries definition
-                 or a MeshFunction that defines the boundaries
+    mesh : Union[dolfin.mesh, str]
+        Filename of the xml file with the mesh definition or a dolfin mesh
+    boundaries : Union[dolfin.mesh, str]
+        Filename of the xml file with the boundaries definition or a MeshFunction that
+        defines the boundaries
     p_order : int
-        the order of the approximating polynomial basis functions
+        Order of the approximating polynomial basis functions
     """  # noqa (W505)
 
     def __init__(self, mesh, boundaries=None, p_order=3):
@@ -138,19 +137,19 @@ class FemMagnetostatic2d:
 
         Parameters
         ----------
-        g : dolfin.Expression or dolfin.Function
-            the right hand side function of the Poisson problem
-        dirichlet_bc_function : dolfin.Expression o dolfin.Function
-                              the Dirichlet boundary condition function
-        neumann_bc_function : dolfin.Expression or dolfin.Function
-                            the Neumann boundary condition function
+        g : Union[dolfin.Expression, dolfin.Function]
+            Right hand side function of the Poisson problem
+        dirichlet_bc_function : Union[dolfin.Expression, dolfin.Function]
+            Dirichlet boundary condition function
+        neumann_bc_function : Union[dolfin.Expression, dolfin.Function]
+            Neumann boundary condition function
         dirichlet_marker : int
-                           the identification number for the dirichlet boundary
+            Identification number for the dirichlet boundary
 
         Returns
         -------
-        psi : dolfin function
-            the poloidal magnetic flux as solution of the magnetostatic problem
+        psi : dolfin.Function
+            Poloidal magnetic flux as solution of the magnetostatic problem
         """
         if neumann_bc_function is None:
             neumann_bc_function = dolfin.Expression("0.0", degree=self.p_order)
@@ -210,14 +209,13 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
 
     Parameters
     ----------
-    mesh : dolfin.mesh or string
-           the filename of the xml file with the mesh definition
-           or a dolfin mesh
-    boundaries : dolfin.MeshFunction or string
-                 the filename of the xml file with the boundaries definition
-                 or a MeshFunction that defines the boundaries
+    mesh : Union[dolfin.mesh, str]
+        Filename of the xml file with the mesh definition or a dolfin mesh
+    boundaries : Union[dolfin.mesh, str]
+        Filename of the xml file with the boundaries definition or a MeshFunction that
+        defines the boundaries
     p_order : int
-        the order of the approximating polynomial basis functions
+        Order of the approximating polynomial basis functions
     """  # noqa (W505)
 
     def __init__(self, mesh, boundaries=None, p_order=3):
@@ -253,22 +251,22 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
         curr_target: float,
     ):
         """
-        Returns the density current function given pprime and ffprime.
+        Return the density current function given pprime and ffprime.
 
         Parameters
         ----------
-        pprime: Union[Callable, float]
+        pprime: Union[callable, float]
             pprime as function of psi_norm (1-D function)
-        ffprime: Union[Callable, float]
+        ffprime: Union[callable, float]
             ffprime as function of psi_norm (1-D function)
         curr_target: float
-            target current (also used to initialize the solution in case self.psi is
+            Target current (also used to initialize the solution in case self.psi is
             still 0 and pprime and ffprime are, then, not defined)
 
         Returns
         -------
-        g: Callable
-            source current to solve the magnetostatic problem
+        g: callable
+            Source current to solve the magnetostatic problem
         """
         dx = dolfin.Measure("dx", domain=self.mesh)
         area = dolfin.assemble(dolfin.Constant(1) * dx())
@@ -302,22 +300,22 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
         curr_target: float,
     ):
         """
-        Returns the density current DOLFIN function given pprime and ffprime.
+        Return the density current DOLFIN function given pprime and ffprime.
 
         Parameters
         ----------
-        pprime: Union[Callable, float]
+        pprime: Union[callable, float]
             pprime as function of psi_norm (1-D function)
-        ffprime: Union[Callable, float]
+        ffprime: Union[callable, float]
             ffprime as function of psi_norm (1-D function)
         curr_target: float
-            target current (also used to initialize the solution in case self.psi is
+            Target current (also used to initialize the solution in case self.psi is
             still 0 and pprime and ffprime are, then, not defined)
 
         Returns
         -------
-        g: callble
-            source current to solve the magnetostatic problem
+        g: callable
+            Source current to solve the magnetostatic problem
         """
         myfunc = self._create_g_func(pprime, ffprime, curr_target)
         func = ScalarSubFunc(myfunc)
@@ -366,7 +364,7 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
         plot=False,
     ):
         """
-        Solves the GS problem given pprime and ffprime
+        Solve the G-S problem given pprime and ffprime.
 
         Parameters
         ----------
@@ -374,11 +372,11 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
         ffprime:
         curr_target: float
             Target total plasma current
-        dirichlet_bc_function: Optional[]
+        dirichlet_bc_function: Optional[Union[dolfin.Expression, dolfin.Function]]
 
-        dirichlet_marker: Optional[]
+        dirichlet_marker: Optional[Union[dolfin.Expression, dolfin.Function]]
 
-        neumann_bc_function: Optional[]
+        neumann_bc_function: Optional[Union[dolfin.Expression, dolfin.Function]]
 
         iter_err_max: float
 
