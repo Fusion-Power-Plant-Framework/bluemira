@@ -201,6 +201,33 @@ def _make_vertex(point):
     return cadapi.apiVertex(*point)
 
 
+def closed_wire_wrapper(drop_closure_point):
+    """
+    Decorator for checking / enforcing closures on wire creation functions.
+    """
+
+    def decorator(func):
+        def wrapper(points, label="", closed=False):
+            points = Coordinates(points)
+            if points.closed:
+                if closed is False:
+                    bluemira_warn(
+                        f"{func.__name__}: input points are closed but closed=False, defaulting to closed=True."
+                    )
+                closed = True
+                if drop_closure_point:
+                    points = Coordinates(points.points[:-1])
+            wire = func(points, label=label, closed=closed)
+            if closed:
+                wire = cadapi.close_wire(wire)
+            return BluemiraWire(wire, label=label)
+
+        return wrapper
+
+    return decorator
+
+
+@closed_wire_wrapper(drop_closure_point=True)
 def make_polygon(
     points: Union[list, np.ndarray], label: str = "", closed: bool = False
 ) -> BluemiraWire:
@@ -222,11 +249,43 @@ def make_polygon(
     -------
     wire: BluemiraWire
         a bluemira wire that contains the polygon
+
+    Notes
+    -----
+    If the input points are closed, but closed is False, the returned BluemiraWire will
+    be closed.
     """
-    points = Coordinates(points)
-    if closed and points.closed:
-        points = Coordinates(points.points[:-1])
-    return BluemiraWire(cadapi.make_polygon(points.T, closed), label=label)
+    return cadapi.make_polygon(points.T)
+
+
+@closed_wire_wrapper(drop_closure_point=False)
+def make_bezier(
+    points: Union[list, np.ndarray], label: str = "", closed: bool = False
+) -> BluemiraWire:
+    """Make a bspline from a set of points.
+
+    Parameters
+    ----------
+    points: Union[list, np.ndarray]
+        list of points. It can be given as a list of 3D tuples, a 3D numpy array,
+        or similar.
+    label: str, default = ""
+        Object's label
+    closed: bool, default = False
+        if True, the first and last points will be connected in order to form a
+        closed bspline. Defaults to False.
+
+    Returns
+    -------
+    wire: BluemiraWire
+        a bluemira wire that contains the bspline
+
+    Notes
+    -----
+    If the input points are closed, but closed is False, the returned BluemiraWire will
+    be closed.
+    """
+    return cadapi.make_bezier(points.T)
 
 
 def make_bspline(
@@ -308,31 +367,6 @@ def interpolate_bspline(
         cadapi.interpolate_bspline(points.T, closed, start_tangent, end_tangent),
         label=label,
     )
-
-
-def make_bezier(
-    points: Union[list, np.ndarray], label: str = "", closed: bool = False
-) -> BluemiraWire:
-    """Make a bspline from a set of points.
-
-    Parameters
-    ----------
-    points: Union[list, np.ndarray]
-        list of points. It can be given as a list of 3D tuples, a 3D numpy array,
-        or similar.
-    label: str, default = ""
-        Object's label
-    closed: bool, default = False
-        if True, the first and last points will be connected in order to form a
-        closed bspline. Defaults to False.
-
-    Returns
-    -------
-    wire: BluemiraWire
-        a bluemira wire that contains the bspline
-    """
-    points = Coordinates(points).T
-    return BluemiraWire(cadapi.make_bezier(points, closed), label=label)
 
 
 def make_circle(
