@@ -359,13 +359,38 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
         dirichlet_bc_function=None,
         dirichlet_marker=None,
         neumann_bc_function=None,
-        tol=1e-5,
+        iter_err_max=1e-5,
         max_iter=10,
         relaxation=0.0,
         verbose=False,
         plot=False,
     ):
-        """Solves the GS problem given pprime and ffprime"""
+        """
+        Solves the GS problem given pprime and ffprime
+
+        Parameters
+        ----------
+        pprime:
+        ffprime:
+        curr_target: float
+            Target total plasma current
+        dirichlet_bc_function: Optional[]
+
+        dirichlet_marker: Optional[]
+
+        neumann_bc_function: Optional[]
+
+        iter_err_max: float
+
+        max_iter: inter
+            Maximum number of iterations
+        relaxation: float
+            Relaxation factor for the Picard iteration procedure
+        verbose: bool
+            Whether or not to print
+        plot: bool
+            Whether or not to plot
+        """
         points = self.mesh.coordinates()
 
         if plot:
@@ -381,7 +406,7 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
 
         eps = 1.0
         i = 0  # iteration counter
-        while eps > tol and i < max_iter:
+        while eps > iter_err_max and i < max_iter:
             i += 1
 
             prev_psi = self.psi.vector()[:]

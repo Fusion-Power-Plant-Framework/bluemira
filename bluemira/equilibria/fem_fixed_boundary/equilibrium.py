@@ -44,40 +44,37 @@ def solve_plasmod_fixed_boundary(
     delta95_t,
     kappa95_t,
     lcar_mesh=0.15,
-    niter_max=30,
+    max_iter=30,
     iter_err_max=1e-5,
     relaxation=0.2,
-    gs_relaxation=0.5,
     plot=False,
     verbose=False,
 ):
     """
     Solve the plasma fixed boundary problem using delta95 and kappa95 as target
-    values and iterating on plasmod to have consistency with pprime and ffprime.
+    values and iterating on PLASMOD to have consistency with pprime and ffprime.
 
     Parameters
     ----------
     builder_plasma: Builder
-        plasma poloidal cross section builder object
+        Plasma poloidal cross section builder object
     plasmod_options: dict
-        set of options used to set up and run plasmod
+        Set of options used to set up and run PLASMOD
     gs_options: dict
-        set of options used to set up and run the FemGradShafranovFixedBoundary
+        Set of options used to set up and run the FemGradShafranovFixedBoundary
     delta95_t: float
-        target value for delta at 95%
+        Target value for delta at 95%
     kappa95_t: float
-        target value for kappa at 95%
+        Target value for kappa at 95%
     lcar_mesh: float
-        value of the characteristic length used to generate the mesh to solve the
+        Value of the characteristic length used to generate the mesh to solve the
         Grad-Shafranov problem
-    niter_max: int
-        maximum number of iteration between Grad-Shafranov and Plasmod
+    max_iter: int
+        Maximum number of iteration between Grad-Shafranov and PLASMOD
     iter_err_max: float
-        convergence maximum error to stop the iteration
+        Convergence maximum error to stop the iteration
     relaxation: float
-        iteration relaxing factor
-    gs_relaxation: float
-        FemGradShafranovFixedBoundary iteration relaxing factor
+        Iteration relaxing factor
     plot: bool
         Whether or not to plot
     verbose: bool
@@ -91,13 +88,11 @@ def solve_plasmod_fixed_boundary(
     delta_95 = delta95_t
     kappa_95 = kappa95_t
 
-    while niter < niter_max:
+    while niter < max_iter:
         # source string to be used in changed parameters
         source = f"from equilibrium iteration {niter}"
 
-        # build the plasma
-        # - xz - plasma toroidal cross section
-        # - xyz - to get the volume
+        # build the plasma x-z cross-section and get its volume
         plasma = builder_plasma.build_xz().get_component("xz").get_component("LCFS")
         lcfs = plasma.shape
         plasma_volume = 2 * np.pi * lcfs.center_of_mass[0] * lcfs.area
@@ -178,9 +173,9 @@ def solve_plasmod_fixed_boundary(
             plasmod_solver.pprime,
             plasmod_solver.ffprime,
             plasmod_solver.I_p,
-            tol=gs_options["tol"],
+            iter_err_max=gs_options["iter_err_max"],
             max_iter=gs_options["max_iter"],
-            relaxation=gs_relaxation,
+            relaxation=gs_options["relaxation"],
             plot=gs_options["plot"],
         )
 
@@ -243,9 +238,9 @@ def solve_plasmod_fixed_boundary(
         builder_plasma.reinitialise(builder_plasma.params)
         bluemira_debug(f"{builder_plasma.params}")
 
-    if niter == niter_max:
+    if niter == max_iter:
         bluemira_warn(
-            f"PLASMOD <-> Fixed boundary G-S did not converge within {niter_max} iterations:\n"
+            f"PLASMOD <-> Fixed boundary G-S did not converge within {max_iter} iterations:\n"
             f"\t Target kappa_95: {kappa95_t:.3f}\n"
             f"\t Actual kappa_95: {kappa_95:.3f}\n"
             f"\t Target delta_95: {delta95_t:.3f}\n"
