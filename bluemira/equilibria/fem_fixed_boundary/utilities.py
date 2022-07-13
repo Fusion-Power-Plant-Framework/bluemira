@@ -30,6 +30,7 @@ from matplotlib._tri import TriContourGenerator
 from matplotlib.tri.triangulation import Triangulation
 from scipy.optimize import minimize
 
+from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.utilities.tools import is_num
 
 
@@ -193,20 +194,21 @@ def get_tricontours(x, z, array, value):
     return contours
 
 
-def calculate_plasma_shape_params(points, psi, gs_solver, psi_norm, plot=False):
+def calculate_plasma_shape_params(psi_norm_func, mesh, psi_norm, plot=False):
     """
     Calculate the plasma parameters (Rgeo, kappa, delta) for a given magnetic
     isoflux using optimisation.
 
     Parameters
     ----------
-    points: Iterable
-        2D points on which psi has been calculated
-    psi: Iterable
-        scalar value of the plasma magnetic poloidal flux at points
-    levels: Iterable
-        values that identify the isoflux curve at which the plasma parameters are
-        calculated
+    psi_norm_func: callable
+        Function to calculate normalised psi
+    mesh: dolfin.Mesh
+        Mesh object to use to estimate extrema prior to optimisation
+    psi_norm: float
+        Normalised psi value for which to calculate the shape parameters
+    plot: bool
+        Whether or not to plot
 
     Returns
     -------
@@ -217,10 +219,10 @@ def calculate_plasma_shape_params(points, psi, gs_solver, psi_norm, plot=False):
     delta:
         array of the delta value of the isoflux curves
     """
-    mesh = points
     points = mesh.coordinates()
+    psi_norm_array = [psi_norm_func(x) for x in points]
 
-    contour = get_tricontours(points[:, 0], points[:, 1], psi, psi_norm)[0]
+    contour = get_tricontours(points[:, 0], points[:, 1], psi_norm_array, psi_norm)[0]
     x, z = contour.T
     ind_z_max = np.argmax(z)
     pu = contour[ind_z_max]
@@ -244,22 +246,27 @@ def calculate_plasma_shape_params(points, psi, gs_solver, psi_norm, plot=False):
         return -x[0]
 
     def f_constrain_p95(x):
-        return gs_solver.psi_norm_2d(x) - psi_norm
+        return psi_norm_func(x) - psi_norm
 
     def find_extremum(func, x0):
+        """
+        Extremum finding using constrained optimisation
+        """
+        # TODO: Replace scipy minimize with something a little more robust
         delta = 0.3
         bounds = [(xi - delta, xi + delta) for xi in x0]
-        print("Point: ", x0)
-        x_star = minimize(
+        result = minimize(
             func,
             x0,
             constraints=({"fun": f_constrain_p95, "type": "eq"}),
             method="SLSQP",
             bounds=bounds,
-            options={"disp": True, "ftol": 1e-10, "maxiter": 1000},
-        ).x
-        print("Opt point: ", x_star)
-        return x_star
+            options={"disp": False, "ftol": 1e-10, "maxiter": 1000},
+        )
+        if result.success:
+            bluemira_warn("Flux surface extremum finding failing:\n" f"{result.status}")
+
+        return result.x
 
     pl_opt = find_extremum(f_obj_lower_extremum, pl)
 
@@ -272,9 +279,9 @@ def calculate_plasma_shape_params(points, psi, gs_solver, psi_norm, plot=False):
     if plot:
         from dolfin import plot  # noqa
 
-        f, ax = plt.subplots()
+        _, ax = plt.subplots()
         plot(mesh)
-        ax.tricontour(points[:, 0], points[:, 1], psi)
+        ax.tricontour(points[:, 0], points[:, 1], psi_norm_array)
         ax.plot(x, z, color="r")
         ax.plot(*po, marker="o", color="r")
         ax.plot(*pi, marker="o", color="r")
@@ -290,22 +297,22 @@ def calculate_plasma_shape_params(points, psi, gs_solver, psi_norm, plot=False):
 
     pi, po, pu, pl = pi_opt, po_opt, pu_opt, pl_opt
     # geometric center of a magnetic flux surface
-    r_geo = (po[0] + pi[0]) / 2
+    r_geo = 0.5 * (po_opt[0] + pi_opt[0])
 
     # elongation
-    a = (po[0] - pi[0]) / 2
-    b = (pu[1] - pl[1]) / 2
+    a = 0.5 * (po_opt[0] - pi_opt[0])
+    b = 0.5 * (pu_opt[1] - pl_opt[1])
     if a == 0:
         kappa = 1
     else:
         kappa = b / a
 
     # triangularity
-    c = r_geo - pl[0]
-    d = r_geo - pu[0]
+    c = r_geo - pl_opt[0]
+    d = r_geo - pu_opt[0]
     if a == 0:
         delta = 0
     else:
-        delta = (c + d) / 2 / a
+        delta = 0.5 * (c + d) / a
 
     return r_geo, kappa, delta

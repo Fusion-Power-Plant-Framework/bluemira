@@ -179,11 +179,9 @@ def solve_plasmod_fixed_boundary(
             plot=gs_options["plot"],
         )
 
-        points = mesh.coordinates()
         r_geo, kappa_95, delta_95 = calculate_plasma_shape_params(
+            gs_solver.psi_norm_2d,
             mesh,
-            np.array([gs_solver.psi_norm_2d(x) for x in points]),
-            gs_solver,
             np.sqrt(0.95),
         )
 
