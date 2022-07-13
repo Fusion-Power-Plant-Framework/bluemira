@@ -232,7 +232,7 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
     @property
     def psi_b(self):
         """Poloidal flux on the boundary"""
-        return np.min(self.psi.vector()[:])
+        return 0.0  # np.min(self.psi.vector()[:])
 
     @property
     def psi_norm_2d(self):
@@ -361,7 +361,7 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
         neumann_bc_function=None,
         tol=1e-5,
         max_iter=10,
-        relaxation=1,
+        relaxation=0.0,
         verbose=False,
         plot=False,
     ):
@@ -399,8 +399,6 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
             super().solve(
                 self.g, dirichlet_bc_function, dirichlet_marker, neumann_bc_function
             )
-            self._update_curr(curr_target)
-            bluemira_critical(self._calculate_curr_tot())
 
             new = np.array([self.psi_norm_2d(p) for p in points])
             diff = new - prev
@@ -418,5 +416,7 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
             self.psi.vector()[:] = (1 - relaxation) * self.psi.vector()[
                 :
             ] + relaxation * prev_psi
+
+            self._update_curr(curr_target)
 
         return self.psi

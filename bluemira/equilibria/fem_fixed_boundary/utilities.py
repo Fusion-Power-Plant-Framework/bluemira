@@ -316,10 +316,10 @@ def calculate_plasma_shape_params_opt(points, psi, gs_solver, psi_norm, plot=Fal
         return -x[0]
 
     def f_constrain_p95(x):
-        return (gs_solver.psi_norm_2d(x) - psi_norm) ** 2
+        return gs_solver.psi_norm_2d(x) - psi_norm
 
     def find_extremum(func, x0):
-        delta = 0.1
+        delta = 0.3
         bounds = [(xi - delta, xi + delta) for xi in x0]
         print("Point: ", x0)
         x_star = minimize(
@@ -360,6 +360,7 @@ def calculate_plasma_shape_params_opt(points, psi, gs_solver, psi_norm, plot=Fal
         ax.set_aspect("equal")
         plt.show()
 
+    pi, po, pu, pl = pi_opt, po_opt, pu_opt, pl_opt
     # geometric center of a magnetic flux surface
     r_geo = (po[0] + pi[0]) / 2
 

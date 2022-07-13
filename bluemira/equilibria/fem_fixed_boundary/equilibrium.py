@@ -22,7 +22,12 @@
 """Fixed boundary equilibrium class"""
 import numpy as np
 
-from bluemira.base.look_and_feel import bluemira_debug, bluemira_print, bluemira_warn
+from bluemira.base.look_and_feel import (
+    bluemira_critical,
+    bluemira_debug,
+    bluemira_print,
+    bluemira_warn,
+)
 from bluemira.equilibria.fem_fixed_boundary.fem_magnetostatic_2D import (
     FemGradShafranovFixedBoundary,
 )
@@ -31,6 +36,7 @@ from bluemira.equilibria.fem_fixed_boundary.transport_solver import (
 )
 from bluemira.equilibria.fem_fixed_boundary.utilities import (
     calculate_plasma_shape_params,
+    calculate_plasma_shape_params_opt,
     plot_profile,
 )
 from bluemira.mesh import meshing
@@ -188,10 +194,13 @@ def solve_plasmod_fixed_boundary(
             plot=gs_options["plot"],
         )
 
-        # TODO: Try harder to get this working!
-        # r_geo, kappa_95, delta_95 = calculate_plasma_shape_params_opt(
-        #     mesh, np.array([gs_solver.psi_norm_2d(x) for x in points]), gs_solver, 0.95
-        # )
+        points = mesh.coordinates()
+        r_geo, kappa_95, delta_95 = calculate_plasma_shape_params_opt(
+            mesh,
+            np.array([gs_solver.psi_norm_2d(x) for x in points]),
+            gs_solver,
+            np.sqrt(0.95),
+        )
 
         # create the finer mesh to calculate the isofluxes
         plasma.shape.boundary[0].mesh_options = {
@@ -215,11 +224,18 @@ def solve_plasmod_fixed_boundary(
         x2d_data = np.array([gs_solver.psi_norm_2d(x) for x in points])
 
         # calculate kappa_95 and delta_95
-        r_geo, kappa_95, delta_95 = calculate_plasma_shape_params(
+        r_geo_m, kappa_95_m, delta_95_m = calculate_plasma_shape_params(
             points, x2d_data, [np.sqrt(0.95)]
         )
-        r_geo, kappa_95, delta_95 = r_geo[0], kappa_95[0], delta_95[0]
+        r_geo_m, kappa_95_m, delta_95_m = r_geo_m[0], kappa_95_m[0], delta_95_m[0]
+        # r_geo, kappa_95, delta_95  = r_geo_m, kappa_95_m, delta_95_m
+        bluemira_critical(f"Opt coarse values: {r_geo}, {kappa_95}, {delta_95}")
+        bluemira_critical(f"Mesh fine values: {r_geo_m}, {kappa_95_m}, {delta_95_m}")
 
+        a, b, c = calculate_plasma_shape_params_opt(
+            mesh, x2d_data, gs_solver, np.sqrt(0.95), plot=False
+        )
+        bluemira_critical(f"Opt fine values: {a}, {b}, {c}")
         # calculate the iteration error
         err_delta = abs(delta_95 - delta95_t) / delta95_t
         err_kappa = abs(kappa_95 - kappa95_t) / kappa95_t

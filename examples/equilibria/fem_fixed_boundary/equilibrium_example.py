@@ -123,9 +123,7 @@ plasmod_build_config = {
 }
 
 plasmod_options = {"params": plasmod_params, "build_config": plasmod_build_config}
-# With p_order = 1 I can match the extrema very well... and then I get the same
-# problem where kappa goes well above 2.0
-gs_options = {"p_order": 1, "tol": 1e-3, "max_iter": 30, "plot": False}
+gs_options = {"p_order": 2, "tol": 1e-4, "max_iter": 30, "plot": False}
 
 # target values
 delta95_t = 0.333
@@ -140,7 +138,7 @@ solve_plasmod_fixed_boundary(
     lcar_coarse=0.3,
     lcar_fine=0.05,
     niter_max=15,
-    iter_err_max=1e-6,
+    iter_err_max=1e-4,
     relaxation=0.0,
     gs_relaxation=0.05,
     plot=False,
