@@ -196,7 +196,7 @@ def get_tricontours(x, z, array, value):
 
 def calculate_plasma_shape_params(psi_norm_func, mesh, psi_norm, plot=False):
     """
-    Calculate the plasma parameters (Rgeo, kappa, delta) for a given magnetic
+    Calculate the plasma parameters (r_geo, kappa, delta) for a given magnetic
     isoflux using optimisation.
 
     Parameters
@@ -212,12 +212,12 @@ def calculate_plasma_shape_params(psi_norm_func, mesh, psi_norm, plot=False):
 
     Returns
     -------
-    r_geo: Iterable
-        array of averaged radial coordinate of the isoflux curves
-    kappa:
-        array of the kappa value of the isoflux curves
-    delta:
-        array of the delta value of the isoflux curves
+    r_geo: float
+        Geometric major radius of the flux surface at psi_norm
+    kappa: float
+        Elongation of the flux surface at psi_norm
+    delta: float
+        Triangularity of the flux surface at psi_norm
     """
     points = mesh.coordinates()
     psi_norm_array = [psi_norm_func(x) for x in points]
@@ -263,8 +263,8 @@ def calculate_plasma_shape_params(psi_norm_func, mesh, psi_norm, plot=False):
             bounds=bounds,
             options={"disp": False, "ftol": 1e-10, "maxiter": 1000},
         )
-        if result.success:
-            bluemira_warn("Flux surface extremum finding failing:\n" f"{result.status}")
+        if not result.success:
+            bluemira_warn("Flux surface extremum finding failing:\n" f"{result.message}")
 
         return result.x
 
