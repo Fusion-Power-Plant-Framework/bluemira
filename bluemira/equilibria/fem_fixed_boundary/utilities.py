@@ -248,13 +248,14 @@ def calculate_plasma_shape_params(psi_norm_func, mesh, psi_norm, plot=False):
     def f_constrain_p95(x):
         return psi_norm_func(x) - psi_norm
 
+    search_range = mesh.hmax()
+
     def find_extremum(func, x0):
         """
         Extremum finding using constrained optimisation
         """
         # TODO: Replace scipy minimize with something a little more robust
-        delta = 0.3
-        bounds = [(xi - delta, xi + delta) for xi in x0]
+        bounds = [(xi - search_range, xi + search_range) for xi in x0]
         result = minimize(
             func,
             x0,
