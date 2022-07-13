@@ -99,9 +99,9 @@ class TestGetNormal:
             directory=DATA_DIR,
             subdomains=True,
         )
-        dolfin.plot(mesh)
 
         if tests.PLOTTING:
+            dolfin.plot(mesh)
             plt.show()
 
         em_solver = FemMagnetostatic2d(mesh, boundaries, 3)
