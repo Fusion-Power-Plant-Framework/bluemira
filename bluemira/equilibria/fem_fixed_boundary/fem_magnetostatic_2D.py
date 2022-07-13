@@ -30,7 +30,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 from bluemira.base.constants import MU_0
-from bluemira.base.look_and_feel import bluemira_print_flush
+from bluemira.base.look_and_feel import bluemira_critical, bluemira_print_flush
 from bluemira.equilibria.fem_fixed_boundary.utilities import (
     ScalarSubFunc,
     plot_scalar_field,
@@ -400,6 +400,7 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
                 self.g, dirichlet_bc_function, dirichlet_marker, neumann_bc_function
             )
             self._update_curr(curr_target)
+            bluemira_critical(self._calculate_curr_tot())
 
             new = np.array([self.psi_norm_2d(p) for p in points])
             diff = new - prev
