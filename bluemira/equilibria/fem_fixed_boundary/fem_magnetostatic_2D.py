@@ -372,14 +372,16 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
         ffprime:
         curr_target: float
             Target total plasma current
-        dirichlet_bc_function: Optional[Union[dolfin.Expression, dolfin.Function]]
-
-        dirichlet_marker: Optional[Union[dolfin.Expression, dolfin.Function]]
-
-        neumann_bc_function: Optional[Union[dolfin.Expression, dolfin.Function]]
-
+        dirichlet_bc_function : Optional[Union[dolfin.Expression, dolfin.Function]]
+            Dirichlet boundary condition function. Defaults to a Dirichlet boundary
+            condition of 0 on the plasma boundary.
+        neumann_bc_function : Optional[Union[dolfin.Expression, dolfin.Function]]
+            Neumann boundary condition function. Defaults to a Neumann boundary
+            condition of 0 on the plasma boundary.
+        dirichlet_marker : int
+            Identification number for the dirichlet boundary
         iter_err_max: float
-
+            Convergence criterion value
         max_iter: inter
             Maximum number of iterations
         relaxation: float
