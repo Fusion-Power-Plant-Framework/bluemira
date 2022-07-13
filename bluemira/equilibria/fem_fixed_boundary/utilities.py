@@ -233,22 +233,13 @@ def calculate_plasma_shape_params(psi_norm_func, mesh, psi_norm, plot=False):
     ind_x_min = np.argmin(x)
     pi = contour[ind_x_min]
 
-    def f_obj_lower_extremum(x):
-        return x[1]
-
-    def f_obj_upper_extremum(x):
-        return -x[1]
-
-    def f_obj_inner_extremum(x):
-        return x[0]
-
-    def f_obj_outer_extremum(x):
-        return -x[0]
+    search_range = mesh.hmax()
 
     def f_constrain_p95(x):
+        """
+        Constraint function for points on the psi_norm surface.
+        """
         return psi_norm_func(x) - psi_norm
-
-    search_range = mesh.hmax()
 
     def find_extremum(func, x0):
         """
@@ -269,13 +260,13 @@ def calculate_plasma_shape_params(psi_norm_func, mesh, psi_norm, plot=False):
 
         return result.x
 
-    pl_opt = find_extremum(f_obj_lower_extremum, pl)
+    pi_opt = find_extremum(lambda x: x[0], pi)
 
-    pu_opt = find_extremum(f_obj_upper_extremum, pu)
+    po_opt = find_extremum(lambda x: -x[0], po)
 
-    pi_opt = find_extremum(f_obj_inner_extremum, pi)
+    pl_opt = find_extremum(lambda x: x[1], pl)
 
-    po_opt = find_extremum(f_obj_outer_extremum, po)
+    pu_opt = find_extremum(lambda x: -x[1], pu)
 
     if plot:
         from dolfin import plot  # noqa
