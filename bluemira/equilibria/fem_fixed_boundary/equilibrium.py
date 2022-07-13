@@ -202,40 +202,6 @@ def solve_plasmod_fixed_boundary(
             np.sqrt(0.95),
         )
 
-        # create the finer mesh to calculate the isofluxes
-        plasma.shape.boundary[0].mesh_options = {
-            "lcar": lcar_fine,
-            "physical_group": "lcfs",
-        }
-        plasma.shape.mesh_options = {"lcar": lcar_fine, "physical_group": "plasma_face"}
-
-        m = meshing.Mesh()
-        m(plasma)
-
-        msh_to_xdmf("Mesh.msh", dimensions=(0, 2), directory=".", verbose=verbose)
-
-        mesh, boundaries, subdomains, labels = import_mesh(
-            "Mesh",
-            directory=".",
-            subdomains=True,
-        )
-
-        points = mesh.coordinates()
-        x2d_data = np.array([gs_solver.psi_norm_2d(x) for x in points])
-
-        # calculate kappa_95 and delta_95
-        r_geo_m, kappa_95_m, delta_95_m = calculate_plasma_shape_params(
-            points, x2d_data, [np.sqrt(0.95)]
-        )
-        r_geo_m, kappa_95_m, delta_95_m = r_geo_m[0], kappa_95_m[0], delta_95_m[0]
-        # r_geo, kappa_95, delta_95  = r_geo_m, kappa_95_m, delta_95_m
-        bluemira_critical(f"Opt coarse values: {r_geo}, {kappa_95}, {delta_95}")
-        bluemira_critical(f"Mesh fine values: {r_geo_m}, {kappa_95_m}, {delta_95_m}")
-
-        a, b, c = calculate_plasma_shape_params_opt(
-            mesh, x2d_data, gs_solver, np.sqrt(0.95), plot=False
-        )
-        bluemira_critical(f"Opt fine values: {a}, {b}, {c}")
         # calculate the iteration error
         err_delta = abs(delta_95 - delta95_t) / delta95_t
         err_kappa = abs(kappa_95 - kappa95_t) / kappa95_t
