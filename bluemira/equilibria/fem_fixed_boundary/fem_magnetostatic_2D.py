@@ -368,8 +368,10 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
 
         Parameters
         ----------
-        pprime:
-        ffprime:
+        pprime: Union[callable, float]
+            pprime as function of psi_norm (1-D function)
+        ffprime: Union[callable, float]
+            ffprime as function of psi_norm (1-D function)
         curr_target: float
             Target total plasma current
         dirichlet_bc_function : Optional[Union[dolfin.Expression, dolfin.Function]]
