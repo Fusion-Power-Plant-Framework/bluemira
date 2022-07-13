@@ -390,6 +390,11 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
             Whether or not to print
         plot: bool
             Whether or not to plot
+
+        Returns
+        -------
+        psi: dolfin.Function
+            dolfin.Function for psi
         """
         points = self.mesh.coordinates()
 
