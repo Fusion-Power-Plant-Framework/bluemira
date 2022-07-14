@@ -26,6 +26,8 @@ Example single null first wall particle heat flux
 # %%
 import os
 
+import matplotlib.pyplot as plt
+
 from bluemira.base.file import get_bluemira_path
 from bluemira.base.parameter import ParameterFrame
 from bluemira.equilibria import Equilibrium
@@ -86,3 +88,4 @@ solver = ChargedParticleSolver(params, eq, dx_mp=0.001)
 x, z, hf = solver.analyse(first_wall=fw_shape)
 
 solver.plot()
+plt.show()
