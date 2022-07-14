@@ -80,6 +80,7 @@ dev_requires = [
     "pytest-cov",
     "pytest-html",
     "pytest-metadata",
+    "pytest-json-report",
     "sphinx",
     "sphinx-autoapi",
     "sphinx-rtd-theme",
