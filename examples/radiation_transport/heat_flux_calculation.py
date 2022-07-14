@@ -23,6 +23,7 @@
 Example single null first wall particle heat flux
 """
 
+# %%
 import os
 
 from bluemira.base.file import get_bluemira_path
@@ -31,18 +32,32 @@ from bluemira.equilibria import Equilibrium
 from bluemira.geometry._deprecated_loop import Loop
 from bluemira.radiation_transport.advective_transport import ChargedParticleSolver
 
+# %%[markdown]
+
+# First we load an up equilibrium
+
+# %%
 read_path = get_bluemira_path("equilibria", subfolder="data")
 eq_name = "EU-DEMO_EOF.json"
 eq_name = os.sep.join([read_path, eq_name])
 eq = Equilibrium.from_eqdsk(eq_name)
 
-read_path = get_bluemira_path(
-    "bluemira/radiation_transport/test_data", subfolder="tests"
-)
+# %%[markdown]
+
+# Now we load a first wall geometry, so that the solver can determine where the flux
+# surfaces intersect the first wall.
+
+# %%
+read_path = get_bluemira_path("radiation_transport/test_data", subfolder="tests")
 fw_name = "first_wall.json"
 fw_name = os.sep.join([read_path, fw_name])
 fw_shape = Loop.from_file(fw_name)
 
+# %%[markdown]
+
+# Then we define some input `Parameter`s for the solve.
+
+# %%
 
 params = ParameterFrame(
     # fmt: off
@@ -59,6 +74,11 @@ params = ParameterFrame(
     # fmt:on
 )
 
+# %%[markdown]
+
+# Finally, we initialise the `ChargedParticleSolver` and run it.
+
+# %%
 solver = ChargedParticleSolver(params, eq, dx_mp=0.001)
 x, z, hf = solver.analyse(first_wall=fw_shape)
 
