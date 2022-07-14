@@ -44,125 +44,18 @@ __all__ = ["BluemiraFace"]
 class BluemiraFace(BluemiraGeo):
     """Bluemira Face class."""
 
-    def __init__(self, boundary, label: str = ""):
-        boundary_classes = [BluemiraWire]
-        super().__init__(boundary, label, boundary_classes)
-        self._create_face()
+    def __init__(self, shape, label: str = ""):
+        shape_classes = [cadapi.apiFace]
+        super().__init__(shape, label, shape_classes)
 
-    @staticmethod
-    def _converter(func):
-        def wrapper(*args, **kwargs):
-            output = func(*args, **kwargs)
-            if isinstance(output, cadapi.apiWire):
-                output = BluemiraWire(output)
-            if isinstance(output, cadapi.apiFace):
-                output = BluemiraFace._create(output)
-            return output
-
-        return wrapper
-
-    def copy(self):
-        """Make a copy of the BluemiraFace"""
-        return BluemiraFace(self.boundary, self.label)
-
-    def deepcopy(self):
-        """Make a copy of the BluemiraFace"""
-        boundary = []
-        for o in self.boundary:
-            boundary += [o.deepcopy()]
-        return BluemiraFace(boundary, self.label)
-
-    def _check_boundary(self, objs):
-        """Check if objects in objs are of the correct type for this class"""
-        if not hasattr(objs, "__len__"):
-            objs = [objs]
-        check = False
-        for c in self._boundary_classes:
-            check = check or (all(isinstance(o, c) for o in objs))
-            if check:
-                if all(o.is_closed() for o in objs):
-                    return objs
-                else:
-                    raise NotClosedWire("Only closed BluemiraWire are accepted.")
-        raise TypeError(
-            f"Only {self._boundary_classes} objects can be used for {self.__class__}"
-        )
-
-    def _create_face(self, check_reverse=True):
-        """Create the primitive face"""
-        external: BluemiraWire = self.boundary[0]
-        face = cadapi.apiFace(external._create_wire(check_reverse=False))
-
-        if len(self.boundary) > 1:
-            fholes = [cadapi.apiFace(h._shape) for h in self.boundary[1:]]
-            face = face.cut(fholes)
-            if len(face.Faces) == 1:
-                face = face.Faces[0]
-            else:
-                raise DisjointedFace("Any or more than one face has been created.")
-
-        if check_reverse:
-            return self._check_reverse(face)
-        else:
-            return face
-
-    @property
-    def _shape(self) -> cadapi.apiFace:
-        """Part.Face: shape of the object as a primitive face"""
-        return self._create_face()
-
-    @property
-    def _wires(self) -> List[cadapi.apiWire]:
-        """list(Part.Wire): list of wires of which the shape consists of."""
-        wires = []
-        for o in self.boundary:
-            if isinstance(o, cadapi.apiWire):
-                wires += o.Wires
-            else:
-                wires += o._wires
-        return wires
-
-    @classmethod
-    def _create(cls, obj: cadapi.apiFace, label="") -> BluemiraFace:
-        if isinstance(obj, cadapi.apiFace):
-            orientation = obj.Orientation
-            bmwires = []
-            for w in obj.Wires:
-                w_orientation = w.Orientation
-                bm_wire = BluemiraWire(w)
-                bm_wire._orientation = w_orientation
-                if cadapi.is_closed(w):
-                    bm_wire.close()
-                bmwires += [bm_wire]
-            bmface = cls(bmwires, label=label)
-            bmface._orientation = orientation
-            return bmface
-
-        raise TypeError(f"Only Part.Face objects can be used to create a {cls} instance")
-
-    def discretize(
-        self, ndiscr: int = 100, byedges: bool = False, dl: float = None
-    ) -> np.ndarray:
+    def boundary(self, b_type: str = "wires"):
         """
-        Make an array of the geometry.
-
-        Parameters
-        ----------
-        ndiscr: int
-            Number of points in the array
-        byedges: bool
-            Whether or not to discretise by edges
-
-        Returns
-        -------
-        xyz: np.ndarray
-            (M, (3, N)) array of point coordinates where M is the number of boundaries
-            and N the number of discretization points.
+        Get the boundary (wires or vertex) of face.
         """
-        points = []
-        for w in self._shape.Wires:
-            if byedges:
-                points.append(cadapi.discretize_by_edges(w, ndiscr=ndiscr, dl=dl))
-            else:
-                points.append(cadapi.discretize(w, ndiscr=ndiscr, dl=dl))
-        return points
+        wires = cadapi.wires(self._shape)
+        if b_type == "wires":
+            return [BluemiraWire(w) for w in wires]
+        if b_type == "vertexes":
+            return [BluemiraWire(w).boundary() for w in wires]
+
+        raise ValueError("Only ['vertexes', 'wires'] are allowed as boundary type")

@@ -556,6 +556,14 @@ def offset_wire(
     return wire
 
 
+def make_face(wire: apiWire, label: str = ""):
+    """Make a face give a wire boundary"""
+    face = apiFace(wire)
+    if face.isValid():
+        return face
+    else:
+        raise FreeCADError('An invalid face has been generated')
+
 # ======================================================================================
 # Object properties
 # ======================================================================================
@@ -617,6 +625,27 @@ def end_point(obj) -> np.ndarray:
     """The end point of the object"""
     point = obj.Edges[-1].lastVertex().Point
     return vector_to_numpy(point)
+
+def ordered_vertexes(obj) -> np.ndarray:
+    """Ordered vertexes of the object"""
+    vertexes = _get_api_attr(obj, "OrderedVertexes")
+    return vertex_to_numpy(vertexes)
+
+def wires(obj) -> np.ndarray:
+    """Wires of the object"""
+    return _get_api_attr(obj, "Wires")
+
+def faces(obj) -> np.ndarray:
+    """Faces of the object"""
+    return _get_api_attr(obj, "Faces")
+
+def shells(obj) -> np.ndarray:
+    """Shells of the object"""
+    return _get_api_attr(obj, "Shells")
+
+def solids(obj) -> np.ndarray:
+    """Solids of the object"""
+    return _get_api_attr(obj, "Solids")
 
 
 # ======================================================================================

@@ -647,6 +647,10 @@ def convex_hull_wires_2d(
     return make_polygon(hull_coords, closed=True)
 
 
+def make_face(wire: BluemiraWire, label: str = ""):
+    """Make a face give a BluemiraWire boundary"""
+    return BluemiraFace(cadapi.make_face(wire.shape, label))
+
 # # =============================================================================
 # # Shape operation
 # # =============================================================================

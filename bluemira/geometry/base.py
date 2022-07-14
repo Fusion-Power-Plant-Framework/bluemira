@@ -78,23 +78,23 @@ class BluemiraGeo(ABC, GeoMeshable):
 
     Parameters
     ----------
-    boundary:
-        shape's boundary
+    shape:
+        geometry shape
     label: str
         identification label for the shape
-    boundary_classes:
-        list of allowed class types for shape's boundary
+    shape_classes:
+        list of allowed class types for shape
     """
 
     def __init__(
         self,
-        boundary,
+        shape,
         label: str = "",
-        boundary_classes=None,
+        shape_classes=None,
     ):
         super().__init__()
-        self._boundary_classes = boundary_classes
-        self.boundary = boundary
+        self._shape_classes = shape_classes
+        self.shape = shape
         self.label = label
         self.__orientation = _Orientation("Forward")
 
@@ -119,40 +119,33 @@ class BluemiraGeo(ABC, GeoMeshable):
         """
         return func
 
-    def _check_boundary(self, objs):
+    def _check_shape(self, shape):
         """
-        Check if objects objs can be used as boundaries.
+        Check if shape is a valid object to be wrapped in BluemiraGeo
         """
-        if not hasattr(objs, "__len__"):
-            objs = [objs]
+        if isinstance(shape, self.__class__):
+            shape = shape._shape
+
         check = False
-        for c in self._boundary_classes:
-            check = check or (all(isinstance(o, c) for o in objs))
-            if check:
-                return objs
+        for c in self._shape_classes:
+            check = check or (isinstance(shape, c) for c in self._shape_classes)
+
+        if check:
+            return shape
         raise TypeError(
-            f"Only {self._boundary_classes} objects can be used for {self.__class__}"
+            f"Only {self._shape_classes} objects can be used for {self.__class__}"
         )
 
     @property
-    def boundary(self):
+    def shape(self):
         """
-        The shape's boundary.
+        The geometry shape.
         """
-        return self._boundary
+        return self._shape
 
-    @boundary.setter
-    def boundary(self, objs):
-        self._boundary = self._check_boundary(objs)
-
-    @property
-    @abstractmethod
-    def _shape(self):
-        """
-        The primitive shape of the object.
-        """
-        # Note: this is the "hidden" connection with primitive shapes
-        pass
+    @shape.setter
+    def shape(self, new_shape):
+        self._shape = self._check_shape(new_shape)
 
     @property
     def length(self):
@@ -207,44 +200,24 @@ class BluemiraGeo(ABC, GeoMeshable):
         """
         return cadapi.is_valid(self._shape)
 
-    def search(self, label: str):
-        """
-        Search for a shape with the specified label
-
-        Parameters
-        ----------
-        label : str
-            shape label.
-
-        Returns
-        -------
-        output : [BluemiraGeo]
-            list of shapes that have the specified label.
-
-        """
-        output = []
-        if self.label == label:
-            output.append(self)
-        for o in self.boundary:
-            if isinstance(o, BluemiraGeo):
-                output += o.search(label)
-        return output
+    @abstractmethod
+    def boundary(self, b_type: str):
+        """ Object's boundary """
+        pass
 
     def scale(self, factor) -> None:
         """
         Apply scaling with factor to this object. This function modifies the self
         object.
         """
-        for o in self.boundary:
-            o.scale(factor)
+        self._shape.scale(factor)
 
     def translate(self, vector) -> None:
         """
         Translate this shape with the vector. This function modifies the self
         object.
         """
-        for o in self.boundary:
-            o.translate(vector)
+        self._shape.translate(vector)
 
     def rotate(self, base, direction, degree) -> None:
         """
@@ -259,15 +232,13 @@ class BluemiraGeo(ABC, GeoMeshable):
         degree: float
             rotation angle
         """
-        for o in self.boundary:
-            o.rotate(base, direction, degree)
+        self._shape.rotate(base, direction, degree)
 
     def change_placement(self, placement) -> None:
         """
         Change the placement of self
         """
-        for o in self.boundary:
-            o.change_placement(placement)
+        self._shape.change_placement(placement)
 
     def __repr__(self):  # noqa D105
         new = []
