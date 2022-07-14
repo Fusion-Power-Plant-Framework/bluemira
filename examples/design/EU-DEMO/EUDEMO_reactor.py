@@ -146,7 +146,7 @@ json_writer(
 config = {
     "Name": "EU-DEMO",
     "tau_flattop": 6900,
-    "n_TF": 14,
+    "n_TF": 12,
     "fw_psi_n": 1.07,
     "tk_sol_ib": 0.225,
     "tk_tf_front_ib": 0.04,
