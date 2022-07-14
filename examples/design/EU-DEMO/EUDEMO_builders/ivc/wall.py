@@ -160,6 +160,8 @@ class WallBuilder(OptimisedShapeBuilder):
         "r_fw_ib_in",  # inboard first wall inner radius
         "r_fw_ob_in",  # inboard first wall outer radius
         "A",  # aspect ratio
+        "tk_sol_ib",  # inboard SOL thickness
+        "tk_sol_ob",  # outboard SOL thickness
     ]
     _required_config: List[str] = []
     _params: Configuration
@@ -233,15 +235,37 @@ class WallBuilder(OptimisedShapeBuilder):
         """
         params = super()._derive_shape_params()
         if issubclass(self._param_class, PolySpline):
-            params["height"] = self._derive_polyspline_values()
+            params["height"] = self._derive_polyspline_height_values()
+            params["x1"] = self._derive_polyspline_x1_values()
+            params["x2"] = self._derive_polyspline_x2_values()
         return params
 
-    def _derive_polyspline_values(self) -> float:
+    def _derive_polyspline_height_values(self) -> float:
         """Derive the PolySpline height from relevant parameters."""
-        r_minor = self._params.R_0 / self._params.A
-        ref_height = (self._params.kappa_95 * r_minor) * 2
+        r_minor = self._params.R_0.value / self._params.A.value
+        ref_height = (self._params.kappa_95.value * r_minor) * 2
         return {
             "value": ref_height,
             "lower_bound": 0.8 * ref_height,
             "upper_bound": 1.2 * ref_height,
+        }
+
+    def _derive_polyspline_x1_values(self) -> float:
+        """Derive the PolySpline x1 from relevant parameters."""
+        r_minor = self._params.R_0.value / self._params.A.value
+        ref_x1 = self._params.R_0.value - r_minor - self._params.tk_sol_ib.value
+        return {
+            "value": ref_x1,
+            "lower_bound": 0.8 * ref_x1,
+            "upper_bound": 1 - 1e-3 * ref_x1,
+        }
+
+    def _derive_polyspline_x2_values(self) -> float:
+        """Derive the PolySpline x2 from relevant parameters."""
+        r_minor = self._params.R_0.value / self._params.A.value
+        ref_x2 = self._params.R_0.value + r_minor + self._params.tk_sol_ob.value
+        return {
+            "value": ref_x2,
+            "lower_bound": 1 - 1e-3 * ref_x2,
+            "upper_bound": 1.2 * ref_x2,
         }
