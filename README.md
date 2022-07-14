@@ -3,7 +3,7 @@
 
 # Bluemira
 
-![image](documentation/source/intro_mosaic.png)
+![image](documentation/source/bluemira_intro_mosaic.png)
 
 
 ``Bluemira`` is an integrated inter-disciplinary design tool for future fusion reactors. It
