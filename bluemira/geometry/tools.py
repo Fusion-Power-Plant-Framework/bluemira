@@ -675,6 +675,9 @@ def revolve_shape(
     shape: Union[BluemiraShell, BluemiraSolid]
         the revolved shape.
     """
+    if not isinstance(shape, BluemiraWire, BluemiraFace):
+        raise GeometryError(f"Cannot revolve shape of type: {type(shape)}")
+
     if degree > 360:
         bluemira_warn("Cannot revolve a shape by more than 360 degrees.")
         degree = 360
