@@ -316,6 +316,7 @@ class TestRevolveShape:
         face = BluemiraFace([circ, circ2])
         result = revolve_shape(face, self.base, self.direction, degree=360)
         assert isinstance(result, BluemiraSolid)
+        assert result.is_valid()
 
 
 class TestSolidFacePlaneIntersect:
