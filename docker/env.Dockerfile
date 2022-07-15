@@ -59,7 +59,8 @@ RUN bash scripts/freecad/install-freecad.sh
 
 COPY requirements.txt .
 # Update and install dependencies available through pip
-RUN python -m pip install --upgrade pip setuptools wheel pybind11 \
+RUN pip install -i https://test.pypi.org/simple/ 'CoolProp==6.4.2.dev0' \
+    && python -m pip install --upgrade pip setuptools wheel pybind11 \
     && python -m pip install -r requirements.txt
 # Coolprop numba-scipy neutronics-materal-maker
 
@@ -68,14 +69,11 @@ COPY scripts/fenicsx ./scripts/fenicsx/
 RUN bash scripts/fenicsx/install-fenicsx-deps.sh \
     && bash scripts/fenicsx/install-fenicsx.sh
 
-RUN pip install ./
-
 FROM base as dev-base
 
 COPY requirements-develop.txt .
 
-RUN pip install -i https://test.pypi.org/simple/ 'CoolProp==6.4.2.dev0' \
-    && pip install -r requirements-develop.txt
+RUN pip install -r requirements-develop.txt
 
 FROM base as env
 
