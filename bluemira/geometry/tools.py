@@ -682,8 +682,12 @@ def revolve_shape(
     if degree == 360:
         # We split into two separate revolutions of 180 degree and fuse them
         if isinstance(shape, BluemiraWire):
-            shape = BluemiraFace(shape)._shape
             flag_shell = True
+            return convert(
+                cadapi.revolve_shape(shape._shape, base, direction, degree=degree),
+                label=label,
+            )
+
         elif isinstance(shape, BluemiraFace):
             shape = shape._shape
             flag_shell = False
