@@ -40,6 +40,8 @@ from bluemira.geometry.parameterisations import (
     TripleArc,
 )
 from bluemira.geometry.plane import BluemiraPlane
+from bluemira.geometry.shell import BluemiraShell
+from bluemira.geometry.solid import BluemiraSolid
 from bluemira.geometry.tools import (
     _signed_distance_2D,
     convex_hull_wires_2d,
@@ -286,6 +288,34 @@ class TestWirePlaneIntersect:
 
         intersect = slice_shape(wire, plane)
         assert intersect.shape[0] == 4
+
+
+class TestRevolveShape:
+    big = 10
+    small = 5
+    centre = 15
+    base = (0, 0, 0)
+    direction = (0, 0, 1)
+
+    @pytest.mark.parametrize("radius", [small, big])
+    def test_revolve_wire_360(self, radius):
+        circ = make_circle(radius, [self.centre, 0, 0], axis=[0, 1, 0])
+        result = revolve_shape(circ, self.base, self.direction, degree=360)
+        assert isinstance(result, BluemiraShell)
+
+    @pytest.mark.parametrize("radius", [small, big])
+    def test_revolve_face_360(self, radius):
+        circ = make_circle(radius, [self.centre, 0, 0], axis=[0, 1, 0])
+        face = BluemiraFace(circ)
+        result = revolve_shape(face, self.base, self.direction, degree=360)
+        assert isinstance(result, BluemiraSolid)
+
+    def test_revolve_hollow_face_360(self):
+        circ = make_circle(self.big, [self.centre, 0, 0], axis=[0, 1, 0])
+        circ2 = make_circle(self.small, [self.centre, 0, 0], axis=[0, 1, 0])
+        face = BluemiraFace([circ, circ2])
+        result = revolve_shape(face, self.base, self.direction, degree=360)
+        assert isinstance(result, BluemiraSolid)
 
 
 class TestSolidFacePlaneIntersect:

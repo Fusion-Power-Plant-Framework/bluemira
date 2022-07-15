@@ -684,9 +684,12 @@ def revolve_shape(
         if isinstance(shape, BluemiraWire):
             shape = BluemiraFace(shape)._shape
             flag_shell = True
-        else:
+        elif isinstance(shape, BluemiraFace):
             shape = shape._shape
             flag_shell = False
+
+        else:
+            raise GeometryError(f"Invalid input shape class: {type(shape)}")
 
         shape_1 = cadapi.revolve_shape(shape, base, direction, degree=180)
         shape_2 = deepcopy(shape_1)
