@@ -33,8 +33,8 @@ from bluemira.geometry._deprecated_loop import Loop
 from bluemira.radiation_transport.advective_transport import ChargedParticleSolver
 from bluemira.radiation_transport.radiation_profile import (
     CoreRadiation,
+    DNScrapeOffLayerRadiation,
     Radiation,
-    STScrapeOffLayerRadiation,
     calculate_z_species,
     electron_density_and_temperature_sol_decay,
     exponential_decay,
@@ -90,7 +90,7 @@ class TestRadiation:
             impurity_data,
             plasma_params,
         )
-        cls.st_sol = STScrapeOffLayerRadiation(
+        cls.st_sol = DNScrapeOffLayerRadiation(
             cls.solver,
             impurity_content,
             impurity_data,

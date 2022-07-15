@@ -323,6 +323,11 @@ def random_point_temperature(
 
     q_u = p_fraction * q_u * div_p_sharing
 
+    # Flux expansion at the point
+    Bp_sep_mp = eq.Bp(r_sep_omp, z_mp)
+    Bp_p = eq.Bp(x_p, z_p)
+    f_p = (r_sep_omp * Bp_sep_mp) / (x_p * Bp_p)
+
     # Distance between the chosen point and the the target
     if (lfs and z_p < o_pt_z) or (not lfs and z_p > o_pt_z):
         forward = True
@@ -330,7 +335,7 @@ def random_point_temperature(
         forward = False
     l_p = calculate_connection_length_flt(
         eq,
-        x_p + d,
+        x_p + (d * f_p),
         z_p,
         forward=forward,
         first_wall=firstwall_geom,
@@ -687,6 +692,7 @@ class Radiation:
         ["gamma_sheath", "sheath heat transmission coefficient", 7, "dimensionless", None, "Input"],
         ["eps_cool", "electron energy loss", 25, "eV", None, "Input"],
         ["f_ion_t", "Hydrogen first ionization", 0.01, "keV", None, "Input"],
+        ["det_t", "Detachment target temperature", 0.0015, "keV", None, "Input"],
         ["lfs_p_fraction", "lfs fraction of SoL power", 0.8, "dimensionless", None, "Input"],
         ["div_p_sharing", "Power fraction towards each divertor", 0.5, "dimensionless", None, "Input"],
     ]
@@ -782,6 +788,8 @@ class Radiation:
         rad_i=None,
         rec_i=None,
         t_tar=None,
+        x_point_rad=False,
+        main_chamber_rad=False,
     ):
         """
         Along a single flux tube, it assigns different temperature values.
@@ -806,6 +814,9 @@ class Radiation:
             into the recycling region
         t_tar: float
             electron temperature at the target
+        main_chamber_rad: boolean
+            if True, the temperature from the midplane to
+            the radiation region entrance is not constant
 
         Returns
         -------
@@ -821,7 +832,17 @@ class Radiation:
             te[rad_i] = t_rad_in
         elif rad_i is not None and len(rad_i) > 1:
             te[rad_i] = exponential_decay(t_rad_in, t_rad_out, len(rad_i), decay=True)
+
+        if rec_i is not None and x_point_rad:
+            te[rec_i] = gaussian_decay(t_rad_out / 2, t_tar, len(rec_i))
+        elif rec_i is not None and x_point_rad is False:
             te[rec_i] = t_tar
+
+        if main_chamber_rad:
+            mask = np.ones_like(te, dtype=bool)
+            main_rad = np.concatenate((rad_i, rec_i))
+            mask[main_rad] = False
+            te[mask] = np.linspace(te_mp, t_rad_in, len(te[mask]))
 
         return te
 
@@ -835,7 +856,7 @@ class Radiation:
         rad_i=None,
         rec_i=None,
         n_tar=None,
-        x_point_rad=False,
+        main_chamber_rad=False,
     ):
         """
         Along a single flux tube, it assigns different density values.
@@ -862,6 +883,9 @@ class Radiation:
             electron density at the target
         x_point_rad: boolean
             if True, it assumes there is no radiation at all in the recycling region
+        main_chamber_rad: boolean
+            if True, the temperature from the midplane to
+            the radiation region entrance is not constant
 
         Returns
         -------
@@ -878,10 +902,19 @@ class Radiation:
         elif rad_i is not None and len(rad_i) > 1:
             ne[rad_i] = exponential_decay(n_rad_out, n_rad_in, len(rad_i))
 
-        if rec_i is not None and x_point_rad:
-            ne[rec_i] = gaussian_decay(n_rad_out, 0.1, len(rec_i))
-        elif rec_i is not None and x_point_rad is False:
+        if rec_i is not None and len(rad_i) == 1:
+            ne[rec_i] = n_tar
+        elif rec_i is not None and len(rec_i) > 0:
             ne[rec_i] = gaussian_decay(n_rad_out, n_tar, len(rec_i))
+        if rec_i is not None and len(rec_i) > 0 and len(rad_i) > 1:
+            gap = ne[rad_i[-1]] - ne[rad_i[-2]]
+            ne[rec_i] = gaussian_decay(n_rad_out - gap, n_tar, len(rec_i))
+
+        if main_chamber_rad:
+            mask = np.ones_like(ne, dtype=bool)
+            main_rad = np.concatenate((rad_i, rec_i))
+            mask[main_rad] = False
+            ne[mask] = np.linspace(ne_mp, n_rad_in, len(ne[mask]))
 
         return ne
 
@@ -1151,7 +1184,7 @@ class ScrapeOffLayerRadiation(Radiation):
 
         return rho_sol
 
-    def x_point_radiation_z_ext(self, main_ext=0.2, pfr_ext=0.3, low_div=True):
+    def x_point_radiation_z_ext(self, main_ext=None, pfr_ext=0.3, low_div=True):
         """
         Simple definition of a radiation region around the x-point.
         The region is supposed to extend from an arbitrary z coordinate on the
@@ -1175,6 +1208,8 @@ class ScrapeOffLayerRadiation(Radiation):
             vertical (z coordinate) extension of the radiation region
             toward the pfr
         """
+        if main_ext is None:
+            main_ext = self.points["x_point"]["z_up"]
         if low_div is True:
             z_main = self.points["x_point"]["z_low"] + main_ext
             z_pfr = self.points["x_point"]["z_low"] - pfr_ext
@@ -1347,8 +1382,9 @@ class ScrapeOffLayerRadiation(Radiation):
 
         # Ratio between upstream and local temperature
         f_t = t_u / t_p
+        print(t_u, t_p)
 
-        # Local electron temperature
+        # Local electron density
         n_p = self.plasma_params.n_el_sep * f_t
 
         # Temperature and density profiles across the SoL
@@ -1364,7 +1400,9 @@ class ScrapeOffLayerRadiation(Radiation):
 
         return te_prof, ne_prof
 
-    def tar_electron_densitiy_temperature_profiles(self, ne_div, te_div, f_m=1):
+    def tar_electron_densitiy_temperature_profiles(
+        self, ne_div, te_div, f_m=0.1, detachment=False
+    ):
         """
         Calculation of electron density and electron temperature profiles
         across the SoL at the target.
@@ -1390,7 +1428,10 @@ class ScrapeOffLayerRadiation(Radiation):
         ne_t: np.array
             target density
         """
-        te_t = te_div
+        if not detachment:
+            te_t = te_div
+        else:
+            te_t = [self.plasma_params.det_t] * len(te_div)
         ne_t = (f_m * ne_div) / 2
 
         return te_t, ne_t
@@ -1435,6 +1476,7 @@ class ScrapeOffLayerRadiation(Radiation):
                 flux_tube.loop.z,
                 c=p,
                 s=10,
+                marker=".",
                 cmap="plasma",
                 vmin=p_min,
                 vmax=p_max,
@@ -1455,8 +1497,10 @@ class ScrapeOffLayerRadiation(Radiation):
         pfr_ext=None,
         rec_ext=None,
         x_point_rad=False,
+        detachment=False,
         lfs=True,
         low_div=True,
+        main_chamber_rad=False,
     ):
         """
         Temperature and density profiles builder.
@@ -1485,12 +1529,20 @@ class ScrapeOffLayerRadiation(Radiation):
         x_point_rad: boolean
             if True, it assumes there is no radiation at all
             in the recycling region, and pfr_ext MUST be provided.
+        detachment: boolean
+            if True, it makes the temperature decay through the
+            recycling region from the H ionization temperature to
+            the assign temperature for detachment at the target.
+            Else temperature is constant through the recycling region.
         lfs: boolean
             low field side. Default value True.
             If False it stands for high field side (hfs)
         low_div: boolean
             default=True for the lower divertor.
             If False, upper divertor
+        main_chamber_rad: boolean
+            if True, the temperature from the midplane to
+            the radiation region entrance is not constant
 
         Returns
         -------
@@ -1532,6 +1584,10 @@ class ScrapeOffLayerRadiation(Radiation):
         t_mp_prof, n_mp_prof = self.mp_electron_density_temperature_profiles(
             self.t_u, lfs
         )
+        if lfs:
+            r_sep_mp = self.r_sep_omp
+        else:
+            r_sep_mp = self.r_sep_imp
 
         # entrance of radiation region
         t_rad_in = random_point_temperature(
@@ -1540,7 +1596,7 @@ class ScrapeOffLayerRadiation(Radiation):
             self.t_u,
             self.q_u,
             self.transport_solver.eq,
-            self.r_sep_omp,
+            r_sep_mp,
             self.z_mp,
             self.plasma_params.lfs_p_fraction,
             self.plasma_params.div_p_sharing,
@@ -1565,6 +1621,10 @@ class ScrapeOffLayerRadiation(Radiation):
                 self.plasma_params.f_ion_t,
                 lfs,
             )
+        # condition for occurred detachment
+        if t_rad_out <= self.plasma_params.f_ion_t:
+            x_point_rad = True
+            detachment = True
 
         # profiles through the SoL
         t_in_prof, n_in_prof = self.any_point_n_t_profiles(
@@ -1586,6 +1646,7 @@ class ScrapeOffLayerRadiation(Radiation):
         t_tar_prof, n_tar_prof = self.tar_electron_densitiy_temperature_profiles(
             n_out_prof,
             t_out_prof,
+            detachment=detachment,
         )
 
         # temperature poloidal distribution
@@ -1598,6 +1659,8 @@ class ScrapeOffLayerRadiation(Radiation):
                 rad_i=reg[0],
                 rec_i=reg[1],
                 t_tar=t_t,
+                x_point_rad=x_point_rad,
+                main_chamber_rad=main_chamber_rad,
             )
             for f, t, t_in, t_out, reg, t_t, in zip(
                 flux_tubes,
@@ -1609,10 +1672,6 @@ class ScrapeOffLayerRadiation(Radiation):
             )
         ]
 
-        # condition for occurred detachment
-        if t_rad_out <= self.plasma_params.f_ion_t:
-            x_point_rad = True
-
         # density poloidal distribution
         n_pol = [
             self.flux_tube_pol_n(
@@ -1623,7 +1682,7 @@ class ScrapeOffLayerRadiation(Radiation):
                 rad_i=reg[0],
                 rec_i=reg[1],
                 n_tar=n_t,
-                x_point_rad=x_point_rad,
+                main_chamber_rad=main_chamber_rad,
             )
             for f, n, n_in, n_out, reg, n_t, in zip(
                 flux_tubes,
@@ -1730,13 +1789,15 @@ class DNScrapeOffLayerRadiation(ScrapeOffLayerRadiation):
                 "flux_tube": getattr(self, f"flux_tubes_{side}_{low_up}"),
                 "x_strike": getattr(self, f"x_strike_{side}"),
                 "z_strike": getattr(self, f"z_strike_{side}"),
-                "main_ext": 0.2,
+                "main_ext": None,
                 "wall_profile": firstwall_geom,
                 "pfr_ext": None,
-                "rec_ext": 0.5,
+                "rec_ext": 5,
                 "x_point_rad": False,
+                "detachment": False,
                 "lfs": side == "lfs",
                 "low_div": low_up == "low",
+                "main_chamber_rad": True,
             }
             for side in ["lfs", "hfs"]
             for low_up in ["low", "up"]
@@ -1752,8 +1813,10 @@ class DNScrapeOffLayerRadiation(ScrapeOffLayerRadiation):
                 var["pfr_ext"],
                 var["rec_ext"],
                 var["x_point_rad"],
+                var["detachment"],
                 var["lfs"],
                 var["low_div"],
+                var["main_chamber_rad"],
             )
 
         return (
@@ -1862,6 +1925,7 @@ class DNScrapeOffLayerRadiation(ScrapeOffLayerRadiation):
         """
         # total line radiation loss along the open flux tubes
         total_rad_lfs_low = np.sum(np.array(rad_lfs_low, dtype=object), axis=0).tolist()
+        self.a = total_rad_lfs_low
         total_rad_lfs_up = np.sum(np.array(rad_lfs_up, dtype=object), axis=0).tolist()
         total_rad_hfs_low = np.sum(np.array(rad_hfs_low, dtype=object), axis=0).tolist()
         total_rad_hfs_up = np.sum(np.array(rad_hfs_up, dtype=object), axis=0).tolist()

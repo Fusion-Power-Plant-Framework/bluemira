@@ -37,7 +37,7 @@ from bluemira.geometry._deprecated_loop import Loop
 from bluemira.radiation_transport.advective_transport import ChargedParticleSolver
 from bluemira.radiation_transport.radiation_profile import (
     CoreRadiation,
-    STScrapeOffLayerRadiation,
+    DNScrapeOffLayerRadiation,
 )
 
 # %%[markdown]
@@ -153,7 +153,7 @@ stcore.build_core_radiation_map()
 # Run scrape-off layer radiation source calculation for Spherical Tokamak
 
 # %%
-stsol = STScrapeOffLayerRadiation(
+stsol = DNScrapeOffLayerRadiation(
     solver, impurity_content, impurity_data, plasma_params, fw_shape
 )
 
