@@ -19,11 +19,13 @@ install_requires = [
     "asteval",
     "Babel",
     "click",
+    "CoolProp",
     "fortranformat",
     "gmsh",
     "imageio",
     "matplotlib>=3.5",
     "meshio[all]",
+    "neutronics-material-maker==0.1.11",  # Crash on upgrade
     "nlopt",
     "numba",
     "numba-scipy",

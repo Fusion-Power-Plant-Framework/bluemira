@@ -4,6 +4,7 @@ Babel==2.10.3
 cftime==1.6.1
 click==8.1.3
 commonmark==0.9.1
+CoolProp==6.4.2dev0
 cycler==0.11.0
 fonttools==4.34.4
 fortranformat==1.2.1
@@ -16,6 +17,7 @@ matplotlib==3.5.3
 meshio[all]==5.3.4
 mpi4py==3.1.3
 netCDF4==1.6.0
+neutronics-material-maker==0.1.11
 nlopt==2.7.1
 numba==0.56.0
 numba-scipy==0.3.1
