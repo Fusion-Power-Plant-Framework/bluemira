@@ -20,6 +20,7 @@
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 
 import os
+import subprocess  # noqa :S404
 from unittest import mock
 
 import pytest
@@ -45,14 +46,28 @@ from bluemira.base.look_and_feel import (
 ROOT = get_bluemira_root()
 
 
+GIT_WORKTREE = subprocess.run(  # noqa: S607
+    ["git", "rev-parse", "--is-inside-work-tree"], shell=False  # noqa: S603
+)
+
+
+@pytest.mark.skipif(
+    GIT_WORKTREE.returncode != 0, reason="Not inside functioning git repository"
+)
 def test_get_git_version():
     assert isinstance(get_git_version(ROOT), bytes)
 
 
+@pytest.mark.skipif(
+    GIT_WORKTREE.returncode != 0, reason="Not inside functioning git repository"
+)
 def test_get_git_branch():
     assert isinstance(get_git_branch(ROOT), str)
 
 
+@pytest.mark.skipif(
+    GIT_WORKTREE.returncode != 0, reason="Not inside functioning git repository"
+)
 def test_count_slocs():
     branch = get_git_branch(ROOT)
     slocs = count_slocs(ROOT, branch)
