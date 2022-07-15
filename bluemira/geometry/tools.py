@@ -679,30 +679,23 @@ def revolve_shape(
         bluemira_warn("Cannot revolve a shape by more than 360 degrees.")
         degree = 360
 
-    if degree == 360:
-        # We split into two separate revolutions of 180 degree and fuse them
-        if isinstance(shape, BluemiraWire):
-            flag_shell = True
-            return convert(
-                cadapi.revolve_shape(shape._shape, base, direction, degree=degree),
-                label=label,
-            )
+    if np.isclose(degree, 360):
+        degree = 360
 
-        elif isinstance(shape, BluemiraFace):
-            shape = shape._shape
-            flag_shell = False
-
-        else:
-            raise GeometryError(f"Invalid input shape class: {type(shape)}")
-
-        shape_1 = cadapi.revolve_shape(shape, base, direction, degree=180)
-        shape_2 = deepcopy(shape_1)
-        shape_2 = cadapi.rotate_shape(shape_2, base, direction, degree=180)
-        result = cadapi.boolean_fuse([shape_1, shape_2])
-
-        if flag_shell:
-            result = result.Shells[0]
-
+    if degree == 360 and isinstance(shape, BluemiraFace):
+        first_shape = shape.boundary[0]
+        result = cadapi.revolve_shape(
+            cadapi.apiFace(first_shape._shape), base, direction, degree=degree
+        )
+        if len(shape.boundary) > 1:
+            cut_solids = []
+            for boundary in shape.boundary[1:]:
+                cut_solids.append(
+                    cadapi.revolve_shape(
+                        cadapi.apiFace(boundary._shape), base, direction, degree=degree
+                    )
+                )
+            result = cadapi.boolean_cut(result, cut_solids)[0]
         return convert(result, label)
 
     return convert(cadapi.revolve_shape(shape._shape, base, direction, degree), label)

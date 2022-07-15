@@ -302,6 +302,10 @@ class TestRevolveShape:
         circ = make_circle(radius, [self.centre, 0, 0], axis=[0, 1, 0])
         result = revolve_shape(circ, self.base, self.direction, degree=360)
         assert isinstance(result, BluemiraShell)
+        assert result.is_valid()
+        np.testing.assert_approx_equal(
+            result.area, 2 * np.pi * radius * 2 * np.pi * self.centre
+        )
 
     @pytest.mark.parametrize("radius", [small, big])
     def test_revolve_face_360(self, radius):
@@ -309,6 +313,10 @@ class TestRevolveShape:
         face = BluemiraFace(circ)
         result = revolve_shape(face, self.base, self.direction, degree=360)
         assert isinstance(result, BluemiraSolid)
+        assert result.is_valid()
+        np.testing.assert_approx_equal(
+            result.volume, np.pi * (radius**2) * 2 * np.pi * self.centre
+        )
 
     def test_revolve_hollow_face_360(self):
         circ = make_circle(self.big, [self.centre, 0, 0], axis=[0, 1, 0])
@@ -317,6 +325,10 @@ class TestRevolveShape:
         result = revolve_shape(face, self.base, self.direction, degree=360)
         assert isinstance(result, BluemiraSolid)
         assert result.is_valid()
+        np.testing.assert_approx_equal(
+            result.volume,
+            np.pi * (self.big**2 - self.small**2) * 2 * np.pi * self.centre,
+        )
 
 
 class TestSolidFacePlaneIntersect:
