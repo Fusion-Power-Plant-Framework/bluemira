@@ -32,6 +32,7 @@ from numpy.linalg import norm
 import bluemira.codes._freecadapi as cadapi
 from bluemira.base.constants import EPS
 from bluemira.base.file import get_bluemira_path
+from bluemira.geometry.error import GeometryError
 from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.parameterisations import (
     PictureFrame,
@@ -329,6 +330,11 @@ class TestRevolveShape:
             result.volume,
             np.pi * (self.big**2 - self.small**2) * 2 * np.pi * self.centre,
         )
+
+    @pytest.mark.parametrize("degree", [0, 180, 360])
+    def test_invalid_shape_type(self, degree):
+        with pytest.raises(GeometryError):
+            revolve_shape(1, self.base, self.direction, degree=degree)
 
 
 class TestSolidFacePlaneIntersect:
