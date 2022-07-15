@@ -124,7 +124,7 @@ def equal(orig, new):
     return True
 
 
-def convert(path, check, ci):
+def convert(path, check, modify):
     """
     Convert file to ipynb.
 
@@ -132,6 +132,10 @@ def convert(path, check, ci):
     ----------
     path: str
         path to file
+    check: bool
+        check existing files or overwrite all
+    modify: bool
+        modify files
 
     """
     with open(path, "r") as py_fh:
@@ -151,7 +155,7 @@ def convert(path, check, ci):
         nb_json = json.dumps(nb_str, indent=2) + "\n"
 
         if not equal(orig_nb_json, nb_json):
-            if ci:
+            if not modify:
                 return ipynb + " NEEDS UPDATE"
 
             with open(name + ".ipynb", "w") as nb_fh:
@@ -174,7 +178,7 @@ def arguments():
         "--check", action="store_true", default=False, help="precommit difference check"
     )
     parser.add_argument(
-        "--ci", action="store_true", default=False, help="dont make changes for CI"
+        "--no-modify", action="store_true", default=False, help="don't make changes"
     )
     parser.add_argument(
         "files",
@@ -189,23 +193,27 @@ def arguments():
     if args.files == [] and not args.check:
         files = list(Path(__file__).parent.rglob("*.py"))
         try:
-            files.pop(files.index(__file__))
+            files.pop(files.index(Path(__file__)))
         except ValueError:
             pass
     else:
         files = args.files
+        if not files:
+            raise ValueError("No files specified")
 
-    return files, args.check, args.ci
+    return files, args.check, not args.no_modify
 
 
 if __name__ == "__main__":
-    files, check, ci = arguments()
+    files, check, modify = arguments()
     updated = []
     for file in files:
-        update = convert(file, check, ci)
+        update = convert(file, check, modify)
         if update is not None:
             updated.append(update)
 
     if updated != []:
         print("\n".join(updated))
+        if modify:
+            print("\nchanges need to be commited")
         exit(1)

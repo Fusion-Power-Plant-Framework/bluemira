@@ -88,8 +88,7 @@ jobs:
     - name: Check Code Quality
       shell: bash -l {0}
       run: |
-        SKIP=flake8,black,black-jupyter,regenerate-ipynb-examples pre-commit run --all-files
-        # python examples/convert_py_to_ipynb.py --check --ci
+        SKIP=flake8,black,black-jupyter pre-commit run --all-files
         flake8 --count
         black --check .
 
