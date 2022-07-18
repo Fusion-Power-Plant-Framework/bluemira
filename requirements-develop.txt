@@ -1,5 +1,5 @@
 alabaster==0.7.12
-astroid==2.12.1
+astroid==2.12.2
 attrs==21.4.0
 bandit==1.7.4
 black==22.6.0
@@ -57,7 +57,7 @@ sphinxcontrib-htmlhelp==2.0.0
 sphinxcontrib-jsmath==1.0.1
 sphinxcontrib-qthelp==1.0.3
 sphinxcontrib-serializinghtml==1.1.5
-stevedore==3.5.0
+stevedore==4.0.0
 toml==0.10.2
 tomli==2.0.1
 typing_extensions==4.3.0
