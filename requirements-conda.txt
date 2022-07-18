@@ -14,4 +14,4 @@ shiboken2==5.13.2
 sympy==1.10.1
 typing_extensions==4.3.0
 vtk==9.0.1
-zipp==3.8.0
+zipp==3.8.1
