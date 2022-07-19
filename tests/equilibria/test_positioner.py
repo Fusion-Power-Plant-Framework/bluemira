@@ -52,7 +52,7 @@ class TestXZLMapper:
         positioner = CoilPositioner(9, 3.1, 0.33, 1.59, tf, 2.6, 0.5, 6, 5)
         cls.coilset = positioner.make_coilset()
         solenoid = cls.coilset.get_solenoid()
-        cls.coilset.set_control_currents(1e6 * np.ones(cls.coilset.n_coils))
+        cls.coilset.current = 1e6
         cls.xzl_map = XZLMapper(tf, solenoid.radius, -10, 10, 0.1, CS=False)
 
     def test_xzl(self):
@@ -187,7 +187,7 @@ class TestZLMapper:
         cls.zones = [eq, lp, up]
         positioner = CoilPositioner(9, 3.1, 0.33, 1.59, tf, 2.6, 0.5, 6, 5)
         cls.coilset = positioner.make_coilset()
-        cls.coilset.set_control_currents(1e6 * np.ones(cls.coilset.n_coils))
+        cls.coilset.current = 1e6
         solenoid = cls.coilset.get_solenoid()
         cls.xz_map = XZLMapper(
             tf, solenoid.radius, solenoid.z_min, solenoid.z_max, solenoid.gap, CS=True
@@ -238,7 +238,7 @@ class TestZLMapperEdges:
         cls.zones = [eq, lp, up]
         positioner = CoilPositioner(9, 3.1, 0.33, 1.59, tf, 2.6, 0.5, 6, 5)
         cls.coilset = positioner.make_coilset()
-        cls.coilset.set_control_currents(1e6 * np.ones(cls.coilset.n_coils))
+        cls.coilset.current = 1e6
         solenoid = cls.coilset.get_solenoid()
         cls.xz_map = XZLMapper(
             tf, solenoid.radius, solenoid.z_min, solenoid.z_max, solenoid.gap, CS=True
@@ -274,7 +274,8 @@ class TestZLMapperEdges:
 class TestRegionMapper:
     @classmethod
     def setup_class(cls):
-        coil = Coil(
+        circuit = SymmetricCircuit(
+            np.array([[0, 0], [1, 0]]),
             x=1.5,
             z=6,
             current=1e6,
@@ -282,16 +283,14 @@ class TestRegionMapper:
             dz=0.5,
             j_max=1e7,
             b_max=100,
-            ctype="PF",
             name="PF_2",
         )
-        circuit = SymmetricCircuit(coil)
 
-        coil2 = Coil(
+        coil = Coil(
             x=4, z=10, current=2e6, dx=1, dz=0.5, j_max=5e6, b_max=50, name="PF_1"
         )
 
-        cls.coilset = CoilSet([coil2, circuit])
+        cls.coilset = CoilSet(coil, circuit)
 
     def create_rectangular_region(self):
         max_coil_shifts = {
@@ -302,21 +301,20 @@ class TestRegionMapper:
         }
 
         pfregions = {}
-        for coil in self.coilset._ccoils:
-            xu = coil.x + max_coil_shifts["x_shifts_upper"]
-            xl = coil.x + max_coil_shifts["x_shifts_lower"]
-            zu = coil.z + max_coil_shifts["z_shifts_upper"]
-            zl = coil.z + max_coil_shifts["z_shifts_lower"]
-
+        xup = self.coilset.x[self.coilset._control] + max_coil_shifts["x_shifts_upper"]
+        xlo = self.coilset.x[self.coilset._control] + max_coil_shifts["x_shifts_lower"]
+        zup = self.coilset.z[self.coilset._control] + max_coil_shifts["z_shifts_upper"]
+        zlo = self.coilset.z[self.coilset._control] + max_coil_shifts["z_shifts_lower"]
+        for name, xl, xu, zl, zu in zip(self.coilset.name, xup, xlo, zup, zlo):
             rect = Loop(x=[xl, xu, xu, xl, xl], z=[zl, zl, zu, zu, zl])
 
-            pfregions[coil.name] = rect
+            pfregions[name] = rect
         return pfregions
 
     def test_region_mapper(self):
         pfregions = self.create_rectangular_region()
         region_mapper = RegionMapper(pfregions)
-        x_init, z_init = self.coilset.get_positions()
+        x_init, z_init = self.coilset.position
 
         mapped_positions = region_mapper.get_Lmap(self.coilset)[0]
         region_mapper.set_Lmap(mapped_positions)

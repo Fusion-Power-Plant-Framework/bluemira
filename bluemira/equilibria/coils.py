@@ -22,12 +22,18 @@
 """
 Coil and coil grouping objects
 """
+from __future__ import annotations
 
-from copy import deepcopy
-from re import split
-from typing import Any, Optional
+import abc
 
-import matplotlib.pyplot as plt
+# from copy import deepcopy
+from enum import Enum, EnumMeta, auto
+from functools import update_wrapper, wraps
+
+# from re import split
+from typing import Callable, Dict, Iterable, List, Optional, Tuple, Union
+
+# import matplotlib.pyplot as plt
 import numpy as np
 
 from bluemira.base.constants import MU_0
@@ -43,14 +49,42 @@ from bluemira.magnetostatics.greens import (
     greens_psi,
 )
 from bluemira.magnetostatics.semianalytic_2d import semianalytic_Bx, semianalytic_Bz
-from bluemira.utilities.tools import is_num
+from bluemira.utilities.tools import is_num_array
 
-PF_COIL_NAME = "PF_{}"
-CS_COIL_NAME = "CS_{}"
-NO_COIL_NAME = "Unclassified_{}"
+# from scipy.interpolate import RectBivariateSpline
 
 
-class CoilNamer:
+__all__ = ["CoilType", "Coil", "CoilSet", "Circuit", "SymmetricCircuit"]
+
+
+class CoilTypeEnumMeta(EnumMeta):
+    """
+    Allow override of KeyError error string
+    """
+
+    def __getitem__(self, name):
+        try:
+            return super().__getitem__(name)
+        except KeyError:
+            raise KeyError(f"Unknown CoilType {name}") from None
+
+
+class CoilType(Enum, metaclass=CoilTypeEnumMeta):
+    """
+    CoilType Enum
+    """
+
+    PF = auto()
+    CS = auto()
+    NONE = auto()
+
+
+__ITERABLE_FLOAT = Union[float, Iterable[float]]
+__ITERABLE_COILTYPE = Union[str, CoilType, Iterable[Union[str, CoilType]]]
+__ANY_ITERABLE = Union[__ITERABLE_COILTYPE, __ITERABLE_FLOAT]
+
+
+class CoilNumber:
     """
     Coil naming-numbering utility class. Coil naming convention is not enforced here.
     """
@@ -60,16 +94,7 @@ class CoilNamer:
     __no_counter: int = 1
 
     @staticmethod
-    def _get_prefix(coil: Any):
-        if not hasattr(coil, "ctype") or coil.ctype not in ["PF", "CS"]:
-            return NO_COIL_NAME
-        elif coil.ctype == "CS":
-            return CS_COIL_NAME
-        elif coil.ctype == "PF":
-            return PF_COIL_NAME
-
-    @staticmethod
-    def generate_name(coil: Any, idx: Optional[int] = None):
+    def generate(ctype: CoilType) -> int:
         """
         Generate a coil name based on its type and indexing if specified. If no index is
         specified, an encapsulated global counter assigns an index.
@@ -78,27 +103,677 @@ class CoilNamer:
         ----------
         coil: Any
             Object to name
-        idx: Optional[int]
-            Name index. If None, assigned automatically
 
         Returns
         -------
         name: str
             Coil name
         """
-        prefix = CoilNamer._get_prefix(coil)
-        if idx is None:
-            if prefix == NO_COIL_NAME:
-                idx = CoilNamer.__no_counter
-                CoilNamer.__no_counter += 1
-            elif prefix == CS_COIL_NAME:
-                idx = CoilNamer.__CS_counter
-                CoilNamer.__CS_counter += 1
-            elif prefix == PF_COIL_NAME:
-                idx = CoilNamer.__PF_counter
-                CoilNamer.__PF_counter += 1
+        if ctype == CoilType.NONE:
+            idx = CoilNumber.__no_counter
+            CoilNumber.__no_counter += 1
+        elif ctype == CoilType.CS:
+            idx = CoilNumber.__CS_counter
+            CoilNumber.__CS_counter += 1
+        elif ctype == CoilType.PF:
+            idx = CoilNumber.__PF_counter
+            CoilNumber.__PF_counter += 1
 
-        return prefix.format(idx)
+        return idx
+
+
+def _sum_all(func: Optional[callable] = None, *, axis: int = 0) -> callable:
+    """
+    Sum all outputs of a function on a given axis
+    """
+
+    def wrapper(*args, **kwargs):
+        ret = func(*args, **kwargs)
+        return ret.sum(axis=axis)
+
+    if func is None:
+
+        def decorator(func):
+            return update_wrapper(wrapper, func)
+
+        return decorator
+    else:
+        return update_wrapper(wrapper, func)
+
+
+class CoilFieldsMixin:
+
+    __slots__ = (
+        "_quad_dx",
+        "_quad_dz",
+        "_quad_x",
+        "_quad_z",
+        "_quad_weighting",
+        "_einsum_str",
+    )
+
+    def __init__(self, weighting=None):
+        if type(self) == CoilFieldsMixin:
+            raise TypeError("Can't be initialised directly")
+
+        self.discretise(weighting)
+
+    def _pad_discretisation(
+        self,
+        _quad_x: List[np.ndarray],
+        _quad_z: List[np.ndarray],
+        _quad_dx: List[np.ndarray],
+        _quad_dz: List[np.ndarray],
+    ):
+        """
+        Convert quadrature list of array to rectuangualr arrays.
+        Padding quadrature arrays with zeros to allow array operations
+        on rectangular matricies.
+
+        Parameters
+        ----------
+        _quad_x: List[np.ndarray]
+            x quadratures
+        _quad_z: List[np.ndarray]
+            z quadratures
+        _quad_dx: List[np.ndarray]
+            dx quadratures
+        _quad_dz: List[np.ndarray]
+            dz quadratures
+
+        Notes
+        -----
+        Padding exists for coils with different discretisations or sizes within a coilgroup.
+        There are a few extra calculations of the greens functions where padding exists in
+        the :func:_combined_control method.
+
+        """
+        all_len = np.array([len(q) for q in _quad_x])
+        max_len = max(all_len)
+        diff = max_len - all_len
+
+        for i, d in enumerate(diff):
+            for val in [_quad_x, _quad_z, _quad_dx, _quad_dz]:
+                val[i] = np.pad(val[i], (0, d))
+
+        self._quad_x = np.array(_quad_x)
+        self._quad_z = np.array(_quad_z)
+        self._quad_dx = np.array(_quad_dx)
+        self._quad_dz = np.array(_quad_dz)
+        weighting = np.ones((self._x.shape[0], max_len)) / all_len[:, None]
+        weighting[np.isclose(self._quad_dx, 0)] = 0
+
+        return weighting
+
+    def _rectangular_discretisation(self, d_coil):
+        """
+        Discretise a coil into smaller rectangles based on fraction of
+        coil dimensions
+
+        Parameters
+        ----------
+        d_coil: float
+            Target discretisation fraction
+
+        Returns
+        -------
+        weighting: np.ndarray
+
+        """
+        nx = np.maximum(1, np.ceil(self._dx * 2 / d_coil))
+        nz = np.maximum(1, np.ceil(self._dz * 2 / d_coil))
+
+        if not all(nx * nz == 1):
+            dx, dz = self._dx / nx, self._dz / nz
+            _quad_x = []
+            _quad_z = []
+            _quad_dx = []
+            _quad_dz = []
+
+            for i, (coil_x, coil_z, sc_dx, sc_dz, _nx, _nz) in enumerate(
+                zip(self._x, self._z, dx, dz, nx, nz)
+            ):
+
+                # Calculate sub-coil centroids
+                x_sc = (coil_x - self._dx[i]) + sc_dx * np.arange(1, 2 * _nx, 2)
+                z_sc = (coil_z - self._dz[i]) + sc_dz * np.arange(1, 2 * _nz, 2)
+                x_sc, z_sc = np.meshgrid(x_sc, z_sc)
+
+                _quad_x += [x_sc.flat]
+                _quad_z += [z_sc.flat]
+                _quad_dx += [np.ones(x_sc.size) * sc_dx]
+                _quad_dz += [np.ones(x_sc.size) * sc_dz]
+
+            return self._pad_discretisation(_quad_x, _quad_z, _quad_dx, _quad_dz)
+
+    def discretise(self, d_coil=None):
+        """
+        Discretise a coil for greens function magnetic field calculations
+
+        Parameters
+        ----------
+        d_coil: float
+            Target discretisation fraction
+
+        Notes
+        -----
+        Only discretisation method currently implemented is rectangular fraction
+
+        Possible improvement: multiple discretisations for different coils
+
+        """
+        weighting = None
+        self._quad_x = self._x.copy()
+        self._quad_dx = self._dx.copy()
+        self._quad_z = self._z.copy()
+        self._quad_dz = self._dz.copy()
+
+        if d_coil is not None:
+            # How fancy do we want the mesh or just smaller rectangles?
+            weighting = self._rectangular_discretisation(d_coil)
+
+        if weighting is None:
+            self._einsum_str = "..., ...j -> ..."
+            self._quad_weighting = np.ones((self._x.shape[0], 1))
+        else:
+            self._einsum_str = "...j, ...j -> ..."
+            self._quad_weighting = weighting
+
+    def psi(self, x, z):
+        """
+        Calculate poloidal flux at (x, z)
+        """
+        return self.unit_psi(x, z) * self.current
+
+    def psi_greens(self, pgreen):
+        """
+        Calculate plasma psi from Greens functions and current
+        """
+        return self.current * pgreen
+
+    def unit_psi(self, x, z):
+        """
+        Calculate poloidal flux at (x, z) due to a unit current
+        """
+        x, z = np.ascontiguousarray(x), np.ascontiguousarray(z)
+
+        return np.einsum(
+            self._einsum_str,
+            greens_psi(
+                self._quad_x[None],
+                self._quad_z[None],
+                x[..., None],
+                z[..., None],
+                self._quad_dx[None],
+                self._quad_dz[None],
+            ),
+            self._quad_weighting[None],
+        )
+
+    def Bx(self, x, z):
+        """
+        Calculate radial magnetic field Bx at (x, z)
+        """
+        return self.unit_Bx(x, z) * self.current
+
+    def Bx_greens(self, bgreen):
+        """
+        Uses the Greens mapped dict to quickly compute the Bx
+        """
+        return self.current * bgreen
+
+    def unit_Bx(self, x, z):
+        """
+        Calculate the radial magnetic field response at (x, z) due to a unit
+        current. Green's functions are used outside the coil, and a semianalytic
+        method is used for the field inside the coil.
+
+        Parameters
+        ----------
+        x: Union[float, int, np.array]
+            The x values at which to calculate the Bx response
+        z: Union[float, int, np.array]
+            The z values at which to calculate the Bx response
+
+        Returns
+        -------
+        Bx: Union[float, np.array]
+            The radial magnetic field response at the x, z coordinates.
+        """
+        return self._mix_control_method(
+            x, z, self._unit_Bx_greens, self._unit_Bx_analytical
+        )
+
+    def Bz(self, x, z):
+        """
+        Calculate vertical magnetic field Bz at (x, z)
+        """
+        return self.unit_Bz(x, z) * self.current
+
+    def Bz_greens(self, bgreen):
+        """
+        Uses the Greens mapped dict to quickly compute the Bx
+        """
+        return self.current * bgreen
+
+    def unit_Bz(self, x, z):
+        """
+        Calculate the vertical magnetic field response at (x, z) due to a unit
+        current. Green's functions are used outside the coil, and a semianalytic
+        method is used for the field inside the coil.
+
+        Parameters
+        ----------
+        x: Union[float, int, np.array]
+            The x values at which to calculate the Bz response
+        z: Union[float, int, np.array]
+            The z values at which to calculate the Bz response
+
+        Returns
+        -------
+        Bz: Union[float, np.array]
+            The vertical magnetic field response at the x, z coordinates.
+        """
+        return self._mix_control_method(
+            x, z, self._unit_Bz_greens, self._unit_Bz_analytical
+        )
+
+    def Bp(self, x, z):
+        """
+        Calculate poloidal magnetic field Bp at (x, z)
+        """
+        return np.hypot(self.Bx(x, z), self.Bz(x, z))
+
+    def _mix_control_method(self, x, z, greens_func, semianalytic_func):
+        """
+        Boiler-plate helper function to mixed the Green's function responses
+        with the semi-analytic function responses, as a function of position
+        outside/inside the coil boundary.
+
+        Parameters
+        ----------
+        x,z: Union[float, int, np.array]
+            Points to calculate field at
+        greens_func: Callable
+            greens function
+        semianalytic_func: Callable
+            semianalytic function
+
+        Returns
+        -------
+        response: np.ndarray
+
+        """
+        x, z = np.ascontiguousarray(x), np.ascontiguousarray(z)
+
+        zero_coil_size = np.logical_or(np.isclose(self._dx, 0), np.isclose(self._dz, 0))
+
+        if False in zero_coil_size:
+            # if dx or dz is not 0 and x,z inside coil
+            inside = np.logical_and(
+                self._points_inside_coil(x, z), ~zero_coil_size[None]
+            )
+            if np.all(~inside):
+                return greens_func(x, z)
+            elif np.all(inside):
+                # Not called for circuits as they will always be a mixture
+                return semianalytic_func(x, z)
+            else:
+                return self._combined_control(
+                    inside, x, z, greens_func, semianalytic_func
+                )
+        else:
+            return greens_func(x, z)
+
+    def _combined_control(self, inside, x, z, greens_func, semianalytic_func):
+        """
+        Combine semianalytic and greens function calculation of magnetic field
+
+        Used for situation where there are calculation points both inside and
+        outside the coil boundaries.
+
+        Parameters
+        ----------
+        inside: np.ndarray[bool]
+            array of if the point is inside a coil
+        x,z: Union[float, int, np.array]
+            Points to calculate field at
+        greens_func: Callable
+            greens function
+        semianalytic_func: Callable
+            semianalytic function
+
+        Returns
+        -------
+        response: np.ndarray
+
+        """
+        response = np.zeros_like(inside, dtype=float)
+        for coil, (points, qx, qz, qw, cx, cz, cdx, cdz) in enumerate(
+            zip(
+                inside.T,
+                self._quad_x,
+                self._quad_z,
+                self._quad_weighting,
+                self._x,
+                self._z,
+                self._dx,
+                self._dz,
+            )
+        ):
+            if np.any(~points):
+                response[~points, coil] = np.squeeze(
+                    greens_func(x[~points], z[~points], True, qx, qz, qw)
+                )
+            if np.any(points):
+                response[points, coil] = np.squeeze(
+                    semianalytic_func(x[points], z[points], True, cx, cz, cdx, cdz)
+                )
+
+        return response
+
+    def _points_inside_coil(
+        self,
+        x: Union[float, np.array],
+        z: Union[float, np.array],
+        *,
+        atol: float = X_TOLERANCE,
+    ):
+        """
+        Determine which points lie inside or on the coil boundary.
+
+        Parameters
+        ----------
+        x: Union[float, np.array]
+            The x coordinates to check
+        z: Union[float, np.array]
+            The z coordinates to check
+        atol: Optional[float]
+            Add an offset, to ensure points very near the edge are counted as
+            being on the edge of a coil
+
+        Returns
+        -------
+        inside: np.array(dtype=bool)
+            The Boolean array of point indices inside/outside the coil boundary
+        """
+        x, z = np.ascontiguousarray(x)[..., None], np.ascontiguousarray(z)[..., None]
+
+        x_min, x_max = (
+            self._x - self._dx - atol,
+            self._x + self._dx + atol,
+        )
+        z_min, z_max = (
+            self._z - self._dz - atol,
+            self._z + self._dz + atol,
+        )
+        return (
+            (x >= x_min[None])
+            & (x <= x_max[None])
+            & (z >= z_min[None])
+            & (z <= z_max[None])
+        )
+
+    def _unit_B_greens(
+        self, greens, x, z, split=False, _quad_x=None, _quad_z=None, _quad_weight=None
+    ):
+        """
+        Calculate radial magnetic field B respose at (x, z) due to a unit
+        current using Green's functions.
+
+        Parameters
+        ----------
+        greens: Callable
+            greens function
+        x,z: Union[float, int, np.array]
+            Points to calculate field at
+        split: bool
+            Flag for if :func:_combined_control is used
+        _quad_x: Optional[np.ndarray]
+            :func:_combined_control x positions
+        _quad_z: Optional[np.ndarray]
+            :func:_combined_control z positions
+        _quad_weight: Optional[np.ndarray]
+            :func:_combined_control weighting
+
+        Returns
+        -------
+        response: np.ndarray
+
+        """
+        if not split:
+            _quad_x = self._quad_x
+            _quad_z = self._quad_z
+            _quad_weight = self._quad_weighting
+
+        return np.einsum(
+            self._einsum_str,
+            greens(
+                _quad_x[None],
+                _quad_z[None],
+                x[..., None],
+                z[..., None],
+            ),
+            _quad_weight[None],
+        )
+
+    def _unit_Bx_greens(
+        self, x, z, split=False, _quad_x=None, _quad_z=None, _quad_weight=None
+    ):
+        """
+        Calculate radial magnetic field Bx respose at (x, z) due to a unit
+        current using Green's functions.
+
+        Parameters
+        ----------
+        greens: Callable
+            greens function
+        x,z: Union[float, int, np.array]
+            Points to calculate field at
+        split: bool
+            Flag for if :func:_combined_control is used
+        _quad_x: Optional[np.ndarray]
+            :func:_combined_control x positions
+        _quad_z: Optional[np.ndarray]
+            :func:_combined_control z positions
+        _quad_weight: Optional[np.ndarray]
+            :func:_combined_control weighting
+
+        Returns
+        -------
+        response: np.ndarray
+
+        """
+        return self._unit_B_greens(
+            greens_Bx, x, z, split, _quad_x, _quad_z, _quad_weight
+        )
+
+    def _unit_Bz_greens(
+        self, x, z, split=False, _quad_x=None, _quad_z=None, _quad_weight=None
+    ):
+        """
+        Calculate vertical magnetic field Bz at (x, z) due to a unit current
+
+        Parameters
+        ----------
+        greens: Callable
+            greens function
+        x,z: Union[float, int, np.array]
+            Points to calculate field at
+        split: bool
+            Flag for if :func:_combined_control is used
+        _quad_x: Optional[np.ndarray]
+            :func:_combined_control x positions
+        _quad_z: Optional[np.ndarray]
+            :func:_combined_control z positions
+        _quad_weight: Optional[np.ndarray]
+            :func:_combined_control weighting
+
+        Returns
+        -------
+        response: np.ndarray
+
+        """
+        return self._unit_B_greens(
+            greens_Bz, x, z, split, _quad_x, _quad_z, _quad_weight
+        )
+
+    def _unit_B_analytical(
+        self,
+        semianalytic,
+        x,
+        z,
+        split=False,
+        coil_x=None,
+        coil_z=None,
+        coil_dx=None,
+        coil_dz=None,
+    ):
+        """
+        Calculate radial magnetic field Bx response at (x, z) due to a unit
+        current using semi-analytic method.
+
+        Parameters
+        ----------
+        semianalytic: Callable
+            semianalytic function
+        x,z: Union[float, int, np.array]
+            Points to calculate field at
+        split: bool
+            Flag for if :func:_combined_control is used
+        coil_x: Optional[np.ndarray]
+            :func:_combined_control x positions
+        coil_z: Optional[np.ndarray]
+            :func:_combined_control z positions
+        coil_dx: Optional[np.ndarray]
+            :func:_combined_control x positions
+        coil_dz: Optional[np.ndarray]
+            :func:_combined_control z positions
+
+        Returns
+        -------
+        response: np.ndarray
+
+        """
+        if not split:
+            coil_x = self._x
+            coil_z = self._z
+            coil_dx = self._dx
+            coil_dz = self._dz
+
+        return semianalytic(
+            coil_x[None],
+            coil_z[None],
+            x[..., None],
+            z[..., None],
+            d_xc=coil_dx[None],
+            d_zc=coil_dz[None],
+        )
+
+    def _unit_Bx_analytical(
+        self, x, z, split=False, coil_x=None, coil_z=None, coil_dx=None, coil_dz=None
+    ):
+        """
+        Calculate vertical magnetic field Bx response at (x, z) due to a unit
+        current using semi-analytic method.
+
+        Parameters
+        ----------
+        x,z: Union[float, int, np.array]
+            Points to calculate field at
+        split: bool
+            Flag for if :func:_combined_control is used
+        coil_x: Optional[np.ndarray]
+            :func:_combined_control x positions
+        coil_z: Optional[np.ndarray]
+            :func:_combined_control z positions
+        coil_dx: Optional[np.ndarray]
+            :func:_combined_control x positions
+        coil_dz: Optional[np.ndarray]
+            :func:_combined_control z positions
+
+        Returns
+        -------
+        response: np.ndarray
+        """
+        return self._unit_B_analytical(
+            semianalytic_Bx, x, z, split, coil_x, coil_z, coil_dx, coil_dz
+        )
+
+    def _unit_Bz_analytical(
+        self, x, z, split=False, coil_x=None, coil_z=None, coil_dx=None, coil_dz=None
+    ):
+        """
+        Calculate vertical magnetic field Bz response at (x, z) due to a unit
+        current using semi-analytic method.
+
+        Parameters
+        ----------
+        x,z: Union[float, int, np.array]
+            Points to calculate field at
+        split: bool
+            Flag for if :func:_combined_control is used
+        coil_x: Optional[np.ndarray]
+            :func:_combined_control x positions
+        coil_z: Optional[np.ndarray]
+            :func:_combined_control z positions
+        coil_dx: Optional[np.ndarray]
+            :func:_combined_control x positions
+        coil_dz: Optional[np.ndarray]
+            :func:_combined_control z positions
+
+        Returns
+        -------
+        response: np.ndarray
+        """
+        return self._unit_B_analytical(
+            semianalytic_Bz, x, z, split, coil_x, coil_z, coil_dx, coil_dz
+        )
+
+    def F(self, eqcoil):  # noqa :N802
+        """
+        Calculate the force response at the coil centre including the coil
+        self-force.
+
+        \t:math:`\\mathbf{F} = \\mathbf{j}\\times \\mathbf{B}`\n
+        \t:math:`F_x = IB_z+\\dfrac{\\mu_0I^2}{4\\pi X}\\textrm{ln}\\bigg(\\dfrac{8X}{r_c}-1+\\xi/2\\bigg)`\n
+        \t:math:`F_z = -IBx`
+        """  # noqa :W505
+        Bx, Bz = eqcoil.Bx(self._x, self._z), eqcoil.Bz(self._x, self._z)
+        if self.rc != 0:  # true divide errors for zero current coils
+            a = MU_0 * self.current**2 / (4 * np.pi * self._x)
+            fx = a * (np.log(8 * self._x / self.rc) - 1 + 0.25)
+
+        else:
+            fx = 0
+        return np.array(
+            [
+                (self.current * Bz + fx) * 2 * np.pi * self._x,
+                -self.current * Bx * 2 * np.pi * self._x,
+            ]
+        )
+
+    def control_F(self, coil: CoilGroup = None):  # noqa :N802
+        """
+        Returns the Green's matrix element for the coil mutual force.
+
+        \t:math:`Fz_{i,j}=-2\\pi X_i\\mathcal{G}(X_j,Z_j,X_i,Z_i)`
+        """
+
+        if coil._x == self._x and coil._z == self._z:
+            # self inductance
+            if self.rc != 0:
+                a = MU_0 / (4 * np.pi * self._x)
+                Bz = a * (np.log(8 * self._x / self.rc) - 1 + 0.25)
+            else:
+                Bz = 0
+            Bx = 0  # Should be 0 anyway
+
+        else:
+            Bz = coil.unit_Bz(self._x, self._z)
+            Bx = coil.unit_Bx(self._x, self._z)
+
+        return 2 * np.pi * self._x * np.array([Bz, -Bx])  # 1 cross B
 
 
 def get_max_current(dx, dz, j_max):
@@ -140,28 +815,36 @@ class CoilSizer:
     def __init__(self, coil):
         self.update(coil)
 
-        dxdz_specified = is_num(self.dx) and is_num(self.dz)
+        dx_specified = np.array([is_num_array(self._dx)], dtype=bool)
+        dz_specified = np.array([is_num_array(self._dz)], dtype=bool)
+        dxdz_specified = np.logical_and(dx_specified, dz_specified)
 
-        if not dxdz_specified and not (self.dx is None and self.dz is None):
+        if any(
+            np.logical_and(
+                ~dxdz_specified, np.logical_xor(dx_specified, dz_specified)
+            ).flat
+        ):
             # Check that we don't have dx = None and dz = float or vice versa
             raise EquilibriaError("Must specify either dx and dz or neither.")
 
-        if dxdz_specified and not self.flag_sizefix:
-            # If dx and dz are specified, we presume the coil size should remain fixed
-            self.flag_sizefix = True
+        if any(dxdz_specified.flat):
+            if not self.flag_sizefix:
+                # If dx and dz are specified, we presume the coil size should
+                # remain fixed
+                self.flag_sizefix = True
 
-        if dxdz_specified:
             self._set_coil_attributes(coil)
 
-        if not dxdz_specified and not self.j_max:
-            # Check there is a viable way to size the coil
-            raise EquilibriaError("Must specify either dx and dz or j_max.")
+        else:
+            if any(~is_num_array(self.j_max)):
+                # Check there is a viable way to size the coil
+                raise EquilibriaError("Must specify either dx and dz or j_max.")
 
-        if not dxdz_specified and self.flag_sizefix:
-            # If dx and dz are not specified, we cannot fix the size of the coil
-            self.flag_sizefix = False
+            if self.flag_sizefix:
+                # If dx and dz are not specified, we cannot fix the size of the coil
+                self.flag_sizefix = False
 
-        coil.flag_sizefix = self.flag_sizefix
+        coil._flag_sizefix = self.flag_sizefix
 
     def __call__(self, coil, current=None):
         """
@@ -179,14 +862,13 @@ class CoilSizer:
 
         if not self.flag_sizefix:
             # Adjust the size of the coil
-            coil.dx, coil.dz = self._make_size(current)
-
-        self._set_coil_attributes(coil)
+            coil._dx, coil._dz = self._make_size(current)
+            self._set_coil_attributes(coil)
 
     def _set_coil_attributes(self, coil):
-        coil.rc = 0.5 * np.hypot(coil.dx, coil.dz)
-        coil.x_corner, coil.z_corner = self._make_corners(
-            coil.x, coil.z, coil.dx, coil.dz
+        coil._current_radius = 0.5 * np.hypot(coil._dx, coil._dz)
+        coil._x_boundary, coil._z_boundary = self._make_boundary(
+            coil._x, coil._z, coil._dx, coil._dz
         )
 
     def update(self, coil):
@@ -198,11 +880,11 @@ class CoilSizer:
         coil: Coil
             Coil to size
         """
-        self.dx = coil.dx
-        self.dz = coil.dz
+        self._dx = coil._dx
+        self._dz = coil._dz
         self.current = coil.current
         self.j_max = coil.j_max
-        self.flag_sizefix = coil.flag_sizefix
+        self.flag_sizefix = coil._flag_sizefix
 
     def get_max_current(self, coil):
         """
@@ -230,12 +912,9 @@ class CoilSizer:
                 "Cannot get the maximum current of a coil of an unspecified size."
             )
 
-        if self.j_max is None:
-            max_current = np.inf
-        else:
-            max_current = get_max_current(self.dx, self.dz, self.j_max)
-
-        return max_current
+        return np.where(
+            self.j_max == np.nan, np.inf, get_max_current(self._dx, self._dz, self.j_max)
+        )
 
     def _make_size(self, current=None):
         """
@@ -248,533 +927,245 @@ class CoilSizer:
         return half_width, half_width
 
     @staticmethod
-    def _make_corners(x_c, z_c, dx, dz):
+    def _make_boundary(x_c: float, z_c: float, dx: float, dz: float):
         """
-        Makes the coil corner vectors
-        """
-        xx, zz = np.ones(4) * x_c, np.ones(4) * z_c
-        x_corner = xx + dx * np.array([-1, 1, 1, -1])
-        z_corner = zz + dz * np.array([-1, -1, 1, 1])
-        return x_corner, z_corner
-
-
-class Coil:
-    """
-    Poloidal field coil with a rectangular cross-section.
-
-    Parameters
-    ----------
-    x: float
-        Coil geometric centre x coordinate [m]
-    z: float
-        Coil geometric centre z coordinate [m]
-    current: float (default = 0)
-        Coil current [A]
-    dx: float
-        Coil radial half-width [m] from coil centre to edge (either side)
-    dz: float
-        Coil vertical half-width [m] from coil centre to edge (either side)
-    n_turns: int (default = 1)
-        Number of turns
-    n_filaments: int (default = 1)
-        Number of filaments (for multi-filament coils)
-    control: bool
-        Enable or disable control system
-    ctype: str
-        Type of coil ['PF', 'CS', 'Plasma']
-    j_max: float (default = 12.5)
-        Maximum current density in the coil [MA/m^2]
-    b_max: float (default = 12)
-        Maximum magnetic field at the coil [T]
-    name: str or None
-        The name of the coil
-    """
-
-    # TODO - make Coil inherit from CoilGroup as a group of size 1
-
-    __slots___ = [
-        "x",
-        "z",
-        "current",
-        "dx",
-        "dz",
-        "j_max",
-        "b_max",
-        "n_filaments",
-        "n_turns",
-        "flag_sizefix",
-        "name",
-        "sub_coils",
-        "control",
-        "ctype",
-    ]
-
-    def __init__(
-        self,
-        x,
-        z,
-        current=0,
-        dx=None,
-        dz=None,
-        n_turns=1,
-        control=True,
-        ctype="PF",
-        j_max=None,
-        b_max=None,
-        name=None,
-        n_filaments=1,
-        flag_sizefix=False,
-    ):
-
-        self.x = x
-        self.z = z
-        self.dx = dx
-        self.dz = dz
-        self.current = current
-        self.j_max = j_max
-        self.b_max = b_max
-        self.n_turns = n_turns
-        self.n_filaments = n_filaments
-        self.control = control
-        self.ctype = ctype
-        self.flag_sizefix = flag_sizefix
-
-        if name is None:
-            # We need to have a reasonable coil name
-            name = CoilNamer.generate_name(self, None)
-        self.name = name
-
-        self.__sizer = CoilSizer(self)
-        self.__sizer(self)
-
-        self.sub_coils = None
-
-    @property
-    def n_coils(self):
-        """
-        Number of coils.
-        """
-        return 1
-
-    def set_current(self, current):
-        """
-        Sets the current in a Coil object
+        Makes the coil boundary vectors
 
         Parameters
         ----------
-        current: float
-            The current to set in the coil
-        """
-        self.current = current
-        if self.sub_coils is not None:
-            for coil in self.sub_coils.values():
-                coil.set_current(current / len(self.sub_coils))
-
-    def adjust_current(self, d_current):
-        """
-        Adjusts the current in a Coil object
-
-        Parameters
-        ----------
-        d_current: float
-            The change in current to apply to the coil
-        """
-        self.current += d_current
-        if self.sub_coils is not None:
-            for coil in self.sub_coils.values():
-                coil.adjust_current(d_current / len(self.sub_coils))
-
-    def set_position(self, x, z, dz=None):
-        """
-        Sets the position of the Coil object
-
-        Parameters
-        ----------
-        x: float
-            The radial position of the coil
-        z: float
-            The vertical position of the coil
-        dz: float or None
-            The vertical extent of the coil (applied to CS coils only)
-        """
-        self.x = x
-        self.z = z
-        if dz is None:
-            self.__sizer(self)
-        else:
-            self.set_dz(dz)
-        self.sub_coils = None  # Need to re-mesh if this is what you want
-
-    def adjust_position(self, dx, dz):
-        """
-        Adjusts the position of the Coil object
-
-        Parameters
-        ----------
+        x_c: float
+            x coordinate of centre
+        z_c: float
+            z coordinate of centre
         dx: float
-            The change in radial position to apply to the coil
+            dx of coil
         dz: float
-            The change in vertical position to apply to the coil
-        """
-        self.set_position(self.x + dx, self.z + dz)
-
-    def set_dx(self, dx):
-        """
-        Adjusts the radial thickness of the Coil object (meshing not handled)
-        """
-        self.dx = dx
-        self.__sizer(self)
-
-    def set_dz(self, dz):
-        """
-        Adjusts the vertical thickness of the Coil object (meshing not handled)
-        """
-        self.dz = dz
-        self.__sizer(self)
-
-    def make_size(self, current=None):
-        """
-        Size the coil based on a current and a current density.
-        """
-        self.__sizer(self, current)
-        if self.flag_sizefix is False:
-            self.sub_coils = None  # Need to re-mesh if this is what you want
-
-    def fix_size(self):
-        """
-        Fixes the size of the coil
-        """
-        self.flag_sizefix = True
-        self.__sizer.update(self)
-
-    def _points_inside_coil(self, x, z):
-        """
-        Determine which points lie inside or on the coil boundary.
-
-        Parameters
-        ----------
-        x: Union[float, np.array]
-            The x coordinates to check
-        z: Union[float, np.array]
-            The z coordinates to check
+            dz of coil
 
         Returns
         -------
-        inside: np.array(dtype=bool)
-            The Boolean array of point indices inside/outside the coil boundary
-        """
-        x, z = np.ascontiguousarray(x), np.ascontiguousarray(z)
-        # Add an offset, to ensure points very near the edge are counted as
-        # being on the edge of a coil
-        atol = X_TOLERANCE
-        x_min, x_max = self.x - self.dx - atol, self.x + self.dx + atol
-        z_min, z_max = self.z - self.dz - atol, self.z + self.dz + atol
-        return (x >= x_min) & (x <= x_max) & (z >= z_min) & (z <= z_max)
-
-    def assign_material(self, j_max=NBTI_J_MAX, b_max=NBTI_B_MAX):
-        """
-        Assigns EM material properties to coil
-
-        Parameters
-        ----------
-        j_max: float (default None)
-            Overwrite default constant material max current density [MA/m^2]
-        b_max: float (default None)
-            Overwrite default constant material max field [T]
-        """
-        if not is_num(j_max):
-            raise EquilibriaError(f"j_max must be specified as a number, not: {j_max}")
-        if not is_num(b_max):
-            raise EquilibriaError(f"b_max must be specified as a number, not: {b_max}")
-
-        self.j_max = j_max
-        self.b_max = b_max
-        self.__sizer.update(self)
-
-    def get_max_current(self):
-        """
-        Gets the maximum current for a coil with a specified size
-
-        Returns
-        -------
-        Imax: float
-            The maximum current that can be produced by the coil [A]
-        """
-        return self.__sizer.get_max_current(self)
-
-    def mesh_coil(self, d_coil):
-        """
-        Mesh an individual coil into smaller subcoils.
-        This handles both variable area PFs with fixed Jmax [MA/m^2]
-        and fixed area CS modules with fixed A [m^2]
-
-        Parameters
-        ----------
-        d_coil: float > 0
-            The coil sub-division size
+        x_boundary, z_boundary: np.array
 
         Note
         ----
-        Breaks down the coil into SubCoils and adds to the self.subcoils dict.
-            .subcoils[sub_name] = SubCoil
-        """
-        dx_full, dz_full = abs(self.dx), abs(self.dz)
+        Only rectangular coils
 
-        nx = max(1, int(np.ceil(dx_full * 2 / d_coil)))
-        nz = max(1, int(np.ceil(dz_full * 2 / d_coil)))
-        self.n_filaments = nx * nz
+        """
+        xx, zz = (np.ones((4, 1)) * x_c).T, (np.ones((4, 1)) * z_c).T
+        x_boundary = xx + (dx * np.array([-1, 1, 1, -1])[:, None]).T
+        z_boundary = zz + (dz * np.array([-1, -1, 1, 1])[:, None]).T
+        return x_boundary, z_boundary
 
-        if self.n_filaments == 1:
-            # Catches the cases where:
-            #    dx = dz = 0
-            #    the mesh scale is bigger than the coil
-            return  # Do nothing, coil is not meshed, .sub_coils is not created
-        else:
-            dx, dz = dx_full / nx, dz_full / nz
 
-            # Calculate sub-coil centroids
-            x_sc = (self.x - dx_full) + dx * np.arange(1, 2 * nx, 2)
-            z_sc = (self.z - dz_full) + dz * np.arange(1, 2 * nz, 2)
-            x_sc, z_sc = np.meshgrid(x_sc, z_sc)
+class CoilGroup(CoilFieldsMixin, abc.ABC):
+    """
+    Abstract base class for all groups of coils
 
-            self.sub_coils = {}
-            current = self.current / self.n_filaments  # Current per coil filament
+    A group of coils is defined as shaing a property eg current
 
-            for i, (xc, zc) in enumerate(zip(x_sc.flat, z_sc.flat)):
-                sub_name = self.name + f"_{i + 1:1.0f}"
-                c = Coil(
-                    xc,
-                    zc,
-                    current,
-                    n_filaments=1,
-                    dx=dx,
-                    dz=dz,
-                    ctype=self.ctype,
-                    name=sub_name,
-                )
-                self.sub_coils[sub_name] = c
+    Parameters
+    ----------
+    x: Union[float, Iterable[float]]
+        Coil geometric centre x coordinate [m]
+    z: Union[float, Iterable[float]]
+        Coil geometric centre z coordinate [m]
+    dx: Optional[Union[float, Iterable[float]]]
+        Coil radial half-width [m] from coil centre to edge (either side)
+    dz: Optional[Union[float, Iterable[float]]]
+        Coil vertical half-width [m] from coil centre to edge (either side)
+    current: Optional[Union[float, Iterable[float]] (default = 0)
+        Coil current [A]
+    name: Optional[Union[str, Iterable[str]]]]
+        The name of the coil
+    ctype: Optional[Union[str, CoilType, Iterable[Union[str, CoilType]]]
+        Type of coil see CoilType enum
+    j_max: Optional[Union[float, Iterable[float]]]
+        Maximum current density in the coil [MA/m^2]
+    b_max: Optional[Union[float, Iterable[float]]]
+        Maximum magnetic field at the coil [T]
 
-    def psi(self, x, z):
-        """
-        Calculate poloidal flux at (x, z)
-        """
-        return self.control_psi(x, z) * self.current
+    Notes
+    -----
+    This class is not designed to be used directly as there are few
+    protections on input variables
 
-    def psi_greens(self, pgreen):
-        """
-        Calculate plasma psi from Greens functions and current
-        """
-        return self.current * pgreen
+    """
 
-    def Bx(self, x, z):
-        """
-        Calculate radial magnetic field Bx at (x, z)
-        """
-        return self.control_Bx(x, z) * self.current
+    __slots__ = (
+        "_sizer",
+        "_b_max",
+        "_ctype",
+        "_current",
+        "_dx",
+        "_dz",
+        "_flag_sizefix",
+        "_index",
+        "_j_max",
+        "_name_map",
+        "_current_radius",
+        "_x",
+        "_x_boundary",
+        "_z",
+        "_z_boundary",
+    )
 
-    def Bx_greens(self, bgreen):
-        """
-        Uses the Greens mapped dict to quickly compute the Bx
-        """
-        return self.current * bgreen
+    def __init__(
+        self,
+        x: __ITERABLE_FLOAT,
+        z: __ITERABLE_FLOAT,
+        dx: Optional[__ITERABLE_FLOAT] = None,
+        dz: Optional[__ITERABLE_FLOAT] = None,
+        current: Optional[__ITERABLE_FLOAT] = 0,
+        name: Optional[Union[str, Iterable[str]]] = None,
+        ctype: Optional[__ITERABLE_COILTYPE] = CoilType.PF,
+        j_max: Optional[__ITERABLE_FLOAT] = None,
+        b_max: Optional[__ITERABLE_FLOAT] = None,
+        d_coil: Optional[int] = None,
+    ) -> None:
 
-    def Bz(self, x, z):
-        """
-        Calculate vertical magnetic field Bz at (x, z)
-        """
-        return self.control_Bz(x, z) * self.current
+        _inputs = {
+            "x": x,
+            "z": z,
+            "dx": dx,
+            "dz": dz,
+            "current": current,
+            "name": name,
+            "ctype": ctype,
+            "j_max": j_max,
+            "b_max": b_max,
+        }
 
-    def Bz_greens(self, bgreen):
-        """
-        Uses the Greens mapped dict to quickly compute the Bx
-        """
-        return self.current * bgreen
+        _inputs = self._make_iterable(**_inputs)
 
-    def Bp(self, x, z):
-        """
-        Calculate poloidal magnetic field Bp at (x, z)
-        """
-        return np.hypot(
-            self.control_Bx(x, z) * self.current, self.control_Bz(x, z) * self.current
-        )
+        self._lengthcheck(**_inputs)
 
-    def control_psi(self, x, z):
-        """
-        Calculate poloidal flux at (x, z) due to a unit current
-        """
-        if self.sub_coils is None:
-            return greens_psi(self.x, self.z, x, z, self.dx, self.dz) * self.n_turns
+        self._x = _inputs["x"]
+        self._z = _inputs["z"]
+        self._dx = _inputs["dx"]
+        self._dz = _inputs["dz"]
+        self._current = _inputs["current"]
+        self._j_max = _inputs["j_max"]
+        self._b_max = _inputs["b_max"]
 
-        gpsi = [greens_psi(c.x, c.z, x, z, c.dx, c.dz) for c in self.sub_coils.values()]
-        return sum(gpsi) / self.n_filaments
+        self._ctype = [
+            ct
+            if isinstance(ct, CoilType)
+            else CoilType["NONE"]
+            if isinstance(ct, np.ndarray) or ct is None
+            else CoilType[ct.upper()]
+            for ct in _inputs["ctype"]
+        ]
 
-    def control_Bx(self, x, z):
+        self._flag_sizefix = False
+        self._sizer = CoilSizer(self)
+        self._sizer(self)
+
+        # Meshing
+        super().__init__(d_coil)
+
+        # Lastly number coils to minimise incrementing coil numbers
+        # on failing initialisation.
+        self._index = [CoilNumber.generate(ct) for ct in self.ctype]
+
+        self._name_map = {
+            f"{self._ctype[en].name}_{ind}" if n is None else n: ind
+            for en, (n, ind) in enumerate(zip(_inputs["name"], self._index))
+        }
+
+    @staticmethod
+    def _make_iterable(
+        **kwargs: __ANY_ITERABLE,
+    ) -> Dict[str, Iterable[Union[str, float, CoilType]]]:
         """
-        Calculate the radial magnetic field response at (x, z) due to a unit
-        current. Green's functions are used outside the coil, and a semianalytic
-        method is used for the field inside the coil.
+        Converts all arguments to Iterables
 
         Parameters
         ----------
-        x: Union[float, int, np.array]
-            The x values at which to calculate the Bx response
-        z: Union[float, int, np.array]
-            The z values at which to calculate the Bx response
+        *args: Any
 
         Returns
         -------
-        Bx: Union[float, np.array]
-            The radial magnetic field response at the x, z coordinates.
-        """
-        return self._mix_control_method(
-            x, z, self._control_Bx_greens, self._control_Bx_analytical
-        )
+        Iterable
 
-    def control_Bz(self, x, z):
+        Notes
+        -----
+        Assumes init is specified correctly. No protection against singular None.
+        A singular None will fail on lengthcheck.
+        String and CoilType are converted to lists everything else is a np.array
+        with dtype=float.
         """
-        Calculate the vertical magnetic field response at (x, z) due to a unit
-        current. Green's functions are used outside the coil, and a semianalytic
-        method is used for the field inside the coil.
+        ret = {}
 
-        Parameters
-        ----------
-        x: Union[float, int, np.array]
-            The x values at which to calculate the Bz response
-        z: Union[float, int, np.array]
-            The z values at which to calculate the Bz response
-
-        Returns
-        -------
-        Bz: Union[float, np.array]
-            The vertical magnetic field response at the x, z coordinates.
-        """
-        return self._mix_control_method(
-            x, z, self._control_Bz_greens, self._control_Bz_analytical
-        )
-
-    def _mix_control_method(self, x, z, greens_func, semianalytic_func):
-        """
-        Boiler-plate helper function to mixed the Green's function responses
-        with the semi-analytic function responses, as a function of position
-        outside/inside the coil boundary.
-        """
-        x, z = np.ascontiguousarray(x), np.ascontiguousarray(z)
-        if np.isclose(self.dx, 0.0) or np.isclose(self.dz, 0.0):
-            response = greens_func(x, z)
-
-        else:
-            inside = self._points_inside_coil(x, z)
-            response = np.zeros(x.shape)
-            if np.any(~inside):
-                response[~inside] = greens_func(x[~inside], z[~inside])
-            if np.any(inside):
-                response[inside] = semianalytic_func(x[inside], z[inside])
-        if x.size == 1:
-            return response[0]
-        return response
-
-    def _control_Bx_greens(self, x, z):
-        """
-        Calculate radial magnetic field Bx respose at (x, z) due to a unit
-        current using Green's functions.
-        """
-        if self.sub_coils is None:
-            return greens_Bx(self.x, self.z, x, z) * self.n_turns
-
-        gx = [greens_Bx(c.x, c.z, x, z) for c in self.sub_coils.values()]
-        return sum(gx) / self.n_filaments
-
-    def _control_Bz_greens(self, x, z):
-        """
-        Calculate vertical magnetic field Bz at (x, z) due to a unit current
-        """
-        if self.sub_coils is None:
-            return greens_Bz(self.x, self.z, x, z) * self.n_turns
-
-        gz = [greens_Bz(c.x, c.z, x, z) for c in self.sub_coils.values()]
-        return sum(gz) / self.n_filaments
-
-    def _control_Bx_analytical(self, x, z):
-        """
-        Calculate radial magnetic field Bx response at (x, z) due to a unit
-        current using semi-analytic method.
-        """
-        return semianalytic_Bx(self.x, self.z, x, z, d_xc=self.dx, d_zc=self.dz)
-
-    def _control_Bz_analytical(self, x, z):
-        """
-        Calculate vertical magnetic field Bz response at (x, z) due to a unit
-        current using semi-analytic method.
-        """
-        return semianalytic_Bz(self.x, self.z, x, z, d_xc=self.dx, d_zc=self.dz)
-
-    def F(self, eqcoil):  # noqa :N802
-        """
-        Calculate the force response at the coil centre including the coil
-        self-force.
-
-        \t:math:`\\mathbf{F} = \\mathbf{j}\\times \\mathbf{B}`\n
-        \t:math:`F_x = IB_z+\\dfrac{\\mu_0I^2}{4\\pi X}\\textrm{ln}\\bigg(\\dfrac{8X}{r_c}-1+\\xi/2\\bigg)`\n
-        \t:math:`F_z = -IBx`
-        """  # noqa :W505
-        Bx, Bz = eqcoil.Bx(self.x, self.z), eqcoil.Bz(self.x, self.z)
-        if self.rc != 0:  # true divide errors for zero current coils
-            a = MU_0 * self.current**2 / (4 * np.pi * self.x)
-            fx = a * (np.log(8 * self.x / self.rc) - 1 + 0.25)
-
-        else:
-            fx = 0
-        return np.array(
-            [
-                (self.current * Bz + fx) * 2 * np.pi * self.x,
-                -self.current * Bx * 2 * np.pi * self.x,
-            ]
-        )
-
-    def control_F(self, coil):  # noqa :N802
-        """
-        Returns the Green's matrix element for the coil mutual force.
-
-        \t:math:`Fz_{i,j}=-2\\pi X_i\\mathcal{G}(X_j,Z_j,X_i,Z_i)`
-        """
-        if coil.x == self.x and coil.z == self.z:
-            # self inductance
-            if self.rc != 0:
-                a = MU_0 / (4 * np.pi * self.x)
-                Bz = a * (np.log(8 * self.x / self.rc) - 1 + 0.25)
+        n_c = len(kwargs["x"]) if isinstance(kwargs["x"], Iterable) else 1
+        for name, arg in kwargs.items():
+            if name in ["name", "ctype"]:
+                if isinstance(arg, (str, type(None), CoilType)):
+                    arg = [arg for _ in range(n_c)]
+            elif isinstance(arg, Iterable) and isinstance(
+                arg[0], (int, float, complex, CoilType)
+            ):
+                arg = np.array(arg)
             else:
-                Bz = 0
-            Bx = 0  # Should be 0 anyway
+                arg = np.array([arg for _ in range(n_c)], dtype=float)
+            ret[name] = arg
 
-        else:
-            Bz = coil.control_Bz(self.x, self.z)
-            Bx = coil.control_Bx(self.x, self.z)
-        return 2 * np.pi * self.x * np.array([Bz, -Bx])  # 1 cross B
+        return ret
 
-    def toggle_control(self):
+    @staticmethod
+    def _lengthcheck(ignore: Optional[List] = None, **kwargs: __ANY_ITERABLE) -> None:
         """
-        Toggles coil control functionality
+        Check length of iterables
+
+        Parameters
+        ----------
+        ignore: list
+            list of variables to ignore
+        **kwargs: dict
+            dictionary of arguments to check length of
+
+        Raises
+        ------
+        ValueError if not in ignore list and different length to 'x'
+
         """
-        self.control = not self.control
-        if self.sub_coils is not None:
-            for coil in self.sub_coils.values():
-                coil.toggle_control()
+        if ignore is None:
+            ignore = []
+
+        len_first = len(kwargs["x"])
+        for name, value in kwargs.items():
+            if name in ignore:
+                continue
+
+            if len(value) != len_first:
+                raise ValueError(
+                    f"{name} does not contain {len_first} elements: {value}"
+                )
+
+    def _define_subgroup(self, *groups):
+        """
+        Create groups enum
+
+        be careful will make all previous uses uncomparible
+        """
+        groups = ["_all"] + list(groups)
+        self._SubGroup = Enum("SubGroup", {g: auto() for g in groups})
 
     @property
-    def n_control(self):
+    def x_boundary(self) -> np.ndarray:
         """
-        The length of the controls.
+        Get x boundary of coil
         """
-        return 1
-
-    def n_constraints(self):
-        """
-        The length of the constraints.
-        """
-        return 1
+        return self._x_boundary
 
     @property
-    def area(self):
+    def z_boundary(self) -> np.ndarray:
+        """
+        Get z boundary of coil
+        """
+        return self._z_boundary
+
+    @property
+    def area(self) -> np.ndarray:
         """
         The cross-sectional area of the coil
 
@@ -786,7 +1177,7 @@ class Coil:
         return 4 * self.dx * self.dz
 
     @property
-    def volume(self):
+    def volume(self) -> np.ndarray:
         """
         The volume of the coil
 
@@ -797,1299 +1188,900 @@ class Coil:
         """
         return self.area * 2 * np.pi * self.x
 
-    def plot(self, ax=None, subcoil=True, **kwargs):
+    @property
+    def n_coils(self) -> int:
         """
-        Plots the Coil object onto `ax`. Should only be used for individual
-        coils. Use CoilSet.plot() for CoilSet objects
+        Get number of coils in group
         """
-        return CoilPlotter(self, ax=ax, subcoil=subcoil, **kwargs)
+        return len(self.x)
 
-    def __repr__(self):
+    @property
+    def ctype(self) -> Union[CoilType, Iterable[CoilType]]:
+        """
+        Get CoilType of coils
+        """
+        return self._ctype
+
+    @property
+    def name(self):
+        """
+        Get names of coils
+        """
+        return list(self._name_map.keys())
+
+    @property
+    def current_radius(self):
+        """
+        TODO
+        """
+        return self._current_radius
+
+    @property
+    def j_max(self):
+        """
+        Get coil current density
+        """
+        return self._j_max
+
+    @j_max.setter
+    def j_max(self, new_j_max):
+        """
+        Set new coil current density
+        """
+        self._j_max[:] = new_j_max
+
+    @property
+    def b_max(self):
+        """
+        Get maximum magnetic field at each coil [T]
+        """
+        return self._b_max
+
+    @b_max.setter
+    def b_max(self, new_b_max):
+        """
+        Set maximum magnetic field at each coil [T]
+        """
+        self._b_max[:] = new_b_max
+
+    @property
+    def current(self) -> np.ndarray:
+        """
+        Get coil current
+        """
+        return self._current
+
+    @current.setter
+    def current(self, new_current: __ITERABLE_FLOAT) -> None:
+        """
+        Set coil current
+        """
+        self._current[:] = new_current
+
+    def adjust_current(self, d_current: __ITERABLE_FLOAT) -> None:
+        """
+        Modify current in each coil
+        """
+        self.current += d_current
+
+    @property
+    def position(self) -> np.ndarray:
+        """
+        Set position of each coil
+        """
+        return self.x.ravel(), self.z.ravel()
+
+    @position.setter
+    def position(self, new_position: __ITERABLE_FLOAT):
+        """
+        Set position of each coil
+        """
+        self.x = new_position[:, 0]
+        self.z = new_position[:, 1]
+
+    def adjust_position(self, d_xz: __ITERABLE_FLOAT):
+        """
+        Adjust position of each coil
+        """
+        d_xz = np.atleast_2d(d_xz)
+        self.position = np.stack(
+            [self.x.ravel() + d_xz[:, 0], self.z.ravel() + d_xz[:, 1]], axis=1
+        )
+
+    @property
+    def x(self) -> tuple:
+        """
+        Get x coordinate of each coil
+        """
+        _x = self._x[:]
+        _x.flags.writeable = False
+        return _x
+
+    @x.setter
+    def x(self, new_x: __ITERABLE_FLOAT) -> None:
+        """
+        Set x coordinate of each coil
+        """
+        self._x[:] = np.atleast_2d(new_x.T).T
+        self._sizer(self)
+
+    @property
+    def z(self) -> tuple:
+        """
+        Get z coordinate of each coil
+        """
+        _z = self._z[:]
+        _z.flags.writeable = False
+        return _z
+
+    @z.setter
+    def z(self, new_z: __ITERABLE_FLOAT) -> None:
+        """
+        Set z coordinate of each coil
+        """
+        self._z[:] = np.atleast_2d(new_z.T).T
+        self._sizer(self)
+
+    @property
+    def dx(self) -> tuple:
+        """
+        Get dx coordinate of each coil
+        """
+        _dx = self._dx[:]
+        _dx.flags.writeable = False
+        return _dx
+
+    @dx.setter
+    def dx(self, new_dx: __ITERABLE_FLOAT) -> None:
+        """
+        Set dx coordinate of each coil
+        """
+        self._dx[:] = np.atleast_2d(new_dx.T).T
+        self._sizer(self)
+
+    @property
+    def dz(self) -> np.ndarray:
+        """
+        Get dz coordinate of each coil
+        """
+        _dz = self._dz[:]
+        _dz.flags.writeable = False
+        return _dz
+
+    @dz.setter
+    def dz(self, new_dz: __ITERABLE_FLOAT) -> None:
+        """
+        Set dz coordinate of each coil
+        """
+        self._dz[:] = np.atleast_2d(new_dz.T).T
+        self._sizer(self)
+
+    def make_size(self, current: Optional[__ITERABLE_FLOAT] = None) -> None:
+        """
+        Size the coil based on a current and a current density.
+        """
+        self._sizer(self, current)
+
+    def fix_size(self) -> None:
+        """
+        Fixes the size of all coils
+        """
+        self._flag_sizefix = True
+        self._sizer.update(self)
+
+    def assign_material(
+        self,
+        j_max: __ITERABLE_FLOAT = NBTI_J_MAX,
+        b_max: __ITERABLE_FLOAT = NBTI_B_MAX,
+    ) -> None:
+        """
+        Assigns EM material properties to coil
+
+        Parameters
+        ----------
+        j_max: float (default None)
+            Overwrite default constant material max current density [MA/m^2]
+        b_max: float (default None)
+            Overwrite default constant material max field [T]
+
+        """
+        for jm, bm in zip(j_max, b_max):
+            if not is_num_array(j_max):
+                raise EquilibriaError(f"j_max must be specified as a number, not: {jm}")
+            if not is_num_array(b_max):
+                raise EquilibriaError(f"b_max must be specified as a number, not: {bm}")
+
+        self.j_max = j_max
+        self.b_max = b_max
+        self._sizer.update(self)
+
+    def get_max_current(self) -> np.ndarray:
+        """
+        Gets the maximum current for a coil with a specified size
+
+        Returns
+        -------
+        Imax: float
+            The maximum current that can be produced by the coil [A]
+        """
+        return self._sizer.get_max_current(self)
+
+    def to_dict(self):
+        """
+        TODO
+        """
+        raise NotImplementedError
+
+    def to_group_vecs(self) -> Iterable[np.array]:
+        """
+        Collect CoilGroup Properties
+
+        Returns
+        -------
+        x: np.ndarray(n_coils)
+            The x-positions of coils
+        z: np.ndarray(n_coils)
+            The z-positions of coils.
+        dx: np.ndarray(n_coils)
+            The coil size in the x-direction.
+        dz: np.ndarray(n_coils)
+            The coil size in the z-direction.
+        currents: np.ndarray(n_coils)
+            The coil currents.
+        """
+        return (
+            self.x,
+            self.z,
+            self.dx,
+            self.dz,
+            self.current,
+        )
+
+    @classmethod
+    def from_group_vecs(cls, groupvecs):
+        raise NotImplementedError
+
+    @classmethod
+    def from_coils(cls, coils):
+        raise NotImplementedError
+
+    def plot(self):
+        """
+        TODO
+        """
+        raise NotImplementedError
+
+    def __str__(self) -> str:
+        """
+        Pretty coil printing.
+        """
+        x = self._x.flatten()
+        z = self._z.flatten()
+        c = self._current.flatten()
+        return " | ".join(
+            (
+                f"{name}: X={x[ind]:.2f} m,"
+                f" Z={z[ind]:.2f} m,"
+                f" I={c[ind]/1e6:.2f} MA"
+            )
+            for ind, name in enumerate(self._name_map.keys())
+        )
+
+    def __repr__(self) -> str:
         """
         Pretty console coil rendering.
         """
         return f"{self.__class__.__name__}({self.__str__()})"
 
-    def __str__(self):
-        """
-        Pretty coil printing.
-        """
-        return (
-            f"X={self.x:.2f} m, Z={self.z:.2f} m, I={self.current/1e6:.2f} MA "
-            f"control={self.control}"
-        )
 
-    def to_dict(self):
-        """
-        Returns a parameter dictionary for the Coil object
-        """
-        return {
-            "x": self.x,
-            "z": self.z,
-            "current": self.current,
-            "x_corner": self.x_corner,
-            "z_corner": self.z_corner,
-            "dx": self.dx,
-            "dz": self.dz,
-            "rc": self.rc,
-            "n_filaments": self.n_filaments,
-            "n_turns": self.n_turns,
-            "ctype": self.ctype,
-            "control": self.control,
-            "name": self.name,
-        }
-
-    def to_group_vecs(self):
-        """
-        Convert Coil properties to numpy arrays
-
-        Returns
-        -------
-        x: np.ndarray(n_coils)
-            The x-positions of coils
-        z: np.ndarray(n_coils)
-            The z-positions of coils.
-        dx: np.ndarray(n_coils)
-            The coil size in the x-direction.
-        dz: np.ndarray(n_coils)
-            The coil size in the z-direction.
-        currents: np.ndarray(n_coils)
-            The coil currents.
-        """
-        return (
-            np.array([self.x]),
-            np.array([self.z]),
-            np.array([self.dx]),
-            np.array([self.dz]),
-            np.array([self.current]),
-        )
-
-
-class CoilGroup:
+class Coil(CoilGroup):
     """
-    Abstract grouping of Coil objects. Handles ordering of coils by type and name,
-    and grouping of methods.
-
-    Parameters
-    ----------
-    coils: List[Coil]
-        The list of Coils to group together
-    """
-
-    def __init__(self, coils):
-        self.coils = self.sort_coils(coils)
-
-    @staticmethod
-    def sort_coils(coils):
-        """
-        Sort coils in an ordered dictionary, by type and by name.
-        """
-        pf_coils = [coil for coil in coils if coil.ctype == "PF"]
-        cs_coils = [coil for coil in coils if coil.ctype == "CS"]
-        other = [coil for coil in coils if coil.ctype not in ["PF", "CS"]]
-
-        def sort_function(key):
-            return [
-                int(text) if text.isdigit() else text
-                for text in split(r"(\d+)", key.name)
-            ]
-
-        pf_coils.sort(key=sort_function)
-        cs_coils.sort(key=sort_function)
-        other.sort(key=sort_function)
-
-        all_coils = pf_coils + cs_coils + other
-
-        return {coil.name: coil for coil in all_coils}
-
-    def __getitem__(self, name):
-        """
-        Dict-like behaviour for CoilGroup object
-        """
-        try:
-            return self.coils[name]
-        except IndexError:
-            raise KeyError(f'CoilGroup does not contain coil index "{name}"')
-
-    def __repr__(self):
-        """
-        Pretty CoilGroup console rendering.
-        """
-        try:
-            return "\n".join([n + ": " + c.__str__() for n, c in self.coils.items()])
-
-        except AttributeError:  # Coils still unnamed (list)
-            return "\n".join(c.__str__() for c in self.coils)
-
-    def to_dict(self):
-        """
-        Convert Group to dictionary.
-
-        Returns
-        -------
-        dict
-            a dict of coil dicts
-
-        Notes
-        -----
-        Example output:
-
-        {'PF_1': {'X': 10.4, 'Z': 4.4, 'I': 36, ...},
-        'PF_2': {'X': 4.4, ....}}
-        """
-        cdict = {}
-
-        coils = self.coils
-
-        for name, coil in coils.items():
-            cdict[name] = coil.to_dict()
-        return cdict
-
-    def to_group_vecs(self):
-        """
-        Convert CoilGroup properties to numpy arrays
-
-        Returns
-        -------
-        x: np.ndarray(n_coils)
-            The x-positions of coils
-        z: np.ndarray(n_coils)
-            The z-positions of coils.
-        dx: np.ndarray(n_coils)
-            The coil size in the x-direction.
-        dz: np.ndarray(n_coils)
-            The coil size in the z-direction.
-        currents: np.ndarray(n_coils)
-            The coil currents.
-        """
-        x, z, dx, dz, currents = [], [], [], [], []
-
-        for coil in self.coils.values():
-            xi, zi, dxi, dzi, ci = coil.to_group_vecs()
-            x.extend(xi)
-            z.extend(zi)
-            dx.extend(dxi)
-            dz.extend(dzi)
-            currents.extend(ci)
-        return np.array(x), np.array(z), np.array(dx), np.array(dz), np.array(currents)
-
-    def add_coil(self, coil):
-        """
-        Add a coil to the CoilGroup.
-
-        Parameters
-        ----------
-        coil: Coil object
-            The coil to be added to the CoilGroup
-        """
-        self.coils[coil.name] = coil
-        self.coils = self.sort_coils(list(self.coils.values()))
-
-    def remove_coil(self, coilname):
-        """
-        Remove a coil from the CoilGroup.
-
-        Parameters
-        ----------
-        coilname: str
-            The coil name (key in .coils) of the Coil to be removed
-        """
-        try:
-            del self.coils[coilname]
-        except KeyError:
-            raise KeyError("No coil with such a name in the CoilGroup.")
-
-    def mesh_coils(self, d_coil=-1):
-        """
-        Sub-divide coils into subcoils based on size. Coils are meshed within
-        the Coil object, such that Coil().sub_coils = [Coil(), Coil(), ..]
-        """
-        if d_coil < 0:  # dCoil not set, use stored value
-            if not hasattr(self, "d_coil"):
-                self.d_coil = 0
-        else:
-            self.d_coil = d_coil
-        #  Do not sub-divide coils
-        if self.d_coil == 0:
-            return
-        else:
-            for coil in self.coils.values():
-                if coil.ctype == "PF":
-                    coil.make_size()
-                coil.mesh_coil(self.d_coil)
-
-    def fix_sizes(self):
-        """
-        Holds the sizes of all coils constant
-        """
-        for coil in self.coils.values():
-            coil.fix_size()
-
-    # Grouping methods
-    @staticmethod
-    def _sum_all(seq, method, *args):
-        """
-        Sums all the responses in a sequence of objects for obj.method(*args)
-        """
-        a = np.array([getattr(obj, method)(*args) for obj in seq])
-        return a.sum(axis=0)
-
-    @staticmethod
-    def _all_if(seq, method, *args):
-        """
-        Sums all the responses in a sequence of objects for obj.method(*args)
-        if obj.control is True
-        """
-        return [getattr(obj, method)(*args) for obj in seq if obj.control]
-
-    def psi(self, x, z):
-        """
-        Poloidal flux due to coils
-        """
-        return self._sum_all(self.coils.values(), "psi", x, z)
-
-    def map_psi_greens(self, x, z):
-        """
-        Mapping of the psi Greens functions into a dict for each coil
-        """
-        pgreen = {}
-        for name, coil in self.coils.items():
-            pgreen[name] = coil.control_psi(x, z)
-        return pgreen
-
-    def psi_greens(self, pgreen):
-        """
-        Uses the Greens mapped dict to quickly compute the psi
-        """
-        psi_coils = 0
-        for name, coil in self.coils.items():
-            psi_coils += coil.psi_greens(pgreen[name])
-        return psi_coils
-
-    def Bx(self, x, z):
-        """
-        Radial magnetic field at x, z
-        """
-        return self._sum_all(self.coils.values(), "Bx", x, z)
-
-    def map_Bx_greens(self, x, z):
-        """
-        Mapping of the Bx Greens function into a dict for each coil
-        """
-        bgreen = {}
-        for name, coil in self.coils.items():
-            bgreen[name] = coil.control_Bx(x, z)
-        return bgreen
-
-    def Bx_greens(self, bgreen):
-        """
-        Uses the Greens mapped dict to quickly compute the Bx
-        """
-        bx_coils = 0
-        for name, coil in self.coils.items():
-            bx_coils += coil.Bx_greens(bgreen[name])
-        return bx_coils
-
-    def Bz(self, x, z):
-        """
-        Vertical magnetic field at x, z
-        """
-        return self._sum_all(self.coils.values(), "Bz", x, z)
-
-    def map_Bz_greens(self, x, z):
-        """
-        Mapping of the Bz Greens function into a dict for each coil
-        """
-        bgreen = {}
-        for name, coil in self.coils.items():
-            bgreen[name] = coil.control_Bz(x, z)
-        return bgreen
-
-    def Bz_greens(self, bgreen):
-        """
-        Uses the Greens mapped dict to quickly compute the Bx
-        """
-        bz_coils = 0
-        for name, coil in self.coils.items():
-            bz_coils += coil.Bz_greens(bgreen[name])
-        return bz_coils
-
-    def Bp(self, x, z):
-        """
-        Poloidal magnetic field at x, z
-        """
-        bx = self._sum_all(self.coils.values(), "Bx", x, z)
-        bz = self._sum_all(self.coils.values(), "Bz", x, z)
-        return np.hypot(bx, bz)
-
-    def control_Bx(self, x, z):
-        """
-        Returns a list of control responses for Bx at the given (x, z)
-        location(s)
-        """
-        return self._all_if(self.coils.values(), "control_Bx", x, z)
-
-    def control_Bz(self, x, z):
-        """
-        Returns a list of control responses for Bz at the given (x, z)
-        location(s)
-        """
-        return self._all_if(self.coils.values(), "control_Bz", x, z)
-
-    def control_psi(self, x, z):
-        """
-        Returns a list of control responses for psi at the given (x, z)
-        location(s)
-        """
-        return self._all_if(self.coils.values(), "control_psi", x, z)
-
-    def F(self, eqcoil):  # noqa :N802
-        """
-        Returns the forces in the CoilGroup as a response to an equilibrium or
-        other CoilGroup
-
-        Parameters
-        ----------
-        eqcoil: Equilibrium or Coil/CoilSet object
-            Any grouping with .Bx() and .Bz() functionality
-        """
-        forces = np.zeros((self.n_coils, 2))
-        for i, coil in enumerate(self.coils.values()):
-            forces[i, :] = coil.F(eqcoil)
-        return forces
-
-    def control_F(self, coil):
-        """
-        Returns a list of control responses for F at the given coil location(s)
-        """
-        c_forces = np.zeros((self.n_coils, 2))
-        for i, coil in enumerate(self.coils.values()):
-            c_forces[i, :] = coil.control_F(coil)
-        return c_forces
-
-    def toggle_control(self, *name):
-        """
-        Toggles the control of a coil in a CoilGroup. Tracks control of a coil
-        in the CoilGroup
-        """
-        for n in name:
-            self.coils[n].toggle_control()
-        self._classify_control()
-
-    @property
-    def n_coils(self):
-        """
-        The number of coils.
-        """
-        return sum([c.n_coils for c in self.coils.values()])
-
-    @property
-    def area(self):
-        """
-        The total cross-sectional area of the coil
-
-        Returns
-        -------
-        area: float
-            The total cross-sectional area of the coil [m^2]
-        """
-        return sum([c.area for c in self.coils.values()])
-
-    @property
-    def volume(self):
-        """
-        The total volume of the CoilGroup
-
-        Returns
-        -------
-        volume: float
-            The total volume of the CoilGroup [m^3]
-        """
-        return sum([c.volume for c in self.coils.values()])
-
-    def _classify_control(self):
-        """
-        Tracks controlled and uncontrolled coils. _ccoils used in constraints
-        for optimisation of controlled coils only
-        """
-        self._ccoils = [c for c in self.coils.values() if c.control]
-        self._ucoils = [c for c in self.coils.values() if not c.control]
-
-
-class Solenoid(CoilGroup):
-    """
-    Solenoid object for a vertically arranged stack of CS coils. Will default
-    to an ITER-like equispaced arrangement.
+    Singular coil
 
     Parameters
     ----------
     x: float
-        Solenoid geometric centre axis location (radius from machine axis)
-    dx: float
-        Solenoid thickness either side of centre
-    z_min, z_max: float, float
-        Minimum and maximum Z coordinates of the Solenoid
-    n_CS: int
-        Number of central solenoid modules
+        Coil geometric centre x coordinate [m]
+    z: float
+        Coil geometric centre z coordinate [m]
+    dx: Optional[float]
+        Coil radial half-width [m] from coil centre to edge (either side)
+    dz: Optional[float]
+        Coil vertical half-width [m] from coil centre to edge (either side)
+    current: Optional[float] (default = 0)
+        Coil current [A]
+    name: Optional[str]
+        The name of the coil
+    ctype: Optional[Union[str, CoilType]]
+        Type of coil see CoilType enum
+    j_max: Optional[float]
+        Maximum current density in the coil [MA/m^2]
+    b_max: Optional[float]
+        Maximum magnetic field at the coil [T]
+
     """
 
-    control = True
+    __slots__ = ()
 
-    def __init__(self, x, dx, z_min, z_max, n_CS, gap=0.1, j_max=12.5, coils=None):
-        self.radius = x
-        self.dx = dx
-        self.z_min = z_min
-        self.z_max = z_max
-        self.n_CS = n_CS
-        self.gap = gap
-        self.j_max = j_max
-        if coils is None:
-            self.coils = []
-            self.grid()
-        else:
-            self.coils = coils
+    __safe_attrs = ("_flag_sizefix", "_sizer")
 
-    @classmethod
-    def from_coils(cls, coils):
+    def __init__(
+        self,
+        x: float,
+        z: float,
+        dx: Optional[float] = None,
+        dz: Optional[float] = None,
+        current: Optional[float] = 0,
+        name: Optional[str] = None,
+        ctype: Optional[Union[str, CoilType]] = CoilType.PF,
+        j_max: Optional[float] = None,
+        b_max: Optional[float] = None,
+        d_coil: Optional[int] = None,
+    ) -> None:
+        # Only to force type check correctness
+        super().__init__(x, z, dx, dz, current, name, ctype, j_max, b_max, d_coil)
+
+    @property
+    def name(self):
         """
-        Initialises a Solenoid object from a list of input coils
-
-        Parameters
-        ----------
-        coils: Iterable[Coil]
-            The list of coils from which to make the Solenoid
+        Name of coil
         """
-        if not coils:
-            return None
+        return list(self._name_map.keys())[0]
 
-        x = coils[0].x
-        d_x = coils[0].dx
-        n_cs = len(coils)
-        z_min = min([c.z - c.dz for c in coils])
-        z_max = max([c.z + c.dz for c in coils])
-        coils = sorted(coils, key=lambda c_: -c_.z)  # Order from top to bottom
-        for i, coil in enumerate(coils):
-            coil.name = CoilNamer.generate_name(coil, i + 1)
+    # def __setattr__(self, attr: str, value: Any) -> None:
+    #     """
+    #     Set attribute with some protection for singular values
+    #     """
+    #     with suppress(AttributeError):
+    #         old_attr = super().__getattribute__(attr)
+    #         if attr not in self.__safe_attrs:
+    #             if not isinstance(value, Iterable) and len(old_attr) == 1:
+    #                 if isinstance(value, (str, CoilType)):
+    #                     value = [value]
+    #                 else:
+    #                     value = np.atleast_2d(value, dtype=float)
 
-        return cls(x, d_x, z_min, z_max, n_cs, coils=coils)
-
-    def grid(self):
-        """
-        Initial CS sub-divisions (equi-spaced)
-        """
-        dz = ((self.z_max - self.z_min) - self.gap * (self.n_CS - 1)) / self.n_CS / 2
-        v1 = np.arange(0, self.n_CS)
-        v2 = np.arange(1, self.n_CS * 2, 2)
-        zc = self.z_max - self.gap * v1 - dz * v2
-        for zc in zc:
-            self.add_coil(self.radius, zc, dx=self.dx, dz=dz)
-
-    def add_coil(self, x, z, dx, dz):
-        """
-        Adds a coil to the Solenoid object
-        """
-        coil = Coil(
-            x,
-            z,
-            current=0,
-            n_turns=1,
-            control=True,
-            ctype="CS",
-            j_max=self.j_max,
-            dx=dx,
-            dz=dz,
-        )
-        self.coils.append(coil)
-
-    def calc_psi_max(self, x, z):
-        """
-        Calculates the maximum flux which can be generated by the Solenoid at a
-        particular location
-
-        Parameters
-        ----------
-        x, z: float, float or array(N, M), array(N, M)
-            Coordinates of the point at which to evaluate the maximum flux
-
-        Returns
-        -------
-        psimax: float or array(N, M)
-            The maximum psi at x, z [V.s] NOTE: V.s!!!
-        """
-        old_currents = [coil.current for coil in self.coils]
-        for coil in self.coils:
-            max_current = coil.get_max_current()
-            coil.current = max_current
-        self.mesh_coils(0.2)
-        psimax = self.psi(x, z)
-
-        for current, coil in zip(old_currents, self.coils):
-            coil.current = current
-        return 2 * np.pi * psimax
+    #     if attr in self.__safe_attrs or (
+    #         isinstance(value, Iterable) and len(value) == 1
+    #     ):
+    #         super().__setattr__(attr, value)
+    #     else:
+    #         raise ValueError(f"Length of value should be 1: {attr}={value}")
 
 
 class Circuit(CoilGroup):
     """
-    A grouping of Coils that are force to have the same current. The first coil in
-    the Circuit is the controlled Coil.
-
-    Parameters
-    ----------
-    coils: List[Coil]
-        The list of Coils to group into a Circuit
+    Base circuit class
     """
 
-    def __init__(self, coils):
-        if len(coils) < 2:
-            raise EquilibriaError("A Circuit must be initialised with more than 1 Coil.")
+    __num_circuit = 0
 
-        super().__init__(coils)
-        self.control = True
-        self.current = coils[0].current
+    __slots__ = "_circuit_name"
 
-    def adjust_current(self, d_current):
-        """
-        Adjust the current in the Circuit.
-        """
-        for i, coil in enumerate(self.coils.values()):
-            coil.adjust_current(d_current)
-        self.current += d_current
+    @staticmethod
+    def _namer():
+        Circuit.__num_circuit += 1
+        return f"CIRC_{Circuit.__num_circuit}"
 
-    def set_current(self, current):
+    @CoilGroup.current.setter
+    def current(self, new_current: float) -> None:
         """
-        Set the current in the Circuit.
+        Set coil current
         """
-        for i, coil in enumerate(self.coils.values()):
-            coil.set_current(current)
-        self.current = current
-
-    def get_control_current(self):
-        """
-        Get the control current from the Circuit.
-        """
-        return self.current * np.ones(len(self.coils))
-
-    def map_psi_greens(self, x, z):
-        """
-        Mapping of the psi Greens functions into a dict for each coil
-        """
-        return {self.name: self.control_psi(x, z)}
-
-    def psi_greens(self, pgreen):
-        """
-        Calculate psi from Greens functions and current
-        """
-        return self.current * pgreen
-
-    def map_Bx_greens(self, x, z):
-        """
-        Mapping of the Bx Greens functions into a dict for each coil
-        """
-        return {self.name: self.control_Bx(x, z)}
-
-    def Bx_greens(self, bx_green):
-        """
-        Calculate Bx from Greens functions and current
-        """
-        return self.current * bx_green
-
-    def map_Bz_greens(self, x, z):
-        """
-        Mapping of the Bz Greens functions into a dict for each coil
-        """
-        return {self.name: self.control_Bz(x, z)}
-
-    def Bz_greens(self, bz_green):
-        """
-        Calculate Bz from Greens functions and current
-        """
-        return self.current * bz_green
-
-    def control_Bx(self, x, z):
-        """
-        Returns a list of control responses for Bx at the given (x, z)
-        location(s)
-        """
-        return sum(super().control_Bx(x, z))
-
-    def control_Bz(self, x, z):
-        """
-        Returns a list of control responses for Bz at the given (x, z)
-        location(s)
-        """
-        return sum(super().control_Bz(x, z))
-
-    def control_psi(self, x, z):
-        """
-        Returns a list of control responses for psi at the given (x, z)
-        location(s)
-        """
-        return sum(super().control_psi(x, z))
-
-    def control_F(self, coil):
-        """
-        Returns a list of control responses for F at the given (x, z)
-        location(s)
-        """
-        return np.sum(super().control_F(coil), axis=0)
-
-    def F(self, eqcoil):
-        """
-        Get the sum of the forces on a coil from the Circuit.
-        """
-        return np.sum(super().F(eqcoil), axis=0)
-
-    @property
-    def n_control(self):
-        """
-        The length of the controls.
-        """
-        return 1
-
-    @property
-    def n_constraints(self):
-        """
-        The length of the constraints.
-        """
-        return len(self.coils)
-
-    def make_size(self, current=None):
-        """
-        Set the size of the coils in the Circuit.
-        """
-        for coil in self.coils.values():
-            coil.make_size(current=current)
-
-    def plot(self, ax=None, subcoil=True, **kwargs):
-        """
-        Plot the Circuit.
-        """
-        if ax is None:
-            ax = plt.gca()
-        for coil in self.coils.values():
-            coil.plot(ax=ax, subcoil=subcoil, **kwargs)
+        if isinstance(new_current, Iterable):
+            new_current = new_current[0]
+        self._current[:] = new_current
 
 
 class SymmetricCircuit(Circuit):
     """
-    A grouping of Coils that are force to have the same  with symmetry about z=0.
-    The first coil in the Circuit is the controlled Coil.
+    Positionally symmetric coils everything else the same
+
 
     Parameters
     ----------
-    coils: Coil
-        The coil from which to make a SymmetricCircuit
+    symmetry_line: np.ndarray[[float, float], [float, float]]:
+        two points making a symmetry line
+    x: float
+        Coil geometric centre x coordinate [m]
+    z: float
+        Coil geometric centre z coordinate [m]
+    dx: Optional[float]
+        Coil radial half-width [m] from coil centre to edge (either side)
+    dz: Optional[float]
+        Coil vertical half-width [m] from coil centre to edge (either side)
+    current: Optional[float] (default = 0)
+        Coil current [A]
+    name: Optional[str]
+        The name of the coil
+    ctype: Optional[Union[str, CoilType]]
+        Type of coil see CoilType enum
+    j_max: Optional[float]
+        Maximum current density in the coil [MA/m^2]
+    b_max: Optional[float]
+        Maximum magnetic field at the coil [T]
+
     """
 
-    def __init__(self, coil):
+    __slots__ = ("_uv", "_symmetry_point", "_point")
 
-        if coil.z == 0:
-            raise EquilibriaError(
-                "SymmetricCircuit must be initialised with a Coil with z != 0."
-            )
+    def __init__(
+        self,
+        symmetry_line: np.ndarray[[float, float], [float, float]],
+        x: float,
+        z: float,
+        dx: Optional[float] = None,
+        dz: Optional[float] = None,
+        current: Optional[float] = 0,
+        name: Optional[str] = None,
+        ctype: Optional[Union[str, CoilType]] = CoilType.PF,
+        j_max: Optional[float] = None,
+        b_max: Optional[float] = None,
+        d_coil: Optional[int] = None,
+    ) -> None:
 
-        self.name = coil.name
-        coil.name += ".1"
+        self._circuit_name = self._namer()
+        self._point = np.array([x, z])
+        x, z = self._setup_symmetry(symmetry_line)
+        ones = np.ones(2)
+        current *= ones
+        ctype = [ctype, ctype]
 
-        mirror = Coil(
-            x=coil.x,
-            z=-coil.z,
-            dx=coil.dx,
-            dz=coil.dz,
-            current=coil.current,
-            n_turns=coil.n_turns,
-            control=coil.control,
-            ctype=coil.ctype,
-            j_max=coil.j_max,
-            b_max=coil.b_max,
-            name=self.name + ".2",
-            flag_sizefix=coil.flag_sizefix,
+        if dx is not None:
+            dx *= ones
+        if dz is not None:
+            dz *= ones
+        if name is not None:
+            name = [f"{name}.1", f"{name}.2"]
+        if j_max is not None:
+            j_max *= ones
+        if b_max is not None:
+            b_max *= ones
+
+        super().__init__(x, z, dx, dz, current, name, ctype, j_max, b_max, d_coil)
+
+    @property
+    def name(self):
+        """
+        Name of circuit
+        """
+        return self._circuit_name
+
+    def modify_symmetry(self, symmetry_line: np.ndarray[[float, float], [float, float]]):
+        """
+        Create a unit vector for the symmetry of the coil
+
+        Parameters
+        ----------
+        symmetry_line: np.ndarray[[float, float], [float, float]]
+            two points making a symmetry line
+
+        """
+        self._uv = (symmetry_line[1] - symmetry_line[0]) / np.linalg.norm(
+            symmetry_line[1] - symmetry_line[0]
         )
+        self._symmetry_point = symmetry_line[0]
 
-        super().__init__([coil, mirror])
-
-    def __setattr__(self, attr, value):
+    def _setup_symmetry(self, symmetry_line):
         """
-        Custom __setattr__ to default to setting the attributes of
-        the member coils if not found in SymmetricCircuit.
+        Setup the symmetry of the coil
 
         Parameters
         ----------
-        attr: str
-              Name of attribute to fetch.
-        value:
-            Object to assign attribute to.
-        """
-        super().__setattr__(attr, value)
-        if hasattr(self, "name") and hasattr(self, "coils"):
-            name = self.name
-            coil = self.coils[name + ".1"]
-            if hasattr(coil, attr):
-                if attr == "z":
-                    coil1 = self.coils[name + ".1"]
-                    coil1.__setattr__(attr, value)
-                    coil2 = self.coils[name + ".2"]
-                    coil2.__setattr__(attr, -value)
-                else:
-                    for cl_n in [".1", ".2"]:
-                        coil = self.coils[name + cl_n]
-                        coil.__setattr__(attr, value)
-
-    def __getattr__(self, attr):
-        """
-        Custom __getattr__ to default to returning the attribute of
-        the primary coil if not found in SymmetricCircuit.
-
-        Parameters
-        ----------
-        attr: str
-              Name of attribute to fetch.
-
-        """
-        name = self.__getattribute__("name")
-        coil = self.__getattribute__("coils")[name + ".1"]
-        if hasattr(coil, attr):
-            return coil.__getattribute__(attr)
-        else:
-            return self.__getattribute__(attr)
-
-    def apply_coil_method(self, method_name, *args, **kwargs):
-        """
-        Calls the coil method method_name on both coils in the
-        SymmetricCircuit, and returns any results in a list.
-
-        Parameters
-        ----------
-        method_name: str
-            Name of method in Coil to call for each member of
-            the SymmetricCircuit.
-
-        args: tuple
-            Arguments to pass to into Coil method function call.
-
-        kwargs: dict
-            Keyword arguments to pass to Coil method function call.
+        symmetry_line: np.ndarray[[float, float], [float, float]]
+            two points making a symmetry line
 
         Returns
         -------
-        results: list
-            List containing outputs of coil method applied
-            to each member of the SymmetricCircuit
-        """
-        results = []
-        for cl_n in [".1", ".2"]:
-            coil = self.coils[self.name + cl_n]
-            result = coil.__getattribute__(method_name)(*args, **kwargs)
-            results.append(result)
-        return results
+        x, z of the two coils
 
-    def set_dx(self, _dx):
         """
-        Adjusts the radial thickness of all Coils in the SymmetricCircuit.
+        self.modify_symmetry(symmetry_line)
+        return np.array([self._point, self._point - self._symmetrise()]).T
 
-        Parameters
-        ----------
-        _dx: float
-            The change in radial position to apply to the coils
+    def _symmetrise(self):
         """
-        self.apply_coil_method("set_dx", _dx)
-
-    def set_dz(self, _dz):
+        Calculate the change in position to the symmetric coil,
+        twice the distance to the line of symmetry.
         """
-        Adjusts the vertical thickness of all Coils in the SymmetricCircuit.
+        return 2 * (
+            (self._point - self._symmetry_point)
+            - (np.dot(self._point - self._symmetry_point, self._uv) * self._uv)
+        )
 
-        Parameters
-        ----------
-        _dz: float
-            The change in vertical position to apply to the coils
+    def _resymmetrise_x(self):
+        self._point[0] = self._x[0]
+        self._x[1] = self._point[0] - self._symmetrise()[0]
+
+    def _resymmetrise_z(self):
+        self._point[1] = self._z[0]
+        self._z[1] = self._point[1] - self._symmetrise()[1]
+
+    @Circuit.x.setter
+    def x(self, new_x: float) -> None:
         """
-        self.apply_coil_method("set_dz", _dz)
-
-    def mesh_coil(self, d_coil):
+        Set x coordinate of each coil
         """
-        Mesh an coils in the SymmetricCircuit into smaller subcoils.
+        self._x[0] = self._point[0] = new_x
+        self._x[1] = self._point[0] - self._symmetrise()[0]
+        self._sizer(self)
 
-        Parameters
-        ----------
-        d_coil: float > 0
-            The coil sub-division size
+    @Circuit.z.setter
+    def z(self, new_z: float) -> None:
         """
-        self.apply_coil_method("mesh_coil", d_coil)
+        Set z coordinate of each coil
+        """
+        self._z[0] = self._point[1] = new_z
+        self._z[1] = self._point[1] - self._symmetrise()[1]
+        self._sizer(self)
 
-    def _points_inside_coil(self, x, z):
-        return self.coils[self.name + ".1"]._points_inside_coil(x, abs(z))
+    @Circuit.position.setter
+    def position(self, new_position: __ITERABLE_FLOAT):
+        """
+        Set position of each coil
+        """
+        self.x = new_position[0, 0]
+        self.z = new_position[0, 1]
 
 
 class CoilSet(CoilGroup):
     """
-    Poloidal field coil set
+    Coilset is the main interface for groups of coils in bluemira
 
-    Parameters
-    ----------
-    coils: Iterable[Coil]
-        The list of poloidal field coils
-    R_0: float
-        Major radius [m] of machine (used to order coil numbers)
-    d_coil: float
-        Coil mesh length [m]
     """
 
-    def __init__(self, coils, d_coil=0.5):
-        super().__init__(coils)
-        self._classify_control()
+    __slots__ = (
+        "__coilgroups",
+        "_circuits",
+        "_control",
+        "_has_circuits",
+    )
 
-    @classmethod
-    def from_eqdsk(cls, filename, force_symmetry=False):
-        """
-        Initialises a CoilSet object from an eqdsk file.
+    def __init__(self, *coils: Union[CoilGroup, List, Dict], d_coil=None):
 
-        Parameters
-        ----------
-        filename: str
-            Filename
-        force_symmetry: bool (default = False)
-            Whether or not to force symmetrisation in the CoilSet
-        """
-        eqdsk = EQDSKInterface()
-        e = eqdsk.read(filename)
-        if "equilibria" not in e["name"]:
-            # SCENE or CREATE
-            e["dxc"] = e["dxc"] / 2
-            e["dzc"] = e["dzc"] / 2
+        if not coils:
+            raise ValueError("No coils provided")
 
-        if force_symmetry:
-            return symmetrise_coilset(cls.from_group_vecs(e))
-        else:
-            return cls.from_group_vecs(e)
+        attributes = self._process_coilgroups(self._convert_to_coilgroup(coils))
 
-    @classmethod
-    def from_group_vecs(cls, groupvecs):
-        """
-        Initialises an instance of CoilSet from group vectors. This has been
-        implemented as a dict operation, because it will occur for eqdsks only.
-        Future dict instantiation methods will likely differ, hence the
-        confusing name of this method.
-        """
-        pfcoils = []
-        cscoils = []
-        passivecoils = []
-        i_pf = 1
-        i_cs = 1
-        for i in range(groupvecs["ncoil"]):
-            dx = groupvecs["dxc"][i]
-            dz = groupvecs["dzc"][i]
-            if abs(groupvecs["Ic"][i]) < I_MIN:
-                # Catch CREATE's crap 0's
-                passivecoils.append(
-                    Coil(
-                        groupvecs["xc"][i],
-                        groupvecs["zc"][i],
-                        current=0,
-                        dx=dx,
-                        dz=dz,
-                        ctype="Passive",
-                        control=False,
-                    )
-                )
-            else:
-                if dx != dz:  # Rough and ready
-                    cscoils.append(
-                        Coil(
-                            groupvecs["xc"][i],
-                            groupvecs["zc"][i],
-                            groupvecs["Ic"][i],
-                            dx=dx,
-                            dz=dz,
-                            ctype="CS",
-                        )
-                    )
-                    i_cs += 1
-                else:
-                    coil = Coil(
-                        groupvecs["xc"][i],
-                        groupvecs["zc"][i],
-                        groupvecs["Ic"][i],
-                        dx=dx,
-                        dz=dz,
-                        ctype="PF",
-                    )
-                    i_pf += 1
-                    coil.fix_size()  # Oh ja
-                    pfcoils.append(coil)
+        for k, v in attributes.items():
+            setattr(self, k, v)
 
-        coils = pfcoils
-        if len(cscoils) != 0:
-            coils.extend(cscoils)
-        coils.extend(passivecoils)
-        return cls(coils)
+        self._circuit_mechanics()
 
-    @property
-    def n_PF(self):
-        """
-        The number of PF coils.
-        """
-        return len([c for c in self.coils.values() if c.ctype == "PF"])
+        self.discretise(d_coil)
 
-    @property
-    def n_CS(self):
-        """
-        The number of CS coils.
-        """
-        return len([c for c in self.coils.values() if c.ctype == "CS"])
+        self._control = np.ones_like(self._x, dtype=bool)
 
-    @property
-    def n_control(self):
+    def __init_subclass__(cls, *args, **kwargs):
         """
-        The length of the controls.
+        Subclassing protection
         """
-        return sum([coil.n_control for coil in self.coils.values()])
+        raise EquilibriaError("class not designed to be subclassed")
 
-    @property
-    def n_constraints(self):
+    def __str__(self) -> str:
         """
-        The length of the constraints.
+        Pretty pront Coilset
         """
-        return sum([coil.n_constraints for coil in self.coils.values()])
+        return ", ".join(
+            sorted(
+                [f"{v.__class__.__name__}({v})" for v in self.__coilgroups.values()],
+                key=lambda k: k.split("(")[1].split(":")[0],
+            )
+        )
 
-    def reassign_coils(self, coils):
-        """
-        Re-set the coils in the CoilSet.
-        """
-        self.coils = self.sort_coils(coils)
-        self._classify_control()
+    def _circuit_mechanics(self):
+        self._circuits = np.array(
+            [isinstance(cg, Circuit) for cg in self.__coilgroups.values()], dtype=bool
+        )
 
-    def add_coil(self, coil):
-        """
-        Add a coil to the CoilSet and re-order coil numbering.
-        """
-        super().add_coil(coil)
-        self._classify_control()
+        self._has_circuits = any(self._circuits)
 
-    def remove_coil(self, coilname):
-        """
-        Remove a coil from the Coilset and re-order coil numbering.
-        """
-        super().remove_coil(coilname)
-        self._classify_control()
-
-    def reset(self):
-        """
-        Returns coilset to virgin current and size state. Positions are fixed.
-        Coils are controlled by default
-        """
-        for coil in self.coils.values():
-            coil.current = 0
-            coil.control = True
-            if coil.ctype == "PF":
-                coil.make_size()
-
-    def adjust_sizes(self, max_currents=None):
-        """
-        Resize coils based on coil currents (PF coils only)
-
-        Parameters
-        ----------
-        max_currents: np.array(n_C)
-            The array of peak coil currents (including CS for simplicity) [A]
-        """
-        for i, coil in enumerate(self.coils.values()):
-            if coil.ctype == "PF":
-                if max_currents is not None:
-                    current = max_currents[i]
-                else:
-                    current = None  # defaults to self.current
-                coil.make_size(current=current)
+        return
+        no_coils = len(self._x)
+        _circuit_index = [0]
+        for c in range(no_coils):
+            if not (self._circuits[c] and c):
+                _circuit_index.append(no + 1)
             else:
                 pass
+        self._circuit_index = np.array(_circuit_index)
 
-    def get_control_currents(self):
+    @CoilGroup.x.setter
+    def x(self, new_x):
         """
-        Returns a list of controlled coil currents (if coil.control == True)
+        https://stackoverflow.com/questions/10810369/python-super-and-setting-parent-class-property
         """
-        return np.array([c.current for c in self.coils.values() if c.control])
+        if self._has_circuits:
+            raise NotImplementedError
+        super(CoilSet, self.__class__).x.fset(self, new_x)
 
-    def get_control_names(self):
+    @CoilGroup.z.setter
+    def z(self, new_z):
+        if self._has_circuits:
+            raise NotImplementedError
+        super(CoilSet, self.__class__).z.fset(self, new_z)
+
+    @CoilGroup.dx.setter
+    def dx(self, new_dx):
+        if self._has_circuits:
+            raise NotImplementedError
+        super(CoilSet, self.__class__).dx.fset(self, new_dx)
+
+    @CoilGroup.dz.setter
+    def dz(self, new_dz):
+        if self._has_circuits:
+            raise NotImplementedError
+        super(CoilSet, self.__class__).dz.fset(self, new_dz)
+
+    @CoilGroup.current.setter
+    def current(self, new_current):
+        if self._has_circuits:
+            raise NotImplementedError
+        super(CoilSet, self.__class__).current.fset(self, new_current)
+
+    @property
+    def control_current(self) -> np.ndarray:
         """
-        Returns a list of controlled coil names (if coil.control == True)
+        Get coil current
         """
-        return [coil.name for coil in self.coils.values() if coil.control]
+        return self.current[self._control]
 
-    def get_uncontrol_names(self):
+    @control_current.setter
+    def control_current(self, new_current: __ITERABLE_FLOAT) -> None:
         """
-        Returns a list of uncontrolled coil names (if coil.control == False)
+        Set coil current
         """
-        return [coil.name for coil in self.coils.values() if not coil.control]
+        if self._has_circuits:
+            raise NotImplementedError
+        self.current[self._control] = new_current
 
-    def get_PF_names(self):
+    @property
+    def control_x(self) -> np.ndarray:
         """
-        Return a list of PF coil names
+        Get control coil x positions
         """
-        return [coil.name for coil in self.coils.values() if "PF" in coil.name]
+        return self.x[self._control]
 
-    def get_CS_names(self):
+    @control_x.setter
+    def control_x(self, new_x: __ITERABLE_FLOAT) -> None:
         """
-        Return a list of CS coil names
+        Set coil control_x
         """
-        return [coil.name for coil in self.coils.values() if "CS" in coil.name]
+        if self._has_circuits:
+            raise NotImplementedError
+        self.x[self._control] = new_x
 
-    def get_solenoid(self):
+    @property
+    def control_z(self) -> np.ndarray:
         """
-        Returns the central Solenoid object for a CoilSet
+        Get control coil z positions
         """
-        names = self.get_CS_names()
-        coils = [deepcopy(self.coils[name]) for name in names]
-        return Solenoid.from_coils(coils)
+        return self.z[self._control]
 
-    def get_positions(self):
+    @control_z.setter
+    def control_z(self, new_z: __ITERABLE_FLOAT) -> None:
         """
-        Returns the arrays of the coil centre coordinates
+        Set coil control_z
         """
-        coil_values = self.coils.values()
-        x, z = np.zeros(len(coil_values)), np.zeros(len(coil_values))
-        for i, coil in enumerate(coil_values):
-            x[i] = float(coil.x)
-            z[i] = float(coil.z)
-        return x, z
+        if self._has_circuits:
+            raise NotImplementedError
+        self.z[self._control] = new_z
 
-    def assign_coil_materials(self, name, j_max=None, b_max=None):
-        """
-        Assigns material limits to coils
+    def _controller(func):
+        @wraps(func)
+        def _control_wrapper(self, *args, **kwargs):
+            return func(self, *args, **kwargs)[..., self._control]
 
-        Parameters
-        ----------
-        name: str
-            Name of the coil to assign the material to
-            from ['PF', 'CS', 'PF_x', 'CS_x'] with x a valid str(int)
-        j_max: float (default None)
-            Overwrite default constant material max current density [MA/m^2]
-        b_max: float (default None)
-            Overwrite default constant material max field [T]
-        """
-        if name == "PF":
-            names = self.get_PF_names()
-            for name in names:
-                self.assign_coil_materials(name, j_max=j_max, b_max=b_max)
-        elif name == "CS":
-            names = self.get_CS_names()
-            for name in names:
-                self.assign_coil_materials(name, j_max=j_max, b_max=b_max)
-        else:
-            self.coils[name].assign_material(j_max=j_max, b_max=b_max)
+        return _control_wrapper
 
-    def get_max_fields(self):
-        """
-        Returns a vector of the maximum magnetic fields
+    control_Bx = _controller(CoilGroup.unit_Bx)
+    control_Bz = _controller(CoilGroup.unit_Bz)
+    control_psi = _controller(CoilGroup.unit_psi)
 
-        Returns
-        -------
-        b_max: np.array(self.n_C)
-            An array of maximum field values [T]
-        """
-        b_max = np.zeros(len(self.coils.values()))
-        for i, coil in enumerate(self.coils.values()):
-            b_max[i] = coil.b_max
-        return b_max
+    def _summer(func):
+        @wraps(func)
+        def _sum_wrapper(self, *args, **kwargs):
+            return np.squeeze(np.sum(func(self, *args, **kwargs), axis=-1))
 
-    def get_max_currents(self, max_pf_current):
-        """
-        Returns a vector of the maximum coil currents. If a PF coil size is
-        fixed, will return the correct maximum, overwriting the input maximum.
+        return _sum_wrapper
 
-        Parameters
-        ----------
-        max_pf_current: float or None
-            Maximum PF coil current [A]
+    Bx = _summer(CoilGroup.Bx)
+    Bz = _summer(CoilGroup.Bz)
+    psi = _summer(CoilGroup.psi)
+    Bx_greens = _summer(CoilGroup.Bx_greens)
+    Bz_greens = _summer(CoilGroup.Bz_greens)
+    psi_greens = _summer(CoilGroup.psi_greens)
+    # @CoilGroup.x.setter
+    # def x(self, new_x: __ITERABLE_FLOAT):
+    #     self._x[:] = np.atleast_2d(new_x.T).T
+    #     self._ensure_symmetry('x')
 
-        Returns
-        -------
-        max_currents: np.array(n_C)
-        """
-        n_currents = len(self.coils.values())
-        max_currents = max_pf_current * np.ones(n_currents)
-        pf_names = self.get_PF_names()
-        for i, name in enumerate(pf_names):
-            if self.coils[name].flag_sizefix:
-                max_currents[i] = self.coils[name].get_max_current()
+    # @CoilGroup.z.setter
+    # def z(self, new_z: __ITERABLE_FLOAT):
+    #     self._z[:] = np.atleast_2d(new_z.T).T
+    #     self._ensure_symmetry('z')
+    @staticmethod
+    def _sizer(self):
+        for cg in self.__coilgroups.values():
+            cg._sizer(cg)
 
-        cs_names = self.get_CS_names()
-        for i, name in enumerate(cs_names):
-            max_currents[self.n_PF + i] = self.coils[name].get_max_current()
-        return max_currents
+    def _ensure_symmetry(self, prop):
+        for no, cg in enumerate(self.__coilgroups.values()):
+            if self._circuits[no]:
+                getattr(cg, f"_resymmetrise_{prop}")()
+            cg._sizer(cg)
 
-    def adjust_currents(self, current_change):
-        """
-        Modify currents in coils: [I]<--[I]+[dI]
-        """
-        for coil, d_i in zip(self._ccoils, current_change):
-            coil.adjust_current(d_i)
+    @staticmethod
+    def _convert_to_coilgroup(
+        coils: Tuple[Union[CoilGroup, List, Dict]]
+    ) -> List[CoilGroup]:
+        # Overly complex data structure of coils not dealt with
+        # eg Tuple(List(CoilGroup), List(List), Dict(List))
+        for i, coil in enumerate(coils):
+            if isinstance(coil, List):
+                coils[i] = Coil(*coil)
+            elif isinstance(coil, Dict):
+                coils[i] = Coil(**coil)
+            elif not isinstance(coil, CoilGroup):
+                raise TypeError(f"Conversion to Coil unknown for type '{type(coil)}'")
+        return coils
 
-    def set_control_currents(self, currents, update_size=True):
-        """
-        Sets the currents in the coils being controlled
-        """
-        for coil, current in zip(self._ccoils, currents):
-            coil.set_current(current)
-        if update_size:
-            self.adjust_sizes()
-            self.mesh_coils()
+    def _process_coilgroups(self, coilgroups: List[CoilGroup]):
+        self.__coilgroups = {cg.name: cg for cg in coilgroups}
 
-    def adjust_positions(self, position_changes):
-        """
-        Modify coil positions: [X]<--[X]+[dX]
-        """
-        for coil, position in zip(self._ccoils, position_changes):
-            coil.adjust_position(*position)
+        # filters = {
+        #     group.name: partial(
+        #         lambda name, coilgroup: np.array(
+        #             [c_n == name for c_n in coilgroup.name], dtype=bool
+        #         ),
+        #         group.name,
+        #     )
+        #     for group in coilgroups
+        # }
 
-    def set_positions(self, positions):
-        """
-        Sets the positions of the coils being controlled
-        """
-        if isinstance(positions, list):
-            self._set_positions_list(positions)
-        elif isinstance(positions, dict):
-            self._set_positions_dict(positions)
-        else:
-            raise TypeError("Coil positions type should be either list or dict")
+        # self.define_subset(filters)
+        # self._finalise_groups()
 
-    def _set_positions_list(self, positions):
-        for coil, position in zip(self._ccoils, positions):
-            coil.set_position(*position)
+        names = [
+            "_x",
+            "_z",
+            "_dx",
+            "_dz",
+            "_current",
+            "_j_max",
+            "_b_max",
+            "_ctype",
+        ]
+        attributes = {k: [] for k in names}
+        indexes = {}
+        for name, attr_list in attributes.items():
+            no_coils = 0
+            for no, group in enumerate(coilgroups):
+                child_attr = getattr(group, name)
+                old_coils = no_coils
+                no_coils += 1 if isinstance(child_attr, str) else len(child_attr)
+                indexes[no] = (old_coils, no_coils)
+                if (
+                    len(child_attr) > 1 and not isinstance(child_attr, str)
+                ) or isinstance(child_attr, list):
+                    attributes[name].extend(child_attr)
+                else:
+                    attributes[name].append(child_attr)
 
-    def _set_positions_dict(self, positions):
-        for coil in self._ccoils:
-            if coil.name in positions:
-                coil.set_position(*positions[coil.name])
-
-    def plot(self, ax=None, snap=None, subcoil=True, **kwargs):
-        """
-        Plots the CoilSet object onto `ax`
-        """
-        if snap is not None:
-            for name, coil in self.coils.items():
-                coil.current = self.Iswing[name][snap]
-        return CoilSetPlotter(self, ax=ax, subcoil=subcoil, **kwargs)
-
-
-def _get_symmetric_coils(coilset):
-    """
-    Coilset symmetry utility
-    """
-    x, z, dx, dz, currents = coilset.to_group_vecs()
-    coil_matrix = np.array([x, np.abs(z), dx, dz, currents]).T
-
-    sym_stack = [[coil_matrix[0], 1]]
-    for i in range(1, len(x)):
-        coil = coil_matrix[i]
-
-        for j, sym_coil in enumerate(sym_stack):
-            if np.allclose(coil, sym_coil[0]):
-                sym_stack[j][1] += 1
-                break
-
-        else:
-            sym_stack.append([coil, 1])
-
-    return sym_stack
-
-
-def check_coilset_symmetric(coilset):
-    """
-    Check whether or not a CoilSet is purely symmetric about z=0.
-
-    Parameters
-    ----------
-    coilset: CoilSet
-        CoilSet to check for symmetry
-
-    Returns
-    -------
-    symmetric: bool
-        Whether or not the CoilSet is symmetric about z=0
-    """
-    sym_stack = _get_symmetric_coils(coilset)
-    for coil, count in sym_stack:
-        if count != 2:
-            if not np.isclose(coil[1], 0.0):
-                # z = 0
-                return False
-    return True
-
-
-def symmetrise_coilset(coilset):
-    """
-    Symmetrise a CoilSet by converting any coils that are up-down symmetric about
-    z=0 to SymmetricCircuits.
-
-    Parameters
-    ----------
-    coilset: CoilSet
-        CoilSet to symmetrise
-
-    Returns
-    -------
-    symmetric_coilset: CoilSet
-        New CoilSet with SymmetricCircuits where appropriate
-    """
-    if not check_coilset_symmetric(coilset):
-        bluemira_warn(
-            "Symmetrising a CoilSet which is not purely symmetric about z=0. This can result in undesirable behaviour."
-        )
-    coilset = deepcopy(coilset)
-
-    sym_stack = _get_symmetric_coils(coilset)
-    counts = np.array(sym_stack, dtype=object).T[1]
-
-    new_coils = []
-    for coil, count in zip(coilset.coils.values(), counts):
-        if count == 1:
-            new_coils.append(coil)
-        elif count == 2:
-            if isinstance(coil, SymmetricCircuit):
-                new_coils.append(coil)
-            elif isinstance(coil, Coil):
-                new_coils.append(SymmetricCircuit(coil))
+            if isinstance(getattr(group, name), np.ndarray) and (
+                attributes[name][0].dtype == float
+                if isinstance(attributes[name][0], np.ndarray)
+                else True
+            ):
+                attributes[name] = np.squeeze(np.array(attributes[name], dtype=float))
             else:
-                raise EquilibriaError(f"Unrecognised class {coil.__class__.__name__}")
-        else:
-            raise EquilibriaError("There are super-posed Coils in this CoilSet.")
+                attributes[name] = np.array(attributes[name], dtype=object)
 
-    return CoilSet(new_coils)
+            for no, group in enumerate(coilgroups):
+                index_slice = slice(indexes[no][0], indexes[no][1])
+                setattr(group, name, attributes[name][index_slice])
+
+        return attributes
+
+    @property
+    def name(self):
+        """
+        Names of Coilset
+        """
+        return list(self.__coilgroups.keys())
+
+    def get_coil(self, name_or_id):
+        """
+        Get an individual coil
+        """
+        # Actually all coils could just be attributes eg coilset.PF_1
+        # all groups coilset.PF.current = 5
+        pass
+
+    def _define_subset(self, filters: Dict[str, Callable]):
+        # Create new subgroup of coils
+
+        self._filters = {
+            "PF": lambda coilgroup: np.array(
+                [ct is CoilType.PF for ct in coilgroup.ctype], dtype=bool
+            ),
+            "CS": lambda coilgroup: np.array(
+                [ct is CoilType.CS for ct in coilgroup.ctype], dtype=bool
+            ),
+            **filters,
+        }
+
+    def add_subset(self, filters: Dict[str, Callable]):
+        """
+        Subset filtering
+        """
+        self._filters = {**self._filters, **filters}
+
+        self._finalise_groups()
+
+    def _finalise_groups(self):
+        self._define_subgroup(self._filters.keys())
+
+        self._group_ind = {
+            self._SubGroup._all: slice(None),
+            **{self._SubGroup[f_k]: filt(self) for f_k, filt in self._filters.items()},
+        }
+
+    def __getattribute__(self, attr):
+        """
+        Get attribute with extra for subgroups
+        """
+        try:
+            return super().__getattribute__(attr)
+        except AttributeError as ae:
+            if attr != "__coilgroups":
+                try:
+                    return self.__coilgroups[attr]
+                except KeyError:
+                    # try:
+                    #     return self.__coilgroups[self._group_ind[self._SubGroup[attr]]]
+                    # except KeyError:
+                    raise ae
+            else:
+                raise ae
+
+    def psi(self, x, z):
+        return np.sum(super().psi(x, z), axis=-1)
 
 
-def make_mutual_inductance_matrix(coilset):
+# TODO or To remove (for imports)
+
+
+class Solenoid:
     """
-    Calculate the mutual inductance matrix of a coilset.
-
-    Parameters
-    ----------
-    coilset: CoilSet
-        Coilset for which to calculate the mutual inductance matrix
-
-    Returns
-    -------
-    M: np.ndarray
-        The symmetric mutual inductance matrix [H]
-
-    Notes
-    -----
-    Single-filament coil formulation; serves as a useful approximation.
+    Dummy
     """
-    n_coils = coilset.n_coils
-    M = np.zeros((n_coils, n_coils))  # noqa
-    coils = list(coilset.coils.values())
 
-    itri, jtri = np.triu_indices(n_coils, k=1)
+    pass
 
-    for i, j in zip(itri, jtri):
-        coil_1 = coils[i]
-        coil_2 = coils[j]
-        n1 = coil_1.n_turns
-        n2 = coil_2.n_turns
-        mi = n1 * n2 * greens_psi(coil_1.x, coil_1.z, coil_2.x, coil_2.z)
-        M[i, j] = M[j, i] = mi
 
-    for i, coil in enumerate(coils):
-        radius = np.hypot(coil.dx, coil.dz)
-        M[i, i] = coil.n_turns**2 * circular_coil_inductance_elliptic(coil.x, radius)
+def symmetrise_coilset():
+    """
+    Dummy
+    """
+    pass
 
-    return M
+
+def check_coilset_symmetric():
+    """
+    Dummy
+    """
+    pass
+
+
+def make_mutual_inductance_matrix():
+    """
+    Dummy
+    """
+    pass
+
+
+CS_COIL_NAME = "{}"  # noqa: F401
+PF_COIL_NAME = "{}"  # noqa: F401
+NO_COIL_NAME = "{}"  # noqa: F401

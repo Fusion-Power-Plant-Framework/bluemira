@@ -505,7 +505,7 @@ class FieldNullConstraint(AbsoluteMagneticConstraint):
         """
         Calculate control response of a CoilSet to the constraint.
         """
-        return np.array(
+        return np.vstack(
             [coilset.control_Bx(self.x, self.z), coilset.control_Bz(self.x, self.z)]
         )
 
@@ -557,7 +557,7 @@ class PsiConstraint(AbsoluteMagneticConstraint):
         """
         Calculate control response of a CoilSet to the constraint.
         """
-        return np.array(coilset.control_psi(self.x, self.z))
+        return coilset.control_psi(self.x, self.z)
 
     def evaluate(self, eq):
         """
@@ -605,11 +605,9 @@ class IsofluxConstraint(RelativeMagneticConstraint):
         """
         Calculate control response of a CoilSet to the constraint.
         """
-        c_ref = coilset.control_psi(self.ref_x, self.ref_z)
-        return (
-            np.array(coilset.control_psi(self.x, self.z))
-            - np.array(c_ref)[:, np.newaxis]
-        ).T
+        return coilset.control_psi(self.x, self.z) - coilset.control_psi(
+            self.ref_x, self.ref_z
+        )
 
     def evaluate(self, eq):
         """
@@ -664,7 +662,7 @@ class PsiBoundaryConstraint(AbsoluteMagneticConstraint):
         """
         Calculate control response of a CoilSet to the constraint.
         """
-        return np.array(coilset.control_psi(self.x, self.z)).T
+        return coilset.control_psi(self.x, self.z).T
 
     def evaluate(self, eq):
         """
@@ -765,7 +763,7 @@ class MagneticConstraintSet(ABC):
         """
         Build the control response matrix used in optimisation.
         """
-        self.A = np.zeros((len(self), len(self.coilset._ccoils)))
+        self.A = np.zeros((len(self), len(self.coilset._control)))
 
         i = 0
         for constraint in self.constraints:

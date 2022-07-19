@@ -29,7 +29,8 @@ from bluemira.geometry._deprecated_loop import Loop
 class TestCoilsetOptimiser:
     @classmethod
     def setup_class(cls):
-        coil = Coil(
+        circuit = SymmetricCircuit(
+            np.array([[0, 0], [1, 0]]),
             x=1.5,
             z=6.0,
             current=1e6,
@@ -40,7 +41,6 @@ class TestCoilsetOptimiser:
             ctype="PF",
             name="PF_2",
         )
-        circuit = SymmetricCircuit(coil)
 
         coil2 = Coil(
             x=4.0,
@@ -63,7 +63,7 @@ class TestCoilsetOptimiser:
             b_max=50.0,
             name="PF_3",
         )
-        cls.coilset = CoilSet([circuit, coil2, coil3])
+        cls.coilset = CoilSet(circuit, coil2, coil3)
 
         max_coil_shifts = {
             "x_shifts_lower": -2.0,
@@ -73,15 +73,14 @@ class TestCoilsetOptimiser:
         }
 
         cls.pfregions = {}
-        for coil in cls.coilset._ccoils:
-            xu = coil.x + max_coil_shifts["x_shifts_upper"]
-            xl = coil.x + max_coil_shifts["x_shifts_lower"]
-            zu = coil.z + max_coil_shifts["z_shifts_upper"]
-            zl = coil.z + max_coil_shifts["z_shifts_lower"]
-
+        xup = cls.coilset.x[cls.coilset._control] + max_coil_shifts["x_shifts_upper"]
+        xlo = cls.coilset.x[cls.coilset._control] + max_coil_shifts["x_shifts_lower"]
+        zup = cls.coilset.z[cls.coilset._control] + max_coil_shifts["z_shifts_upper"]
+        zlo = cls.coilset.z[cls.coilset._control] + max_coil_shifts["z_shifts_lower"]
+        for name, xl, xu, zl, zu in zip(cls.coilset.name, xup, xlo, zup, zlo):
             rect = Loop(x=[xl, xu, xu, xl, xl], z=[zl, zl, zu, zu, zl])
 
-            cls.pfregions[coil.name] = rect
+            cls.pfregions[name] = rect
 
         cls.optimiser = CoilsetPositionCOP(cls.coilset, None, None, cls.pfregions)
 

@@ -40,7 +40,7 @@ class TestForceField:
             c = Coil(xi, zi, current=10e6, ctype="PF", name=f"PF_{i+1}", dx=0, dz=0)
 
             coils.append(c)
-        cls.coilset = CoilSet(coils)
+        cls.coilset = CoilSet(*coils)
         cls.eq = Equilibrium(
             cls.coilset,
             Grid(0.1, 10, -10, 10, 10, 10),

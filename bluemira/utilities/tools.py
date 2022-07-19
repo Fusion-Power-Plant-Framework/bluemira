@@ -380,6 +380,16 @@ def is_num(thing):
         return False
 
 
+def is_num_array(thing):
+    """
+    :func:is_num but also includes arrays
+    """
+    if isinstance(thing, np.ndarray) and thing.dtype in [float, int, complex]:
+        return ~np.isnan(thing)
+    else:
+        return is_num(thing)
+
+
 def abs_rel_difference(v2, v1_ref):
     """
     Calculate the absolute relative difference between a new value and an old
@@ -561,9 +571,14 @@ def flatten_iterable(iters):
     Yields
     ------
         elements of iterable
+
+    Notes
+    -----
+    Does not cater for nested dictionaries
+
     """
     for _iter in iters:
-        if isinstance(_iter, Iterable) and not isinstance(_iter, (str, bytes)):
+        if isinstance(_iter, Iterable) and not isinstance(_iter, (str, bytes, dict)):
             for _it in flatten_iterable(_iter):
                 yield _it
         else:

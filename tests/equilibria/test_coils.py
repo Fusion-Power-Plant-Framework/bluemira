@@ -18,6 +18,7 @@
 #
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
+import copy
 
 import numpy as np
 import pytest
@@ -26,12 +27,10 @@ from matplotlib import pyplot as plt
 import tests
 from bluemira.base.constants import MU_0
 from bluemira.equilibria.coils import (
-    CS_COIL_NAME,
-    NO_COIL_NAME,
-    PF_COIL_NAME,
     Coil,
     CoilGroup,
     CoilSet,
+    CoilType,
     SymmetricCircuit,
     check_coilset_symmetric,
     make_mutual_inductance_matrix,
@@ -46,34 +45,29 @@ class TestCoil:
     @classmethod
     def setup_class(cls):
         # make a default coil
-        cls.coil = Coil(4, 4, 10e6, j_max=NBTI_J_MAX)
-        cls.cs_coil = Coil(4, 4, 10e6, ctype="CS", j_max=NBTI_J_MAX)
-        cls.no_coil = Coil(4, 4, 10e6, ctype="asrgd", j_max=NBTI_J_MAX)
+        cls.coil = Coil(x=4, z=4, current=10e6, j_max=NBTI_J_MAX)
+        cls.cs_coil = Coil(x=4, z=4, current=10e6, ctype="CS", j_max=NBTI_J_MAX)
+        cls.no_coil = Coil(x=4, z=4, current=10e6, ctype=None, j_max=NBTI_J_MAX)
 
     def test_name(self):
-        def extract_int(coil):
-            return int(coil.name.split("_")[-1])
 
-        def extract_prefix(coil):
-            return coil.name.split("_")[0]
+        assert self.coil.ctype[0] == CoilType.PF
+        assert self.cs_coil.ctype[0] == CoilType.CS
+        assert self.no_coil.ctype[0] == CoilType.NONE
+        coil = Coil(x=4, z=4, current=10e6, j_max=NBTI_J_MAX)
+        cs_coil = Coil(x=4, z=4, current=10e6, ctype="CS", j_max=NBTI_J_MAX)
+        no_coil = Coil(x=4, z=4, current=10e6, ctype="None", j_max=NBTI_J_MAX)
 
-        assert extract_prefix(self.coil) == PF_COIL_NAME.split("_")[0]
-        assert extract_prefix(self.cs_coil) == CS_COIL_NAME.split("_")[0]
-        assert extract_prefix(self.no_coil) == NO_COIL_NAME.split("_")[0]
-        coil = Coil(4, 4, 10e6, j_max=NBTI_J_MAX)
-        cs_coil = Coil(4, 4, 10e6, ctype="CS", j_max=NBTI_J_MAX)
-        no_coil = Coil(4, 4, 10e6, ctype="agd", j_max=NBTI_J_MAX)
-
-        assert extract_int(coil) == extract_int(self.coil) + 1
-        assert extract_int(cs_coil) == extract_int(self.cs_coil) + 1
-        assert extract_int(no_coil) == extract_int(self.no_coil) + 1
+        assert coil._index[0] == self.coil._index[0] + 1
+        assert cs_coil._index[0] == self.cs_coil._index[0] + 1
+        assert no_coil._index[0] == self.no_coil._index[0] + 1
 
     def test_field(self):
-        c = Coil(1, 0, current=1591550, dx=0, dz=0)  # Sollte 5 T am Achse erzeugen
+        c = Coil(x=1, z=0, current=1591550, dx=0, dz=0)  # Should produce 5 T on axis
         Bx, Bz = 0, MU_0 * c.current / (2 * c.x)
 
         assert c.Bx(0.001, 0) == Bx
-        assert round(abs(c.Bz(0.001, 0) - Bz), 5) == 0
+        assert np.round(abs(c.Bz(0.001, 0) - Bz), 5) == 0
         z = 4
         Bx, Bz = (
             0,
@@ -84,14 +78,14 @@ class TestCoil:
             * c.current
             / (4 * np.pi * (z**2 + c.x**2) ** (3 / 2)),
         )
-        assert round(abs(c.Bx(0.001, z) - Bx), 4) == 0
-        assert round(abs(c.Bz(0.001, z) - Bz), 5) == 0
+        assert np.round(abs(c.Bx(0.001, z) - Bx), 4) == 0
+        assert np.round(abs(c.Bz(0.001, z) - Bz), 5) == 0
         psi_single = c.psi(15, 15)
-        c.mesh_coil(0.1)
-        assert round(abs(c.Bx(0.001, z) - Bx), 4) == 0
-        assert round(abs(c.Bz(0.001, z) - Bz), 3) == 0
+        c.discretise(0.1)
+        assert np.round(abs(c.Bx(0.001, z) - Bx), 4) == 0
+        assert np.round(abs(c.Bz(0.001, z) - Bz), 3) == 0
         psi_multi = c.psi(15, 15)
-        assert round(abs(psi_single - psi_multi), 2) == 0
+        assert np.round(abs(psi_single - psi_multi), 2) == 0
 
     def test_mesh(self):
         xmin, xmax = 0.1, 20
@@ -101,12 +95,12 @@ class TestCoil:
         x_1_d = np.linspace(xmin, xmax, nx)
         z_1_d = np.linspace(zmin, zmax, nz)
         x, z = np.meshgrid(x_1_d, z_1_d, indexing="ij")
-        c = Coil(4, 0, current=1591550, dx=0.3, dz=1)
+        c = Coil(x=4, z=0, current=1591550, dx=0.3, dz=1)
 
-        gbx = c.control_Bx(x, z)
-        gbz = c.control_Bz(x, z)
+        gbx = c.unit_Bx(x, z)
+        gbz = c.unit_Bz(x, z)
         gbp = np.sqrt(gbx**2 + gbz**2)
-        gp = c.control_psi(x, z)
+        gp = c.unit_psi(x, z)
 
         if tests.PLOTTING:
             f, ax = plt.subplots()
@@ -117,12 +111,12 @@ class TestCoil:
             ax.set_xlim([2, 6])
             ax.set_ylim([-3, 3])
 
-        c.mesh_coil(0.1)
+        c.discretise(0.1)
 
-        gbxn = c.control_Bx(x, z)
-        gbzn = c.control_Bz(x, z)
+        gbxn = c.unit_Bx(x, z)
+        gbzn = c.unit_Bz(x, z)
         gbpn = np.sqrt(gbx**2 + gbz**2)
-        gpn = c.control_psi(x, z)
+        gpn = c.unit_psi(x, z)
 
         if tests.PLOTTING:
             f, ax = plt.subplots()
@@ -158,7 +152,7 @@ class TestCoil:
 
         b1 = f_callable(x, z)
 
-        assert np.allclose(b, b1)
+        assert np.allclose(b, b1.flat)
 
     def test_bx(self):
         self.callable_tester(self.coil.Bx)
@@ -173,16 +167,19 @@ class TestCoil:
         self.callable_tester(self.coil.psi)
 
     def test_point_in_coil(self):
-        coil = Coil(4, 4, current=10, dx=1, dz=2)
+        coil = Coil(x=4, z=4, current=10, dx=1, dz=2)
         inside_x = [3, 4, 5, 3, 4, 5, 3, 4, 5]
         inside_z = [2, 2, 2, 3, 3, 3, 6, 6, 6]
         inside = coil._points_inside_coil(inside_x, inside_z)
+
         assert np.alltrue(inside)
+
         outside_x = [0, 0, 0, 1, 1, 1, 10, 10, 10, 3, 3, 3]
         outside_z = [0, 4, 6, 0, 4, 6, 0, 4, 6, 1.9, 6.1, 10]
         outside = coil._points_inside_coil(outside_x, outside_z)
+
         assert np.all(~outside)
-        assert np.alltrue(coil._points_inside_coil(coil.x_corner, coil.z_corner))
+        assert np.alltrue(coil._points_inside_coil(coil.x_boundary, coil.z_boundary))
 
 
 @pytest.mark.longrun
@@ -194,16 +191,16 @@ class TestSemiAnalytic:
 
     @classmethod
     def setup_class(cls):
-        cls.coil = Coil(4, 4, current=10e6, dx=1, dz=2)
-        cls.coil.mesh_coil(0.2)
+        cls.coil = Coil(x=4, z=4, current=10e6, dx=1, dz=2)
+        cls.coil.discretise(0.2)
         cls.grid = Grid(0.1, 8, 0, 8, 100, 100)
-        cls.x_corner = np.append(cls.coil.x_corner, cls.coil.x_corner[0])
-        cls.z_corner = np.append(cls.coil.z_corner, cls.coil.z_corner[0])
+        cls.x_boundary = np.append(cls.coil.x_boundary, cls.coil.x_boundary[0])
+        cls.z_boundary = np.append(cls.coil.z_boundary, cls.coil.z_boundary[0])
 
     def test_bx(self):
-        gp = self.coil.control_Bx(self.grid.x, self.grid.z)
-        gp_greens = self.coil._control_Bx_greens(self.grid.x, self.grid.z)
-        gp_analytic = self.coil._control_Bx_analytical(self.grid.x, self.grid.z)
+        gp = self.coil.unit_Bx(self.grid.x, self.grid.z)
+        gp_greens = self.coil._unit_Bx_greens(self.grid.x, self.grid.z)
+        gp_analytic = self.coil._unit_Bx_analytical(self.grid.x, self.grid.z)
 
         if tests.PLOTTING:
             f, ax = plt.subplots(1, 3)
@@ -212,16 +209,16 @@ class TestSemiAnalytic:
             ax[1].contourf(self.grid.x, self.grid.z, gp, levels=levels)
             ax[2].contourf(self.grid.x, self.grid.z, gp_analytic, levels=levels)
             for axis in ax:
-                axis.plot(self.x_corner, self.z_corner, color="r")
+                axis.plot(self.x_boundary, self.z_boundary, color="r")
                 axis.set_aspect("equal")
             ax[0].set_title("Green's functions")
             ax[1].set_title("Combined Green's and semi-analytic")
             ax[2].set_title("Semi-analytic method")
 
     def test_bz(self):
-        gp = self.coil.control_Bz(self.grid.x, self.grid.z)
-        gp_greens = self.coil._control_Bz_greens(self.grid.x, self.grid.z)
-        gp_analytic = self.coil._control_Bz_analytical(self.grid.x, self.grid.z)
+        gp = self.coil.unit_Bz(self.grid.x, self.grid.z)
+        gp_greens = self.coil._unit_Bz_greens(self.grid.x, self.grid.z)
+        gp_analytic = self.coil._unit_Bz_analytical(self.grid.x, self.grid.z)
 
         if tests.PLOTTING:
             f, ax = plt.subplots(1, 3)
@@ -230,7 +227,7 @@ class TestSemiAnalytic:
             ax[1].contourf(self.grid.x, self.grid.z, gp, levels=levels)
             ax[2].contourf(self.grid.x, self.grid.z, gp_analytic, levels=levels)
             for axis in ax:
-                axis.plot(self.x_corner, self.z_corner, color="r")
+                axis.plot(self.x_boundary, self.z_boundary, color="r")
                 axis.set_aspect("equal")
             ax[0].set_title("Green's functions")
             ax[1].set_title("Combined Green's and semi-analytic")
@@ -240,15 +237,13 @@ class TestSemiAnalytic:
 class TestCoilGroup:
     @staticmethod
     def make_coilgroup():
-        coils = [
-            Coil(6, 6, ctype="CS", name="CS_8", j_max=NBTI_J_MAX),
-            Coil(7, 7, ctype="CS", name="CS_0", j_max=NBTI_J_MAX),
-            Coil(8, 8, ctype="plasma", name="plasma_1", j_max=NBTI_J_MAX),
-            Coil(4, 4, ctype="PF", name="PF_1", j_max=NBTI_J_MAX),
-            Coil(4, 5, ctype="PF", name="PF_0", j_max=NBTI_J_MAX),
-        ]
+        x = [6, 7, 4, 4]
+        z = [6, 7, 4, 5]
+        ctype = ["CS", "CS", "PF", "PF"]
+        name = ["CS_8", "CS_0", "PF_1", "PF_0"]
+        j_max = NBTI_J_MAX
 
-        return CoilGroup(coils)
+        return CoilGroup(x=x, z=z, name=name, ctype=ctype, j_max=j_max)
 
     def test_init_sort(self):
         group = self.make_coilgroup()
@@ -258,13 +253,11 @@ class TestCoilGroup:
         assert coil_list[1].name == "PF_1"
         assert coil_list[2].name == "CS_0"
         assert coil_list[3].name == "CS_8"
-        assert coil_list[4].name == "plasma_1"
 
     def test_add(self):
         group = self.make_coilgroup()
         group.add_coil(Coil(3, 3, ctype="PF", name="PF_3", j_max=NBTI_J_MAX))
         group.add_coil(Coil(9, 9, ctype="CS", name="CS_9", j_max=NBTI_J_MAX))
-        group.add_coil(Coil(10, 10, ctype="plasma", name="plasma_10", j_max=NBTI_J_MAX))
 
         coil_list = list(group.coils.values())
         assert len(coil_list) == 8
@@ -274,8 +267,6 @@ class TestCoilGroup:
         assert coil_list[3].name == "CS_0"
         assert coil_list[4].name == "CS_8"
         assert coil_list[5].name == "CS_9"
-        assert coil_list[6].name == "plasma_1"
-        assert coil_list[7].name == "plasma_10"
 
     def test_remove(self):
         group = self.make_coilgroup()
@@ -290,11 +281,20 @@ class TestCoilGroup:
             group.remove_coil("PF_1")
 
 
-class TestSymmetricCircuit:
+class TestPositionalSymmetricCircuit:
     @classmethod
     def setup_class(cls):
         coil = Coil(x=1.5, z=6, current=1e6, dx=0.25, dz=0.5, ctype="PF", name="TEST")
-        circuit = SymmetricCircuit(coil)
+        circuit = SymmetricCircuit(
+            np.array([[0, 0], [1, 0]]),
+            x=1.5,
+            z=6,
+            current=1e6,
+            dx=0.25,
+            dz=0.5,
+            ctype="PF",
+            name="TEST",
+        )
         mirror_coil = Coil(
             x=1.5, z=-6, current=1e6, dx=0.25, dz=0.5, ctype="PF", name="TEST_MIRROR"
         )
@@ -302,66 +302,68 @@ class TestSymmetricCircuit:
         cls.circuit = circuit
         cls.coils = [coil, mirror_coil]
 
-    def test_fields(self):
+    @pytest.mark.parametrize("fieldtype", ["unit_", ""])
+    def test_fields(self, fieldtype):
         points = [
             [1, 1],
             [2, 2],
             [1.5, 6],
             [1.5, -6],
         ]
+        # circuit_Bx = getattr(self.circuit, f"{fieldtype}Bx")(*np.array(points).T)
+
         for point in points:
-            coil_psi = sum([coil.psi(*point) for coil in self.coils])
-            coil_Bx = sum([coil.Bx(*point) for coil in self.coils])
-            coil_Bz = sum([coil.Bz(*point) for coil in self.coils])
+            coil_psi = sum(
+                [getattr(coil, f"{fieldtype}psi")(*point) for coil in self.coils]
+            )
+            coil_Bx = sum(
+                [getattr(coil, f"{fieldtype}Bx")(*point) for coil in self.coils]
+            )
+            coil_Bz = sum(
+                [getattr(coil, f"{fieldtype}Bz")(*point) for coil in self.coils]
+            )
 
-            circuit_psi = self.circuit.psi(*point)
-            circuit_Bx = self.circuit.Bx(*point)
-            circuit_Bz = self.circuit.Bz(*point)
-            assert np.isclose(coil_psi, circuit_psi)
-            assert np.isclose(coil_Bx, circuit_Bx)
-            assert np.isclose(coil_Bz, circuit_Bz)
+            circuit_psi = getattr(self.circuit, f"{fieldtype}psi")(*point)
+            circuit_Bx = getattr(self.circuit, f"{fieldtype}Bx")(*point)
+            circuit_Bz = getattr(self.circuit, f"{fieldtype}Bz")(*point)
 
-    def test_control(self):
-        points = [
-            [1, 1],
-            [2, 2],
-            [1.5, 6],
-            [1.5, -6],
-        ]
-        for point in points:
-            coil_psi = sum([coil.control_psi(*point) for coil in self.coils])
-            coil_Bx = sum([coil.control_Bx(*point) for coil in self.coils])
-            coil_Bz = sum([coil.control_Bz(*point) for coil in self.coils])
-
-            circuit_psi = self.circuit.control_psi(*point)
-            circuit_Bx = self.circuit.control_Bx(*point)
-            circuit_Bz = self.circuit.control_Bz(*point)
-            assert np.isclose(coil_psi, circuit_psi)
-            assert np.isclose(coil_Bx, circuit_Bx)
-            assert np.isclose(coil_Bz, circuit_Bz)
+            assert np.allclose(coil_psi, np.sum(circuit_psi))
+            assert np.allclose(coil_Bx, np.sum(circuit_Bx))
+            assert np.allclose(coil_Bz, np.sum(circuit_Bz))
 
     def test_current(self):
-        self.circuit.set_current(2e6)
+        self.circuit.current = 2e6
         for coil in self.coils:
-            coil.set_current(2e6)
-        self.test_fields()
+            coil.current = 2e6
+        self.test_fields("")
 
     def test_attributes(self):
-        self.circuit.x = 4
-        assert self.circuit.x == 4
-        assert self.circuit["TEST.1"].x == 4
-        assert self.circuit["TEST.2"].x == 4
+        circ = copy.deepcopy(self.circuit)
+        circ.x = 4
+        assert circ.x[0] == 4
+        assert circ.x[1] == 4
 
-        self.circuit.z = 6
-        assert self.circuit.z == 6
-        assert self.circuit["TEST.1"].z == 6
-        assert self.circuit["TEST.2"].z == -6
+        circ.z = 6
+        assert circ.z[0] == 6
+        assert circ.z[1] == -6
+
+        assert np.allclose(self.coils[0].volume, self.circuit.volume)
+
+    def test_position(self):
+        circ = copy.deepcopy(self.circuit)
+        before = circ.x.copy()
+        circ.adjust_position(np.array([[1, 0]]))
+        assert np.allclose(before + 1, circ.x)
 
 
 class TestCoilSet:
     @classmethod
     def setup_class(cls):
         coil = Coil(
+            x=4, z=10, current=2e6, dx=1, dz=0.5, j_max=5.0, b_max=50, name="PF_1"
+        )
+        circuit = SymmetricCircuit(
+            np.array([[0, 0], [1, 0]]),
             x=1.5,
             z=6,
             current=1e6,
@@ -372,13 +374,8 @@ class TestCoilSet:
             ctype="PF",
             name="PF_2",
         )
-        circuit = SymmetricCircuit(coil)
 
-        coil2 = Coil(
-            x=4, z=10, current=2e6, dx=1, dz=0.5, j_max=5.0, b_max=50, name="PF_1"
-        )
-
-        cls.coilset = CoilSet([coil2, circuit])
+        cls.coilset = CoilSet(coil, circuit)
 
     def test_group_vecs(self):
         x, z, dx, dz, currents = self.coilset.to_group_vecs()
@@ -427,8 +424,8 @@ class TestCoilSet:
 
     def test_currents(self):
         set_currents = np.array([3e6, 4e6])
-        self.coilset.set_control_currents(set_currents)
-        currents = self.coilset.get_control_currents()
+        self.coilset.control_current = set_currents
+        currents = self.coilset.control_current
         assert np.allclose(set_currents, currents)
 
     def test_material_assignment(self):
@@ -445,54 +442,44 @@ class TestCoilSet:
 
 class TestCoilSetSymmetry:
     def test_symmetry_check(self):
-        coilset = CoilSet(
-            [Coil(5, 5, 0, dx=1.0, dz=1.0), Coil(5, -5, 0, dx=1.0, dz=1.0)]
-        )
+        coilset = CoilSet(Coil(5, 5, dx=1.0, dz=1.0), Coil(5, -5, dx=1.0, dz=1.0))
 
         assert check_coilset_symmetric(coilset)
 
         coilset = CoilSet(
-            [Coil(5, 5, 0, dx=1.0, dz=1.0), Coil(5, -5, dx=1.0, dz=1.0, current=1e6)]
+            Coil(5, 5, dx=1.0, dz=1.0), Coil(5, -5, dx=1.0, dz=1.0, current=1e6)
         )
 
         assert not check_coilset_symmetric(coilset)
 
         coilset = CoilSet(
-            [
-                Coil(5, 5, 0, dx=1.0, dz=1.0),
-                Coil(5, 0, 0, dx=1.0, dz=1.0),
-                Coil(5, -5, 0, dx=1.0, dz=1.0),
-            ]
+            Coil(5, 5, dx=1.0, dz=1.0),
+            Coil(5, 0, dx=1.0, dz=1.0),
+            Coil(5, -5, dx=1.0, dz=1.0),
         )
         assert check_coilset_symmetric(coilset)
 
         coilset = CoilSet(
-            [
-                Coil(5, 5, 0, dx=1.0, dz=1.0),
-                Coil(5, 1, 0, dx=1.0, dz=1.0),
-                Coil(5, -5, 0, dx=1.0, dz=1.0),
-            ]
+            Coil(5, 5, dx=1.0, dz=1.0),
+            Coil(5, 1, dx=1.0, dz=1.0),
+            Coil(5, -5, dx=1.0, dz=1.0),
         )
 
         assert not check_coilset_symmetric(coilset)
 
         coilset = CoilSet(
-            [
-                Coil(5, 5, 0, dx=1.0, dz=1.0),
-                Coil(5, 0, 0, dx=1.0, dz=1.0),
-                Coil(5, 1, 0, dx=1.0, dz=1.0),
-                Coil(5, -5, 0, dx=1.0, dz=1.0),
-            ]
+            Coil(5, 5, dx=1.0, dz=1.0),
+            Coil(5, 0, dx=1.0, dz=1.0),
+            Coil(5, 1, dx=1.0, dz=1.0),
+            Coil(5, -5, dx=1.0, dz=1.0),
         )
 
         assert not check_coilset_symmetric(coilset)
 
     def test_symmetrise(self):
         coilset = CoilSet(
-            [
-                Coil(5, 5, 1e6, dx=1, dz=1),
-                Coil(5, -5, 1e6, dx=1, dz=1),
-            ]
+            Coil(5, 5, current=1e6, dx=1, dz=1),
+            Coil(5, -5, current=1e6, dx=1, dz=1),
         )
         new = symmetrise_coilset(coilset)
         assert len(new.coils) == 1
@@ -500,12 +487,10 @@ class TestCoilSetSymmetry:
         assert isinstance(list(new.coils.values())[0], SymmetricCircuit)
 
         coilset = CoilSet(
-            [
-                SymmetricCircuit(Coil(5, 5, 1e6, dx=1, dz=1)),
-                SymmetricCircuit(Coil(12, 7, 1e6, dx=1, dz=1)),
-                SymmetricCircuit(Coil(4, 9, 1e6, dx=1, dz=1)),
-                Coil(5, 0, 1e6, dx=1, dz=1),
-            ]
+            SymmetricCircuit(Coil(5, 5, current=1e6, dx=1, dz=1)),
+            SymmetricCircuit(Coil(12, 7, current=1e6, dx=1, dz=1)),
+            SymmetricCircuit(Coil(4, 9, current=1e6, dx=1, dz=1)),
+            Coil(5, 0, current=1e6, dx=1, dz=1),
         )
         new = symmetrise_coilset(coilset)
         assert len(new.coils) == len(coilset.coils)
@@ -552,7 +537,7 @@ class TestMutualInductances:
         coil1 = Coil(4, 4, j_max=1)
         coil2 = Coil(5, 5, j_max=1)
         coil3 = Coil(6, 6, j_max=1)
-        cls.coilset1 = CoilSet([coil1, coil2, coil3])
+        cls.coilset1 = CoilSet(coil1, coil2, coil3)
 
     def test_normal(self):
         """
@@ -570,16 +555,3 @@ class TestMutualInductances:
         diag = np.diag_indices(3)
         m[diag] = 0.0
         assert np.allclose(m, test_m)
-
-
-class TestCoilSorting:
-    def test_sorting_coilset(self):
-        """Ensure sorting of coils properly handles numbers in the coil name."""
-        coils = [
-            Coil(5, 5, 0, dx=1.0, dz=1.0, name="CS_2"),
-            Coil(5, 5, 0, dx=1.0, dz=1.0, name="CS_10"),
-        ]
-        sorted_coils = CoilGroup.sort_coils(coils)
-        sorted_names = list(sorted_coils)
-        assert sorted_names[0] == "CS_2"
-        assert sorted_names[1] == "CS_10"

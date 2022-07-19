@@ -143,8 +143,8 @@ class CoilsetOptimisationProblem(OptimisationProblem):
             Number of substates (blocks) in the state vector.
         """
         substates = 3
-        x, z = coilset.get_positions()
-        currents = coilset.get_control_currents() / current_scale
+        x, z = coilset.position
+        currents = coilset.current / current_scale
 
         coilset_state = np.concatenate((x, z, currents))
         return coilset_state, substates
@@ -735,7 +735,7 @@ class UnconstrainedTikhonovCurrentGradientCOP(CoilsetOptimisationProblem):
         current_adjustment = tikhonov(a_mat, b_vec, self.gamma)
 
         # Update parameterisation (coilset).
-        self.coilset.adjust_currents(current_adjustment)
+        self.coilset.current += current_adjustment
         return self.coilset
 
 
