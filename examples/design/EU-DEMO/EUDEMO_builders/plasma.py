@@ -223,7 +223,9 @@ class PlasmaBuilder(Builder):
         # TODO: Handle other TF coil parameterisations?
         shape = PrincetonD()
         for key, val in {"x1": rin, "x2": rout, "dz": 0}.items():
-            shape.adjust_variable(key, value=val)
+            shape.adjust_variable(
+                key, value=val, lower_bound=val - 1, upper_bound=val + 1
+            )
 
         tf_boundary = shape.create_shape()
         if self._params.delta_95 < 0:  # Negative triangularity
