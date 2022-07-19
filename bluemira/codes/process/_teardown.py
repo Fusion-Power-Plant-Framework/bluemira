@@ -105,7 +105,7 @@ class Teardown(CodesTeardown):
         bluemira_print("Mocking PROCESS systems code run")
         mock_file_path = os.path.join(self.read_directory, self.MOCK_JSON_NAME)
         outputs = _read_json_file_or_raise(mock_file_path)
-        self.params.update_kw_parameters(outputs)
+        self.params.update_kw_parameters(outputs, source=self._name)
 
     def get_raw_outputs(self, params: Union[List, str]) -> List[float]:
         """
