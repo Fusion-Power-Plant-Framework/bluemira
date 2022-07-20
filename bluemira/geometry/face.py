@@ -37,6 +37,7 @@ from bluemira.geometry.base import BluemiraGeo
 # import from error
 from bluemira.geometry.error import DisjointedFace, NotClosedWire
 from bluemira.geometry.wire import BluemiraWire
+from bluemira.geometry.coordinates import Coordinates
 
 __all__ = ["BluemiraFace"]
 
@@ -48,14 +49,22 @@ class BluemiraFace(BluemiraGeo):
         shape_classes = [cadapi.apiFace]
         super().__init__(shape, label, shape_classes)
 
-    def boundary(self, b_type: str = "wires"):
-        """
-        Get the boundary (wires or vertex) of face.
-        """
-        wires = cadapi.wires(self._shape)
-        if b_type == "wires":
-            return [BluemiraWire(w) for w in wires]
-        if b_type == "vertexes":
-            return [BluemiraWire(w).boundary() for w in wires]
+    @property
+    def vertexes(self):
+        return Coordinates(cadapi.vertexes(self.shape))
 
-        raise ValueError("Only ['vertexes', 'wires'] are allowed as boundary type")
+    @property
+    def wires(self):
+        return [BluemiraWire(o) for o in cadapi.wires(self.shape)]
+
+    @property
+    def faces(self):
+        return self
+
+    @property
+    def shells(self):
+        return []
+
+    @property
+    def solids(self):
+        return []

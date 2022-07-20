@@ -56,11 +56,11 @@ def convert(apiobj, label=""):
     if isinstance(apiobj, cadapi.apiWire):
         output = BluemiraWire(apiobj, label)
     elif isinstance(apiobj, cadapi.apiFace):
-        output = BluemiraFace._create(apiobj, label)
+        output = BluemiraFace(apiobj, label)
     elif isinstance(apiobj, cadapi.apiShell):
-        output = BluemiraShell._create(apiobj, label)
+        output = BluemiraShell(apiobj, label)
     elif isinstance(apiobj, cadapi.apiSolid):
-        output = BluemiraSolid._create(apiobj, label)
+        output = BluemiraSolid(apiobj, label)
     else:
         raise ValueError(f"Cannot convert {type(apiobj)} object into a BluemiraGeo.")
     return output
@@ -649,7 +649,18 @@ def convex_hull_wires_2d(
 
 def make_face(wire: BluemiraWire, label: str = ""):
     """Make a face give a BluemiraWire boundary"""
-    return BluemiraFace(cadapi.make_face(wire.shape, label))
+    return BluemiraFace(cadapi.make_face(wire.shape), label=label)
+
+
+def make_shell(faces: List[BluemiraFace], label: str = ""):
+    """Make a shell from a list of BluemiraFace"""
+    return BluemiraShell(cadapi.make_shell([f.shape for f in faces]), label=label)
+
+
+def make_solid(shell: BluemiraShell, label: str = ""):
+    """Make a solid give a BluemiraShell boundary"""
+    return BluemiraSolid(cadapi.make_solid(shell.shape), label=label)
+
 
 # # =============================================================================
 # # Shape operation

@@ -128,7 +128,8 @@ def check_data_type(data_type):
                     output = output[0]
             else:
                 raise TypeError(
-                    f"Only {data_type} instances can be converted to {type(output)}"
+                    f"{objs} Only {data_type} instances can be converted to"
+                    f" {type(output)}"
                 )
             return output
 
@@ -153,7 +154,6 @@ def point_to_list(points):
 def vertex_to_list(vertexes):
     """Converts a FreeCAD Part.Vertex or list(Part.Vertex) into a list"""
     return [[v.X, v.Y, v.Z] for v in vertexes]
-
 
 @check_data_type(Base.Vector)
 def vector_to_numpy(vectors):
@@ -556,7 +556,7 @@ def offset_wire(
     return wire
 
 
-def make_face(wire: apiWire, label: str = ""):
+def make_face(wire: apiWire):
     """Make a face give a wire boundary"""
     face = apiFace(wire)
     if face.isValid():
@@ -629,6 +629,11 @@ def end_point(obj) -> np.ndarray:
 def ordered_vertexes(obj) -> np.ndarray:
     """Ordered vertexes of the object"""
     vertexes = _get_api_attr(obj, "OrderedVertexes")
+    return vertex_to_numpy(vertexes)
+
+def vertexes(obj) -> np.ndarray:
+    """Wires of the object"""
+    vertexes = _get_api_attr(obj, "Vertexes")
     return vertex_to_numpy(vertexes)
 
 def wires(obj) -> np.ndarray:

@@ -53,17 +53,7 @@ from bluemira.geometry.shell import BluemiraShell
 from bluemira.geometry.solid import BluemiraSolid
 
 # Some useful tools
-from bluemira.geometry.tools import (
-    boolean_cut,
-    boolean_fuse,
-    extrude_shape,
-    interpolate_bspline,
-    make_circle,
-    make_polygon,
-    revolve_shape,
-    save_as_STP,
-    sweep_shape,
-)
+import bluemira.geometry.tools as geotools
 
 # Basic objects
 from bluemira.geometry.wire import BluemiraWire
@@ -80,7 +70,7 @@ from bluemira.geometry.wire import BluemiraWire
 # %%
 # Note that we are going to give these geometries some labels, which
 # we might use later.
-circle_wire = make_circle(
+circle_wire = geotools.make_circle(
     radius=5,
     center=(0, 0, 0),
     axis=(0, 0, 1),
@@ -88,8 +78,8 @@ circle_wire = make_circle(
     end_angle=360,
     label="my_wire",
 )
-circle_face = BluemiraFace(circle_wire, label="my_face")
-cylinder = extrude_shape(circle_face, vec=(0, 0, 10), label="my_solid")
+circle_face = geotools.make_face(circle_wire, label="my_face")
+cylinder = geotools.extrude_shape(circle_face, vec=(0, 0, 10), label="my_solid")
 
 # %%[markdown]
 
@@ -114,30 +104,21 @@ print(cylinder)
 show_cad(cylinder, DisplayCADOptions(color="blue", transparency=0.1))
 
 # %%[markdown]
-# ## Matryoshka structure
+# ## BluemiraGeo structure
 
-# Bluemira geometries are structured in a commonly used "Matryoshka" or
-# "Russian doll"-like structure.
+# Each BluemiraGeo object has access to its sub-components that form the geoemtry
 
-# Solid -> Shell -> Face -> Wire
-
-# These are accessible via the boundary attribute, so, in general, the boundary
-# of a Solid is a Shell or set of Shells, and a Shell will have a set of Faces, etc.
+# i.e: Solid -> Shell -> Face -> Wire
 
 # Let's take a little peek under the hood of our cylinder
 
 # %%
 print(f"Our cylinder is a BluemiraSolid: {isinstance(cylinder, BluemiraSolid)}")
 
-i, j, k = 0, 0, 0  # This is just to facilitate comprehension
-for i, shell in enumerate(cylinder.boundary):
-    print(f"Shell: {i}.{j}.{k} is a BluemiraShell: {isinstance(shell, BluemiraShell)}")
-    for j, face in enumerate(shell.boundary):
-        print(f"Face: {i}.{j}.{k} is a BluemiraFace: {isinstance(face, BluemiraFace)}")
-        for k, wire in enumerate(face.boundary):
-            print(
-                f"Wire: {i}.{j}.{k} is a BluemiraWire: {isinstance(wire, BluemiraWire)}"
-            )
+print(f"Cylinder shell: {cylinder.shells}")
+print(f"Cylinder faces: {cylinder.faces}")
+print(f"Cylinder wires: {cylinder.wires}")
+print(f"Cylinder vertixes: {cylinder.vertexes}")
 
 # %%[markdown]
 # OK, so a cylinder is pretty simple, but more complicated shapes
@@ -163,7 +144,7 @@ y = np.zeros(6)
 z = 5 * np.sin(theta)
 
 points = np.array([x, y, z])
-pentagon = make_polygon(points)
+pentagon = geotools.make_polygon(points)
 
 plot_2d(pentagon)
 
@@ -184,9 +165,9 @@ y = 0.5 * np.sin(x) + 3 * np.cos(x) ** 2
 z = np.zeros(1000)
 
 points = np.array([x, y, z])
-spline = interpolate_bspline(points)
+spline = geotools.interpolate_bspline(points)
 points = np.array([x, y + 3, z])
-polygon = make_polygon(points)
+polygon = geotools.make_polygon(points)
 
 show_cad(
     [spline, polygon], [DisplayCADOptions(color="blue"), DisplayCADOptions(color="red")]
@@ -196,7 +177,7 @@ show_cad(
 # To get an idea of why polygons are bad / slow / ugly, try:
 vector = (0, 0, 1)
 show_cad(
-    [extrude_shape(spline, vector), extrude_shape(polygon, vector)],
+    [geotools.extrude_shape(spline, vector), geotools.extrude_shape(polygon, vector)],
     [DisplayCADOptions(color="blue"), DisplayCADOptions(color="red")],
 )
 
@@ -205,17 +186,17 @@ show_cad(
 # There is nothing stopping you from combining different primitives, though!
 
 radius = 2
-part_circle = make_circle(radius=radius, start_angle=0, end_angle=270)
+part_circle = geotools.make_circle(radius=radius, start_angle=0, end_angle=270)
 
 points = np.array([[radius, 0, 0], [0, 0, -radius], [0, 0, 0]])
-closure = make_polygon(points)
+closure = geotools.make_polygon(points)
 
-my_shape = BluemiraWire([part_circle, closure])
+my_shape = BluemiraWire(part_circle + closure)
 
 # Let's just check we got that right...
 print(f"My shape is closed: {my_shape.is_closed()}")
 
-show_cad(BluemiraFace(my_shape))
+show_cad(geotools.make_face(my_shape))
 
 # %%[markdown]
 # ## Geometry operations: Part 1
@@ -229,9 +210,9 @@ show_cad(BluemiraFace(my_shape))
 # %%
 # Make a hollow cylinder, by revolving a rectangle
 points = np.array([[4, 5, 5, 4], [0, 0, 0, 0], [2, 2, 3, 3]])
-rectangle = BluemiraFace(make_polygon(points, closed=True))
+rectangle = geotools.make_face(geotools.make_polygon(points, closed=True))
 
-hollow_cylinder = revolve_shape(
+hollow_cylinder = geotools.revolve_shape(
     rectangle, base=(0, 0, 0), direction=(0, 0, 1), degree=360
 )
 
@@ -241,10 +222,11 @@ show_cad(hollow_cylinder)
 # Sweep a profile along a path
 
 points = np.array([[4.5, 4.5], [0, 3], [2.5, 2.5]])
-straight_line = make_polygon(points)
-quarter_turn = make_circle(center=(3, 3, 2.5), axis=(0, 0, 1), radius=1.5, end_angle=90)
-path = BluemiraWire([straight_line, quarter_turn])
-solid = sweep_shape(rectangle.boundary[0], path)
+straight_line = geotools.make_polygon(points)
+quarter_turn = geotools.make_circle(center=(3, 3, 2.5), axis=(0, 0, 1), radius=1.5,
+                             end_angle=90)
+path = BluemiraWire(straight_line + quarter_turn)
+solid = geotools.sweep_shape(rectangle.wires, path)
 show_cad(solid)
 
 # %%[markdown]
@@ -264,8 +246,8 @@ points = np.array(
     ]
 )
 
-box_1 = BluemiraFace(make_polygon(points, closed=True))
-box_1 = extrude_shape(box_1, (0, 2, 0))
+box_1 = geotools.make_face(geotools.make_polygon(points, closed=True))
+box_1 = geotools.extrude_shape(box_1, (0, 2, 0))
 
 points = np.array(
     [
@@ -275,14 +257,14 @@ points = np.array(
     ]
 )
 
-box_2 = BluemiraFace(make_polygon(points, closed=True))
-box_2 = extrude_shape(box_2, (0, 1, 0))
+box_2 = geotools.make_face(geotools.make_polygon(points, closed=True))
+box_2 = geotools.extrude_shape(box_2, (0, 1, 0))
 
-fused_boxes = boolean_fuse([box_1, box_2])
+fused_boxes = geotools.boolean_fuse([box_1, box_2])
 
 show_cad(fused_boxes)
 
-cut_box_1 = boolean_cut(box_1, box_2)[0]
+cut_box_1 = geotools.boolean_cut(box_1, box_2)[0]
 
 show_cad(cut_box_1)
 
@@ -318,4 +300,4 @@ show_cad([cut_box_1, new_cut_box_1], options=blue_red_options)
 my_shapes = [cut_box_1]
 # Modify this file path to where you want to save the data.
 my_file_path = "my_tutorial_assembly.STP"
-save_as_STP(my_shapes, filename=my_file_path, scale=1)
+geotools.save_as_STP(my_shapes, filename=my_file_path, scale=1)

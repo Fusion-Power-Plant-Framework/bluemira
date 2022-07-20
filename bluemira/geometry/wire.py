@@ -212,11 +212,22 @@ class BluemiraWire(BluemiraGeo):
         """
         return Coordinates(cadapi.end_point(self._shape))
 
-    def boundary(self, b_type: str = "vertexes") -> Coordinates:
-        """
-        Get the boundary (vertexes) of wire.
-        """
-        if b_type == "vertexes":
-            return Coordinates(cadapi.ordered_vertexes(self._shape))
+    @property
+    def vertexes(self):
+        return Coordinates(cadapi.vertexes(self.shape))
 
-        raise ValueError("Only 'vertexes' is allowed as boundary type")
+    @property
+    def wires(self):
+        return self
+
+    @property
+    def faces(self):
+        return []
+
+    @property
+    def shells(self):
+        return []
+
+    @property
+    def solids(self):
+        return []

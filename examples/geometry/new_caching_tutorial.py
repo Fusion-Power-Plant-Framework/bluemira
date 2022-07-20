@@ -74,9 +74,7 @@ bmwire = BluemiraWire(wire)
 
 bmwire1 = geotools.make_polygon(points, "open_poly", False)
 bmwire2 = geotools.make_polygon(points, "closed_poly", True)
-vertexes1 = bmwire1.boundary()
 
-# bmface1 = geotools.make_face(bmwire1)
+#bmface1 = geotools.make_face(bmwire1)#
 bmface2 = geotools.make_face(bmwire2)
-face_boundary = bmface2.boundary()
-face_boundary_v = bmface2.boundary("vertexes")
+bmshell = geotools.make_shell([bmface2])

@@ -29,8 +29,10 @@ from __future__ import annotations
 import bluemira.codes._freecadapi as cadapi
 
 # import from bluemira
+from bluemira.geometry.coordinates import Coordinates
 from bluemira.geometry.base import BluemiraGeo
-from bluemira.geometry.error import DisjointedSolid
+from bluemira.geometry.wire import BluemiraWire
+from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.shell import BluemiraShell
 
 __all__ = ["BluemiraSolid"]
@@ -39,49 +41,26 @@ __all__ = ["BluemiraSolid"]
 class BluemiraSolid(BluemiraGeo):
     """Bluemira Solid class."""
 
-    def __init__(self, boundary, label: str = ""):
-        boundary_classes = [BluemiraShell]
-        super().__init__(boundary, label, boundary_classes)
-
-    def _create_solid(self, check_reverse=True):
-        """Creation of the solid"""
-        new_shell = self.boundary[0]._create_shell(check_reverse=False)
-        solid = cadapi.apiSolid(new_shell)
-
-        if len(self.boundary) > 1:
-            shell_holes = [cadapi.apiSolid(s._shape) for s in self.boundary[1:]]
-            solid = solid.cut(shell_holes)
-            if len(solid.Solids) == 1:
-                solid = solid.Solids[0]
-            else:
-                raise DisjointedSolid("Disjointed solids are not accepted.")
-
-        if check_reverse:
-            return self._check_reverse(cadapi.apiSolid(solid))
-        else:
-            return solid
+    def __init__(self, shape, label: str = ""):
+        shape_classes = [cadapi.apiSolid]
+        super().__init__(shape, label, shape_classes)
 
     @property
-    def _shape(self):
-        """Part.Solid: shape of the object as a single solid"""
-        return self._create_solid()
+    def vertexes(self):
+        return Coordinates(cadapi.vertexes(self.shape))
 
-    @classmethod
-    def _create(cls, obj: cadapi.apiSolid, label=""):
-        if isinstance(obj, cadapi.apiSolid):
-            orientation = obj.Orientation
+    @property
+    def wires(self):
+        return [BluemiraWire(o) for o in cadapi.wires(self.shape)]
 
-            if len(obj.Solids) > 1:
-                raise DisjointedSolid("Disjointed solids are not accepted.")
+    @property
+    def faces(self):
+        return [BluemiraFace(o) for o in cadapi.faces(self.shape)]
 
-            bm_shells = []
-            for shell in obj.Shells:
-                bm_shells.append(BluemiraShell._create(shell))
+    @property
+    def shells(self):
+        return [BluemiraShell(o) for o in cadapi.shells(self.shape)]
 
-            bmsolid = cls(bm_shells, label=label)
-            bmsolid._orientation = orientation
-            return bmsolid
-
-        raise TypeError(
-            f"Only Part.Solid objects can be used to create a {cls} instance"
-        )
+    @property
+    def solids(self):
+        return self

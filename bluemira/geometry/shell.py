@@ -30,7 +30,9 @@ import bluemira.codes._freecadapi as cadapi
 
 # import from bluemira
 from bluemira.geometry.base import BluemiraGeo
+from bluemira.geometry.wire import BluemiraWire
 from bluemira.geometry.face import BluemiraFace
+from bluemira.geometry.coordinates import Coordinates
 
 __all__ = ["BluemiraShell"]
 
@@ -38,36 +40,26 @@ __all__ = ["BluemiraShell"]
 class BluemiraShell(BluemiraGeo):
     """Bluemira Shell class."""
 
-    def __init__(self, boundary, label: str = ""):
-        boundary_classes = [BluemiraFace]
-        super().__init__(boundary, label, boundary_classes)
-
-    def _create_shell(self, check_reverse=True):
-        """Creation of the shell"""
-        faces = [f._create_face(check_reverse=True) for f in self.boundary]
-        shell = cadapi.apiShell(faces)
-
-        if check_reverse:
-            return self._check_reverse(shell)
-        else:
-            return shell
+    def __init__(self, shape, label: str = ""):
+        shape_classes = [cadapi.apiShell]
+        super().__init__(shape, label, shape_classes)
 
     @property
-    def _shape(self):
-        """Part.Shell: shape of the object as a primitive shell"""
-        return self._create_shell()
+    def vertexes(self):
+        return Coordinates(cadapi.vertexes(self.shape))
 
-    @classmethod
-    def _create(cls, obj: cadapi.apiShell, label=""):
-        if isinstance(obj, cadapi.apiShell):
-            orientation = obj.Orientation
-            faces = obj.Faces
-            bmfaces = []
-            for face in faces:
-                bmfaces.append(BluemiraFace._create(face))
-            bmshell = BluemiraShell(bmfaces, label=label)
-            bmshell._orientation = orientation
-            return bmshell
-        raise TypeError(
-            f"Only Part.Shell objects can be used to create a {cls} instance"
-        )
+    @property
+    def wires(self):
+        return [BluemiraWire(o) for o in cadapi.wires(self.shape)]
+
+    @property
+    def faces(self):
+        return [BluemiraFace(o) for o in cadapi.faces(self.shape)]
+
+    @property
+    def shells(self):
+        return self
+
+    @property
+    def solids(self):
+        return []
