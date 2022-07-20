@@ -33,6 +33,7 @@ import bluemira.codes._freecadapi as cadapi
 from bluemira.base.constants import EPS
 from bluemira.base.file import get_bluemira_path
 from bluemira.geometry.face import BluemiraFace
+from bluemira.geometry.wire import BluemiraWire
 from bluemira.geometry.parameterisations import (
     PictureFrame,
     PolySpline,
@@ -53,6 +54,7 @@ from bluemira.geometry.tools import (
     make_circle_arc_3P,
     make_ellipse,
     make_polygon,
+    make_face,
     offset_wire,
     point_inside_shape,
     revolve_shape,
@@ -60,6 +62,7 @@ from bluemira.geometry.tools import (
     signed_distance,
     signed_distance_2D_polygon,
     slice_shape,
+    boolean_cut,
 )
 from tests._helpers import combine_text_mock_write_calls
 
@@ -324,7 +327,7 @@ class TestSolidFacePlaneIntersect:
     def test_cylinder(self, plane, length, hollow):
         circ = make_circle(self.small)
         if not hollow:
-            circ = BluemiraFace(circ)
+            circ = make_face(circ)
         cylinder = extrude_shape(circ, (0, 0, self.offset))
         _slice = slice_shape(cylinder, plane)
         assert _slice is not None
@@ -337,7 +340,7 @@ class TestSolidFacePlaneIntersect:
         circ = make_circle(self.small, [0, 0, self.centre], axis=[0, 1, 0])
         circ2 = make_circle(self.big, [0, 0, self.centre], axis=[0, 1, 0])
 
-        face = BluemiraFace([circ2, circ])
+        face = boolean_cut(make_face(circ2), make_face(circ))[0]
 
         # cant join a face to itself atm 20/12/21
         donut = revolve_shape(face, direction=[1, 0, 0], degree=359)
@@ -360,7 +363,9 @@ class TestSolidFacePlaneIntersect:
 
         path = PrincetonD({"x2": {"value": self.big}}).create_shape()
         p2 = offset_wire(path, self.offset)
-        face = BluemiraFace([p2, path])
+        face_out = make_face(p2)
+        face_in = make_face(path)
+        face = boolean_cut(face_out, face_in)[0]
         extruded = extrude_shape(face, (0, 1, 0))
 
         _slice_xy = slice_shape(extruded, self.xy_plane)
@@ -371,7 +376,7 @@ class TestSolidFacePlaneIntersect:
 
     def test_polygon_cut(self):
 
-        face = BluemiraFace(generic_wire)
+        face = make_face(generic_wire)
         _slice_face = slice_shape(face, BluemiraPlane())
         assert generic_wire.length == _slice_face[0].length
 
@@ -382,7 +387,7 @@ class TestSolidFacePlaneIntersect:
 
 class TestPointInside:
     def test_simple(self):
-        polygon = BluemiraFace(
+        polygon = make_face(
             make_polygon({"x": [-2, 2, 2, -2, -2, -2], "z": [-2, -2, 2, 2, 1.5, -2]})
         )
         in_points = [

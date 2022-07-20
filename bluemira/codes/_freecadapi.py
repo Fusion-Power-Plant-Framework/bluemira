@@ -70,6 +70,9 @@ apiPlacement = Base.Placement  # noqa : N816
 apiPlane = Part.Plane  # noqa :N816
 apiCompound = Part.Compound  # noqa :N816
 
+working_precision = 1e-5
+min_precision = 1e-5
+max_precision = 1e-5
 # ======================================================================================
 # Array, List, Vector, Point manipulation
 # ======================================================================================
@@ -562,7 +565,11 @@ def make_face(wire: apiWire):
     if face.isValid():
         return face
     else:
-        raise FreeCADError('An invalid face has been generated')
+        face.fix(working_precision, min_precision, max_precision)
+        if face.isValid():
+            return face
+        else:
+            raise FreeCADError('An invalid face has been generated')
 
 # ======================================================================================
 # Object properties

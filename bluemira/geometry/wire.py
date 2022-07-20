@@ -52,6 +52,32 @@ class BluemiraWire(BluemiraGeo):
         shape_classes = [cadapi.apiWire]
         super().__init__(shape, label, shape_classes)
 
+    def _check_shape(self, shape):
+        """
+        Check if shape is a valid object to be wrapped in BluemiraGeo
+        """
+        if isinstance(shape, self.__class__):
+            return shape._shape
+
+        is_list = isinstance(shape, list)
+        if not is_list:
+            shape = [shape]
+
+        check = False
+
+        for ind, s in enumerate(shape):
+            if isinstance(s, self.__class__):
+                shape[ind] = s.shape
+
+        for c in self._shape_classes:
+            check = check or all(isinstance(s, c) for s in shape)
+
+        if check:
+            return cadapi.apiWire(shape)
+        raise TypeError(
+            f"Only {self._shape_classes} objects can be used for {self.__class__}"
+        )
+
     def __add__(self, other):
         """Add two wires"""
         output = None
