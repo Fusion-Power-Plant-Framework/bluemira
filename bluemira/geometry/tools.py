@@ -53,6 +53,8 @@ from bluemira.geometry.wire import BluemiraWire
 
 def convert(apiobj, label=""):
     """Convert a FreeCAD shape into the corresponding BluemiraGeo object."""
+    if isinstance(apiobj, cadapi.apiVertex):
+        output = Coordinates(apiobj)
     if isinstance(apiobj, cadapi.apiWire):
         output = BluemiraWire(apiobj, label)
     elif isinstance(apiobj, cadapi.apiFace):

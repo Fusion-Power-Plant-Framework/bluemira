@@ -636,19 +636,19 @@ def vertexes(obj) -> np.ndarray:
     vertexes = _get_api_attr(obj, "Vertexes")
     return vertex_to_numpy(vertexes)
 
-def wires(obj) -> np.ndarray:
+def wires(obj) -> list[apiWire]:
     """Wires of the object"""
     return _get_api_attr(obj, "Wires")
 
-def faces(obj) -> np.ndarray:
+def faces(obj) -> list[apiFace]:
     """Faces of the object"""
     return _get_api_attr(obj, "Faces")
 
-def shells(obj) -> np.ndarray:
+def shells(obj) -> list[apiShell]:
     """Shells of the object"""
     return _get_api_attr(obj, "Shells")
 
-def solids(obj) -> np.ndarray:
+def solids(obj) -> list[apiSolid]:
     """Solids of the object"""
     return _get_api_attr(obj, "Solids")
 

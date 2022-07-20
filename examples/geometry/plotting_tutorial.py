@@ -26,7 +26,7 @@ Plotting module examples
 import matplotlib.pyplot as plt
 
 import bluemira.display as display
-import bluemira.geometry.tools
+import bluemira.geometry.tools as geotools
 from bluemira.base.components import Component, PhysicalComponent
 from bluemira.display.plotter import FacePlotter, WirePlotter
 from bluemira.geometry.face import BluemiraFace
@@ -47,7 +47,7 @@ p.adjust_variable("x1", 4, lower_bound=3, upper_bound=5)
 p.adjust_variable("x2", 16, lower_bound=10, upper_bound=20)
 p.adjust_variable("dz", 0, lower_bound=0, upper_bound=0)
 wire = p.create_shape()
-face = BluemiraFace(wire)
+face = geotools.make_face(wire)
 
 # %%[markdown]
 # ## Default plotting
@@ -245,7 +245,7 @@ p2.adjust_variable("x1", 3.5, lower_bound=3, upper_bound=5)
 p2.adjust_variable("x2", 17, lower_bound=10, upper_bound=20)
 p2.adjust_variable("dz", 0, lower_bound=0, upper_bound=0)
 wire2 = p2.create_shape()
-face2 = BluemiraFace(wire2)
+face2 = geotools.make_face(wire2)
 
 # %%[markdown]
 # ## Combined Face Plot
@@ -295,7 +295,10 @@ plt.show()
 
 # %%
 f, ax = plt.subplots()
-face3 = BluemiraFace([wire2.deepcopy(), wire.deepcopy()])
+face_out = geotools.make_face(wire2.deepcopy())
+face_in = geotools.make_face(wire.deepcopy())
+#face3 = geotools.make_face(wire2.deepcopy() + wire.deepcopy())
+face3 = geotools.boolean_cut(face_out, [face_in])[0]
 fplotter3 = FacePlotter(plane="xz")
 fplotter3.options.show_points = True
 ax = fplotter3.plot_2d(face3, ax=ax, show=False)
@@ -330,7 +333,7 @@ face.translate(v)
 
 # %%
 points = [[0, 0, 0], [1, 0, 0], [1, 0, 3], [0, 0, 3]]
-wire = bluemira.geometry.tools.make_polygon(points, closed=True)
+wire = geotools.make_polygon(points, closed=True)
 wire1 = wire.deepcopy()
 wire1.translate((3, 0, 5))
 wplotter = WirePlotter(plane="xz")
@@ -349,8 +352,8 @@ plt.show()
 # matplotlib.
 
 # %%
-wface = BluemiraFace(wire)
-w1face = BluemiraFace(wire1)
+wface = geotools.make_face(wire)
+w1face = geotools.make_face(wire1)
 
 # %%[markdown]
 # ## PhysicalComponent Plot
@@ -393,7 +396,9 @@ display.plot_2d(group, **my_group_options)
 
 # %%
 wplotter.options.wire_options["color"] = "red"
-ax = wplotter.plot_2d(wface.boundary[0], show=False)
+ax = None
+for w in wface.wires:
+    ax = wplotter.plot_2d(w, show=False)
 fplotter.options.face_options["color"] = "green"
 fplotter.options.wire_options["color"] = "black"
 ax = fplotter.plot_2d(w1face, ax=ax, show=False)
