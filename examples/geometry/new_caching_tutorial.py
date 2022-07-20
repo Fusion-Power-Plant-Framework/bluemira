@@ -55,6 +55,14 @@ import bluemira.geometry.tools as geotools
 # Basic objects
 from bluemira.geometry.wire import BluemiraWire
 from bluemira.geometry.face import BluemiraFace
+from bluemira.geometry.plane import BluemiraPlane
+
+from bluemira.geometry.parameterisations import (
+    PictureFrame,
+    PolySpline,
+    PrincetonD,
+    TripleArc,
+)
 
 # %%[markdown]
 
@@ -74,7 +82,29 @@ bmwire = BluemiraWire(wire)
 
 bmwire1 = geotools.make_polygon(points, "open_poly", False)
 bmwire2 = geotools.make_polygon(points, "closed_poly", True)
+bmwire3 = BluemiraWire([bmwire1,bmwire2])
 
 #bmface1 = geotools.make_face(bmwire1)#
 bmface2 = geotools.make_face(bmwire2)
 bmshell = geotools.make_shell([bmface2])
+
+big = 10
+offset = 1
+
+path = PrincetonD({"x2": {"value": big}}).create_shape()
+p2 = geotools.offset_wire(path, offset)
+print(p2.discretize(2, byedges=True))
+
+
+small = 5
+length = 31.41592653589793
+plane = BluemiraPlane(base=[0, 0, 0.001], axis=[0, 0, 1])
+circ = geotools.make_circle(small)
+if not False:
+    circ = geotools.make_face(circ)
+cylinder = geotools.extrude_shape(circ, (0, 0, offset))
+_slice = geotools.slice_shape(cylinder, plane)
+assert _slice is not None
+assert all([np.isclose(sl.length, length) for sl in _slice]), [
+    f"{sl.length}, {length}" for sl in _slice
+]
