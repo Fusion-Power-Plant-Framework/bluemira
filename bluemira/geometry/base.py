@@ -124,11 +124,11 @@ class BluemiraGeo(ABC, GeoMeshable):
         Check if shape is a valid object to be wrapped in BluemiraGeo
         """
         if isinstance(shape, self.__class__):
-            shape = shape._shape
+            return shape._shape
 
         check = False
         for c in self._shape_classes:
-            check = check or (isinstance(shape, c) for c in self._shape_classes)
+            check = check or all(isinstance(shape, c) for c in self._shape_classes)
 
         if check:
             return shape
@@ -200,11 +200,6 @@ class BluemiraGeo(ABC, GeoMeshable):
         """
         return cadapi.is_valid(self._shape)
 
-    @abstractmethod
-    def boundary(self, b_type: str):
-        """ Object's boundary """
-        pass
-
     def scale(self, factor) -> None:
         """
         Apply scaling with factor to this object. This function modifies the self
@@ -270,6 +265,31 @@ class BluemiraGeo(ABC, GeoMeshable):
         else:
             geo_copy.label = self.label
         return geo_copy
+
+    @property
+    @abstractmethod
+    def vertexes(self):
+        pass
+
+    @property
+    @abstractmethod
+    def wires(self):
+        pass
+
+    @property
+    @abstractmethod
+    def faces(self):
+        pass
+
+    @property
+    @abstractmethod
+    def shells(self):
+        pass
+
+    @property
+    @abstractmethod
+    def solids(self):
+        pass
 
     # Obsolete.
     # It was used to getattr from the primitive object, but it was replaced
