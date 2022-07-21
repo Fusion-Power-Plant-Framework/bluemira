@@ -335,6 +335,7 @@ eof_psi = 2 * np.pi * eof.psi(*eof._x_points[0][:2])
 ax[1].set_title("$\\psi_{b}$ = " + f"{sof_psi:.2f} V.s")
 ax[2].set_title("$\\psi_{b}$ = " + f"{eof_psi:.2f} V.s")
 
+plt.show()
 
 # TODO: Fix this example...
 # bluemira_print(
