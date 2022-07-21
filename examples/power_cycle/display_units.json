@@ -1,0 +1,44 @@
+{
+    "Use": "Example run",
+    "Display Units": {
+        "Tables": {
+            "mass-flow": "kg/s",
+            "pressure": "bar",
+            "temperature": "ºC",
+            "specific-enthalpy": "kJ/kg",
+            "coefficient": "-",
+            "power": {
+                "heat-received": "MW",
+                "heat-exchanged": "MW",
+                "work-mechanical": "MW",
+                "work_electrical": "MW"
+            }
+        },
+        "Diagrams": {
+            "mass-flow": "kg/s",
+            "pressure": "bar",
+            "temperature": "ºC",
+            "specific-enthalpy": "kJ/kg",
+            "coefficient": "-",
+            "power": {
+                "heat-received": "MW",
+                "heat-exchanged": "MW",
+                "work-mechanical": "MW",
+                "work_electrical": "MW"
+            }
+        },
+        "Plots": {
+            "mass-flow": "kg/s",
+            "pressure": "bar",
+            "temperature": "ºC",
+            "specific-enthalpy": "kJ/kg",
+            "coefficient": "-",
+            "power": {
+                "heat-received": "MW",
+                "heat-exchanged": "MW",
+                "work-mechanical": "MW",
+                "work_electrical": "MW"
+            }
+        }
+    }
+}
