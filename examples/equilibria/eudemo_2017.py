@@ -330,8 +330,8 @@ sof.coilset.plot(ax[1])
 eof.plot(ax[2])
 eof.coilset.plot(ax[2])
 
-sof_psi = 2 * np.pi * sof.psi(*sof._x_points[0][:2])[0][0]
-eof_psi = 2 * np.pi * eof.psi(*eof._x_points[0][:2])[0][0]
+sof_psi = 2 * np.pi * sof.psi(*sof._x_points[0][:2])
+eof_psi = 2 * np.pi * eof.psi(*eof._x_points[0][:2])
 ax[1].set_title("$\\psi_{b}$ = " + f"{sof_psi:.2f} V.s")
 ax[2].set_title("$\\psi_{b}$ = " + f"{eof_psi:.2f} V.s")
 
