@@ -27,7 +27,6 @@ import datetime
 import inspect
 import json
 import os
-from copy import deepcopy
 from typing import Iterable, List, Optional, Sequence, Type, Union
 
 import numba as nb
@@ -675,27 +674,30 @@ def revolve_shape(
     shape: Union[BluemiraShell, BluemiraSolid]
         the revolved shape.
     """
+    if not isinstance(shape, (BluemiraWire, BluemiraFace)):
+        raise GeometryError(f"Cannot revolve shape of type: {type(shape)}")
+
     if degree > 360:
         bluemira_warn("Cannot revolve a shape by more than 360 degrees.")
         degree = 360
 
-    if degree == 360:
-        # We split into two separate revolutions of 180 degree and fuse them
-        if isinstance(shape, BluemiraWire):
-            shape = BluemiraFace(shape)._shape
-            flag_shell = True
-        else:
-            shape = shape._shape
-            flag_shell = False
+    if np.isclose(degree, 360):
+        degree = 360
 
-        shape_1 = cadapi.revolve_shape(shape, base, direction, degree=180)
-        shape_2 = deepcopy(shape_1)
-        shape_2 = cadapi.rotate_shape(shape_2, base, direction, degree=180)
-        result = cadapi.boolean_fuse([shape_1, shape_2])
-
-        if flag_shell:
-            result = result.Shells[0]
-
+    if degree == 360 and isinstance(shape, BluemiraFace):
+        first_shape = shape.boundary[0]
+        result = cadapi.revolve_shape(
+            cadapi.apiFace(first_shape._shape), base, direction, degree=degree
+        )
+        if len(shape.boundary) > 1:
+            cut_solids = []
+            for boundary in shape.boundary[1:]:
+                cut_solids.append(
+                    cadapi.revolve_shape(
+                        cadapi.apiFace(boundary._shape), base, direction, degree=degree
+                    )
+                )
+            result = cadapi.boolean_cut(result, cut_solids)[0]
         return convert(result, label)
 
     return convert(cadapi.revolve_shape(shape._shape, base, direction, degree), label)
