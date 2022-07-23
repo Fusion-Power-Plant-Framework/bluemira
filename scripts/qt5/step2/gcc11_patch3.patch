@@ -1,0 +1,13 @@
+---
+ src/qmldebug/qqmlprofilerevent_p.h  | 2 +
+ 1 file changed, 2 insertions(+), 0 deletions(-)
+
+diff --git a/src/qmldebug/qqmlprofilerevent_p.h b/src/qmldebug/qqmlprofilerevent_p.h
+--- a/src/qmldebug/qqmlprofilerevent_p.h
++++ b/src/qmldebug/qqmlprofilerevent_p.h
+@@ -48,1 +48,3 @@
+#include <QtCore/qmetatype.h>
+
++#include <limits>
++
+#include <initializer_list>
