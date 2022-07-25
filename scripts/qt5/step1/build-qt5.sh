@@ -19,7 +19,7 @@ fi
 if [ ! -d qt5 ]; then
   git clone https://code.qt.io/qt/qt5.git
   cd qt5
-  git checkout 5.15.2
+  git checkout v5.15.5-lts-lgpl
   cd ..
 fi
 

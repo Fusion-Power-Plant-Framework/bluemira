@@ -7,6 +7,6 @@ fi
 if [ ! -d pyside-setup ]; then
     git clone --recursive https://code.qt.io/pyside/pyside-setup
     cd pyside-setup
-    git checkout 5.15.2
+    git checkout v5.15.2.1
     cd ..
 fi

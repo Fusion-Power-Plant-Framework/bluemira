@@ -1,6 +1,5 @@
 set -e
 
-add-apt-repository -y "https://ppa.launchpad.net/freecad-maintainers/freecad-stable/ubuntu impish"
 apt-get update
 apt-get install -y \
     cmake cmake-gui libboost-date-time-dev libboost-dev libboost-filesystem-dev \

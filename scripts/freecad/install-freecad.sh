@@ -32,6 +32,7 @@ PYTHON_BIN_DIR=$(dirname $PYTHON_BIN)
 PYTHON_PACKAGES_DIR=$(readlink --canonicalize $PYTHON_BIN_DIR/../lib/python$PYTHON_VERSION/site-packages)
 PYTHON_FREECAD_DIR=$PYTHON_PACKAGES_DIR/freecad
 
+mkdir -p $PYTHON_FREECAD_DIR
 mkdir freecad-build
 cd freecad-build
 
@@ -78,38 +79,24 @@ cmake -G Ninja \
       -DBUILD_SURFACE=FALSE \
       -DBUILD_VR=FALSE \
       -DBUILD_CLOUD=FALSE \
+      -DFREECAD_USE_PYBIND11:BOOL=ON \
       -DPYTHON_EXECUTABLE=$PYTHON_BIN \
       -DPYSIDE_INCLUDE_DIR=$PYTHON_PACKAGES_DIR/PySide2/include \
       -DPYSIDE_LIBRARY=$PYTHON_PACKAGES_DIR/PySide2/libpyside2.abi3.so.5.15 \
-      -DCMAKE_PREFIX_PATH=/usr/local/Qt-5.15.2/lib/cmake \
+      -DCMAKE_PREFIX_PATH=/usr/local/Qt-5.15.5/lib/cmake \
       -DPYSIDE2UICBINARY=$PYTHON_PACKAGES_DIR/PySide2/uic \
       -DPYSIDE2RCCBINARY=$PYTHON_PACKAGES_DIR/PySide2/rcc \
+      -DCMAKE_INSTALL_PREFIX=$PYTHON_FREECAD_DIR \
+      -DFREECAD_USE_EXTERNAL_ZIPIOS=TRUE \
+      -DINSTALL_TO_SITEPACKAGES=TRUE \
       ../freecad-source
 
-# Crashes for me if I try to use more than one core (possibly OOM).
-# Also shouldn't force a specific number of build threads.
-ninja -j$NJOBS
+ninja install
 
-# FreeCAD doesn't give us much help when putting files into python, so mock up some
-# infrastructure in out site-packages directory.
-
-echo "Installing FreeCAD for Python version: $PYTHON_VERSION"
-echo "Using installation directory: $PYTHON_FREECAD_DIR"
-
-if [ -d $PYTHON_FREECAD_DIR ]; then
-  echo "WARNING: FreeCAD install exists and will be overwritten"
-  rm -rf $PYTHON_FREECAD_DIR
-fi
-
-mkdir -p $PYTHON_FREECAD_DIR/lib
-
+# Installing lib into different location so overwrite init
 echo "import os
 import sys
 
 sys.path += __path__
 sys.path += [os.path.join(__path__[0], 'lib')]
-import FreeCAD as app" >> $PYTHON_FREECAD_DIR/__init__.py
-
-cp ../freecad-build/lib/*.so $PYTHON_FREECAD_DIR/lib
-cp ../freecad-build/Mod/Part/*.so $PYTHON_FREECAD_DIR/lib
-cp -r ../freecad-build/Mod/Part/BOPTools $PYTHON_FREECAD_DIR
+import FreeCAD as app" > $PYTHON_FREECAD_DIR/__init__.py

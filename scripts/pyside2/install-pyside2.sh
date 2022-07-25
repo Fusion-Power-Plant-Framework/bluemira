@@ -16,5 +16,5 @@ fi
 
 cd pyside-setup
 # https://bugreports.qt.io/browse/PYSIDE-1873
-python3 setup.py build --qmake=/usr/local/Qt-5.15.2/bin/qmake --parallel=$NJOBS --limited-api=yes
-python3 setup.py install --qmake=/usr/local/Qt-5.15.2/bin/qmake --parallel=$NJOBS --limited-api=yes
+python3 setup.py build --qmake=/usr/local/Qt-5.15.5/bin/qmake --parallel=$NJOBS --limited-api=yes
+python3 setup.py install --qmake=/usr/local/Qt-5.15.5/bin/qmake --parallel=$NJOBS --limited-api=yes

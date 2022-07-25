@@ -17,11 +17,11 @@ cd ..
 export LLVM_INSTALL_DIR=/usr/lib/llvm-14
 PATCH_DIR=/opt/bluemira/scripts/qt5/step2
 cd qt5/qtbase
-patch -p 1 -f < "$PATCH_DIR/gcc11_patch1.patch"
-patch -p 1 -f < "$PATCH_DIR/gcc11_patch2.patch"
+# patch -p 1 -f < "$PATCH_DIR/gcc11_patch1.patch"
+# patch -p 1 -f < "$PATCH_DIR/gcc11_patch2.patch"
 
 cd ../qtdeclarative
-patch -p 1 -f < "$PATCH_DIR/gcc11_patch3.patch"
+# patch -p 1 -f < "$PATCH_DIR/gcc11_patch3.patch"
 
 cd ../../
 
