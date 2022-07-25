@@ -32,8 +32,6 @@ from numpy.linalg import norm
 import bluemira.codes._freecadapi as cadapi
 from bluemira.base.constants import EPS
 from bluemira.base.file import get_bluemira_path
-from bluemira.geometry.face import BluemiraFace
-from bluemira.geometry.wire import BluemiraWire
 from bluemira.geometry.parameterisations import (
     PictureFrame,
     PolySpline,

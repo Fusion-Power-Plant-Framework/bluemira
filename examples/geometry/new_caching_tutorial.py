@@ -108,3 +108,42 @@ assert _slice is not None
 assert all([np.isclose(sl.length, length) for sl in _slice]), [
     f"{sl.length}, {length}" for sl in _slice
 ]
+
+
+square_points = [
+            (0.0, 0.0, 0.0),
+            (1.0, 0.0, 0.0),
+            (1.0, 1.0, 0.0),
+            (0.0, 1.0, 0.0),
+        ]
+points = square_points
+points.append(square_points[0])
+wire1 = geotools.make_polygon(points[0:4], label="wire1")
+print(wire1)
+wire2 = geotools.make_polygon(points[3:], label="wire2")
+wire = BluemiraWire([wire1, wire2], label="wire")
+wire_copy = wire.copy()
+wire_deepcopy = wire.deepcopy()
+
+assert wire_copy.label == wire.label
+assert wire_deepcopy.label == wire.label
+assert wire.length == (wire1.length + wire2.length)
+assert wire.length == wire_copy.length
+assert wire.length == wire_deepcopy.length
+w1_len = wire1.length
+w2_len = wire2.length
+w_len = wire.length
+
+wire.scale(2)
+print(wire1)
+assert wire.length == 2 * w_len
+assert wire.length == wire_copy.length
+assert w_len == wire_deepcopy.length
+assert wire1.length == 2 * w1_len
+assert wire2.length == 2 * w2_len
+
+wire_copy = wire.copy("wire_copy")
+wire_deepcopy = wire.deepcopy("wire_deepcopy")
+
+assert wire_copy.label == "wire_copy"
+assert wire_deepcopy.label == "wire_deepcopy"

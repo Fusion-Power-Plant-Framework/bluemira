@@ -27,7 +27,7 @@ from bluemira.geometry._deprecated_tools import make_circle_arc
 from bluemira.geometry.coordinates import Coordinates, get_area, in_polygon
 from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.inscribed_rect import _rect, inscribed_rect_in_poly
-from bluemira.geometry.tools import boolean_cut, make_circle, make_polygon
+from bluemira.geometry.tools import boolean_cut, make_circle, make_polygon, make_face
 
 
 class TestInscribedRectangle:
@@ -36,19 +36,19 @@ class TestInscribedRectangle:
         np.array([[6, 8, 10, 8, 6], [0, 0, 0, 0, 0], [8, 6, 8, 10, 8]])
     )
     circle_xz = make_circle_arc(2, 4, -4)
-    circle = Coordinates(
-        np.array([circle_xz[0], np.zeros_like(circle_xz[0]), circle_xz[1]])
-    )
-
-    complex_shape = BluemiraFace(make_circle(2, center=(4, 0, -4), axis=(0, 1, 0)))
-    circle_sm = BluemiraFace(make_circle(0.6, center=(5, 0, -5), axis=(0, 1, 0)))
-
+    circle = Loop(x=circle_xz[0], z=circle_xz[1])
+    circle_xz_offset = make_circle_arc(0.6, 5, -5)
+    circle_sm = Loop(x=circle_xz_offset[0], z=circle_xz_offset[1])
+    complex_shape = make_face(make_circle(2, center=(4, 0, -4), axis=(0, 1, 0)))
+    circle_sm = make_face(make_circle(0.6, center=(5, 0, -5), axis=(0, 1, 0)))
     for i in [(0, 0, 0), (-2, 0, 2), (-2, 0, 0), (0, 0, 2)]:
         c_s = circle_sm.deepcopy()
         c_s.translate(i)
         complex_shape = boolean_cut(complex_shape, c_s)[0]
-
-    complex_shape = complex_shape.boundary[0].discretize(byedges=True, ndiscr=100)
+    # Convert back to Loop
+    complex_shape = Loop(
+        *complex_shape.wires[0].discretize(byedges=True, ndiscr=100).xz
+    )
 
     shapes = [square, diamond, circle, complex_shape]
     convex = [True, True, True, False]

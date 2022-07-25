@@ -38,6 +38,7 @@ from bluemira.geometry.tools import (
     make_polygon,
     offset_wire,
     revolve_shape,
+    make_face
 )
 from bluemira.geometry.wire import BluemiraWire
 
@@ -104,7 +105,7 @@ class TestGeometry:
             major_radius=major_radius,
             minor_radius=minor_radius,
         )
-        edge = bm_ellipse.boundary[0].Edges[0]
+        edge = bm_ellipse.shape.Edges[0]
 
         # ellispe eccentricity
         eccentricity = math.sqrt(1 - (minor_radius / major_radius) ** 2)
@@ -141,8 +142,10 @@ class TestGeometry:
         assert wire.length == 2 * w_len
         assert wire.length == wire_copy.length
         assert w_len == wire_deepcopy.length
-        assert wire1.length == 2 * w1_len
-        assert wire2.length == 2 * w2_len
+        # wire1 and wire2 are not modified with the scaling of wire, 'cause a new wire
+        # is created.
+        assert wire1.length == w1_len
+        assert wire2.length == w2_len
 
         wire_copy = wire.copy("wire_copy")
         wire_deepcopy = wire.deepcopy("wire_deepcopy")
@@ -226,14 +229,14 @@ class TestGeometry:
     params_for_fuse_faces = [
         pytest.param(
             [
-                BluemiraFace(
+                make_face(
                     make_polygon(
                         [[0, 0, 0], [1, 0, 0], [1, 1, 0], [0, 1, 0]],
                         label="wire1",
                         closed=True,
                     )
                 ),
-                BluemiraFace(
+                make_face(
                     make_polygon(
                         [[0, 0, 0], [1, 0, 0], [1, 1, 0], [0, 1, 0]],
                         label="wire2",
@@ -246,14 +249,14 @@ class TestGeometry:
         ),
         pytest.param(
             [
-                BluemiraFace(
+                make_face(
                     make_polygon(
                         [[0, 0, 0], [1, 0, 0], [1, 1, 0], [0, 1, 0]],
                         label="wire1",
                         closed=True,
                     )
                 ),
-                BluemiraFace(
+                make_face(
                     make_polygon(
                         [[1, 0, 0], [2, 0, 0], [2, 1, 0], [0, 1, 0]],
                         label="wire2",
@@ -266,14 +269,14 @@ class TestGeometry:
         ),
         pytest.param(
             [
-                BluemiraFace(
+                make_face(
                     make_polygon(
                         [[0, 0, 0], [1, 0, 0], [1, 1, 0], [0, 1, 0]],
                         label="wire1",
                         closed=True,
                     )
                 ),
-                BluemiraFace(
+                make_face(
                     make_polygon(
                         [[0, 0, 0], [-1, 0, 0], [-1, -1, 0], [0, -1, 0]],
                         label="wire2",
@@ -287,14 +290,14 @@ class TestGeometry:
         ),
         pytest.param(
             [
-                BluemiraFace(
+                make_face(
                     make_polygon(
                         [[0, 0, 0], [1, 0, 0], [1, 1, 0], [0, 1, 0]],
                         label="wire1",
                         closed=True,
                     )
                 ),
-                BluemiraFace(
+                make_face(
                     make_polygon(
                         [[0.5, 0.5, 0], [1.5, 0.5, 0], [1.5, 1.5, 0], [0.5, 1.5, 0]],
                         label="wire2",
@@ -375,14 +378,14 @@ class TestGeometry:
     params_for_cut_faces = [
         pytest.param(
             [
-                BluemiraFace(
+                make_face(
                     make_polygon(
                         [[0, 0, 0], [1, 0, 0], [1, 1, 0], [0, 1, 0]],
                         label="wire1",
                         closed=True,
                     )
                 ),
-                BluemiraFace(
+                make_face(
                     make_polygon(
                         [[0, 0, 0], [1, 0, 0], [1, 1, 0], [0, 1, 0]],
                         label="wire2",
@@ -395,14 +398,14 @@ class TestGeometry:
         ),
         pytest.param(
             [
-                BluemiraFace(
+                make_face(
                     make_polygon(
                         [[0, 0, 0], [1, 0, 0], [1, 1, 0], [0, 1, 0]],
                         label="wire1",
                         closed=True,
                     )
                 ),
-                BluemiraFace(
+                make_face(
                     make_polygon(
                         [[1, 0, 0], [2, 0, 0], [2, 1, 0], [1, 1, 0]],
                         label="wire2",
@@ -415,14 +418,14 @@ class TestGeometry:
         ),
         pytest.param(
             [
-                BluemiraFace(
+                make_face(
                     make_polygon(
                         [[0, 0, 0], [1, 0, 0], [1, 1, 0], [0, 1, 0]],
                         label="wire1",
                         closed=True,
                     )
                 ),
-                BluemiraFace(
+                make_face(
                     make_polygon(
                         [[0, 0, 0], [-1, 0, 0], [-1, -1, 0], [0, -1, 0]],
                         label="wire2",
@@ -436,14 +439,14 @@ class TestGeometry:
         ),
         pytest.param(
             [
-                BluemiraFace(
+                make_face(
                     make_polygon(
                         [[0, 0, 0], [1, 0, 0], [1, 1, 0], [0, 1, 0]],
                         label="wire1",
                         closed=True,
                     )
                 ),
-                BluemiraFace(
+                make_face(
                     make_polygon(
                         [[0.5, 0.5, 0], [1.5, 0.5, 0], [1.5, 1.5, 0], [0.5, 1.5, 0]],
                         label="wire2",
@@ -475,7 +478,7 @@ class TestGeometry:
 
     @pytest.mark.parametrize("direction", [1, -1])
     def test_cut_solids(self, direction):
-        face = BluemiraFace(
+        face = make_face(
             make_polygon(
                 [[0, 0, 0], [1, 0, 0], [1, 1, 0], [0, 1, 0]],
                 label="wire1",
@@ -485,7 +488,7 @@ class TestGeometry:
 
         solid = extrude_shape(face, (0, 0, 5))
 
-        face2 = BluemiraFace(
+        face2 = make_face(
             make_polygon(
                 [[-1, 0, 1], [2, 0, 1], [2, 1, 1], [-1, 1, 1]],
                 label="wire2",
@@ -591,7 +594,7 @@ class TestShapeTransformations:
             label="test_wire",
         )
 
-        cls.face = BluemiraFace(cls.wire.deepcopy(), label="test_face")
+        cls.face = make_face(cls.wire.deepcopy(), label="test_face")
         cls.solid = extrude_shape(cls.face.deepcopy(), (0, 0, 1), label="test_solid")
 
     @staticmethod

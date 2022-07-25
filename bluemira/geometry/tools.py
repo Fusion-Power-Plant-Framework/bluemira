@@ -43,7 +43,7 @@ from bluemira.codes import _freecadapi as cadapi
 from bluemira.geometry.base import BluemiraGeo, GeoMeshable
 from bluemira.geometry.constants import D_TOLERANCE
 from bluemira.geometry.coordinates import Coordinates
-from bluemira.geometry.error import GeometryError
+from bluemira.geometry.error import GeometryError, DisjointedFace
 from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.plane import BluemiraPlane
 from bluemira.geometry.shell import BluemiraShell
@@ -648,9 +648,22 @@ def convex_hull_wires_2d(
     return make_polygon(hull_coords, closed=True)
 
 
-def make_face(wire: BluemiraWire, label: str = ""):
+def make_face(wires: Union[BluemiraWire, List[BluemiraWire]], label: str = ""):
     """Make a face give a BluemiraWire boundary"""
-    return BluemiraFace(cadapi.make_face(wire.shape), label=label)
+    if not isinstance(wires, list):
+        wires = [wires]
+    if not all(isinstance(w, BluemiraWire) for w in wires):
+       raise ValueError(f"The input wires are not all BluemiraWire instances")
+    if not all(w.is_closed() for w in wires):
+        raise GeometryError(f"Only closed wires can be used to generate a face")
+    face = BluemiraFace(cadapi.make_face(wires[0].shape), label=label)
+    if len(wires) > 1:
+        fholes = [make_face(w) for w in wires[1:]]
+        face = boolean_cut(face, fholes)
+        if len(face) > 1:
+            raise DisjointedFace("Any or more than one face has been created.")
+        face = face[0]
+    return face
 
 
 def make_shell(faces: List[BluemiraFace], label: str = ""):
@@ -1221,8 +1234,8 @@ def serialize_shape(shape: BluemiraGeo):
 
     output = []
     if isinstance(shape, BluemiraGeo):
-        dict = {"label": shape.label, "boundary": output}
-        for obj in shape.boundary:
+        dict = {"label": shape.label, "shape": output}
+        for obj in shape.shape:
             output.append(serialize_shape(obj))
             if isinstance(shape, GeoMeshable):
                 if shape.mesh_options is not None:

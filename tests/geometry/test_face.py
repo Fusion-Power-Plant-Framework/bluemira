@@ -29,7 +29,7 @@ from bluemira.geometry.parameterisations import (
     SextupleArc,
     TripleArc,
 )
-from bluemira.geometry.tools import make_polygon, offset_wire
+from bluemira.geometry.tools import make_polygon, offset_wire, make_face
 
 
 class TestBluemiraFace:
@@ -47,7 +47,7 @@ class TestBluemiraFace:
 
     def test_single_complicated(self):
         for shape in self.shapes:
-            face = BluemiraFace(shape)
+            face = make_face(shape)
             assert face.is_valid()
             assert not face.is_null()
             assert face.area > 0.0
@@ -58,19 +58,19 @@ class TestBluemiraFace:
         for shape in self.shapes:
             wire = offset_wire(shape, offset, join="arc")
             face_list = [wire, shape][::direction]
-            face = BluemiraFace(face_list)
+            face = make_face(face_list)
             assert not face.is_null()
             assert face.is_valid()
             assert np.isclose(
                 face.area,
-                BluemiraFace(face_list[0]).area - BluemiraFace(face_list[1]).area,
+                make_face(face_list[0]).area - make_face(face_list[1]).area,
             )
 
     def test_two_offsets(self):
         for shape in self.shapes:
             outer = offset_wire(shape, 0.5, join="arc")
             inner = offset_wire(shape, -0.5, join="arc")
-            face = BluemiraFace([outer, inner])
+            face = make_face([outer, inner])
             assert not face.is_null()
             assert face.is_valid()
             assert face.area > 0.0
