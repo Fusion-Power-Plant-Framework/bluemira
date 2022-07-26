@@ -41,7 +41,7 @@ from bluemira.geometry.base import BluemiraGeo
 from bluemira.geometry.coordinates import Coordinates, get_area
 from bluemira.geometry.error import GeometryError
 from bluemira.geometry.face import BluemiraFace
-from bluemira.geometry.tools import extrude_shape, revolve_shape
+import bluemira.geometry.tools as geotools #import extrude_shape, revolve_shape
 
 TEST_PATH = get_bluemira_path("geometry/test_data", subfolder="tests")
 
@@ -190,7 +190,7 @@ class TestMixedFaces:
         """
         coords = Coordinates.from_json(os.sep.join([TEST_PATH, filename]))
         face = make_mixed_face(*coords.xyz)
-        part = revolve_shape(face, degree=degree)
+        part = geotools.revolve_shape(face, degree=degree)
         self.assert_properties(true_props, part)
 
     @pytest.mark.parametrize(
@@ -244,7 +244,7 @@ class TestMixedFaces:
         fn = os.sep.join([TEST_PATH, filename])
         coords = Coordinates.from_json(fn)
         face = make_mixed_face(*coords.xyz)
-        part = extrude_shape(face, vec=vec)
+        part = geotools.extrude_shape(face, vec=vec)
         self.assert_properties(true_props, part)
 
     def test_face_seg_fault(self):
@@ -290,7 +290,7 @@ class TestMixedFaces:
         outer = Coordinates.from_json(os.path.join(TEST_PATH, f"{name}_outer.json"))
         inner_wire = make_mixed_wire(*inner.xyz)
         outer_wire = make_mixed_wire(*outer.xyz)
-        face = BluemiraFace([outer_wire, inner_wire])
+        face = geotools.make_face([outer_wire, inner_wire])
         self.assert_properties(true_props, face)
 
     def test_coordinate_cleaning(self):

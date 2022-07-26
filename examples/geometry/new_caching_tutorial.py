@@ -50,7 +50,9 @@ from bluemira.display import plot_2d, show_cad
 from bluemira.display.displayer import DisplayCADOptions
 
 import bluemira.codes._freecadapi as cadapi
-import bluemira.geometry.tools as geotools
+from bluemira.geometry.tools import (
+    make_face, make_polygon, extrude_shape, boolean_fuse
+)
 
 # Basic objects
 from bluemira.geometry.wire import BluemiraWire
@@ -64,86 +66,139 @@ from bluemira.geometry.parameterisations import (
     TripleArc,
 )
 
-# %%[markdown]
+wire1 = make_polygon(
+    [
+        [0, 1, 1],
+        [0, 0, 1],
+        [0, 0, 0]
+    ],
+    label="wire1"
+)
+wire2 = make_polygon(
+        [
+            [0, 1, 1],
+            [0, 0, 1],
+            [0, 0, 0],
+        ]
+)
 
-# ## Make a cylinder
+wire_fuse = boolean_fuse([wire1, wire2])
+print(wire_fuse)
 
-# There are many ways to make a cylinder, but perhaps the simplest way is as follows:
-# * Make a circular Wire
-# * Make a Face from that Wire
-# * Extrude that Face along a vector, to make a Solid
+wire1 = make_polygon(
+    [
+        [0, 1, 1],
+        [0, 0, 1],
+        [0, 0, 0],
+    ],
+    label="wire1"
+)
+wire2 = make_polygon(
+    [
+        [1, 0, 0],
+        [1, 1, 0],
+        [0, 0, 0],
+    ],
+)
 
-# %%
-# Note that we are going to give these geometries some labels, which
-# we might use later.
-points = [[0,0,0], [1,0,0], [1,1,0]]
-wire = cadapi.make_polygon(points)
-bmwire = BluemiraWire(wire)
-
-bmwire1 = geotools.make_polygon(points, "open_poly", False)
-bmwire2 = geotools.make_polygon(points, "closed_poly", True)
-bmwire3 = BluemiraWire([bmwire1,bmwire2])
-
-#bmface1 = geotools.make_face(bmwire1)#
-bmface2 = geotools.make_face(bmwire2)
-bmshell = geotools.make_shell([bmface2])
-
-big = 10
-offset = 1
-
-path = PrincetonD({"x2": {"value": big}}).create_shape()
-p2 = geotools.offset_wire(path, offset)
-print(p2.discretize(2, byedges=True))
+wire_fuse = boolean_fuse([wire1, wire2])
+print(wire_fuse)
+print(wire_fuse.is_closed())
 
 
-small = 5
-length = 31.41592653589793
-plane = BluemiraPlane(base=[0, 0, 0.001], axis=[0, 0, 1])
-circ = geotools.make_circle(small)
-if not False:
-    circ = geotools.make_face(circ)
-cylinder = geotools.extrude_shape(circ, (0, 0, offset))
-_slice = geotools.slice_shape(cylinder, plane)
-assert _slice is not None
-assert all([np.isclose(sl.length, length) for sl in _slice]), [
-    f"{sl.length}, {length}" for sl in _slice
+wire1 = make_polygon(
+    [
+        [0, 0, 0],
+        [1, 0, 0],
+        [1, 1, 0],
+        [0.5, 1, 0]
+     ],
+    label="wire1"
+)
+wire2 = make_polygon(
+    [
+        [1, 0, 0],
+        [1, 1, 0],
+        [0, 0, 0],
+    ],
+)
+
+
+
+
+# wire1 = make_polygon(
+#     [[0, 1, -1], [0, 0, 1], [0, 0, -1]],
+#     label="wire1"
+# )
+# wire2 = make_polygon(
+#     [
+#         [1, 0, 0],
+#         [1, 1, 0],
+#         [0, 0, 0],
+#     ],
+# )
+
+from bluemira.geometry.coordinates import Coordinates
+square_points = [
+    (0.0, 0.0, 0.0),
+    (1.0, 0.0, 0.0),
+    (1.0, 1.0, 0.0),
+    (0.0, 1.0, 0.0),
 ]
 
+points2 = [
+    (1.0, 1.5, 0.0),
+    (0.0, 1.0, 0.0),
+    (0.0, 0.5, 0.0),
+]
 
-square_points = [
-            (0.0, 0.0, 0.0),
-            (1.0, 0.0, 0.0),
-            (1.0, 1.0, 0.0),
-            (0.0, 1.0, 0.0),
-        ]
 points = square_points
 points.append(square_points[0])
-wire1 = geotools.make_polygon(points[0:4], label="wire1")
-print(wire1)
-wire2 = geotools.make_polygon(points[3:], label="wire2")
-wire = BluemiraWire([wire1, wire2], label="wire")
-wire_copy = wire.copy()
-wire_deepcopy = wire.deepcopy()
+coord = Coordinates(points)
+wire1 = make_polygon(coord.points[0:4], label="wire1")
 
-assert wire_copy.label == wire.label
-assert wire_deepcopy.label == wire.label
-assert wire.length == (wire1.length + wire2.length)
-assert wire.length == wire_copy.length
-assert wire.length == wire_deepcopy.length
-w1_len = wire1.length
-w2_len = wire2.length
-w_len = wire.length
+coord2 = Coordinates(points2)
+wire2 = make_polygon(coord2.points, label="wire2")
 
-wire.scale(2)
-print(wire1)
-assert wire.length == 2 * w_len
-assert wire.length == wire_copy.length
-assert w_len == wire_deepcopy.length
-assert wire1.length == 2 * w1_len
-assert wire2.length == 2 * w2_len
+from bluemira.display.plotter import FacePlotter, WirePlotter
+import bluemira.display as display
+from bluemira.geometry.placement import BluemiraPlacement
 
-wire_copy = wire.copy("wire_copy")
-wire_deepcopy = wire.deepcopy("wire_deepcopy")
+wplotter = WirePlotter()
+wplotter.options.show_points = True
+wplotter.options.wire_options = {'color': 'black', 'linewidth': 2.5, 'zorder': 20}
+wplotter.options.view = BluemiraPlacement(label="xyz")
+ax = wplotter.plot_2d(wire1, show=False)
+wplotter.plot_2d(wire2, ax = ax)
 
-assert wire_copy.label == "wire_copy"
-assert wire_deepcopy.label == "wire_deepcopy"
+# wire = BluemiraWire([wire1, wire2], label="wire")
+
+from bluemira.geometry.parameterisations import TripleArc, PictureFrame
+curve = TripleArc().create_shape()
+
+wplotter = WirePlotter()
+wplotter.options.wire_options = {'color': 'black', 'linewidth': 2.5, 'zorder': 20}
+wplotter.plot_2d(curve)
+
+p = PictureFrame()
+# wire = p.create_shape()
+# wplotter.plot_2d(wire)
+
+p.adjust_variable("x1", value=4, lower_bound=4, upper_bound=5)
+p.adjust_variable("x2", value=16, lower_bound=14, upper_bound=18)
+p.adjust_variable(
+    "z1",
+    value=8,
+    lower_bound=5,
+    upper_bound=15,
+)
+p.adjust_variable(
+    "z2",
+    value=-8,
+    lower_bound=-15,
+    upper_bound=-5,
+)
+p.adjust_variable("ri", value=0, lower_bound=0, upper_bound=2)
+p.adjust_variable("ro", value=0, lower_bound=0, upper_bound=5)
+wire = p.create_shape()
+wplotter.plot_2d(wire)

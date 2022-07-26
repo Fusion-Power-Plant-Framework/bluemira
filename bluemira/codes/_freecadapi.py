@@ -1262,7 +1262,8 @@ def boolean_fuse(shapes):
     _type = type(shapes[0])
     _check_shapes_same_type(shapes)
 
-    if _is_wire_or_face(_type):
+#    if _is_wire_or_face(_type):
+    if _type == apiFace:
         _check_shapes_coplanar(shapes)
         if not _shapes_are_coaxis(shapes):
             bluemira_warn(

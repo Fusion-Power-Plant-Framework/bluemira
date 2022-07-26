@@ -71,8 +71,7 @@ class TestInscribedRectangle:
 
         fig, ax = plt.subplots()
 
-        shape_face = BluemiraFace(make_polygon(shape, closed=True))
-        plot_2d(shape_face, self.po, ax=ax, linewidth=0.1, show=False, zorder=-10)
+        shape_face = make_face(make_polygon(shape.xyz))
         for i in range(x):
             for j in range(y):
                 point = points[:, i, j]
@@ -90,8 +89,7 @@ class TestInscribedRectangle:
                         assert len(sq.x) == 5
                         try:
                             tf = boolean_cut(
-                                BluemiraFace(make_polygon(sq.xyz, closed=True)),
-                                shape_face,
+                                make_face(make_polygon(sq.xyz)), shape_face
                             )
                             tf = [seg.discretize(byedges=True, ndiscr=50) for seg in tf]
                         except ValueError:

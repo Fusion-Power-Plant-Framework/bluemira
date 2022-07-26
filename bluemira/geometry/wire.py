@@ -73,7 +73,10 @@ class BluemiraWire(BluemiraGeo):
             check = check or all(isinstance(s, c) for s in shape)
 
         if check:
-            return cadapi.apiWire(shape)
+            if not is_list:
+                return shape[0]
+            else:
+                return cadapi.boolean_fuse(shape)
         raise TypeError(
             f"Only {self._shape_classes} objects can be used for {self.__class__}"
         )

@@ -39,6 +39,7 @@ from bluemira.geometry.error import GeometryError
 from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.wire import BluemiraWire
 from bluemira.utilities.tools import flatten_iterable
+import bluemira.geometry.tools as geotools
 
 # =============================================================================
 # Errors
@@ -593,7 +594,7 @@ def make_face(x, y, z, label="", spline=False):
         The BluemiraFace bound by the coordinates
     """
     wire = make_wire(x, y, z, label=label, spline=spline)
-    return BluemiraFace(wire, label=label)
+    return geotools.make_face(wire, label=label)
 
 
 class MixedFaceMaker:
@@ -705,7 +706,7 @@ class MixedFaceMaker:
 
         # Finally, make the OCC face from the wire formed from the boundary wires
         self._make_wire()
-        self.face = BluemiraFace(self.wire, label=self.label)
+        self.face = geotools.make_face(self.wire, label=self.label)
 
     def _find_polygon_vertices(self):
         """
