@@ -2,7 +2,7 @@
 Base classes for the power cycle model.
 """
 
-# Import
+# Import general packages
 import abc
 
 import matplotlib.pyplot as plt
@@ -125,7 +125,7 @@ class PowerCycleABC(abc.ABC):
             )
 
     @staticmethod
-    def _validate_list(input) -> list:
+    def _validate_list(input):
         """
         Validate a subclass input to be a list. If the input is just a
         single value, insert it in a list.
@@ -283,6 +283,28 @@ class PowerCycleUtilities:
     """
     Useful functions for multiple classes in the Power Cycle module.
     """
+
+    # ------------------------------------------------------------------
+    # DATA VISUALIZATION
+    # ------------------------------------------------------------------
+    @staticmethod
+    def print_header(header=None):
+        """
+        Print a set of header lines to separate different script runs
+        in the terminal.
+        """
+        # Validate header
+        if not header:
+            header = "NEW RUN"
+
+        # Build header
+        header = " " + header + " "
+        header = header.center(72, "=")
+
+        # Print Header
+        print("\n\n")
+        print(header)
+        print("\n")
 
     # ------------------------------------------------------------------
     # DATA MANIPULATION

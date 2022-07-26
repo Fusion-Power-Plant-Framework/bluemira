@@ -1,21 +1,21 @@
-# Import
+# Import general packages
 from pprint import pprint
 
 import matplotlib.pyplot as plt
-from _TIAGO_FILES_.Tools import Tools as imported_tools
 
+# Import BLUEMIRA packages
 import bluemira.base.constants as constants
-from bluemira.power_cycle.base import PowerCycleUtilities as imported_utilities
-from bluemira.power_cycle.loads import PhaseLoad as imported_class_3
-from bluemira.power_cycle.loads import PowerData as imported_class_1
-from bluemira.power_cycle.loads import PowerLoad as imported_class_2
-from bluemira.power_cycle.timeline import PowerCyclePhase as imported_class_0
+
+# Import Power Cycle packages
+from bluemira.power_cycle.base import PowerCycleUtilities
+from bluemira.power_cycle.loads import PhaseLoad, PowerData, PowerLoad
+from bluemira.power_cycle.timeline import PowerCyclePhase
 
 # Header
-imported_tools.print_header("Test PhaseLoad")
+PowerCycleUtilities.print_header("Test PhaseLoad")
 
 # Phase
-ftt = imported_class_0(
+ftt = PowerCyclePhase(
     "Dwell",
     "dwl",
     "ss",
@@ -23,34 +23,34 @@ ftt = imported_class_0(
 )
 
 # PowerLoad 1
-data_11 = imported_class_1(
+data_11 = PowerData(
     "Load 1 - Fixed Consumption",
     [0, 1],
     [2, 2],
 )
-data_12 = imported_class_1(
+data_12 = PowerData(
     "Load 1 - Variable Consumption",
     [0, 4, 7, 8],
     [6, 9, 7, 8],
 )
-instance_1 = imported_class_2(
+instance_1 = PowerLoad(
     "Load 1",
     [data_11, data_12],
     ["ramp", "ramp"],
 )
 
 # PowerLoad 2
-data_21 = imported_class_1(
+data_21 = PowerData(
     "Load 2 - Fixed Consumption",
     [0, 200],
     [4, 4],
 )
-data_22 = imported_class_1(
+data_22 = PowerData(
     "Load 2 - Variable Consumption",
     [200, 500, 700, 900, 1000],
     [0, 2, 3, 5, 8],
 )
-instance_2 = imported_class_2(
+instance_2 = PowerLoad(
     "Load 2",
     [data_21, data_22],
     ["step", "ramp"],
@@ -63,12 +63,12 @@ test_normalize = [
     True,  # Normalize PowerLoad 1
     False,  # Don't normalize PowerLoad 2, and cut at phase end
 ]
-test_instance = imported_class_3(test_name, ftt, test_set, test_normalize)
+test_instance = PhaseLoad(test_name, ftt, test_set, test_normalize)
 pprint(vars(test_instance))
 
 # Test validation method
-check_instance = imported_class_3._validate(test_instance)
-"check_instance = imported_class_3._validate(test_name)"
+check_instance = PhaseLoad._validate(test_instance)
+"check_instance = PhaseLoad._validate(test_name)"
 pprint("No errors raised on validation!")
 
 # Test `_normal_set` attribute
@@ -81,7 +81,7 @@ pprint(normal_data)
 plt.figure()
 plt.grid()
 test_instance.plot(n_points=1000, detailed=True, c="r")
-imported_utilities.adjust_2d_graph_ranges()
+PowerCycleUtilities.adjust_2d_graph_ranges()
 
 # Show plots
 plt.show()
