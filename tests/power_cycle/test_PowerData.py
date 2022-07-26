@@ -1,14 +1,14 @@
-# Import
+# Import general packages
 from pprint import pprint
 
 import matplotlib.pyplot as plt
-from _TIAGO_FILES_.Tools import Tools as imported_tools
 
-from bluemira.power_cycle.base import PowerCycleUtilities as imported_utilities
-from bluemira.power_cycle.loads import PowerData as imported_class
+# Import Power Cycle packages
+from bluemira.power_cycle.base import PowerCycleUtilities
+from bluemira.power_cycle.loads import PowerData
 
 # Header
-imported_tools.print_header("Test PowerData")
+PowerCycleUtilities.print_header("Test PowerData")
 
 # Test data
 test_name = "test_powerdata"
@@ -16,15 +16,15 @@ test_time = [0, 4, 7, 8]
 test_data = [6, 9, 7, 8]
 
 # Create instance of PowerData
-test_instance = imported_class(test_name, test_time, test_data)
+test_instance = PowerData(test_name, test_time, test_data)
 
 # Print instance attributes
 pprint(test_instance.time)
 pprint(test_instance.data)
 
 # Test validation method
-test_instance = imported_class._validate(test_instance)
-"imported_class._validate(test_data)"
+test_instance = PowerData._validate(test_instance)
+"PowerData._validate(test_data)"
 pprint("No errors raised on validation!")
 
 # Test visualization method
@@ -32,7 +32,7 @@ plt.figure()
 plt.grid()
 plot_list = test_instance.plot()
 pprint(plot_list)
-imported_utilities.adjust_2d_graph_ranges()
+PowerCycleUtilities.adjust_2d_graph_ranges()
 
 # Show plots
 plt.show()

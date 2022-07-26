@@ -2,20 +2,23 @@
 Classes to define the timeline for Power Cycle simulations.
 """
 
-# Import
+# Import general packages
 from typing import Union  # , List
 
-from bluemira.power_cycle.base import PowerCycleABC as imported_abc
-from bluemira.power_cycle.base import PowerCycleError as imported_error
-from bluemira.power_cycle.base import PowerCycleUtilities as imported_utilities
-from bluemira.power_cycle.base import classproperty
+# Import Power Cycle packages
+from bluemira.power_cycle.base import (
+    PowerCycleABC,
+    PowerCycleError,
+    PowerCycleUtilities,
+    classproperty,
+)
 
 # ######################################################################
 # POWER CYCLE PHASE
 # ######################################################################
 
 
-class PowerCyclePhase(imported_abc):
+class PowerCyclePhase(PowerCycleABC):
     """
     Class to define phases for a Power Cycle pulse.
 
@@ -46,11 +49,11 @@ class PowerCyclePhase(imported_abc):
     @classproperty
     def _errors(cls):
         class_name = cls.__name__
-        valid_dependencies = imported_utilities._join_valid_values(
+        valid_dependencies = PowerCycleUtilities._join_valid_values(
             cls._valid_dependencies
         )
         e = {
-            "label": imported_error(
+            "label": PowerCycleError(
                 "Value",
                 f"""
                 The argument given for the attribute `label` is not a
@@ -58,7 +61,7 @@ class PowerCyclePhase(imported_abc):
                 be labeled with strings of 3 characters.
                 """,
             ),
-            "dependency": imported_error(
+            "dependency": PowerCycleError(
                 "Value",
                 f"""
                 The argument given for the attribute `dependency` is not
@@ -66,7 +69,7 @@ class PowerCyclePhase(imported_abc):
                 {valid_dependencies}.
                 """,
             ),
-            "duration": imported_error(
+            "duration": PowerCycleError(
                 "Value",
                 """
                 The argument given for the attribute `duration` is not
@@ -149,7 +152,7 @@ class PowerCyclePhase(imported_abc):
 # ######################################################################
 
 
-class PowerCyclePulse(imported_abc):
+class PowerCyclePulse(PowerCycleABC):
     """
     Class to define pulses for a Power Cycle timeline.
 
@@ -264,7 +267,7 @@ class PowerCyclePulse(imported_abc):
 # ######################################################################
 
 
-class PowerCycleTimeline(imported_abc):
+class PowerCycleTimeline(PowerCycleABC):
     """
     Class to define a timeline for Power Cycle simulations.
 

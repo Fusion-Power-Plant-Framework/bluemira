@@ -1,17 +1,18 @@
-# Import
+# Import general packages
 from pprint import pprint
 
-from _TIAGO_FILES_.Tools import Tools as imported_tools
-
+# Import BLUEMIRA packages
 import bluemira.base.constants as constants
-from bluemira.power_cycle.timeline import PowerCyclePhase as imported_class_1
-from bluemira.power_cycle.timeline import PowerCyclePulse as imported_class_2
+
+# Import Power Cycle packages
+from bluemira.power_cycle.base import PowerCycleUtilities
+from bluemira.power_cycle.timeline import PowerCyclePhase, PowerCyclePulse
 
 # Header
-imported_tools.print_header("Test PowerCyclePulse")
+PowerCycleUtilities.print_header("Test PowerCyclePulse")
 
 # Dwell-2-Flat
-d2f = imported_class_1(
+d2f = PowerCyclePhase(
     "Dwell-2-Flat",
     "d2f",
     "tt",
@@ -19,7 +20,7 @@ d2f = imported_class_1(
 )
 
 # Flat-Top
-ftt = imported_class_1(
+ftt = PowerCyclePhase(
     "Flat-Top",
     "ftt",
     "ss",
@@ -27,7 +28,7 @@ ftt = imported_class_1(
 )
 
 # Flat-2-Dwell
-f2d = imported_class_1(
+f2d = PowerCyclePhase(
     "Flat-2-Dwell",
     "f2d",
     "tt",
@@ -35,7 +36,7 @@ f2d = imported_class_1(
 )
 
 # Dwell-Time
-dwl = imported_class_1(
+dwl = PowerCyclePhase(
     "Dwell-Time",
     "dwl",
     "ss",
@@ -46,12 +47,12 @@ dwl = imported_class_1(
 # Create instance of PowerCyclePulse
 test_name = "Generic Pulse"
 test_set = [d2f, ftt, f2d, dwl]
-test_instance = imported_class_2(test_name, test_set)
+test_instance = PowerCyclePulse(test_name, test_set)
 pprint(vars(test_instance))
 
 # Test validation method
-check_instance = imported_class_2._validate(test_instance)
-"check_instance = imported_class_2._validate(test_name)"
+check_instance = PowerCyclePulse._validate(test_instance)
+"check_instance = PowerCyclePulse._validate(test_name)"
 pprint("No errors raised on validation!")
 
 # Test duration methods

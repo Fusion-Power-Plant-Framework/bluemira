@@ -1,12 +1,13 @@
 """
 Classes to create loads in the power cycle model.
 """
+# Import general packages
 from typing import List, Union
 
-# Import
 import numpy as np
-from scipy.interpolate import interp1d as imported_interp1d
+from scipy.interpolate import interp1d
 
+# Import Power Cycle packages
 from bluemira.power_cycle.base import (
     PowerCycleABC,
     PowerCycleError,
@@ -366,7 +367,7 @@ class PowerLoad(PowerCycleABC):
         y = powerdata.data
         b = False  # out-of-bound values do not raise error
         f = (0, 0)  # below-bounds/above-bounds values set to 0
-        lookup = imported_interp1d(x, y, kind=k, fill_value=f, bounds_error=b)
+        lookup = interp1d(x, y, kind=k, fill_value=f, bounds_error=b)
 
         # Output interpolated curve
         curve = list(lookup(time))
