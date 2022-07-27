@@ -24,16 +24,18 @@ Tests for the display auto_config module.
 
 """
 import time
+from functools import partial
 from unittest.mock import patch
 
 from bluemira.display.auto_config import get_primary_screen_size
 
 
-def timeout():
+def timeout(t=4):
     """
     The timeout in get_primary_screen_size is 3s
     """
-    time.sleep(4)
+    time.sleep(t)
+    return True
 
 
 class TestGetScreenSize:
@@ -45,3 +47,11 @@ class TestGetScreenSize:
         out = get_primary_screen_size()
         assert out == (None, None)
         assert len(caplog.messages) == 1
+
+    @patch(
+        "bluemira.display.auto_config._get_primary_screen_size", new=partial(timeout, 1)
+    )
+    def test_no_timeout(self, caplog):
+        out = get_primary_screen_size()
+        assert out
+        assert len(caplog.messages) == 0
