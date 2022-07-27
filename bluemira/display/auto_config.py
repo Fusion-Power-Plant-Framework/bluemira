@@ -56,7 +56,10 @@ def get_primary_screen_size():
         val = result.get(timeout=3)
     except TimeoutError:
         pool.terminate()
-        bluemira_warn("Unable to get screensize, please check your X server")
+        bluemira_warn(
+            "Unable to get screensize, please check your X server."
+            " You may not be able to view live figures in this mode."
+        )
         return None, None
     else:
         pool.close()
