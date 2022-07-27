@@ -26,11 +26,13 @@ Automatic configuration some plot defaults
 import functools
 import os
 import sys
+from multiprocessing import Pool, TimeoutError
 
 import numpy as np
 import seaborn as sns
 from PySide2 import QtWidgets
 
+from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.display.palettes import BLUEMIRA_PALETTE
 
 
@@ -47,6 +49,24 @@ def get_primary_screen_size():
         width of the primary screen in pixels. If there is no screen returns None
     height: Union[int, None]
         height of the primary screen in pixels. If there is no screen returns None
+    """
+    pool = Pool(processes=1)
+    result = pool.apply_async(_get_primary_screen_size)
+    try:
+        val = result.get(timeout=3)
+    except TimeoutError:
+        pool.terminate()
+        bluemira_warn("Unable to get screensize, please check your X server")
+        return None, None
+    else:
+        pool.close()
+        pool.join()
+        return val
+
+
+def _get_primary_screen_size():
+    """
+    Direct run of screen size check without subprocess
     """
     if sys.platform.startswith("linux") and os.getenv("DISPLAY") is None:
         return None, None
