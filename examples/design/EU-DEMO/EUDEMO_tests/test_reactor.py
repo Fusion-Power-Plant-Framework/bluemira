@@ -185,7 +185,6 @@ class TestEUDEMO:
             ],
         ).plot_2d()
 
-    @pytest.mark.skipif(not tests.PLOTTING, reason="plotting disabled")
     def test_show_cad(self):
         """
         Display the results.
@@ -210,5 +209,5 @@ class TestEUDEMO:
         component.add_child(plasma_builder.build_xyz(degree=270))
         component.add_child(tf_coils_builder.build_xyz(degree=270))
         component.add_child(pf_coils_builder.build_xyz(degree=270))
-        if tests.PLOTTING:
-            component.show_cad()
+
+        component.show_cad()
