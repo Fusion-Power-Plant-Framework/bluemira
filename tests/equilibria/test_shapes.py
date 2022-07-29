@@ -23,7 +23,6 @@ import numpy as np
 import pytest
 from matplotlib import pyplot as plt
 
-import tests
 from bluemira.equilibria.shapes import (
     JohnerLCFS,
     flux_surface_cunningham,
@@ -32,7 +31,6 @@ from bluemira.equilibria.shapes import (
 )
 
 
-@pytest.mark.skipif(not tests.PLOTTING, reason="plotting disabled")
 class TestCunningham:
     @classmethod
     def setup_class(cls):
@@ -74,7 +72,6 @@ class TestCunningham:
         cls.f.suptitle("Cunningham parameterisations")
 
 
-@pytest.mark.skipif(not tests.PLOTTING, reason="plotting disabled")
 class TestManickam:
     @classmethod
     def setup_class(cls):
@@ -154,7 +151,6 @@ johner_params = [
 ]
 
 
-# @pytest.mark.skipif(not tests.PLOTTING, reason="plotting disabled")
 class TestJohner:
     @classmethod
     def setup_class(cls):
@@ -172,8 +168,7 @@ class TestJohner:
     @classmethod
     def teardown_class(cls):
         cls.f.suptitle("Johner parameterisations")
-        if tests.PLOTTING:
-            plt.show()
+        plt.show()
 
 
 class TestJohnerCAD:

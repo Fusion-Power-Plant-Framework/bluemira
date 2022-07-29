@@ -22,7 +22,6 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pytest
 
-import tests
 from bluemira.geometry._deprecated_loop import Loop
 from bluemira.geometry._deprecated_tools import make_circle_arc
 from bluemira.geometry.face import BluemiraFace
@@ -64,9 +63,8 @@ class TestInscribedRectangle:
         points[0] += np.min(shape.x)
         points[1] += np.min(shape.z)
 
-        if tests.PLOTTING:
-            f, ax = plt.subplots()
-            shape.plot(ax, linewidth=0.1)
+        _, ax = plt.subplots()
+        shape.plot(ax, linewidth=0.1)
 
         shape_face = BluemiraFace(make_polygon(shape.xyz))
         for i in range(x):
@@ -95,9 +93,8 @@ class TestInscribedRectangle:
                         except ValueError:
                             tf = None
 
-                        if tests.PLOTTING:
-                            ax.plot(*point, marker="o")
-                            sq.plot(ax, linewidth=0.1)
+                        ax.plot(*point, marker="o")
+                        sq.plot(ax, linewidth=0.1)
 
                         if tf is not None:
                             # Some overlaps are points or lines of 0 area
@@ -105,20 +102,20 @@ class TestInscribedRectangle:
                                 self.assertion_error_creator(
                                     "Overlap", [dx, dz, point, k, convex]
                                 )
-                                if tests.PLOTTING:
-                                    for t in tf:
-                                        t.plot(
-                                            ax,
-                                            facecolor="r",
-                                            edgecolor="r",
-                                            linewidth=1,
-                                            zorder=40,
-                                        )
+
+                                for t in tf:
+                                    t.plot(
+                                        ax,
+                                        facecolor="r",
+                                        edgecolor="r",
+                                        linewidth=1,
+                                        zorder=40,
+                                    )
+
                         if not np.allclose(dx / dz, k):
                             self.assertion_error_creator("Aspect", [dx, dz, dx / dz, k])
+        plt.show()
 
-        if tests.PLOTTING:
-            plt.show()
         if self.r is not False:
             raise AssertionError(self.r)
 

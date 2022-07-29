@@ -153,7 +153,6 @@ class TestEUDEMO:
         tf_component = self.component.get_component(EUDEMOReactorDesign.PF_COILS)
         assert tf_component is not None
 
-    @pytest.mark.skipif(not tests.PLOTTING, reason="plotting disabled")
     def test_plot_xz(self):
         """
         Display the results.
@@ -170,7 +169,6 @@ class TestEUDEMO:
             ],
         ).plot_2d()
 
-    @pytest.mark.skipif(not tests.PLOTTING, reason="plotting disabled")
     def test_plot_xy(self):
         """
         Display the results.

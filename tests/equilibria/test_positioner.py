@@ -24,7 +24,6 @@ import os
 import numpy as np
 from matplotlib import pyplot as plt
 
-import tests
 from bluemira.base.file import get_bluemira_path
 from bluemira.equilibria.coils import Coil, CoilSet, SymmetricCircuit
 from bluemira.equilibria.positioner import CoilPositioner, RegionMapper, XZLMapper
@@ -192,11 +191,10 @@ class TestZLMapper:
         cls.xz_map = XZLMapper(
             tf, solenoid.radius, solenoid.z_min, solenoid.z_max, solenoid.gap, CS=True
         )
-        if tests.PLOTTING:
-            f, cls.ax = plt.subplots()
-            up.plot(cls.ax, fill=False, linestyle="-", edgecolor="r")
-            lp.plot(cls.ax, fill=False, linestyle="-", edgecolor="r")
-            eq.plot(cls.ax, fill=False, linestyle="-", edgecolor="r")
+        f, cls.ax = plt.subplots()
+        up.plot(cls.ax, fill=False, linestyle="-", edgecolor="r")
+        lp.plot(cls.ax, fill=False, linestyle="-", edgecolor="r")
+        eq.plot(cls.ax, fill=False, linestyle="-", edgecolor="r")
 
     def test_cs_zl(self):
         l_pos, lb, ub = self.xz_map.get_Lmap(
@@ -214,9 +212,8 @@ class TestZLMapper:
         z = np.sort(z)  # [::-1]  # Fixed somewhere else jcrois
         assert np.allclose(z, zcs), z - zcs
 
-        if tests.PLOTTING:
-            self.xz_map.plot(ax=self.ax)
-            plt.show()
+        self.xz_map.plot(ax=self.ax)
+        plt.show()
 
 
 class TestZLMapperEdges:
@@ -243,11 +240,11 @@ class TestZLMapperEdges:
         cls.xz_map = XZLMapper(
             tf, solenoid.radius, solenoid.z_min, solenoid.z_max, solenoid.gap, CS=True
         )
-        if tests.PLOTTING:
-            f, cls.ax = plt.subplots()
-            up.plot(cls.ax, fill=False, linestyle="-", edgecolor="r")
-            lp.plot(cls.ax, fill=False, linestyle="-", edgecolor="r")
-            eq.plot(cls.ax, fill=False, linestyle="-", edgecolor="r")
+
+        _, cls.ax = plt.subplots()
+        up.plot(cls.ax, fill=False, linestyle="-", edgecolor="r")
+        lp.plot(cls.ax, fill=False, linestyle="-", edgecolor="r")
+        eq.plot(cls.ax, fill=False, linestyle="-", edgecolor="r")
 
     def test_cs_zl(self):
 
@@ -266,9 +263,8 @@ class TestZLMapperEdges:
         z = np.sort(z)  # [::-1]  # Fixed somewhere else jcrois
         assert np.allclose(z, zcs), z - zcs
 
-        if tests.PLOTTING:
-            self.xz_map.plot(ax=self.ax)
-            plt.show()
+        self.xz_map.plot(ax=self.ax)
+        plt.show()
 
 
 class TestRegionMapper:

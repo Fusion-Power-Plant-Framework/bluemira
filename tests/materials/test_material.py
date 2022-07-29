@@ -33,7 +33,8 @@ with warnings.catch_warnings():
     warnings.simplefilter("ignore", category=UserWarning)
     from neutronics_material_maker.utils import make_serpent_material
 
-import tests
+import matplotlib.pyplot as plt
+
 from bluemira.base.constants import kgm3_to_gcm3, to_kelvin
 from bluemira.utilities.tools import is_num
 from tests.materials.materials_helpers import MATERIAL_CACHE
@@ -77,7 +78,6 @@ class TestMaterials:
     nb_3_sn = MATERIAL_CACHE.get_material("Nb3Sn - WST")
     nb_3_sn_2 = MATERIAL_CACHE.get_material("Nb3Sn - EUTF4")
     nbti = MATERIAL_CACHE.get_material("NbTi")
-    plot = tests.PLOTTING
 
     def test_density_load(self):
         self.beryllium.temperature = 300
@@ -106,13 +106,13 @@ class TestMaterials:
         assert " tmp 400 " in s.splitlines()[0]
 
     def test_superconductor_plot(self):
-        if self.plot:
-            b_min, b_max = 3, 16
-            t_min, t_max = 2, 6
-            eps = -0.66
-            self.nb_3_sn.plot(b_min, b_max, t_min, t_max, eps)
-            self.nb_3_sn_2.plot(b_min, b_max, t_min, t_max, eps)
-            self.nbti.plot(b_min, b_max, t_min, t_max)
+        b_min, b_max = 3, 16
+        t_min, t_max = 2, 6
+        eps = -0.66
+        self.nb_3_sn.plot(b_min, b_max, t_min, t_max, eps)
+        self.nb_3_sn_2.plot(b_min, b_max, t_min, t_max, eps)
+        self.nbti.plot(b_min, b_max, t_min, t_max)
+        plt.show()
 
 
 class TestLiquids:

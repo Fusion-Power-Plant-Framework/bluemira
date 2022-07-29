@@ -30,7 +30,6 @@ import tempfile
 import numpy as np
 import pytest
 
-import tests
 from bluemira.base.components import PhysicalComponent
 from bluemira.builders.shapes import MakeOptimisedShape, MakeParameterisedShape
 from bluemira.geometry.optimisation import GeometryOptimisationProblem, minimise_length
@@ -82,8 +81,7 @@ class TestMakeParameterisedShape:
             self.build_config["variables_map"]["dz"]["value"], abs=1e-2
         )
 
-        if tests.PLOTTING:
-            self.component.plot_2d()
+        self.component.plot_2d()
 
     def test_save_shape(self):
         """
@@ -171,5 +169,4 @@ class TestMakeOptimisedShape:
             build_config["variables_map"]["dz"]["value"], abs=1e-2
         )
 
-        if tests.PLOTTING:
-            component.plot_2d()
+        component.plot_2d()

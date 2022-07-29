@@ -25,9 +25,7 @@ import os
 import numpy as np
 from matplotlib import pyplot as plt
 
-import tests
 from bluemira.base.file import get_bluemira_path
-from bluemira.display.auto_config import plot_defaults
 from bluemira.magnetostatics.semianalytic_2d import semianalytic_Bx, semianalytic_Bz
 
 
@@ -119,16 +117,14 @@ class TestSemiAnalyticBxBz:
         assert np.all(bx_array == bx_results)
         assert np.all(bz_array == bz_results)
 
-        if tests.PLOTTING:
-            plot_defaults()
-            f, ax = plt.subplots()
-            ax.plot(bp_fe, marker="s", label="FE", ms=20)
-            ax.plot(bp_paper, marker="^", label="Paper", ms=20)
-            ax.plot(bp, marker="X", label="New", ms=20)
-            ax.legend()
-            ax.set_xlabel("Point number")
-            ax.set_ylabel("$B_{p}$ [T]")
-            plt.show()
+        _, ax = plt.subplots()
+        ax.plot(bp_fe, marker="s", label="FE", ms=20)
+        ax.plot(bp_paper, marker="^", label="Paper", ms=20)
+        ax.plot(bp, marker="X", label="New", ms=20)
+        ax.legend()
+        ax.set_xlabel("Point number")
+        ax.set_ylabel("$B_{p}$ [T]")
+        plt.show()
 
     def test_tough_Bz_integration_does_not_raise_error(self):
         """
@@ -184,8 +180,7 @@ class TestPoloidalFieldBenchmark:
         filename = os.sep.join([self.path, "new_B_along_z-z.json"])
         x, z, B = self.load_data(filename)
 
-        if tests.PLOTTING:
-            f, ax = plt.subplots()
+        _, ax = plt.subplots()
 
         x_values = np.unique(x)
         for x_value in x_values:
@@ -199,27 +194,24 @@ class TestPoloidalFieldBenchmark:
 
             assert max(abs(b_fe - b_calc)) < self.peak_discrepancy
 
-            if tests.PLOTTING:
-                p = ax.plot(z_x, b_fe, label="ERMES x=" + str(x_value))
-                ax.plot(
-                    z_x,
-                    b_calc,
-                    linestyle="--",
-                    color=p[0].get_color(),
-                    label="bluemira x=" + str(x_value),
-                )
-        if tests.PLOTTING:
-            ax.legend()
-            ax.set_xlim([40, 80])
-            ax.set_xlabel("z")
-            ax.set_ylabel("$B_{p}$")
+            p = ax.plot(z_x, b_fe, label="ERMES x=" + str(x_value))
+            ax.plot(
+                z_x,
+                b_calc,
+                linestyle="--",
+                color=p[0].get_color(),
+                label="bluemira x=" + str(x_value),
+            )
+        ax.legend()
+        ax.set_xlim([40, 80])
+        ax.set_xlabel("z")
+        ax.set_ylabel("$B_{p}$")
 
     def test_field_inside_coil_x_x(self):
         filename = os.sep.join([self.path, "new_B_along_x-x.json"])
         x, z, B = self.load_data(filename)
 
-        if tests.PLOTTING:
-            f, ax = plt.subplots()
+        f, ax = plt.subplots()
 
         z_values = np.unique(z)[:5]  # Mirrored about coil zc-axis
         for z_value in z_values:
@@ -232,17 +224,15 @@ class TestPoloidalFieldBenchmark:
             b_calc = np.hypot(bx, bz)
             assert max(abs(b_fe - b_calc)) < self.peak_discrepancy
 
-            if tests.PLOTTING:
-                p = ax.plot(x_z, b_fe, label="ERMES z=" + str(z_value))
-                ax.plot(
-                    x_z,
-                    b_calc,
-                    linestyle="--",
-                    color=p[0].get_color(),
-                    label="bluemira z=" + str(z_value),
-                )
-        if tests.PLOTTING:
-            ax.legend()
-            ax.set_xlim([0, 8])
-            ax.set_xlabel("x")
-            ax.set_ylabel("$B_{p}$")
+            p = ax.plot(x_z, b_fe, label="ERMES z=" + str(z_value))
+            ax.plot(
+                x_z,
+                b_calc,
+                linestyle="--",
+                color=p[0].get_color(),
+                label="bluemira z=" + str(z_value),
+            )
+        ax.legend()
+        ax.set_xlim([0, 8])
+        ax.set_xlabel("x")
+        ax.set_ylabel("$B_{p}$")

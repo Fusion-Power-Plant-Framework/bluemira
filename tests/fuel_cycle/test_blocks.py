@@ -26,7 +26,6 @@ import matplotlib.pyplot as plt
 import numpy as np
 from scipy.interpolate import interp1d
 
-import tests
 from bluemira.base.file import get_bluemira_path
 from bluemira.fuel_cycle.blocks import FuelCycleComponent
 from bluemira.fuel_cycle.tools import (
@@ -39,8 +38,7 @@ from bluemira.fuel_cycle.tools import (
 class TestFuelCycleComponent:
     @classmethod
     def setup_class(cls):
-        if tests.PLOTTING:
-            _, cls.ax = plt.subplots()
+        _, cls.ax = plt.subplots()
 
     def test_bathtub(self):
         t = np.linspace(0, 30, 1900)
@@ -50,8 +48,7 @@ class TestFuelCycleComponent:
         component.add_in_flow(m)
         component.run()
 
-        if tests.PLOTTING:
-            self.ax.plot(t, component.inventory, label="linear")
+        self.ax.plot(t, component.inventory, label="linear")
 
     def test_sqrtbathtub(self):
         t = np.linspace(0, 60, 1900)
@@ -65,10 +62,9 @@ class TestFuelCycleComponent:
         component.add_in_flow(m)
         component.run()
 
-        if tests.PLOTTING:
-            self.ax.plot(t, component.inventory, label="sqrt")
-            self.ax.legend()
-            plt.show()
+        self.ax.plot(t, component.inventory, label="sqrt")
+        self.ax.legend()
+        plt.show()
 
 
 class TestSqrtFittedSinks:
@@ -107,8 +103,7 @@ class TestSqrtFittedSinks:
         # Now build an example TCycleComponent for the HCPB upper
         # with a constant mass flux equivalent to that modelled
 
-        if tests.PLOTTING:
-            f, ax = plt.subplots()
+        f, ax = plt.subplots()
 
         r_2_values = []
 
@@ -153,18 +148,16 @@ class TestSqrtFittedSinks:
             ss_res = np.sum((y_interp - y_model) ** 2)
             r_2 = 1 - ss_res / ss_tot
 
-            if tests.PLOTTING:
-                ax.plot(t[:-1], y_interp, label=label)
-                ax.plot(t[:-1], y_model, label=label + " fit", linestyle="--")
+            ax.plot(t[:-1], y_interp, label=label)
+            ax.plot(t[:-1], y_model, label=label + " fit", linestyle="--")
 
             r_2_values.append(r_2)
 
-        if tests.PLOTTING:
-            ax.set_xlabel("time [fpy]")
-            ax.set_ylabel("inventory [kg]")
-            box = ax.get_position()
-            ax.set_position([box.x0, box.y0, box.width * 0.6, box.height])
-            ax.legend(loc="center left", bbox_to_anchor=(1, 0.5))
-            plt.show()
+        ax.set_xlabel("time [fpy]")
+        ax.set_ylabel("inventory [kg]")
+        box = ax.get_position()
+        ax.set_position([box.x0, box.y0, box.width * 0.6, box.height])
+        ax.legend(loc="center left", bbox_to_anchor=(1, 0.5))
+        plt.show()
 
         assert np.all(np.array(r_2_values) > 0.9995)

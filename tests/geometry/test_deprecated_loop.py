@@ -27,7 +27,6 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pytest
 
-import tests
 from bluemira.base.file import get_bluemira_path
 from bluemira.geometry._deprecated_loop import Loop
 from bluemira.geometry.error import GeometryError
@@ -209,7 +208,6 @@ class TestLoop:
         assert not a._check_already_in([4, 4])
 
 
-@pytest.mark.skipif(not tests.PLOTTING, reason="plotting disabled")
 class Test3Dplotting:
     def test_looks_good(self):
         loop = Loop(x=[0.4, 4, 6, 7, 8, 4, 0.4], y=[1, 1, 2, 2, 3, 3, 1], z=0)

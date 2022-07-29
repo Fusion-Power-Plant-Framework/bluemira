@@ -21,7 +21,6 @@
 
 import matplotlib.pyplot as plt
 
-import tests
 from bluemira.geometry.coordinates import Coordinates
 from bluemira.structural.crosssection import RectangularBeam
 from bluemira.structural.geometry import Geometry
@@ -85,6 +84,5 @@ class TestPlotting:
 
         fem.apply_load_case(load_case)
 
-        if tests.PLOTTING:
-            GeometryPlotter(geometry)
-            plt.show()
+        GeometryPlotter(geometry)
+        plt.show()

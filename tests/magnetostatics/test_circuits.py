@@ -26,7 +26,6 @@ import numpy as np
 import pytest
 from scipy.interpolate import interp1d
 
-import tests
 from bluemira.base.file import get_bluemira_path
 from bluemira.geometry._deprecated_tools import (
     innocent_smoothie,
@@ -137,11 +136,10 @@ def test_mixedsourcesolver():
     assert np.allclose(bt_bl, bt_tr)
     assert np.allclose(bt_bl, bt_tl)
 
-    if tests.PLOTTING:
-        solver.plot()
-        f, ax = plt.subplots()
-        ax.contourf(xx, zz, Bt)
-        ax.set_aspect("equal")
+    solver.plot()
+    _, ax = plt.subplots()
+    ax.contourf(xx, zz, Bt)
+    ax.set_aspect("equal")
 
 
 class TestArbitraryPlanarXSCircuit:
@@ -294,24 +292,19 @@ class TestCariddiBenchmark:
 
         ripple = self.cage.ripple(self.x_rip[1:19], np.zeros(18), self.z_rip[1:19])
 
-        if tests.PLOTTING:
-            f, (ax2, ax) = plt.subplots(1, 2)
-            ax.scatter(
-                list(range(1, 19)), self.cariddi_ripple, marker="o", label="CARIDDI"
-            )
-            ax.scatter(
-                list(range(1, 19)), ripple, marker="x", label="bluemira", zorder=20
-            )
-            ax.legend(loc="upper left")
+        _, (ax2, ax) = plt.subplots(1, 2)
+        ax.scatter(list(range(1, 19)), self.cariddi_ripple, marker="o", label="CARIDDI")
+        ax.scatter(list(range(1, 19)), ripple, marker="x", label="bluemira", zorder=20)
+        ax.legend(loc="upper left")
 
-            ax.set_ylabel("$\\delta_{\\phi}$ [%]")
-            ax.yaxis.set_label_position("right")
-            ax.yaxis.tick_right()
-            ax.set_xlabel("Point index")
-            ax.set_xticks(np.arange(1, 19, 2))
+        ax.set_ylabel("$\\delta_{\\phi}$ [%]")
+        ax.yaxis.set_label_position("right")
+        ax.yaxis.tick_right()
+        ax.set_xlabel("Point index")
+        ax.set_xticks(np.arange(1, 19, 2))
 
-            ax2.plot(self.coil_loop.x, self.coil_loop.z, color="b")
-            ax2.plot(self.x_rip[1:19], self.z_rip[1:19], marker=".", color="r")
-            plt.show()
+        ax2.plot(self.coil_loop.x, self.coil_loop.z, color="b")
+        ax2.plot(self.x_rip[1:19], self.z_rip[1:19], marker=".", color="r")
+        plt.show()
 
         assert np.max(np.abs(ripple - self.cariddi_ripple)) < 0.04

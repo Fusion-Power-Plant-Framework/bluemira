@@ -28,7 +28,6 @@ from unittest.mock import MagicMock
 
 import pytest
 
-import tests
 from bluemira.base.design import Design
 from bluemira.base.error import DesignError
 
@@ -80,8 +79,7 @@ class TestDesign:
         tf_coils_component = component.get_component("TF Coils")
         assert [child.name for child in tf_coils_component.children] == ["Shape"]
 
-        if tests.PLOTTING:
-            component.plot_2d()
+        component.plot_2d()
 
     def test_stage_usage(self):
         design = Design(self.params, self.build_config)

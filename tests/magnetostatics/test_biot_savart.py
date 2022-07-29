@@ -23,7 +23,6 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pytest
 
-import tests
 from bluemira.base.constants import MU_0
 from bluemira.display.auto_config import plot_defaults
 from bluemira.geometry._deprecated_loop import Loop
@@ -78,8 +77,7 @@ def test_biot_savart_loop():
     rms_Bz = np.average((Bz - Bz2) ** 2)
     rms_Bp = np.average((Bp - Bp2) ** 2)
 
-    if tests.PLOTTING:
-        plot_errors(x_2d, z_2d, Bx, Bz, Bp, Bx2, Bz2, Bp2)
+    plot_errors(x_2d, z_2d, Bx, Bz, Bp, Bx2, Bz2, Bp2)
 
     # Note that we're using a lot of points on our circle...
     # But the errors are predominantly around the centre of the coil
@@ -171,14 +169,13 @@ def test_inductance():
             ind2[i, j] = circular_coil_inductance_kirchhoff(r, rc)
             ind3[i, j] = bsf.inductance()
 
-    if tests.PLOTTING:
-        levels = np.linspace(np.amin(ind), np.amax(ind), 20)
-        f, ax = plt.subplots(1, 4)
-        xx, yy = np.meshgrid(radii, rci)
-        ax[0].contourf(xx, yy, ind, levels=levels)
-        ax[1].contourf(xx, yy, ind2, levels=levels)
-        ax[2].contourf(xx, yy, ind3, levels=levels)
-        diff = 100 * (ind - ind3) / ind
-        cm = ax[3].contourf(xx, yy, diff, levels=np.linspace(-10, 10, 100))
-        f.colorbar(cm)
-        plt.show()
+    levels = np.linspace(np.amin(ind), np.amax(ind), 20)
+    f, ax = plt.subplots(1, 4)
+    xx, yy = np.meshgrid(radii, rci)
+    ax[0].contourf(xx, yy, ind, levels=levels)
+    ax[1].contourf(xx, yy, ind2, levels=levels)
+    ax[2].contourf(xx, yy, ind3, levels=levels)
+    diff = 100 * (ind - ind3) / ind
+    cm = ax[3].contourf(xx, yy, diff, levels=np.linspace(-10, 10, 100))
+    f.colorbar(cm)
+    plt.show()
