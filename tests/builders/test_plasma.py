@@ -26,6 +26,8 @@ Tests for plasma builders
 import sys
 from unittest import mock
 
+from matplotlib import pyplot as plt
+
 from bluemira.base.components import Component, PhysicalComponent
 from bluemira.builders.plasma import MakeParameterisedPlasma
 
@@ -69,6 +71,7 @@ class TestMakeParameterisedPlasma:
             else:
                 lcfs.plot_options.face_options["color"] = color
                 lcfs.plot_2d()
+                plt.close("all")
 
     def test_builder_with_import_isolation(self):
         """Check that the build works with a clean set of imports."""

@@ -74,3 +74,4 @@ def _plot_verification_test(
         axis.set_aspect("equal")
 
     plt.show()
+    plt.close(f)

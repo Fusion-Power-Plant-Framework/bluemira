@@ -23,6 +23,7 @@
 Tests for the plotter module.
 """
 
+import matplotlib.pyplot as plt
 import numpy as np
 
 import bluemira.geometry.face as face
@@ -118,6 +119,9 @@ class TestPlot3d:
     Generic 3D plotting tests.
     """
 
+    def teardown_method(self):
+        plt.close("all")
+
     def test_plot_3d_same_axis(self):
         ax_orig = Plot3D()
         ax_1 = plot_3d(tools.make_circle(), show=False, ax=ax_orig)
@@ -137,6 +141,9 @@ class TestPlot3d:
 
 
 class TestPointsPlotter:
+    def teardown_method(self):
+        plt.close("all")
+
     def test_plotting_2d(self):
         plotter.PointsPlotter().plot_2d(SQUARE_POINTS)
 
@@ -145,6 +152,9 @@ class TestPointsPlotter:
 
 
 class TestWirePlotter:
+    def teardown_method(self):
+        plt.close("all")
+
     def setup_method(self):
         self.wire = tools.make_polygon(SQUARE_POINTS)
 
@@ -166,6 +176,9 @@ class TestFacePlotter:
         wire = tools.make_polygon(SQUARE_POINTS)
         wire.close()
         self.face = face.BluemiraFace(wire)
+
+    def teardown_method(self):
+        plt.close("all")
 
     def test_plotting_2d(self):
         plotter.FacePlotter().plot_2d(self.face)
@@ -190,6 +203,9 @@ class TestComponentPlotter:
         self.group = Component("Parent")
         self.child1 = PhysicalComponent("Child1", shape=face1, parent=self.group)
         self.child2 = PhysicalComponent("Child2", shape=face2, parent=self.group)
+
+    def teardown_method(self):
+        plt.close("all")
 
     def test_plotting_2d(self):
         plotter.ComponentPlotter().plot_2d(self.group)

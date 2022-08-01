@@ -209,6 +209,9 @@ class TestLoop:
 
 
 class Test3Dplotting:
+    def teardown_method(self):
+        plt.close("all")
+
     def test_looks_good(self):
         loop = Loop(x=[0.4, 4, 6, 7, 8, 4, 0.4], y=[1, 1, 2, 2, 3, 3, 1], z=0)
         ax = Plot3D()

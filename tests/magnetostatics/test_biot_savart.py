@@ -151,6 +151,7 @@ def plot_errors(x, z, Bx, Bz, Bp, Bx2, Bz2, Bp2):
     ax[2, 2].set_aspect("equal")
     ax[2, 3].set_aspect(20)
     plt.show()
+    plt.close(f)
 
 
 @pytest.mark.longrun
@@ -179,3 +180,4 @@ def test_inductance():
     cm = ax[3].contourf(xx, yy, diff, levels=np.linspace(-10, 10, 100))
     f.colorbar(cm)
     plt.show()
+    plt.close(f)

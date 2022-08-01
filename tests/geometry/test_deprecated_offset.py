@@ -56,12 +56,12 @@ class TestClipperOffset:
         coordinates = Coordinates({"x": x, "y": y, "z": np.random.rand()})
         c = offset_clipper(coordinates, delta, method=method)
 
-        _, ax = plt.subplots()
+        fig, ax = plt.subplots()
         ax.plot(x, y, "k")
         ax.plot(c.x, c.y, "r", marker="o")
         ax.set_aspect("equal")
         plt.show()
-        plt.close()  # make sure we don't have lots of plots open
+        plt.close(fig)  # make sure we don't have lots of plots open
 
         distance = self._calculate_offset(coordinates, c)
         np.testing.assert_almost_equal(distance, abs(delta))
@@ -86,13 +86,14 @@ class TestClipperOffset:
             # distance = self._calculate_offset(coordinates, offset_coordinates)
             # np.testing.assert_almost_equal(distance, 1.5)
 
-        _, ax = plt.subplots()
+        fig, ax = plt.subplots()
         ax.plot(coordinates.x, coordinates.z, color="k")
         colors = ["r", "g", "y"]
         for offset_coordinates, c in zip(offsets, colors):
             ax.plot(offset_coordinates.x, offset_coordinates.z, color=c)
         ax.set_aspect("equal")
         plt.show()
+        plt.close(fig)
 
     def test_wrong_method(self):
         coordinates = Coordinates({"x": [0, 1, 2, 0], "y": [0, 1, -1, 0]})

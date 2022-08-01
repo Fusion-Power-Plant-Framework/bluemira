@@ -211,6 +211,7 @@ class TestFields:
         )
         ax4.set_aspect("equal")
         ax4.set_title("plasma_Bp")
+        plt.close("all")
 
 
 class TestEquilibrium:

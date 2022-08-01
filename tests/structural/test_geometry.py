@@ -43,9 +43,10 @@ class TestKMatrix:
 
         k_matrix = geometry.k_matrix()
 
-        _, ax = plt.subplots()
+        fig, ax = plt.subplots()
         ax.matshow(k_matrix)
         plt.show()
+        plt.close(fig)
 
         assert np.allclose(k_matrix, k_matrix.T)
 

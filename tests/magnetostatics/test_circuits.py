@@ -137,9 +137,11 @@ def test_mixedsourcesolver():
     assert np.allclose(bt_bl, bt_tl)
 
     solver.plot()
-    _, ax = plt.subplots()
+    fig, ax = plt.subplots()
     ax.contourf(xx, zz, Bt)
     ax.set_aspect("equal")
+    plt.show()
+    plt.close(fig)
 
 
 class TestArbitraryPlanarXSCircuit:
@@ -292,7 +294,7 @@ class TestCariddiBenchmark:
 
         ripple = self.cage.ripple(self.x_rip[1:19], np.zeros(18), self.z_rip[1:19])
 
-        _, (ax2, ax) = plt.subplots(1, 2)
+        fig, (ax2, ax) = plt.subplots(1, 2)
         ax.scatter(list(range(1, 19)), self.cariddi_ripple, marker="o", label="CARIDDI")
         ax.scatter(list(range(1, 19)), ripple, marker="x", label="bluemira", zorder=20)
         ax.legend(loc="upper left")
@@ -306,5 +308,6 @@ class TestCariddiBenchmark:
         ax2.plot(self.coil_loop.x, self.coil_loop.z, color="b")
         ax2.plot(self.x_rip[1:19], self.z_rip[1:19], marker=".", color="r")
         plt.show()
+        plt.close(fig)
 
         assert np.max(np.abs(ripple - self.cariddi_ripple)) < 0.04

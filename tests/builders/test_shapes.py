@@ -29,6 +29,7 @@ import tempfile
 
 import numpy as np
 import pytest
+from matplotlib import pyplot as plt
 
 from bluemira.base.components import PhysicalComponent
 from bluemira.builders.shapes import MakeOptimisedShape, MakeParameterisedShape
@@ -82,6 +83,7 @@ class TestMakeParameterisedShape:
         )
 
         self.component.plot_2d()
+        plt.close("all")
 
     def test_save_shape(self):
         """
@@ -170,3 +172,4 @@ class TestMakeOptimisedShape:
         )
 
         component.plot_2d()
+        plt.close("all")

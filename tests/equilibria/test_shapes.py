@@ -70,6 +70,7 @@ class TestCunningham:
     @classmethod
     def teardown_class(cls):
         cls.f.suptitle("Cunningham parameterisations")
+        plt.close(cls.f)
 
 
 class TestManickam:
@@ -110,6 +111,8 @@ class TestManickam:
     @classmethod
     def teardown_class(cls):
         cls.f.suptitle("Manickam parameterisations")
+        plt.show()
+        plt.close(cls.f)
 
 
 johner_names = [
@@ -169,6 +172,7 @@ class TestJohner:
     def teardown_class(cls):
         cls.f.suptitle("Johner parameterisations")
         plt.show()
+        plt.close(cls.f)
 
 
 class TestJohnerCAD:

@@ -35,7 +35,7 @@ DATA_PATH = get_bluemira_path("geometry", subfolder="data")
 class TestXZLMapper:
     @classmethod
     def setup_class(cls):
-        f, cls.ax = plt.subplots()
+        cls.fig, cls.ax = plt.subplots()
         tf = Loop.from_file(os.sep.join([DATA_PATH, "TFreference.json"]))
         tf = tf.offset(2.5)
         clip = np.where(tf.x >= 3.5)
@@ -53,6 +53,10 @@ class TestXZLMapper:
         solenoid = cls.coilset.get_solenoid()
         cls.coilset.set_control_currents(1e6 * np.ones(cls.coilset.n_coils))
         cls.xzl_map = XZLMapper(tf, solenoid.radius, -10, 10, 0.1, CS=False)
+
+    @classmethod
+    def teardown_cls(cls):
+        plt.close(cls.fig)
 
     def test_xzl(self):
         l_pos, lb, ub = self.xzl_map.get_Lmap(
@@ -191,10 +195,14 @@ class TestZLMapper:
         cls.xz_map = XZLMapper(
             tf, solenoid.radius, solenoid.z_min, solenoid.z_max, solenoid.gap, CS=True
         )
-        f, cls.ax = plt.subplots()
+        cls.fig, cls.ax = plt.subplots()
         up.plot(cls.ax, fill=False, linestyle="-", edgecolor="r")
         lp.plot(cls.ax, fill=False, linestyle="-", edgecolor="r")
         eq.plot(cls.ax, fill=False, linestyle="-", edgecolor="r")
+
+    @classmethod
+    def teardown_cls(cls):
+        plt.close(cls.fig)
 
     def test_cs_zl(self):
         l_pos, lb, ub = self.xz_map.get_Lmap(
@@ -245,6 +253,10 @@ class TestZLMapperEdges:
         up.plot(cls.ax, fill=False, linestyle="-", edgecolor="r")
         lp.plot(cls.ax, fill=False, linestyle="-", edgecolor="r")
         eq.plot(cls.ax, fill=False, linestyle="-", edgecolor="r")
+
+    @classmethod
+    def teardown_cls(cls):
+        plt.close("all")
 
     def test_cs_zl(self):
 

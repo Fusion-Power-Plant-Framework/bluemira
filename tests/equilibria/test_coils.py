@@ -49,6 +49,10 @@ class TestCoil:
         cls.cs_coil = Coil(4, 4, 10e6, ctype="CS", j_max=NBTI_J_MAX)
         cls.no_coil = Coil(4, 4, 10e6, ctype="asrgd", j_max=NBTI_J_MAX)
 
+    @classmethod
+    def teardown_cls(cls):
+        plt.close("all")
+
     def test_name(self):
         def extract_int(coil):
             return int(coil.name.split("_")[-1])
@@ -196,6 +200,9 @@ class TestSemiAnalytic:
         cls.grid = Grid(0.1, 8, 0, 8, 100, 100)
         cls.x_corner = np.append(cls.coil.x_corner, cls.coil.x_corner[0])
         cls.z_corner = np.append(cls.coil.z_corner, cls.coil.z_corner[0])
+
+    def teardown_method(self):
+        plt.close("all")
 
     def test_bx(self):
         gp = self.coil.control_Bx(self.grid.x, self.grid.z)

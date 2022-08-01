@@ -22,6 +22,7 @@
 
 import numpy as np
 import pytest
+from matplotlib import pyplot as plt
 
 from bluemira.display import plot_2d
 from bluemira.structural.crosssection import (
@@ -46,6 +47,7 @@ class TestIbeam:
     def test_plot(self):
         i_beam = IBeam(1, 1, 0.25, 0.5)
         plot_2d(i_beam.geometry, show_points=True)
+        plt.close()
 
     def test_errors(self):
         props = [

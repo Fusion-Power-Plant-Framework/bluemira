@@ -31,6 +31,9 @@ from bluemira.display.auto_config import plot_defaults
 
 
 class TestSuperSankey:
+    def teardown_method(self):
+        plt.close()
+
     def test_sankey_ring(self):
         plot_defaults(True)
 

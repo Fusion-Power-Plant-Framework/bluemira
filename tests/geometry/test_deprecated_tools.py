@@ -142,6 +142,10 @@ class TestOnPolygon:
 
 
 class TestLoopPlane:
+    @classmethod
+    def teardown_class(cls):
+        plt.close("all")
+
     def test_simple(self):
         loop = Loop(x=[0, 1, 2, 2, 0, 0], z=[-1, -1, -1, 1, 1, -1])
         plane = Plane([0, 0, 0], [1, 0, 0], [0, 1, 0])  # x-y
@@ -228,6 +232,10 @@ class TestLoopPlane:
 
 
 class TestInPolygon:
+    @classmethod
+    def teardown_class(cls):
+        plt.close("all")
+
     def test_simple(self):
         loop = Loop(x=[-2, 2, 2, -2, -2, -2], z=[-2, -2, 2, 2, 1.5, -2])
         in_points = [
@@ -264,7 +272,6 @@ class TestInPolygon:
             [-2, 2],
         ]
 
-        plt.close("all")
         _, ax = plt.subplots()
         loop.plot(ax, edgecolor="k")
         for point in in_points:
@@ -354,6 +361,10 @@ class TestRotationMatrix:
 
 
 class TestOffset:
+    @classmethod
+    def teardown_class(cls):
+        plt.close("all")
+
     def test_rectangle(self):
         # Rectangle - positive offset
         x = [1, 3, 3, 1, 1, 3]
@@ -410,6 +421,10 @@ class TestOffset:
 
 
 class TestIntersections:
+    @classmethod
+    def teardown_class(cls):
+        plt.close("all")
+
     def test_get_intersect(self):
         loop1 = Loop(x=[0, 0.5, 1, 2, 3, 4, 0], z=[1, 1, 1, 1, 2, 5, 5])
         loop2 = Loop(x=[1.5, 1.5, 2.5, 2.5, 2.5], z=[4, -4, -4, -4, 5])
@@ -652,7 +667,7 @@ class TestMixedFaces:
         """
         Tests a particularly tricky face that can result in a seg fault...
         """
-        fn = os.sep.join([TEST_PATH, "divertor_seg_fault_LDS.json"])
+        fn = os.path.join(TEST_PATH, "divertor_seg_fault_LDS.json")
         loop: Loop = Loop.from_file(fn)
         face = make_mixed_face(*loop.xyz)
         true_props = {
@@ -687,15 +702,15 @@ class TestMixedFaces:
         """
         Tests some shell mixed faces
         """
-        inner: Loop = Loop.from_file(os.sep.join([TEST_PATH, f"{name}_inner.json"]))
-        outer: Loop = Loop.from_file(os.sep.join([TEST_PATH, f"{name}_outer.json"]))
+        inner: Loop = Loop.from_file(os.path.join(TEST_PATH, f"{name}_inner.json"))
+        outer: Loop = Loop.from_file(os.path.join(TEST_PATH, f"{name}_outer.json"))
         inner_wire = make_mixed_wire(*inner.xyz)
         outer_wire = make_mixed_wire(*outer.xyz)
         face = BluemiraFace([outer_wire, inner_wire])
         self.assert_properties(true_props, face)
 
     def test_coordinate_cleaning(self):
-        fn = os.sep.join([TEST_PATH, "bb_ob_bss_test.json"])
+        fn = os.path.join(TEST_PATH, "bb_ob_bss_test.json")
         loop: Loop = Loop.from_file(fn)
         make_mixed_wire(*loop.xyz, allow_fallback=False)
 

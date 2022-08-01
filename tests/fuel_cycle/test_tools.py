@@ -53,6 +53,10 @@ class TestSinkTools:
         self.I_min, self.I_max = 3.0, 5.0
         self.t_in, self.t_out = 5.0, 6.0
 
+    @classmethod
+    def teardown_class(cls):
+        plt.close("all")
+
     def test_timestep(self):
         """
         th \\n
