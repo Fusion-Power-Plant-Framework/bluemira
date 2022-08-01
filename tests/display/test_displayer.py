@@ -38,9 +38,6 @@ from tests.display.helpers import PatchQApp, PatchQuarterWidget
 _FREECAD_REF = "bluemira.codes._freecadapi"
 
 
-# TODO(hsaunders1904): the plots in this module are never shown
-
-
 class TestDisplayCADOptions:
     def test_default_options(self):
         """
