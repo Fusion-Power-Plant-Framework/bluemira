@@ -35,7 +35,6 @@ from EUDEMO_builders.plasma import PlasmaBuilder, PlasmaComponent
 from EUDEMO_builders.reactor import EUDEMOReactorDesign
 from EUDEMO_builders.tf_coils import TFCoilsBuilder, TFCoilsComponent
 
-import tests
 from bluemira.base.components import Component
 from bluemira.base.file import get_bluemira_root
 from bluemira.base.logs import get_log_level, set_log_level
