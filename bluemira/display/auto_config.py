@@ -32,16 +32,21 @@ import numpy as np
 import seaborn as sns
 from PySide2 import QtWidgets
 
-from bluemira.base.look_and_feel import bluemira_warn
+from bluemira.base.look_and_feel import bluemira_debug, bluemira_warn
 from bluemira.display.palettes import BLUEMIRA_PALETTE
 
 
 @functools.lru_cache(1)
-def get_primary_screen_size():
+def get_primary_screen_size(timeout: float = 3):
     """
     Get the size in pixels of the primary screen.
 
     Used for sizing figures to the screen for small screens.
+
+    Parameters
+    ----------
+    timeout: float
+        timeout value in seconds
 
     Returns
     -------
@@ -50,21 +55,19 @@ def get_primary_screen_size():
     height: Union[int, None]
         height of the primary screen in pixels. If there is no screen returns None
     """
-    pool = Pool(processes=1)
-    result = pool.apply_async(_get_primary_screen_size)
-    try:
-        val = result.get(timeout=3)
-    except TimeoutError:
-        pool.terminate()
-        bluemira_warn(
-            "Unable to get screensize, please check your X server."
-            " You may not be able to view live figures in this mode."
-        )
-        return None, None
-    else:
-        pool.close()
-        pool.join()
-        return val
+    with Pool(processes=1) as pool:
+        result = pool.apply_async(_get_primary_screen_size)
+        try:
+            val = result.get(timeout=timeout)
+        except TimeoutError:
+            pool.terminate()
+            bluemira_warn(
+                "Unable to get screensize, please check your X server."
+                " You may not be able to view live figures in this mode."
+            )
+            return None, None
+        else:
+            return val
 
 
 def _get_primary_screen_size():
@@ -72,6 +75,9 @@ def _get_primary_screen_size():
     Direct run of screen size check without subprocess
     """
     if sys.platform.startswith("linux") and os.getenv("DISPLAY") is None:
+        bluemira_debug(
+            "No DISPLAY variable found, set DISPLAY to have interactive figures."
+        )
         return None, None
 
     # IPython detection (of sorts)

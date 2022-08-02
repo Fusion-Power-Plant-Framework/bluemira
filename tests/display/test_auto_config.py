@@ -30,7 +30,7 @@ from unittest.mock import patch
 from bluemira.display.auto_config import get_primary_screen_size
 
 
-def timeout(t=4):
+def timeout(t=0.05):
     """
     The timeout in get_primary_screen_size is 3s
     """
@@ -40,18 +40,23 @@ def timeout(t=4):
 
 class TestGetScreenSize:
     def setup(self):
+        # clear lru_cache
         get_primary_screen_size.cache_clear()
 
-    @patch("bluemira.display.auto_config._get_primary_screen_size", new=timeout)
+    @patch(
+        "bluemira.display.auto_config._get_primary_screen_size",
+        new=partial(timeout, 0.02),
+    )
     def test_timeout(self, caplog):
-        out = get_primary_screen_size()
+        out = get_primary_screen_size(timeout=0.01)
         assert out == (None, None)
         assert len(caplog.messages) == 1
 
     @patch(
-        "bluemira.display.auto_config._get_primary_screen_size", new=partial(timeout, 1)
+        "bluemira.display.auto_config._get_primary_screen_size",
+        new=partial(timeout, 0.01),
     )
     def test_no_timeout(self, caplog):
-        out = get_primary_screen_size()
+        out = get_primary_screen_size(0.02)
         assert out
         assert len(caplog.messages) == 0
