@@ -24,7 +24,7 @@ import numpy as np
 from bluemira.geometry.plane import BluemiraPlane
 
 
-class TestPlacement:
+class TestPlane:
     def test_instantiation(self):
         base = np.random.random((1, 3))[0]
         # create a random axis. A constant value has been added to avoid [0,0,0]

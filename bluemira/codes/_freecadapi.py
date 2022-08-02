@@ -1684,9 +1684,10 @@ def face_from_plane(plane: Part.Plane, width: float, height: float):
         Base.Vector(width / 2, height / 2, 0),
         Base.Vector(-width / 2, height / 2, 0),
     ]
-    border = Part.makePolygon(corners + [corners[0]])  # will return a closed Wire
-    wall = Part.Face(plane, border)
+    # create the closed border
+    border = Part.makePolygon(corners + [corners[0]])
 
+    wall = Part.Face(border)
     wall.Placement = placement_from_plane(plane)
 
     return wall

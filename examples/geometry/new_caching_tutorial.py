@@ -164,41 +164,58 @@ from bluemira.display.plotter import FacePlotter, WirePlotter
 import bluemira.display as display
 from bluemira.geometry.placement import BluemiraPlacement
 
-wplotter = WirePlotter()
-wplotter.options.show_points = True
-wplotter.options.wire_options = {'color': 'black', 'linewidth': 2.5, 'zorder': 20}
-wplotter.options.view = BluemiraPlacement(label="xyz")
-ax = wplotter.plot_2d(wire1, show=False)
-wplotter.plot_2d(wire2, ax = ax)
-
-# wire = BluemiraWire([wire1, wire2], label="wire")
-
-from bluemira.geometry.parameterisations import TripleArc, PictureFrame
-curve = TripleArc().create_shape()
-
-wplotter = WirePlotter()
-wplotter.options.wire_options = {'color': 'black', 'linewidth': 2.5, 'zorder': 20}
-wplotter.plot_2d(curve)
-
-p = PictureFrame()
+# wplotter = WirePlotter()
+# wplotter.options.show_points = True
+# wplotter.options.wire_options = {'color': 'black', 'linewidth': 2.5, 'zorder': 20}
+# wplotter.options.view = BluemiraPlacement(label="xyz")
+# ax = wplotter.plot_2d(wire1, show=False)
+# wplotter.plot_2d(wire2, ax = ax)
+#
+# # wire = BluemiraWire([wire1, wire2], label="wire")
+#
+# from bluemira.geometry.parameterisations import TripleArc, PictureFrame
+# curve = TripleArc().create_shape()
+#
+# wplotter = WirePlotter()
+# wplotter.options.wire_options = {'color': 'black', 'linewidth': 2.5, 'zorder': 20}
+# wplotter.plot_2d(curve)
+#
+# p = PictureFrame()
+# # wire = p.create_shape()
+# # wplotter.plot_2d(wire)
+#
+# p.adjust_variable("x1", value=4, lower_bound=4, upper_bound=5)
+# p.adjust_variable("x2", value=16, lower_bound=14, upper_bound=18)
+# p.adjust_variable(
+#     "z1",
+#     value=8,
+#     lower_bound=5,
+#     upper_bound=15,
+# )
+# p.adjust_variable(
+#     "z2",
+#     value=-8,
+#     lower_bound=-15,
+#     upper_bound=-5,
+# )
+# p.adjust_variable("ri", value=0, lower_bound=0, upper_bound=2)
+# p.adjust_variable("ro", value=0, lower_bound=0, upper_bound=5)
 # wire = p.create_shape()
 # wplotter.plot_2d(wire)
 
-p.adjust_variable("x1", value=4, lower_bound=4, upper_bound=5)
-p.adjust_variable("x2", value=16, lower_bound=14, upper_bound=18)
-p.adjust_variable(
-    "z1",
-    value=8,
-    lower_bound=5,
-    upper_bound=15,
+base = np.array([0,0,0])
+# create a random axis. A constant value has been added to avoid [0,0,0]
+axis = np.array([1,0,0])
+plane = BluemiraPlane(base, axis)
+lx = 20
+ly = 10
+bmface = plane.to_face(lx, ly)
+
+fplotter = FacePlotter()
+
+fplotter.plot_3d(bmface)
+
+np.testing.assert_almost_equal(bmface.center_of_mass, plane.base)
+np.testing.assert_almost_equal(
+    np.array([bmface.length, bmface.area]), np.array([2 * (lx + ly), lx * ly])
 )
-p.adjust_variable(
-    "z2",
-    value=-8,
-    lower_bound=-15,
-    upper_bound=-5,
-)
-p.adjust_variable("ri", value=0, lower_bound=0, upper_bound=2)
-p.adjust_variable("ro", value=0, lower_bound=0, upper_bound=5)
-wire = p.create_shape()
-wplotter.plot_2d(wire)
