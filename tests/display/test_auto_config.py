@@ -48,7 +48,6 @@ class TestGetScreenSize:
         new=partial(timeout, 0.1),
     )
     def test_timeout(self, caplog):
-        assert len(caplog.messages) == 0
         out = get_primary_screen_size(timeout=0.01)
         assert out == (None, None)
         assert len(caplog.messages) == 1
@@ -58,7 +57,6 @@ class TestGetScreenSize:
         new=partial(timeout, 0.01),
     )
     def test_no_timeout(self, caplog):
-        assert len(caplog.messages) == 0
-        out = get_primary_screen_size(0.1)
+        out = get_primary_screen_size(1)
         assert out
         assert len(caplog.messages) == 0
