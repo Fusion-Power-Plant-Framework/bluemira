@@ -168,7 +168,7 @@ class TestPictureFrame:
         p.adjust_variable("ri", value=0, lower_bound=0, upper_bound=2)
         p.adjust_variable("ro", value=0, lower_bound=0, upper_bound=5)
         wire = p.create_shape()
-        assert len(wire._boundary) == 4
+        assert len(wire.edges) == 4
         length = 2 * (12 + 16)
         assert np.isclose(wire.length, length)
 
@@ -212,11 +212,11 @@ class TestComplexPictureFrame:
     def test_tapered_segments(self):
         p = PictureFrame(inner="TAPERED_INNER")
         wire = p.create_shape()
-        assert len(wire._boundary) == 4
+        assert len(wire.edges) == 10
         p.adjust_variable("ri", value=0, lower_bound=0, upper_bound=2)
         p.adjust_variable("ro", value=0, lower_bound=0, upper_bound=5)
         wire = p.create_shape()
-        assert len(wire._boundary) == 4
+        assert len(wire.edges) == 6
 
     @pytest.mark.parametrize(
         "vals",
@@ -245,7 +245,7 @@ class TestTripleArc:
         p.adjust_variable("a1", value=45)
         p.adjust_variable("a2", value=45)
         wire = p.create_shape()
-        assert len(wire._boundary) == 6
+        assert len(wire.edges) == 6
         length = 2 * np.pi * 3
         assert np.isclose(wire.length, length)
 
@@ -255,19 +255,19 @@ class TestPolySpline:
         p = PolySpline()
         p.adjust_variable("flat", value=0)
         wire = p.create_shape()
-        assert len(wire._boundary) == 5
+        assert len(wire.edges) == 5
 
         p.adjust_variable("flat", value=1)
 
         wire = p.create_shape()
-        assert len(wire._boundary) == 6
+        assert len(wire.edges) == 6
 
 
 class TestSextupleArc:
     def test_segments(self):
         p = SextupleArc()
         wire = p.create_shape()
-        assert len(wire._boundary) == 7
+        assert len(wire.wires) == 1
 
     def test_circle(self):
         p = SextupleArc(

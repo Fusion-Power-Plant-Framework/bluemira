@@ -76,7 +76,10 @@ class BluemiraWire(BluemiraGeo):
             if not is_list:
                 return shape[0]
             else:
-                return cadapi.boolean_fuse(shape)
+                if len(shape) == 1:
+                    return shape[0]
+                else:
+                    return cadapi.boolean_fuse(shape)
         raise TypeError(
             f"Only {self._shape_classes} objects can be used for {self.__class__}"
         )
@@ -246,8 +249,12 @@ class BluemiraWire(BluemiraGeo):
         return Coordinates(cadapi.vertexes(self.shape))
 
     @property
+    def edges(self):
+        return [BluemiraWire(cadapi.apiWire(o)) for o in cadapi.edges(self.shape)]
+
+    @property
     def wires(self):
-        return self
+        return [self]
 
     @property
     def faces(self):

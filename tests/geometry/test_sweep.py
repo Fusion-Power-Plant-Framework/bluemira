@@ -29,6 +29,7 @@ from bluemira.geometry.parameterisations import PrincetonD, TripleArc
 from bluemira.geometry.tools import (
     make_circle,
     make_polygon,
+    make_face,
     offset_wire,
     revolve_shape,
     sweep_shape,
@@ -144,7 +145,7 @@ class TestRevolve:
         shape = revolve_shape(wire, degree=180)
         assert np.isclose(shape.area, 4 * np.pi)
         assert shape.is_valid()
-        face = BluemiraFace(wire)
+        face = make_face(wire)
         shape = revolve_shape(face, degree=180)
         assert np.isclose(shape.volume, np.pi)
         assert shape.is_valid()
@@ -156,14 +157,14 @@ class TestRevolve:
         shape = revolve_shape(wire, degree=360)
         assert np.isclose(shape.area, 8 * np.pi)
         assert shape.is_valid()
-        face = BluemiraFace(wire)
+        face = make_face(wire)
         shape = revolve_shape(face, degree=360)
         assert np.isclose(shape.volume, 2 * np.pi)
         assert shape.is_valid()
 
     def test_johner_semi(self):
         wire = JohnerLCFS().create_shape()
-        face = BluemiraFace(wire)
+        face = make_face(wire)
         shape = revolve_shape(wire, degree=180)
         assert shape.is_valid()
         true_volume = np.pi * face.center_of_mass[0] * face.area
@@ -173,7 +174,7 @@ class TestRevolve:
 
     def test_johner_full(self):
         wire = JohnerLCFS().create_shape()
-        face = BluemiraFace(wire)
+        face = make_face(wire)
         shape = revolve_shape(wire, degree=360)
         assert shape.is_valid()
         true_volume = 2 * np.pi * face.center_of_mass[0] * face.area
@@ -195,7 +196,7 @@ class TestRevolve:
             closed=True,
         )
         outer = offset_wire(inner, 1.0, join="intersect")
-        face = BluemiraFace([outer, inner])
+        face = make_face([outer, inner])
         solid = revolve_shape(face, degree=360)
 
         true_volume = 2 * np.pi * x_c * (4**2 - 2**2)

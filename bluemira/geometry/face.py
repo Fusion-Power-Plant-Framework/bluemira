@@ -54,12 +54,16 @@ class BluemiraFace(BluemiraGeo):
         return Coordinates(cadapi.vertexes(self.shape))
 
     @property
+    def edges(self):
+        return [BluemiraWire(cadapi.apiWire(o)) for o in cadapi.edges(self.shape)]
+
+    @property
     def wires(self):
         return [BluemiraWire(o) for o in cadapi.wires(self.shape)]
 
     @property
     def faces(self):
-        return self
+        return [self]
 
     @property
     def shells(self):

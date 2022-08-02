@@ -643,6 +643,10 @@ def vertexes(obj) -> np.ndarray:
     vertexes = _get_api_attr(obj, "Vertexes")
     return vertex_to_numpy(vertexes)
 
+def edges(obj) -> list[apiWire]:
+    """Edges of the object"""
+    return _get_api_attr(obj, "Edges")
+
 def wires(obj) -> list[apiWire]:
     """Wires of the object"""
     return _get_api_attr(obj, "Wires")
