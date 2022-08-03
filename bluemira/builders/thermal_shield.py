@@ -47,6 +47,7 @@ from bluemira.geometry.tools import (
     make_polygon,
     offset_wire,
     revolve_shape,
+    make_face
 )
 from bluemira.geometry.wire import BluemiraWire
 
@@ -110,7 +111,7 @@ class VacuumVesselThermalShieldBuilder(Builder):
             open_wire=False,
             ndiscr=600,
         )
-        vvts_face = BluemiraFace([vvts_outer_wire, vvts_inner_wire])
+        vvts_face = make_face([vvts_outer_wire, vvts_inner_wire])
         self._vvts_face = vvts_face
         vvts = PhysicalComponent("VVTS", vvts_face)
 

@@ -68,3 +68,7 @@ class BluemiraSolid(BluemiraGeo):
     @property
     def solids(self):
         return [self]
+
+    @property
+    def boundary(self):
+        return self.shells

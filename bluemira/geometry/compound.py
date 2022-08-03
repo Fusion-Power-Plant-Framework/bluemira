@@ -30,9 +30,14 @@ Wrapper for FreeCAD Part.Compounds objects
 
 from __future__ import annotations
 
-from bluemira.codes._freecadapi import apiCompound
+import bluemira.codes._freecadapi as cadapi
 from bluemira.geometry.base import BluemiraGeo
+from bluemira.geometry.wire import BluemiraWire
+from bluemira.geometry.face import BluemiraFace
+from bluemira.geometry.shell import BluemiraShell
+from bluemira.geometry.solid import BluemiraSolid
 
+from bluemira.geometry.coordinates import Coordinates
 
 class BluemiraCompound(BluemiraGeo):
     """Bluemira Compound class."""
@@ -40,3 +45,31 @@ class BluemiraCompound(BluemiraGeo):
     def __init__(self, shape, label: str = ""):
         shape_classes = [BluemiraGeo]
         super().__init__(shape, label, shape_classes)
+
+    @property
+    def vertexes(self):
+        return Coordinates(cadapi.vertexes(self.shape))
+
+    @property
+    def edges(self):
+        return [BluemiraWire(cadapi.apiWire(o)) for o in cadapi.edges(self.shape)]
+
+    @property
+    def wires(self):
+        return [BluemiraWire(o) for o in cadapi.wires(self.shape)]
+
+    @property
+    def faces(self):
+        return [BluemiraFace(o) for o in cadapi.faces(self.shape)]
+
+    @property
+    def shells(self):
+        return [BluemiraShell(o) for o in cadapi.shells(self.shape)]
+
+    @property
+    def solids(self):
+        return [BluemiraSolid(o) for o in cadapi.solids(self.shape)]
+
+    @property
+    def boundary(self):
+        return None

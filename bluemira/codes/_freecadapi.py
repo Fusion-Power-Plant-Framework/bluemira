@@ -647,6 +647,10 @@ def edges(obj) -> list[apiWire]:
     """Edges of the object"""
     return _get_api_attr(obj, "Edges")
 
+def ordered_edges(obj) -> np.ndarray:
+    """Ordered edges of the object"""
+    return _get_api_attr(obj, "OrderedEdges")
+
 def wires(obj) -> list[apiWire]:
     """Wires of the object"""
     return _get_api_attr(obj, "Wires")
@@ -1829,8 +1833,24 @@ def serialize_shape(shape):
     """
     type_ = type(shape)
 
+    output = []
+
+    if type_ == Part.Solid:
+        for shell in shape.Shells:
+            output.append(serialize_shape(shell))
+        return {"Solid": output}
+
+    if type_ == Part.Shell:
+        for face in shape.Faces:
+            output.append(serialize_shape(face))
+        return {"Shell": output}
+
+    if type_ == Part.Face:
+        for wire in shape.Wires:
+            output.append(serialize_shape(wire))
+        return {"Face": output}
+
     if type_ == Part.Wire:
-        output = []
         edges = shape.OrderedEdges
         for edge in edges:
             output.append(serialize_shape(edge))
@@ -1923,12 +1943,30 @@ def deserialize_shape(buffer):
         The deserialized FreeCAD object
     """
     for type_, v in buffer.items():
+        if type_ == "Solid":
+            temp_list = []
+            for shell in v:
+                temp_list.append(deserialize_shape(shell))
+            return Part.Solid(temp_list)
+
+        if type_ == "Shell":
+            temp_list = []
+            for face in v:
+                temp_list.append(deserialize_shape(face))
+            return Part.Shell(temp_list)
+
+        if type_ == "Face":
+            temp_list = []
+            for wire in v:
+                temp_list.append(deserialize_shape(wire))
+            return Part.Face(temp_list)
+
         if type_ == "Wire":
             temp_list = []
             for edge in v:
                 temp_list.append(deserialize_shape(edge))
-
             return Part.Wire(temp_list)
+
         if type_ == "LineSegment":
             return make_polygon([v["StartPoint"], v["EndPoint"]])
         elif type_ == "BezierCurve":

@@ -72,8 +72,8 @@ poly4 = tools.make_polygon(
 )
 poly_out = BluemiraWire([poly1, poly2], label="poly_out")
 poly_in = BluemiraWire([poly3, poly4], label="poly_in")
-coil_out = BluemiraFace([poly_out, poly_in], label="coil_out")
-coil_in = BluemiraFace([poly_in], label="coil_in")
+coil_out = tools.make_face([poly_out, poly_in], label="coil_out")
+coil_in = tools.make_face([poly_in], label="coil_in")
 
 
 # %%[markdown]
@@ -85,7 +85,7 @@ coil_in = BluemiraFace([poly_in], label="coil_in")
 # %%
 
 lcfs.mesh_options = {"lcar": 0.75, "physical_group": "LCFS"}
-face = BluemiraFace(lcfs, label="plasma_surface")
+face = tools.make_face(lcfs, label="plasma_surface")
 face.mesh_options = {"lcar": 0.5, "physical_group": "surface"}
 
 poly1.mesh_options = {"lcar": 0.25, "physical_group": "poly1"}

@@ -50,6 +50,7 @@ from bluemira.geometry.tools import (
     offset_wire,
     slice_shape,
     sweep_shape,
+    make_face
 )
 from bluemira.geometry.wire import BluemiraWire
 from bluemira.magnetostatics.circuits import (
@@ -367,7 +368,7 @@ class TFCoilsBuilder(OptimisedShapeBuilder):
         # Should normally be gotten with wire_plane_intersect
         # (it's not OK to assume that the maximum x value occurs on the midplane)
         x_out = self._centreline.bounding_box.x_max
-        xs = BluemiraFace(deepcopy(self._wp_cross_section))
+        xs = make_face(deepcopy(self._wp_cross_section))
         xs2 = deepcopy(xs)
         xs2.translate((x_out - xs2.center_of_mass[0], 0, 0))
 

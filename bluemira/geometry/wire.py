@@ -267,3 +267,7 @@ class BluemiraWire(BluemiraGeo):
     @property
     def solids(self):
         return []
+
+    @property
+    def boundary(self):
+        return self.edges

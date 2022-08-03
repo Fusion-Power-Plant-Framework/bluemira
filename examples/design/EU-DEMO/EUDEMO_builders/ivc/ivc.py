@@ -42,6 +42,7 @@ from bluemira.geometry.tools import (
     convex_hull_wires_2d,
     make_polygon,
     offset_wire,
+    make_face,
 )
 from bluemira.geometry.wire import BluemiraWire
 
@@ -353,7 +354,7 @@ def build_ivc_xz_shapes(
         components, BlanketThicknessBuilder.COMPONENT_BOUNDARY
     )
     plasma_facing_wire = _build_plasma_facing_wire(components)
-    in_vessel_face = BluemiraFace([blanket_boundary, plasma_facing_wire])
+    in_vessel_face = make_face([blanket_boundary, plasma_facing_wire])
 
     # Cut a clearance between the blankets and divertor - getting two
     # new faces
@@ -415,7 +416,7 @@ def _make_clearance_face(x_min: float, x_max: float, z: float, thickness: float)
         z - thickness / 2,
         z + thickness / 2,
     ]
-    return BluemiraFace(make_polygon([x_coords, y_coords, z_coords], closed=True))
+    return make_face(make_polygon([x_coords, y_coords, z_coords], closed=True))
 
 
 def _extract_wire(component_tree: Component, label: str) -> BluemiraWire:

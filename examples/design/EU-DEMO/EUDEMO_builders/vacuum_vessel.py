@@ -38,7 +38,7 @@ from bluemira.builders.tools import (
 from bluemira.display.palettes import BLUE_PALETTE
 from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.plane import BluemiraPlane
-from bluemira.geometry.tools import offset_wire, revolve_shape
+from bluemira.geometry.tools import offset_wire, revolve_shape, make_face
 from bluemira.geometry.wire import BluemiraWire
 
 
@@ -121,7 +121,7 @@ class VacuumVesselBuilder(Builder):
             angle_2,
             num_points=300,
         )
-        face = BluemiraFace([outer_vv, inner_vv])
+        face = make_face([outer_vv, inner_vv])
         self._vv_face = face
 
         body = PhysicalComponent("Body", face)

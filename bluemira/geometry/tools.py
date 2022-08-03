@@ -49,6 +49,7 @@ from bluemira.geometry.plane import BluemiraPlane
 from bluemira.geometry.shell import BluemiraShell
 from bluemira.geometry.solid import BluemiraSolid
 from bluemira.geometry.wire import BluemiraWire
+from bluemira.geometry.compound import BluemiraCompound
 
 
 def convert(apiobj, label=""):
@@ -653,9 +654,9 @@ def make_face(wires: Union[BluemiraWire, List[BluemiraWire]], label: str = ""):
     if not isinstance(wires, list):
         wires = [wires]
     if not all(isinstance(w, BluemiraWire) for w in wires):
-       raise ValueError(f"The input wires are not all BluemiraWire instances")
+       raise ValueError(f"The input wires {wires} are not all BluemiraWire instances")
     if not all(w.is_closed() for w in wires):
-        raise GeometryError(f"Only closed wires can be used to generate a face")
+        raise GeometryError(f"Only closed wires {wires} can be used to generate a face")
     face = BluemiraFace(cadapi.make_face(wires[0].shape), label=label)
     if len(wires) > 1:
         fholes = [make_face(w) for w in wires[1:]]
@@ -675,6 +676,10 @@ def make_solid(shell: BluemiraShell, label: str = ""):
     """Make a solid give a BluemiraShell boundary"""
     return BluemiraSolid(cadapi.make_solid(shell.shape), label=label)
 
+
+def make_shell(objs: List[BluemiraGeo], label: str = ""):
+    """Make a shell from a list of BluemiraFace"""
+    return BluemiraCompound(cadapi.make_compound([o.shape for o in objs]), label=label)
 
 # # =============================================================================
 # # Shape operation
@@ -1231,21 +1236,17 @@ def serialize_shape(shape: BluemiraGeo):
     Serialize a BluemiraGeo object.
     """
     type_ = type(shape)
-
-    output = []
+    dict = {}
     if isinstance(shape, BluemiraGeo):
-        dict = {"label": shape.label, "shape": output}
-        for obj in shape.shape:
-            output.append(serialize_shape(obj))
-            if isinstance(shape, GeoMeshable):
-                if shape.mesh_options is not None:
-                    if shape.mesh_options.lcar is not None:
-                        dict["lcar"] = shape.mesh_options.lcar
-                    if shape.mesh_options.physical_group is not None:
-                        dict["physical_group"] = shape.mesh_options.physical_group
+        dict["label"] = shape.label
+        dict["shape"] = cadapi.serialize_shape(shape.shape)
+        if isinstance(shape, GeoMeshable):
+            if shape.mesh_options is not None:
+                if shape.mesh_options.lcar is not None:
+                    dict["lcar"] = shape.mesh_options.lcar
+                if shape.mesh_options.physical_group is not None:
+                    dict["physical_group"] = shape.mesh_options.physical_group
         return {str(type(shape).__name__): dict}
-    elif isinstance(shape, cadapi.apiWire):
-        return cadapi.serialize_shape(shape)
     else:
         raise NotImplementedError(f"Serialization non implemented for {type_}")
 
@@ -1279,31 +1280,21 @@ def deserialize_shape(buffer: dict):
 
     def _extract_shape(shape_dict: dict, shape_type: Type[BluemiraGeo]):
         label = shape_dict["label"]
-        boundary = shape_dict["boundary"]
-
-        temp_list = []
-        for item in boundary:
-            if issubclass(shape_type, BluemiraWire):
-                for k in item:
-                    if k == shape_type.__name__:
-                        shape = deserialize_shape(item)
-                    else:
-                        shape = cadapi.deserialize_shape(item)
-                    temp_list.append(shape)
-            else:
-                temp_list.append(deserialize_shape(item))
-
+        shape = cadapi.deserialize_shape(shape_dict["shape"])
         mesh_options = _extract_mesh_options(shape_dict)
 
-        shape = shape_type(label=label, boundary=temp_list)
+        bm_shape = shape_type(label=label, shape=shape)
         if mesh_options is not None:
-            shape.mesh_options = mesh_options
-        return shape
+            bm_shape.mesh_options = mesh_options
+        return bm_shape
 
     for type_, v in buffer.items():
-        for supported_types in supported_types:
-            if type_ == supported_types.__name__:
-                return _extract_shape(v, BluemiraWire)
+        if type_ == BluemiraWire.__name__:
+            return _extract_shape(v, BluemiraWire)
+        elif type_ == BluemiraFace.__name__:
+            return _extract_shape(v, BluemiraFace)
+        elif type_ == BluemiraShell.__name__:
+            return _extract_shape(v, BluemiraShell)
         else:
             raise NotImplementedError(f"Deserialization non implemented for {type_}")
 

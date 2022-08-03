@@ -45,7 +45,13 @@ from bluemira.equilibria.shapes import JohnerLCFS
 from bluemira.equilibria.solve import DudsonConvergence, PicardIterator
 from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.parameterisations import PrincetonD
-from bluemira.geometry.tools import make_circle, make_polygon, offset_wire, revolve_shape
+from bluemira.geometry.tools import (
+    make_circle,
+    make_polygon,
+    offset_wire,
+    make_face,
+    revolve_shape,
+)
 from bluemira.geometry.wire import BluemiraWire
 
 
@@ -395,7 +401,7 @@ class PlasmaBuilder(Builder):
             sep_component.plot_options.wire_options["color"] = BLUE_PALETTE["PL"]
             component.add_child(sep_component)
 
-        lcfs_face = BluemiraFace(self._boundary, label="LCFS")
+        lcfs_face = make_face(self._boundary, label="LCFS")
         lcfs_component = PhysicalComponent("LCFS", lcfs_face)
         lcfs_component.plot_options.wire_options["color"] = BLUE_PALETTE["PL"]
         lcfs_component.plot_options.face_options["color"] = BLUE_PALETTE["PL"]
@@ -430,7 +436,7 @@ class PlasmaBuilder(Builder):
         inner = make_circle(self._boundary.bounding_box.x_min, axis=[0, 0, 1])
         outer = make_circle(self._boundary.bounding_box.x_max, axis=[0, 0, 1])
 
-        lcfs_face = BluemiraFace([outer, inner], label="LCFS")
+        lcfs_face = make_face([outer, inner], label="LCFS")
         lcfs_component = PhysicalComponent("LCFS", lcfs_face)
         lcfs_component.plot_options.wire_options["color"] = BLUE_PALETTE["PL"]
         lcfs_component.plot_options.face_options["color"] = BLUE_PALETTE["PL"]

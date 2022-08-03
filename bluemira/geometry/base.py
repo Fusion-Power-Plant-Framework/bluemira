@@ -273,6 +273,11 @@ class BluemiraGeo(ABC, GeoMeshable):
 
     @property
     @abstractmethod
+    def edges(self):
+        pass
+
+    @property
+    @abstractmethod
     def wires(self):
         pass
 
@@ -289,6 +294,11 @@ class BluemiraGeo(ABC, GeoMeshable):
     @property
     @abstractmethod
     def solids(self):
+        pass
+
+    @property
+    @abstractmethod
+    def boundary(self):
         pass
 
     # Obsolete.

@@ -31,14 +31,14 @@ def create_compound_from_component(comp):
     """
     Creates a BluemiraCompound from the children's shapes of a component.
     """
-    boundary = []
+    shape = []
     if comp.is_leaf and hasattr(comp, "shape") and comp.shape:
-        boundary.append(comp.shape)
+        shape.append(comp.shape)
     else:
         for c in comp.leaves:
             if hasattr(c, "shape") and c.shape:
-                boundary.append(c.shape)
-    compound = BluemiraCompound(label=comp.name, boundary=boundary)
+                shape.append(c.shape)
+    compound = BluemiraCompound(label=comp.name, shape=shape)
     return compound
 
 

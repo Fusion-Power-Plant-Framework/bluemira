@@ -43,6 +43,7 @@ from bluemira.geometry.tools import (
     revolve_shape,
     slice_shape,
     sweep_shape,
+    make_face
 )
 
 __all__ = [
@@ -253,7 +254,7 @@ def _generate_gap_volumes(face, n_seg_p_sector, n_sectors, gap):
         [bb.z_min - delta, bb.z_min - delta, bb.z_max + delta, bb.z_max + delta]
     )
     poly = make_polygon({"x": x, "y": 0, "z": z}, closed=True)
-    bb_face = BluemiraFace(poly)
+    bb_face = make_face(poly)
     bb_face.translate((0, -0.5 * gap, 0))
     gap_volume = extrude_shape(bb_face, (0, gap, 0))
     degree = 360 / n_sectors
@@ -315,4 +316,4 @@ def make_circular_xy_ring(r_inner, r_outer):
 
     inner = make_circle(r_inner, center=centre, axis=axis)
     outer = make_circle(r_outer, center=centre, axis=axis)
-    return BluemiraFace([outer, inner])
+    return make_face([outer, inner])

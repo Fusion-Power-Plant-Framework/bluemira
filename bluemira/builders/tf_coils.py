@@ -38,7 +38,7 @@ from bluemira.geometry.optimisation import (
     constrain_koz,
     minimise_length,
 )
-from bluemira.geometry.tools import offset_wire
+from bluemira.geometry.tools import offset_wire, make_face
 from bluemira.geometry.wire import BluemiraWire
 from bluemira.magnetostatics.biot_savart import BiotSavartFilament
 from bluemira.magnetostatics.circuits import HelmholtzCage
@@ -132,7 +132,7 @@ class ParameterisedRippleSolver:
         for c in current_arrays:
             c.set_ccw((0, 1, 0))
 
-        radius = 0.5 * BluemiraFace(self.wp_xs).area / (self.nx * self.ny)
+        radius = 0.5 * make_face(self.wp_xs).area / (self.nx * self.ny)
         filament = BiotSavartFilament(
             current_arrays, radius=radius, current=1 / (self.nx * self.ny)
         )

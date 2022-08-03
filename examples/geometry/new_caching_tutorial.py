@@ -51,7 +51,12 @@ from bluemira.display.displayer import DisplayCADOptions
 
 import bluemira.codes._freecadapi as cadapi
 from bluemira.geometry.tools import (
-    make_face, make_polygon, extrude_shape, boolean_fuse
+    make_face,
+    make_polygon,
+    extrude_shape,
+    boolean_fuse,
+    serialize_shape,
+    deserialize_shape
 )
 
 # Basic objects
@@ -215,7 +220,9 @@ fplotter = FacePlotter()
 
 fplotter.plot_3d(bmface)
 
-np.testing.assert_almost_equal(bmface.center_of_mass, plane.base)
-np.testing.assert_almost_equal(
-    np.array([bmface.length, bmface.area]), np.array([2 * (lx + ly), lx * ly])
-)
+buffer = cadapi.serialize_shape(bmface.shape)
+face = cadapi.deserialize_shape(buffer)
+
+bmbuffer = serialize_shape(bmface)
+print(bmbuffer)
+bmface1 = deserialize_shape(bmbuffer)

@@ -37,7 +37,7 @@ from bluemira.builders.tools import (
 from bluemira.display.palettes import BLUE_PALETTE
 from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.placement import BluemiraPlacement
-from bluemira.geometry.tools import boolean_cut, make_polygon, slice_shape
+from bluemira.geometry.tools import boolean_cut, make_polygon, slice_shape, make_face
 
 
 class BlanketBuilder(Builder):
@@ -121,7 +121,7 @@ class BlanketBuilder(Builder):
         slices = []
         for i, segment in enumerate(self._segments):
             slice = PhysicalComponent(
-                segment.name, BluemiraFace(slice_shape(segment.shape, xy_plane)[0])
+                segment.name, make_face(slice_shape(segment.shape, xy_plane)[0])
             )
             slice.plot_options.face_options["color"] = BLUE_PALETTE["BB"][i]
             slices.append(slice)
@@ -186,7 +186,7 @@ class BlanketBuilder(Builder):
         off = 0.1
         z = np.array([0, 0, bb.z_max + off, bb.z_max + off])
         cut_wire = make_polygon({"x": x, "y": 0, "z": z}, closed=True)
-        cut_face = BluemiraFace(cut_wire)
+        cut_face = make_face(cut_wire)
 
         segments = boolean_cut(self._silhouette, cut_face)
         segments.sort(key=lambda seg: seg.bounding_box.x_min)
