@@ -4,7 +4,7 @@ from typing import Dict, Generic, Type, TypeVar, Union
 from bluemira.base.parameter import ParameterFrame
 
 _DesignerReturnT = TypeVar("_DesignerReturnT")
-_ParamT = TypeVar("_ParamT", bound=ParameterFrame)
+_ParameterFrameT = TypeVar("_ParameterFrameT", bound=ParameterFrame)
 
 
 class Designer(abc.ABC, Generic[_DesignerReturnT]):
@@ -20,7 +20,7 @@ class Designer(abc.ABC, Generic[_DesignerReturnT]):
     def run(self) -> _DesignerReturnT:
         pass
 
-    def _init_params(self, params: Union[Dict, _ParamT]) -> _ParamT:
+    def _init_params(self, params: Union[Dict, _ParameterFrameT]) -> _ParameterFrameT:
         if isinstance(params, dict):
             return self.param_cls.from_dict(params)
         elif isinstance(params, ParameterFrame):

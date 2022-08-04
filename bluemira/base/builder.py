@@ -33,7 +33,7 @@ from bluemira.base.designer import Designer
 from bluemira.base.parameter import ParameterFrame
 
 _ComponentManagerT = TypeVar("_ComponentManagerT")
-_ParamT = TypeVar("_ParamT", bound=ParameterFrame)
+_ParameterFrameT = TypeVar("_ParameterFrameT", bound=ParameterFrame)
 
 
 def _remove_suffix(s: str, suffix: str) -> str:
@@ -46,7 +46,7 @@ def _remove_suffix(s: str, suffix: str) -> str:
 class Builder(abc.ABC, Generic[_ComponentManagerT]):
     def __init__(
         self,
-        params: Union[ParameterFrame, Dict],
+        params: Union[_ParameterFrameT, Dict],
         build_config: Dict,
         designer: Optional[Designer] = None,
     ):
@@ -59,14 +59,14 @@ class Builder(abc.ABC, Generic[_ComponentManagerT]):
         self.designer = designer
 
     @abc.abstractproperty
-    def param_cls(self) -> Type[_ParamT]:
+    def param_cls(self) -> Type[_ParameterFrameT]:
         pass
 
     @abc.abstractmethod
     def build(self) -> _ComponentManagerT:
         return Component(self.name)
 
-    def _init_params(self, params: Union[Dict, _ParamT]) -> _ParamT:
+    def _init_params(self, params: Union[Dict, _ParameterFrameT]) -> _ParameterFrameT:
         if isinstance(params, dict):
             return self.param_cls.from_dict(params)
         elif isinstance(params, ParameterFrame):
