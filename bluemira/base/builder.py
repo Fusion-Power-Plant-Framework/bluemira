@@ -20,7 +20,7 @@
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 
 """
-Interfaces for builder and build steps classes
+Interfaces for builder classes.
 """
 
 from __future__ import annotations
@@ -44,6 +44,19 @@ def _remove_suffix(s: str, suffix: str) -> str:
 
 
 class Builder(abc.ABC, Generic[_ComponentManagerT]):
+    """
+    Base class for component builders.
+
+    Parameters
+    ----------
+    params: Union[Dict, ParameterFrame]
+        The parameters required by the builder.
+    build_config: Dict
+        The build configuration for the builder.
+    designer: Optional[Designer]
+        A designer to solve a design problem required by the builder.
+    """
+
     def __init__(
         self,
         params: Union[_ParameterFrameT, Dict],
@@ -60,10 +73,12 @@ class Builder(abc.ABC, Generic[_ComponentManagerT]):
 
     @abc.abstractproperty
     def param_cls(self) -> Type[_ParameterFrameT]:
+        """The class to hold this builder's parameters."""
         pass
 
     @abc.abstractmethod
     def build(self) -> _ComponentManagerT:
+        """Build the component."""
         return Component(self.name)
 
     def _init_params(self, params: Union[Dict, _ParameterFrameT]) -> _ParameterFrameT:
