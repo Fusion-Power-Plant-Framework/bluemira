@@ -26,52 +26,51 @@ Interfaces for builder and build steps classes
 from __future__ import annotations
 
 import abc
-import enum
-import string
-from typing import Any, Dict, List, Literal, Optional, Union
+from typing import Dict, Generic, Optional, Type, TypeVar, Union
 
 from bluemira.base.components import Component
-from bluemira.base.config import Configuration
-from bluemira.base.error import BuilderError
-from bluemira.base.look_and_feel import bluemira_debug, bluemira_print
+from bluemira.base.designer import Designer
 from bluemira.base.parameter import ParameterFrame
 
-__all__ = ["Builder", "BuildConfig"]
+_ComponentManagerT = TypeVar("_ComponentManagerT")
+_ParamT = TypeVar("_ParamT", bound=ParameterFrame)
 
 
-BuildConfig = Dict[str, Union[int, float, str, "BuildConfig"]]
-"""
-Type alias for representing nested build configuration information.
-"""
+def _remove_suffix(s: str, suffix: str) -> str:
+    # Python 3.9 has str.removesuffix()
+    if suffix and s.endswith(suffix):
+        return s[: -len(suffix)]
+    return s
 
 
-# TODO: Consolidate with RunMode in codes.
-class RunMode(enum.Enum):
-    """
-    Enum class to pass args and kwargs to the function corresponding to the chosen
-    PROCESS runmode (Run, Read, or Mock).
-    """
+class Builder(abc.ABC, Generic[_ComponentManagerT]):
+    def __init__(
+        self,
+        params: Union[ParameterFrame, Dict],
+        build_config: Dict,
+        designer: Optional[Designer] = None,
+    ):
+        super().__init__()
+        self.name = build_config.get(
+            "name", _remove_suffix(self.__class__.__name__, "Builder")
+        )
+        self.params = self._init_params(params)
+        self.build_config = build_config
+        self.designer = designer
 
-    RUN = enum.auto()
-    READ = enum.auto()
-    MOCK = enum.auto()
+    @abc.abstractproperty
+    def param_cls(self) -> Type[_ParamT]:
+        pass
 
-    def __call__(self, obj, *args, **kwargs):
-        """
-        Call function of object with lowercase name of enum
+    @abc.abstractmethod
+    def build(self) -> _ComponentManagerT:
+        return Component(self.name)
 
-        Parameters
-        ----------
-        obj: instance
-            instance of class the function will come from
-        *args
-           args of function
-        **kwargs
-           kwargs of function
-
-        Returns
-        -------
-        function result
-        """
-        func = getattr(obj, self.name.lower())
-        return func(*args, **kwargs)
+    def _init_params(self, params: Union[Dict, _ParamT]) -> _ParamT:
+        if isinstance(params, dict):
+            return self.param_cls.from_dict(params)
+        elif isinstance(params, ParameterFrame):
+            return params
+        raise TypeError(
+            f"Cannot interpret type '{type(params)}' as {self.param_cls.__name__}."
+        )
