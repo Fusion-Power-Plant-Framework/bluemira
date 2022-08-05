@@ -57,14 +57,7 @@ class CryostatDesignerParams(ParameterFrame):
     Cryostat designer parameters
     """
 
-    x_g_support: Parameter[float]
-    x_gs_kink_diff: Parameter[float]  # TODO add to Parameter default = 2
     g_cr_ts: Parameter[float]
-    tk_cr_vv: Parameter[float]
-    well_depth: Parameter[float]  # TODO add to Parameter default = 5 chickens
-    z_gs: Parameter[
-        float
-    ]  # TODO add to Parameter default (z gravity support) = -15 chickens
 
 
 class CryostatBuilderParams(ParameterFrame):
@@ -73,6 +66,14 @@ class CryostatBuilderParams(ParameterFrame):
     """
 
     n_TF: Parameter[int]
+    tk_cr_vv: Parameter[float]
+    # TODO add to Parameter default = 5 chickens
+    well_depth: Parameter[float]
+    x_g_support: Parameter[float]
+    # TODO add to Parameter default = 2
+    x_gs_kink_diff: Parameter[float]
+    # TODO add to Parameter default (z gravity support) = -15 chickens
+    z_gs: Parameter[float]
 
 
 class CryostatDesigner(Designer[BluemiraFace]):
@@ -90,51 +91,10 @@ class CryostatDesigner(Designer[BluemiraFace]):
         super().__init__(params)
         self.cryo_ts_xz = cryo_ts_xz
 
-    def run(self) -> tuple[BluemiraFace]:
+    def run(self) -> tuple[float]:
         """
         Cryostat designer run method
         """
-        return self.run_xz(), self.run_xy()
-
-    def run_xz(self) -> BluemiraFace:
-        """
-        Creates minimal xz for cryostat
-        """
-        x_in = 0
-        x_out, z_top = self._get_extrema()
-
-        x_gs_kink = self.params.x_g_support - self.params.x_gs_kink_diff
-        z_mid = self.params.z_gs - self.params.g_cr_ts
-        z_bot = z_mid - self.params.well_depth
-        tk = self.params.tk_cr_vv.value
-
-        x_inner = [x_in, x_out, x_out, x_gs_kink, x_gs_kink, x_in]
-        z_inner = [z_top, z_top, z_mid, z_mid, z_bot, z_bot]
-
-        x_outer = [x_in, x_gs_kink, x_gs_kink, x_out, x_out, x_in]
-        x_outer[1:-1] += tk
-
-        z_outer = [z_bot, z_bot, z_mid, z_mid, z_top, z_top]
-        z_outer[:4] -= tk
-        z_outer[4:] += tk
-
-        x = np.concatenate([x_inner, x_outer])
-        z = np.concatenate([z_inner, z_outer])
-
-        return BluemiraFace(make_polygon({"x": x, "y": 0, "z": z}, closed=True))
-
-    def run_xy(self) -> BluemiraFace:
-        """
-        Creates minimal xy for cryostat
-        """
-        r_in, _ = self._get_extrema()
-        r_out = r_in + self.params.tk_cr_vv
-        inner = make_circle(radius=r_in)
-        outer = make_circle(radius=r_out)
-
-        return BluemiraFace([outer, inner])
-
-    def _get_extrema(self) -> tuple[float]:
         bound_box = self.cryo_ts_xz.bounding_box
         z_max = bound_box.z_max
         x_max = bound_box.x_max
@@ -155,20 +115,50 @@ class CryostatBuilder(Builder):
         """
         Build the cryostat component.
         """
+        self.x_out, self.z_top = self.designer.run()
+
+        # possibly just
+        # return Cyrostat(
+        #     super().build(
+        #         xz=[self.build_xz()], xy=[self.build_xy()], xyz=self.build_xyz()
+        #     )
+        # )
+
         component = super().build()
-
-        self._xz_cross_section, self._xy_cross_section = self.designer.run()
-
         component.add_child(Component("xz", children=[self.build_xz()]))
         component.add_child(Component("xy", children=[self.build_xy()]))
         component.add_child(Component("xyz", children=self.build_xyz()))
+
         return Cryostat(component)
 
     def build_xz(self) -> PhysicalComponent:
         """
         Build the x-z components of the cryostat.
         """
-        cryostat_vv = PhysicalComponent(self.CRYO, self._xz_cross_section)
+        x_in = 0
+        x_gs_kink = self.params.x_g_support - self.params.x_gs_kink_diff
+        z_mid = self.params.z_gs - self.params.g_cr_ts
+        z_bot = z_mid - self.params.well_depth
+        tk = self.params.tk_cr_vv.value
+
+        x_inner = [x_in, self.x_out, self.x_out, x_gs_kink, x_gs_kink, x_in]
+        z_inner = [self.z_top, self.z_top, z_mid, z_mid, z_bot, z_bot]
+
+        x_outer = [x_in, x_gs_kink, x_gs_kink, self.x_out, self.x_out, x_in]
+        x_outer[1:-1] += tk
+
+        z_outer = [z_bot, z_bot, z_mid, z_mid, self.z_top, self.z_top]
+        z_outer[:4] -= tk
+        z_outer[4:] += tk
+
+        x = np.concatenate([x_inner, x_outer])
+        z = np.concatenate([z_inner, z_outer])
+
+        self.xz_cross_section = BluemiraFace(
+            make_polygon({"x": x, "y": 0, "z": z}, closed=True)
+        )
+
+        cryostat_vv = PhysicalComponent(self.CRYO, self.xz_cross_section)
         cryostat_vv.plot_options.face_options["color"] = BLUE_PALETTE["CR"][0]
         return cryostat_vv
 
@@ -176,7 +166,11 @@ class CryostatBuilder(Builder):
         """
         Build the x-y components of the cryostat.
         """
-        cryostat_vv = PhysicalComponent(self.CRYO, self._xy_cross_section)
+        r_out = self.x_out + self.params.tk_cr_vv
+        inner = make_circle(radius=self.x_out)
+        outer = make_circle(radius=r_out)
+
+        cryostat_vv = PhysicalComponent(self.CRYO, BluemiraFace([outer, inner]))
         cryostat_vv.plot_options.face_options["color"] = BLUE_PALETTE["CR"][0]
         return cryostat_vv
 
@@ -188,7 +182,7 @@ class CryostatBuilder(Builder):
         n_sectors = max(1, int(degree // int(sector_degree)))
 
         shape = revolve_shape(
-            self._xz_cross_section,
+            self.xz_cross_section,
             base=(0, 0, 0),
             direction=(0, 0, 1),
             degree=sector_degree,
