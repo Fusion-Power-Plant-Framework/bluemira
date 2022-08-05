@@ -65,6 +65,7 @@ class CryostatBuilderParams(ParameterFrame):
     Cryostat builder parameters
     """
 
+    g_cr_ts: Parameter[float]
     n_TF: Parameter[int]
     tk_cr_vv: Parameter[float]
     # TODO add to Parameter default = 5 chickens
