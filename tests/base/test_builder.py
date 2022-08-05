@@ -19,84 +19,33 @@
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 
-import pytest
-
 from bluemira.base.builder import Builder
-from bluemira.base.components import Component
-from bluemira.base.error import BuilderError
 
 
-class NoParamBuilder(Builder):
-    def build(self, **kwargs) -> Component:
-        return super().build(**kwargs)
+class ParamClass:
+    def __init__(self, param_1, param_2) -> None:
+        self.param_1 = param_1
+        self.param_2 = param_2
 
-    def reinitialise(self, params, **kwargs) -> None:
-        return super().reinitialise(params, **kwargs)
+    @classmethod
+    def from_dict(cls, d):
+        return cls(**d)
 
 
-class ABuilder(Builder):
-    _required_params = [
-        "P_el_net",
-        "R_0",
-        "n_TF",
-    ]
+class StubBuilder(Builder):
+    param_cls = ParamClass
 
-    def build(self, **kwargs) -> Component:
-        return super().build(**kwargs)
-
-    def reinitialise(self, params, **kwargs) -> None:
-        return super().reinitialise(params, **kwargs)
+    def build(self):
+        return super().build()
 
 
 class TestBuilder:
-    def test_name(self):
-        params = {}
-        build_config = {
-            "name": "TestBuilder",
-        }
-        builder = NoParamBuilder(params, build_config)
-        assert builder.name == build_config["name"]
+    _params = {
+        "param_1": {"name": "param_1", "unit": "m", "value": 1},
+        "param_2": {"name": "param_2", "unit": "T", "value": 2},
+    }
 
-    def test_required_params(self):
-        params = {
-            "P_el_net": {
-                "value": 500,
-                "description": "Make some fusion",
-            },
-            "R_0": 9.0,
-            "n_TF": {
-                "value": 16,
-                "description": "Number of TF coils needed for this study",
-            },
-        }
-        build_config = {"name": "TestBuilder"}
-        builder = ABuilder(params, build_config)
-        builder_dict = builder._params.to_dict(verbose=True)
-        for key, var in params.items():
-            if isinstance(var, dict):
-                for param_key in var.keys():
-                    assert params[key][param_key] == builder_dict[key][param_key]
+    def test_default_name_is_class_name_sans_builder(self):
+        builder = StubBuilder(self._params, {})
 
-    def test_required_params_missing(self):
-        params = {}
-        build_config = {"name": "TestBuilder"}
-        with pytest.raises(
-            BuilderError,
-            match="Required parameters P_el_net, R_0, n_TF not provided to Builder",
-        ):
-            ABuilder(params, build_config)
-
-        params = {
-            "P_el_net": {
-                "value": 500,
-                "description": "Make some fusion",
-            },
-            "n_TF": {
-                "value": 16,
-                "description": "Number of TF coils needed for this study",
-            },
-        }
-        with pytest.raises(
-            BuilderError, match="Required parameters R_0 not provided to Builder"
-        ):
-            ABuilder(params, build_config)
+        assert builder.name == "Stub"
