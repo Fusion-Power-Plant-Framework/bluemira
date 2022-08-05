@@ -27,21 +27,22 @@ install_requires = [
     "natsort",
     "neutronics-material-maker==0.1.11",  # Crash on upgrade
     "nlopt",
-    "numba",
     "numba-scipy",
+    "numba",
     "numpy<=1.21.5",  # numba's highest numpy
     "pandas",
-    "pint",
     "periodictable",
+    "pint",
     "pyclipper",
     "pypet",
     "pyquaternion",
     "scikit-learn",
+    "scipy<=1.5.3",
     "seaborn",
     "Shapely",
     "tables",
     "tabulate",
-    "scipy<=1.5.3",
+    "typeguard",
     "wrapt",
 ]
 
