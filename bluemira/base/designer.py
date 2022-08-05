@@ -18,68 +18,43 @@
 #
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
-
 """
-Interfaces for builder classes.
+Interfaces for designer classes.
 """
-
-from __future__ import annotations
 
 import abc
-from typing import Dict, Generic, Optional, Type, TypeVar, Union
+from typing import Dict, Generic, Type, TypeVar, Union
 
-from bluemira.base.components import Component
-from bluemira.base.designer import Designer
 from bluemira.base.parameter import ParameterFrame
 
-_ComponentManagerT = TypeVar("_ComponentManagerT")
+_DesignerReturnT = TypeVar("_DesignerReturnT")
 _ParameterFrameT = TypeVar("_ParameterFrameT", bound=ParameterFrame)
 
 
-def _remove_suffix(s: str, suffix: str) -> str:
-    # Python 3.9 has str.removesuffix()
-    if suffix and s.endswith(suffix):
-        return s[: -len(suffix)]
-    return s
-
-
-class Builder(abc.ABC, Generic[_ComponentManagerT]):
+class Designer(abc.ABC, Generic[_DesignerReturnT]):
     """
-    Base class for component builders.
+    Base class for 'Designers' that solver design problems as part of
+    building a reactor component.
 
     Parameters
     ----------
-    params: Union[Dict, ParameterFrame]
-        The parameters required by the builder.
-    build_config: Dict
-        The build configuration for the builder.
-    designer: Optional[Designer]
-        A designer to solve a design problem required by the builder.
+    params: Union[_ParameterFrameT, Dict]
+        The parameters required by the designer.
     """
 
-    def __init__(
-        self,
-        params: Union[_ParameterFrameT, Dict],
-        build_config: Dict,
-        designer: Optional[Designer] = None,
-    ):
+    def __init__(self, params: Union[_ParameterFrameT, Dict]):
         super().__init__()
-        self.name = build_config.get(
-            "name", _remove_suffix(self.__class__.__name__, "Builder")
-        )
         self.params = self._init_params(params)
-        self.build_config = build_config
-        self.designer = designer
 
     @abc.abstractproperty
-    def param_cls(self) -> Type[_ParameterFrameT]:
-        """The class to hold this builder's parameters."""
+    def param_cls(self) -> Type[ParameterFrame]:
+        """The class to hold this designer's parameters."""
         pass
 
     @abc.abstractmethod
-    def build(self) -> _ComponentManagerT:
-        """Build the component."""
-        return Component(self.name)
+    def run(self) -> _DesignerReturnT:
+        """Run the design."""
+        pass
 
     def _init_params(self, params: Union[Dict, _ParameterFrameT]) -> _ParameterFrameT:
         if isinstance(params, dict):
