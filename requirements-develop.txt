@@ -35,7 +35,7 @@ platformdirs==2.5.2
 pluggy==1.0.0
 pre-commit==2.20.0
 py==1.11.0
-pycodestyle==2.8.0
+pycodestyle==2.9.1
 pydocstyle==6.1.1
 pyflakes==2.5.0
 Pygments==2.13.0
