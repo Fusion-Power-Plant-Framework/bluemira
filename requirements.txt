@@ -14,8 +14,8 @@ llvmlite==0.39.0
 matplotlib==3.5.3
 neutronics-material-maker==0.1.11
 nlopt==2.7.1
-numba==0.56.0
 numba-scipy==0.3.1
+numba==0.56.0
 numexpr==2.8.3
 numpy==1.22.4
 packaging==21.3
@@ -30,10 +30,12 @@ pyquaternion==0.9.9
 python-dateutil==2.8.2
 pytz==2022.2.1
 scikit-learn==1.1.2
+scipy==1.7.3
 seaborn==0.11.2
 six==1.16.0
 tables==3.7.0
 tabulate==0.8.10
 threadpoolctl==3.1.0
+typeguard==2.13.3
 wrapt==1.14.1
-scipy==1.7.3
+zipp==3.8.0
