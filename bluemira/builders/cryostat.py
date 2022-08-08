@@ -22,14 +22,16 @@
 """
 Cryostat builder
 """
-from typing import Dict, List, Type, Union
+from typing import Dict, List, Tuple, Type, Union
 
 import numpy as np
 
 from bluemira.base.builder import Builder
 from bluemira.base.components import Component, PhysicalComponent
 from bluemira.base.designer import Designer
-from bluemira.base.parameter import Parameter, ParameterFrame
+from bluemira.base.parameter_frame import NewParameter as Parameter
+from bluemira.base.parameter_frame import NewParameterFrame as ParameterFrame
+from bluemira.base.parameter_frame import parameter_frame
 from bluemira.builders.tools import circular_pattern_component
 from bluemira.display.palettes import BLUE_PALETTE
 from bluemira.geometry.face import BluemiraFace
@@ -52,7 +54,8 @@ class Cryostat:
         return self._component
 
 
-class CryostatDesignerParams(ParameterFrame):
+@parameter_frame
+class CryostatDesignerParams:
     """
     Cryostat designer parameters
     """
@@ -60,7 +63,8 @@ class CryostatDesignerParams(ParameterFrame):
     g_cr_ts: Parameter[float]
 
 
-class CryostatBuilderParams(ParameterFrame):
+@parameter_frame
+class CryostatBuilderParams:
     """
     Cryostat builder parameters
     """
@@ -92,15 +96,15 @@ class CryostatDesigner(Designer[BluemiraFace]):
         super().__init__(params)
         self.cryo_ts_xz = cryo_ts_xz
 
-    def run(self) -> tuple[float]:
+    def run(self) -> Tuple[float]:
         """
         Cryostat designer run method
         """
         bound_box = self.cryo_ts_xz.bounding_box
         z_max = bound_box.z_max
         x_max = bound_box.x_max
-        x_out = x_max + self.params.g_cr_ts
-        z_top = z_max + self.params.g_cr_ts
+        x_out = x_max + self.params.g_cr_ts.value
+        z_top = z_max + self.params.g_cr_ts.value
         return x_out, z_top
 
 
@@ -119,7 +123,7 @@ class CryostatBuilder(Builder):
         self.x_out, self.z_top = self.designer.run()
 
         # possibly just
-        # return Cyrostat(
+        # return Cryostat(
         #     super().build(
         #         xz=[self.build_xz()], xy=[self.build_xy()], xyz=self.build_xyz()
         #     )
@@ -137,18 +141,18 @@ class CryostatBuilder(Builder):
         Build the x-z components of the cryostat.
         """
         x_in = 0
-        x_gs_kink = self.params.x_g_support - self.params.x_gs_kink_diff
-        z_mid = self.params.z_gs - self.params.g_cr_ts
-        z_bot = z_mid - self.params.well_depth
+        x_gs_kink = self.params.x_g_support.value - self.params.x_gs_kink_diff.value
+        z_mid = self.params.z_gs.value - self.params.g_cr_ts.value
+        z_bot = z_mid - self.params.well_depth.value
         tk = self.params.tk_cr_vv.value
 
         x_inner = [x_in, self.x_out, self.x_out, x_gs_kink, x_gs_kink, x_in]
         z_inner = [self.z_top, self.z_top, z_mid, z_mid, z_bot, z_bot]
 
-        x_outer = [x_in, x_gs_kink, x_gs_kink, self.x_out, self.x_out, x_in]
+        x_outer = np.array([x_in, x_gs_kink, x_gs_kink, self.x_out, self.x_out, x_in])
         x_outer[1:-1] += tk
 
-        z_outer = [z_bot, z_bot, z_mid, z_mid, self.z_top, self.z_top]
+        z_outer = np.array([z_bot, z_bot, z_mid, z_mid, self.z_top, self.z_top])
         z_outer[:4] -= tk
         z_outer[4:] += tk
 
@@ -167,7 +171,7 @@ class CryostatBuilder(Builder):
         """
         Build the x-y components of the cryostat.
         """
-        r_out = self.x_out + self.params.tk_cr_vv
+        r_out = self.x_out + self.params.tk_cr_vv.value
         inner = make_circle(radius=self.x_out)
         outer = make_circle(radius=r_out)
 
