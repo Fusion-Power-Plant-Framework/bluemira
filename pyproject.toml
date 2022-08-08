@@ -39,6 +39,7 @@ dependencies = [
     "seaborn",
     "tables",
     "tabulate",
+    "typeguard",
     "scipy",
     "wrapt",
 ]
