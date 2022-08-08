@@ -50,29 +50,22 @@ class Plasma:
         )
 
 
-class PlasmaParams:
-    """The plasma builder has no parameters."""
-
-    @classmethod
-    def from_dict(cls, _):
-        # Temporary hack while we wait on the new ParameterFrame
-        return cls()
-
-
 class PlasmaBuilder(Builder):
     """
     Builder for a poloidally symmetric plasma.
     """
 
-    param_cls = PlasmaParams
     LCFS = "LCFS"
+
+    # This builder has no parameters
+    param_cls = None
 
     def __init__(
         self,
         build_config: Dict,
         designer: Designer[BluemiraWire],
     ):
-        super().__init__({}, build_config, designer)
+        super().__init__(None, build_config, designer)
 
     def build(self) -> Plasma:
         xz_lcfs = self.designer.run()

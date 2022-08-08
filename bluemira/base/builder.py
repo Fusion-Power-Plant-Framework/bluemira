@@ -59,7 +59,7 @@ class Builder(abc.ABC, Generic[_ComponentManagerT]):
 
     def __init__(
         self,
-        params: Union[_ParameterFrameT, Dict],
+        params: Union[_ParameterFrameT, Dict, None],
         build_config: Dict,
         designer: Optional[Designer] = None,
     ):
@@ -72,7 +72,7 @@ class Builder(abc.ABC, Generic[_ComponentManagerT]):
         self.designer = designer
 
     @abc.abstractproperty
-    def param_cls(self) -> Type[_ParameterFrameT]:
+    def param_cls(self) -> Union[Type[_ParameterFrameT], None]:
         """The class to hold this builder's parameters."""
         pass
 
@@ -81,10 +81,14 @@ class Builder(abc.ABC, Generic[_ComponentManagerT]):
         """Build the component."""
         return Component(self.name)
 
-    def _init_params(self, params: Union[Dict, _ParameterFrameT]) -> _ParameterFrameT:
+    def _init_params(
+        self, params: Union[Dict, _ParameterFrameT, None]
+    ) -> _ParameterFrameT:
         if isinstance(params, dict):
             return self.param_cls.from_dict(params)
         elif isinstance(params, ParameterFrame):
+            return params
+        elif self.param_cls is None and params is None:
             return params
         raise TypeError(
             f"Cannot interpret type '{type(params)}' as {self.param_cls.__name__}."
