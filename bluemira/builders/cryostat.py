@@ -32,7 +32,11 @@ from bluemira.base.designer import Designer
 from bluemira.base.parameter_frame import NewParameter as Parameter
 from bluemira.base.parameter_frame import NewParameterFrame as ParameterFrame
 from bluemira.base.parameter_frame import parameter_frame
-from bluemira.builders.tools import circular_pattern_component
+from bluemira.builders.tools import (
+    circular_pattern_component,
+    directional_component_tree,
+    get_n_sectors,
+)
 from bluemira.display.palettes import BLUE_PALETTE
 from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.tools import make_circle, make_polygon, revolve_shape
@@ -120,25 +124,31 @@ class CryostatBuilder(Builder):
         """
         Build the cryostat component.
         """
-        self.x_out, self.z_top = self.designer.run()
-
-        # possibly just
-        # return Cryostat(
-        #     super().build(
-        #         xz=[self.build_xz()], xy=[self.build_xy()], xyz=self.build_xyz()
-        #     )
-        # )
+        x_out, z_top = self.designer.run()
+        xz_cryostat = self.build_xz(x_out, z_top)
+        xz_cross_section = xz_cryostat.get_component_properties("shape")
 
         component = super().build()
-        component.add_child(Component("xz", children=[self.build_xz()]))
-        component.add_child(Component("xy", children=[self.build_xy()]))
-        component.add_child(Component("xyz", children=self.build_xyz()))
+
+        directional_component_tree(
+            component,
+            xz=[xz_cryostat],
+            xy=[self.build_xy(x_out)],
+            xyz=self.build_xyz(xz_cross_section),
+        )
 
         return Cryostat(component)
 
-    def build_xz(self) -> PhysicalComponent:
+    def build_xz(self, x_out: float, z_top: float) -> PhysicalComponent:
         """
         Build the x-z components of the cryostat.
+
+        Parameters
+        ----------
+        x_out: float
+            x coordinate extremity
+        z_top: float
+            z coordinate extremity
         """
         x_in = 0
         x_gs_kink = self.params.x_g_support.value - self.params.x_gs_kink_diff.value
@@ -146,48 +156,59 @@ class CryostatBuilder(Builder):
         z_bot = z_mid - self.params.well_depth.value
         tk = self.params.tk_cr_vv.value
 
-        x_inner = [x_in, self.x_out, self.x_out, x_gs_kink, x_gs_kink, x_in]
-        z_inner = [self.z_top, self.z_top, z_mid, z_mid, z_bot, z_bot]
+        x_inner = [x_in, x_out, x_out, x_gs_kink, x_gs_kink, x_in]
+        z_inner = [z_top, z_top, z_mid, z_mid, z_bot, z_bot]
 
-        x_outer = np.array([x_in, x_gs_kink, x_gs_kink, self.x_out, self.x_out, x_in])
+        x_outer = np.array([x_in, x_gs_kink, x_gs_kink, x_out, x_out, x_in])
         x_outer[1:-1] += tk
 
-        z_outer = np.array([z_bot, z_bot, z_mid, z_mid, self.z_top, self.z_top])
+        z_outer = np.array([z_bot, z_bot, z_mid, z_mid, z_top, z_top])
         z_outer[:4] -= tk
         z_outer[4:] += tk
 
         x = np.concatenate([x_inner, x_outer])
         z = np.concatenate([z_inner, z_outer])
 
-        self.xz_cross_section = BluemiraFace(
+        xz_cross_section = BluemiraFace(
             make_polygon({"x": x, "y": 0, "z": z}, closed=True)
         )
 
-        cryostat_vv = PhysicalComponent(self.CRYO, self.xz_cross_section)
+        cryostat_vv = PhysicalComponent(self.CRYO, xz_cross_section)
         cryostat_vv.plot_options.face_options["color"] = BLUE_PALETTE["CR"][0]
         return cryostat_vv
 
-    def build_xy(self) -> PhysicalComponent:
+    def build_xy(self, x_out: float) -> PhysicalComponent:
         """
         Build the x-y components of the cryostat.
+
+        Parameters
+        ----------
+        x_out: float
+            x coordinate extremity
         """
-        r_out = self.x_out + self.params.tk_cr_vv.value
-        inner = make_circle(radius=self.x_out)
+        r_out = x_out + self.params.tk_cr_vv.value
+        inner = make_circle(radius=x_out)
         outer = make_circle(radius=r_out)
 
         cryostat_vv = PhysicalComponent(self.CRYO, BluemiraFace([outer, inner]))
         cryostat_vv.plot_options.face_options["color"] = BLUE_PALETTE["CR"][0]
         return cryostat_vv
 
-    def build_xyz(self, degree=360) -> List[PhysicalComponent]:
+    def build_xyz(
+        self, xz_cross_section: BluemiraFace, degree=360
+    ) -> List[PhysicalComponent]:
         """
         Build the x-y-z components of the cryostat.
+
+        Parameters
+        ----------
+        xz_cross_section: BluemiraFace
+            xz cross section of cryostat
         """
-        sector_degree = 360 / self.params.n_TF.value
-        n_sectors = max(1, int(degree // int(sector_degree)))
+        sector_degree, n_sectors = get_n_sectors(self.params.n_TF.value, degree)
 
         shape = revolve_shape(
-            self.xz_cross_section,
+            xz_cross_section,
             base=(0, 0, 0),
             direction=(0, 0, 1),
             degree=sector_degree,
