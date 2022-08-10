@@ -20,7 +20,6 @@
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 
 import numpy as np
-import pytest
 from matplotlib import pyplot as plt
 
 from bluemira.geometry.coordinates import Coordinates
@@ -29,7 +28,6 @@ from bluemira.structural.geometry import Geometry
 from bluemira.structural.material import SS316
 
 
-@pytest.mark.longrun  # TODO(hsaunders1904): remove this
 class TestKMatrix:
     def test_k(self):
         geometry = Geometry()
