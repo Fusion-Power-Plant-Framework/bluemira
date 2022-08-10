@@ -71,11 +71,9 @@ def pytest_configure(config):
     if not config.getoption("--plotting-on"):
         # We're not displaying plots so use a display-less backend
         mpl.use("Agg")
-        # Disable CAD viewer by mocking out QApplication.exec
-        from PySide2.QtWidgets import QApplication
-
-        app = QApplication([])
-        mock.patch.object(app, "exec_").start()
+        # Disable CAD viewer by mocking out FreeCAD API's displayer.
+        # Note that if we use a new CAD backend, this must be changed.
+        mock.patch("bluemira.codes._freecadapi.show_cad").start()
 
     options = {
         "longrun": config.option.longrun,
