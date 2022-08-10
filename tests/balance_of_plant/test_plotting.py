@@ -78,6 +78,7 @@ class TestSuperSankey:
         figure = plt.gcf()
         new_file = tempfile.NamedTemporaryFile()
         figure.savefig(new_file)
+        plt.show()
 
         path = get_bluemira_path("balance_of_plant/test_data", subfolder="tests")
         reference_file = os.path.join(path, "sankey_test.png")
