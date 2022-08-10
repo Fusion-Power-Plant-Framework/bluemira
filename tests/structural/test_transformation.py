@@ -108,7 +108,6 @@ class TestLambdaTransformationMatrices:
             self.plot_nodes(
                 Node(1, 1, 1, 0), Node(1 + v[0], 1 + v[1], 1 + v[2], 1), local
             )
-            plt.show()
 
     def test_big_random(self):
         for _ in range(100):
