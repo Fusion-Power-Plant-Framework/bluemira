@@ -71,6 +71,8 @@ class TestLambdaTransformationMatrices:
         ax.set_xlim([-2, 2])
         ax.set_ylim([-2, 2])
         ax.set_zlim([-2, 2])
+        plt.show()
+        plt.close(fig)
 
     def assert_works_good(self, dcm, local, msg=""):
         global_check = dcm @ local
