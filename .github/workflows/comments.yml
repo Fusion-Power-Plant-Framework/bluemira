@@ -1,7 +1,7 @@
 name: PR Comments
 
 # This workflow should only be used for low permission actions
-# for instance those that on't need the repository checked out.
+# for instance those that don't need the repository checked out.
 on:
   workflow_run:
     workflows: ["bluemira_ci"]
