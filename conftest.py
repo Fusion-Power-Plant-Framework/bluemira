@@ -23,9 +23,10 @@
 Used by pytest for configuration like adding command line options.
 """
 
+from unittest import mock
+
 import matplotlib as mpl
 
-import tests
 from bluemira.base.file import try_get_bluemira_private_data_root
 
 
@@ -37,7 +38,7 @@ def pytest_addoption(parser):
         "--plotting-on",
         action="store_true",
         default=False,
-        help="switch on plotting in tests",
+        help="switch on interactive plotting in tests",
     )
     parser.addoption(
         "--longrun",
@@ -67,11 +68,12 @@ def pytest_configure(config):
     """
     Configures pytest with the plotting and longrun command line options.
     """
-    if config.getoption("--plotting-on"):
-        tests.PLOTTING = True
-    else:
+    if not config.getoption("--plotting-on"):
         # We're not displaying plots so use a display-less backend
         mpl.use("Agg")
+        # Disable CAD viewer by mocking out FreeCAD API's displayer.
+        # Note that if we use a new CAD backend, this must be changed.
+        mock.patch("bluemira.codes._freecadapi.show_cad").start()
 
     options = {
         "longrun": config.option.longrun,

@@ -24,7 +24,6 @@ from copy import deepcopy
 import numpy as np
 from matplotlib import pyplot as plt
 
-import tests
 from bluemira.geometry.tools import make_circle
 from bluemira.structural.crosssection import IBeam
 from bluemira.structural.material import SS316
@@ -76,10 +75,9 @@ class TestCyclicSymmetry:
         result = model.solve(sparse=False)
         fullresult = fullmodel.solve(sparse=True)
 
-        if tests.PLOTTING:
-            result.plot(100, stress=True, pattern=True)
-            fullresult.plot(100, stress=True)
-            plt.show()
+        result.plot(100, stress=True, pattern=True)
+        fullresult.plot(100, stress=True)
+        plt.show()
 
         left = model.cycle_sym.left_nodes
         right = model.cycle_sym.right_nodes

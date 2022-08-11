@@ -26,7 +26,6 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pytest
 
-import tests
 from bluemira.base.file import get_bluemira_path
 from bluemira.geometry._deprecated_offset import offset_clipper
 from bluemira.geometry.coordinates import Coordinates
@@ -35,8 +34,6 @@ from bluemira.geometry.tools import distance_to, make_polygon
 
 
 class TestClipperOffset:
-    plot = tests.PLOTTING
-
     options = [("square"), ("miter")]
     # NOTE: "round" can be montrously slow..
 
@@ -58,12 +55,13 @@ class TestClipperOffset:
     def test_complex_polygon(self, x, y, delta, method):
         coordinates = Coordinates({"x": x, "y": y, "z": np.random.rand()})
         c = offset_clipper(coordinates, delta, method=method)
-        if self.plot:
-            f, ax = plt.subplots()
-            ax.plot(x, y, "k")
-            ax.plot(c.x, c.y, "r", marker="o")
-            ax.set_aspect("equal")
-            plt.show()
+
+        fig, ax = plt.subplots()
+        ax.plot(x, y, "k")
+        ax.plot(c.x, c.y, "r", marker="o")
+        ax.set_aspect("equal")
+        plt.show()
+        plt.close(fig)  # make sure we don't have lots of plots open
 
         distance = self._calculate_offset(coordinates, c)
         np.testing.assert_almost_equal(distance, abs(delta))
@@ -88,14 +86,14 @@ class TestClipperOffset:
             # distance = self._calculate_offset(coordinates, offset_coordinates)
             # np.testing.assert_almost_equal(distance, 1.5)
 
-        if self.plot:
-            f, ax = plt.subplots()
-            ax.plot(coordinates.x, coordinates.z, color="k")
-            colors = ["r", "g", "y"]
-            for offset_coordinates, c in zip(offsets, colors):
-                ax.plot(offset_coordinates.x, offset_coordinates.z, color=c)
-            ax.set_aspect("equal")
-            plt.show()
+        fig, ax = plt.subplots()
+        ax.plot(coordinates.x, coordinates.z, color="k")
+        colors = ["r", "g", "y"]
+        for offset_coordinates, c in zip(offsets, colors):
+            ax.plot(offset_coordinates.x, offset_coordinates.z, color=c)
+        ax.set_aspect("equal")
+        plt.show()
+        plt.close(fig)
 
     def test_wrong_method(self):
         coordinates = Coordinates({"x": [0, 1, 2, 0], "y": [0, 1, -1, 0]})

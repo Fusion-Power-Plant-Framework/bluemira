@@ -35,7 +35,6 @@ from EUDEMO_builders.plasma import PlasmaBuilder, PlasmaComponent
 from EUDEMO_builders.reactor import EUDEMOReactorDesign
 from EUDEMO_builders.tf_coils import TFCoilsBuilder, TFCoilsComponent
 
-import tests
 from bluemira.base.components import Component
 from bluemira.base.file import get_bluemira_root
 from bluemira.base.logs import get_log_level, set_log_level
@@ -153,7 +152,6 @@ class TestEUDEMO:
         tf_component = self.component.get_component(EUDEMOReactorDesign.PF_COILS)
         assert tf_component is not None
 
-    @pytest.mark.skipif(not tests.PLOTTING, reason="plotting disabled")
     def test_plot_xz(self):
         """
         Display the results.
@@ -170,7 +168,6 @@ class TestEUDEMO:
             ],
         ).plot_2d()
 
-    @pytest.mark.skipif(not tests.PLOTTING, reason="plotting disabled")
     def test_plot_xy(self):
         """
         Display the results.
@@ -187,7 +184,6 @@ class TestEUDEMO:
             ],
         ).plot_2d()
 
-    @pytest.mark.skipif(not tests.PLOTTING, reason="plotting disabled")
     def test_show_cad(self):
         """
         Display the results.
@@ -212,5 +208,5 @@ class TestEUDEMO:
         component.add_child(plasma_builder.build_xyz(degree=270))
         component.add_child(tf_coils_builder.build_xyz(degree=270))
         component.add_child(pf_coils_builder.build_xyz(degree=270))
-        if tests.PLOTTING:
-            component.show_cad()
+
+        component.show_cad()

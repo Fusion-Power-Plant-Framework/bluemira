@@ -21,7 +21,6 @@
 
 import numpy as np
 
-import tests
 from bluemira.magnetostatics.circular_arc import CircularArcCurrentSource
 from bluemira.magnetostatics.semianalytic_2d import semianalytic_Bx, semianalytic_Bz
 from tests.magnetostatics.setup_methods import _plot_verification_test
@@ -67,22 +66,21 @@ class TestCircularArcCurrentSource:
         assert np.allclose(Bx_coil, Bx)
         assert np.allclose(Bz_coil, Bz)
 
-        if tests.PLOTTING:
-            self.arc.plot()
-            _plot_verification_test(
-                self.xc,
-                self.zc,
-                self.dx,
-                self.dz,
-                xx,
-                zz,
-                Bx_coil,
-                Bz_coil,
-                Bp_coil,
-                Bx,
-                Bz,
-                Bp,
-            )
+        self.arc.plot()
+        _plot_verification_test(
+            self.xc,
+            self.zc,
+            self.dx,
+            self.dz,
+            xx,
+            zz,
+            Bx_coil,
+            Bz_coil,
+            Bp_coil,
+            Bx,
+            Bz,
+            Bp,
+        )
 
     def test_singularities(self):
         """

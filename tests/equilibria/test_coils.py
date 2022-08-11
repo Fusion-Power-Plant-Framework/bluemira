@@ -23,7 +23,6 @@ import numpy as np
 import pytest
 from matplotlib import pyplot as plt
 
-import tests
 from bluemira.base.constants import MU_0
 from bluemira.equilibria.coils import (
     CS_COIL_NAME,
@@ -49,6 +48,10 @@ class TestCoil:
         cls.coil = Coil(4, 4, 10e6, j_max=NBTI_J_MAX)
         cls.cs_coil = Coil(4, 4, 10e6, ctype="CS", j_max=NBTI_J_MAX)
         cls.no_coil = Coil(4, 4, 10e6, ctype="asrgd", j_max=NBTI_J_MAX)
+
+    @classmethod
+    def teardown_cls(cls):
+        plt.close("all")
 
     def test_name(self):
         def extract_int(coil):
@@ -105,33 +108,31 @@ class TestCoil:
 
         gbx = c.control_Bx(x, z)
         gbz = c.control_Bz(x, z)
-        gbp = np.sqrt(gbx**2 + gbz**2)
-        gp = c.control_psi(x, z)
+        _ = np.sqrt(gbx**2 + gbz**2)
+        _ = c.control_psi(x, z)
 
-        if tests.PLOTTING:
-            f, ax = plt.subplots()
-            cc = ax.contourf(x, z, gbx)
+        _, ax = plt.subplots()
+        cc = ax.contourf(x, z, gbx)
 
-            plt.colorbar(cc)
-            ax.set_aspect("equal")
-            ax.set_xlim([2, 6])
-            ax.set_ylim([-3, 3])
+        plt.colorbar(cc)
+        ax.set_aspect("equal")
+        ax.set_xlim([2, 6])
+        ax.set_ylim([-3, 3])
 
         c.mesh_coil(0.1)
 
         gbxn = c.control_Bx(x, z)
-        gbzn = c.control_Bz(x, z)
-        gbpn = np.sqrt(gbx**2 + gbz**2)
-        gpn = c.control_psi(x, z)
+        _ = c.control_Bz(x, z)
+        _ = np.sqrt(gbx**2 + gbz**2)
+        _ = c.control_psi(x, z)
 
-        if tests.PLOTTING:
-            f, ax = plt.subplots()
-            c = ax.contourf(x, z, gbxn)
-            plt.colorbar(c)
-            ax.set_aspect("equal")
-            ax.set_xlim([2, 6])
-            ax.set_ylim([-3, 3])
-            plt.show()
+        _, ax = plt.subplots()
+        c = ax.contourf(x, z, gbxn)
+        plt.colorbar(c)
+        ax.set_aspect("equal")
+        ax.set_xlim([2, 6])
+        ax.set_ylim([-3, 3])
+        plt.show()
 
     @staticmethod
     def callable_tester(f_callable):
@@ -200,41 +201,42 @@ class TestSemiAnalytic:
         cls.x_corner = np.append(cls.coil.x_corner, cls.coil.x_corner[0])
         cls.z_corner = np.append(cls.coil.z_corner, cls.coil.z_corner[0])
 
+    def teardown_method(self):
+        plt.close("all")
+
     def test_bx(self):
         gp = self.coil.control_Bx(self.grid.x, self.grid.z)
         gp_greens = self.coil._control_Bx_greens(self.grid.x, self.grid.z)
         gp_analytic = self.coil._control_Bx_analytical(self.grid.x, self.grid.z)
 
-        if tests.PLOTTING:
-            f, ax = plt.subplots(1, 3)
-            levels = np.linspace(np.amin(gp), np.amax(gp), 20)
-            ax[0].contourf(self.grid.x, self.grid.z, gp_greens)
-            ax[1].contourf(self.grid.x, self.grid.z, gp, levels=levels)
-            ax[2].contourf(self.grid.x, self.grid.z, gp_analytic, levels=levels)
-            for axis in ax:
-                axis.plot(self.x_corner, self.z_corner, color="r")
-                axis.set_aspect("equal")
-            ax[0].set_title("Green's functions")
-            ax[1].set_title("Combined Green's and semi-analytic")
-            ax[2].set_title("Semi-analytic method")
+        _, ax = plt.subplots(1, 3)
+        levels = np.linspace(np.amin(gp), np.amax(gp), 20)
+        ax[0].contourf(self.grid.x, self.grid.z, gp_greens)
+        ax[1].contourf(self.grid.x, self.grid.z, gp, levels=levels)
+        ax[2].contourf(self.grid.x, self.grid.z, gp_analytic, levels=levels)
+        for axis in ax:
+            axis.plot(self.x_corner, self.z_corner, color="r")
+            axis.set_aspect("equal")
+        ax[0].set_title("Green's functions")
+        ax[1].set_title("Combined Green's and semi-analytic")
+        ax[2].set_title("Semi-analytic method")
 
     def test_bz(self):
         gp = self.coil.control_Bz(self.grid.x, self.grid.z)
         gp_greens = self.coil._control_Bz_greens(self.grid.x, self.grid.z)
         gp_analytic = self.coil._control_Bz_analytical(self.grid.x, self.grid.z)
 
-        if tests.PLOTTING:
-            f, ax = plt.subplots(1, 3)
-            levels = np.linspace(np.amin(gp), np.amax(gp), 20)
-            ax[0].contourf(self.grid.x, self.grid.z, gp_greens)
-            ax[1].contourf(self.grid.x, self.grid.z, gp, levels=levels)
-            ax[2].contourf(self.grid.x, self.grid.z, gp_analytic, levels=levels)
-            for axis in ax:
-                axis.plot(self.x_corner, self.z_corner, color="r")
-                axis.set_aspect("equal")
-            ax[0].set_title("Green's functions")
-            ax[1].set_title("Combined Green's and semi-analytic")
-            ax[2].set_title("Semi-analytic method")
+        _, ax = plt.subplots(1, 3)
+        levels = np.linspace(np.amin(gp), np.amax(gp), 20)
+        ax[0].contourf(self.grid.x, self.grid.z, gp_greens)
+        ax[1].contourf(self.grid.x, self.grid.z, gp, levels=levels)
+        ax[2].contourf(self.grid.x, self.grid.z, gp_analytic, levels=levels)
+        for axis in ax:
+            axis.plot(self.x_corner, self.z_corner, color="r")
+            axis.set_aspect("equal")
+        ax[0].set_title("Green's functions")
+        ax[1].set_title("Combined Green's and semi-analytic")
+        ax[2].set_title("Semi-analytic method")
 
 
 class TestCoilGroup:

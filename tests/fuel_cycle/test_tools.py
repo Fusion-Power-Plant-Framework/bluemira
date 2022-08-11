@@ -23,7 +23,6 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pytest
 
-import tests
 from bluemira.base.constants import T_LAMBDA
 from bluemira.fuel_cycle.timeline_tools import (
     generate_exponential_distribution,
@@ -54,6 +53,10 @@ class TestSinkTools:
         self.I_min, self.I_max = 3.0, 5.0
         self.t_in, self.t_out = 5.0, 6.0
 
+    @classmethod
+    def teardown_class(cls):
+        plt.close("all")
+
     def test_timestep(self):
         """
         th \\n
@@ -83,19 +86,19 @@ class TestSinkTools:
         cross = 80
         dt15 = _find_t15(inventory, eta, m_in, 0, time_y, cross)
 
-        if tests.PLOTTING:
-            f, ax = plt.subplots(figsize=[10, 8])
-            ax.plot(t, i, label="Idecay+m_in")
-            ax.plot(t, ii, label="Idecay")
-            ax.plot(time_y, iend, marker="o", ms=15)
-            ax.plot(time_y, iend2, marker="s", ms=15)
+        _, ax = plt.subplots(figsize=[10, 8])
+        ax.plot(t, i, label="Idecay+m_in")
+        ax.plot(t, ii, label="Idecay")
+        ax.plot(time_y, iend, marker="o", ms=15)
+        ax.plot(time_y, iend2, marker="s", ms=15)
 
-            ax.plot([dt15, dt15], [0, inventory])
+        ax.plot([dt15, dt15], [0, inventory])
 
-            ax.plot([0, time_y], [cross, cross])
+        ax.plot([0, time_y], [cross, cross])
 
-            ax.plot(dt15, cross, color="r", marker="*", ms=15)
-            plt.show()
+        ax.plot(dt15, cross, color="r", marker="*", ms=15)
+        plt.show()
+
         # high n required to converge..
         assert np.isclose(iend2, i[-1], rtol=0.01), f"{iend2} != {i[-1]}"
         assert np.isclose(iend, ii[-1], rtol=0.0001), f"{iend} != {ii[-1]}"
@@ -117,9 +120,7 @@ class TestSinkTools:
 
     def test_tlossft(self):
         def _build():
-            if not tests.PLOTTING:
-                return
-            f, ax = plt.subplots(figsize=[10, 8])
+            _, ax = plt.subplots(figsize=[10, 8])
             ax.plot(
                 [self.t_in - 0.5, self.t_out + 0.5],
                 [self.I_min, self.I_min],
@@ -140,14 +141,9 @@ class TestSinkTools:
             return ax
 
         def plot(ax, i_new, label=None):
-            if not tests.PLOTTING:
-                return
-
             ax.plot([self.t_in, self.t_out], [inventory, i_new], marker="o", label=label)
 
         def plotter():
-            if not tests.PLOTTING:
-                return
             ax = _build()
             plot(ax, i2, label="little")
             plot(ax, i22, label="decay only")

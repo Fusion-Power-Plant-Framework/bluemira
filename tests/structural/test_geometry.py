@@ -20,17 +20,14 @@
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 
 import numpy as np
-import pytest
 from matplotlib import pyplot as plt
 
-import tests
 from bluemira.geometry.coordinates import Coordinates
 from bluemira.structural.crosssection import IBeam
 from bluemira.structural.geometry import Geometry
 from bluemira.structural.material import SS316
 
 
-@pytest.mark.longrun
 class TestKMatrix:
     def test_k(self):
         geometry = Geometry()
@@ -43,10 +40,13 @@ class TestKMatrix:
         geometry.add_element(1, 2, i_300_200, SS316)
 
         k_matrix = geometry.k_matrix()
+
+        fig, ax = plt.subplots()
+        ax.matshow(k_matrix)
+        plt.show()
+        plt.close(fig)
+
         assert np.allclose(k_matrix, k_matrix.T)
-        if tests.PLOTTING:
-            f, ax = plt.subplots()
-            ax.matshow(k_matrix)
 
 
 class TestMembership:

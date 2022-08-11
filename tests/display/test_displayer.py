@@ -23,18 +23,19 @@
 Tests for the displayer module.
 """
 
-import contextlib
 from unittest.mock import patch
 
 import numpy as np
 import pytest
 
-import tests
 from bluemira.base.components import Component, PhysicalComponent
 from bluemira.display import displayer
 from bluemira.display.error import DisplayError
-from bluemira.geometry.tools import extrude_shape, make_polygon
+from bluemira.geometry.face import BluemiraFace
+from bluemira.geometry.tools import extrude_shape, make_circle, make_polygon
 from tests.display.helpers import PatchQApp, PatchQuarterWidget
+
+_FREECAD_REF = "bluemira.codes._freecadapi"
 
 
 class TestDisplayCADOptions:
@@ -107,20 +108,12 @@ class TestComponentDisplayer:
         wire2 = make_polygon(square_points + 1.0, closed=True)
 
         group = Component("Parent")
-        child1 = PhysicalComponent(
-            "Child1",
-            shape=wire1,
-            parent=group,
-        )
+        child1 = PhysicalComponent("Child1", shape=wire1, parent=group)
         child1.display_cad_options.color = (0.0, 1.0, 0.0)
         child2 = PhysicalComponent("Child2", shape=wire2, parent=group)
 
-        with contextlib.nullcontext() if tests.PLOTTING else patch(
-            "bluemira.codes._freecadapi.QApplication", PatchQApp
-        ):
-            with contextlib.nullcontext() if tests.PLOTTING else patch(
-                "bluemira.codes._freecadapi.quarter.QuarterWidget", PatchQuarterWidget
-            ):
+        with patch(f"{_FREECAD_REF}.QApplication", PatchQApp):
+            with patch(f"{_FREECAD_REF}.quarter.QuarterWidget", PatchQuarterWidget):
                 child1.show_cad()
                 group.show_cad()
                 child2.display_cad_options = displayer.DisplayCADOptions(
@@ -146,12 +139,8 @@ class TestGeometryDisplayer:
         wire1 = make_polygon(self.square_points, label="wire1", closed=False)
         box1 = extrude_shape(wire1, vec=(0.0, 0.0, 1.0), label="box1")
 
-        with contextlib.nullcontext() if tests.PLOTTING else patch(
-            "bluemira.codes._freecadapi.QApplication", PatchQApp
-        ):
-            with contextlib.nullcontext() if tests.PLOTTING else patch(
-                "bluemira.codes._freecadapi.quarter.QuarterWidget", PatchQuarterWidget
-            ):
+        with patch(f"{_FREECAD_REF}.QApplication", PatchQApp):
+            with patch(f"{_FREECAD_REF}.quarter.QuarterWidget", PatchQuarterWidget):
                 displayer.show_cad(wire1)
                 displayer.show_cad(
                     box1, displayer.DisplayCADOptions(color=(1.0, 0.0, 1.0))
@@ -181,3 +170,10 @@ class TestGeometryDisplayer:
                             displayer.DisplayCADOptions(color=(0.0, 1.0, 0.0)),
                         ],
                     )
+
+    def test_3d_cad_displays_shape(self):
+        circle_wire = make_circle(radius=5, axis=(0, 0, 1), label="my_wire")
+        circle_face = BluemiraFace(circle_wire, label="my_face")
+        cylinder = extrude_shape(circle_face, vec=(0, 0, 10), label="my_solid")
+
+        displayer.show_cad(cylinder)

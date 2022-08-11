@@ -40,3 +40,4 @@ markers = [
     "private"
 ]
 addopts = "--html=report.html --self-contained-html --strict-markers"
+filterwarnings = ['ignore:Matplotlib is currently using agg:UserWarning']

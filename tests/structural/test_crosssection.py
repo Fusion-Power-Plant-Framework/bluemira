@@ -22,8 +22,8 @@
 
 import numpy as np
 import pytest
+from matplotlib import pyplot as plt
 
-import tests
 from bluemira.display import plot_2d
 from bluemira.structural.crosssection import (
     AnalyticalCrossSection,
@@ -44,10 +44,10 @@ class TestIbeam:
         assert i_beam.i_zz == 46875000000e-12
         assert np.isclose(i_beam.j, 114583333333.3333e-12)
 
-    @pytest.mark.skipif(not tests.PLOTTING, reason="plotting disabled")
     def test_plot(self):
         i_beam = IBeam(1, 1, 0.25, 0.5)
         plot_2d(i_beam.geometry, show_points=True)
+        plt.close()
 
     def test_errors(self):
         props = [

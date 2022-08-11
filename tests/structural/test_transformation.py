@@ -24,7 +24,6 @@ import itertools
 import numpy as np
 from matplotlib import pyplot as plt
 
-import tests
 from bluemira.structural.node import Node
 from bluemira.structural.transformation import (
     _direction_cosine_matrix,
@@ -48,11 +47,7 @@ class TestLambdaTransformationMatrices:
         assert np.isclose(abs(np.linalg.det(dcm)), 1)
 
     @staticmethod
-    def assert_looks_good(node1, node2, local, fig=None, ax=None):
-        if not tests.PLOTTING:
-            return
-
-        # TODO: not an assert
+    def plot_nodes(node1, node2, local, fig=None, ax=None):
         # Visualise transform
         if fig is None:
             fig = plt.figure()
@@ -76,6 +71,8 @@ class TestLambdaTransformationMatrices:
         ax.set_xlim([-2, 2])
         ax.set_ylim([-2, 2])
         ax.set_zlim([-2, 2])
+        plt.show()
+        plt.close(fig)
 
     def assert_works_good(self, dcm, local, msg=""):
         global_check = dcm @ local
@@ -107,10 +104,10 @@ class TestLambdaTransformationMatrices:
             dcm, local = _direction_cosine_matrix_debugging(*v, debug=True)
             self.assert_maths_good(dcm, msg=f"coords: {v}")
 
-            # TODO: these are not asserts
             self.assert_works_good(dcm, local, msg=f"coords: {v}")
-            # self.assert_looks_good(Node(1, 1, 1, 0), Node(1+v[0], 1+v[1], 1+v[2], 1),
-            #                       local)
+            self.plot_nodes(
+                Node(1, 1, 1, 0), Node(1 + v[0], 1 + v[1], 1 + v[2], 1), local
+            )
 
     def test_big_random(self):
         for _ in range(100):
@@ -144,7 +141,6 @@ class TestLambdaTransformationMatrices:
         self.assert_maths_good(dcm)
 
         self.assert_works_good(dcm, self.global_cs)
-        # self.assert_looks_good(N1, N2, self.global_cs)
 
     def test_random2(self):
         for _ in range(100):

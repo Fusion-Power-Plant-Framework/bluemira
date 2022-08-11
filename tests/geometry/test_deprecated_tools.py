@@ -26,7 +26,6 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pytest
 
-import tests
 from bluemira.base.file import get_bluemira_path
 from bluemira.codes.error import FreeCADError
 from bluemira.geometry._deprecated_base import GeometryError, Plane
@@ -143,6 +142,10 @@ class TestOnPolygon:
 
 
 class TestLoopPlane:
+    @classmethod
+    def teardown_class(cls):
+        plt.close("all")
+
     def test_simple(self):
         loop = Loop(x=[0, 1, 2, 2, 0, 0], z=[-1, -1, -1, 1, 1, -1])
         plane = Plane([0, 0, 0], [1, 0, 0], [0, 1, 0])  # x-y
@@ -159,13 +162,11 @@ class TestLoopPlane:
         intersect = loop_plane_intersect(loop, plane)
         assert len(intersect) == 2
 
-        if tests.PLOTTING:
-            f, ax = plt.subplots()
-            loop.plot(ax)
+        _, ax = plt.subplots()
+        loop.plot(ax)
 
         for i in intersect:
-            if tests.PLOTTING:
-                ax.plot(i[0], i[2], marker="o", color="r")
+            ax.plot(i[0], i[2], marker="o", color="r")
             assert on_polygon(i[0], i[2], loop.d2.T)
 
         plane = Plane([0, 0, 2.7], [1, 0, 2.7], [0, 1, 2.7])  # x-y offset
@@ -173,16 +174,14 @@ class TestLoopPlane:
         assert len(intersect) == 4
 
         for i in intersect:
-            if tests.PLOTTING:
-                ax.plot(i[0], i[2], marker="o", color="r")
+            ax.plot(i[0], i[2], marker="o", color="r")
             assert on_polygon(i[0], i[2], loop.d2.T)
 
         plane = Plane([0, 0, 4], [1, 0, 4], [0, 1, 4])  # x-y offset
         intersect = loop_plane_intersect(loop, plane)
         assert len(intersect) == 1
         for i in intersect:
-            if tests.PLOTTING:
-                ax.plot(i[0], i[2], marker="o", color="r")
+            ax.plot(i[0], i[2], marker="o", color="r")
 
             assert on_polygon(i[0], i[2], loop.d2.T)
 
@@ -199,12 +198,11 @@ class TestLoopPlane:
         intersect = loop_plane_intersect(loop, plane)
         assert len(intersect) == 2
 
-        if tests.PLOTTING:
-            f, ax = plt.subplots()
-            loop.plot(ax)
-            for i in intersect:
-                ax.plot(i[0], i[2], marker="o", color="r")
-            plt.show()
+        _, ax = plt.subplots()
+        loop.plot(ax)
+        for i in intersect:
+            ax.plot(i[0], i[2], marker="o", color="r")
+        plt.show()
 
         plane = Plane([0, 10, 0], [1, 10, 0], [0, 10, 1])  # x-y
         intersect = loop_plane_intersect(loop, plane)
@@ -219,12 +217,10 @@ class TestLoopPlane:
         plane = Plane([0, 0, 0], [1, 1, 1], [2, 0, 0])  # x-y-z
         intersect = loop_plane_intersect(loop, plane)
 
-        if tests.PLOTTING:
-            f, ax = plt.subplots()
-            loop.plot(ax)
+        _, ax = plt.subplots()
+        loop.plot(ax)
         for i in intersect:
-            if tests.PLOTTING:
-                ax.plot(i[0], i[2], marker="o", color="r")
+            ax.plot(i[0], i[2], marker="o", color="r")
             assert on_polygon(i[0], i[2], loop.d2.T)
 
     def test_flat_intersect(self):
@@ -236,6 +232,10 @@ class TestLoopPlane:
 
 
 class TestInPolygon:
+    @classmethod
+    def teardown_class(cls):
+        plt.close("all")
+
     def test_simple(self):
         loop = Loop(x=[-2, 2, 2, -2, -2, -2], z=[-2, -2, 2, 2, 1.5, -2])
         in_points = [
@@ -272,24 +272,21 @@ class TestInPolygon:
             [-2, 2],
         ]
 
-        if tests.PLOTTING:
-            plt.close("all")
-            f, ax = plt.subplots()
-            loop.plot(ax, edgecolor="k")
-            for point in in_points:
-                check = in_polygon(*point, loop.d2.T)
-                c = "b" if check else "r"
-                ax.plot(*point, marker="s", color=c)
-            for point in on_points:
-                check = in_polygon(*point, loop.d2.T)
-                c = "b" if check else "r"
-                ax.plot(*point, marker="o", color=c)
-            for point in out_points:
-                check = in_polygon(*point, loop.d2.T)
-                c = "b" if check else "r"
-                ax.plot(*point, marker="*", color=c)
-
-            plt.show()
+        _, ax = plt.subplots()
+        loop.plot(ax, edgecolor="k")
+        for point in in_points:
+            check = in_polygon(*point, loop.d2.T)
+            c = "b" if check else "r"
+            ax.plot(*point, marker="s", color=c)
+        for point in on_points:
+            check = in_polygon(*point, loop.d2.T)
+            c = "b" if check else "r"
+            ax.plot(*point, marker="o", color=c)
+        for point in out_points:
+            check = in_polygon(*point, loop.d2.T)
+            c = "b" if check else "r"
+            ax.plot(*point, marker="*", color=c)
+        plt.show()
 
         # Test single and arrays
         for p in in_points:
@@ -329,11 +326,11 @@ class TestInPolygon:
             for j in range(m):
                 if in_polygon(x[i, j], z[i, j], lcfs.d2.T):
                     mask[i, j] = 1
-        if tests.PLOTTING:
-            f, ax = plt.subplots()
-            lcfs.plot(ax, fill=False, edgecolor="k")
-            ax.contourf(x, z, mask, levels=[0, 0.5, 1])
-            plt.show()
+
+        _, ax = plt.subplots()
+        lcfs.plot(ax, fill=False, edgecolor="k")
+        ax.contourf(x, z, mask, levels=[0, 0.5, 1])
+        plt.show()
 
         hits = np.count_nonzero(mask)
         assert hits == 1171, hits
@@ -364,11 +361,9 @@ class TestRotationMatrix:
 
 
 class TestOffset:
-    plot = tests.PLOTTING
-
     @classmethod
-    def setup_class(cls):
-        pass
+    def teardown_class(cls):
+        plt.close("all")
 
     def test_rectangle(self):
         # Rectangle - positive offset
@@ -377,11 +372,11 @@ class TestOffset:
         o = offset(x, y, 0.25)
         assert sum(o[0] - np.array([0.75, 3.25, 3.25, 0.75, 0.75])) == 0
         assert sum(o[1] - np.array([0.75, 0.75, 3.25, 3.25, 0.75])) == 0
-        if self.plot:
-            f, ax = plt.subplots()
-            ax.plot(x, y, "k")
-            ax.plot(*o, "r", marker="o")
-            ax.set_aspect("equal")
+
+        _, ax = plt.subplots()
+        ax.plot(x, y, "k")
+        ax.plot(*o, "r", marker="o")
+        ax.set_aspect("equal")
 
     def test_triangle(self):
         x = [1, 2, 1.5, 1, 2]
@@ -392,11 +387,11 @@ class TestOffset:
             < 1e-3
         )
         assert abs(sum(t[1] - np.array([1.25, 1.25, 2.47930937, 1.25])) - 0) < 1e-3
-        if self.plot:
-            f, ax = plt.subplots()
-            ax.plot(x, y, "k")
-            ax.plot(*t, "r", marker="o")
-            ax.set_aspect("equal")
+
+        _, ax = plt.subplots()
+        ax.plot(x, y, "k")
+        ax.plot(*t, "r", marker="o")
+        ax.set_aspect("equal")
 
     def test_complex_open(self):
         # fmt:off
@@ -405,11 +400,11 @@ class TestOffset:
         # fmt:on
 
         c = offset(x, y, 1)
-        if self.plot:
-            f, ax = plt.subplots()
-            ax.plot(x, y, "k")
-            ax.plot(*c, "r", marker="o")
-            ax.set_aspect("equal")
+
+        _, ax = plt.subplots()
+        ax.plot(x, y, "k")
+        ax.plot(*c, "r", marker="o")
+        ax.set_aspect("equal")
 
     def test_complex_closed(self):
         # fmt:off
@@ -418,14 +413,18 @@ class TestOffset:
         # fmt:on
 
         c = offset(x, y, 1)
-        if self.plot:
-            f, ax = plt.subplots()
-            ax.plot(x, y, "k")
-            ax.plot(*c, "r", marker="o")
-            ax.set_aspect("equal")
+
+        _, ax = plt.subplots()
+        ax.plot(x, y, "k")
+        ax.plot(*c, "r", marker="o")
+        ax.set_aspect("equal")
 
 
 class TestIntersections:
+    @classmethod
+    def teardown_class(cls):
+        plt.close("all")
+
     def test_get_intersect(self):
         loop1 = Loop(x=[0, 0.5, 1, 2, 3, 4, 0], z=[1, 1, 1, 1, 2, 5, 5])
         loop2 = Loop(x=[1.5, 1.5, 2.5, 2.5, 2.5], z=[4, -4, -4, -4, 5])
@@ -452,11 +451,12 @@ class TestIntersections:
         loop1 = Loop(x=[0, 0.5, 1, 2, 3, 5, 4.5, 4, 0], z=[1, 1, 1, 1, 2, 4, 4.5, 5, 5])
         loop2 = Loop(x=[1.5, 1.5, 2.5, 2.5, 2.5], z=[4, -4, -4, -4, 5])
         join_intersect(loop1, loop2)
-        if tests.PLOTTING:
-            f, ax = plt.subplots()
-            loop1.plot(ax, fill=False, edgecolor="k", points=True)
-            loop2.plot(ax, fill=False, edgecolor="r", points=True)
-            plt.show()
+
+        _, ax = plt.subplots()
+        loop1.plot(ax, fill=False, edgecolor="k", points=True)
+        loop2.plot(ax, fill=False, edgecolor="r", points=True)
+        plt.show()
+
         assert np.allclose(loop1[3], [1.5, 0, 1])
         assert np.allclose(loop1[5], [2.5, 0, 1.5])
         assert np.allclose(loop1[10], [2.5, 0, 5])
@@ -465,11 +465,11 @@ class TestIntersections:
         loop2 = Loop(x=[1.5, 1.5, 2.5, 2.5, 2.5], y=[4, -4, -4, -4, 5])
         join_intersect(loop1, loop2)
 
-        if tests.PLOTTING:
-            f, ax = plt.subplots()
-            loop1.plot(ax, fill=False, edgecolor="k", points=True)
-            loop2.plot(ax, fill=False, edgecolor="r", points=True)
-            plt.show()
+        _, ax = plt.subplots()
+        loop1.plot(ax, fill=False, edgecolor="k", points=True)
+        loop2.plot(ax, fill=False, edgecolor="r", points=True)
+        plt.show()
+
         assert np.allclose(loop1[3], [1.5, 1, 0])
         assert np.allclose(loop1[5], [2.5, 1.5, 0])
         assert np.allclose(loop1[8], [2.5, 5, 0])
@@ -478,11 +478,11 @@ class TestIntersections:
         loop2 = Loop(z=[1.5, 1.5, 2.5, 2.5, 2.5], y=[4, -4, -4, -4, 5])
         join_intersect(loop1, loop2)
 
-        if tests.PLOTTING:
-            f, ax = plt.subplots()
-            loop1.plot(ax, fill=False, edgecolor="k", points=True)
-            loop2.plot(ax, fill=False, edgecolor="r", points=True)
-            plt.show()
+        _, ax = plt.subplots()
+        loop1.plot(ax, fill=False, edgecolor="k", points=True)
+        loop2.plot(ax, fill=False, edgecolor="r", points=True)
+        plt.show()
+
         assert np.allclose(loop1[1], [0, 5, 2.5])
         assert np.allclose(loop1[4], [0, 1.5, 2.5])
         assert np.allclose(loop1[6], [0, 1, 1.5])
@@ -492,10 +492,10 @@ class TestIntersections:
         lp = Loop.from_file(os.sep.join([TEST_PATH, "test_LP_intersect.json"]))
         eq = Loop.from_file(os.sep.join([TEST_PATH, "test_EQ_intersect.json"]))
         up = Loop.from_file(os.sep.join([TEST_PATH, "test_UP_intersect.json"]))
-        if tests.PLOTTING:
-            f, ax = plt.subplots()
-            for loop in [tf, up, eq, lp]:
-                loop.plot(ax, fill=False)
+
+        _, ax = plt.subplots()
+        for loop in [tf, up, eq, lp]:
+            loop.plot(ax, fill=False)
 
         args = []
         intx, intz = [], []
@@ -505,24 +505,25 @@ class TestIntersections:
             args.extend(a)
             intx.extend(i[0])
             intz.extend(i[1])
-        if tests.PLOTTING:
-            for loop in [tf, up, eq, lp]:
-                loop.plot(ax, fill=False, points=True)
-            ax.plot(*tf.d2.T[args].T, marker="o", color="r")
-            ax.plot(intx, intz, marker="^", color="k")
+
+        for loop in [tf, up, eq, lp]:
+            loop.plot(ax, fill=False, points=True)
+        ax.plot(*tf.d2.T[args].T, marker="o", color="r")
+        ax.plot(intx, intz, marker="^", color="k")
+
         assert len(intx) == len(args), f"{len(intx)} != {len(args)}"
         assert np.allclose(np.sort(intx), np.sort(tf.x[args]))
         assert np.allclose(np.sort(intz), np.sort(tf.z[args]))
 
     def test_join_intersect_arg2(self):
-        tf = Loop.from_file(os.sep.join([TEST_PATH, "test_TF_intersect2.json"]))
-        lp = Loop.from_file(os.sep.join([TEST_PATH, "test_LP_intersect2.json"]))
-        eq = Loop.from_file(os.sep.join([TEST_PATH, "test_EQ_intersect2.json"]))
-        up = Loop.from_file(os.sep.join([TEST_PATH, "test_UP_intersect2.json"]))
-        if tests.PLOTTING:
-            f, ax = plt.subplots()
-            for loop in [tf, up, eq, lp]:
-                loop.plot(ax, fill=False)
+        tf = Loop.from_file(os.path.join(TEST_PATH, "test_TF_intersect2.json"))
+        lp = Loop.from_file(os.path.join(TEST_PATH, "test_LP_intersect2.json"))
+        eq = Loop.from_file(os.path.join(TEST_PATH, "test_EQ_intersect2.json"))
+        up = Loop.from_file(os.path.join(TEST_PATH, "test_UP_intersect2.json"))
+
+        _, ax = plt.subplots()
+        for loop in [tf, up, eq, lp]:
+            loop.plot(ax, fill=False)
 
         args = []
         intx, intz = [], []
@@ -532,9 +533,10 @@ class TestIntersections:
             args.extend(a)
             intx.extend(i[0])
             intz.extend(i[1])
-        if tests.PLOTTING:
-            ax.plot(*tf.d2.T[args].T, marker="o", color="r")
-            ax.plot(intx, intz, marker="^", color="k")
+
+        ax.plot(*tf.d2.T[args].T, marker="o", color="r")
+        ax.plot(intx, intz, marker="^", color="k")
+
         assert len(intx) == len(args), f"{len(intx)} != {len(args)}"
         assert np.allclose(np.sort(intx), np.sort(tf.x[args])), f"{intx} != {tf.x[args]}"
         assert np.allclose(np.sort(intz), np.sort(tf.z[args])), f"{intz} != {tf.z[args]}"
@@ -665,7 +667,7 @@ class TestMixedFaces:
         """
         Tests a particularly tricky face that can result in a seg fault...
         """
-        fn = os.sep.join([TEST_PATH, "divertor_seg_fault_LDS.json"])
+        fn = os.path.join(TEST_PATH, "divertor_seg_fault_LDS.json")
         loop: Loop = Loop.from_file(fn)
         face = make_mixed_face(*loop.xyz)
         true_props = {
@@ -700,15 +702,15 @@ class TestMixedFaces:
         """
         Tests some shell mixed faces
         """
-        inner: Loop = Loop.from_file(os.sep.join([TEST_PATH, f"{name}_inner.json"]))
-        outer: Loop = Loop.from_file(os.sep.join([TEST_PATH, f"{name}_outer.json"]))
+        inner: Loop = Loop.from_file(os.path.join(TEST_PATH, f"{name}_inner.json"))
+        outer: Loop = Loop.from_file(os.path.join(TEST_PATH, f"{name}_outer.json"))
         inner_wire = make_mixed_wire(*inner.xyz)
         outer_wire = make_mixed_wire(*outer.xyz)
         face = BluemiraFace([outer_wire, inner_wire])
         self.assert_properties(true_props, face)
 
     def test_coordinate_cleaning(self):
-        fn = os.sep.join([TEST_PATH, "bb_ob_bss_test.json"])
+        fn = os.path.join(TEST_PATH, "bb_ob_bss_test.json")
         loop: Loop = Loop.from_file(fn)
         make_mixed_wire(*loop.xyz, allow_fallback=False)
 

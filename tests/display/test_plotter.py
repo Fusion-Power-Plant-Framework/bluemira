@@ -23,12 +23,12 @@
 Tests for the plotter module.
 """
 
+import matplotlib.pyplot as plt
 import numpy as np
 
 import bluemira.geometry.face as face
 import bluemira.geometry.placement as placement
 import bluemira.geometry.tools as tools
-import tests
 from bluemira.base.components import Component, PhysicalComponent
 from bluemira.display import plot_3d, plotter
 from bluemira.utilities.plot_tools import Plot3D
@@ -119,6 +119,9 @@ class TestPlot3d:
     Generic 3D plotting tests.
     """
 
+    def teardown_method(self):
+        plt.close("all")
+
     def test_plot_3d_same_axis(self):
         ax_orig = Plot3D()
         ax_1 = plot_3d(tools.make_circle(), show=False, ax=ax_orig)
@@ -138,28 +141,34 @@ class TestPlot3d:
 
 
 class TestPointsPlotter:
+    def teardown_method(self):
+        plt.close("all")
+
     def test_plotting_2d(self):
-        plotter.PointsPlotter().plot_2d(SQUARE_POINTS, show=tests.PLOTTING)
+        plotter.PointsPlotter().plot_2d(SQUARE_POINTS)
 
     def test_plotting_3d(self):
-        plotter.PointsPlotter().plot_3d(SQUARE_POINTS, show=tests.PLOTTING)
+        plotter.PointsPlotter().plot_3d(SQUARE_POINTS)
 
 
 class TestWirePlotter:
+    def teardown_method(self):
+        plt.close("all")
+
     def setup_method(self):
         self.wire = tools.make_polygon(SQUARE_POINTS)
 
     def test_plotting_2d(self):
-        plotter.WirePlotter().plot_2d(self.wire, show=tests.PLOTTING)
+        plotter.WirePlotter().plot_2d(self.wire)
 
     def test_plotting_2d_with_points(self):
-        plotter.WirePlotter(show_points=True).plot_2d(self.wire, show=tests.PLOTTING)
+        plotter.WirePlotter(show_points=True).plot_2d(self.wire)
 
     def test_plotting_3d(self):
-        plotter.WirePlotter().plot_3d(self.wire, show=tests.PLOTTING)
+        plotter.WirePlotter().plot_3d(self.wire)
 
     def test_plotting_3d_with_points(self):
-        plotter.WirePlotter(show_points=True).plot_3d(self.wire, show=tests.PLOTTING)
+        plotter.WirePlotter(show_points=True).plot_3d(self.wire)
 
 
 class TestFacePlotter:
@@ -168,19 +177,20 @@ class TestFacePlotter:
         wire.close()
         self.face = face.BluemiraFace(wire)
 
+    def teardown_method(self):
+        plt.close("all")
+
     def test_plotting_2d(self):
-        plotter.FacePlotter().plot_2d(self.face, show=tests.PLOTTING)
+        plotter.FacePlotter().plot_2d(self.face)
 
     def test_plotting_2d_with_wire(self):
-        plotter.FacePlotter(show_wires=True).plot_2d(self.face, show=tests.PLOTTING)
+        plotter.FacePlotter(show_wires=True).plot_2d(self.face)
 
     def test_plotting_3d(self):
-        plotter.FacePlotter().plot_3d(self.face, show=tests.PLOTTING)
+        plotter.FacePlotter().plot_3d(self.face)
 
     def test_plotting_3d_with_wire_and_points(self):
-        plotter.FacePlotter(show_wires=True, show_points=True).plot_3d(
-            self.face, show=tests.PLOTTING
-        )
+        plotter.FacePlotter(show_wires=True, show_points=True).plot_3d(self.face)
 
 
 class TestComponentPlotter:
@@ -194,18 +204,17 @@ class TestComponentPlotter:
         self.child1 = PhysicalComponent("Child1", shape=face1, parent=self.group)
         self.child2 = PhysicalComponent("Child2", shape=face2, parent=self.group)
 
+    def teardown_method(self):
+        plt.close("all")
+
     def test_plotting_2d(self):
-        plotter.ComponentPlotter().plot_2d(self.group, show=tests.PLOTTING)
+        plotter.ComponentPlotter().plot_2d(self.group)
 
     def test_plotting_2d_no_wires(self):
-        plotter.ComponentPlotter(show_wires=True).plot_2d(
-            self.group, show=tests.PLOTTING
-        )
+        plotter.ComponentPlotter(show_wires=True).plot_2d(self.group)
 
     def test_plotting_3d(self):
-        plotter.ComponentPlotter().plot_3d(self.group, show=tests.PLOTTING)
+        plotter.ComponentPlotter().plot_3d(self.group)
 
     def test_plotting_3d_with_wires_and_points(self):
-        plotter.ComponentPlotter(show_wires=True, show_points=True).plot_3d(
-            self.group, show=tests.PLOTTING
-        )
+        plotter.ComponentPlotter(show_wires=True, show_points=True).plot_3d(self.group)

@@ -23,8 +23,8 @@ from copy import deepcopy
 
 import numpy as np
 import pytest
+from matplotlib import pyplot as plt
 
-import tests
 from bluemira.base.constants import ANSI_COLOR
 from bluemira.structural.crosssection import IBeam, RectangularBeam
 from bluemira.structural.error import StructuralError
@@ -520,7 +520,6 @@ class TestLFrame:
         assert np.isclose(delta_cz, deflections[6 * 2 + 2], rtol=1e-2)
 
 
-@pytest.mark.skipif(not tests.PLOTTING, reason="plotting disabled")
 @pytest.mark.longrun
 class TestCompoundDeflection:
     def test_fixedfixed(self):
@@ -588,9 +587,9 @@ class TestCompoundDeflection:
 
         result = model.solve(load_case)
         result.plot()
+        plt.show()
 
 
-@pytest.mark.skipif(not tests.PLOTTING, reason="plotting disabled")
 @pytest.mark.longrun
 class TestGravityLoads:
     def test_angled_cantilever(self):
@@ -611,11 +610,12 @@ class TestGravityLoads:
 
         result = model.solve()
         result.plot()
+        plt.show()
+
         # Check that tip displacements in the x and y directions are equal
         assert np.isclose(result.deflections[6 * n], result.deflections[6 * n + 1])
 
 
-@pytest.mark.skipif(not tests.PLOTTING, reason="plotting disabled")
 class TestFixedFixedStress:
     def test_stress(self):
         model = FiniteElementModel()
@@ -636,7 +636,10 @@ class TestFixedFixedStress:
         model.add_support(3, True, True, True, True, True, True)
         model.add_distributed_load(0, -w, "Fz")
         model.add_distributed_load(1, -w, "Fz")
-        model.solve()
+        result = model.solve()
+
+        result.plot()
+        plt.show()
 
 
 @pytest.mark.longrun
@@ -728,16 +731,17 @@ class TestMiniEiffelTower:
         model.add_node(0, 0, 324)
         model.add_element(20, 21, cs5, SS316)
 
-        if tests.PLOTTING:
-            model.plot()
+        model.plot()
+        plt.show()
+
         cls.model = model
 
-    @pytest.mark.skipif(not tests.PLOTTING, reason="plotting disabled")
     def test_something(self):
         self.model.add_gravity_loads()
         result = self.model.solve()
         result.plot(stress=True)
         self.model.clear_loads()
+        plt.show()
 
 
 @pytest.mark.longrun
@@ -770,5 +774,6 @@ class TestInterpolation:
         model.add_gravity_loads()
 
         result = model.solve()
-        if tests.PLOTTING:
-            result.plot(stress=True)
+
+        result.plot(stress=True)
+        plt.show()
