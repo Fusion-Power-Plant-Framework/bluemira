@@ -111,65 +111,13 @@ jobs:
                --json-report-indent=3 \
                tests examples/design/EU-DEMO --reactor --private ${PYTEST_LONGRUN}
 
-    - name: Upload test report (push only)
-      if: ${{ github.event_name == 'push' }}
+    - name: Upload test report
       uses: actions/upload-artifact@v3
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
         name: report-json
         path: .report.json
-
-    - name: Download reference test report (PR only)
-      if: ${{ github.event_name == 'pull_request' }}
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      run: |
-        artifact_url="$( \
-          gh api repos/${{ github.repository }}/actions/artifacts --jq '.artifacts[] | select(.name == "report-json") | select(.workflow_run.head_sha == "${{ github.event.pull_request.base.sha }}") | .archive_download_url')"
-        if [ ! -z "${artifact_url}" ]; then
-          gh api ${artifact_url} > report-json.zip
-          mkdir ref_report
-          unzip report-json.zip -d ref_report
-        fi
-
-    - name: Generate warning report
-      if: ${{ github.event_name == 'pull_request' }}
-      id: warning-report
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      run: |
-        if [ -f "ref_report/.report.json" ]; then
-          compare_args="--compare ref_report/.report.json"
-        fi
-        report_str=$(python scripts/format_warning_report.py .report.json ${compare_args}) || true
-        # Ugly stuff to escape new lines
-        report_str="${report_str//'%'/'%25'}"
-        report_str="${report_str//$'\n'/'%0A'}"
-        echo "::set-output name=report::"${report_str}""
-
-    - name: Find warning report comment
-      if: ${{ github.event_name == 'pull_request' }}
-      uses: peter-evans/find-comment@v2
-      id: find-warning-report-comment
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        issue-number: ${{ github.event.pull_request.number }}
-        comment-author: "github-actions[bot]"
-        body-includes: ⚠️ Warning Report
-        direction: last
-
-    - name: Create or update warning report comment
-      if: ${{ github.event_name == 'pull_request' }}
-      uses: peter-evans/create-or-update-comment@v2
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        comment-id: ${{ steps.find-warning-report-comment.outputs.comment-id }}
-        issue-number: ${{ github.event.pull_request.number }}
-        body: ${{ steps.warning-report.outputs.report }}
-        edit-mode: replace
 
     - name: "Upload coverage to Codecov"
       uses: codecov/codecov-action@v2
