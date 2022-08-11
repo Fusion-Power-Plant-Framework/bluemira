@@ -31,11 +31,11 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: |
         artifact_url="$( \
-          gh api repos/${{ github.repository }}/actions/artifacts --jq '.artifacts[] | select(.name == "PR-report-json") | select(.workflow_run.head_sha == "${{ github.event.workflow_run.head_sha }}") | .archive_download_url')"
+          gh api repos/${{ github.repository }}/actions/artifacts --jq '.artifacts[] | select(.name == "report-json") | select(.workflow_run.head_sha == "${{ github.event.workflow_run.head_sha }}") | .archive_download_url')"
         if [ ! -z "${artifact_url}" ]; then
-          gh api ${artifact_url} > PR-report-json.zip
+          gh api ${artifact_url} > report-json.zip
           mkdir PR_report
-          unzip PR-report-json.zip -d PR_report
+          unzip report-json.zip -d PR_report
         fi
     - name: Generate warning report
       if: ${{ github.event_name == 'pull_request' }}

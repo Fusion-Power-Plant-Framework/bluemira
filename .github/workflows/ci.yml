@@ -112,21 +112,11 @@ jobs:
                tests examples/design/EU-DEMO --reactor --private ${PYTEST_LONGRUN}
 
     - name: Upload test report (push only)
-      if: ${{ github.event_name == 'push' }}
       uses: actions/upload-artifact@v3
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
         name: report-json
-        path: .report.json
-
-    - name: Upload test report (PR only)
-      if: ${{ github.event_name == 'pull_request' }}
-      uses: actions/upload-artifact@v3
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        name: PR-report-json
         path: .report.json
 
     - name: "Upload coverage to Codecov"
