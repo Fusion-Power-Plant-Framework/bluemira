@@ -111,7 +111,7 @@ jobs:
                --json-report-indent=3 \
                tests examples/design/EU-DEMO --reactor --private ${PYTEST_LONGRUN}
 
-    - name: Upload test report (push only)
+    - name: Upload test report
       uses: actions/upload-artifact@v3
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
