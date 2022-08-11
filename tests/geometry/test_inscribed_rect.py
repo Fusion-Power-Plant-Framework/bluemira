@@ -22,79 +22,88 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pytest
 
-from bluemira.geometry._deprecated_loop import Loop
-from bluemira.geometry._deprecated_tools import make_circle_arc
+from bluemira.display.plotter import PlotOptions, plot_2d
+from bluemira.geometry._deprecated_tools import in_polygon, make_circle_arc
+from bluemira.geometry.coordinates import Coordinates
 from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.inscribed_rect import _rect, inscribed_rect_in_poly
 from bluemira.geometry.tools import boolean_cut, make_circle, make_polygon
 
 
 class TestInscribedRectangle:
-    square = Loop(x=[2, 4, 4, 2, 2], z=[0, 0, 2, 2, 0])
-    diamond = Loop(x=[6, 8, 10, 8, 6], z=[8, 6, 8, 10, 8])
+    square = Coordinates(np.array([[2, 4, 4, 2, 2], [0, 0, 0, 0, 0], [0, 0, 2, 2, 0]]))
+    diamond = Coordinates(
+        np.array([[6, 8, 10, 8, 6], [0, 0, 0, 0, 0], [8, 6, 8, 10, 8]])
+    )
     circle_xz = make_circle_arc(2, 4, -4)
-    circle = Loop(x=circle_xz[0], z=circle_xz[1])
-    circle_xz_offset = make_circle_arc(0.6, 5, -5)
-    circle_sm = Loop(x=circle_xz_offset[0], z=circle_xz_offset[1])
+    circle = Coordinates(
+        np.array([circle_xz[0], np.zeros_like(circle_xz[0]), circle_xz[1]])
+    )
+
     complex_shape = BluemiraFace(make_circle(2, center=(4, 0, -4), axis=(0, 1, 0)))
     circle_sm = BluemiraFace(make_circle(0.6, center=(5, 0, -5), axis=(0, 1, 0)))
+
     for i in [(0, 0, 0), (-2, 0, 2), (-2, 0, 0), (0, 0, 2)]:
         c_s = circle_sm.deepcopy()
         c_s.translate(i)
         complex_shape = boolean_cut(complex_shape, c_s)[0]
-    # Convert back to Loop
-    complex_shape = Loop(
-        *complex_shape.boundary[0].discretize(byedges=True, ndiscr=100).xz
-    )
+
+    complex_shape = complex_shape.boundary[0].discretize(byedges=True, ndiscr=100)
 
     shapes = [square, diamond, circle, complex_shape]
     convex = [True, True, True, False]
 
     aspectratios = np.logspace(-1, 1, num=5)
 
+    po = PlotOptions(face_options={})
+
     @pytest.mark.parametrize("shape, convex", zip(shapes, convex))
     def test_inscribed_rectangle(self, shape, convex):
         x = y = 5
         self.r = False
         # Random points in a rectangular grid of the shape
-        points = np.random.random((2, x, y))
-        points[0] *= np.ptp(shape.x)
-        points[1] *= np.ptp(shape.z)
-        points[0] += np.min(shape.x)
-        points[1] += np.min(shape.z)
+        points = np.random.random((3, x, y))
+        points[1] = 0
+        points[0] *= np.ptp(shape[0])
+        points[2] *= np.ptp(shape[2])
+        points[0] += np.min(shape[0])
+        points[2] += np.min(shape[2])
 
         fig, ax = plt.subplots()
-        shape.plot(ax, linewidth=0.1)
 
-        shape_face = BluemiraFace(make_polygon(shape.xyz))
+        shape_face = BluemiraFace(make_polygon(shape, closed=True))
+        plot_2d(shape_face, self.po, ax=ax, linewidth=0.1, show=False, zorder=-10)
         for i in range(x):
             for j in range(y):
                 point = points[:, i, j]
-                if shape.point_inside(point, include_edges=False):
+                if in_polygon(point[0], point[2], shape.xz.T):
                     for k in self.aspectratios:
                         dx, dz = inscribed_rect_in_poly(
                             shape.x,
                             shape.z,
                             point[0],
-                            point[1],
+                            point[2],
                             aspectratio=k,
                             convex=convex,
                         )
-                        sq = _rect(point[0], point[1], dx, dz)
+                        sq = _rect(point[0], point[2], dx, dz)
                         assert len(sq.x) == 5
                         try:
                             tf = boolean_cut(
-                                BluemiraFace(make_polygon(sq.xyz)), shape_face
+                                BluemiraFace(make_polygon(sq.xyz, closed=True)),
+                                shape_face,
                             )
                             tf = [
-                                Loop(*seg.discretize(byedges=True, ndiscr=50).xz)
+                                Coordinates(
+                                    seg.discretize(byedges=True, ndiscr=50)._array
+                                )
                                 for seg in tf
                             ]
                         except ValueError:
                             tf = None
 
-                        ax.plot(*point, marker="o")
-                        sq.plot(ax, linewidth=0.1)
+                        ax.plot(point[0], point[2], marker="o")
+                        ax.plot(sq.x, sq.z, linewidth=0.1, color="k")
 
                         if tf is not None:
                             # Some overlaps are points or lines of 0 area
