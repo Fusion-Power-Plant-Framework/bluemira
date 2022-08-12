@@ -20,82 +20,37 @@
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 
 """
-Tests for plasma builders
+Tests for plasma builder.
 """
 
-import sys
 from unittest import mock
 
-from matplotlib import pyplot as plt
-
-from bluemira.base.components import Component, PhysicalComponent
-from bluemira.builders.plasma import MakeParameterisedPlasma
+from bluemira.builders.plasma import PlasmaBuilder
+from bluemira.geometry.tools import make_polygon
 
 
-class TestMakeParameterisedPlasma:
-    def test_builder(self):
-        params = {
-            "R_0": (9.0, "Input"),
-            "A": (3.5, "Input"),
-        }
-        build_config = {
-            "name": "Plasma",
-            "class": "MakeParameterisedPlasma",
-            "param_class": "bluemira.equilibria.shapes::JohnerLCFS",
-            "variables_map": {
-                "r_0": "R_0",
-                "a": "A",
-            },
-        }
-        builder = MakeParameterisedPlasma(params, build_config)
-        component = builder()
-        assert component is not None
-        assert isinstance(component, Component)
-        assert len(component.children) == 3
+class TestPlasmaBuilder:
+    @classmethod
+    def setup_class(cls):
+        # Square as revolving a circle 360 causes an error
+        # https://github.com/Fusion-Power-Plant-Framework/bluemira/issues/1090
+        cls.square = make_polygon(
+            [(1, 0, 1), (3, 0, 1), (3, 0, -1), (1, 0, -1)], closed=True
+        )
 
-        dims = ["xz", "xy", "xyz"]
-        child: Component
-        for child, dim in zip(component.children, dims):
-            assert child.name == dim
+    def test_plasma_contains_components_in_3_dimensions(self):
+        designer = mock.Mock(run=lambda: self.square)
+        builder = PlasmaBuilder({}, designer)
+        plasma = builder.build()
 
-            assert len(child.children) == 1
+        assert plasma.component().get_component("xz")
+        assert plasma.component().get_component("xy")
+        assert plasma.component().get_component("xyz")
 
-            lcfs: PhysicalComponent = child.get_component("LCFS")
-            assert lcfs is not None
+    def test_lcfs_eq_to_designer_shape(self):
+        designer = mock.Mock(run=lambda: self.square)
+        builder = PlasmaBuilder({}, designer)
 
-            color = (0.80078431, 0.54, 0.80078431)
-            if dim == "xyz":
-                lcfs.display_cad_options.color = color
-                lcfs.display_cad_options.transparency = 0.2
-                lcfs.show_cad()
-            else:
-                lcfs.plot_options.face_options["color"] = color
-                lcfs.plot_2d()
-                plt.close("all")
+        plasma = builder.build()
 
-    def test_builder_with_import_isolation(self):
-        """Check that the build works with a clean set of imports."""
-        with mock.patch.dict(sys.modules):
-            for mod in list(sys.modules.keys()):
-                if mod.startswith("bluemira"):
-                    sys.modules.pop(mod)
-
-            from bluemira.builders.plasma import MakeParameterisedPlasma
-
-            params = {
-                "R_0": (9.0, "Input"),
-                "A": (3.5, "Input"),
-            }
-            build_config = {
-                "name": "Plasma",
-                "class": "MakeParameterisedPlasma",
-                "param_class": "bluemira.equilibria.shapes::JohnerLCFS",
-                "variables_map": {
-                    "r_0": "R_0",
-                    "a": "A",
-                },
-            }
-            builder = MakeParameterisedPlasma(params, build_config)
-            plasma = builder().get_component("xz").get_component("LCFS")
-
-            assert plasma is not None
+        assert plasma.lcfs() == self.square
