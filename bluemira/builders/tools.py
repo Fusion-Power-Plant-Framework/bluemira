@@ -46,11 +46,37 @@ from bluemira.geometry.tools import (
 )
 
 __all__ = [
+    "get_n_sectors",
     "circular_pattern_component",
     "pattern_revolved_silhouette",
     "pattern_lofted_silhouette",
     "varied_offset",
+    "find_xy_plane_radii",
+    "make_circular_xy_ring",
 ]
+
+
+def get_n_sectors(no_obj, degree=360):
+    """
+    Get sector count and angle size for a given number of degrees of the reactor.
+
+    Parameters
+    ----------
+    no_obj: int
+        total number of components (eg TF coils)
+    degree: float
+        angle to view of reactor
+
+    Returns
+    -------
+    sector_degree: float
+        number of degrees per sector
+    n_sectors: int
+        number of sectors
+    """
+    sector_degree = 360 / no_obj
+    n_sectors = max(1, int(degree // int(sector_degree)))
+    return sector_degree, n_sectors
 
 
 def circular_pattern_component(
