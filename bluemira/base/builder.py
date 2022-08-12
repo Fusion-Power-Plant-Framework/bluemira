@@ -26,11 +26,12 @@ Interfaces for builder classes.
 from __future__ import annotations
 
 import abc
-from typing import Dict, Generic, Optional, Type, TypeVar, Union
+from typing import Dict, Generic, List, Optional, Type, TypeVar, Union
 
 from bluemira.base.components import Component
 from bluemira.base.designer import Designer
 from bluemira.base.parameter import ParameterFrame
+from bluemira.utilities.plot_tools import set_component_view
 
 _ComponentManagerT = TypeVar("_ComponentManagerT")
 _ParameterFrameT = TypeVar("_ParameterFrameT", bound=ParameterFrame)
@@ -80,6 +81,36 @@ class Builder(abc.ABC, Generic[_ComponentManagerT]):
     def build(self) -> _ComponentManagerT:
         """Build the component."""
         return Component(self.name)
+
+    def component_tree(
+        self, xz: List[Component], xy: List[Component], xyz: List[Component]
+    ) -> Component:
+        """
+        Adds views of components to an overall component tree
+
+        Parameters
+        ----------
+        xz: List[Component]
+            xz view of component
+        xy: List[Component]
+            xy view of component
+        xyz: List[Component]
+            xyz view of component
+
+        Returns
+        -------
+        component
+
+        """
+        component = Builder.build(self)
+        component.add_child(Component("xz", children=xz))
+        component.add_child(Component("xy", children=xy))
+        component.add_child(Component("xyz", children=xyz))
+
+        set_component_view(component.get_component("xz"), "xz")
+        set_component_view(component.get_component("xy"), "xy")
+
+        return component
 
     def _init_params(
         self, params: Union[Dict, _ParameterFrameT, None]

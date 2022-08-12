@@ -20,6 +20,7 @@
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 
 from bluemira.base.builder import Builder
+from bluemira.base.components import Component
 
 
 class ParamClass:
@@ -49,3 +50,21 @@ class TestBuilder:
         builder = StubBuilder(self._params, {})
 
         assert builder.name == "Stub"
+
+    def test_component_tree(self):
+        builder = StubBuilder(self._params, {})
+        component = builder.component_tree(
+            xz=[Component("p1")], xy=[Component("p2")], xyz=[Component("p3")]
+        )
+        assert len(component.descendants) == 6
+        assert len(component.children) == 3
+        assert [ch.name for ch in component.children] == ["xz", "xy", "xyz"]
+        # xyz child's view is not changed from the default
+        assert [desc.plot_options.view for desc in component.descendants] == [
+            "xz",
+            "xz",
+            "xy",
+            "xy",
+            "xz",
+            "xz",
+        ]
