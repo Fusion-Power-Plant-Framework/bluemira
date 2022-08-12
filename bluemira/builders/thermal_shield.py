@@ -23,7 +23,7 @@
 Thermal shield builders
 """
 
-from typing import Dict, List, Type, Union
+from typing import Dict, List, Tuple, Type, Union
 
 import numpy as np
 from scipy.spatial import ConvexHull
@@ -77,8 +77,8 @@ class VVTSBuilderParams:
     VVTS builder parameters
     """
 
-    n_TF: Parameter[int]
     g_vv_ts: Parameter[float]
+    n_TF: Parameter[int]
     tk_ts: Parameter[float]
 
 
@@ -117,7 +117,7 @@ class VVTSBuilder(Builder):
         directional_component_tree(
             component,
             xz=[xz_vvts],
-            xy=[self.build_xy(vvts_face)],
+            xy=self.build_xy(vvts_face),
             xyz=self.build_xyz(vvts_face),
         )
 
@@ -132,20 +132,25 @@ class VVTSBuilder(Builder):
         koz: BluemiraWire
             keep out zone for the thermal shield
         """
-        vvts_inner_wire = offset_wire(
-            koz,
-            self.params.g_vv_ts.value,
+        # This split hack works round #1319
+        ex_args = dict(
             join="intersect",
             open_wire=False,
             ndiscr=600,
+        )
+        vvts_inner_wire = offset_wire(
+            offset_wire(koz, self.params.g_vv_ts.value / 2, **ex_args),
+            -self.params.g_vv_ts.value / 2,
+            **ex_args
         )
         vvts_outer_wire = offset_wire(
-            vvts_inner_wire,
-            self.params.tk_ts.value,
-            join="intersect",
-            open_wire=False,
-            ndiscr=600,
+            offset_wire(
+                koz, (self.params.tk_ts.value + self.params.g_vv_ts.value) / 2, **ex_args
+            ),
+            -(self.params.tk_ts.value + self.params.g_vv_ts.value) / 2,
+            **ex_args
         )
+
         vvts_face = BluemiraFace([vvts_outer_wire, vvts_inner_wire])
         self.vvts_face = vvts_face
 
@@ -163,6 +168,7 @@ class VVTSBuilder(Builder):
             xz face to build vvts
         """
         xy_plane = BluemiraPlane.from_3_points([0, 0, 0], [1, 0, 0], [1, 1, 0])
+
         r_ib_out, r_ob_out = find_xy_plane_radii(vvts_face.boundary[0], xy_plane)
         r_ib_in, r_ob_in = find_xy_plane_radii(vvts_face.boundary[1], xy_plane)
 
