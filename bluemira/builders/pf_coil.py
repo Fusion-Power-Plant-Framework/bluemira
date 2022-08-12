@@ -88,12 +88,13 @@ class PFCoilBuilder(Builder):
         Build the PFCoil component.
         """
         xz_cross_section = self.designer.run()
-
-        component = super().build()
-        component.add_child(Component("xz", children=self.build_xz(xz_cross_section)))
-        component.add_child(Component("xy", children=self.build_xy(xz_cross_section)))
-        component.add_child(Component("xyz", children=self.build_xyz(xz_cross_section)))
-        return PFCoil(component)
+        return PFCoil(
+            self.component_tree(
+                xz=self.build_xz(xz_cross_section),
+                xy=self.build_xy(xz_cross_section),
+                xyz=self.build_xyz(xz_cross_section),
+            )
+        )
 
     def build_xy(self, shape: BluemiraWire) -> List[PhysicalComponent]:
         """
