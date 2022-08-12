@@ -34,6 +34,10 @@ from bluemira.geometry.wire import BluemiraWire
 
 
 class Plasma:
+    """
+    Plasma Component Manager TODO
+    """
+
     def __init__(self, component_tree: Component):
         self._component_tree = component_tree
 
@@ -68,17 +72,41 @@ class PlasmaBuilder(Builder):
         super().__init__(None, build_config, designer)
 
     def build(self) -> Plasma:
+        """
+        Build the plasma component.
+        """
         xz_lcfs = self.designer.run()
-        component = self._build_component_tree(xz_lcfs)
-        return Plasma(component)
+        return Plasma(
+            self.component_tree(
+                xz=[self.build_xz(xz_lcfs)],
+                xy=[self.build_xy(xz_lcfs)],
+                xyz=[self.build_xyz(xz_lcfs)],
+            )
+        )
 
     def build_xz(self, lcfs: BluemiraWire) -> PhysicalComponent:
+        """
+        Build the x-z components of the plasma.
+
+        Parameters
+        ----------
+        lcfs: BluemiraWire
+            LCFS wire
+        """
         face = BluemiraFace(lcfs, self.name)
         component = PhysicalComponent(self.LCFS, face)
         component.plot_options.face_options["color"] = BLUE_PALETTE["PL"]
         return component
 
     def build_xy(self, lcfs: BluemiraWire) -> PhysicalComponent:
+        """
+        Build the x-y components of the plasma.
+
+        Parameters
+        ----------
+        lcfs: BluemiraWire
+            LCFS wire
+        """
         inner = make_circle(lcfs.bounding_box.x_min, axis=[0, 1, 0])
         outer = make_circle(lcfs.bounding_box.x_max, axis=[0, 1, 0])
         face = BluemiraFace([outer, inner], self.name)
@@ -87,14 +115,17 @@ class PlasmaBuilder(Builder):
         return component
 
     def build_xyz(self, lcfs: BluemiraWire, degree: float = 360.0) -> PhysicalComponent:
+        """
+        Build the x-y-z components of the plasma.
+
+        Parameters
+        ----------
+        lcfs: BluemiraWire
+            LCFS wire
+        degree: float
+            degrees to sweep the shape
+        """
         shell = revolve_shape(lcfs, direction=(0, 0, 1), degree=degree)
         component = PhysicalComponent(self.LCFS, shell)
         component.display_cad_options.color = BLUE_PALETTE["PL"]
-        return component
-
-    def _build_component_tree(self, lcfs: BluemiraWire) -> Component:
-        component = Component(self.name)
-        component.add_child(Component("xz", children=[self.build_xz(lcfs)]))
-        component.add_child(Component("xy", children=[self.build_xy(lcfs)]))
-        component.add_child(Component("xyz", children=[self.build_xyz(lcfs)]))
         return component
