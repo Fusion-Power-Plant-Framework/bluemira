@@ -36,7 +36,6 @@ from bluemira.base.parameter_frame import NewParameterFrame as ParameterFrame
 from bluemira.base.parameter_frame import parameter_frame
 from bluemira.builders.tools import (
     circular_pattern_component,
-    directional_component_tree,
     find_xy_plane_radii,
     get_n_sectors,
     make_circular_xy_ring,
@@ -112,16 +111,13 @@ class VVTSBuilder(Builder):
         xz_vvts = self.build_xz(koz)
         vvts_face = xz_vvts.get_component_properties("shape")
 
-        component = super().build()
-
-        directional_component_tree(
-            component,
-            xz=[xz_vvts],
-            xy=self.build_xy(vvts_face),
-            xyz=self.build_xyz(vvts_face),
+        return VacuumVesselThermalShield(
+            self.component_tree(
+                xz=[xz_vvts],
+                xy=self.build_xy(vvts_face),
+                xyz=self.build_xyz(vvts_face),
+            )
         )
-
-        return VacuumVesselThermalShield(component)
 
     def build_xz(self, koz) -> PhysicalComponent:
         """
@@ -270,16 +266,13 @@ class CryostatTSBuilder(Builder):
         xz_cts = self.build_xz(pf_kozs, tf_koz)
         cts_face = xz_cts.get_component_properties("shape")
 
-        component = super().build()
-
-        directional_component_tree(
-            component,
-            xz=[xz_cts],
-            xy=[self.build_xy(cts_face)],
-            xyz=self.build_xyz(cts_face),
+        return CryostatThermalShield(
+            self.component_tree(
+                xz=[xz_cts],
+                xy=[self.build_xy(cts_face)],
+                xyz=self.build_xyz(cts_face),
+            )
         )
-
-        return CryostatThermalShield(component)
 
     def build_xz(
         self, pf_kozs: List[BluemiraWire], tf_koz: BluemiraWire
