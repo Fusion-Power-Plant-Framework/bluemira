@@ -25,7 +25,10 @@ A basic tutorial for configuring and running a design with parameterised shapes.
 
 # %%
 from bluemira.base.design import Design
-from bluemira.geometry.optimisation import GeometryOptimisationProblem
+from bluemira.geometry.optimisation import GeometryOptimisationProblem, calculate_length
+from bluemira.geometry.parameterisations import GeometryParameterisation
+from bluemira.utilities.opt_problems import OptimisationObjective
+from bluemira.utilities.optimiser import Optimiser, approx_derivative
 
 # %%[markdown]
 # # Configuring and Running a Simple Shape-Based Design
@@ -45,34 +48,38 @@ from bluemira.geometry.optimisation import GeometryOptimisationProblem
 
 
 # %%
+def maximise_length(vector, grad, parameterisation, ad_args=None):
+    """
+    Objective function for maximising the length of the given parameterisation.
+    """
+    ad_args = ad_args if ad_args is not None else {}
+
+    # Negative length since we are maximising
+    length = -calculate_length(vector, parameterisation)
+    if grad.size > 0:
+        grad[:] = approx_derivative(
+            calculate_length, vector, f0=length, args=(parameterisation,), **ad_args
+        )
+    return length
+
+
 class MaximiseLength(GeometryOptimisationProblem):
     """
-    A simple geometry optimisation problem that minimises length without constraints.
+    A simple geometry optimisation problem that maximises length without constraints.
     """
 
-    def calculate_length(self, x):
-        """
-        Calculate the length of the GeometryParameterisation.
-
-        Result is negative as we're maximising rather than minimising. Note that most
-        real life problems will minimise.
-        """
-        self.update_parameterisation(x)
-        return -self.parameterisation.create_shape().length
-
-    def f_objective(self, x, grad):
-        """
-        Objective function is the length of the parameterised shape.
-        """
-        length = self.calculate_length(x)
-
-        if grad.size > 0:
-            # Only called if a gradient-based optimiser is used
-            grad[:] = self.optimiser.approx_derivative(
-                self.calculate_length, x, f0=length
-            )
-
-        return length
+    def __init__(
+        self,
+        geometry_parameterisation: GeometryParameterisation,
+        optimiser: Optimiser,
+    ):
+        objective = OptimisationObjective(
+            f_objective=maximise_length,
+            f_objective_args={"parameterisation": geometry_parameterisation},
+        )
+        super().__init__(
+            geometry_parameterisation, optimiser, objective, constraints=None
+        )
 
 
 # %%[markdown]
@@ -190,4 +197,4 @@ component.plot_2d()
 # %%
 tf_builder = design.get_builder("TF Coils")
 tf_design_problem: GeometryOptimisationProblem = tf_builder.design_problem
-print(tf_design_problem.parameterisation.variables)
+print(tf_design_problem._parameterisation.variables)
