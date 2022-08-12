@@ -29,7 +29,6 @@ import numpy as np
 
 import bluemira.base.components as bm_comp
 import bluemira.geometry as bm_geo
-import bluemira.utilities.plot_tools as bm_plot_tools
 from bluemira.base.constants import EPS
 from bluemira.base.error import BuilderError
 from bluemira.builders._varied_offset import varied_offset
