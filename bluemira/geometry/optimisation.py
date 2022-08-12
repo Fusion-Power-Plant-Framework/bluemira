@@ -127,8 +127,8 @@ class GeometryOptimisationProblem(OptimisationProblem):
     def __init__(
         self,
         geometry_parameterisation: GeometryParameterisation,
-        optimiser: Optimiser,
-        objective: OptimisationObjective,
+        optimiser: Optimiser = None,
+        objective: OptimisationObjective = None,
         constraints: List[OptimisationConstraint] = None,
     ):
         super().__init__(geometry_parameterisation, optimiser, objective, constraints)
