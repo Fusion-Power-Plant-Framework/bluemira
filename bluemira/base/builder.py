@@ -102,7 +102,7 @@ class Builder(abc.ABC, Generic[_ComponentManagerT]):
         component
 
         """
-        component = super().build()
+        component = Builder.build(self)
         component.add_child(Component("xz", children=xz))
         component.add_child(Component("xy", children=xy))
         component.add_child(Component("xyz", children=xyz))
