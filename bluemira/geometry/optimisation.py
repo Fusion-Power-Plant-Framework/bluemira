@@ -193,17 +193,18 @@ class MinimiseLengthGOP(GeometryOptimisationProblem):
         objective = OptimisationObjective(
             minimise_length, {"parameterisation": parameterisation}
         )
-        koz_points = keep_out_zone.discretize(n_koz_points, byedges=True).xz
-        koz_constraint = OptimisationConstraint(
-            constrain_koz,
-            f_constraint_args={
-                "parameterisation": parameterisation,
-                "n_shape_discr": n_koz_points,
-                "koz_points": koz_points,
-            },
-            tolerance=koz_con_tol * np.ones(n_koz_points),
-        )
+        constraints = []
+        if keep_out_zone is not None:
+            koz_points = keep_out_zone.discretize(n_koz_points, byedges=True).xz
+            koz_constraint = OptimisationConstraint(
+                constrain_koz,
+                f_constraint_args={
+                    "parameterisation": parameterisation,
+                    "n_shape_discr": n_koz_points,
+                    "koz_points": koz_points,
+                },
+                tolerance=koz_con_tol * np.ones(n_koz_points),
+            )
+            constraints.append(koz_constraint)
 
-        super().__init__(
-            parameterisation, optimiser, objective, constraints=[koz_constraint]
-        )
+        super().__init__(parameterisation, optimiser, objective, constraints=constraints)
