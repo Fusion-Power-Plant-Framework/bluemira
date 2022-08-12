@@ -350,6 +350,33 @@ def bounding_box(x, y, z):
     return BoundingBox.from_xyz(x, y, z).get_box_arrays()
 
 
+def interpolate_points(x, y, z, n_points):
+    """
+    Interpolate Points
+
+    Parameters
+    ----------
+    x: np.array
+        The x coordinates
+    y: np.array
+        The y coordinates
+    z: np.array
+        The z coordinates
+    n_points: int
+        number of points
+
+    Returns
+    -------
+    x, y, z
+    """
+    ll = vector_lengthnorm(x, y, z)
+    linterp = np.linspace(0, 1, int(n_points))
+    x = interp1d(ll, x)(linterp)
+    y = interp1d(ll, y)(linterp)
+    z = interp1d(ll, z)(linterp)
+    return x, y, z
+
+
 def vector_lengthnorm(x, y, z):
     """
     Get a normalised 1-D parameterisation of a set of x-y-z coordinates.

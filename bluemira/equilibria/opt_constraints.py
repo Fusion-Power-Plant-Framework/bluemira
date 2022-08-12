@@ -36,7 +36,7 @@ from bluemira.equilibria.opt_constraint_funcs import (
     field_constraints,
 )
 from bluemira.equilibria.plotting import ConstraintPlotter
-from bluemira.geometry._deprecated_loop import Loop
+from bluemira.geometry._deprecated_tools import interpolate_points
 from bluemira.utilities.opt_problems import OptimisationConstraint
 from bluemira.utilities.tools import abs_rel_difference, is_num
 
@@ -870,9 +870,7 @@ class AutoConstraints(MagneticConstraintSet):
             ]
 
         # Interpolate some points on the LCFS
-        loop = Loop(x=x, z=z)
-        loop.interpolate(n_points)
-        x_boundary, z_boundary = loop.x, loop.z
+        x_boundary, _, z_boundary = interpolate_points(x, np.zeros_like[x], z, n_points)
 
         # Apply an appropriate constraint on the LCFS
         if psi_boundary is None:
