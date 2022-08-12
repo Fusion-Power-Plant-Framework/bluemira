@@ -65,6 +65,7 @@ class NewParameter(Generic[ParameterValueType]):
         self._add_history_record()
 
     def __repr__(self) -> str:
+        """String repr of class instance."""
         return f"<NewParameter({self.name}={self.value}{self.unit})>"
 
     def history(self) -> List[ParameterValue]:
