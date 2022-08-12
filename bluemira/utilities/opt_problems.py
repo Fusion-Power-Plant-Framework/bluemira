@@ -103,7 +103,7 @@ class OptimisationObjective:
 
     def __init__(self, f_objective, f_objective_args=None):
         self._f_objective = f_objective
-        self._args = f_objective_args
+        self._args = f_objective_args if f_objective_args is not None else {}
 
     def __call__(self, vector, grad):
         """
@@ -164,7 +164,7 @@ class OptimisationProblem(ABC):
         self._objective = objective
         self._constraints = constraints
 
-    def set_up_optimiser(self, dimension: int, bounds: np.array):
+    def set_up_optimiser(self, dimension: int, bounds: np.ndarray):
         """
         Set up NLOpt-based optimiser with algorithm,  bounds, tolerances, and
         constraint & objective functions.
@@ -184,7 +184,8 @@ class OptimisationProblem(ABC):
         self._objective.apply_objective(self)
 
         # Apply constraints
-        self.apply_constraints(self.opt, self._constraints)
+        if self._constraints is not None:
+            self.apply_constraints(self.opt, self._constraints)
 
         # Set state vector bounds
         self.opt.set_lower_bounds(bounds[0])
@@ -205,9 +206,8 @@ class OptimisationProblem(ABC):
             Iterable of OptimisationConstraint objects containing optimisation
             constraints to be applied to the Optimiser.
         """
-        if opt_constraints is not None:
-            for _opt_constraint in opt_constraints:
-                _opt_constraint.apply_constraint(self)
+        for _opt_constraint in opt_constraints:
+            _opt_constraint.apply_constraint(self)
         return opt
 
     def initialise_state(self, parameterisation) -> np.array:
