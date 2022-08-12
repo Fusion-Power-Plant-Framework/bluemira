@@ -225,16 +225,16 @@ class CryostatThermalShield:
         return self._component
 
 
-class CryostatTSDesignerParams(ParameterFrame):
-    pass
+@parameter_frame
+class CryostatTSBuilderParams:
+    """
+    Cryostat thermal shield builder parameters
+    """
 
-
-class CryostatTSBuilderParams(ParameterFrame):
-    tk_ts: Parameter[float]
     g_ts_pf: Parameter[float]
     g_ts_tf: Parameter[float]
-    # g_vv_ts: Parameter[float]
     n_TF: Parameter[int]
+    tk_ts: Parameter[float]
 
 
 class CryostatTSDesigner(Designer[BluemiraWire]):
@@ -245,39 +245,45 @@ class CryostatTSDesigner(Designer[BluemiraWire]):
         params: Union[ParameterFrame, Dict],
         pf_coils_xz_kozs: List[BluemiraWire],
         tf_xz_koz: BluemiraWire,
-        # vv_xz_koz: Optional[BluemiraWi re] = None,
     ):
         super().__init__(params)
         self.pf_coils_xz_kozs = pf_coils_xz_kozs
         self.tf_xz_koz = tf_xz_koz
 
-    def run(self):
+    def run(self) -> Tuple[List[BluemiraWire], BluemiraWire]:
         """
         Vacuum vessel thermal shield designer run method
         """
-        return self.vv_koz
+        return self.pf_coils_xz_kozs, self.tf_xz_koz
 
 
 class CryostatTSBuilder(Builder):
     CRYO_TS = "Cryostat TS"
 
+    param_cls: Type[CryostatTSBuilderParams] = CryostatTSBuilderParams
+
     def build(self) -> CryostatThermalShield:
         """
         Build the cryostat thermal shield component.
         """
-        self.koz = self.designer.run()
-        xz_cts = self.build_xz()
+        pf_kozs, tf_koz = self.designer.run()
+        xz_cts = self.build_xz(pf_kozs, tf_koz)
         cts_face = xz_cts.get_component_properties("shape")
 
         component = super().build()
 
         directional_component_tree(
-            component, xz=[xz_cts], xy=[self.build_xy(cts_face)], xyz=self.build_xyz()
+            component,
+            xz=[xz_cts],
+            xy=[self.build_xy(cts_face)],
+            xyz=self.build_xyz(cts_face),
         )
 
         return CryostatThermalShield(component)
 
-    def build_xz(self, pf_kozs) -> PhysicalComponent:
+    def build_xz(
+        self, pf_kozs: List[BluemiraWire], tf_koz: BluemiraWire
+    ) -> PhysicalComponent:
         """
         Build the x-z components of the thermal shield.
         """
@@ -290,7 +296,7 @@ class CryostatTSBuilder(Builder):
         # Project extrema slightly beyond axis (might be bad for NT) - will get cut later
         x.extend([-0.5, -0.5])  # [m]
         z.extend([np.min(z), np.max(z)])
-        xz = np.array(), np.array(z)
+        xz = np.array(x), np.array(z)
         hull_idx = ConvexHull(np.array([x, z]).T).vertices
 
         wire = make_polygon({"x": x[hull_idx], "y": 0, "z": z[hull_idx]}, closed=True)
@@ -307,7 +313,7 @@ class CryostatTSBuilder(Builder):
         # import ipdb
         # ipdb.set_trace()
         tf_o_wire = offset_wire(
-            self.tf_koz,
+            tf_koz,
             self.params.g_ts_tf,
             join="arc",
             open_wire=False,
