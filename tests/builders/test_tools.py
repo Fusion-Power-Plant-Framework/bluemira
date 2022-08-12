@@ -27,6 +27,7 @@ from scipy.interpolate import interp1d
 
 from bluemira.base.error import BuilderError
 from bluemira.builders.tools import (
+    get_n_sectors,
     make_circular_xy_ring,
     pattern_lofted_silhouette,
     pattern_revolved_silhouette,
@@ -42,6 +43,37 @@ from bluemira.geometry.tools import (
     make_polygon,
 )
 from bluemira.geometry.wire import BluemiraWire
+
+
+class TestGetNSectors:
+    sector_degree = [
+        360.0,
+        180.0,
+        120.0,
+        90.0,
+        72.0,
+        60.0,
+        51.42857142857143,
+        45.0,
+        40.0,
+        36.0,
+        32.72727272727273,
+        30.0,
+        27.692307692307693,
+        25.714285714285715,
+        24.0,
+    ]
+
+    @pytest.mark.parametrize("ttl, sector_degree", zip(np.arange(1, 16), sector_degree))
+    @pytest.mark.parametrize("degree", np.arange(0, 361, step=60))
+    def test_get_n_sectors(self, degree, ttl, sector_degree):
+        s_deg, n_sec = get_n_sectors(ttl, degree)
+        assert np.isclose(s_deg, sector_degree)
+        try:
+            assert np.isclose(degree // sector_degree, n_sec)
+        except AssertionError:
+            # a sector at both ends
+            assert np.isclose((degree // sector_degree) + 1, n_sec)
 
 
 class TestVariedOffsetFunction:
