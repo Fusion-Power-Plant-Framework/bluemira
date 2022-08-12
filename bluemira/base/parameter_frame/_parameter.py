@@ -51,8 +51,8 @@ class NewParameter(Generic[ParameterValueType]):
                 value = float(value)
             elif not isinstance(value, _value_types):
                 raise TypeError(
-                    f'type of argument "value" must be {_value_types}; '
-                    f"got {type(value)} instead"
+                    f'type of argument "value" must be one of {_value_types}; '
+                    f"got {type(value)} instead."
                 )
         self._name = name
         self._value = value
