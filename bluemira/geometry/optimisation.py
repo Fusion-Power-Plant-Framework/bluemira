@@ -62,11 +62,15 @@ def minimise_length(vector, grad, parameterisation, ad_args=None):
     grad: np.ndarray
         Local gradient of objective function used by LD NLOPT algorithms.
         Updated in-place.
+    ad_args: Dict
+        Additional arguments to pass to the `approx_derivative` function.
 
     Returns
     -------
     fom: Value of objective function (figure of merit).
     """
+    ad_args = ad_args if ad_args is not None else {}
+
     length = calculate_length(vector, parameterisation)
     if grad.size > 0:
         grad[:] = approx_derivative(
@@ -189,17 +193,18 @@ class MinimiseLengthGOP(GeometryOptimisationProblem):
         objective = OptimisationObjective(
             minimise_length, {"parameterisation": parameterisation}
         )
-        koz_points = keep_out_zone.discretize(n_koz_points, byedges=True).xz
-        koz_constraint = OptimisationConstraint(
-            constrain_koz,
-            f_constraint_args={
-                "parameterisation": parameterisation,
-                "n_shape_discr": n_koz_points,
-                "koz_points": koz_points,
-            },
-            tolerance=koz_con_tol * np.ones(n_koz_points),
-        )
+        constraints = []
+        if keep_out_zone is not None:
+            koz_points = keep_out_zone.discretize(n_koz_points, byedges=True).xz
+            koz_constraint = OptimisationConstraint(
+                constrain_koz,
+                f_constraint_args={
+                    "parameterisation": parameterisation,
+                    "n_shape_discr": n_koz_points,
+                    "koz_points": koz_points,
+                },
+                tolerance=koz_con_tol * np.ones(n_koz_points),
+            )
+            constraints.append(koz_constraint)
 
-        super().__init__(
-            parameterisation, optimiser, objective, constraints=[koz_constraint]
-        )
+        super().__init__(parameterisation, optimiser, objective, constraints=constraints)

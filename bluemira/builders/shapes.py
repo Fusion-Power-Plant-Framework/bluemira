@@ -140,11 +140,11 @@ class OptimisedShapeBuilder(ParameterisedShapeBuilder):
         Optimise the shape using the provided parameterisation and optimiser.
         """
         bluemira_debug(
-            f"""Setting up design problem with:
-algorithm_name: {self._algorithm_name}
-n_variables: {self._shape.variables.n_free_variables}
-opt_conditions: {self._opt_conditions}
-opt_parameters: {self._opt_parameters}"""
+            f"Setting up design problem with:\n"
+            f"algorithm_name: {self._algorithm_name}\n"
+            f"n_variables: {self._shape.variables.n_free_variables}\n"
+            f"opt_conditions: {self._opt_conditions}\n"
+            f"opt_parameters: {self._opt_parameters}"
         )
         optimiser = Optimiser(
             self._algorithm_name,
