@@ -32,11 +32,7 @@ from bluemira.base.designer import Designer
 from bluemira.base.parameter_frame import NewParameter as Parameter
 from bluemira.base.parameter_frame import NewParameterFrame as ParameterFrame
 from bluemira.base.parameter_frame import parameter_frame
-from bluemira.builders.tools import (
-    circular_pattern_component,
-    directional_component_tree,
-    get_n_sectors,
-)
+from bluemira.builders.tools import circular_pattern_component, get_n_sectors
 from bluemira.display.palettes import BLUE_PALETTE
 from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.tools import make_circle, make_polygon, revolve_shape
@@ -128,16 +124,13 @@ class CryostatBuilder(Builder):
         xz_cryostat = self.build_xz(x_out, z_top)
         xz_cross_section = xz_cryostat.get_component_properties("shape")
 
-        component = super().build()
-
-        directional_component_tree(
-            component,
-            xz=[xz_cryostat],
-            xy=[self.build_xy(x_out)],
-            xyz=self.build_xyz(xz_cross_section),
+        return Cryostat(
+            self.component_tree(
+                xz=[xz_cryostat],
+                xy=[self.build_xy(x_out)],
+                xyz=self.build_xyz(xz_cross_section),
+            )
         )
-
-        return Cryostat(component)
 
     def build_xz(self, x_out: float, z_top: float) -> PhysicalComponent:
         """
