@@ -64,16 +64,24 @@ class TestGetNSectors:
         24.0,
     ]
 
+    n_sectors = {
+        1: [1, 1, 1, 1, 1, 1, 1],
+        5: [1, 1, 1, 2, 3, 4, 5],
+        7: [1, 1, 2, 3, 4, 5, 7],
+        9: [1, 1, 3, 4, 6, 7, 9],
+    }
+
     @pytest.mark.parametrize("ttl, sector_degree", zip(np.arange(1, 16), sector_degree))
     @pytest.mark.parametrize("degree", np.arange(0, 361, step=60))
-    def test_get_n_sectors(self, degree, ttl, sector_degree):
-        s_deg, n_sec = get_n_sectors(ttl, degree)
+    def test_get_n_sectors_degree(self, degree, ttl, sector_degree):
+        s_deg, _ = get_n_sectors(ttl, degree)
         assert np.isclose(s_deg, sector_degree)
-        try:
-            assert np.isclose(degree // sector_degree, n_sec)
-        except AssertionError:
-            # a sector at both ends
-            assert np.isclose((degree // sector_degree) + 1, n_sec)
+
+    @pytest.mark.parametrize("ttl", n_sectors.keys())
+    @pytest.mark.parametrize("degree", np.arange(0, 361, step=60))
+    def test_get_n_sectors_amount(self, degree, ttl):
+        _, n_sec = get_n_sectors(ttl, degree)
+        assert np.isclose(n_sec, self.n_sectors[ttl].pop(0))
 
 
 class TestVariedOffsetFunction:
