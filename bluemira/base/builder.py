@@ -30,6 +30,7 @@ from typing import Dict, List, Optional, Type, Union
 
 from bluemira.base.components import Component
 from bluemira.base.designer import Designer
+from bluemira.base.error import BuilderError
 from bluemira.base.parameter_frame import NewParameterFrame as ParameterFrame
 from bluemira.utilities.plot_tools import set_component_view
 
@@ -157,7 +158,7 @@ class Builder(abc.ABC):
                 # Case for where there are no parameters associated with this builder
                 return params
             else:
-                raise TypeError("Cannot process parameters, 'param_cls' is None.")
+                raise BuilderError("Cannot process parameters, 'param_cls' is None.")
         elif isinstance(params, dict):
             return self.param_cls.from_dict(params)
         elif isinstance(params, ParameterFrame):
