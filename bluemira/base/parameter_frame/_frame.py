@@ -10,6 +10,26 @@ from bluemira.base.parameter_frame._parameter import NewParameter, ParameterValu
 
 @dataclass
 class NewParameterFrame:
+    """
+    A data class to hold a collection of `NewParameter` objects.
+
+    The class should be declared using on of the following forms:
+
+    .. code-block:: python
+
+        @parameter_frame
+        class MyFrame:
+            param_1: Parameter[float]
+            param_2: Parameter[int]
+
+
+        @dataclass
+        class AnotherFrame(NewParameterFrame):
+            param_1: Parameter[float]
+            param_2: Parameter[int]
+
+    """
+
     @classmethod
     def from_dict(
         cls,
@@ -52,6 +72,7 @@ class NewParameterFrame:
 
     @classmethod
     def from_frame(cls, frame: NewParameterFrame) -> NewParameterFrame:
+        """Initialise an instance from another NewParameterFrame."""
         kwargs = {}
         for field in cls.__dataclass_fields__:
             try:
@@ -65,6 +86,7 @@ class NewParameterFrame:
 
     @classmethod
     def from_json(cls, json_in: Union[str, json.SupportsRead]) -> NewParameterFrame:
+        """Initialise an instance from a JSON file, string, or reader."""
         if hasattr(json_in, "read"):
             # load from file stream
             return cls.from_dict(json.load(json_in))

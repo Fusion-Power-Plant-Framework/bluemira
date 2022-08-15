@@ -26,8 +26,8 @@ from typing import Dict, List, Tuple, Type, Union
 
 import numpy as np
 
-from bluemira.base.builder import Builder
-from bluemira.base.components import Component, PhysicalComponent
+from bluemira.base.builder import Builder, ComponentManager
+from bluemira.base.components import PhysicalComponent
 from bluemira.base.designer import Designer
 from bluemira.base.parameter_frame import NewParameter as Parameter
 from bluemira.base.parameter_frame import NewParameterFrame as ParameterFrame
@@ -38,20 +38,10 @@ from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.tools import make_circle, make_polygon, revolve_shape
 
 
-class Cryostat:
+class Cryostat(ComponentManager):
     """
-    Cryostat Component Manager TODO
+    Wrapper around a cryostat component tree.
     """
-
-    def __init__(self, component: Component):
-        super().__init__()
-        self._component = component
-
-    def component(self) -> Component:
-        """
-        Return component
-        """
-        return self._component
 
 
 @parameter_frame

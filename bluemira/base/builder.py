@@ -26,15 +26,18 @@ Interfaces for builder classes.
 from __future__ import annotations
 
 import abc
-from typing import Dict, Generic, List, Optional, Type, TypeVar, Union
+from typing import Dict, List, Optional, Type, Union
 
 from bluemira.base.components import Component
 from bluemira.base.designer import Designer
-from bluemira.base.parameter import ParameterFrame
+from bluemira.base.error import BuilderError
+from bluemira.base.parameter_frame import NewParameterFrame as ParameterFrame
 from bluemira.utilities.plot_tools import set_component_view
 
-_ComponentManagerT = TypeVar("_ComponentManagerT")
-_ParameterFrameT = TypeVar("_ParameterFrameT", bound=ParameterFrame)
+BuildConfig = Dict[str, Union[int, float, str, "BuildConfig"]]
+"""
+Type alias for representing nested build configuration information.
+"""
 
 
 def _remove_suffix(s: str, suffix: str) -> str:
@@ -44,7 +47,42 @@ def _remove_suffix(s: str, suffix: str) -> str:
     return s
 
 
-class Builder(abc.ABC, Generic[_ComponentManagerT]):
+class ComponentManager(abc.ABC):
+    """
+    A wrapper around a component tree.
+
+    The purpose of the classes deriving from this is to abstract away
+    the structure of the component tree and provide access to a set of
+    its features. This way a reactor build procedure can be completely
+    agnostic of the structure of component trees, relying instead on
+    a set of methods implemented on concrete `ComponentManager`
+    instances.
+
+    This class can also be used to hold 'construction geometry' that may
+    not be part of the component tree, but was useful in construction
+    of the tree, and could be subsequently useful (e.g., an equilibrium
+    can be solved to get a plasma shape, the equilibrium is not
+    derivable from the plasma component tree, but can be useful in
+    other stages of a reactor build procedure).
+
+    Parameters
+    ----------
+    component_tree: Component
+        The component tree this manager should wrap.
+    """
+
+    def __init__(self, component_tree: Component) -> None:
+        super().__init__()
+        self._component = component_tree
+
+    def component(self) -> Component:
+        """
+        Return the component tree wrapped by this manager.
+        """
+        return self._component
+
+
+class Builder(abc.ABC):
     """
     Base class for component builders.
 
@@ -56,11 +94,16 @@ class Builder(abc.ABC, Generic[_ComponentManagerT]):
         The build configuration for the builder.
     designer: Optional[Designer]
         A designer to solve a design problem required by the builder.
+
+    Notes
+    -----
+    If there are no parameters associated with a concrete builder, set
+    `param_cls` to `None` and pass `None` into this class's constructor.
     """
 
     def __init__(
         self,
-        params: Union[_ParameterFrameT, Dict, None],
+        params: Union[ParameterFrame, Dict, None],
         build_config: Dict,
         designer: Optional[Designer] = None,
     ):
@@ -73,20 +116,20 @@ class Builder(abc.ABC, Generic[_ComponentManagerT]):
         self.designer = designer
 
     @abc.abstractproperty
-    def param_cls(self) -> Union[Type[_ParameterFrameT], None]:
+    def param_cls(self) -> Union[Type[ParameterFrame], None]:
         """The class to hold this builder's parameters."""
         pass
 
     @abc.abstractmethod
-    def build(self) -> _ComponentManagerT:
-        """Build the component."""
-        return Component(self.name)
+    def build(self) -> ComponentManager:
+        """Build the component and return a component manager instance."""
+        pass
 
     def component_tree(
         self, xz: List[Component], xy: List[Component], xyz: List[Component]
     ) -> Component:
         """
-        Adds views of components to an overall component tree
+        Adds views of components to an overall component tree.
 
         Parameters
         ----------
@@ -102,7 +145,7 @@ class Builder(abc.ABC, Generic[_ComponentManagerT]):
         component
 
         """
-        component = Builder.build(self)
+        component = Component(self.name)
         component.add_child(Component("xz", children=xz))
         component.add_child(Component("xy", children=xy))
         component.add_child(Component("xyz", children=xyz))
@@ -113,13 +156,17 @@ class Builder(abc.ABC, Generic[_ComponentManagerT]):
         return component
 
     def _init_params(
-        self, params: Union[Dict, _ParameterFrameT, None]
-    ) -> _ParameterFrameT:
-        if isinstance(params, dict):
+        self, params: Union[Dict, ParameterFrame, None]
+    ) -> Union[ParameterFrame, None]:
+        if self.param_cls is None:
+            if params is None:
+                # Case for where there are no parameters associated with this builder
+                return params
+            else:
+                raise BuilderError("Cannot process parameters, 'param_cls' is None.")
+        elif isinstance(params, dict):
             return self.param_cls.from_dict(params)
         elif isinstance(params, ParameterFrame):
-            return params
-        elif self.param_cls is None and params is None:
             return params
         raise TypeError(
             f"Cannot interpret type '{type(params)}' as {self.param_cls.__name__}."

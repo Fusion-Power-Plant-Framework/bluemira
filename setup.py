@@ -40,6 +40,7 @@ install_requires = [
     "seaborn",
     "tables",
     "tabulate",
+    "typeguard",
     "wrapt",
 ]
 
