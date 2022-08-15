@@ -142,19 +142,12 @@ class VVTSBuilder(Builder):
             open_wire=False,
             ndiscr=600,
         )
-        vvts_inner_wire = offset_wire(
-            offset_wire(koz, self.params.g_vv_ts.value / 2, **ex_args),
-            -self.params.g_vv_ts.value / 2,
-            **ex_args
-        )
+        vvts_inner_wire = offset_wire(koz, self.params.g_vv_ts.value, **ex_args)
         vvts_outer_wire = offset_wire(
-            offset_wire(
-                koz, (self.params.tk_ts.value + self.params.g_vv_ts.value) / 2, **ex_args
-            ),
-            -(self.params.tk_ts.value + self.params.g_vv_ts.value) / 2,
+            vvts_inner_wire,
+            self.params.tk_ts.value + self.params.g_vv_ts.value,
             **ex_args
         )
-
         vvts_face = BluemiraFace([vvts_outer_wire, vvts_inner_wire])
         self.vvts_face = vvts_face
 
@@ -203,11 +196,14 @@ class VVTSBuilder(Builder):
             vvts_face,
             base=(0, 0, 0),
             direction=(0, 0, 1),
+            # degree=degree - 1
             degree=sector_degree,
         )
 
         vvts_body = PhysicalComponent(self.VVTS, shape)
         vvts_body.display_cad_options.color = BLUE_PALETTE["TS"][0]
+        # return [vvts_body]
+        # this is currently broken because of #1319 and related issues
         return circular_pattern_component(
             vvts_body, n_sectors, degree=sector_degree * n_sectors
         )

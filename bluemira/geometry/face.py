@@ -40,6 +40,8 @@ from bluemira.geometry.wire import BluemiraWire
 
 __all__ = ["BluemiraFace"]
 
+FACES = []
+
 
 class BluemiraFace(BluemiraGeo):
     """Bluemira Face class."""
@@ -91,8 +93,17 @@ class BluemiraFace(BluemiraGeo):
     def _create_face(self, check_reverse=True):
         """Create the primitive face"""
         external: BluemiraWire = self.boundary[0]
-        face = cadapi.apiFace(external._create_wire(check_reverse=False))
+        from bluemira.display.displayer import show_cad
 
+        # show_cad(external)
+        class test:
+            _shape = external._create_wire(check_reverse=True)
+
+        # show_cad(test)
+        # import ipdb
+        # ipdb.set_trace()
+        face = cadapi.apiFace(external._create_wire(check_reverse=False))
+        FACES.append(face)
         if len(self.boundary) > 1:
             fholes = [cadapi.apiFace(h._shape) for h in self.boundary[1:]]
             face = face.cut(fholes)
