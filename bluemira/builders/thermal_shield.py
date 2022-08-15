@@ -82,6 +82,10 @@ class VVTSBuilderParams:
 
 
 class VVTSDesigner(Designer[BluemiraWire]):
+    """
+    Vacuum vessel thermal shield designer
+    """
+
     params_cls = None
 
     def __init__(
@@ -100,6 +104,10 @@ class VVTSDesigner(Designer[BluemiraWire]):
 
 
 class VVTSBuilder(Builder):
+    """
+    Vacuum vessel thermal shield builder
+    """
+
     VVTS = "VVTS"
     param_cls: Type[VVTSBuilderParams] = VVTSBuilderParams
 
@@ -234,6 +242,10 @@ class CryostatTSBuilderParams:
 
 
 class CryostatTSDesigner(Designer[BluemiraWire]):
+    """
+    Cryostat thermal shield designer
+    """
+
     params_cls = None
 
     def __init__(
@@ -254,6 +266,10 @@ class CryostatTSDesigner(Designer[BluemiraWire]):
 
 
 class CryostatTSBuilder(Builder):
+    """
+    Cryostat thermal shield builder
+    """
+
     CRYO_TS = "Cryostat TS"
 
     param_cls: Type[CryostatTSBuilderParams] = CryostatTSBuilderParams
@@ -289,7 +305,7 @@ class CryostatTSBuilder(Builder):
         # Project extrema slightly beyond axis (might be bad for NT) - will get cut later
         x.extend([-0.5, -0.5])  # [m]
         z.extend([np.min(z), np.max(z)])
-        xz = np.array(x), np.array(z)
+        x, z = np.array(x), np.array(z)
         hull_idx = ConvexHull(np.array([x, z]).T).vertices
 
         wire = make_polygon({"x": x[hull_idx], "y": 0, "z": z[hull_idx]}, closed=True)
@@ -355,6 +371,9 @@ class CryostatTSBuilder(Builder):
         return cryostat_ts
 
     def build_xyz(self, cts_face, degree=360) -> List[PhysicalComponent]:
+        """
+        Build the x-y-z components of the thermal shield.
+        """
         sector_degree, n_sectors = get_n_sectors(self.params.n_TF.value, degree)
 
         shape = revolve_shape(
