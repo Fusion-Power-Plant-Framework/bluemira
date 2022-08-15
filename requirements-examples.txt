@@ -42,7 +42,7 @@ pure-eval==0.2.2
 pycparser==2.21
 Pygments==2.12.0
 pyrsistent==0.18.1
-pyzmq==23.2.0
+pyzmq==23.2.1
 Send2Trash==1.8.0
 soupsieve==2.3.2.post1
 stack-data==0.4.0
