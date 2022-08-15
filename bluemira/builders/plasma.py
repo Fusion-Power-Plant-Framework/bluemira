@@ -24,8 +24,8 @@ Plasma builder.
 
 from typing import Dict
 
-from bluemira.base.builder import Builder
-from bluemira.base.components import Component, PhysicalComponent
+from bluemira.base.builder import Builder, ComponentManager
+from bluemira.base.components import PhysicalComponent
 from bluemira.base.designer import Designer
 from bluemira.display.palettes import BLUE_PALETTE
 from bluemira.geometry.face import BluemiraFace
@@ -33,22 +33,16 @@ from bluemira.geometry.tools import make_circle, revolve_shape
 from bluemira.geometry.wire import BluemiraWire
 
 
-class Plasma:
+class Plasma(ComponentManager):
     """
-    Plasma Component Manager TODO
+    Wrapper around a plasma component tree.
     """
-
-    def __init__(self, component_tree: Component):
-        self._component_tree = component_tree
-
-    def component(self) -> Component:
-        """Return the plasma component tree."""
-        return self._component_tree
 
     def lcfs(self) -> BluemiraWire:
         """Return a wire representing the last-closed flux surface."""
         return (
-            self._component_tree.get_component("xz")
+            self.component()
+            .get_component("xz")
             .get_component(PlasmaBuilder.LCFS)
             .shape.boundary[0]
         )
