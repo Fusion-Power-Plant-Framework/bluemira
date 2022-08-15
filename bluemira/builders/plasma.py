@@ -25,7 +25,7 @@ Plasma builder.
 from typing import Dict
 
 from bluemira.base.builder import Builder, ComponentManager
-from bluemira.base.components import Component, PhysicalComponent
+from bluemira.base.components import PhysicalComponent
 from bluemira.base.designer import Designer
 from bluemira.display.palettes import BLUE_PALETTE
 from bluemira.geometry.face import BluemiraFace
