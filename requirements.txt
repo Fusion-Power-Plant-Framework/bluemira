@@ -38,4 +38,3 @@ tabulate==0.8.10
 threadpoolctl==3.1.0
 typeguard==2.13.3
 wrapt==1.14.1
-zipp==3.8.0
