@@ -26,7 +26,12 @@ from unittest import mock
 
 import numpy as np
 
-from bluemira.builders.thermal_shield import CryostatTSBuilder, VVTSBuilder
+from bluemira.builders.thermal_shield import (
+    CryostatTSBuilder,
+    CryostatTSDesigner,
+    VVTSBuilder,
+    VVTSDesigner,
+)
 from bluemira.display.displayer import show_cad
 from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.parameterisations import PrincetonD
@@ -79,6 +84,7 @@ class TestCryostatTSBuilder:
             cp[2] += pf_s[1]
             squares.append(cp.T)
 
+        # Only half of the pf coils to catch weird edge cases
         cls.pf_coil_koz = [make_polygon(sq, closed=True) for sq in squares]
 
         cls.tf_xz_koz = BluemiraFace(PrincetonD().create_shape())
@@ -94,20 +100,19 @@ class TestCryostatTSBuilder:
         xyz = cryostat_ts.component().get_component("xyz")
         assert xyz
         assert len(xyz.leaves) == self.params["n_TF"]["value"]
-        show_cad(*xyz.get_component_properties("shape", first=False))
 
 
-# class TestCryostatDesigner:
-#     @classmethod
-#     def setup_class(cls):
-#         cls.params = {"g_cr_ts": {"name": "g_cr_ts", "value": 0.3}}
-#         cls.z_max = 10
-#         cls.x_max = 5
-#         bb = mock.Mock(z_max=cls.z_max, x_max=cls.x_max)
-#         cls.cryostat_ts_xz = mock.Mock(bounding_box=bb)
+class TestThermalShieldDesigners:
+    """
+    What goes in comes out
+    """
 
-#     def test_designer(self):
-#         designer = CryostatDesigner(self.params, self.cryostat_ts_xz)
-#         x_out, z_out = designer.run()
-#         assert x_out == self.x_max + self.params["g_cr_ts"]["value"]
-#         assert z_out == self.z_max + self.params["g_cr_ts"]["value"]
+    def test_vvtsdesigner(self):
+        _in = 1
+        designer = VVTSDesigner(_in)
+        assert designer.run() == _in
+
+    def test_cryotsdesigner(self):
+        _in = 1, 2
+        designer = CryostatTSDesigner(*_in)
+        assert designer.run() == _in

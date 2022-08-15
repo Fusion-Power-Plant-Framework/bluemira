@@ -23,16 +23,15 @@
 Thermal shield builders
 """
 
-from typing import Dict, List, Tuple, Type, Union
+from typing import List, Tuple, Type
 
 import numpy as np
 from scipy.spatial import ConvexHull
 
-from bluemira.base.builder import Builder
-from bluemira.base.components import Component, PhysicalComponent
+from bluemira.base.builder import Builder, ComponentManager
+from bluemira.base.components import PhysicalComponent
 from bluemira.base.designer import Designer
 from bluemira.base.parameter_frame import NewParameter as Parameter
-from bluemira.base.parameter_frame import NewParameterFrame as ParameterFrame
 from bluemira.base.parameter_frame import parameter_frame
 from bluemira.builders.tools import (
     circular_pattern_component,
@@ -54,20 +53,10 @@ from bluemira.geometry.tools import (
 from bluemira.geometry.wire import BluemiraWire
 
 
-class VacuumVesselThermalShield:
+class VacuumVesselThermalShield(ComponentManager):
     """
-    VacuumVesselThermalShield Component Manager TODO
+    Wrapper around a VacuumVesselThermalShield component tree.
     """
-
-    def __init__(self, component: Component):
-        super().__init__()
-        self._component = component
-
-    def component(self) -> Component:
-        """
-        Return component
-        """
-        return self._component
 
 
 @parameter_frame
@@ -86,14 +75,13 @@ class VVTSDesigner(Designer[BluemiraWire]):
     Vacuum vessel thermal shield designer
     """
 
-    params_cls = None
+    param_cls = None
 
     def __init__(
         self,
-        params: Union[ParameterFrame, Dict],
         vv_koz: BluemiraWire,
     ):
-        super().__init__(params)
+        super().__init__()
         self.vv_koz = vv_koz
 
     def run(self):
@@ -209,20 +197,10 @@ class VVTSBuilder(Builder):
         )
 
 
-class CryostatThermalShield:
+class CryostatThermalShield(ComponentManager):
     """
-    CryostatThermalShield Component Manager TODO
+    Wrapper around a CryostatThermalShield component tree.
     """
-
-    def __init__(self, component: Component):
-        super().__init__()
-        self._component = component
-
-    def component(self) -> Component:
-        """
-        Return component
-        """
-        return self._component
 
 
 @parameter_frame
@@ -242,21 +220,20 @@ class CryostatTSDesigner(Designer[BluemiraWire]):
     Cryostat thermal shield designer
     """
 
-    params_cls = None
+    param_cls = None
 
     def __init__(
         self,
-        params: Union[ParameterFrame, Dict],
         pf_coils_xz_kozs: List[BluemiraWire],
         tf_xz_koz: BluemiraWire,
     ):
-        super().__init__(params)
+        super().__init__()
         self.pf_coils_xz_kozs = pf_coils_xz_kozs
         self.tf_xz_koz = tf_xz_koz
 
     def run(self) -> Tuple[List[BluemiraWire], BluemiraWire]:
         """
-        Vacuum vessel thermal shield designer run method
+        Cryostat thermal shield designer run method
         """
         return self.pf_coils_xz_kozs, self.tf_xz_koz
 
