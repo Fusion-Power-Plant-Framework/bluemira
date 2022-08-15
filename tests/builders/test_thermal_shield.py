@@ -33,7 +33,6 @@ from bluemira.builders.thermal_shield import (
     VVTSDesigner,
 )
 from bluemira.display.displayer import show_cad
-from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.parameterisations import PrincetonD
 from bluemira.geometry.tools import make_circle, make_polygon
 
@@ -87,7 +86,7 @@ class TestCryostatTSBuilder:
         # Only half of the pf coils to catch weird edge cases
         cls.pf_coil_koz = [make_polygon(sq, closed=True) for sq in squares]
 
-        cls.tf_xz_koz = BluemiraFace(PrincetonD().create_shape())
+        cls.tf_xz_koz = PrincetonD().create_shape()
 
     def test_components_and_segments(self):
         designer = mock.Mock(run=lambda: (self.pf_coil_koz, self.tf_xz_koz))
