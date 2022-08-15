@@ -304,21 +304,13 @@ class CryostatTSBuilder(Builder):
         x, z = np.array(x), np.array(z)
         hull_idx = ConvexHull(np.array([x, z]).T).vertices
 
-        wire = make_polygon({"x": x[hull_idx], "y": 0, "z": z[hull_idx]}, closed=True)
-        wire = offset_wire(wire, self.params.g_ts_pf.value, open_wire=False, ndiscr=600)
         pf_o_wire = offset_wire(
-            wire, self.params.tk_ts.value, open_wire=False, ndiscr=600
-        )
-
-        pf_o_wire2 = offset_wire(
             make_polygon({"x": x[hull_idx], "y": 0, "z": z[hull_idx]}, closed=True),
             self.params.g_ts_pf.value + self.params.tk_ts.value,
             open_wire=False,
             ndiscr=600,
         )
-        # TODO: is there any differnece between pf_o_wire and pf_o_wire2?
-        # import ipdb
-        # ipdb.set_trace()
+
         tf_o_wire = offset_wire(
             tf_koz,
             self.params.g_ts_tf.value,
