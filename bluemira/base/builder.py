@@ -34,6 +34,11 @@ from bluemira.base.error import BuilderError
 from bluemira.base.parameter_frame import NewParameterFrame as ParameterFrame
 from bluemira.utilities.plot_tools import set_component_view
 
+BuildConfig = Dict[str, Union[int, float, str, "BuildConfig"]]
+"""
+Type alias for representing nested build configuration information.
+"""
+
 
 def _remove_suffix(s: str, suffix: str) -> str:
     # Python 3.9 has str.removesuffix()
