@@ -309,12 +309,14 @@ class CryostatTSBuilder(Builder):
         hull_idx = ConvexHull(np.array([x, z]).T).vertices
 
         wire = make_polygon({"x": x[hull_idx], "y": 0, "z": z[hull_idx]}, closed=True)
-        wire = offset_wire(wire, self.params.g_ts_pf, open_wire=False, ndiscr=600)
-        pf_o_wire = offset_wire(wire, self.params.tk_ts, open_wire=False, ndiscr=600)
+        wire = offset_wire(wire, self.params.g_ts_pf.value, open_wire=False, ndiscr=600)
+        pf_o_wire = offset_wire(
+            wire, self.params.tk_ts.value, open_wire=False, ndiscr=600
+        )
 
         pf_o_wire2 = offset_wire(
             make_polygon({"x": x[hull_idx], "y": 0, "z": z[hull_idx]}, closed=True),
-            self.params.g_ts_pf + self.params.tk_ts,
+            self.params.g_ts_pf.value + self.params.tk_ts.value,
             open_wire=False,
             ndiscr=600,
         )
@@ -323,7 +325,7 @@ class CryostatTSBuilder(Builder):
         # ipdb.set_trace()
         tf_o_wire = offset_wire(
             tf_koz,
-            self.params.g_ts_tf,
+            self.params.g_ts_tf.value,
             join="arc",
             open_wire=False,
             ndiscr=600,
@@ -338,7 +340,7 @@ class CryostatTSBuilder(Builder):
             # the TF offset face is probably enclosed by the PF offset face
             cts_inner = pf_o_wire
 
-        cts_outer = offset_wire(cts_inner, self.params.tk_ts, ndiscr=600)
+        cts_outer = offset_wire(cts_inner, self.params.tk_ts.value, ndiscr=600)
         cts_face = BluemiraFace([cts_outer, cts_inner])
         bb = cts_face.bounding_box
         x_in, x_out = 0, -bb.x_max
