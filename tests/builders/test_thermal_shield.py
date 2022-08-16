@@ -58,6 +58,7 @@ class TestVVTSBuilder:
 
         xyz = vvts.component().get_component("xyz")
         assert xyz
+
         # not sectioned because of #1319 and related issues
         # assert len(xyz.leaves) == self.params["n_TF"]["value"]
         # xx = xyz.get_component_properties("shape", first=False)[0]

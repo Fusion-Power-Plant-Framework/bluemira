@@ -34,8 +34,6 @@ from bluemira.geometry.face import BluemiraFace
 
 __all__ = ["BluemiraShell"]
 
-SHELL = []
-
 
 class BluemiraShell(BluemiraGeo):
     """Bluemira Shell class."""
@@ -48,7 +46,6 @@ class BluemiraShell(BluemiraGeo):
         """Creation of the shell"""
         faces = [f._create_face(check_reverse=True) for f in self.boundary]
         shell = cadapi.apiShell(faces)
-        SHELL.append(shell)
         if check_reverse:
             return self._check_reverse(shell)
         else:

@@ -887,9 +887,6 @@ def circular_pattern(
     for i in range(1, n_shapes):
         new_shape = shape.deepcopy()
         new_shape.rotate(origin, direction, i * angle)
-        # import ipdb
-
-        # ipdb.set_trace()
         shapes.append(new_shape)
     return shapes
 

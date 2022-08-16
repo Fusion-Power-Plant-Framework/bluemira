@@ -184,17 +184,17 @@ class VVTSBuilder(Builder):
             vvts_face,
             base=(0, 0, 0),
             direction=(0, 0, 1),
-            # degree=degree - 1
-            degree=sector_degree,
+            degree=degree - 1
+            # degree=sector_degree,
         )
 
         vvts_body = PhysicalComponent(self.VVTS, shape)
         vvts_body.display_cad_options.color = BLUE_PALETTE["TS"][0]
-        # return [vvts_body]
-        # this is currently broken because of #1319 and related issues
-        return circular_pattern_component(
-            vvts_body, n_sectors, degree=sector_degree * n_sectors
-        )
+        return [vvts_body]
+        # this is currently broken because of #1319 and related Topological naming issues
+        # return circular_pattern_component(
+        #     vvts_body, n_sectors, degree=sector_degree * n_sectors
+        # )
 
 
 class CryostatThermalShield(ComponentManager):
