@@ -131,6 +131,8 @@ class BluemiraFace(BluemiraGeo):
                 w_orientation = w.Orientation
                 bm_wire = BluemiraWire(w)
                 bm_wire._orientation = w_orientation
+                if cadapi.is_closed(w):
+                    bm_wire.close()
                 bmwires += [bm_wire]
             bmface = cls(bmwires, label=label)
             bmface._orientation = orientation

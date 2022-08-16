@@ -19,6 +19,8 @@
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 
+from unittest.mock import patch
+
 import freecad  # noqa: F401
 import numpy as np
 import Part
@@ -45,6 +47,28 @@ class TestFreecadapi:
             (0.0, 1.0, 0.0),
             (0.0, 0.0, 0.0),
         ]
+
+    def test_offset_wire_arranged_edges(self):
+        def offsetter(wire):
+            return cadapi.offset_wire(
+                wire,
+                0.05,
+                join="intersect",
+                open_wire=False,
+            )
+
+        circ = cadapi.make_circle(10)
+        with patch("bluemira.codes._freecadapi.arrange_edges", new=lambda a, b: b):
+            wire1 = offsetter(circ)
+            wire2 = offsetter(wire1)
+
+        wire1_a = offsetter(circ)
+        wire2_a = offsetter(wire1_a)
+        assert circ.Length < wire1.Length
+        # these two should break in future, this mean the topo naming may be fixed
+        assert circ.Length == wire2.Length
+        assert wire1.Length > wire2.Length
+        assert circ.Length < wire1_a.Length < wire2_a.Length
 
     def test_fail_vector_to_numpy(self):
         with pytest.raises(TypeError):
