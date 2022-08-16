@@ -23,15 +23,92 @@
 Equilibrium objects for EU-DEMO design
 """
 
+from typing import Dict, Union
+
 import numpy as np
+from EUDEMO_builders.pf_coils import make_coilset, make_grid
 
 from bluemira.base.look_and_feel import bluemira_warn
+from bluemira.base.parameter_frame import NewParameter as Parameter
+from bluemira.base.parameter_frame import NewParameterFrame as ParameterFrame
+from bluemira.base.parameter_frame import parameter_frame
+from bluemira.equilibria import Equilibrium
 from bluemira.equilibria.opt_constraints import (
     FieldNullConstraint,
     MagneticConstraintSet,
     PsiBoundaryConstraint,
 )
+from bluemira.equilibria.profiles import BetaIpProfile
 from bluemira.equilibria.shapes import flux_surface_johner
+from bluemira.geometry.wire import BluemiraWire
+
+KAPPA_95_TO_100 = 1.12
+
+
+@parameter_frame
+class EquilibriumParams(ParameterFrame):
+    """Parameters required to make a new equilibrium."""
+
+    A: Parameter[float]
+    B_0: Parameter[float]
+    beta_p: Parameter[float]
+    CS_bmax: Parameter[float]
+    CS_jmax: Parameter[float]
+    delta_95: Parameter[float]
+    g_cs_mod: Parameter[float]
+    I_p: Parameter[float]
+    kappa_95: Parameter[float]
+    n_CS: Parameter[float]
+    n_PF: Parameter[float]
+    PF_bmax: Parameter[float]
+    PF_jmax: Parameter[float]
+    R_0: Parameter[float]
+    r_cs_in: Parameter[float]
+    tk_cs_casing: Parameter[float]
+    tk_cs_insulation: Parameter[float]
+    tk_cs: Parameter[float]
+
+
+def make_equilibrium(
+    _params: Union[EquilibriumParams, Dict], tf_coil_boundary: BluemiraWire
+):
+    """
+    Build an equilibrium using a coilset and a `BetaIpProfile` profile.
+    """
+    if isinstance(_params, dict):
+        params = EquilibriumParams.from_dict(_params)
+    else:
+        params = _params
+
+    kappa = KAPPA_95_TO_100 * params.kappa_95.value
+    coilset = make_coilset(
+        tf_coil_boundary,
+        R_0=params.R_0.value,
+        kappa=kappa,
+        delta=params.delta_95.value,
+        r_cs=params.r_cs_in.value + params.tk_cs.value / 2,
+        tk_cs=params.tk_cs.value / 2,
+        g_cs=params.g_cs_mod.value,
+        tk_cs_ins=params.tk_cs_insulation.value,
+        tk_cs_cas=params.tk_cs_casing.value,
+        n_CS=params.n_CS.value,
+        n_PF=params.n_PF.value,
+        CS_jmax=params.CS_jmax.value,
+        CS_bmax=params.CS_bmax.value,
+        PF_jmax=params.PF_jmax.value,
+        PF_bmax=params.PF_bmax.value,
+    )
+    profiles = BetaIpProfile(
+        params.beta_p.value,
+        params.I_p.value * 1e6,  # TODO(hsaunders1904): unit change?
+        params.R_0.value,
+        params.B_0.value,
+    )
+    grid = make_grid(
+        params.R_0.value, params.A.value, kappa, scale_x=1.6, scale_z=1.7, nx=65, nz=65
+    )
+
+    return Equilibrium(coilset, grid, profiles)
 
 
 def estimate_kappa95(A, m_s_limit):

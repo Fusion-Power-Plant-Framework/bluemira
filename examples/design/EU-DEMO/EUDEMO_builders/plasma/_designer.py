@@ -25,8 +25,11 @@ A builder for Plasma properties and geometry.
 from typing import Dict, Union
 
 import numpy as np
-from EUDEMO_builders.equilibria import EUDEMOSingleNullConstraints
-from EUDEMO_builders.equilibrium import EquilibriumParams, make_equilibrium
+from EUDEMO_builders.equilibria import (
+    EquilibriumParams,
+    EUDEMOSingleNullConstraints,
+    make_equilibrium,
+)
 
 from bluemira.base.builder import Designer
 from bluemira.base.parameter_frame import NewParameter as Parameter
@@ -45,7 +48,7 @@ from bluemira.geometry.wire import BluemiraWire
 
 @parameter_frame
 class UnconstrainedTikhonovDesignerParams(ParameterFrame):
-    """ """
+    """Parameters for running the `UnconstrainedTikhonovDesigner` designer."""
 
     A: Parameter[float]
     B_0: Parameter[float]
@@ -72,6 +75,23 @@ class UnconstrainedTikhonovDesignerParams(ParameterFrame):
 
 
 class UnconstrainedTikhonovDesigner(Designer[Equilibrium]):
+    """
+    Run an unconstrained Tikhonov optimisation to generate an equilibrium.
+
+    Creates an initial equilibrium using a PrincetonD TF coil parameterisation,
+    a basic PF coil arrangement, and uses a Picard iterator to solve an
+    `UnconstrainedTikhonovCurrentGradientCOP` to optimise the coil positions
+    and plasma shape.
+
+    Parameters
+    ----------
+    params: Union[UnconstrainedTikhonovDesignerParams, Dict]
+        The parameters for this designer. A ParameterFrame or a
+        dictionary from which a ParameterFrame can be made.
+    plot_optimisation: bool
+        Plot the iterations in the optimisation routine (default = False).
+    """
+
     def __init__(
         self,
         params: Union[UnconstrainedTikhonovDesignerParams, Dict],
@@ -80,7 +100,10 @@ class UnconstrainedTikhonovDesigner(Designer[Equilibrium]):
         self.params: UnconstrainedTikhonovDesignerParams = self._init_params(params)
         self._plot_optimisation = plot_optimisation
 
-    def run(self):
+    def run(self) -> Equilibrium:
+        """
+        Make and optimise the equilibrium.
+        """
         eq = self._make_equilibrium()
         opt_problem = self._make_opt_problem(eq)
         self._run_picard_iter(eq, opt_problem, self._plot_optimisation)
@@ -92,7 +115,11 @@ class UnconstrainedTikhonovDesigner(Designer[Equilibrium]):
         opt_problem: CoilsetOptimisationProblem,
         plot: bool = False,
     ):
-        """Run a PicardIterator to optimise the given `Equilibrium`."""
+        """
+        Run a PicardIterator to optimise the given `Equilibrium`.
+
+        This function iteratively updates the given equilibrium.
+        """
         iterator_program = PicardIterator(
             eq,
             opt_problem,
