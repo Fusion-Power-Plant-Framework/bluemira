@@ -98,11 +98,7 @@ class BluemiraWire(BluemiraGeo):
                 for w in o.Wires:
                     wire = cadapi.apiWire(w.OrderedEdges)
                     if self._orientation != _Orientation(wire.Orientation):
-                        edges = []
-                        for edge in wire.OrderedEdges:
-                            edge.reverse()
-                            edges.append(edge)
-                        wire = cadapi.apiWire(edges)
+                        wire.reverse()
                     wires += [wire]
             else:
                 wires += o._wires

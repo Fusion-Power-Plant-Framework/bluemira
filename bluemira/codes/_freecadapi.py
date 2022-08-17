@@ -60,6 +60,7 @@ from bluemira.geometry.constants import MINIMUM_LENGTH
 
 apiVertex = Part.Vertex  # noqa :N816
 apiVector = Base.Vector  # noqa :N816
+apiEdge = Part.Edge  # noqa :N816
 apiWire = Part.Wire  # noqa :N816
 apiFace = Part.Face  # noqa :N816
 apiShell = Part.Shell  # noqa :N816
@@ -72,6 +73,32 @@ apiCompound = Part.Compound  # noqa :N816
 # ======================================================================================
 # Array, List, Vector, Point manipulation
 # ======================================================================================
+
+
+def arrange_edges(old_wire: apiWire, new_wire: apiWire):
+    """
+    A helper to try and fix some topological naming issues.
+    Tries to arrange edges as they were in the old wire
+
+    Parameters
+    ----------
+    old_wire: apiWire
+        old wire to emulate edges from
+    new_wire: apiWire
+        new wire to change edge arrangement
+
+    Returns
+    -------
+    apiWire
+
+    """
+    old_edges = Part.sortEdges(old_wire.Edges)[0]
+    new_edges = Part.sortEdges(new_wire.Edges)[0]
+    for old_edge in old_edges:
+        for new_edge in new_edges:
+            if old_edge.Orientation != new_edge.Orientation:
+                apiEdge.reverse(new_edge)
+    return apiWire(new_edges)
 
 
 def check_data_type(data_type):
@@ -513,7 +540,9 @@ def offset_wire(
 
     shape = apiShape(wire)
     try:
-        wire = apiWire(shape.makeOffset2D(thickness, f_join, False, open_wire))
+        wire = arrange_edges(
+            wire, shape.makeOffset2D(thickness, f_join, False, open_wire)
+        )
     except Base.FreeCADError as error:
         msg = "\n".join(
             [
