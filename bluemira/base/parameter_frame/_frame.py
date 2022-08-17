@@ -96,3 +96,33 @@ class NewParameterFrame:
                 return cls.from_dict(json.load(f))
         # load from a JSON string
         return cls.from_dict(json.loads(json_in))
+
+
+def make_parameter_frame(
+    params: Union[Dict, NewParameterFrame, None],
+    param_cls: Type[NewParameterFrame],
+) -> Union[NewParameterFrame, None]:
+    """
+    Helper function to generate a `ParameterFrame` of a specific type
+
+    Parameters
+    ----------
+    params: Union[Dict, NewParameterFrame, None]
+        The parameters to initialise the class with
+    param_cls: Type[NewParameterFrame]
+        The `ParameterFrame` class to generate
+
+
+    """
+    if param_cls is None:
+        if params is None:
+            # Case for where there are no parameters associated with the object
+            return params
+        raise ValueError("Cannot process parameters, 'param_cls' is None.")
+    elif isinstance(params, dict):
+        return param_cls.from_dict(params)
+    elif isinstance(params, param_cls):
+        return params
+    elif isinstance(params, NewParameterFrame):
+        return param_cls.from_frame(params)
+    raise TypeError(f"Cannot interpret type '{type(params)}' as {param_cls.__name__}.")
