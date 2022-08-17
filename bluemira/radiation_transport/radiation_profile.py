@@ -28,13 +28,19 @@ from typing import TYPE_CHECKING
 
 import matplotlib.pyplot as plt
 import numpy as np
-from scipy.interpolate import interp1d
+from cherab.core.math import sample3d
+from raysect.core import Point2D, Point3D, Vector3D, rotate_basis, translate
+from raysect.optical.observer import PinholeCamera, PowerPipeline0D, PowerPipeline2D
+from raysect.optical.observer.nonimaging.pixel import Pixel
+from scipy.interpolate import LinearNDInterpolator, interp1d, interp2d
 
 from bluemira.base import constants
 from bluemira.base.error import BuilderError
 from bluemira.base.parameter import ParameterFrame
+from bluemira.equilibria.equilibrium import Equilibrium
 from bluemira.equilibria.flux_surfaces import calculate_connection_length_flt
 from bluemira.equilibria.grid import Grid
+from bluemira.equilibria.physics import calc_psi_norm
 from bluemira.radiation_transport.constants import SEP_CORRECTOR
 
 if TYPE_CHECKING:
@@ -662,6 +668,74 @@ def calculate_line_radiation_loss(ne, p_loss_f, species_frac):
     return (species_frac[0] * (ne**2) * p_loss_f) / 1e6
 
 
+def linear_interpolator(x, z, field):
+    """
+    Interpolating function calculated over 1D coordinate
+    arrays and 1D field value array.
+
+    Parameters
+    ----------
+    x: np.array
+        x coordinates of given points
+    z: np.array
+        z coordinates of given points
+    field: np.array
+        set of punctual field values associated to the given points
+
+    Returns
+    -------
+    interpolated_function: LinearNDInterpolator object
+    """
+    return LinearNDInterpolator(list(zip(x, z)), field, fill_value=0)
+
+
+def interpolated_field_values(x, z, linear_interpolator):
+    """
+    Interpolated field values for a given set of points.
+
+    Parameters
+    ----------
+    x: float, np.array
+        x coordinates of point in which interpolate
+    z: float, np.array
+        z coordinates of point in which interpolate
+    linear_interpolator: Interpolating function
+        LinearNDInterpolator object
+
+    Returns
+    -------
+    field_grid: matrix len(x) x len(z)
+        2D grid of interpolated field values
+    """
+    xx, zz = np.meshgrid(x, z)
+    return linear_interpolator(xx, zz)
+
+
+def grid_interpolator(x, z, field_grid):
+    """
+    Interpolated field function obtainded for a given grid.
+    Needed: length(xx) = m, length(zz) = n, field_grid.shape = n x m.
+
+    Parameters
+    ----------
+    x: np.array
+        x coordinates. length(xx)=m
+    z: np.array
+        z coordinates. length(xx)=n
+    field_grid: matrix n x m
+        corresponding field values arranged according to
+        the grid of given points
+
+    Returns
+    -------
+    interpolated_function: scipy.interpolate.interp2d object
+        interpolated field function, to be used to
+        calculate the field values for a new set of points
+        or to be provided to a tracing code such as CHEARAB
+    """
+    return interp2d(x, z, field_grid)
+
+
 class Radiation:
     """
     Initial and generic class (no distinction between core and SOL)
@@ -686,7 +760,7 @@ class Radiation:
         ['R_0', 'Major radius', 3.639, 'm', None, 'Input'],
         ["kappa", "Elongation", 2.8, "dimensionless", None, "Input"],
         ['P_sep', 'Radiation power', 150, 'MW', None, 'Input'],
-        ['fw_lambda_q_near_omp', 'Lambda_q near SOL omp', 0.003, 'm', None, 'Input'],
+        ['fw_lambda_q_near_omp', 'Lambda_q near SOL omp', 0.05, 'm', None, 'Input'],
         ['fw_lambda_q_far_omp', 'Lambda_q far SOL omp', 0.1, 'm', None, 'Input'],
         ["k_0", "material's conductivity", 2000, "dimensionless", None, "Input"],
         ["gamma_sheath", "sheath heat transmission coefficient", 7, "dimensionless", None, "Input"],
@@ -700,6 +774,7 @@ class Radiation:
 
     def __init__(
         self,
+        eq: Equilibrium,
         transport_solver: ChargedParticleSolver,
         plasma_params: ParameterFrame,
     ):
@@ -709,6 +784,7 @@ class Radiation:
         )
 
         self.transport_solver = transport_solver
+        self.eq = eq
 
         self.collect_x_and_o_point_coordinates()
 
@@ -719,7 +795,7 @@ class Radiation:
         """
         Magnetic axis coordinates and x-point(s) coordinates.
         """
-        o_point, x_point = self.transport_solver.eq.get_OX_points()
+        o_point, x_point = self.eq.get_OX_points()
         self.points = {
             "x_point": {
                 "x": x_point[0][0],
@@ -736,7 +812,7 @@ class Radiation:
         """
         Radiation source relevant parameters at the separatrix
         """
-        self.separatrix = self.transport_solver.eq.get_separatrix()
+        self.separatrix = self.eq.get_separatrix()
         # The two halves
         self.sep_lfs = self.separatrix[0]
         self.sep_hfs = self.separatrix[1]
@@ -750,12 +826,12 @@ class Radiation:
         # Mid-plane z coordinate
         self.z_mp = self.points["o_point"]["z"]
         # magnetic field components at the midplane
-        self.Bp_sep_omp = self.transport_solver.eq.Bp(self.x_sep_omp, self.z_mp)
-        Bt_sep_omp = self.transport_solver.eq.Bt(self.x_sep_omp)
+        self.Bp_sep_omp = self.eq.Bp(self.x_sep_omp, self.z_mp)
+        Bt_sep_omp = self.eq.Bt(self.x_sep_omp)
         self.Btot_sep_omp = np.hypot(self.Bp_sep_omp, Bt_sep_omp)
         self.pitch_angle_omp = self.Btot_sep_omp / self.Bp_sep_omp
-        self.Bp_sep_imp = self.transport_solver.eq.Bp(self.x_sep_imp, self.z_mp)
-        Bt_sep_imp = self.transport_solver.eq.Bt(self.x_sep_imp)
+        self.Bp_sep_imp = self.eq.Bp(self.x_sep_imp, self.z_mp)
+        Bt_sep_imp = self.eq.Bt(self.x_sep_imp)
         self.Btot_sep_imp = np.hypot(self.Bp_sep_imp, Bt_sep_imp)
         self.pitch_angle_imp = self.Btot_sep_imp / self.Bp_sep_imp
 
@@ -776,7 +852,7 @@ class Radiation:
         flux tubes: list
             list of flux tubes
         """
-        return [self.transport_solver.eq.get_flux_surface(psi) for psi in psi_n]
+        return [self.eq.get_flux_surface(psi) for psi in psi_n]
 
     def flux_tube_pol_t(
         self,
@@ -956,12 +1032,13 @@ class CoreRadiation(Radiation):
 
     def __init__(
         self,
+        eq: Equilibrium,
         transport_solver: ChargedParticleSolver,
+        plasma_params: ParameterFrame,
         impurity_content,
         impurity_data,
-        plasma_params,
     ):
-        super().__init__(transport_solver, plasma_params)
+        super().__init__(eq, transport_solver, plasma_params)
 
         self.H_content = impurity_content["H"]
         self.impurities_content = impurity_content.values()
@@ -994,12 +1071,12 @@ class CoreRadiation(Radiation):
         ) / 2.0
 
         # Plasma core for rho < rho_core
-        rho_core1 = np.linspace(0, 0.95 * self.rho_ped)
-        rho_core2 = np.linspace(0.95 * self.rho_ped, self.rho_ped)
+        rho_core1 = np.linspace(0, 0.95 * self.rho_ped, 25)
+        rho_core2 = np.linspace(0.95 * self.rho_ped, self.rho_ped, 10)
         rho_core = np.append(rho_core1, rho_core2)
 
         # Plasma mantle for rho_core < rho < 1
-        rho_sep = np.linspace(self.rho_ped, 0.99)
+        rho_sep = np.linspace(self.rho_ped, 0.99, 5)
 
         rho_core = np.append(rho_core, rho_sep)
 
@@ -1079,25 +1156,28 @@ class CoreRadiation(Radiation):
             for loss, fi in zip(loss_f, self.impurities_content)
         ]
 
-        return self.plot_1d_profile(self.rho_core, rad)
+        self.rad = rad
 
-    def build_core_radiation_map(self):
+        # return self.plot_1d_profile(self.rho_core, rad)
+
+    def build_core_distribution(self):
         """
         2D map of the line radiation loss in the plasma core.
         """
         # Closed flux tubes within the separatrix
-        flux_tubes = self.collect_flux_tubes(self.rho_core)
+        psi_n = self.rho_core**2
+        self.flux_tubes = self.collect_flux_tubes(psi_n)
 
         # For each flux tube, poloidal density profile.
         ne_pol = [
             self.flux_tube_pol_n(ft, n, core=True)
-            for ft, n in zip(flux_tubes, self.ne_mp)
+            for ft, n in zip(self.flux_tubes, self.ne_mp)
         ]
 
         # For each flux tube, poloidal temperature profile.
         te_pol = [
             self.flux_tube_pol_t(ft, t, core=True)
-            for ft, t in zip(flux_tubes, self.te_mp)
+            for ft, t in zip(self.flux_tubes, self.te_mp)
         ]
 
         # For each impurity species and for each flux tube,
@@ -1114,10 +1194,13 @@ class CoreRadiation(Radiation):
             for ft, fi in zip(loss_f, self.impurities_content)
         ]
 
-        # Total line radiation loss along each flux tube
+        return rad
+
+    def build_core_radiation_map(self, rad):
+
         total_rad = np.sum(np.array(rad, dtype=object), axis=0).tolist()
 
-        return self.plot_2d_map(flux_tubes, total_rad)
+        return self.plot_2d_map(self.flux_tubes, total_rad)
 
     def plot_2d_map(self, flux_tubes, power_density, ax=None):
         """
@@ -1139,7 +1222,7 @@ class CoreRadiation(Radiation):
         p_min = min([np.amin(p) for p in power_density])
         p_max = max([np.amax(p) for p in power_density])
 
-        separatrix = self.transport_solver.eq.get_separatrix()
+        separatrix = self.eq.get_separatrix()
         for sep in separatrix:
             sep.plot(ax, linewidth=2)
         for flux_tube, p in zip(flux_tubes, power_density):
@@ -1375,14 +1458,13 @@ class ScrapeOffLayerRadiation(Radiation):
             Bp_sep_mp = self.Bp_sep_imp
 
         # magnetic field components at the local point
-        Bp_p = self.transport_solver.eq.Bp(x_p, z_p)
+        Bp_p = self.eq.Bp(x_p, z_p)
 
         # flux expansion
         f_p = (r_sep_mp * Bp_sep_mp) / (x_p * Bp_p)
 
         # Ratio between upstream and local temperature
         f_t = t_u / t_p
-        print(t_u, t_p)
 
         # Local electron density
         n_p = self.plasma_params.n_el_sep * f_t
@@ -1467,7 +1549,7 @@ class ScrapeOffLayerRadiation(Radiation):
         p_max = max([max(p) for p in power])
 
         firstwall.plot(ax, linewidth=0.5, fill=False)
-        separatrix = self.transport_solver.eq.get_separatrix()
+        separatrix = self.eq.get_separatrix()
         for sep in separatrix:
             sep.plot(ax, linewidth=2)
         for flux_tube, p in zip(tubes, power):
@@ -1595,7 +1677,7 @@ class ScrapeOffLayerRadiation(Radiation):
             in_z,
             self.t_u,
             self.q_u,
-            self.transport_solver.eq,
+            self.eq,
             r_sep_mp,
             self.z_mp,
             self.plasma_params.lfs_p_fraction,
@@ -1707,13 +1789,14 @@ class DNScrapeOffLayerRadiation(ScrapeOffLayerRadiation):
 
     def __init__(
         self,
+        eq: Equilibrium,
         transport_solver: ChargedParticleSolver,
+        plasma_params: ParameterFrame,
         impurity_content,
         impurity_data,
-        plasma_params,
         firstwall_geom,
     ):
-        super().__init__(transport_solver, plasma_params)
+        super().__init__(eq, transport_solver, plasma_params)
 
         self.H_content = impurity_content["H"]
         self.impurities_content = [
@@ -1751,7 +1834,7 @@ class DNScrapeOffLayerRadiation(ScrapeOffLayerRadiation):
             self.plasma_params.q_95,
             self.plasma_params.fw_lambda_q_far_omp,
             self.plasma_params.P_sep,
-            self.transport_solver.eq,
+            self.eq,
             self.r_sep_omp,
             self.z_mp,
             self.plasma_params.k_0,
@@ -1925,7 +2008,6 @@ class DNScrapeOffLayerRadiation(ScrapeOffLayerRadiation):
         """
         # total line radiation loss along the open flux tubes
         total_rad_lfs_low = np.sum(np.array(rad_lfs_low, dtype=object), axis=0).tolist()
-        self.a = total_rad_lfs_low
         total_rad_lfs_up = np.sum(np.array(rad_lfs_up, dtype=object), axis=0).tolist()
         total_rad_hfs_low = np.sum(np.array(rad_hfs_low, dtype=object), axis=0).tolist()
         total_rad_hfs_up = np.sum(np.array(rad_hfs_up, dtype=object), axis=0).tolist()
@@ -1940,3 +2022,148 @@ class DNScrapeOffLayerRadiation(ScrapeOffLayerRadiation):
             [total_rad_lfs_low, total_rad_hfs_low, total_rad_lfs_up, total_rad_hfs_up],
             firstwall_geom,
         )
+
+
+class TempSolver:
+    def __init__(
+        self,
+        eq: Equilibrium,
+        transport_solver: ChargedParticleSolver,
+        plasma_params: ParameterFrame,
+        impurity_content,
+        impurity_data,
+    ):
+
+        self.eq = eq
+        self.transport_solver = transport_solver
+        self.params = plasma_params
+        self.imp_content = impurity_content
+        self.imp_data = impurity_data
+
+    def analyse(self, firstwall_geom):
+
+        core = CoreRadiation(
+            self.eq, self.transport_solver, self.params, self.imp_content, self.imp_data
+        )
+        rad = core.build_core_distribution()
+        total_rad = np.sum(np.array(rad, dtype=object), axis=0).tolist()
+        X_c = []
+        Z_c = []
+        P_c = []
+        for flux_tube, p in zip(core.flux_tubes, total_rad):
+            X_c.append(flux_tube.x)
+            Z_c.append(flux_tube.z)
+            P_c.append(p)
+
+        X_c = np.concatenate(X_c)
+        Z_c = np.concatenate(Z_c)
+        P_c = np.concatenate(P_c)
+
+        if self.eq.is_double_null:
+            sol = DNScrapeOffLayerRadiation(
+                self.eq,
+                self.transport_solver,
+                self.params,
+                self.imp_content,
+                self.imp_data,
+                firstwall_geom,
+            )
+
+        t_and_n_sol_profiles = sol.build_sol_profiles(firstwall_geom)
+        rad_sector_profiles = sol.build_sol_rad_distribution(*t_and_n_sol_profiles)
+        total_rad_lfs_low = np.sum(
+            np.array(rad_sector_profiles[0], dtype=object), axis=0
+        ).tolist()
+        total_rad_lfs_up = np.sum(
+            np.array(rad_sector_profiles[1], dtype=object), axis=0
+        ).tolist()
+        total_rad_hfs_low = np.sum(
+            np.array(rad_sector_profiles[2], dtype=object), axis=0
+        ).tolist()
+        total_rad_hfs_up = np.sum(
+            np.array(rad_sector_profiles[3], dtype=object), axis=0
+        ).tolist()
+        rads = [total_rad_lfs_low, total_rad_hfs_low, total_rad_lfs_up, total_rad_hfs_up]
+        power = sum(rads, [])
+        flux_tubes = [
+            self.transport_solver.flux_surfaces_ob_lfs,
+            self.transport_solver.flux_surfaces_ib_lfs,
+            self.transport_solver.flux_surfaces_ob_hfs,
+            self.transport_solver.flux_surfaces_ib_hfs,
+        ]
+        tubes = sum(flux_tubes, [])
+        X = []
+        Z = []
+        P = []
+        for flux_tube, p in zip(tubes, power):
+            X.append(flux_tube.loop.x)
+            Z.append(flux_tube.loop.z)
+            P.append(p)
+
+        X = np.concatenate(X)
+        Z = np.concatenate(Z)
+        P = np.concatenate(P)
+
+        X_tot = np.concatenate([X_c, X])
+        Z_tot = np.concatenate([Z_c, Z])
+        P_tot = np.concatenate([P_c, P])
+        self.X_tot = X_tot
+        self.Z_tot = Z_tot
+        self.P_tot = P_tot
+        return X_tot, Z_tot, P_tot
+
+    def rad_core_by_psi_n(self, psi_n):
+        core_rad = CoreRadiation(
+            self.eq, self.transport_solver, self.params, self.imp_content, self.imp_data
+        )
+        core_rad.build_mp_rad_profile()
+        rad_tot = np.sum(np.array(core_rad.rad, dtype=object), axis=0).tolist()
+        f_rad = interp1d(core_rad.rho_core, rad_tot)
+        rho_new = np.sqrt(psi_n)
+        rad_new = f_rad(rho_new)
+
+        return rad_new
+
+    def rad_core_by_points(self, x, z):
+        psi = self.eq.psi(x, z)
+        psi_n = calc_psi_norm(psi, *self.eq.get_OX_psis(psi))
+
+        return self.rad_core_by_psi_n(psi_n)
+
+    def rad_by_psi_n(self, psi_n):
+        if psi_n < 1:
+            return self.rad_core_by_psi_n(psi_n)
+        else:
+            print("SoL. I cannot for now")
+
+    def rad_by_points(self, x, z):
+        f = linear_interpolator(self.X_tot, self.Z_tot, self.P_tot)
+
+        return interpolated_field_values(x, z, f)
+
+    def plot(self, ax=None):
+        if ax is None:
+            fig, ax = plt.subplots()
+        else:
+            fig = ax.figure
+
+        p_min = min(self.P_tot)
+        p_max = max(self.P_tot)
+
+        separatrix = self.eq.get_separatrix()
+        for sep in separatrix:
+            sep.plot(ax, linewidth=2)
+        cm = ax.scatter(
+            self.X_tot,
+            self.Z_tot,
+            c=self.P_tot,
+            s=10,
+            cmap="plasma",
+            vmin=p_min,
+            vmax=p_max,
+            zorder=40,
+        )
+
+        fig.colorbar(cm, label="MW/m^3")
+
+        return ax
