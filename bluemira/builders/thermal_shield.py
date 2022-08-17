@@ -123,7 +123,7 @@ class VVTSBuilder(Builder):
             )
         )
 
-    def build_xz(self, koz) -> PhysicalComponent:
+    def build_xz(self, koz: BluemiraWire) -> PhysicalComponent:
         """
         Build the x-z components of the vacuum vessel thermal shield.
 
@@ -151,7 +151,7 @@ class VVTSBuilder(Builder):
         vvts.plot_options.face_options["color"] = BLUE_PALETTE["TS"][0]
         return vvts
 
-    def build_xy(self, vvts_face) -> PhysicalComponent:
+    def build_xy(self, vvts_face: BluemiraFace) -> PhysicalComponent:
         """
         Build the x-y components of the vacuum vessel thermal shield.
 
@@ -177,7 +177,9 @@ class VVTSBuilder(Builder):
 
         return sections
 
-    def build_xyz(self, vvts_face, degree=360) -> List[PhysicalComponent]:
+    def build_xyz(
+        self, vvts_face: BluemiraFace, degree: float = 360
+    ) -> List[PhysicalComponent]:
         """
         Build the x-y-z components of the vacuum vessel thermal shield
 
@@ -341,7 +343,7 @@ class CryostatTSBuilder(Builder):
         cryostat_ts.plot_options.face_options["color"] = BLUE_PALETTE["TS"][0]
         return cryostat_ts
 
-    def build_xy(self, cts_face) -> PhysicalComponent:
+    def build_xy(self, cts_face: BluemiraFace) -> PhysicalComponent:
         """
         Build the x-y components of the thermal shield.
         """
@@ -353,7 +355,9 @@ class CryostatTSBuilder(Builder):
 
         return cryostat_ts
 
-    def build_xyz(self, cts_face, degree=360) -> List[PhysicalComponent]:
+    def build_xyz(
+        self, cts_face: BluemiraFace, degree: float = 360
+    ) -> List[PhysicalComponent]:
         """
         Build the x-y-z components of the thermal shield.
         """
