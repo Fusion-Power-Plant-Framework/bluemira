@@ -99,7 +99,6 @@ class Builder(abc.ABC):
     -----
     If there are no parameters associated with a concrete builder, set
     `param_cls` to `None` and pass `None` into this class's constructor.
-    If param_cls is not `None` `param_cls` is set up with an empty dictionary.
     """
 
     def __init__(

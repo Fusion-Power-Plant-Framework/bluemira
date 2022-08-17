@@ -23,7 +23,7 @@ Interfaces for designer classes.
 """
 
 import abc
-from typing import Dict, Generic, Optional, Type, TypeVar
+from typing import Dict, Generic, Optional, Type, TypeVar, Union
 
 from bluemira.base.parameter_frame import NewParameterFrame as ParameterFrame
 from bluemira.base.parameter_frame import parameter_setup
@@ -45,7 +45,6 @@ class Designer(abc.ABC, Generic[_DesignerReturnT]):
     -----
     If there are no parameters associated with a concrete builder, set
     `param_cls` to `None` and pass `None` into this class's constructor.
-    If param_cls is not `None` `param_cls` is set up with an empty dictionary.
     """
 
     def __init__(self, params: Optional[ParameterFrame, Dict] = None):
