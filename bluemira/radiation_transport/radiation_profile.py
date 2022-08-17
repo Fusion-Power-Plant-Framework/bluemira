@@ -2050,7 +2050,7 @@ class TempSolver:
         for flux_tube, rad in zip(core.flux_tubes, total_rad):
             x_core.append(flux_tube.x)
             z_core.append(flux_tube.z)
-            rad_core.append(p)
+            rad_core.append(rad)
 
         x_core = np.concatenate(x_core)
         z_core = np.concatenate(z_core)
