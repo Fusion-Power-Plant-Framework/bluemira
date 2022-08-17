@@ -19,6 +19,8 @@
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 
+from unittest.mock import patch
+
 import freecad  # noqa: F401
 import numpy as np
 import Part
@@ -45,6 +47,46 @@ class TestFreecadapi:
             (0.0, 1.0, 0.0),
             (0.0, 0.0, 0.0),
         ]
+
+    @staticmethod
+    def offsetter(wire):
+        return cadapi.offset_wire(
+            wire,
+            0.05,
+            join="intersect",
+            open_wire=False,
+        )
+
+    def test_multi_offset_wire(self):
+        circ = cadapi.make_circle(10)
+        wire1 = self.offsetter(circ)
+        wire2 = self.offsetter(wire1)
+
+        assert circ.Length < wire1.Length < wire2.Length
+
+    def test_multi_offset_wire_without_arranged_edges(self):
+        """
+        FreeCAD Topological naming bug
+
+        As of 08/2022 FreeCAD has a ordering/naming bug as detailed in #1347.
+        The result is that some operations do not work as expected (such as offset_wire)
+        Some operations when repeated also raise errors such as DisjointedFace errors.
+        arrange_edges tries to reorder the internal edges of a wire to attempt to side
+        step the issue.
+
+        FreeCAD aims to fix this for v1 which is due for release in 2023.
+        When that happens our work arounds can be removed (including this test)
+        """
+
+        circ = cadapi.make_circle(10)
+        with patch("bluemira.codes._freecadapi.arrange_edges", new=lambda a, b: b):
+            wire1 = self.offsetter(circ)
+            wire2 = self.offsetter(wire1)
+
+        assert circ.Length < wire1.Length
+        # these two should break in future, this mean the topo naming may be fixed
+        assert circ.Length == wire2.Length
+        assert wire1.Length > wire2.Length
 
     def test_fail_vector_to_numpy(self):
         with pytest.raises(TypeError):
