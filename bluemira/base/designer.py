@@ -53,7 +53,7 @@ class Designer(abc.ABC, Generic[_DesignerReturnT]):
         self.params = parameter_setup(params, self.param_cls)
 
     @abc.abstractproperty
-    def param_cls(self) -> Type[ParameterFrame]:
+    def param_cls(self) -> Union[Type[ParameterFrame], None]:
         """The class to hold this Designer's parameters."""
         pass
 

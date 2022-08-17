@@ -117,7 +117,7 @@ class Builder(abc.ABC):
         self.designer = designer
 
     @abc.abstractproperty
-    def param_cls(self) -> Type[ParameterFrame]:
+    def param_cls(self) -> Union[Type[ParameterFrame], None]:
         """The class to hold this Builders's parameters."""
         pass
 
