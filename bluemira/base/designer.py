@@ -25,10 +25,10 @@ Interfaces for designer classes.
 import abc
 from typing import Dict, Generic, Type, TypeVar, Union
 
-from bluemira.base.parameter import ParameterFrame
+from bluemira.base.parameter_frame import NewParameterFrame as ParameterFrame
+from bluemira.base.parameter_frame import make_parameter_frame
 
 _DesignerReturnT = TypeVar("_DesignerReturnT")
-_ParameterFrameT = TypeVar("_ParameterFrameT", bound=ParameterFrame)
 
 
 class Designer(abc.ABC, Generic[_DesignerReturnT]):
@@ -38,29 +38,25 @@ class Designer(abc.ABC, Generic[_DesignerReturnT]):
 
     Parameters
     ----------
-    params: Union[_ParameterFrameT, Dict]
+    params: Optional[ParameterFrame, Dict]
         The parameters required by the designer.
+
+    Notes
+    -----
+    If there are no parameters associated with a concrete builder, set
+    `param_cls` to `None` and pass `None` into this class's constructor.
     """
 
-    def __init__(self, params: Union[_ParameterFrameT, Dict]):
+    def __init__(self, params: Union[ParameterFrame, Dict, None] = None):
         super().__init__()
-        self.params = self._init_params(params)
+        self.params = make_parameter_frame(params, self.param_cls)
 
     @abc.abstractproperty
-    def param_cls(self) -> Type[ParameterFrame]:
-        """The class to hold this designer's parameters."""
+    def param_cls(self) -> Union[Type[ParameterFrame], None]:
+        """The class to hold this Designer's parameters."""
         pass
 
     @abc.abstractmethod
     def run(self) -> _DesignerReturnT:
         """Run the design."""
         pass
-
-    def _init_params(self, params: Union[Dict, _ParameterFrameT]) -> _ParameterFrameT:
-        if isinstance(params, dict):
-            return self.param_cls.from_dict(params)
-        elif isinstance(params, ParameterFrame):
-            return params
-        raise TypeError(
-            f"Cannot interpret type '{type(params)}' as {self.param_cls.__name__}."
-        )

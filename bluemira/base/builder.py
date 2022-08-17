@@ -30,8 +30,8 @@ from typing import Dict, List, Optional, Type, Union
 
 from bluemira.base.components import Component
 from bluemira.base.designer import Designer
-from bluemira.base.error import BuilderError
 from bluemira.base.parameter_frame import NewParameterFrame as ParameterFrame
+from bluemira.base.parameter_frame import make_parameter_frame
 from bluemira.utilities.plot_tools import set_component_view
 
 BuildConfig = Dict[str, Union[int, float, str, "BuildConfig"]]
@@ -111,13 +111,13 @@ class Builder(abc.ABC):
         self.name = build_config.get(
             "name", _remove_suffix(self.__class__.__name__, "Builder")
         )
-        self.params = self._init_params(params)
+        self.params = make_parameter_frame(params, self.param_cls)
         self.build_config = build_config
         self.designer = designer
 
     @abc.abstractproperty
     def param_cls(self) -> Union[Type[ParameterFrame], None]:
-        """The class to hold this builder's parameters."""
+        """The class to hold this Builders's parameters."""
         pass
 
     @abc.abstractmethod
@@ -154,20 +154,3 @@ class Builder(abc.ABC):
         set_component_view(component.get_component("xy"), "xy")
 
         return component
-
-    def _init_params(
-        self, params: Union[Dict, ParameterFrame, None]
-    ) -> Union[ParameterFrame, None]:
-        if self.param_cls is None:
-            if params is None:
-                # Case for where there are no parameters associated with this builder
-                return params
-            else:
-                raise BuilderError("Cannot process parameters, 'param_cls' is None.")
-        elif isinstance(params, dict):
-            return self.param_cls.from_dict(params)
-        elif isinstance(params, ParameterFrame):
-            return params
-        raise TypeError(
-            f"Cannot interpret type '{type(params)}' as {self.param_cls.__name__}."
-        )
