@@ -105,7 +105,7 @@ class ParameterSetup(abc.ABC):
 
     Parameters
     ----------
-    params: Union[_ParameterFrameT, Dict]
+    params: Optional[NewParameterFrame, Dict]
         The parameters required by the designer.
 
     Notes
@@ -115,7 +115,7 @@ class ParameterSetup(abc.ABC):
     If param_cls is not `None` `param_cls` is set up with an empty dictionary.
     """
 
-    def __init__(self, params: Union[NewParameterFrame, Dict, None] = None):
+    def __init__(self, params: Optional[NewParameterFrame, Dict] = None):
         super().__init__()
         self.params = self._init_params(params)
 
