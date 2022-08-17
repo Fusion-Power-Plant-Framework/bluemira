@@ -140,7 +140,7 @@ plasma_params = ParameterFrame(
 
 # %%
 rad_solver = TempSolver(eq, solver, plasma_params, impurity_content, impurity_data)
-X, Z, rad = rad_solver.analyse(fw_shape)
+x, z, rad = rad_solver.analyse(fw_shape)
 
 core_rad_by_psi = rad_solver.rad_core_by_psi_n(0.9)
 print(core_rad_by_psi)

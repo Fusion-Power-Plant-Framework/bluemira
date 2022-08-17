@@ -28,10 +28,6 @@ from typing import TYPE_CHECKING
 
 import matplotlib.pyplot as plt
 import numpy as np
-from cherab.core.math import sample3d
-from raysect.core import Point2D, Point3D, Vector3D, rotate_basis, translate
-from raysect.optical.observer import PinholeCamera, PowerPipeline0D, PowerPipeline2D
-from raysect.optical.observer.nonimaging.pixel import Pixel
 from scipy.interpolate import LinearNDInterpolator, interp1d, interp2d
 
 from bluemira.base import constants
@@ -2047,17 +2043,18 @@ class TempSolver:
         )
         rad = core.build_core_distribution()
         total_rad = np.sum(np.array(rad, dtype=object), axis=0).tolist()
-        X_c = []
-        Z_c = []
-        P_c = []
-        for flux_tube, p in zip(core.flux_tubes, total_rad):
-            X_c.append(flux_tube.x)
-            Z_c.append(flux_tube.z)
-            P_c.append(p)
 
-        X_c = np.concatenate(X_c)
-        Z_c = np.concatenate(Z_c)
-        P_c = np.concatenate(P_c)
+        x_core = []
+        z_core = []
+        rad_core = []
+        for flux_tube, rad in zip(core.flux_tubes, total_rad):
+            x_core.append(flux_tube.x)
+            z_core.append(flux_tube.z)
+            rad_core.append(p)
+
+        x_core = np.concatenate(x_core)
+        z_core = np.concatenate(z_core)
+        rad_core = np.concatenate(rad_core)
 
         if self.eq.is_double_null:
             sol = DNScrapeOffLayerRadiation(
@@ -2091,26 +2088,26 @@ class TempSolver:
             self.transport_solver.flux_surfaces_ob_hfs,
             self.transport_solver.flux_surfaces_ib_hfs,
         ]
-        tubes = sum(flux_tubes, [])
-        X = []
-        Z = []
-        P = []
-        for flux_tube, p in zip(tubes, power):
-            X.append(flux_tube.loop.x)
-            Z.append(flux_tube.loop.z)
-            P.append(p)
+        flux_tubes = sum(flux_tubes, [])
+        x_sol = []
+        z_sol = []
+        rad_sol = []
+        for flux_tube, p in zip(flux_tubes, power):
+            x_sol.append(flux_tube.loop.x)
+            z_sol.append(flux_tube.loop.z)
+            rad_sol.append(p)
 
-        X = np.concatenate(X)
-        Z = np.concatenate(Z)
-        P = np.concatenate(P)
+        x_sol = np.concatenate(x_sol)
+        z_sol = np.concatenate(z_sol)
+        rad_sol = np.concatenate(rad_sol)
 
-        X_tot = np.concatenate([X_c, X])
-        Z_tot = np.concatenate([Z_c, Z])
-        P_tot = np.concatenate([P_c, P])
-        self.X_tot = X_tot
-        self.Z_tot = Z_tot
-        self.P_tot = P_tot
-        return X_tot, Z_tot, P_tot
+        x_tot = np.concatenate([x_core, x_sol])
+        z_tot = np.concatenate([z_core, z_sol])
+        rad_tot = np.concatenate([rad_core, rad_sol])
+        self.x_tot = x_tot
+        self.z_tot = z_tot
+        self.rad_tot = rad_tot
+        return x_tot, z_tot, rad_tot
 
     def rad_core_by_psi_n(self, psi_n):
         core_rad = CoreRadiation(
@@ -2137,7 +2134,7 @@ class TempSolver:
             print("SoL. I cannot for now")
 
     def rad_by_points(self, x, z):
-        f = linear_interpolator(self.X_tot, self.Z_tot, self.P_tot)
+        f = linear_interpolator(self.x_tot, self.z_tot, self.rad_tot)
 
         return interpolated_field_values(x, z, f)
 
@@ -2147,16 +2144,16 @@ class TempSolver:
         else:
             fig = ax.figure
 
-        p_min = min(self.P_tot)
-        p_max = max(self.P_tot)
+        p_min = min(self.rad_tot)
+        p_max = max(self.rad_tot)
 
         separatrix = self.eq.get_separatrix()
         for sep in separatrix:
             sep.plot(ax, linewidth=2)
         cm = ax.scatter(
-            self.X_tot,
-            self.Z_tot,
-            c=self.P_tot,
+            self.x_tot,
+            self.z_tot,
+            c=self.rad_tot,
             s=10,
             cmap="plasma",
             vmin=p_min,
