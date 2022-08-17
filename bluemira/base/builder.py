@@ -82,7 +82,7 @@ class ComponentManager(abc.ABC):
         return self._component
 
 
-class Builder(ParameterSetup):
+class Builder(abc.ABC, ParameterSetup):
     """
     Base class for component builders.
 

@@ -30,7 +30,7 @@ from bluemira.base.parameter_frame import ParameterSetup
 _DesignerReturnT = TypeVar("_DesignerReturnT")
 
 
-class Designer(ParameterSetup, Generic[_DesignerReturnT]):
+class Designer(abc.ABC, ParameterSetup, Generic[_DesignerReturnT]):
     """
     Base class for 'Designers' that solver design problems as part of
     building a reactor component.
