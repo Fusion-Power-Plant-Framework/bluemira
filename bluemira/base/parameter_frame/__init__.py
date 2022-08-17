@@ -21,7 +21,12 @@
 """Module containing classes related to NewParameter and NewParameterFrame"""
 
 from bluemira.base.parameter_frame._decorator import parameter_frame
-from bluemira.base.parameter_frame._frame import NewParameterFrame, parameter_setup
+from bluemira.base.parameter_frame._frame import NewParameterFrame, make_parameter_frame
 from bluemira.base.parameter_frame._parameter import NewParameter
 
-__all__ = ["NewParameter", "NewParameterFrame", "parameter_setup", "parameter_frame"]
+__all__ = [
+    "NewParameter",
+    "NewParameterFrame",
+    "make_parameter_frame",
+    "parameter_frame",
+]

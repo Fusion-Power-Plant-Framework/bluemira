@@ -98,10 +98,10 @@ class NewParameterFrame:
         return cls.from_dict(json.loads(json_in))
 
 
-def parameter_setup(
+def make_parameter_frame(
     params: Union[Dict, NewParameterFrame, None],
     param_cls: Type[NewParameterFrame],
-) -> Union[Type[NewParameterFrame], None]:
+) -> Union[NewParameterFrame, None]:
     """
     Helper function to generate a `ParameterFrame` of a specific type
 

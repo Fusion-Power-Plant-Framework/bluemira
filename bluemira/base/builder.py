@@ -31,7 +31,7 @@ from typing import Dict, List, Optional, Type, Union
 from bluemira.base.components import Component
 from bluemira.base.designer import Designer
 from bluemira.base.parameter_frame import NewParameterFrame as ParameterFrame
-from bluemira.base.parameter_frame import parameter_setup
+from bluemira.base.parameter_frame import make_parameter_frame
 from bluemira.utilities.plot_tools import set_component_view
 
 BuildConfig = Dict[str, Union[int, float, str, "BuildConfig"]]
@@ -111,7 +111,7 @@ class Builder(abc.ABC):
         self.name = build_config.get(
             "name", _remove_suffix(self.__class__.__name__, "Builder")
         )
-        self.params = parameter_setup(params, self.param_cls)
+        self.params = make_parameter_frame(params, self.param_cls)
         self.build_config = build_config
         self.designer = designer
 

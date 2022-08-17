@@ -26,7 +26,7 @@ import abc
 from typing import Dict, Generic, Type, TypeVar, Union
 
 from bluemira.base.parameter_frame import NewParameterFrame as ParameterFrame
-from bluemira.base.parameter_frame import parameter_setup
+from bluemira.base.parameter_frame import make_parameter_frame
 
 _DesignerReturnT = TypeVar("_DesignerReturnT")
 
@@ -49,7 +49,7 @@ class Designer(abc.ABC, Generic[_DesignerReturnT]):
 
     def __init__(self, params: Union[ParameterFrame, Dict, None] = None):
         super().__init__()
-        self.params = parameter_setup(params, self.param_cls)
+        self.params = make_parameter_frame(params, self.param_cls)
 
     @abc.abstractproperty
     def param_cls(self) -> Union[Type[ParameterFrame], None]:

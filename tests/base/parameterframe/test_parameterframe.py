@@ -7,7 +7,7 @@ import pytest
 
 from bluemira.base.parameter_frame import NewParameter as Parameter
 from bluemira.base.parameter_frame import NewParameterFrame as ParameterFrame
-from bluemira.base.parameter_frame import parameter_frame, parameter_setup
+from bluemira.base.parameter_frame import make_parameter_frame, parameter_frame
 
 
 @dataclass
@@ -169,15 +169,15 @@ class TestParameterSetup:
 
     def test_params_None(self):
         with pytest.raises(ValueError):
-            parameter_setup(self.frame, None)
+            make_parameter_frame(self.frame, None)
         with pytest.raises(TypeError):
-            parameter_setup(None, BasicFrame)
-        params = parameter_setup(None, None)
+            make_parameter_frame(None, BasicFrame)
+        params = make_parameter_frame(None, None)
         assert params is None
 
     @pytest.mark.parametrize(
         "frame", [frame, BasicFrame.from_dict(frame), BasicFrameDec.from_dict(frame)]
     )
     def test_params_type(self, frame):
-        params = parameter_setup(frame, BasicFrame)
+        params = make_parameter_frame(frame, BasicFrame)
         assert isinstance(params, BasicFrame)
