@@ -23,14 +23,15 @@ Interfaces for designer classes.
 """
 
 import abc
-from typing import Generic, TypeVar
+from typing import Dict, Generic, Optional, Type, TypeVar
 
-from bluemira.base.parameter_frame import ParameterSetup
+from bluemira.base.parameter_frame import NewParameterFrame as ParameterFrame
+from bluemira.base.parameter_frame import parameter_setup
 
 _DesignerReturnT = TypeVar("_DesignerReturnT")
 
 
-class Designer(abc.ABC, ParameterSetup, Generic[_DesignerReturnT]):
+class Designer(abc.ABC, Generic[_DesignerReturnT]):
     """
     Base class for 'Designers' that solver design problems as part of
     building a reactor component.
@@ -46,6 +47,15 @@ class Designer(abc.ABC, ParameterSetup, Generic[_DesignerReturnT]):
     `param_cls` to `None` and pass `None` into this class's constructor.
     If param_cls is not `None` `param_cls` is set up with an empty dictionary.
     """
+
+    def __init__(self, params: Optional[ParameterFrame, Dict] = None):
+        super().__init__()
+        self.params = parameter_setup(params, self.param_cls)
+
+    @abc.abstractproperty
+    def param_cls(self) -> Type[ParameterFrame]:
+        """The class to hold this Designer's parameters."""
+        pass
 
     @abc.abstractmethod
     def run(self) -> _DesignerReturnT:

@@ -7,7 +7,7 @@ import pytest
 
 from bluemira.base.parameter_frame import NewParameter as Parameter
 from bluemira.base.parameter_frame import NewParameterFrame as ParameterFrame
-from bluemira.base.parameter_frame import parameter_frame
+from bluemira.base.parameter_frame import parameter_frame, parameter_setup
 
 
 @dataclass
@@ -159,3 +159,25 @@ class TestParameterFrame:
         assert frame.height.unit == "cm"
         assert frame.age.value == 30
         assert frame.age.unit == "years"
+
+
+class TestParameterSetup:
+    frame = {
+        "height": {"name": "height", "value": 180.5, "unit": "cm"},
+        "age": {"name": "age", "value": 30, "unit": "years"},
+    }
+
+    def test_params_None(self):
+        with pytest.raises(ValueError):
+            params = parameter_setup(self.frame, None)
+        with pytest.raises(TypeError):
+            params = parameter_setup(None, BasicFrame)
+        params = parameter_setup(None, None)
+        assert params is None
+
+    @pytest.mark.parametrize(
+        "frame", [frame, BasicFrame.from_dict(frame), BasicFrameDec.from_dict(frame)]
+    )
+    def test_params_type(self, frame):
+        params = parameter_setup(frame, BasicFrame)
+        assert isinstance(params, BasicFrame)

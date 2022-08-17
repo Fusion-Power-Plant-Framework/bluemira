@@ -26,12 +26,12 @@ Interfaces for builder classes.
 from __future__ import annotations
 
 import abc
-from typing import Dict, List, Optional, Union
+from typing import Dict, List, Optional, Type, Union
 
 from bluemira.base.components import Component
 from bluemira.base.designer import Designer
 from bluemira.base.parameter_frame import NewParameterFrame as ParameterFrame
-from bluemira.base.parameter_frame import ParameterSetup
+from bluemira.base.parameter_frame import parameter_setup
 from bluemira.utilities.plot_tools import set_component_view
 
 BuildConfig = Dict[str, Union[int, float, str, "BuildConfig"]]
@@ -82,7 +82,7 @@ class ComponentManager(abc.ABC):
         return self._component
 
 
-class Builder(abc.ABC, ParameterSetup):
+class Builder(abc.ABC):
     """
     Base class for component builders.
 
@@ -108,12 +108,18 @@ class Builder(abc.ABC, ParameterSetup):
         build_config: Dict,
         designer: Optional[Designer] = None,
     ):
-        super().__init__(params)
+        super().__init__()
         self.name = build_config.get(
             "name", _remove_suffix(self.__class__.__name__, "Builder")
         )
+        self.params = parameter_setup(params, self.param_cls)
         self.build_config = build_config
         self.designer = designer
+
+    @abc.abstractproperty
+    def param_cls(self) -> Type[ParameterFrame]:
+        """The class to hold this Builders's parameters."""
+        pass
 
     @abc.abstractmethod
     def build(self) -> ComponentManager:
