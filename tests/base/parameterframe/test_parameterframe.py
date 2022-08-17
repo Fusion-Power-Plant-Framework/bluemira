@@ -169,9 +169,9 @@ class TestParameterSetup:
 
     def test_params_None(self):
         with pytest.raises(ValueError):
-            params = parameter_setup(self.frame, None)
+            parameter_setup(self.frame, None)
         with pytest.raises(TypeError):
-            params = parameter_setup(None, BasicFrame)
+            parameter_setup(None, BasicFrame)
         params = parameter_setup(None, None)
         assert params is None
 
