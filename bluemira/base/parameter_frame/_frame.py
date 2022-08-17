@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import abc
 import copy
 import json
 from dataclasses import dataclass
@@ -96,3 +97,45 @@ class NewParameterFrame:
                 return cls.from_dict(json.load(f))
         # load from a JSON string
         return cls.from_dict(json.loads(json_in))
+
+
+class ParameterSetup(abc.ABC):
+    """
+    Base class to setup parameters for `Designers` and `Builders`
+
+    Parameters
+    ----------
+    params: Union[_ParameterFrameT, Dict]
+        The parameters required by the designer.
+
+    Notes
+    -----
+    If there are no parameters associated with a concrete builder, set
+    `param_cls` to `None` and pass `None` into this class's constructor.
+    If param_cls is not `None` `param_cls` is set up with an empty dictionary.
+    """
+
+    def __init__(self, params: Union[NewParameterFrame, Dict, None] = None):
+        super().__init__()
+        self.params = self._init_params(params)
+
+    @abc.abstractproperty
+    def param_cls(self) -> Type[NewParameterFrame]:
+        """The class to hold this object's parameters."""
+        pass
+
+    def _init_params(
+        self, params: Union[Dict, NewParameterFrame, None]
+    ) -> Union[NewParameterFrame, None]:
+        if params is None:
+            if self.param_cls is None:
+                # Case for where there are no parameters associated with the object
+                return params
+            return self.param_cls.from_dict({})
+        elif isinstance(params, dict):
+            return self.param_cls.from_dict(params)
+        elif isinstance(params, NewParameterFrame):
+            return params
+        raise TypeError(
+            f"Cannot interpret type '{type(params)}' as {self.param_cls.__name__}."
+        )
