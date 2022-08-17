@@ -23,7 +23,7 @@
 Thermal shield builders
 """
 
-from typing import List, Tuple, Type
+from typing import Dict, List, Tuple, Type, Union
 
 import numpy as np
 from scipy.spatial import ConvexHull
@@ -98,6 +98,14 @@ class VVTSBuilder(Builder):
 
     VVTS = "VVTS"
     param_cls: Type[VVTSBuilderParams] = VVTSBuilderParams
+
+    def __init__(
+        self,
+        params: Union[VVTSBuilderParams, Dict],
+        build_config: Dict,
+        designer: Designer[BluemiraWire],
+    ):
+        super().__init__(params, build_config, designer)
 
     def build(self) -> VacuumVesselThermalShield:
         """
@@ -246,6 +254,14 @@ class CryostatTSBuilder(Builder):
     CRYO_TS = "Cryostat TS"
 
     param_cls: Type[CryostatTSBuilderParams] = CryostatTSBuilderParams
+
+    def __init__(
+        self,
+        params: Union[CryostatTSBuilderParams, Dict],
+        build_config: Dict,
+        designer: Designer[BluemiraWire],
+    ):
+        super().__init__(params, build_config, designer)
 
     def build(self) -> CryostatThermalShield:
         """
