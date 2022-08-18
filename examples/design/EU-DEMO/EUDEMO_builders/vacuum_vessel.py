@@ -29,16 +29,14 @@ from bluemira.base.components import PhysicalComponent
 from bluemira.base.designer import Designer
 from bluemira.base.parameter_frame import NewParameter as Parameter
 from bluemira.base.parameter_frame import parameter_frame
-from bluemira.builders.tools import (  # circular_pattern_component,
-    find_xy_plane_radii,
-    get_n_sectors,
-    make_circular_xy_ring,
+from bluemira.builders.tools import (
+    build_sectioned_xy,
+    build_sectioned_xyz,
     varied_offset,
 )
 from bluemira.display.palettes import BLUE_PALETTE
 from bluemira.geometry.face import BluemiraFace
-from bluemira.geometry.plane import BluemiraPlane
-from bluemira.geometry.tools import offset_wire, revolve_shape
+from bluemira.geometry.tools import offset_wire
 from bluemira.geometry.wire import BluemiraWire
 
 
@@ -148,22 +146,7 @@ class VacuumVesselBuilder(Builder):
         """
         Build the x-y components of the vacuum vessel.
         """
-        xy_plane = BluemiraPlane.from_3_points([0, 0, 0], [1, 0, 0], [1, 1, 0])
-
-        r_ib_out, r_ob_out = find_xy_plane_radii(vv_face.boundary[0], xy_plane)
-        r_ib_in, r_ob_in = find_xy_plane_radii(vv_face.boundary[1], xy_plane)
-
-        sections = []
-        for name, r_in, r_out in [
-            ["inboard", r_ib_in, r_ib_out],
-            ["outboard", r_ob_in, r_ob_out],
-        ]:
-            board = make_circular_xy_ring(r_in, r_out)
-            section = PhysicalComponent(name, board)
-            section.plot_options.face_options["color"] = BLUE_PALETTE[self.VV][0]
-            sections.append(section)
-
-        return sections
+        return build_sectioned_xy(vv_face, BLUE_PALETTE[self.VV][0])
 
     def build_xyz(
         self, vv_face: BluemiraFace, degree: float = 360.0
@@ -171,20 +154,11 @@ class VacuumVesselBuilder(Builder):
         """
         Build the x-y-z components of the vacuum vessel.
         """
-        sector_degree, n_sectors = get_n_sectors(self.params.n_TF.value, degree)
-
-        shape = revolve_shape(
+        return build_sectioned_xyz(
+            self.BODY,
+            self.params.n_TF.value,
+            BLUE_PALETTE[self.VV][0],
             vv_face,
-            base=(0, 0, 0),
-            direction=(0, 0, 1),
-            degree=degree - 1
-            # degree=sector_degree,
+            degree,
+            working=False,
         )
-
-        vv_body = PhysicalComponent(self.BODY, shape)
-        vv_body.display_cad_options.color = BLUE_PALETTE[self.VV][0]
-        return [vv_body]
-        # this is currently broken because of #1319 and related Topological naming issues
-        # return circular_pattern_component(
-        #     vv_body, n_sectors, degree=sector_degree * n_sectors
-        # )
