@@ -167,11 +167,9 @@ class CryostatBuilder(Builder):
         x = np.concatenate([x_inner, x_outer])
         z = np.concatenate([z_inner, z_outer])
 
-        xz_cross_section = BluemiraFace(
-            make_polygon({"x": x, "y": 0, "z": z}, closed=True)
+        cryostat_vv = PhysicalComponent(
+            self.CRYO, BluemiraFace(make_polygon({"x": x, "y": 0, "z": z}, closed=True))
         )
-
-        cryostat_vv = PhysicalComponent(self.CRYO, xz_cross_section)
         cryostat_vv.plot_options.face_options["color"] = BLUE_PALETTE["CR"][0]
         return cryostat_vv
 
@@ -184,9 +182,9 @@ class CryostatBuilder(Builder):
         x_out: float
             x coordinate extremity
         """
-        r_out = x_out + self.params.tk_cr_vv.value
-
-        cryostat_vv = PhysicalComponent(self.CRYO, make_circular_xy_ring(x_out, r_out))
+        cryostat_vv = PhysicalComponent(
+            self.CRYO, make_circular_xy_ring(x_out, x_out + self.params.tk_cr_vv.value)
+        )
         cryostat_vv.plot_options.face_options["color"] = BLUE_PALETTE["CR"][0]
         return cryostat_vv
 
