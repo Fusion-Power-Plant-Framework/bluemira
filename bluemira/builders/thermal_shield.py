@@ -34,22 +34,16 @@ from bluemira.base.components import PhysicalComponent
 from bluemira.base.parameter_frame import NewParameter as Parameter
 from bluemira.base.parameter_frame import NewParameterFrame as ParameterFrame
 from bluemira.builders.tools import (
-    circular_pattern_component,
+    build_sectioned_xy,
+    build_sectioned_xyz,
     find_xy_plane_radii,
-    get_n_sectors,
     make_circular_xy_ring,
 )
 from bluemira.display.palettes import BLUE_PALETTE
 from bluemira.geometry.error import GeometryError
 from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.plane import BluemiraPlane
-from bluemira.geometry.tools import (
-    boolean_cut,
-    boolean_fuse,
-    make_polygon,
-    offset_wire,
-    revolve_shape,
-)
+from bluemira.geometry.tools import boolean_cut, boolean_fuse, make_polygon, offset_wire
 from bluemira.geometry.wire import BluemiraWire
 
 
@@ -139,22 +133,7 @@ class VVTSBuilder(Builder):
         vvts_face: BluemiraFace
             xz face to build vvts
         """
-        xy_plane = BluemiraPlane.from_3_points([0, 0, 0], [1, 0, 0], [1, 1, 0])
-
-        r_ib_out, r_ob_out = find_xy_plane_radii(vvts_face.boundary[0], xy_plane)
-        r_ib_in, r_ob_in = find_xy_plane_radii(vvts_face.boundary[1], xy_plane)
-
-        sections = []
-        for name, r_in, r_out in [
-            ["inboard", r_ib_in, r_ib_out],
-            ["outboard", r_ob_in, r_ob_out],
-        ]:
-            board = make_circular_xy_ring(r_in, r_out)
-            section = PhysicalComponent(name, board)
-            section.plot_options.face_options["color"] = BLUE_PALETTE["TS"][0]
-            sections.append(section)
-
-        return sections
+        return build_sectioned_xy(vvts_face, BLUE_PALETTE["TS"][0])
 
     def build_xyz(
         self, vvts_face: BluemiraFace, degree: float = 360
@@ -167,23 +146,14 @@ class VVTSBuilder(Builder):
         vvts_face: BluemiraFace
             xz face to build vvts
         """
-        sector_degree, n_sectors = get_n_sectors(self.params.n_TF.value, degree)
-
-        shape = revolve_shape(
+        return build_sectioned_xyz(
+            self.VVTS,
+            self.params.n_TF.value,
+            BLUE_PALETTE["TS"][0],
             vvts_face,
-            base=(0, 0, 0),
-            direction=(0, 0, 1),
-            degree=degree - 1
-            # degree=sector_degree,
+            degree,
+            working=False,
         )
-
-        vvts_body = PhysicalComponent(self.VVTS, shape)
-        vvts_body.display_cad_options.color = BLUE_PALETTE["TS"][0]
-        return [vvts_body]
-        # this is currently broken because of #1319 and related Topological naming issues
-        # return circular_pattern_component(
-        #     vvts_body, n_sectors, degree=sector_degree * n_sectors
-        # )
 
 
 class CryostatThermalShield(ComponentManager):
@@ -319,16 +289,11 @@ class CryostatTSBuilder(Builder):
         """
         Build the x-y-z components of the thermal shield.
         """
-        sector_degree, n_sectors = get_n_sectors(self.params.n_TF.value, degree)
-
-        shape = revolve_shape(
+        return build_sectioned_xyz(
+            self.CRYO_TS,
+            self.params.n_TF.value,
+            BLUE_PALETTE["TS"][0],
             cts_face,
-            base=(0, 0, 0),
-            direction=(0, 0, 1),
-            degree=sector_degree,
-        )
-        cryostat_ts = PhysicalComponent(self.CRYO_TS, shape)
-        cryostat_ts.display_cad_options.color = BLUE_PALETTE["TS"][0]
-        return circular_pattern_component(
-            cryostat_ts, n_sectors, degree=sector_degree * n_sectors
+            degree,
+            working=True,
         )

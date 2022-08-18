@@ -31,6 +31,7 @@ import bluemira.base.components as bm_comp
 import bluemira.geometry as bm_geo
 from bluemira.base.constants import EPS
 from bluemira.base.error import BuilderError
+from bluemira.builders._sectioned_helpers import build_sectioned_xy, build_sectioned_xyz
 from bluemira.builders._varied_offset import varied_offset
 from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.tools import (
@@ -53,6 +54,8 @@ __all__ = [
     "varied_offset",
     "find_xy_plane_radii",
     "make_circular_xy_ring",
+    "build_sectioned_xy",
+    "build_sectioned_xyz",
 ]
 
 
