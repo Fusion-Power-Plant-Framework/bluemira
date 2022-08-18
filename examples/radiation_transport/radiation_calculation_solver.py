@@ -160,6 +160,7 @@ print(rdm_rad_by_point_1)
 rdm_rad_by_point_2 = rad_solver.rad_by_points(12, -0.5)
 print(rdm_rad_by_point_2)
 
+test_sol = rad_solver.rad_sol_by_psi_n(1.05)
 
 rad_solver.plot()
 

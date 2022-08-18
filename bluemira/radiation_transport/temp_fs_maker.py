@@ -195,9 +195,6 @@ class TempFsSolver:
         """
         Make individual PartialOpenFluxSurfaces through a point.
         """
-        from bluemira.equilibria.physics import calc_psi_norm
-
-        # from bluemira.equilibria.equilibrium import ge
         loop = find_flux_surface_through_point(
             self.eq.x, self.eq.z, self.eq.psi(), x, z, self.eq.psi(x, z)
         )

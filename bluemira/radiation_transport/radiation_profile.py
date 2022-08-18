@@ -2108,6 +2108,10 @@ class RadiationSolver:
         z_sol = np.concatenate([flux_tube.loop.z for flux_tube in flux_tubes])
         rad_sol = np.concatenate(power)
 
+        self.x_sol = x_sol
+        self.z_sol = z_sol
+        self.rad_sol = rad_sol
+
         x_all = np.concatenate([x_core, x_sol])
         z_all = np.concatenate([z_core, z_sol])
         rad_all = np.concatenate([rad_core, rad_sol])
@@ -2139,7 +2143,6 @@ class RadiationSolver:
         f_rad = interp1d(core_rad.rho_core, rad_tot)
         rho_new = np.sqrt(psi_n)
         rad_new = f_rad(rho_new)
-
         return rad_new
 
     def rad_core_by_points(self, x, z):
@@ -2160,8 +2163,48 @@ class RadiationSolver:
         """
         psi = self.eq.psi(x, z)
         psi_n = calc_psi_norm(psi, *self.eq.get_OX_psis(psi))
-
         return self.rad_core_by_psi_n(psi_n)
+
+    def rad_sol_by_psi_n(self, psi_n):
+        """
+        Calculation of sol radiation source for a given psi norm value
+
+        Parameters
+        ----------
+        psi_n: float
+            The normalised magnetic flux value
+
+        Returns
+        -------
+        list
+            Local radiation source values associated to the given psi_n
+        """
+        f_sol = linear_interpolator(self.x_sol, self.z_sol, self.rad_sol)
+        fs = self.eq.get_flux_surface(psi_n)
+        return np.concatenate(
+            [interpolated_field_values(x, z, f_sol) for x, z in zip(fs.x, fs.z)]
+        )
+
+    def rad_sol_by_points(self, x_lst, z_lst):
+        """
+        Calculation of sol radiation source for a given (set of) x, z coordinates
+
+        Parameters
+        ----------
+        x: float (list)
+            The x coordinate(s) of desired radiation source point(s)
+        z: float(list)
+            The z coordinate(s) of desired radiation source point(s)
+
+        Returns
+        -------
+        list
+            Local radiation source value(s) associated to the point(s)
+        """
+        f_sol = linear_interpolator(self.x_sol, self.z_sol, self.rad_sol)
+        return np.concatenate(
+            [interpolated_field_values(x, z, f_sol) for x, z in zip(x_lst, z_lst)]
+        )
 
     def rad_by_psi_n(self, psi_n):
         """
@@ -2180,7 +2223,7 @@ class RadiationSolver:
         if psi_n < 1:
             return self.rad_core_by_psi_n(psi_n)
         else:
-            print("SoL. I cannot for now")
+            return self.rad_sol_by_psi_n(psi_n)
 
     def rad_by_points(self, x, z):
         """
