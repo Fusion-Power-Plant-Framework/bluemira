@@ -36,10 +36,11 @@ from bluemira.builders.tools import (
     build_sectioned_xyz,
     circular_pattern_component,
     get_n_sectors,
+    make_circular_xy_ring,
 )
 from bluemira.display.palettes import BLUE_PALETTE
 from bluemira.geometry.face import BluemiraFace
-from bluemira.geometry.tools import make_circle, make_polygon
+from bluemira.geometry.tools import make_polygon
 
 
 class Cryostat(ComponentManager):
@@ -184,10 +185,8 @@ class CryostatBuilder(Builder):
             x coordinate extremity
         """
         r_out = x_out + self.params.tk_cr_vv.value
-        inner = make_circle(radius=x_out)
-        outer = make_circle(radius=r_out)
 
-        cryostat_vv = PhysicalComponent(self.CRYO, BluemiraFace([outer, inner]))
+        cryostat_vv = PhysicalComponent(self.CRYO, make_circular_xy_ring(x_out, r_out))
         cryostat_vv.plot_options.face_options["color"] = BLUE_PALETTE["CR"][0]
         return cryostat_vv
 
