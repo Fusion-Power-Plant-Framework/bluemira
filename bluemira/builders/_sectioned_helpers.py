@@ -87,7 +87,7 @@ def build_sectioned_xyz(
         face,
         base=(0, 0, 0),
         direction=(0, 0, 1),
-        degree=sector_degree if working else degree - 1,
+        degree=sector_degree if working else max(359, degree),
     )
     body = PhysicalComponent(name, shape)
     body.display_cad_options.color = plot_colour
