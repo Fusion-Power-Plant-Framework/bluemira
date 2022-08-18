@@ -78,10 +78,10 @@ class TestGetNSectors:
         assert np.isclose(s_deg, sector_degree)
 
     @pytest.mark.parametrize("ttl", n_sectors.keys())
-    @pytest.mark.parametrize("degree", np.arange(0, 361, step=60))
-    def test_get_n_sectors_amount(self, degree, ttl):
+    @pytest.mark.parametrize("ind, degree", enumerate(np.arange(0, 361, step=60)))
+    def test_get_n_sectors_amount(self, ind, degree, ttl):
         _, n_sec = get_n_sectors(ttl, degree)
-        assert np.isclose(n_sec, self.n_sectors[ttl].pop(0))
+        assert np.isclose(n_sec, self.n_sectors[ttl][ind])
 
 
 class TestVariedOffsetFunction:
