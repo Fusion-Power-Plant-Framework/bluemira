@@ -32,10 +32,14 @@ from bluemira.base.components import PhysicalComponent
 from bluemira.base.designer import Designer
 from bluemira.base.parameter_frame import NewParameter as Parameter
 from bluemira.base.parameter_frame import NewParameterFrame as ParameterFrame
-from bluemira.builders.tools import circular_pattern_component, get_n_sectors
+from bluemira.builders.tools import (
+    build_sectioned_xyz,
+    circular_pattern_component,
+    get_n_sectors,
+)
 from bluemira.display.palettes import BLUE_PALETTE
 from bluemira.geometry.face import BluemiraFace
-from bluemira.geometry.tools import make_circle, make_polygon, revolve_shape
+from bluemira.geometry.tools import make_circle, make_polygon
 
 
 class Cryostat(ComponentManager):
@@ -198,17 +202,11 @@ class CryostatBuilder(Builder):
         xz_cross_section: BluemiraFace
             xz cross section of cryostat
         """
-        sector_degree, n_sectors = get_n_sectors(self.params.n_TF.value, degree)
-
-        shape = revolve_shape(
+        return build_sectioned_xyz(
+            self.CRYO,
+            self.params.n_TF.value,
+            BLUE_PALETTE["CR"][0],
             xz_cross_section,
-            base=(0, 0, 0),
-            direction=(0, 0, 1),
-            degree=sector_degree,
-        )
-
-        cryostat_vv = PhysicalComponent(self.CRYO, shape)
-        cryostat_vv.display_cad_options.color = BLUE_PALETTE["CR"][0]
-        return circular_pattern_component(
-            cryostat_vv, n_sectors, degree=sector_degree * n_sectors
+            degree,
+            working=True,
         )
