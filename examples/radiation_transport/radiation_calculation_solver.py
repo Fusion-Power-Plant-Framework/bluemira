@@ -36,7 +36,7 @@ from bluemira.base.file import get_bluemira_path
 from bluemira.base.parameter import ParameterFrame
 from bluemira.equilibria import Equilibrium
 from bluemira.geometry._deprecated_loop import Loop
-from bluemira.radiation_transport.radiation_profile import TempSolver
+from bluemira.radiation_transport.radiation_profile import RadiationSolver
 from bluemira.radiation_transport.temp_fs_maker import TempFsSolver
 
 # %%[markdown]
@@ -139,7 +139,7 @@ plasma_params = ParameterFrame(
 # Run core radiation source calculation for Spherical Tokamak
 
 # %%
-rad_solver = TempSolver(eq, solver, plasma_params, impurity_content, impurity_data)
+rad_solver = RadiationSolver(eq, solver, plasma_params, impurity_content, impurity_data)
 x, z, rad = rad_solver.analyse(fw_shape)
 
 core_rad_by_psi = rad_solver.rad_core_by_psi_n(0.9)

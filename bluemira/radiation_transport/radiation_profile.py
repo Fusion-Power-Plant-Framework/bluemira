@@ -2020,7 +2020,11 @@ class DNScrapeOffLayerRadiation(ScrapeOffLayerRadiation):
         )
 
 
-class TempSolver:
+class RadiationSolver:
+    """
+    Simplified solver to easily access the radiation model location inputs.
+    """
+
     def __init__(
         self,
         eq: Equilibrium,
@@ -2037,24 +2041,33 @@ class TempSolver:
         self.imp_data = impurity_data
 
     def analyse(self, firstwall_geom):
+        """
+        Using core radiation model and sol radiation model
+        to calculate the radiation source at all points
 
+        Parameters
+        ----------
+        first_wall: Loop
+            The closed first wall geometry
+
+        Returns
+        -------
+        x_all: np.array
+            The x coordinates of all the points included within the flux surfaces
+        z_all: np.array
+            The z coordinates of all the points included within the flux surfaces
+        rad_all: np.array
+            The local radiation source at all points included within the flux surfaces [MW/m^3]
+        """
         core = CoreRadiation(
             self.eq, self.transport_solver, self.params, self.imp_content, self.imp_data
         )
         rad = core.build_core_distribution()
         total_rad = np.sum(np.array(rad, dtype=object), axis=0).tolist()
 
-        x_core = []
-        z_core = []
-        rad_core = []
-        for flux_tube, rad in zip(core.flux_tubes, total_rad):
-            x_core.append(flux_tube.x)
-            z_core.append(flux_tube.z)
-            rad_core.append(rad)
-
-        x_core = np.concatenate(x_core)
-        z_core = np.concatenate(z_core)
-        rad_core = np.concatenate(rad_core)
+        x_core = np.concatenate([flux_tube.x for flux_tube in core.flux_tubes])
+        z_core = np.concatenate([flux_tube.z for flux_tube in core.flux_tubes])
+        rad_core = np.concatenate(total_rad)
 
         if self.eq.is_double_null:
             sol = DNScrapeOffLayerRadiation(
@@ -2065,9 +2078,9 @@ class TempSolver:
                 self.imp_data,
                 firstwall_geom,
             )
-
         t_and_n_sol_profiles = sol.build_sol_profiles(firstwall_geom)
         rad_sector_profiles = sol.build_sol_rad_distribution(*t_and_n_sol_profiles)
+
         total_rad_lfs_low = np.sum(
             np.array(rad_sector_profiles[0], dtype=object), axis=0
         ).tolist()
@@ -2082,6 +2095,7 @@ class TempSolver:
         ).tolist()
         rads = [total_rad_lfs_low, total_rad_hfs_low, total_rad_lfs_up, total_rad_hfs_up]
         power = sum(rads, [])
+
         flux_tubes = [
             self.transport_solver.flux_surfaces_ob_lfs,
             self.transport_solver.flux_surfaces_ib_lfs,
@@ -2089,27 +2103,34 @@ class TempSolver:
             self.transport_solver.flux_surfaces_ib_hfs,
         ]
         flux_tubes = sum(flux_tubes, [])
-        x_sol = []
-        z_sol = []
-        rad_sol = []
-        for flux_tube, p in zip(flux_tubes, power):
-            x_sol.append(flux_tube.loop.x)
-            z_sol.append(flux_tube.loop.z)
-            rad_sol.append(p)
 
-        x_sol = np.concatenate(x_sol)
-        z_sol = np.concatenate(z_sol)
-        rad_sol = np.concatenate(rad_sol)
+        x_sol = np.concatenate([flux_tube.loop.x for flux_tube in flux_tubes])
+        z_sol = np.concatenate([flux_tube.loop.z for flux_tube in flux_tubes])
+        rad_sol = np.concatenate(power)
 
-        x_tot = np.concatenate([x_core, x_sol])
-        z_tot = np.concatenate([z_core, z_sol])
-        rad_tot = np.concatenate([rad_core, rad_sol])
-        self.x_tot = x_tot
-        self.z_tot = z_tot
-        self.rad_tot = rad_tot
-        return x_tot, z_tot, rad_tot
+        x_all = np.concatenate([x_core, x_sol])
+        z_all = np.concatenate([z_core, z_sol])
+        rad_all = np.concatenate([rad_core, rad_sol])
+
+        self.x_all = x_all
+        self.z_all = z_all
+        self.rad_all = rad_all
+        return x_all, z_all, rad_all
 
     def rad_core_by_psi_n(self, psi_n):
+        """
+        Calculation of core radiation source for a given (set of) psi norm value(s)
+
+        Parameters
+        ----------
+        psi_n: float (list)
+            The normalised magnetic flux value(s)
+
+        Returns
+        -------
+        rad_new: float (list)
+            Local radiation source value(s) associated to the given psi_n
+        """
         core_rad = CoreRadiation(
             self.eq, self.transport_solver, self.params, self.imp_content, self.imp_data
         )
@@ -2122,38 +2143,83 @@ class TempSolver:
         return rad_new
 
     def rad_core_by_points(self, x, z):
+        """
+        Calculation of core radiation source for a given (set of) x, z coordinates
+
+        Parameters
+        ----------
+        x: float (list)
+            The x coordinate(s) of desired radiation source point(s)
+        z: float(list)
+            The z coordinate(s) of desired radiation source point(s)
+
+        Returns
+        -------
+        self.rad_core_by_psi_n(psi_n): float (list)
+            Local radiation source value(s) associated to the point(s)
+        """
         psi = self.eq.psi(x, z)
         psi_n = calc_psi_norm(psi, *self.eq.get_OX_psis(psi))
 
         return self.rad_core_by_psi_n(psi_n)
 
     def rad_by_psi_n(self, psi_n):
+        """
+        Calculation of any radiation source for a given (set of) psi norm value(s)
+
+        Parameters
+        ----------
+        psi_n: float (list)
+            The normalised magnetic flux value(s)
+
+        Returns
+        -------
+        rad_any: float (list)
+            Local radiation source value(s) associated to the given psi_n
+        """
         if psi_n < 1:
             return self.rad_core_by_psi_n(psi_n)
         else:
             print("SoL. I cannot for now")
 
     def rad_by_points(self, x, z):
-        f = linear_interpolator(self.x_tot, self.z_tot, self.rad_tot)
+        """
+        Calculation of any radiation source for a given (set of) x, z coordinates
 
+        Parameters
+        ----------
+        x: float (list)
+            The x coordinate(s) of desired radiation source point(s)
+        z: float(list)
+            The z coordinate(s) of desired radiation source point(s)
+
+        Returns
+        -------
+        rad_any: float (list)
+            Local radiation source value(s) associated to the point(s)
+        """
+        f = linear_interpolator(self.x_all, self.z_all, self.rad_all)
         return interpolated_field_values(x, z, f)
 
     def plot(self, ax=None):
+        """
+        Plot the RadiationSolver results.
+        """
         if ax is None:
             fig, ax = plt.subplots()
         else:
             fig = ax.figure
 
-        p_min = min(self.rad_tot)
-        p_max = max(self.rad_tot)
+        p_min = min(self.rad_all)
+        p_max = max(self.rad_all)
 
         separatrix = self.eq.get_separatrix()
         for sep in separatrix:
             sep.plot(ax, linewidth=2)
         cm = ax.scatter(
-            self.x_tot,
-            self.z_tot,
-            c=self.rad_tot,
+            self.x_all,
+            self.z_all,
+            c=self.rad_all,
             s=10,
             cmap="plasma",
             vmin=p_min,
