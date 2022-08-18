@@ -43,15 +43,21 @@ Attempt at recreating the EU-DEMO 2017 reference equilibria from a known coilset
 #
 # # EU-DEMO 2017 reference breakdown and equilibrium benchmark
 
+# with
+# - 300mw out
+# - 2 hr flat top
 # %%
 import json
 import os
+import sys
 from copy import deepcopy
 
 import matplotlib.pyplot as plt
 import numpy as np
+import pandas as pd
 from IPython import get_ipython
 
+from bluemira.base.constants import raw_uc
 from bluemira.base.file import get_bluemira_path
 from bluemira.base.look_and_feel import bluemira_print
 from bluemira.display import plot_defaults
@@ -113,6 +119,20 @@ z = [9.26, 7.9, 2.5, -2.5, -7.9, -10.5, 7.07, 4.08, -0.4, -4.88, -7.86]
 dx = [0.6, 0.7, 0.5, 0.5, 0.7, 1.0, 0.4, 0.4, 0.4, 0.4, 0.4]
 dz = [0.6, 0.7, 0.5, 0.5, 0.7, 1.0, 2.99 / 2, 2.99 / 2, 5.97 / 2, 2.99 / 2, 2.99 / 2]
 
+# crude movement of coils
+x[0] = min(x[0], min(koz_UP[0])) - dx[0]
+x[1] = max(x[1], max(koz_UP[0])) + dx[1]
+x[4] = x[4] + 2 * dx[4]
+x[5] = min(x[5], min(koz_LP[0]))
+
+z[1] = z[1] - dz[1]
+z[4] = z[4] + 2 * dz[4]
+
+# Matti's positions
+# x[:6] = np.array([4, 14.54, 17.75, 17.75, 15.4, 7.0])
+# z[:6] = np.array([9.26, 7.25, 2.5, -2.5, -6.55, -10.5])
+
+# create coilset
 coils = []
 j = 1
 for i, (xi, zi, dxi, dzi) in enumerate(zip(x, z, dx, dz)):
@@ -139,7 +159,32 @@ coilset.assign_material("PF", j_max=12.5e6, b_max=11)
 coilset.fix_sizes()
 coilset.discretisation = 0.3
 
-coilset.plot()
+# %%[markdown]
+
+# Plot keep out zones and coils
+
+# %%
+
+# Adjust axis limits
+fig, ax = plt.subplots()
+axis_pad = 1
+ax.set_xlim(0, max(np.max(koz_UP[0]), np.max(koz_LP[0])) + axis_pad)
+ax.set_ylim(
+    -(max(np.max(koz_UP[1]), -np.min(koz_LP[1])) + axis_pad),
+    max(np.max(koz_UP[1]), np.max(koz_LP[1])) + axis_pad,
+)
+
+# add TF and koz to plot
+ax.plot(*koz_UP)
+ax.plot(*koz_LP)
+ax.plot(*TF_inner)
+ax.plot(*TF_outer)
+
+coilset.plot(ax=ax)
+
+# %%
+plt.draw()
+plt.pause(0.001)
 
 # %% [markdown]
 #
@@ -156,7 +201,7 @@ B_0 = 4.8901  # ???
 A = 3.1
 kappa_95 = 1.65
 delta_95 = 0.33
-tau_flattop = 2 * 3600
+tau_flattop = 2 * 3600  # 2hrs
 v_burn = 4.220e-2  # V
 c_ejima = 0.3
 
@@ -203,11 +248,13 @@ bd_opt_problem = BreakdownCOP(
     B_stray_max=1e-3,
     B_stray_con_tol=1e-6,
     n_B_stray_points=10,
-    constraints=[field_constraints, force_constraints],
+    constraints=[
+        field_constraints,
+        force_constraints,
+    ],
 )
 
 coilset = bd_opt_problem.optimise(x0=max_currents)
-
 bluemira_print(f"Breakdown psi: {breakdown.breakdown_psi*2*np.pi:.2f} V.s")
 
 # %% [markdown]
@@ -215,7 +262,7 @@ bluemira_print(f"Breakdown psi: {breakdown.breakdown_psi*2*np.pi:.2f} V.s")
 # Calculate SOF and EOF plasma boundary fluxes
 
 # %%
-psi_sof = calc_psib(breakdown.breakdown_psi * 2 * np.pi, R_0, I_p, l_i, c_ejima)
+psi_sof = calc_psib(breakdown_flux, R_0, I_p, l_i, c_ejima)
 psi_eof = psi_sof - tau_flattop * v_burn
 
 # CREATE then knocked off an extra 10 V.s for misc plasma stuff I didnt look into
@@ -348,18 +395,37 @@ iterator()
 # Plot the results
 
 # %%
-f, ax = plt.subplots(1, 3)
-breakdown.plot(ax[0])
-breakdown.coilset.plot(ax[0])
-sof.plot(ax[1])
-sof.coilset.plot(ax[1])
-eof.plot(ax[2])
-eof.coilset.plot(ax[2])
+
+f, ax = plt.subplots(1, 2)
+ax1 = None
+ax2 = ax[0]
+ax3 = ax[1]
+
+# breakdown.plot(ax1)
+# breakdown.coilset.plot(ax1)
+sof.plot(ax2)
+sof.coilset.plot(ax2)
+eof.plot(ax3)
+eof.coilset.plot(ax3)
 
 sof_psi = 2 * np.pi * sof.psi(*sof._x_points[0][:2])
 eof_psi = 2 * np.pi * eof.psi(*eof._x_points[0][:2])
-ax[1].set_title("$\\psi_{b}$ = " + f"{sof_psi:.2f} V.s")
-ax[2].set_title("$\\psi_{b}$ = " + f"{eof_psi:.2f} V.s")
+
+# ax1.set_title(f"Breakdown {ax[0].get_title()}")
+ax2.set_title("SOF $\\psi_{b}$ = " + f"{sof_psi:.2f} V.s")
+ax3.set_title("EOF $\\psi_{b}$ = " + f"{eof_psi:.2f} V.s")
+
+
+for i in range(len(ax)):
+    ax[i].set_xlim(0, max(np.max(koz_UP[0]), np.max(koz_LP[0])) + axis_pad)
+    ax[i].set_ylim(
+        -(max(np.max(koz_UP[1]), -np.min(koz_LP[1])) + axis_pad),
+        max(np.max(koz_UP[1]), np.max(koz_LP[1])) + axis_pad,
+    )
+    ax[i].plot(*koz_UP)
+    ax[i].plot(*koz_LP)
+    ax[i].plot(*TF_inner)
+    ax[i].plot(*TF_outer)
 
 
 bluemira_print(f"SOF: beta_p: {calc_beta_p(sof):.2f} l_i: {calc_li3(sof):.2f}")
