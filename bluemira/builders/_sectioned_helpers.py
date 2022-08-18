@@ -95,9 +95,7 @@ def build_sectioned_xyz(
     # this is currently broken in some situations
     # because of #1319 and related Topological naming issues
     return (
-        [body]
+        circular_pattern_component(body, n_sectors, degree=sector_degree * n_sectors)
         if working
-        else circular_pattern_component(
-            body, n_sectors, degree=sector_degree * n_sectors
-        )
+        else [body]
     )
