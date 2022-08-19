@@ -147,11 +147,11 @@ class VVTSBuilder(Builder):
             xz face to build vvts
         """
         return build_sectioned_xyz(
+            vvts_face,
+            degree,
             self.VVTS,
             self.params.n_TF.value,
             BLUE_PALETTE["TS"][0],
-            vvts_face,
-            degree,
             working=False,
         )
 
@@ -290,10 +290,10 @@ class CryostatTSBuilder(Builder):
         Build the x-y-z components of the thermal shield.
         """
         return build_sectioned_xyz(
+            cts_face,
             self.CRYO_TS,
             self.params.n_TF.value,
             BLUE_PALETTE["TS"][0],
-            cts_face,
             degree,
             working=True,
         )

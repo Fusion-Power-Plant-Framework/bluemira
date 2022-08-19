@@ -200,10 +200,10 @@ class CryostatBuilder(Builder):
             xz cross section of cryostat
         """
         return build_sectioned_xyz(
+            xz_cross_section,
             self.CRYO,
             self.params.n_TF.value,
             BLUE_PALETTE["CR"][0],
-            xz_cross_section,
             degree,
             working=True,
         )

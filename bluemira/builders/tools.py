@@ -359,6 +359,9 @@ def build_sectioned_xy(
     ----------
     face: BluemiraFace
         xz face to build xy component
+    plot_colour: Tuple[float]
+        colour tuple for component
+
     """
     xy_plane = BluemiraPlane.from_3_points([0, 0, 0], [1, 0, 0], [1, 1, 0])
 
@@ -379,10 +382,10 @@ def build_sectioned_xy(
 
 
 def build_sectioned_xyz(
+    face: BluemiraFace,
     name: str,
     n_TF: int,
     plot_colour: Tuple[float],
-    face: BluemiraFace,
     degree: float = 360,
     working: bool = False,
 ) -> List[PhysicalComponent]:
@@ -393,6 +396,17 @@ def build_sectioned_xyz(
     ----------
     face: BluemiraFace
         xz face to build xyz component
+    name: str
+        PhysicalComponent name
+    n_TF: int
+        number of TF coils
+    plot_colour: Tuple[float]
+        colour tuple for component
+    degree: float
+        angle to sweep through
+    working: bool
+        Switch off sectioning (#1319 Topology issue)
+
     """
     sector_degree, n_sectors = get_n_sectors(n_TF, degree)
 
@@ -400,7 +414,7 @@ def build_sectioned_xyz(
         face,
         base=(0, 0, 0),
         direction=(0, 0, 1),
-        degree=sector_degree if working else max(359, degree),
+        degree=sector_degree if working else min(359, degree),
     )
     body = PhysicalComponent(name, shape)
     body.display_cad_options.color = plot_colour

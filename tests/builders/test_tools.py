@@ -25,8 +25,11 @@ import numpy as np
 import pytest
 from scipy.interpolate import interp1d
 
+from bluemira.base.components import Component, PhysicalComponent
 from bluemira.base.error import BuilderError
 from bluemira.builders.tools import (
+    build_sectioned_xy,
+    build_sectioned_xyz,
     get_n_sectors,
     make_circular_xy_ring,
     pattern_lofted_silhouette,
@@ -41,6 +44,7 @@ from bluemira.geometry.tools import (
     find_clockwise_angle_2d,
     make_circle,
     make_polygon,
+    offset_wire,
 )
 from bluemira.geometry.wire import BluemiraWire
 
@@ -312,3 +316,46 @@ class TestMakeCircularRing:
     def test_raises_error_on_equal_radii(self):
         with pytest.raises(BuilderError):
             make_circular_xy_ring(1, 1)
+
+
+class TestBuildSectioned:
+    plot_colour = (1, 1, 1)
+
+    sq_arr = np.array([[2, 0, -0.5], [3, 0, -0.5], [3, 0, 0.5], [2, 0, 0.5]]).T
+    # rifling
+    sq_arr_2 = np.array([[2, 2, -0.5], [3, 2, -0.5], [3, 2, 0.5], [2, 2, 0.5]]).T
+    circ1 = make_circle(10, center=(15, 0, 0), axis=(0.0, 1.0, 0.0))
+
+    # working[2] should be true but topolgy problems
+    working = [True, True, False, False, False, False]
+
+    faces = []
+    for sec in [sq_arr, sq_arr_2, circ1]:
+        if not isinstance(sec, BluemiraWire):
+            sec = make_polygon(sec, closed=True)
+        offset = offset_wire(
+            sec,
+            1,
+            join="intersect",
+            open_wire=False,
+            ndiscr=600,
+        )
+        faces.append(BluemiraFace([offset, sec]))
+
+    @pytest.mark.parametrize("face", faces)
+    def test_build_sectioned_xy(self, face):
+        sec = build_sectioned_xy(face, self.plot_colour)
+
+        assert len(sec) == 2
+        assert all([isinstance(s, PhysicalComponent) for s in sec])
+        assert [s.plot_options.face_options["color"] == self.plot_colour for s in sec]
+
+    @pytest.mark.parametrize("face, work", zip(faces + faces, working))
+    def test_build_sectioned_xyz(self, face, work):
+        sec = build_sectioned_xyz("test", 12, self.plot_colour, face, working=work)
+
+        assert len(sec) == 12 if work else len(sec) == 1
+        assert all(
+            [isinstance(s, Component if work else PhysicalComponent) for s in sec]
+        )
+        assert [s.plot_options.face_options["color"] == self.plot_colour for s in sec]
