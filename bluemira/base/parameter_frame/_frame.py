@@ -5,7 +5,11 @@ import json
 from dataclasses import dataclass
 from typing import Any, Dict, Tuple, Type, TypeVar, Union, get_args
 
-from bluemira.base.parameter_frame._parameter import NewParameter, ParamDictT
+from bluemira.base.parameter_frame._parameter import (
+    NewParameter,
+    ParamDictT,
+    ParameterValueType,
+)
 
 _PfT = TypeVar("_PfT", bound="NewParameterFrame")
 
@@ -37,6 +41,12 @@ class NewParameterFrame:
         if not isinstance(__o, NewParameterFrame):
             return NotImplemented
         return self.__dataclass_fields__ == __o.__dataclass_fields__
+
+    def update_values(self, new_values: Dict[str, ParameterValueType], source: str = ""):
+        """Update the given parameter values."""
+        for key, value in new_values.items():
+            param: NewParameter = getattr(self, key)
+            param.set_value(value, source)
 
     @classmethod
     def from_dict(
