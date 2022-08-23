@@ -148,10 +148,10 @@ class VVTSBuilder(Builder):
         """
         return build_sectioned_xyz(
             vvts_face,
-            degree,
             self.VVTS,
             self.params.n_TF.value,
             BLUE_PALETTE["TS"][0],
+            degree,
             working=False,
         )
 

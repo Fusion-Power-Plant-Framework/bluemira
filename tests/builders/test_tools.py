@@ -352,7 +352,7 @@ class TestBuildSectioned:
 
     @pytest.mark.parametrize("face, work", zip(faces + faces, working))
     def test_build_sectioned_xyz(self, face, work):
-        sec = build_sectioned_xyz("test", 12, self.plot_colour, face, working=work)
+        sec = build_sectioned_xyz(face, "test", 12, self.plot_colour, working=work)
 
         assert len(sec) == 12 if work else len(sec) == 1
         assert all(
