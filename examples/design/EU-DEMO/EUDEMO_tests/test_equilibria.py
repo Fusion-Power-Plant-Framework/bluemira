@@ -19,9 +19,66 @@
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 
+import json
+import os
+from typing import Dict
+
 import numpy as np
 import pytest
-from EUDEMO_builders.equilibria import estimate_kappa95
+from EUDEMO_builders.equilibria import UnconstrainedTikhonovSolver as UTSolver
+from EUDEMO_builders.equilibria import UnconstrainedTikhonovSolverParams
+from EUDEMO_builders.equilibria.tools import estimate_kappa95
+
+from bluemira.equilibria import Equilibrium
+
+
+class TestUnconstrainedTikhonovSolver:
+
+    DATA_DIR = os.path.join(os.path.dirname(__file__), "data")
+
+    @classmethod
+    def setup_class(cls):
+        cls.param_dict = cls._read_json(os.path.join(cls.DATA_DIR, "params.json"))
+
+    def test_params_converted_to_parameter_frame(self):
+        solver = UTSolver(self.param_dict)
+
+        assert isinstance(solver.params, UnconstrainedTikhonovSolverParams)
+
+    @pytest.mark.longrun
+    def test_solver_converges_on_run(self):
+        solver = UTSolver(self.param_dict)  # , plot_optimisation=True)
+
+        eq = solver.execute(solver.run_mode_cls.RUN)
+
+        assert eq.get_LCFS()
+        # check parameters have been updated
+        assert solver.params != UnconstrainedTikhonovSolverParams.from_dict(
+            self.param_dict
+        )
+
+    def test_solver_reads_file_in_read_mode(self):
+        eqdsk = os.path.join(os.path.dirname(__file__), "data", "equlibrium_eqdsk.json")
+        solver = UTSolver(self.param_dict, {"file_path": eqdsk})
+
+        eq = solver.execute(solver.run_mode_cls.READ)
+
+        ref_eq = Equilibrium.from_eqdsk(eqdsk)
+        assert eq.analyse_plasma() == ref_eq.analyse_plasma()
+
+    def test_solver_outputs_equilibrium_in_mock_mode(self):
+        solver = UTSolver(self.param_dict)
+
+        eq = solver.execute(solver.run_mode_cls.MOCK)
+
+        assert isinstance(eq, Equilibrium)
+        expected_n_coils = sum(self.param_dict[p]["value"] for p in ["n_PF", "n_CS"])
+        assert len(eq.coilset.coils) == expected_n_coils
+
+    @staticmethod
+    def _read_json(file_path: str) -> Dict:
+        with open(file_path, "r") as f:
+            return json.load(f)
 
 
 class TestKappaLaw:

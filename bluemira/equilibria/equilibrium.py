@@ -518,7 +518,7 @@ class Equilibrium(MHDState):
 
     def __init__(
         self,
-        coilset,
+        coilset: CoilSet,
         grid,
         profiles,
         force_symmetry=False,
