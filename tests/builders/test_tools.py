@@ -357,7 +357,7 @@ class TestBuildSectioned:
         assert all([isinstance(s, PhysicalComponent) for s in sec])
         assert [s.plot_options.face_options["color"] == self.plot_colour for s in sec]
 
-    @pytest.mark.parametrize("face, work", zip(faces + faces, working))
+    @pytest.mark.parametrize("face, work", face_work)
     def test_build_sectioned_xyz(self, face, work):
         sec = build_sectioned_xyz(face, "test", 12, self.plot_colour, working=work)
 
