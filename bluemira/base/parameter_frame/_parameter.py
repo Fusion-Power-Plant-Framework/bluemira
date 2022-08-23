@@ -1,8 +1,13 @@
+from __future__ import annotations
+
 import copy
 from dataclasses import dataclass
 from typing import Dict, Generic, List, Tuple, Type, TypeVar
 
+import pint
 from typeguard import typechecked
+
+from bluemira.base.constants import raw_uc
 
 ParameterValueType = TypeVar("ParameterValueType")
 
@@ -66,7 +71,23 @@ class NewParameter(Generic[ParameterValueType]):
 
     def __repr__(self) -> str:
         """String repr of class instance."""
-        return f"<NewParameter({self.name}={self.value}{self.unit})>"
+        return f"<NewParameter({self.name}={self.value} {self.unit})>"
+
+    def __eq__(self, __o: object) -> bool:
+        """
+        Check if this parameter is equal to another.
+
+        Parameters are equal if their names and values (with matching
+        units) are equal.
+        """
+        if not isinstance(__o, NewParameter):
+            return NotImplemented
+        try:
+            o_value_with_correct_unit = raw_uc(__o.value, __o.unit, self.unit)
+        except pint.DimensionalityError:
+            # incompatible units
+            return False
+        return (self.name == __o.name) and (self.value == o_value_with_correct_unit)
 
     def history(self) -> List[ParameterValue]:
         """Return the history of this parameter's value."""

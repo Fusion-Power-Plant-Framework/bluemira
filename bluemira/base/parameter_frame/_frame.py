@@ -30,6 +30,12 @@ class NewParameterFrame:
 
     """
 
+    def __eq__(self, __o: object) -> bool:
+        """Check whether two ParameterFrames are equal."""
+        if not isinstance(__o, NewParameterFrame):
+            return NotImplemented
+        return self.__dataclass_fields__ == __o.__dataclass_fields__
+
     @classmethod
     def from_dict(
         cls,

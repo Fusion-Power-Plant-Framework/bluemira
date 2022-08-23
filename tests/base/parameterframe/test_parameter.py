@@ -92,4 +92,48 @@ class TestParameter:
     def test_repr_contains_name_value_and_unit(self):
         param = Parameter(**self.SERIALIZED_PARAM)
 
-        assert re.search("my_param=100dimensionless", repr(param))
+        assert re.search("my_param=100 dimensionless", repr(param))
+
+    @pytest.mark.parametrize(
+        "param1, param2",
+        [
+            (
+                {"name": "p", "value": 10, "unit": "dimensionless"},
+                {"name": "p", "value": 10, "unit": "dimensionless"},
+            ),
+            (
+                {"name": "p", "value": 1, "unit": "m"},
+                {"name": "p", "value": 100, "unit": "cm"},
+            ),
+        ],
+    )
+    def test_params_with_same_name_and_values_are_equal(self, param1, param2):
+        p1 = Parameter(**param1)
+        p2 = Parameter(**param2)
+
+        assert p1 == p2
+
+    @pytest.mark.parametrize(
+        "param1, param2",
+        [
+            (
+                {"name": "p", "value": 10, "unit": "m"},
+                {"name": "p", "value": 10, "unit": "dimensionless"},
+            ),
+            (
+                {"name": "p", "value": 100.5, "unit": "m"},
+                {"name": "p", "value": 100, "unit": "m"},
+            ),
+        ],
+    )
+    def test_params_with_different_values_are_not_equal(self, param1, param2):
+        p1 = Parameter(**param1)
+        p2 = Parameter(**param2)
+
+        assert p1 != p2
+
+    def test_params_with_different_names_are_not_equal(self):
+        p1 = Parameter(**{"name": "p1", "value": 10, "unit": "dimensionless"})
+        p2 = Parameter(**{"name": "p2", "value": 10, "unit": "dimensionless"})
+
+        assert p1 != p2
