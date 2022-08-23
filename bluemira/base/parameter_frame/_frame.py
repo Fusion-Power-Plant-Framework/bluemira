@@ -36,10 +36,16 @@ class NewParameterFrame:
             return NotImplemented
         return self.__dataclass_fields__ == __o.__dataclass_fields__
 
+    def update_values(self, new_values: Dict[str, ParameterValueType], source: str = ""):
+        """Update the given parameter values."""
+        for key, value in new_values.items():
+            param: NewParameter = getattr(self, key)
+            param.set_value(value, source)
+
     @classmethod
     def from_dict(
         cls,
-        data: Dict[str, Mapping[str, Union[str, ParameterValueType]]],
+        data: Mapping[str, Mapping[str, Union[str, ParameterValueType]]],
         allow_unknown=False,
     ):
         """Initialize an instance from a dictionary."""
