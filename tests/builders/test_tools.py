@@ -322,12 +322,11 @@ class TestBuildSectioned:
     plot_colour = (1, 1, 1)
 
     sq_arr = np.array([[2, 0, -0.5], [3, 0, -0.5], [3, 0, 0.5], [2, 0, 0.5]]).T
-    # rifling
+    # rifling shape, for edge cases
     sq_arr_2 = np.array([[2, 2, -0.5], [3, 2, -0.5], [3, 2, 0.5], [2, 2, 0.5]]).T
     circ1 = make_circle(10, center=(15, 0, 0), axis=(0.0, 1.0, 0.0))
 
-    # working[2] should be true but topolgy problems
-    working = [True, True, False, False, False, False]
+    working = [True, True, True, False, False, False]
 
     faces = []
     for sec in [sq_arr, sq_arr_2, circ1]:
@@ -341,6 +340,14 @@ class TestBuildSectioned:
             ndiscr=600,
         )
         faces.append(BluemiraFace([offset, sec]))
+
+    # failing test mark
+    face_work = list(map(list, zip(*[faces + faces, working])))
+    face_work[2] = pytest.param(
+        faces[2],
+        working[2],
+        marks=pytest.mark.xfail(reason="Possible #1347 Topology failure"),
+    )
 
     @pytest.mark.parametrize("face", faces)
     def test_build_sectioned_xy(self, face):
