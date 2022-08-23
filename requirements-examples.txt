@@ -1,6 +1,6 @@
 argon2-cffi==21.3.0
 argon2-cffi-bindings==21.2.0
-asttokens==2.0.7
+asttokens==2.0.8
 attrs==22.1.0
 backcall==0.2.0
 beautifulsoup4==4.11.1
