@@ -59,13 +59,6 @@ class BlanketBuilderParams:
     c_rm: Parameter[float]
 
 
-@parameter_frame
-class BlanketDesignerParams:
-    """
-    Blanket designer parameters
-    """
-
-
 class BlanketDesigner(Designer[BluemiraFace]):
     """
     Blanket designer
@@ -197,7 +190,7 @@ class BlanketBuilder(Builder):
         x_mid = 0.5 * (bb.x_min + bb.x_max)
         delta = 0.5 * self.params.c_rm.value
 
-        x = np.zeros(4) + x_mid
+        x = np.full(4, x_mid)
         x[0, 3] -= delta
         x[1, 2] += delta
 
