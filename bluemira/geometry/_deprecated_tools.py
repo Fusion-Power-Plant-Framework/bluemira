@@ -25,6 +25,7 @@ A collection of geometry tools.
 
 from functools import partial
 from itertools import zip_longest
+from typing import Tuple
 
 import numba as nb
 import numpy as np
@@ -269,7 +270,9 @@ def get_angle_between_points(p0, p1, p2):
     return get_angle_between_vectors(ba, bc)
 
 
-def get_angle_between_vectors(v1, v2, signed=False):
+def get_angle_between_vectors(
+    v1: np.ndarray, v2: np.ndarray, signed: bool = False
+) -> float:
     """
     Angle between vectors. Will return the signed angle if specified.
 
@@ -304,7 +307,7 @@ def get_angle_between_vectors(v1, v2, signed=False):
     return sign * angle
 
 
-def segment_lengths(x: np.ndarray, y: np.ndarray, z: np.ndarray):
+def segment_lengths(x: np.ndarray, y: np.ndarray, z: np.ndarray) -> np.ndarray:
     """
     Returns the length of each individual segment in a set of coordinates
 
@@ -325,42 +328,44 @@ def segment_lengths(x: np.ndarray, y: np.ndarray, z: np.ndarray):
     return np.sqrt(np.diff(x) ** 2 + np.diff(y) ** 2 + np.diff(z) ** 2)
 
 
-def bounding_box(x, y, z):
+def bounding_box(x: np.ndarray, y: np.ndarray, z: np.ndarray) -> Tuple[np.ndarray]:
     """
     Calculates a bounding box for a set of 3-D coordinates
 
     Parameters
     ----------
-    x: np.array(N)
+    x: np.ndarray
         The x coordinates
-    y: np.array(N)
+    y: np.ndarray
         The y coordinates
-    z: np.array(N)
+    z: np.ndarray
         The z coordinates
 
     Returns
     -------
-    x_b: np.array(8)
+    x_b: np.ndarray
         The x coordinates of the bounding box rectangular cuboid
-    y_b: np.array(8)
+    y_b: np.ndarray
         The y coordinates of the bounding box rectangular cuboid
-    z_b: np.array(8)
+    z_b: np.ndarray
         The z coordinates of the bounding box rectangular cuboid
     """
     return BoundingBox.from_xyz(x, y, z).get_box_arrays()
 
 
-def interpolate_points(x, y, z, n_points):
+def interpolate_points(
+    x: np.ndarray, y: np.ndarray, z: np.ndarray, n_points: int
+) -> Tuple[np.ndarray]:
     """
     Interpolate Points
 
     Parameters
     ----------
-    x: np.array
+    x: np.darray
         The x coordinates
-    y: np.array
+    y: np.darray
         The y coordinates
-    z: np.array
+    z: np.darray
         The z coordinates
     n_points: int
         number of points
@@ -377,22 +382,22 @@ def interpolate_points(x, y, z, n_points):
     return x, y, z
 
 
-def vector_lengthnorm(x, y, z):
+def vector_lengthnorm(x: np.ndarray, y: np.ndarray, z: np.ndarray) -> np.ndarray:
     """
     Get a normalised 1-D parameterisation of a set of x-y-z coordinates.
 
     Parameters
     ----------
-    x: np.array
+    x: np.ndarray
         The x coordinates
-    y: np.array
+    y: np.ndarray
         The y coordinates
-    z: np.array
+    z: np.ndarray
         The z coordinates
 
     Returns
     -------
-    length_: np.array(n)
+    length_: np.ndarray
         The normalised length vector
     """
     length_ = np.append(
