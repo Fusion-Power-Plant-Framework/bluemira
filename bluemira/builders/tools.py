@@ -387,7 +387,7 @@ def build_sectioned_xyz(
     n_TF: int,
     plot_colour: Tuple[float],
     degree: float = 360,
-    working: bool = False,
+    disable_sectioning: bool = False,
 ) -> List[PhysicalComponent]:
     """
     Build the x-y-z components of sectioned component
@@ -404,8 +404,18 @@ def build_sectioned_xyz(
         colour tuple for component
     degree: float
         angle to sweep through
-    working: bool
+    disable_sectioning: bool
         Switch off sectioning (#1319 Topology issue)
+
+    Notes
+    -----
+    disable_sectioning will only return a list with a single component
+    rotated a maximum of 359 degrees. This is a workaround for two issues
+    from the topology naming issue #1319:
+
+        - Some objects fail to be rebuilt when rotated
+        - Some objects cant be rotated 360 degrees due to DisjointedFaceError
+
 
     """
     sector_degree, n_sectors = get_n_sectors(n_TF, degree)
@@ -414,7 +424,7 @@ def build_sectioned_xyz(
         face,
         base=(0, 0, 0),
         direction=(0, 0, 1),
-        degree=sector_degree if working else min(359, degree),
+        degree=sector_degree if disable_sectioning else min(359, degree),
     )
     body = PhysicalComponent(name, shape)
     body.display_cad_options.color = plot_colour
@@ -423,6 +433,6 @@ def build_sectioned_xyz(
     # because of #1319 and related Topological naming issues
     return (
         circular_pattern_component(body, n_sectors, degree=sector_degree * n_sectors)
-        if working
+        if disable_sectioning
         else [body]
     )

@@ -326,7 +326,7 @@ class TestBuildSectioned:
     sq_arr_2 = np.array([[2, 2, -0.5], [3, 2, -0.5], [3, 2, 0.5], [2, 2, 0.5]]).T
     circ1 = make_circle(10, center=(15, 0, 0), axis=(0.0, 1.0, 0.0))
 
-    working = [True, True, True, False, False, False]
+    disable_sectioning = [True, True, True, False, False, False]
 
     faces = []
     for sec in [sq_arr, sq_arr_2, circ1]:
@@ -342,10 +342,10 @@ class TestBuildSectioned:
         faces.append(BluemiraFace([offset, sec]))
 
     # failing test mark
-    face_work = list(map(list, zip(*[faces + faces, working])))
-    face_work[2] = pytest.param(
+    face_sec = list(map(list, zip(*[faces + faces, disable_sectioning])))
+    face_sec[2] = pytest.param(
         faces[2],
-        working[2],
+        disable_sectioning[2],
         marks=pytest.mark.xfail(reason="Possible #1347 Topology failure"),
     )
 
@@ -357,12 +357,17 @@ class TestBuildSectioned:
         assert all([isinstance(s, PhysicalComponent) for s in sec])
         assert [s.plot_options.face_options["color"] == self.plot_colour for s in sec]
 
-    @pytest.mark.parametrize("face, work", face_work)
-    def test_build_sectioned_xyz(self, face, work):
-        sec = build_sectioned_xyz(face, "test", 12, self.plot_colour, working=work)
+    @pytest.mark.parametrize("face, section_bool", face_sec)
+    def test_build_sectioned_xyz(self, face, section_bool):
+        sec = build_sectioned_xyz(
+            face, "test", 12, self.plot_colour, disable_sectioning=section_bool
+        )
 
-        assert len(sec) == 12 if work else len(sec) == 1
+        assert len(sec) == 12 if section_bool else len(sec) == 1
         assert all(
-            [isinstance(s, Component if work else PhysicalComponent) for s in sec]
+            [
+                isinstance(s, Component if section_bool else PhysicalComponent)
+                for s in sec
+            ]
         )
         assert [s.plot_options.face_options["color"] == self.plot_colour for s in sec]

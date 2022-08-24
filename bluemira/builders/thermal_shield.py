@@ -152,7 +152,7 @@ class VVTSBuilder(Builder):
             self.params.n_TF.value,
             BLUE_PALETTE["TS"][0],
             degree,
-            working=False,
+            disable_sectioning=False,
         )
 
 
@@ -295,5 +295,5 @@ class CryostatTSBuilder(Builder):
             self.params.n_TF.value,
             BLUE_PALETTE["TS"][0],
             degree,
-            working=True,
+            disable_sectioning=True,
         )
