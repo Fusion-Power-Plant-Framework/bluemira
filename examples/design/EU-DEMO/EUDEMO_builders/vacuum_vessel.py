@@ -155,10 +155,10 @@ class VacuumVesselBuilder(Builder):
         Build the x-y-z components of the vacuum vessel.
         """
         return build_sectioned_xyz(
+            vv_face,
             self.BODY,
             self.params.n_TF.value,
             BLUE_PALETTE[self.VV][0],
-            vv_face,
             degree,
             working=False,
         )
