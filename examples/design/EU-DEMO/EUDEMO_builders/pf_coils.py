@@ -18,6 +18,8 @@
 #
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
+"""Functions related to EUDEMO PF coils."""
+
 import numpy as np
 
 from bluemira.base.error import BuilderError
@@ -208,6 +210,7 @@ def make_coilset(
 def make_grid(R_0, A, kappa, scale_x=1.6, scale_z=1.7, nx=65, nz=65):
     """
     Make a finite difference Grid for an Equilibrium.
+
     Parameters
     ----------
     R_0: float
