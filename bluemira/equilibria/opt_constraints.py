@@ -557,7 +557,7 @@ class PsiConstraint(AbsoluteMagneticConstraint):
         """
         Calculate control response of a CoilSet to the constraint.
         """
-        return np.array(coilset.control_psi(self.x, self.z))
+        return np.array(coilset.control_psi(self.x, self.z)).T
 
     def evaluate(self, eq):
         """

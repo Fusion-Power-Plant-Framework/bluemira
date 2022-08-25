@@ -95,7 +95,7 @@ def Ax_b_constraint(constraint, vector, grad, a_mat, b_vec, value, scale):  # no
     scale: float
         Current scale with which to calculate the constraints
     """
-    constraint[:] = a_mat.T @ vector * scale - b_vec - value
+    constraint[:] = a_mat @ vector * scale - b_vec - value
     if grad.size > 0:
         grad[:] = scale * a_mat.T
     return constraint
