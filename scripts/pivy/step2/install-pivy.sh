@@ -4,11 +4,6 @@ cd /opt/pivy
 
 NJOBS=$(nproc --ignore=2)
 
-PATCH_DIR=/opt/bluemira/scripts/pivy/step2/
-# pivy#91 changes some interface that produces
-# "SystemError: <built-in function cast> returned NULL without setting an exception"
-patch -R -p 1 -f < "$PATCH_DIR/pivy1.patch"
-
 if [ -d build ]; then
   if ${FORCE}; then
     echo "Removing previous pivy build"

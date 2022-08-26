@@ -1,10 +1,8 @@
 anytree==2.8.0
 asteval==0.9.27
 Babel==2.10.3
-cftime==1.6.1
 click==8.1.3
-commonmark==0.9.1
-CoolProp==6.4.2dev0
+CoolProp==6.4.1
 cycler==0.11.0
 fonttools==4.34.4
 fortranformat==1.2.1
@@ -21,18 +19,14 @@ neutronics-material-maker==0.1.11
 nlopt==2.7.1
 numba==0.56.0
 numba-scipy==0.3.1
-numba==0.55.2
 numexpr==2.8.3
 numpy==1.22.4
 packaging==21.3
 pandas==1.4.3
 periodictable==1.6.1
-petsc4py==3.17.3
-petsc==3.17.3
 Pillow==9.2.0
 Pint==0.19.2
 pyclipper==1.3.0.post3
-Pygments==2.12.0
 pyparsing==3.0.9
 pypet==0.6.0
 pyquaternion==0.9.9
@@ -47,3 +41,4 @@ tables==3.7.0
 tabulate==0.8.10
 threadpoolctl==3.1.0
 wrapt==1.14.1
+scipy==1.7.3
