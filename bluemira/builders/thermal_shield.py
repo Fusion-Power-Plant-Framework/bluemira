@@ -23,16 +23,16 @@
 Thermal shield builders
 """
 
-from typing import Dict, List, Tuple, Type, Union
+from dataclasses import dataclass
+from typing import Dict, List, Type, Union
 
 import numpy as np
 from scipy.spatial import ConvexHull
 
 from bluemira.base.builder import Builder, ComponentManager
 from bluemira.base.components import PhysicalComponent
-from bluemira.base.designer import Designer
 from bluemira.base.parameter_frame import NewParameter as Parameter
-from bluemira.base.parameter_frame import parameter_frame
+from bluemira.base.parameter_frame import NewParameterFrame as ParameterFrame
 from bluemira.builders.tools import (
     circular_pattern_component,
     find_xy_plane_radii,
@@ -59,8 +59,8 @@ class VacuumVesselThermalShield(ComponentManager):
     """
 
 
-@parameter_frame
-class VVTSBuilderParams:
+@dataclass
+class VVTSBuilderParams(ParameterFrame):
     """
     VVTS builder parameters
     """
@@ -68,27 +68,6 @@ class VVTSBuilderParams:
     g_vv_ts: Parameter[float]
     n_TF: Parameter[int]
     tk_ts: Parameter[float]
-
-
-class VVTSDesigner(Designer[BluemiraWire]):
-    """
-    Vacuum vessel thermal shield designer
-    """
-
-    param_cls = None
-
-    def __init__(
-        self,
-        vv_koz: BluemiraWire,
-    ):
-        super().__init__()
-        self.vv_koz = vv_koz
-
-    def run(self):
-        """
-        Vacuum vessel thermal shield designer run method
-        """
-        return self.vv_koz
 
 
 class VVTSBuilder(Builder):
@@ -103,17 +82,17 @@ class VVTSBuilder(Builder):
         self,
         params: Union[VVTSBuilderParams, Dict],
         build_config: Dict,
-        designer: Designer[BluemiraWire],
+        keep_out_zone: BluemiraWire,
     ):
-        super().__init__(params, build_config, designer)
+        super().__init__(params, build_config)
+        self.keep_out_zone = keep_out_zone
 
     def build(self) -> VacuumVesselThermalShield:
         """
         Build the vacuum vessel thermal shield component.
         """
-        koz = self.designer.run()
-        xz_vvts = self.build_xz(koz)
-        vvts_face = xz_vvts.get_component_properties("shape")
+        xz_vvts = self.build_xz(self.keep_out_zone)
+        vvts_face: BluemiraFace = xz_vvts.get_component_properties("shape")
 
         return VacuumVesselThermalShield(
             self.component_tree(
@@ -151,7 +130,7 @@ class VVTSBuilder(Builder):
         vvts.plot_options.face_options["color"] = BLUE_PALETTE["TS"][0]
         return vvts
 
-    def build_xy(self, vvts_face: BluemiraFace) -> PhysicalComponent:
+    def build_xy(self, vvts_face: BluemiraFace) -> List[PhysicalComponent]:
         """
         Build the x-y components of the vacuum vessel thermal shield.
 
@@ -213,8 +192,8 @@ class CryostatThermalShield(ComponentManager):
     """
 
 
-@parameter_frame
-class CryostatTSBuilderParams:
+@dataclass
+class CryostatTSBuilderParams(ParameterFrame):
     """
     Cryostat thermal shield builder parameters
     """
@@ -223,29 +202,6 @@ class CryostatTSBuilderParams:
     g_ts_tf: Parameter[float]
     n_TF: Parameter[int]
     tk_ts: Parameter[float]
-
-
-class CryostatTSDesigner(Designer[BluemiraWire]):
-    """
-    Cryostat thermal shield designer
-    """
-
-    param_cls = None
-
-    def __init__(
-        self,
-        pf_coils_xz_kozs: List[BluemiraWire],
-        tf_xz_koz: BluemiraWire,
-    ):
-        super().__init__()
-        self.pf_coils_xz_kozs = pf_coils_xz_kozs
-        self.tf_xz_koz = tf_xz_koz
-
-    def run(self) -> Tuple[List[BluemiraWire], BluemiraWire]:
-        """
-        Cryostat thermal shield designer run method
-        """
-        return self.pf_coils_xz_kozs, self.tf_xz_koz
 
 
 class CryostatTSBuilder(Builder):
@@ -261,17 +217,19 @@ class CryostatTSBuilder(Builder):
         self,
         params: Union[CryostatTSBuilderParams, Dict],
         build_config: Dict,
-        designer: Designer[BluemiraWire],
+        pf_keep_out_zones: List[BluemiraWire],
+        tf_keep_out_zone: BluemiraWire,
     ):
-        super().__init__(params, build_config, designer)
+        super().__init__(params, build_config)
+        self.pf_keep_out_zones = pf_keep_out_zones
+        self.tf_keep_out_zone = tf_keep_out_zone
 
     def build(self) -> CryostatThermalShield:
         """
         Build the cryostat thermal shield component.
         """
-        pf_kozs, tf_koz = self.designer.run()
-        xz_cts = self.build_xz(pf_kozs, tf_koz)
-        cts_face = xz_cts.get_component_properties("shape")
+        xz_cts = self.build_xz(self.pf_keep_out_zones, self.tf_keep_out_zone)
+        cts_face: BluemiraFace = xz_cts.get_component_properties("shape")
 
         return CryostatThermalShield(
             self.component_tree(

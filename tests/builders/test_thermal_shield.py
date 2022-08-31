@@ -22,16 +22,9 @@
 """
 Tests for thermal shield builders.
 """
-from unittest import mock
-
 import numpy as np
 
-from bluemira.builders.thermal_shield import (
-    CryostatTSBuilder,
-    CryostatTSDesigner,
-    VVTSBuilder,
-    VVTSDesigner,
-)
+from bluemira.builders.thermal_shield import CryostatTSBuilder, VVTSBuilder
 from bluemira.display.displayer import show_cad
 from bluemira.geometry.parameterisations import PrincetonD
 from bluemira.geometry.tools import make_circle, make_polygon
@@ -48,9 +41,7 @@ class TestVVTSBuilder:
         cls.vv_koz = make_circle(10, center=(15, 0, 0), axis=(0.0, 1.0, 0.0))
 
     def test_components_and_segments(self):
-        designer = mock.Mock(run=lambda: self.vv_koz)
-
-        builder = VVTSBuilder(self.params, {}, designer)
+        builder = VVTSBuilder(self.params, {}, self.vv_koz)
         vvts = builder.build()
 
         assert vvts.component().get_component("xz")
@@ -90,8 +81,7 @@ class TestCryostatTSBuilder:
         cls.tf_xz_koz = PrincetonD().create_shape()
 
     def test_components_and_segments(self):
-        designer = mock.Mock(run=lambda: (self.pf_coil_koz, self.tf_xz_koz))
-        builder = CryostatTSBuilder(self.params, {}, designer)
+        builder = CryostatTSBuilder(self.params, {}, self.pf_coil_koz, self.tf_xz_koz)
         cryostat_ts = builder.build()
 
         assert cryostat_ts.component().get_component("xz")
@@ -100,19 +90,3 @@ class TestCryostatTSBuilder:
         xyz = cryostat_ts.component().get_component("xyz")
         assert xyz
         assert len(xyz.leaves) == self.params["n_TF"]["value"]
-
-
-class TestThermalShieldDesigners:
-    """
-    What goes in comes out
-    """
-
-    def test_vvtsdesigner(self):
-        _in = 1
-        designer = VVTSDesigner(_in)
-        assert designer.run() == _in
-
-    def test_cryotsdesigner(self):
-        _in = 1, 2
-        designer = CryostatTSDesigner(*_in)
-        assert designer.run() == _in

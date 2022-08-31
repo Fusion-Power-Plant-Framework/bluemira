@@ -41,8 +41,7 @@ class TestCryostatBuilder:
         }
 
     def test_components_and_segments(self):
-        designer = mock.Mock(run=lambda: (10, 10))
-        builder = CryostatBuilder(self.params, {}, designer)
+        builder = CryostatBuilder(self.params, {}, 10, 10)
         cryostat = builder.build()
 
         assert cryostat.component().get_component("xz")
