@@ -19,8 +19,6 @@
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 
-from unittest import mock
-
 from bluemira.builders.pf_coil import PFCoilBuilder
 from bluemira.geometry.tools import make_polygon
 
@@ -40,8 +38,7 @@ class TestPFCoilBuilder:
         }
 
     def test_component_dimensions_are_built(self):
-        designer = mock.Mock(run=lambda: self.square)
-        builder = PFCoilBuilder(self.params, {}, designer)
+        builder = PFCoilBuilder(self.params, {}, self.square)
 
         coil = builder.build()
 

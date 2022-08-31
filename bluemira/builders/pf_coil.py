@@ -72,20 +72,20 @@ class PFCoilBuilder(Builder):
         self,
         params: Union[PFCoilBuilderParams, Dict],
         build_config: Dict,
-        designer: Designer[BluemiraWire],
+        xz_cross_section: BluemiraWire,
     ):
-        super().__init__(params, build_config, designer)
+        super().__init__(params, build_config)
+        self.xz_cross_section = xz_cross_section
 
     def build(self) -> PFCoil:
         """
         Build the PFCoil component.
         """
-        xz_cross_section = self.designer.run()
         return PFCoil(
             self.component_tree(
-                xz=self.build_xz(xz_cross_section),
-                xy=self.build_xy(xz_cross_section),
-                xyz=self.build_xyz(xz_cross_section),
+                xz=self.build_xz(self.xz_cross_section),
+                xy=self.build_xy(self.xz_cross_section),
+                xyz=self.build_xyz(self.xz_cross_section),
             )
         )
 
