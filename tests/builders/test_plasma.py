@@ -23,8 +23,6 @@
 Tests for plasma builder.
 """
 
-from unittest import mock
-
 from bluemira.builders.plasma import PlasmaBuilder
 from bluemira.geometry.tools import make_polygon
 
@@ -39,8 +37,7 @@ class TestPlasmaBuilder:
         )
 
     def test_plasma_contains_components_in_3_dimensions(self):
-        designer = mock.Mock(run=lambda: self.square)
-        builder = PlasmaBuilder({}, designer)
+        builder = PlasmaBuilder({}, self.square)
         plasma = builder.build()
 
         assert plasma.component().get_component("xz")
@@ -48,8 +45,7 @@ class TestPlasmaBuilder:
         assert plasma.component().get_component("xyz")
 
     def test_lcfs_eq_to_designer_shape(self):
-        designer = mock.Mock(run=lambda: self.square)
-        builder = PlasmaBuilder({}, designer)
+        builder = PlasmaBuilder({}, self.square)
 
         plasma = builder.build()
 
