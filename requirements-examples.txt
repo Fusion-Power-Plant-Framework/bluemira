@@ -45,7 +45,7 @@ pyrsistent==0.18.1
 pyzmq==23.2.1
 Send2Trash==1.8.0
 soupsieve==2.3.2.post1
-stack-data==0.4.0
+stack-data==0.5.0
 terminado==0.15.0
 tinycss2==1.1.1
 tornado==6.2
