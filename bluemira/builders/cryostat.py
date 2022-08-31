@@ -22,6 +22,7 @@
 """
 Cryostat builder
 """
+from dataclasses import dataclass
 from typing import Dict, List, Tuple, Type, Union
 
 import numpy as np
@@ -31,7 +32,6 @@ from bluemira.base.components import PhysicalComponent
 from bluemira.base.designer import Designer
 from bluemira.base.parameter_frame import NewParameter as Parameter
 from bluemira.base.parameter_frame import NewParameterFrame as ParameterFrame
-from bluemira.base.parameter_frame import parameter_frame
 from bluemira.builders.tools import circular_pattern_component, get_n_sectors
 from bluemira.display.palettes import BLUE_PALETTE
 from bluemira.geometry.face import BluemiraFace
@@ -44,8 +44,8 @@ class Cryostat(ComponentManager):
     """
 
 
-@parameter_frame
-class CryostatDesignerParams:
+@dataclass
+class CryostatDesignerParams(ParameterFrame):
     """
     Cryostat designer parameters
     """
@@ -53,8 +53,8 @@ class CryostatDesignerParams:
     g_cr_ts: Parameter[float]
 
 
-@parameter_frame
-class CryostatBuilderParams:
+@dataclass
+class CryostatBuilderParams(ParameterFrame):
     """
     Cryostat builder parameters
     """
@@ -71,7 +71,7 @@ class CryostatBuilderParams:
     z_gs: Parameter[float]
 
 
-class CryostatDesigner(Designer[BluemiraFace]):
+class CryostatDesigner(Designer[Tuple[float, float]]):
     """
     Designer for the cryostat
     """
@@ -86,7 +86,7 @@ class CryostatDesigner(Designer[BluemiraFace]):
         super().__init__(params)
         self.cryo_ts_xz = cryo_ts_xz
 
-    def run(self) -> Tuple[float]:
+    def run(self) -> Tuple[float, float]:
         """
         Cryostat designer run method
         """
