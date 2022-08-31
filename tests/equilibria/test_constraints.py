@@ -29,6 +29,7 @@ from bluemira.equilibria.opt_constraints import (
     IsofluxConstraint,
     MagneticConstraintSet,
     PsiBoundaryConstraint,
+    PsiConstraint,
 )
 from bluemira.equilibria.opt_problems import TikhonovCurrentCOP
 
@@ -54,9 +55,13 @@ class TestWeightedConstraints:
             z_iso = np.array([0.0, 4.3, 0.1, -4.0])
             w_iso = np.array([3.0, 1.0, 10.0, 0.0])
 
-            x_psi = np.array([0.0, 9.0, 15.0])
-            z_psi = np.array([0.0, 8.0, 8.0])
-            w_psi = np.array([2.0, 0.5, 3.0])
+            x_psi_bound = np.array([0.0, 9.0, 15.0])
+            z_psi_bound = np.array([0.0, 8.0, 8.0])
+            w_psi_bound = np.array([2.0, 0.5, 3.0])
+
+            x_psi = np.array([0.6, 1.5])
+            z_psi = np.array([0.0, 0.1])
+            w_psi = np.array([3.0, 10.0])
 
             if apply_weights:
                 constraint_set = MagneticConstraintSet(
@@ -65,16 +70,29 @@ class TestWeightedConstraints:
                             x_iso, z_iso, ref_x=0.5, ref_z=0.5, weights=w_iso
                         ),
                         PsiBoundaryConstraint(
-                            x_psi, z_psi, target_value=0.0, weights=w_psi
+                            x=x_psi_bound,
+                            z=z_psi_bound,
+                            target_value=0.0,
+                            weights=w_psi_bound,
+                        ),
+                        PsiConstraint(
+                            x=x_psi,
+                            z=z_psi,
+                            target_value=1.0,
+                            weights=w_psi,
+                            tolerance=1.0e-4,
                         ),
                     ]
                 )
-                weights = np.concatenate([w_iso, w_psi])
+                weights = np.concatenate([w_iso, w_psi_bound, w_psi])
             else:
                 constraint_set = MagneticConstraintSet(
                     [
                         IsofluxConstraint(x_iso, z_iso, ref_x=0.5, ref_z=0.5),
-                        PsiBoundaryConstraint(x_psi, z_psi, target_value=0.0),
+                        PsiBoundaryConstraint(
+                            x_psi_bound, z_psi_bound, target_value=0.0
+                        ),
+                        PsiConstraint(x_psi, z_psi, target_value=1.0, tolerance=1.0e-4),
                     ]
                 )
                 weights = np.ones(len(constraint_set))
@@ -85,9 +103,9 @@ class TestWeightedConstraints:
             # Test that weights have been applied
 
             problem = TikhonovCurrentCOP(
-                eq.coilset,
-                eq,
-                constraint_set,
+                coilset=eq.coilset,
+                eq=eq,
+                targets=constraint_set,
                 gamma=1e-8,
             )
             problem.optimise(fixed_coils=True)
