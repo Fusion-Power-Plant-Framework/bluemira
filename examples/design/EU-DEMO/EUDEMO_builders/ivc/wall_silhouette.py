@@ -59,7 +59,6 @@ class WallSilhouetteDesigner(Designer[GeometryParameterisation]):
         params: Union[ParameterFrame, Dict],
         build_config: Dict,
         equilibrium: Optional[Equilibrium] = None,
-        **problem_class_kwargs,
     ) -> None:
 
         super().__init__(params, build_config)
@@ -79,15 +78,15 @@ class WallSilhouetteDesigner(Designer[GeometryParameterisation]):
 
         if problem_class is not None:
             self.problem_class = get_class_from_module(problem_class)
+            self.problem_settings = self.opt_config.get("problem_settings", {})
+
             self.opt_config = self.build_config.get("optimisation_config", {})
 
-            self.problem_settings = self.opt_config.get("problem_settings", {})
             self.algorithm_name = self.opt_config.get("algorithm_name", "SLSQP")
             self.opt_conditions = self.opt_config.get(
                 "opt_conditions", {"max_eval": 100}
             )
             self.opt_parameters = self.opt_config.get("parameters", {})
-            self.problem_class_kwargs = problem_class_kwargs
 
         self.equilibrium = equilibrium
 
@@ -156,7 +155,6 @@ class WallSilhouetteDesigner(Designer[GeometryParameterisation]):
             parameterisation,
             optimiser,
             self._make_wall_keep_out_zone(),
-            **self.problem_class_kwargs,
             **self.problem_settings,
         )
 
