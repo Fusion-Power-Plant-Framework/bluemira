@@ -24,6 +24,8 @@ from bluemira.base.designer import Designer
 
 
 class SimpleDesigner(Designer):
+    param_cls = None
+
     def run(self) -> int:
         return 10
 
@@ -35,8 +37,6 @@ class SimpleDesigner(Designer):
 
 
 class TestDesigner:
-    param_cls = None
-
     def test_execute_calls_run_if_no_run_mode_in_build_config(self):
         designer = SimpleDesigner(None, {})
 
