@@ -38,7 +38,7 @@ class Designer(abc.ABC, Generic[_DesignerReturnT]):
 
     Parameters
     ----------
-    params: Optional[ParameterFrame, Dict]
+    params: Union[Dict, ParameterFrame, None]
         The parameters required by the designer.
     build_config: Optional[Dict]
         The build configuration options for the designer.
