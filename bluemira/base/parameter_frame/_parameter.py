@@ -82,7 +82,7 @@ class NewParameter(Generic[ParameterValueType]):
 
     def __repr__(self) -> str:
         """String repr of class instance."""
-        return f"<NewParameter({self.name}={self.value} {self.unit})>"
+        return f"<{type(self).__name__}({self.name}={self.value} {self.unit})>"
 
     def __eq__(self, __o: object) -> bool:
         """
