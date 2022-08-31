@@ -94,7 +94,7 @@ prominence = [
 ]
 
 [build-system]
-requires = ["setuptools", "versioneer"]
+requires = ["setuptools", "versioneer>=0.24"]
 build-backend = "setuptools.build_meta"
 
 [tool.setuptools.packages.find]
