@@ -26,10 +26,9 @@ Interfaces for builder classes.
 from __future__ import annotations
 
 import abc
-from typing import Dict, List, Optional, Type, Union
+from typing import Dict, List, Type, Union
 
 from bluemira.base.components import Component
-from bluemira.base.designer import Designer
 from bluemira.base.parameter_frame import NewParameterFrame as ParameterFrame
 from bluemira.base.parameter_frame import make_parameter_frame
 from bluemira.utilities.plot_tools import set_component_view
@@ -101,19 +100,13 @@ class Builder(abc.ABC):
     `param_cls` to `None` and pass `None` into this class's constructor.
     """
 
-    def __init__(
-        self,
-        params: Union[ParameterFrame, Dict, None],
-        build_config: Dict,
-        designer: Optional[Designer] = None,
-    ):
+    def __init__(self, params: Union[ParameterFrame, Dict, None], build_config: Dict):
         super().__init__()
         self.name = build_config.get(
             "name", _remove_suffix(self.__class__.__name__, "Builder")
         )
         self.params = make_parameter_frame(params, self.param_cls)
         self.build_config = build_config
-        self.designer = designer
 
     @abc.abstractproperty
     def param_cls(self) -> Union[Type[ParameterFrame], None]:
