@@ -19,11 +19,11 @@
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 """
-Interfaces for designer classes.
+Interface for designer classes.
 """
 
 import abc
-from typing import Dict, Generic, Type, TypeVar, Union
+from typing import Callable, Dict, Generic, Optional, Type, TypeVar, Union
 
 from bluemira.base.parameter_frame import NewParameterFrame as ParameterFrame
 from bluemira.base.parameter_frame import make_parameter_frame
@@ -31,7 +31,7 @@ from bluemira.base.parameter_frame import make_parameter_frame
 _DesignerReturnT = TypeVar("_DesignerReturnT")
 
 
-class Designer(abc.ABC, Generic[_DesignerReturnT]):
+class Designer(Generic[_DesignerReturnT]):
     """
     Base class for 'Designers' that solver design problems as part of
     building a reactor component.
@@ -40,6 +40,8 @@ class Designer(abc.ABC, Generic[_DesignerReturnT]):
     ----------
     params: Optional[ParameterFrame, Dict]
         The parameters required by the designer.
+    build_config: Optional[Dict]
+        The build configuration options for the designer.
 
     Notes
     -----
@@ -47,16 +49,54 @@ class Designer(abc.ABC, Generic[_DesignerReturnT]):
     `param_cls` to `None` and pass `None` into this class's constructor.
     """
 
-    def __init__(self, params: Union[ParameterFrame, Dict, None] = None):
-        super().__init__()
-        self.params = make_parameter_frame(params, self.param_cls)
+    RUN_MODE = "run_mode"
 
-    @abc.abstractproperty
-    def param_cls(self) -> Union[Type[ParameterFrame], None]:
-        """The class to hold this Designer's parameters."""
-        pass
+    def __init__(
+        self,
+        params: Union[Dict, ParameterFrame, None],
+        build_config: Optional[Dict] = None,
+    ):
+        self.params = make_parameter_frame(params, self.param_cls)
+        self.build_config = build_config if build_config is not None else {}
+        self._run_func = self._get_run_func(self.build_config.get(self.RUN_MODE, "run"))
+
+    def execute(self) -> _DesignerReturnT:
+        """
+        Execute the designer with the run mode specified by the build config.
+
+        By default the run mode is 'run'.
+        """
+        return self._run_func()
 
     @abc.abstractmethod
     def run(self) -> _DesignerReturnT:
-        """Run the design."""
-        pass
+        """Run the design problem."""
+
+    def mock(self) -> _DesignerReturnT:
+        """
+        Return a mock of a design.
+
+        Optionally implemented.
+        """
+        raise NotImplementedError
+
+    def read(self) -> _DesignerReturnT:
+        """
+        Read a design from a file.
+
+        The file path should be specified in the build config.
+
+        Optionally implemented.
+        """
+        raise NotImplementedError
+
+    @abc.abstractproperty
+    def param_cls(self) -> Type[ParameterFrame]:
+        """The ParameterFrame class defining this designer's parameters."""
+
+    def _get_run_func(self, mode: str) -> Callable:
+        """Retrieve the function corresponding to the given run mode."""
+        try:
+            return getattr(self, mode)
+        except AttributeError:
+            raise ValueError(f"{type(self).__name__} has no run mode '{mode}'.")
