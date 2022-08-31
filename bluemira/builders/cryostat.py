@@ -106,18 +106,28 @@ class CryostatBuilder(Builder):
     CRYO = "Cryostat VV"
     param_cls: Type[CryostatBuilderParams] = CryostatBuilderParams
 
+    def __init__(
+        self,
+        params: Union[ParameterFrame, Dict, None],
+        build_config: Dict,
+        x_out: float,
+        z_top: float,
+    ):
+        super().__init__(params, build_config)
+        self.x_out = x_out
+        self.z_top = z_top
+
     def build(self) -> Cryostat:
         """
         Build the cryostat component.
         """
-        x_out, z_top = self.designer.run()
-        xz_cryostat = self.build_xz(x_out, z_top)
-        xz_cross_section = xz_cryostat.get_component_properties("shape")
+        xz_cryostat = self.build_xz(self.x_out, self.z_top)
+        xz_cross_section: BluemiraFace = xz_cryostat.get_component_properties("shape")
 
         return Cryostat(
             self.component_tree(
                 xz=[xz_cryostat],
-                xy=[self.build_xy(x_out)],
+                xy=[self.build_xy(self.x_out)],
                 xyz=self.build_xyz(xz_cross_section),
             )
         )
