@@ -13,7 +13,7 @@ class NewParameterFrame:
     """
     A data class to hold a collection of `NewParameter` objects.
 
-    The class should be declared using on of the following forms:
+    The class should be declared using one of the following forms:
 
     .. code-block:: python
 
@@ -72,7 +72,7 @@ class NewParameterFrame:
         return out
 
     @classmethod
-    def _validate_parameter_field(cls, field: str) -> Tuple[Type]:
+    def _validate_parameter_field(cls, field: str) -> Tuple[Type, ...]:
         member_type = cls.__dataclass_fields__[field].type
         if (member_type is not NewParameter) and (
             not hasattr(member_type, "__origin__")
