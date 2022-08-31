@@ -18,35 +18,42 @@
 #
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
+import pytest
 
-"""
-Tests for plasma builder.
-"""
-
-from bluemira.builders.plasma import PlasmaBuilder
-from bluemira.geometry.tools import make_polygon
+from bluemira.base.designer import Designer
 
 
-class TestPlasmaBuilder:
-    @classmethod
-    def setup_class(cls):
-        # Square as revolving a circle 360 causes an error
-        # https://github.com/Fusion-Power-Plant-Framework/bluemira/issues/1090
-        cls.square = make_polygon(
-            [(1, 0, 1), (3, 0, 1), (3, 0, -1), (1, 0, -1)], closed=True
-        )
+class SimpleDesigner(Designer):
+    param_cls = None
 
-    def test_plasma_contains_components_in_3_dimensions(self):
-        builder = PlasmaBuilder({}, self.square)
-        plasma = builder.build()
+    def run(self) -> int:
+        return 10
 
-        assert plasma.component().get_component("xz")
-        assert plasma.component().get_component("xy")
-        assert plasma.component().get_component("xyz")
+    def mock(self) -> int:
+        return 11
 
-    def test_lcfs_eq_to_designer_shape(self):
-        builder = PlasmaBuilder({}, self.square)
+    def read(self) -> int:
+        return 12
 
-        plasma = builder.build()
+    def custom_run_mode(self) -> int:
+        return 13
 
-        assert plasma.lcfs() == self.square
+
+class TestDesigner:
+    def test_execute_calls_run_if_no_run_mode_in_build_config(self):
+        designer = SimpleDesigner(None, {})
+
+        assert designer.execute() == 10
+
+    @pytest.mark.parametrize(
+        "mode, output",
+        [("run", 10), ("mock", 11), ("read", 12), ("custom_run_mode", 13)],
+    )
+    def test_execute_calls_function_given_by_run_mode(self, mode, output):
+        designer = SimpleDesigner(None, {"run_mode": mode})
+
+        assert designer.execute() == output
+
+    def test_ValueError_on_init_given_unknown_run_mode(self):
+        with pytest.raises(ValueError):
+            SimpleDesigner(None, {"run_mode": "not_a_mode"})

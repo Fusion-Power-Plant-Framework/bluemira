@@ -22,6 +22,7 @@
 """
 Cryostat builder
 """
+from dataclasses import dataclass
 from typing import Dict, List, Tuple, Type, Union
 
 import numpy as np
@@ -31,7 +32,6 @@ from bluemira.base.components import PhysicalComponent
 from bluemira.base.designer import Designer
 from bluemira.base.parameter_frame import NewParameter as Parameter
 from bluemira.base.parameter_frame import NewParameterFrame as ParameterFrame
-from bluemira.base.parameter_frame import parameter_frame
 from bluemira.builders.tools import circular_pattern_component, get_n_sectors
 from bluemira.display.palettes import BLUE_PALETTE
 from bluemira.geometry.face import BluemiraFace
@@ -44,8 +44,8 @@ class Cryostat(ComponentManager):
     """
 
 
-@parameter_frame
-class CryostatDesignerParams:
+@dataclass
+class CryostatDesignerParams(ParameterFrame):
     """
     Cryostat designer parameters
     """
@@ -53,8 +53,8 @@ class CryostatDesignerParams:
     g_cr_ts: Parameter[float]
 
 
-@parameter_frame
-class CryostatBuilderParams:
+@dataclass
+class CryostatBuilderParams(ParameterFrame):
     """
     Cryostat builder parameters
     """
@@ -71,7 +71,7 @@ class CryostatBuilderParams:
     z_gs: Parameter[float]
 
 
-class CryostatDesigner(Designer[BluemiraFace]):
+class CryostatDesigner(Designer[Tuple[float, float]]):
     """
     Designer for the cryostat
     """
@@ -86,7 +86,7 @@ class CryostatDesigner(Designer[BluemiraFace]):
         super().__init__(params)
         self.cryo_ts_xz = cryo_ts_xz
 
-    def run(self) -> Tuple[float]:
+    def run(self) -> Tuple[float, float]:
         """
         Cryostat designer run method
         """
@@ -106,18 +106,28 @@ class CryostatBuilder(Builder):
     CRYO = "Cryostat VV"
     param_cls: Type[CryostatBuilderParams] = CryostatBuilderParams
 
+    def __init__(
+        self,
+        params: Union[ParameterFrame, Dict, None],
+        build_config: Dict,
+        x_out: float,
+        z_top: float,
+    ):
+        super().__init__(params, build_config)
+        self.x_out = x_out
+        self.z_top = z_top
+
     def build(self) -> Cryostat:
         """
         Build the cryostat component.
         """
-        x_out, z_top = self.designer.run()
-        xz_cryostat = self.build_xz(x_out, z_top)
-        xz_cross_section = xz_cryostat.get_component_properties("shape")
+        xz_cryostat = self.build_xz(self.x_out, self.z_top)
+        xz_cross_section: BluemiraFace = xz_cryostat.get_component_properties("shape")
 
         return Cryostat(
             self.component_tree(
                 xz=[xz_cryostat],
-                xy=[self.build_xy(x_out)],
+                xy=[self.build_xy(self.x_out)],
                 xyz=self.build_xyz(xz_cross_section),
             )
         )

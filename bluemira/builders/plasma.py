@@ -26,7 +26,6 @@ from typing import Dict
 
 from bluemira.base.builder import Builder, ComponentManager
 from bluemira.base.components import PhysicalComponent
-from bluemira.base.designer import Designer
 from bluemira.display.palettes import BLUE_PALETTE
 from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.tools import make_circle, revolve_shape
@@ -61,20 +60,20 @@ class PlasmaBuilder(Builder):
     def __init__(
         self,
         build_config: Dict,
-        designer: Designer[BluemiraWire],
+        xz_lcfs: BluemiraWire,
     ):
-        super().__init__(None, build_config, designer)
+        super().__init__(None, build_config)
+        self.xz_lcfs = xz_lcfs
 
     def build(self) -> Plasma:
         """
         Build the plasma component.
         """
-        xz_lcfs = self.designer.run()
         return Plasma(
             self.component_tree(
-                xz=[self.build_xz(xz_lcfs)],
-                xy=[self.build_xy(xz_lcfs)],
-                xyz=[self.build_xyz(xz_lcfs)],
+                xz=[self.build_xz(self.xz_lcfs)],
+                xy=[self.build_xy(self.xz_lcfs)],
+                xyz=[self.build_xyz(self.xz_lcfs)],
             )
         )
 
