@@ -1,22 +1,110 @@
+[project]
+name = "bluemira"
+authors = [{name="The bluemira team"}]
+description = """An integrated inter-disciplinary design tool for future fusion
+ reactors, incorporating several modules, some of which rely on
+ other codes, to carry out a range of typical conceptual fusion
+ reactor design activities."""
+readme = "README.md"
+requires-python = ">=3.8"
+dynamic=['version']
+classifiers=[
+        "Development Status :: 3 - Alpha",
+        "Programming Language :: Python :: 3",
+        "License :: OSI Approved :: GNU Lesser General Public License v2.1 or later (LGPLv2.1+)",
+        "Operating System :: POSIX :: Linux",
+    ]
+dependencies = [
+    "anytree",
+    "asteval",
+    "Babel",
+    "click",
+    "CoolProp",
+    "fortranformat",
+    "gmsh",
+    "imageio",
+    "matplotlib>=3.5",
+    "neutronics-material-maker==0.1.11",  # Crash on upgrade
+    "nlopt",
+    "numba",
+    "numba-scipy",
+    "numpy",
+    "pandas",
+    "pint",
+    "periodictable",
+    "pyclipper",
+    "pypet",
+    "pyquaternion",
+    "scikit-learn",
+    "seaborn",
+    "tables",
+    "tabulate",
+    "scipy",
+    "wrapt",
+]
+
+[project.entry-points.numba_extensions]
+init = "numba_scipy:_init_extension"
+
+[project.urls]
+homepage = "https://github.com/Fusion-Power-Plant-Framework/bluemira"
+documentation = "https://bluemira.readthedocs.io"
+repository = "https://github.com/Fusion-Power-Plant-Framework/bluemira"
+
+[project.optional-dependencies]
+dev = [
+    "black",
+    "flake8",
+    "flake8-absolute-import",
+    "flake8-bandit",
+    "flake8-docstrings",
+    "pep8-naming",
+    "pre-commit",
+    "pytest",
+    "pytest-cov",
+    "pytest-html",
+    "pytest-metadata",
+    "pytest-json-report",
+    "sphinx",
+    "sphinx-autoapi",
+    "sphinx-rtd-theme",
+    "versioneer",
+]
+examples = ["notebook"]
+pinned = [
+    "nlopt==2.7.1",
+    "numba==0.56.0",
+    "numba-scipy==0.3.1",
+    "numpy==1.22.4",
+    "matplotlib==3.5.3",
+    "scipy==1.7.3",
+]
+openmoc = [
+    "OpenMOC @git+https://github.com/mit-crpg/OpenMOC.git@7940c0b",
+]
+openmc = [
+    "OpenMC @git+https://github.com/openmc-dev/openmc.git",
+    "parametric-plasma-source @git+https://github.com/open-radiation-sources/parametric-plasma-source.git",
+]
+process = [
+    "cmake>=3.13.0",
+]
+prominence = [
+    "prominence",
+]
+
+[build-system]
+requires = ["setuptools", "versioneer"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["."]
+exclude = ["tests*"]
+
 [tool.black]
 line-length = 89
 include = '\.pyi?$'
-exclude = '''
-/(
-    \.git
-  | \.hg
-  | \.mypy_cache
-  | \.tox
-  | \.venv
-  | \.env
-  | _build
-  | buck-out
-  | build
-  | dist
-  | mirapy
-  | examples/meshing
-)/
-'''
+extend-exclude = '\.env'
 
 [tool.coverage.report]
 "exclude_lines" = [
