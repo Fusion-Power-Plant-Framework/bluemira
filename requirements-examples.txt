@@ -13,7 +13,7 @@ entrypoints==0.4
 executing==1.0.0
 fastjsonschema==2.16.1
 importlib-resources==5.9.0
-ipykernel==6.15.1
+ipykernel==6.15.2
 ipython==8.4.0
 ipython-genutils==0.2.0
 jedi==0.18.1
