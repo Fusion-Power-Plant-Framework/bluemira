@@ -27,8 +27,6 @@ import os
 
 import numpy as np
 import pytest
-
-# from EUDEMO_builders.ivc import InVesselComponentBuilder
 from EUDEMO_builders.ivc import WallSilhouetteDesigner
 
 from bluemira.base.error import BuilderError
@@ -146,4 +144,6 @@ class TestWallSilhouetteDesigner:
         bounding_box = designer.execute().create_shape().bounding_box
 
         width = bounding_box.x_max - bounding_box.x_min
-        assert width == pytest.approx(12.1 - 5.8)
+        assert width == pytest.approx(
+            PARAMS["r_fw_ob_in"]["value"] - PARAMS["r_fw_ib_in"]["value"]
+        )
