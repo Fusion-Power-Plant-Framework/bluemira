@@ -47,7 +47,7 @@ class TestUnconstrainedTikhonovSolver:
 
     @pytest.mark.longrun
     def test_solver_converges_on_run(self):
-        solver = UTSolver(self.param_dict)  # , plot_optimisation=True)
+        solver = UTSolver(self.param_dict, {"plot_optimisation": True})
 
         eq = solver.execute(solver.run_mode_cls.RUN)
 

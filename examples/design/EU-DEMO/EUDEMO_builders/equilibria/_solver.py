@@ -141,9 +141,15 @@ class _Setup(Task):
 
 
 class _Run(Task):
-    def __init__(self, params: ParameterFrame, file_path: Optional[str] = None) -> None:
+    def __init__(
+        self,
+        params: ParameterFrame,
+        file_path: Optional[str] = None,
+        plot_optimisation: bool = False,
+    ):
         super().__init__(params)
         self.file_path = file_path
+        self.plot_optimisation = plot_optimisation
 
     def run(
         self, eq_and_opt_problem: Tuple[Equilibrium, CoilsetOptimisationProblem]
@@ -156,7 +162,7 @@ class _Run(Task):
             convergence=DudsonConvergence(),
             relaxation=0.2,
             fixed_coils=True,
-            plot=False,  # TODO(hsaunders1904): make configurable
+            plot=self.plot_optimisation,
         )
         iterator_program()
         return eq
@@ -204,6 +210,20 @@ class UnconstrainedTikhonovSolver(SolverABC):
     """
     Solves an unconstrained Tikhnov current gradient coil-set
     optimisation problem, outputting an `Equilibrium`.
+
+    Parameters
+    ----------
+    params: Union[Dict, NewParameterFrame]
+        The parameters for the solver, the dictionary or frame must
+        contain all the parameters present in
+        `UnconstrainedTikhonovSolverParams`.
+    build_config: Optional[Dict]
+        The config for the solver. Optional keys:
+        - `read_file_path`: str
+            the path to an eqdsk file to read the equilibrium from,
+            required in `READ` mode.
+        - `plot_optimisation`: bool
+            set to `True` to plot the iterations in the optimisation.
     """
 
     setup_cls = _Setup
@@ -215,8 +235,10 @@ class UnconstrainedTikhonovSolver(SolverABC):
         self.params = make_parameter_frame(params, UnconstrainedTikhonovSolverParams)
         self.build_config = {} if build_config is None else build_config
         read_file_path = self.build_config.get("file_path", None)
+        plot_optimisation = self.build_config.get("plot_optimisation", False)
+
         self._setup = self.setup_cls(self.params)
-        self._run = self.run_cls(self.params, read_file_path)
+        self._run = self.run_cls(self.params, read_file_path, plot_optimisation)
         self._teardown = self.teardown_cls(self.params)
 
 
