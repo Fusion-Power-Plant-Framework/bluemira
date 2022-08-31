@@ -35,6 +35,9 @@ class SimpleDesigner(Designer):
     def read(self) -> int:
         return 12
 
+    def custom_run_mode(self) -> int:
+        return 13
+
 
 class TestDesigner:
     def test_execute_calls_run_if_no_run_mode_in_build_config(self):
@@ -42,7 +45,10 @@ class TestDesigner:
 
         assert designer.execute() == 10
 
-    @pytest.mark.parametrize("mode, output", [("run", 10), ("mock", 11), ("read", 12)])
+    @pytest.mark.parametrize(
+        "mode, output",
+        [("run", 10), ("mock", 11), ("read", 12), ("custom_run_mode", 13)],
+    )
     def test_execute_calls_function_given_by_run_mode(self, mode, output):
         designer = SimpleDesigner(None, {"run_mode": mode})
 
