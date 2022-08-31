@@ -32,10 +32,10 @@ from bluemira.base.parameter_frame import NewParameterFrame as ParameterFrame
 from bluemira.equilibria import Equilibrium
 from bluemira.equilibria.find import find_OX_points, get_legs
 from bluemira.geometry.parameterisations import GeometryParameterisation, PolySpline
-from bluemira.geometry.tools import convex_hull_wires_2d, make_polygon
+from bluemira.geometry.tools import convex_hull_wires_2d, make_polygon, offset_wire
 from bluemira.geometry.wire import BluemiraWire
 from bluemira.utilities.optimiser import Optimiser
-from bluemira.utilities.tools import get_class_from_module, offset_wire
+from bluemira.utilities.tools import get_class_from_module
 
 
 @dataclass
@@ -48,9 +48,11 @@ class WallSilhouetteDesignerParams(ParameterFrame):
     r_fw_ib_in: Parameter[float]  # inboard first wall inner radius
     r_fw_ob_in: Parameter[float]  # inboard first wall outer radius
     A: Parameter[float]  # aspect ratio
+    tk_sol_ib: Parameter[float]
+    fw_psi_n: Parameter[float]
 
 
-class WallSilhouetteDesigner(Designer[GeometryParameterisation]):
+class WallSilhouetteDesigner(Designer[BluemiraWire]):
 
     param_cls = WallSilhouetteDesignerParams
 
@@ -58,7 +60,7 @@ class WallSilhouetteDesigner(Designer[GeometryParameterisation]):
         self,
         params: Union[ParameterFrame, Dict],
         build_config: Dict,
-        equilibrium: Optional[Equilibrium] = None,
+        equilibrium: Equilibrium,
     ) -> None:
 
         super().__init__(params, build_config)
@@ -78,9 +80,9 @@ class WallSilhouetteDesigner(Designer[GeometryParameterisation]):
 
         if problem_class is not None:
             self.problem_class = get_class_from_module(problem_class)
-            self.problem_settings = self.opt_config.get("problem_settings", {})
 
             self.opt_config = self.build_config.get("optimisation_config", {})
+            self.problem_settings = self.opt_config.get("problem_settings", {})
 
             self.algorithm_name = self.opt_config.get("algorithm_name", "SLSQP")
             self.opt_conditions = self.opt_config.get(
@@ -90,7 +92,7 @@ class WallSilhouetteDesigner(Designer[GeometryParameterisation]):
 
         self.equilibrium = equilibrium
 
-    def execute(self):
+    def execute(self) -> GeometryParameterisation:
         """
         Execute method of WallSilhouetteDesigner
         """
@@ -100,7 +102,8 @@ class WallSilhouetteDesigner(Designer[GeometryParameterisation]):
         _, x_points = find_OX_points(
             self.equilibrium.x, self.equilibrium.z, self.equilibrium.psi()
         )
-        if result.bounding_box.z_min >= x_points[0].z:
+
+        if result.create_shape().bounding_box.z_min >= x_points[0].z:
             raise BuilderError(
                 "First wall boundary does not inclose separatrix x-point."
             )
@@ -127,6 +130,7 @@ class WallSilhouetteDesigner(Designer[GeometryParameterisation]):
         Optimise the shape using the provided parameterisation and optimiser.
         """
         parameterisation = self._get_parameterisation()
+
         if not hasattr(self, "problem_class"):
             raise ValueError(
                 f"Cannot execute {type(self).__name__} in RUN mode: no problem_class specified."
@@ -147,7 +151,7 @@ class WallSilhouetteDesigner(Designer[GeometryParameterisation]):
             self.opt_parameters,
         )
 
-        if self._problem_settings != {}:
+        if self.problem_settings != {}:
             bluemira_debug(
                 f"Applying non-default settings to problem: {self.problem_settings}"
             )
@@ -173,24 +177,25 @@ class WallSilhouetteDesigner(Designer[GeometryParameterisation]):
         shape_params = {}
         for key, val in self.variables_map.items():
             if isinstance(val, str):
-                val = self.params.get(val)
+                val = getattr(self.params, val).value
 
             if isinstance(val, dict):
                 if isinstance(val["value"], str):
-                    val["value"] = self.params.get(val["value"])
+                    val["value"] = getattr(self.params, val["value"]).value
             else:
                 val = {"value": val}
 
             shape_params[key] = val
 
-        if issubclass(self.param_cls, PolySpline):
+        if issubclass(self.parameterisation_cls, PolySpline):
             shape_params["height"] = {"value": self._derive_polyspline_height()}
+
         return shape_params
 
     def _derive_polyspline_height(self) -> float:
         """Derive the PolySpline height from relevant parameters."""
-        r_minor = self._params.R_0 / self._params.A
-        return (self._params.kappa_95 * r_minor) * 2
+        r_minor = self.params.R_0.value / self.params.A.value
+        return (self.params.kappa_95.value * r_minor) * 2
 
     def _make_wall_keep_out_zone(self) -> BluemiraWire:
         """
