@@ -24,15 +24,18 @@ A collection of tools used in the EU-DEMO design.
 """
 
 import copy
+from typing import List, Tuple
 
 import numpy as np
 
 import bluemira.base.components as bm_comp
 import bluemira.geometry as bm_geo
+from bluemira.base.components import PhysicalComponent
 from bluemira.base.constants import EPS
 from bluemira.base.error import BuilderError
 from bluemira.builders._varied_offset import varied_offset
 from bluemira.geometry.face import BluemiraFace
+from bluemira.geometry.plane import BluemiraPlane
 from bluemira.geometry.tools import (
     boolean_cut,
     boolean_fuse,
@@ -53,6 +56,8 @@ __all__ = [
     "varied_offset",
     "find_xy_plane_radii",
     "make_circular_xy_ring",
+    "build_sectioned_xy",
+    "build_sectioned_xyz",
 ]
 
 
@@ -342,3 +347,92 @@ def make_circular_xy_ring(r_inner, r_outer):
     inner = make_circle(r_inner, center=centre, axis=axis)
     outer = make_circle(r_outer, center=centre, axis=axis)
     return BluemiraFace([outer, inner])
+
+
+def build_sectioned_xy(
+    face: BluemiraFace, plot_colour: Tuple[float]
+) -> List[PhysicalComponent]:
+    """
+    Build the x-y components of sectioned component
+
+    Parameters
+    ----------
+    face: BluemiraFace
+        xz face to build xy component
+    plot_colour: Tuple[float]
+        colour tuple for component
+
+    """
+    xy_plane = BluemiraPlane.from_3_points([0, 0, 0], [1, 0, 0], [1, 1, 0])
+
+    r_ib_out, r_ob_out = find_xy_plane_radii(face.boundary[0], xy_plane)
+    r_ib_in, r_ob_in = find_xy_plane_radii(face.boundary[1], xy_plane)
+
+    sections = []
+    for name, r_in, r_out in [
+        ["inboard", r_ib_in, r_ib_out],
+        ["outboard", r_ob_in, r_ob_out],
+    ]:
+        board = make_circular_xy_ring(r_in, r_out)
+        section = PhysicalComponent(name, board)
+        section.plot_options.face_options["color"] = plot_colour
+        sections.append(section)
+
+    return sections
+
+
+def build_sectioned_xyz(
+    face: BluemiraFace,
+    name: str,
+    n_TF: int,
+    plot_colour: Tuple[float],
+    degree: float = 360,
+    disable_sectioning: bool = False,
+) -> List[PhysicalComponent]:
+    """
+    Build the x-y-z components of sectioned component
+
+    Parameters
+    ----------
+    face: BluemiraFace
+        xz face to build xyz component
+    name: str
+        PhysicalComponent name
+    n_TF: int
+        number of TF coils
+    plot_colour: Tuple[float]
+        colour tuple for component
+    degree: float
+        angle to sweep through
+    disable_sectioning: bool
+        Switch off sectioning (#1319 Topology issue)
+
+    Notes
+    -----
+    disable_sectioning will only return a list with a single component
+    rotated a maximum of 359 degrees. This is a workaround for two issues
+    from the topology naming issue #1319:
+
+        - Some objects fail to be rebuilt when rotated
+        - Some objects cant be rotated 360 degrees due to DisjointedFaceError
+
+
+    """
+    sector_degree, n_sectors = get_n_sectors(n_TF, degree)
+
+    shape = revolve_shape(
+        face,
+        base=(0, 0, 0),
+        direction=(0, 0, 1),
+        degree=sector_degree if disable_sectioning else min(359, degree),
+    )
+    body = PhysicalComponent(name, shape)
+    body.display_cad_options.color = plot_colour
+
+    # this is currently broken in some situations
+    # because of #1319 and related Topological naming issues
+    return (
+        circular_pattern_component(body, n_sectors, degree=sector_degree * n_sectors)
+        if disable_sectioning
+        else [body]
+    )
