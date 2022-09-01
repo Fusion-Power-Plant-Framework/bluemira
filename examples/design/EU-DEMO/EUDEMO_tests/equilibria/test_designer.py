@@ -25,6 +25,7 @@ from typing import Dict
 
 import pytest
 
+from bluemira.base.file import get_bluemira_path
 from bluemira.equilibria import Equilibrium
 from EUDEMO_builders.equilibria import EquilibriumDesigner
 from EUDEMO_builders.equilibria._designer import EquilibriumDesignerParams
@@ -32,6 +33,9 @@ from EUDEMO_builders.equilibria._designer import EquilibriumDesignerParams
 
 class TestUnconstrainedTikhonovSolver:
 
+    EQDSK_FILE = os.path.join(
+        get_bluemira_path("equilibria", subfolder="data"), "EU-DEMO_EOF.json"
+    )
     DATA_DIR = os.path.join(os.path.dirname(__file__), "test_data")
 
     @classmethod
@@ -54,7 +58,7 @@ class TestUnconstrainedTikhonovSolver:
         assert designer.params != EquilibriumDesignerParams.from_dict(self.param_dict)
 
     def test_designer_reads_file_in_read_mode(self):
-        eqdsk = os.path.join(self.DATA_DIR, "equilibrium_eqdsk.json")
+        eqdsk = self.EQDSK_FILE
         designer = EquilibriumDesigner(
             self.param_dict, {"run_mode": "read", "file_path": eqdsk}
         )
