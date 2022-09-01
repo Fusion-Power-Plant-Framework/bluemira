@@ -58,7 +58,7 @@ class Designer(abc.ABC, Generic[_DesignerReturnT]):
     ):
         self.params = make_parameter_frame(params, self.param_cls)
         self.build_config = build_config if build_config is not None else {}
-        self._run_func = self._get_run_func(self.build_config.get(self.RUN_MODE, "run"))
+        self._run_func = self._get_run_func(self.run_mode)
 
     def execute(self) -> _DesignerReturnT:
         """
@@ -93,6 +93,11 @@ class Designer(abc.ABC, Generic[_DesignerReturnT]):
     @abc.abstractproperty
     def param_cls(self) -> Type[ParameterFrame]:
         """The ParameterFrame class defining this designer's parameters."""
+
+    @property
+    def run_mode(self) -> str:
+        """Get the run mode of this designer."""
+        return self.build_config.get(self.RUN_MODE, "run")
 
     def _get_run_func(self, mode: str) -> Callable:
         """Retrieve the function corresponding to the given run mode."""
