@@ -22,7 +22,7 @@
 
 """
 from dataclasses import dataclass
-from typing import Tuple
+from typing import Dict, Tuple
 
 import numpy as np
 
@@ -43,9 +43,15 @@ class PlasmaFaceDesignerParams(ParameterFrame):
 
 class PlasmaFaceDesigner(Designer[BluemiraFace]):
 
-    params_cls = PlasmaFaceDesignerParams
+    param_cls = PlasmaFaceDesignerParams
 
-    def __init__(self, params, ivc_boundary, wall_boundary, divertor_silhouette):
+    def __init__(
+        self,
+        params: Dict[str, ParameterFrame],
+        ivc_boundary: BluemiraWire,
+        wall_boundary: BluemiraWire,
+        divertor_silhouette: BluemiraWire,
+    ):
         super().__init__(params)
         self.ivc_boundary = ivc_boundary
         self.wall_boundary = wall_boundary
@@ -68,10 +74,7 @@ class PlasmaFaceDesigner(Designer[BluemiraFace]):
             self.params.rm_clearance.value,
         )
 
-        blanket_face, divertor_face = self._cut_vessel_shape(
-            in_vessel_face, rm_clearance_face
-        )
-        return blanket_face, divertor_face
+        return self._cut_vessel_shape(in_vessel_face, rm_clearance_face)
 
     @staticmethod
     def _make_clearance_face(
@@ -83,14 +86,17 @@ class PlasmaFaceDesigner(Designer[BluemiraFace]):
         The face is intended to be used to cut a remote maintainance
         clearance between blankets and divertor.
         """
-        x_coords = [x_min, x_min, x_max, x_max]
-        y_coords = [0, 0, 0, 0]
-        z_coords = [
-            z + thickness / 2,
-            z - thickness / 2,
-            z - thickness / 2,
-            z + thickness / 2,
-        ]
+        x_coords = np.full(4, x_min)
+        y_coords = np.zeros(4)
+
+        z_coords = np.zeros(4)
+        z_coords[(0, 3),] = (  # noqa: E231
+            z + thickness / 2
+        )
+        z_coords[(1, 2),] = (  # noqa: E231
+            z - thickness / 2
+        )
+
         return BluemiraFace(make_polygon([x_coords, y_coords, z_coords], closed=True))
 
     @staticmethod

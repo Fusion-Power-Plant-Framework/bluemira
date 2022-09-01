@@ -23,6 +23,7 @@ Module containing builders for the EUDEMO first wall components
 """
 from EUDEMO_builders.ivc.divertor_silhouette import DivertorSilhouetteDesigner
 from EUDEMO_builders.ivc.ivc_boundary import IVCBoundaryDesigner
+from EUDEMO_builders.ivc.plasma_face import PlasmaFaceDesigner
 from EUDEMO_builders.ivc.wall_silhouette import WallSilhouetteDesigner
 from EUDEMO_builders.ivc.wall_silhouette_parameterisation import (
     WallPolySpline,

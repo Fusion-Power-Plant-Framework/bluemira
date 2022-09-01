@@ -48,7 +48,7 @@ class IVCBoundaryDesigner(Designer[BluemiraWire]):
 
     def __init__(
         self,
-        params: Dict[str, IVCBoundaryParams],
+        params: Dict[str, ParameterFrame],
         wall_shape: BluemiraWire,
         z_min: float,
     ):

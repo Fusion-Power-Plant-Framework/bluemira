@@ -93,7 +93,7 @@ class DivertorSilhouetteDesigner(Designer[BluemiraWire]):
 
     def __init__(
         self,
-        params: Dict[str, DivertorSilhouetteParams],
+        params: Dict[str, ParameterFrame],
         equilibrium: Equilibrium,
         wall,
     ):
