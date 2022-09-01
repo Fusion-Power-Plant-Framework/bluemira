@@ -19,12 +19,11 @@
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 
-from EUDEMO_builders.maintenance import UpperPortOP
-
 from bluemira.base.config import Configuration
 from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.tools import make_polygon
 from bluemira.utilities.optimiser import Optimiser
+from EUDEMO_builders.maintenance import UpperPortOP
 
 
 class TestUpperPortOP:
