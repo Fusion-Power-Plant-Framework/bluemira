@@ -29,7 +29,7 @@ import numpy as np
 import pytest
 from EUDEMO_builders.ivc import WallSilhouetteDesigner
 
-from bluemira.base.error import BuilderError
+from bluemira.base.error import DesignError
 from bluemira.base.file import get_bluemira_path
 from bluemira.equilibria import Equilibrium
 from bluemira.equilibria.find import find_OX_points

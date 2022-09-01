@@ -25,7 +25,7 @@ from dataclasses import dataclass
 from typing import Dict, Type, Union
 
 from bluemira.base.designer import Designer
-from bluemira.base.error import BuilderError
+from bluemira.base.error import DesignError
 from bluemira.base.look_and_feel import bluemira_debug, bluemira_print
 from bluemira.base.parameter_frame import NewParameter as Parameter
 from bluemira.base.parameter_frame import NewParameterFrame as ParameterFrame
@@ -104,9 +104,7 @@ class WallSilhouetteDesigner(Designer[GeometryParameterisation]):
         )
 
         if result.create_shape().bounding_box.z_min >= x_points[0].z:
-            raise BuilderError(
-                "First wall boundary does not enclose separatrix x-point."
-            )
+            raise DesignError("First wall boundary does not enclose separatrix x-point.")
         return result
 
     def mock(self) -> GeometryParameterisation:

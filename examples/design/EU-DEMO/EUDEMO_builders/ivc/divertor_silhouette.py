@@ -56,6 +56,15 @@ class LegPosition(enum.Enum):
     OUTER = enum.auto()
 
 
+class WireEndAxis(enum.Enum):
+    """
+    Enum for wire end axis
+    """
+
+    X = enum.auto()
+    Z = enum.auto()
+
+
 def get_separatrix_legs(
     equilibrium: Equilibrium,
 ) -> Dict[LegPosition, List[BluemiraWire]]:
@@ -129,11 +138,11 @@ class DivertorSilhouetteDesigner(Designer[BluemiraWire]):
         sols = self._get_sols_for_leg(leg)
 
         # Just use the first scrape-off layer for now
-        point = sols[0].value_at(distance=self.leg_length[leg])
+        point = sols[0].value_at(distance=self.leg_length[leg].value)
 
         # Create some vertical targets for now. Eventually the target
         # angle will be derived from the grazing-angle parameter
-        target_length = self.params.div_Ltarg
+        target_length = self.params.div_Ltarg.value
         target_coords = np.array(
             [
                 [point[0], point[0]],
@@ -226,7 +235,7 @@ class DivertorSilhouetteDesigner(Designer[BluemiraWire]):
         """
         Build the inner baffle to join with the given target.
         """
-        if self.params.div_open:
+        if self.params.div_open.value:
             raise NotImplementedError("Open divertor baffles not yet supported")
         else:
             inner_target_start = self._get_wire_end_with_largest(target, "x")
@@ -245,7 +254,7 @@ class DivertorSilhouetteDesigner(Designer[BluemiraWire]):
         """
         Build the outer baffle to join with the given target.
         """
-        if self.params.div_open:
+        if self.params.div_open.value:
             raise NotImplementedError("Open divertor baffles not yet supported")
         else:
             outer_target_end = self._get_wire_end_with_largest(target, "x")
@@ -288,11 +297,7 @@ class DivertorSilhouetteDesigner(Designer[BluemiraWire]):
         Get the coordinates of the end of a wire whose coordinate in the
         given axis satisfies the comparision function.
         """
-        allowed_axes = ["x", "z"]
-        if axis not in allowed_axes:
-            raise ValueError(
-                f"Unrecognised axis '{axis}'. Must be one of: {allowed_axes}."
-            )
+        axis = WireEndAxis[axis].name.lower()
 
         start_point = wire.start_point()
         end_point = wire.end_point()
