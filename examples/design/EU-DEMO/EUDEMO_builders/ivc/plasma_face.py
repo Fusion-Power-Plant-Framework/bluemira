@@ -21,25 +21,35 @@
 """
 
 """
+from dataclasses import dataclass
 from typing import Tuple
 
-from EUDEMO_builders.ivc.tools import _cut_vessel_shape, _make_clearance_face
+import numpy as np
 
 from bluemira.base.designer import Designer
+from bluemira.base.parameter_frame import NewParameter as Parameter
+from bluemira.base.parameter_frame import NewParameterFrame as ParameterFrame
 from bluemira.geometry.face import BluemiraFace
+from bluemira.geometry.tools import boolean_cut, make_polygon
 from bluemira.geometry.wire import BluemiraWire
+
+
+@dataclass
+class PlasmaFaceDesignerParams(ParameterFrame):
+    """Parameters for running the `PlasmaFaceDesigner`."""
+
+    rm_clearance: Parameter[float]
 
 
 class PlasmaFaceDesigner(Designer[BluemiraFace]):
 
-    params_cls = None
+    params_cls = PlasmaFaceDesignerParams
 
-    def __init__(self, ivc_boundary, wall_boundary, divertor_silhouette, rm_clearance):
-        super().__init__()
+    def __init__(self, params, ivc_boundary, wall_boundary, divertor_silhouette):
+        super().__init__(params)
         self.ivc_boundary = ivc_boundary
         self.wall_boundary = wall_boundary
         self.divertor_silhouette = divertor_silhouette
-        self.rm_clearance = rm_clearance
 
     def run(self) -> Tuple[BluemiraFace]:
         plasma_facing_wire = BluemiraWire(
@@ -51,14 +61,46 @@ class PlasmaFaceDesigner(Designer[BluemiraFace]):
         # Cut a clearance between the blankets and divertor - getting two
         # new faces
         vessel_bbox = in_vessel_face.bounding_box
-        rm_clearance_face = _make_clearance_face(
+        rm_clearance_face = self._make_clearance_face(
             vessel_bbox.x_min,
             vessel_bbox.x_max,
             self.wall_boundary.bounding_box.z_min,
-            self.rm_clearance,
+            self.params.rm_clearance.value,
         )
 
-        blanket_face, divertor_face = _cut_vessel_shape(
+        blanket_face, divertor_face = self._cut_vessel_shape(
             in_vessel_face, rm_clearance_face
         )
+        return blanket_face, divertor_face
+
+    @staticmethod
+    def _make_clearance_face(
+        x_min: float, x_max: float, z: float, thickness: float
+    ) -> BluemiraFace:
+        """
+        Makes a rectangular face in xz with the given thickness in z.
+
+        The face is intended to be used to cut a remote maintainance
+        clearance between blankets and divertor.
+        """
+        x_coords = [x_min, x_min, x_max, x_max]
+        y_coords = [0, 0, 0, 0]
+        z_coords = [
+            z + thickness / 2,
+            z - thickness / 2,
+            z - thickness / 2,
+            z + thickness / 2,
+        ]
+        return BluemiraFace(make_polygon([x_coords, y_coords, z_coords], closed=True))
+
+    @staticmethod
+    def _cut_vessel_shape(
+        in_vessel_face: BluemiraFace, rm_clearance_face: BluemiraFace
+    ) -> Tuple[BluemiraFace, BluemiraFace]:
+        """
+        Cut a remote maintainance clearance into the given vessel shape.
+        """
+        pieces = boolean_cut(in_vessel_face, [rm_clearance_face])
+        blanket_face = pieces[np.argmax([p.center_of_mass[2] for p in pieces])]
+        divertor_face = pieces[np.argmin([p.center_of_mass[2] for p in pieces])]
         return blanket_face, divertor_face

@@ -39,7 +39,7 @@ from bluemira.geometry.wire import BluemiraWire
 
 @dataclass
 class DivertorSilhouetteParams(ParameterFrame):
-    """Parameters for running the `WallSolver`."""
+    """Parameters for running the `DivertorSilhouetteDesigner`."""
 
     div_L2D_ib: Parameter[float]
     div_L2D_ob: Parameter[float]

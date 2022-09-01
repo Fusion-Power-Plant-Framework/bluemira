@@ -21,45 +21,10 @@
 """
 
 """
-from typing import Tuple
-
 import numpy as np
 
-from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.tools import boolean_cut, make_polygon
 from bluemira.geometry.wire import BluemiraWire
-
-
-def _cut_vessel_shape(
-    in_vessel_face: BluemiraFace, rm_clearance_face: BluemiraFace
-) -> Tuple[BluemiraFace, BluemiraFace]:
-    """
-    Cut a remote maintainance clearance into the given vessel shape.
-    """
-    pieces = boolean_cut(in_vessel_face, [rm_clearance_face])
-    blanket_face = pieces[np.argmax([p.center_of_mass[2] for p in pieces])]
-    divertor_face = pieces[np.argmin([p.center_of_mass[2] for p in pieces])]
-    return blanket_face, divertor_face
-
-
-def _make_clearance_face(
-    x_min: float, x_max: float, z: float, thickness: float
-) -> BluemiraFace:
-    """
-    Makes a rectangular face in xz with the given thickness in z.
-
-    The face is intended to be used to cut a remote maintainance
-    clearance between blankets and divertor.
-    """
-    x_coords = [x_min, x_min, x_max, x_max]
-    y_coords = [0, 0, 0, 0]
-    z_coords = [
-        z + thickness / 2,
-        z - thickness / 2,
-        z - thickness / 2,
-        z + thickness / 2,
-    ]
-    return BluemiraFace(make_polygon([x_coords, y_coords, z_coords], closed=True))
 
 
 def cut_wall_below_x_point(shape: BluemiraWire, x_point_z: float) -> BluemiraWire:
