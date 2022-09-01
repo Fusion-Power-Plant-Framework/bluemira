@@ -49,7 +49,7 @@ class Designer(abc.ABC, Generic[_DesignerReturnT]):
     `param_cls` to `None` and pass `None` into this class's constructor.
     """
 
-    RUN_MODE = "run_mode"
+    KEY_RUN_MODE = "run_mode"
 
     def __init__(
         self,
@@ -97,7 +97,7 @@ class Designer(abc.ABC, Generic[_DesignerReturnT]):
     @property
     def run_mode(self) -> str:
         """Get the run mode of this designer."""
-        return self.build_config.get(self.RUN_MODE, "run")
+        return self.build_config.get(self.KEY_RUN_MODE, "run")
 
     def _get_run_func(self, mode: str) -> Callable:
         """Retrieve the function corresponding to the given run mode."""
