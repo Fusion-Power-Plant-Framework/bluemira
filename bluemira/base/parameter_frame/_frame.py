@@ -3,9 +3,11 @@ from __future__ import annotations
 import copy
 import json
 from dataclasses import dataclass
-from typing import Any, Dict, Mapping, Tuple, Type, Union, get_args
+from typing import Any, Dict, Mapping, Tuple, Type, TypeVar, Union, get_args
 
 from bluemira.base.parameter_frame._parameter import NewParameter, ParameterValueType
+
+_PfT = TypeVar("_PfT", bound="NewParameterFrame")
 
 
 @dataclass
@@ -32,10 +34,10 @@ class NewParameterFrame:
 
     @classmethod
     def from_dict(
-        cls,
+        cls: Type[_PfT],
         data: Dict[str, Mapping[str, Union[str, ParameterValueType]]],
         allow_unknown=False,
-    ):
+    ) -> _PfT:
         """Initialize an instance from a dictionary."""
         data = copy.deepcopy(data)
         kwargs: Dict[str, NewParameter] = {}
@@ -52,26 +54,8 @@ class NewParameterFrame:
             raise ValueError(f"Unknown parameter(s) '{list(data)}' in dict.")
         return cls(**kwargs)
 
-    def to_dict(self) -> Dict[str, Dict[str, Any]]:
-        """Serialize this NewParameterFrame to a dictionary."""
-        out = {}
-        for member in self.__dataclass_fields__:
-            out[member] = getattr(self, member).to_dict()
-        return out
-
     @classmethod
-    def _validate_parameter_field(cls, field: str) -> Tuple[Type]:
-        member_type = cls.__dataclass_fields__[field].type
-        if (member_type is not NewParameter) and (
-            not hasattr(member_type, "__origin__")
-            or member_type.__origin__ is not NewParameter
-        ):
-            raise TypeError(f"Field '{field}' does not have type NewParameter.")
-        value_types = get_args(member_type)
-        return value_types
-
-    @classmethod
-    def from_frame(cls, frame: NewParameterFrame) -> NewParameterFrame:
+    def from_frame(cls: Type[_PfT], frame: NewParameterFrame) -> _PfT:
         """Initialise an instance from another NewParameterFrame."""
         kwargs = {}
         for field in cls.__dataclass_fields__:
@@ -85,7 +69,7 @@ class NewParameterFrame:
         return cls(**kwargs)
 
     @classmethod
-    def from_json(cls, json_in: Union[str, json.SupportsRead]) -> NewParameterFrame:
+    def from_json(cls: Type[_PfT], json_in: Union[str, json.SupportsRead]) -> _PfT:
         """Initialise an instance from a JSON file, string, or reader."""
         if hasattr(json_in, "read"):
             # load from file stream
@@ -96,6 +80,24 @@ class NewParameterFrame:
                 return cls.from_dict(json.load(f))
         # load from a JSON string
         return cls.from_dict(json.loads(json_in))
+
+    def to_dict(self) -> Dict[str, Dict[str, Any]]:
+        """Serialize this NewParameterFrame to a dictionary."""
+        out = {}
+        for member in self.__dataclass_fields__:
+            out[member] = getattr(self, member).to_dict()
+        return out
+
+    @classmethod
+    def _validate_parameter_field(cls, field: str) -> Tuple[Type, ...]:
+        member_type = cls.__dataclass_fields__[field].type
+        if (member_type is not NewParameter) and (
+            not hasattr(member_type, "__origin__")
+            or member_type.__origin__ is not NewParameter
+        ):
+            raise TypeError(f"Field '{field}' does not have type NewParameter.")
+        value_types = get_args(member_type)
+        return value_types
 
 
 def make_parameter_frame(
