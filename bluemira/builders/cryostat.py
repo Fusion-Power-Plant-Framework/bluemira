@@ -32,12 +32,7 @@ from bluemira.base.components import PhysicalComponent
 from bluemira.base.designer import Designer
 from bluemira.base.parameter_frame import NewParameter as Parameter
 from bluemira.base.parameter_frame import NewParameterFrame as ParameterFrame
-from bluemira.builders.tools import (
-    build_sectioned_xyz,
-    circular_pattern_component,
-    get_n_sectors,
-    make_circular_xy_ring,
-)
+from bluemira.builders.tools import build_sectioned_xyz, make_circular_xy_ring
 from bluemira.display.palettes import BLUE_PALETTE
 from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.tools import make_polygon
