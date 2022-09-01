@@ -3,9 +3,9 @@ from __future__ import annotations
 import copy
 import json
 from dataclasses import dataclass
-from typing import Any, Dict, Mapping, Tuple, Type, TypeVar, Union, get_args
+from typing import Any, Dict, Tuple, Type, TypeVar, Union, get_args
 
-from bluemira.base.parameter_frame._parameter import NewParameter, ParameterValueType
+from bluemira.base.parameter_frame._parameter import NewParameter, ParamDictT
 
 _PfT = TypeVar("_PfT", bound="NewParameterFrame")
 
@@ -35,7 +35,7 @@ class NewParameterFrame:
     @classmethod
     def from_dict(
         cls: Type[_PfT],
-        data: Dict[str, Mapping[str, Union[str, ParameterValueType]]],
+        data: Dict[str, ParamDictT],
         allow_unknown=False,
     ) -> _PfT:
         """Initialize an instance from a dictionary."""
@@ -101,20 +101,18 @@ class NewParameterFrame:
 
 
 def make_parameter_frame(
-    params: Union[Dict, NewParameterFrame, None],
-    param_cls: Type[NewParameterFrame],
-) -> Union[NewParameterFrame, None]:
+    params: Union[Dict[str, ParamDictT], NewParameterFrame, None],
+    param_cls: Type[_PfT],
+) -> Union[_PfT, None]:
     """
-    Helper function to generate a `ParameterFrame` of a specific type
+    Factory function to generate a `ParameterFrame` of a specific type.
 
     Parameters
     ----------
-    params: Union[Dict, NewParameterFrame, None]
+    params: Union[Dict[str, ParamDictT], NewParameterFrame, None]
         The parameters to initialise the class with
     param_cls: Type[NewParameterFrame]
         The `ParameterFrame` class to generate
-
-
     """
     if param_cls is None:
         if params is None:
