@@ -1,10 +1,21 @@
 import copy
 from dataclasses import dataclass
-from typing import Dict, Generic, List, Tuple, Type, TypeVar
+from typing import Dict, Generic, List, Tuple, Type, TypedDict, TypeVar
 
 from typeguard import typechecked
 
 ParameterValueType = TypeVar("ParameterValueType")
+
+
+class ParamDictT(TypedDict, Generic[ParameterValueType]):
+    """Typed dictionary for a Parameter."""
+
+    name: str
+    value: ParameterValueType
+    unit: str
+    source: str
+    description: str
+    long_name: str
 
 
 @dataclass
