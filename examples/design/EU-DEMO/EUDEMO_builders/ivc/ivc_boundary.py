@@ -62,8 +62,8 @@ class IVCBoundaryDesigner(Designer[BluemiraWire]):
     def run(self) -> BluemiraWire:
         return varied_offset(
             self.wall_shape,
-            self.params.tk_bb_ib,
-            self.params.tk_bb_ob,
-            self.params.ib_offset_angle,
-            self.params.ob_offset_angle,
+            self.params.tk_bb_ib.value,
+            self.params.tk_bb_ob.value,
+            self.params.ib_offset_angle.value,
+            self.params.ob_offset_angle.value,
         )

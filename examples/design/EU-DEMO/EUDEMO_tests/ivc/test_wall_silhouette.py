@@ -37,12 +37,6 @@ from bluemira.equilibria.find import find_OX_points
 EQDATA = get_bluemira_path("equilibria/test_data", subfolder="tests")
 DATA = get_bluemira_path("design/EU-DEMO/EUDEMO_tests/test_data", subfolder="examples")
 
-
-import copy
-
-import pytest
-from EUDEMO_builders.ivc import WallSilhouetteDesigner
-
 OPTIMISER_MODULE_REF = "bluemira.geometry.optimisation"
 WALL_MODULE_REF = "EUDEMO_builders.ivc.wall_silhouette_parameterisation"
 
