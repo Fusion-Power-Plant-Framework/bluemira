@@ -19,7 +19,7 @@
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 """
-Test the complete first wall builder, including divertor.
+Test first wall silhouette designer.
 """
 
 import copy

@@ -22,7 +22,7 @@
 First Wall Silhouette designer
 """
 from dataclasses import dataclass
-from typing import Dict, Optional, Type, Union
+from typing import Dict, Type, Union
 
 from bluemira.base.designer import Designer
 from bluemira.base.error import BuilderError
@@ -52,7 +52,7 @@ class WallSilhouetteDesignerParams(ParameterFrame):
     fw_psi_n: Parameter[float]
 
 
-class WallSilhouetteDesigner(Designer[BluemiraWire]):
+class WallSilhouetteDesigner(Designer[GeometryParameterisation]):
 
     param_cls = WallSilhouetteDesignerParams
 
@@ -105,7 +105,7 @@ class WallSilhouetteDesigner(Designer[BluemiraWire]):
 
         if result.create_shape().bounding_box.z_min >= x_points[0].z:
             raise BuilderError(
-                "First wall boundary does not inclose separatrix x-point."
+                "First wall boundary does not enclose separatrix x-point."
             )
         return result
 
