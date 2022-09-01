@@ -78,6 +78,7 @@ class EquilibriumDesigner(Designer[Equilibrium]):
     """
     Solves an unconstrained Tikhnov current gradient coil-set
     optimisation problem, outputting an `Equilibrium`.
+
     Parameters
     ----------
     params: Union[Dict, NewParameterFrame]
