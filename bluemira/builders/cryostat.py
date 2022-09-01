@@ -32,10 +32,10 @@ from bluemira.base.components import PhysicalComponent
 from bluemira.base.designer import Designer
 from bluemira.base.parameter_frame import NewParameter as Parameter
 from bluemira.base.parameter_frame import NewParameterFrame as ParameterFrame
-from bluemira.builders.tools import circular_pattern_component, get_n_sectors
+from bluemira.builders.tools import build_sectioned_xyz, make_circular_xy_ring
 from bluemira.display.palettes import BLUE_PALETTE
 from bluemira.geometry.face import BluemiraFace
-from bluemira.geometry.tools import make_circle, make_polygon, revolve_shape
+from bluemira.geometry.tools import make_polygon
 
 
 class Cryostat(ComponentManager):
@@ -162,11 +162,9 @@ class CryostatBuilder(Builder):
         x = np.concatenate([x_inner, x_outer])
         z = np.concatenate([z_inner, z_outer])
 
-        xz_cross_section = BluemiraFace(
-            make_polygon({"x": x, "y": 0, "z": z}, closed=True)
+        cryostat_vv = PhysicalComponent(
+            self.CRYO, BluemiraFace(make_polygon({"x": x, "y": 0, "z": z}, closed=True))
         )
-
-        cryostat_vv = PhysicalComponent(self.CRYO, xz_cross_section)
         cryostat_vv.plot_options.face_options["color"] = BLUE_PALETTE["CR"][0]
         return cryostat_vv
 
@@ -179,11 +177,9 @@ class CryostatBuilder(Builder):
         x_out: float
             x coordinate extremity
         """
-        r_out = x_out + self.params.tk_cr_vv.value
-        inner = make_circle(radius=x_out)
-        outer = make_circle(radius=r_out)
-
-        cryostat_vv = PhysicalComponent(self.CRYO, BluemiraFace([outer, inner]))
+        cryostat_vv = PhysicalComponent(
+            self.CRYO, make_circular_xy_ring(x_out, x_out + self.params.tk_cr_vv.value)
+        )
         cryostat_vv.plot_options.face_options["color"] = BLUE_PALETTE["CR"][0]
         return cryostat_vv
 
@@ -198,17 +194,11 @@ class CryostatBuilder(Builder):
         xz_cross_section: BluemiraFace
             xz cross section of cryostat
         """
-        sector_degree, n_sectors = get_n_sectors(self.params.n_TF.value, degree)
-
-        shape = revolve_shape(
+        return build_sectioned_xyz(
             xz_cross_section,
-            base=(0, 0, 0),
-            direction=(0, 0, 1),
-            degree=sector_degree,
-        )
-
-        cryostat_vv = PhysicalComponent(self.CRYO, shape)
-        cryostat_vv.display_cad_options.color = BLUE_PALETTE["CR"][0]
-        return circular_pattern_component(
-            cryostat_vv, n_sectors, degree=sector_degree * n_sectors
+            self.CRYO,
+            self.params.n_TF.value,
+            BLUE_PALETTE["CR"][0],
+            degree,
+            disable_sectioning=True,
         )
