@@ -297,7 +297,7 @@ class DivertorSilhouetteDesigner(Designer[BluemiraWire]):
         Get the coordinates of the end of a wire whose coordinate in the
         given axis satisfies the comparision function.
         """
-        axis = WireEndAxis[axis].name.lower()
+        axis = WireEndAxis[axis.upper()].name.lower()
 
         start_point = wire.start_point()
         end_point = wire.end_point()
