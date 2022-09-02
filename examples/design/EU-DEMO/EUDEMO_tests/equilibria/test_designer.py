@@ -31,7 +31,7 @@ from EUDEMO_builders.equilibria import EquilibriumDesigner
 from EUDEMO_builders.equilibria._designer import EquilibriumDesignerParams
 
 
-class TestUnconstrainedTikhonovSolver:
+class TestEquilibriumDesigner:
 
     EQDSK_FILE = os.path.join(
         get_bluemira_path("equilibria", subfolder="data"), "EU-DEMO_EOF.json"
