@@ -26,7 +26,6 @@ from typing import Dict, Type, Union
 
 from bluemira.base.builder import Builder, ComponentManager
 from bluemira.base.components import Component, PhysicalComponent
-from bluemira.base.designer import Designer
 from bluemira.base.parameter_frame import NewParameter as Parameter
 from bluemira.base.parameter_frame import parameter_frame
 from bluemira.builders.tools import (
@@ -35,7 +34,6 @@ from bluemira.builders.tools import (
     pattern_revolved_silhouette,
 )
 from bluemira.display.palettes import BLUE_PALETTE
-from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.wire import BluemiraWire
 
 
@@ -56,27 +54,6 @@ class DivertorBuilderParams:
     c_rm: Parameter[float]
 
 
-class DivertorDesigner(Designer[BluemiraWire]):
-    """
-    Divertor designer
-    """
-
-    param_cls = None
-
-    def __init__(
-        self,
-        divertor_silhouette: BluemiraWire,
-    ):
-        super().__init__()
-        self.divertor_silhouette = divertor_silhouette
-
-    def run(self):
-        """
-        Divertor designer run method
-        """
-        return self.divertor_silhouette
-
-
 class DivertorBuilder(Builder):
     """
     Divertor builder
@@ -90,45 +67,39 @@ class DivertorBuilder(Builder):
         self,
         params: Union[DivertorBuilderParams, Dict],
         build_config: Dict,
-        designer: Designer[BluemiraFace],
+        divertor_silhouette: BluemiraWire,
     ):
-        super().__init__(params, build_config, designer)
+        super().__init__(params, build_config)
+        self.ivc_koz = divertor_silhouette
 
     def build(self) -> Divertor:
         """
         Build the divertor component.
         """
-        ivc_koz = self.designer.run()
-
         return Divertor(
             self.component_tree(
-                xz=[self.build_xz(ivc_koz)],
+                xz=[self.build_xz()],
                 xy=[],
-                xyz=self.build_xyz(ivc_koz),
+                xyz=self.build_xyz(),
             )
         )
 
-    def build_xz(
-        self,
-        ivc_koz: BluemiraWire,
-    ) -> PhysicalComponent:
+    def build_xz(self) -> PhysicalComponent:
         """
         Build the x-z components of the divertor.
         """
-        body = PhysicalComponent(self.BODY, ivc_koz)
+        body = PhysicalComponent(self.BODY, self.ivc_koz)
         body.plot_options.face_options["color"] = BLUE_PALETTE[self.DIV][0]
 
         return body
 
-    def build_xyz(
-        self, ivc_koz: BluemiraWire, degree: float = 360.0
-    ) -> PhysicalComponent:
+    def build_xyz(self, degree: float = 360.0) -> PhysicalComponent:
         """
         Build the x-y-z components of the divertor.
         """
         sector_degree, n_sectors = get_n_sectors(self.params.n_TF.value, degree)
         shapes = pattern_revolved_silhouette(
-            ivc_koz,
+            self.ivc_koz,
             self.params.n_div_cassettes.value,
             self.params.n_TF.value,
             self.params.c_rm.value,
