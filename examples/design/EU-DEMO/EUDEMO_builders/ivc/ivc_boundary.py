@@ -19,7 +19,7 @@
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 """
-
+IVC Boundary Designer
 """
 from dataclasses import dataclass
 from typing import Dict
@@ -43,6 +43,17 @@ class IVCBoundaryParams(ParameterFrame):
 
 
 class IVCBoundaryDesigner(Designer[BluemiraWire]):
+    """
+    Designs the IVC Boundary ie the Vacuum Vessel keep out zone
+
+    Parameters
+    ----------
+    params: Dict[str, ParameterFrame]
+        IVC Boundary designer parameters
+    wall_shape: BluemiraWire
+        Wall shape as defined by the wall silhouette designer
+
+    """
 
     param_cls = IVCBoundaryParams
 
@@ -50,16 +61,17 @@ class IVCBoundaryDesigner(Designer[BluemiraWire]):
         self,
         params: Dict[str, ParameterFrame],
         wall_shape: BluemiraWire,
-        z_min: float,
     ):
         super().__init__(params)
 
         if not wall_shape.is_closed():
             raise DesignError("Wall shape must be closed.")
         self.wall_shape = wall_shape
-        self.z_min = z_min
 
     def run(self) -> BluemiraWire:
+        """
+        Run the IVC Boundary designer
+        """
         return varied_offset(
             self.wall_shape,
             self.params.tk_bb_ib.value,

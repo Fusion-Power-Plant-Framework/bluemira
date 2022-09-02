@@ -83,6 +83,19 @@ def get_separatrix_legs(
 
 
 class DivertorSilhouetteDesigner(Designer[BluemiraWire]):
+    """
+    Designs the divertor silhouette to help design the divertor kepp out zone
+
+    Parameters
+    ----------
+    params: Dict[str, ParameterFrame]
+        Divertor silhouette designer parameters
+    equilibrium: Equilibrium
+        The equilibrium to design around
+    wall: BluemiraWire
+        wall boundary keep out zone (cut at divertor)
+
+    """
 
     INNER_BAFFLE = "inner_baffle"
     OUTER_BAFFLE = "outer_baffle"
@@ -96,7 +109,7 @@ class DivertorSilhouetteDesigner(Designer[BluemiraWire]):
         self,
         params: Dict[str, ParameterFrame],
         equilibrium: Equilibrium,
-        wall,
+        wall: BluemiraWire,
     ):
         super().__init__(params)
         if self.params.div_type.value == "DN":
@@ -112,6 +125,9 @@ class DivertorSilhouetteDesigner(Designer[BluemiraWire]):
         self.separatrix_legs = get_separatrix_legs(self.equilibrium)
 
     def run(self) -> Tuple[BluemiraWire]:
+        """
+        Run method of DivertorSilhouetteDesigner
+        """
         # Build the targets for each separatrix leg
         inner_target = self.make_target(LegPosition.INNER, self.INNER_TARGET)
         outer_target = self.make_target(LegPosition.OUTER, self.OUTER_TARGET)

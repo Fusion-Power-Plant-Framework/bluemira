@@ -54,6 +54,19 @@ class WallSilhouetteDesignerParams(ParameterFrame):
 
 
 class WallSilhouetteDesigner(Designer[GeometryParameterisation]):
+    """
+    Designs the first wall silhouette to inform the divertor and IVC design areas
+
+    Parameters
+    ----------
+    params: Dict[str, ParameterFrame]
+        Wall silhouette designer parameters
+    build_config: Dict
+        configuration of the design
+    equilibrium: Equilibrium
+        The equilibrium to design around
+
+    """
 
     param_cls = WallSilhouetteDesignerParams
 

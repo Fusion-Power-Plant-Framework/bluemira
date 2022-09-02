@@ -19,7 +19,7 @@
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 """
-
+Plasma Face Designer
 """
 from dataclasses import dataclass
 from typing import Dict, Tuple
@@ -43,6 +43,20 @@ class PlasmaFaceDesignerParams(ParameterFrame):
 
 
 class PlasmaFaceDesigner(Designer[BluemiraFace]):
+    """
+    Designs the Plasma facing keep out zones
+
+    Parameters
+    ----------
+    params: Dict[str, ParameterFrame]
+        Plasma face designer parameters
+    ivc_boundary: BluemiraWire
+        IVC boundary keep out zone
+    wall_boundary: BluemiraWire
+        wall boundary keep out zone (cut at divertor)
+    divertor_silhouette: BluemiraWire
+        divertor keep out zone
+    """
 
     param_cls = PlasmaFaceDesignerParams
 
@@ -61,6 +75,11 @@ class PlasmaFaceDesigner(Designer[BluemiraFace]):
         self.divertor_silhouette = divertor_silhouette
 
     def run(self) -> Tuple[BluemiraFace]:
+        """
+        Run method for PlasmaFaceDesigner
+        """
+        # For double null this and self.divertor_silhouette need a structure
+        # to accomodate two divertors
         plasma_facing_wire = BluemiraWire(
             [self.wall_boundary, *self.divertor_silhouette]
         )
