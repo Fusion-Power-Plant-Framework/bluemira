@@ -38,7 +38,7 @@ from bluemira.geometry.wire import BluemiraWire
 class PlasmaFaceDesignerParams(ParameterFrame):
     """Parameters for running the `PlasmaFaceDesigner`."""
 
-    rm_clearance: Parameter[float]
+    c_rm: Parameter[float]
 
 
 class PlasmaFaceDesigner(Designer[BluemiraFace]):
@@ -71,7 +71,7 @@ class PlasmaFaceDesigner(Designer[BluemiraFace]):
             vessel_bbox.x_min,
             vessel_bbox.x_max,
             self.wall_boundary.bounding_box.z_min,
-            self.params.rm_clearance.value,
+            self.params.c_rm.value,
         )
 
         return _cut_vessel_shape(in_vessel_face, rm_clearance_face)
