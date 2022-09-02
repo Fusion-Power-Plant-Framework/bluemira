@@ -26,9 +26,6 @@ from copy import deepcopy
 from typing import Any, Dict, Tuple
 
 import numpy as np
-from EUDEMO_builders.ivc.blanket import BlanketThicknessBuilder
-from EUDEMO_builders.ivc.divertor import DivertorSilhouetteBuilder
-from EUDEMO_builders.ivc.wall import WallBuilder
 
 from bluemira.base.builder import BuildConfig
 from bluemira.base.components import Component, PhysicalComponent
@@ -44,6 +41,9 @@ from bluemira.geometry.tools import (
     offset_wire,
 )
 from bluemira.geometry.wire import BluemiraWire
+from EUDEMO_builders.ivc.blanket import BlanketThicknessBuilder
+from EUDEMO_builders.ivc.divertor import DivertorSilhouetteBuilder
+from EUDEMO_builders.ivc.wall import WallBuilder
 
 
 def _cut_wall_below_x_point(shape: BluemiraWire, x_point_z: float) -> BluemiraWire:
