@@ -26,7 +26,6 @@ from typing import Dict, List, Type, Union
 
 from bluemira.base.builder import Builder, ComponentManager
 from bluemira.base.components import PhysicalComponent
-from bluemira.base.designer import Designer
 from bluemira.base.parameter_frame import NewParameter as Parameter
 from bluemira.base.parameter_frame import parameter_frame
 from bluemira.builders.tools import (
@@ -60,27 +59,6 @@ class VacuumVesselBuilderParams:
     g_vv_bb: Parameter[float]
 
 
-class VacuumVesselDesigner(Designer[BluemiraWire]):
-    """
-    Vacuum Vessel designer
-    """
-
-    param_cls = None
-
-    def __init__(
-        self,
-        ivc_koz: BluemiraWire,
-    ):
-        super().__init__()
-        self.ivc_koz = ivc_koz
-
-    def run(self):
-        """
-        Vacuum Vessel designer run method
-        """
-        return self.ivc_koz
-
-
 class VacuumVesselBuilder(Builder):
     """
     Vacuum Vessel builder
@@ -94,16 +72,16 @@ class VacuumVesselBuilder(Builder):
         self,
         params: Union[VacuumVesselBuilderParams, Dict],
         build_config: Dict,
-        designer: Designer[BluemiraFace],
+        ivc_koz: BluemiraWire,
     ):
-        super().__init__(params, build_config, designer)
+        super().__init__(params, build_config)
+        self.ivc_koz = ivc_koz
 
     def build(self) -> VacuumVessel:
         """
         Build the vacuum vessel component.
         """
-        ivc_koz = self.designer.run()
-        xz_vv = self.build_xz(ivc_koz)
+        xz_vv = self.build_xz()
         vv_face = xz_vv.get_component_properties("shape")
 
         return VacuumVessel(
@@ -116,7 +94,6 @@ class VacuumVesselBuilder(Builder):
 
     def build_xz(
         self,
-        ivc_koz: BluemiraWire,
         inboard_offset_degree: float = 80,
         outboard_offset_degree: float = 160,
     ) -> PhysicalComponent:
@@ -124,7 +101,7 @@ class VacuumVesselBuilder(Builder):
         Build the x-z components of the vacuum vessel.
         """
         inner_vv = offset_wire(
-            ivc_koz, self.params.g_vv_bb.value, join="arc", open_wire=False
+            self.ivc_koz, self.params.g_vv_bb.value, join="arc", open_wire=False
         )
         outer_vv = varied_offset(
             inner_vv,
