@@ -29,14 +29,12 @@ import numpy as np
 
 from bluemira.base.builder import Builder, ComponentManager
 from bluemira.base.components import PhysicalComponent
-from bluemira.base.designer import Designer
 from bluemira.base.parameter_frame import NewParameter as Parameter
 from bluemira.base.parameter_frame import parameter_frame
 from bluemira.builders.tools import build_sectioned_xyz, make_circular_xy_ring
 from bluemira.display.palettes import BLUE_PALETTE
 from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.tools import boolean_cut, boolean_fuse, make_polygon, offset_wire
-from bluemira.geometry.wire import BluemiraWire
 
 
 class RadiationShield(ComponentManager):
@@ -56,27 +54,6 @@ class RadiationShieldBuilderParams:
     g_cr_rs: Parameter[float]
 
 
-class RadiationShieldDesigner(Designer[BluemiraWire]):
-    """
-    Radiation shield designer
-    """
-
-    param_cls = None
-
-    def __init__(
-        self,
-        cryo_vv_xz: BluemiraWire,
-    ):
-        super().__init__()
-        self.cryo_vv_xz = cryo_vv_xz
-
-    def run(self) -> BluemiraWire:
-        """
-        Radiation shield designer run method
-        """
-        return self.cryo_vv_xz
-
-
 class RadiationShieldBuilder(Builder):
     """
     Radiation Shield builder
@@ -90,35 +67,35 @@ class RadiationShieldBuilder(Builder):
         self,
         params: Union[RadiationShieldBuilderParams, Dict],
         build_config: Dict,
-        designer: Designer[BluemiraFace],
+        cryo_vv: BluemiraFace,
     ):
-        super().__init__(params, build_config, designer)
+        super().__init__(params, build_config)
+        self.cryo_vv = cryo_vv
 
     def build(self) -> RadiationShield:
         """
         Build the radiation shield component.
         """
-        cryo_vv = self.designer.run()
-        rs_xz = self.build_xz(cryo_vv)
+        rs_xz = self.build_xz()
         rs_face = rs_xz.get_component_properties("shape")
 
         return RadiationShield(
             self.component_tree(
                 xz=[rs_xz],
-                xy=[self.build_xy(cryo_vv)],
+                xy=[self.build_xy()],
                 xyz=self.build_xyz(rs_face),
             )
         )
 
-    def build_xz(self, cryo_vv: BluemiraWire) -> PhysicalComponent:
+    def build_xz(self) -> PhysicalComponent:
         """
         Build the x-z components of the radiation shield.
         """
-        cryo_vv_rot = cryo_vv.deepcopy()
+        cryo_vv_rot = self.cryo_vv.deepcopy()
         cryo_vv_rot.rotate(base=(0, 0, 0), direction=(0, 0, 1), degree=180)
 
         rs_inner = offset_wire(
-            boolean_fuse([cryo_vv, cryo_vv_rot]).boundary[0], self.params.g_cr_rs
+            boolean_fuse([self.cryo_vv, cryo_vv_rot]).boundary[0], self.params.g_cr_rs
         )
         rs_outer = offset_wire(rs_inner, self.params.tk_rs)
 
@@ -140,11 +117,11 @@ class RadiationShieldBuilder(Builder):
         shield_body.plot_options.face_options["color"] = BLUE_PALETTE[self.RS][0]
         return shield_body
 
-    def build_xy(self, cryo_vv: BluemiraWire) -> PhysicalComponent:
+    def build_xy(self) -> PhysicalComponent:
         """
         Build the x-y components of the radiation shield.
         """
-        r_in = cryo_vv.bounding_box.x_max + self.params.g_cr_rs
+        r_in = self.cryo_vv.bounding_box.x_max + self.params.g_cr_rs
         r_out = r_in + self.params.tk_rs
 
         shield_body = PhysicalComponent(self.BODY, make_circular_xy_ring(r_in, r_out))
