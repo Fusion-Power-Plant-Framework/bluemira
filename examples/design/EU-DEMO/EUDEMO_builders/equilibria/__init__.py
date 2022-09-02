@@ -19,31 +19,9 @@
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 
-from bluemira.base.config import Configuration
-from bluemira.geometry.face import BluemiraFace
-from bluemira.geometry.tools import make_polygon
-from bluemira.utilities.optimiser import Optimiser
-from EUDEMO_builders.maintenance import UpperPortOP
+"""
+Equilibrium objects for EU-DEMO design
+"""
+from EUDEMO_builders.equilibria._designer import EquilibriumDesigner
 
-
-class TestUpperPortOP:
-    def test_dummy_blanket_port_opt(self):
-        params = Configuration()
-        bb = make_polygon(
-            {
-                "x": [5, 6, 6, 11, 11, 12, 12, 5],
-                "y": 0,
-                "z": [-5, -5, 5, 5, -5, -5, 6, 6],
-            },
-            closed=True,
-        )
-        bb = BluemiraFace(bb)
-        optimiser = Optimiser(
-            "SLSQP", opt_conditions={"max_eval": 1000, "ftol_rel": 1e-8}
-        )
-
-        design_problem = UpperPortOP(params, optimiser, bb)
-
-        solution = design_problem.optimise()
-
-        assert design_problem.opt.check_constraints(solution)
+__all__ = ["EquilibriumDesigner"]

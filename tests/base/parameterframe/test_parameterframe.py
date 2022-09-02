@@ -160,6 +160,49 @@ class TestParameterFrame:
         assert frame.age.value == 30
         assert frame.age.unit == "years"
 
+    def test_parameter_frames_with_eq_parameters_are_equal(self):
+        params = {
+            "height": {"name": "height", "value": 180.5, "unit": "cm"},
+            "age": {"name": "age", "value": 30, "unit": "years"},
+        }
+        frame1 = BasicFrame.from_dict(params)
+        frame2 = BasicFrame.from_dict(params)
+
+        assert frame1 == frame2
+
+    def test_parameter_frames_with_different_parameters_are_not_equal(self):
+        @dataclass
+        class OtherFrame(ParameterFrame):
+            height: Parameter[float]
+            age: Parameter[int]
+            weight: Parameter[float]
+
+        params = {
+            "height": {"name": "height", "value": 180.5, "unit": "cm"},
+            "age": {"name": "age", "value": 30, "unit": "years"},
+        }
+        frame1 = BasicFrame.from_dict(params)
+        frame2 = OtherFrame.from_dict(
+            {**params, "weight": {"name": "weight", "value": 58.2, "unit": "kg"}}
+        )
+
+        assert frame1 != frame2
+
+    def test_update_values_edits_frames_values(self):
+        frame = BasicFrame.from_dict(
+            {
+                "height": {"name": "height", "value": 180.5, "unit": "cm"},
+                "age": {"name": "age", "value": 30, "unit": "years"},
+            }
+        )
+
+        frame.update_values({"height": 160.4}, source="a test")
+
+        assert frame.height.value == 160.4
+        assert frame.height.source == "a test"
+        assert frame.age.value == 30
+        assert frame.age.source != "a test"
+
 
 class TestParameterSetup:
     frame = {

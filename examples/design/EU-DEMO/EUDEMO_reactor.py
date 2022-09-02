@@ -27,13 +27,6 @@ Perform the EU-DEMO reactor design.
 import pprint as pprint
 
 import matplotlib.pyplot as plt
-from EUDEMO_builders.blanket import BlanketBuilder
-from EUDEMO_builders.divertor import DivertorBuilder
-from EUDEMO_builders.pf_coils import PFCoilsBuilder
-from EUDEMO_builders.plasma import PlasmaBuilder, PlasmaComponent
-from EUDEMO_builders.reactor import EUDEMOReactorDesign
-from EUDEMO_builders.tf_coils import TFCoilsBuilder
-from EUDEMO_builders.vacuum_vessel import VacuumVesselBuilder
 
 from bluemira.base.components import Component
 from bluemira.base.config import Configuration
@@ -54,6 +47,13 @@ from bluemira.codes.plasmod.mapping import (  # noqa: N812
 )
 from bluemira.codes.process.mapping import mappings as PROCESS_mappings  # noqa: N812
 from bluemira.utilities.tools import json_writer
+from EUDEMO_builders.blanket import BlanketBuilder
+from EUDEMO_builders.divertor import DivertorBuilder
+from EUDEMO_builders.pf_coils import PFCoilsBuilder
+from EUDEMO_builders.plasma import PlasmaBuilder, PlasmaComponent
+from EUDEMO_builders.reactor import EUDEMOReactorDesign
+from EUDEMO_builders.tf_coils import TFCoilsBuilder
+from EUDEMO_builders.vacuum_vessel import VacuumVesselBuilder
 
 # %%[markdown]
 # # Configuring and Running an EU-DEMO Design

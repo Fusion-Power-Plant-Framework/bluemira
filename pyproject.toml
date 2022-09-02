@@ -30,7 +30,7 @@ exclude = '''
 line_length = 89
 profile = "black"
 skip_gitignore = true
-known_first_party = ["bluemira"]
+known_first_party = ["bluemira", "EUDEMO_builders", "EUDEMO_tests"]
 force_to_top = ["freecad"]
 
 [tool.pytest.ini_options]
