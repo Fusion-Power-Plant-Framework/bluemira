@@ -50,6 +50,8 @@ class WallSilhouetteDesignerParams(ParameterFrame):
     A: Parameter[float]  # aspect ratio
     tk_sol_ib: Parameter[float]
     fw_psi_n: Parameter[float]
+    div_L2D_ib: Parameter[float]
+    div_L2D_ob: Parameter[float]
 
 
 class WallSilhouetteDesigner(Designer[GeometryParameterisation]):
@@ -80,14 +82,12 @@ class WallSilhouetteDesigner(Designer[GeometryParameterisation]):
 
         if problem_class is not None:
             self.problem_class = get_class_from_module(problem_class)
+            self.problem_settings = self.build_config.get("problem_settings", {})
 
-            self.opt_config = self.build_config.get("optimisation_config", {})
-            self.problem_settings = self.opt_config.get("problem_settings", {})
+            self.opt_config = self.build_config.get("optimisation_settings", {})
 
             self.algorithm_name = self.opt_config.get("algorithm_name", "SLSQP")
-            self.opt_conditions = self.opt_config.get(
-                "opt_conditions", {"max_eval": 100}
-            )
+            self.opt_conditions = self.opt_config.get("conditions", {"max_eval": 100})
             self.opt_parameters = self.opt_config.get("parameters", {})
 
         self.equilibrium = equilibrium
@@ -119,7 +119,7 @@ class WallSilhouetteDesigner(Designer[GeometryParameterisation]):
         """
         if not self.file_path:
             raise ValueError(
-                f"Cannot execute {type(self).__name__} in READ mode: no file path specified."
+                f"Cannot execute {type(self).__name__} in 'read' mode: no file path specified."
             )
         return self.parameterisation_cls.from_json(file=self.file_path)
 

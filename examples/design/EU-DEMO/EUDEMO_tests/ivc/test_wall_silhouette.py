@@ -63,6 +63,8 @@ PARAMS = {
     "A": {"name": "A", "value": 3.1},
     "tk_sol_ib": {"name": "tk_sol_ib", "value": 0.225},
     "fw_psi_n": {"name": "fw_psi_n", "value": 1.07},
+    "div_L2D_ib": {"name": "div_L2D_ib", "value": 1.1},
+    "div_L2D_ob": {"name": "div_L2D_ob", "value": 1.45},
 }
 
 
@@ -71,13 +73,6 @@ class TestWallSilhouetteDesigner:
     def setup_class(cls):
         cls.eq = Equilibrium.from_eqdsk(os.path.join(EQDATA, "eqref_OOB.json"))
         _, cls.x_points = find_OX_points(cls.eq.x, cls.eq.z, cls.eq.psi())
-
-    def test_shape_is_closed(self):
-        designer = WallSilhouetteDesigner(
-            PARAMS, build_config=CONFIG, equilibrium=self.eq
-        )
-
-        assert designer.execute().create_shape().is_closed()
 
     def test_parameterisation_read(self):
         config = copy.deepcopy(CONFIG)
@@ -93,6 +88,67 @@ class TestWallSilhouetteDesigner:
         assert param.variables["flat"].value == 0
         assert param.variables["x1"].value == PARAMS["r_fw_ib_in"]["value"]
         assert param.variables["x2"].value == PARAMS["r_fw_ob_in"]["value"]
+
+    def test_read_no_file(self):
+        config = copy.deepcopy(CONFIG)
+        config.update({"run_mode": "read"})
+
+        designer = WallSilhouetteDesigner(
+            PARAMS, build_config=config, equilibrium=self.eq
+        )
+
+        with pytest.raises(ValueError):
+            designer.execute()
+
+    def test_run_no_problem_class(self):
+        config = copy.deepcopy(CONFIG)
+        config.update({"run_mode": "run"})
+        del config["problem_class"]
+
+        designer = WallSilhouetteDesigner(
+            PARAMS, build_config=config, equilibrium=self.eq
+        )
+
+        with pytest.raises(ValueError):
+            designer.execute()
+
+    def test_run_check_parameters(self):
+        config = copy.deepcopy(CONFIG)
+        config["run_mode"] = "run"
+        config.update(
+            {
+                "problem_settings": {"n_koz_points": 101},
+                "optimisation_settings": {
+                    "algorithm_name": "COBYLA",
+                    "parameters": {"initial_step": 1e-4},
+                    "conditions": {"max_eval": 101},
+                },
+            }
+        )
+        designer = WallSilhouetteDesigner(
+            PARAMS, build_config=config, equilibrium=self.eq
+        )
+        d_run = designer.execute()
+
+        designer_mock = WallSilhouetteDesigner(
+            PARAMS, build_config=CONFIG, equilibrium=self.eq
+        )
+        d_mock = designer_mock.execute()
+        assert d_run.create_shape().length != d_mock.create_shape().length
+        assert designer.problem_settings == config["problem_settings"]
+        assert designer.opt_config == config["optimisation_settings"]
+        assert (
+            designer.algorithm_name == config["optimisation_settings"]["algorithm_name"]
+        )
+        assert designer.opt_parameters == config["optimisation_settings"]["parameters"]
+        assert designer.opt_conditions == config["optimisation_settings"]["conditions"]
+
+    def test_shape_is_closed(self):
+        designer = WallSilhouetteDesigner(
+            PARAMS, build_config=CONFIG, equilibrium=self.eq
+        )
+
+        assert designer.execute().create_shape().is_closed()
 
     def test_height_derived_from_params_given_PolySpline_mock_mode(self):
         params = copy.deepcopy(PARAMS)
@@ -141,3 +197,15 @@ class TestWallSilhouetteDesigner:
         assert width == pytest.approx(
             PARAMS["r_fw_ob_in"]["value"] - PARAMS["r_fw_ib_in"]["value"]
         )
+
+    def test_DesignError_for_small_silhouette(self):
+
+        config = copy.deepcopy(CONFIG)
+        config.update({"param_class": f"{WALL_MODULE_REF}::WallPrincetonD"})
+
+        designer = WallSilhouetteDesigner(
+            PARAMS, build_config=config, equilibrium=self.eq
+        )
+
+        with pytest.raises(DesignError):
+            designer.execute()
