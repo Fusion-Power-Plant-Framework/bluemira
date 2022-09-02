@@ -27,7 +27,6 @@ import numpy as np
 
 from bluemira.base.builder import Builder, Component, ComponentManager
 from bluemira.base.components import PhysicalComponent
-from bluemira.base.designer import Designer
 from bluemira.base.parameter_frame import NewParameter as Parameter
 from bluemira.base.parameter_frame import parameter_frame
 from bluemira.builders.tools import (
@@ -59,27 +58,6 @@ class BlanketBuilderParams:
     c_rm: Parameter[float]
 
 
-class BlanketDesigner(Designer[BluemiraFace]):
-    """
-    Blanket designer
-    """
-
-    param_cls = None
-
-    def __init__(
-        self,
-        blanket_silhouette: BluemiraFace,
-    ):
-        super().__init__()
-        self.blanket_silhouette = blanket_silhouette
-
-    def run(self):
-        """
-        Blanket designer run method
-        """
-        return self.blanket_silhouette
-
-
 class BlanketBuilder(Builder):
     """
     Blanket builder
@@ -94,16 +72,16 @@ class BlanketBuilder(Builder):
         self,
         params: Union[BlanketBuilderParams, Dict],
         build_config: Dict,
-        designer: Designer[BluemiraFace],
+        blanket_silhouette: BluemiraFace,
     ):
-        super().__init__(params, build_config, designer)
+        super().__init__(params, build_config)
+        self.silhouette = blanket_silhouette
 
     def build(self) -> Blanket:
         """
         Build the blanket component.
         """
-        silhouette = self.designer.run()
-        ibs_silhouette, obs_silhouette = self.segment_blanket(silhouette)
+        ibs_silhouette, obs_silhouette = self.segment_blanket()
         segments = self.get_segments(ibs_silhouette, obs_silhouette)
 
         return Blanket(
@@ -182,11 +160,11 @@ class BlanketBuilder(Builder):
                 segments.append(segment)
         return segments
 
-    def segment_blanket(self, silhouette: BluemiraFace, offset: float = 0.1):
+    def segment_blanket(self, offset: float = 0.1):
         """
         Cut the blanket silhouette into segment silhouettes. Simple vertical cut for now.
         """
-        bb = silhouette.bounding_box
+        bb = self.silhouette.bounding_box
         x_mid = 0.5 * (bb.x_min + bb.x_max)
         delta = 0.5 * self.params.c_rm.value
 
@@ -200,6 +178,6 @@ class BlanketBuilder(Builder):
         cut_wire = make_polygon({"x": x, "y": 0, "z": z}, closed=True)
         cut_face = BluemiraFace(cut_wire)
 
-        segments = boolean_cut(silhouette, cut_face)
+        segments = boolean_cut(self.silhouette, cut_face)
         segments.sort(key=lambda seg: seg.bounding_box.x_min)
         return segments
