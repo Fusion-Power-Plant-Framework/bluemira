@@ -41,6 +41,7 @@ from bluemira.geometry.wire import BluemiraWire
 class DivertorSilhouetteParams(ParameterFrame):
     """Parameters for running the `DivertorSilhouetteDesigner`."""
 
+    div_type: Parameter[str]
     div_L2D_ib: Parameter[float]
     div_L2D_ob: Parameter[float]
     div_Ltarg: Parameter[float]  # noqa: N815
@@ -98,6 +99,9 @@ class DivertorSilhouetteDesigner(Designer[BluemiraWire]):
         wall,
     ):
         super().__init__(params)
+        if self.params.div_type.value == "DN":
+            raise NotImplementedError("Double Null divertor not implemented")
+
         self.equilibrium = equilibrium
         self.x_limits = (wall.start_point().x[0], wall.end_point().x[0])
         self.z_limits = (wall.start_point().z[0], wall.end_point().z[0])

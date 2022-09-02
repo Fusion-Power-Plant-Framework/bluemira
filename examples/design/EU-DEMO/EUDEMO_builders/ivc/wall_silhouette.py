@@ -42,7 +42,6 @@ from bluemira.utilities.tools import get_class_from_module
 class WallSilhouetteDesignerParams(ParameterFrame):
     """Parameters for running the `WallSilhouetteDesigner`."""
 
-    plasma_type: Parameter[str]
     R_0: Parameter[float]  # major radius
     kappa_95: Parameter[float]  # 95th percentile plasma elongation
     r_fw_ib_in: Parameter[float]  # inboard first wall inner radius

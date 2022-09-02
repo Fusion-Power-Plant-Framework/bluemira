@@ -38,6 +38,7 @@ from bluemira.geometry.wire import BluemiraWire
 class PlasmaFaceDesignerParams(ParameterFrame):
     """Parameters for running the `PlasmaFaceDesigner`."""
 
+    div_type: Parameter[str]
     c_rm: Parameter[float]
 
 
@@ -53,6 +54,8 @@ class PlasmaFaceDesigner(Designer[BluemiraFace]):
         divertor_silhouette: BluemiraWire,
     ):
         super().__init__(params)
+        if self.params.div_type.value == "DN":
+            raise NotImplementedError("Double Null divertor not implemented")
         self.ivc_boundary = ivc_boundary
         self.wall_boundary = wall_boundary
         self.divertor_silhouette = divertor_silhouette

@@ -45,6 +45,7 @@ def get_turning_point_idxs(z: np.ndarray):
 class TestDivertorSilhouetteDesigner:
 
     _default_params = {
+        "div_type": {"name": "div_type", "value": "SN"},
         "div_L2D_ib": {"name": "div_L2D_ib", "value": 1.1},
         "div_L2D_ob": {"name": "div_L2D_ob", "value": 1.45},
         "div_Ltarg": {"name": "div_Ltarg", "value": 0.5},

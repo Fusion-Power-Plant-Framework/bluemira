@@ -55,7 +55,6 @@ CONFIG = {
     "problem_class": f"{OPTIMISER_MODULE_REF}::MinimiseLengthGOP",
 }
 PARAMS = {
-    "plasma_type": {"name": "plasma_type", "value": "SN"},
     "R_0": {"name": "R_0", "value": 10.5},
     "kappa_95": {"name": "kappa_95", "value": 1.6},
     "r_fw_ib_in": {"name": "r_fw_ib_in", "value": 5.8},
