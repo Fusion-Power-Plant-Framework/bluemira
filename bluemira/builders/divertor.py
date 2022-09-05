@@ -22,12 +22,13 @@
 """
 Builder for making a parameterised EU-DEMO divertor.
 """
+from dataclasses import dataclass
 from typing import Dict, Type, Union
 
 from bluemira.base.builder import Builder, ComponentManager
 from bluemira.base.components import Component, PhysicalComponent
 from bluemira.base.parameter_frame import NewParameter as Parameter
-from bluemira.base.parameter_frame import parameter_frame
+from bluemira.base.parameter_frame import NewParameterFrame as ParameterFrame
 from bluemira.builders.tools import (
     circular_pattern_component,
     get_n_sectors,
@@ -43,8 +44,8 @@ class Divertor(ComponentManager):
     """
 
 
-@parameter_frame
-class DivertorBuilderParams:
+@dataclass
+class DivertorBuilderParams(ParameterFrame):
     """
     Divertor builder parameters
     """
