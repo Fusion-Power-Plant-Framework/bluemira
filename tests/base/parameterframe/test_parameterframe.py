@@ -224,3 +224,23 @@ class TestParameterSetup:
     def test_params_type(self, frame):
         params = make_parameter_frame(frame, BasicFrame)
         assert isinstance(params, BasicFrame)
+
+
+def test_changes_to_parameters_are_propagated_between_frames():
+    """
+    This tests a key mechanic that updates to parameters in a frame
+    made from some base frame, are propagated to the base frame.
+    This allows builders/designers to update parameters at the reactor
+    level, whilst still only working with their specific frame.
+    """
+
+    @dataclass
+    class SubFrame(ParameterFrame):
+        height: Parameter[float]
+
+    base_frame = BasicFrame.from_dict(TestParameterSetup.frame)
+    slim_frame = SubFrame.from_frame(base_frame)
+
+    slim_frame.height.value = 200.5
+
+    assert base_frame.height.value == 200.5
