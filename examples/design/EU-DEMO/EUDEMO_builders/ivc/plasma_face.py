@@ -65,7 +65,7 @@ class PlasmaFaceDesigner(Designer[BluemiraFace]):
         params: Dict[str, ParameterFrame],
         ivc_boundary: BluemiraWire,
         wall_boundary: BluemiraWire,
-        divertor_silhouette: BluemiraWire,
+        divertor_silhouette: Tuple[BluemiraWire],
     ):
         super().__init__(params)
         if self.params.div_type.value == "DN":
