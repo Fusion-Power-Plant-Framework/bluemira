@@ -27,12 +27,12 @@ import os
 
 import numpy as np
 import pytest
-from EUDEMO_builders.ivc import WallSilhouetteDesigner
 
 from bluemira.base.error import DesignError
 from bluemira.base.file import get_bluemira_path
 from bluemira.equilibria import Equilibrium
 from bluemira.equilibria.find import find_OX_points
+from EUDEMO_builders.ivc import WallSilhouetteDesigner
 
 EQDATA = get_bluemira_path("equilibria/test_data", subfolder="tests")
 DATA = get_bluemira_path("design/EU-DEMO/EUDEMO_tests/test_data", subfolder="examples")

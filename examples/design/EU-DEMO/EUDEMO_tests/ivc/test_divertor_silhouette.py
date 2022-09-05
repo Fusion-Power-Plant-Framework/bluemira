@@ -26,13 +26,13 @@ import os
 from unittest import mock
 
 import numpy as np
-from EUDEMO_builders.ivc import DivertorSilhouetteDesigner
-from EUDEMO_builders.ivc.divertor_silhouette import LegPosition
 
 from bluemira.base.file import get_bluemira_path
 from bluemira.equilibria import Equilibrium
 from bluemira.equilibria.find import find_OX_points
 from bluemira.geometry.tools import make_polygon, signed_distance
+from EUDEMO_builders.ivc import DivertorSilhouetteDesigner
+from EUDEMO_builders.ivc.divertor_silhouette import LegPosition
 
 DATA = get_bluemira_path("equilibria/test_data", subfolder="tests")
 
