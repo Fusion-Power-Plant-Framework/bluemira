@@ -9,6 +9,11 @@ from bluemira.base.parameter_frame import NewParameter as Parameter
 from bluemira.base.parameter_frame import NewParameterFrame as ParameterFrame
 from bluemira.base.parameter_frame import make_parameter_frame, parameter_frame
 
+FRAME_DATA = {
+    "height": {"name": "height", "value": 180.5, "unit": "cm"},
+    "age": {"name": "age", "value": 30, "unit": "years"},
+}
+
 
 @dataclass
 class BasicFrame(ParameterFrame):
@@ -24,12 +29,7 @@ class BasicFrameDec:
 
 class TestParameterFrame:
     def test_init_from_dict_sets_valid_entries(self):
-        frame = BasicFrame.from_dict(
-            {
-                "height": {"name": "height", "value": 180.5, "unit": "cm"},
-                "age": {"name": "age", "value": 30, "unit": "years"},
-            }
-        )
+        frame = BasicFrame.from_dict(FRAME_DATA)
 
         assert frame.height.value == 180.5
         assert frame.height.unit == "cm"
@@ -42,7 +42,7 @@ class TestParameterFrame:
     )
     def test_from_dict_TypeError_given_invalid_type(self, name, value):
         data = {
-            "height": {"name": "height", "value": 180.5, "unit": "m"},
+            "height": {"name": "height", "value": 180.5, "unit": "cm"},
             "age": {"name": "age", "value": 30, "unit": "years"},
         }
         data["age"][name] = value
@@ -67,15 +67,11 @@ class TestParameterFrame:
             BasicFrame.from_dict(data)
 
     def test_to_dict_returns_input_to_from_dict(self):
-        data = {
-            "height": {"name": "height", "value": 180.5, "unit": "cm"},
-            "age": {"name": "age", "value": 30, "unit": "years"},
-        }
-        frame = BasicFrame.from_dict(data)
+        frame = BasicFrame.from_dict(FRAME_DATA)
 
         out_dict = frame.to_dict()
 
-        assert out_dict == data
+        assert out_dict == FRAME_DATA
 
     def test_initialising_using_untyped_generic_parameter_is_allowed(self):
         @dataclass
@@ -107,12 +103,8 @@ class TestParameterFrame:
         assert len(ParameterFrame().to_dict()) == 0
 
     def test_decorated_frame_equal_to_inherited(self):
-        data = {
-            "height": {"name": "height", "value": 180.5, "unit": "cm"},
-            "age": {"name": "age", "value": 30, "unit": "years"},
-        }
-        inherited_frame = BasicFrame.from_dict(data)
-        decorated_frame = BasicFrameDec.from_dict(data)
+        inherited_frame = BasicFrame.from_dict(FRAME_DATA)
+        decorated_frame = BasicFrameDec.from_dict(FRAME_DATA)
 
         assert isinstance(decorated_frame, ParameterFrame)
         assert decorated_frame.height.value == inherited_frame.height.value
@@ -161,12 +153,8 @@ class TestParameterFrame:
         assert frame.age.unit == "years"
 
     def test_parameter_frames_with_eq_parameters_are_equal(self):
-        params = {
-            "height": {"name": "height", "value": 180.5, "unit": "cm"},
-            "age": {"name": "age", "value": 30, "unit": "years"},
-        }
-        frame1 = BasicFrame.from_dict(params)
-        frame2 = BasicFrame.from_dict(params)
+        frame1 = BasicFrame.from_dict(FRAME_DATA)
+        frame2 = BasicFrame.from_dict(FRAME_DATA)
 
         assert frame1 == frame2
 
@@ -177,24 +165,15 @@ class TestParameterFrame:
             age: Parameter[int]
             weight: Parameter[float]
 
-        params = {
-            "height": {"name": "height", "value": 180.5, "unit": "cm"},
-            "age": {"name": "age", "value": 30, "unit": "years"},
-        }
-        frame1 = BasicFrame.from_dict(params)
+        frame1 = BasicFrame.from_dict(FRAME_DATA)
         frame2 = OtherFrame.from_dict(
-            {**params, "weight": {"name": "weight", "value": 58.2, "unit": "kg"}}
+            {**FRAME_DATA, "weight": {"name": "weight", "value": 58.2, "unit": "kg"}}
         )
 
         assert frame1 != frame2
 
     def test_update_values_edits_frames_values(self):
-        frame = BasicFrame.from_dict(
-            {
-                "height": {"name": "height", "value": 180.5, "unit": "cm"},
-                "age": {"name": "age", "value": 30, "unit": "years"},
-            }
-        )
+        frame = BasicFrame.from_dict(FRAME_DATA)
 
         frame.update_values({"height": 160.4}, source="a test")
 
@@ -205,21 +184,21 @@ class TestParameterFrame:
 
 
 class TestParameterSetup:
-    frame = {
-        "height": {"name": "height", "value": 180.5, "unit": "cm"},
-        "age": {"name": "age", "value": 30, "unit": "years"},
-    }
-
     def test_params_None(self):
         with pytest.raises(ValueError):
-            make_parameter_frame(self.frame, None)
+            make_parameter_frame(FRAME_DATA, None)
         with pytest.raises(TypeError):
             make_parameter_frame(None, BasicFrame)
         params = make_parameter_frame(None, None)
         assert params is None
 
     @pytest.mark.parametrize(
-        "frame", [frame, BasicFrame.from_dict(frame), BasicFrameDec.from_dict(frame)]
+        "frame",
+        [
+            FRAME_DATA,
+            BasicFrame.from_dict(FRAME_DATA),
+            BasicFrameDec.from_dict(FRAME_DATA),
+        ],
     )
     def test_params_type(self, frame):
         params = make_parameter_frame(frame, BasicFrame)
@@ -238,7 +217,7 @@ def test_changes_to_parameters_are_propagated_between_frames():
     class SubFrame(ParameterFrame):
         height: Parameter[float]
 
-    base_frame = BasicFrame.from_dict(TestParameterSetup.frame)
+    base_frame = BasicFrame.from_dict(FRAME_DATA)
     slim_frame = SubFrame.from_frame(base_frame)
 
     slim_frame.height.value = 200.5
