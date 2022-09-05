@@ -66,7 +66,7 @@ class DivertorBuilder(Builder):
 
     def __init__(
         self,
-        params: Union[DivertorBuilderParams, Dict],
+        params: Union[ParameterFrame, Dict],
         build_config: Dict,
         divertor_silhouette: BluemiraFace,
     ):
