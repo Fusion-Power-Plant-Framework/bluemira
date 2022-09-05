@@ -115,12 +115,9 @@ def _make_clearance_face(
     y_coords = np.zeros(4)
 
     z_coords = np.zeros(4)
-    z_coords[(0, 3),] = (  # noqa: E231
-        z + thickness / 2
-    )
-    z_coords[(1, 2),] = (  # noqa: E231
-        z - thickness / 2
-    )
+    z_coords[[0, 3]] = z + thickness / 2
+    z_coords[[1, 2]] = z - thickness / 2
+
     return BluemiraFace(make_polygon([x_coords, y_coords, z_coords], closed=True))
 
 
