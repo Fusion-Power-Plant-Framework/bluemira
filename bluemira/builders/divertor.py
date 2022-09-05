@@ -62,6 +62,8 @@ class DivertorBuilder(Builder):
 
     DIV = "DIV"
     BODY = "Body"
+    CASETTES = "cassettes"
+    SEGMENT_PREFIX = "segment"
     param_cls: Type[DivertorBuilderParams] = DivertorBuilderParams
 
     def __init__(
@@ -108,12 +110,12 @@ class DivertorBuilder(Builder):
 
         segments = []
         for no, shape in enumerate(shapes):
-            segment = PhysicalComponent(f"segment_{no}", shape)
+            segment = PhysicalComponent(f"{self.SEGMENT_PREFIX}_{no}", shape)
             segment.display_cad_options.color = BLUE_PALETTE[self.DIV][no]
             segments.append(segment)
 
         return circular_pattern_component(
-            Component("cassettes", children=segments),
+            Component(self.CASETTES, children=segments),
             n_sectors,
             degree=sector_degree * n_sectors,
         )
