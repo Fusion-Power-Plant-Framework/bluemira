@@ -172,12 +172,8 @@ class BlanketBuilder(Builder):
         delta = 0.5 * self.params.c_rm.value
 
         x = np.full(4, x_mid)
-        x[
-            (0, 3),
-        ] -= delta
-        x[
-            (1, 2),
-        ] += delta
+        x[[0, 3]] -= delta
+        x[[1, 2]] += delta
 
         z = np.zeros(4)
         z[2:] += bb.z_max + offset
