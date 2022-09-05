@@ -18,7 +18,7 @@ ipython==8.4.0
 ipython-genutils==0.2.0
 jedi==0.18.1
 Jinja2==3.1.2
-jsonschema==4.14.0
+jsonschema==4.15.0
 jupyter-client==7.3.5
 jupyter-core==4.11.1
 jupyterlab-pygments==0.2.2
@@ -36,7 +36,7 @@ pexpect==4.8.0
 pickleshare==0.7.5
 prometheus-client==0.14.1
 prompt-toolkit==3.0.30
-psutil==5.9.1
+psutil==5.9.2
 ptyprocess==0.7.0
 pure-eval==0.2.2
 pycparser==2.21
