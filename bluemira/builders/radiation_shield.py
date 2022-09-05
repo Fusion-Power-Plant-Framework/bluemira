@@ -109,10 +109,10 @@ class RadiationShieldBuilder(Builder):
         x[2:] = bound_box.x_min - 1.0
 
         z = np.zeros(4)
-        z[(0, -1),] = (
+        z[(0, -1),] = (  # noqa: E231
             bound_box.z_min - 1.0
         )
-        z[(1, 2),] = (
+        z[(1, 2),] = (  # noqa: E231
             bound_box.z_max + 1.0
         )
 
