@@ -200,5 +200,4 @@ class CryostatBuilder(Builder):
             self.params.n_TF.value,
             BLUE_PALETTE["CR"][0],
             degree,
-            disable_sectioning=True,
         )
