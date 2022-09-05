@@ -34,7 +34,7 @@ from bluemira.builders.tools import (
     pattern_revolved_silhouette,
 )
 from bluemira.display.palettes import BLUE_PALETTE
-from bluemira.geometry.wire import BluemiraWire
+from bluemira.geometry.face import BluemiraFace
 
 
 class Divertor(ComponentManager):
@@ -67,10 +67,10 @@ class DivertorBuilder(Builder):
         self,
         params: Union[DivertorBuilderParams, Dict],
         build_config: Dict,
-        divertor_silhouette: BluemiraWire,
+        divertor_silhouette: BluemiraFace,
     ):
         super().__init__(params, build_config)
-        self.ivc_koz = divertor_silhouette
+        self.div_koz = divertor_silhouette
 
     def build(self) -> Divertor:
         """
@@ -88,7 +88,7 @@ class DivertorBuilder(Builder):
         """
         Build the x-z components of the divertor.
         """
-        body = PhysicalComponent(self.BODY, self.ivc_koz)
+        body = PhysicalComponent(self.BODY, self.div_koz)
         body.plot_options.face_options["color"] = BLUE_PALETTE[self.DIV][0]
 
         return body
@@ -99,7 +99,7 @@ class DivertorBuilder(Builder):
         """
         sector_degree, n_sectors = get_n_sectors(self.params.n_TF.value, degree)
         shapes = pattern_revolved_silhouette(
-            self.ivc_koz,
+            self.div_koz,
             self.params.n_div_cassettes.value,
             self.params.n_TF.value,
             self.params.c_rm.value,
@@ -112,5 +112,7 @@ class DivertorBuilder(Builder):
             segments.append(segment)
 
         return circular_pattern_component(
-            Component("cassettes", children=segments), n_sectors, degree=sector_degree
+            Component("cassettes", children=segments),
+            n_sectors,
+            degree=sector_degree * n_sectors,
         )
