@@ -128,7 +128,9 @@ class BlanketBuilder(Builder):
 
         # TODO: Add blanket cuts properly in 3-D
         return circular_pattern_component(
-            Component(self.BB, children=segments), n_sectors, degree=sector_degree
+            Component(self.BB, children=segments),
+            n_sectors,
+            degree=sector_degree * n_sectors,
         )
 
     def get_segments(self, ibs_silhouette: BluemiraFace, obs_silhouette: BluemiraFace):
@@ -169,15 +171,18 @@ class BlanketBuilder(Builder):
         delta = 0.5 * self.params.c_rm.value
 
         x = np.full(4, x_mid)
-        x[0, 3] -= delta
-        x[1, 2] += delta
+        x[
+            (0, 3),
+        ] -= delta
+        x[
+            (1, 2),
+        ] += delta
 
         z = np.zeros(4)
         z[2:] += bb.z_max + offset
 
         cut_wire = make_polygon({"x": x, "y": 0, "z": z}, closed=True)
         cut_face = BluemiraFace(cut_wire)
-
         segments = boolean_cut(self.silhouette, cut_face)
         segments.sort(key=lambda seg: seg.bounding_box.x_min)
         return segments
