@@ -405,17 +405,16 @@ def build_sectioned_xyz(
     degree: float
         angle to sweep through
     enable_sectioning: bool
-        Switch off sectioning (#1319 Topology issue)
+        Switch on/off sectioning (#1319 Topology issue)
 
     Notes
     -----
-    enable_sectioning will only return a list with a single component
-    rotated a maximum of 359 degrees. This is a workaround for two issues
+    When `enable_sectioning=False` a list with a single component rotated a maximum
+    of 359 degrees will be returned. This is a workaround for two issues
     from the topology naming issue #1319:
 
         - Some objects fail to be rebuilt when rotated
         - Some objects cant be rotated 360 degrees due to DisjointedFaceError
-
 
     """
     sector_degree, n_sectors = get_n_sectors(n_TF, degree)
