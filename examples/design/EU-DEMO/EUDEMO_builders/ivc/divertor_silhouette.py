@@ -124,7 +124,7 @@ class DivertorSilhouetteDesigner(Designer[BluemiraWire]):
         }
         self.separatrix_legs = get_separatrix_legs(self.equilibrium)
 
-    def run(self) -> Tuple[BluemiraWire]:
+    def run(self) -> Tuple[BluemiraWire, ...]:
         """
         Run method of DivertorSilhouetteDesigner
         """
