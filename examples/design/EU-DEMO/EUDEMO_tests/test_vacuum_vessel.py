@@ -32,7 +32,10 @@ class TestVacuumVesselBuilder:
             "tk_vv_out": {"name": "tk_vv_out", "value": 1.1},
             "g_vv_bb": {"name": "g_vv_bb", "value": 0.02},
             "n_TF": {"name": "n_TF", "value": 16},
+            "vv_in_off_deg": {"name": "vv_in_off_deg", "value": 80},
+            "vv_out_off_deg": {"name": "vv_out_off_deg", "value": 160},
         }
+
         cls.picture_frame = PictureFrame(
             {"x1": {"value": 2}, "ro": {"value": 6}, "ri": {"value": 3}},
         ).create_shape()
