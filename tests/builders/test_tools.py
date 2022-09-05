@@ -326,7 +326,7 @@ class TestBuildSectioned:
     sq_arr_2 = np.array([[2, 2, -0.5], [3, 2, -0.5], [3, 2, 0.5], [2, 2, 0.5]]).T
     circ1 = make_circle(10, center=(15, 0, 0), axis=(0.0, 1.0, 0.0))
 
-    disable_sectioning = [True, True, True, False, False, False]
+    enable_sectioning = [True, True, True, False, False, False]
 
     faces = []
     for sec in [sq_arr, sq_arr_2, circ1]:
@@ -342,10 +342,10 @@ class TestBuildSectioned:
         faces.append(BluemiraFace([offset, sec]))
 
     # failing test mark
-    face_sec = list(map(list, zip(*[faces + faces, disable_sectioning])))
+    face_sec = list(map(list, zip(*[faces + faces, enable_sectioning])))
     face_sec[2] = pytest.param(
         faces[2],
-        disable_sectioning[2],
+        enable_sectioning[2],
         marks=pytest.mark.xfail(reason="Possible #1347 Topology failure"),
     )
 

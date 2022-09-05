@@ -3,7 +3,7 @@
 # codes, to carry out a range of typical conceptual fusion reactor design
 # activities.
 #
-# Copyright (C) 2021 M. Coleman, J. Cook, F. Franza, I.A. Maione, S. McIntosh, J. Morris,
+# Copyright (C) 2022 M. Coleman, J. Cook, F. Franza, I.A. Maione, S. McIntosh, J. Morris,
 #                    D. Short
 #
 # bluemira is free software; you can redistribute it and/or
@@ -22,11 +22,13 @@
 """
 Builder for making a parameterised EU-DEMO vacuum vessel.
 """
+from dataclasses import dataclass
 from typing import Dict, List, Type, Union
 
 from bluemira.base.builder import Builder, ComponentManager
 from bluemira.base.components import PhysicalComponent
 from bluemira.base.parameter_frame import NewParameter as Parameter
+from bluemira.base.parameter_frame import NewParameterFrame as ParameterFrame
 from bluemira.base.parameter_frame import parameter_frame
 from bluemira.builders.tools import (
     build_sectioned_xy,
@@ -45,8 +47,8 @@ class VacuumVessel(ComponentManager):
     """
 
 
-@parameter_frame
-class VacuumVesselBuilderParams:
+@dataclass
+class VacuumVesselBuilderParams(ParameterFrame):
     """
     Vacuum Vessel builder parameters
     """
@@ -57,6 +59,8 @@ class VacuumVesselBuilderParams:
     tk_vv_in: Parameter[float]
     tk_vv_out: Parameter[float]
     g_vv_bb: Parameter[float]
+    vv_in_off_deg: Parameter[float]
+    vv_out_off_deg: Parameter[float]
 
 
 class VacuumVesselBuilder(Builder):
@@ -70,7 +74,7 @@ class VacuumVesselBuilder(Builder):
 
     def __init__(
         self,
-        params: Union[VacuumVesselBuilderParams, Dict],
+        params: Union[ParameterFrame, Dict],
         build_config: Dict,
         ivc_koz: BluemiraWire,
     ):
@@ -94,8 +98,6 @@ class VacuumVesselBuilder(Builder):
 
     def build_xz(
         self,
-        inboard_offset_degree: float = 80,
-        outboard_offset_degree: float = 160,
     ) -> PhysicalComponent:
         """
         Build the x-z components of the vacuum vessel.
@@ -107,9 +109,8 @@ class VacuumVesselBuilder(Builder):
             inner_vv,
             self.params.tk_vv_in.value,
             self.params.tk_vv_out.value,
-            # TODO: Calculate these / get them from params
-            inboard_offset_degree,
-            outboard_offset_degree,
+            self.params.vv_in_off_deg.value,
+            self.params.vv_out_off_deg.value,
             num_points=300,
         )
         face = BluemiraFace([outer_vv, inner_vv])
@@ -137,5 +138,4 @@ class VacuumVesselBuilder(Builder):
             self.params.n_TF.value,
             BLUE_PALETTE[self.VV][0],
             degree,
-            working=False,
         )
