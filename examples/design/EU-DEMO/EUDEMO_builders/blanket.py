@@ -21,6 +21,7 @@
 """
 EUDEMO builder for blanket
 """
+from dataclasses import dataclass
 from typing import Dict, List, Type, Union
 
 import numpy as np
@@ -28,7 +29,7 @@ import numpy as np
 from bluemira.base.builder import Builder, Component, ComponentManager
 from bluemira.base.components import PhysicalComponent
 from bluemira.base.parameter_frame import NewParameter as Parameter
-from bluemira.base.parameter_frame import parameter_frame
+from bluemira.base.parameter_frame import NewParameterFrame as ParameterFrame
 from bluemira.builders.tools import (
     circular_pattern_component,
     get_n_sectors,
@@ -46,8 +47,8 @@ class Blanket(ComponentManager):
     """
 
 
-@parameter_frame
-class BlanketBuilderParams:
+@dataclass
+class BlanketBuilderParams(ParameterFrame):
     """
     Blanket builder parameters
     """
