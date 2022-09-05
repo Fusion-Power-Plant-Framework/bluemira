@@ -65,7 +65,7 @@ class PlasmaFaceDesigner(Designer[BluemiraFace]):
         params: Dict[str, ParameterFrame],
         ivc_boundary: BluemiraWire,
         wall_boundary: BluemiraWire,
-        divertor_silhouette: Tuple[BluemiraWire],
+        divertor_silhouette: Tuple[BluemiraWire, ...],
     ):
         super().__init__(params)
         if self.params.div_type.value == "DN":
@@ -74,7 +74,7 @@ class PlasmaFaceDesigner(Designer[BluemiraFace]):
         self.wall_boundary = wall_boundary
         self.divertor_silhouette = divertor_silhouette
 
-    def run(self) -> Tuple[BluemiraFace]:
+    def run(self) -> Tuple[BluemiraFace, BluemiraFace]:
         """
         Run method for PlasmaFaceDesigner
         """
