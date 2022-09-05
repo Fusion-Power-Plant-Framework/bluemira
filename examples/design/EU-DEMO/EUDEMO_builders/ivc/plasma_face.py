@@ -108,7 +108,10 @@ def _make_clearance_face(
     The face is intended to be used to cut a remote maintainance
     clearance between blankets and divertor.
     """
-    x_coords = np.full(4, x_min)
+    x_coords = np.zeros(4)
+    x_coords[:2] = x_min
+    x_coords[2:] = x_max
+
     y_coords = np.zeros(4)
 
     z_coords = np.zeros(4)
@@ -118,7 +121,6 @@ def _make_clearance_face(
     z_coords[(1, 2),] = (  # noqa: E231
         z - thickness / 2
     )
-
     return BluemiraFace(make_polygon([x_coords, y_coords, z_coords], closed=True))
 
 

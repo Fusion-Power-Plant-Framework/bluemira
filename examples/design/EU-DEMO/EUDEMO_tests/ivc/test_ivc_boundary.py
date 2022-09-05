@@ -22,11 +22,11 @@
 Test ivc boundary designer.
 """
 import pytest
-from EUDEMO_builders.ivc import IVCBoundaryDesigner
 
 from bluemira.base.error import DesignError
 from bluemira.geometry.parameterisations import PictureFrame
 from bluemira.geometry.tools import make_circle, signed_distance
+from EUDEMO_builders.ivc import IVCBoundaryDesigner
 
 
 class TestIVCBoundaryDesigner:
@@ -43,10 +43,10 @@ class TestIVCBoundaryDesigner:
         wall_shape = make_circle(end_angle=180)
 
         with pytest.raises(DesignError):
-            IVCBoundaryDesigner(self.params, wall_shape, 0.0)
+            IVCBoundaryDesigner(self.params, wall_shape)
 
     def test_design_returns_boundary_that_does_not_intersect_wire(self):
-        designer = IVCBoundaryDesigner(self.params, self.picture_frame, -4)
+        designer = IVCBoundaryDesigner(self.params, self.picture_frame)
 
         wire = designer.execute()
 
