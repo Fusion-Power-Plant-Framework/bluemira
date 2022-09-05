@@ -22,7 +22,7 @@
 """
 Radiation shield builder
 """
-
+from dataclasses import dataclass
 from typing import Dict, List, Type, Union
 
 import numpy as np
@@ -30,7 +30,7 @@ import numpy as np
 from bluemira.base.builder import Builder, ComponentManager
 from bluemira.base.components import PhysicalComponent
 from bluemira.base.parameter_frame import NewParameter as Parameter
-from bluemira.base.parameter_frame import parameter_frame
+from bluemira.base.parameter_frame import NewParameterFrame as ParameterFrame
 from bluemira.builders.tools import build_sectioned_xyz, make_circular_xy_ring
 from bluemira.display.palettes import BLUE_PALETTE
 from bluemira.geometry.face import BluemiraFace
@@ -43,8 +43,8 @@ class RadiationShield(ComponentManager):
     """
 
 
-@parameter_frame
-class RadiationShieldBuilderParams:
+@dataclass
+class RadiationShieldBuilderParams(ParameterFrame):
     """
     Radiation Shield builder parameters
     """
@@ -65,7 +65,7 @@ class RadiationShieldBuilder(Builder):
 
     def __init__(
         self,
-        params: Union[RadiationShieldBuilderParams, Dict],
+        params: Union[ParameterFrame, Dict],
         build_config: Dict,
         cryo_vv: BluemiraFace,
     ):
@@ -93,11 +93,14 @@ class RadiationShieldBuilder(Builder):
         """
         cryo_vv_rot = self.cryo_vv.deepcopy()
         cryo_vv_rot.rotate(base=(0, 0, 0), direction=(0, 0, 1), degree=180)
+        from bluemira.display.displayer import show_cad
 
+        show_cad([self.cryo_vv, cryo_vv_rot])
         rs_inner = offset_wire(
-            boolean_fuse([self.cryo_vv, cryo_vv_rot]).boundary[0], self.params.g_cr_rs
+            boolean_fuse([self.cryo_vv, cryo_vv_rot]).boundary[0],
+            self.params.g_cr_rs.value,
         )
-        rs_outer = offset_wire(rs_inner, self.params.tk_rs)
+        rs_outer = offset_wire(rs_inner, self.params.tk_rs.value)
 
         # Now we slice in half
         bound_box = rs_outer.bounding_box
@@ -106,8 +109,12 @@ class RadiationShieldBuilder(Builder):
         x[2:] = bound_box.x_min - 1.0
 
         z = np.zeros(4)
-        z[0, -1] = bound_box.z_min - 1.0
-        z[1, 2] = bound_box.z_max + 1.0
+        z[(0, -1),] = (
+            bound_box.z_min - 1.0
+        )
+        z[(1, 2),] = (
+            bound_box.z_max + 1.0
+        )
 
         cutter = BluemiraFace(make_polygon({"x": x, "y": 0, "z": z}, closed=True))
 
@@ -121,8 +128,8 @@ class RadiationShieldBuilder(Builder):
         """
         Build the x-y components of the radiation shield.
         """
-        r_in = self.cryo_vv.bounding_box.x_max + self.params.g_cr_rs
-        r_out = r_in + self.params.tk_rs
+        r_in = self.cryo_vv.bounding_box.x_max + self.params.g_cr_rs.value
+        r_out = r_in + self.params.tk_rs.value
 
         shield_body = PhysicalComponent(self.BODY, make_circular_xy_ring(r_in, r_out))
         shield_body.plot_options.face_options["color"] = BLUE_PALETTE[self.RS][0]
@@ -141,5 +148,4 @@ class RadiationShieldBuilder(Builder):
             self.params.n_TF.value,
             BLUE_PALETTE[self.RS][0],
             degree,
-            disable_sectioning=False,
         )
