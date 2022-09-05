@@ -10,7 +10,7 @@ gmsh==4.10.5
 imageio==2.21.2
 joblib==1.1.0
 kiwisolver==1.4.4
-llvmlite==0.39.0
+llvmlite==0.39.1
 matplotlib==3.5.3
 neutronics-material-maker==0.1.11
 nlopt==2.7.1
