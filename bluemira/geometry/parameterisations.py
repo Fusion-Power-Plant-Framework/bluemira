@@ -1356,7 +1356,10 @@ class PictureFrameMeta(type(GeometryParameterisation), type(PictureFrameTools)):
         cls.lower = lower if isinstance(lower, PFrameSection) else PFrameSection[lower]
 
         if isinstance(inner, str):
-            cls.inner = PFrameSection[inner]
+            inner = PFrameSection[inner]
+
+        if isinstance(inner, PFrameSection):
+            cls.inner = inner
             cls.inner_vars = lambda self, v: (v.x1, v.x3, v.z3, v.z1 - v.ri, v.z2 + v.ri)
         elif inner is None:
             cls.inner = cls._connect_straight_to_inner_limb
