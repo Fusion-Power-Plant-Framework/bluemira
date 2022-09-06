@@ -93,9 +93,7 @@ class RadiationShieldBuilder(Builder):
         """
         cryo_vv_rot = self.cryo_vv.deepcopy()
         cryo_vv_rot.rotate(base=(0, 0, 0), direction=(0, 0, 1), degree=180)
-        from bluemira.display.displayer import show_cad
 
-        show_cad([self.cryo_vv, cryo_vv_rot])
         rs_inner = offset_wire(
             boolean_fuse([self.cryo_vv, cryo_vv_rot]).boundary[0],
             self.params.g_cr_rs.value,
