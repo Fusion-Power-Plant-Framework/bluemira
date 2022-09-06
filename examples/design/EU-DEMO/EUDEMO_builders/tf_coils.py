@@ -408,7 +408,7 @@ class TFCoilBuilder(Builder):
     def _build_xz_wp(self) -> Tuple[BluemiraWire, BluemiraWire, PhysicalComponent]:
         # Winding pack
         # x_min = self.wp_cross_section.bounding_box.x_min
-        # x_centreline_in = self._centreline.bounding_box.x_min
+        # x_centreline_in = self.centreline.bounding_box.x_min
         # dx = abs(x_min - x_centreline_in)
         wp_outer = offset_wire(
             self.centreline, 0.5 * self.params.tk_tf_wp.value, join="arc"
@@ -453,7 +453,7 @@ class TFCoilBuilder(Builder):
         # Winding pack
         # Should normally be gotten with wire_plane_intersect
         # (it's not OK to assume that the maximum x value occurs on the midplane)
-        x_out = self._centreline.bounding_box.x_max
+        x_out = self.centreline.bounding_box.x_max
         xs = BluemiraFace(deepcopy(self.wp_cross_section))
         xs2 = deepcopy(xs)
         xs2.translate((x_out - xs2.center_of_mass[0], 0, 0))
@@ -505,7 +505,7 @@ class TFCoilBuilder(Builder):
         self, n_sectors: int, sector_degree: float
     ) -> Tuple[BluemiraSolid, List[PhysicalComponent]]:
         # Winding pack
-        wp_solid = sweep_shape(self.wp_cross_section, self._centreline)
+        wp_solid = sweep_shape(self.wp_cross_section, self.centreline)
         winding_pack = PhysicalComponent(self.WP, wp_solid)
         winding_pack.display_cad_options.color = BLUE_PALETTE["TF"][1]
         return wp_solid, circular_pattern_component(
@@ -523,7 +523,7 @@ class TFCoilBuilder(Builder):
         # Get the insulation internal boundary sweep it over the centreline
         # and cut out the windingpack
         ins_solid = boolean_cut(
-            sweep_shape(ins_inner_face.boundary[0], self._centreline), wp_solid
+            sweep_shape(ins_inner_face.boundary[0], self.centreline), wp_solid
         )[0]
         insulation = PhysicalComponent(
             self.INS,
@@ -553,7 +553,7 @@ class TFCoilBuilder(Builder):
         inner_xs_rect = make_polygon([x_in, y_in, np.zeros(4)], closed=True)
 
         # Sweep with a varying rectangular cross-section
-        centreline_points = self._centreline.discretize(byedges=True, ndiscr=2000)
+        centreline_points = self.centreline.discretize(byedges=True, ndiscr=2000)
         idx = np.where(np.isclose(centreline_points.x, np.min(centreline_points.x)))[0]
         z_turn_top = np.max(centreline_points.z[idx])
         z_turn_bot = np.min(centreline_points.z[idx])
@@ -565,7 +565,7 @@ class TFCoilBuilder(Builder):
         inner_xs_rect_bot = deepcopy(inner_xs_rect)
         inner_xs_rect_bot.translate((0, 0, z_turn_bot))
         solid = sweep_shape(
-            [inner_xs_rect_top, outer_xs, inner_xs_rect_bot], self._centreline
+            [inner_xs_rect_top, outer_xs, inner_xs_rect_bot], self.centreline
         )
 
         # This is because the bounding box of a solid is not to be trusted
@@ -611,7 +611,7 @@ class TFCoilBuilder(Builder):
         joiner_bot = extrude_shape(BluemiraFace(joiner_bot), (0, 0, -z_min))
 
         # Need to cut away the excess joiner extrusions
-        cl = deepcopy(self._centreline)
+        cl = deepcopy(self.centreline)
         cl.translate((0, -2 * self.params.tf_wp_depth, 0))
         cutter = extrude_shape(BluemiraFace(cl), (0, 4 * self.params.tf_wp_depth, 0))
         joiner_top = boolean_cut(joiner_top, cutter)[0]
@@ -646,7 +646,7 @@ class TFCoilBuilder(Builder):
 
         outer_face = deepcopy(face)
         outer_face.translate(
-            (self._centreline.bounding_box.x_max - outer_face.center_of_mass[0], 0, 0)
+            (self.centreline.bounding_box.x_max - outer_face.center_of_mass[0], 0, 0)
         )
         return face, outer_face
 
@@ -690,7 +690,7 @@ class TFCoilBuilder(Builder):
         dy_out[[0, 1]] = -dy_out[[0, 1]]
 
         outboard_wire = make_polygon([dx_out, dy_out, np.zeros(4)], closed=True)
-        outboard_wire.translate((self._centreline.bounding_box.x_max, 0, 0))
+        outboard_wire.translate((self.centreline.bounding_box.x_max, 0, 0))
 
         return inboard_wire, outboard_wire
 
@@ -715,13 +715,14 @@ class TFCoilBuilder(Builder):
         Make a magnetostatics solver for the field from the TF coils.
         """
         circuit = ArbitraryPlanarRectangularXSCircuit(
-            self._centreline.discretize(byedges=True, ndiscr=100),
+            self.centreline.discretize(byedges=True, ndiscr=100),
             breadth=0.5 * self.params.tk_tf_wp.value,
             depth=0.5 * self.params.tk_tf_wp_y.value,
             current=1,
         )
         solver = HelmholtzCage(circuit, self.params.n_TF.value)
-        field = solver.field(self.params.R_0, 0, self.params.z_0)
-        current = -self.params.B_0 / field[1]  # single coil amp-turns
-        solver.set_current(current)
+        # single coil amp-turns
+        solver.set_current(
+            -self.params.B_0 / solver.field(self.params.R_0, 0, self.params.z_0)[1]
+        )
         return solver
