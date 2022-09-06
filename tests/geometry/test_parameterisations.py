@@ -31,6 +31,7 @@ from bluemira.codes._freecadapi import _wire_edges_tangent
 from bluemira.geometry.error import GeometryParameterisationError
 from bluemira.geometry.parameterisations import (
     GeometryParameterisation,
+    PFrameSection,
     PictureFrame,
     PolySpline,
     PrincetonD,
@@ -194,6 +195,9 @@ class TestComplexPictureFrame:
             ["CURVED", "CURVED", 57.6308],
             ["CURVED", "FLAT", 56.829],
             ["FLAT", "CURVED", 56.829],
+            [PFrameSection.CURVED, PFrameSection.CURVED, 57.6308],
+            [PFrameSection.CURVED, PFrameSection.FLAT, 56.829],
+            [PFrameSection.FLAT, PFrameSection.CURVED, 56.829],
         ],
     )
     def test_length(self, upper, lower, result):
@@ -202,7 +206,15 @@ class TestComplexPictureFrame:
         assert np.isclose(wire.length, result, rtol=1e-4, atol=1e-5)
 
     @pytest.mark.parametrize(
-        "upper, lower", [["CURVED", "CURVED"], ["CURVED", "FLAT"], ["FLAT", "CURVED"]]
+        "upper, lower",
+        [
+            ["CURVED", "CURVED"],
+            ["CURVED", "FLAT"],
+            ["FLAT", "CURVED"],
+            [PFrameSection.CURVED, PFrameSection.CURVED],
+            [PFrameSection.CURVED, PFrameSection.FLAT],
+            [PFrameSection.FLAT, PFrameSection.CURVED],
+        ],
     )
     def test_ordering(self, upper, lower):
         p = PictureFrame(upper=upper, lower=lower)
@@ -220,7 +232,14 @@ class TestComplexPictureFrame:
 
     @pytest.mark.parametrize(
         "vals",
-        [{"inner": "CURVED"}, {"upper": "TAPERED_INNER"}, {"lower": "TAPERED_INNER"}],
+        [
+            {"inner": "CURVED"},
+            {"upper": "TAPERED_INNER"},
+            {"lower": "TAPERED_INNER"},
+            {"inner": PFrameSection.CURVED},
+            {"upper": PFrameSection.TAPERED_INNER},
+            {"lower": PFrameSection.TAPERED_INNER},
+        ],
     )
     def test_bad_combinations_raise_ValueError(self, vals):
         with pytest.raises(ValueError):
