@@ -140,21 +140,22 @@ plasma_params = ParameterFrame(
 # Run core radiation source calculation for Spherical Tokamak
 
 # %%
-stcore = CoreRadiation(solver, impurity_content, impurity_data, plasma_params)
+stcore = CoreRadiation(eq, solver, plasma_params, impurity_content, impurity_data)
 
 # %%[markdown]
 # Build radiation profile at the midplane and 2D core radiation map
 
 # %%
 stcore.build_mp_rad_profile()
-stcore.build_core_radiation_map()
+rad = stcore.build_core_distribution()
+stcore.build_core_radiation_map(rad)
 
 # %%[markdown]
 # Run scrape-off layer radiation source calculation for Spherical Tokamak
 
 # %%
 stsol = DNScrapeOffLayerRadiation(
-    solver, impurity_content, impurity_data, plasma_params, fw_shape
+    eq, solver, plasma_params, impurity_content, impurity_data, fw_shape
 )
 
 # %%[markdown]

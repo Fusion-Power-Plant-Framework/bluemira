@@ -55,7 +55,7 @@ def upstream_temperature(
     z_mp,
     k_0,
     firstwall_geom: Grid,
-    n=2,
+    n=1,
 ):
     """
     Calculate the upstream temperature, as suggested from "Pitcher, 1997".
@@ -104,7 +104,6 @@ def upstream_temperature(
     a_par = 4 * np.pi * a * (k ** (1 / 2)) * n * lambda_q_f
     # power density at the upstream
     q_u = (p_sol * q_95) / a_par
-
     # connection length from the midplane to the target
     l_tot = calculate_connection_length_flt(
         eq,
@@ -351,7 +350,6 @@ def random_point_temperature(
 
     # connection length from mp to p point
     s_p = l_tot - l_p
-
     # Local temperature
     t_p = ((t_u**3.5) - 3.5 * (q_u / k_0) * s_p) ** (2 / 7)
 
@@ -756,7 +754,7 @@ class Radiation:
         ['R_0', 'Major radius', 3.639, 'm', None, 'Input'],
         ["kappa", "Elongation", 2.8, "dimensionless", None, "Input"],
         ['P_sep', 'Radiation power', 150, 'MW', None, 'Input'],
-        ['fw_lambda_q_near_omp', 'Lambda_q near SOL omp', 0.05, 'm', None, 'Input'],
+        ['fw_lambda_q_near_omp', 'Lambda_q near SOL omp', 0.005, 'm', None, 'Input'],
         ['fw_lambda_q_far_omp', 'Lambda_q far SOL omp', 0.1, 'm', None, 'Input'],
         ["k_0", "material's conductivity", 2000, "dimensionless", None, "Input"],
         ["gamma_sheath", "sheath heat transmission coefficient", 7, "dimensionless", None, "Input"],
@@ -812,6 +810,7 @@ class Radiation:
         # The two halves
         self.sep_lfs = self.separatrix[0]
         self.sep_hfs = self.separatrix[1]
+
         # The mid-plane radii
         self.x_sep_omp = self.transport_solver.x_sep_omp
         self.x_sep_imp = self.transport_solver.x_sep_imp
@@ -1642,7 +1641,7 @@ class ScrapeOffLayerRadiation(Radiation):
                 self.points["x_point"]["z_low"],
                 rec_ext=rec_ext,
             )
-            pfr_ext = ion_front_z
+            pfr_ext = abs(ion_front_z)
 
         # Validity condition for x-point radiative
         if x_point_rad and pfr_ext is None:
@@ -1976,7 +1975,6 @@ class DNScrapeOffLayerRadiation(ScrapeOffLayerRadiation):
                 ]
                 for f, fi in zip(ft["loss"], self.impurities_content)
             ]
-
         return rad["lfs_low"], rad["lfs_up"], rad["hfs_low"], rad["hfs_up"]
 
     def build_sol_radiation_map(
