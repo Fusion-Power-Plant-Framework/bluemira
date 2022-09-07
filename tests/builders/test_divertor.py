@@ -27,9 +27,9 @@ class TestDivertorBuilder:
     @classmethod
     def setup_class(cls):
         cls.params = {
-            "n_div_cassettes": {"name": "n_div_cassettes", "value": 3},
-            "c_rm": {"name": "c_rm", "value": 0.02},
-            "n_TF": {"name": "n_TF", "value": 12},
+            "n_div_cassettes": {"value": 3},
+            "c_rm": {"value": 0.02},
+            "n_TF": {"value": 12},
         }
         cls.div_koz = BluemiraFace(
             make_polygon([[1, 0, -5], [1, 0, -10], [5, 0, -10], [5, 0, -5]], closed=True)
