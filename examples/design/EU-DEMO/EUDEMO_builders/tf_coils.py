@@ -100,6 +100,11 @@ class TFCoilDesignerParams(ParameterFrame):
     tf_wp_width: Parameter[float]
     tk_tf_front_ib: Parameter[float]
     g_ts_tf: Parameter[float]
+    TF_ripple_limit: Parameter[float]
+    R_O: Parameter[float]
+    z_0: Parameter[float]
+    B_0: Parameter[float]
+    n_TF: Parameter[int]
 
 
 @dataclass
@@ -202,26 +207,19 @@ class TFCoilDesigner(Designer[GeometryParameterisation]):
                 val = {"value": val}
 
             shape_params[key] = val
+
         # Radial width of the winding pack with no insulation or insertion gap
         dr_wp = (
             self._params.tf_wp_width.value
             - 2 * self._params.tk_tf_ins.value
             - 2 * self._params.tk_tf_insgap.value
         )
-        self.params.add_parameter(
-            "tk_tf_wp", value=dr_wp, unit="m", source=type(self).__name__
-        )
-
         # Toroidal width of the winding pack no insulation
         dy_wp = (
             self._params.tf_wp_depth.value
             - 2 * self._params.tk_tf_ins
             - 2 * self._params.tk_tf_insgap
         )
-        self.params.add_parameter(
-            "tk_tf_wp_y", value=dy_wp, unit="m", source=type(self).__name__
-        )
-
         # PROCESS doesn't output the radius of the current centroid on the inboard
         r_current_in_board = (
             self._params.r_tf_in.value
@@ -230,13 +228,16 @@ class TFCoilDesigner(Designer[GeometryParameterisation]):
             + self._params.tk_tf_insgap.value
             + 0.5 * dr_wp
         )
-        self._params.add_parameter(
-            "r_tf_current_ib",
-            "Radius of the TF coil current centroid on the inboard",
-            r_current_in_board,
-            "m",
+
+        self.params.update(
+            {
+                "tk_tf_wp": dr_wp,
+                "tk_tf_wp_y": dy_wp,
+                "r_tf_current_ib": r_current_in_board,
+            },
             source=type(self).__name__,
         )
+
         shape_params["x1"] = {"value": r_current_in_board, "fixed": True}
         return shape_params
 
@@ -276,6 +277,7 @@ class TFCoilDesigner(Designer[GeometryParameterisation]):
         design_problem = self._problem_class(
             parameterisation,
             optimiser,
+            self.params,
             wp_cross_section=self._make_wp_xs(),
             separatrix=self.separatrix,
             keep_out_zone=self._make_centreline_koz(self.keep_out_zone),
