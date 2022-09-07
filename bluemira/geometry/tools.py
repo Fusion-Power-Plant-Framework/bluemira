@@ -1299,36 +1299,6 @@ def deserialize_shape(buffer: dict):
             raise NotImplementedError(f"Deserialization non implemented for {type_}")
 
 
-# # =============================================================================
-# # shape utils
-# # =============================================================================
-def get_shape_by_name(shape: BluemiraGeo, name: str):
-    """
-    Search through the boundary of the shape and get any shapes with a label
-    corresponding to the provided name. Includes the shape itself if the name matches
-    its label.
-
-    Parameters
-    ----------
-    shape: BluemiraGeo
-        The shape to search for the provided name.
-    name: str
-        The name to search for.
-
-    Returns
-    -------
-    shapes: List[BluemiraGeo]
-        The shapes known to the provided shape that correspond to the provided name.
-    """
-    shapes = []
-    if hasattr(shape, "label") and shape.label == name:
-        shapes.append(shape)
-    if hasattr(shape, "boundary"):
-        for o in shape.boundary:
-            shapes += get_shape_by_name(o, name)
-    return shapes
-
-
 # ======================================================================================
 # Find operations
 # ======================================================================================

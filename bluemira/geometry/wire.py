@@ -84,15 +84,16 @@ class BluemiraWire(BluemiraGeo):
             f"Only {self._shape_classes} objects can be used for {self.__class__}"
         )
 
-    def __add__(self, other):
-        """Add two wires"""
-        output = None
-        if isinstance(other, BluemiraWire):
-            wire = cadapi.apiWire([self._shape, other._shape])
-            output = BluemiraWire(wire)
-        else:
-            raise TypeError(f"{type(other)} is not an instance of BluemiraWire.")
-        return output
+    # NOTE: propose to remove this function since it is never really used.
+    # def __add__(self, other):
+    #     """Add two wires"""
+    #     output = None
+    #     if isinstance(other, BluemiraWire):
+    #         wire = cadapi.apiWire([self._shape, other._shape])
+    #         output = BluemiraWire(wire)
+    #     else:
+    #         raise TypeError(f"{type(other)} is not an instance of BluemiraWire.")
+    #     return output
 
     def close(self) -> None:
         """

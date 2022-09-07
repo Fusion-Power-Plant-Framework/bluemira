@@ -226,3 +226,54 @@ face = cadapi.deserialize_shape(buffer)
 bmbuffer = serialize_shape(bmface)
 print(bmbuffer)
 bmface1 = deserialize_shape(bmbuffer)
+
+
+
+from bluemira.base.file import get_bluemira_path
+from bluemira.geometry._deprecated_loop import Loop
+from bluemira.geometry._deprecated_tools import (
+    bounding_box,
+    check_linesegment,
+    convert_coordinates_to_face,
+    convert_coordinates_to_wire,
+    distance_between_points,
+    get_area,
+    get_intersect,
+    in_polygon,
+    join_intersect,
+    loop_plane_intersect,
+    make_face,
+    make_mixed_face,
+    make_mixed_wire,
+    make_wire,
+    offset,
+    on_polygon,
+    polygon_in_polygon,
+    rotation_matrix,
+)
+from bluemira.geometry.base import BluemiraGeo
+from bluemira.geometry.face import BluemiraFace
+import bluemira.geometry.tools as geotools #import extrude_shape, revolve_shape
+import os
+
+TEST_PATH = get_bluemira_path("geometry/test_data", subfolder="tests")
+data = (
+    "div_test_mfm.json",
+    (0, 2, 0),
+    {
+        "center_of_mass": (
+            8.03233,
+            0.990000,
+            -6.44430,
+        ),
+        "volume": 4.58653,
+        "area": 29.2239,
+    },
+)
+filename = data[0]
+vec = data[1]
+
+fn = os.sep.join([TEST_PATH, filename])
+loop: Loop = Loop.from_file(fn)
+face = make_mixed_face(*loop.xyz)
+part = geotools.extrude_shape(face, vec=vec)

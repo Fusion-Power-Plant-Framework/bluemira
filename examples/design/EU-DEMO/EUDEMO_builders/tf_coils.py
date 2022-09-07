@@ -402,10 +402,10 @@ class TFCoilsBuilder(OptimisedShapeBuilder):
 
         # Casing
         ib_cas_wire, ob_cas_wire = self._make_cas_xs()
-        cas_inner_face = BluemiraFace(
+        cas_inner_face = make_face(
             [ib_cas_wire, deepcopy(ins_inner_face.boundary[0])]
         )
-        cas_outer_face = BluemiraFace(
+        cas_outer_face = make_face(
             [ob_cas_wire, deepcopy(ins_outer_face.boundary[0])]
         )
 
@@ -510,7 +510,7 @@ class TFCoilsBuilder(OptimisedShapeBuilder):
         y_in = 0.5 * (self.params.tf_wp_depth + self.params.tk_tf_side)
 
         inner_xs.translate((0, 0, z_min - inner_xs.center_of_mass[2]))
-        inboard_casing = extrude_shape(BluemiraFace(inner_xs), (0, 0, z_max - z_min))
+        inboard_casing = extrude_shape(make_face(inner_xs), (0, 0, z_max - z_min))
 
         # Join the straight leg to the curvy bits
         x_min = np.min(centreline_points.x)
@@ -526,7 +526,7 @@ class TFCoilsBuilder(OptimisedShapeBuilder):
             ],
             closed=True,
         )
-        joiner_top = extrude_shape(BluemiraFace(joiner_top), (0, 0, -z_max))
+        joiner_top = extrude_shape(make_face(joiner_top), (0, 0, -z_max))
         joiner_bot = make_polygon(
             [
                 [x_min, x_turn_bot, x_turn_bot, x_min],
@@ -535,12 +535,12 @@ class TFCoilsBuilder(OptimisedShapeBuilder):
             ],
             closed=True,
         )
-        joiner_bot = extrude_shape(BluemiraFace(joiner_bot), (0, 0, -z_min))
+        joiner_bot = extrude_shape(make_face(joiner_bot), (0, 0, -z_min))
 
         # Need to cut away the excess joiner extrusions
         cl = deepcopy(self._centreline)
         cl.translate((0, -2 * self.params.tf_wp_depth, 0))
-        cl_face = BluemiraFace(cl)
+        cl_face = make_face(cl)
         cutter = extrude_shape(cl_face, (0, 4 * self.params.tf_wp_depth, 0))
         joiner_top = boolean_cut(joiner_top, cutter)[0]
         joiner_bot = boolean_cut(joiner_bot, cutter)[0]
@@ -606,7 +606,7 @@ class TFCoilsBuilder(OptimisedShapeBuilder):
             self._wp_cross_section,
             self._params.tk_tf_ins.value + self._params.tk_tf_insgap.value,
         )
-        face = BluemiraFace([ins_outer, self._wp_cross_section])
+        face = make_face([ins_outer, self._wp_cross_section])
 
         outer_face = deepcopy(face)
         outer_face.translate((x_out - outer_face.center_of_mass[0], 0, 0))

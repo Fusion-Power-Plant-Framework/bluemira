@@ -96,7 +96,7 @@ class ValueParameterBase:
             1, center=(1, 0, -1), start_angle=90, end_angle=270, axis=(0, -1, 0)
         )
         line2 = make_polygon([[1, 0, -2], [2, 0, -2]])
-        cls.mixed = BluemiraWire(line + semicircle + line2)
+        cls.mixed = BluemiraWire([line, semicircle, line2])
         cls.circle = make_circle(
             5, center=(5, 0, 0), start_angle=90, end_angle=270, axis=(0, -1, 0)
         )

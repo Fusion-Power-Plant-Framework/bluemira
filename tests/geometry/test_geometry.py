@@ -75,12 +75,12 @@ class TestGeometry:
         half_sq_2 = sq_points[2:, :].T
         wire1 = make_polygon(half_sq, label="wire1", closed=False)
         wire2 = make_polygon(half_sq_2, label="wire2", closed=False)
-        wire3 = wire1 + wire2
+        wire3 = BluemiraWire([wire1, wire2])
         wire3.label = "wire3"
         assert wire1.length == 2.0
         assert wire2.length == 1.0
         assert wire3.length == 3.0
-        wire1 += wire2
+        wire1 = BluemiraWire([wire1, wire2])
         assert wire1.length == 3.0
 
     def test_make_circle(self):

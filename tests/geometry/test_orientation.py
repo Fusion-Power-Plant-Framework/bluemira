@@ -36,13 +36,13 @@ class TestOrientation:
         )
 
         bm_wire = BluemiraWire(wire)
-        assert bm_wire._boundary[0].Orientation == wire.Orientation
+        assert bm_wire.boundary[0].Orientation == wire.Orientation
         assert bm_wire._shape.Orientation == wire.Orientation
 
         wire.reverse()
 
         bm_wire = BluemiraWire(wire)
-        assert bm_wire._boundary[0].Orientation == wire.Orientation
+        assert bm_wire.boundary[0].Orientation == wire.Orientation
         assert bm_wire._shape.Orientation == wire.Orientation
 
     def test_face(self):
