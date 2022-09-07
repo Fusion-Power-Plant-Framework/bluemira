@@ -97,14 +97,19 @@ class TFCoilDesignerParams(ParameterFrame):
     r_tf_current_ib: Parameter[float]
     tk_tf_wp: Parameter[float]
     tk_tf_wp_y: Parameter[float]
+    tf_wp_depth: Parameter[float]
     tf_wp_width: Parameter[float]
     tk_tf_front_ib: Parameter[float]
     g_ts_tf: Parameter[float]
     TF_ripple_limit: Parameter[float]
-    R_O: Parameter[float]
+    R_0: Parameter[float]
     z_0: Parameter[float]
     B_0: Parameter[float]
     n_TF: Parameter[int]
+    tk_tf_ins: Parameter[float]
+    tk_tf_insgap: Parameter[float]
+    tk_tf_nose: Parameter[float]
+    r_tf_in: Parameter[float]
 
 
 @dataclass
@@ -113,7 +118,7 @@ class TFCoilBuilderParams(ParameterFrame):
     TF Coil builder parameters
     """
 
-    R_O: Parameter[float]
+    R_0: Parameter[float]
     z_0: Parameter[float]
     B_0: Parameter[float]
     n_TF: Parameter[int]
@@ -122,7 +127,7 @@ class TFCoilBuilderParams(ParameterFrame):
     tf_wp_width: Parameter[float]
     tk_tf_front_ib: Parameter[float]
     tk_tf_ins: Parameter[float]
-    tk_tf_ins_gap: Parameter[float]
+    tk_tf_insgap: Parameter[float]
     tk_tf_nose: Parameter[float]
     tk_tf_side: Parameter[float]
     tk_tf_wp: Parameter[float]
@@ -177,7 +182,7 @@ class TFCoilDesigner(Designer[GeometryParameterisation]):
         d_yc = np.full(4, 0.5 * self.params.tk_tf_wp_y.value)
         d_yc[:2] = -d_yc[:2]
 
-        x_c = np.full(4, self.params.r_tf_current_ib)
+        x_c = np.full(4, self.params.r_tf_current_ib.value)
         x_c[[0, -1]] -= d_xc
         x_c[[1, 2]] += d_xc
 
@@ -193,7 +198,7 @@ class TFCoilDesigner(Designer[GeometryParameterisation]):
         tk_offset = 0.5 * self.params.tf_wp_width.value
         # Variable thickness of the casing is problematic...
         # TODO: Improve this estimate (or use variable offset here too..)
-        tk_offset += 1.5 * self.params.tk_tf_front_ib
+        tk_offset += 1.5 * self.params.tk_tf_front_ib.value
         tk_offset += self.params.g_ts_tf.value
         return offset_wire(keep_out_zone, tk_offset, open_wire=False, join="arc")
 
@@ -220,8 +225,8 @@ class TFCoilDesigner(Designer[GeometryParameterisation]):
         # Toroidal width of the winding pack no insulation
         dy_wp = (
             self.params.tf_wp_depth.value
-            - 2 * self.params.tk_tf_ins
-            - 2 * self.params.tk_tf_insgap
+            - 2 * self.params.tk_tf_ins.value
+            - 2 * self.params.tk_tf_insgap.value
         )
         # PROCESS doesn't output the radius of the current centroid on the inboard
         r_current_in_board = (
@@ -232,7 +237,7 @@ class TFCoilDesigner(Designer[GeometryParameterisation]):
             + 0.5 * dr_wp
         )
 
-        self.params.update(
+        self.params.update_values(
             {
                 "tk_tf_wp": dr_wp,
                 "tk_tf_wp_y": dy_wp,
@@ -273,11 +278,11 @@ class TFCoilDesigner(Designer[GeometryParameterisation]):
             self.opt_parameters,
         )
 
-        if self._problem_settings != {}:
+        if self.problem_settings != {}:
             bluemira_debug(
                 f"Applying non-default settings to problem: {self.problem_settings}"
             )
-        design_problem = self._problem_class(
+        design_problem = self.problem_class(
             parameterisation,
             optimiser,
             self.params,
@@ -354,7 +359,7 @@ class TFCoilBuilder(Builder):
             self._make_field_solver(),
         )
 
-    def build_xz(self) -> List[PhysicalComponent, Component, Component]:
+    def build_xz(self) -> List[Union[PhysicalComponent, Component]]:
         """
         Build the x-z components of the TF coils.
         """
@@ -368,7 +373,7 @@ class TFCoilBuilder(Builder):
 
     def build_xy(
         self, ins_inner_face: BluemiraFace, ins_outer_face: BluemiraFace
-    ) -> List[Component, ...]:
+    ) -> List[Component]:
         """
         Build the x-y components of the TF coils.
         """
