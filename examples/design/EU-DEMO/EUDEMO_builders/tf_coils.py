@@ -24,7 +24,7 @@ EU-DEMO build classes for TF Coils.
 """
 from copy import deepcopy
 from dataclasses import dataclass
-from typing import Dict, List, Tuple, Type, Union
+from typing import Dict, List, Optional, Tuple, Type, Union
 
 import numpy as np
 
@@ -138,7 +138,7 @@ class TFCoilDesigner(Designer[GeometryParameterisation]):
         params: Union[Dict, ParameterFrame],
         build_config: Dict,
         separatrix: BluemiraWire,
-        keep_out_zone: BluemiraWire,
+        keep_out_zone: Optional[BluemiraWire] = None,
     ):
         super().__init__(params, build_config)
 
@@ -164,6 +164,9 @@ class TFCoilDesigner(Designer[GeometryParameterisation]):
             self.algorithm_name = self.opt_config.get("algorithm_name", "SLSQP")
             self.opt_conditions = self.opt_config.get("conditions", {"max_eval": 100})
             self.opt_parameters = self.opt_config.get("parameters", {})
+
+        self.separatrix = separatrix
+        self.keep_out_zone = keep_out_zone
 
     def _make_wp_xs(self):
         """
@@ -280,7 +283,9 @@ class TFCoilDesigner(Designer[GeometryParameterisation]):
             self.params,
             wp_cross_section=self._make_wp_xs(),
             separatrix=self.separatrix,
-            keep_out_zone=self._make_centreline_koz(self.keep_out_zone),
+            keep_out_zone=None
+            if self.keep_out_zone is None
+            else self._make_centreline_koz(self.keep_out_zone),
             **self.problem_settings,
         )
 
