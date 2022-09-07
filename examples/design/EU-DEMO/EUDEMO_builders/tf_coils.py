@@ -190,11 +190,11 @@ class TFCoilDesigner(Designer[GeometryParameterisation]):
         """
         # The keep-out zone is for the TF WP centreline, so we need to add to it to
         # prevent clashes when the winding pack thickness and casing are added.
-        tk_offset = 0.5 * self._params.tf_wp_width.value
+        tk_offset = 0.5 * self.params.tf_wp_width.value
         # Variable thickness of the casing is problematic...
         # TODO: Improve this estimate (or use variable offset here too..)
-        tk_offset += 1.5 * self._params.tk_tf_front_ib
-        tk_offset += self._params.g_ts_tf.value
+        tk_offset += 1.5 * self.params.tk_tf_front_ib
+        tk_offset += self.params.g_ts_tf.value
         return offset_wire(keep_out_zone, tk_offset, open_wire=False, join="arc")
 
     def _derive_shape_params(self, variables_map: Dict[str, str]) -> Dict:
@@ -213,22 +213,22 @@ class TFCoilDesigner(Designer[GeometryParameterisation]):
 
         # Radial width of the winding pack with no insulation or insertion gap
         dr_wp = (
-            self._params.tf_wp_width.value
-            - 2 * self._params.tk_tf_ins.value
-            - 2 * self._params.tk_tf_insgap.value
+            self.params.tf_wp_width.value
+            - 2 * self.params.tk_tf_ins.value
+            - 2 * self.params.tk_tf_insgap.value
         )
         # Toroidal width of the winding pack no insulation
         dy_wp = (
-            self._params.tf_wp_depth.value
-            - 2 * self._params.tk_tf_ins
-            - 2 * self._params.tk_tf_insgap
+            self.params.tf_wp_depth.value
+            - 2 * self.params.tk_tf_ins
+            - 2 * self.params.tk_tf_insgap
         )
         # PROCESS doesn't output the radius of the current centroid on the inboard
         r_current_in_board = (
-            self._params.r_tf_in.value
-            + self._params.tk_tf_nose.value
-            + self._params.tk_tf_ins.value
-            + self._params.tk_tf_insgap.value
+            self.params.r_tf_in.value
+            + self.params.tk_tf_nose.value
+            + self.params.tk_tf_ins.value
+            + self.params.tk_tf_insgap.value
             + 0.5 * dr_wp
         )
 
