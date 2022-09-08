@@ -341,11 +341,6 @@ def find_psi_axis(psi_func, mesh):
     points = mesh.coordinates()
     psi_array = [psi_func(x) for x in points]
     psi_max_arg = np.argmax(psi_array)
-
-    print("Old-school")
-    print(np.max(psi_func.vector()[:]))
-    print(points[psi_max_arg])
-
     x0 = points[psi_max_arg]
     search_range = mesh.hmax()
     bounds = [(xi - search_range, xi + search_range) for xi in x0]
@@ -360,7 +355,4 @@ def find_psi_axis(psi_func, mesh):
     if not result.success:
         bluemira_warn("Poloidal flux maximum finding failing:\n" f"{result.message}")
 
-    print("New-school")
-    print(psi_func(result.x))
-    print(result.x)
     return psi_func(result.x)
