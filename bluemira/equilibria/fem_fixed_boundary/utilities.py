@@ -345,9 +345,9 @@ def find_psi_axis(psi_func, mesh):
     x0 = points[psi_max_arg]
     search_range = mesh.hmax()
     bounds = [(xi - search_range, xi + search_range) for xi in x0]
-    max_psi_func = lambda x: -psi_func(x)
+
     result = minimize(
-        max_psi_func,
+        lambda x: -psi_func(x),
         x0,
         method="SLSQP",
         bounds=bounds,
