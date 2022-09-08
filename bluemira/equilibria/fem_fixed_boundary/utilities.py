@@ -324,7 +324,7 @@ def calculate_plasma_shape_params(psi_norm_func, mesh, psi_norm, plot=False):
 
 def find_psi_axis(psi_func, mesh):
     """
-    Find the magnetic axis in the poloidal flux map
+    Find the magnetic axis in the poloidal flux map.
 
     Parameters
     ----------
@@ -336,7 +336,7 @@ def find_psi_axis(psi_func, mesh):
     Returns
     -------
     psi_axis: float
-        Maximum psi in the continuous psi function
+        Maximum psi in the continuous psi function [V.s]
     """
     points = mesh.coordinates()
     psi_array = [psi_func(x) for x in points]
