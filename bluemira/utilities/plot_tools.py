@@ -94,7 +94,7 @@ def str_to_latex(string):
     return "$" + s[0] + ss + "}" * (len(s) - 1) + "$"
 
 
-def make_gif(folder, figname, formatt="png", clean=False):
+def make_gif(folder, figname, formatt="png", clean=True):
     """
     Makes a GIF image from a set of images with similar names in a folder
     Cleans up the temporary figure files (deletes!)
