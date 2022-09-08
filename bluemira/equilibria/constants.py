@@ -84,7 +84,7 @@ NB3SN_B_MAX = 13  # Eyeball
 NB3SN_J_MAX = 16.5  # From Simon McIntosh CS calc, 2019
 
 # Dots per inch for GIFs
-DPI_GIF = 80
+DPI_GIF = 200
 
 # Matplotlib event plotting pause (shitty stupid API)
 PLT_PAUSE = 0.001  # Completely arbitrary number of seconds?

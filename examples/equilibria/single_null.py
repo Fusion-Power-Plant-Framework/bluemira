@@ -240,7 +240,13 @@ current_opt_problem = UnconstrainedTikhonovCurrentGradientCOP(
 )
 
 program = PicardIterator(
-    eq, current_opt_problem, fixed_coils=True, relaxation=0.2, plot=True
+    eq,
+    current_opt_problem,
+    fixed_coils=True,
+    relaxation=0.2,
+    plot=True,
+    gif=True,
+    figure_folder="/home/matti/code/",
 )
 program()
 

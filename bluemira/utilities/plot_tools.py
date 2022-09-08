@@ -33,6 +33,7 @@ from matplotlib.patches import Patch, PathPatch
 from matplotlib.path import Path
 from mpl_toolkits.mplot3d import Axes3D
 from mpl_toolkits.mplot3d.art3d import PathPatch3D
+from PIL import Image
 
 import bluemira.display.error as bm_display_error
 from bluemira.base.components import Component
@@ -93,7 +94,7 @@ def str_to_latex(string):
     return "$" + s[0] + ss + "}" * (len(s) - 1) + "$"
 
 
-def make_gif(folder, figname, formatt="png", clean=True):
+def make_gif(folder, figname, formatt="png", clean=False):
     """
     Makes a GIF image from a set of images with similar names in a folder
     Cleans up the temporary figure files (deletes!)
@@ -121,6 +122,17 @@ def make_gif(folder, figname, formatt="png", clean=True):
     if clean:
         for fp in ims:
             os.remove(fp)
+
+    if len(images) > 1:
+        # Occasionally bbox_tight is a few pixels off for contours it seems
+        # Resize the offending images
+        sizes = np.array([image.shape for image in images])
+        if not (sizes == sizes[0]).all():
+            shape = tuple(sizes[1][:2])
+            for i, image in enumerate(images):
+                if image.shape[:2] != shape:
+                    images[i] = Image.fromarray(image).resize(shape[::-1])
+
     gifname = os.path.join(folder, figname) + ".gif"
     kwargs = {"duration": 0.5, "loop": 3}
     imageio.mimsave(gifname, images, "GIF-FI", **kwargs)
@@ -136,6 +148,7 @@ def save_figure(fig, name, save=False, folder=None, dpi=600, formatt="png", **kw
         name = os.sep.join([folder, name]) + "." + formatt
         if os.path.isfile(name):
             os.remove(name)  # f.savefig will otherwise not overwrite
+
         fig.savefig(name, dpi=dpi, bbox_inches="tight", format=formatt, **kwargs)
     else:
         pass
