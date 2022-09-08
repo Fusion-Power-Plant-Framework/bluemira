@@ -131,10 +131,29 @@ def make_parameter_frame(
 
     Parameters
     ----------
-    params: Union[Dict[str, ParamDictT], NewParameterFrame, None]
-        The parameters to initialise the class with
+    params: Union[Dict[str, ParamDictT], NewParameterFrame, str, None]
+        The parameters to initialise the class with.
+        This parameter can be several types:
+
+            * Dict[str, ParamDictT]:
+                A dict where the keys are parameter names, and the
+                values are the data associated with the corresponding
+                name.
+            * ParameterFrame:
+                A reference to the parameters on this frame will be
+                assigned to the new ParameterFrame's parameters. Note
+                that this makes no copies, so updates to parameters in
+                the new frame will propagate to the old, and vice versa.
+            * str:
+                The path to a JSON file, or, if the string starts with
+                '{', a JSON string.
+            * None:
+                For the case where no parameters are actually required.
+                This is intended for internal use, to aid in validation
+                of parameters in `Builder`s and `Designer`s.
+
     param_cls: Type[NewParameterFrame]
-        The `ParameterFrame` class to generate
+        The `ParameterFrame` class to create a new instance of.
     """
     if param_cls is None:
         if params is None:
