@@ -444,6 +444,8 @@ class PicardIterator:
         self.relaxation = relaxation
         self.maxiter = maxiter
         self.plot_flag = plot
+        if gif and not plot:
+            self.plot_flag = True
         self.gif_flag = gif
         if figure_folder is None:
             figure_folder = try_get_bluemira_path(
