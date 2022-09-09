@@ -449,7 +449,7 @@ class PicardIterator:
         self.gif_flag = gif
         if figure_folder is None:
             figure_folder = try_get_bluemira_path(
-                "plots/equilibria", subfolder="data", allow_missing=not self.gif_flag
+                "", subfolder="generated_data", allow_missing=not self.gif_flag
             )
         self.figure_folder = figure_folder
         self.store = []

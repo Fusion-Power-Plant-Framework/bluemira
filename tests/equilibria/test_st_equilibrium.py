@@ -186,7 +186,7 @@ class TestSTEquilibrium:
             opt_problem,
             plot=False,
             gif=True,
-            figure_folder="/home/matti/code/",
+            figure_folder=None,
             relaxation=0.3,
             maxiter=400,
             convergence=criterion,
