@@ -30,7 +30,6 @@ from typing import Iterable, List, Optional
 import bluemira.codes._freecadapi as cadapi
 from bluemira.base.constants import EPS
 from bluemira.base.look_and_feel import bluemira_warn
-import bluemira.codes._freecadapi as cadapi
 from bluemira.codes.error import FreeCADError
 
 # import from bluemira
@@ -72,13 +71,10 @@ class BluemiraWire(BluemiraGeo):
             check = check or all(isinstance(s, c) for s in shape)
 
         if check:
-            if not is_list:
+            if len(shape) == 1:
                 return shape[0]
             else:
-                if len(shape) == 1:
-                    return shape[0]
-                else:
-                    return cadapi.apiWire(shape)
+                return cadapi.boolean_fuse(shape)
         raise TypeError(
             f"Only {self._shape_classes} objects can be used for {self.__class__}"
         )
