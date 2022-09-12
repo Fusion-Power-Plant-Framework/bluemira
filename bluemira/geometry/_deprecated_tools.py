@@ -851,6 +851,10 @@ def vector_intersect_3d(p_1, p_2, p_3, p_4):
     return intersection
 
 
+def point_on_plane(point, base, normal):
+    return True
+
+
 def loop_plane_intersect(loop, plane):
     """
     Calculate the intersection of a loop with a plane.
@@ -868,7 +872,7 @@ def loop_plane_intersect(loop, plane):
         The xyz coordinates of the intersections with the loop. Returns None if
         there are no intersections detected
     """
-    out = _loop_plane_intersect(loop.xyz.T[:-1], plane.p1, plane.n_hat)
+    out = _loop_plane_intersect(loop.xyz.T[:-1], plane.base, plane.axis)
     if not out:
         return None
     else:

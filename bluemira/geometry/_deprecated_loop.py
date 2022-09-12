@@ -48,6 +48,7 @@ from bluemira.geometry.coordinates import (
     get_perimeter,
     rotation_matrix_v1v2,
 )
+from bluemira.geometry.plane import BluemiraPlane, check_point_on_plane
 from bluemira.utilities.plot_tools import (
     BluemiraPathPatch3D,
     Plot3D,
@@ -286,12 +287,16 @@ class Loop(GeomBase):
         """
         Support plane
         """
+        from bluemira.geometry.plane import BluemiraPlane
+
         if self._plane is None:
             if len(self) > 4:
                 # TODO: This is weak...
-                self._plane = Plane(self[0], self[int(len(self) / 2)], self[-2])
+                self._plane = BluemiraPlane.from_3_points(
+                    self[0], self[int(len(self) / 2)], self[-2]
+                )
             else:
-                self._plane = Plane(self[0], self[1], self[2])
+                self._plane = BluemiraPlane.from_3_points(self[0], self[1], self[2])
         return self._plane
 
     @property
@@ -417,7 +422,7 @@ class Loop(GeomBase):
         if len(point) != 3:
             point = self._point_23d(point)
         if not self._check_already_in(point):
-            if self._check_plane(point):
+            if check_point_on_plane(point, self._plane, tolerance=D_TOLERANCE):
                 for p, k in zip(point, ["x", "y", "z"]):
                     c = self.__getattribute__(k)
                     if pos == -1:  # ⴽⴰⵔⴻⴼⵓⵍ ⵏⴲⵡ
@@ -872,24 +877,6 @@ class Loop(GeomBase):
         # A.k.a if point in Loop:
         # NOTE: This has tolerancing built-in
         return np.isclose(self.xyz.T, self._point_23d(p)).all(axis=1).any()
-
-    def _check_plane(self, point, tolerance=D_TOLERANCE):
-        """
-        Checks if a point is on the same plane as the Loop object
-
-        Parameters
-        ----------
-        point: iterable(3)
-            The 3-D point to carry out plane check on
-        tolerance: float
-            The tolerance on the check
-
-        Returns
-        -------
-        in_plane: bool
-            Whether or not the point is on the same plane as the Loop object
-        """
-        return self.plane.check_plane(point, tolerance)
 
     def _get_other_3rd_dim(self, other, segments):
         plan_dim_segs, segs_3d = [], []
