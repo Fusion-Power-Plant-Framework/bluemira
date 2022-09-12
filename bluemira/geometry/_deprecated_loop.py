@@ -178,6 +178,8 @@ class Loop(GeomBase):
     utility for discretised geometries.
     """
 
+    # TODO: Slots not immediately compatible with __getstate__ and __setstate__.
+    # Depending on how fast we eradicate Loop, consider improving.
     # __slots__ = [
     #     "_x",
     #     "_y",

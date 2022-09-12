@@ -30,7 +30,7 @@ import pytest
 from bluemira.base.file import get_bluemira_path
 from bluemira.geometry._deprecated_loop import Loop
 from bluemira.geometry.error import GeometryError
-from bluemira.geometry.tools import check_point_on_plane
+from bluemira.geometry.tools import point_on_plane
 from bluemira.utilities.plot_tools import Plot3D
 
 TEST = get_bluemira_path("geometry/test_data", subfolder="tests")
