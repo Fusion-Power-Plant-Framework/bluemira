@@ -154,6 +154,12 @@ def make_parameter_frame(
 
     param_cls: Type[NewParameterFrame]
         The `ParameterFrame` class to create a new instance of.
+
+    Returns
+    -------
+    Union[ParameterFrame, None]
+        A frame of the type `param_cls`, or `None` if `params` and
+        `param_cls` are both `None`.
     """
     if param_cls is None:
         if params is None:
