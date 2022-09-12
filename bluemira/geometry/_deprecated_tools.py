@@ -890,10 +890,10 @@ def _loop_plane_intersect(array, p1, vec2):
     return out
 
 
-def get_intersect(loop1, loop2):
+def get_intersect(xy1, xy2):
     """
-    Calculates the intersection points between two Loops. Will return unique
-    list of x, z intersections (no duplicates in x-z space)
+    Calculates the intersection points between two sets of 2-D coordinates. Will return
+    a unique list of x, z intersections (no duplicates in x-z space).
 
     Parameters
     ----------
@@ -913,8 +913,8 @@ def get_intersect(loop1, loop2):
     ----
     D. Schwarz, <https://uk.mathworks.com/matlabcentral/fileexchange/11837-fast-and-robust-curve-intersections>
     """  # noqa :W505
-    x1, y1 = loop1.d2
-    x2, y2 = loop2.d2
+    x1, y1 = xy1
+    x2, y2 = xy2
 
     def inner_inter(x_1, x_2):
         n1, n2 = x_1.shape[0] - 1, x_2.shape[0] - 1
@@ -993,7 +993,7 @@ def join_intersect(loop1, loop2, get_arg=False):
     -----
     Modifies loop1
     """
-    x_inter, z_inter = get_intersect(loop1, loop2)
+    x_inter, z_inter = get_intersect(loop1.d2, loop2.d2)
     xz = loop1.d2
     args = _intersect_count(x_inter, z_inter, xz[0], xz[1])
 

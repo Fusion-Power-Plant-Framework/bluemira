@@ -124,7 +124,7 @@ def inscribed_rect_in_poly(
     dx, dz = getdxdz()
 
     if convex or all(
-        [not i.size for i in get_intersect(_rect(x, z, dx, dz), coordinates)]
+        [not i.size for i in get_intersect(_rect(x, z, dx, dz).xz, coordinates.xz)]
     ):
         return dx, dz
 
@@ -135,7 +135,9 @@ def inscribed_rect_in_poly(
         dx = (left + right) / 2
         dz = dx / aspectratio
 
-        if all([not i.size for i in get_intersect(_rect(x, z, dx, dz), coordinates)]):
+        if all(
+            [not i.size for i in get_intersect(_rect(x, z, dx, dz).xz, coordinates.xz)]
+        ):
             left = dx  # increase the dx
         else:
             right = dx  # decrease the dx

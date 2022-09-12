@@ -436,21 +436,21 @@ class TestIntersections:
         loop1 = Loop(x=[0, 0.5, 1, 2, 3, 4, 0], z=[1, 1, 1, 1, 2, 5, 5])
         loop2 = Loop(x=[1.5, 1.5, 2.5, 2.5, 2.5], z=[4, -4, -4, -4, 5])
         shouldbe = [[1.5, 1], [2.5, 1.5], [2.5, 5]]
-        intersect = np.array(get_intersect(loop1, loop2))
+        intersect = np.array(get_intersect(loop1.d2, loop2.d2))
         correct = np.array(shouldbe).T
         assert np.allclose(intersect, correct)
 
         loop1 = Loop(x=[0, 0.5, 1, 2, 3, 4, 0], y=[1, 1, 1, 1, 2, 5, 5])
         loop2 = Loop(x=[1.5, 1.5, 2.5, 2.5, 2.5], y=[4, -4, -4, -4, 5])
         shouldbe = [[1.5, 1], [2.5, 1.5], [2.5, 5]]
-        intersect = np.array(get_intersect(loop1, loop2))
+        intersect = np.array(get_intersect(loop1.d2, loop2.d2))
         correct = np.array(shouldbe).T
         assert np.allclose(intersect, correct)
 
         loop1 = Loop(z=[0, 0.5, 1, 2, 3, 4, 0], y=[1, 1, 1, 1, 2, 5, 5])
         loop2 = Loop(z=[1.5, 1.5, 2.5, 2.5, 2.5], y=[4, -4, -4, -4, 5])
         shouldbe = [[1.5, 1][::-1], [2.5, 1.5][::-1], [2.5, 5][::-1]]
-        intersect = np.array(get_intersect(loop1, loop2))
+        intersect = np.array(get_intersect(loop1.d2, loop2.d2))
         correct = np.array(shouldbe).T
         assert np.allclose(intersect, correct)
 
@@ -507,8 +507,8 @@ class TestIntersections:
         args = []
         intx, intz = [], []
         for loop in [lp, eq, up]:
-            i = get_intersect(tf, loop)
-            a = join_intersect(tf, loop, get_arg=True)
+            i = get_intersect(tf.d2, loop.d2)
+            a = join_intersect(tf.d2, loop.d2, get_arg=True)
             args.extend(a)
             intx.extend(i[0])
             intz.extend(i[1])
