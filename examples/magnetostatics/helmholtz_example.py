@@ -33,8 +33,7 @@ Simple HelmholzCage example with different current sources.
 import matplotlib.pyplot as plt
 import numpy as np
 
-from bluemira.geometry._deprecated_loop import Loop
-from bluemira.geometry._deprecated_tools import make_circle_arc
+from bluemira.geometry.tools import make_circle, offset_wire
 from bluemira.magnetostatics.biot_savart import BiotSavartFilament
 from bluemira.magnetostatics.circuits import (
     ArbitraryPlanarRectangularXSCircuit,
@@ -54,7 +53,8 @@ depth = 1.0
 radius = 6
 x_c = 9
 z_c = 0
-x, z = make_circle_arc(radius, x_c, z_c, n_points=200, start_angle=np.pi)
+
+circle = make_circle(radius, center=(x_c, 0, z_c), axis=(0, 1, 0))
 
 # %%[markdown]
 # Make a Biot-Savart filament (which needs to be properly discretised)
@@ -64,23 +64,21 @@ n_filaments_x = 2
 n_filaments_y = 3
 fil_radius = 0.5 * (breadth + depth) / (n_filaments_x * n_filaments_y)
 
-loop = Loop(x=x, z=z)
-loop.close()
-loop.interpolate(50)
-
-loops = []
+filaments = []
 filaments = []
 dx_offsets = np.linspace(-breadth / 2, breadth / 2, n_filaments_x)
 dy_offsets = np.linspace(-depth / 2, depth / 2, n_filaments_y)
 
 for dx in dx_offsets:
     for dy in dy_offsets:
-        new_loop = loop.offset(dx)
-        new_loop.translate(vector=[0, dy, 0])
-        loops.append(new_loop)
+        new_loop = offset_wire(circle, dx)
+        new_loop.translate(vector=(0, dy, 0))
+        coordinates = new_loop.discretize(ndiscr=50)
+        coordinates.close()
+        filaments.append(coordinates)
 
 biotsavart_circuit = BiotSavartFilament(
-    loops, radius=fil_radius, current=current / (n_filaments_x * n_filaments_y)
+    filaments, radius=fil_radius, current=current / (n_filaments_x * n_filaments_y)
 )
 
 # %%[markdown]
@@ -88,9 +86,10 @@ biotsavart_circuit = BiotSavartFilament(
 # of several trapezoidal prism elements
 
 # %%
-loop.close()
+
+coordinates = circle.discretize(ndiscr=200, byedges=True)
 analytical_circuit1 = ArbitraryPlanarRectangularXSCircuit(
-    loop, breadth=breadth, depth=depth, current=current
+    coordinates, breadth=breadth, depth=depth, current=current
 )
 
 # %%[markdown]
@@ -193,6 +192,7 @@ def plot_cage_results(cage, xz_fields, xy_fields):
     ax.set_xlabel("x [m]")
     ax.set_ylabel("y [m]")
     ax.set_ylabel("z [m]")
+    plt.show()
 
 
 # Plot the two cages and the results in the two planes
