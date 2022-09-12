@@ -87,7 +87,7 @@ biotsavart_circuit = BiotSavartFilament(
 
 # %%
 
-coordinates = circle.discretize(ndiscr=200, byedges=True)
+coordinates = circle.discretize(ndiscr=100, byedges=True)
 analytical_circuit1 = ArbitraryPlanarRectangularXSCircuit(
     coordinates, breadth=breadth, depth=depth, current=current
 )
@@ -192,10 +192,10 @@ def plot_cage_results(cage, xz_fields, xy_fields):
     ax.set_xlabel("x [m]")
     ax.set_ylabel("y [m]")
     ax.set_ylabel("z [m]")
-    plt.show()
 
 
 # Plot the two cages and the results in the two planes
 plot_cage_results(analytical_tf_cage1, analytical_xz_fields, analytical_xy_fields)
 plot_cage_results(analytical_tf_cage2, analytical_xz_fields2, analytical_xy_fields2)
 plot_cage_results(biotsavart_tf_cage, biotsavart_xz_fields, biotsavart_xy_fields)
+plt.show()

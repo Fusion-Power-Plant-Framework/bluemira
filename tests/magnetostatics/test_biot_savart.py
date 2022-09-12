@@ -27,6 +27,7 @@ from bluemira.base.constants import MU_0
 from bluemira.display.auto_config import plot_defaults
 from bluemira.geometry._deprecated_loop import Loop
 from bluemira.geometry._deprecated_tools import make_circle_arc
+from bluemira.geometry.tools import make_circle
 from bluemira.magnetostatics.biot_savart import BiotSavartFilament
 from bluemira.magnetostatics.greens import (
     circular_coil_inductance_elliptic,
@@ -54,9 +55,9 @@ def test_biot_savart_loop():
     # Analytical field values
     _, Bx, Bz = greens_all(x_coil, z_coil, x_2d, z_2d)
 
-    xc, yc = make_circle_arc(x_coil, 0, z_coil, n_points=2000)
-    loop = Loop(xc, yc, 0)
-    bsf = BiotSavartFilament(loop, radius)
+    circle = make_circle(radius=x_coil, center=(0, z_coil, 0), axis=(0, 0, 1))
+    filament = circle.discretize(ndiscr=2000)
+    bsf = BiotSavartFilament(filament, radius)
 
     Bx2, _, Bz2 = bsf.field(x_2d, np.zeros_like(x_2d), z_2d)
 
