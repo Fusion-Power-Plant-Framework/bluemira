@@ -182,6 +182,10 @@ def check_point_on_plane(point, plane, tolerance=D_TOLERANCE):
         Whether or not the point is on the plane
     """
     return (
-        cadapi.apiVector(point).distanceToPlane(plane._shape.Position, plane._shape.Axis)
+        abs(
+            cadapi.apiVector(point).distanceToPlane(
+                plane._shape.Position, plane._shape.Axis
+            )
+        )
         < tolerance
     )
