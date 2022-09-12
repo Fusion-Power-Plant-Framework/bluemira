@@ -30,7 +30,7 @@ import pytest
 from bluemira.base.file import get_bluemira_path
 from bluemira.geometry._deprecated_loop import Loop
 from bluemira.geometry.error import GeometryError
-from bluemira.geometry.plane import check_point_on_plane
+from bluemira.geometry.tools import check_point_on_plane
 from bluemira.utilities.plot_tools import Plot3D
 
 TEST = get_bluemira_path("geometry/test_data", subfolder="tests")
@@ -117,13 +117,13 @@ class TestLoop:
             b.reorder(2)
 
     def test_planes(self):
-        assert check_point_on_plane([3, 2, 0], self.h.plane)
-        assert not check_point_on_plane([3, 2, 10], self.h.plane)
-        assert check_point_on_plane([3, 0, 10], self.a.plane)
-        assert check_point_on_plane([3, 0, 10], self.b.plane)
-        assert not check_point_on_plane([3, 2, 45.5], self.b.plane)
-        assert check_point_on_plane([3, 0, 10], self.tt.plane)
-        assert not check_point_on_plane([3, 2, 45.5], self.tt.plane)
+        assert point_on_plane([3, 2, 0], self.h.plane)
+        assert not point_on_plane([3, 2, 10], self.h.plane)
+        assert point_on_plane([3, 0, 10], self.a.plane)
+        assert point_on_plane([3, 0, 10], self.b.plane)
+        assert not point_on_plane([3, 2, 45.5], self.b.plane)
+        assert point_on_plane([3, 0, 10], self.tt.plane)
+        assert not point_on_plane([3, 2, 45.5], self.tt.plane)
 
     def test_rotate(self):
         self.h.close()

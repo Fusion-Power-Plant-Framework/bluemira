@@ -57,7 +57,8 @@ from bluemira.geometry.coordinates import (
     rotation_matrix_v1v2,
 )
 from bluemira.geometry.error import GeometryError
-from bluemira.geometry.plane import BluemiraPlane, check_point_on_plane
+from bluemira.geometry.plane import BluemiraPlane
+from bluemira.geometry.tools import point_on_plane
 from bluemira.utilities.plot_tools import (
     BluemiraPathPatch3D,
     Plot3D,
@@ -501,7 +502,7 @@ class Loop(GeomBase):
         if len(point) != 3:
             point = self._point_23d(point)
         if not self._check_already_in(point):
-            if check_point_on_plane(point, self.plane, tolerance=D_TOLERANCE):
+            if point_on_plane(point, self.plane, tolerance=D_TOLERANCE):
                 for p, k in zip(point, ["x", "y", "z"]):
                     c = self.__getattribute__(k)
                     if pos == -1:  # ⴽⴰⵔⴻⴼⵓⵍ ⵏⴲⵡ
