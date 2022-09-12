@@ -763,6 +763,14 @@ class Coordinates:
         return self._array[[1, 2], :]
 
     @property
+    def xyz(self):
+        """
+        The x-y-z coordinate array
+        """
+        # TODO: Temporary, while Loop still exists
+        return self._array
+
+    @property
     def points(self):
         """
         A list of the individual points of the Coordinates.

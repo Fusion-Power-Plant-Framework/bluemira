@@ -26,12 +26,13 @@ In contained file because loop module imports geomtools and geombase modules
 import numpy as np
 from scipy.spatial.distance import pdist
 
-from bluemira.geometry._deprecated_loop import Loop
 from bluemira.geometry._deprecated_tools import (
     get_intersect,
+    in_polygon,
     loop_plane_intersect,
     quart_rotate,
 )
+from bluemira.geometry.coordinates import Coordinates
 from bluemira.geometry.plane import BluemiraPlane
 
 __all__ = ["inscribed_rect_in_poly"]
@@ -85,11 +86,11 @@ def inscribed_rect_in_poly(
     Setting either value to a very small value could cause the function to hang.
 
     """
-    loop = Loop(x=x_poly, z=z_poly)
-    if not loop.closed:
-        loop.close()
+    coordinates = Coordinates({"x": x_poly, "z": z_poly})
+    if not coordinates.closed:
+        coordinates.close()
 
-    if not loop.point_inside([x_point, z_point]):
+    if not in_polygon(x_point, z_point, coordinates.xz.T, include_edges=False):
         return 0, 0
 
     x, z = x_point, z_point
@@ -113,7 +114,7 @@ def inscribed_rect_in_poly(
 
     # Set up distance calculation
     getdxdz = _GetDxDz(
-        loop,
+        coordinates,
         [x_point, z_point],
         aspectratio,
         convex,
@@ -122,7 +123,9 @@ def inscribed_rect_in_poly(
 
     dx, dz = getdxdz()
 
-    if convex or all([not i.size for i in get_intersect(_rect(x, z, dx, dz), loop)]):
+    if convex or all(
+        [not i.size for i in get_intersect(_rect(x, z, dx, dz), coordinates)]
+    ):
         return dx, dz
 
     left, right = 0, dx
@@ -132,7 +135,7 @@ def inscribed_rect_in_poly(
         dx = (left + right) / 2
         dz = dx / aspectratio
 
-        if all([not i.size for i in get_intersect(_rect(x, z, dx, dz), loop)]):
+        if all([not i.size for i in get_intersect(_rect(x, z, dx, dz), coordinates)]):
             left = dx  # increase the dx
         else:
             right = dx  # decrease the dx
@@ -145,8 +148,8 @@ class _GetDxDz:
 
     Parameters
     ----------
-    loop: Loop
-        Region loop
+    coords: Coordinates
+        Region coordinates
     point: (float, float)
         central point of rectangle
     aspectratio: float
@@ -158,12 +161,12 @@ class _GetDxDz:
 
     """
 
-    def __init__(self, loop, point, aspectratio, convex, planes):
+    def __init__(self, coords, point, aspectratio, convex, planes):
         self.vec_arr_x = np.zeros((9, 2))
         self.vec_arr_x[0] = point
 
         self.point = point
-        self.loop = loop
+        self.coords = coords
         self.planes = planes
 
         self.n_p = 2 * len(planes)
@@ -207,7 +210,7 @@ class _GetDxDz:
             maximum height/2 of rectangle
         """
         for n, plane in zip(self.elements, self.planes):
-            lpi = loop_plane_intersect(self.loop, plane)
+            lpi = loop_plane_intersect(self.coords, plane)
             self.check(n, lpi)
 
         self.vec_arr_z = self.vec_arr_x.copy()
@@ -253,9 +256,12 @@ def _rect(x, z, dx, dz):
 
     Returns
     -------
-    loop
-        Rectangular closed loop
+    coords
+        Rectangular closed set of coordinates
     """
-    return Loop(
-        x=x + np.array([-dx, dx, dx, -dx, -dx]), z=z + np.array([-dz, -dz, dz, dz, -dz])
+    return Coordinates(
+        {
+            "x": x + np.array([-dx, dx, dx, -dx, -dx]),
+            "z": z + np.array([-dz, -dz, dz, dz, -dz]),
+        }
     )
