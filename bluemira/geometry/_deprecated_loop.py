@@ -1111,11 +1111,18 @@ class Loop(GeomBase):
             return False
 
     def __getstate__(self):
+        """
+        Pickling utility used in deepcopy
+        """
+        # Need to pop the FreeCAD Part.Plane object which is unpicklable
         state = self.__dict__.copy()
         print(state)
         state.pop("_plane", None)
         return state
 
     def __setstate__(self, state):
+        """
+        Pickling utility used in deepcopy
+        """
         self.__dict__.update(state)
         self._plane = None
