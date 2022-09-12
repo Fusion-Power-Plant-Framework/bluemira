@@ -38,7 +38,6 @@ from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.equilibria.constants import PSI_NORM_TOL
 from bluemira.equilibria.error import FluxSurfaceError
 from bluemira.equilibria.find import find_flux_surface_through_point
-from bluemira.geometry._deprecated_base import Plane
 from bluemira.geometry._deprecated_loop import Loop
 from bluemira.geometry._deprecated_tools import (
     check_linesegment,
@@ -47,6 +46,7 @@ from bluemira.geometry._deprecated_tools import (
     join_intersect,
     loop_plane_intersect,
 )
+from bluemira.geometry.plane import BluemiraPlane
 
 
 @nb.jit(nopython=True, cache=True)
@@ -400,7 +400,7 @@ class OpenFluxSurface(FluxSurface):
             return loop
 
         if plane is None:
-            plane = Plane(
+            plane = BluemiraPlane.from_3_points(
                 [o_point.x, 0, o_point.z],
                 [o_point.x + 1, 0, o_point.z],
                 [o_point.x, 1, o_point.z],
@@ -606,7 +606,7 @@ class FieldLine:
         if ax is None:
             ax = plt.gca()
 
-        xz_plane = Plane([0, 0, 0], [1, 0, 0], [0, 0, 1])
+        xz_plane = BluemiraPlane.from_3_points([0, 0, 0], [1, 0, 0], [0, 0, 1])
         xi, _, zi = loop_plane_intersect(self.loop, xz_plane).T
         idx = np.where(xi >= 0)
         xi = xi[idx]

@@ -30,7 +30,7 @@ from scipy.interpolate import interp1d
 from scipy.spatial.distance import cdist
 
 from bluemira.base.look_and_feel import bluemira_warn
-from bluemira.geometry._deprecated_base import GeomBase, GeometryError, Plane
+from bluemira.geometry._deprecated_base import GeomBase
 from bluemira.geometry._deprecated_tools import (
     bounding_box,
     in_polygon,
@@ -48,6 +48,7 @@ from bluemira.geometry.coordinates import (
     get_perimeter,
     rotation_matrix_v1v2,
 )
+from bluemira.geometry.error import GeometryError
 from bluemira.geometry.plane import BluemiraPlane, check_point_on_plane
 from bluemira.utilities.plot_tools import (
     BluemiraPathPatch3D,
@@ -287,8 +288,6 @@ class Loop(GeomBase):
         """
         Support plane
         """
-        from bluemira.geometry.plane import BluemiraPlane
-
         if self._plane is None:
             if len(self) > 4:
                 # TODO: This is weak...
