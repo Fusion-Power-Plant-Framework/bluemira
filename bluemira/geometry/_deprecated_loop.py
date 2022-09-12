@@ -421,7 +421,7 @@ class Loop(GeomBase):
         if len(point) != 3:
             point = self._point_23d(point)
         if not self._check_already_in(point):
-            if check_point_on_plane(point, self._plane, tolerance=D_TOLERANCE):
+            if check_point_on_plane(point, self.plane, tolerance=D_TOLERANCE):
                 for p, k in zip(point, ["x", "y", "z"]):
                     c = self.__getattribute__(k)
                     if pos == -1:  # ⴽⴰⵔⴻⴼⵓⵍ ⵏⴲⵡ
