@@ -74,7 +74,7 @@ class BluemiraWire(BluemiraGeo):
             if len(shape) == 1:
                 return shape[0]
             else:
-                return cadapi.boolean_fuse(shape)
+                return cadapi.apiWire(shape)
         raise TypeError(
             f"Only {self._shape_classes} objects can be used for {self.__class__}"
         )
