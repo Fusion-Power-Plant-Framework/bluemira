@@ -32,6 +32,7 @@ from bluemira.base.error import DesignError
 from bluemira.base.file import get_bluemira_path
 from bluemira.equilibria import Equilibrium
 from bluemira.equilibria.find import find_OX_points
+from bluemira.geometry.parameterisations import TripleArc
 from bluemira.geometry.tools import make_circle, make_polygon
 from EUDEMO_builders.tf_coils import TFCoilBuilder, TFCoilDesigner
 
@@ -224,3 +225,27 @@ class TestTFCoilDesigner:
 
     #     with pytest.raises(DesignError):
     #         designer.execute()
+
+
+class TestTFCoilBuilder:
+
+    centreline = TripleArc().create_shape()
+    wp_cross_section = make_polygon(
+        [[0, 0, 0], [1, 0, 0], [1, 0, 1], [0, 0, 1]], closed=True
+    )
+
+    from bluemira.display.displayer import show_cad
+
+    show_cad([centreline, wp_cross_section])
+
+    def test_components_and_segments(self):
+        builder = TFCoilBuilder(self.params, {}, self.centreline, self.wp_cross_section)
+        tf_coil = builder.build()
+
+        assert tf_coil.component().get_component("xz")
+        assert tf_coil.component().get_component("xy")
+
+        xyz = tf_coil.component().get_component("xyz")
+        assert xyz
+        # Casing, Insulation, Winding pack
+        assert len(xyz.leaves) == self.params["n_TF"]["value"] * 3

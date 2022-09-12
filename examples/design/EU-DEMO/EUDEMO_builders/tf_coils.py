@@ -142,7 +142,7 @@ class TFCoilDesigner(Designer[GeometryParameterisation]):
         self,
         params: Union[Dict, ParameterFrame],
         build_config: Dict,
-        separatrix: BluemiraWire,
+        separatrix: Optional[BluemiraWire] = None,
         keep_out_zone: Optional[BluemiraWire] = None,
     ):
         super().__init__(params, build_config)
@@ -258,10 +258,15 @@ class TFCoilDesigner(Designer[GeometryParameterisation]):
         pack current centreline.
         """
         parameterisation = self._get_parameterisation()
+        wp_cross_section = self._make_wp_xs()
 
         if not hasattr(self, "problem_class"):
             raise ValueError(
                 f"Cannot execute {type(self).__name__} in RUN mode: no problem_class specified."
+            )
+        if self.separatrix is None:
+            raise ValueError(
+                "Cannot execute {type(self).__name__} in RUN mode: no separatrix specified"
             )
 
         bluemira_debug(
@@ -286,7 +291,7 @@ class TFCoilDesigner(Designer[GeometryParameterisation]):
             parameterisation,
             optimiser,
             self.params,
-            wp_cross_section=self._make_wp_xs(),
+            wp_cross_section=wp_cross_section,
             separatrix=self.separatrix,
             keep_out_zone=None
             if self.keep_out_zone is None
@@ -300,7 +305,7 @@ class TFCoilDesigner(Designer[GeometryParameterisation]):
             design_problem.apply_shape_constraints()
 
         bluemira_debug("Solving...")
-        return design_problem.optimise()
+        return design_problem.optimise(), wp_cross_section
 
     def read(self) -> GeometryParameterisation:
         """
@@ -311,14 +316,19 @@ class TFCoilDesigner(Designer[GeometryParameterisation]):
             raise ValueError(
                 f"Cannot execute {type(self).__name__} in 'read' mode: no file path specified."
             )
-        return self.parameterisation_cls.from_json(file=self.file_path)
+
+        # TODO find some way to extract wp_xs from saved shape...if its possible otherwise these could be unrelated
+        return (
+            self.parameterisation_cls.from_json(file=self.file_path),
+            self._make_wp_xs(),
+        )
 
     def mock(self) -> GeometryParameterisation:
         """
         Mock a design of TF coils using the original parameterisation of the current
         centreline.
         """
-        return self._get_parameterisation()
+        return self._get_parameterisation(), self._make_wp_xs()
 
 
 class TFCoilBuilder(Builder):
