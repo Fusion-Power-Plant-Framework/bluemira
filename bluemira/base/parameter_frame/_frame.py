@@ -150,7 +150,7 @@ def make_parameter_frame(
             * None:
                 For the case where no parameters are actually required.
                 This is intended for internal use, to aid in validation
-                of parameters in `Builder`s and `Designer`s.
+                of parameters in `Builder`\\s and `Designer`\\s.
 
     param_cls: Type[NewParameterFrame]
         The `ParameterFrame` class to create a new instance of.
