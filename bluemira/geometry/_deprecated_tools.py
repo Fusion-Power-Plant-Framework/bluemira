@@ -851,6 +851,10 @@ def vector_intersect_3d(p_1, p_2, p_3, p_4):
     return intersection
 
 
+def point_on_plane(point, base, normal):
+    return True
+
+
 def loop_plane_intersect(loop, plane):
     """
     Calculate the intersection of a loop with a plane.
