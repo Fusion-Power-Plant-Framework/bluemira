@@ -23,6 +23,15 @@
 A coordinate-series object class.
 """
 
+import abc
+import json
+import os
+import pickle  # noqa :S403
+import warnings
+from collections.abc import Iterable
+from copy import deepcopy
+from typing import Union
+
 import matplotlib.pyplot as plt
 import numpy as np
 from matplotlib.patches import PathPatch
@@ -55,7 +64,79 @@ from bluemira.utilities.plot_tools import (
     Plot3D,
     coordinates_to_path,
 )
-from bluemira.utilities.tools import is_num
+from bluemira.utilities.tools import is_num, json_writer
+
+
+class GeomBase(abc.ABC):
+    """
+    Base object for geometry classes. Need to think about this more...
+    """
+
+    plan_dims: Union[None, Iterable]
+
+    @abc.abstractmethod
+    def as_dict(self):
+        """
+        Cast the GeomBase as a dictionary.
+        """
+        pass
+
+    @abc.abstractmethod
+    def from_dict(self, d):
+        """
+        Initialise a GeomBase from a dictionary.
+        """
+        pass
+
+    def to_json(self, filename, **kwargs):
+        """
+        Exports a JSON of a geometry object
+        """
+        d = self.as_dict()
+        filename = os.path.splitext(filename)[0]
+        filename += ".json"
+        return json_writer(d, filename, **kwargs)
+
+    @classmethod
+    def load(cls, filename):
+        """
+        Load a geometry object either from a JSON or pickle.
+        """
+        ext = os.path.splitext(filename)[-1]
+        if ext == ".pkl":
+            warnings.warn(
+                "GeomBase objects should no longer be saved as pickle files.",
+                DeprecationWarning,
+                stacklevel=2,
+            )
+            with open(filename, "rb") as data:
+                return pickle.load(data)  # noqa :S301
+
+        elif ext == ".json":
+            with open(filename, "r") as data:
+                return json.load(data)
+        elif ext == "":
+            # Default to JSON if no extension specified
+            return cls.load(filename + ".json")
+        else:
+            raise GeometryError(f"File extension {ext} not recognised.")
+
+    @classmethod
+    def from_file(cls, filename):
+        """
+        Just in case the above objects become too complicated?
+        """
+        d = cls.load(filename)
+        return cls.from_dict(d)
+
+    def copy(self):
+        """
+        Get a deep copy of the geometry object.
+        """
+        return deepcopy(self)
+
+    def _get_3rd_dim(self):
+        return [c for c in ["x", "y", "z"] if c not in self.plan_dims][0]
 
 
 class Loop(GeomBase):
@@ -97,19 +178,19 @@ class Loop(GeomBase):
     utility for discretised geometries.
     """
 
-    __slots__ = [
-        "_x",
-        "_y",
-        "_z",
-        "_ndim",
-        "_plan_dims",
-        "_plane",
-        "_n_hat",
-        "closed",
-        "ccw",
-        "inner",
-        "outer",
-    ]
+    # __slots__ = [
+    #     "_x",
+    #     "_y",
+    #     "_z",
+    #     "_ndim",
+    #     "_plan_dims",
+    #     "_plane",
+    #     "_n_hat",
+    #     "closed",
+    #     "ccw",
+    #     "inner",
+    #     "outer",
+    # ]
 
     def __init__(self, x=None, y=None, z=None, enforce_ccw=True):
         self.x = x
@@ -1029,3 +1110,13 @@ class Loop(GeomBase):
             return True
         else:
             return False
+
+    def __getstate__(self):
+        state = self.__dict__.copy()
+        print(state)
+        state.pop("_plane", None)
+        return state
+
+    def __setstate__(self, state):
+        self.__dict__.update(state)
+        self._plane = None

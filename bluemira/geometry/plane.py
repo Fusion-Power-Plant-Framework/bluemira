@@ -162,6 +162,16 @@ class BluemiraPlane:
 
         return BluemiraPlacement._create(cadapi.placement_from_plane(self._shape))
 
+    # def __getstate__(self):
+    #     d = dict(self.__dict__)
+    #     del d["_shape"]
+    #     return d
+
+    # def __setstate__(self, d):
+    #     self.__dict__.update(d)
+    #     print(d)
+    #     self.__dict__["_shape"] = cadapi.make_plane(self.__dict__["base"], self.__dict__["axis"])
+
 
 def check_point_on_plane(point, plane, tolerance=D_TOLERANCE):
     """
