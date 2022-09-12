@@ -897,10 +897,10 @@ def get_intersect(xy1, xy2):
 
     Parameters
     ----------
-    loop1: Loop
-        The Loops between which intersection points should be calculated
-    loop2: Loop
-        The Loops between which intersection points should be calculated
+    xy1: np.ndarray
+        The 2-D coordinates between which intersection points should be calculated
+    xy2: np.ndarray
+        The 2-D coordinates between which intersection points should be calculated
 
     Returns
     -------
