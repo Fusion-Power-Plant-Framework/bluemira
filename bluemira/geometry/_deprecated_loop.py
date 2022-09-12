@@ -39,7 +39,6 @@ from scipy.interpolate import interp1d
 from scipy.spatial.distance import cdist
 
 from bluemira.base.look_and_feel import bluemira_warn
-from bluemira.geometry._deprecated_base import GeomBase
 from bluemira.geometry._deprecated_tools import (
     bounding_box,
     in_polygon,
