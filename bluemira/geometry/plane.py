@@ -30,7 +30,7 @@ import copy
 import numpy as np
 
 import bluemira.codes._freecadapi as cadapi
-from bluemira.geometry.constants import D_TOLERANCE, VERY_BIG
+from bluemira.geometry.constants import VERY_BIG
 from bluemira.geometry.face import BluemiraFace
 
 __all__ = ["BluemiraPlane"]
@@ -161,41 +161,3 @@ class BluemiraPlane:
         from bluemira.geometry.placement import BluemiraPlacement
 
         return BluemiraPlacement._create(cadapi.placement_from_plane(self._shape))
-
-    # def __getstate__(self):
-    #     d = dict(self.__dict__)
-    #     del d["_shape"]
-    #     return d
-
-    # def __setstate__(self, d):
-    #     self.__dict__.update(d)
-    #     print(d)
-    #     self.__dict__["_shape"] = cadapi.make_plane(self.__dict__["base"], self.__dict__["axis"])
-
-
-def check_point_on_plane(point, plane, tolerance=D_TOLERANCE):
-    """
-    Check if a point is on a plane.
-
-    Parameters
-    ----------
-    point: Iterable
-        Point to check
-    plane: BluemiraPlane
-        Plane to check
-    tolerance: float
-        Tolerance with which to check
-
-    Returns
-    -------
-    point_on_plane: bool
-        Whether or not the point is on the plane
-    """
-    return (
-        abs(
-            cadapi.apiVector(point).distanceToPlane(
-                plane._shape.Position, plane._shape.Axis
-            )
-        )
-        < tolerance
-    )
