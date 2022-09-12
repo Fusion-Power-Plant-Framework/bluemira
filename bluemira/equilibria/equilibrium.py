@@ -60,7 +60,7 @@ from bluemira.equilibria.plotting import (
     EquilibriumPlotter,
 )
 from bluemira.equilibria.profiles import CustomProfile
-from bluemira.geometry._deprecated_loop import Loop
+from bluemira.geometry.coordinates import Coordinates
 from bluemira.utilities.opt_tools import process_scipy_result
 from bluemira.utilities.tools import abs_rel_difference
 
@@ -1093,7 +1093,7 @@ class Equilibrium(MHDState):
 
         Returns
         -------
-        flux_surface: Loop(x, z) object
+        flux_surface: Coordinates
             Flux surface Loop
         """
         if psi is None:
@@ -1101,7 +1101,7 @@ class Equilibrium(MHDState):
         f = find_flux_surf(
             self.x, self.z, psi, psi_n, o_points=o_points, x_points=x_points
         )
-        return Loop(x=f[0], z=f[1])
+        return Coordinates({"x": f[0], "z": f[1]})
 
     def get_LCFS(self, psi=None):
         """
