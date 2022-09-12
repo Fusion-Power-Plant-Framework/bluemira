@@ -33,6 +33,7 @@ from bluemira.geometry._deprecated_tools import (
     loop_plane_intersect,
     quart_rotate,
 )
+from bluemira.geometry.plane import BluemiraPlane
 
 __all__ = ["inscribed_rect_in_poly"]
 
@@ -102,10 +103,14 @@ def inscribed_rect_in_poly(
 
     xo, rot_p = [x, 0, z], [0, 1, 0]
 
-    xx_plane = Plane(*xx)
-    zz_plane = Plane(*zz)
-    xz_plane = Plane(*quart_rotate(xx, theta=angle_r, xo=xo, dx=rot_p))
-    zx_plane = Plane(*quart_rotate(xx, theta=-angle_r, xo=xo, dx=rot_p))
+    xx_plane = BluemiraPlane.from_3_points(*xx)
+    zz_plane = BluemiraPlane.from_3_points(*zz)
+    xz_plane = BluemiraPlane.from_3_points(
+        *quart_rotate(xx, theta=angle_r, xo=xo, dx=rot_p)
+    )
+    zx_plane = BluemiraPlane.from_3_points(
+        *quart_rotate(xx, theta=-angle_r, xo=xo, dx=rot_p)
+    )
 
     # Set up distance calculation
     getdxdz = _GetDxDz(
