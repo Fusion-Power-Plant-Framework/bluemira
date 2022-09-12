@@ -190,34 +190,66 @@ class TestPictureFrame:
 
 class TestComplexPictureFrame:
     @pytest.mark.parametrize(
-        "upper, lower, result",
+        "upper, lower, inner, result",
         [
-            ["CURVED", "CURVED", 57.6308],
-            ["CURVED", "FLAT", 56.829],
-            ["FLAT", "CURVED", 56.829],
-            [PFrameSection.CURVED, PFrameSection.CURVED, 57.6308],
-            [PFrameSection.CURVED, PFrameSection.FLAT, 56.829],
-            [PFrameSection.FLAT, PFrameSection.CURVED, 56.829],
+            ["CURVED", "CURVED", "TAPERED_INNER", 56.331],
+            ["CURVED", "FLAT", "TAPERED_INNER", 54.714],
+            ["FLAT", "CURVED", "TAPERED_INNER", 54.714],
+            [
+                PFrameSection.CURVED,
+                PFrameSection.CURVED,
+                PFrameSection.TAPERED_INNER,
+                56.331,
+            ],
+            [
+                PFrameSection.CURVED,
+                PFrameSection.FLAT,
+                PFrameSection.TAPERED_INNER,
+                54.714,
+            ],
+            [
+                PFrameSection.FLAT,
+                PFrameSection.CURVED,
+                PFrameSection.TAPERED_INNER,
+                54.714,
+            ],
+            ["CURVED", "CURVED", None, 57.6308],
+            ["CURVED", "FLAT", None, 56.014],
+            ["FLAT", "CURVED", None, 56.014],
+            [PFrameSection.CURVED, PFrameSection.CURVED, None, 57.6308],
+            [PFrameSection.CURVED, PFrameSection.FLAT, None, 56.014],
+            [PFrameSection.FLAT, PFrameSection.CURVED, None, 56.014],
         ],
     )
-    def test_length(self, upper, lower, result):
-        p = PictureFrame(upper=upper, lower=lower)
+    def test_length(self, upper, lower, inner, result):
+        p = PictureFrame(upper=upper, lower=lower, inner=inner)
         wire = p.create_shape()
         assert np.isclose(wire.length, result, rtol=1e-4, atol=1e-5)
 
     @pytest.mark.parametrize(
-        "upper, lower",
+        "upper, lower, inner",
         [
-            ["CURVED", "CURVED"],
-            ["CURVED", "FLAT"],
-            ["FLAT", "CURVED"],
-            [PFrameSection.CURVED, PFrameSection.CURVED],
-            [PFrameSection.CURVED, PFrameSection.FLAT],
-            [PFrameSection.FLAT, PFrameSection.CURVED],
+            # should these pass?
+            # ["FLAT", "FLAT", "TAPERED_INNER"],
+            # ["CURVED", "CURVED", "TAPERED_INNER"],
+            # ["CURVED", "FLAT", "TAPERED_INNER"],
+            # ["FLAT", "CURVED", "TAPERED_INNER"],
+            # [PFrameSection.FLAT, PFrameSection.FLAT, PFrameSection.TAPERED_INNER],
+            # [PFrameSection.CURVED, PFrameSection.CURVED, PFrameSection.TAPERED_INNER],
+            # [PFrameSection.CURVED, PFrameSection.FLAT, PFrameSection.TAPERED_INNER],
+            # [PFrameSection.FLAT, PFrameSection.CURVED, PFrameSection.TAPERED_INNER],
+            ["FLAT", "FLAT", None],
+            ["CURVED", "CURVED", None],
+            ["CURVED", "FLAT", None],
+            ["FLAT", "CURVED", None],
+            [PFrameSection.FLAT, PFrameSection.FLAT, None],
+            [PFrameSection.CURVED, PFrameSection.CURVED, None],
+            [PFrameSection.CURVED, PFrameSection.FLAT, None],
+            [PFrameSection.FLAT, PFrameSection.CURVED, None],
         ],
     )
-    def test_ordering(self, upper, lower):
-        p = PictureFrame(upper=upper, lower=lower)
+    def test_ordering(self, upper, lower, inner):
+        p = PictureFrame(upper=upper, lower=lower, inner=inner)
         wire = p.create_shape()
         assert _wire_edges_tangent(wire._shape)
 

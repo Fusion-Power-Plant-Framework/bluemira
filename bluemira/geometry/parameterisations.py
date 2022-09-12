@@ -1005,7 +1005,7 @@ class PictureFrameTools:
         x_mid: float,
         z_top: float,
         z_mid: float,
-        r_c: float,
+        ri: float,
         axis: Iterable[float] = (0, -1, 0),
         flip: bool = False,
     ):
@@ -1026,8 +1026,8 @@ class PictureFrameTools:
             Vertical position of top of limb dome [m]
         z_mid: float
             Vertical position of flat section [m]
-        r_c: float
-            Radius of corner transition. Nominally 0 [m]
+        ri: float
+            Radius of inner corner transition. Nominally 0 [m]
         axis: Iterable[float]
             [x,y,z] vector normal to plane of parameterisation
         flip: bool
@@ -1065,7 +1065,7 @@ class PictureFrameTools:
             z_top_r_leg = z_top + r_leg
             z_mid_r_j = z_mid - r_j
             z_trans_diff = -(r_leg - r_j)
-            z_corner = z_mid + r_c
+            z_corner = z_mid + ri
             corner_angle_s = 90
             corner_angle_e = 180
             joint_angle_s = 90 - deg_theta_j
@@ -1079,7 +1079,7 @@ class PictureFrameTools:
             z_top_r_leg = z_top - r_leg
             z_mid_r_j = z_mid + r_j
             z_trans_diff = r_leg - r_j
-            z_corner = z_mid - r_c
+            z_corner = z_mid - ri
             corner_angle_s = 180
             corner_angle_e = 270
             joint_angle_s = -90
@@ -1105,8 +1105,8 @@ class PictureFrameTools:
 
         # Inner Corner
         corner_in = make_circle(
-            r_c,
-            [x_mid + r_c, 0.0, z_corner],
+            ri,
+            [x_mid + ri, 0.0, z_corner],
             start_angle=corner_angle_s,
             end_angle=corner_angle_e,
             axis=[0, 1, 0],
@@ -1114,7 +1114,7 @@ class PictureFrameTools:
         )
 
         # Build straight section of leg
-        p1 = [x_mid + r_c, 0, z_mid]
+        p1 = [x_mid + ri, 0, z_mid]
         p2 = [leg_centre[0] - (r_leg + r_j) * np.sin(theta_j), 0, z_mid]
         straight_section = make_polygon([p2, p1] if flip else [p1, p2])
 
@@ -1294,15 +1294,12 @@ class PictureFrameTools:
 
         return BluemiraWire([bot_straight, ct_angle, top_straight], label="inner_limb")
 
-    def _connect_curve_to_outer_limb(self, top, bottom):
+    def _connect_to_outer_limb(self, top, bottom, top_curve=False, bot_curve=False):
 
         return self._outer_limb(
-            top.discretize(100, byedges=True)[:, -1],
-            bottom.discretize(100, byedges=True)[:, 0],
+            top.discretize(100, byedges=True)[:, -1] if top_curve else top,
+            bottom.discretize(100, byedges=True)[:, 0] if bot_curve else bottom,
         )
-
-    def _connect_straight_to_outer_limb(self, top, bottom):
-        return self._outer_limb(top, bottom)
 
     def _connect_straight_to_inner_limb(self, top, bottom):
         return self._inner_limb(top, bottom)
@@ -1360,19 +1357,13 @@ class PictureFrameMeta(type(GeometryParameterisation), type(PictureFrameTools)):
 
         if isinstance(inner, PFrameSection):
             cls.inner = inner
-            cls.inner_vars = lambda self, v: (v.x1, v.x3, v.z3, v.z1 - v.ri, v.z2 + v.ri)
+            cls.inner_vars = lambda self, v: (v.x1, v.x4, v.z3, v.z1 - v.ri, v.z2 + v.ri)
         elif inner is None:
             cls.inner = cls._connect_straight_to_inner_limb
-            if PFrameSection.CURVED in [cls.upper, cls.lower]:
-                cls.inner_vars = lambda self, v: (
-                    [v.x1, 0, v.z2 + v.r_c],
-                    [v.x1, 0, v.z1 - v.r_c],
-                )
-            else:
-                cls.inner_vars = lambda self, v: (
-                    [v.x1, 0, v.z2 + v.ri],
-                    [v.x1, 0, v.z1 - v.ri],
-                )
+            cls.inner_vars = lambda self, v: (
+                [v.x1, 0, v.z2 + v.ri],
+                [v.x1, 0, v.z1 - v.ri],
+            )
 
         if (
             isinstance(cls.inner, PFrameSection)
@@ -1383,51 +1374,51 @@ class PictureFrameMeta(type(GeometryParameterisation), type(PictureFrameTools)):
         if cls.upper == PFrameSection.CURVED:
             cls.upper_vars = lambda self, v: (
                 v.x2,
-                v.x_curve_start,
-                v.x1,
+                v.x3,
+                v.x4 if self.inner is PFrameSection.TAPERED_INNER else v.x1,
                 v.z1_peak,
                 v.z1,
-                v.r_c,
+                v.ri,
             )
         elif cls.upper == PFrameSection.FLAT:
-            if cls.lower == PFrameSection.CURVED:
-                cls.upper_vars = lambda self, v: (v.x1, v.x2, v.z1, v.r_c, v.r_c)
-            elif cls.inner == PFrameSection.TAPERED_INNER:
-                cls.upper_vars = lambda self, v: (v.x3, v.x2, v.z1, v.ri, v.ro)
-            else:
-                cls.upper_vars = lambda self, v: (v.x1, v.x2, v.z1, v.ri, v.ro)
-
+            cls.upper_vars = lambda self, v: (
+                v.x4 if self.inner is PFrameSection.TAPERED_INNER else v.x1,
+                v.x2,
+                v.z1,
+                v.ri,
+                v.ro,
+            )
         else:
             raise ValueError(f"The upper leg cannot be {cls.upper}")
 
         if cls.lower == PFrameSection.CURVED:
             cls.lower_vars = lambda self, v: (
                 v.x2,
-                v.x_curve_start,
-                v.x1,
+                v.x3,
+                v.x4 if self.inner is PFrameSection.TAPERED_INNER else v.x1,
                 v.z2_peak,
                 v.z2,
-                v.r_c,
+                v.ri,
             )
         elif cls.lower == PFrameSection.FLAT:
-            if cls.upper == PFrameSection.CURVED:
-                cls.lower_vars = lambda self, v: (v.x1, v.x2, v.z2, v.r_c, v.r_c)
-            elif cls.inner == PFrameSection.TAPERED_INNER:
-                cls.lower_vars = lambda self, v: (v.x3, v.x2, v.z2, v.ri, v.ro)
-            else:
-                cls.lower_vars = lambda self, v: (v.x1, v.x2, v.z2, v.ri, v.ro)
+            cls.lower_vars = lambda self, v: (
+                v.x4 if self.inner is PFrameSection.TAPERED_INNER else v.x1,
+                v.x2,
+                v.z2,
+                v.ri,
+                v.ro,
+            )
         else:
             raise ValueError(f"The lower leg cannot be {cls.lower}")
 
-        if PFrameSection.CURVED in [cls.upper, cls.lower]:
-            cls.outer = cls._connect_curve_to_outer_limb
-            cls.outer_vars = lambda self, top_leg, bot_leg, v: (top_leg, bot_leg)
-        else:
-            cls.outer = cls._connect_straight_to_outer_limb
-            cls.outer_vars = lambda self, top_leg, bot_leg, v: (
-                [v.x2, 0, v.z1 - v.ro],
-                [v.x2, 0, v.z2 + v.ro],
-            )
+        cls.outer = cls._connect_to_outer_limb
+
+        cls.outer_vars = lambda self, top_leg, bot_leg, v: (
+            top_leg if self.upper is PFrameSection.CURVED else [v.x2, 0, v.z1 - v.ro],
+            bot_leg if self.lower is PFrameSection.CURVED else [v.x2, 0, v.z2 + v.ro],
+            self.upper is PFrameSection.CURVED,
+            self.lower is PFrameSection.CURVED,
+        )
 
         obj = cls.__new__(cls)
         obj.__init__(var_dict)
@@ -1462,18 +1453,19 @@ class PictureFrame(
     ro: float
         Radius of outer corners [m]
 
-    For curved pictures frames there is no 'ri' or 'ro' but the additional keys are:
+    For curved pictures frames there is no 'ro' on the curved section but there
+    are additional keys:
 
     z1_peak: float
         Vertical position of top of limb dome [m]
     z2_peak: float
         Vertical position of top of limb dome [m]
-    r_c: float
-        radius of inboard and outboard corners. [m]
+    x3: float
+        The radius to start the dome curve [m]
 
     For tapered inner leg the additional keys are:
 
-    x3: float
+    x4: float
         Radial position of outer limb [m]
     z3: float
         Vertical position of top of tapered section [m]
@@ -1501,12 +1493,22 @@ class PictureFrame(
             BoundedVariable(
                 "z2", -9.5, lower_bound=-10.5, upper_bound=-8, descr="Lower limb height"
             ),
+            BoundedVariable(
+                "ri",
+                0.1,
+                lower_bound=0,
+                upper_bound=2,
+                descr="Inboard corner radius",
+            ),
+            BoundedVariable(
+                "ro", 2, lower_bound=1, upper_bound=5, descr="Outboard corner radius"
+            ),
         ]
 
         if PFrameSection.CURVED in [self.upper, self.lower]:
             bounded_vars += [
                 BoundedVariable(
-                    "x_curve_start",
+                    "x3",
                     2.5,
                     lower_bound=2.4,
                     upper_bound=2.6,
@@ -1526,45 +1528,25 @@ class PictureFrame(
                     upper_bound=-6,
                     descr="Lower limb curve height",
                 ),
-                BoundedVariable(
-                    "r_c",
-                    0.1,
-                    lower_bound=0.09,
-                    upper_bound=0.11,
-                    descr="Corner/transition joint radius",
-                ),
-            ]
-        else:
-            bounded_vars += [
-                BoundedVariable(
-                    "ri",
-                    1,
-                    lower_bound=0,
-                    upper_bound=2,
-                    descr="Inboard corner radius",
-                ),
-                BoundedVariable(
-                    "ro", 2, lower_bound=1, upper_bound=5, descr="Outboard corner radius"
-                ),
             ]
 
-            if self.inner == PFrameSection.TAPERED_INNER:
-                bounded_vars += [
-                    BoundedVariable(
-                        "x3",
-                        1.1,
-                        lower_bound=1,
-                        upper_bound=1.3,
-                        descr="Middle limb radius",
-                    ),
-                    BoundedVariable(
-                        "z3",
-                        6.5,
-                        lower_bound=6,
-                        upper_bound=8,
-                        descr="Taper angle stop height",
-                    ),
-                ]
+        if self.inner == PFrameSection.TAPERED_INNER:
+            bounded_vars += [
+                BoundedVariable(
+                    "x4",
+                    1.1,
+                    lower_bound=1,
+                    upper_bound=1.3,
+                    descr="Middle limb radius",
+                ),
+                BoundedVariable(
+                    "z3",
+                    6.5,
+                    lower_bound=6,
+                    upper_bound=8,
+                    descr="Taper angle stop height",
+                ),
+            ]
 
         variables = OptVariables(bounded_vars, frozen=True)
         variables.adjust_variables(var_dict, strict_bounds=False)
