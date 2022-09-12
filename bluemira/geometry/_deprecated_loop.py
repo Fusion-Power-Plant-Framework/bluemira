@@ -371,8 +371,6 @@ class Loop(GeomBase):
         """
         Support plane
         """
-        from bluemira.geometry.plane import BluemiraPlane
-
         if self._plane is None:
             if len(self) > 4:
                 # TODO: This is weak...
