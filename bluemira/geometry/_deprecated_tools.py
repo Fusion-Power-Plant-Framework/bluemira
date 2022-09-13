@@ -1012,9 +1012,9 @@ def join_intersect(coords1, coords2, get_arg=False):
             bump = 0
         else:
             bump = 1
-        if not not np.isclose(coords1.xyz.T, [x_int[i], 0, z_int[i]]).all(axis=1).any():
+        if not np.isclose(coords1.xyz.T, [x_int[i], 0, z_int[i]]).all(axis=1).any():
             # Only increment counter if the intersection isn't already in the Coordinates
-            coords1.insert([x_int[i], 0, z_int[i]], pos=arg + count + bump)
+            coords1.insert([x_int[i], 0, z_int[i]], index=arg + count + bump)
             count += 1
 
     if get_arg:
