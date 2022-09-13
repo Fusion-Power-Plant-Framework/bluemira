@@ -20,6 +20,7 @@
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 
 import os
+from copy import deepcopy
 
 import numpy as np
 import pytest
@@ -75,13 +76,13 @@ class TestOpenFluxSurfaceStuff:
         l_hfs = hfs.connection_length(self.eq)
 
         # test discretisation sensitivity
-        lfs_loop = lfs.coords.copy()
+        lfs_loop = deepcopy(lfs.coords)
         lfs_loop.interpolate(3 * len(lfs_loop))
         lfs_interp = PartialOpenFluxSurface(lfs_loop)
         l_lfs_interp = lfs_interp.connection_length(self.eq)
         assert np.isclose(l_lfs, l_lfs_interp, rtol=5e-3)
 
-        hfs_loop = hfs.coords.copy()
+        hfs_loop = deepcopy(hfs.coords)
         hfs_loop.interpolate(3 * len(hfs_loop))
         hfs_interp = PartialOpenFluxSurface(hfs_loop)
         l_hfs_interp = hfs_interp.connection_length(self.eq)

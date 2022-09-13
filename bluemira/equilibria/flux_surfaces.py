@@ -406,7 +406,7 @@ class OpenFluxSurface(FluxSurface):
                 [o_point.x, 1, o_point.z],
             )
 
-        ref_coords = self.coords.copy()
+        ref_coords = deepcopy(self.coords)
         intersections = coords_plane_intersect(ref_coords, plane)
         x_inter = intersections.T[0]
 
@@ -462,7 +462,7 @@ class PartialOpenFluxSurface(OpenFluxSurface):
         first_wall: Coordinates
             The geometry of the first wall to clip the OpenFluxSurface to
         """
-        first_wall = first_wall.copy()
+        first_wall = deepcopy(first_wall)
 
         args = join_intersect(self.coords, first_wall, get_arg=True)
 
