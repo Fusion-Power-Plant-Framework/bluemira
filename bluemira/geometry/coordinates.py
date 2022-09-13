@@ -717,6 +717,24 @@ class Coordinates:
         if not self.check_ccw(axis=axis):
             self.reverse()
 
+    def distance_to(self, point):
+        """
+        Calculates the distances from each point in the Coordinates to the point.
+
+        Parameters
+        ----------
+        point: iterable(3)
+            The point to which to calculate the distances
+
+        Returns
+        -------
+        distances: np.array(N)
+            The vector of distances of the Coordinates to the point
+        """
+        point = np.array(point)
+        point = point.reshape(3, 1).T
+        return cdist(self.xyz.T, point, "euclidean")
+
     def argmin(self, point):
         """
         Parameters
@@ -729,9 +747,7 @@ class Coordinates:
         arg: int
             The index of the closest point
         """
-        point = point.reshape(3, 1).T
-        distances = cdist(self.xyz.T, point, "euclidean")
-        return np.argmin(sdistances)
+        return np.argmin(self.distance_to(point))
 
     # =============================================================================
     # Property access
