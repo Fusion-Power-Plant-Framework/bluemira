@@ -32,7 +32,6 @@ import numpy as np
 from numba.np.extensions import cross2d
 from pyquaternion import Quaternion
 from scipy.interpolate import UnivariateSpline, interp1d
-from scipy.spatial.distance import cdist
 
 from bluemira.base.constants import EPS
 from bluemira.base.look_and_feel import bluemira_warn
@@ -1022,8 +1021,7 @@ def join_intersect(loop1, loop2, get_arg=False):
     if get_arg:
         args = []
         for x, z in zip(x_inter, z_inter):
-            arg = np.argmin(cdist(loop1.xyz.T, [x, 0, z], "euclidean"))
-            args.append(arg)
+            args.append(loop1.argmin([x, 0, z]))
         return list(set(args))
 
 

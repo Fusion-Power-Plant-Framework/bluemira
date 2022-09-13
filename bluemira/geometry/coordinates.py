@@ -28,6 +28,7 @@ from typing import Iterable
 import numba as nb
 import numpy as np
 from pyquaternion import Quaternion
+from scipy.spatial.distance import cdist
 
 from bluemira.base.constants import EPS
 from bluemira.base.look_and_feel import bluemira_warn
@@ -715,6 +716,22 @@ class Coordinates:
 
         if not self.check_ccw(axis=axis):
             self.reverse()
+
+    def argmin(self, point):
+        """
+        Parameters
+        ----------
+        point: iterable(3)
+            The point to which to calculate the distances
+
+        Returns
+        -------
+        arg: int
+            The index of the closest point
+        """
+        point = point.reshape(3, 1).T
+        distances = cdist(self.xyz.T, point, "euclidean")
+        return np.argmin(sdistances)
 
     # =============================================================================
     # Property access

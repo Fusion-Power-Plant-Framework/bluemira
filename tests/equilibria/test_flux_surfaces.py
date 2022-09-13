@@ -75,13 +75,13 @@ class TestOpenFluxSurfaceStuff:
         l_hfs = hfs.connection_length(self.eq)
 
         # test discretisation sensitivity
-        lfs_loop = lfs.loop.copy()
+        lfs_loop = lfs.coords.copy()
         lfs_loop.interpolate(3 * len(lfs_loop))
         lfs_interp = PartialOpenFluxSurface(lfs_loop)
         l_lfs_interp = lfs_interp.connection_length(self.eq)
         assert np.isclose(l_lfs, l_lfs_interp, rtol=5e-3)
 
-        hfs_loop = hfs.loop.copy()
+        hfs_loop = hfs.coords.copy()
         hfs_loop.interpolate(3 * len(hfs_loop))
         hfs_interp = PartialOpenFluxSurface(hfs_loop)
         l_hfs_interp = hfs_interp.connection_length(self.eq)
@@ -93,7 +93,7 @@ class TestOpenFluxSurfaceStuff:
         l_flt_hfs = flt.trace_field_line(
             x_start, z_start, n_turns_max=20, forward=False
         ).connection_length
-        print(len(l_flt_lfs.loop))
+        print(len(l_flt_lfs.coords))
         assert np.isclose(l_flt_lfs.connection_length, l_lfs, rtol=2e-2)
         assert np.isclose(l_flt_hfs, l_hfs, rtol=2e-2)
 
@@ -159,7 +159,7 @@ class TestFieldLine:
         flt = FieldLineTracer(self.eq)
         field_line = flt.trace_field_line(13, 0, n_points=1000)
         assert np.isclose(
-            field_line.connection_length, field_line.loop.length, rtol=5e-2
+            field_line.connection_length, field_line.coords.length, rtol=5e-2
         )
 
 
