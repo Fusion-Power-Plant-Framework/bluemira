@@ -41,34 +41,35 @@ DATA = get_bluemira_path("design/EU-DEMO/EUDEMO_tests/test_data", subfolder="exa
 
 OPTIMISER_MODULE_REF = "bluemira.builders.tf_coils"
 
-CONFIG = {
-    "param_class": f"TripleArc",
-    "variables_map": {},
-    "run_mode": "mock",
-    "name": "First Wall",
-    "problem_class": f"{OPTIMISER_MODULE_REF}::RippleConstrainedLengthGOP",
-}
-PARAMS = {
-    "R_0": {"name": "R_0", "value": 10.5},
-    "r_tf_current_ib": {"name": "r_tf_current_ib", "value": 1},
-    "r_tf_in": {"name": "r_tf_in", "value": 3.2},
-    "tk_tf_wp": {"name": "tk_tf_wp", "value": 0.5},
-    "tk_tf_wp_y": {"name": "tk_tf_wp_y", "value": 0.5},
-    "tf_wp_width": {"name": "tf_wp_width", "value": 0.76},
-    "tf_wp_depth": {"name": "tf_wp_depth", "value": 1.05},
-    "tk_tf_front_ib": {"name": "tk_tf_front_ib", "value": 0.04},
-    "g_ts_tf": {"name": "g_ts_tf", "value": 0.05},
-    "TF_ripple_limit": {"name": "TF_ripple_limit", "value": 0.6},
-    "z_0": {"name": "z_0", "value": 0.0},
-    "B_0": {"name": "B_0", "value": 6},
-    "n_TF": {"name": "n_TF", "value": 12},
-    "tk_tf_ins": {"name": "tk_tf_ins", "value": 0.08},
-    "tk_tf_insgap": {"name": "tk_tf_insgap", "value": 0.1},
-    "tk_tf_nose": {"name": "tk_tf_nose", "value": 0.6},
-}
-
 
 class TestTFCoilDesigner:
+
+    CONFIG = {
+        "param_class": f"TripleArc",
+        "variables_map": {},
+        "run_mode": "mock",
+        "name": "First Wall",
+        "problem_class": f"{OPTIMISER_MODULE_REF}::RippleConstrainedLengthGOP",
+    }
+    PARAMS = {
+        "R_0": {"value": 10.5},
+        "r_tf_current_ib": {"value": 1},
+        "r_tf_in": {"value": 3.2},
+        "tk_tf_wp": {"value": 0.5},
+        "tk_tf_wp_y": {"value": 0.5},
+        "tf_wp_width": {"value": 0.76},
+        "tf_wp_depth": {"value": 1.05},
+        "tk_tf_front_ib": {"value": 0.04},
+        "g_ts_tf": {"value": 0.05},
+        "TF_ripple_limit": {"value": 0.6},
+        "z_0": {"value": 0.0},
+        "B_0": {"value": 6},
+        "n_TF": {"value": 12},
+        "tk_tf_ins": {"value": 0.08},
+        "tk_tf_insgap": {"value": 0.1},
+        "tk_tf_nose": {"value": 0.6},
+    }
+
     @classmethod
     def setup_class(cls):
         cls.eq = Equilibrium.from_eqdsk(os.path.join(EQDATA, "eqref_OOB.json"))
@@ -91,11 +92,11 @@ class TestTFCoilDesigner:
     #     assert param.variables["x1"].value == PARAMS["r_fw_ib_in"]["value"]
 
     def test_read_no_file(self):
-        config = copy.deepcopy(CONFIG)
+        config = copy.deepcopy(self.CONFIG)
         config.update({"run_mode": "read"})
 
         designer = TFCoilDesigner(
-            PARAMS,
+            self.PARAMS,
             build_config=config,
             separatrix=self.lcfs,
             keep_out_zone=self.vvts_koz,
@@ -105,12 +106,12 @@ class TestTFCoilDesigner:
             designer.execute()
 
     def test_run_no_problem_class(self):
-        config = copy.deepcopy(CONFIG)
+        config = copy.deepcopy(self.CONFIG)
         config.update({"run_mode": "run"})
         del config["problem_class"]
 
         designer = TFCoilDesigner(
-            PARAMS,
+            self.PARAMS,
             build_config=config,
             separatrix=self.lcfs,
             keep_out_zone=self.vvts_koz,
@@ -120,7 +121,7 @@ class TestTFCoilDesigner:
             designer.execute()
 
     def test_run_check_parameters(self):
-        config = copy.deepcopy(CONFIG)
+        config = copy.deepcopy(self.CONFIG)
         config["run_mode"] = "run"
         config.update(
             {
@@ -133,20 +134,20 @@ class TestTFCoilDesigner:
             }
         )
         designer = TFCoilDesigner(
-            PARAMS,
+            self.PARAMS,
             build_config=config,
             separatrix=self.lcfs,
             keep_out_zone=self.vvts_koz,
         )
-        d_run = designer.execute()
+        d_run, wp_run = designer.execute()
 
         designer_mock = TFCoilDesigner(
-            PARAMS,
-            build_config=CONFIG,
+            self.PARAMS,
+            build_config=self.CONFIG,
             separatrix=self.lcfs,
             keep_out_zone=self.vvts_koz,
         )
-        d_mock = designer_mock.execute()
+        d_mock, wp_run = designer_mock.execute()
         assert d_run.create_shape().length != d_mock.create_shape().length
         assert designer.problem_settings == config["problem_settings"]
         assert designer.opt_config == config["optimisation_settings"]
@@ -158,13 +159,13 @@ class TestTFCoilDesigner:
 
     def test_shape_is_closed(self):
         designer = TFCoilDesigner(
-            PARAMS,
-            build_config=CONFIG,
+            self.PARAMS,
+            build_config=self.CONFIG,
             separatrix=self.lcfs,
             keep_out_zone=self.vvts_koz,
         )
 
-        assert designer.execute().create_shape().is_closed()
+        assert designer.execute()[0].create_shape().is_closed()
 
     # def test_height_derived_from_params_given_PolySpline_mock_mode(self):
     #     params = copy.deepcopy(PARAMS)
@@ -231,12 +232,28 @@ class TestTFCoilBuilder:
 
     centreline = TripleArc().create_shape()
     wp_cross_section = make_polygon(
-        [[0, 0, 0], [1, 0, 0], [1, 0, 1], [0, 0, 1]], closed=True
+        [[0, 0, 0], [1, 0, 0], [1, 1, 0], [0, 1, 0]], closed=True
     )
+    params = {
+        "R_0": {"value": 9},
+        "z_0": {"value": 0.0},
+        "B_0": {"value": 6},
+        "n_TF": {"value": 18},
+        "r_tf_in": {"value": 3.2},
+        "tk_tf_wp": {"value": 0.4},
+        "tk_tf_wp_y": {"value": 0.69},
+        "tf_wp_width": {"value": 0.76},
+        "tf_wp_depth": {"value": 1.05},
+        "tk_tf_front_ib": {"value": 0.04},
+        "tk_tf_ins": {"value": 0.08},
+        "tk_tf_insgap": {"value": 0.1},
+        "tk_tf_nose": {"value": 0.6},
+        "tk_tf_side": {"value": 0.1},
+    }
 
     from bluemira.display.displayer import show_cad
 
-    show_cad([centreline, wp_cross_section])
+    # show_cad([centreline, wp_cross_section])
 
     def test_components_and_segments(self):
         builder = TFCoilBuilder(self.params, {}, self.centreline, self.wp_cross_section)
