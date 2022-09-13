@@ -42,8 +42,8 @@ class StubBuilder(Builder):
 
 class TestBuilder:
     _params = {
-        "param_1": {"name": "param_1", "unit": "m", "value": 1},
-        "param_2": {"name": "param_2", "unit": "T", "value": 2},
+        "param_1": {"unit": "m", "value": 1},
+        "param_2": {"unit": "T", "value": 2},
     }
 
     def test_default_name_is_class_name_sans_builder(self):

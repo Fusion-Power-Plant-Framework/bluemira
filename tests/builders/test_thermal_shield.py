@@ -34,9 +34,9 @@ class TestVVTSBuilder:
     @classmethod
     def setup_class(cls):
         cls.params = {
-            "g_vv_ts": {"name": "g_vv_ts", "value": 0.05},
-            "n_TF": {"name": "n_TF", "value": 16},
-            "tk_ts": {"name": "tk_ts", "value": 0.05},
+            "g_vv_ts": {"value": 0.05},
+            "n_TF": {"value": 16},
+            "tk_ts": {"value": 0.05},
         }
         cls.vv_koz = make_circle(10, center=(15, 0, 0), axis=(0.0, 1.0, 0.0))
 
@@ -60,10 +60,10 @@ class TestCryostatTSBuilder:
     @classmethod
     def setup_class(cls):
         cls.params = {
-            "g_ts_pf": {"name": "g_ts_pf", "value": 0.3},
-            "g_ts_tf": {"name": "g_ts_tf", "value": 0.3},
-            "n_TF": {"name": "n_TF", "value": 16},
-            "tk_ts": {"name": "tk_ts", "value": 0.3},
+            "g_ts_pf": {"value": 0.3},
+            "g_ts_tf": {"value": 0.3},
+            "n_TF": {"value": 16},
+            "tk_ts": {"value": 0.3},
         }
         size_1_sq = np.array([[0, 0, 0], [1, 0, 0], [1, 0, 1], [0, 0, 1]]).T
         pf_shifts = np.array([(5, 8), (13, 5), (15, 0)])
