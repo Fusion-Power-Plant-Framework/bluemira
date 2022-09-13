@@ -46,6 +46,7 @@ from bluemira.equilibria.error import EquilibriaError
 from bluemira.equilibria.plotting import RegionPlotter, XZLPlotter
 from bluemira.geometry._deprecated_tools import (
     coords_plane_intersect,
+    interpolate_midpoints,
     join_intersect,
     offset,
     vector_lengthnorm_2d,
@@ -260,7 +261,7 @@ class XZLMapper:
 
     def __init__(self, pf_coords, cs_x=1, cs_zmin=1, cs_zmax=1, cs_gap=0.1, CS=False):
         while len(pf_coords) < 4:
-            pf_coords.interpolate_midpoints()
+            pf_coords = Coordinates(np.c_[interpolate_midpoints(*pf_coords.xyz)])
 
         self.pf_coords = deepcopy(pf_coords)  # Stored as loop too
 
@@ -304,19 +305,18 @@ class XZLMapper:
         self.cstrack = {"L": interp1d(z, [0, 1]), "z": interp1d([0, 1], z)}
 
     @staticmethod
-    def PFnorm(l_values, loop, point):
+    def PFnorm(l_values, coords, point):
         """
-        Função de otimização para o posicionamento das bobinas ao longo da
-        pista
+        Optimisation function for the positioning of the coils along the track.
         """
-        return (loop["x"](l_values) - point[0]) ** 2 + (
-            loop["z"](l_values) - point[1]
+        return (coords["x"](l_values) - point[0]) ** 2 + (
+            coords["z"](l_values) - point[1]
         ) ** 2
 
     def xz_to_L(self, x, z):  # noqa :N802
         """
-        Translação de coordenadas (x, z) até coordenadas lineares normalizadas
-        (L) para as bobinas PF
+        Translation of (x-z) coordinates to linear normalised coordinates (L) for the PF
+        coils.
         """
         return minimize_scalar(
             self.PFnorm, method="bounded", args=(self.pftrack, [x, z]), bounds=[0, 1]
@@ -324,8 +324,8 @@ class XZLMapper:
 
     def L_to_xz(self, l_values):  # noqa :N802
         """
-        Translação de coordenadas lineares normalizadas (L) até coordenadas
-        (x, z) para as bobinas PF
+        Translation of linear normalised coordinates (L) to (x-z) coordinates for the PF
+        coils.
         """
         return self.pftrack["x"](l_values), self.pftrack["z"](l_values)
 
