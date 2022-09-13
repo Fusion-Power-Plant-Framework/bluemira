@@ -34,12 +34,12 @@ from bluemira.geometry._deprecated_tools import (
     check_linesegment,
     convert_coordinates_to_face,
     convert_coordinates_to_wire,
+    coords_plane_intersect,
     distance_between_points,
     get_area,
     get_intersect,
     in_polygon,
     join_intersect,
-    loop_plane_intersect,
     make_face,
     make_mixed_face,
     make_mixed_wire,
@@ -150,7 +150,7 @@ class TestLoopPlane:
     def test_simple(self):
         loop = Loop(x=[0, 1, 2, 2, 0, 0], z=[-1, -1, -1, 1, 1, -1])
         plane = BluemiraPlane.from_3_points([0, 0, 0], [1, 0, 0], [0, 1, 0])  # x-y
-        intersect = loop_plane_intersect(loop, plane)
+        intersect = coords_plane_intersect(loop, plane)
         e = np.array([[0, 0, 0], [2, 0, 0]])
         assert np.allclose(intersect, e)
 
@@ -160,7 +160,7 @@ class TestLoopPlane:
             z=[-1, -2, -3, -4, -5, -6, -7, -8, -4, -2, 3, 2, 4, 2, 0, -1],
         )
         plane = BluemiraPlane.from_3_points([0, 0, 0], [1, 0, 0], [0, 1, 0])  # x-y
-        intersect = loop_plane_intersect(loop, plane)
+        intersect = coords_plane_intersect(loop, plane)
         assert len(intersect) == 2
 
         _, ax = plt.subplots()
@@ -173,7 +173,7 @@ class TestLoopPlane:
         plane = BluemiraPlane.from_3_points(
             [0, 0, 2.7], [1, 0, 2.7], [0, 1, 2.7]
         )  # x-y offset
-        intersect = loop_plane_intersect(loop, plane)
+        intersect = coords_plane_intersect(loop, plane)
         assert len(intersect) == 4
 
         for i in intersect:
@@ -183,7 +183,7 @@ class TestLoopPlane:
         plane = BluemiraPlane.from_3_points(
             [0, 0, 4], [1, 0, 4], [0, 1, 4]
         )  # x-y offset
-        intersect = loop_plane_intersect(loop, plane)
+        intersect = coords_plane_intersect(loop, plane)
         assert len(intersect) == 1
         for i in intersect:
             ax.plot(i[0], i[2], marker="o", color="r")
@@ -193,7 +193,7 @@ class TestLoopPlane:
         plane = BluemiraPlane.from_3_points(
             [0, 0, 4.0005], [1, 0, 4.0005], [0, 1, 4.0005]
         )  # x-y offset
-        intersect = loop_plane_intersect(loop, plane)
+        intersect = coords_plane_intersect(loop, plane)
         assert intersect is None
 
     def test_other_dims(self):
@@ -202,7 +202,7 @@ class TestLoopPlane:
             y=[-1, -2, -3, -4, -5, -6, -7, -8, -4, -2, 3, 2, 4, 2, 0, -1],
         )
         plane = BluemiraPlane.from_3_points([0, 0, 0], [1, 0, 0], [0, 0, 1])  # x-y
-        intersect = loop_plane_intersect(loop, plane)
+        intersect = coords_plane_intersect(loop, plane)
         assert len(intersect) == 2
 
         _, ax = plt.subplots()
@@ -212,7 +212,7 @@ class TestLoopPlane:
         plt.show()
 
         plane = BluemiraPlane.from_3_points([0, 10, 0], [1, 10, 0], [0, 10, 1])  # x-y
-        intersect = loop_plane_intersect(loop, plane)
+        intersect = coords_plane_intersect(loop, plane)
         assert intersect is None
 
     def test_xyzplane(self):
@@ -222,7 +222,7 @@ class TestLoopPlane:
         )
         loop.translate([-2, 0, 0])
         plane = BluemiraPlane.from_3_points([0, 0, 0], [1, 1, 1], [2, 0, 0])  # x-y-z
-        intersect = loop_plane_intersect(loop, plane)
+        intersect = coords_plane_intersect(loop, plane)
 
         _, ax = plt.subplots()
         loop.plot(ax)
@@ -234,7 +234,7 @@ class TestLoopPlane:
         # test that a shared segment with plane only gives two intersects
         loop = Loop(x=[0, 2, 2, 0, 0], z=[-1, -1, 1, 1, -1])
         plane = BluemiraPlane.from_3_points([0, 0, 1], [0, 1, 1], [1, 0, 1])
-        inter = loop_plane_intersect(loop, plane)
+        inter = coords_plane_intersect(loop, plane)
         assert np.allclose(inter, np.array([[0, 0, 1], [2, 0, 1]]))
 
 

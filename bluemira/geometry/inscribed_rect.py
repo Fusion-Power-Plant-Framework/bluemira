@@ -27,9 +27,9 @@ import numpy as np
 from scipy.spatial.distance import pdist
 
 from bluemira.geometry._deprecated_tools import (
+    coords_plane_intersect,
     get_intersect,
     in_polygon,
-    loop_plane_intersect,
     quart_rotate,
 )
 from bluemira.geometry.coordinates import Coordinates
@@ -212,7 +212,7 @@ class _GetDxDz:
             maximum height/2 of rectangle
         """
         for n, plane in zip(self.elements, self.planes):
-            lpi = loop_plane_intersect(self.coords, plane)
+            lpi = coords_plane_intersect(self.coords, plane)
             self.check(n, lpi)
 
         self.vec_arr_z = self.vec_arr_x.copy()

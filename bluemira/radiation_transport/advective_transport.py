@@ -32,7 +32,7 @@ from bluemira.base.parameter import ParameterFrame
 from bluemira.equilibria.find import find_flux_surface_through_point
 from bluemira.equilibria.flux_surfaces import OpenFluxSurface
 from bluemira.geometry._deprecated_loop import Loop
-from bluemira.geometry._deprecated_tools import loop_plane_intersect
+from bluemira.geometry._deprecated_tools import coords_plane_intersect
 from bluemira.geometry.plane import BluemiraPlane
 from bluemira.radiation_transport.error import AdvectionTransportError
 
@@ -171,8 +171,8 @@ class ChargedParticleSolver:
         separatrix = self.eq.get_separatrix()
 
         if not isinstance(separatrix, Loop):
-            sep1_intersections = loop_plane_intersect(separatrix[0], yz_plane)
-            sep2_intersections = loop_plane_intersect(separatrix[1], yz_plane)
+            sep1_intersections = coords_plane_intersect(separatrix[0], yz_plane)
+            sep2_intersections = coords_plane_intersect(separatrix[1], yz_plane)
             sep1_arg = np.argmin(np.abs(sep1_intersections.T[0] - o_point.x))
             sep2_arg = np.argmin(np.abs(sep2_intersections.T[0] - o_point.x))
             x_sep1_mp = sep1_intersections.T[0][sep1_arg]
@@ -182,11 +182,11 @@ class ChargedParticleSolver:
             else:
                 x_sep_mp = x_sep1_mp if x_sep1_mp < x_sep2_mp else x_sep2_mp
         else:
-            sep_intersections = loop_plane_intersect(separatrix, yz_plane)
+            sep_intersections = coords_plane_intersect(separatrix, yz_plane)
             sep_arg = np.argmin(np.abs(sep_intersections.T[0] - o_point.x))
             x_sep_mp = sep_intersections.T[0][sep_arg]
 
-        out_intersections = loop_plane_intersect(self.first_wall, yz_plane)
+        out_intersections = coords_plane_intersect(self.first_wall, yz_plane)
         if outboard:
             x_out_mp = np.max(out_intersections.T[0])
         else:

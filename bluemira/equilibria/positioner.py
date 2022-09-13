@@ -46,8 +46,8 @@ from bluemira.equilibria.error import EquilibriaError
 from bluemira.equilibria.plotting import RegionPlotter, XZLPlotter
 from bluemira.geometry._deprecated_loop import Loop
 from bluemira.geometry._deprecated_tools import (
+    coords_plane_intersect,
     join_intersect,
-    loop_plane_intersect,
     vector_lengthnorm_2d,
 )
 from bluemira.geometry.constants import VERY_BIG
@@ -793,7 +793,7 @@ class RegionInterpolator:
 
         plane = BluemiraPlane.from_3_points([0, 0, z], [1, 0, z], [0, 1, z])
 
-        intersect = loop_plane_intersect(self.loop, plane)
+        intersect = coords_plane_intersect(self.loop, plane)
         if len(intersect) == 1:
             x = intersect[0][0]
         elif len(intersect) == 2:
@@ -828,7 +828,7 @@ class RegionInterpolator:
         l_1 = tools.clip(l_1, 0.0, 1.0)
 
         plane = BluemiraPlane.from_3_points([x, 0, z], [x + 1, 0, z], [x, 1, z])
-        intersect = loop_plane_intersect(self.loop, plane)
+        intersect = coords_plane_intersect(self.loop, plane)
 
         return self._intersect_filter(x, l_1, intersect)
 
@@ -864,7 +864,7 @@ class RegionInterpolator:
         """
         if intersect is None:
             plane = BluemiraPlane.from_3_points([x, 0, 0], [x + 1, 0, 0], [x, 1, 0])
-            intersect = loop_plane_intersect(self.loop, plane)
+            intersect = coords_plane_intersect(self.loop, plane)
             l_0, l_1 = self._intersect_filter(
                 x, l_1, [False] if intersect is None else intersect
             )
