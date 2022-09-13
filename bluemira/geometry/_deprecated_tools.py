@@ -1068,65 +1068,6 @@ def make_circle_arc(
     return x, y
 
 
-def get_control_point(loop):
-    """
-    Find an arbitrary control point which sits inside a specified Loop
-
-    If a Shell is given, finds a point which sits on the solid part of the Shell.
-
-    Parameters
-    ----------
-    loop: Loop or Shell
-        The geometry to find a control point for. Must be 2-D.
-
-    Returns
-    -------
-    float, float
-        An arbitrary control point for the Loop or Shell.
-    """
-    if loop.__class__.__name__ == "Loop":
-        cp = [loop.centroid[0], loop.centroid[1]]
-        if loop.point_inside(cp):
-            return cp
-        else:
-            return _montecarloloopcontrol(loop)
-    else:
-        raise GeometryError(f"Unrecognised type: {type(loop)}.")
-
-
-def _montecarloloopcontrol(loop):
-    """
-    Find an arbitrary point inside a Loop
-
-    If the centroid doesn't work, will use brute force...
-
-    Parameters
-    ----------
-    loop: Loop
-        The geometry to find a control point for. Must be 2-D.
-
-    Returns
-    -------
-    float, float
-        An arbitrary control point for the Loop.
-    """
-    xmin, xmax = np.min(loop.d2[0]), np.max(loop.d2[0])
-    dx = xmax - xmin
-    ymin, ymax = np.min(loop.d2[1]), np.max(loop.d2[1])
-    dy = ymax - ymin
-    i = 0
-    while i < 1000:
-        i += 1
-        n, m = np.random.rand(2)
-        x = xmin + n * dx
-        y = ymin + m * dy
-        if loop.point_inside([x, y]):
-            return [x, y]
-    raise GeometryError(
-        "Unable to find a control point for this Loop using brute force."
-    )
-
-
 # =============================================================================
 # Coordinates conversion
 # =============================================================================
