@@ -367,12 +367,12 @@ class OpenFluxSurface(FluxSurface):
 
     __slots__ = ()
 
-    def __init__(self, loop):
-        if loop.closed:
+    def __init__(self, coords):
+        if coords.closed:
             raise FluxSurfaceError(
                 "OpenFluxSurface cannot be made from a closed geometry."
             )
-        super().__init__(loop)
+        super().__init__(coords)
 
     def split(self, o_point, plane=None):
         """
@@ -406,8 +406,8 @@ class OpenFluxSurface(FluxSurface):
                 [o_point.x, 1, o_point.z],
             )
 
-        ref_loop = self.coords.copy()
-        intersections = coords_plane_intersect(ref_loop, plane)
+        ref_coords = self.coords.copy()
+        intersections = coords_plane_intersect(ref_coords, plane)
         x_inter = intersections.T[0]
 
         # Pick the first intersection, travelling from the o_point outwards
@@ -420,24 +420,24 @@ class OpenFluxSurface(FluxSurface):
 
         delta = 1e-1 if o_point.x < x_mp else -1e-1
         radial_line = Coordinates({"x": [o_point.x, x_mp + delta], "z": [z_mp, z_mp]})
-        # Add the intersection point to the loop
-        arg_inter = join_intersect(ref_loop, radial_line, get_arg=True)[0]
+        # Add the intersection point to the Coordinates
+        arg_inter = join_intersect(ref_coords, radial_line, get_arg=True)[0]
 
         # Split the flux surface geometry
-        loop1 = Coordinates(ref_loop[: arg_inter + 1])
-        loop2 = Coordinates(ref_loop[arg_inter:])
+        coords1 = Coordinates(ref_coords[: arg_inter + 1])
+        coords2 = Coordinates(ref_coords[arg_inter:])
 
-        loop1 = reset_direction(loop1)
-        loop2 = reset_direction(loop2)
+        coords1 = reset_direction(coords1)
+        coords2 = reset_direction(coords2)
 
         # Sort the segments into down / outboard and up / inboard geometries
-        if loop1.z[1] > z_mp:
-            lfs_loop = loop2
-            hfs_loop = loop1
+        if coords1.z[1] > z_mp:
+            lfs_coords = coords2
+            hfs_coords = coords1
         else:
-            lfs_loop = loop1
-            hfs_loop = loop2
-        return PartialOpenFluxSurface(lfs_loop), PartialOpenFluxSurface(hfs_loop)
+            lfs_coords = coords1
+            hfs_coords = coords2
+        return PartialOpenFluxSurface(lfs_coords), PartialOpenFluxSurface(hfs_coords)
 
 
 class PartialOpenFluxSurface(OpenFluxSurface):
@@ -473,7 +473,7 @@ class PartialOpenFluxSurface(OpenFluxSurface):
             self.alpha = None
             return
 
-        # Because we oriented the loop the "right" way, the first intersection
+        # Because we oriented the Coordinates the "right" way, the first intersection
         # is at the smallest argument
         self.coords = Coordinates(self.coords[: min(args) + 1])
 
@@ -524,10 +524,10 @@ def analyse_plasma_core(eq, n_points=50):
         Results dataclass
     """
     psi_n = np.linspace(PSI_NORM_TOL, 1 - PSI_NORM_TOL, n_points, endpoint=False)
-    loops = [eq.get_flux_surface(pn) for pn in psi_n]
-    loops.append(eq.get_LCFS())
+    coords = [eq.get_flux_surface(pn) for pn in psi_n]
+    coords.append(eq.get_LCFS())
     psi_n = np.append(psi_n, 1.0)
-    flux_surfaces = [ClosedFluxSurface(loop) for loop in loops]
+    flux_surfaces = [ClosedFluxSurface(coord) for coord in coords]
     vars = ["major_radius", "minor_radius", "aspect_ratio", "area", "volume"]
     vars += [
         f"{v}{end}"
@@ -573,7 +573,7 @@ class FieldLine:
 
     Parameters
     ----------
-    loop: Coordinates
+    coords: Coordinates
         Geometry of the FieldLine
     connection_length: float
         Connection length of the FieldLine
@@ -704,8 +704,8 @@ class FieldLineTracer:
 
         x = r * np.cos(phi)
         y = r * np.sin(phi)
-        loop = Coordinates({"x": x, "y": y, "z": z})
-        return FieldLine(loop, connection_length)
+        coords = Coordinates({"x": x, "y": y, "z": z})
+        return FieldLine(coords, connection_length)
 
     def _dxzl_dphi(self, phi, xz, forward):
         """
