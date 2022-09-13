@@ -971,37 +971,36 @@ def _intersect_count(x_inter, z_inter, x2, z2):
     return np.array(args)
 
 
-def join_intersect(loop1, loop2, get_arg=False):
+def join_intersect(coords1, coords2, get_arg=False):
     """
-    Add the intersection points between Loop1 and Loop2 to Loop1.
+    Add the intersection points between coords1 and coords2 to coords1.
 
     Parameters
     ----------
-    loop1: Loop
-        The Loop to which the intersection points should be added
-    loop2: Loop
-        The intersecting Loop
+    coords1: Coordinates
+        The Coordinates to which the intersection points should be added
+    coords2: Coordinates
+        The intersecting Coordinates
     get_arg: bool (default = False)
 
     Returns
     -------
     (if get_arg is True)
     args: list(int, int, ..) of len(N_intersections)
-        The arguments of Loop1 in which the intersections were added.
+        The arguments of coords1 in which the intersections were added.
 
     Notes
     -----
     Modifies loop1
     """
-    x_inter, z_inter = get_intersect(loop1.xz, loop2.xz)
-    xz = loop1.xz
-    args = _intersect_count(x_inter, z_inter, xz[0], xz[1])
+    x_inter, z_inter = get_intersect(coords1.xz, coords2.xz)
+    args = _intersect_count(x_inter, z_inter, coords1.x, coords1.z)
 
     orderr = args.argsort()
     x_int = x_inter[orderr]
     z_int = z_inter[orderr]
 
-    args = _intersect_count(x_int, z_int, xz[0], xz[1])
+    args = _intersect_count(x_int, z_int, coords1.x, coords1.z)
 
     # TODO: Check for duplicates and order correctly based on distance
     # u, counts = np.unique(args, return_counts=True)
@@ -1013,15 +1012,15 @@ def join_intersect(loop1, loop2, get_arg=False):
             bump = 0
         else:
             bump = 1
-        if not not np.isclose(loop1.xyz.T, [x_int[i], 0, z_int[i]]).all(axis=1).any():
-            # Only increment counter if the intersection isn't already in the Loop
-            loop1.insert([x_int[i], 0, z_int[i]], pos=arg + count + bump)
+        if not not np.isclose(coords1.xyz.T, [x_int[i], 0, z_int[i]]).all(axis=1).any():
+            # Only increment counter if the intersection isn't already in the Coordinates
+            coords1.insert([x_int[i], 0, z_int[i]], pos=arg + count + bump)
             count += 1
 
     if get_arg:
         args = []
         for x, z in zip(x_inter, z_inter):
-            args.append(loop1.argmin([x, 0, z]))
+            args.append(coords1.argmin([x, 0, z]))
         return list(set(args))
 
 

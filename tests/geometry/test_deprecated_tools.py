@@ -50,6 +50,7 @@ from bluemira.geometry._deprecated_tools import (
     rotation_matrix,
 )
 from bluemira.geometry.base import BluemiraGeo
+from bluemira.geometry.coordinates import Coordinates
 from bluemira.geometry.error import GeometryError
 from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.plane import BluemiraPlane
@@ -432,67 +433,29 @@ class TestIntersections:
     def teardown_class(cls):
         plt.close("all")
 
-    def test_get_intersect(self):
-        loop1 = Loop(x=[0, 0.5, 1, 2, 3, 4, 0], z=[1, 1, 1, 1, 2, 5, 5])
-        loop2 = Loop(x=[1.5, 1.5, 2.5, 2.5, 2.5], z=[4, -4, -4, -4, 5])
+    @pytest.mark.parametrize("c1, c2", [["x", "z"], ["x", "y"], ["y", "z"]])
+    def test_get_intersect(self, c1, c2):
+        loop1 = Coordinates({c1: [0, 0.5, 1, 2, 3, 4, 0], c2: [1, 1, 1, 1, 2, 5, 5]})
+        loop2 = Coordinates({c1: [1.5, 1.5, 2.5, 2.5, 2.5], c2: [4, -4, -4, -4, 5]})
         shouldbe = [[1.5, 1], [2.5, 1.5], [2.5, 5]]
-        intersect = np.array(get_intersect(loop1.d2, loop2.d2))
+        intersect = np.array(
+            get_intersect(
+                getattr(loop1, "".join([c1, c2])), getattr(loop2, "".join([c1, c2]))
+            )
+        )
         correct = np.array(shouldbe).T
-        assert np.allclose(intersect, correct)
-
-        loop1 = Loop(x=[0, 0.5, 1, 2, 3, 4, 0], y=[1, 1, 1, 1, 2, 5, 5])
-        loop2 = Loop(x=[1.5, 1.5, 2.5, 2.5, 2.5], y=[4, -4, -4, -4, 5])
-        shouldbe = [[1.5, 1], [2.5, 1.5], [2.5, 5]]
-        intersect = np.array(get_intersect(loop1.d2, loop2.d2))
-        correct = np.array(shouldbe).T
-        assert np.allclose(intersect, correct)
-
-        loop1 = Loop(z=[0, 0.5, 1, 2, 3, 4, 0], y=[1, 1, 1, 1, 2, 5, 5])
-        loop2 = Loop(z=[1.5, 1.5, 2.5, 2.5, 2.5], y=[4, -4, -4, -4, 5])
-        shouldbe = [[1.5, 1][::-1], [2.5, 1.5][::-1], [2.5, 5][::-1]]
-        intersect = np.array(get_intersect(loop1.d2, loop2.d2))
-        correct = np.array(shouldbe).T
-        assert np.allclose(intersect, correct)
+        np.testing.assert_allclose(intersect, correct)
 
     def test_join_intersect(self):
-        loop1 = Loop(x=[0, 0.5, 1, 2, 3, 5, 4.5, 4, 0], z=[1, 1, 1, 1, 2, 4, 4.5, 5, 5])
-        loop2 = Loop(x=[1.5, 1.5, 2.5, 2.5, 2.5], z=[4, -4, -4, -4, 5])
+        loop1 = Coordinates(
+            {"x": [0, 0.5, 1, 2, 3, 5, 4.5, 4, 0], "z": [1, 1, 1, 1, 2, 4, 4.5, 5, 5]}
+        )
+        loop2 = Coordinates({"x": [1.5, 1.5, 2.5, 2.5], "z": [4, -4, -4, 5]})
         join_intersect(loop1, loop2)
 
-        _, ax = plt.subplots()
-        loop1.plot(ax, fill=False, edgecolor="k", points=True)
-        loop2.plot(ax, fill=False, edgecolor="r", points=True)
-        plt.show()
-
-        assert np.allclose(loop1[3], [1.5, 0, 1])
-        assert np.allclose(loop1[5], [2.5, 0, 1.5])
-        assert np.allclose(loop1[10], [2.5, 0, 5])
-
-        loop1 = Loop(x=[0, 0.5, 1, 2, 3, 4, 0], y=[1, 1, 1, 1, 2, 5, 5])
-        loop2 = Loop(x=[1.5, 1.5, 2.5, 2.5, 2.5], y=[4, -4, -4, -4, 5])
-        join_intersect(loop1, loop2)
-
-        _, ax = plt.subplots()
-        loop1.plot(ax, fill=False, edgecolor="k", points=True)
-        loop2.plot(ax, fill=False, edgecolor="r", points=True)
-        plt.show()
-
-        assert np.allclose(loop1[3], [1.5, 1, 0])
-        assert np.allclose(loop1[5], [2.5, 1.5, 0])
-        assert np.allclose(loop1[8], [2.5, 5, 0])
-
-        loop1 = Loop(z=[0, 0.5, 1, 2, 3, 4, 0], y=[1, 1, 1, 1, 2, 5, 5])
-        loop2 = Loop(z=[1.5, 1.5, 2.5, 2.5, 2.5], y=[4, -4, -4, -4, 5])
-        join_intersect(loop1, loop2)
-
-        _, ax = plt.subplots()
-        loop1.plot(ax, fill=False, edgecolor="k", points=True)
-        loop2.plot(ax, fill=False, edgecolor="r", points=True)
-        plt.show()
-
-        assert np.allclose(loop1[1], [0, 5, 2.5])
-        assert np.allclose(loop1[4], [0, 1.5, 2.5])
-        assert np.allclose(loop1[6], [0, 1, 1.5])
+        np.testing.assert_allclose(loop1.points[3], [1.5, 0, 1])
+        np.testing.assert_allclose(loop1.points[5], [2.5, 0, 1.5])
+        np.testing.assert_allclose(loop1.points[10], [2.5, 0, 5])
 
     def test_join_intersect_arg1(self):
         tf = Loop.from_file(os.sep.join([TEST_PATH, "test_TF_intersect.json"]))
