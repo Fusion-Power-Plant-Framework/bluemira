@@ -44,13 +44,14 @@ from bluemira.equilibria.coils import (
 from bluemira.equilibria.constants import NBTI_J_MAX
 from bluemira.equilibria.error import EquilibriaError
 from bluemira.equilibria.plotting import RegionPlotter, XZLPlotter
-from bluemira.geometry._deprecated_loop import Loop
 from bluemira.geometry._deprecated_tools import (
     coords_plane_intersect,
     join_intersect,
+    offset,
     vector_lengthnorm_2d,
 )
 from bluemira.geometry.constants import VERY_BIG
+from bluemira.geometry.coordinates import Coordinates, get_area_2d
 from bluemira.geometry.error import GeometryError
 from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.inscribed_rect import inscribed_rect_in_poly
@@ -73,7 +74,7 @@ class CoilPositioner:
         Plasma triangularity
     kappa: float
         Plasma elongation
-    track: Loop object (x, z)
+    track: Coordinates (x, z)
         Track along which PF coils are positioned
     x_cs: float
         Central Solenoid radius
@@ -136,18 +137,22 @@ class CoilPositioner:
 
         angle = np.radians(angle_lower)
 
-        line = Loop(
-            x=[self.ref[0], self.ref[0] + VERY_BIG * np.cos(angle)],
-            z=[self.ref[1], self.ref[1] + VERY_BIG * np.sin(angle)],
+        line = Coordinates(
+            {
+                "x": [self.ref[0], self.ref[0] + VERY_BIG * np.cos(angle)],
+                "z": [self.ref[1], self.ref[1] + VERY_BIG * np.sin(angle)],
+            }
         )
 
         arg_lower = join_intersect(track, line, get_arg=True)
 
         angle = np.radians(angle_upper)
 
-        line = Loop(
-            x=[self.ref[0], self.ref[0] + VERY_BIG * np.cos(angle)],
-            z=[self.ref[1], self.ref[1] + VERY_BIG * np.sin(angle)],
+        line = Coordinates(
+            {
+                "x": [self.ref[0], self.ref[0] + VERY_BIG * np.cos(angle)],
+                "z": [self.ref[1], self.ref[1] + VERY_BIG * np.sin(angle)],
+            }
         )
 
         arg_upper = join_intersect(track, line, get_arg=True)
@@ -162,12 +167,10 @@ class CoilPositioner:
         else:
             arg_upper = len(track) - 1
 
-        tf_loop = Loop(*track[arg_lower : arg_upper + 1])
-        l_norm = vector_lengthnorm_2d(tf_loop["x"], tf_loop["z"])
+        tf_loop = Coordinates(track[:, arg_lower : arg_upper + 1])
+        l_norm = vector_lengthnorm_2d(tf_loop.x, tf_loop.z)
         pos = np.linspace(0, 1, n_PF)
-        xint, zint = interp1d(l_norm, tf_loop["x"])(pos), interp1d(l_norm, tf_loop["z"])(
-            pos
-        )
+        xint, zint = interp1d(l_norm, tf_loop.x)(pos), interp1d(l_norm, tf_loop.z)(pos)
         return [
             Coil(xint[i], zint[i], name=PF_COIL_NAME.format(n_PF - i), j_max=NBTI_J_MAX)
             for i in range(n_PF)
@@ -241,7 +244,7 @@ class XZLMapper:
 
     Parameters
     ----------
-    pftrack: Loop object (x, z)
+    pftrack: Coordinates (x, z)
         Track along which PF coils are positioned
     cs_x: float
         Radius of the centre of the central solenoid [m]
@@ -255,20 +258,20 @@ class XZLMapper:
         Whether or not to XL map CS
     """
 
-    def __init__(self, pftrack, cs_x=1, cs_zmin=1, cs_zmax=1, cs_gap=0.1, CS=False):
-        while len(pftrack) < 4:
-            pftrack.interpolate_midpoints()
+    def __init__(self, pf_coords, cs_x=1, cs_zmin=1, cs_zmax=1, cs_gap=0.1, CS=False):
+        while len(pf_coords) < 4:
+            pf_coords.interpolate_midpoints()
 
-        self.pfloop = deepcopy(pftrack)  # Stored as loop too
+        self.pf_coords = deepcopy(pf_coords)  # Stored as loop too
 
-        ln = vector_lengthnorm_2d(pftrack.x, pftrack.z)
+        ln = vector_lengthnorm_2d(pf_coords.x, pf_coords.z)
 
-        x_ius = InterpolatedUnivariateSpline(ln, pftrack.x)
-        z_ius = InterpolatedUnivariateSpline(ln, pftrack.z)
+        x_ius = InterpolatedUnivariateSpline(ln, pf_coords.x)
+        z_ius = InterpolatedUnivariateSpline(ln, pf_coords.z)
         self.pftrack = {
             "x": x_ius,
             "z": z_ius,
-            "L": self.pfloop.length,
+            "L": self.pf_coords.length,
             "dx": x_ius.derivative(),
             "dz": z_ius.derivative(),
         }
@@ -387,8 +390,8 @@ class XZLMapper:
             if self.exclusions is not None:
                 for ex in self.exclusions:
                     if ex[0] < loc < ex[1]:
-                        back = -(loc - ex[0] + 2 * coil.rc / self.pfloop.length)
-                        forw = ex[1] - loc + 2 * coil.rc / self.pfloop.length
+                        back = -(loc - ex[0] + 2 * coil.rc / self.pf_coords.length)
+                        forw = ex[1] - loc + 2 * coil.rc / self.pf_coords.length
                         if abs(back) >= abs(forw):
                             d_l = forw
                             break
@@ -472,17 +475,17 @@ class XZLMapper:
 
         Parameters
         ----------
-        zones: List[Loop]
+        zones: List[Coordinates]
             The list of exclusion zones
 
         Returns
         -------
-        joiner: Loop
+        joiner: Coordinates
             The boolean union of all the exclusion zones
         """
         self.excl_zones.extend(zones)
 
-        joiner = self.pfloop.offset(-0.0001)
+        joiner = self.pf_coords.offset(-0.0001)
         joiner.close()
 
         joiner = BluemiraFace(make_polygon(joiner.xyz))
@@ -498,25 +501,25 @@ class XZLMapper:
 
         Parameters
         ----------
-        zones: list(Loop, Loop, ..)
-            List of Loop exclusion zones in x, z coordinates
+        zones: List[Coordinates]
+            List of Coordinates exclusion zones in x, z coordinates
         """
         excl_zone = self._get_unique_zone(zones)
 
-        pf_wire = make_polygon(self.pfloop.xyz)
+        pf_wire = make_polygon(self.pf_coords.xyz)
         incl_wires = boolean_cut(pf_wire, excl_zone)
-        incl_loops = [Loop(*w.discretize(byedges=True, ndiscr=100)) for w in incl_wires]
+        incl_loops = [w.discretize(byedges=True, ndiscr=100) for w in incl_wires]
 
         outer_wire = offset_wire(excl_zone.boundary[0], 100)
         negative = BluemiraFace([outer_wire, excl_zone.boundary[0]])
         excl_wires = boolean_cut(pf_wire, negative)
-        excl_loops = [Loop(*w.discretize(byedges=True, ndiscr=100)) for w in excl_wires]
+        excl_loops = [w.discretize(byedges=True, ndiscr=100) for w in excl_wires]
         self.incl_loops = incl_loops
         self.excl_loops = excl_loops
 
         # Track start and end points
-        p0 = self.pfloop.d2.T[0]
-        p1 = self.pfloop.d2.T[-1]
+        p0 = self.pf_coords.d2.T[0]
+        p1 = self.pf_coords.d2.T[-1]
 
         # Calculate exclusion sections in parametric space
         exclusions = []
@@ -551,9 +554,9 @@ class RegionMapper:
 
     Parameters
     ----------
-    pfregions: dict(coil_name:Loop, coil_name:Loop, ...)
-        Regions in which each PF coil resides. The loop objects must be 2d in x,z.
-
+    pfregions: dict(coil_name: Coordinates, coil_name: Coordinates, ...)
+        Regions in which each PF coil resides. The Coordinates objects must be 2-D in
+        x, z.
     """
 
     def __init__(self, pfregions):
@@ -579,7 +582,9 @@ class RegionMapper:
     def _region_setup(self, pf_name, loop_reg):
 
         if all(loop_reg.y != 0):
-            raise EquilibriaError("Loop object must be 2D in x,z for RegionMapper")
+            raise EquilibriaError(
+                "Coordinates object must be 2D- in x, z for RegionMapper"
+            )
 
         region_name = self._name_converter(pf_name, True)
         self.regions[region_name] = RegionInterpolator(loop_reg)
@@ -607,7 +612,7 @@ class RegionMapper:
 
         Parameters
         ----------
-        pfregion: dict(coil_name:Loop)
+        pfregion: dict(coil_name:Coordinates)
             A region where a PF coil will reside
 
         """
@@ -749,24 +754,22 @@ class RegionInterpolator:
 
     Parameters
     ----------
-    loop: Loop
+    coords: Coordinates
         Region to interpolate within
 
     """
 
-    def __init__(self, loop):
+    def __init__(self, coords):
 
-        # Should all of this be in Loop? - see Loop.interpolator
+        self.x = coords.x
+        self.z = coords.z
+        self.coords = coords
 
-        self.x = loop.x
-        self.z = loop.z
-        self.loop = loop
+        self.check_loop_feasibility(coords)
 
-        self.check_loop_feasibility(loop)
-
-        self.loop = loop
-        self.z_min = min(self.loop.z)
-        self.z_max = max(self.loop.z)
+        self.coords = coords
+        self.z_min = min(self.coords.z)
+        self.z_max = max(self.coords.z)
 
     def to_xz(self, l_values):
         """
@@ -793,7 +796,7 @@ class RegionInterpolator:
 
         plane = BluemiraPlane.from_3_points([0, 0, z], [1, 0, z], [0, 1, z])
 
-        intersect = coords_plane_intersect(self.loop, plane)
+        intersect = coords_plane_intersect(self.coords, plane)
         if len(intersect) == 1:
             x = intersect[0][0]
         elif len(intersect) == 2:
@@ -828,7 +831,7 @@ class RegionInterpolator:
         l_1 = tools.clip(l_1, 0.0, 1.0)
 
         plane = BluemiraPlane.from_3_points([x, 0, z], [x + 1, 0, z], [x, 1, z])
-        intersect = coords_plane_intersect(self.loop, plane)
+        intersect = coords_plane_intersect(self.coords, plane)
 
         return self._intersect_filter(x, l_1, intersect)
 
@@ -864,7 +867,7 @@ class RegionInterpolator:
         """
         if intersect is None:
             plane = BluemiraPlane.from_3_points([x, 0, 0], [x + 1, 0, 0], [x, 1, 0])
-            intersect = coords_plane_intersect(self.loop, plane)
+            intersect = coords_plane_intersect(self.coords, plane)
             l_0, l_1 = self._intersect_filter(
                 x, l_1, [False] if intersect is None else intersect
             )
@@ -878,7 +881,7 @@ class RegionInterpolator:
         return l_0, l_1
 
     @staticmethod
-    def check_loop_feasibility(loop):
+    def check_loop_feasibility(coords):
         """
         Checks the provided region is a ConvexHull.
 
@@ -887,7 +890,7 @@ class RegionInterpolator:
 
         Parameters
         ----------
-        loop: Loop object
+        coords: Coordinates
             Region to check
 
         Raises
@@ -896,5 +899,7 @@ class RegionInterpolator:
             When loop is not a Convex Hull
 
         """
-        if not np.allclose(ConvexHull(loop.d2.T).volume, loop.area, atol=EPS):
+        if not np.allclose(
+            ConvexHull(coords.xz.T).volume, get_area_2d(coords.x, coords.z), atol=EPS
+        ):
             raise GeometryError("Region must be a Convex Hull")

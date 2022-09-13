@@ -357,7 +357,7 @@ def interpolate_points(
     x: np.ndarray, y: np.ndarray, z: np.ndarray, n_points: int
 ) -> Tuple[np.ndarray]:
     """
-    Interpolate Points
+    Interpolate points.
 
     Parameters
     ----------
@@ -372,7 +372,12 @@ def interpolate_points(
 
     Returns
     -------
-    x, y, z
+    x: np.darray
+        The interpolated x coordinates
+    y: np.darray
+        The interpolated y coordinates
+    z: np.darray
+        The interpolated z coordinates
     """
     ll = vector_lengthnorm(x, y, z)
     linterp = np.linspace(0, 1, int(n_points))
@@ -380,6 +385,39 @@ def interpolate_points(
     y = interp1d(ll, y)(linterp)
     z = interp1d(ll, z)(linterp)
     return x, y, z
+
+
+def interpolate_midpoints(
+    x: np.ndarray, y: np.ndarray, z: np.ndarray, n_points: int
+) -> Tuple[np.ndarray]:
+    """
+    Interpolate the points adding the midpoint of each segment to the points.
+
+    Parameters
+    ----------
+    x: np.darray
+        The x coordinates
+    y: np.darray
+        The y coordinates
+    z: np.darray
+        The z coordinates
+    n_points: int
+        number of points
+
+    Returns
+    -------
+    x: np.darray
+        The interpolated x coordinates
+    y: np.darray
+        The interpolated y coordinates
+    z: np.darray
+        The interpolated z coordinates
+    """
+    xyz = np.c_[x, y, z]
+    xyz_new = xyz[:, :-1] + np.diff(xyz) / 2
+    xyz_new = np.insert(xyz_new, np.arange(len(x) - 1), xyz[:, :-1], axis=1)
+    xyz_new = np.append(xyz_new, xyz[:, -1].reshape(3, 1), axis=1)
+    return xyz_new[0], xyz_new[1], xyz_new[2]
 
 
 def vector_lengthnorm(x: np.ndarray, y: np.ndarray, z: np.ndarray) -> np.ndarray:
