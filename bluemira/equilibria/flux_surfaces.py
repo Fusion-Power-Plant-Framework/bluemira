@@ -294,7 +294,7 @@ class ClosedFluxSurface(FluxSurface):
         zc = za + a * np.sqrt(0.5)
 
         line = Coordinates({"x": [xa, xd], "z": [za, zd]})
-        xb, zb = get_intersect(self.coords, line)
+        xb, zb = get_intersect(self.coords.xz, line.xz)
         d_ab = np.hypot(xb - xa, zb - za)
         d_ac = np.hypot(xc - xa, zc - za)
         d_cd = np.hypot(xd - xc, zd - zc)
