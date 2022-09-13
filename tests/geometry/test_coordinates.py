@@ -348,3 +348,11 @@ class TestCoordinates:
         assert c.y[index] == 10
         assert c.z[index] == 10
         assert len(c) == 8
+
+    def test_insert_overshoot_index(self):
+        c = Coordinates({"x": [0, 1, 2, 3, 4, 5, 6], "z": [0, 1, 2, 3, 4, 5, 6]})
+        c.insert([10, 10, 10], index=10)
+        assert c.x[7] == 10
+        assert c.y[7] == 10
+        assert c.z[7] == 10
+        assert len(c) == 8
