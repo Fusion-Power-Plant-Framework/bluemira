@@ -993,8 +993,8 @@ def join_intersect(loop1, loop2, get_arg=False):
     -----
     Modifies loop1
     """
-    x_inter, z_inter = get_intersect(loop1.d2, loop2.d2)
-    xz = loop1.d2
+    x_inter, z_inter = get_intersect(loop1.xz, loop2.xz)
+    xz = loop1.xz
     args = _intersect_count(x_inter, z_inter, xz[0], xz[1])
 
     orderr = args.argsort()

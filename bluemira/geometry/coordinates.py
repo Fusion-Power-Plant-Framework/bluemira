@@ -856,6 +856,26 @@ class Coordinates:
         if self.closed:
             self._array = self._array[:, :-1]
 
+    def insert(self, point, index=0):
+        """
+        Insert a point to the Coordinates.
+
+        Parameters
+        ----------
+        point: iterable(3)
+            The 3-D point to insert into the Coordinates
+        index: int > -1
+            The position of the point in the Coordinates (order index)
+        """
+        if not np.isclose(self.xyz.T, point).all(axis=1).any():
+            point = np.array(point).reshape((3, 1))
+            if index == -1:
+                self._array = np.hstack(self._array, point)
+            else:
+                self._array = np.hstack(
+                    (self._array[:, :index], point, self._array[:, index:])
+                )
+
     def close(self):
         """
         Close the Coordinates (if they are open)
