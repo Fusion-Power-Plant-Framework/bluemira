@@ -865,7 +865,7 @@ def coords_plane_intersect(coords, plane):
     Returns
     -------
     inter: np.array(3, n_intersections) or None
-        The xyz coordinates of the intersections with the loop. Returns None if
+        The xyz coordinates of the intersections with the Coordinates. Returns None if
         there are no intersections detected
     """
     out = _coords_plane_intersect(coords.xyz.T[:-1], plane.base, plane.axis)
