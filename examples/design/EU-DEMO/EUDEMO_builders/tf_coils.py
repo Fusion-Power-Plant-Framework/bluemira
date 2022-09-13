@@ -359,17 +359,17 @@ class TFCoilBuilder(Builder):
         Build the vacuum vessel component.
         """
         ins_inner_face, ins_outer_face = self._make_ins_xsec()
-        xyz = self.build_xyz(ins_inner_face)
+        xyz_case, xyz = self.build_xyz(ins_inner_face)
         return TFCoil(
             self.component_tree(
-                xz=self.build_xz(xyz[0].get_component_properties("shape")),
+                xz=self.build_xz(xyz_case),
                 xy=self.build_xy(ins_inner_face, ins_outer_face),
                 xyz=xyz,
             ),
             self._make_field_solver(),
         )
 
-    def build_xz(self) -> List[Union[PhysicalComponent, Component]]:
+    def build_xz(self, xyz_shape) -> List[Union[PhysicalComponent, Component]]:
         """
         Build the x-z components of the TF coils.
         """
@@ -378,7 +378,7 @@ class TFCoilBuilder(Builder):
         return [
             winding_pack,
             self._build_xz_ins(wp_inner, wp_outer),
-            self._build_xz_case(),
+            self._build_xz_case(xyz_shape),
         ]
 
     def build_xy(
@@ -423,9 +423,11 @@ class TFCoilBuilder(Builder):
             wp_solid, ins_inner_face, n_sectors, sector_degree
         )
 
-        case_sectors = self._build_xyz_case(ins_solid, n_sectors, sector_degree)
+        case_solid, case_sectors = self._build_xyz_case(
+            ins_solid, n_sectors, sector_degree
+        )
 
-        return [*wp_sectors, *ins_sectors, *case_sectors]
+        return case_solid, [*wp_sectors, *ins_sectors, *case_sectors]
 
     def _build_xz_wp(self) -> Tuple[BluemiraWire, BluemiraWire, PhysicalComponent]:
         # Winding pack
@@ -570,7 +572,9 @@ class TFCoilBuilder(Builder):
         x_in[[0, -1]] = bb.x_min
         x_in[[1, 2]] = bb.x_max
 
-        y_in = np.full(4, self.params.r_tf_in * np.tan(np.pi / self.params.n_TF.value))
+        y_in = np.full(
+            4, self.params.r_tf_in.value * np.tan(np.pi / self.params.n_TF.value)
+        )
         y_in[:2] = -y_in[:2]
         inner_xs_rect = make_polygon([x_in, y_in, np.zeros(4)], closed=True)
 
@@ -601,7 +605,9 @@ class TFCoilBuilder(Builder):
 
         z_min_arr = np.full(4, z_min)
         z_max_arr = np.full(4, z_max)
-        y_in = np.full(4, 0.5 * (self.params.tf_wp_depth + self.params.tk_tf_side))
+        y_in = np.full(
+            4, 0.5 * (self.params.tf_wp_depth.value + self.params.tk_tf_side.value)
+        )
         y_in[:2] = -y_in[:2]
 
         inner_xs.translate((0, 0, z_min - inner_xs.center_of_mass[2]))
@@ -634,8 +640,10 @@ class TFCoilBuilder(Builder):
 
         # Need to cut away the excess joiner extrusions
         cl = deepcopy(self.centreline)
-        cl.translate((0, -2 * self.params.tf_wp_depth, 0))
-        cutter = extrude_shape(BluemiraFace(cl), (0, 4 * self.params.tf_wp_depth, 0))
+        cl.translate((0, -2 * self.params.tf_wp_depth.value, 0))
+        cutter = extrude_shape(
+            BluemiraFace(cl), (0, 4 * self.params.tf_wp_depth.value, 0)
+        )
         joiner_top = boolean_cut(joiner_top, cutter)[0]
         joiner_bot = boolean_cut(joiner_bot, cutter)[0]
 
@@ -652,7 +660,7 @@ class TFCoilBuilder(Builder):
 
         casing = PhysicalComponent(self.CASING, case_solid_hollow)
         casing.display_cad_options.color = BLUE_PALETTE["TF"][0]
-        return circular_pattern_component(
+        return case_solid_hollow, circular_pattern_component(
             casing, n_sectors, degree=n_sectors * sector_degree
         )
 
@@ -676,13 +684,13 @@ class TFCoilBuilder(Builder):
         """
         Make the casing x-y cross-section wires
         """
-        x_in = self.params.r_tf_in
+        x_in = self.params.r_tf_in.value
         # Insulation and insertion gap included in WP width
         x_out = (
             x_in
-            + self.params.tk_tf_nose
-            + self.params.tf_wp_width
-            + self.params.tk_tf_front_ib
+            + self.params.tk_tf_nose.value
+            + self.params.tf_wp_width.value
+            + self.params.tk_tf_front_ib.value
         )
         tan_half_angle = np.tan(np.pi / self.params.n_TF.value)
         y_in = x_in * tan_half_angle
