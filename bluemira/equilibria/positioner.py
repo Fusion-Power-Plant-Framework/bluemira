@@ -485,11 +485,14 @@ class XZLMapper:
         """
         self.excl_zones.extend(zones)
 
-        joiner = self.pf_coords.offset(-0.0001)
+        offset_coords = offset(*self.pf_coords.xz, -0.0001)
+        joiner = Coordinates({"x": offset_coords[0], "z": offset_coords[1]})
         joiner.close()
 
-        joiner = BluemiraFace(make_polygon(joiner.xyz))
-        zones = [BluemiraFace(make_polygon(zone.xyz)) for zone in self.excl_zones]
+        joiner = BluemiraFace(make_polygon(joiner.xyz, closed=True))
+        zones = [
+            BluemiraFace(make_polygon(zone.xyz, closed=True)) for zone in self.excl_zones
+        ]
 
         joiner = boolean_fuse([joiner] + zones)
 
@@ -506,7 +509,7 @@ class XZLMapper:
         """
         excl_zone = self._get_unique_zone(zones)
 
-        pf_wire = make_polygon(self.pf_coords.xyz)
+        pf_wire = make_polygon(self.pf_coords.xyz, closed=True)
         incl_wires = boolean_cut(pf_wire, excl_zone)
         incl_loops = [w.discretize(byedges=True, ndiscr=100) for w in incl_wires]
 
@@ -518,23 +521,23 @@ class XZLMapper:
         self.excl_loops = excl_loops
 
         # Track start and end points
-        p0 = self.pf_coords.d2.T[0]
-        p1 = self.pf_coords.d2.T[-1]
+        p0 = self.pf_coords.xz.T[0]
+        p1 = self.pf_coords.xz.T[-1]
 
         # Calculate exclusion sections in parametric space
         exclusions = []
         for i, excl in enumerate(self.excl_loops):
             # Check if the start point lies in the exclusion
-            if np.allclose(p0, excl.d2.T[0]) or np.allclose(p0, excl.d2.T[-1]):
+            if np.allclose(p0, excl.xz.T[0]) or np.allclose(p0, excl.xz.T[-1]):
                 start = 0
             else:
-                start = self.xz_to_L(*excl.d2.T[0])
+                start = self.xz_to_L(*excl.xz.T[0])
 
             # Check if the end point lies in the inclusion
-            if np.allclose(p1, excl.d2.T[-1]) or np.allclose(p1, excl.d2.T[0]):
+            if np.allclose(p1, excl.xz.T[-1]) or np.allclose(p1, excl.xz.T[0]):
                 stop = 1
             else:
-                stop = self.xz_to_L(*excl.d2.T[-1])
+                stop = self.xz_to_L(*excl.xz.T[-1])
 
             exclusions.append(sorted([start, stop]))
 

@@ -645,14 +645,14 @@ class XZLPlotter(Plotter):
         super().__init__(ax)
         self.xzl = xzl_mapper
 
-        for loop in self.xzl.excl_zones:
-            loop.plot(self.ax, fill=True, alpha=0.2, facecolor="r", edgecolor="r")
+        for coords in self.xzl.excl_zones:
+            coords.plot(self.ax, fill=True, alpha=0.2, facecolor="r", edgecolor="r")
 
-        for loop in self.xzl.excl_loops:
-            loop.plot(self.ax, fill=False, edgecolor="r", zorder=1, linestyle="--")
+        for coords in self.xzl.excl_loops:
+            coords.plot(self.ax, fill=False, edgecolor="r", zorder=1, linestyle="--")
 
-        for loop in self.xzl.incl_loops:
-            loop.plot(self.ax, fill=False, edgecolor="k", zorder=1, linestyle="--")
+        for coords in self.xzl.incl_loops:
+            coords.plot(self.ax, fill=False, edgecolor="k", zorder=1, linestyle="--")
 
 
 class RegionPlotter(Plotter):

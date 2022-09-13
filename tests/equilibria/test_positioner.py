@@ -186,10 +186,12 @@ class TestZLMapper:
         tf = Loop.from_file(os.sep.join([DATA_PATH, "TFreference.json"]))
         tf = tf.offset(2.5)
         clip = np.where(tf.x >= 3.5)
-        tf = Loop(tf.x[clip], z=tf.z[clip])
-        up = Loop(x=[7.5, 14, 14, 7.5, 7.5], z=[3, 3, 15, 15, 3])
-        lp = Loop(x=[10, 10, 15, 22, 22, 15, 10], z=[-6, -10, -13, -13, -8, -8, -6])
-        eq = Loop(x=[14, 22, 22, 14, 14], z=[-1.4, -1.4, 1.4, 1.4, -1.4])
+        tf = Coordinates({"x": tf.x[clip], "z": tf.z[clip]})
+        up = Coordinates({"x": [7.5, 14, 14, 7.5, 7.5], "z": [3, 3, 15, 15, 3]})
+        lp = Coordinates(
+            {"x": [10, 10, 15, 22, 22, 15, 10], "z": [-6, -10, -13, -13, -8, -8, -6]}
+        )
+        eq = Coordinates({"x": [14, 22, 22, 14, 14], "z": [-1.4, -1.4, 1.4, 1.4, -1.4]})
 
         cls.TF = tf
         cls.zones = [eq, lp, up]
@@ -201,9 +203,9 @@ class TestZLMapper:
             tf, solenoid.radius, solenoid.z_min, solenoid.z_max, solenoid.gap, CS=True
         )
         cls.fig, cls.ax = plt.subplots()
-        up.plot(cls.ax, fill=False, linestyle="-", edgecolor="r")
-        lp.plot(cls.ax, fill=False, linestyle="-", edgecolor="r")
-        eq.plot(cls.ax, fill=False, linestyle="-", edgecolor="r")
+        cls.ax.plot(up.x, up.z, linestyle="-", color="r")
+        cls.ax.plot(lp.x, lp.z, linestyle="-", color="r")
+        cls.ax.plot(eq.x, eq.z, linestyle="-", color="r")
 
     @classmethod
     def teardown_cls(cls):
@@ -240,10 +242,12 @@ class TestZLMapperEdges:
         tf = Loop.from_file(os.sep.join([DATA_PATH, "TFreference.json"]))
         tf = tf.offset(2.5)
         clip = np.where(tf.x >= 3.5)
-        tf = Loop(tf.x[clip], z=tf.z[clip])
-        up = Loop(x=[0, 14, 14, 0, 0], z=[3, 3, 15, 15, 3])
-        lp = Loop(x=[10, 10, 15, 22, 22, 15, 10], z=[-6, -10, -13, -13, -8, -8, -6])
-        eq = Loop(x=[14, 22, 22, 14, 14], z=[-1.4, -1.4, 1.4, 1.4, -1.4])
+        tf = Coordinates({"x": tf.x[clip], "z": tf.z[clip]})
+        up = Coordinates({"x": [0, 14, 14, 0, 0], "z": [3, 3, 15, 15, 3]})
+        lp = Coordinates(
+            {"x": [10, 10, 15, 22, 22, 15, 10], "z": [-6, -10, -13, -13, -8, -8, -6]}
+        )
+        eq = Coordinates({"x": [14, 22, 22, 14, 14], "z": [-1.4, -1.4, 1.4, 1.4, -1.4]})
         cls.TF = tf
         cls.zones = [eq, lp, up]
         positioner = CoilPositioner(9, 3.1, 0.33, 1.59, tf, 2.6, 0.5, 6, 5)
@@ -255,9 +259,9 @@ class TestZLMapperEdges:
         )
 
         _, cls.ax = plt.subplots()
-        up.plot(cls.ax, fill=False, linestyle="-", edgecolor="r")
-        lp.plot(cls.ax, fill=False, linestyle="-", edgecolor="r")
-        eq.plot(cls.ax, fill=False, linestyle="-", edgecolor="r")
+        cls.ax.plot(up.x, up.z, linestyle="-", color="r")
+        cls.ax.plot(lp.x, lp.z, linestyle="-", color="r")
+        cls.ax.plot(eq.x, eq.z, linestyle="-", color="r")
 
     @classmethod
     def teardown_cls(cls):
@@ -321,7 +325,7 @@ class TestRegionMapper:
             zu = coil.z + max_coil_shifts["z_shifts_upper"]
             zl = coil.z + max_coil_shifts["z_shifts_lower"]
 
-            rect = Loop(x=[xl, xu, xu, xl, xl], z=[zl, zl, zu, zu, zl])
+            rect = Coordinates({"x": [xl, xu, xu, xl, xl], "z": [zl, zl, zu, zu, zl]})
 
             pfregions[coil.name] = rect
         return pfregions
