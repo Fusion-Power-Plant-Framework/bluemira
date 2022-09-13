@@ -424,8 +424,8 @@ class OpenFluxSurface(FluxSurface):
         arg_inter = join_intersect(ref_coords, radial_line, get_arg=True)[0]
 
         # Split the flux surface geometry
-        coords1 = Coordinates(ref_coords[: arg_inter + 1])
-        coords2 = Coordinates(ref_coords[arg_inter:])
+        coords1 = Coordinates(ref_coords[:, : arg_inter + 1])
+        coords2 = Coordinates(ref_coords[:, arg_inter:])
 
         coords1 = reset_direction(coords1)
         coords2 = reset_direction(coords2)
