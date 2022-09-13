@@ -24,7 +24,6 @@ Methods for finding O- and X-points and flux surfaces on 2-D arrays.
 """
 
 import operator
-from collections.abc import Iterable
 
 import numba as nb
 import numpy as np
