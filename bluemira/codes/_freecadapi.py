@@ -615,6 +615,9 @@ def is_valid(obj) -> bool:
     """True if obj is valid"""
     return _get_api_attr(obj, "isValid")()
 
+def orientation(obj) -> bool:
+    """True if obj is valid"""
+    return _get_api_attr(obj, "Orientation")
 
 def bounding_box(obj) -> Tuple[float, float, float, float, float, float]:
     """Object's bounding box"""

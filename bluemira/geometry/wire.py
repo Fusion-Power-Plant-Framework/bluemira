@@ -34,11 +34,10 @@ import bluemira.codes._freecadapi as cadapi
 from bluemira.codes.error import FreeCADError
 
 # import from bluemira
-from bluemira.geometry.base import BluemiraGeo, _Orientation
+from bluemira.geometry.base import BluemiraGeo
 from bluemira.geometry.coordinates import Coordinates
 from bluemira.geometry.error import (
     GeometryError,
-    MixedOrientationWireError,
     NotClosedWire,
 )
 
@@ -79,7 +78,7 @@ class BluemiraWire(BluemiraGeo):
                 if len(shape) == 1:
                     return shape[0]
                 else:
-                    return cadapi.boolean_fuse(shape)
+                    return cadapi.apiWire(shape)
         raise TypeError(
             f"Only {self._shape_classes} objects can be used for {self.__class__}"
         )

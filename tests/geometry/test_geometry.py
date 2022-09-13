@@ -607,12 +607,12 @@ class TestShapeTransformations:
         direction = (0, 0, 1)
         degree = 180
         length = self.wire.length
-        orientation = self.wire._orientation
+        orientation = self.wire.orientation
         centroid = np.array(self.wire.center_of_mass)
         self.wire.rotate(base, direction, degree)
         assert self.wire.length == length
         assert self.wire.label == "test_wire"
-        assert self.wire._orientation == orientation
+        assert self.wire.orientation == orientation
         assert self._centroids_close(
             self.wire.center_of_mass, centroid, np.array([-2 * centroid[0], 0, 0])
         )
@@ -622,12 +622,12 @@ class TestShapeTransformations:
         direction = (0, 0, 1)
         degree = 180
         area = self.face.area
-        orientation = self.face._orientation
+        orientation = self.face.orientation
         centroid = np.array(self.face.center_of_mass)
         self.face.rotate(base, direction, degree)
         assert np.isclose(self.face.area, area)
         assert self.face.label == "test_face"
-        assert self.face._orientation == orientation
+        assert self.face.orientation == orientation
         assert self._centroids_close(
             self.face.center_of_mass, centroid, np.array([-2 * centroid[0], 0, 0])
         )
@@ -637,12 +637,12 @@ class TestShapeTransformations:
         direction = (0, 0, 1)
         degree = 180
         volume = self.solid.volume
-        orientation = self.solid._orientation
+        orientation = self.solid.orientation
         centroid = np.array(self.solid.center_of_mass)
         self.solid.rotate(base, direction, degree)
         assert np.isclose(self.solid.volume, volume)
         assert self.solid.label == "test_solid"
-        assert self.solid._orientation == orientation
+        assert self.solid.orientation == orientation
         assert self._centroids_close(
             self.solid.center_of_mass, centroid, np.array([-2 * centroid[0], 0, 0])
         )

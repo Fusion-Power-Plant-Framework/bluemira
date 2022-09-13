@@ -96,21 +96,20 @@ class BluemiraGeo(ABC, GeoMeshable):
         self._shape_classes = shape_classes
         self.shape = shape
         self.label = label
-        self.__orientation = _Orientation("Forward")
 
-    @property
-    def _orientation(self):
-        return self.__orientation
-
-    @_orientation.setter
-    def _orientation(self, value):
-        self.__orientation = _Orientation(value)
-
-    def _check_reverse(self, obj):
-        if self._orientation != _Orientation(obj.Orientation):
-            obj.reverse()
-            self._orientation = _Orientation(obj.Orientation)
-        return obj
+    # @property
+    # def _orientation(self):
+    #     return self.__orientation
+    #
+    # @_orientation.setter
+    # def _orientation(self, value):
+    #     self.__orientation = _Orientation(value)
+    #
+    # def _check_reverse(self, obj):
+    #     if self._orientation != _Orientation(obj.Orientation):
+    #         obj.reverse()
+    #         self._orientation = _Orientation(obj.Orientation)
+    #     return obj
 
     @staticmethod
     def _converter(func):
@@ -181,6 +180,13 @@ class BluemiraGeo(ABC, GeoMeshable):
         The bounding box of the shape."""
         x_min, y_min, z_min, x_max, y_max, z_max = cadapi.bounding_box(self._shape)
         return BoundingBox(x_min, x_max, y_min, y_max, z_min, z_max)
+
+    @property
+    def orientation(self):
+        """
+        Orientation of the shape
+        """
+        return cadapi.orientation(self._shape)
 
     def is_null(self):
         """

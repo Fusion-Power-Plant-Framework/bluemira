@@ -87,6 +87,9 @@ wire2 = make_polygon(
         ]
 )
 
+bm_wire = BluemiraWire([wire1, wire2])
+print(bm_wire.orientation())
+
 wire_fuse = boolean_fuse([wire1, wire2])
 print(wire_fuse)
 

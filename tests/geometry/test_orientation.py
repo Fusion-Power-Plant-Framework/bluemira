@@ -36,26 +36,24 @@ class TestOrientation:
         )
 
         bm_wire = BluemiraWire(wire)
-        assert bm_wire.boundary[0].Orientation == wire.Orientation
-        assert bm_wire._shape.Orientation == wire.Orientation
+        assert bm_wire.shape.Orientation == wire.Orientation
 
         wire.reverse()
 
         bm_wire = BluemiraWire(wire)
-        assert bm_wire.boundary[0].Orientation == wire.Orientation
-        assert bm_wire._shape.Orientation == wire.Orientation
+        assert bm_wire.shape.Orientation == wire.Orientation
 
     def test_face(self):
         wire = cadapi.make_polygon(
             [[0, 0, 0], [1, 0, 0], [1, 0, 1], [0, 0, 1], [0, 0, 0]],
         )
         face = cadapi.apiFace(wire)
-        bm_face = BluemiraFace._create(face)
+        bm_face = BluemiraFace(face)
 
         assert bm_face._shape.Orientation == face.Orientation
 
         face.reverse()
-        bm_face = BluemiraFace._create(face)
+        bm_face = BluemiraFace(face)
 
         assert bm_face._shape.Orientation == face.Orientation
 
@@ -65,23 +63,28 @@ class TestOrientation:
         )
         circle = cadapi.make_circle(radius=10, axis=[0, 1, 0])
         face = cadapi.apiFace([circle, wire])
-        bm_face = BluemiraFace._create(face)
+        bm_face = BluemiraFace(face)
 
         assert bm_face._shape.Orientation == face.Orientation
         assert bm_face.area == face.Area
 
         face.reverse()
-        bm_face = BluemiraFace._create(face)
+        bm_face = BluemiraFace(face)
 
         assert bm_face._shape.Orientation == face.Orientation
         assert bm_face.area == face.Area
 
-    def test_bad_wire(self):
+    def test_orientation_joined_wires(self):
         wire_1 = cadapi.make_polygon([[0, 0, 0], [1, 0, 0]])
         wire_2 = cadapi.make_polygon([[1, 0, 0], [2, 0, 0]])
         wire_2.reverse()
-        with pytest.raises(MixedOrientationWireError):
-            bm_wire = BluemiraWire([wire_1, wire_2])
+        # with pytest.raises(MixedOrientationWireError):
+        #     bm_wire = BluemiraWire([wire_1, wire_2])
+        bm_wire = BluemiraWire([wire_1, wire_2])
+        print(wire_1.Orientation)
+        assert wire_1.Orientation == "Forward"
+        assert wire_2.Orientation == "Reversed"
+        assert bm_wire.orientation == "Forward"
 
 
 class ExtrudeOrientation:
@@ -103,8 +106,8 @@ class ExtrudeOrientation:
         face = cadapi.apiFace(profile)
         self.solid_fc = cadapi.extrude_shape(face, (0, self._extrusion, 0))
 
-        profile = geo_tools.make_polygon(self.VERTS)
-        face = BluemiraFace(profile)
+        profile = geo_tools.make_polygon(self.VERTS, closed=True)
+        face = geo_tools.make_face(profile)
         self.solid_bm = geo_tools.extrude_shape(face, (0, self._extrusion, 0))
 
     @pytest.mark.parametrize("shapes_name", ["wires", "faces", "solids"])
