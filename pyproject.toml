@@ -94,7 +94,7 @@ prominence = [
 ]
 
 [build-system]
-requires = ["setuptools", "versioneer>=0.24"]
+requires = ["setuptools", "versioneer[toml]>=0.26"]
 build-backend = "setuptools.build_meta"
 
 [tool.setuptools.packages.find]
@@ -129,3 +129,11 @@ markers = [
 ]
 addopts = "--html=report.html --self-contained-html --strict-markers"
 filterwarnings = ['ignore:Matplotlib is currently using agg:UserWarning']
+
+[tool.versioneer]
+VCS = "git"
+style = "pep440"
+versionfile_source = "bluemira/_version.py"
+versionfile_build = "bluemira/_version.py"
+tag_prefix = "v"
+parentdir_prefix = "bluemira-"
