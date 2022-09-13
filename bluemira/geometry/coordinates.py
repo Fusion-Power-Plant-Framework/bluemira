@@ -867,10 +867,15 @@ class Coordinates:
         index: int > -1
             The position of the point in the Coordinates (order index)
         """
+        if index > len(self):
+            bluemira_warn(
+                "Insert a point in Coordinates at an index greater than the number of points."
+            )
+            index = -1
         if not np.isclose(self.xyz.T, point).all(axis=1).any():
             point = np.array(point).reshape((3, 1))
             if index == -1:
-                self._array = np.hstack(self._array, point)
+                self._array = np.hstack((self._array, point))
             else:
                 self._array = np.hstack(
                     (self._array[:, :index], point, self._array[:, index:])
