@@ -630,7 +630,7 @@ class Equilibrium(MHDState):
             q = np.zeros(n_x)
 
         lcfs = self.get_LCFS(psi)
-        nbdry = lcfs.d2.shape[1]
+        nbdry = lcfs.xz.shape[1]
         x_c, z_c, dxc, dzc, currents = self.coilset.to_group_vecs()
 
         result = {
@@ -656,8 +656,8 @@ class Equilibrium(MHDState):
             "pressure": self.pressure(psinorm),
             "pnorm": psinorm,
             "nbdry": nbdry,
-            "xbdry": lcfs["x"],
-            "zbdry": lcfs["z"],
+            "xbdry": lcfs.x,
+            "zbdry": lcfs.z,
             "ncoil": self.coilset.n_coils,
             "xc": x_c,
             "zc": z_c,
