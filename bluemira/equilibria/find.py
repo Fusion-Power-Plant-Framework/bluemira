@@ -34,9 +34,8 @@ from scipy.interpolate import RectBivariateSpline
 from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.equilibria.constants import B_TOLERANCE, X_TOLERANCE
 from bluemira.equilibria.error import EquilibriaError
-from bluemira.geometry._deprecated_loop import Loop
 from bluemira.geometry._deprecated_tools import in_polygon, join_intersect
-from bluemira.geometry.coordinates import get_area_2d
+from bluemira.geometry.coordinates import Coordinates, get_area_2d
 
 __all__ = [
     "Xpoint",
@@ -651,11 +650,11 @@ def find_LCFS_separatrix(
 
     Returns
     -------
-    lcfs: Loop
+    lcfs: Coordinates
         The last closed flux surface
-    separatrix: Union[Loop, list]
+    separatrix: Union[Coordinates, list]
         The plasma separatrix (first open flux surface). Will return a
-        list of Loops for double_null=True, with all four separatrix legs being
+        list of Coordinates for double_null=True, with all four separatrix legs being
         captured.
 
     Notes
@@ -669,7 +668,7 @@ def find_LCFS_separatrix(
 
     def get_flux_loop(psi_norm):
         f_s = find_flux_surf(x, z, psi, psi_norm, o_points=o_points, x_points=x_points)
-        return Loop(x=f_s[0], z=f_s[1])
+        return Coordinates({"x": f_s[0], "z": f_s[1]})
 
     low = 0.99  # Guaranteed (?) to be a closed flux surface
     high = 1.01  # Guaranteed (?) to be an open flux surface
@@ -700,13 +699,13 @@ def find_LCFS_separatrix(
     separatrix = get_flux_loop(high)
 
     if double_null:
-        # We already have the LCFS, just need to find the two open Loops for
+        # We already have the LCFS, just need to find the two open Coordinates for
         # the separatrix
 
         low = high
         high = low + 0.02
         delta = high - low
-        # Need to find two open Loops, not just the first open one...
+        # Need to find two open Coordinates, not just the first open one...
         z_ref = min(abs(min(lcfs.z)), abs(max(lcfs.z)))
         while delta > psi_n_tol:
             middle = low + delta / 2
@@ -722,14 +721,16 @@ def find_LCFS_separatrix(
             delta = high - low
 
         coords = find_flux_surfs(x, z, psi, high, o_points=o_points, x_points=x_points)
-        loops = [Loop(x=c.T[0], z=c.T[1]) for c in coords]
+        loops = [Coordinates({"x": c.T[0], "z": c.T[1]}) for c in coords]
         loops.sort(key=lambda loop: -loop.length)
         separatrix = loops[:2]
     return lcfs, separatrix
 
 
 def _extract_leg(flux_line, x_cut, z_cut, delta_x, o_point_z):
-    radial_line = Loop(x=[x_cut - delta_x, x_cut + delta_x], z=[z_cut, z_cut])
+    radial_line = Coordinates(
+        {"x": [x_cut - delta_x, x_cut + delta_x], "z": [z_cut, z_cut]}
+    )
     arg_inters = join_intersect(flux_line, radial_line, get_arg=True)
     arg_inters.sort()
     # Lower null vs upper null
@@ -743,12 +744,12 @@ def _extract_leg(flux_line, x_cut, z_cut, delta_x, o_point_z):
     flux_legs = []
     for arg in arg_inters:
         if func(flux_line.z[arg + 1], flux_line.z[arg]):
-            leg = Loop.from_array(flux_line[arg:])
+            leg = Coordinates(flux_line[:, arg:])
         else:
-            leg = Loop.from_array(flux_line[: arg + 1])
+            leg = Coordinates(flux_line[:, : arg + 1])
 
         # Make the leg flow away from the plasma core
-        if leg.argmin((x_cut, z_cut)) > 3:
+        if leg.argmin((x_cut, 0, z_cut)) > 3:
             leg.reverse()
 
         flux_legs.append(leg)
@@ -770,7 +771,9 @@ def _extract_offsets(equilibrium, dx_offsets, ref_leg, direction, delta_x, o_poi
             z,
             equilibrium.psi(x, z),
         )
-        offset_legs.append(_extract_leg(Loop(x=xl, z=zl), x, z, delta_x, o_point_z))
+        offset_legs.append(
+            _extract_leg(Coordinates({"x": xl, "z": zl}), x, z, delta_x, o_point_z)
+        )
     return offset_legs
 
 
@@ -789,7 +792,7 @@ def get_legs(equilibrium, n_layers: int = 1, dx_off: float = 0.0):
 
     Returns
     -------
-    legs: Dict[str, List[Loop]]
+    legs: Dict[str, List[Coordinates]]
         Dictionary of the legs with each key containing a list of geometries
 
     Raises
@@ -814,7 +817,7 @@ def get_legs(equilibrium, n_layers: int = 1, dx_off: float = 0.0):
     else:
         dx_offsets = np.linspace(0, dx_off, n_layers)[1:]
 
-    if isinstance(separatrix, Iterable):
+    if isinstance(separatrix, list):
         # Double null (sort in/out bottom/top)
         separatrix.sort(key=lambda half_sep: np.min(half_sep.x))
         x_points.sort(key=lambda x_point: x_point.z)
@@ -875,9 +878,9 @@ def grid_2d_contour(x, z):
     Returns
     -------
     x_new: np.array
-        The x coordinates of the grid-loop
+        The x coordinates of the grid-coordinates
     z_new: np.array
-        The z coordinates of the grid-loop
+        The z coordinates of the grid-coordinates
     """
     x_new, z_new = [], []
     for i, (xi, zi) in enumerate(zip(x[:-1], z[:-1])):
@@ -929,7 +932,7 @@ def in_plasma(x, z, psi, o_points=None, x_points=None):
     """
     mask = np.zeros_like(psi)
     lcfs, _ = find_LCFS_separatrix(x, z, psi, o_points=o_points, x_points=x_points)
-    return _in_plasma(x, z, mask, lcfs.d2.T)
+    return _in_plasma(x, z, mask, lcfs.xz.T)
 
 
 def in_zone(x, z, zone):

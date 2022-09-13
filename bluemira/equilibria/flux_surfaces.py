@@ -395,7 +395,7 @@ class OpenFluxSurface(FluxSurface):
         """
 
         def reset_direction(coords):
-            if coords.argmin([x_mp, z_mp]) != 0:
+            if coords.argmin([x_mp, 0, z_mp]) != 0:
                 coords.reverse()
             return coords
 
@@ -477,7 +477,7 @@ class PartialOpenFluxSurface(OpenFluxSurface):
         # is at the smallest argument
         self.coords = Coordinates(self.coords[: min(args) + 1])
 
-        fw_arg = int(first_wall.argmin([self.x_end, self.z_end]))
+        fw_arg = int(first_wall.argmin([self.x_end, 0, self.z_end]))
 
         if fw_arg + 1 == len(first_wall):
             pass

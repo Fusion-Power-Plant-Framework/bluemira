@@ -1082,7 +1082,7 @@ class Equilibrium(MHDState):
 
     def get_flux_surface(self, psi_n, psi=None, o_points=None, x_points=None):
         """
-        Get a flux surface Loop. NOTE: Continuous surface (bridges grid)
+        Get a flux surface Coordinates. NOTE: Continuous surface (bridges grid)
 
         Parameters
         ----------
@@ -1094,7 +1094,7 @@ class Equilibrium(MHDState):
         Returns
         -------
         flux_surface: Coordinates
-            Flux surface Loop
+            Flux surface Coordinates
         """
         if psi is None:
             psi = self.psi()
@@ -1115,8 +1115,8 @@ class Equilibrium(MHDState):
 
         Returns
         -------
-        lcfs: Loop
-            The Loop of the LCFS
+        lcfs: Coordinates
+            The Coordinates of the LCFS
         """
         if psi is None:
             psi = self.psi()
@@ -1134,8 +1134,8 @@ class Equilibrium(MHDState):
 
         Returns
         -------
-        separatrix: Union[Loop, MultiLoop]
-            The separatrix loop(s) (Loop for SN, MultiLoop for DN)
+        separatrix: Union[Coordinates, List[Coordinates]]
+            The separatrix loop(s) (Coordinates for SN, List[Coordinates]] for DN)
         """
         if psi is None:
             psi = self.psi()
