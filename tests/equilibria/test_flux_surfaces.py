@@ -36,7 +36,7 @@ from bluemira.equilibria.flux_surfaces import (
     poloidal_angle,
 )
 from bluemira.equilibria.shapes import flux_surface_cunningham, flux_surface_johner
-from bluemira.geometry._deprecated_loop import Loop
+from bluemira.geometry.coordinates import Coordinates
 
 TEST_PATH = get_bluemira_path("equilibria/test_data", subfolder="tests")
 
@@ -49,11 +49,11 @@ class TestOpenFluxSurfaceStuff:
         cls.eq = Equilibrium.from_eqdsk(filename)
 
     def test_bad_geometry(self):
-        closed_loop = Loop(x=[0, 4, 5, 8, 0], z=[1, 2, 3, 4, 1])
+        closed_coords = Coordinates({"x": [0, 4, 5, 8, 0], "z": [1, 2, 3, 4, 1]})
         with pytest.raises(FluxSurfaceError):
-            _ = OpenFluxSurface(closed_loop)
+            _ = OpenFluxSurface(closed_coords)
         with pytest.raises(FluxSurfaceError):
-            _ = PartialOpenFluxSurface(closed_loop)
+            _ = PartialOpenFluxSurface(closed_coords)
 
     def test_connection_length(self):
         """
@@ -69,7 +69,7 @@ class TestOpenFluxSurfaceStuff:
             z_start,
             self.eq.psi(x_start, z_start),
         )
-        fs = OpenFluxSurface(Loop(x=x_loop, z=z_loop))
+        fs = OpenFluxSurface(Coordinates({"x": x_loop, "z": z_loop}))
         lfs, hfs = fs.split(self.eq.get_OX_points()[0][0])
         l_lfs = lfs.connection_length(self.eq)
         l_hfs = hfs.connection_length(self.eq)
@@ -100,7 +100,7 @@ class TestOpenFluxSurfaceStuff:
 
 class TestClosedFluxSurface:
     def test_bad_geometry(self):
-        open_loop = Loop(x=[0, 4, 5, 8], z=[1, 2, 3, 4])
+        open_loop = Coordinates({"x": [0, 4, 5, 8], "z": [1, 2, 3, 4]})
         with pytest.raises(FluxSurfaceError):
             _ = ClosedFluxSurface(open_loop)
 
