@@ -64,10 +64,12 @@ class NewParameterFrame:
                 raise ValueError(f"Data for parameter '{member}' not found.")
 
             value_type = cls._validate_parameter_field(member)
-            kwargs[member] = NewParameter(**param_data, _value_types=value_type)
+            kwargs[member] = NewParameter(
+                name=member, **param_data, _value_types=value_type
+            )
 
         if not allow_unknown and len(data) > 0:
-            raise ValueError(f"Unknown parameter(s) '{list(data)}' in dict.")
+            raise ValueError(f"Unknown parameter(s) {str(list(data))[1:-1]} in dict.")
         return cls(**kwargs)
 
     @classmethod
@@ -100,8 +102,12 @@ class NewParameterFrame:
     def to_dict(self) -> Dict[str, Dict[str, Any]]:
         """Serialize this NewParameterFrame to a dictionary."""
         out = {}
-        for member in self.__dataclass_fields__:
-            out[member] = getattr(self, member).to_dict()
+        for param_name in self.__dataclass_fields__:
+            param_data = getattr(self, param_name).to_dict()
+            # We already have the name of the param, and use it as a
+            # key. No need to repeat the name in the data, so pop it.
+            param_data.pop("name")
+            out[param_name] = param_data
         return out
 
     @classmethod
@@ -117,7 +123,7 @@ class NewParameterFrame:
 
 
 def make_parameter_frame(
-    params: Union[Dict[str, ParamDictT], NewParameterFrame, None],
+    params: Union[Dict[str, ParamDictT], NewParameterFrame, str, None],
     param_cls: Type[_PfT],
 ) -> Union[_PfT, None]:
     """
@@ -125,10 +131,35 @@ def make_parameter_frame(
 
     Parameters
     ----------
-    params: Union[Dict[str, ParamDictT], NewParameterFrame, None]
-        The parameters to initialise the class with
+    params: Union[Dict[str, ParamDictT], NewParameterFrame, str, None]
+        The parameters to initialise the class with.
+        This parameter can be several types:
+
+            * Dict[str, ParamDictT]:
+                A dict where the keys are parameter names, and the
+                values are the data associated with the corresponding
+                name.
+            * ParameterFrame:
+                A reference to the parameters on this frame will be
+                assigned to the new ParameterFrame's parameters. Note
+                that this makes no copies, so updates to parameters in
+                the new frame will propagate to the old, and vice versa.
+            * str:
+                The path to a JSON file, or, if the string starts with
+                '{', a JSON string.
+            * None:
+                For the case where no parameters are actually required.
+                This is intended for internal use, to aid in validation
+                of parameters in `Builder`\\s and `Designer`\\s.
+
     param_cls: Type[NewParameterFrame]
-        The `ParameterFrame` class to generate
+        The `ParameterFrame` class to create a new instance of.
+
+    Returns
+    -------
+    Union[ParameterFrame, None]
+        A frame of the type `param_cls`, or `None` if `params` and
+        `param_cls` are both `None`.
     """
     if param_cls is None:
         if params is None:
@@ -139,6 +170,8 @@ def make_parameter_frame(
         return param_cls.from_dict(params)
     elif isinstance(params, param_cls):
         return params
+    elif isinstance(params, str):
+        return param_cls.from_json(params)
     elif isinstance(params, NewParameterFrame):
         return param_cls.from_frame(params)
     raise TypeError(f"Cannot interpret type '{type(params)}' as {param_cls.__name__}.")

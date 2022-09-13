@@ -31,8 +31,8 @@ from EUDEMO_builders.ivc import PlasmaFaceDesigner
 class TestPlasmaFaceDesigner:
 
     _params = {
-        "div_type": {"name": "div_type", "value": "SN"},
-        "c_rm": {"name": "c_rm", "value": 0.02},
+        "div_type": {"value": "SN"},
+        "c_rm": {"value": 0.02},
     }
 
     @classmethod

@@ -27,10 +27,10 @@ class TestDivertorBuilder:
     @classmethod
     def setup_class(cls):
         cls.params = {
-            "n_bb_inboard": {"name": "n_bb_inboard", "value": 2},
-            "n_bb_outboard": {"name": "n_bb_outboard", "value": 3},
-            "c_rm": {"name": "c_rm", "value": 0.02},
-            "n_TF": {"name": "n_TF", "value": 12},
+            "n_bb_inboard": {"value": 2},
+            "n_bb_outboard": {"value": 3},
+            "c_rm": {"value": 0.02},
+            "n_TF": {"value": 12},
         }
         cls.silhouette = BluemiraFace(
             make_polygon(
