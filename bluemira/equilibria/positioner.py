@@ -24,6 +24,7 @@ Coil positioning routines (automatic and adjustable)
 """
 
 import re
+from copy import deepcopy
 
 import numpy as np
 from scipy.interpolate import InterpolatedUnivariateSpline, interp1d
@@ -43,7 +44,6 @@ from bluemira.equilibria.coils import (
 from bluemira.equilibria.constants import NBTI_J_MAX
 from bluemira.equilibria.error import EquilibriaError
 from bluemira.equilibria.plotting import RegionPlotter, XZLPlotter
-from bluemira.geometry._deprecated_base import Plane
 from bluemira.geometry._deprecated_loop import Loop
 from bluemira.geometry._deprecated_tools import (
     join_intersect,
@@ -54,6 +54,7 @@ from bluemira.geometry.constants import VERY_BIG
 from bluemira.geometry.error import GeometryError
 from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.inscribed_rect import inscribed_rect_in_poly
+from bluemira.geometry.plane import BluemiraPlane
 from bluemira.geometry.tools import boolean_cut, boolean_fuse, make_polygon, offset_wire
 from bluemira.utilities import tools
 
@@ -258,7 +259,7 @@ class XZLMapper:
         while len(pftrack) < 4:
             pftrack.interpolate_midpoints()
 
-        self.pfloop = pftrack.copy()  # Stored as loop too
+        self.pfloop = deepcopy(pftrack)  # Stored as loop too
 
         ln = vector_lengthnorm_2d(pftrack.x, pftrack.z)
 
@@ -790,7 +791,7 @@ class RegionInterpolator:
         l_0, l_1 = l_values
         z = self.z_min + (self.z_max - self.z_min) * l_1
 
-        plane = Plane([0, 0, z], [1, 0, z], [0, 1, z])
+        plane = BluemiraPlane.from_3_points([0, 0, z], [1, 0, z], [0, 1, z])
 
         intersect = loop_plane_intersect(self.loop, plane)
         if len(intersect) == 1:
@@ -826,7 +827,7 @@ class RegionInterpolator:
         l_1 = (z - self.z_min) / (self.z_max - self.z_min)
         l_1 = tools.clip(l_1, 0.0, 1.0)
 
-        plane = Plane([x, 0, z], [x + 1, 0, z], [x, 1, z])
+        plane = BluemiraPlane.from_3_points([x, 0, z], [x + 1, 0, z], [x, 1, z])
         intersect = loop_plane_intersect(self.loop, plane)
 
         return self._intersect_filter(x, l_1, intersect)
@@ -848,7 +849,7 @@ class RegionInterpolator:
             x coordinate
         l_1: float
             Normalised z coordinate
-        intersect: Plane
+        intersect: BluemiraPlane
             A plane through xz
 
         Returns
@@ -862,7 +863,7 @@ class RegionInterpolator:
             When loop is not a Convex Hull
         """
         if intersect is None:
-            plane = Plane([x, 0, 0], [x + 1, 0, 0], [x, 1, 0])
+            plane = BluemiraPlane.from_3_points([x, 0, 0], [x + 1, 0, 0], [x, 1, 0])
             intersect = loop_plane_intersect(self.loop, plane)
             l_0, l_1 = self._intersect_filter(
                 x, l_1, [False] if intersect is None else intersect

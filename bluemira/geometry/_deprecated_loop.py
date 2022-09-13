@@ -23,6 +23,15 @@
 A coordinate-series object class.
 """
 
+import abc
+import json
+import os
+import pickle  # noqa :S403
+import warnings
+from collections.abc import Iterable
+from copy import deepcopy
+from typing import Union
+
 import matplotlib.pyplot as plt
 import numpy as np
 from matplotlib.patches import PathPatch
@@ -30,7 +39,6 @@ from scipy.interpolate import interp1d
 from scipy.spatial.distance import cdist
 
 from bluemira.base.look_and_feel import bluemira_warn
-from bluemira.geometry._deprecated_base import GeomBase, GeometryError, Plane
 from bluemira.geometry._deprecated_tools import (
     bounding_box,
     in_polygon,
@@ -48,12 +56,87 @@ from bluemira.geometry.coordinates import (
     get_perimeter,
     rotation_matrix_v1v2,
 )
+from bluemira.geometry.error import GeometryError
+from bluemira.geometry.plane import BluemiraPlane
+from bluemira.geometry.tools import point_on_plane
 from bluemira.utilities.plot_tools import (
     BluemiraPathPatch3D,
     Plot3D,
     coordinates_to_path,
 )
-from bluemira.utilities.tools import is_num
+from bluemira.utilities.tools import is_num, json_writer
+
+
+class GeomBase(abc.ABC):
+    """
+    Base object for geometry classes. Need to think about this more...
+    """
+
+    plan_dims: Union[None, Iterable]
+
+    @abc.abstractmethod
+    def as_dict(self):
+        """
+        Cast the GeomBase as a dictionary.
+        """
+        pass
+
+    @abc.abstractmethod
+    def from_dict(self, d):
+        """
+        Initialise a GeomBase from a dictionary.
+        """
+        pass
+
+    def to_json(self, filename, **kwargs):
+        """
+        Exports a JSON of a geometry object
+        """
+        d = self.as_dict()
+        filename = os.path.splitext(filename)[0]
+        filename += ".json"
+        return json_writer(d, filename, **kwargs)
+
+    @classmethod
+    def load(cls, filename):
+        """
+        Load a geometry object either from a JSON or pickle.
+        """
+        ext = os.path.splitext(filename)[-1]
+        if ext == ".pkl":
+            warnings.warn(
+                "GeomBase objects should no longer be saved as pickle files.",
+                DeprecationWarning,
+                stacklevel=2,
+            )
+            with open(filename, "rb") as data:
+                return pickle.load(data)  # noqa :S301
+
+        elif ext == ".json":
+            with open(filename, "r") as data:
+                return json.load(data)
+        elif ext == "":
+            # Default to JSON if no extension specified
+            return cls.load(filename + ".json")
+        else:
+            raise GeometryError(f"File extension {ext} not recognised.")
+
+    @classmethod
+    def from_file(cls, filename):
+        """
+        Just in case the above objects become too complicated?
+        """
+        d = cls.load(filename)
+        return cls.from_dict(d)
+
+    def copy(self):
+        """
+        Get a deep copy of the geometry object.
+        """
+        return deepcopy(self)
+
+    def _get_3rd_dim(self):
+        return [c for c in ["x", "y", "z"] if c not in self.plan_dims][0]
 
 
 class Loop(GeomBase):
@@ -95,19 +178,21 @@ class Loop(GeomBase):
     utility for discretised geometries.
     """
 
-    __slots__ = [
-        "_x",
-        "_y",
-        "_z",
-        "_ndim",
-        "_plan_dims",
-        "_plane",
-        "_n_hat",
-        "closed",
-        "ccw",
-        "inner",
-        "outer",
-    ]
+    # TODO: Slots not immediately compatible with __getstate__ and __setstate__.
+    # Depending on how fast we eradicate Loop, consider improving.
+    # __slots__ = [
+    #     "_x",
+    #     "_y",
+    #     "_z",
+    #     "_ndim",
+    #     "_plan_dims",
+    #     "_plane",
+    #     "_n_hat",
+    #     "closed",
+    #     "ccw",
+    #     "inner",
+    #     "outer",
+    # ]
 
     def __init__(self, x=None, y=None, z=None, enforce_ccw=True):
         self.x = x
@@ -289,9 +374,11 @@ class Loop(GeomBase):
         if self._plane is None:
             if len(self) > 4:
                 # TODO: This is weak...
-                self._plane = Plane(self[0], self[int(len(self) / 2)], self[-2])
+                self._plane = BluemiraPlane.from_3_points(
+                    self[0], self[int(len(self) / 2)], self[-2]
+                )
             else:
-                self._plane = Plane(self[0], self[1], self[2])
+                self._plane = BluemiraPlane.from_3_points(self[0], self[1], self[2])
         return self._plane
 
     @property
@@ -417,7 +504,7 @@ class Loop(GeomBase):
         if len(point) != 3:
             point = self._point_23d(point)
         if not self._check_already_in(point):
-            if self._check_plane(point):
+            if point_on_plane(point, self.plane, tolerance=D_TOLERANCE):
                 for p, k in zip(point, ["x", "y", "z"]):
                     c = self.__getattribute__(k)
                     if pos == -1:  # ⴽⴰⵔⴻⴼⵓⵍ ⵏⴲⵡ
@@ -873,24 +960,6 @@ class Loop(GeomBase):
         # NOTE: This has tolerancing built-in
         return np.isclose(self.xyz.T, self._point_23d(p)).all(axis=1).any()
 
-    def _check_plane(self, point, tolerance=D_TOLERANCE):
-        """
-        Checks if a point is on the same plane as the Loop object
-
-        Parameters
-        ----------
-        point: iterable(3)
-            The 3-D point to carry out plane check on
-        tolerance: float
-            The tolerance on the check
-
-        Returns
-        -------
-        in_plane: bool
-            Whether or not the point is on the same plane as the Loop object
-        """
-        return self.plane.check_plane(point, tolerance)
-
     def _get_other_3rd_dim(self, other, segments):
         plan_dim_segs, segs_3d = [], []
         for seg in segments:
@@ -1043,3 +1112,20 @@ class Loop(GeomBase):
             return True
         else:
             return False
+
+    def __getstate__(self):
+        """
+        Pickling utility used in deepcopy
+        """
+        # Need to pop the FreeCAD Part.Plane object which is unpicklable
+        state = self.__dict__.copy()
+        print(state)
+        state.pop("_plane", None)
+        return state
+
+    def __setstate__(self, state):
+        """
+        Pickling utility used in deepcopy
+        """
+        self.__dict__.update(state)
+        self._plane = None

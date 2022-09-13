@@ -868,7 +868,7 @@ def loop_plane_intersect(loop, plane):
         The xyz coordinates of the intersections with the loop. Returns None if
         there are no intersections detected
     """
-    out = _loop_plane_intersect(loop.xyz.T[:-1], plane.p1, plane.n_hat)
+    out = _loop_plane_intersect(loop.xyz.T[:-1], plane.base, plane.axis)
     if not out:
         return None
     else:

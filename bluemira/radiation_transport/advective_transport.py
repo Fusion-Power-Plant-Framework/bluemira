@@ -31,9 +31,9 @@ from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.base.parameter import ParameterFrame
 from bluemira.equilibria.find import find_flux_surface_through_point
 from bluemira.equilibria.flux_surfaces import OpenFluxSurface
-from bluemira.geometry._deprecated_base import Plane
 from bluemira.geometry._deprecated_loop import Loop
 from bluemira.geometry._deprecated_tools import loop_plane_intersect
+from bluemira.geometry.plane import BluemiraPlane
 from bluemira.radiation_transport.error import AdvectionTransportError
 
 __all__ = ["ChargedParticleSolver"]
@@ -82,7 +82,7 @@ class ChargedParticleSolver:
         o_points, _ = self.eq.get_OX_points()
         self._o_point = o_points[0]
         z = self._o_point.z
-        self._yz_plane = Plane([0, 0, z], [1, 0, z], [1, 1, z])
+        self._yz_plane = BluemiraPlane.from_3_points([0, 0, z], [1, 0, z], [1, 1, z])
 
     @property
     def flux_surfaces(self):

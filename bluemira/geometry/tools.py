@@ -41,6 +41,7 @@ from bluemira.base.file import force_file_extension, get_bluemira_path
 from bluemira.base.look_and_feel import bluemira_debug, bluemira_warn
 from bluemira.codes import _freecadapi as cadapi
 from bluemira.geometry.base import BluemiraGeo, GeoMeshable
+from bluemira.geometry.constants import D_TOLERANCE
 from bluemira.geometry.coordinates import Coordinates
 from bluemira.geometry.error import GeometryError
 from bluemira.geometry.face import BluemiraFace
@@ -1167,7 +1168,7 @@ def boolean_cut(shape, tools):
 
 def point_inside_shape(point, shape):
     """
-    Whether or not a point is inside a shape.
+    Check whether or not a point is inside a shape.
 
     Parameters
     ----------
@@ -1182,6 +1183,34 @@ def point_inside_shape(point, shape):
         Whether or not the point is inside the shape
     """
     return cadapi.point_inside_shape(point, shape._shape)
+
+
+def point_on_plane(point, plane, tolerance=D_TOLERANCE):
+    """
+    Check whether or not a point is on a plane.
+
+    Parameters
+    ----------
+    point: Iterable
+        Coordinates of the point
+    plane: BluemiraPlane
+        Plane to check
+    tolerance: float
+        Tolerance with which to check
+
+    Returns
+    -------
+    point_on_plane: bool
+        Whether or not the point is on the plane
+    """
+    return (
+        abs(
+            cadapi.apiVector(point).distanceToPlane(
+                plane._shape.Position, plane._shape.Axis
+            )
+        )
+        < tolerance
+    )
 
 
 # # =============================================================================
