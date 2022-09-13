@@ -32,6 +32,7 @@ import numpy as np
 from numba.np.extensions import cross2d
 from pyquaternion import Quaternion
 from scipy.interpolate import UnivariateSpline, interp1d
+from scipy.spatial.distance import cdist
 
 from bluemira.base.constants import EPS
 from bluemira.base.look_and_feel import bluemira_warn
@@ -1013,15 +1014,16 @@ def join_intersect(loop1, loop2, get_arg=False):
             bump = 0
         else:
             bump = 1
-        if not loop1._check_already_in([x_int[i], z_int[i]]):
+        if not not np.isclose(loop1.xyz.T, [x_int[i], 0, z_int[i]]).all(axis=1).any():
             # Only increment counter if the intersection isn't already in the Loop
-            loop1.insert([x_int[i], z_int[i]], pos=arg + count + bump)
+            loop1.insert([x_int[i], 0, z_int[i]], pos=arg + count + bump)
             count += 1
 
     if get_arg:
         args = []
         for x, z in zip(x_inter, z_inter):
-            args.append(loop1.argmin([x, z]))
+            arg = np.argmin(cdist(loop1.xyz.T, [x, 0, z], "euclidean"))
+            args.append(arg)
         return list(set(args))
 
 
