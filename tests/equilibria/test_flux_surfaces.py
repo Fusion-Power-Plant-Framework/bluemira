@@ -37,6 +37,7 @@ from bluemira.equilibria.flux_surfaces import (
     poloidal_angle,
 )
 from bluemira.equilibria.shapes import flux_surface_cunningham, flux_surface_johner
+from bluemira.geometry._deprecated_tools import interpolate_points
 from bluemira.geometry.coordinates import Coordinates
 
 TEST_PATH = get_bluemira_path("equilibria/test_data", subfolder="tests")
@@ -77,13 +78,13 @@ class TestOpenFluxSurfaceStuff:
 
         # test discretisation sensitivity
         lfs_loop = deepcopy(lfs.coords)
-        lfs_loop.interpolate(3 * len(lfs_loop))
+        lfs_loop = Coordinates(interpolate_points(*lfs_loop.xyz, 3 * len(lfs_loop)))
         lfs_interp = PartialOpenFluxSurface(lfs_loop)
         l_lfs_interp = lfs_interp.connection_length(self.eq)
         assert np.isclose(l_lfs, l_lfs_interp, rtol=5e-3)
 
         hfs_loop = deepcopy(hfs.coords)
-        hfs_loop.interpolate(3 * len(hfs_loop))
+        hfs_loop = Coordinates(interpolate_points(*hfs_loop.xyz, 3 * len(hfs_loop)))
         hfs_interp = PartialOpenFluxSurface(hfs_loop)
         l_hfs_interp = hfs_interp.connection_length(self.eq)
         assert np.isclose(l_hfs, l_hfs_interp, rtol=5e-3)
