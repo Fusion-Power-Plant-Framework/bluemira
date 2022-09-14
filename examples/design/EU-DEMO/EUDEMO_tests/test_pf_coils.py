@@ -30,9 +30,8 @@ from EUDEMO_builders.pf_coils import (
 
 from bluemira.base.error import BuilderError
 from bluemira.equilibria.coils import Coil
-from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.parameterisations import PictureFrame, PrincetonD, TripleArc
-from bluemira.geometry.tools import boolean_cut, make_polygon
+from bluemira.geometry.tools import boolean_cut, make_face, make_polygon
 
 
 class TestMakeCoilMapper:
@@ -58,10 +57,10 @@ class TestMakeCoilMapper:
     @classmethod
     def setup_class(cls):
 
-        exclusion1 = BluemiraFace(
+        exclusion1 = make_face(
             make_polygon([[6, 9, 9, 6], [0, 0, 0, 0], [0, 0, 20, 20]], closed=True)
         )
-        exclusion2 = BluemiraFace(
+        exclusion2 = make_face(
             make_polygon([[9, 20, 20, 9], [0, 0, 0, 0], [-1, -1, 1, 1]], closed=True)
         )
         cls.exclusions = [exclusion1, exclusion2]

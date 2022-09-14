@@ -48,6 +48,7 @@ from bluemira.geometry.tools import (
     extrude_shape,
     make_face,
     make_polygon,
+    make_solid,
     offset_wire,
     slice_shape,
     sweep_shape,
@@ -326,21 +327,17 @@ class TFCoilsBuilder(OptimisedShapeBuilder):
             self._centreline, -0.5 * self._params.tk_tf_wp.value, join="arc"
         )
 
-        winding_pack = PhysicalComponent(
-            "Winding pack", BluemiraFace([wp_outer, wp_inner])
-        )
+        winding_pack = PhysicalComponent("Winding pack", make_face([wp_outer, wp_inner]))
         winding_pack.plot_options.face_options["color"] = BLUE_PALETTE["TF"][1]
         component.add_child(winding_pack)
 
         # Insulation + Insertion gap
         offset_tk = self._params.tk_tf_ins.value + self._params.tk_tf_insgap.value
         ins_o_outer = offset_wire(wp_outer, offset_tk, join="arc")
-        ins_outer = PhysicalComponent("inner", BluemiraFace([ins_o_outer, wp_outer]))
+        ins_outer = PhysicalComponent("inner", make_face([ins_o_outer, wp_outer]))
         ins_outer.plot_options.face_options["color"] = BLUE_PALETTE["TF"][2]
         ins_i_inner = offset_wire(wp_inner, -offset_tk, join="arc")
-        ins_inner = PhysicalComponent(
-            "Insulation", BluemiraFace([wp_inner, ins_i_inner])
-        )
+        ins_inner = PhysicalComponent("Insulation", make_face([wp_inner, ins_i_inner]))
         ins_inner.plot_options.face_options["color"] = BLUE_PALETTE["TF"][2]
         insulation = Component("Insulation", children=[ins_outer, ins_inner])
         component.add_child(insulation)
@@ -548,7 +545,7 @@ class TFCoilsBuilder(OptimisedShapeBuilder):
         solid = pieces[-1]
 
         case_solid = boolean_fuse([solid, inboard_casing, joiner_top, joiner_bot])
-        outer_ins_solid = BluemiraSolid(ins_solid.boundary[0])
+        outer_ins_solid = make_solid(ins_solid.boundary[0])
         case_solid_hollow = boolean_cut(case_solid, outer_ins_solid)[0]
         self._make_cas_xz(case_solid_hollow)
 
@@ -668,8 +665,8 @@ class TFCoilsBuilder(OptimisedShapeBuilder):
                 "boolean cutting operation failed to create a hollow solid."
             )
 
-        inner = BluemiraFace([wires[1], wires[0]])
-        outer = BluemiraFace([wires[3], wires[2]])
+        inner = make_face([wires[1], wires[0]])
+        outer = make_face([wires[3], wires[2]])
         self._temp_casing = [inner, outer]
 
     def _make_centreline_koz(self, keep_out_zone):

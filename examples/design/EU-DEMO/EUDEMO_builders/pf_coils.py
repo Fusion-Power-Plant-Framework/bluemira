@@ -59,6 +59,7 @@ from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.tools import (
     boolean_cut,
     distance_to,
+    make_face,
     make_polygon,
     offset_wire,
     split_wire,
@@ -796,7 +797,7 @@ def make_pf_coil_path(tf_boundary: BluemiraWire, offset_value: float) -> Bluemir
         x_min += eps
         eps += 1e-3
 
-    cutter = BluemiraFace(
+    cutter = make_face(
         make_polygon(
             {"x": [0, x_min, x_min, 0], "z": [z_min, z_min, z_max, z_max]}, closed=True
         )

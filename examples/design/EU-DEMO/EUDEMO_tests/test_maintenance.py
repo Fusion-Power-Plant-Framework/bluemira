@@ -22,8 +22,7 @@
 from EUDEMO_builders.maintenance import UpperPortOP
 
 from bluemira.base.config import Configuration
-from bluemira.geometry.face import BluemiraFace
-from bluemira.geometry.tools import make_polygon
+from bluemira.geometry.tools import make_face, make_polygon
 from bluemira.utilities.optimiser import Optimiser
 
 
@@ -38,7 +37,7 @@ class TestUpperPortOP:
             },
             closed=True,
         )
-        bb = BluemiraFace(bb)
+        bb = make_face(bb)
         optimiser = Optimiser(
             "SLSQP", opt_conditions={"max_eval": 1000, "ftol_rel": 1e-8}
         )
