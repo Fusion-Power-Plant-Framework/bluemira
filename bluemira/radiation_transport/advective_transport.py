@@ -31,8 +31,8 @@ from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.base.parameter import ParameterFrame
 from bluemira.equilibria.find import find_flux_surface_through_point
 from bluemira.equilibria.flux_surfaces import OpenFluxSurface
-from bluemira.geometry._deprecated_loop import Loop
 from bluemira.geometry._deprecated_tools import coords_plane_intersect
+from bluemira.geometry.coordinates import Coordinates
 from bluemira.geometry.plane import BluemiraPlane
 from bluemira.radiation_transport.error import AdvectionTransportError
 
@@ -198,11 +198,11 @@ class ChargedParticleSolver:
         """
         Make individual PartialOpenFluxSurfaces through a point.
         """
-        loop = find_flux_surface_through_point(
+        coords = find_flux_surface_through_point(
             self.eq.x, self.eq.z, self.eq.psi(), x, z, self.eq.psi(x, z)
         )
-        loop = Loop(loop[0], z=loop[1])
-        f_s = OpenFluxSurface(loop)
+        coords = Coordinates({"x": coords[0], "z": coords[1]})
+        f_s = OpenFluxSurface(coords)
         lfs, hfs = f_s.split(self._o_point, plane=self._yz_plane)
         return lfs, hfs
 
@@ -263,7 +263,7 @@ class ChargedParticleSolver:
 
         Parameters
         ----------
-        first_wall: Loop
+        first_wall: Coordinates
             The closed first wall geometry on which to calculate the heat flux
 
         Returns
@@ -474,7 +474,7 @@ class ChargedParticleSolver:
         self.first_wall.plot(ax, linewidth=0.5, fill=False)
         separatrix = self.eq.get_separatrix()
 
-        if isinstance(separatrix, Loop):
+        if isinstance(separatrix, Coordinates):
             separatrix = [separatrix]
 
         for sep in separatrix:
