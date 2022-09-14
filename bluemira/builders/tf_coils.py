@@ -24,6 +24,7 @@ Built-in build steps for making parameterised TF coils.
 """
 
 from copy import deepcopy
+from dataclasses import dataclass
 
 import matplotlib
 import matplotlib.pyplot as plt
@@ -31,6 +32,9 @@ import numpy as np
 
 from bluemira.base.error import BuilderError
 from bluemira.base.look_and_feel import bluemira_debug_flush
+from bluemira.base.parameter_frame import NewParameter as Parameter
+from bluemira.base.parameter_frame import NewParameterFrame as ParameterFrame
+from bluemira.base.parameter_frame import make_parameter_frame
 from bluemira.display import plot_2d
 from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.optimisation import (
@@ -190,6 +194,14 @@ class RippleConstrainedLengthGOP(GeometryOptimisationProblem):
     The geometry parameterisation is updated in place
     """
 
+    @dataclass
+    class _Params(ParameterFrame):
+        n_TF: Parameter[int]
+        R_0: Parameter[float]
+        z_0: Parameter[float]
+        B_0: Parameter[float]
+        TF_ripple_limit: Parameter[float]
+
     def __init__(
         self,
         parameterisation,
@@ -205,7 +217,7 @@ class RippleConstrainedLengthGOP(GeometryOptimisationProblem):
         n_rip_points=100,
         n_koz_points=100,
     ):
-        self.params = params
+        self.params = make_parameter_frame(params, self._Params)
         self.separatrix = separatrix
         self.wp_cross_section = wp_cross_section
         self.keep_out_zone = keep_out_zone
