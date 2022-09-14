@@ -26,7 +26,6 @@ import pytest
 from scipy.special import ellipe
 
 import bluemira.codes._freecadapi as cadapi
-from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.tools import (
     boolean_cut,
     boolean_fuse,

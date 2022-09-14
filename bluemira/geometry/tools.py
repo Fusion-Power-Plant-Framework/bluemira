@@ -27,7 +27,6 @@ import datetime
 import inspect
 import json
 import os
-from copy import deepcopy
 from typing import Iterable, List, Optional, Sequence, Type, Union
 
 import numba as nb
@@ -677,8 +676,8 @@ def make_solid(shell: BluemiraShell, label: str = ""):
     return BluemiraSolid(cadapi.make_solid(shell.shape), label=label)
 
 
-def make_shell(objs: List[BluemiraGeo], label: str = ""):
-    """Make a shell from a list of BluemiraFace"""
+def make_compound(objs: List[BluemiraGeo], label: str = ""):
+    """Make a compound from a list of BluemiraFace"""
     return BluemiraCompound(cadapi.make_compound([o.shape for o in objs]), label=label)
 
 
@@ -1265,7 +1264,6 @@ def deserialize_shape(buffer: dict):
     -------
         The deserialized BluemiraGeo object.
     """
-    supported_types = [BluemiraWire, BluemiraFace, BluemiraShell]
 
     def _extract_mesh_options(shape_dict: dict):
         mesh_options = None

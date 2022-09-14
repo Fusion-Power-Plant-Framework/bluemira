@@ -51,8 +51,6 @@ import bluemira.geometry.tools as geotools
 # Some display functionality
 from bluemira.display import plot_2d, show_cad
 from bluemira.display.displayer import DisplayCADOptions
-from bluemira.geometry.face import BluemiraFace
-from bluemira.geometry.shell import BluemiraShell
 from bluemira.geometry.solid import BluemiraSolid
 
 # Basic objects
