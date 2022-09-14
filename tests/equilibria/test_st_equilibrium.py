@@ -44,6 +44,7 @@ from bluemira.equilibria import (
 from bluemira.equilibria.file import EQDSKInterface
 from bluemira.equilibria.opt_problems import UnconstrainedTikhonovCurrentGradientCOP
 from bluemira.equilibria.solve import DudsonConvergence
+from bluemira.geometry.coordinates import get_area_2d
 
 
 @pytest.mark.private
@@ -206,8 +207,12 @@ class TestSTEquilibrium:
     def _test_equilibrium_good(self, eq):
         assert np.isclose(eq.profiles.I_p, abs(self.jeq_dict["cplasma"]))
         lcfs = eq.get_LCFS()
-        assert np.isclose(self.eq_blueprint.get_LCFS().area, lcfs.area, rtol=1e-2)
-        assert np.isclose(lcfs.centroid[-1], 0.0)
+        assert np.isclose(
+            get_area_2d(*self.eq_blueprint.get_LCFS().xz),
+            get_area_2d(*lcfs.xz),
+            rtol=1e-2,
+        )
+        assert np.isclose(lcfs.center_of_mass[-1], 0.0)
 
     def _test_profiles_good(self, eq):
         """
