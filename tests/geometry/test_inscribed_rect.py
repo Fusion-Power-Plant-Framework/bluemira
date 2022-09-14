@@ -93,12 +93,7 @@ class TestInscribedRectangle:
                                 BluemiraFace(make_polygon(sq.xyz, closed=True)),
                                 shape_face,
                             )
-                            tf = [
-                                Coordinates(
-                                    seg.discretize(byedges=True, ndiscr=50)._array
-                                )
-                                for seg in tf
-                            ]
+                            tf = [seg.discretize(byedges=True, ndiscr=50) for seg in tf]
                         except ValueError:
                             tf = None
 

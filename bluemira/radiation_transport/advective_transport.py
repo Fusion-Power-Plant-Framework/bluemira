@@ -23,6 +23,8 @@
 A simplified 2-D solver for calculating charged particle heat loads.
 """
 
+from copy import deepcopy
+
 import matplotlib.pyplot as plt
 import numpy as np
 
@@ -137,9 +139,9 @@ class ChargedParticleSolver:
         """
         Force working first wall geometry to be closed and counter-clockwise.
         """
-        first_wall = first_wall.copy()
+        first_wall = deepcopy(first_wall)
 
-        if not first_wall.ccw:
+        if not first_wall.check_ccw(axis=[0, 1, 0]):
             bluemira_warn(
                 "First wall should be oriented counter-clockwise. Reversing it."
             )

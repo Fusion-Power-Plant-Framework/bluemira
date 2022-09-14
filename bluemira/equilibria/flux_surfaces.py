@@ -475,22 +475,22 @@ class PartialOpenFluxSurface(OpenFluxSurface):
 
         # Because we oriented the Coordinates the "right" way, the first intersection
         # is at the smallest argument
-        self.coords = Coordinates(self.coords[: min(args) + 1])
+        self.coords = Coordinates(self.coords[:, : min(args) + 1])
 
         fw_arg = int(first_wall.argmin([self.x_end, 0, self.z_end]))
 
         if fw_arg + 1 == len(first_wall):
             pass
         elif check_linesegment(
-            first_wall.d2.T[fw_arg],
-            first_wall.d2.T[fw_arg + 1],
+            first_wall.xz.T[fw_arg],
+            first_wall.xz.T[fw_arg + 1],
             np.array([self.x_end, self.z_end]),
         ):
             fw_arg = fw_arg + 1
 
         # Relying on the fact that first wall is ccw, get the intersection angle
         self.alpha = get_angle_between_points(
-            self.coords[-2], self.coords[-1], first_wall[fw_arg]
+            self.coords.points[-2], self.coords.points[-1], first_wall.points[fw_arg]
         )
 
     def flux_expansion(self, eq):
