@@ -44,7 +44,10 @@ class Reactor:
 
     Components should be defined on the reactor as class properties
     annotated with a type (similar to a ``dataclass``). A type must be
-    given, if the type is not known, use ``typing.any``.
+    given, if the type is not known, use ``typing.any``. Note that a
+    declared component is not required to be set for the reactor to be
+    valid. So it is possible to just add a reactor's plasma, but not its
+    TF coils, for example.
 
     Parameters
     ----------
@@ -91,7 +94,8 @@ class Reactor:
             try:
                 component_manager = getattr(self, comp_name)
             except AttributeError:
-                # raise ReactorError(f"Component not set for '{comp_name}'.")
+                # We don't mind if a reactor component is not set, it
+                # just won't be part of the tree
                 continue
 
             component.add_child(component_manager.component())

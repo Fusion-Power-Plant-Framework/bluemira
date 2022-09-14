@@ -19,6 +19,7 @@
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 
+from bluemira.base.builder import ComponentManager
 from bluemira.base.reactor import Reactor
 from bluemira.builders.plasma import Plasma, PlasmaBuilder
 from bluemira.geometry.tools import make_polygon
@@ -26,9 +27,19 @@ from bluemira.geometry.tools import make_polygon
 REACTOR_NAME = "My Reactor"
 
 
+class TFCoil(ComponentManager):
+    """
+    This component manager is purely for testing the reactor is still
+    valid if this is not set, so we don't need to implement it.
+    """
+
+
 class MyReactor(Reactor):
 
+    SOME_CONSTANT: str = "not a component"
+
     plasma: Plasma
+    tf_coil: TFCoil
 
 
 class TestReactor:
@@ -38,6 +49,11 @@ class TestReactor:
 
     def test_name_set_on_root_component(self):
         assert self.reactor.component().name == REACTOR_NAME
+
+    def test_unset_components_are_not_part_of_component_tree(self):
+        # Only the plasma component is in the tree, as we haven't set the
+        # TF coil
+        assert len(self.reactor.component().children) == 1
 
     def test_component_tree_built_from_class_properties(self):
         assert self.reactor.plasma.component().name == "Plasma"
