@@ -45,7 +45,7 @@ from bluemira.geometry._deprecated_tools import (
     get_intersect,
     join_intersect,
 )
-from bluemira.geometry.coordinates import Coordinates
+from bluemira.geometry.coordinates import Coordinates, get_area_2d
 from bluemira.geometry.plane import BluemiraPlane
 
 
@@ -306,7 +306,7 @@ class ClosedFluxSurface(FluxSurface):
         """
         Enclosed area of the ClosedFluxSurface.
         """
-        return self.coords.area
+        return get_area_2d(*self.coords.xz)
 
     @property
     @lru_cache(1)
@@ -314,7 +314,7 @@ class ClosedFluxSurface(FluxSurface):
         """
         Volume of the ClosedFluxSurface.
         """
-        return 2 * np.pi * self.coords.area * self.coords.centroid[0]
+        return 2 * np.pi * self.area * self.coords.center_of_mass[0]
 
     def shafranov_shift(self, eq):
         """

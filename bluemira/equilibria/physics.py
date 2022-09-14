@@ -216,7 +216,7 @@ def calc_dx_sep(eq):
         null and the next closest flux surface with a null [m]
     """
     o_points, x_points = eq.get_OX_points()
-    x, z = eq.get_LCFS().d2
+    x, z = eq.get_LCFS().xz
     lfs = np.argmax(x)
     lfp = eq.get_midplane(x[lfs], z[lfs], x_points[0].psi)
     d_x = []
@@ -235,7 +235,7 @@ def calc_volume(eq):
     """
     Calculates plasma volume [m^3]
     """
-    lcfs = eq.get_LCFS().d2
+    lcfs = eq.get_LCFS().xz
     return revolved_volume(*lcfs)
 
 
