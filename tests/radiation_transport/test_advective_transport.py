@@ -28,6 +28,7 @@ from bluemira.base.file import get_bluemira_path
 from bluemira.base.parameter import ParameterFrame
 from bluemira.equilibria.equilibrium import Equilibrium
 from bluemira.geometry._deprecated_loop import Loop
+from bluemira.geometry.coordinates import Coordinates
 from bluemira.radiation_transport.advective_transport import ChargedParticleSolver
 from bluemira.radiation_transport.error import AdvectionTransportError
 
@@ -71,6 +72,7 @@ class TestChargedParticleRecursionSN:
         fw_name = "first_wall.json"
         filename = os.sep.join([TEST_PATH, fw_name])
         fw = Loop.from_file(filename)
+        fw = Coordinates(fw.xyz)
 
         # fmt: off
         cls.params = ParameterFrame([
@@ -155,6 +157,7 @@ class TestChargedParticleRecursionDN:
         fw_name = "DN_fw_shape.json"
         filename = os.sep.join([TEST_PATH, fw_name])
         fw = Loop.from_file(filename)
+        fw = Coordinates(fw.xyz)
 
         # fmt: off
         cls.params = ParameterFrame([
