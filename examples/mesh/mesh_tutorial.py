@@ -42,7 +42,6 @@ import matplotlib.pyplot as plt
 import bluemira.geometry.tools as tools
 from bluemira.base.components import Component, PhysicalComponent
 from bluemira.equilibria.shapes import JohnerLCFS
-from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.wire import BluemiraWire
 from bluemira.mesh import meshing
 from bluemira.mesh.tools import import_mesh, msh_to_xdmf

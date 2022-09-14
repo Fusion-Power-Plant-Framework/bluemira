@@ -25,10 +25,6 @@ Wrapper for FreeCAD Part.Face objects
 
 from __future__ import annotations
 
-from typing import List
-
-import numpy as np
-
 import bluemira.codes._freecadapi as cadapi
 
 # import from bluemira
@@ -36,7 +32,6 @@ from bluemira.geometry.base import BluemiraGeo
 from bluemira.geometry.coordinates import Coordinates
 
 # import from error
-from bluemira.geometry.error import DisjointedFace, NotClosedWire
 from bluemira.geometry.wire import BluemiraWire
 
 __all__ = ["BluemiraFace"]
@@ -51,28 +46,49 @@ class BluemiraFace(BluemiraGeo):
 
     @property
     def vertexes(self):
+        """
+        The vertexes of the face.
+        """
         return Coordinates(cadapi.vertexes(self.shape))
 
     @property
     def edges(self):
+        """
+        The edges of the face.
+        """
         return [BluemiraWire(cadapi.apiWire(o)) for o in cadapi.edges(self.shape)]
 
     @property
     def wires(self):
+        """
+        The wires of the face.
+        """
         return [BluemiraWire(o) for o in cadapi.wires(self.shape)]
 
     @property
     def faces(self):
+        """
+        The faces of the face. By definition a list of itself.
+        """
         return [self]
 
     @property
     def shells(self):
+        """
+        The shells of the face. By definition an empty list.
+        """
         return []
 
     @property
     def solids(self):
+        """
+        The solids of the face. By definition an empty list.
+        """
         return []
 
     @property
     def boundary(self):
+        """
+        The boundaries of the face.
+        """
         return self.wires
