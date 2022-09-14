@@ -50,6 +50,7 @@ import numpy as np
 from IPython import get_ipython
 
 from bluemira.display import plot_defaults
+from bluemira.display.plotter import plot_coordinates
 from bluemira.equilibria.coils import Coil, CoilSet
 from bluemira.equilibria.equilibrium import Equilibrium
 from bluemira.equilibria.grid import Grid
@@ -546,9 +547,9 @@ program()
 f, ax = plt.subplots()
 x_old, z_old = old_coilset.get_positions()
 x_new, z_new = sof.coilset.get_positions()
-old_eq.get_LCFS().plot(ax=ax, edgecolor="b", fill=False)
-sof.get_LCFS().plot(ax=ax, edgecolor="r", fill=False)
-eof.get_LCFS().plot(ax=ax, edgecolor="g", fill=False)
+plot_coordinates(old_eq.get_LCFS(), ax=ax, edgecolor="b", fill=False)
+plot_coordinates(sof.get_LCFS(), ax=ax, edgecolor="r", fill=False)
+plot_coordinates(eof.get_LCFS(), ax=ax, edgecolor="g", fill=False)
 ax.plot(x_old, z_old, linewidth=0, marker="o", color="b")
 ax.plot(x_new, z_new, linewidth=0, marker="+", color="r")
 isoflux.plot(ax=ax)

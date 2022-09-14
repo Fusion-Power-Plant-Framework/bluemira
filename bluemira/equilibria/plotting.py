@@ -530,12 +530,12 @@ class EquilibriumPlotter(Plotter):
             return
 
         if isinstance(separatrix, list):
-            loops = separatrix
+            coords = separatrix
         else:
-            loops = [separatrix]
+            coords = [separatrix]
 
-        for loop in loops:
-            x, z = loop.d2
+        for coord in coords:
+            x, z = coord.xz
             self.ax.plot(
                 x,
                 z,
