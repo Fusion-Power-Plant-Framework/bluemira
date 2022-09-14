@@ -24,12 +24,11 @@ import pytest
 
 from bluemira.codes.error import FreeCADError
 from bluemira.equilibria.shapes import JohnerLCFS
-from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.parameterisations import PrincetonD, TripleArc
 from bluemira.geometry.tools import (
     make_circle,
-    make_polygon,
     make_face,
+    make_polygon,
     offset_wire,
     revolve_shape,
     sweep_shape,

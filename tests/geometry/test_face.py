@@ -22,14 +22,13 @@
 import numpy as np
 import pytest
 
-from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.parameterisations import (
     PictureFrame,
     PrincetonD,
     SextupleArc,
     TripleArc,
 )
-from bluemira.geometry.tools import make_polygon, offset_wire, make_face
+from bluemira.geometry.tools import make_face, make_polygon, offset_wire
 
 
 class TestBluemiraFace:
