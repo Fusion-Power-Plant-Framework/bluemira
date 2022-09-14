@@ -28,6 +28,7 @@ import pytest
 
 from bluemira.base.file import get_bluemira_path
 from bluemira.codes.error import FreeCADError
+from bluemira.display.plotter import plot_coordinates
 from bluemira.geometry._deprecated_tools import (
     bounding_box,
     check_linesegment,
@@ -166,7 +167,7 @@ class TestCoordinatesPlane:
         assert len(intersect) == 2
 
         _, ax = plt.subplots()
-        coords.plot(ax)
+        plot_coordinates(coords, ax=ax)
 
         for i in intersect:
             ax.plot(i[0], i[2], marker="o", color="r")
@@ -210,7 +211,7 @@ class TestCoordinatesPlane:
         assert len(intersect) == 2
 
         _, ax = plt.subplots()
-        coords.plot(ax)
+        plot_coordinates(coords, ax=ax)
         for i in intersect:
             ax.plot(i[0], i[2], marker="o", color="r")
         plt.show()
@@ -231,7 +232,7 @@ class TestCoordinatesPlane:
         intersect = coords_plane_intersect(coords, plane)
 
         _, ax = plt.subplots()
-        coords.plot(ax)
+        plot_coordinates(coords, ax=ax)
         for i in intersect:
             ax.plot(i[0], i[2], marker="o", color="r")
             assert on_polygon(i[0], i[2], coords.xz.T)
@@ -286,7 +287,7 @@ class TestInPolygon:
         ]
 
         _, ax = plt.subplots()
-        coords.plot(ax, edgecolor="k")
+        plot_coordinates(coords, ax=ax, edgecolor="k")
         for point in in_points:
             check = in_polygon(*point, coords.xz.T)
             c = "b" if check else "r"
@@ -341,7 +342,7 @@ class TestInPolygon:
                     mask[i, j] = 1
 
         _, ax = plt.subplots()
-        lcfs.plot(ax, fill=False, edgecolor="k")
+        plot_coordinates(lcfs, ax=ax, fill=False, edgecolor="k")
         ax.contourf(x, z, mask, levels=[0, 0.5, 1])
         plt.show()
 
@@ -462,7 +463,6 @@ class TestIntersections:
         np.testing.assert_allclose(loop1.points[5], [2.5, 0, 1.5])
         np.testing.assert_allclose(loop1.points[10], [2.5, 0, 5])
 
-    @pytest.mark.xfail
     def test_join_intersect_arg1(self):
         tf = Coordinates.from_json(os.sep.join([TEST_PATH, "test_TF_intersect.json"]))
         lp = Coordinates.from_json(os.sep.join([TEST_PATH, "test_LP_intersect.json"]))
@@ -470,20 +470,20 @@ class TestIntersections:
         up = Coordinates.from_json(os.sep.join([TEST_PATH, "test_UP_intersect.json"]))
 
         _, ax = plt.subplots()
-        for loop in [tf, up, eq, lp]:
-            loop.plot(ax, fill=False)
+        for coords in [tf, up, eq, lp]:
+            plot_coordinates(coords, ax=ax, fill=False)
 
         args = []
         intx, intz = [], []
-        for loop in [lp, eq, up]:
-            i = get_intersect(tf.xz, loop.xz)
-            a = join_intersect(tf.xz, loop.xz, get_arg=True)
+        for coords in [lp, eq, up]:
+            i = get_intersect(tf.xz, coords.xz)
+            a = join_intersect(tf, coords, get_arg=True)
             args.extend(a)
             intx.extend(i[0])
             intz.extend(i[1])
 
-        for loop in [tf, up, eq, lp]:
-            loop.plot(ax, fill=False, points=True)
+        for coords in [tf, up, eq, lp]:
+            plot_coordinates(coords, ax=ax, fill=False, points=True)
         ax.plot(*tf.xz.T[args].T, marker="o", color="r")
         ax.plot(intx, intz, marker="^", color="k")
 
@@ -491,7 +491,6 @@ class TestIntersections:
         assert np.allclose(np.sort(intx), np.sort(tf.x[args]))
         assert np.allclose(np.sort(intz), np.sort(tf.z[args]))
 
-    @pytest.mark.xfail
     def test_join_intersect_arg2(self):
         tf = Coordinates.from_json(os.path.join(TEST_PATH, "test_TF_intersect2.json"))
         lp = Coordinates.from_json(os.path.join(TEST_PATH, "test_LP_intersect2.json"))
@@ -499,14 +498,14 @@ class TestIntersections:
         up = Coordinates.from_json(os.path.join(TEST_PATH, "test_UP_intersect2.json"))
 
         _, ax = plt.subplots()
-        for loop in [tf, up, eq, lp]:
-            loop.plot(ax, fill=False)
+        for coords in [tf, up, eq, lp]:
+            plot_coordinates(coords, ax=ax, fill=False)
 
         args = []
         intx, intz = [], []
-        for loop in [lp, eq, up]:
-            i = get_intersect(tf, loop)
-            a = join_intersect(tf, loop, get_arg=True)
+        for coords in [lp, eq, up]:
+            i = get_intersect(tf.xz, coords.xz)
+            a = join_intersect(tf, coords, get_arg=True)
             args.extend(a)
             intx.extend(i[0])
             intz.extend(i[1])
