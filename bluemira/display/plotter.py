@@ -929,8 +929,8 @@ def _plot_3d(coords, ax=None, **kwargs):
 
     if ax is None:
         ax = Plot3D()
-        # Maintenant on re-arrange un peu pour que matplotlib puisse nous
-        # montrer qqchose un peu plus correct
+        # Now we re-arrange a little so that matplotlib can show us something a little
+        # more correct
         x_bb, y_bb, z_bb = bounding_box(*coords.xyz)
         for x, y, z in zip(x_bb, y_bb, z_bb):
             ax.plot([x], [y], [z], color="w")
@@ -953,10 +953,10 @@ def _plot_3d(coords, ax=None, **kwargs):
         j = dims.index(b)
         x, y = xyz[i], xyz[j]
 
-        # Pour en faire un objet que matplotlib puisse comprendre
+        # To make an object which matplotlib can understand
         poly = coordinates_to_path(x, y)
 
-        # En suite en re-transforme l'objet matplotlib en 3-D!
+        # And now re-transform the matplotlib object to 3-D
         p = BluemiraPathPatch3D(
             poly,
             -coords.normal_vector,
