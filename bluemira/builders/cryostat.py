@@ -34,7 +34,7 @@ from bluemira.base.config import Configuration
 from bluemira.builders.tools import circular_pattern_component
 from bluemira.display.palettes import BLUE_PALETTE
 from bluemira.geometry.face import BluemiraFace
-from bluemira.geometry.tools import make_circle, make_polygon, revolve_shape
+from bluemira.geometry.tools import make_circle, make_face, make_polygon, revolve_shape
 
 
 class CryostatBuilder(Builder):
@@ -118,7 +118,7 @@ class CryostatBuilder(Builder):
         x = np.concatenate([x_inner, x_outer])
         z = np.concatenate([z_inner, z_outer])
 
-        shape = BluemiraFace(make_polygon({"x": x, "y": 0, "z": z}, closed=True))
+        shape = make_face(make_polygon({"x": x, "y": 0, "z": z}, closed=True))
         self._cryo_vv = shape
         cryostat_vv = PhysicalComponent("Cryostat VV", shape)
         cryostat_vv.plot_options.face_options["color"] = BLUE_PALETTE["CR"][0]
@@ -135,7 +135,7 @@ class CryostatBuilder(Builder):
         inner = make_circle(radius=r_in)
         outer = make_circle(radius=r_out)
 
-        shape = BluemiraFace([outer, inner])
+        shape = make_face([outer, inner])
         cryostat_vv = PhysicalComponent("Cryostat VV", shape)
         cryostat_vv.plot_options.face_options["color"] = BLUE_PALETTE["CR"][0]
         component = Component("xy", children=[cryostat_vv])

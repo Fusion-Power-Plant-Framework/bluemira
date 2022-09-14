@@ -31,7 +31,7 @@ from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.geometry.constants import VERY_BIG
 from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.plane import BluemiraPlane
-from bluemira.geometry.tools import boolean_cut, make_polygon, slice_shape
+from bluemira.geometry.tools import boolean_cut, make_face, make_polygon, slice_shape
 from bluemira.utilities.opt_problems import (
     OptimisationConstraint,
     OptimisationObjective,
@@ -223,7 +223,7 @@ def segment_blanket_xz(breeding_blanket_xz, r_inner_cut, cut_angle, cut_thicknes
     p1 = [p0[0], 0, p0[2] + VERY_BIG]
     p2 = [p0[0] - cut_thickness, 0, p1[2]]
     p3 = [p2[0], 0, p0[2] - np.sqrt(2) * cut_thickness]
-    cut_zone = BluemiraFace(make_polygon([p0, p1, p2, p3], closed=True))
+    cut_zone = make_face(make_polygon([p0, p1, p2, p3], closed=True))
     if cut_angle != 0.0:
         cut_zone.rotate(base=p0, direction=(0, -1, 0), degree=cut_angle)
 
@@ -265,7 +265,7 @@ def build_upper_port_zone(r_up_inner, r_up_outer, z_max=10, z_min=0):
     """
     x = [r_up_inner, r_up_outer, r_up_outer, r_up_inner]
     z = [z_min, z_min, z_max, z_max]
-    return BluemiraFace(make_polygon({"x": x, "y": 0, "z": z}, closed=True))
+    return make_face(make_polygon({"x": x, "y": 0, "z": z}, closed=True))
 
 
 if __name__ == "__main__":
@@ -279,7 +279,7 @@ if __name__ == "__main__":
         {"x": [5, 6, 6, 11, 11, 12, 12, 5], "y": 0, "z": [-5, -5, 5, 5, -5, -5, 6, 6]},
         closed=True,
     )
-    bb = BluemiraFace(bb)
+    bb = make_face(bb)
     optimiser = Optimiser("SLSQP", opt_conditions={"max_eval": 1000, "ftol_rel": 1e-8})
 
     design_problem = UpperPortOP(params, optimiser, bb)

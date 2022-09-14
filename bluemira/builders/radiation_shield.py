@@ -36,6 +36,7 @@ from bluemira.geometry.tools import (
     boolean_cut,
     boolean_fuse,
     make_circle,
+    make_face,
     make_polygon,
     offset_wire,
     revolve_shape,
@@ -109,14 +110,14 @@ class RadiationShieldBuilder(Builder):
         rs_inner = offset_wire(cryo_vv_outer, self.params.g_cr_rs)
         rs_outer = offset_wire(rs_inner, self.params.tk_rs)
 
-        rs_full = BluemiraFace([rs_outer, rs_inner])
+        rs_full = make_face([rs_outer, rs_inner])
         # Now we slice in half
         bound_box = rs_outer.bounding_box
         x_min = bound_box.x_min - 1.0
         z_min, z_max = bound_box.z_min - 1.0, bound_box.z_max + 1.0
         x = [0, 0, x_min, x_min]
         z = [z_min, z_max, z_max, z_min]
-        cutter = BluemiraFace(make_polygon({"x": x, "y": 0, "z": z}, closed=True))
+        cutter = make_face(make_polygon({"x": x, "y": 0, "z": z}, closed=True))
         rs_half = boolean_cut(rs_full, cutter)[0]
         self._rs_face = rs_half
 
@@ -136,7 +137,7 @@ class RadiationShieldBuilder(Builder):
         inner = make_circle(radius=r_in)
         outer = make_circle(radius=r_out)
 
-        shape = BluemiraFace([outer, inner])
+        shape = make_face([outer, inner])
         shield_body = PhysicalComponent("Body", shape)
         shield_body.plot_options.face_options["color"] = BLUE_PALETTE["RS"][0]
         component = Component("xy", children=[shield_body])

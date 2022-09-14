@@ -25,9 +25,8 @@ Builder for the PF coils
 
 from bluemira.base.components import Component, PhysicalComponent
 from bluemira.display.palettes import BLUE_PALETTE
-from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.parameterisations import PictureFrame
-from bluemira.geometry.tools import make_circle, offset_wire, revolve_shape
+from bluemira.geometry.tools import make_circle, make_face, offset_wire, revolve_shape
 
 
 class PFCoilBuilder:
@@ -51,18 +50,18 @@ class PFCoilBuilder:
         c1 = make_circle(r_out)
         c2 = make_circle(r_in)
 
-        wp = PhysicalComponent("winding pack", BluemiraFace([c1, c2]))
+        wp = PhysicalComponent("winding pack", make_face([c1, c2]))
         idx = 0 if self.ctype == "CS" else 1
         wp.plot_options.face_options["color"] = BLUE_PALETTE["PF"][idx]
 
         r_in -= self.tk_insulation
         c3 = make_circle(r_in)
-        inner_ins = PhysicalComponent("inner", BluemiraFace([c2, c3]))
+        inner_ins = PhysicalComponent("inner", make_face([c2, c3]))
         inner_ins.plot_options.face_options["color"] = BLUE_PALETTE["PF"][3]
 
         r_out += self.tk_insulation
         c4 = make_circle(r_out)
-        outer_ins = PhysicalComponent("outer_ins", BluemiraFace([c4, c1]))
+        outer_ins = PhysicalComponent("outer_ins", make_face([c4, c1]))
         outer_ins.plot_options.face_options["color"] = BLUE_PALETTE["PF"][3]
 
         ins = Component(
@@ -72,12 +71,12 @@ class PFCoilBuilder:
 
         r_in -= self.tk_casing
         c5 = make_circle(r_in)
-        inner_cas = PhysicalComponent("inner", BluemiraFace([c3, c5]))
+        inner_cas = PhysicalComponent("inner", make_face([c3, c5]))
         inner_cas.plot_options.face_options["color"] = BLUE_PALETTE["PF"][2]
 
         r_out += self.tk_casing
         c6 = make_circle(r_out)
-        outer_cas = PhysicalComponent("outer", BluemiraFace([c6, c4]))
+        outer_cas = PhysicalComponent("outer", make_face([c6, c4]))
         outer_cas.plot_options.face_options["color"] = BLUE_PALETTE["PF"][2]
         casing = Component(
             "casing",
@@ -106,17 +105,17 @@ class PFCoilBuilder:
                 "ro": {"value": self.r_corner, "fixed": True},
             }
         ).create_shape()
-        wp = PhysicalComponent("winding pack", BluemiraFace(shape))
+        wp = PhysicalComponent("winding pack", make_face(shape))
         idx = 0 if self.ctype == "CS" else 1
         wp.plot_options.face_options["color"] = BLUE_PALETTE["PF"][idx]
 
         ins_shape = offset_wire(shape, self.tk_insulation)
 
-        ins = PhysicalComponent("ground insulation", BluemiraFace([ins_shape, shape]))
+        ins = PhysicalComponent("ground insulation", make_face([ins_shape, shape]))
         ins.plot_options.face_options["color"] = BLUE_PALETTE["PF"][3]
         cas_shape = offset_wire(ins_shape, self.tk_casing)
 
-        casing = PhysicalComponent("casing", BluemiraFace([cas_shape, ins_shape]))
+        casing = PhysicalComponent("casing", make_face([cas_shape, ins_shape]))
         casing.plot_options.face_options["color"] = BLUE_PALETTE["PF"][2]
         return Component(self.coil.name, children=[wp, ins, casing])
 

@@ -268,7 +268,7 @@ class CryostatThermalShieldBuilder(Builder):
 
         try:
             cts_inner = boolean_fuse(
-                [BluemiraFace(pf_o_wire), BluemiraFace(tf_o_wire)]
+                [make_face(pf_o_wire), make_face(tf_o_wire)]
             ).boundary[0]
         except GeometryError:
             # TODO: boolean_fuse probably shouldn't throw an error here...
@@ -276,13 +276,13 @@ class CryostatThermalShieldBuilder(Builder):
             cts_inner = pf_o_wire
 
         cts_outer = offset_wire(cts_inner, self.params.tk_ts, ndiscr=600)
-        cts_face = BluemiraFace([cts_outer, cts_inner])
+        cts_face = make_face([cts_outer, cts_inner])
         bound_box = cts_face.bounding_box
         z_min, z_max = bound_box.z_min, bound_box.z_max
         x_in, x_out = 0, -bound_box.x_max
         x = [x_in, x_out, x_out, x_in]
         z = [z_min, z_min, z_max, z_max]
-        cutter = BluemiraFace(make_polygon({"x": x, "y": 0, "z": z}, closed=True))
+        cutter = make_face(make_polygon({"x": x, "y": 0, "z": z}, closed=True))
 
         cts = boolean_cut(cts_face, cutter)[0]
         self._cts_face = cts
