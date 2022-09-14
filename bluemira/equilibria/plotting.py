@@ -32,6 +32,7 @@ from matplotlib.gridspec import GridSpec
 from scipy.interpolate import RectBivariateSpline
 
 from bluemira.base.look_and_feel import bluemira_warn
+from bluemira.display.plotter import plot_coordinates
 from bluemira.equilibria.constants import J_TOR_MIN, M_PER_MN
 from bluemira.equilibria.find import Xpoint, get_contours, grid_2d_contour
 from bluemira.equilibria.physics import calc_psi
@@ -646,13 +647,19 @@ class XZLPlotter(Plotter):
         self.xzl = xzl_mapper
 
         for coords in self.xzl.excl_zones:
-            coords.plot(self.ax, fill=True, alpha=0.2, facecolor="r", edgecolor="r")
+            plot_coordinates(
+                coords, self.ax, fill=True, alpha=0.2, facecolor="r", edgecolor="r"
+            )
 
         for coords in self.xzl.excl_loops:
-            coords.plot(self.ax, fill=False, edgecolor="r", zorder=1, linestyle="--")
+            plot_coordinates(
+                coords, self.ax, fill=False, edgecolor="r", zorder=1, linestyle="--"
+            )
 
         for coords in self.xzl.incl_loops:
-            coords.plot(self.ax, fill=False, edgecolor="k", zorder=1, linestyle="--")
+            plot_coordinates(
+                coords, self.ax, fill=False, edgecolor="k", zorder=1, linestyle="--"
+            )
 
 
 class RegionPlotter(Plotter):
@@ -665,8 +672,14 @@ class RegionPlotter(Plotter):
         self.rmp = region_mapper
 
         for intpltr in self.rmp.regions.values():
-            intpltr.loop.plot(
-                self.ax, fill=True, alpha=0.2, zorder=1, facecolor="g", edgecolor="g"
+            plot_coordinates(
+                intpltr.coords,
+                self.ax,
+                fill=True,
+                alpha=0.2,
+                zorder=1,
+                facecolor="g",
+                edgecolor="g",
             )
 
 

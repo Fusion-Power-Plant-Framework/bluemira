@@ -813,16 +813,17 @@ class Plottable:
 
 def _get_ndim(coords):
     count = 0
+    length = coords.shape[1]
     for c in coords.xyz:
-        if len(c) == len(coords):
-            if not np.allclose(c, c[0] * np.ones(len(coords))):
+        if len(c) == length:
+            if not np.allclose(c, c[0] * np.ones(length)):
                 count += 1
 
     return max(count, 2)
 
 
 def _get_plan_dims(array):
-    length = len(array)
+    length = array.shape[1]
     axes = ["x", "y", "z"]
     dims = []
     for i, k in enumerate(axes):
@@ -911,6 +912,7 @@ def plot_coordinates(coords, ax=None, points=False, **kwargs):
         poly = coordinates_to_path(x, y)
         p = PathPatch(poly, color=fc, alpha=alpha)
         ax.add_patch(p)
+
     ax.plot(x, y, color=ec, marker=marker, linewidth=lw, linestyle=ls)
 
     if points:
