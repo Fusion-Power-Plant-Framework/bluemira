@@ -239,7 +239,7 @@ class BluemiraGeo(ABC, GeoMeshable):
         """
         Change the placement of self
         """
-        self._shape.change_placement(placement)
+        cadapi.change_placement(self._shape, placement._shape)
 
     def __repr__(self):  # noqa D105
         """
