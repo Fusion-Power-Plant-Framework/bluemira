@@ -23,8 +23,6 @@
 Example single null first wall particle heat flux
 """
 
-import json
-
 # %%
 import os
 
@@ -56,9 +54,7 @@ eq = Equilibrium.from_eqdsk(eq_name)
 read_path = get_bluemira_path("radiation_transport/test_data", subfolder="tests")
 fw_name = "DN_fw_shape.json"
 fw_name = os.sep.join([read_path, fw_name])
-with open(fw_name, "r") as file:
-    fw_dict = json.load(file)
-fw_shape = Coordinates(fw_dict)
+fw_shape = Coordinates.from_json(fw_name)
 
 # %%[markdown]
 
