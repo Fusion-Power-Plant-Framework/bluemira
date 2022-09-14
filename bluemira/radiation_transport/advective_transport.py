@@ -31,6 +31,7 @@ import numpy as np
 from bluemira.base.constants import EPS
 from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.base.parameter import ParameterFrame
+from bluemira.display.plotter import plot_coordinates
 from bluemira.equilibria.find import find_flux_surface_through_point
 from bluemira.equilibria.flux_surfaces import OpenFluxSurface
 from bluemira.geometry._deprecated_tools import coords_plane_intersect
@@ -473,17 +474,17 @@ class ChargedParticleSolver:
         if ax is None:
             ax = plt.gca()
 
-        self.first_wall.plot(ax, linewidth=0.5, fill=False)
+        plot_coordinates(self.first_wall, ax=ax, linewidth=0.5, fill=False)
         separatrix = self.eq.get_separatrix()
 
         if isinstance(separatrix, Coordinates):
             separatrix = [separatrix]
 
         for sep in separatrix:
-            sep.plot(ax, linewidth=0.2)
+            plot_coordinates(sep, ax=ax, linewidth=0.2)
 
         for f_s in self.flux_surfaces:
-            f_s.plot(ax, linewidth=0.01)
+            plot_coordinates(f_s.coords, ax=ax, linewidth=0.01)
 
         cm = ax.scatter(
             self.result[0],
