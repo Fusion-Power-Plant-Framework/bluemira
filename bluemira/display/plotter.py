@@ -34,6 +34,7 @@ import mpl_toolkits.mplot3d as a3
 import numpy as np
 from matplotlib.patches import PathPatch
 
+from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.display.error import DisplayError
 from bluemira.display.palettes import BLUE_PALETTE
 from bluemira.geometry import bound_box, face
@@ -820,12 +821,12 @@ def _get_ndim(coords):
     return max(count, 2)
 
 
-def _get_plan_dims(coords):
-    length = len(coords)
+def _get_plan_dims(array):
+    length = len(array)
     axes = ["x", "y", "z"]
     dims = []
-    for k in axes:
-        c = getattr(coords, k)
+    for i, k in enumerate(axes):
+        c = array[i]
         if not np.allclose(c[0] * np.ones(length), c):
             dims.append(k)
 
@@ -833,8 +834,8 @@ def _get_plan_dims(coords):
         # Stops error when flat lines are given (same coords in two axes)
         axes.remove(dims[0])  # remove variable axis
         temp = []
-        for k in axes:  # both all equal to something
-            c = getattr(coords, k)
+        for i, k in enumerate(axes):  # both all equal to something
+            c = array[i]
             if c[0] == 0.0:
                 pass
             else:
@@ -901,7 +902,7 @@ def plot_coordinates(coords, ax=None, points=False, **kwargs):
         }
         _plot_3d(coords, ax=ax, **kwargs)
 
-    a, b = _get_plan_dims(coords)
+    a, b = _get_plan_dims(coords.xyz)
     x, y = [getattr(coords, c) for c in [a, b]]
     marker = "o" if points else None
     ax.set_xlabel(a + " [m]")
@@ -936,6 +937,9 @@ def _plot_3d(coords, ax=None, **kwargs):
 
     ax.plot(*coords.xyz, color=kwargs["edgecolor"], lw=kwargs["linewidth"])
     if kwargs["fill"]:
+        if not coords.is_planar:
+            bluemira_warn("Cannot fill plot of non-planar Coordinates.")
+            return
         dcm = rotation_matrix_v1v2(-coords.normal_vector, np.array([0.0, 0.0, 1.0]))
 
         xyz = dcm.T @ coords.xyz
@@ -943,22 +947,24 @@ def _plot_3d(coords, ax=None, **kwargs):
 
         xyz -= center_of_mass
 
-        if coords.is_planar:
-            # Pour en faire un objet que matplotlib puisse comprendre
+        dims = ["x", "y", "z"]
+        a, b = _get_plan_dims(xyz)
+        i = dims.index(a)
+        j = dims.index(b)
+        x, y = xyz[i], xyz[j]
 
-            poly = coordinates_to_path(*coords.d2)
+        # Pour en faire un objet que matplotlib puisse comprendre
+        poly = coordinates_to_path(x, y)
 
-            # En suite en re-transforme l'objet matplotlib en 3-D!
-            c = coords._point_23d(coords.centroid)
-
-            p = BluemiraPathPatch3D(
-                poly,
-                -coords.normal_vector,
-                c,
-                color=kwargs["facecolor"],
-                alpha=kwargs["alpha"],
-            )
-            ax.add_patch(p)
+        # En suite en re-transforme l'objet matplotlib en 3-D!
+        p = BluemiraPathPatch3D(
+            poly,
+            -coords.normal_vector,
+            coords.center_of_mass,
+            color=kwargs["facecolor"],
+            alpha=kwargs["alpha"],
+        )
+        ax.add_patch(p)
 
     if not hasattr(ax, "zaxis"):
         ax.set_aspect("equal")
