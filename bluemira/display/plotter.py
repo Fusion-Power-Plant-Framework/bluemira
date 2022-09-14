@@ -32,16 +32,19 @@ from typing import TYPE_CHECKING, List, Optional, Union
 import matplotlib.pyplot as plt
 import mpl_toolkits.mplot3d as a3
 import numpy as np
+from matplotlib.patches import PathPatch
 
 from bluemira.display.error import DisplayError
 from bluemira.display.palettes import BLUE_PALETTE
 from bluemira.geometry import bound_box, face
 from bluemira.geometry import placement as _placement
 from bluemira.geometry import wire
+from bluemira.geometry._deprecated_tools import bounding_box
 from bluemira.geometry.coordinates import (
     Coordinates,
     _parse_to_xyz_array,
     get_centroid_3d,
+    rotation_matrix_v1v2,
 )
 
 if TYPE_CHECKING:
@@ -807,16 +810,6 @@ class Plottable:
         return self._plotter.plot_3d(self, ax=ax, show=show)
 
 
-from matplotlib.patches import PathPatch
-
-from bluemira.geometry._deprecated_tools import bounding_box, rotation_matrix_v1v2
-from bluemira.utilities.plot_tools import (
-    BluemiraPathPatch3D,
-    Plot3D,
-    coordinates_to_path,
-)
-
-
 def _get_ndim(coords):
     count = 0
     for c in coords.xyz:
@@ -878,6 +871,8 @@ def plot_coordinates(coords, ax=None, points=False, **kwargs):
     alpha: float
         The transparency to plot the Coordinates fill with
     """
+    from bluemira.utilities.plot_tools import coordinates_to_path
+
     ndim = _get_ndim(coords)
 
     fc = kwargs.get("facecolor", "royalblue")
@@ -925,6 +920,8 @@ def plot_coordinates(coords, ax=None, points=False, **kwargs):
 
 
 def _plot_3d(coords, ax=None, **kwargs):
+    from bluemira.utilities.plot_tools import BluemiraPathPatch3D, Plot3D
+
     if ax is None:
         ax = Plot3D()
         # Maintenant on re-arrange un peu pour que matplotlib puisse nous
@@ -935,7 +932,7 @@ def _plot_3d(coords, ax=None, **kwargs):
 
     ax.plot(*coords.xyz, color=kwargs["edgecolor"], lw=kwargs["linewidth"])
     if kwargs["fill"]:
-        dcm = rotation_matrix_v1v2(-coords.n_hat, np.array([0.0, 0.0, 1.0]))
+        dcm = rotation_matrix_v1v2(-coords.normal_vector, np.array([0.0, 0.0, 1.0]))
 
         xyz = dcm.T @ coords.xyz
         center_of_mass = get_centroid_3d(*xyz)
@@ -944,13 +941,18 @@ def _plot_3d(coords, ax=None, **kwargs):
 
         if coords.is_planar:
             # Pour en faire un objet que matplotlib puisse comprendre
+
             poly = coordinates_to_path(*loop.d2)
 
             # En suite en re-transforme l'objet matplotlib en 3-D!
             c = coords._point_23d(coords.centroid)
 
             p = BluemiraPathPatch3D(
-                poly, -coords.n_hat, c, color=kwargs["facecolor"], alpha=kwargs["alpha"]
+                poly,
+                -coords.normal_vector,
+                c,
+                color=kwargs["facecolor"],
+                alpha=kwargs["alpha"],
             )
             ax.add_patch(p)
 
