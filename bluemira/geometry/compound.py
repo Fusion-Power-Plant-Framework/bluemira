@@ -48,28 +48,49 @@ class BluemiraCompound(BluemiraGeo):
 
     @property
     def vertexes(self):
+        """
+        The vertexes of the compound.
+        """
         return Coordinates(cadapi.vertexes(self.shape))
 
     @property
     def edges(self):
+        """
+        The edges of the compound.
+        """
         return [BluemiraWire(cadapi.apiWire(o)) for o in cadapi.edges(self.shape)]
 
     @property
     def wires(self):
+        """
+        The wires of the compound.
+        """
         return [BluemiraWire(o) for o in cadapi.wires(self.shape)]
 
     @property
     def faces(self):
+        """
+        The faces of the compound.
+        """
         return [BluemiraFace(o) for o in cadapi.faces(self.shape)]
 
     @property
     def shells(self):
+        """
+        The shells of the compound.
+        """
         return [BluemiraShell(o) for o in cadapi.shells(self.shape)]
 
     @property
     def solids(self):
+        """
+        The solids of the compound.
+        """
         return [BluemiraSolid(o) for o in cadapi.solids(self.shape)]
 
     @property
     def boundary(self):
+        """
+        The boundaries of the compound. Ill-defined, so None.
+        """
         return None
