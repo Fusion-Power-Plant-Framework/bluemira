@@ -179,7 +179,7 @@ class TestJohnerCAD:
     def test_segments(self):
         p = JohnerLCFS()
         wire = p.create_shape()
-        assert len(wire._boundary) == 4
+        assert len(wire.boundary) == 4
 
     def test_symmetry(self):
         p_pos = JohnerLCFS()

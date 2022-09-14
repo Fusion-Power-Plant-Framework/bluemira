@@ -23,9 +23,8 @@ import numpy as np
 import pytest
 
 from bluemira.display.plotter import PlotOptions, plot_2d
-from bluemira.geometry._deprecated_tools import make_circle_arc
-from bluemira.geometry.coordinates import Coordinates, get_area, in_polygon
-from bluemira.geometry.face import BluemiraFace
+from bluemira.geometry._deprecated_tools import get_area, in_polygon, make_circle_arc
+from bluemira.geometry.coordinates import Coordinates
 from bluemira.geometry.inscribed_rect import _rect, inscribed_rect_in_poly
 from bluemira.geometry.tools import boolean_cut, make_circle, make_face, make_polygon
 
@@ -40,8 +39,8 @@ class TestInscribedRectangle:
         np.array([circle_xz[0], np.zeros_like(circle_xz[0]), circle_xz[1]])
     )
 
-    complex_shape = BluemiraFace(make_circle(2, center=(4, 0, -4), axis=(0, 1, 0)))
-    circle_sm = BluemiraFace(make_circle(0.6, center=(5, 0, -5), axis=(0, 1, 0)))
+    complex_shape = make_face(make_circle(2, center=(4, 0, -4), axis=(0, 1, 0)))
+    circle_sm = make_face(make_circle(0.6, center=(5, 0, -5), axis=(0, 1, 0)))
 
     for i in [(0, 0, 0), (-2, 0, 2), (-2, 0, 0), (0, 0, 2)]:
         c_s = circle_sm.deepcopy()
@@ -90,7 +89,8 @@ class TestInscribedRectangle:
                         assert len(sq.x) == 5
                         try:
                             tf = boolean_cut(
-                                make_face(make_polygon(sq.xyz)), shape_face
+                                make_face(make_polygon(sq.xyz, closed=True)),
+                                shape_face,
                             )
                             tf = [seg.discretize(byedges=True, ndiscr=50) for seg in tf]
                         except ValueError:
