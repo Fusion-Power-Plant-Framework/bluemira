@@ -29,9 +29,8 @@ from bluemira.base.builder import BuildConfig
 from bluemira.base.components import Component, PhysicalComponent
 from bluemira.builders.shapes import ParameterisedShapeBuilder
 from bluemira.display.palettes import BLUE_PALETTE
-from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.parameterisations import GeometryParameterisation
-from bluemira.geometry.tools import make_circle, revolve_shape
+from bluemira.geometry.tools import make_circle, make_face, revolve_shape
 from bluemira.geometry.wire import BluemiraWire
 
 
@@ -87,7 +86,7 @@ class MakeParameterisedPlasma(ParameterisedShapeBuilder):
         result: Component
             The resulting component representing the xz view of the Plasma.
         """
-        face = BluemiraFace(self._boundary, self._label)
+        face = make_face(self._boundary, self._label)
         component = PhysicalComponent(self._label, face)
         component.plot_options.face_options["color"] = BLUE_PALETTE["PL"]
 
@@ -109,7 +108,7 @@ class MakeParameterisedPlasma(ParameterisedShapeBuilder):
         inner = make_circle(self._boundary.bounding_box.x_min, axis=[0, 1, 0])
         outer = make_circle(self._boundary.bounding_box.x_max, axis=[0, 1, 0])
 
-        face = BluemiraFace([outer, inner], self._label)
+        face = make_face([outer, inner], self._label)
         component = PhysicalComponent(self._label, face)
         component.plot_options.face_options["color"] = BLUE_PALETTE["PL"]
 

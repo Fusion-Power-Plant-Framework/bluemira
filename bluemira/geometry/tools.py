@@ -828,9 +828,7 @@ def split_wire(wire: BluemiraWire, vertex: Iterable, tolerance: float = EPS):
     GeometryError:
         If the vertex is further away to the wire than the specified tolerance
     """
-    wire_1, wire_2 = cadapi.split_wire(
-        wire.get_single_wire()._shape, vertex, tolerance=tolerance
-    )
+    wire_1, wire_2 = cadapi.split_wire(wire._shape, vertex, tolerance=tolerance)
     if wire_1:
         wire_1 = BluemiraWire(wire_1)
     if wire_2:
