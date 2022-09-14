@@ -152,7 +152,6 @@ class BluemiraWire(BluemiraGeo):
         degree: float
             rotation angle
         """
-
         cadapi.rotate_shape(self._shape, base, direction, degree)
 
     def change_placement(self, placement):
