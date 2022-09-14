@@ -23,6 +23,8 @@
 Example single null first wall particle heat flux
 """
 
+import json
+
 # %%
 import os
 
@@ -31,7 +33,7 @@ import matplotlib.pyplot as plt
 from bluemira.base.file import get_bluemira_path
 from bluemira.base.parameter import ParameterFrame
 from bluemira.equilibria import Equilibrium
-from bluemira.geometry._deprecated_loop import Loop
+from bluemira.geometry.coordinates import Coordinates
 from bluemira.radiation_transport.advective_transport import ChargedParticleSolver
 
 # %%[markdown]
@@ -54,7 +56,9 @@ eq = Equilibrium.from_eqdsk(eq_name)
 read_path = get_bluemira_path("radiation_transport/test_data", subfolder="tests")
 fw_name = "DN_fw_shape.json"
 fw_name = os.sep.join([read_path, fw_name])
-fw_shape = Loop.from_file(fw_name)
+with open(fw_name, "r") as file:
+    fw_dict = json.load(file)
+fw_shape = Coordinates(fw_dict)
 
 # %%[markdown]
 
