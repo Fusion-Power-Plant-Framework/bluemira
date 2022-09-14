@@ -32,12 +32,12 @@ from __future__ import annotations
 
 import bluemira.codes._freecadapi as cadapi
 from bluemira.geometry.base import BluemiraGeo
-from bluemira.geometry.wire import BluemiraWire
+from bluemira.geometry.coordinates import Coordinates
 from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.shell import BluemiraShell
 from bluemira.geometry.solid import BluemiraSolid
+from bluemira.geometry.wire import BluemiraWire
 
-from bluemira.geometry.coordinates import Coordinates
 
 class BluemiraCompound(BluemiraGeo):
     """Bluemira Compound class."""

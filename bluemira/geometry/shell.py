@@ -30,9 +30,9 @@ import bluemira.codes._freecadapi as cadapi
 
 # import from bluemira
 from bluemira.geometry.base import BluemiraGeo
-from bluemira.geometry.wire import BluemiraWire
-from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.coordinates import Coordinates
+from bluemira.geometry.face import BluemiraFace
+from bluemira.geometry.wire import BluemiraWire
 
 __all__ = ["BluemiraShell"]
 

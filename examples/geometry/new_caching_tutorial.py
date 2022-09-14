@@ -45,46 +45,38 @@ A geometry tutorial for users.
 # %%
 import numpy as np
 
+import bluemira.codes._freecadapi as cadapi
+
 # Some display functionality
 from bluemira.display import plot_2d, show_cad
 from bluemira.display.displayer import DisplayCADOptions
-
-import bluemira.codes._freecadapi as cadapi
-from bluemira.geometry.tools import (
-    make_face,
-    make_polygon,
-    extrude_shape,
-    boolean_fuse,
-    serialize_shape,
-    deserialize_shape
-)
-
-# Basic objects
-from bluemira.geometry.wire import BluemiraWire
 from bluemira.geometry.face import BluemiraFace
-from bluemira.geometry.plane import BluemiraPlane
-
 from bluemira.geometry.parameterisations import (
     PictureFrame,
     PolySpline,
     PrincetonD,
     TripleArc,
 )
+from bluemira.geometry.plane import BluemiraPlane
+from bluemira.geometry.tools import (
+    boolean_fuse,
+    deserialize_shape,
+    extrude_shape,
+    make_face,
+    make_polygon,
+    serialize_shape,
+)
 
-wire1 = make_polygon(
+# Basic objects
+from bluemira.geometry.wire import BluemiraWire
+
+wire1 = make_polygon([[0, 1, 1], [0, 0, 1], [0, 0, 0]], label="wire1")
+wire2 = make_polygon(
     [
         [0, 1, 1],
         [0, 0, 1],
-        [0, 0, 0]
-    ],
-    label="wire1"
-)
-wire2 = make_polygon(
-        [
-            [0, 1, 1],
-            [0, 0, 1],
-            [0, 0, 0],
-        ]
+        [0, 0, 0],
+    ]
 )
 
 bm_wire = BluemiraWire([wire1, wire2])
@@ -99,7 +91,7 @@ wire1 = make_polygon(
         [0, 0, 1],
         [0, 0, 0],
     ],
-    label="wire1"
+    label="wire1",
 )
 wire2 = make_polygon(
     [
@@ -114,15 +106,7 @@ print(wire_fuse)
 print(wire_fuse.is_closed())
 
 
-wire1 = make_polygon(
-    [
-        [0, 0, 0],
-        [1, 0, 0],
-        [1, 1, 0],
-        [0.5, 1, 0]
-     ],
-    label="wire1"
-)
+wire1 = make_polygon([[0, 0, 0], [1, 0, 0], [1, 1, 0], [0.5, 1, 0]], label="wire1")
 wire2 = make_polygon(
     [
         [1, 0, 0],
@@ -130,8 +114,6 @@ wire2 = make_polygon(
         [0, 0, 0],
     ],
 )
-
-
 
 
 # wire1 = make_polygon(
@@ -147,6 +129,7 @@ wire2 = make_polygon(
 # )
 
 from bluemira.geometry.coordinates import Coordinates
+
 square_points = [
     (0.0, 0.0, 0.0),
     (1.0, 0.0, 0.0),
@@ -168,8 +151,8 @@ wire1 = make_polygon(coord.points[0:4], label="wire1")
 coord2 = Coordinates(points2)
 wire2 = make_polygon(coord2.points, label="wire2")
 
-from bluemira.display.plotter import FacePlotter, WirePlotter
 import bluemira.display as display
+from bluemira.display.plotter import FacePlotter, WirePlotter
 from bluemira.geometry.placement import BluemiraPlacement
 
 # wplotter = WirePlotter()
@@ -211,9 +194,9 @@ from bluemira.geometry.placement import BluemiraPlacement
 # wire = p.create_shape()
 # wplotter.plot_2d(wire)
 
-base = np.array([0,0,0])
+base = np.array([0, 0, 0])
 # create a random axis. A constant value has been added to avoid [0,0,0]
-axis = np.array([1,0,0])
+axis = np.array([1, 0, 0])
 plane = BluemiraPlane(base, axis)
 lx = 20
 ly = 10
@@ -231,7 +214,9 @@ print(bmbuffer)
 bmface1 = deserialize_shape(bmbuffer)
 
 
+import os
 
+import bluemira.geometry.tools as geotools  # import extrude_shape, revolve_shape
 from bluemira.base.file import get_bluemira_path
 from bluemira.geometry._deprecated_loop import Loop
 from bluemira.geometry._deprecated_tools import (
@@ -256,8 +241,6 @@ from bluemira.geometry._deprecated_tools import (
 )
 from bluemira.geometry.base import BluemiraGeo
 from bluemira.geometry.face import BluemiraFace
-import bluemira.geometry.tools as geotools #import extrude_shape, revolve_shape
-import os
 
 TEST_PATH = get_bluemira_path("geometry/test_data", subfolder="tests")
 data = (

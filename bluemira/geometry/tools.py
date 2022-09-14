@@ -41,15 +41,14 @@ from bluemira.base.file import force_file_extension, get_bluemira_path
 from bluemira.base.look_and_feel import bluemira_debug, bluemira_warn
 from bluemira.codes import _freecadapi as cadapi
 from bluemira.geometry.base import BluemiraGeo, GeoMeshable
-from bluemira.geometry.constants import D_TOLERANCE
+from bluemira.geometry.compound import BluemiraCompound
 from bluemira.geometry.coordinates import Coordinates
-from bluemira.geometry.error import GeometryError, DisjointedFace
+from bluemira.geometry.error import DisjointedFace, GeometryError
 from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.plane import BluemiraPlane
 from bluemira.geometry.shell import BluemiraShell
 from bluemira.geometry.solid import BluemiraSolid
 from bluemira.geometry.wire import BluemiraWire
-from bluemira.geometry.compound import BluemiraCompound
 
 
 def convert(apiobj, label=""):
@@ -654,7 +653,7 @@ def make_face(wires: Union[BluemiraWire, List[BluemiraWire]], label: str = ""):
     if not isinstance(wires, list):
         wires = [wires]
     if not all(isinstance(w, BluemiraWire) for w in wires):
-       raise ValueError(f"The input wires {wires} are not all BluemiraWire instances")
+        raise ValueError(f"The input wires {wires} are not all BluemiraWire instances")
     if not all(w.is_closed() for w in wires):
         raise GeometryError(f"Only closed wires {wires} can be used to generate a face")
     face = BluemiraFace(cadapi.make_face(wires[0].shape), label=label)
@@ -680,6 +679,7 @@ def make_solid(shell: BluemiraShell, label: str = ""):
 def make_shell(objs: List[BluemiraGeo], label: str = ""):
     """Make a shell from a list of BluemiraFace"""
     return BluemiraCompound(cadapi.make_compound([o.shape for o in objs]), label=label)
+
 
 # # =============================================================================
 # # Shape operation

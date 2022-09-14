@@ -27,13 +27,13 @@ from __future__ import annotations
 
 # import from freecad
 import bluemira.codes._freecadapi as cadapi
+from bluemira.geometry.base import BluemiraGeo
 
 # import from bluemira
 from bluemira.geometry.coordinates import Coordinates
-from bluemira.geometry.base import BluemiraGeo
-from bluemira.geometry.wire import BluemiraWire
 from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.shell import BluemiraShell
+from bluemira.geometry.wire import BluemiraWire
 
 __all__ = ["BluemiraSolid"]
 

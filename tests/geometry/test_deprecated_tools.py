@@ -26,6 +26,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pytest
 
+import bluemira.geometry.tools as geotools  # import extrude_shape, revolve_shape
+import tests
 from bluemira.base.file import get_bluemira_path
 from bluemira.codes.error import FreeCADError
 from bluemira.geometry._deprecated_tools import (
@@ -41,7 +43,6 @@ from bluemira.geometry.base import BluemiraGeo
 from bluemira.geometry.coordinates import Coordinates, get_area
 from bluemira.geometry.error import GeometryError
 from bluemira.geometry.face import BluemiraFace
-import bluemira.geometry.tools as geotools #import extrude_shape, revolve_shape
 
 TEST_PATH = get_bluemira_path("geometry/test_data", subfolder="tests")
 

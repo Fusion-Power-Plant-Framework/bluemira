@@ -44,10 +44,10 @@ from bluemira.geometry.plane import BluemiraPlane
 from bluemira.geometry.tools import (
     boolean_cut,
     boolean_fuse,
+    make_face,
     make_polygon,
     offset_wire,
     revolve_shape,
-    make_face
 )
 from bluemira.geometry.wire import BluemiraWire
 

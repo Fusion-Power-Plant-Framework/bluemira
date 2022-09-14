@@ -45,15 +45,15 @@ A geometry tutorial for users.
 # %%
 import numpy as np
 
+# Some useful tools
+import bluemira.geometry.tools as geotools
+
 # Some display functionality
 from bluemira.display import plot_2d, show_cad
 from bluemira.display.displayer import DisplayCADOptions
 from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.shell import BluemiraShell
 from bluemira.geometry.solid import BluemiraSolid
-
-# Some useful tools
-import bluemira.geometry.tools as geotools
 
 # Basic objects
 from bluemira.geometry.wire import BluemiraWire
@@ -223,8 +223,9 @@ show_cad(hollow_cylinder)
 
 points = np.array([[4.5, 4.5], [0, 3], [2.5, 2.5]])
 straight_line = geotools.make_polygon(points)
-quarter_turn = geotools.make_circle(center=(3, 3, 2.5), axis=(0, 0, 1), radius=1.5,
-                             end_angle=90)
+quarter_turn = geotools.make_circle(
+    center=(3, 3, 2.5), axis=(0, 0, 1), radius=1.5, end_angle=90
+)
 path = BluemiraWire(straight_line + quarter_turn)
 solid = geotools.sweep_shape(rectangle.wires, path)
 show_cad(solid)

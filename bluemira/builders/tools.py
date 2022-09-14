@@ -39,11 +39,11 @@ from bluemira.geometry.tools import (
     circular_pattern,
     extrude_shape,
     make_circle,
+    make_face,
     make_polygon,
     revolve_shape,
     slice_shape,
     sweep_shape,
-    make_face
 )
 
 __all__ = [

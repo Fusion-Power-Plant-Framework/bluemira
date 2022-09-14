@@ -33,11 +33,11 @@ import bluemira.codes._freecadapi as cadapi
 
 # import from bluemira
 from bluemira.geometry.base import BluemiraGeo
+from bluemira.geometry.coordinates import Coordinates
 
 # import from error
 from bluemira.geometry.error import DisjointedFace, NotClosedWire
 from bluemira.geometry.wire import BluemiraWire
-from bluemira.geometry.coordinates import Coordinates
 
 __all__ = ["BluemiraFace"]
 

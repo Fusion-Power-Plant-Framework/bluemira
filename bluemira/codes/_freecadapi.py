@@ -158,6 +158,7 @@ def vertex_to_list(vertexes):
     """Converts a FreeCAD Part.Vertex or list(Part.Vertex) into a list"""
     return [[v.X, v.Y, v.Z] for v in vertexes]
 
+
 @check_data_type(Base.Vector)
 def vector_to_numpy(vectors):
     """Converts a FreeCAD Base.Vector or list(Base.Vector) into a numpy array"""
@@ -569,7 +570,8 @@ def make_face(wire: apiWire):
         if face.isValid():
             return face
         else:
-            raise FreeCADError('An invalid face has been generated')
+            raise FreeCADError("An invalid face has been generated")
+
 
 # ======================================================================================
 # Object properties
@@ -615,9 +617,11 @@ def is_valid(obj) -> bool:
     """True if obj is valid"""
     return _get_api_attr(obj, "isValid")()
 
+
 def orientation(obj) -> bool:
     """True if obj is valid"""
     return _get_api_attr(obj, "Orientation")
+
 
 def bounding_box(obj) -> Tuple[float, float, float, float, float, float]:
     """Object's bounding box"""
@@ -636,35 +640,43 @@ def end_point(obj) -> np.ndarray:
     point = obj.Edges[-1].lastVertex().Point
     return vector_to_numpy(point)
 
+
 def ordered_vertexes(obj) -> np.ndarray:
     """Ordered vertexes of the object"""
     vertexes = _get_api_attr(obj, "OrderedVertexes")
     return vertex_to_numpy(vertexes)
+
 
 def vertexes(obj) -> np.ndarray:
     """Wires of the object"""
     vertexes = _get_api_attr(obj, "Vertexes")
     return vertex_to_numpy(vertexes)
 
+
 def edges(obj) -> list[apiWire]:
     """Edges of the object"""
     return _get_api_attr(obj, "Edges")
+
 
 def ordered_edges(obj) -> np.ndarray:
     """Ordered edges of the object"""
     return _get_api_attr(obj, "OrderedEdges")
 
+
 def wires(obj) -> list[apiWire]:
     """Wires of the object"""
     return _get_api_attr(obj, "Wires")
+
 
 def faces(obj) -> list[apiFace]:
     """Faces of the object"""
     return _get_api_attr(obj, "Faces")
 
+
 def shells(obj) -> list[apiShell]:
     """Shells of the object"""
     return _get_api_attr(obj, "Shells")
+
 
 def solids(obj) -> list[apiSolid]:
     """Solids of the object"""
@@ -1273,7 +1285,7 @@ def boolean_fuse(shapes):
     _type = type(shapes[0])
     _check_shapes_same_type(shapes)
 
-#    if _is_wire_or_face(_type):
+    #    if _is_wire_or_face(_type):
     if _type == apiFace:
         _check_shapes_coplanar(shapes)
         if not _shapes_are_coaxis(shapes):

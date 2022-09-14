@@ -35,10 +35,10 @@ from bluemira.geometry.tools import (
     make_circle,
     make_circle_arc_3P,
     make_ellipse,
+    make_face,
     make_polygon,
     offset_wire,
     revolve_shape,
-    make_face
 )
 from bluemira.geometry.wire import BluemiraWire
 

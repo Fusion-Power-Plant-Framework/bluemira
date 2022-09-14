@@ -297,7 +297,7 @@ plt.show()
 f, ax = plt.subplots()
 face_out = geotools.make_face(wire2.deepcopy())
 face_in = geotools.make_face(wire.deepcopy())
-#face3 = geotools.make_face(wire2.deepcopy() + wire.deepcopy())
+# face3 = geotools.make_face(wire2.deepcopy() + wire.deepcopy())
 face3 = geotools.boolean_cut(face_out, [face_in])[0]
 fplotter3 = FacePlotter(plane="xz")
 fplotter3.options.show_points = True

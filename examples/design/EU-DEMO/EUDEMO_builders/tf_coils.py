@@ -46,11 +46,11 @@ from bluemira.geometry.tools import (
     boolean_cut,
     boolean_fuse,
     extrude_shape,
+    make_face,
     make_polygon,
     offset_wire,
     slice_shape,
     sweep_shape,
-    make_face
 )
 from bluemira.geometry.wire import BluemiraWire
 from bluemira.magnetostatics.circuits import (
@@ -402,12 +402,8 @@ class TFCoilsBuilder(OptimisedShapeBuilder):
 
         # Casing
         ib_cas_wire, ob_cas_wire = self._make_cas_xs()
-        cas_inner_face = make_face(
-            [ib_cas_wire, deepcopy(ins_inner_face.boundary[0])]
-        )
-        cas_outer_face = make_face(
-            [ob_cas_wire, deepcopy(ins_outer_face.boundary[0])]
-        )
+        cas_inner_face = make_face([ib_cas_wire, deepcopy(ins_inner_face.boundary[0])])
+        cas_outer_face = make_face([ob_cas_wire, deepcopy(ins_outer_face.boundary[0])])
 
         ib_cas_comp = PhysicalComponent("inboard", cas_inner_face)
         ib_cas_comp.plot_options.face_options["color"] = BLUE_PALETTE["TF"][0]

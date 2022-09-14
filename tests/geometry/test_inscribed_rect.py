@@ -27,7 +27,7 @@ from bluemira.geometry._deprecated_tools import make_circle_arc
 from bluemira.geometry.coordinates import Coordinates, get_area, in_polygon
 from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.inscribed_rect import _rect, inscribed_rect_in_poly
-from bluemira.geometry.tools import boolean_cut, make_circle, make_polygon, make_face
+from bluemira.geometry.tools import boolean_cut, make_circle, make_face, make_polygon
 
 
 class TestInscribedRectangle:
@@ -46,9 +46,7 @@ class TestInscribedRectangle:
         c_s.translate(i)
         complex_shape = boolean_cut(complex_shape, c_s)[0]
     # Convert back to Loop
-    complex_shape = Loop(
-        *complex_shape.wires[0].discretize(byedges=True, ndiscr=100).xz
-    )
+    complex_shape = Loop(*complex_shape.wires[0].discretize(byedges=True, ndiscr=100).xz)
 
     shapes = [square, diamond, circle, complex_shape]
     convex = [True, True, True, False]
