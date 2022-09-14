@@ -33,7 +33,6 @@ import matplotlib.pyplot as plt
 from bluemira.base.file import get_bluemira_path
 from bluemira.base.parameter import ParameterFrame
 from bluemira.equilibria import Equilibrium
-from bluemira.geometry._deprecated_loop import Loop
 from bluemira.geometry.coordinates import Coordinates
 from bluemira.radiation_transport.advective_transport import ChargedParticleSolver
 
