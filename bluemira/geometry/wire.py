@@ -25,7 +25,7 @@ Wrapper for FreeCAD Part.Wire objects
 
 from __future__ import annotations
 
-from typing import Iterable, List, Optional
+from typing import Iterable, Optional
 
 import bluemira.codes._freecadapi as cadapi
 from bluemira.base.constants import EPS
@@ -35,10 +35,7 @@ from bluemira.codes.error import FreeCADError
 # import from bluemira
 from bluemira.geometry.base import BluemiraGeo
 from bluemira.geometry.coordinates import Coordinates
-from bluemira.geometry.error import (
-    GeometryError,
-    NotClosedWire,
-)
+from bluemira.geometry.error import GeometryError, NotClosedWire
 
 __all__ = ["BluemiraWire"]
 
@@ -242,28 +239,49 @@ class BluemiraWire(BluemiraGeo):
 
     @property
     def vertexes(self):
+        """
+        The vertexes of the wire.
+        """
         return Coordinates(cadapi.vertexes(self.shape))
 
     @property
     def edges(self):
+        """
+        The edges of the wire.
+        """
         return [BluemiraWire(cadapi.apiWire(o)) for o in cadapi.edges(self.shape)]
 
     @property
     def wires(self):
+        """
+        The wires of the wire. By definition a list of itself.
+        """
         return [self]
 
     @property
     def faces(self):
+        """
+        The faces of the wire. By definition an empty list.
+        """
         return []
 
     @property
     def shells(self):
+        """
+        The shells of the wire. By definition an empty list.
+        """
         return []
 
     @property
     def solids(self):
+        """
+        The solids of the wire. By definition an empty list.
+        """
         return []
 
     @property
     def boundary(self):
+        """
+        The boundaries of the wire.
+        """
         return self.edges
