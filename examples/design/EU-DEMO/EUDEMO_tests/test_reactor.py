@@ -99,7 +99,7 @@ class TestEUDEMO:
             {"x": reference_eq_vals["xbdry"], "z": reference_eq_vals["zbdry"]}
         )
 
-        lcfs = Coordinates(plasma_component.equilibrium.get_LCFS().xyz)
+        lcfs = plasma_component.equilibrium.get_LCFS()
         np.testing.assert_allclose(ref_lcfs.length, lcfs.length, rtol=0.5)
         np.testing.assert_allclose(
             ref_lcfs.center_of_mass[0], lcfs.center_of_mass[0], rtol=0.5
