@@ -43,13 +43,12 @@ from bluemira.equilibria.opt_problems import UnconstrainedTikhonovCurrentGradien
 from bluemira.equilibria.profiles import BetaIpProfile
 from bluemira.equilibria.shapes import JohnerLCFS
 from bluemira.equilibria.solve import DudsonConvergence, PicardIterator
-from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.parameterisations import PrincetonD
 from bluemira.geometry.tools import (
     make_circle,
+    make_face,
     make_polygon,
     offset_wire,
-    make_face,
     revolve_shape,
 )
 from bluemira.geometry.wire import BluemiraWire

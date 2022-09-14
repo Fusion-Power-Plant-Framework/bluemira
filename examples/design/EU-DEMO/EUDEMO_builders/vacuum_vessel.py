@@ -36,9 +36,8 @@ from bluemira.builders.tools import (
     varied_offset,
 )
 from bluemira.display.palettes import BLUE_PALETTE
-from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.plane import BluemiraPlane
-from bluemira.geometry.tools import offset_wire, revolve_shape, make_face
+from bluemira.geometry.tools import make_face, offset_wire, revolve_shape
 from bluemira.geometry.wire import BluemiraWire
 
 

@@ -32,13 +32,12 @@ import numpy as np
 from bluemira.base.error import BuilderError
 from bluemira.base.look_and_feel import bluemira_debug_flush
 from bluemira.display import plot_2d
-from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.optimisation import (
     GeometryOptimisationProblem,
     constrain_koz,
     minimise_length,
 )
-from bluemira.geometry.tools import offset_wire, make_face
+from bluemira.geometry.tools import make_face, offset_wire
 from bluemira.geometry.wire import BluemiraWire
 from bluemira.magnetostatics.biot_savart import BiotSavartFilament
 from bluemira.magnetostatics.circuits import HelmholtzCage
