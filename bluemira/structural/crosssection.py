@@ -417,7 +417,9 @@ class AnalyticalCrossSection(CrossSection):
         if len(self.geometry.boundary) > 1:
             # Cut out any holes in the face
             for wire in self.geometry.boundary[1:]:
-                y, z = wire.discretize(ndiscr=n_discr, byedges=True).yz
+                coords = wire.discretize(ndiscr=n_discr, byedges=True)
+                coords.reverse()
+                y, z = coords.yz
                 q_zz_i, q_yy_i, i_zz_i, i_yy_i, i_zy_i = _calculate_properties(y, z)
 
                 q_zz_o -= q_zz_i
