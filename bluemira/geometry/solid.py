@@ -47,28 +47,49 @@ class BluemiraSolid(BluemiraGeo):
 
     @property
     def vertexes(self):
+        """
+        The vertexes of the solid.
+        """
         return Coordinates(cadapi.vertexes(self.shape))
 
     @property
     def edges(self):
+        """
+        The edges of the solid.
+        """
         return [BluemiraWire(cadapi.apiWire(o)) for o in cadapi.edges(self.shape)]
 
     @property
     def wires(self):
+        """
+        The wires of the solid.
+        """
         return [BluemiraWire(o) for o in cadapi.wires(self.shape)]
 
     @property
     def faces(self):
+        """
+        The faces of the solid.
+        """
         return [BluemiraFace(o) for o in cadapi.faces(self.shape)]
 
     @property
     def shells(self):
+        """
+        The shells of the solid.
+        """
         return [BluemiraShell(o) for o in cadapi.shells(self.shape)]
 
     @property
     def solids(self):
+        """
+        The solids of the solid. By definition a list of itself.
+        """
         return [self]
 
     @property
     def boundary(self):
+        """
+        The boundaries of the solid.
+        """
         return self.shells

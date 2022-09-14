@@ -82,7 +82,7 @@ class BluemiraShell(BluemiraGeo):
     @property
     def solids(self):
         """
-        The solids of the shell. By definition and empty list.
+        The solids of the shell. By definition an empty list.
         """
         return []
 
