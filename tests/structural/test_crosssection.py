@@ -97,11 +97,20 @@ class TestAnalytical:
         for k in ["area", "centroid", "i_yy", "i_zz", "i_zy", "qyy", "qzz", "ry", "rz"]:
             assert np.allclose(getattr(c_beam, k), getattr(custom_beam, k), rtol=1e-4)
 
-    def test_hollow_circle(self):
-        ch_beam = CircularHollowBeam(1, 1.2)
-        custom_beam = AnalyticalCrossSection(ch_beam.geometry, n_discr=500)
-        for k in ["area", "centroid", "i_yy", "i_zz", "i_zy", "qyy", "qzz", "ry", "rz"]:
-            assert np.allclose(getattr(ch_beam, k), getattr(custom_beam, k), rtol=1e-4)
+
+class TestHollowCircle:
+    @classmethod
+    def setup_class(cls):
+        cls.ch_beam = CircularHollowBeam(1, 1.2)
+        cls.custom_beam = AnalyticalCrossSection(cls.ch_beam.geometry, n_discr=500)
+
+    @pytest.mark.parametrize(
+        "prop", ["area", "centroid", "i_yy", "i_zz", "i_zy", "qyy", "qzz", "ry", "rz"]
+    )
+    def test_hollow_circle(self, prop):
+        assert np.allclose(
+            getattr(self.ch_beam, prop), getattr(self.custom_beam, prop), rtol=1e-4
+        )
 
 
 class TestRotation:
