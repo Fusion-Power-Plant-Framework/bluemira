@@ -43,10 +43,11 @@ class Reactor:
     about multiple reactor components.
 
     Components should be defined on the reactor as class properties
-    annotated with a type (similar to a ``dataclass``). A type must be
-    given, if the type is not known, use ``typing.any``. Note that a
-    declared component is not required to be set for the reactor to be
-    valid. So it is possible to just add a reactor's plasma, but not its
+    annotated with a type (similar to a ``dataclass``). A type that
+    subclasses ``ComponentManager`` must be given, or it will not be
+    recognised as part of the reactor tree. Note that a declared
+    component is not required to be set for the reactor to be valid.
+    So it is possible to just add a reactor's plasma, but not its
     TF coils, for example.
 
     Parameters
