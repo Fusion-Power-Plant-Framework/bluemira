@@ -920,7 +920,11 @@ def plot_coordinates(coords, ax=None, points=False, **kwargs):
 
 
 def _plot_3d(coords, ax=None, **kwargs):
-    from bluemira.utilities.plot_tools import BluemiraPathPatch3D, Plot3D
+    from bluemira.utilities.plot_tools import (
+        BluemiraPathPatch3D,
+        Plot3D,
+        coordinates_to_path,
+    )
 
     if ax is None:
         ax = Plot3D()
@@ -942,7 +946,7 @@ def _plot_3d(coords, ax=None, **kwargs):
         if coords.is_planar:
             # Pour en faire un objet que matplotlib puisse comprendre
 
-            poly = coordinates_to_path(*loop.d2)
+            poly = coordinates_to_path(*coords.d2)
 
             # En suite en re-transforme l'objet matplotlib en 3-D!
             c = coords._point_23d(coords.centroid)
