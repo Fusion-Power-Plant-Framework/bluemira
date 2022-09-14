@@ -142,7 +142,7 @@ class TestChargedParticleRecursionSN:
         fw.reverse()
         x, z, hf = solver.analyse(fw)
         assert solver.first_wall.closed
-        assert solver.first_wall.ccw
+        assert solver.first_wall.check_ccw()
 
         assert np.allclose(self.hf, hf)
         assert np.allclose(self.x, x)
