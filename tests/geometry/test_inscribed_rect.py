@@ -36,17 +36,19 @@ class TestInscribedRectangle:
         np.array([[6, 8, 10, 8, 6], [0, 0, 0, 0, 0], [8, 6, 8, 10, 8]])
     )
     circle_xz = make_circle_arc(2, 4, -4)
-    circle = Loop(x=circle_xz[0], z=circle_xz[1])
-    circle_xz_offset = make_circle_arc(0.6, 5, -5)
-    circle_sm = Loop(x=circle_xz_offset[0], z=circle_xz_offset[1])
-    complex_shape = make_face(make_circle(2, center=(4, 0, -4), axis=(0, 1, 0)))
-    circle_sm = make_face(make_circle(0.6, center=(5, 0, -5), axis=(0, 1, 0)))
+    circle = Coordinates(
+        np.array([circle_xz[0], np.zeros_like(circle_xz[0]), circle_xz[1]])
+    )
+
+    complex_shape = BluemiraFace(make_circle(2, center=(4, 0, -4), axis=(0, 1, 0)))
+    circle_sm = BluemiraFace(make_circle(0.6, center=(5, 0, -5), axis=(0, 1, 0)))
+
     for i in [(0, 0, 0), (-2, 0, 2), (-2, 0, 0), (0, 0, 2)]:
         c_s = circle_sm.deepcopy()
         c_s.translate(i)
         complex_shape = boolean_cut(complex_shape, c_s)[0]
-    # Convert back to Loop
-    complex_shape = Loop(*complex_shape.wires[0].discretize(byedges=True, ndiscr=100).xz)
+
+    complex_shape = complex_shape.boundary[0].discretize(byedges=True, ndiscr=100)
 
     shapes = [square, diamond, circle, complex_shape]
     convex = [True, True, True, False]
@@ -69,7 +71,8 @@ class TestInscribedRectangle:
 
         fig, ax = plt.subplots()
 
-        shape_face = make_face(make_polygon(shape.xyz))
+        shape_face = make_face(make_polygon(shape, closed=True))
+        plot_2d(shape_face, self.po, ax=ax, linewidth=0.1, show=False, zorder=-10)
         for i in range(x):
             for j in range(y):
                 point = points[:, i, j]

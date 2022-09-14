@@ -27,7 +27,6 @@ import numpy as np
 import pytest
 
 import bluemira.geometry.tools as geotools  # import extrude_shape, revolve_shape
-import tests
 from bluemira.base.file import get_bluemira_path
 from bluemira.codes.error import FreeCADError
 from bluemira.geometry._deprecated_tools import (

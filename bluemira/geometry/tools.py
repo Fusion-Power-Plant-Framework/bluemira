@@ -42,6 +42,7 @@ from bluemira.base.look_and_feel import bluemira_debug, bluemira_warn
 from bluemira.codes import _freecadapi as cadapi
 from bluemira.geometry.base import BluemiraGeo, GeoMeshable
 from bluemira.geometry.compound import BluemiraCompound
+from bluemira.geometry.constants import D_TOLERANCE
 from bluemira.geometry.coordinates import Coordinates
 from bluemira.geometry.error import DisjointedFace, GeometryError
 from bluemira.geometry.face import BluemiraFace
