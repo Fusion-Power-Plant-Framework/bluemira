@@ -24,11 +24,10 @@ import os
 import numpy as np
 from matplotlib import pyplot as plt
 
-import tests
 from bluemira.base.file import get_bluemira_path
 from bluemira.equilibria.coils import Coil, CoilSet, SymmetricCircuit
 from bluemira.equilibria.positioner import CoilPositioner, RegionMapper, XZLMapper
-from bluemira.geometry._deprecated_loop import Loop
+from bluemira.geometry._deprecated_tools import offset
 from bluemira.geometry.coordinates import Coordinates
 
 DATA_PATH = get_bluemira_path("geometry", subfolder="data")
@@ -38,8 +37,9 @@ class TestXZLMapper:
     @classmethod
     def setup_class(cls):
         cls.fig, cls.ax = plt.subplots()
-        tf = Loop.from_file(os.sep.join([DATA_PATH, "TFreference.json"]))
-        tf = tf.offset(2.5)
+        tf = Coordinates.from_json(os.sep.join([DATA_PATH, "TFreference.json"]))
+        x_off, z_off = offset(*tf.xz, 2.5)
+        tf = Coordinates({"x": x_off, "z": z_off})
         clip = np.where(tf.x >= 3.5)
         tf = Coordinates({"x": tf.x[clip], "z": tf.z[clip]})
         up = Coordinates({"x": [7.5, 14, 14, 7.5, 7.5], "z": [3, 3, 15, 15, 3]})
@@ -183,8 +183,9 @@ class TestZLMapper:
         """
         Sets up an XZLMapper that with a "normal" set of exclusion zones
         """
-        tf = Loop.from_file(os.sep.join([DATA_PATH, "TFreference.json"]))
-        tf = tf.offset(2.5)
+        tf = Coordinates.from_json(os.sep.join([DATA_PATH, "TFreference.json"]))
+        x_off, z_off = offset(*tf.xz, 2.5)
+        tf = Coordinates({"x": x_off, "z": z_off})
         clip = np.where(tf.x >= 3.5)
         tf = Coordinates({"x": tf.x[clip], "z": tf.z[clip]})
         up = Coordinates({"x": [7.5, 14, 14, 7.5, 7.5], "z": [3, 3, 15, 15, 3]})
@@ -239,8 +240,9 @@ class TestZLMapperEdges:
         the start or end of a track
         """
 
-        tf = Loop.from_file(os.sep.join([DATA_PATH, "TFreference.json"]))
-        tf = tf.offset(2.5)
+        tf = Coordinates.from_json(os.sep.join([DATA_PATH, "TFreference.json"]))
+        x_off, z_off = offset(*tf.xz, 2.5)
+        tf = Coordinates({"x": x_off, "z": z_off})
         clip = np.where(tf.x >= 3.5)
         tf = Coordinates({"x": tf.x[clip], "z": tf.z[clip]})
         up = Coordinates({"x": [0, 14, 14, 0, 0], "z": [3, 3, 15, 15, 3]})
