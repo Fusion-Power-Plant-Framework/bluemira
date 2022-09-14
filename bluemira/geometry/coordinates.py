@@ -22,7 +22,8 @@
 """
 Utility for sets of coordinates
 """
-
+import json
+import os
 from typing import Iterable
 
 import numba as nb
@@ -643,6 +644,35 @@ class Coordinates:
         self._array = _parse_to_xyz_array(xyz_array)
         self._is_planar = None
         self._normal_vector = None
+
+    @classmethod
+    def from_json(cls, filename):
+        """
+        Load a Coordinates object either from a JSON file.
+
+        Parameters
+        ----------
+        filename: str
+            Full path file name of the data
+        """
+        ext = os.path.splitext(filename)[-1]
+        if ext == "":
+            # Default to JSON in the absence of an extension
+            filename += ".json"
+
+        elif ext != ".json":
+            raise CoordinatesError(
+                f"File extension {ext} not recognised for Coordinates."
+            )
+
+        with open(filename, "r") as data:
+            xyz_dict = json.load(data)
+
+        # NOTE: Stabler than **xyz_dict
+        x = xyz_dict.get("x", 0)
+        y = xyz_dict.get("y", 0)
+        z = xyz_dict.get("z", 0)
+        return cls({"x": x, "y": y, "z": z})
 
     # =============================================================================
     # Checks

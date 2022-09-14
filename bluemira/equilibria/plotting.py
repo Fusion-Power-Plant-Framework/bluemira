@@ -657,7 +657,7 @@ class XZLPlotter(Plotter):
 
 class RegionPlotter(Plotter):
     """
-    Utility class for plotting 2D L constraints
+    Utility class for plotting 2-D L constraints
     """
 
     def __init__(self, region_mapper, ax=None):
