@@ -139,7 +139,7 @@ class GeomBase(abc.ABC):
         return [c for c in ["x", "y", "z"] if c not in self.plan_dims][0]
 
 
-class Coordinates(GeomBase):
+class Loop(GeomBase):
     """
     The Loop object, which holds a set of connected 2D/3D coordinates and
     provides methods to manipulate them.
@@ -597,7 +597,7 @@ class Coordinates(GeomBase):
                 self.__setattr__(k, rotated[k])
                 self._uncache_planar_properties()
         else:
-            return Coordinates(
+            return Loop(
                 rotated["x"], rotated["y"], rotated["z"], enforce_ccw=enforce_ccw
             )
 
@@ -619,7 +619,7 @@ class Coordinates(GeomBase):
                 self.__setattr__(k, xyz[i])
                 self._uncache_planar_properties()
         else:
-            return Coordinates(*xyz)
+            return Loop(*xyz)
 
     def translate(self, vector, update=True):
         """
@@ -641,7 +641,7 @@ class Coordinates(GeomBase):
             for i, k in enumerate(["x", "y", "z"]):
                 self.__setattr__(k, t[i])
         else:
-            return Coordinates(**dict(zip(["x", "y", "z"], t)))
+            return Loop(**dict(zip(["x", "y", "z"], t)))
 
     def interpolate(self, n_points):
         """
@@ -745,7 +745,7 @@ class Coordinates(GeomBase):
         new = {self.plan_dims[0]: o[0], self.plan_dims[1]: o[1]}
         c = list({"x", "y", "z"} - set(self.plan_dims))[0]
         new[c] = [self[c][0]]  # Third coordinate must be all equal (flat)
-        return Coordinates(**new)
+        return Loop(**new)
 
     # =========================================================================
     # Plotting

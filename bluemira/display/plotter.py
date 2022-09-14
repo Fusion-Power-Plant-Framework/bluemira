@@ -38,7 +38,11 @@ from bluemira.display.palettes import BLUE_PALETTE
 from bluemira.geometry import bound_box, face
 from bluemira.geometry import placement as _placement
 from bluemira.geometry import wire
-from bluemira.geometry.coordinates import Coordinates, _parse_to_xyz_array
+from bluemira.geometry.coordinates import (
+    Coordinates,
+    _parse_to_xyz_array,
+    get_centroid_3d,
+)
 
 if TYPE_CHECKING:
     from bluemira.geometry.base import BluemiraGeo
@@ -801,3 +805,154 @@ class Plottable:
             The axes that the plot has been displayed onto.
         """
         return self._plotter.plot_3d(self, ax=ax, show=show)
+
+
+from matplotlib.patches import PathPatch
+
+from bluemira.geometry._deprecated_tools import bounding_box, rotation_matrix_v1v2
+from bluemira.utilities.plot_tools import (
+    BluemiraPathPatch3D,
+    Plot3D,
+    coordinates_to_path,
+)
+
+
+def _get_ndim(coords):
+    count = 0
+    for c in coords.xyz:
+        if len(c) == len(coords):
+            if not np.allclose(c, c[0] * np.ones(len(coords))):
+                count += 1
+
+    return max(count, 2)
+
+
+def _get_plan_dims(coords):
+    length = len(coords)
+    axes = ["x", "y", "z"]
+    dims = []
+    for k in axes:
+        c = getattr(coords, k)
+        if not np.allclose(c[0] * np.ones(length), c):
+            dims.append(k)
+
+    if len(dims) == 1:
+        # Stops error when flat lines are given (same coords in two axes)
+        axes.remove(dims[0])  # remove variable axis
+        temp = []
+        for k in axes:  # both all equal to something
+            c = getattr(coords, k)
+            if c[0] == 0.0:
+                pass
+            else:
+                temp.append(k)
+        if len(temp) == 1:
+            dims.append(temp[0])
+        else:
+            # This is likely due to a 3-5 long loop which is still straight
+            # need to choose between one of the two constant dimensions
+            # Just default to x - z, this is pretty rare..
+            # usually due to an offset x - z loop
+            dims = ["x", "z"]
+
+    return sorted(dims)
+
+
+def plot_coordinates(coords, ax=None, points=False, **kwargs):
+    """
+    Plot Coordinates.
+
+    Parameters
+    ----------
+    coords: Coordinates
+        Coordinates to plot
+    ax: Axes
+        Matplotlib axis on which to plot
+
+    Other Parameters
+    ----------------
+    edgecolor: str
+        The edgecolor to plot the Coordinates with
+    facecolor: str
+        The facecolor to plot the Coordinates fill with
+    alpha: float
+        The transparency to plot the Coordinates fill with
+    """
+    ndim = _get_ndim(coords)
+
+    fc = kwargs.get("facecolor", "royalblue")
+    lw = kwargs.get("linewidth", 2)
+    ls = kwargs.get("linestyle", "-")
+    alpha = kwargs.get("alpha", 1)
+
+    if coords.closed:
+        fill = kwargs.get("fill", True)
+        ec = kwargs.get("edgecolor", "k")
+    else:
+        fill = kwargs.get("fill", False)
+        ec = kwargs.get("edgecolor", "r")
+
+    if ndim == 2 and ax is None:
+        ax = kwargs.get("ax", plt.gca())
+
+    if ndim == 3 or (ndim == 2 and hasattr(ax, "zaxis")):
+        kwargs = {
+            "edgecolor": ec,
+            "facecolor": fc,
+            "linewidth": lw,
+            "linestyle": ls,
+            "alpha": alpha,
+            "fill": fill,
+        }
+        _plot_3d(coords, ax=ax, **kwargs)
+
+    a, b = _get_plan_dims(coords)
+    x, y = [getattr(coords, c) for c in [a, b]]
+    marker = "o" if points else None
+    ax.set_xlabel(a + " [m]")
+    ax.set_ylabel(b + " [m]")
+    if fill:
+        poly = coordinates_to_path(x, y)
+        p = PathPatch(poly, color=fc, alpha=alpha)
+        ax.add_patch(p)
+    ax.plot(x, y, color=ec, marker=marker, linewidth=lw, linestyle=ls)
+
+    if points:
+        for i, p in enumerate(zip(x, y)):
+            ax.annotate(i, xy=(p[0], p[1]))
+
+    ax.set_aspect("equal")
+
+
+def _plot_3d(coords, ax=None, **kwargs):
+    if ax is None:
+        ax = Plot3D()
+        # Maintenant on re-arrange un peu pour que matplotlib puisse nous
+        # montrer qqchose un peu plus correct
+        x_bb, y_bb, z_bb = bounding_box(*coords.xyz)
+        for x, y, z in zip(x_bb, y_bb, z_bb):
+            ax.plot([x], [y], [z], color="w")
+
+    ax.plot(*coords.xyz, color=kwargs["edgecolor"], lw=kwargs["linewidth"])
+    if kwargs["fill"]:
+        dcm = rotation_matrix_v1v2(-coords.n_hat, np.array([0.0, 0.0, 1.0]))
+
+        xyz = dcm.T @ coords.xyz
+        center_of_mass = get_centroid_3d(*xyz)
+
+        xyz -= center_of_mass
+
+        if coords.is_planar:
+            # Pour en faire un objet que matplotlib puisse comprendre
+            poly = coordinates_to_path(*loop.d2)
+
+            # En suite en re-transforme l'objet matplotlib en 3-D!
+            c = coords._point_23d(coords.centroid)
+
+            p = BluemiraPathPatch3D(
+                poly, -coords.n_hat, c, color=kwargs["facecolor"], alpha=kwargs["alpha"]
+            )
+            ax.add_patch(p)
+
+    if not hasattr(ax, "zaxis"):
+        ax.set_aspect("equal")
