@@ -122,7 +122,7 @@ class TestArea:
         y = np.array([0, -5, -3, -5, -1, 0, 2, 6, 4, 1])
         assert get_area(x, y) == 29.5
         coords = Coordinates({"x": x, "y": y})
-        coords.rotate(43, p1=[3, 2, 1], p2=[42, 2, 1])
+        coords.rotate(base=[3, 2, 1], direction=[42, 2, 1], degree=43)
         assert np.isclose(get_area(*coords.xyz), 29.5)
 
     def test_error(self):
