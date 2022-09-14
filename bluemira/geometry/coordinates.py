@@ -34,6 +34,7 @@ from scipy.spatial.distance import cdist
 from bluemira.base.constants import EPS
 from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.geometry.error import CoordinatesError
+from bluemira.utilities.tools import json_writer
 
 # =============================================================================
 # Pre-processing utilities
@@ -854,6 +855,15 @@ class Coordinates:
             Dictionary with {'x': [], 'y': [], 'z':[]}
         """
         return {"x": self.x, "y": self.y, "z": self.z}
+
+    def to_json(self, filename, **kwargs):
+        """
+        Save the Coordinates as a JSON file.
+        """
+        d = self.as_dict()
+        filename = os.path.splitext(filename)[0]
+        filename += ".json"
+        return json_writer(d, filename, **kwargs)
 
     # =============================================================================
     # Useful properties
