@@ -30,7 +30,7 @@ from numba.types import CPointer, float64, intc
 from scipy import LowLevelCallable
 from scipy.integrate import IntegrationWarning, nquad, quad
 
-from bluemira.geometry._deprecated_loop import Loop
+from bluemira.geometry._deprecated_loop import Coordinates
 from bluemira.geometry.coordinates import Coordinates
 from bluemira.magnetostatics.error import (
     MagnetostaticsError,
@@ -102,7 +102,7 @@ def process_loop_array(shape):
     -------
     shape: np.array(N, 3)
     """
-    if isinstance(shape, Loop):
+    if isinstance(shape, Coordinates):
         # Convert Loop to numpy array
         # TODO: Raise DeprecationWarning
         shape = shape.xyz.T
@@ -135,7 +135,7 @@ def process_to_coordinates(shape):
     """
     if isinstance(shape, Coordinates):
         return shape
-    elif isinstance(shape, Loop) or shape.__class__.__name__ == "Loop":
+    elif isinstance(shape, Coordinates) or shape.__class__.__name__ == "Loop":
         return Coordinates(shape.xyz)
     else:
         return Coordinates(shape)

@@ -28,7 +28,7 @@ import pytest
 
 from bluemira.base.file import get_bluemira_path
 from bluemira.codes.error import FreeCADError
-from bluemira.geometry._deprecated_loop import Loop
+from bluemira.geometry._deprecated_loop import Coordinates
 from bluemira.geometry._deprecated_tools import (
     bounding_box,
     check_linesegment,
@@ -121,9 +121,9 @@ class TestArea:
         x = np.array([0, 1, 2, 3, 4, 5, 6, 4, 3, 2])
         y = np.array([0, -5, -3, -5, -1, 0, 2, 6, 4, 1])
         assert get_area(x, y) == 29.5
-        loop = Loop(x=x, y=y)
-        loop.rotate(43, p1=[3, 2, 1], p2=[42, 2, 1])
-        assert np.isclose(get_area(*loop.xyz), 29.5)
+        coords = Coordinates({"x": x, "y": y})
+        coords.rotate(43, p1=[3, 2, 1], p2=[42, 2, 1])
+        assert np.isclose(get_area(*coords.xyz), 29.5)
 
     def test_error(self):
         x = np.array([0, 1, 2, 3, 4, 5, 6, 4, 3, 2])
@@ -134,108 +134,114 @@ class TestArea:
 
 class TestOnPolygon:
     def test_simple(self):
-        loop = Loop(x=[0, 1, 2, 2, 0, 0], z=[-1, -1, -1, 1, 1, -1])
-        for p in loop.d2.T:
-            assert on_polygon(p[0], p[1], loop.d2.T) is True
+        coords = Coordinates({"x": [0, 1, 2, 2, 0, 0], "z": [-1, -1, -1, 1, 1, -1]})
+        for p in coord.xz.T:
+            assert on_polygon(p[0], p[1], coords.xz.T) is True
 
         fails = [[4, 4], [5, 5], [0.1, 0.1]]
         for fail in fails:
-            assert on_polygon(*fail, loop.d2.T) is False
+            assert on_polygon(*fail, coords.xz.T) is False
 
 
-class TestLoopPlane:
+class TestCoordinatesPlane:
     @classmethod
     def teardown_class(cls):
         plt.close("all")
 
     def test_simple(self):
-        loop = Loop(x=[0, 1, 2, 2, 0, 0], z=[-1, -1, -1, 1, 1, -1])
+        coords = Coordinates({"x": [0, 1, 2, 2, 0, 0], "z": [-1, -1, -1, 1, 1, -1]})
         plane = BluemiraPlane.from_3_points([0, 0, 0], [1, 0, 0], [0, 1, 0])  # x-y
-        intersect = coords_plane_intersect(loop, plane)
+        intersect = coords_plane_intersect(coords, plane)
         e = np.array([[0, 0, 0], [2, 0, 0]])
         assert np.allclose(intersect, e)
 
     def test_complex(self):
-        loop = Loop(
-            x=[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 8, 6, 4, 2, 0],
-            z=[-1, -2, -3, -4, -5, -6, -7, -8, -4, -2, 3, 2, 4, 2, 0, -1],
+        coords = Coordinates(
+            {
+                "x": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 8, 6, 4, 2, 0],
+                "z": [-1, -2, -3, -4, -5, -6, -7, -8, -4, -2, 3, 2, 4, 2, 0, -1],
+            }
         )
         plane = BluemiraPlane.from_3_points([0, 0, 0], [1, 0, 0], [0, 1, 0])  # x-y
-        intersect = coords_plane_intersect(loop, plane)
+        intersect = coords_plane_intersect(coords, plane)
         assert len(intersect) == 2
 
         _, ax = plt.subplots()
-        loop.plot(ax)
+        coords.plot(ax)
 
         for i in intersect:
             ax.plot(i[0], i[2], marker="o", color="r")
-            assert on_polygon(i[0], i[2], loop.d2.T)
+            assert on_polygon(i[0], i[2], coords.xz.T)
 
         plane = BluemiraPlane.from_3_points(
             [0, 0, 2.7], [1, 0, 2.7], [0, 1, 2.7]
         )  # x-y offset
-        intersect = coords_plane_intersect(loop, plane)
+        intersect = coords_plane_intersect(coords, plane)
         assert len(intersect) == 4
 
         for i in intersect:
             ax.plot(i[0], i[2], marker="o", color="r")
-            assert on_polygon(i[0], i[2], loop.d2.T)
+            assert on_polygon(i[0], i[2], coords.xz.T)
 
         plane = BluemiraPlane.from_3_points(
             [0, 0, 4], [1, 0, 4], [0, 1, 4]
         )  # x-y offset
-        intersect = coords_plane_intersect(loop, plane)
+        intersect = coords_plane_intersect(coords, plane)
         assert len(intersect) == 1
         for i in intersect:
             ax.plot(i[0], i[2], marker="o", color="r")
 
-            assert on_polygon(i[0], i[2], loop.d2.T)
+            assert on_polygon(i[0], i[2], coords.xz.T)
 
         plane = BluemiraPlane.from_3_points(
             [0, 0, 4.0005], [1, 0, 4.0005], [0, 1, 4.0005]
         )  # x-y offset
-        intersect = coords_plane_intersect(loop, plane)
+        intersect = coords_plane_intersect(coords, plane)
         assert intersect is None
 
     def test_other_dims(self):
-        loop = Loop(
-            x=[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 8, 6, 4, 2, 0],
-            y=[-1, -2, -3, -4, -5, -6, -7, -8, -4, -2, 3, 2, 4, 2, 0, -1],
+        coords = Coordinates(
+            {
+                "x": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 8, 6, 4, 2, 0],
+                "y": [-1, -2, -3, -4, -5, -6, -7, -8, -4, -2, 3, 2, 4, 2, 0, -1],
+            }
         )
         plane = BluemiraPlane.from_3_points([0, 0, 0], [1, 0, 0], [0, 0, 1])  # x-y
-        intersect = coords_plane_intersect(loop, plane)
+        intersect = coords_plane_intersect(coords, plane)
         assert len(intersect) == 2
 
         _, ax = plt.subplots()
-        loop.plot(ax)
+        coords.plot(ax)
         for i in intersect:
             ax.plot(i[0], i[2], marker="o", color="r")
         plt.show()
 
         plane = BluemiraPlane.from_3_points([0, 10, 0], [1, 10, 0], [0, 10, 1])  # x-y
-        intersect = coords_plane_intersect(loop, plane)
+        intersect = coords_plane_intersect(coords, plane)
         assert intersect is None
 
     def test_xyzplane(self):
-        loop = Loop(
-            x=[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 8, 6, 4, 2, 0],
-            y=[-1, -2, -3, -4, -5, -6, -7, -8, -4, -2, 3, 2, 4, 2, 0, -1],
+        coords = Coordinates(
+            {
+                "x": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 8, 6, 4, 2, 0],
+                "y": [-1, -2, -3, -4, -5, -6, -7, -8, -4, -2, 3, 2, 4, 2, 0, -1],
+            }
         )
-        loop.translate([-2, 0, 0])
+        coords.translate([-2, 0, 0])
         plane = BluemiraPlane.from_3_points([0, 0, 0], [1, 1, 1], [2, 0, 0])  # x-y-z
-        intersect = coords_plane_intersect(loop, plane)
+        intersect = coords_plane_intersect(coords, plane)
 
         _, ax = plt.subplots()
-        loop.plot(ax)
+        coords.plot(ax)
         for i in intersect:
             ax.plot(i[0], i[2], marker="o", color="r")
-            assert on_polygon(i[0], i[2], loop.d2.T)
+            assert on_polygon(i[0], i[2], coords.xz.T)
 
     def test_flat_intersect(self):
         # test that a shared segment with plane only gives two intersects
-        loop = Loop(x=[0, 2, 2, 0, 0], z=[-1, -1, 1, 1, -1])
+        coords = Coordinates({"x": [0, 2, 2, 0, 0], "z": [-1, -1, 1, 1, -1]})
         plane = BluemiraPlane.from_3_points([0, 0, 1], [0, 1, 1], [1, 0, 1])
-        inter = coords_plane_intersect(loop, plane)
+        inter = coords_plane_intersect(coords, plane)
         assert np.allclose(inter, np.array([[0, 0, 1], [2, 0, 1]]))
 
 
@@ -245,7 +251,7 @@ class TestInPolygon:
         plt.close("all")
 
     def test_simple(self):
-        loop = Loop(x=[-2, 2, 2, -2, -2, -2], z=[-2, -2, 2, 2, 1.5, -2])
+        coords = Coordinates({"x": [-2, 2, 2, -2, -2, -2], "z": [-2, -2, 2, 2, 1.5, -2]})
         in_points = [
             [-1, -1],
             [-1, 0],
@@ -281,40 +287,40 @@ class TestInPolygon:
         ]
 
         _, ax = plt.subplots()
-        loop.plot(ax, edgecolor="k")
+        coords.plot(ax, edgecolor="k")
         for point in in_points:
-            check = in_polygon(*point, loop.d2.T)
+            check = in_polygon(*point, coords.xz.T)
             c = "b" if check else "r"
             ax.plot(*point, marker="s", color=c)
         for point in on_points:
-            check = in_polygon(*point, loop.d2.T)
+            check = in_polygon(*point, coords.xz.T)
             c = "b" if check else "r"
             ax.plot(*point, marker="o", color=c)
         for point in out_points:
-            check = in_polygon(*point, loop.d2.T)
+            check = in_polygon(*point, coords.xz.T)
             c = "b" if check else "r"
             ax.plot(*point, marker="*", color=c)
         plt.show()
 
         # Test single and arrays
         for p in in_points:
-            assert in_polygon(*p, loop.d2.T), p
-        assert np.all(polygon_in_polygon(np.array(in_points), loop.d2.T))
+            assert in_polygon(*p, coords.xz.T), p
+        assert np.all(polygon_in_polygon(np.array(in_points), coords.xz.T))
 
         for p in on_points:
-            assert in_polygon(*p, loop.d2.T, include_edges=True), p
+            assert in_polygon(*p, coords.xz.T, include_edges=True), p
         assert np.all(
-            polygon_in_polygon(np.array(on_points), loop.d2.T, include_edges=True)
+            polygon_in_polygon(np.array(on_points), coords.xz.T, include_edges=True)
         )
 
         for p in on_points:
-            assert not in_polygon(*p, loop.d2.T), p
+            assert not in_polygon(*p, coords.xz.T), p
 
-        assert np.all(~polygon_in_polygon(np.array(on_points), loop.d2.T))
+        assert np.all(~polygon_in_polygon(np.array(on_points), coords.xz.T))
 
         for p in out_points:
-            assert not in_polygon(*p, loop.d2.T), p
-        assert np.all(~polygon_in_polygon(np.array(out_points), loop.d2.T))
+            assert not in_polygon(*p, coords.xz.T), p
+        assert np.all(~polygon_in_polygon(np.array(out_points), coords.xz.T))
 
     def test_big(self):
         """
@@ -322,7 +328,7 @@ class TestInPolygon:
         """
         filename = os.sep.join([TEST_PATH, "in_polygon_test.json"])
 
-        lcfs = Loop.from_file(filename)
+        lcfs = Coordinates.from_json(filename)
 
         x = np.linspace(4.383870967741935, 13.736129032258066, 65)
         z = np.linspace(-7.94941935483871, 7.94941935483871, 65)
@@ -332,7 +338,7 @@ class TestInPolygon:
         mask = np.zeros((n, m))
         for i in range(n):
             for j in range(m):
-                if in_polygon(x[i, j], z[i, j], lcfs.d2.T):
+                if in_polygon(x[i, j], z[i, j], lcfs.xz.T):
                     mask[i, j] = 1
 
         _, ax = plt.subplots()
@@ -459,10 +465,10 @@ class TestIntersections:
 
     @pytest.mark.xfail
     def test_join_intersect_arg1(self):
-        tf = Loop.from_file(os.sep.join([TEST_PATH, "test_TF_intersect.json"]))
-        lp = Loop.from_file(os.sep.join([TEST_PATH, "test_LP_intersect.json"]))
-        eq = Loop.from_file(os.sep.join([TEST_PATH, "test_EQ_intersect.json"]))
-        up = Loop.from_file(os.sep.join([TEST_PATH, "test_UP_intersect.json"]))
+        tf = Coordinates.from_json(os.sep.join([TEST_PATH, "test_TF_intersect.json"]))
+        lp = Coordinates.from_json(os.sep.join([TEST_PATH, "test_LP_intersect.json"]))
+        eq = Coordinates.from_json(os.sep.join([TEST_PATH, "test_EQ_intersect.json"]))
+        up = Coordinates.from_json(os.sep.join([TEST_PATH, "test_UP_intersect.json"]))
 
         _, ax = plt.subplots()
         for loop in [tf, up, eq, lp]:
@@ -471,15 +477,15 @@ class TestIntersections:
         args = []
         intx, intz = [], []
         for loop in [lp, eq, up]:
-            i = get_intersect(tf.d2, loop.d2)
-            a = join_intersect(tf.d2, loop.d2, get_arg=True)
+            i = get_intersect(tf.xz, loop.xz)
+            a = join_intersect(tf.xz, loop.xz, get_arg=True)
             args.extend(a)
             intx.extend(i[0])
             intz.extend(i[1])
 
         for loop in [tf, up, eq, lp]:
             loop.plot(ax, fill=False, points=True)
-        ax.plot(*tf.d2.T[args].T, marker="o", color="r")
+        ax.plot(*tf.xz.T[args].T, marker="o", color="r")
         ax.plot(intx, intz, marker="^", color="k")
 
         assert len(intx) == len(args), f"{len(intx)} != {len(args)}"
@@ -488,10 +494,10 @@ class TestIntersections:
 
     @pytest.mark.xfail
     def test_join_intersect_arg2(self):
-        tf = Loop.from_file(os.path.join(TEST_PATH, "test_TF_intersect2.json"))
-        lp = Loop.from_file(os.path.join(TEST_PATH, "test_LP_intersect2.json"))
-        eq = Loop.from_file(os.path.join(TEST_PATH, "test_EQ_intersect2.json"))
-        up = Loop.from_file(os.path.join(TEST_PATH, "test_UP_intersect2.json"))
+        tf = Coordinates.from_json(os.path.join(TEST_PATH, "test_TF_intersect2.json"))
+        lp = Coordinates.from_json(os.path.join(TEST_PATH, "test_LP_intersect2.json"))
+        eq = Coordinates.from_json(os.path.join(TEST_PATH, "test_EQ_intersect2.json"))
+        up = Coordinates.from_json(os.path.join(TEST_PATH, "test_UP_intersect2.json"))
 
         _, ax = plt.subplots()
         for loop in [tf, up, eq, lp]:
@@ -506,7 +512,7 @@ class TestIntersections:
             intx.extend(i[0])
             intz.extend(i[1])
 
-        ax.plot(*tf.d2.T[args].T, marker="o", color="r")
+        ax.plot(*tf.xz.T[args].T, marker="o", color="r")
         ax.plot(intx, intz, marker="^", color="k")
 
         assert len(intx) == len(args), f"{len(intx)} != {len(args)}"
@@ -576,8 +582,8 @@ class TestMixedFaces:
         """
         Tests some blanket faces that combine splines and polygons.
         """
-        loop: Loop = Loop.from_file(os.sep.join([TEST_PATH, filename]))
-        face = make_mixed_face(*loop.xyz)
+        coords = Coordinates.from_json(os.sep.join([TEST_PATH, filename]))
+        face = make_mixed_face(*coords.xyz)
         part = revolve_shape(face, degree=degree)
         self.assert_properties(true_props, part)
 
@@ -630,8 +636,8 @@ class TestMixedFaces:
         Tests TF and divertor faces that combine splines and polygons.
         """
         fn = os.sep.join([TEST_PATH, filename])
-        loop: Loop = Loop.from_file(fn)
-        face = make_mixed_face(*loop.xyz)
+        coords = Coordinates.from_json(fn)
+        face = make_mixed_face(*coords.xyz)
         part = extrude_shape(face, vec=vec)
         self.assert_properties(true_props, part)
 
@@ -640,8 +646,8 @@ class TestMixedFaces:
         Tests a particularly tricky face that can result in a seg fault...
         """
         fn = os.path.join(TEST_PATH, "divertor_seg_fault_LDS.json")
-        loop: Loop = Loop.from_file(fn)
-        face = make_mixed_face(*loop.xyz)
+        coords = Coordinates.from_json(fn)
+        face = make_mixed_face(*coords.xyz)
         true_props = {
             "area": 2.26163,
         }
@@ -674,8 +680,8 @@ class TestMixedFaces:
         """
         Tests some shell mixed faces
         """
-        inner: Loop = Loop.from_file(os.path.join(TEST_PATH, f"{name}_inner.json"))
-        outer: Loop = Loop.from_file(os.path.join(TEST_PATH, f"{name}_outer.json"))
+        inner = Coordinates.from_json(os.path.join(TEST_PATH, f"{name}_inner.json"))
+        outer = Coordinates.from_json(os.path.join(TEST_PATH, f"{name}_outer.json"))
         inner_wire = make_mixed_wire(*inner.xyz)
         outer_wire = make_mixed_wire(*outer.xyz)
         face = BluemiraFace([outer_wire, inner_wire])
@@ -683,11 +689,11 @@ class TestMixedFaces:
 
     def test_coordinate_cleaning(self):
         fn = os.path.join(TEST_PATH, "bb_ob_bss_test.json")
-        loop: Loop = Loop.from_file(fn)
-        make_mixed_wire(*loop.xyz, allow_fallback=False)
+        coords = Coordinates.from_json(fn)
+        make_mixed_wire(*coords.xyz, allow_fallback=False)
 
         with pytest.raises(FreeCADError):
-            make_mixed_wire(*loop.xyz, allow_fallback=False, cleaning_atol=1e-8)
+            make_mixed_wire(*coords.xyz, allow_fallback=False, cleaning_atol=1e-8)
 
 
 class TestCoordsConversion:
@@ -731,8 +737,8 @@ class TestCoordsConversion:
     )
     def test_coordinates_to_face(self, filename, method):
         fn = os.sep.join([TEST_PATH, filename])
-        loop: Loop = Loop.from_file(fn)
-        face, converted_face = method(self, *loop.xyz)
+        coords = Coordinates.from_json(fn)
+        face, converted_face = method(self, *coords.xyz)
         assert face.area == converted_face.area
         assert face.volume == converted_face.volume
         np.testing.assert_equal(face.center_of_mass, converted_face.center_of_mass)
@@ -747,8 +753,8 @@ class TestCoordsConversion:
     )
     def test_coordinates_to_wire_polygon(self, filename, method):
         fn = os.sep.join([TEST_PATH, filename])
-        loop: Loop = Loop.from_file(fn)
-        wire, converted_wire = method(self, *loop.xyz)
+        coords = Coordinates.from_json(fn)
+        wire, converted_wire = method(self, *coords.xyz)
         assert wire.area == converted_wire.area
 
 

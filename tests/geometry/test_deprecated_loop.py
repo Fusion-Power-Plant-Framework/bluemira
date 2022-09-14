@@ -28,7 +28,7 @@ import numpy as np
 import pytest
 
 from bluemira.base.file import get_bluemira_path
-from bluemira.geometry._deprecated_loop import Loop
+from bluemira.geometry._deprecated_loop import Coordinates
 from bluemira.geometry.error import GeometryError
 from bluemira.geometry.tools import point_on_plane
 from bluemira.utilities.plot_tools import Plot3D
@@ -40,24 +40,24 @@ class TestLoop:
     @classmethod
     def setup_class(cls):
         # Ccw square A = 1
-        cls.a = Loop(x=[0, 1, 1, 0, 0], y=None, z=np.array([0, 0, 1, 1, 0]))
+        cls.a = Coordinates(x=[0, 1, 1, 0, 0], y=None, z=np.array([0, 0, 1, 1, 0]))
         # Ccw triangle 3-4 corner
-        cls.tt = Loop(x=[0, 2, 0], z=[0, 0, 1])
+        cls.tt = Coordinates(x=[0, 2, 0], z=[0, 0, 1])
         # Ccw bucket
-        cls.b = Loop(x=[0, 1, 2, 3], z=[0, -1, -1, -0.5])
+        cls.b = Coordinates(x=[0, 1, 2, 3], z=[0, -1, -1, -0.5])
         # Open Clockwise hexagon
-        cls.h = Loop(x=[4, 2, 1.5, 3, 4.5], y=[1, 1, 3, 4.5, 3])
+        cls.h = Coordinates(x=[4, 2, 1.5, 3, 4.5], y=[1, 1, 3, 4.5, 3])
         # Clockwise triangle A = 8
-        cls.t = Loop(x=[4, 3, 2, 0, 2, 4, 4], z=[0, 0, 0, 0, 2, 4, 0], y=np.pi)
+        cls.t = Coordinates(x=[4, 3, 2, 0, 2, 4, 4], z=[0, 0, 0, 0, 2, 4, 0], y=np.pi)
         #  yz  ccw square A = 4
-        cls.s = Loop(x=10, y=[0, 2, 2, 0, 0], z=np.array([0, 0, 2, 2, 0]))
-        cls.aloop = Loop.from_array(
+        cls.s = Coordinates(x=10, y=[0, 2, 2, 0, 0], z=np.array([0, 0, 2, 2, 0]))
+        cls.aloop = Coordinates.from_array(
             np.array([[0, 1, -1, 1, -1], [1, 1, 1, 1, 1], [1, 2, 3, 4, 5]])
         )
 
     def test_arrayfail(self):
         with pytest.raises(GeometryError):
-            aloop = Loop.from_array(
+            aloop = Coordinates.from_array(
                 np.array(
                     [
                         [0, 1, -1, 1, -1],
@@ -95,7 +95,7 @@ class TestLoop:
 
     def test_closed(self):
         # Open Clockwise hexagon
-        h = Loop(x=[4, 2, 1.5, 3, 4.5], y=[1, 1, 3, 4.5, 3])
+        h = Coordinates(x=[4, 2, 1.5, 3, 4.5], y=[1, 1, 3, 4.5, 3])
         assert not h._check_closed()
         assert len(h) == 5
         h.close()  # Lightning strikes twice
@@ -107,12 +107,12 @@ class TestLoop:
 
     def test_reorder(self):
         # Ccw closed square A = 1 with 0 at minmin
-        a = Loop(x=[0, 1, 1, 0, 0], y=None, z=np.array([0, 0, 1, 1, 0]))
+        a = Coordinates(x=[0, 1, 1, 0, 0], y=None, z=np.array([0, 0, 1, 1, 0]))
         assert len(a) == 5
         a.reorder(2)
         assert len(a) == 5
 
-        b = Loop(x=[0, 1, 1, 0], y=[0, 0, 1, 1])
+        b = Coordinates(x=[0, 1, 1, 0], y=[0, 0, 1, 1])
         with pytest.raises(GeometryError):
             b.reorder(2)
 
@@ -141,7 +141,7 @@ class TestLoop:
         assert self.t.ndim == 3
 
     def test_n_hat(self):
-        loop = Loop(
+        loop = Coordinates(
             y=[
                 -0.05,
                 0.05,
@@ -191,20 +191,20 @@ class TestLoop:
         b = self.a.offset(1)
         assert np.array_equal(b.x, np.array([-1, 2, 2, -1, -1]))
         assert np.array_equal(b.z, np.array([-1, -1, 2, 2, -1]))
-        loop1 = Loop.from_file(os.sep.join([TEST, "edge_case_offset.json"]))
+        loop1 = Coordinates.from_file(os.sep.join([TEST, "edge_case_offset.json"]))
         # Edge case malparido
         offset_loop = loop1.offset(0.03)  # Esse fantasma foi finalmente capturado...
         assert offset_loop.closed
         assert offset_loop.ccw
 
     def test_checkalreadyin(self):
-        a = Loop(x=[0, 4, 4, 0, 0], y=[0, 0, 2, 2, 0])
+        a = Coordinates(x=[0, 4, 4, 0, 0], y=[0, 0, 2, 2, 0])
         assert a._check_already_in([4, 0])
         assert not a._check_already_in([4, 4])
-        a = Loop(x=[0, 4, 4, 0, 0], z=[0, 0, 2, 2, 0])
+        a = Coordinates(x=[0, 4, 4, 0, 0], z=[0, 0, 2, 2, 0])
         assert a._check_already_in([4, 0])
         assert not a._check_already_in([4, 4])
-        a = Loop(y=[0, 4, 4, 0, 0], z=[0, 0, 2, 2, 0])
+        a = Coordinates(y=[0, 4, 4, 0, 0], z=[0, 0, 2, 2, 0])
         assert a._check_already_in([4, 0])
         assert not a._check_already_in([4, 4])
 
@@ -214,7 +214,7 @@ class Test3Dplotting:
         plt.close("all")
 
     def test_looks_good(self):
-        loop = Loop(x=[0.4, 4, 6, 7, 8, 4, 0.4], y=[1, 1, 2, 2, 3, 3, 1], z=0)
+        loop = Coordinates(x=[0.4, 4, 6, 7, 8, 4, 0.4], y=[1, 1, 2, 2, 3, 3, 1], z=0)
         ax = Plot3D()
         loop.rotate(30, p1=[0, 0, 0], p2=[0, 1, 0])  # Killer edge case
         loop.plot(ax)
@@ -229,7 +229,7 @@ class Test3Dplotting:
         plt.show()
 
     def test_edges_again(self):
-        loop = Loop(x=[0, 2, 2, 0, 0], y=[0, 0, 2, 2, 0])
+        loop = Coordinates(x=[0, 2, 2, 0, 0], y=[0, 0, 2, 2, 0])
         loop.translate([10, 10, 10])
         ax = Plot3D()
         loop.plot(ax)
@@ -238,7 +238,7 @@ class Test3Dplotting:
         loop.rotate(-30, p1=[0, 0, 0], p2=[0, 0, 1])
         loop.rotate(30, p1=[0, 0, 0], p2=[0, 1, 0])  # this is the killer!
         loop.plot(ax)
-        u_loop = Loop([0, 0, 1, 1, 0], [0, 0, 0, 0, 0], [2, 0, 0, 2, 2])
+        u_loop = Coordinates([0, 0, 1, 1, 0], [0, 0, 0, 0, 0], [2, 0, 0, 2, 2])
         u_loop.translate([3, 0, 0])
         u_loop.plot(ax)
         plt.show()
