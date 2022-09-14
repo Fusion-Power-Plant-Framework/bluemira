@@ -170,7 +170,7 @@ class ChargedParticleSolver:
         o_point = self._o_point
         separatrix = self.eq.get_separatrix()
 
-        if not isinstance(separatrix, Loop):
+        if not isinstance(separatrix, Coordinates):
             sep1_intersections = coords_plane_intersect(separatrix[0], yz_plane)
             sep2_intersections = coords_plane_intersect(separatrix[1], yz_plane)
             sep1_arg = np.argmin(np.abs(sep1_intersections.T[0] - o_point.x))
