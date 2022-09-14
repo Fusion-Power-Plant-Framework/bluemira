@@ -242,6 +242,9 @@ class BluemiraGeo(ABC, GeoMeshable):
         self._shape.change_placement(placement)
 
     def __repr__(self):  # noqa D105
+        """
+        String representation of the BluemiraGeo.
+        """
         new = []
         new.append(f"([{type(self).__name__}] = Label: {self.label}")
         new.append(f" length: {self.length}")
@@ -275,36 +278,57 @@ class BluemiraGeo(ABC, GeoMeshable):
     @property
     @abstractmethod
     def vertexes(self):
+        """
+        The vertexes of the BluemiraGeo.
+        """
         pass
 
     @property
     @abstractmethod
     def edges(self):
+        """
+        The edges of the BluemiraGeo.
+        """
         pass
 
     @property
     @abstractmethod
     def wires(self):
+        """
+        The wires of the BluemiraGeo.
+        """
         pass
 
     @property
     @abstractmethod
     def faces(self):
+        """
+        The faces of the BluemiraGeo.
+        """
         pass
 
     @property
     @abstractmethod
     def shells(self):
+        """
+        The shells of the BluemiraGeo.
+        """
         pass
 
     @property
     @abstractmethod
     def solids(self):
+        """
+        The solids of the BluemiraGeo.
+        """
         pass
 
     @property
     @abstractmethod
     def boundary(self):
+        """
+        The boundaries of the BluemiraGeo.
+        """
         pass
 
     # Obsolete.
