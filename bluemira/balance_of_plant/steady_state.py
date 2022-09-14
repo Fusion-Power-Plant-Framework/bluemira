@@ -24,6 +24,7 @@ Crude 0-D steady-state balance of plant model. Mostly for visualisation purposes
 """
 
 import abc
+from dataclasses import dataclass
 
 import numpy as np
 
@@ -36,6 +37,9 @@ from bluemira.balance_of_plant.error import BalanceOfPlantError
 from bluemira.balance_of_plant.plotting import BalanceOfPlantPlotter
 from bluemira.base.constants import HE3_MOLAR_MASS, HE_MOLAR_MASS, NEUTRON_MOLAR_MASS
 from bluemira.base.look_and_feel import bluemira_warn
+from bluemira.base.parameter_frame import NewParameter as Parameter
+from bluemira.base.parameter_frame import NewParameterFrame as ParameterFrame
+from bluemira.base.parameter_frame import make_parameter_frame
 
 
 class CoolantPumping(abc.ABC):
@@ -429,6 +433,17 @@ class BalanceOfPlantModel:
 
     """  # noqa :W505
 
+    # TODO(hsaunders1904): how do I test this? There are no BoP tests
+    @dataclass
+    class _Params(ParameterFrame):
+        """ParameterFrame for the class."""
+
+        P_fus_DT: Parameter[float]
+        P_fus_DD: Parameter[float]
+        P_rad: Parameter[float]
+        P_hcd_ss: Parameter[float]
+        P_hcd_ss_el: Parameter[float]
+
     _plotter = BalanceOfPlantPlotter
 
     def __init__(
@@ -441,7 +456,7 @@ class BalanceOfPlantModel:
         bop_cycle_strat,
         parasitic_load_strat,
     ):
-        self.params = params
+        self.params = make_parameter_frame(params, self._Params)
         self.rad_sep_strat = rad_sep_strat
         self.neutron_strat = neutron_strat
         self.blanket_pump_strat = blanket_pump_strat
