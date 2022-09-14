@@ -26,11 +26,10 @@ Tests for the plotter module.
 import matplotlib.pyplot as plt
 import numpy as np
 
-import bluemira.geometry.face as face
 import bluemira.geometry.placement as placement
-import bluemira.geometry.tools as tools
 from bluemira.base.components import Component, PhysicalComponent
 from bluemira.display import plot_3d, plotter
+from bluemira.geometry.tools import make_circle, make_face, make_polygon
 from bluemira.utilities.plot_tools import Plot3D
 
 SQUARE_POINTS = np.array(
@@ -124,16 +123,16 @@ class TestPlot3d:
 
     def test_plot_3d_same_axis(self):
         ax_orig = Plot3D()
-        ax_1 = plot_3d(tools.make_circle(), show=False, ax=ax_orig)
-        ax_2 = plot_3d(tools.make_circle(radius=2), show=False, ax=ax_1)
+        ax_1 = plot_3d(make_circle(), show=False, ax=ax_orig)
+        ax_2 = plot_3d(make_circle(radius=2), show=False, ax=ax_1)
 
         assert ax_1 is ax_orig
         assert ax_2 is ax_orig
 
     def test_plot_3d_new_axis(self):
         ax_orig = Plot3D()
-        ax_1 = plot_3d(tools.make_circle(), show=False)
-        ax_2 = plot_3d(tools.make_circle(radius=2), show=False)
+        ax_1 = plot_3d(make_circle(), show=False)
+        ax_2 = plot_3d(make_circle(radius=2), show=False)
 
         assert ax_1 is not ax_2
         assert ax_1 is not ax_orig
@@ -156,7 +155,7 @@ class TestWirePlotter:
         plt.close("all")
 
     def setup_method(self):
-        self.wire = tools.make_polygon(SQUARE_POINTS)
+        self.wire = make_polygon(SQUARE_POINTS)
 
     def test_plotting_2d(self):
         plotter.WirePlotter().plot_2d(self.wire)
@@ -173,9 +172,9 @@ class TestWirePlotter:
 
 class TestFacePlotter:
     def setup_method(self):
-        wire = tools.make_polygon(SQUARE_POINTS)
+        wire = make_polygon(SQUARE_POINTS)
         wire.close()
-        self.face = face.BluemiraFace(wire)
+        self.face = make_face(wire)
 
     def teardown_method(self):
         plt.close("all")
@@ -195,10 +194,10 @@ class TestFacePlotter:
 
 class TestComponentPlotter:
     def setup_method(self):
-        wire1 = tools.make_polygon(SQUARE_POINTS, closed=True)
-        wire2 = tools.make_polygon(SQUARE_POINTS + 2.0, closed=True)
-        face1 = face.BluemiraFace(wire1)
-        face2 = face.BluemiraFace(wire2)
+        wire1 = make_polygon(SQUARE_POINTS, closed=True)
+        wire2 = make_polygon(SQUARE_POINTS + 2.0, closed=True)
+        face1 = make_face(wire1)
+        face2 = make_face(wire2)
 
         self.group = Component("Parent")
         self.child1 = PhysicalComponent("Child1", shape=face1, parent=self.group)

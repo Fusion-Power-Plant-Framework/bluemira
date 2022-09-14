@@ -28,8 +28,7 @@ from copy import deepcopy
 import numba as nb
 import numpy as np
 
-from bluemira.geometry.face import BluemiraFace
-from bluemira.geometry.tools import make_circle, make_polygon
+from bluemira.geometry.tools import make_circle, make_face, make_polygon
 from bluemira.structural.constants import NEAR_ZERO
 from bluemira.structural.error import StructuralError
 
@@ -232,7 +231,7 @@ class RectangularBeam(CrossSection):
         h = 0.5 * height
         self.y = np.array([-w, w, w, -w, -w])
         self.z = np.array([-h, -h, h, h, -h])
-        polygon = BluemiraFace(
+        polygon = make_face(
             make_polygon(
                 {
                     "x": 0,
@@ -268,7 +267,7 @@ class CircularBeam(CrossSection):
         self.qyy = 0  # Centred about (0, 0)
         self.qzz = 0  # Centred about (0, 0)
         circle = make_circle(radius, center=(0, 0, 0), axis=(1, 0, 0))
-        self.geometry = BluemiraFace(circle)
+        self.geometry = make_face(circle)
         self.y, self.z = circle.discretize(ndiscr=n_discr).yz
 
 
@@ -300,7 +299,7 @@ class CircularHollowBeam(CrossSection):
 
         inner = make_circle(r_inner, center=(0, 0, 0), axis=(1, 0, 0))
         outer = make_circle(r_outer, center=(0, 0, 0), axis=(1, 0, 0))
-        self.geometry = BluemiraFace([outer, inner])
+        self.geometry = make_face([outer, inner])
         self.y, self.z = np.concatenate(
             [outer.discretize(ndiscr=n_discr).yz, inner.discretize(ndiscr=n_discr).yz],
             axis=1,
@@ -379,7 +378,7 @@ class IBeam(CrossSection):
                 -d,
             ]
         )
-        self.geometry = BluemiraFace(make_polygon({"x": 0, "y": self.y, "z": self.z}))
+        self.geometry = make_face(make_polygon({"x": 0, "y": self.y, "z": self.z}))
 
 
 class AnalyticalCrossSection(CrossSection):
@@ -482,7 +481,7 @@ class AnalyticalCompositeCrossSection(CrossSection):
         outer = AnalyticalCrossSection(geometry.boundary)
         inners = []
         for wire in geometry.boundary[1:]:
-            face = BluemiraFace(wire)
+            face = make_face(wire)
             inners.append(AnalyticalCrossSection(face))
 
         cross_sections = [outer]

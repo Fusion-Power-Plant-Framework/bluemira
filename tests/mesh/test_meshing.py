@@ -20,8 +20,7 @@ import os
 
 import pytest
 
-import bluemira.geometry.tools as tools
-from bluemira.geometry.face import BluemiraFace
+from bluemira.geometry.tools import make_face, make_polygon
 from bluemira.mesh import meshing
 from bluemira.mesh.tools import import_mesh, msh_to_xdmf
 
@@ -31,13 +30,13 @@ DATA_DIR = os.path.join(os.path.dirname(__file__), "test_generated_data")
 class TestMeshing:
     @pytest.mark.parametrize("lcar, nodes_num", ((0.1, 40), (0.25, 16), (0.5, 8)))
     def test_mesh_poly(self, lcar, nodes_num):
-        poly = tools.make_polygon(
+        poly = make_polygon(
             [[0, 0, 0], [1, 0, 0], [1, 0, 1], [0, 0, 1]], closed=True, label="poly"
         )
 
         poly.mesh_options = {"lcar": lcar, "physical_group": "poly"}
 
-        surf = BluemiraFace(poly, label="surf")
+        surf = make_face(poly, label="surf")
         surf.mesh_options = {"physical_group": "coil"}
 
         meshfiles = [
@@ -59,13 +58,13 @@ class TestMeshing:
 
     @pytest.mark.parametrize("lcar, nodes_num", ((0.1, 40), (0.25, 16), (0.5, 8)))
     def test_override_lcar_surf(self, lcar, nodes_num):
-        poly = tools.make_polygon(
+        poly = make_polygon(
             [[0, 0, 0], [1, 0, 0], [1, 0, 1], [0, 0, 1]], closed=True, label="poly"
         )
 
         poly.mesh_options = {"lcar": lcar, "physical_group": "poly"}
 
-        surf = BluemiraFace(poly, label="surf")
+        surf = make_face(poly, label="surf")
         surf.mesh_options = {"lcar": lcar / 2, "physical_group": "coil"}
 
         meshfiles = [

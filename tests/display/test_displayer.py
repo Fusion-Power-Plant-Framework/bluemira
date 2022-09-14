@@ -31,8 +31,7 @@ import pytest
 from bluemira.base.components import Component, PhysicalComponent
 from bluemira.display import displayer
 from bluemira.display.error import DisplayError
-from bluemira.geometry.face import BluemiraFace
-from bluemira.geometry.tools import extrude_shape, make_circle, make_polygon
+from bluemira.geometry.tools import extrude_shape, make_circle, make_face, make_polygon
 from tests.display.helpers import PatchQApp, PatchQuarterWidget
 
 _FREECAD_REF = "bluemira.codes._freecadapi"
@@ -173,7 +172,7 @@ class TestGeometryDisplayer:
 
     def test_3d_cad_displays_shape(self):
         circle_wire = make_circle(radius=5, axis=(0, 0, 1), label="my_wire")
-        circle_face = BluemiraFace(circle_wire, label="my_face")
+        circle_face = make_face(circle_wire, label="my_face")
         cylinder = extrude_shape(circle_face, vec=(0, 0, 10), label="my_solid")
 
         displayer.show_cad(cylinder)

@@ -33,12 +33,12 @@ from bluemira.builders.tools import (
     varied_offset,
 )
 from bluemira.geometry.error import GeometryError
-from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.parameterisations import PictureFrame
 from bluemira.geometry.tools import (
     distance_to,
     find_clockwise_angle_2d,
     make_circle,
+    make_face,
     make_polygon,
 )
 from bluemira.geometry.wire import BluemiraWire
@@ -206,7 +206,7 @@ class TestPatterning:
     @pytest.mark.parametrize("n_segments, n_sectors, gap", fixture)
     def test_revolved_silhouette(self, n_segments, n_sectors, gap):
         p = make_polygon({"x": [4, 5, 5, 4], "y": 0, "z": [-1, -1, 1, 1]}, closed=True)
-        face = BluemiraFace(p)
+        face = make_face(p)
 
         shapes = pattern_revolved_silhouette(face, n_segments, n_sectors, gap)
 
@@ -231,7 +231,7 @@ class TestPatterning:
     @pytest.mark.parametrize("n_segments, n_sectors, gap", fixture[:-1])
     def test_lofted_silhouette(self, n_segments, n_sectors, gap):
         p = make_polygon({"x": [4, 5, 5, 4], "y": 0, "z": [-1, -1, 1, 1]}, closed=True)
-        face = BluemiraFace(p)
+        face = make_face(p)
 
         shapes = pattern_lofted_silhouette(face, n_segments, n_sectors, gap)
 

@@ -25,13 +25,12 @@ import dolfin
 import matplotlib.pyplot as plt
 import numpy as np
 
-import bluemira.geometry.tools as tools
 from bluemira.base.components import Component, PhysicalComponent
 from bluemira.equilibria.fem_fixed_boundary.fem_magnetostatic_2D import (
     FemMagnetostatic2d,
 )
 from bluemira.equilibria.fem_fixed_boundary.utilities import ScalarSubFunc, b_coil_axis
-from bluemira.geometry.face import BluemiraFace
+from bluemira.geometry.tools import make_face, make_polygon
 from bluemira.mesh import meshing
 from bluemira.mesh.tools import import_mesh, msh_to_xdmf
 
@@ -53,7 +52,7 @@ class TestGetNormal:
         drc = 0.01
         lcar_coil = 0.01
 
-        poly_coil = tools.make_polygon(
+        poly_coil = make_polygon(
             [
                 [rc - drc, rc + drc, rc + drc, rc - drc],
                 [0, 0, 0, 0],
@@ -64,10 +63,10 @@ class TestGetNormal:
         )
 
         poly_coil.mesh_options = {"lcar": lcar_coil, "physical_group": "poly_coil"}
-        coil = BluemiraFace(poly_coil)
+        coil = make_face(poly_coil)
         coil.mesh_options = {"lcar": lcar_coil, "physical_group": "coil"}
 
-        poly_enclo = tools.make_polygon(
+        poly_enclo = make_polygon(
             [
                 [0, r_enclo, r_enclo, 0],
                 [0, 0, 0, 0],
@@ -78,7 +77,7 @@ class TestGetNormal:
         )
 
         poly_enclo.mesh_options = {"lcar": lcar_enclo, "physical_group": "poly_enclo"}
-        enclosure = BluemiraFace([poly_enclo, poly_coil])
+        enclosure = make_face([poly_enclo, poly_coil])
         enclosure.mesh_options = {"lcar": lcar_enclo, "physical_group": "enclo"}
 
         c_universe = Component(name="universe")

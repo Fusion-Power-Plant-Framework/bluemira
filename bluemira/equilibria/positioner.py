@@ -55,10 +55,15 @@ from bluemira.geometry.coordinates import (
     vector_lengthnorm,
 )
 from bluemira.geometry.error import GeometryError
-from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.inscribed_rect import inscribed_rect_in_poly
 from bluemira.geometry.plane import BluemiraPlane
-from bluemira.geometry.tools import boolean_cut, boolean_fuse, make_polygon, offset_wire
+from bluemira.geometry.tools import (
+    boolean_cut,
+    boolean_fuse,
+    make_face,
+    make_polygon,
+    offset_wire,
+)
 from bluemira.utilities import tools
 
 
@@ -490,10 +495,8 @@ class XZLMapper:
         joiner = Coordinates({"x": offset_coords[0], "z": offset_coords[1]})
         joiner.close()
 
-        joiner = BluemiraFace(make_polygon(joiner.xyz, closed=True))
-        zones = [
-            BluemiraFace(make_polygon(zone.xyz, closed=True)) for zone in self.excl_zones
-        ]
+        joiner = make_face(make_polygon(joiner.xyz))
+        zones = [make_face(make_polygon(zone.xyz)) for zone in self.excl_zones]
 
         joiner = boolean_fuse([joiner] + zones)
 
@@ -515,7 +518,7 @@ class XZLMapper:
         incl_loops = [w.discretize(byedges=True, ndiscr=100) for w in incl_wires]
 
         outer_wire = offset_wire(excl_zone.boundary[0], 100)
-        negative = BluemiraFace([outer_wire, excl_zone.boundary[0]])
+        negative = make_face([outer_wire, excl_zone.boundary[0]])
         excl_wires = boolean_cut(pf_wire, negative)
         excl_loops = [w.discretize(byedges=True, ndiscr=100) for w in excl_wires]
         self.incl_loops = incl_loops
