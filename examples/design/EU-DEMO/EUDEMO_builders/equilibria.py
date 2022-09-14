@@ -32,6 +32,8 @@ from bluemira.equilibria.opt_constraints import (
     PsiBoundaryConstraint,
 )
 from bluemira.equilibria.shapes import flux_surface_johner
+from bluemira.geometry._deprecated_tools import interpolate_points
+from bluemira.geometry.coordinates import Coordinates
 
 
 def estimate_kappa95(A, m_s_limit):
@@ -193,7 +195,8 @@ class EUDEMOSingleNullConstraints(DivertorLegCalculator, MagneticConstraintSet):
 
         constraints = [FieldNullConstraint(*x_point)]
 
-        f_s.interpolate(n)
+        f_s = Coordinates(interpolate_points(*f_s.xyz, n))
+
         x_s, z_s = f_s.x, f_s.z
 
         constraints.append(PsiBoundaryConstraint(x_s, z_s, psibval, tolerance=psibtol))
@@ -257,7 +260,7 @@ class EUDEMODoubleNullConstraints(DivertorLegCalculator, MagneticConstraintSet):
             FieldNullConstraint(f_s.x[arg_xl], f_s.z[arg_xl]),
             FieldNullConstraint(f_s.x[arg_xu], f_s.z[arg_xu]),
         ]
-        f_s.interpolate(n)
+        f_s = Coordinates(interpolate_points(*f_s.xyz, n))
         x_s, z_s = f_s.x, f_s.z
 
         constraints.append(PsiBoundaryConstraint(x_s, z_s, psibval))
