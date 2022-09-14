@@ -28,7 +28,6 @@ import pytest
 
 from bluemira.base.file import get_bluemira_path
 from bluemira.codes.error import FreeCADError
-from bluemira.geometry._deprecated_loop import Coordinates
 from bluemira.geometry._deprecated_tools import (
     bounding_box,
     check_linesegment,
@@ -135,7 +134,7 @@ class TestArea:
 class TestOnPolygon:
     def test_simple(self):
         coords = Coordinates({"x": [0, 1, 2, 2, 0, 0], "z": [-1, -1, -1, 1, 1, -1]})
-        for p in coord.xz.T:
+        for p in coords.xz.T:
             assert on_polygon(p[0], p[1], coords.xz.T) is True
 
         fails = [[4, 4], [5, 5], [0.1, 0.1]]
