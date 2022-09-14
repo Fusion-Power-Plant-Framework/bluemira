@@ -20,6 +20,7 @@
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 
 import os
+from copy import deepcopy
 
 import numpy as np
 import pytest
@@ -136,7 +137,7 @@ class TestChargedParticleRecursionSN:
         Trying screwing up the geometry and get the same results.
         """
         solver = ChargedParticleSolver(self.params, self.solver.eq, dx_mp=0.001)
-        fw = self.solver.first_wall.copy()
+        fw = deepcopy(self.solver.first_wall)
         fw.open()
         fw.reverse()
         x, z, hf = solver.analyse(fw)
@@ -184,7 +185,7 @@ class TestChargedParticleRecursionDN:
         assert np.isclose(np.sum(self.hf), 830.6, rtol=1e-2)
 
     def test_analyse_DN(self, caplog):
-        fw = self.solver.first_wall.copy()
+        fw = deepcopy(self.solver.first_wall)
         self.solver.flux_surfaces_ob_hfs = []
         self.solver.flux_surfaces_ob_lfs = []
         x_sep_omp, x_wall_limit = self.solver._get_sep_out_intersection(outboard=True)
