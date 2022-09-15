@@ -318,8 +318,8 @@ class TFCoilDesigner(Designer[GeometryParameterisation]):
                 f"Cannot execute {type(self).__name__} in 'read' mode: no file path specified."
             )
 
-        # TODO find some way to extract wp_xs from saved shape...if its possible otherwise
-        # these could be unrelated
+        # TODO find some way to extract wp_xs from saved shape...if its possible
+        # otherwise these could be unrelated
         return (
             self.parameterisation_cls.from_json(file=self.file_path),
             self._make_wp_xs(),
@@ -337,8 +337,8 @@ class TFCoilBuilder(Builder):
     """
     TFCoil Builder
 
-    TODO tf_wp_width and tf_wp_depth can be completely disconnected from the wp_cross_section
-    passed in
+    TODO tf_wp_width and tf_wp_depth can be completely disconnected from the
+    wp_cross_section passed in
     """
 
     WP = "Winding Pack"
@@ -448,10 +448,9 @@ class TFCoilBuilder(Builder):
         return case_solid, [*wp_sectors, *ins_sectors, *case_sectors]
 
     def _build_xz_wp(self) -> Tuple[BluemiraWire, BluemiraWire, PhysicalComponent]:
-        # Winding pack
-        # x_min = self.wp_cross_section.bounding_box.x_min
-        # x_centreline_in = self.centreline.bounding_box.x_min
-        # dx = abs(x_min - x_centreline_in)
+        """
+        Winding pack x-z
+        """
         wp_outer = offset_wire(self.centreline, 0.5 * self.wp_x_size, join="arc")
         wp_inner = offset_wire(self.centreline, -0.5 * self.wp_x_size, join="arc")
 
@@ -461,7 +460,9 @@ class TFCoilBuilder(Builder):
         return wp_inner, wp_outer, winding_pack
 
     def _build_xz_ins(self, wp_inner: BluemiraWire, wp_outer: BluemiraWire) -> Component:
-        # Insulation + Insertion gap
+        """
+        Insulation and Insertion gap x-z
+        """
         offset_tk = self.params.tk_tf_ins.value + self.params.tk_tf_insgap.value
 
         ins_o_outer = offset_wire(wp_outer, offset_tk, join="arc")
@@ -475,7 +476,9 @@ class TFCoilBuilder(Builder):
         return Component(self.INS, children=[ins_outer, ins_inner])
 
     def _build_xz_case(self, xyz_shape) -> Component:
-        # Casing
+        """
+        Casing x-z
+        """
         cas_inner, cas_outer = self._make_cas_xz(xyz_shape)
 
         cas_inner = PhysicalComponent(self.IN, cas_inner)
@@ -487,7 +490,9 @@ class TFCoilBuilder(Builder):
         return Component(self.CASING, children=[cas_inner, cas_outer])
 
     def _build_xy_wp(self) -> List[Component]:
-        # Winding pack
+        """
+        Winding pack x-y
+        """
         # Should normally be gotten with wire_plane_intersect
         # (it's not OK to assume that the maximum x value occurs on the midplane)
         x_out = self.centreline.bounding_box.x_max
@@ -506,7 +511,9 @@ class TFCoilBuilder(Builder):
     def _build_xy_ins(
         self, ins_inner_face: BluemiraFace, ins_outer_face: BluemiraFace
     ) -> List[Component]:
-        # Insulation
+        """
+        Insulation x-y
+        """
         ib_ins_comp = PhysicalComponent(self.INB, ins_inner_face)
         ib_ins_comp.plot_options.face_options["color"] = BLUE_PALETTE["TF"][2]
         ob_ins_comp = PhysicalComponent(self.OUTB, ins_outer_face)
@@ -523,7 +530,9 @@ class TFCoilBuilder(Builder):
         ib_cas_wire: BluemiraWire,
         ob_cas_wire: BluemiraWire,
     ) -> List[Component]:
-        # Casing
+        """
+        Casing x-y
+        """
         cas_inner_face = BluemiraFace(
             [ib_cas_wire, deepcopy(ins_inner_face.boundary[0])]
         )
@@ -544,7 +553,9 @@ class TFCoilBuilder(Builder):
     def _build_xyz_wp(
         self, n_sectors: int, sector_degree: float
     ) -> Tuple[BluemiraSolid, List[PhysicalComponent]]:
-        # Winding pack
+        """
+        Winding pack x-y-z
+        """
         wp_solid = sweep_shape(self.wp_cross_section, self.centreline)
         winding_pack = PhysicalComponent(self.WP, wp_solid)
         winding_pack.display_cad_options.color = BLUE_PALETTE["TF"][1]
@@ -559,9 +570,9 @@ class TFCoilBuilder(Builder):
         n_sectors: int,
         sector_degree: float,
     ) -> Tuple[BluemiraSolid, List[PhysicalComponent]]:
-        # Insulation
-        # Get the insulation internal boundary sweep it over the centreline
-        # and cut out the windingpack
+        """
+        Insulation x-y-z
+        """
         ins_solid = boolean_cut(
             sweep_shape(ins_inner_face.boundary[0], self.centreline), wp_solid
         )[0]
@@ -583,38 +594,16 @@ class TFCoilBuilder(Builder):
         n_sectors: int,
         sector_degree: float,
     ) -> List[PhysicalComponent]:
-        # Casing
+        """
+        Casing x-y-z
+        """
         # Normally I'd do lots more here to get to a proper casing
         # This is just a proof-of-principle
 
-        # Make inner xs into a rectangle
-        bb = inner_xs.bounding_box
-        x_in = np.zeros(4)
-        x_in[[0, -1]] = bb.x_min
-        x_in[[1, 2]] = bb.x_max
-
-        y_in = np.full(4, y_in)
-        y_in[:2] = -y_in[:2]
-
-        inner_xs_rect = make_polygon([x_in, y_in, np.zeros(4)], closed=True)
-
-        # Sweep with a varying rectangular cross-section
         centreline_points = self.centreline.discretize(byedges=True, ndiscr=2000)
-        idx = np.where(np.isclose(centreline_points.x, np.min(centreline_points.x)))[0]
-        z_turn_top = np.max(centreline_points.z[idx])
-        z_turn_bot = np.min(centreline_points.z[idx])
-        z_min_cl = np.min(centreline_points.z)
-        z_max_cl = np.max(centreline_points.z)
 
-        inner_xs_rect_top = deepcopy(inner_xs_rect)
-        inner_xs_rect_top.translate((0, 0, z_turn_top))
-        inner_xs_rect_bot = deepcopy(inner_xs_rect)
-        inner_xs_rect_bot.translate((0, 0, z_turn_bot))
-        solid = sweep_shape(
-            [inner_xs_rect_top, outer_xs, inner_xs_rect_bot], self.centreline
-        )
+        solid = self._make_inner_cas_xsec(y_in, inner_xs, outer_xs, centreline_points)
 
-        # This is because the bounding box of a solid is not to be trusted
         cut_wires = slice_shape(
             solid, BluemiraPlane.from_3_points([0, 0, 0], [1, 0, 0], [1, 0, 1])
         )
@@ -623,49 +612,12 @@ class TFCoilBuilder(Builder):
         z_min = bb.z_min
         z_max = bb.z_max
 
-        z_min_arr = np.full(4, z_min)
-        z_max_arr = np.full(4, z_max)
-        y_in = np.full(
-            4, 0.5 * (self.params.tf_wp_depth.value + self.params.tk_tf_side.value)
-        )
-        y_in[:2] = -y_in[:2]
-
         inner_xs.translate((0, 0, z_min - inner_xs.center_of_mass[2]))
         inboard_casing = extrude_shape(BluemiraFace(inner_xs), (0, 0, z_max - z_min))
 
-        # Join the straight leg to the curvy bits
-        x_min = np.min(centreline_points.x)
-        idx = np.where(np.isclose(centreline_points.z, z_max_cl))[0]
-        x_turn_top = np.min(centreline_points.x[idx])
-        idx = np.where(np.isclose(centreline_points.z, z_min_cl))[0]
-        x_turn_bot = np.min(centreline_points.x[idx])
-        joiner_top = make_polygon(
-            [
-                [x_min, x_turn_top, x_turn_top, x_min],
-                y_in,
-                z_max_arr,
-            ],
-            closed=True,
+        joiner_top, joiner_bottom = self._make_joining_sections(
+            z_min, z_max, centreline_points
         )
-        joiner_top = extrude_shape(BluemiraFace(joiner_top), (0, 0, -z_max))
-        joiner_bot = make_polygon(
-            [
-                [x_min, x_turn_bot, x_turn_bot, x_min],
-                y_in,
-                z_min_arr,
-            ],
-            closed=True,
-        )
-        joiner_bot = extrude_shape(BluemiraFace(joiner_bot), (0, 0, -z_min))
-
-        # Need to cut away the excess joiner extrusions
-        cl = deepcopy(self.centreline)
-        cl.translate((0, -2 * self.params.tf_wp_depth.value, 0))
-        cutter = extrude_shape(
-            BluemiraFace(cl), (0, 4 * self.params.tf_wp_depth.value, 0)
-        )
-        joiner_top = boolean_cut(joiner_top, cutter)[0]
-        joiner_bot = boolean_cut(joiner_bot, cutter)[0]
 
         # Cut away straight sweep before fusing to protect against degenerate faces
         # Keep the largest piece
@@ -673,7 +625,7 @@ class TFCoilBuilder(Builder):
         pieces.sort(key=lambda x: x.volume)
         solid = pieces[-1]
 
-        case_solid = boolean_fuse([solid, inboard_casing, joiner_top, joiner_bot])
+        case_solid = boolean_fuse([solid, inboard_casing, joiner_top, joiner_bottom])
         case_solid_hollow = boolean_cut(
             case_solid, BluemiraSolid(ins_solid.boundary[0])
         )[0]
@@ -704,8 +656,8 @@ class TFCoilBuilder(Builder):
         """
         Make the casing x-y cross-section wires
 
-        TODO tf_wp_width and tf_wp_depth can be completely disconnected from the wp_cross_section
-        passed in
+        TODO tf_wp_width and tf_wp_depth can be completely disconnected from the
+        wp_cross_section passed in
 
         """
         tf_centreline_min = self.centreline.bounding_box.x_min
@@ -765,6 +717,80 @@ class TFCoilBuilder(Builder):
             )
 
         return BluemiraFace([wires[1], wires[0]]), BluemiraFace([wires[3], wires[2]])
+
+    def _make_inner_cas_xsec(
+        self,
+        y_in: float,
+        inner_xs: BluemiraWire,
+        outer_xs: BluemiraWire,
+        centreline_points: np.ndarray,
+    ) -> BluemiraSolid:
+        """
+        Make inner cross section for casing x-y-z
+        """
+        # Make inner xs into a rectangle
+        bb = inner_xs.bounding_box
+        x_in = np.zeros(4)
+        x_in[[0, -1]] = bb.x_min
+        x_in[[1, 2]] = bb.x_max
+
+        y_in = np.full(4, y_in)
+        y_in[:2] = -y_in[:2]
+
+        inner_xs_rect = make_polygon([x_in, y_in, np.zeros(4)], closed=True)
+
+        # Sweep with a varying rectangular cross-section
+        idx = np.where(np.isclose(centreline_points.x, np.min(centreline_points.x)))[0]
+        z_turn_top = np.max(centreline_points.z[idx])
+        z_turn_bot = np.min(centreline_points.z[idx])
+
+        inner_xs_rect_top = deepcopy(inner_xs_rect)
+        inner_xs_rect_top.translate((0, 0, z_turn_top))
+        inner_xs_rect_bot = deepcopy(inner_xs_rect)
+        inner_xs_rect_bot.translate((0, 0, z_turn_bot))
+        return sweep_shape(
+            [inner_xs_rect_top, outer_xs, inner_xs_rect_bot], self.centreline
+        )
+
+    def _make_joining_sections(
+        self, z_min: float, z_max: float, centreline_points: np.ndarray
+    ) -> List[BluemiraSolid]:
+        # Join the straight leg to the curvy bits
+
+        y_in_join = np.full(
+            4, 0.5 * (self.params.tf_wp_depth.value + self.params.tk_tf_side.value)
+        )
+        y_in_join[:2] = -y_in_join[:2]
+        x_min = np.min(centreline_points.x)
+
+        idx = np.where(np.isclose(centreline_points.z, np.max(centreline_points.z)))[0]
+        x_turn_top = np.min(centreline_points.x[idx])
+        idx = np.where(np.isclose(centreline_points.z, np.min(centreline_points.z)))[0]
+        x_turn_bot = np.min(centreline_points.x[idx])
+
+        # Need to cut away the excess joiner extrusions
+        cl = deepcopy(self.centreline)
+        cl.translate((0, -2 * self.params.tf_wp_depth.value, 0))
+        cutter = extrude_shape(
+            BluemiraFace(cl), (0, 4 * self.params.tf_wp_depth.value, 0)
+        )
+
+        joiners = []
+        for z, x_turn in [[z_max, x_turn_top], [z_min, x_turn_bot]]:
+            z_arr = np.full(4, z)
+            j_face = BluemiraFace(
+                make_polygon(
+                    [
+                        [x_min, x_turn, x_turn, x_min],
+                        y_in_join,
+                        z_arr,
+                    ],
+                    closed=True,
+                )
+            )
+            joiners.append(boolean_cut(extrude_shape(j_face, (0, 0, -z)), cutter)[0])
+
+        return joiners
 
     def _make_field_solver(self):
         """
