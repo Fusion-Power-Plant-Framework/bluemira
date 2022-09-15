@@ -253,7 +253,7 @@ class TFCoilDesigner(Designer[GeometryParameterisation]):
     def _get_parameterisation(self) -> GeometryParameterisation:
         return self.parameterisation_cls(self._derive_shape_params(self.variables_map))
 
-    def run(self) -> GeometryParameterisation:
+    def run(self) -> Tuple[GeometryParameterisation, BluemiraWire]:
         """
         Run the specified design optimisation problem to generate the TF coil winding
         pack current centreline.
@@ -308,7 +308,7 @@ class TFCoilDesigner(Designer[GeometryParameterisation]):
         bluemira_debug("Solving...")
         return design_problem.optimise(), wp_cross_section
 
-    def read(self) -> GeometryParameterisation:
+    def read(self) -> Tuple[GeometryParameterisation, BluemiraWire]:
         """
         Read in a file to set up a specified GeometryParameterisation and extract the
         current centreline.
@@ -324,7 +324,7 @@ class TFCoilDesigner(Designer[GeometryParameterisation]):
             self._make_wp_xs(parameterisation.create_shape().bounding_box.x_min),
         )
 
-    def mock(self) -> GeometryParameterisation:
+    def mock(self) -> Tuple[GeometryParameterisation, BluemiraWire]:
         """
         Mock a design of TF coils using the original parameterisation of the current
         centreline.
@@ -425,7 +425,7 @@ class TFCoilBuilder(Builder):
         ib_cas_wire: BluemiraWire,
         ob_cas_wire: BluemiraWire,
         degree: float = 360.0,
-    ) -> List[Component]:
+    ) -> Tuple[BluemiraSolid, List[Component]]:
         """
         Build the x-y-z components of the TF coils.
         """
@@ -597,7 +597,7 @@ class TFCoilBuilder(Builder):
         outer_xs: BluemiraWire,
         n_sectors: int,
         sector_degree: float,
-    ) -> List[PhysicalComponent]:
+    ) -> Tuple[BluemiraSolid, List[PhysicalComponent]]:
         """
         Casing x-y-z
         """
