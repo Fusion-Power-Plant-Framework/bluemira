@@ -28,7 +28,7 @@ from bluemira.base.constants import EPS, MU_0_4PI, ONE_4PI
 from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.geometry._deprecated_tools import bounding_box, rotation_matrix
 from bluemira.magnetostatics.baseclass import CurrentSource
-from bluemira.magnetostatics.tools import process_loop_array, process_xyz_array
+from bluemira.magnetostatics.tools import process_coords_array, process_xyz_array
 from bluemira.utilities import tools
 from bluemira.utilities.plot_tools import Plot3D
 
@@ -61,7 +61,7 @@ class BiotSavartFilament(CurrentSource):
         d_ls, mids_points = [], []
         points = []
         for i, array in enumerate(arrays):
-            xyz = process_loop_array(array)
+            xyz = process_coords_array(array)
 
             d_l = np.diff(xyz, axis=0)
             self._check_discretisation(d_l)

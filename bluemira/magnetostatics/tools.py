@@ -30,6 +30,7 @@ from numba.types import CPointer, float64, intc
 from scipy import LowLevelCallable
 from scipy.integrate import IntegrationWarning, nquad, quad
 
+from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.geometry.coordinates import Coordinates
 from bluemira.magnetostatics.error import (
     MagnetostaticsError,
@@ -43,7 +44,7 @@ __all__ = [
     "jit_llc7",
     "integrate",
     "n_integrate",
-    "process_loop_array",
+    "process_coords_array",
     "process_xyz_array",
 ]
 
@@ -88,21 +89,21 @@ def process_xyz_array(func):
     return wrapper
 
 
-def process_loop_array(shape):
+def process_coords_array(shape):
     """
-    Parse a Loop or array to an array.
+    Parse Coordinates or array to an array.
 
     Parameters
     ----------
-    shape: Union[np.array(N, 3), Loop]
+    shape: Union[np.array(N, 3), Coordinates]
         The Loop or array to make into a coordinate array
 
     Returns
     -------
     shape: np.array(N, 3)
     """
-    if shape.__class__.__name__ == "Loop":
-        # Deprecated.. Deprecation warning raised in old Loop class.
+    if type(shape).__name__ == "Loop":
+        bluemira_warn("Loops are deprecated; please use Coordinates.")
         shape = shape.xyz.T
 
     elif isinstance(shape, np.ndarray):
@@ -129,7 +130,8 @@ def process_to_coordinates(shape):
     """
     if isinstance(shape, Coordinates):
         return shape
-    elif shape.__class__.__name__ == "Loop":
+    elif type(shape).__name__ == "Loop":
+        bluemira_warn("Loops are deprecated; please use Coordinates.")
         return Coordinates(shape.xyz)
     else:
         return Coordinates(shape)
