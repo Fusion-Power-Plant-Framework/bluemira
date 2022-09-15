@@ -361,22 +361,22 @@ def interpolate_points(
 
     Parameters
     ----------
-    x: np.darray
+    x: np.ndarray
         The x coordinates
-    y: np.darray
+    y: np.ndarray
         The y coordinates
-    z: np.darray
+    z: np.ndarray
         The z coordinates
     n_points: int
         number of points
 
     Returns
     -------
-    x: np.darray
+    x: np.ndarray
         The interpolated x coordinates
-    y: np.darray
+    y: np.ndarray
         The interpolated y coordinates
-    z: np.darray
+    z: np.ndarray
         The interpolated z coordinates
     """
     ll = vector_lengthnorm(x, y, z)
@@ -395,22 +395,22 @@ def interpolate_midpoints(
 
     Parameters
     ----------
-    x: np.darray
+    x: np.ndarray
         The x coordinates
-    y: np.darray
+    y: np.ndarray
         The y coordinates
-    z: np.darray
+    z: np.ndarray
         The z coordinates
     n_points: int
         number of points
 
     Returns
     -------
-    x: np.darray
+    x: np.ndarray
         The interpolated x coordinates
-    y: np.darray
+    y: np.ndarray
         The interpolated y coordinates
-    z: np.darray
+    z: np.ndarray
         The interpolated z coordinates
     """
     xyz = np.c_[x, y, z]
