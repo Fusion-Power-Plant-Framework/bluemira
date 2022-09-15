@@ -174,7 +174,7 @@ class TFCoilDesigner(Designer[GeometryParameterisation]):
         self.separatrix = separatrix
         self.keep_out_zone = keep_out_zone
 
-    def _make_wp_xs(self, inboard_centroid: float):
+    def _make_wp_xs(self, inboard_centroid: float) -> BluemiraWire:
         """
         Make the winding pack x-y cross-section wire (excluding insulation and
         insertion gap)
@@ -190,7 +190,7 @@ class TFCoilDesigner(Designer[GeometryParameterisation]):
         wp_xs = make_polygon([x_c, d_yc, np.zeros(4)], closed=True)
         return wp_xs
 
-    def _make_centreline_koz(self, keep_out_zone):
+    def _make_centreline_koz(self, keep_out_zone) -> BluemiraWire:
         """
         Make a keep-out-zone for the TF coil centreline optimisation problem.
         """
@@ -250,7 +250,7 @@ class TFCoilDesigner(Designer[GeometryParameterisation]):
         shape_params["x1"] = {"value": r_current_in_board, "fixed": True}
         return shape_params
 
-    def _get_parameterisation(self):
+    def _get_parameterisation(self) -> GeometryParameterisation:
         return self.parameterisation_cls(self._derive_shape_params(self.variables_map))
 
     def run(self) -> GeometryParameterisation:
@@ -386,7 +386,9 @@ class TFCoilBuilder(Builder):
             self._make_field_solver(),
         )
 
-    def build_xz(self, xyz_shape) -> List[Union[PhysicalComponent, Component]]:
+    def build_xz(
+        self, xyz_shape: BluemiraSolid
+    ) -> List[Union[PhysicalComponent, Component]]:
         """
         Build the x-z components of the TF coils.
         """
@@ -634,11 +636,12 @@ class TFCoilBuilder(Builder):
 
         casing = PhysicalComponent(self.CASING, case_solid_hollow)
         casing.display_cad_options.color = BLUE_PALETTE["TF"][0]
+        casing.display_cad_options.transparency = 0.5
         return case_solid_hollow, circular_pattern_component(
             casing, n_sectors, degree=n_sectors * sector_degree
         )
 
-    def _make_ins_xsec(self):
+    def _make_ins_xsec(self) -> Tuple[BluemiraFace, BluemiraFace]:
         """
         Make the insulation + insertion gap x-y cross-section faces
         """
@@ -654,7 +657,7 @@ class TFCoilBuilder(Builder):
         )
         return face, outer_face
 
-    def _make_cas_xsec(self):
+    def _make_cas_xsec(self) -> Tuple[float, BluemiraWire, BluemiraWire]:
         """
         Make the casing x-y cross-section wires
 
@@ -794,7 +797,7 @@ class TFCoilBuilder(Builder):
 
         return joiners
 
-    def _make_field_solver(self):
+    def _make_field_solver(self) -> HelmholtzCage:
         """
         Make a magnetostatics solver for the field from the TF coils.
         """
