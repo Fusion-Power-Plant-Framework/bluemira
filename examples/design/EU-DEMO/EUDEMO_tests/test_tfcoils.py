@@ -25,9 +25,9 @@ Test first wall silhouette designer.
 import copy
 import os
 
+import numpy as np
 import pytest
 
-from bluemira.base.error import DesignError
 from bluemira.base.file import get_bluemira_path
 from bluemira.equilibria import Equilibrium
 from bluemira.equilibria.find import find_OX_points
@@ -76,19 +76,25 @@ class TestTFCoilDesigner:
         cls.lcfs = make_polygon(cls.eq.get_LCFS().xyz, closed=True)
         cls.vvts_koz = make_circle(10, center=(15, 0, 0), axis=(0.0, 1.0, 0.0))
 
-    # def test_parameterisation_read(self):
-    #     config = copy.deepcopy(CONFIG)
-    #     config.update(
-    #         {"run_mode": "read", "file_path": os.path.join(DATA, "wall_polyspline.json")}
-    #     )
+    def test_parameterisation_read(self):
+        config = copy.deepcopy(self.CONFIG)
+        config.update(
+            {
+                "run_mode": "read",
+                "file_path": os.path.join(DATA, "tf_coils_TripleArc_18.json"),
+            }
+        )
 
-    #     designer = TFCoilDesigner(
-    #         PARAMS, build_config=config, separatrix=self.lcfs, keep_out_zone=self.vvts_koz
-    #     )
-    #     param = designer.execute()
+        designer = TFCoilDesigner(
+            self.PARAMS,
+            build_config=config,
+            separatrix=self.lcfs,
+            keep_out_zone=self.vvts_koz,
+        )
+        param, wp = designer.execute()
 
-    #     assert param.variables["flat"].value == 0
-    #     assert param.variables["x1"].value == PARAMS["r_fw_ib_in"]["value"]
+        assert np.isclose(param.variables["sl"].value, 5)
+        assert np.isclose(param.variables["x1"].value, wp.center_of_mass[0])
 
     def test_read_no_file(self):
         config = copy.deepcopy(self.CONFIG)
@@ -165,66 +171,6 @@ class TestTFCoilDesigner:
         )
 
         assert designer.execute()[0].create_shape().is_closed()
-
-    # def test_height_derived_from_params_given_PolySpline_mock_mode(self):
-    #     params = copy.deepcopy(PARAMS)
-    #     params.update(
-    #         {
-    #             "R_0": {"name": "R_0", "value": 10},
-    #             "kappa_95": {"name": "kappa_95", "value": 2},
-    #             "A": {"name": "A", "value": 2},
-    #         }
-    #     )
-    #     config = copy.deepcopy(CONFIG)
-    #     config.update({"param_class": f"{WALL_MODULE_REF}::WallPolySpline"})
-
-    #     designer = TFCoilDesigner(
-    #         params, build_config=config, separatrix=self.lcfs, keep_out_zone=self.vvts_koz
-    #     )
-    #     bounding_box = designer.execute().create_shape().bounding_box
-
-    #     # expected_height = 2*(R_0/A)*kappa_95 = 20
-    #     assert np.isclose(bounding_box.z_max - bounding_box.z_min, 20.0)
-
-    # def test_width_matches_params_given_PrincetonD_mock_mode(self):
-
-    #     vm = {
-    #         "x1": {  # ib radius
-    #             "value": "r_fw_ib_in",
-    #         },
-    #         "x2": {  # ob radius
-    #             "value": "r_fw_ob_in",
-    #         },
-    #         "dz": -2,
-    #     }
-    #     config = copy.deepcopy(CONFIG)
-
-    #     config.update(
-    #         {"param_class": f"{WALL_MODULE_REF}::WallPrincetonD", "variables_map": vm}
-    #     )
-
-    #     designer = TFCoilDesigner(
-    #         PARAMS, build_config=config, separatrix=self.lcfs, keep_out_zone=self.vvts_koz
-    #     )
-
-    #     bounding_box = designer.execute().create_shape().bounding_box
-
-    #     width = bounding_box.x_max - bounding_box.x_min
-    #     assert width == pytest.approx(
-    #         PARAMS["r_fw_ob_in"]["value"] - PARAMS["r_fw_ib_in"]["value"]
-    #     )
-
-    # def test_DesignError_for_small_silhouette(self):
-
-    #     config = copy.deepcopy(CONFIG)
-    #     config.update({"param_class": f"{WALL_MODULE_REF}::WallPrincetonD"})
-
-    #     designer = TFCoilDesigner(
-    #         PARAMS, build_config=config, separatrix=self.lcfs, keep_out_zone=self.vvts_koz
-    #     )
-
-    #     with pytest.raises(DesignError):
-    #         designer.execute()
 
 
 class TestTFCoilBuilder:

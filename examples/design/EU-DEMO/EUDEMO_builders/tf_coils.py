@@ -174,7 +174,7 @@ class TFCoilDesigner(Designer[GeometryParameterisation]):
         self.separatrix = separatrix
         self.keep_out_zone = keep_out_zone
 
-    def _make_wp_xs(self):
+    def _make_wp_xs(self, inboard_centroid: float):
         """
         Make the winding pack x-y cross-section wire (excluding insulation and
         insertion gap)
@@ -183,7 +183,7 @@ class TFCoilDesigner(Designer[GeometryParameterisation]):
         d_yc = np.full(4, 0.5 * self.params.tk_tf_wp_y.value)
         d_yc[:2] = -d_yc[:2]
 
-        x_c = np.full(4, self.params.r_tf_current_ib.value)
+        x_c = np.full(4, inboard_centroid)
         x_c[[0, -1]] -= d_xc
         x_c[[1, 2]] += d_xc
 
@@ -259,7 +259,7 @@ class TFCoilDesigner(Designer[GeometryParameterisation]):
         pack current centreline.
         """
         parameterisation = self._get_parameterisation()
-        wp_cross_section = self._make_wp_xs()
+        wp_cross_section = self._make_wp_xs(self.params.r_tf_current_ib.value)
 
         if not hasattr(self, "problem_class"):
             raise ValueError(
@@ -318,11 +318,10 @@ class TFCoilDesigner(Designer[GeometryParameterisation]):
                 f"Cannot execute {type(self).__name__} in 'read' mode: no file path specified."
             )
 
-        # TODO find some way to extract wp_xs from saved shape...if its possible
-        # otherwise these could be unrelated
+        parameterisation = self.parameterisation_cls.from_json(file=self.file_path)
         return (
-            self.parameterisation_cls.from_json(file=self.file_path),
-            self._make_wp_xs(),
+            parameterisation,
+            self._make_wp_xs(parameterisation.create_shape().bounding_box.x_min),
         )
 
     def mock(self) -> GeometryParameterisation:
@@ -330,7 +329,10 @@ class TFCoilDesigner(Designer[GeometryParameterisation]):
         Mock a design of TF coils using the original parameterisation of the current
         centreline.
         """
-        return self._get_parameterisation(), self._make_wp_xs()
+        parameterisation = self._get_parameterisation()
+        return parameterisation, self._make_wp_xs(
+            parameterisation.create_shape().bounding_box.x_min
+        )
 
 
 class TFCoilBuilder(Builder):
