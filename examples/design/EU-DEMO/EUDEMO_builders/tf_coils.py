@@ -72,6 +72,7 @@ class TFCoil(ComponentManager):
     def field(self, x, y, z):
         """
         Calculate the magnetic field due to the TF coils at a set of points.
+
         Parameters
         ----------
         x: Union[float, np.array]
@@ -122,7 +123,6 @@ class TFCoilBuilderParams(ParameterFrame):
     z_0: Parameter[float]
     B_0: Parameter[float]
     n_TF: Parameter[int]
-    r_tf_in: Parameter[float]
     tf_wp_depth: Parameter[float]
     tf_wp_width: Parameter[float]
     tk_tf_front_ib: Parameter[float]
@@ -130,11 +130,12 @@ class TFCoilBuilderParams(ParameterFrame):
     tk_tf_insgap: Parameter[float]
     tk_tf_nose: Parameter[float]
     tk_tf_side: Parameter[float]
-    tk_tf_wp: Parameter[float]
-    tk_tf_wp_y: Parameter[float]
 
 
 class TFCoilDesigner(Designer[GeometryParameterisation]):
+    """
+    TF Coil Designer
+    """
 
     param_cls = TFCoilDesignerParams
 
@@ -317,7 +318,8 @@ class TFCoilDesigner(Designer[GeometryParameterisation]):
                 f"Cannot execute {type(self).__name__} in 'read' mode: no file path specified."
             )
 
-        # TODO find some way to extract wp_xs from saved shape...if its possible otherwise these could be unrelated
+        # TODO find some way to extract wp_xs from saved shape...if its possible otherwise
+        # these could be unrelated
         return (
             self.parameterisation_cls.from_json(file=self.file_path),
             self._make_wp_xs(),
@@ -332,6 +334,12 @@ class TFCoilDesigner(Designer[GeometryParameterisation]):
 
 
 class TFCoilBuilder(Builder):
+    """
+    TFCoil Builder
+
+    TODO tf_wp_width and tf_wp_depth can be completely disconnected from the wp_cross_section
+    passed in
+    """
 
     WP = "Winding Pack"
     OUT = "outer"
@@ -353,17 +361,24 @@ class TFCoilBuilder(Builder):
         self.centreline = centreline
 
         self.wp_cross_section = wp_cross_section
+        bb = self.wp_cross_section.bounding_box
+        self.wp_x_size = bb.x_max - bb.x_min
+        self.wp_y_size = bb.y_max - bb.y_min
 
     def build(self) -> TFCoil:
         """
         Build the vacuum vessel component.
         """
         ins_inner_face, ins_outer_face = self._make_ins_xsec()
-        xyz_case, xyz = self.build_xyz(ins_inner_face)
+        y_in, ib_cas_wire, ob_cas_wire = self._make_cas_xsec()
+
+        xyz_case, xyz = self.build_xyz(y_in, ins_inner_face, ib_cas_wire, ob_cas_wire)
         return TFCoil(
             self.component_tree(
                 xz=self.build_xz(xyz_case),
-                xy=self.build_xy(ins_inner_face, ins_outer_face),
+                xy=self.build_xy(
+                    ins_inner_face, ins_outer_face, ib_cas_wire, ob_cas_wire
+                ),
                 xyz=xyz,
             ),
             self._make_field_solver(),
@@ -382,7 +397,11 @@ class TFCoilBuilder(Builder):
         ]
 
     def build_xy(
-        self, ins_inner_face: BluemiraFace, ins_outer_face: BluemiraFace
+        self,
+        ins_inner_face: BluemiraFace,
+        ins_outer_face: BluemiraFace,
+        ib_cas_wire: BluemiraWire,
+        ob_cas_wire: BluemiraWire,
     ) -> List[Component]:
         """
         Build the x-y components of the TF coils.
@@ -390,22 +409,21 @@ class TFCoilBuilder(Builder):
         return [
             *self._build_xy_wp(),
             *self._build_xy_ins(ins_inner_face, ins_outer_face),
-            *self._build_xy_case(ins_inner_face, ins_outer_face),
+            *self._build_xy_case(
+                ins_inner_face, ins_outer_face, ib_cas_wire, ob_cas_wire
+            ),
         ]
 
     def build_xyz(
-        self, ins_inner_face: BluemiraFace, degree: float = 360.0
+        self,
+        y_in: float,
+        ins_inner_face: BluemiraFace,
+        ib_cas_wire: BluemiraWire,
+        ob_cas_wire: BluemiraWire,
+        degree: float = 360.0,
     ) -> List[Component]:
         """
         Build the x-y-z components of the TF coils.
-        Parameters
-        ----------
-        degree: float
-            The angle [°] around which to build the components, by default 360.0.
-        Returns
-        -------
-        component: Component
-            The component grouping the results in 3D (xyz).
         """
         # Minimum angle per TF coil (nudged by a tiny length since we start counting a
         # sector at theta=0). This means we can draw a sector as 360 / n_TF and get one
@@ -424,7 +442,7 @@ class TFCoilBuilder(Builder):
         )
 
         case_solid, case_sectors = self._build_xyz_case(
-            ins_solid, n_sectors, sector_degree
+            y_in, ins_solid, ib_cas_wire, ob_cas_wire, n_sectors, sector_degree
         )
 
         return case_solid, [*wp_sectors, *ins_sectors, *case_sectors]
@@ -434,12 +452,8 @@ class TFCoilBuilder(Builder):
         # x_min = self.wp_cross_section.bounding_box.x_min
         # x_centreline_in = self.centreline.bounding_box.x_min
         # dx = abs(x_min - x_centreline_in)
-        wp_outer = offset_wire(
-            self.centreline, 0.5 * self.params.tk_tf_wp.value, join="arc"
-        )
-        wp_inner = offset_wire(
-            self.centreline, -0.5 * self.params.tk_tf_wp.value, join="arc"
-        )
+        wp_outer = offset_wire(self.centreline, 0.5 * self.wp_x_size, join="arc")
+        wp_inner = offset_wire(self.centreline, -0.5 * self.wp_x_size, join="arc")
 
         winding_pack = PhysicalComponent(self.WP, BluemiraFace([wp_outer, wp_inner]))
         winding_pack.plot_options.face_options["color"] = BLUE_PALETTE["TF"][1]
@@ -473,7 +487,6 @@ class TFCoilBuilder(Builder):
         return Component(self.CASING, children=[cas_inner, cas_outer])
 
     def _build_xy_wp(self) -> List[Component]:
-
         # Winding pack
         # Should normally be gotten with wire_plane_intersect
         # (it's not OK to assume that the maximum x value occurs on the midplane)
@@ -504,10 +517,13 @@ class TFCoilBuilder(Builder):
         )
 
     def _build_xy_case(
-        self, ins_inner_face: BluemiraFace, ins_outer_face: BluemiraFace
+        self,
+        ins_inner_face: BluemiraFace,
+        ins_outer_face: BluemiraFace,
+        ib_cas_wire: BluemiraWire,
+        ob_cas_wire: BluemiraWire,
     ) -> List[Component]:
         # Casing
-        ib_cas_wire, ob_cas_wire = self._make_cas_xsec()
         cas_inner_face = BluemiraFace(
             [ib_cas_wire, deepcopy(ins_inner_face.boundary[0])]
         )
@@ -559,12 +575,17 @@ class TFCoilBuilder(Builder):
         )
 
     def _build_xyz_case(
-        self, ins_solid: BluemiraSolid, n_sectors: int, sector_degree: float
+        self,
+        y_in: float,
+        ins_solid: BluemiraSolid,
+        inner_xs: BluemiraWire,
+        outer_xs: BluemiraWire,
+        n_sectors: int,
+        sector_degree: float,
     ) -> List[PhysicalComponent]:
         # Casing
         # Normally I'd do lots more here to get to a proper casing
         # This is just a proof-of-principle
-        inner_xs, outer_xs = self._make_cas_xsec()
 
         # Make inner xs into a rectangle
         bb = inner_xs.bounding_box
@@ -572,10 +593,9 @@ class TFCoilBuilder(Builder):
         x_in[[0, -1]] = bb.x_min
         x_in[[1, 2]] = bb.x_max
 
-        y_in = np.full(
-            4, self.params.r_tf_in.value * np.tan(np.pi / self.params.n_TF.value)
-        )
+        y_in = np.full(4, y_in)
         y_in[:2] = -y_in[:2]
+
         inner_xs_rect = make_polygon([x_in, y_in, np.zeros(4)], closed=True)
 
         # Sweep with a varying rectangular cross-section
@@ -683,15 +703,21 @@ class TFCoilBuilder(Builder):
     def _make_cas_xsec(self):
         """
         Make the casing x-y cross-section wires
+
+        TODO tf_wp_width and tf_wp_depth can be completely disconnected from the wp_cross_section
+        passed in
+
         """
-        x_in = self.params.r_tf_in.value
-        # Insulation and insertion gap included in WP width
-        x_out = (
-            x_in
-            + self.params.tk_tf_nose.value
+        tf_centreline_min = self.centreline.bounding_box.x_min
+        tf_thick = (
+            self.params.tk_tf_nose.value
             + self.params.tf_wp_width.value
             + self.params.tk_tf_front_ib.value
         )
+        x_in = tf_centreline_min - 0.5 * tf_thick
+        # Insulation and insertion gap included in WP width
+        x_out = x_in + tf_thick
+
         tan_half_angle = np.tan(np.pi / self.params.n_TF.value)
         y_in = x_in * tan_half_angle
         y_out = x_out * tan_half_angle
@@ -722,7 +748,7 @@ class TFCoilBuilder(Builder):
         outboard_wire = make_polygon([dx_out, dy_out, np.zeros(4)], closed=True)
         outboard_wire.translate((self.centreline.bounding_box.x_max, 0, 0))
 
-        return inboard_wire, outboard_wire
+        return y_in, inboard_wire, outboard_wire
 
     def _make_cas_xz(self, solid: BluemiraSolid) -> Tuple[BluemiraFace, BluemiraFace]:
         """
@@ -746,13 +772,14 @@ class TFCoilBuilder(Builder):
         """
         circuit = ArbitraryPlanarRectangularXSCircuit(
             self.centreline.discretize(byedges=True, ndiscr=100),
-            breadth=0.5 * self.params.tk_tf_wp.value,
-            depth=0.5 * self.params.tk_tf_wp_y.value,
+            breadth=0.5 * self.wp_x_size,
+            depth=0.5 * self.wp_y_size,
             current=1,
         )
         solver = HelmholtzCage(circuit, self.params.n_TF.value)
         # single coil amp-turns
         solver.set_current(
-            -self.params.B_0 / solver.field(self.params.R_0, 0, self.params.z_0)[1]
+            -self.params.B_0.value
+            / solver.field(self.params.R_0.value, 0, self.params.z_0.value)[1]
         )
         return solver

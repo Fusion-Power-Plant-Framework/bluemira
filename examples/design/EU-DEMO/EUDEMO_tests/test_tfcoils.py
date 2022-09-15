@@ -25,7 +25,6 @@ Test first wall silhouette designer.
 import copy
 import os
 
-import numpy as np
 import pytest
 
 from bluemira.base.error import DesignError
@@ -45,7 +44,7 @@ OPTIMISER_MODULE_REF = "bluemira.builders.tf_coils"
 class TestTFCoilDesigner:
 
     CONFIG = {
-        "param_class": f"TripleArc",
+        "param_class": "TripleArc",
         "variables_map": {},
         "run_mode": "mock",
         "name": "First Wall",
@@ -231,29 +230,34 @@ class TestTFCoilDesigner:
 class TestTFCoilBuilder:
 
     centreline = TripleArc().create_shape()
+    tk_tf_wp = 0.4
+    tk_tf_wp_y = 0.7
+
+    x_min = centreline.bounding_box.x_min - (0.5 * tk_tf_wp)
+    y_min = centreline.bounding_box.y_min - (0.5 * tk_tf_wp_y)
+
     wp_cross_section = make_polygon(
-        [[0, 0, 0], [1, 0, 0], [1, 1, 0], [0, 1, 0]], closed=True
+        [
+            [x_min, y_min, 0],
+            [x_min + tk_tf_wp, y_min, 0],
+            [x_min + tk_tf_wp, y_min + tk_tf_wp_y, 0],
+            [x_min, y_min + tk_tf_wp_y, 0],
+        ],
+        closed=True,
     )
     params = {
         "R_0": {"value": 9},
         "z_0": {"value": 0.0},
         "B_0": {"value": 6},
         "n_TF": {"value": 18},
-        "r_tf_in": {"value": 3.2},
-        "tk_tf_wp": {"value": 0.4},
-        "tk_tf_wp_y": {"value": 0.69},
-        "tf_wp_width": {"value": 0.76},
-        "tf_wp_depth": {"value": 1.05},
+        "tf_wp_width": {"value": 0.7},
+        "tf_wp_depth": {"value": 1.00},
         "tk_tf_front_ib": {"value": 0.04},
         "tk_tf_ins": {"value": 0.08},
         "tk_tf_insgap": {"value": 0.1},
         "tk_tf_nose": {"value": 0.6},
         "tk_tf_side": {"value": 0.1},
     }
-
-    from bluemira.display.displayer import show_cad
-
-    # show_cad([centreline, wp_cross_section])
 
     def test_components_and_segments(self):
         builder = TFCoilBuilder(self.params, {}, self.centreline, self.wp_cross_section)
@@ -264,5 +268,6 @@ class TestTFCoilBuilder:
 
         xyz = tf_coil.component().get_component("xyz")
         assert xyz
+        xyz.show_cad()
         # Casing, Insulation, Winding pack
         assert len(xyz.leaves) == self.params["n_TF"]["value"] * 3
