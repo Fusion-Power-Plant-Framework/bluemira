@@ -827,7 +827,6 @@ class Coordinates:
         """
         The x-y-z coordinate array
         """
-        # TODO: Temporary, while Loop still exists
         return self._array
 
     @property
@@ -938,7 +937,7 @@ class Coordinates:
         """
         if index > len(self):
             bluemira_warn(
-                "Insert a point in Coordinates at an index greater than the number of points."
+                "Inserting a point in Coordinates at an index greater than the number of points."
             )
             index = -1
         if not np.isclose(self.xyz.T, point).all(axis=1).any():
