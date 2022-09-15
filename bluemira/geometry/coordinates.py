@@ -28,6 +28,7 @@ from typing import Iterable
 
 import numba as nb
 import numpy as np
+from click import FileError
 from pyquaternion import Quaternion
 from scipy.spatial.distance import cdist
 
@@ -649,25 +650,21 @@ class Coordinates:
     @classmethod
     def from_json(cls, filename):
         """
-        Load a Coordinates object either from a JSON file.
+        Load a Coordinates object from a JSON file.
 
         Parameters
         ----------
         filename: str
             Full path file name of the data
         """
-        ext = os.path.splitext(filename)[-1]
-        if ext == "":
-            # Default to JSON in the absence of an extension
-            filename += ".json"
-
-        elif ext != ".json":
+        try:
+            with open(filename, "r") as data:
+                xyz_dict = json.load(data)
+        except json.JSONDecodeError:
             raise CoordinatesError(
-                f"File extension {ext} not recognised for Coordinates."
+                f"Could not read the file: {filename}"
+                + "\n Please ensure it is a JSON file."
             )
-
-        with open(filename, "r") as data:
-            xyz_dict = json.load(data)
 
         # NOTE: Stabler than **xyz_dict
         x = xyz_dict.get("x", 0)
