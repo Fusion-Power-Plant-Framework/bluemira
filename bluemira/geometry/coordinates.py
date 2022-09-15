@@ -28,7 +28,6 @@ from typing import Iterable
 
 import numba as nb
 import numpy as np
-from click import FileError
 from pyquaternion import Quaternion
 from scipy.spatial.distance import cdist
 
