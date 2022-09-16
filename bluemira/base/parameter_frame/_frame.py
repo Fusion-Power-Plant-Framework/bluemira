@@ -3,7 +3,9 @@ from __future__ import annotations
 import copy
 import json
 from dataclasses import dataclass
-from typing import Any, Dict, Tuple, Type, TypeVar, Union, get_args
+from typing import Any, Dict, List, Tuple, Type, TypeVar, Union, get_args
+
+from tabulate import tabulate
 
 from bluemira.base.parameter_frame._parameter import (
     NewParameter,
@@ -120,6 +122,46 @@ class NewParameterFrame:
             raise TypeError(f"Field '{field}' does not have type NewParameter.")
         value_types = get_args(member_type)
         return value_types
+
+    def tabulator(self, keys: List = None, tablefmt: str = "fancy_grid") -> str:
+        """
+        Tabulate the ParameterFrame
+
+        Parameters
+        ----------
+        keys: list
+            table column keys
+        tablefmt: str (default="fancy_grid")
+            The format of the table - see
+            https://github.com/astanin/python-tabulate#table-format
+
+        Returns
+        -------
+        tabulated: str
+            The tabulated DataFrame
+        """
+        columns = list(ParamDictT.__annotations__.keys()) if keys is None else keys
+        rec_col = copy.deepcopy(columns)
+        rec_col.pop(columns.index("name"))
+        records = sorted(
+            [
+                [key, *[param.get(col, "N/A") for col in rec_col]]
+                for key, param in self.to_dict().items()
+            ]
+        )
+        return tabulate(
+            records,
+            headers=columns,
+            tablefmt=tablefmt,
+            showindex=False,
+            numalign="right",
+        )
+
+    def __str__(self) -> str:
+        """
+        Pretty print ParameterFrame
+        """
+        return self.tabulator()
 
 
 def make_parameter_frame(
