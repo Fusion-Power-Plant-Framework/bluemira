@@ -341,6 +341,7 @@ class TFCoilBuilder(Builder):
 
     TODO tf_wp_width and tf_wp_depth can be completely disconnected from the
     wp_cross_section passed in
+    so can R_0 and z_0
     """
 
     WP = "Winding Pack"
@@ -410,13 +411,16 @@ class TFCoilBuilder(Builder):
         """
         Build the x-y components of the TF coils.
         """
-        return [
-            *self._build_xy_wp(),
-            *self._build_xy_ins(ins_inner_face, ins_outer_face),
-            *self._build_xy_case(
-                ins_inner_face, ins_outer_face, ib_cas_wire, ob_cas_wire
-            ),
-        ]
+        return circular_pattern_component(
+            [
+                self._build_xy_wp(),
+                self._build_xy_ins(ins_inner_face, ins_outer_face),
+                self._build_xy_case(
+                    ins_inner_face, ins_outer_face, ib_cas_wire, ob_cas_wire
+                ),
+            ],
+            self.params.n_TF.value,
+        )
 
     def build_xyz(
         self,
@@ -439,17 +443,19 @@ class TFCoilBuilder(Builder):
             n_sectors, get_n_sectors(self.params.n_TF.value + 1e3 * EPS, degree)[1] + 1
         )
 
-        wp_solid, wp_sectors = self._build_xyz_wp(n_sectors, sector_degree)
+        wp_solid, wp_sector = self._build_xyz_wp()
 
-        ins_solid, ins_sectors = self._build_xyz_ins(
-            wp_solid, ins_inner_face, n_sectors, sector_degree
+        ins_solid, ins_sector = self._build_xyz_ins(wp_solid, ins_inner_face)
+
+        case_solid, case_sector = self._build_xyz_case(
+            y_in, ins_solid, ib_cas_wire, ob_cas_wire
         )
 
-        case_solid, case_sectors = self._build_xyz_case(
-            y_in, ins_solid, ib_cas_wire, ob_cas_wire, n_sectors, sector_degree
+        return case_solid, circular_pattern_component(
+            [wp_sector, ins_sector, case_sector],
+            n_sectors,
+            degree=n_sectors * sector_degree,
         )
-
-        return case_solid, [*wp_sectors, *ins_sectors, *case_sectors]
 
     def _build_xz_wp(self) -> Tuple[BluemiraWire, BluemiraWire, PhysicalComponent]:
         """
@@ -493,7 +499,7 @@ class TFCoilBuilder(Builder):
 
         return Component(self.CASING, children=[cas_inner, cas_outer])
 
-    def _build_xy_wp(self) -> List[Component]:
+    def _build_xy_wp(self) -> Component:
         """
         Winding pack x-y
         """
@@ -508,13 +514,11 @@ class TFCoilBuilder(Builder):
         ib_wp_comp.plot_options.face_options["color"] = BLUE_PALETTE["TF"][1]
         ob_wp_comp = PhysicalComponent(self.OUTB, xs2)
         ob_wp_comp.plot_options.face_options["color"] = BLUE_PALETTE["TF"][1]
-        return circular_pattern_component(
-            Component(self.WP, children=[ib_wp_comp, ob_wp_comp]), self.params.n_TF.value
-        )
+        return Component(self.WP, children=[ib_wp_comp, ob_wp_comp])
 
     def _build_xy_ins(
         self, ins_inner_face: BluemiraFace, ins_outer_face: BluemiraFace
-    ) -> List[Component]:
+    ) -> Component:
         """
         Insulation x-y
         """
@@ -522,10 +526,7 @@ class TFCoilBuilder(Builder):
         ib_ins_comp.plot_options.face_options["color"] = BLUE_PALETTE["TF"][2]
         ob_ins_comp = PhysicalComponent(self.OUTB, ins_outer_face)
         ob_ins_comp.plot_options.face_options["color"] = BLUE_PALETTE["TF"][2]
-        return circular_pattern_component(
-            Component(self.INS, children=[ib_ins_comp, ob_ins_comp]),
-            self.params.n_TF.value,
-        )
+        return Component(self.INS, children=[ib_ins_comp, ob_ins_comp])
 
     def _build_xy_case(
         self,
@@ -548,32 +549,26 @@ class TFCoilBuilder(Builder):
         ib_cas_comp.plot_options.face_options["color"] = BLUE_PALETTE["TF"][0]
         ob_cas_comp = PhysicalComponent(self.OUTB, cas_outer_face)
         ob_cas_comp.plot_options.face_options["color"] = BLUE_PALETTE["TF"][0]
-        casing = Component(
+        return Component(
             self.CASING,
             children=[ib_cas_comp, ob_cas_comp],
         )
-        return circular_pattern_component(casing, self.params.n_TF.value)
 
-    def _build_xyz_wp(
-        self, n_sectors: int, sector_degree: float
-    ) -> Tuple[BluemiraSolid, List[PhysicalComponent]]:
+    def _build_xyz_wp(self) -> Tuple[BluemiraSolid, PhysicalComponent]:
         """
         Winding pack x-y-z
         """
         wp_solid = sweep_shape(self.wp_cross_section, self.centreline)
         winding_pack = PhysicalComponent(self.WP, wp_solid)
         winding_pack.display_cad_options.color = BLUE_PALETTE["TF"][1]
-        return wp_solid, circular_pattern_component(
-            winding_pack, n_sectors, degree=sector_degree * n_sectors
-        )
+
+        return wp_solid, winding_pack
 
     def _build_xyz_ins(
         self,
         wp_solid: BluemiraSolid,
         ins_inner_face: BluemiraFace,
-        n_sectors: int,
-        sector_degree: float,
-    ) -> Tuple[BluemiraSolid, List[PhysicalComponent]]:
+    ) -> Tuple[BluemiraSolid, PhysicalComponent]:
         """
         Insulation x-y-z
         """
@@ -585,9 +580,8 @@ class TFCoilBuilder(Builder):
             ins_solid,
         )
         insulation.display_cad_options.color = BLUE_PALETTE["TF"][2]
-        return ins_solid, circular_pattern_component(
-            insulation, n_sectors, degree=sector_degree * n_sectors
-        )
+
+        return ins_solid, insulation
 
     def _build_xyz_case(
         self,
@@ -595,9 +589,7 @@ class TFCoilBuilder(Builder):
         ins_solid: BluemiraSolid,
         inner_xs: BluemiraWire,
         outer_xs: BluemiraWire,
-        n_sectors: int,
-        sector_degree: float,
-    ) -> Tuple[BluemiraSolid, List[PhysicalComponent]]:
+    ) -> Tuple[BluemiraSolid, PhysicalComponent]:
         """
         Casing x-y-z
         """
@@ -636,10 +628,7 @@ class TFCoilBuilder(Builder):
 
         casing = PhysicalComponent(self.CASING, case_solid_hollow)
         casing.display_cad_options.color = BLUE_PALETTE["TF"][0]
-        casing.display_cad_options.transparency = 0.5
-        return case_solid_hollow, circular_pattern_component(
-            casing, n_sectors, degree=n_sectors * sector_degree
-        )
+        return case_solid_hollow, casing
 
     def _make_ins_xsec(self) -> Tuple[BluemiraFace, BluemiraFace]:
         """

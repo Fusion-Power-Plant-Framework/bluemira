@@ -31,7 +31,7 @@ import pytest
 from bluemira.base.file import get_bluemira_path
 from bluemira.equilibria import Equilibrium
 from bluemira.equilibria.find import find_OX_points
-from bluemira.geometry.parameterisations import TripleArc
+from bluemira.geometry.parameterisations import PrincetonD, TripleArc
 from bluemira.geometry.tools import make_circle, make_polygon
 from EUDEMO_builders.tf_coils import TFCoilBuilder, TFCoilDesigner
 
@@ -175,22 +175,28 @@ class TestTFCoilDesigner:
 
 class TestTFCoilBuilder:
 
-    centreline = TripleArc().create_shape()
-    tk_tf_wp = 0.4
-    tk_tf_wp_y = 0.7
+    centrelines, wp_xs = [], []
 
-    x_min = centreline.bounding_box.x_min - (0.5 * tk_tf_wp)
-    y_min = centreline.bounding_box.y_min - (0.5 * tk_tf_wp_y)
+    for cl in [TripleArc(), PrincetonD()]:
+        centreline = cl.create_shape()
+        tk_tf_wp = 0.4
+        tk_tf_wp_y = 0.7
 
-    wp_cross_section = make_polygon(
-        [
-            [x_min, y_min, 0],
-            [x_min + tk_tf_wp, y_min, 0],
-            [x_min + tk_tf_wp, y_min + tk_tf_wp_y, 0],
-            [x_min, y_min + tk_tf_wp_y, 0],
-        ],
-        closed=True,
-    )
+        x_min = centreline.bounding_box.x_min - (0.5 * tk_tf_wp)
+        y_min = centreline.bounding_box.y_min - (0.5 * tk_tf_wp_y)
+
+        wp_cross_section = make_polygon(
+            [
+                [x_min, y_min, 0],
+                [x_min + tk_tf_wp, y_min, 0],
+                [x_min + tk_tf_wp, y_min + tk_tf_wp_y, 0],
+                [x_min, y_min + tk_tf_wp_y, 0],
+            ],
+            closed=True,
+        )
+        centrelines.append(centreline)
+        wp_xs.append(wp_cross_section)
+
     params = {
         "R_0": {"value": 9},
         "z_0": {"value": 0.0},
@@ -205,15 +211,41 @@ class TestTFCoilBuilder:
         "tk_tf_side": {"value": 0.1},
     }
 
-    def test_components_and_segments(self):
-        builder = TFCoilBuilder(self.params, {}, self.centreline, self.wp_cross_section)
+    @pytest.mark.parametrize("centreline, wp_xs", zip(centrelines, wp_xs))
+    def test_components_and_segments(self, centreline, wp_xs):
+        builder = TFCoilBuilder(self.params, {}, centreline, wp_xs)
         tf_coil = builder.build()
 
         assert tf_coil.component().get_component("xz")
-        assert tf_coil.component().get_component("xy")
+        xy = tf_coil.component().get_component("xy")
+        assert xy
 
         xyz = tf_coil.component().get_component("xyz")
         assert xyz
         xyz.show_cad()
+
         # Casing, Insulation, Winding pack
         assert len(xyz.leaves) == self.params["n_TF"]["value"] * 3
+        # inboard and outboard
+        assert len(xy.leaves) == self.params["n_TF"]["value"] * 3 * 2
+
+        ins = xyz.get_component(f"{TFCoilBuilder.INS} 1")
+        wp = xyz.get_component(f"{TFCoilBuilder.WP} 1")
+        insgap = self.params["tk_tf_ins"]["value"] + self.params["tk_tf_insgap"]["value"]
+        assert np.isclose(
+            wp._shape.bounding_box.x_min - ins._shape.bounding_box.x_min, insgap
+        )
+        assert np.isclose(
+            ins._shape.bounding_box.y_max - wp._shape.bounding_box.y_max, insgap
+        )
+
+        ib_cas = xy.get_component(f"{TFCoilBuilder.CASING} 1").get_component("inboard 1")
+        case_thick = (
+            self.params["tf_wp_width"]["value"]
+            + self.params["tk_tf_nose"]["value"]
+            + self.params["tk_tf_front_ib"]["value"]
+        )
+        assert np.isclose(
+            ib_cas._shape.bounding_box.x_max - ib_cas._shape.bounding_box.x_min,
+            case_thick,
+        )
