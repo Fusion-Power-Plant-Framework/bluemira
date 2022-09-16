@@ -158,9 +158,9 @@ class FiniteElementModel:
         """
         return self.geometry.add_element(node_id1, node_id2, cross_section, material)
 
-    def add_loop(self, loop, cross_section, material=None):
+    def add_coordinates(self, coords, cross_section, material=None):
         """
-        Adds a Loop object to the FiniteElementModel
+        Adds a Coordinates object to the FiniteElementModel
 
         Parameters
         ----------
@@ -171,7 +171,7 @@ class FiniteElementModel:
         material: Material object
             The material of all the Elements in the Coordinates
         """
-        self.geometry.add_coordinates(loop, cross_section, material)
+        self.geometry.add_coordinates(coords, cross_section, material)
 
     def add_support(
         self, node_id, dx=False, dy=False, dz=False, rx=False, ry=False, rz=False

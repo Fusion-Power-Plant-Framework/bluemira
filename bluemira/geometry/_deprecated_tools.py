@@ -314,16 +314,16 @@ def segment_lengths(x: np.ndarray, y: np.ndarray, z: np.ndarray) -> np.ndarray:
     Parameters
     ----------
     x: array_like
-        x coordinates of the loop [m]
+        x coordinates [m]
     y: array_like
-        y coordinates of the loop [m]
+        y coordinates [m]
     z: array_like
-        z coordinates of the loop [m]
+        z coordinates [m]
 
     Returns
     -------
     dL: np.array(N)
-        The length of each individual segment in the loop
+        The length of each individual segment in the coordinates
     """
     return np.sqrt(np.diff(x) ** 2 + np.diff(y) ** 2 + np.diff(z) ** 2)
 
@@ -447,19 +447,19 @@ def vector_lengthnorm(x: np.ndarray, y: np.ndarray, z: np.ndarray) -> np.ndarray
 
 def vector_lengthnorm_2d(x, z):
     """
-    Get a normalised 1-D parameterisation of an x, z loop.
+    Get a normalised 1-D parameterisation of x, z coordinates.
 
     Parameters
     ----------
     x: array_like
-        x coordinates of the loop [m]
+        x coordinates [m]
     z: array_like
-        z coordinates of the loop [m]
+        z coordinates [m]
 
     Returns
     -------
     total_length: np.array(N)
-        The cumulative normalised length of each individual segment in the loop
+        The cumulative normalised length of each individual segment in the coordinates
     """
     total_length = np.append(0, np.cumsum(np.sqrt(np.diff(x) ** 2 + np.diff(z) ** 2)))
     return total_length / total_length[-1]
@@ -472,9 +472,9 @@ def innocent_smoothie(x, z, n=500, s=0):
     Parameters
     ----------
     x: array_like
-        x coordinates of the loop [m]
+        x coordinates [m]
     z: array_like
-        z coordinates of the loop [m]
+        z coordinates [m]
     n: int
         The number of interpolation points
     s: Union[int, float]
@@ -483,9 +483,9 @@ def innocent_smoothie(x, z, n=500, s=0):
     Returns
     -------
     x: array_like
-        Smoothed, interpolated x coordinates of the loop [m]
+        Smoothed, interpolated x coordinates [m]
     z: array_like
-        Smoothed, interpolated z coordinates of the loop [m]
+        Smoothed, interpolated z coordinates [m]
     """
     length_norm = vector_lengthnorm_2d(x, z)
     n = int(n)
@@ -891,7 +891,7 @@ def vector_intersect_3d(p_1, p_2, p_3, p_4):
 
 def coords_plane_intersect(coords, plane):
     """
-    Calculate the intersection of a loop with a plane.
+    Calculate the intersection of Coordinates with a plane.
 
     Parameters
     ----------
@@ -1029,7 +1029,7 @@ def join_intersect(coords1, coords2, get_arg=False):
 
     Notes
     -----
-    Modifies loop1
+    Modifies coords1
     """
     x_inter, z_inter = get_intersect(coords1.xz, coords2.xz)
     args = _intersect_count(x_inter, z_inter, coords1.x, coords1.z)
@@ -1253,7 +1253,7 @@ def make_mixed_wire(
     Returns
     -------
     wire: BluemiraWire
-        The BluemiraWire of the mixed polygon/spline Loop
+        The BluemiraWire of the mixed polygon/spline coordinates
     """
     mfm = MixedFaceMaker(
         x,
@@ -1341,7 +1341,7 @@ def make_mixed_face(
     Returns
     -------
     face: BluemiraFace
-        The BluemiraFace of the mixed polygon/spline Loop
+        The BluemiraFace of the mixed polygon/spline coordinates
     """
     mfm = MixedFaceMaker(
         x,
@@ -1555,12 +1555,12 @@ class MixedFaceMaker:
 
     def _find_polygon_vertices(self):
         """
-        Finds all vertices in the loop which belong to polygon-like edges
+        Finds all vertices in the Coordinates which belong to polygon-like edges
 
         Returns
         -------
         vertices: np.ndarray(dtype=int)
-            The vertices of the loop which are polygon-like
+            The vertices of the coordinates which are polygon-like
         """
         seg_lengths = segment_lengths(self.x, self.y, self.z)
         median = np.median(seg_lengths)
@@ -1618,7 +1618,7 @@ class MixedFaceMaker:
         Parameters
         ----------
         vertices: np.ndarray(dtype=int)
-            The vertices of the loop which are polygon-like
+            The vertices of the lcoordinates which are polygon-like
 
         Returns
         -------
@@ -1636,7 +1636,7 @@ class MixedFaceMaker:
             delta = vertices[i + 1] - vertex
 
             if i == len(vertices) - 2:
-                # end of loop clean-up
+                # end of coordinates clean-up
                 end = vertices[i + 1]
                 sequences.append([start, end])
                 break
@@ -1660,7 +1660,7 @@ class MixedFaceMaker:
             # Shape is a pure polygon
             return sequences
 
-        # Now check the start and end of the loop, to see if a polygon segment
+        # Now check the start and end of the coordinates, to see if a polygon segment
         # bridges the join
         first_p_vertex = sequences[0][0]
         last_p_vertex = sequences[-1][1]
@@ -1680,7 +1680,7 @@ class MixedFaceMaker:
 
         last_p_vertex = sequences[-1][1]
         if self.num_points - last_p_vertex <= self.n_segments:
-            # There is a small spline section at the end of the loop, that
+            # There is a small spline section at the end of the coordinates, that
             # needs to be bridged
             if sequences[0][0] == 0:
                 # There is no bridge -> take action

@@ -244,7 +244,7 @@ class PlasmaCoil:
         Parameters
         ----------
         ax: Axes object
-            The matplotlib axes on which to plot the Loop
+            The matplotlib axes on which to plot the PlasmaCoil
         """
         return PlasmaCoilPlotter(self, ax=ax)
 
