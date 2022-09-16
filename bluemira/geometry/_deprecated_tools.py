@@ -30,7 +30,6 @@ from typing import Tuple
 import numba as nb
 import numpy as np
 from numba.np.extensions import cross2d
-from pyquaternion import Quaternion
 from scipy.interpolate import UnivariateSpline, interp1d
 
 from bluemira.base.constants import EPS
