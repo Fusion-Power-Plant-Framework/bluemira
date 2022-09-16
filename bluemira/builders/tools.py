@@ -24,7 +24,7 @@ A collection of tools used in the EU-DEMO design.
 """
 
 import copy
-from typing import List, Tuple
+from typing import List, Tuple, Union
 
 import numpy as np
 
@@ -85,7 +85,7 @@ def get_n_sectors(no_obj, degree=360):
 
 
 def circular_pattern_component(
-    component: bm_comp.Component,
+    component: Union[bm_comp.Component, List[bm_comp.Component]],
     n_children: int,
     parent_prefix: str = "Sector",
     *,
@@ -103,7 +103,7 @@ def circular_pattern_component(
 
     Parameters
     ----------
-    component: Component
+    component: Union[Component, List[Component]],
         The original Component to use as the template for copying around the circle.
     n_children: int
         The number of children to produce around the circle.
@@ -145,25 +145,32 @@ def circular_pattern_component(
         if isinstance(comp, bm_comp.PhysicalComponent):
             comp.shape = shape
 
-    def assign_or_pattern(comp: bm_comp.Component):
-        if isinstance(comp, bm_comp.PhysicalComponent):
-            shapes = bm_geo.tools.circular_pattern(
-                comp.shape,
-                n_shapes=n_children,
-                origin=origin,
-                direction=direction,
-                degree=degree,
-            )
-            for sector, shape in zip(sectors, shapes):
-                assign_component_to_sector(comp, sector, shape)
-        else:
-            for sector in sectors:
-                assign_component_to_sector(comp, sector)
+    def assign_or_pattern(comps: Union[bm_comp.Component, List[bm_comp.Component]]):
+        if not isinstance(comps, list):
+            comps = [comps]
 
-    def process_children(comp: bm_comp.Component):
-        for child in comp.children:
-            assign_or_pattern(child)
-            process_children(child)
+        for comp in comps:
+            if isinstance(comp, bm_comp.PhysicalComponent):
+                shapes = bm_geo.tools.circular_pattern(
+                    comp.shape,
+                    n_shapes=n_children,
+                    origin=origin,
+                    direction=direction,
+                    degree=degree,
+                )
+                for sector, shape in zip(sectors, shapes):
+                    assign_component_to_sector(comp, sector, shape)
+            else:
+                for sector in sectors:
+                    assign_component_to_sector(comp, sector)
+
+    def process_children(comps: Union[bm_comp.Component, List[bm_comp.Component]]):
+        if not isinstance(comps, list):
+            comps = [comps]
+        for comp in comps:
+            for child in comp.children:
+                assign_or_pattern(child)
+                process_children(child)
 
     assign_or_pattern(component)
     process_children(component)
