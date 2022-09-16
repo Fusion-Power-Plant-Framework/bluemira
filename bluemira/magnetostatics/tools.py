@@ -96,17 +96,13 @@ def process_coords_array(shape):
     Parameters
     ----------
     shape: Union[np.array(N, 3), Coordinates]
-        The Loop or array to make into a coordinate array
+        The Coordinates or array to make into a coordinate array
 
     Returns
     -------
     shape: np.array(N, 3)
     """
-    if type(shape).__name__ == "Loop":
-        bluemira_warn("Loops are deprecated; please use Coordinates.")
-        shape = shape.xyz.T
-
-    elif isinstance(shape, np.ndarray):
+    if isinstance(shape, np.ndarray):
         pass
 
     elif isinstance(shape, Coordinates):
@@ -130,9 +126,6 @@ def process_to_coordinates(shape):
     """
     if isinstance(shape, Coordinates):
         return shape
-    elif type(shape).__name__ == "Loop":
-        bluemira_warn("Loops are deprecated; please use Coordinates.")
-        return Coordinates(shape.xyz)
     else:
         return Coordinates(shape)
 

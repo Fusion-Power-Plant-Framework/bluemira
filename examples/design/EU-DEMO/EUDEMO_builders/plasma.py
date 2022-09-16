@@ -232,7 +232,6 @@ class PlasmaBuilder(Builder):
             )
         tf_boundary = offset_wire(tf_boundary, -0.5)
 
-        # TODO: Avoid converting to (deprecated) Loop
         # TODO: Agree on numpy array dimensionality
         x, z = flatten_shape(*tf_boundary.discretize(200, byedges=True).xz)
         tf_boundary = make_polygon({"x": x, "z": z})
