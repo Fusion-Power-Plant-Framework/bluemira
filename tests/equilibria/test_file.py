@@ -20,13 +20,17 @@
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 
 import os
+from unittest import mock
 
 import fortranformat as ff
 import numpy as np
+import pytest
+from typeguard import check_type
 
 from bluemira.base.file import get_bluemira_path, get_files_by_ext
 from bluemira.equilibria.file import EQDSKInterface
 from bluemira.utilities.tools import compare_dicts
+from tests._helpers import combine_text_mock_write_calls
 
 
 class TestEQDSKInterface:
@@ -34,8 +38,12 @@ class TestEQDSKInterface:
 
     @classmethod
     def setup_class(cls):
-        cls.testfiles = get_files_by_ext(cls.path, "eqdsk")
+        cls.testfiles = [
+            os.path.join(get_bluemira_path("eqdsk", subfolder="data"), "jetto.eqdsk_out")
+        ]
+        cls.testfiles += get_files_by_ext(cls.path, "eqdsk")
         cls.testfiles += get_files_by_ext(cls.path, "eqdsk_out")
+        assert cls.testfiles
 
     def read_strict_geqdsk(self, fname):
         """
@@ -126,18 +134,17 @@ class TestEQDSKInterface:
         # Loop over all test files
         for f in self.testfiles:
             # Define absolute path of current test file
-            file = os.sep.join([self.path, f])
+            file = os.path.join(self.path, f)
 
             # Create EQDSK file interface and read data to a dict
-            eqdsk = EQDSKInterface()
-            eqdsk.read(file)
+            eqdsk = EQDSKInterface.from_file(file)
             d1 = eqdsk.to_dict()
 
             # Write data read in from test file into a new EQDSK
             # file, with the suffix "_temp"
             name = f.split(".")[0] + "_temp"
-            fname = os.sep.join([self.path, name])
-            eqdsk.write(fname, d1, formatt="eqdsk")
+            fname = os.path.join(self.path, name)
+            eqdsk.write(fname, format="eqdsk")
             d2 = eqdsk.to_dict()
 
             # Check eqdsk is readable by Fortran readers.
@@ -148,9 +155,8 @@ class TestEQDSKInterface:
             # Write data read in from test file into a new JSON
             # file, with the suffix "_temp"
             jname = fname.split(".")[0] + ".json"
-            eqdsk.write(jname, d1, formatt="json")
-            neqdsk = EQDSKInterface()
-            d3 = neqdsk.read(jname)
+            eqdsk.write(jname, format="json")
+            d3 = EQDSKInterface.from_file(jname).to_dict()
 
             # Clean up temporary files
             os.remove(fname + ".eqdsk")
@@ -161,3 +167,46 @@ class TestEQDSKInterface:
             assert compare_dicts(d1, d2, verbose=True)
             assert compare_dicts(d1, d3, verbose=True)
             assert compare_dicts(d2, d3, verbose=True)
+
+    def test_read_matches_values_in_file(self):
+        eq = EQDSKInterface.from_file(self.testfiles[0])
+
+        assert eq.nz == 151
+        assert eq.nx == 151
+        assert eq.xdim == pytest.approx(3.14981545)
+        assert eq.ncoil == 0
+        assert eq.xc.size == 0
+        assert eq.nbdry == 72
+        np.testing.assert_allclose(
+            eq.xbdry[:3], [0.399993127e01, 0.399150254e01, 0.396906908e01]
+        )
+        np.testing.assert_allclose(
+            eq.zbdry[-3:], [-0.507187454e00, -0.240712636e00, 0.263892047e-01]
+        )
+
+    def test_values_match_annotated_types(self):
+        eq = EQDSKInterface.from_file(self.testfiles[0])
+
+        mismatched = []
+        for key, value_type in EQDSKInterface.__annotations__.items():
+            value = getattr(eq, key)
+            try:
+                check_type(key, value, value_type)
+            except TypeError:
+                mismatched.append((key, type(value), value_type))
+        assert not mismatched
+
+    def test_write_then_read_in_json_format(self):
+        eq = EQDSKInterface.from_file(self.testfiles[0])
+
+        with mock.patch("builtins.open", new_callable=mock.mock_open) as open_mock:
+            eq.write("some/path.json", format="json")
+        written = combine_text_mock_write_calls(open_mock)
+
+        with mock.patch(
+            "builtins.open", new_callable=mock.mock_open, read_data=written
+        ) as open_mock:
+            eq2 = EQDSKInterface.from_file("/some/path.json")
+
+        assert eq2.nz == 151
+        assert eq2.nbdry == 72
