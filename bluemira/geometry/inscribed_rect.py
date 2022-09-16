@@ -32,7 +32,6 @@ from bluemira.geometry._deprecated_tools import (
     coords_plane_intersect,
     get_intersect,
     in_polygon,
-    quart_rotate,
 )
 from bluemira.geometry.coordinates import Coordinates
 from bluemira.geometry.plane import BluemiraPlane
