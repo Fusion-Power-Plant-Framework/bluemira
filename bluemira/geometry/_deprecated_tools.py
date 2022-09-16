@@ -363,7 +363,9 @@ def interpolate_points(
 
 
 def interpolate_midpoints(
-    x: np.ndarray, y: np.ndarray, z: np.ndarray, n_points: int
+    x: np.ndarray,
+    y: np.ndarray,
+    z: np.ndarray,
 ) -> Tuple[np.ndarray]:
     """
     Interpolate the points adding the midpoint of each segment to the points.
@@ -376,8 +378,6 @@ def interpolate_midpoints(
         The y coordinates
     z: np.ndarray
         The z coordinates
-    n_points: int
-        number of points
 
     Returns
     -------
