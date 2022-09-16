@@ -205,30 +205,6 @@ def on_polygon(x, z, poly):
     return on_edge
 
 
-def check_closed(x, y, z):
-    """
-    Check that the coordinates are closed e.g. first element == last element for all
-    dimensions.
-
-    Parameters
-    ----------
-    x: np.array
-        The x coordinates
-    y: np.array
-        The y coorindates
-    z: np.array
-        The z coordinates
-
-    Returns
-    -------
-    closed: bool
-        True if the coordinates are closed
-    """
-    if x[0] == x[-1] and y[0] == y[-1] and z[0] == z[-1]:
-        return True
-    return False
-
-
 # =============================================================================
 # Coordinate analysis
 # =============================================================================
