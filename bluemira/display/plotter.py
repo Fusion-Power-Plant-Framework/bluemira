@@ -40,7 +40,6 @@ from bluemira.display.palettes import BLUE_PALETTE
 from bluemira.geometry import bound_box, face
 from bluemira.geometry import placement as _placement
 from bluemira.geometry import wire
-from bluemira.geometry._deprecated_tools import bounding_box
 from bluemira.geometry.coordinates import (
     Coordinates,
     _parse_to_xyz_array,
@@ -933,7 +932,7 @@ def _plot_3d(coords, ax=None, **kwargs):
         ax = Plot3D()
         # Now we re-arrange a little so that matplotlib can show us something a little
         # more correct
-        x_bb, y_bb, z_bb = bounding_box(*coords.xyz)
+        x_bb, y_bb, z_bb = bound_box.BoundingBox.from_xyz(*coords.xyz).get_box_arrays()
         for x, y, z in zip(x_bb, y_bb, z_bb):
             ax.plot([x], [y], [z], color="w")
 

@@ -30,13 +30,11 @@ from typing import Tuple
 import numba as nb
 import numpy as np
 from numba.np.extensions import cross2d
-from pyquaternion import Quaternion
 from scipy.interpolate import UnivariateSpline, interp1d
 
 from bluemira.base.constants import EPS
 from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.codes import _freecadapi as cadapi
-from bluemira.geometry.bound_box import BoundingBox
 from bluemira.geometry.constants import CROSS_P_TOL, DOT_P_TOL
 from bluemira.geometry.coordinates import _validate_coordinates, get_area
 from bluemira.geometry.error import GeometryError
@@ -205,30 +203,6 @@ def on_polygon(x, z, poly):
     return on_edge
 
 
-def check_closed(x, y, z):
-    """
-    Check that the coordinates are closed e.g. first element == last element for all
-    dimensions.
-
-    Parameters
-    ----------
-    x: np.array
-        The x coordinates
-    y: np.array
-        The y coorindates
-    z: np.array
-        The z coordinates
-
-    Returns
-    -------
-    closed: bool
-        True if the coordinates are closed
-    """
-    if x[0] == x[-1] and y[0] == y[-1] and z[0] == z[-1]:
-        return True
-    return False
-
-
 # =============================================================================
 # Coordinate analysis
 # =============================================================================
@@ -328,31 +302,6 @@ def segment_lengths(x: np.ndarray, y: np.ndarray, z: np.ndarray) -> np.ndarray:
     return np.sqrt(np.diff(x) ** 2 + np.diff(y) ** 2 + np.diff(z) ** 2)
 
 
-def bounding_box(x: np.ndarray, y: np.ndarray, z: np.ndarray) -> Tuple[np.ndarray]:
-    """
-    Calculates a bounding box for a set of 3-D coordinates
-
-    Parameters
-    ----------
-    x: np.ndarray
-        The x coordinates
-    y: np.ndarray
-        The y coordinates
-    z: np.ndarray
-        The z coordinates
-
-    Returns
-    -------
-    x_b: np.ndarray
-        The x coordinates of the bounding box rectangular cuboid
-    y_b: np.ndarray
-        The y coordinates of the bounding box rectangular cuboid
-    z_b: np.ndarray
-        The z coordinates of the bounding box rectangular cuboid
-    """
-    return BoundingBox.from_xyz(x, y, z).get_box_arrays()
-
-
 def interpolate_points(
     x: np.ndarray, y: np.ndarray, z: np.ndarray, n_points: int
 ) -> Tuple[np.ndarray]:
@@ -388,7 +337,9 @@ def interpolate_points(
 
 
 def interpolate_midpoints(
-    x: np.ndarray, y: np.ndarray, z: np.ndarray, n_points: int
+    x: np.ndarray,
+    y: np.ndarray,
+    z: np.ndarray,
 ) -> Tuple[np.ndarray]:
     """
     Interpolate the points adding the midpoint of each segment to the points.
@@ -401,8 +352,6 @@ def interpolate_midpoints(
         The y coordinates
     z: np.ndarray
         The z coordinates
-    n_points: int
-        number of points
 
     Returns
     -------
@@ -635,103 +584,6 @@ def offset(x, z, offset_value):
 # =============================================================================
 # Rotations
 # =============================================================================
-
-
-def quart_rotate(point, **kwargs):
-    """
-    Rotate a point cloud by angle theta around vector (right-hand coordinates).
-    Uses black quarternion magic.
-
-    Parameters
-    ----------
-    point: Union[np.array(n, 3), dict('x': [], 'y': [], 'z': [])]
-        The coordinates of the points to be rotated
-    kwargs:
-        theta: float
-            Rotation angle [radians]
-        p1: [float, float, float]
-            Origin of rotation vector
-        p2: [float, float, float]
-            Second point defining rotation axis
-    kwargs: (alternatively)
-        theta: float
-            Rotation angle [radians]
-        xo: [float, float, float]
-            Origin of rotation vector
-        dx: [float, float, float] or one of 'x', 'y', 'z'
-            Direction vector definition rotation axis from origin. If a string
-            is specified the dx vector is automatically calculated, e.g.
-            'z': (0, 0, 1)
-    kwargs: (alternatively)
-        quart: Quarternion object
-            The rotation quarternion
-        xo: [float, float, float]
-            Origin of rotation vector
-
-    Returns
-    -------
-    rpoint: Union[np.array(n, 3), dict('x': [], 'y': [], 'z': [])]
-        The rotated coordinates. Output in numpy array or dict, depending on
-        input type
-    """
-    if "quart" in kwargs:
-        quart = kwargs["quart"]
-        xo = kwargs.get("xo", np.zeros(3))
-    else:
-        theta = kwargs["theta"]
-        if "p1" in kwargs and "p2" in kwargs:
-            p1, p2 = kwargs["p1"], kwargs["p2"]
-            if not isinstance(p1, np.ndarray) or not isinstance(p1, np.ndarray):
-                p1, p2 = np.array(p1), np.array(p2)
-            xo = p1
-            dx = p2 - p1
-            dx = tuple(dx)
-        elif "xo" in kwargs and "dx" in kwargs:
-            xo, dx = kwargs["xo"], kwargs["dx"]
-        elif "dx" in kwargs:
-            dx = kwargs["dx"]
-            if isinstance(dx, str):
-                index = ["x", "y", "z"].index(dx)
-                dx = np.zeros(3)
-                dx[index] = 1
-            xo = np.zeros(3)
-        else:
-            errtxt = "error in kwargs input\n"
-            errtxt += "rotation vector input as ether:\n"
-            errtxt += "\tpair of points, p1=[x,y,z] and p2=[x,y,z]\n"
-            errtxt += "\torigin and vector, xo=[x,y,z] and dx=[x,y,z]\n"
-            raise GeometryError(errtxt)
-
-        dx /= np.linalg.norm(dx)  # normalise rotation axis
-        quart = Quaternion(axis=dx, angle=theta)
-
-    if isinstance(point, dict):
-        isdict = True
-        p = np.zeros((len(point["x"]), 3))
-        for i, var in enumerate(["x", "y", "z"]):
-            p[:, i] = point[var]
-        point = p
-    else:
-        isdict = False
-    if np.ndim(point) == 1 and len(point) == 3:
-        point = np.array([point])
-    if np.shape(point)[1] != 3:
-        errtxt = "point vector required as numpy.array size=(:,3)"
-        raise GeometryError(errtxt)
-
-    trans = np.ones((len(point), 1)) * xo  # expand vector origin
-    p = point - trans  # translate to rotation vector's origin (xo)
-    rpoint = np.zeros(np.shape(point))
-    for i, po in enumerate(p):
-        rpoint[i, :] = quart.rotate(po)
-    rpoint += trans  # translate from rotation vector's origion (xo)
-
-    if isdict:  # return to dict
-        p = {}
-        for i, var in enumerate(["x", "y", "z"]):
-            p[var] = rpoint[:, i]
-        rpoint = p
-    return rpoint
 
 
 def rotation_matrix(theta, axis="z"):

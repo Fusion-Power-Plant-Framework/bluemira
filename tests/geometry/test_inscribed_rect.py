@@ -102,7 +102,7 @@ class TestInscribedRectangle:
 
                         if tf is not None:
                             # Some overlaps are points or lines of 0 area
-                            if not all([get_area(t) == 0.0 for t in tf]):
+                            if not all([get_area(*t.xyz) == 0.0 for t in tf]):
                                 self.assertion_error_creator(
                                     "Overlap", [dx, dz, point, k, convex]
                                 )

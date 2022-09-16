@@ -23,6 +23,8 @@ Function to find inscribed rectangle.
 
 In contained file because loop module imports geomtools and geombase modules
 """
+from copy import deepcopy
+
 import numpy as np
 from scipy.spatial.distance import pdist
 
@@ -30,7 +32,6 @@ from bluemira.geometry._deprecated_tools import (
     coords_plane_intersect,
     get_intersect,
     in_polygon,
-    quart_rotate,
 )
 from bluemira.geometry.coordinates import Coordinates
 from bluemira.geometry.plane import BluemiraPlane
@@ -95,22 +96,24 @@ def inscribed_rect_in_poly(
 
     x, z = x_point, z_point
 
-    angle_r = np.arctan(1 / aspectratio)
+    angle_r = np.rad2deg(np.arctan(1 / aspectratio))
 
     # Set up "Union Jack" intersection Planes
-    xx = np.array([[x, 0, z], [x + 1, 0, z], [x, 1, z]])
-    zz = np.array([[x, 0, z], [x, 0, z + 1], [x, 1, z]])
+    xx = Coordinates([[x, 0, z], [x + 1, 0, z], [x, 1, z], [0, 0, 0]])
+    zz = Coordinates([[x, 0, z], [x, 0, z + 1], [x, 1, z], [0, 0, 0]])
 
     xo, rot_p = [x, 0, z], [0, 1, 0]
 
-    xx_plane = BluemiraPlane.from_3_points(*xx)
-    zz_plane = BluemiraPlane.from_3_points(*zz)
-    xz_plane = BluemiraPlane.from_3_points(
-        *quart_rotate(xx, theta=angle_r, xo=xo, dx=rot_p)
-    )
-    zx_plane = BluemiraPlane.from_3_points(
-        *quart_rotate(xx, theta=-angle_r, xo=xo, dx=rot_p)
-    )
+    xx_plane = BluemiraPlane.from_3_points(*xx.points[:3])
+    zz_plane = BluemiraPlane.from_3_points(*zz.points[:3])
+
+    xx_rot = deepcopy(xx)
+    xx_rot.rotate(base=xo, direction=rot_p, degree=angle_r)
+    xz_plane = BluemiraPlane.from_3_points(*xx_rot.points[:3])
+
+    zz_rot = deepcopy(xx)
+    zz_rot.rotate(base=xo, direction=rot_p, degree=-angle_r)
+    zx_plane = BluemiraPlane.from_3_points(*zz_rot.points[:3])
 
     # Set up distance calculation
     getdxdz = _GetDxDz(

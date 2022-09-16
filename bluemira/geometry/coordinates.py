@@ -986,7 +986,7 @@ class Coordinates:
         points = self._array - base.reshape(3, 1)
         quart = Quaternion(axis=direction, angle=np.deg2rad(degree))
         r_matrix = quart.rotation_matrix
-        new_array = points.T @ r_matrix.T
+        new_array = points.T @ r_matrix.T + base
         self._array = new_array.T
 
         self._update_plane_props()

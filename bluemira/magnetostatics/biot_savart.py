@@ -26,7 +26,8 @@ import numpy as np
 
 from bluemira.base.constants import EPS, MU_0_4PI, ONE_4PI
 from bluemira.base.look_and_feel import bluemira_warn
-from bluemira.geometry._deprecated_tools import bounding_box, rotation_matrix
+from bluemira.geometry._deprecated_tools import rotation_matrix
+from bluemira.geometry.bound_box import BoundingBox
 from bluemira.magnetostatics.baseclass import CurrentSource
 from bluemira.magnetostatics.tools import process_coords_array, process_xyz_array
 from bluemira.utilities import tools
@@ -244,7 +245,7 @@ class BiotSavartFilament(CurrentSource):
             # If no ax provided, we assume that we want to plot only this source,
             # and thus set aspect ratio equality on this term only
             # Invisible bounding box to set equal aspect ratio plot
-            xbox, ybox, zbox = bounding_box(*self.points.T)
+            xbox, ybox, zbox = BoundingBox.from_xyz(*self.points.T).get_box_arrays()
             ax.plot(1.1 * xbox, 1.1 * ybox, 1.1 * zbox, "s", alpha=0)
 
         # Split sub-filaments up for plotting purposes

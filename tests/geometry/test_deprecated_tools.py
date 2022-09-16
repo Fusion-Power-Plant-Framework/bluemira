@@ -30,7 +30,6 @@ from bluemira.base.file import get_bluemira_path
 from bluemira.codes.error import FreeCADError
 from bluemira.display.plotter import plot_coordinates
 from bluemira.geometry._deprecated_tools import (
-    bounding_box,
     check_linesegment,
     convert_coordinates_to_face,
     convert_coordinates_to_wire,
@@ -89,27 +88,6 @@ class TestCheckLineSegment:
         b = [0.001, 0.0]
         c = [0.005, 0.0]
         assert check_linesegment(np.array(a), np.array(b), np.array(c)) is False
-
-
-class TestBoundingBox:
-    def test_null(self):
-        x, y, z = np.zeros(100), np.zeros(100), np.zeros(100)
-        xb, yb, zb = bounding_box(x, y, z)
-        assert np.all(xb == 0)
-        assert np.all(yb == 0)
-        assert np.all(zb == 0)
-
-    def test_random(self):
-        x, y, z = np.random.rand(100), np.random.rand(100), np.random.rand(100)
-        args = np.random.randint(0, 100, 8)
-        x[args] = np.array([-2, -2, -2, -2, 2, 2, 2, 2])
-        y[args] = np.array([-2, -2, 2, 2, 2, -2, -2, 2])
-        z[args] = np.array([-2, 2, -2, 2, -2, 2, -2, 2])
-        xb, yb, zb = bounding_box(x, y, z)
-
-        assert np.allclose(xb, np.array([-2, -2, -2, -2, 2, 2, 2, 2]))
-        assert np.allclose(yb, np.array([-2, -2, 2, 2, -2, -2, 2, 2]))
-        assert np.allclose(zb, np.array([-2, 2, -2, 2, -2, 2, -2, 2]))
 
 
 class TestArea:
