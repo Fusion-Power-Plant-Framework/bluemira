@@ -303,31 +303,6 @@ def segment_lengths(x: np.ndarray, y: np.ndarray, z: np.ndarray) -> np.ndarray:
     return np.sqrt(np.diff(x) ** 2 + np.diff(y) ** 2 + np.diff(z) ** 2)
 
 
-def bounding_box(x: np.ndarray, y: np.ndarray, z: np.ndarray) -> Tuple[np.ndarray]:
-    """
-    Calculates a bounding box for a set of 3-D coordinates
-
-    Parameters
-    ----------
-    x: np.ndarray
-        The x coordinates
-    y: np.ndarray
-        The y coordinates
-    z: np.ndarray
-        The z coordinates
-
-    Returns
-    -------
-    x_b: np.ndarray
-        The x coordinates of the bounding box rectangular cuboid
-    y_b: np.ndarray
-        The y coordinates of the bounding box rectangular cuboid
-    z_b: np.ndarray
-        The z coordinates of the bounding box rectangular cuboid
-    """
-    return BoundingBox.from_xyz(x, y, z).get_box_arrays()
-
-
 def interpolate_points(
     x: np.ndarray, y: np.ndarray, z: np.ndarray, n_points: int
 ) -> Tuple[np.ndarray]:
