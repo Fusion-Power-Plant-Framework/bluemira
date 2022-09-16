@@ -97,7 +97,7 @@ def inscribed_rect_in_poly(
 
     x, z = x_point, z_point
 
-    angle_r = np.arctan(1 / aspectratio)
+    angle_r = np.rad2deg(np.arctan(1 / aspectratio))
 
     # Set up "Union Jack" intersection Planes
     xx = Coordinates([[x, 0, z], [x + 1, 0, z], [x, 1, z], [0, 0, 0]])
@@ -109,14 +109,12 @@ def inscribed_rect_in_poly(
     zz_plane = BluemiraPlane.from_3_points(*zz.points[:3])
 
     xx_rot = deepcopy(xx)
-    xx_rot.rotate(base=xo, direction=rot_p, degree=np.rad2deg(angle_r))
-    xz_plane = BluemiraPlane.from_3_points(
-        *quart_rotate(xx.points[:3], theta=angle_r, xo=xo, dx=rot_p)
-    )
+    xx_rot.rotate(base=xo, direction=rot_p, degree=angle_r)
     xz_plane = BluemiraPlane.from_3_points(*xx_rot.points[:3])
-    zx_plane = BluemiraPlane.from_3_points(
-        *quart_rotate(xx.points[:3], theta=-angle_r, xo=xo, dx=rot_p)
-    )
+
+    zz_rot = deepcopy(xx)
+    zz_rot.rotate(base=xo, direction=rot_p, degree=-angle_r)
+    zx_plane = BluemiraPlane.from_3_points(*zz_rot.points[:3])
 
     # Set up distance calculation
     getdxdz = _GetDxDz(
