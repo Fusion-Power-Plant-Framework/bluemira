@@ -30,7 +30,6 @@ from numba.types import CPointer, float64, intc
 from scipy import LowLevelCallable
 from scipy.integrate import IntegrationWarning, nquad, quad
 
-from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.geometry.coordinates import Coordinates
 from bluemira.magnetostatics.error import (
     MagnetostaticsError,
