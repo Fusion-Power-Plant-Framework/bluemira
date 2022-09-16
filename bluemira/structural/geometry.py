@@ -313,7 +313,7 @@ class Geometry:
 
     def add_coordinates(self, coordinates, cross_section, material=None):
         """
-        Adds a Loop object to the Geometry
+        Adds a Coordinates object to the Geometry
 
         Parameters
         ----------

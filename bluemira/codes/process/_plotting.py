@@ -100,7 +100,8 @@ def setup_radial_build(run, width=1.0):
     plots: Axes
         The Matplotlib Axes object.
     """
-    from bluemira.geometry._deprecated_loop import Loop
+    from bluemira.display.plotter import plot_coordinates
+    from bluemira.geometry.coordinates import Coordinates
 
     R_0 = run["R_0"]
 
@@ -142,12 +143,14 @@ def setup_radial_build(run, width=1.0):
     for comp in run["Radial Build"]:
         xc, yc = boxr(comp[2] - comp[1], comp[2], width)
         yc = np.array(yc)
-        loop = Loop(x=xc, y=yc)
+        coords = Coordinates({"x": xc, "y": yc})
         for key, c in col.items():
             if key in comp[0]:
                 ax.plot(xc, yc, color=c, linewidth=0, label=key)
                 if comp[1] > 0:
-                    loop.plot(ax, facecolor=c, edgecolor="k", linewidth=0)
+                    plot_coordinates(
+                        coords, ax=ax, facecolor=c, edgecolor="k", linewidth=0
+                    )
                 if key in gkeys:
                     gkeys.remove(key)
                     lpatches.append(patches.Patch(color=c, label=glabels[key]))

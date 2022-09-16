@@ -67,19 +67,19 @@ class Snapshot:
 
     Parameters
     ----------
-    eq: Equilibrium object
+    eq: Equilibrium
         The equilibrium at the snapshot
     coilset: CoilSet
         The coilset at the snapshot
     opt_problem: CoilsetOptimisationProblem
         The constraints at the snapshot
-    profiles: Profile object
+    profiles: Profile
         The profile at the snapshot
     optimiser: EquilibriumOptimiser object
         The optimiser for the snapshot
-    limiter: Limiter object
+    limiter: Limiter
         The limiter for the snapshot
-    tfcoil: Loop object
+    tfcoil: Coordinates
         The PF coil placement boundary
     """
 

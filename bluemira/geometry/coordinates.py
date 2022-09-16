@@ -22,16 +22,19 @@
 """
 Utility for sets of coordinates
 """
-
+import json
+import os
 from typing import Iterable
 
 import numba as nb
 import numpy as np
 from pyquaternion import Quaternion
+from scipy.spatial.distance import cdist
 
 from bluemira.base.constants import EPS
 from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.geometry.error import CoordinatesError
+from bluemira.utilities.tools import json_writer
 
 # =============================================================================
 # Pre-processing utilities
@@ -643,6 +646,31 @@ class Coordinates:
         self._is_planar = None
         self._normal_vector = None
 
+    @classmethod
+    def from_json(cls, filename):
+        """
+        Load a Coordinates object from a JSON file.
+
+        Parameters
+        ----------
+        filename: str
+            Full path file name of the data
+        """
+        try:
+            with open(filename, "r") as data:
+                xyz_dict = json.load(data)
+        except json.JSONDecodeError:
+            raise CoordinatesError(
+                f"Could not read the file: {filename}"
+                + "\n Please ensure it is a JSON file."
+            )
+
+        # NOTE: Stabler than **xyz_dict
+        x = xyz_dict.get("x", 0)
+        y = xyz_dict.get("y", 0)
+        z = xyz_dict.get("z", 0)
+        return cls({"x": x, "y": y, "z": z})
+
     # =============================================================================
     # Checks
     # =============================================================================
@@ -716,6 +744,38 @@ class Coordinates:
         if not self.check_ccw(axis=axis):
             self.reverse()
 
+    def distance_to(self, point):
+        """
+        Calculates the distances from each point in the Coordinates to the point.
+
+        Parameters
+        ----------
+        point: iterable(3)
+            The point to which to calculate the distances
+
+        Returns
+        -------
+        distances: np.array(N)
+            The vector of distances of the Coordinates to the point
+        """
+        point = np.array(point)
+        point = point.reshape(3, 1).T
+        return cdist(self.xyz.T, point, "euclidean")
+
+    def argmin(self, point):
+        """
+        Parameters
+        ----------
+        point: iterable(3)
+            The point to which to calculate the distances
+
+        Returns
+        -------
+        arg: int
+            The index of the closest point
+        """
+        return np.argmin(self.distance_to(point))
+
     # =============================================================================
     # Property access
     # =============================================================================
@@ -763,6 +823,13 @@ class Coordinates:
         return self._array[[1, 2], :]
 
     @property
+    def xyz(self):
+        """
+        The x-y-z coordinate array
+        """
+        return self._array
+
+    @property
     def points(self):
         """
         A list of the individual points of the Coordinates.
@@ -783,6 +850,15 @@ class Coordinates:
             Dictionary with {'x': [], 'y': [], 'z':[]}
         """
         return {"x": self.x, "y": self.y, "z": self.z}
+
+    def to_json(self, filename, **kwargs):
+        """
+        Save the Coordinates as a JSON file.
+        """
+        d = self.as_dict()
+        filename = os.path.splitext(filename)[0]
+        filename += ".json"
+        return json_writer(d, filename, **kwargs)
 
     # =============================================================================
     # Useful properties
@@ -847,6 +923,31 @@ class Coordinates:
         """
         if self.closed:
             self._array = self._array[:, :-1]
+
+    def insert(self, point, index=0):
+        """
+        Insert a point to the Coordinates.
+
+        Parameters
+        ----------
+        point: iterable(3)
+            The 3-D point to insert into the Coordinates
+        index: int > -1
+            The position of the point in the Coordinates (order index)
+        """
+        if index > len(self):
+            bluemira_warn(
+                "Inserting a point in Coordinates at an index greater than the number of points."
+            )
+            index = -1
+        if not np.isclose(self.xyz.T, point).all(axis=1).any():
+            point = np.array(point).reshape((3, 1))
+            if index == -1:
+                self._array = np.hstack((self._array, point))
+            else:
+                self._array = np.hstack(
+                    (self._array[:, :index], point, self._array[:, index:])
+                )
 
     def close(self):
         """

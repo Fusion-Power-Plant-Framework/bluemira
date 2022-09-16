@@ -552,7 +552,7 @@ class BetaIpProfile(Profile):
             lcfs, _ = find_LCFS_separatrix(
                 x, z, psi, o_points=o_points, x_points=x_points
             )
-            v_plasma = revolved_volume(*lcfs.d2)
+            v_plasma = revolved_volume(*lcfs.xz)
             Bp = MU_0 * self.I_p / lcfs.length
             p_avg = volume_integral(pfunc, x, self.dx, self.dz) / v_plasma
             beta_p_actual = 2 * MU_0 * p_avg / Bp**2

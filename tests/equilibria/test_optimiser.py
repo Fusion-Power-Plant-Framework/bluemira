@@ -23,7 +23,7 @@ import numpy as np
 
 from bluemira.equilibria.coils import Coil, CoilSet, SymmetricCircuit
 from bluemira.equilibria.opt_problems import CoilsetPositionCOP
-from bluemira.geometry._deprecated_loop import Loop
+from bluemira.geometry.coordinates import Coordinates
 
 
 class TestCoilsetOptimiser:
@@ -79,7 +79,7 @@ class TestCoilsetOptimiser:
             zu = coil.z + max_coil_shifts["z_shifts_upper"]
             zl = coil.z + max_coil_shifts["z_shifts_lower"]
 
-            rect = Loop(x=[xl, xu, xu, xl, xl], z=[zl, zl, zu, zu, zl])
+            rect = Coordinates({"x": [xl, xu, xu, xl, xl], "z": [zl, zl, zu, zu, zl]})
 
             cls.pfregions[coil.name] = rect
 

@@ -60,7 +60,7 @@ from bluemira.equilibria.plotting import (
     EquilibriumPlotter,
 )
 from bluemira.equilibria.profiles import CustomProfile
-from bluemira.geometry._deprecated_loop import Loop
+from bluemira.geometry.coordinates import Coordinates
 from bluemira.utilities.opt_tools import process_scipy_result
 from bluemira.utilities.tools import abs_rel_difference
 
@@ -630,7 +630,7 @@ class Equilibrium(MHDState):
             q = np.zeros(n_x)
 
         lcfs = self.get_LCFS(psi)
-        nbdry = lcfs.d2.shape[1]
+        nbdry = lcfs.xz.shape[1]
         x_c, z_c, dxc, dzc, currents = self.coilset.to_group_vecs()
 
         result = {
@@ -656,8 +656,8 @@ class Equilibrium(MHDState):
             "pressure": self.pressure(psinorm),
             "pnorm": psinorm,
             "nbdry": nbdry,
-            "xbdry": lcfs["x"],
-            "zbdry": lcfs["z"],
+            "xbdry": lcfs.x,
+            "zbdry": lcfs.z,
             "ncoil": self.coilset.n_coils,
             "xc": x_c,
             "zc": z_c,
@@ -1082,7 +1082,7 @@ class Equilibrium(MHDState):
 
     def get_flux_surface(self, psi_n, psi=None, o_points=None, x_points=None):
         """
-        Get a flux surface Loop. NOTE: Continuous surface (bridges grid)
+        Get a flux surface Coordinates. NOTE: Continuous surface (bridges grid)
 
         Parameters
         ----------
@@ -1093,15 +1093,15 @@ class Equilibrium(MHDState):
 
         Returns
         -------
-        flux_surface: Loop(x, z) object
-            Flux surface Loop
+        flux_surface: Coordinates
+            Flux surface Coordinates
         """
         if psi is None:
             psi = self.psi()
         f = find_flux_surf(
             self.x, self.z, psi, psi_n, o_points=o_points, x_points=x_points
         )
-        return Loop(x=f[0], z=f[1])
+        return Coordinates({"x": f[0], "z": f[1]})
 
     def get_LCFS(self, psi=None):
         """
@@ -1115,8 +1115,8 @@ class Equilibrium(MHDState):
 
         Returns
         -------
-        lcfs: Loop
-            The Loop of the LCFS
+        lcfs: Coordinates
+            The Coordinates of the LCFS
         """
         if psi is None:
             psi = self.psi()
@@ -1134,8 +1134,8 @@ class Equilibrium(MHDState):
 
         Returns
         -------
-        separatrix: Union[Loop, MultiLoop]
-            The separatrix loop(s) (Loop for SN, MultiLoop for DN)
+        separatrix: Union[Coordinates, List[Coordinates]]
+            The separatrix loop(s) (Coordinates for SN, List[Coordinates]] for DN)
         """
         if psi is None:
             psi = self.psi()

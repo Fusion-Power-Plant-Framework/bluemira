@@ -25,8 +25,7 @@ import pytest
 
 from bluemira.base.constants import MU_0
 from bluemira.display.auto_config import plot_defaults
-from bluemira.geometry._deprecated_loop import Loop
-from bluemira.geometry._deprecated_tools import make_circle_arc
+from bluemira.geometry.tools import make_circle
 from bluemira.magnetostatics.biot_savart import BiotSavartFilament
 from bluemira.magnetostatics.greens import (
     circular_coil_inductance_elliptic,
@@ -37,7 +36,7 @@ from bluemira.magnetostatics.greens import (
 
 def test_biot_savart_loop():
     """
-    Test that a circular GreenFieldLoop (Biot Savart differential form)
+    Test that a circular BiotSavartFilament (Biot Savart differential form)
     matches with the analytical Greens function for a circular coil.
 
     This is a verification test.
@@ -54,9 +53,9 @@ def test_biot_savart_loop():
     # Analytical field values
     _, Bx, Bz = greens_all(x_coil, z_coil, x_2d, z_2d)
 
-    xc, yc = make_circle_arc(x_coil, 0, z_coil, n_points=2000)
-    loop = Loop(xc, yc, 0)
-    bsf = BiotSavartFilament(loop, radius)
+    circle = make_circle(radius=x_coil, center=(0, z_coil, 0), axis=(0, 0, 1))
+    filament = circle.discretize(ndiscr=2000)
+    bsf = BiotSavartFilament(filament, radius)
 
     Bx2, _, Bz2 = bsf.field(x_2d, np.zeros_like(x_2d), z_2d)
 
@@ -162,10 +161,10 @@ def test_inductance():
 
     ind3 = np.zeros((100, 100))
     for i, r in enumerate(radii):
-        x, y = make_circle_arc(r, n_points=200)
-        loop = Loop(x=x, z=y)
+        circle = make_circle(r, center=(0, 0, 0), axis=(0, 1, 0))
+        filament = circle.discretize(ndiscr=200)
         for j, rc in enumerate(rci):
-            bsf = BiotSavartFilament(loop, rc)
+            bsf = BiotSavartFilament(filament, rc)
             ind[i, j] = circular_coil_inductance_elliptic(r, rc)
             ind2[i, j] = circular_coil_inductance_kirchhoff(r, rc)
             ind3[i, j] = bsf.inductance()

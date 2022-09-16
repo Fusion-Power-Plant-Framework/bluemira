@@ -20,6 +20,7 @@
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 
 import os
+from copy import deepcopy
 
 import numpy as np
 import pytest
@@ -27,7 +28,7 @@ import pytest
 from bluemira.base.file import get_bluemira_path
 from bluemira.base.parameter import ParameterFrame
 from bluemira.equilibria.equilibrium import Equilibrium
-from bluemira.geometry._deprecated_loop import Loop
+from bluemira.geometry.coordinates import Coordinates
 from bluemira.radiation_transport.advective_transport import ChargedParticleSolver
 from bluemira.radiation_transport.error import AdvectionTransportError
 
@@ -70,7 +71,7 @@ class TestChargedParticleRecursionSN:
         eq = Equilibrium.from_eqdsk(filename)
         fw_name = "first_wall.json"
         filename = os.sep.join([TEST_PATH, fw_name])
-        fw = Loop.from_file(filename)
+        fw = Coordinates.from_json(filename)
 
         # fmt: off
         cls.params = ParameterFrame([
@@ -134,12 +135,12 @@ class TestChargedParticleRecursionSN:
         Trying screwing up the geometry and get the same results.
         """
         solver = ChargedParticleSolver(self.params, self.solver.eq, dx_mp=0.001)
-        fw = self.solver.first_wall.copy()
+        fw = deepcopy(self.solver.first_wall)
         fw.open()
         fw.reverse()
         x, z, hf = solver.analyse(fw)
         assert solver.first_wall.closed
-        assert solver.first_wall.ccw
+        assert solver.first_wall.check_ccw()
 
         assert np.allclose(self.hf, hf)
         assert np.allclose(self.x, x)
@@ -154,7 +155,7 @@ class TestChargedParticleRecursionDN:
         eq = Equilibrium.from_eqdsk(filename)
         fw_name = "DN_fw_shape.json"
         filename = os.sep.join([TEST_PATH, fw_name])
-        fw = Loop.from_file(filename)
+        fw = Coordinates.from_json(filename)
 
         # fmt: off
         cls.params = ParameterFrame([
@@ -181,7 +182,7 @@ class TestChargedParticleRecursionDN:
         assert np.isclose(np.sum(self.hf), 830.6, rtol=1e-2)
 
     def test_analyse_DN(self, caplog):
-        fw = self.solver.first_wall.copy()
+        fw = deepcopy(self.solver.first_wall)
         self.solver.flux_surfaces_ob_hfs = []
         self.solver.flux_surfaces_ob_lfs = []
         x_sep_omp, x_wall_limit = self.solver._get_sep_out_intersection(outboard=True)

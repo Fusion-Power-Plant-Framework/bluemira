@@ -32,6 +32,7 @@ from matplotlib.gridspec import GridSpec
 from scipy.interpolate import RectBivariateSpline
 
 from bluemira.base.look_and_feel import bluemira_warn
+from bluemira.display.plotter import plot_coordinates
 from bluemira.equilibria.constants import J_TOR_MIN, M_PER_MN
 from bluemira.equilibria.find import Xpoint, get_contours, grid_2d_contour
 from bluemira.equilibria.physics import calc_psi
@@ -529,12 +530,12 @@ class EquilibriumPlotter(Plotter):
             return
 
         if isinstance(separatrix, list):
-            loops = separatrix
+            coords = separatrix
         else:
-            loops = [separatrix]
+            coords = [separatrix]
 
-        for loop in loops:
-            x, z = loop.d2
+        for coord in coords:
+            x, z = coord.xz
             self.ax.plot(
                 x,
                 z,
@@ -645,19 +646,25 @@ class XZLPlotter(Plotter):
         super().__init__(ax)
         self.xzl = xzl_mapper
 
-        for loop in self.xzl.excl_zones:
-            loop.plot(self.ax, fill=True, alpha=0.2, facecolor="r", edgecolor="r")
+        for coords in self.xzl.excl_zones:
+            plot_coordinates(
+                coords, self.ax, fill=True, alpha=0.2, facecolor="r", edgecolor="r"
+            )
 
-        for loop in self.xzl.excl_loops:
-            loop.plot(self.ax, fill=False, edgecolor="r", zorder=1, linestyle="--")
+        for coords in self.xzl.excl_loops:
+            plot_coordinates(
+                coords, self.ax, fill=False, edgecolor="r", zorder=1, linestyle="--"
+            )
 
-        for loop in self.xzl.incl_loops:
-            loop.plot(self.ax, fill=False, edgecolor="k", zorder=1, linestyle="--")
+        for coords in self.xzl.incl_loops:
+            plot_coordinates(
+                coords, self.ax, fill=False, edgecolor="k", zorder=1, linestyle="--"
+            )
 
 
 class RegionPlotter(Plotter):
     """
-    Utility class for plotting 2D L constraints
+    Utility class for plotting 2-D L constraints
     """
 
     def __init__(self, region_mapper, ax=None):
@@ -665,8 +672,14 @@ class RegionPlotter(Plotter):
         self.rmp = region_mapper
 
         for intpltr in self.rmp.regions.values():
-            intpltr.loop.plot(
-                self.ax, fill=True, alpha=0.2, zorder=1, facecolor="g", edgecolor="g"
+            plot_coordinates(
+                intpltr.coords,
+                self.ax,
+                fill=True,
+                alpha=0.2,
+                zorder=1,
+                facecolor="g",
+                edgecolor="g",
             )
 
 

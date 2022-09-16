@@ -339,3 +339,20 @@ class TestCoordinates:
         assert not c.check_ccw([0, 0, 1])
         c.set_ccw([0, 0, 1])
         assert c.check_ccw()
+
+    @pytest.mark.parametrize("index", [0, 1, 2, 3, 6, -1])
+    def test_insert(self, index):
+        c = Coordinates({"x": [0, 1, 2, 3, 4, 5, 6], "z": [0, 1, 2, 3, 4, 5, 6]})
+        c.insert([10, 10, 10], index=index)
+        assert c.x[index] == 10
+        assert c.y[index] == 10
+        assert c.z[index] == 10
+        assert len(c) == 8
+
+    def test_insert_overshoot_index(self):
+        c = Coordinates({"x": [0, 1, 2, 3, 4, 5, 6], "z": [0, 1, 2, 3, 4, 5, 6]})
+        c.insert([10, 10, 10], index=10)
+        assert c.x[7] == 10
+        assert c.y[7] == 10
+        assert c.z[7] == 10
+        assert len(c) == 8

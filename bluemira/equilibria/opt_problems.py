@@ -311,10 +311,10 @@ class CoilsetPositionCOP(CoilsetOptimisationProblem):
         Equilibrium object used to update magnetic field targets.
     targets: MagneticConstraintSet
         Set of magnetic field targets to use in objective function.
-    pfregions: dict(coil_name:Loop, coil_name:Loop, ...)
-        Dictionary of loops that specify convex hull regions inside which
+    pfregions: dict(coil_name:Coordinates, coil_name:Coordinates, ...)
+        Dictionary of Coordinates that specify convex hull regions inside which
         each PF control coil position is to be optimised.
-        The loop objects must be 2d in x,z in units of [m].
+        The Coordinates must be 2d in x,z in units of [m].
     max_currents: float or np.array(len(coilset._ccoils)) (default = None)
         Maximum allowed current for each independent coil current in coilset [A].
         If specified as a float, the float will set the maximum allowed current
@@ -530,10 +530,10 @@ class NestedCoilsetPositionCOP(CoilsetOptimisationProblem):
         Equilibrium object used to update magnetic field targets.
     targets: MagneticConstraintSet
         Set of magnetic field targets to use in objective function.
-    pfregions: dict(coil_name:Loop, coil_name:Loop, ...)
-        Dictionary of loops that specify convex hull regions inside which
+    pfregions: dict(coil_name:Coordinates, coil_name:Coordinates, ...)
+        Dictionary of Coordinates that specify convex hull regions inside which
         each PF control coil position is to be optimised.
-        The loop objects must be 2d in x,z in units of [m].
+        The Coordinates must be 2d in x,z in units of [m].
     optimiser: Optimiser
         Optimiser object to use for constrained optimisation.
     constraints: List[OptimisationConstraint] (default: None)

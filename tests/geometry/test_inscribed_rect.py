@@ -23,7 +23,7 @@ import numpy as np
 import pytest
 
 from bluemira.display.plotter import PlotOptions, plot_2d
-from bluemira.geometry._deprecated_tools import in_polygon, make_circle_arc
+from bluemira.geometry._deprecated_tools import get_area, in_polygon, make_circle_arc
 from bluemira.geometry.coordinates import Coordinates
 from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.inscribed_rect import _rect, inscribed_rect_in_poly
@@ -93,12 +93,7 @@ class TestInscribedRectangle:
                                 BluemiraFace(make_polygon(sq.xyz, closed=True)),
                                 shape_face,
                             )
-                            tf = [
-                                Coordinates(
-                                    seg.discretize(byedges=True, ndiscr=50)._array
-                                )
-                                for seg in tf
-                            ]
+                            tf = [seg.discretize(byedges=True, ndiscr=50) for seg in tf]
                         except ValueError:
                             tf = None
 
@@ -107,7 +102,7 @@ class TestInscribedRectangle:
 
                         if tf is not None:
                             # Some overlaps are points or lines of 0 area
-                            if not all([t.area == 0.0 for t in tf]):
+                            if not all([get_area(t) == 0.0 for t in tf]):
                                 self.assertion_error_creator(
                                     "Overlap", [dx, dz, point, k, convex]
                                 )

@@ -314,16 +314,16 @@ def segment_lengths(x: np.ndarray, y: np.ndarray, z: np.ndarray) -> np.ndarray:
     Parameters
     ----------
     x: array_like
-        x coordinates of the loop [m]
+        x coordinates [m]
     y: array_like
-        y coordinates of the loop [m]
+        y coordinates [m]
     z: array_like
-        z coordinates of the loop [m]
+        z coordinates [m]
 
     Returns
     -------
     dL: np.array(N)
-        The length of each individual segment in the loop
+        The length of each individual segment in the coordinates
     """
     return np.sqrt(np.diff(x) ** 2 + np.diff(y) ** 2 + np.diff(z) ** 2)
 
@@ -357,22 +357,27 @@ def interpolate_points(
     x: np.ndarray, y: np.ndarray, z: np.ndarray, n_points: int
 ) -> Tuple[np.ndarray]:
     """
-    Interpolate Points
+    Interpolate points.
 
     Parameters
     ----------
-    x: np.darray
+    x: np.ndarray
         The x coordinates
-    y: np.darray
+    y: np.ndarray
         The y coordinates
-    z: np.darray
+    z: np.ndarray
         The z coordinates
     n_points: int
         number of points
 
     Returns
     -------
-    x, y, z
+    x: np.ndarray
+        The interpolated x coordinates
+    y: np.ndarray
+        The interpolated y coordinates
+    z: np.ndarray
+        The interpolated z coordinates
     """
     ll = vector_lengthnorm(x, y, z)
     linterp = np.linspace(0, 1, int(n_points))
@@ -380,6 +385,39 @@ def interpolate_points(
     y = interp1d(ll, y)(linterp)
     z = interp1d(ll, z)(linterp)
     return x, y, z
+
+
+def interpolate_midpoints(
+    x: np.ndarray, y: np.ndarray, z: np.ndarray, n_points: int
+) -> Tuple[np.ndarray]:
+    """
+    Interpolate the points adding the midpoint of each segment to the points.
+
+    Parameters
+    ----------
+    x: np.ndarray
+        The x coordinates
+    y: np.ndarray
+        The y coordinates
+    z: np.ndarray
+        The z coordinates
+    n_points: int
+        number of points
+
+    Returns
+    -------
+    x: np.ndarray
+        The interpolated x coordinates
+    y: np.ndarray
+        The interpolated y coordinates
+    z: np.ndarray
+        The interpolated z coordinates
+    """
+    xyz = np.c_[x, y, z]
+    xyz_new = xyz[:, :-1] + np.diff(xyz) / 2
+    xyz_new = np.insert(xyz_new, np.arange(len(x) - 1), xyz[:, :-1], axis=1)
+    xyz_new = np.append(xyz_new, xyz[:, -1].reshape(3, 1), axis=1)
+    return xyz_new[0], xyz_new[1], xyz_new[2]
 
 
 def vector_lengthnorm(x: np.ndarray, y: np.ndarray, z: np.ndarray) -> np.ndarray:
@@ -409,19 +447,19 @@ def vector_lengthnorm(x: np.ndarray, y: np.ndarray, z: np.ndarray) -> np.ndarray
 
 def vector_lengthnorm_2d(x, z):
     """
-    Get a normalised 1-D parameterisation of an x, z loop.
+    Get a normalised 1-D parameterisation of x, z coordinates.
 
     Parameters
     ----------
     x: array_like
-        x coordinates of the loop [m]
+        x coordinates [m]
     z: array_like
-        z coordinates of the loop [m]
+        z coordinates [m]
 
     Returns
     -------
     total_length: np.array(N)
-        The cumulative normalised length of each individual segment in the loop
+        The cumulative normalised length of each individual segment in the coordinates
     """
     total_length = np.append(0, np.cumsum(np.sqrt(np.diff(x) ** 2 + np.diff(z) ** 2)))
     return total_length / total_length[-1]
@@ -434,9 +472,9 @@ def innocent_smoothie(x, z, n=500, s=0):
     Parameters
     ----------
     x: array_like
-        x coordinates of the loop [m]
+        x coordinates [m]
     z: array_like
-        z coordinates of the loop [m]
+        z coordinates [m]
     n: int
         The number of interpolation points
     s: Union[int, float]
@@ -445,9 +483,9 @@ def innocent_smoothie(x, z, n=500, s=0):
     Returns
     -------
     x: array_like
-        Smoothed, interpolated x coordinates of the loop [m]
+        Smoothed, interpolated x coordinates [m]
     z: array_like
-        Smoothed, interpolated z coordinates of the loop [m]
+        Smoothed, interpolated z coordinates [m]
     """
     length_norm = vector_lengthnorm_2d(x, z)
     n = int(n)
@@ -851,24 +889,24 @@ def vector_intersect_3d(p_1, p_2, p_3, p_4):
     return intersection
 
 
-def loop_plane_intersect(loop, plane):
+def coords_plane_intersect(coords, plane):
     """
-    Calculate the intersection of a loop with a plane.
+    Calculate the intersection of Coordinates with a plane.
 
     Parameters
     ----------
-    loop: Loop
-        The loop to calculate the intersection on
+    coords: Coordinates
+        The coordinates to calculate the intersection on
     plane: Plane
         The plane to calculate the intersection with
 
     Returns
     -------
     inter: np.array(3, n_intersections) or None
-        The xyz coordinates of the intersections with the loop. Returns None if
+        The xyz coordinates of the intersections with the Coordinates. Returns None if
         there are no intersections detected
     """
-    out = _loop_plane_intersect(loop.xyz.T[:-1], plane.base, plane.axis)
+    out = _coords_plane_intersect(coords.xyz.T[:-1], plane.base, plane.axis)
     if not out:
         return None
     else:
@@ -876,7 +914,7 @@ def loop_plane_intersect(loop, plane):
 
 
 @nb.jit(cache=True, nopython=True)
-def _loop_plane_intersect(array, p1, vec2):
+def _coords_plane_intersect(array, p1, vec2):
     # JIT compiled utility of the above
     out = []
     for i in range(len(array)):
@@ -890,17 +928,17 @@ def _loop_plane_intersect(array, p1, vec2):
     return out
 
 
-def get_intersect(loop1, loop2):
+def get_intersect(xy1, xy2):
     """
-    Calculates the intersection points between two Loops. Will return unique
-    list of x, z intersections (no duplicates in x-z space)
+    Calculates the intersection points between two sets of 2-D coordinates. Will return
+    a unique list of x, z intersections (no duplicates in x-z space).
 
     Parameters
     ----------
-    loop1: Loop
-        The Loops between which intersection points should be calculated
-    loop2: Loop
-        The Loops between which intersection points should be calculated
+    xy1: np.ndarray
+        The 2-D coordinates between which intersection points should be calculated
+    xy2: np.ndarray
+        The 2-D coordinates between which intersection points should be calculated
 
     Returns
     -------
@@ -913,8 +951,8 @@ def get_intersect(loop1, loop2):
     ----
     D. Schwarz, <https://uk.mathworks.com/matlabcentral/fileexchange/11837-fast-and-robust-curve-intersections>
     """  # noqa :W505
-    x1, y1 = loop1.d2
-    x2, y2 = loop2.d2
+    x1, y1 = xy1
+    x2, y2 = xy2
 
     def inner_inter(x_1, x_2):
         n1, n2 = x_1.shape[0] - 1, x_2.shape[0] - 1
@@ -971,37 +1009,36 @@ def _intersect_count(x_inter, z_inter, x2, z2):
     return np.array(args)
 
 
-def join_intersect(loop1, loop2, get_arg=False):
+def join_intersect(coords1, coords2, get_arg=False):
     """
-    Add the intersection points between Loop1 and Loop2 to Loop1.
+    Add the intersection points between coords1 and coords2 to coords1.
 
     Parameters
     ----------
-    loop1: Loop
-        The Loop to which the intersection points should be added
-    loop2: Loop
-        The intersecting Loop
+    coords1: Coordinates
+        The Coordinates to which the intersection points should be added
+    coords2: Coordinates
+        The intersecting Coordinates
     get_arg: bool (default = False)
 
     Returns
     -------
     (if get_arg is True)
     args: list(int, int, ..) of len(N_intersections)
-        The arguments of Loop1 in which the intersections were added.
+        The arguments of coords1 in which the intersections were added.
 
     Notes
     -----
-    Modifies loop1
+    Modifies coords1
     """
-    x_inter, z_inter = get_intersect(loop1, loop2)
-    xz = loop1.d2
-    args = _intersect_count(x_inter, z_inter, xz[0], xz[1])
+    x_inter, z_inter = get_intersect(coords1.xz, coords2.xz)
+    args = _intersect_count(x_inter, z_inter, coords1.x, coords1.z)
 
     orderr = args.argsort()
     x_int = x_inter[orderr]
     z_int = z_inter[orderr]
 
-    args = _intersect_count(x_int, z_int, xz[0], xz[1])
+    args = _intersect_count(x_int, z_int, coords1.x, coords1.z)
 
     # TODO: Check for duplicates and order correctly based on distance
     # u, counts = np.unique(args, return_counts=True)
@@ -1013,15 +1050,15 @@ def join_intersect(loop1, loop2, get_arg=False):
             bump = 0
         else:
             bump = 1
-        if not loop1._check_already_in([x_int[i], z_int[i]]):
-            # Only increment counter if the intersection isn't already in the Loop
-            loop1.insert([x_int[i], z_int[i]], pos=arg + count + bump)
+        if not np.isclose(coords1.xyz.T, [x_int[i], 0, z_int[i]]).all(axis=1).any():
+            # Only increment counter if the intersection isn't already in the Coordinates
+            coords1.insert([x_int[i], 0, z_int[i]], index=arg + count + bump)
             count += 1
 
     if get_arg:
         args = []
         for x, z in zip(x_inter, z_inter):
-            args.append(loop1.argmin([x, z]))
+            args.append(coords1.argmin([x, 0, z]))
         return list(set(args))
 
 
@@ -1066,65 +1103,6 @@ def make_circle_arc(
         x[-1] = x[0]
         y[-1] = y[0]
     return x, y
-
-
-def get_control_point(loop):
-    """
-    Find an arbitrary control point which sits inside a specified Loop
-
-    If a Shell is given, finds a point which sits on the solid part of the Shell.
-
-    Parameters
-    ----------
-    loop: Loop or Shell
-        The geometry to find a control point for. Must be 2-D.
-
-    Returns
-    -------
-    float, float
-        An arbitrary control point for the Loop or Shell.
-    """
-    if loop.__class__.__name__ == "Loop":
-        cp = [loop.centroid[0], loop.centroid[1]]
-        if loop.point_inside(cp):
-            return cp
-        else:
-            return _montecarloloopcontrol(loop)
-    else:
-        raise GeometryError(f"Unrecognised type: {type(loop)}.")
-
-
-def _montecarloloopcontrol(loop):
-    """
-    Find an arbitrary point inside a Loop
-
-    If the centroid doesn't work, will use brute force...
-
-    Parameters
-    ----------
-    loop: Loop
-        The geometry to find a control point for. Must be 2-D.
-
-    Returns
-    -------
-    float, float
-        An arbitrary control point for the Loop.
-    """
-    xmin, xmax = np.min(loop.d2[0]), np.max(loop.d2[0])
-    dx = xmax - xmin
-    ymin, ymax = np.min(loop.d2[1]), np.max(loop.d2[1])
-    dy = ymax - ymin
-    i = 0
-    while i < 1000:
-        i += 1
-        n, m = np.random.rand(2)
-        x = xmin + n * dx
-        y = ymin + m * dy
-        if loop.point_inside([x, y]):
-            return [x, y]
-    raise GeometryError(
-        "Unable to find a control point for this Loop using brute force."
-    )
 
 
 # =============================================================================
@@ -1275,7 +1253,7 @@ def make_mixed_wire(
     Returns
     -------
     wire: BluemiraWire
-        The BluemiraWire of the mixed polygon/spline Loop
+        The BluemiraWire of the mixed polygon/spline coordinates
     """
     mfm = MixedFaceMaker(
         x,
@@ -1363,7 +1341,7 @@ def make_mixed_face(
     Returns
     -------
     face: BluemiraFace
-        The BluemiraFace of the mixed polygon/spline Loop
+        The BluemiraFace of the mixed polygon/spline coordinates
     """
     mfm = MixedFaceMaker(
         x,
@@ -1577,12 +1555,12 @@ class MixedFaceMaker:
 
     def _find_polygon_vertices(self):
         """
-        Finds all vertices in the loop which belong to polygon-like edges
+        Finds all vertices in the Coordinates which belong to polygon-like edges
 
         Returns
         -------
         vertices: np.ndarray(dtype=int)
-            The vertices of the loop which are polygon-like
+            The vertices of the coordinates which are polygon-like
         """
         seg_lengths = segment_lengths(self.x, self.y, self.z)
         median = np.median(seg_lengths)
@@ -1640,7 +1618,7 @@ class MixedFaceMaker:
         Parameters
         ----------
         vertices: np.ndarray(dtype=int)
-            The vertices of the loop which are polygon-like
+            The vertices of the lcoordinates which are polygon-like
 
         Returns
         -------
@@ -1658,7 +1636,7 @@ class MixedFaceMaker:
             delta = vertices[i + 1] - vertex
 
             if i == len(vertices) - 2:
-                # end of loop clean-up
+                # end of coordinates clean-up
                 end = vertices[i + 1]
                 sequences.append([start, end])
                 break
@@ -1682,7 +1660,7 @@ class MixedFaceMaker:
             # Shape is a pure polygon
             return sequences
 
-        # Now check the start and end of the loop, to see if a polygon segment
+        # Now check the start and end of the coordinates, to see if a polygon segment
         # bridges the join
         first_p_vertex = sequences[0][0]
         last_p_vertex = sequences[-1][1]
@@ -1702,7 +1680,7 @@ class MixedFaceMaker:
 
         last_p_vertex = sequences[-1][1]
         if self.num_points - last_p_vertex <= self.n_segments:
-            # There is a small spline section at the end of the loop, that
+            # There is a small spline section at the end of the coordinates, that
             # needs to be bridged
             if sequences[0][0] == 0:
                 # There is no bridge -> take action

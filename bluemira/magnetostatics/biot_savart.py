@@ -28,7 +28,7 @@ from bluemira.base.constants import EPS, MU_0_4PI, ONE_4PI
 from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.geometry._deprecated_tools import bounding_box, rotation_matrix
 from bluemira.magnetostatics.baseclass import CurrentSource
-from bluemira.magnetostatics.tools import process_loop_array, process_xyz_array
+from bluemira.magnetostatics.tools import process_coords_array, process_xyz_array
 from bluemira.utilities import tools
 from bluemira.utilities.plot_tools import Plot3D
 
@@ -41,9 +41,9 @@ class BiotSavartFilament(CurrentSource):
 
     Parameters
     ----------
-    arrays: Union[Loop, np.array(n, 3), List[Loop, np.array(n, 3)]]
-        The arbitrarily shaped closed current Loop. Alternatively provide the
-        list of Loop objects.
+    arrays: Union[Coordinates, np.array(n, 3), List[Coordinates, np.array(n, 3)]]
+        The arbitrarily shaped closed current Coordinates. Alternatively provide the
+        list of Coordinates objects.
     radius: float
         The nominal radius of the coil
     current: float
@@ -54,14 +54,14 @@ class BiotSavartFilament(CurrentSource):
     def __init__(self, arrays, radius, current=1.0):
 
         if not isinstance(arrays, list):
-            # Handle single Loop/array
+            # Handle single Coordinates/array
             arrays = [arrays]
 
-        # Handle list of Loops/arrays (potentially of different sizes)
+        # Handle list of Coordinates/arrays (potentially of different sizes)
         d_ls, mids_points = [], []
         points = []
         for i, array in enumerate(arrays):
-            xyz = process_loop_array(array)
+            xyz = process_coords_array(array)
 
             d_l = np.diff(xyz, axis=0)
             self._check_discretisation(d_l)
@@ -71,7 +71,7 @@ class BiotSavartFilament(CurrentSource):
             points.append(xyz[:-1, :])
             mids_points.append(mid_points)
             if i == 0:
-                # Take the first loop as a reference for inductance calculation
+                # Take the first Coordinates as a reference for inductance calculation
                 self.ref_mid_points = mid_points
                 self.ref_d_l = d_l
 
@@ -102,7 +102,7 @@ class BiotSavartFilament(CurrentSource):
     @process_xyz_array
     def potential(self, x, y, z):
         """
-        Calculate the vector potential of an arbitrarily shaped loop.
+        Calculate the vector potential of an arbitrarily shaped Coordinates.
 
         Parameters
         ----------
@@ -117,7 +117,7 @@ class BiotSavartFilament(CurrentSource):
         Returns
         -------
         potential: np.array(3)
-            The vector potential at the point due to the arbitrarily shaped loop
+            The vector potential at the point due to the arbitrarily shaped Coordinates
         """
         point = np.array([x, y, z])
         r = point - self.points
@@ -135,7 +135,7 @@ class BiotSavartFilament(CurrentSource):
     @process_xyz_array
     def field(self, x, y, z):
         """
-        Calculate the field due to the arbitrarily shaped loop.
+        Calculate the field due to the arbitrarily shaped Coordinates.
 
         Parameters
         ----------
@@ -149,7 +149,7 @@ class BiotSavartFilament(CurrentSource):
         Returns
         -------
         B: np.array
-            The field at the point(s) due to the arbitrarily shaped loop
+            The field at the point(s) due to the arbitrarily shaped Coordinates
 
         Notes
         -----
@@ -180,7 +180,7 @@ class BiotSavartFilament(CurrentSource):
         Returns
         -------
         inductance: float
-            The total inductance (including self-inductance of reference loop)
+            The total inductance (including self-inductance of reference Coordinates)
             in Henries [H]
 
         Notes
@@ -190,7 +190,7 @@ class BiotSavartFilament(CurrentSource):
         https://arxiv.org/pdf/1204.1486.pdf
 
         You probably shouldn't use this if you are actually interested in the
-        inductance of an arbitrarily shaped loop...
+        inductance of an arbitrarily shaped Coordinates...
         """  # noqa :W505
         # TODO: Validate inductance calculate properly and compare stored
         # energy of systems
