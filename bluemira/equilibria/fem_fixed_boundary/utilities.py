@@ -28,7 +28,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 from matplotlib._tri import TriContourGenerator
 from matplotlib.tri.triangulation import Triangulation
-from scipy.optimize import minimize
+import scipy
+# from scipy.optimize import minimize
 
 from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.utilities.tools import is_num
@@ -149,8 +150,11 @@ def plot_scalar_field(
     defaults = {"linewidths": 2, "colors": "k"}
     contour_kwargs = {**defaults, **kwargs}
 
+    cntr = None
+    cntrf = None
+
     if contour:
-        axis.tricontour(x, y, data, levels=levels, **contour_kwargs)
+        cntr = axis.tricontour(x, y, data, levels=levels, **contour_kwargs)
 
     if tofill:
         cntrf = axis.tricontourf(x, y, data, levels=levels, cmap="RdBu_r")
@@ -160,7 +164,7 @@ def plot_scalar_field(
     axis.set_ylabel("z [m]")
     axis.set_aspect("equal")
 
-    return axis
+    return axis, cntr, cntrf
 
 
 def plot_profile(x, prof, var_name, var_unit):
@@ -259,7 +263,7 @@ def calculate_plasma_shape_params(psi_norm_func, mesh, psi_norm, plot=False):
         """
         # TODO: Replace scipy minimize with something a little more robust
         bounds = [(xi - search_range, xi + search_range) for xi in x0]
-        result = minimize(
+        result = scipy.optimize.minimize(
             func,
             x0,
             constraints=({"fun": f_constrain_p95, "type": "eq"}),
@@ -320,3 +324,79 @@ def calculate_plasma_shape_params(psi_norm_func, mesh, psi_norm, plot=False):
         delta = 0.5 * (c + d) / a
 
     return r_geo, kappa, delta
+
+
+
+class Solovev:
+    def __init__(self, R0, a, kappa, delta, A1, A2):
+        self.R0 = R0
+        self.a = a
+        self.kappa = kappa
+        self.delta = delta
+        self.A1 = A1
+        self.A2 = A2
+        self._findParams()
+
+    def _findParams(self):
+        ri = self.R0 - self.a
+        ro = self.R0 + self.a
+        rt = self.R0 - self.delta * self.a
+        zt = self.kappa * self.a
+
+        m = np.array(
+            [
+                [1.0, ri**2, ri**4, ri**2 * np.log(ri)],
+                [1.0, ro**2, ro**4, ro**2 * np.log(ro)],
+                [
+                    1.0,
+                    rt**2,
+                    rt**2 * (rt**2 - 4 * zt**2),
+                    rt**2 * np.log(rt) - zt**2,
+                ],
+                [0.0, 2.0, 4 * (rt**2 - 2 * zt**2), 2 * np.log(rt) + 1.0],
+            ]
+        )
+
+        b = np.array(
+            [
+                [-(ri**4) / 8.0, 0],
+                [-(ro**4) / 8.0, 0.0],
+                [-(rt**4) / 8.0, +(zt**2) / 2.0],
+                [-(rt**2) / 2.0, 0.0],
+            ]
+        )
+        b = b * np.array([self.A1, self.A2])
+        b = np.sum(b, axis=1)
+
+        self.coeff = scipy.linalg.solve(m, b)
+        print(f"Solovev coefficients: {self.coeff}")
+
+    def psi(self, points):
+        if len(points.shape) == 1:
+            points = np.array([points])
+
+        c = lambda x: np.array(
+            [
+                1.0,
+                x[0] ** 2,
+                x[0] ** 2 * (x[0] ** 2 - 4 * x[1] ** 2),
+                x[0] ** 2 * np.log(x[0]) - x[1] ** 2,
+                (x[0] ** 4) / 8.0,
+                -(x[1] ** 2) / 2.0,
+            ]
+        )
+
+        m = np.concatenate((self.coeff, np.array([self.A1, self.A2])))
+
+        return [np.sum(c(x) * m) * 2 * np.pi for x in points]
+
+    def plot_psi(self, ri, zi, dr, dz, nr, nz, levels=20, axis=None, tofill=True):
+        r = np.linspace(ri, ri + dr, nr)
+        z = np.linspace(zi, zi + dz, nz)
+        rv, zv = np.meshgrid(r, z)
+        points = np.vstack([rv.ravel(), zv.ravel()]).T
+        psi = self.psi(points)
+        cplot = plot_scalar_field(
+            points[:, 0], points[:, 1], psi, levels=levels, axis=axis, tofill=tofill
+        )
+        return cplot + (points, psi)
