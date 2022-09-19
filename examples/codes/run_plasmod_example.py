@@ -211,10 +211,18 @@ solver.execute(plasmod.RunMode.RUN)
 print("Profiles")
 pprint(list(plasmod.mapping.Profiles))
 
-plasmod.plot_default_profiles(solver)
 # %%
 plot_profile(solver, plasmod.Profiles.Te, "keV")
 print_outputs(solver)
+
+# %%[markdown]
+# ### Plotting the results
+# There is a default set of output profiles that can be plotted easily:
+
+# %%
+
+plasmod.plot_default_profiles(solver)
+
 
 # %%[markdown]
 # ### Rerunning with modified settings
