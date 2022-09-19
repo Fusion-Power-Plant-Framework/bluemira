@@ -4,6 +4,13 @@ geometry
 The geometrical core of bluemira is based on FreeCAD package. A basic api has been
 implemented to interface with main FreeCAD objects and functions.
 
+Note that `BluemiraGeo` objects are intended to be static; deep copies to the underlying
+FreeCAD objects are held in state. This means that shared boundaries between `BluemiraGeo`
+objects are not possible. Take care when creating your geometries; if e.g. a `BluemiraWire`
+is used in a Boolean operation and that `BluemiraWire` is subsequently modified somehow,
+this will not update or affect the result of the Boolean operation previously carried
+out.
+
 .. note:: Currently only a minor part of the FreeCAD potentiality has been
     implemented in the respective api.
 
