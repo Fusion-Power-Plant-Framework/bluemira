@@ -224,7 +224,7 @@ straight_line = geotools.make_polygon(points)
 quarter_turn = geotools.make_circle(
     center=(3, 3, 2.5), axis=(0, 0, 1), radius=1.5, end_angle=90
 )
-path = BluemiraWire(straight_line + quarter_turn)
+path = BluemiraWire([straight_line, quarter_turn])
 solid = geotools.sweep_shape(rectangle.wires, path)
 show_cad(solid)
 
