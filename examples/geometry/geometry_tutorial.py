@@ -189,7 +189,7 @@ part_circle = geotools.make_circle(radius=radius, start_angle=0, end_angle=270)
 points = np.array([[radius, 0, 0], [0, 0, -radius], [0, 0, 0]])
 closure = geotools.make_polygon(points)
 
-my_shape = BluemiraWire(part_circle + closure)
+my_shape = BluemiraWire([part_circle, closure])
 
 # Let's just check we got that right...
 print(f"My shape is closed: {my_shape.is_closed()}")
