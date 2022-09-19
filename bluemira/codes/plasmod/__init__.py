@@ -23,6 +23,7 @@
 Importer for plasmod's constants, enums, and solver
 """
 
+from bluemira.codes.plasmod._plotting import plot_default_profiles
 from bluemira.codes.plasmod.api import RunMode, Solver
 from bluemira.codes.plasmod.constants import BINARY, NAME
 from bluemira.codes.plasmod.mapping import (
@@ -40,6 +41,7 @@ __all__ = [
     "ImpurityModel",
     "PedestalModel",
     "PLHModel",
+    "plot_default_profiles",
     "Profiles",
     "SOLModel",
     "TransportModel",
