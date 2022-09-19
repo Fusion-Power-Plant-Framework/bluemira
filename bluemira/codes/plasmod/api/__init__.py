@@ -22,11 +22,9 @@
 The API for the plasmod solver.
 """
 
-from bluemira.codes.plasmod.api._plotting import plot_default_profiles
 from bluemira.codes.plasmod.api._solver import Run, RunMode, Setup, Solver, Teardown
 
 __all__ = [
-    "plot_default_profiles",
     "Run",
     "RunMode",
     "Setup",
