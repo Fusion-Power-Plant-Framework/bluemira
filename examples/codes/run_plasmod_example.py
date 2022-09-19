@@ -211,6 +211,9 @@ solver.execute(plasmod.RunMode.RUN)
 print("Profiles")
 pprint(list(plasmod.mapping.Profiles))
 
+from bluemira.codes.plasmod.api._plotting import plot_profiles
+
+plot_profiles(solver)
 # %%
 plot_profile(solver, plasmod.Profiles.Te, "keV")
 print_outputs(solver)
