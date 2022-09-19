@@ -23,6 +23,12 @@
 Test for transport solver
 """
 
+# %%[markdown]
+
+# # General imports
+
+# %%
+
 import os
 
 from bluemira.base.config import Configuration
@@ -32,13 +38,27 @@ from bluemira.equilibria.fem_fixed_boundary.transport_solver import (
     PlasmodTransportSolver,
 )
 
+# %%[markdown]
+
+# # A simple example to run Plasmod
+
+# Define plasmod binary path
+
+# %%
+
 set_log_level("DEBUG")
 
-PLASMOD_PATH = "/home/ivan/Desktop/bluemira_project/plasmod/bin/"
 PLASMOD_PATH = PLASMOD_PATH = os.path.join(
     os.path.split(get_bluemira_root())[:-1][0], "plasmod/bin"
 )
 binary = os.path.join(PLASMOD_PATH, "plasmod")
+
+
+# %%[markdown]
+
+# Create the parameters and config dictionaries to instantiate plasmod
+
+# %%
 
 new_params = {
     "A": 3.3,
@@ -63,6 +83,12 @@ for param_name in params.keys():
 build_config = {
     "binary": binary,
 }
+
+# %%[markdown]
+
+# Execute Plasmod
+
+# %%
 
 plasmod_solver = PlasmodTransportSolver(
     params=params,
