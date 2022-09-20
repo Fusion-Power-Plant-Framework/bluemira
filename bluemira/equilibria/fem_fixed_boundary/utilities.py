@@ -333,8 +333,8 @@ class Solovev:
     plasma boundary. Used for verification purposes
     """
 
-    def __init__(self, R0, a, kappa, delta, A1, A2):
-        self.R0 = R0
+    def __init__(self, R_0, a, kappa, delta, A1, A2):  # noqa: N803
+        self.R_0 = R_0
         self.a = a
         self.kappa = kappa
         self.delta = delta
@@ -343,9 +343,9 @@ class Solovev:
         self._find_params()
 
     def _find_params(self):
-        ri = self.R0 - self.a
-        ro = self.R0 + self.a
-        rt = self.R0 - self.delta * self.a
+        ri = self.R_0 - self.a
+        ro = self.R_0 + self.a
+        rt = self.R_0 - self.delta * self.a
         zt = self.kappa * self.a
 
         m = np.array(
