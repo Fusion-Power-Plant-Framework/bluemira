@@ -41,7 +41,7 @@ def plot_default_profiles(solver, show=True):
     Returns
     -------
     f: Figure
-        Matplotlig figure
+        Matplotlib figure
     ax: np.ndarray[Axes]
         Array of matplotlib Axes
     """
