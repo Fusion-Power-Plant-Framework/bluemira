@@ -221,7 +221,7 @@ print_outputs(solver)
 
 # %%
 
-plasmod.plot_default_profiles(solver)
+plasmod.plot_default_profiles(solver.plasmod_outputs())
 
 
 # %%[markdown]

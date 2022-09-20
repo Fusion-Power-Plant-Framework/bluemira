@@ -27,13 +27,13 @@ import matplotlib.pyplot as plt
 from bluemira.display import plot_defaults
 
 
-def plot_default_profiles(solver, show=True):
+def plot_default_profiles(plasmod_outputs, show=True):
     """
     Plot a default set of profiles from a PLASMOD solver.
 
     Parameters
     ----------
-    solver: plasmod.Solver
+    plasmod_outputs: plasmod.PlasmodOutputs
         Solver for which to plot profiles
     show: bool
         Whether or not to show the plot
@@ -45,49 +45,47 @@ def plot_default_profiles(solver, show=True):
     ax: np.ndarray[Axes]
         Array of matplotlib Axes
     """
-    from bluemira.codes.plasmod.mapping import Profiles
-
     plot_defaults()
 
     f, ax = plt.subplots(2, 3)
-    rho = solver.get_profile(Profiles.x)
+    rho = plasmod_outputs.x
 
     # Temperature profiles
-    ti = solver.get_profile(Profiles.Ti)
-    te = solver.get_profile(Profiles.Te)
+    ti = plasmod_outputs.Ti
+    te = plasmod_outputs.Te
     ax[0, 0].plot(rho, ti, label="$T_{i}$")
     ax[0, 0].plot(rho, te, label="$T_{e}$")
     ax[0, 0].set_ylabel("Temperature [keV]")
 
     # Current profiles
-    jpar = solver.get_profile(Profiles.jpar)
-    jbs = solver.get_profile(Profiles.jbs)
-    jcd = solver.get_profile(Profiles.jcd)
+    jpar = plasmod_outputs.jpar
+    jbs = plasmod_outputs.jbs
+    jcd = plasmod_outputs.jcd
     ax[0, 1].plot(rho, jpar, label="$j_{||}$")
     ax[0, 1].plot(rho, jbs, label="$j_{BS}$")
     ax[0, 1].plot(rho, jcd, label="$j_{CD}$")
     ax[0, 1].set_ylabel("Current density [A/m²]")
 
     # Density profiles
-    ni = solver.get_profile(Profiles.nions)
-    ne = solver.get_profile(Profiles.ne)
+    ni = plasmod_outputs.nions
+    ne = plasmod_outputs.ne
     ax[1, 0].plot(rho, ni, label="$n_{i}$")
     ax[1, 0].plot(rho, ne, label="$n_{e}$")
     ax[1, 0].set_ylabel("Density [10¹⁹/m3]")
 
     # q profile
-    qprof = solver.get_profile(Profiles.qprof)
+    qprof = plasmod_outputs.qprof
     ax[1, 1].plot(rho, qprof, label="$q$")
     ax[1, 1].set_ylabel("Safety factor")
 
     # Flux functions
-    pprime = solver.get_profile(Profiles.pprime)
+    pprime = plasmod_outputs.pprime
     ax[0, 2].plot(rho, pprime, label="p'")
     ax[0, 2].set_ylabel("[Pa/Wb]")
     axi: plt.Axes = ax[0, 2]
     axi.ticklabel_format(axis="y", style="scientific", scilimits=(0, 0))
 
-    ffprime = solver.get_profile(Profiles.ffprime)
+    ffprime = plasmod_outputs.ffprime
     ax[1, 2].plot(rho, ffprime, label="FF'")
     ax[1, 2].set_ylabel("[T]")
 
