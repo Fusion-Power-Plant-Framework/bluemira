@@ -402,6 +402,13 @@ class TestPlasmodSolver:
 
         assert solver.params.beta_N == original_beta_n
 
+    def test_plasmod_solver_plotting(self):
+        solver = plasmod.Solver(self.default_pf, self.build_config)
+        solver.execute(plasmod.RunMode.RUN)
+
+        f, ax = plasmod.plot_default_profiles(solver.plasmod_outputs())
+        assert len(f.get_axes()) == 6
+
     @staticmethod
     def read_data_file(file_name):
         data_dir = os.path.join(os.path.dirname(__file__), "data")
