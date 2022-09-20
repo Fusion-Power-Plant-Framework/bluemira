@@ -166,21 +166,21 @@ class PlasmodTransportSolver(TransportSolver):
 
     @property
     def delta_95(self):
-        """Get plasma elongation at 95 % flux surface"""
+        """Get plasma triangularity at 95 % flux surface"""
         if self._delta_95 is None:
             self._delta_95 = self.solver.params["d95"]
         return self._delta_95
 
     @property
     def volume_in(self):
-        """Get plasma elongation at 95 % flux surface"""
+        """Get plasma volume"""
         if self._volume_in is None:
             self._volume_in = self.solver.params["V_p"]
         return self._volume_in
 
     @property
     def I_p(self):  # noqa :N802
-        """Get plasma elongation at 95 % flux surface"""
+        """Get plasma current"""
         if self._I_p is None:
             self._I_p = self.solver.params["I_p"] * 1e6
         return self._I_p
