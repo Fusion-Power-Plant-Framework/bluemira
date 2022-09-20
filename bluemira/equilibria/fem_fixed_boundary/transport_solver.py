@@ -37,7 +37,7 @@ class TransportSolver(ABC):
     # This abstract class specifies all the properties and methods that
     # should be provided by a generic transport solver. For the moment
     # they are limited to pprime and ffprime. It is only a draft version.
-    # Todo: check if it is necessary to add other properties or methods.
+    # TODO: see #1448
 
     def __init__(self, *args, **kwargs):
         self.solver = None
