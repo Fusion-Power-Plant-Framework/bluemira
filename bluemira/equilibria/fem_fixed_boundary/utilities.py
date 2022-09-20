@@ -33,8 +33,6 @@ from matplotlib.tri.triangulation import Triangulation
 from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.utilities.tools import is_num
 
-# from scipy.optimize import minimize
-
 
 def b_coil_axis(r, z, pz, curr):
     """
