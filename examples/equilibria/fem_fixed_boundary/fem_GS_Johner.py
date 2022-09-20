@@ -23,9 +23,6 @@
 Example on the application of the GS solver for a Johner plasma parametrization
 """
 
-# isort:maintain_block
-import dolfin
-
 # %%
 import matplotlib.pyplot as plt
 import numpy as np
@@ -38,7 +35,7 @@ from bluemira.equilibria.fem_fixed_boundary.utilities import plot_scalar_field
 from bluemira.mesh import meshing
 from bluemira.mesh.tools import import_mesh, msh_to_xdmf
 
-# isort:end_maintain_block
+import dolfin  # isort:skip
 
 # %%[markdown]
 # # Create a plasma shape
