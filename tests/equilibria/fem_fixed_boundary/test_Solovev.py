@@ -38,7 +38,7 @@ import dolfin  # isort:skip
 
 
 class TestSolovev:
-    def test_Solovev_Zheng(self):
+    def test_Solovev_Zheng(self):  # noqa: N803
         """
         Compare the psi Solovev analytical solution as described in [Zheng1996] with the
         one calculated using the implemented magnetostic module.
@@ -63,14 +63,14 @@ class TestSolovev:
         solovev = Solovev(R0, a, kappa, delta, A1, A2)
 
         levels = 50
-        axis, cntr, cntrf, points, psi_exact = solovev.plot_psi(
+        axis, cntr, _, _, psi_exact = solovev.plot_psi(
             5.0, -6, 8.0, 12.0, 100, 100, levels=levels
         )
         plt.show()
 
         # get the plasma boundary finding the contour at psi = 0
         levels = [0]
-        axis, cntr, cntrf, points, psi_exact = solovev.plot_psi(
+        axis, cntr, _, _, psi_exact = solovev.plot_psi(
             6.0, -5, 6.0, 10.0, 500, 500, levels=levels, tofill=False
         )
 
@@ -103,11 +103,11 @@ class TestSolovev:
 
         # mesh the plasma
         m = meshing.Mesh()
-        buffer = m(plasma)
+        m(plasma)
 
         msh_to_xdmf("Mesh.msh", dimensions=2, directory=".", verbose=True)
 
-        mesh, boundaries, subdomains, labels = import_mesh(
+        mesh, boundaries, _, _ = import_mesh(
             "Mesh",
             directory=".",
             subdomains=True,
