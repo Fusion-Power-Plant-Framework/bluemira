@@ -23,6 +23,7 @@
 Example on the application of the GS solver for a Johner plasma parametrization
 """
 
+# isort:maintain_block
 import dolfin
 
 # %%
@@ -36,6 +37,8 @@ from bluemira.equilibria.fem_fixed_boundary.fem_magnetostatic_2D import (
 from bluemira.equilibria.fem_fixed_boundary.utilities import plot_scalar_field
 from bluemira.mesh import meshing
 from bluemira.mesh.tools import import_mesh, msh_to_xdmf
+
+# isort:end_maintain_block
 
 # %%[markdown]
 # # Create a plasma shape
