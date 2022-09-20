@@ -22,7 +22,6 @@
 import matplotlib.pyplot as plt
 import numpy as np
 
-import tests
 from bluemira.base.components import PhysicalComponent
 from bluemira.base.constants import MU_0
 from bluemira.equilibria.fem_fixed_boundary.fem_magnetostatic_2D import (
@@ -63,12 +62,11 @@ class TestSolovev:
         # create the Solovev instance to get the exact psi
         solovev = Solovev(R0, a, kappa, delta, A1, A2)
 
-        if tests.PLOTTING:
-            levels = 50
-            axis, cntr, cntrf, points, psi_exact = solovev.plot_psi(
-                5.0, -6, 8.0, 12.0, 100, 100, levels=levels
-            )
-            plt.show()
+        levels = 50
+        axis, cntr, cntrf, points, psi_exact = solovev.plot_psi(
+            5.0, -6, 8.0, 12.0, 100, 100, levels=levels
+        )
+        plt.show()
 
         # get the plasma boundary finding the contour at psi = 0
         levels = [0]
@@ -76,8 +74,7 @@ class TestSolovev:
             6.0, -5, 6.0, 10.0, 500, 500, levels=levels, tofill=False
         )
 
-        if tests.PLOTTING:
-            plt.show()
+        plt.show()
 
         ind0 = np.where(np.array(levels) == 0.0)[0][0]
         boundary = cntr.collections[ind0].get_paths()[0].vertices
@@ -100,10 +97,9 @@ class TestSolovev:
 
         plasma = PhysicalComponent("Plasma", shape=plasma_face)
 
-        if tests.PLOTTING:
-            plasma.plot_options.view = "xy"
-            plasma.plot_2d()
-            plt.show()
+        plasma.plot_options.view = "xy"
+        plasma.plot_2d()
+        plt.show()
 
         # mesh the plasma
         m = meshing.Mesh()
@@ -117,9 +113,8 @@ class TestSolovev:
             subdomains=True,
         )
 
-        if tests.PLOTTING:
-            dolfin.plot(mesh)
-            plt.show()
+        dolfin.plot(mesh)
+        plt.show()
 
         # initialize the Grad-Shafranov solver
         p = 2
@@ -142,42 +137,41 @@ class TestSolovev:
         psi_calc_data = np.array([psi_calc(x) for x in mesh_points])
         psi_exact = solovev.psi(mesh_points)
 
-        if tests.PLOTTING:
-            levels = np.linspace(min(psi_exact), max(psi_exact), 25)
-            axis, cntr, _ = plot_scalar_field(
-                mesh_points[:, 0],
-                mesh_points[:, 1],
-                psi_exact,
-                levels=levels,
-                axis=None,
-                tofill=False,
-            )
+        levels = np.linspace(min(psi_exact), max(psi_exact), 25)
+        axis, cntr, _ = plot_scalar_field(
+            mesh_points[:, 0],
+            mesh_points[:, 1],
+            psi_exact,
+            levels=levels,
+            axis=None,
+            tofill=False,
+        )
 
-            plt.show()
+        plt.show()
 
-            axis = None
-            axis, cntr, _ = plot_scalar_field(
-                mesh_points[:, 0],
-                mesh_points[:, 1],
-                psi_exact,
-                levels=20,
-                axis=axis,
-                tofill=True,
-            )
-            plt.show()
+        axis = None
+        axis, cntr, _ = plot_scalar_field(
+            mesh_points[:, 0],
+            mesh_points[:, 1],
+            psi_exact,
+            levels=20,
+            axis=axis,
+            tofill=True,
+        )
+        plt.show()
 
-            error = abs(psi_calc_data - psi_exact)
+        error = abs(psi_calc_data - psi_exact)
 
-            levels = np.linspace(0.0, max(error) * 1.1, 50)
-            axis, cntr, _ = plot_scalar_field(
-                mesh_points[:, 0],
-                mesh_points[:, 1],
-                error,
-                levels=levels,
-                axis=None,
-                tofill=True,
-            )
-            plt.show()
+        levels = np.linspace(0.0, max(error) * 1.1, 50)
+        axis, cntr, _ = plot_scalar_field(
+            mesh_points[:, 0],
+            mesh_points[:, 1],
+            error,
+            levels=levels,
+            axis=None,
+            tofill=True,
+        )
+        plt.show()
 
         # calculate the error norm
         diff = psi_calc_data - psi_exact
