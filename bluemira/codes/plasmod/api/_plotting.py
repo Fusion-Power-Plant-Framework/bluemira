@@ -26,6 +26,8 @@ import matplotlib.pyplot as plt
 
 from bluemira.display import plot_defaults
 
+__all__ = ["plot_default_profiles"]
+
 
 def plot_default_profiles(plasmod_outputs, show=True):
     """
