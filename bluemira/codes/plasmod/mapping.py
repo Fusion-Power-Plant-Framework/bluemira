@@ -138,10 +138,10 @@ class Profiles(Model):
     jbs     [A/m²] Bootstrap parallel current density profile
     jcd     [A/m²] CD parallel current density profile
     nions   [10¹⁹/m³] ion density profile
-    nfuel   [10¹⁹/m3] fuel density profile
-    ndeut   [10¹⁹/m3] deuterium density profile
-    ntrit   [10¹⁹/m3] tritium density profile
-    nalf    [10¹⁹/m3] helium density profile
+    nfuel   [10¹⁹/m³] fuel density profile
+    ndeut   [10¹⁹/m³] deuterium density profile
+    ntrit   [10¹⁹/m³] tritium density profile
+    nalf    [10¹⁹/m³] helium density profile
 
     Not yet enabled in plasmod:
      * qrad   radiation density profile

@@ -216,6 +216,15 @@ plot_profile(solver, plasmod.Profiles.Te, "keV")
 print_outputs(solver)
 
 # %%[markdown]
+# ### Plotting the results
+# There is a default set of output profiles that can be plotted easily:
+
+# %%
+
+plasmod.plot_default_profiles(solver.plasmod_outputs())
+
+
+# %%[markdown]
 # ### Rerunning with modified settings
 # #### Changing the transport model
 
