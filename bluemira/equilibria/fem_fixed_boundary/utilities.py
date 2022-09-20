@@ -26,13 +26,14 @@ from typing import Callable
 import dolfin
 import matplotlib.pyplot as plt
 import numpy as np
+import scipy
 from matplotlib._tri import TriContourGenerator
 from matplotlib.tri.triangulation import Triangulation
-import scipy
-# from scipy.optimize import minimize
 
 from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.utilities.tools import is_num
+
+# from scipy.optimize import minimize
 
 
 def b_coil_axis(r, z, pz, curr):
@@ -326,8 +327,11 @@ def calculate_plasma_shape_params(psi_norm_func, mesh, psi_norm, plot=False):
     return r_geo, kappa, delta
 
 
-
 class Solovev:
+    """
+    Test why core gets dumped.
+    """
+
     def __init__(self, R0, a, kappa, delta, A1, A2):
         self.R0 = R0
         self.a = a
