@@ -22,6 +22,7 @@
 import matplotlib.pyplot as plt
 import numpy as np
 
+import tests
 from bluemira.base.components import PhysicalComponent
 from bluemira.base.constants import MU_0
 from bluemira.equilibria.fem_fixed_boundary.fem_magnetostatic_2D import (
@@ -34,8 +35,7 @@ from bluemira.geometry.wire import BluemiraWire
 from bluemira.mesh import meshing
 from bluemira.mesh.tools import import_mesh, msh_to_xdmf
 
-import dolfin
-import tests
+import dolfin  # isort:skip
 
 
 class TestSolovev:
