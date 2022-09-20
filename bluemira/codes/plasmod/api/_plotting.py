@@ -73,7 +73,7 @@ def plot_default_profiles(plasmod_outputs, show=True):
     ne = plasmod_outputs.ne
     ax[1, 0].plot(rho, ni, label="$n_{i}$")
     ax[1, 0].plot(rho, ne, label="$n_{e}$")
-    ax[1, 0].set_ylabel("Density [10¹⁹/m3]")
+    ax[1, 0].set_ylabel("Density [10¹⁹/m³]")
 
     # q profile
     qprof = plasmod_outputs.qprof
