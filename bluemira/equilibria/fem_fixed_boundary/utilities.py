@@ -329,7 +329,8 @@ def calculate_plasma_shape_params(psi_norm_func, mesh, psi_norm, plot=False):
 
 class Solovev:
     """
-    Test why core gets dumped.
+    Solov'ev analytical solution to a fixed boundary equilibrium problem with a symmetric
+    plasma boundary. Used for verification purposes
     """
 
     def __init__(self, R0, a, kappa, delta, A1, A2):
@@ -339,9 +340,9 @@ class Solovev:
         self.delta = delta
         self.A1 = A1
         self.A2 = A2
-        self._findParams()
+        self._find_params()
 
-    def _findParams(self):
+    def _find_params(self):
         ri = self.R0 - self.a
         ro = self.R0 + self.a
         rt = self.R0 - self.delta * self.a
@@ -376,6 +377,9 @@ class Solovev:
         print(f"Solovev coefficients: {self.coeff}")
 
     def psi(self, points):
+        """
+        Calculate psi analytically at a set of points.
+        """
         if len(points.shape) == 1:
             points = np.array([points])
 
@@ -395,6 +399,9 @@ class Solovev:
         return [np.sum(c(x) * m) * 2 * np.pi for x in points]
 
     def plot_psi(self, ri, zi, dr, dz, nr, nz, levels=20, axis=None, tofill=True):
+        """
+        Plot psi
+        """
         r = np.linspace(ri, ri + dr, nr)
         z = np.linspace(zi, zi + dz, nz)
         rv, zv = np.meshgrid(r, z)
