@@ -383,20 +383,21 @@ class Solovev:
         if len(points.shape) == 1:
             points = np.array([points])
 
-        c = lambda x: np.array(
-            [
-                1.0,
-                x[0] ** 2,
-                x[0] ** 2 * (x[0] ** 2 - 4 * x[1] ** 2),
-                x[0] ** 2 * np.log(x[0]) - x[1] ** 2,
-                (x[0] ** 4) / 8.0,
-                -(x[1] ** 2) / 2.0,
-            ]
-        )
+        def psi_func(x):
+            return np.array(
+                [
+                    1.0,
+                    x[0] ** 2,
+                    x[0] ** 2 * (x[0] ** 2 - 4 * x[1] ** 2),
+                    x[0] ** 2 * np.log(x[0]) - x[1] ** 2,
+                    (x[0] ** 4) / 8.0,
+                    -(x[1] ** 2) / 2.0,
+                ]
+            )
 
         m = np.concatenate((self.coeff, np.array([self.A1, self.A2])))
 
-        return [np.sum(c(x) * m) * 2 * np.pi for x in points]
+        return [np.sum(psi_func(x) * m) * 2 * np.pi for x in points]
 
     def plot_psi(self, ri, zi, dr, dz, nr, nz, levels=20, axis=None, tofill=True):
         """
