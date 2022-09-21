@@ -233,6 +233,22 @@ def get_tricontours(
     return [tcg.create_contour(val)[0][0] for val in value]
 
 
+def find_flux_surface_precise(psi_norm_func, mesh, psi_norm, xtol=1e-7):
+    points = mesh.coordinates()
+    psi_norm_array = [psi_norm_func(x) for x in points]
+    contour = get_tricontours(points[:, 0], points[:, 1], psi_norm_array, psi_norm)[0]
+
+    new_contour = 0 * contour
+    for i in range(len(contour)):
+        new_contour[i, :] = scipy.optimize.fsolve(
+            lambda x: psi_norm_func(x) - psi_norm,
+            contour[i, :],
+            xtol=xtol,
+        )
+    x, z = new_contour.T
+    return x, z
+
+
 def calculate_plasma_shape_params(
     psi_norm_func: Callable[[np.ndarray], np.ndarray],
     mesh: dolfin.Mesh,
