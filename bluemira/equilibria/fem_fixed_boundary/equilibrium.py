@@ -156,12 +156,13 @@ def solve_plasmod_fixed_boundary(
 
         directory = get_bluemira_path("", subfolder="generated_data")
         mesh_name = "FixedBoundaryEquilibriumMesh"
-        mesh_file = os.path.join(directory, mesh_name + ".msh")
-        m = meshing.Mesh(meshfile=mesh_file)
+        mesh_name_msh = mesh_name + ".msh"
+
+        m = meshing.Mesh(meshfile=os.path.join(directory, mesh_name_msh))
         m(plasma)
 
         msh_to_xdmf(
-            mesh_name + ".msh", dimensions=(0, 2), directory=directory, verbose=verbose
+            mesh_name_msh, dimensions=(0, 2), directory=directory, verbose=verbose
         )
 
         mesh = import_mesh(
