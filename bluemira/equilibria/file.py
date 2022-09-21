@@ -136,8 +136,8 @@ class EQDSKInterface:
             self.x = _derive_x(self.xgrid1, self.xdim, self.nx)
         if self.z.size == 0:
             self.z = _derive_z(self.zmid, self.zdim, self.nz)
-        if self.qpsi.size == 0:
-            self.qpsi = _derive_psinorm(self.fpol)
+        if self.psinorm.size == 0:
+            self.psinorm = _derive_psinorm(self.fpol)
 
     @classmethod
     def from_file(cls, file_path: str):
@@ -230,22 +230,10 @@ def _read_json(file) -> Dict:
             return _read_json(f_h)
 
     data = json.load(file)
-    data_has_pnorm = False
-    data_has_psinorm = False
     for k, value in data.items():
-        if k == "pnorm":
-            data_has_pnorm = True
-        if k == "psinorm":
-            data_has_psinorm = True
         if isinstance(value, list):
             data[k] = np.asarray(value)
 
-    # Backward compatibility for when psinorm used to be called pnorm
-    if data_has_pnorm:
-        if data_has_psinorm:
-            del data["pnorm"]
-        else:
-            data["psinorm"] = data.pop("pnorm")
     return data
 
 
@@ -511,7 +499,7 @@ def _write_eqdsk(file, data):
     file_id_string = "_".join([trimmed_name, timestamp])
 
     # Define dummy data for qpsi if it has not been previously defined.
-    if data["qpsi"] is None:
+    if data["qpsi"].size == 0:
         qpsi = np.zeros(data["nx"])
     else:
         qpsi = data["qpsi"]
