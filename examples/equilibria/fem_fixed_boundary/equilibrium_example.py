@@ -90,11 +90,8 @@ new_params = {
     "f_ni": 0,
 }
 
-# plasmod options
-PLASMOD_PATH = "/home/ivan/Desktop/bluemira_project/plasmod/bin/"
-PLASMOD_PATH = PLASMOD_PATH = os.path.join(
-    os.path.split(get_bluemira_root())[:-1][0], "plasmod/bin"
-)
+# PLASMOD options
+PLASMOD_PATH = os.path.join(os.path.split(get_bluemira_root())[:-1][0], "plasmod/bin")
 binary = os.path.join(PLASMOD_PATH, "plasmod")
 
 plasmod_params = Configuration(new_params)

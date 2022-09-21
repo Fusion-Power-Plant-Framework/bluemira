@@ -217,7 +217,7 @@ def calculate_plasma_shape_params(psi_norm_func, mesh, psi_norm, plot=False):
 
     Parameters
     ----------
-    psi_norm_func: callable
+    psi_norm_func: Callable
         Function to calculate normalised psi
     mesh: dolfin.Mesh
         Mesh object to use to estimate extrema prior to optimisation

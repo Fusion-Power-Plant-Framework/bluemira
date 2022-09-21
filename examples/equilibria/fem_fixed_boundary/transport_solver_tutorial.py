@@ -48,9 +48,7 @@ from bluemira.equilibria.fem_fixed_boundary.transport_solver import (
 
 set_log_level("DEBUG")
 
-PLASMOD_PATH = PLASMOD_PATH = os.path.join(
-    os.path.split(get_bluemira_root())[:-1][0], "plasmod/bin"
-)
+PLASMOD_PATH = os.path.join(os.path.split(get_bluemira_root())[:-1][0], "plasmod/bin")
 binary = os.path.join(PLASMOD_PATH, "plasmod")
 
 
