@@ -22,7 +22,7 @@
 """
 The bluemira transport solver module
 """
-from abc import ABC, abstractmethod, abstractproperty
+from abc import ABC, abstractproperty
 
 import numpy as np
 from scipy.interpolate import interp1d
