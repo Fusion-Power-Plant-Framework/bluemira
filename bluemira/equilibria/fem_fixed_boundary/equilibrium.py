@@ -20,8 +20,11 @@
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 
 """Fixed boundary equilibrium solve"""
+import os
+
 import numpy as np
 
+from bluemira.base.file import get_bluemira_path
 from bluemira.base.look_and_feel import bluemira_debug, bluemira_print, bluemira_warn
 from bluemira.equilibria.fem_fixed_boundary.fem_magnetostatic_2D import (
     FemGradShafranovFixedBoundary,
@@ -151,14 +154,19 @@ def solve_plasmod_fixed_boundary(
             "physical_group": "plasma_face",
         }
 
-        m = meshing.Mesh()
+        directory = get_bluemira_path("", subfolder="generated_data")
+        mesh_name = "FixedBoundaryEquilibriumMesh"
+        mesh_file = os.path.join(directory, mesh_name + ".msh")
+        m = meshing.Mesh(meshfile=mesh_file)
         m(plasma)
 
-        msh_to_xdmf("Mesh.msh", dimensions=(0, 2), directory=".", verbose=verbose)
+        msh_to_xdmf(
+            mesh_name + ".msh", dimensions=(0, 2), directory=directory, verbose=verbose
+        )
 
         mesh = import_mesh(
-            "Mesh",
-            directory=".",
+            mesh_name,
+            directory=directory,
             subdomains=True,
         )[0]
 
