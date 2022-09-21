@@ -232,9 +232,20 @@ def _read_json(file) -> Dict:
             return _read_json(f_h)
 
     data = json.load(file)
+    data_has_pnorm = False
+    data_has_psinorm = False
     for k, value in data.items():
         if isinstance(value, list):
             data[k] = np.asarray(value)
+        data_has_pnorm |= k == "pnorm"
+        data_has_psinorm |= k == "psinorm"
+
+    # For backward compatibility where 'psinorm' was sometimes 'pnorm'
+    if data_has_pnorm:
+        if data_has_psinorm:
+            del data["pnorm"]
+        else:
+            data["psinorm"] = data.pop("pnorm")
 
     return data
 
