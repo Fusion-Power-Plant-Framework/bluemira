@@ -27,7 +27,7 @@ import numpy as np
 import pytest
 from typeguard import check_type
 
-from bluemira.base.file import get_bluemira_path, get_files_by_ext
+from bluemira.base.file import get_bluemira_path
 from bluemira.equilibria.file import EQDSKInterface
 from bluemira.utilities.tools import compare_dicts
 from tests._helpers import combine_text_mock_write_calls
@@ -35,15 +35,11 @@ from tests._helpers import combine_text_mock_write_calls
 
 class TestEQDSKInterface:
     path = get_bluemira_path("equilibria/test_data", subfolder="tests")
-
-    @classmethod
-    def setup_class(cls):
-        cls.testfiles = [
-            os.path.join(get_bluemira_path("eqdsk", subfolder="data"), "jetto.eqdsk_out")
-        ]
-        cls.testfiles += get_files_by_ext(cls.path, "eqdsk")
-        cls.testfiles += get_files_by_ext(cls.path, "eqdsk_out")
-        assert cls.testfiles
+    testfiles = [
+        os.path.join(get_bluemira_path("eqdsk", subfolder="data"), "jetto.eqdsk_out"),
+        os.path.join(path, "DN-DEMO_eqref.json"),
+        os.path.join(path, "eqref_OOB.json"),
+    ]
 
     def read_strict_geqdsk(self, fname):
         """
@@ -130,43 +126,39 @@ class TestEQDSKInterface:
         (ncoil,) = fCSTM.read(file.readline())
         coil = read_flat_array(f2020, 5 * ncoil)
 
-    def test_read(self):
-        # Loop over all test files
-        for f in self.testfiles:
-            # Define absolute path of current test file
-            file = os.path.join(self.path, f)
+    @pytest.mark.parametrize("file", testfiles)
+    def test_read(self, file):
+        # Create EQDSK file interface and read data to a dict
+        eqdsk = EQDSKInterface.from_file(file)
+        d1 = eqdsk.to_dict()
 
-            # Create EQDSK file interface and read data to a dict
-            eqdsk = EQDSKInterface.from_file(file)
-            d1 = eqdsk.to_dict()
+        # Write data read in from test file into a new EQDSK
+        # file, with the suffix "_temp"
+        name = os.path.splitext(os.path.basename(file))[0] + "_temp"
+        fname = os.path.join(self.path, name)
+        eqdsk.write(fname, format="eqdsk")
+        d2 = eqdsk.to_dict()
 
-            # Write data read in from test file into a new EQDSK
-            # file, with the suffix "_temp"
-            name = f.split(".")[0] + "_temp"
-            fname = os.path.join(self.path, name)
-            eqdsk.write(fname, format="eqdsk")
-            d2 = eqdsk.to_dict()
+        # Check eqdsk is readable by Fortran readers.
+        # This demands stricter adherence to the G-EQDSK
+        # format than bluemira's main reader.
+        self.read_strict_geqdsk(fname)
 
-            # Check eqdsk is readable by Fortran readers.
-            # This demands stricter adherence to the G-EQDSK
-            # format than bluemira's main reader.
-            self.read_strict_geqdsk(fname)
+        # Write data read in from test file into a new JSON
+        # file, with the suffix "_temp"
+        jname = os.path.splitext(fname)[0] + ".json"
+        eqdsk.write(jname, format="json")
+        d3 = EQDSKInterface.from_file(jname).to_dict()
 
-            # Write data read in from test file into a new JSON
-            # file, with the suffix "_temp"
-            jname = fname.split(".")[0] + ".json"
-            eqdsk.write(jname, format="json")
-            d3 = EQDSKInterface.from_file(jname).to_dict()
+        # Clean up temporary files
+        os.remove(fname + ".eqdsk")
+        os.remove(fname + ".json")
 
-            # Clean up temporary files
-            os.remove(fname + ".eqdsk")
-            os.remove(fname + ".json")
-
-            # Compare dictionaries to check data hasn't
-            # been changed.
-            assert compare_dicts(d1, d2, verbose=True)
-            assert compare_dicts(d1, d3, verbose=True)
-            assert compare_dicts(d2, d3, verbose=True)
+        # Compare dictionaries to check data hasn't
+        # been changed.
+        assert compare_dicts(d1, d2, verbose=True)
+        assert compare_dicts(d1, d3, verbose=True)
+        assert compare_dicts(d2, d3, verbose=True)
 
     def test_read_matches_values_in_file(self):
         eq = EQDSKInterface.from_file(self.testfiles[0])
@@ -210,3 +202,7 @@ class TestEQDSKInterface:
 
         assert eq2.nz == 151
         assert eq2.nbdry == 72
+
+    @pytest.mark.parametrize("field", ["x", "z", "psinorm"])
+    def test_derived_field_is_calculated_if_not_given(self, field):
+        data_file = get_bluemira_path("equilibria", subfolder="data")
