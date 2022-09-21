@@ -346,6 +346,41 @@ def calculate_plasma_shape_params(
     return r_geo, kappa, delta
 
 
+def find_psi_axis(psi_func, mesh):
+    """
+    Find the magnetic axis in the poloidal flux map
+    Parameters
+    ----------
+    psi_func: callable
+        Function to return psi at a given point
+    mesh: dolfin.Mesh
+        Mesh object to use to estimate extrema prior to optimisation
+    Returns
+    -------
+    psi_axis: float
+        Maximum psi in the continuous psi function
+    """
+    points = mesh.coordinates()
+    psi_array = [psi_func(x) for x in points]
+    psi_max_arg = np.argmax(psi_array)
+
+    x0 = points[psi_max_arg]
+    search_range = mesh.hmax()
+    bounds = [(xi - search_range, xi + search_range) for xi in x0]
+
+    result = scipy.optimize.minimize(
+        lambda x: -psi_func(x),
+        x0,
+        method="SLSQP",
+        bounds=bounds,
+        options={"disp": False, "ftol": 1e-10, "maxiter": 1000},
+    )
+    if not result.success:
+        bluemira_warn("Poloidal flux maximum finding failing:\n" f"{result.message}")
+
+    return psi_func(result.x)
+
+
 class Solovev:
     """
     Solov'ev analytical solution to a fixed boundary equilibrium problem with a symmetric
