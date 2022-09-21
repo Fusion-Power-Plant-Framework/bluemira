@@ -119,24 +119,24 @@ class EQDSKInterface:
     """Z coordinate of the magnetic axis [m]."""
     zmid: float
     """Z coordinate of the middle of the spatial grid [m]."""
-    x: np.ndarray = np.array([])
-    """X 1-D vector [m]."""
-    z: np.ndarray = np.array([])
-    """Z 1-D vector [m]."""
-    psinorm: np.ndarray = np.array([])
-    """Normalised psi vector [A]."""
-    qpsi: np.ndarray = np.array([])
+    x: Optional[np.ndarray] = None
+    """X 1-D vector [m] (calculated if not given)."""
+    z: Optional[np.ndarray] = None
+    """Z 1-D vector [m] (calculated if not given)."""
+    psinorm: Optional[np.ndarray] = None
+    """Normalised psi vector [A] (calculated if not given)."""
+    qpsi: Optional[np.ndarray] = None
     """Safety factor values on the 1-D flux grid [dimensionless]."""
     file_name: Optional[str] = None
     """The EQDSK file the data originates from."""
 
     def __post_init__(self):
         """Calculate derived parameters if they're not given."""
-        if self.x.size == 0:
+        if self.x is None:
             self.x = _derive_x(self.xgrid1, self.xdim, self.nx)
-        if self.z.size == 0:
+        if self.z is None:
             self.z = _derive_z(self.zmid, self.zdim, self.nz)
-        if self.psinorm.size == 0:
+        if self.psinorm is None:
             self.psinorm = _derive_psinorm(self.fpol)
 
     @classmethod
@@ -499,7 +499,7 @@ def _write_eqdsk(file, data):
     file_id_string = "_".join([trimmed_name, timestamp])
 
     # Define dummy data for qpsi if it has not been previously defined.
-    if data["qpsi"].size == 0:
+    if data["qpsi"] is None:
         qpsi = np.zeros(data["nx"])
     else:
         qpsi = data["qpsi"]
