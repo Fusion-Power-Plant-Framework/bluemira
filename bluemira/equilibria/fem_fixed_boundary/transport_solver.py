@@ -57,27 +57,6 @@ class TransportSolver(ABC):
         pass
 
 
-class NoneTransportSolver(TransportSolver):
-    """Empty transport solver"""
-
-    def __init__(self, *args, **kwargs):
-        self.solver = None
-
-    @TransportSolver.pprime.getter
-    def pprime(self):
-        """
-        Get pprime as function of psi_norm
-        """
-        return None
-
-    @TransportSolver.ffprime.getter
-    def ffprime(self):
-        """
-        Get ffprime as function of psi_norm
-        """
-        return None
-
-
 class PlasmodTransportSolver(TransportSolver):
     """
     PLASMOD transport solver class
