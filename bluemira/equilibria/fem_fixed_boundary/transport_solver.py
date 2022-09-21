@@ -22,7 +22,7 @@
 """
 The bluemira transport solver module
 """
-from abc import ABC, abstractmethod
+from abc import ABC, abstractmethod, abstractproperty
 
 import numpy as np
 from scipy.interpolate import interp1d
@@ -42,16 +42,14 @@ class TransportSolver(ABC):
     def __init__(self, *args, **kwargs):
         self.solver = None
 
-    @property
-    @abstractmethod
+    @abstractproperty
     def pprime(self):
         """
         Get pprime as function of psi_norm
         """
         pass
 
-    @property
-    @abstractmethod
+    @abstractproperty
     def ffprime(self):
         """
         Get ffprime as function of psi_norm
