@@ -34,6 +34,8 @@ from bluemira.equilibria.file import EQDSKInterface
 from bluemira.utilities.tools import compare_dicts
 from tests._helpers import combine_text_mock_write_calls
 
+OPEN = "builtins.open"
+
 
 class TestEQDSKInterface:
     path = get_bluemira_path("equilibria/test_data", subfolder="tests")
@@ -199,27 +201,25 @@ class TestEQDSKInterface:
     def test_write_then_read_in_json_format(self):
         eq = EQDSKInterface.from_file(self.testfiles[0])
 
-        with mock.patch("builtins.open", new_callable=mock.mock_open) as open_mock:
+        with mock.patch(OPEN, new_callable=mock.mock_open) as open_mock:
             eq.write("some/path.json", format="json")
         written = combine_text_mock_write_calls(open_mock)
 
         with mock.patch(
-            "builtins.open", new_callable=mock.mock_open, read_data=written
+            OPEN, new_callable=mock.mock_open, read_data=written
         ) as open_mock:
             eq2 = EQDSKInterface.from_file("/some/path.json")
 
         assert eq2.nz == 151
         assert eq2.nbdry == 72
 
-    # @pytest.mark.parametrize("field", ["x", "z", "psinorm"])
-    # def test_derived_field_is_calculated_if_not_given(self, field):
     def test_derived_field_is_calculated_if_not_given(self):
         data = copy.deepcopy(self.eudemo_sof_data)
         for field in ["x", "z", "psinorm"]:
             del data[field]
 
         open_mock = mock.mock_open(read_data=json.dumps(data))
-        with mock.patch("builtins.open", new=open_mock):
+        with mock.patch(OPEN, new=open_mock):
             eqdsk = EQDSKInterface.from_file("/some/file.json")
 
         np.testing.assert_allclose(eqdsk.x, self.eudemo_sof_data["x"])

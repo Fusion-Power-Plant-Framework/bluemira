@@ -34,6 +34,8 @@ import numpy as np
 from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.utilities.tools import is_num, json_writer
 
+EQDSK_EXTENSIONS = [".eqdsk", ".eqdsk_out", ".geqdsk"]
+
 
 @dataclass(repr=False)
 class EQDSKInterface:
@@ -161,7 +163,7 @@ class EQDSKInterface:
         """
         _, file_extension = os.path.splitext(file_path)
         file_name = os.path.basename(file_path)
-        if file_extension.lower() in [".eqdsk", ".eqdsk_out", ".geqdsk"]:
+        if file_extension.lower() in EQDSK_EXTENSIONS:
             return cls(file_name=file_name, **_read_eqdsk(file_path))
         if file_extension.lower() == ".json":
             return cls(file_name=file_name, **_read_json(file_path))
@@ -424,8 +426,8 @@ def _write_eqdsk(file, data):
         Dictionary of EQDSK data.
     """
     if isinstance(file, str):
-        if not file.endswith(".eqdsk") or not file.endswith(".geqdsk"):
-            file = file.split(".")[0] + ".eqdsk"
+        if not any(file.endswith(ext) for ext in EQDSK_EXTENSIONS):
+            file = os.path.splitext(file)[0] + ".eqdsk"
         with open(file, "w") as f_handle:
             return _write_eqdsk(f_handle, data)
 
