@@ -349,6 +349,7 @@ def calculate_plasma_shape_params(
 def find_psi_axis(psi_func, mesh):
     """
     Find the magnetic axis in the poloidal flux map.
+
     Parameters
     ----------
     psi_func: callable
