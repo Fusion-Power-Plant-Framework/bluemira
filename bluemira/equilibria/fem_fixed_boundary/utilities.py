@@ -113,7 +113,7 @@ class ScalarSubFunc(dolfin.UserExpression):
 
 
 def plot_scalar_field(
-    x, y, data, levels=20, axis=None, contour=True, tofill=True, **kwargs
+    x, y, data, levels=20, ax=None, contour=True, tofill=True, **kwargs
 ):
     """
     Plot a scalar field
@@ -140,9 +140,9 @@ def plot_scalar_field(
     axis: Axis
         Matplotlib axis on which the plot ocurred
     """
-    if axis is None:
+    if ax is None:
         fig = plt.figure()
-        axis = fig.add_subplot()
+        ax = fig.add_subplot()
     else:
         fig = plt.gcf()
 
@@ -153,20 +153,20 @@ def plot_scalar_field(
     cntrf = None
 
     if contour:
-        cntr = axis.tricontour(x, y, data, levels=levels, **contour_kwargs)
+        cntr = ax.tricontour(x, y, data, levels=levels, **contour_kwargs)
 
     if tofill:
-        cntrf = axis.tricontourf(x, y, data, levels=levels, cmap="RdBu_r")
-        fig.colorbar(cntrf, ax=axis)
+        cntrf = ax.tricontourf(x, y, data, levels=levels, cmap="RdBu_r")
+        fig.colorbar(cntrf, ax=ax)
 
-    axis.set_xlabel("x [m]")
-    axis.set_ylabel("z [m]")
-    axis.set_aspect("equal")
+    ax.set_xlabel("x [m]")
+    ax.set_ylabel("z [m]")
+    ax.set_aspect("equal")
 
-    return axis, cntr, cntrf
+    return ax, cntr, cntrf
 
 
-def plot_profile(x, prof, var_name, var_unit):
+def plot_profile(x, prof, var_name, var_unit, show=True):
     """
     Plot profile
     """
@@ -174,7 +174,8 @@ def plot_profile(x, prof, var_name, var_unit):
     ax.plot(x, prof)
     ax.set(xlabel="x (-)", ylabel=var_name + " (" + var_unit + ")")
     ax.grid()
-    plt.show()
+    if show:
+        plt.show()
 
 
 def get_tricontours(x, z, array, value):
@@ -407,6 +408,6 @@ class Solovev:
         points = np.vstack([rv.ravel(), zv.ravel()]).T
         psi = self.psi(points)
         cplot = plot_scalar_field(
-            points[:, 0], points[:, 1], psi, levels=levels, axis=axis, tofill=tofill
+            points[:, 0], points[:, 1], psi, levels=levels, ax=axis, tofill=tofill
         )
         return cplot + (points, psi)
