@@ -116,10 +116,12 @@ def solve_plasmod_fixed_boundary(
         delta = (delta_u + delta_l) / 2
 
         if verbose:
-            print(f"kappa_u: {kappa_u}, delta_u: {delta_u}")
-            print(f"kappa_l: {kappa_l}, delta_l: {delta_l}")
-            print(f"kappa: {kappa}, delta: {delta}")
-            print(f"volume: {plasma_volume}")
+            bluemira_print(
+                f"{kappa_u=}, {delta_u=}\n"
+                f"{kappa_l=}, {delta_l=}\n"
+                f"{kappa=}, {delta=}\n"
+                f"{plasma_volume=}"
+            )
 
         # initialize plasmod solver
         # - V_p is set equal to plasma volume
