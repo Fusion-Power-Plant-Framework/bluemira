@@ -93,12 +93,6 @@ class EQDSKInterface:
     """Poloidal flux at the magnetic axis [V.s/rad]."""
     psimag: float
     """Poloidal flux at the magnetic axis [V.s/rad]."""
-    psinorm: np.ndarray
-    """Normalised psi vector [A]."""
-    qpsi: np.ndarray
-    """Safety factor values on the 1-D flux grid [dimensionless]."""
-    x: np.ndarray
-    """X 1-D vector [m]."""
     xbdry: np.ndarray
     """X coordinates of the plasma boundary [m]."""
     xc: np.ndarray
@@ -113,8 +107,6 @@ class EQDSKInterface:
     """X coordinates of the limiters [m]."""
     xmag: float
     """Radius of the magnetic axis [m]."""
-    z: np.ndarray
-    """Z 1-D vector [m]."""
     zbdry: np.ndarray
     """Z coordinates of the plasma boundary [m]."""
     zc: np.ndarray
@@ -127,8 +119,25 @@ class EQDSKInterface:
     """Z coordinate of the magnetic axis [m]."""
     zmid: float
     """Z coordinate of the middle of the spatial grid [m]."""
+    x: np.ndarray = np.array([])
+    """X 1-D vector [m]."""
+    z: np.ndarray = np.array([])
+    """Z 1-D vector [m]."""
+    psinorm: np.ndarray = np.array([])
+    """Normalised psi vector [A]."""
+    qpsi: np.ndarray = np.array([])
+    """Safety factor values on the 1-D flux grid [dimensionless]."""
     file_name: Optional[str] = None
     """The EQDSK file the data originates from."""
+
+    def __post_init__(self):
+        """Calculate derived parameters if they're not given."""
+        if self.x.size == 0:
+            self.x = _derive_x(self.xgrid1, self.xdim, self.nx)
+        if self.z.size == 0:
+            self.z = _derive_z(self.zmid, self.zdim, self.nz)
+        if self.qpsi.size == 0:
+            self.qpsi = _derive_psinorm(self.fpol)
 
     @classmethod
     def from_file(cls, file_path: str):
@@ -384,21 +393,22 @@ def _read_eqdsk(file) -> Dict:
     data["Ic"] = i_c
 
     # Additional utility data
-    x = np.linspace(
-        data["xgrid1"],
-        data["xgrid1"] + data["xdim"],
-        data["nx"],
-    )
-    z = np.linspace(
-        data["zmid"] - data["zdim"] / 2,
-        data["zmid"] + data["zdim"] / 2,
-        data["nz"],
-    )
-    psinorm = np.linspace(0, 1, len(data["fpol"]))
-    data["x"] = x
-    data["z"] = z
-    data["psinorm"] = psinorm
+    data["x"] = _derive_x(data["xgrid1"], data["xdim"], data["nx"])
+    data["z"] = _derive_z(data["zmid"], data["zdim"], data["nz"])
+    data["psinorm"] = _derive_psinorm(data["fpol"])
     return data
+
+
+def _derive_x(xgrid1, xdim, nx):
+    return np.linspace(xgrid1, xgrid1 + xdim, nx)
+
+
+def _derive_z(zmid, zdim, nz):
+    return np.linspace(zmid - zdim / 2, zmid + zdim / 2, nz)
+
+
+def _derive_psinorm(fpol):
+    return np.linspace(0, 1, len(fpol))
 
 
 def _write_eqdsk(file, data):
