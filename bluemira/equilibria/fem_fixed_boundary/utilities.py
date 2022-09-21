@@ -352,7 +352,7 @@ def find_psi_axis(psi_func, mesh):
 
     Parameters
     ----------
-    psi_func: callable
+    psi_func: Callable
         Function to return psi at a given point
     mesh: dolfin.Mesh
         Mesh object to use to estimate extrema prior to optimisation
