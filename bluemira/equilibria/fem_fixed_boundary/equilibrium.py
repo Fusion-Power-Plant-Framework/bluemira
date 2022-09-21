@@ -201,23 +201,15 @@ def solve_plasmod_fixed_boundary(
         ) + relaxation * delta_u_0
 
         if verbose:
-            print("previous shape parameters")
-            print(f"{kappa_u_0}, {delta_u_0}")
-
-            print("recalculated shape parameters")
-            print(f"{kappa_u}, {delta_u}")
-
-            print(" ")
-            print(f"bluemira delta95 = {delta_95}")
-            print(f"target delta95 = {delta95_t}")
-
-            print(f"|Target - bluemira|/Target = {err_delta}")
-
-            print(" ")
-            print(f"bluemira kappa95 = {kappa_95}")
-            print(f"target kappa95 = {kappa95_t}")
-
-            print(f"|Target - bluemira|/Target = {err_kappa}")
+            bluemira_print(
+                "Previous shape parameters:\n"
+                f"\t {kappa_u_0=:.3f}, {delta_u_0=:.3f}\n"
+                "Recalculated shape parameters:\n"
+                f"\t {kappa_u=:.3f}, {delta_u=:.3f}\n"
+                "\n"
+                f"|Target - Actual|/Target = {err_delta:.3f}\n"
+                f"|Target - bluemira|/Target = {err_kappa:.3f}\n"
+            )
 
         print("\n")
         bluemira_print(f"PLASMOD <-> Fixed boundary G-S iter {n_iter} : {iter_err:.3E}")
