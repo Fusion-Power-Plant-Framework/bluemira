@@ -33,6 +33,7 @@ from bluemira.base.constants import MU_0
 from bluemira.base.look_and_feel import bluemira_print_flush
 from bluemira.equilibria.fem_fixed_boundary.utilities import (
     ScalarSubFunc,
+    find_psi_axis,
     plot_scalar_field,
 )
 
@@ -125,6 +126,8 @@ class FemMagnetostatic2d:
         # initialize solution
         self.psi = dolfin.Function(self.V)
         self.psi.set_allow_extrapolation(True)
+        self._psi_ax = None
+        self._psi_b = None
 
     def define_g(self, g: Union[dolfin.Expression, dolfin.Function]):
         """
@@ -187,7 +190,9 @@ class FemMagnetostatic2d:
             solver_parameters={"linear_solver": "default"},
         )
 
-        # return the solution
+        # Reset cached psi-axis and psi-boundary property
+        self._psi_ax = None
+        self._psi_b = None
         return self.psi
 
     def calculate_b(self) -> dolfin.Function:
@@ -244,12 +249,16 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
     @property
     def psi_ax(self) -> float:
         """Poloidal flux on the magnetic axis"""
-        return np.max(self.psi.vector()[:])
+        if self._psi_ax is None:
+            self._psi_ax = find_psi_axis(self.psi, self.mesh)
+        return self._psi_ax
 
     @property
     def psi_b(self) -> float:
         """Poloidal flux on the boundary"""
-        return 0.0  # np.min(self.psi.vector()[:])
+        if self._psi_b is None:
+            self._psi_b = np.min(self.psi.vector()[:])
+        return self._psi_b
 
     @property
     def psi_norm_2d(self) -> Callable[[np.ndarray], float]:
