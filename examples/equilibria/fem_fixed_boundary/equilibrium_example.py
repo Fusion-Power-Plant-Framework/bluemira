@@ -122,7 +122,6 @@ plasmod_build_config = {
     "binary": binary,
 }
 
-plasmod_options = {"params": plasmod_params, "build_config": plasmod_build_config}
 gs_options = {
     "p_order": 2,
     "max_iter": 30,
@@ -137,7 +136,8 @@ kappa95_t = 1.652
 
 solve_plasmod_fixed_boundary(
     builder_plasma,
-    plasmod_options,
+    plasmod_params,
+    plasmod_build_config,
     gs_options,
     delta95_t,
     kappa95_t,

@@ -19,7 +19,7 @@
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 
-"""Fixed boundary equilibrium class"""
+"""Fixed boundary equilibrium solve"""
 import numpy as np
 
 from bluemira.base.look_and_feel import bluemira_debug, bluemira_print, bluemira_warn
@@ -39,7 +39,8 @@ from bluemira.mesh.tools import import_mesh, msh_to_xdmf
 
 def solve_plasmod_fixed_boundary(
     builder_plasma,
-    plasmod_options,
+    params,
+    build_config,
     gs_options,
     delta95_t,
     kappa95_t,
@@ -58,8 +59,10 @@ def solve_plasmod_fixed_boundary(
     ----------
     builder_plasma: Builder
         Plasma poloidal cross section builder object
-    plasmod_options: dict
-        Set of options used to set up and run PLASMOD
+    params: Configuration
+        Parameters to use in the PLASMOD solve
+    build_config: dict
+        Build configuration to use in the PLASMOD solve
     gs_options: dict
         Set of options used to set up and run the FemGradShafranovFixedBoundary
     delta95_t: float
@@ -117,20 +120,16 @@ def solve_plasmod_fixed_boundary(
 
         # initialize plasmod solver
         # - V_p is set equal to plasma volume
-        plasmod_options["params"].set_parameter("V_p", plasma_volume, "m^3", source)
+        params.set_parameter("V_p", plasma_volume, "m^3", source)
 
-        plasmod_options["params"].set_parameter("kappa", kappa, "dimensionless", source)
-        plasmod_options["params"].set_parameter("delta", delta, "dimensionless", source)
-        plasmod_options["params"].set_parameter(
-            "kappa_95", kappa_95, "dimensionless", source
-        )
-        plasmod_options["params"].set_parameter(
-            "delta_95", delta_95, "dimensionless", source
-        )
+        params.set_parameter("kappa", kappa, "dimensionless", source)
+        params.set_parameter("delta", delta, "dimensionless", source)
+        params.set_parameter("kappa_95", kappa_95, "dimensionless", source)
+        params.set_parameter("delta_95", delta_95, "dimensionless", source)
 
         plasmod_solver = PlasmodTransportSolver(
-            params=plasmod_options["params"],
-            build_config=plasmod_options["build_config"],
+            params=params,
+            build_config=build_config,
         )
         plasmod_solver.execute()
 
