@@ -234,6 +234,20 @@ def get_tricontours(
 
 
 def find_flux_surface_precise(psi_norm_func, mesh, psi_norm, xtol=1e-7):
+    """
+    Find a flux surface in the psi function precisely.
+
+    Parameters
+    ----------
+
+
+    Returns
+    -------
+    x: np.ndarray
+        x coordinates of the flux surface
+    z: np.ndarray
+        z coordinates of the flux surface
+    """
     points = mesh.coordinates()
     psi_norm_array = [psi_norm_func(x) for x in points]
     contour = get_tricontours(points[:, 0], points[:, 1], psi_norm_array, psi_norm)[0]
