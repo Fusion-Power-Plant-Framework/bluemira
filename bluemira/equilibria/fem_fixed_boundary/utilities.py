@@ -239,7 +239,10 @@ def find_flux_surface_precise(psi_norm_func, mesh, psi_norm, xtol=1e-7):
 
     Parameters
     ----------
-
+    psi_norm_func: Callable
+        Function to calculate normalised psi
+    mesh: dolfin.Mesh
+        Mesh object to use to estimate extrema prior to optimisation
 
     Returns
     -------
