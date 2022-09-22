@@ -1650,17 +1650,16 @@ class CoilSet(CoilGroup):
         force_symmetry: bool (default = False)
             Whether or not to force symmetrisation in the CoilSet
         """
-        eqdsk = EQDSKInterface()
-        e = eqdsk.read(filename)
-        if "equilibria" not in e["name"]:
+        e = EQDSKInterface(filename)
+        if "equilibria" not in e.name:
             # SCENE or CREATE
-            e["dxc"] = e["dxc"] / 2
-            e["dzc"] = e["dzc"] / 2
+            e.dxc /= 2
+            e.dzc /= 2
 
         if force_symmetry:
-            return symmetrise_coilset(cls.from_group_vecs(e))
+            return symmetrise_coilset(cls.from_group_vecs(e.to_dict()))
         else:
-            return cls.from_group_vecs(e)
+            return cls.from_group_vecs(e.to_dict())
 
     @classmethod
     def from_group_vecs(cls, groupvecs):
