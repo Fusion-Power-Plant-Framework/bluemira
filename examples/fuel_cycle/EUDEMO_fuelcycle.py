@@ -173,12 +173,7 @@ fw_flow = convert_flux_to_flow(fw_retention_flux, 1400)
 
 # Normalise sqrt sink factors, because T flows are off...
 eta_norm = fw_flow / vessel_outflux
-
-
-if eta_norm >= 1:
-    eta_ivc /= eta_norm
-else:
-    eta_ivc /= eta_norm
+eta_ivc /= eta_norm
 
 m_dir_pump = 0.024
 t_pump = m_dir_pump / vessel_outflux
