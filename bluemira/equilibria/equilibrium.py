@@ -1321,8 +1321,8 @@ class Equilibrium(MHDState):
             field=True,
         )
 
-    def plot_core(self, ax=None):
+    def plot_core(self):
         """
         Plot a 1-D section through the magnetic axis.
         """
-        return CorePlotter2(self, ax)
+        return CorePlotter2(self)
