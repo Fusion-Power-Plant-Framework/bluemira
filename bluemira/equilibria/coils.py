@@ -1163,8 +1163,8 @@ class CoilGroup:
         Returns a list of control responses for F at the given coil location(s)
         """
         c_forces = np.zeros((self.n_coils, 2))
-        for i, coil in enumerate(self.coils.values()):
-            c_forces[i, :] = coil.control_F(coil)
+        for i, this_coil in enumerate(self.coils.values()):
+            c_forces[i, :] = this_coil.control_F(coil)
         return c_forces
 
     def toggle_control(self, *name):
