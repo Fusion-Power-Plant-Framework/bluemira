@@ -58,6 +58,7 @@ def check_matrix_condition(matrix, digits):
             "cause LinAlgErrors.\n"
             f"matrix condition number: {condition_number}"
         )
+        return False
 
     if digit_loss > digits:
         digit_loss = int(np.ceil(digit_loss))
@@ -65,6 +66,7 @@ def check_matrix_condition(matrix, digits):
             "Structural::FiniteElementModel:\n Ill-conditioned matrix"
             f"\n|\tAccuracy loss below the {digit_loss}-th digit."
         )
+        return False
 
     return True
 
