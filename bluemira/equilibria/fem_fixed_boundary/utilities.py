@@ -233,7 +233,7 @@ def get_tricontours(
     return [tcg.create_contour(val)[0][0] for val in value]
 
 
-def find_flux_surface_precise(psi_norm_func, mesh, psi_norm, xtol=1e-7):
+def find_flux_surface_precise_OLD(psi_norm_func, mesh, psi_norm, xtol=1e-7):
     """
     Find a flux surface in the psi function precisely.
 
@@ -268,6 +268,73 @@ def find_flux_surface_precise(psi_norm_func, mesh, psi_norm, xtol=1e-7):
         )
     x, z = new_contour.T
     return x, z
+
+
+def find_flux_surface_precise(psi_norm_func, mesh, psi_norm, n_points=100):
+    """
+    Find a flux surface in the psi function precisely.
+
+    Parameters
+    ----------
+    psi_norm_func: Callable
+        Function to calculate normalised psi
+    mesh: dolfin.Mesh
+        Mesh object to use to estimate extrema prior to optimisation
+    psi_norm: float
+        Normalised psi value for which to calculate the shape parameters
+    xtol: float
+        Precision ersatz
+
+    Returns
+    -------
+    x: np.ndarray
+        x coordinates of the flux surface
+    z: np.ndarray
+        z coordinates of the flux surface
+    """
+    search_range = mesh.hmax()
+    x_axis, z_axis = find_magnetic_axis(lambda x: -psi_norm_func(x), mesh)
+    mpoints = mesh.coordinates()
+    psi_norm_array = [psi_norm_func(x) for x in mpoints]
+    contour = get_tricontours(mpoints[:, 0], mpoints[:, 1], psi_norm_array, psi_norm)[0]
+
+    theta = np.linspace(0, 2 * np.pi, n_points - 1, endpoint=False)
+
+    def psi_norm_match(x):
+        return abs(psi_norm_func(x) - psi_norm)
+
+    points = np.zeros((2, n_points))
+    for i in range(len(theta)):
+        if i == 0:
+            d_guess = abs(np.max(contour[0, :]) - x_axis) - search_range
+        else:
+            d_guess = np.hypot(points[0, i - 1] - x_axis, points[1, i - 1] - z_axis)
+
+        def theta_line(d):
+            return x_axis + d * np.cos(theta[i]), z_axis + d * np.sin(theta[i])
+
+        result = scipy.optimize.minimize(
+            lambda d: psi_norm_match(theta_line(d)),
+            x0=d_guess,
+            bounds=[(d_guess - 2 * search_range, d_guess + 2 * search_range)],
+            method="SLSQP",
+            options={"disp": False, "ftol": 1e-10, "maxiter": 1000},
+        )
+        points[:, i] = theta_line(result.x)
+
+    points[:, -1] = points[:, 0]
+
+    mpoints = mesh.coordinates()
+    psi_norm_array = [psi_norm_func(x) for x in mpoints]
+
+    contour = get_tricontours(mpoints[:, 0], mpoints[:, 1], psi_norm_array, psi_norm)[0]
+    f, ax = plt.subplots()
+    ax.plot(*contour.T, color="b", marker="o", linestyle="--")
+    ax.plot(*points, color="r", marker="s")
+    ax.plot(x_axis, z_axis, marker="o", color="g")
+    ax.set_aspect("equal")
+    plt.show()
+    return points
 
 
 def calculate_plasma_shape_params(
