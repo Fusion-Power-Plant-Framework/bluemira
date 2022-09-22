@@ -47,6 +47,10 @@ from bluemira.fuel_cycle.tools import (
 
 @dataclass
 class EDFCMParams:
+    """
+    Parameters required to run :class:`bluemira.fuel_cycle.cycle.EUDEMOFuelCycleModel`.
+    """
+
     TBR: float = 1.05
     """Tritium breeding ratio [dimensionless]."""
     f_b: float = 0.015
@@ -125,35 +129,21 @@ class EUDEMOFuelCycleModel:
 
     Parameters
     ----------
-    timeline: Timeline object
-        The timeline with which to run the FuelCycle
+    params: Union[EDFCMParams, Dict[str, float]]
+        The parameters for the model. See
+        :class:`bluemira.fuel_cycle.cycle.EDFCMParams` for list of
+        available parameters.
+    build_config: Dict[str, Any]
+        Configuration options for the model. Options are:
 
-    Other Parameters
-    ----------------
-    A: float
-        [1=100%] DEMO load factor - read from lifecycle output
-    f_b: float
-        [1=100%] Tritium burnup fraction in plasma
-    TBR: float
-        [T/T_{fused}] Reactor engineering tritium breeding fraction
-    eta_f: float
-        [1=100%] Fuelling efficiency
-    t_c_TFV: float  # unused
-        Tritium exhaust cycle time [s]
-    t_c_BB: float  # unused
-        Blanket tritium exhaust cycle time [s]
-    I_ivc: float  # unused
-        In-vessel environment maximum absorbed T inventory [s]
-    I_tfv: float
-        Tritium fuel cycle systems maximum absorbed T inventory [kg]
-    I_bb: float  # unused
-        Blanket maximum absorbed T inventory [kg]
-    eta_ivc: float  # unused
-        [1=100%] T exhaust efficiency of in-vessel environment
-    eta_tfv: float
-        [1=100%] T exhaust efficiency of in-vessel environment
-    eta_bb: float
-        [1=100%] T exhaust efficiency of blanket
+            * verbose: bool (False)
+                Print debugging information.
+            * timestep: float (1200.0)
+                The time step in the cycle [s].
+            * conv_thresh: float (2e-4)
+                The convergence threshold in the cycle.
+            * n: int (length of timeline['time'])
+                The no. of time steps to use from the the timeline.
     """
 
     def __init__(
