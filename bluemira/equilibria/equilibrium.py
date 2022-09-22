@@ -213,8 +213,7 @@ class MHDState:
         limiter: Union[Limiter, None]
             Limiter instance if any limiters are in file
         """
-        eqdsk = EQDSKInterface()
-        e = eqdsk.read(filename)
+        e = EQDSKInterface.from_file(filename).to_dict()
         if "equilibria" in e["name"]:
             psi = e["psi"]
         elif "SCENE" in e["name"] and not isinstance(cls, Breakdown):
@@ -270,9 +269,9 @@ class MHDState:
         else:
             filename = os.sep.join([directory, filename])
 
-        self.filename = filename  # Conveniente
-        eqdsk = EQDSKInterface()
-        eqdsk.write(filename, data, formatt=filetype, **kwargs)
+        self.filename = filename  # Convenient
+        eqdsk = EQDSKInterface(**data)
+        eqdsk.write(filename, format=filetype, **kwargs)
 
 
 class Breakdown(MHDState):
@@ -654,7 +653,7 @@ class Equilibrium(MHDState):
             "ffprime": self.ffprime(psinorm),
             "pprime": self.pprime(psinorm),
             "pressure": self.pressure(psinorm),
-            "pnorm": psinorm,
+            "psinorm": psinorm,
             "nbdry": nbdry,
             "xbdry": lcfs["x"],
             "zbdry": lcfs["z"],
@@ -670,8 +669,8 @@ class Equilibrium(MHDState):
 
         if self.limiter is None:  # Needed for eqdsk file format
             result["nlim"] = 0
-            result["xlim"] = 0
-            result["zlim"] = 0
+            result["xlim"] = np.ndarray([])
+            result["zlim"] = np.ndarray([])
         else:
             result["nlim"] = len(self.limiter)
             result["xlim"] = self.limiter.x
