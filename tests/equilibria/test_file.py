@@ -224,6 +224,9 @@ class TestEQDSKInterface:
 
         np.testing.assert_allclose(eqdsk.x, self.eudemo_sof_data["x"])
         np.testing.assert_allclose(eqdsk.z, self.eudemo_sof_data["z"])
-        # TODO(hsaunders1904): understand why this fails
-        # np.testing.assert_allclose(eqdsk.psinorm, self.eudemo_sof_data["psinorm"])
-        assert eqdsk.psinorm.size > 0
+        # The calculation used for psinorm has changed since the
+        # eudemo_sof_data was created - so we can't compare to that in
+        # this case.
+        np.testing.assert_allclose(
+            eqdsk.psinorm, np.linspace(0, 1, len(self.eudemo_sof_data["fpol"]))
+        )
