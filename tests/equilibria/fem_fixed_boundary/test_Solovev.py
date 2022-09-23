@@ -49,18 +49,18 @@ class TestSolovev:
         """
 
         # set problem parameters
-        R0 = 9.07  # noqa: N806
+        R_0 = 9.07
         A = 3.1
         delta = 0.5
         kappa = 1.7
-        a = R0 / A
+        a = R_0 / A
 
         # Solovev parameters for pprime and ffprime
         A1 = -6.84256806e-02  # noqa: N806
         A2 = -6.52918977e-02  # noqa: N806
 
         # create the Solovev instance to get the exact psi
-        solovev = Solovev(R0, a, kappa, delta, A1, A2)
+        solovev = Solovev(R_0, a, kappa, delta, A1, A2)
 
         levels = 50
         axis, cntr, _, _, psi_exact = solovev.plot_psi(
