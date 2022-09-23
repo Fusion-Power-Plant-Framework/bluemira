@@ -89,7 +89,7 @@ class TestSolovev:
 
         boundary_old = boundary
 
-        n_points = 2000
+        n_points = 500
         boundary = find_flux_surface_no_mesh(solovev.psi_norm_2d, 1, n_points=n_points)
         min_distance = np.min(np.hypot(np.diff(boundary[0, :]), np.diff(boundary[1, :])))
         from bluemira.base.look_and_feel import bluemira_print
@@ -118,7 +118,7 @@ class TestSolovev:
         #     boundary[:, int(len(boundary) / 2 - 1) : len(boundary)], label="curve2"
         # )
         # lcfs = BluemiraWire([curve1, curve2], "LCFS")
-        lcfs.mesh_options = {"lcar": 0.015, "physical_group": "lcfs"}
+        lcfs.mesh_options = {"lcar": 0.02, "physical_group": "lcfs"}
 
         plasma_face = BluemiraFace(lcfs, "plasma_face")
         plasma_face.mesh_options = {"lcar": 0.2, "physical_group": "plasma_face"}
