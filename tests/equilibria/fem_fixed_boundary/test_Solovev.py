@@ -68,26 +68,9 @@ class TestSolovev:
         )
         plt.show()
 
-        # get the plasma boundary finding the contour at psi = 0
-        levels = [0]
-        axis, cntr, _, _, psi_exact = solovev.plot_psi(
-            6.0, -5, 6.0, 10.0, 500, 500, levels=levels, tofill=False
-        )
-
-        plt.show()
-
-        ind0 = np.where(np.array(levels) == 0.0)[0][0]
-        boundary = cntr.collections[ind0].get_paths()[0].vertices
-
-        boundary = np.hstack(
-            (boundary, np.zeros((boundary.shape[0], 1), dtype=boundary.dtype))
-        )
-        boundary_old = boundary
         from bluemira.equilibria.fem_fixed_boundary.utilities import (
             find_flux_surface_no_mesh,
         )
-
-        boundary_old = boundary
 
         n_points = 500
         boundary = find_flux_surface_no_mesh(solovev.psi_norm_2d, 1, n_points=n_points)
@@ -98,10 +81,10 @@ class TestSolovev:
         curve2 = interpolate_bspline(boundary[:, n_points // 2 :], "curve2")
         lcfs = BluemiraWire([curve1, curve2], "LCFS")
 
-        lcfs.mesh_options = {"lcar": 0.02, "physical_group": "lcfs"}
+        lcfs.mesh_options = {"lcar": 0.024, "physical_group": "lcfs"}
 
         plasma_face = BluemiraFace(lcfs, "plasma_face")
-        plasma_face.mesh_options = {"lcar": 0.2, "physical_group": "plasma_face"}
+        plasma_face.mesh_options = {"lcar": 0.5, "physical_group": "plasma_face"}
 
         plasma = PhysicalComponent("Plasma", shape=plasma_face)
 
@@ -186,5 +169,4 @@ class TestSolovev:
         diff = psi_calc_data - psi_exact
         eps = np.linalg.norm(diff, ord=2) / np.linalg.norm(psi_exact, ord=2)
         raise ValueError(eps)
-
-        assert eps < 1e-4
+        assert eps < 1e-5
