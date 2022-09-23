@@ -95,7 +95,6 @@ class Solovev:
         b = np.sum(b, axis=1)
 
         self.coeff = scipy.linalg.solve(m, b)
-        print(f"Solovev coefficients: {self.coeff}")
 
     def psi(self, point):
         """
