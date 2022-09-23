@@ -42,10 +42,6 @@ from bluemira.fuel_cycle.tools import (
     legal_limit,
 )
 
-# TODO: Make the whole thing run in self.t (higher resolution, better plotting)
-# It will be slower... and it will probably be less accurate! But the plots..
-# FIXED: You hacked the plot
-
 
 class EUDEMOFuelCycleModel:
     """
