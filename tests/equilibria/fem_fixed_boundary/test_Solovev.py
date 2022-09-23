@@ -45,7 +45,11 @@ import dolfin  # isort:skip
 class Solovev:
     """
     Solov'ev analytical solution to a fixed boundary equilibrium problem with a symmetric
-    plasma boundary. Used for verification purposes
+    plasma boundary sa described in [Zheng1996]. Used for verification purposes.
+
+    .. [Zheng1996] S. B. Zheng, A. J. Wootton, and Emilia R. Solano , "Analytical
+        tokamak equilibrium for shaped plasmas", Physics of Plasmas 3, 1176-1178 (
+        1996) https://doi.org/10.1063/1.871772
     """
 
     def __init__(self, R_0, a, kappa, delta, A1, A2):  # noqa: N803
