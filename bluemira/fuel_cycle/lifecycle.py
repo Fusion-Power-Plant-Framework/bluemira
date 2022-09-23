@@ -53,6 +53,7 @@ class LifeCycle:
         Parameters for the reactor life cycle. See
         :class:`bluemira.fuel_cycle.lifecycle.LifeCycleParams` for
         parameters details.
+        Set to an empty ``dict`` to use default values.
     learning_strategy: LearningStrategy
         A concrete instance of a ``LearningStrategy`` for distributing
         the total operational availability over different operational
@@ -80,12 +81,10 @@ class LifeCycle:
             self.params = config
         elif isinstance(config, dict):
             self.params = LifeCycleParams(**config)
-        elif config is None:
-            self.params = LifeCycleParams()
         else:
             raise TypeError(
-                "Invalid type for 'params'. Must be one of 'dict', "
-                f"'LifeCycleParams', or 'None'; found '{type(config).__name__}'."
+                "Invalid type for 'params'. Must be one of 'dict', or "
+                f"'LifeCycleParams'; found '{type(config).__name__}'."
             )
 
         # Constructors
