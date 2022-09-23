@@ -91,33 +91,13 @@ class TestSolovev:
 
         n_points = 500
         boundary = find_flux_surface_no_mesh(solovev.psi_norm_2d, 1, n_points=n_points)
-        min_distance = np.min(np.hypot(np.diff(boundary[0, :]), np.diff(boundary[1, :])))
-        from bluemira.base.look_and_feel import bluemira_print
 
-        bluemira_print(f"{min_distance}")
-        f, ax = plt.subplots()
-        ax.plot(*boundary_old.T[:2, :], color="b", marker="o", linestyle="--")
-        ax.plot(*boundary, color="r", marker="s")
-        ax.set_aspect("equal")
-        plt.show()
-        boundary = np.array([boundary[0, :], boundary[1, :], np.zeros(n_points)])
+        boundary = np.array([boundary[0, :], np.zeros(n_points), boundary[1, :]])
 
         curve1 = interpolate_bspline(boundary[:, : n_points // 2 + 1], "curve1")
         curve2 = interpolate_bspline(boundary[:, n_points // 2 :], "curve2")
         lcfs = BluemiraWire([curve1, curve2], "LCFS")
 
-        # x_axis = R0
-        # z_axis = 0
-        # boundary = find_flux_surface_precise(solovev.psi_norm_2d, None, 1, n_points=200)
-
-        # # create the PhysicalComponent for the plasma
-        # curve1 = interpolate_bspline(
-        #     boundary[:, 0 : int(len(boundary) / 2)], label="curve1"
-        # )
-        # curve2 = interpolate_bspline(
-        #     boundary[:, int(len(boundary) / 2 - 1) : len(boundary)], label="curve2"
-        # )
-        # lcfs = BluemiraWire([curve1, curve2], "LCFS")
         lcfs.mesh_options = {"lcar": 0.02, "physical_group": "lcfs"}
 
         plasma_face = BluemiraFace(lcfs, "plasma_face")
@@ -125,14 +105,14 @@ class TestSolovev:
 
         plasma = PhysicalComponent("Plasma", shape=plasma_face)
 
-        plasma.plot_options.view = "xy"
+        plasma.plot_options.view = "xz"
         plasma.plot_2d()
         plt.show()
 
         # mesh the plasma
         meshing.Mesh()(plasma)
 
-        msh_to_xdmf("Mesh.msh", dimensions=2, directory=".")
+        msh_to_xdmf("Mesh.msh", dimensions=(0, 2), directory=".")
 
         mesh, boundaries, _, _ = import_mesh(
             "Mesh",
