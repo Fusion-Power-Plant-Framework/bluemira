@@ -29,7 +29,7 @@ from bluemira.equilibria.fem_fixed_boundary.fem_magnetostatic_2D import (
     FemMagnetostatic2d,
 )
 from bluemira.equilibria.fem_fixed_boundary.utilities import (
-    find_flux_surface_no_mesh,
+    find_flux_surface,
     find_magnetic_axis,
     plot_scalar_field,
 )
@@ -179,9 +179,7 @@ class TestSolovevZheng:
         plt.show()
 
         n_points = 500
-        boundary = find_flux_surface_no_mesh(
-            cls.solovev.psi_norm_2d, 1, n_points=n_points
-        )
+        boundary = find_flux_surface(cls.solovev.psi_norm_2d, 1, n_points=n_points)
         cls.boundary = boundary
         boundary = np.array([boundary[0, :], np.zeros(n_points), boundary[1, :]])
 

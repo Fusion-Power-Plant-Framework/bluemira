@@ -349,7 +349,7 @@ def find_flux_surface_precise(psi_norm_func, mesh, psi_norm, n_points=100):
             x0=d_guess,
             bounds=[(d_guess - 2 * search_range, d_guess + 2 * search_range)],
             method="SLSQP",
-            options={"disp": False, "ftol": 1e-10, "maxiter": 1000},
+            options={"disp": False, "ftol": 1e-14, "maxiter": 1000},
         )
         points[:, i] = theta_line(result.x)
 
