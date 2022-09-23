@@ -337,8 +337,7 @@ class LifeCycle:
         if self.params.A_global > self.fpy / (self.fpy + S_TO_YR * self.min_downtime):
             bluemira_warn("FuelCycle::Lifecyle: Input availability is unachievable.")
         # Re-assign A
-        self.params.update_kw_parameters({"A_global": actual_lf})
-        # self.A_global = actual_A
+        self.params.A_global = actual_lf
 
     def summary(self):
         """
