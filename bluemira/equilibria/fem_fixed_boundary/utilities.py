@@ -303,24 +303,28 @@ def find_flux_surface(psi_norm_func, psi_norm, mesh=None, n_points=100):
     def psi_norm_match(x):
         return abs(psi_norm_func(x) - psi_norm)
 
+    def theta_line(d, theta_i):
+        return float(x_axis + d * np.cos(theta_i)), float(z_axis + d * np.sin(theta_i))
+
+    def psi_line_match(d, *args):
+        return psi_norm_match(theta_line(d, args[0]))
+
     theta = np.linspace(0, 2 * np.pi, n_points - 1, endpoint=False, dtype=float)
     points = np.zeros((2, n_points), dtype=float)
     distances = np.zeros(n_points)
     for i in range(len(theta)):
 
-        def theta_line(d):
-            return float(x_axis + d * np.cos(theta[i])), float(
-                z_axis + d * np.sin(theta[i])
-            )
-
         result = scipy.optimize.minimize(
-            lambda d: psi_norm_match(theta_line(d)),
+            psi_line_match,
             x0=d_guess,
-            bounds=[(d_guess - 2 * search_range, d_guess + 2 * search_range)],
+            args=(theta[i]),
+            bounds=bounds,
             method="SLSQP",
             options={"disp": False, "ftol": 1e-14, "maxiter": 1000},
         )
-        points[:, i] = theta_line(result.x)
+        points[:, i] = theta_line(result.x, theta[i])
+        distances[i] = result.x
+        d_guess = get_next_guess(points, distances, i)
 
     points[:, -1] = points[:, 0]
 
