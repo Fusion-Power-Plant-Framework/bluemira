@@ -21,6 +21,7 @@
 
 import matplotlib.pyplot as plt
 import numpy as np
+import scipy
 
 from bluemira.base.components import PhysicalComponent
 from bluemira.base.constants import MU_0
@@ -28,8 +29,8 @@ from bluemira.equilibria.fem_fixed_boundary.fem_magnetostatic_2D import (
     FemMagnetostatic2d,
 )
 from bluemira.equilibria.fem_fixed_boundary.utilities import (
-    Solovev,
     find_flux_surface_no_mesh,
+    find_magnetic_axis,
     plot_scalar_field,
 )
 from bluemira.geometry.face import BluemiraFace
@@ -39,6 +40,118 @@ from bluemira.mesh import meshing
 from bluemira.mesh.tools import import_mesh, msh_to_xdmf
 
 import dolfin  # isort:skip
+
+
+class Solovev:
+    """
+    Solov'ev analytical solution to a fixed boundary equilibrium problem with a symmetric
+    plasma boundary. Used for verification purposes
+    """
+
+    def __init__(self, R_0, a, kappa, delta, A1, A2):  # noqa: N803
+        self.R_0 = R_0
+        self.a = a
+        self.kappa = kappa
+        self.delta = delta
+        self.A1 = A1
+        self.A2 = A2
+        self._find_params()
+        self._psi_ax = None
+        self._psi_b = None
+
+    def _find_params(self):
+        ri = self.R_0 - self.a
+        ro = self.R_0 + self.a
+        rt = self.R_0 - self.delta * self.a
+        zt = self.kappa * self.a
+
+        m = np.array(
+            [
+                [1.0, ri**2, ri**4, ri**2 * np.log(ri)],
+                [1.0, ro**2, ro**4, ro**2 * np.log(ro)],
+                [
+                    1.0,
+                    rt**2,
+                    rt**2 * (rt**2 - 4 * zt**2),
+                    rt**2 * np.log(rt) - zt**2,
+                ],
+                [0.0, 2.0, 4 * (rt**2 - 2 * zt**2), 2 * np.log(rt) + 1.0],
+            ]
+        )
+
+        b = np.array(
+            [
+                [-(ri**4) / 8.0, 0],
+                [-(ro**4) / 8.0, 0.0],
+                [-(rt**4) / 8.0, +(zt**2) / 2.0],
+                [-(rt**2) / 2.0, 0.0],
+            ]
+        )
+        b = b * np.array([self.A1, self.A2])
+        b = np.sum(b, axis=1)
+
+        self.coeff = scipy.linalg.solve(m, b)
+        print(f"Solovev coefficients: {self.coeff}")
+
+    def psi(self, point):
+        """
+        Calculate psi analytically at a point.
+        """
+
+        def psi_func(x):
+            return np.array(
+                [
+                    1.0,
+                    x[0] ** 2,
+                    x[0] ** 2 * (x[0] ** 2 - 4 * x[1] ** 2),
+                    x[0] ** 2 * np.log(x[0]) - x[1] ** 2,
+                    (x[0] ** 4) / 8.0,
+                    -(x[1] ** 2) / 2.0,
+                ]
+            )
+
+        m = np.concatenate((self.coeff, np.array([self.A1, self.A2])))
+        return 2 * np.pi * np.sum(psi_func(point) * m)
+
+    def plot_psi(self, ri, zi, dr, dz, nr, nz, levels=20, axis=None, tofill=True):
+        """
+        Plot psi
+        """
+        r = np.linspace(ri, ri + dr, nr)
+        z = np.linspace(zi, zi + dz, nz)
+        rv, zv = np.meshgrid(r, z)
+        points = np.vstack([rv.ravel(), zv.ravel()]).T
+        psi = np.array([self.psi(point) for point in points])
+        cplot = plot_scalar_field(
+            points[:, 0], points[:, 1], psi, levels=levels, ax=axis, tofill=tofill
+        )
+        return cplot + (points, psi)
+
+    @property
+    def psi_ax(self):
+        """Poloidal flux on the magnetic axis"""
+        if self._psi_ax is None:
+            self._psi_ax = self.psi(find_magnetic_axis(lambda x: self.psi(x), None))
+        return self._psi_ax
+
+    @property
+    def psi_b(self):
+        """Poloidal flux on the boundary"""
+        if self._psi_b is None:
+            self._psi_b = 0.0
+        return self._psi_b
+
+    @property
+    def psi_norm_2d(self):
+        """Normalized flux function in 2-D"""
+
+        def myfunc(x):
+            value = np.sqrt(
+                np.abs((self.psi(x) - self.psi_ax) / (self.psi_b - self.psi_ax))
+            )
+            return value
+
+        return myfunc
 
 
 class TestSolovev:
@@ -167,5 +280,4 @@ class TestSolovev:
         # calculate the error norm
         diff = psi_calc_data - psi_exact
         eps = np.linalg.norm(diff, ord=2) / np.linalg.norm(psi_exact, ord=2)
-        raise ValueError(eps)
         assert eps < 1e-5
