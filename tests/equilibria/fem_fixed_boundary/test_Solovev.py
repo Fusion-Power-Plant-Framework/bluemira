@@ -105,9 +105,6 @@ class TestSolovev:
             subdomains=True,
         )
 
-        dolfin.plot(mesh)
-        plt.show()
-
         # initialize the Grad-Shafranov solver
         p = 2
         gs_solver = FemMagnetostatic2d(p_order=p)
