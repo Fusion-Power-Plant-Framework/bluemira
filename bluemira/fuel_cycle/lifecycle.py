@@ -541,7 +541,7 @@ class LifeCycleParams:
     https://ieeexplore.ieee.org/document/6374236/.
     """
 
-    tf_ins_nflux: float = 14000000000000.0
+    tf_ins_nflux: float = 1.4e13
     """
     TF insulation peak neutron flux [1/m^2/s]. Pavel Pereslavtsev sent me an email
     20/02/2017.
