@@ -270,6 +270,10 @@ def find_flux_surface_precise_OLD(psi_norm_func, mesh, psi_norm, xtol=1e-7):
     return x, z
 
 
+def find_flux_surface_no_mesh(psi_norm_func, psi_norm, n_points=100):
+    return contour
+
+
 def find_flux_surface_precise(psi_norm_func, mesh, psi_norm, n_points=100):
     """
     Find a flux surface in the psi function precisely.

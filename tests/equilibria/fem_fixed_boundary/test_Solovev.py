@@ -81,6 +81,10 @@ class TestSolovev:
         boundary = np.hstack(
             (boundary, np.zeros((boundary.shape[0], 1), dtype=boundary.dtype))
         )
+        # from bluemira.equilibria.fem_fixed_boundary.utilities import find_flux_surface_precise
+        # x_axis = R0
+        # z_axis = 0
+        # boundary = find_flux_surface_precise(solovev.psi_norm_2d, None, 1, n_points=200)
 
         # create the PhysicalComponent for the plasma
         curve1 = interpolate_bspline(
