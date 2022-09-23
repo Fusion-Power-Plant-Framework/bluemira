@@ -178,7 +178,6 @@ t_pump = m_dir_pump / vessel_outflux
 # It was agreed that this 1.8 kg is needed steady-state, and is used as I_TFV_min
 m_cryodistillation = 1.8
 
-# fmt: off
 tfv_config = {
     "TBR": TBR,
     "f_b": 0.015,
