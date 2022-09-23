@@ -46,11 +46,28 @@ __all__ = ["LifeCycle"]
 class LifeCycle:
     """
     A life cycle object for a fusion reactor.
+
+    Parameters
+    ----------
+    config: Union[LifeCycleParams, Dict[str, float]]
+        Parameters for the reactor life cycle. See
+        :class:`bluemira.fuel_cycle.lifecycle.LifeCycleParams` for
+        parameters details.
+    learning_strategy: LearningStrategy
+        A concrete instance of a ``LearningStrategy`` for distributing
+        the total operational availability over different operational
+        phases.
+    availability_strategy: OperationalAvailabilityStrategy
+        Concrete instance of an OperationalAvailabilityStrategy
+        implementing a strategy to generate distributions of unplanned
+        outages.
+    inputs: Dict
+        Currently unused.
     """
 
     def __init__(
         self,
-        config: Union[LifecycleParams, Dict[str, float]],
+        config: Union[LifeCycleParams, Dict[str, float]],
         learning_strategy: LearningStrategy,
         availability_strategy: OperationalAvailabilityStrategy,
         inputs: dict,
@@ -59,16 +76,16 @@ class LifeCycle:
         self.availability_strategy = availability_strategy
         self.inputs = inputs
 
-        if isinstance(config, LifecycleParams):
+        if isinstance(config, LifeCycleParams):
             self.params = config
         elif isinstance(config, dict):
-            self.params = LifecycleParams(**config)
+            self.params = LifeCycleParams(**config)
         elif config is None:
-            self.params = LifecycleParams()
+            self.params = LifeCycleParams()
         else:
             raise TypeError(
                 "Invalid type for 'params'. Must be one of 'dict', "
-                f"'LifecycleParams', or 'None'; found '{type(config).__name__}'."
+                f"'LifeCycleParams', or 'None'; found '{type(config).__name__}'."
             )
 
         # Constructors
@@ -460,65 +477,86 @@ class LifeCycle:
 
 
 @dataclass
-class LifecycleParams:
+class LifeCycleParams:
+    """Parameters for running :class:`bluemira.fuel_cycle.lifecycle.LifeCycle`"""
+
     A_global: float = 0.3
     """Global load factor [dimensionless]. Not always used."""
+
     I_p: float = 19
     """Plasma current [MA]. None."""
+
     bmd: float = 150
     """Blanket maintenance duration [days]. Full replacement intervention duration."""
+
     dmd: float = 90
     """Divertor maintenance duration [days]. Full replacement intervention duration."""
+
     t_pulse: float = 7200
     """Pulse length [s]. Includes ramp-up and ramp-down time."""
+
     t_cs_recharge: float = 600
     """CS recharge time [s]. Presently assumed to dictate minimum dwell period."""
+
     t_pumpdown: float = 599
     """
     Pump down duration of the vessel in between pulses [s]. Presently assumed to
     take less time than the CS recharge.
     """
+
     s_ramp_up: float = 0.1
     """Plasma current ramp-up rate [MA/s]. None."""
+
     s_ramp_down: float = 0.1
     """Plasma current ramp-down rate [MA/s]. None."""
+
     n_DT_reactions: float = 7.078779946428698e20
     """D-T fusion reaction rate [1/s]. At full power."""
+
     n_DD_reactions: float = 8.548069652616976e18
     """D-D fusion reaction rate [1/s]. At full power."""
+
     blk_1_dpa: float = 20
     """
     Starter blanket life limit (EUROfer) [dpa].
     https://iopscience.iop.org/article/10.1088/1741-4326/57/9/092002/pdf.
     """
+
     blk_2_dpa: float = 50
     """
     Second blanket life limit (EUROfer) [dpa].
     https://iopscience.iop.org/article/10.1088/1741-4326/57/9/092002/pdf.
     """
+
     div_dpa: float = 5
     """
     Divertor life limit (CuCrZr) [dpa].
     https://iopscience.iop.org/article/10.1088/1741-4326/57/9/092002/pdf.
     """
+
     vv_dpa: float = 3.25
     """Vacuum vessel life limit (SS316-LN-IG) [dpa]. RCC-Mx or whatever it is called."""
+
     tf_fluence: float = 3.2e21
     """
     Insulation fluence limit for ITER equivalent to 10 MGy [1/m^2].
     https://ieeexplore.ieee.org/document/6374236/.
     """
+
     tf_ins_nflux: float = 14000000000000.0
     """
     TF insulation peak neutron flux [1/m^2/s]. Pavel Pereslavtsev sent me an email
     20/02/2017.
     """
+
     blk_dmg: float = 10.2
     """Blanket neutron daamge rate [dpa/fpy]. Pavel Pereslavtsev 2M7HN3 fig. 20."""
+
     div_dmg: float = 3
     """
     Divertor neutron damange rate [dpa/fpy].
     https://iopscience.iop.org/article/10.1088/1741-4326/57/9/092002/pdf.
     """
+
     vv_dmg: float = 0.3
     """Vacuum vessel neutron damage rate [dpa/fpy]. Pavel Pereslavtsev 2M7HN3 fig. 18."""
