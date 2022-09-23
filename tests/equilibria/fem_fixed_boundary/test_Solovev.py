@@ -81,19 +81,31 @@ class TestSolovev:
         boundary = np.hstack(
             (boundary, np.zeros((boundary.shape[0], 1), dtype=boundary.dtype))
         )
-        # from bluemira.equilibria.fem_fixed_boundary.utilities import find_flux_surface_precise
+        from bluemira.equilibria.fem_fixed_boundary.utilities import (
+            find_flux_surface_no_mesh,
+        )
+
+        n_points = 100
+        boundary = find_flux_surface_no_mesh(solovev.psi_norm_2d, 1.0, n_points=n_points)
+        print(boundary.shape)
+        boundary = np.array([boundary[0, :], boundary[1, :], np.zeros(n_points)])
+
+        curve1 = interpolate_bspline(boundary[:, : n_points // 2 + 1])
+        curve2 = interpolate_bspline(boundary[:, n_points // 2 :])
+        lcfs = BluemiraWire([curve1, curve2], "LCFS")
+
         # x_axis = R0
         # z_axis = 0
         # boundary = find_flux_surface_precise(solovev.psi_norm_2d, None, 1, n_points=200)
 
-        # create the PhysicalComponent for the plasma
-        curve1 = interpolate_bspline(
-            boundary[0 : int(len(boundary) / 2)], label="curve1"
-        )
-        curve2 = interpolate_bspline(
-            boundary[int(len(boundary) / 2 - 1) : len(boundary)], label="curve2"
-        )
-        lcfs = BluemiraWire([curve1, curve2], "LCFS")
+        # # create the PhysicalComponent for the plasma
+        # curve1 = interpolate_bspline(
+        #     boundary[:, 0 : int(len(boundary) / 2)], label="curve1"
+        # )
+        # curve2 = interpolate_bspline(
+        #     boundary[:, int(len(boundary) / 2 - 1) : len(boundary)], label="curve2"
+        # )
+        # lcfs = BluemiraWire([curve1, curve2], "LCFS")
         lcfs.mesh_options = {"lcar": 0.05, "physical_group": "lcfs"}
 
         plasma_face = BluemiraFace(lcfs, "plasma_face")
@@ -140,7 +152,7 @@ class TestSolovev:
         # calculate the GS and analytic solution on the mesh points
         mesh_points = mesh.coordinates()
         psi_calc_data = np.array([psi_calc(x) for x in mesh_points])
-        psi_exact = solovev.psi(mesh_points)
+        psi_exact = [solovev.psi(point) for point in mesh_points]
 
         levels = np.linspace(min(psi_exact), max(psi_exact), 25)
         axis, cntr, _ = plot_scalar_field(
@@ -181,5 +193,6 @@ class TestSolovev:
         # calculate the error norm
         diff = psi_calc_data - psi_exact
         eps = np.linalg.norm(diff, ord=2) / np.linalg.norm(psi_exact, ord=2)
+        raise ValueError(eps)
 
         assert eps < 1e-4

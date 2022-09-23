@@ -271,7 +271,35 @@ def find_flux_surface_precise_OLD(psi_norm_func, mesh, psi_norm, xtol=1e-7):
 
 
 def find_flux_surface_no_mesh(psi_norm_func, psi_norm, n_points=100):
-    return contour
+    x_axis, z_axis = find_magnetic_axis(lambda x: -psi_norm_func(x), None)
+    theta = np.linspace(0, 2 * np.pi, n_points - 1, endpoint=False)
+
+    def psi_norm_match(x):
+        return abs(psi_norm_func(x) - psi_norm)
+
+    points = np.zeros((2, n_points), dtype=float)
+    for i in range(len(theta)):
+
+        def theta_line(d):
+            return x_axis + d * np.cos(theta[i]), z_axis + d * np.sin(theta[i])
+
+        result = scipy.optimize.minimize(
+            lambda d: psi_norm_match(theta_line(d)),
+            x0=0.5,
+            bounds=None,
+            method="SLSQP",
+            options={"disp": False, "ftol": 1e-10, "maxiter": 1000},
+        )
+        points[:, i] = theta_line(result.x)
+
+    points[:, -1] = points[:, 0]
+
+    f, ax = plt.subplots()
+    ax.plot(*points, color="r", marker="s")
+    ax.plot(x_axis, z_axis, marker="o", color="g")
+    ax.set_aspect("equal")
+    plt.show()
+    return points
 
 
 def find_flux_surface_precise(psi_norm_func, mesh, psi_norm, n_points=100):
@@ -547,12 +575,10 @@ class Solovev:
         self.coeff = scipy.linalg.solve(m, b)
         print(f"Solovev coefficients: {self.coeff}")
 
-    def psi(self, points):
+    def psi(self, point):
         """
-        Calculate psi analytically at a set of points.
+        Calculate psi analytically at a point.
         """
-        if len(points.shape) == 1:
-            points = np.array([points])
 
         def psi_func(x):
             return np.array(
@@ -567,8 +593,7 @@ class Solovev:
             )
 
         m = np.concatenate((self.coeff, np.array([self.A1, self.A2])))
-
-        return [np.sum(psi_func(x) * m) * 2 * np.pi for x in points]
+        return 2 * np.pi * np.sum(psi_func(point) * m)
 
     def plot_psi(self, ri, zi, dr, dz, nr, nz, levels=20, axis=None, tofill=True):
         """
@@ -578,7 +603,7 @@ class Solovev:
         z = np.linspace(zi, zi + dz, nz)
         rv, zv = np.meshgrid(r, z)
         points = np.vstack([rv.ravel(), zv.ravel()]).T
-        psi = self.psi(points)
+        psi = np.array([self.psi(point) for point in points])
         cplot = plot_scalar_field(
             points[:, 0], points[:, 1], psi, levels=levels, ax=axis, tofill=tofill
         )
@@ -588,7 +613,7 @@ class Solovev:
     def psi_ax(self):
         """Poloidal flux on the magnetic axis"""
         if self._psi_ax is None:
-            self._psi_ax = self.psi(find_magnetic_axis(self.psi, None))
+            self._psi_ax = self.psi(find_magnetic_axis(lambda x: self.psi(x), None))
         return self._psi_ax
 
     @property
