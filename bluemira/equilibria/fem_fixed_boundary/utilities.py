@@ -454,7 +454,7 @@ def calculate_plasma_shape_params(
     return r_geo, kappa, delta
 
 
-def find_psi_axis(psi_func, mesh):
+def find_magnetic_axis(psi_func, mesh=None):
     """
     Find the magnetic axis in the poloidal flux map.
 
@@ -462,21 +462,26 @@ def find_psi_axis(psi_func, mesh):
     ----------
     psi_func: Callable
         Function to return psi at a given point
-    mesh: dolfin.Mesh
-        Mesh object to use to estimate extrema prior to optimisation
+    mesh: Optional[dolfin.Mesh]
+        Mesh object to use to estimate magnetic axis prior to optimisation
+        If None, a reasonable guess is made.
 
     Returns
     -------
     psi_axis: float
         Maximum psi in the continuous psi function [V.s]
     """
-    points = mesh.coordinates()
-    psi_array = [psi_func(x) for x in points]
-    psi_max_arg = np.argmax(psi_array)
+    if mesh:
+        points = mesh.coordinates()
+        psi_array = [psi_func(x) for x in points]
+        psi_max_arg = np.argmax(psi_array)
 
-    x0 = points[psi_max_arg]
-    search_range = mesh.hmax()
-    bounds = [(xi - search_range, xi + search_range) for xi in x0]
+        x0 = points[psi_max_arg]
+        search_range = mesh.hmax()
+        bounds = [(xi - search_range, xi + search_range) for xi in x0]
+    else:
+        x0 = np.array([0.1, 0.0])
+        bounds = [(0.0, 20.0), (-2, 2)]
 
     result = scipy.optimize.minimize(
         lambda x: -psi_func(x),
@@ -505,6 +510,8 @@ class Solovev:
         self.A1 = A1
         self.A2 = A2
         self._find_params()
+        self._psi_ax = None
+        self._psi_b = None
 
     def _find_params(self):
         ri = self.R_0 - self.a
@@ -576,3 +583,29 @@ class Solovev:
             points[:, 0], points[:, 1], psi, levels=levels, ax=axis, tofill=tofill
         )
         return cplot + (points, psi)
+
+    @property
+    def psi_ax(self):
+        """Poloidal flux on the magnetic axis"""
+        if self._psi_ax is None:
+            self._psi_ax = self.psi(find_magnetic_axis(self.psi, None))
+        return self._psi_ax
+
+    @property
+    def psi_b(self):
+        """Poloidal flux on the boundary"""
+        if self._psi_b is None:
+            self._psi_b = 0.0
+        return self._psi_b
+
+    @property
+    def psi_norm_2d(self):
+        """Normalized flux function in 2-D"""
+
+        def myfunc(x):
+            value = np.sqrt(
+                np.abs((self.psi(x) - self.psi_ax) / (self.psi_b - self.psi_ax))
+            )
+            return value
+
+        return myfunc
