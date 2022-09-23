@@ -158,16 +158,8 @@ class Solovev:
 
 
 class TestSolovev:
-    def test_Solovev_Zheng(self):  # noqa: N803
-        """
-        Compare the psi Solovev analytical solution as described in [Zheng1996] with the
-        one calculated using the implemented magnetostic module.
-
-        .. [Zheng1996] S. B. Zheng, A. J. Wootton, and Emilia R. Solano , "Analytical
-           tokamak equilibrium for shaped plasmas", Physics of Plasmas 3, 1176-1178 (
-           1996) https://doi.org/10.1063/1.871772
-        """
-
+    @classmethod
+    def setup_class(cls):
         # set problem parameters
         R_0 = 9.07
         A = 3.1
@@ -180,17 +172,19 @@ class TestSolovev:
         A2 = -6.52918977e-02  # noqa: N806
 
         # create the Solovev instance to get the exact psi
-        solovev = Solovev(R_0, a, kappa, delta, A1, A2)
+        cls.solovev = Solovev(R_0, a, kappa, delta, A1, A2)
 
         levels = 50
-        axis, _, _, _, psi_exact = solovev.plot_psi(
+        axis, _, _, _, psi_exact = cls.solovev.plot_psi(
             5.0, -6, 8.0, 12.0, 100, 100, levels=levels
         )
         plt.show()
 
         n_points = 500
-        boundary = find_flux_surface_no_mesh(solovev.psi_norm_2d, 1, n_points=n_points)
-
+        boundary = find_flux_surface_no_mesh(
+            cls.solovev.psi_norm_2d, 1, n_points=n_points
+        )
+        cls.boundary = boundary
         boundary = np.array([boundary[0, :], np.zeros(n_points), boundary[1, :]])
 
         curve1 = interpolate_bspline(boundary[:, : n_points // 2 + 1], "curve1")
@@ -206,16 +200,12 @@ class TestSolovev:
 
         plasma = PhysicalComponent("Plasma", shape=plasma_face)
 
-        plasma.plot_options.view = "xz"
-        plasma.plot_2d()
-        plt.show()
-
         # mesh the plasma
         meshing.Mesh()(plasma)
 
         msh_to_xdmf("Mesh.msh", dimensions=(0, 2), directory=".")
 
-        mesh, boundaries, _, _ = import_mesh(
+        cls.mesh, boundaries, _, _ = import_mesh(
             "Mesh",
             directory=".",
             subdomains=True,
@@ -229,40 +219,36 @@ class TestSolovev:
         # Set the right hand side of the Grad-Shafranov equation, as a function of psi
         g = dolfin.Expression(
             "1/mu0*(-x[0]*A1 + A2/x[0])",
-            A1=solovev.A1,
-            A2=solovev.A2,
+            A1=cls.solovev.A1,
+            A2=cls.solovev.A2,
             mu0=MU_0,
             degree=p,
         )
         gs_solver.define_g(g)
 
         # solve the Grad-Shafranov equation
-        psi_calc = gs_solver.solve()
+        cls.fe_psi_calc = gs_solver.solve()
 
+    def test_Solovev_Zheng(self):  # noqa: N803
+        """
+        Compare the psi Solovev analytical solution as described in [Zheng1996] with the
+        one calculated using the implemented magnetostic module.
+
+        .. [Zheng1996] S. B. Zheng, A. J. Wootton, and Emilia R. Solano , "Analytical
+           tokamak equilibrium for shaped plasmas", Physics of Plasmas 3, 1176-1178 (
+           1996) https://doi.org/10.1063/1.871772
+        """
         # calculate the GS and analytic solution on the mesh points
-        mesh_points = mesh.coordinates()
-        psi_calc_data = np.array([psi_calc(x) for x in mesh_points])
-        psi_exact = [solovev.psi(point) for point in mesh_points]
+        mesh_points = self.mesh.coordinates()
+        psi_calc_data = np.array([self.fe_psi_calc(x) for x in mesh_points])
+        psi_exact = [self.solovev.psi(point) for point in mesh_points]
 
-        levels = np.linspace(min(psi_exact), max(psi_exact), 25)
-        axis, cntr, _ = plot_scalar_field(
-            mesh_points[:, 0],
-            mesh_points[:, 1],
-            psi_exact,
-            levels=levels,
-            axis=None,
-            tofill=False,
-        )
-
-        plt.show()
-
-        axis = None
-        axis, cntr, _ = plot_scalar_field(
+        plot_scalar_field(
             mesh_points[:, 0],
             mesh_points[:, 1],
             psi_exact,
             levels=20,
-            axis=axis,
+            axis=None,
             tofill=True,
         )
         plt.show()
@@ -270,7 +256,7 @@ class TestSolovev:
         error = abs(psi_calc_data - psi_exact)
 
         levels = np.linspace(0.0, max(error) * 1.1, 50)
-        axis, cntr, _ = plot_scalar_field(
+        plot_scalar_field(
             mesh_points[:, 0],
             mesh_points[:, 1],
             error,
