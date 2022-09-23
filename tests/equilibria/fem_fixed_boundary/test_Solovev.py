@@ -248,7 +248,7 @@ class TestSolovevZheng:
             mesh_points[:, 1],
             psi_exact,
             levels=20,
-            axis=None,
+            ax=None,
             tofill=True,
         )
         plt.show()
@@ -261,7 +261,7 @@ class TestSolovevZheng:
             mesh_points[:, 1],
             error,
             levels=levels,
-            axis=None,
+            ax=None,
             tofill=True,
         )
         plt.show()
