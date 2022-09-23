@@ -27,7 +27,11 @@ from bluemira.base.constants import MU_0
 from bluemira.equilibria.fem_fixed_boundary.fem_magnetostatic_2D import (
     FemMagnetostatic2d,
 )
-from bluemira.equilibria.fem_fixed_boundary.utilities import Solovev, plot_scalar_field
+from bluemira.equilibria.fem_fixed_boundary.utilities import (
+    Solovev,
+    find_flux_surface_no_mesh,
+    plot_scalar_field,
+)
 from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.tools import interpolate_bspline
 from bluemira.geometry.wire import BluemiraWire
@@ -68,10 +72,6 @@ class TestSolovev:
         )
         plt.show()
 
-        from bluemira.equilibria.fem_fixed_boundary.utilities import (
-            find_flux_surface_no_mesh,
-        )
-
         n_points = 500
         boundary = find_flux_surface_no_mesh(solovev.psi_norm_2d, 1, n_points=n_points)
 
@@ -81,6 +81,8 @@ class TestSolovev:
         curve2 = interpolate_bspline(boundary[:, n_points // 2 :], "curve2")
         lcfs = BluemiraWire([curve1, curve2], "LCFS")
 
+        # Tweaked discretisation and mesh size to get error below 1e-5 but still be fast.
+        # Keep as is until we move to Fenics-X where we will need to see how it performs.
         lcfs.mesh_options = {"lcar": 0.024, "physical_group": "lcfs"}
 
         plasma_face = BluemiraFace(lcfs, "plasma_face")
