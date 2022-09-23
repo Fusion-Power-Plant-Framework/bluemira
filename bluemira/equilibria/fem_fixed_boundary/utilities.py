@@ -250,10 +250,8 @@ def find_flux_surface_precise_OLD(psi_norm_func, mesh, psi_norm, xtol=1e-7):
 
     Returns
     -------
-    x: np.ndarray
-        x coordinates of the flux surface
-    z: np.ndarray
-        z coordinates of the flux surface
+    points: np.ndarray
+        x, z coordinates of the flux surface
     """
     points = mesh.coordinates()
     psi_norm_array = [psi_norm_func(x) for x in points]
