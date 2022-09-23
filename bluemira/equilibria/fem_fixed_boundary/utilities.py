@@ -271,6 +271,7 @@ def find_flux_surface_precise_OLD(psi_norm_func, mesh, psi_norm, xtol=1e-7):
 
 
 def find_flux_surface_no_mesh(psi_norm_func, psi_norm, n_points=100):
+    """ """
     x_axis, z_axis = find_magnetic_axis(lambda x: -psi_norm_func(x), None)
     theta = np.linspace(0, 2 * np.pi, n_points - 1, endpoint=False)
 

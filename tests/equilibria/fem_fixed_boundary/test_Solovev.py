@@ -70,6 +70,7 @@ class TestSolovev:
         axis, _, _, _, psi_exact = solovev.plot_psi(
             5.0, -6, 8.0, 12.0, 100, 100, levels=levels
         )
+        plt.show()
 
         n_points = 500
         boundary = find_flux_surface_no_mesh(solovev.psi_norm_2d, 1, n_points=n_points)
@@ -91,6 +92,7 @@ class TestSolovev:
 
         plasma.plot_options.view = "xz"
         plasma.plot_2d()
+        plt.show()
 
         # mesh the plasma
         meshing.Mesh()(plasma)
@@ -104,6 +106,7 @@ class TestSolovev:
         )
 
         dolfin.plot(mesh)
+        plt.show()
 
         # initialize the Grad-Shafranov solver
         p = 2
@@ -138,6 +141,8 @@ class TestSolovev:
             tofill=False,
         )
 
+        plt.show()
+
         axis = None
         axis, cntr, _ = plot_scalar_field(
             mesh_points[:, 0],
@@ -147,6 +152,7 @@ class TestSolovev:
             axis=axis,
             tofill=True,
         )
+        plt.show()
 
         error = abs(psi_calc_data - psi_exact)
 
@@ -159,8 +165,10 @@ class TestSolovev:
             axis=None,
             tofill=True,
         )
+        plt.show()
 
         # calculate the error norm
         diff = psi_calc_data - psi_exact
         eps = np.linalg.norm(diff, ord=2) / np.linalg.norm(psi_exact, ord=2)
+        raise ValueError(eps)
         assert eps < 1e-5
