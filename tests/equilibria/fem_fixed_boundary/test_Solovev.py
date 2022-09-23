@@ -157,7 +157,7 @@ class Solovev:
         return myfunc
 
 
-class TestSolovev:
+class TestSolovevZheng:
     @classmethod
     def setup_class(cls):
         # set problem parameters
@@ -229,7 +229,7 @@ class TestSolovev:
         # solve the Grad-Shafranov equation
         cls.fe_psi_calc = gs_solver.solve()
 
-    def test_Solovev_Zheng(self):  # noqa: N803
+    def test_psi_mesh_array(self):  # noqa: N803
         """
         Compare the psi Solovev analytical solution as described in [Zheng1996] with the
         one calculated using the implemented magnetostic module.
