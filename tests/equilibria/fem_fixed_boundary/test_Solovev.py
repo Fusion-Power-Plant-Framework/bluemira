@@ -78,20 +78,32 @@ class TestSolovev:
 
         ind0 = np.where(np.array(levels) == 0.0)[0][0]
         boundary = cntr.collections[ind0].get_paths()[0].vertices
+
         boundary = np.hstack(
             (boundary, np.zeros((boundary.shape[0], 1), dtype=boundary.dtype))
         )
+        boundary_old = boundary
         from bluemira.equilibria.fem_fixed_boundary.utilities import (
             find_flux_surface_no_mesh,
         )
 
-        n_points = 100
-        boundary = find_flux_surface_no_mesh(solovev.psi_norm_2d, 1.0, n_points=n_points)
-        print(boundary.shape)
+        boundary_old = boundary
+
+        n_points = 1000
+        boundary = find_flux_surface_no_mesh(solovev.psi_norm_2d, 1, n_points=n_points)
+        min_distance = np.min(np.hypot(np.diff(boundary[0, :]), np.diff(boundary[1, :])))
+        from bluemira.base.look_and_feel import bluemira_print
+
+        bluemira_print(f"{min_distance}")
+        f, ax = plt.subplots()
+        ax.plot(*boundary_old.T[:2, :], color="b", marker="o", linestyle="--")
+        ax.plot(*boundary, color="r", marker="s")
+        ax.set_aspect("equal")
+        plt.show()
         boundary = np.array([boundary[0, :], boundary[1, :], np.zeros(n_points)])
 
-        curve1 = interpolate_bspline(boundary[:, : n_points // 2 + 1])
-        curve2 = interpolate_bspline(boundary[:, n_points // 2 :])
+        curve1 = interpolate_bspline(boundary[:, : n_points // 2 + 1], "curve1")
+        curve2 = interpolate_bspline(boundary[:, n_points // 2 :], "curve2")
         lcfs = BluemiraWire([curve1, curve2], "LCFS")
 
         # x_axis = R0
@@ -106,7 +118,7 @@ class TestSolovev:
         #     boundary[:, int(len(boundary) / 2 - 1) : len(boundary)], label="curve2"
         # )
         # lcfs = BluemiraWire([curve1, curve2], "LCFS")
-        lcfs.mesh_options = {"lcar": 0.05, "physical_group": "lcfs"}
+        lcfs.mesh_options = {"lcar": min_distance, "physical_group": "lcfs"}
 
         plasma_face = BluemiraFace(lcfs, "plasma_face")
         plasma_face.mesh_options = {"lcar": 0.2, "physical_group": "plasma_face"}

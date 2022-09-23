@@ -288,7 +288,7 @@ def find_flux_surface_no_mesh(psi_norm_func, psi_norm, n_points=100):
             x0=0.5,
             bounds=None,
             method="SLSQP",
-            options={"disp": False, "ftol": 1e-10, "maxiter": 1000},
+            options={"disp": False, "ftol": 1e-14, "maxiter": 3000},
         )
         points[:, i] = theta_line(result.x)
 
