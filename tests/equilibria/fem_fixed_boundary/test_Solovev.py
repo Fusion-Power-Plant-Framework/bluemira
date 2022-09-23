@@ -270,3 +270,7 @@ class TestSolovevZheng:
         diff = psi_calc_data - psi_exact
         eps = np.linalg.norm(diff, ord=2) / np.linalg.norm(psi_exact, ord=2)
         assert eps < 1e-5
+
+    def test_psi_boundary(self):
+        psi_fe_boundary = [self.fe_psi_calc(point) for point in self.boundary.T]
+        assert np.max(np.abs(psi_fe_boundary)) < 1e-3

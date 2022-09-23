@@ -279,19 +279,23 @@ def find_flux_surface_no_mesh(psi_norm_func, psi_norm, n_points=100):
         return abs(psi_norm_func(x) - psi_norm)
 
     points = np.zeros((2, n_points), dtype=float)
+    d0 = 0.5
     for i in range(len(theta)):
 
         def theta_line(d):
-            return x_axis + d * np.cos(theta[i]), z_axis + d * np.sin(theta[i])
+            return float(x_axis + d * np.cos(theta[i])), float(
+                z_axis + d * np.sin(theta[i])
+            )
 
         result = scipy.optimize.minimize(
             lambda d: psi_norm_match(theta_line(d)),
-            x0=0.5,
+            x0=d0,
             bounds=None,
             method="SLSQP",
             options={"disp": False, "ftol": 1e-14, "maxiter": 3000},
         )
         points[:, i] = theta_line(result.x)
+        d0 = result.x
 
     points[:, -1] = points[:, 0]
 
@@ -510,16 +514,16 @@ def find_magnetic_axis(psi_func, mesh=None):
         bounds = [(xi - search_range, xi + search_range) for xi in x0]
     else:
         x0 = np.array([0.1, 0.0])
-        bounds = [(0.0, 20.0), (-2, 2)]
+        bounds = [(0.0, 20.0), (-2.0, 2.0)]
 
     result = scipy.optimize.minimize(
         lambda x: -psi_func(x),
         x0,
         method="SLSQP",
         bounds=bounds,
-        options={"disp": False, "ftol": 1e-10, "maxiter": 1000},
+        options={"disp": False, "ftol": 1e-14, "maxiter": 1000},
     )
     if not result.success:
         bluemira_warn("Poloidal flux maximum finding failing:\n" f"{result.message}")
 
-    return np.array(result.x)
+    return np.array(result.x, dtype=float)
