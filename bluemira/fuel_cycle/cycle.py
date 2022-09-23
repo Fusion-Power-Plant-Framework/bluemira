@@ -399,8 +399,6 @@ class EUDEMOFuelCycleModel:
         )
         # Flow 9
         store.add_in_flow(direct.out_flow)
-        # _, gpuff_corr = discretise_1d(self.DEMO_t, gpuff, n_ts)
-        # store.add_in_flow(-gpuff_corr)
         store.run()
         # This is conservative... need to find a way to make gas available
         # instantaneously. At present this means gas puffs get "frozen" first
