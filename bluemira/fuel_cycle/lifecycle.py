@@ -21,8 +21,11 @@
 """
 Fusion power reactor lifecycle object.
 """
+from __future__ import annotations
+
 import json
-from typing import Type
+from dataclasses import dataclass
+from typing import Dict, Union
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -30,7 +33,6 @@ from matplotlib.lines import Line2D
 
 from bluemira.base.constants import S_TO_YR, YR_TO_S
 from bluemira.base.look_and_feel import bluemira_print, bluemira_warn
-from bluemira.base.parameter import ParameterFrame
 from bluemira.fuel_cycle.timeline import Timeline
 from bluemira.fuel_cycle.timeline_tools import (
     LearningStrategy,
@@ -46,45 +48,28 @@ class LifeCycle:
     A life cycle object for a fusion reactor.
     """
 
-    # fmt: off
-    default_params = [
-        ["A_global", "Global load factor", 0.3, "dimensionless", "Not always used", "Input"],
-        ["I_p", "Plasma current", 19, "MA", None, "Input"],
-        ["bmd", "Blanket maintenance duration", 150, "days", "Full replacement intervention duration", "Input"],
-        ["dmd", "Divertor maintenance duration", 90, "days", "Full replacement intervention duration", "Input"],
-        ["t_pulse", "Pulse length", 7200, "s", "Includes ramp-up and ramp-down time", "Input"],
-        ["t_cs_recharge", "CS recharge time", 600, "s", "Presently assumed to dictate minimum dwell period", "Input"],
-        ["t_pumpdown", "Pump down duration of the vessel in between pulses", 599, "s", "Presently assumed to take less time than the CS recharge", "Input"],
-        ["s_ramp_up", "Plasma current ramp-up rate", 0.1, "MA/s", None, "R. Wenninger"],
-        ["s_ramp_down", "Plasma current ramp-down rate", 0.1, "MA/s", None, "R. Wenninger"],
-        ["n_DT_reactions", "D-T fusion reaction rate", 7.078779946428698e20, "1/s", "At full power", "Input"],
-        ["n_DD_reactions", "D-D fusion reaction rate", 8.548069652616976e18, "1/s", "At full power", "Input"],
-        ["blk_1_dpa", "Starter blanket life limit (EUROfer)", 20, "dpa", "https://iopscience.iop.org/article/10.1088/1741-4326/57/9/092002/pdf", "Input"],
-        ["blk_2_dpa", "Second blanket life limit (EUROfer)", 50, "dpa", "https://iopscience.iop.org/article/10.1088/1741-4326/57/9/092002/pdf", "Input"],
-        ["div_dpa", "Divertor life limit (CuCrZr)", 5, "dpa", "https://iopscience.iop.org/article/10.1088/1741-4326/57/9/092002/pdf", "Input"],
-        ["vv_dpa", "Vacuum vessel life limit (SS316-LN-IG)", 3.25, "dpa", "RCC-Mx or whatever it is called", "Input"],
-        ["tf_fluence", "Insulation fluence limit for ITER equivalent to 10 MGy", 3.2e21, "1/m^2", "https://ieeexplore.ieee.org/document/6374236/", "Input"],
-        ["tf_ins_nflux", "TF insulation peak neutron flux", 1.4e13, "1/m^2/s", "Pavel Pereslavtsev sent me an email 20/02/2017", "Input"],
-        ["blk_dmg", "Blanket neutron daamge rate", 10.2, "dpa/fpy", "Pavel Pereslavtsev 2M7HN3 fig. 20", "Input"],
-        ["div_dmg", "Divertor neutron damange rate", 3, "dpa/fpy", "https://iopscience.iop.org/article/10.1088/1741-4326/57/9/092002/pdf", "Input"],
-        ["vv_dmg", "Vacuum vessel neutron damage rate", 0.3, "dpa/fpy", "Pavel Pereslavtsev 2M7HN3 fig. 18", "Input"],
-    ]
-    # fmt: on
-
     def __init__(
         self,
-        config: Type[ParameterFrame],
-        learning_strategy: Type[LearningStrategy],
-        availability_strategy: Type[OperationalAvailabilityStrategy],
+        config: Union[LifecycleParams, Dict[str, float]],
+        learning_strategy: LearningStrategy,
+        availability_strategy: OperationalAvailabilityStrategy,
         inputs: dict,
     ):
-        self.config = config
         self.learning_strategy = learning_strategy
         self.availability_strategy = availability_strategy
         self.inputs = inputs
 
-        self.params = ParameterFrame(self.default_params)
-        self.params.update_kw_parameters(self.config)
+        if isinstance(config, LifecycleParams):
+            self.params = config
+        elif isinstance(config, dict):
+            self.params = LifecycleParams(**config)
+        elif config is None:
+            self.params = LifecycleParams()
+        else:
+            raise TypeError(
+                "Invalid type for 'params'. Must be one of 'dict', "
+                f"'LifecycleParams', or 'None'; found '{type(config).__name__}'."
+            )
 
         # Constructors
         self.total_planned_maintenance = None
@@ -105,6 +90,7 @@ class LifeCycle:
         self.tf_lifeend = None
         self.vv_lifeend = None
         self.A_global = None
+        self.n_cycles = None  # Total number of D-T pulses
 
         # Derive/convert inputs
         self.maintenance_l = self.params.bmd * 24 * 3600  # [s]
@@ -184,14 +170,7 @@ class LifeCycle:
                 f" years, or {vvlifeperc:.2f} % of neutron budget."
             )
             # TODO: treat output parameter
-        self.params.add_parameter(
-            "n_cycles",
-            "Total number of D-T pulses",
-            self.fpy * YR_TO_S / self.t_flattop,
-            "",
-            None,
-            "bluemira",
-        )
+        self.n_cycles = self.fpy * YR_TO_S / self.t_flattop
 
     def set_availabilities(self, load_factor):
         """
@@ -316,7 +295,7 @@ class LifeCycle:
                 "the problem is probably related to unplanned maintenance."
             )
             self.__init__(
-                self.config,
+                self.params,
                 self.learning_strategy,
                 self.availability_strategy,
                 self.inputs,
@@ -324,7 +303,7 @@ class LifeCycle:
 
         if delta2 > 0.015:
             bluemira_warn(
-                "FuelCycle::Lifecyle: availability discrepancy greated than\n"
+                "FuelCycle::Lifecyle: availability discrepancy greater than\n"
                 "specified tolerance\n"
                 f"Actual: {actual_lf:.4f}\n"
                 f"Planned: {self.params.A_global:.4f}\n"
@@ -332,7 +311,7 @@ class LifeCycle:
                 "the problem is probably related to unplanned maintenance."
             )
             self.__init__(
-                self.config,
+                self.params,
                 self.learning_strategy,
                 self.availability_strategy,
                 self.inputs,
@@ -478,3 +457,68 @@ class LifeCycle:
         with open(filename) as f_h:
             data = json.load(f_h)
         return data
+
+
+@dataclass
+class LifecycleParams:
+    A_global: float = 0.3
+    """Global load factor [dimensionless]. Not always used."""
+    I_p: float = 19
+    """Plasma current [MA]. None."""
+    bmd: float = 150
+    """Blanket maintenance duration [days]. Full replacement intervention duration."""
+    dmd: float = 90
+    """Divertor maintenance duration [days]. Full replacement intervention duration."""
+    t_pulse: float = 7200
+    """Pulse length [s]. Includes ramp-up and ramp-down time."""
+    t_cs_recharge: float = 600
+    """CS recharge time [s]. Presently assumed to dictate minimum dwell period."""
+    t_pumpdown: float = 599
+    """
+    Pump down duration of the vessel in between pulses [s]. Presently assumed to
+    take less time than the CS recharge.
+    """
+    s_ramp_up: float = 0.1
+    """Plasma current ramp-up rate [MA/s]. None."""
+    s_ramp_down: float = 0.1
+    """Plasma current ramp-down rate [MA/s]. None."""
+    n_DT_reactions: float = 7.078779946428698e20
+    """D-T fusion reaction rate [1/s]. At full power."""
+    n_DD_reactions: float = 8.548069652616976e18
+    """D-D fusion reaction rate [1/s]. At full power."""
+    blk_1_dpa: float = 20
+    """
+    Starter blanket life limit (EUROfer) [dpa].
+    https://iopscience.iop.org/article/10.1088/1741-4326/57/9/092002/pdf.
+    """
+    blk_2_dpa: float = 50
+    """
+    Second blanket life limit (EUROfer) [dpa].
+    https://iopscience.iop.org/article/10.1088/1741-4326/57/9/092002/pdf.
+    """
+    div_dpa: float = 5
+    """
+    Divertor life limit (CuCrZr) [dpa].
+    https://iopscience.iop.org/article/10.1088/1741-4326/57/9/092002/pdf.
+    """
+    vv_dpa: float = 3.25
+    """Vacuum vessel life limit (SS316-LN-IG) [dpa]. RCC-Mx or whatever it is called."""
+    tf_fluence: float = 3.2e21
+    """
+    Insulation fluence limit for ITER equivalent to 10 MGy [1/m^2].
+    https://ieeexplore.ieee.org/document/6374236/.
+    """
+    tf_ins_nflux: float = 14000000000000.0
+    """
+    TF insulation peak neutron flux [1/m^2/s]. Pavel Pereslavtsev sent me an email
+    20/02/2017.
+    """
+    blk_dmg: float = 10.2
+    """Blanket neutron daamge rate [dpa/fpy]. Pavel Pereslavtsev 2M7HN3 fig. 20."""
+    div_dmg: float = 3
+    """
+    Divertor neutron damange rate [dpa/fpy].
+    https://iopscience.iop.org/article/10.1088/1741-4326/57/9/092002/pdf.
+    """
+    vv_dmg: float = 0.3
+    """Vacuum vessel neutron damage rate [dpa/fpy]. Pavel Pereslavtsev 2M7HN3 fig. 18."""
