@@ -270,7 +270,7 @@ def find_flux_surface_precise_OLD(psi_norm_func, mesh, psi_norm, xtol=1e-7):
 
 def find_flux_surface(psi_norm_func, psi_norm, mesh=None, n_points=100):
     """
-    Find a flux surface in the psi function precisely.
+    Find a flux surface in the psi_norm function precisely by normalised psi value.
 
     Parameters
     ----------
@@ -279,9 +279,12 @@ def find_flux_surface(psi_norm_func, psi_norm, mesh=None, n_points=100):
     mesh: dolfin.Mesh
         Mesh object to use to estimate extrema prior to optimisation
     psi_norm: float
-        Normalised psi value for which to calculate the shape parameters
-    xtol: float
-        Precision ersatz
+        Normalised psi value for which to find the flux surface
+    mesh: Optional[dolfin.Mesh]
+        Mesh object to use to estimate the flux surface
+        If None, reasonable guesses are used.
+    n_points: int
+        Number of points along the flux surface
 
     Returns
     -------
