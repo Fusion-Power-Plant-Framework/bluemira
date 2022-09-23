@@ -22,6 +22,8 @@
 """
 Full fuel cycle model object
 """
+from __future__ import annotations
+
 from dataclasses import dataclass
 from typing import Any, Dict, Optional, Union
 
@@ -43,81 +45,6 @@ from bluemira.fuel_cycle.tools import (
 # TODO: Make the whole thing run in self.t (higher resolution, better plotting)
 # It will be slower... and it will probably be less accurate! But the plots..
 # FIXED: You hacked the plot
-
-
-@dataclass
-class EDFCMParams:
-    """
-    Parameters required to run :class:`bluemira.fuel_cycle.cycle.EUDEMOFuelCycleModel`.
-    """
-
-    TBR: float = 1.05
-    """Tritium breeding ratio [dimensionless]."""
-    f_b: float = 0.015
-    """Burn-up fraction [dimensionless]."""
-    m_gas: float = 50
-    """
-    Gas puff flow rate [Pa m^3/s]. To maintain detachment - no chance of
-    fusion from gas injection.
-    """
-    A_global: float = 0.3
-    """Load factor [dimensionless]."""
-    r_learn: float = 1
-    """Learning rate [dimensionless]."""
-    t_pump: float = 100
-    """
-    Time in DIR loop [s]. Time between exit from plasma and entry into
-    plasma through DIR loop.
-    """
-    t_exh: float = 3600
-    """
-    Time in INDIR loop [s]. Time between exit from plasma and entry into
-    TFV systems INDIR.
-    """
-    t_ters: float = 18000
-    """Time from BB exit to TFV system [s]."""
-    t_freeze: float = 1800
-    """Time taken to freeze pellets [s]."""
-    f_dir: float = 0.9
-    """Fraction of flow through DIR loop [dimensionless]."""
-    t_detrit: float = 36000
-    """Time in detritiation system [s]."""
-    f_detrit_split: float = 0.9999
-    """Fraction of detritiation line tritium extracted [dimensionless]."""
-    f_exh_split: float = 0.99
-    """Fraction of exhaust tritium extracted [dimensionless]."""
-    eta_fuel_pump: float = 0.9
-    """
-    Efficiency of fuel line pump [dimensionless]. Pump which pumps down
-    the fuelling lines.
-    """
-    eta_f: float = 0.5
-    """
-    Fuelling efficiency [dimensionless]. Efficiency of the fuelling
-    lines prior to entry into the VV chamber.
-    """
-    I_miv: float = 0.3
-    """Maximum in-vessel T inventory [kg]."""
-    I_tfv_min: float = 2
-    """
-    Minimum TFV inventory [kg]. Without which e.g. cryodistillation
-    columns are not effective.
-    """
-    I_tfv_max: float = 2.2
-    """
-    Maximum TFV inventory [kg]. Account for T sequestration inside the T
-    plant.
-    """
-    I_mbb: float = 0.055
-    """Maximum BB T inventory [kg]."""
-    eta_iv: float = 0.9995
-    """In-vessel bathtub parameter [dimensionless]."""
-    eta_bb: float = 0.995
-    """BB bathtub parameter [dimensionless]."""
-    eta_tfv: float = 0.998
-    """TFV bathtub parameter [dimensionless]."""
-    f_terscwps: float = 0.9999
-    """TERS and CWPS cumulated factor [dimensionless]."""
 
 
 class EUDEMOFuelCycleModel:
@@ -161,7 +88,7 @@ class EUDEMOFuelCycleModel:
         else:
             raise TypeError(
                 "Invalid type for 'params'. Must be one of 'dict', "
-                "'EDFCMParams', 'None'; found '{type(params)}'."
+                f"'EDFCMParams', or 'None'; found '{type(params).__name__}'."
             )
 
         # Handle calculation information
@@ -408,8 +335,8 @@ class EUDEMOFuelCycleModel:
 
     def recycle(self):
         """
-        The main loop of the fuel cycle, which is called recusively until the
-        convergence criterion is met
+        The main loop of the fuel cycle, which is called recursively until the
+        convergence criterion is met.
         """
         # Fuelling (fuel in)
         # Fuel pump built in (ghosted component)
@@ -451,7 +378,7 @@ class EUDEMOFuelCycleModel:
         # Blanket
         m_T_bred = self.blanket(self.params.eta_bb, self.params.I_mbb)
         t, m_bred = discretise_1d(self.DEMO_t, m_T_bred, n_ts)
-        m_T_bred = FuelCycleFlow(t, m_bred, self.params.t_ters.value)
+        m_T_bred = FuelCycleFlow(t, m_bred, self.params.t_ters)
         # Tritium extraction and recovery system + coolant water purification
         m_T_bred_totfv, m_T_bred_tostack = m_T_bred.split(2, [self.params.f_terscwps])
         # TFV systems - runs in t
@@ -472,7 +399,7 @@ class EUDEMOFuelCycleModel:
         )
         # Flow 9
         store.add_in_flow(direct.out_flow)
-        _, gpuff_corr = discretise_1d(self.DEMO_t, gpuff, n_ts)
+        # _, gpuff_corr = discretise_1d(self.DEMO_t, gpuff, n_ts)
         # store.add_in_flow(-gpuff_corr)
         store.run()
         # This is conservative... need to find a way to make gas available
@@ -731,3 +658,78 @@ class EUDEMOFuelCycleModel:
         ax.plot(self.DEMO_t, m_ideal, label="ideal")
         ax.plot(self.t[self.max_T[0]], self.max_T[1], label="max yellow")
         ax.legend()
+
+
+@dataclass
+class EDFCMParams:
+    """
+    Parameters required to run :class:`bluemira.fuel_cycle.cycle.EUDEMOFuelCycleModel`.
+    """
+
+    TBR: float = 1.05
+    """Tritium breeding ratio [dimensionless]."""
+    f_b: float = 0.015
+    """Burn-up fraction [dimensionless]."""
+    m_gas: float = 50
+    """
+    Gas puff flow rate [Pa m^3/s]. To maintain detachment - no chance of
+    fusion from gas injection.
+    """
+    A_global: float = 0.3
+    """Load factor [dimensionless]."""
+    r_learn: float = 1
+    """Learning rate [dimensionless]."""
+    t_pump: float = 100
+    """
+    Time in DIR loop [s]. Time between exit from plasma and entry into
+    plasma through DIR loop.
+    """
+    t_exh: float = 3600
+    """
+    Time in INDIR loop [s]. Time between exit from plasma and entry into
+    TFV systems INDIR.
+    """
+    t_ters: float = 18000
+    """Time from BB exit to TFV system [s]."""
+    t_freeze: float = 1800
+    """Time taken to freeze pellets [s]."""
+    f_dir: float = 0.9
+    """Fraction of flow through DIR loop [dimensionless]."""
+    t_detrit: float = 36000
+    """Time in detritiation system [s]."""
+    f_detrit_split: float = 0.9999
+    """Fraction of detritiation line tritium extracted [dimensionless]."""
+    f_exh_split: float = 0.99
+    """Fraction of exhaust tritium extracted [dimensionless]."""
+    eta_fuel_pump: float = 0.9
+    """
+    Efficiency of fuel line pump [dimensionless]. Pump which pumps down
+    the fuelling lines.
+    """
+    eta_f: float = 0.5
+    """
+    Fuelling efficiency [dimensionless]. Efficiency of the fuelling
+    lines prior to entry into the VV chamber.
+    """
+    I_miv: float = 0.3
+    """Maximum in-vessel T inventory [kg]."""
+    I_tfv_min: float = 2
+    """
+    Minimum TFV inventory [kg]. Without which e.g. cryodistillation
+    columns are not effective.
+    """
+    I_tfv_max: float = 2.2
+    """
+    Maximum TFV inventory [kg]. Account for T sequestration inside the T
+    plant.
+    """
+    I_mbb: float = 0.055
+    """Maximum BB T inventory [kg]."""
+    eta_iv: float = 0.9995
+    """In-vessel bathtub parameter [dimensionless]."""
+    eta_bb: float = 0.995
+    """BB bathtub parameter [dimensionless]."""
+    eta_tfv: float = 0.998
+    """TFV bathtub parameter [dimensionless]."""
+    f_terscwps: float = 0.9999
+    """TERS and CWPS cumulated factor [dimensionless]."""
