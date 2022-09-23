@@ -175,9 +175,7 @@ class TestSolovevZheng:
         cls.solovev = Solovev(R_0, a, kappa, delta, A1, A2)
 
         levels = 50
-        axis, _, _, _, psi_exact = cls.solovev.plot_psi(
-            5.0, -6, 8.0, 12.0, 100, 100, levels=levels
-        )
+        cls.solovev.plot_psi(5.0, -6, 8.0, 12.0, 100, 100, levels=levels)
         plt.show()
 
         n_points = 500
@@ -270,6 +268,12 @@ class TestSolovevZheng:
         diff = psi_calc_data - psi_exact
         eps = np.linalg.norm(diff, ord=2) / np.linalg.norm(psi_exact, ord=2)
         assert eps < 1e-5
+
+    def test_psi_axis(self):
+        x_axis_s, z_axis_s = find_magnetic_axis(self.solovev.psi, None)
+        x_axis_fe, z_axis_fe = find_magnetic_axis(self.fe_psi_calc, self.mesh)
+        np.testing.assert_allclose(x_axis_fe, x_axis_s, atol=1e-6)
+        np.testing.assert_allclose(z_axis_fe, z_axis_s, atol=1e-6)
 
     def test_psi_boundary(self):
         psi_fe_boundary = [self.fe_psi_calc(point) for point in self.boundary.T]
