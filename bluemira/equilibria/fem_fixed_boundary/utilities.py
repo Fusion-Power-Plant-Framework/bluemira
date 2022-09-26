@@ -274,7 +274,7 @@ def find_flux_surface(psi_norm_func, psi_norm, mesh=None, n_points=100):
 
     Parameters
     ----------
-    psi_norm_func: Callable
+    psi_norm_func: Callable[[np.ndarray], float]
         Function to calculate normalised psi
     mesh: dolfin.Mesh
         Mesh object to use to estimate extrema prior to optimisation
@@ -344,7 +344,7 @@ def calculate_plasma_shape_params(
 
     Parameters
     ----------
-    psi_norm_func: Callable
+    psi_norm_func: Callable[[np.ndarray], float]
         Function to calculate normalised psi
     mesh: dolfin.Mesh
         Mesh object to use to estimate extrema prior to optimisation
@@ -451,7 +451,7 @@ def find_magnetic_axis(psi_func, mesh=None):
 
     Parameters
     ----------
-    psi_func: Callable
+    psi_func: Callable[[np.ndarray], float]
         Function to return psi at a given point
     mesh: Optional[dolfin.Mesh]
         Mesh object to use to estimate magnetic axis prior to optimisation
