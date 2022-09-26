@@ -31,14 +31,18 @@ from bluemira.display.plotter import plot_coordinates
 from bluemira.geometry.coordinates import (
     Coordinates,
     check_linesegment,
+    coords_plane_intersect,
     get_centroid,
+    get_intersect,
     get_normal_vector,
     get_perimeter,
     in_polygon,
+    join_intersect,
     on_polygon,
     polygon_in_polygon,
 )
 from bluemira.geometry.error import CoordinatesError
+from bluemira.geometry.plane import BluemiraPlane
 
 TEST_PATH = get_bluemira_path("geometry/test_data", subfolder="tests")
 
@@ -514,3 +518,189 @@ class TestInPolygon:
 
         hits = np.count_nonzero(mask)
         assert hits == 1171, hits
+
+
+class TestIntersections:
+    @classmethod
+    def teardown_class(cls):
+        plt.close("all")
+
+    @pytest.mark.parametrize("c1, c2", [["x", "z"], ["x", "y"], ["y", "z"]])
+    def test_get_intersect(self, c1, c2):
+        loop1 = Coordinates({c1: [0, 0.5, 1, 2, 3, 4, 0], c2: [1, 1, 1, 1, 2, 5, 5]})
+        loop2 = Coordinates({c1: [1.5, 1.5, 2.5, 2.5, 2.5], c2: [4, -4, -4, -4, 5]})
+        shouldbe = [[1.5, 1], [2.5, 1.5], [2.5, 5]]
+        intersect = np.array(
+            get_intersect(
+                getattr(loop1, "".join([c1, c2])), getattr(loop2, "".join([c1, c2]))
+            )
+        )
+        correct = np.array(shouldbe).T
+        np.testing.assert_allclose(intersect, correct)
+
+    def test_join_intersect(self):
+        loop1 = Coordinates(
+            {"x": [0, 0.5, 1, 2, 3, 5, 4.5, 4, 0], "z": [1, 1, 1, 1, 2, 4, 4.5, 5, 5]}
+        )
+        loop2 = Coordinates({"x": [1.5, 1.5, 2.5, 2.5], "z": [4, -4, -4, 5]})
+        join_intersect(loop1, loop2)
+
+        np.testing.assert_allclose(loop1.points[3], [1.5, 0, 1])
+        np.testing.assert_allclose(loop1.points[5], [2.5, 0, 1.5])
+        np.testing.assert_allclose(loop1.points[10], [2.5, 0, 5])
+
+    def test_join_intersect_arg1(self):
+        tf = Coordinates.from_json(os.sep.join([TEST_PATH, "test_TF_intersect.json"]))
+        lp = Coordinates.from_json(os.sep.join([TEST_PATH, "test_LP_intersect.json"]))
+        eq = Coordinates.from_json(os.sep.join([TEST_PATH, "test_EQ_intersect.json"]))
+        up = Coordinates.from_json(os.sep.join([TEST_PATH, "test_UP_intersect.json"]))
+
+        _, ax = plt.subplots()
+        for coords in [tf, up, eq, lp]:
+            plot_coordinates(coords, ax=ax, fill=False)
+
+        args = []
+        intx, intz = [], []
+        for coords in [lp, eq, up]:
+            i = get_intersect(tf.xz, coords.xz)
+            a = join_intersect(tf, coords, get_arg=True)
+            args.extend(a)
+            intx.extend(i[0])
+            intz.extend(i[1])
+
+        for coords in [tf, up, eq, lp]:
+            plot_coordinates(coords, ax=ax, fill=False, points=True)
+        ax.plot(*tf.xz.T[args].T, marker="o", color="r")
+        ax.plot(intx, intz, marker="^", color="k")
+
+        assert len(intx) == len(args), f"{len(intx)} != {len(args)}"
+        assert np.allclose(np.sort(intx), np.sort(tf.x[args]))
+        assert np.allclose(np.sort(intz), np.sort(tf.z[args]))
+
+    def test_join_intersect_arg2(self):
+        tf = Coordinates.from_json(os.path.join(TEST_PATH, "test_TF_intersect2.json"))
+        lp = Coordinates.from_json(os.path.join(TEST_PATH, "test_LP_intersect2.json"))
+        eq = Coordinates.from_json(os.path.join(TEST_PATH, "test_EQ_intersect2.json"))
+        up = Coordinates.from_json(os.path.join(TEST_PATH, "test_UP_intersect2.json"))
+
+        _, ax = plt.subplots()
+        for coords in [tf, up, eq, lp]:
+            plot_coordinates(coords, ax=ax, fill=False)
+
+        args = []
+        intx, intz = [], []
+        for coords in [lp, eq, up]:
+            i = get_intersect(tf.xz, coords.xz)
+            a = join_intersect(tf, coords, get_arg=True)
+            args.extend(a)
+            intx.extend(i[0])
+            intz.extend(i[1])
+
+        ax.plot(*tf.xz.T[args].T, marker="o", color="r")
+        ax.plot(intx, intz, marker="^", color="k")
+
+        assert len(intx) == len(args), f"{len(intx)} != {len(args)}"
+        assert np.allclose(np.sort(intx), np.sort(tf.x[args])), f"{intx} != {tf.x[args]}"
+        assert np.allclose(np.sort(intz), np.sort(tf.z[args])), f"{intz} != {tf.z[args]}"
+
+
+class TestCoordinatesPlaneIntersect:
+    @classmethod
+    def teardown_class(cls):
+        plt.close("all")
+
+    def test_simple(self):
+        coords = Coordinates({"x": [0, 1, 2, 2, 0, 0], "z": [-1, -1, -1, 1, 1, -1]})
+        plane = BluemiraPlane.from_3_points([0, 0, 0], [1, 0, 0], [0, 1, 0])  # x-y
+        intersect = coords_plane_intersect(coords, plane)
+        e = np.array([[0, 0, 0], [2, 0, 0]])
+        assert np.allclose(intersect, e)
+
+    def test_complex(self):
+        coords = Coordinates(
+            {
+                "x": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 8, 6, 4, 2, 0],
+                "z": [-1, -2, -3, -4, -5, -6, -7, -8, -4, -2, 3, 2, 4, 2, 0, -1],
+            }
+        )
+        plane = BluemiraPlane.from_3_points([0, 0, 0], [1, 0, 0], [0, 1, 0])  # x-y
+        intersect = coords_plane_intersect(coords, plane)
+        assert len(intersect) == 2
+
+        _, ax = plt.subplots()
+        plot_coordinates(coords, ax=ax)
+
+        for i in intersect:
+            ax.plot(i[0], i[2], marker="o", color="r")
+            assert on_polygon(i[0], i[2], coords.xz.T)
+
+        plane = BluemiraPlane.from_3_points(
+            [0, 0, 2.7], [1, 0, 2.7], [0, 1, 2.7]
+        )  # x-y offset
+        intersect = coords_plane_intersect(coords, plane)
+        assert len(intersect) == 4
+
+        for i in intersect:
+            ax.plot(i[0], i[2], marker="o", color="r")
+            assert on_polygon(i[0], i[2], coords.xz.T)
+
+        plane = BluemiraPlane.from_3_points(
+            [0, 0, 4], [1, 0, 4], [0, 1, 4]
+        )  # x-y offset
+        intersect = coords_plane_intersect(coords, plane)
+        assert len(intersect) == 1
+        for i in intersect:
+            ax.plot(i[0], i[2], marker="o", color="r")
+
+            assert on_polygon(i[0], i[2], coords.xz.T)
+
+        plane = BluemiraPlane.from_3_points(
+            [0, 0, 4.0005], [1, 0, 4.0005], [0, 1, 4.0005]
+        )  # x-y offset
+        intersect = coords_plane_intersect(coords, plane)
+        assert intersect is None
+
+    def test_other_dims(self):
+        coords = Coordinates(
+            {
+                "x": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 8, 6, 4, 2, 0],
+                "y": [-1, -2, -3, -4, -5, -6, -7, -8, -4, -2, 3, 2, 4, 2, 0, -1],
+            }
+        )
+        plane = BluemiraPlane.from_3_points([0, 0, 0], [1, 0, 0], [0, 0, 1])  # x-y
+        intersect = coords_plane_intersect(coords, plane)
+        assert len(intersect) == 2
+
+        _, ax = plt.subplots()
+        plot_coordinates(coords, ax=ax)
+        for i in intersect:
+            ax.plot(i[0], i[2], marker="o", color="r")
+        plt.show()
+
+        plane = BluemiraPlane.from_3_points([0, 10, 0], [1, 10, 0], [0, 10, 1])  # x-y
+        intersect = coords_plane_intersect(coords, plane)
+        assert intersect is None
+
+    def test_xyzplane(self):
+        coords = Coordinates(
+            {
+                "x": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 8, 6, 4, 2, 0],
+                "y": [-1, -2, -3, -4, -5, -6, -7, -8, -4, -2, 3, 2, 4, 2, 0, -1],
+            }
+        )
+        coords.translate([-2, 0, 0])
+        plane = BluemiraPlane.from_3_points([0, 0, 0], [1, 1, 1], [2, 0, 0])  # x-y-z
+        intersect = coords_plane_intersect(coords, plane)
+
+        _, ax = plt.subplots()
+        plot_coordinates(coords, ax=ax)
+        for i in intersect:
+            ax.plot(i[0], i[2], marker="o", color="r")
+            assert on_polygon(i[0], i[2], coords.xz.T)
+
+    def test_flat_intersect(self):
+        # test that a shared segment with plane only gives two intersects
+        coords = Coordinates({"x": [0, 2, 2, 0, 0], "z": [-1, -1, 1, 1, -1]})
+        plane = BluemiraPlane.from_3_points([0, 0, 1], [0, 1, 1], [1, 0, 1])
+        inter = coords_plane_intersect(coords, plane)
+        assert np.allclose(inter, np.array([[0, 0, 1], [2, 0, 1]]))
