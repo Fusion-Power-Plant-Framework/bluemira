@@ -30,7 +30,11 @@ import numpy as np
 
 from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.codes import _freecadapi as cadapi
-from bluemira.geometry.coordinates import _validate_coordinates, get_area
+from bluemira.geometry.coordinates import (
+    _validate_coordinates,
+    get_angle_between_points,
+    get_area,
+)
 from bluemira.geometry.error import GeometryError
 from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.wire import BluemiraWire
