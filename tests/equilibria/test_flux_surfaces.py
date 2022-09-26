@@ -37,8 +37,7 @@ from bluemira.equilibria.flux_surfaces import (
     poloidal_angle,
 )
 from bluemira.equilibria.shapes import flux_surface_cunningham, flux_surface_johner
-from bluemira.geometry._deprecated_tools import interpolate_points
-from bluemira.geometry.coordinates import Coordinates
+from bluemira.geometry.coordinates import Coordinates, interpolate_points
 
 TEST_PATH = get_bluemira_path("equilibria/test_data", subfolder="tests")
 

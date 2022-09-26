@@ -94,16 +94,16 @@ def vector_lengthnorm(
         The x coordinates
     y: np.ndarray
         The y coordinates
-    z: np.ndarray
-        The z coordinates
+    z: Optional[np.ndarray]
+        The z coordinates. If None, carries out the operation in 2-D
 
     Returns
     -------
     length_: np.ndarray
         The normalised length vector
     """
-    coords = [x, y, z] if z else [x, y]
-    dl_vectors = np.sqrt(np.sum([np.diff(ci) ** 2 for ci in coords]))
+    coords = [x, y] if z is None else [x, y, z]
+    dl_vectors = np.sqrt(np.sum([np.diff(ci) ** 2 for ci in coords], axis=0))
     length_ = np.append(
         0,
         np.cumsum(dl_vectors),
