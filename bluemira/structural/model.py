@@ -51,6 +51,8 @@ def check_matrix_condition(matrix, digits):
 
     Raises
     ------
+    StructuralError
+        If the stiffness matrix is singular or ill-conditioned
     """
     condition_number = np.linalg.cond(matrix)
     digit_loss = np.log10(condition_number)
