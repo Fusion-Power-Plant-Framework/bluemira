@@ -33,8 +33,8 @@ from scipy.interpolate import RectBivariateSpline
 from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.equilibria.constants import B_TOLERANCE, X_TOLERANCE
 from bluemira.equilibria.error import EquilibriaError
-from bluemira.geometry._deprecated_tools import in_polygon, join_intersect
-from bluemira.geometry.coordinates import Coordinates, get_area_2d
+from bluemira.geometry._deprecated_tools import join_intersect
+from bluemira.geometry.coordinates import Coordinates, get_area_2d, in_polygon
 
 __all__ = [
     "Xpoint",
