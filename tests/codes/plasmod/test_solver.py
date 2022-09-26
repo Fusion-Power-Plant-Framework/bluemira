@@ -438,6 +438,6 @@ class TestPlasmodSolver:
         with open(file_path, "r") as f:
             input_file = f.read()
         param_regex = param + r" +([0-9]+(\.[0-9]+E[\+-][0-9]+)?)"
-        match = re.search(param_regex, input_file, re.MULTILINE)
-        if match:
-            return float(match.group(1))
+        re_match = re.search(param_regex, input_file, re.MULTILINE)
+        if re_match:
+            return float(re_match.group(1))
