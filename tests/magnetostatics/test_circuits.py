@@ -24,15 +24,15 @@ import json
 import matplotlib.pyplot as plt
 import numpy as np
 import pytest
-from scipy.interpolate import interp1d
+from scipy.interpolate import UnivariateSpline, interp1d
 
 from bluemira.base.file import get_bluemira_path
-from bluemira.geometry._deprecated_tools import (
-    innocent_smoothie,
-    offset,
+from bluemira.geometry._deprecated_tools import offset
+from bluemira.geometry.coordinates import (
+    Coordinates,
     vector_lengthnorm,
+    vector_lengthnorm_2d,
 )
-from bluemira.geometry.coordinates import Coordinates
 from bluemira.geometry.parameterisations import PictureFrame, PrincetonD, TripleArc
 from bluemira.geometry.tools import make_circle
 from bluemira.magnetostatics.baseclass import SourceGroup
@@ -274,7 +274,11 @@ class TestCariddiBenchmark:
             coil_loop = Coordinates({"x": x, "y": 0, "z": z})
 
         # Smooth out graphically determined TF centreline...
-        x, z = innocent_smoothie(coil_loop.x, coil_loop.z, n=150, s=0.02)
+        length_norm = vector_lengthnorm_2d(x, z)
+        l_interp = np.linspace(0, 1, 150)
+        x = UnivariateSpline(length_norm, x, s=0.02)(l_interp)
+        z = UnivariateSpline(length_norm, z, s=0.02)(l_interp)
+
         coil_loop = Coordinates({"x": x[:-10], "y": 0, "z": z[:-10]})
         coil_loop.close()
         cls.coil_loop = coil_loop

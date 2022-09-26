@@ -25,7 +25,6 @@ A collection of geometry tools.
 
 from functools import partial
 from itertools import zip_longest
-from typing import Tuple
 
 import numba as nb
 import numpy as np
@@ -131,40 +130,6 @@ def _segment_lengths(x: np.ndarray, y: np.ndarray, z: np.ndarray) -> np.ndarray:
         The length of each individual segment in the coordinates
     """
     return np.sqrt(np.diff(x) ** 2 + np.diff(y) ** 2 + np.diff(z) ** 2)
-
-
-def innocent_smoothie(x, z, n=500, s=0):
-    """
-    Get a smoothed interpolated set of coordinates.
-
-    Parameters
-    ----------
-    x: array_like
-        x coordinates [m]
-    z: array_like
-        z coordinates [m]
-    n: int
-        The number of interpolation points
-    s: Union[int, float]
-        The smoothing parameter to use. 0 results in no smoothing (default)
-
-    Returns
-    -------
-    x: array_like
-        Smoothed, interpolated x coordinates [m]
-    z: array_like
-        Smoothed, interpolated z coordinates [m]
-    """
-    length_norm = vector_lengthnorm_2d(x, z)
-    n = int(n)
-    l_interp = np.linspace(0, 1, n)
-    if s == 0:
-        x = interp1d(length_norm, x)(l_interp)
-        z = interp1d(length_norm, z)(l_interp)
-    else:
-        x = UnivariateSpline(length_norm, x, s=s)(l_interp)
-        z = UnivariateSpline(length_norm, z, s=s)(l_interp)
-    return x, z
 
 
 # =============================================================================
