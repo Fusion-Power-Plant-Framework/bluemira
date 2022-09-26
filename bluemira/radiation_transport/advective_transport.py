@@ -23,12 +23,14 @@
 A simplified 2-D solver for calculating charged particle heat loads.
 """
 
+from dataclasses import dataclass
+from typing import Dict
+
 import matplotlib.pyplot as plt
 import numpy as np
 
 from bluemira.base.constants import EPS
 from bluemira.base.look_and_feel import bluemira_warn
-from bluemira.base.parameter import ParameterFrame
 from bluemira.equilibria.find import find_flux_surface_through_point
 from bluemira.equilibria.flux_surfaces import OpenFluxSurface
 from bluemira.geometry._deprecated_base import Plane
@@ -42,31 +44,25 @@ __all__ = ["ChargedParticleSolver"]
 class ChargedParticleSolver:
     """
     A simplified charged particle transport model along open field lines.
+
+    Parameters
+    ----------
+    config: Dict[str, float]
+        The parameters for running the transport model. See
+        :class:`ChargedParticleSolverParams` for available parameters
+        and their defaults.
+    equilibrium: Equilibrium
+        The equilibrium defining flux surfaces.
+    dx_mp: float (optional)
+        The midplane spatial resolution between flux surfaces [m]
+        (default: 0.001).
     """
 
-    # fmt: off
-    default_params = [
-        ['P_sep_particle', 'Separatrix power', 150, 'MW', None, 'Input'],
-        ["f_p_sol_near", "near scrape-off layer power rate", 0.50, "dimensionless", None, "Input"],
-        ["fw_lambda_q_near_omp", "Lambda q near SOL at the outboard", 0.003, "m", None, "Input"],
-        ["fw_lambda_q_far_omp", "Lambda q far SOL at the outboard", 0.05, "m", None, "Input"],
-        ["fw_lambda_q_near_imp", "Lambda q near SOL at the inboard", 0.003, "m", None, "Input"],
-        ["fw_lambda_q_far_imp", "Lambda q far SOL at the inboard", 0.05, "m", None, "Input"],
-        ["f_lfs_lower_target", "Fraction of SOL power deposited on the LFS lower target", 0.9, "dimensionless", None, "Input"],
-        ["f_hfs_lower_target", "Fraction of SOL power deposited on the HFS lower target", 0.1, "dimensionless", None, "Input"],
-        ["f_lfs_upper_target", "Fraction of SOL power deposited on the LFS upper target (DN only)", 0, "dimensionless", None, "Input"],
-        ["f_hfs_upper_target", "Fraction of SOL power deposited on the HFS upper target (DN only)", 0, "dimensionless", None, "Input"],
-    ]
-    # fmt: on
-
-    def __init__(self, config, equilibrium, **kwargs):
+    def __init__(self, config: Dict[str, float], equilibrium, dx_mp: float = 0.001):
         self.eq = equilibrium
-        self.params = ParameterFrame(self.default_params)
-        self.params.update_kw_parameters(config, f"{self.__class__.__name__} input")
+        self.params = self._make_params(config)
         self._check_params()
-
-        # Midplane spatial resolution between flux surfaces
-        self.dx_mp = kwargs.get("dx_mp", 0.001)
+        self.dx_mp = dx_mp
 
         # Constructors
         self.first_wall = None
@@ -493,3 +489,55 @@ class ChargedParticleSolver:
         )
         f = plt.gcf()
         f.colorbar(cm, label="MW/m^2")
+
+    def _make_params(self, config):
+        """Convert the given params to ``ChargedParticleSolverParams``"""
+        if isinstance(config, dict):
+            return ChargedParticleSolverParams(**config)
+        elif isinstance(config, ChargedParticleSolverParams):
+            return config
+        else:
+            raise TypeError(
+                "Unsupported type: 'config' must be a 'dict', or "
+                "'ChargedParticleSolverParams' instance; found "
+                f"'{type(config).__name__}'."
+            )
+
+
+@dataclass
+class ChargedParticleSolverParams:
+    P_sep_particle: float = 150
+    """Separatrix power [MW]."""
+
+    f_p_sol_near: float = 0.5
+    """Near scrape-off layer power rate [dimensionless]."""
+
+    fw_lambda_q_near_omp: float = 0.003
+    """Lambda q near SOL at the outboard [m]."""
+
+    fw_lambda_q_far_omp: float = 0.05
+    """Lambda q far SOL at the outboard [m]."""
+
+    fw_lambda_q_near_imp: float = 0.003
+    """Lambda q near SOL at the inboard [m]."""
+
+    fw_lambda_q_far_imp: float = 0.05
+    """Lambda q far SOL at the inboard [m]."""
+
+    f_lfs_lower_target: float = 0.9
+    """Fraction of SOL power deposited on the LFS lower target [dimensionless]."""
+
+    f_hfs_lower_target: float = 0.1
+    """Fraction of SOL power deposited on the HFS lower target [dimensionless]."""
+
+    f_lfs_upper_target: float = 0
+    """
+    Fraction of SOL power deposited on the LFS upper target (DN only)
+    [dimensionless].
+    """
+
+    f_hfs_upper_target: float = 0
+    """
+    Fraction of SOL power deposited on the HFS upper target (DN only)
+    [dimensionless].
+    """
