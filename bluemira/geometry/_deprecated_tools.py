@@ -284,7 +284,7 @@ def innocent_smoothie(x, z, n=500, s=0):
 # =============================================================================
 
 
-def side_vector(polygon_array):
+def _side_vector(polygon_array):
     """
     Calculates the side vectors of an anti-clockwise polygon
 
@@ -301,7 +301,7 @@ def side_vector(polygon_array):
     return polygon_array - np.roll(polygon_array, 1)
 
 
-def normal_vector(side_vectors):
+def _normal_vector(side_vectors):
     """
     Anti-clockwise
 
@@ -357,7 +357,7 @@ def offset(x, z, offset_value):
         closed = False
     p = np.array([np.array(x), np.array(z)])
     # Normal vectors for each side
-    v = normal_vector(side_vector(p))
+    v = _normal_vector(_side_vector(p))
     # Construct points offset
     off_p = np.column_stack(p + offset_value * v)
     off_p2 = np.column_stack(np.roll(p, 1) + offset_value * v)
@@ -484,7 +484,7 @@ def vector_intersect(p1, p2, p3, p4):
         point = p2
     else:
         dp = p1 - p3
-        dap = normal_vector(da)
+        dap = _normal_vector(da)
         denom = np.dot(dap, db)
         num = np.dot(dap, dp)
         point = num / denom.astype(float) * db + p3
