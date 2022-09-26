@@ -40,16 +40,18 @@ def test_illconditioned(caplog):
         [[17, -864, 716, -799], [1, -50, 0, 0], [0, 1, -50, 0], [0, 0, 1, -50]]
     )
     orange = ANSI_COLOR["orange"]
-    for k, digits, out in [
-        [k1, 3, orange],
-        [k1, 5, ""],
-        [k2, 9, orange],
-        [k2, 10, ""],
+    for k, digits in [
+        [k1, 3],
+        [k2, 9],
+    ]:
+        with pytest.raises(StructuralError):
+            check_matrix_condition(k, digits)
+
+    for k, digits in [
+        [k1, 5],
+        [k2, 10],
     ]:
         check_matrix_condition(k, digits)
-        output = "".join(caplog.messages)
-        assert output == "" if len(out) == 0 else output.startswith(out)
-        caplog.clear()
 
 
 class TestFEModel:
