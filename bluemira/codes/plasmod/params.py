@@ -23,9 +23,12 @@ Parameter definitions for Plasmod.
 """
 
 from dataclasses import dataclass
+from typing import Dict
 
 from bluemira.base.parameter_frame import NewParameter as Parameter
 from bluemira.base.parameter_frame import NewParameterFrame as ParameterFrame
+from bluemira.codes.plasmod.mapping import mappings
+from bluemira.codes.utilities import ParameterMapping
 
 
 @dataclass
@@ -120,3 +123,10 @@ class PlasmodSolverParams(ParameterFrame):
     """Plasma effective charge [dimensionless]."""
     v_burn: Parameter[float]
     """Target loop voltage (if lower than -1e-3, ignored)-> plasma loop voltage [V]."""
+
+    def __post_init__(self):
+        self._mappings = mappings
+
+    def mappings(self) -> Dict[str, ParameterMapping]:
+        """Return the mappings from these parameters to Plasmod parameters."""
+        return self._mappings

@@ -23,11 +23,11 @@ Defines the 'Teardown' stage for the plasmod solver.
 """
 
 from bluemira.base.look_and_feel import bluemira_debug
-from bluemira.base.parameter import ParameterFrame
 from bluemira.codes.error import CodesError
 from bluemira.codes.interface import CodesTeardown
 from bluemira.codes.plasmod.api._outputs import PlasmodOutputs
 from bluemira.codes.plasmod.constants import NAME as PLASMOD_NAME
+from bluemira.codes.plasmod.params import PlasmodSolverParams
 
 
 class Teardown(CodesTeardown):
@@ -49,7 +49,11 @@ class Teardown(CodesTeardown):
         The path to the plasmod profiles file.
     """
 
-    def __init__(self, params: ParameterFrame, output_file: str, profiles_file: str):
+    params: PlasmodSolverParams
+
+    def __init__(
+        self, params: PlasmodSolverParams, output_file: str, profiles_file: str
+    ):
         super().__init__(params, PLASMOD_NAME)
         self.outputs = PlasmodOutputs()
         self.output_file = output_file
@@ -67,7 +71,7 @@ class Teardown(CodesTeardown):
         Update this object's plasmod params with default values.
         """
         self.outputs = PlasmodOutputs()
-        self._update_params_with_outputs(vars(self.outputs))
+        self._update_params_with_outputs(vars(self.outputs), self.params.mappings())
 
     def read(self):
         """
@@ -88,7 +92,7 @@ class Teardown(CodesTeardown):
                 f"Could not read plasmod output file: {os_error}."
             ) from os_error
         self._raise_on_plasmod_error_code(self.outputs.i_flag)
-        self._update_params_with_outputs(vars(self.outputs))
+        self._update_params_with_outputs(vars(self.outputs), self.params.mappings())
 
     @staticmethod
     def _raise_on_plasmod_error_code(exit_code: int):

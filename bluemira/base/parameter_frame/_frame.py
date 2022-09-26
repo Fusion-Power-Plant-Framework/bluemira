@@ -167,7 +167,7 @@ class NewParameterFrame:
 def make_parameter_frame(
     params: Union[Dict[str, ParamDictT], NewParameterFrame, str, None],
     param_cls: Type[_PfT],
-) -> Union[_PfT, None]:
+) -> _PfT:
     """
     Factory function to generate a `ParameterFrame` of a specific type.
 
@@ -204,9 +204,9 @@ def make_parameter_frame(
         `param_cls` are both `None`.
     """
     if param_cls is None:
-        if params is None:
-            # Case for where there are no parameters associated with the object
-            return params
+        # if params is None:
+        #     # Case for where there are no parameters associated with the object
+        #     return params
         raise ValueError("Cannot process parameters, 'param_cls' is None.")
     elif isinstance(params, dict):
         return param_cls.from_dict(params)
