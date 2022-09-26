@@ -24,12 +24,7 @@ from typing import Type
 
 from bluemira.base.builder import ComponentManager
 from bluemira.base.components import Component
-from bluemira.base.error import BluemiraError
 from bluemira.display.displayer import ComponentDisplayer
-
-
-class ReactorError(BluemiraError):
-    """Exceptions related to reactors."""
 
 
 class Reactor:
