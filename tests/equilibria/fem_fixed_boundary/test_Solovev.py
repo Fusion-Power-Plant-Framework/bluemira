@@ -62,15 +62,12 @@ class TestSolovev:
         # create the Solovev instance to get the exact psi
         solovev = Solovev(R0, a, kappa, delta, A1, A2)
 
-        levels = 50
-        axis, cntr, _, _, psi_exact = solovev.plot_psi(
-            5.0, -6, 8.0, 12.0, 100, 100, levels=levels
-        )
+        solovev.plot_psi(5.0, -6, 8.0, 12.0, 100, 100, levels=50)
         plt.show()
 
         # get the plasma boundary finding the contour at psi = 0
         levels = [0]
-        axis, cntr, _, _, psi_exact = solovev.plot_psi(
+        _, cntr, *_ = solovev.plot_psi(
             6.0, -5, 6.0, 10.0, 500, 500, levels=levels, tofill=False
         )
 
@@ -138,7 +135,7 @@ class TestSolovev:
         psi_exact = solovev.psi(mesh_points)
 
         levels = np.linspace(min(psi_exact), max(psi_exact), 25)
-        axis, cntr, _ = plot_scalar_field(
+        plot_scalar_field(
             mesh_points[:, 0],
             mesh_points[:, 1],
             psi_exact,
@@ -149,13 +146,12 @@ class TestSolovev:
 
         plt.show()
 
-        axis = None
-        axis, cntr, _ = plot_scalar_field(
+        plot_scalar_field(
             mesh_points[:, 0],
             mesh_points[:, 1],
             psi_exact,
             levels=20,
-            ax=axis,
+            ax=None,
             tofill=True,
         )
         plt.show()
@@ -163,7 +159,7 @@ class TestSolovev:
         error = abs(psi_calc_data - psi_exact)
 
         levels = np.linspace(0.0, max(error) * 1.1, 50)
-        axis, cntr, _ = plot_scalar_field(
+        plot_scalar_field(
             mesh_points[:, 0],
             mesh_points[:, 1],
             error,
