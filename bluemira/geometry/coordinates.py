@@ -28,11 +28,13 @@ from typing import Iterable
 
 import numba as nb
 import numpy as np
+from numba.np.extensions import cross2d
 from pyquaternion import Quaternion
 from scipy.spatial.distance import cdist
 
 from bluemira.base.constants import EPS
 from bluemira.base.look_and_feel import bluemira_warn
+from bluemira.geometry.constants import CROSS_P_TOL
 from bluemira.geometry.error import CoordinatesError
 from bluemira.utilities.tools import json_writer
 
