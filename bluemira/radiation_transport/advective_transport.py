@@ -23,11 +23,12 @@
 A simplified 2-D solver for calculating charged particle heat loads.
 """
 
-from dataclasses import dataclass
+from dataclasses import dataclass, fields
 from typing import Dict
 
 import matplotlib.pyplot as plt
 import numpy as np
+from matplotlib.axes import Axes
 
 from bluemira.base.constants import EPS
 from bluemira.base.look_and_feel import bluemira_warn
@@ -493,7 +494,13 @@ class ChargedParticleSolver:
     def _make_params(self, config):
         """Convert the given params to ``ChargedParticleSolverParams``"""
         if isinstance(config, dict):
-            return ChargedParticleSolverParams(**config)
+            try:
+                return ChargedParticleSolverParams(**config)
+            except TypeError:
+                unknown = [
+                    k for k in config if k not in fields(ChargedParticleSolverParams)
+                ]
+                raise TypeError(f"Unknown config parameter(s) {str(unknown)[1:-1]}")
         elif isinstance(config, ChargedParticleSolverParams):
             return config
         else:

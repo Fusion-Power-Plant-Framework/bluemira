@@ -55,15 +55,22 @@ class TestChargedParticleInputs:
         with pytest.raises(AdvectionTransportError):
             ChargedParticleSolver(params, None)
 
+    def test_TypeError_given_unknown_parameter(self):
+        params = {"not_a_param": 0.1}
+
+        with pytest.raises(TypeError) as type_error:
+            ChargedParticleSolver(params, None)
+        assert "not_a_param" in str(type_error)
+
 
 class TestChargedParticleRecursionSN:
     @classmethod
     def setup_class(cls):
         eq_name = "EU-DEMO_EOF.json"
-        filename = os.sep.join([EQ_PATH, eq_name])
+        filename = os.path.join(EQ_PATH, eq_name)
         eq = Equilibrium.from_eqdsk(filename)
         fw_name = "first_wall.json"
-        filename = os.sep.join([TEST_PATH, fw_name])
+        filename = os.path.join(TEST_PATH, fw_name)
         fw = Loop.from_file(filename)
 
         cls.params = {
