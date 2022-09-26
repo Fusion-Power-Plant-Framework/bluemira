@@ -27,7 +27,7 @@ from copy import deepcopy
 import numpy as np
 from scipy.linalg import block_diag
 
-from bluemira.geometry._deprecated_tools import rotation_matrix
+from bluemira.geometry.coordinates import rotation_matrix
 
 
 def _nb_isclose(a, b, rtol=1.0e-5, atol=0.0e-8):

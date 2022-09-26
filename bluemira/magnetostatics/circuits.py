@@ -28,8 +28,12 @@ from copy import deepcopy
 import numpy as np
 
 from bluemira.base.look_and_feel import bluemira_warn
-from bluemira.geometry._deprecated_tools import rotation_matrix
-from bluemira.geometry.coordinates import Coordinates, in_polygon, rotation_matrix_v1v2
+from bluemira.geometry.coordinates import (
+    Coordinates,
+    in_polygon,
+    rotation_matrix,
+    rotation_matrix_v1v2,
+)
 from bluemira.magnetostatics.baseclass import SourceGroup
 from bluemira.magnetostatics.error import MagnetostaticsError
 from bluemira.magnetostatics.tools import process_to_coordinates, process_xyz_array

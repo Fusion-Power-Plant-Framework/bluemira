@@ -24,8 +24,11 @@ Symmetry boundary conditions
 """
 import numpy as np
 
-from bluemira.geometry._deprecated_tools import get_angle_between_points, rotation_matrix
-from bluemira.geometry.coordinates import project_point_axis
+from bluemira.geometry.coordinates import (
+    get_angle_between_points,
+    project_point_axis,
+    rotation_matrix,
+)
 from bluemira.structural.error import StructuralError
 from bluemira.structural.matrixops import cyclic_decomposition
 

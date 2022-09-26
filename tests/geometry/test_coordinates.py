@@ -40,6 +40,7 @@ from bluemira.geometry.coordinates import (
     join_intersect,
     on_polygon,
     polygon_in_polygon,
+    rotation_matrix,
 )
 from bluemira.geometry.error import CoordinatesError
 from bluemira.geometry.plane import BluemiraPlane
@@ -704,3 +705,27 @@ class TestCoordinatesPlaneIntersect:
         plane = BluemiraPlane.from_3_points([0, 0, 1], [0, 1, 1], [1, 0, 1])
         inter = coords_plane_intersect(coords, plane)
         assert np.allclose(inter, np.array([[0, 0, 1], [2, 0, 1]]))
+
+
+class TestRotationMatrix:
+    def test_axes(self):
+        axes = ["x", "y", "z"]
+        axes2 = [[1, 0, 0], [0, 1, 0], [0, 0, 1]]
+
+        for a1, a2 in zip(axes, axes2):
+            r_1 = rotation_matrix(np.pi / 6, a1)
+            r_2 = rotation_matrix(np.pi / 6, a2)
+            assert np.allclose(r_1, r_2), a1
+
+        axes = ["fail", "somthing", "1"]
+        for axis in axes:
+            with pytest.raises(CoordinatesError):
+                rotation_matrix(30, axis)
+
+    def test_ccw(self):
+        p1 = [9, 0, 0]
+
+        r_matrix = rotation_matrix(np.pi / 2, axis="z")
+        p2 = r_matrix @ p1
+
+        assert np.isclose(p2[1], 9), p2

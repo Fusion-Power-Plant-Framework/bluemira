@@ -561,6 +561,122 @@ def get_centroid_3d(x, y, z):
     return [get_rational(i, c) for i, c in enumerate([cx, cy, cz])]
 
 
+def get_angle_between_points(p0, p1, p2):
+    """
+    Angle between points. P1 is vertex of angle. ONly tested in 2d
+    """
+    if not all(isinstance(p, np.ndarray) for p in [p0, p1, p2]):
+        p0, p1, p2 = np.array(p0), np.array(p1), np.array(p2)
+    ba = p0 - p1
+    bc = p2 - p1
+    return get_angle_between_vectors(ba, bc)
+
+
+def get_angle_between_vectors(
+    v1: np.ndarray, v2: np.ndarray, signed: bool = False
+) -> float:
+    """
+    Angle between vectors. Will return the signed angle if specified.
+
+    Parameters
+    ----------
+    v1: np.array
+        The first vector
+    v2: np.array
+        The second vector
+
+    Returns
+    -------
+    angle: float
+        The angle between the vectors [radians]
+    """
+    if not all(isinstance(p, np.ndarray) for p in [v1, v2]):
+        v1, v2 = np.array(v1), np.array(v2)
+    v1n = v1 / np.linalg.norm(v1)
+    v2n = v2 / np.linalg.norm(v2)
+    cos_angle = np.dot(v1n, v2n)
+    # clip to dodge a NaN
+    angle = np.arccos(np.clip(cos_angle, -1, 1))
+    sign = 1
+    if signed:
+        det = np.linalg.det(np.stack((v1n[-2:], v2n[-2:])))
+        if det == 0:
+            # Vectors parallel
+            sign = 1
+        else:
+            sign = np.sign(det)
+
+    return sign * angle
+
+
+# =============================================================================
+# Rotations
+# =============================================================================
+
+
+def rotation_matrix(theta, axis="z"):
+    """
+    Old-fashioned rotation matrix: :math:`\\mathbf{R_{u}}(\\theta)`
+    \t:math:`\\mathbf{x^{'}}=\\mathbf{R_{u}}(\\theta)\\mathbf{x}`
+
+    \t:math:`\\mathbf{R_{u}}(\\theta)=cos(\\theta)\\mathbf{I}+sin(\\theta)[\\mathbf{u}]_{\\times}(1-cos(\\theta))(\\mathbf{u}\\otimes\\mathbf{u})`
+
+    Parameters
+    ----------
+    theta: float
+        The rotation angle [radians] (counter-clockwise about axis!)
+    axis: Union[str, iterable(3)]
+        The rotation axis (specified by axis label or vector)
+
+    Returns
+    -------
+    r_matrix: np.array((3, 3))
+        The (active) rotation matrix about the axis for an angle theta
+    """
+    if isinstance(axis, str):
+        # I'm leaving all this in here, because it is easier to understand
+        # what is going on, and that these are just "normal" rotation matrices
+        if axis == "z":
+            r_matrix = np.array(
+                [
+                    [np.cos(theta), -np.sin(theta), 0],
+                    [np.sin(theta), np.cos(theta), 0],
+                    [0, 0, 1],
+                ]
+            )
+        elif axis == "y":
+            r_matrix = np.array(
+                [
+                    [np.cos(theta), 0, np.sin(theta)],
+                    [0, 1, 0],
+                    [-np.sin(theta), 0, np.cos(theta)],
+                ]
+            )
+        elif axis == "x":
+            r_matrix = np.array(
+                [
+                    [1, 0, 0],
+                    [0, np.cos(theta), -np.sin(theta)],
+                    [0, np.sin(theta), np.cos(theta)],
+                ]
+            )
+        else:
+            raise CoordinatesError(
+                f"Incorrect rotation axis: {axis}\n"
+                "please select from: ['x', 'y', 'z']"
+            )
+    else:
+        # Cute, but hard to understand!
+        axis = np.array(axis) / np.linalg.norm(axis)  # Unit vector
+        cos = np.cos(theta)
+        sin = np.sin(theta)
+        x, y, z = axis
+        u_x = np.array([[0, -z, y], [z, 0, -x], [-y, x, 0]])
+        u_o_u = np.outer(axis, axis)
+        r_matrix = cos * np.eye(3) + sin * u_x + (1 - cos) * u_o_u
+    return r_matrix
+
+
 def rotation_matrix_v1v2(v1, v2):
     """
     Get a rotation matrix based off two vectors.

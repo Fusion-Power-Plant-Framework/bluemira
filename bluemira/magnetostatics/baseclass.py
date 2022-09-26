@@ -29,8 +29,8 @@ from typing import List
 
 import numpy as np
 
-from bluemira.geometry._deprecated_tools import rotation_matrix
 from bluemira.geometry.bound_box import BoundingBox
+from bluemira.geometry.coordinates import rotation_matrix
 from bluemira.utilities.plot_tools import Plot3D
 
 __all__ = ["CurrentSource", "RectangularCrossSectionCurrentSource", "SourceGroup"]
