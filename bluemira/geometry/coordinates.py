@@ -24,12 +24,13 @@ Utility for sets of coordinates
 """
 import json
 import os
-from typing import Iterable
+from typing import Iterable, Tuple
 
 import numba as nb
 import numpy as np
 from numba.np.extensions import cross2d
 from pyquaternion import Quaternion
+from scipy.interpolate import interp1d
 from scipy.spatial.distance import cdist
 
 from bluemira.base.constants import EPS
@@ -79,6 +80,118 @@ def _validate_coordinates(x, y, z=None):
 # =============================================================================
 # Tools and calculations for sets of coordinates
 # =============================================================================
+
+
+def vector_lengthnorm(x: np.ndarray, y: np.ndarray, z: np.ndarray) -> np.ndarray:
+    """
+    Get a normalised 1-D parameterisation of a set of x-y-z coordinates.
+
+    Parameters
+    ----------
+    x: np.ndarray
+        The x coordinates
+    y: np.ndarray
+        The y coordinates
+    z: np.ndarray
+        The z coordinates
+
+    Returns
+    -------
+    length_: np.ndarray
+        The normalised length vector
+    """
+    length_ = np.append(
+        0,
+        np.cumsum(np.sqrt(np.diff(x) ** 2 + np.diff(y) ** 2 + np.diff(z) ** 2)),
+    )
+    return length_ / length_[-1]
+
+
+def vector_lengthnorm_2d(x, z):
+    """
+    Get a normalised 1-D parameterisation of x, z coordinates.
+
+    Parameters
+    ----------
+    x: array_like
+        x coordinates [m]
+    z: array_like
+        z coordinates [m]
+
+    Returns
+    -------
+    total_length: np.array(N)
+        The cumulative normalised length of each individual segment in the coordinates
+    """
+    total_length = np.append(0, np.cumsum(np.sqrt(np.diff(x) ** 2 + np.diff(z) ** 2)))
+    return total_length / total_length[-1]
+
+
+def interpolate_points(
+    x: np.ndarray, y: np.ndarray, z: np.ndarray, n_points: int
+) -> Tuple[np.ndarray]:
+    """
+    Interpolate points.
+
+    Parameters
+    ----------
+    x: np.ndarray
+        The x coordinates
+    y: np.ndarray
+        The y coordinates
+    z: np.ndarray
+        The z coordinates
+    n_points: int
+        number of points
+
+    Returns
+    -------
+    x: np.ndarray
+        The interpolated x coordinates
+    y: np.ndarray
+        The interpolated y coordinates
+    z: np.ndarray
+        The interpolated z coordinates
+    """
+    ll = vector_lengthnorm(x, y, z)
+    linterp = np.linspace(0, 1, int(n_points))
+    x = interp1d(ll, x)(linterp)
+    y = interp1d(ll, y)(linterp)
+    z = interp1d(ll, z)(linterp)
+    return x, y, z
+
+
+def interpolate_midpoints(
+    x: np.ndarray,
+    y: np.ndarray,
+    z: np.ndarray,
+) -> Tuple[np.ndarray]:
+    """
+    Interpolate the points adding the midpoint of each segment to the points.
+
+    Parameters
+    ----------
+    x: np.ndarray
+        The x coordinates
+    y: np.ndarray
+        The y coordinates
+    z: np.ndarray
+        The z coordinates
+
+    Returns
+    -------
+    x: np.ndarray
+        The interpolated x coordinates
+    y: np.ndarray
+        The interpolated y coordinates
+    z: np.ndarray
+        The interpolated z coordinates
+    """
+    xyz = np.c_[x, y, z]
+    xyz_new = xyz[:, :-1] + np.diff(xyz) / 2
+    xyz_new = np.insert(xyz_new, np.arange(len(x) - 1), xyz[:, :-1], axis=1)
+    xyz_new = np.append(xyz_new, xyz[:, -1].reshape(3, 1), axis=1)
+    return xyz_new[0], xyz_new[1], xyz_new[2]
 
 
 @nb.jit(cache=True, nopython=True)
