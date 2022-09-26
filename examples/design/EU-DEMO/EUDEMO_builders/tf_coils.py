@@ -265,7 +265,7 @@ class TFCoilDesigner(Designer[GeometryParameterisation]):
             )
         if self.separatrix is None:
             raise ValueError(
-                "Cannot execute {type(self).__name__} in RUN mode: no separatrix specified"
+                f"Cannot execute {type(self).__name__} in RUN mode: no separatrix specified"
             )
 
         bluemira_debug(
