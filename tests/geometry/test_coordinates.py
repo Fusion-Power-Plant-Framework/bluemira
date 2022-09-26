@@ -19,11 +19,14 @@
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 
+import os
 from copy import deepcopy
 
+import matplotlib.pyplot as plt
 import numpy as np
 import pytest
 
+from bluemira.display.plotter import plot_coordinates
 from bluemira.geometry.coordinates import (
     Coordinates,
     check_linesegment,
@@ -35,6 +38,8 @@ from bluemira.geometry.coordinates import (
     polygon_in_polygon,
 )
 from bluemira.geometry.error import CoordinatesError
+
+TEST_PATH = get_bluemira_path("geometry/test_data", subfolder="tests")
 
 
 def trace_torus_orbit(r_1, r_2, n_r_2_turns, n_points):
