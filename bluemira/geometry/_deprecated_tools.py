@@ -64,31 +64,6 @@ class MixedFaceAreaError(GeometryError):
 # =============================================================================
 
 
-def distance_between_points(p1, p2):
-    """
-    Calculates the distance between two points
-
-    Parameters
-    ----------
-    p1: (float, float)
-        The coordinates of the first point
-    p2: (float, float)
-        The coordinates of the second point
-
-    Returns
-    -------
-    d: float
-        The distance between the two points [m]
-    """
-    if len(p1) != len(p2):
-        raise GeometryError("Need two points of the same number of coordinates.")
-
-    if (len(p1) not in [2, 3]) or (len(p2) not in [2, 3]):
-        raise GeometryError("Need 2- or 3-D sized points.")
-
-    return np.sqrt(sum([(p2[i] - p1[i]) ** 2 for i in range(len(p2))]))
-
-
 def get_angle_between_points(p0, p1, p2):
     """
     Angle between points. P1 is vertex of angle. ONly tested in 2d

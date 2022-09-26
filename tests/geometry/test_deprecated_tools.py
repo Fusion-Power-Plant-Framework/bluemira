@@ -33,7 +33,6 @@ from bluemira.geometry._deprecated_tools import (
     convert_coordinates_to_face,
     convert_coordinates_to_wire,
     coords_plane_intersect,
-    distance_between_points,
     get_area,
     get_intersect,
     join_intersect,
@@ -580,27 +579,3 @@ class TestCoordsConversion:
         coords = Coordinates.from_json(fn)
         wire, converted_wire = method(self, *coords.xyz)
         assert wire.area == converted_wire.area
-
-
-class TestDistance:
-    def test_2d(self):
-        d = distance_between_points([0, 0], [1, 1])
-        assert d == np.sqrt(2)
-
-    def test_3d(self):
-        d = distance_between_points([0, 0, 0], [1, 1, 1])
-        assert d == np.sqrt(3)
-
-    def test_fail(self):
-        with pytest.raises(GeometryError):
-            distance_between_points([0, 0], [1, 1, 1])
-        with pytest.raises(GeometryError):
-            distance_between_points([0, 0, 0], [1, 1])
-        with pytest.raises(GeometryError):
-            distance_between_points([0, 0, 0, 0], [1, 1, 1, 1])
-        with pytest.raises(GeometryError):
-            distance_between_points([0], [1, 1])
-        with pytest.raises(GeometryError):
-            distance_between_points([0, 0], [1])
-        with pytest.raises(GeometryError):
-            distance_between_points([0], [1])

@@ -977,7 +977,7 @@ class PolySpline(GeometryParameterisation):
         """
         Make 2 Bézier spline control points between two vertices.
         """
-        dl = distance_between_points(p0, p3)
+        dl = np.sqrt(np.sum((np.array(p3) - np.array(p0)) ** 2))
 
         p1, p2 = np.zeros(3), np.zeros(3)
         for point, control_point, angle, tension in zip(
