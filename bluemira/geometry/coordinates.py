@@ -104,10 +104,7 @@ def vector_lengthnorm(
     """
     coords = [x, y] if z is None else [x, y, z]
     dl_vectors = np.sqrt(np.sum([np.diff(ci) ** 2 for ci in coords], axis=0))
-    length_ = np.append(
-        0,
-        np.cumsum(dl_vectors),
-    )
+    length_ = np.append(0, np.cumsum(dl_vectors))
     return length_ / length_[-1]
 
 
