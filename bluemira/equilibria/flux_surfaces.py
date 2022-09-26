@@ -38,13 +38,15 @@ from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.equilibria.constants import PSI_NORM_TOL
 from bluemira.equilibria.error import FluxSurfaceError
 from bluemira.equilibria.find import find_flux_surface_through_point
-from bluemira.geometry._deprecated_tools import (
+from bluemira.geometry._deprecated_tools import get_angle_between_points
+from bluemira.geometry.coordinates import (
+    Coordinates,
+    check_linesegment,
     coords_plane_intersect,
-    get_angle_between_points,
+    get_area_2d,
     get_intersect,
     join_intersect,
 )
-from bluemira.geometry.coordinates import Coordinates, check_linesegment, get_area_2d
 from bluemira.geometry.plane import BluemiraPlane
 
 

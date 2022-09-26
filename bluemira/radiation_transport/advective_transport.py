@@ -34,8 +34,7 @@ from bluemira.base.parameter import ParameterFrame
 from bluemira.display.plotter import plot_coordinates
 from bluemira.equilibria.find import find_flux_surface_through_point
 from bluemira.equilibria.flux_surfaces import OpenFluxSurface
-from bluemira.geometry._deprecated_tools import coords_plane_intersect
-from bluemira.geometry.coordinates import Coordinates
+from bluemira.geometry.coordinates import Coordinates, coords_plane_intersect
 from bluemira.geometry.plane import BluemiraPlane
 from bluemira.radiation_transport.error import AdvectionTransportError
 

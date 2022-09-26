@@ -44,16 +44,14 @@ from bluemira.equilibria.coils import (
 from bluemira.equilibria.constants import NBTI_J_MAX
 from bluemira.equilibria.error import EquilibriaError
 from bluemira.equilibria.plotting import RegionPlotter, XZLPlotter
-from bluemira.geometry._deprecated_tools import (
-    coords_plane_intersect,
-    join_intersect,
-    offset,
-)
+from bluemira.geometry._deprecated_tools import offset
 from bluemira.geometry.constants import VERY_BIG
 from bluemira.geometry.coordinates import (
     Coordinates,
+    coords_plane_intersect,
     get_area_2d,
     interpolate_midpoints,
+    join_intersect,
     vector_lengthnorm,
 )
 from bluemira.geometry.error import GeometryError
