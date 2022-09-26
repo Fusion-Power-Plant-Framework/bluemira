@@ -19,8 +19,10 @@
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 
+import pytest
+
 from bluemira.base.builder import ComponentManager
-from bluemira.base.reactor import Reactor
+from bluemira.base.reactor import Reactor, ReactorError
 from bluemira.builders.plasma import Plasma, PlasmaBuilder
 from bluemira.geometry.tools import make_polygon
 
@@ -60,6 +62,11 @@ class TestReactor:
 
     def test_show_cad_displays_all_components(self):
         self.reactor.show_cad()
+
+    @pytest.mark.parametrize("bad_dim", ["not_a_dim", 1, ["x"]])
+    def test_ReactorError_given_invalid_plotting_dimension(self, bad_dim):
+        with pytest.raises(ReactorError):
+            self.reactor.show_cad(dim=bad_dim)
 
     @staticmethod
     def _make_reactor() -> MyReactor:

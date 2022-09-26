@@ -24,7 +24,10 @@ from typing import Type
 
 from bluemira.base.builder import ComponentManager
 from bluemira.base.components import Component
+from bluemira.base.error import ReactorError
 from bluemira.display.displayer import ComponentDisplayer
+
+_PLOT_DIMS = ["xyz", "xz", "xyz"]
 
 
 class Reactor:
@@ -107,5 +110,10 @@ class Reactor:
             The dimension of the reactor to show, typically one of
             'xz', 'xy', or 'xyz'. (default: 'xyz')
         """
+        if dim not in _PLOT_DIMS:
+            raise ReactorError(
+                f"Invalid plotting dimension '{dim}'. "
+                f"Must be one of {str(_PLOT_DIMS)[1:-1]}"
+            )
         comp = self.component()
         ComponentDisplayer().show_cad(comp.get_component(dim, first=False), **kwargs)
