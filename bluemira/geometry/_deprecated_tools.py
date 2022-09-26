@@ -284,38 +284,6 @@ def innocent_smoothie(x, z, n=500, s=0):
 # =============================================================================
 
 
-def close_coordinates(x, y, z):
-    """
-    Close an ordered set of coordinates.
-
-    Parameters
-    ----------
-    x: np.array
-        The x coordinates
-    y: np.array
-        The y coordinates
-    z: np.array
-        The z coordinates
-
-    Returns
-    -------
-    x: np.array
-        The closed x coordinates
-    y: np.array
-        The closed y coordinates
-    z: np.array
-        The closed z coordinates
-    """
-    close_distance = np.sqrt(
-        (x[-1] - x[0]) ** 2 + (y[-1] - y[0]) ** 2 + (z[-1] - z[0]) ** 2
-    )
-    if close_distance > EPS:
-        x = np.append(x, x[0])
-        y = np.append(y, y[0])
-        z = np.append(z, z[0])
-    return x, y, z
-
-
 def side_vector(polygon_array):
     """
     Calculates the side vectors of an anti-clockwise polygon
