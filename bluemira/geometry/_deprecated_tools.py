@@ -26,18 +26,11 @@ A collection of geometry tools.
 from functools import partial
 from itertools import zip_longest
 
-import numba as nb
 import numpy as np
 
-from bluemira.base.constants import EPS
 from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.codes import _freecadapi as cadapi
-from bluemira.geometry.constants import DOT_P_TOL
-from bluemira.geometry.coordinates import (
-    _validate_coordinates,
-    check_linesegment,
-    get_area,
-)
+from bluemira.geometry.coordinates import _validate_coordinates, get_area
 from bluemira.geometry.error import GeometryError
 from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.wire import BluemiraWire
