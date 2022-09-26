@@ -461,7 +461,7 @@ class ChargedParticleSolver:
             / (Bp * 2 * np.pi * x)
         )
 
-    def plot(self, ax=None):
+    def plot(self, ax: Axes = None, show=False):
         """
         Plot the ChargedParticleSolver results.
         """
@@ -488,8 +488,11 @@ class ChargedParticleSolver:
             zorder=40,
             cmap="plasma",
         )
-        f = plt.gcf()
-        f.colorbar(cm, label="MW/m^2")
+        f = ax.figure
+        f.colorbar(cm, label="MW/m²")
+        if show:
+            plt.show()
+        return ax
 
     def _make_params(self, config):
         """Convert the given params to ``ChargedParticleSolverParams``"""

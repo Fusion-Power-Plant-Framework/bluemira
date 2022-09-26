@@ -144,15 +144,19 @@ class TestChargedParticleRecursionSN:
         assert np.allclose(self.x, x)
         assert np.allclose(self.z, z)
 
+    def test_plotting(self):
+        ax = self.solver.plot(show=True)
+        assert len(ax.lines) > 2
+
 
 class TestChargedParticleRecursionDN:
     @classmethod
     def setup_class(cls):
         eq_name = "DN-DEMO_eqref.json"
-        filename = os.sep.join([EQ_PATH, eq_name])
+        filename = os.path.join(EQ_PATH, eq_name)
         eq = Equilibrium.from_eqdsk(filename)
         fw_name = "DN_fw_shape.json"
-        filename = os.sep.join([TEST_PATH, fw_name])
+        filename = os.path.join(TEST_PATH, fw_name)
         fw = Loop.from_file(filename)
 
         cls.params = {
