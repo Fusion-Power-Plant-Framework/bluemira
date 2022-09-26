@@ -152,7 +152,7 @@ class TestTFCoilDesigner:
             separatrix=self.lcfs,
             keep_out_zone=self.vvts_koz,
         )
-        d_mock, wp_run = designer_mock.execute()
+        d_mock, _ = designer_mock.execute()
         assert d_run.create_shape().length != d_mock.create_shape().length
         assert designer.problem_settings == config["problem_settings"]
         assert designer.opt_config == config["optimisation_settings"]
