@@ -54,6 +54,11 @@ class MixedFaceAreaError(GeometryError):
     pass
 
 
+# =============================================================================
+# Utility functions used exclusively in this file
+# =============================================================================
+
+
 def _segment_lengths(x: np.ndarray, y: np.ndarray, z: np.ndarray) -> np.ndarray:
     """
     Returns the length of each individual segment in a set of coordinates
@@ -149,6 +154,11 @@ def _vector_intersect(p1, p2, p3, p4):
     return point
 
 
+# =============================================================================
+# Coordinate creation
+# =============================================================================
+
+
 def offset(x, z, offset_value):
     """
     Get a square-based offset of the coordinates (no splines). N-sized output
@@ -209,11 +219,6 @@ def offset(x, z, offset_value):
     # sorted ccw nicely - i know looks weird but.. leave us kids alone
     # drop nan values
     return pnts[~np.isnan(pnts).any(axis=1)][::-1].T
-
-
-# =============================================================================
-# Coordinate creation
-# =============================================================================
 
 
 def make_circle_arc(
