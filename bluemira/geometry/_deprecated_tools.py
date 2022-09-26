@@ -35,7 +35,11 @@ from bluemira.base.constants import EPS
 from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.codes import _freecadapi as cadapi
 from bluemira.geometry.constants import DOT_P_TOL
-from bluemira.geometry.coordinates import _validate_coordinates, get_area
+from bluemira.geometry.coordinates import (
+    _validate_coordinates,
+    check_linesegment,
+    get_area,
+)
 from bluemira.geometry.error import GeometryError
 from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.wire import BluemiraWire
@@ -133,7 +137,7 @@ def get_angle_between_vectors(
     return sign * angle
 
 
-def segment_lengths(x: np.ndarray, y: np.ndarray, z: np.ndarray) -> np.ndarray:
+def _segment_lengths(x: np.ndarray, y: np.ndarray, z: np.ndarray) -> np.ndarray:
     """
     Returns the length of each individual segment in a set of coordinates
 
@@ -1266,7 +1270,7 @@ class MixedFaceMaker:
         vertices: np.ndarray(dtype=int)
             The vertices of the coordinates which are polygon-like
         """
-        seg_lengths = segment_lengths(self.x, self.y, self.z)
+        seg_lengths = _segment_lengths(self.x, self.y, self.z)
         median = np.median(seg_lengths)
 
         long_indices = np.where(seg_lengths > self.median_factor * median)[0]
@@ -1471,7 +1475,7 @@ class MixedFaceMaker:
         clean_coords: np.ndarray
             3D array of cleaned coordinates.
         """
-        mask = ~np.isclose(segment_lengths(*coords), 0, atol=self.cleaning_atol)
+        mask = ~np.isclose(_segment_lengths(*coords), 0, atol=self.cleaning_atol)
         mask = np.insert(mask, 0, True)
         return coords[:, mask]
 
