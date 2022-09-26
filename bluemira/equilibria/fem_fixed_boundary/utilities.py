@@ -299,7 +299,25 @@ def find_flux_surface(psi_norm_func, psi_norm, mesh=None, n_points=100):
     psi_norm_array = [psi_norm_func(x) for x in mpoints]
     contour = get_tricontours(mpoints[:, 0], mpoints[:, 1], psi_norm_array, psi_norm)[0]
 
-    theta = np.linspace(0, 2 * np.pi, n_points - 1, endpoint=False)
+    if mesh:
+        search_range = mesh.hmax()
+        mpoints = mesh.coordinates()
+        psi_norm_array = [psi_norm_func(x) for x in mpoints]
+        contour = get_tricontours(
+            mpoints[:, 0], mpoints[:, 1], psi_norm_array, psi_norm
+        )[0]
+        d_guess = abs(np.max(contour[0, :]) - x_axis) - search_range
+        bounds = [(d_guess - 2 * search_range, d_guess + 2 * search_range)]
+
+        def get_next_guess(points, distances, i):  # noqa: U100
+            return np.hypot(points[0, i - 1] - x_axis, points[1, i - 1] - z_axis)
+
+    else:
+        d_guess = 0.5
+        bounds = [(0.1, None)]
+
+        def get_next_guess(points, distances, i):  # noqa: U100
+            return distances[i]
 
     def psi_norm_match(x):
         return abs(psi_norm_func(x) - psi_norm)
