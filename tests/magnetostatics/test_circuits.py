@@ -28,11 +28,7 @@ from scipy.interpolate import UnivariateSpline, interp1d
 
 from bluemira.base.file import get_bluemira_path
 from bluemira.geometry._deprecated_tools import offset
-from bluemira.geometry.coordinates import (
-    Coordinates,
-    vector_lengthnorm,
-    vector_lengthnorm_2d,
-)
+from bluemira.geometry.coordinates import Coordinates, vector_lengthnorm
 from bluemira.geometry.parameterisations import PictureFrame, PrincetonD, TripleArc
 from bluemira.geometry.tools import make_circle
 from bluemira.magnetostatics.baseclass import SourceGroup
@@ -274,7 +270,7 @@ class TestCariddiBenchmark:
             coil_loop = Coordinates({"x": x, "y": 0, "z": z})
 
         # Smooth out graphically determined TF centreline...
-        length_norm = vector_lengthnorm_2d(x, z)
+        length_norm = vector_lengthnorm(x, z)
         l_interp = np.linspace(0, 1, 150)
         x = UnivariateSpline(length_norm, x, s=0.02)(l_interp)
         z = UnivariateSpline(length_norm, z, s=0.02)(l_interp)

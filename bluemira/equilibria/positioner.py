@@ -46,13 +46,16 @@ from bluemira.equilibria.error import EquilibriaError
 from bluemira.equilibria.plotting import RegionPlotter, XZLPlotter
 from bluemira.geometry._deprecated_tools import (
     coords_plane_intersect,
-    interpolate_midpoints,
     join_intersect,
     offset,
-    vector_lengthnorm_2d,
 )
 from bluemira.geometry.constants import VERY_BIG
-from bluemira.geometry.coordinates import Coordinates, get_area_2d
+from bluemira.geometry.coordinates import (
+    Coordinates,
+    get_area_2d,
+    interpolate_midpoints,
+    vector_lengthnorm,
+)
 from bluemira.geometry.error import GeometryError
 from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.inscribed_rect import inscribed_rect_in_poly
@@ -169,7 +172,7 @@ class CoilPositioner:
             arg_upper = len(track) - 1
 
         tf_loop = Coordinates(track[:, arg_lower : arg_upper + 1])
-        l_norm = vector_lengthnorm_2d(tf_loop.x, tf_loop.z)
+        l_norm = vector_lengthnorm(tf_loop.x, tf_loop.z)
         pos = np.linspace(0, 1, n_PF)
         xint, zint = interp1d(l_norm, tf_loop.x)(pos), interp1d(l_norm, tf_loop.z)(pos)
         return [
@@ -265,7 +268,7 @@ class XZLMapper:
 
         self.pf_coords = deepcopy(pf_coords)  # Stored as loop too
 
-        ln = vector_lengthnorm_2d(pf_coords.x, pf_coords.z)
+        ln = vector_lengthnorm(pf_coords.x, pf_coords.z)
 
         x_ius = InterpolatedUnivariateSpline(ln, pf_coords.x)
         z_ius = InterpolatedUnivariateSpline(ln, pf_coords.z)

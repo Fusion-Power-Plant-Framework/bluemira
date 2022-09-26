@@ -24,7 +24,7 @@ Utility for sets of coordinates
 """
 import json
 import os
-from typing import Iterable, Tuple
+from typing import Iterable, Optional, Tuple
 
 import numba as nb
 import numpy as np
@@ -82,9 +82,11 @@ def _validate_coordinates(x, y, z=None):
 # =============================================================================
 
 
-def vector_lengthnorm(x: np.ndarray, y: np.ndarray, z: np.ndarray) -> np.ndarray:
+def vector_lengthnorm(
+    x: np.ndarray, y: np.ndarray, z: Optional[np.ndarray] = None
+) -> np.ndarray:
     """
-    Get a normalised 1-D parameterisation of a set of x-y-z coordinates.
+    Get a normalised 1-D parameterisation of a set of x-y(-z) coordinates.
 
     Parameters
     ----------
@@ -100,31 +102,13 @@ def vector_lengthnorm(x: np.ndarray, y: np.ndarray, z: np.ndarray) -> np.ndarray
     length_: np.ndarray
         The normalised length vector
     """
+    coords = [x, y, z] if z else [x, y]
+    dl_vectors = np.sqrt(np.sum([np.diff(ci) ** 2 for ci in coords]))
     length_ = np.append(
         0,
-        np.cumsum(np.sqrt(np.diff(x) ** 2 + np.diff(y) ** 2 + np.diff(z) ** 2)),
+        np.cumsum(dl_vectors),
     )
     return length_ / length_[-1]
-
-
-def vector_lengthnorm_2d(x, z):
-    """
-    Get a normalised 1-D parameterisation of x, z coordinates.
-
-    Parameters
-    ----------
-    x: array_like
-        x coordinates [m]
-    z: array_like
-        z coordinates [m]
-
-    Returns
-    -------
-    total_length: np.array(N)
-        The cumulative normalised length of each individual segment in the coordinates
-    """
-    total_length = np.append(0, np.cumsum(np.sqrt(np.diff(x) ** 2 + np.diff(z) ** 2)))
-    return total_length / total_length[-1]
 
 
 def interpolate_points(
