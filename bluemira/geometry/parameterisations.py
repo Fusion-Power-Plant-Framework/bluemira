@@ -34,7 +34,6 @@ from typing import Dict, Iterable, Optional, TextIO, Union
 import numpy as np
 from scipy.special import iv as bessel
 
-from bluemira.geometry._deprecated_tools import distance_between_points
 from bluemira.geometry.error import GeometryParameterisationError
 from bluemira.geometry.tools import (
     interpolate_bspline,
