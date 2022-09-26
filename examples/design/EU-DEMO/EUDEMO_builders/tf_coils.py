@@ -159,9 +159,7 @@ class TFCoilDesigner(Designer[GeometryParameterisation]):
 
         self.file_path = self.build_config.get("file_path", None)
 
-        problem_class = self.build_config.get("problem_class", None)
-
-        if problem_class is not None:
+        if (problem_class := self.build_config.get("problem_class", None)) is not None
             self.problem_class = get_class_from_module(problem_class)
             self.problem_settings = self.build_config.get("problem_settings", {})
 
