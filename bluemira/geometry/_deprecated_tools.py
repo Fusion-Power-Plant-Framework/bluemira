@@ -175,6 +175,41 @@ def _normal_vector(side_vectors):
     return a
 
 
+def _vector_intersect(p1, p2, p3, p4):
+    """
+    Get the intersection point between two 2-D vectors.
+
+    Parameters
+    ----------
+    p1: np.ndarray(2)
+        The first point on the first vector
+    p2: np.ndarray(2)
+        The second point on the first vector
+    p3: np.ndarray(2)
+        The first point on the second vector
+    p4: np.ndarray(2)
+        The second point on the second vector
+
+    Returns
+    -------
+    p_inter: np.ndarray(2)
+        The point of the intersection between the two vectors
+    """
+    da = p2 - p1
+    db = p4 - p3
+
+    if np.isclose(np.cross(da, db), 0):  # vectors parallel
+        # NOTE: careful modifying this, different behaviour required...
+        point = p2
+    else:
+        dp = p1 - p3
+        dap = _normal_vector(da)
+        denom = np.dot(dap, db)
+        num = np.dot(dap, dp)
+        point = num / denom.astype(float) * db + p3
+    return point
+
+
 def offset(x, z, offset_value):
     """
     Get a square-based offset of the coordinates (no splines). N-sized output
@@ -222,7 +257,9 @@ def offset(x, z, offset_value):
     off_s = np.array([ox[2:], oz[2:]]).T
     pnts = []
     for i in range(len(off_s[:, 0]) - 2)[0::2]:
-        pnts.append(vector_intersect(off_s[i], off_s[i + 1], off_s[i + 3], off_s[i + 2]))
+        pnts.append(
+            _vector_intersect(off_s[i], off_s[i + 1], off_s[i + 3], off_s[i + 2])
+        )
     pnts.append(pnts[0])
     pnts = np.array(pnts)[:-1][::-1]  # sorted ccw nicely
     if closed:
@@ -306,41 +343,6 @@ def rotation_matrix(theta, axis="z"):
 # =============================================================================
 # Intersection tools
 # =============================================================================
-
-
-def vector_intersect(p1, p2, p3, p4):
-    """
-    Get the intersection point between two 2-D vectors.
-
-    Parameters
-    ----------
-    p1: np.ndarray(2)
-        The first point on the first vector
-    p2: np.ndarray(2)
-        The second point on the first vector
-    p3: np.ndarray(2)
-        The first point on the second vector
-    p4: np.ndarray(2)
-        The second point on the second vector
-
-    Returns
-    -------
-    p_inter: np.ndarray(2)
-        The point of the intersection between the two vectors
-    """
-    da = p2 - p1
-    db = p4 - p3
-
-    if np.isclose(np.cross(da, db), 0):  # vectors parallel
-        # NOTE: careful modifying this, different behaviour required...
-        point = p2
-    else:
-        dp = p1 - p3
-        dap = _normal_vector(da)
-        denom = np.dot(dap, db)
-        num = np.dot(dap, dp)
-        point = num / denom.astype(float) * db + p3
-    return point
 
 
 def vector_intersect_3d(p_1, p_2, p_3, p_4):
