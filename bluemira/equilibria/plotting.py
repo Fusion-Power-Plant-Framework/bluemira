@@ -705,7 +705,7 @@ class CorePlotter2(Plotter):
     Utility class for plotting plasma equilibrium cross-core profiles.
     """
 
-    def __init__(self, eq, ax=None):
+    def __init__(self, eq):
         jfunc = RectBivariateSpline(eq.x[:, 0], eq.z[0, :], eq._jtor)
         p = eq.pressure_map()
         pfunc = RectBivariateSpline(eq.x[:, 0], eq.z[0, :], p)

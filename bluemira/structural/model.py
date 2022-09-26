@@ -48,25 +48,34 @@ def check_matrix_condition(matrix, digits):
         The matrix to check the condition number of
     digits: int
         The desired level of digit-precision (higher is less demanding)
+
+    Raises
+    ------
+    StructuralError
+        If the stiffness matrix is singular or ill-conditioned
     """
     condition_number = np.linalg.cond(matrix)
     digit_loss = np.log10(condition_number)
 
+    err_txt = ""
     if condition_number > 1 / EPS:
-        bluemira_warn(
+        err_txt = """
             "Structural::FiniteElementModel:\n Singular stiffness matrix will "
             "cause LinAlgErrors.\n"
             f"matrix condition number: {condition_number}"
-        )
+            """
 
     if digit_loss > digits:
         digit_loss = int(np.ceil(digit_loss))
-        bluemira_warn(
+
+        err_txt = """
             "Structural::FiniteElementModel:\n Ill-conditioned matrix"
             f"\n|\tAccuracy loss below the {digit_loss}-th digit."
-        )
+        """
 
-    return True
+    if err_txt:
+        err_txt += "\nProbably worth checking model boundary conditions."
+        raise StructuralError(err_txt)
 
 
 class FiniteElementModel:
@@ -426,12 +435,7 @@ class FiniteElementModel:
                 "Can only solve systems in which all DOFs have "
                 "been constrained at least once."
             )
-        if not check_matrix_condition(k_matrix, 15):
-            raise StructuralError(
-                "Ill-conditioned or singular stiffness matrix. "
-                "Probably worth checking model boundary "
-                "conditions."
-            )
+        check_matrix_condition(k_matrix, 15)
 
     def _displacement_check(self, deflections):
         """
