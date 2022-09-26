@@ -28,7 +28,6 @@ from itertools import zip_longest
 
 import numba as nb
 import numpy as np
-from scipy.interpolate import UnivariateSpline, interp1d
 
 from bluemira.base.constants import EPS
 from bluemira.base.look_and_feel import bluemira_warn
