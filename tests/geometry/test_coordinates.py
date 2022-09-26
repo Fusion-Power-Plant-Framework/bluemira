@@ -26,6 +26,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pytest
 
+from bluemira.base.file import get_bluemira_path
 from bluemira.display.plotter import plot_coordinates
 from bluemira.geometry.coordinates import (
     Coordinates,
