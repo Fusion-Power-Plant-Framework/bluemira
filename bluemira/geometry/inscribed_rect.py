@@ -28,12 +28,12 @@ from copy import deepcopy
 import numpy as np
 from scipy.spatial.distance import pdist
 
-from bluemira.geometry._deprecated_tools import (
+from bluemira.geometry.coordinates import (
+    Coordinates,
     coords_plane_intersect,
     get_intersect,
     in_polygon,
 )
-from bluemira.geometry.coordinates import Coordinates
 from bluemira.geometry.plane import BluemiraPlane
 
 __all__ = ["inscribed_rect_in_poly"]

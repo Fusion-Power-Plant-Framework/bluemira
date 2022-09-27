@@ -26,8 +26,8 @@ import numpy as np
 
 from bluemira.base.constants import EPS, MU_0_4PI, ONE_4PI
 from bluemira.base.look_and_feel import bluemira_warn
-from bluemira.geometry._deprecated_tools import rotation_matrix
 from bluemira.geometry.bound_box import BoundingBox
+from bluemira.geometry.coordinates import rotation_matrix
 from bluemira.magnetostatics.baseclass import CurrentSource
 from bluemira.magnetostatics.tools import process_coords_array, process_xyz_array
 from bluemira.utilities import tools

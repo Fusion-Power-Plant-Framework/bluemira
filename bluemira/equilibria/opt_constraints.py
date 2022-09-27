@@ -36,7 +36,7 @@ from bluemira.equilibria.opt_constraint_funcs import (
     field_constraints,
 )
 from bluemira.equilibria.plotting import ConstraintPlotter
-from bluemira.geometry._deprecated_tools import interpolate_points
+from bluemira.geometry.coordinates import interpolate_points
 from bluemira.utilities.opt_problems import OptimisationConstraint
 from bluemira.utilities.tools import abs_rel_difference, is_num
 

@@ -24,15 +24,18 @@ Utility for sets of coordinates
 """
 import json
 import os
-from typing import Iterable
+from typing import Iterable, Optional, Tuple
 
 import numba as nb
 import numpy as np
+from numba.np.extensions import cross2d
 from pyquaternion import Quaternion
+from scipy.interpolate import interp1d
 from scipy.spatial.distance import cdist
 
 from bluemira.base.constants import EPS
 from bluemira.base.look_and_feel import bluemira_warn
+from bluemira.geometry.constants import CROSS_P_TOL, DOT_P_TOL
 from bluemira.geometry.error import CoordinatesError
 from bluemira.utilities.tools import json_writer
 
@@ -77,6 +80,99 @@ def _validate_coordinates(x, y, z=None):
 # =============================================================================
 # Tools and calculations for sets of coordinates
 # =============================================================================
+
+
+def vector_lengthnorm(
+    x: np.ndarray, y: np.ndarray, z: Optional[np.ndarray] = None
+) -> np.ndarray:
+    """
+    Get a normalised 1-D parameterisation of a set of x-y(-z) coordinates.
+
+    Parameters
+    ----------
+    x: np.ndarray
+        The x coordinates
+    y: np.ndarray
+        The y coordinates
+    z: Optional[np.ndarray]
+        The z coordinates. If None, carries out the operation in 2-D
+
+    Returns
+    -------
+    length_: np.ndarray
+        The normalised length vector
+    """
+    coords = [x, y] if z is None else [x, y, z]
+    dl_vectors = np.sqrt(np.sum([np.diff(ci) ** 2 for ci in coords], axis=0))
+    length_ = np.append(0, np.cumsum(dl_vectors))
+    return length_ / length_[-1]
+
+
+def interpolate_points(
+    x: np.ndarray, y: np.ndarray, z: np.ndarray, n_points: int
+) -> Tuple[np.ndarray]:
+    """
+    Interpolate points.
+
+    Parameters
+    ----------
+    x: np.ndarray
+        The x coordinates
+    y: np.ndarray
+        The y coordinates
+    z: np.ndarray
+        The z coordinates
+    n_points: int
+        number of points
+
+    Returns
+    -------
+    x: np.ndarray
+        The interpolated x coordinates
+    y: np.ndarray
+        The interpolated y coordinates
+    z: np.ndarray
+        The interpolated z coordinates
+    """
+    ll = vector_lengthnorm(x, y, z)
+    linterp = np.linspace(0, 1, int(n_points))
+    x = interp1d(ll, x)(linterp)
+    y = interp1d(ll, y)(linterp)
+    z = interp1d(ll, z)(linterp)
+    return x, y, z
+
+
+def interpolate_midpoints(
+    x: np.ndarray,
+    y: np.ndarray,
+    z: np.ndarray,
+) -> Tuple[np.ndarray]:
+    """
+    Interpolate the points adding the midpoint of each segment to the points.
+
+    Parameters
+    ----------
+    x: np.ndarray
+        The x coordinates
+    y: np.ndarray
+        The y coordinates
+    z: np.ndarray
+        The z coordinates
+
+    Returns
+    -------
+    x: np.ndarray
+        The interpolated x coordinates
+    y: np.ndarray
+        The interpolated y coordinates
+    z: np.ndarray
+        The interpolated z coordinates
+    """
+    xyz = np.c_[x, y, z]
+    xyz_new = xyz[:, :-1] + np.diff(xyz) / 2
+    xyz_new = np.insert(xyz_new, np.arange(len(x) - 1), xyz[:, :-1], axis=1)
+    xyz_new = np.append(xyz_new, xyz[:, -1].reshape(3, 1), axis=1)
+    return xyz_new[0], xyz_new[1], xyz_new[2]
 
 
 @nb.jit(cache=True, nopython=True)
@@ -465,6 +561,122 @@ def get_centroid_3d(x, y, z):
     return [get_rational(i, c) for i, c in enumerate([cx, cy, cz])]
 
 
+def get_angle_between_points(p0, p1, p2):
+    """
+    Angle between points. P1 is vertex of angle. ONly tested in 2d
+    """
+    if not all(isinstance(p, np.ndarray) for p in [p0, p1, p2]):
+        p0, p1, p2 = np.array(p0), np.array(p1), np.array(p2)
+    ba = p0 - p1
+    bc = p2 - p1
+    return get_angle_between_vectors(ba, bc)
+
+
+def get_angle_between_vectors(
+    v1: np.ndarray, v2: np.ndarray, signed: bool = False
+) -> float:
+    """
+    Angle between vectors. Will return the signed angle if specified.
+
+    Parameters
+    ----------
+    v1: np.array
+        The first vector
+    v2: np.array
+        The second vector
+
+    Returns
+    -------
+    angle: float
+        The angle between the vectors [radians]
+    """
+    if not all(isinstance(p, np.ndarray) for p in [v1, v2]):
+        v1, v2 = np.array(v1), np.array(v2)
+    v1n = v1 / np.linalg.norm(v1)
+    v2n = v2 / np.linalg.norm(v2)
+    cos_angle = np.dot(v1n, v2n)
+    # clip to dodge a NaN
+    angle = np.arccos(np.clip(cos_angle, -1, 1))
+    sign = 1
+    if signed:
+        det = np.linalg.det(np.stack((v1n[-2:], v2n[-2:])))
+        if det == 0:
+            # Vectors parallel
+            sign = 1
+        else:
+            sign = np.sign(det)
+
+    return sign * angle
+
+
+# =============================================================================
+# Rotations
+# =============================================================================
+
+
+def rotation_matrix(theta, axis="z"):
+    """
+    Old-fashioned rotation matrix: :math:`\\mathbf{R_{u}}(\\theta)`
+    \t:math:`\\mathbf{x^{'}}=\\mathbf{R_{u}}(\\theta)\\mathbf{x}`
+
+    \t:math:`\\mathbf{R_{u}}(\\theta)=cos(\\theta)\\mathbf{I}+sin(\\theta)[\\mathbf{u}]_{\\times}(1-cos(\\theta))(\\mathbf{u}\\otimes\\mathbf{u})`
+
+    Parameters
+    ----------
+    theta: float
+        The rotation angle [radians] (counter-clockwise about axis!)
+    axis: Union[str, iterable(3)]
+        The rotation axis (specified by axis label or vector)
+
+    Returns
+    -------
+    r_matrix: np.array((3, 3))
+        The (active) rotation matrix about the axis for an angle theta
+    """
+    if isinstance(axis, str):
+        # I'm leaving all this in here, because it is easier to understand
+        # what is going on, and that these are just "normal" rotation matrices
+        if axis == "z":
+            r_matrix = np.array(
+                [
+                    [np.cos(theta), -np.sin(theta), 0],
+                    [np.sin(theta), np.cos(theta), 0],
+                    [0, 0, 1],
+                ]
+            )
+        elif axis == "y":
+            r_matrix = np.array(
+                [
+                    [np.cos(theta), 0, np.sin(theta)],
+                    [0, 1, 0],
+                    [-np.sin(theta), 0, np.cos(theta)],
+                ]
+            )
+        elif axis == "x":
+            r_matrix = np.array(
+                [
+                    [1, 0, 0],
+                    [0, np.cos(theta), -np.sin(theta)],
+                    [0, np.sin(theta), np.cos(theta)],
+                ]
+            )
+        else:
+            raise CoordinatesError(
+                f"Incorrect rotation axis: {axis}\n"
+                "please select from: ['x', 'y', 'z']"
+            )
+    else:
+        # Cute, but hard to understand!
+        axis = np.array(axis) / np.linalg.norm(axis)  # Unit vector
+        cos = np.cos(theta)
+        sin = np.sin(theta)
+        x, y, z = axis
+        u_x = np.array([[0, -z, y], [z, 0, -x], [-y, x, 0]])
+        u_o_u = np.outer(axis, axis)
+        r_matrix = cos * np.eye(3) + sin * u_x + (1 - cos) * u_o_u
+    return r_matrix
+
+
 def rotation_matrix_v1v2(v1, v2):
     """
     Get a rotation matrix based off two vectors.
@@ -528,6 +740,393 @@ def principal_components(xyz_array):
     eigenvalues = eigenvalues[sort]
     eigenvectors = eigenvectors[:, sort]
     return eigenvalues, eigenvectors
+
+
+# =============================================================================
+# Intersection tools
+# =============================================================================
+
+
+def vector_intersect_3d(p_1, p_2, p_3, p_4):
+    """
+    Get the intersection point between two 3-D vectors.
+
+    Parameters
+    ----------
+    p1: np.ndarray(3)
+        The first point on the first vector
+    p2: np.ndarray(3)
+        The second point on the first vector
+    p3: np.ndarray(3)
+        The first point on the second vector
+    p4: np.ndarray(3)
+        The second point on the second vector
+
+    Returns
+    -------
+    p_inter: np.ndarray(3)
+        The point of the intersection between the two vectors
+
+    Raises
+    ------
+    CoordinatesError
+        If there is no intersection between the points
+
+    Notes
+    -----
+    Credit: Paul Bourke at
+    http://paulbourke.net/geometry/pointlineplane/#:~:text=The%20shortest%20line%20between%20two%20lines%20in%203D
+    """
+    p_13 = p_1 - p_3
+    p_43 = p_4 - p_3
+
+    if np.linalg.norm(p_13) < EPS:
+        raise CoordinatesError("No intersection between 3-D lines.")
+    p_21 = p_2 - p_1
+    if np.linalg.norm(p_21) < EPS:
+        raise CoordinatesError("No intersection between 3-D lines.")
+
+    d1343 = np.dot(p_13, p_43)
+    d4321 = np.dot(p_43, p_21)
+    d1321 = np.dot(p_13, p_21)
+    d4343 = np.dot(p_43, p_43)
+    d2121 = np.dot(p_21, p_21)
+
+    denom = d2121 * d4343 - d4321 * d4321
+
+    if np.abs(denom) < EPS:
+        raise CoordinatesError("No intersection between 3-D lines.")
+
+    numer = d1343 * d4321 - d1321 * d4343
+
+    mua = numer / denom
+    intersection = p_1 + mua * p_21
+    return intersection
+
+
+def coords_plane_intersect(coords, plane):
+    """
+    Calculate the intersection of Coordinates with a plane.
+
+    Parameters
+    ----------
+    coords: Coordinates
+        The coordinates to calculate the intersection on
+    plane: Plane
+        The plane to calculate the intersection with
+
+    Returns
+    -------
+    inter: np.array(3, n_intersections) or None
+        The xyz coordinates of the intersections with the Coordinates. Returns None if
+        there are no intersections detected
+    """
+    out = _coords_plane_intersect(coords.xyz.T[:-1], plane.base, plane.axis)
+    if not out:
+        return None
+    else:
+        return np.unique(out, axis=0)  # Drop occasional duplicates
+
+
+@nb.jit(cache=True, nopython=True)
+def _coords_plane_intersect(array, p1, vec2):
+    # JIT compiled utility of the above
+    out = []
+    for i in range(len(array)):
+        vec1 = array[i + 1] - array[i]
+        dot = np.dot(vec1, vec2)
+        if abs(dot) > DOT_P_TOL:
+            w = array[i] - p1
+            fac = -(np.dot(vec2, w)) / dot
+            if (fac >= 0) and (fac <= 1):
+                out.append(array[i] + fac * vec1)
+    return out
+
+
+def get_intersect(xy1, xy2):
+    """
+    Calculates the intersection points between two sets of 2-D coordinates. Will return
+    a unique list of x, z intersections (no duplicates in x-z space).
+
+    Parameters
+    ----------
+    xy1: np.ndarray
+        The 2-D coordinates between which intersection points should be calculated
+    xy2: np.ndarray
+        The 2-D coordinates between which intersection points should be calculated
+
+    Returns
+    -------
+    xi: np.array(N_itersection)
+        The x coordinates of the intersection points
+    zi: np.array(N_itersection)
+        The z coordinates of the intersection points#
+
+    Note
+    ----
+    D. Schwarz, <https://uk.mathworks.com/matlabcentral/fileexchange/11837-fast-and-robust-curve-intersections>
+    """  # noqa :W505
+    x1, y1 = xy1
+    x2, y2 = xy2
+
+    def inner_inter(x_1, x_2):
+        n1, n2 = x_1.shape[0] - 1, x_2.shape[0] - 1
+        xx1 = np.c_[x_1[:-1], x_1[1:]]
+        xx2 = np.c_[x_2[:-1], x_2[1:]]
+        return (
+            np.less_equal(
+                np.tile(xx1.min(axis=1), (n2, 1)).T, np.tile(xx2.max(axis=1), (n1, 1))
+            ),
+            np.greater_equal(
+                np.tile(xx1.max(axis=1), (n2, 1)).T, np.tile(xx2.min(axis=1), (n1, 1))
+            ),
+        )
+
+    x_x = inner_inter(x1, x2)
+    z_z = inner_inter(y1, y2)
+    m, k = np.nonzero(x_x[0] & x_x[1] & z_z[0] & z_z[1])
+    n = len(m)
+    a_m, xz, b_m = np.zeros((4, 4, n)), np.zeros((4, n)), np.zeros((4, n))
+    a_m[0:2, 2, :] = -1
+    a_m[2:4, 3, :] = -1
+    a_m[0::2, 0, :] = np.diff(np.c_[x1, y1], axis=0)[m, :].T
+    a_m[1::2, 1, :] = np.diff(np.c_[x2, y2], axis=0)[k, :].T
+    b_m[0, :] = -x1[m].ravel()
+    b_m[1, :] = -x2[k].ravel()
+    b_m[2, :] = -y1[m].ravel()
+    b_m[3, :] = -y2[k].ravel()
+    for i in range(n):
+        try:
+            xz[:, i] = np.linalg.solve(a_m[:, :, i], b_m[:, i])
+        except np.linalg.LinAlgError:
+            # Parallel segments. Will raise numpy RuntimeWarnings
+            xz[0, i] = np.nan
+    in_range = (xz[0, :] >= 0) & (xz[1, :] >= 0) & (xz[0, :] <= 1) & (xz[1, :] <= 1)
+    xz = xz[2:, in_range].T
+    x, z = xz[:, 0], xz[:, 1]
+    if len(x) > 0:
+        x, z = np.unique([x, z], axis=1)
+    return x, z
+
+
+@nb.jit(cache=True, nopython=True)
+def _intersect_count(x_inter, z_inter, x2, z2):
+    args = []
+    for i in range(len(x_inter)):
+        for j in range(len(x2) - 1):
+            if check_linesegment(
+                np.array([x2[j], z2[j]]),
+                np.array([x2[j + 1], z2[j + 1]]),
+                np.array([x_inter[i], z_inter[i]]),
+            ):
+                args.append(j)
+                break
+    return np.array(args)
+
+
+def join_intersect(coords1, coords2, get_arg=False):
+    """
+    Add the intersection points between coords1 and coords2 to coords1.
+
+    Parameters
+    ----------
+    coords1: Coordinates
+        The Coordinates to which the intersection points should be added
+    coords2: Coordinates
+        The intersecting Coordinates
+    get_arg: bool (default = False)
+
+    Returns
+    -------
+    (if get_arg is True)
+    args: list(int, int, ..) of len(N_intersections)
+        The arguments of coords1 in which the intersections were added.
+
+    Notes
+    -----
+    Modifies coords1
+    """
+    x_inter, z_inter = get_intersect(coords1.xz, coords2.xz)
+    args = _intersect_count(x_inter, z_inter, coords1.x, coords1.z)
+
+    orderr = args.argsort()
+    x_int = x_inter[orderr]
+    z_int = z_inter[orderr]
+
+    args = _intersect_count(x_int, z_int, coords1.x, coords1.z)
+
+    # TODO: Check for duplicates and order correctly based on distance
+    # u, counts = np.unique(args, return_counts=True)
+
+    count = 0
+    for i, arg in enumerate(args):
+        if i > 0 and args[i - 1] == arg:
+            # Two intersection points, one after the other
+            bump = 0
+        else:
+            bump = 1
+        if not np.isclose(coords1.xyz.T, [x_int[i], 0, z_int[i]]).all(axis=1).any():
+            # Only increment counter if the intersection isn't already in the Coordinates
+            coords1.insert([x_int[i], 0, z_int[i]], index=arg + count + bump)
+            count += 1
+
+    if get_arg:
+        args = []
+        for x, z in zip(x_inter, z_inter):
+            args.append(coords1.argmin([x, 0, z]))
+        return list(set(args))
+
+
+# =============================================================================
+# Boolean checks
+# =============================================================================
+
+
+@nb.jit(cache=True, nopython=True)
+def check_linesegment(point_a, point_b, point_c):
+    """
+    Check that point C is on the line between points A and B.
+
+    Parameters
+    ----------
+    point_a: np.array(2)
+        The first line segment point
+    point_b: np.array(2)
+        The second line segment point
+    point_c: np.array(2)
+        The point which to check is on A--B
+
+    Returns
+    -------
+    check: bool
+        True: if C on A--B, else False
+    """
+    # Do some protection of numba against integers and lists
+    a_c = np.array([point_c[0] - point_a[0], point_c[1] - point_a[1]], dtype=np.float_)
+    a_b = np.array([point_b[0] - point_a[0], point_b[1] - point_a[1]], dtype=np.float_)
+
+    distance = np.sqrt(np.sum(a_b**2))
+    # Numba doesn't like doing cross-products of things with size 2
+    cross = cross2d(a_b, a_c)
+    if np.abs(cross) > CROSS_P_TOL * distance:
+        return False
+    k_ac = np.dot(a_b, a_c)
+    k_ab = np.dot(a_b, a_b)
+    if k_ac < 0:
+        return False
+    elif k_ac > k_ab:
+        return False
+    else:
+        return True
+
+
+@nb.jit(cache=True, nopython=True)
+def in_polygon(x, z, poly, include_edges=False):
+    """
+    Determine if a point (x, z) is inside a 2-D polygon.
+
+    Parameters
+    ----------
+    x, z: float, float
+        Point coordinates
+    poly: np.array(2, N)
+        The array of polygon point coordinates
+    include_edges: bool
+        Whether or not to return True if a point is on the perimeter of the
+        polygon
+
+    Returns
+    -------
+    inside: bool
+        Whether or not the point is in the polygon
+    """
+    n = len(poly)
+    inside = False
+    x1, z1, x_inter = 0, 0, 0
+    x0, z0 = poly[0]
+    for i in range(n + 1):
+        x1, z1 = poly[i % n]
+
+        if x == x1 and z == z1:
+            return include_edges
+
+        if z > min(z0, z1):
+            if z <= max(z0, z1):
+                if x <= max(x0, x1):
+
+                    if z0 != z1:
+                        x_inter = (z - z0) * (x1 - x0) / (z1 - z0) + x0
+                        if x == x_inter:
+                            return include_edges
+                    if x0 == x1 or x <= x_inter:
+
+                        inside = not inside  # Beautiful
+        elif z == min(z0, z1):
+            if z0 == z1:
+                if (x <= max(x0, x1)) and (x >= min(x0, x1)):
+                    return include_edges
+
+        x0, z0 = x1, z1
+    return inside
+
+
+@nb.jit(cache=True, nopython=True)
+def polygon_in_polygon(poly1, poly2, include_edges=False):
+    """
+    Determine what points of a polygon are inside another polygon.
+
+    Parameters
+    ----------
+    poly1: np.array(2, N1)
+        The array of polygon1 point coordinates
+    poly2: np.array(2, N2)
+        The array of polygon2 point coordinates
+    include_edges: bool
+        Whether or not to return True if a point is on the perimeter of the
+        polygon
+
+    Returns
+    -------
+    inside: np.array(N1, dtype=bool)
+        The array of boolean values per index of polygon1
+    """
+    inside_array = np.empty(len(poly1), dtype=np.bool_)
+    for i in range(len(poly1)):
+        inside_array[i] = in_polygon(
+            poly1[i][0], poly1[i][1], poly2, include_edges=include_edges
+        )
+    return inside_array
+
+
+@nb.jit(forceobj=True)
+def on_polygon(x, z, poly):
+    """
+    Determine if a point (x, z) is on the perimeter of a closed 2-D polygon.
+
+    Parameters
+    ----------
+    x, z: float, float
+        Point coordinates
+    poly: np.array(2, N)
+        The array of polygon point coordinates
+
+    Returns
+    -------
+    on_edge: bool
+        Whether or not the point is on the perimeter of the polygon
+    """
+    on_edge = False
+    for i, (point_a, point_b) in enumerate(zip(poly[:-1], poly[1:])):
+        c = check_linesegment(np.array(point_a), np.array(point_b), np.array([x, z]))
+
+        if c is True:
+            return True
+    return on_edge
+
+
+# =============================================================================
+# Coordinate class and parsers
+# =============================================================================
 
 
 def _parse_to_xyz_array(xyz_array):

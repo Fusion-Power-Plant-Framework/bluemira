@@ -32,8 +32,7 @@ from bluemira.equilibria.opt_constraints import (
     PsiBoundaryConstraint,
 )
 from bluemira.equilibria.shapes import flux_surface_johner
-from bluemira.geometry._deprecated_tools import interpolate_points
-from bluemira.geometry.coordinates import Coordinates
+from bluemira.geometry.coordinates import Coordinates, interpolate_points
 
 
 def estimate_kappa95(A, m_s_limit):
