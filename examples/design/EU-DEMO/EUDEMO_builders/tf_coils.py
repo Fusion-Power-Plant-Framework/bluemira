@@ -135,6 +135,30 @@ class TFCoilBuilderParams(ParameterFrame):
 class TFCoilDesigner(Designer[GeometryParameterisation]):
     """
     TF Coil Designer
+
+    Parameters
+    ----------
+    params: Union[Dict, ParameterFrame]
+        TF Coil Designer parameters
+    build_config: Dict
+        Required keys;
+
+            * param_class: str
+                A string of the import location for the parameterisation
+                class of the TF Coil
+
+        Optional keys:
+
+            * variables_map: Dict
+                variable map for the param_class
+            * file_path: str
+                file path for loading parameterisation
+            * problem_class: str
+                A string of the import location for the problem class to
+                solve
+            * optimisation_settings: Dict
+                problem_class optimisation settings
+
     """
 
     param_cls = TFCoilDesignerParams
