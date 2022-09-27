@@ -144,7 +144,7 @@ class TestTFCoilDesigner:
             separatrix=self.lcfs,
             keep_out_zone=self.vvts_koz,
         )
-        d_run, _ = designer_mock.execute()
+        d_run, _ = designer.execute()
 
         designer_mock = TFCoilDesigner(
             self.PARAMS,
@@ -173,8 +173,7 @@ class TestTFCoilDesigner:
         assert designer.execute()[0].create_shape().is_closed()
 
 
-class TestTFCoilBuilder:
-
+def centreline_setup():
     centrelines, wp_xs = [], []
 
     for cl in [TripleArc(), PrincetonD()]:
@@ -197,6 +196,11 @@ class TestTFCoilBuilder:
         centrelines.append(centreline)
         wp_xs.append(wp_cross_section)
 
+    return centrelines, wp_xs
+
+
+class TestTFCoilBuilder:
+
     params = {
         "R_0": {"value": 9},
         "z_0": {"value": 0.0},
@@ -211,7 +215,7 @@ class TestTFCoilBuilder:
         "tk_tf_side": {"value": 0.1},
     }
 
-    @pytest.mark.parametrize("centreline, wp_xs", zip(centrelines, wp_xs))
+    @pytest.mark.parametrize("centreline, wp_xs", zip(*centreline_setup()))
     def test_components_and_segments(self, centreline, wp_xs):
         builder = TFCoilBuilder(self.params, {}, centreline, wp_xs)
         tf_coil = builder.build()
