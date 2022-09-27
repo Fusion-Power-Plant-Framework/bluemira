@@ -205,15 +205,17 @@ class TFCoilDesigner(Designer[GeometryParameterisation]):
         shape_params = {}
         for key, val in variables_map.items():
             if isinstance(val, str):
-                val = getattr(self.params, val).value
-
-            if isinstance(val, dict):
-                if isinstance(val["value"], str):
-                    val["value"] = getattr(self.params, val["value"]).value
+                new_val = getattr(self.params, val).value
             else:
-                val = {"value": val}
+                new_val = deepcopy(val)
 
-            shape_params[key] = val
+            if isinstance(new_val, dict):
+                if isinstance(new_val["value"], str):
+                    new_val["value"] = getattr(self.params, new_val["value"]).value
+            else:
+                new_val = {"value": new_val}
+
+            shape_params[key] = new_val
 
         # Radial width of the winding pack with no insulation or insertion gap
         dr_wp = (
@@ -261,11 +263,11 @@ class TFCoilDesigner(Designer[GeometryParameterisation]):
 
         if not hasattr(self, "problem_class"):
             raise ValueError(
-                f"Cannot execute {type(self).__name__} in RUN mode: no problem_class specified."
+                f"Cannot execute {type(self).__name__} in 'run' mode: no problem_class specified."
             )
         if self.separatrix is None:
             raise ValueError(
-                f"Cannot execute {type(self).__name__} in RUN mode: no separatrix specified"
+                f"Cannot execute {type(self).__name__} in 'run' mode: no separatrix specified"
             )
 
         bluemira_debug(
@@ -303,7 +305,6 @@ class TFCoilDesigner(Designer[GeometryParameterisation]):
             bluemira_debug("Applying shape constraints")
             design_problem.apply_shape_constraints()
 
-        bluemira_debug("Solving...")
         return design_problem.optimise(), wp_cross_section
 
     def read(self) -> Tuple[GeometryParameterisation, BluemiraWire]:
