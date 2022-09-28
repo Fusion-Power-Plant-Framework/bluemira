@@ -24,7 +24,6 @@ Defines the setup task for running PROCESS.
 import os
 from typing import Dict, Union
 
-from bluemira.base.parameter import ParameterFrame
 from bluemira.codes.error import CodesError
 from bluemira.codes.interface import CodesSetup
 from bluemira.codes.process.api import DEFAULT_INDAT, InDat, update_obsolete_vars
@@ -33,6 +32,7 @@ from bluemira.codes.process.mapping import (
     CurrentDriveEfficiencyModel,
     TFCoilConductorTechnology,
 )
+from bluemira.codes.process.params import ProcessSolverParams
 
 
 class Setup(CodesSetup):
@@ -59,7 +59,7 @@ class Setup(CodesSetup):
 
     def __init__(
         self,
-        params: ParameterFrame,
+        params: ProcessSolverParams,
         in_dat_path: str,
         problem_settings: Dict[str, Union[float, str]] = None,
         template_in_dat_path: str = DEFAULT_INDAT,
@@ -106,7 +106,7 @@ class Setup(CodesSetup):
             )
 
         if use_bp_inputs:
-            inputs = self._get_new_inputs(remapper=update_obsolete_vars)
+            inputs = self._get_new_inputs(self.params.mappings())
             for key, value in inputs.items():
                 writer.add_parameter(key, value)
             for key, value in self.problem_settings.items():

@@ -2,7 +2,17 @@ from __future__ import annotations
 
 import copy
 from dataclasses import dataclass
-from typing import Dict, Generic, List, Tuple, Type, TypedDict, TypeVar
+from typing import (
+    Dict,
+    Generic,
+    Iterable,
+    List,
+    Optional,
+    Tuple,
+    Type,
+    TypedDict,
+    TypeVar,
+)
 
 import pint
 from typeguard import typechecked
@@ -111,7 +121,7 @@ class NewParameter(Generic[ParameterValueType]):
         self._source = source
         self._add_history_record()
 
-    def to_dict(self) -> Dict:
+    def to_dict(self, fields: Optional[Iterable[str]] = None) -> Dict:
         """Serialize the parameter to a dictionary."""
         out = {"name": self.name, "value": self.value}
         for field in ["unit", "source", "description", "long_name"]:

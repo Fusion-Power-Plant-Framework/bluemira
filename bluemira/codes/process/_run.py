@@ -24,10 +24,11 @@ PROCESS run functions
 """
 
 from bluemira.base.look_and_feel import bluemira_print
-from bluemira.base.parameter import ParameterFrame
+from bluemira.base.parameter_frame import NewParameterFrame as ParameterFrame
 from bluemira.codes.interface import CodesTask
 from bluemira.codes.process.constants import BINARY as PROCESS_BINARY
 from bluemira.codes.process.constants import NAME as PROCESS_NAME
+from bluemira.codes.process.params import ProcessSolverParams
 
 
 class Run(CodesTask):
@@ -51,7 +52,7 @@ class Run(CodesTask):
 
     def __init__(
         self,
-        params: ParameterFrame,
+        params: ProcessSolverParams,
         in_dat_path: str,
         binary: str = PROCESS_BINARY,
     ):

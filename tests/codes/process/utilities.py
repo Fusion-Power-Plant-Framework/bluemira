@@ -24,6 +24,7 @@ import os
 DATA_DIR = os.path.join(os.path.dirname(__file__), "test_data")
 READ_DIR = os.path.join(DATA_DIR, "read")
 RUN_DIR = os.path.join(DATA_DIR, "run")
+PARAM_FILE = os.path.join(DATA_DIR, "params.json")
 FAKE_PROCESS_DICT = {  # Fake for the output of PROCESS's `get_dicts()`
     "DICT_DESCRIPTIONS": {"some_property": "its description"}
 }

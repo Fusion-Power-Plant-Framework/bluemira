@@ -23,14 +23,15 @@ from unittest import mock
 
 import pytest
 
-from bluemira.base.config import ParameterFrame
 from bluemira.codes import process
 from bluemira.codes.process._run import Run
+from bluemira.codes.process.params import ProcessSolverParams
+from tests.codes.process.utilities import PARAM_FILE
 
 
 class TestRun:
     def setup_method(self):
-        self.default_pf = ParameterFrame()
+        self.default_pf = ProcessSolverParams.from_json(PARAM_FILE)
 
         self._subprocess_patch = mock.patch("bluemira.codes.interface.run_subprocess")
         self.run_subprocess_mock = self._subprocess_patch.start()

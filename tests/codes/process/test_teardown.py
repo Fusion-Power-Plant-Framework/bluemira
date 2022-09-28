@@ -23,12 +23,11 @@ from unittest import mock
 
 import pytest
 
-from bluemira.base.config import Configuration
 from bluemira.codes import process
 from bluemira.codes.error import CodesError
 from bluemira.codes.process._teardown import Teardown
 from bluemira.codes.process.mapping import mappings as process_mappings
-from bluemira.codes.utilities import add_mapping
+from bluemira.codes.process.params import ProcessSolverParams
 from tests._helpers import file_exists
 from tests.codes.process import utilities as utils
 
@@ -54,8 +53,7 @@ class TestTeardown:
         cls._process_dict_patch.stop()
 
     def setup_method(self):
-        self.default_pf = Configuration()
-        add_mapping(process.NAME, self.default_pf, process_mappings)
+        self.default_pf = ProcessSolverParams.from_json(utils.PARAM_FILE)
 
     @pytest.mark.parametrize("run_func", ["run", "runinput"])
     def test_run_func_updates_bluemira_params_from_mfile(self, run_func):
@@ -65,7 +63,7 @@ class TestTeardown:
             getattr(teardown, run_func)()
 
         # Expected value comes from ./test_data/mfile_data.json
-        assert teardown.params["tau_e"] == pytest.approx(4.3196)
+        assert teardown.params.tau_e.value == pytest.approx(4.3196)
 
     @pytest.mark.parametrize("run_func", ["read", "readall"])
     def test_read_func_updates_bluemira_params_from_mfile(self, run_func):
@@ -75,7 +73,7 @@ class TestTeardown:
             getattr(teardown, run_func)()
 
         # Expected value comes from ./test_data/mfile_data.json
-        assert teardown.params["tau_e"] == pytest.approx(4.3196)
+        assert teardown.params.tau_e.value == pytest.approx(4.3196)
 
     @pytest.mark.parametrize(
         "run_func, data_dir", [("runinput", utils.RUN_DIR), ("readall", utils.READ_DIR)]
@@ -86,13 +84,13 @@ class TestTeardown:
         # The two run modes in this test are expected to ignore the
         # 'recv = False' Parameter attribute
         teardown = Teardown(self.default_pf, utils.RUN_DIR, utils.READ_DIR)
-        teardown.params.get_param("r_tf_in_centre").mapping[process.NAME].recv = False
+        teardown.params.update_mappings({"r_tf_in_centre": {"recv": False}})
 
         with file_exists(os.path.join(data_dir, "MFILE.DAT"), self.IS_FILE_REF):
             getattr(teardown, run_func)()
 
         # Expected value comes from ./test_data/mfile_data.json
-        assert teardown.params["r_tf_in_centre"] == pytest.approx(2.6354)
+        assert teardown.params.r_tf_in_centre.value == pytest.approx(2.6354)
 
     @pytest.mark.parametrize(
         "run_func, data_dir", [("run", utils.RUN_DIR), ("read", utils.READ_DIR)]
@@ -101,13 +99,13 @@ class TestTeardown:
         self, run_func, data_dir
     ):
         teardown = Teardown(self.default_pf, utils.RUN_DIR, utils.READ_DIR)
-        teardown.params.get_param("r_tf_in_centre").mapping[process.NAME].recv = False
+        teardown.params.update_mappings({"r_tf_in_centre": {"recv": False}})
 
         with file_exists(os.path.join(data_dir, "MFILE.DAT"), self.IS_FILE_REF):
             getattr(teardown, run_func)()
 
         # Non-expected value comes from ./test_data/mfile_data.json
-        assert teardown.params["r_tf_in_centre"] != pytest.approx(2.6354)
+        assert teardown.params.r_tf_in_centre.value != pytest.approx(2.6354)
 
     def test_mock_updates_params_from_mockPROCESS_json_file(self):
         teardown = Teardown(self.default_pf, None, utils.READ_DIR)
@@ -115,10 +113,10 @@ class TestTeardown:
         teardown.mock()
 
         # Expected values come from ./test_data/read/mockPROCESS.json
-        assert teardown.params.delta_95 == pytest.approx(0.33333)
-        assert teardown.params.B_0 == pytest.approx(5.2742)
-        assert teardown.params.r_fw_ib_in == pytest.approx(5.953487)
-        assert teardown.params.v_burn == pytest.approx(0.032175)
+        assert teardown.params.delta_95.value == pytest.approx(0.33333)
+        assert teardown.params.B_0.value == pytest.approx(5.2742)
+        assert teardown.params.r_fw_ib_in.value == pytest.approx(5.953487)
+        assert teardown.params.v_burn.value == pytest.approx(0.032175)
 
     def test_mock_raises_CodesError_if_mock_file_does_not_exist(self):
         teardown = Teardown(self.default_pf, None, "./not/a/dir")

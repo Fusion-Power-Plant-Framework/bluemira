@@ -146,7 +146,6 @@ class CodesTeardown(CodesTask):
             external_unit: str = value_data["unit"]
             value = value_data["value"]
             param: Parameter = getattr(self.params, param_name)
-            print(param)
             if external_unit == param.unit:
                 param.set_value(value, source=self._name)
             else:
@@ -182,14 +181,29 @@ class CodesTeardown(CodesTask):
             external code's unit.
         """
         mapped_outputs = {}
-        for bm_key, mapping in mappings.items():
+        for external_name, value in external_outputs.items():
+            bm_name = self._get_bm_name_from_external(external_name, mappings)
+            if bm_name is None:
+                continue
+            mapping = mappings[bm_name]
             if not (recv_all or mapping.recv):
                 continue
-            output_value = self._get_output_or_raise(external_outputs, mapping.name)
+            output_value = self._get_output_or_raise(external_outputs, external_name)
             if output_value is None:
                 continue
-            mapped_outputs[bm_key] = {"value": output_value, "unit": mapping.unit}
+            if mapping.unit is None:
+                continue
+            mapped_outputs[bm_name] = {"value": value, "unit": mapping.unit}
         return mapped_outputs
+
+    @staticmethod
+    def _get_bm_name_from_external(
+        external_name: str, mappings: Dict[str, ParameterMapping]
+    ) -> Union[str, None]:
+        for bm_name, mapping in mappings.items():
+            if mapping.name == external_name:
+                return bm_name
+        return None
 
     def _get_output_or_raise(
         self, external_outputs: Dict[str, Any], parameter_name: str

@@ -2,8 +2,19 @@ from __future__ import annotations
 
 import copy
 import json
-from dataclasses import dataclass
-from typing import Any, Dict, List, Optional, Tuple, Type, TypeVar, Union, get_args
+from dataclasses import dataclass, fields
+from typing import (
+    Any,
+    Dict,
+    Generator,
+    List,
+    Optional,
+    Tuple,
+    Type,
+    TypeVar,
+    Union,
+    get_args,
+)
 
 from tabulate import tabulate
 
@@ -44,6 +55,16 @@ class NewParameterFrame:
             return NotImplemented
         return self.__dataclass_fields__ == __o.__dataclass_fields__
 
+    def __iter__(self) -> Generator[NewParameter, None, None]:
+        """
+        Iterate over this frame's parameters.
+
+        The order is based on the order in which the parameters were
+        declared.
+        """
+        for field in fields(self):
+            yield getattr(self, field.name)
+
     def update_values(self, new_values: Dict[str, ParameterValueType], source: str = ""):
         """Update the given parameter values."""
         for key, value in new_values.items():
@@ -62,8 +83,8 @@ class NewParameterFrame:
         for member in cls.__dataclass_fields__:
             try:
                 param_data = data.pop(member)
-            except KeyError:
-                raise ValueError(f"Data for parameter '{member}' not found.")
+            except KeyError as e:
+                raise ValueError(f"Data for parameter '{member}' not found.") from e
 
             value_type = cls._validate_parameter_field(member)
             kwargs[member] = NewParameter(

@@ -23,13 +23,12 @@ from unittest import mock
 
 import pytest
 
-from bluemira.base.config import Configuration
-from bluemira.codes import process
 from bluemira.codes.error import CodesError
 from bluemira.codes.process._setup import Setup
 from bluemira.codes.process.mapping import mappings as process_mappings
-from bluemira.codes.utilities import add_mapping
+from bluemira.codes.process.params import ProcessSolverParams
 from tests._helpers import file_exists
+from tests.codes.process.utilities import PARAM_FILE
 
 
 class TestSetup:
@@ -37,8 +36,7 @@ class TestSetup:
     MODULE_REF = "bluemira.codes.process._setup"
 
     def setup_method(self):
-        self.default_pf = Configuration()
-        add_mapping(process.NAME, self.default_pf, process_mappings)
+        self.default_pf = ProcessSolverParams.from_json(PARAM_FILE)
 
         self._writer_patch = mock.patch(f"{self.MODULE_REF}.InDat")
         self.writer_cls_mock = self._writer_patch.start()
