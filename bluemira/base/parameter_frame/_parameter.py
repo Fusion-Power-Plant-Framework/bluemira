@@ -18,7 +18,8 @@ base_unit_defaults = {
     "[current]": "ampere",
     "[temperature]": "kelvin",
     "[substance]": "mol",
-    "": "degree",  # dimensionality == {}
+    "[luminosity]": "candela",
+    "[]": "degree",  # dimensionality == {}
 }
 
 combined_unit_defaults = {
@@ -26,6 +27,8 @@ combined_unit_defaults = {
     "1/m^3": {"[length]": -3},
     "1/m^2/s": {"[length]": -2, "[time]": -1},
 }
+
+WEIRD_UNITS = ["eV"]
 
 
 class ParamDictT(TypedDict, Generic[ParameterValueType]):
@@ -119,13 +122,20 @@ class NewParameter(Generic[ParameterValueType]):
         self, value: ParameterValueType, unit: Union[str, pint.Unit]
     ) -> Tuple[ParameterValueType, pint.Unit]:
         quantity = pint.Quantity(value, unit)
-        dimensionality = quantity.units.dimensionality
-        dim_list = list(map(base_unit_defaults.get, dimensionality.keys()))
-        dim_pow = list(dimensionality.values())
-        if not dim_list:
-            raise NotImplementedError("dimensionless units need work")
+        unit_str = f"{quantity.units:~P}"
+        for wu in WEIRD_UNITS:
+            if wu in unit_str:
+                unit = self._fix_weird_units(value, quantity.units)
+                break
         else:
-            unit = pint.Unit("".join([f"{j[0]}^{j[1]}" for j in zip(dim_list, dim_pow)]))
+            if dimensionality := quantity.units.dimensionality:
+                dim_list = list(map(base_unit_defaults.get, dimensionality.keys()))
+                dim_pow = list(dimensionality.values())
+                unit = pint.Unit(
+                    ".".join([f"{j[0]}^{j[1]}" for j in zip(dim_list, dim_pow)])
+                )
+            else:
+                unit = self._fix_dimensionless_units(quantity.units)
 
         if unit != quantity.units:
             value = raw_uc(quantity.magnitude, quantity.units, unit)
@@ -187,3 +197,9 @@ class NewParameter(Generic[ParameterValueType]):
     def _add_history_record(self):
         history_entry = ParameterValue(self.value, self.source)
         self._history.append(history_entry)
+
+    def _fix_dimensionless_units(self, unit: pint.Unit) -> pint.Unit:
+        raise NotImplementedError("dimensionless units need work")
+
+    def _fix_weird_units(self, value: ParameterValueType, unit: pint.Unit) -> pint.Unit:
+        raise NotImplementedError("weird units need work")
