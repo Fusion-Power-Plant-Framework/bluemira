@@ -161,7 +161,7 @@ class NewParameterFrame:
         """
         Pretty print ParameterFrame
         """
-        return self.tabulator()
+        return self.tabulate()
 
 
 def make_parameter_frame(
