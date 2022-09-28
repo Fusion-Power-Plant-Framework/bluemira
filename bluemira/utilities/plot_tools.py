@@ -121,7 +121,6 @@ def make_gif(folder, figname, formatt="png", clean=True):
     if clean:
         for fp in ims:
             os.remove(fp)
-
     gifname = os.path.join(folder, figname) + ".gif"
     kwargs = {"duration": 0.5, "loop": 3}
     imageio.mimsave(gifname, images, "GIF-FI", **kwargs)
@@ -137,7 +136,6 @@ def save_figure(fig, name, save=False, folder=None, dpi=600, formatt="png", **kw
         name = os.sep.join([folder, name]) + "." + formatt
         if os.path.isfile(name):
             os.remove(name)  # f.savefig will otherwise not overwrite
-
         fig.savefig(name, dpi=dpi, bbox_inches="tight", format=formatt, **kwargs)
     else:
         pass
