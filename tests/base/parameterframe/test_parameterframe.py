@@ -8,6 +8,7 @@ import pytest
 from bluemira.base.parameter_frame import NewParameter as Parameter
 from bluemira.base.parameter_frame import NewParameterFrame as ParameterFrame
 from bluemira.base.parameter_frame import make_parameter_frame, parameter_frame
+from bluemira.base.parameter_frame._parameter import ParamDictT
 
 FRAME_DATA = {
     "height": {"value": 180.5, "unit": "cm"},
@@ -181,6 +182,32 @@ class TestParameterFrame:
         assert frame.height.source == "a test"
         assert frame.age.value == 30
         assert frame.age.source != "a test"
+
+    def test_tabulator_method_formatting(self):
+        with mock.patch("bluemira.base.parameter_frame._frame.tabulate") as m_tb:
+            BasicFrame.from_dict(FRAME_DATA).tabulator()
+
+        (table_rows,), call_kwargs = m_tb.call_args
+
+        headers = call_kwargs["headers"]
+        assert set(headers) == set(ParamDictT.__annotations__.keys())
+
+        # The columns and rows of the parameterframe are sorted
+        data_keys = sorted(FRAME_DATA.keys())
+        fd_keys_list = list(FRAME_DATA.keys())
+        data_values = list(FRAME_DATA.values())
+        data_values_index = sorted(
+            range(len(fd_keys_list)), key=fd_keys_list.__getitem__
+        )
+
+        for no, (tr, dvi) in enumerate(zip(table_rows, data_values_index)):
+            assert tr[0] == data_keys[no]
+            for ind, val in data_values[dvi].items():
+                assert tr[headers.index(ind)] == FRAME_DATA[data_keys[no]][ind]
+            nas = [i for i, x in enumerate(tr) if x == "N/A"]
+
+            # Number of 'N/A' equal to headers without name - numberof filled keys
+            assert len(nas) == len(headers[1:]) - len(data_values[dvi].keys())
 
 
 class TestParameterSetup:
