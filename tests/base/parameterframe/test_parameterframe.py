@@ -215,7 +215,9 @@ class TestParameterFrame:
             nas = [i for i, x in enumerate(tr) if x == "N/A"]
 
             # Number of 'N/A' equal to headers without name - number of filled keys
-            assert len(nas) == len(headers[1:] - data_values[dvi].keys())
+            no_name_headers = headers.copy()
+            no_name_headers.pop(headers.index("name"))
+            assert len(nas) == len(no_name_headers - data_values[dvi].keys())
 
 
 class TestParameterSetup:
