@@ -141,7 +141,7 @@ class TFCoilDesigner(Designer[GeometryParameterisation]):
     params: Union[Dict, ParameterFrame]
         TF Coil Designer parameters
     build_config: Dict
-        Required keys;
+        Required keys:
 
             * param_class: str
                 A string of the import location for the parameterisation
@@ -641,8 +641,7 @@ class TFCoilBuilder(Builder):
         # Cut away straight sweep before fusing to protect against degenerate faces
         # Keep the largest piece
         pieces = boolean_cut(solid, inboard_casing)
-        pieces.sort(key=lambda x: x.volume)
-        solid = pieces[-1]
+        solid = max(pieces, key=lambda x: x.volume)
 
         case_solid = boolean_fuse([solid, inboard_casing, joiner_top, joiner_bottom])
         case_solid_hollow = boolean_cut(
