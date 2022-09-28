@@ -588,7 +588,7 @@ class PicardIterator:
         """
         self.ax.clear()
         self.eq.plot(ax=self.ax)
-        self.ax.figure.canvas.draw()
+        plt.pause(PLT_PAUSE)
         save_figure(
             self.f,
             self.pname + str(self.i),
@@ -596,7 +596,6 @@ class PicardIterator:
             folder=self.figure_folder,
             dpi=DPI_GIF,
         )
-        plt.pause(PLT_PAUSE)
 
     def _solve(self):
         """

@@ -33,7 +33,6 @@ from matplotlib.patches import Patch, PathPatch
 from matplotlib.path import Path
 from mpl_toolkits.mplot3d import Axes3D
 from mpl_toolkits.mplot3d.art3d import PathPatch3D
-from PIL import Image
 
 import bluemira.display.error as bm_display_error
 from bluemira.base.components import Component
@@ -122,16 +121,6 @@ def make_gif(folder, figname, formatt="png", clean=True):
     if clean:
         for fp in ims:
             os.remove(fp)
-
-    if len(images) > 1:
-        # Occasionally bbox_tight is a few pixels off for contours it seems
-        # Resize the offending images
-        sizes = np.array([image.shape for image in images])
-        if not (sizes == sizes[0]).all():
-            shape = tuple(sizes[1][:2])
-            for i, image in enumerate(images):
-                if image.shape[:2] != shape:
-                    images[i] = Image.fromarray(image).resize(shape[::-1])
 
     gifname = os.path.join(folder, figname) + ".gif"
     kwargs = {"duration": 0.5, "loop": 3}
