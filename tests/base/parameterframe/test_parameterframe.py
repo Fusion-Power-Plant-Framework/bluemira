@@ -8,6 +8,7 @@ import pytest
 from bluemira.base.parameter_frame import NewParameter as Parameter
 from bluemira.base.parameter_frame import NewParameterFrame as ParameterFrame
 from bluemira.base.parameter_frame import make_parameter_frame, parameter_frame
+from bluemira.base.parameter_frame._parameter import ParamDictT
 
 FRAME_DATA = {
     "height": {"value": 180.5, "unit": "cm"},
@@ -181,6 +182,75 @@ class TestParameterFrame:
         assert frame.height.source == "a test"
         assert frame.age.value == 30
         assert frame.age.source != "a test"
+
+    def _call_tabulate(self, head_keys):
+        with mock.patch("bluemira.base.parameter_frame._frame.tabulate") as m_tb:
+            BasicFrame.from_dict(FRAME_DATA).tabulate(keys=head_keys)
+
+        (table_rows,), call_kwargs = m_tb.call_args
+
+        return call_kwargs["headers"], table_rows
+
+    @pytest.mark.parametrize(
+        "head_keys, result",
+        zip(
+            [None, ["name", "value"]],
+            [ParamDictT.__annotations__.keys(), ["name", "value"]],
+        ),
+    )
+    def test_tabulate_headers(self, head_keys, result):
+        headers, _ = self._call_tabulate(head_keys)
+        assert set(headers) == set(result)
+
+    def _get_data_keys_and_values(self, head_keys):
+        # The columns and rows of the parameterframe are sorted
+        data_keys = sorted(FRAME_DATA.keys())
+
+        if head_keys is not None:
+            fd_keys_list = list(set(head_keys) - set(FRAME_DATA.keys()))
+        else:
+            fd_keys_list = list(FRAME_DATA.keys())
+
+        data_values = list(FRAME_DATA.values())
+        data_values_index = sorted(
+            range(len(fd_keys_list)), key=fd_keys_list.__getitem__
+        )
+
+        return data_keys, data_values, data_values_index
+
+    @pytest.mark.parametrize("head_keys", [None, ["name", "value"]])
+    def test_tabulate_method_columns_have_correct_num_of_NA(self, head_keys):
+        # Number of 'N/A' equal to headers without name - number of filled keys
+
+        nn_headers, table_rows = self._call_tabulate(head_keys)
+        nn_headers.pop(nn_headers.index("name"))
+
+        _, data_values, data_values_index = self._get_data_keys_and_values(head_keys)
+
+        for tr, dvi in zip(table_rows, data_values_index):
+            assert len([i for i, x in enumerate(tr) if x == "N/A"]) == len(
+                nn_headers - data_values[dvi].keys()
+            )
+
+    @pytest.mark.parametrize("head_keys", [None, ["name", "value"]])
+    def test_tabulate_method_columns_have_correct_data(self, head_keys):
+        headers, table_rows = self._call_tabulate(head_keys)
+
+        (
+            data_keys,
+            data_values,
+            data_values_index,
+        ) = self._get_data_keys_and_values(head_keys)
+
+        for no, (tr, dvi) in enumerate(zip(table_rows, data_values_index)):
+            # name is correct
+            assert tr[0] == data_keys[no]
+            for ind, val in data_values[dvi].items():
+                try:
+                    assert tr[headers.index(ind)] == FRAME_DATA[data_keys[no]][ind]
+                except ValueError as ve:
+                    if ind in head_keys:
+                        raise ve
 
 
 class TestParameterSetup:
