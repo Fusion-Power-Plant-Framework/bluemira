@@ -125,7 +125,7 @@ class TestEUDEMO:
             self.reactor.params.R_0.value, 0.0, self.reactor.params.z_0.value
         )
         assert field is not None
-        assert field == pytest.approx([0, -5.0031, 0])
+        assert field == pytest.approx([0, -5.0031, 0], rel=1e-6, abs=2e-12)
 
     def test_tf_save(self):
         """
