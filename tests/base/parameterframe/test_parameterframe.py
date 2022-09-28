@@ -212,12 +212,13 @@ class TestParameterFrame:
                 except ValueError as ve:
                     if ind in head_keys:
                         raise ve
-            nas = [i for i, x in enumerate(tr) if x == "N/A"]
 
             # Number of 'N/A' equal to headers without name - number of filled keys
             no_name_headers = headers.copy()
             no_name_headers.pop(headers.index("name"))
-            assert len(nas) == len(no_name_headers - data_values[dvi].keys())
+            assert len([i for i, x in enumerate(tr) if x == "N/A"]) == len(
+                no_name_headers - data_values[dvi].keys()
+            )
 
 
 class TestParameterSetup:
