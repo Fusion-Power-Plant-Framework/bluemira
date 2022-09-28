@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import copy
 from dataclasses import dataclass
-from typing import Dict, Generic, List, Tuple, Type, TypedDict, TypeVar
+from typing import Dict, Generic, List, Tuple, Type, TypedDict, TypeVar, Union
 
 import pint
 from typeguard import typechecked
@@ -10,6 +10,22 @@ from typeguard import typechecked
 from bluemira.base.constants import raw_uc
 
 ParameterValueType = TypeVar("ParameterValueType")
+
+base_unit_defaults = {
+    "[time]": "second",
+    "[length]": "metre",
+    "[mass]": "kilogram",
+    "[current]": "ampere",
+    "[temperature]": "kelvin",
+    "[substance]": "mol",
+    "": "degree",  # dimensionality == {}
+}
+
+combined_unit_defaults = {
+    "kg/m^3": {"[length]": -3, "[mass]": 1},
+    "1/m^3": {"[length]": -3},
+    "1/m^2/s": {"[length]": -2, "[time]": -1},
+}
 
 
 class ParamDictT(TypedDict, Generic[ParameterValueType]):
@@ -71,8 +87,7 @@ class NewParameter(Generic[ParameterValueType]):
                     f"got {type(value)} instead."
                 )
         self._name = name
-        self._value = value
-        self._unit = unit
+        self._value, self._unit = self.check_unit(value, unit)
         self._source = source
         self._description = description
         self._long_name = long_name
@@ -99,6 +114,22 @@ class NewParameter(Generic[ParameterValueType]):
             # incompatible units
             return False
         return (self.name == __o.name) and (self.value == o_value_with_correct_unit)
+
+    def check_unit(
+        self, value: ParameterValueType, unit: Union[str, pint.Unit]
+    ) -> Tuple[ParameterValueType, pint.Unit]:
+        quantity = pint.Quantity(value, unit)
+        dimensionality = quantity.units.dimensionality
+        dim_list = list(map(base_unit_defaults.get, dimensionality.keys()))
+        dim_pow = list(dimensionality.values())
+        if not dim_list:
+            raise NotImplementedError("dimensionless units need work")
+        else:
+            unit = pint.Unit("".join([f"{j[0]}^{j[1]}" for j in zip(dim_list, dim_pow)]))
+
+        if unit != quantity.units:
+            value = raw_uc(quantity.magnitude, quantity.units, unit)
+        return value, unit
 
     def history(self) -> List[ParameterValue]:
         """Return the history of this parameter's value."""
