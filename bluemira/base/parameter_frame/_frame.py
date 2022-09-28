@@ -123,9 +123,7 @@ class NewParameterFrame:
         value_types = get_args(member_type)
         return value_types
 
-    def tabulator(
-        self, keys: Optional[List] = None, tablefmt: str = "fancy_grid"
-    ) -> str:
+    def tabulate(self, keys: Optional[List] = None, tablefmt: str = "fancy_grid") -> str:
         """
         Tabulate the ParameterFrame
 
