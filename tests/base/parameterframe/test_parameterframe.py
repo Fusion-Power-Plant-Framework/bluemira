@@ -183,31 +183,39 @@ class TestParameterFrame:
         assert frame.age.value == 30
         assert frame.age.source != "a test"
 
-    def test_tabulator_method_formatting(self):
+    @pytest.mark.parametrize("head_keys", [None, ["name", "value"]])
+    def test_tabulator_method_formatting(self, head_keys):
         with mock.patch("bluemira.base.parameter_frame._frame.tabulate") as m_tb:
-            BasicFrame.from_dict(FRAME_DATA).tabulator()
+            BasicFrame.from_dict(FRAME_DATA).tabulator(keys=head_keys)
 
         (table_rows,), call_kwargs = m_tb.call_args
 
         headers = call_kwargs["headers"]
-        assert set(headers) == set(ParamDictT.__annotations__.keys())
+        assert set(headers) <= set(ParamDictT.__annotations__.keys())
 
         # The columns and rows of the parameterframe are sorted
         data_keys = sorted(FRAME_DATA.keys())
-        fd_keys_list = list(FRAME_DATA.keys())
+
+        if head_keys is not None:
+            fd_keys_list = list(set(head_keys) - set(FRAME_DATA.keys()))
+        else:
+            fd_keys_list = list(FRAME_DATA.keys())
         data_values = list(FRAME_DATA.values())
         data_values_index = sorted(
             range(len(fd_keys_list)), key=fd_keys_list.__getitem__
         )
-
         for no, (tr, dvi) in enumerate(zip(table_rows, data_values_index)):
             assert tr[0] == data_keys[no]
             for ind, val in data_values[dvi].items():
-                assert tr[headers.index(ind)] == FRAME_DATA[data_keys[no]][ind]
+                try:
+                    assert tr[headers.index(ind)] == FRAME_DATA[data_keys[no]][ind]
+                except ValueError as ve:
+                    if ind in head_keys:
+                        raise ve
             nas = [i for i, x in enumerate(tr) if x == "N/A"]
 
-            # Number of 'N/A' equal to headers without name - numberof filled keys
-            assert len(nas) == len(headers[1:]) - len(data_values[dvi].keys())
+            # Number of 'N/A' equal to headers without name - number of filled keys
+            assert len(nas) == len(headers[1:] - data_values[dvi].keys())
 
 
 class TestParameterSetup:

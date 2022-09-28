@@ -3,7 +3,7 @@ from __future__ import annotations
 import copy
 import json
 from dataclasses import dataclass
-from typing import Any, Dict, List, Tuple, Type, TypeVar, Union, get_args
+from typing import Any, Dict, List, Optional, Tuple, Type, TypeVar, Union, get_args
 
 from tabulate import tabulate
 
@@ -123,13 +123,15 @@ class NewParameterFrame:
         value_types = get_args(member_type)
         return value_types
 
-    def tabulator(self, keys: List = None, tablefmt: str = "fancy_grid") -> str:
+    def tabulator(
+        self, keys: Optional[List] = None, tablefmt: str = "fancy_grid"
+    ) -> str:
         """
         Tabulate the ParameterFrame
 
         Parameters
         ----------
-        keys: list
+        keys: Optional[List]
             table column keys
         tablefmt: str (default="fancy_grid")
             The format of the table - see
