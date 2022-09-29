@@ -29,7 +29,6 @@ from itertools import zip_longest
 import numpy as np
 
 import bluemira.geometry.tools as geotools
-from bluemira.base.constants import EPS
 from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.codes import _freecadapi as cadapi
 from bluemira.geometry.coordinates import (
@@ -39,7 +38,6 @@ from bluemira.geometry.coordinates import (
 )
 from bluemira.geometry.error import GeometryError
 from bluemira.geometry.face import BluemiraFace
-from bluemira.geometry.plane import BluemiraPlane
 from bluemira.geometry.wire import BluemiraWire
 from bluemira.utilities.tools import flatten_iterable
 
