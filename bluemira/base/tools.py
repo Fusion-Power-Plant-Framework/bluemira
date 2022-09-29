@@ -24,7 +24,7 @@ Tool function and classes for the bluemira base module.
 """
 from bluemira.base.components import Component, PhysicalComponent
 from bluemira.geometry.compound import BluemiraCompound
-from bluemira.geometry.tools import serialize_shape
+from bluemira.geometry.tools import make_compound, serialize_shape
 
 
 def create_compound_from_component(comp):
@@ -38,6 +38,7 @@ def create_compound_from_component(comp):
         for c in comp.leaves:
             if hasattr(c, "shape") and c.shape:
                 shape.append(c.shape)
+    shape = make_compound(shape)
     compound = BluemiraCompound(label=comp.name, shape=shape)
     return compound
 

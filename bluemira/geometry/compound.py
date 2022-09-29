@@ -43,7 +43,7 @@ class BluemiraCompound(BluemiraGeo):
     """Bluemira Compound class."""
 
     def __init__(self, shape, label: str = ""):
-        shape_classes = [BluemiraGeo]
+        shape_classes = [cadapi.apiCompound]
         super().__init__(shape, label, shape_classes)
 
     def _check_shape(self, shape):
