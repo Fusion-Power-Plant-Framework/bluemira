@@ -284,20 +284,48 @@ class ProcessSolverParams(ParameterFrame):
     tk_vv_in: Parameter[float]
     """Inboard vacuum vessel thickness [meter]."""
 
+    # Other parameters
     B_tf_peak: Parameter[float]
-    T_e: Parameter[float]
-    V_p: Parameter[float]
-    Z_eff: Parameter[float]
+    """Peak field inside the TF coil winding pack [tesla]."""
+
     f_ni: Parameter[float]
+    """Non-inductive current drive fraction [dimensionless]."""
+
     h_cp_top: Parameter[float]
+    """Height of the TF coil inboard Tapered section end [meter]."""
+
     h_tf_max_in: Parameter[float]
+    """Plasma side TF coil maximum height [meter]."""
+
     l_i: Parameter[float]
+    """Normalised internal plasma inductance [dimensionless]."""
+
     q_95: Parameter[float]
+    """Plasma safety factor [dimensionless]."""
+
     r_tf_inboard_out: Parameter[float]
+    """Outboard Radius of the TF coil inboard leg tapered region [meter]."""
+
     sigma_tf_case_max: Parameter[float]
+    """Maximum von Mises stress in the TF coil case nose [pascal]."""
+
     sigma_tf_wp_max: Parameter[float]
+    """Maximum von Mises stress in the TF coil winding pack nose [pascal]."""
+
+    T_e: Parameter[float]
+    """Average plasma electron temperature [kiloelectron_volt]."""
+
     tau_flattop: Parameter[float]
+    """Flat-top duration [second]."""
+
     tk_tf_outboard: Parameter[float]
+    """TF coil outboard thickness [meter]."""
+
+    V_p: Parameter[float]
+    """Plasma volume [meter ** 3]."""
+
+    Z_eff: Parameter[float]
+    """Effective particle radiation atomic mass [unified_atomic_mass_unit]."""
 
     def __post_init__(self):
         """
