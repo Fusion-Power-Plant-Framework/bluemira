@@ -26,12 +26,11 @@ import json
 import os
 from typing import Dict, List, Union
 
-from bluemira.base.constants import raw_uc
 from bluemira.base.look_and_feel import bluemira_print, bluemira_warn
 from bluemira.base.parameter import ParameterMapping
 from bluemira.codes.error import CodesError
 from bluemira.codes.interface import CodesTeardown
-from bluemira.codes.process.api import PROCESS_DICT, MFile, update_obsolete_vars
+from bluemira.codes.process.api import MFile, update_obsolete_vars
 from bluemira.codes.process.constants import NAME as PROCESS_NAME
 from bluemira.codes.process.params import ProcessSolverParams
 
@@ -200,7 +199,33 @@ class _MFileWrapper:
         for key, val in self.mfile.data.items():
             data[key] = val["scan01"]
         self._data = data
+        self._data.update(self._derive_radial_build_params(self._data))
         return data
+
+    def _derive_radial_build_params(self, data: Dict) -> Dict[str, float]:
+        """
+        Derive radial build parameters that PROCESS does not directly calculate.
+
+        Notes
+        -----
+        The PROCESS radial build is taken along the diagonal (maximum
+        length) of the TF coil, so this must be taken into consideration
+        when translating the geometry into the mid-plane.
+        """
+        rtfin = data["bore"] + data["ohcth"] + data["precomp"] + data["gapoh"]
+        r_ts_ib_in = rtfin + data["tfcth"] + data["tftsgap"] + data["thshield"]
+        r_vv_ib_in = r_ts_ib_in + data["gapds"] + data["d_vv_in"] + data["shldith"]
+        r_fw_ib_in = r_vv_ib_in + data["vvblgap"] + data["blnkith"] + data["fwith"]
+        r_fw_ob_in = r_fw_ib_in + data["scrapli"] + 2 * data["rminor"] + data["scraplo"]
+        r_vv_ob_in = r_fw_ob_in + data["fwoth"] + data["blnkoth"] + data["vvblgap"]
+        return {
+            "rtfin": rtfin,
+            "r_ts_ib_in": r_ts_ib_in,
+            "r_vv_ib_in": r_vv_ib_in,
+            "r_fw_ib_in": r_fw_ib_in,
+            "r_fw_ob_in": r_fw_ob_in,
+            "r_vv_ob_in": r_vv_ob_in,
+        }
 
     @staticmethod
     def update_mappings(old_mappings: Dict[str, ParameterMapping]):

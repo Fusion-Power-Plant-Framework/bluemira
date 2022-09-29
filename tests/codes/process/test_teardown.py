@@ -23,10 +23,8 @@ from unittest import mock
 
 import pytest
 
-from bluemira.codes import process
 from bluemira.codes.error import CodesError
 from bluemira.codes.process._teardown import Teardown
-from bluemira.codes.process.mapping import mappings as process_mappings
 from bluemira.codes.process.params import ProcessSolverParams
 from tests._helpers import file_exists
 from tests.codes.process import utilities as utils
@@ -42,15 +40,9 @@ class TestTeardown:
         cls._mfile_patch = mock.patch(f"{cls.MODULE_REF}.MFile", new=utils.FakeMFile)
         cls.mfile_mock = cls._mfile_patch.start()
 
-        cls._process_dict_patch = mock.patch(
-            f"{cls.MODULE_REF}.PROCESS_DICT", new=utils.FAKE_PROCESS_DICT
-        )
-        cls.process_mock = cls._process_dict_patch.start()
-
     @classmethod
     def teardown_class(cls):
         cls._mfile_patch.stop()
-        cls._process_dict_patch.stop()
 
     def setup_method(self):
         self.default_pf = ProcessSolverParams.from_json(utils.PARAM_FILE)
