@@ -145,7 +145,8 @@ class TFCoilDesigner(Designer[GeometryParameterisation]):
 
             * param_class: str
                 A string of the import location for the parameterisation
-                class of the TF Coil eg., `bluemira.geometry.parameterisations::TripleArc`.
+                class of the TF Coil
+                eg., `bluemira.geometry.parameterisations::TripleArc`.
 
         Optional keys:
 
