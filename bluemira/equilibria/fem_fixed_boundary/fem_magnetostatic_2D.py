@@ -23,7 +23,7 @@
 Bluemira module for the solution of a 2D magnetostatic problem with cylindrical symmetry
 and toroidal current source using fenics FEM solver
 """
-from typing import Callable, Union
+from typing import Callable, Optional, Union
 
 import dolfin
 import matplotlib.pyplot as plt
@@ -248,7 +248,7 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
         self,
         pprime: Union[Callable, float],
         ffprime: Union[Callable, float],
-        curr_target: float,
+        curr_target: Optional[float] = None,
     ):
         """
         Return the density current function given pprime and ffprime.
@@ -259,9 +259,10 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
             pprime as function of psi_norm (1-D function)
         ffprime: Union[callable, float]
             ffprime as function of psi_norm (1-D function)
-        curr_target: float
+        curr_target: Optional[float]
             Target current (also used to initialize the solution in case self.psi is
-            still 0 and pprime and ffprime are, then, not defined)
+            still 0 and pprime and ffprime are, then, not defined) [A]
+            If None, the plasma current is calculated and not constrained
 
         Returns
         -------
@@ -270,7 +271,11 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
         """
         dx = dolfin.Measure("dx", domain=self.mesh)
         area = dolfin.assemble(dolfin.Constant(1) * dx())
-        j_target = curr_target / area
+
+        if curr_target:
+            j_target = curr_target / area
+        else:
+            j_target = 1.0
 
         def g(x):
             if self.psi_ax == 0:
@@ -297,7 +302,7 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
         self,
         pprime: Union[Callable, float],
         ffprime: Union[Callable, float],
-        curr_target: float,
+        curr_target: Optional[float] = None,
     ):
         """
         Return the density current DOLFIN function given pprime and ffprime.
@@ -328,7 +333,8 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
 
     def _update_curr(self, curr_target):
         self.k = 1
-        self.k = curr_target / self._calculate_curr_tot()
+        if curr_target:
+            self.k = curr_target / self._calculate_curr_tot()
 
     def _plot_current_iteration(self, points, i_iter):
         curr_data = np.array([self.g_func(p) for p in points])
@@ -353,7 +359,7 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
         self,
         pprime,
         ffprime,
-        curr_target,
+        curr_target=None,
         dirichlet_bc_function=None,
         dirichlet_marker=None,
         neumann_bc_function=None,
@@ -372,8 +378,9 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
             pprime as function of psi_norm (1-D function)
         ffprime: Union[callable, float]
             ffprime as function of psi_norm (1-D function)
-        curr_target: float
-            Target total plasma current
+        curr_target: Optional[float]
+            Target total plasma current [A]
+            If None, plasma current is calculated and not constrained
         dirichlet_bc_function : Optional[Union[dolfin.Expression, dolfin.Function]]
             Dirichlet boundary condition function. Defaults to a Dirichlet boundary
             condition of 0 on the plasma boundary.
