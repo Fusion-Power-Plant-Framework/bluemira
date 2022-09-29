@@ -18,10 +18,33 @@ from typing import (
 
 from tabulate import tabulate
 
+import pint
+
+from bluemira.base.constants import raw_uc
 from bluemira.base.parameter_frame._parameter import NewParameter as Parameter
 from bluemira.base.parameter_frame._parameter import ParamDictT, ParameterValueType
 
 _PfT = TypeVar("_PfT", bound="NewParameterFrame")
+
+
+base_unit_defaults = {
+    "[time]": "second",
+    "[length]": "metre",
+    "[mass]": "kilogram",
+    "[current]": "ampere",
+    "[temperature]": "kelvin",
+    "[substance]": "mol",
+    "[luminosity]": "candela",
+    "[]": "degree",  # dimensionality == {}
+}
+
+combined_unit_defaults = {
+    "kg/m^3": {"[length]": -3, "[mass]": 1},
+    "1/m^3": {"[length]": -3},
+    "1/m^2/s": {"[length]": -2, "[time]": -1},
+}
+
+WEIRD_UNITS = ["eV"]
 
 
 @dataclass
@@ -139,6 +162,31 @@ class NewParameterFrame:
             raise TypeError(f"Field '{field}' does not have type Parameter.")
         value_types = get_args(member_type)
         return value_types
+
+    @classmethod
+    def _validate_units(cls, param_data: Dict):
+        quantity = pint.Quantity(param_data["value"], param_data["unit"])
+        if dimensionality := quantity.units.dimensionality:
+            dim_list = list(map(base_unit_defaults.get, dimensionality.keys()))
+            dim_pow = list(dimensionality.values())
+            unit = pint.Unit(
+                ".".join([f"{j[0]}^{j[1]}" for j in zip(dim_list, dim_pow)])
+            )
+            unit = cls._fix_weird_units(unit, quantity.units)
+        else:
+            unit = cls._fix_dimensionless_units(quantity.units)
+
+        if unit != quantity.units:
+            param_data["value"] = raw_uc(quantity.magnitude, quantity.units, unit)
+            param_data["unit"] = unit
+
+    @staticmethod
+    def _fix_dimensionless_units(unit: pint.Unit) -> pint.Unit:
+        raise NotImplementedError("dimensionless units need work")
+
+    @staticmethod
+    def _fix_weird_units(new_unit: pint.Unit, old_unit: pint.Unit) -> pint.Unit:
+        raise NotImplementedError("weird units need work")
 
     def tabulate(self, keys: Optional[List] = None, tablefmt: str = "fancy_grid") -> str:
         """
