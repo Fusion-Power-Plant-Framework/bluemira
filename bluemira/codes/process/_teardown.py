@@ -24,9 +24,9 @@ PROCESS teardown functions
 
 import json
 import os
-from typing import Dict, List, Union
+from typing import Dict, Iterable, List, Union
 
-from bluemira.base.look_and_feel import bluemira_print, bluemira_warn
+from bluemira.base.look_and_feel import bluemira_print
 from bluemira.base.parameter import ParameterMapping
 from bluemira.codes.error import CodesError
 from bluemira.codes.interface import CodesTeardown
@@ -111,7 +111,7 @@ class Teardown(CodesTeardown):
         outputs = _read_json_file_or_raise(mock_file_path)
         self.params.update_values(outputs, source=self._name)
 
-    def get_raw_outputs(self, params: Union[List, str]) -> List[float]:
+    def get_raw_outputs(self, params: Union[Iterable, str]) -> List[float]:
         """
         Get raw variables from an MFILE.
 
@@ -127,12 +127,29 @@ class Teardown(CodesTeardown):
         values: List[float]
             The parameter values.
         """
-        if self._mfile_wrapper:
-            return self._mfile_wrapper.extract_outputs(params)
-        raise CodesError(
-            "Cannot retrieve output from PROCESS MFile. "
-            "The solver has not been run, so no MFile is available to read."
-        )
+        if not self._mfile_wrapper:
+            raise CodesError(
+                "Cannot retrieve output from PROCESS MFile. "
+                "The solver has not been run, so no MFile is available to read."
+            )
+        if isinstance(params, str):
+            params = [params]
+        outputs = []
+        data = self._mfile_wrapper.data
+        for param_name in params:
+            if mapping := self.params.mappings().get(param_name, None):
+                process_name = mapping.name
+            else:
+                process_name = param_name
+            try:
+                value = data[process_name]
+            except KeyError:
+                raise CodesError(
+                    "No PROCESS output, or bluemira parameter mapped to a PROCESS "
+                    f"output, with name '{param_name}'."
+                )
+            outputs.append(value)
+        return outputs
 
     def _load_mfile(self, path: str, recv_all: bool):
         """
@@ -215,74 +232,28 @@ class _MFileWrapper:
             "r_vv_ob_in": r_vv_ob_in,
         }
 
-    @staticmethod
-    def update_mappings(old_mappings: Dict[str, ParameterMapping]):
-        """
-        Convert old PROCESS mappings to new ones
 
-        Parameters
-        ----------
-        old_mappings: dict
-            dictionary of parameter mappings
+def update_mappings(old_mappings: Dict[str, ParameterMapping]):
+    """
+    Convert old PROCESS mappings to new ones
 
-        Returns
-        -------
-        new_mappings: dict
-            dictionary of new parameter mappings
-        """
-        new_mappings = {}
-        for key, val in old_mappings.items():
-            new_name = update_obsolete_vars(val.name)
-            if new_name != val.name:
-                val = ParameterMapping(
-                    new_name, send=val.send, recv=val.recv, unit=val.unit
-                )
-            new_mappings[key] = val
-        return new_mappings
+    Parameters
+    ----------
+    old_mappings: dict
+        dictionary of parameter mappings
 
-    def extract_outputs(self, outputs: Union[List, str]) -> List[float]:
-        """
-        Searches MFile for variable.
-
-        Outputs defined in bluemira variable names if they are mapped
-        otherwise process variable names are the default
-
-        Parameters
-        ----------
-        outputs: Union[List, str]
-            parameter names to access
-
-        Returns
-        -------
-        List of values
-
-        """
-        if isinstance(outputs, str):
-            # Handle single variable request
-            outputs = [outputs]
-
-        out: List[float] = []
-        for output in outputs:
-            try:
-                value = self._data[output]
-            except KeyError:
-                if (process_var := self.bm_to_p_mappings.get(output, None)) is not None:
-                    process_var = process_var.name
-                else:
-                    process_var = output
-                try:
-                    process_value = self.mfile.data[process_var]
-                except KeyError:
-                    outputs.append(0.0)
-                    bluemira_warn(
-                        f"bluemira variable '{output}' a.k.a. "
-                        f"PROCESS variable '{process_var}' "
-                        "not found in PROCESS output. Value set to 0.0."
-                    )
-                    continue
-                value = process_value["scan01"]
-            out.append(value)
-        return out
+    Returns
+    -------
+    new_mappings: dict
+        dictionary of new parameter mappings
+    """
+    new_mappings = {}
+    for key, val in old_mappings.items():
+        new_name = update_obsolete_vars(val.name)
+        if new_name != val.name:
+            val = ParameterMapping(new_name, send=val.send, recv=val.recv, unit=val.unit)
+        new_mappings[key] = val
+    return new_mappings
 
 
 def _read_json_file_or_raise(file_path: str) -> Dict[str, float]:
