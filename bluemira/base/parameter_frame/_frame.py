@@ -18,11 +18,8 @@ from typing import (
 
 from tabulate import tabulate
 
-from bluemira.base.parameter_frame._parameter import (
-    NewParameter,
-    ParamDictT,
-    ParameterValueType,
-)
+from bluemira.base.parameter_frame._parameter import NewParameter as Parameter
+from bluemira.base.parameter_frame._parameter import ParamDictT, ParameterValueType
 
 _PfT = TypeVar("_PfT", bound="NewParameterFrame")
 
@@ -30,7 +27,7 @@ _PfT = TypeVar("_PfT", bound="NewParameterFrame")
 @dataclass
 class NewParameterFrame:
     """
-    A data class to hold a collection of `NewParameter` objects.
+    A data class to hold a collection of `Parameter` objects.
 
     The class should be declared using on of the following forms:
 
@@ -49,7 +46,7 @@ class NewParameterFrame:
 
     """
 
-    def __iter__(self) -> Generator[NewParameter, None, None]:
+    def __iter__(self) -> Generator[Parameter, None, None]:
         """
         Iterate over this frame's parameters.
 
@@ -62,7 +59,7 @@ class NewParameterFrame:
     def update_values(self, new_values: Dict[str, ParameterValueType], source: str = ""):
         """Update the given parameter values."""
         for key, value in new_values.items():
-            param: NewParameter = getattr(self, key)
+            param: Parameter = getattr(self, key)
             param.set_value(value, source)
 
     @classmethod
@@ -73,7 +70,7 @@ class NewParameterFrame:
     ) -> _PfT:
         """Initialize an instance from a dictionary."""
         data = copy.deepcopy(data)
-        kwargs: Dict[str, NewParameter] = {}
+        kwargs: Dict[str, Parameter] = {}
         for member in cls.__dataclass_fields__:
             try:
                 param_data = data.pop(member)
@@ -81,7 +78,10 @@ class NewParameterFrame:
                 raise ValueError(f"Data for parameter '{member}' not found.") from e
 
             value_type = cls._validate_parameter_field(member)
-            kwargs[member] = NewParameter(
+
+            cls._validate_units(param_data)
+
+            kwargs[member] = Parameter(
                 name=member, **param_data, _value_types=value_type
             )
 
@@ -132,11 +132,11 @@ class NewParameterFrame:
     @classmethod
     def _validate_parameter_field(cls, field: str) -> Tuple[Type, ...]:
         member_type = cls.__dataclass_fields__[field].type
-        if (member_type is not NewParameter) and (
+        if (member_type is not Parameter) and (
             not hasattr(member_type, "__origin__")
-            or member_type.__origin__ is not NewParameter
+            or member_type.__origin__ is not Parameter
         ):
-            raise TypeError(f"Field '{field}' does not have type NewParameter.")
+            raise TypeError(f"Field '{field}' does not have type Parameter.")
         value_types = get_args(member_type)
         return value_types
 
