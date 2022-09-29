@@ -28,7 +28,7 @@ from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.base.parameter import ParameterFrame
 from bluemira.base.solver import SolverABC, Task
 from bluemira.codes.error import CodesError
-from bluemira.codes.utilities import get_recv_mapping, run_subprocess
+from bluemira.codes.utilities import run_subprocess
 
 
 class CodesTask(Task):
