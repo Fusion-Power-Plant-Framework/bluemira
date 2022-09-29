@@ -71,7 +71,7 @@ class Teardown(CodesTeardown):
         Update this object's plasmod params with default values.
         """
         self.outputs = PlasmodOutputs()
-        self._update_params_with_outputs(vars(self.outputs), self.params.mappings())
+        self._update_params_with_outputs(vars(self.outputs))
 
     def read(self):
         """
@@ -92,7 +92,7 @@ class Teardown(CodesTeardown):
                 f"Could not read plasmod output file: {os_error}."
             ) from os_error
         self._raise_on_plasmod_error_code(self.outputs.i_flag)
-        self._update_params_with_outputs(vars(self.outputs), self.params.mappings())
+        self._update_params_with_outputs(vars(self.outputs))
 
     @staticmethod
     def _raise_on_plasmod_error_code(exit_code: int):

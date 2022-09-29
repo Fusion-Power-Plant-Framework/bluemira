@@ -248,11 +248,12 @@ class CodesSolver(SolverABC):
                     "var2": {"recv": False}
                 }
         """
+        param_mappings = self.params.mappings()
         for key, val in send_recv.items():
             try:
-                p_map = getattr(self.params, key).mapping[self.name]
+                p_map = param_mappings[key]
             except (AttributeError, KeyError):
-                bluemira_warn(f"No mapping known for {key} in {self.name}")
+                bluemira_warn(f"No mapping known for '{key}' in '{self.name}'.")
             else:
                 for sr_key, sr_val in val.items():
                     setattr(p_map, sr_key, sr_val)

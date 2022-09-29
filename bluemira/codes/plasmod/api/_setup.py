@@ -112,7 +112,7 @@ class Setup(CodesSetup):
         """
         new_inputs = {} if new_inputs is None else new_inputs
         new_inputs = self._remove_non_plasmod_inputs(new_inputs)
-        new = self._get_new_inputs(self.params.mappings())
+        new = self._get_new_inputs()
         new.update(new_inputs)
         # Create a new PlasmodInputs object so we still benefit from
         # the __post_init__ processing (converts models to enums)
