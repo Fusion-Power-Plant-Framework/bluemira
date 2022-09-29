@@ -102,14 +102,11 @@ def _get_mapping(
     if send_recv not in ["send", "recv"]:
         raise CodesError("Mapping must be obtained for either send or recv.")
 
-    mapping = {}
-    for key in params.keys():
-        param = params.get_param(key)
-        if code_name in param.mapping and (
-            override or getattr(param.mapping[code_name], send_recv)
-        ):
-            mapping[param.mapping[code_name].name] = key
-    return mapping
+    mappings = {}
+    for name, mapping in params.mappings().items():
+        if override or getattr(mapping, send_recv):
+            mappings[mapping.name] = name
+    return mappings
 
 
 def get_recv_mapping(params, code_name, recv_all=False):

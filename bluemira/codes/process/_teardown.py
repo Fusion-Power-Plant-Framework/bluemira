@@ -144,19 +144,17 @@ class Teardown(CodesTeardown):
         False, then only update a parameter if its mapping has
         ``recv == True``.
         """
-        outputs = self._read_mfile(path, self.params.mappings())
-        self._update_params_with_outputs(outputs, self.params.mappings(), recv_all)
+        mfile = self._read_mfile(path)
+        self._update_params_with_outputs(mfile.data, recv_all)
 
-    def _read_mfile(self, path: str, param_mappings: Dict[str, ParameterMapping]):
+    def _read_mfile(self, path: str):
         """
         Read an MFile, applying the given mappings, and performing unit
         conversions.
         """
-        bm_units = {}
-        for param in self.params:
-            bm_units[param.name] = param.unit
-        self._mfile_wrapper = _MFileWrapper(path, param_mappings, bm_units)
-        return self._mfile_wrapper.read()
+        self._mfile_wrapper = _MFileWrapper(path)
+        self._mfile_wrapper.read()
+        return self._mfile_wrapper
 
 
 class _MFileWrapper:
@@ -172,35 +170,25 @@ class _MFileWrapper:
         ... TODO(hsaunders1904)
     """
 
-    def __init__(
-        self,
-        file_path: str,
-        parameter_mappings: Dict[str, ParameterMapping],
-        bm_units: Dict[str, str],
-    ):
+    def __init__(self, file_path: str):
         if not os.path.isfile(file_path):
             raise CodesError(f"Path '{file_path}' is not a file.")
         self.file_path = file_path
-        self.bm_to_p_mappings = self.update_mappings(parameter_mappings)
-        self.bm_units = bm_units
         self.mfile = MFile(file_path)
         _raise_on_infeasible_solution(self.mfile)
-        self._data = {}  # hold reference to data that has been read and mapped
+        self.data = {}
 
     def read(self) -> Dict:
         """
         Read the data from the PROCESS MFile.
 
-        Return the data as a dictionary where keys are bluemira parameter
-        names, and values are values read from the MFile - performing any
-        necessary unit conversions.
+        Store the result in ``data`` attribute.
         """
         data = {}
         for key, val in self.mfile.data.items():
             data[key] = val["scan01"]
-        self._data = data
-        self._data.update(self._derive_radial_build_params(self._data))
-        return data
+        self.data = data
+        self.data.update(self._derive_radial_build_params(self.data))
 
     def _derive_radial_build_params(self, data: Dict) -> Dict[str, float]:
         """

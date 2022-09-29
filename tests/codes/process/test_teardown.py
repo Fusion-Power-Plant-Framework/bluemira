@@ -66,6 +66,7 @@ class TestTeardown:
 
         # Expected value comes from ./test_data/mfile_data.json
         assert teardown.params.tau_e.value == pytest.approx(4.3196)
+        assert teardown.params.P_el_net.value == pytest.approx(500)
 
     @pytest.mark.parametrize(
         "run_func, data_dir", [("runinput", utils.RUN_DIR), ("readall", utils.READ_DIR)]

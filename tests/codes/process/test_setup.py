@@ -53,8 +53,9 @@ class TestSetup:
         writer = self.writer_cls_mock.return_value
         num_send_params = sum(1 for x in process_mappings.values() if x.send)
         assert writer.add_parameter.call_count == num_send_params
-        # Expected value comes from default PROCESS template file
+        # Expected value comes from default pf
         assert mock.call("pnetelin", 500) in writer.add_parameter.call_args_list
+        assert mock.call("dr_tf_case_out", 0.04) in writer.add_parameter.call_args_list
 
     def test_run_adds_problem_setting_params_to_InDat_writer(self):
         problem_settings = {"input0": 0.0}
