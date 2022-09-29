@@ -24,7 +24,7 @@ import pytest
 
 from bluemira.display.plotter import PlotOptions, plot_2d
 from bluemira.geometry._deprecated_tools import make_circle_arc
-from bluemira.geometry.coordinates import Coordinates, get_area
+from bluemira.geometry.coordinates import Coordinates, get_area, in_polygon
 from bluemira.geometry.inscribed_rect import _rect, inscribed_rect_in_poly
 from bluemira.geometry.tools import boolean_cut, make_circle, make_face, make_polygon
 
