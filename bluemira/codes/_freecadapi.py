@@ -1850,6 +1850,11 @@ def serialize_shape(shape):
 
     output = []
 
+    if type_ == Part.Compound:
+        for child in shape.childShapes():
+            output.append(serialize_shape(child))
+        return {"Compound": output}
+
     if type_ == Part.Solid:
         for shell in shape.Shells:
             output.append(serialize_shape(shell))
