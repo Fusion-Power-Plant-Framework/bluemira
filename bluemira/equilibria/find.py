@@ -145,8 +145,6 @@ def find_local_minima(f):
         (
             (f < np.roll(f, 1, 0))
             & (f < np.roll(f, -1, 0))
-            & (f <= np.roll(f, 0, 1))
-            & (f <= np.roll(f, 0, -1))
             & (f < np.roll(f, 1, 1))
             & (f < np.roll(f, -1, 1))
         )
