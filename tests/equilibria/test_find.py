@@ -31,6 +31,7 @@ from bluemira.equilibria.find import (
     _in_plasma,
     find_LCFS_separatrix,
     find_local_minima,
+    find_local_minima2,
     get_legs,
     inv_2x2_matrix,
 )
@@ -63,6 +64,45 @@ def test_find_local_minima():
     assert len(jj) == 6
     assert (np.sort(ii) == np.array([0, 1, 1, 50, 98, 98])).all()
     assert (np.sort(jj) == np.array([0, 0, 1, 50, 98, 98])).all()
+
+
+def test_find_local_minima2():
+    for _ in range(10):
+        array = np.ones((100, 100))
+        i, j = np.random.randint(0, 99, 2)
+        print(i, j)
+        array[i, j] = 0
+        print(array)
+        print(np.where(array == 0))
+        ii, jj = find_local_minima2(array)
+        try:
+            # Minima corners another
+            assert len(ii) == array.size - 5
+            assert len(jj) == array.size - 5
+        except AssertionError:
+            # Lone minima
+            assert len(ii) == array.size - 8
+            assert len(jj) == array.size - 8
+        # assert ii[0] == i
+        # assert jj[0] == j
+
+    array = np.ones((100, 100))
+    array[1, 0] = 0
+    array[-2, -2] = 0
+    array[-2, 1] = 0
+    array[1, -2] = 0
+    array[0, 50] = 0
+    array[50, 0] = 0
+
+    ii, jj = find_local_minima2(array)
+
+    assert len(ii) == array.size - 39
+    assert len(jj) == array.size - 39
+    truth_array = np.arange(10000)
+    locations = np.arange(9900, 10000)[::-1]
+
+    assert (truth_array[~np.unique(np.sort(ii))] == locations).all()
+    assert (truth_array[~np.unique(np.sort(ii))] == locations).all()
 
 
 def test_inv_2x2_jacobian():

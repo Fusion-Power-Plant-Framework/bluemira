@@ -27,6 +27,8 @@ import operator
 
 import numba as nb
 import numpy as np
+import scipy.ndimage.filters as filters
+import scipy.ndimage.morphology as morphology
 from matplotlib._contour import QuadContourGenerator
 from scipy.interpolate import RectBivariateSpline
 
@@ -149,6 +151,22 @@ def find_local_minima(f):
             & (f < np.roll(f, -1, 1))
         )
     )
+
+
+def find_local_minima2(arr):
+    """
+    https://stackoverflow.com/questions/3986345/how-to-find-the-local-minima-of-a-smooth-multidimensional-array-in-numpy-efficien
+
+    does find "plateau", can find minima at corners of array...
+    """
+    neighborhood = morphology.generate_binary_structure(len(arr.shape), 2)
+    local_min = filters.minimum_filter(arr, footprint=neighborhood) == arr
+    background = arr == 0
+    eroded_background = morphology.binary_erosion(
+        background, structure=neighborhood, border_value=1
+    )
+    detected_minima = local_min ^ eroded_background
+    return np.where(detected_minima)
 
 
 @nb.jit(nopython=True, cache=True)
