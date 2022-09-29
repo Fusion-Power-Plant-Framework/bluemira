@@ -145,14 +145,29 @@ class TFCoilDesigner(Designer[GeometryParameterisation]):
 
             * param_class: str
                 A string of the import location for the parameterisation
-                class of the TF Coil
+                class of the TF Coil eg., `bluemira.geometry.parameterisations::TripleArc`.
 
         Optional keys:
 
             * variables_map: Dict
-                variable map for the param_class
+                param_class variables map to modify the parameterisation defaults.
+                eg:
+
+                ..code-block::python
+
+                    variables_map = {
+
+                        "x1":{
+                            "value": "r_tf_in_centre",
+                            "fixed": True,
+                        },
+                        "x2": 5,
+                        "x3": {"value": 6},
+                        "x4": "R_0",
+                    }
+
             * file_path: str
-                file path for loading parameterisation
+                file path for loading parameterisation used only in 'read' mode
             * problem_class: str
                 A string of the import location for the problem class to
                 solve
@@ -361,11 +376,11 @@ class TFCoilDesigner(Designer[GeometryParameterisation]):
 class TFCoilBuilder(Builder):
     """
     TFCoil Builder
-
-    TODO tf_wp_width and tf_wp_depth can be completely disconnected from the
-    wp_cross_section passed in
-    so can R_0 and z_0
     """
+
+    # TODO tf_wp_width and tf_wp_depth can be completely disconnected from the
+    # wp_cross_section passed in
+    # so can R_0 and z_0
 
     WP = "Winding Pack"
     OUT = "outer"
