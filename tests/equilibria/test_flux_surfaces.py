@@ -127,16 +127,17 @@ class TestClosedFluxSurface:
             1.6,
             0.4,
             0.33,
-            -20,
-            5,
-            60,
+            0,
+            0,
+            45,
             30,
         )
         fs = flux_surface_johner(
-            7, 0, 2, kappa_u, kappa_l, delta_u, delta_l, a1, a2, a3, a4, n=1000
+            R_0, z_0, a, kappa_u, kappa_l, delta_u, delta_l, a1, a2, a3, a4, n=1000
         )
         fs.close()
         fs = ClosedFluxSurface(fs)
+
         assert np.isclose(fs.major_radius, R_0)
         assert np.isclose(fs._z_centre, z_0)
         assert np.isclose(fs.minor_radius, a)
