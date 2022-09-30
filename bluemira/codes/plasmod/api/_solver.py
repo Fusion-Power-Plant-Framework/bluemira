@@ -37,7 +37,6 @@ from bluemira.codes.plasmod.api._teardown import Teardown
 from bluemira.codes.plasmod.constants import BINARY as PLASMOD_BINARY
 from bluemira.codes.plasmod.constants import NAME as PLASMOD_NAME
 from bluemira.codes.plasmod.mapping import Profiles
-from bluemira.codes.plasmod.mapping import mappings as plasmod_mappings
 from bluemira.codes.plasmod.params import PlasmodSolverParams
 
 
