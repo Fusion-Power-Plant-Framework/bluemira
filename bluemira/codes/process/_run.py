@@ -24,7 +24,6 @@ PROCESS run functions
 """
 
 from bluemira.base.look_and_feel import bluemira_print
-from bluemira.base.parameter_frame import NewParameterFrame as ParameterFrame
 from bluemira.codes.interface import CodesTask
 from bluemira.codes.process.constants import BINARY as PROCESS_BINARY
 from bluemira.codes.process.constants import NAME as PROCESS_NAME
