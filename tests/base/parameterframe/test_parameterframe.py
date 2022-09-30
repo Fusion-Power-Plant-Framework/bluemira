@@ -252,6 +252,16 @@ class TestParameterFrame:
                     if ind in head_keys:
                         raise ve
 
+    def test_iterating_returns_parameters_in_declaration_order(self):
+        frame = BasicFrame.from_dict(FRAME_DATA)
+
+        params = []
+        for param in frame:
+            params.append(param)
+
+        assert all(isinstance(p, Parameter) for p in params)
+        assert [p.name for p in params] == ["height", "age"]
+
 
 class TestParameterSetup:
     def test_params_None(self):
