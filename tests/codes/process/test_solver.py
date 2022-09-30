@@ -92,7 +92,7 @@ class TestSolver:
 
 
 @pytest.mark.skipif(not ENABLED, reason="PROCESS is not installed on the system.")
-class TestSolverSystem:
+class TestSolverIntegration:
 
     DATA_DIR = os.path.join(os.path.dirname(__file__), "test_data")
 

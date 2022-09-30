@@ -23,6 +23,7 @@ from unittest import mock
 
 import pytest
 
+from bluemira.codes import process
 from bluemira.codes.error import CodesError
 from bluemira.codes.process._setup import Setup
 from bluemira.codes.process.mapping import mappings as process_mappings
@@ -30,15 +31,14 @@ from bluemira.codes.process.params import ProcessSolverParams
 from tests._helpers import file_exists
 from tests.codes.process.utilities import PARAM_FILE
 
+MODULE_REF = "bluemira.codes.process._setup"
+
 
 class TestSetup:
-
-    MODULE_REF = "bluemira.codes.process._setup"
-
     def setup_method(self):
         self.default_pf = ProcessSolverParams.from_json(PARAM_FILE)
 
-        self._writer_patch = mock.patch(f"{self.MODULE_REF}.InDat")
+        self._writer_patch = mock.patch(f"{MODULE_REF}.InDat")
         self.writer_cls_mock = self._writer_patch.start()
 
     def teardown_method(self):
@@ -54,8 +54,8 @@ class TestSetup:
         num_send_params = sum(1 for x in process_mappings.values() if x.send)
         assert writer.add_parameter.call_count == num_send_params
         # Expected value comes from default pf
-        assert mock.call("pnetelin", 500) in writer.add_parameter.call_args_list
-        assert mock.call("dr_tf_case_out", 0.04) in writer.add_parameter.call_args_list
+        call_arg_list = writer.add_parameter.call_args_list
+        assert mock.call("pnetelin", 500) in call_arg_list
 
     def test_run_adds_problem_setting_params_to_InDat_writer(self):
         problem_settings = {"input0": 0.0}
@@ -72,7 +72,7 @@ class TestSetup:
         setup = Setup(self.default_pf, "", template_in_dat_path="template/path/in.dat")
         self.writer_cls_mock.return_value.data = {"input": 0.0}
 
-        with file_exists("template/path/in.dat", f"{self.MODULE_REF}.os.path.isfile"):
+        with file_exists("template/path/in.dat", f"{MODULE_REF}.os.path.isfile"):
             setup.run()
 
         self.writer_cls_mock.assert_called_once_with(filename="template/path/in.dat")
@@ -109,3 +109,20 @@ class TestSetup:
         writer = self.writer_cls_mock.return_value
         call_args = writer.add_parameter.call_args_list
         assert mock.call(model_name, model_cls[field_str].value) in call_args
+
+
+@pytest.mark.skipif(
+    not process.ENABLED, reason="PROCESS is not installed on the system."
+)
+class TestSetupIntegration:
+    @mock.patch(f"{MODULE_REF}.InDat")
+    def test_obsolete_parameter_names_are_updated(self, writer_cls_mock):
+        pf = ProcessSolverParams.from_json(PARAM_FILE)
+        setup = Setup(pf, "")
+        writer_cls_mock.return_value.data = {"x": 0}
+
+        setup.run()
+
+        writer = writer_cls_mock.return_value
+        # 'dr_tf_case_out' is new name for 'casthi'
+        assert mock.call("dr_tf_case_out", 0.04) in writer.add_parameter.call_args_list
