@@ -23,7 +23,7 @@ dependencies = [
     "fortranformat",
     "gmsh",
     "imageio",
-    "matplotlib>=3.5",
+    "matplotlib>=3.5,<3.6",
     "neutronics-material-maker==0.1.11",  # Crash on upgrade
     "nlopt",
     "numba",
