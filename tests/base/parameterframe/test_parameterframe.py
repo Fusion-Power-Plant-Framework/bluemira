@@ -173,6 +173,13 @@ class TestParameterFrame:
 
         assert frame1 != frame2
 
+    @pytest.mark.parametrize("x", [1, "str", Parameter("x", 0.1, "m")])
+    def test_frame_ne_to_non_frame(self, x):
+        frame = BasicFrame.from_dict(FRAME_DATA)
+
+        assert frame != x
+        assert x != frame
+
     def test_update_values_edits_frames_values(self):
         frame = BasicFrame.from_dict(FRAME_DATA)
 
