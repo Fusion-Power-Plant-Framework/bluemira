@@ -124,7 +124,6 @@ class TestSolverSystem:
 
     @pytest.mark.parametrize("run_mode", [RunMode.READ, RunMode.READALL])
     def test_derived_radial_build_params_are_updated(self, run_mode):
-        # Assert here to check the parameters are actually changing
         build_config = {"read_dir": self.DATA_DIR}
 
         solver = Solver(self.params, build_config)
@@ -155,8 +154,6 @@ class TestSolverSystem:
         assert os.path.isfile(os.path.join(run_dir.name, "MFILE.DAT"))
 
     def test_get_species_data_returns_row_vectors(self):
-        # imp_data.__file__ is returning './__init__.py' for some reason
-        # god knows why
         temp, loss_f, z_eff = Solver.get_species_data("H")
 
         assert isinstance(temp.size, int) == 1 and temp.size > 0
