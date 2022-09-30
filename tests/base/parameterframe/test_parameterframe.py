@@ -3,6 +3,7 @@ from dataclasses import dataclass
 from typing import Union
 from unittest import mock
 
+import pint
 import pytest
 
 from bluemira.base.parameter_frame import NewParameter as Parameter
@@ -285,6 +286,53 @@ class TestParameterFrame:
         with pytest.raises(ValueError) as error:
             BasicFrame.from_json(["x"])
         assert "Cannot read JSON" in str(error)
+
+
+@dataclass
+class UnitFrame1(ParameterFrame):
+    height: Parameter[float]
+    age: Parameter[int]
+    weight: Parameter[int]
+
+
+@dataclass
+class UnitFrame2(ParameterFrame):
+    magfield: Parameter[float]
+    energy: Parameter[float]
+    pressure: Parameter[int]
+
+
+class TestParameterFrameUnits:
+
+    SIMPLE_FRAME_DATA = {
+        "length": {"value": 180.5, "unit": "in"},
+        "time": {"value": 30, "unit": "day"},
+        "mass": {"value": 1, "unit": "tonne"},
+    }
+
+    COMPLEX_FRAME_DATA = {
+        "magfield": {"value": 5000, "unit": "gamma"},
+        "energy": {"value": 30, "unit": "keV"},
+        "pressure": {"value": 1, "unit": "atm"},
+    }
+
+    def test_simple_units_to_defaults(self):
+        frame = UnitFrame1.from_dict(self.SIMPLE_FRAME_DATA)
+        assert frame.length.unit == pint.Unit("m")
+        assert frame.length.value == 4.5847
+        assert frame.time.unit == pint.Unit("s")
+        assert frame.time.value == 2592000
+        assert frame.mass.unit == pint.Unit("kg")
+        assert frame.mass.value == 1000
+
+    def test_complex_units_to_defaults(self):
+        frame = UnitFrame2.from_dict(self.COMPLEX_FRAME_DATA)
+        assert frame.magfield.unit == pint.Unit("T")
+        assert frame.magfield.value == pytest.approx(5e-6)
+        assert frame.energy.unit == pint.Unit("J")
+        assert frame.energy.value == pytest.approx(4.8065299e-15)
+        assert frame.pressure.unit == pint.Unit("Pa")
+        assert frame.pressure.value == 101325
 
 
 class TestParameterSetup:

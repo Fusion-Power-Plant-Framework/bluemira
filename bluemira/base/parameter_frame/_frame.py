@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import copy
 import json
+from contextlib import suppress
 from dataclasses import dataclass, fields
 from typing import (
     Any,
@@ -16,9 +17,8 @@ from typing import (
     get_args,
 )
 
-from tabulate import tabulate
-
 import pint
+from tabulate import tabulate
 
 from bluemira.base.constants import raw_uc
 from bluemira.base.parameter_frame._parameter import NewParameter as Parameter
@@ -35,16 +35,54 @@ base_unit_defaults = {
     "[temperature]": "kelvin",
     "[substance]": "mol",
     "[luminosity]": "candela",
-    "[]": "degree",  # dimensionality == {}
+    "[angle]": "degree",  # dimensionality == {}
 }
 
 combined_unit_defaults = {
-    "kg/m^3": {"[length]": -3, "[mass]": 1},
-    "1/m^3": {"[length]": -3},
-    "1/m^2/s": {"[length]": -2, "[time]": -1},
+    "[energy]": "joules",
+    "[pressure]": "pascal",
+    "[magnetic_field]": "tesla",
+    "[electric_potential]": "volt",
+    "[power]": "watt",
+    "[force]": "newton",
+    "[resistance]": "ohm",
 }
 
-WEIRD_UNITS = ["eV"]
+combined_unit_dimensions = {
+    "[energy]": {"[length]": 2, "[mass]": 1, "[time]": -2},
+    "[pressure]": {"[length]": -1, "[mass]": 1, "[time]": -2},
+    "[magnetic_field]": {"[current]": -1, "[mass]": 1, "[time]": -2},
+    "[electric_potential]": {"[length]": 2, "[mass]": 1, "[time]": -2},
+    "[power]": {"[length]": 2, "[mass]": 1, "[time]": -3},
+    "[force]": {"[length]": 2, "[mass]": 1, "[time]": -3},
+    "[resistance]": {"[current]": -2, "[length]": 2, "[mass]": 1, "[time]": -3},
+}
+
+ANGLE = ["turn", "degree", "arcminute", "arcsecond", "milliarcsecond", "grade", "mil"]
+
+# day
+# gigajoule
+# kiloelectron_volt
+# megaampere
+# megaampere * meter / megawatt
+# megaampere / meter ** 2
+# meganewton
+# megawatt
+# megawatt / meter ** 2
+# meter
+# meter ** 3
+# meter ** 3 * pascal / second
+# ohm
+# pascal
+# second
+# tesla
+# unified_atomic_mass_unit
+# volt
+# watt
+
+
+# degree
+# displacements_per_atom
 
 
 @dataclass
@@ -101,9 +139,7 @@ class NewParameterFrame:
                 raise ValueError(f"Data for parameter '{member}' not found.") from e
 
             value_type = cls._validate_parameter_field(member)
-
-            cls._validate_units(param_data)
-
+            cls._validate_units(param_data, value_type)
             kwargs[member] = Parameter(
                 name=member, **param_data, _value_types=value_type
             )
@@ -164,29 +200,58 @@ class NewParameterFrame:
         return value_types
 
     @classmethod
-    def _validate_units(cls, param_data: Dict):
+    def _validate_units(cls, param_data: Dict, value_type):
+
         quantity = pint.Quantity(param_data["value"], param_data["unit"])
+
         if dimensionality := quantity.units.dimensionality:
             dim_list = list(map(base_unit_defaults.get, dimensionality.keys()))
             dim_pow = list(dimensionality.values())
             unit = pint.Unit(
                 ".".join([f"{j[0]}^{j[1]}" for j in zip(dim_list, dim_pow)])
             )
-            unit = cls._fix_weird_units(unit, quantity.units)
+            unit = cls._fix_combined_units(unit)
         else:
-            unit = cls._fix_dimensionless_units(quantity.units)
+            unit = quantity.units
 
+        # unit = cls._fix_dimensionless_units(unit, quantity.units)
         if unit != quantity.units:
-            param_data["value"] = raw_uc(quantity.magnitude, quantity.units, unit)
+            val = raw_uc(quantity.magnitude, quantity.units, unit)
+            if isinstance(param_data["value"], int) and int in value_type:
+                val = int(val)
+            param_data["value"] = val
             param_data["unit"] = unit
 
     @staticmethod
-    def _fix_dimensionless_units(unit: pint.Unit) -> pint.Unit:
-        raise NotImplementedError("dimensionless units need work")
+    def _fix_dimensionless_units(
+        modified_unit: pint.Unit, orig_unit: pint.Unit
+    ) -> pint.Unit:
+        unit_str = str(orig_unit)
+        # for ang in ANGLE:
+        #     if ang in orig_unit:
+        #     return Unit(base_unit_defaults["[angle]"])
+
+        # if "displacements_per_atom" in unit_str:
+        #     if modified_unit == Unit('dimensionless'):
+        #         return Unit("displacements_per_atom")
+        #     unit_lst =
+        #     if len(unit_str.split('/')) == 1:
+        #         return Unit(f"displacements_per_atom.{unit}")
+        #     # where is the unit?
+        #     unit_lst = unit_str
+        #     return Unit(f"{unit}/displacements_per_atom")
+        # else:
+        #     return unit
 
     @staticmethod
-    def _fix_weird_units(new_unit: pint.Unit, old_unit: pint.Unit) -> pint.Unit:
-        raise NotImplementedError("weird units need work")
+    def _fix_combined_units(unit: pint.Unit) -> pint.Unit:
+        dim_keys = list(combined_unit_dimensions.keys())
+        dim_val = list(combined_unit_dimensions.values())
+        with suppress(ValueError):
+            return pint.Unit(
+                combined_unit_defaults[dim_keys[dim_val.index(unit.dimensionality)]]
+            )
+        return unit
 
     def tabulate(self, keys: Optional[List] = None, tablefmt: str = "fancy_grid") -> str:
         """

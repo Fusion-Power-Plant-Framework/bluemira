@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import copy
 from dataclasses import dataclass
-from typing import Dict, Generic, List, Tuple, Type, TypedDict, TypeVar
+from typing import Dict, Generic, List, Tuple, Type, TypedDict, TypeVar, Union
 
 import pint
 from typeguard import typechecked
@@ -56,7 +56,7 @@ class NewParameter(Generic[ParameterValueType]):
         self,
         name: str,
         value: ParameterValueType,
-        unit: str = "",
+        unit: pint.Unit = pint.Unit("dimensionless"),
         source: str = "",
         description: str = "",
         long_name: str = "",
@@ -71,7 +71,8 @@ class NewParameter(Generic[ParameterValueType]):
                     f"got {type(value)} instead."
                 )
         self._name = name
-        self._value, self._unit = self.check_unit(value, unit)
+        self._value = value
+        self._unit = unit
         self._source = source
         self._description = description
         self._long_name = long_name
@@ -81,7 +82,7 @@ class NewParameter(Generic[ParameterValueType]):
 
     def __repr__(self) -> str:
         """String repr of class instance."""
-        return f"<{type(self).__name__}({self.name}={self.value} {self.unit})>"
+        return f"<{type(self).__name__}({self.name}={self.value} {self.unit:~P})>"
 
     def __eq__(self, __o: object) -> bool:
         """
@@ -132,8 +133,12 @@ class NewParameter(Generic[ParameterValueType]):
     def value(self, new_value: ParameterValueType):
         self.set_value(new_value, source="")
 
+    def value_as(self, unit: Union[str, pint.Unit]) -> ParameterValueType:
+        """Return the current value in a given unit"""
+        return raw_uc(self.value, self.unit, unit)
+
     @property
-    def unit(self) -> str:
+    def unit(self) -> pint.Unit:
         """Return the physical unit of the parameter."""
         return self._unit
 
