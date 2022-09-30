@@ -269,6 +269,23 @@ class TestParameterFrame:
         assert all(isinstance(p, Parameter) for p in params)
         assert [p.name for p in params] == ["height", "age"]
 
+    def test_ValueError_creating_frame_from_non_superset_frame(self):
+        @dataclass
+        class OtherFrame(ParameterFrame):
+            height: Parameter[float]
+            age: Parameter[int]
+            weight: Parameter[float]
+
+        basic_frame = BasicFrame.from_dict(FRAME_DATA)
+
+        with pytest.raises(ValueError):
+            OtherFrame.from_frame(basic_frame)
+
+    def test_from_json_ValueError_given_non_string_or_buffer(self):
+        with pytest.raises(ValueError) as error:
+            BasicFrame.from_json(["x"])
+        assert "Cannot read JSON" in str(error)
+
 
 class TestParameterSetup:
     def test_params_None(self):

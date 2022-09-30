@@ -109,6 +109,8 @@ class NewParameterFrame:
         if hasattr(json_in, "read"):
             # load from file stream
             return cls.from_dict(json.load(json_in))
+        elif not isinstance(json_in, str):
+            raise ValueError(f"Cannot read JSON from type '{type(json_in).__name__}'.")
         elif not json_in.startswith("{"):
             # load from file
             with open(json_in, "r") as f:
