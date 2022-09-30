@@ -25,9 +25,9 @@ from typing import Any, Callable, Dict, List, Optional, Union
 
 from bluemira.base.constants import raw_uc
 from bluemira.base.look_and_feel import bluemira_warn
-from bluemira.base.parameter import ParameterFrame
 from bluemira.base.solver import SolverABC, Task
 from bluemira.codes.error import CodesError
+from bluemira.codes.params import MappedParameterFrame
 from bluemira.codes.utilities import run_subprocess
 
 
@@ -36,7 +36,9 @@ class CodesTask(Task):
     Base class for a task used by a solver for an external code.
     """
 
-    def __init__(self, params: ParameterFrame, codes_name: str) -> None:
+    params: MappedParameterFrame
+
+    def __init__(self, params: MappedParameterFrame, codes_name: str) -> None:
         super().__init__(params)
         self._name = codes_name
 
@@ -94,7 +96,7 @@ class CodesSetup(CodesTask):
             def remapper(x):
                 return x
 
-        for bm_name, mapping in self.params.mappings().items():
+        for bm_name, mapping in self.params.mappings.items():
             if not mapping.send:
                 continue
             external_name = remapper(mapping.name)
@@ -178,7 +180,7 @@ class CodesTeardown(CodesTask):
             unit conversions made).
         """
         mapped_outputs = {}
-        for bm_name, mapping in self.params.mappings().items():
+        for bm_name, mapping in self.params.mappings.items():
             if not (mapping.recv or recv_all):
                 continue
             output_value = self._get_output_or_raise(external_outputs, mapping.name)
@@ -212,6 +214,11 @@ class CodesSolver(SolverABC):
     """
     Base class for solvers running an external code.
     """
+
+    params: MappedParameterFrame
+
+    def __init__(self, params: MappedParameterFrame):
+        super().__init__(params)
 
     @abc.abstractproperty
     def name(self):

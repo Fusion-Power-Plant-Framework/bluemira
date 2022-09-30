@@ -21,10 +21,11 @@
 """Base classes for external parameter management."""
 
 import abc
-from typing import Dict
+from typing import Dict, Literal
 
 from bluemira.base.parameter import ParameterMapping
 from bluemira.base.parameter_frame import NewParameterFrame as ParameterFrame
+from bluemira.codes.error import CodesError
 
 
 class MappedParameterFrame(ParameterFrame):
@@ -33,6 +34,9 @@ class MappedParameterFrame(ParameterFrame):
 
     The mappings are intended to be used to map bluemira parameters to
     parameters in an external code.
+
+    See :class:`bluemira.base.parameter_frame.ParameterFrame` for details
+    on how to declare parameters.
     """
 
     @abc.abstractproperty
@@ -43,6 +47,39 @@ class MappedParameterFrame(ParameterFrame):
         The keys are names of parameters in this frame, the values
         are ``ParameterMapping` objects containing the name of the
         corresponding parameter in some external code.
-
-        TODO(hsaunders1904: link to ``add_mapping``)
         """
+
+    def update_mappings(
+        self, new_send_recv: Dict[str, Dict[Literal["send", "recv"], bool]]
+    ):
+        """
+        Update the mappings in this frame with new send/recv values.
+
+        Parameters
+        ----------
+        new_send_recv: Dict[str, Dict[Literal["send", "recv"], bool]]
+            The new send/recv values for all, or a subset, of the
+            parameter mappings.
+            Keys are parameter names (as defined in this class, not the
+            external code), the values are a dictionary, optionally
+            containing keys 'send' and/or 'recv'. The values for the
+            inner dictionary are a boolean.
+
+        Raises
+        ------
+        CodesError:
+            If a parameter name in the input does not match the name of
+            a parameter in this frame.
+        """
+        for param_name, send_recv_mapping in new_send_recv.items():
+            try:
+                param_mapping = self.mappings[param_name]
+            except KeyError:
+                raise CodesError(
+                    "Cannot update parameter mapping. "
+                    f"No parameter with name '{param_name}' in '{type(self).__name__}'."
+                )
+            if (send_mapping := send_recv_mapping.get("send", None)) is not None:
+                param_mapping.send = send_mapping
+            if (recv_mapping := send_recv_mapping.get("recv", None)) is not None:
+                param_mapping.recv = recv_mapping

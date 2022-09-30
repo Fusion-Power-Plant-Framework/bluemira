@@ -24,18 +24,17 @@ PROCESS's parameter definitions.
 """
 
 from copy import deepcopy
-from dataclasses import dataclass, fields
+from dataclasses import dataclass
 from typing import Dict
 
 from bluemira.base.parameter import ParameterMapping
 from bluemira.base.parameter_frame import NewParameter as Parameter
-from bluemira.base.parameter_frame import NewParameterFrame as ParameterFrame
-from bluemira.codes.error import CodesError
+from bluemira.codes.params import MappedParameterFrame
 from bluemira.codes.process.mapping import mappings
 
 
 @dataclass
-class ProcessSolverParams(ParameterFrame):
+class ProcessSolverParams(MappedParameterFrame):
     """Parameters required to run PROCESS."""
 
     # In-out parameters
@@ -327,33 +326,11 @@ class ProcessSolverParams(ParameterFrame):
     Z_eff: Parameter[float]
     """Effective particle radiation atomic mass [unified_atomic_mass_unit]."""
 
-    def __post_init__(self):
-        """
-        Perform post init processing.
+    _mappings = None
 
-        Store the PROCESS parameter mappings on the frame.
-        """
-        self._mappings = deepcopy(mappings)
-        field_names = [field.name for field in fields(self)]
-        for param_name in mappings.keys():
-            if param_name not in field_names:
-                self._mappings.pop(param_name)
-
+    @property
     def mappings(self) -> Dict[str, ParameterMapping]:
-        """Return the mappings from these parameters to Plasmod parameters."""
+        """Define mappings between these parameters and PROCESS's."""
+        if self._mappings is None:
+            self._mappings = deepcopy(mappings)
         return self._mappings
-
-    def update_mappings(self, new_send_recv: Dict[str, Dict[str, bool]]):
-        """Update the mappings in this frame with new send/recv values."""
-        for param_name, send_recv_mapping in new_send_recv.items():
-            try:
-                param_mapping = self._mappings[param_name]
-            except KeyError:
-                raise CodesError(
-                    "Cannot update parameter mapping. "
-                    f"No parameter with name '{param_name}' in '{type(self).__name__}'."
-                )
-            if (send_mapping := send_recv_mapping.get("send", None)) is not None:
-                param_mapping.send = send_mapping
-            if (recv_mapping := send_recv_mapping.get("recv", None)) is not None:
-                param_mapping.recv = recv_mapping

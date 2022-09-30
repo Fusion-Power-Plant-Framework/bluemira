@@ -137,7 +137,7 @@ class Teardown(CodesTeardown):
         outputs = []
         data = self._mfile_wrapper.data
         for param_name in params:
-            if mapping := self.params.mappings().get(param_name, None):
+            if mapping := self.params.mappings.get(param_name, None):
                 process_name = mapping.name
             else:
                 process_name = param_name

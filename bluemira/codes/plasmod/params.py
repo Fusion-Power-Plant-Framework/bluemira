@@ -22,6 +22,7 @@
 Parameter definitions for Plasmod.
 """
 
+from copy import deepcopy
 from dataclasses import dataclass
 from typing import Dict
 
@@ -124,9 +125,11 @@ class PlasmodSolverParams(ParameterFrame):
     v_burn: Parameter[float]
     """Target loop voltage (if lower than -1e-3, ignored)-> plasma loop voltage [V]."""
 
-    def __post_init__(self):
-        self._mappings = mappings
+    _mappings = None
 
+    @property
     def mappings(self) -> Dict[str, ParameterMapping]:
-        """Return the mappings from these parameters to Plasmod parameters."""
+        """Define mappings between these parameters and Plasmod's."""
+        if self._mappings is None:
+            self._mappings = deepcopy(mappings)
         return self._mappings
