@@ -194,7 +194,6 @@ class CodesTeardown(CodesTask):
         self, external_outputs: Dict[str, Any], parameter_name: str
     ):
         try:
-            # output_value = external_outputs[parameter_name]
             output_value = external_outputs.get(parameter_name, None)
         except KeyError as key_error:
             raise CodesError(
@@ -248,7 +247,7 @@ class CodesSolver(SolverABC):
                     "var2": {"recv": False}
                 }
         """
-        param_mappings = self.params.mappings()
+        param_mappings = self.params.mappings
         for key, val in send_recv.items():
             try:
                 p_map = param_mappings[key]
