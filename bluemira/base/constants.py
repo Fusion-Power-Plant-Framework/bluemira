@@ -72,6 +72,7 @@ class BMUnitRegistry(UnitRegistry):
         # Other currencies need to be set up in a new context
         self.define("USD = [currency]")
 
+        self._gas_flow_temperature = None
         self._contexts_added = False
 
     def _add_contexts(self, contexts: Optional[List[Context]] = None):
@@ -136,7 +137,7 @@ class BMUnitRegistry(UnitRegistry):
 
         If Quantity provided to setter it will convert units (naïvely)
         """
-        if not hasattr(self, "_gas_flow_temperature"):
+        if self._gas_flow_temperature is None:
             self._gas_flow_temperature = self.Quantity(0, "celsius").to("kelvin")
         return self._gas_flow_temperature
 
