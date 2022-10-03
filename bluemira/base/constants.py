@@ -391,7 +391,10 @@ def gas_flow_uc(
     """
     if gas_flow_temperature is not None:
         ureg.gas_flow_temperature = gas_flow_temperature
-    return raw_uc(value, unit_from, unit_to)
+    value = raw_uc(value, unit_from, unit_to)
+
+    ureg.gas_flow_temperature = 273.15
+    return value
 
 
 def to_celsius(
