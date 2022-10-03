@@ -20,79 +20,17 @@ from typing import (
 import pint
 from tabulate import tabulate
 
-from bluemira.base.constants import raw_uc
+from bluemira.base.constants import (
+    ANGLE_units,
+    base_unit_defaults,
+    combined_unit_defaults,
+    combined_unit_dimensions,
+    raw_uc,
+)
 from bluemira.base.parameter_frame._parameter import NewParameter as Parameter
 from bluemira.base.parameter_frame._parameter import ParamDictT, ParameterValueType
 
 _PfT = TypeVar("_PfT", bound="NewParameterFrame")
-
-
-base_unit_defaults = {
-    "[time]": "second",
-    "[length]": "metre",
-    "[mass]": "kilogram",
-    "[current]": "ampere",
-    "[temperature]": "kelvin",
-    "[substance]": "mol",
-    "[luminosity]": "candela",
-    "[angle]": "degree",  # dimensionality == {}
-}
-
-combined_unit_defaults = {
-    "[energy]": "joules",
-    "[pressure]": "pascal",
-    "[magnetic_field]": "tesla",
-    "[electric_potential]": "volt",
-    "[power]": "watt",
-    "[force]": "newton",
-    "[resistance]": "ohm",
-}
-
-combined_unit_dimensions = {
-    "[energy]": {"[length]": 2, "[mass]": 1, "[time]": -2},
-    "[pressure]": {"[length]": -1, "[mass]": 1, "[time]": -2},
-    "[magnetic_field]": {"[current]": -1, "[mass]": 1, "[time]": -2},
-    "[electric_potential]": {"[length]": 2, "[mass]": 1, "[time]": -2},
-    "[power]": {"[length]": 2, "[mass]": 1, "[time]": -3},
-    "[force]": {"[length]": 2, "[mass]": 1, "[time]": -3},
-    "[resistance]": {"[current]": -2, "[length]": 2, "[mass]": 1, "[time]": -3},
-}
-
-ANGLE = [
-    "radian",
-    "turn",
-    "degree",
-    "arcminute",
-    "arcsecond",
-    "milliarcsecond",
-    "grade",
-    "mil",
-]
-
-# day
-# gigajoule
-# kiloelectron_volt
-# megaampere
-# megaampere * meter / megawatt
-# megaampere / meter ** 2
-# meganewton
-# megawatt
-# megawatt / meter ** 2
-# meter
-# meter ** 3
-# meter ** 3 * pascal / second
-# ohm
-# pascal
-# second
-# tesla
-# unified_atomic_mass_unit
-# volt
-# watt
-
-
-# degree
-# displacements_per_atom
-# full_power_year
 
 
 @dataclass
@@ -256,7 +194,7 @@ class NewParameterFrame:
         """
         unit_str = f"{orig_unit:D}"
 
-        ang_unit = [ang for ang in ANGLE if ang in unit_str]
+        ang_unit = [ang for ang in ANGLE_units if ang in unit_str]
         if len(ang_unit) > 1:
             raise ValueError(f"No...{orig_unit}")
         elif len(ang_unit) == 1:

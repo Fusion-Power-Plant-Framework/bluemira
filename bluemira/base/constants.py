@@ -218,6 +218,48 @@ DENSITY = MASS / LENGTH**3
 PART_DENSITY = LENGTH**-3
 FLUX_DENSITY = LENGTH**-2 / TIME
 
+base_unit_defaults = {
+    "[time]": TIME,
+    "[length]": LENGTH,
+    "[mass]": MASS,
+    "[current]": CURRENT,
+    "[temperature]": TEMP,
+    "[substance]": QUANTITY,
+    "[luminosity]": "candela",
+    "[angle]": ANGLE,
+}
+
+combined_unit_defaults = {
+    "[energy]": "joules",
+    "[pressure]": "pascal",
+    "[magnetic_field]": "tesla",
+    "[electric_potential]": "volt",
+    "[power]": "watt",
+    "[force]": "newton",
+    "[resistance]": "ohm",
+}
+
+combined_unit_dimensions = {
+    "[energy]": {"[length]": 2, "[mass]": 1, "[time]": -2},
+    "[pressure]": {"[length]": -1, "[mass]": 1, "[time]": -2},
+    "[magnetic_field]": {"[current]": -1, "[mass]": 1, "[time]": -2},
+    "[electric_potential]": {"[length]": 2, "[mass]": 1, "[time]": -2},
+    "[power]": {"[length]": 2, "[mass]": 1, "[time]": -3},
+    "[force]": {"[length]": 2, "[mass]": 1, "[time]": -3},
+    "[resistance]": {"[current]": -2, "[length]": 2, "[mass]": 1, "[time]": -3},
+}
+
+ANGLE_units = [
+    "radian",
+    "turn",
+    "degree",
+    "arcminute",
+    "arcsecond",
+    "milliarcsecond",
+    "grade",
+    "mil",
+]
+
 # =============================================================================
 # Physical constants
 # =============================================================================
