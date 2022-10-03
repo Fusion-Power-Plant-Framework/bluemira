@@ -8,6 +8,6 @@ The following parameters are calculated:
 * First wall neutron damage and heat flux.
 
 
-### Prerequisites
+### Prerequisites 
 
 An installation of OpenMC version 0.13.0 or later is required. See https://docs.openmc.org/en/stable/quickinstall.html.
