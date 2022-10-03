@@ -45,7 +45,7 @@ class MappedParameterFrame(ParameterFrame):
         The mappings associated with these frame's parameters.
 
         The keys are names of parameters in this frame, the values
-        are ``ParameterMapping` objects containing the name of the
+        are ``ParameterMapping`` objects containing the name of the
         corresponding parameter in some external code.
         """
 
