@@ -364,7 +364,7 @@ def gas_flow_uc(
     value: Union[int, float, np.ndarray],
     unit_from: Union[str, ureg.Unit],
     unit_to: Union[str, ureg.Unit],
-    gas_flow_temperature: Optional[Union[float, int, complex, Quantity]] = None,
+    gas_flow_temperature: Optional[Union[float, int, Quantity]] = None,
 ) -> Union[int, float, np.ndarray]:
     """
     Converts around Standard temperature and pressure for gas unit conversion.
@@ -382,7 +382,7 @@ def gas_flow_uc(
         unit to convert to
     gas_flow_temperature: Optional[Union[float, int, complex, Quantity]]
         Gas flow temperature if not provided is 273.15 K,
-        if units not given kelvin assumed
+        if not a `Quantity` the units are assumed to be kelvin
 
     Returns
     -------
