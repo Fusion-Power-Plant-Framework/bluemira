@@ -304,18 +304,27 @@ class UnitFrame2(ParameterFrame):
 
 @dataclass
 class UnitFrame3(ParameterFrame):
-    # angle: Parameter[float]
-    # solid_angle: Parameter[float]
-    # solid_angle2: Parameter[float]
-    # solid_angleperthing: Parameter[float]
-    # thingpersoild_angle: Parameter[float]
-    # thingpersoild_angleperthing: Parameter[float]
     damagepertime: Parameter[float]
     timeperdamage: Parameter[float]
     damage: Parameter[float]
     perdamage: Parameter[float]
     on_time: Parameter[float]
     per_on_time: Parameter[float]
+
+
+@dataclass
+class UnitFrame4(ParameterFrame):
+    angle: Parameter[float]
+    angle2: Parameter[float]
+    angleperthing: Parameter[float]
+    thingperangle: Parameter[float]
+
+
+@dataclass
+class UnitFrame5(ParameterFrame):
+    wtf1: Parameter[float]
+    wtf2: Parameter[float]
+    wtf3: Parameter[float]
 
 
 class TestParameterFrameUnits:
@@ -333,18 +342,25 @@ class TestParameterFrameUnits:
     }
 
     WEIRD_FRAME_DATA = {
-        # "angle": {"value": 5, "unit": "radian"},
-        # "solid_angle": {"value": 5, "unit": "sr"},
-        # "solid_angle2": {"value": 5, "unit": "radian^2"},
-        # "solid_angleperthing": {"value": 5, "unit": "sr/m"},
-        # "thingpersoild_angle": {"value": 5, "unit": "W/sr"},
-        # "thingpersoild_angleperthing": {"value": 5, "unit": "m^2/sr.W/Pa.fpy"},
         "damagepertime": {"value": 30, "unit": "dpa/fpy"},
         "timeperdamage": {"value": 30, "unit": "fpy/dpa"},
         "damage": {"value": 30, "unit": "dpa"},
         "perdamage": {"value": 30, "unit": "1/dpa"},
         "on_time": {"value": 1, "unit": "fpy"},
         "per_on_time": {"value": 1, "unit": "1/fpy"},
+    }
+
+    ANGLE_FRAME_DATA = {
+        "angle": {"value": 5, "unit": "radian"},
+        "angle2": {"value": 5, "unit": "grade"},
+        "angleperthing": {"value": 5, "unit": "radian/m"},
+        "thingperangle": {"value": 5, "unit": "W/turn"},
+    }
+
+    WTF_FRAME_DATA = {
+        "wtf1": {"value": 5, "unit": "m^2/grade.W/(Pa.fpy)"},
+        "wtf2": {"value": 5, "unit": "dpa.m^2/rad.W/(Pa.fpy)"},
+        "wtf3": {"value": 5, "unit": "dpa^-1.m^2/turn.W/(Pa.fpy)"},
     }
 
     def test_simple_units_to_defaults(self):
@@ -380,6 +396,30 @@ class TestParameterFrameUnits:
         assert frame.damagepertime.unit == pint.Unit("dpa/fpy")
         assert frame.timeperdamage.value == 30
         assert frame.timeperdamage.unit == pint.Unit("fpy/dpa")
+
+    def test_angle_units_to_defaults(self):
+        frame = UnitFrame4.from_dict(self.ANGLE_FRAME_DATA)
+        assert frame.angle.value == pytest.approx(286.4789)
+        assert frame.angle.unit == pint.Unit("degree")
+        assert frame.angle2.value == pytest.approx(4.5)
+        assert frame.angle2.unit == pint.Unit("degree")
+        assert frame.angleperthing.value == pytest.approx(286.4789)
+        assert frame.angleperthing.unit == pint.Unit("degree / metre")
+        assert frame.thingperangle.value == pytest.approx(0.0138888888)
+        assert frame.thingperangle.unit == pint.Unit("watt / degree")
+
+    def test_wtf_units(self):
+        frame = UnitFrame5.from_dict(self.WTF_FRAME_DATA)
+        assert frame.wtf1.value == pytest.approx(5.555555)
+        assert frame.wtf1.unit == pint.Unit(
+            "meter ** 5 / degree / full_power_year / second"
+        )
+        assert frame.wtf2.value == pytest.approx(0.0872664)
+        assert frame.wtf2.unit == pint.Unit(
+            "dpa * meter ** 5 / degree / full_power_year / second"
+        )
+        assert frame.wtf3.value == pytest.approx(0.01388888)
+        assert frame.wtf3.unit == pint.Unit("m^5/deg/dpa/fpy/s")
 
 
 class TestParameterSetup:
