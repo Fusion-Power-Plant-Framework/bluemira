@@ -160,9 +160,3 @@ class NewParameter(Generic[ParameterValueType]):
     def _add_history_record(self):
         history_entry = ParameterValue(self.value, self.source)
         self._history.append(history_entry)
-
-    def _fix_dimensionless_units(self, unit: pint.Unit) -> pint.Unit:
-        raise NotImplementedError("dimensionless units need work")
-
-    def _fix_weird_units(self, value: ParameterValueType, unit: pint.Unit) -> pint.Unit:
-        raise NotImplementedError("weird units need work")

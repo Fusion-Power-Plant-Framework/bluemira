@@ -83,6 +83,7 @@ ANGLE = ["turn", "degree", "arcminute", "arcsecond", "milliarcsecond", "grade", 
 
 # degree
 # displacements_per_atom
+# full_power_year
 
 
 @dataclass
@@ -214,7 +215,8 @@ class NewParameterFrame:
         else:
             unit = quantity.units
 
-        # unit = cls._fix_dimensionless_units(unit, quantity.units)
+        unit = cls._fix_weird_units(unit, quantity.units)
+
         if unit != quantity.units:
             val = raw_uc(quantity.magnitude, quantity.units, unit)
             if isinstance(param_data["value"], int) and int in value_type:
@@ -222,26 +224,41 @@ class NewParameterFrame:
             param_data["value"] = val
             param_data["unit"] = unit
 
-    @staticmethod
-    def _fix_dimensionless_units(
-        modified_unit: pint.Unit, orig_unit: pint.Unit
+    @classmethod
+    def _fix_weird_units(
+        cls, modified_unit: pint.Unit, orig_unit: pint.Unit
     ) -> pint.Unit:
         unit_str = str(orig_unit)
-        # for ang in ANGLE:
-        #     if ang in orig_unit:
-        #     return Unit(base_unit_defaults["[angle]"])
 
-        # if "displacements_per_atom" in unit_str:
-        #     if modified_unit == Unit('dimensionless'):
-        #         return Unit("displacements_per_atom")
-        #     unit_lst =
-        #     if len(unit_str.split('/')) == 1:
-        #         return Unit(f"displacements_per_atom.{unit}")
-        #     # where is the unit?
-        #     unit_lst = unit_str
-        #     return Unit(f"{unit}/displacements_per_atom")
-        # else:
-        #     return unit
+        for ang in ANGLE:
+            if ang in unit_str:
+                ang_unit = ang
+                break
+        else:
+            ang_unit = None
+
+        fpy = "full_power_year" in unit_str
+        dpa = "displacements_per_atom" in unit_str
+
+        if not (fpy and dpa and ang_unit is None):
+            return modified_unit
+
+        if modified_unit == pint.Unit("dimensionless"):
+            if dpa and not ang_unit:
+                return pint.Unit("displacements_per_atom")
+            elif ang_unit and not (fpy and dpa):
+                return cls._fix_angle_units(
+                    modified_unit, orig_unit, base_unit_defaults["[angle]"]
+                )
+        else:
+            # dpa/fpy
+            # fpy
+            # thing/angle
+            # thing/angle **2
+            # angle ** 2 / thing
+            # angle / thing ** 2
+
+            return modified_unit
 
     @staticmethod
     def _fix_combined_units(unit: pint.Unit) -> pint.Unit:
