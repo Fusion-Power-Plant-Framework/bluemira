@@ -201,10 +201,9 @@ class _MFileWrapper:
 
         Store the result in ``data`` attribute.
         """
-        data = {}
-        for key, val in self.mfile.data.items():
-            data[key] = val["scan01"]
-        self.data = data
+        self.data = {
+            param_name: val["scan01"] for param_name, val in self.mfile.data.items()
+        }
         self.data.update(self._derive_radial_build_params(self.data))
 
     def _derive_radial_build_params(self, data: Dict) -> Dict[str, float]:
