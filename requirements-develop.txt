@@ -61,7 +61,7 @@ stevedore==4.0.0
 toml==0.10.2
 tomli==2.0.1
 typing_extensions==4.3.0
-Unidecode==1.3.4
+Unidecode==1.3.6
 urllib3==1.26.12
 versioneer==0.26
 virtualenv==20.16.5
