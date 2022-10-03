@@ -58,7 +58,16 @@ combined_unit_dimensions = {
     "[resistance]": {"[current]": -2, "[length]": 2, "[mass]": 1, "[time]": -3},
 }
 
-ANGLE = ["turn", "degree", "arcminute", "arcsecond", "milliarcsecond", "grade", "mil"]
+ANGLE = [
+    "radian",
+    "turn",
+    "degree",
+    "arcminute",
+    "arcsecond",
+    "milliarcsecond",
+    "grade",
+    "mil",
+]
 
 # day
 # gigajoule
@@ -222,13 +231,13 @@ class NewParameterFrame:
             if isinstance(param_data["value"], int) and int in value_type:
                 val = int(val)
             param_data["value"] = val
-            param_data["unit"] = unit
+        param_data["unit"] = unit
 
     @classmethod
     def _fix_weird_units(
         cls, modified_unit: pint.Unit, orig_unit: pint.Unit
     ) -> pint.Unit:
-        unit_str = str(orig_unit)
+        unit_str = f"{orig_unit:D}"
 
         for ang in ANGLE:
             if ang in unit_str:
@@ -240,25 +249,41 @@ class NewParameterFrame:
         fpy = "full_power_year" in unit_str
         dpa = "displacements_per_atom" in unit_str
 
-        if not (fpy and dpa and ang_unit is None):
-            return modified_unit
+        if not (fpy or dpa) and ang_unit is None:
+            return pint.Unit(modified_unit)
 
         if modified_unit == pint.Unit("dimensionless"):
             if dpa and not ang_unit:
-                return pint.Unit("displacements_per_atom")
-            elif ang_unit and not (fpy and dpa):
+                return pint.Unit(
+                    f"displacements_per_atom^{-1 if len(unit_str.split('/')) > 1 else 1}"
+                )
+            else:
                 return cls._fix_angle_units(
                     modified_unit, orig_unit, base_unit_defaults["[angle]"]
                 )
+        elif fpy:
+            if not modified_unit.dimensionality.keys() - ["[time]"]:
+                expon = list(modified_unit.dimensionality.values())[0]
+                if dpa:
+                    dpa_expon = -1 if len(unit_str.split("/")) > 1 and expon == 1 else 1
+                    return pint.Unit(f"dpa^{dpa_expon}.fpy^{expon}")
+                return pint.Unit(f"fpy^{expon}")
+            elif dpa:
+                # More complex
+                raise NotImplementedError()
+            else:
+                # More complex
+                raise NotImplementedError()
         else:
-            # dpa/fpy
-            # fpy
+            # More complex
+            raise NotImplementedError()
+            return modified_unit
+            # import ipdb
+            # ipdb.set_trace()
             # thing/angle
             # thing/angle **2
             # angle ** 2 / thing
             # angle / thing ** 2
-
-            return modified_unit
 
     @staticmethod
     def _fix_combined_units(unit: pint.Unit) -> pint.Unit:
@@ -268,7 +293,11 @@ class NewParameterFrame:
             return pint.Unit(
                 combined_unit_defaults[dim_keys[dim_val.index(unit.dimensionality)]]
             )
-        return unit
+        return pint.Unit(unit)
+
+    @staticmethod
+    def _fix_angle_units(modified_unit, orig_unit, default_unit):
+        raise NotImplementedError()
 
     def tabulate(self, keys: Optional[List] = None, tablefmt: str = "fancy_grid") -> str:
         """

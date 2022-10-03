@@ -290,9 +290,9 @@ class TestParameterFrame:
 
 @dataclass
 class UnitFrame1(ParameterFrame):
-    height: Parameter[float]
-    age: Parameter[int]
-    weight: Parameter[int]
+    length: Parameter[float]
+    time: Parameter[int]
+    mass: Parameter[int]
 
 
 @dataclass
@@ -300,6 +300,22 @@ class UnitFrame2(ParameterFrame):
     magfield: Parameter[float]
     energy: Parameter[float]
     pressure: Parameter[int]
+
+
+@dataclass
+class UnitFrame3(ParameterFrame):
+    # angle: Parameter[float]
+    # solid_angle: Parameter[float]
+    # solid_angle2: Parameter[float]
+    # solid_angleperthing: Parameter[float]
+    # thingpersoild_angle: Parameter[float]
+    # thingpersoild_angleperthing: Parameter[float]
+    damagepertime: Parameter[float]
+    timeperdamage: Parameter[float]
+    damage: Parameter[float]
+    perdamage: Parameter[float]
+    on_time: Parameter[float]
+    per_on_time: Parameter[float]
 
 
 class TestParameterFrameUnits:
@@ -314,6 +330,21 @@ class TestParameterFrameUnits:
         "magfield": {"value": 5000, "unit": "gamma"},
         "energy": {"value": 30, "unit": "keV"},
         "pressure": {"value": 1, "unit": "atm"},
+    }
+
+    WEIRD_FRAME_DATA = {
+        # "angle": {"value": 5, "unit": "radian"},
+        # "solid_angle": {"value": 5, "unit": "sr"},
+        # "solid_angle2": {"value": 5, "unit": "radian^2"},
+        # "solid_angleperthing": {"value": 5, "unit": "sr/m"},
+        # "thingpersoild_angle": {"value": 5, "unit": "W/sr"},
+        # "thingpersoild_angleperthing": {"value": 5, "unit": "m^2/sr.W/Pa.fpy"},
+        "damagepertime": {"value": 30, "unit": "dpa/fpy"},
+        "timeperdamage": {"value": 30, "unit": "fpy/dpa"},
+        "damage": {"value": 30, "unit": "dpa"},
+        "perdamage": {"value": 30, "unit": "1/dpa"},
+        "on_time": {"value": 1, "unit": "fpy"},
+        "per_on_time": {"value": 1, "unit": "1/fpy"},
     }
 
     def test_simple_units_to_defaults(self):
@@ -333,6 +364,22 @@ class TestParameterFrameUnits:
         assert frame.energy.value == pytest.approx(4.8065299e-15)
         assert frame.pressure.unit == pint.Unit("Pa")
         assert frame.pressure.value == 101325
+
+    def test_weird_units_to_defaults_dpa_fpy(self):
+        frame = UnitFrame3.from_dict(self.WEIRD_FRAME_DATA)
+        assert frame.damage.value == 30
+        assert frame.damage.unit == pint.Unit("dpa")
+        assert frame.on_time.value == 1
+        assert frame.on_time.unit == pint.Unit("fpy")
+
+        assert frame.perdamage.value == 30
+        assert frame.perdamage.unit == pint.Unit("1/dpa")
+        assert frame.per_on_time.value == 1
+        assert frame.per_on_time.unit == pint.Unit("1/fpy")
+        assert frame.damagepertime.value == 30
+        assert frame.damagepertime.unit == pint.Unit("dpa/fpy")
+        assert frame.timeperdamage.value == 30
+        assert frame.timeperdamage.unit == pint.Unit("fpy/dpa")
 
 
 class TestParameterSetup:
