@@ -181,10 +181,10 @@ class BMUnitRegistry(UnitRegistry):
         units_from: str,
         units_to: str,
         forward_transform: Callable[
-            [UnitRegistry, Union[float, int, complex, Quantity]], float
+            [UnitRegistry, Union[float, complex, Quantity]], float
         ],
         reverse_transform: Callable[
-            [UnitRegistry, Union[float, int, complex, Quantity]], float
+            [UnitRegistry, Union[float, complex, Quantity]], float
         ],
     ):
 
@@ -366,10 +366,10 @@ S_TO_YR = ureg.Quantity(1, ureg.second).to(ureg.year).magnitude
 
 
 def raw_uc(
-    value: Union[int, float, np.ndarray],
+    value: Union[float, np.ndarray],
     unit_from: Union[str, ureg.Unit],
     unit_to: Union[str, ureg.Unit],
-) -> Union[int, float, np.ndarray]:
+) -> Union[float, np.ndarray]:
     """
     Raw unit converter
 
@@ -404,10 +404,10 @@ def raw_uc(
 
 
 def gas_flow_uc(
-    value: Union[int, float, np.ndarray],
+    value: Union[float, np.ndarray],
     unit_from: Union[str, ureg.Unit],
     unit_to: Union[str, ureg.Unit],
-    gas_flow_temperature: Optional[Union[float, int, Quantity]] = None,
+    gas_flow_temperature: Optional[Union[float, Quantity]] = None,
 ) -> Union[int, float, np.ndarray]:
     """
     Converts around Standard temperature and pressure for gas unit conversion.
@@ -417,13 +417,13 @@ def gas_flow_uc(
 
     Parameters
     ----------
-    value: Union[int, float, np.array]
+    value: Union[float, np.array]
         value to convert
     unit_from: Union[str, Unit]
         unit to convert from
     unit_to: Union[str, Unit]
         unit to convert to
-    gas_flow_temperature: Optional[Union[float, int, complex, Quantity]]
+    gas_flow_temperature: Optional[Union[float, Quantity]]
         Gas flow temperature if not provided is 273.15 K,
         if not a `Quantity` the units are assumed to be kelvin
 
