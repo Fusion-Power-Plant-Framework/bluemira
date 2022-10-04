@@ -27,10 +27,9 @@ import os
 from typing import Dict, Iterable, List, Union
 
 from bluemira.base.look_and_feel import bluemira_print
-from bluemira.base.parameter import ParameterMapping
 from bluemira.codes.error import CodesError
 from bluemira.codes.interface import CodesTeardown
-from bluemira.codes.process.api import MFile, update_obsolete_vars
+from bluemira.codes.process.api import MFile
 from bluemira.codes.process.constants import NAME as PROCESS_NAME
 from bluemira.codes.process.params import ProcessSolverParams
 
@@ -230,29 +229,6 @@ class _MFileWrapper:
             "r_fw_ob_in": r_fw_ob_in,
             "r_vv_ob_in": r_vv_ob_in,
         }
-
-
-def update_mappings(old_mappings: Dict[str, ParameterMapping]):
-    """
-    Convert old PROCESS mappings to new ones
-
-    Parameters
-    ----------
-    old_mappings: dict
-        dictionary of parameter mappings
-
-    Returns
-    -------
-    new_mappings: dict
-        dictionary of new parameter mappings
-    """
-    new_mappings = {}
-    for key, val in old_mappings.items():
-        new_name = update_obsolete_vars(val.name)
-        if new_name != val.name:
-            val = ParameterMapping(new_name, send=val.send, recv=val.recv, unit=val.unit)
-        new_mappings[key] = val
-    return new_mappings
 
 
 def _read_json_file_or_raise(file_path: str) -> Dict[str, float]:
