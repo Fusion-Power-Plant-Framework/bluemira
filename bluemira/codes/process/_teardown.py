@@ -182,8 +182,6 @@ class _MFileWrapper:
     ----------
     file_path: str
         Path to an MFile.
-    parameter_mappings: Dict[str, ParameterMapping]
-        ... TODO(hsaunders1904)
     """
 
     def __init__(self, file_path: str):
