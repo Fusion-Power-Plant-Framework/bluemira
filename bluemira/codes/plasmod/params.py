@@ -27,17 +27,14 @@ from dataclasses import dataclass
 from typing import Dict
 
 from bluemira.base.parameter_frame import NewParameter as Parameter
-from bluemira.base.parameter_frame import NewParameterFrame as ParameterFrame
+from bluemira.codes.params import MappedParameterFrame
 from bluemira.codes.plasmod.mapping import mappings
 from bluemira.codes.utilities import ParameterMapping
 
 
 @dataclass
-class PlasmodSolverParams(ParameterFrame):
-    """
-    Parameters required to execute the :class:`bluemira.codes.plasmod.Solver`
-    class.
-    """
+class PlasmodSolverParams(MappedParameterFrame):
+    """Parameters required in :class:`bluemira.codes.plasmod.Solver`."""
 
     # Input parameters
     A: Parameter[float]
@@ -65,7 +62,7 @@ class PlasmodSolverParams(ParameterFrame):
     delta: Parameter[float]
     """
     Plasma edge triangularity (used only for first iteration, then
-    iterated to constrain delta95) [dimensionless] .
+    iterated to constrain delta95) [dimensionless].
     """
     kappa: Parameter[float]
     """

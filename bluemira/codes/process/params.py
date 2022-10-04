@@ -35,7 +35,7 @@ from bluemira.codes.process.mapping import mappings
 
 @dataclass
 class ProcessSolverParams(MappedParameterFrame):
-    """Parameters required to run PROCESS."""
+    """Parameters required in :class:`bluemira.codes.process.Solver`."""
 
     # In-out parameters
     C_Ejima: Parameter[float]
