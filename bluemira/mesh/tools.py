@@ -36,7 +36,7 @@ from dolfin import Mesh, MeshValueCollection, XDMFFile
 from dolfin.cpp.mesh import MeshFunctionSizet
 from tabulate import tabulate
 
-from bluemira.base.look_and_feel import bluemira_print, bluemira_warn
+from bluemira.base.look_and_feel import bluemira_debug, bluemira_warn
 from bluemira.mesh.error import MeshConversionError
 
 __all__ = ("msh_to_xdmf", "import_mesh")
@@ -61,7 +61,6 @@ def msh_to_xdmf(
     mesh_name: str,
     dimensions: Union[Tuple[int], int] = (0, 2),
     directory: str = ".",
-    verbose: bool = False,
 ):
     """
     Convert a MSH file to an XMDF file.
@@ -75,8 +74,6 @@ def msh_to_xdmf(
         (0, 1, 2) would be a 3-D mesh
     directory: str
         Directory in which the MSH file exists and where the XDMF files will be written
-    verbose: bool
-        Whether or not to display the association table in stdout
 
     Raises
     ------
@@ -102,7 +99,7 @@ def msh_to_xdmf(
     mesh = meshio.read(file_path)
     _export_domain(mesh, file_prefix, directory, dimensions)
     _export_boundaries(mesh, file_prefix, directory, dimensions)
-    _export_link_file(mesh, file_prefix, directory, verbose=verbose)
+    _export_link_file(mesh, file_prefix, directory)
 
 
 def import_mesh(file_prefix="mesh", subdomains=False, directory="."):
@@ -243,7 +240,7 @@ def _export_boundaries(mesh, file_prefix, directory, dimensions):
     )
 
 
-def _export_link_file(mesh, file_prefix, directory, verbose=False):
+def _export_link_file(mesh, file_prefix, directory):
     """
     Export the association file between MSH and XDMF objects.
     """
@@ -256,14 +253,13 @@ def _export_link_file(mesh, file_prefix, directory, verbose=False):
             value = mesh.cell_data[GMSH_PHYS][index][0]
             table[key] = int(value)
 
-    if verbose:
-        bluemira_print(
-            tabulate(
-                list(table.items()),
-                headers=["GMSH label", "MeshFunction value"],
-                tablefmt="simple",
-            )
+    bluemira_debug(
+        tabulate(
+            list(table.items()),
+            headers=["GMSH label", "MeshFunction value"],
+            tablefmt="simple",
         )
+    )
 
     filename = os.sep.join([directory, f"{file_prefix}_{LINKFILE_SUFFIX}"])
     with open(filename, "w") as file:

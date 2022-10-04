@@ -52,7 +52,6 @@ def solve_plasmod_fixed_boundary(
     iter_err_max=1e-5,
     relaxation=0.2,
     plot=False,
-    verbose=False,
 ):
     """
     Solve the plasma fixed boundary problem using delta95 and kappa95 as target
@@ -83,18 +82,19 @@ def solve_plasmod_fixed_boundary(
         Iteration relaxing factor
     plot: bool
         Whether or not to plot
-    verbose: bool
-        Whether or not to print
 
     Notes
     -----
     This function directly modifies the parameters of builder_plasma
     """
-    n_iter = 0
     delta_95 = delta95_t
     kappa_95 = kappa95_t
 
-    while n_iter < max_iter:
+    directory = get_bluemira_path("", subfolder="generated_data")
+    mesh_name = "FixedBoundaryEquilibriumMesh"
+    mesh_name_msh = mesh_name + ".msh"
+
+    for n_iter in range(max_iter):
         # source string to be used in changed parameters
         source = f"from equilibrium iteration {n_iter}"
 
@@ -115,13 +115,12 @@ def solve_plasmod_fixed_boundary(
         kappa = (kappa_u + kappa_l) / 2
         delta = (delta_u + delta_l) / 2
 
-        if verbose:
-            bluemira_print(
-                f"{kappa_u=}, {delta_u=}\n"
-                f"{kappa_l=}, {delta_l=}\n"
-                f"{kappa=}, {delta=}\n"
-                f"{plasma_volume=}"
-            )
+        bluemira_debug(
+            f"{kappa_u=}, {delta_u=}\n"
+            f"{kappa_l=}, {delta_l=}\n"
+            f"{kappa=}, {delta=}\n"
+            f"{plasma_volume=}"
+        )
 
         # initialize plasmod solver
         # - V_p is set equal to plasma volume
@@ -156,16 +155,9 @@ def solve_plasmod_fixed_boundary(
             "physical_group": "plasma_face",
         }
 
-        directory = get_bluemira_path("", subfolder="generated_data")
-        mesh_name = "FixedBoundaryEquilibriumMesh"
-        mesh_name_msh = mesh_name + ".msh"
+        meshing.Mesh(meshfile=os.path.join(directory, mesh_name_msh))(plasma)
 
-        m = meshing.Mesh(meshfile=os.path.join(directory, mesh_name_msh))
-        m(plasma)
-
-        msh_to_xdmf(
-            mesh_name_msh, dimensions=(0, 2), directory=directory, verbose=verbose
-        )
+        msh_to_xdmf(mesh_name_msh, dimensions=(0, 2), directory=directory)
 
         mesh = import_mesh(
             mesh_name,
@@ -174,8 +166,7 @@ def solve_plasmod_fixed_boundary(
         )[0]
 
         # initialize the Grad-Shafranov solver
-        p_order = gs_options["p_order"]
-        gs_solver = FemGradShafranovFixedBoundary(mesh, p_order=p_order)
+        gs_solver = FemGradShafranovFixedBoundary(mesh, p_order=gs_options["p_order"])
 
         bluemira_print("Solving fixed boundary Grad-Shafranov...")
 
@@ -211,26 +202,20 @@ def solve_plasmod_fixed_boundary(
             delta95_t / delta_95
         ) + relaxation * delta_u_0
 
-        if verbose:
-            bluemira_print(
-                "Previous shape parameters:\n"
-                f"\t {kappa_u_0=:.3f}, {delta_u_0=:.3f}\n"
-                "Recalculated shape parameters:\n"
-                f"\t {kappa_u=:.3f}, {delta_u=:.3f}\n"
-                "\n"
-                f"|Target - Actual|/Target = {err_delta:.3f}\n"
-                f"|Target - bluemira|/Target = {err_kappa:.3f}\n"
-            )
+        bluemira_debug(
+            "Previous shape parameters:\n"
+            f"\t {kappa_u_0=:.3f}, {delta_u_0=:.3f}\n"
+            "Recalculated shape parameters:\n"
+            f"\t {kappa_u=:.3f}, {delta_u=:.3f}\n"
+            "\n"
+            f"|Target - Actual|/Target = {err_delta:.3f}\n"
+            f"|Target - bluemira|/Target = {err_kappa:.3f}\n"
+        )
 
-        print("\n")
         bluemira_print(f"PLASMOD <-> Fixed boundary G-S iter {n_iter} : {iter_err:.3E}")
-        print("\n")
 
         if iter_err <= iter_err_max:
             break
-
-        # increase iteration number
-        n_iter += 1
 
         # update builder_plasma parameters
         builder_plasma.params.kappa_u = kappa_u
@@ -238,7 +223,7 @@ def solve_plasmod_fixed_boundary(
         builder_plasma.reinitialise(builder_plasma.params)
         bluemira_debug(f"{builder_plasma.params}")
 
-    if n_iter == max_iter:
+    else:
         bluemira_warn(
             f"PLASMOD <-> Fixed boundary G-S did not converge within {max_iter} iterations:\n"
             f"\t Target kappa_95: {kappa95_t:.3f}\n"
@@ -247,12 +232,13 @@ def solve_plasmod_fixed_boundary(
             f"\t Actual delta_95: {delta_95:.3f}\n"
             f"\t Error: {iter_err:.3E} > {iter_err_max:.3E}\n"
         )
-    else:
-        bluemira_print(
-            f"PLASMOD <-> Fixed boundary G-S successfully converged within {n_iter} iterations:\n"
-            f"\t Target kappa_95: {kappa95_t:.3f}\n"
-            f"\t Actual kappa_95: {kappa_95:.3f}\n"
-            f"\t Target delta_95: {delta95_t:.3f}\n"
-            f"\t Actual delta_95: {delta_95:.3f}\n"
-            f"\t Error: {iter_err:.3E} > {iter_err_max:.3E}\n"
-        )
+        return
+
+    bluemira_print(
+        f"PLASMOD <-> Fixed boundary G-S successfully converged within {n_iter} iterations:\n"
+        f"\t Target kappa_95: {kappa95_t:.3f}\n"
+        f"\t Actual kappa_95: {kappa_95:.3f}\n"
+        f"\t Target delta_95: {delta95_t:.3f}\n"
+        f"\t Actual delta_95: {delta_95:.3f}\n"
+        f"\t Error: {iter_err:.3E} > {iter_err_max:.3E}\n"
+    )

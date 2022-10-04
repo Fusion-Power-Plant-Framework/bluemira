@@ -23,7 +23,7 @@
 Bluemira module for the solution of a 2D magnetostatic problem with cylindrical symmetry
 and toroidal current source using fenics FEM solver
 """
-from typing import Callable, Optional, Union
+from typing import Callable, Iterable, Optional, Union
 
 import dolfin
 import matplotlib.pyplot as plt
@@ -73,18 +73,18 @@ class FemMagnetostatic2d:
         Order of the approximating polynomial basis functions
     """  # noqa (W505)
 
-    def __init__(self, mesh, boundaries=None, p_order=3):
+    def __init__(
+        self,
+        mesh: Union[dolfin.mesh, str],
+        boundaries: Union[dolfin.mesh, str] = None,
+        p_order: int = 3,
+    ):
 
         self.p_order = p_order
 
-        # ======================================================================
         # check whether mesh is a filename or a mesh, then load it or use it
-        if isinstance(mesh, str):
-            self.mesh = dolfin.Mesh(mesh)  # define the mesh
-        else:
-            self.mesh = mesh  # use the mesh
+        self.mesh = dolfin.Mesh(mesh) if isinstance(mesh, str) else mesh
 
-        # ======================================================================
         # define boundaries
         if boundaries is None:
             # initialize the MeshFunction
@@ -100,7 +100,6 @@ class FemMagnetostatic2d:
         else:
             self.boundaries = boundaries
 
-        # ======================================================================
         # define the function space and bilinear forms
         # the Continuos Galerkin function space has been chosen as suitable for the
         # solution of the magnetostatic weak formulation in a Soblev Space H1(D)
@@ -126,11 +125,11 @@ class FemMagnetostatic2d:
 
     def solve(
         self,
-        g,
-        dirichlet_bc_function=None,
-        dirichlet_marker=None,
-        neumann_bc_function=None,
-    ):
+        g: Union[dolfin.Expression, dolfin.Function],
+        dirichlet_bc_function: Union[dolfin.Expression, dolfin.Function] = None,
+        dirichlet_marker: int = None,
+        neumann_bc_function: Union[dolfin.Expression, dolfin.Function] = None,
+    ) -> dolfin.Function:
         """
         Solve the weak formulation maxwell equation given a right hand side g,
         Dirichlet and Neumann boundary conditions.
@@ -141,10 +140,10 @@ class FemMagnetostatic2d:
             Right hand side function of the Poisson problem
         dirichlet_bc_function : Union[dolfin.Expression, dolfin.Function]
             Dirichlet boundary condition function
-        neumann_bc_function : Union[dolfin.Expression, dolfin.Function]
-            Neumann boundary condition function
         dirichlet_marker : int
             Identification number for the dirichlet boundary
+        neumann_bc_function : Union[dolfin.Expression, dolfin.Function]
+            Neumann boundary condition function
 
         Returns
         -------
@@ -218,29 +217,33 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
         Order of the approximating polynomial basis functions
     """  # noqa (W505)
 
-    def __init__(self, mesh, boundaries=None, p_order=3):
+    def __init__(
+        self,
+        mesh: Union[dolfin.mesh, str],
+        boundaries: Union[dolfin.mesh, str] = None,
+        p_order: int = 3,
+    ):
         super().__init__(mesh, boundaries, p_order)
         self.k = 1
 
     @property
-    def psi_ax(self):
+    def psi_ax(self) -> np.ndarray:
         """Poloidal flux on the magnetic axis"""
         return np.max(self.psi.vector()[:])
 
     @property
-    def psi_b(self):
+    def psi_b(self) -> float:
         """Poloidal flux on the boundary"""
         return 0.0  # np.min(self.psi.vector()[:])
 
     @property
-    def psi_norm_2d(self):
+    def psi_norm_2d(self) -> Callable:
         """Normalized flux function in 2-D"""
 
         def myfunc(x):
-            value = np.sqrt(
+            return np.sqrt(
                 np.abs((self.psi(x) - self.psi_ax) / (self.psi_b - self.psi_ax))
             )
-            return value
 
         return myfunc
 
@@ -249,7 +252,7 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
         pprime: Union[Callable, float],
         ffprime: Union[Callable, float],
         curr_target: Optional[float] = None,
-    ):
+    ) -> Callable:
         """
         Return the density current function given pprime and ffprime.
 
@@ -272,10 +275,7 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
         dx = dolfin.Measure("dx", domain=self.mesh)
         area = dolfin.assemble(dolfin.Constant(1) * dx())
 
-        if curr_target:
-            j_target = curr_target / area
-        else:
-            j_target = 1.0
+        j_target = curr_target / area if curr_target else 1.0
 
         def g(x):
             if self.psi_ax == 0:
@@ -284,15 +284,8 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
                 r = x[0]
                 x_psi = self.psi_norm_2d(x)
 
-                if callable(pprime):
-                    a = r * pprime(x_psi)
-                else:
-                    a = r * pprime
-
-                if callable(ffprime):
-                    b = 1 / MU_0 / r * ffprime(x_psi)
-                else:
-                    b = 1 / MU_0 / r * ffprime
+                a = r * (pprime(x_psi) if callable(pprime) else pprime)
+                b = 1 / MU_0 / r * (ffprime(x_psi) if callable(ffprime) else ffprime)
 
                 return self.k * (a + b)
 
@@ -303,7 +296,7 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
         pprime: Union[Callable, float],
         ffprime: Union[Callable, float],
         curr_target: Optional[float] = None,
-    ):
+    ) -> Callable:
         """
         Return the density current DOLFIN function given pprime and ffprime.
 
@@ -331,18 +324,20 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
         dx = dolfin.Measure("dx", domain=self.mesh)
         return dolfin.assemble(self.g * dx())
 
-    def _update_curr(self, curr_target):
+    def _update_curr(self, curr_target: float):
         self.k = 1
         if curr_target:
             self.k = curr_target / self._calculate_curr_tot()
 
-    def _plot_current_iteration(self, points, i_iter):
+    def _plot_current_iteration(self, points: Iterable, i_iter: int):
         curr_data = np.array([self.g_func(p) for p in points])
         self._plot_array(
             points, curr_data, f"J current at iteration {i_iter}", contour=False
         )
 
-    def _plot_array(self, points, array, title, contour=True):
+    def _plot_array(
+        self, points: np.ndarray, array: np.ndarray, title: str, contour: bool = True
+    ):
         plot_scalar_field(
             points[:, 0],
             points[:, 1],
@@ -357,18 +352,19 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
 
     def solve(
         self,
-        pprime,
-        ffprime,
-        curr_target=None,
-        dirichlet_bc_function=None,
-        dirichlet_marker=None,
-        neumann_bc_function=None,
-        iter_err_max=1e-5,
-        max_iter=10,
-        relaxation=0.0,
-        verbose=False,
-        plot=False,
-    ):
+        pprime: Union[callable, float],
+        ffprime: Union[callable, float],
+        curr_target: Optional[float] = None,
+        dirichlet_bc_function: Optional[
+            Union[dolfin.Expression, dolfin.Function]
+        ] = None,
+        dirichlet_marker: Optional[int] = None,
+        neumann_bc_function: Optional[Union[dolfin.Expression, dolfin.Function]] = None,
+        iter_err_max: float = 1e-5,
+        max_iter: int = 10,
+        relaxation: float = 0.0,
+        plot: bool = False,
+    ) -> dolfin.Function:
         """
         Solve the G-S problem given pprime and ffprime.
 
@@ -384,19 +380,17 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
         dirichlet_bc_function : Optional[Union[dolfin.Expression, dolfin.Function]]
             Dirichlet boundary condition function. Defaults to a Dirichlet boundary
             condition of 0 on the plasma boundary.
+        dirichlet_marker : int
+            Identification number for the dirichlet boundary
         neumann_bc_function : Optional[Union[dolfin.Expression, dolfin.Function]]
             Neumann boundary condition function. Defaults to a Neumann boundary
             condition of 0 on the plasma boundary.
-        dirichlet_marker : int
-            Identification number for the dirichlet boundary
         iter_err_max: float
             Convergence criterion value
-        max_iter: inter
+        max_iter: int
             Maximum number of iterations
         relaxation: float
             Relaxation factor for the Picard iteration procedure
-        verbose: bool
-            Whether or not to print
         plot: bool
             Whether or not to plot
 
@@ -419,10 +413,7 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
         self._update_curr(curr_target)
 
         eps = 1.0
-        i = 0  # iteration counter
-        while eps > iter_err_max and i < max_iter:
-            i += 1
-
+        for i in range(1, max_iter + 1):
             prev_psi = self.psi.vector()[:]
 
             if plot:
@@ -457,5 +448,8 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
             ] + relaxation * prev_psi
 
             self._update_curr(curr_target)
+
+            if eps > iter_err_max:
+                break
 
         return self.psi
