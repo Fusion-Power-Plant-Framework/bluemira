@@ -25,7 +25,7 @@ class TestParameter:
         assert param.description == "A parameter for testing on."
         assert param.long_name == "My parameter"
         assert param.source == "test"
-        assert param.unit == "dimensionless"
+        assert param.unit == ""
 
     def test_initial_value_added_to_history_on_init(self):
         param = Parameter(**self.SERIALIZED_PARAM)
@@ -91,8 +91,7 @@ class TestParameter:
 
     def test_repr_contains_name_value_and_unit(self):
         param = Parameter(**self.SERIALIZED_PARAM)
-
-        assert re.search("my_param=100 dimensionless", repr(param))
+        assert re.search("my_param=100 ", repr(param))
 
     @pytest.mark.parametrize(
         "param1, param2",

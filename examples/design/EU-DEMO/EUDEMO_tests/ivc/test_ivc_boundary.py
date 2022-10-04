@@ -33,10 +33,10 @@ class TestIVCBoundaryDesigner:
 
     picture_frame = PictureFrame({"ro": {"value": 6}, "ri": {"value": 3}}).create_shape()
     params = {
-        "tk_bb_ib": {"value": 0.8},
-        "tk_bb_ob": {"value": 1.1},
-        "ib_offset_angle": {"value": 45},
-        "ob_offset_angle": {"value": 175},
+        "tk_bb_ib": {"value": 0.8, "unit": "m"},
+        "tk_bb_ob": {"value": 1.1, "unit": "m"},
+        "ib_offset_angle": {"value": 45, "unit": "degree"},
+        "ob_offset_angle": {"value": 175, "unit": "degree"},
     }
 
     def test_DesignError_given_wall_shape_not_closed(self):

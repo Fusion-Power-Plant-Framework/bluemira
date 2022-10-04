@@ -45,11 +45,11 @@ def get_turning_point_idxs(z: np.ndarray):
 class TestDivertorSilhouetteDesigner:
 
     _default_params = {
-        "div_type": {"value": "SN"},
-        "div_L2D_ib": {"value": 1.1},
-        "div_L2D_ob": {"value": 1.45},
-        "div_Ltarg": {"value": 0.5},
-        "div_open": {"value": False},
+        "div_type": {"value": "SN", "unit": ""},
+        "div_L2D_ib": {"value": 1.1, "unit": "m"},
+        "div_L2D_ob": {"value": 1.45, "unit": "m"},
+        "div_Ltarg": {"value": 0.5, "unit": "m"},
+        "div_open": {"value": False, "unit": ""},
     }
 
     @classmethod

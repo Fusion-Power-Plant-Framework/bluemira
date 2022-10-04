@@ -55,15 +55,15 @@ CONFIG = {
     "problem_class": f"{OPTIMISER_MODULE_REF}::MinimiseLengthGOP",
 }
 PARAMS = {
-    "R_0": {"value": 10.5},
-    "kappa_95": {"value": 1.6},
-    "r_fw_ib_in": {"value": 5.8},
-    "r_fw_ob_in": {"value": 12.1},
-    "A": {"value": 3.1},
-    "tk_sol_ib": {"value": 0.225},
-    "fw_psi_n": {"value": 1.07},
-    "div_L2D_ib": {"value": 1.1},
-    "div_L2D_ob": {"value": 1.45},
+    "R_0": {"value": 10.5, "unit": "m"},
+    "kappa_95": {"value": 1.6, "unit": "m"},
+    "r_fw_ib_in": {"value": 5.8, "unit": "m"},
+    "r_fw_ob_in": {"value": 12.1, "unit": "m"},
+    "A": {"value": 3.1, "unit": "m"},
+    "tk_sol_ib": {"value": 0.225, "unit": "m"},
+    "fw_psi_n": {"value": 1.07, "unit": "m"},
+    "div_L2D_ib": {"value": 1.1, "unit": "m"},
+    "div_L2D_ob": {"value": 1.45, "unit": "m"},
 }
 
 
@@ -153,9 +153,9 @@ class TestWallSilhouetteDesigner:
         params = copy.deepcopy(PARAMS)
         params.update(
             {
-                "R_0": {"value": 10},
-                "kappa_95": {"value": 2},
-                "A": {"value": 2},
+                "R_0": {"value": 10, "unit": "m"},
+                "kappa_95": {"value": 2, "unit": "m"},
+                "A": {"value": 2, "unit": "m"},
             }
         )
         config = copy.deepcopy(CONFIG)
