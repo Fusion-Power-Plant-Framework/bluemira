@@ -40,10 +40,24 @@ from bluemira.mesh import meshing
 from bluemira.mesh.tools import import_mesh, msh_to_xdmf
 
 
+@dataclass
+class PlasmaFixedBoundary:
+    kappa_u: float
+    kappa_l: float
+    delta_u: float
+    delta_l: float
+    V_p: float
+    kappa: float
+    delta: float
+    kappa_95: float
+    delta_95: float
+
+
 def solve_plasmod_fixed_boundary(
     builder_plasma,
     params,
     build_config,
+    plasma_lcfs: PhysicalComponent,
     gs_options,
     delta95_t,
     kappa95_t,
@@ -52,15 +66,13 @@ def solve_plasmod_fixed_boundary(
     iter_err_max=1e-5,
     relaxation=0.2,
     plot=False,
-):
+) -> dataclass:
     """
     Solve the plasma fixed boundary problem using delta95 and kappa95 as target
     values and iterating on PLASMOD to have consistency with pprime and ffprime.
 
     Parameters
     ----------
-    builder_plasma: Builder
-        Plasma poloidal cross section builder object
     params: Configuration
         Parameters to use in the PLASMOD solve
     build_config: dict
@@ -83,9 +95,6 @@ def solve_plasmod_fixed_boundary(
     plot: bool
         Whether or not to plot
 
-    Notes
-    -----
-    This function directly modifies the parameters of builder_plasma
     """
     delta_95 = delta95_t
     kappa_95 = kappa95_t
@@ -94,42 +103,34 @@ def solve_plasmod_fixed_boundary(
     mesh_name = "FixedBoundaryEquilibriumMesh"
     mesh_name_msh = mesh_name + ".msh"
 
+    params: PlasmaFixedBoundary
+
     for n_iter in range(max_iter):
         # source string to be used in changed parameters
         source = f"from equilibrium iteration {n_iter}"
 
         # build the plasma x-z cross-section and get its volume
-        plasma = builder_plasma.build_xz().get_component("xz").get_component("LCFS")
-        lcfs = plasma.shape
+        lcfs = plasma_lcfs.shape
         plasma_volume = 2 * np.pi * lcfs.center_of_mass[0] * lcfs.area
 
         if plot:
-            plasma.plot_options.show_faces = False
-            plasma.plot_2d(show=True)
+            plasma_lcfs.plot_options.show_faces = False
+            plasma_lcfs.plot_2d(show=True)
 
-        kappa_u = builder_plasma.params.get_param("kappa_u")
-        kappa_l = builder_plasma.params.get_param("kappa_l")
-        delta_u = builder_plasma.params.get_param("delta_u")
-        delta_l = builder_plasma.params.get_param("delta_l")
-
-        kappa = (kappa_u + kappa_l) / 2
-        delta = (delta_u + delta_l) / 2
+        params.kappa = (params.kappa_u + params.kappa_l) / 2
+        params.delta = (params.delta_u + params.delta_l) / 2
+        params.V_p = plasma_volume
+        params.kappa95 = kappa_95
+        params.delta95 = delta_95
 
         bluemira_debug(
-            f"{kappa_u=}, {delta_u=}\n"
-            f"{kappa_l=}, {delta_l=}\n"
-            f"{kappa=}, {delta=}\n"
-            f"{plasma_volume=}"
+            f"{params.kappa_u=}, {params.delta_u=}\n"
+            f"{params.kappa_l=}, {params.delta_l=}\n"
+            f"{params.kappa=}, {params.delta=}\n"
+            f"{params.V_p=}"
         )
 
         # initialize plasmod solver
-        # - V_p is set equal to plasma volume
-        params.set_parameter("V_p", plasma_volume, "m^3", source)
-
-        params.set_parameter("kappa", kappa, "dimensionless", source)
-        params.set_parameter("delta", delta, "dimensionless", source)
-        params.set_parameter("kappa_95", kappa_95, "dimensionless", source)
-        params.set_parameter("delta_95", delta_95, "dimensionless", source)
 
         plasmod_solver = PlasmodTransportSolver(
             params=params,
@@ -146,16 +147,16 @@ def solve_plasmod_fixed_boundary(
             )
 
         # generate mesh for the Grad-Shafranov solver
-        plasma.shape.boundary[0].mesh_options = {
+        plasma_lcfs.shape.boundary[0].mesh_options = {
             "lcar": lcar_mesh,
             "physical_group": "lcfs",
         }
-        plasma.shape.mesh_options = {
+        plasma_lcfs.shape.mesh_options = {
             "lcar": lcar_mesh,
             "physical_group": "plasma_face",
         }
 
-        meshing.Mesh(meshfile=os.path.join(directory, mesh_name_msh))(plasma)
+        meshing.Mesh(meshfile=os.path.join(directory, mesh_name_msh))(plasma_lcfs)
 
         msh_to_xdmf(mesh_name_msh, dimensions=(0, 2), directory=directory)
 
@@ -192,8 +193,8 @@ def solve_plasmod_fixed_boundary(
         iter_err = max(err_delta, err_kappa)
 
         # calculate the new kappa_u and delta_u
-        kappa_u_0 = builder_plasma.params.get_param("kappa_u")
-        delta_u_0 = builder_plasma.params.get_param("delta_u")
+        kappa_u_0 = params.kappa_u
+        delta_u_0 = params.delta_u
 
         kappa_u = (1 - relaxation) * kappa_u_0 * (
             kappa95_t / kappa_95
@@ -217,11 +218,11 @@ def solve_plasmod_fixed_boundary(
         if iter_err <= iter_err_max:
             break
 
-        # update builder_plasma parameters
-        builder_plasma.params.kappa_u = kappa_u
-        builder_plasma.params.delta_u = delta_u
-        builder_plasma.reinitialise(builder_plasma.params)
-        bluemira_debug(f"{builder_plasma.params}")
+        # update parameters
+        params.kappa_u = kappa_u
+        params.delta_u = delta_u
+        plasma_lcfs.shape = plasma_lcfs._shape.create_shape()
+        bluemira_debug(f"{params}")
 
     else:
         bluemira_warn(
@@ -232,7 +233,7 @@ def solve_plasmod_fixed_boundary(
             f"\t Actual delta_95: {delta_95:.3f}\n"
             f"\t Error: {iter_err:.3E} > {iter_err_max:.3E}\n"
         )
-        return
+        return params
 
     bluemira_print(
         f"PLASMOD <-> Fixed boundary G-S successfully converged within {n_iter} iterations:\n"
@@ -242,3 +243,5 @@ def solve_plasmod_fixed_boundary(
         f"\t Actual delta_95: {delta_95:.3f}\n"
         f"\t Error: {iter_err:.3E} > {iter_err_max:.3E}\n"
     )
+
+    return params
