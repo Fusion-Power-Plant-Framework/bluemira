@@ -305,7 +305,7 @@ def _convert_angle_units(modified_unit, orig_unit, angle_unit):
         if b in unit_str:
             raise NotImplementedError(f"{breaking_units} not supported for conversion")
     if f"{angle_unit}**" in unit_str:
-        raise NotImplementedError("Exponent angles are not supported")
+        raise NotImplementedError("Exponent angles >1, <-1 are not supported")
     unit_list = unit_str.split("/", 1)
     exp = "." if angle_unit in unit_list[0] else "/"
     modified_unit = "".join(str(modified_unit).split(angle_unit))
