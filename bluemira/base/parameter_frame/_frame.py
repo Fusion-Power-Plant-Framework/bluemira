@@ -154,11 +154,11 @@ class NewParameterFrame:
         quantity = pint.Quantity(param_data["value"], param_data["unit"])
 
         if dimensionality := quantity.units.dimensionality:
-            unit = cls._fix_combined_units(cls._remake_units(dimensionality))
+            unit = _fix_combined_units(_remake_units(dimensionality))
         else:
             unit = quantity.units
 
-        unit = cls._fix_weird_units(unit, quantity.units)
+        unit = _fix_weird_units(unit, quantity.units)
 
         if unit != quantity.units:
             val = raw_uc(quantity.magnitude, quantity.units, unit)
@@ -167,105 +167,6 @@ class NewParameterFrame:
             param_data["value"] = val
 
         param_data["unit"] = unit
-
-    @staticmethod
-    def _remake_units(dimensionality: Union[Dict, pint.UnitsContainer]) -> pint.Unit:
-        dim_list = list(map(base_unit_defaults.get, dimensionality.keys()))
-        dim_pow = list(dimensionality.values())
-        return pint.Unit(".".join([f"{j[0]}^{j[1]}" for j in zip(dim_list, dim_pow)]))
-
-    @staticmethod
-    def _fix_combined_units(unit: pint.Unit) -> pint.Unit:
-        dim_keys = list(combined_unit_dimensions.keys())
-        dim_val = list(combined_unit_dimensions.values())
-        with suppress(ValueError):
-            return pint.Unit(
-                combined_unit_defaults[dim_keys[dim_val.index(unit.dimensionality)]]
-            )
-        return pint.Unit(unit)
-
-    @classmethod
-    def _fix_weird_units(
-        cls, modified_unit: pint.Unit, orig_unit: pint.Unit
-    ) -> pint.Unit:
-        """
-        Essentially a crude unit parser for when we have no dimensions
-        or non-comutative dimensions
-        """
-        unit_str = f"{orig_unit:D}"
-
-        ang_unit = [ang for ang in ANGLE_units if ang in unit_str]
-        if len(ang_unit) > 1:
-            raise ValueError(f"No...{orig_unit}")
-        elif len(ang_unit) == 1:
-            ang_unit = ang_unit[0]
-        else:
-            ang_unit = None
-
-        fpy = "full_power_year" in unit_str
-        dpa = "displacements_per_atom" in unit_str
-
-        if not (fpy or dpa) and ang_unit is None:
-            return pint.Unit(modified_unit)
-
-        if modified_unit == pint.Unit("dimensionless") and dpa:
-            new_unit = pint.Unit(
-                f"displacements_per_atom^{-1 if len(unit_str.split('/')) > 1 else 1}"
-            )
-        elif fpy:
-            if not modified_unit.dimensionality.keys() - ["[time]"]:
-                expon = list(modified_unit.dimensionality.values())[0]
-                if dpa:
-                    dpa_expon = -1 if len(unit_str.split("/")) > 1 and expon == 1 else 1
-                    new_unit = pint.Unit(f"dpa^{dpa_expon}.fpy^{expon}")
-                else:
-                    new_unit = pint.Unit(f"fpy^{expon}")
-            else:
-                unit_list = unit_str.split("/")
-                if dpa:
-                    if "displacements_per_atom" in unit_list[0]:
-                        dpa_str = "dpa."
-                    else:
-                        dpa_str = "dpa^-1."
-                else:
-                    dpa_str = ""
-
-                dim = dict(modified_unit.dimensionality)
-                if "full_power_year" in unit_list[0]:
-                    dim["[time]"] -= 1
-                    new_unit = pint.Unit(
-                        f"{dpa_str}fpy.{cls._fix_combined_units(cls._remake_units(dim))}"
-                    )
-                else:
-                    dim["[time]"] += 1
-                    new_unit = pint.Unit(
-                        f"{dpa_str}{cls._fix_combined_units(cls._remake_units(dim))}/fpy"
-                    )
-        else:
-            new_unit = modified_unit
-
-        # Deal with angles
-        if ang_unit:
-            return cls._fix_angle_units(new_unit, orig_unit, ang_unit)
-        else:
-            return new_unit
-
-    @staticmethod
-    def _fix_angle_units(modified_unit, orig_unit, angle_unit):
-        breaking_units = ["steradian", "square_degree"]
-        new_angle_unit = base_unit_defaults["[angle]"]
-        unit_str = f"{orig_unit:C}"
-        for b in breaking_units:
-            if b in unit_str:
-                raise NotImplementedError(
-                    f"{breaking_units} not supported for conversion"
-                )
-        if f"{angle_unit}**" in unit_str:
-            raise NotImplementedError("Exponent angles are not supported")
-        unit_list = unit_str.split("/", 1)
-        exp = "." if angle_unit in unit_list[0] else "/"
-        modified_unit = "".join(str(modified_unit).split(angle_unit))
-        return pint.Unit(f"{modified_unit}{exp}{new_angle_unit}")
 
     def tabulate(self, keys: Optional[List] = None, tablefmt: str = "fancy_grid") -> str:
         """
@@ -306,6 +207,109 @@ class NewParameterFrame:
         Pretty print ParameterFrame
         """
         return self.tabulate()
+
+
+def _fix_weird_units(modified_unit: pint.Unit, orig_unit: pint.Unit) -> pint.Unit:
+    """
+    Essentially a crude unit parser for when we have no dimensions
+    or non-comutative dimensions
+    """
+    unit_str = f"{orig_unit:D}"
+
+    ang_unit = [ang for ang in ANGLE_units if ang in unit_str]
+    if len(ang_unit) > 1:
+        raise ValueError(f"No...🤯 {orig_unit}")
+    elif len(ang_unit) == 1:
+        ang_unit = ang_unit[0]
+    else:
+        ang_unit = None
+
+    fpy = "full_power_year" in unit_str
+    dpa = "displacements_per_atom" in unit_str
+
+    if not (fpy or dpa) and ang_unit is None:
+        return pint.Unit(modified_unit)
+
+    if modified_unit == pint.Unit("dimensionless") and dpa:
+        new_unit = pint.Unit(
+            f"displacements_per_atom^{-1 if len(unit_str.split('/')) > 1 else 1}"
+        )
+    elif fpy:
+        if not modified_unit.dimensionality.keys() - ["[time]"]:
+            expon = list(modified_unit.dimensionality.values())[0]
+            if dpa:
+                dpa_expon = -1 if len(unit_str.split("/")) > 1 and expon == 1 else 1
+                new_unit = pint.Unit(f"dpa^{dpa_expon}.fpy^{expon}")
+            else:
+                new_unit = pint.Unit(f"fpy^{expon}")
+        else:
+            unit_list = unit_str.split("/")
+            if dpa:
+                if "displacements_per_atom" in unit_list[0]:
+                    dpa_str = "dpa."
+                else:
+                    dpa_str = "dpa^-1."
+            else:
+                dpa_str = ""
+
+            dim = dict(modified_unit.dimensionality)
+            if "full_power_year" in unit_list[0]:
+                dim["[time]"] -= 1
+                new_unit = pint.Unit(
+                    f"{dpa_str}fpy.{_fix_combined_units(_remake_units(dim))}"
+                )
+            else:
+                dim["[time]"] += 1
+                new_unit = pint.Unit(
+                    f"{dpa_str}{_fix_combined_units(_remake_units(dim))}/fpy"
+                )
+    else:
+        new_unit = modified_unit
+
+    # Deal with angles
+    if ang_unit:
+        return _convert_angle_units(new_unit, orig_unit, ang_unit)
+    else:
+        return new_unit
+
+
+def _remake_units(dimensionality: Union[Dict, pint.UnitsContainer]) -> pint.Unit:
+    dim_list = list(map(base_unit_defaults.get, dimensionality.keys()))
+    dim_pow = list(dimensionality.values())
+    return pint.Unit(".".join([f"{j[0]}^{j[1]}" for j in zip(dim_list, dim_pow)]))
+
+
+def _fix_combined_units(unit: pint.Unit) -> pint.Unit:
+    dim_keys = list(combined_unit_dimensions.keys())
+    dim_val = list(combined_unit_dimensions.values())
+    with suppress(ValueError):
+        return pint.Unit(
+            combined_unit_defaults[dim_keys[dim_val.index(unit.dimensionality)]]
+        )
+    return pint.Unit(unit)
+
+
+def _convert_angle_units(modified_unit, orig_unit, angle_unit):
+    """
+    Converts angle units to the base unit default for angles.
+
+    Angles are dimensionless therefore dimensionality conversion
+    from pint doesnt work. Conversions between angle units is also not
+    very robust.
+
+    """
+    breaking_units = ["steradian", "square_degree"]
+    new_angle_unit = base_unit_defaults["[angle]"]
+    unit_str = f"{orig_unit:C}"
+    for b in breaking_units:
+        if b in unit_str:
+            raise NotImplementedError(f"{breaking_units} not supported for conversion")
+    if f"{angle_unit}**" in unit_str:
+        raise NotImplementedError("Exponent angles are not supported")
+    unit_list = unit_str.split("/", 1)
+    exp = "." if angle_unit in unit_list[0] else "/"
+    modified_unit = "".join(str(modified_unit).split(angle_unit))
+    return pint.Unit(f"{modified_unit}{exp}{new_angle_unit}")
 
 
 def make_parameter_frame(
