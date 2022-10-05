@@ -28,8 +28,8 @@ import numpy as np
 
 from bluemira.base.builder import Builder, Component, ComponentManager
 from bluemira.base.components import PhysicalComponent
-from bluemira.base.parameter_frame import NewParameter as Parameter
-from bluemira.base.parameter_frame import NewParameterFrame as ParameterFrame
+from bluemira.base.parameter_frame import Parameter as Parameter
+from bluemira.base.parameter_frame import ParameterFrame
 from bluemira.builders.tools import (
     circular_pattern_component,
     get_n_sectors,

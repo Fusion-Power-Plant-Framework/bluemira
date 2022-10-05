@@ -32,9 +32,8 @@ import numpy as np
 
 from bluemira.base.error import BuilderError
 from bluemira.base.look_and_feel import bluemira_debug_flush
-from bluemira.base.parameter_frame import NewParameter as Parameter
-from bluemira.base.parameter_frame import NewParameterFrame as ParameterFrame
-from bluemira.base.parameter_frame import make_parameter_frame
+from bluemira.base.parameter_frame import Parameter as Parameter
+from bluemira.base.parameter_frame import ParameterFrame, make_parameter_frame
 from bluemira.display import plot_2d
 from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.optimisation import (

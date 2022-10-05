@@ -31,7 +31,7 @@ class ParameterValue(Generic[ParameterValueType]):
     source: str
 
 
-class NewParameter(Generic[ParameterValueType]):
+class Parameter(Generic[ParameterValueType]):
     """
     Represents a parameter with physical units.
 
@@ -91,7 +91,7 @@ class NewParameter(Generic[ParameterValueType]):
         Parameters are equal if their names and values (with matching
         units) are equal.
         """
-        if not isinstance(__o, NewParameter):
+        if not isinstance(__o, Parameter):
             return NotImplemented
         try:
             o_value_with_correct_unit = raw_uc(__o.value, __o.unit, self.unit)

@@ -18,15 +18,15 @@
 #
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
-"""Module containing classes related to NewParameter and NewParameterFrame"""
+"""Module containing classes related to Parameter and ParameterFrame"""
 
 from bluemira.base.parameter_frame._decorator import parameter_frame
-from bluemira.base.parameter_frame._frame import NewParameterFrame, make_parameter_frame
-from bluemira.base.parameter_frame._parameter import NewParameter
+from bluemira.base.parameter_frame._frame import ParameterFrame, make_parameter_frame
+from bluemira.base.parameter_frame._parameter import Parameter
 
 __all__ = [
-    "NewParameter",
-    "NewParameterFrame",
+    "Parameter",
+    "ParameterFrame",
     "make_parameter_frame",
     "parameter_frame",
 ]

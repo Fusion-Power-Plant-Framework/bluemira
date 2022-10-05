@@ -2,7 +2,7 @@ import copy
 
 import pytest
 
-from bluemira.base.parameter_frame import NewParameter as Parameter
+from bluemira.base.parameter_frame import Parameter as Parameter
 
 
 class TestParameter:

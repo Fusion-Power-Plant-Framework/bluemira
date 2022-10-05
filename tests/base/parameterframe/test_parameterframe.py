@@ -7,9 +7,12 @@ from unittest import mock
 import pint
 import pytest
 
-from bluemira.base.parameter_frame import NewParameter as Parameter
-from bluemira.base.parameter_frame import NewParameterFrame as ParameterFrame
-from bluemira.base.parameter_frame import make_parameter_frame, parameter_frame
+from bluemira.base.parameter_frame import Parameter as Parameter
+from bluemira.base.parameter_frame import (
+    ParameterFrame,
+    make_parameter_frame,
+    parameter_frame,
+)
 from bluemira.base.parameter_frame._parameter import ParamDictT
 
 FRAME_DATA = {

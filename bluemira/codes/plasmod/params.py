@@ -26,7 +26,7 @@ from copy import deepcopy
 from dataclasses import dataclass
 from typing import Dict
 
-from bluemira.base.parameter_frame import NewParameter as Parameter
+from bluemira.base.parameter_frame import Parameter as Parameter
 from bluemira.codes.params import MappedParameterFrame
 from bluemira.codes.plasmod.mapping import mappings
 from bluemira.codes.utilities import ParameterMapping

@@ -25,7 +25,7 @@ import abc
 from dataclasses import dataclass
 from typing import Dict, Literal, Optional, Union
 
-from bluemira.base.parameter_frame import NewParameterFrame as ParameterFrame
+from bluemira.base.parameter_frame import ParameterFrame
 from bluemira.codes.error import CodesError
 
 

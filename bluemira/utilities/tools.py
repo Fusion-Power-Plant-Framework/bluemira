@@ -72,10 +72,6 @@ class NumpyJSONEncoder(JSONEncoder):
         https://bugs.python.org/issue42434
         https://bugs.python.org/issue31466
         """
-        from bluemira.base.parameter import Parameter
-
-        if isinstance(obj, Parameter):
-            obj = obj.value
         return _floatstr(obj, *args, **kwargs)
 
     def iterencode(self, o, _one_shot=False):

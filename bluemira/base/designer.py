@@ -25,8 +25,7 @@ Interface for designer classes.
 import abc
 from typing import Callable, Dict, Generic, Optional, Type, TypeVar, Union
 
-from bluemira.base.parameter_frame import NewParameterFrame as ParameterFrame
-from bluemira.base.parameter_frame import make_parameter_frame
+from bluemira.base.parameter_frame import ParameterFrame, make_parameter_frame
 
 _DesignerReturnT = TypeVar("_DesignerReturnT")
 

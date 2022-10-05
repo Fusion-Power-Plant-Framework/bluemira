@@ -29,8 +29,8 @@ from typing import Callable, Dict, Iterable, List, Sequence, Tuple
 import numpy as np
 
 from bluemira.base.designer import Designer
-from bluemira.base.parameter_frame import NewParameter as Parameter
-from bluemira.base.parameter_frame import NewParameterFrame as ParameterFrame
+from bluemira.base.parameter_frame import Parameter as Parameter
+from bluemira.base.parameter_frame import ParameterFrame
 from bluemira.equilibria import Equilibrium
 from bluemira.equilibria.find import find_flux_surface_through_point, get_legs
 from bluemira.geometry.tools import make_polygon

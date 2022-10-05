@@ -28,7 +28,7 @@ from typing import Dict, List, Union
 from bluemira.base.builder import Builder, ComponentManager
 from bluemira.base.components import Component, PhysicalComponent
 from bluemira.base.designer import Designer
-from bluemira.base.parameter_frame import NewParameter as Parameter
+from bluemira.base.parameter_frame import Parameter as Parameter
 from bluemira.base.parameter_frame import parameter_frame
 from bluemira.display.palettes import BLUE_PALETTE
 from bluemira.equilibria.coils import Coil

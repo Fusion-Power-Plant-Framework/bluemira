@@ -28,14 +28,17 @@ from bluemira.base.constants import (
     combined_unit_dimensions,
     raw_uc,
 )
-from bluemira.base.parameter_frame._parameter import NewParameter as Parameter
-from bluemira.base.parameter_frame._parameter import ParamDictT, ParameterValueType
+from bluemira.base.parameter_frame._parameter import (
+    ParamDictT,
+    Parameter,
+    ParameterValueType,
+)
 
-_PfT = TypeVar("_PfT", bound="NewParameterFrame")
+_PfT = TypeVar("_PfT", bound="ParameterFrame")
 
 
 @dataclass
-class NewParameterFrame:
+class ParameterFrame:
     """
     A data class to hold a collection of `Parameter` objects.
 
@@ -50,7 +53,7 @@ class NewParameterFrame:
 
 
         @dataclass
-        class AnotherFrame(NewParameterFrame):
+        class AnotherFrame(ParameterFrame):
             param_1: Parameter[float]
             param_2: Parameter[int]
 
@@ -104,15 +107,15 @@ class NewParameterFrame:
         return cls(**kwargs)
 
     @classmethod
-    def from_frame(cls: Type[_PfT], frame: NewParameterFrame) -> _PfT:
-        """Initialise an instance from another NewParameterFrame."""
+    def from_frame(cls: Type[_PfT], frame: ParameterFrame) -> _PfT:
+        """Initialise an instance from another ParameterFrame."""
         kwargs = {}
         for field in cls.__dataclass_fields__:
             try:
                 kwargs[field] = getattr(frame, field)
             except AttributeError:
                 raise ValueError(
-                    f"Cannot create NewParameterFrame from other. "
+                    f"Cannot create ParameterFrame from other. "
                     f"Other frame does not contain field '{field}'."
                 )
         return cls(**kwargs)
@@ -133,7 +136,7 @@ class NewParameterFrame:
         return cls.from_dict(json.loads(json_in))
 
     def to_dict(self) -> Dict[str, Dict[str, Any]]:
-        """Serialize this NewParameterFrame to a dictionary."""
+        """Serialize this ParameterFrame to a dictionary."""
         out = {}
         for param_name in self.__dataclass_fields__:
             param_data = getattr(self, param_name).to_dict()
@@ -344,7 +347,7 @@ def _non_comutative_unit_conversion(dimensionality, numerator, dpa, fpy):
 
 
 def make_parameter_frame(
-    params: Union[Dict[str, ParamDictT], NewParameterFrame, str, None],
+    params: Union[Dict[str, ParamDictT], ParameterFrame, str, None],
     param_cls: Type[_PfT],
 ) -> Union[_PfT, None]:
     """
@@ -352,7 +355,7 @@ def make_parameter_frame(
 
     Parameters
     ----------
-    params: Union[Dict[str, ParamDictT], NewParameterFrame, str, None]
+    params: Union[Dict[str, ParamDictT], ParameterFrame, str, None]
         The parameters to initialise the class with.
         This parameter can be several types:
 
@@ -373,7 +376,7 @@ def make_parameter_frame(
                 This is intended for internal use, to aid in validation
                 of parameters in `Builder`\\s and `Designer`\\s.
 
-    param_cls: Type[NewParameterFrame]
+    param_cls: Type[ParameterFrame]
         The `ParameterFrame` class to create a new instance of.
 
     Returns
@@ -393,6 +396,6 @@ def make_parameter_frame(
         return params
     elif isinstance(params, str):
         return param_cls.from_json(params)
-    elif isinstance(params, NewParameterFrame):
+    elif isinstance(params, ParameterFrame):
         return param_cls.from_frame(params)
     raise TypeError(f"Cannot interpret type '{type(params)}' as {param_cls.__name__}.")
