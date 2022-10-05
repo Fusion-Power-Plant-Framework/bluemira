@@ -7,19 +7,19 @@ import volume_functions as vf
 
 def check_geometry(geometry_variables):
 
-    if geometry_variables["divertor_width"] > 0.9 * geometry_variables["minor_r"]:
+    if geometry_variables.divertor_width > 0.9 * geometry_variables.minor_r:
         raise ValueError("The divertor width must be less than 90% of the minor radius")
 
     inboard_build = (
-        geometry_variables["minor_r"]
-        + geometry_variables["inb_fw_thick"]
-        + geometry_variables["inb_bz_thick"]
-        + geometry_variables["inb_mnfld_thick"]
-        + geometry_variables["inb_vv_thick"]
-        + geometry_variables["tf_thick"]
+        geometry_variables.minor_r
+        + geometry_variables.inb_fw_thick
+        + geometry_variables.inb_bz_thick
+        + geometry_variables.inb_mnfld_thick
+        + geometry_variables.inb_vv_thick
+        + geometry_variables.tf_thick
     )
 
-    if inboard_build > geometry_variables["major_r"]:
+    if inboard_build > geometry_variables.major_r:
         raise ValueError("The inboard build does not fit within the major radius")
 
 
@@ -27,22 +27,22 @@ def make_geometry(geometry_variables, material_lib):
 
     # Creates a OpenMC CSG geometry for a EU Demo reactor
 
-    minor_r = geometry_variables["minor_r"]
-    major_r = geometry_variables["major_r"]
-    elong = geometry_variables["elong"]
+    minor_r = geometry_variables.minor_r
+    major_r = geometry_variables.major_r
+    elong = geometry_variables.elong
 
-    inb_fw_thick = geometry_variables["inb_fw_thick"]
-    inb_bz_thick = geometry_variables["inb_bz_thick"]
-    inb_mnfld_thick = geometry_variables["inb_mnfld_thick"]
-    inb_vv_thick = geometry_variables["inb_vv_thick"]
-    tf_thick = geometry_variables["tf_thick"]
+    inb_fw_thick = geometry_variables.inb_fw_thick
+    inb_bz_thick = geometry_variables.inb_bz_thick
+    inb_mnfld_thick = geometry_variables.inb_mnfld_thick
+    inb_vv_thick = geometry_variables.inb_vv_thick
+    tf_thick = geometry_variables.tf_thick
 
-    outb_fw_thick = geometry_variables["outb_fw_thick"]
-    outb_bz_thick = geometry_variables["outb_bz_thick"]
-    outb_mnfld_thick = geometry_variables["outb_mnfld_thick"]
-    outb_vv_thick = geometry_variables["outb_vv_thick"]
+    outb_fw_thick = geometry_variables.outb_fw_thick
+    outb_bz_thick = geometry_variables.outb_bz_thick
+    outb_mnfld_thick = geometry_variables.outb_mnfld_thick
+    outb_vv_thick = geometry_variables.outb_vv_thick
 
-    divertor_width = geometry_variables["divertor_width"]
+    divertor_width = geometry_variables.divertor_width
 
     inner_plasma_r = major_r - minor_r
     outer_plasma_r = major_r + minor_r
