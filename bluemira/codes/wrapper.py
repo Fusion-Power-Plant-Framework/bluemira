@@ -32,7 +32,7 @@ from bluemira.codes.utilities import get_code_interface
 
 if TYPE_CHECKING:
     from bluemira.base.builder import BuildConfig
-    from bluemira.base.parameter import ParameterFrame
+    from bluemira.base.parameter_frame import NewParameter as ParameterFrame
 
 
 def systems_code_solver(
