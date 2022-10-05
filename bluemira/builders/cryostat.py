@@ -30,8 +30,7 @@ import numpy as np
 from bluemira.base.builder import Builder, ComponentManager
 from bluemira.base.components import PhysicalComponent
 from bluemira.base.designer import Designer
-from bluemira.base.parameter_frame import Parameter as Parameter
-from bluemira.base.parameter_frame import ParameterFrame
+from bluemira.base.parameter_frame import Parameter, ParameterFrame
 from bluemira.builders.tools import build_sectioned_xyz, make_circular_xy_ring
 from bluemira.display.palettes import BLUE_PALETTE
 from bluemira.geometry.face import BluemiraFace

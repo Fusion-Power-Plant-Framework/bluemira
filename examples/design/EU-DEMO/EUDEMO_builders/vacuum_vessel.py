@@ -27,8 +27,7 @@ from typing import Dict, List, Type, Union
 
 from bluemira.base.builder import Builder, ComponentManager
 from bluemira.base.components import PhysicalComponent
-from bluemira.base.parameter_frame import Parameter as Parameter
-from bluemira.base.parameter_frame import ParameterFrame
+from bluemira.base.parameter_frame import Parameter, ParameterFrame
 from bluemira.builders.tools import (
     build_sectioned_xy,
     build_sectioned_xyz,

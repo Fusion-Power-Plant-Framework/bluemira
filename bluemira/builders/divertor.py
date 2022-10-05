@@ -27,8 +27,7 @@ from typing import Dict, Type, Union
 
 from bluemira.base.builder import Builder, ComponentManager
 from bluemira.base.components import Component, PhysicalComponent
-from bluemira.base.parameter_frame import Parameter as Parameter
-from bluemira.base.parameter_frame import ParameterFrame
+from bluemira.base.parameter_frame import Parameter, ParameterFrame
 from bluemira.builders.tools import (
     circular_pattern_component,
     get_n_sectors,

@@ -21,8 +21,7 @@
 from dataclasses import dataclass
 from typing import Dict, Union
 
-from bluemira.base.parameter_frame import Parameter as Parameter
-from bluemira.base.parameter_frame import ParameterFrame
+from bluemira.base.parameter_frame import Parameter, ParameterFrame
 from bluemira.equilibria import Equilibrium
 from bluemira.equilibria.profiles import BetaIpProfile
 from bluemira.geometry.wire import BluemiraWire

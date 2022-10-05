@@ -7,8 +7,8 @@ from unittest import mock
 import pint
 import pytest
 
-from bluemira.base.parameter_frame import Parameter as Parameter
 from bluemira.base.parameter_frame import (
+    Parameter,
     ParameterFrame,
     make_parameter_frame,
     parameter_frame,
