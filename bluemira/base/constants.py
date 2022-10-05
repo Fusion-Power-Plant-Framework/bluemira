@@ -121,8 +121,8 @@ class BMUnitRegistry(UnitRegistry):
             e_to_t,
             t_units,
             ev_units,
-            lambda ureg, x: x * conversion,
-            lambda ureg, x: x / conversion,
+            lambda _, x: x * conversion,
+            lambda _, x: x / conversion,
         )
 
     @property
@@ -142,7 +142,7 @@ class BMUnitRegistry(UnitRegistry):
         return self._gas_flow_temperature
 
     @gas_flow_temperature.setter
-    def gas_flow_temperature(self, value: [float, Quantity]):
+    def gas_flow_temperature(self, value: Union[float, Quantity]):
         self._gas_flow_temperature = (
             value.to("kelvin")
             if isinstance(value, Quantity)

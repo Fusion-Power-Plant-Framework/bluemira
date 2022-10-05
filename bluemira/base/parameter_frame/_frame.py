@@ -189,7 +189,7 @@ def _validate_parameter_field(field, member_type: Type) -> Tuple[Type, ...]:
     return value_types
 
 
-def _validate_units(param_data: Dict, value_type: Type):
+def _validate_units(param_data: Dict, value_type: Iterable[Type, ...]):
 
     try:
         quantity = pint.Quantity(param_data["value"], param_data["unit"])
@@ -217,7 +217,7 @@ def _validate_units(param_data: Dict, value_type: Type):
     param_data["unit"] = unit
 
 
-def _remake_units(dimensionality: Union[Dict, pint.UnitsContainer]) -> pint.Unit:
+def _remake_units(dimensionality: Union[Dict, pint.unit.UnitsContainer]) -> pint.Unit:
     """Reconstruct unit from its dimensionality"""
     dim_list = list(map(base_unit_defaults.get, dimensionality.keys()))
     dim_pow = list(dimensionality.values())
@@ -242,7 +242,7 @@ def _convert_angle_units(
     Converts angle units to the base unit default for angles.
 
     Angles are dimensionless therefore dimensionality conversion
-    from pint doesnt work. Conversions between angle units is also not
+    from pint doesn't work. Conversions between angle units is also not
     very robust.
 
     Parameters
@@ -276,7 +276,7 @@ def _convert_angle_units(
 def _fix_weird_units(modified_unit: pint.Unit, orig_unit: pint.Unit) -> pint.Unit:
     """
     Essentially a crude unit parser for when we have no dimensions
-    or non-comutative dimensions
+    or non-commutative dimensions
     """
     unit_str = f"{orig_unit:C}"
 

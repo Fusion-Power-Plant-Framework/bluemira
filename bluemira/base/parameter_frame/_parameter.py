@@ -142,7 +142,7 @@ class NewParameter(Generic[ParameterValueType]):
         return raw_uc(self.value, self.unit, unit)
 
     @property
-    def unit(self) -> pint.Unit:
+    def unit(self) -> str:
         """Return the physical unit of the parameter."""
         return f"{self._unit:~P}"
 
