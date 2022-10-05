@@ -168,13 +168,3 @@ class TestTeardown:
                 teardown.read()
 
         assert "bore" in str(exc)
-
-    # def test_read_func_updates_bluemira_params_from_mfile(self, run_func):
-    #     teardown = Teardown(self.default_pf, None, utils.READ_DIR)
-
-    # with file_exists(os.path.join(utils.READ_DIR, "MFILE.DAT"), self.IS_FILE_REF):
-    #     getattr(teardown, run_func)()
-
-    #     # Expected value comes from ./test_data/mfile_data.json
-    #     assert teardown.params.tau_e.value == pytest.approx(4.3196)
-    #     assert teardown.params.P_el_net.value == pytest.approx(500)
