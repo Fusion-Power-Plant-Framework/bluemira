@@ -280,13 +280,19 @@ def _convert_angle_units(
 def _fix_weird_units(modified_unit: pint.Unit, orig_unit: pint.Unit) -> pint.Unit:
     """
     Essentially a crude unit parser for when we have no dimensions
-    or non-commutative dimensions
+    or non-commutative dimensions.
+
+    Full power years (dimension [time]) and displacements per atom (dimensionless)
+    need to be readded to units as they will be removed by the dimensionality conversion.
+
+    Angle units are dimensionless and conversions between them are not robust
+
     """
     unit_str = f"{orig_unit:C}"
 
     ang_unit = [ang for ang in ANGLE_UNITS if ang in unit_str]
     if len(ang_unit) > 1:
-        raise ValueError(f"No...🤯 {orig_unit}")
+        raise ValueError(f"More than one angle unit not supported...🤯 {orig_unit}")
     elif len(ang_unit) == 1:
         ang_unit = ang_unit[0]
     else:
@@ -307,7 +313,15 @@ def _fix_weird_units(modified_unit: pint.Unit, orig_unit: pint.Unit) -> pint.Uni
 
 
 def _non_comutative_unit_conversion(dimensionality, numerator, dpa, fpy):
-    # Only allows dpa and fpy to be first order
+    """
+    Full power years (dimension [time]) and displacements per atom (dimensionless)
+    need to be readded to units as they will be removed by the dimensionality conversion.
+
+    Full power years even though time based is not the same as straight 'time' and
+    is therefore dealt with after other standard unit conversions.
+
+    Only first order of both of these units is dealt with.
+    """
     dpa_str = (
         ("dpa." if "displacements_per_atom" in numerator else "dpa^-1.") if dpa else ""
     )

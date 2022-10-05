@@ -258,6 +258,8 @@ ANGLE_UNITS = [
     "milliarcsecond",
     "grade",
     "mil",
+    "steradian",
+    "square_degree",
 ]
 
 # =============================================================================
