@@ -56,7 +56,7 @@ class NewParameter(Generic[ParameterValueType]):
         self,
         name: str,
         value: ParameterValueType,
-        unit: Union[str, pint.Unit] = pint.Unit("dimensionless"),
+        unit: str = "",
         source: str = "",
         description: str = "",
         long_name: str = "",

@@ -202,7 +202,7 @@ def _validate_units(param_data: Dict, value_type: Iterable[Type, ...]):
     except TypeError as te:
         if not isinstance(param_data["value"], bool):
             raise te
-        param_data["unit"] = pint.Unit("dimensionless")
+        param_data["unit"] = "dimensionless"
         return
 
     if dimensionality := quantity.units.dimensionality:
@@ -218,7 +218,7 @@ def _validate_units(param_data: Dict, value_type: Iterable[Type, ...]):
             val = int(val)
         param_data["value"] = val
 
-    param_data["unit"] = unit
+    param_data["unit"] = f"{unit:~P}"
 
 
 def _remake_units(dimensionality: Union[Dict, pint.unit.UnitsContainer]) -> pint.Unit:
