@@ -49,7 +49,7 @@ import abc
 import enum
 from typing import Any, Callable, Optional, Type
 
-from bluemira.base.parameter import ParameterFrame
+from bluemira.base.parameter_frame import NewParameterFrame as ParameterFrame
 
 
 class Task(abc.ABC):

@@ -19,10 +19,13 @@
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 
-from bluemira.base.config import ParameterFrame
+from dataclasses import dataclass
+
 from bluemira.base.parameter import ParameterMapping
+from bluemira.base.parameter_frame import NewParameter as Parameter
 from bluemira.base.solver import NoOpTask, RunMode
 from bluemira.codes import interface
+from bluemira.codes.params import MappedParameterFrame
 
 
 class NoOpRunMode(RunMode):
@@ -38,18 +41,35 @@ class NoOpSolver(interface.CodesSolver):
     run_mode_cls = NoOpRunMode
 
 
+@dataclass
+class Params(MappedParameterFrame):
+    param1: Parameter[float]
+    param2: Parameter[int]
+
+    mappings = {
+        "param1": ParameterMapping("ext1", send=True, recv=True),
+        "param2": ParameterMapping("ext2", send=False, recv=False),
+    }
+
+
 class TestCodesSolver:
     def test_modify_mappings_updates_send_recv_values_of_params(self):
-        params = ParameterFrame()
-        params.add_parameter(
-            "param1",
-            unit="dimensionless",
-            value=1,
-            mapping={NoOpSolver.name: ParameterMapping("param1", recv=False, send=True)},
+        params = Params.from_dict(
+            {
+                "param1": {"value": 0.1, "unit": "m"},
+                "param2": {"value": 5, "unit": "dimensionless"},
+            }
         )
         solver = NoOpSolver(params)
 
-        solver.modify_mappings({"param1": {"recv": True, "send": False}})
+        solver.modify_mappings(
+            {
+                "param1": {"recv": True, "send": False},
+                "param2": {"recv": False, "send": True},
+            }
+        )
 
-        assert solver.params.param1.mapping[solver.name].recv is True
-        assert solver.params.param1.mapping[solver.name].send is False
+        assert solver.params.mappings["param1"].send is False
+        assert solver.params.mappings["param1"].recv is True
+        assert solver.params.mappings["param2"].send is True
+        assert solver.params.mappings["param2"].recv is False

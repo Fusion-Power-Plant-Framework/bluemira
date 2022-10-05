@@ -173,6 +173,13 @@ class TestParameterFrame:
 
         assert frame1 != frame2
 
+    @pytest.mark.parametrize("x", [1, "str", Parameter("x", 0.1, "m")])
+    def test_frame_ne_to_non_frame(self, x):
+        frame = BasicFrame.from_dict(FRAME_DATA)
+
+        assert frame != x
+        assert x != frame
+
     def test_update_values_edits_frames_values(self):
         frame = BasicFrame.from_dict(FRAME_DATA)
 
@@ -251,6 +258,33 @@ class TestParameterFrame:
                 except ValueError as ve:
                     if ind in head_keys:
                         raise ve
+
+    def test_iterating_returns_parameters_in_declaration_order(self):
+        frame = BasicFrame.from_dict(FRAME_DATA)
+
+        params = []
+        for param in frame:
+            params.append(param)
+
+        assert all(isinstance(p, Parameter) for p in params)
+        assert [p.name for p in params] == ["height", "age"]
+
+    def test_ValueError_creating_frame_from_non_superset_frame(self):
+        @dataclass
+        class OtherFrame(ParameterFrame):
+            height: Parameter[float]
+            age: Parameter[int]
+            weight: Parameter[float]
+
+        basic_frame = BasicFrame.from_dict(FRAME_DATA)
+
+        with pytest.raises(ValueError):
+            OtherFrame.from_frame(basic_frame)
+
+    def test_from_json_ValueError_given_non_string_or_buffer(self):
+        with pytest.raises(ValueError) as error:
+            BasicFrame.from_json(["x"])
+        assert "Cannot read JSON" in str(error)
 
 
 class TestParameterSetup:

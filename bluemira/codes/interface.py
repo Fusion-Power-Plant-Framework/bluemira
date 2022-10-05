@@ -25,10 +25,10 @@ from typing import Any, Callable, Dict, List, Optional, Union
 
 from bluemira.base.constants import raw_uc
 from bluemira.base.look_and_feel import bluemira_warn
-from bluemira.base.parameter import ParameterFrame
 from bluemira.base.solver import SolverABC, Task
 from bluemira.codes.error import CodesError
-from bluemira.codes.utilities import get_recv_mapping, get_send_mapping, run_subprocess
+from bluemira.codes.params import MappedParameterFrame
+from bluemira.codes.utilities import run_subprocess
 
 
 class CodesTask(Task):
@@ -36,7 +36,9 @@ class CodesTask(Task):
     Base class for a task used by a solver for an external code.
     """
 
-    def __init__(self, params: ParameterFrame, codes_name: str) -> None:
+    params: MappedParameterFrame
+
+    def __init__(self, params: MappedParameterFrame, codes_name: str) -> None:
         super().__init__(params)
         self._name = codes_name
 
@@ -94,22 +96,22 @@ class CodesSetup(CodesTask):
             def remapper(x):
                 return x
 
-        send_mappings = get_send_mapping(self.params, self._name)
-        for external_key, bm_key in send_mappings.items():
-            external_key = remapper(external_key)
-            if isinstance(external_key, list):
-                for key in external_key:
-                    _inputs[key] = self._convert_units(self.params.get_param(bm_key))
+        for bm_name, mapping in self.params.mappings.items():
+            if not mapping.send:
                 continue
-
-            _inputs[external_key] = self._convert_units(self.params.get_param(bm_key))
-
+            external_name = remapper(mapping.name)
+            bm_param = getattr(self.params, bm_name)
+            target_unit = mapping.unit
+            if isinstance(external_name, list):
+                for name in external_name:
+                    _inputs[name] = self._convert_units(bm_param, target_unit)
+            else:
+                _inputs[external_name] = self._convert_units(bm_param, target_unit)
         return _inputs
 
-    def _convert_units(self, param):
-        code_unit = param.mapping[self._name].unit
-        if code_unit is not None:
-            return raw_uc(param.value, param.unit, code_unit)
+    def _convert_units(self, param, target_unit: str):
+        if target_unit is not None:
+            return raw_uc(param.value, param.unit, target_unit)
         else:
             return param.value
 
@@ -151,7 +153,7 @@ class CodesTeardown(CodesTask):
             does not exist in this object's ParameterFrame.
         """
         mapped_outputs = self._map_external_outputs_to_bluemira_params(outputs, recv_all)
-        self.params.update_kw_parameters(mapped_outputs, source=self._name)
+        self.params.update_values(mapped_outputs, source=self._name)
 
     def _map_external_outputs_to_bluemira_params(
         self, external_outputs: Dict[str, Any], recv_all: bool
@@ -172,31 +174,29 @@ class CodesTeardown(CodesTask):
 
         Returns
         -------
-        mapped_outputs: Dict[str, Dict[str, Any]]
-            The keys are bluemira parameter names and the values are a
-            dict of form '{"value": Any, "unit": str}', where the value
-            is the external code's output value, and the unit is the
-            external code's unit.
+        mapped_outputs: Dict[str, float]
+            The keys are bluemira parameter names and the values are the
+            external codes' outputs for those parameters (with necessary
+            unit conversions made).
         """
         mapped_outputs = {}
-        recv_mappings = get_recv_mapping(self.params, self._name, recv_all)
-        for external_key, bluemira_key in recv_mappings.items():
-            output_value = self._get_output_or_raise(external_outputs, external_key)
-            if output_value is None:
+        for bm_name, mapping in self.params.mappings.items():
+            if not (mapping.recv or recv_all):
                 continue
-            param_mapping = self._get_parameter_mapping_or_raise(bluemira_key)
-            if param_mapping.unit is not None:
-                mapped_outputs[bluemira_key] = {
-                    "value": output_value,
-                    "unit": param_mapping.unit,
-                }
+            output_value = self._get_output_or_raise(external_outputs, mapping.name)
+            if output_value is None or mapping.unit is None:
+                continue
+            value = raw_uc(
+                output_value, getattr(self.params, bm_name).unit, mapping.unit
+            )
+            mapped_outputs[bm_name] = value
         return mapped_outputs
 
     def _get_output_or_raise(
         self, external_outputs: Dict[str, Any], parameter_name: str
     ):
         try:
-            output_value = external_outputs[parameter_name]
+            output_value = external_outputs.get(parameter_name, None)
         except KeyError as key_error:
             raise CodesError(
                 f"No output value from code '{self._name}' found for parameter "
@@ -209,20 +209,16 @@ class CodesTeardown(CodesTask):
             )
         return output_value
 
-    def _get_parameter_mapping_or_raise(self, bluemira_param_name: str):
-        try:
-            return self.params.get_param(bluemira_param_name).mapping[self._name]
-        except AttributeError as attr_error:
-            raise CodesError(
-                f"No mapping defined between parameter '{bluemira_param_name}' and "
-                f"code '{self._name}'."
-            ) from attr_error
-
 
 class CodesSolver(SolverABC):
     """
     Base class for solvers running an external code.
     """
+
+    params: MappedParameterFrame
+
+    def __init__(self, params: MappedParameterFrame):
+        super().__init__(params)
 
     @abc.abstractproperty
     def name(self):
@@ -258,11 +254,12 @@ class CodesSolver(SolverABC):
                     "var2": {"recv": False}
                 }
         """
+        param_mappings = self.params.mappings
         for key, val in send_recv.items():
             try:
-                p_map = getattr(self.params, key).mapping[self.name]
-            except (AttributeError, KeyError):
-                bluemira_warn(f"No mapping known for {key} in {self.name}")
+                p_map = param_mappings[key]
+            except KeyError:
+                bluemira_warn(f"No mapping known for '{key}' in '{self.name}'.")
             else:
                 for sr_key, sr_val in val.items():
                     setattr(p_map, sr_key, sr_val)

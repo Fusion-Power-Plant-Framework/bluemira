@@ -28,11 +28,11 @@ import enum
 from typing import Any, Dict, Optional, Union
 
 from bluemira.base.look_and_feel import bluemira_warn
-from bluemira.base.parameter import ParameterFrame
 from bluemira.codes.error import CodesError
 from bluemira.codes.interface import CodesSetup
 from bluemira.codes.plasmod.api._inputs import PlasmodInputs
 from bluemira.codes.plasmod.constants import NAME as PLASMOD_NAME
+from bluemira.codes.plasmod.params import PlasmodSolverParams
 
 
 class Setup(CodesSetup):
@@ -54,9 +54,11 @@ class Setup(CodesSetup):
         The path where the plasmod input file should be written.
     """
 
+    params: PlasmodSolverParams
+
     def __init__(
         self,
-        params: ParameterFrame,
+        params: PlasmodSolverParams,
         problem_settings: Dict[str, Any],
         plasmod_input_file: str,
     ):
@@ -64,7 +66,6 @@ class Setup(CodesSetup):
 
         self.inputs = PlasmodInputs()
         self.plasmod_input_file = plasmod_input_file
-
         self.update_inputs(problem_settings)
 
     def run(self):

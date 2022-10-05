@@ -27,7 +27,8 @@ from typing import Dict, List, Tuple, Union
 import numpy as np
 
 from bluemira.base.look_and_feel import bluemira_warn
-from bluemira.base.parameter import ParameterFrame
+from bluemira.base.parameter_frame import NewParameterFrame as ParameterFrame
+from bluemira.base.parameter_frame import make_parameter_frame
 from bluemira.base.solver import RunMode as BaseRunMode
 from bluemira.codes.error import CodesError
 from bluemira.codes.interface import CodesSolver
@@ -37,8 +38,7 @@ from bluemira.codes.process._teardown import Teardown
 from bluemira.codes.process.api import DEFAULT_INDAT, Impurities
 from bluemira.codes.process.constants import BINARY as PROCESS_BINARY
 from bluemira.codes.process.constants import NAME as PROCESS_NAME
-from bluemira.codes.process.mapping import mappings as process_mappings
-from bluemira.codes.utilities import add_mapping
+from bluemira.codes.process.params import ProcessSolverParams
 
 BuildConfig = Dict[str, Union[float, str, "BuildConfig"]]
 
@@ -63,9 +63,10 @@ class Solver(CodesSolver):
 
     Parameters
     ----------
-    params: ParameterFrame
-        ParameterFrame containing bluemira parameters for running, and
-        extracting outputs from, PROCESS.
+    params: Union[Dict, ParameterFrame]
+        ParameterFrame or dict containing parameters for running PROCESS.
+        See :class:`bluemira.codes.plasmod.params.ProcessSolverParams` for
+        parameter details.
     build_config: Mapping[str, Mapping[float, str, BuildConfig]]
         Dictionary containing the configuration for this solver.
         Expected keys are:
@@ -116,15 +117,14 @@ class Solver(CodesSolver):
     teardown_cls = Teardown
     run_mode_cls = RunMode
 
-    def __init__(self, params: ParameterFrame, build_config: BuildConfig):
+    def __init__(self, params: Union[Dict, ParameterFrame], build_config: BuildConfig):
         # Init task objects on execution so parameters can be edited
         # between separate 'execute' calls.
         self._setup: Union[Setup, None] = None
         self._run: Union[Run, None] = None
         self._teardown: Union[Teardown, None] = None
 
-        self.params = params
-        add_mapping(PROCESS_NAME, self.params, process_mappings)
+        self.params = make_parameter_frame(params, ProcessSolverParams)
 
         _build_config = copy.deepcopy(build_config)
         self.binary = _build_config.pop("binary", PROCESS_BINARY)

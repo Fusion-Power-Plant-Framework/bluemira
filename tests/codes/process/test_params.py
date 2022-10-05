@@ -19,33 +19,16 @@
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 
-from unittest import mock
-
 import pytest
 
-from bluemira.codes import process
-from bluemira.codes.process._run import Run
-from bluemira.codes.process.params import ProcessSolverParams
+from bluemira.codes.process.params import ParameterMapping, ProcessSolverParams
 from tests.codes.process.utilities import PARAM_FILE
 
 
-class TestRun:
-    def setup_method(self):
-        self.default_pf = ProcessSolverParams.from_json(PARAM_FILE)
+class TestProcessSolverParams:
 
-        self._subprocess_patch = mock.patch("bluemira.codes.interface.run_subprocess")
-        self.run_subprocess_mock = self._subprocess_patch.start()
-        self.run_subprocess_mock.return_value = 0
+    params = ProcessSolverParams.from_json(PARAM_FILE)
 
-    def teardown_method(self):
-        self._subprocess_patch.stop()
-
-    @pytest.mark.parametrize("run_func", ["run", "runinput"])
-    def test_run_func_calls_subprocess_with_in_dat_path(self, run_func):
-        run = Run(self.default_pf, "input/path_IN.DAT")
-
-        getattr(run, run_func)()
-
-        self.run_subprocess_mock.assert_called_once_with(
-            [process.BINARY, "-i", "input/path_IN.DAT"]
-        )
+    @pytest.mark.parametrize("param", params, ids=lambda p: p.name)
+    def test_mapping_defined_for_param(self, param):
+        assert isinstance(self.params.mappings[param.name], ParameterMapping)
