@@ -322,6 +322,7 @@ class UnitFrame1(ParameterFrame):
     time: Parameter[int]
     mass: Parameter[int]
     flag: Parameter[bool]
+    string: Parameter[str]
 
 
 @dataclass
@@ -363,6 +364,7 @@ class TestParameterFrameUnits:
         "time": {"value": 30, "unit": "day"},
         "mass": {"value": 1, "unit": "tonne"},
         "flag": {"value": False, "unit": ""},
+        "string": {"value": "Hello 👋", "unit": ""},
     }
 
     COMPLEX_FRAME_DATA = {
@@ -403,6 +405,8 @@ class TestParameterFrameUnits:
         assert frame.mass.value == 1000
         assert frame.flag.value is False
         assert frame.flag.unit == ""
+        assert frame.string.value == "Hello 👋"
+        assert frame.string.unit == ""
 
     def test_complex_units_to_defaults(self):
         frame = UnitFrame2.from_dict(self.COMPLEX_FRAME_DATA)
