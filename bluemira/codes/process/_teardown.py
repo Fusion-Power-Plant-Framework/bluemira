@@ -26,10 +26,10 @@ import json
 import os
 from typing import Dict, Iterable, List, Union
 
-from bluemira.base.look_and_feel import bluemira_print
+from bluemira.base.look_and_feel import bluemira_print, bluemira_warn
 from bluemira.codes.error import CodesError
 from bluemira.codes.interface import CodesTeardown
-from bluemira.codes.process.api import MFile
+from bluemira.codes.process.api import MFile, update_obsolete_vars
 from bluemira.codes.process.constants import NAME as PROCESS_NAME
 from bluemira.codes.process.params import ProcessSolverParams
 
@@ -198,9 +198,22 @@ class _MFileWrapper:
 
         Store the result in ``data`` attribute.
         """
-        self.data = {
-            param_name: val["scan01"] for param_name, val in self.mfile.data.items()
-        }
+        self.data = {}
+        for process_param_name, value in self.mfile.data.items():
+            param_name = update_obsolete_vars(process_param_name)
+            if param_name is None:
+                bluemira_warn(
+                    f"PROCESS parameter '{process_param_name}' is obsolete and has no "
+                    " alternative.\n"
+                    "Setting value to 0.0."
+                )
+                self.data[process_param_name] = 0.0
+            elif isinstance(param_name, list):
+                for name in param_name:
+                    self.data[name] = value["scan01"]
+            else:
+                self.data[param_name] = value["scan01"]
+
         self.data.update(self._derive_radial_build_params(self.data))
 
     def _derive_radial_build_params(self, data: Dict) -> Dict[str, float]:
@@ -213,12 +226,27 @@ class _MFileWrapper:
         length) of the TF coil, so this must be taken into consideration
         when translating the geometry into the mid-plane.
         """
-        rtfin = data["bore"] + data["ohcth"] + data["precomp"] + data["gapoh"]
-        r_ts_ib_in = rtfin + data["tfcth"] + data["tftsgap"] + data["thshield"]
-        r_vv_ib_in = r_ts_ib_in + data["gapds"] + data["d_vv_in"] + data["shldith"]
-        r_fw_ib_in = r_vv_ib_in + data["vvblgap"] + data["blnkith"] + data["fwith"]
-        r_fw_ob_in = r_fw_ib_in + data["scrapli"] + 2 * data["rminor"] + data["scraplo"]
-        r_vv_ob_in = r_fw_ob_in + data["fwoth"] + data["blnkoth"] + data["vvblgap"]
+        try:
+            shield_th = data["thshield"]
+        except KeyError:
+            # PROCESS updated their parameter names in v2.4.0, splitting
+            # 'thshield' into 'thshield_ib', 'thshield_ob', and 'thshield_vb'
+            shield_th = data["thshield_ib"] + data["thshield_ib"]
+
+        try:
+            rtfin = data["bore"] + data["ohcth"] + data["precomp"] + data["gapoh"]
+            r_ts_ib_in = rtfin + data["tfcth"] + data["tftsgap"] + shield_th
+            r_vv_ib_in = r_ts_ib_in + data["gapds"] + data["d_vv_in"] + data["shldith"]
+            r_fw_ib_in = r_vv_ib_in + data["vvblgap"] + data["blnkith"] + data["fwith"]
+            r_fw_ob_in = (
+                r_fw_ib_in + data["scrapli"] + 2 * data["rminor"] + data["scraplo"]
+            )
+            r_vv_ob_in = r_fw_ob_in + data["fwoth"] + data["blnkoth"] + data["vvblgap"]
+        except KeyError as key_error:
+            raise CodesError(
+                f"Missing PROCESS parameter in '{self.file_path}': {key_error}\n"
+                "Cannot derive required bluemira parameters."
+            )
         return {
             "rtfin": rtfin,
             "r_ts_ib_in": r_ts_ib_in,

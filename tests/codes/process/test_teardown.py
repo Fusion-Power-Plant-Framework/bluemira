@@ -35,17 +35,13 @@ class TestTeardown:
     MODULE_REF = "bluemira.codes.process._teardown"
     IS_FILE_REF = f"{MODULE_REF}.os.path.isfile"
 
-    @classmethod
-    def setup_class(cls):
-        cls._mfile_patch = mock.patch(f"{cls.MODULE_REF}.MFile", new=utils.FakeMFile)
-        cls.mfile_mock = cls._mfile_patch.start()
-
-    @classmethod
-    def teardown_class(cls):
-        cls._mfile_patch.stop()
-
     def setup_method(self):
         self.default_pf = ProcessSolverParams.from_json(utils.PARAM_FILE)
+        self._mfile_patch = mock.patch(f"{self.MODULE_REF}.MFile", new=utils.FakeMFile)
+        self.mfile_mock = self._mfile_patch.start()
+
+    def teardown_method(self):
+        self._mfile_patch.stop()
 
     @pytest.mark.parametrize("run_func", ["run", "runinput"])
     def test_run_func_updates_bluemira_params_from_mfile(self, run_func):
@@ -138,3 +134,40 @@ class TestTeardown:
             with pytest.raises(CodesError) as codes_err:
                 getattr(teardown, run_func)()
             assert "did not find a feasible solution" in str(codes_err)
+
+    def test_obsolete_vars_with_multiple_new_names_all_have_mappings(self):
+        def fake_uov(param: str):
+            if param == "thshield":
+                return ["thshield_ib", "thshield_ob", "thshield_vb"]
+            return param
+
+        teardown = Teardown(self.default_pf, None, utils.READ_DIR)
+        with mock.patch(f"{self.MODULE_REF}.update_obsolete_vars", new=fake_uov):
+            with file_exists(
+                os.path.join(utils.READ_DIR, "MFILE.DAT"), self.IS_FILE_REF
+            ):
+                teardown.read()
+
+        outputs = teardown.get_raw_outputs(["thshield_ib", "thshield_ob", "thshield_vb"])
+        # value from the 'thshield' param in ./test_data/mfile_data.json
+        assert outputs == [0.05, 0.05, 0.05]
+
+    def test_CodesError_if_process_parameter_missing_from_radial_build_calculation(self):
+        teardown = Teardown(self.default_pf, None, utils.READ_DIR)
+        del self.mfile_mock.data["bore"]
+
+        with file_exists(os.path.join(utils.READ_DIR, "MFILE.DAT"), self.IS_FILE_REF):
+            with pytest.raises(CodesError) as exc:
+                teardown.read()
+
+        assert "bore" in str(exc)
+
+    # def test_read_func_updates_bluemira_params_from_mfile(self, run_func):
+    #     teardown = Teardown(self.default_pf, None, utils.READ_DIR)
+
+    # with file_exists(os.path.join(utils.READ_DIR, "MFILE.DAT"), self.IS_FILE_REF):
+    #     getattr(teardown, run_func)()
+
+    #     # Expected value comes from ./test_data/mfile_data.json
+    #     assert teardown.params.tau_e.value == pytest.approx(4.3196)
+    #     assert teardown.params.P_el_net.value == pytest.approx(500)
