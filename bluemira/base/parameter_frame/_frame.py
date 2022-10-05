@@ -90,7 +90,10 @@ class NewParameterFrame:
             value_type = _validate_parameter_field(
                 member, cls.__dataclass_fields__[member].type
             )
-            _validate_units(param_data, value_type)
+            try:
+                _validate_units(param_data, value_type)
+            except pint.errors.PintError as pe:
+                raise ValueError("Unit conversion failed") from pe
 
             kwargs[member] = Parameter(
                 name=member, **param_data, _value_types=value_type

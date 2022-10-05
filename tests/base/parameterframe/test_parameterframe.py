@@ -456,7 +456,7 @@ class TestParameterFrameUnits:
     def test_bad_unit(self):
         frame_data = deepcopy(self.SIMPLE_FRAME_DATA)
         frame_data["length"]["unit"] = "I_am_a_unit"
-        with pytest.raises(pint.errors.UndefinedUnitError):
+        with pytest.raises(ValueError):
             frame = UnitFrame1.from_dict(frame_data)
 
 

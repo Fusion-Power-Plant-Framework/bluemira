@@ -89,9 +89,26 @@ class TestParameter:
 
         assert isinstance(param.value, float)
 
-    def test_repr_contains_name_value_and_unit(self):
+    def test_repr_contains_name_value_and_no_unit(self):
         param = Parameter(**self.SERIALIZED_PARAM)
-        assert re.search("my_param=100 ", repr(param))
+        assert "(my_param=100 )" in repr(param)
+
+    def test_repr_contains_name_value_and_unit(self):
+        s_param = copy.deepcopy(self.SERIALIZED_PARAM)
+        s_param["unit"] = "metre"
+        param = Parameter(**s_param)
+        assert "(my_param=100 m)" in repr(param)
+
+    def test_value_as_conversion(self):
+        s_param = copy.deepcopy(self.SERIALIZED_PARAM)
+        param = Parameter(**s_param)
+
+        with pytest.raises(ValueError):
+            param.value_as("W")
+
+        s_param["unit"] = "metre"
+        param = Parameter(**s_param)
+        assert param.value_as("km") == 1e-3 * s_param["value"]
 
     @pytest.mark.parametrize(
         "param1, param2",

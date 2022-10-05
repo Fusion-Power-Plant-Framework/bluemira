@@ -139,7 +139,10 @@ class NewParameter(Generic[ParameterValueType]):
 
     def value_as(self, unit: Union[str, pint.Unit]) -> ParameterValueType:
         """Return the current value in a given unit"""
-        return raw_uc(self.value, self.unit, unit)
+        try:
+            return raw_uc(self.value, self.unit, unit)
+        except pint.errors.PintError as pe:
+            raise ValueError("Unit conversion failed") from pe
 
     @property
     def unit(self) -> str:
