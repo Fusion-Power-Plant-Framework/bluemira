@@ -21,11 +21,12 @@
 """The API for the plasmod solver."""
 
 from enum import auto
-from typing import Any, Dict, Iterable
+from typing import Any, Dict, Iterable, Union
 
 import numpy as np
 
-from bluemira.base.parameter import ParameterFrame
+from bluemira.base.parameter_frame import NewParameterFrame as ParameterFrame
+from bluemira.base.parameter_frame import make_parameter_frame
 from bluemira.base.solver import RunMode as BaseRunMode
 from bluemira.codes.error import CodesError
 from bluemira.codes.interface import CodesSolver
@@ -36,8 +37,7 @@ from bluemira.codes.plasmod.api._teardown import Teardown
 from bluemira.codes.plasmod.constants import BINARY as PLASMOD_BINARY
 from bluemira.codes.plasmod.constants import NAME as PLASMOD_NAME
 from bluemira.codes.plasmod.mapping import Profiles
-from bluemira.codes.plasmod.mapping import mappings as plasmod_mappings
-from bluemira.codes.utilities import add_mapping
+from bluemira.codes.plasmod.params import PlasmodSolverParams
 
 
 class RunMode(BaseRunMode):
@@ -84,18 +84,20 @@ class Solver(CodesSolver):
     DEFAULT_OUTPUT_FILE = "plasmod_output.dat"
     DEFAULT_PROFILES_FILE = "plasmod_profiles.dat"
 
-    def __init__(self, params: ParameterFrame, build_config: Dict[str, Any] = None):
+    def __init__(
+        self,
+        params: Union[Dict, ParameterFrame],
+        build_config: Dict[str, Any] = None,
+    ):
         # Init task objects on execution so parameters can be edited
         # between separate 'execute' calls.
         self._setup: Setup
         self._run: Run
         self._teardown: Teardown
 
-        self.params = params
-        add_mapping(PLASMOD_NAME, self.params, plasmod_mappings)
+        self.params = make_parameter_frame(params, PlasmodSolverParams)
 
         self.build_config = {} if build_config is None else build_config
-
         self.binary = self.build_config.get("binary", PLASMOD_BINARY)
         self.problem_settings = self.build_config.get("problem_settings", {})
         self.input_file = self.build_config.get("input_file", self.DEFAULT_INPUT_FILE)

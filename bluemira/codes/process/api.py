@@ -25,6 +25,7 @@ PROCESS api
 import os
 from enum import Enum
 from pathlib import Path
+from typing import List, Union
 
 from bluemira.base.file import get_bluemira_path
 from bluemira.base.look_and_feel import bluemira_print, bluemira_warn
@@ -120,7 +121,7 @@ class Impurities(Enum):
         return f"fimp({self.value:02}"
 
 
-def update_obsolete_vars(process_map_name: str) -> str:
+def update_obsolete_vars(process_map_name: str) -> Union[str, List[str], None]:
     """
     Check if the bluemira variable is up to date using the OBS_VAR dict.
     If the PROCESS variable name has been updated in the installed version
@@ -129,13 +130,16 @@ def update_obsolete_vars(process_map_name: str) -> str:
     Parameters
     ----------
     process_map_name: str
-        PROCESS variable name obtained from the bluemira mapping.
+        PROCESS variable name.
 
     Returns
     -------
-    process_name: str
+    process_name: Union[str, List[str], None]
         PROCESS variable names valid for the install (if OBS_VAR is updated
-        correctly)
+        correctly). Returns a list if an obsolete variable has been
+        split into more than one new variable (e.g., a thermal shield
+        thickness is split into ib/ob thickness). Returns `None` if there
+        is no alternative.
     """
     process_name = _nested_check(process_map_name)
 
@@ -153,6 +157,8 @@ def _nested_check(process_name):
     """
     while process_name in OBS_VARS:
         process_name = OBS_VARS[process_name]
+        if process_name == "None":
+            return None
         if isinstance(process_name, list):
             names = []
             for p in process_name:
