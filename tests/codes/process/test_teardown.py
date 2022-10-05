@@ -18,6 +18,7 @@
 #
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
+import copy
 import os
 from unittest import mock
 
@@ -35,12 +36,17 @@ class TestTeardown:
     MODULE_REF = "bluemira.codes.process._teardown"
     IS_FILE_REF = f"{MODULE_REF}.os.path.isfile"
 
+    @classmethod
+    def setup_class(cls):
+        cls._pf = ProcessSolverParams.from_json(utils.PARAM_FILE)
+        cls._mfile_patch = mock.patch(f"{cls.MODULE_REF}.MFile", new=utils.FakeMFile)
+
     def setup_method(self):
-        self.default_pf = ProcessSolverParams.from_json(utils.PARAM_FILE)
-        self._mfile_patch = mock.patch(f"{self.MODULE_REF}.MFile", new=utils.FakeMFile)
+        self.default_pf = copy.deepcopy(self._pf)
         self.mfile_mock = self._mfile_patch.start()
 
     def teardown_method(self):
+        self.mfile_mock.reset_data()
         self._mfile_patch.stop()
 
     @pytest.mark.parametrize("run_func", ["run", "runinput"])

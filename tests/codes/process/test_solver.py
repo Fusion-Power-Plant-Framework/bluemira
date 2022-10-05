@@ -52,6 +52,9 @@ class TestSolver:
     def setup_method(self):
         self.params = ProcessSolverParams.from_json(utils.PARAM_FILE)
 
+    def teardown_method(self):
+        self.mfile_mock.reset_data()
+
     @mock.patch(f"{MODULE_REF}.bluemira_warn")
     def test_bluemira_warning_if_build_config_has_unknown_arg(self, bm_warn_mock):
         build_config = {"not_an_arg": 0, "also_not_an_arg": 0}
