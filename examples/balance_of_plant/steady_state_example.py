@@ -34,7 +34,6 @@ from bluemira.balance_of_plant.steady_state import (
     RadChargedPowerStrategy,
     SuperheatedRankine,
 )
-from bluemira.base.parameter import ParameterFrame
 
 # %%[markdown]
 
@@ -43,13 +42,13 @@ from bluemira.base.parameter import ParameterFrame
 
 # %%
 # fmt: off
-default_params = ParameterFrame([
-    ['P_fus_DT', 'D-T fusion power', 1995, 'MW', None, 'Input'],
-    ['P_fus_DD', 'D-D fusion power', 5, 'MW', None, 'Input'],
-    ['P_rad', 'Radiation power', 400, 'MW', None, 'Input'],
-    ['P_hcd_ss', "Steady-state heating and current drive power", 50, "MW", None, 'Input'],
-    ['P_hcd_ss_el', "Steady-state heating and current drive electrical power", 150, "MW", None, 'Input'],
-])
+default_params = {
+    'P_fus_DT': 1995,
+    'P_fus_DD': 5,
+    'P_rad': 400,
+    'P_hcd_ss': 50,
+    'P_hcd_ss_el': 150,
+}
 # fmt: on
 
 # %%[markdown]
