@@ -8,6 +8,7 @@ from typing import (
     Any,
     Dict,
     Generator,
+    Iterable,
     List,
     Optional,
     Tuple,
@@ -21,7 +22,7 @@ import pint
 from tabulate import tabulate
 
 from bluemira.base.constants import (
-    ANGLE_units,
+    ANGLE_UNITS,
     base_unit_defaults,
     combined_unit_defaults,
     combined_unit_dimensions,
@@ -280,7 +281,7 @@ def _fix_weird_units(modified_unit: pint.Unit, orig_unit: pint.Unit) -> pint.Uni
     """
     unit_str = f"{orig_unit:C}"
 
-    ang_unit = [ang for ang in ANGLE_units if ang in unit_str]
+    ang_unit = [ang for ang in ANGLE_UNITS if ang in unit_str]
     if len(ang_unit) > 1:
         raise ValueError(f"No...🤯 {orig_unit}")
     elif len(ang_unit) == 1:

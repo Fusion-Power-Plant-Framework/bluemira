@@ -249,7 +249,7 @@ combined_unit_dimensions = {
     "[resistance]": {"[current]": -2, "[length]": 2, "[mass]": 1, "[time]": -3},
 }
 
-ANGLE_units = [
+ANGLE_UNITS = [
     "radian",
     "turn",
     "degree",
