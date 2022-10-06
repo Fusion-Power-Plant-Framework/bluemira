@@ -142,10 +142,12 @@ class BMUnitRegistry(UnitRegistry):
         return self._gas_flow_temperature
 
     @gas_flow_temperature.setter
-    def gas_flow_temperature(self, value: Union[float, Quantity]):
+    def gas_flow_temperature(self, value: Union[float, None, Quantity]):
         self._gas_flow_temperature = (
             value.to("kelvin")
             if isinstance(value, Quantity)
+            else value
+            if value is None
             else self.Quantity(value, "kelvin")
         )
 
