@@ -102,10 +102,9 @@ class TestSolovev:
         plt.show()
 
         # mesh the plasma
-        m = meshing.Mesh()
-        m(plasma)
+        meshing.Mesh()(plasma)
 
-        msh_to_xdmf("Mesh.msh", dimensions=2, directory=".", verbose=True)
+        msh_to_xdmf("Mesh.msh", dimensions=2, directory=".")
 
         mesh, boundaries, _, _ = import_mesh(
             "Mesh",

@@ -27,11 +27,12 @@ Example on the application of the GS solver for a Johner plasma parametrization
 import matplotlib.pyplot as plt
 import numpy as np
 
-from bluemira.builders.plasma import MakeParameterisedPlasma
+from bluemira.base.components import PhysicalComponent
 from bluemira.equilibria.fem_fixed_boundary.fem_magnetostatic_2D import (
     FemGradShafranovFixedBoundary,
 )
 from bluemira.equilibria.fem_fixed_boundary.utilities import plot_scalar_field
+from bluemira.equilibria.shapes import JohnerLCFS
 from bluemira.mesh import meshing
 from bluemira.mesh.tools import import_mesh, msh_to_xdmf
 
@@ -41,22 +42,8 @@ import dolfin  # isort:skip
 # # Create a plasma shape
 
 # %%
-
-params = {
-    "R_0": (9.0, "Input"),
-    "A": (3.5, "Input"),
-}
-build_config = {
-    "name": "Plasma",
-    "class": "MakeParameterisedPlasma",
-    "param_class": "bluemira.equilibria.shapes::JohnerLCFS",
-    "variables_map": {
-        "r_0": "R_0",
-        "a": "A",
-    },
-}
-builder = MakeParameterisedPlasma(params, build_config)
-plasma = builder().get_component("xz").get_component("LCFS")
+var_dict = {"r_0": {"value": 9.0}, "a": {"value": 3.5}}
+plasma = PhysicalComponent("Plasma", shape=JohnerLCFS(var_dict).create_shape())
 
 plasma.shape.mesh_options = {"lcar": 0.3, "physical_group": "plasma"}
 plasma.shape.boundary[0].mesh_options = {"lcar": 0.3, "physical_group": "lcfs"}
@@ -66,17 +53,14 @@ plasma.shape.boundary[0].mesh_options = {"lcar": 0.3, "physical_group": "lcfs"}
 # Initialize and create the mesh
 
 # %%
-
-m = meshing.Mesh()
-buffer = m(plasma)
+meshing.Mesh()(plasma)
 
 # %%[markdown]
 
 # # Convert to xdmf
 
 # %%
-
-msh_to_xdmf("Mesh.msh", dimensions=(0, 2), directory=".", verbose=True)
+msh_to_xdmf("Mesh.msh", dimensions=(0, 2), directory=".")
 
 mesh, boundaries, subdomains, labels = import_mesh(
     "Mesh",

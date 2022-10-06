@@ -114,8 +114,7 @@ c_coil = PhysicalComponent(name="coil", shape=coil, parent=c_universe)
 
 # %%
 
-m = meshing.Mesh()
-m(c_universe, dim=2)
+meshing.Mesh()(c_universe, dim=2)
 
 # %%[markdown]
 

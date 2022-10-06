@@ -27,6 +27,7 @@ from typing import Dict
 import numpy as np
 from scipy.interpolate import interp1d
 
+from bluemira.base.components import PhysicalComponent
 from bluemira.base.file import get_bluemira_path
 from bluemira.base.look_and_feel import bluemira_debug, bluemira_print, bluemira_warn
 from bluemira.base.parameter_frame import NewParameterFrame as ParameterFrame
@@ -126,14 +127,15 @@ def solve_transport_fixed_boundary(
     mesh_name = "FixedBoundaryEquilibriumMesh"
     mesh_name_msh = mesh_name + ".msh"
 
-    plasma = plasma_parameterisation(params.to_dict())
+    parameterisation = plasma_parameterisation(params.to_dict())
 
     lcfs_boundary_options = {"lcar": lcar_mesh, "physical_group": "lcfs"}
     lcfs_options = {"lcar": lcar_mesh, "physical_group": "plasma_face"}
 
     for n_iter in range(max_iter):
         # build the plasma x-z cross-section and get its volume
-        lcfs = plasma.create_shape()
+        plasma = PhysicalComponent("Plasma", shape=parameterisation.create_shape())
+        lcfs = plasma.shape
         plasma_volume = 2 * np.pi * lcfs.center_of_mass[0] * lcfs.area
 
         if plot:
@@ -174,7 +176,7 @@ def solve_transport_fixed_boundary(
         lcfs.boundary[0].mesh_options = lcfs_boundary_options
         lcfs.mesh_options = lcfs_options
 
-        meshing.Mesh(meshfile=os.path.join(directory, mesh_name_msh))(lcfs)
+        meshing.Mesh(meshfile=os.path.join(directory, mesh_name_msh))(plasma)
 
         msh_to_xdmf(mesh_name_msh, dimensions=(0, 2), directory=directory)
 
@@ -234,7 +236,7 @@ def solve_transport_fixed_boundary(
         # update parameters
         params.kappa_u = kappa_u
         params.delta_u = delta_u
-        plasma.adjust_variables(params.to_dict())
+        parameterisation.adjust_variables(params.to_dict())
         bluemira_debug(f"{params}")
 
     if n_iter == max_iter - 1:
