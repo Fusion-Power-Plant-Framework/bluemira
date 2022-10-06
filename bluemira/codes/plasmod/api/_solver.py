@@ -164,7 +164,7 @@ class Solver(CodesSolver):
         """
         return interp1d(self._x_psi, profile_data, kind="linear")(self._x_phi)
 
-    def get_profile(self, profile: Profiles) -> np.ndarray:
+    def get_profile(self, profile: Union[str, Profiles]) -> np.ndarray:
         """
         Get a single plasmod profile.
 
@@ -178,6 +178,9 @@ class Solver(CodesSolver):
         profile_values: np.ndarray
             A plasmod profile.
         """
+        if isinstance(profile, str):
+            profile = Profiles(profile)
+
         prof_data = getattr(self.plasmod_outputs(), profile.name)
         if profile is Profiles.x:
             prof_data = self._x_phi
@@ -185,7 +188,9 @@ class Solver(CodesSolver):
             prof_data = self._from_phi_to_psi(prof_data)
         return prof_data
 
-    def get_profiles(self, profiles: Iterable[Profiles]) -> Dict[Profiles, np.ndarray]:
+    def get_profiles(
+        self, profiles: Iterable[Union[str, Profiles]]
+    ) -> Dict[Profiles, np.ndarray]:
         """
         Get a dictionary of plasmod profiles.
 
