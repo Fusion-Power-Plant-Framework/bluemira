@@ -33,7 +33,7 @@ from bluemira.base.parameter_frame import NewParameter as Parameter
 from bluemira.base.parameter_frame import NewParameterFrame as ParameterFrame
 from bluemira.equilibria.fem_fixed_boundary.equilibrium import (
     FemGradShafranovOptions,
-    PlasmaFixedBoundary,
+    PlasmaFixedBoundaryParams,
     solve_transport_fixed_boundary,
 )
 from bluemira.equilibria.shapes import JohnerLCFS
@@ -41,7 +41,7 @@ from bluemira.equilibria.shapes import JohnerLCFS
 set_log_level("NOTSET")
 
 # %%
-main_params = PlasmaFixedBoundary(
+main_params = PlasmaFixedBoundaryParams(
     **{
         "r_0": 8.9830e00,
         "a": 3.1,
@@ -55,6 +55,8 @@ main_params = PlasmaFixedBoundary(
 
 @dataclass
 class TransportSolverParams(ParameterFrame):
+    """Transport Solver ParameterFrame"""
+
     A: Parameter[float]
     R_0: Parameter[float]
     I_p: Parameter[float]

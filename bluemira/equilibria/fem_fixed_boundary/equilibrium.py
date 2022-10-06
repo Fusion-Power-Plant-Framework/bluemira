@@ -21,7 +21,7 @@
 
 """Fixed boundary equilibrium solve"""
 import os
-from dataclasses import dataclass
+from dataclasses import asdict, dataclass
 from typing import Dict, Type
 
 import numpy as np
@@ -47,7 +47,9 @@ from bluemira.mesh.tools import import_mesh, msh_to_xdmf
 
 
 @dataclass
-class PlasmaFixedBoundary:
+class PlasmaFixedBoundaryParams:
+    """Plasma Transport Fixed Boundary parameters"""
+
     r_0: float
     a: float
     kappa_u: float
@@ -55,16 +57,11 @@ class PlasmaFixedBoundary:
     delta_u: float
     delta_l: float
 
-    def to_dict(self):
-        shape_params = {}
-        for param_name in self.__dataclass_fields__:
-            param_data = getattr(self, param_name)
-            shape_params[param_name] = {"value": param_data}
-        return shape_params
-
 
 @dataclass
 class FemGradShafranovOptions:
+    """Fem Grad-Shafranov solver options"""
+
     p_order: int
     iter_err_max: float
     max_iter: int
@@ -77,7 +74,7 @@ def _interpolate_profile(x, profile_data):
 
 def solve_transport_fixed_boundary(
     plasma_parameterisation: Type[GeometryParameterisation],
-    params: PlasmaFixedBoundary,
+    params: PlasmaFixedBoundaryParams,
     transport_params: ParameterFrame,
     build_config: Dict,
     gs_options: FemGradShafranovOptions,
@@ -90,7 +87,8 @@ def solve_transport_fixed_boundary(
     plot: bool = False,
     transport_code_module: str = "PLASMOD",
     transport_run_mode: str = "run",
-) -> PlasmaFixedBoundary:
+    mesh_filename: str = "FixedBoundaryEquilibriumMesh",
+) -> PlasmaFixedBoundaryParams:
     """
     Solve the plasma fixed boundary problem using delta95 and kappa95 as target
     values and iterating on a transport solver to have consistency with pprime
@@ -121,16 +119,23 @@ def solve_transport_fixed_boundary(
         Iteration relaxing factor
     plot: bool
         Whether or not to plot
+    transport_code_module: str
+        transport code to run
+    transport_run_mode: str
+        transport code run mode
+    mesh_filename: str
+        filename for mesh output file
 
     """
     delta_95 = delta95_t
     kappa_95 = kappa95_t
 
     directory = get_bluemira_path("", subfolder="generated_data")
-    mesh_name = "FixedBoundaryEquilibriumMesh"
-    mesh_name_msh = mesh_name + ".msh"
+    mesh_name_msh = mesh_filename + ".msh"
 
-    parameterisation = plasma_parameterisation(params.to_dict())
+    parameterisation = plasma_parameterisation(
+        {k: {"value": v} for k, v in asdict(params).items()}
+    )
 
     lcfs_boundary_options = {"lcar": lcar_mesh, "physical_group": "lcfs"}
     lcfs_options = {"lcar": lcar_mesh, "physical_group": "plasma_face"}
@@ -156,7 +161,7 @@ def solve_transport_fixed_boundary(
 
         bluemira_debug(
             f"FB Params\n\n"
-            f"{tabulate([[k, v['value']] for k,v in params.to_dict().items()],headers=['name', 'value'],tablefmt='simple')}\n\n"
+            f"{tabulate(list(asdict(params).items()),headers=['name', 'value'],tablefmt='simple')}\n\n"
             f"Transport Params\n\n"
             f"{transport_params.tabulate(keys=['name', 'value', 'unit'], tablefmt='simple')}"
         )
@@ -185,7 +190,7 @@ def solve_transport_fixed_boundary(
 
         msh_to_xdmf(mesh_name_msh, dimensions=(0, 2), directory=directory)
 
-        mesh = import_mesh(mesh_name, directory=directory, subdomains=True)[0]
+        mesh = import_mesh(mesh_filename, directory=directory, subdomains=True)[0]
 
         # initialize the Grad-Shafranov solver
         gs_solver = FemGradShafranovFixedBoundary(mesh, p_order=gs_options.p_order)
@@ -242,8 +247,8 @@ def solve_transport_fixed_boundary(
         params.kappa_u = kappa_u
         params.delta_u = delta_u
 
-        for name, value in params.to_dict().items():
-            parameterisation.adjust_variable(name, value["value"])
+        for name, value in asdict(params).items():
+            parameterisation.adjust_variable(name, value)
 
     if n_iter == max_iter - 1:
         message = bluemira_warn
