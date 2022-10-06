@@ -60,7 +60,7 @@ class ScalarSubFunc(dolfin.UserExpression):
 
     Parameters
     ----------
-    func_list: Union[List[Iterable[float, Callable]], Iterable[float, Callable]]
+    func_list: Union[Iterable[Union[float, Callable]], float, Callable]
         list of functions to be interpolated into the subdomains. Int and float values
         are considered as constant functions. Any other callable function must return
         a single value.
@@ -88,7 +88,7 @@ class ScalarSubFunc(dolfin.UserExpression):
         functions: Union[Iterable[Union[float, Callable]], float, Callable],
     ) -> Iterable[Union[float, Callable]]:
         """Check if the argument is a function or a list of fuctions"""
-        if not isinstance(functions, List):
+        if not isinstance(functions, Iterable):
             functions = [functions]
         if all(isinstance(f, (float, Callable)) for f in functions):
             return functions
