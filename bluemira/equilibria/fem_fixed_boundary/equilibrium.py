@@ -22,7 +22,7 @@
 """Fixed boundary equilibrium solve"""
 import os
 from dataclasses import dataclass
-from typing import Dict
+from typing import Dict, Type
 
 import numpy as np
 from scipy.interpolate import interp1d
@@ -74,7 +74,7 @@ def _interpolate_profile(x, profile_data):
 
 
 def solve_transport_fixed_boundary(
-    plasma_parameterisation: GeometryParameterisation,
+    plasma_parameterisation: Type[GeometryParameterisation],
     params: PlasmaFixedBoundary,
     transport_params: ParameterFrame,
     build_config: Dict,
