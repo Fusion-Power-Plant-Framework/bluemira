@@ -75,6 +75,12 @@ class ParameterFrame:
             param: Parameter = getattr(self, key)
             param.set_value(value, source)
 
+    def update_from_frame(self, frame):
+        for o_param in frame:
+            if hasattr(self, o_param.name):
+                param = getattr(self, o_param.name)
+                param.value = raw_uc(o_param.value, o_param.unit, param.unit)
+
     @classmethod
     def from_dict(
         cls: Type[_PfT],

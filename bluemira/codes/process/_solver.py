@@ -141,7 +141,7 @@ class Solver(CodesSolver):
                 f"'{quoted_delim.join(_build_config.keys())}'."
             )
 
-    def execute(self, run_mode: RunMode) -> ParameterFrame:
+    def execute(self, run_mode: Union[str, RunMode]) -> ParameterFrame:
         """
         Execute the solver in the given run mode.
 
@@ -152,6 +152,8 @@ class Solver(CodesSolver):
             :func:`~bluemira.codes.process._solver.Solver.__init__`
             docstring for details of the behaviour of each run mode.
         """
+        if isinstance(run_mode, str):
+            run_mode = self.run_mode_cls[run_mode.upper()]
         self._setup = Setup(
             self.params, self.in_dat_path, self.problem_settings, self.template_in_dat
         )

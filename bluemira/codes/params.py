@@ -159,3 +159,19 @@ class ParameterMapping:
             raise ValueError(f"{attr} must be a bool")
         else:
             super().__setattr__(attr, value)
+
+
+# def make_mapped_default_parameter_frame(defaults, mappings: Dict[str, ParameterMapping], param_cls:Type[_PfT]):
+def make_mapped_default_parameter_frame(defaults, mappings, param_cls):
+
+    new_param_dict = {}
+    for map_name, param_map in mappings.items():
+        if param_map.send:
+            new_param_dict[map_name] = {
+                "value": getattr(defaults, param_map.name),
+                "unit": param_map.unit,
+            }
+        else:
+            new_param_dict[map_name] = {"value": 0, "unit": param_map.unit}
+
+    return param_cls.from_dict(new_param_dict)

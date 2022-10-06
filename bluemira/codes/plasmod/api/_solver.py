@@ -25,17 +25,19 @@ from typing import Any, Dict, Iterable, Union
 
 import numpy as np
 
-from bluemira.base.parameter_frame import ParameterFrame, make_parameter_frame
+from bluemira.base.parameter_frame import ParameterFrame
 from bluemira.base.solver import RunMode as BaseRunMode
 from bluemira.codes.error import CodesError
 from bluemira.codes.interface import CodesSolver
+from bluemira.codes.params import make_mapped_default_parameter_frame
+from bluemira.codes.plasmod.api._inputs import PlasmodInputs
 from bluemira.codes.plasmod.api._outputs import PlasmodOutputs
 from bluemira.codes.plasmod.api._run import Run
 from bluemira.codes.plasmod.api._setup import Setup
 from bluemira.codes.plasmod.api._teardown import Teardown
 from bluemira.codes.plasmod.constants import BINARY as PLASMOD_BINARY
 from bluemira.codes.plasmod.constants import NAME as PLASMOD_NAME
-from bluemira.codes.plasmod.mapping import Profiles
+from bluemira.codes.plasmod.mapping import Profiles, mappings
 from bluemira.codes.plasmod.params import PlasmodSolverParams
 
 
@@ -94,7 +96,10 @@ class Solver(CodesSolver):
         self._run: Run
         self._teardown: Teardown
 
-        self.params = make_parameter_frame(params, PlasmodSolverParams)
+        self.params = make_mapped_default_parameter_frame(
+            PlasmodInputs, mappings, PlasmodSolverParams
+        )
+        self.params.update_from_frame(params)
 
         self.build_config = {} if build_config is None else build_config
         self.binary = self.build_config.get("binary", PLASMOD_BINARY)
@@ -105,7 +110,7 @@ class Solver(CodesSolver):
             "profiles_file", self.DEFAULT_PROFILES_FILE
         )
 
-    def execute(self, run_mode: RunMode) -> ParameterFrame:
+    def execute(self, run_mode: Union[str, RunMode]) -> ParameterFrame:
         """
         Execute this plasmod solver.
 
@@ -122,6 +127,9 @@ class Solver(CodesSolver):
         run_mode: RunMode
             The mode to execute this solver in.
         """
+        if isinstance(run_mode, str):
+            run_mode = self.run_mode_cls[run_mode.upper()]
+
         self._setup = Setup(self.params, self.problem_settings, self.input_file)
         self._run = Run(
             self.params,
