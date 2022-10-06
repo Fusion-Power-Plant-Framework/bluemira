@@ -26,6 +26,7 @@ from typing import Dict, Type
 
 import numpy as np
 from scipy.interpolate import interp1d
+from tabulate import tabulate
 
 from bluemira.base.components import PhysicalComponent
 from bluemira.base.file import get_bluemira_path
@@ -154,10 +155,10 @@ def solve_transport_fixed_boundary(
         transport_params.delta_95.value = delta_95
 
         bluemira_debug(
-            f"{params.kappa_u=}, {params.delta_u=}\n"
-            f"{params.kappa_l=}, {params.delta_l=}\n"
-            f"{transport_params.kappa=}, {transport_params.delta=}\n"
-            f"{transport_params.V_p=}"
+            f"FB Params\n\n"
+            f"{tabulate([[k, v['value']] for k,v in params.to_dict().items()],headers=['name', 'value'],tablefmt='simple')}\n\n"
+            f"Transport Params\n\n"
+            f"{transport_params.tabulate(keys=['name', 'value', 'unit'], tablefmt='simple')}"
         )
 
         # initialize transport solver
@@ -225,11 +226,11 @@ def solve_transport_fixed_boundary(
 
         bluemira_debug(
             "Previous shape parameters:\n\t"
-            f"{kappa_u_0=:.3f}, {delta_u_0=:.3f}\n"
+            f"{kappa_u_0=:.3e}, {delta_u_0=:.3e}\n"
             "Recalculated shape parameters:\n\t"
-            f"{kappa_u=:.3f}, {delta_u=:.3f}\n\n"
-            f"|Target - Actual|/Target = {err_delta:.3f}\n"
-            f"|Target - bluemira|/Target = {err_kappa:.3f}\n"
+            f"{kappa_u=:.3e}, {delta_u=:.3e}\n\n"
+            f"|Target - Actual|/Target = {err_delta:.3e}\n"
+            f"|Target - bluemira|/Target = {err_kappa:.3e}\n"
         )
 
         bluemira_print(f"PLASMOD <-> Fixed boundary G-S iter {n_iter} : {iter_err:.3E}")
@@ -240,17 +241,19 @@ def solve_transport_fixed_boundary(
         # update parameters
         params.kappa_u = kappa_u
         params.delta_u = delta_u
+
         for name, value in params.to_dict().items():
             parameterisation.adjust_variable(name, value["value"])
-        bluemira_debug(f"{params}")
 
     if n_iter == max_iter - 1:
         message = bluemira_warn
         line_1 = f"did not converge within {max_iter}"
+        ltgt = ">"
 
     else:
         message = bluemira_print
         line_1 = f"successfully converged within {n_iter}"
+        ltgt = "<"
 
     message(
         f"PLASMOD <-> Fixed boundary G-S {line_1} iterations:\n\t"
@@ -258,7 +261,7 @@ def solve_transport_fixed_boundary(
         f"Actual kappa_95: {kappa_95:.3f}\n\t"
         f"Target delta_95: {delta95_t:.3f}\n\t"
         f"Actual delta_95: {delta_95:.3f}\n\t"
-        f"Error: {iter_err:.3E} > {iter_err_max:.3E}\n"
+        f"Error: {iter_err:.3E} {ltgt} {iter_err_max:.3E}\n"
     )
 
     return params
