@@ -64,9 +64,9 @@ class FemMagnetostatic2d:
 
     Parameters
     ----------
-    mesh : Union[dolfin.mesh, str]
+    mesh : Union[dolfin.Mesh, str]
         Filename of the xml file with the mesh definition or a dolfin mesh
-    boundaries : Union[dolfin.mesh, str]
+    boundaries : Union[dolfin.Mesh, str]
         Filename of the xml file with the boundaries definition or a MeshFunction that
         defines the boundaries
     p_order : int
@@ -75,8 +75,8 @@ class FemMagnetostatic2d:
 
     def __init__(
         self,
-        mesh: Union[dolfin.mesh, str],
-        boundaries: Union[dolfin.mesh, str] = None,
+        mesh: Union[dolfin.Mesh, str],
+        boundaries: Union[dolfin.Mesh, str] = None,
         p_order: int = 3,
     ):
 
@@ -208,9 +208,9 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
 
     Parameters
     ----------
-    mesh : Union[dolfin.mesh, str]
+    mesh : Union[dolfin.Mesh, str]
         Filename of the xml file with the mesh definition or a dolfin mesh
-    boundaries : Union[dolfin.mesh, str]
+    boundaries : Union[dolfin.Mesh, str]
         Filename of the xml file with the boundaries definition or a MeshFunction that
         defines the boundaries
     p_order : int
@@ -219,8 +219,8 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
 
     def __init__(
         self,
-        mesh: Union[dolfin.mesh, str],
-        boundaries: Union[dolfin.mesh, str] = None,
+        mesh: Union[dolfin.Mesh, str],
+        boundaries: Union[dolfin.Mesh, str] = None,
         p_order: int = 3,
     ):
         super().__init__(mesh, boundaries, p_order)

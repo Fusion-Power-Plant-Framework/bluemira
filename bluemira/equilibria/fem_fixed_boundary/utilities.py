@@ -28,7 +28,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import scipy
 from matplotlib._tri import TriContourGenerator
-from matplotlib.axes import _axes as Axes  # noqa: N812
+from matplotlib.axes._axes import Axes
 from matplotlib.tri.triangulation import Triangulation
 
 from bluemira.base.look_and_feel import bluemira_warn
@@ -73,7 +73,7 @@ class ScalarSubFunc(dolfin.UserExpression):
 
     def __init__(
         self,
-        func_list: Union[List[Iterable[float, Callable]], Iterable[float, Callable]],
+        func_list: Union[Iterable[Union[float, Callable]], float, Callable],
         mark_list: Optional[Iterable[int]] = None,
         subdomains: Optional[dolfin.cpp.mesh.MeshFunctionSizet] = None,
         **kwargs,
@@ -85,8 +85,8 @@ class ScalarSubFunc(dolfin.UserExpression):
 
     def check_functions(
         self,
-        functions: Union[List[Iterable[float, Callable]], Iterable[float, Callable]],
-    ) -> List[Iterable[float, Callable]]:
+        functions: Union[Iterable[Union[float, Callable]], float, Callable],
+    ) -> Iterable[Union[float, Callable]]:
         """Check if the argument is a function or a list of fuctions"""
         if not isinstance(functions, List):
             functions = [functions]

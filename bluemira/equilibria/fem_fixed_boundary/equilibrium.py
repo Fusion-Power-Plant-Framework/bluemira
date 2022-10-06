@@ -21,7 +21,7 @@
 
 """Fixed boundary equilibrium solve"""
 import os
-from dataclasses import asdict, dataclass
+from dataclasses import dataclass
 from typing import Dict
 
 import numpy as np
@@ -29,7 +29,7 @@ from scipy.interpolate import interp1d
 
 from bluemira.base.file import get_bluemira_path
 from bluemira.base.look_and_feel import bluemira_debug, bluemira_print, bluemira_warn
-from bluemira.base.parameterframe import NewParameterFrame as ParameterFrame
+from bluemira.base.parameter_frame import NewParameterFrame as ParameterFrame
 from bluemira.codes import transport_code_solver
 from bluemira.equilibria.fem_fixed_boundary.fem_magnetostatic_2D import (
     FemGradShafranovFixedBoundary,
@@ -51,6 +51,13 @@ class PlasmaFixedBoundary:
     kappa_l: float
     delta_u: float
     delta_l: float
+
+    def to_dict(self):
+        shape_params = {}
+        for param_name in self.__dataclass_fields__:
+            param_data = getattr(self, param_name)
+            shape_params[param_name] = {"value": param_data}
+        return shape_params
 
 
 @dataclass
@@ -119,14 +126,14 @@ def solve_transport_fixed_boundary(
     mesh_name = "FixedBoundaryEquilibriumMesh"
     mesh_name_msh = mesh_name + ".msh"
 
-    plasma = plasma_parameterisation(asdict(params))
+    plasma = plasma_parameterisation(params.to_dict())
 
     lcfs_boundary_options = {"lcar": lcar_mesh, "physical_group": "lcfs"}
     lcfs_options = {"lcar": lcar_mesh, "physical_group": "plasma_face"}
 
     for n_iter in range(max_iter):
         # build the plasma x-z cross-section and get its volume
-        lcfs = plasma.create_shape().shape
+        lcfs = plasma.create_shape()
         plasma_volume = 2 * np.pi * lcfs.center_of_mass[0] * lcfs.area
 
         if plot:
@@ -141,8 +148,8 @@ def solve_transport_fixed_boundary(
         transport_params.delta95 = delta_95
 
         bluemira_debug(
-            f"{transport_params.kappa_u=}, {transport_params.delta_u=}\n"
-            f"{transport_params.kappa_l=}, {transport_params.delta_l=}\n"
+            f"{params.kappa_u=}, {params.delta_u=}\n"
+            f"{params.kappa_l=}, {params.delta_l=}\n"
             f"{transport_params.kappa=}, {transport_params.delta=}\n"
             f"{transport_params.V_p=}"
         )
@@ -227,7 +234,7 @@ def solve_transport_fixed_boundary(
         # update parameters
         params.kappa_u = kappa_u
         params.delta_u = delta_u
-        plasma.adjust_variables(asdict(params))
+        plasma.adjust_variables(params.to_dict())
         bluemira_debug(f"{params}")
 
     if n_iter == max_iter - 1:
