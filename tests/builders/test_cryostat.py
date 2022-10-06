@@ -31,13 +31,13 @@ class TestCryostatBuilder:
     @classmethod
     def setup_class(cls):
         cls.params = {
-            "g_cr_ts": {"value": 0.3},
-            "n_TF": {"value": 16},
-            "tk_cr_vv": {"value": 0.3},
-            "well_depth": {"value": 5},
-            "x_g_support": {"value": 13},
-            "x_gs_kink_diff": {"value": 2},
-            "z_gs": {"value": -15},
+            "g_cr_ts": {"value": 0.3, "unit": "m"},
+            "n_TF": {"value": 16, "unit": ""},
+            "tk_cr_vv": {"value": 0.3, "unit": "m"},
+            "well_depth": {"value": 5, "unit": "m"},
+            "x_g_support": {"value": 13, "unit": "m"},
+            "x_gs_kink_diff": {"value": 2, "unit": "m"},
+            "z_gs": {"value": -15, "unit": "m"},
         }
 
     def test_components_and_segments(self):
@@ -55,7 +55,7 @@ class TestCryostatBuilder:
 class TestCryostatDesigner:
     @classmethod
     def setup_class(cls):
-        cls.params = {"g_cr_ts": {"value": 0.3}}
+        cls.params = {"g_cr_ts": {"value": 0.3, "unit": "m"}}
         cls.z_max = 10
         cls.x_max = 5
         bb = mock.Mock(z_max=cls.z_max, x_max=cls.x_max)

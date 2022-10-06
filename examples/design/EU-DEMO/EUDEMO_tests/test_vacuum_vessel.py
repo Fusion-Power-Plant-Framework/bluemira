@@ -26,14 +26,14 @@ class TestVacuumVesselBuilder:
     @classmethod
     def setup_class(cls):
         cls.params = {
-            "r_vv_ib_in": {"value": 5.1},
-            "r_vv_ob_in": {"value": 14.5},
-            "tk_vv_in": {"value": 0.6},
-            "tk_vv_out": {"value": 1.1},
-            "g_vv_bb": {"value": 0.02},
-            "n_TF": {"value": 16},
-            "vv_in_off_deg": {"value": 80},
-            "vv_out_off_deg": {"value": 160},
+            "r_vv_ib_in": {"value": 5.1, "unit": "m"},
+            "r_vv_ob_in": {"value": 14.5, "unit": "m"},
+            "tk_vv_in": {"value": 0.6, "unit": "m"},
+            "tk_vv_out": {"value": 1.1, "unit": "m"},
+            "g_vv_bb": {"value": 0.02, "unit": "m"},
+            "n_TF": {"value": 16, "unit": ""},
+            "vv_in_off_deg": {"value": 80, "unit": "deg"},
+            "vv_out_off_deg": {"value": 160, "unit": "deg"},
         }
 
         cls.picture_frame = PictureFrame(

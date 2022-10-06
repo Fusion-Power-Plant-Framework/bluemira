@@ -21,7 +21,15 @@
 import numpy as np
 import pytest
 
-from bluemira.base.constants import E_I, E_IJ, E_IJK, raw_uc, to_celsius, to_kelvin
+from bluemira.base.constants import (
+    E_I,
+    E_IJ,
+    E_IJK,
+    gas_flow_uc,
+    raw_uc,
+    to_celsius,
+    to_kelvin,
+)
 from bluemira.utilities.tools import levi_civita_tensor
 
 
@@ -44,18 +52,32 @@ class TestTemperatureConverters:
             to_celsius(-1000, unit)
 
 
-class TestRawConverter:
+class TestConverter:
     def test_percentage_conversion(self):
         assert raw_uc(1, "percent", "%") == 1
         assert raw_uc(1, "count", "%") == 100
 
-    def test_flow_conversion(self):
+    def test_raw_flow_conversion(self):
         assert np.isclose(raw_uc(1, "mol", "Pa m^3"), 2271.0954641485578)
         assert np.isclose(raw_uc(1, "mol/s", "Pa m^3/s"), 2271.0954641485578)
+        assert np.isclose(raw_uc(2271.0954641485578, "Pa m^3", "mol"), 1)
+        assert np.isclose(raw_uc(2271.0954641485578, "Pa m^3/s", "mol/s"), 1)
+
+    def test_gas_flow_conversion(self):
+        assert np.isclose(gas_flow_uc(1, "mol/s", "Pa m^3/s"), 2271.0954641485578)
+        assert np.isclose(gas_flow_uc(2271.0954641485578, "Pa m^3/s", "mol/s"), 1)
+
+        assert np.isclose(gas_flow_uc(1, "mol/s", "Pa m^3/s", 298.15), 2478.95)
+        assert np.isclose(gas_flow_uc(1, "mol/s", "Pa m^3/s"), 2271.0954641485578)
+
+        assert np.isclose(gas_flow_uc(2478.95, "Pa m^3/s", "mol/s", 298.15), 1)
+        assert np.isclose(gas_flow_uc(2271.0954641485578, "Pa m^3/s", "mol/s"), 1)
 
     def test_energy_temperature_conversion(self):
         assert np.isclose(raw_uc(1, "eV", "K"), 11604.518121550082)
         assert np.isclose(raw_uc(1, "eV/s", "K/s"), 11604.518121550082)
+        assert np.isclose(raw_uc(11604.518121550082, "K", "eV"), 1)
+        assert np.isclose(raw_uc(11604.518121550082, "K/s", "eV/s"), 1)
 
     def test_units_with_scales(self):
         # .....I know.....
