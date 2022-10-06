@@ -28,6 +28,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import scipy
 from matplotlib._tri import TriContourGenerator
+from matplotlib.axes import _axes as Axes  # noqa: N812
 from matplotlib.tri.triangulation import Triangulation
 
 from bluemira.base.look_and_feel import bluemira_warn
@@ -102,11 +103,11 @@ class ScalarSubFunc(dolfin.UserExpression):
             func = self.functions[0]
         else:
             m = self.subdomains[cell.index]
-            if m in self.markers:
-                index = np.where(np.array(self.markers) == m)
-                func = self.functions[index[0][0]]
-            else:
-                func = 0
+            func = (
+                self.functions[np.where(np.array(self.markers) == m)[0][0]]
+                if m in self.markers
+                else 0
+            )
         if callable(func):
             values[0] = func(x)
         elif isinstance(func, (int, float)):
@@ -127,11 +128,11 @@ def plot_scalar_field(
     y: np.ndarray,
     data: np.ndarray,
     levels: int = 20,
-    ax: Optional[Axis] = None,
+    ax: Optional[Axes] = None,
     contour: bool = True,
     tofill: bool = True,
     **kwargs,
-) -> Tuple[axis, Union[axis, None], Union[axis, None]]:
+) -> Tuple[Axes, Union[Axes, None], Union[Axes, None]]:
     """
     Plot a scalar field
 
@@ -158,10 +159,9 @@ def plot_scalar_field(
         Matplotlib axis on which the plot ocurred
     """
     if ax is None:
-        fig = plt.figure()
-        ax = fig.add_subplot()
+        fig, ax = plt.subplots()
     else:
-        fig = plt.gcf()
+        fig = ax.get_figure()
 
     defaults = {"linewidths": 2, "colors": "k"}
     contour_kwargs = {**defaults, **kwargs}
@@ -184,12 +184,19 @@ def plot_scalar_field(
 
 
 def plot_profile(
-    x: np.ndarray, prof: np.ndarray, var_name: str, var_unit: str, show: bool = True
+    x: np.ndarray,
+    prof: np.ndarray,
+    var_name: str,
+    var_unit: str,
+    ax: Optional[Axes] = None,
+    show: bool = True,
 ):
     """
     Plot profile
     """
-    fig, ax = plt.subplots()
+    if ax is None:
+        _, ax = plt.subplots()
+
     ax.plot(x, prof)
     ax.set(xlabel="x (-)", ylabel=f"{var_name} ({var_unit})")
     ax.grid()
@@ -227,7 +234,9 @@ def get_tricontours(
     return [tcg.create_contour(val)[0][0] for val in value]
 
 
-def calculate_plasma_shape_params(psi_norm_func, mesh, psi_norm, plot=False):
+def calculate_plasma_shape_params(
+    psi_norm_func: Callable, mesh: dolfin.Mesh, psi_norm: float, plot: bool = False
+):
     """
     Calculate the plasma parameters (r_geo, kappa, delta) for a given magnetic
     isoflux using optimisation.
