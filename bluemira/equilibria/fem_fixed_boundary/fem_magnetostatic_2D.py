@@ -449,7 +449,7 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
 
             self._update_curr(curr_target)
 
-            if eps > iter_err_max:
+            if eps < iter_err_max:
                 break
 
         return self.psi

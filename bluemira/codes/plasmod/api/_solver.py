@@ -152,9 +152,9 @@ class Solver(CodesSolver):
         return self.params
 
     def _scale_x_profile(self):
-        self._x_phi = getattr(self.plasmod_outputs(), Profiles.x)
+        self._x_phi = getattr(self.plasmod_outputs(), Profiles.x.name)
         self._x_phi /= np.max(self._x_phi)
-        psi = getattr(self.plasmod_outputs(), Profiles.psi)
+        psi = getattr(self.plasmod_outputs(), Profiles.psi.name)
         self._x_psi = np.sqrt(psi / psi[-1])
 
     def _from_phi_to_psi(self, profile_data):

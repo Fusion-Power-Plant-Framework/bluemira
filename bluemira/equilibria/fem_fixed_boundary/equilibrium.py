@@ -39,6 +39,7 @@ from bluemira.equilibria.fem_fixed_boundary.utilities import (
     calculate_plasma_shape_params,
     plot_profile,
 )
+from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.parameterisations import GeometryParameterisation
 from bluemira.mesh import meshing
 from bluemira.mesh.tools import import_mesh, msh_to_xdmf
@@ -87,6 +88,7 @@ def solve_transport_fixed_boundary(
     relaxation: float = 0.2,
     plot: bool = False,
     transport_code_module: str = "PLASMOD",
+    transport_run_mode: str = "run",
 ) -> PlasmaFixedBoundary:
     """
     Solve the plasma fixed boundary problem using delta95 and kappa95 as target
@@ -134,7 +136,9 @@ def solve_transport_fixed_boundary(
 
     for n_iter in range(max_iter):
         # build the plasma x-z cross-section and get its volume
-        plasma = PhysicalComponent("Plasma", shape=parameterisation.create_shape())
+        plasma = PhysicalComponent(
+            "Plasma", shape=BluemiraFace(parameterisation.create_shape())
+        )
         lcfs = plasma.shape
         plasma_volume = 2 * np.pi * lcfs.center_of_mass[0] * lcfs.area
 
@@ -142,12 +146,12 @@ def solve_transport_fixed_boundary(
             lcfs.plot_options.show_faces = False
             lcfs.plot_2d(show=True)
 
-        transport_params.kappa = (params.kappa_u + params.kappa_l) / 2
-        transport_params.delta = (params.delta_u + params.delta_l) / 2
+        transport_params.kappa.value = (params.kappa_u + params.kappa_l) / 2
+        transport_params.delta.value = (params.delta_u + params.delta_l) / 2
 
-        transport_params.V_p = plasma_volume
-        transport_params.kappa95 = kappa_95
-        transport_params.delta95 = delta_95
+        transport_params.V_p.value = plasma_volume
+        transport_params.kappa_95.value = kappa_95
+        transport_params.delta_95.value = delta_95
 
         bluemira_debug(
             f"{params.kappa_u=}, {params.delta_u=}\n"
@@ -162,7 +166,7 @@ def solve_transport_fixed_boundary(
             build_config=build_config,
             module=transport_code_module,
         )
-        transp_out_params = transport_solver.execute()
+        transp_out_params = transport_solver.execute(transport_run_mode)
 
         x = transport_solver.get_profile("x")
         pprime = transport_solver.get_profile("pprime")
@@ -190,7 +194,7 @@ def solve_transport_fixed_boundary(
         gs_solver.solve(
             _interpolate_profile(x, pprime),
             _interpolate_profile(x, ffprime),
-            transp_out_params.I_p,
+            transp_out_params.I_p.value,
             iter_err_max=gs_options.iter_err_max,
             max_iter=gs_options.max_iter,
             relaxation=gs_options.relaxation,
@@ -236,7 +240,8 @@ def solve_transport_fixed_boundary(
         # update parameters
         params.kappa_u = kappa_u
         params.delta_u = delta_u
-        parameterisation.adjust_variables(params.to_dict())
+        for name, value in params.to_dict().items():
+            parameterisation.adjust_variable(name, value["value"])
         bluemira_debug(f"{params}")
 
     if n_iter == max_iter - 1:

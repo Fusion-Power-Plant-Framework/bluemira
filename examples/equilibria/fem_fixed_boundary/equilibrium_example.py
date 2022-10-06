@@ -72,7 +72,7 @@ class TransportSolverParams(ParameterFrame):
 source = "Plasmod Example"
 plasmod_params = TransportSolverParams.from_dict(
     {
-        "A": {"value": main_params.a, "unit": "m", "source": source},
+        "A": {"value": main_params.a, "unit": "", "source": source},
         "R_0": {"value": main_params.r_0, "unit": "m", "source": source},
         "I_p": {"value": 19e6, "unit": "A", "source": source},
         "B_0": {"value": 5.31, "unit": "T", "source": source},
