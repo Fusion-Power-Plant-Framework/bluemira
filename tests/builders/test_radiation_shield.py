@@ -27,9 +27,9 @@ class TestRadiationShieldBuilder:
     @classmethod
     def setup_class(cls):
         cls.params = {
-            "g_cr_rs": {"value": 3},
-            "tk_rs": {"value": 0.02},
-            "n_TF": {"value": 12},
+            "g_cr_rs": {"value": 3, "unit": "m"},
+            "tk_rs": {"value": 0.02, "unit": "m"},
+            "n_TF": {"value": 12, "unit": ""},
         }
         cls.cryo_koz = BluemiraFace(
             make_polygon([[0, 0, -5], [0, 0, -10], [5, 0, -10], [5, 0, -5]], closed=True)

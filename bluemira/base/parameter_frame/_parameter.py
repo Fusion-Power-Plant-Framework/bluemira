@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import copy
 from dataclasses import dataclass
-from typing import Dict, Generic, List, Tuple, Type, TypedDict, TypeVar
+from typing import Dict, Generic, List, Tuple, Type, TypedDict, TypeVar, Union
 
 import pint
 from typeguard import typechecked
@@ -72,7 +72,7 @@ class NewParameter(Generic[ParameterValueType]):
                 )
         self._name = name
         self._value = value
-        self._unit = unit
+        self._unit = pint.Unit(unit)
         self._source = source
         self._description = description
         self._long_name = long_name
@@ -113,8 +113,12 @@ class NewParameter(Generic[ParameterValueType]):
 
     def to_dict(self) -> Dict:
         """Serialize the parameter to a dictionary."""
-        out = {"name": self.name, "value": self.value}
-        for field in ["unit", "source", "description", "long_name"]:
+        out = {
+            "name": self.name,
+            "value": self.value,
+            "unit": "dimensionless" if self.unit == "" else self.unit,
+        }
+        for field in ["source", "description", "long_name"]:
             if value := getattr(self, field):
                 out[field] = value
         return out
@@ -133,10 +137,17 @@ class NewParameter(Generic[ParameterValueType]):
     def value(self, new_value: ParameterValueType):
         self.set_value(new_value, source="")
 
+    def value_as(self, unit: Union[str, pint.Unit]) -> ParameterValueType:
+        """Return the current value in a given unit"""
+        try:
+            return raw_uc(self.value, self.unit, unit)
+        except pint.errors.PintError as pe:
+            raise ValueError("Unit conversion failed") from pe
+
     @property
     def unit(self) -> str:
         """Return the physical unit of the parameter."""
-        return self._unit
+        return f"{self._unit:~P}"
 
     @property
     def source(self) -> str:

@@ -1,8 +1,10 @@
 import io
+from copy import deepcopy
 from dataclasses import dataclass
 from typing import Union
 from unittest import mock
 
+import pint
 import pytest
 
 from bluemira.base.parameter_frame import NewParameter as Parameter
@@ -28,14 +30,24 @@ class BasicFrameDec:
     age: Parameter[int]
 
 
+@dataclass
+class BrokenFrame(ParameterFrame):
+    height: float
+
+
 class TestParameterFrame:
     def test_init_from_dict_sets_valid_entries(self):
         frame = BasicFrame.from_dict(FRAME_DATA)
 
-        assert frame.height.value == 180.5
-        assert frame.height.unit == "cm"
-        assert frame.age.value == 30
-        assert frame.age.unit == "years"
+        assert frame.height.value == 1.805
+        assert frame.height.unit == "m"
+        assert (
+            frame.age.value
+            == pint.Quantity(FRAME_DATA["age"]["value"], FRAME_DATA["age"]["unit"])
+            .to("s")
+            .magnitude
+        )
+        assert frame.age.unit == "s"
 
     @pytest.mark.parametrize(
         "name, value",
@@ -50,6 +62,11 @@ class TestParameterFrame:
 
         with pytest.raises(TypeError):
             BasicFrame.from_dict(data)
+
+    def test_TypeError_raise_for_non_parameter_type(self):
+        frame_data = {"height": FRAME_DATA["height"]}
+        with pytest.raises(TypeError):
+            BrokenFrame.from_dict(frame_data)
 
     def test_from_dict_ValueError_given_unknown_parameter(self):
         data = {
@@ -68,18 +85,20 @@ class TestParameterFrame:
             BasicFrame.from_dict(data)
 
     def test_to_dict_returns_input_to_from_dict(self):
-        frame = BasicFrame.from_dict(FRAME_DATA)
-
+        frame_data = deepcopy(FRAME_DATA)
+        frame_data["height"]["unit"] = "m"
+        frame_data["age"]["unit"] = "s"
+        frame = BasicFrame.from_dict(frame_data)
         out_dict = frame.to_dict()
 
-        assert out_dict == FRAME_DATA
+        assert out_dict == frame_data
 
     def test_initialising_using_untyped_generic_parameter_is_allowed(self):
         @dataclass
         class GenericFrame(ParameterFrame):
             x: Parameter
 
-        frame = GenericFrame.from_dict({"x": {"value": 10}})
+        frame = GenericFrame.from_dict({"x": {"value": 10, "unit": "m"}})
 
         assert frame.x.value == 10
 
@@ -90,7 +109,7 @@ class TestParameterFrame:
             x: Parameter[Union[str, list]]
 
         with pytest.raises(TypeError):
-            GenericFrame.from_dict({"x": {"value": value}})
+            GenericFrame.from_dict({"x": {"value": value, "unit": "m"}})
 
     def test_TypeError_given_field_does_not_have_Parameter_type(self):
         @dataclass
@@ -119,10 +138,10 @@ class TestParameterFrame:
 
         frame = BasicFrame.from_json(json_str)
 
-        assert frame.height.value == 180.5
-        assert frame.height.unit == "cm"
-        assert frame.age.value == 30
-        assert frame.age.unit == "years"
+        assert frame.height.value == 1.805
+        assert frame.height.unit == "m"
+        assert frame.age.value == pint.Quantity(30, "year").to("s").magnitude
+        assert frame.age.unit == "s"
 
     def test_from_json_reads_json_io(self):
         json_str = """{
@@ -133,10 +152,10 @@ class TestParameterFrame:
 
         frame = BasicFrame.from_json(json_io)
 
-        assert frame.height.value == 180.5
-        assert frame.height.unit == "cm"
-        assert frame.age.value == 30
-        assert frame.age.unit == "years"
+        assert frame.height.value == 1.805
+        assert frame.height.unit == "m"
+        assert frame.age.value == pint.Quantity(30, "year").to("s").magnitude
+        assert frame.age.unit == "s"
 
     def test_from_json_reads_from_file(self):
         json_str = """{
@@ -148,10 +167,10 @@ class TestParameterFrame:
         ):
             frame = BasicFrame.from_json("./some/path")
 
-        assert frame.height.value == 180.5
-        assert frame.height.unit == "cm"
-        assert frame.age.value == 30
-        assert frame.age.unit == "years"
+        assert frame.height.value == 1.805
+        assert frame.height.unit == "m"
+        assert frame.age.value == pint.Quantity(30, "year").to("s").magnitude
+        assert frame.age.unit == "s"
 
     def test_parameter_frames_with_eq_parameters_are_equal(self):
         frame1 = BasicFrame.from_dict(FRAME_DATA)
@@ -187,16 +206,24 @@ class TestParameterFrame:
 
         assert frame.height.value == 160.4
         assert frame.height.source == "a test"
-        assert frame.age.value == 30
+        assert (
+            frame.age.value
+            == pint.Quantity(FRAME_DATA["age"]["value"], FRAME_DATA["age"]["unit"])
+            .to("s")
+            .magnitude
+        )
         assert frame.age.source != "a test"
 
     def _call_tabulate(self, head_keys):
+        frame_data = deepcopy(FRAME_DATA)
+        frame_data["height"]["unit"] = "m"
+        frame_data["age"]["unit"] = "s"
         with mock.patch("bluemira.base.parameter_frame._frame.tabulate") as m_tb:
-            BasicFrame.from_dict(FRAME_DATA).tabulate(keys=head_keys)
+            BasicFrame.from_dict(frame_data).tabulate(keys=head_keys)
 
         (table_rows,), call_kwargs = m_tb.call_args
 
-        return call_kwargs["headers"], table_rows
+        return call_kwargs["headers"], table_rows, frame_data
 
     @pytest.mark.parametrize(
         "head_keys, result",
@@ -206,19 +233,19 @@ class TestParameterFrame:
         ),
     )
     def test_tabulate_headers(self, head_keys, result):
-        headers, _ = self._call_tabulate(head_keys)
+        headers, *_ = self._call_tabulate(head_keys)
         assert set(headers) == set(result)
 
-    def _get_data_keys_and_values(self, head_keys):
+    def _get_data_keys_and_values(self, frame_data, head_keys):
         # The columns and rows of the parameterframe are sorted
-        data_keys = sorted(FRAME_DATA.keys())
+        data_keys = sorted(frame_data.keys())
 
         if head_keys is not None:
-            fd_keys_list = list(set(head_keys) - set(FRAME_DATA.keys()))
+            fd_keys_list = list(set(head_keys) - set(frame_data.keys()))
         else:
-            fd_keys_list = list(FRAME_DATA.keys())
+            fd_keys_list = list(frame_data.keys())
 
-        data_values = list(FRAME_DATA.values())
+        data_values = list(frame_data.values())
         data_values_index = sorted(
             range(len(fd_keys_list)), key=fd_keys_list.__getitem__
         )
@@ -229,10 +256,12 @@ class TestParameterFrame:
     def test_tabulate_method_columns_have_correct_num_of_NA(self, head_keys):
         # Number of 'N/A' equal to headers without name - number of filled keys
 
-        nn_headers, table_rows = self._call_tabulate(head_keys)
+        nn_headers, table_rows, frame_data = self._call_tabulate(head_keys)
         nn_headers.pop(nn_headers.index("name"))
 
-        _, data_values, data_values_index = self._get_data_keys_and_values(head_keys)
+        _, data_values, data_values_index = self._get_data_keys_and_values(
+            frame_data, head_keys
+        )
 
         for tr, dvi in zip(table_rows, data_values_index):
             assert len([i for i, x in enumerate(tr) if x == "N/A"]) == len(
@@ -241,20 +270,20 @@ class TestParameterFrame:
 
     @pytest.mark.parametrize("head_keys", [None, ["name", "value"]])
     def test_tabulate_method_columns_have_correct_data(self, head_keys):
-        headers, table_rows = self._call_tabulate(head_keys)
+        headers, table_rows, frame_data = self._call_tabulate(head_keys)
 
         (
             data_keys,
             data_values,
             data_values_index,
-        ) = self._get_data_keys_and_values(head_keys)
+        ) = self._get_data_keys_and_values(frame_data, head_keys)
 
         for no, (tr, dvi) in enumerate(zip(table_rows, data_values_index)):
             # name is correct
             assert tr[0] == data_keys[no]
             for ind, val in data_values[dvi].items():
                 try:
-                    assert tr[headers.index(ind)] == FRAME_DATA[data_keys[no]][ind]
+                    assert tr[headers.index(ind)] == frame_data[data_keys[no]][ind]
                 except ValueError as ve:
                     if ind in head_keys:
                         raise ve
@@ -285,6 +314,150 @@ class TestParameterFrame:
         with pytest.raises(ValueError) as error:
             BasicFrame.from_json(["x"])
         assert "Cannot read JSON" in str(error)
+
+
+@dataclass
+class UnitFrame1(ParameterFrame):
+    length: Parameter[float]
+    time: Parameter[int]
+    mass: Parameter[int]
+    flag: Parameter[bool]
+    string: Parameter[str]
+
+
+@dataclass
+class UnitFrame2(ParameterFrame):
+    magfield: Parameter[float]
+    energy: Parameter[float]
+    pressure: Parameter[int]
+
+
+@dataclass
+class UnitFrame3(ParameterFrame):
+    damagepertime: Parameter[float]
+    timeperdamage: Parameter[float]
+    damage: Parameter[float]
+    perdamage: Parameter[float]
+    on_time: Parameter[float]
+    per_on_time: Parameter[float]
+
+
+@dataclass
+class UnitFrame4(ParameterFrame):
+    angle: Parameter[float]
+    angle2: Parameter[float]
+    angleperthing: Parameter[float]
+    thingperangle: Parameter[float]
+
+
+@dataclass
+class UnitFrame5(ParameterFrame):
+    wtf1: Parameter[float]
+    wtf2: Parameter[float]
+    wtf3: Parameter[float]
+
+
+class TestParameterFrameUnits:
+
+    SIMPLE_FRAME_DATA = {
+        "length": {"value": 180.5, "unit": "in"},
+        "time": {"value": 30, "unit": "day"},
+        "mass": {"value": 1, "unit": "tonne"},
+        "flag": {"value": False, "unit": ""},
+        "string": {"value": "Hello 👋", "unit": ""},
+    }
+
+    COMPLEX_FRAME_DATA = {
+        "magfield": {"value": 5000, "unit": "gamma"},
+        "energy": {"value": 30, "unit": "keV"},
+        "pressure": {"value": 1, "unit": "atm"},
+    }
+
+    WEIRD_FRAME_DATA = {
+        "damagepertime": {"value": 30, "unit": "dpa/fpy"},
+        "timeperdamage": {"value": 30, "unit": "fpy/dpa"},
+        "damage": {"value": 30, "unit": "dpa"},
+        "perdamage": {"value": 30, "unit": "1/dpa"},
+        "on_time": {"value": 1, "unit": "fpy"},
+        "per_on_time": {"value": 1, "unit": "1/fpy"},
+    }
+
+    ANGLE_FRAME_DATA = {
+        "angle": {"value": 5, "unit": "radian"},
+        "angle2": {"value": 5, "unit": "grade"},
+        "angleperthing": {"value": 5, "unit": "radian/m"},
+        "thingperangle": {"value": 5, "unit": "W/turn"},
+    }
+
+    WTF_FRAME_DATA = {
+        "wtf1": {"value": 5, "unit": "m^2/grade.W/(Pa.fpy)"},
+        "wtf2": {"value": 5, "unit": "dpa.m^2/rad.W/(Pa.fpy)"},
+        "wtf3": {"value": 5, "unit": "dpa^-1.m^2/turn.W/(Pa.fpy)"},
+    }
+
+    def test_simple_units_to_defaults(self):
+        frame = UnitFrame1.from_dict(self.SIMPLE_FRAME_DATA)
+        assert frame.length.unit == "m"
+        assert frame.length.value == 4.5847
+        assert frame.time.unit == "s"
+        assert frame.time.value == 2592000
+        assert frame.mass.unit == "kg"
+        assert frame.mass.value == 1000
+        assert frame.flag.value is False
+        assert frame.flag.unit == ""
+        assert frame.string.value == "Hello 👋"
+        assert frame.string.unit == ""
+
+    def test_complex_units_to_defaults(self):
+        frame = UnitFrame2.from_dict(self.COMPLEX_FRAME_DATA)
+        assert frame.magfield.unit == "T"
+        assert frame.magfield.value == pytest.approx(5e-6)
+        assert frame.energy.unit == "J"
+        assert frame.energy.value == pytest.approx(4.8065299e-15)
+        assert frame.pressure.unit == "Pa"
+        assert frame.pressure.value == 101325
+
+    def test_weird_units_to_defaults_dpa_fpy(self):
+        frame = UnitFrame3.from_dict(self.WEIRD_FRAME_DATA)
+        assert frame.damage.value == 30
+        assert frame.damage.unit == "dpa"
+        assert frame.on_time.value == 1
+        assert frame.on_time.unit == "fpy"
+
+        assert frame.perdamage.value == 30
+        assert frame.perdamage.unit == "1/dpa"
+        assert frame.per_on_time.value == 1
+        assert frame.per_on_time.unit == "1/fpy"
+        assert frame.damagepertime.value == 30
+        assert frame.damagepertime.unit == "dpa/fpy"
+        assert frame.timeperdamage.value == 30
+        assert frame.timeperdamage.unit == "fpy/dpa"
+
+    def test_angle_units_to_defaults(self):
+        frame = UnitFrame4.from_dict(self.ANGLE_FRAME_DATA)
+        assert frame.angle.value == pytest.approx(286.4789)
+        assert frame.angle.unit == "deg"
+        assert frame.angle2.value == pytest.approx(4.5)
+        assert frame.angle2.unit == "deg"
+        assert frame.angleperthing.value == pytest.approx(286.4789)
+        assert frame.angleperthing.unit == "deg/m"
+        assert frame.thingperangle.value == pytest.approx(0.0138888888)
+        assert frame.thingperangle.unit == "W/deg"
+
+    def test_wtf_units(self):
+        frame = UnitFrame5.from_dict(self.WTF_FRAME_DATA)
+        assert frame.wtf1.value == pytest.approx(5.555555)
+        assert frame.wtf1.unit == "m⁵/deg/fpy/s"
+        assert frame.wtf2.value == pytest.approx(0.0872664)
+        assert frame.wtf2.unit == "dpa·m⁵/deg/fpy/s"
+        assert frame.wtf3.value == pytest.approx(0.01388888)
+        assert frame.wtf3.unit == "m⁵/deg/dpa/fpy/s"
+
+    def test_bad_unit(self):
+        frame_data = deepcopy(self.SIMPLE_FRAME_DATA)
+        frame_data["length"]["unit"] = "I_am_a_unit"
+        with pytest.raises(ValueError):
+            frame = UnitFrame1.from_dict(frame_data)
 
 
 class TestParameterSetup:

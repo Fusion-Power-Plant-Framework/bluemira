@@ -59,8 +59,8 @@ class TestTeardown:
         # Expected value comes from ./test_data/mfile_data.json
         assert teardown.params.tau_e.value == pytest.approx(4.3196)
 
-    @pytest.mark.parametrize("run_func", ["read", "readall"])
-    def test_read_func_updates_bluemira_params_from_mfile(self, run_func):
+    @pytest.mark.parametrize("run_func, result", [("read", 5e8), ("readall", 5e-4)])
+    def test_read_func_updates_bluemira_params_from_mfile(self, run_func, result):
         teardown = Teardown(self.default_pf, None, utils.READ_DIR)
 
         with file_exists(os.path.join(utils.READ_DIR, "MFILE.DAT"), self.IS_FILE_REF):
@@ -68,7 +68,8 @@ class TestTeardown:
 
         # Expected value comes from ./test_data/mfile_data.json
         assert teardown.params.tau_e.value == pytest.approx(4.3196)
-        assert teardown.params.P_el_net.value == pytest.approx(500)
+        # auto unit conversion
+        assert teardown.params.P_el_net.value == pytest.approx(result)
 
     @pytest.mark.parametrize(
         "run_func, data_dir", [("runinput", utils.RUN_DIR), ("readall", utils.READ_DIR)]
