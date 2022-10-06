@@ -21,63 +21,79 @@
 
 """Fixed boundary equilibrium solve"""
 import os
+from dataclasses import asdict, dataclass
+from typing import Dict
 
 import numpy as np
+from scipy.interpolate import interp1d
 
 from bluemira.base.file import get_bluemira_path
 from bluemira.base.look_and_feel import bluemira_debug, bluemira_print, bluemira_warn
+from bluemira.base.parameterframe import NewParameterFrame as ParameterFrame
+from bluemira.codes import transport_code_solver
 from bluemira.equilibria.fem_fixed_boundary.fem_magnetostatic_2D import (
     FemGradShafranovFixedBoundary,
-)
-from bluemira.equilibria.fem_fixed_boundary.transport_solver import (
-    PlasmodTransportSolver,
 )
 from bluemira.equilibria.fem_fixed_boundary.utilities import (
     calculate_plasma_shape_params,
     plot_profile,
 )
+from bluemira.geometry.parameterisations import GeometryParameterisation
 from bluemira.mesh import meshing
 from bluemira.mesh.tools import import_mesh, msh_to_xdmf
 
 
 @dataclass
 class PlasmaFixedBoundary:
+    r_0: float
+    a: float
     kappa_u: float
     kappa_l: float
     delta_u: float
     delta_l: float
-    V_p: float
-    kappa: float
-    delta: float
-    kappa_95: float
-    delta_95: float
 
 
-def solve_plasmod_fixed_boundary(
-    builder_plasma,
-    params,
-    build_config,
-    plasma_lcfs: PhysicalComponent,
-    gs_options,
-    delta95_t,
-    kappa95_t,
-    lcar_mesh=0.15,
-    max_iter=30,
-    iter_err_max=1e-5,
-    relaxation=0.2,
-    plot=False,
-) -> dataclass:
+@dataclass
+class FemGradShafranovOptions:
+    p_order: int
+    iter_err_max: float
+    max_iter: int
+    relaxation: float
+
+
+def _interpolate_profile(x, profile_data):
+    return interp1d(x, profile_data, kind="linear", fill_value="extrapolate")
+
+
+def solve_transport_fixed_boundary(
+    plasma_parameterisation: GeometryParameterisation,
+    params: PlasmaFixedBoundary,
+    transport_params: ParameterFrame,
+    build_config: Dict,
+    gs_options: FemGradShafranovOptions,
+    delta95_t: float,
+    kappa95_t: float,
+    lcar_mesh: float = 0.15,
+    max_iter: int = 30,
+    iter_err_max: float = 1e-5,
+    relaxation: float = 0.2,
+    plot: bool = False,
+    transport_code_module: str = "PLASMOD",
+) -> PlasmaFixedBoundary:
     """
     Solve the plasma fixed boundary problem using delta95 and kappa95 as target
-    values and iterating on PLASMOD to have consistency with pprime and ffprime.
+    values and iterating on a transport solver to have consistency with pprime
+    and ffprime.
 
     Parameters
     ----------
+    plasma_parameterisation: GeometryParameterisation
+        Geometry parameterisation of the plasma
     params: Configuration
         Parameters to use in the PLASMOD solve
     build_config: dict
         Build configuration to use in the PLASMOD solve
-    gs_options: dict
+    gs_options: FemGradShafranovOptions
         Set of options used to set up and run the FemGradShafranovFixedBoundary
     delta95_t: float
         Target value for delta at 95%
@@ -103,82 +119,73 @@ def solve_plasmod_fixed_boundary(
     mesh_name = "FixedBoundaryEquilibriumMesh"
     mesh_name_msh = mesh_name + ".msh"
 
-    params: PlasmaFixedBoundary
+    plasma = plasma_parameterisation(asdict(params))
+
+    lcfs_boundary_options = {"lcar": lcar_mesh, "physical_group": "lcfs"}
+    lcfs_options = {"lcar": lcar_mesh, "physical_group": "plasma_face"}
 
     for n_iter in range(max_iter):
-        # source string to be used in changed parameters
-        source = f"from equilibrium iteration {n_iter}"
-
         # build the plasma x-z cross-section and get its volume
-        lcfs = plasma_lcfs.shape
+        lcfs = plasma.create_shape().shape
         plasma_volume = 2 * np.pi * lcfs.center_of_mass[0] * lcfs.area
 
         if plot:
-            plasma_lcfs.plot_options.show_faces = False
-            plasma_lcfs.plot_2d(show=True)
+            lcfs.plot_options.show_faces = False
+            lcfs.plot_2d(show=True)
 
-        params.kappa = (params.kappa_u + params.kappa_l) / 2
-        params.delta = (params.delta_u + params.delta_l) / 2
-        params.V_p = plasma_volume
-        params.kappa95 = kappa_95
-        params.delta95 = delta_95
+        transport_params.kappa = (params.kappa_u + params.kappa_l) / 2
+        transport_params.delta = (params.delta_u + params.delta_l) / 2
+
+        transport_params.V_p = plasma_volume
+        transport_params.kappa95 = kappa_95
+        transport_params.delta95 = delta_95
 
         bluemira_debug(
-            f"{params.kappa_u=}, {params.delta_u=}\n"
-            f"{params.kappa_l=}, {params.delta_l=}\n"
-            f"{params.kappa=}, {params.delta=}\n"
-            f"{params.V_p=}"
+            f"{transport_params.kappa_u=}, {transport_params.delta_u=}\n"
+            f"{transport_params.kappa_l=}, {transport_params.delta_l=}\n"
+            f"{transport_params.kappa=}, {transport_params.delta=}\n"
+            f"{transport_params.V_p=}"
         )
 
-        # initialize plasmod solver
-
-        plasmod_solver = PlasmodTransportSolver(
-            params=params,
+        # initialize transport solver
+        transport_solver = transport_code_solver(
+            params=transport_params,
             build_config=build_config,
+            module=transport_code_module,
         )
-        plasmod_solver.execute()
+        transp_out_params = transport_solver.execute()
+
+        x = transport_solver.get_profile("x")
+        pprime = transport_solver.get_profile("pprime")
+        ffprime = transport_solver.get_profile("ffprime")
 
         if plot:
-            plot_profile(
-                plasmod_solver.x, plasmod_solver.pprime(plasmod_solver.x), "pprime", "-"
-            )
-            plot_profile(
-                plasmod_solver.x, plasmod_solver.ffprime(plasmod_solver.x), "ffrime", "-"
-            )
+            plot_profile(x, _interpolate_profile(x, pprime)(x), "pprime", "-")
+            plot_profile(x, _interpolate_profile(x, ffprime)(x), "ffrime", "-")
 
         # generate mesh for the Grad-Shafranov solver
-        plasma_lcfs.shape.boundary[0].mesh_options = {
-            "lcar": lcar_mesh,
-            "physical_group": "lcfs",
-        }
-        plasma_lcfs.shape.mesh_options = {
-            "lcar": lcar_mesh,
-            "physical_group": "plasma_face",
-        }
+        lcfs.boundary[0].mesh_options = lcfs_boundary_options
+        lcfs.mesh_options = lcfs_options
 
-        meshing.Mesh(meshfile=os.path.join(directory, mesh_name_msh))(plasma_lcfs)
+        meshing.Mesh(meshfile=os.path.join(directory, mesh_name_msh))(lcfs)
 
         msh_to_xdmf(mesh_name_msh, dimensions=(0, 2), directory=directory)
 
-        mesh = import_mesh(
-            mesh_name,
-            directory=directory,
-            subdomains=True,
-        )[0]
+        mesh = import_mesh(mesh_name, directory=directory, subdomains=True)[0]
 
         # initialize the Grad-Shafranov solver
-        gs_solver = FemGradShafranovFixedBoundary(mesh, p_order=gs_options["p_order"])
+        gs_solver = FemGradShafranovFixedBoundary(mesh, p_order=gs_options.p_order)
 
         bluemira_print("Solving fixed boundary Grad-Shafranov...")
 
         gs_solver.solve(
-            plasmod_solver.pprime,
-            plasmod_solver.ffprime,
-            plasmod_solver.I_p,
-            iter_err_max=gs_options["iter_err_max"],
-            max_iter=gs_options["max_iter"],
-            relaxation=gs_options["relaxation"],
-            plot=gs_options["plot"],
+            _interpolate_profile(x, pprime),
+            _interpolate_profile(x, ffprime),
+            transp_out_params.I_p,
+            iter_err_max=gs_options.iter_err_max,
+            max_iter=gs_options.max_iter,
+            relaxation=gs_options.relaxation,
+            plot=plot,
         )
 
         _, kappa_95, delta_95 = calculate_plasma_shape_params(
@@ -204,11 +211,10 @@ def solve_plasmod_fixed_boundary(
         ) + relaxation * delta_u_0
 
         bluemira_debug(
-            "Previous shape parameters:\n"
-            f"\t {kappa_u_0=:.3f}, {delta_u_0=:.3f}\n"
-            "Recalculated shape parameters:\n"
-            f"\t {kappa_u=:.3f}, {delta_u=:.3f}\n"
-            "\n"
+            "Previous shape parameters:\n\t"
+            f"{kappa_u_0=:.3f}, {delta_u_0=:.3f}\n"
+            "Recalculated shape parameters:\n\t"
+            f"{kappa_u=:.3f}, {delta_u=:.3f}\n\n"
             f"|Target - Actual|/Target = {err_delta:.3f}\n"
             f"|Target - bluemira|/Target = {err_kappa:.3f}\n"
         )
@@ -221,27 +227,24 @@ def solve_plasmod_fixed_boundary(
         # update parameters
         params.kappa_u = kappa_u
         params.delta_u = delta_u
-        plasma_lcfs.shape = plasma_lcfs._shape.create_shape()
+        plasma.adjust_variables(asdict(params))
         bluemira_debug(f"{params}")
 
-    else:
-        bluemira_warn(
-            f"PLASMOD <-> Fixed boundary G-S did not converge within {max_iter} iterations:\n"
-            f"\t Target kappa_95: {kappa95_t:.3f}\n"
-            f"\t Actual kappa_95: {kappa_95:.3f}\n"
-            f"\t Target delta_95: {delta95_t:.3f}\n"
-            f"\t Actual delta_95: {delta_95:.3f}\n"
-            f"\t Error: {iter_err:.3E} > {iter_err_max:.3E}\n"
-        )
-        return params
+    if n_iter == max_iter - 1:
+        message = bluemira_warn
+        line_1 = f"did not converge within {max_iter}"
 
-    bluemira_print(
-        f"PLASMOD <-> Fixed boundary G-S successfully converged within {n_iter} iterations:\n"
-        f"\t Target kappa_95: {kappa95_t:.3f}\n"
-        f"\t Actual kappa_95: {kappa_95:.3f}\n"
-        f"\t Target delta_95: {delta95_t:.3f}\n"
-        f"\t Actual delta_95: {delta_95:.3f}\n"
-        f"\t Error: {iter_err:.3E} > {iter_err_max:.3E}\n"
+    else:
+        message = bluemira_print
+        line_1 = f"successfully converged within {n_iter}"
+
+    message(
+        f"PLASMOD <-> Fixed boundary G-S {line_1} iterations:\n\t"
+        f"Target kappa_95: {kappa95_t:.3f}\n\t"
+        f"Actual kappa_95: {kappa_95:.3f}\n\t"
+        f"Target delta_95: {delta95_t:.3f}\n\t"
+        f"Actual delta_95: {delta_95:.3f}\n\t"
+        f"Error: {iter_err:.3E} > {iter_err_max:.3E}\n"
     )
 
     return params

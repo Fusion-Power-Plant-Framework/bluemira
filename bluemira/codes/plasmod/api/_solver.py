@@ -24,6 +24,7 @@ from enum import auto
 from typing import Any, Dict, Iterable, Union
 
 import numpy as np
+from scipy.interpolate import interp1d
 
 from bluemira.base.parameter_frame import ParameterFrame
 from bluemira.base.solver import RunMode as BaseRunMode
@@ -146,7 +147,22 @@ class Solver(CodesSolver):
         if teardown := self._get_execution_method(self._teardown, run_mode):
             teardown()
 
+        self._scale_x_profile()
+
         return self.params
+
+    def _scale_x_profile(self):
+        self._x_phi = getattr(self.plasmod_outputs(), Profiles.x)
+        self._x_phi /= np.max(self._x_phi)
+        psi = getattr(self.plasmod_outputs(), Profiles.psi)
+        self._x_psi = np.sqrt(psi / psi[-1])
+
+    def _from_phi_to_psi(self, profile_data):
+        """
+        Convert the profile to the magnetic coordinate sqrt((psi - psi_ax)/(psi_b -
+        psi_ax))
+        """
+        return interp1d(self._x_psi, profile_data, kind="linear")(self._x_phi)
 
     def get_profile(self, profile: Profiles) -> np.ndarray:
         """
@@ -162,7 +178,12 @@ class Solver(CodesSolver):
         profile_values: np.ndarray
             A plasmod profile.
         """
-        return getattr(self.plasmod_outputs(), profile.name)
+        prof_data = getattr(self.plasmod_outputs(), profile.name)
+        if profile is Profiles.x:
+            prof_data = self._x_phi
+        elif profile in (Profiles.psi, Profiles.pprime.Profiles.ffprime):
+            prof_data = self._from_phi_to_psi(prof_data)
+        return prof_data
 
     def get_profiles(self, profiles: Iterable[Profiles]) -> Dict[Profiles, np.ndarray]:
         """
