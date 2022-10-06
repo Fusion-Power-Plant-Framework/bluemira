@@ -196,7 +196,7 @@ def _validate_parameter_field(field, member_type: Type) -> Tuple[Type, ...]:
     return value_types
 
 
-def _validate_units(param_data: Dict, value_type: Iterable[Type, ...]):
+def _validate_units(param_data: Dict, value_type: Iterable[Type]):
 
     try:
         quantity = pint.Quantity(param_data["value"], param_data["unit"])
