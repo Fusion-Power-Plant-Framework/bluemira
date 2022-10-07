@@ -57,6 +57,17 @@ class PlasmaFixedBoundaryParams:
     delta_u: float
     delta_l: float
 
+    def tabulate(self):
+        """
+        Tabulate dataclass
+        """
+        return tabulate(
+            list(asdict(self).items()),
+            headers=["name", "value"],
+            tablefmt="simple",
+            numalign="right",
+        )
+
 
 @dataclass
 class FemGradShafranovOptions:
@@ -161,7 +172,7 @@ def solve_transport_fixed_boundary(
 
         bluemira_debug(
             f"FB Params\n\n"
-            f"{tabulate(list(asdict(params).items()),headers=['name', 'value'],tablefmt='simple', numalign='right')}\n\n"
+            f"{params.tabulate()}\n\n"
             f"Transport Params\n\n"
             f"{transport_params.tabulate(keys=['name', 'value', 'unit'], tablefmt='simple')}"
         )
