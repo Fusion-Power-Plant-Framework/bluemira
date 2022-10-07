@@ -112,14 +112,14 @@ def get_max_current(dx, dz, j_max):
     dz: float
         Coil half-height [m]
     j_max: float
-        Coil current density [MA/m^2]
+        Coil current density [A/m^2]
 
     Returns
     -------
     max_current: float
         Maximum current [A]
     """
-    return abs(j_max * 1e6 * (4 * dx * dz))
+    return abs(j_max * (4 * dx * dz))
 
 
 class CoilSizer:
@@ -244,7 +244,7 @@ class CoilSizer:
         if current is None:
             current = self.current
 
-        half_width = 0.5 * np.sqrt((abs(current) / (1e6 * self.j_max)))
+        half_width = 0.5 * np.sqrt((abs(current) / (self.j_max)))
         return half_width, half_width
 
     @staticmethod
@@ -283,7 +283,7 @@ class Coil:
     ctype: str
         Type of coil ['PF', 'CS', 'Plasma']
     j_max: float (default = 12.5)
-        Maximum current density in the coil [MA/m^2]
+        Maximum current density in the coil [A/m^2]
     b_max: float (default = 12)
         Maximum magnetic field at the coil [T]
     name: str or None
@@ -478,7 +478,7 @@ class Coil:
         Parameters
         ----------
         j_max: float (default None)
-            Overwrite default constant material max current density [MA/m^2]
+            Overwrite default constant material max current density [A/m^2]
         b_max: float (default None)
             Overwrite default constant material max field [T]
         """
@@ -505,7 +505,7 @@ class Coil:
     def mesh_coil(self, d_coil):
         """
         Mesh an individual coil into smaller subcoils.
-        This handles both variable area PFs with fixed Jmax [MA/m^2]
+        This handles both variable area PFs with fixed Jmax [A/m^2]
         and fixed area CS modules with fixed A [m^2]
 
         Parameters
@@ -1860,7 +1860,7 @@ class CoilSet(CoilGroup):
             Name of the coil to assign the material to
             from ['PF', 'CS', 'PF_x', 'CS_x'] with x a valid str(int)
         j_max: float (default None)
-            Overwrite default constant material max current density [MA/m^2]
+            Overwrite default constant material max current density [A/m^2]
         b_max: float (default None)
             Overwrite default constant material max field [T]
         """

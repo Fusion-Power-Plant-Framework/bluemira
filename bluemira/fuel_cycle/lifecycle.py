@@ -31,7 +31,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 from matplotlib.lines import Line2D
 
-from bluemira.base.constants import S_TO_YR, YR_TO_S
+from bluemira.base.constants import S_TO_YR, YR_TO_S, raw_uc
 from bluemira.base.look_and_feel import bluemira_print, bluemira_warn
 from bluemira.fuel_cycle.timeline import Timeline
 from bluemira.fuel_cycle.timeline_tools import (
@@ -109,8 +109,8 @@ class LifeCycle:
         self.n_cycles = None  # Total number of D-T pulses
 
         # Derive/convert inputs
-        self.maintenance_l = self.params.bmd * 24 * 3600  # [s]
-        self.maintenance_s = self.params.dmd * 24 * 3600  # [s]
+        self.maintenance_l = self.params.bmd  # [s]
+        self.maintenance_s = self.params.dmd  # [s]
         self.t_rampup = self.params.I_p / self.params.s_ramp_up  # [s]
         self.t_rampdown = self.params.I_p / self.params.s_ramp_down  # [s]
         self.t_flattop = self.params.t_pulse - self.t_rampup - self.t_rampdown  # [s]
@@ -481,14 +481,14 @@ class LifeCycleParams:
     A_global: float = 0.3
     """Global load factor [dimensionless]. Not always used."""
 
-    I_p: float = 19
-    """Plasma current [MA]. None."""
+    I_p: float = 19e6
+    """Plasma current [A]. None."""
 
-    bmd: float = 150
+    bmd: float = raw_uc(150, "days", "s")
     """Blanket maintenance duration [days]. Full replacement intervention duration."""
 
-    dmd: float = 90
-    """Divertor maintenance duration [days]. Full replacement intervention duration."""
+    dmd: float = raw_uc(90, "days", "s")
+    """Divertor maintenance duration [s]. Full replacement intervention duration."""
 
     t_pulse: float = 7200
     """Pulse length [s]. Includes ramp-up and ramp-down time."""
@@ -502,11 +502,11 @@ class LifeCycleParams:
     take less time than the CS recharge.
     """
 
-    s_ramp_up: float = 0.1
-    """Plasma current ramp-up rate [MA/s]. None."""
+    s_ramp_up: float = 1e5
+    """Plasma current ramp-up rate [A/s]. None."""
 
-    s_ramp_down: float = 0.1
-    """Plasma current ramp-down rate [MA/s]. None."""
+    s_ramp_down: float = 1e5
+    """Plasma current ramp-down rate [A/s]. None."""
 
     n_DT_reactions: float = 7.078779946428698e20
     """D-T fusion reaction rate [1/s]. At full power."""

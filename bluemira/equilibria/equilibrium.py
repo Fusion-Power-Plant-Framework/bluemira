@@ -151,7 +151,7 @@ class MHDState:
         Returns
         -------
         F: np.array(n_coils, 2)
-            [Fx, Fz] array of forces on coils [MN]
+            [Fx, Fz] array of forces on coils [N]
 
         Notes
         -----
@@ -172,7 +172,7 @@ class MHDState:
         forces[:, 0] = currents * (response[:, :, 0] @ currents + background[:, 0])
         forces[:, 1] = currents * (response[:, :, 1] @ currents + background[:, 1])
 
-        return forces / 1e6
+        return forces
 
     def get_coil_fields(self):
         """
@@ -1266,9 +1266,9 @@ class Equilibrium(MHDState):
         of the equilbrium and coilset.
         """
         c_names = self.coilset.get_control_names()
-        currents = self.coilset.get_control_currents() / 1e6
+        currents = self.coilset.get_control_currents()
         fields = self.get_coil_fields()
-        forces = self.get_coil_forces() / 1e6
+        forces = self.get_coil_forces()
         fz = forces.T[1]
         fz_cs = fz[self.coilset.n_PF :]
         fz_c_stot = sum(fz_cs)
@@ -1276,7 +1276,7 @@ class Equilibrium(MHDState):
         for j in range(self.coilset.n_CS - 1):
             fsep.append(np.sum(fz_cs[j + 1 :]) - np.sum(fz_cs[: j + 1]))
         fsep = max(fsep)
-        table = {"I [MA]": currents, "B [T]": fields, "F [MN]": fz}
+        table = {"I [A]": currents, "B [T]": fields, "F [N]": fz}
         df = DataFrame(list(table.values()), index=list(table.keys()))
         df = df.applymap(lambda x: f"{x:.2f}")
         print(tabulate.tabulate(df, headers=c_names))

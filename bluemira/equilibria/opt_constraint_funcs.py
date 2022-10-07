@@ -205,11 +205,11 @@ def coil_force_constraints(
     n_CS: int
         Number of CS coils
     PF_Fz_max: float
-        Maximum vertical force on each PF coil [MN]
+        Maximum vertical force on each PF coil [N]
     CS_Fz_sum_max: float
-        Maximum total vertical force on the CS stack [MN]
+        Maximum total vertical force on the CS stack [N]
     CS_Fz_sep_max: float
-        Maximum vertical separation force in the CS stack [MN]
+        Maximum vertical separation force in the CS stack [N]
     scale: float
         Current scale with which to calculate the constraints
 
