@@ -529,7 +529,7 @@ def kgm3_to_gcm3(density: Union[float, np.array, List[float]]) -> Union[float, n
     density_gcm3 : Union[float, np.array]
         The density [g/cm3]
     """
-    return raw_uc(density, "kg m^3", "g cm^3")
+    return raw_uc(density, "kg.m^-3", "g.cm^-3")
 
 
 def gcm3_to_kgm3(density: Union[float, np.array, List[float]]) -> Union[float, np.array]:
@@ -546,7 +546,7 @@ def gcm3_to_kgm3(density: Union[float, np.array, List[float]]) -> Union[float, n
     density_kgm3 : Union[float, np.array]
         The density [kg/m3]
     """
-    return raw_uc(density, "g cm^3", "kg m^3")
+    return raw_uc(density, "g.cm^-3", "kg.m^-3")
 
 
 # =============================================================================
