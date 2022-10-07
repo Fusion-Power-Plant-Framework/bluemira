@@ -57,7 +57,7 @@ class PlasmaFixedBoundaryParams:
     delta_u: float
     delta_l: float
 
-    def tabulate(self):
+    def tabulate(self) -> str:
         """
         Tabulate dataclass
         """
