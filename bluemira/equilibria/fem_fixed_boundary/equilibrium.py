@@ -161,7 +161,7 @@ def solve_transport_fixed_boundary(
 
         bluemira_debug(
             f"FB Params\n\n"
-            f"{tabulate(list(asdict(params).items()),headers=['name', 'value'],tablefmt='simple')}\n\n"
+            f"{tabulate(list(asdict(params).items()),headers=['name', 'value'],tablefmt='simple', numalign='right')}\n\n"
             f"Transport Params\n\n"
             f"{transport_params.tabulate(keys=['name', 'value', 'unit'], tablefmt='simple')}"
         )
