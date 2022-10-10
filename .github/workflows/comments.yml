@@ -11,13 +11,19 @@ on:
 jobs:
   warnings-comment:
     runs-on: ubuntu-latest
-    if: >
-      ${{ github.event.workflow_run.event == 'pull_request' &&
-      github.event.workflow_run.conclusion == 'success' }}
+    if: github.event.action == 'completed' && github.event.workflow_run.conclusion != 'skipped'
+    env:
+      RESULT: ${{ github.event.workflow_run.conclusion }}
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     steps:
+    - name: "Get information about the current run"
+      uses: potiuk/get-workflow-origin@v1_3
+      id: workflow-run-info
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+        sourceRunId: ${{ github.event.workflow_run.id }}
     - name: Download reference test report
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      if: env.RESULT == 'success' && steps.workflow-run-info.outputs.pullRequestNumber != ''
       run: |
         artifact_url="$( \
           gh api repos/${{ github.repository }}/actions/artifacts --jq '.artifacts[] | select(.name == "report-json") | select(.workflow_run.head_sha == "${{ github.event.workflow_run.pull_request.base.sha }}") | .archive_download_url')"
@@ -27,8 +33,7 @@ jobs:
           unzip report-json.zip -d ref_report
         fi
     - name: Download PR test report
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      if: env.RESULT == 'success' && steps.workflow-run-info.outputs.pullRequestNumber != ''
       run: |
         artifact_url="$( \
           gh api repos/${{ github.repository }}/actions/artifacts --jq '.artifacts[] | select(.name == "report-json") | select(.workflow_run.head_sha == "${{ github.event.workflow_run.head_sha }}") | .archive_download_url')"
@@ -38,10 +43,8 @@ jobs:
           unzip report-json.zip -d PR_report
         fi
     - name: Generate warning report
-      if: ${{ github.event_name == 'pull_request' }}
+      if: env.RESULT == 'success' && steps.workflow-run-info.outputs.pullRequestNumber != ''
       id: warning-report
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: |
         if [ -f "ref_report/.report.json" ]; then
           compare_args="--compare ref_report/.report.json"
@@ -53,22 +56,20 @@ jobs:
         echo "::set-output name=report::"${report_str}""
 
     - name: Find warning report comment
+      if: env.RESULT == 'success' && steps.workflow-run-info.outputs.pullRequestNumber != ''
       uses: peter-evans/find-comment@v2
       id: find-warning-report-comment
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
-        issue-number: ${{ github.event.workflow_run.pull_request.number }}
+        issue-number: ${{ steps.workflow-run-info.outputs.pullRequestNumber }}
         comment-author: "github-actions[bot]"
         body-includes: ⚠️ Warning Report
         direction: last
 
     - name: Create or update warning report comment
+      if: env.RESULT == 'success' && steps.workflow-run-info.outputs.pullRequestNumber != ''
       uses: peter-evans/create-or-update-comment@v2
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
         comment-id: ${{ steps.find-warning-report-comment.outputs.comment-id }}
-        issue-number: ${{ github.event.workflow_run.pull_request.number }}
+        issue-number: ${{ steps.workflow-run-info.outputs.pullRequestNumber }}
         body: ${{ steps.warning-report.outputs.report }}
         edit-mode: replace
