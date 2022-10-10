@@ -52,8 +52,7 @@ class BluemiraShell(BluemiraGeo):
         else:
             return shell
 
-    @property
-    def _shape(self):
+    def create_shape(self):
         """Part.Shell: shape of the object as a primitive shell"""
         return self._create_shell()
 

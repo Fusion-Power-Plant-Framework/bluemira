@@ -106,8 +106,7 @@ class BluemiraFace(BluemiraGeo):
         else:
             return face
 
-    @property
-    def _shape(self) -> cadapi.apiFace:
+    def create_shape(self) -> cadapi.apiFace:
         """Part.Face: shape of the object as a primitive face"""
         return self._create_face()
 
@@ -160,7 +159,7 @@ class BluemiraFace(BluemiraGeo):
             and N the number of discretization points.
         """
         points = []
-        for w in self._shape.Wires:
+        for w in self.shape.Wires:
             if byedges:
                 points.append(cadapi.discretize_by_edges(w, ndiscr=ndiscr, dl=dl))
             else:

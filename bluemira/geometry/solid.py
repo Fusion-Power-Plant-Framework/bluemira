@@ -61,8 +61,7 @@ class BluemiraSolid(BluemiraGeo):
         else:
             return solid
 
-    @property
-    def _shape(self):
+    def create_shape(self):
         """Part.Solid: shape of the object as a single solid"""
         return self._create_solid()
 

@@ -77,8 +77,7 @@ class BluemiraWire(BluemiraGeo):
 
         return wrapper
 
-    @property
-    def _shape(self) -> cadapi.apiWire:
+    def create_shape(self) -> cadapi.apiWire:
         """apiWire: shape of the object as a single wire"""
         return self._create_wire()
 
@@ -106,7 +105,7 @@ class BluemiraWire(BluemiraGeo):
 
     def get_single_wire(self) -> BluemiraWire:
         """Get a single wire representing the object"""
-        return BluemiraWire(self._shape)
+        return BluemiraWire(self.shape)
 
     def __add__(self, other):
         """Add two wires"""
@@ -123,11 +122,13 @@ class BluemiraWire(BluemiraGeo):
         This function modifies the object boundary.
         """
         if not self.is_closed():
-            closure = cadapi.wire_closure(self._shape)
+            closure = cadapi.wire_closure(self.shape)
             if isinstance(self.boundary[0], cadapi.apiWire):
                 self.boundary.append(closure)
+                self.boundary = self.boundary
             else:
-                self.boundary.append(BluemiraWire(closure))
+                self.append(BluemiraWire(closure))
+                self.boundary = self.boundary
 
         # check that the new boundary is closed
         if not self.is_closed():
@@ -148,64 +149,10 @@ class BluemiraWire(BluemiraGeo):
             a np array with the x,y,z coordinates of the discretized points.
         """
         if byedges:
-            points = cadapi.discretize_by_edges(self._shape, ndiscr=ndiscr, dl=dl)
+            points = cadapi.discretize_by_edges(self.shape, ndiscr=ndiscr, dl=dl)
         else:
-            points = cadapi.discretize(self._shape, ndiscr=ndiscr, dl=dl)
+            points = cadapi.discretize(self.shape, ndiscr=ndiscr, dl=dl)
         return Coordinates(points)
-
-    def scale(self, factor) -> None:
-        """
-        Apply scaling with factor to this object. This function modifies the self
-        object.
-        """
-        for o in self.boundary:
-            if isinstance(o, cadapi.apiWire):
-                cadapi.scale_shape(o, factor)
-            else:
-                o.scale(factor)
-
-    def translate(self, vector) -> None:
-        """
-        Translate this shape with the vector. This function modifies the self
-        object.
-        """
-        for o in self.boundary:
-            if isinstance(o, cadapi.apiWire):
-                cadapi.translate_shape(o, vector)
-            else:
-                o.translate(vector)
-
-    def rotate(
-        self,
-        base: tuple = (0.0, 0.0, 0.0),
-        direction: tuple = (0.0, 0.0, 1.0),
-        degree: float = 180,
-    ):
-        """
-        Rotate this shape.
-
-        Parameters
-        ----------
-        base: tuple (x,y,z)
-            Origin location of the rotation
-        direction: tuple (x,y,z)
-            The direction vector
-        degree: float
-            rotation angle
-        """
-        for o in self.boundary:
-            if isinstance(o, cadapi.apiWire):
-                cadapi.rotate_shape(o, base, direction, degree)
-            else:
-                o.rotate(base, direction, degree)
-
-    def change_placement(self, placement):
-        """Changes the object placement"""
-        for o in self.boundary:
-            if isinstance(o, cadapi.apiWire):
-                cadapi.change_placement(o, placement._shape)
-            else:
-                o.change_placement(placement)
 
     def value_at(self, alpha: Optional[float] = None, distance: Optional[float] = None):
         """
@@ -277,10 +224,10 @@ class BluemiraWire(BluemiraGeo):
         """
         Get the coordinates of the start of the wire.
         """
-        return Coordinates(cadapi.start_point(self._shape))
+        return Coordinates(cadapi.start_point(self.shape))
 
     def end_point(self) -> Coordinates:
         """
         Get the coordinates of the end of the wire.
         """
-        return Coordinates(cadapi.end_point(self._shape))
+        return Coordinates(cadapi.end_point(self.shape))
