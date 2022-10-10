@@ -151,6 +151,12 @@ def solve_transport_fixed_boundary(
     lcfs_boundary_options = {"lcar": lcar_mesh, "physical_group": "lcfs"}
     lcfs_options = {"lcar": lcar_mesh, "physical_group": "plasma_face"}
 
+    transport_solver = transport_code_solver(
+        params=transport_params,
+        build_config=build_config,
+        module=transport_code_module,
+    )
+
     for n_iter in range(max_iter):
         # build the plasma x-z cross-section and get its volume
         plasma = PhysicalComponent(
@@ -177,12 +183,8 @@ def solve_transport_fixed_boundary(
             f"{transport_params.tabulate(keys=['name', 'value', 'unit'], tablefmt='simple')}"
         )
 
-        # initialize transport solver
-        transport_solver = transport_code_solver(
-            params=transport_params,
-            build_config=build_config,
-            module=transport_code_module,
-        )
+        # run transport solver
+        transport_solver.params.update_from_frame(transport_params)
         transp_out_params = transport_solver.execute(transport_run_mode)
 
         x = transport_solver.get_profile("x")
