@@ -62,18 +62,6 @@ class NumpyJSONEncoder(JSONEncoder):
             return obj.tolist()
         return super().default(obj)
 
-    @staticmethod
-    def floatstr(_floatstr, obj, *args, **kwargs):
-        """
-        Awaiting python bugs:
-
-        https://github.com/python/cpython/pull/13233
-        https://bugs.python.org/issue36841
-        https://bugs.python.org/issue42434
-        https://bugs.python.org/issue31466
-        """
-        return _floatstr(obj, *args, **kwargs)
-
     def iterencode(self, o, _one_shot=False):
         """
         Patch iterencode type checking
