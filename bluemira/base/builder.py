@@ -29,8 +29,7 @@ import abc
 from typing import Dict, List, Type, Union
 
 from bluemira.base.components import Component
-from bluemira.base.parameter_frame import NewParameterFrame as ParameterFrame
-from bluemira.base.parameter_frame import make_parameter_frame
+from bluemira.base.parameter_frame import ParameterFrame, make_parameter_frame
 from bluemira.utilities.plot_tools import set_component_view
 
 BuildConfig = Dict[str, Union[int, float, str, "BuildConfig"]]

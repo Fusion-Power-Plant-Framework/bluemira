@@ -41,7 +41,6 @@ dependencies = [
     "tabulate",
     "typeguard",
     "scipy",
-    "wrapt",
 ]
 
 [project.entry-points.numba_extensions]

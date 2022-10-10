@@ -27,8 +27,7 @@ from typing import Dict, Tuple
 import numpy as np
 
 from bluemira.base.designer import Designer
-from bluemira.base.parameter_frame import NewParameter as Parameter
-from bluemira.base.parameter_frame import NewParameterFrame as ParameterFrame
+from bluemira.base.parameter_frame import Parameter, ParameterFrame
 from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.tools import boolean_cut, make_polygon
 from bluemira.geometry.wire import BluemiraWire

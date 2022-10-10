@@ -25,8 +25,7 @@ from typing import Any, Dict, Iterable, Union
 
 import numpy as np
 
-from bluemira.base.parameter_frame import NewParameterFrame as ParameterFrame
-from bluemira.base.parameter_frame import make_parameter_frame
+from bluemira.base.parameter_frame import ParameterFrame, make_parameter_frame
 from bluemira.base.solver import RunMode as BaseRunMode
 from bluemira.codes.error import CodesError
 from bluemira.codes.interface import CodesSolver

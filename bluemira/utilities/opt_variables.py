@@ -582,7 +582,7 @@ class OptVariables:
 
     def tabulator(self, keys=None, db=None, tablefmt="fancy_grid") -> str:
         """
-        Tabulate the underlying DataFrame of the ParameterFrame
+        Tabulate the optimisation variables.
 
         Parameters
         ----------

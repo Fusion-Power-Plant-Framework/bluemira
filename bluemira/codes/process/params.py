@@ -27,9 +27,8 @@ from copy import deepcopy
 from dataclasses import dataclass
 from typing import Dict
 
-from bluemira.base.parameter import ParameterMapping
-from bluemira.base.parameter_frame import NewParameter as Parameter
-from bluemira.codes.params import MappedParameterFrame
+from bluemira.base.parameter_frame import Parameter
+from bluemira.codes.params import MappedParameterFrame, ParameterMapping
 from bluemira.codes.process.mapping import mappings
 
 

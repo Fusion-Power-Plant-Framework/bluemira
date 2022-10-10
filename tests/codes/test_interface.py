@@ -21,11 +21,10 @@
 
 from dataclasses import dataclass
 
-from bluemira.base.parameter import ParameterMapping
-from bluemira.base.parameter_frame import NewParameter as Parameter
+from bluemira.base.parameter_frame import Parameter
 from bluemira.base.solver import NoOpTask, RunMode
 from bluemira.codes import interface
-from bluemira.codes.params import MappedParameterFrame
+from bluemira.codes.params import MappedParameterFrame, ParameterMapping
 
 
 class NoOpRunMode(RunMode):

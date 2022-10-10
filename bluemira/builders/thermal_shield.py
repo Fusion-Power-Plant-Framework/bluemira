@@ -31,8 +31,7 @@ from scipy.spatial import ConvexHull
 
 from bluemira.base.builder import Builder, ComponentManager
 from bluemira.base.components import PhysicalComponent
-from bluemira.base.parameter_frame import NewParameter as Parameter
-from bluemira.base.parameter_frame import NewParameterFrame as ParameterFrame
+from bluemira.base.parameter_frame import Parameter, ParameterFrame
 from bluemira.builders.tools import (
     build_sectioned_xy,
     build_sectioned_xyz,

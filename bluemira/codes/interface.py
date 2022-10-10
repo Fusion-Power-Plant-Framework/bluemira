@@ -64,7 +64,7 @@ class CodesSetup(CodesTask):
         self, remapper: Optional[Union[Callable, Dict[str, str]]] = None
     ) -> Dict[str, float]:
         """
-        Retrieve inputs values to the external code from this tasks'
+        Retrieve inputs values to the external code from this task's
         ParameterFrame.
 
         Convert the inputs' units to those used by the external code.

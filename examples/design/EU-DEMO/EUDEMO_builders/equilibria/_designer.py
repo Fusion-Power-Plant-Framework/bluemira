@@ -29,8 +29,7 @@ from typing import Dict, Optional, Union
 import numpy as np
 
 from bluemira.base.designer import Designer
-from bluemira.base.parameter_frame import NewParameter as Parameter
-from bluemira.base.parameter_frame import NewParameterFrame as ParameterFrame
+from bluemira.base.parameter_frame import Parameter, ParameterFrame
 from bluemira.equilibria import Equilibrium
 from bluemira.equilibria.opt_problems import UnconstrainedTikhonovCurrentGradientCOP
 from bluemira.equilibria.solve import DudsonConvergence, PicardIterator
@@ -81,7 +80,7 @@ class EquilibriumDesigner(Designer[Equilibrium]):
 
     Parameters
     ----------
-    params: Union[Dict, NewParameterFrame]
+    params: Union[Dict, ParameterFrame]
         The parameters for the solver, the dictionary or frame must
         contain all the parameters present in
         `UnconstrainedTikhonovSolverParams`.

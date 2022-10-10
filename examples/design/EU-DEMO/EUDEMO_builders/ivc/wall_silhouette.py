@@ -27,8 +27,7 @@ from typing import Dict, Type, Union
 from bluemira.base.designer import Designer
 from bluemira.base.error import DesignError
 from bluemira.base.look_and_feel import bluemira_debug, bluemira_print
-from bluemira.base.parameter_frame import NewParameter as Parameter
-from bluemira.base.parameter_frame import NewParameterFrame as ParameterFrame
+from bluemira.base.parameter_frame import Parameter, ParameterFrame
 from bluemira.equilibria import Equilibrium
 from bluemira.equilibria.find import find_OX_points, get_legs
 from bluemira.geometry.parameterisations import GeometryParameterisation, PolySpline

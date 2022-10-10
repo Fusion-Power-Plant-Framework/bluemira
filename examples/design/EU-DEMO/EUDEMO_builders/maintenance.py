@@ -23,11 +23,14 @@
 Some crude EU-DEMO remote maintenance considerations
 """
 
+from dataclasses import dataclass
+
 import numpy as np
 
 from bluemira.base.constants import EPS
 from bluemira.base.error import BuilderError
 from bluemira.base.look_and_feel import bluemira_warn
+from bluemira.base.parameter_frame import Parameter, ParameterFrame, make_parameter_frame
 from bluemira.geometry.constants import VERY_BIG
 from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.plane import BluemiraPlane
@@ -54,14 +57,31 @@ def _get_inner_cut_point(breeding_blanket_xz, r_inner_cut):
     return intersection
 
 
+@dataclass
+class UpperPortOPParameters(ParameterFrame):
+    """Parameters required to run :class:`UpperPortOP`."""
+
+    c_rm: Parameter[float]
+    """Remote maintenance clearance [m]."""
+    R_0: Parameter[float]
+    """Major radius [m]."""
+    bb_min_angle: Parameter[float]
+    """Minimum blanket module angle [degrees]."""
+    tk_bb_ib: Parameter[float]
+    """Blanket inboard thickness [m]."""
+    tk_bb_ob: Parameter[float]
+    """Blanket outboard thickness [m]."""
+
+
 class UpperPortOP(OptimisationProblem):
     """
     Reduced model optimisation problem for the vertical upper port size optimisation.
 
     Parameters
     ----------
-    params: ParameterFrame
-        Parameter frame for the problem
+    params: Union[Dict, ParameterFrame]
+        Parameter frame for the problem. See
+        :class:`UpperPortOPParameters` for parameter details.
     optimiser: Optimiser
         Optimiser object to use when solving this problem
     breeding_blanket_xz: BluemiraFace
@@ -70,6 +90,8 @@ class UpperPortOP(OptimisationProblem):
         Constraint tolerance
     """
 
+    params: UpperPortOPParameters
+
     def __init__(
         self,
         params,
@@ -77,7 +99,7 @@ class UpperPortOP(OptimisationProblem):
         breeding_blanket_xz: BluemiraFace,
         constraint_tol: float = 1e-6,
     ):
-
+        params = make_parameter_frame(params, UpperPortOPParameters)
         objective = OptimisationObjective(self.minimise_port_size, f_objective_args={})
 
         box = breeding_blanket_xz.bounding_box

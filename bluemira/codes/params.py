@@ -19,12 +19,13 @@
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 """Base classes for external parameter management."""
+from __future__ import annotations
 
 import abc
-from typing import Dict, Literal
+from dataclasses import dataclass
+from typing import Dict, Literal, Optional, Union
 
-from bluemira.base.parameter import ParameterMapping
-from bluemira.base.parameter_frame import NewParameterFrame as ParameterFrame
+from bluemira.base.parameter_frame import ParameterFrame
 from bluemira.codes.error import CodesError
 
 
@@ -83,3 +84,78 @@ class MappedParameterFrame(ParameterFrame):
                 param_mapping.send = send_mapping
             if (recv_mapping := send_recv_mapping.get("recv", None)) is not None:
                 param_mapping.recv = recv_mapping
+
+
+@dataclass
+class ParameterMapping:
+    """
+    Simple class containing information on mapping of a bluemira parameter to one in
+    external software.
+
+    Parameters
+    ----------
+    name: str
+       name of mapped parameter
+    recv: bool
+        receive data from mapped parameter (to overwrite bluemira parameter)
+    send: bool
+        send data to mapped parameter (from bluemira parameter)
+    """
+
+    name: str
+    send: bool = True
+    recv: bool = True
+    unit: Optional[str] = None
+
+    _frozen = ()
+
+    def __post_init__(self):
+        """
+        Freeze the dataclass
+        """
+        self._frozen = ("name", "unit", "_frozen")
+
+    def to_dict(self) -> Dict:
+        """
+        Convert this object to a dictionary with attributes as values.
+        """
+        return {
+            "name": self.name,
+            "send": self.send,
+            "recv": self.recv,
+            "unit": self.unit,
+        }
+
+    @classmethod
+    def from_dict(cls, the_dict: Dict) -> "ParameterMapping":
+        """
+        Create a ParameterMapping using a dictionary with attributes as values.
+        """
+        return cls(**the_dict)
+
+    def __str__(self):
+        """
+        Create a string representation of of this object which is more compact than that
+        provided by the default `__repr__` method.
+        """
+        return repr(self.to_dict())
+
+    def __setattr__(self, attr: str, value: Union[bool, str]):
+        """
+        Protect against additional attributes
+        Parameters
+        ----------
+        attr: str
+            Attribute to set (name can only be set on init)
+        value: Union[bool, str]
+            Value of attribute
+        """
+        if (
+            attr not in ["send", "recv", "name", "unit", "_frozen"]
+            or attr in self._frozen
+        ):
+            raise KeyError(f"{attr} cannot be set for a {self.__class__.__name__}")
+        elif attr in ["send", "recv"] and not isinstance(value, bool):
+            raise ValueError(f"{attr} must be a bool")
+        else:
+            super().__setattr__(attr, value)

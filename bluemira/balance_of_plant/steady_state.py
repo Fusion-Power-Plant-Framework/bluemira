@@ -24,6 +24,7 @@ Crude 0-D steady-state balance of plant model. Mostly for visualisation purposes
 """
 
 import abc
+from dataclasses import dataclass
 
 import numpy as np
 
@@ -394,15 +395,39 @@ class ParasiticLoadStrategy(abc.ABC):
         pass
 
 
+@dataclass
+class BoPModelParams:
+    """Parmeters required to run :class:`BalanceOfPlantModel`."""
+
+    P_fus_DT: float
+    """D-T fusion power [MW]."""
+    P_fus_DD: float
+    """D-D fusion power [MW]."""
+    P_rad: float
+    """'Radiation power [MW]."""
+    P_hcd_ss: float
+    """Steady-state HCD power [MW]."""
+    P_hcd_ss_el: float
+    """Steady-state heating and current drive electrical power [MW]."""
+
+
 class BalanceOfPlantModel:
     """
-    Balance of plant calculator for a fusion power reactor
-
+    Balance of plant calculator for a fusion power reactor.
 
     Parameters
     ----------
-    params: ParameterFrame
-        Input parameters
+    params: Union[Dict[str, float], BoPModelParams]
+        Structure containing input parameters.
+        If this is a dictionary, required keys are:
+
+            * P_fus_DT: float
+            * P_fus_DD: float
+            * P_rad: float
+            * P_hcd_ss: float
+            * P_hcd_ss_el: float
+
+        See :class:`BoPModelParams` for parameter details.
     rad_sep_strat: FractionSplitStrategy
         Strategy to calculate the where the radiation and charged particle power
         in the scrape-off-layer is carried to
@@ -441,7 +466,15 @@ class BalanceOfPlantModel:
         bop_cycle_strat,
         parasitic_load_strat,
     ):
-        self.params = params
+        if isinstance(params, dict):
+            self.params = BoPModelParams(**params)
+        elif isinstance(params, BoPModelParams):
+            self.params = params
+        else:
+            raise TypeError(
+                f"Unsupported type '{type(self.params).__name__}' for params. "
+                "Must be 'dict' or 'BoPModelParams'."
+            )
         self.rad_sep_strat = rad_sep_strat
         self.neutron_strat = neutron_strat
         self.blanket_pump_strat = blanket_pump_strat
@@ -454,18 +487,17 @@ class BalanceOfPlantModel:
         """
         Carry out the balance of plant calculation
         """
-        p_fusion = self.params.P_fus_DT.value + self.params.P_fus_DD.value
+        p_fusion = self.params.P_fus_DT + self.params.P_fus_DD
         f_neutron_DT = HE_MOLAR_MASS / (HE_MOLAR_MASS + NEUTRON_MOLAR_MASS)
         f_neutron_DD = 0.5 * HE3_MOLAR_MASS / (NEUTRON_MOLAR_MASS + HE3_MOLAR_MASS)
         p_neutron = (
-            f_neutron_DT * self.params.P_fus_DT.value
-            + f_neutron_DD * self.params.P_fus_DD.value
+            f_neutron_DT * self.params.P_fus_DT + f_neutron_DD * self.params.P_fus_DD
         )
-        p_charged = self.params.P_fus_DT.value + self.params.P_fus_DD.value - p_neutron
+        p_charged = self.params.P_fus_DT + self.params.P_fus_DD - p_neutron
 
-        p_radiation = self.params.P_rad.value
-        p_hcd = self.params.P_hcd_ss.value
-        p_hcd_el = self.params.P_hcd_ss_el.value
+        p_radiation = self.params.P_rad
+        p_hcd = self.params.P_hcd_ss
+        p_hcd_el = self.params.P_hcd_ss_el
         p_separatrix = p_charged - p_radiation + p_hcd
         (
             p_n_blk,

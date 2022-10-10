@@ -26,8 +26,7 @@ from typing import Dict
 
 from bluemira.base.designer import Designer
 from bluemira.base.error import DesignError
-from bluemira.base.parameter_frame import NewParameter as Parameter
-from bluemira.base.parameter_frame import NewParameterFrame as ParameterFrame
+from bluemira.base.parameter_frame import Parameter, ParameterFrame
 from bluemira.builders.tools import varied_offset
 from bluemira.geometry.wire import BluemiraWire
 
