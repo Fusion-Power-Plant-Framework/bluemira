@@ -23,9 +23,10 @@ from __future__ import annotations
 
 import abc
 from dataclasses import dataclass
-from typing import Dict, Literal, Optional, Union
+from typing import Dict, Literal, Optional, Type, Union
 
 from bluemira.base.parameter_frame import ParameterFrame
+from bluemira.base.parameter_frame._frame import _PfT
 from bluemira.codes.error import CodesError
 
 
@@ -161,9 +162,15 @@ class ParameterMapping:
             super().__setattr__(attr, value)
 
 
-# def make_mapped_default_parameter_frame(defaults, mappings: Dict[str, ParameterMapping], param_cls:Type[_PfT]):
-def make_mapped_default_parameter_frame(defaults, mappings, param_cls):
+def make_mapped_default_parameter_frame(
+    defaults: dataclass, mappings: Dict[str, ParameterMapping], param_cls: Type[_PfT]
+) -> _PfT:
+    """
+    Create ParameterFrame with default values for external codes.
 
+    External codes are likely to have variables that are not changed often
+    therefore in some cases sane defaults are needed
+    """
     new_param_dict = {}
     for map_name, param_map in mappings.items():
         if param_map.send:
