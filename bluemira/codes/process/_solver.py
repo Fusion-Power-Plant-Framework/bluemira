@@ -125,16 +125,6 @@ class Solver(CodesSolver):
         self._setup: Union[Setup, None] = None
         self._run: Union[Run, None] = None
         self._teardown: Union[Teardown, None] = None
-        mm = _make_writer(build_config.get("template_in_dat", DEFAULT_INDAT)).data
-
-        ProcessInputs = make_dataclass("ProcesInputs", list(mm.keys()))(
-            {key: value.get_value for key, value in mm.items()}
-        )
-
-        self.params = make_mapped_default_parameter_frame(
-            ProcessInputs, mappings, ProcessSolverParams
-        )
-        self.params.update_from_frame(params)
 
         _build_config = copy.deepcopy(build_config)
         self.binary = _build_config.pop("binary", PROCESS_BINARY)
@@ -151,6 +141,17 @@ class Solver(CodesSolver):
                 f"'{self.name}' solver received unknown build_config arguments: "
                 f"'{quoted_delim.join(_build_config.keys())}'."
             )
+
+        # Get process defaults from template file
+        mm = _make_writer(self.template_in_dat).data
+        process_inputs = make_dataclass("ProcesInputs", list(mm.keys()))(
+            {key: value.get_value for key, value in mm.items()}
+        )
+
+        self.params = make_mapped_default_parameter_frame(
+            process_inputs, mappings, ProcessSolverParams
+        )
+        self.params.update_from_frame(params)
 
     def execute(self, run_mode: Union[str, RunMode]) -> ParameterFrame:
         """
