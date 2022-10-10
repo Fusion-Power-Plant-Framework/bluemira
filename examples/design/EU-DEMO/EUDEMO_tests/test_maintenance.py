@@ -19,7 +19,6 @@
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 
-from bluemira.base.config import Configuration
 from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.tools import make_polygon
 from bluemira.utilities.optimiser import Optimiser
@@ -28,7 +27,13 @@ from EUDEMO_builders.maintenance import UpperPortOP
 
 class TestUpperPortOP:
     def test_dummy_blanket_port_opt(self):
-        params = Configuration()
+        params = {
+            "c_rm": {"value": 0.02, "unit": "m"},
+            "R_0": {"value": 9, "unit": "m"},
+            "bb_min_angle": {"value": 70, "unit": "degrees"},
+            "tk_bb_ib": {"value": 0.8, "unit": "m"},
+            "tk_bb_ob": {"value": 1.1, "unit": "m"},
+        }
         bb = make_polygon(
             {
                 "x": [5, 6, 6, 11, 11, 12, 12, 5],
