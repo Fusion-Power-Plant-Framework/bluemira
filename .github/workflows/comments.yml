@@ -22,6 +22,9 @@ jobs:
       with:
         token: ${{ secrets.GITHUB_TOKEN }}
         sourceRunId: ${{ github.event.workflow_run.id }}
+    - name: Checkout
+      if: env.RESULT == 'success' && steps.workflow-run-info.outputs.pullRequestNumber != ''
+      uses: actions/checkout@v3
     - name: Download reference test report
       if: env.RESULT == 'success' && steps.workflow-run-info.outputs.pullRequestNumber != ''
       run: |
