@@ -19,6 +19,7 @@
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 
+import dolfinx
 import matplotlib.pyplot as plt
 import numpy as np
 import scipy
@@ -38,8 +39,6 @@ from bluemira.geometry.tools import interpolate_bspline
 from bluemira.geometry.wire import BluemiraWire
 from bluemira.mesh import meshing
 from bluemira.mesh.tools import import_mesh, msh_to_xdmf
-
-import dolfin  # isort:skip
 
 
 class Solovev:

@@ -53,7 +53,7 @@ Some examples of using bluemira mesh module.
 # %%
 import os
 
-import dolfin
+import dolfinx
 import matplotlib.pyplot as plt
 
 import bluemira.geometry.tools as tools
@@ -155,7 +155,7 @@ mesh, boundaries, subdomains, labels = import_mesh(
     directory=directory,
     subdomains=True,
 )
-dolfin.plot(mesh)
+dolfinx.plot(mesh)
 plt.show()
 
 print(mesh.coordinates())

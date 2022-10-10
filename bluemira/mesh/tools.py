@@ -32,8 +32,10 @@ from typing import Tuple, Union
 
 import meshio
 import numpy as np
-from dolfin import Mesh, MeshValueCollection, XDMFFile
+from dolfin import MeshValueCollection
 from dolfin.cpp.mesh import MeshFunctionSizet
+from dolfinx.io import XDMFFile
+from dolfinx.mesh import Mesh, XDMFFile
 from tabulate import tabulate
 
 from bluemira.base.look_and_feel import bluemira_debug, bluemira_warn
@@ -104,7 +106,7 @@ def msh_to_xdmf(
 
 def import_mesh(file_prefix="mesh", subdomains=False, directory="."):
     """
-    Import a dolfin mesh.
+    Import a dolfinx mesh.
 
     Parameters
     ----------
@@ -116,7 +118,7 @@ def import_mesh(file_prefix="mesh", subdomains=False, directory="."):
         Directory in which the MSH file and XDMF files exist
     Returns
     -------
-    mesh: dolfin::Mesh
+    mesh: dolfinx.mesh::Mesh
         Dolfin Mesh object containing the domain
     boundaries_mf: dolfin::MeshFunctionSizet
         Dolfin MeshFunctionSizet object containing the geometry
