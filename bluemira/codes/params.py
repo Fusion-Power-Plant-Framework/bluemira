@@ -23,7 +23,7 @@ from __future__ import annotations
 
 import abc
 from dataclasses import dataclass
-from typing import Dict, Literal, Optional, Type, Union
+from typing import Dict, Literal, Optional, Type, Union, get_args
 
 from bluemira.base.parameter_frame import ParameterFrame
 from bluemira.base.parameter_frame._frame import _PfT
@@ -170,6 +170,11 @@ def make_mapped_default_parameter_frame(
 
     External codes are likely to have variables that are not changed often
     therefore in some cases sane defaults are needed
+
+    Notes
+    -----
+    If `mapping.send == False` a default value of 0, '' or False is
+    used dependending on the parameter type
     """
     new_param_dict = {}
     for map_name, param_map in mappings.items():
@@ -179,6 +184,13 @@ def make_mapped_default_parameter_frame(
                 "unit": param_map.unit,
             }
         else:
-            new_param_dict[map_name] = {"value": 0, "unit": param_map.unit}
+            val = 0
+            param_typing = get_args(param_cls.__annotations__[map_name])
+            if float not in param_typing:
+                if str in param_typing:
+                    val = ""
+                elif bool in param_typing:
+                    val = False
+            new_param_dict[map_name] = {"value": val, "unit": param_map.unit}
 
     return param_cls.from_dict(new_param_dict)
