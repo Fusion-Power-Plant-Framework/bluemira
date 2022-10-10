@@ -23,9 +23,10 @@
 PROCESS api
 """
 import os
+from dataclasses import dataclass
 from enum import Enum
 from pathlib import Path
-from typing import List, Union
+from typing import Dict, List, TypeVar, Union
 
 from bluemira.base.file import get_bluemira_path
 from bluemira.base.look_and_feel import bluemira_print, bluemira_warn
@@ -83,6 +84,29 @@ if ENABLED:
 DEFAULT_INDAT = os.path.join(
     get_bluemira_path("codes/process"), "PROCESS_DEFAULT_IN.DAT"
 )
+
+InVarValueType = TypeVar("InVarValueType")
+
+
+@dataclass
+class INVariable:
+    name: str
+    _value: Union[float, List, Dict]
+    v_type: InVarValueType
+    parameter_group: str
+    comment: str
+
+    @property
+    def get_value(self) -> Union[float, List, Dict]:
+        """Return value in correct format"""
+        return self._value
+
+    @property
+    def value(self) -> Union[str, List, Dict]:
+        if not isinstance(self._value, (List, Dict)):
+            return f"{self._value}"
+        else:
+            return self._value
 
 
 class Impurities(Enum):

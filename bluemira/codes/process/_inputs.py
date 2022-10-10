@@ -22,8 +22,10 @@
 Parameter classes/structures for Process
 """
 
-from dataclasses import dataclass, field
-from typing import Dict, List
+from dataclasses import dataclass, field, fields
+from typing import Dict, Generator, List
+
+from bluemira.codes.process.api import INVariable
 
 
 @dataclass
@@ -48,11 +50,14 @@ class ProcessInputs:
         }
     )
     # fmt: off
-    icc: List[int] = field(default_factory=lambda:[1, 2, 5, 8, 11, 13, 15, 16, 24, 25, 26, 27, 30, 31, 32, 33, 34,
-                      35, 36, 60, 62, 65, 68, 72])
-    ixc: List[int] = field(default_factory=lambda:[2, 3, 4, 5, 6, 9, 13, 14, 16, 18, 29, 36, 37, 38, 39, 41, 42,
-                      44, 48, 49, 50, 51, 52, 53, 54, 56, 57, 58, 59, 60, 61, 102, 103,
-                      106, 109, 110, 113, 117, 122, 123])
+    icc: List[int] = field(default_factory=lambda: [1, 2, 5, 8, 11, 13, 15, 16, 24, 25,
+                                                    26, 27, 30, 31, 32, 33, 34, 35, 36,
+                                                    60, 62, 65, 68, 72])
+    ixc: List[int] = field(default_factory=lambda: [2, 3, 4, 5, 6, 9, 13, 14, 16, 18,
+                                                    29, 36, 37, 38, 39, 41, 42, 44, 48,
+                                                    49, 50, 51, 52, 53, 54, 56, 57, 58,
+                                                    59, 60, 61, 102, 103, 106, 109, 110,
+                                                    113, 117, 122, 123])
     # fmt: on
     abktflnc: float = 15.0
     adivflnc: float = 20.0
@@ -244,3 +249,39 @@ class ProcessInputs:
     zref: List[float] = field(
         default_factory=lambda: [3.6, 1.2, 1.0, 2.8, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0]
     )
+
+    def __iter__(self) -> Generator[field, None, None]:
+        """
+        Iterate over this frame's parameters.
+
+        The order is based on the order in which the parameters were
+        declared.
+        """
+        for _field in fields(self):
+            yield _field
+
+    def __post_init__(self):
+        for _field in self:
+            if _field.name not in ["icc", "ixc", "bounds"]:
+                new_val = INVariable(
+                    _field.name, getattr(self, _field.name), "Parameter", "", ""
+                )
+                setattr(self, _field.name, new_val)
+        self.icc = INVariable(
+            "icc",
+            self.icc,
+            "Constraint Equation",
+            "Constraint Equation",
+            "Constraint Equations",
+        )
+        self.ixc = INVariable(
+            "ixc",
+            self.ixc,
+            "Iteration Variable",
+            "Iteration Variable",
+            "Iteration Variables",
+        )
+        self.bounds = INVariable("bounds", self.bounds, "Bound", "Bound", "Bounds")
+
+    def to_dict(self):
+        return {f.name: getattr(self, f.name) for f in self}
