@@ -21,22 +21,25 @@
 
 import copy
 import os
+from dataclasses import make_dataclass
 from enum import auto
 from typing import Dict, List, Tuple, Union
 
 import numpy as np
 
 from bluemira.base.look_and_feel import bluemira_warn
-from bluemira.base.parameter_frame import ParameterFrame, make_parameter_frame
+from bluemira.base.parameter_frame import ParameterFrame
 from bluemira.base.solver import RunMode as BaseRunMode
 from bluemira.codes.error import CodesError
 from bluemira.codes.interface import CodesSolver
+from bluemira.codes.params import make_mapped_default_parameter_frame
 from bluemira.codes.process._run import Run
-from bluemira.codes.process._setup import Setup
+from bluemira.codes.process._setup import Setup, _make_writer
 from bluemira.codes.process._teardown import Teardown
 from bluemira.codes.process.api import DEFAULT_INDAT, Impurities
 from bluemira.codes.process.constants import BINARY as PROCESS_BINARY
 from bluemira.codes.process.constants import NAME as PROCESS_NAME
+from bluemira.codes.process.mappings import mappings
 from bluemira.codes.process.params import ProcessSolverParams
 
 BuildConfig = Dict[str, Union[float, str, "BuildConfig"]]
@@ -122,8 +125,16 @@ class Solver(CodesSolver):
         self._setup: Union[Setup, None] = None
         self._run: Union[Run, None] = None
         self._teardown: Union[Teardown, None] = None
+        mm = _make_writer(build_config.get("template_in_dat", DEFAULT_INDAT))["data"]
 
-        self.params = make_parameter_frame(params, ProcessSolverParams)
+        ProcessInputs = make_dataclass("ProcesInputs", list(mm.keys))(
+            {key: value.get_value for key, value in mm.items()}
+        )
+
+        self.params = make_mapped_default_parameter_frame(
+            ProcessInputs, mappings, ProcessSolverParams
+        )
+        self.params.update_from_frame(params)
 
         _build_config = copy.deepcopy(build_config)
         self.binary = _build_config.pop("binary", PROCESS_BINARY)
