@@ -22,10 +22,12 @@
 Defines the setup task for running PROCESS.
 """
 import os
+from dataclasses import asdict, dataclass
 from typing import Dict, Union
 
 from bluemira.codes.error import CodesError
 from bluemira.codes.interface import CodesSetup
+from bluemira.codes.process._inputs import ProcessInputs
 from bluemira.codes.process.api import DEFAULT_INDAT, InDat, update_obsolete_vars
 from bluemira.codes.process.constants import NAME as PROCESS_NAME
 from bluemira.codes.process.mapping import (
@@ -62,13 +64,11 @@ class Setup(CodesSetup):
         params: ProcessSolverParams,
         in_dat_path: str,
         problem_settings: Dict[str, Union[float, str]] = None,
-        template_in_dat_path: str = DEFAULT_INDAT,
     ):
         super().__init__(params, PROCESS_NAME)
 
         self.in_dat_path = in_dat_path
         self.problem_settings = problem_settings if problem_settings is not None else {}
-        self.template_in_dat_path = template_in_dat_path
 
     def run(self):
         """
@@ -99,11 +99,7 @@ class Setup(CodesSetup):
             Default, True
         """
         # Load defaults in bluemira folder
-        writer = _make_writer(self.template_in_dat_path)
-        if writer.data == {}:
-            raise CodesError(
-                f"Unable to read template IN.DAT file '{self.template_in_dat_path}'."
-            )
+        writer = _make_writer(ProcessInputs())
 
         if use_bp_inputs:
             inputs = self._get_new_inputs(remapper=update_obsolete_vars)
@@ -131,9 +127,8 @@ class Setup(CodesSetup):
             writer.add_parameter(name, model.value)
 
 
-def _make_writer(template_in_dat: str) -> InDat:
-    if os.path.isfile(template_in_dat):
-        # InDat autoloads IN.DAT without checking for existence
-        return InDat(filename=template_in_dat)
-    else:
-        raise CodesError(f"Template IN.DAT '{template_in_dat}' is not a file.")
+def _make_writer(inputs_dataclass: dataclass) -> InDat:
+    # InDat autoloads IN.DAT without checking for existence
+    indat = InDat()
+    indat.data = asdict(inputs_dataclass)
+    return indat

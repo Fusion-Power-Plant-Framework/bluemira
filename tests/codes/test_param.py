@@ -92,7 +92,7 @@ class TestDefaultPM:
         params = make_mapped_default_parameter_frame(MyDF, mappings, MyPF)
         assert params.D.value == 0
         assert params.D.unit == "m"
-        assert params.E.value == " "
+        assert params.E.value == "0"
         assert params.E.unit == ""
         assert params.F.value is False
         assert params.F.unit == ""

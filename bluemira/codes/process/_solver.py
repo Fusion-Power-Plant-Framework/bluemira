@@ -33,8 +33,9 @@ from bluemira.base.solver import RunMode as BaseRunMode
 from bluemira.codes.error import CodesError
 from bluemira.codes.interface import CodesSolver
 from bluemira.codes.params import make_mapped_default_parameter_frame
+from bluemira.codes.process._inputs import ProcessInputs
 from bluemira.codes.process._run import Run
-from bluemira.codes.process._setup import Setup, _make_writer
+from bluemira.codes.process._setup import Setup
 from bluemira.codes.process._teardown import Teardown
 from bluemira.codes.process.api import DEFAULT_INDAT, Impurities
 from bluemira.codes.process.constants import BINARY as PROCESS_BINARY
@@ -80,9 +81,6 @@ class Solver(CodesSolver):
             The directory in which to run PROCESS. It is also the
             directory in which to look for PROCESS input and output
             files. Default is current working directory.
-        * template_in_dat: str
-            The path to a template IN.DAT file. The default is to use
-            one provided by bluemira.
         * problem_settings: Mapping[str, float]
             Any PROCESS parameters that do not correspond to a bluemira
             parameter.
@@ -126,11 +124,15 @@ class Solver(CodesSolver):
         self._run: Union[Run, None] = None
         self._teardown: Union[Teardown, None] = None
 
+        self.params = make_mapped_default_parameter_frame(
+            ProcessInputs, mappings, ProcessSolverParams
+        )
+        self.params.update_from_frame(params)
+
         _build_config = copy.deepcopy(build_config)
         self.binary = _build_config.pop("binary", PROCESS_BINARY)
         self.run_directory = _build_config.pop("run_dir", os.getcwd())
         self.read_directory = _build_config.pop("read_dir", os.getcwd())
-        self.template_in_dat = _build_config.pop("template_in_dat", DEFAULT_INDAT)
         self.problem_settings = _build_config.pop("problem_settings", {})
         self.in_dat_path = _build_config.pop(
             "in_dat_path", os.path.join(self.run_directory, "IN.DAT")
@@ -141,17 +143,6 @@ class Solver(CodesSolver):
                 f"'{self.name}' solver received unknown build_config arguments: "
                 f"'{quoted_delim.join(_build_config.keys())}'."
             )
-
-        # Get process defaults from template file
-        mm = _make_writer(self.template_in_dat).data
-        process_inputs = make_dataclass("ProcesInputs", list(mm.keys()))(
-            {key: value.get_value for key, value in mm.items()}
-        )
-
-        self.params = make_mapped_default_parameter_frame(
-            process_inputs, mappings, ProcessSolverParams
-        )
-        self.params.update_from_frame(params)
 
     def execute(self, run_mode: Union[str, RunMode]) -> ParameterFrame:
         """
@@ -166,9 +157,7 @@ class Solver(CodesSolver):
         """
         if isinstance(run_mode, str):
             run_mode = self.run_mode_cls[run_mode.upper()]
-        self._setup = Setup(
-            self.params, self.in_dat_path, self.problem_settings, self.template_in_dat
-        )
+        self._setup = Setup(self.params, self.in_dat_path, self.problem_settings)
         self._run = Run(self.params, self.in_dat_path, self.binary)
         self._teardown = Teardown(self.params, self.run_directory, self.read_directory)
 
