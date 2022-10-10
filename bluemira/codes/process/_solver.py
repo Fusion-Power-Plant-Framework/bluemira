@@ -127,7 +127,7 @@ class Solver(CodesSolver):
         self._teardown: Union[Teardown, None] = None
         mm = _make_writer(build_config.get("template_in_dat", DEFAULT_INDAT))["data"]
 
-        ProcessInputs = make_dataclass("ProcesInputs", list(mm.keys))(
+        ProcessInputs = make_dataclass("ProcesInputs", list(mm.keys()))(
             {key: value.get_value for key, value in mm.items()}
         )
 
