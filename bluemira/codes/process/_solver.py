@@ -39,7 +39,7 @@ from bluemira.codes.process._teardown import Teardown
 from bluemira.codes.process.api import DEFAULT_INDAT, Impurities
 from bluemira.codes.process.constants import BINARY as PROCESS_BINARY
 from bluemira.codes.process.constants import NAME as PROCESS_NAME
-from bluemira.codes.process.mappings import mappings
+from bluemira.codes.process.mapping import mappings
 from bluemira.codes.process.params import ProcessSolverParams
 
 BuildConfig = Dict[str, Union[float, str, "BuildConfig"]]
