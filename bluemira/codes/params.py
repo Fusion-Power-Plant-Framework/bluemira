@@ -173,7 +173,7 @@ def make_mapped_default_parameter_frame(
 
     Notes
     -----
-    If `mapping.send == False` a default value of 0, '' or False is
+    If `mapping.send == False` a default value of 0, ' ' or False is
     used dependending on the parameter type
     """
     new_param_dict = {}
@@ -188,7 +188,7 @@ def make_mapped_default_parameter_frame(
             param_typing = get_args(param_cls.__annotations__[map_name])
             if float not in param_typing:
                 if str in param_typing:
-                    val = ""
+                    val = " "
                 elif bool in param_typing:
                     val = False
             new_param_dict[map_name] = {"value": val, "unit": param_map.unit}

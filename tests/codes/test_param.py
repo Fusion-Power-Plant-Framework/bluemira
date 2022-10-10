@@ -19,9 +19,12 @@
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 
+from dataclasses import dataclass
+
 import pytest
 
-from bluemira.codes.params import ParameterMapping
+from bluemira.base.parameter_frame import Parameter, ParameterFrame
+from bluemira.codes.params import ParameterMapping, make_mapped_default_parameter_frame
 
 
 class TestParameterMapping:
@@ -55,3 +58,50 @@ class TestParameterMapping:
 
     def test_tofrom_dict(self):
         assert self.pm == ParameterMapping.from_dict(self.pm.to_dict())
+
+
+@dataclass
+class MyDF:
+    a = 1
+    b = "hello"
+    c = True
+
+
+@dataclass
+class MyPF(ParameterFrame):
+    A: Parameter[float]
+    B: Parameter[str]
+    C: Parameter[bool]
+    D: Parameter[float]
+    E: Parameter[str]
+    F: Parameter[bool]
+
+
+mappings = {
+    "A": ParameterMapping("a", send=True, recv=False, unit="m"),
+    "B": ParameterMapping("b", send=True, recv=False, unit=""),
+    "C": ParameterMapping("c", send=True, recv=False, unit=""),
+    "D": ParameterMapping("d", send=False, recv=False, unit="m"),
+    "E": ParameterMapping("e", send=False, recv=False, unit=""),
+    "F": ParameterMapping("f", send=False, recv=False, unit=""),
+}
+
+
+class TestDefaultPM:
+    def test_mapped_default_pm_sets_unknown_values(self):
+        params = make_mapped_default_parameter_frame(MyDF, mappings, MyPF)
+        assert params.D.value == 0
+        assert params.D.unit == "m"
+        assert params.E.value == " "
+        assert params.E.unit == ""
+        assert params.F.value is False
+        assert params.F.unit == ""
+
+    def test_mapped_default_pm_sets_known_values(self):
+        params = make_mapped_default_parameter_frame(MyDF, mappings, MyPF)
+        assert params.A.value == 1
+        assert params.A.unit == "m"
+        assert params.B.value == "hello"
+        assert params.B.unit == ""
+        assert params.C.value is True
+        assert params.C.unit == ""
