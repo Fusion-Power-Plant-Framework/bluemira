@@ -41,7 +41,6 @@ install_requires = [
     "tables",
     "tabulate",
     "typeguard",
-    "wrapt",
 ]
 
 openmoc = [
