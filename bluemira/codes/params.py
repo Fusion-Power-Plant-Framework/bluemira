@@ -178,19 +178,12 @@ def make_mapped_default_parameter_frame(
     """
     new_param_dict = {}
     for map_name, param_map in mappings.items():
-        if param_map.send:
+        if hasattr(defaults, param_map.name):
             new_param_dict[map_name] = {
                 "value": getattr(defaults, param_map.name),
                 "unit": param_map.unit,
             }
         else:
-            val = 0
-            param_typing = get_args(param_cls.__annotations__[map_name])
-            if float not in param_typing:
-                if str in param_typing:
-                    val = " "
-                elif bool in param_typing:
-                    val = False
-            new_param_dict[map_name] = {"value": val, "unit": param_map.unit}
-
+            param_type = get_args(param_cls.__annotations__[map_name])[0]
+            new_param_dict[map_name] = {"value": param_type(0), "unit": param_map.unit}
     return param_cls.from_dict(new_param_dict)
