@@ -51,22 +51,22 @@ class TestTFCoilDesigner:
         "problem_class": f"{OPTIMISER_MODULE_REF}::RippleConstrainedLengthGOP",
     }
     PARAMS = {
-        "R_0": {"value": 10.5},
-        "r_tf_current_ib": {"value": 1},
-        "r_tf_in": {"value": 3.2},
-        "tk_tf_wp": {"value": 0.5},
-        "tk_tf_wp_y": {"value": 0.5},
-        "tf_wp_width": {"value": 0.76},
-        "tf_wp_depth": {"value": 1.05},
-        "tk_tf_front_ib": {"value": 0.04},
-        "g_ts_tf": {"value": 0.05},
-        "TF_ripple_limit": {"value": 0.6},
-        "z_0": {"value": 0.0},
-        "B_0": {"value": 6},
-        "n_TF": {"value": 12},
-        "tk_tf_ins": {"value": 0.08},
-        "tk_tf_insgap": {"value": 0.1},
-        "tk_tf_nose": {"value": 0.6},
+        "R_0": {"value": 10.5, "unit": "m"},
+        "r_tf_current_ib": {"value": 1, "unit": "m"},
+        "r_tf_in": {"value": 3.2, "unit": "m"},
+        "tk_tf_wp": {"value": 0.5, "unit": "m"},
+        "tk_tf_wp_y": {"value": 0.5, "unit": "m"},
+        "tf_wp_width": {"value": 0.76, "unit": "m"},
+        "tf_wp_depth": {"value": 1.05, "unit": "m"},
+        "tk_tf_front_ib": {"value": 0.04, "unit": "m"},
+        "g_ts_tf": {"value": 0.05, "unit": ""},
+        "TF_ripple_limit": {"value": 0.6, "unit": "m"},
+        "z_0": {"value": 0.0, "unit": "m"},
+        "B_0": {"value": 6, "unit": "T"},
+        "n_TF": {"value": 12, "unit": ""},
+        "tk_tf_ins": {"value": 0.08, "unit": "m"},
+        "tk_tf_insgap": {"value": 0.1, "unit": "m"},
+        "tk_tf_nose": {"value": 0.6, "unit": "m"},
     }
 
     @classmethod
@@ -202,17 +202,17 @@ def centreline_setup():
 class TestTFCoilBuilder:
 
     params = {
-        "R_0": {"value": 9},
-        "z_0": {"value": 0.0},
-        "B_0": {"value": 6},
-        "n_TF": {"value": 18},
-        "tf_wp_width": {"value": 0.7},
-        "tf_wp_depth": {"value": 1.00},
-        "tk_tf_front_ib": {"value": 0.04},
-        "tk_tf_ins": {"value": 0.08},
-        "tk_tf_insgap": {"value": 0.1},
-        "tk_tf_nose": {"value": 0.6},
-        "tk_tf_side": {"value": 0.1},
+        "R_0": {"value": 9, "unit": "m"},
+        "z_0": {"value": 0.0, "unit": "m"},
+        "B_0": {"value": 6, "unit": "T"},
+        "n_TF": {"value": 18, "unit": ""},
+        "tf_wp_width": {"value": 0.7, "unit": "m"},
+        "tf_wp_depth": {"value": 1.00, "unit": "m"},
+        "tk_tf_front_ib": {"value": 0.04, "unit": "m"},
+        "tk_tf_ins": {"value": 0.08, "unit": "m"},
+        "tk_tf_insgap": {"value": 0.1, "unit": "m"},
+        "tk_tf_nose": {"value": 0.6, "unit": "m"},
+        "tk_tf_side": {"value": 0.1, "unit": "m"},
     }
 
     @pytest.mark.parametrize("centreline, wp_xs", zip(*centreline_setup()))
