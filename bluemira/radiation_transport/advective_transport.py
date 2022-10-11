@@ -467,7 +467,7 @@ class ChargedParticleSolver:
         Plot the ChargedParticleSolver results.
         """
         if ax is None:
-            ax = plt.gca()
+            _, ax = plt.subplots()
 
         plot_coordinates(self.first_wall, ax=ax, linewidth=0.5, fill=False)
         separatrix = self.eq.get_separatrix()
