@@ -22,7 +22,6 @@
 Defines the setup task for running PROCESS.
 """
 import os
-from dataclasses import dataclass
 from typing import Dict, Union
 
 from bluemira.codes.error import CodesError
@@ -63,11 +62,15 @@ class Setup(CodesSetup):
         self,
         params: ProcessSolverParams,
         in_dat_path: str,
+        template_in_dat: Union[str, ProcessInputs] = None,
         problem_settings: Dict[str, Union[float, str]] = None,
     ):
         super().__init__(params, PROCESS_NAME)
 
         self.in_dat_path = in_dat_path
+        self.template_in_dat = (
+            self.params.defaults if template_in_dat is None else template_in_dat
+        )
         self.problem_settings = problem_settings if problem_settings is not None else {}
 
     def run(self):
@@ -99,7 +102,7 @@ class Setup(CodesSetup):
             Default, True
         """
         # Load defaults in bluemira folder
-        writer = _make_writer(ProcessInputs())
+        writer = _make_writer(self.template_in_dat)
 
         if use_bp_inputs:
             inputs = self._get_new_inputs(remapper=update_obsolete_vars)
@@ -127,8 +130,13 @@ class Setup(CodesSetup):
             writer.add_parameter(name, model.value)
 
 
-def _make_writer(inputs_dataclass: dataclass) -> InDat:
-    # InDat autoloads IN.DAT without checking for existence
-    indat = InDat()
-    indat.data = inputs_dataclass.to_dict()
-    return indat
+def _make_writer(template_in_dat: Union[str, ProcessInputs]) -> InDat:
+    if isinstance(template_in_dat, ProcessInputs):
+        indat = InDat()
+        indat.data = template_in_dat.to_dict()
+        return indat
+    elif isinstance(template_in_dat, str) and os.path.isfile(template_in_dat):
+        # InDat autoloads IN.DAT without checking for existence
+        return InDat(filename=template_in_dat)
+    else:
+        raise CodesError(f"Template IN.DAT '{template_in_dat}' is not a file.")

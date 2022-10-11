@@ -23,11 +23,12 @@ Parameter definitions for Plasmod.
 """
 
 from copy import deepcopy
-from dataclasses import dataclass
+from dataclasses import asdict, dataclass
 from typing import Dict
 
 from bluemira.base.parameter_frame import Parameter
 from bluemira.codes.params import MappedParameterFrame
+from bluemira.codes.plasmod.api._inputs import PlasmodInputs
 from bluemira.codes.plasmod.mapping import mappings
 from bluemira.codes.utilities import ParameterMapping
 
@@ -122,11 +123,32 @@ class PlasmodSolverParams(MappedParameterFrame):
     v_burn: Parameter[float]
     """Target loop voltage (if lower than -1e-3, ignored)-> plasma loop voltage [V]."""
 
-    _mappings = None
+    _mappings = deepcopy(mappings)
+    _defaults = PlasmodInputs()
 
     @property
     def mappings(self) -> Dict[str, ParameterMapping]:
         """Define mappings between these parameters and Plasmod's."""
-        if self._mappings is None:
-            self._mappings = deepcopy(mappings)
         return self._mappings
+
+    @property
+    def defaults(self) -> PlasmodInputs:
+        """Defaults for Plasmod"""
+        return self._defaults
+
+    @classmethod
+    def from_defaults(cls) -> MappedParameterFrame:
+        """
+        Initialise from defaults
+        """
+        default_dict = asdict(cls._defaults)
+        # fmt: off
+        out_keys = [
+            "betapol", "betan", "fbs", "rli", "Hcorr", "taueff", "rplas", "Pfusdd",
+            "Pfusdt", "Pfus", "Prad", "Psep", "Psync", "Pbrehms", "Pline", "PLH",
+            "Pohm", "Zeff",
+        ]
+        # fmt: on
+        for k in out_keys:
+            default_dict[k] = 0
+        return super().from_defaults(default_dict)

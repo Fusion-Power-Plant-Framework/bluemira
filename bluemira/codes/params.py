@@ -23,10 +23,9 @@ from __future__ import annotations
 
 import abc
 from dataclasses import dataclass
-from typing import Dict, Literal, Optional, Type, Union, get_args
+from typing import Dict, Literal, Optional, Union
 
 from bluemira.base.parameter_frame import ParameterFrame
-from bluemira.base.parameter_frame._frame import _PfT
 from bluemira.codes.error import CodesError
 
 
@@ -40,6 +39,29 @@ class MappedParameterFrame(ParameterFrame):
     See :class:`bluemira.base.parameter_frame.ParameterFrame` for details
     on how to declare parameters.
     """
+
+    @abc.abstractproperty
+    def defaults(self) -> dataclass:
+        """
+        Default values for the ParameterFrame
+        """
+
+    @classmethod
+    def from_defaults(cls, data: Dict) -> MappedParameterFrame:
+        """
+        Create ParameterFrame with default values for external codes.
+
+        External codes are likely to have variables that are not changed often
+        therefore in some cases sane defaults are needed
+
+        """
+        new_param_dict = {}
+        for map_name, param_map in cls._mappings.items():
+            new_param_dict[map_name] = {
+                "value": data[param_map.name],
+                "unit": param_map.unit,
+            }
+        return cls.from_dict(new_param_dict)
 
     @abc.abstractproperty
     def mappings(self) -> Dict[str, ParameterMapping]:
@@ -160,30 +182,3 @@ class ParameterMapping:
             raise ValueError(f"{attr} must be a bool")
         else:
             super().__setattr__(attr, value)
-
-
-def make_mapped_default_parameter_frame(
-    defaults: dataclass, mappings: Dict[str, ParameterMapping], param_cls: Type[_PfT]
-) -> _PfT:
-    """
-    Create ParameterFrame with default values for external codes.
-
-    External codes are likely to have variables that are not changed often
-    therefore in some cases sane defaults are needed
-
-    Notes
-    -----
-    If `mapping.send == False` a default value of 0, ' ' or False is
-    used dependending on the parameter type
-    """
-    new_param_dict = {}
-    for map_name, param_map in mappings.items():
-        if hasattr(defaults, param_map.name):
-            new_param_dict[map_name] = {
-                "value": getattr(defaults, param_map.name),
-                "unit": param_map.unit,
-            }
-        else:
-            param_type = get_args(param_cls.__annotations__[map_name])[0]
-            new_param_dict[map_name] = {"value": param_type(0), "unit": param_map.unit}
-    return param_cls.from_dict(new_param_dict)

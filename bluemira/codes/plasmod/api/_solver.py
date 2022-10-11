@@ -29,15 +29,13 @@ from bluemira.base.parameter_frame import ParameterFrame
 from bluemira.base.solver import RunMode as BaseRunMode
 from bluemira.codes.error import CodesError
 from bluemira.codes.interface import CodesSolver
-from bluemira.codes.params import make_mapped_default_parameter_frame
-from bluemira.codes.plasmod.api._inputs import PlasmodInputs
 from bluemira.codes.plasmod.api._outputs import PlasmodOutputs
 from bluemira.codes.plasmod.api._run import Run
 from bluemira.codes.plasmod.api._setup import Setup
 from bluemira.codes.plasmod.api._teardown import Teardown
 from bluemira.codes.plasmod.constants import BINARY as PLASMOD_BINARY
 from bluemira.codes.plasmod.constants import NAME as PLASMOD_NAME
-from bluemira.codes.plasmod.mapping import Profiles, mappings
+from bluemira.codes.plasmod.mapping import Profiles
 from bluemira.codes.plasmod.params import PlasmodSolverParams
 
 
@@ -96,9 +94,7 @@ class Solver(CodesSolver):
         self._run: Run
         self._teardown: Teardown
 
-        self.params = make_mapped_default_parameter_frame(
-            PlasmodInputs, mappings, PlasmodSolverParams
-        )
+        self.params = PlasmodSolverParams.from_defaults()
         self.params.update_from_frame(params)
 
         self.build_config = {} if build_config is None else build_config

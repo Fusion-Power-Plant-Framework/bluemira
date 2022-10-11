@@ -21,7 +21,6 @@
 
 import copy
 import os
-from dataclasses import make_dataclass
 from enum import auto
 from typing import Dict, List, Tuple, Union
 
@@ -32,15 +31,12 @@ from bluemira.base.parameter_frame import ParameterFrame
 from bluemira.base.solver import RunMode as BaseRunMode
 from bluemira.codes.error import CodesError
 from bluemira.codes.interface import CodesSolver
-from bluemira.codes.params import make_mapped_default_parameter_frame
-from bluemira.codes.process._inputs import ProcessInputs
 from bluemira.codes.process._run import Run
 from bluemira.codes.process._setup import Setup
 from bluemira.codes.process._teardown import Teardown
-from bluemira.codes.process.api import DEFAULT_INDAT, Impurities
+from bluemira.codes.process.api import Impurities
 from bluemira.codes.process.constants import BINARY as PROCESS_BINARY
 from bluemira.codes.process.constants import NAME as PROCESS_NAME
-from bluemira.codes.process.mapping import mappings
 from bluemira.codes.process.params import ProcessSolverParams
 
 BuildConfig = Dict[str, Union[float, str, "BuildConfig"]]
@@ -124,15 +120,16 @@ class Solver(CodesSolver):
         self._run: Union[Run, None] = None
         self._teardown: Union[Teardown, None] = None
 
-        self.params = make_mapped_default_parameter_frame(
-            ProcessInputs, mappings, ProcessSolverParams
-        )
+        self.params = ProcessSolverParams.from_defaults()
         self.params.update_from_frame(params)
 
         _build_config = copy.deepcopy(build_config)
         self.binary = _build_config.pop("binary", PROCESS_BINARY)
         self.run_directory = _build_config.pop("run_dir", os.getcwd())
         self.read_directory = _build_config.pop("read_dir", os.getcwd())
+        self.template_in_dat = _build_config.pop(
+            "template_in_dat", ProcessSolverParams.defaults
+        )
         self.problem_settings = _build_config.pop("problem_settings", {})
         self.in_dat_path = _build_config.pop(
             "in_dat_path", os.path.join(self.run_directory, "IN.DAT")
@@ -157,7 +154,9 @@ class Solver(CodesSolver):
         """
         if isinstance(run_mode, str):
             run_mode = self.run_mode_cls[run_mode.upper()]
-        self._setup = Setup(self.params, self.in_dat_path, self.problem_settings)
+        self._setup = Setup(
+            self.params, self.in_dat_path, self.problem_settings, self.template_in_dat
+        )
         self._run = Run(self.params, self.in_dat_path, self.binary)
         self._teardown = Teardown(self.params, self.run_directory, self.read_directory)
 

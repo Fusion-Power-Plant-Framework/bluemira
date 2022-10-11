@@ -80,7 +80,11 @@ class ParameterFrame:
         for o_param in frame:
             if hasattr(self, o_param.name):
                 param = getattr(self, o_param.name)
-                param.value = raw_uc(o_param.value, o_param.unit, param.unit)
+                param.set_value(
+                    raw_uc(o_param.value, o_param.unit, param.unit), o_param.source
+                )
+                param._long_name = o_param.long_name
+                param._description = o_param.description
 
     @classmethod
     def from_dict(

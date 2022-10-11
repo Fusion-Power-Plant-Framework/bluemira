@@ -29,6 +29,7 @@ from typing import Dict
 
 from bluemira.base.parameter_frame import Parameter
 from bluemira.codes.params import MappedParameterFrame, ParameterMapping
+from bluemira.codes.process._inputs import ProcessInputs
 from bluemira.codes.process.mapping import mappings
 
 
@@ -36,7 +37,7 @@ from bluemira.codes.process.mapping import mappings
 class ProcessSolverParams(MappedParameterFrame):
     """Parameters required in :class:`bluemira.codes.process.Solver`."""
 
-    # In-out parameters
+    # In parameters
     C_Ejima: Parameter[float]
     """Ejima constant [dimensionless]."""
 
@@ -91,7 +92,7 @@ class ProcessSolverParams(MappedParameterFrame):
     tk_vv_top: Parameter[float]
     """Upper vacuum vessel thickness [meter]."""
 
-    # In-out parameters
+    # Out parameters
     B_0: Parameter[float]
     """Toroidal field at R_0 [tesla]."""
 
@@ -325,11 +326,40 @@ class ProcessSolverParams(MappedParameterFrame):
     Z_eff: Parameter[float]
     """Effective particle radiation atomic mass [unified_atomic_mass_unit]."""
 
-    _mappings = None
+    _mappings = deepcopy(mappings)
+    _defaults = ProcessInputs()
 
     @property
     def mappings(self) -> Dict[str, ParameterMapping]:
         """Define mappings between these parameters and PROCESS's."""
-        if self._mappings is None:
-            self._mappings = deepcopy(mappings)
         return self._mappings
+
+    @property
+    def defaults(self) -> ProcessInputs:
+        """
+        Default values for Process
+        """
+        return self._defaults
+
+    @classmethod
+    def from_defaults(cls) -> MappedParameterFrame:
+        """
+        Initialise from defaults
+        """
+        default_dict = {k: v.get_value for k, v in cls._defaults.to_dict().items()}
+        # fmt: off
+        out_keys = [
+            "enbeam", "etanbi", "emult", "shldlth", "pnetelmw", "kappa95", "triang95",
+            "plascur/1d6", "powfmw", "pdt", "pdd", "pdivt", "pcoreradmw", "pedgeradmw",
+            "pedgeradmw", "pradmw", "plinepv*vol", "psyncpv*vol", "pbrempv*vol",
+            "bootipf", "betap", "taueff", "vburn", "fwith", "fwoth", "dr_tf_wp", "wwp1",
+            "tfinsgap", "r_cp_top", "rtfin", "r_tf_inboard_mid", "r_ts_ib_in",
+            "r_vv_ib_in", "r_fw_ib_in", "r_fw_ob_in", "r_vv_ob_in", "r_tf_outboard_mid",
+            "tfbusres", "ztot", "estotftgj", "tflegres", "pinjmw", "qss/1.0D6",
+            "thshield", "bmaxtfrp", "q95", "zeff", "vol", "rli", "faccd", "tfthko",
+            "h_cp_top", "hmax", "r_tf_inboard_out",
+        ]
+        # fmt: on
+        for k in out_keys:
+            default_dict[k] = 0
+        return super().from_defaults(default_dict)

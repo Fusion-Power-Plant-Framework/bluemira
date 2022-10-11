@@ -19,12 +19,12 @@
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 
-from dataclasses import dataclass
+from dataclasses import asdict, dataclass
 
 import pytest
 
-from bluemira.base.parameter_frame import Parameter, ParameterFrame
-from bluemira.codes.params import ParameterMapping, make_mapped_default_parameter_frame
+from bluemira.base.parameter_frame import Parameter
+from bluemira.codes.params import MappedParameterFrame, ParameterMapping
 
 
 class TestParameterMapping:
@@ -61,14 +61,24 @@ class TestParameterMapping:
 
 
 @dataclass
-class MyDF:
-    a = 1
-    b = "hello"
-    c = True
+class MyDC:
+    a: int = 1
+    b: str = "hello"
+    c: bool = True
+
+
+mappings = {
+    "A": ParameterMapping("a", send=True, recv=False, unit="m"),
+    "B": ParameterMapping("b", send=True, recv=False, unit=""),
+    "C": ParameterMapping("c", send=True, recv=False, unit=""),
+    "D": ParameterMapping("d", send=False, recv=False, unit="cm"),
+    "E": ParameterMapping("e", send=False, recv=False, unit=""),
+    "F": ParameterMapping("f", send=False, recv=False, unit=""),
+}
 
 
 @dataclass
-class MyPF(ParameterFrame):
+class MyPF(MappedParameterFrame):
     A: Parameter[float]
     B: Parameter[str]
     C: Parameter[bool]
@@ -76,20 +86,26 @@ class MyPF(ParameterFrame):
     E: Parameter[str]
     F: Parameter[bool]
 
+    _mappings = mappings
+    _defaults = MyDC()
 
-mappings = {
-    "A": ParameterMapping("a", send=True, recv=False, unit="m"),
-    "B": ParameterMapping("b", send=True, recv=False, unit=""),
-    "C": ParameterMapping("c", send=True, recv=False, unit=""),
-    "D": ParameterMapping("d", send=False, recv=False, unit="m"),
-    "E": ParameterMapping("e", send=False, recv=False, unit=""),
-    "F": ParameterMapping("f", send=False, recv=False, unit=""),
-}
+    @property
+    def defaults(self) -> MyDC:
+        """Defaults for Plasmod"""
+        return self._defaults
+
+    @classmethod
+    def from_defaults(cls) -> MappedParameterFrame:
+        default_dict = asdict(cls._defaults)
+        default_dict["d"] = 0
+        default_dict["e"] = "0"
+        default_dict["f"] = False
+        return super().from_defaults(default_dict)
 
 
 class TestDefaultPM:
     def test_mapped_default_pm_sets_unknown_values(self):
-        params = make_mapped_default_parameter_frame(MyDF, mappings, MyPF)
+        params = MyPF.from_defaults()
         assert params.D.value == 0
         assert params.D.unit == "m"
         assert params.E.value == "0"
@@ -98,7 +114,7 @@ class TestDefaultPM:
         assert params.F.unit == ""
 
     def test_mapped_default_pm_sets_known_values(self):
-        params = make_mapped_default_parameter_frame(MyDF, mappings, MyPF)
+        params = MyPF.from_defaults()
         assert params.A.value == 1
         assert params.A.unit == "m"
         assert params.B.value == "hello"

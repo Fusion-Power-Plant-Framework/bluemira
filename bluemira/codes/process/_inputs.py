@@ -30,6 +30,14 @@ from bluemira.codes.process.api import INVariable
 
 @dataclass
 class ProcessInputs:
+    """
+    Process Inputs dataclass
+
+    Notes
+    -----
+    All entries get wrapped in an INVariable class to enable easy InDat writing
+    """
+
     bounds: Dict[str, Dict[str, str]] = field(
         default_factory=lambda: {
             "2": {"u": "20.0"},
@@ -252,15 +260,20 @@ class ProcessInputs:
 
     def __iter__(self) -> Generator[field, None, None]:
         """
-        Iterate over this frame's parameters.
+        Iterate over this dataclass
 
-        The order is based on the order in which the parameters were
+        The order is based on the order in which the values were
         declared.
         """
         for _field in fields(self):
             yield _field
 
     def __post_init__(self):
+        """
+        Wrap each value in an INVariable object
+
+        Needed for compatibility with PROCESS InDat writer
+        """
         for _field in self:
             if _field.name not in ["icc", "ixc", "bounds"]:
                 new_val = INVariable(
@@ -283,5 +296,8 @@ class ProcessInputs:
         )
         self.bounds = INVariable("bounds", self.bounds, "Bound", "Bound", "Bounds")
 
-    def to_dict(self):
+    def to_dict(self) -> Dict[str, INVariable]:
+        """
+        A dictionary representation of the dataclass
+        """
         return {f.name: getattr(self, f.name) for f in self}

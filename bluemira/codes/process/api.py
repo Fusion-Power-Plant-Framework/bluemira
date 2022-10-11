@@ -90,6 +90,13 @@ InVarValueType = TypeVar("InVarValueType")
 
 @dataclass
 class INVariable:
+    """
+    Process io.in_dat.INVariable replica
+
+    Used to simulate what process does to input variables
+    for the InDat input file writer
+    """
+
     name: str
     _value: Union[float, List, Dict]
     v_type: InVarValueType
@@ -103,6 +110,9 @@ class INVariable:
 
     @property
     def value(self) -> Union[str, List, Dict]:
+        """
+        Return the string of a value if not a Dict or a List
+        """
         if not isinstance(self._value, (List, Dict)):
             return f"{self._value}"
         else:
