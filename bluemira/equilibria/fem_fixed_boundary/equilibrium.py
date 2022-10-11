@@ -31,7 +31,7 @@ from tabulate import tabulate
 from bluemira.base.components import PhysicalComponent
 from bluemira.base.file import get_bluemira_path
 from bluemira.base.look_and_feel import bluemira_debug, bluemira_print, bluemira_warn
-from bluemira.base.parameter_frame import NewParameterFrame as ParameterFrame
+from bluemira.base.parameter_frame import ParameterFrame
 from bluemira.codes import transport_code_solver
 from bluemira.equilibria.fem_fixed_boundary.fem_magnetostatic_2D import (
     FemGradShafranovFixedBoundary,

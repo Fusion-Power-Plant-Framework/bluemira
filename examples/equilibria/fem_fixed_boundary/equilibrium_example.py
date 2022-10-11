@@ -29,8 +29,7 @@ from dataclasses import dataclass
 
 from bluemira.base.file import get_bluemira_root
 from bluemira.base.logs import set_log_level
-from bluemira.base.parameter_frame import NewParameter as Parameter
-from bluemira.base.parameter_frame import NewParameterFrame as ParameterFrame
+from bluemira.base.parameter_frame import Parameter, ParameterFrame
 from bluemira.equilibria.fem_fixed_boundary.equilibrium import (
     FemGradShafranovOptions,
     PlasmaFixedBoundaryParams,
