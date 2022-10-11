@@ -22,13 +22,11 @@
 """
 PROCESS api
 """
-import os
 from dataclasses import dataclass
 from enum import Enum
 from pathlib import Path
 from typing import Dict, List, TypeVar, Union
 
-from bluemira.base.file import get_bluemira_path
 from bluemira.base.look_and_feel import bluemira_print, bluemira_warn
 from bluemira.codes.error import CodesError
 from bluemira.utilities.tools import flatten_iterable
@@ -81,13 +79,6 @@ if ENABLED:
     PROCESS_DICT = get_dicts()
 
 
-DEFAULT_INDAT = os.path.join(
-    get_bluemira_path("codes/process"), "PROCESS_DEFAULT_IN.DAT"
-)
-
-InVarValueType = TypeVar("InVarValueType")
-
-
 @dataclass
 class INVariable:
     """
@@ -99,7 +90,7 @@ class INVariable:
 
     name: str
     _value: Union[float, List, Dict]
-    v_type: InVarValueType
+    v_type: TypeVar("InVarValueType")
     parameter_group: str
     comment: str
 

@@ -47,3 +47,35 @@ def test_impurities(imp_data_mock):
     assert api.Impurities(10).id() == "fimp(10"
     assert api.Impurities(1).file() == Path("./H_Lzdata.dat")
     assert api.Impurities(10).file() == Path("./FeLzdata.dat")
+
+
+def test_INVariable_works_with_floats():
+    inv = api.INVariable("name", 5, "a 'type'", "a 'group'", "a comment")
+
+    assert inv.name == "name"
+    assert inv._value == inv.get_value == 5
+    assert inv.value == "5"
+
+    inv.value = 6
+
+    assert inv._value == inv.get_value == 6
+    assert inv.value == "6"
+
+    assert inv.v_type == "a 'type'"
+    assert inv.parameter_group == "a 'group'"
+    assert inv.comment == "a comment"
+
+
+def test_INVariable_works_with_list_and_dict():
+    inv = api.INVariable("name", [5], "a 'type'", "a 'group'", "a comment")
+
+    assert inv.name == "name"
+    assert inv._value == inv.value == inv.get_value == [5]
+
+    inv.value = {"a": 6}
+
+    assert inv._value == inv.value == inv.get_value == {"a": 6}
+
+    assert inv.v_type == "a 'type'"
+    assert inv.parameter_group == "a 'group'"
+    assert inv.comment == "a comment"
