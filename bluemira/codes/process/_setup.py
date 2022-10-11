@@ -132,7 +132,7 @@ class Setup(CodesSetup):
 
 def _make_writer(template_in_dat: Union[str, ProcessInputs]) -> InDat:
     if isinstance(template_in_dat, ProcessInputs):
-        indat = InDat()
+        indat = InDat(filename=None)
         indat.data = template_in_dat.to_dict()
         return indat
     elif isinstance(template_in_dat, str) and os.path.isfile(template_in_dat):

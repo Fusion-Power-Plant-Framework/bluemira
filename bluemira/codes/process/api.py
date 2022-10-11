@@ -118,6 +118,13 @@ class INVariable:
         else:
             return self._value
 
+    @value.setter
+    def value(self, new_value):
+        """
+        Value setter
+        """
+        self._value = new_value
+
 
 class Impurities(Enum):
     """

@@ -127,9 +127,7 @@ class Solver(CodesSolver):
         self.binary = _build_config.pop("binary", PROCESS_BINARY)
         self.run_directory = _build_config.pop("run_dir", os.getcwd())
         self.read_directory = _build_config.pop("read_dir", os.getcwd())
-        self.template_in_dat = _build_config.pop(
-            "template_in_dat", ProcessSolverParams.defaults
-        )
+        self.template_in_dat = _build_config.pop("template_in_dat", self.params.defaults)
         self.problem_settings = _build_config.pop("problem_settings", {})
         self.in_dat_path = _build_config.pop(
             "in_dat_path", os.path.join(self.run_directory, "IN.DAT")
@@ -155,7 +153,10 @@ class Solver(CodesSolver):
         if isinstance(run_mode, str):
             run_mode = self.run_mode_cls[run_mode.upper()]
         self._setup = Setup(
-            self.params, self.in_dat_path, self.problem_settings, self.template_in_dat
+            self.params,
+            self.in_dat_path,
+            self.template_in_dat,
+            self.problem_settings,
         )
         self._run = Run(self.params, self.in_dat_path, self.binary)
         self._teardown = Teardown(self.params, self.run_directory, self.read_directory)
