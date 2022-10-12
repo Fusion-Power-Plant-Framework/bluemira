@@ -104,7 +104,7 @@ class MyPF(MappedParameterFrame):
 
 
 class TestDefaultPM:
-    def test_mapped_default_pm_sets_unknown_values(self):
+    def test_unmapped_default_pm_sets_values(self):
         params = MyPF.from_defaults()
         assert params.D.value == 0
         assert params.D.unit == "m"
@@ -113,7 +113,7 @@ class TestDefaultPM:
         assert params.F.value is False
         assert params.F.unit == ""
 
-    def test_mapped_default_pm_sets_known_values(self):
+    def test_mapped_default_pm_sets_values(self):
         params = MyPF.from_defaults()
         assert params.A.value == 1
         assert params.A.unit == "m"
