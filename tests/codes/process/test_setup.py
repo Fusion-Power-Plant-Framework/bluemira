@@ -41,6 +41,10 @@ class TestSetup:
         self._writer_patch = mock.patch(f"{MODULE_REF}._make_writer")
         self._indat_patch = mock.patch(f"{MODULE_REF}.InDat")
 
+    def teardown_method(self):
+        self._writer_patch.stop()
+        self._indat_patch.stop()
+
     def test_run_adds_bluemira_params_to_InDat_writer(self):
 
         with self._writer_patch as writer_cls_mock:
