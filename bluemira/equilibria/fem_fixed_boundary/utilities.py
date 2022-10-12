@@ -235,8 +235,11 @@ def get_tricontours(
 
 
 def calculate_plasma_shape_params(
-    psi_norm_func: Callable, mesh: dolfin.Mesh, psi_norm: float, plot: bool = False
-):
+    psi_norm_func: Callable[[np.ndarray], np.ndarray],
+    mesh: dolfin.Mesh,
+    psi_norm: float,
+    plot: bool = False,
+) -> Tuple[float, float, float]:
     """
     Calculate the plasma parameters (r_geo, kappa, delta) for a given magnetic
     isoflux using optimisation.
@@ -279,13 +282,13 @@ def calculate_plasma_shape_params(
 
     search_range = mesh.hmax()
 
-    def f_constrain_p95(x: float) -> float:
+    def f_constrain_p95(x: np.ndarray) -> np.ndarray:
         """
         Constraint function for points on the psi_norm surface.
         """
         return psi_norm_func(x) - psi_norm
 
-    def find_extremum(func: Callable, x0: float) -> np.ndarray:
+    def find_extremum(func: Callable[[np.ndarray], np.ndarray], x0: float) -> np.ndarray:
         """
         Extremum finding using constrained optimisation
         """
@@ -311,10 +314,8 @@ def calculate_plasma_shape_params(
     pu_opt = find_extremum(lambda x: -x[1], pu)
 
     if plot:
-        from dolfin import plot  # noqa
-
         _, ax = plt.subplots()
-        plot(mesh)
+        dolfin.plot(mesh)
         ax.tricontour(points[:, 0], points[:, 1], psi_norm_array)
         ax.plot(x, z, color="r")
         ax.plot(*po, marker="o", color="r")

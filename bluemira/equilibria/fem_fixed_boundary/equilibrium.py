@@ -83,7 +83,7 @@ class FemGradShafranovOptions:
 
 def _interpolate_profile(
     x: np.ndarray, profile_data: np.ndarray
-) -> Callable[np.ndarray, np.ndarray]:
+) -> Callable[[np.ndarray], np.ndarray]:
     """Interpolate profile data"""
     return interp1d(x, profile_data, kind="linear", fill_value="extrapolate")
 
@@ -151,8 +151,8 @@ def _run_transport_solver(
 
 def _solve_GS_problem(
     plasma: PhysicalComponent,
-    pprime: Callable[np.ndarray, np.ndarray],
-    ffprime: Callable[np.ndarray, np.ndarray],
+    pprime: Callable[[np.ndarray], np.ndarray],
+    ffprime: Callable[[np.ndarray], np.ndarray],
     I_p: float,
     directory: str,
     mesh_filename: str,
@@ -244,7 +244,7 @@ def solve_transport_fixed_boundary(
     relaxation: float = 0.2,
     plot: bool = False,
     transport_code_module: str = "PLASMOD",
-    transport_run_mode: str = "run",
+    transport_run_mode: Union[str, RunMode] = "run",
     mesh_filename: str = "FixedBoundaryEquilibriumMesh",
 ) -> PlasmaFixedBoundaryParams:
     """
