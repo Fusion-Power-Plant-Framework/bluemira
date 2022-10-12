@@ -95,7 +95,8 @@ def _create_plasma_xz_cross_section(
     delta_95: float,
     kappa_95: float,
     lcfs_options: Dict[str, Dict],
-) -> Tuple[PhysicalComponent, BluemiraFace]:
+    plot: bool,
+) -> PhysicalComponent:
     """
     Build the plasma x-z cross-section, get its volume and update transport solver
     parameters
@@ -118,13 +119,17 @@ def _create_plasma_xz_cross_section(
     lcfs.boundary[0].mesh_options = lcfs_options["lcfs"]
     lcfs.mesh_options = lcfs_options["face"]
 
+    if plot:
+        lcfs.plot_options.show_faces = False
+        lcfs.plot_2d(show=True)
+
     bluemira_debug(
         f"FB Params\n\n"
         f"{params.tabulate()}\n\n"
         f"Transport Params\n\n"
         f"{transport_params.tabulate(keys=['name', 'value', 'unit'], tablefmt='simple')}"
     )
-    return plasma, lcfs
+    return plasma
 
 
 def _run_transport_solver(
@@ -146,7 +151,6 @@ def _run_transport_solver(
 
 def _solve_GS_problem(
     plasma: PhysicalComponent,
-    lcfs: BluemiraFace,
     pprime: Callable[np.ndarray, np.ndarray],
     ffprime: Callable[np.ndarray, np.ndarray],
     I_p: float,
@@ -304,18 +308,15 @@ def solve_transport_fixed_boundary(
 
     for n_iter in range(max_iter):
 
-        plasma, lcfs = _create_plasma_xz_cross_section(
+        plasma = _create_plasma_xz_cross_section(
             parameterisation,
             transport_params,
             params,
             delta_95,
             kappa_95,
             lcfs_options,
+            plot,
         )
-
-        if plot:
-            lcfs.plot_options.show_faces = False
-            lcfs.plot_2d(show=True)
 
         transp_out_params, x, pprime, ffprime = _run_transport_solver(
             transport_params, transport_solver, transport_run_mode
@@ -327,7 +328,6 @@ def solve_transport_fixed_boundary(
 
         delta_95, kappa_95 = _solve_GS_problem(
             plasma,
-            lcfs,
             _interpolate_profile(x, pprime),
             _interpolate_profile(x, ffprime),
             transp_out_params.I_p.value,
