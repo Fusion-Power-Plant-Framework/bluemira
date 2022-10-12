@@ -44,7 +44,6 @@ from bluemira.equilibria.fem_fixed_boundary.utilities import (
 )
 from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.parameterisations import GeometryParameterisation
-from bluemira.geometry.wire import BluemiraWire
 from bluemira.mesh import meshing
 from bluemira.mesh.tools import import_mesh, msh_to_xdmf
 
@@ -96,7 +95,7 @@ def _create_plasma_xz_cross_section(
     delta_95: float,
     kappa_95: float,
     lcfs_options: Dict[str, Dict],
-):
+) -> Tuple[PhysicalComponent, BluemiraFace]:
     """
     Build the plasma x-z cross-section, get its volume and update transport solver
     parameters
@@ -147,7 +146,7 @@ def _run_transport_solver(
 
 def _solve_GS_problem(
     plasma: PhysicalComponent,
-    lcfs: BluemiraWire,
+    lcfs: BluemiraFace,
     pprime: Callable[np.ndarray, np.ndarray],
     ffprime: Callable[np.ndarray, np.ndarray],
     I_p: float,
