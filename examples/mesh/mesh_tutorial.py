@@ -41,11 +41,15 @@ import matplotlib.pyplot as plt
 
 import bluemira.geometry.tools as tools
 from bluemira.base.components import Component, PhysicalComponent
+from bluemira.base.logs import set_log_level
 from bluemira.equilibria.shapes import JohnerLCFS
 from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.wire import BluemiraWire
 from bluemira.mesh import meshing
 from bluemira.mesh.tools import import_mesh, msh_to_xdmf
+
+set_log_level("DEBUG")
+
 
 # %%[markdown]
 
@@ -123,7 +127,7 @@ print(m.get_gmsh_dict(buffer))
 
 # %%
 
-msh_to_xdmf("Mesh.msh", dimensions=(0, 2), directory=".", verbose=True)
+msh_to_xdmf("Mesh.msh", dimensions=(0, 2), directory=".")
 
 mesh, boundaries, subdomains, labels = import_mesh(
     "Mesh",
