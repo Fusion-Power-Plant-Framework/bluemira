@@ -89,7 +89,8 @@ class _INVariable:
 
     This allows the defaults to imitate the same format as PROCESS'
     InDat even if PROCESS isn't installed.
-    Therefore they will work the same in all cases.
+    Therefore they will work the same in all cases and we dont always
+    need to be able to read a PROCESS input file.
     """
 
     name: str
