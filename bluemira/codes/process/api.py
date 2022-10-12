@@ -86,6 +86,10 @@ class _INVariable:
 
     Used to simulate what process does to input variables
     for the InDat input file writer
+
+    This allows the defaults to imitate the same format as PROCESS'
+    InDat even if PROCESS isn't installed.
+    Therefore they will work the same in all cases.
     """
 
     name: str

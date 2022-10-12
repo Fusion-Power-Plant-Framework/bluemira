@@ -151,7 +151,7 @@ class Solver(CodesSolver):
             docstring for details of the behaviour of each run mode.
         """
         if isinstance(run_mode, str):
-            run_mode = self.run_mode_cls[run_mode.upper()]
+            run_mode = self.run_mode_cls.from_string(run_mode)
         self._setup = Setup(
             self.params,
             self.in_dat_path,

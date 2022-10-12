@@ -25,7 +25,7 @@ Parameter classes/structures for Process
 from dataclasses import dataclass, field, fields
 from typing import Dict, Generator, List
 
-from bluemira.codes.process.api import INVariable
+from bluemira.codes.process.api import _INVariable
 
 
 @dataclass
@@ -36,6 +36,9 @@ class ProcessInputs:
     Notes
     -----
     All entries get wrapped in an INVariable class to enable easy InDat writing
+    Units for these are avaialable in bluemira.codes.process.mapping for mapped
+    variables otherwise
+    `process.io.python_fortran_dicts.get_dicts()["DICT_DESCRIPTIONS"]`
     """
 
     bounds: Dict[str, Dict[str, str]] = field(
@@ -276,27 +279,27 @@ class ProcessInputs:
         """
         for _field in self:
             if _field.name not in ["icc", "ixc", "bounds"]:
-                new_val = INVariable(
+                new_val = _INVariable(
                     _field.name, getattr(self, _field.name), "Parameter", "", ""
                 )
                 setattr(self, _field.name, new_val)
-        self.icc = INVariable(
+        self.icc = _INVariable(
             "icc",
             self.icc,
             "Constraint Equation",
             "Constraint Equation",
             "Constraint Equations",
         )
-        self.ixc = INVariable(
+        self.ixc = _INVariable(
             "ixc",
             self.ixc,
             "Iteration Variable",
             "Iteration Variable",
             "Iteration Variables",
         )
-        self.bounds = INVariable("bounds", self.bounds, "Bound", "Bound", "Bounds")
+        self.bounds = _INVariable("bounds", self.bounds, "Bound", "Bound", "Bounds")
 
-    def to_dict(self) -> Dict[str, INVariable]:
+    def to_dict(self) -> Dict[str, _INVariable]:
         """
         A dictionary representation of the dataclass
         """

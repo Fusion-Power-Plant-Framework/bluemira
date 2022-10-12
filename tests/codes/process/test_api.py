@@ -50,7 +50,7 @@ def test_impurities(imp_data_mock):
 
 
 def test_INVariable_works_with_floats():
-    inv = api.INVariable("name", 5, "a 'type'", "a 'group'", "a comment")
+    inv = api._INVariable("name", 5, "a 'type'", "a 'group'", "a comment")
 
     assert inv.name == "name"
     assert inv._value == inv.get_value == 5
@@ -67,7 +67,7 @@ def test_INVariable_works_with_floats():
 
 
 def test_INVariable_works_with_list_and_dict():
-    inv = api.INVariable("name", [5], "a 'type'", "a 'group'", "a comment")
+    inv = api._INVariable("name", [5], "a 'type'", "a 'group'", "a comment")
 
     assert inv.name == "name"
     assert inv._value == inv.value == inv.get_value == [5]

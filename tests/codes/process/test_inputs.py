@@ -20,7 +20,7 @@
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 
 from bluemira.codes.process._inputs import ProcessInputs
-from bluemira.codes.process.api import INVariable
+from bluemira.codes.process.api import _INVariable
 
 
 class TestProcessInput:
@@ -30,12 +30,12 @@ class TestProcessInput:
     def test_to_dict(self):
         for k, v in self.df.to_dict().items():
             assert k == v.name
-            assert isinstance(v, INVariable)
+            assert isinstance(v, _INVariable)
 
     def test_iteration(self):
         for field in self.df:
             var = getattr(self.df, field.name)
-            assert isinstance(var, INVariable)
+            assert isinstance(var, _INVariable)
             if field.name not in ["icc", "ixc", "bounds"]:
                 assert var.v_type == "Parameter"
 
