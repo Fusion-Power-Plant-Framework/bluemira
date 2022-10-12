@@ -75,7 +75,7 @@ class ParameterFrame:
             param: Parameter = getattr(self, key)
             param.set_value(value, source)
 
-    def update_from_frame(self, frame: _PfT):
+    def update_from_frame(self, frame: ParameterFrame):
         """Update the frame with the values of another frame"""
         for o_param in frame:
             if hasattr(self, o_param.name):

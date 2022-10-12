@@ -124,7 +124,7 @@ class Solver(CodesSolver):
             The mode to execute this solver in.
         """
         if isinstance(run_mode, str):
-            run_mode = self.run_mode_cls[run_mode.upper()]
+            run_mode = self.run_mode_cls.from_string(run_mode)
 
         self._setup = Setup(self.params, self.problem_settings, self.input_file)
         self._run = Run(

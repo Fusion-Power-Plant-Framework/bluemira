@@ -80,7 +80,7 @@ if ENABLED:
 
 
 @dataclass
-class INVariable:
+class _INVariable:
     """
     Process io.in_dat.INVariable replica
 
