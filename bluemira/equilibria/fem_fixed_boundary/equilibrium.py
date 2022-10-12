@@ -190,7 +190,7 @@ def _solve_GS_problem(
     return delta_95, kappa_95
 
 
-def _calculate_iteration_err(
+def _update_delta_kappa_iteration_err(
     params: PlasmaFixedBoundaryParams,
     delta_95: float,
     delta95_t: float,
@@ -199,7 +199,7 @@ def _calculate_iteration_err(
     relaxation: float,
 ) -> Tuple[float, float, float]:
     """
-    Calculate the iteration error
+    Recalculate Delta, Kappa and the iteration error
     """
     err_delta = abs(delta_95 - delta95_t) / delta95_t
     err_kappa = abs(kappa_95 - kappa95_t) / kappa95_t
@@ -224,7 +224,7 @@ def _calculate_iteration_err(
         f"|Target - Actual|/Target = {err_delta:.3e}\n"
         f"|Target - bluemira|/Target = {err_kappa:.3e}\n"
     )
-    return iter_err, delta_u, kappa_u
+    return delta_u, kappa_u, iter_err
 
 
 def solve_transport_fixed_boundary(
@@ -339,7 +339,7 @@ def solve_transport_fixed_boundary(
             plot,
         )
 
-        iter_err, delta_u, kappa_u = _calculate_iteration_err(
+        delta_u, kappa_u, iter_err = _update_delta_kappa_iteration_err(
             params,
             delta_95,
             delta95_t,
