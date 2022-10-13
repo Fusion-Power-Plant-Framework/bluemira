@@ -91,7 +91,7 @@ def msh_to_xdmf(
     """
     dimensions = _check_dimensions(dimensions)
 
-    file_path = os.sep.join([directory, mesh_name])
+    file_path = os.path.join(directory, mesh_name)
     if not os.path.exists(file_path):
         raise MeshConversionError(f"No such file: {file_path}")
 
@@ -125,9 +125,9 @@ def import_mesh(file_prefix="mesh", subdomains=False, directory="."):
     link_dict: dict
         Link dictionary between MSH and XDMF objects
     """
-    domain_file = os.sep.join([directory, f"{file_prefix}_{DOMAIN_SUFFIX}"])
-    boundary_file = os.sep.join([directory, f"{file_prefix}_{BOUNDARY_SUFFIX}"])
-    link_file = os.sep.join([directory, f"{file_prefix}_{LINKFILE_SUFFIX}"])
+    domain_file = os.path.join(directory, f"{file_prefix}_{DOMAIN_SUFFIX}")
+    boundary_file = os.path.join(directory, f"{file_prefix}_{BOUNDARY_SUFFIX}")
+    link_file = os.path.join(directory, f"{file_prefix}_{LINKFILE_SUFFIX}")
     files = [domain_file, boundary_file, link_file]
     exists = [os.path.exists(file) for file in files]
 
@@ -208,7 +208,7 @@ def _export_domain(mesh, file_prefix, directory, dimensions):
     domain = _make_mesh(mesh, dimensions, cells, cell_data)
 
     _write_mesh(
-        os.sep.join([directory, f"{file_prefix}_{DOMAIN_SUFFIX}"]),
+        os.path.join(directory, f"{file_prefix}_{DOMAIN_SUFFIX}"),
         domain,
     )
 
@@ -235,7 +235,7 @@ def _export_boundaries(mesh, file_prefix, directory, dimensions):
     boundaries = _make_mesh(mesh, dimensions, cells, cell_data)
 
     _write_mesh(
-        os.sep.join([directory, f"{file_prefix}_{BOUNDARY_SUFFIX}"]),
+        os.path.join(directory, f"{file_prefix}_{BOUNDARY_SUFFIX}"),
         boundaries,
     )
 
@@ -261,7 +261,7 @@ def _export_link_file(mesh, file_prefix, directory):
         )
     )
 
-    filename = os.sep.join([directory, f"{file_prefix}_{LINKFILE_SUFFIX}"])
+    filename = os.path.join(directory, f"{file_prefix}_{LINKFILE_SUFFIX}")
     with open(filename, "w") as file:
         json.dump(table, file, indent=4)
 
