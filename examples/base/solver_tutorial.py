@@ -37,13 +37,14 @@ An example/tutorial of how to write a Solver and Task classes.
 
 # %%
 import enum
+from dataclasses import dataclass
 from typing import Dict
 
 import matplotlib.pyplot as plt
 import numpy as np
 from scipy.optimize import curve_fit
 
-from bluemira.base.parameter import ParameterFrame
+from bluemira.base.parameter_frame import Parameter, ParameterFrame
 from bluemira.base.solver import RunMode, SolverABC, Task
 
 # %%[markdown]
@@ -69,28 +70,52 @@ def generate_noisy_gaussian(
 # %%
 x = np.linspace(-10, 10, 200)
 gauss_data = generate_noisy_gaussian(x, 2, 1.8, 1.5)
-gauss_params = ParameterFrame(
-    [
-        ["sigma", "sigma", 1.0, "dimensionless", "Standard Deviation", "Input"],
-        ["mu", "mu", 1.0, "dimensionless", "Expectation value", "Input"],
-        [
-            "vertical_offset",
-            "vertical_offset",
-            0.0,
-            "dimensionless",
-            "The vertical offset",
-            "Input",
-        ],
-        ["x", "x", x, "dimensionless", "Problem space", "Input"],
-        [
-            "gauss_data",
-            "gauss_data",
-            gauss_data,
-            "dimensionless",
-            "Gauss signal",
-            "Input",
-        ],
-    ]
+
+
+@dataclass
+class GaussParams(ParameterFrame):
+    """Gauss parameterframe"""
+
+    sigma: Parameter[float]
+    mu: Parameter[float]
+    vertical_offset: Parameter[float]
+    x: Parameter[np.ndarray]
+    gauss_data: Parameter[np.ndarray]
+
+
+gauss_params = GaussParams.from_dict(
+    {
+        "sigma": {
+            "value": 1.0,
+            "unit": "dimensionless",
+            "description": "Standard Deviation",
+            "source": "Input",
+        },
+        "mu": {
+            "value": 1.0,
+            "unit": "dimensionless",
+            "description": "Expectation value",
+            "source": "Input",
+        },
+        "vertical_offset": {
+            "value": 0.0,
+            "unit": "dimensionless",
+            "description": "The vertical offset",
+            "source": "Input",
+        },
+        "x": {
+            "value": x,
+            "unit": "dimensionless",
+            "description": "Problem space",
+            "source": "Input",
+        },
+        "gauss_data": {
+            "value": gauss_data,
+            "unit": "dimensionless",
+            "description": "Gauss signal",
+            "source": "Input",
+        },
+    }
 )
 
 plt.plot(x, gauss_data)
@@ -140,8 +165,8 @@ class GaussFitSetup(Task):
 
     def __init__(self, params: ParameterFrame):
         super().__init__(params)
-        self._x = self.params["x"]
-        self._y = self.params["y"]
+        self._x = self.params.x.value
+        self._y = self.params.gauss_data.value
 
     def run(self) -> Dict[str, float]:
         """
@@ -198,7 +223,7 @@ class GaussFitRun(Task):
             setup_result["vertical_offset"],
         )
         opt, _ = curve_fit(
-            gaussian, self.params["x"], self.params["y"], p0=initial_guess
+            gaussian, self.params.x.value, self.params.gauss_data.value, p0=initial_guess
         )
         return {
             "sigma": opt[0],
@@ -222,7 +247,7 @@ class GaussFitTeardown(Task):
 
     def run(self, run_result: Dict[str, float]) -> np.ndarray:
         """Run the teardown procedure."""
-        return gaussian(self.params["x"], **run_result)
+        return gaussian(self.params.x.value, **run_result)
 
     def mock(self, run_result: Dict[str, float]) -> np.ndarray:
         """
@@ -265,13 +290,12 @@ class GaussFitSolver(SolverABC):
 # We can run the solver in `RUN` mode:
 
 # %%
-params = {"x": x, "y": gauss_data}
 
-gauss_solver = GaussFitSolver(params)
+gauss_solver = GaussFitSolver(gauss_params)
 result = gauss_solver.execute(GaussFitRunMode.RUN)
 
-plt.plot(params["x"], params["y"])
-plt.plot(params["x"], result)
+plt.plot(gauss_params.x.value, gauss_params.gauss_data.value)
+plt.plot(gauss_params.x.value, result)
 
 # %%[markdown]
 # And we can run the solver in `MOCK` mode:
@@ -279,5 +303,7 @@ plt.plot(params["x"], result)
 # %%
 result = gauss_solver.execute(GaussFitRunMode.MOCK)
 
-plt.plot(params["x"], params["y"])
-plt.plot(params["x"], result)
+plt.plot(gauss_params.x.value, gauss_params.gauss_data.value)
+plt.plot(gauss_params.x.value, result)
+
+plt.show()
