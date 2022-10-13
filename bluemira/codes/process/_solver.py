@@ -125,7 +125,7 @@ class Solver(CodesSolver):
         if isinstance(params, ParameterFrame):
             self.params.update_from_frame(params)
         else:
-            self.params.update_from_values(params)
+            self.params.update_values(params)
 
         _build_config = copy.deepcopy(build_config)
         self.binary = _build_config.pop("binary", PROCESS_BINARY)
