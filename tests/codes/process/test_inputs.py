@@ -27,19 +27,15 @@ class TestProcessInput:
     def setup(self):
         self.df = ProcessInputs()
 
-    def test_to_dict(self):
-        for k, v in self.df.to_dict().items():
+    def test_to_invariable(self):
+        for k, v in self.df.to_invariable().items():
             assert k == v.name
             assert isinstance(v, _INVariable)
-
-    def test_iteration(self):
-        for field in self.df:
-            var = getattr(self.df, field.name)
-            assert isinstance(var, _INVariable)
-            if field.name not in ["icc", "ixc", "bounds"]:
-                assert var.v_type == "Parameter"
-
-    def test_invar_initialisation(self):
-        assert self.df.icc.v_type == "Constraint Equation"
-        assert self.df.ixc.v_type == "Iteration Variable"
-        assert self.df.bounds.v_type == "Bound"
+            if k not in ["icc", "ixc", "bounds"]:
+                assert v.v_type == "Parameter"
+            elif k == "icc":
+                assert v.v_type == "Constraint Equation"
+            elif k == "ixc":
+                assert v.v_type == "Iteration Variable"
+            elif k == "bounds":
+                assert v.v_type == "Bound"

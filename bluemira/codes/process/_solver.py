@@ -121,13 +121,19 @@ class Solver(CodesSolver):
         self._teardown: Union[Teardown, None] = None
 
         self.params = ProcessSolverParams.from_defaults()
-        self.params.update_from_frame(params)
+
+        if isinstance(params, ParameterFrame):
+            self.params.update_from_frame(params)
+        else:
+            self.params.update_from_values(params)
 
         _build_config = copy.deepcopy(build_config)
         self.binary = _build_config.pop("binary", PROCESS_BINARY)
         self.run_directory = _build_config.pop("run_dir", os.getcwd())
         self.read_directory = _build_config.pop("read_dir", os.getcwd())
-        self.template_in_dat = _build_config.pop("template_in_dat", self.params.defaults)
+        self.template_in_dat = _build_config.pop(
+            "template_in_dat", self.params.template_defaults
+        )
         self.problem_settings = _build_config.pop("problem_settings", {})
         self.in_dat_path = _build_config.pop(
             "in_dat_path", os.path.join(self.run_directory, "IN.DAT")

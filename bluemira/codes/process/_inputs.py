@@ -23,7 +23,7 @@ Parameter classes/structures for Process
 """
 
 from dataclasses import dataclass, field, fields
-from typing import Dict, Generator, List
+from typing import Dict, Generator, List, Tuple, Union
 
 from bluemira.codes.process.api import _INVariable
 
@@ -261,7 +261,7 @@ class ProcessInputs:
         default_factory=lambda: [3.6, 1.2, 1.0, 2.8, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0]
     )
 
-    def __iter__(self) -> Generator[field, None, None]:
+    def __iter__(self) -> Generator[Tuple[str, Union[float, List, Dict]], None, None]:
         """
         Iterate over this dataclass
 
@@ -269,38 +269,41 @@ class ProcessInputs:
         declared.
         """
         for _field in fields(self):
-            yield _field
+            yield _field.name, getattr(self, _field.name)
 
-    def __post_init__(self):
+    def to_invariable(self) -> Dict[str, _INVariable]:
         """
         Wrap each value in an INVariable object
 
         Needed for compatibility with PROCESS InDat writer
         """
-        for _field in self:
-            if _field.name not in ["icc", "ixc", "bounds"]:
-                new_val = _INVariable(
-                    _field.name, getattr(self, _field.name), "Parameter", "", ""
-                )
-                setattr(self, _field.name, new_val)
-        self.icc = _INVariable(
+        out_dict = {}
+        for name, value in self:
+            if name not in ["icc", "ixc", "bounds"]:
+                new_val = _INVariable(name, value, "Parameter", "", "")
+                out_dict[name] = new_val
+        out_dict["icc"] = _INVariable(
             "icc",
             self.icc,
             "Constraint Equation",
             "Constraint Equation",
             "Constraint Equations",
         )
-        self.ixc = _INVariable(
+        out_dict["ixc"] = _INVariable(
             "ixc",
             self.ixc,
             "Iteration Variable",
             "Iteration Variable",
             "Iteration Variables",
         )
-        self.bounds = _INVariable("bounds", self.bounds, "Bound", "Bound", "Bounds")
+        out_dict["bounds"] = _INVariable(
+            "bounds", self.bounds, "Bound", "Bound", "Bounds"
+        )
+        return out_dict
 
-    def to_dict(self) -> Dict[str, _INVariable]:
+    def to_dict(self) -> Dict[str, Union[float, List, Dict]]:
         """
         A dictionary representation of the dataclass
+
         """
-        return {f.name: getattr(self, f.name) for f in self}
+        return {name: value for name, value in self}

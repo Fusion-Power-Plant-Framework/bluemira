@@ -25,12 +25,27 @@ PROCESS's parameter definitions.
 
 from copy import deepcopy
 from dataclasses import dataclass
-from typing import Dict
+from typing import Dict, List, Union
 
 from bluemira.base.parameter_frame import Parameter
 from bluemira.codes.params import MappedParameterFrame, ParameterMapping
 from bluemira.codes.process._inputs import ProcessInputs
+from bluemira.codes.process.api import _INVariable
 from bluemira.codes.process.mapping import mappings
+
+# fmt: off
+PROCESS_OUT_ONLY_KEYS = [
+    "enbeam", "etanbi", "emult", "shldlth", "pnetelmw", "kappa95", "triang95",
+    "plascur/1d6", "powfmw", "pdt", "pdd", "pdivt", "pcoreradmw", "pedgeradmw",
+    "pedgeradmw", "pradmw", "plinepv*vol", "psyncpv*vol", "pbrempv*vol",
+    "bootipf", "betap", "taueff", "vburn", "fwith", "fwoth", "dr_tf_wp", "wwp1",
+    "tfinsgap", "r_cp_top", "rtfin", "r_tf_inboard_mid", "r_ts_ib_in",
+    "r_vv_ib_in", "r_fw_ib_in", "r_fw_ob_in", "r_vv_ob_in", "r_tf_outboard_mid",
+    "tfbusres", "ztot", "estotftgj", "tflegres", "pinjmw", "qss/1.0D6",
+    "thshield", "bmaxtfrp", "q95", "zeff", "vol", "rli", "faccd", "tfthko",
+    "h_cp_top", "hmax", "r_tf_inboard_out",
+]
+# fmt: on
 
 
 @dataclass
@@ -335,31 +350,25 @@ class ProcessSolverParams(MappedParameterFrame):
         return self._mappings
 
     @property
-    def defaults(self) -> ProcessInputs:
+    def defaults(self) -> Dict[str, Union[float, List, Dict]]:
         """
         Default values for Process
         """
-        return self._defaults
+        return self._defaults.to_dict()
+
+    @property
+    def template_defaults(self) -> Dict[str, _INVariable]:
+        """
+        Template defaults for process
+        """
+        return self._defaults.to_invariable()
 
     @classmethod
     def from_defaults(cls) -> MappedParameterFrame:
         """
         Initialise from defaults
         """
-        default_dict = {k: v.get_value for k, v in cls._defaults.to_dict().items()}
-        # fmt: off
-        out_keys = [
-            "enbeam", "etanbi", "emult", "shldlth", "pnetelmw", "kappa95", "triang95",
-            "plascur/1d6", "powfmw", "pdt", "pdd", "pdivt", "pcoreradmw", "pedgeradmw",
-            "pedgeradmw", "pradmw", "plinepv*vol", "psyncpv*vol", "pbrempv*vol",
-            "bootipf", "betap", "taueff", "vburn", "fwith", "fwoth", "dr_tf_wp", "wwp1",
-            "tfinsgap", "r_cp_top", "rtfin", "r_tf_inboard_mid", "r_ts_ib_in",
-            "r_vv_ib_in", "r_fw_ib_in", "r_fw_ob_in", "r_vv_ob_in", "r_tf_outboard_mid",
-            "tfbusres", "ztot", "estotftgj", "tflegres", "pinjmw", "qss/1.0D6",
-            "thshield", "bmaxtfrp", "q95", "zeff", "vol", "rli", "faccd", "tfthko",
-            "h_cp_top", "hmax", "r_tf_inboard_out",
-        ]
-        # fmt: on
-        for k in out_keys:
+        default_dict = cls._defaults.to_dict()
+        for k in PROCESS_OUT_ONLY_KEYS:
             default_dict[k] = 0
         return super().from_defaults(default_dict)

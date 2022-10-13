@@ -95,7 +95,11 @@ class Solver(CodesSolver):
         self._teardown: Teardown
 
         self.params = PlasmodSolverParams.from_defaults()
-        self.params.update_from_frame(params)
+
+        if isinstance(params, ParameterFrame):
+            self.params.update_from_frame(params)
+        else:
+            self.params.update_from_values(params)
 
         self.build_config = {} if build_config is None else build_config
         self.binary = self.build_config.get("binary", PLASMOD_BINARY)

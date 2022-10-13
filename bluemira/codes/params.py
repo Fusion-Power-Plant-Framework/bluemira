@@ -41,7 +41,7 @@ class MappedParameterFrame(ParameterFrame):
     """
 
     @abc.abstractproperty
-    def defaults(self) -> dataclass:
+    def defaults(self) -> Dict:
         """
         Default values for the ParameterFrame
         """

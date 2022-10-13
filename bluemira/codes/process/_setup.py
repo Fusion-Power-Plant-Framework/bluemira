@@ -27,7 +27,7 @@ from typing import Dict, Union
 from bluemira.codes.error import CodesError
 from bluemira.codes.interface import CodesSetup
 from bluemira.codes.process._inputs import ProcessInputs
-from bluemira.codes.process.api import InDat, update_obsolete_vars
+from bluemira.codes.process.api import InDat, _INVariable, update_obsolete_vars
 from bluemira.codes.process.constants import NAME as PROCESS_NAME
 from bluemira.codes.process.mapping import (
     CurrentDriveEfficiencyModel,
@@ -69,7 +69,7 @@ class Setup(CodesSetup):
 
         self.in_dat_path = in_dat_path
         self.template_in_dat = (
-            self.params.defaults if template_in_dat is None else template_in_dat
+            self.params.template_defaults if template_in_dat is None else template_in_dat
         )
         self.problem_settings = problem_settings if problem_settings is not None else {}
 
@@ -130,10 +130,11 @@ class Setup(CodesSetup):
             writer.add_parameter(name, model.value)
 
 
-def _make_writer(template_in_dat: Union[str, ProcessInputs]) -> InDat:
-    if isinstance(template_in_dat, ProcessInputs):
+def _make_writer(template_in_dat: Union[str, Dict[str, _INVariable]]) -> InDat:
+    if isinstance(template_in_dat, Dict):
         indat = InDat(filename=None)
-        indat.data = template_in_dat.to_dict()
+        indat.data = template_in_dat
+        print(indat.data)
         return indat
     elif isinstance(template_in_dat, str) and os.path.isfile(template_in_dat):
         # InDat autoloads IN.DAT without checking for existence

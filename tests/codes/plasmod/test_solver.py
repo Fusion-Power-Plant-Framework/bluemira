@@ -60,12 +60,17 @@ class TestPlasmodSetup:
         assert setup.inputs.q_heat == 1.5
         assert setup.inputs.nx == 25
 
-    def test_update_inputs_changes_input_values(self):
+    @pytest.mark.parametrize("param_type", ["dict", "frame"])
+    def test_update_inputs_changes_input_values(self, param_type):
         new_inputs = {
             "v_loop": -1.5e-3,
             "q_heat": 1.5,
             "nx": 25,
         }
+        if param_type == "dict":
+            param = {k: data["value"] for k, data in self.default_pf.to_dict().items()}
+        else:
+            param = self.default_pf
         setup = Setup(self.default_pf, {}, self.input_file)
 
         setup.update_inputs(new_inputs)

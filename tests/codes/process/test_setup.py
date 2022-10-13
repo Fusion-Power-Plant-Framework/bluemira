@@ -87,7 +87,7 @@ class TestSetup:
             setup = Setup(self.default_pf, "", template_in_dat=None)
             setup.run()
 
-        assert indat_cls_mock.return_value.data == self.default_pf.defaults.to_dict()
+        assert indat_cls_mock.return_value.data == self.default_pf.template_defaults
 
     @pytest.mark.parametrize("run_func", ["run", "runinput"])
     def test_run_raises_CodesError_given_no_data_in_template_file(self, run_func):
