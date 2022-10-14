@@ -47,7 +47,7 @@ above.
 
 import abc
 import enum
-from typing import Any, Callable, Optional, Type
+from typing import Any, Callable, Optional, Type, Union
 
 from bluemira.base.parameter_frame import ParameterFrame
 
@@ -180,8 +180,10 @@ class SolverABC(abc.ABC):
         """
         pass
 
-    def execute(self, run_mode: RunMode) -> Any:
+    def execute(self, run_mode: Union[str, RunMode]) -> Any:
         """Execute the setup, run, and teardown tasks, in order."""
+        if isinstance(run_mode, str):
+            run_mode = self.run_mode_cls.from_string(run_mode)
         result = None
         if setup := self._get_execution_method(self._setup, run_mode):
             result = setup()

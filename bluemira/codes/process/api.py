@@ -22,12 +22,11 @@
 """
 PROCESS api
 """
-import os
+from dataclasses import dataclass
 from enum import Enum
 from pathlib import Path
-from typing import List, Union
+from typing import Dict, List, TypeVar, Union
 
-from bluemira.base.file import get_bluemira_path
 from bluemira.base.look_and_feel import bluemira_print, bluemira_warn
 from bluemira.codes.error import CodesError
 from bluemira.utilities.tools import flatten_iterable
@@ -80,9 +79,47 @@ if ENABLED:
     PROCESS_DICT = get_dicts()
 
 
-DEFAULT_INDAT = os.path.join(
-    get_bluemira_path("codes/process"), "PROCESS_DEFAULT_IN.DAT"
-)
+@dataclass
+class _INVariable:
+    """
+    Process io.in_dat.INVariable replica
+
+    Used to simulate what process does to input variables
+    for the InDat input file writer
+
+    This allows the defaults to imitate the same format as PROCESS'
+    InDat even if PROCESS isn't installed.
+    Therefore they will work the same in all cases and we dont always
+    need to be able to read a PROCESS input file.
+    """
+
+    name: str
+    _value: Union[float, List, Dict]
+    v_type: TypeVar("InVarValueType")
+    parameter_group: str
+    comment: str
+
+    @property
+    def get_value(self) -> Union[float, List, Dict]:
+        """Return value in correct format"""
+        return self._value
+
+    @property
+    def value(self) -> Union[str, List, Dict]:
+        """
+        Return the string of a value if not a Dict or a List
+        """
+        if not isinstance(self._value, (List, Dict)):
+            return f"{self._value}"
+        else:
+            return self._value
+
+    @value.setter
+    def value(self, new_value):
+        """
+        Value setter
+        """
+        self._value = new_value
 
 
 class Impurities(Enum):

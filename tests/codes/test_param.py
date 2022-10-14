@@ -19,9 +19,12 @@
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 
+from dataclasses import asdict, dataclass
+
 import pytest
 
-from bluemira.codes.params import ParameterMapping
+from bluemira.base.parameter_frame import Parameter
+from bluemira.codes.params import MappedParameterFrame, ParameterMapping
 
 
 class TestParameterMapping:
@@ -55,3 +58,66 @@ class TestParameterMapping:
 
     def test_tofrom_dict(self):
         assert self.pm == ParameterMapping.from_dict(self.pm.to_dict())
+
+
+@dataclass
+class MyDC:
+    a: int = 1
+    b: str = "hello"
+    c: bool = True
+
+
+mappings = {
+    "A": ParameterMapping("a", send=True, recv=False, unit="m"),
+    "B": ParameterMapping("b", send=True, recv=False, unit=""),
+    "C": ParameterMapping("c", send=True, recv=False, unit=""),
+    "D": ParameterMapping("d", send=False, recv=False, unit="cm"),
+    "E": ParameterMapping("e", send=False, recv=False, unit=""),
+    "F": ParameterMapping("f", send=False, recv=False, unit=""),
+}
+
+
+@dataclass
+class MyPF(MappedParameterFrame):
+    A: Parameter[float]
+    B: Parameter[str]
+    C: Parameter[bool]
+    D: Parameter[float]
+    E: Parameter[str]
+    F: Parameter[bool]
+
+    _mappings = mappings
+    _defaults = MyDC()
+
+    @property
+    def defaults(self) -> MyDC:
+        """Defaults for Plasmod"""
+        return self._defaults
+
+    @classmethod
+    def from_defaults(cls) -> MappedParameterFrame:
+        default_dict = asdict(cls._defaults)
+        default_dict["d"] = 0
+        default_dict["e"] = "0"
+        default_dict["f"] = False
+        return super().from_defaults(default_dict)
+
+
+class TestDefaultPM:
+    def test_unmapped_default_pm_sets_values(self):
+        params = MyPF.from_defaults()
+        assert params.D.value == 0
+        assert params.D.unit == "m"
+        assert params.E.value == "0"
+        assert params.E.unit == ""
+        assert params.F.value is False
+        assert params.F.unit == ""
+
+    def test_mapped_default_pm_sets_values(self):
+        params = MyPF.from_defaults()
+        assert params.A.value == 1
+        assert params.A.unit == "m"
+        assert params.B.value == "hello"
+        assert params.B.unit == ""
+        assert params.C.value is True
+        assert params.C.unit == ""

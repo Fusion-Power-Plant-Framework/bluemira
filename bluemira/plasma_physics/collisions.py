@@ -32,7 +32,6 @@ from bluemira.base.constants import (
     H_PLANCK,
     K_BOLTZMANN,
     PROTON_MASS,
-    raw_uc,
 )
 
 
@@ -43,7 +42,7 @@ def debye_length(temperature, density):
     Parameters
     ----------
     temperature: float
-        Temperature [C]
+        Temperature [K]
     density: float
         Density [m^-3]
 
@@ -52,7 +51,6 @@ def debye_length(temperature, density):
     debye_length: float
         Debye length [m]
     """
-    temperature = raw_uc(temperature, "celsius", "kelvin")
     return np.sqrt(EPS_0 * K_BOLTZMANN * temperature / (EV_TO_J**2 * density))
 
 
@@ -80,7 +78,7 @@ def thermal_velocity(temperature, mass):
     Parameters
     ----------
     temperature: float
-        Temperature [C]
+        Temperature [K]
     mass: float
         Mass of the particle [kg]
 
@@ -89,7 +87,6 @@ def thermal_velocity(temperature, mass):
     The sqrt(2) term is for a 3-dimensional system and the most probable velocity in
     the particle velocity distribution.
     """
-    temperature = raw_uc(temperature, "celsius", "kelvin")
     return np.sqrt(2) * np.sqrt(K_BOLTZMANN * temperature / mass)
 
 
@@ -138,7 +135,7 @@ def coulomb_logarithm(temperature, density):
     Parameters
     ----------
     temperature: float
-        Temperature [C]
+        Temperature [K]
     density: float
         Density [1/m^3]
 

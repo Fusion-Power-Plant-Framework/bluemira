@@ -25,7 +25,7 @@ from typing import Any, Dict, Iterable, Union
 
 import numpy as np
 
-from bluemira.base.parameter_frame import ParameterFrame, make_parameter_frame
+from bluemira.base.parameter_frame import ParameterFrame
 from bluemira.base.solver import RunMode as BaseRunMode
 from bluemira.codes.error import CodesError
 from bluemira.codes.interface import CodesSolver
@@ -94,7 +94,12 @@ class Solver(CodesSolver):
         self._run: Run
         self._teardown: Teardown
 
-        self.params = make_parameter_frame(params, PlasmodSolverParams)
+        self.params = PlasmodSolverParams.from_defaults()
+
+        if isinstance(params, ParameterFrame):
+            self.params.update_from_frame(params)
+        else:
+            self.params.update_values(params)
 
         self.build_config = {} if build_config is None else build_config
         self.binary = self.build_config.get("binary", PLASMOD_BINARY)
@@ -105,7 +110,7 @@ class Solver(CodesSolver):
             "profiles_file", self.DEFAULT_PROFILES_FILE
         )
 
-    def execute(self, run_mode: RunMode) -> ParameterFrame:
+    def execute(self, run_mode: Union[str, RunMode]) -> ParameterFrame:
         """
         Execute this plasmod solver.
 
@@ -122,6 +127,9 @@ class Solver(CodesSolver):
         run_mode: RunMode
             The mode to execute this solver in.
         """
+        if isinstance(run_mode, str):
+            run_mode = self.run_mode_cls.from_string(run_mode)
+
         self._setup = Setup(self.params, self.problem_settings, self.input_file)
         self._run = Run(
             self.params,

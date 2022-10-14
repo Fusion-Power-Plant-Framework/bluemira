@@ -187,7 +187,7 @@ class CodesTeardown(CodesTask):
             if output_value is None or mapping.unit is None:
                 continue
             value = raw_uc(
-                output_value, getattr(self.params, bm_name).unit, mapping.unit
+                output_value, mapping.unit, getattr(self.params, bm_name).unit
             )
             mapped_outputs[bm_name] = value
         return mapped_outputs

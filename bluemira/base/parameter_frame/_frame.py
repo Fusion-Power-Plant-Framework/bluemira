@@ -75,6 +75,19 @@ class ParameterFrame:
             param: Parameter = getattr(self, key)
             param.set_value(value, source)
 
+    def update_from_frame(self, frame: ParameterFrame):
+        """Update the frame with the values of another frame"""
+        for o_param in frame:
+            if hasattr(self, o_param.name):
+                param = getattr(self, o_param.name)
+                param.set_value(
+                    raw_uc(o_param.value, o_param.unit, param.unit), o_param.source
+                )
+                if o_param.long_name != "":
+                    param._long_name = o_param.long_name
+                if o_param.description != "":
+                    param._description = o_param.description
+
     @classmethod
     def from_dict(
         cls: Type[_PfT],

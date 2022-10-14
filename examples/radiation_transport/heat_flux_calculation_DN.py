@@ -52,13 +52,8 @@ eq = Equilibrium.from_eqdsk(eq_name)
 # %%
 read_path = get_bluemira_path("radiation_transport/test_data", subfolder="tests")
 fw_name = "DN_fw_shape.json"
-<<<<<<< HEAD
-fw_name = os.sep.join([read_path, fw_name])
-fw_shape = Coordinates.from_json(fw_name)
-=======
 fw_name = os.path.join(read_path, fw_name)
-fw_shape = Loop.from_file(fw_name)
->>>>>>> 44bf57e9 (Remove ParameterFrame from radiation_transport module (#1472))
+fw_shape = Coordinates.from_json(fw_name)
 
 # %%[markdown]
 

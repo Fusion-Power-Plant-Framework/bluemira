@@ -62,15 +62,15 @@ class HePumping(CoolantPumping):
     Parameters
     ----------
     pressure_in: float
-        Inlet pressure [MPa]
+        Inlet pressure [Pa]
     pressure_out: float
-        Pressure drop [MPa]
+        Pressure drop [Pa]
     t_in: float
-        Inlet temperature [°C]
+        Inlet temperature [K]
     t_out: float
-        Outlet temperature [°C]
+        Outlet temperature [K]
     blanket_power: float
-        Total blanket power excluding pumping power [MW]
+        Total blanket power excluding pumping power [W]
     eta_isen: float
         Isentropic efficiency of the He compressors
     eta_el: float
@@ -175,9 +175,9 @@ class SuperheatedRankine(PowerCycleEfficiencyCalc):
     Parameters
     ----------
     bb_t_out: float
-        Breeding blanket outlet temperature [C]
+        Breeding blanket outlet temperature [K]
     delta_t_turbine: float
-        Turbine inlet delta T [C]
+        Turbine inlet delta T [K]
     """
 
     def __init__(self, bb_t_out, delta_t_turbine):

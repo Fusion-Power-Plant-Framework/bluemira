@@ -41,6 +41,30 @@ class MappedParameterFrame(ParameterFrame):
     """
 
     @abc.abstractproperty
+    def defaults(self) -> Dict:
+        """
+        Default values for the ParameterFrame
+        """
+
+    @classmethod
+    def from_defaults(cls, data: Dict) -> MappedParameterFrame:
+        """
+        Create ParameterFrame with default values for external codes.
+
+        External codes are likely to have variables that are not changed often
+        therefore in some cases sane defaults are needed
+
+        """
+        new_param_dict = {}
+        for bm_map_name, param_map in cls._mappings.items():
+            new_param_dict[bm_map_name] = {
+                "value": data[param_map.name],
+                "unit": param_map.unit,
+                "source": "bluemira codes default",
+            }
+        return cls.from_dict(new_param_dict)
+
+    @abc.abstractproperty
     def mappings(self) -> Dict[str, ParameterMapping]:
         """
         The mappings associated with these frame's parameters.
