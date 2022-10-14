@@ -60,17 +60,13 @@ class TestPlasmodSetup:
         assert setup.inputs.q_heat == 1.5
         assert setup.inputs.nx == 25
 
-    @pytest.mark.parametrize("param_type", ["dict", "frame"])
-    def test_update_inputs_changes_input_values(self, param_type):
+    def test_update_inputs_changes_input_values(self):
         new_inputs = {
             "v_loop": -1.5e-3,
             "q_heat": 1.5,
             "nx": 25,
         }
-        if param_type == "dict":
-            param = {k: data["value"] for k, data in self.default_pf.to_dict().items()}
-        else:
-            param = self.default_pf
+
         setup = Setup(self.default_pf, {}, self.input_file)
 
         setup.update_inputs(new_inputs)
@@ -324,8 +320,14 @@ class TestPlasmodSolver:
 
         assert getattr(solver, key) == default
 
-    def test_execute_in_run_mode_sets_expected_params(self):
-        solver = plasmod.Solver(self.default_pf, self.build_config)
+    @pytest.mark.parametrize("param_type", ["dict", "frame"])
+    def test_execute_in_run_mode_sets_expected_params(self, param_type):
+        if param_type == "dict":
+            param = {k: data["value"] for k, data in self.default_pf.to_dict().items()}
+        else:
+            param = self.default_pf
+
+        solver = plasmod.Solver(param, self.build_config)
 
         pf = solver.execute(plasmod.RunMode.RUN)
 
@@ -337,6 +339,7 @@ class TestPlasmodSolver:
                 self.build_config["profiles_file"],
             ]
         )
+        self.run_subprocess_mock.reset_mock()
         assert pf.beta_N.value == pytest.approx(3.0007884293)
 
     def test_get_profile_returns_profile_array(self):
