@@ -36,6 +36,7 @@ Application of the dolfin fem 2D magnetostatic to a single coil problem
 # Import necessary module definitions.
 
 # %%
+import os
 
 import dolfin
 import matplotlib.pyplot as plt
@@ -44,6 +45,7 @@ import numpy as np
 import bluemira.geometry.tools as tools
 import bluemira.magnetostatics.greens as greens
 from bluemira.base.components import Component, PhysicalComponent
+from bluemira.base.file import get_bluemira_path
 from bluemira.equilibria.fem_fixed_boundary.fem_magnetostatic_2D import (
     FemMagnetostatic2d,
 )
@@ -113,8 +115,10 @@ c_coil = PhysicalComponent(name="coil", shape=coil, parent=c_universe)
 # Create the mesh (by default, mesh is stored in the file Mesh.msh")
 
 # %%
+directory = get_bluemira_path("", subfolder="generated_data")
+meshfiles = [os.path.join(directory, p) for p in ["Mesh.geo_unrolled", "Mesh.msh"]]
 
-meshing.Mesh()(c_universe, dim=2)
+meshing.Mesh(meshfile=meshfiles)(c_universe, dim=2)
 
 # %%[markdown]
 
@@ -122,11 +126,11 @@ meshing.Mesh()(c_universe, dim=2)
 
 # %%
 
-msh_to_xdmf("Mesh.msh", dimensions=(0, 2), directory=".")
+msh_to_xdmf("Mesh.msh", dimensions=(0, 2), directory=directory)
 
 mesh, boundaries, subdomains, labels = import_mesh(
     "Mesh",
-    directory=".",
+    directory=directory,
     subdomains=True,
 )
 dolfin.plot(mesh)
