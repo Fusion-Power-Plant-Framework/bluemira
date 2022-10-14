@@ -35,7 +35,8 @@ class ProcessInputs:
 
     Notes
     -----
-    All entries get wrapped in an INVariable class to enable easy InDat writing
+    All entries get wrapped in an INVariable class to enable easy InDat writing.
+    
     Units for these are avaialable in bluemira.codes.process.mapping for mapped
     variables otherwise
     `process.io.python_fortran_dicts.get_dicts()["DICT_DESCRIPTIONS"]`

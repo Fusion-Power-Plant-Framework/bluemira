@@ -134,7 +134,6 @@ def _make_writer(template_in_dat: Union[str, Dict[str, _INVariable]]) -> InDat:
     if isinstance(template_in_dat, Dict):
         indat = InDat(filename=None)
         indat.data = template_in_dat
-        print(indat.data)
         return indat
     elif isinstance(template_in_dat, str) and os.path.isfile(template_in_dat):
         # InDat autoloads IN.DAT without checking for existence
