@@ -57,11 +57,12 @@ class MappedParameterFrame(ParameterFrame):
         """
         new_param_dict = {}
         for bm_map_name, param_map in cls._mappings.items():
-            new_param_dict[bm_map_name] = {
-                "value": data[param_map.name],
-                "unit": param_map.unit,
-                "source": "bluemira codes default",
-            }
+            if param_map.name in data:
+                new_param_dict[bm_map_name] = {
+                    "value": data[param_map.name],
+                    "unit": param_map.unit,
+                    "source": "bluemira codes default",
+                }
         return cls.from_dict(new_param_dict)
 
     @abc.abstractproperty

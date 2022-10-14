@@ -107,10 +107,13 @@ class ProcessInputs:
     divdum: int = 1
     divfix: float = 0.621
     dnbeta: float = 3.0
+    emult: float = 1.35
+    enbeam: float = 1e3
     epsvmc: float = 1e-08
     etaech: float = 0.4
     etahtp: float = 0.87
     etaiso: float = 0.9
+    etanbi: float = 0.3
     etath: float = 0.375
     fbetatry: float = 0.48251
     fcap0: float = 1.15
@@ -224,6 +227,7 @@ class ProcessInputs:
     scraplo: float = 0.225
     secondary_cycle: int = 2
     shldith: float = 1e-06
+    shldlth: float = 1e-06
     shldoth: float = 1e-06
     shldtth: float = 1e-06
     sig_tf_case_max: float = 580000000.0
