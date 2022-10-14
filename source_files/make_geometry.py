@@ -7,8 +7,8 @@ import volume_functions as vf
 
 def check_geometry(geometry_variables):
 
-    if geometry_variables.divertor_width > 0.9 * geometry_variables.minor_r:
-        raise ValueError("The divertor width must be less than 90% of the minor radius")
+    if geometry_variables.divertor_width > 0.95 * geometry_variables.minor_r:
+        raise ValueError("The divertor width must be less than 95% of the minor radius")
 
     inboard_build = (
         geometry_variables.minor_r
@@ -238,21 +238,21 @@ def make_geometry(geometry_variables, material_lib):
 
     ########################
     ### Assigning Materials
-    #########################
+    ########################
 
-    cells["divertor_cell"].fill = material_lib["eurofer_mat"]
+    cells["divertor_cell"].fill = material_lib["water_cooled_steel_mat"]  #
     cells["div_surf_cell"].fill = material_lib["eurofer_mat"]
-    cells["bore_cell"].fill = material_lib["eurofer_mat"]
-    cells["tf_coil_cell"].fill = material_lib["eurofer_mat"]
-    cells["vv_inb_cell"].fill = material_lib["eurofer_mat"]
+    cells["bore_cell"].fill     = material_lib["eurofer_mat"]
+    cells["tf_coil_cell"].fill  = material_lib["eurofer_mat"]
+    cells["vv_inb_cell"].fill   = material_lib["eurofer_mat"] #
     cells["manifold_inb_cell"].fill = material_lib["manifold_mat"]
-    cells["bz_inb_cell"].fill = material_lib["BZ_mat"]
-    cells["fw_inb_cell"].fill = material_lib["fw_mat"]
+    cells["bz_inb_cell"].fill   = material_lib["bz_mat"]
+    cells["fw_inb_cell"].fill   = material_lib["fw_mat"]
 
-    cells["fw_cell"].fill = material_lib["fw_mat"]
-    cells["bz_cell"].fill = material_lib["BZ_mat"]
+    cells["fw_cell"].fill       = material_lib["fw_mat"]
+    cells["bz_cell"].fill       = material_lib["bz_mat"]
     cells["manifold_cell"].fill = material_lib["manifold_mat"]
-    cells["vv_cell"].fill = material_lib["eurofer_mat"]
+    cells["vv_cell"].fill       = material_lib["eurofer_mat"] #
 
     ################################
     ### Outboard Surface cells
@@ -424,8 +424,8 @@ def make_geometry(geometry_variables, material_lib):
         vert_semi_axis,
     )
 
-    print("\ntheta_rad", math.pi + math.atan(theta_tan))
-    print("\nradii", r_inner, r_outer, major_r, "\n")
+    # print("\ntheta_rad", math.pi + math.atan(theta_tan))
+    # print("\nradii", r_inner, r_outer, major_r, "\n")
 
     cells["fw_outb_surf_cells"][-2].volume = vf.calc_outb_inner_surf_vol(
         r_outer, r_inner, dummy_maj_r, dummy_min_r, vert_semi_axis, fw_surf_score_depth
@@ -475,26 +475,26 @@ def make_geometry(geometry_variables, material_lib):
     # it is defined by the order in which each cell variable is created
     universe = openmc.Universe(
         cells=[
-            cells["bore_cell"],  # Cell 1
-            cells["tf_coil_cell"],  # Cell 2
-            cells["vv_inb_cell"],  # Cell 3
+            cells["bore_cell"],          # Cell 1
+            cells["tf_coil_cell"],       # Cell 2
+            cells["vv_inb_cell"],        # Cell 3
             cells["manifold_inb_cell"],  # Cell 4
-            cells["bz_inb_cell"],  # Cell 5
-            cells["fw_inb_cell"],  # Cell 6
-            cells["divertor_cell"],  # Cell 7
-            cells["div_surf_cell"],  # Cell 8
+            cells["bz_inb_cell"],        # Cell 5
+            cells["fw_inb_cell"],        # Cell 6
+            cells["divertor_cell"],      # Cell 7
+            cells["div_surf_cell"],      # Cell 8
             cells["inner_vessel_cell"],  # Cell 9
-            cells["fw_cell"],  # Cell 10
-            cells["bz_cell"],  # Cell 11
-            cells["manifold_cell"],  # Cell 12
-            cells["vv_cell"],  # Cell 13
-            cells["outer_vessel_cell1"],  # Cell 14
-            cells["outer_vessel_cell2"],  # Cell 15
-            cells["outer_vessel_cell3"],
+            cells["fw_cell"],            # Cell 10
+            cells["bz_cell"],            # Cell 11
+            cells["manifold_cell"],      # Cell 12
+            cells["vv_cell"],            # Cell 13
+            cells["outer_vessel_cell1"], # Cell 14
+            cells["outer_vessel_cell2"], # Cell 15
+            cells["outer_vessel_cell3"], # Cell 16
         ]
-        + cells["fw_outb_surf_cells"]  # Cell 16
-        + cells["fw_inb_surf_cells"]  # Cells 17 - 28
-    )  # Cells 30 - 36
+        + cells["fw_outb_surf_cells"]    # Cells 17 - 28  
+        + cells["fw_inb_surf_cells"]     # Cells 30 - 36
+    )
 
     geometry = openmc.Geometry(universe)
     geometry.export_to_xml()

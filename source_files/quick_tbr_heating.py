@@ -36,15 +36,16 @@ class TBRHeatingBase:
 @dataclass
 class TBRHeatingRuntimeParams:
     stochastic_vol_calc: bool
+    plot_geometry: bool
     no_of_particles: int
     reactor_power_MW: float
     no_of_particles_stoch: int
-    use_dagmc: bool
     batches: int
     photon_transport: bool
     electron_treatment: str
     run_mode: str
     openmc_output_summary: str
+    parametric_source: bool
 
 
 @dataclass
@@ -72,8 +73,10 @@ class TBRHeatingGeometryParams:
 
 
 def create_ring_source(geometry_variables):
+
     # Creating simple ring source
     # A more accurate source will slightly affect the wall loadings and dpa profiles
+    
     my_source = openmc.Source()
     source_radii = openmc.stats.Discrete(
         [geometry_variables.major_r + geometry_variables.shaf_shift], [1]
@@ -85,6 +88,26 @@ def create_ring_source(geometry_variables):
     )
     my_source.angle = openmc.stats.Isotropic()
     my_source.energy = openmc.stats.Discrete([14.06e6], [1])
+    
+    return my_source
+
+
+def create_parametric_source(geometry_variables):
+    source_params = "mode=2," + \
+                "temperature=15.4," + \
+                "major_r=" + str(geometry_variables.major_r) + ","\
+                "minor_r=" + str(geometry_variables.minor_r) + "," \
+                "elongation=" + str(geometry_variables.elong) + ","  \
+                "triangulation=0.333," + \
+                "radial_shift=" + str(geometry_variables.shaf_shift) + "," \
+                "peaking_factor=1.508," + \
+                "vertical_shift=0.0," + \
+                "start_angle=0.0," + \
+                "angle_range=360.0"
+
+    my_source = openmc.Source(library='PPS_OpenMC.so', 
+                              parameters=source_params )
+    
     return my_source
 
 
@@ -115,10 +138,16 @@ def setup_openmc(
 
 
 def create_materials(material_variables):
+
     if material_variables.blanket_type == "hcpb":
         material_lib = mm.make_hcpb_mats(material_variables.li_enrich_ao)
+    elif material_variables.blanket_type == 'dcll':
+        material_lib = mm.make_dcll_mats(material_variables.li_enrich_ao)
+    elif material_variables.blanket_type == 'wcll':
+        material_lib = mm.make_wcll_mats(material_variables.li_enrich_ao)
     else:
-        raise ValueError("blanket_type must be either hcpb")
+        raise ValueError("blanket_type must be either hcpb, dcll, or wcll")
+
     return material_lib
 
 
@@ -261,6 +290,7 @@ def geometry_plotter(cells, geometry_variables):
 
 
 def summary(universe, src_str, statepoint_file="statepoint.2.h5"):
+
     #########################################
     # dpa coefficients
     #########################################
@@ -274,6 +304,7 @@ def summary(universe, src_str, statepoint_file="statepoint.2.h5"):
     # dpa formula
     # TODO where does 0.8 come from?
     displacements_per_damage_eV = 0.8 / (2 * dpa_fe_threshold_eV)
+    
     ##############################################
     ### Load statepoint file and print results ###
     ##############################################
@@ -295,7 +326,7 @@ def summary(universe, src_str, statepoint_file="statepoint.2.h5"):
     tbr_df = statepoint.get_tally(name=tally).get_pandas_dataframe()
     tbr = "{:.2f}".format(tbr_df["mean"].sum())
     tbr_e = "{:.2f}".format(tbr_df["std. dev."].sum())
-    print(f"\n{tally}\n{tbr}{tbr_e}")
+    print(f"\n{tally}\n{tbr} {tbr_e}")
 
     tally = "MW heating"  # 'mean' units are MW
     heating_df = statepoint.get_tally(name=tally).get_pandas_dataframe()
@@ -365,7 +396,7 @@ def summary(universe, src_str, statepoint_file="statepoint.2.h5"):
 
 
 def stochastic_volume_calculation(
-    geometry_variables, cells, no_of_particles=4e7, use_dagmc=False
+    geometry_variables, cells, no_of_particles=4e7
 ):
     ##############################################
     ### Stochastic volume calculation ###
@@ -402,24 +433,17 @@ def stochastic_volume_calculation(
         upper_right,
     )
     settings = openmc.Settings()
-    settings.dagmc = use_dagmc
     settings.volume_calculations = [cell_vol_calc]
 
     settings.export_to_xml()
     openmc.calculate_volumes()
 
-    try:
-        os.remove("summary.h5")
-        os.remove("statepoint.2.h5")
-    except OSError:
-        pass
 
 
 def run_tbr_heating_calc(
     runtime_variables,
     material_variables,
     geometry_variables,
-    plot_geometry: bool = False,
 ):
     """
     Runs OpenMC calculation to get TBR, component heating, first wall dpa, and photon
@@ -429,9 +453,14 @@ def run_tbr_heating_calc(
     material_lib = create_materials(material_variables)
 
     mg.check_geometry(geometry_variables)
+    
+    if runtime_variables.parametric_source:
+        source = create_parametric_source(geometry_variables)
+    else:
+        source = create_ring_source(geometry_variables)
 
     setup_openmc(
-        create_ring_source(geometry_variables),
+        source,
         runtime_variables.no_of_particles,
         runtime_variables.batches,
         runtime_variables.photon_transport,
@@ -447,7 +476,7 @@ def run_tbr_heating_calc(
 
     create_tallies(*filter_cells(cells, src_str))
 
-    if plot_geometry:
+    if runtime_variables.plot_geometry:
         geometry_plotter(cells, geometry_variables)
 
     # Start the OpenMC calculation, run time calculated from here
@@ -471,21 +500,23 @@ if __name__ == "__main__":
     # Calculation runtime variables
     runtime_variables = TBRHeatingRuntimeParams(
         **{
-            "stochastic_vol_calc": True,  # Do a stochastic volume calculation - this takes a long time!
+            "stochastic_vol_calc": False,    # Do a stochastic volume calculation - this takes a long time!
+            "plot_geometry": False,
             "reactor_power_MW": 1998.0,
-            "no_of_particles": 18000,  # 18000 = 5 seconds,  1000000 = 259 seconds }
+            "no_of_particles": 18000,        # 18000 = 5 seconds,  1000000 = 259 seconds }
             "no_of_particles_stoch": 4e6,
-            "use_dagmc": False,
             "batches": 2,
             "photon_transport": True,
             "electron_treatment": "ttb",
             "run_mode": "fixed source",
             "openmc_output_summary": False,
+            "parametric_source": False
         }
     )
 
     material_variables = TBRHeatingMaterialParams(
-        **{"blanket_type": "hcpb", "li_enrich_ao": 60.0}
+        **{"blanket_type": "hcpb", 
+           "li_enrich_ao": 60.0}
     )  # atomic fraction percentage of lithium
 
     # Geometry variables
@@ -503,28 +534,67 @@ if __name__ == "__main__":
     #                        35.0,      # breeder zone
     #                        2.2        # fw and armour
 
-    geometry_variables = TBRHeatingGeometryParams(
-        **{
-            "minor_r": 288.3,
-            "major_r": 893.8,
-            "elong": 1.65,
-            "shaf_shift": 60.0,  # The shafranov shift of the plasma
-            "inb_fw_thick": 2.2,
-            "inb_bz_thick": 35.0,
-            "inb_mnfld_thick": 41.0,
-            "inb_vv_thick": 60.0,
-            "tf_thick": 40.0,
-            "outb_fw_thick": 2.2,
-            "outb_bz_thick": 57.0,
-            "outb_mnfld_thick": 56.0,
-            "outb_vv_thick": 60.0,
-            "divertor_width": 200.0,
-        }
-    )
+    if material_variables.blanket_type == "wcll":
+        geometry_variables = TBRHeatingGeometryParams(
+            **{
+                "minor_r": 288.3,
+                "major_r": 893.8,
+                "elong": 1.65,
+                "shaf_shift": 60.0,  # The shafranov shift of the plasma
+                "inb_fw_thick": 2.7,
+                "inb_bz_thick": 37.8,
+                "inb_mnfld_thick": 41.0,
+                "inb_vv_thick": 60.0,
+                "tf_thick": 40.0,
+                "outb_fw_thick": 2.7,
+                "outb_bz_thick": 53.8,
+                "outb_mnfld_thick": 43.5,
+                "outb_vv_thick": 60.0,
+                "divertor_width": 267.0,
+            }
+        )
+    elif material_variables.blanket_type == "dcll":
+        geometry_variables = TBRHeatingGeometryParams(
+            **{
+                "minor_r": 288.3,
+                "major_r": 893.8,
+                "elong": 1.65,
+                "shaf_shift": 60.0,  # The shafranov shift of the plasma
+                "inb_fw_thick": 2.2,
+                "inb_bz_thick": 30.0,
+                "inb_mnfld_thick": 17.8,
+                "inb_vv_thick": 60.0,
+                "tf_thick": 40.0,
+                "outb_fw_thick": 2.2,
+                "outb_bz_thick": 64.0,
+                "outb_mnfld_thick": 24.8,
+                "outb_vv_thick": 60.0,
+                "divertor_width": 200.0,
+            }
+        )
+    else:
+        geometry_variables = TBRHeatingGeometryParams(
+            **{
+                "minor_r": 288.3,
+                "major_r": 893.8,
+                "elong": 1.65,
+                "shaf_shift": 60.0,  # The shafranov shift of the plasma
+                "inb_fw_thick": 2.2,
+                "inb_bz_thick": 35.0,
+                "inb_mnfld_thick": 41.0,
+                "inb_vv_thick": 60.0,
+                "tf_thick": 40.0,
+                "outb_fw_thick": 2.2,
+                "outb_bz_thick": 57.0,
+                "outb_mnfld_thick": 56.0,
+                "outb_vv_thick": 60.0,
+                "divertor_width": 200.0,
+            }
+        )
+        
 
     run_tbr_heating_calc(
         runtime_variables,
         material_variables,
-        geometry_variables,
-        plot_geometry=True,
+        geometry_variables
     )

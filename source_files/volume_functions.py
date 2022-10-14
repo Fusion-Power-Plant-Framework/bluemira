@@ -17,8 +17,8 @@ def get_ellipse_rz_from_theta(
     # Ellipse
     # (r - dummy_maj_r)**2 / dummy_min_r**2 + z**2 / vert_semi_axis**2 = 1 )
 
-    print("\nCalc of ellipse")
-    print(dummy_min_r, dummy_maj_r, maj_r, theta_rad, vert_semi_axis)
+    # print("\nCalc of ellipse")
+    # print(dummy_min_r, dummy_maj_r, maj_r, theta_rad, vert_semi_axis)
 
     if abs(theta_rad) < 1e-6:
         r = None
