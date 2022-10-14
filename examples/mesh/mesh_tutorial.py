@@ -36,13 +36,13 @@ Some examples of using bluemira mesh module.
 
 # %%
 import os
-from pathlib import Path
 
 import dolfin
 import matplotlib.pyplot as plt
 
 import bluemira.geometry.tools as tools
 from bluemira.base.components import Component, PhysicalComponent
+from bluemira.base.file import get_bluemira_path
 from bluemira.base.logs import set_log_level
 from bluemira.equilibria.shapes import JohnerLCFS
 from bluemira.geometry.face import BluemiraFace
@@ -118,9 +118,9 @@ c_coil_out = PhysicalComponent(name="coil_out", shape=coil_out, parent=c_coil)
 # Initialize and create the mesh
 
 # %%
-meshfiles = [
-    os.path.join(Path(__file__).parent, p) for p in ["Mesh.geo_unrolled", "Mesh.msh"]
-]
+directory = get_bluemira_path("", subfolder="generated_data")
+
+meshfiles = [os.path.join(directory, p) for p in ["Mesh.geo_unrolled", "Mesh.msh"]]
 m = meshing.Mesh(meshfile=meshfiles)
 buffer = m(c_all)
 print(m.get_gmsh_dict(buffer))
@@ -134,12 +134,12 @@ print(m.get_gmsh_dict(buffer))
 msh_to_xdmf(
     "Mesh.msh",
     dimensions=(0, 2),
-    directory=Path(__file__).parent,
+    directory=directory,
 )
 
 mesh, boundaries, subdomains, labels = import_mesh(
     "Mesh",
-    directory=Path(__file__).parent,
+    directory=directory,
     subdomains=True,
 )
 dolfin.plot(mesh)
