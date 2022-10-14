@@ -26,7 +26,6 @@ dependencies:
   - hdf5=1.12.1
   - netcdf4=1.6.0
   - numpy=1.22.4
-  - fenics=2019.1.0
   - MeshPy=2020.1
   - meshio=4.4.5
   - mshr=2019.1.0

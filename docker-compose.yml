@@ -1,0 +1,12 @@
+services:
+  bluemira:
+    image: bluemira:fenics_img
+    volumes:
+        - /tmp/.X11-unix:/tmp/.X11-unix  # X11 forwarding
+        - $HOME/.Xauthority:/user/.Xauthority  # X11 forwarding
+        - /dev/dri/card0:/dev/dri/card0  # Removes cad viewer warning for me
+        - ./:/root/bluemira
+    environment:
+      DISPLAY: $DISPLAY
+    network_mode: host
+
