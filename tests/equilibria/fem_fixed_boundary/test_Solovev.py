@@ -117,7 +117,8 @@ class TestSolovev:
 
         # initialize the Grad-Shafranov solver
         p = 2
-        gs_solver = FemMagnetostatic2d(mesh, boundaries, p_order=p)
+        gs_solver = FemMagnetostatic2d(p_order=p)
+        gs_solver.set_mesh(mesh, boundaries)
 
         # Set the right hand side of the Grad-Shafranov equation, as a function of psi
         g = dolfin.Expression(
@@ -127,9 +128,10 @@ class TestSolovev:
             mu0=MU_0,
             degree=p,
         )
+        gs_solver.define_g(g)
 
         # solve the Grad-Shafranov equation
-        psi_calc = gs_solver.solve(g)
+        psi_calc = gs_solver.solve()
 
         # calculate the GS and analytic solution on the mesh points
         mesh_points = mesh.coordinates()
