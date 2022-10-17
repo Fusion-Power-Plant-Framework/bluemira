@@ -80,7 +80,7 @@ class ParameterFrame:
             param.set_value(value, source)
 
     def update_from_dict(self, new_values: ParamDictT):
-        """Update from dictionary representation of Parameter"""
+        """Update from a dictionary representation of a ``ParameterFrame``"""
         for key, value in new_values.items():
             param: Parameter = getattr(self, key)
             if "name" in value:
