@@ -154,8 +154,16 @@ class TestFEMGSSolver:
         self.gs_solver = mock.MagicMock()
         self.transport_solver = DummyTransportSolver()
         self.transport_solver.params = mock.MagicMock()
-        self.transport_params = mock.Mock()
-        self.params = Params(1, 1, 1, 1)
+        self.johner_param = JohnerLCFS(
+            {
+                "r_0": {"value": 9},
+                "a": {"value": 3.1},
+                "kappa_u": {"value": 1},
+                "kappa_l": {"value": 1},
+                "delta_u": {"value": 1},
+                "delta_l": {"value": 1},
+            }
+        )
 
     def teardown_method(self):
         for patch in self.patches:
@@ -174,10 +182,8 @@ class TestFEMGSSolver:
         self, iter_err_max, max_iter, message, iters, interp, caplog
     ):
         solve_transport_fixed_boundary(
-            JohnerLCFS,
-            self.params,
+            self.johner_param,
             self.transport_solver,
-            self.transport_params,
             self.gs_solver,
             5,
             6,
