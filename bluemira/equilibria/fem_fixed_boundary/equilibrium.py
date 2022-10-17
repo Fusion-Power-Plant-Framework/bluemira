@@ -21,8 +21,9 @@
 
 """Fixed boundary equilibrium solve"""
 import os
+from copy import deepcopy
 from dataclasses import asdict, dataclass
-from typing import Callable, Dict, Tuple, Type, Union
+from typing import Callable, Dict, Tuple, Union
 
 import numpy as np
 from dolfin import Mesh
@@ -197,10 +198,8 @@ def _update_delta_kappa(
 
 
 def solve_transport_fixed_boundary(
-    plasma_parameterisation: Type[GeometryParameterisation],
-    params: PlasmaFixedBoundaryParams,
+    parameterisation: GeometryParameterisation,
     transport_solver: CodesSolver,
-    transport_params: ParameterFrame,
     gs_solver: FemGradShafranovFixedBoundary,
     kappa95_t: float,
     delta95_t: float,
@@ -219,14 +218,10 @@ def solve_transport_fixed_boundary(
 
     Parameters
     ----------
-    plasma_parameterisation: Type[GeometryParameterisation]
+    parameterisation: Type[GeometryParameterisation]
         Geometry parameterisation class for the plasma
-    params: PlasmaFixedBoundaryParams
-        dataclass of variables to use in the PLASMOD solve
     transport_solver: CodesSolver
         Transport Solver to call
-    transport_params: ParameterFrame
-        ParameterFrame for transport solver
     gs_solver: FemGradShafranovFixedBoundary
         Grad-Shafranov Solver instance
     kappa95_t: float
@@ -256,9 +251,17 @@ def solve_transport_fixed_boundary(
     directory = get_bluemira_path("", subfolder="generated_data")
     mesh_name_msh = mesh_filename + ".msh"
 
-    parameterisation = plasma_parameterisation(
-        {k: {"value": v} for k, v in asdict(params).items()}
+    paramet_params = PlasmaFixedBoundaryParams(
+        **{
+            k: v
+            for k, v in zip(
+                parameterisation.variables.names, parameterisation.variables.values
+            )
+            if k in PlasmaFixedBoundaryParams.__annotations__.keys()
+        }
     )
+
+    transport_params = deepcopy(transport_solver.params)
 
     lcfs_options = {
         "face": {"lcar": lcar_mesh, "physical_group": "plasma_face"},
@@ -270,7 +273,7 @@ def solve_transport_fixed_boundary(
         plasma = create_plasma_xz_cross_section(
             parameterisation,
             transport_params,
-            params,
+            paramet_params,
             kappa_95,
             delta_95,
             lcfs_options,
@@ -311,7 +314,7 @@ def solve_transport_fixed_boundary(
         )
 
         iter_err = _update_delta_kappa(
-            params,
+            paramet_params,
             kappa_95,
             kappa95_t,
             delta_95,
@@ -328,7 +331,7 @@ def solve_transport_fixed_boundary(
             break
 
         # update parameters
-        for name, value in asdict(params).items():
+        for name, value in asdict(paramet_params).items():
             parameterisation.adjust_variable(name, value)
 
     else:
