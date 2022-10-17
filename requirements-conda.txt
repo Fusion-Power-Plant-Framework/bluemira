@@ -9,7 +9,7 @@ pybind11-global==2.10.0
 PySide2==5.15.5
 pytools==2022.1.12
 PyYAML==6.0
-Shapely==1.8.4
+Shapely==1.8.5.post1
 shiboken2==5.15.5
 sympy==1.11.1
 typing_extensions==4.4.0
