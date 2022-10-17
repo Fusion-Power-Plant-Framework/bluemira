@@ -33,6 +33,7 @@ from bluemira.equilibria.fem_fixed_boundary.fem_magnetostatic_2D import (
 )
 from bluemira.equilibria.fem_fixed_boundary.utilities import plot_scalar_field
 from bluemira.equilibria.shapes import JohnerLCFS
+from bluemira.geometry.face import BluemiraFace
 from bluemira.mesh import meshing
 from bluemira.mesh.tools import import_mesh, msh_to_xdmf
 
@@ -43,7 +44,9 @@ import dolfin  # isort:skip
 
 # %%
 var_dict = {"r_0": {"value": 9.0}, "a": {"value": 3.5}}
-plasma = PhysicalComponent("Plasma", shape=JohnerLCFS(var_dict).create_shape())
+plasma = PhysicalComponent(
+    "Plasma", shape=BluemiraFace(JohnerLCFS(var_dict).create_shape())
+)
 
 plasma.shape.mesh_options = {"lcar": 0.3, "physical_group": "plasma"}
 plasma.shape.boundary[0].mesh_options = {"lcar": 0.3, "physical_group": "lcfs"}
@@ -72,8 +75,10 @@ plt.show()
 
 Ic = 18e6
 
-gs_solver = FemGradShafranovFixedBoundary(mesh)
-gs_solver.solve(1, 0, Ic, max_iter=20, plot=True)
+gs_solver = FemGradShafranovFixedBoundary(max_iter=20)
+gs_solver.set_mesh(mesh)
+gs_solver.define_g(1, 0, Ic)
+gs_solver.solve(plot=True)
 
 points = mesh.coordinates()
 psi_data = np.array([gs_solver.psi(x) for x in points])

@@ -46,12 +46,12 @@ def b_coil_axis(r, z, pz, curr):
     return 4 * np.pi * 1e-7 * curr * r**2 / (r**2 + (pz - z) ** 2) ** 1.5 / 2.0
 
 
-def _convert_const_to_dolfin(value):
+def _convert_const_to_dolfin(value: float):
     """Convert a constant value to a dolfin function"""
     if not isinstance(value, (int, float)):
         raise ValueError("Value must be integer or float.")
 
-    return dolfin.Constant(float)
+    return dolfin.Constant(value)
 
 
 class ScalarSubFunc(dolfin.UserExpression):
@@ -230,7 +230,6 @@ def get_tricontours(
     tcg = TriContourGenerator(tri.get_cpp_triangulation(), array)
     if is_num(value):
         value = [value]
-
     return [tcg.create_contour(val)[0][0] for val in value]
 
 

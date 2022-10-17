@@ -25,6 +25,7 @@ from dataclasses import asdict, dataclass
 from typing import Callable, Dict, Tuple, Type, Union
 
 import numpy as np
+from dolfin import Mesh
 from scipy.interpolate import interp1d
 from tabulate import tabulate
 
@@ -33,7 +34,6 @@ from bluemira.base.file import get_bluemira_path
 from bluemira.base.look_and_feel import bluemira_debug, bluemira_print, bluemira_warn
 from bluemira.base.parameter_frame import ParameterFrame
 from bluemira.base.solver import RunMode
-from bluemira.codes import transport_code_solver
 from bluemira.codes.interface import CodesSolver
 from bluemira.equilibria.fem_fixed_boundary.fem_magnetostatic_2D import (
     FemGradShafranovFixedBoundary,
@@ -71,16 +71,6 @@ class PlasmaFixedBoundaryParams:
         )
 
 
-@dataclass
-class FemGradShafranovOptions:
-    """Fem Grad-Shafranov solver options"""
-
-    p_order: int
-    iter_err_max: float
-    max_iter: int
-    relaxation: float
-
-
 def _interpolate_profile(
     x: np.ndarray, profile_data: np.ndarray
 ) -> Callable[[np.ndarray], np.ndarray]:
@@ -88,13 +78,14 @@ def _interpolate_profile(
     return interp1d(x, profile_data, kind="linear", fill_value="extrapolate")
 
 
-def _create_plasma_xz_cross_section(
+def create_plasma_xz_cross_section(
     parameterisation: GeometryParameterisation,
     transport_params: ParameterFrame,
     params: PlasmaFixedBoundaryParams,
-    delta_95: float,
     kappa_95: float,
+    delta_95: float,
     lcfs_options: Dict[str, Dict],
+    source: str,
     plot: bool,
 ) -> PhysicalComponent:
     """
@@ -107,21 +98,21 @@ def _create_plasma_xz_cross_section(
     lcfs = plasma.shape
     plasma_volume = 2 * np.pi * lcfs.center_of_mass[0] * lcfs.area
 
-    # Update transport parameter values
-    transport_params.kappa.value = (params.kappa_u + params.kappa_l) / 2
-    transport_params.delta.value = (params.delta_u + params.delta_l) / 2
+    # Update transport parameter valupes
+    transport_params.kappa.set_value((params.kappa_u + params.kappa_l) / 2, source)
+    transport_params.delta.set_value((params.delta_u + params.delta_l) / 2, source)
 
-    transport_params.V_p.value = plasma_volume
-    transport_params.kappa_95.value = kappa_95
-    transport_params.delta_95.value = delta_95
+    transport_params.V_p.set_value(plasma_volume, source)
+    transport_params.kappa_95.set_value(kappa_95, source)
+    transport_params.delta_95.set_value(delta_95, source)
 
     # Set mesh options
     lcfs.boundary[0].mesh_options = lcfs_options["lcfs"]
     lcfs.mesh_options = lcfs_options["face"]
 
     if plot:
-        lcfs.plot_options.show_faces = False
-        lcfs.plot_2d(show=True)
+        plasma.plot_options.show_faces = False
+        plasma.plot_2d(show=True)
 
     bluemira_debug(
         f"FB Params\n\n"
@@ -133,8 +124,8 @@ def _create_plasma_xz_cross_section(
 
 
 def _run_transport_solver(
-    transport_params: ParameterFrame,
     transport_solver: CodesSolver,
+    transport_params: ParameterFrame,
     transport_run_mode: Union[str, RunMode],
 ) -> Tuple[ParameterFrame, np.ndarray, np.ndarray, np.ndarray]:
     """Run transport solver"""
@@ -149,60 +140,30 @@ def _run_transport_solver(
     )
 
 
-def _solve_GS_problem(
+def create_mesh(
     plasma: PhysicalComponent,
-    pprime: Callable[[np.ndarray], np.ndarray],
-    ffprime: Callable[[np.ndarray], np.ndarray],
-    I_p: float,
     directory: str,
     mesh_filename: str,
     mesh_name_msh: str,
-    gs_options: FemGradShafranovOptions,
-    plot: bool = False,
-) -> Tuple[float, float]:
+) -> Mesh:
     """
-    Solve Grad-Shafranov problem
+    Create mesh
     """
-    # generate mesh for the Grad-Shafranov solver
     meshing.Mesh(meshfile=os.path.join(directory, mesh_name_msh))(plasma)
-
     msh_to_xdmf(mesh_name_msh, dimensions=(0, 2), directory=directory)
-
-    mesh = import_mesh(mesh_filename, directory=directory, subdomains=True)[0]
-
-    # initialize the Grad-Shafranov solver
-    gs_solver = FemGradShafranovFixedBoundary(mesh, p_order=gs_options.p_order)
-
-    bluemira_print("Solving fixed boundary Grad-Shafranov...")
-
-    gs_solver.solve(
-        pprime,
-        ffprime,
-        iter_err_max=gs_options.iter_err_max,
-        max_iter=gs_options.max_iter,
-        relaxation=gs_options.relaxation,
-        plot=plot,
-    )
-
-    _, kappa_95, delta_95 = calculate_plasma_shape_params(
-        gs_solver.psi_norm_2d,
-        mesh,
-        np.sqrt(0.95),
-    )
-
-    return delta_95, kappa_95
+    return import_mesh(mesh_filename, directory=directory, subdomains=True)[0]
 
 
-def _update_delta_kappa_iteration_err(
+def _update_delta_kappa(
     params: PlasmaFixedBoundaryParams,
-    delta_95: float,
-    delta95_t: float,
     kappa_95: float,
     kappa95_t: float,
+    delta_95: float,
+    delta95_t: float,
     relaxation: float,
-) -> Tuple[float, float, float]:
+) -> float:
     """
-    Recalculate Delta, Kappa and the iteration error
+    Recalculate Delta and Kappa and calculate the iteration error
     """
     err_delta = abs(delta_95 - delta95_t) / delta95_t
     err_kappa = abs(kappa_95 - kappa95_t) / kappa95_t
@@ -227,26 +188,28 @@ def _update_delta_kappa_iteration_err(
         f"|Target - Actual|/Target = {err_delta:.3e}\n"
         f"|Target - bluemira|/Target = {err_kappa:.3e}\n"
     )
-    return delta_u, kappa_u, iter_err
+    params.kappa_u = kappa_u
+    params.delta_u = delta_u
+
+    return iter_err
 
 
 def solve_transport_fixed_boundary(
     plasma_parameterisation: Type[GeometryParameterisation],
     params: PlasmaFixedBoundaryParams,
+    transport_solver: CodesSolver,
     transport_params: ParameterFrame,
-    build_config: Dict,
-    gs_options: FemGradShafranovOptions,
-    delta95_t: float,
+    gs_solver: FemGradShafranovFixedBoundary,
     kappa95_t: float,
+    delta95_t: float,
     lcar_mesh: float = 0.15,
     max_iter: int = 30,
     iter_err_max: float = 1e-5,
     relaxation: float = 0.2,
-    plot: bool = False,
-    transport_code_module: str = "PLASMOD",
     transport_run_mode: Union[str, RunMode] = "run",
     mesh_filename: str = "FixedBoundaryEquilibriumMesh",
-) -> PlasmaFixedBoundaryParams:
+    plot: bool = False,
+):
     """
     Solve the plasma fixed boundary problem using delta95 and kappa95 as target
     values and iterating on a transport solver to have consistency with pprime
@@ -258,35 +221,35 @@ def solve_transport_fixed_boundary(
         Geometry parameterisation class for the plasma
     params: PlasmaFixedBoundaryParams
         dataclass of variables to use in the PLASMOD solve
-    build_config: dict
-        Build configuration to use in the PLASMOD solve
-    gs_options: FemGradShafranovOptions
-        Set of options used to set up and run the FemGradShafranovFixedBoundary
-    delta95_t: float
-        Target value for delta at 95%
+    transport_solver: CodesSolver
+        Transport Solver to call
+    transport_params: ParameterFrame
+        ParameterFrame for transport solver
+    gs_solver: FemGradShafranovFixedBoundary
+        Grad-Shafranov Solver instance
     kappa95_t: float
         Target value for kappa at 95%
+    delta95_t: float
+        Target value for delta at 95%
     lcar_mesh: float
         Value of the characteristic length used to generate the mesh to solve the
         Grad-Shafranov problem
     max_iter: int
-        Maximum number of iteration between Grad-Shafranov and PLASMOD
+        Maximum number of iteration between Grad-Shafranov and the transport solver
     iter_err_max: float
         Convergence maximum error to stop the iteration
     relaxation: float
         Iteration relaxing factor
-    plot: bool
-        Whether or not to plot
-    transport_code_module: str
-        transport code to run
     transport_run_mode: str
-        transport code run mode
+        Run mode for transport solver
     mesh_filename: str
         filename for mesh output file
+    plot: bool
+        Whether or not to plot
 
     """
-    delta_95 = delta95_t
     kappa_95 = kappa95_t
+    delta_95 = delta95_t
 
     directory = get_bluemira_path("", subfolder="generated_data")
     mesh_name_msh = mesh_filename + ".msh"
@@ -300,58 +263,61 @@ def solve_transport_fixed_boundary(
         "lcfs": {"lcar": lcar_mesh, "physical_group": "lcfs"},
     }
 
-    transport_solver = transport_code_solver(
-        params=transport_params,
-        build_config=build_config,
-        module=transport_code_module,
-    )
-
     for n_iter in range(max_iter):
 
-        plasma = _create_plasma_xz_cross_section(
+        plasma = create_plasma_xz_cross_section(
             parameterisation,
             transport_params,
             params,
-            delta_95,
             kappa_95,
+            delta_95,
             lcfs_options,
+            f"from equilibrium iteration {n_iter}",
             plot,
         )
 
         transp_out_params, x, pprime, ffprime = _run_transport_solver(
-            transport_params, transport_solver, transport_run_mode
+            transport_solver, transport_params, transport_run_mode
         )
 
         if plot:
             plot_profile(x, _interpolate_profile(x, pprime)(x), "pprime", "-")
             plot_profile(x, _interpolate_profile(x, ffprime)(x), "ffrime", "-")
 
-        delta_95, kappa_95 = _solve_GS_problem(
+        mesh = create_mesh(
             plasma,
-            _interpolate_profile(x, pprime),
-            _interpolate_profile(x, ffprime),
-            transp_out_params.I_p.value,
             directory,
             mesh_filename,
             mesh_name_msh,
-            gs_options,
-            plot,
         )
 
-        delta_u, kappa_u, iter_err = _update_delta_kappa_iteration_err(
+        gs_solver.set_mesh(mesh)
+        gs_solver.define_g(
+            _interpolate_profile(x, pprime),
+            _interpolate_profile(x, ffprime),
+            transp_out_params.I_p.value,
+        )
+
+        bluemira_print("Solving fixed boundary Grad-Shafranov...")
+
+        gs_solver.solve(plot=plot)
+
+        _, kappa_95, delta_95 = calculate_plasma_shape_params(
+            gs_solver.psi_norm_2d,
+            mesh,
+            np.sqrt(0.95),
+        )
+
+        iter_err = _update_delta_kappa(
             params,
-            delta_95,
-            delta95_t,
             kappa_95,
             kappa95_t,
+            delta_95,
+            delta95_t,
             relaxation,
         )
 
         bluemira_print(f"PLASMOD <-> Fixed boundary G-S iter {n_iter} : {iter_err:.3E}")
-
-        # update parameters
-        params.delta_u = delta_u
-        params.kappa_u = kappa_u
 
         if iter_err <= iter_err_max:
             message = bluemira_print
@@ -359,6 +325,7 @@ def solve_transport_fixed_boundary(
             ltgt = "<"
             break
 
+        # update parameters
         for name, value in asdict(params).items():
             parameterisation.adjust_variable(name, value)
 
@@ -376,5 +343,3 @@ def solve_transport_fixed_boundary(
         f"Actual delta_95: {delta_95:.3f}\n\t"
         f"Error: {iter_err:.3E} {ltgt} {iter_err_max:.3E}\n"
     )
-
-    return params
