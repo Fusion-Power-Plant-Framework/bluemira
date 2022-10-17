@@ -43,7 +43,11 @@ A geometry tutorial for users.
 # Let's start out by importing all the basic objects, and some typical tools
 
 # %%
+import os
+
 import numpy as np
+
+from bluemira.base.file import get_bluemira_path
 
 # Some display functionality
 from bluemira.display import plot_2d, show_cad
@@ -318,4 +322,10 @@ show_cad([cut_box_1, new_cut_box_1], options=blue_red_options)
 my_shapes = [cut_box_1]
 # Modify this file path to where you want to save the data.
 my_file_path = "my_tutorial_assembly.STP"
-save_as_STP(my_shapes, filename=my_file_path, scale=1)
+save_as_STP(
+    my_shapes,
+    filename=os.path.join(
+        get_bluemira_path("", subfolder="generated_data"), my_file_path
+    ),
+    scale=1,
+)
