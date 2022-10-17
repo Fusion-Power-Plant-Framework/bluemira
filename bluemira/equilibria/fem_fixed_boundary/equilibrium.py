@@ -23,7 +23,7 @@
 import os
 from copy import deepcopy
 from dataclasses import asdict, dataclass, fields
-from typing import Callable, Dict, Tuple, Union
+from typing import Callable, Dict, List, Tuple, Union
 
 import numpy as np
 from dolfin import Mesh
@@ -62,6 +62,8 @@ class PlasmaFixedBoundaryParams:
     delta_u: float
     delta_l: float
 
+    _fields = None
+
     def tabulate(self) -> str:
         """
         Tabulate dataclass
@@ -72,6 +74,13 @@ class PlasmaFixedBoundaryParams:
             tablefmt="simple",
             numalign="right",
         )
+
+    @classmethod
+    def fields(cls) -> List:
+        """List of fields in the dataclass"""
+        if cls._fields is None:
+            cls._fields = [k.name for k in fields(cls)]
+        return cls._fields
 
 
 @dataclass
@@ -269,14 +278,13 @@ def solve_transport_fixed_boundary(
     directory = get_bluemira_path("", subfolder="generated_data")
     mesh_name_msh = mesh_filename + ".msh"
 
-    pfb_fields = [k.name for k in fields(PlasmaFixedBoundaryParams)]
     paramet_params = PlasmaFixedBoundaryParams(
         **{
             k: v
             for k, v in zip(
                 parameterisation.variables.names, parameterisation.variables.values
             )
-            if k in pfb_fields
+            if k in PlasmaFixedBoundaryParams.fields()
         }
     )
 
