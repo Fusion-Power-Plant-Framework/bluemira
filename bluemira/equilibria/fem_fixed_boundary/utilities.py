@@ -233,41 +233,6 @@ def get_tricontours(
     return [tcg.create_contour(val)[0][0] for val in value]
 
 
-def find_flux_surface_precise_OLD(psi_norm_func, mesh, psi_norm, xtol=1e-7):
-    """
-    Find a flux surface in the psi function precisely.
-
-    Parameters
-    ----------
-    psi_norm_func: Callable
-        Function to calculate normalised psi
-    mesh: dolfin.Mesh
-        Mesh object to use to estimate extrema prior to optimisation
-    psi_norm: float
-        Normalised psi value for which to calculate the shape parameters
-    xtol: float
-        Precision ersatz
-
-    Returns
-    -------
-    points: np.ndarray
-        x, z coordinates of the flux surface
-    """
-    points = mesh.coordinates()
-    psi_norm_array = [psi_norm_func(x) for x in points]
-    contour = get_tricontours(points[:, 0], points[:, 1], psi_norm_array, psi_norm)[0]
-
-    new_contour = 0 * contour
-    for i in range(len(contour)):
-        new_contour[i, :] = scipy.optimize.fsolve(
-            lambda x: psi_norm_func(x) - psi_norm,
-            contour[i, :],
-            xtol=xtol,
-        )
-    x, z = new_contour.T
-    return x, z
-
-
 def find_flux_surface(psi_norm_func, psi_norm, mesh=None, n_points=100):
     """
     Find a flux surface in the psi_norm function precisely by normalised psi value.
@@ -288,16 +253,10 @@ def find_flux_surface(psi_norm_func, psi_norm, mesh=None, n_points=100):
 
     Returns
     -------
-    x: np.ndarray
-        x coordinates of the flux surface
-    z: np.ndarray
-        z coordinates of the flux surface
+    points: np.ndarray
+        x, z coordinates of the flux surface
     """
-    search_range = mesh.hmax()
-    x_axis, z_axis = find_magnetic_axis(lambda x: -psi_norm_func(x), mesh)
-    mpoints = mesh.coordinates()
-    psi_norm_array = [psi_norm_func(x) for x in mpoints]
-    contour = get_tricontours(mpoints[:, 0], mpoints[:, 1], psi_norm_array, psi_norm)[0]
+    x_axis, z_axis = find_magnetic_axis(lambda x: -psi_norm_func(x), mesh=mesh)
 
     if mesh:
         search_range = mesh.hmax()
@@ -477,8 +436,8 @@ def find_magnetic_axis(psi_func, mesh=None):
 
     Returns
     -------
-    psi_axis: float
-        Maximum psi in the continuous psi function [V.s]
+    mag_axis: np.ndarray
+        Position vector (2) of the magnetic axis [m]
     """
     if mesh:
         points = mesh.coordinates()

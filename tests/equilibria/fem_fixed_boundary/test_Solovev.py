@@ -210,7 +210,7 @@ class TestSolovevZheng:
         # initialize the Grad-Shafranov solver
         p = 2
         gs_solver = FemMagnetostatic2d(p_order=p)
-        gs_solver.set_mesh(mesh, boundaries)
+        gs_solver.set_mesh(cls.mesh, boundaries)
 
         # Set the right hand side of the Grad-Shafranov equation, as a function of psi
         g = dolfin.Expression(
