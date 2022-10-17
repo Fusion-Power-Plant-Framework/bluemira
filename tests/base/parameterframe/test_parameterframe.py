@@ -221,17 +221,20 @@ class TestParameterFrame:
         frame = BasicFrame.from_dict(FRAME_DATA)
 
         frame.update_from_dict(
-            {"height": {"value": 160.4, "unit": "m", "source": "a test"}}
+            {
+                "height": {
+                    "name": "height",
+                    "value": 160.4,
+                    "unit": "m",
+                    "source": "a test",
+                },
+                "age": {"value": 20, "unit": "years"},
+            }
         )
 
         assert frame.height.value == 160.4
         assert frame.height.source == "a test"
-        assert (
-            frame.age.value
-            == pint.Quantity(FRAME_DATA["age"]["value"], FRAME_DATA["age"]["unit"])
-            .to("s")
-            .magnitude
-        )
+        assert frame.age.value == pint.Quantity(20, "years").to("s").magnitude
         assert frame.age.source != "a test"
 
     def _call_tabulate(self, head_keys):
