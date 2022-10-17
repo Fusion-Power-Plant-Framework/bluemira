@@ -25,6 +25,7 @@ An example that shows how to set up the problem for the fixed boundary equilibri
 
 # %%
 import os
+import shutil
 from dataclasses import dataclass
 
 from bluemira.base.file import get_bluemira_root
@@ -61,11 +62,10 @@ johner_params = PlasmaFixedBoundaryParams(
 # Initialise the transport solver in this case PLASMOD is used
 
 # %%
-
-if plasmod_binary := shutil.which("plasmod") is None:
-    PLASMOD_PATH = os.path.join(os.path.dirname(get_bluemira_root()), "plasmod/bin")
-else:
+if plasmod_binary := shutil.which("plasmod"):
     PLASMOD_PATH = os.path.dirname(plasmod_binary)
+else:
+    PLASMOD_PATH = os.path.join(os.path.dirname(get_bluemira_root()), "plasmod/bin")
 binary = os.path.join(PLASMOD_PATH, "plasmod")
 
 

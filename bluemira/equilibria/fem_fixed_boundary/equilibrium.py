@@ -47,6 +47,8 @@ from bluemira.geometry.parameterisations import GeometryParameterisation
 from bluemira.mesh import meshing
 from bluemira.mesh.tools import import_mesh, msh_to_xdmf
 
+__all__ = ["solve_transport_fixed_boundary"]
+
 
 @dataclass
 class PlasmaFixedBoundaryParams:
