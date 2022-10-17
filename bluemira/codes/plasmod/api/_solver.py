@@ -100,7 +100,10 @@ class Solver(CodesSolver):
         if isinstance(params, ParameterFrame):
             self.params.update_from_frame(params)
         else:
-            self.params.update_values(params)
+            try:
+                self.params.update_from_dict(params)
+            except TypeError:
+                self.params.update_values(params)
 
         self.build_config = {} if build_config is None else build_config
         self.binary = self.build_config.get("binary", PLASMOD_BINARY)

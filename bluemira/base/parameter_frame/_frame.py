@@ -71,30 +71,29 @@ class ParameterFrame:
 
     def update_values(
         self,
-        new_values: Dict[str, Union[ParameterValueType, ParamDictT]],
+        new_values: Dict[str, ParameterValueType, ParamDictT],
         source: str = "",
     ):
         """Update the given parameter values."""
         for key, value in new_values.items():
             param: Parameter = getattr(self, key)
-            if (
-                isinstance(value, Dict)
-                and value.keys() <= ParamDictT.__annotations__.keys()
-            ):
-                if "name" in value:
-                    del value["name"]
-                value_type = _validate_parameter_field(
-                    key, self.__dataclass_fields__[key].type
-                )
-                new_param = Parameter(name=key, **value, _value_types=value_type)
-                new_val = raw_uc(new_param.value, new_param.unit, param.unit)
-                param.set_value(new_val, new_param.source)
-                if new_param.long_name != "":
-                    param._long_name = new_param.long_name
-                if new_param.description != "":
-                    param._description = new_param.description
-            else:
-                param.set_value(value, source)
+            param.set_value(value, source)
+
+    def update_from_dict(self, new_values: ParamDictT):
+        """Update from dictionary representation of Parameter"""
+        for key, value in new_values.items():
+            param: Parameter = getattr(self, key)
+            if "name" in value:
+                del value["name"]
+            value_type = _validate_parameter_field(
+                key, self.__dataclass_fields__[key].type
+            )
+            new_param = Parameter(name=key, **value, _value_types=value_type)
+            param.set_value(new_param.value_as(param.unit), new_param.source)
+            if new_param.long_name != "":
+                param._long_name = new_param.long_name
+            if new_param.description != "":
+                param._description = new_param.description
 
     def update_from_frame(self, frame: ParameterFrame):
         """Update the frame with the values of another frame"""
