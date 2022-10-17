@@ -320,10 +320,12 @@ class TestPlasmodSolver:
 
         assert getattr(solver, key) == default
 
-    @pytest.mark.parametrize("param_type", ["dict", "frame"])
+    @pytest.mark.parametrize("param_type", ["kvdict", "dict", "frame"])
     def test_execute_in_run_mode_sets_expected_params(self, param_type):
-        if param_type == "dict":
+        if param_type == "kvdict":
             param = {k: data["value"] for k, data in self.default_pf.to_dict().items()}
+        elif param_type == "dict":
+            param = self.default_pf.to_dict()
         else:
             param = self.default_pf
 

@@ -25,85 +25,85 @@ An example that shows how to set up the problem for the fixed boundary equilibri
 
 # %%
 import os
+import shutil
 
-from bluemira.base.config import Configuration
 from bluemira.base.file import get_bluemira_root
 from bluemira.base.logs import set_log_level
-from bluemira.builders.plasma import MakeParameterisedPlasma
+from bluemira.codes import transport_code_solver
 from bluemira.equilibria.fem_fixed_boundary.equilibrium import (
-    solve_plasmod_fixed_boundary,
+    solve_transport_fixed_boundary,
 )
+from bluemira.equilibria.fem_fixed_boundary.fem_magnetostatic_2D import (
+    FemGradShafranovFixedBoundary,
+)
+from bluemira.equilibria.shapes import JohnerLCFS
 
 set_log_level("NOTSET")
 
+# %%[markdown]
+# Setup the Plasma shape parameterisation variables
+
 # %%
-main_params = {
-    "R_0": 8.9830e00,
-    "A": 3.1,
-    "kappa_u": 1.6,
-    "kappa_l": 1.75,
-    "delta_u": 0.33,
-    "delta_l": 0.45,
-    "I_p": 19e6,
-    "B_0": 5.31,
-}
-
-build_config = {
-    "name": "Plasma",
-    "class": "MakeParameterisedPlasma",
-    "param_class": "bluemira.equilibria.shapes::JohnerLCFS",
-    "variables_map": {
-        "r_0": "R_0",
-        "a": "A",
-        "kappa_u": "kappa_u",
-        "kappa_l": "kappa_l",
-        "delta_u": "delta_u",
-        "delta_l": "delta_l",
-    },
-}
-
-Configuration.set_template_parameters(
-    [
-        ["kappa_u", "kappa_u", "", "dimensionless"],
-        ["kappa_l", "kappa_l", "", "dimensionless"],
-        ["delta_u", "delta_u", "", "dimensionless"],
-        ["delta_l", "delta_l", "", "dimensionless"],
-        ["kappa_95", "kappa_95", "", "dimensionless"],
-        ["delta_95", "delta_95", "", "dimensionless"],
-    ]
+johner_parameterisation = JohnerLCFS(
+    {
+        "r_0": {"value": 8.9830e00},
+        "a": {"value": 3.1},
+        "kappa_u": {"value": 1.6},
+        "kappa_l": {"value": 1.75},
+        "delta_u": {"value": 0.33},
+        "delta_l": {"value": 0.45},
+    }
 )
 
-builder_plasma = MakeParameterisedPlasma(main_params, build_config)
+# %%[markdown]
+# Initialise the transport solver in this case PLASMOD is used
 
-new_params = {
-    "A": main_params["A"],
-    "R_0": main_params["R_0"],
-    "I_p": main_params["I_p"] / 1e6,
-    "B_0": main_params["B_0"],
-    "V_p": -2500,
-    "v_burn": -1.0e6,
-    "kappa_95": 1.652,
-    "delta_95": 0.333,
-    "delta": (main_params["delta_l"] + main_params["delta_u"]) / 2,
-    "kappa": (main_params["kappa_l"] + main_params["kappa_u"]) / 2,
-    "q_95": 3.25,
-    "f_ni": 0,
-}
-
-# PLASMOD options
-PLASMOD_PATH = os.path.join(os.path.split(get_bluemira_root())[:-1][0], "plasmod/bin")
+# %%
+if plasmod_binary := shutil.which("plasmod"):
+    PLASMOD_PATH = os.path.dirname(plasmod_binary)
+else:
+    PLASMOD_PATH = os.path.join(os.path.dirname(get_bluemira_root()), "plasmod/bin")
 binary = os.path.join(PLASMOD_PATH, "plasmod")
 
-plasmod_params = Configuration(new_params)
 
-# Add parameter source
-for param_name in plasmod_params.keys():
-    if param_name in new_params:
-        param = plasmod_params.get_param(param_name)
-        param.source = "Plasmod Example"
+source = "Plasmod Example"
+plasmod_params = {
+    "A": {"value": johner_parameterisation.variables.a, "unit": "", "source": source},
+    "R_0": {
+        "value": johner_parameterisation.variables.r_0,
+        "unit": "m",
+        "source": source,
+    },
+    "I_p": {"value": 19e6, "unit": "A", "source": source},
+    "B_0": {"value": 5.31, "unit": "T", "source": source},
+    "V_p": {"value": -2500, "unit": "m^3", "source": source},
+    "v_burn": {"value": -1.0e6, "unit": "V", "source": source},
+    "kappa_95": {"value": 1.652, "unit": "", "source": source},
+    "delta_95": {"value": 0.333, "unit": "", "source": source},
+    "delta": {
+        "value": (
+            johner_parameterisation.variables.delta_l
+            + johner_parameterisation.variables.delta_u
+        )
+        / 2,
+        "unit": "",
+        "source": source,
+    },
+    "kappa": {
+        "value": (
+            johner_parameterisation.variables.kappa_l
+            + johner_parameterisation.variables.kappa_u
+        )
+        / 2,
+        "unit": "",
+        "source": source,
+    },
+    "q_95": {"value": 3.25, "unit": "", "source": source},
+    "f_ni": {"value": 0, "unit": "", "source": source},
+}
 
 problem_settings = {
-    "amin": new_params["R_0"] / new_params["A"],
+    "amin": plasmod_params["R_0"]["value"] / plasmod_params["A"]["value"],
     "pfus_req": 2000.0,
     "pheat_max": 100.0,
     "q_control": 50.0,
@@ -119,29 +119,38 @@ plasmod_build_config = {
     "binary": binary,
 }
 
-gs_options = {
-    "p_order": 2,
-    "max_iter": 30,
-    "iter_err_max": 1e-4,
-    "relaxation": 0.05,
-    "plot": False,
-}
+plasmod_solver = transport_code_solver(
+    params=plasmod_params,
+    build_config=plasmod_build_config,
+    module="PLASMOD",
+)
 
-# target values
-delta95_t = 0.333
-kappa95_t = 1.652
+# %%[markdown]
+# Initialise the FEM problem
 
-solve_plasmod_fixed_boundary(
-    builder_plasma,
-    plasmod_params,
-    plasmod_build_config,
-    gs_options,
-    delta95_t,
-    kappa95_t,
+# %%
+
+fem_GS_fixed_boundary = FemGradShafranovFixedBoundary(
+    p_order=2,
+    max_iter=30,
+    iter_err_max=1e-4,
+    relaxation=0.05,
+)
+
+# %%[markdown]
+# Solve
+
+# %%
+
+solve_transport_fixed_boundary(
+    johner_parameterisation,
+    plasmod_solver,
+    fem_GS_fixed_boundary,
+    kappa95_t=1.652,  # Target kappa_95
+    delta95_t=0.333,  # Target delta_95
     lcar_mesh=0.3,
     max_iter=15,
     iter_err_max=1e-4,
     relaxation=0.0,
     plot=False,
-    verbose=False,
 )

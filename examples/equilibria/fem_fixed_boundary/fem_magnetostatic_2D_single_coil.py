@@ -114,8 +114,7 @@ c_coil = PhysicalComponent(name="coil", shape=coil, parent=c_universe)
 
 # %%
 
-m = meshing.Mesh()
-m(c_universe, dim=2)
+meshing.Mesh()(c_universe, dim=2)
 
 # %%[markdown]
 
@@ -141,7 +140,8 @@ plt.show()
 
 # %%
 
-em_solver = FemMagnetostatic2d(mesh, boundaries, 3)
+em_solver = FemMagnetostatic2d(3)
+em_solver.set_mesh(mesh, boundaries)
 
 # %%[markdown]
 
@@ -175,7 +175,8 @@ plt.show()
 
 # %%
 
-em_solver.solve(jtot)
+em_solver.define_g(jtot)
+em_solver.solve()
 em_solver.calculate_b()
 
 # %%[markdown]
