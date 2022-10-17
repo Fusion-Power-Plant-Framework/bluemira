@@ -272,7 +272,7 @@ def solve_transport_fixed_boundary(
     pfb_fields = [k.name for k in fields(PlasmaFixedBoundaryParams)]
     paramet_params = PlasmaFixedBoundaryParams(
         **{
-            k.name: v
+            k: v
             for k, v in zip(
                 parameterisation.variables.names, parameterisation.variables.values
             )
