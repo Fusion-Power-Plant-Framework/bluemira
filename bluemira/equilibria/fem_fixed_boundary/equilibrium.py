@@ -22,7 +22,7 @@
 """Fixed boundary equilibrium solve"""
 import os
 from copy import deepcopy
-from dataclasses import asdict, dataclass
+from dataclasses import asdict, dataclass, fields
 from typing import Callable, Dict, Tuple, Union
 
 import numpy as np
@@ -269,13 +269,14 @@ def solve_transport_fixed_boundary(
     directory = get_bluemira_path("", subfolder="generated_data")
     mesh_name_msh = mesh_filename + ".msh"
 
+    pfb_fields = [k.name for k in fields(PlasmaFixedBoundaryParams)]
     paramet_params = PlasmaFixedBoundaryParams(
         **{
-            k: v
+            k.name: v
             for k, v in zip(
                 parameterisation.variables.names, parameterisation.variables.values
             )
-            if k in PlasmaFixedBoundaryParams.__annotations__.keys()
+            if k in pfb_fields
         }
     )
 
