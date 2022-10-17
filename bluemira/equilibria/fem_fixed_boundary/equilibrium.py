@@ -33,7 +33,7 @@ from tabulate import tabulate
 from bluemira.base.components import PhysicalComponent
 from bluemira.base.file import get_bluemira_path
 from bluemira.base.look_and_feel import bluemira_debug, bluemira_print, bluemira_warn
-from bluemira.base.parameter_frame import ParameterFrame
+from bluemira.base.parameter_frame import Parameter, ParameterFrame
 from bluemira.base.solver import RunMode
 from bluemira.codes.interface import CodesSolver
 from bluemira.equilibria.fem_fixed_boundary.fem_magnetostatic_2D import (
@@ -72,6 +72,24 @@ class PlasmaFixedBoundaryParams:
             tablefmt="simple",
             numalign="right",
         )
+
+
+@dataclass
+class TransportSolverParams(ParameterFrame):
+    """Transport Solver ParameterFrame"""
+
+    A: Parameter[float]
+    R_0: Parameter[float]
+    I_p: Parameter[float]
+    B_0: Parameter[float]
+    V_p: Parameter[float]
+    v_burn: Parameter[float]
+    kappa_95: Parameter[float]
+    delta_95: Parameter[float]
+    delta: Parameter[float]
+    kappa: Parameter[float]
+    q_95: Parameter[float]
+    f_ni: Parameter[float]
 
 
 def _interpolate_profile(
@@ -261,7 +279,9 @@ def solve_transport_fixed_boundary(
         }
     )
 
-    transport_params = deepcopy(transport_solver.params)
+    transport_params = TransportSolverParams.from_frame(
+        deepcopy(transport_solver.params)
+    )
 
     lcfs_options = {
         "face": {"lcar": lcar_mesh, "physical_group": "plasma_face"},
