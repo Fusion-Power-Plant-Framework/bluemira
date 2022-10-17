@@ -14,7 +14,7 @@ llvmlite==0.39.1
 matplotlib==3.5.3
 neutronics-material-maker==0.1.11
 nlopt==2.7.1
-numba==0.56.2
+numba==0.56.3
 numba-scipy==0.3.1
 numexpr==2.8.3
 numpy==1.22.4
