@@ -62,7 +62,10 @@ johner_params = PlasmaFixedBoundaryParams(
 
 # %%
 
-PLASMOD_PATH = os.path.join(os.path.split(get_bluemira_root())[:-1][0], "plasmod/bin")
+if plasmod_binary := shutil.which("plasmod") is None:
+    PLASMOD_PATH = os.path.join(os.path.dirname(get_bluemira_root()), "plasmod/bin")
+else:
+    PLASMOD_PATH = os.path.dirname(plasmod_binary)
 binary = os.path.join(PLASMOD_PATH, "plasmod")
 
 

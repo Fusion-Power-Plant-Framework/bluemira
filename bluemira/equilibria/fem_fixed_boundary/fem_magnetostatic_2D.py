@@ -129,6 +129,7 @@ class FemMagnetostatic2d:
     def define_g(self, g: Union[dolfin.Expression, dolfin.Function]):
         """
         Define g, the right hand side function of the Poisson problem
+
         Parameters
         ----------
         g : Union[dolfin.Expression, dolfin.Function]

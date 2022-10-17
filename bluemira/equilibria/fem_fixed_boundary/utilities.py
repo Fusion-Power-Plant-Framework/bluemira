@@ -94,7 +94,7 @@ class ScalarSubFunc(dolfin.UserExpression):
             return functions
         raise ValueError(
             "Accepted functions are instance of (int, float, Callable)"
-            "or alist of them."
+            "or a list of them."
         )
 
     def eval_cell(self, values: List, x: float, cell):

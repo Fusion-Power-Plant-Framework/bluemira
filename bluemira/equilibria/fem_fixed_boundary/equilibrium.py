@@ -321,7 +321,7 @@ def solve_transport_fixed_boundary(
 
         if iter_err <= iter_err_max:
             message = bluemira_print
-            line_1 = f"successfully converged within {n_iter}"
+            line_1 = f"successfully converged in {n_iter} iterations"
             ltgt = "<"
             break
 
