@@ -30,8 +30,13 @@ Wrapper for FreeCAD Part.Compounds objects
 
 from __future__ import annotations
 
-from bluemira.codes._freecadapi import apiCompound
+import bluemira.codes._freecadapi as cadapi
 from bluemira.geometry.base import BluemiraGeo
+from bluemira.geometry.coordinates import Coordinates
+from bluemira.geometry.face import BluemiraFace
+from bluemira.geometry.shell import BluemiraShell
+from bluemira.geometry.solid import BluemiraSolid
+from bluemira.geometry.wire import BluemiraWire
 
 
 class BluemiraCompound(BluemiraGeo):
@@ -41,6 +46,54 @@ class BluemiraCompound(BluemiraGeo):
         boundary_classes = [BluemiraGeo]
         super().__init__(boundary, label, boundary_classes)
 
-    def create_shape(self) -> apiCompound:
+    def create_shape(self) -> cadapi.apiCompound:
         """apiCompound: shape of the object as a single compound"""
-        return apiCompound([s.shape for s in self.boundary])
+        return cadapi.apiCompound([s.shape for s in self.boundary])
+
+    @property
+    def vertexes(self):
+        """
+        The vertexes of the compound.
+        """
+        return Coordinates(cadapi.vertexes(self.shape))
+
+    @property
+    def edges(self):
+        """
+        The edges of the compound.
+        """
+        return [BluemiraWire(cadapi.apiWire(o)) for o in cadapi.edges(self.shape)]
+
+    @property
+    def wires(self):
+        """
+        The wires of the compound.
+        """
+        return [BluemiraWire(o) for o in cadapi.wires(self.shape)]
+
+    @property
+    def faces(self):
+        """
+        The faces of the compound.
+        """
+        return [BluemiraFace(o) for o in cadapi.faces(self.shape)]
+
+    @property
+    def shells(self):
+        """
+        The shells of the compound.
+        """
+        return [BluemiraShell(o) for o in cadapi.shells(self.shape)]
+
+    @property
+    def solids(self):
+        """
+        The solids of the compound.
+        """
+        return [BluemiraSolid(o) for o in cadapi.solids(self.shape)]
+
+    def shape_boundary(self):
+        """
+        The boundaries of the compound. Ill-defined, so None.
+        """
+        return None

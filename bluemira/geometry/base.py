@@ -36,6 +36,7 @@ import bluemira.mesh.meshing as meshing
 # import freecad api
 from bluemira.codes import _freecadapi as cadapi
 from bluemira.geometry.bound_box import BoundingBox
+from bluemira.geometry.coordinates import Coordinates
 
 
 class GeoMeshable(meshing.Meshable):
@@ -354,20 +355,58 @@ class BluemiraGeo(ABC, GeoMeshable):
             geo_copy.label = self.label
         return geo_copy
 
-    # Obsolete.
-    # It was used to getattr from the primitive object, but it was replaced
-    # with specific implementation into the respective api. However it could be still
-    # useful (for this reason is just commented).
-    # def __getattr__(self, key):
-    #     """
-    #     Transfer the key getattr to shape object.
-    #     """
-    #     if key in type(self).attrs:
-    #         output = getattr(self.shape, type(self).attrs[key])
-    #         if callable(output):
-    #             return self.__class__._converter(output)
-    #         else:
-    #             return output
-    #     else:
-    #         raise AttributeError("'{}' has no attribute '{}'".format(str(type(
-    #             self).__name__), key))
+    @property
+    @abstractmethod
+    def vertexes(self):
+        """
+        The vertexes of the BluemiraGeo.
+        """
+        pass
+
+    @property
+    @abstractmethod
+    def edges(self):
+        """
+        The edges of the BluemiraGeo.
+        """
+        pass
+
+    @property
+    @abstractmethod
+    def wires(self):
+        """
+        The wires of the BluemiraGeo.
+        """
+        pass
+
+    @property
+    @abstractmethod
+    def faces(self):
+        """
+        The faces of the BluemiraGeo.
+        """
+        pass
+
+    @property
+    @abstractmethod
+    def shells(self):
+        """
+        The shells of the BluemiraGeo.
+        """
+        pass
+
+    @property
+    @abstractmethod
+    def solids(self):
+        """
+        The solids of the BluemiraGeo.
+        """
+        pass
+
+    @property
+    @abstractmethod
+    def shape_boundary(self):
+        """
+        The boundaries of the BluemiraGeo.
+        """
+        pass

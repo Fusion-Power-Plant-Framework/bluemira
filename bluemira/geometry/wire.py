@@ -82,14 +82,13 @@ class BluemiraWire(BluemiraGeo):
         return self._create_wire()
 
     def _create_wire(self, check_reverse=True):
-        wire = cadapi.apiWire(self._wires)
+        wire = cadapi.apiWire(self._get_wires())
         if check_reverse:
             return self._check_reverse(wire)
         else:
             return wire
 
-    @property
-    def _wires(self) -> List[cadapi.apiWire]:
+    def _get_wires(self) -> List[cadapi.apiWire]:
         """list(apiWire): list of wires of which the shape consists of."""
         wires = []
         for o in self.boundary:
@@ -100,7 +99,7 @@ class BluemiraWire(BluemiraGeo):
                         wire.reverse()
                     wires += [wire]
             else:
-                wires += o._wires
+                wires += o._get_wires()
         return wires
 
     def get_single_wire(self) -> BluemiraWire:
@@ -231,3 +230,52 @@ class BluemiraWire(BluemiraGeo):
         Get the coordinates of the end of the wire.
         """
         return Coordinates(cadapi.end_point(self.shape))
+
+    @property
+    def vertexes(self):
+        """
+        The vertexes of the wire.
+        """
+        return Coordinates(cadapi.vertexes(self.shape))
+
+    @property
+    def edges(self):
+        """
+        The edges of the wire.
+        """
+        return [BluemiraWire(cadapi.apiWire(o)) for o in cadapi.edges(self.shape)]
+
+    @property
+    def wires(self):
+        """
+        The wires of the wire. By definition a list of itself.
+        """
+        return [self]
+
+    @property
+    def faces(self):
+        """
+        The faces of the wire. By definition an empty list.
+        """
+        return []
+
+    @property
+    def shells(self):
+        """
+        The shells of the wire. By definition an empty list.
+        """
+        return []
+
+    @property
+    def solids(self):
+        """
+        The solids of the wire. By definition an empty list.
+        """
+        return []
+
+    @property
+    def shape_boundary(self):
+        """
+        The boundaries of the wire.
+        """
+        return self.edges
