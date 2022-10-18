@@ -21,8 +21,7 @@
 """
 Defines the 'Run' stage of the plasmod solver.
 """
-from os import chdir, getcwd
-
+from bluemira.base.file import working_dir
 from bluemira.base.look_and_feel import bluemira_print
 from bluemira.codes.error import CodesError
 from bluemira.codes.interface import CodesTask
@@ -88,12 +87,9 @@ class Run(CodesTask):
             OSError (e.g., the plasmod binary does not exist).
         """
         bluemira_print(f"Running '{PLASMOD_NAME}' systems code")
-        current_dir = getcwd()
         command = [self.binary, self.input_file, self.output_file, self.profiles_file]
-        try:
-            chdir(self.directory)
-            self._run_subprocess(command)
-        except OSError as os_error:
-            raise CodesError(f"Failed to run plasmod: {os_error}") from os_error
-        finally:
-            chdir(current_dir)
+        with working_dir(self.directory):
+            try:
+                self._run_subprocess(command)
+            except OSError as os_error:
+                raise CodesError(f"Failed to run plasmod: {os_error}") from os_error

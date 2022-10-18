@@ -25,6 +25,7 @@ File I/O functions and some path operations
 
 import os
 import pathlib
+from contextlib import contextmanager
 from typing import Dict, List, Union
 
 BM_ROOT = "!BM_ROOT!"
@@ -236,6 +237,17 @@ def file_name_maker(filename: str, lowercase: bool = False) -> str:
         filename = os.sep.join(split[:-1])
         filename = os.sep.join([filename, split[-1].lower()])
     return filename
+
+
+@contextmanager
+def working_dir(directory: str):
+    """Change working directory"""
+    current_dir = os.getcwd()
+    try:
+        os.chdir(directory)
+        yield
+    finally:
+        os.chdir(current_dir)
 
 
 class FileManager:
