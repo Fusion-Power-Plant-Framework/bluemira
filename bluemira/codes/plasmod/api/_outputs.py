@@ -153,6 +153,8 @@ def read_plasmod_output(io_stream: TextIO) -> Dict[str, Union[np.ndarray, float]
         output_key, *output_value = row[0].split()
         if len(output_value) > 1:
             output[output_key] = np.array(output_value, dtype=float)
+        elif len(output_value) == 0:
+            output[output_key] = np.array([])
         else:
             output[output_key] = float(output_value[0])
     return output

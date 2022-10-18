@@ -27,7 +27,7 @@ An example that shows how to set up the problem for the fixed boundary equilibri
 import os
 import shutil
 
-from bluemira.base.file import get_bluemira_root
+from bluemira.base.file import get_bluemira_path, get_bluemira_root
 from bluemira.base.logs import set_log_level
 from bluemira.codes import transport_code_solver
 from bluemira.equilibria.fem_fixed_boundary.equilibrium import (
@@ -117,6 +117,7 @@ plasmod_build_config = {
     "problem_settings": problem_settings,
     "mode": "run",
     "binary": binary,
+    "directory": get_bluemira_path("", subfolder="generated_data"),
 }
 
 plasmod_solver = transport_code_solver(

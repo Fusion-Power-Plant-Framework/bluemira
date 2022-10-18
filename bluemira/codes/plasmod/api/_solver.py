@@ -21,6 +21,7 @@
 """The API for the plasmod solver."""
 
 from enum import auto
+from pathlib import Path
 from typing import Any, Dict, Iterable, Union
 
 import numpy as np
@@ -113,6 +114,7 @@ class Solver(CodesSolver):
         self.profiles_file = self.build_config.get(
             "profiles_file", self.DEFAULT_PROFILES_FILE
         )
+        self.directory = self.build_config.get("directory", "./")
 
     def execute(self, run_mode: Union[str, RunMode]) -> ParameterFrame:
         """
@@ -134,15 +136,22 @@ class Solver(CodesSolver):
         if isinstance(run_mode, str):
             run_mode = self.run_mode_cls.from_string(run_mode)
 
-        self._setup = Setup(self.params, self.problem_settings, self.input_file)
+        self._setup = Setup(
+            self.params, self.problem_settings, Path(self.directory, self.input_file)
+        )
         self._run = Run(
             self.params,
             self.input_file,
             self.output_file,
             self.profiles_file,
+            self.directory,
             self.binary,
         )
-        self._teardown = Teardown(self.params, self.output_file, self.profiles_file)
+        self._teardown = Teardown(
+            self.params,
+            Path(self.directory, self.output_file),
+            Path(self.directory, self.profiles_file),
+        )
         if setup := self._get_execution_method(self._setup, run_mode):
             setup()
         if run := self._get_execution_method(self._run, run_mode):

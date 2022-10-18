@@ -34,16 +34,14 @@ from bluemira.codes.process.api import _INVariable
 from bluemira.codes.process.mapping import mappings
 
 # fmt: off
-PROCESS_OUT_ONLY_KEYS = [
-    "enbeam", "etanbi", "emult", "shldlth", "pnetelmw", "kappa95", "triang95",
-    "plascur/1d6", "powfmw", "pdt", "pdd", "pdivt", "pcoreradmw", "pedgeradmw",
-    "pedgeradmw", "pradmw", "plinepv*vol", "psyncpv*vol", "pbrempv*vol",
-    "bootipf", "betap", "taueff", "vburn", "fwith", "fwoth", "dr_tf_wp", "wwp1",
-    "tfinsgap", "r_cp_top", "rtfin", "r_tf_inboard_mid", "r_ts_ib_in",
-    "r_vv_ib_in", "r_fw_ib_in", "r_fw_ob_in", "r_vv_ob_in", "r_tf_outboard_mid",
-    "tfbusres", "ztot", "estotftgj", "tflegres", "pinjmw", "qss/1.0D6",
-    "thshield", "bmaxtfrp", "q95", "zeff", "vol", "rli", "faccd", "tfthko",
-    "h_cp_top", "hmax", "r_tf_inboard_out",
+PROCESS_DEFAULT_ONLY_KEYS = [
+    "betap", "bmaxtfrp", "bootipf", "dr_tf_wp", "estotftgj", "faccd", "fwith", "fwoth",
+    "h_cp_top", "hmax", "kappa95", "pbrempv*vol", "pcoreradmw", "pdd", "pdivt", "pdt",
+    "pedgeradmw", "pinjmw", "plascur/1d6", "plinepv*vol", "pnetelmw", "powfmw", "pradmw",
+    "psyncpv*vol", "q95", "qss/1.0D6", "r_cp_top", "r_fw_ib_in", "r_fw_ob_in",
+    "r_tf_inboard_mid", "r_tf_inboard_out", "r_tf_outboard_mid", "r_ts_ib_in",
+    "r_vv_ib_in", "r_vv_ob_in", "rli", "rtfin", "taueff", "tfbusres", "tfinsgap",
+    "tflegres", "tfthko", "thshield", "triang95", "vburn", "vol", "wwp1", "zeff", "ztot",
 ]
 # fmt: on
 
@@ -369,6 +367,7 @@ class ProcessSolverParams(MappedParameterFrame):
         Initialise from defaults
         """
         default_dict = cls._defaults.to_dict()
-        for k in PROCESS_OUT_ONLY_KEYS:
-            default_dict[k] = 0
+        for k in PROCESS_DEFAULT_ONLY_KEYS:
+            if k not in default_dict:
+                default_dict[k] = 0
         return super().from_defaults(default_dict)

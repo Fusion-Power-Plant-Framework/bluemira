@@ -20,6 +20,7 @@
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 
 import os
+import tempfile
 
 import pytest
 
@@ -29,6 +30,7 @@ from bluemira.base.file import (
     force_file_extension,
     get_bluemira_path,
     try_get_bluemira_path,
+    working_dir,
 )
 
 REACTOR_NAME = "TEST_REACTOR"
@@ -250,3 +252,12 @@ def test_force_file_extension():
     assert force_file_extension(file_path, [".mf", ".mo"]) == file_path + ".mf"
     assert force_file_extension(file_path + ".mf", [".mf", ".mo"]) == file_path + ".mf"
     assert force_file_extension(file_path, ".mf") == file_path + ".mf"
+
+
+def test_working_dir_context_manager():
+    cwd = os.getcwd()
+    with working_dir(tempfile.mkdtemp()):
+        changed_cwd = os.getcwd()
+    final_cwd = os.getcwd()
+    assert cwd != changed_cwd
+    assert cwd == final_cwd

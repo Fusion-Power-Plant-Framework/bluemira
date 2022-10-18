@@ -31,7 +31,6 @@ An example to run PROCESS
 
 # %%
 import bluemira.codes.process as process
-from bluemira.base.config import Configuration
 from bluemira.base.file import get_bluemira_path
 from bluemira.base.logs import set_log_level
 
@@ -71,10 +70,10 @@ binary = f"{PROCESS_PATH}process"
 
 # %%
 
-new_params = {
+params = {
     "A": 3.1,
     "R_0": 9.002,
-    "I_p": 17.75,
+    "I_p": 17.75e6,
     "B_0": 5.855,
     "V_p": -2500,
     "v_burn": -1.0e6,
@@ -84,13 +83,6 @@ new_params = {
     "kappa": 1.6969830041844367,
 }
 
-params = Configuration(new_params)
-
-# Add parameter source
-for param_name in params.keys():
-    if param_name in new_params:
-        param = params.get_param(param_name)
-        param.source = "Solver Example"
 
 # %%[markdown]
 # Finally the `build_config` dictionary collates the configuration settings for

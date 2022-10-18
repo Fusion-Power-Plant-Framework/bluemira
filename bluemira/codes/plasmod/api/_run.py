@@ -21,7 +21,7 @@
 """
 Defines the 'Run' stage of the plasmod solver.
 """
-
+from bluemira.base.file import working_dir
 from bluemira.base.look_and_feel import bluemira_print
 from bluemira.codes.error import CodesError
 from bluemira.codes.interface import CodesTask
@@ -48,6 +48,8 @@ class Run(CodesTask):
     profiles_file: str
         The path to which the plasmod profiles output file should be
         written.
+    directory: str
+        The directory to run the code in
     binary: str
         The name of, or path to, the plasmod binary. If this is not an
         absolute path, the binary must be on the system path.
@@ -61,6 +63,7 @@ class Run(CodesTask):
         input_file: str,
         output_file: str,
         profiles_file: str,
+        directory: str = "./",
         binary=PLASMOD_BINARY,
     ):
         super().__init__(params, PLASMOD_NAME)
@@ -68,6 +71,7 @@ class Run(CodesTask):
         self.input_file = input_file
         self.output_file = output_file
         self.profiles_file = profiles_file
+        self.directory = directory
 
     def run(self):
         """
@@ -84,7 +88,8 @@ class Run(CodesTask):
         """
         bluemira_print(f"Running '{PLASMOD_NAME}' systems code")
         command = [self.binary, self.input_file, self.output_file, self.profiles_file]
-        try:
-            self._run_subprocess(command)
-        except OSError as os_error:
-            raise CodesError(f"Failed to run plasmod: {os_error}") from os_error
+        with working_dir(self.directory):
+            try:
+                self._run_subprocess(command)
+            except OSError as os_error:
+                raise CodesError(f"Failed to run plasmod: {os_error}") from os_error

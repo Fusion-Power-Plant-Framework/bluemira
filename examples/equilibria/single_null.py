@@ -127,8 +127,8 @@ coilset = CoilSet(coils)
 
 # %%
 
-coilset.assign_coil_materials("CS", j_max=16.5, b_max=12.5)
-coilset.assign_coil_materials("PF", j_max=12.5, b_max=11.0)
+coilset.assign_coil_materials("CS", j_max=16.5e6, b_max=12.5)
+coilset.assign_coil_materials("PF", j_max=12.5e6, b_max=11.0)
 
 # Later on, we will optimise the PF coil positions, but for the CS coils we can fix sizes
 # and mesh them already.

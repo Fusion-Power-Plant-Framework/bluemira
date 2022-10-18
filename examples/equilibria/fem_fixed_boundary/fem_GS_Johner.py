@@ -24,10 +24,13 @@ Example on the application of the GS solver for a Johner plasma parametrization
 """
 
 # %%
+import os
+
 import matplotlib.pyplot as plt
 import numpy as np
 
 from bluemira.base.components import PhysicalComponent
+from bluemira.base.file import get_bluemira_path
 from bluemira.equilibria.fem_fixed_boundary.fem_magnetostatic_2D import (
     FemGradShafranovFixedBoundary,
 )
@@ -41,6 +44,7 @@ import dolfin  # isort:skip
 
 # %%[markdown]
 # # Create a plasma shape
+
 
 # %%
 var_dict = {"r_0": {"value": 9.0}, "a": {"value": 3.5}}
@@ -56,18 +60,20 @@ plasma.shape.boundary[0].mesh_options = {"lcar": 0.3, "physical_group": "lcfs"}
 # Initialize and create the mesh
 
 # %%
-meshing.Mesh()(plasma)
+directory = get_bluemira_path("", subfolder="generated_data")
+meshfiles = [os.path.join(directory, p) for p in ["Mesh.geo_unrolled", "Mesh.msh"]]
+meshing.Mesh(meshfile=meshfiles)(plasma)
 
 # %%[markdown]
 
 # # Convert to xdmf
 
 # %%
-msh_to_xdmf("Mesh.msh", dimensions=(0, 2), directory=".")
+msh_to_xdmf("Mesh.msh", dimensions=(0, 2), directory=directory)
 
 mesh, boundaries, subdomains, labels = import_mesh(
     "Mesh",
-    directory=".",
+    directory=directory,
     subdomains=True,
 )
 dolfin.plot(mesh)
