@@ -69,11 +69,7 @@ class ParameterFrame:
         for field in fields(self):
             yield getattr(self, field.name)
 
-    def update_values(
-        self,
-        new_values: Dict[str, ParameterValueType, ParamDictT],
-        source: str = "",
-    ):
+    def update_values(self, new_values: Dict[str, ParameterValueType], source: str = ""):
         """Update the given parameter values."""
         for key, value in new_values.items():
             param: Parameter = getattr(self, key)
