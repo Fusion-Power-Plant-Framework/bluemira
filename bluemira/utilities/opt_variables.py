@@ -542,7 +542,7 @@ class OptVariables:
                     f"'{self.__class__.__name__}' object has no attribute '{attr}'"
                 ) from None
 
-    def to_dict(self) -> Dict:
+    def as_dict(self) -> Dict:
         """
         Dictionary Representation of OptVariables
         """
@@ -585,7 +585,7 @@ class OptVariables:
         if keys is not None:
             columns = keys
 
-        records = sorted([tuple(val) for val in self.to_dict().values()])
+        records = sorted([tuple(val) for val in self.as_dict().values()])
 
         return tabulate(
             records,
