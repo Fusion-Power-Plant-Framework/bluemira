@@ -3,7 +3,7 @@
 # codes, to carry out a range of typical conceptual fusion reactor design
 # activities.
 #
-# Copyright (C) 2021 M. Coleman, J. Cook, F. Franza, I.A. Maione, S. McIntosh, J. Morris,
+# Copyright (C) 2022 M. Coleman, J. Cook, F. Franza, I.A. Maione, S. McIntosh, J. Morris,
 #                    D. Short
 #
 # bluemira is free software; you can redistribute it and/or
@@ -22,158 +22,118 @@
 """
 Builder for making a parameterised EU-DEMO vacuum vessel.
 """
+from dataclasses import dataclass
+from typing import Dict, List, Type, Union
 
-from copy import deepcopy
-from typing import List
-
-import bluemira.utilities.plot_tools as bm_plot_tools
-from bluemira.base.builder import BuildConfig, Builder
-from bluemira.base.components import Component, PhysicalComponent
-from bluemira.base.config import Configuration
+from bluemira.base.builder import Builder, ComponentManager
+from bluemira.base.components import PhysicalComponent
+from bluemira.base.parameter_frame import Parameter, ParameterFrame
 from bluemira.builders.tools import (
-    find_xy_plane_radii,
-    make_circular_xy_ring,
+    build_sectioned_xy,
+    build_sectioned_xyz,
     varied_offset,
 )
 from bluemira.display.palettes import BLUE_PALETTE
 from bluemira.geometry.face import BluemiraFace
-from bluemira.geometry.plane import BluemiraPlane
-from bluemira.geometry.tools import offset_wire, revolve_shape
+from bluemira.geometry.tools import offset_wire
 from bluemira.geometry.wire import BluemiraWire
+
+
+class VacuumVessel(ComponentManager):
+    """
+    Wrapper around a Vacuum Vessel component tree.
+    """
+
+
+@dataclass
+class VacuumVesselBuilderParams(ParameterFrame):
+    """
+    Vacuum Vessel builder parameters
+    """
+
+    n_TF: Parameter[int]
+    r_vv_ib_in: Parameter[float]
+    r_vv_ob_in: Parameter[float]
+    tk_vv_in: Parameter[float]
+    tk_vv_out: Parameter[float]
+    g_vv_bb: Parameter[float]
+    vv_in_off_deg: Parameter[float]
+    vv_out_off_deg: Parameter[float]
 
 
 class VacuumVesselBuilder(Builder):
     """
-    Builder for the vacuum vessel
+    Vacuum Vessel builder
     """
 
-    _required_params: List[str] = [
-        "r_vv_ib_in",
-        "r_vv_ob_in",
-        "tk_vv_in",
-        "tk_vv_out",
-        "g_vv_bb",
-        "n_TF",
-    ]
-    _params: Configuration
-    _ivc_koz: BluemiraWire
+    VV = "VV"
+    BODY = "Body"
+    param_cls: Type[VacuumVesselBuilderParams] = VacuumVesselBuilderParams
 
     def __init__(
         self,
-        params,
-        build_config: BuildConfig,
+        params: Union[ParameterFrame, Dict],
+        build_config: Dict,
         ivc_koz: BluemiraWire,
     ):
-        super().__init__(
-            params,
-            build_config,
-            ivc_koz=ivc_koz,
-        )
+        super().__init__(params, build_config)
+        self.ivc_koz = ivc_koz
 
-    def reinitialise(self, params, ivc_koz) -> None:
-        """
-        Reinitialise the parameters and boundary.
-
-        Parameters
-        ----------
-        params: dict
-            The new parameter values to initialise this builder against.
-        """
-        super().reinitialise(params)
-
-        if not ivc_koz.is_closed():
-            ivc_koz = deepcopy(ivc_koz)
-            ivc_koz.close()
-        self._ivc_koz = ivc_koz
-
-    def build(self) -> Component:
+    def build(self) -> VacuumVessel:
         """
         Build the vacuum vessel component.
-
-        Returns
-        -------
-        component: Component
-            The Component built by this builder.
         """
-        super().build()
+        xz_vv = self.build_xz()
+        vv_face = xz_vv.get_component_properties("shape")
 
-        component = Component(name=self.name)
-        component.add_child(self.build_xz())
-        component.add_child(self.build_xy())
-        component.add_child(self.build_xyz())
-        return component
+        return VacuumVessel(
+            self.component_tree(
+                xz=[xz_vv],
+                xy=self.build_xy(vv_face),
+                xyz=self.build_xyz(vv_face),
+            )
+        )
 
-    def build_xz(self):
+    def build_xz(
+        self,
+    ) -> PhysicalComponent:
         """
         Build the x-z components of the vacuum vessel.
         """
         inner_vv = offset_wire(
-            self._ivc_koz, self._params.g_vv_bb.value, join="arc", open_wire=False
+            self.ivc_koz, self.params.g_vv_bb.value, join="arc", open_wire=False
         )
-        # TODO: Calculate these / get them from params
-        angle_1 = 80
-        angle_2 = 160
         outer_vv = varied_offset(
             inner_vv,
-            self._params.tk_vv_in.value,
-            self._params.tk_vv_out.value,
-            angle_1,
-            angle_2,
+            self.params.tk_vv_in.value,
+            self.params.tk_vv_out.value,
+            self.params.vv_in_off_deg.value,
+            self.params.vv_out_off_deg.value,
             num_points=300,
         )
         face = BluemiraFace([outer_vv, inner_vv])
-        self._vv_face = face
 
-        body = PhysicalComponent("Body", face)
-        body.plot_options.face_options["color"] = BLUE_PALETTE["VV"][0]
+        body = PhysicalComponent(self.BODY, face)
+        body.plot_options.face_options["color"] = BLUE_PALETTE[self.VV][0]
 
-        component = Component("xz", children=[body])
-        bm_plot_tools.set_component_view(component, "xz")
-        return component
+        return body
 
-    def build_xy(self):
+    def build_xy(self, vv_face: BluemiraFace) -> List[PhysicalComponent]:
         """
         Build the x-y components of the vacuum vessel.
         """
-        xy_plane = BluemiraPlane.from_3_points([0, 0, 0], [1, 0, 0], [1, 1, 0])
-        r_ib_out, r_ob_out = find_xy_plane_radii(self._vv_face.boundary[0], xy_plane)
-        r_ib_in, r_ob_in = find_xy_plane_radii(self._vv_face.boundary[1], xy_plane)
+        return build_sectioned_xy(vv_face, BLUE_PALETTE[self.VV][0])
 
-        inboard = make_circular_xy_ring(r_ib_in, r_ib_out)
-        vv_inboard = PhysicalComponent("inboard", inboard)
-        vv_inboard.plot_options.face_options["color"] = BLUE_PALETTE["VV"][0]
-
-        outboard = make_circular_xy_ring(r_ob_in, r_ob_out)
-        vv_outboard = PhysicalComponent("outboard", outboard)
-        vv_outboard.plot_options.face_options["color"] = BLUE_PALETTE["VV"][0]
-
-        component = Component("xy", children=[vv_inboard, vv_outboard])
-        bm_plot_tools.set_component_view(component, "xy")
-        return component
-
-    def build_xyz(self, degree=360.0) -> Component:
+    def build_xyz(
+        self, vv_face: BluemiraFace, degree: float = 360.0
+    ) -> PhysicalComponent:
         """
         Build the x-y-z components of the vacuum vessel.
         """
-        vv_face = self._vv_face.deepcopy()
-        base = (0, 0, 0)
-        direction = (0, 0, 1)
-        vv_body = revolve_shape(
+        return build_sectioned_xyz(
             vv_face,
-            base=base,
-            direction=direction,
-            degree=degree
-            - 1,  # TODO: Put back `degree/ self._params.n_TF.value,` (#902)
+            self.BODY,
+            self.params.n_TF.value,
+            BLUE_PALETTE[self.VV][0],
+            degree,
         )
-
-        vv = PhysicalComponent("Body", vv_body)
-        vv.display_cad_options.color = BLUE_PALETTE["VV"][0]
-        component = Component("xyz", children=[vv])
-        # TODO: Put back sector segmentation (see #902 for details)
-        # n_vv_draw = max(1, int(degree // (360 // self._params.n_TF.value)))
-        # degree = (360.0 / self._params.n_TF.value) * n_vv_draw
-        # sectors = circular_pattern_component(vv, n_vv_draw, degree=degree)
-        # component = Component("xyz")
-        # component.add_children(sectors, merge_trees=True)
-
-        return component

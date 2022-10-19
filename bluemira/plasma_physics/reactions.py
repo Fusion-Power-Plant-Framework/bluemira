@@ -123,7 +123,7 @@ def n_DD_reactions(p_fus) -> float:  # noqa :N802
     Parameters
     ----------
     p_fus: float
-        D-D fusion power [MW]
+        D-D fusion power [W]
 
     Returns
     -------
@@ -131,7 +131,7 @@ def n_DD_reactions(p_fus) -> float:  # noqa :N802
         Number of D-D reactions per second [1/s]
     """
     e_dd = E_DD_fusion()
-    return raw_uc(p_fus, "MW", "W") / (e_dd * EV_TO_J)
+    return p_fus / (e_dd * EV_TO_J)
 
 
 def r_T_burn(p_fus):  # noqa :N802

@@ -23,7 +23,7 @@
 A collection of generic physical constants, conversions, and miscellaneous constants.
 """
 
-from typing import List, Optional, Union
+from typing import Callable, List, Optional, Union
 
 import numpy as np
 from periodictable import elements
@@ -72,6 +72,7 @@ class BMUnitRegistry(UnitRegistry):
         # Other currencies need to be set up in a new context
         self.define("USD = [currency]")
 
+        self._gas_flow_temperature = None
         self._contexts_added = False
 
     def _add_contexts(self, contexts: Optional[List[Context]] = None):
@@ -114,13 +115,49 @@ class BMUnitRegistry(UnitRegistry):
         t_units = "[temperature]"
         ev_units = "[energy]"
 
-        return self._transform(e_to_t, t_units, ev_units, self.Quantity("k_B"))
+        conversion = self.Quantity("k_B")
+
+        return self._transform(
+            e_to_t,
+            t_units,
+            ev_units,
+            lambda _, x: x * conversion,
+            lambda _, x: x / conversion,
+        )
+
+    @property
+    def flow_conversion(self):
+        """Gas flow conversion factor R * T"""
+        return self.Quantity("molar_gas_constant") * self.gas_flow_temperature
+
+    @property
+    def gas_flow_temperature(self):
+        """
+        Gas flow temperature in kelvin
+
+        If Quantity provided to setter it will convert units (naïvely)
+        """
+        if self._gas_flow_temperature is None:
+            self._gas_flow_temperature = self.Quantity(0, "celsius").to("kelvin")
+        return self._gas_flow_temperature
+
+    @gas_flow_temperature.setter
+    def gas_flow_temperature(self, value: Union[float, None, Quantity]):
+        self._gas_flow_temperature = (
+            value.to("kelvin")
+            if isinstance(value, Quantity)
+            else value
+            if value is None
+            else self.Quantity(value, "kelvin")
+        )
 
     def _flow_context(self):
         """
         Convert between flow in mol and Pa m^3
 
-        Pa m^3 = R * 0degC * mol
+        Pa m^3 = R * temperature * mol
+
+        https://en.wikipedia.org/wiki/Standard_temperature_and_pressure#Molar_volume_of_a_gas
 
         Returns
         -------
@@ -132,18 +169,25 @@ class BMUnitRegistry(UnitRegistry):
         mol_units = "[substance]"
         pam3_units = "[energy]"
 
-        conversion_factor = self.Quantity("molar_gas_constant") * self.Quantity(
-            0, "celsius"
-        ).to("kelvin")
-
-        return self._transform(mols_to_pam3, mol_units, pam3_units, conversion_factor)
+        return self._transform(
+            mols_to_pam3,
+            mol_units,
+            pam3_units,
+            lambda ureg, x: x * ureg.flow_conversion,
+            lambda ureg, x: x / ureg.flow_conversion,
+        )
 
     @staticmethod
     def _transform(
         context: Context,
         units_from: str,
         units_to: str,
-        conversion: Union[float, int, complex, Quantity],
+        forward_transform: Callable[
+            [UnitRegistry, Union[float, complex, Quantity]], float
+        ],
+        reverse_transform: Callable[
+            [UnitRegistry, Union[float, complex, Quantity]], float
+        ],
     ):
 
         formatters = ["{}", "{} / [time]"]
@@ -151,14 +195,10 @@ class BMUnitRegistry(UnitRegistry):
         for form in formatters:
 
             context.add_transformation(
-                form.format(units_from),
-                form.format(units_to),
-                lambda ureg, x: x * conversion,
+                form.format(units_from), form.format(units_to), forward_transform
             )
             context.add_transformation(
-                form.format(units_to),
-                form.format(units_from),
-                lambda ureg, x: x / conversion,
+                form.format(units_to), form.format(units_from), reverse_transform
             )
 
         return context
@@ -179,6 +219,50 @@ ANGLE = ureg.degree
 DENSITY = MASS / LENGTH**3
 PART_DENSITY = LENGTH**-3
 FLUX_DENSITY = LENGTH**-2 / TIME
+
+base_unit_defaults = {
+    "[time]": TIME,
+    "[length]": LENGTH,
+    "[mass]": MASS,
+    "[current]": CURRENT,
+    "[temperature]": TEMP,
+    "[substance]": QUANTITY,
+    "[luminosity]": "candela",
+    "[angle]": ANGLE,
+}
+
+combined_unit_defaults = {
+    "[energy]": "joules",
+    "[pressure]": "pascal",
+    "[magnetic_field]": "tesla",
+    "[electric_potential]": "volt",
+    "[power]": "watt",
+    "[force]": "newton",
+    "[resistance]": "ohm",
+}
+
+combined_unit_dimensions = {
+    "[energy]": {"[length]": 2, "[mass]": 1, "[time]": -2},
+    "[pressure]": {"[length]": -1, "[mass]": 1, "[time]": -2},
+    "[magnetic_field]": {"[current]": -1, "[mass]": 1, "[time]": -2},
+    "[electric_potential]": {"[length]": 2, "[mass]": 1, "[time]": -2},
+    "[power]": {"[length]": 2, "[mass]": 1, "[time]": -3},
+    "[force]": {"[length]": 2, "[mass]": 1, "[time]": -3},
+    "[resistance]": {"[current]": -2, "[length]": 2, "[mass]": 1, "[time]": -3},
+}
+
+ANGLE_UNITS = [
+    "radian",
+    "turn",
+    "degree",
+    "arcminute",
+    "arcsecond",
+    "milliarcsecond",
+    "grade",
+    "mil",
+    "steradian",
+    "square_degree",
+]
 
 # =============================================================================
 # Physical constants
@@ -286,10 +370,10 @@ S_TO_YR = ureg.Quantity(1, ureg.second).to(ureg.year).magnitude
 
 
 def raw_uc(
-    value: Union[int, float, np.ndarray],
+    value: Union[float, np.ndarray],
     unit_from: Union[str, ureg.Unit],
     unit_to: Union[str, ureg.Unit],
-) -> Union[int, float, np.ndarray]:
+) -> Union[float, np.ndarray]:
     """
     Raw unit converter
 
@@ -321,6 +405,42 @@ def raw_uc(
             ureg.Quantity(value * unit_from_q).to(unit_to_q.units).magnitude
             / unit_to_q.magnitude
         )
+
+
+def gas_flow_uc(
+    value: Union[float, np.ndarray],
+    unit_from: Union[str, ureg.Unit],
+    unit_to: Union[str, ureg.Unit],
+    gas_flow_temperature: Optional[Union[float, Quantity]] = None,
+) -> Union[int, float, np.ndarray]:
+    """
+    Converts around Standard temperature and pressure for gas unit conversion.
+    Accurate for Ideal gases.
+
+    https://en.wikipedia.org/wiki/Standard_temperature_and_pressure#Molar_volume_of_a_gas
+
+    Parameters
+    ----------
+    value: Union[float, np.array]
+        value to convert
+    unit_from: Union[str, Unit]
+        unit to convert from
+    unit_to: Union[str, Unit]
+        unit to convert to
+    gas_flow_temperature: Optional[Union[float, Quantity]]
+        Gas flow temperature if not provided is 273.15 K,
+        if not a `Quantity` the units are assumed to be kelvin
+
+    Returns
+    -------
+    converted value
+    """
+    if gas_flow_temperature is not None:
+        ureg.gas_flow_temperature = gas_flow_temperature
+    try:
+        return raw_uc(value, unit_from, unit_to)
+    finally:
+        ureg.gas_flow_temperature = None
 
 
 def to_celsius(
@@ -357,7 +477,7 @@ def to_kelvin(
     temp: Union[float, np.array, List[float]]
         The temperature to convert, default [°C]
     unit: Union[str, Unit]
-    change the unit of the incoming value
+        change the unit of the incoming value
 
 
     Returns
@@ -409,7 +529,7 @@ def kgm3_to_gcm3(density: Union[float, np.array, List[float]]) -> Union[float, n
     density_gcm3 : Union[float, np.array]
         The density [g/cm3]
     """
-    return raw_uc(density, "kg m^3", "g cm^3")
+    return raw_uc(density, "kg.m^-3", "g.cm^-3")
 
 
 def gcm3_to_kgm3(density: Union[float, np.array, List[float]]) -> Union[float, np.array]:
@@ -426,7 +546,7 @@ def gcm3_to_kgm3(density: Union[float, np.array, List[float]]) -> Union[float, n
     density_kgm3 : Union[float, np.array]
         The density [kg/m3]
     """
-    return raw_uc(density, "g cm^3", "kg m^3")
+    return raw_uc(density, "g.cm^-3", "kg.m^-3")
 
 
 # =============================================================================

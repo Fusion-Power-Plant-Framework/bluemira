@@ -20,24 +20,17 @@
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 
 """
-Interfaces for builder and build steps classes
+Interfaces for builder classes.
 """
 
 from __future__ import annotations
 
 import abc
-import enum
-import string
-from typing import Any, Dict, List, Literal, Optional, Union
+from typing import Dict, List, Type, Union
 
 from bluemira.base.components import Component
-from bluemira.base.config import Configuration
-from bluemira.base.error import BuilderError
-from bluemira.base.look_and_feel import bluemira_debug, bluemira_print
-from bluemira.base.parameter import ParameterFrame
-
-__all__ = ["Builder", "BuildConfig"]
-
+from bluemira.base.parameter_frame import ParameterFrame, make_parameter_frame
+from bluemira.utilities.plot_tools import set_component_view
 
 BuildConfig = Dict[str, Union[int, float, str, "BuildConfig"]]
 """
@@ -45,212 +38,111 @@ Type alias for representing nested build configuration information.
 """
 
 
-# TODO: Consolidate with RunMode in codes.
-class RunMode(enum.Enum):
+def _remove_suffix(s: str, suffix: str) -> str:
+    # Python 3.9 has str.removesuffix()
+    if suffix and s.endswith(suffix):
+        return s[: -len(suffix)]
+    return s
+
+
+class ComponentManager(abc.ABC):
     """
-    Enum class to pass args and kwargs to the function corresponding to the chosen
-    PROCESS runmode (Run, Read, or Mock).
+    A wrapper around a component tree.
+
+    The purpose of the classes deriving from this is to abstract away
+    the structure of the component tree and provide access to a set of
+    its features. This way a reactor build procedure can be completely
+    agnostic of the structure of component trees, relying instead on
+    a set of methods implemented on concrete `ComponentManager`
+    instances.
+
+    This class can also be used to hold 'construction geometry' that may
+    not be part of the component tree, but was useful in construction
+    of the tree, and could be subsequently useful (e.g., an equilibrium
+    can be solved to get a plasma shape, the equilibrium is not
+    derivable from the plasma component tree, but can be useful in
+    other stages of a reactor build procedure).
+
+    Parameters
+    ----------
+    component_tree: Component
+        The component tree this manager should wrap.
     """
 
-    RUN = enum.auto()
-    READ = enum.auto()
-    MOCK = enum.auto()
+    def __init__(self, component_tree: Component) -> None:
+        super().__init__()
+        self._component = component_tree
 
-    def __call__(self, obj, *args, **kwargs):
+    def component(self) -> Component:
         """
-        Call function of object with lowercase name of enum
-
-        Parameters
-        ----------
-        obj: instance
-            instance of class the function will come from
-        *args
-           args of function
-        **kwargs
-           kwargs of function
-
-        Returns
-        -------
-        function result
+        Return the component tree wrapped by this manager.
         """
-        func = getattr(obj, self.name.lower())
-        return func(*args, **kwargs)
+        return self._component
 
 
 class Builder(abc.ABC):
     """
-    The Builder classes in bluemira define the various steps that will take place to
-    build components when a Design is run.
+    Base class for component builders.
+
+    Parameters
+    ----------
+    params: Union[Dict, ParameterFrame]
+        The parameters required by the builder.
+    build_config: Dict
+        The build configuration for the builder.
+    designer: Optional[Designer]
+        A designer to solve a design problem required by the builder.
+
+    Notes
+    -----
+    If there are no parameters associated with a concrete builder, set
+    `param_cls` to `None` and pass `None` into this class's constructor.
     """
 
-    _default_runmode: Optional[str] = None
-    _required_params: List[str] = []
-    _required_config: List[str] = []
-    _params: Configuration
-    _design_problem = None
+    def __init__(self, params: Union[ParameterFrame, Dict, None], build_config: Dict):
+        super().__init__()
+        self.name = build_config.get(
+            "name", _remove_suffix(self.__class__.__name__, "Builder")
+        )
+        self.params = make_parameter_frame(params, self.param_cls)
+        self.build_config = build_config
 
-    def __init__(self, params: Dict[str, Any], build_config: BuildConfig, **kwargs):
-        self._name = build_config["name"]
-
-        self._validate_config(build_config)
-        self._extract_config(build_config)
-        self._params = Configuration.from_template(self._required_params)
-        self.reinitialise(params, **kwargs)
-
-    def __call__(self) -> Component:
-        """
-        Perform the full build process using the current parameterisation of the builder.
-
-        Returns
-        -------
-        component: Component
-            The Component build by this builder.
-        """
-        bluemira_print(f"Running full build chain for {self.name}")
-        if hasattr(self, "_runmode"):
-            bluemira_print(f"Designing {self.name} using runmode: {self.runmode}")
-            self._runmode(self)
-        return self.build()
+    @abc.abstractproperty
+    def param_cls(self) -> Union[Type[ParameterFrame], None]:
+        """The class to hold this Builders's parameters."""
+        pass
 
     @abc.abstractmethod
-    def reinitialise(self, params, **kwargs) -> None:
+    def build(self) -> ComponentManager:
+        """Build the component and return a component manager instance."""
+        pass
+
+    def component_tree(
+        self, xz: List[Component], xy: List[Component], xyz: List[Component]
+    ) -> Component:
         """
-        Initialise the state of this builder ready for a new run.
+        Adds views of components to an overall component tree.
 
         Parameters
         ----------
-        params: Dict[str, Any]
-            The parameterisation containing at least the required params for this
-            Builder.
-        """
-        bluemira_debug(f"Reinitialising {self.name}")
-        self._reset_params(params)
+        xz: List[Component]
+            xz view of component
+        xy: List[Component]
+            xy view of component
+        xyz: List[Component]
+            xyz view of component
 
-    @abc.abstractmethod
-    def build(self) -> Component:
-        """
-        Runs this Builder's build process to populate the required Components.
+        Returns
+        -------
+        component
 
-        The result of the build is stored in the Builder's component property.
         """
-        bluemira_print(f"Building {self.name}")
+        component = Component(self.name)
+        component.add_child(Component("xz", children=xz))
+        component.add_child(Component("xy", children=xy))
+        component.add_child(Component("xyz", children=xyz))
 
-        return Component(self._name)
+        set_component_view(component.get_component("xz"), "xz")
+        set_component_view(component.get_component("xy"), "xy")
 
-    @property
-    def name(self) -> str:
-        """
-        The name of the builder.
-        """
-        return self._name
-
-    @property
-    def params(self) -> ParameterFrame:
-        """
-        The parameterisation of this builder.
-        """
-        return self._params
-
-    @property
-    def required_params(self) -> List[str]:
-        """
-        The variable names of the parameters that are needed to run this builder.
-        """
-        return self._required_params
-
-    @property
-    def required_config(self) -> List[str]:
-        """
-        The names of the build configuration values that are needed to run this builder.
-        """
-        return self._required_config
-
-    @property
-    def runmode(self):
-        """
-        The name of the method that will be executed when calling this builder.
-        """
-        return self._runmode.name.lower()
-
-    @property
-    def design_problem(self):
-        """
-        The design problem solved by this builder, if any.
-        """
-        return self._design_problem
-
-    def run(self):
-        """
-        Optional abstract method to run a design problem while building.
-        """
-        raise NotImplementedError
-
-    def read(self):
-        """
-        Optional abstract method to read the result of a design problem while building.
-        """
-        raise NotImplementedError
-
-    def mock(self):
-        """
-        Optional abstract method to mock a design problem while building.
-        """
-        raise NotImplementedError
-
-    def _validate_requirement(
-        self, input, source: Literal["params", "config"]
-    ) -> List[str]:
-        missing = []
-        for req in getattr(self, f"_required_{source}"):
-            if req not in input.keys():
-                missing += [req]
-        return missing
-
-    def _validate_config(self, build_config: BuildConfig):
-        missing_config = self._validate_requirement(build_config, "config")
-
-        if missing_config != []:
-            raise BuilderError(
-                f"Required config keys {', '.join(missing_config)} not provided to "
-                f"Builder: {self._name}"
-            )
-
-    def _validate_params(self, params):
-        missing_params = self._validate_requirement(params, "params")
-
-        if missing_params != []:
-            raise BuilderError(
-                f"Required parameters {', '.join(missing_params)} not provided to "
-                f"Builder {self._name}"
-            )
-
-    def _reset_params(self, params):
-        self._validate_params(params)
-        self._params.update_kw_parameters({k: params[k] for k in self._params.keys()})
-
-    def _extract_config(self, build_config: BuildConfig):
-        has_runmode = (
-            "runmode" in build_config
-            or getattr(self, "_default_runmode", None) is not None
-        )
-        if has_runmode:
-            self._set_runmode(build_config)
-
-    def _set_runmode(self, build_config: BuildConfig):
-        """
-        Set runmode according to the "runmode" parameter in build_config or the default
-        run mode if not provided via build_config.
-        """
-        runmode = build_config.get("runmode", self._default_runmode)
-
-        if not hasattr(self, runmode.lower()):
-            raise NotImplementedError(
-                f"Builder {self.__class__.__name__} has no {runmode.lower()} mode."
-            )
-
-        mode = (
-            build_config.get("runmode", self._default_runmode)
-            .upper()
-            .translate(str.maketrans("", "", string.whitespace))
-        )
-        self._runmode = RunMode[mode]
+        return component

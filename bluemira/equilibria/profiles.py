@@ -698,14 +698,13 @@ class CustomProfile(Profile):
         """
         Initialises a CustomProfile object from an eqdsk file
         """
-        eqdsk = EQDSKInterface()
-        e = eqdsk.read(filename)
+        e = EQDSKInterface.from_file(filename)
         return cls(
-            e["pprime"],
-            e["ffprime"],
-            R_0=e["xcentre"],
-            B_0=abs(e["bcentre"]),
-            p_func=e["pressure"],
-            f_func=e["fpol"],
-            I_p=abs(e["cplasma"]),
+            e.pprime,
+            e.ffprime,
+            R_0=e.xcentre,
+            B_0=abs(e.bcentre),
+            p_func=e.pressure,
+            f_func=e.fpol,
+            I_p=abs(e.cplasma),
         )

@@ -22,15 +22,3 @@
 """
 Base classes and functionality for the bluemira code.
 """
-
-# from .builder import *
-from bluemira.base.parameter import Parameter, ParameterFrame, ParameterMapping
-
-"""
-from .components import (
-    Component,
-    PhysicalComponent,
-    MagneticComponent,
-)
-from .design import Design
-"""

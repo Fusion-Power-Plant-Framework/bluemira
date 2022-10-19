@@ -102,7 +102,8 @@ class TestGetNormal:
         dolfin.plot(mesh)
         plt.show()
 
-        em_solver = FemMagnetostatic2d(mesh, boundaries, 3)
+        em_solver = FemMagnetostatic2d(3)
+        em_solver.set_mesh(mesh, boundaries)
 
         current = 1e6
         jc = current / coil.area
@@ -110,7 +111,8 @@ class TestGetNormal:
         functions = [jc]
         jtot = ScalarSubFunc(functions, markers, subdomains)
 
-        em_solver.solve(jtot)
+        em_solver.define_g(jtot)
+        em_solver.solve()
         em_solver.calculate_b()
 
         z_points_axis = np.linspace(0, r_enclo, 200)

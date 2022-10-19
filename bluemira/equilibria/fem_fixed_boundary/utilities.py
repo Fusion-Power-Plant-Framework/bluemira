@@ -21,13 +21,14 @@
 
 """Module to support the fem_fixed_boundary implementation"""
 
-from typing import Callable
+from typing import Callable, Iterable, List, Optional, Tuple, Union
 
 import dolfin
 import matplotlib.pyplot as plt
 import numpy as np
 import scipy
 from matplotlib._tri import TriContourGenerator
+from matplotlib.axes._axes import Axes
 from matplotlib.tri.triangulation import Triangulation
 
 from bluemira.base.look_and_feel import bluemira_warn
@@ -39,16 +40,18 @@ def b_coil_axis(r, z, pz, curr):
     Return the module of the magnetic field of a coil (of radius r and centered in
     (0, z)) calculated on a point on the coil axis at a distance pz from the
     axis origin.
+
+    TODO: add equation
     """
     return 4 * np.pi * 1e-7 * curr * r**2 / (r**2 + (pz - z) ** 2) ** 1.5 / 2.0
 
 
-def _convert_const_to_dolfin(value):
+def _convert_const_to_dolfin(value: float):
     """Convert a constant value to a dolfin function"""
-    if isinstance(value, (int, float)):
-        return dolfin.Constant(float)
-    else:
+    if not isinstance(value, (int, float)):
         raise ValueError("Value must be integer or float.")
+
+    return dolfin.Constant(value)
 
 
 class ScalarSubFunc(dolfin.UserExpression):
@@ -57,7 +60,7 @@ class ScalarSubFunc(dolfin.UserExpression):
 
     Parameters
     ----------
-    func_list: Iterable[int, float, callable]
+    func_list: Union[Iterable[Union[float, Callable]], float, Callable]
         list of functions to be interpolated into the subdomains. Int and float values
         are considered as constant functions. Any other callable function must return
         a single value.
@@ -68,35 +71,43 @@ class ScalarSubFunc(dolfin.UserExpression):
         the whole subdomains mesh function
     """
 
-    def __init__(self, func_list, mark_list=None, subdomains=None, **kwargs):
+    def __init__(
+        self,
+        func_list: Union[Iterable[Union[float, Callable]], float, Callable],
+        mark_list: Optional[Iterable[int]] = None,
+        subdomains: Optional[dolfin.cpp.mesh.MeshFunctionSizet] = None,
+        **kwargs,
+    ):
         super().__init__(**kwargs)
         self.functions = self.check_functions(func_list)
         self.markers = mark_list
         self.subdomains = subdomains
 
-    def check_functions(self, functions):
+    def check_functions(
+        self,
+        functions: Union[Iterable[Union[float, Callable]], float, Callable],
+    ) -> Iterable[Union[float, Callable]]:
         """Check if the argument is a function or a list of fuctions"""
-        if isinstance(functions, (int, float, Callable)):
-            return [functions]
-        if isinstance(functions, list):
-            if all(isinstance(f, (int, float, Callable)) for f in functions):
-                return functions
+        if not isinstance(functions, Iterable):
+            functions = [functions]
+        if all(isinstance(f, (float, Callable)) for f in functions):
+            return functions
         raise ValueError(
             "Accepted functions are instance of (int, float, Callable)"
-            "or alist of them."
+            "or a list of them."
         )
 
-    def eval_cell(self, values, x, cell):
+    def eval_cell(self, values: List, x: float, cell):
         """Evaluate the value on each cell"""
         if self.markers is None or self.subdomains is None:
             func = self.functions[0]
         else:
             m = self.subdomains[cell.index]
-            if m in self.markers:
-                index = np.where(np.array(self.markers) == m)
-                func = self.functions[index[0][0]]
-            else:
-                func = 0
+            func = (
+                self.functions[np.where(np.array(self.markers) == m)[0][0]]
+                if m in self.markers
+                else 0
+            )
         if callable(func):
             values[0] = func(x)
         elif isinstance(func, (int, float)):
@@ -104,7 +115,7 @@ class ScalarSubFunc(dolfin.UserExpression):
         else:
             raise ValueError(f"{func} is not callable or is not a constant")
 
-    def value_shape(self):
+    def value_shape(self) -> Tuple:
         """
         Value_shape function (necessary for a UserExpression)
         https://fenicsproject.discourse.group/t/problems-interpolating-a-userexpression-and-plotting-it/1303
@@ -113,8 +124,15 @@ class ScalarSubFunc(dolfin.UserExpression):
 
 
 def plot_scalar_field(
-    x, y, data, levels=20, ax=None, contour=True, tofill=True, **kwargs
-):
+    x: np.ndarray,
+    y: np.ndarray,
+    data: np.ndarray,
+    levels: int = 20,
+    ax: Optional[Axes] = None,
+    contour: bool = True,
+    tofill: bool = True,
+    **kwargs,
+) -> Tuple[Axes, Union[Axes, None], Union[Axes, None]]:
     """
     Plot a scalar field
 
@@ -141,10 +159,9 @@ def plot_scalar_field(
         Matplotlib axis on which the plot ocurred
     """
     if ax is None:
-        fig = plt.figure()
-        ax = fig.add_subplot()
+        fig, ax = plt.subplots()
     else:
-        fig = plt.gcf()
+        fig = ax.get_figure()
 
     defaults = {"linewidths": 2, "colors": "k"}
     contour_kwargs = {**defaults, **kwargs}
@@ -166,19 +183,30 @@ def plot_scalar_field(
     return ax, cntr, cntrf
 
 
-def plot_profile(x, prof, var_name, var_unit, show=True):
+def plot_profile(
+    x: np.ndarray,
+    prof: np.ndarray,
+    var_name: str,
+    var_unit: str,
+    ax: Optional[Axes] = None,
+    show: bool = True,
+):
     """
     Plot profile
     """
-    fig, ax = plt.subplots()
+    if ax is None:
+        _, ax = plt.subplots()
+
     ax.plot(x, prof)
-    ax.set(xlabel="x (-)", ylabel=var_name + " (" + var_unit + ")")
+    ax.set(xlabel="x (-)", ylabel=f"{var_name} ({var_unit})")
     ax.grid()
     if show:
         plt.show()
 
 
-def get_tricontours(x, z, array, value):
+def get_tricontours(
+    x: np.ndarray, z: np.ndarray, array: np.ndarray, value: Union[float, Iterable]
+) -> List[np.ndarray]:
     """
     Get the contours of a value in a triangular set of points.
 
@@ -202,15 +230,15 @@ def get_tricontours(x, z, array, value):
     tcg = TriContourGenerator(tri.get_cpp_triangulation(), array)
     if is_num(value):
         value = [value]
-
-    contours = []
-    for val in value:
-        contours.append(tcg.create_contour(val)[0][0])
-
-    return contours
+    return [tcg.create_contour(val)[0][0] for val in value]
 
 
-def calculate_plasma_shape_params(psi_norm_func, mesh, psi_norm, plot=False):
+def calculate_plasma_shape_params(
+    psi_norm_func: Callable[[np.ndarray], np.ndarray],
+    mesh: dolfin.Mesh,
+    psi_norm: float,
+    plot: bool = False,
+) -> Tuple[float, float, float]:
     """
     Calculate the plasma parameters (r_geo, kappa, delta) for a given magnetic
     isoflux using optimisation.
@@ -240,24 +268,26 @@ def calculate_plasma_shape_params(psi_norm_func, mesh, psi_norm, plot=False):
 
     contour = get_tricontours(points[:, 0], points[:, 1], psi_norm_array, psi_norm)[0]
     x, z = contour.T
+
     ind_z_max = np.argmax(z)
-    pu = contour[ind_z_max]
     ind_z_min = np.argmin(z)
-    pl = contour[ind_z_min]
     ind_x_max = np.argmax(x)
-    po = contour[ind_x_max]
     ind_x_min = np.argmin(x)
+
+    pu = contour[ind_z_max]
+    pl = contour[ind_z_min]
+    po = contour[ind_x_max]
     pi = contour[ind_x_min]
 
     search_range = mesh.hmax()
 
-    def f_constrain_p95(x):
+    def f_constrain_p95(x: np.ndarray) -> np.ndarray:
         """
         Constraint function for points on the psi_norm surface.
         """
         return psi_norm_func(x) - psi_norm
 
-    def find_extremum(func, x0):
+    def find_extremum(func: Callable[[np.ndarray], np.ndarray], x0: float) -> np.ndarray:
         """
         Extremum finding using constrained optimisation
         """
@@ -277,18 +307,14 @@ def calculate_plasma_shape_params(psi_norm_func, mesh, psi_norm, plot=False):
         return result.x
 
     pi_opt = find_extremum(lambda x: x[0], pi)
-
-    po_opt = find_extremum(lambda x: -x[0], po)
-
     pl_opt = find_extremum(lambda x: x[1], pl)
 
+    po_opt = find_extremum(lambda x: -x[0], po)
     pu_opt = find_extremum(lambda x: -x[1], pu)
 
     if plot:
-        from dolfin import plot  # noqa
-
         _, ax = plt.subplots()
-        plot(mesh)
+        dolfin.plot(mesh)
         ax.tricontour(points[:, 0], points[:, 1], psi_norm_array)
         ax.plot(x, z, color="r")
         ax.plot(*po, marker="o", color="r")
@@ -310,18 +336,12 @@ def calculate_plasma_shape_params(psi_norm_func, mesh, psi_norm, plot=False):
     # elongation
     a = 0.5 * (po_opt[0] - pi_opt[0])
     b = 0.5 * (pu_opt[1] - pl_opt[1])
-    if a == 0:
-        kappa = 1
-    else:
-        kappa = b / a
+    kappa = 1 if a == 0 else b / a
 
     # triangularity
     c = r_geo - pl_opt[0]
     d = r_geo - pu_opt[0]
-    if a == 0:
-        delta = 0
-    else:
-        delta = 0.5 * (c + d) / a
+    delta = 0 if a == 0 else 0.5 * (c + d) / a
 
     return r_geo, kappa, delta
 

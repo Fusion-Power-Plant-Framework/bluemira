@@ -30,12 +30,12 @@ An example of how to use Units within bluemira.
 # internally in most situations the units are up to the developer
 
 # %%
+from dataclasses import dataclass
 
 from pint.errors import DimensionalityError
 
-import bluemira.base.config as cfg
 import bluemira.base.constants as const
-import bluemira.base.parameter as param
+from bluemira.base.parameter_frame import Parameter, ParameterFrame, parameter_frame
 
 # %%[markdown]
 # ## Raw conversion
@@ -45,6 +45,9 @@ import bluemira.base.parameter as param
 print(const.raw_uc(1, "um^3", "m^3"))
 # gas flow rate conversion @OdegC
 print(const.raw_uc(1, "mol/s", "Pa m^3/s"))
+print(const.gas_flow_uc(1, "mol/s", "Pa m^3/s"))
+# gas flow rate conversion @25degC
+print(const.gas_flow_uc(1, "mol/s", "Pa m^3/s", gas_flow_temperature=298.15))
 # boltzmann constant conversion
 print(const.raw_uc(1, "eV", "K"))
 
@@ -62,20 +65,42 @@ print(const.to_celsius(10, unit="rankine"))
 
 # %%[markdown]
 # ## Parameters and Units
-# First I grab the default configuration
+# First I make a small ParameterFrame
 
 # %%
 
-pf = cfg.Configuration()
+
+@dataclass
+class MyParameterFrame(ParameterFrame):
+    """A ParameterFrame"""
+
+    A: Parameter[float]
+
+
+# this works the same
+@parameter_frame
+class MyDecoratedFrame:
+    """A ParameterFrame made with a decorator"""
+
+    A: Parameter[float]
+
+
+mypf = MyParameterFrame.from_dict({"A": {"value": 5, "unit": ""}})
+mydecpf = MyDecoratedFrame.from_dict({"A": {"value": 5, "unit": ""}})
+
+print(mypf)
+print(mydecpf)
+# Both frames equal
+assert all([dparam == param for dparam, param in zip(mydecpf, mypf)])  # noqa: S101
 
 # %%[markdown]
 # Trying to set a unit with the wrong dimension
 
 # %%
+mydiffval = MyDecoratedFrame.from_dict({"A": {"value": 6, "unit": "m"}})
 
-param1 = param.Parameter(var="A", value=5, unit="m")
 try:
-    pf.update_kw_parameters({"A": param1})
+    mypf.update_from_frame(mydiffval)
 except DimensionalityError as de:
     print(de)
 
@@ -84,10 +109,6 @@ except DimensionalityError as de:
 
 # %%
 
-print(pf.I_p)
-param2 = param.Parameter(var="I_p", value=5, unit="uA", source="very small input")
+mypf.update_values({"A": {"value": 6, "unit": ""}})
 
-# %%
-
-pf.set_parameter("I_p", param2)
-print(pf.I_p)
+print(mypf)

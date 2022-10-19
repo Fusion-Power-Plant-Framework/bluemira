@@ -21,6 +21,7 @@
 
 import numpy as np
 
+from bluemira.base.constants import raw_uc
 from bluemira.magnetostatics.trapezoidal_prism import TrapezoidalPrismCurrentSource
 
 
@@ -45,7 +46,7 @@ def test_paper_example():
         4e5,
     )
     field = source.field(2, 2, 2)
-    abs_field = 1e3 * np.sqrt(sum(field**2))  # Field in mT
+    abs_field = raw_uc(np.sqrt(sum(field**2)), "T", "mT")  # Field in mT
     # As per Babic and Aykel paper
     # Assume truncated last digit and not rounded...
     field_7decimals = np.trunc(abs_field * 10**7) / 10**7
@@ -54,7 +55,7 @@ def test_paper_example():
 
     # Test singularity treatments:
     field = source.field(1, 1, 1)
-    abs_field = 1e3 * np.sqrt(sum(field**2))  # Field in mT
+    abs_field = raw_uc(np.sqrt(sum(field**2)), "T", "mT")  # Field in mT
     # Assume truncated last digit and not rounded...
     field_9decimals = np.trunc(abs_field * 10**9) / 10**9
     field_9true = 53.581000397

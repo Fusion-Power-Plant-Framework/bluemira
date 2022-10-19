@@ -27,18 +27,17 @@ from typing import Dict, List, Tuple, Union
 import numpy as np
 
 from bluemira.base.look_and_feel import bluemira_warn
-from bluemira.base.parameter import ParameterFrame
+from bluemira.base.parameter_frame import ParameterFrame
 from bluemira.base.solver import RunMode as BaseRunMode
 from bluemira.codes.error import CodesError
 from bluemira.codes.interface import CodesSolver
 from bluemira.codes.process._run import Run
 from bluemira.codes.process._setup import Setup
 from bluemira.codes.process._teardown import Teardown
-from bluemira.codes.process.api import DEFAULT_INDAT, Impurities
+from bluemira.codes.process.api import Impurities
 from bluemira.codes.process.constants import BINARY as PROCESS_BINARY
 from bluemira.codes.process.constants import NAME as PROCESS_NAME
-from bluemira.codes.process.mapping import mappings as process_mappings
-from bluemira.codes.utilities import add_mapping
+from bluemira.codes.process.params import ProcessSolverParams
 
 BuildConfig = Dict[str, Union[float, str, "BuildConfig"]]
 
@@ -63,9 +62,10 @@ class Solver(CodesSolver):
 
     Parameters
     ----------
-    params: ParameterFrame
-        ParameterFrame containing bluemira parameters for running, and
-        extracting outputs from, PROCESS.
+    params: Union[Dict, ParameterFrame]
+        ParameterFrame or dict containing parameters for running PROCESS.
+        See :class:`bluemira.codes.plasmod.params.ProcessSolverParams` for
+        parameter details.
     build_config: Mapping[str, Mapping[float, str, BuildConfig]]
         Dictionary containing the configuration for this solver.
         Expected keys are:
@@ -77,9 +77,6 @@ class Solver(CodesSolver):
             The directory in which to run PROCESS. It is also the
             directory in which to look for PROCESS input and output
             files. Default is current working directory.
-        * template_in_dat: str
-            The path to a template IN.DAT file. The default is to use
-            one provided by bluemira.
         * problem_settings: Mapping[str, float]
             Any PROCESS parameters that do not correspond to a bluemira
             parameter.
@@ -116,21 +113,30 @@ class Solver(CodesSolver):
     teardown_cls = Teardown
     run_mode_cls = RunMode
 
-    def __init__(self, params: ParameterFrame, build_config: BuildConfig):
+    def __init__(self, params: Union[Dict, ParameterFrame], build_config: BuildConfig):
         # Init task objects on execution so parameters can be edited
         # between separate 'execute' calls.
         self._setup: Union[Setup, None] = None
         self._run: Union[Run, None] = None
         self._teardown: Union[Teardown, None] = None
 
-        self.params = params
-        add_mapping(PROCESS_NAME, self.params, process_mappings)
+        self.params = ProcessSolverParams.from_defaults()
+
+        if isinstance(params, ParameterFrame):
+            self.params.update_from_frame(params)
+        else:
+            try:
+                self.params.update_from_dict(params)
+            except TypeError:
+                self.params.update_values(params)
 
         _build_config = copy.deepcopy(build_config)
         self.binary = _build_config.pop("binary", PROCESS_BINARY)
         self.run_directory = _build_config.pop("run_dir", os.getcwd())
         self.read_directory = _build_config.pop("read_dir", os.getcwd())
-        self.template_in_dat = _build_config.pop("template_in_dat", DEFAULT_INDAT)
+        self.template_in_dat = _build_config.pop(
+            "template_in_dat", self.params.template_defaults
+        )
         self.problem_settings = _build_config.pop("problem_settings", {})
         self.in_dat_path = _build_config.pop(
             "in_dat_path", os.path.join(self.run_directory, "IN.DAT")
@@ -142,7 +148,7 @@ class Solver(CodesSolver):
                 f"'{quoted_delim.join(_build_config.keys())}'."
             )
 
-    def execute(self, run_mode: RunMode) -> ParameterFrame:
+    def execute(self, run_mode: Union[str, RunMode]) -> ParameterFrame:
         """
         Execute the solver in the given run mode.
 
@@ -153,8 +159,13 @@ class Solver(CodesSolver):
             :func:`~bluemira.codes.process._solver.Solver.__init__`
             docstring for details of the behaviour of each run mode.
         """
+        if isinstance(run_mode, str):
+            run_mode = self.run_mode_cls.from_string(run_mode)
         self._setup = Setup(
-            self.params, self.in_dat_path, self.problem_settings, self.template_in_dat
+            self.params,
+            self.in_dat_path,
+            self.template_in_dat,
+            self.problem_settings,
         )
         self._run = Run(self.params, self.in_dat_path, self.binary)
         self._teardown = Teardown(self.params, self.run_directory, self.read_directory)

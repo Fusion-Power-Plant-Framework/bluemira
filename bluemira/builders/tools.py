@@ -24,15 +24,18 @@ A collection of tools used in the EU-DEMO design.
 """
 
 import copy
+from typing import List, Tuple, Union
 
 import numpy as np
 
 import bluemira.base.components as bm_comp
 import bluemira.geometry as bm_geo
+from bluemira.base.components import PhysicalComponent
 from bluemira.base.constants import EPS
 from bluemira.base.error import BuilderError
 from bluemira.builders._varied_offset import varied_offset
 from bluemira.geometry.face import BluemiraFace
+from bluemira.geometry.plane import BluemiraPlane
 from bluemira.geometry.tools import (
     boolean_cut,
     boolean_fuse,
@@ -46,15 +49,43 @@ from bluemira.geometry.tools import (
 )
 
 __all__ = [
+    "get_n_sectors",
     "circular_pattern_component",
     "pattern_revolved_silhouette",
     "pattern_lofted_silhouette",
     "varied_offset",
+    "find_xy_plane_radii",
+    "make_circular_xy_ring",
+    "build_sectioned_xy",
+    "build_sectioned_xyz",
 ]
 
 
+def get_n_sectors(no_obj, degree=360):
+    """
+    Get sector count and angle size for a given number of degrees of the reactor.
+
+    Parameters
+    ----------
+    no_obj: int
+        total number of components (eg TF coils)
+    degree: float
+        angle to view of reactor
+
+    Returns
+    -------
+    sector_degree: float
+        number of degrees per sector
+    n_sectors: int
+        number of sectors
+    """
+    sector_degree = 360 / no_obj
+    n_sectors = max(1, int(degree // int(sector_degree)))
+    return sector_degree, n_sectors
+
+
 def circular_pattern_component(
-    component: bm_comp.Component,
+    component: Union[bm_comp.Component, List[bm_comp.Component]],
     n_children: int,
     parent_prefix: str = "Sector",
     *,
@@ -72,7 +103,7 @@ def circular_pattern_component(
 
     Parameters
     ----------
-    component: Component
+    component: Union[Component, List[Component]],
         The original Component to use as the template for copying around the circle.
     n_children: int
         The number of children to produce around the circle.
@@ -114,25 +145,32 @@ def circular_pattern_component(
         if isinstance(comp, bm_comp.PhysicalComponent):
             comp.shape = shape
 
-    def assign_or_pattern(comp: bm_comp.Component):
-        if isinstance(comp, bm_comp.PhysicalComponent):
-            shapes = bm_geo.tools.circular_pattern(
-                comp.shape,
-                n_shapes=n_children,
-                origin=origin,
-                direction=direction,
-                degree=degree,
-            )
-            for sector, shape in zip(sectors, shapes):
-                assign_component_to_sector(comp, sector, shape)
-        else:
-            for sector in sectors:
-                assign_component_to_sector(comp, sector)
+    def assign_or_pattern(comps: Union[bm_comp.Component, List[bm_comp.Component]]):
+        if not isinstance(comps, list):
+            comps = [comps]
 
-    def process_children(comp: bm_comp.Component):
-        for child in comp.children:
-            assign_or_pattern(child)
-            process_children(child)
+        for comp in comps:
+            if isinstance(comp, bm_comp.PhysicalComponent):
+                shapes = bm_geo.tools.circular_pattern(
+                    comp.shape,
+                    n_shapes=n_children,
+                    origin=origin,
+                    direction=direction,
+                    degree=degree,
+                )
+                for sector, shape in zip(sectors, shapes):
+                    assign_component_to_sector(comp, sector, shape)
+            else:
+                for sector in sectors:
+                    assign_component_to_sector(comp, sector)
+
+    def process_children(comps: Union[bm_comp.Component, List[bm_comp.Component]]):
+        if not isinstance(comps, list):
+            comps = [comps]
+        for comp in comps:
+            for child in comp.children:
+                assign_or_pattern(child)
+                process_children(child)
 
     assign_or_pattern(component)
     process_children(component)
@@ -316,3 +354,91 @@ def make_circular_xy_ring(r_inner, r_outer):
     inner = make_circle(r_inner, center=centre, axis=axis)
     outer = make_circle(r_outer, center=centre, axis=axis)
     return BluemiraFace([outer, inner])
+
+
+def build_sectioned_xy(
+    face: BluemiraFace, plot_colour: Tuple[float]
+) -> List[PhysicalComponent]:
+    """
+    Build the x-y components of sectioned component
+
+    Parameters
+    ----------
+    face: BluemiraFace
+        xz face to build xy component
+    plot_colour: Tuple[float]
+        colour tuple for component
+
+    """
+    xy_plane = BluemiraPlane.from_3_points([0, 0, 0], [1, 0, 0], [1, 1, 0])
+
+    r_ib_out, r_ob_out = find_xy_plane_radii(face.boundary[0], xy_plane)
+    r_ib_in, r_ob_in = find_xy_plane_radii(face.boundary[1], xy_plane)
+
+    sections = []
+    for name, r_in, r_out in [
+        ["inboard", r_ib_in, r_ib_out],
+        ["outboard", r_ob_in, r_ob_out],
+    ]:
+        board = make_circular_xy_ring(r_in, r_out)
+        section = PhysicalComponent(name, board)
+        section.plot_options.face_options["color"] = plot_colour
+        sections.append(section)
+
+    return sections
+
+
+def build_sectioned_xyz(
+    face: BluemiraFace,
+    name: str,
+    n_TF: int,
+    plot_colour: Tuple[float],
+    degree: float = 360,
+    enable_sectioning: bool = True,
+) -> List[PhysicalComponent]:
+    """
+    Build the x-y-z components of sectioned component
+
+    Parameters
+    ----------
+    face: BluemiraFace
+        xz face to build xyz component
+    name: str
+        PhysicalComponent name
+    n_TF: int
+        number of TF coils
+    plot_colour: Tuple[float]
+        colour tuple for component
+    degree: float
+        angle to sweep through
+    enable_sectioning: bool
+        Switch on/off sectioning (#1319 Topology issue)
+
+    Notes
+    -----
+    When `enable_sectioning=False` a list with a single component rotated a maximum
+    of 359 degrees will be returned. This is a workaround for two issues
+    from the topology naming issue #1319:
+
+        - Some objects fail to be rebuilt when rotated
+        - Some objects cant be rotated 360 degrees due to DisjointedFaceError
+
+    """
+    sector_degree, n_sectors = get_n_sectors(n_TF, degree)
+
+    shape = revolve_shape(
+        face,
+        base=(0, 0, 0),
+        direction=(0, 0, 1),
+        degree=sector_degree if enable_sectioning else min(359, degree),
+    )
+    body = PhysicalComponent(name, shape)
+    body.display_cad_options.color = plot_colour
+
+    # this is currently broken in some situations
+    # because of #1319 and related Topological naming issues
+    return (
+        circular_pattern_component(body, n_sectors, degree=sector_degree * n_sectors)
+        if enable_sectioning
+        else [body]
+    )

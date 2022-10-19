@@ -25,8 +25,12 @@ import numpy as np
 import pytest
 from scipy.interpolate import interp1d
 
+from bluemira.base.components import Component, PhysicalComponent
 from bluemira.base.error import BuilderError
 from bluemira.builders.tools import (
+    build_sectioned_xy,
+    build_sectioned_xyz,
+    get_n_sectors,
     make_circular_xy_ring,
     pattern_lofted_silhouette,
     pattern_revolved_silhouette,
@@ -40,8 +44,48 @@ from bluemira.geometry.tools import (
     find_clockwise_angle_2d,
     make_circle,
     make_polygon,
+    offset_wire,
 )
 from bluemira.geometry.wire import BluemiraWire
+
+
+class TestGetNSectors:
+    sector_degree = [
+        360.0,
+        180.0,
+        120.0,
+        90.0,
+        72.0,
+        60.0,
+        51.42857142857143,
+        45.0,
+        40.0,
+        36.0,
+        32.72727272727273,
+        30.0,
+        27.692307692307693,
+        25.714285714285715,
+        24.0,
+    ]
+
+    n_sectors = {
+        1: [1, 1, 1, 1, 1, 1, 1],
+        5: [1, 1, 1, 2, 3, 4, 5],
+        7: [1, 1, 2, 3, 4, 5, 7],
+        9: [1, 1, 3, 4, 6, 7, 9],
+    }
+
+    @pytest.mark.parametrize("ttl, sector_degree", zip(np.arange(1, 16), sector_degree))
+    @pytest.mark.parametrize("degree", np.arange(0, 361, step=60))
+    def test_get_n_sectors_degree(self, degree, ttl, sector_degree):
+        s_deg, _ = get_n_sectors(ttl, degree)
+        assert np.isclose(s_deg, sector_degree)
+
+    @pytest.mark.parametrize("ttl", n_sectors.keys())
+    @pytest.mark.parametrize("ind, degree", enumerate(np.arange(0, 361, step=60)))
+    def test_get_n_sectors_amount(self, ind, degree, ttl):
+        _, n_sec = get_n_sectors(ttl, degree)
+        assert np.isclose(n_sec, self.n_sectors[ttl][ind])
 
 
 class TestVariedOffsetFunction:
@@ -272,3 +316,58 @@ class TestMakeCircularRing:
     def test_raises_error_on_equal_radii(self):
         with pytest.raises(BuilderError):
             make_circular_xy_ring(1, 1)
+
+
+class TestBuildSectioned:
+    plot_colour = (1, 1, 1)
+
+    sq_arr = np.array([[2, 0, -0.5], [3, 0, -0.5], [3, 0, 0.5], [2, 0, 0.5]]).T
+    # rifling shape, for edge cases
+    sq_arr_2 = np.array([[2, 2, -0.5], [3, 2, -0.5], [3, 2, 0.5], [2, 2, 0.5]]).T
+    circ1 = make_circle(10, center=(15, 0, 0), axis=(0.0, 1.0, 0.0))
+
+    enable_sectioning = [True, True, True, False, False, False]
+
+    faces = []
+    for sec in [sq_arr, sq_arr_2, circ1]:
+        if not isinstance(sec, BluemiraWire):
+            sec = make_polygon(sec, closed=True)
+        offset = offset_wire(
+            sec,
+            1,
+            join="intersect",
+            open_wire=False,
+            ndiscr=600,
+        )
+        faces.append(BluemiraFace([offset, sec]))
+
+    # failing test mark
+    face_sec = list(map(list, zip(*[faces + faces, enable_sectioning])))
+    face_sec[2] = pytest.param(
+        faces[2],
+        enable_sectioning[2],
+        marks=pytest.mark.xfail(reason="Possible #1347 Topology failure"),
+    )
+
+    @pytest.mark.parametrize("face", faces)
+    def test_build_sectioned_xy(self, face):
+        sec = build_sectioned_xy(face, self.plot_colour)
+
+        assert len(sec) == 2
+        assert all([isinstance(s, PhysicalComponent) for s in sec])
+        assert [s.plot_options.face_options["color"] == self.plot_colour for s in sec]
+
+    @pytest.mark.parametrize("face, section_bool", face_sec)
+    def test_build_sectioned_xyz(self, face, section_bool):
+        sec = build_sectioned_xyz(
+            face, "test", 12, self.plot_colour, enable_sectioning=section_bool
+        )
+
+        assert len(sec) == 12 if section_bool else len(sec) == 1
+        assert all(
+            [
+                isinstance(s, Component if section_bool else PhysicalComponent)
+                for s in sec
+            ]
+        )
+        assert [s.plot_options.face_options["color"] == self.plot_colour for s in sec]
