@@ -190,7 +190,7 @@ class ParameterFrame:
         Returns
         -------
         tabulated: str
-            The tabulated DataFrame
+            The tabulated data
         """
         columns = list(ParamDictT.__annotations__.keys()) if keys is None else keys
         rec_col = copy.deepcopy(columns)

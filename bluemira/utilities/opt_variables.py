@@ -27,11 +27,10 @@ from __future__ import annotations
 
 import json
 from operator import attrgetter
-from typing import Dict, TextIO, Union
+from typing import Dict, List, Optional, TextIO, Union
 
 import matplotlib.pyplot as plt
 import numpy as np
-from pandas import DataFrame
 from tabulate import tabulate
 
 from bluemira.base.look_and_feel import bluemira_warn
@@ -543,32 +542,38 @@ class OptVariables:
                     f"'{self.__class__.__name__}' object has no attribute '{attr}'"
                 ) from None
 
-    def _to_records(self):
-        return sorted(
-            [
-                attrgetter(*BoundedVariable.__slots__)(self._var_dict[key])
-                for key in self._var_dict.keys()
-            ]
-        )
+    def as_dict(self) -> Dict:
+        """
+        Dictionary Representation of OptVariables
+        """
+        return {
+            key: {
+                k: v
+                for k, v in zip(
+                    BoundedVariable.__slots__,
+                    attrgetter(*BoundedVariable.__slots__)(self._var_dict[key]),
+                )
+            }
+            for key in self._var_dict.keys()
+        }
 
-    @staticmethod
-    def float_format(num):
+    def tabulate(self, keys: Optional[List] = None, tablefmt: str = "fancy_grid") -> str:
         """
-        Format a float
-        """
-        if type(num) is float:
-            return f"{num:.4g}"
-        else:
-            return num
+        Tabulate OptVariables
 
-    def format_values(self):
-        """
-        Format values in the underlying DataFrame
-        """
-        db = self._get_db()
-        return db["Value"].apply(self.float_format)
+        Parameters
+        ----------
+        keys: Optional[List]
+            table column keys
+        tablefmt: str (default="fancy_grid")
+            The format of the table - see
+            https://github.com/astanin/python-tabulate#table-format
 
-    def _get_db(self):
+        Returns
+        -------
+        tabulated: str
+            The tabulated data
+        """
         columns = [
             "Name",
             "Value",
@@ -577,36 +582,13 @@ class OptVariables:
             "Fixed",
             "Description",
         ]
-        db = DataFrame.from_records(self._to_records(), columns=columns)
-        return db
-
-    def tabulator(self, keys=None, db=None, tablefmt="fancy_grid") -> str:
-        """
-        Tabulate the optimisation variables.
-
-        Parameters
-        ----------
-        keys: list
-            database column keys
-        db: DataFrame
-            database to tabulate
-        tablefmt: str (default="fancy_grid")
-            The format of the table - see
-            https://github.com/astanin/python-tabulate#table-format
-
-        Returns
-        -------
-        tabulated: str
-            The tabulated DataFrame
-        """
-        db = self._get_db() if db is None else db
-        if keys is None:
-            columns = list(db.columns)
-        else:
-            db = db[keys]
+        if keys is not None:
             columns = keys
+
+        records = sorted([tuple(val) for val in self.as_dict().values()])
+
         return tabulate(
-            db,
+            records,
             headers=columns,
             tablefmt=tablefmt,
             showindex=False,
@@ -617,9 +599,7 @@ class OptVariables:
         """
         Pretty prints a representation of the OptVariables inside the console
         """
-        fdb = self._get_db()
-        fdb["Value"] = self.format_values()
-        return self.tabulator(keys=None, db=fdb)
+        return self.tabulate()
 
     def __repr__(self) -> str:
         """

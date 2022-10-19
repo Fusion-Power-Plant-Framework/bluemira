@@ -29,7 +29,6 @@ dependencies = [
     "numba",
     "numba-scipy",
     "numpy",
-    "pandas",
     "pint",
     "periodictable",
     "pyclipper",

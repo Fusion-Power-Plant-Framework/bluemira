@@ -62,7 +62,7 @@ def test_read_write(param_class: Type[GeometryParameterisation]):
         new_param = param_class.from_json(the_path)
         for attr in GeometryParameterisation.__slots__:
             if attr == "variables":
-                assert new_param.variables._to_records() == param.variables._to_records()
+                assert new_param.variables.as_dict() == param.variables.as_dict()
             else:
                 assert getattr(new_param, attr) == getattr(param, attr)
     finally:

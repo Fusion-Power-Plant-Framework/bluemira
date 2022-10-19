@@ -28,7 +28,6 @@ from typing import Iterable
 
 import numpy as np
 import tabulate
-from pandas import DataFrame
 from scipy.optimize import minimize
 
 from bluemira.base.constants import MU_0
@@ -1277,9 +1276,14 @@ class Equilibrium(MHDState):
             fsep.append(np.sum(fz_cs[j + 1 :]) - np.sum(fz_cs[: j + 1]))
         fsep = max(fsep)
         table = {"I [A]": currents, "B [T]": fields, "F [N]": fz}
-        df = DataFrame(list(table.values()), index=list(table.keys()))
-        df = df.applymap(lambda x: f"{x:.2f}")
-        print(tabulate.tabulate(df, headers=c_names))
+        print(
+            tabulate.tabulate(
+                list(table.values()),
+                headers=c_names,
+                floatfmt=".2f",
+                showindex=table.keys(),
+            )
+        )
         return table, fz_c_stot, fsep
 
     @property
