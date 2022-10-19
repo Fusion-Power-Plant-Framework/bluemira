@@ -116,8 +116,8 @@ for i, (xi, zi, dxi, dzi) in enumerate(zip(x, z, dx, dz)):
 coilset = CoilSet(coils)
 
 # Assign current density and peak field constraints
-coilset.assign_coil_materials("CS", j_max=16.5, b_max=12.5)
-coilset.assign_coil_materials("PF", j_max=12.5, b_max=11)
+coilset.assign_coil_materials("CS", j_max=16.5e6, b_max=12.5)
+coilset.assign_coil_materials("PF", j_max=12.5e6, b_max=11)
 coilset.fix_sizes()
 coilset.mesh_coils(0.3)
 

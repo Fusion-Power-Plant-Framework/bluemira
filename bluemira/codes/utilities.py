@@ -28,7 +28,7 @@ import os
 import subprocess  # noqa: S404
 import threading
 from enum import Enum
-from typing import Dict, List, Literal
+from typing import List
 
 from bluemira.base.look_and_feel import (
     _bluemira_clean_flush,
@@ -36,8 +36,7 @@ from bluemira.base.look_and_feel import (
     bluemira_print,
     bluemira_print_clean,
 )
-from bluemira.base.parameter import ParameterFrame, ParameterMapping
-from bluemira.codes.error import CodesError
+from bluemira.codes.params import ParameterMapping
 from bluemira.utilities.tools import get_module
 
 
@@ -75,116 +74,6 @@ def get_code_interface(module):
         return get_module(module)
 
 
-def _get_mapping(
-    params, code_name: str, send_recv: Literal["send", "recv"], override: bool = False
-) -> Dict[str, str]:
-    """
-    Create a dictionary to get the send or receive mappings for a given code.
-
-    Parameters
-    ----------
-    params: ParameterFrame
-        The parameters with mappings that define what is going to be sent or received.
-    code_name: str
-        The identifying name of the code that data being send to or received from.
-    send_recv: Literal["send", "recv"]
-        Whether to generate a mapping for sending or receiving.
-    override: bool, optional
-        If True then map variables with a mapping defined, even if recv or send=False.
-        By default, False.
-
-    Yields
-    ------
-    mapping: Dict[str, str]
-        The mapping between external code parameter names (key) and bluemira parameter
-        names (value).
-    """
-    if send_recv not in ["send", "recv"]:
-        raise CodesError("Mapping must be obtained for either send or recv.")
-
-    mapping = {}
-    for key in params.keys():
-        param = params.get_param(key)
-        if code_name in param.mapping and (
-            override or getattr(param.mapping[code_name], send_recv)
-        ):
-            mapping[param.mapping[code_name].name] = key
-    return mapping
-
-
-def get_recv_mapping(params, code_name, recv_all=False):
-    """
-    Get the receive mapping for variables mapped from the external code to the provided
-    input ParameterFrame.
-
-    Parameters
-    ----------
-    params: ParameterFrame
-        The parameters with mappings that define what is going to be received.
-    code_name: str
-        The identifying name of the code that is being received from.
-    recv_all: bool, optional
-        If True then receive all variables with a mapping defined, even if recv=False. By
-        default, False.
-
-    Returns
-    -------
-    mapping: Dict[str, str]
-        The mapping between external code parameter names (key) and bluemira parameter
-        names (value) to use for receiving.
-    """
-    return _get_mapping(params, code_name, "recv", recv_all)
-
-
-def get_send_mapping(params, code_name, send_all=False):
-    """
-    Get the send mapping for variables mapped from the external code to the provided
-    input ParameterFrame.
-
-    Parameters
-    ----------
-    params: ParameterFrame
-        The parameters with mappings that define what is going to be sent.
-    code_name: str
-        The identifying name of the code that is being sent to.
-    send_all: bool, optional
-        If True then send all variables with a mapping defined, even if send=False. By
-        default, False.
-
-    Returns
-    -------
-    mapping: Dict[str, str]
-        The mapping between external code parameter names (key) and bluemira parameter
-        names (value) to use for sending.
-    """
-    return _get_mapping(params, code_name, "send", send_all)
-
-
-def add_mapping(
-    code_name: str,
-    params: ParameterFrame,
-    mapping: Dict[str, ParameterMapping],
-):
-    """
-    Adds mappings for a given code to a ParameterFrame.
-    Modifies directly params but only if no mapping for that code exists
-
-    Parameters
-    ----------
-    code_name: str
-        Name of code
-    params: ParameterFrame
-        ParameterFrame to modify
-    mapping: Dict[str, ParameterMapping]
-        mapping between bluemira and the code
-
-    """
-    for key in params.keys():
-        param = params.get_param(key)
-        if param.var in mapping and code_name not in param.mapping:
-            param.mapping[code_name] = mapping[param.var]
-
-
 def create_mapping(
     in_mappings=None, out_mappings=None, io_mappings=None, none_mappings=None
 ):
@@ -210,10 +99,7 @@ def create_mapping(
         [none_mappings, nones],
     ]:
         if puts is not None:
-            for (
-                bm_key,
-                (ec_key, unit),
-            ) in puts.items():
+            for (bm_key, (ec_key, unit)) in puts.items():
                 mappings[bm_key] = ParameterMapping(
                     ec_key, send=sr["send"], recv=sr["recv"], unit=unit
                 )

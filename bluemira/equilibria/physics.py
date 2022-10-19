@@ -453,7 +453,7 @@ def normalise_beta(beta, a, b_tor, I_p):
     b_tor: float
         Toroidal field [T]
     I_p: float
-        Plasma current [MA]
+        Plasma current [A]
 
     Returns
     -------
@@ -478,7 +478,7 @@ def beta_N_to_beta(beta_N, a, Btor, I_p):  # noqa :N802
     b_tor: float
         Toroidal field [T]
     I_p: float
-        Plasma current [MA]
+        Plasma current [A]
 
     Returns
     -------

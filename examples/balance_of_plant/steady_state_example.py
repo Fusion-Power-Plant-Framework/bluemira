@@ -24,6 +24,8 @@ Simple example of a 0-D steady-state balance of plant view.
 """
 
 # %%
+import matplotlib.pyplot as plt
+
 from bluemira.balance_of_plant.steady_state import (
     BalanceOfPlantModel,
     H2OPumping,
@@ -34,7 +36,6 @@ from bluemira.balance_of_plant.steady_state import (
     RadChargedPowerStrategy,
     SuperheatedRankine,
 )
-from bluemira.base.parameter import ParameterFrame
 
 # %%[markdown]
 
@@ -43,13 +44,13 @@ from bluemira.base.parameter import ParameterFrame
 
 # %%
 # fmt: off
-default_params = ParameterFrame([
-    ['P_fus_DT', 'D-T fusion power', 1995, 'MW', None, 'Input'],
-    ['P_fus_DD', 'D-D fusion power', 5, 'MW', None, 'Input'],
-    ['P_rad', 'Radiation power', 400, 'MW', None, 'Input'],
-    ['P_hcd_ss', "Steady-state heating and current drive power", 50, "MW", None, 'Input'],
-    ['P_hcd_ss_el', "Steady-state heating and current drive electrical power", 150, "MW", None, 'Input'],
-])
+default_params = {
+    'P_fus_DT': 1995,
+    'P_fus_DD': 5,
+    'P_rad': 400,
+    'P_hcd_ss': 50,
+    'P_hcd_ss_el': 150,
+}
 # fmt: on
 
 # %%[markdown]
@@ -80,8 +81,10 @@ rad_sep_strat = RadChargedPowerStrategy(
 # powers, and the balance of plant cycle design.
 
 # %%
-blanket_pump_strat = HePumping(8, 7.5, 300, 500, eta_isentropic=0.9, eta_electric=0.87)
-bop_cycle = SuperheatedRankine(bb_t_out=500, delta_t_turbine=20)
+blanket_pump_strat = HePumping(
+    8e6, 7.5e6, 300, 500, eta_isentropic=0.9, eta_electric=0.87
+)
+bop_cycle = SuperheatedRankine(bb_t_out=500 + 273.15, delta_t_turbine=20)
 divertor_pump_strat = H2OPumping(f_pump=0.05, eta_isentropic=0.99, eta_electric=0.87)
 
 # %%[markdown]
@@ -173,3 +176,5 @@ WCLL_bop = BalanceOfPlantModel(
 )
 WCLL_bop.build()
 WCLL_bop.plot(title="WCLL blanket")
+
+plt.show()

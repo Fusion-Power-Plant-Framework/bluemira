@@ -22,11 +22,11 @@
 """
 PROCESS api
 """
-import os
+from dataclasses import dataclass
 from enum import Enum
 from pathlib import Path
+from typing import Dict, List, TypeVar, Union
 
-from bluemira.base.file import get_bluemira_path
 from bluemira.base.look_and_feel import bluemira_print, bluemira_warn
 from bluemira.codes.error import CodesError
 from bluemira.utilities.tools import flatten_iterable
@@ -79,9 +79,47 @@ if ENABLED:
     PROCESS_DICT = get_dicts()
 
 
-DEFAULT_INDAT = os.path.join(
-    get_bluemira_path("codes/process"), "PROCESS_DEFAULT_IN.DAT"
-)
+@dataclass
+class _INVariable:
+    """
+    Process io.in_dat.INVariable replica
+
+    Used to simulate what process does to input variables
+    for the InDat input file writer
+
+    This allows the defaults to imitate the same format as PROCESS'
+    InDat even if PROCESS isn't installed.
+    Therefore they will work the same in all cases and we dont always
+    need to be able to read a PROCESS input file.
+    """
+
+    name: str
+    _value: Union[float, List, Dict]
+    v_type: TypeVar("InVarValueType")
+    parameter_group: str
+    comment: str
+
+    @property
+    def get_value(self) -> Union[float, List, Dict]:
+        """Return value in correct format"""
+        return self._value
+
+    @property
+    def value(self) -> Union[str, List, Dict]:
+        """
+        Return the string of a value if not a Dict or a List
+        """
+        if not isinstance(self._value, (List, Dict)):
+            return f"{self._value}"
+        else:
+            return self._value
+
+    @value.setter
+    def value(self, new_value):
+        """
+        Value setter
+        """
+        self._value = new_value
 
 
 class Impurities(Enum):
@@ -120,7 +158,7 @@ class Impurities(Enum):
         return f"fimp({self.value:02}"
 
 
-def update_obsolete_vars(process_map_name: str) -> str:
+def update_obsolete_vars(process_map_name: str) -> Union[str, List[str], None]:
     """
     Check if the bluemira variable is up to date using the OBS_VAR dict.
     If the PROCESS variable name has been updated in the installed version
@@ -129,13 +167,16 @@ def update_obsolete_vars(process_map_name: str) -> str:
     Parameters
     ----------
     process_map_name: str
-        PROCESS variable name obtained from the bluemira mapping.
+        PROCESS variable name.
 
     Returns
     -------
-    process_name: str
+    process_name: Union[str, List[str], None]
         PROCESS variable names valid for the install (if OBS_VAR is updated
-        correctly)
+        correctly). Returns a list if an obsolete variable has been
+        split into more than one new variable (e.g., a thermal shield
+        thickness is split into ib/ob thickness). Returns `None` if there
+        is no alternative.
     """
     process_name = _nested_check(process_map_name)
 
@@ -153,6 +194,8 @@ def _nested_check(process_name):
     """
     while process_name in OBS_VARS:
         process_name = OBS_VARS[process_name]
+        if process_name == "None":
+            return None
         if isinstance(process_name, list):
             names = []
             for p in process_name:

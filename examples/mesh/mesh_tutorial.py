@@ -35,17 +35,23 @@ Some examples of using bluemira mesh module.
 # Import necessary module definitions.
 
 # %%
+import os
 
 import dolfin
 import matplotlib.pyplot as plt
 
 import bluemira.geometry.tools as tools
 from bluemira.base.components import Component, PhysicalComponent
+from bluemira.base.file import get_bluemira_path
+from bluemira.base.logs import set_log_level
 from bluemira.equilibria.shapes import JohnerLCFS
 from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.wire import BluemiraWire
 from bluemira.mesh import meshing
 from bluemira.mesh.tools import import_mesh, msh_to_xdmf
+
+set_log_level("DEBUG")
+
 
 # %%[markdown]
 
@@ -112,8 +118,10 @@ c_coil_out = PhysicalComponent(name="coil_out", shape=coil_out, parent=c_coil)
 # Initialize and create the mesh
 
 # %%
+directory = get_bluemira_path("", subfolder="generated_data")
 
-m = meshing.Mesh()
+meshfiles = [os.path.join(directory, p) for p in ["Mesh.geo_unrolled", "Mesh.msh"]]
+m = meshing.Mesh(meshfile=meshfiles)
 buffer = m(c_all)
 print(m.get_gmsh_dict(buffer))
 
@@ -123,11 +131,15 @@ print(m.get_gmsh_dict(buffer))
 
 # %%
 
-msh_to_xdmf("Mesh.msh", dimensions=(0, 2), directory=".", verbose=True)
+msh_to_xdmf(
+    "Mesh.msh",
+    dimensions=(0, 2),
+    directory=directory,
+)
 
 mesh, boundaries, subdomains, labels = import_mesh(
     "Mesh",
-    directory=".",
+    directory=directory,
     subdomains=True,
 )
 dolfin.plot(mesh)

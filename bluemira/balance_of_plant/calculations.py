@@ -25,7 +25,7 @@ Simple relations for power.
 
 import numpy as np
 
-from bluemira.base.constants import to_kelvin
+from bluemira.base.constants import raw_uc
 from bluemira.base.look_and_feel import bluemira_warn
 
 
@@ -40,9 +40,9 @@ def cryo_power(s_tf, m_cold, nucl_heating, e_pf_max, t_pulse, tf_current, n_TF):
     m_cold: float
         Total cold mass [kg]
     nucl_heating: float
-        Total coil nuclear heating [MW]
+        Total coil nuclear heating [W]
     e_pf_max: float
-        Maximum stored energy in the PF coils [MJ]
+        Maximum stored energy in the PF coils [J]
     t_pulse: float
         Pulse length [s]
     tf_current: float
@@ -64,7 +64,7 @@ def cryo_power(s_tf, m_cold, nucl_heating, e_pf_max, t_pulse, tf_current, n_TF):
     # Steady-state loads
     qss = 4.3e-4 * m_cold + 2 * s_tf
     # AC losses
-    qac = 1e3 * e_pf_max / t_pulse
+    qac = raw_uc(e_pf_max, "J", "kJ") / t_pulse
     # Current leads
     qcl = 13.6e-3 * n_TF * tf_current
     # Misc. loads (piping and reserves)
@@ -81,15 +81,15 @@ def He_pumping(  # noqa :N802
     Parameters
     ----------
     pressure_in: float
-        Inlet pressure [MPa]
+        Inlet pressure [Pa]
     pressure_out: float
-        Pressure drop [MPa]
+        Pressure drop [Pa]
     t_in: float
-        Inlet temperature [°C]
+        Inlet temperature [K]
     t_out: float
-        Outlet temperature [°C]
+        Outlet temperature [K]
     blanket_power: float
-        Total blanket power excluding pumping power [MW]
+        Total blanket power excluding pumping power [W]
     eta_isen: float
         Isentropic efficiency of the He compressors
     eta_el: float
@@ -115,7 +115,7 @@ def He_pumping(  # noqa :N802
     \t:math:`f_{pump}=\\dfrac{dP}{dTc_P\\rho_{av}}`
     """  # noqa :W505
     d_temp = t_out - t_in
-    t_bb_inlet = to_kelvin(t_in)
+    t_bb_inlet = t_in
     # Ideal monoatomic gas - small compression ratios
     t_comp_inlet = t_bb_inlet / ((pressure_in / pressure_out) ** (2 / 5))
     # Ivo not sure why can't refind it - probably right but very little
@@ -165,15 +165,15 @@ def superheated_rankine(blanket_power, div_power, bb_outlet_temp, delta_t_turbin
     Parameters
     ----------
     blanket_power: float
-        Blanket thermal power [MW]
+        Blanket thermal power [W]
     div_power: float
-        Divertor thermal power [MW]
+        Divertor thermal power [W]
     bb_outlet_temp: float
-        Blanket outlet temperature [C]
+        Blanket outlet temperature [K]
     delta_t_turbine: float
-        Turbine inlet temperature drop [C]
+        Turbine inlet temperature drop [K]
     """
-    t_turb = to_kelvin(bb_outlet_temp - delta_t_turbine)
+    t_turb = bb_outlet_temp - delta_t_turbine
     if t_turb < 657 or t_turb > 915:
         bluemira_warn("BoP turbine inlet temperature outside range of validity.")
     f_lgh = div_power / (blanket_power + div_power)

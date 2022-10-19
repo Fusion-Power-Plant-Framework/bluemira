@@ -29,8 +29,7 @@ from pprint import pprint
 
 import matplotlib.pyplot as plt
 
-from bluemira.base.config import Configuration
-from bluemira.base.file import get_bluemira_root
+from bluemira.base.file import get_bluemira_path, get_bluemira_root
 from bluemira.base.logs import set_log_level
 from bluemira.codes import plasmod
 
@@ -73,7 +72,7 @@ binary = os.path.join(PLASMOD_PATH, "bin", "plasmod")
 new_params = {
     "A": 3.1,
     "R_0": 9.002,
-    "I_p": 17.75,
+    "I_p": 17.75e6,
     "B_0": 5.855,
     "V_p": -2500,
     "v_burn": -1.0e6,
@@ -83,13 +82,6 @@ new_params = {
     "kappa": 1.6969830041844367,
 }
 
-params = Configuration(new_params)
-
-# Add parameter source
-for param_name in params.keys():
-    if param_name in new_params:
-        param = params.get_param(param_name)
-        param.source = "Plasmod Example"
 
 # %%[markdown]
 # Some values are not linked into bluemira. These plasmod parameters can be set
@@ -127,6 +119,7 @@ for var_name in dir(plasmod.mapping):
 build_config = {
     "problem_settings": problem_settings,
     "binary": binary,
+    "directory": get_bluemira_path("", subfolder="generated_data"),
 }
 
 # %%[markdown]
@@ -134,7 +127,7 @@ build_config = {
 
 # %%
 
-solver = plasmod.Solver(params=params, build_config=build_config)
+solver = plasmod.Solver(params=new_params, build_config=build_config)
 
 # %%[markdown]
 # These few functions are helpers to simplify the remainder of the tutorial.
@@ -149,10 +142,12 @@ def print_outputs(solver):
     Print plasmod scalars
     """
     outputs = solver.plasmod_outputs()
-    print(f"Fusion power [MW]: {solver.params.P_fus/ 1E6}")
+    print(f"Fusion power [MW]: {solver.params.P_fus.value_as('MW')}")
     print(f"Additional heating power [MW]: {outputs.Paux / 1E6}")
-    print(f"Radiation power [MW]: {solver.params.P_rad / 1E6}")
-    print(f"Transport power across separatrix [MW]: {solver.params.P_sep / 1E6}")
+    print(f"Radiation power [MW]: {solver.params.P_rad.value_as('MW')}")
+    print(
+        f"Transport power across separatrix [MW]: {solver.params.P_sep.value_as('MW')}"
+    )
     print(f"{solver.params.q_95}")
     print(f"{solver.params.I_p}")
     print(f"{solver.params.l_i}")
@@ -163,7 +158,7 @@ def print_outputs(solver):
         f"Divertor challenging criterion (P_sep * Bt /(q95 * R0 * A)) [-]: {outputs.psepb_q95AR}"
     )
     print(
-        f"H-mode operating regime f_LH = P_sep/P_LH [-]: {solver.params.P_sep / solver.params.P_LH}"
+        f"H-mode operating regime f_LH = P_sep/P_LH [-]: {solver.params.P_sep.value / solver.params.P_LH.value}"
     )
     print(f"{solver.params.tau_e}")
     print(f"Protium fraction [-]: {outputs.cprotium}")
@@ -239,7 +234,7 @@ print_outputs(solver)
 # Plasmod calculates the additional heating power and the plasma current
 
 # %%
-solver.params.q_95 = (3.5, "input")
+solver.params.q_95.set_value(3.5, "Input 1")
 
 solver.problem_settings["pfus_req"] = 2000.0
 solver.problem_settings["i_equiltype"] = plasmod.EquilibriumModel.q95_sawtooth
@@ -265,7 +260,9 @@ print_outputs(solver)
 
 # %%
 solver.modify_mappings({"q_95": {"send": False}})
-solver.params.q_95 = (5, "input")
+solver.params.q_95.set_value(5, "Input 2")
 solver.execute(plasmod.RunMode.RUN)
 print_outputs(solver)
-print("\nq_95 value history\n", solver.params.q_95.history())
+print("\nq_95 value history\n")
+for hist in solver.params.q_95.history():
+    print(hist)

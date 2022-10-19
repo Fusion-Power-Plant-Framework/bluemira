@@ -18,67 +18,238 @@
 #
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
-
 """
-Tests for EU-DEMO TF Coils build.
+Test first wall silhouette designer.
 """
 
+import copy
+import os
+
+import numpy as np
 import pytest
-from EUDEMO_builders.tf_coils import TFCoilsBuilder
 
-from bluemira.base.config import Configuration
-from bluemira.base.error import BuilderError
 from bluemira.base.file import get_bluemira_path
+from bluemira.equilibria import Equilibrium
+from bluemira.equilibria.find import find_OX_points
+from bluemira.geometry.parameterisations import PrincetonD, TripleArc
+from bluemira.geometry.tools import make_circle, make_polygon
+from EUDEMO_builders.tf_coils import TFCoilBuilder, TFCoilDesigner
 
-DATA_PATH = get_bluemira_path(
-    "test_data", subfolder="examples/design/EU-DEMO/EUDEMO_tests"
-)
-"""
-The path to data to be used in these tests.
-"""
+EQDATA = get_bluemira_path("equilibria/test_data", subfolder="tests")
+DATA = get_bluemira_path("design/EU-DEMO/EUDEMO_tests/test_data", subfolder="examples")
+
+OPTIMISER_MODULE_REF = "bluemira.builders.tf_coils"
 
 
-class TestTFCoils:
-    """
-    Test the EU-DEMO TF Coils build methods.
-    """
+class TestTFCoilDesigner:
 
-    def setup_method(self):
-        self.build_config = {
-            "name": "TF Coils",
-            "param_class": "TripleArc",
-            "runmode": "read",
-            "variables_map": {},
-            "problem_class": "bluemira.builders.tf_coils::RippleConstrainedLengthGOP",
-            "geom_path": DATA_PATH,
-        }
-        self.params = Configuration().to_dict()
-        self.params["n_TF"] = 18
+    CONFIG = {
+        "param_class": "TripleArc",
+        "variables_map": {},
+        "run_mode": "mock",
+        "name": "First Wall",
+        "problem_class": f"{OPTIMISER_MODULE_REF}::RippleConstrainedLengthGOP",
+    }
+    PARAMS = {
+        "R_0": {"value": 10.5, "unit": "m"},
+        "r_tf_current_ib": {"value": 1, "unit": "m"},
+        "r_tf_in": {"value": 3.2, "unit": "m"},
+        "tk_tf_wp": {"value": 0.5, "unit": "m"},
+        "tk_tf_wp_y": {"value": 0.5, "unit": "m"},
+        "tf_wp_width": {"value": 0.76, "unit": "m"},
+        "tf_wp_depth": {"value": 1.05, "unit": "m"},
+        "tk_tf_front_ib": {"value": 0.04, "unit": "m"},
+        "g_ts_tf": {"value": 0.05, "unit": "m"},
+        "TF_ripple_limit": {"value": 0.6, "unit": "%"},
+        "z_0": {"value": 0.0, "unit": "m"},
+        "B_0": {"value": 6, "unit": "T"},
+        "n_TF": {"value": 12, "unit": ""},
+        "tk_tf_ins": {"value": 0.08, "unit": "m"},
+        "tk_tf_insgap": {"value": 0.1, "unit": "m"},
+        "tk_tf_nose": {"value": 0.6, "unit": "m"},
+    }
 
-    def test_bad_geom_path(self):
-        self.build_config["geom_path"] = "/a/bad/path/6b04dbec4a955560d59cf1e5e885b8de"
-        with pytest.raises(BuilderError):
-            TFCoilsBuilder(self.params, self.build_config)
+    @classmethod
+    def setup_class(cls):
+        cls.eq = Equilibrium.from_eqdsk(os.path.join(EQDATA, "eqref_OOB.json"))
+        _, cls.x_points = find_OX_points(cls.eq.x, cls.eq.z, cls.eq.psi())
+        cls.lcfs = make_polygon(cls.eq.get_LCFS().xyz, closed=True)
+        cls.vvts_koz = make_circle(10, center=(15, 0, 0), axis=(0.0, 1.0, 0.0))
 
-    def test_read_from_dir(self):
-        builder = TFCoilsBuilder(self.params, self.build_config)
-        builder()
+    def test_parameterisation_read(self):
+        config = copy.deepcopy(self.CONFIG)
+        config.update(
+            {
+                "run_mode": "read",
+                "file_path": os.path.join(DATA, "tf_coils_TripleArc_18.json"),
+            }
+        )
 
-    def test_mock(self):
-        self.build_config["runmode"] = "mock"
-        builder = TFCoilsBuilder(self.params, self.build_config)
-        builder()
+        designer = TFCoilDesigner(
+            self.PARAMS,
+            build_config=config,
+            separatrix=self.lcfs,
+            keep_out_zone=self.vvts_koz,
+        )
+        param, wp = designer.execute()
 
-    def test_run_no_separatrix(self):
-        self.build_config["runmode"] = "run"
-        with pytest.raises(BuilderError):
-            TFCoilsBuilder(self.params, self.build_config)
+        assert np.isclose(param.variables["sl"].value, 5)
+        assert np.isclose(param.variables["x1"].value, wp.center_of_mass[0])
 
-    @pytest.mark.parametrize(
-        "degree,n_children", [(360, 18), (20, 1), (21, 2), (270, 14)]
-    )
-    def test_build_xyz(self, degree, n_children):
-        builder = TFCoilsBuilder(self.params, self.build_config)
-        builder.mock()
-        result = builder.build_xyz(degree=degree)
-        assert len(result.children) == n_children
+    def test_read_no_file(self):
+        config = copy.deepcopy(self.CONFIG)
+        config.update({"run_mode": "read"})
+
+        designer = TFCoilDesigner(
+            self.PARAMS,
+            build_config=config,
+            separatrix=self.lcfs,
+            keep_out_zone=self.vvts_koz,
+        )
+
+        with pytest.raises(ValueError):
+            designer.execute()
+
+    def test_run_no_problem_class(self):
+        config = copy.deepcopy(self.CONFIG)
+        config.update({"run_mode": "run"})
+        del config["problem_class"]
+
+        designer = TFCoilDesigner(
+            self.PARAMS,
+            build_config=config,
+            separatrix=self.lcfs,
+            keep_out_zone=self.vvts_koz,
+        )
+
+        with pytest.raises(ValueError):
+            designer.execute()
+
+    def test_run_check_parameters(self):
+        config = copy.deepcopy(self.CONFIG)
+        config["run_mode"] = "run"
+        config.update(
+            {
+                "problem_settings": {"n_koz_points": 101},
+                "optimisation_settings": {
+                    "algorithm_name": "COBYLA",
+                    "parameters": {"initial_step": 1e-4},
+                    "conditions": {"max_eval": 25},
+                },
+            }
+        )
+        designer = TFCoilDesigner(
+            self.PARAMS,
+            build_config=config,
+            separatrix=self.lcfs,
+            keep_out_zone=self.vvts_koz,
+        )
+        d_run, _ = designer.execute()
+
+        designer_mock = TFCoilDesigner(
+            self.PARAMS,
+            build_config=self.CONFIG,
+            separatrix=self.lcfs,
+            keep_out_zone=self.vvts_koz,
+        )
+        d_mock, _ = designer_mock.execute()
+        assert d_run.create_shape().length != d_mock.create_shape().length
+        assert designer.problem_settings == config["problem_settings"]
+        assert designer.opt_config == config["optimisation_settings"]
+        assert (
+            designer.algorithm_name == config["optimisation_settings"]["algorithm_name"]
+        )
+        assert designer.opt_parameters == config["optimisation_settings"]["parameters"]
+        assert designer.opt_conditions == config["optimisation_settings"]["conditions"]
+
+    def test_shape_is_closed(self):
+        designer = TFCoilDesigner(
+            self.PARAMS,
+            build_config=self.CONFIG,
+            separatrix=self.lcfs,
+            keep_out_zone=self.vvts_koz,
+        )
+
+        assert designer.execute()[0].create_shape().is_closed()
+
+
+def centreline_setup():
+    centrelines, wp_xs = [], []
+
+    for cl in [TripleArc(), PrincetonD()]:
+        centreline = cl.create_shape()
+        tk_tf_wp = 0.4
+        tk_tf_wp_y = 0.7
+
+        x_min = centreline.bounding_box.x_min - (0.5 * tk_tf_wp)
+        y_min = centreline.bounding_box.y_min - (0.5 * tk_tf_wp_y)
+
+        wp_cross_section = make_polygon(
+            [
+                [x_min, y_min, 0],
+                [x_min + tk_tf_wp, y_min, 0],
+                [x_min + tk_tf_wp, y_min + tk_tf_wp_y, 0],
+                [x_min, y_min + tk_tf_wp_y, 0],
+            ],
+            closed=True,
+        )
+        centrelines.append(centreline)
+        wp_xs.append(wp_cross_section)
+
+    return centrelines, wp_xs
+
+
+class TestTFCoilBuilder:
+
+    params = {
+        "R_0": {"value": 9, "unit": "m"},
+        "z_0": {"value": 0.0, "unit": "m"},
+        "B_0": {"value": 6, "unit": "T"},
+        "n_TF": {"value": 18, "unit": ""},
+        "tf_wp_width": {"value": 0.7, "unit": "m"},
+        "tf_wp_depth": {"value": 1.00, "unit": "m"},
+        "tk_tf_front_ib": {"value": 0.04, "unit": "m"},
+        "tk_tf_ins": {"value": 0.08, "unit": "m"},
+        "tk_tf_insgap": {"value": 0.1, "unit": "m"},
+        "tk_tf_nose": {"value": 0.6, "unit": "m"},
+        "tk_tf_side": {"value": 0.1, "unit": "m"},
+    }
+
+    @pytest.mark.parametrize("centreline, wp_xs", zip(*centreline_setup()))
+    def test_components_and_segments(self, centreline, wp_xs):
+        builder = TFCoilBuilder(self.params, {}, centreline, wp_xs)
+        tf_coil = builder.build()
+
+        assert tf_coil.component().get_component("xz")
+        xy = tf_coil.component().get_component("xy")
+        assert xy
+
+        xyz = tf_coil.component().get_component("xyz")
+        assert xyz
+        xyz.show_cad()
+
+        # Casing, Insulation, Winding pack
+        assert len(xyz.leaves) == self.params["n_TF"]["value"] * 3
+        # inboard and outboard
+        assert len(xy.leaves) == self.params["n_TF"]["value"] * 3 * 2
+
+        ins = xyz.get_component(f"{TFCoilBuilder.INS} 1")
+        wp = xyz.get_component(f"{TFCoilBuilder.WP} 1")
+        insgap = self.params["tk_tf_ins"]["value"] + self.params["tk_tf_insgap"]["value"]
+        assert np.isclose(
+            wp._shape.bounding_box.x_min - ins._shape.bounding_box.x_min, insgap
+        )
+        assert np.isclose(
+            ins._shape.bounding_box.y_max - wp._shape.bounding_box.y_max, insgap
+        )
+
+        ib_cas = xy.get_component(f"{TFCoilBuilder.CASING} 1").get_component("inboard 1")
+        case_thick = (
+            self.params["tf_wp_width"]["value"]
+            + self.params["tk_tf_nose"]["value"]
+            + self.params["tk_tf_front_ib"]["value"]
+        )
+        assert np.isclose(
+            ib_cas._shape.bounding_box.x_max - ib_cas._shape.bounding_box.x_min,
+            case_thick,
+        )

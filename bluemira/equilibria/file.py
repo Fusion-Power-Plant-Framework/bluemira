@@ -18,45 +18,29 @@
 #
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
-
 """
 Input and output file interface. EQDSK and json. NOTE: jsons are better :)
 """
+
 import json
 import os
 import time
+from dataclasses import asdict, dataclass
+from typing import Dict, Optional
 
 import fortranformat as ff
 import numpy as np
 
 from bluemira.base.look_and_feel import bluemira_warn
-from bluemira.base.parameter import ParameterFrame
 from bluemira.utilities.tools import is_num, json_writer
 
-__all__ = ["EQDSKInterface"]
+EQDSK_EXTENSIONS = [".eqdsk", ".eqdsk_out", ".geqdsk"]
 
 
-def read_array(tokens, n, name="Unknown"):
-    data = np.zeros([n])
-    try:
-        for i in np.arange(n):
-            data[i] = float(next(tokens))
-    except StopIteration:
-        raise ValueError(f"Failed reading array {name} of size {n}")
-    return data
-
-
-def read_2d_array(tokens, n_x, n_y, name="Unknown"):
-    data = np.zeros([n_y, n_x])
-    for i in np.arange(n_y):
-        data[i, :] = read_array(tokens, n_x, name + "[" + str(i) + "]")
-    data = np.transpose(data)
-    return data
-
-
+@dataclass(repr=False)
 class EQDSKInterface:
     """
-    Provides an interface to EQDSK files (G-EQDSK format)
+    Container for data from an EQDSK file.
 
     Inspired by an EQDSK reader originally developed by B. Dudson:
         https://github.com/bendudson/pyTokamak/blob/master/tokamak/formats/geqdsk.py
@@ -66,460 +50,506 @@ class EQDSKInterface:
 
     Notes
     -----
-    G-EQDSK is from the 1980's and EQDSK files should generally only be read and not written.
-    New equilibria should really just be saved as JSON files.
+    G-EQDSK is from the 1980's and EQDSK files should generally only be
+    read and not written. New equilibria should really just be saved as
+    JSON files.
 
     Poloidal magnetic flux units not enforced here!
 
     Plasma current direction is not enforced here!
-    """  # noqa :W505
+    """
 
-    # fmt: off
-    p = [
-        ["name", "Name of the equilibrium EQDSK", None, "dimensionless", None, "eqfile"],
-        ["nx", "Number of grid points in the radial direction", None, "dimensionless", None, "eqfile"],
-        ["nz", "Number of grid points in the vertical direction", None, "dimensionless", None, "eqfile"],
-        ["xdim", "Horizontal dimension of the spatial grid", None, "m", None, "eqfile"],
-        ["zdim", "Vertical dimension of the spatial grid", None, "m", None, "eqfile"],
-        ["xcentre", "Radius of the reference toroidal magnetic field", None, "m", None, "eqfile"],
-        ["xgrid1", "Minimum radius of the spatial grid", None, "m", None, "eqfile"],
-        ["zmid", "Z coordinate of the middle of the spatial grid", None, "m", None, "eqfile"],
-        ["xmag", "Radius of the magnetic axis", None, "m", None, "eqfile"],
-        ["zmag", "Z coordinate of the magnetic axis", None, "m", None, "eqfile"],
-        ["psimag", "Poloidal flux at the magnetic axis", None, "V.s/rad", None, "eqfile"],
-        ["psibdry", "Poloidal flux at the magnetic axis", None, "V.s/rad", None, "eqfile"],
-        ["bcentre", "Magnetic field at the reference radius", None, "T", None, "eqfile"],
-        ["cplasma", "Plasma current", None, "A", None, "eqfile"],
-        ["fpol", "Poloidal current function f = R*B on 1-D flux grid", None, "T.m", None, "eqfile"],
-        ["pressure", "Plasma pressure function on 1-D flux grid", None, "N/m^2", None, "eqfile"],
-        ["ffprime", "FF' function on 1-D flux grid", None, "m.T^2/V.s/rad", None, "eqfile"],
-        ["pprime", "P' function on 1-D flux grid", None, "N/m^2/V.s/rad", None, "eqfile"],
-        ["psi", "Poloidal magnetic flux on the 2-D grid", None, "V.s/rad", None, "eqfile"],
-        ["qpsi", "Safety factor values on the 1-D flux grid", None, "dimensionless", None, "eqfile"],
-        ["nbdry", "Number of boundary points", None, "dimensionless", None, "eqfile"],
-        ["nlim", "Number of limiters", None, "dimensionless", None, "eqfile"],
-        ["xbdry", "X coordinates of the plasma boundary", None, "m", None, "eqfile"],
-        ["zbdry", "Z coordinates of the plasma boundary", None, "m", None, "eqfile"],
-        ["xlim", "X coordinates of the limiters", None, "m", None, "eqfile"],
-        ["zlim", "Z coordinates of the limiters", None, "m", None, "eqfile"],
-        ["ncoil", "Number of coils", None, "dimensionless", None, "eqfile"],
-        ["xc", "X coordinates of the coils", None, "m", None, "eqfile"],
-        ["zc", "Z coordinates of the coils", None, "m", None, "eqfile"],
-        ["dxc", "X half-thicknesses of the coils", None, "m", None, "eqfile"],
-        ["dzc", "Z half-thicknesses of hte coils", None, "m", None, "eqfile"],
-        ["Ic", "Coil currents", None, "A", None, "eqfile"],
-        ["x", "X 1-D vector", None, "m", None, "eqfile"],
-        ["z", "Z 1-D vector", None, "m", None, "eqfile"],
-        ["psinorm", "Normalised psi vector", None, "A", None, "eqfile"],
-    ]
-    # fmt: on
-    data = ParameterFrame(p)
+    bcentre: float
+    """Magnetic field at the reference radius [T]."""
+    cplasma: float
+    """Plasma current [A]."""
+    dxc: np.ndarray
+    """X half-thicknesses of the coils [m]."""
+    dzc: np.ndarray
+    """Z half-thicknesses of the coils [m]."""
+    ffprime: np.ndarray
+    """FF' function on 1-D flux grid [m.T^2/V.s/rad]."""
+    fpol: np.ndarray
+    """Poloidal current function f = R*B on 1-D flux [T.m]."""
+    Ic: np.ndarray
+    """Coil currents [A]."""
+    name: str
+    """Name of the equilibrium EQDSK [dimensionless]."""
+    nbdry: int
+    """Number of boundary points [dimensionless]."""
+    ncoil: int
+    """Number of coils [dimensionless]."""
+    nlim: int
+    """Number of limiters [dimensionless]."""
+    nx: int
+    """Number of grid points in the radial direction [dimensionless]."""
+    nz: int
+    """Number of grid points in the vertical direction [dimensionless]."""
+    pprime: np.ndarray
+    """P' function on 1-D flux grid [N/m^2/V.s/rad]."""
+    pressure: np.ndarray
+    """Plasma pressure function on 1-D flux grid [N/m^2]."""
+    psi: np.ndarray
+    """Poloidal magnetic flux on the 2-D grid [V.s/rad]."""
+    psibdry: float
+    """Poloidal flux at the magnetic axis [V.s/rad]."""
+    psimag: float
+    """Poloidal flux at the magnetic axis [V.s/rad]."""
+    xbdry: np.ndarray
+    """X coordinates of the plasma boundary [m]."""
+    xc: np.ndarray
+    """X coordinates of the coils [m]."""
+    xcentre: float
+    """Radius of the reference toroidal magnetic  [m]."""
+    xdim: float
+    """Horizontal dimension of the spatial grid [m]."""
+    xgrid1: float
+    """Minimum radius of the spatial grid [m]."""
+    xlim: np.ndarray
+    """X coordinates of the limiters [m]."""
+    xmag: float
+    """Radius of the magnetic axis [m]."""
+    zbdry: np.ndarray
+    """Z coordinates of the plasma boundary [m]."""
+    zc: np.ndarray
+    """Z coordinates of the coils [m]."""
+    zdim: float
+    """Vertical dimension of the spatial grid [m]."""
+    zlim: np.ndarray
+    """Z coordinates of the limiters [m]."""
+    zmag: float
+    """Z coordinate of the magnetic axis [m]."""
+    zmid: float
+    """Z coordinate of the middle of the spatial grid [m]."""
+    x: Optional[np.ndarray] = None
+    """X 1-D vector [m] (calculated if not given)."""
+    z: Optional[np.ndarray] = None
+    """Z 1-D vector [m] (calculated if not given)."""
+    psinorm: Optional[np.ndarray] = None
+    """Normalised psi vector [A] (calculated if not given)."""
+    qpsi: Optional[np.ndarray] = None
+    """Safety factor values on the 1-D flux grid [dimensionless]."""
+    file_name: Optional[str] = None
+    """The EQDSK file the data originates from."""
 
-    def __init__(self):
-        self.filename = None
-        self.header = None
+    def __post_init__(self):
+        """Calculate derived parameters if they're not given."""
+        if self.x is None:
+            self.x = _derive_x(self.xgrid1, self.xdim, self.nx)
+        if self.z is None:
+            self.z = _derive_z(self.zmid, self.zdim, self.nz)
+        if self.psinorm is None:
+            self.psinorm = _derive_psinorm(self.fpol)
 
-    def read(self, file):
+    @classmethod
+    def from_file(cls, file_path: str):
         """
-        Reads an input EQDSK file in. Can be in EQDSK or JSON format.
+        Create an EQDSKInterface object from a file.
 
         Parameters
         ----------
-        file: str
-            Full path string of the file
+        file_path: str
+            Path to a file of one of the following formats:
+
+                * JSON
+                * eqdsk
+                * eqdsk_out
+                * geqdsk
 
         Returns
         -------
-        data: dict
-            The dictionary of EQDSK data specified in the ParameterFrame
+        EQDSKInterface
+            An instance of this class containing the EQDSK file's data.
         """
-        self.filename = self._get_filename(file)
-        if (
-            file.endswith(".eqdsk")
-            or file.endswith(".eqdsk_out")
-            or file.endswith(".geqdsk")
-        ):
-            return self._read_eqdsk(file)
-        if file.endswith(".json"):
-            return self._read_json(file)
-        formatt = file.split(".")[-1]
-        raise ValueError(f"Unrecognised file format {formatt}")
+        _, file_extension = os.path.splitext(file_path)
+        file_name = os.path.basename(file_path)
+        if file_extension.lower() in EQDSK_EXTENSIONS:
+            return cls(file_name=file_name, **_read_eqdsk(file_path))
+        if file_extension.lower() == ".json":
+            return cls(file_name=file_name, **_read_json(file_path))
+        raise ValueError(f"Unrecognised file format '{file_extension}'.")
 
-    def write(self, file, data, formatt="json", **kwargs):
+    def to_dict(self) -> Dict:
+        """Return a dictionary of the EQDSK data."""
+        d = asdict(self)
+        # Remove the file name as this is metadata, not EQDSK data
+        del d["file_name"]
+        return d
+
+    def write(
+        self, file_path: str, format: str = "json", json_kwargs: Optional[Dict] = None
+    ):
         """
-        Writes an output EQDSK file
+        Write the EQDSK data to file in the given format.
 
         Parameters
         ----------
-        file: str
-            The full path string of the file to be created
-        data: dict
-            The dictionary of EQDSK data specified in the ParameterFrame
-        formatt: str
-            The format to save the file in
-        kwargs: dict
-            passed onto the writer
+        file_path: str
+            Path to where the file should be written.
+        format: str
+            The format to save the file in. One of 'json', 'eqdsk', or
+            'geqdsk'.
+        json_kwargs: Dict
+            Key word arguments to pass to the ``json.dump`` call. Only
+            used if ``format`` is 'json'.
         """
-        self.filename = self._get_filename(file)
-        if formatt == "json":
-            self._write_json(file, data, **kwargs)
-        elif formatt in ["eqdsk", "geqdsk"]:
+        if format == "json":
+            json_kwargs = {} if json_kwargs is None else json_kwargs
+            json_writer(self.to_dict(), file_path, **json_kwargs)
+        elif format in ["eqdsk", "geqdsk"]:
             bluemira_warn(
                 "You are in the 21st century. Are you sure you want to be making an EDQSK in this day and age?"
             )
-            self._write_eqdsk(file, data, **kwargs)
-        else:
-            raise ValueError(f"Unrecognised file format {formatt}")
+            _write_eqdsk(file_path, self.to_dict())
 
-    @staticmethod
-    def _get_filename(file):
-        return file.split(os.sep)[-1]
-
-    def to_dict(self):
+    def update(self, eqdsk_data: Dict):
         """
-        Produces a dictionary of the EQDSK information
-
-        Returns
-        -------
-        eqdsk_dict: dict
-            The dictionary of all the EQDSK information
-        """
-        return dict(self.data.items())
-
-    def load_dict(self, eqdsk_dict):
-        """
-        Loads a dictionary of EQDSK information and updates the EQDSKInterface
+        Update this object's data with values from a dictionary.
 
         Parameters
         ----------
-        eqdsk_dict: dict
-            The dictionary of updated EQDSK information
+        eqdsk_data: Dict
+            A dict containing the new eqdsk data.
+
+        Raises
+        ------
+        ValueError
+            If a key in ``eqdsk_data`` does not correspond to an
+            attribute of this class.
         """
-        self.data.update_kw_parameters(eqdsk_dict, f"Loaded from {self.filename}")
-
-    def set_attr(self, name, value):
-        """
-        Sets an attribute of the underlying ParameterFrame
-
-        Parameters
-        ----------
-        name: str
-            A key of the ParameterFrame
-        value: any type
-            The value of the parameter to set
-        """
-        if name in self.data.keys():
-            self.data.set_parameter(name, value, source=self.header)
-        else:
-            raise KeyError(f'No parameter "{name}" in ParameterFrame')
-
-    def _read_json(self, file):
-        if isinstance(file, str):
-            with open(file, "r") as f_h:
-                return self._read_json(f_h)
-
-        data = json.load(file)
-        for k, value in data.items():
-            if isinstance(value, list):
-                data[k] = np.asarray(value)
-
-        self.load_dict(data)
-        return self.to_dict()
-
-    def _write_json(self, file, data, **kwargs):
-        return json_writer(data, file, **kwargs)
-
-    def _read_eqdsk(self, file):
-        if isinstance(file, str):
-            with open(file, "r") as f_handle:
-                return self._read_eqdsk(f_handle)
-
-        description = file.readline()
-        if not description:
-            raise IOError(f"Could not read the file {self.filename}.")
-        description = description.split()
-        self.header = description[0]
-
-        ints = []
-        for value in description:
-            if is_num(value):
-                ints.append(value)
-        if len(ints) < 3:
-            raise IOError(
-                "Should be at least 3 numbers in the first line "
-                f"of the EQDSK {self.filename}."
-            )
-
-        n_x = int(ints[-2])
-        n_z = int(ints[-1])
-        self.set_attr("name", description[0])
-        self.set_attr("nx", n_x)
-        self.set_attr("nz", n_z)
-
-        tokens = self.eqdsk_generator(file)
-        for name in [
-            "xdim",
-            "zdim",
-            "xcentre",
-            "xgrid1",
-            "zmid",
-            "xmag",
-            "zmag",
-            "psimag",
-            "psibdry",
-            "bcentre",
-            "cplasma",
-            "psimag",
-            None,
-            "xmag",
-            None,
-            "zmag",
-            None,
-            "psibdry",
-            None,
-            None,
-        ]:
-            if name is not None:  # Lots of dummies and duplication
-                self.set_attr(name, float(next(tokens)))
+        for key, value in eqdsk_data.items():
+            if hasattr(self, key):
+                setattr(self, key, value)
             else:
-                next(tokens)  # Dummy
+                raise ValueError(
+                    f"Cannot update EQDSKInterface from dict. Unrecognised key '{key}'."
+                )
 
-        for name in ["fpol", "pressure", "ffprime", "pprime"]:
-            self.set_attr(name, read_array(tokens, n_x, name))
 
-        self.set_attr("psi", read_2d_array(tokens, n_x, n_z, "psi"))
-        self.set_attr("qpsi", read_array(tokens, n_x, "qpsi"))
-        nbdry = int(next(tokens))
-        nlim = int(next(tokens))
-        self.set_attr("nbdry", nbdry)
-        self.set_attr("nlim", nlim)
+def _read_json(file) -> Dict:
+    if isinstance(file, str):
+        with open(file, "r") as f_h:
+            return _read_json(f_h)
 
-        if nbdry > 0:
-            xbdry = np.zeros([nbdry])
-            zbdry = np.zeros([nbdry])
-            for i in range(nbdry):
-                xbdry[i] = float(next(tokens))
-                zbdry[i] = float(next(tokens))
+    data = json.load(file)
+    data_has_pnorm = False
+    data_has_psinorm = False
+    for k, value in data.items():
+        if isinstance(value, list):
+            data[k] = np.asarray(value)
+        data_has_pnorm |= k == "pnorm"
+        data_has_psinorm |= k == "psinorm"
+
+    # For backward compatibility where 'psinorm' was sometimes 'pnorm'
+    if data_has_pnorm:
+        if data_has_psinorm:
+            del data["pnorm"]
         else:
-            xbdry = [0]
-            zbdry = [0]
-        self.set_attr("xbdry", xbdry)
-        self.set_attr("zbdry", zbdry)
+            data["psinorm"] = data.pop("pnorm")
 
-        if nlim > 0:
-            xlim = np.zeros([nlim])
-            zlim = np.zeros([nlim])
-            for i in range(nlim):
-                xlim[i] = float(next(tokens))
-                zlim[i] = float(next(tokens))
-            self.set_attr("xlim", xlim)
-            self.set_attr("zlim", zlim)
+    return data
 
-        try:
-            ncoil = int(next(tokens))
-        except StopIteration:  # No coils in file
-            ncoil, x_c, z_c, dxc, dzc, i_c = 0, 0, 0, 0, 0, 0
-        if ncoil > 0:
-            x_c = np.zeros(ncoil)
-            z_c = np.zeros(ncoil)
-            dxc = np.zeros(ncoil)
-            dzc = np.zeros(ncoil)
-            i_c = np.zeros(ncoil)
-            for i in range(ncoil):
-                x_c[i] = float(next(tokens))
-                z_c[i] = float(next(tokens))
-                dxc[i] = float(next(tokens))
-                dzc[i] = float(next(tokens))
-                i_c[i] = float(next(tokens))
+
+def _read_array(tokens, n, name="Unknown"):
+    data = np.zeros([n])
+    try:
+        for i in np.arange(n):
+            data[i] = float(next(tokens))
+    except StopIteration:
+        raise ValueError(f"Failed reading array {name} of size {n}")
+    return data
+
+
+def _read_2d_array(tokens, n_x, n_y, name="Unknown"):
+    data = np.zeros([n_y, n_x])
+    for i in np.arange(n_y):
+        data[i, :] = _read_array(tokens, n_x, name + "[" + str(i) + "]")
+    data = np.transpose(data)
+    return data
+
+
+def _eqdsk_generator(file):
+    """
+    Transforms a file object into a generator, following G-EQDSK number
+    conventions
+
+    Parameters
+    ----------
+    file: file object
+        The file to read
+
+    Returns
+    -------
+    generator: generator
+        The generator of the file handle being read
+    """
+    while True:
+        line = file.readline()
+        if not line:
+            break
+
+        # Distinguish negative/positive numbers from negative/positive exponent
+        if "E" in line or "e" in line:
+            line = line.replace("E-", "*")
+            line = line.replace("e-", "*")
+            line = line.replace("-", " -")
+            line = line.replace("*", "e-")
+            line = line.replace("E+", "*")
+            line = line.replace("e+", "*")
+            line = line.replace("+", " ")
+            line = line.replace("*", "e+")
+        generator_list = line.split()
+        for obj in generator_list:
+            yield obj
+
+
+def _read_eqdsk(file) -> Dict:
+    if isinstance(file, str):
+        with open(file, "r") as f_handle:
+            return _read_eqdsk(f_handle)
+
+    description = file.readline()
+    if not description:
+        raise IOError(f"Could not read the file '{file}'.")
+    description = description.split()
+
+    ints = []
+    for value in description:
+        if is_num(value):
+            ints.append(value)
+    if len(ints) < 3:
+        raise IOError(
+            "Should be at least 3 numbers in the first line " f"of the EQDSK {file}."
+        )
+
+    data = {}
+    n_x = int(ints[-2])
+    n_z = int(ints[-1])
+    data["name"] = description[0]
+    data["nx"] = n_x
+    data["nz"] = n_z
+
+    tokens = _eqdsk_generator(file)
+    for name in [
+        "xdim",
+        "zdim",
+        "xcentre",
+        "xgrid1",
+        "zmid",
+        "xmag",
+        "zmag",
+        "psimag",
+        "psibdry",
+        "bcentre",
+        "cplasma",
+        "psimag",
+        None,
+        "xmag",
+        None,
+        "zmag",
+        None,
+        "psibdry",
+        None,
+        None,
+    ]:
+        if name is not None:  # Lots of dummies and duplication
+            data[name] = float(next(tokens))
         else:
-            # No coils in file
-            x_c, z_c, dxc, dzc, i_c = 0, 0, 0, 0, 0
-        self.set_attr("ncoil", ncoil)
-        self.set_attr("xc", x_c)
-        self.set_attr("zc", z_c)
-        self.set_attr("dxc", dxc)
-        self.set_attr("dzc", dzc)
-        self.set_attr("Ic", i_c)
-        # Additional utility data
-        x = np.linspace(
-            self.data["xgrid1"],
-            self.data["xgrid1"] + self.data["xdim"],
-            self.data["nx"],
-        )
-        z = np.linspace(
-            self.data["zmid"] - self.data["zdim"] / 2,
-            self.data["zmid"] + self.data["zdim"] / 2,
-            self.data["nz"],
-        )
-        psinorm = np.linspace(0, 1, len(self.data["fpol"]))
-        self.set_attr("x", x)
-        self.set_attr("z", z)
-        self.set_attr("psinorm", psinorm)
-        return self.to_dict()
+            next(tokens)  # Dummy
 
-    @staticmethod
-    def eqdsk_generator(file):
+    for name in ["fpol", "pressure", "ffprime", "pprime"]:
+        data[name] = _read_array(tokens, n_x, name)
+
+    data["psi"] = _read_2d_array(tokens, n_x, n_z, "psi")
+    data["qpsi"] = _read_array(tokens, n_x, "qpsi")
+    nbdry = int(next(tokens))
+    nlim = int(next(tokens))
+    data["nbdry"] = nbdry
+    data["nlim"] = nlim
+
+    xbdry = np.zeros(nbdry)
+    zbdry = np.zeros(nbdry)
+    for i in range(nbdry):
+        xbdry[i] = float(next(tokens))
+        zbdry[i] = float(next(tokens))
+    data["xbdry"] = xbdry
+    data["zbdry"] = zbdry
+
+    xlim = np.zeros(nlim)
+    zlim = np.zeros(nlim)
+    for i in range(nlim):
+        xlim[i] = float(next(tokens))
+        zlim[i] = float(next(tokens))
+    data["xlim"] = xlim
+    data["zlim"] = zlim
+
+    try:
+        ncoil = int(next(tokens))
+    except StopIteration:  # No coils in file
+        ncoil = 0
+
+    x_c = np.zeros(ncoil)
+    z_c = np.zeros(ncoil)
+    dxc = np.zeros(ncoil)
+    dzc = np.zeros(ncoil)
+    i_c = np.zeros(ncoil)
+    for i in range(ncoil):
+        x_c[i] = float(next(tokens))
+        z_c[i] = float(next(tokens))
+        dxc[i] = float(next(tokens))
+        dzc[i] = float(next(tokens))
+        i_c[i] = float(next(tokens))
+    data["ncoil"] = ncoil
+    data["xc"] = x_c
+    data["zc"] = z_c
+    data["dxc"] = dxc
+    data["dzc"] = dzc
+    data["Ic"] = i_c
+
+    # Additional utility data
+    data["x"] = _derive_x(data["xgrid1"], data["xdim"], data["nx"])
+    data["z"] = _derive_z(data["zmid"], data["zdim"], data["nz"])
+    data["psinorm"] = _derive_psinorm(data["fpol"])
+    return data
+
+
+def _derive_x(xgrid1, xdim, nx):
+    return np.linspace(xgrid1, xgrid1 + xdim, nx)
+
+
+def _derive_z(zmid, zdim, nz):
+    return np.linspace(zmid - zdim / 2, zmid + zdim / 2, nz)
+
+
+def _derive_psinorm(fpol):
+    return np.linspace(0, 1, len(fpol))
+
+
+def _write_eqdsk(file, data):
+    """
+    Writes data out to a text file in G-EQDSK format.
+
+    Parameters
+    ----------
+    file: str
+        The full path string of the file to be created
+    data: dict
+        Dictionary of EQDSK data.
+    """
+    if isinstance(file, str):
+        if not any(file.endswith(ext) for ext in EQDSK_EXTENSIONS):
+            file = os.path.splitext(file)[0] + ".eqdsk"
+        with open(file, "w") as f_handle:
+            return _write_eqdsk(f_handle, data)
+
+    def write_header(fortran_format, id_string, var_list):
         """
-        Transforms a file object into a generator, following G-EQDSK number
-        conventions
+        Writes G-EQDSK header out to file.
 
         Parameters
         ----------
-        file: file object
-            The file to read
-
-        Returns
-        -------
-        generator: generator
-            The generator of the file handle being read
+        fortran_format: ff.FortranRecordWriter
+            FortranRecordWriter object for Fortran format edit descriptor
+            to be used for header output.
+        id_string: str
+            String containing name of file to be used as identification
+            string. Will be trimmed if length exceeds 39 characters,
+            so it will fit within the permitted header length of the
+            GEQDSK specification when a timestamp is added.
+        var_list: list
+            List of names of keys in EQDSKInterface.data identifying
+            variables to add to the header following the id_string.
+            Empty strings will be recorded as 0.
         """
-        while True:
-            line = file.readline()
-            if not line:
-                break
+        line = [id_string]
+        line += [data[v] if v != "" else 0 for v in var_list]
+        file.write(fortran_format.write(line))
+        file.write("\n")
 
-            # Distinguish negative/positive numbers from negative/positive exponent
-            if "E" in line or "e" in line:
-                line = line.replace("E-", "*")
-                line = line.replace("e-", "*")
-                line = line.replace("-", " -")
-                line = line.replace("*", "e-")
-                line = line.replace("E+", "*")
-                line = line.replace("e+", "*")
-                line = line.replace("+", " ")
-                line = line.replace("*", "e+")
-            generator_list = line.split()
-            for obj in generator_list:
-                yield obj
-
-    def _write_eqdsk(self, file, data, **kwargs):
+    def write_line(fortran_format, var_list):
         """
-        Writes data out to a text file in G-EQDSK format.
+        Writes a line of variable values out to a G-EQDSK file.
 
         Parameters
         ----------
-        file: str
-            The full path string of the file to be created
-        data: dict
-            The dictionary of EQDSK data specified in the ParameterFrame
-        kwargs: dict
-            The kwargs do not provide any options here
+        fortran_format: ff.FortranRecordWriter
+            FortranRecordWriter object for Fortran format edit descriptor
+            to be used for the format of the line output.
+        var_list: list
+            List of names of keys in EQDSKInterface.data identifying
+            variables to added to the current line.
+            Empty strings will be recorded as 0.
         """
-        if isinstance(file, str):
-            if not file.endswith(".eqdsk") or not file.endswith(".geqdsk"):
-                file = file.split(".")[0] + ".eqdsk"
-            with open(file, "w") as f_handle:
-                return self._write_eqdsk(f_handle, data)
-        self.load_dict(data)
+        line = [data[v] if v != "" else 0 for v in var_list]
+        file.write(fortran_format.write(line))
+        file.write("\n")
 
-        def write_header(fortran_format, id_string, var_list):
-            """
-            Writes G-EQDSK header out to file.
+    def write_array(fortran_format, array):
+        """
+        Writes a numpy array out to a G-EQDSK file.
 
-            Parameters
-            ----------
-            fortran_format: ff.FortranRecordWriter
-                FortranRecordWriter object for Fortran format edit descriptor
-                to be used for header output.
-            id_string: str
-                String containing name of file to be used as identification
-                string. Will be trimmed if length exceeds 39 characters,
-                so it will fit within the permitted header length of the
-                GEQDSK specification when a timestamp is added.
-            var_list: list
-                List of names of keys in EQDSKInterface.data identifying
-                variables to add to the header following the id_string.
-                Empty strings will be recorded as 0.
-            """
-            line = [id_string]
-            line += [self.data[v] if v != "" else 0 for v in var_list]
-            file.write(fortran_format.write(line))
-            file.write("\n")
-
-        def write_line(fortran_format, var_list):
-            """
-            Writes a line of variable values out to a G-EQDSK file.
-
-            Parameters
-            ----------
-            fortran_format: ff.FortranRecordWriter
-                FortranRecordWriter object for Fortran format edit descriptor
-                to be used for the format of the line output.
-            var_list: list
-                List of names of keys in EQDSKInterface.data identifying
-                variables to added to the current line.
-                Empty strings will be recorded as 0.
-            """
-            line = [self.data[v] if v != "" else 0 for v in var_list]
-            file.write(fortran_format.write(line))
-            file.write("\n")
-
-        def write_array(fortran_format, array):
-            """
-            Writes a numpy array out to a G-EQDSK file.
-
-            Parameters
-            ----------
-            fortran_format: ff.FortranRecordWriter
-                FortranRecordWriter object for Fortran format edit descriptor
-                to be used for the format of the line output.
-            array: np.array
-                Numpy array of variables to be written to file.
-                Array will be flattened in column-major (Fortran)
-                order if is more than one-dimensional.
-            """
-            if array.ndim > 1:
-                flat_array = array.flatten(order="F")
-                file.write(fortran_format.write(flat_array))
-            else:
-                file.write(fortran_format.write(array))
-            file.write("\n")
-
-        # Create id string for file comprising of timestamp and trimmed filename
-        # that fits the 48 character limit of strings in EQDSK headers.
-        timestamp = time.strftime("%d%m%Y")
-        trimmed_name = self.data["name"][0 : 48 - len(timestamp) - 1]
-        file_id_string = "_".join([trimmed_name, timestamp])
-
-        # Define dummy data for qpsi if it has not been previously defined.
-        if self.data["qpsi"] is None:
-            qpsi = np.zeros(self.data["nx"])
+        Parameters
+        ----------
+        fortran_format: ff.FortranRecordWriter
+            FortranRecordWriter object for Fortran format edit descriptor
+            to be used for the format of the line output.
+        array: np.array
+            Numpy array of variables to be written to file.
+            Array will be flattened in column-major (Fortran)
+            order if is more than one-dimensional.
+        """
+        if array.ndim > 1:
+            flat_array = array.flatten(order="F")
+            file.write(fortran_format.write(flat_array))
         else:
-            qpsi = self.data["qpsi"]
+            file.write(fortran_format.write(array))
+        file.write("\n")
 
-        # Create array containing coilset information.
-        coil = np.zeros(5 * self.data["ncoil"])
-        for i, value in enumerate(["xc", "zc", "dxc", "dzc", "Ic"]):
-            coil[i::5] = self.data[value]
+    # Create id string for file comprising of timestamp and trimmed filename
+    # that fits the 48 character limit of strings in EQDSK headers.
+    timestamp = time.strftime("%d%m%Y")
+    trimmed_name = data["name"][0 : 48 - len(timestamp) - 1]
+    file_id_string = "_".join([trimmed_name, timestamp])
 
-        # Create FortranRecordWriter objects with the Fortran format
-        # edit descriptors to be used in the G-EQDSK output.
-        f2000 = ff.FortranRecordWriter("a48,3i4")
-        f2020 = ff.FortranRecordWriter("5e16.9")
-        f2022 = ff.FortranRecordWriter("2i5")
-        fCSTM = ff.FortranRecordWriter("i5")
+    # Define dummy data for qpsi if it has not been previously defined.
+    if data["qpsi"] is None:
+        qpsi = np.zeros(data["nx"])
+    else:
+        qpsi = data["qpsi"]
 
-        # Write header in f2000 (6a8,3i4) format.
-        write_header(f2000, file_id_string, ["", "nx", "nz"])
-        # Write out lines containing floats in f2020 (5e16.9) format.
-        write_line(f2020, ["xdim", "zdim", "xcentre", "xgrid1", "zmid"])
-        write_line(f2020, ["xmag", "zmag", "psimag", "psibdry", "bcentre"])
-        write_line(f2020, ["cplasma", "psimag", "", "xmag", ""])
-        write_line(f2020, ["zmag", "", "psibdry", "", ""])
-        # Write out arrays in in f2020 (5e16.9) format.
-        write_array(f2020, self.data["fpol"])
-        write_array(f2020, self.data["pressure"])
-        write_array(f2020, self.data["ffprime"])
-        write_array(f2020, self.data["pprime"])
-        write_array(f2020, self.data["psi"])
-        write_array(f2020, qpsi)
-        # Write out number of boundary points and limiters f2022 (2i5) format.
-        write_line(f2022, ["nbdry", "nlim"])
-        # Write out boundary point and limiter data as array of ordered pairs.
-        write_array(f2020, np.array([self.data["xbdry"], self.data["zbdry"]]))
-        write_array(f2020, np.array([self.data["xlim"], self.data["zlim"]]))
+    # Create array containing coilset information.
+    coil = np.zeros(5 * data["ncoil"])
+    for i, value in enumerate(["xc", "zc", "dxc", "dzc", "Ic"]):
+        coil[i::5] = data[value]
 
-        # Output of coilset information. This is an extension to the
-        # regular eqdsk format.
-        write_line(fCSTM, ["ncoil"])
-        write_array(f2020, coil)
+    # Create FortranRecordWriter objects with the Fortran format
+    # edit descriptors to be used in the G-EQDSK output.
+    f2000 = ff.FortranRecordWriter("a48,3i4")
+    f2020 = ff.FortranRecordWriter("5e16.9")
+    f2022 = ff.FortranRecordWriter("2i5")
+    fCSTM = ff.FortranRecordWriter("i5")
+
+    # Write header in f2000 (6a8,3i4) format.
+    write_header(f2000, file_id_string, ["", "nx", "nz"])
+    # Write out lines containing floats in f2020 (5e16.9) format.
+    write_line(f2020, ["xdim", "zdim", "xcentre", "xgrid1", "zmid"])
+    write_line(f2020, ["xmag", "zmag", "psimag", "psibdry", "bcentre"])
+    write_line(f2020, ["cplasma", "psimag", "", "xmag", ""])
+    write_line(f2020, ["zmag", "", "psibdry", "", ""])
+    # Write out arrays in in f2020 (5e16.9) format.
+    write_array(f2020, data["fpol"])
+    write_array(f2020, data["pressure"])
+    write_array(f2020, data["ffprime"])
+    write_array(f2020, data["pprime"])
+    write_array(f2020, data["psi"])
+    write_array(f2020, qpsi)
+    # Write out number of boundary points and limiters f2022 (2i5) format.
+    write_line(f2022, ["nbdry", "nlim"])
+    # Write out boundary point and limiter data as array of ordered pairs.
+    write_array(f2020, np.array([data["xbdry"], data["zbdry"]]))
+    write_array(f2020, np.array([data["xlim"], data["zlim"]]))
+
+    # Output of coilset information. This is an extension to the
+    # regular eqdsk format.
+    write_line(fCSTM, ["ncoil"])
+    write_array(f2020, coil)

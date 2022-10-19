@@ -61,8 +61,7 @@ class TestSTEquilibrium:
         jeq_name = "jetto.eqdsk_out"
         filename = os.sep.join([private, jeq_name])
         cls.profiles = CustomProfile.from_eqdsk(filename)
-        reader = EQDSKInterface()
-        cls.jeq_dict = reader.read(filename)
+        cls.jeq_dict = EQDSKInterface.from_file(filename)
 
     def test_equilibrium(self):
         build_tweaks = {
@@ -79,7 +78,7 @@ class TestSTEquilibrium:
 
         R_0 = 3.639
         A = 1.667
-        i_p = self.jeq_dict["cplasma"]
+        i_p = self.jeq_dict.cplasma
 
         xc = np.array(
             [1.5, 1.5, 8.259059936102478, 8.259059936102478, 10.635505223274231]
@@ -108,8 +107,8 @@ class TestSTEquilibrium:
         inboard_iso = [R_0 * (1.0 - 1 / A), 0.0]
         outboard_iso = [R_0 * (1.0 + 1 / A), 0.0]
 
-        x = self.jeq_dict["xbdry"]
-        z = self.jeq_dict["zbdry"]
+        x = self.jeq_dict.xbdry
+        z = self.jeq_dict.zbdry
         upper_iso = [x[np.argmax(z)], np.max(z)]
         lower_iso = [x[np.argmin(z)], np.min(z)]
 
@@ -205,7 +204,7 @@ class TestSTEquilibrium:
         self._test_profiles_good(eq)
 
     def _test_equilibrium_good(self, eq):
-        assert np.isclose(eq.profiles.I_p, abs(self.jeq_dict["cplasma"]))
+        assert np.isclose(eq.profiles.I_p, abs(self.jeq_dict.cplasma))
         lcfs = eq.get_LCFS()
         assert np.isclose(
             get_area_2d(*self.eq_blueprint.get_LCFS().xz),
@@ -223,10 +222,10 @@ class TestSTEquilibrium:
         def scale(profile):
             return np.abs(profile) / np.max(np.abs(profile))
 
-        jetto_pprime = self.jeq_dict["pprime"]
-        jetto_ffprime = self.jeq_dict["ffprime"]
+        jetto_pprime = self.jeq_dict.pprime
+        jetto_ffprime = self.jeq_dict.ffprime
 
-        psi_n = self.jeq_dict["psinorm"]
+        psi_n = self.jeq_dict.psinorm
         bm_pprime_p = self.profiles.pprime(psi_n)
         bm_ffprime_p = self.profiles.ffprime(psi_n)
 

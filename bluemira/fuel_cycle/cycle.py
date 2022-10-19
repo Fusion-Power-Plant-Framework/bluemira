@@ -22,13 +22,17 @@
 """
 Full fuel cycle model object
 """
+from __future__ import annotations
+
+from dataclasses import dataclass
+from typing import Any, Dict, Optional, Union
+
 import matplotlib.pyplot as plt
 import numpy as np
 from scipy.interpolate import interp1d
 
 from bluemira.base.constants import N_AVOGADRO, T_LAMBDA, T_MOLAR_MASS, YR_TO_S, raw_uc
 from bluemira.base.look_and_feel import bluemira_print
-from bluemira.base.parameter import ParameterFrame
 from bluemira.fuel_cycle.blocks import FuelCycleComponent, FuelCycleFlow
 from bluemira.fuel_cycle.tools import (
     _speed_recycle,
@@ -37,10 +41,6 @@ from bluemira.fuel_cycle.tools import (
     find_noisy_locals,
     legal_limit,
 )
-
-# TODO: Make the whole thing run in self.t (higher resolution, better plotting)
-# It will be slower... and it will probably be less accurate! But the plots..
-# FIXED: You hacked the plot
 
 
 class EUDEMOFuelCycleModel:
@@ -52,77 +52,47 @@ class EUDEMOFuelCycleModel:
 
     Parameters
     ----------
-    timeline: Timeline object
-        The timeline with which to run the FuelCycle
+    params: Union[EDFCMParams, Dict[str, float]]
+        The parameters for the model. See
+        :class:`bluemira.fuel_cycle.cycle.EDFCMParams` for list of
+        available parameters.
+    build_config: Dict[str, Any]
+        Configuration options for the model. Options are:
 
-    Other Parameters
-    ----------------
-    A: float
-        [1=100%] DEMO load factor - read from lifecycle output
-    f_b: float
-        [1=100%] Tritium burnup fraction in plasma
-    TBR: float
-        [T/T_{fused}] Reactor engineering tritium breeding fraction
-    eta_f: float
-        [1=100%] Fuelling efficiency
-    t_c_TFV: float
-        Tritium exhaust cycle time [s]
-    t_c_BB: float
-        Blanket tritium exhaust cycle time [s]
-    I_ivc: float
-        In-vessel environment maximum absorbed T inventory [s]
-    I_tfv: float
-        Tritium fuel cycle systems maximum absorbed T inventory [kg]
-    I_bb: float
-        Blanket maximum absorbed T inventory [kg]
-    eta_ivc: float
-        [1=100%] T exhaust efficiency of in-vessel environment
-    eta_tfv: float
-        [1=100%] T exhaust efficiency of in-vessel environment
-    eta_bb: float
-        [1=100%] T exhaust efficiency of blanket
+            * verbose: bool (False)
+                Print debugging information.
+            * timestep: float (1200.0)
+                The time step in the cycle [s].
+            * conv_thresh: float (2e-4)
+                The convergence threshold in the cycle.
+            * n: int (length of timeline['time'])
+                The no. of time steps to use from the the timeline.
     """
 
-    # fmt: off
-    default_params = [
-        ['TBR', 'Tritium breeding ratio', 1.05, 'dimensionless', None, 'Default'],
-        ['f_b', 'Burn-up fraction', 0.015, 'dimensionless', None, 'Default'],
-        ['m_gas', 'Gas puff flow rate', 50, 'Pa m^3/s', 'To maintain detachment - no chance of fusion from gas injection', 'Discussions with Chris Day and Yannick Hörstenmeyer'],
-        ['A_global', 'Load factor', 0.3, 'dimensionless', None, 'Default'],
-        ['r_learn', 'Learning rate', 1, 'dimensionless', None, 'Default'],
-        ['t_pump', 'Time in DIR loop', 100, 's', 'Time between exit from plasma and entry into plasma through DIR loop', 'Discussions with Chris Day and Yannick Hörstenmeyer'],
-        ['t_exh', 'Time in INDIR loop', 3600, 's', 'Time between exit from plasma and entry into TFV systems INDIR', 'Default'],
-        ['t_ters', 'Time from BB exit to TFV system', 5 * 3600, 's', None, 'Default'],
-        ['t_freeze', 'Time taken to freeze pellets', 1800, 's', None, 'Discussions with Chris Day and Yannick Hörstenmeyer'],
-        ['f_dir', 'Fraction of flow through DIR loop', 0.9, 'dimensionless', None, 'Discussions with Chris Day and Yannick Hörstenmeyer'],
-        ['t_detrit', 'Time in detritiation system', 10 * 3600, 's', None, 'Default'],
-        ['f_detrit_split', 'Fraction of detritiation line tritium extracted', 0.9999, 'dimensionless', None, 'Default'],
-        ['f_exh_split', 'Fraction of exhaust tritium extracted', 0.99, 'dimensionless', None, 'Default'],
-        ['eta_fuel_pump', 'Efficiency of fuel line pump', 0.9, 'dimensionless', 'Pump which pumps down the fuelling lines', 'Default'],
-        ['eta_f', 'Fuelling efficiency', 0.5, 'dimensionless', 'Efficiency of the fuelling lines prior to entry into the VV chamber', 'Default'],
-        ['I_miv', 'Maximum in-vessel T inventory', 0.3, 'kg', None, 'Default'],
-        ['I_tfv_min', 'Minimum TFV inventory', 2, 'kg', 'Without which e.g. cryodistillation columns are not effective', "Discussions with Chris Day and Jonas Schwenzer (N.B. working assumptions only)"],
-        ['I_tfv_max', 'Maximum TFV inventory', 2.2, 'kg', "Account for T sequestration inside the T plant", "Discussions with Chris Day and Jonas Schwenzer (N.B. working assumptions only)"],
-        ['I_mbb', 'Maximum BB T inventory', 0.055, 'kg', None, 'Default'],
-        ['eta_iv', 'In-vessel bathtub parameter', 0.9995, 'dimensionless', None, 'Default'],
-        ['eta_bb', 'BB bathtub parameter', 0.995, 'dimensionless', None, 'Default'],
-        ['eta_tfv', 'TFV bathtub parameter', 0.998, 'dimensionless', None, 'Default'],
-        ['f_terscwps', 'TERS and CWPS cumulated factor', 0.9999, 'dimensionless', None, 'Default']
-    ]
-    # fmt: on
-
-    def __init__(self, config, inputs):
+    def __init__(
+        self,
+        params: Optional[Union[EDFCMParams, Dict[str, float]]] = None,
+        build_config: Optional[Dict[str, Any]] = None,
+    ):
         # Handle parameters
-        self.params = ParameterFrame(self.default_params)
-        self.params.update_kw_parameters(
-            config, source=f"{self.__class__.__name__} input"
-        )
+        if isinstance(params, EDFCMParams):
+            self.params = params
+        elif isinstance(params, dict):
+            self.params = EDFCMParams(**params)
+        elif params is None:
+            self.params = EDFCMParams()
+        else:
+            raise TypeError(
+                "Invalid type for 'params'. Must be one of 'dict', "
+                f"'EDFCMParams', or 'None'; found '{type(params).__name__}'."
+            )
 
         # Handle calculation information
-        self.verbose = inputs.get("verbose", False)
-        self.timestep = inputs.get("timestep", 1200)
-        self.conv_thresh = inputs.get("conv_thresh", 0.0002)
-        self.n = inputs.get("n", None)
+        build_config = {} if build_config is None else build_config
+        self.verbose = build_config.get("verbose", False)
+        self.timestep = build_config.get("timestep", 1200)
+        self.conv_thresh = build_config.get("conv_thresh", 2e-4)
+        self.n = build_config.get("n", None)
 
     def _constructors(self):
         # Constructors (untangling the spaghetti)
@@ -361,8 +331,8 @@ class EUDEMOFuelCycleModel:
 
     def recycle(self):
         """
-        The main loop of the fuel cycle, which is called recusively until the
-        convergence criterion is met
+        The main loop of the fuel cycle, which is called recursively until the
+        convergence criterion is met.
         """
         # Fuelling (fuel in)
         # Fuel pump built in (ghosted component)
@@ -404,7 +374,7 @@ class EUDEMOFuelCycleModel:
         # Blanket
         m_T_bred = self.blanket(self.params.eta_bb, self.params.I_mbb)
         t, m_bred = discretise_1d(self.DEMO_t, m_T_bred, n_ts)
-        m_T_bred = FuelCycleFlow(t, m_bred, self.params.t_ters.value)
+        m_T_bred = FuelCycleFlow(t, m_bred, self.params.t_ters)
         # Tritium extraction and recovery system + coolant water purification
         m_T_bred_totfv, m_T_bred_tostack = m_T_bred.split(2, [self.params.f_terscwps])
         # TFV systems - runs in t
@@ -425,8 +395,6 @@ class EUDEMOFuelCycleModel:
         )
         # Flow 9
         store.add_in_flow(direct.out_flow)
-        _, gpuff_corr = discretise_1d(self.DEMO_t, gpuff, n_ts)
-        # store.add_in_flow(-gpuff_corr)
         store.run()
         # This is conservative... need to find a way to make gas available
         # instantaneously. At present this means gas puffs get "frozen" first
@@ -684,3 +652,78 @@ class EUDEMOFuelCycleModel:
         ax.plot(self.DEMO_t, m_ideal, label="ideal")
         ax.plot(self.t[self.max_T[0]], self.max_T[1], label="max yellow")
         ax.legend()
+
+
+@dataclass
+class EDFCMParams:
+    """
+    Parameters required to run :class:`bluemira.fuel_cycle.cycle.EUDEMOFuelCycleModel`.
+    """
+
+    TBR: float = 1.05
+    """Tritium breeding ratio [dimensionless]."""
+    f_b: float = 0.015
+    """Burn-up fraction [dimensionless]."""
+    m_gas: float = 50
+    """
+    Gas puff flow rate [Pa m^3/s]. To maintain detachment - no chance of
+    fusion from gas injection.
+    """
+    A_global: float = 0.3
+    """Load factor [dimensionless]."""
+    r_learn: float = 1
+    """Learning rate [dimensionless]."""
+    t_pump: float = 100
+    """
+    Time in DIR loop [s]. Time between exit from plasma and entry into
+    plasma through DIR loop.
+    """
+    t_exh: float = 3600
+    """
+    Time in INDIR loop [s]. Time between exit from plasma and entry into
+    TFV systems INDIR.
+    """
+    t_ters: float = 18000
+    """Time from BB exit to TFV system [s]."""
+    t_freeze: float = 1800
+    """Time taken to freeze pellets [s]."""
+    f_dir: float = 0.9
+    """Fraction of flow through DIR loop [dimensionless]."""
+    t_detrit: float = 36000
+    """Time in detritiation system [s]."""
+    f_detrit_split: float = 0.9999
+    """Fraction of detritiation line tritium extracted [dimensionless]."""
+    f_exh_split: float = 0.99
+    """Fraction of exhaust tritium extracted [dimensionless]."""
+    eta_fuel_pump: float = 0.9
+    """
+    Efficiency of fuel line pump [dimensionless]. Pump which pumps down
+    the fuelling lines.
+    """
+    eta_f: float = 0.5
+    """
+    Fuelling efficiency [dimensionless]. Efficiency of the fuelling
+    lines prior to entry into the VV chamber.
+    """
+    I_miv: float = 0.3
+    """Maximum in-vessel T inventory [kg]."""
+    I_tfv_min: float = 2
+    """
+    Minimum TFV inventory [kg]. Without which e.g. cryodistillation
+    columns are not effective.
+    """
+    I_tfv_max: float = 2.2
+    """
+    Maximum TFV inventory [kg]. Account for T sequestration inside the T
+    plant.
+    """
+    I_mbb: float = 0.055
+    """Maximum BB T inventory [kg]."""
+    eta_iv: float = 0.9995
+    """In-vessel bathtub parameter [dimensionless]."""
+    eta_bb: float = 0.995
+    """BB bathtub parameter [dimensionless]."""
+    eta_tfv: float = 0.998
+    """TFV bathtub parameter [dimensionless]."""
+    f_terscwps: float = 0.9999
+    """TERS and CWPS cumulated factor [dimensionless]."""

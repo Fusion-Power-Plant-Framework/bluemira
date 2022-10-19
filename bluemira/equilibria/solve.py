@@ -423,7 +423,7 @@ class PicardIterator:
         optimisation_problem,
         convergence=DudsonConvergence(),
         fixed_coils: bool = False,
-        relaxation: int = 0,
+        relaxation: float = 0,
         maxiter: int = 30,
         plot=True,
         gif=False,
