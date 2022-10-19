@@ -1,11 +1,11 @@
 Parameters and ParameterFrames
-==============================
+------------------------------
 
 :py:class:`Parameter` and :py:class:`ParameterFrame` are the means by which the physical
 configuration of a ``bluemira`` analysis are setup.
 
 Parameters
-----------
+^^^^^^^^^^
 
 A :py:class:`Parameter` is a dataclass that wraps a value acting a container for metadata about the value. To create a :py:class:`Parameter` as a minimum the name, the value and a unit need to be provided but other information can be added:
 
@@ -64,7 +64,7 @@ Any update to a :py:class:`Parameter` value is stored and can be accessed with t
 
 
 ParameterFrames
----------------
+^^^^^^^^^^^^^^^
 
 ParameterFrames allow Parameters to be grouped together to describe the overall
 parameterisation of a particular analysis or other class within ``bluemira``. For this
