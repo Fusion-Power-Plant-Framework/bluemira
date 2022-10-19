@@ -48,7 +48,6 @@ class BluemiraFace(BluemiraGeo):
     def __init__(self, boundary, label: str = ""):
         boundary_classes = [BluemiraWire]
         super().__init__(boundary, label, boundary_classes)
-        self._create_face()
 
     @staticmethod
     def _converter(func):
@@ -75,11 +74,15 @@ class BluemiraFace(BluemiraGeo):
 
     def _check_boundary(self, objs):
         """Check if objects in objs are of the correct type for this class"""
+        if objs is None:
+            return objs
+
         if not hasattr(objs, "__len__"):
             objs = [objs]
         check = False
         for c in self._boundary_classes:
-            check = check or (all(isinstance(o, c) for o in objs))
+            for o in objs:
+                check = check or isinstance(o, c)
             if check:
                 if all(o.is_closed() for o in objs):
                     return objs
@@ -114,7 +117,7 @@ class BluemiraFace(BluemiraGeo):
     @classmethod
     def _create(cls, obj: cadapi.apiFace, label="") -> BluemiraFace:
         if isinstance(obj, cadapi.apiFace):
-            orientation = obj.Orientation
+
             bmwires = []
             for w in obj.Wires:
                 w_orientation = w.Orientation
@@ -123,8 +126,12 @@ class BluemiraFace(BluemiraGeo):
                 if cadapi.is_closed(w):
                     bm_wire.close()
                 bmwires += [bm_wire]
-            bmface = cls(bmwires, label=label)
-            bmface._orientation = orientation
+
+            bmface = cls(None, label=label)
+            bmface.shape = obj
+            bmface._boundary = bmwires
+            bmface._orientation = obj.Orientation
+
             return bmface
 
         raise TypeError(f"Only Part.Face objects can be used to create a {cls} instance")

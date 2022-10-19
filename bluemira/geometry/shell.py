@@ -27,9 +27,10 @@ from __future__ import annotations
 
 # import from freecad
 import bluemira.codes._freecadapi as cadapi
+from bluemira.geometry.base import BluemiraGeo
 
 # import from bluemira
-from bluemira.geometry.base import BluemiraGeo
+from bluemira.geometry.coordinates import Coordinates
 from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.wire import BluemiraWire
 
@@ -60,13 +61,16 @@ class BluemiraShell(BluemiraGeo):
     @classmethod
     def _create(cls, obj: cadapi.apiShell, label=""):
         if isinstance(obj, cadapi.apiShell):
-            orientation = obj.Orientation
+
             faces = obj.Faces
             bmfaces = []
             for face in faces:
                 bmfaces.append(BluemiraFace._create(face))
-            bmshell = BluemiraShell(bmfaces, label=label)
-            bmshell._orientation = orientation
+
+            bmshell = BluemiraShell(None, label=label)
+            bmshell.shape = obj
+            bmshell.boundary = bmfaces
+            bmshell._orientation = obj.Orientation
             return bmshell
         raise TypeError(
             f"Only Part.Shell objects can be used to create a {cls} instance"

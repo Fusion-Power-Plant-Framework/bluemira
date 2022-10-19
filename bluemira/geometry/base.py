@@ -123,12 +123,21 @@ class BluemiraGeo(ABC, GeoMeshable):
     def _check_boundary(self, objs):
         """
         Check if objects objs can be used as boundaries.
+
+        Note: empty BluemiraGeo are allowed in case of objs == None.
         """
+        if objs is None:
+            return objs
+
         if not hasattr(objs, "__len__"):
             objs = [objs]
+
         check = False
         for c in self._boundary_classes:
-            check = check or (all(isinstance(o, c) for o in objs))
+            # # in case of obj = [], this check returns True instead of False
+            # check = check or (all(isinstance(o, c) for o in objs))
+            for o in objs:
+                check = check or isinstance(o, c)
             if check:
                 return objs
         raise TypeError(
@@ -145,7 +154,10 @@ class BluemiraGeo(ABC, GeoMeshable):
     @boundary.setter
     def boundary(self, objs):
         self._boundary = self._check_boundary(objs)
-        self.shape = self.create_shape()
+        if self._boundary is None:
+            self.shape = None
+        else:
+            self.shape = self.create_shape()
 
     @abstractmethod
     def create_shape(self):

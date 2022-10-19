@@ -70,7 +70,6 @@ class BluemiraSolid(BluemiraGeo):
     @classmethod
     def _create(cls, obj: cadapi.apiSolid, label=""):
         if isinstance(obj, cadapi.apiSolid):
-            orientation = obj.Orientation
 
             if len(obj.Solids) > 1:
                 raise DisjointedSolid("Disjointed solids are not accepted.")
@@ -79,8 +78,12 @@ class BluemiraSolid(BluemiraGeo):
             for shell in obj.Shells:
                 bm_shells.append(BluemiraShell._create(shell))
 
-            bmsolid = cls(bm_shells, label=label)
-            bmsolid._orientation = orientation
+            # create an empty BluemiraSolid
+            bmsolid = cls(None, label=label)
+            # assign shape, boundary, and orientation
+            bmsolid.shape = obj
+            bmsolid._boundary = bm_shells
+            bmsolid._orientation = obj.Orientation
             return bmsolid
 
         raise TypeError(
