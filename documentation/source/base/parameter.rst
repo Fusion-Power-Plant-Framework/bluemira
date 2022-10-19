@@ -66,9 +66,9 @@ Any update to a :py:class:`Parameter` value is stored and can be accessed with t
 ParameterFrames
 ^^^^^^^^^^^^^^^
 
-ParameterFrames allow Parameters to be grouped together to describe the overall
+A :py:class:`ParameterFrame` allows Parameters to be grouped together to describe the overall
 parameterisation of a particular analysis or other class within ``bluemira``. For this
-reason you will interact with Parameters via ParameterFrames in most cases.
+reason you will interact with Parameters via a :py:class:`ParameterFrame` in most cases. A :py:class:`ParameterFrame` enforces our default units as described in :ref:`unit_convention`.
 
 A ParameterFrame is written in one of two ways, firstly as a dataclass:
 

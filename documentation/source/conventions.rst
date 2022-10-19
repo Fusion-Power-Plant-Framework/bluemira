@@ -32,9 +32,10 @@ number, going anti-clockwise as seen from above the machine:
 
     Indicative sector angles and naming convention (green boxes) in ``bluemira``
 
+.. _unit_convention:
 
-Unit convention
-^^^^^^^^^^^^^^^
+Unit conventions
+^^^^^^^^^^^^^^^^
 
 ``Bluemira`` uses the `International System of Units (SI) <https://en.wikipedia.org/wiki/International_System_of_Units>`_ convention,
 with only minor deviations. As a summary, all inputs to the code should be in the following units:
@@ -59,8 +60,8 @@ with only minor deviations. As a summary, all inputs to the code should be in th
      - ampere
      - [A]
    * - temperature
-     - celsius
-     - [C]
+     - kelvin
+     - [K]
    * - amount of substance
      - mol
      - [mol]
