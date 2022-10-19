@@ -582,6 +582,9 @@ class OptVariables:
             "Fixed",
             "Description",
         ]
+        if keys is not None:
+            columns = keys
+
         records = sorted([tuple(val) for val in self.to_dict().values()])
 
         return tabulate(
