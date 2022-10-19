@@ -542,6 +542,21 @@ class OptVariables:
                     f"'{self.__class__.__name__}' object has no attribute '{attr}'"
                 ) from None
 
+    def to_dict(self) -> Dict:
+        """
+        Dictionary Representation of OptVariables
+        """
+        return {
+            key: {
+                k: v
+                for k, v in zip(
+                    BoundedVariable.__slots__,
+                    attrgetter(*BoundedVariable.__slots__)(self._var_dict[key]),
+                )
+            }
+            for key in self._var_dict.keys()
+        }
+
     def tabulate(self, keys: Optional[List] = None, tablefmt: str = "fancy_grid") -> str:
         """
         Tabulate OptVariables
@@ -567,12 +582,8 @@ class OptVariables:
             "Fixed",
             "Description",
         ]
-        records = sorted(
-            [
-                attrgetter(*BoundedVariable.__slots__)(self._var_dict[key])
-                for key in self._var_dict.keys()
-            ]
-        )
+        records = sorted([tuple(val) for val in self.to_dict().values()])
+
         return tabulate(
             records,
             headers=columns,
