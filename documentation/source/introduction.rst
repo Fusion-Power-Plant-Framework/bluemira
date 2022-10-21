@@ -64,7 +64,7 @@ using ``bluemira`` as an "early adopter", please do get in touch with us so that
 help you.
 
 
-.. figure:: bluemira-roadmap.png
+.. figure:: bluemira-roadmap.svg
     :name: fig:bluemira-roadmap
 
-    ``Bluemira`` development roadmap for 2022
+    ``Bluemira`` development roadmap for 2022/23
