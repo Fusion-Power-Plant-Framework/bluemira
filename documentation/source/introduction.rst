@@ -40,3 +40,23 @@ help you.
     :name: fig:bluemira-roadmap
 
     ``Bluemira`` development roadmap for 2022
+
+
+How to use ``Bluemira``
+-----------------------
+
+``Bluemira`` is designed to be used by three different types of user.
+
+  Modeller
+    A Modeller will use a program given to them by a Reactor Designer to carry out design studies on a particular reactor design. Modellers will need to know about the parameters of a design and how to manipulate JSON files to modify those parameters.
+
+  Reactor Designer
+    A Reactor Designer will use ``Bluemira`` as a framework to create a design for a reactor. To design a reactor the design workflow strategy needs to be considered and codified. Using Designer and Builder objects each component of the reactor can be created and collected into a full reactor design or used individually.
+
+  Developers
+    A developer of ``Bluemira`` will need to understand the program to a much more detailed level than a reactor designer. They will be involved with adding new features to ``Bluemira`` as well as helping a Reactor Designer or a Modeller to add a new feature or customisation option.
+
+High level Architecture
+^^^^^^^^^^^^^^^^^^^^^^^
+
+.. graphviz:: design_build.dot

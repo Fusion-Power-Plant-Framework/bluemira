@@ -1,0 +1,17 @@
+digraph {
+    compound=true;
+
+    subgraph cluster_0 {
+        label="Designer";
+        a[label="ParameterFrame"];
+        b[label="Optimisation or Minimal design problem"]
+    }
+
+    subgraph cluster_1 {
+        label="Builder";
+        c[label="ParameterFrame"];
+    }
+    a -> c [ltail=cluster_0, lhead=cluster_1];
+    c -> d [ltail=cluster_1]
+    d[label="Component"]
+}
