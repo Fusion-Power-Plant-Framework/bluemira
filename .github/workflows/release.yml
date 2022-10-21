@@ -47,7 +47,7 @@ jobs:
             exit 1;
           fi
 
-          echo ::set-output name=tag::${TAG}
+          echo tag::${TAG} >> $GITHUB_OUTPUT
 
       - name: Update main
         id: update-main

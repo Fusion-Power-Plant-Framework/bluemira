@@ -21,7 +21,7 @@ jobs:
           CURRENT_DATE="$(date --date="$(date +'%y%m%d')" +%s)"
           DAYS_DIFF=$(( ("${INITIAL_RELEASE_DATE}" - "${CURRENT_DATE}")/(60*60*24) ))
           if [ $(("${DAYS_DIFF}" % 42)) -eq 0 ]; then
-            echo ::set-output name=release_due::true
+            echo release_due::true >> $GITHUB_OUTPUT
           else
             echo "Release is not due"
           fi
