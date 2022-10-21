@@ -59,4 +59,4 @@ How to use ``Bluemira``
 High level Architecture
 ^^^^^^^^^^^^^^^^^^^^^^^
 
-.. graphviz:: design_build.dot
+.. graphviz:: base/design_build.dot
