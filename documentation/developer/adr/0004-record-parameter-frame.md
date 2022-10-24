@@ -67,9 +67,8 @@ The final design landed on consists of some of both options:
   class MyDecoratedFrameForAJob:
       B: Parameter[float]
       z_0: Parameter[float]
-
-
   ```
+
 
 Further work will be done to add helper methods to collate all `Parameters` required in a given piece of code
 
