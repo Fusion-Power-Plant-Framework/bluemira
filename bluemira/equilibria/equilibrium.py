@@ -130,8 +130,8 @@ class MHDState:
         Stores Green's functions arrays in a dictionary of coils. Used upon
         initialisation and must be called after meshing of coils.
 
-        Modifies:
-        ------
+        Modifies
+        --------
         ._pgreen: dict
             Greens function coil mapping for psi
         ._bxgreen: dict

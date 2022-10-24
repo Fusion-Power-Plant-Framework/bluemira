@@ -92,21 +92,27 @@ html_css_files = ["css/custom.css"]
 
 numfig = True
 
+
 # --- Configuration for sphinx-autoapi ---
 extensions.append("sphinx.ext.inheritance_diagram")
 extensions.append("autoapi.extension")
 
 autoapi_type = "python"
 autoapi_dirs = ["../../bluemira"]
-autoapi_keep_files = False
+autoapi_keep_files = True
 autoapi_options = [
     "members",
     "undoc-members",
+    "private-members",
     "show-inheritance",
     "show-inheritance-diagram",
     "show-module-summary",
     "special-members",
 ]
+
+# --- Configuration for graphviz ---
+extensions.append("sphinx.ext.graphviz")
+graphviz_output_format = "svg"
 
 
 class ParamsDirective(Directive):
@@ -160,20 +166,19 @@ class SkipAlreadyDocumented:
     """
 
     def __init__(self):
-        lis = [
+        skip_list = [
             "bluemira.codes.process.api.ENABLED",
             "bluemira.codes.process.api.PROCESS_DICT",
+            "bluemira.codes._nlopt_api.NLOPTOptimiser._opt_inputs_ready",
         ]
 
-        self.dict = {i: 0 for i in lis}
+        self.skip_dict = {i: 0 for i in skip_list}
 
     def __call__(self, app, what, name, obj, skip, options):
         """autoapi-skip-member definition"""
-        if name in self.dict:
+        if name in self.skip_dict:
             # Skip first occurrence
-            if self.dict[name] < 1:
+            if self.skip_dict[name] < 1:
                 skip = True
-            else:
-                skip = False
-            self.dict[name] += 1
+            self.skip_dict[name] += 1
         return skip
