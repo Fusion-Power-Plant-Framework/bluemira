@@ -4,37 +4,77 @@ Date: 2022-06-30
 
 ## Status
 
-Proposed
+Completed
 
 ## Context
 
 We want to make it easier to configure a `ParameterFrame` for a `ReactorDesigner`.
 
 Currently we have all `Parameters` listed in `Configuration`. There are a number of downsides to this approach.
+
 * Their definition is global meaning that no shared names can exist across different `Builder`s.
 * `Builder`s take more `Parameters` than they probably need
 
-
 Options:
+
 * Define a `ParameterFrame` for each `Builder` with no default values.
-    * Reconstruct the global list of required `Parameters` for a `ReactorDesigner` from
+  * Reconstruct the global list of required `Parameters` for a `ReactorDesigner` from
     the set of `Parameters` required for all of its `Builder`s.
 * Nested / indexed / tagged `ParameterFrame` where `Builder`s would automatically tag
- a `Parameter` but the overall list would remain flat.
- * A `ConfigurationSchema`-like approach for each `Builder`.
+  a `Parameter` but the overall list would remain flat.
+  * A `ConfigurationSchema`-like approach for each `Builder`.
 
 e.g.
- ```python
- class BuilderOne(Builder):
-     R_0: Parameter[float]
-     A: Parameter[float]
 
- ```
+```python
+class BuilderOne(Builder):
+    R_0: Parameter[float]
+    A: Parameter[float]
+```
 
 ## Decision
 
-We will trial the three options above taking e.g. the EUDEMO `PlasmaBuilder` as an example.
+We will trial the three options above  taking e.g. the EUDEMO `PlasmaBuilder` as an example.
+
+#### 2022-10-24
+
+The final design landed on consists of some of both options:
+
+-  A dedicated `ParameterFrame` is created for each object that uses one
+
+- No default values are stored on a `ParameterFrame`
+
+  - A `MappedParameterFrame` has defaults and is used exclusively for external codes where some variables are not controlled in mapping but can be updated through the solver interface. Eg. PROCESS DEMO style input
+
+-  Only the value and source of a `Parameter` have an API entry point to be updated after creation
+
+- A `ParameterFrame` definition looks like one of the below. The decorated version is a shortcut for the dataclass version but there is no static autocomplete as of writing. Therefore within bluemira core code the dataclass version should be used.
+
+  ```python
+  from dataclasses import dataclass
+  from bluemira.base.parameter_frame import (
+      Parameter,
+      ParameterFrame,
+      parameter_frame,
+  )
+
+  @dataclass
+  class MyFrameForAJob(ParmeterFrame):
+     R_0: Parameter[float]
+     A: Parameter[float]
+
+  @parameter_frame
+  class MyDecoratedFrameForAJob:
+      B: Parameter[float]
+      z_0: Parameter[float]
+
+
+  ```
+
+Further work will be done to add helper methods to collate all `Parameters` required in a given piece of code
 
 ## Consequences
 
-The consequences of this decision are to be explored.
+All existing metadata has been removed from bluemira and should be stored in a `Parameter` JSON file for a given reactor design.
+
+All `Parameters` need to be defined for a given design.
