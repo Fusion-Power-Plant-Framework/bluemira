@@ -1,10 +1,11 @@
 # 1. `DesignStage` architectural decision
 
 Date: 2022-06-30
+Updated: 2022-10-24
 
 ## Status
 
-Proposed
+Completed
 
 ## Context
 
@@ -34,6 +35,22 @@ We add a `DesignStage` class to handles the  `["run", "read", "mock"]` logic for
 We will trial the two options above taking e.g. the EUDEMO `PlasmaBuilder` as an example
 to inform our decision.
 
+#### 2022-10-24
+
+The `Designer` (previously called the `DesignStage`) is in charge of solving a minimal design problem.
+In its simplest form the output of the `Designer`s `execute` method is an input to the `Builder`.
+A `Designer` can have different run modes as described above but by default only needs a run method to function.
+
+With user inputs and the output of the `execute` method the `Builder` creates the CAD for a given `Component`.
+The `Builder` will output a `ComponentManager` containing the `Component` built by the `Builder`.
+
+Both a `Designer` and `Builder` need their own `ParameterFrame` to define the `Parameters` needed.
+
+A `ParameterFrame` should only be needed at this level and a `Designer` and `Builder` are in charge to update the
+`ParameterFrame` where appropriate. Lower level functionality should use the `Parameter` value as input.
+
+Further work will be undertaken so that `Solver` can inherit from `Designer` functioning as a multistage `Designer`
+
 ## Consequences
 
-The consequences of this decision are to be explored.
+The separation of `Designer` and `Builder` mechanics required a rewrite of the existing complex reactor design.
