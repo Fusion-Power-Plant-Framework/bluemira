@@ -4,7 +4,7 @@ Date: 2022-06-30
 
 ## Status
 
-Proposed
+Completed
 
 ## Context
 
@@ -27,6 +27,17 @@ information present in the `Reactor` or other `Component`s.
 We will trial the three options above taking e.g. the EUDEMO plasma `Component` as an example
 to inform our decision.
 
+#### 2022-10-24
+
+A `ComponentManager` was settled on as a good abstraction from a `Component`, physical or otherwise, and information that a user
+may require from a `Component`. For example:
+
+* The separatrix of a plasma is part of a component but requires low level knowledge to access
+* The magnetic field due to the equlibria is interlinked with the plasma but not part of the `Component`
+    * The equlibiria can be stored on the `ComponentManager`
+
 ## Consequences
 
-The consequences of this decision are to be explored.
+There will be a few internal `ComponentManager`s available for use. It is however expected that a Reactor Designer creates
+their own `ComponentManager`s to facilitate their workflow. `ComponentManager` objects will only live at the designer/builder level,
+facilitating access to properties that can be passed to lower level objects.
