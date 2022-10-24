@@ -29,7 +29,7 @@ jobs:
       if: env.RESULT == 'success' && steps.workflow-run-info.outputs.pullRequestNumber != ''
       run: |
         artifact_url="$( \
-          gh api repos/${{ github.repository }}/actions/artifacts --jq '.artifacts[] | select(.name == "report-json") | select(.workflow_run.head_sha == "${{ github.event.workflow_run.pull_request.base.sha }}") | .archive_download_url')"
+          gh api repos/${{ github.repository }}/actions/artifacts --jq '.artifacts[] | select(.name == "report-json") | select(.workflow_run.head_sha == "${{ steps.workflow-run-info.outputs.targetCommitSha }}") | .archive_download_url')"
         if [ ! -z "${artifact_url}" ]; then
           gh api ${artifact_url} > report-json.zip
           mkdir ref_report
