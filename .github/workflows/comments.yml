@@ -56,7 +56,7 @@ jobs:
         # Ugly stuff to escape new lines
         report_str="${report_str//'%'/'%25'}"
         report_str="${report_str//$'\n'/'%0A'}"
-        echo "::set-output name=report::"${report_str}""
+        echo report="${report_str}"" >> $GITHUB_OUTPUT
 
     - name: Find warning report comment
       if: env.RESULT == 'success' && steps.workflow-run-info.outputs.pullRequestNumber != ''
