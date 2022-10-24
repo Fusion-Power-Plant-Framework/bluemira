@@ -130,14 +130,16 @@ class MHDState:
         Stores Green's functions arrays in a dictionary of coils. Used upon
         initialisation and must be called after meshing of coils.
 
-        Modifies
-        --------
-        ._pgreen: dict
-            Greens function coil mapping for psi
-        ._bxgreen: dict
-            Greens function coil mapping for Bx
-        .bzgreen: dict
-            Greens function coil mapping for Bz
+        Notes
+        -----
+        Modifies:
+
+            ._pgreen: dict
+                Greens function coil mapping for psi
+            ._bxgreen: dict
+                Greens function coil mapping for Bx
+            .bzgreen: dict
+                Greens function coil mapping for Bz
         """
         self._psi_green = self.coilset.map_psi_greens(self.x, self.z)
         self._bx_green = self.coilset.map_Bx_greens(self.x, self.z)
@@ -826,9 +828,10 @@ class Equilibrium(MHDState):
         Note
         ----
         Modifies the following in-place:
-            .plasma_psi                                                          \n
-            .psi_func                                                            \n
-            ._I_p                                                                 \n
+
+            .plasma_psi
+            .psi_func
+            ._I_p
             ._Jtor
         """
         if self._li is None:
