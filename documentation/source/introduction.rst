@@ -60,3 +60,4 @@ High level Architecture
 ^^^^^^^^^^^^^^^^^^^^^^^
 
 .. graphviz:: base/design_build.dot
+    :align: center

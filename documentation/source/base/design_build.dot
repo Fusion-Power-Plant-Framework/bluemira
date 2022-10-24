@@ -1,16 +1,37 @@
-digraph G {
+digraph {
     compound=true;
-    node [shape = box, width = 2]
-    graph [splines = false, ranksep = 0.2]
-
+    node [
+        shape = box,
+        width = 2,
+        fontname="Lato,proxima-nova,Helvetica Neue,Arial,sans-serif",
+        fontsize="12px",
+        fontcolor="#404040",
+        color="#404040"
+    ]
+    graph [
+        splines = false,
+        ranksep = 0.2,
+        fontname="Lato,proxima-nova,Helvetica Neue,Arial,sans-serif",
+        fontsize="12px",
+        fontcolor="#404040",
+        pencolor="#404040"
+    ]
 
     subgraph cluster_0 {
         label="Designer";
         tooltip="Designer";
         href="../base/design_build.html"
         target="_parent"
-        { rank=same b c ee[group=g1, style=invis, width=0.01] }
-        a[group=g1, label="ParameterFrame", tooltip="ParameterFrame", href="../base/parameter.html", target="_parent"];
+        fontcolor="#2980b9"
+        { rank=same b c ee[group=g1, style=invis, width=0.01, tooltip="Designer"] }
+        a[
+            group=g1,
+            label="ParameterFrame",
+            tooltip="ParameterFrame",
+            href="../base/parameter.html",
+            target="_parent",
+            fontcolor="#2980b9"
+        ];
         b[label="Optimisation", tooltip="Optimisation"];
         c[label="Minimal Problem", tooltip="Minimal Problem"];
 
@@ -25,15 +46,44 @@ digraph G {
         tooltip="Builder";
         href="../base/design_build.html"
         target="_parent"
-        d[group=g1, label="ParameterFrame", tooltip="ParameterFrame", href="../base/parameter.html", target="_parent"];
+        fontcolor="#2980b9"
+        d[
+            group=g1,
+            label="ParameterFrame",
+            tooltip="ParameterFrame",
+            href="../base/parameter.html",
+            target="_parent",
+            fontcolor="#2980b9"
+        ];
     }
     subgraph cluster_2 {
         label="ComponentManager";
         tooltip="ComponentManager"
-        e[label="Component", tooltip="Component", href="../base/components.html", target="_parent"]
+        e[
+            label="Component",
+            tooltip="Component",
+            href="../base/components.html",
+            target="_parent",
+            fontcolor="#2980b9"
+        ]
+
+    }
+    subgraph cluster_3 {
+        label="ComponentManager";
+        tooltip="ComponentManager"
+        f[
+            label="Component",
+            tooltip="Component",
+            href="../base/components.html",
+            target="_parent",
+            fontcolor="#2980b9"
+        ]
 
     }
     ee -> d [group=g1, ltail=cluster_0, lhead=cluster_1, minlen=2];
     d -> e [ltail=cluster_1, lhead=cluster_2, minlen=2];
+    e -> reac [ltail=cluster_2, minlen=2];
+    f -> reac [ltail=cluster_3, minlen=2];
 
+    reac[label="Reactor", tooltip="Reactor"]
 }
