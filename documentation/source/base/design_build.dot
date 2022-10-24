@@ -1,17 +1,25 @@
 digraph {
     compound=true;
+    node [shape=record]
 
     subgraph cluster_0 {
         label="Designer";
-        a[label="ParameterFrame"];
-        b[label="Optimisation or Minimal design problem"]
+        tooltip="Designer";
+        href="../base/design_build.html"
+        target="_parent"
+        a[label="ParameterFrame", tooltip="ParameterFrame", href="../base/parameter.html", target="_parent"];
+        b[label="Optimisation", tooltip="Optimisation"];
+        c[label="Minimal Design Problem", tooltip="Minimal Design Problem"];
     }
 
     subgraph cluster_1 {
         label="Builder";
-        c[label="ParameterFrame"];
+        tooltip="Builder";
+        href="../base/design_build.html"
+        target="_parent"
+        d[label="ParameterFrame", tooltip="ParameterFrame", href="../base/parameter.html", target="_parent"];
     }
-    a -> c [ltail=cluster_0, lhead=cluster_1];
-    c -> d [ltail=cluster_1]
-    d[label="Component"]
+    a -> d [ltail=cluster_0, lhead=cluster_1, minlen=2];
+    d -> e [ltail=cluster_1]
+    e[label="Component", tooltip="Component", href="../base/components.html", target="_parent"]
 }
