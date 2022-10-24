@@ -1,3 +1,9 @@
+// Useful info
+// This graph is designed to be output as an interactive svg
+// fontname, fontcolor and pencolor were copied from the rtd sphinx theme
+// the 'ee' node is used to force alignment, it is set to be invisible
+// target can be modified as per w3 http specs
+
 digraph {
     compound=true;
     node [
@@ -35,6 +41,7 @@ digraph {
         b[label="Optimisation", tooltip="Optimisation"];
         c[label="Minimal Problem", tooltip="Minimal Problem"];
 
+        // Force alignment
         edge[style=invis];
         a -> {ee, b, c}
         b -> c [minlen= 3]

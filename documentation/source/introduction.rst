@@ -58,6 +58,7 @@ How to use ``Bluemira``
 
 High level Architecture
 ^^^^^^^^^^^^^^^^^^^^^^^
+The below figure shows the high level workflow to create a component for a reactor. To read more about each individual section click on the links in the figure
 
 .. graphviz:: base/design_build.dot
     :align: center
