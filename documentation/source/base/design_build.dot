@@ -1,15 +1,23 @@
-digraph {
+digraph G {
     compound=true;
-    node [shape=record]
+    node [shape = box, width = 2]
+    graph [splines = false, ranksep = 0.2]
+
 
     subgraph cluster_0 {
         label="Designer";
         tooltip="Designer";
         href="../base/design_build.html"
         target="_parent"
-        a[label="ParameterFrame", tooltip="ParameterFrame", href="../base/parameter.html", target="_parent"];
+        { rank=same b c ee[group=g1, style=invis, width=0.01] }
+        a[group=g1, label="ParameterFrame", tooltip="ParameterFrame", href="../base/parameter.html", target="_parent"];
         b[label="Optimisation", tooltip="Optimisation"];
-        c[label="Minimal Design Problem", tooltip="Minimal Design Problem"];
+        c[label="Minimal Problem", tooltip="Minimal Problem"];
+
+        edge[style=invis];
+        a -> {ee, b, c}
+        b -> c [minlen= 3]
+        ee ->c
     }
 
     subgraph cluster_1 {
@@ -17,9 +25,15 @@ digraph {
         tooltip="Builder";
         href="../base/design_build.html"
         target="_parent"
-        d[label="ParameterFrame", tooltip="ParameterFrame", href="../base/parameter.html", target="_parent"];
+        d[group=g1, label="ParameterFrame", tooltip="ParameterFrame", href="../base/parameter.html", target="_parent"];
     }
-    a -> d [ltail=cluster_0, lhead=cluster_1, minlen=2];
-    d -> e [ltail=cluster_1]
-    e[label="Component", tooltip="Component", href="../base/components.html", target="_parent"]
+    subgraph cluster_2 {
+        label="ComponentManager";
+        tooltip="ComponentManager"
+        e[label="Component", tooltip="Component", href="../base/components.html", target="_parent"]
+
+    }
+    ee -> d [group=g1, ltail=cluster_0, lhead=cluster_1, minlen=2];
+    d -> e [ltail=cluster_1, lhead=cluster_2, minlen=2];
+
 }
