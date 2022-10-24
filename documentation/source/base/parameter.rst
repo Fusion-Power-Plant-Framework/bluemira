@@ -36,7 +36,7 @@ A :py:class:`Parameter` is a dataclass that wraps a value acting a container for
     >>> print(r_0)
     ... <Parameter(R_0=5000 cm)>
 
-Only the value of the :py:class:`Parameter` can be updated after initialisation. However if you want to change the source the :py:func:`set_value` method can be used.
+Only the value of the :py:class:`Parameter` can be updated after initialisation. However if you want to change the source the :py:meth:`set_value` method can be used.
 
 .. code-block:: pycon
 
@@ -46,14 +46,14 @@ Only the value of the :py:class:`Parameter` can be updated after initialisation.
    >>> r_0.set_value(20, "New Input")
    ... <Parameter(R_0=20 cm)> New Input
 
-If you want to access the value of the :py:class:`Parameter` in a different unit the :py:func:`set_value` method can be used.
+If you want to access the value of the :py:class:`Parameter` in a different unit the :py:meth:`set_value` method can be used.
 
 .. code-block:: pycon
 
     >>> r_0.value_as('m')
     ... 0.2
 
-Any update to a :py:class:`Parameter` value is stored and can be accessed with the :py:func:`history` method which can be useful to understand why a :py:class:`Parameter` value changed.
+Any update to a :py:class:`Parameter` value is stored and can be accessed with the :py:meth:`history` method which can be useful to understand why a :py:class:`Parameter` value changed.
 
 .. code-block:: pycon
 
