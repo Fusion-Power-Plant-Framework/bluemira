@@ -182,3 +182,28 @@ class SkipAlreadyDocumented:
                 skip = True
             self.skip_dict[name] += 1
         return skip
+
+
+# autoapi inheritance diagram hack
+import sphinx.ext.inheritance_diagram as inheritance_diagram  # noqa: E402
+
+_old_html_visit_inheritance_diagram = inheritance_diagram.html_visit_inheritance_diagram
+
+
+def html_visit_inheritance_diagram(self, node):
+    """
+    Hacks the uri of the inheritance diagram if its an autoapi diagram
+
+    Otherwise we get 404 links from the diagram
+    """
+    current_filename = self.builder.current_docname + self.builder.out_suffix
+    if "autoapi" in current_filename:
+        for n in node:
+            refuri = n.get("refuri")
+            if refuri is not None:
+                n["refuri"] = f"autoapi/bluemira/{refuri[6:]}"
+
+    return _old_html_visit_inheritance_diagram(self, node)
+
+
+inheritance_diagram.html_visit_inheritance_diagram = html_visit_inheritance_diagram
