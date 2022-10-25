@@ -144,13 +144,13 @@ the value you put into a :py:class:`Parameter` will be different to the one you 
     ...     },
     ... }
     >>> print(MyParameterFrame.from_dict(param_dict))
-    ... ╒════════╤═════════╤═══════════════╤══════════╤═══════════════╤═════════════╕
-    ... │ name   │   value │ unit          │ source   │ description   │ long_name   │
-    ... ╞════════╪═════════╪═══════════════╪══════════╪═══════════════╪═════════════╡
-    ... │ A      │     3.1 │ dimensionless │ Input    │ N/A           │ N/A         │
-    ... ├────────┼─────────┼───────────────┼──────────┼───────────────┼─────────────┤
-    ... │ R_0    │    0.09 │ m             │ Input    │ N/A           │ N/A         │
-    ... ╘════════╧═════════╧═══════════════╧══════════╧═══════════════╧═════════════╛
+    ╒════════╤═════════╤═══════════════╤══════════╤═══════════════╤═════════════╕
+    │ name   │   value │ unit          │ source   │ description   │ long_name   │
+    ╞════════╪═════════╪═══════════════╪══════════╪═══════════════╪═════════════╡
+    │ A      │     3.1 │ dimensionless │ Input    │ N/A           │ N/A         │
+    ├────────┼─────────┼───────────────┼──────────┼───────────────┼─────────────┤
+    │ R_0    │    0.09 │ m             │ Input    │ N/A           │ N/A         │
+    ╘════════╧═════════╧═══════════════╧══════════╧═══════════════╧═════════════╛
 
 Use :py:meth:`Parameter.value_as` to return parameter values in a non-standard unit
 Input values with units listed in :ref:`unit_convention` are not modified.
