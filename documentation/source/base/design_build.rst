@@ -6,14 +6,14 @@ Designers and Builders are the main structure in ``bluemira`` for creating a Com
 The two main classes are:
 
 * :py:class:`bluemira.base.designer.Designer`: the Designer base class
-* :py:class:`bluemira.mesh.builder.Builder`: the Builder base class
+* :py:class:`bluemira.base.builder.Builder`: the Builder base class
 
 Designers
 ^^^^^^^^^
 
-`Designer`s solve the minimal design problem of a `Component`. The minimal design problem could
+`Designers` solve the minimal design problem of a `Component`. The minimal design problem could
 result in for instance a geometric wire or some relevant values that allow the `Builder` to build
-the `Component` CAD. A Designer is optional as some `Component`s can be completely built with
+the `Component` CAD. A Designer is optional as some `Components` can be completely built with
 user input and calculations from previous component design stages.
 Optimisation problems should be run within a `Designer`.
 
