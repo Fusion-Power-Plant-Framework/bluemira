@@ -7,7 +7,7 @@ configuration of a ``bluemira`` analysis are setup.
 Parameters
 ^^^^^^^^^^
 
-A :py:class:`Parameter` is a class that wraps a value acting a container for metadata about the value.
+A :py:class:`Parameter` object wraps a value and holds metadata relating to that value.
 To create a :py:class:`Parameter`, as a minimum, the name, the value and a unit need to be provided
 but other information can be added:
 
