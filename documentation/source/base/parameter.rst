@@ -11,18 +11,18 @@ A :py:class:`Parameter` is a class that wraps a value acting a container for met
 To create a :py:class:`Parameter`, as a minimum, the name, the value and a unit need to be provided
 but other information can be added:
 
-  - name
-    The shorthand name of the :py:class:`Parameter` used for access when used as part of a :py:class:`ParameterFrame`.
-  - value
-    The value of the :py:class:`Parameter`.
-  - unit
-    The unit associated with the value.
-  - source
-    The origin of a :py:class:`Parameter`, for instance the module it was set from.
-  - description
-    A description of the :py:class:`Parameter`. This is a good place for references and other useful information.
-  - long_name
-    A longer more descriptive name for instance 'A' could be the :py:class:`Parameter` name but 'Aspect Ratio' is more helpful for a user.
+    name
+        The shorthand name of the :py:class:`Parameter` used for access when used as part of a :py:class:`ParameterFrame`.
+    value
+        The value of the :py:class:`Parameter`.
+    unit
+        The unit associated with the value.
+    source
+        The origin of a :py:class:`Parameter`, for instance the module it was set from.
+    description
+        A description of the :py:class:`Parameter`. This is a good place for references and other useful information.
+    long_name
+        A longer more descriptive name for instance 'A' could be the :py:class:`Parameter` name but 'Aspect Ratio' is more helpful for a user.
 
 .. code-block:: pycon
 
@@ -121,10 +121,11 @@ a json file or another :py:class:`ParameterFrame` (must be a superset of the :py
 
 Units
 """""
-:py:class:`ParameterFrame`s always enforce the same set of standard units :ref:`unit_convention`.
-:py:class:`Parameter`s within a :py:class:`ParameterFrame` whose units are convertible to one of bluemira's standard units,
+:py:class:`ParameterFrames` always enforce the same set of standard units :ref:`unit_convention`.
+:py:class:`Parameters` within a :py:class:`ParameterFrame` whose units are convertible to one of bluemira's standard units,
 have their values and converted to the corresponding standard unit.
 This keeps the units used within Bluemira consistent across classes and modules.
+
 For this reason, if your inputs use a non-standard unit,
 the value you put into a :py:class:`Parameter` will be different to the one you get out.
 
@@ -152,5 +153,5 @@ the value you put into a :py:class:`Parameter` will be different to the one you 
     │ R_0    │    0.09 │ m             │ Input    │ N/A           │ N/A         │
     ╘════════╧═════════╧═══════════════╧══════════╧═══════════════╧═════════════╛
 
-Use :py:meth:`Parameter.value_as` to return parameter values in a non-standard unit
+Use :py:meth:`Parameter.value_as` to return parameter values in a non-standard unit.
 Input values with units listed in :ref:`unit_convention` are not modified.
