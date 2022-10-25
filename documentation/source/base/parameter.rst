@@ -97,6 +97,9 @@ or using the :py:class:`parameter_frame` decorator
     ...     R_0: Parameter[float]
     ...     A: Parameter[float]
 
+These two methods of declaring a ParameterFrame are equivalent however,
+Python type-checkers can provide better method/attribute hints when using the @dataclass decorator.
+
 The type of each :py:class:`Parameter` must be specified and adhered to in the initialisation of the :py:class:`ParameterFrame`.
 A :py:class:`ParameterFrame` can be initialised from a dictionary,
 a json file or another :py:class:`ParameterFrame` (must be a superset of the :py:class:`ParameterFrame` being initialised).
