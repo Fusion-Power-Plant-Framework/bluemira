@@ -21,24 +21,25 @@ A basic `Designer` only requires a `run` method and a `param_cls` attribute to s
 `ParameterFrame` class reference. Once initialised the `Designer` is run with its `execute` method.
 The below is for illustrative purposes and is overkill, in this instance you would just have a `Builder`.
 
-```python
-from dataclasses import dataclass
+.. code-block:: python
 
-from bluemira.base.designer import Designer
-from bluemira.base.parameter_frame import Parameter, ParameterFrame
+    from dataclasses import dataclass
 
-@dataclass
-class DesignerPF(ParameterFrame):
-    A: Parameter[float]
+    from bluemira.base.designer import Designer
+    from bluemira.base.parameter_frame import Parameter, ParameterFrame
+
+    @dataclass
+    class DesignerPF(ParameterFrame):
+        A: Parameter[float]
 
 
-class MyDesigner(Designer)
+    class MyDesigner(Designer)
 
-    param_cls = DesignerPF
+        param_cls = DesignerPF
 
-    def run(self) -> float:
-        return  self.params.A.value
-```
+        def run(self) -> float:
+            return  self.params.A.value
+
 
 To initialised a `Designer` you need any `ParameterFrame` instance that is a superset of `param_cls`
 and optionally a `build_config` dictionary which contains configuration options for the `Designer`.
@@ -46,19 +47,19 @@ It is possible to execute a `Designer` in different ways depending on requiremen
 availability. If another method such as `mock` or `read` is defined and `run_mode` is specified in
 the `build_config` the `execute` method will call the specified method.
 
-```python
-build_config = {"run_mode": "mock"}
+.. code-block:: python
 
-class MyOtherDesigner(Designer):
+    build_config = {"run_mode": "mock"}
 
-    param_cls = DesignerPF
+    class MyOtherDesigner(Designer):
 
-    def run(self) -> float:
-        return self.params.A.value
+        param_cls = DesignerPF
 
-    def mock(self) -> float:
-        return self.params.A.value ** 2
-```
+        def run(self) -> float:
+            return self.params.A.value
+
+        def mock(self) -> float:
+            return self.params.A.value ** 2
 
 Builders
 ^^^^^^^^
@@ -75,38 +76,39 @@ instance that is a superset of `param_cls` and optionally the `Designer.execute(
 The below is an example of a standard `Builder` structure and once initialised the `build` method is
 called to create the `Component`.
 
-```python
-from dataclasses import dataclass
+.. code-block:: python
 
-from bluemira.base.builder import Builder, ComponentManager
-from bluemira.base.parameter_frame import Parameter, ParameterFrame
+    from dataclasses import dataclass
 
-@dataclass
-class BuilderPF(ParameterFrame):
-    R_0: Parameter[float]
+    from bluemira.base.builder import Builder, ComponentManager
+    from bluemira.base.parameter_frame import Parameter, ParameterFrame
 
-class MyComponentManager(ComponentManager):
-    """Blank Component Manager"""
+    @dataclass
+    class BuilderPF(ParameterFrame):
+        R_0: Parameter[float]
+
+    class MyComponentManager(ComponentManager):
+        """Blank Component Manager"""
 
 
-class MyBuilder(Builder):
+    class MyBuilder(Builder):
 
-    param_cls = BuilderPF
+        param_cls = BuilderPF
 
-    def build(self) -> MyComponentManager
-        return MyComponentManager(
-            self.component_tree(
-                xz=[self.build_xz()],
-                xy=[self.build_xy()],
-                xyz=[self.build_xyz()],
+        def build(self) -> MyComponentManager
+            return MyComponentManager(
+                self.component_tree(
+                    xz=[self.build_xz()],
+                    xy=[self.build_xy()],
+                    xyz=[self.build_xyz()],
+                )
             )
-        )
 
-    def build_xz(self):
-        # return A 2D geometry PhysicalComponent
+        def build_xz(self):
+            # return A 2D geometry PhysicalComponent
 
-    def build_xy(self):
-        # return A 2D geometry PhysicalComponent
+        def build_xy(self):
+            # return A 2D geometry PhysicalComponent
 
-    def build_xyz(self):
-        # return A 3D geometry PhysicalComponent
+        def build_xyz(self):
+            # return A 3D geometry PhysicalComponent
