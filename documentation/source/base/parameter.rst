@@ -7,7 +7,9 @@ configuration of a ``bluemira`` analysis are setup.
 Parameters
 ^^^^^^^^^^
 
-A :py:class:`Parameter` is a dataclass that wraps a value acting a container for metadata about the value. To create a :py:class:`Parameter` as a minimum the name, the value and a unit need to be provided but other information can be added:
+A :py:class:`Parameter` is a class that wraps a value acting a container for metadata about the value.
+To create a :py:class:`Parameter`, as a minimum, the name, the value and a unit need to be provided
+but other information can be added:
 
   - name
     The shorthand name of the :py:class:`Parameter` used for access when used as part of a :py:class:`ParameterFrame`.
@@ -36,7 +38,8 @@ A :py:class:`Parameter` is a dataclass that wraps a value acting a container for
     >>> print(r_0)
     ... <Parameter(R_0=5000 cm)>
 
-Only the value of the :py:class:`Parameter` can be updated after initialisation. However if you want to change the source the :py:meth:`set_value` method can be used.
+Only the value of the :py:class:`Parameter` can be updated after initialisation.
+However if you want to change the source the :py:meth:`set_value` method can be used.
 
 .. code-block:: pycon
 
@@ -54,7 +57,8 @@ the :py:meth:`set_value` method can be used.
     >>> r_0.value_as('m')
     ... 0.2
 
-Any update to a :py:class:`Parameter` value is stored and can be accessed with the :py:meth:`history` method which can be useful to understand why a :py:class:`Parameter` value changed.
+Any update to a :py:class:`Parameter` value is stored and can be accessed with the :py:meth:`history` method
+which can be useful to understand why a :py:class:`Parameter` value changed.
 
 .. code-block:: pycon
 
@@ -68,8 +72,8 @@ ParameterFrames
 ^^^^^^^^^^^^^^^
 
 A :py:class:`ParameterFrame` allows Parameters to be grouped together to describe the overall
-parameterisation of a particular analysis or class within ``bluemira``. For this
-reason you will interact with Parameters via a :py:class:`ParameterFrame` in most cases. A :py:class:`ParameterFrame` enforces our default units as described in :ref:`unit_convention`.
+parameterisation of a particular analysis or class within ``bluemira``.
+For this reason you will interact with Parameters via a :py:class:`ParameterFrame` in most cases.
 
 A ParameterFrame is written in one of two ways, as a dataclass:
 
@@ -93,7 +97,9 @@ or using the :py:class:`parameter_frame` decorator
     ...     R_0: Parameter[float]
     ...     A: Parameter[float]
 
-The type of each :py:class:`Parameter` must be specified and adhered to in the initialisation of the :py:class:`ParameterFrame`. A :py:class:`ParameterFrame` can be initialised from a dictionary, a json file or another :py:class:`ParameterFrame` (must be a superset of the :py:class:`ParameterFrame` being initialised).
+The type of each :py:class:`Parameter` must be specified and adhered to in the initialisation of the :py:class:`ParameterFrame`.
+A :py:class:`ParameterFrame` can be initialised from a dictionary,
+a json file or another :py:class:`ParameterFrame` (must be a superset of the :py:class:`ParameterFrame` being initialised).
 
 .. code-block:: pycon
 
@@ -103,7 +109,7 @@ The type of each :py:class:`Parameter` must be specified and adhered to in the i
     ...         "value": 9,
     ...         "unit": "m",
     ...         "source": "Input",
-    ...
+    ...     },
     ...     "A": {
     ...         "value": 3.1,
     ...         "unit": "dimensionless",
@@ -112,3 +118,39 @@ The type of each :py:class:`Parameter` must be specified and adhered to in the i
     ... }
     >>> params = MyParameterFrame.from_dict(param_dict)
     >>> param_2 = MyParameterFrame.from_frame(params)
+
+Units
+"""""
+:py:class:`ParameterFrame`s always enforce the same set of standard units :ref:`unit_convention`.
+:py:class:`Parameter`s within a :py:class:`ParameterFrame` whose units are convertible to one of bluemira's standard units,
+have their values and converted to the corresponding standard unit.
+This keeps the units used within Bluemira consistent across classes and modules.
+For this reason, if your inputs use a non-standard unit,
+the value you put into a :py:class:`Parameter` will be different to the one you get out.
+
+.. code-block:: pycon
+
+    >>> from bluemira.base import ParameterFrame, ParameterMapping
+    >>> param_dict = {
+    ...     "R_0": {
+    ...         "value": 9,
+    ...         "unit": "cm",
+    ...         "source": "Input",
+    ...     },
+    ...     "A": {
+    ...         "value": 3.1,
+    ...         "unit": "dimensionless",
+    ...         "source": "Input",
+    ...     },
+    ... }
+    >>> print(MyParameterFrame.from_dict(param_dict))
+    ... ╒════════╤═════════╤═══════════════╤══════════╤═══════════════╤═════════════╕
+    ... │ name   │   value │ unit          │ source   │ description   │ long_name   │
+    ... ╞════════╪═════════╪═══════════════╪══════════╪═══════════════╪═════════════╡
+    ... │ A      │     3.1 │ dimensionless │ Input    │ N/A           │ N/A         │
+    ... ├────────┼─────────┼───────────────┼──────────┼───────────────┼─────────────┤
+    ... │ R_0    │    0.09 │ m             │ Input    │ N/A           │ N/A         │
+    ... ╘════════╧═════════╧═══════════════╧══════════╧═══════════════╧═════════════╛
+
+Use :py:meth:`Parameter.value_as` to return parameter values in a non-standard unit
+Input values with units listed in :ref:`unit_convention` are not modified.
