@@ -18,7 +18,7 @@ A :py:class:`Parameter` is a dataclass that wraps a value acting a container for
   - source
     The origin of a :py:class:`Parameter`, for instance the module it was set from.
   - description
-    A description of the :py:class:`Parameter`. This is a good place for references and other useful information
+    A description of the :py:class:`Parameter`. This is a good place for references and other useful information.
   - long_name
     A longer more descriptive name for instance 'A' could be the :py:class:`Parameter` name but 'Aspect Ratio' is more helpful for a user.
 
@@ -46,7 +46,8 @@ Only the value of the :py:class:`Parameter` can be updated after initialisation.
    >>> r_0.set_value(20, "New Input")
    ... <Parameter(R_0=20 cm)> New Input
 
-If you want to access the value of the :py:class:`Parameter` in a different unit the :py:meth:`set_value` method can be used.
+If you want to access the value of the :py:class:`Parameter` in a different unit,
+the :py:meth:`set_value` method can be used.
 
 .. code-block:: pycon
 
@@ -67,10 +68,10 @@ ParameterFrames
 ^^^^^^^^^^^^^^^
 
 A :py:class:`ParameterFrame` allows Parameters to be grouped together to describe the overall
-parameterisation of a particular analysis or other class within ``bluemira``. For this
+parameterisation of a particular analysis or class within ``bluemira``. For this
 reason you will interact with Parameters via a :py:class:`ParameterFrame` in most cases. A :py:class:`ParameterFrame` enforces our default units as described in :ref:`unit_convention`.
 
-A ParameterFrame is written in one of two ways, firstly as a dataclass:
+A ParameterFrame is written in one of two ways, as a dataclass:
 
 .. code-block:: pycon
 
@@ -81,7 +82,7 @@ A ParameterFrame is written in one of two ways, firstly as a dataclass:
     ...     R_0: Parameter[float]
     ...     A: Parameter[float]
 
-and secondly using the :py:class:`parameter_frame` decorator
+or using the :py:class:`parameter_frame` decorator
 
 .. code-block:: pycon
 
