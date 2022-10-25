@@ -59,9 +59,9 @@ jobs:
           compare_args="--compare ref_report/.report.json"
         fi
         report_str=$(python scripts/format_warning_report.py PR_report/.report.json ${compare_args}) || true
-        report_str=$(cat << EOF "${report_str}"
-        EOF)
-        echo report=$report_str >> $GITHUB_OUTPUT
+        echo '<<EOF' $GITHUB_OUTPUT
+        echo report="${report_str}" >> $GITHUB_OUTPUT
+        echo 'EOF' >> $GITHUB_OUTPUT
 
     - name: Find warning report comment
       if: env.RESULT == 'success' && steps.workflow-run-info.outputs.pullRequestNumber != ''
