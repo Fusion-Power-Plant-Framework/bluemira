@@ -59,9 +59,6 @@ jobs:
           compare_args="--compare ref_report/.report.json"
         fi
         report_str=$(python scripts/format_warning_report.py PR_report/.report.json ${compare_args}) || true
-        # Ugly stuff to escape new lines
-        report_str="${report_str//'%'/'%25'}"
-        report_str="${report_str//$'\n'/'%0A'}"
         echo report="${report_str}" >> $GITHUB_OUTPUT
 
     - name: Find warning report comment
