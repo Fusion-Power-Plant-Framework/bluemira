@@ -1,7 +1,6 @@
 // Useful info
 // This graph is designed to be output as an interactive svg
 // fontname, fontcolor and pencolor were copied from the rtd sphinx theme
-// the 'ee' node is used to force alignment, it is set to be invisible
 // target can be modified as per w3 http specs
 
 digraph {
@@ -26,14 +25,14 @@ digraph {
     subgraph cluster_0 {
         label="Designer";
         tooltip="Designer";
-        href="../base/design_build.html"
+        href="../base/design_build.html#designers"
         target="_parent"
         fontcolor="#2980b9"
         a[
             group=g1,
             label="ParameterFrame",
             tooltip="ParameterFrame",
-            href="../base/parameter.html",
+            href="../base/parameter.html#parameterframes",
             target="_parent",
             fontcolor="#2980b9"
         ];
@@ -42,14 +41,14 @@ digraph {
     subgraph cluster_1 {
         label="Builder";
         tooltip="Builder";
-        href="../base/design_build.html"
+        href="../base/design_build.html#builders"
         target="_parent"
         fontcolor="#2980b9"
         d[
             group=g1,
             label="ParameterFrame",
             tooltip="ParameterFrame",
-            href="../base/parameter.html",
+            href="../base/parameter.html#parameterframes",
             target="_parent",
             fontcolor="#2980b9"
         ];
@@ -57,10 +56,13 @@ digraph {
     subgraph cluster_2 {
         label="ComponentManager";
         tooltip="ComponentManager"
+        href="../base/components.html#componentmanagers"
+        target="_parent"
+        fontcolor="#2980b9"
         e[
             label="Component",
             tooltip="Component",
-            href="../base/components.html",
+            href="../base/components.html#components",
             target="_parent",
             fontcolor="#2980b9"
         ]
@@ -69,10 +71,13 @@ digraph {
     subgraph cluster_3 {
         label="ComponentManager";
         tooltip="ComponentManager"
+        href="../base/components.html#componentmanagers"
+        target="_parent"
+        fontcolor="#2980b9"
         f[
             label="Component",
             tooltip="Component",
-            href="../base/components.html",
+            href="../base/components.html#components",
             target="_parent",
             fontcolor="#2980b9"
         ]
