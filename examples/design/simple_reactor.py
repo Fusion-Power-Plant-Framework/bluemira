@@ -31,6 +31,8 @@ from bluemira.base.builder import Builder, ComponentManager
 from bluemira.base.components import Component, PhysicalComponent
 from bluemira.base.designer import Designer
 from bluemira.base.parameter_frame import Parameter, ParameterFrame
+from bluemira.base.reactor import Reactor
+from bluemira.display.palettes import BLUE_PALETTE
 from bluemira.equilibria.shapes import JohnerLCFS
 from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.optimisation import GeometryOptimisationProblem, minimise_length
@@ -50,7 +52,8 @@ from bluemira.utilities.tools import get_class_from_module
 # %%[markdown]
 
 # Let's set up some parameters that we're going to use in our reactor design.
-# and some `ComponentManagers` to manage acces to our `Components`
+# Some `ComponentManagers` to manage acces to our `Components`,
+# A reactor
 
 # %%
 
@@ -85,6 +88,12 @@ class Plasma(ComponentManager):
 
 class TFCoil(ComponentManager):
     pass
+
+
+class MyReactor(Reactor):
+
+    plasma: Plasma
+    tf_coil: TFCoil
 
 
 # %%[markdown]
@@ -226,14 +235,20 @@ class PlasmaBuilder(Builder):
         """
         Build the xz Component of the Plasma
         """
-        return PhysicalComponent("LCFS", BluemiraFace(self.wire))
+        component = PhysicalComponent("LCFS", BluemiraFace(self.wire))
+        component.display_cad_options.color = BLUE_PALETTE["PL"]
+        component.display_cad_options.transparency = 0.5
+        return component
 
     def build_xyz(self, lcfs):
         """
         Build the xyz Component of the Plasma
         """
         shape = revolve_shape(lcfs, degree=359)
-        return PhysicalComponent("LCFS", shape)
+        component = PhysicalComponent("LCFS", shape)
+        component.display_cad_options.color = BLUE_PALETTE["PL"]
+        component.display_cad_options.transparency = 0.5
+        return component
 
 
 class TFCoilDesigner(Designer):
@@ -430,3 +445,10 @@ tf_parameterisation = tf_coil_designer.execute()
 
 tf_coil_builder = TFCoilBuilder(tf_coil_params, tf_parameterisation.create_shape())
 tf_coil = tf_coil_builder.build()
+
+reactor = MyReactor("Simple Example")
+
+reactor.plasma = plasma
+reactor.tf_coil = tf_coil
+
+reactor.show_cad()
