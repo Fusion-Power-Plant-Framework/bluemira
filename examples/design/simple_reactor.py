@@ -199,11 +199,11 @@ class MyTFCoilOptProblem(GeometryOptimisationProblem):
         """
         Constraint function
         """
-        function = MyTFCoilOptProblem.constraint_value
-        constraint[:] = function(vector, parameterisation, lcfs, min_distance)
+        tffunction = MyTFCoilOptProblem.constraint_value
+        constraint[:] = tffunction(vector, parameterisation, lcfs, min_distance)
         if grad.size > 0:
             grad[:] = approx_derivative(
-                function,
+                tffunction,
                 vector,
                 f0=constraint,
                 args=(parameterisation, lcfs, min_distance),
