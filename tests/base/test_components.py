@@ -66,19 +66,21 @@ class TestComponentClass:
 
     def test_get_component_multiple_full_tree(self):
         parent = Component("Parent")
-        child1 = Component("Child", parent=parent)
-        child2 = Component("Child", parent=parent)
-        grandchild = Component("Grandchild", parent=child1)
+        child1 = Component("Child1", parent=parent)
+        child2 = Component("Child2", parent=parent)
+        relative = Component("relative", parent=child1)
+        grandchild1 = Component("Grandchild", parent=child1)
+        grandchild2 = Component("Grandchild", parent=child2)
 
-        components = grandchild.get_component("Child", first=False, full_tree=True)
+        components = relative.get_component("Grandchild", first=False, full_tree=True)
         assert len(components) == 2
         assert components[0] is not components[1]
-        assert components[0].parent == components[1].parent
+        assert components[0].parent.parent == components[1].parent.parent
 
     def test_get_component_multiple_from_node(self):
         parent = Component("Parent")
-        child1 = Component("Child", parent=parent)
-        child2 = Component("Child", parent=parent)
+        child1 = Component("Child1", parent=parent)
+        child2 = Component("Child2", parent=parent)
         grandchild1 = Component("Grandchild", parent=child1)
         grandchild2 = Component("Grandchild", parent=child2)
 
@@ -146,6 +148,37 @@ class TestComponentClass:
 
         assert parent.get_component("Child1") is not None
 
+    def test_add_child_ComponentError_given_duplicated_component_name(self):
+        parent = Component("TFCoils")
+        parent.add_child(Component("Sector 1"))
+
+        with pytest.raises(ComponentError):
+            parent.add_child(Component("Sector 1"))
+
+    def test_add_child_with_same_name_different_level(self):
+        parent = Component("TFCoils")
+        parent.add_child(Component("Sector 1"))
+
+        parent.add_child(Component("Othersector", children=[Component("Sector 1")]))
+
+        assert len(parent.children) == 2
+        assert len(parent.descendants) == 3
+
+    def test_init_with_same_name_different_level(self):
+        parent = Component("TFCoils")
+        Component("Sector 1", parent=parent)
+        Component("Other Sector", parent=parent, children=[Component("Sector 1")])
+
+        assert len(parent.children) == 2
+        assert len(parent.descendants) == 3
+
+    def test_init_ComponentError_given_duplicated_component_name(self):
+        parent = Component("TFCoils")
+        Component("Sector 1", parent=parent)
+
+        with pytest.raises(ComponentError):
+            Component("Sector 1", parent=parent)
+
 
 class TestPhysicalComponent:
     """
@@ -173,10 +206,10 @@ class TestPhysicalComponent:
     def test_get_components_properties(self, first, result):
         parent = Component("Parent")
         component = PhysicalComponent(
-            "Dummy", shape="A shape", material="A material", parent=parent
+            "Dummy1", shape="A shape", material="A material", parent=parent
         )
         component2 = PhysicalComponent(
-            "Dummy", shape="A shape", material="A material", parent=parent
+            "Dummy2", shape="A shape", material="A material", parent=parent
         )
         shape, material = parent.get_component_properties(
             ("shape", "material"), first=first

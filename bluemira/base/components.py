@@ -77,7 +77,12 @@ class Component(NodeMixin, Plottable, DisplayableCAD):
     ):
         super().__init__()
         self.name = name
+
+        if parent is not None and name in (ch.name for ch in parent.children):
+            raise ComponentError(f"Component {name} is already a child of {parent}")
+
         self.parent = parent
+
         if children:
             self.children = children
 
@@ -199,7 +204,7 @@ class Component(NodeMixin, Plottable, DisplayableCAD):
             This component.
         """
         # TODO: Support merge_trees here too.
-        if child in self.children:
+        if child in self.children or child.name in (ch.name for ch in self.children):
             raise ComponentError(f"Component {child} is already a child of {self}")
         self.children = list(self.children) + [child]
 
