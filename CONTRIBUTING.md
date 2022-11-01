@@ -141,6 +141,51 @@ This is not a hard rule, and there are some notable exceptions:
 * `x`, `y`, `z`, `r` for floats or arrays describing coordinates
 * Where it makes sense to reflect mathematical notation (e.g. `R_0`)
 
+### Import style
+
+* All imports should be absolute imports, eg:
+
+    ```python
+    from bluemira.base.components import Component
+    ```
+
+    not this
+
+    ```python
+    from ..base.components import Component
+    ```
+    We enforced this with `flake8`.
+* Imports between bluemira modules imports should access individual methods directly.
+* Wildcard imports should not be used as it pollutes the namespace and makes it hard to work out where a method originates
+* Some external modules such as `numpy` and `matplotlib.pyplot` have specific import styles widely used elsewhere, please look for examples in ``bluemira`` if unsure:
+   ```python
+   import numpy as np
+   import matplotlib.pyplot as plt
+    ```
+    If only a few methods are used from these types of modules directly importing the method is preferred.
+* Formatting of imports is automatically organised by `isort` and `black`. `isort` organises imports into three sections; builtin modules, external modules and internal modules.
+
+All of the above mean that this is bad:
+
+```python
+
+import bluemira.base as base
+from ..geometry import tools
+import os
+from scipy import *
+```
+and this is good:
+
+```python
+from os import chdir
+
+from scipy.interpolate import interp1d
+import numpy as np
+
+from bluemira.base.builder import Builder
+from bluemira.geometry.tools import make_circle
+```
+
 ## Documentation style guide
 
 Please write all written documentation in `.rst.` format.
