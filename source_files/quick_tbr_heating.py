@@ -139,6 +139,9 @@ def load_fw_points():
     select_fw_elements = [0, 4, 8, 11, 14, 17, 21, 25, 28, 33, 39, 42, -1]   
     fewer_inner_blanket_points = inner_blanket_face[ select_fw_elements ] * m_to_cm
     
+    # Adjusting point too close to plasma
+    fewer_inner_blanket_points[-5][0] = fewer_inner_blanket_points[-5][0] - 25.
+    
     # Specifying the number of the selected points that define the inboard
     no_inboard_points = 6
    
