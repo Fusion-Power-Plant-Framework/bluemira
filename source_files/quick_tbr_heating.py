@@ -117,7 +117,7 @@ def create_parametric_source(geometry_variables):
 
 # ----------------------------------------------------------------------------------------
 
-def load_fw_points():
+def load_fw_points(geometry_variables):
     
     # Load given first wall points and adjusts for given major and minor radii
 
@@ -688,7 +688,7 @@ def run_tbr_heating_calc(
         runtime_variables.openmc_output_summary
     )
     
-    fewer_inner_blanket_points, no_inboard_points, div_points = load_fw_points()
+    fewer_inner_blanket_points, no_inboard_points, div_points = load_fw_points(geometry_variables)
     cells, universe = mg.make_geometry(geometry_variables, fewer_inner_blanket_points, no_inboard_points, div_points)
 
     # Calculating source strength
