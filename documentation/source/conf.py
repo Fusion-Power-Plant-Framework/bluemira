@@ -195,7 +195,7 @@ def html_visit_inheritance_diagram(self, node):
     Hacks the uri of the inheritance diagram if its an autoapi diagram
 
     By default the refuri link is to ../../<expected file>.html whereas
-    the actual file lives at autapi/bluemira/<expected file>.html.
+    the actual file lives at autoapi/bluemira/<expected file>.html.
 
     refuri is used for parent classes outside of the current file.
 
