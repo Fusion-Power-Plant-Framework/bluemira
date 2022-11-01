@@ -662,10 +662,7 @@ def geometry_plotter(cells, geometry_variables):
 def run_tbr_heating_calc(
     runtime_variables,
     material_variables,
-    geometry_variables,
-    fewer_inner_blanket_points,
-    no_inboard_points,
-    div_points
+    geometry_variables
 ):
     """
     Runs OpenMC calculation to get TBR, component heating, first wall dpa, and photon
@@ -691,6 +688,7 @@ def run_tbr_heating_calc(
         runtime_variables.openmc_output_summary
     )
     
+    fewer_inner_blanket_points, no_inboard_points, div_points = load_fw_points()
     cells, universe = mg.make_geometry(geometry_variables, fewer_inner_blanket_points, no_inboard_points, div_points)
 
     # Calculating source strength
@@ -812,13 +810,8 @@ if __name__ == "__main__":
             }
         )
         
-    fewer_inner_blanket_points, no_inboard_points, div_points = load_fw_points()
-    
     run_tbr_heating_calc(
         runtime_variables,
         material_variables,
-        geometry_variables,
-        fewer_inner_blanket_points,
-        no_inboard_points,
-        div_points
+        geometry_variables
     )
