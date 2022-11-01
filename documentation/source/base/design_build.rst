@@ -12,7 +12,7 @@ Designers
 ^^^^^^^^^
 
 `Designers` solve the minimal design problem of a `Component`. The minimal design problem could
-result in for instance a geometric wire or some relevant values that allow the `Builder` to build
+result in, for instance, a geometric wire or some relevant values that allow the `Builder` to build
 the `Component` CAD. A Designer is optional as some `Components` can be completely built with
 user input and calculations from previous component design stages.
 Optimisation problems should be run within a `Designer`.
@@ -41,7 +41,7 @@ The below is for illustrative purposes and is overkill, in this instance you wou
             return  self.params.A.value
 
 
-To initialised a `Designer` you need any `ParameterFrame` instance that is a superset of `param_cls`
+To initialise a `Designer` you need any `ParameterFrame` instance that is a superset of `param_cls`
 and optionally a `build_config` dictionary which contains configuration options for the `Designer`.
 It is possible to execute a `Designer` in different ways depending on requirements or software
 availability. If another method such as `mock` or `read` is defined and `run_mode` is specified in
