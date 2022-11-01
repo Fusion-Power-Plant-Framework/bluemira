@@ -39,7 +39,7 @@ def timeout(t=0.05):
 
 
 class TestGetScreenSize:
-    def setup(self):
+    def setup_method(self):
         # clear lru_cache
         get_primary_screen_size.cache_clear()
 

@@ -28,7 +28,7 @@ from bluemira.codes.params import MappedParameterFrame, ParameterMapping
 
 
 class TestParameterMapping:
-    def setup(self):
+    def setup_method(self):
         self.pm = ParameterMapping("Name", send=True, recv=False)
 
     @pytest.mark.parametrize(

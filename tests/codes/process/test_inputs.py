@@ -24,7 +24,7 @@ from bluemira.codes.process.api import _INVariable
 
 
 class TestProcessInput:
-    def setup(self):
+    def setup_method(self):
         self.df = ProcessInputs()
 
     def test_to_invariable(self):
