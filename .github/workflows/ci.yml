@@ -96,7 +96,7 @@ jobs:
     - name: Build Documentation bluemira
       shell: bash -l {0}
       run: |
-        sphinx-build -W documentation/source documentation/build
+        sphinx-build -j auto -W documentation/source documentation/build
 
     - name: Run pytest bluemira
       shell: bash -l {0}

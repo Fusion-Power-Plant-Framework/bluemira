@@ -1029,7 +1029,7 @@ class CoilGroup:
     @staticmethod
     def _sum_all(seq, method, *args):
         """
-        Sums all the responses in a sequence of objects for obj.method(*args)
+        Sums all the responses in a sequence of objects for a given method result
         """
         a = np.array([getattr(obj, method)(*args) for obj in seq])
         return a.sum(axis=0)
@@ -1037,7 +1037,7 @@ class CoilGroup:
     @staticmethod
     def _all_if(seq, method, *args):
         """
-        Sums all the responses in a sequence of objects for obj.method(*args)
+        Sums all the responses in a sequence of objects for a given method result
         if obj.control is True
         """
         return [getattr(obj, method)(*args) for obj in seq if obj.control]
