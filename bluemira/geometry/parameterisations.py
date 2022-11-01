@@ -49,6 +49,9 @@ from bluemira.utilities.opt_variables import BoundedVariable, OptVariables
 __all__ = [
     "GeometryParameterisation",
     "PictureFrame",
+    "PictureFrameMeta",
+    "PictureFrameTools",
+    "PFrameSection",
     "PolySpline",
     "PrincetonD",
     "SextupleArc",
@@ -1323,21 +1326,32 @@ class PFrameSection(Enum):
     TAPERED_INNER = partial(PictureFrameTools._make_tapered_inner_leg)
 
     def __call__(self, *args, **kwargs):
+        """
+        Call linked function on access
+        """
         return self.value(*args, **kwargs)
 
 
 class PictureFrameMeta(type(GeometryParameterisation), type(PictureFrameTools)):
+    """
+    A Metaclass to define the customisations on a given PictureFrame parameterisation
 
-    __SECT_STR = Union[str, PFrameSection]
+    The methods required to create modified upper, lower or inner legs
+    are set here
+
+    """
 
     def __call__(
         cls,  # noqa: N805
         var_dict: Optional[Dict] = None,
         *,
-        upper: __SECT_STR = PFrameSection.FLAT,
-        lower: __SECT_STR = PFrameSection.FLAT,
-        inner: Optional[__SECT_STR] = None,
-    ):
+        upper: Union[str, PFrameSection] = PFrameSection.FLAT,
+        lower: Union[str, PFrameSection] = PFrameSection.FLAT,
+        inner: Optional[Union[str, PFrameSection]] = None,
+    ) -> PictureFrame:
+        """
+        Set up the modified PictureFrame class
+        """
         cls.upper = upper if isinstance(upper, PFrameSection) else PFrameSection[upper]
         cls.lower = lower if isinstance(lower, PFrameSection) else PFrameSection[lower]
 

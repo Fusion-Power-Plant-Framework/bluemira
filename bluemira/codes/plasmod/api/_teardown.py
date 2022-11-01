@@ -99,12 +99,19 @@ class Teardown(CodesTeardown):
         """
         Check the returned exit code of plasmod.
 
-        1: PLASMOD converged successfully
-        -1: Max number of iterations achieved
-            (equilibrium oscillating, pressure too high, reduce H)
-            0: transport solver crashed (abnormal parameters
-            or too large dtmin and/or dtmin
-        -2: Equilibrium solver crashed: too high pressure
+        1: PLASMOD converged successfully:
+
+        -1: Max number of iterations achieved:
+
+            Equilibrium oscillating, pressure too high, reduce H
+
+        0: transport solver crashed:
+
+            Abnormal parameters or too large dtmin and/or dtmin
+
+        -2: Equilibrium solver crashed:
+
+            Pressure too high
 
         Raises
         ------
