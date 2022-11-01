@@ -194,7 +194,19 @@ def html_visit_inheritance_diagram(self, node):
     """
     Hacks the uri of the inheritance diagram if its an autoapi diagram
 
-    Otherwise we get 404 links from the diagram
+    By default the refuri link is to ../../<expected file>.html whereas
+    the actual file lives at autapi/bluemira/<expected file>.html.
+
+    refuri is used for parent classes outside of the current file.
+
+    The original function appends a further ../ to the refuri which has the
+    effect of returning to the root directory of the built documentation.
+
+    I havent found a method to set the default expected path and it seems to
+    be a slight incompatibility between autoapi and inheritance-diagram
+
+    This replaces the wrong path with a corrected path to the autoapi folder,
+    otherwise we get 404 links from the diagram links.
     """
     current_filename = self.builder.current_docname + self.builder.out_suffix
     if "autoapi" in current_filename:
