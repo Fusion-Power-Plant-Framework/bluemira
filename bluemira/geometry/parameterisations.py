@@ -1336,7 +1336,7 @@ class PictureFrameMeta(type(GeometryParameterisation), type(PictureFrameTools)):
     """
     A Metaclass to define the customisations on a given PictureFrame parameterisation
 
-    The methods required to create a modified of the upper, lower or inner legs
+    The methods required to create modified upper, lower or inner legs
     are set here
 
     """
@@ -1350,7 +1350,7 @@ class PictureFrameMeta(type(GeometryParameterisation), type(PictureFrameTools)):
         inner: Optional[Union[str, PFrameSection]] = None,
     ) -> PictureFrame:
         """
-        Setup the modified PictureFrame class
+        Set up the modified PictureFrame class
         """
         cls.upper = upper if isinstance(upper, PFrameSection) else PFrameSection[upper]
         cls.lower = lower if isinstance(lower, PFrameSection) else PFrameSection[lower]
