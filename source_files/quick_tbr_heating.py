@@ -123,7 +123,6 @@ def load_fw_points():
 
     blanket_face = np.load('blanket_face.npy')[0]
     divertor_face = np.load('divertor_face.npy')[0]
-    ivc_boundary = np.load('ivc_boundary.npy')
     
     # The plasma geometry for the given points
     ex_pts_maj_r = 900.
