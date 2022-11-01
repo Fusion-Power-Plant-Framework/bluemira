@@ -155,7 +155,7 @@ This is not a hard rule, and there are some notable exceptions:
     from ..base.components import Component
     ```
     We enforced this with `flake8`.
-* Imports between bluemira modules imports should access individual methods directly.
+* Imports between bluemira modules should access individual methods directly.
 * Wildcard imports should not be used as it pollutes the namespace and makes it hard to work out where a method originates
 * Some external modules such as `numpy` and `matplotlib.pyplot` have specific import styles widely used elsewhere, please look for examples in ``bluemira`` if unsure:
    ```python
@@ -165,7 +165,7 @@ This is not a hard rule, and there are some notable exceptions:
     If only a few methods are used from these types of modules directly importing the method is preferred.
 * Formatting of imports is automatically organised by `isort` and `black`. `isort` organises imports into three sections; builtin modules, external modules and internal modules.
 
-All of the above mean that this is bad:
+All of the above means that this is bad:
 
 ```python
 
