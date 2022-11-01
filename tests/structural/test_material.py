@@ -32,7 +32,7 @@ MATERIAL_CACHE.load_from_file(os.sep.join([MATERIAL_DATA_PATH, "mixtures.json"])
 
 
 class TestMaterialInterface:
-    def setup(self):
+    def setup_method(self):
         self.SS316 = MATERIAL_CACHE.get_material("SS316-LN")
         self.SW = MATERIAL_CACHE.get_material("Steel Water 60/40")
 
