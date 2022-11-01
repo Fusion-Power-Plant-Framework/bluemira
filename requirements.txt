@@ -21,7 +21,7 @@ numpy==1.22.4
 packaging==21.3
 pandas==1.5.1
 periodictable==1.6.1
-Pillow==9.2.0
+Pillow==9.3.0
 Pint==0.19.2
 pyclipper==1.3.0.post3
 pyparsing==3.0.9
