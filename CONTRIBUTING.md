@@ -154,9 +154,9 @@ This is not a hard rule, and there are some notable exceptions:
     ```python
     from ..base.components import Component
     ```
-    We enforced this with `flake8`.
+    We enforce this with `flake8`.
 * Imports between bluemira modules should access individual methods directly.
-* Wildcard imports should not be used as it pollutes the namespace and makes it hard to work out where a method originates
+* Wildcard imports should not be used as it pollutes the namespace and makes it hard to work out where a method originates.
 * Some external modules such as `numpy` and `matplotlib.pyplot` have specific import styles widely used elsewhere, please look for examples in ``bluemira`` if unsure:
    ```python
    import numpy as np
