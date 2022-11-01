@@ -4,165 +4,78 @@ pi = math.pi
 
 ########## Volume Functions ###################################################################################
 
-
-def get_ellipse_rz_from_theta(
-    dummy_min_r, dummy_maj_r, maj_r, theta_rad, vert_semi_axis
-):
-
-    # Finds z where 2D ellipse and divided line intersect
-
-    # Line
-    # z = (maj_r - r) / tan( theta )
-    #
-    # Ellipse
-    # (r - dummy_maj_r)**2 / dummy_min_r**2 + z**2 / vert_semi_axis**2 = 1 )
-
-    # print("\nCalc of ellipse")
-    # print(dummy_min_r, dummy_maj_r, maj_r, theta_rad, vert_semi_axis)
-
-    if abs(theta_rad) < 1e-6:
-        r = None
-        z = -(
-            (vert_semi_axis**2 * (1 - (maj_r - dummy_maj_r) ** 2 / dummy_min_r**2))
-            ** 0.5
-        )
-
-    elif abs(abs(theta_rad) - pi) < 1e-6:
-        r = None
-        z = (
-            vert_semi_axis**2 * (1 - (maj_r - dummy_maj_r) ** 2 / dummy_min_r**2)
-        ) ** 0.5
-
-    elif abs(theta_rad) < pi:
-
-        tan2t = math.tan(theta_rad) ** 2
-
-        a = dummy_min_r**-2 + vert_semi_axis**-2 / tan2t
-        b = -2 * (
-            dummy_maj_r * dummy_min_r**-2 + maj_r * vert_semi_axis**-2 / tan2t
-        )
-        c = (
-            maj_r**2 * vert_semi_axis**-2 / tan2t
-            + dummy_maj_r**2 * dummy_min_r**-2
-            - 1
-        )
-
-        r = (-b + (b**2 - 4 * a * c) ** 0.5) / (2.0 * a)
-        z = (maj_r - r) / math.tan(theta_rad)
-
-    elif pi < theta_rad < 2 * pi:
-
-        tan2t = math.tan(theta_rad) ** 2
-
-        a = dummy_min_r**-2 + vert_semi_axis**-2 / tan2t
-        b = -2 * (
-            dummy_maj_r * dummy_min_r**-2 + maj_r * vert_semi_axis**-2 / tan2t
-        )
-        c = (
-            maj_r**2 * vert_semi_axis**-2 / tan2t
-            + dummy_maj_r**2 * dummy_min_r**-2
-            - 1
-        )
-
-        r = (-b - (b**2 - 4 * a * c) ** 0.5) / (2.0 * a)
-        z = (maj_r - r) / math.tan(theta_rad)
-
-    return r, z
-
+def get_vol_of_truncated_cone(cone, top_z, bot_z):
+    
+    # Calculates the volume of a truncated cone from an OpenMC cone surface and z bounds
+    # Assumes it is centred on the origin
+    
+    # Get cone parameters
+    top_r = ( cone.r2 * ( top_z - cone.z0 )**2 )**0.5
+    bot_r = ( cone.r2 * ( bot_z - cone.z0 )**2 )**0.5
+    height = top_z - bot_z
+    
+    volume = pi / 3. * height * ( top_r**2 + top_r * bot_r + bot_r**2 )
+    
+    return volume
 
 ###########################################################################################################################
 
+def get_fw_vol( outer_cone, inner_cone, top_plane, bottom_plane ):
+    
+    # Takes the bounding OpenMC surface objects and calculates the first wall volume
+    # This is only approximate but accurate as long as the first wall is thin
+    
+    top_z = top_plane.z0
+    bottom_z = bottom_plane.z0
+    
+    outer_cone_vol = get_vol_of_truncated_cone( outer_cone, top_z, bottom_z ) 
+    inner_cone_vol = get_vol_of_truncated_cone( inner_cone, top_z, bottom_z ) 
+    
+    volume = outer_cone_vol - inner_cone_vol
 
-def calc_ellipse_integral_term_for_z(z, r0, e_min_r, e_maj_r):
+    return volume
 
-    # Calculates the integral term for z
+###########################################################################################################################
+def get_div_fw_section_vol( outer_cone, inner_cone, outer_r, inner_r ):
+    
+    # Takes the bounding OpenMC surface objects and calculates the first wall volume
+    # This is only approximate but accurate as long as the first wall is thin
+    
+    # Getting z coord at radial limits for outer zone
+    # Squareroot in function so have two roots
+    z1a = outer_cone.z0 - inner_r / outer_cone.r2**0.5
+    z1b = outer_cone.z0 + inner_r / outer_cone.r2**0.5
+    z2a = outer_cone.z0 - outer_r / outer_cone.r2**0.5
+    z2b = outer_cone.z0 + outer_r / outer_cone.r2**0.5
+    
+    # Select correct roots
+    z1 = z1a if z1a < 0. and ((z1a > z1b) or z1b > 0. ) else z1b
+    z2 = z2a if z2a < 0. and ((z2a > z2b) or z2b > 0. ) else z2b
+    
+    top_z    = max(z1, z2)
+    bottom_z = min(z1, z2)
+    
+    outer_cone_vol = get_vol_of_truncated_cone( outer_cone, top_z, bottom_z ) 
+    inner_cone_vol = get_vol_of_truncated_cone( inner_cone, top_z, bottom_z ) 
+    
+    volume = outer_cone_vol - inner_cone_vol
 
-    # e_min_r is the ellipse minor radius
-    # e_maj_r is the ellipse major radius
-
-    return pi * (
-        r0**2 * z
-        + r0 * e_min_r * z * (1 - z**2 / e_maj_r**2) ** 0.5
-        + r0 * e_min_r * e_maj_r * math.asin(z / e_maj_r)
-        + e_min_r**2 * z * (1 - z**2 / (3 * e_maj_r**2))
-    )
-
+    return volume
 
 ###########################################################################################################################
 
+def get_div_fw_vol( outer_cones, inner_cones, rs ):
+    
+    # Calculates the volume for each section of the divertor first wall
+    # This is only approximate but accurate as long as the first wall is thin
+    
+    volumes = []
+    for i, outer_cone in enumerate(outer_cones):
+        
+        vol = get_div_fw_section_vol( outer_cone, inner_cones[i], rs[i+1], rs[i] )
 
-def calc_ellipse_integral_term_for_r(r, r0, e_min_r, e_maj_r):
+        volumes.append( vol )
+        
+    volume = sum(volumes)
 
-    # Calculates the integral term for r
-
-    # e_min_r is the ellipse minor radius
-    # e_maj_r is the ellipse major radius
-
-    return (
-        pi
-        * e_maj_r
-        * (
-            e_min_r * r0 * math.asin((r - r0) / e_min_r)
-            - (1 - (r - r0) ** 2 / e_min_r**2) ** 0.5
-            * (2 * e_min_r**2 - 2 * r**2 + r * r0 + r0**2)
-            / 3
-        )
-    )
-
-
-###########################################################################################################################
-
-
-def calc_ellipse_integral_for_z(z_upper, z_lower, r0, ellipse_min_r, ellipse_maj_r):
-
-    # Calculates the integral of an ellipse with respect to z
-    # Note this has a minor approximation which is acceptable because the layer is very thin
-
-    return calc_ellipse_integral_term_for_z(
-        z_upper, r0, ellipse_min_r, ellipse_maj_r
-    ) - calc_ellipse_integral_term_for_z(z_lower, r0, ellipse_min_r, ellipse_maj_r)
-
-
-###########################################################################################################################
-
-
-def calc_ellipse_integral_for_r(r_outer, r_inner, r0, ellipse_min_r, ellipse_maj_r):
-
-    # Calculates the integral of an ellipse with respect to r
-    # Note this has a minor approximation which is acceptable because the layer is very thin
-
-    return calc_ellipse_integral_term_for_r(
-        r_outer, r0, ellipse_min_r, ellipse_maj_r
-    ) - calc_ellipse_integral_term_for_r(r_inner, r0, ellipse_min_r, ellipse_maj_r)
-
-
-###########################################################################################################################
-
-
-def calc_outb_surf_vol(z_upper, z_lower, r0, ellipse_min_r, ellipse_maj_r, offset):
-
-    # Calculates the outboard surface volume
-
-    outer_maj_r = ellipse_maj_r + offset
-    outer_min_r = ellipse_min_r + offset
-
-    return calc_ellipse_integral_for_z(
-        z_upper, z_lower, r0, outer_min_r, outer_maj_r
-    ) - calc_ellipse_integral_for_z(z_upper, z_lower, r0, ellipse_min_r, ellipse_maj_r)
-
-
-###########################################################################################################################
-
-
-def calc_outb_inner_surf_vol(
-    r_outer, r_inner, r0, ellipse_min_r, ellipse_maj_r, offset
-):
-
-    # Calculates the inboard surface volume
-
-    outer_maj_r = ellipse_maj_r + offset
-    outer_min_r = ellipse_min_r + offset
-
-    return calc_ellipse_integral_for_r(
-        r_outer, r_inner, r0, outer_min_r, outer_maj_r
-    ) - calc_ellipse_integral_for_r(r_outer, r_inner, r0, ellipse_min_r, ellipse_maj_r)
+    return volume

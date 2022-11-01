@@ -5,6 +5,7 @@ def get_percent_err(row):
 
     # Adds a column to an OpenMC results dataframe that is the
     # percentage stochastic uncertainty in the result
+    
     val = 100
 
     if (isinstance(row["mean"], pd.Series) and row["mean"].any() > 0.0) or row[
