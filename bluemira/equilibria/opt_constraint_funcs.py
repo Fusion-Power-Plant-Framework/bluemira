@@ -97,7 +97,7 @@ def Ax_b_constraint(constraint, vector, grad, a_mat, b_vec, value, scale):  # no
     """
     constraint[:] = a_mat @ vector * scale - b_vec - value
     if grad.size > 0:
-        grad[:] = scale * a_mat.T
+        grad[:] = scale * a_mat
     return constraint
 
 
