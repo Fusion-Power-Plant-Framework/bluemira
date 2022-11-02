@@ -41,7 +41,7 @@ How to use ``Bluemira``
 
   _`Reactor Designer`
     A Reactor Designer will use ``Bluemira`` as a framework to create a design for a reactor.
-    To design a reactor, the design workflow strategy needs to be considered and codified. 
+    To design a reactor, the design workflow strategy needs to be considered and codified.
     Using Designer and Builder objects, each component of the reactor can be created and collected into a full reactor design, or used individually.
 
   Developers

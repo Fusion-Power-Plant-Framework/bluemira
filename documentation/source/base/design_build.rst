@@ -60,8 +60,6 @@ the `build_config` the `execute` method will call the specified method.
 
 .. code-block:: python
 
-    build_config = {"run_mode": "mock"}
-
     class MyOtherDesigner(Designer):
 
         param_cls = DesignerPF
