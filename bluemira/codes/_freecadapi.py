@@ -1707,7 +1707,7 @@ def face_from_plane(plane: Part.Plane, width: float, height: float):
     ]
     # create the closed border
     border = Part.makePolygon(corners + [corners[0]])
-    wall = Part.Face(plane, border)
+    wall = Part.Face(border)
 
     wall.Placement = placement_from_plane(plane)
 

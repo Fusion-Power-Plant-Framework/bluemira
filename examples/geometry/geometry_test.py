@@ -33,7 +33,9 @@ Application test for the caching geoemtry (ivanmaione/develop_simple_caching_2)
 
 # Import necessary module definitions.
 
-import dolfin
+# %%
+
+import dolfin  # noqa
 import matplotlib.pyplot as plt
 
 import bluemira.display as display
@@ -41,8 +43,6 @@ import bluemira.geometry.tools as geotools
 import bluemira.mesh.tools as meshtools
 from bluemira.base.components import Component, PhysicalComponent
 from bluemira.geometry.coordinates import Coordinates
-
-# %%
 from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.wire import BluemiraWire
 from bluemira.mesh.meshing import Mesh
@@ -116,6 +116,7 @@ wire_out.boundary[1] = new_wire
 # # or
 # old_wire = wire_out.search("circle_out2")[0]
 # old_wire.boundary = new_wire.boundary
+# old_wire.label = new_wire.label
 root.plot_2d(show=True)
 
 # %%[markdown]
