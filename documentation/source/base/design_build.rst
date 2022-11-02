@@ -8,6 +8,17 @@ The two main classes are:
 * :py:class:`bluemira.base.designer.Designer`: the Designer base class
 * :py:class:`bluemira.base.builder.Builder`: the Builder base class
 
+A `Designer` carries out component design activities,
+for example evaluating a geometry parameterisation,
+or performing an optimisation.
+It outputs a minimal representation of a component that can be used to generate geometry
+(note that this minimal representation may itself be some, simple, geometry).
+
+A Builder is responsible for generating and manipulating ``bluemira`` geometry objects (CAD),
+to create a Component.
+It will typically perform geometry operations like offsets or sweeps,
+and is not intended to perform any complex calculations.
+
 Designers
 ^^^^^^^^^
 
@@ -61,6 +72,11 @@ the `build_config` the `execute` method will call the specified method.
         def mock(self) -> float:
             return self.params.A.value ** 2
 
+    params = {"A": {"value": 2, "unit": "dimensionless"}}
+    build_config = {"run_mode": "mock"}
+    designer = MyOtherDesigner(params, build_config)
+    print(designer.execute())  # == 4
+
 Builders
 ^^^^^^^^
 
@@ -68,7 +84,7 @@ The minimal design problem output if required along with user input to the `Buil
 the information needed to build the CAD for the `Component`.
 The `build` method of the `Builder` usually builds the xz, xy and xyz views of a `Component`,
 creates the component tree and sets up the `ComponentManager` although what the build method does
-is up to the Reactor Designer.
+is up to the :ref:`Reactor Designer <how to use>`.
 
 Like a `Designer` a `Builder` requires a `param_cls` attribute and is initialised with a `ParameterFrame`
 instance that is a superset of `param_cls` and optionally the `Designer.execute()` output and a

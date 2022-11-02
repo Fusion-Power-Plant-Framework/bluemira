@@ -29,15 +29,17 @@ the way:
 Many typical tokamak fusion reactor design optimisation problems are also implemented,
 leveraging the functionality of the above modules.
 
+.. _how to use:
+
 How to use ``Bluemira``
 -----------------------
 
 ``Bluemira`` is designed to be used by three different types of user.
 
   Modeller
-    A Modeller will use a program given to them by a Reactor Designer to carry out design studies on a particular reactor design. Modellers will need to know about the parameters of a design and how to manipulate JSON files to modify those parameters.
+    A Modeller will execute a reactor build workflow (created by a '`Reactor Designer`_'), to carry out studies on a reactor design. Modellers will need to know about the parameters of a design, and how to manipulate JSON files to modify those parameters.
 
-  Reactor Designer
+  _`Reactor Designer`
     A Reactor Designer will use ``Bluemira`` as a framework to create a design for a reactor. To design a reactor the design workflow strategy needs to be considered and codified. Using Designer and Builder objects each component of the reactor can be created and collected into a full reactor design or used individually.
 
   Developers
