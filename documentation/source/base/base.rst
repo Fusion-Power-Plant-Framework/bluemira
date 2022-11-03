@@ -10,3 +10,4 @@ The ``base`` module contains the core functionality to represent objects used fo
 
    parameter
    components
+   design_build
