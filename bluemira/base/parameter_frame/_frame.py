@@ -42,7 +42,7 @@ class ParameterFrame:
     """
     A data class to hold a collection of `Parameter` objects.
 
-    The class should be declared using on of the following forms:
+    The class should be declared using the following form:
 
     .. code-block:: python
 
