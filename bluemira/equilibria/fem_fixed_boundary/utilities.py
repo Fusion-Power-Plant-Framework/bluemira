@@ -233,6 +233,82 @@ def get_tricontours(
     return [tcg.create_contour(val)[0][0] for val in value]
 
 
+def find_flux_surface(psi_norm_func, psi_norm, mesh=None, n_points=100):
+    """
+    Find a flux surface in the psi_norm function precisely by normalised psi value.
+
+    Parameters
+    ----------
+    psi_norm_func: Callable[[np.ndarray], float]
+        Function to calculate normalised psi
+    mesh: dolfin.Mesh
+        Mesh object to use to estimate extrema prior to optimisation
+    psi_norm: float
+        Normalised psi value for which to find the flux surface
+    mesh: Optional[dolfin.Mesh]
+        Mesh object to use to estimate the flux surface
+        If None, reasonable guesses are used.
+    n_points: int
+        Number of points along the flux surface
+
+    Returns
+    -------
+    points: np.ndarray
+        x, z coordinates of the flux surface
+    """
+    x_axis, z_axis = find_magnetic_axis(lambda x: -psi_norm_func(x), mesh=mesh)
+
+    if mesh:
+        search_range = mesh.hmax()
+        mpoints = mesh.coordinates()
+        psi_norm_array = [psi_norm_func(x) for x in mpoints]
+        contour = get_tricontours(
+            mpoints[:, 0], mpoints[:, 1], psi_norm_array, psi_norm
+        )[0]
+        d_guess = abs(np.max(contour[0, :]) - x_axis) - search_range
+        bounds = [(d_guess - 2 * search_range, d_guess + 2 * search_range)]
+
+        def get_next_guess(points, distances, i):  # noqa: U100
+            return np.hypot(points[0, i - 1] - x_axis, points[1, i - 1] - z_axis)
+
+    else:
+        d_guess = 0.5
+        bounds = [(0.1, None)]
+
+        def get_next_guess(points, distances, i):  # noqa: U100
+            return distances[i]
+
+    def psi_norm_match(x):
+        return abs(psi_norm_func(x) - psi_norm)
+
+    def theta_line(d, theta_i):
+        return float(x_axis + d * np.cos(theta_i)), float(z_axis + d * np.sin(theta_i))
+
+    def psi_line_match(d, *args):
+        return psi_norm_match(theta_line(d, args[0]))
+
+    theta = np.linspace(0, 2 * np.pi, n_points - 1, endpoint=False, dtype=float)
+    points = np.zeros((2, n_points), dtype=float)
+    distances = np.zeros(n_points)
+    for i in range(len(theta)):
+
+        result = scipy.optimize.minimize(
+            psi_line_match,
+            x0=d_guess,
+            args=(theta[i]),
+            bounds=bounds,
+            method="SLSQP",
+            options={"disp": False, "ftol": 1e-14, "maxiter": 1000},
+        )
+        points[:, i] = theta_line(result.x, theta[i])
+        distances[i] = result.x
+        d_guess = get_next_guess(points, distances, i)
+
+    points[:, -1] = points[:, 0]
+
+    return points
+
+
 def calculate_plasma_shape_params(
     psi_norm_func: Callable[[np.ndarray], np.ndarray],
     mesh: dolfin.Mesh,
@@ -245,7 +321,7 @@ def calculate_plasma_shape_params(
 
     Parameters
     ----------
-    psi_norm_func: Callable
+    psi_norm_func: Callable[[np.ndarray], float]
         Function to calculate normalised psi
     mesh: dolfin.Mesh
         Mesh object to use to estimate extrema prior to optimisation
@@ -346,125 +422,43 @@ def calculate_plasma_shape_params(
     return r_geo, kappa, delta
 
 
-def find_psi_axis(psi_func, mesh):
+def find_magnetic_axis(psi_func, mesh=None):
     """
     Find the magnetic axis in the poloidal flux map.
 
     Parameters
     ----------
-    psi_func: Callable
+    psi_func: Callable[[np.ndarray], float]
         Function to return psi at a given point
-    mesh: dolfin.Mesh
-        Mesh object to use to estimate extrema prior to optimisation
+    mesh: Optional[dolfin.Mesh]
+        Mesh object to use to estimate magnetic axis prior to optimisation
+        If None, a reasonable guess is made.
 
     Returns
     -------
-    psi_axis: float
-        Maximum psi in the continuous psi function [V.s]
+    mag_axis: np.ndarray
+        Position vector (2) of the magnetic axis [m]
     """
-    points = mesh.coordinates()
-    psi_array = [psi_func(x) for x in points]
-    psi_max_arg = np.argmax(psi_array)
+    if mesh:
+        points = mesh.coordinates()
+        psi_array = [psi_func(x) for x in points]
+        psi_max_arg = np.argmax(psi_array)
 
-    x0 = points[psi_max_arg]
-    search_range = mesh.hmax()
-    bounds = [(xi - search_range, xi + search_range) for xi in x0]
+        x0 = points[psi_max_arg]
+        search_range = mesh.hmax()
+        bounds = [(xi - search_range, xi + search_range) for xi in x0]
+    else:
+        x0 = np.array([0.1, 0.0])
+        bounds = [(0.0, 20.0), (-2.0, 2.0)]
 
     result = scipy.optimize.minimize(
         lambda x: -psi_func(x),
         x0,
         method="SLSQP",
         bounds=bounds,
-        options={"disp": False, "ftol": 1e-10, "maxiter": 1000},
+        options={"disp": False, "ftol": 1e-14, "maxiter": 1000},
     )
     if not result.success:
         bluemira_warn("Poloidal flux maximum finding failing:\n" f"{result.message}")
 
-    return psi_func(result.x)
-
-
-class Solovev:
-    """
-    Solov'ev analytical solution to a fixed boundary equilibrium problem with a symmetric
-    plasma boundary. Used for verification purposes
-    """
-
-    def __init__(self, R_0, a, kappa, delta, A1, A2):  # noqa: N803
-        self.R_0 = R_0
-        self.a = a
-        self.kappa = kappa
-        self.delta = delta
-        self.A1 = A1
-        self.A2 = A2
-        self._find_params()
-
-    def _find_params(self):
-        ri = self.R_0 - self.a
-        ro = self.R_0 + self.a
-        rt = self.R_0 - self.delta * self.a
-        zt = self.kappa * self.a
-
-        m = np.array(
-            [
-                [1.0, ri**2, ri**4, ri**2 * np.log(ri)],
-                [1.0, ro**2, ro**4, ro**2 * np.log(ro)],
-                [
-                    1.0,
-                    rt**2,
-                    rt**2 * (rt**2 - 4 * zt**2),
-                    rt**2 * np.log(rt) - zt**2,
-                ],
-                [0.0, 2.0, 4 * (rt**2 - 2 * zt**2), 2 * np.log(rt) + 1.0],
-            ]
-        )
-
-        b = np.array(
-            [
-                [-(ri**4) / 8.0, 0],
-                [-(ro**4) / 8.0, 0.0],
-                [-(rt**4) / 8.0, +(zt**2) / 2.0],
-                [-(rt**2) / 2.0, 0.0],
-            ]
-        )
-        b = b * np.array([self.A1, self.A2])
-        b = np.sum(b, axis=1)
-
-        self.coeff = scipy.linalg.solve(m, b)
-        print(f"Solovev coefficients: {self.coeff}")
-
-    def psi(self, points):
-        """
-        Calculate psi analytically at a set of points.
-        """
-        if len(points.shape) == 1:
-            points = np.array([points])
-
-        def psi_func(x):
-            return np.array(
-                [
-                    1.0,
-                    x[0] ** 2,
-                    x[0] ** 2 * (x[0] ** 2 - 4 * x[1] ** 2),
-                    x[0] ** 2 * np.log(x[0]) - x[1] ** 2,
-                    (x[0] ** 4) / 8.0,
-                    -(x[1] ** 2) / 2.0,
-                ]
-            )
-
-        m = np.concatenate((self.coeff, np.array([self.A1, self.A2])))
-
-        return [np.sum(psi_func(x) * m) * 2 * np.pi for x in points]
-
-    def plot_psi(self, ri, zi, dr, dz, nr, nz, levels=20, axis=None, tofill=True):
-        """
-        Plot psi
-        """
-        r = np.linspace(ri, ri + dr, nr)
-        z = np.linspace(zi, zi + dz, nz)
-        rv, zv = np.meshgrid(r, z)
-        points = np.vstack([rv.ravel(), zv.ravel()]).T
-        psi = self.psi(points)
-        cplot = plot_scalar_field(
-            points[:, 0], points[:, 1], psi, levels=levels, ax=axis, tofill=tofill
-        )
-        return cplot + (points, psi)
+    return np.array(result.x, dtype=float)

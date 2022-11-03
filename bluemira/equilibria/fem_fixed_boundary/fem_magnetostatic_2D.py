@@ -33,7 +33,7 @@ from bluemira.base.constants import MU_0
 from bluemira.base.look_and_feel import bluemira_print_flush
 from bluemira.equilibria.fem_fixed_boundary.utilities import (
     ScalarSubFunc,
-    find_psi_axis,
+    find_magnetic_axis,
     plot_scalar_field,
 )
 
@@ -245,12 +245,13 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
         self.iter_err_max = iter_err_max
         self.max_iter = max_iter
         self.relaxation = relaxation
+        self.k = 1
 
     @property
     def psi_ax(self) -> float:
         """Poloidal flux on the magnetic axis"""
         if self._psi_ax is None:
-            self._psi_ax = find_psi_axis(self.psi, self.mesh)
+            self._psi_ax = self.psi(find_magnetic_axis(self.psi, self.mesh))
         return self._psi_ax
 
     @property
@@ -271,7 +272,7 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
         self,
         pprime: Union[Callable[[np.ndarray], np.ndarray], float],
         ffprime: Union[Callable[[np.ndarray], np.ndarray], float],
-        curr_target: Optional[float] = None,
+        curr_target: float,
     ) -> Callable[[np.ndarray], float]:
         """
         Return the density current function given pprime and ffprime.
@@ -282,10 +283,9 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
             pprime as function of psi_norm (1-D function)
         ffprime: Union[callable, float]
             ffprime as function of psi_norm (1-D function)
-        curr_target: Optional[float]
+        curr_target: float
             Target current (also used to initialize the solution in case self.psi is
             still 0 and pprime and ffprime are, then, not defined) [A]
-            If None, the plasma current is calculated and not constrained
 
         Returns
         -------
@@ -296,7 +296,7 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
             dolfin.Constant(1) * dolfin.Measure("dx", domain=self.mesh)()
         )
 
-        j_target = curr_target / area if curr_target else 1.0
+        j_target = curr_target / area
 
         def g(x):
             if self.psi_ax == 0:
@@ -316,7 +316,7 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
         self,
         pprime: Union[Callable[[np.ndarray], np.ndarray], float],
         ffprime: Union[Callable[[np.ndarray], np.ndarray], float],
-        curr_target: Optional[float] = None,
+        curr_target: float,
     ):
         """
         Return the density current DOLFIN function given pprime and ffprime.
@@ -327,10 +327,9 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
             pprime as function of psi_norm (1-D function)
         ffprime: Union[Callable[[np.ndarray], np.ndarray]
             ffprime as function of psi_norm (1-D function)
-        curr_target: Optional[float]
+        curr_target: float
             Target current (also used to initialize the solution in case self.psi is
             still 0 and pprime and ffprime are, then, not defined)
-            If None, plasma current is calculated and not constrained
         """
         self._curr_target = curr_target
         self._g_func = self._create_g_func(pprime, ffprime, self._curr_target)
@@ -341,9 +340,7 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
         return dolfin.assemble(self.g * dolfin.Measure("dx", domain=self.mesh)())
 
     def _update_curr(self):
-        self.k = 1
-        if self._curr_target:
-            self.k = self._curr_target / self._calculate_curr_tot()
+        self.k = self._curr_target / self._calculate_curr_tot()
 
     def _plot_current_iteration(
         self, i_iter: int, points: Iterable, prev: Optional[np.ndarray] = None
