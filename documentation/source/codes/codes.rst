@@ -21,22 +21,33 @@ MappedParameterFrames
 ^^^^^^^^^^^^^^^^^^^^^
 
 `MappedParameterFrames` extend the base `ParameterFrame` to allow mapping to external codes variables through `ParameterMapping`_.
-Default values for external codes are also enabled for instances where there are many unmapped variables that are only exposed to experienced users through the :py:attr:`problem_settings` of a `Solver` which is a direct link to the external code's variables.
+:py:class:`.MappedParameterFrame` extends :py:class:`.ParameterFrame`
+to allow mapping to external codes' variables through `ParameterMapping`_.
+Default values for external codes' parameters are provided for instances
+where there are many unmapped variables,
+which are usually only known by users experienced with the external code.
+These unmapped parameters can be set using the :py:attr:`problem_settings` of a
+:py:class:`.SolverABC` instance.
 
 ParameterMapping
 """"""""""""""""
 
-ParameterMapping is used to create a connection between ``bluemira`` parameters and parameters on any external program. At its most basic level it is a key-value mapping between two variable names. On top of the mapping, how the parameter value flows between ``bluemira`` and the external program is modified by the :py:attr:`send` and :py:attr:`recv` attributes.
+:py:class:`.ParameterMapping` is used to create a connection
+between ``bluemira`` parameters and parameters of any external program.
+At its most basic level, it is a key-value mapping between two variable names.
+On top of the mapping, how the parameter value flows
+between ``bluemira`` and the external program
+is modified by the :py:attr:`send` and :py:attr:`recv` attributes.
 
 :py:attr:`send`
-    true - set bluemira parameter value as input to external code
+    ``True`` - set bluemira parameter value as input to external code
 
-    false - use default value as input to external code
+    ``False`` - use default value as input to external code
 
 :py:attr:`recv`
-    true - set external code result to the new value of the bluemira parameter
+    ``True`` - set external code result to the new value of the bluemira parameter
 
-    false - keep the original bluemira parameter value ignoring the external value
+    ``False`` - keep the original bluemira parameter value ignoring the external value
 
 FPIs
 ^^^^
