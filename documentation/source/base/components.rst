@@ -1,4 +1,4 @@
-components
+Components
 ==========
 
 ``Components`` are the fundamental building blocks of a bluemira design. Various types of

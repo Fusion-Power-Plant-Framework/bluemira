@@ -11,9 +11,9 @@ objects and functions.
 .. warning:: Only 1D and 2D mesh operations are implemented. Mesh of 3D objects will
    raise and error.
 
-The meshing module of bluemira implements the following main classe:
+The meshing module of bluemira implements the following main classes:
 
-* :py:class:`bluemira.mesh.meshign.Meshable`: base class from which meshable objects
+* :py:class:`bluemira.mesh.meshing.Meshable`: base class from which meshable objects
   inherit
 * :py:class:`bluemira.mesh.meshing.Mesh`: active class that performs the mesh operation
 
