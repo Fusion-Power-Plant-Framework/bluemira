@@ -22,9 +22,24 @@ Various types of `Component` classes are defined that can be used to represent d
   reactor, such as blanket layers, vessel shells, or ports.
   As implementations of :py:class:`bluemira.base.components.PhysicalComponent` correspond to a physical object,
   instances of that class can be defined with a shape and a material.
-- :py:class:`bluemira.base.components.MagneticComponent` defines the magnetic parts of a
-  reactor, such as poloidal or toroidal field coils.
-  These have a shape and material and additionally define a conductor to provide the current-carrying filament.
+
+A `Component` can be used as shown below:
+
+.. code-block:: pycon
+
+    >>> reactor = Component("My Reactor")
+    >>> plasma = PhysicalComponent("Plasma", plasma_shape)
+    >>> blanket = Component("Blanket")
+    >>> blanket.add_child(PhysicalComponent("First Wall", wall_shape))
+    >>> blanket.add_child(PhysicalComponent("Breeding Zone", breeding_zone_shape))
+    >>> reactor.add_child(plasma)
+    >>> reactor.add_child(blanket)
+    >>> reactor.tree()
+    My Reactor (Component)
+    ├── Plasma (PhysicalComponent)
+    └── Blanket (Component)
+        ├── First Wall (PhysicalComponent)
+        └── Breeding Zone (PhysicalComponent)
 
 ComponentManagers
 -----------------
@@ -34,18 +49,18 @@ The aim is to make it easier to access logically associated properties of a `Com
 It also can contain helper methods to ease access of specific sections of geometry,
 for instance the separatrix of a plasma.
 
-.. code-block:: pycon
+.. code-block:: python
 
-    >>> from bluemira.base.components import Component
-    >>> from bluemira.base.builder import ComponentManager
-    >>>
-    >>> class Plasma(ComponentManager):
-    ...     def lcfs(self):
-    ...         return (
-    ...             self.component
-    ...             .get_component("xz")
-    ...             .get_component('LCFS')
-    ...             .shape.boundary[0]
-    ...         )
+    from bluemira.base.components import Component
+    from bluemira.base.builder import ComponentManager
+
+    class Plasma(ComponentManager):
+        def lcfs(self):
+            return (
+                self.component
+                .get_component("xz")
+                .get_component('LCFS')
+                .shape.boundary[0]
+            )
 
 A `ComponentManager` should be how a `Component` is used after creation within the top level of the reactor design.
