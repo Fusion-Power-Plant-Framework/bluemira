@@ -2,7 +2,7 @@ Components
 ==========
 
 `Components` are the fundamental building blocks of a bluemira design.
-A `Component` is a physical object or a group of physical objects.
+A `Component` is a physical object or a group of physical objects, organised in a tree structure.
 A user may want access to some properties associated with a `Component` that are related
 but not directly connected to the physical object.
 For this reason we have `ComponentManagers` which can provide helper functions for common operations or
