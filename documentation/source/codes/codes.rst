@@ -20,7 +20,6 @@ External Code Interfaces
 MappedParameterFrames
 ^^^^^^^^^^^^^^^^^^^^^
 
-`MappedParameterFrames` extend the base `ParameterFrame` to allow mapping to external codes variables through `ParameterMapping`_.
 :py:class:`.MappedParameterFrame` extends :py:class:`.ParameterFrame`
 to allow mapping to external codes' variables through `ParameterMapping`_.
 Default values for external codes' parameters are provided for instances
