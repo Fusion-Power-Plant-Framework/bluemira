@@ -56,8 +56,12 @@ from bluemira.utilities.tools import get_class_from_module
 
 # # Simplistic Reactor Design
 
-# This example aims to give an example of how to set up a new reactor in its simplest
-# form.
+# This example show hows to set up a simple reactor, consisting of a plasma and a single TF coil.
+# The TF coil will be optimised such that its length is minimised, whilst maintaining a minimum distance to the plasma.
+
+# To do this we'll run through how to set up the parameters for the build, 
+# how to define the `Builder`s and `Designer`s (including the optimisation problem) for the plasma and TF coil, 
+# and how to run the build with configurable parameters.
 
 # Firstly we need to define the parameters we're going to use in our reactor design for
 # each component.
@@ -129,6 +133,7 @@ class MyReactor(Reactor):
 # %%[markdown]
 
 # Now we want to define a way to optimise the TF coil shape.
+# We want to minimise the length of the TF coil, constraining the optimiser such that the any part of the coil is always a minimum distance away from the plasma.
 
 # %%
 
@@ -222,7 +227,8 @@ class MyTFCoilOptProblem(GeometryOptimisationProblem):
 
 # We need to define some `Designers` and `Builders` for our various `Components`.
 
-# Firstly the Plasma,
+# Firstly the plasma.
+# The plasma designer will, using its `ParameterFrame`, evaluate a `JohnerLCFS` geometry parameterisation, returning a wire representing the plasma's last-closed-flux-surface (LCFS).
 
 # In this case `PlasmaDesigner` has some required parameters but `PlasmaBuilder` does
 # not
@@ -231,12 +237,12 @@ class MyTFCoilOptProblem(GeometryOptimisationProblem):
 
 
 class PlasmaDesigner(Designer):
-    """Plasma Designer"""
+    """Design a plasma's LCFS using a Johner paramterisation."""
 
     param_cls = PlasmaDesignerParams
 
     def run(self) -> GeometryParameterisation:
-        """Plasma Designer run method"""
+        """Build the LCFS, returning a closed wire defining its outline."""
         return self._build_wire(self.params)
 
     @staticmethod
@@ -263,9 +269,7 @@ class PlasmaDesigner(Designer):
 
 
 class PlasmaBuilder(Builder):
-    """
-    Our PlasmaBuilder
-    """
+    """Build the 3D geometry of a plasma from a given LCFS."""
 
     param_cls = None
 
@@ -288,7 +292,9 @@ class PlasmaBuilder(Builder):
 
     def build_xz(self) -> PhysicalComponent:
         """
-        Build the xz Component of the Plasma
+        Build a view of the plasma in the toroidal (xz) plane.
+        
+        This generates a ``PhysicalComponent``, whose shape is a face.
         """
         component = PhysicalComponent("LCFS", BluemiraFace(self.wire))
         component.display_cad_options.color = BLUE_PALETTE["PL"]
@@ -297,7 +303,7 @@ class PlasmaBuilder(Builder):
 
     def build_xyz(self, lcfs: BluemiraFace) -> PhysicalComponent:
         """
-        Build the xyz Component of the Plasma
+        Build the 3D (xyz) Component of the plasma by revolving the given face 360 degrees.
         """
         shape = revolve_shape(lcfs, degree=359)
         component = PhysicalComponent("LCFS", shape)
@@ -319,7 +325,7 @@ class PlasmaBuilder(Builder):
 class TFCoilDesigner(Designer):
     """TF coil Designer"""
 
-    param_cls = None
+    param_cls = None  # This designer takes no parameters
 
     def __init__(self, plasma_lcfs, params, build_config):
         super().__init__(params, build_config)
@@ -343,7 +349,7 @@ class TFCoilDesigner(Designer):
             optimiser=Optimiser(
                 "SLSQP", opt_conditions={"max_eval": 5000, "ftol_rel": 1e-6}
             ),
-            min_distance=1.0,
+            min_distance=1.0,  # the coil must be >= 1 meter from the LCFS
         )
         return my_tf_coil_opt_problem.optimise()
 
@@ -415,7 +421,9 @@ class TFCoilBuilder(Builder):
 # %%
 
 build_config = {
-    "params": {},
+    # This reactor has no global parameters, but this key would usually 
+    # be used to set parameters that are shared between components
+    "params": {},  
     "Plasma": {
         "Designer": {
             "params": {
