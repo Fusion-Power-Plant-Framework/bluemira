@@ -22,13 +22,13 @@
 """
 Builder for the PF coils
 """
-
+from dataclasses import dataclass
 from typing import Dict, List, Union
 
 from bluemira.base.builder import Builder, ComponentManager
 from bluemira.base.components import Component, PhysicalComponent
 from bluemira.base.designer import Designer
-from bluemira.base.parameter_frame import Parameter, parameter_frame
+from bluemira.base.parameter_frame import Parameter, ParameterFrame
 from bluemira.display.palettes import BLUE_PALETTE
 from bluemira.equilibria.coils import Coil
 from bluemira.geometry.face import BluemiraFace
@@ -43,8 +43,8 @@ class PFCoil(ComponentManager):
     """
 
 
-@parameter_frame
-class PFCoilBuilderParams:
+@dataclass
+class PFCoilBuilderParams(ParameterFrame):
     """
     Parameters for the `PFCoilBuilder` class.
     """
@@ -173,8 +173,8 @@ class PFCoilBuilder(Builder):
         return components
 
 
-@parameter_frame
-class PFCoilPictureFrameParams:
+@dataclass
+class PFCoilPictureFrameParams(ParameterFrame):
     """
     Parameters for the `PFCoilPictureFrame` designer.
     """

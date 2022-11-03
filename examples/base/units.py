@@ -35,7 +35,7 @@ from dataclasses import dataclass
 from pint.errors import DimensionalityError
 
 import bluemira.base.constants as const
-from bluemira.base.parameter_frame import Parameter, ParameterFrame, parameter_frame
+from bluemira.base.parameter_frame import Parameter, ParameterFrame
 
 # %%[markdown]
 # ## Raw conversion
@@ -77,27 +77,19 @@ class MyParameterFrame(ParameterFrame):
     A: Parameter[float]
 
 
-# this works the same
-@parameter_frame
-class MyDecoratedFrame:
-    """A ParameterFrame made with a decorator"""
-
-    A: Parameter[float]
-
-
 mypf = MyParameterFrame.from_dict({"A": {"value": 5, "unit": ""}})
-mydecpf = MyDecoratedFrame.from_dict({"A": {"value": 5, "unit": ""}})
+mypf2 = MyParameterFrame.from_dict({"A": {"value": 5, "unit": ""}})
 
 print(mypf)
-print(mydecpf)
+print(mypf2)
 # Both frames equal
-assert all([dparam == param for dparam, param in zip(mydecpf, mypf)])  # noqa: S101
+assert mypf == mypf2  # noqa: S101
 
 # %%[markdown]
 # Trying to set a unit with the wrong dimension
 
 # %%
-mydiffval = MyDecoratedFrame.from_dict({"A": {"value": 6, "unit": "m"}})
+mydiffval = MyParameterFrame.from_dict({"A": {"value": 6, "unit": "m"}})
 
 try:
     mypf.update_from_frame(mydiffval)

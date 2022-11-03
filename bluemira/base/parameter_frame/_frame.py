@@ -46,12 +46,6 @@ class ParameterFrame:
 
     .. code-block:: python
 
-        @parameter_frame
-        class MyFrame:
-            param_1: Parameter[float]
-            param_2: Parameter[int]
-
-
         @dataclass
         class AnotherFrame(ParameterFrame):
             param_1: Parameter[float]

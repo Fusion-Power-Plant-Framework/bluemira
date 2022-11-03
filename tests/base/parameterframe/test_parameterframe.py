@@ -7,12 +7,7 @@ from unittest import mock
 import pint
 import pytest
 
-from bluemira.base.parameter_frame import (
-    Parameter,
-    ParameterFrame,
-    make_parameter_frame,
-    parameter_frame,
-)
+from bluemira.base.parameter_frame import Parameter, ParameterFrame, make_parameter_frame
 from bluemira.base.parameter_frame._parameter import ParamDictT
 
 FRAME_DATA = {
@@ -23,12 +18,6 @@ FRAME_DATA = {
 
 @dataclass
 class BasicFrame(ParameterFrame):
-    height: Parameter[float]
-    age: Parameter[int]
-
-
-@parameter_frame
-class BasicFrameDec:
     height: Parameter[float]
     age: Parameter[int]
 
@@ -124,14 +113,6 @@ class TestParameterFrame:
 
     def test_a_default_frame_is_empty(self):
         assert len(ParameterFrame().to_dict()) == 0
-
-    def test_decorated_frame_equal_to_inherited(self):
-        inherited_frame = BasicFrame.from_dict(FRAME_DATA)
-        decorated_frame = BasicFrameDec.from_dict(FRAME_DATA)
-
-        assert isinstance(decorated_frame, ParameterFrame)
-        assert decorated_frame.height.value == inherited_frame.height.value
-        assert decorated_frame.age.value == inherited_frame.age.value
 
     def test_from_json_reads_json_string(self):
         json_str = """{
@@ -497,7 +478,6 @@ class TestParameterSetup:
         [
             FRAME_DATA,
             BasicFrame.from_dict(FRAME_DATA),
-            BasicFrameDec.from_dict(FRAME_DATA),
         ],
     )
     def test_params_type(self, frame):
