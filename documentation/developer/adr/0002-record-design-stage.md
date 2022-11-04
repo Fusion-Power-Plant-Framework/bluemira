@@ -37,11 +37,13 @@ to inform our decision.
 
 #### 2022-10-24
 
-The `Designer` (previously called the `DesignStage`) is in charge of solving a minimal design problem.
+The `Designer` (previously called the `DesignStage`) is in charge of creating the minimal representation of the geometry although this is not necessarily its only output.
+Other outputs could be, in the case of a `PlasmaDesigner`, an `Equilibrium` object,
+which is in some cases needed to define the separatrix of a plasma (the minimal geometry representation) and may have uses elsewhere in the workflow.
 In its simplest form the output of the `Designer`s `execute` method is an input to the `Builder`.
 A `Designer` can have different run modes as described above but by default only needs a run method to function.
 
-With user inputs and the output of the `execute` method the `Builder` creates the CAD for a given `Component`.
+With user inputs and the minimal representation of the geometry the `Builder` creates the CAD for a given `Component`.
 At the time of writing the `Builder` will output a `ComponentManager` containing the `Component` built by the `Builder`.
 We plan for a `Builder` to output a `Component` to allow flexibility in `ComponentManager` definition.
 The output of the `Builder` and possibly some output of the `Designer` would then be used to intialise a `ComponentManager`.
