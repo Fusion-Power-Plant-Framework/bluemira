@@ -1,4 +1,4 @@
-# 1. Record architecture decisions
+# 4. Record architecture decisions
 
 Date: 2022-06-30
 Updated: 2022-10-24
@@ -56,7 +56,6 @@ The final design landed on consists of some of both options:
   from bluemira.base.parameter_frame import (
       Parameter,
       ParameterFrame,
-      parameter_frame,
   )
 
   @dataclass
@@ -64,12 +63,22 @@ The final design landed on consists of some of both options:
      R_0: Parameter[float]
      A: Parameter[float]
 
+  ```
+
+A decorator to allow for easier definition of a `ParameterFrame` was also developed but typing issues need to be fixed to enable its use:
+
+  ```python
+  from bluemira.base.parameter_frame import (
+      Parameter,
+      ParameterFrame,
+      parameter_frame,
+  )
+
   @parameter_frame
   class MyDecoratedFrameForAJob:
       B: Parameter[float]
       z_0: Parameter[float]
   ```
-
 
 Further work will be done to add helper methods to collate all `Parameters` required in a given piece of code
 
