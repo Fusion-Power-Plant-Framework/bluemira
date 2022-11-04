@@ -142,7 +142,7 @@ class MyReactor(Reactor):
 # Further information on geometry can be found in the
 # [geometry tutorial](../geometry/geometry_tutorial.ipynb) and information about
 # geometry optimisation can be found in the
-# geometry optimisation tutorial](../geometry/optimisation_tutorial.ipynb).
+# [geometry optimisation tutorial](../geometry/optimisation_tutorial.ipynb).
 
 # %%
 
