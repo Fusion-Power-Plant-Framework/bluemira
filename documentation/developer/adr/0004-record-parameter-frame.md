@@ -14,7 +14,7 @@ We want to make it easier to configure a `ParameterFrame` for a `ReactorDesigner
 Currently we have all `Parameters` listed in `Configuration`. There are a number of downsides to this approach.
 
 * Their definition is global meaning that no shared names can exist across different `Builder`s.
-* `Builder`s take more `Parameters` than they probably need
+* `Builder`s take more `Parameters` than they probably need.
 
 Options:
 
@@ -49,7 +49,7 @@ The final design landed on consists of some of both options:
 
 -  Only the value and source of a `Parameter` have an API entry point to be updated after creation
 
-- A `ParameterFrame` definition looks like one of the below. The decorated version is a shortcut for the dataclass version but there is no static autocomplete as of writing. Therefore within bluemira core code the dataclass version should be used.
+- A `ParameterFrame` is defined similarly to the below.
 
   ```python
   from dataclasses import dataclass
@@ -70,7 +70,6 @@ A decorator to allow for easier definition of a `ParameterFrame` was also develo
   ```python
   from bluemira.base.parameter_frame import (
       Parameter,
-      ParameterFrame,
       parameter_frame,
   )
 
