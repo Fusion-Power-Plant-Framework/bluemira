@@ -42,12 +42,13 @@ In its simplest form the output of the `Designer`s `execute` method is an input 
 A `Designer` can have different run modes as described above but by default only needs a run method to function.
 
 With user inputs and the output of the `execute` method the `Builder` creates the CAD for a given `Component`.
-The `Builder` will output a `ComponentManager` containing the `Component` built by the `Builder`.
+At the time of writing the `Builder` will output a `ComponentManager` containing the `Component` built by the `Builder`.
+We plan for a `Builder` to output a `Component` to allow flexibility in `ComponentManager` definition.
+The output of the `Builder` and possibly some output of the `Designer` would then be used to intialise a `ComponentManager`.
 
 Both a `Designer` and `Builder` need their own `ParameterFrame` to define the `Parameters` needed.
 
-A `ParameterFrame` should only be needed at this level and a `Designer` and `Builder` are responsible for updating the
-`ParameterFrame` where appropriate. Lower level functionality should use the `Parameter` value as input.
+A `ParameterFrame` should only be needed in the `Designer` or `Builder` and external functions should have the relevant `Parameter` values passed in directly.
 
 Further work will be undertaken so that `Solver` can inherit from `Designer` functioning as a multistage `Designer`.
 
