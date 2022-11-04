@@ -93,7 +93,6 @@ a json file or another :py:class:`ParameterFrame` (must be a superset of the :py
 
 .. code-block:: python
 
-    from bluemira.base import ParameterFrame, ParameterMapping
     param_dict = {
         "R_0": {
             "value": 9,
@@ -121,7 +120,6 @@ the value you put into a :py:class:`Parameter` will be different to the one you 
 
 .. code-block:: pycon
 
-    >>> from bluemira.base import ParameterFrame, ParameterMapping
     >>> param_dict = {
     ...     "R_0": {
     ...         "value": 9,
