@@ -79,6 +79,9 @@ A decorator to allow for easier definition of a `ParameterFrame` was also develo
       z_0: Parameter[float]
   ```
 
+This method has been remove in [#1607](https://github.com/Fusion-Power-Plant-Framework/bluemira/pull/1607) as it is confusing to have two methods to define a `ParameterFrame`.
+We may add this back in future if we manage to fix the typing issue.
+
 Further work will be done to add helper methods to collate all `Parameters` required in a given piece of code
 
 ## Consequences
