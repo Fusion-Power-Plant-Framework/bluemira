@@ -20,7 +20,7 @@ Options:
 
 It will be quite difficult to have a totally "general" `ComponentManager`.
 
-Many of the properties are not specific to a `Component` but maye require access to "external"
+Many of the properties are not specific to a `Component` but may require access to "external"
 information present in the `Reactor` or other `Component`s.
 
 ## Decision
