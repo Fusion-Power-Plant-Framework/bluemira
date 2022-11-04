@@ -52,7 +52,7 @@ The output of the `Builder` and possibly some output of the `Designer` would the
 
 Both a `Designer` and `Builder` need their own `ParameterFrame` to define the `Parameters` needed.
 
-A `ParameterFrame` should only be needed in the `Designer` or `Builder` and external functions should have the relevant `Parameter` values passed in directly.
+A `ParameterFrame` should only be needed in the `Designer` and/or `Builder` (as well as in an optional `Reactor` object) and external functions should have the relevant `Parameter` values passed in directly.
 
 Further work will be undertaken so that `Solver` can inherit from `Designer` functioning as a multistage `Designer`.
 
