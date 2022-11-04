@@ -69,7 +69,10 @@ The final design landed on consists of some of both options:
 
   ```
 
-A decorator to allow for easier definition of a `ParameterFrame` was also developed but typing issues need to be fixed to enable its use:
+A decorator to allow for easier definition of a `ParameterFrame` was also developed but typing issues need to be fixed to enable its use.
+The decorator worked using the function `dataclasses.make_dataclass(<class_name>, base=ParameterFrame)`.
+However, type hint providers (e.g., MyPy), can't tell that the generated class is a ParameterFrame instance,
+so cannot provide type hints for methods inherited from ParameterFrame:
 
   ```python
   from bluemira.base.parameter_frame import (
@@ -83,8 +86,8 @@ A decorator to allow for easier definition of a `ParameterFrame` was also develo
       z_0: Parameter[float]
   ```
 
-This method has been removed in 
-[#1607](https://github.com/Fusion-Power-Plant-Framework/bluemira/pull/1607) 
+This method has been removed in
+[#1607](https://github.com/Fusion-Power-Plant-Framework/bluemira/pull/1607)
 as it is confusing to have two methods to define a `ParameterFrame`.
 We may add this back in future if we manage to fix the typing issue.
 
