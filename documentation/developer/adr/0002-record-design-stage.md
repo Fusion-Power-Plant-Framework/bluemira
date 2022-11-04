@@ -1,4 +1,4 @@
-# 1. `DesignStage` architectural decision
+# 2. `DesignStage` architectural decision
 
 Date: 2022-06-30
 Updated: 2022-10-24
