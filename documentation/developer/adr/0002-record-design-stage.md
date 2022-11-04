@@ -54,3 +54,7 @@ Further work will be undertaken so that `Solver` can inherit from `Designer` fun
 ## Consequences
 
 The separation of `Designer` and `Builder` mechanics required a rewrite of the existing complex reactor design.
+
+A reactor workflow author will often need to define a `Designer` and a `Builder` for a component.
+Previously they would only define a `Builder`.
+Each `Designer` or `Builder` now requires its own `ParameterFrame` if `Parameters` are needed for initialising or executing the object.
