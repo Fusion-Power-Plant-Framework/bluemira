@@ -229,15 +229,34 @@ class TestComplexPictureFrame:
     @pytest.mark.parametrize(
         "upper, lower, inner",
         [
-            # should these pass?
-            # ["FLAT", "FLAT", "TAPERED_INNER"],
-            # ["CURVED", "CURVED", "TAPERED_INNER"],
-            # ["CURVED", "FLAT", "TAPERED_INNER"],
-            # ["FLAT", "CURVED", "TAPERED_INNER"],
-            # [PFrameSection.FLAT, PFrameSection.FLAT, PFrameSection.TAPERED_INNER],
-            # [PFrameSection.CURVED, PFrameSection.CURVED, PFrameSection.TAPERED_INNER],
-            # [PFrameSection.CURVED, PFrameSection.FLAT, PFrameSection.TAPERED_INNER],
-            # [PFrameSection.FLAT, PFrameSection.CURVED, PFrameSection.TAPERED_INNER],
+            pytest.param("FLAT", "FLAT", "TAPERED_INNER", marks=pytest.mark.xfail),
+            pytest.param("CURVED", "CURVED", "TAPERED_INNER", marks=pytest.mark.xfail),
+            pytest.param("CURVED", "FLAT", "TAPERED_INNER", marks=pytest.mark.xfail),
+            pytest.param("FLAT", "CURVED", "TAPERED_INNER", marks=pytest.mark.xfail),
+            pytest.param(
+                PFrameSection.FLAT,
+                PFrameSection.FLAT,
+                PFrameSection.TAPERED_INNER,
+                marks=pytest.mark.xfail,
+            ),
+            pytest.param(
+                PFrameSection.CURVED,
+                PFrameSection.CURVED,
+                PFrameSection.TAPERED_INNER,
+                marks=pytest.mark.xfail,
+            ),
+            pytest.param(
+                PFrameSection.CURVED,
+                PFrameSection.FLAT,
+                PFrameSection.TAPERED_INNER,
+                marks=pytest.mark.xfail,
+            ),
+            pytest.param(
+                PFrameSection.FLAT,
+                PFrameSection.CURVED,
+                PFrameSection.TAPERED_INNER,
+                marks=pytest.mark.xfail,
+            ),
             ["FLAT", "FLAT", None],
             ["CURVED", "CURVED", None],
             ["CURVED", "FLAT", None],
