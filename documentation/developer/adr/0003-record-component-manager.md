@@ -43,4 +43,4 @@ There will be a few internal `ComponentManager`s available for use. It is howeve
 their own `ComponentManager`s to facilitate their workflow. `ComponentManager` objects will only live at the designer/builder level,
 facilitating access to properties that can be passed to lower level objects.
 `ComponentManagers` abstract away the component tree structure at the reactor level.
-In theory, means the component trees can be changed without having to make changes to the reactor build workflow.
+In theory, this means the component trees can be changed without having to make changes to the reactor build workflow.
