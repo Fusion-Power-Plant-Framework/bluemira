@@ -56,11 +56,14 @@ from bluemira.utilities.tools import get_class_from_module
 
 # # Simplistic Reactor Design
 
-# This example show hows to set up a simple reactor, consisting of a plasma and a single TF coil.
-# The TF coil will be optimised such that its length is minimised, whilst maintaining a minimum distance to the plasma.
+# This example show hows to set up a simple reactor, consisting of a plasma and
+# a single TF coil.
+# The TF coil will be optimised such that its length is minimised,
+# whilst maintaining a minimum distance to the plasma.
 
-# To do this we'll run through how to set up the parameters for the build, 
-# how to define the `Builder`s and `Designer`s (including the optimisation problem) for the plasma and TF coil, 
+# To do this we'll run through how to set up the parameters for the build,
+# how to define the `Builder`s and `Designer`s (including the optimisation problem)
+# for the plasma and TF coil,
 # and how to run the build with configurable parameters.
 
 # Firstly we need to define the parameters we're going to use in our reactor design for
@@ -133,7 +136,13 @@ class MyReactor(Reactor):
 # %%[markdown]
 
 # Now we want to define a way to optimise the TF coil shape.
-# We want to minimise the length of the TF coil, constraining the optimiser such that the any part of the coil is always a minimum distance away from the plasma.
+# We want to minimise the length of the TF coil, constraining the optimiser such that
+# the any part of the coil is always a minimum distance away from the plasma.
+
+# Further information on geometry can be found in the
+# [geometry tutorial](../geometry/geometry_tutorial.ipynb) and information about
+# geometry optimisation can be found in the
+# geometry optimisation tutorial](../geometry/optimisation_tutorial.ipynb).
 
 # %%
 
@@ -228,7 +237,9 @@ class MyTFCoilOptProblem(GeometryOptimisationProblem):
 # We need to define some `Designers` and `Builders` for our various `Components`.
 
 # Firstly the plasma.
-# The plasma designer will, using its `ParameterFrame`, evaluate a `JohnerLCFS` geometry parameterisation, returning a wire representing the plasma's last-closed-flux-surface (LCFS).
+# The plasma designer will, using its `ParameterFrame`, evaluate a `JohnerLCFS`
+# geometry parameterisation, returning a wire representing the plasma's
+# last-closed-flux-surface (LCFS).
 
 # In this case `PlasmaDesigner` has some required parameters but `PlasmaBuilder` does
 # not
@@ -293,7 +304,7 @@ class PlasmaBuilder(Builder):
     def build_xz(self) -> PhysicalComponent:
         """
         Build a view of the plasma in the toroidal (xz) plane.
-        
+
         This generates a ``PhysicalComponent``, whose shape is a face.
         """
         component = PhysicalComponent("LCFS", BluemiraFace(self.wire))
@@ -303,7 +314,8 @@ class PlasmaBuilder(Builder):
 
     def build_xyz(self, lcfs: BluemiraFace) -> PhysicalComponent:
         """
-        Build the 3D (xyz) Component of the plasma by revolving the given face 360 degrees.
+        Build the 3D (xyz) Component of the plasma by revolving the given face
+        360 degrees.
         """
         shape = revolve_shape(lcfs, degree=359)
         component = PhysicalComponent("LCFS", shape)
@@ -315,8 +327,10 @@ class PlasmaBuilder(Builder):
 # %%[markdown]
 
 # And now the TF Coil, in this instance for simplicity we are only making one TF coil.
+
 # If more TF coils were to be required the build_xyz of `TFCoilBuilder` would need to
 # be modified.
+
 # Notice that only `TFCoilBuilder` has required parameters in this case.
 
 # %%
@@ -338,10 +352,7 @@ class TFCoilDesigner(Designer):
     def run(self) -> GeometryParameterisation:
         """TF coil run method"""
         parameterisation = self.parameterisation_cls(
-            var_dict={
-                "x1": {"value": 3.0, "fixed": True},
-                "x2": {"value": 15, "lower_bound": 12},
-            }
+            var_dict=self.build_config["var_dict"]
         )
         my_tf_coil_opt_problem = MyTFCoilOptProblem(
             parameterisation,
@@ -356,7 +367,7 @@ class TFCoilDesigner(Designer):
 
 class TFCoilBuilder(Builder):
     """
-    Our TF Coil builder.
+    Build a 3D model of a TF Coil from a given centre line
     """
 
     param_cls = TFCoilBuilderParams
@@ -421,9 +432,9 @@ class TFCoilBuilder(Builder):
 # %%
 
 build_config = {
-    # This reactor has no global parameters, but this key would usually 
+    # This reactor has no global parameters, but this key would usually
     # be used to set parameters that are shared between components
-    "params": {},  
+    "params": {},
     "Plasma": {
         "Designer": {
             "params": {
@@ -480,6 +491,10 @@ build_config = {
         "Designer": {
             "runmode": "run",
             "param_class": "PrincetonD",
+            "var_dict": {
+                "x1": {"value": 3.0, "fixed": True},
+                "x2": {"value": 15, "lower_bound": 12},
+            },
         },
         "Builder": {
             "params": {
