@@ -45,9 +45,9 @@ However if you want to change the source the :py:meth:`set_value` method can be 
 
    >>> r_0.value = 6000
    >>> print(r_0, r_0.source)
-   ... <Parameter(R_0=6000 cm)> Input
+   <Parameter(R_0=6000 cm)> Input
    >>> r_0.set_value(20, "New Input")
-   ... <Parameter(R_0=20 cm)> New Input
+   <Parameter(R_0=20 cm)> New Input
 
 If you want to access the value of the :py:class:`Parameter` in a different unit,
 the :py:meth:`set_value` method can be used.
@@ -55,7 +55,7 @@ the :py:meth:`set_value` method can be used.
 .. code-block:: pycon
 
     >>> r_0.value_as('m')
-    ... 0.2
+    0.2
 
 Any update to a :py:class:`Parameter` value is stored and can be accessed with the :py:meth:`history` method
 which can be useful to understand why a :py:class:`Parameter` value changed.
@@ -63,9 +63,9 @@ which can be useful to understand why a :py:class:`Parameter` value changed.
 .. code-block:: pycon
 
     >>> r_0.history()
-    ... [ParameterValue(value=5000, source='Input'),
-    ...  ParameterValue(value=6000, source='Input'),
-    ...  ParameterValue(value=20, source='New Input')]
+    [ParameterValue(value=5000, source='Input'),
+     ParameterValue(value=6000, source='Input'),
+     ParameterValue(value=20, source='New Input')]
 
 
 ParameterFrames
@@ -75,52 +75,39 @@ A :py:class:`ParameterFrame` allows Parameters to be grouped together to describ
 parameterisation of a particular analysis or class within ``bluemira``.
 For this reason you will interact with Parameters via a :py:class:`ParameterFrame` in most cases.
 
-A ParameterFrame is written in one of two ways, as a dataclass:
+A ParameterFrame is written as a dataclass:
 
-.. code-block:: pycon
+.. code-block:: python
 
-    >>> from dataclasses import dataclass
-    >>> from bluemira.base.parameter_frame import Parameter, ParameterFrame
-    >>> @dataclass
-    ... class MyParameterFrame(ParameterFrame):
-    ...     R_0: Parameter[float]
-    ...     A: Parameter[float]
+    from dataclasses import dataclass
+    from bluemira.base.parameter_frame import Parameter, ParameterFrame
 
-or using the :py:class:`parameter_frame` decorator
-
-.. code-block:: pycon
-
-    >>> from dataclasses import dataclass
-    >>> from bluemira.base.parameter_frame import Parameter, parameter_frame
-    >>> @parameter_frame
-    ... class MyParameterFrame:
-    ...     R_0: Parameter[float]
-    ...     A: Parameter[float]
-
-These two methods of declaring a ParameterFrame are equivalent however,
-Python type-checkers can provide better method/attribute hints when using the @dataclass decorator.
+    @dataclass
+    class MyParameterFrame(ParameterFrame):
+        R_0: Parameter[float]
+        A: Parameter[float]
 
 The type of each :py:class:`Parameter` must be specified and adhered to in the initialisation of the :py:class:`ParameterFrame`.
 A :py:class:`ParameterFrame` can be initialised from a dictionary,
 a json file or another :py:class:`ParameterFrame` (must be a superset of the :py:class:`ParameterFrame` being initialised).
 
-.. code-block:: pycon
+.. code-block:: python
 
-    >>> from bluemira.base import ParameterFrame, ParameterMapping
-    >>> param_dict = {
-    ...     "R_0": {
-    ...         "value": 9,
-    ...         "unit": "m",
-    ...         "source": "Input",
-    ...     },
-    ...     "A": {
-    ...         "value": 3.1,
-    ...         "unit": "dimensionless",
-    ...         "source": "Input",
-    ...     },
-    ... }
-    >>> params = MyParameterFrame.from_dict(param_dict)
-    >>> param_2 = MyParameterFrame.from_frame(params)
+    from bluemira.base import ParameterFrame, ParameterMapping
+    param_dict = {
+        "R_0": {
+            "value": 9,
+            "unit": "m",
+            "source": "Input",
+        },
+        "A": {
+            "value": 3.1,
+            "unit": "dimensionless",
+            "source": "Input",
+        },
+    }
+    params = MyParameterFrame.from_dict(param_dict)
+    param_2 = MyParameterFrame.from_frame(params)
 
 Units
 """""

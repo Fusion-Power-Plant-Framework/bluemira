@@ -20,7 +20,6 @@
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 """Module containing classes related to Parameter and ParameterFrame"""
 
-from bluemira.base.parameter_frame._decorator import parameter_frame
 from bluemira.base.parameter_frame._frame import ParameterFrame, make_parameter_frame
 from bluemira.base.parameter_frame._parameter import Parameter
 
@@ -28,5 +27,4 @@ __all__ = [
     "Parameter",
     "ParameterFrame",
     "make_parameter_frame",
-    "parameter_frame",
 ]
