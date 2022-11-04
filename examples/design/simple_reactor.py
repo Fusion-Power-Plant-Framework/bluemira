@@ -328,6 +328,14 @@ class PlasmaBuilder(Builder):
 
 # And now the TF Coil, in this instance for simplicity we are only making one TF coil.
 
+# The TF coil designer is finding the given geometry parameterisation given a string
+# in the `build_config` which should point to a class.
+# The parameterisation is then fed into the optimisation problem we made earlier.
+# Finally when the designer is executed the optimisation problem is run to generate
+# the centreline wire of the coil.
+
+# The TF coil builder then is passed the centreline from the designer to create the
+# Component and therefore the CAD of the TF coil.
 # If more TF coils were to be required the build_xyz of `TFCoilBuilder` would need to
 # be modified.
 
