@@ -25,7 +25,7 @@ Options:
 * Add a `DesignStage` class which handles the `["run", "read", "mock"]` logic for `Builder`
 
 * Should every `DesignStage` be a `Solver` where `["run", "read", "mock"]` logic is also
-handled.
+handled?
 
 ## Decision
 
@@ -46,10 +46,10 @@ The `Builder` will output a `ComponentManager` containing the `Component` built 
 
 Both a `Designer` and `Builder` need their own `ParameterFrame` to define the `Parameters` needed.
 
-A `ParameterFrame` should only be needed at this level and a `Designer` and `Builder` are in charge to update the
+A `ParameterFrame` should only be needed at this level and a `Designer` and `Builder` are responsible for updating the
 `ParameterFrame` where appropriate. Lower level functionality should use the `Parameter` value as input.
 
-Further work will be undertaken so that `Solver` can inherit from `Designer` functioning as a multistage `Designer`
+Further work will be undertaken so that `Solver` can inherit from `Designer` functioning as a multistage `Designer`.
 
 ## Consequences
 
