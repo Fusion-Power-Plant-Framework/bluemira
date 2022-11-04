@@ -31,7 +31,8 @@ An example of how to use Parameters and ParameterFrames within bluemira.
 # source, description and long_name.
 #
 # The mechanics of the unit system in bluemira are fairly staight forward
-# It provides an implicit interface to convert units to the base units of bluemira.
+# It provides an implicit interface to convert units to the 
+# [base units of bluemira](https://bluemira.readthedocs.io/en/latest/conventions.html#unit-convention).
 
 # %%
 from dataclasses import dataclass
@@ -43,7 +44,7 @@ from bluemira.base.parameter_frame import Parameter, ParameterFrame
 
 # %%[markdown]
 # ## Parameters and Units
-# First I make a small ParameterFrame and compare the two methods of creating a frame
+# First, I make a small `ParameterFrame` and compare the two methods of creating it.
 
 # %%
 
@@ -102,8 +103,9 @@ print(mypf.R_0.value_as("cm"))  # 600
 # ## Raw conversion
 
 # In some situations it may be useful to convert a raw value to a different unit.
-# It is recommended (and enforced within bluemira core) that all conversions however
-# simplistic are converted this way.
+# It is recommended that all conversions, 
+# however simple, are made using `bluemira.constants.raw_uc`.
+# This is how all unit conversions are performed internally.
 #
 # Any possible future base unit changes can be achieved by searching for a given unit.
 
