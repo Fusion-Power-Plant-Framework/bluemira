@@ -32,6 +32,7 @@ from bluemira.equilibria.opt_constraints import (
     PsiConstraint,
 )
 from bluemira.equilibria.opt_problems import TikhonovCurrentCOP
+from bluemira.utilities.optimiser import Optimiser
 
 
 # @pytest.mark.longrun
@@ -101,12 +102,22 @@ class TestWeightedConstraints:
             constraint_set(eq)
 
             # Test that weights have been applied
-
             problem = TikhonovCurrentCOP(
                 coilset=eq.coilset,
                 eq=eq,
                 targets=constraint_set,
                 gamma=1e-8,
+                optimiser=Optimiser(
+                    algorithm_name="SLSQP",
+                    opt_conditions={
+                        "xtol_rel": 1e-4,
+                        "xtol_abs": 1e-4,
+                        "ftol_rel": 1e-4,
+                        "ftol_abs": 1e-4,
+                        "max_eval": 100,
+                    },
+                    opt_parameters={"initial_step": 0.03},
+                ),
             )
             problem.optimise(fixed_coils=True)
 
