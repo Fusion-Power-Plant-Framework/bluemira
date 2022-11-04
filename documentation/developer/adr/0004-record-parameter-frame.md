@@ -86,6 +86,10 @@ Further work will be done to add helper methods to collate all `Parameters` requ
 
 ## Consequences
 
-All existing metadata has been removed from bluemira and should be stored in a `Parameter` JSON file for a given reactor design.
+* All existing metadata has been removed from bluemira and should be stored in a `Parameter` JSON file for a given reactor design.
 
-All `Parameters` need to be defined for a given design.
+* All `Parameters` need to be defined for a given design.
+
+* There are now many different ParameterFrame classes instead of one global one.
+
+* Reactor Designers are expected to define their own parameter frames.
