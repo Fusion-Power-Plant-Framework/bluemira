@@ -1,4 +1,4 @@
-# 4. Record architecture decisions
+# 4. Record ParameterFrame decisions
 
 Date: 2022-06-30
 Updated: 2022-10-24
