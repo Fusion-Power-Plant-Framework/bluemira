@@ -41,11 +41,15 @@ We will trial the three options above  taking e.g. the EUDEMO `PlasmaBuilder` as
 
 The final design landed on consists of some of both options:
 
--  A dedicated `ParameterFrame` is created for each object that uses one
+- A dedicated `ParameterFrame` is created for each object that uses one
+
+  - This replaces the list of strings we were previously setting to the `_required_params` class attribute.
 
 - No default values are stored on a `ParameterFrame`
 
-  - A `MappedParameterFrame` has defaults and is used exclusively for external codes where some variables are not controlled in mapping but can be updated through the solver interface. Eg. PROCESS DEMO style input
+  - A `MappedParameterFrame` has defaults and is used exclusively for external codes.
+    Not all of an external codes variables are mapped with bluemira variables but defaults are in some cases set for them.
+    These variables can be updated through the solver interface via the `problem_settings` key in `build_config`.
 
 -  Only the value and source of a `Parameter` have an API entry point to be updated after creation
 
