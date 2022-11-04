@@ -37,7 +37,9 @@ to inform our decision.
 
 #### 2022-10-24
 
-The `Designer` (previously called the `DesignStage`) is in charge of creating the minimal representation of the geometry although this is not necessarily its only output.
+The `Designer` (previously called the `DesignStage`) is in charge of creating the minimal representation of the geometry.
+This minimal representation could be anything from a single number to an 2D wire of the centreline of a `Component`
+The minimal geometric representation is not necessarily its only output.
 Other outputs could be, in the case of a `PlasmaDesigner`, an `Equilibrium` object,
 which is in some cases needed to define the separatrix of a plasma (the minimal geometry representation) and may have uses elsewhere in the workflow.
 In its simplest form the output of the `Designer`s `execute` method is an input to the `Builder`.
