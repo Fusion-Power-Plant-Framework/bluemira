@@ -6,11 +6,21 @@ The codes subpackage has all interfaces to codes that are either made to be easi
 Pluggable Dependencies
 ----------------------
 
-Each pluggable dependency should have an API that isolates bluemira users from any changes to that dependency. The main APIs that we have created so far are for the CAD engine and the optimiser library.
+Each pluggable dependency should have an API that
+isolates bluemira users from any changes to that dependency.
+The main APIs that we have created so far are for the CAD engine
+and the optimiser library.
 
-For the CAD engine all the functions are wrapped by equivalent functions in the geometry module. The geometry module should be the interface most users access CAD through. The CAD engine is still accessible for advanced users with the hope that any new functionality that is created can be ported to the geometry module. If there is a future CAD engine change we aim to make this invisible to the end user.
+For the CAD engine all the functions are wrapped by equivalent functions
+in the geometry module.
+The geometry module should be the interface most users access CAD through.
+The CAD engine is still accessible for advanced users with the hope that
+any new functionality that is created can be ported to the geometry module.
+If there is a future CAD engine change we aim to make this invisible to the end user.
 
-The optimiser library is wrapped in a similar way but as optimisers are used in various areas of bluemira the main user interface is through the optimiser module in utilities.
+The optimiser library is wrapped in a similar way
+but as optimisers are used in various areas of bluemira
+the main user interface is through the optimiser module in utilities.
 
 Any additional pluggable dependencies should have APIs created in a similar way.
 
