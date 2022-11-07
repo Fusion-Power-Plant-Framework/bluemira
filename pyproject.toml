@@ -72,7 +72,7 @@ dev = [
 examples = ["notebook"]
 pinned = [
     "nlopt==2.7.1",
-    "numba==0.56.3",
+    "numba==0.56.4",
     "numba-scipy==0.3.1",
     "numpy==1.23.2",
     "matplotlib==3.5.3",
