@@ -44,6 +44,10 @@ from FreeCAD import Base
 from pivy import coin, quarter
 from PySide2.QtWidgets import QApplication
 
+# import visualisation
+from pivy import coin, quarter
+from PySide2.QtWidgets import QApplication
+
 from bluemira.base.constants import EPS
 from bluemira.base.file import force_file_extension
 from bluemira.base.look_and_feel import bluemira_warn
