@@ -20,25 +20,24 @@
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 
 """
-An example of how to use Units within bluemira.
+An example to show the use of the raw unit converters
 """
 
-# %%[markdown]
-# # Unit conversion in bluemira
-# The mechanics of the unit system in bluemira are fairly staight forward
-# It aims to provide a useful user interface to convert units
-# internally in most situations the units are up to the developer
-
-# %%
-from dataclasses import dataclass
-
-from pint.errors import DimensionalityError
-
-import bluemira.base.constants as const
-from bluemira.base.parameter_frame import Parameter, ParameterFrame
 
 # %%[markdown]
 # ## Raw conversion
+
+# In some situations it may be useful to convert a raw value to a different unit.
+# It is recommended that all conversions,
+# however simple, are made using `bluemira.constants.raw_uc`.
+# This is how all unit conversions are performed internally.
+#
+# Using `raw_uc` makes it less likely bugs would be introduced in the event of a
+# base unit change.
+
+# %%
+
+import bluemira.base.constants as const
 
 # %%
 
@@ -52,7 +51,9 @@ print(const.gas_flow_uc(1, "mol/s", "Pa m^3/s", gas_flow_temperature=298.15))
 print(const.raw_uc(1, "eV", "K"))
 
 # %%[markdown]
-# ## Raw Temperature conversion with checks
+# ## Raw Temperature conversion with checks from different units
+# The explicit temperature conversion routines guard against temperatures
+# below absolute zero
 
 # %%
 
@@ -62,45 +63,3 @@ except ValueError as v:
     print(v)
 
 print(const.to_celsius(10, unit="rankine"))
-
-# %%[markdown]
-# ## Parameters and Units
-# First I make a small ParameterFrame
-
-# %%
-
-
-@dataclass
-class MyParameterFrame(ParameterFrame):
-    """A ParameterFrame"""
-
-    A: Parameter[float]
-
-
-mypf = MyParameterFrame.from_dict({"A": {"value": 5, "unit": ""}})
-mypf2 = MyParameterFrame.from_dict({"A": {"value": 5, "unit": ""}})
-
-print(mypf)
-print(mypf2)
-# Both frames equal
-assert mypf == mypf2  # noqa: S101
-
-# %%[markdown]
-# Trying to set a unit with the wrong dimension
-
-# %%
-mydiffval = MyParameterFrame.from_dict({"A": {"value": 6, "unit": "m"}})
-
-try:
-    mypf.update_from_frame(mydiffval)
-except DimensionalityError as de:
-    print(de)
-
-# %%[markdown]
-# Changing a value of a parameter with a compatible but different unit
-
-# %%
-
-mypf.update_values({"A": {"value": 6, "unit": ""}})
-
-print(mypf)
