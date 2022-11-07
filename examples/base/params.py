@@ -27,7 +27,7 @@ An example of how to use Parameters and ParameterFrames within bluemira.
 # # Parameters and ParameterFrames in bluemira
 # `Parameters` and `ParameterFrames` are the mechanism bluemira uses to contain
 # metadata about a given value.
-# Each `Parameter` must have a unit associated with the value and can have a
+# Each `Parameter` must have a unit associated with its value, and can have a
 # source, description and long_name.
 #
 # The mechanics of the unit system in bluemira are fairly staight forward
