@@ -30,8 +30,7 @@ An example of how to use Parameters and ParameterFrames within bluemira.
 # Each `Parameter` must have a unit associated with its value, and can have a
 # source, description and long_name.
 #
-# The mechanics of the unit system in bluemira are fairly staight forward
-# It provides an implicit interface to convert units to the
+# `ParameterFrame`s implicitly convert parameter values' units to the
 # [base units of bluemira](
 # https://bluemira.readthedocs.io/en/latest/conventions.html#unit-convention).
 
