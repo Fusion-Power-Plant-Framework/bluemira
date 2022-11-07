@@ -36,7 +36,7 @@ but other information can be added:
     ...     long_name="Major Radius",
     ... )
     >>> print(r_0)
-    ... <Parameter(R_0=5000 cm)>
+    <Parameter(R_0=5000 cm)>
 
 Only the value of the :py:class:`Parameter` can be updated after initialisation.
 However if you want to change the source the :py:meth:`set_value` method can be used.
