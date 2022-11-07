@@ -193,3 +193,15 @@ The simplest interface definition would look something like the below:
             self.binary = build_config.get("binary", None),
             # problem settings are parameters passed directly to the external program
             self.problem_settings = build_config.get("problem_settings", None)
+
+APIs
+^^^^
+
+An interface for programs that have an API to a Python library
+should follow the same pattern as above.
+For now, we do not have an example integration.
+The first expected integration will be the PROCESS,
+once its python interface has been completed.
+
+If you have an existing code that you would like to integrate into ``bluemira``,
+please contact the maintainers so we can discuss the best way forward.
