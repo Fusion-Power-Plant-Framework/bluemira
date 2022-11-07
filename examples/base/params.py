@@ -31,15 +31,15 @@ An example of how to use Parameters and ParameterFrames within bluemira.
 # source, description and long_name.
 #
 # The mechanics of the unit system in bluemira are fairly staight forward
-# It provides an implicit interface to convert units to the 
-# [base units of bluemira](https://bluemira.readthedocs.io/en/latest/conventions.html#unit-convention).
+# It provides an implicit interface to convert units to the
+# [base units of bluemira](
+# https://bluemira.readthedocs.io/en/latest/conventions.html#unit-convention).
 
 # %%
 from dataclasses import dataclass
 
 from pint.errors import DimensionalityError
 
-import bluemira.base.constants as const
 from bluemira.base.parameter_frame import Parameter, ParameterFrame
 
 # %%[markdown]
@@ -57,6 +57,7 @@ class MyParameterFrame(ParameterFrame):
     A: Parameter[float]
 
 
+# the unit "" is equivalent to "dimensionless"
 mypf = MyParameterFrame.from_dict(
     {"A": {"value": 5, "unit": ""}, "R_0": {"value": 8, "unit": "m"}}
 )
@@ -98,36 +99,3 @@ print(mypf)
 # %%
 
 print(mypf.R_0.value_as("cm"))  # 600
-
-# %%[markdown]
-# ## Raw conversion
-
-# In some situations it may be useful to convert a raw value to a different unit.
-# It is recommended that all conversions, 
-# however simple, are made using `bluemira.constants.raw_uc`.
-# This is how all unit conversions are performed internally.
-#
-# Any possible future base unit changes can be achieved by searching for a given unit.
-
-# %%
-
-print(const.raw_uc(1, "um^3", "m^3"))
-# gas flow rate conversion @OdegC
-print(const.raw_uc(1, "mol/s", "Pa m^3/s"))
-print(const.gas_flow_uc(1, "mol/s", "Pa m^3/s"))
-# gas flow rate conversion @25degC
-print(const.gas_flow_uc(1, "mol/s", "Pa m^3/s", gas_flow_temperature=298.15))
-# boltzmann constant conversion
-print(const.raw_uc(1, "eV", "K"))
-
-# %%[markdown]
-# ## Raw Temperature conversion with checks from different units
-
-# %%
-
-try:
-    const.to_kelvin(-300)
-except ValueError as v:
-    print(v)
-
-print(const.to_celsius(10, unit="rankine"))
