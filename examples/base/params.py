@@ -88,7 +88,7 @@ except DimensionalityError as de:
 
 # %%
 
-mypf.update_values({"R_0": {"value": 6000, "unit": "mm"}})
+mypf.update_from_dict({"R_0": {"value": 6000, "unit": "mm"}})
 
 print(mypf)
 
