@@ -22,7 +22,9 @@
 """
 Simple steady-state EU-DEMO balance of plant model
 """
-import enum
+
+from dataclasses import dataclass
+from typing import Dict, Union
 
 import numpy as np
 
@@ -36,9 +38,8 @@ from bluemira.balance_of_plant.steady_state import (
     RadChargedPowerStrategy,
     SuperheatedRankine,
 )
-from bluemira.codes.interface import RunMode, SolverABC, Task
 
-__all__ = ["SteadyStatePowerCycleSolver"]
+__all__ = ["SteadyStatePowerCycle"]
 
 
 class EUDEMOReferenceParasiticLoadStrategy(ParasiticLoadStrategy):
@@ -65,127 +66,110 @@ class EUDEMOReferenceParasiticLoadStrategy(ParasiticLoadStrategy):
         return p_mag, p_cryo, p_t_plant, p_other
 
 
-class SteadyStatePowerCycleRunMode(RunMode):
-    """Enumeration of the run modes for the steady state power cycle solver"""
+@dataclass
+class SteadyStatePowerCycleParams:
 
-    RUN = enum.auto()
+    bb_p_inlet: float
+    bb_p_outlet: float
+    bb_pump_eta_el: float
+    bb_pump_eta_isen: float
+    bb_t_inlet: float
+    bb_t_outlet: float
+    blanket_type: str
+    div_pump_eta_el: float
+    div_pump_eta_isen: float
+    e_decay_mult: float
+    e_mult: float
+    f_core_rad_fw: float
+    f_fw_aux: float
+    f_sol_ch_fw: float
+    f_sol_rad_fw: float
+    f_sol_rad: float
+    vvpfrac: float
 
 
-class SteadyStatePowerCycleSetup(Task):
+class SteadyStatePowerCycle:
     """
-    Setup task for the steady-state power cycle model.
+    Calculator for the steady-state power cycle of an EU-DEMO reactor.
     """
 
-    def run(self):
-        """
-        Run the setup task.
-        """
-        params = self.params  # avoid constant 'self' lookup
-        # TODO: Get remaining hard-coded values hooked up
-        neutron_power_strat = NeutronPowerStrategy(
+    def __init__(self, params: Union[Dict, SteadyStatePowerCycleParams]):
+        if isinstance(params, dict):
+            self.params = SteadyStatePowerCycleParams(**params)
+        elif isinstance(params, SteadyStatePowerCycleParams):
+            self.params = params
+        else:
+            raise TypeError(
+                "Invalid type for params. "
+                "Must be 'dict' or 'SteadyStatePowerCycleParams',"
+                f" found '{type(params).__name__}'."
+            )
+
+        self.neutron_power_strat = NeutronPowerStrategy(
             f_blanket=0.9,
             f_divertor=0.05,
-            f_vessel=params.vvpfrac.value,  # TODO: Change this parameter name
+            f_vessel=params.vvpfrac,  # TODO: Change this parameter name
             f_other=0.01,
-            energy_multiplication=params.e_mult.value,
-            decay_multiplication=params.e_decay_mult.value,
+            energy_multiplication=params.e_mult,
+            decay_multiplication=params.e_decay_mult,
         )
-        rad_sep_strat = RadChargedPowerStrategy(
-            f_core_rad_fw=params.f_core_rad_fw.value,
-            f_sol_rad=params.f_sol_rad.value,
-            f_sol_rad_fw=params.f_sol_rad_fw.value,
-            f_sol_ch_fw=params.f_sol_ch_fw.value,
-            f_fw_aux=params.f_fw_aux.value,
+        self.rad_sep_strat = RadChargedPowerStrategy(
+            f_core_rad_fw=params.f_core_rad_fw,
+            f_sol_rad=params.f_sol_rad,
+            f_sol_rad_fw=params.f_sol_rad_fw,
+            f_sol_ch_fw=params.f_sol_ch_fw,
+            f_fw_aux=params.f_fw_aux,
         )
 
-        if params.blanket_type.value == "HCPB":
-            blanket_pump_strat = HePumping(
-                params.bb_p_inlet.value,
-                params.bb_p_outlet.value,
-                params.bb_t_inlet.value,
-                params.bb_t_outlet.value,
-                eta_isentropic=params.bb_pump_eta_isen.value,
-                eta_electric=params.bb_pump_eta_el.value,
+        if params.blanket_type == "HCPB":
+            self.blanket_pump_strat = HePumping(
+                params.bb_p_inlet,
+                params.bb_p_outlet,
+                params.bb_t_inlet,
+                params.bb_t_outlet,
+                eta_isentropic=params.bb_pump_eta_isen,
+                eta_electric=params.bb_pump_eta_el,
             )
-            bop_cycle = SuperheatedRankine(
-                bb_t_out=params.bb_t_outlet.value, delta_t_turbine=20
+            self.bop_cycle = SuperheatedRankine(
+                bb_t_out=params.bb_t_outlet, delta_t_turbine=20
             )
-        elif params.blanket_type.value == "WCLL":
-            blanket_pump_strat = H2OPumping(
+        elif params.blanket_type == "WCLL":
+            self.blanket_pump_strat = H2OPumping(
                 0.005,
-                eta_isentropic=params.bb_pump_eta_isen.value,
-                eta_electric=params.bb_pump_eta_el.value,
+                eta_isentropic=params.bb_pump_eta_isen,
+                eta_electric=params.bb_pump_eta_el,
             )
-            bop_cycle = PredeterminedEfficiency(0.33)
+            self.bop_cycle = PredeterminedEfficiency(0.33)
         else:
-            raise ValueError(f"Unrecognised blanket type {params.blanket_type.value}")
+            raise ValueError(f"Unrecognised blanket type {params.blanket_type}")
 
-        divertor_pump_strat = H2OPumping(
+        self.divertor_pump_strat = H2OPumping(
             f_pump=0.05,
-            eta_isentropic=params.div_pump_eta_isen.value,
-            eta_electric=params.div_pump_eta_el.value,
+            eta_isentropic=params.div_pump_eta_isen,
+            eta_electric=params.div_pump_eta_el,
         )
-        parasitic_load_strat = EUDEMOReferenceParasiticLoadStrategy()
-        return (
-            rad_sep_strat,
-            neutron_power_strat,
-            blanket_pump_strat,
-            divertor_pump_strat,
-            bop_cycle,
-            parasitic_load_strat,
+        self.parasitic_load_strat = EUDEMOReferenceParasiticLoadStrategy()
+
+    def run(self):
+        """Run the balance of plant model."""
+        power_cycle = BalanceOfPlantModel(
+            self.params,
+            rad_sep_strat=self.rad_sep_strat,
+            neutron_power_strat=self.neutron_power_strat,
+            blanket_pump_strat=self.blanket_pump_strat,
+            divertor_pump_strat=self.divertor_pump_strat,
+            bop_cycle=self.bop_cycle,
+            parasitic_load_strat=self.parasitic_load_strat,
         )
+        power_cycle.build()
 
-
-class SteadyStatePowerCycleRun(Task):
-    """
-    Run task for the steady-state power cycle model.
-    """
-
-    def run(self, setup_result):
-        """
-        Run the run task. (o.O)
-        """
-        bop = BalanceOfPlantModel(self.params, *setup_result)
-        bop.build()
-        return bop
-
-
-class SteadyStatePowerCycleTeardown(Task):
-    """
-    Teardown task for the steady-state power cycle model.
-    """
-
-    def run(self, run_result):
-        """
-        Run the teardown task.
-        """
-        power_cycle = run_result
         flow_dict = power_cycle.flow_dict
         electricity = flow_dict["Electricity"]
         p_el_net = abs(electricity[-1])
-        f_recirc = sum(np.abs(electricity[1:-1])) / abs(electricity[0])
+        f_recirc = np.sum(np.abs(electricity[1:-1])) / abs(electricity[0])
         eta_ss = p_el_net / (flow_dict["Plasma"][0] + flow_dict["Neutrons"][1])
         return power_cycle, {
             "P_el_net": p_el_net,
             "eta_ss": eta_ss,
             "f_recirc": f_recirc,
         }
-
-
-class SteadyStatePowerCycleSolver(SolverABC):
-    """
-    Solver for the steady-state power cycle of an EU-DEMO reactor.
-    """
-
-    setup_cls = SteadyStatePowerCycleSetup
-    run_cls = SteadyStatePowerCycleRun
-    teardown_cls = SteadyStatePowerCycleTeardown
-    run_mode_cls = SteadyStatePowerCycleRunMode
-
-    def execute(self):
-        """
-        Execute the solver.
-        """
-        power_cycle, result = super().execute(SteadyStatePowerCycleRunMode.RUN)
-        self.model = power_cycle
-        return result
