@@ -36,7 +36,7 @@ from bluemira.balance_of_plant.steady_state import (
     RadChargedPowerStrategy,
     SuperheatedRankine,
 )
-from bluemira.base.solver import RunMode, SolverABC, Task
+from bluemira.codes.interface import RunMode, SolverABC, Task
 
 __all__ = ["SteadyStatePowerCycleSolver"]
 

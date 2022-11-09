@@ -34,8 +34,7 @@ from bluemira.base.components import PhysicalComponent
 from bluemira.base.file import get_bluemira_path
 from bluemira.base.look_and_feel import bluemira_debug, bluemira_print, bluemira_warn
 from bluemira.base.parameter_frame import Parameter, ParameterFrame
-from bluemira.base.solver import RunMode
-from bluemira.codes.interface import CodesSolver
+from bluemira.codes.interface import CodesSolver, RunMode
 from bluemira.equilibria.fem_fixed_boundary.fem_magnetostatic_2D import (
     FemGradShafranovFixedBoundary,
 )
