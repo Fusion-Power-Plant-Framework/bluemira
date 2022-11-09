@@ -1,16 +1,16 @@
 ## Linked Issues
 
-Does this PR close or fix any Issues? Remember to create an Issue before starting work so that your fix / proposal can be addressed by the team.
+<!-- Does this PR close or fix any Issues? Remember to create an Issue before starting work so that your fix / proposal can be addressed by the team. -->
 
-e.g. Closes #{ID}
+Closes #{ID}
 
 ## Description
 
-What is your PR trying to achieve? How did you go about achieving it?
+<!-- What is your PR trying to achieve? How did you go about achieving it? -->
 
 ## Interface Changes
 
-If you've had to update an interface or introduce a new interface as part of your change then let us know here.
+<!-- If you've had to update an interface or introduce a new interface as part of your change then let us know here. -->
 
 ## Checklist
 
