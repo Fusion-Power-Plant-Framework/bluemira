@@ -95,9 +95,9 @@ a :py:class:`.CodesSolver` requires implementations of classes for three tasks:
 Run Mode
 """"""""
 
-Within each :py:class:`~bluemira.base.solver.Task`,
-there is the concept of a :py:class:`~bluemira.base.solver.RunMode`.
-A :py:class:`~bluemira.base.solver.RunMode` enum enumerates the ways in which
+Within each :py:class:`~bluemira.codes.interface.CodesTask`,
+there is the concept of a :py:class:`~bluemira.codes.interface.RunMode`.
+A :py:class:`~bluemira.codes.interface.RunMode` enum enumerates the ways in which
 an external program can be run.
 It must, at least, contain a ``RUN`` option,
 but will often also have ``READ`` and ``MOCK`` options.
@@ -115,7 +115,7 @@ Default values for external codes' parameters are provided for instances
 where there are many unmapped variables,
 which are usually only known by users experienced with the external code.
 These unmapped parameters can be set using the :py:attr:`problem_settings` of a
-:py:class:`.SolverABC` instance.
+:py:class:`.CodesSolver` instance.
 
 ParameterMapping
 """"""""""""""""
@@ -147,7 +147,7 @@ The simplest interface definition would look something like the below:
 
     from enum import auto
 
-    from bluemira.base.solver import RunMode as BaseRunMode
+    from bluemira.codes.interface import RunMode as BaseRunMode
     from bluemira.codes.interface import CodesSolver, CodesTeardown, CodesSetup, CodesTask
 
 

@@ -28,9 +28,9 @@ import numpy as np
 
 from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.base.parameter_frame import ParameterFrame
-from bluemira.base.solver import RunMode as BaseRunMode
 from bluemira.codes.error import CodesError
 from bluemira.codes.interface import CodesSolver
+from bluemira.codes.interface import RunMode as BaseRunMode
 from bluemira.codes.process._run import Run
 from bluemira.codes.process._setup import Setup
 from bluemira.codes.process._teardown import Teardown

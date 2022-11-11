@@ -28,9 +28,9 @@ import numpy as np
 from scipy.interpolate import interp1d
 
 from bluemira.base.parameter_frame import ParameterFrame
-from bluemira.base.solver import RunMode as BaseRunMode
 from bluemira.codes.error import CodesError
 from bluemira.codes.interface import CodesSolver
+from bluemira.codes.interface import RunMode as BaseRunMode
 from bluemira.codes.plasmod.api._outputs import PlasmodOutputs
 from bluemira.codes.plasmod.api._run import Run
 from bluemira.codes.plasmod.api._setup import Setup
