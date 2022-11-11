@@ -8,10 +8,10 @@ def make_common_mats():
     # Makes materials that are common to all blankets
 
     tungsten_mat = openmc.Material(name='tungsten')
-    tungsten_mat.add_nuclide('W180', 0.266, percent_type='ao')
-    tungsten_mat.add_nuclide('W182', 0.143, percent_type='ao')
-    tungsten_mat.add_nuclide('W183', 0.307, percent_type='ao')
-    tungsten_mat.add_nuclide('W184', 0.284, percent_type='ao')
+    tungsten_mat.add_nuclide('W182', 0.266, percent_type='ao')
+    tungsten_mat.add_nuclide('W184', 0.143, percent_type='ao')
+    tungsten_mat.add_nuclide('W185', 0.307, percent_type='ao')
+    tungsten_mat.add_nuclide('W186', 0.284, percent_type='ao')
     tungsten_mat.set_density('g/cm3', 19.3)
     
     material_lib['tungsten_mat'] = tungsten_mat
@@ -19,10 +19,10 @@ def make_common_mats():
     eurofer_mat = openmc.Material(name='eurofer')
     eurofer_mat.add_element('Fe', 0.9006, percent_type='wo')
     eurofer_mat.add_element('Cr', 0.0886, percent_type='wo')
-    eurofer_mat.add_nuclide('W180', 0.0108 * 0.266, percent_type='wo')
-    eurofer_mat.add_nuclide('W182', 0.0108 * 0.143, percent_type='wo')
-    eurofer_mat.add_nuclide('W183', 0.0108 * 0.307, percent_type='wo')
-    eurofer_mat.add_nuclide('W184', 0.0108 * 0.284, percent_type='wo')
+    eurofer_mat.add_nuclide('W182', 0.0108 * 0.266, percent_type='wo')
+    eurofer_mat.add_nuclide('W184', 0.0108 * 0.143, percent_type='wo')
+    eurofer_mat.add_nuclide('W185', 0.0108 * 0.307, percent_type='wo')
+    eurofer_mat.add_nuclide('W186', 0.0108 * 0.284, percent_type='wo')
     eurofer_mat.set_density('g/cm3', 7.78)
     
     material_lib['eurofer_mat'] = eurofer_mat
@@ -65,23 +65,7 @@ def export_materials():
     material_lib['outb_sf_mat']   = clone_and_rename_mat( material_lib['eurofer_mat'],  602, 'outb_sf')
     material_lib['div_sf_mat']    = clone_and_rename_mat( material_lib['eurofer_mat'],  603, 'div_sf')
 
-    materials = openmc.Materials([
-                                  material_lib['inb_fw_mat'], 
-                                  material_lib['inb_bz_mat'], 
-                                  material_lib['inb_mani_mat'], 
-                                  material_lib['inb_vv_mat'], 
-                                  material_lib['outb_fw_mat'],
-                                  material_lib['outb_bz_mat'],
-                                  material_lib['outb_mani_mat'],
-                                  material_lib['outb_vv_mat'],
-                                  material_lib['divertor_mat'],
-                                  material_lib['div_fw_mat'],
-                                  material_lib['tf_coil_mat'],
-                                  material_lib['inb_sf_mat'], 
-                                  material_lib['outb_sf_mat'], 
-                                  material_lib['div_sf_mat'],
-                                  material_lib['container_mat']
-                                 ])
+    materials = openmc.Materials( material_lib.values() )
 
     materials.export_to_xml()
 
@@ -375,6 +359,3 @@ def make_wcll_mats(li_enrich_ao):
     export_materials()
     
     return
-
-
-
