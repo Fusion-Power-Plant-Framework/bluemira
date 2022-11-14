@@ -71,8 +71,6 @@ COPY scripts/fenicsx ./scripts/fenicsx/
 RUN bash scripts/fenicsx/install-fenicsx-deps.sh
 RUN bash scripts/fenicsx/install-fenicsx.sh
 
-RUN apt-get install -y locales
-
 FROM base as release
 COPY --from=build_deps /usr /usr
 COPY --from=build_deps /etc /etc
