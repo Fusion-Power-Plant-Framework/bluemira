@@ -236,6 +236,10 @@ class CoilGroup(CoilFieldsMixin):
         max_len = max(all_len)
         self._pad_size = max_len - all_len
 
+        self._einsum_str = (
+            "..., ...j -> ..." if all(self._pad_size == 0) else "...j, ...j -> ..."
+        )
+
 
 class _CoilGroup(abc.ABC):
     """
