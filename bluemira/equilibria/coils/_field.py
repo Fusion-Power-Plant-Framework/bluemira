@@ -49,7 +49,7 @@ from bluemira.magnetostatics.greens import (
     greens_psi,
 )
 from bluemira.magnetostatics.semianalytic_2d import semianalytic_Bx, semianalytic_Bz
-from bluemira.utilities.tools import is_num
+from bluemira.utilities.tools import consec_repeat_elem, is_num
 
 
 class CoilFieldsMixin:
@@ -518,7 +518,7 @@ class CoilFieldsMixin:
             semianalytic_Bz, x, z, split, coil_x, coil_z, coil_dx, coil_dz
         )
 
-    def F(self, eqcoil):  # noqa :N802
+    def F(self, eqcoil: CoilGroup) -> np.ndarray:  # noqa :N802
         """
         Calculate the force response at the coil centre including the coil
         self-force.
@@ -527,41 +527,54 @@ class CoilFieldsMixin:
         \t:math:`F_x = IB_z+\\dfrac{\\mu_0I^2}{4\\pi X}\\textrm{ln}\\bigg(\\dfrac{8X}{r_c}-1+\\xi/2\\bigg)`\n
         \t:math:`F_z = -IBx`
         """  # noqa :W505
-        Bx, Bz = eqcoil.Bx(self.x, self.z), eqcoil.Bz(self.x, self.z)
-        if self.rc != 0:  # true divide errors for zero current coils
-            a = MU_0 * self.current**2 / (4 * np.pi * self.x)
-            fx = a * (np.log(8 * self.x / self._current_radius) - 1 + 0.25)
+        multiplier = self.current * 2 * np.pi * self.x
 
-        else:
-            fx = 0
+        fx = np.where(
+            self._current_radius == 0,
+            0,  # true divide errors for zero current coils
+            MU_0
+            * self.current**2
+            / (4 * np.pi * self.x)
+            * (np.log(8 * self.x / self._current_radius) - 1 + 0.25),
+        )
         return np.array(
             [
-                (self.current * Bz + fx) * 2 * np.pi * self.x,
-                -self.current * Bx * 2 * np.pi * self.x,
+                multiplier * (eqcoil.Bx(self.x, self.z).T + fx),
+                multiplier * eqcoil.Bz(self.x, self.z).T,
             ]
         )
 
-    def control_F(self, coil: CoilGroup = None):  # noqa :N802
+    def control_F(self, coil: CoilGroup) -> np.ndarray:  # noqa :N802
         """
         Returns the Green's matrix element for the coil mutual force.
 
         \t:math:`Fz_{i,j}=-2\\pi X_i\\mathcal{G}(X_j,Z_j,X_i,Z_i)`
         """
+        pos = np.array([self.x, self.z])
 
-        if coil.x == self.x and coil.z == self.z:
-            # self inductance
-            if self._current_radius != 0:
-                a = MU_0 / (4 * np.pi * self.x)
-                Bz = a * (np.log(8 * self.x / self._current_radius) - 1 + 0.25)
-            else:
-                Bz = 0
-            Bx = 0  # Should be 0 anyway
+        same_pos = np.where(pos == np.array([coil.x, coil.z]))
+
+        if same_pos[0] != [] and all(same_pos[0] == np.array([0, 1])):  # x and z points
+            Bz = np.zeros(pos[0].size)
+            Bx = Bz.copy()
+            z_pos = consec_repeat_elem(same_pos[1], 2)
+            cr = self._current_radius[z_pos]
+            Bz[z_pos] = np.where(
+                cr == 0,
+                0,
+                MU_0
+                / (4 * np.pi * pos[0][z_pos])
+                * (np.log(8 * pos[0][z_pos] / cr) - 1 + 0.25),
+            )
+            Bx[z_pos] = 0  # Should be 0 anyway
+            Bz[~z_pos] = coil.unit_Bz(*pos[:, ~z_pos])
+            Bx[~z_pos] = coil.unit_Bx(*pos[:, ~z_pos])
 
         else:
-            Bz = coil.unit_Bz(self.x, self.z)
-            Bx = coil.unit_Bx(self.x, self.z)
+            Bz = coil.unit_Bz(*pos)
+            Bx = coil.unit_Bx(*pos)
 
-        return 2 * np.pi * self.x * np.array([Bz, -Bx])  # 1 cross B
+        return 2 * np.pi * pos[0] * np.array([Bz, -Bx]).T  # 1 cross B
 
 
 def get_max_current(dx, dz, j_max):

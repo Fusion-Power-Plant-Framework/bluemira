@@ -123,10 +123,11 @@ class CoilNumber:
 
 class Coil:
     def __init__(
+        self,
         x: float,
         z: float,
-        dx: float,
-        dz: float,
+        dx: float = None,
+        dz: float = None,
         name: Optional[str] = None,
         ctype: Union[str, CoilType] = CoilType.NONE,
         current: float = 0,
@@ -134,18 +135,21 @@ class Coil:
         b_max: float = np.nan,
         discretisation: float = 1,
     ):
+        self._dx = None
+        self._dz = None
+        self._discretisation = 1
+        self._flag_sizefix = None
 
         self.x = x
         self.z = z
         self.dx = dx
         self.dz = dz
+        self.discretisation = discretisation
         self.current = current
         self.j_max = j_max
         self.b_max = b_max
-        self.discretisation = discretisation
         self.ctype = ctype
         self.name = name
-        self._flag_sizefix = None
 
         self._number = CoilNumber.generate(self.ctype)
         if self.name is None:

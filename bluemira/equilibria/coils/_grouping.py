@@ -32,13 +32,14 @@ from functools import update_wrapper, wraps
 from operator import attrgetter
 
 # from re import split
-from typing import Callable, Dict, Iterable, List, Optional, Tuple, Union
+from typing import Callable, Dict, Iterable, List, Optional, Tuple, Type, Union
 
 # import matplotlib.pyplot as plt
 import numpy as np
 
 from bluemira.base.constants import MU_0
 from bluemira.base.look_and_feel import bluemira_warn
+from bluemira.equilibria.coils._coil import CoilType
 from bluemira.equilibria.coils._field import CoilFieldsMixin
 from bluemira.equilibria.constants import I_MIN, NBTI_B_MAX, NBTI_J_MAX, X_TOLERANCE
 from bluemira.equilibria.error import EquilibriaError
@@ -61,13 +62,13 @@ class CoilGroup(CoilFieldsMixin):
         self._coils = coils
         self._pad_discretisation(self.__list_getter("_quad_x"))
 
-    def __list_getter(self, attr):
+    def __list_getter(self, attr: str):
         return np.frompyfunc(attrgetter(attr), 1, 1)(self._coils)
 
-    def __getter(self, attr):
+    def __getter(self, attr: str):
         return np.array([*flatten_iterable(self.__list_getter(attr))])
 
-    def __quad_getter(self, attr):
+    def __quad_getter(self, attr: str):
         _quad_list = self.__list_getter(attr)
 
         for i, d in enumerate(self._pad_size):
@@ -75,12 +76,27 @@ class CoilGroup(CoilFieldsMixin):
 
         return np.array(_quad_list.tolist())
 
-    def __setter(self, attr, values):
+    def __setter(
+        self,
+        attr: str,
+        values: Union[CoilType, float, Iterable[Union[CoilType, float]]],
+        dtype: Union[Type, None] = None,
+    ):
+        values = np.array([values], dtype=dtype)
+        no_val = values.size
         no = 0
         for coil in flatten_iterable(self._coils):
             end_no = no + coil.n_coils
-            setattr(coil, attr, values[no:end_no])
-            no = end_no
+            if end_no > no_val:
+                if no_val == 1:
+                    setattr(coil, attr, np.repeat(values[0], end_no - no))
+                else:
+                    raise ValueError(
+                        "The number of elements is less than the number of coils"
+                    )
+            else:
+                setattr(coil, attr, values[no:end_no])
+                no = end_no
 
     def _pad_discretisation(
         self,
@@ -111,15 +127,21 @@ class CoilGroup(CoilFieldsMixin):
             "..., ...j -> ..." if all(self._pad_size == 0) else "...j, ...j -> ..."
         )
 
+    def assign_material(
+        self, j_max: Union[float, Iterable[float]], b_max: Union[float, Iterable[float]]
+    ):
+        self.j_max = j_max
+        self.b_max = b_max
+
     @property
-    def n_coils(self):
+    def n_coils(self) -> int:
         n = 0
         for cg in flatten_iterable(self._coils):
             n += cg.n_coils
         return n
 
     @property
-    def name(self):
+    def name(self) -> np.ndarray:
         return self.__getter("name")
 
     @property
@@ -127,35 +149,35 @@ class CoilGroup(CoilFieldsMixin):
         return self.__getter("x")
 
     @property
-    def z(self) -> float:
+    def z(self) -> np.ndarray:
         return self.__getter("z")
 
     @property
-    def ctype(self):
+    def ctype(self) -> np.ndarray:
         return self.__getter("ctype")
 
     @property
-    def dx(self) -> float:
+    def dx(self) -> np.ndarray:
         return self.__getter("dx")
 
     @property
-    def dz(self) -> float:
+    def dz(self) -> np.ndarray:
         return self.__getter("dz")
 
     @property
-    def current(self) -> float:
+    def current(self) -> np.ndarray:
         return self.__getter("current")
 
     @property
-    def j_max(self) -> float:
+    def j_max(self) -> np.ndarray:
         return self.__getter("j_max")
 
     @property
-    def b_max(self) -> float:
+    def b_max(self) -> np.ndarray:
         return self.__getter("b_max")
 
     @property
-    def discretisation(self) -> float:
+    def discretisation(self) -> np.ndarray:
         return self.__getter("discretisation")
 
     @property
@@ -174,50 +196,8 @@ class CoilGroup(CoilFieldsMixin):
     def z_boundary(self) -> np.ndarray:
         return self.__getter("z_boundary")
 
-    @x.setter
-    def x(self, values):
-        self.__setter("x", values)
-
-    @z.setter
-    def z(self, values):
-        self.__setter("z", values)
-
-    @ctype.setter
-    def ctype(self, values):
-        values = np.array(values, dtype=object)
-        self.__setter("ctype", values)
-
-    @dx.setter
-    def dx(self, values):
-        self.__setter("dx", values)
-
-    @dz.setter
-    def dz(self, values):
-        self.__setter("dz", values)
-
-    @current.setter
-    def current(self, values):
-        self.__setter("current", values)
-
-    @j_max.setter
-    def j_max(self, values):
-        self.__setter("j_max", values)
-
-    @b_max.setter
-    def b_max(self, values):
-        self.__setter("b_max", values)
-
-    @discretisation.setter
-    def discretisation(self, values):
-        self.__setter("discretisation", values)
-        self._pad_discretisation(self.__list_getter("_quad_x"))
-
-    def assign_material(self, j_max, b_max):
-        self.j_max = j_max
-        self.b_max = b_max
-
     @property
-    def _current_radius(self):
+    def _current_radius(self) -> np.ndarray:
         return self.__getter("_current_radius")
 
     @property
@@ -239,6 +219,43 @@ class CoilGroup(CoilFieldsMixin):
     @property
     def _quad_weighting(self):
         return self.__quad_getter("_quad_weighting")
+
+    @x.setter
+    def x(self, values: Union[float, Iterable[float]]):
+        self.__setter("x", values)
+
+    @z.setter
+    def z(self, values: Union[float, Iterable[float]]):
+        self.__setter("z", values)
+
+    @ctype.setter
+    def ctype(self, values: Union[CoilType, Iterable[CoilType]]):
+        self.__setter("ctype", values, dtype=object)
+
+    @dx.setter
+    def dx(self, values: Union[float, Iterable[float]]):
+        self.__setter("dx", values)
+
+    @dz.setter
+    def dz(self, values: Union[float, Iterable[float]]):
+        self.__setter("dz", values)
+
+    @current.setter
+    def current(self, values: Union[float, Iterable[float]]):
+        self.__setter("current", values)
+
+    @j_max.setter
+    def j_max(self, values: Union[float, Iterable[float]]):
+        self.__setter("j_max", values)
+
+    @b_max.setter
+    def b_max(self, values: Union[float, Iterable[float]]):
+        self.__setter("b_max", values)
+
+    @discretisation.setter
+    def discretisation(self, values: Union[float, Iterable[float]]):
+        self.__setter("discretisation", values)
+        self._pad_discretisation(self.__list_getter("_quad_x"))
 
 
 class _CoilGroup(abc.ABC):
