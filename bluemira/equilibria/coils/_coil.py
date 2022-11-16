@@ -144,14 +144,6 @@ class Coil:
     _j_max: float = field(init=False, repr=False, default=np.nan)
     _b_max: float = field(init=False, repr=False, default=np.nan)
     _discretisation: float = field(init=False, repr=False, default=1)
-    _quad_x: np.ndarray = field(init=False, repr=False)
-    _quad_z: np.ndarray = field(init=False, repr=False)
-    _quad_dx: np.ndarray = field(init=False, repr=False)
-    _quad_dz: np.ndarray = field(init=False, repr=False)
-    _number: int = field(init=False, repr=False)
-    _current_radius: float = field(init=False, repr=False)
-    _x_boundary: float = field(init=False, repr=False)
-    _z_boundary: float = field(init=False, repr=False)
     _flag_sizefix: bool = field(init=False, repr=False, default=False)
 
     def __post_init__(self):
@@ -161,7 +153,11 @@ class Coil:
 
         # check if dx and not dz set
         # check of j max set
-        self.validate_size()
+        self._validate_size()
+
+    @property
+    def n_coils(self):
+        return 1
 
     @property
     def x(self) -> float:
@@ -225,17 +221,21 @@ class Coil:
 
     @property
     def x_boundary(self):
+        if x_boundary := getattr(self, "_x_boundary", None):
+            return x_boundary
         return self._make_boundary(self.x, self.z, self.dx, self.dz)[0]
 
     @property
     def z_boundary(self):
+        if z_boundary := getattr(self, "_z_boundary", None):
+            return z_boundary
         return self._make_boundary(self.x, self.z, self.dx, self.dz)[1]
 
     @x.setter
     def x(self, value: float):
         if type(value) is property:
             raise TypeError("__init__() missing required positional argument 'x'")
-        self._x = value
+        self._x = float(value)
         if None not in (self.dx, self.dz):
             self._discretise()
             self._set_coil_attributes()
@@ -244,7 +244,7 @@ class Coil:
     def z(self, value: float):
         if type(value) is property:
             raise TypeError("__init__() missing required positional argument 'z'")
-        self._z = value
+        self._z = float(value)
         if None not in (self.dx, self.dz):
             self._discretise()
             self._set_coil_attributes()
@@ -254,20 +254,18 @@ class Coil:
         if type(value) is property:
             # initial value not specified, use default
             value = type(self)._ctype
-        import ipdb
-
-        ipdb.set_trace()
-        self._ctype = value if isinstance(value, CoilType) else CoilType[value]
+        self._ctype = (
+            value
+            if isinstance(value, CoilType)
+            else CoilType[value[0] if isinstance(value, np.ndarray) else value]
+        )
 
     @dx.setter
     def dx(self, value: float):
-        import ipdb
-
-        ipdb.set_trace()
         if type(value) is property:
             # initial value not specified, use default
             value = type(self)._dx
-        self._dx = value
+        self._dx = float(value)
         if None not in (self.dx, self.dz):
             self._discretise()
             self._set_coil_attributes()
@@ -277,7 +275,7 @@ class Coil:
         if type(value) is property:
             # initial value not specified, use default
             value = type(self)._dz
-        self._dz = value
+        self._dz = float(value)
         if None not in (self.dx, self.dz):
             self._discretise()
             self._set_coil_attributes()
@@ -294,7 +292,7 @@ class Coil:
         if type(value) is property:
             # initial value not specified, use default
             value = type(self)._j_max
-        self._j_max = value
+        self._j_max = float(value)
         self.resize()
 
     @b_max.setter
@@ -302,14 +300,14 @@ class Coil:
         if type(value) is property:
             # initial value not specified, use default
             value = type(self)._b_max
-        self._b_max = value
+        self._b_max = float(value)
 
     @discretisation.setter
     def discretisation(self, value: float):
         if type(value) is property:
             # initial value not specified, use default
             value = type(self)._discretisation
-        self._discretisation = value
+        self._discretisation = float(value)
         self._discretise()
 
     def assign_material(
@@ -322,17 +320,12 @@ class Coil:
 
         Parameters
         ----------
-        j_max: float (default None)
+        j_max: float
             Overwrite default constant material max current density [A/m^2]
-        b_max: float (default None)
+        b_max: float
             Overwrite default constant material max field [T]
 
         """
-        if not is_num(j_max):
-            raise EquilibriaError(f"j_max must be specified as a number, not: {jm}")
-        if not is_num_(b_max):
-            raise EquilibriaError(f"b_max must be specified as a number, not: {bm}")
-
         self.j_max = j_max
         self.b_max = b_max
 
@@ -352,12 +345,13 @@ class Coil:
         self._quad_z = np.array([self.z])
         self._quad_dx = np.array([self.dx])
         self._quad_dz = np.array([self.dz])
+        self._quad_weighting = np.ones_like(self._quad_x)
 
         if self.discretisation < 1:
             # How fancy do we want the mesh or just smaller rectangles?
             self._rectangular_discretisation()
 
-    def validate_size(self):
+    def _validate_size(self):
         dx_spec = is_num(self.dx)
         dz_spec = is_num(self.dz)
         dxdz_spec = dx_spec and dz_spec
@@ -372,6 +366,7 @@ class Coil:
                 self._flag_sizefix = True
 
             self._set_coil_attributes()
+            self._discretise()
         else:
             if not is_num(self.j_max):
                 # Check there is a viable way to size the coil
@@ -404,7 +399,7 @@ class Coil:
         nx = np.maximum(1, np.ceil(self.dx * 2 / self.discretisation))
         nz = np.maximum(1, np.ceil(self.dz * 2 / self.discretisation))
 
-        if not all(nx * nz == 1):
+        if not nx * nz == 1:
             sc_dx, sc_dz = self.dx / nx, self.dz / nz
 
             # Calculate sub-coil centroids
@@ -416,6 +411,8 @@ class Coil:
             self._quad_z = z_sc.flatten()
             self._quad_dx = np.ones(x_sc.size) * sc_dx
             self._quad_dz = np.ones(x_sc.size) * sc_dz
+
+            self._quad_weighting = np.ones(x_sc.size)
 
     def fix_size(self):
         """
