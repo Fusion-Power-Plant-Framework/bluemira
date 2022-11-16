@@ -51,8 +51,6 @@ from bluemira.magnetostatics.greens import (
 from bluemira.magnetostatics.semianalytic_2d import semianalytic_Bx, semianalytic_Bz
 from bluemira.utilities.tools import is_num
 
-# from scipy.interpolate import RectBivariateSpline
-
 
 class CoilFieldsMixin:
 

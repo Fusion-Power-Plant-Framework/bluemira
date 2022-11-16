@@ -24,7 +24,6 @@ Coil and coil grouping objects
 """
 
 import abc
-from dataclasses import dataclass, field
 
 # from copy import deepcopy
 from enum import Enum, EnumMeta, auto
@@ -122,31 +121,32 @@ class CoilNumber:
         return idx
 
 
-@dataclass
 class Coil:
-    x: float
-    z: float
-    ctype: Union[str, CoilType]
-    dx: float
-    dz: float
-    current: float
-    j_max: float
-    b_max: float
-    discretisation: float
-    name: Optional[str] = None
+    def __init__(
+        x: float,
+        z: float,
+        dx: float,
+        dz: float,
+        name: Optional[str] = None,
+        ctype: Union[str, CoilType] = CoilType.NONE,
+        current: float = 0,
+        j_max: float = np.nan,
+        b_max: float = np.nan,
+        discretisation: float = 1,
+    ):
 
-    _x: float = field(init=False, repr=False)
-    _z: float = field(init=False, repr=False)
-    _ctype: Union[str, CoilType] = field(init=False, repr=False, default=CoilType.NONE)
-    _dx: float = field(init=False, repr=False, default=None)
-    _dz: float = field(init=False, repr=False, default=None)
-    _current: float = field(init=False, repr=False, default=0)
-    _j_max: float = field(init=False, repr=False, default=np.nan)
-    _b_max: float = field(init=False, repr=False, default=np.nan)
-    _discretisation: float = field(init=False, repr=False, default=1)
-    _flag_sizefix: bool = field(init=False, repr=False, default=False)
+        self.x = x
+        self.z = z
+        self.dx = dx
+        self.dz = dz
+        self.current = current
+        self.j_max = j_max
+        self.b_max = b_max
+        self.discretisation = discretisation
+        self.ctype = ctype
+        self.name = name
+        self._flag_sizefix = None
 
-    def __post_init__(self):
         self._number = CoilNumber.generate(self.ctype)
         if self.name is None:
             self.name = f"{self._ctype.name}_{self._number}"
@@ -233,8 +233,6 @@ class Coil:
 
     @x.setter
     def x(self, value: float):
-        if type(value) is property:
-            raise TypeError("__init__() missing required positional argument 'x'")
         self._x = float(value)
         if None not in (self.dx, self.dz):
             self._discretise()
@@ -242,8 +240,6 @@ class Coil:
 
     @z.setter
     def z(self, value: float):
-        if type(value) is property:
-            raise TypeError("__init__() missing required positional argument 'z'")
         self._z = float(value)
         if None not in (self.dx, self.dz):
             self._discretise()
@@ -251,9 +247,6 @@ class Coil:
 
     @ctype.setter
     def ctype(self, value: Union[str, CoilType]):
-        if type(value) is property:
-            # initial value not specified, use default
-            value = type(self)._ctype
         self._ctype = (
             value
             if isinstance(value, CoilType)
@@ -262,9 +255,6 @@ class Coil:
 
     @dx.setter
     def dx(self, value: float):
-        if type(value) is property:
-            # initial value not specified, use default
-            value = type(self)._dx
         self._dx = float(value)
         if None not in (self.dx, self.dz):
             self._discretise()
@@ -272,9 +262,6 @@ class Coil:
 
     @dz.setter
     def dz(self, value: float):
-        if type(value) is property:
-            # initial value not specified, use default
-            value = type(self)._dz
         self._dz = float(value)
         if None not in (self.dx, self.dz):
             self._discretise()
@@ -282,31 +269,19 @@ class Coil:
 
     @current.setter
     def current(self, value: Union[str, CoilType]):
-        if type(value) is property:
-            # initial value not specified, use default
-            value = type(self)._current
         self._current = value
 
     @j_max.setter
     def j_max(self, value: float):
-        if type(value) is property:
-            # initial value not specified, use default
-            value = type(self)._j_max
         self._j_max = float(value)
         self.resize()
 
     @b_max.setter
     def b_max(self, value: float):
-        if type(value) is property:
-            # initial value not specified, use default
-            value = type(self)._b_max
         self._b_max = float(value)
 
     @discretisation.setter
     def discretisation(self, value: float):
-        if type(value) is property:
-            # initial value not specified, use default
-            value = type(self)._discretisation
         self._discretisation = float(value)
         self._discretise()
 

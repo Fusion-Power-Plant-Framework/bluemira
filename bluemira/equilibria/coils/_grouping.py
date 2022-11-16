@@ -82,6 +82,35 @@ class CoilGroup(CoilFieldsMixin):
             setattr(coil, attr, values[no:end_no])
             no = end_no
 
+    def _pad_discretisation(
+        self,
+        _to_pad: List[np.ndarray],
+    ):
+        """
+        Convert quadrature list of array to rectuangualr arrays.
+        Padding quadrature arrays with zeros to allow array operations
+        on rectangular matricies.
+
+        Parameters
+        ----------
+        _to_pad: List[np.ndarray]
+            x quadratures
+
+        Notes
+        -----
+        Padding exists for coils with different discretisations or sizes within a coilgroup.
+        There are a few extra calculations of the greens functions where padding exists in
+        the :func:_combined_control method.
+
+        """
+        all_len = np.array([len(q) for q in _to_pad])
+        max_len = max(all_len)
+        self._pad_size = max_len - all_len
+
+        self._einsum_str = (
+            "..., ...j -> ..." if all(self._pad_size == 0) else "...j, ...j -> ..."
+        )
+
     @property
     def n_coils(self):
         n = 0
@@ -210,35 +239,6 @@ class CoilGroup(CoilFieldsMixin):
     @property
     def _quad_weighting(self):
         return self.__quad_getter("_quad_weighting")
-
-    def _pad_discretisation(
-        self,
-        _to_pad: List[np.ndarray],
-    ):
-        """
-        Convert quadrature list of array to rectuangualr arrays.
-        Padding quadrature arrays with zeros to allow array operations
-        on rectangular matricies.
-
-        Parameters
-        ----------
-        _to_pad: List[np.ndarray]
-            x quadratures
-
-        Notes
-        -----
-        Padding exists for coils with different discretisations or sizes within a coilgroup.
-        There are a few extra calculations of the greens functions where padding exists in
-        the :func:_combined_control method.
-
-        """
-        all_len = np.array([len(q) for q in _to_pad])
-        max_len = max(all_len)
-        self._pad_size = max_len - all_len
-
-        self._einsum_str = (
-            "..., ...j -> ..." if all(self._pad_size == 0) else "...j, ...j -> ..."
-        )
 
 
 class _CoilGroup(abc.ABC):
