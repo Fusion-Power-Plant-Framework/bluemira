@@ -267,6 +267,17 @@ class TestClip:
         assert np.allclose(test_float, expected_float)
 
 
+def test_consec_repeat_elem():
+
+    arr = np.array([0, 1, 1, 2, 2, 2, 3, 3, 4])
+
+    assert np.allclose(consec_repeat_elem(arr, 2), np.array([1, 3, 4, 6]))
+    assert np.allclose(consec_repeat_elem(arr, 3), np.array([3]))
+
+    with pytest.raises(NotImplementedError):
+        consec_repeat_elem(arr, 1)
+
+
 def test_polar_cartesian():
     x = np.random.rand(100)
     z = np.random.rand(100)

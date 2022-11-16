@@ -536,6 +536,14 @@ def flatten_iterable(iters):
             yield _iter
 
 
+def consec_repeat_elem(arr: np.ndarray, num_rep: int) -> np.ndarray:
+    if num_rep <= 1:
+        raise NotImplementedError("Not implemented for less than 2 repeat elements")
+    N = num_rep - 1
+    m = arr[:-1] == arr[1:]
+    return np.flatnonzero(np.convolve(m, np.ones(N, dtype=int)) == N) - N + 1
+
+
 # ======================================================================================
 # Coordinate system transformations
 # ======================================================================================
