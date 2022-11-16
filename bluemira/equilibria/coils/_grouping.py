@@ -39,6 +39,7 @@ import numpy as np
 
 from bluemira.base.constants import MU_0
 from bluemira.base.look_and_feel import bluemira_warn
+from bluemira.equilibria.coils._field import CoilFieldsMixin
 from bluemira.equilibria.constants import I_MIN, NBTI_B_MAX, NBTI_J_MAX, X_TOLERANCE
 from bluemira.equilibria.error import EquilibriaError
 from bluemira.equilibria.file import EQDSKInterface
@@ -55,14 +56,24 @@ from bluemira.utilities.tools import flatten_iterable, is_num
 # from scipy.interpolate import RectBivariateSpline
 
 
-class CoilGroup:
+class CoilGroup(CoilFieldsMixin):
     def __init__(self, *coils: Union[Coil, CoilGroup[Coil]]) -> None:
         self._coils = coils
+        self._pad_discretisation(self.__list_getter("_quad_x"))
+
+    def __list_getter(self, attr):
+        return np.frompyfunc(attrgetter(attr), 1, 1)(self._coils)
 
     def __getter(self, attr):
-        return np.array(
-            [*flatten_iterable(np.frompyfunc(attrgetter(attr), 1, 1)(self._coils))]
-        )
+        return np.array([*flatten_iterable(self.__list_getter(attr))])
+
+    def __quad_getter(self, attr):
+        _quad_list = self.__list_getter(attr)
+
+        for i, d in enumerate(self._pad_size):
+            _quad_list[i] = np.pad(_quad_list[i], (0, d))
+
+        return np.array(_quad_list.tolist())
 
     def __setter(self, attr, values):
         no = 0
@@ -77,6 +88,10 @@ class CoilGroup:
         for cg in flatten_iterable(self._coils):
             n += cg.n_coils
         return n
+
+    @property
+    def name(self):
+        return self.__getter("name")
 
     @property
     def x(self) -> np.ndarray:
@@ -114,6 +129,22 @@ class CoilGroup:
     def discretisation(self) -> float:
         return self.__getter("discretisation")
 
+    @property
+    def area(self) -> np.ndarray:
+        return self.__getter("area")
+
+    @property
+    def volume(self) -> np.ndarray:
+        return self.__getter("volume")
+
+    @property
+    def x_boundary(self) -> np.ndarray:
+        return self.__getter("x_boundary")
+
+    @property
+    def z_boundary(self) -> np.ndarray:
+        return self.__getter("z_boundary")
+
     @x.setter
     def x(self, values):
         self.__setter("x", values)
@@ -124,6 +155,7 @@ class CoilGroup:
 
     @ctype.setter
     def ctype(self, values):
+        values = np.array(values, dtype=object)
         self.__setter("ctype", values)
 
     @dx.setter
@@ -149,14 +181,60 @@ class CoilGroup:
     @discretisation.setter
     def discretisation(self, values):
         self.__setter("discretisation", values)
+        self._pad_discretisation(self.__list_getter("_quad_x"))
+
+    def assign_material(self, j_max, b_max):
+        self.j_max = j_max
+        self.b_max = b_max
 
     @property
-    def area(self) -> np.ndarray:
-        return self.__getter("area")
+    def _current_radius(self):
+        return self.__getter("_current_radius")
 
     @property
-    def volume(self) -> np.ndarray:
-        return self.__getter("volume")
+    def _quad_x(self):
+        return self.__quad_getter("_quad_x")
+
+    @property
+    def _quad_z(self):
+        return self.__quad_getter("_quad_z")
+
+    @property
+    def _quad_dx(self):
+        return self.__quad_getter("_quad_dx")
+
+    @property
+    def _quad_dz(self):
+        return self.__quad_getter("_quad_dz")
+
+    @property
+    def _quad_weighting(self):
+        return self.__quad_getter("_quad_weighting")
+
+    def _pad_discretisation(
+        self,
+        _to_pad: List[np.ndarray],
+    ):
+        """
+        Convert quadrature list of array to rectuangualr arrays.
+        Padding quadrature arrays with zeros to allow array operations
+        on rectangular matricies.
+
+        Parameters
+        ----------
+        _to_pad: List[np.ndarray]
+            x quadratures
+
+        Notes
+        -----
+        Padding exists for coils with different discretisations or sizes within a coilgroup.
+        There are a few extra calculations of the greens functions where padding exists in
+        the :func:_combined_control method.
+
+        """
+        all_len = np.array([len(q) for q in _to_pad])
+        max_len = max(all_len)
+        self._pad_size = max_len - all_len
 
 
 class _CoilGroup(abc.ABC):
