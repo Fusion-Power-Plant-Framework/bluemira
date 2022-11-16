@@ -69,53 +69,6 @@ class CoilFieldsMixin:
         if type(self) == CoilFieldsMixin:
             raise TypeError("Can't be initialised directly")
 
-    def _pad_discretisation(
-        self,
-        _quad_x: List[np.ndarray],
-        _quad_z: List[np.ndarray],
-        _quad_dx: List[np.ndarray],
-        _quad_dz: List[np.ndarray],
-    ):
-        """
-        Convert quadrature list of array to rectuangualr arrays.
-        Padding quadrature arrays with zeros to allow array operations
-        on rectangular matricies.
-
-        Parameters
-        ----------
-        _quad_x: List[np.ndarray]
-            x quadratures
-        _quad_z: List[np.ndarray]
-            z quadratures
-        _quad_dx: List[np.ndarray]
-            dx quadratures
-        _quad_dz: List[np.ndarray]
-            dz quadratures
-
-        Notes
-        -----
-        Padding exists for coils with different discretisations or sizes within a coilgroup.
-        There are a few extra calculations of the greens functions where padding exists in
-        the :func:_combined_control method.
-
-        """
-        all_len = np.array([len(q) for q in _quad_x])
-        max_len = max(all_len)
-        diff = max_len - all_len
-
-        for i, d in enumerate(diff):
-            for val in [_quad_x, _quad_z, _quad_dx, _quad_dz]:
-                val[i] = np.pad(val[i], (0, d))
-
-        self._quad_x = np.array(_quad_x)
-        self._quad_z = np.array(_quad_z)
-        self._quad_dx = np.array(_quad_dx)
-        self._quad_dz = np.array(_quad_dz)
-        weighting = np.ones((self._x.shape[0], max_len)) / all_len[:, None]
-        weighting[np.isclose(self._quad_dx, 0)] = 0
-
-        return weighting
-
     def psi(self, x, z):
         """
         Calculate poloidal flux at (x, z)
@@ -243,7 +196,7 @@ class CoilFieldsMixin:
         """
         x, z = np.ascontiguousarray(x), np.ascontiguousarray(z)
 
-        zero_coil_size = np.logical_or(np.isclose(self._dx, 0), np.isclose(self._dz, 0))
+        zero_coil_size = np.logical_or(np.isclose(self.dx, 0), np.isclose(self.dz, 0))
 
         if False in zero_coil_size:
             # if dx or dz is not 0 and x,z inside coil
@@ -292,10 +245,10 @@ class CoilFieldsMixin:
                 self._quad_x,
                 self._quad_z,
                 self._quad_weighting,
-                self._x,
-                self._z,
-                self._dx,
-                self._dz,
+                self.x,
+                self.z,
+                self.dx,
+                self.dz,
             )
         ):
             if np.any(~points):
@@ -337,12 +290,12 @@ class CoilFieldsMixin:
         x, z = np.ascontiguousarray(x)[..., None], np.ascontiguousarray(z)[..., None]
 
         x_min, x_max = (
-            self._x - self._dx - atol,
-            self._x + self._dx + atol,
+            self.x - self.dx - atol,
+            self.x + self.dx + atol,
         )
         z_min, z_max = (
-            self._z - self._dz - atol,
-            self._z + self._dz + atol,
+            self.z - self.dz - atol,
+            self.z + self.dz + atol,
         )
         return (
             (x >= x_min[None])
@@ -493,10 +446,10 @@ class CoilFieldsMixin:
 
         """
         if not split:
-            coil_x = self._x
-            coil_z = self._z
-            coil_dx = self._dx
-            coil_dz = self._dz
+            coil_x = self.x
+            coil_z = self.z
+            coil_dx = self.dx
+            coil_dz = self.dz
 
         return semianalytic(
             coil_x[None],
@@ -576,17 +529,17 @@ class CoilFieldsMixin:
         \t:math:`F_x = IB_z+\\dfrac{\\mu_0I^2}{4\\pi X}\\textrm{ln}\\bigg(\\dfrac{8X}{r_c}-1+\\xi/2\\bigg)`\n
         \t:math:`F_z = -IBx`
         """  # noqa :W505
-        Bx, Bz = eqcoil.Bx(self._x, self._z), eqcoil.Bz(self._x, self._z)
+        Bx, Bz = eqcoil.Bx(self.x, self.z), eqcoil.Bz(self.x, self.z)
         if self.rc != 0:  # true divide errors for zero current coils
-            a = MU_0 * self.current**2 / (4 * np.pi * self._x)
-            fx = a * (np.log(8 * self._x / self.rc) - 1 + 0.25)
+            a = MU_0 * self.current**2 / (4 * np.pi * self.x)
+            fx = a * (np.log(8 * self.x / self._current_radius) - 1 + 0.25)
 
         else:
             fx = 0
         return np.array(
             [
-                (self.current * Bz + fx) * 2 * np.pi * self._x,
-                -self.current * Bx * 2 * np.pi * self._x,
+                (self.current * Bz + fx) * 2 * np.pi * self.x,
+                -self.current * Bx * 2 * np.pi * self.x,
             ]
         )
 
@@ -597,20 +550,20 @@ class CoilFieldsMixin:
         \t:math:`Fz_{i,j}=-2\\pi X_i\\mathcal{G}(X_j,Z_j,X_i,Z_i)`
         """
 
-        if coil._x == self._x and coil._z == self._z:
+        if coil.x == self.x and coil.z == self.z:
             # self inductance
-            if self.rc != 0:
-                a = MU_0 / (4 * np.pi * self._x)
-                Bz = a * (np.log(8 * self._x / self.rc) - 1 + 0.25)
+            if self._current_radius != 0:
+                a = MU_0 / (4 * np.pi * self.x)
+                Bz = a * (np.log(8 * self.x / self._current_radius) - 1 + 0.25)
             else:
                 Bz = 0
             Bx = 0  # Should be 0 anyway
 
         else:
-            Bz = coil.unit_Bz(self._x, self._z)
-            Bx = coil.unit_Bx(self._x, self._z)
+            Bz = coil.unit_Bz(self.x, self.z)
+            Bx = coil.unit_Bx(self.x, self.z)
 
-        return 2 * np.pi * self._x * np.array([Bz, -Bx])  # 1 cross B
+        return 2 * np.pi * self.x * np.array([Bz, -Bx])  # 1 cross B
 
 
 def get_max_current(dx, dz, j_max):
