@@ -5,11 +5,11 @@ from pprint import pprint
 import bluemira.base.constants as constants
 
 # Import Power Cycle packages
-from bluemira.power_cycle.base import PowerCycleUtilities
+from bluemira.power_cycle.base import print_header
 from bluemira.power_cycle.timeline import PowerCyclePhase
 
 # Header
-PowerCycleUtilities.print_header("Test PowerCyclePhase")
+print_header("Test PowerCyclePhase")
 
 # Error messages
 class_errors = PowerCyclePhase._errors

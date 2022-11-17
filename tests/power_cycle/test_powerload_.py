@@ -5,14 +5,14 @@ from pprint import pprint
 import matplotlib.pyplot as plt
 
 # Import Power Cycle packages
-from bluemira.power_cycle.base import PowerCycleUtilities
 from bluemira.power_cycle.loads import PowerData, PowerLoad
+from bluemira.power_cycle.utilities import adjust_2d_graph_ranges, print_header
 
 # from scipy.interpolate import interp1d as imported_interp1d
 
 
 # Header
-PowerCycleUtilities.print_header("Test PowerLoad")
+print_header("Test PowerLoad")
 
 # Test data
 name_1 = "test_1"
@@ -41,7 +41,7 @@ plt.figure()
 plt.grid()
 instance_1.plot(c="r")
 instance_2.plot(c="b")
-PowerCycleUtilities.adjust_2d_graph_ranges()
+adjust_2d_graph_ranges()
 
 # Test addition method
 plt.figure()
