@@ -7,12 +7,12 @@ import matplotlib.pyplot as plt
 import bluemira.base.constants as constants
 
 # Import Power Cycle packages
-from bluemira.power_cycle.base import PowerCycleUtilities
 from bluemira.power_cycle.loads import PhaseLoad, PowerData, PowerLoad
 from bluemira.power_cycle.timeline import PowerCyclePhase
+from bluemira.power_cycle.utilities import adjust_2d_graph_ranges, print_header
 
 # Header
-PowerCycleUtilities.print_header("Test PhaseLoad")
+print_header("Test PhaseLoad")
 
 # Phase
 ftt = PowerCyclePhase(
@@ -81,7 +81,7 @@ pprint(normal_data)
 plt.figure()
 plt.grid()
 test_instance.plot(n_points=1000, detailed=True, c="r")
-PowerCycleUtilities.adjust_2d_graph_ranges()
+adjust_2d_graph_ranges()
 
 # Show plots
 plt.show()

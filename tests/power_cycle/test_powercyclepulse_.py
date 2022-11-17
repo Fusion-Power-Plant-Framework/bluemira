@@ -5,11 +5,11 @@ from pprint import pprint
 import bluemira.base.constants as constants
 
 # Import Power Cycle packages
-from bluemira.power_cycle.base import PowerCycleUtilities
 from bluemira.power_cycle.timeline import PowerCyclePhase, PowerCyclePulse
+from bluemira.power_cycle.utilities import print_header
 
 # Header
-PowerCycleUtilities.print_header("Test PowerCyclePulse")
+print_header("Test PowerCyclePulse")
 
 # Dwell-2-Flat
 d2f = PowerCyclePhase(
