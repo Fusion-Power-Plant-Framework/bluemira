@@ -235,14 +235,14 @@ class Coil:
 
     @property
     def x_boundary(self):
-        if x_boundary := getattr(self, "_x_boundary", None):
-            return x_boundary
+        if getattr(self, "_x_boundary") is not None:
+            return self._x_boundary
         return self._make_boundary(self.x, self.z, self.dx, self.dz)[0]
 
     @property
     def z_boundary(self):
-        if z_boundary := getattr(self, "_z_boundary", None):
-            return z_boundary
+        if getattr(self, "_z_boundary") is not None:
+            return self._z_boundary
         return self._make_boundary(self.x, self.z, self.dx, self.dz)[1]
 
     @x.setter
@@ -269,14 +269,14 @@ class Coil:
 
     @dx.setter
     def dx(self, value: float):
-        self._dx = float(value)
+        self._dx = None if value is None else float(value)
         if None not in (self.dx, self.dz):
             self._discretise()
             self._set_coil_attributes()
 
     @dz.setter
     def dz(self, value: float):
-        self._dz = float(value)
+        self._dz = None if value is None else float(value)
         if None not in (self.dx, self.dz):
             self._discretise()
             self._set_coil_attributes()
@@ -288,7 +288,8 @@ class Coil:
     @j_max.setter
     def j_max(self, value: float):
         self._j_max = float(value)
-        self.resize()
+        if None not in (self.dx, self.dz):
+            self.resize()
 
     @b_max.setter
     def b_max(self, value: float):

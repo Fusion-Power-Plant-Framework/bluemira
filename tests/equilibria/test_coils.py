@@ -44,9 +44,9 @@ class TestCoil:
     @classmethod
     def setup_class(cls):
         # make a default coil
-        cls.coil = Coil(x=4, z=4, current=10e6, j_max=NBTI_J_MAX)
+        cls.coil = Coil(x=4, z=4, current=10e6, ctype="PF", j_max=NBTI_J_MAX)
         cls.cs_coil = Coil(x=4, z=4, current=10e6, ctype="CS", j_max=NBTI_J_MAX)
-        cls.no_coil = Coil(x=4, z=4, current=10e6, ctype=None, j_max=NBTI_J_MAX)
+        cls.no_coil = Coil(x=4, z=4, current=10e6, ctype="NONE", j_max=NBTI_J_MAX)
 
     @classmethod
     def teardown_cls(cls):
@@ -54,16 +54,16 @@ class TestCoil:
 
     def test_name(self):
 
-        assert self.coil.ctype[0] == CoilType.PF
-        assert self.cs_coil.ctype[0] == CoilType.CS
-        assert self.no_coil.ctype[0] == CoilType.NONE
-        coil = Coil(x=4, z=4, current=10e6, j_max=NBTI_J_MAX)
+        assert self.coil.ctype == CoilType.PF
+        assert self.cs_coil.ctype == CoilType.CS
+        assert self.no_coil.ctype == CoilType.NONE
+        coil = Coil(x=4, z=4, current=10e6, ctype="PF", j_max=NBTI_J_MAX)
         cs_coil = Coil(x=4, z=4, current=10e6, ctype="CS", j_max=NBTI_J_MAX)
-        no_coil = Coil(x=4, z=4, current=10e6, ctype="None", j_max=NBTI_J_MAX)
+        no_coil = Coil(x=4, z=4, current=10e6, ctype="NONE", j_max=NBTI_J_MAX)
 
-        assert coil._index[0] == self.coil._index[0] + 1
-        assert cs_coil._index[0] == self.cs_coil._index[0] + 1
-        assert no_coil._index[0] == self.no_coil._index[0] + 1
+        assert coil._number == self.coil._number + 1
+        assert cs_coil._number == self.cs_coil._number + 1
+        assert no_coil._number == self.no_coil._number + 1
 
     def test_field(self):
         c = Coil(x=1, z=0, current=1591550, dx=0, dz=0)  # Should produce 5 T on axis
@@ -192,13 +192,14 @@ class TestSemiAnalytic:
 
     @classmethod
     def setup_class(cls):
-        cls.coil = Coil(x=4, z=4, current=10e6, dx=1, dz=2)
-        cls.coil.discretise(0.2)
+        cls.coil = CoilGroup(Coil(x=4, z=4, current=10e6, dx=1, dz=2))
+        cls.coil.discretisation = 0.2
         cls.grid = Grid(0.1, 8, 0, 8, 100, 100)
         cls.x_boundary = np.append(cls.coil.x_boundary, cls.coil.x_boundary[0])
         cls.z_boundary = np.append(cls.coil.z_boundary, cls.coil.z_boundary[0])
 
     def teardown_method(self):
+        plt.show()
         plt.close("all")
 
     def test_bx(self):
@@ -245,42 +246,38 @@ class TestCoilGroup:
         name = ["CS_8", "CS_0", "PF_1", "PF_0"]
         j_max = NBTI_J_MAX
 
-        return CoilGroup(x=x, z=z, name=name, ctype=ctype, j_max=j_max)
+        return CoilGroup(
+            *(
+                Coil(x=_x, z=_z, name=_n, ctype=_ct, j_max=j_max)
+                for _x, _z, _ct, _n in zip(x, z, ctype, name)
+            )
+        )
 
     def test_init_sort(self):
         group = self.make_coilgroup()
-        coil_list = list(group.coils.values())
-        assert len(coil_list) == 5
-        assert coil_list[0].name == "PF_0"
-        assert coil_list[1].name == "PF_1"
-        assert coil_list[2].name == "CS_0"
-        assert coil_list[3].name == "CS_8"
+        assert group.n_coils == 4
+        assert group.name == ["CS_8", "CS_0", "PF_1", "PF_0"]
 
     def test_add(self):
         group = self.make_coilgroup()
         group.add_coil(Coil(3, 3, ctype="PF", name="PF_3", j_max=NBTI_J_MAX))
         group.add_coil(Coil(9, 9, ctype="CS", name="CS_9", j_max=NBTI_J_MAX))
 
-        coil_list = list(group.coils.values())
-        assert len(coil_list) == 8
-        assert coil_list[0].name == "PF_0"
-        assert coil_list[1].name == "PF_1"
-        assert coil_list[2].name == "PF_3"
-        assert coil_list[3].name == "CS_0"
-        assert coil_list[4].name == "CS_8"
-        assert coil_list[5].name == "CS_9"
+        assert group.n_coils == 6
+        assert group.name == ["CS_8", "CS_0", "PF_1", "PF_0", "PF_3", "CS_9"]
 
     def test_remove(self):
         group = self.make_coilgroup()
         group.remove_coil("PF_0")
         group.remove_coil("PF_1")
 
-        coil_list = list(group.coils.values())
-        assert len(coil_list) == 3
-        assert coil_list[0].name == "CS_0"
+        assert group.n_coils == 2
+        assert group.name == ["CS_8", "CS_0"]
 
-        with pytest.raises(KeyError):
+        with pytest.raises(EquilibriaError):
             group.remove_coil("PF_1")
+
+        # TODO test nested removal
 
 
 class TestPositionalSymmetricCircuit:
@@ -501,36 +498,37 @@ class TestCoilSetSymmetry:
 
 class TestCoilSizing:
     def test_initialisation(self):
-        c = Coil(4, 4, current=0, j_max=None, dx=1, dz=1)
+        c = Coil(4, 4, current=0, j_max=np.nan, dx=1, dz=1)
         assert c.dx == 1
         assert c.dz == 1
 
-        c = Coil(4, 4, current=0, j_max=None, dx=1, dz=2)
+        c = Coil(4, 4, current=0, j_max=np.nan, dx=1, dz=2)
         assert c.dx == 1
         assert c.dz == 2
 
-        c = Coil(4, 4, current=0, j_max=None, dx=2, dz=1)
+        c = Coil(4, 4, current=0, j_max=np.nan, dx=2, dz=1)
         assert c.dx == 2
         assert c.dz == 1
 
-        c = Coil(4, 4, current=0, j_max=None, dx=1, dz=1, flag_sizefix=False)
+        c = Coil(4, 4, current=0, j_max=np.nan, dx=1, dz=1)
         assert c.dx == 1
         assert c.dz == 1
-        assert c.flag_sizefix
+        assert c._flag_sizefix
 
         c = Coil(4, 4, current=0, j_max=10)
         assert c.dx == 0
         assert c.dz == 0
-        assert not c.flag_sizefix
+        assert not c._flag_sizefix
 
     def test_bad_initialisation(self):
         with pytest.raises(EquilibriaError):
             Coil(4, 4, current=1)
-
         with pytest.raises(EquilibriaError):
             Coil(4, 4, dx=1)
         with pytest.raises(EquilibriaError):
             Coil(4, 4, dz=1)
+        with pytest.raises(EquilibriaError):
+            Coil(4, 4, j_max=np.nan)
 
 
 class TestMutualInductances:

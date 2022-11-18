@@ -142,7 +142,7 @@ class CoilGroup(CoilFieldsMixin):
 
     @property
     def name(self) -> np.ndarray:
-        return self.__getter("name")
+        return self.__getter("name").tolist()
 
     @property
     def x(self) -> np.ndarray:
@@ -154,7 +154,7 @@ class CoilGroup(CoilFieldsMixin):
 
     @property
     def ctype(self) -> np.ndarray:
-        return self.__getter("ctype")
+        return self.__getter("ctype").tolist()
 
     @property
     def dx(self) -> np.ndarray:
