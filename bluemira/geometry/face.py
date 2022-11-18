@@ -25,8 +25,6 @@ Wrapper for FreeCAD Part.Face objects
 
 from __future__ import annotations
 
-from typing import List
-
 import numpy as np
 
 import bluemira.codes._freecadapi as cadapi

@@ -128,7 +128,7 @@ root.plot_2d(show=True)
 # wire_out must be updated.
 
 # %%
-wire_out.boundary = wire_out.boundary
+wire_out._set_boundary(wire_out.boundary)
 
 print(wire_out)
 root.plot_2d(show=True)
@@ -174,7 +174,7 @@ face_comp.plot_2d(show=True)
 # %%
 m = Mesh()
 buffer = m(face_comp)
-meshtools.msh_to_xdmf("Mesh.msh", dimensions=2, directory=".", verbose=True)
+meshtools.msh_to_xdmf("Mesh.msh", dimensions=2, directory=".")
 
 mesh, boundaries, _, _ = meshtools.import_mesh(
     "Mesh",
@@ -198,7 +198,7 @@ obj.mesh_options.lcar = 0.02
 obj.mesh_options.physical_group = "circle"
 
 buffer = m(face_comp)
-meshtools.msh_to_xdmf("Mesh.msh", dimensions=2, directory=".", verbose=True)
+meshtools.msh_to_xdmf("Mesh.msh", dimensions=2, directory=".")
 
 mesh, boundaries, _, _ = meshtools.import_mesh(
     "Mesh",

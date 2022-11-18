@@ -1255,7 +1255,7 @@ def sweep_shape(profiles, path, solid=True, frenet=True):
 # ======================================================================================
 # Boolean operations
 # ======================================================================================
-def boolean_fuse(shapes, remove_splitter = True):
+def boolean_fuse(shapes, remove_splitter=True):
     """
     Fuse two or more shapes together. Internal splitter are removed.
 
@@ -1264,14 +1264,15 @@ def boolean_fuse(shapes, remove_splitter = True):
     shapes: Iterable
         List of FreeCAD shape objects to be fused together. All the objects in the
         list must be of the same type.
+    remove_splitter: booelan
+        if True, shape is refined removing extra edges.
+        See(https://wiki.freecadweb.org/Part_RefineShape)
+
 
     Returns
     -------
     fuse_shape:
         Result of the boolean operation.
-    remove_splitter:
-        if True, shape is refined removing extra edges.
-        See(https://wiki.freecadweb.org/Part_RefineShape)
 
     Raises
     ------

@@ -36,7 +36,6 @@ import bluemira.mesh.meshing as meshing
 # import freecad api
 from bluemira.codes import _freecadapi as cadapi
 from bluemira.geometry.bound_box import BoundingBox
-from bluemira.geometry.coordinates import Coordinates
 
 
 class GeoMeshable(meshing.Meshable):
@@ -97,7 +96,7 @@ class BluemiraGeo(ABC, GeoMeshable):
         self._boundary_classes = boundary_classes
         self.__orientation = _Orientation("Forward")
         self.label = label
-        self.boundary = boundary
+        self._set_boundary(boundary)
 
     @property
     def _orientation(self):
@@ -151,13 +150,13 @@ class BluemiraGeo(ABC, GeoMeshable):
         """
         return self._boundary
 
-    @boundary.setter
-    def boundary(self, objs):
+    def _set_boundary(self, objs, replace_shape=True):
         self._boundary = self._check_boundary(objs)
-        if self._boundary is None:
-            self.shape = None
-        else:
-            self.shape = self.create_shape()
+        if replace_shape:
+            if self._boundary is None:
+                self.shape = None
+            else:
+                self.shape = self.create_shape()
 
     @abstractmethod
     def create_shape(self):
@@ -259,6 +258,7 @@ class BluemiraGeo(ABC, GeoMeshable):
         """
         Apply scaling with factor to this object. This function modifies the self
         object.
+
         Note
         ----
         The operation is made on shape and boundary in order to maintain the consistency.
@@ -276,6 +276,7 @@ class BluemiraGeo(ABC, GeoMeshable):
         """
         Translate this shape with the vector. This function modifies the self
         object.
+
         Note
         ----
         The operation is made on shape and boundary in order to maintain the consistency.

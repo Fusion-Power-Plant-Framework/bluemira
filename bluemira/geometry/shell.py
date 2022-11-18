@@ -69,7 +69,7 @@ class BluemiraShell(BluemiraGeo):
 
             bmshell = BluemiraShell(None, label=label)
             bmshell.shape = obj
-            bmshell.boundary = bmfaces
+            bmshell._set_boundary(bmfaces, False)
             bmshell._orientation = obj.Orientation
             return bmshell
         raise TypeError(

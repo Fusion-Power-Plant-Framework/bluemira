@@ -117,19 +117,15 @@ class BluemiraWire(BluemiraGeo):
             raise TypeError(f"{type(other)} is not an instance of BluemiraWire.")
         return output
 
-    def close(self) -> None:
+    def close(self, label="") -> None:
         """
         Close the shape with a line segment between shape's end and start point.
         This function modifies the object boundary.
         """
         if not self.is_closed():
-            closure = cadapi.wire_closure(self.shape)
-            if isinstance(self.boundary[0], cadapi.apiWire):
-                self.boundary.append(closure)
-                self.boundary = self.boundary
-            else:
-                self.append(BluemiraWire(closure))
-                self.boundary = self.boundary
+            closure = BluemiraWire(cadapi.wire_closure(self.shape), label)
+            self._boundary.append(closure)
+            self._set_boundary(self.boundary)
 
         # check that the new boundary is closed
         if not self.is_closed():
