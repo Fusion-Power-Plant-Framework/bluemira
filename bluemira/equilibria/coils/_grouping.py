@@ -62,6 +62,42 @@ class CoilGroup(CoilFieldsMixin):
         self._coils = coils
         self._pad_discretisation(self.__list_getter("_quad_x"))
 
+    def add_coil(self, *coils: Union[Coil, CoilGroup[Coil]]):
+        self._coils = (*self._coils, *coils)
+        self._pad_discretisation(self.__list_getter("_quad_x"))
+
+    def remove_coil(self, *coil_name, _top_level=True):
+        # have to navigate nested
+        names = self.name
+
+        if _top_level and (remainder := set(coil_name) - set(names)):
+            raise EquilibriaError(f"Unknown coils {remainder}")
+
+        c_names = []
+        removed_names = []
+
+        for c in self._coils:
+            if isinstance(c, CoilGroup):
+                removed_names.extend(c.remove_coil(*coil_name, _top_level=False))
+            elif c.name in coil_name:
+                c_names.append(c.name)
+
+        to_remove = [names.index(c_n) for c_n in c_names]
+
+        coils = np.array(self._coils, dtype=object)
+        mask = np.full(coils.size, True, dtype=bool)
+        mask[to_remove] = False
+
+        for no, c in enumerate(self._coils):
+            if c.name == []:
+                mask[no] = False
+
+        self._coils = tuple(coils[mask])
+        self._pad_discretisation(self.__list_getter("_quad_x"))
+
+        if not _top_level:
+            return removed_names + to_remove
+
     def __list_getter(self, attr: str):
         return np.frompyfunc(attrgetter(attr), 1, 1)(self._coils)
 
