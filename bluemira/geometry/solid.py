@@ -30,7 +30,8 @@ import bluemira.codes._freecadapi as cadapi
 
 # import from bluemira
 from bluemira.geometry.base import BluemiraGeo
-from bluemira.geometry.error import DisjointedSolid
+from bluemira.geometry.coordinates import Coordinates
+from bluemira.geometry.error import DisjointedSolid, GeometryError
 from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.shell import BluemiraShell
 from bluemira.geometry.wire import BluemiraWire
@@ -73,6 +74,10 @@ class BluemiraSolid(BluemiraGeo):
 
             if len(obj.Solids) > 1:
                 raise DisjointedSolid("Disjointed solids are not accepted.")
+
+            if not obj.isValid():
+                cadapi.save_as_STP(obj, "objet_not_valid")
+                raise GeometryError(f"Solid {obj} is not valid.")
 
             bm_shells = []
             for shell in obj.Shells:

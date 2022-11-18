@@ -691,8 +691,8 @@ def revolve_shape(
 
         shape_1 = cadapi.revolve_shape(shape, base, direction, degree=180)
         shape_2 = deepcopy(shape_1)
-        shape_2 = cadapi.rotate_shape(shape_2, base, direction, degree=180)
-        result = cadapi.boolean_fuse([shape_1, shape_2])
+        shape_2 = cadapi.rotate_shape(shape_2, base, direction, degree=-180)
+        result = cadapi.boolean_fuse([shape_1, shape_2], remove_splitter=False)
 
         if flag_shell:
             result = result.Shells[0]

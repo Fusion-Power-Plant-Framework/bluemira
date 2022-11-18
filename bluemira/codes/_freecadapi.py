@@ -1255,7 +1255,7 @@ def sweep_shape(profiles, path, solid=True, frenet=True):
 # ======================================================================================
 # Boolean operations
 # ======================================================================================
-def boolean_fuse(shapes):
+def boolean_fuse(shapes, remove_splitter = True):
     """
     Fuse two or more shapes together. Internal splitter are removed.
 
@@ -1269,6 +1269,9 @@ def boolean_fuse(shapes):
     -------
     fuse_shape:
         Result of the boolean operation.
+    remove_splitter:
+        if True, shape is refined removing extra edges.
+        See(https://wiki.freecadweb.org/Part_RefineShape)
 
     Raises
     ------
@@ -1308,7 +1311,8 @@ def boolean_fuse(shapes):
 
         elif _type == apiFace:
             merged_shape = shapes[0].fuse(shapes[1:])
-            merged_shape = merged_shape.removeSplitter()
+            if remove_splitter:
+                merged_shape = merged_shape.removeSplitter()
             if len(merged_shape.Faces) > 1:
                 raise FreeCADError(
                     f"Boolean fuse operation on {shapes} gives more than one face."
@@ -1317,7 +1321,8 @@ def boolean_fuse(shapes):
 
         elif _type == apiSolid:
             merged_shape = shapes[0].fuse(shapes[1:])
-            merged_shape = merged_shape.removeSplitter()
+            if remove_splitter:
+                merged_shape = merged_shape.removeSplitter()
             if len(merged_shape.Solids) > 1:
                 raise FreeCADError(
                     f"Boolean fuse operation on {shapes} gives more than one solid."
