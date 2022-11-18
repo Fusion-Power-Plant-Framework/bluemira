@@ -158,6 +158,16 @@ class Coil:
         # check if dx and not dz set
         # check of j max set
         self._validate_size()
+        if not self._flag_sizefix and None in (self.dx, self.dz):
+            self._dx, self._dz = 0, 0
+
+    def __repr__(self):
+        return (
+            f"{type(self).__name__}({self.name} ctype={self.ctype.name} x={self.x:.2g}"
+            f" z={self.z:.2g} dx={self.dx:.2g} dz={self.dz:.2g} current={self.current:.2g}"
+            f" j_max={self.j_max:.2g} b_max={self.b_max:.2g}"
+            f" discretisation={self.discretisation:.2g})"
+        )
 
     @property
     def n_coils(self):
