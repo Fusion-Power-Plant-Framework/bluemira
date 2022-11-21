@@ -154,12 +154,12 @@ class BluemiraGeo(ABC, GeoMeshable):
         self._boundary = self._check_boundary(objs)
         if replace_shape:
             if self._boundary is None:
-                self.shape = None
+                self._set_shape(None)
             else:
-                self.shape = self.create_shape()
+                self._set_shape(self._create_shape())
 
     @abstractmethod
-    def create_shape(self):
+    def _create_shape(self):
         """
         Create the shape from the boundary
         """
@@ -174,8 +174,7 @@ class BluemiraGeo(ABC, GeoMeshable):
         # Note: this is the "hidden" connection with primitive shapes
         return self._shape
 
-    @shape.setter
-    def shape(self, value):
+    def _set_shape(self, value):
         self._shape = value
 
     @property

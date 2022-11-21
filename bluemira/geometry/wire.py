@@ -79,7 +79,7 @@ class BluemiraWire(BluemiraGeo):
 
         return wrapper
 
-    def create_shape(self) -> cadapi.apiWire:
+    def _create_shape(self) -> cadapi.apiWire:
         """apiWire: shape of the object as a single wire"""
         return self._create_wire()
 
@@ -103,10 +103,6 @@ class BluemiraWire(BluemiraGeo):
             else:
                 wires += o._get_wires()
         return wires
-
-    def get_single_wire(self) -> BluemiraWire:
-        """Get a single wire representing the object"""
-        return BluemiraWire(self.shape)
 
     def __add__(self, other):
         """Add two wires"""
@@ -185,7 +181,7 @@ class BluemiraWire(BluemiraGeo):
                 alpha = 1.0
             distance = alpha * self.length
 
-        return cadapi.wire_value_at(self.get_single_wire()._shape, distance)
+        return cadapi.wire_value_at(self.shape, distance)
 
     def parameter_at(self, vertex: Iterable, tolerance: float = EPS):
         """
@@ -212,7 +208,7 @@ class BluemiraWire(BluemiraGeo):
         """
         try:
             return cadapi.wire_parameter_at(
-                self.get_single_wire()._shape, vertex=vertex, tolerance=tolerance
+                self.shape, vertex=vertex, tolerance=tolerance
             )
         except FreeCADError as e:
             raise GeometryError(e.args[0])

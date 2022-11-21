@@ -46,7 +46,7 @@ class BluemiraCompound(BluemiraGeo):
         boundary_classes = [BluemiraGeo]
         super().__init__(boundary, label, boundary_classes)
 
-    def create_shape(self) -> cadapi.apiCompound:
+    def _create_shape(self) -> cadapi.apiCompound:
         """apiCompound: shape of the object as a single compound"""
         return cadapi.apiCompound([s.shape for s in self.boundary])
 

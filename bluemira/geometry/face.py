@@ -108,7 +108,7 @@ class BluemiraFace(BluemiraGeo):
         else:
             return face
 
-    def create_shape(self) -> cadapi.apiFace:
+    def _create_shape(self) -> cadapi.apiFace:
         """Part.Face: shape of the object as a primitive face"""
         return self._create_face()
 
@@ -126,7 +126,7 @@ class BluemiraFace(BluemiraGeo):
                 bmwires += [bm_wire]
 
             bmface = cls(None, label=label)
-            bmface.shape = obj
+            bmface._set_shape(obj)
             bmface._boundary = bmwires
             bmface._orientation = obj.Orientation
 

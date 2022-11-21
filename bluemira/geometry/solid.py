@@ -64,7 +64,7 @@ class BluemiraSolid(BluemiraGeo):
         else:
             return solid
 
-    def create_shape(self):
+    def _create_shape(self):
         """Part.Solid: shape of the object as a single solid"""
         return self._create_solid()
 
@@ -86,7 +86,7 @@ class BluemiraSolid(BluemiraGeo):
             # create an empty BluemiraSolid
             bmsolid = cls(None, label=label)
             # assign shape, boundary, and orientation
-            bmsolid.shape = obj
+            bmsolid._set_shape(obj)
             bmsolid._boundary = bm_shells
             bmsolid._orientation = obj.Orientation
             return bmsolid

@@ -54,7 +54,7 @@ class BluemiraShell(BluemiraGeo):
         else:
             return shell
 
-    def create_shape(self):
+    def _create_shape(self):
         """Part.Shell: shape of the object as a primitive shell"""
         return self._create_shell()
 
@@ -68,7 +68,7 @@ class BluemiraShell(BluemiraGeo):
                 bmfaces.append(BluemiraFace._create(face))
 
             bmshell = BluemiraShell(None, label=label)
-            bmshell.shape = obj
+            bmshell._set_shape(obj)
             bmshell._set_boundary(bmfaces, False)
             bmshell._orientation = obj.Orientation
             return bmshell
