@@ -96,12 +96,7 @@ class TestOptimiser:
         optimiser.set_lower_bounds([0, 0])
         optimiser.set_upper_bounds([3, 3])
         result = optimiser.optimise([0.0, 0.0])
-        try:
-            np.testing.assert_allclose(result, np.array([1.0, 1.0]))
-        except AssertionError as e:
-            print(optimiser._f_objective.last_x)
-            raise e
-        del optimiser
+        np.testing.assert_allclose(result, np.array([1.0, 1.0]))
 
     def test_constraints(self):
         optimiser = Optimiser(
@@ -119,9 +114,4 @@ class TestOptimiser:
         optimiser.add_eq_constraints(f_eq_constraints, tolerance=tol * np.ones(2))
         # NOTE: Convergence only guaranteed for feasible starting point!
         result = optimiser.optimise(x0=np.array([0.6, 0.5, 3.14, 3.15, 3.16]))
-        try:
-            np.testing.assert_allclose(result, np.array([0.5, 0.0, 3.14, 3.15, 3.16]))
-        except AssertionError as e:
-            print(optimiser._f_objective.last_x)
-            raise e
-        del optimiser
+        np.testing.assert_allclose(result, np.array([0.5, 0.0, 3.14, 3.15, 3.16]))
