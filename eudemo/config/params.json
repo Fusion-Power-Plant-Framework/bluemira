@@ -710,5 +710,31 @@
         "unit": "dimensionless",
         "source": "Input",
         "long_name": "Number of outboard blanket segments"
+    },
+    "r_tf_current_ib": {
+        "value": 1,
+        "unit": "m",
+        "source": "Input",
+        "long_name": "Radius of the TF coil current centroid on the inboard"
+    },
+    "tk_tf_wp": {
+        "value": 0.5,
+        "unit": "m",
+        "long_name": "TF coil winding pack radial thickness",
+        "description": "Excluding insulation",
+        "source": "Input"
+    },
+    "tk_tf_wp_y": {
+        "value": 0.5,
+        "unit": "m",
+        "long_name": "TF coil winding pack toroidal thickness",
+        "description": "Excluding insulation",
+        "source": "Input"
+    },
+    "z_0": {
+        "value": 0,
+        "unit": "m",
+        "source": "Input",
+        "long_name": "Vertical offset of plasma centreline"
     }
 }

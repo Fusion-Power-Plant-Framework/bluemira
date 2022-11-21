@@ -50,7 +50,7 @@ class VacuumVessel(ComponentManager):
             self.component()
             .get_component("xz")
             .get_component(VacuumVesselBuilder.BODY)
-            .shape.boundary
+            .shape.boundary[0]
         )
 
 

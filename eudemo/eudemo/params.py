@@ -9,6 +9,7 @@ from bluemira.base.parameter_frame import Parameter, ParameterFrame
 class EUDEMOReactorParams(ParameterFrame):
     """All parameters for the EUDEMO reactor."""
 
+    # Common parameters
     A: Parameter[float]
     B_0: Parameter[float]
     B_tf_peak: Parameter[float]
@@ -140,3 +141,9 @@ class EUDEMOReactorParams(ParameterFrame):
     # Blanket
     n_bb_inboard: Parameter[int]
     n_bb_outboard: Parameter[int]
+
+    # TF Coils
+    r_tf_current_ib: Parameter[float]
+    tk_tf_wp_y: Parameter[float]
+    tk_tf_wp: Parameter[float]
+    z_0: Parameter[float]

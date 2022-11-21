@@ -53,6 +53,7 @@ from eudemo.equilibria import EquilibriumDesigner
 from eudemo.ivc import design_ivc
 from eudemo.params import EUDEMOReactorParams
 from eudemo.radial_build import radial_build
+from eudemo.tf_coils import TFCoil, TFCoilBuilder, TFCoilDesigner
 from eudemo.vacuum_vessel import VacuumVessel, VacuumVesselBuilder
 
 CONFIG_DIR = Path(__file__).parent.parent / "config"
@@ -66,6 +67,7 @@ class EUDEMO(Reactor):
     vacuum_vessel: VacuumVessel
     divertor: Divertor
     blanket: Blanket
+    tf_coils: TFCoil
 
 
 def build_plasma(build_config: Dict, eq: Equilibrium) -> Plasma:
@@ -92,6 +94,22 @@ def build_blanket(params, build_config, blanket_face) -> Blanket:
     """Build the blanket given a silhouette of a sector."""
     builder = BlanketBuilder(params, build_config, blanket_face)
     return builder.build()
+
+
+def build_tf_coils(
+    params, build_config, separatrix, vacuum_vessel_cross_section
+) -> TFCoil:
+    """Design and build the TF coils for the reactor."""
+    centreline, wp_cross_section = run_designer(
+        TFCoilDesigner,
+        params,
+        build_config,
+        separatrix=separatrix,
+        keep_out_zone=vacuum_vessel_cross_section,
+    )
+    return TFCoilBuilder(
+        params, build_config, centreline.create_shape(), wp_cross_section
+    ).build()
 
 
 def _read_json(file_path: str) -> Dict:
@@ -122,18 +140,25 @@ if __name__ == "__main__":
     vacuum_vessel = build_vacuum_vessel(
         params, build_config.get("Vacuum vessel", {}), ivc_boundary
     )
-    reactor.divertor = build_divertor(
-        params, build_config.get("Divertor", {}), divertor_face
-    )
-    reactor.blanket = build_blanket(
-        params, build_config.get("Blanket", {}), blanket_face
-    )
+    # reactor.divertor = build_divertor(
+    #     params, build_config.get("Divertor", {}), divertor_face
+    # )
+    # reactor.blanket = build_blanket(
+    #     params, build_config.get("Blanket", {}), blanket_face
+    # )
 
     thermal_shield_config = build_config.get("Thermal shield", {})
     vv_thermal_shield = VVTSBuilder(
         params,
         thermal_shield_config.get("Vacuum vessel", {}),
         keep_out_zone=vacuum_vessel.xz_boundary(),
+    )
+
+    reactor.tf_coils = build_tf_coils(
+        params,
+        build_config.get("TF coils", {}),
+        reactor.plasma.lcfs(),
+        vacuum_vessel.xz_boundary(),
     )
 
     reactor.show_cad()

@@ -36,7 +36,7 @@ from bluemira.geometry.tools import make_circle, make_polygon
 from eudemo.tf_coils import TFCoilBuilder, TFCoilDesigner
 
 EQDATA = get_bluemira_path("equilibria/test_data", subfolder="tests")
-DATA = get_bluemira_path("design/EU-DEMO/EUDEMO_tests/test_data", subfolder="examples")
+DATA = get_bluemira_path("tests/test_data", subfolder="eudemo")
 
 OPTIMISER_MODULE_REF = "bluemira.builders.tf_coils"
 
