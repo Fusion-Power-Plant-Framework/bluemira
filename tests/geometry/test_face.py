@@ -39,7 +39,7 @@ class TestBluemiraFace:
             [[4, -2, 0], [6, -2, 0], [6, 2, 0], [4, 2, 0]],
             closed=True,
         )
-        princeton = PrincetonD().create_shape(n_points=80)
+        princeton = PrincetonD().create_shape(n_points=150)
         triple = TripleArc().create_shape()
         sextuple = SextupleArc().create_shape()
         tapered = PictureFrame(inner="TAPERED_INNER").create_shape()
@@ -56,6 +56,7 @@ class TestBluemiraFace:
     def test_two_complicated(self, offset):
         direction = int(offset / abs(offset))
         for shape in self.shapes:
+            print(shape)
             wire = offset_wire(shape, offset, join="arc")
             face_list = [wire, shape][::direction]
             face = BluemiraFace(face_list)

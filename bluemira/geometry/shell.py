@@ -27,10 +27,12 @@ from __future__ import annotations
 
 # import from freecad
 import bluemira.codes._freecadapi as cadapi
+from bluemira.geometry.base import BluemiraGeo
 
 # import from bluemira
-from bluemira.geometry.base import BluemiraGeo
+from bluemira.geometry.coordinates import Coordinates
 from bluemira.geometry.face import BluemiraFace
+from bluemira.geometry.wire import BluemiraWire
 
 __all__ = ["BluemiraShell"]
 
@@ -52,22 +54,73 @@ class BluemiraShell(BluemiraGeo):
         else:
             return shell
 
-    @property
-    def _shape(self):
+    def _create_shape(self):
         """Part.Shell: shape of the object as a primitive shell"""
         return self._create_shell()
 
     @classmethod
     def _create(cls, obj: cadapi.apiShell, label=""):
         if isinstance(obj, cadapi.apiShell):
-            orientation = obj.Orientation
+
             faces = obj.Faces
             bmfaces = []
             for face in faces:
                 bmfaces.append(BluemiraFace._create(face))
-            bmshell = BluemiraShell(bmfaces, label=label)
-            bmshell._orientation = orientation
+
+            bmshell = BluemiraShell(None, label=label)
+            bmshell._set_shape(obj)
+            bmshell._set_boundary(bmfaces, False)
+            bmshell._orientation = obj.Orientation
             return bmshell
         raise TypeError(
             f"Only Part.Shell objects can be used to create a {cls} instance"
         )
+
+    @property
+    def vertexes(self):
+        """
+        The vertexes of the shell.
+        """
+        return Coordinates(cadapi.vertexes(self.shape))
+
+    @property
+    def edges(self):
+        """
+        The edges of the shell.
+        """
+        return [BluemiraWire(cadapi.apiWire(o)) for o in cadapi.edges(self.shape)]
+
+    @property
+    def wires(self):
+        """
+        The wires of the shell.
+        """
+        return [BluemiraWire(o) for o in cadapi.wires(self.shape)]
+
+    @property
+    def faces(self):
+        """
+        The faces of the shell.
+        """
+        return [BluemiraFace(o) for o in cadapi.faces(self.shape)]
+
+    @property
+    def shells(self):
+        """
+        The shells of the shell. By definition a list of itself.
+        """
+        return [self]
+
+    @property
+    def solids(self):
+        """
+        The solids of the shell. By definition an empty list.
+        """
+        return []
+
+    @property
+    def shape_boundary(self):
+        """
+        The boundaries of the shell.
+        """
+        return self.faces

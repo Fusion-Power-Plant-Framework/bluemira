@@ -25,14 +25,13 @@ Wrapper for FreeCAD Part.Face objects
 
 from __future__ import annotations
 
-from typing import List
-
 import numpy as np
 
 import bluemira.codes._freecadapi as cadapi
 
 # import from bluemira
 from bluemira.geometry.base import BluemiraGeo
+from bluemira.geometry.coordinates import Coordinates
 
 # import from error
 from bluemira.geometry.error import DisjointedFace, NotClosedWire
@@ -47,7 +46,6 @@ class BluemiraFace(BluemiraGeo):
     def __init__(self, boundary, label: str = ""):
         boundary_classes = [BluemiraWire]
         super().__init__(boundary, label, boundary_classes)
-        self._create_face()
 
     @staticmethod
     def _converter(func):
@@ -74,11 +72,15 @@ class BluemiraFace(BluemiraGeo):
 
     def _check_boundary(self, objs):
         """Check if objects in objs are of the correct type for this class"""
+        if objs is None:
+            return objs
+
         if not hasattr(objs, "__len__"):
             objs = [objs]
         check = False
         for c in self._boundary_classes:
-            check = check or (all(isinstance(o, c) for o in objs))
+            for o in objs:
+                check = check or isinstance(o, c)
             if check:
                 if all(o.is_closed() for o in objs):
                     return objs
@@ -106,26 +108,14 @@ class BluemiraFace(BluemiraGeo):
         else:
             return face
 
-    @property
-    def _shape(self) -> cadapi.apiFace:
+    def _create_shape(self) -> cadapi.apiFace:
         """Part.Face: shape of the object as a primitive face"""
         return self._create_face()
-
-    @property
-    def _wires(self) -> List[cadapi.apiWire]:
-        """list(Part.Wire): list of wires of which the shape consists of."""
-        wires = []
-        for o in self.boundary:
-            if isinstance(o, cadapi.apiWire):
-                wires += o.Wires
-            else:
-                wires += o._wires
-        return wires
 
     @classmethod
     def _create(cls, obj: cadapi.apiFace, label="") -> BluemiraFace:
         if isinstance(obj, cadapi.apiFace):
-            orientation = obj.Orientation
+
             bmwires = []
             for w in obj.Wires:
                 w_orientation = w.Orientation
@@ -134,8 +124,12 @@ class BluemiraFace(BluemiraGeo):
                 if cadapi.is_closed(w):
                     bm_wire.close()
                 bmwires += [bm_wire]
-            bmface = cls(bmwires, label=label)
-            bmface._orientation = orientation
+
+            bmface = cls(None, label=label)
+            bmface._set_shape(obj)
+            bmface._boundary = bmwires
+            bmface._orientation = obj.Orientation
+
             return bmface
 
         raise TypeError(f"Only Part.Face objects can be used to create a {cls} instance")
@@ -160,9 +154,58 @@ class BluemiraFace(BluemiraGeo):
             and N the number of discretization points.
         """
         points = []
-        for w in self._shape.Wires:
+        for w in self.shape.Wires:
             if byedges:
                 points.append(cadapi.discretize_by_edges(w, ndiscr=ndiscr, dl=dl))
             else:
                 points.append(cadapi.discretize(w, ndiscr=ndiscr, dl=dl))
         return points
+
+    @property
+    def vertexes(self):
+        """
+        The vertexes of the wire.
+        """
+        return Coordinates(cadapi.vertexes(self.shape))
+
+    @property
+    def edges(self):
+        """
+        The edges of the wire.
+        """
+        return [BluemiraWire(cadapi.apiWire(o)) for o in cadapi.edges(self.shape)]
+
+    @property
+    def wires(self):
+        """
+        The wires of the wire. By definition a list of itself.
+        """
+        return [BluemiraWire(o) for o in cadapi.wires(self.shape)]
+
+    @property
+    def faces(self):
+        """
+        The faces of the wire. By definition an empty list.
+        """
+        return [self]
+
+    @property
+    def shells(self):
+        """
+        The shells of the wire. By definition an empty list.
+        """
+        return []
+
+    @property
+    def solids(self):
+        """
+        The solids of the wire. By definition an empty list.
+        """
+        return []
+
+    @property
+    def shape_boundary(self):
+        """
+        The boundaries of the wire.
+        """
+        return self.wires

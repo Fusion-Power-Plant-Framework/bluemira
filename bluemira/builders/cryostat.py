@@ -148,15 +148,15 @@ class CryostatBuilder(Builder):
         z_bot = z_mid - self.params.well_depth.value
         tk = self.params.tk_cr_vv.value
 
-        x_inner = [x_in, x_out, x_out, x_gs_kink, x_gs_kink, x_in]
-        z_inner = [z_top, z_top, z_mid, z_mid, z_bot, z_bot]
+        x_inner = np.array([x_in, x_out, x_out, x_gs_kink, x_gs_kink, x_in])
+        z_inner = np.array([z_top, z_top, z_mid, z_mid, z_bot, z_bot])
 
         x_outer = np.array([x_in, x_gs_kink, x_gs_kink, x_out, x_out, x_in])
         x_outer[1:-1] += tk
 
         z_outer = np.array([z_bot, z_bot, z_mid, z_mid, z_top, z_top])
-        z_outer[:4] -= tk
-        z_outer[4:] += tk
+        z_outer[:2] -= tk
+        z_outer[2:] += tk
 
         x = np.concatenate([x_inner, x_outer])
         z = np.concatenate([z_inner, z_outer])
