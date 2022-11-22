@@ -231,9 +231,6 @@ class TestMixedFaces:
         fn = os.sep.join([TEST_PATH, filename])
         coords = Coordinates.from_json(fn)
         face = make_mixed_face(*coords.xyz)
-        from bluemira.display import show_cad
-
-        show_cad(face.boundary[0])
         part = extrude_shape(face, vec=vec, label=filename)
 
         self.assert_properties(true_props, part)
