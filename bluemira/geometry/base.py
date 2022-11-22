@@ -107,9 +107,9 @@ class BluemiraGeo(ABC, GeoMeshable):
         self.__orientation = _Orientation(value)
 
     def _check_reverse(self, obj):
-        if self._orientation != _Orientation(obj.Orientation):
-            obj.reverse()
-            self._orientation = _Orientation(obj.Orientation)
+        # if self._orientation != _Orientation(obj.Orientation):
+        #     obj.reverse()
+        #     self._orientation = _Orientation(obj.Orientation)
         return obj
 
     @staticmethod
