@@ -76,7 +76,7 @@ class BluemiraSolid(BluemiraGeo):
                 raise DisjointedSolid("Disjointed solids are not accepted.")
 
             if not obj.isValid():
-                cadapi.save_as_STP(obj, "objet_not_valid")
+                # cadapi.save_as_STP(obj, "objet_not_valid")
                 raise GeometryError(f"Solid {obj} is not valid.")
 
             bm_shells = []
