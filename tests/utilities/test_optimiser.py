@@ -39,19 +39,27 @@ def f_rosenbrock(x, grad):
         grad[0] = -2 * a + 4 * b * x[0] ** 3 - 4 * b * x[0] * x[1] + 2 * x[0]
         grad[1] = 2 * b * (x[1] - x[0] ** 2)
 
-    return value
+    return float(value)
+
+
+def f_simple(x, grad):
+    value = np.sum(x)
+    if grad.size > 0:
+        grad[:] = np.ones(5)
+
+    return float(value)
 
 
 def f_ineq_constraint(constraint, x, grad):
-    constraint[0] = 0.5 - x[0]
+    constraint[:] = 0.5 - x[0]
     if grad.size > 0:
         grad[0, :] = [-1, 0, 0, 0, 0]
     return constraint
 
 
 def f_ineq_constraints(constraint, x, grad):
-    constraint[0] = (x[0] + x[1]) - 3
-    constraint[1] = (-2 * x[0] + x[1]) + 1
+    constraint[0] = (x[0] + x[1]) - 4
+    constraint[1] = (-2 * x[0] + x[1]) - 2
 
     if grad.size > 0:
         # Again, if we can easily calculate the gradients.. we should!
@@ -78,18 +86,32 @@ def f_eq_constraints(constraint, x, grad):
 
 
 class TestOptimiser:
-    def test_constrained_rosenbrock(self):
+    def test_rosenbrock(self):
+        optimiser = Optimiser(
+            "SLSQP",
+            2,
+            opt_conditions={"xtol_abs": 1e-12, "max_eval": 1000},
+        )
+        optimiser.set_objective_function(f_rosenbrock)
+        optimiser.set_lower_bounds([0, 0])
+        optimiser.set_upper_bounds([3, 3])
+        result = optimiser.optimise([0.0, 0.0])
+        np.testing.assert_allclose(result, np.array([1.0, 1.0]))
+
+    def test_constraints(self):
         optimiser = Optimiser(
             "SLSQP",
             5,
-            opt_conditions={"ftol_rel": 1e-22, "ftol_abs": 1e-12, "max_eval": 1000},
+            opt_conditions={"xtol_abs": 1e-12, "max_eval": 1000},
         )
-        optimiser.set_objective_function(f_rosenbrock)
-        optimiser.set_lower_bounds([-2, -2, 0, 0, 0])
+        tol = 1e-6
+        optimiser.set_objective_function(f_simple)
+        optimiser.set_lower_bounds([0, 0, -1, -1, -1])
         optimiser.set_upper_bounds([3, 3, 4, 4, 4])
-        optimiser.add_ineq_constraints(f_ineq_constraint, tolerance=1e-6)
-        optimiser.add_ineq_constraints(f_ineq_constraints, tolerance=1e-6 * np.ones(2))
-        optimiser.add_eq_constraints(f_eq_constraint, tolerance=1e-6)
-        optimiser.add_eq_constraints(f_eq_constraints, tolerance=1e-6 * np.ones(2))
-        result = optimiser.optimise([0.5, -0.5, 0, 0, 0])
-        np.testing.assert_allclose(result, np.array([1.0, 1.0, 3.14, 3.15, 3.16]))
+        optimiser.add_ineq_constraints(f_ineq_constraint, tolerance=tol)
+        optimiser.add_ineq_constraints(f_ineq_constraints, tolerance=tol * np.ones(2))
+        optimiser.add_eq_constraints(f_eq_constraint, tolerance=tol)
+        optimiser.add_eq_constraints(f_eq_constraints, tolerance=tol * np.ones(2))
+        # NOTE: Convergence only guaranteed for feasible starting point!
+        result = optimiser.optimise(x0=np.array([0.6, 0.5, 3.14, 3.15, 3.16]))
+        np.testing.assert_allclose(result, np.array([0.5, 0.0, 3.14, 3.15, 3.16]))
