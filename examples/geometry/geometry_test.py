@@ -64,7 +64,7 @@ wire_plotter.plot_2d(wire_in)
 
 # %%[markdown]
 
-# 2. a D shape
+# 2. a D-shape
 
 # %%
 wires = []
