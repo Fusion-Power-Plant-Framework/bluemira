@@ -664,4 +664,4 @@ class TestSavingCAD:
                     lines += [line]
 
         assert lines == []
-        # os.remove(generated_file)
+        os.remove(generated_file)
