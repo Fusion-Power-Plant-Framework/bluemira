@@ -190,7 +190,7 @@ class TestMixedFaces:
         """
         coords = Coordinates.from_json(os.sep.join([TEST_PATH, filename]))
         face = make_mixed_face(*coords.xyz)
-        part = revolve_shape(face, degree=degree)
+        part = revolve_shape(face, degree=degree, label=filename)
         self.assert_properties(true_props, part)
 
     @pytest.mark.parametrize(
@@ -207,19 +207,6 @@ class TestMixedFaces:
                     ),
                     "volume": 185.185,
                     "area": 423.998,
-                },
-            ),
-            (
-                "div_test_mfm.json",
-                (0, 2, 0),
-                {
-                    "center_of_mass": (
-                        8.03233,
-                        0.990000,
-                        -6.44430,
-                    ),
-                    "volume": 4.58653,
-                    "area": 29.2239,
                 },
             ),
             (
@@ -244,7 +231,11 @@ class TestMixedFaces:
         fn = os.sep.join([TEST_PATH, filename])
         coords = Coordinates.from_json(fn)
         face = make_mixed_face(*coords.xyz)
-        part = extrude_shape(face, vec=vec)
+        from bluemira.display import show_cad
+
+        show_cad(face.boundary[0])
+        part = extrude_shape(face, vec=vec, label=filename)
+
         self.assert_properties(true_props, part)
 
     def test_face_seg_fault(self):
