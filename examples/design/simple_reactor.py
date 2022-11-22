@@ -117,6 +117,15 @@ class Plasma(ComponentManager):
 class TFCoil(ComponentManager):
     """TF Coil manager"""
 
+    def wp_volume(self):
+        """Get winding pack volume"""
+        return (
+            self.component()
+            .get_component("xyz")
+            .get_component("Winding pack")
+            .shape.volume()
+        )
+
 
 # %%[markdown]
 
