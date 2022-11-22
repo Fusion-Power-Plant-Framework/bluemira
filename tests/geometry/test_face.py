@@ -56,7 +56,6 @@ class TestBluemiraFace:
     def test_two_complicated(self, offset):
         direction = int(offset / abs(offset))
         for shape in self.shapes:
-            print(shape)
             wire = offset_wire(shape, offset, join="arc")
             face_list = [wire, shape][::direction]
             face = BluemiraFace(face_list)
