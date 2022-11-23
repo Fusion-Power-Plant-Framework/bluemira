@@ -25,7 +25,7 @@ from bluemira.base.parameter_frame import Parameter, ParameterFrame
 from bluemira.equilibria import Equilibrium
 from bluemira.equilibria.profiles import BetaIpProfile
 from bluemira.geometry.wire import BluemiraWire
-from eudemo.pf_coils import make_coilset, make_grid
+from eudemo.pf_coils.tools import make_coilset, make_grid
 
 KAPPA_95_TO_100 = 1.12
 

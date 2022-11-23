@@ -22,11 +22,22 @@
 
 import numpy as np
 
+from bluemira.base.constants import EPS
 from bluemira.base.error import BuilderError
+from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.equilibria.coils import Coil, CoilSet
 from bluemira.equilibria.grid import Grid
 from bluemira.geometry.constants import VERY_BIG
-from bluemira.geometry.tools import distance_to, make_polygon, offset_wire
+from bluemira.geometry.face import BluemiraFace
+from bluemira.geometry.tools import (
+    boolean_cut,
+    distance_to,
+    make_polygon,
+    offset_wire,
+    split_wire,
+)
+from bluemira.geometry.wire import BluemiraWire
+from bluemira.utilities.positioning import PathInterpolator, PositionMapper
 
 
 def make_solenoid(r_cs, tk_cs, z_min, z_max, g_cs, tk_cs_ins, tk_cs_cas, n_CS):
@@ -234,3 +245,125 @@ def make_grid(R_0, A, kappa, scale_x=1.6, scale_z=1.7, nx=65, nz=65):
     x_min, x_max = R_0 - scale_x * (R_0 / A), R_0 + scale_x * (R_0 / A)
     z_min, z_max = -scale_z * (kappa * R_0 / A), scale_z * (kappa * R_0 / A)
     return Grid(x_min, x_max, z_min, z_max, nx, nz)
+
+
+def make_coil_mapper(track, exclusion_zones, coils):
+    """
+    Make a PositionMapper for the given coils.
+
+    Break a track down into individual interpolator segments
+    incorporating exclusion zones and mapping tracks to coils.
+
+    Parameters
+    ----------
+    track: BluemiraWire
+        Full length interpolator track for PF coils
+    exclusion_zones: List[BluemiraFace]
+        List of exclusion zones
+    coils: List[Coil]
+        List of coils
+
+    Returns
+    -------
+    mapper: PositionMapper
+        Position mapper for coil position interpolation
+    """
+    # Break down the track into subsegments
+    if exclusion_zones:
+        segments = boolean_cut(track, exclusion_zones)
+    else:
+        segments = [track]
+
+    # Sort the coils into the segments
+    coil_bins = [[] for _ in range(len(segments))]
+    for i, coil in enumerate(coils):
+        distances = [distance_to([coil.x, 0, coil.z], seg)[0] for seg in segments]
+        coil_bins[np.argmin(distances)].append(coil)
+
+    # Check if multiple coils are on the same segment and split the segments and make
+    # PathInterpolators
+    interpolator_dict = {}
+    for segment, bin in zip(segments, coil_bins):
+        if len(bin) < 1:
+            bluemira_warn("There is a segment of the track which has no coils on it.")
+        elif len(bin) == 1:
+            coil = bin[0]
+            interpolator_dict[coil.name] = PathInterpolator(segment)
+        else:
+            coils = bin
+            l_values = np.array(
+                [segment.parameter_at([c.x, 0, c.z], tolerance=VERY_BIG) for c in coils]
+            )
+            idx = np.argsort(l_values)
+            l_values = l_values[idx]
+            split_values = l_values[:-1] + 0.5 * np.diff(l_values)
+            split_positions = [segment.value_at(alpha=split) for split in split_values]
+
+            sorted_coils = []
+            for i in idx:
+                sorted_coils.append(coils[i])
+            coils = sorted_coils
+
+            sub_segs = []
+            for i, split_pos in enumerate(split_positions):
+                split = segment.parameter_at(split_pos, tolerance=10 * EPS)
+                sub_seg_1, segment = split_wire(
+                    segment, segment.value_at(alpha=split), tolerance=10 * EPS
+                )
+                if sub_seg_1:
+                    sub_segs.append(sub_seg_1)
+                else:
+                    bluemira_warn("Sub-segment of 0 length!")
+            sub_segs.append(segment)
+
+            for coil, sub_seg in zip(coils, sub_segs):
+                interpolator_dict[coil.name] = PathInterpolator(sub_seg)
+
+    return PositionMapper(interpolator_dict)
+
+
+def make_pf_coil_path(tf_boundary: BluemiraWire, offset_value: float) -> BluemiraWire:
+    """
+    Make an open wire along which the PF coils can move.
+
+    Parameters
+    ----------
+    tf_boundary: BluemiraWire
+        Outside edge of the TF coil in the x-z plane
+    offset_value: float
+        Offset value from the TF coil edge
+    Returns
+    -------
+    pf_coil_path: BluemiraWire
+        Path along which the PF coil centroids should be positioned
+    """
+    tf_offset = offset_wire(tf_boundary, offset_value)
+
+    # Find top-left and bottom-left "corners"
+    coordinates = tf_offset.discretize(byedges=True, ndiscr=200)
+    x_min = np.min(coordinates.x)
+    z_min, z_max = 0.0, 0.0
+    eps = 0.0
+    while np.isclose(z_min, z_max):
+        # This is unlikely, but if so, shifting x_min a little ensures the boolean cut
+        # can be performed and that an open wire will be returned
+        idx_inner = np.where(np.isclose(coordinates.x, x_min))[0]
+        z_min = np.min(coordinates.z[idx_inner])
+        z_max = np.max(coordinates.z[idx_inner])
+        x_min += eps
+        eps += 1e-3
+
+    cutter = BluemiraFace(
+        make_polygon(
+            {"x": [0, x_min, x_min, 0], "z": [z_min, z_min, z_max, z_max]}, closed=True
+        )
+    )
+
+    result = boolean_cut(tf_offset, cutter)
+    if len(result) > 1:
+        bluemira_warn(
+            "Boolean cut of the TF boundary resulted in more than one wire.. returning the longest one. Fingers crossed."
+        )
+        result.sort(key=lambda wire: -wire.length)
+    pf_coil_path = result[0]
+    return pf_coil_path
