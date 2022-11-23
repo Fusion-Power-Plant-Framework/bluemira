@@ -496,7 +496,7 @@ def wire_closure(bmwire: BluemiraWire, label="closure") -> BluemiraWire:
         closure: BluemiraWire
             Closure wire
     """
-    wire = bmwire._shape
+    wire = bmwire.shape
     closure = BluemiraWire(cadapi.wire_closure(wire), label=label)
     return closure
 
@@ -595,7 +595,7 @@ def offset_wire(
         Offset wire
     """
     return BluemiraWire(
-        cadapi.offset_wire(wire._shape, thickness, join, open_wire), label=label
+        cadapi.offset_wire(wire.shape, thickness, join, open_wire), label=label
     )
 
 
@@ -683,10 +683,10 @@ def revolve_shape(
     if degree == 360:
         # We split into two separate revolutions of 180 degree and fuse them
         if isinstance(shape, BluemiraWire):
-            shape = BluemiraFace(shape)._shape
+            shape = BluemiraFace(shape).shape
             flag_shell = True
         else:
-            shape = shape._shape
+            shape = shape.shape
             flag_shell = False
 
         shape_1 = cadapi.revolve_shape(shape, base, direction, degree=180)
@@ -699,7 +699,7 @@ def revolve_shape(
 
         return convert(result, label)
 
-    return convert(cadapi.revolve_shape(shape._shape, base, direction, degree), label)
+    return convert(cadapi.revolve_shape(shape.shape, base, direction, degree), label)
 
 
 def extrude_shape(shape: BluemiraGeo, vec: tuple, label="") -> BluemiraSolid:
@@ -723,7 +723,7 @@ def extrude_shape(shape: BluemiraGeo, vec: tuple, label="") -> BluemiraSolid:
     if not label:
         label = shape.label
 
-    return convert(cadapi.extrude_shape(shape._shape, vec), label)
+    return convert(cadapi.extrude_shape(shape.shape, vec), label)
 
 
 def sweep_shape(profiles, path, solid=True, frenet=True, label=""):
@@ -750,9 +750,9 @@ def sweep_shape(profiles, path, solid=True, frenet=True, label=""):
     if not isinstance(profiles, Iterable):
         profiles = [profiles]
 
-    profile_shapes = [p._shape for p in profiles]
+    profile_shapes = [p.shape for p in profiles]
 
-    result = cadapi.sweep_shape(profile_shapes, path._shape, solid, frenet)
+    result = cadapi.sweep_shape(profile_shapes, path.shape, solid, frenet)
 
     return convert(result, label=label)
 
@@ -780,11 +780,11 @@ def distance_to(geo1: BluemiraGeo, geo2: BluemiraGeo):
     if isinstance(geo1, Iterable):
         shape1 = _make_vertex(geo1)
     else:
-        shape1 = geo1._shape
+        shape1 = geo1.shape
     if isinstance(geo2, Iterable):
         shape2 = _make_vertex(geo2)
     else:
-        shape2 = geo2._shape
+        shape2 = geo2.shape
     return cadapi.dist_to_shape(shape1, shape2)
 
 
@@ -845,7 +845,7 @@ def slice_shape(shape: BluemiraGeo, plane: BluemiraPlane):
     Further investigation needed.
 
     """
-    _slice = cadapi.slice_shape(shape._shape, plane.base, plane.axis)
+    _slice = cadapi.slice_shape(shape.shape, plane.base, plane.axis)
 
     if isinstance(_slice, np.ndarray) and _slice.size > 0:
         return _slice
@@ -913,7 +913,7 @@ def save_as_STP(
     if not isinstance(shapes, list):
         shapes = [shapes]
 
-    freecad_shapes = [s._shape for s in shapes]
+    freecad_shapes = [s.shape for s in shapes]
     cadapi.save_as_STP(freecad_shapes, filename, scale)
 
 
@@ -1122,7 +1122,7 @@ def boolean_fuse(shapes, label=""):
     if not all(isinstance(s, _type) for s in shapes):
         raise ValueError(f"All instances in {shapes} must be of the same type.")
 
-    api_shapes = [s._shape for s in shapes]
+    api_shapes = [s.shape for s in shapes]
     try:
         merged_shape = cadapi.boolean_fuse(api_shapes)
         return convert(merged_shape, label)
@@ -1152,10 +1152,10 @@ def boolean_cut(shape, tools):
     error: GeometryError
         In case the boolean operation fails.
     """
-    apishape = shape._shape
+    apishape = shape.shape
     if not isinstance(tools, list):
         tools = [tools]
-    apitools = [t._shape for t in tools]
+    apitools = [t.shape for t in tools]
     cut_shape = cadapi.boolean_cut(apishape, apitools)
 
     if isinstance(cut_shape, Iterable):
@@ -1180,7 +1180,7 @@ def point_inside_shape(point, shape):
     inside: bool
         Whether or not the point is inside the shape
     """
-    return cadapi.point_inside_shape(point, shape._shape)
+    return cadapi.point_inside_shape(point, shape.shape)
 
 
 def point_on_plane(point, plane, tolerance=D_TOLERANCE):
@@ -1204,7 +1204,7 @@ def point_on_plane(point, plane, tolerance=D_TOLERANCE):
     return (
         abs(
             cadapi.apiVector(point).distanceToPlane(
-                plane._shape.Position, plane._shape.Axis
+                plane.shape.Position, plane.shape.Axis
             )
         )
         < tolerance

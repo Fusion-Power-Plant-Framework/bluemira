@@ -50,11 +50,9 @@ import numpy as np
 from bluemira.base.file import get_bluemira_path
 
 # Some display functionality
-from bluemira.display import plot_2d, show_cad
+from bluemira.display import plot_2d, show_cad, plotter
 from bluemira.display.displayer import DisplayCADOptions
-from bluemira.geometry.face import BluemiraFace
-from bluemira.geometry.shell import BluemiraShell
-from bluemira.geometry.solid import BluemiraSolid
+import matplotlib.pyplot as plt
 
 # Some useful tools
 from bluemira.geometry.tools import (
@@ -70,7 +68,52 @@ from bluemira.geometry.tools import (
 )
 
 # Basic objects
+from bluemira.geometry.coordinates import Coordinates
 from bluemira.geometry.wire import BluemiraWire
+from bluemira.geometry.face import BluemiraFace
+from bluemira.geometry.shell import BluemiraShell
+from bluemira.geometry.solid import BluemiraSolid
+
+# %%[markdown]
+
+# ## Make a simple 1D geometry
+
+# %%
+# A wire can be created using the set of functions specified in geometry.tools module.
+# Let's start from the simplest one: a linear segmented wire with vertexes (0,0,0) and (1,0,0).
+points1 = Coordinates({"x": [0, 1, 1], "y": [0, 0, 1], "z": [0, 0, 0]})
+first_wire = make_polygon(points1)
+
+# A wire can be labelled using the BluemiraGeo label property
+first_wire.label = "wire1"
+print(first_wire)
+
+# Concatenation of more wires is also allowed:
+points2 = Coordinates({"x": [1, 2], "y": [1, 2], "z": [0, 0]})
+second_wire = make_polygon(points2, label="wire2")
+full_wire = BluemiraWire([first_wire, second_wire], label="full_wire")
+print(full_wire)
+
+# In such a case, sub-wires are still accessible as separated entity and can be returned
+# through a search operation on the full wire:
+first_wire1 = full_wire.search('wire1')[0]
+print(first_wire1.shape.isSame(first_wire.shape))
+
+# Basic plotting functionality have been implemented
+wire_plotter = plotter.WirePlotter()
+wire_plotter.options.view = "xy"
+wire_plotter.plot_2d(full_wire)
+
+#
+full_wire.translate((1, 1, 0))
+wire_plotter.plot_2d(full_wire, show=False)
+plt.title("Translated wire")
+plt.show()
+
+wire_plotter.plot_2d(first_wire, show=False)
+plt.title("First wire")
+plt.show()
+
 
 # %%[markdown]
 

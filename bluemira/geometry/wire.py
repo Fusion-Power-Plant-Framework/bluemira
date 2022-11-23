@@ -58,7 +58,7 @@ class BluemiraWire(BluemiraGeo):
             if isinstance(boundary, cadapi.apiWire):
                 orient = boundary.Orientation
             elif isinstance(boundary, self.__class__):
-                orient = boundary._shape.Orientation
+                orient = boundary.shape.Orientation
             orientations.append(orient)
 
         if orientations.count(orientations[0]) != len(orientations):

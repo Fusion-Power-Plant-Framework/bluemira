@@ -166,7 +166,7 @@ def show_cad(
             temp = DisplayCADOptions(**kwargs)
             new_options.append(temp)
 
-    shapes = [part._shape for part in parts]
+    shapes = [part.shape for part in parts]
     freecad_options = [o.as_dict() for o in new_options]
 
     cadapi.show_cad(shapes, freecad_options)

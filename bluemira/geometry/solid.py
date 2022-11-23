@@ -52,7 +52,7 @@ class BluemiraSolid(BluemiraGeo):
         solid = cadapi.apiSolid(new_shell)
 
         if len(self.boundary) > 1:
-            shell_holes = [cadapi.apiSolid(s._shape) for s in self.boundary[1:]]
+            shell_holes = [cadapi.apiSolid(s.shape) for s in self.boundary[1:]]
             solid = solid.cut(shell_holes)
             if len(solid.Solids) == 1:
                 solid = solid.Solids[0]

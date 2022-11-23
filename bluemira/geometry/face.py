@@ -96,7 +96,7 @@ class BluemiraFace(BluemiraGeo):
         face = cadapi.apiFace(external._create_wire(check_reverse=False))
 
         if len(self.boundary) > 1:
-            fholes = [cadapi.apiFace(h._shape) for h in self.boundary[1:]]
+            fholes = [cadapi.apiFace(h.shape) for h in self.boundary[1:]]
             face = face.cut(fholes)
             if len(face.Faces) == 1:
                 face = face.Faces[0]
