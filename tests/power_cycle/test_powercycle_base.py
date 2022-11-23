@@ -12,15 +12,19 @@ def script_title():
     return "Test Power Cycle 'base'"
 
 
-def test_PowerCycleError():
+class TestPowerCycleABCError:
+    pass
+
+
+def test_PowerCycleABCError():
     with pytest.raises(PowerCycleABCError):
         raise PowerCycleABCError(
             None,
-            "Some error in the Power Cycle module.",
+            "Some error in the 'PowerCycleABC' class.",
         )
 
 
-class Test_PowerCycleABC:
+class TestPowerCycleABC:
     class SampleConcreteClass(PowerCycleABC):  # Inner Class
         pass
 
