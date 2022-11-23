@@ -27,8 +27,8 @@
     "TF coils": {
         "param_class": "TripleArc",
         "variables_map": {},
-        "run_mode": "run",
-        "name": "First Wall",
+        "run_mode": "read",
+        "file_path": "/home/bf2936/bluemira/code/bluemira/eudemo/config/TFCoilDesign.json",
         "problem_class": "bluemira.builders.tf_coils::RippleConstrainedLengthGOP"
     }
 }
