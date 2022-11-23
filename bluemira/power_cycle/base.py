@@ -26,30 +26,37 @@ class PowerCycleABC(ABC):
     """
 
     def __init__(self, name: str):
-        if isinstance(name, str):
-            self.name = name
-        else:
-            raise TypeError(
-                "The 'name' attribute of instances of the "
-                f"{self.__class__} class must be of the 'str' class."
-            )
+        self.name = self._validate_name(name)
 
     # ------------------------------------------------------------------
     #  METHODS
     # ------------------------------------------------------------------
 
-    @staticmethod
-    def _validate_list(argument):
+    def _validate_name(self, argument):
         """
-        Validate a subclass argument to be a list. If the argument is
-        just a single value, insert it in a list.
+        Validate an argument to be an instance of the 'str' class to be
+        considered a valid name for an instance of a child class of the
+        PowerCycleABC class.
+        """
+        if not isinstance(argument, str):
+            raise PowerCycleError(
+                "The 'name' attribute of instances of the "
+                f"{self.__class__} class must be of the 'str' class."
+            )
+        return argument
+
+    @staticmethod
+    def validate_list(argument):
+        """
+        Validate an argument to be a list. If the argument is just a
+        single value, insert it in a list.
         """
         if not isinstance(argument, list):
             argument = [argument]
         return argument
 
     @classmethod
-    def _validate(cls, instance):
+    def validate(cls, instance):
         """
         Validate `instance` to be an object of the class that calls
         this method.

@@ -1,12 +1,20 @@
-# from pprint import pprint
+from pprint import pformat
 
-# import matplotlib.pyplot as plt
 import pytest
 
-from bluemira.base.look_and_feel import bluemira_print
-from bluemira.power_cycle.base import PowerCycleABC  # PowerCycleError,; NetPowerABC,
+from bluemira.base.look_and_feel import bluemira_debug
+from bluemira.power_cycle.base import PowerCycleABC, PowerCycleError  # NetPowerABC,
 
-bluemira_print("Test Power Cycle Base Classes")
+# import matplotlib.pyplot as plt
+
+
+def script_title():
+    return "Test Power Cycle Base"
+
+
+def test_PowerCycleError():
+    with pytest.raises(PowerCycleError):
+        raise PowerCycleError("Some error in the Power Cycle module.")
 
 
 class Test_PowerCycleABC:
@@ -24,10 +32,20 @@ class Test_PowerCycleABC:
         assert isinstance(right_sample, PowerCycleABC)
 
         int_name = 17
-        with pytest.raises(TypeError):
+        with pytest.raises(PowerCycleError):
             wrong_sample = self.SampleConcreteClass(int_name)
-            name = wrong_sample.name
-            print(name.__class__)
+            wrong_name = wrong_sample.name
+            bluemira_debug(
+                f"""
+                {script_title()} (class constructor)
+
+                Name given to sample:
+                {pformat(wrong_name)}
+
+                Class of name given to sample:
+                {pformat(wrong_name.__class__)}
+                """
+            )
 
     def test_validate_list(self):
         right_sample = self._create_sample()
@@ -38,7 +56,7 @@ class Test_PowerCycleABC:
             [1, 2, 3, 4],
         ]
         for argument in test_arguments:
-            validated_argument = right_sample._validate_list(argument)
+            validated_argument = right_sample.validate_list(argument)
             assert isinstance(validated_argument, list)
 
     # def test_validate():
