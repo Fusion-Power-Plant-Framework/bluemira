@@ -736,5 +736,20 @@
         "unit": "m",
         "source": "Input",
         "long_name": "Vertical offset of plasma centreline"
+    },
+    "F_cs_sepmax": {
+        "value": 350,
+        "unit": "MN",
+        "long_name": "Maximum separation force between CS modules"
+    },
+    "F_cs_ztotmax": {
+        "value": 300,
+        "unit": "MN",
+        "long_name": "Maximum total vertical force in the CS stack"
+    },
+    "F_pf_zmax": {
+        "value": 450,
+        "unit": "MN",
+        "long_name": "Maximum vertical force on a single PF coil"
     }
 }

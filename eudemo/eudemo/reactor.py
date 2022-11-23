@@ -52,6 +52,7 @@ from eudemo.blanket import Blanket, BlanketBuilder
 from eudemo.equilibria import EquilibriumDesigner
 from eudemo.ivc import design_ivc
 from eudemo.params import EUDEMOReactorParams
+from eudemo.pf_coils import PFCoilsDesigner
 from eudemo.radial_build import radial_build
 from eudemo.tf_coils import TFCoil, TFCoilBuilder, TFCoilDesigner
 from eudemo.vacuum_vessel import VacuumVessel, VacuumVesselBuilder
@@ -160,5 +161,14 @@ if __name__ == "__main__":
         reactor.plasma.lcfs(),
         vacuum_vessel.xz_boundary(),
     )
+
+    pf_coil_keep_out_zones = []  # Update when ports are added
+    pf_designer = PFCoilsDesigner(
+        params,
+        build_config.get("PF coils", {}),
+        reactor.tf_coils.boundary(),
+        pf_coil_keep_out_zones,
+    )
+    coilset = pf_designer.execute()
 
     reactor.show_cad()

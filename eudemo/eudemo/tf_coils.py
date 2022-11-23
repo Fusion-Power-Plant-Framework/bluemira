@@ -80,12 +80,23 @@ class TFCoil(ComponentManager):
             The y coordinate(s) of the points at which to calculate the field
         z: Union[float, np.array]
             The z coordinate(s) of the points at which to calculate the field
+
         Returns
         -------
         field: np.array
             The magnetic field vector {Bx, By, Bz} in [T]
         """
         return self._field_solver.field(x, y, z)
+
+    def boundary(self) -> BluemiraWire:
+        """Return the outer xz-boundary of the TF Coils."""
+        return (
+            self.component()
+            .get_component("xz")
+            .get_component("Casing")
+            .get_component("outer")
+            .shape.boundary[0]
+        )
 
 
 @dataclass
