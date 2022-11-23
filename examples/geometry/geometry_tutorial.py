@@ -80,7 +80,8 @@ from bluemira.geometry.solid import BluemiraSolid
 
 # %%
 # A wire can be created using the set of functions specified in geometry.tools module.
-# Let's start from the simplest one: a linear segmented wire with vertexes (0,0,0) and (1,0,0).
+# Let's start from the simplest one: a linear segmented wire with
+# vertexes (0,0,0) and (1,0,0).
 points1 = Coordinates({"x": [0, 1, 1], "y": [0, 0, 1], "z": [0, 0, 0]})
 first_wire = make_polygon(points1)
 
@@ -96,7 +97,7 @@ print(full_wire)
 
 # In such a case, sub-wires are still accessible as separated entity and can be returned
 # through a search operation on the full wire:
-first_wire1 = full_wire.search('wire1')[0]
+first_wire1 = full_wire.search("wire1")[0]
 print(first_wire1.shape.isSame(first_wire.shape))
 
 # Basic plotting functionality have been implemented
