@@ -29,7 +29,7 @@ def test_add_dict_entries():
     new_dict = _add_dict_entries(old_dict, new_entries)
     bluemira_debug(
         f"""
-        {script_title()} ('_add_dict_entries')
+        {script_title()} (_add_dict_entries)
 
         Old dictionary:
         {pformat(old_dict)}
@@ -54,7 +54,7 @@ def test_join_delimited_values():
         string_from_argument = _join_delimited_values(test_argument)
         bluemira_debug(
             f"""
-            {script_title()} ('_join_delimited_values')
+            {script_title()} (_join_delimited_values)
 
             Generated string:
             {string_from_argument}
@@ -127,7 +127,7 @@ class TestPlottingTools:
             n_axes = len(old_limits)
             bluemira_debug(
                 f"""
-                {script_title()} ('adjust_2d_graph_ranges')
+                {script_title()} (adjust_2d_graph_ranges)
 
                 Old axes limits:
                 {pformat(old_limits)}
