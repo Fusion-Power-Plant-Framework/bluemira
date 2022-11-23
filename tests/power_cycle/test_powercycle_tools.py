@@ -13,7 +13,7 @@ from bluemira.power_cycle.tools import (
 
 
 def script_title():
-    return "Test Power Cycle Tools"
+    return "Test Power Cycle 'tools'"
 
 
 def test_add_dict_entries():
@@ -69,14 +69,14 @@ class TestPlottingTools:
         self.sample_y = [3, 4]
 
     def teardown_method(self):
-        self.closer_all_plots()
+        self._close_all_plots()
 
     @staticmethod
-    def closer_all_plots():
+    def _close_all_plots():
         plt.close("all")
 
     @staticmethod
-    def query_axes_limits(ax):
+    def _query_axes_limits(ax):
         all_limits = []
         all_axes = ["x", "y"]
         for axis in all_axes:
@@ -118,9 +118,9 @@ class TestPlottingTools:
             test_plot.plot(self.sample_x, self.sample_y)
             test_plot.set_xscale(scale)
             test_plot.set_yscale(scale)
-            old_limits = self.query_axes_limits(test_plot)
+            old_limits = self._query_axes_limits(test_plot)
             adjust_2d_graph_ranges(ax=test_plot)
-            new_limits = self.query_axes_limits(test_plot)
+            new_limits = self._query_axes_limits(test_plot)
             assert isinstance(test_plot, plt.Axes)
 
             # Assert that range of each axes is increased
@@ -149,4 +149,4 @@ class TestPlottingTools:
                 assert old_upper < new_upper
 
             del test_plot
-            self.closer_all_plots()
+            self._close_all_plots()
