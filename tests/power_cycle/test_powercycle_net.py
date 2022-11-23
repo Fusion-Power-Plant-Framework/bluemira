@@ -3,7 +3,12 @@ from pprint import pformat
 import pytest
 
 from bluemira.base.look_and_feel import bluemira_debug
-from bluemira.power_cycle.net import NetPowerABC, NetPowerABCError
+from bluemira.power_cycle.net import (
+    NetPowerABC,
+    NetPowerABCError,
+    PowerData,
+    PowerDataError,
+)
 
 
 def script_title():
@@ -14,11 +19,11 @@ def test_NetPowerABCError():
     with pytest.raises(NetPowerABCError):
         raise NetPowerABCError(
             None,
-            "Some error in the Power Cycle module.",
+            "Some error in the 'NetPowerABC' class.",
         )
 
 
-class Test_NetPowerABC:
+class TestNetPowerABC:
     class SampleConcreteClass(NetPowerABC):  # Inner Class
         pass
 
@@ -60,7 +65,7 @@ class Test_NetPowerABC:
                     validated_arg = sample._validate_n_points(argument)
                     bluemira_debug(
                         f"""
-                        {script_title()} ('_validate_n_points')
+                        {script_title()} (_validate_n_points)
 
                         Argument:
                         {pformat(argument)}
@@ -81,3 +86,41 @@ class Test_NetPowerABC:
             one_attr = getattr(one_sample, attribute)
             another_attr = getattr(another_sample, attribute)
             assert one_attr != another_attr
+
+
+def test_PowerDataError():
+    with pytest.raises(PowerDataError):
+        raise PowerDataError(
+            None,
+            "Some error in the 'PowerData' class.",
+        )
+
+
+class TestPowerData:
+    def setup_method(self):
+        sample_name = "Sample PowerData Instance"
+        sample_time = [0, 4, 7, 8]
+        sample_data = [6, 9, 7, 8]
+        sample = PowerData(sample_name, sample_time, sample_data)
+        self.sample = sample
+
+    def test_is_increasing(self):
+        sample = self.sample
+        increasing_list = sample.time
+        non_increasing_list = sample.data
+        assert sample._is_increasing(increasing_list)
+        with pytest.raises(PowerDataError):
+            sample._is_increasing(non_increasing_list)
+            bluemira_debug(
+                f"""
+                {script_title()} (_is_increasing)
+
+                Example of increasing list:
+                {pformat(increasing_list)}
+
+                Example of non-increasing list:
+                {pformat(non_increasing_list)}
+                """
+            )
+
+    # def test_sanity(self):

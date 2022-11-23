@@ -9,7 +9,10 @@ from bluemira.base.error import BluemiraError
 
 class PowerCycleError(BluemiraError):
     """
-    Exception class for PowerCycle objects.
+    Exception class for Power Cycle classes.
+    Class should be named in the following format: '(Class)Error',
+    where '(Class)' is the name of the associated class (source) for
+    which the exception class is being defined.
     """
 
     def __init__(self, case=None, msg=""):
@@ -17,8 +20,8 @@ class PowerCycleError(BluemiraError):
         if case:
             all_errors = self._errors()
             if case in all_errors:
-                extra_msg = all_errors[case]
-                message = message + extra_msg
+                extra_msg = str(all_errors[case])
+                message = message + " " + extra_msg
             else:
                 raise ValueError(
                     f"The requested error case '{case}' has not been "
@@ -26,19 +29,31 @@ class PowerCycleError(BluemiraError):
                 )
         super().__init__(message)
 
+    def _source(self):
+        class_name = self.__class__
+        source_class = class_name.replace("Error", "")
+        source_class = "'" + source_class + "'"
+        return source_class
+
     @abstractmethod
     def _errors(self) -> Dict:
         pass
 
 
 class PowerCycleABCError(PowerCycleError):
-    def _errors(self, case):
+    def _associated_class(self) -> str:
+        return
+
+    def _errors(self):
         errors = {
             "name": [
-                "Invalid 'name' parameter.",
+                "Invalid 'name' parameter. The 'name' attribute of ' "
+                f"instances of the {self._source} class must be of "
+                "the 'str' class.",
             ],
             "class": [
-                "Invalid instance.",
+                "Invalid instance. The tested object is not an "
+                f"instance of the {self._source} class."
             ],
         }
         return errors
@@ -68,11 +83,7 @@ class PowerCycleABC(ABC):
         PowerCycleABC class.
         """
         if not isinstance(argument, str):
-            raise PowerCycleABCError(
-                None,
-                "The 'name' attribute of instances of the "
-                f"{self.__class__} class must be of the 'str' class.",
-            )
+            raise PowerCycleABCError("name")
         return argument
 
     @staticmethod
@@ -91,11 +102,6 @@ class PowerCycleABC(ABC):
         Validate `instance` to be an object of the class that calls
         this method.
         """
-        class_name = cls.__name__
         if type(instance) != cls:
-            raise PowerCycleABCError(
-                None,
-                "Invalid object. The tested object is not an "
-                f"instance of the '{class_name}' class.",
-            )
+            raise PowerCycleABCError("class")
         return instance
