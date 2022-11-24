@@ -27,7 +27,7 @@ import operator
 
 import numba as nb
 import numpy as np
-from matplotlib._contour import QuadContourGenerator
+from contourpy import LineType, contour_generator
 from scipy.interpolate import RectBivariateSpline
 
 from bluemira.base.look_and_feel import bluemira_warn
@@ -443,11 +443,13 @@ def get_contours(x, z, array, value):
 
     Returns
     -------
-    value_loop: np.array(ni, mi)
-        The points of the value contour in the array
+    values: List[np.ndarray]
+        The list of arrays of value contour(s) in the array
     """
-    qcg = QuadContourGenerator(x, z, array, None, None, 0)
-    return qcg.create_contour(value)[0]
+    con_gen = contour_generator(
+        x, z, array, name="mpl2014", line_type=LineType.SeparateCode
+    )
+    return con_gen.lines(value)[0]
 
 
 def find_flux_surfs(x, z, psi, psinorm, o_points=None, x_points=None):
