@@ -51,7 +51,7 @@ from bluemira.mesh.meshing import Mesh
 
 # # Geometry caching test
 
-# Creation of a simple 2-D geometry
+# Creation of a simple 2-D geometry.
 # 1. a square
 
 # %%
