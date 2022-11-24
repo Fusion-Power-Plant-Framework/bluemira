@@ -105,12 +105,13 @@ jobs:
         # https://github.com/actions/runner/issues/409#issuecomment-752775072
         PYTEST_LONGRUN: ${{ github.event.pull_request.head.ref == 'develop_dependencies' && '--longrun' || '' }}
       run: |
+        export PYTHONPATH="$(pwd)/eudemo"
         pytest --cov=bluemira \
                --cov-report html:htmlcov_bluemira \
                --cov-report xml \
                --json-report \
                --json-report-indent=3 \
-               tests examples/design/EU-DEMO --reactor --private ${PYTEST_LONGRUN}
+               tests eudemo/tests --reactor --private ${PYTEST_LONGRUN}
 
     - name: Upload test report
       uses: actions/upload-artifact@v3
