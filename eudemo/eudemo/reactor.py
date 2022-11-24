@@ -45,7 +45,7 @@ from bluemira.base.parameter_frame import make_parameter_frame
 from bluemira.base.reactor import Reactor
 from bluemira.builders.divertor import Divertor, DivertorBuilder
 from bluemira.builders.plasma import Plasma, PlasmaBuilder
-from bluemira.builders.thermal_shield import VVTSBuilder
+from bluemira.builders.thermal_shield import VacuumVesselThermalShield, VVTSBuilder
 from bluemira.equilibria.equilibrium import Equilibrium
 from bluemira.geometry.tools import make_polygon
 from eudemo.blanket import Blanket, BlanketBuilder
@@ -69,6 +69,7 @@ class EUDEMO(Reactor):
     divertor: Divertor
     blanket: Blanket
     tf_coils: TFCoil
+    vv_thermal: VacuumVesselThermalShield
 
 
 def build_plasma(build_config: Dict, eq: Equilibrium) -> Plasma:
@@ -136,7 +137,7 @@ if __name__ == "__main__":
         params, build_config["IVC"], equilibrium=eq
     )
 
-    # Do not add VV to the reactor, as the built shape error when
+    # Do not add VV to the reactor, as the built shape errors when
     # displayed (cannot build face from wire).
     vacuum_vessel = build_vacuum_vessel(
         params, build_config.get("Vacuum vessel", {}), ivc_boundary
@@ -154,6 +155,7 @@ if __name__ == "__main__":
         thermal_shield_config.get("Vacuum vessel", {}),
         keep_out_zone=vacuum_vessel.xz_boundary(),
     )
+    reactor.vv_thermal = vv_thermal_shield.build()
 
     reactor.tf_coils = build_tf_coils(
         params,
