@@ -63,12 +63,17 @@ class BluemiraFace(BluemiraGeo):
         """Make a copy of the BluemiraFace"""
         return BluemiraFace(self.boundary, self.label)
 
-    def deepcopy(self):
+    def deepcopy(self, label=None):
         """Make a copy of the BluemiraFace"""
         boundary = []
         for o in self.boundary:
-            boundary += [o.deepcopy()]
-        return BluemiraFace(boundary, self.label)
+            boundary += [o.deepcopy(o.label)]
+        geo_copy = BluemiraFace(boundary)
+        if label is not None:
+            geo_copy.label = label
+        else:
+            geo_copy.label = self.label
+        return geo_copy
 
     def _check_boundary(self, objs):
         """Check if objects in objs are of the correct type for this class"""

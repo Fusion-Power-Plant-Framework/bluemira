@@ -230,6 +230,12 @@ class BluemiraGeo(ABC, GeoMeshable):
         """
         return cadapi.is_valid(self.shape)
 
+    def is_same(self, obj: BluemiraGeo):
+        """
+        Check if obj has the same shape as self
+        """
+        return cadapi.is_same(self.shape, obj.shape)
+
     def search(self, label: str):
         """
         Search for a shape with the specified label

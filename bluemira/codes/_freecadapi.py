@@ -617,6 +617,11 @@ def is_valid(obj) -> bool:
     return _get_api_attr(obj, "isValid")()
 
 
+def is_same(obj1, obj2) -> bool:
+    """True if obj1 and obj2 have the same shape."""
+    return obj1.isSame(obj2)
+
+
 def bounding_box(obj) -> Tuple[float, float, float, float, float, float]:
     """Object's bounding box"""
     box = _get_api_attr(obj, "BoundBox")
@@ -1100,7 +1105,7 @@ def translate_shape(shape, vector: tuple):
     -------
     shape: the modified shape
     """
-    return shape.translate(vector)
+    return shape.translate(Base.Vector(vector))
 
 
 def rotate_shape(

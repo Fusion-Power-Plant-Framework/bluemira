@@ -477,7 +477,7 @@ class TestMakeBSpline:
         # np.testing.assert_allclose(spline.length, expected_length)
         if st and et:
             assert spline.length > 1.0
-            e = spline._shape.Edges[0]
+            e = spline.shape.Edges[0]
             np.testing.assert_allclose(
                 e.tangentAt(e.FirstParameter), np.array(st) / norm(st)
             )
@@ -494,12 +494,12 @@ class TestMakeBSpline:
             points, closed=True, start_tangent=st, end_tangent=et
         )
         if st and et:
-            e = spline._shape.Edges[0]
+            e = spline.shape.Edges[0]
             np.testing.assert_allclose(
                 e.tangentAt(e.FirstParameter), np.array(st) / norm(st)
             )
 
-            # if the bspline is closed, end tangency is not considerd. Last point is
+            # if the bspline is closed, end tangency is not considered. Last point is
             # equal to the first point, thus also its tangent.
             np.testing.assert_allclose(
                 e.tangentAt(e.LastParameter), np.array(st) / norm(st)
