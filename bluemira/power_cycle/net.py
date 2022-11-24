@@ -113,7 +113,7 @@ class PowerDataError(PowerCycleError):
         return errors
 
 
-class PowerData(PowerCycleABC):
+class PowerData(NetPowerABC):
     """
     Data class to store a set of time and load vectors.
 
