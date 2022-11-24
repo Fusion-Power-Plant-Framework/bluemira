@@ -1,5 +1,6 @@
 from pprint import pformat
 
+import matplotlib.pyplot as plt
 import pytest
 
 from bluemira.base.look_and_feel import bluemira_debug
@@ -50,27 +51,26 @@ class TestNetPowerABC:
         sample = self.sample
         all_arguments = self.test_arguments
         for argument in all_arguments:
+            bluemira_debug(
+                f"""
+                {script_title()} (NetPowerABC._validate_n_points)
 
+                Argument:
+                {pformat(argument)}
+                """
+            )
             if not argument:
                 default_n_points = sample._n_points
                 validated_arg = sample._validate_n_points(argument)
                 assert validated_arg == default_n_points
 
-            elif isinstance(argument, int) or isinstance(argument, float):
+            elif (type(argument) is int) or (type(argument) is float):
                 validated_arg = sample._validate_n_points(argument)
                 assert isinstance(validated_arg, int)
 
             else:
                 with pytest.raises(NetPowerABCError):
                     validated_arg = sample._validate_n_points(argument)
-                    bluemira_debug(
-                        f"""
-                        {script_title()} (_validate_n_points)
-
-                        Argument:
-                        {pformat(argument)}
-                        """
-                    )
 
     def test_make_secondary_in_plot(self):
         one_sample = self.sample
@@ -106,21 +106,70 @@ class TestPowerData:
 
     def test_is_increasing(self):
         sample = self.sample
-        increasing_list = sample.time
-        non_increasing_list = sample.data
-        assert sample._is_increasing(increasing_list)
+        increasing_list_example = sample.time
+        non_increasing_list_example = sample.data
+        bluemira_debug(
+            f"""
+            {script_title()} (PowerData._is_increasing)
+
+            Example of increasing list:
+            {pformat(increasing_list_example)}
+
+            Example of non-increasing list:
+            {pformat(non_increasing_list_example)}
+            """
+        )
+        assert sample._is_increasing(increasing_list_example)
         with pytest.raises(PowerDataError):
-            sample._is_increasing(non_increasing_list)
-            bluemira_debug(
-                f"""
-                {script_title()} (_is_increasing)
+            sample._is_increasing(non_increasing_list_example)
 
-                Example of increasing list:
-                {pformat(increasing_list)}
+    def test_sanity(self):
+        sample = self.sample
+        name = sample.name
+        list_of_given_length = sample.time
+        list_shorter = list_of_given_length[:-1]
+        list_longer = list_of_given_length + [10]
+        all_lists = [
+            list_of_given_length,
+            list_shorter,
+            list_longer,
+        ]
+        for time in all_lists:
+            for data in all_lists:
 
-                Example of non-increasing list:
-                {pformat(non_increasing_list)}
-                """
-            )
+                length_time = len(time)
+                length_data = len(data)
+                bluemira_debug(
+                    f"""
+                    {script_title()} (PowerData._sanity)
 
-    # def test_sanity(self):
+                    List used as time vector:
+                    {pformat(time)}
+
+                    List used as data vector:
+                    {pformat(data)}
+                    """
+                )
+
+                if length_time == length_data:
+                    test_instance = PowerData(name, time, data)
+                    assert isinstance(test_instance, PowerData)
+
+                else:
+                    with pytest.raises(PowerDataError):
+                        test_instance = PowerData(name, time, data)
+
+    def test_plot(self):
+        fig = plt.figure()
+        plt.grid()
+        sample = self.sample
+        all_axes = sample.plot()
+        bluemira_debug(
+            f"""
+            {script_title()} (PowerData._plot)
+
+            All plotted objects:
+            {pformat(all_axes)}
+            """
+        )
+        plt.show()  # Run with `pytest --plotting-on` to visualize

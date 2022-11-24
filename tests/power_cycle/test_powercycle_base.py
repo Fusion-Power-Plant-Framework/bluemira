@@ -61,7 +61,7 @@ class TestPowerCycleABC:
                     wrong_sample = self.SampleConcreteClass(argument)
                     bluemira_debug(
                         f"""
-                        {script_title()} (class constructor)
+                        {script_title()} (PowerCycleABC constructor)
 
                         Name given to sample:
                         {pformat(wrong_sample.name)}
