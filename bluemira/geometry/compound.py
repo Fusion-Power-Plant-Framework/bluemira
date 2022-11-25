@@ -62,38 +62,32 @@ class BluemiraCompound(BluemiraGeo):
         """
         The edges of the compound.
         """
-        return [BluemiraWire(cadapi.apiWire(o)) for o in cadapi.edges(self.shape)]
+        return tuple([BluemiraWire(cadapi.apiWire(o)) for o in cadapi.edges(self.shape)])
 
     @property
     def wires(self):
         """
         The wires of the compound.
         """
-        return [BluemiraWire(o) for o in cadapi.wires(self.shape)]
+        return tuple([BluemiraWire(o) for o in cadapi.wires(self.shape)])
 
     @property
     def faces(self):
         """
         The faces of the compound.
         """
-        return [BluemiraFace(o) for o in cadapi.faces(self.shape)]
+        return tuple([BluemiraFace(o) for o in cadapi.faces(self.shape)])
 
     @property
     def shells(self):
         """
         The shells of the compound.
         """
-        return [BluemiraShell(o) for o in cadapi.shells(self.shape)]
+        return tuple([BluemiraShell(o) for o in cadapi.shells(self.shape)])
 
     @property
     def solids(self):
         """
         The solids of the compound.
         """
-        return [BluemiraSolid(o) for o in cadapi.solids(self.shape)]
-
-    def shape_boundary(self):
-        """
-        The boundaries of the compound. Ill-defined, so None.
-        """
-        return None
+        return tuple([BluemiraSolid(o) for o in cadapi.solids(self.shape)])

@@ -420,11 +420,3 @@ class BluemiraGeo(ABC, GeoMeshable):
         The solids of the BluemiraGeo.
         """
         pass
-
-    @property
-    @abstractmethod
-    def shape_boundary(self):
-        """
-        The boundaries of the BluemiraGeo.
-        """
-        pass

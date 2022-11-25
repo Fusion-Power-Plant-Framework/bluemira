@@ -117,10 +117,3 @@ class BluemiraShell(BluemiraGeo):
         The solids of the shell. By definition an empty list.
         """
         return ()
-
-    @property
-    def shape_boundary(self):
-        """
-        The boundaries of the shell.
-        """
-        return self.faces

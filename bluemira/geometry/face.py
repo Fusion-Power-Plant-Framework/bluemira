@@ -207,10 +207,3 @@ class BluemiraFace(BluemiraGeo):
         The solids of the wire. By definition an empty list.
         """
         return ()
-
-    @property
-    def shape_boundary(self):
-        """
-        The boundaries of the wire.
-        """
-        return self.wires

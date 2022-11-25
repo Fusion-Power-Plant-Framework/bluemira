@@ -136,10 +136,3 @@ class BluemiraSolid(BluemiraGeo):
         The solids of the solid. By definition a list of itself.
         """
         return tuple(self)
-
-    @property
-    def shape_boundary(self):
-        """
-        The boundaries of the solid.
-        """
-        return self.shells
