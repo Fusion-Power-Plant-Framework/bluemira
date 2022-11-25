@@ -24,6 +24,7 @@ Test first wall silhouette designer.
 
 import copy
 import os
+from pathlib import Path
 
 import numpy as np
 import pytest
@@ -36,7 +37,7 @@ from bluemira.geometry.tools import make_circle, make_polygon
 from eudemo.tf_coils import TFCoilBuilder, TFCoilDesigner
 
 EQDATA = get_bluemira_path("equilibria/test_data", subfolder="tests")
-DATA = get_bluemira_path("tests/test_data", subfolder="eudemo")
+DATA = str(Path(__file__).parent / "test_data")
 
 OPTIMISER_MODULE_REF = "bluemira.builders.tf_coils"
 

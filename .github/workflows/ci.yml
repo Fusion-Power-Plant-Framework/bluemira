@@ -111,7 +111,7 @@ jobs:
                --cov-report xml \
                --json-report \
                --json-report-indent=3 \
-               tests eudemo/tests --reactor --private ${PYTEST_LONGRUN}
+               tests eudemo/eudemo_tests --reactor --private ${PYTEST_LONGRUN}
 
     - name: Upload test report
       uses: actions/upload-artifact@v3
