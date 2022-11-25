@@ -1,18 +1,22 @@
 # EU-DEMO Reactor Design
 
 This folder contains the EU-DEMO reactor design.
-To run the reactor design, or the EUDEMO tests,
-you must add the `eudemo` folder to your python path:
+To use the `eudemo` package, you must add its path to your Python path:
 
 ```bash
 export PYTHONPATH="<path/to/bluemira>/eudemo:${PYTHONPATH}"
 ```
 
-Run the design using the `reactor.py` file:
+To run the reactor build,
+`cd` into the `eudemo` directory and run the `reactor.py` file:
 
-```console
+```bash
+cd <path/to/bluemira>/eudemo
 python eudemo/eudemo/reactor.py
 ```
+
+The `cd` is required, as the paths in the build config are
+relative to the `eudemo` directory.
 
 In future this will be moved to a separate repository.
 It should be used as a template for how we expect
