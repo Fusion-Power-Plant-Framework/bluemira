@@ -222,20 +222,83 @@ class TestPowerLoad:
         self.load_1 = load_1
         self.load_2 = load_2
 
-    def test_constructor(self):
-
+    def extract_input_samples(self):
         load_1 = self.load_1
         load_2 = self.load_2
-        sample_powerdata_1 = load_1.data_set[0]
-        sample_powerdata_2 = load_2.data_set[0]
-        sample_powerloadmodel_1 = load_1.model[0]
-        sample_powerloadmodel_2 = load_2.model[0]
+        powerdata_1 = load_1.data_set[0]
+        powerdata_2 = load_2.data_set[0]
+        powerloadmodel_1 = load_1.model[0]
+        powerloadmodel_2 = load_2.model[0]
 
-        multi_set = [sample_powerdata_1, sample_powerdata_2]
-        multi_model = [sample_powerloadmodel_1, sample_powerloadmodel_2]
+        powerdata_samples = [
+            powerdata_1,
+            powerdata_2,
+        ]
+        powerloadmodel_samples = [
+            powerloadmodel_1,
+            powerloadmodel_2,
+        ]
+        return powerdata_samples, powerloadmodel_samples
+
+    def test_constructor(self):
+
+        out1, out2 = self.extract_input_samples()
+        powerdata_samples, powerloadmodel_samples = out1, out2
+
         multi_load = PowerLoad(
-            "Load with multiple data sets",
-            multi_set,
-            multi_model,
+            "Load with multiple data sets & models",
+            powerdata_samples,
+            powerloadmodel_samples,
         )
         assert isinstance(multi_load, PowerLoad)
+
+    def test_sanity(self):
+
+        out1, out2 = self.extract_input_samples()
+        powerdata_samples, powerloadmodel_samples = out1, out2
+
+        max_powerdata_length = len(powerdata_samples)
+        max_powerloadmodel_length = len(powerloadmodel_samples)
+
+        for powerdata in powerdata_samples:
+            base_powerdata_input = powerdata
+
+            for powerloadmodel in powerloadmodel_samples:
+                base_powerloadmodel_input = powerloadmodel
+
+                for n_pd in range(max_powerdata_length):
+                    data_input = powerdata_samples[0:n_pd]
+                    data_input.insert(0, base_powerdata_input)
+
+                    for n_plm in range(max_powerloadmodel_length):
+                        model_input = powerloadmodel_samples[0:n_plm]
+                        model_input.insert(0, base_powerloadmodel_input)
+
+                        bluemira_debug(
+                            f"""
+                            {script_title()} (PowerLoadModel._sanity)
+
+                            Current PowerData input:
+                            {pformat(data_input)}
+
+                            Current PowerLoadModel input:
+                            {pformat(model_input)}
+                            """
+                        )
+
+                        if n_pd == n_plm:
+                            load = PowerLoad(
+                                "Test Load",
+                                data_input,
+                                model_input,
+                            )
+                            assert isinstance(load, PowerLoad)
+                        else:
+                            with pytest.raises(PowerLoadError):
+                                load = PowerLoad(
+                                    "Test Load",
+                                    data_input,
+                                    model_input,
+                                )
+
+    # def test_add():
