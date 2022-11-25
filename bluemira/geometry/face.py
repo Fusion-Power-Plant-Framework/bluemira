@@ -178,35 +178,35 @@ class BluemiraFace(BluemiraGeo):
         """
         The edges of the wire.
         """
-        return [BluemiraWire(cadapi.apiWire(o)) for o in cadapi.edges(self.shape)]
+        return tuple([BluemiraWire(cadapi.apiWire(o)) for o in cadapi.edges(self.shape)])
 
     @property
     def wires(self):
         """
         The wires of the wire. By definition a list of itself.
         """
-        return [BluemiraWire(o) for o in cadapi.wires(self.shape)]
+        return tuple([BluemiraWire(o) for o in cadapi.wires(self.shape)])
 
     @property
     def faces(self):
         """
         The faces of the wire. By definition an empty list.
         """
-        return [self]
+        return tuple(self)
 
     @property
     def shells(self):
         """
         The shells of the wire. By definition an empty list.
         """
-        return []
+        return ()
 
     @property
     def solids(self):
         """
         The solids of the wire. By definition an empty list.
         """
-        return []
+        return ()
 
     @property
     def shape_boundary(self):
