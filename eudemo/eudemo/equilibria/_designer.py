@@ -139,7 +139,7 @@ class EquilibriumDesigner(Designer[Equilibrium]):
             "beta_p": plasma_dict["beta_p"],
             "delta_95": plasma_dict["delta_95"],
             "delta": plasma_dict["delta"],
-            "I_p": plasma_dict["Ip"] / 1e6,
+            "I_p": plasma_dict["Ip"],
             "kappa_95": plasma_dict["kappa_95"],
             "kappa": plasma_dict["kappa"],
             "l_i": plasma_dict["li"],
