@@ -102,6 +102,6 @@ class PowerCycleABC(ABC):
         Validate `instance` to be an object of the class that calls
         this method.
         """
-        if type(instance) != cls:
+        if not isinstance(instance, cls):
             raise PowerCycleABCError("class")
         return instance
