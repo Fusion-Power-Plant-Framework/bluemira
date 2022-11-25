@@ -1,11 +1,11 @@
 {
     "Radial build": {
-        "file_path": "/home/matti/code/bluemira/eudemo/config/mockPROCESS.json"
+        "file_path": "config/mockPROCESS.json"
     },
     "Equilibrium": {
         "plot_optimisation": false,
         "run_mode": "read",
-        "file_path": "/home/matti/code/bluemira/eudemo/config/equilibrium_eqdsk.json"
+        "file_path": "config/equilibrium_eqdsk.json"
     },
     "IVC": {
         "Wall silhouette": {
@@ -28,7 +28,7 @@
         "param_class": "TripleArc",
         "variables_map": {},
         "run_mode": "read",
-        "file_path": "/home/matti/code/bluemira/eudemo/config/TFCoilDesign.json",
+        "file_path": "config/TFCoilDesign.json",
         "problem_class": "bluemira.builders.tf_coils::RippleConstrainedLengthGOP"
     }
 }
