@@ -18,17 +18,22 @@
 #
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
+"""CAD builder for PF coils."""
 
 from dataclasses import dataclass
 
 from bluemira.base.builder import Builder
-from bluemira.base.parameter_frame import Parameter, ParameterFrame
+from bluemira.base.parameter_frame import ParameterFrame
 
 
 @dataclass
 class PFCoilsBuilderParams(ParameterFrame):
+    """Parameters for :class:`PFCoilsBuilder`."""
+
     pass
 
 
 class PFCoilsBuilder(Builder):
+    """Builder for EUDEMO PF coils."""
+
     pass
