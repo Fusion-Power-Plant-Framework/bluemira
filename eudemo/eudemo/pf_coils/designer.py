@@ -64,7 +64,9 @@ class PFCoilsDesignerParams(ParameterFrame):
     # TODO(hsaunders1904): docstrings for these parameters?
     A: Parameter[float]
     B_0: Parameter[float]
+    B_premag_stray_max: Parameter[float]
     beta_p: Parameter[float]
+    C_Ejima: Parameter[float]
     CS_bmax: Parameter[float]
     CS_jmax: Parameter[float]
     delta: Parameter[float]
@@ -74,15 +76,19 @@ class PFCoilsDesignerParams(ParameterFrame):
     g_cs_mod: Parameter[float]
     I_p: Parameter[float]
     kappa: Parameter[float]
+    l_i: Parameter[float]
     n_CS: Parameter[int]
     n_PF: Parameter[int]
     PF_bmax: Parameter[float]
     PF_jmax: Parameter[float]
     R_0: Parameter[float]
     r_cs_in: Parameter[float]
+    tau_flattop: Parameter[float]
     tk_cs_casing: Parameter[float]
     tk_cs_insulation: Parameter[float]
     tk_cs: Parameter[float]
+    tk_sol_ib: Parameter[float]
+    v_burn: Parameter[float]
 
 
 class PFCoilsDesigner(Designer[CoilSet]):
@@ -157,7 +163,7 @@ class PFCoilsDesigner(Designer[CoilSet]):
             coilset,
             position_mapper,
             grid,
-            current_opt_constraints=[constraints["ps_inner"]],
+            current_opt_constraints=[constraints["psi_inner"]],
             coil_constraints=constraints["coil_field"],
             equilibrium_constraints=[constraints["isoflux"], constraints["x_point"]],
             profiles=profiles,
