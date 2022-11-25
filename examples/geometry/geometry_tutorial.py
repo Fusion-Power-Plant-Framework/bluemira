@@ -45,46 +45,46 @@ A geometry tutorial for users.
 # %%
 import os
 
+import matplotlib.pyplot as plt
 import numpy as np
 
 from bluemira.base.file import get_bluemira_path
 
 # Some display functionality
-from bluemira.display import show_cad, plotter
+from bluemira.display import plotter, show_cad
 from bluemira.display.displayer import DisplayCADOptions
-import matplotlib.pyplot as plt
+
+# Basic objects
+from bluemira.geometry.coordinates import Coordinates
+from bluemira.geometry.face import BluemiraFace
+from bluemira.geometry.shell import BluemiraShell
+from bluemira.geometry.solid import BluemiraSolid
 
 # Some useful tools
 from bluemira.geometry.tools import (
     boolean_cut,
     boolean_fuse,
+    extrude_shape,
     interpolate_bspline,
     make_circle,
     make_polygon,
     revolve_shape,
-    extrude_shape,
     save_as_STP,
     sweep_shape,
 )
-
-# Basic objects
-from bluemira.geometry.coordinates import Coordinates
 from bluemira.geometry.wire import BluemiraWire
-from bluemira.geometry.face import BluemiraFace
-from bluemira.geometry.shell import BluemiraShell
-from bluemira.geometry.solid import BluemiraSolid
 
 # %%[markdown]
-# ## Geometry creation (1D)
+# ## Geometry creation (1-D)
 
-# Let's get familiar with some ways of making 1D geometries.
+# Let's get familiar with some ways of making 1-D geometries.
 # Bluemira implements functions for the creation of:
 # # * polygons
 # # * splines
 # # * arcs
 # # * a bit of everything (check geometry.tools module for an extensive list)
 
-# Any 1D geometry is stored in a BluemiraWire object. Just as example, we can start
+# Any 1-D geometry is stored in a BluemiraWire object. Just as example, we can start
 # considering a simple linear segmented wire with vertexes on
 # (0,0,0), (1,0,0), and (1,1,0).
 
