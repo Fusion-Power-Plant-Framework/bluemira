@@ -231,3 +231,173 @@ def _flatten_shape(x, z):
     zz[-1] = zmax
 
     return xx, zz
+
+
+import os
+import shutil
+from copy import deepcopy
+
+from bluemira.base.file import get_bluemira_path, get_bluemira_root
+from bluemira.codes.wrapper import transport_code_solver
+from bluemira.equilibria.fem_fixed_boundary.equilibrium import (
+    FemGradShafranovFixedBoundary,
+    solve_transport_fixed_boundary,
+)
+from bluemira.equilibria.shapes import JohnerLCFS
+
+
+def get_plasmod_binary_path():
+    if plasmod_binary := shutil.which("plasmod"):
+        PLASMOD_PATH = os.path.dirname(plasmod_binary)
+    else:
+        PLASMOD_PATH = os.path.join(os.path.dirname(get_bluemira_root()), "plasmod/bin")
+    binary = os.path.join(PLASMOD_PATH, "plasmod")
+    return binary
+
+
+@dataclass
+class FixedEquilibriumDesignerParams(ParameterFrame):
+    """Parameters for running the fixed boundary equilibrium solver."""
+
+    A: Parameter[float]
+    B_0: Parameter[float]
+    delta: Parameter[float]
+    delta_95: Parameter[float]
+    delta_l: Parameter[float]
+    delta_u: Parameter[float]
+    I_p: Parameter[float]
+    kappa: Parameter[float]
+    kappa_95: Parameter[float]
+    kappa_l: Parameter[float]
+    kappa_u: Parameter[float]
+    q_95: Parameter[float]
+    R_0: Parameter[float]
+    tk_cs: Parameter[float]
+    v_burn: Parameter[float]
+    P_fus: Parameter[float]
+    pheat_max: Parameter[float]
+    q_control: Parameter[float]
+
+
+class FixedEquilibriumDesigner(Designer[Equilibrium]):
+    """
+    Solves an unconstrained Tikhnov current gradient coil-set
+    optimisation problem, outputting an `Equilibrium`.
+
+    Parameters
+    ----------
+    params: Union[Dict, ParameterFrame]
+        The parameters for the solver, the dictionary or frame must
+        contain all the parameters present in
+        `UnconstrainedTikhonovSolverParams`.
+    build_config: Optional[Dict]
+        The config for the solver. Optional keys:
+        - `read_file_path`: str
+            the path to an eqdsk file to read the equilibrium from,
+            required in `read` mode.
+        - `plot_optimisation`: bool
+            set to `True` to plot the iterations in the optimisation,
+            only used in `run` mode
+    """
+
+    params: FixedEquilibriumDesignerParams
+    param_cls = FixedEquilibriumDesignerParams
+
+    def __init__(
+        self,
+        params: Union[Dict, ParameterFrame],
+        build_config: Optional[Dict] = None,
+    ):
+        super().__init__(params, build_config)
+        if self.run_mode == "read" and self.file_path is None:
+            raise ValueError(
+                f"Cannot execute {type(self).__name__} in 'read' mode: "
+                "'file_path' missing from build config."
+            )
+
+    def run(self) -> Equilibrium:
+        # Get geometry parameterisation
+        geom_parameterisation = self._get_geometry_parameterisation()
+
+        # Get PLASMOD solver
+        transport_solver = self._get_transport_solver()
+
+        # Get fixed boundary equilibrium solver
+        fem_fixed_be_solver = self._get_fixed_equilibrium_solver()
+
+        # Solve converged transport - fixed boundary equilibrium
+        defaults = {
+            "lcar_mesh": 0.3,
+            "max_iter": 15,
+            "iter_err_max": 1e-3,
+            "relaxation": 0.0,
+            "plot": False,
+        }
+        settings = self.build_config.get("transport_eq_settings", defaults)
+        solve_transport_fixed_boundary(
+            geom_parameterisation,
+            transport_solver,
+            fem_fixed_be_solver,
+            kappa95_t=self.params.kappa_95.value,  # Target kappa_95
+            delta95_t=self.params.delta_95.value,  # Target delta_95
+            **settings,
+        )
+
+        # Make free boundary equilibrium (with coils) from fixed boundary equilibrium
+        pass
+
+    def read(self) -> Equilibrium:
+        """Load an equilibrium from a file."""
+        pass
+
+    def _get_geometry_parameterisation(self):
+        return JohnerLCFS(
+            {
+                "r_0": {"value": self.params.R_0.value},
+                "a": {"value": self.params.A.value},
+                "kappa_u": {"value": self.params.kappa_u.value},
+                "kappa_l": {"value": self.params.kappa_l.value},
+                "delta_u": {"value": self.params.delta_u.value},
+                "delta_l": {"value": self.params.delta_l.value},
+            }
+        )
+
+    def _get_transport_solver(self):
+        plasmod_params = deepcopy(self.params)
+        # Ugh gross...
+        plasmod_params.V_p = -2500
+        plasmod_params.v_burn = -1.0e-6
+
+        defaults = {
+            "i_impmodel": "PED_FIXED",
+            "i_modeltype": "GYROBOHM_2",
+            "i_equiltype": "q95_sawtooth",
+            "i_pedestal": "SAARELMA",
+        }
+        problem_settings = self.build_config.get("plasmod_settings", defaults)
+        problem_settings["amin"] = self.params.R_0.value / self.params.A.value
+        problem_settings["pfus_req"] = self.params.P_fus.value
+        problem_settings["pheat_max"] = self.params.pheat_max.value
+        problem_settings["q_control"] = self.params.q_control.value
+
+        plasmod_build_config = {
+            "problem_settings": problem_settings,
+            "mode": "run",
+            "binary": get_plasmod_binary_path(),
+            "directory": get_bluemira_path("", subfolder="generated_data"),
+        }
+
+        return transport_code_solver(
+            params=plasmod_params, build_config=plasmod_build_config, module="PLASMOD"
+        )
+
+    def _get_fixed_equilibrium_solver(self):
+        defaults = {
+            "p_order": 2,
+            "max_iter": 30,
+            "iter_err_max": 1e-4,
+            "relaxation": 0.05,
+        }
+        return FemGradShafranovFixedBoundary(
+            self.build_config.get("equilibrium_settings", defaults)
+        )

@@ -7,6 +7,27 @@
         "run_mode": "read",
         "file_path": "config/equilibrium_eqdsk.json"
     },
+    "Fixed boundary equilibrium":{
+        "plasmod_settings": {
+            "i_impmodel": "PED_FIXED",
+            "i_modeltype": "GYROBOHM_2",
+            "i_equiltype": "q95_sawtooth",
+            "i_pedestal": "SAARELMA"
+        },
+        "equilibrium_settings": {
+            "p_order": 2,
+            "max_iter": 30,
+            "iter_err_max": 1e-4,
+            "relaxation": 0.05
+        },
+        "transport_eq_settings": {
+            "lcar_mesh": 0.3,
+            "max_iter": 15,
+            "iter_err_max": 1e-3,
+            "relaxation":0.0,
+            "plot": false
+        }
+    },
     "IVC": {
         "Wall silhouette": {
             "param_class": "eudemo.ivc.wall_silhouette_parameterisation::WallPolySpline",
