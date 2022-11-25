@@ -255,6 +255,10 @@ class PowerLoadError(PowerCycleError):
                 "a valid value. A model must be specified with an "
                 "instance of the 'PowerLoadModel' 'Enum' class."
             ],
+            "sanity": [
+                "The attributes 'load' and 'model' of an instance of "
+                f"the {self._source} class must have the same length."
+            ],
             "time": [
                 "The 'time' input used to create a curve with an "
                 f"instance of the {self._source} class must be numeric "
