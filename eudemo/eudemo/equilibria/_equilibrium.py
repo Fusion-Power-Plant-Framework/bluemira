@@ -85,9 +85,7 @@ def make_equilibrium(
     )
     profiles = BetaIpProfile(
         params.beta_p.value,
-        # Convert from MA to A - should remove conversion when below is resolved
-        # https://github.com/Fusion-Power-Plant-Framework/bluemira/issues/1389
-        params.I_p.value * 1e6,
+        params.I_p.value,
         params.R_0.value,
         params.B_0.value,
     )
