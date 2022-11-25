@@ -11,6 +11,12 @@
         "source": "Input",
         "long_name": "Toroidal field at R_0"
     },
+    "B_premag_stray_max": {
+        "value": 0.003,
+        "unit": "tesla",
+        "source": "Input",
+        "long_name": "Maximum field inside the breakdown region during premagnetisation"
+    },
     "B_tf_peak": {
         "value": 12,
         "unit": "tesla",

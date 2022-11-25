@@ -12,6 +12,7 @@ class EUDEMOReactorParams(ParameterFrame):
     # Common parameters
     A: Parameter[float]
     B_0: Parameter[float]
+    B_premag_stray_max: Parameter[float]
     B_tf_peak: Parameter[float]
     beta_p: Parameter[float]
     beta: Parameter[float]
