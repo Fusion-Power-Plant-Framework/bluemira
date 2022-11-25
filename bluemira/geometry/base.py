@@ -138,7 +138,7 @@ class BluemiraGeo(ABC, GeoMeshable):
             for o in objs:
                 check = check or isinstance(o, c)
             if check:
-                return objs
+                return tuple(objs)
         raise TypeError(
             f"Only {self._boundary_classes} objects can be used for {self.__class__}"
         )
