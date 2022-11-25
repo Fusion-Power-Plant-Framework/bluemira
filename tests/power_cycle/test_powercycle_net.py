@@ -9,6 +9,9 @@ from bluemira.power_cycle.net import (
     NetPowerABCError,
     PowerData,
     PowerDataError,
+    PowerLoad,
+    PowerLoadError,
+    PowerLoadModel,
 )
 
 
@@ -173,3 +176,66 @@ class TestPowerData:
             """
         )
         plt.show()  # Run with `pytest --plotting-on` to visualize
+
+
+class TestPowerLoadModel:
+    def test_members(self):
+
+        all_values = [member.value for member in PowerLoadModel]
+        all_names = [member.name for member in PowerLoadModel]
+        bluemira_debug(
+            f"""
+            {script_title()} (PowerLoadModel)
+
+            All member names:
+            {pformat(all_names)}
+
+            All member values:
+            {pformat(all_values)}
+            """
+        )
+
+
+def test_PowerLoadError():
+    with pytest.raises(PowerLoadError):
+        raise PowerLoadError(
+            None,
+            "Some error in the 'PowerLoad' class.",
+        )
+
+
+class TestPowerLoad:
+    def setup_method(self):
+
+        time_1 = [0, 4, 7, 8]
+        data_1 = [6, 9, 7, 8]
+        model_1 = PowerLoadModel.RAMP
+        time_2 = [2, 5, 7, 9, 10]
+        data_2 = [2, 2, 2, 4, 4]
+        model_2 = PowerLoadModel.STEP
+
+        data_set_1 = PowerData("Data 1", time_1, data_1)
+        data_set_2 = PowerData("Data 2", time_2, data_2)
+        load_1 = PowerLoad("Load 1", data_set_1, model_1)
+        load_2 = PowerLoad("Load 2", data_set_2, model_2)
+
+        self.load_1 = load_1
+        self.load_2 = load_2
+
+    def test_constructor(self):
+
+        load_1 = self.load_1
+        load_2 = self.load_2
+        sample_powerdata_1 = load_1.data_set[0]
+        sample_powerdata_2 = load_2.data_set[0]
+        sample_powerloadmodel_1 = load_1.model[0]
+        sample_powerloadmodel_2 = load_2.model[0]
+
+        multi_set = [sample_powerdata_1, sample_powerdata_2]
+        multi_model = [sample_powerloadmodel_1, sample_powerloadmodel_2]
+        multi_load = PowerLoad(
+            "Load with multiple data sets",
+            multi_set,
+            multi_model,
+        )
+        assert isinstance(multi_load, PowerLoad)
