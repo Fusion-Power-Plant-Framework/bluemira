@@ -50,7 +50,7 @@ per-file-ignores =
         D409,
         # It can be useful to have class names in test names e.g., test_raises_SomeException
         N802,
-    examples/design/EU-DEMO/EUDEMO_tests/*:
+    eudemo/eudemo_tests/*:
      	# Use of assert detected. The enclosed code will be removed when compiling
 	    # to optimised byte code. (ignored because of pytest)
         S101,
