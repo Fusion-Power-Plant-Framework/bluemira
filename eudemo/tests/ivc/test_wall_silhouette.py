@@ -24,6 +24,7 @@ Test first wall silhouette designer.
 
 import copy
 import os
+from pathlib import Path
 
 import numpy as np
 import pytest
@@ -35,7 +36,7 @@ from bluemira.equilibria.find import find_OX_points
 from eudemo.ivc import WallSilhouetteDesigner
 
 EQDATA = get_bluemira_path("equilibria/test_data", subfolder="tests")
-DATA = get_bluemira_path("design/EU-DEMO/EUDEMO_tests/test_data", subfolder="examples")
+DATA = str(Path(__file__).parent.parent / "test_data")
 
 OPTIMISER_MODULE_REF = "bluemira.geometry.optimisation"
 WALL_MODULE_REF = "eudemo.ivc.wall_silhouette_parameterisation"
