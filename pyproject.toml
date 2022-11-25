@@ -19,6 +19,7 @@ dependencies = [
     "asteval",
     "Babel",
     "click",
+    "contourpy",
     "CoolProp",
     "fortranformat",
     "gmsh",
