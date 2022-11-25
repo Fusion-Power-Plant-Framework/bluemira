@@ -22,6 +22,8 @@ class EUDEMOReactorParams(ParameterFrame):
     CS_jmax: Parameter[float]
     delta_95: Parameter[float]
     delta: Parameter[float]
+    delta_l: Parameter[float]
+    delta_u: Parameter[float]
     e_mult: Parameter[float]
     e_nbi: Parameter[float]
     eta_nb: Parameter[float]
@@ -39,6 +41,8 @@ class EUDEMOReactorParams(ParameterFrame):
     ib_offset_angle: Parameter[float]
     kappa_95: Parameter[float]
     kappa: Parameter[float]
+    kappa_l: Parameter[float]
+    kappa_u: Parameter[float]
     l_i: Parameter[float]
     n_CS: Parameter[int]
     n_PF: Parameter[int]
@@ -115,6 +119,10 @@ class EUDEMOReactorParams(ParameterFrame):
     v_burn: Parameter[float]
     V_p: Parameter[float]
     Z_eff: Parameter[float]
+
+    # PLASMOD
+    pheat_max: Parameter[float]
+    q_control: Parameter[float]
 
     # Equilibrium
     div_L2D_ib: Parameter[float]
