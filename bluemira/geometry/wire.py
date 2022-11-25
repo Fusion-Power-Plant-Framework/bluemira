@@ -237,7 +237,7 @@ class BluemiraWire(BluemiraGeo):
         """
         The edges of the wire.
         """
-        return [BluemiraWire(cadapi.apiWire(o)) for o in cadapi.edges(self.shape)]
+        return tuple([BluemiraWire(cadapi.apiWire(o)) for o in cadapi.edges(self.shape)])
 
     @property
     def wires(self):
