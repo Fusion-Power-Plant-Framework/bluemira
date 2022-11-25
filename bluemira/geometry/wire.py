@@ -244,28 +244,28 @@ class BluemiraWire(BluemiraGeo):
         """
         The wires of the wire. By definition a list of itself.
         """
-        return [self]
+        return self
 
     @property
     def faces(self):
         """
         The faces of the wire. By definition an empty list.
         """
-        return []
+        return ()
 
     @property
     def shells(self):
         """
         The shells of the wire. By definition an empty list.
         """
-        return []
+        return ()
 
     @property
     def solids(self):
         """
         The solids of the wire. By definition an empty list.
         """
-        return []
+        return ()
 
     @property
     def shape_boundary(self):
