@@ -138,7 +138,7 @@ class BluemiraGeo(ABC, GeoMeshable):
             for o in objs:
                 check = check or isinstance(o, c)
             if check:
-                return tuple(objs)
+                return objs
         raise TypeError(
             f"Only {self._boundary_classes} objects can be used for {self.__class__}"
         )
@@ -148,7 +148,7 @@ class BluemiraGeo(ABC, GeoMeshable):
         """
         The shape's boundary.
         """
-        return self._boundary
+        return tuple(self._boundary)
 
     def _set_boundary(self, objs, replace_shape=True):
         self._boundary = self._check_boundary(objs)
