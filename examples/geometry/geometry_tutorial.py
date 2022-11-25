@@ -109,8 +109,11 @@ second_wire = make_polygon(points2, label="wire2")
 full_wire = BluemiraWire([first_wire, second_wire], label="full_wire")
 print(full_wire)
 
-# In such a case, sub-wires are still accessible as separated entities and
+# %%[markdown]
+# In such a case, sub-wires are still accessible as separate entities and
 # can be returned through a search operation on the full wire:
+
+# %%
 first_wire1 = full_wire.search("wire1")[0]
 print(
     f"first_wire and first_wire1 have the same shape: {first_wire1.is_same(first_wire)}"
@@ -135,6 +138,7 @@ wires.append(make_polygon([[0, 0], [4, 0], [0, 0]], label="w6"))
 closed_wire = BluemiraWire(wires, label="closed_wire")
 wire_plotter.plot_2d(closed_wire)
 
+# %%[markdown]
 # In such a case, the created wire is closed. A check can be done interrogating
 # the is_closed function of the wire:
 
@@ -142,16 +146,19 @@ wire_plotter.plot_2d(closed_wire)
 print(f"wire is closed: {closed_wire.is_closed()}")
 
 # %%[markdown]
-# ## Geometry creation (2D and 3D)
+# ## Geometry creation (2-D and 3-D)
 
-# A closed planar 1D geometry can be used as boundary to generate a 2D face.
+# A closed planar 1-D geometry can be used as boundary to generate a 2-D face.
 
 # %%
 first_face = BluemiraFace(boundary=closed_wire, label="first_face")
 print(first_face)
 
-# A matplotlib-style plotting of a face can be made similarly to what done for
+# %%[markdown]
+# A matplotlib-style plotting of a face can be made similarly to what was done for
 # a wire, i.e. using a FacePlotter
+
+# %%
 face_plotter = plotter.FacePlotter()
 face_plotter.options.view = "xy"
 face_plotter.plot_2d(first_face)
@@ -159,7 +166,7 @@ face_plotter.plot_2d(first_face)
 
 # %%[markdown]
 # If more than one closed wire is given as boundary for a face, the first one is
-# used as external boundary and the other ones are just considered as holes.
+# used as the external boundary and subsequent ones are considered as holes.
 
 # %%
 points = Coordinates({"x": [1, 2, 2, 1], "y": [1, 1, 2, 2]})
@@ -170,20 +177,20 @@ face_plotter.plot_2d(face_with_hole)
 
 
 # %%[markdown]
-# Starting from 1D or 2D geometries, 3D objects can be created, for example,
-# through revolution or extrusion.
+# Starting from 1-D or 2-D geometries, 3-D objects can be created, for example,
+# by revolution or extrusion.
 
 # %%
 first_solid = extrude_shape(face_with_hole, (0, 0, 1), "first_solid")
 print(first_solid)
 
-# Note: 3D operations generate solids that are disconnected from the primitive shape.
+# Note: 3-D operations generate solids that are disconnected from the primitive shape.
 # For this reason, it is not possible to retrieve our initial "face_with_hole"
 # interrogating "fist_solid".
 
 
 # %%[markdown]
-# ## 3D Display
+# ## 3-D Display
 
 # Geometry objects can be displayed via `show_cad`, and the appearance
 # of said objects customised by specifying `color` and `transparency`.
@@ -203,7 +210,7 @@ show_cad(first_solid, DisplayCADOptions(color="blue", transparency=0.1))
 # These are accessible via the boundary attribute, so, in general, the boundary
 # of a Solid is a Shell or set of Shells, and a Shell will have a set of Faces, etc.
 
-# Let's take a little peek under the hood of our solid
+# Let's take a little peek under the hood of our solid:
 
 # %%
 print(f"Our shape is a BluemiraSolid: {isinstance(first_solid, BluemiraSolid)}")
@@ -223,7 +230,6 @@ for i, shell in enumerate(first_solid.boundary):
 
 # ## Geometric transformations
 
-# %%
 # When applying a geometric transformation to a BluemiraGeo object, that operation
 # is transferred also to the boundary objects (in a recursive manner). That allows
 # consistency between the object shape and its boundary without recreating
@@ -231,6 +237,7 @@ for i, shell in enumerate(first_solid.boundary):
 
 # Just as example, we are going to apply a translation to our "face_with_hole".
 
+# %%
 # To have a reference to the initial object, we make a deepcopy of the face
 face_with_hole_copy = face_with_hole.deepcopy("face_copy")
 
@@ -245,7 +252,7 @@ face_plotter.plot_2d(face_with_hole, ax=ax, show=False)
 plt.title("Translated wire")
 plt.show()
 
-# Same happens, for example, to the wire that identifies the hole.
+# The same happens, for example, to the wire that identifies the hole.
 hole_copy = face_with_hole_copy.search("hole")[0]
 wire_plotter.options.wire_options["color"] = "black"
 ax = wire_plotter.plot_2d(hole_copy, show=False)
