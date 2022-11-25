@@ -529,7 +529,6 @@ class TestGeometry:
         assert solid.is_valid()
         assert np.isclose(solid.volume, true_volume)
 
-    @pytest.mark.xfail
     def test_cut_hollow_circle(self):
         # TODO: More fun to be had with circles...
         x_c = 10
