@@ -1,0 +1,34 @@
+{
+    "Radial build": {
+        "file_path": "/home/bf2936/bluemira/code/bluemira/eudemo/config/mockPROCESS.json"
+    },
+    "Equilibrium": {
+        "plot_optimisation": false,
+        "run_mode": "read",
+        "file_path": "/home/bf2936/bluemira/code/bluemira/eudemo/config/equilibrium_eqdsk.json"
+    },
+    "IVC": {
+        "Wall silhouette": {
+            "param_class": "eudemo.ivc.wall_silhouette_parameterisation::WallPolySpline",
+            "variables_map": {
+                "x1": {
+                    "value": "r_fw_ib_in"
+                },
+                "x2": {
+                    "value": "r_fw_ob_in"
+                }
+            },
+            "run_mode": "run",
+            "name": "First Wall",
+            "problem_class": "bluemira.geometry.optimisation::MinimiseLengthGOP"
+        },
+        "Divertor silhouette": {}
+    },
+    "TF coils": {
+        "param_class": "TripleArc",
+        "variables_map": {},
+        "run_mode": "read",
+        "file_path": "/home/bf2936/bluemira/code/bluemira/eudemo/config/TFCoilDesign.json",
+        "problem_class": "bluemira.builders.tf_coils::RippleConstrainedLengthGOP"
+    }
+}
