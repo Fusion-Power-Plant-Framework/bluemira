@@ -99,7 +99,7 @@ class PowerCycleABC(ABC):
     @classmethod
     def validate_class(cls, instance):
         """
-        Validate `instance` to be an object of the class that calls
+        Validate 'instance' to be an object of the class that calls
         this method.
         """
         if not isinstance(instance, cls):
