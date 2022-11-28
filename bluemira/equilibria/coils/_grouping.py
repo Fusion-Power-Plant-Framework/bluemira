@@ -24,36 +24,20 @@ Coil and coil grouping objects
 """
 from __future__ import annotations
 
-import abc
 from copy import deepcopy
-from enum import Enum, EnumMeta, auto
-from functools import update_wrapper, wraps
 from operator import attrgetter
+from typing import Iterable, List, Optional, Tuple, Type, Union
 
-# from re import split
-from typing import Callable, Dict, Iterable, List, Optional, Tuple, Type, Union
-
-# import matplotlib.pyplot as plt
 import numpy as np
 
 from bluemira.base.constants import MU_0
-from bluemira.base.look_and_feel import bluemira_warn
-from bluemira.equilibria.coils._coil import CoilType
+from bluemira.equilibria.coils._coil import Coil, CoilType
 from bluemira.equilibria.coils._field import CoilGroupFieldsMixin
 from bluemira.equilibria.constants import I_MIN, NBTI_B_MAX, NBTI_J_MAX, X_TOLERANCE
 from bluemira.equilibria.error import EquilibriaError
 from bluemira.equilibria.file import EQDSKInterface
 from bluemira.equilibria.plotting import CoilPlotter, CoilSetPlotter
-from bluemira.magnetostatics.greens import (
-    circular_coil_inductance_elliptic,
-    greens_Bx,
-    greens_Bz,
-    greens_psi,
-)
-from bluemira.magnetostatics.semianalytic_2d import semianalytic_Bx, semianalytic_Bz
-from bluemira.utilities.tools import flatten_iterable, is_num, yintercept
-
-# from scipy.interpolate import RectBivariateSpline
+from bluemira.utilities.tools import flatten_iterable, yintercept
 
 
 class CoilGroup(CoilGroupFieldsMixin):
