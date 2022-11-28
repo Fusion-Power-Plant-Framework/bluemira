@@ -244,6 +244,11 @@ from bluemira.equilibria.fem_fixed_boundary.equilibrium import (
     solve_transport_fixed_boundary,
 )
 from bluemira.equilibria.shapes import JohnerLCFS
+from bluemira.geometry.tools import make_circle
+from eudemo.equilibria._equilibrium import (
+    ReferenceEquilibriumParams,
+    make_reference_equilibrium,
+)
 from eudemo.equilibria.tools import ReferenceConstraints
 
 
@@ -269,6 +274,7 @@ class FixedEquilibriumDesignerParams(ParameterFrame):
     kappa_95: Parameter[float]
     q_95: Parameter[float]
     R_0: Parameter[float]
+    r_cs: Parameter[float]
     tk_cs: Parameter[float]
     v_burn: Parameter[float]
     P_fus: Parameter[float]
@@ -340,16 +346,36 @@ class FixedEquilibriumDesigner(Designer[Equilibrium]):
             **settings,
         )
 
+        # Retrieve infromation from end state
+        lcfs_shape = geom_parameterisation.create_shape()
+        p_prime = transport_solver.get_profile("pprime")
+        ff_prime = transport_solver.get_profile("ffprime")
+
         # Make free boundary equilibrium (with coils) from fixed boundary equilibrium
 
-        # Make coilset
+        # Make dummy tf coil boundary
+        offset_value = self.params.tk_bb_ob.value + self.params.tk_vv_ob.value + 1.5
+        tf_coil_boundary = self._make_tf_boundary(lcfs_shape, offset_value)
 
-        # Get flux function profiles
+        eq = make_reference_equilibrium(
+            ReferenceEquilibriumParams.from_frame(self.params),
+            tf_coil_boundary,
+            p_prime,
+            ff_prime,
+        )
 
-        # Make constraints
-        lcfs_shape = geom_parameterisation.create_shape()
-
-        pass
+        opt_problem = self._make_fbe_opt_problem(eq, lcfs_shape)
+        iterator_program = PicardIterator(
+            eq,
+            opt_problem,
+            convergence=DudsonConvergence(),
+            relaxation=0.2,
+            fixed_coils=True,
+            plot=self.plot_optimisation,
+        )
+        iterator_program()
+        self._update_params_from_eq(eq)
+        return eq
 
     def read(self) -> Equilibrium:
         """Load an equilibrium from a file."""
@@ -417,6 +443,34 @@ class FixedEquilibriumDesigner(Designer[Equilibrium]):
         return FemGradShafranovFixedBoundary(
             self.build_config.get("equilibrium_settings", defaults)
         )
+
+    def _make_tf_boundary(
+        self, lcfs_shape: BluemiraWire, offset_value: float
+    ) -> BluemiraWire:
+        coords = lcfs_shape.discretize(byedges=True, ndiscr=200)
+        xu_arg = np.argmax(coords.z)
+        xl_arg = np.argmin(coords.z)
+        xz_min, z_min = coords.x[xl_arg], coords.z[xl_arg]
+        xz_max, z_max = coords.x[xu_arg], coords.z[xu_arg]
+        x_circ = min(xz_min, xz_max)
+        z_circ = z_max - abs(z_min)
+        r_circ = 0.5 * (z_max + abs(z_min))
+        semi_circle = make_circle(
+            r_circ + offset_value,
+            center=(x_circ, z_circ),
+            start_angle=-90,
+            end_angle=90,
+            axis=(0, 1, 0),
+        )
+
+        xs, zs = semi_circle.start_point().points[0].xz
+        xe, ze = semi_circle.end_point().points[0].xz
+        r_cs_out = self.params.r_cs.value + self.params.tk_cs.value
+
+        lower_wire = make_polygon({"x": [r_cs_out, xs], "y": [0, 0], "z": [zs, zs]})
+        upper_wire = make_polygon({"x": [xe, r_cs_out], "y": [0, 0], "z": [ze, ze]})
+
+        return BluemiraWire([lower_wire, semi_circle, upper_wire])
 
     def _make_fbe_opt_problem(self, eq: Equilibrium, lcfs_shape: BluemiraWire):
         """

@@ -27,7 +27,7 @@ from bluemira.base.parameter_frame import Parameter, ParameterFrame
 from bluemira.equilibria import Equilibrium
 from bluemira.equilibria.profiles import BetaIpProfile, CustomProfile
 from bluemira.geometry.wire import BluemiraWire
-from eudemo.pf_coils.tools import make_coilset, make_grid
+from eudemo.pf_coils.tools import make_coilset, make_grid, make_reference_coilset
 
 KAPPA_95_TO_100 = 1.12
 
@@ -118,7 +118,7 @@ class ReferenceEquilibriumParams(ParameterFrame):
 
 def make_reference_equilibrium(
     _params: Union[ReferenceEquilibriumParams, Dict],
-    tf_coil_boundary: BluemiraWire,
+    tf_track: BluemiraWire,
     p_prime: np.ndarray,
     ff_prime: np.ndarray,
 ):
@@ -126,6 +126,14 @@ def make_reference_equilibrium(
         params = ReferenceEquilibriumParams.from_dict(_params)
     else:
         params = _params
+
+    coilset = make_reference_coilset(
+        tf_track,
+        r_cs=params.r_cs_in.value + params.tk_cs.value / 2,
+        tk_cs=params.tk_cs.value / 2,
+        n_CS=9,
+        n_PF=20,
+    )
 
     grid = make_grid(
         params.R_0.value,
