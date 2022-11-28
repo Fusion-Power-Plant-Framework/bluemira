@@ -272,7 +272,7 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
         self,
         pprime: Union[Callable[[np.ndarray], np.ndarray], float],
         ffprime: Union[Callable[[np.ndarray], np.ndarray], float],
-        curr_target: float,
+        curr_target: Optional[float],
     ) -> Callable[[np.ndarray], float]:
         """
         Return the density current function given pprime and ffprime.
@@ -296,7 +296,7 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
             dolfin.Constant(1) * dolfin.Measure("dx", domain=self.mesh)()
         )
 
-        j_target = curr_target / area
+        j_target = curr_target / area if curr_target else 1.0
 
         def g(x):
             if self.psi_ax == 0:
@@ -316,7 +316,7 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
         self,
         pprime: Union[Callable[[np.ndarray], np.ndarray], float],
         ffprime: Union[Callable[[np.ndarray], np.ndarray], float],
-        curr_target: float,
+        curr_target: Optional[float],
     ):
         """
         Return the density current DOLFIN function given pprime and ffprime.
@@ -329,7 +329,8 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
             ffprime as function of psi_norm (1-D function)
         curr_target: float
             Target current (also used to initialize the solution in case self.psi is
-            still 0 and pprime and ffprime are, then, not defined)
+            still 0 and pprime and ffprime are, then, not defined).
+            If None, plasma current is calculated and not constrained
         """
         self._curr_target = curr_target
         self._g_func = self._create_g_func(pprime, ffprime, self._curr_target)
@@ -340,7 +341,9 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
         return dolfin.assemble(self.g * dolfin.Measure("dx", domain=self.mesh)())
 
     def _update_curr(self):
-        self.k = self._curr_target / self._calculate_curr_tot()
+        self.k = 1
+        if self._curr_target:
+            self.k = self._curr_target / self._calculate_curr_tot()
 
     def _plot_current_iteration(
         self, i_iter: int, points: Iterable, prev: Optional[np.ndarray] = None
