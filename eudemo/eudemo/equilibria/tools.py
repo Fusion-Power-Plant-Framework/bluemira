@@ -26,11 +26,13 @@ import numpy as np
 from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.equilibria.opt_constraints import (
     FieldNullConstraint,
+    IsofluxConstraint,
     MagneticConstraintSet,
     PsiBoundaryConstraint,
 )
 from bluemira.equilibria.shapes import flux_surface_johner
 from bluemira.geometry.coordinates import Coordinates, interpolate_points
+from bluemira.geometry.wire import BluemiraWire
 
 
 def estimate_kappa95(A, m_s_limit):
@@ -254,5 +256,47 @@ class EUDEMODoubleNullConstraints(DivertorLegCalculator, MagneticConstraintSet):
         x_s, z_s = f_s.x, f_s.z
 
         constraints.append(PsiBoundaryConstraint(x_s, z_s, psibval))
+
+        super().__init__(constraints)
+
+
+class ReferenceConstraints(MagneticConstraintSet):
+    """
+
+    Parameters
+    ----------
+    shape: BluemiraWire
+        Geometry from which to build the reference constraints for the equilibrium
+    n_points: int
+        Number of points to use when creating the constraints
+    """
+
+    def __init__(self, shape: BluemiraWire, n_points: int):
+        coords = shape.discretize(byedges=True, ndiscr=n_points)
+        z_min = np.min(coords.z)
+        z_max = np.max(coords.z)
+        arg_xl = np.argmin(coords.z)
+        arg_xu = np.argmax(coords.z)
+
+        if np.isclose(abs(z_min), z_max):
+            # Double null
+            constraints = [
+                FieldNullConstraint(coords.x[arg_xl], coords.z[arg_xl]),
+                FieldNullConstraint(coords.x[arg_xu], coords.z[arg_xu]),
+            ]
+
+        elif abs(z_min) > z_max:
+            # Lower single null
+            constraints = [
+                FieldNullConstraint(coords.x[arg_xl], coords.z[arg_xl]),
+            ]
+
+        else:
+            # Upper single null
+            constraints = [
+                FieldNullConstraint(coords.x[arg_xu], coords.z[arg_xu]),
+            ]
+
+        constraints.append(IsofluxConstraint(coords.x, coords.z, tolerance=1e-3))
 
         super().__init__(constraints)
