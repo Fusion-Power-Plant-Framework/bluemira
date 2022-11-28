@@ -33,7 +33,7 @@ from itertools import permutations
 from json import JSONEncoder, dumps
 from os import listdir
 from types import ModuleType
-from typing import Any, Type, Union
+from typing import Any, Tuple, Type, Union
 
 import nlopt
 import numpy as np
@@ -537,14 +537,30 @@ def flatten_iterable(iters):
 
 
 def consec_repeat_elem(arr: np.ndarray, num_rep: int) -> np.ndarray:
+    """
+    Get array of repeated elements with n or more repeats
+
+    Parameters
+    ----------
+    arr: np.ndarray
+        array to find repeats in
+    num_rep: int
+        number of repetitions to find
+
+    Returns
+    -------
+    np.ndarray
+
+    """
     if num_rep <= 1:
         raise NotImplementedError("Not implemented for less than 2 repeat elements")
-    N = num_rep - 1
+    n = num_rep - 1
     m = arr[:-1] == arr[1:]
-    return np.flatnonzero(np.convolve(m, np.ones(N, dtype=int)) == N) - N + 1
+    return np.flatnonzero(np.convolve(m, np.ones(n, dtype=int)) == n) - n + 1
 
 
-def slope(arr):
+def slope(arr: np.ndarray) -> float:
+    """Calculate gradient of a 2x2 point array"""
     x1 = arr[0, 0]
     y1 = arr[0, 1]
     x2 = arr[1, 0]
@@ -557,7 +573,8 @@ def slope(arr):
     return m
 
 
-def yintercept(arr):
+def yintercept(arr: np.ndarray) -> Tuple[float]:
+    """Calculate the y intercept and gradient of an array"""
     s = slope(arr)
     return arr[0, 1] - s * arr[0, 0], s
 
