@@ -107,6 +107,38 @@ class CoilNumber:
 
 
 class Coil(CoilFieldsMixin):
+    """
+    Coil Object
+
+    For used with PF/CS/passive coils
+
+    Parameters
+    ----------
+    x: float
+        Coil geometric centre x coordinate [m]
+    z: float
+        Coil geometric centre z coordinate [m]
+    dx: float
+        Coil radial half-width [m] from coil centre to edge (either side)
+    dz: float
+        Coil vertical half-width [m] from coil centre to edge (either side)
+    name: str
+        The name of the coil
+    ctype: Union[str, CoilType]
+        Type of coil as defined in CoilType
+    current: float (default = 0)
+        Coil current [A]
+    j_max: float
+        Maximum current density in the coil [A/m^2]
+    b_max: float
+        Maximum magnetic field at the coil [T]
+    discretisation: float
+        discretise the coil (between 0 and 1)
+    n_turns: int
+        Number of turns
+
+    """
+
     def __init__(
         self,
         x: float,
@@ -150,6 +182,9 @@ class Coil(CoilFieldsMixin):
             self._discretise()
 
     def __repr__(self):
+        """
+        Pretty printing
+        """
         return (
             f"{type(self).__name__}({self.name} ctype={self.ctype.name} x={self.x:.2g}"
             f" z={self.z:.2g} dx={self.dx:.2g} dz={self.dz:.2g} current={self.current:.2g}"
@@ -158,42 +193,52 @@ class Coil(CoilFieldsMixin):
         )
 
     def n_coils(self):
+        """Number of coils in coil"""
         return 1
 
     @property
     def x(self) -> float:
+        """Get coil x position"""
         return self._x
 
     @property
     def z(self) -> float:
+        """Get coil z position"""
         return self._z
 
     @property
     def ctype(self) -> CoilType:
+        """Get coil type"""
         return self._ctype
 
     @property
     def dx(self) -> float:
+        """Get coil width (half)"""
         return self._dx
 
     @property
     def dz(self) -> float:
+        """Get coil height (half)"""
         return self._dz
 
     @property
     def current(self):
+        """Get coil current"""
         return self._current
 
     @property
     def j_max(self) -> float:
+        """Get coil max current density"""
         return self._j_max
 
     @property
     def b_max(self) -> float:
+        """Get coil max field"""
         return self._b_max
 
     @property
     def discretisation(self) -> float:
+        """Get coil discretisation"""
         return self._discretisation
 
     @property
@@ -222,18 +267,21 @@ class Coil(CoilFieldsMixin):
 
     @property
     def x_boundary(self):
+        """Get coil x coordinate boundary"""
         if getattr(self, "_x_boundary") is not None:
             return self._x_boundary
         return self._make_boundary(self.x, self.z, self.dx, self.dz)[0]
 
     @property
     def z_boundary(self):
+        """Get coil z coordinate boundary"""
         if getattr(self, "_z_boundary") is not None:
             return self._z_boundary
         return self._make_boundary(self.x, self.z, self.dx, self.dz)[1]
 
     @x.setter
     def x(self, value: float):
+        """Set coil x position"""
         self._x = float(value)
         if None not in (self.dx, self.dz):
             self._discretise()
@@ -241,6 +289,7 @@ class Coil(CoilFieldsMixin):
 
     @z.setter
     def z(self, value: float):
+        """Set coil z position"""
         self._z = float(value)
         if None not in (self.dx, self.dz):
             self._discretise()
@@ -248,6 +297,7 @@ class Coil(CoilFieldsMixin):
 
     @ctype.setter
     def ctype(self, value: Union[str, CoilType]):
+        """Set coil type"""
         self._ctype = (
             value
             if isinstance(value, CoilType)
@@ -256,6 +306,7 @@ class Coil(CoilFieldsMixin):
 
     @dx.setter
     def dx(self, value: float):
+        """Set coil dx size"""
         self._dx = None if value is None else float(value)
         if None not in (self.dx, self.dz):
             self._discretise()
@@ -263,27 +314,32 @@ class Coil(CoilFieldsMixin):
 
     @dz.setter
     def dz(self, value: float):
+        """Set coil dz size"""
         self._dz = None if value is None else float(value)
         if None not in (self.dx, self.dz):
             self._discretise()
             self._set_coil_attributes()
 
     @current.setter
-    def current(self, value: Union[str, CoilType]):
+    def current(self, value: float):
+        """Set coil current"""
         self._current = float(value)
 
     @j_max.setter
     def j_max(self, value: float):
+        """Set coil max current density"""
         self._j_max = float(value)
         if None not in (self.dx, self.dz):
             self.resize()
 
     @b_max.setter
     def b_max(self, value: float):
+        """Set coil max field"""
         self._b_max = float(value)
 
     @discretisation.setter
     def discretisation(self, value: float):
+        """Set coil discretisation"""
         self._discretisation = float(value)
         self._discretise()
 
@@ -398,6 +454,7 @@ class Coil(CoilFieldsMixin):
         self._flag_sizefix = True
 
     def resize(self, current: Optional[float] = None):
+        """Resize coil given a current"""
         if not self._flag_sizefix:
             # Adjust the size of the coil
             self.dx, self.dz = self._make_size(current)
