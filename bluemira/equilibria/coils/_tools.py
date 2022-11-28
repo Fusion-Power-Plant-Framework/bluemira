@@ -1,3 +1,8 @@
+import numpy as np
+
+from bluemira.magnetostatics.greens import circular_coil_inductance_elliptic, greens_psi
+
+
 def make_mutual_inductance_matrix(coilset):
     """
     Calculate the mutual inductance matrix of a coilset.
