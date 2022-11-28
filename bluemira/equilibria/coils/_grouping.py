@@ -30,12 +30,10 @@ from typing import Iterable, List, Optional, Tuple, Type, Union
 
 import numpy as np
 
-from bluemira.base.constants import MU_0
 from bluemira.equilibria.coils._coil import Coil, CoilType
 from bluemira.equilibria.coils._field import CoilGroupFieldsMixin
-from bluemira.equilibria.constants import I_MIN, NBTI_B_MAX, NBTI_J_MAX, X_TOLERANCE
+from bluemira.equilibria.constants import I_MIN
 from bluemira.equilibria.error import EquilibriaError
-from bluemira.equilibria.file import EQDSKInterface
 from bluemira.equilibria.plotting import CoilPlotter, CoilSetPlotter
 from bluemira.utilities.tools import flatten_iterable, yintercept
 
