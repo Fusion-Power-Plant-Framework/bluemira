@@ -244,6 +244,7 @@ from bluemira.equilibria.fem_fixed_boundary.equilibrium import (
     solve_transport_fixed_boundary,
 )
 from bluemira.equilibria.shapes import JohnerLCFS
+from eudemo.equilibria.tools import ReferenceConstraints
 
 
 def get_plasmod_binary_path():
@@ -340,6 +341,7 @@ class FixedEquilibriumDesigner(Designer[Equilibrium]):
         )
 
         # Make free boundary equilibrium (with coils) from fixed boundary equilibrium
+        lcfs_shape = geom_parameterisation.create_shape()
         pass
 
     def read(self) -> Equilibrium:
@@ -347,7 +349,7 @@ class FixedEquilibriumDesigner(Designer[Equilibrium]):
         pass
 
     def _derive_shape_params(self):
-        shape_config = self.build_config.get(shape_config, {})
+        shape_config = self.build_config.get("shape_config", {})
         kappa_95 = self.params.kappa_95.value
         delta_95 = self.params.delta_95.value
         kappa_l = shape_config["f_kappa_l"] * kappa_95
@@ -409,34 +411,13 @@ class FixedEquilibriumDesigner(Designer[Equilibrium]):
             self.build_config.get("equilibrium_settings", defaults)
         )
 
-    def _make_fbe_opt_problem(self, eq: Equilibrium):
+    def _make_fbe_opt_problem(self, eq: Equilibrium, lcfs_shape: BluemiraWire):
         """
         Create the `UnconstrainedTikhonovCurrentGradientCOP` optimisation problem.
         """
-        kappa = 1.12 * self.params.kappa_95.value
-        kappa_ul_tweak = 0.05
-        kappa_u = (1 - kappa_ul_tweak) * kappa
-        kappa_l = (1 + kappa_ul_tweak) * kappa
 
-        eq_targets = EUDEMOSingleNullConstraints(
-            R_0=self.params.R_0.value,
-            Z_0=0.0,
-            A=self.params.A.value,
-            kappa_u=kappa_u,
-            kappa_l=kappa_l,
-            delta_u=self.params.delta_95.value,
-            delta_l=self.params.delta_95.value,
-            psi_u_neg=0.0,
-            psi_u_pos=0.0,
-            psi_l_neg=60.0,
-            psi_l_pos=30.0,
-            div_l_ib=self.params.div_L2D_ib.value,
-            div_l_ob=self.params.div_L2D_ob.value,
-            psibval=0.0,
-            psibtol=1.0e-3,
-            lower=True,
-            n=100,
-        )
+        eq_targets = ReferenceConstraints(lcfs_shape, 100)
+
         return UnconstrainedTikhonovCurrentGradientCOP(
             eq.coilset, eq, eq_targets, gamma=1e-8
         )
