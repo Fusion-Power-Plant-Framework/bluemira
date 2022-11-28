@@ -42,6 +42,11 @@ if TYPE_CHECKING:
 
 
 class CoilGroupFieldsMixin:
+    """
+    CoilGroup magnetic fields mixin.
+
+    Add field calculation mechanics to coilgroups
+    """
 
     __slots__ = (
         "_quad_dx",
@@ -51,10 +56,6 @@ class CoilGroupFieldsMixin:
         "_quad_weighting",
         "_einsum_str",
     )
-
-    def __init__(self):
-        if type(self) == CoilFieldsMixin:
-            raise TypeError("Can't be initialised directly")
 
     def psi(self, x: Union[float, np.ndarray], z: Union[float, np.ndarray]):
         """
@@ -621,6 +622,12 @@ class CoilGroupFieldsMixin:
 
 
 class CoilFieldsMixin(CoilGroupFieldsMixin):
+    """
+    Coilmagnetic fields mixin.
+
+    Add field calculation mechanics to Coils
+    """
+
     def _points_inside_coil(
         self,
         x: Union[float, np.array],
