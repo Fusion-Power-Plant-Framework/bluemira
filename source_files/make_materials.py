@@ -9,8 +9,8 @@ def make_common_mats():
 
     tungsten_mat = openmc.Material(name='tungsten')
     tungsten_mat.add_nuclide('W182', 0.266, percent_type='ao')
-    tungsten_mat.add_nuclide('W184', 0.143, percent_type='ao')
-    tungsten_mat.add_nuclide('W185', 0.307, percent_type='ao')
+    tungsten_mat.add_nuclide('W183', 0.143, percent_type='ao')
+    tungsten_mat.add_nuclide('W184', 0.307, percent_type='ao')
     tungsten_mat.add_nuclide('W186', 0.284, percent_type='ao')
     tungsten_mat.set_density('g/cm3', 19.3)
     
@@ -20,8 +20,8 @@ def make_common_mats():
     eurofer_mat.add_element('Fe', 0.9006, percent_type='wo')
     eurofer_mat.add_element('Cr', 0.0886, percent_type='wo')
     eurofer_mat.add_nuclide('W182', 0.0108 * 0.266, percent_type='wo')
-    eurofer_mat.add_nuclide('W184', 0.0108 * 0.143, percent_type='wo')
-    eurofer_mat.add_nuclide('W185', 0.0108 * 0.307, percent_type='wo')
+    eurofer_mat.add_nuclide('W183', 0.0108 * 0.143, percent_type='wo')
+    eurofer_mat.add_nuclide('W184', 0.0108 * 0.307, percent_type='wo')
     eurofer_mat.add_nuclide('W186', 0.0108 * 0.284, percent_type='wo')
     eurofer_mat.set_density('g/cm3', 7.78)
     
