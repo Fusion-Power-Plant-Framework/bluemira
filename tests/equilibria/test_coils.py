@@ -40,6 +40,33 @@ from bluemira.equilibria.error import EquilibriaError
 from bluemira.equilibria.grid import Grid
 
 
+def callable_tester(f_callable, coils=1):
+    """
+    Checks that all different field calls (with different inputs) behave
+    as expected
+    """
+    # This should go without a hitch...
+    value = f_callable(8, 0)
+    v2 = f_callable(np.array(8), np.array(0))
+    v3 = f_callable(np.array([8]), np.array([0]))
+    assert np.allclose(v2, value)
+    assert np.allclose(v3, value)
+
+    # Now let's check iterables (X = 4 or 20 is off-grid)
+    # (Z = -10 or 10 off-grid)
+    x = np.array([4, 8, 20, 4, 8, 20, 4, 8, 20])
+    z = np.array([0, 0, 0, 10, 10, 10, -10, -10, 10])
+
+    b = np.zeros((len(z), coils))
+
+    b1 = f_callable(x, z)
+
+    for i, (xi, zi) in enumerate(zip(x, z)):
+        b[i] = f_callable(xi, zi)
+
+    assert np.allclose(b.flat, b1.flat)
+
+
 class TestCoil:
     @classmethod
     def setup_class(cls):
@@ -48,8 +75,8 @@ class TestCoil:
         cls.cs_coil = Coil(x=4, z=4, current=10e6, ctype="CS", j_max=NBTI_J_MAX)
         cls.no_coil = Coil(x=4, z=4, current=10e6, ctype="NONE", j_max=NBTI_J_MAX)
 
-    @classmethod
-    def teardown_cls(cls):
+    def teardown_method(self):
+        plt.show()
         plt.close("all")
 
     def test_name(self):
@@ -84,7 +111,7 @@ class TestCoil:
         assert np.round(abs(c.Bx(0.001, z) - Bx), 4) == 0
         assert np.round(abs(c.Bz(0.001, z) - Bz), 5) == 0
         psi_single = c.psi(15, 15)
-        c.discretise(0.1)
+        c.discretisation = 0.1
         assert np.round(abs(c.Bx(0.001, z) - Bx), 4) == 0
         assert np.round(abs(c.Bz(0.001, z) - Bz), 3) == 0
         psi_multi = c.psi(15, 15)
@@ -100,10 +127,10 @@ class TestCoil:
         x, z = np.meshgrid(x_1_d, z_1_d, indexing="ij")
         c = Coil(x=4, z=0, current=1591550, dx=0.3, dz=1)
 
-        gbx = c.control_Bx(x, z)
-        gbz = c.control_Bz(x, z)
+        gbx = c.unit_Bx(x, z)
+        gbz = c.unit_Bz(x, z)
         _ = np.sqrt(gbx**2 + gbz**2)
-        _ = c.control_psi(x, z)
+        _ = c.unit_psi(x, z)
 
         _, ax = plt.subplots()
         cc = ax.contourf(x, z, gbx)
@@ -113,12 +140,12 @@ class TestCoil:
         ax.set_xlim([2, 6])
         ax.set_ylim([-3, 3])
 
-        c.discretise(0.1)
+        c.discretisation = 0.1
 
-        gbxn = c.control_Bx(x, z)
-        _ = c.control_Bz(x, z)
+        gbxn = c.unit_Bx(x, z)
+        _ = c.unit_Bz(x, z)
         _ = np.sqrt(gbx**2 + gbz**2)
-        _ = c.control_psi(x, z)
+        _ = c.unit_psi(x, z)
 
         _, ax = plt.subplots()
         c = ax.contourf(x, z, gbxn)
@@ -126,46 +153,18 @@ class TestCoil:
         ax.set_aspect("equal")
         ax.set_xlim([2, 6])
         ax.set_ylim([-3, 3])
-        plt.show()
-
-    @staticmethod
-    def callable_tester(f_callable):
-        """
-        Checks that all different field calls (with different inputs) behave
-        as expected
-        """
-        # This should go without a hitch...
-        value = f_callable(8, 0)
-        v2 = f_callable(np.array(8), np.array(0))
-        v3 = f_callable(np.array([8]), np.array([0]))
-        assert np.isclose(v2, value)
-        assert np.isclose(v3, value)
-
-        # Now let's check iterables (X = 4 or 20 is off-grid)
-        # (Z = -10 or 10 off-grid)
-        x = np.array([4, 8, 20, 4, 8, 20, 4, 8, 20])
-        z = np.array([0, 0, 0, 10, 10, 10, -10, -10, 10])
-
-        b = np.zeros(len(z))
-
-        for i, (xi, zi) in enumerate(zip(x, z)):
-            b[i] = f_callable(xi, zi)
-
-        b1 = f_callable(x, z)
-
-        assert np.allclose(b, b1.flat)
 
     def test_bx(self):
-        self.callable_tester(self.coil.Bx)
+        callable_tester(self.coil.Bx)
 
     def test_bz(self):
-        self.callable_tester(self.coil.Bz)
+        callable_tester(self.coil.Bz)
 
     def test_bp(self):
-        self.callable_tester(self.coil.Bp)
+        callable_tester(self.coil.Bp)
 
     def test_psi(self):
-        self.callable_tester(self.coil.psi)
+        callable_tester(self.coil.psi)
 
     def test_point_in_coil(self):
         coil = Coil(x=4, z=4, current=10, dx=1, dz=2)
@@ -183,7 +182,6 @@ class TestCoil:
         assert np.alltrue(coil._points_inside_coil(coil.x_boundary, coil.z_boundary))
 
 
-@pytest.mark.longrun
 class TestSemiAnalytic:
     """
     Compare all three control response methods, and that the combination of the
@@ -192,49 +190,78 @@ class TestSemiAnalytic:
 
     @classmethod
     def setup_class(cls):
-        cls.coil = CoilGroup(Coil(x=4, z=4, current=10e6, dx=1, dz=2))
+        cls.coil = Coil(x=4, z=4, ctype="PF", current=10e6, dx=1, dz=2)
+        cls.cg1 = CoilGroup(cls.coil)
+        cls.cg2 = CoilGroup(
+            cls.coil, Coil(x=8, z=8, ctype="PF", current=10e6, dx=1, dz=2)
+        )
         cls.coil.discretisation = 0.2
+        cls.cg1.discretisation = 0.2
+        cls.cg2.discretisation = 0.2
         cls.grid = Grid(0.1, 8, 0, 8, 100, 100)
-        cls.x_boundary = np.append(cls.coil.x_boundary, cls.coil.x_boundary[0])
-        cls.z_boundary = np.append(cls.coil.z_boundary, cls.coil.z_boundary[0])
+        cls.grid2 = Grid(0.1, 12, 0, 12, 100, 100)
+        cls.x_boundary = [np.append(cls.coil.x_boundary, cls.coil.x_boundary[0])]
+        cls.z_boundary = [np.append(cls.coil.z_boundary, cls.coil.z_boundary[0])]
+        cls.x_boundary.append(
+            np.append(cls.cg2.x_boundary, cls.cg2.x_boundary[:, 0][:, None], axis=-1)
+        )
+        cls.z_boundary.append(
+            np.append(cls.cg2.z_boundary, cls.cg2.z_boundary[:, 0][:, None], axis=-1)
+        )
 
     def teardown_method(self):
         plt.show()
         plt.close("all")
 
-    def test_bx(self):
-        gp = self.coil.unit_Bx(self.grid.x, self.grid.z)
-        gp_greens = self.coil._unit_Bx_greens(self.grid.x, self.grid.z)
-        gp_analytic = self.coil._unit_Bx_analytical(self.grid.x, self.grid.z)
+    def _plotter(self, gp, gp_greens, gp_analytic):
+        _, ax = plt.subplots(3, 3)
 
-        _, ax = plt.subplots(1, 3)
-        levels = np.linspace(np.amin(gp), np.amax(gp), 20)
-        ax[0].contourf(self.grid.x, self.grid.z, gp_greens)
-        ax[1].contourf(self.grid.x, self.grid.z, gp, levels=levels)
-        ax[2].contourf(self.grid.x, self.grid.z, gp_analytic, levels=levels)
-        for axis in ax:
-            axis.plot(self.x_corner, self.z_corner, color="r")
+        for axis in ax[:2].flat:
+            axis.plot(self.x_boundary[0], self.z_boundary[0], color="r")
             axis.set_aspect("equal")
-        ax[0].set_title("Green's functions")
-        ax[1].set_title("Combined Green's and semi-analytic")
-        ax[2].set_title("Semi-analytic method")
 
-    def test_bz(self):
-        gp = self.coil.unit_Bz(self.grid.x, self.grid.z)
-        gp_greens = self.coil._unit_Bz_greens(self.grid.x, self.grid.z)
-        gp_analytic = self.coil._unit_Bz_analytical(self.grid.x, self.grid.z)
-
-        _, ax = plt.subplots(1, 3)
-        levels = np.linspace(np.amin(gp), np.amax(gp), 20)
-        ax[0].contourf(self.grid.x, self.grid.z, gp_greens)
-        ax[1].contourf(self.grid.x, self.grid.z, gp, levels=levels)
-        ax[2].contourf(self.grid.x, self.grid.z, gp_analytic, levels=levels)
-        for axis in ax:
-            axis.plot(self.x_corner, self.z_corner, color="r")
+        for axis in ax[2].flat:
+            axis.plot(self.x_boundary[1][0], self.z_boundary[1][0], color="r")
+            axis.plot(self.x_boundary[1][1], self.z_boundary[1][1], color="r")
             axis.set_aspect("equal")
-        ax[0].set_title("Green's functions")
-        ax[1].set_title("Combined Green's and semi-analytic")
-        ax[2].set_title("Semi-analytic method")
+
+        levels = np.linspace(np.amin(gp[0]), np.amax(gp[0]), 20)
+
+        ax[0, 0].set_title("Green's functions")
+        ax[0, 1].set_title("Combined Green's and semi-analytic")
+        ax[0, 2].set_title("Semi-analytic method")
+
+        for i in range(2):
+            ax[i, 0].contourf(self.grid.x, self.grid.z, gp_greens[i], levels=levels)
+            ax[i, 1].contourf(self.grid.x, self.grid.z, gp[i], levels=levels)
+            ax[i, 2].contourf(self.grid.x, self.grid.z, gp_analytic[i], levels=levels)
+
+        levels = np.linspace(np.amin(gp[2]), np.amax(gp[2]), 20)
+        ax[2, 0].contourf(
+            self.grid2.x, self.grid2.z, np.sum(gp_greens[2], axis=-1), levels=levels
+        )
+        ax[2, 1].contourf(
+            self.grid2.x, self.grid2.z, np.sum(gp[2], axis=-1), levels=levels
+        )
+        ax[2, 2].contourf(
+            self.grid2.x, self.grid2.z, np.sum(gp_analytic[2], axis=-1), levels=levels
+        )
+
+    @pytest.mark.parametrize("fd", ["Bx", "Bz"])
+    def test_bfield(self, fd):
+        gp_greens = []
+        gp_analytic = []
+        gp = []
+        for cl, grid in [
+            [self.coil, self.grid],
+            [self.cg1, self.grid],
+            [self.cg2, self.grid2],
+        ]:
+            gp_greens.append(getattr(cl, f"_unit_{fd}_greens")(grid.x, grid.z))
+            gp_analytic.append(getattr(cl, f"_unit_{fd}_analytical")(grid.x, grid.z))
+            gp.append(getattr(cl, f"unit_{fd}")(grid.x, grid.z))
+
+        self._plotter(gp, gp_greens, gp_analytic)
 
 
 class TestCoilGroup:
@@ -279,6 +306,17 @@ class TestCoilGroup:
 
         # TODO test nested removal
 
+    def test_psi(self):
+        callable_tester(self.group.psi, self.group.n_coils)
+
+    def test_bx(self):
+        callable_tester(self.group.Bx, self.group.n_coils)
+
+    def test_bz(self):
+        callable_tester(self.group.Bz, self.group.n_coils)
+
+    def test_bp(self):
+        callable_tester(self.group.Bp, self.group.n_coils)
 
 class TestPositionalSymmetricCircuit:
     @classmethod

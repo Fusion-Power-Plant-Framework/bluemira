@@ -52,7 +52,7 @@ from bluemira.magnetostatics.semianalytic_2d import semianalytic_Bx, semianalyti
 from bluemira.utilities.tools import consec_repeat_elem, is_num
 
 
-class CoilFieldsMixin:
+class CoilGroupFieldsMixin:
 
     __slots__ = (
         "_quad_dx",
@@ -90,8 +90,8 @@ class CoilFieldsMixin:
             greens_psi(
                 self._quad_x[None],
                 self._quad_z[None],
-                x[..., None],
-                z[..., None],
+                x[..., None, None],
+                z[..., None, None],
                 self._quad_dx[None],
                 self._quad_dz[None],
             ),
@@ -194,7 +194,10 @@ class CoilFieldsMixin:
         """
         x, z = np.ascontiguousarray(x), np.ascontiguousarray(z)
 
-        zero_coil_size = np.logical_or(np.isclose(self.dx, 0), np.isclose(self.dz, 0))
+        # if not wrapped in np.array the following if won't work for `Coil`
+        zero_coil_size = np.array(
+            np.logical_or(np.isclose(self.dx, 0), np.isclose(self.dz, 0))
+        )
 
         if False in zero_coil_size:
             # if dx or dz is not 0 and x,z inside coil
@@ -239,7 +242,7 @@ class CoilFieldsMixin:
         response = np.zeros_like(inside, dtype=float)
         for coil, (points, qx, qz, qw, cx, cz, cdx, cdz) in enumerate(
             zip(
-                inside.T,
+                np.moveaxis(inside, -1, 0),
                 self._quad_x,
                 self._quad_z,
                 self._quad_weighting,
@@ -250,15 +253,16 @@ class CoilFieldsMixin:
             )
         ):
             if np.any(~points):
-                response[~points, coil] = np.squeeze(
-                    greens_func(x[~points], z[~points], True, qx, qz, qw)
-                )
-            if np.any(points):
-                response[points, coil] = np.squeeze(
-                    semianalytic_func(x[points], z[points], True, cx, cz, cdx, cdz)
+                response[~points, coil] = greens_func(
+                    x[~points], z[~points], True, qx, qz, qw
                 )
 
-        return response
+            if np.any(points):
+                response[points, coil] = semianalytic_func(
+                    x[points], z[points], True, cx, cz, cdx, cdz
+                )
+
+        return np.squeeze(response)
 
     def _points_inside_coil(
         self,
@@ -334,15 +338,17 @@ class CoilFieldsMixin:
             _quad_z = self._quad_z
             _quad_weight = self._quad_weighting
 
-        return np.einsum(
-            self._einsum_str,
-            greens(
-                _quad_x[None],
-                _quad_z[None],
-                x[..., None],
-                z[..., None],
-            ),
-            _quad_weight[None],
+        return np.squeeze(
+            np.einsum(
+                self._einsum_str,
+                greens(
+                    _quad_x[None],
+                    _quad_z[None],
+                    x[..., None, None],
+                    z[..., None, None],
+                ),
+                _quad_weight[None],
+            )
         )
 
     def _unit_Bx_greens(
@@ -449,13 +455,15 @@ class CoilFieldsMixin:
             coil_dx = self.dx
             coil_dz = self.dz
 
-        return semianalytic(
-            coil_x[None],
-            coil_z[None],
-            x[..., None],
-            z[..., None],
-            d_xc=coil_dx[None],
-            d_zc=coil_dz[None],
+        return np.squeeze(
+            semianalytic(
+                coil_x[None],
+                coil_z[None],
+                x[..., None],
+                z[..., None],
+                d_xc=coil_dx[None],
+                d_zc=coil_dz[None],
+            )
         )
 
     def _unit_Bx_analytical(
@@ -577,22 +585,109 @@ class CoilFieldsMixin:
         return 2 * np.pi * pos[0] * np.array([Bz, -Bx]).T  # 1 cross B
 
 
-def get_max_current(dx, dz, j_max):
-    """
-    Get the maximum current in a coil cross-sectional area
+class CoilFieldsMixin(CoilGroupFieldsMixin):
+    def _points_inside_coil(
+        self,
+        x: Union[float, np.array],
+        z: Union[float, np.array],
+        *,
+        atol: float = X_TOLERANCE,
+    ):
+        """
+        Determine which points lie inside or on the coil boundary.
 
-    Parameters
-    ----------
-    dx: float
-        Coil half-width [m]
-    dz: float
-        Coil half-height [m]
-    j_max: float
-        Coil current density [A/m^2]
+        Parameters
+        ----------
+        x: Union[float, np.array]
+            The x coordinates to check
+        z: Union[float, np.array]
+            The z coordinates to check
+        atol: Optional[float]
+            Add an offset, to ensure points very near the edge are counted as
+            being on the edge of a coil
 
-    Returns
-    -------
-    max_current: float
-        Maximum current [A]
-    """
-    return abs(j_max * (4 * dx * dz))
+        Returns
+        -------
+        inside: np.array(dtype=bool)
+            The Boolean array of point indices inside/outside the coil boundary
+        """
+        x, z = np.ascontiguousarray(x)[..., None], np.ascontiguousarray(z)[..., None]
+
+        x_min, x_max = (
+            self.x - self.dx - atol,
+            self.x + self.dx + atol,
+        )
+        z_min, z_max = (
+            self.z - self.dz - atol,
+            self.z + self.dz + atol,
+        )
+        return (x >= x_min) & (x <= x_max) & (z >= z_min) & (z <= z_max)
+
+    def _combined_control(self, inside, x, z, greens_func, semianalytic_func):
+        """
+        Combine semianalytic and greens function calculation of magnetic field
+
+        Used for situation where there are calculation points both inside and
+        outside the coil boundaries.
+
+        Parameters
+        ----------
+        inside: np.ndarray[bool]
+            array of if the point is inside a coil
+        x,z: Union[float, int, np.array]
+            Points to calculate field at
+        greens_func: Callable
+            greens function
+        semianalytic_func: Callable
+            semianalytic function
+
+        Returns
+        -------
+        response: np.ndarray
+
+        """
+        response = np.zeros(inside.shape[:-1])
+        points = inside[:, :, 0]
+
+        if np.any(~points):
+            response[~points] = greens_func(x[~points], z[~points])
+
+        if np.any(points):
+            response[points] = semianalytic_func(x[points], z[points])
+
+        return response
+
+    def _unit_B_analytical(
+        self,
+        semianalytic,
+        x,
+        z,
+        *args,
+        **kwargs,
+    ):
+        """
+        Calculate radial magnetic field Bx response at (x, z) due to a unit
+        current using semi-analytic method.
+
+        Parameters
+        ----------
+        semianalytic: Callable
+            semianalytic function
+        x,z: Union[float, int, np.array]
+            Points to calculate field at
+
+        Returns
+        -------
+        response: np.ndarray
+
+        """
+        return super()._unit_B_analytical(
+            semianalytic,
+            x,
+            z,
+            split=True,
+            coil_x=np.array([self.x]),
+            coil_z=np.array([self.z]),
+            coil_dx=np.array([self.dx]),
+            coil_dz=np.array([self.dz]),
+        )

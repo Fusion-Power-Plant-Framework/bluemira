@@ -40,7 +40,7 @@ import numpy as np
 from bluemira.base.constants import MU_0
 from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.equilibria.coils._coil import CoilType
-from bluemira.equilibria.coils._field import CoilFieldsMixin
+from bluemira.equilibria.coils._field import CoilGroupFieldsMixin
 from bluemira.equilibria.constants import I_MIN, NBTI_B_MAX, NBTI_J_MAX, X_TOLERANCE
 from bluemira.equilibria.error import EquilibriaError
 from bluemira.equilibria.file import EQDSKInterface
@@ -52,13 +52,13 @@ from bluemira.magnetostatics.greens import (
     greens_psi,
 )
 from bluemira.magnetostatics.semianalytic_2d import semianalytic_Bx, semianalytic_Bz
-from bluemira.utilities.tools import flatten_iterable, is_num
+from bluemira.utilities.tools import flatten_iterable, is_num, yintercept
 
 # from scipy.interpolate import RectBivariateSpline
 
 
-class CoilGroup(CoilFieldsMixin):
-    def __init__(self, *coils: Union[Coil, CoilGroup[Coil]]) -> None:
+class CoilGroup(CoilGroupFieldsMixin):
+    def __init__(self, *coils: Union[Coil, CoilGroup[Coil]]):
         self._coils = coils
         self._pad_discretisation(self.__list_getter("_quad_x"))
 
@@ -160,7 +160,7 @@ class CoilGroup(CoilFieldsMixin):
         self._pad_size = max_len - all_len
 
         self._einsum_str = (
-            "..., ...j -> ..." if all(self._pad_size == 0) else "...j, ...j -> ..."
+            "...j, ...ij -> ...i" if len(_to_pad) == 1 else "...ij, ...ij -> ...i"
         )
 
     def assign_material(
@@ -226,11 +226,19 @@ class CoilGroup(CoilFieldsMixin):
 
     @property
     def x_boundary(self) -> np.ndarray:
-        return self.__getter("x_boundary")
+        xb = self.__getter("x_boundary")
+        if self.n_coils > 1:
+            return xb.reshape(-1, 4)
+        else:
+            return xb
 
     @property
     def z_boundary(self) -> np.ndarray:
-        return self.__getter("z_boundary")
+        zb = self.__getter("z_boundary")
+        if self.n_coils > 1:
+            return zb.reshape(-1, 4)
+        else:
+            return zb
 
     @property
     def _current_radius(self) -> np.ndarray:

@@ -37,6 +37,7 @@ import numpy as np
 
 from bluemira.base.constants import MU_0
 from bluemira.base.look_and_feel import bluemira_warn
+from bluemira.equilibria.coils._field import CoilFieldsMixin
 from bluemira.equilibria.constants import I_MIN, NBTI_B_MAX, NBTI_J_MAX, X_TOLERANCE
 from bluemira.equilibria.error import EquilibriaError
 from bluemira.equilibria.file import EQDSKInterface
@@ -121,7 +122,7 @@ class CoilNumber:
         return idx
 
 
-class Coil:
+class Coil(CoilFieldsMixin):
     def __init__(
         self,
         x: float,
@@ -160,6 +161,7 @@ class Coil:
         self._validate_size()
         if not self._flag_sizefix and None in (self.dx, self.dz):
             self._dx, self._dz = 0, 0
+            self._discretise()
 
     def __repr__(self):
         return (
@@ -283,7 +285,7 @@ class Coil:
 
     @current.setter
     def current(self, value: Union[str, CoilType]):
-        self._current = value
+        self._current = float(value)
 
     @j_max.setter
     def j_max(self, value: float):
@@ -330,12 +332,12 @@ class Coil:
         Possible improvement: multiple discretisations for different coils
 
         """
-        weighting = None
         self._quad_x = np.array([self.x])
         self._quad_z = np.array([self.z])
         self._quad_dx = np.array([self.dx])
         self._quad_dz = np.array([self.dz])
         self._quad_weighting = np.ones_like(self._quad_x)
+        self._einsum_str = "...j, ...j -> ..."
 
         if self.discretisation < 1:
             # How fancy do we want the mesh or just smaller rectangles?
@@ -402,7 +404,7 @@ class Coil:
             self._quad_dx = np.ones(x_sc.size) * sc_dx
             self._quad_dz = np.ones(x_sc.size) * sc_dz
 
-            self._quad_weighting = np.ones(x_sc.size)
+            self._quad_weighting = np.ones(x_sc.size) / x_sc.size
 
     def fix_size(self):
         """
