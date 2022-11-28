@@ -25,8 +25,7 @@ Coil and coil grouping objects
 from __future__ import annotations
 
 import abc
-
-# from copy import deepcopy
+from copy import deepcopy
 from enum import Enum, EnumMeta, auto
 from functools import update_wrapper, wraps
 from operator import attrgetter
@@ -300,6 +299,116 @@ class CoilGroup(CoilGroupFieldsMixin):
     def discretisation(self, values: Union[float, Iterable[float]]):
         self.__setter("discretisation", values)
         self._pad_discretisation(self.__list_getter("_quad_x"))
+
+    def __copy__(self):
+        cls = self.__class__
+        result = cls.__new__(cls)
+        result.__dict__.update(self.__dict__)
+        return result
+
+    def __deepcopy__(self, memo):
+        cls = self.__class__
+        result = cls.__new__(cls)
+        memo[id(self)] = result
+        for k, v in self.__dict__.items():
+            setattr(result, k, deepcopy(v, memo))
+        return result
+
+
+class Circuit(CoilGroup):
+    def __init__(
+        self, *coils: Union[Coil, CoilGroup[Coil]], current: Optional[float] = None
+    ):
+        super().__init__(*coils)
+        self.current = self._coils[0].current if current is None else current
+
+    def add_coil(self, *coils: Union[Coil, CoilGroup[Coil]]):
+        super().add_coil(coils)
+        self.current = self._coils[0].current
+
+    @CoilGroup.current.setter
+    def current(self, values: Union[float, Iterable[float]]):
+        if isinstance(values, Iterable):
+            # Force the same value of current for all coils
+            values = values[0]
+        self._CoilGroup__setter("current", values)
+
+
+class SymmetricCircuit(Circuit):
+    def __init__(
+        self,
+        *coils: Union[Coil, CoilGroup[Coil]],
+        symmetry_line: Union[Tuple, np.ndarray] = ((0, 0), (1, 0)),
+    ):
+        if len(coils) != 2:
+            raise EquilibriaError(
+                f"Wrong number of coils to create a {type(self).__name__}"
+            )
+
+        super().__init__(*coils)
+
+        self.modify_symmetry(symmetry_line)
+        diff = self._symmetrise()
+        self._coils[1].x -= diff[0]
+        self._coils[1].z -= diff[1]
+
+    def modify_symmetry(self, symmetry_line: np.ndarray):
+        """
+        Create a unit vector for the symmetry of the circuit
+
+        Parameters
+        ----------
+        symmetry_line: np.ndarray[[float, float], [float, float]]
+            two points making a symmetry line
+
+        """
+        if isinstance(symmetry_line, tuple):
+            self._symmetry_line = np.array(symmetry_line)
+
+        self._symmetry_matrix()
+
+    def _symmetry_matrix(self):
+        self._shift, grad = yintercept(self._symmetry_line)
+        grad2 = grad**2
+        mgrad2 = 1 - grad2
+        gradsq = 2 * grad
+        self.sym_mat = 1 / (1 + grad2) * np.array([[mgrad2, gradsq], [gradsq, -mgrad2]])
+
+    def _symmetrise(self):
+        """
+        Calculate the change in position to the symmetric coil,
+        twice the distance to the line of symmetry.
+        """
+        cp = self._get_group_centre()
+        cp[1] -= self._shift
+        mirror = np.dot(self.sym_mat, cp.T)
+        mirror[1] += self._shift
+        return np.array([np.mean(self._coils[1].x), np.mean(self._coils[1].z)]) - mirror
+
+    @Circuit.x.setter
+    def x(self, new_x: float):
+        """
+        Set x coordinate of each coil
+        """
+        self._coils[0].x += np.mean(new_x) - self._get_group_x_centre()
+        self._coils[1].x -= self._symmetrise()[0]
+
+    @Circuit.z.setter
+    def z(self, new_z: float):
+        """
+        Set z coordinate of each coil
+        """
+        self._coils[0].z += np.mean(new_z) - self._get_group_z_centre()
+        self._coils[1].z -= self._symmetrise()[1]
+
+    def _get_group_x_centre(self):
+        return np.mean(self._coils[0].x)
+
+    def _get_group_z_centre(self):
+        return np.mean(self._coils[0].z)
+
+    def _get_group_centre(self):
+        return np.array([self._get_group_x_centre(), self._get_group_z_centre()])
 
 
 class _CoilGroup(abc.ABC):

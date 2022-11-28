@@ -265,15 +265,14 @@ class TestSemiAnalytic:
 
 
 class TestCoilGroup:
-    @staticmethod
-    def make_coilgroup():
+    def setup_method(self):
         x = [6, 7, 4, 4]
         z = [6, 7, 4, 5]
         ctype = ["CS", "CS", "PF", "PF"]
         name = ["CS_8", "CS_0", "PF_1", "PF_0"]
         j_max = NBTI_J_MAX
 
-        return CoilGroup(
+        self.group = CoilGroup(
             *(
                 Coil(x=_x, z=_z, name=_n, ctype=_ct, j_max=j_max)
                 for _x, _z, _ct, _n in zip(x, z, ctype, name)
@@ -281,28 +280,25 @@ class TestCoilGroup:
         )
 
     def test_init_sort(self):
-        group = self.make_coilgroup()
-        assert group.n_coils == 4
-        assert group.name == ["CS_8", "CS_0", "PF_1", "PF_0"]
+        assert self.group.n_coils == 4
+        assert self.group.name == ["CS_8", "CS_0", "PF_1", "PF_0"]
 
     def test_add(self):
-        group = self.make_coilgroup()
-        group.add_coil(Coil(3, 3, ctype="PF", name="PF_3", j_max=NBTI_J_MAX))
-        group.add_coil(Coil(9, 9, ctype="CS", name="CS_9", j_max=NBTI_J_MAX))
+        self.group.add_coil(Coil(3, 3, ctype="PF", name="PF_3", j_max=NBTI_J_MAX))
+        self.group.add_coil(Coil(9, 9, ctype="CS", name="CS_9", j_max=NBTI_J_MAX))
 
-        assert group.n_coils == 6
-        assert group.name == ["CS_8", "CS_0", "PF_1", "PF_0", "PF_3", "CS_9"]
+        assert self.group.n_coils == 6
+        assert self.group.name == ["CS_8", "CS_0", "PF_1", "PF_0", "PF_3", "CS_9"]
 
     def test_remove(self):
-        group = self.make_coilgroup()
-        group.remove_coil("PF_0")
-        group.remove_coil("PF_1")
+        self.group.remove_coil("PF_0")
+        self.group.remove_coil("PF_1")
 
-        assert group.n_coils == 2
-        assert group.name == ["CS_8", "CS_0"]
+        assert self.group.n_coils == 2
+        assert self.group.name == ["CS_8", "CS_0"]
 
         with pytest.raises(EquilibriaError):
-            group.remove_coil("PF_1")
+            self.group.remove_coil("PF_1")
 
         # TODO test nested removal
 
@@ -318,26 +314,16 @@ class TestCoilGroup:
     def test_bp(self):
         callable_tester(self.group.Bp, self.group.n_coils)
 
-class TestPositionalSymmetricCircuit:
+
+class TestSymmetricCircuit:
     @classmethod
     def setup_class(cls):
         coil = Coil(x=1.5, z=6, current=1e6, dx=0.25, dz=0.5, ctype="PF", name="TEST")
-        circuit = SymmetricCircuit(
-            np.array([[0, 0], [1, 0]]),
-            x=1.5,
-            z=6,
-            current=1e6,
-            dx=0.25,
-            dz=0.5,
-            ctype="PF",
-            name="TEST",
-        )
         mirror_coil = Coil(
             x=1.5, z=-6, current=1e6, dx=0.25, dz=0.5, ctype="PF", name="TEST_MIRROR"
         )
-
-        cls.circuit = circuit
-        cls.coils = [coil, mirror_coil]
+        cls.circuit = SymmetricCircuit(coil, mirror_coil)
+        cls.coils = [copy.deepcopy(coil), copy.deepcopy(mirror_coil)]
 
     @pytest.mark.parametrize("fieldtype", ["unit_", ""])
     def test_fields(self, fieldtype):
@@ -389,7 +375,7 @@ class TestPositionalSymmetricCircuit:
     def test_position(self):
         circ = copy.deepcopy(self.circuit)
         before = circ.x.copy()
-        circ.adjust_position(np.array([[1, 0]]))
+        circ.x += 1
         assert np.allclose(before + 1, circ.x)
 
 
@@ -400,19 +386,31 @@ class TestCoilSet:
             x=4, z=10, current=2e6, dx=1, dz=0.5, j_max=5.0, b_max=50, name="PF_1"
         )
         circuit = SymmetricCircuit(
-            np.array([[0, 0], [1, 0]]),
-            x=1.5,
-            z=6,
-            current=1e6,
-            dx=0.25,
-            dz=0.5,
-            j_max=10.0,
-            b_max=100,
-            ctype="PF",
-            name="PF_2",
+            Coil(
+                x=1.5,
+                z=6,
+                current=1e6,
+                dx=0.25,
+                dz=0.5,
+                j_max=10.0,
+                b_max=100,
+                ctype="PF",
+                name="PF_2.1",
+            ),
+            Coil(
+                x=1.5,
+                z=-6,
+                current=1e6,
+                dx=0.25,
+                dz=0.5,
+                j_max=10.0,
+                b_max=100,
+                ctype="PF",
+                name="PF_2.2",
+            ),
         )
 
-        cls.coilset = CoilSet(coil, circuit)
+        cls.coilset = CoilGroup(coil, circuit)
 
     def test_group_vecs(self):
         x, z, dx, dz, currents = self.coilset.to_group_vecs()
@@ -575,7 +573,7 @@ class TestMutualInductances:
         coil1 = Coil(4, 4, j_max=1)
         coil2 = Coil(5, 5, j_max=1)
         coil3 = Coil(6, 6, j_max=1)
-        cls.coilset1 = CoilSet(coil1, coil2, coil3)
+        cls.coilset1 = CoilGroup(coil1, coil2, coil3)
 
     def test_normal(self):
         """

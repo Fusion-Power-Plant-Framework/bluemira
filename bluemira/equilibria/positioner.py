@@ -33,14 +33,7 @@ from scipy.spatial import ConvexHull
 
 from bluemira.base.constants import EPS
 from bluemira.base.look_and_feel import bluemira_warn
-from bluemira.equilibria.coils import (
-    CS_COIL_NAME,
-    PF_COIL_NAME,
-    Coil,
-    CoilSet,
-    Solenoid,
-    get_max_current,
-)
+from bluemira.equilibria.coils import Coil, CoilSet, Solenoid, get_max_current
 from bluemira.equilibria.constants import NBTI_J_MAX
 from bluemira.equilibria.error import EquilibriaError
 from bluemira.equilibria.plotting import RegionPlotter, XZLPlotter
@@ -173,10 +166,7 @@ class CoilPositioner:
         l_norm = vector_lengthnorm(tf_loop.x, tf_loop.z)
         pos = np.linspace(0, 1, n_PF)
         xint, zint = interp1d(l_norm, tf_loop.x)(pos), interp1d(l_norm, tf_loop.z)(pos)
-        return [
-            Coil(xint[i], zint[i], name=PF_COIL_NAME.format(n_PF - i), j_max=NBTI_J_MAX)
-            for i in range(n_PF)
-        ]
+        return [Coil(xint[i], zint[i], j_max=NBTI_J_MAX) for i in range(n_PF)]
 
     def equispace_CS(self, x_cs, tk_cs, z_min, z_max, n_CS):
         """
@@ -211,7 +201,6 @@ class CoilPositioner:
                 z_cs[i],
                 dx=tk_cs,
                 dz=heights[i],
-                name=CS_COIL_NAME.format(i + 1),
                 ctype="CS",
                 j_max=NBTI_J_MAX,
             )

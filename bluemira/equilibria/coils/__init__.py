@@ -24,13 +24,12 @@ Coil and coil grouping objects
 """
 
 from bluemira.equilibria.coils._coil import Coil, CoilType
-from bluemira.equilibria.coils._field import get_max_current
-from bluemira.equilibria.coils._grouping import (
-    CS_COIL_NAME,
-    PF_COIL_NAME,
-    CoilGroup,
-    Solenoid,
-)
+from bluemira.equilibria.coils._grouping import Circuit, CoilGroup, SymmetricCircuit
 from bluemira.equilibria.coils._grouping import _CoilSet as CoilSet
-from bluemira.equilibria.coils._grouping import _SymmetricCircuit as SymmetricCircuit
-from bluemira.equilibria.coils._grouping import symmetrise_coilset
+from bluemira.equilibria.coils._grouping import _Solenoid as Solenoid
+from bluemira.equilibria.coils._tools import (
+    check_coilset_symmetric,
+    get_max_current,
+    make_mutual_inductance_matrix,
+    symmetrise_coilset,
+)

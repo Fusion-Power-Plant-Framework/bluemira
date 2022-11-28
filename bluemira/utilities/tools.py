@@ -544,6 +544,24 @@ def consec_repeat_elem(arr: np.ndarray, num_rep: int) -> np.ndarray:
     return np.flatnonzero(np.convolve(m, np.ones(N, dtype=int)) == N) - N + 1
 
 
+def slope(arr):
+    x1 = arr[0, 0]
+    y1 = arr[0, 1]
+    x2 = arr[1, 0]
+    y2 = arr[1, 1]
+    m = 0
+    b = x2 - x1
+    d = y2 - y1
+    if b != 0:
+        m = d / b
+    return m
+
+
+def yintercept(arr):
+    s = slope(arr)
+    return arr[0, 1] - s * arr[0, 0], s
+
+
 # ======================================================================================
 # Coordinate system transformations
 # ======================================================================================
