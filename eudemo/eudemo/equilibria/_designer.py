@@ -263,17 +263,9 @@ class FixedEquilibriumDesignerParams(ParameterFrame):
     B_0: Parameter[float]
     delta: Parameter[float]
     delta_95: Parameter[float]
-    delta_l: Parameter[float]
-    delta_u: Parameter[float]
     I_p: Parameter[float]
     kappa: Parameter[float]
     kappa_95: Parameter[float]
-    kappa_l: Parameter[float]
-    kappa_u: Parameter[float]
-    phi_l_neg: Parameter[float]
-    phi_l_pos: Parameter[float]
-    phi_u_neg: Parameter[float]
-    phi_u_pos: Parameter[float]
     q_95: Parameter[float]
     R_0: Parameter[float]
     tk_cs: Parameter[float]
@@ -354,16 +346,26 @@ class FixedEquilibriumDesigner(Designer[Equilibrium]):
         """Load an equilibrium from a file."""
         pass
 
-    def _get_geometry_parameterisation(self):
+    def _derive_shape_params(self):
+        shape_config = self.build_config.get(shape_config, {})
+        kappa_95 = self.params.kappa_95.value
+        delta_95 = self.params.delta_95.value
+        kappa_l = shape_config["f_kappa_l"] * kappa_95
+        kappa_u = shape_config["f_kappa_l"] ** 2 * kappa_95
+        delta_l = shape_config["f_delta_l"] * delta_95
+        delta_u = delta_95
+        return kappa_u, kappa_l, delta_u, delta_l
 
+    def _get_geometry_parameterisation(self):
+        kappa_u, kappa_l, delta_u, delta_l = self._derive_shape_params()
         return JohnerLCFS(
             {
                 "r_0": {"value": self.params.R_0.value},
                 "a": {"value": self.params.A.value},
-                "kappa_u": {"value": self.params.kappa_u.value},
-                "kappa_l": {"value": self.params.kappa_l.value},
-                "delta_u": {"value": self.params.delta_u.value},
-                "delta_l": {"value": self.params.delta_l.value},
+                "kappa_u": {"value": kappa_u},
+                "kappa_l": {"value": kappa_l},
+                "delta_u": {"value": delta_u},
+                "delta_l": {"value": delta_l},
             }
         )
 
@@ -405,4 +407,36 @@ class FixedEquilibriumDesigner(Designer[Equilibrium]):
         }
         return FemGradShafranovFixedBoundary(
             self.build_config.get("equilibrium_settings", defaults)
+        )
+
+    def _make_fbe_opt_problem(self, eq: Equilibrium):
+        """
+        Create the `UnconstrainedTikhonovCurrentGradientCOP` optimisation problem.
+        """
+        kappa = 1.12 * self.params.kappa_95.value
+        kappa_ul_tweak = 0.05
+        kappa_u = (1 - kappa_ul_tweak) * kappa
+        kappa_l = (1 + kappa_ul_tweak) * kappa
+
+        eq_targets = EUDEMOSingleNullConstraints(
+            R_0=self.params.R_0.value,
+            Z_0=0.0,
+            A=self.params.A.value,
+            kappa_u=kappa_u,
+            kappa_l=kappa_l,
+            delta_u=self.params.delta_95.value,
+            delta_l=self.params.delta_95.value,
+            psi_u_neg=0.0,
+            psi_u_pos=0.0,
+            psi_l_neg=60.0,
+            psi_l_pos=30.0,
+            div_l_ib=self.params.div_L2D_ib.value,
+            div_l_ob=self.params.div_L2D_ob.value,
+            psibval=0.0,
+            psibtol=1.0e-3,
+            lower=True,
+            n=100,
+        )
+        return UnconstrainedTikhonovCurrentGradientCOP(
+            eq.coilset, eq, eq_targets, gamma=1e-8
         )
