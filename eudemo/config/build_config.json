@@ -8,6 +8,14 @@
         "file_path": "config/equilibrium_eqdsk.json"
     },
     "Fixed boundary equilibrium":{
+        "shape_config": {
+            "f_delta_l": 1.351,
+            "f_kappa_l": 1.059,
+            "phi_l_neg": -120.0,
+            "phi_l_pos": 30.0,
+            "phi_u_neg": 0.0,
+            "phi_u_pos": 10.0
+        },
         "plasmod_settings": {
             "i_impmodel": "PED_FIXED",
             "i_modeltype": "GYROBOHM_2",
