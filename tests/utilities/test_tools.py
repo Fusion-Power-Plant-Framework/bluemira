@@ -32,6 +32,7 @@ from bluemira.utilities.tools import (
     cartesian_to_polar,
     clip,
     compare_dicts,
+    consec_repeat_elem,
     cross,
     dot,
     get_class_from_module,
