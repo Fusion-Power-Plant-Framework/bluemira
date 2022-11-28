@@ -341,7 +341,14 @@ class FixedEquilibriumDesigner(Designer[Equilibrium]):
         )
 
         # Make free boundary equilibrium (with coils) from fixed boundary equilibrium
+
+        # Make coilset
+
+        # Get flux function profiles
+
+        # Make constraints
         lcfs_shape = geom_parameterisation.create_shape()
+
         pass
 
     def read(self) -> Equilibrium:
