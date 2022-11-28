@@ -355,6 +355,7 @@ class FixedEquilibriumDesigner(Designer[Equilibrium]):
         pass
 
     def _get_geometry_parameterisation(self):
+
         return JohnerLCFS(
             {
                 "r_0": {"value": self.params.R_0.value},
