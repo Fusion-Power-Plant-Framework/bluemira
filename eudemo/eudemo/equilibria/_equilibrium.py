@@ -104,15 +104,11 @@ class ReferenceEquilibriumParams(ParameterFrame):
 
     A: Parameter[float]
     B_0: Parameter[float]
-    g_cs_mod: Parameter[float]
     I_p: Parameter[float]
-    kappa: Parameter[float]
     n_CS: Parameter[float]
     n_PF: Parameter[float]
     R_0: Parameter[float]
     r_cs_in: Parameter[float]
-    tk_cs_casing: Parameter[float]
-    tk_cs_insulation: Parameter[float]
     tk_cs: Parameter[float]
 
 
