@@ -280,21 +280,21 @@ class TestCoilGroup:
         )
 
     def test_init_sort(self):
-        assert self.group.n_coils == 4
+        assert self.group.n_coils() == 4
         assert self.group.name == ["CS_8", "CS_0", "PF_1", "PF_0"]
 
     def test_add(self):
         self.group.add_coil(Coil(3, 3, ctype="PF", name="PF_3", j_max=NBTI_J_MAX))
         self.group.add_coil(Coil(9, 9, ctype="CS", name="CS_9", j_max=NBTI_J_MAX))
 
-        assert self.group.n_coils == 6
+        assert self.group.n_coils() == 6
         assert self.group.name == ["CS_8", "CS_0", "PF_1", "PF_0", "PF_3", "CS_9"]
 
     def test_remove(self):
         self.group.remove_coil("PF_0")
         self.group.remove_coil("PF_1")
 
-        assert self.group.n_coils == 2
+        assert self.group.n_coils() == 2
         assert self.group.name == ["CS_8", "CS_0"]
 
         with pytest.raises(EquilibriaError):
@@ -303,16 +303,16 @@ class TestCoilGroup:
         # TODO test nested removal
 
     def test_psi(self):
-        callable_tester(self.group.psi, self.group.n_coils)
+        callable_tester(self.group.psi, self.group.n_coils())
 
     def test_bx(self):
-        callable_tester(self.group.Bx, self.group.n_coils)
+        callable_tester(self.group.Bx, self.group.n_coils())
 
     def test_bz(self):
-        callable_tester(self.group.Bz, self.group.n_coils)
+        callable_tester(self.group.Bz, self.group.n_coils())
 
     def test_bp(self):
-        callable_tester(self.group.Bp, self.group.n_coils)
+        callable_tester(self.group.Bp, self.group.n_coils())
 
 
 class TestSymmetricCircuit:
@@ -452,12 +452,13 @@ class TestCoilSet:
         assert np.isclose(symm_circuit["PF_2.2"].dz, 0.6)
 
     def test_numbers(self):
-        assert self.coilset.n_PF == 2
-        assert self.coilset.n_CS == 0
-        assert self.coilset.n_coils == 3
-        assert len(self.coilset.coils) == 2
+        assert self.coilset.n_coils("PF") == 2
+        assert self.coilset.n_coils("CS") == 0
+        assert self.coilset.n_coils("NONE") == 1
+        assert self.coilset.n_coils() == 3
 
     def test_currents(self):
+        raise
         set_currents = np.array([3e6, 4e6])
         self.coilset.control_current = set_currents
         currents = self.coilset.control_current
@@ -518,7 +519,7 @@ class TestCoilSetSymmetry:
         )
         new = symmetrise_coilset(coilset)
         assert len(new.coils) == 1
-        assert new.n_coils == 2
+        assert new.n_coils() == 2
         assert isinstance(list(new.coils.values())[0], SymmetricCircuit)
 
         coilset = CoilSet(
@@ -529,7 +530,7 @@ class TestCoilSetSymmetry:
         )
         new = symmetrise_coilset(coilset)
         assert len(new.coils) == len(coilset.coils)
-        assert new.n_coils == coilset.n_coils
+        assert new.n_coils() == coilset.n_coils()
 
 
 class TestCoilSizing:

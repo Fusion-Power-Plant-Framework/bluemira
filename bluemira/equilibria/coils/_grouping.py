@@ -24,6 +24,7 @@ Coil and coil grouping objects
 """
 from __future__ import annotations
 
+from collections import Counter
 from copy import deepcopy
 from operator import attrgetter
 from typing import Iterable, List, Optional, Tuple, Type, Union
@@ -103,7 +104,7 @@ class CoilGroup(CoilGroupFieldsMixin):
         no_val = values.size
         no = 0
         for coil in flatten_iterable(self._coils):
-            end_no = no + coil.n_coils
+            end_no = no + coil.n_coils()
             if end_no > no_val:
                 if no_val == 1:
                     setattr(coil, attr, np.repeat(values[0], end_no - no))
@@ -150,12 +151,14 @@ class CoilGroup(CoilGroupFieldsMixin):
         self.j_max = j_max
         self.b_max = b_max
 
-    @property
-    def n_coils(self) -> int:
-        n = 0
-        for cg in flatten_iterable(self._coils):
-            n += cg.n_coils
-        return n
+    def n_coils(self, ctype: Optional[Union[str, CoilType]] = None) -> int:
+        if ctype is None:
+            return len(self.x)
+
+        if not isinstance(ctype, CoilType):
+            ctype = CoilType[ctype]
+
+        return Counter(self.ctype)[ctype]
 
     @property
     def name(self) -> np.ndarray:
@@ -212,7 +215,7 @@ class CoilGroup(CoilGroupFieldsMixin):
     @property
     def x_boundary(self) -> np.ndarray:
         xb = self.__getter("x_boundary")
-        if self.n_coils > 1:
+        if self.n_coils() > 1:
             return xb.reshape(-1, 4)
         else:
             return xb
@@ -220,7 +223,7 @@ class CoilGroup(CoilGroupFieldsMixin):
     @property
     def z_boundary(self) -> np.ndarray:
         zb = self.__getter("z_boundary")
-        if self.n_coils > 1:
+        if self.n_coils() > 1:
             return zb.reshape(-1, 4)
         else:
             return zb

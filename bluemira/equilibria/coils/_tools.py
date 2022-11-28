@@ -21,7 +21,7 @@ def make_mutual_inductance_matrix(coilset):
     -----
     Single-filament coil formulation; serves as a useful approximation.
     """
-    n_coils = coilset.n_coils
+    n_coils = coilset.n_coils()
     M = np.zeros((n_coils, n_coils))  # noqa
     xcoord = coilset.x
     zcoord = coilset.z

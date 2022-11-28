@@ -157,7 +157,6 @@ class Coil(CoilFieldsMixin):
             f" discretisation={self.discretisation:.2g})"
         )
 
-    @property
     def n_coils(self):
         return 1
 
