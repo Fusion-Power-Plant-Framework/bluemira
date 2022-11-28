@@ -34,7 +34,7 @@ pep8-naming==0.13.2
 platformdirs==2.5.4
 pluggy==1.0.0
 pre-commit==2.20.0
-pycodestyle==2.9.1
+pycodestyle==2.10.0
 pydocstyle==6.1.1
 pyflakes==2.5.0
 Pygments==2.13.0
