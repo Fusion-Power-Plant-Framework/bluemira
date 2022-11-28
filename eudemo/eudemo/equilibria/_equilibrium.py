@@ -21,9 +21,11 @@
 from dataclasses import dataclass
 from typing import Dict, Union
 
+import numpy as np
+
 from bluemira.base.parameter_frame import Parameter, ParameterFrame
 from bluemira.equilibria import Equilibrium
-from bluemira.equilibria.profiles import BetaIpProfile
+from bluemira.equilibria.profiles import BetaIpProfile, CustomProfile
 from bluemira.geometry.wire import BluemiraWire
 from eudemo.pf_coils.tools import make_coilset, make_grid
 
@@ -93,4 +95,53 @@ def make_equilibrium(
         params.R_0.value, params.A.value, kappa, scale_x=1.6, scale_z=1.7, nx=65, nz=65
     )
 
+    return Equilibrium(coilset, grid, profiles)
+
+
+@dataclass
+class ReferenceEquilibriumParams(ParameterFrame):
+    """Parameters required to make a new reference equilibrium."""
+
+    A: Parameter[float]
+    B_0: Parameter[float]
+    g_cs_mod: Parameter[float]
+    I_p: Parameter[float]
+    kappa: Parameter[float]
+    n_CS: Parameter[float]
+    n_PF: Parameter[float]
+    R_0: Parameter[float]
+    r_cs_in: Parameter[float]
+    tk_cs_casing: Parameter[float]
+    tk_cs_insulation: Parameter[float]
+    tk_cs: Parameter[float]
+
+
+def make_reference_equilibrium(
+    _params: Union[ReferenceEquilibriumParams, Dict],
+    tf_coil_boundary: BluemiraWire,
+    p_prime: np.ndarray,
+    ff_prime: np.ndarray,
+):
+    if isinstance(_params, dict):
+        params = ReferenceEquilibriumParams.from_dict(_params)
+    else:
+        params = _params
+
+    grid = make_grid(
+        params.R_0.value,
+        params.A.value,
+        params.kappa.value,
+        scale_x=1.6,
+        scale_z=1.7,
+        nx=65,
+        nz=65,
+    )
+
+    profiles = CustomProfile(
+        p_prime,
+        ff_prime,
+        R_0=params.R_0.value,
+        B_0=params.B_0.value,
+        I_p=params.I_p.value,
+    )
     return Equilibrium(coilset, grid, profiles)
