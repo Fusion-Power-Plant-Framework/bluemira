@@ -25,7 +25,6 @@ Coil and coil grouping objects
 
 from bluemira.equilibria.coils._coil import Coil, CoilType
 from bluemira.equilibria.coils._grouping import Circuit, CoilGroup, SymmetricCircuit
-from bluemira.equilibria.coils._grouping import _CoilSet as CoilSet
 from bluemira.equilibria.coils._grouping import _Solenoid as Solenoid
 from bluemira.equilibria.coils._tools import (
     check_coilset_symmetric,
@@ -33,3 +32,5 @@ from bluemira.equilibria.coils._tools import (
     make_mutual_inductance_matrix,
     symmetrise_coilset,
 )
+
+CoilSet = None

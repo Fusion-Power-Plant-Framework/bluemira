@@ -22,9 +22,10 @@
 """
 Coil and coil grouping objects
 """
+from __future__ import annotations
 
 # from re import split
-from typing import Callable, Optional, Union
+from typing import TYPE_CHECKING, Callable, Optional, Union
 
 # import matplotlib.pyplot as plt
 import numpy as np
@@ -35,6 +36,9 @@ from bluemira.equilibria.plotting import CoilPlotter, CoilSetPlotter
 from bluemira.magnetostatics.greens import greens_Bx, greens_Bz, greens_psi
 from bluemira.magnetostatics.semianalytic_2d import semianalytic_Bx, semianalytic_Bz
 from bluemira.utilities.tools import consec_repeat_elem
+
+if TYPE_CHECKING:
+    from bluemira.equilibria.coils._grouping import CoilGroup
 
 
 class CoilGroupFieldsMixin:

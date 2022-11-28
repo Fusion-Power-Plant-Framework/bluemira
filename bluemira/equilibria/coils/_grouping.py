@@ -198,6 +198,10 @@ class CoilGroup(CoilGroupFieldsMixin):
         return self.__getter("discretisation")
 
     @property
+    def n_turns(self) -> np.ndarray:
+        return self.__getter("n_turns")
+
+    @property
     def area(self) -> np.ndarray:
         return self.__getter("area")
 
@@ -281,6 +285,10 @@ class CoilGroup(CoilGroupFieldsMixin):
     def discretisation(self, values: Union[float, Iterable[float]]):
         self.__setter("discretisation", values)
         self._pad_discretisation(self.__list_getter("_quad_x"))
+
+    @n_turns.setter
+    def n_turns(self, values: Union[float, Iterable[float]]):
+        self.__setter("n_turns", values)
 
     def __copy__(self):
         cls = self.__class__

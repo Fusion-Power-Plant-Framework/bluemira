@@ -32,7 +32,6 @@ import numpy as np
 from bluemira.equilibria.coils._field import CoilFieldsMixin
 from bluemira.equilibria.constants import I_MIN, NBTI_B_MAX, NBTI_J_MAX
 from bluemira.equilibria.error import EquilibriaError
-from bluemira.equilibria.file import EQDSKInterface
 from bluemira.equilibria.plotting import CoilPlotter, CoilSetPlotter
 from bluemira.utilities.tools import is_num
 
@@ -120,6 +119,7 @@ class Coil(CoilFieldsMixin):
         j_max: float = np.nan,
         b_max: float = np.nan,
         discretisation: float = 1,
+        n_turns: int = 1,
     ):
         self._dx = None
         self._dz = None
@@ -136,6 +136,7 @@ class Coil(CoilFieldsMixin):
         self.b_max = b_max
         self.ctype = ctype
         self.name = name
+        self.n_turns = n_turns
 
         self._number = CoilNumber.generate(self.ctype)
         if self.name is None:
