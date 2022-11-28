@@ -161,7 +161,7 @@ def _array_dispatcher(func):
 
         # Handle arrays
         if len(x.shape) == 1:
-            if len(xc.shape) == 1:
+            if not isinstance(xc, np.ndarray) or len(xc.shape) == 1:
                 result = np.zeros(len(x))
                 for i in range(len(x)):
                     result[i] = func(xc, zc, x[i], z[i], d_xc, d_zc)
@@ -175,7 +175,7 @@ def _array_dispatcher(func):
 
         else:
             # 2-D arrays
-            if len(xc.shape) == 1:
+            if not isinstance(xc, np.ndarray) or len(xc.shape) == 1:
                 result = np.zeros(x.shape)
                 for i in range(x.shape[0]):
                     for j in range(z.shape[1]):

@@ -26,7 +26,7 @@ import pytest
 from matplotlib import pyplot as plt
 
 from bluemira.base.file import get_bluemira_path
-from bluemira.equilibria.coils import Coil, CoilSet, SymmetricCircuit
+from bluemira.equilibria.coils import Coil, CoilGroup, SymmetricCircuit
 from bluemira.equilibria.positioner import CoilPositioner, RegionMapper, XZLMapper
 from bluemira.geometry._private_tools import offset
 from bluemira.geometry.coordinates import Coordinates
@@ -301,21 +301,33 @@ class TestRegionMapper:
     def setup_class(cls):
         circuit = SymmetricCircuit(
             np.array([[0, 0], [1, 0]]),
-            x=1.5,
-            z=6,
-            current=1e6,
-            dx=0.25,
-            dz=0.5,
-            j_max=1e7,
-            b_max=100,
-            name="PF_2",
+            Coil(
+                x=1.5,
+                z=6,
+                current=1e6,
+                dx=0.25,
+                dz=0.5,
+                j_max=1e7,
+                b_max=100,
+                name="PF_2.1",
+            ),
+            Coil(
+                x=1.5,
+                z=-6,
+                current=1e6,
+                dx=0.25,
+                dz=0.5,
+                j_max=1e7,
+                b_max=100,
+                name="PF_2.1",
+            ),
         )
 
         coil = Coil(
             x=4, z=10, current=2e6, dx=1, dz=0.5, j_max=5e6, b_max=50, name="PF_1"
         )
 
-        cls.coilset = CoilSet(coil, circuit)
+        cls.coilset = CoilGroup(coil, circuit)
 
     def create_rectangular_region(self):
         max_coil_shifts = {

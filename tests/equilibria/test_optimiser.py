@@ -21,7 +21,7 @@
 
 import numpy as np
 
-from bluemira.equilibria.coils import Coil, CoilSet, SymmetricCircuit
+from bluemira.equilibria.coils import Coil, CoilGroup, SymmetricCircuit
 from bluemira.equilibria.opt_problems import CoilsetPositionCOP
 from bluemira.geometry.coordinates import Coordinates
 
@@ -31,15 +31,28 @@ class TestCoilsetOptimiser:
     def setup_class(cls):
         circuit = SymmetricCircuit(
             np.array([[0, 0], [1, 0]]),
-            x=1.5,
-            z=6.0,
-            current=1e6,
-            dx=0.25,
-            dz=0.5,
-            j_max=1e-5,
-            b_max=100,
-            ctype="PF",
-            name="PF_2",
+            Coil(
+                x=1.5,
+                z=6.0,
+                current=1e6,
+                dx=0.25,
+                dz=0.5,
+                j_max=1e-5,
+                b_max=100,
+                ctype="PF",
+                name="PF_2.1",
+            ),
+            Coil(
+                x=1.5,
+                z=-6.0,
+                current=1e6,
+                dx=0.25,
+                dz=0.5,
+                j_max=1e-5,
+                b_max=100,
+                ctype="PF",
+                name="PF_2.2",
+            ),
         )
 
         coil2 = Coil(
@@ -63,7 +76,7 @@ class TestCoilsetOptimiser:
             b_max=50.0,
             name="PF_3",
         )
-        cls.coilset = CoilSet(circuit, coil2, coil3)
+        cls.coilset = CoilGroup(circuit, coil2, coil3)
 
         max_coil_shifts = {
             "x_shifts_lower": -2.0,
@@ -78,7 +91,7 @@ class TestCoilsetOptimiser:
         xlo = cls.coilset.x[cls.coilset._control] + max_coil_shifts["x_shifts_lower"]
         zup = cls.coilset.z[cls.coilset._control] + max_coil_shifts["z_shifts_upper"]
         zlo = cls.coilset.z[cls.coilset._control] + max_coil_shifts["z_shifts_lower"]
-        
+
         for name, xl, xu, zl, zu in zip(cls.coilset.name, xup, xlo, zup, zlo):
             rect = Coordinates({"x": [xl, xu, xu, xl, xl], "z": [zl, zl, zu, zu, zl]})
             cls.pfregions[name] = rect
