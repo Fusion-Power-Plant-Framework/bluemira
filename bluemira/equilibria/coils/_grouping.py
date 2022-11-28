@@ -40,16 +40,48 @@ from bluemira.utilities.tools import flatten_iterable, yintercept
 
 
 class CoilGroup(CoilGroupFieldsMixin):
+    """
+    Coil Grouping object
+
+    Allow nested coils or groups of coils with access to the methods and properties
+    in the same way to a vanilla Coil
+
+    Parameters
+    ----------
+    coils: Union[Coil, CoilGroup[Coil]]
+
+    """
+
     def __init__(self, *coils: Union[Coil, CoilGroup[Coil]]):
         self._coils = coils
         self._pad_discretisation(self.__list_getter("_quad_x"))
 
     def add_coil(self, *coils: Union[Coil, CoilGroup[Coil]]):
+        """Add coils to the coil group"""
         self._coils = (*self._coils, *coils)
         self._pad_discretisation(self.__list_getter("_quad_x"))
 
-    def remove_coil(self, *coil_name, _top_level=True):
-        # have to navigate nested
+    def remove_coil(self, *coil_name: str, _top_level: bool = True) -> Union[None, List]:
+        """
+        Remove coil from CoilGroup
+
+        Parameters
+        ----------
+        coil_name: str
+            coil(s) to remove
+        _top_level: bool
+            FOR INTERNAL USE, flags if at top level of nested coilgroup stack
+
+        Returns
+        -------
+        Union[List, None]
+            Removed names if not at top level of nested stack
+
+        Notes
+        -----
+        If a nested coilgroup is empty it is also removed from the parent coilgroup
+
+        """
         names = self.name
 
         if _top_level and (remainder := set(coil_name) - set(names)):
@@ -80,13 +112,16 @@ class CoilGroup(CoilGroupFieldsMixin):
         if not _top_level:
             return removed_names + to_remove
 
-    def __list_getter(self, attr: str):
+    def __list_getter(self, attr: str) -> List:
+        """Get attributes from coils tuple"""
         return np.frompyfunc(attrgetter(attr), 1, 1)(self._coils)
 
-    def __getter(self, attr: str):
+    def __getter(self, attr: str) -> np.ndarray:
+        """Get attribute from coils and convert to flattened numpy array"""
         return np.array([*flatten_iterable(self.__list_getter(attr))])
 
-    def __quad_getter(self, attr: str):
+    def __quad_getter(self, attr: str) -> np.ndarray:
+        """Get quadratures and autopad to create non ragged array"""
         _quad_list = self.__list_getter(attr)
 
         for i, d in enumerate(self._pad_size):
@@ -100,6 +135,7 @@ class CoilGroup(CoilGroupFieldsMixin):
         values: Union[CoilType, float, Iterable[Union[CoilType, float]]],
         dtype: Union[Type, None] = None,
     ):
+        """Set attributes on coils"""
         values = np.array([values], dtype=dtype)
         no_val = values.size
         no = 0
@@ -121,7 +157,7 @@ class CoilGroup(CoilGroupFieldsMixin):
         _to_pad: List[np.ndarray],
     ):
         """
-        Convert quadrature list of array to rectuangualr arrays.
+        Convert quadrature list of array to rectuangular arrays.
         Padding quadrature arrays with zeros to allow array operations
         on rectangular matricies.
 
@@ -132,9 +168,10 @@ class CoilGroup(CoilGroupFieldsMixin):
 
         Notes
         -----
-        Padding exists for coils with different discretisations or sizes within a coilgroup.
-        There are a few extra calculations of the greens functions where padding exists in
-        the :func:_combined_control method.
+        Padding exists for coils with different discretisations or sizes within a
+        coilgroup.
+        There are a few extra calculations of the greens functions where padding
+        exists in the :func:_combined_control method of CoilGroupFieldMixin.
 
         """
         all_len = np.array([len(q) for q in _to_pad])
@@ -148,10 +185,24 @@ class CoilGroup(CoilGroupFieldsMixin):
     def assign_material(
         self, j_max: Union[float, Iterable[float]], b_max: Union[float, Iterable[float]]
     ):
+        """Assign material J and B to Coilgroup"""
         self.j_max = j_max
         self.b_max = b_max
 
     def n_coils(self, ctype: Optional[Union[str, CoilType]] = None) -> int:
+        """
+        Get number of coils
+
+        Parameters
+        ----------
+        ctype: Optional[Union[str, CoilType]]
+            get number of coils of a specific type
+
+        Returns
+        -------
+        int
+            Number of coils
+        """
         if ctype is None:
             return len(self.x)
 
@@ -162,58 +213,72 @@ class CoilGroup(CoilGroupFieldsMixin):
 
     @property
     def name(self) -> np.ndarray:
+        """Get coil names"""
         return self.__getter("name").tolist()
 
     @property
     def x(self) -> np.ndarray:
+        """Get coil x positions"""
         return self.__getter("x")
 
     @property
     def z(self) -> np.ndarray:
+        """Get coil z positions"""
         return self.__getter("z")
 
     @property
     def ctype(self) -> np.ndarray:
+        """Get coil types"""
         return self.__getter("ctype").tolist()
 
     @property
     def dx(self) -> np.ndarray:
+        """Get coil widths (half)"""
         return self.__getter("dx")
 
     @property
     def dz(self) -> np.ndarray:
+        """Get coil heights (half)"""
         return self.__getter("dz")
 
     @property
     def current(self) -> np.ndarray:
+        """Get coil currents"""
         return self.__getter("current")
 
     @property
     def j_max(self) -> np.ndarray:
+        """Get coil max current density"""
         return self.__getter("j_max")
 
     @property
     def b_max(self) -> np.ndarray:
+        """Get coil max field"""
         return self.__getter("b_max")
 
     @property
     def discretisation(self) -> np.ndarray:
+        """Get coil discretisations"""
         return self.__getter("discretisation")
 
     @property
     def n_turns(self) -> np.ndarray:
+        """Get coil number of turns"""
         return self.__getter("n_turns")
 
     @property
     def area(self) -> np.ndarray:
+        """Get coil areas"""
         return self.__getter("area")
 
     @property
     def volume(self) -> np.ndarray:
+        """Get coil volumes"""
         return self.__getter("volume")
 
     @property
     def x_boundary(self) -> np.ndarray:
+        """Get coil x coordinate boundary"""
         xb = self.__getter("x_boundary")
         if self.n_coils() > 1:
             return xb.reshape(-1, 4)
@@ -222,6 +287,7 @@ class CoilGroup(CoilGroupFieldsMixin):
 
     @property
     def z_boundary(self) -> np.ndarray:
+        """Get coil z coordinate boundary"""
         zb = self.__getter("z_boundary")
         if self.n_coils() > 1:
             return zb.reshape(-1, 4)
@@ -230,76 +296,97 @@ class CoilGroup(CoilGroupFieldsMixin):
 
     @property
     def _current_radius(self) -> np.ndarray:
+        """Get coil current radius"""
         return self.__getter("_current_radius")
 
     @property
     def _quad_x(self):
+        """Get coil x quadratures"""
         return self.__quad_getter("_quad_x")
 
     @property
     def _quad_z(self):
+        """Get coil z quadratures"""
         return self.__quad_getter("_quad_z")
 
     @property
     def _quad_dx(self):
+        """Get coil dx quadratures"""
         return self.__quad_getter("_quad_dx")
 
     @property
     def _quad_dz(self):
+        """Get coil dz quadratures"""
         return self.__quad_getter("_quad_dz")
 
     @property
     def _quad_weighting(self):
+        """Get coil quadrature weightings"""
         return self.__quad_getter("_quad_weighting")
 
     @x.setter
     def x(self, values: Union[float, Iterable[float]]):
+        """Set coil x positions"""
         self.__setter("x", values)
 
     @z.setter
     def z(self, values: Union[float, Iterable[float]]):
+        """Set coil z positions"""
         self.__setter("z", values)
 
     @ctype.setter
     def ctype(self, values: Union[CoilType, Iterable[CoilType]]):
+        """Set coil types"""
         self.__setter("ctype", values, dtype=object)
 
     @dx.setter
     def dx(self, values: Union[float, Iterable[float]]):
+        """Set coil dx sizes"""
         self.__setter("dx", values)
 
     @dz.setter
     def dz(self, values: Union[float, Iterable[float]]):
+        """Set coil dz sizes"""
         self.__setter("dz", values)
 
     @current.setter
     def current(self, values: Union[float, Iterable[float]]):
+        """Set coil currents"""
         self.__setter("current", values)
 
     @j_max.setter
     def j_max(self, values: Union[float, Iterable[float]]):
+        """Set coil max current densities"""
         self.__setter("j_max", values)
 
     @b_max.setter
     def b_max(self, values: Union[float, Iterable[float]]):
+        """Set coil max fields"""
         self.__setter("b_max", values)
 
     @discretisation.setter
     def discretisation(self, values: Union[float, Iterable[float]]):
+        """Set coil discretisations"""
         self.__setter("discretisation", values)
         self._pad_discretisation(self.__list_getter("_quad_x"))
 
     @n_turns.setter
     def n_turns(self, values: Union[float, Iterable[float]]):
+        """Set coil number of turns"""
         self.__setter("n_turns", values)
 
     def __copy__(self):
+        """Copy dunder method, needed because attribute setter fails for quadratures"""
         cls = self.__class__
         result = cls.__new__(cls)
         result.__dict__.update(self.__dict__)
         return result
 
     def __deepcopy__(self, memo):
+        """
+        Deepcopy dunder method, needed because attribute setter fails for
+        quadratures
+        """
         cls = self.__class__
         result = cls.__new__(cls)
         memo[id(self)] = result
@@ -309,18 +396,41 @@ class CoilGroup(CoilGroupFieldsMixin):
 
 
 class Circuit(CoilGroup):
+    """
+    A CoilGroup with the same currents
+
+    Parameters
+    ----------
+    coils: Union[Coil, CoilGroup[Coil]]
+        coils in circuit
+    current: Optional[float]
+        The current value, if not provided the first coil current is used
+    """
+
     def __init__(
         self, *coils: Union[Coil, CoilGroup[Coil]], current: Optional[float] = None
     ):
         super().__init__(*coils)
-        self.current = self._coils[0].current if current is None else current
+        self.current = self._get_current() if current is None else current
+
+    def _get_current(self):
+        current = self._coils[0].current
+        if isinstance(current, Iterable):
+            current = current[0]
+        return current
 
     def add_coil(self, *coils: Union[Coil, CoilGroup[Coil]]):
+        """
+        Add coil to circuit forcing the same current
+        """
         super().add_coil(coils)
-        self.current = self._coils[0].current
+        self.current = self._get_current()
 
     @CoilGroup.current.setter
     def current(self, values: Union[float, Iterable[float]]):
+        """
+        Set current for circuit
+        """
         if isinstance(values, Iterable):
             # Force the same value of current for all coils
             values = values[0]
@@ -328,6 +438,22 @@ class Circuit(CoilGroup):
 
 
 class SymmetricCircuit(Circuit):
+    """
+    A Circuit with positional symmetry
+
+    Parameters
+    ----------
+    coils: Union[Coil, CoilGroup[Coil]]
+        2 coil or coil group objects to symmetrise in a circuit
+    symmetry_line: Union[Tuple, np.ndarray]
+        Symmetry line, by default the line z=0
+
+    Notes
+    -----
+    Although two groups can be defined any movement of the coils is
+    achieved by offsets to the mean position of the coilgroups
+    """
+
     def __init__(
         self,
         *coils: Union[Coil, CoilGroup[Coil]],
@@ -361,13 +487,23 @@ class SymmetricCircuit(Circuit):
         self._symmetry_matrix()
 
     def _symmetry_matrix(self):
+        """
+        Symmetry matrix
+
+        .. math::
+
+            \\frac{1}{1 + m} \\left[ {\\begin{array}{cc}
+                                        1 - m^2 & 2m \\\\
+                                        2m & -(1 - m^2) \\\\
+                                      \\end{array} } \\right]
+        """
         self._shift, grad = yintercept(self._symmetry_line)
         grad2 = grad**2
         mgrad2 = 1 - grad2
         gradsq = 2 * grad
         self.sym_mat = 1 / (1 + grad2) * np.array([[mgrad2, gradsq], [gradsq, -mgrad2]])
 
-    def _symmetrise(self):
+    def _symmetrise(self) -> np.ndarray:
         """
         Calculate the change in position to the symmetric coil,
         twice the distance to the line of symmetry.
@@ -394,13 +530,16 @@ class SymmetricCircuit(Circuit):
         self._coils[0].z += np.mean(new_z) - self._get_group_z_centre()
         self._coils[1].z -= self._symmetrise()[1]
 
-    def _get_group_x_centre(self):
+    def _get_group_x_centre(self) -> np.ndarray:
+        """Get the x centre of the first coil group"""
         return np.mean(self._coils[0].x)
 
-    def _get_group_z_centre(self):
+    def _get_group_z_centre(self) -> np.ndarray:
+        """Get the z centre of the first coil group"""
         return np.mean(self._coils[0].z)
 
-    def _get_group_centre(self):
+    def _get_group_centre(self) -> np.ndarray:
+        """Get the centre of the first coil group"""
         return np.array([self._get_group_x_centre(), self._get_group_z_centre()])
 
 
