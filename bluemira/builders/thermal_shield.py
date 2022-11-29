@@ -29,8 +29,8 @@ from typing import Dict, List, Type, Union
 import numpy as np
 from scipy.spatial import ConvexHull
 
-from bluemira.base.builder import Builder, ComponentManager
-from bluemira.base.components import PhysicalComponent
+from bluemira.base.builder import Builder
+from bluemira.base.components import Component, PhysicalComponent
 from bluemira.base.parameter_frame import Parameter, ParameterFrame
 from bluemira.builders.tools import (
     build_sectioned_xy,
@@ -44,12 +44,6 @@ from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.plane import BluemiraPlane
 from bluemira.geometry.tools import boolean_cut, boolean_fuse, make_polygon, offset_wire
 from bluemira.geometry.wire import BluemiraWire
-
-
-class VacuumVesselThermalShield(ComponentManager):
-    """
-    Wrapper around a VacuumVesselThermalShield component tree.
-    """
 
 
 @dataclass
@@ -80,19 +74,17 @@ class VVTSBuilder(Builder):
         super().__init__(params, build_config)
         self.keep_out_zone = keep_out_zone
 
-    def build(self) -> VacuumVesselThermalShield:
+    def build(self) -> Component:
         """
         Build the vacuum vessel thermal shield component.
         """
         xz_vvts = self.build_xz(self.keep_out_zone)
         vvts_face: BluemiraFace = xz_vvts.get_component_properties("shape")
 
-        return VacuumVesselThermalShield(
-            self.component_tree(
-                xz=[xz_vvts],
-                xy=self.build_xy(vvts_face),
-                xyz=self.build_xyz(vvts_face),
-            )
+        return self.component_tree(
+            xz=[xz_vvts],
+            xy=self.build_xy(vvts_face),
+            xyz=self.build_xyz(vvts_face),
         )
 
     def build_xz(self, koz: BluemiraWire) -> PhysicalComponent:
@@ -155,12 +147,6 @@ class VVTSBuilder(Builder):
         )
 
 
-class CryostatThermalShield(ComponentManager):
-    """
-    Wrapper around a CryostatThermalShield component tree.
-    """
-
-
 @dataclass
 class CryostatTSBuilderParams(ParameterFrame):
     """
@@ -193,19 +179,17 @@ class CryostatTSBuilder(Builder):
         self.pf_keep_out_zones = pf_keep_out_zones
         self.tf_keep_out_zone = tf_keep_out_zone
 
-    def build(self) -> CryostatThermalShield:
+    def build(self) -> Component:
         """
         Build the cryostat thermal shield component.
         """
         xz_cts = self.build_xz(self.pf_keep_out_zones, self.tf_keep_out_zone)
         cts_face: BluemiraFace = xz_cts.get_component_properties("shape")
 
-        return CryostatThermalShield(
-            self.component_tree(
-                xz=[xz_cts],
-                xy=[self.build_xy(cts_face)],
-                xyz=self.build_xyz(cts_face),
-            )
+        return self.component_tree(
+            xz=[xz_cts],
+            xy=[self.build_xy(cts_face)],
+            xyz=self.build_xyz(cts_face),
         )
 
     def build_xz(

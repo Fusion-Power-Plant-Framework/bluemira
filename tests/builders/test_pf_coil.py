@@ -42,6 +42,6 @@ class TestPFCoilBuilder:
 
         coil = builder.build()
 
-        assert coil.component().get_component("xz")
-        assert coil.component().get_component("xy")
-        assert coil.component().get_component("xyz")
+        assert coil.get_component("xz")
+        assert coil.get_component("xy")
+        assert coil.get_component("xyz")

@@ -39,10 +39,10 @@ class TestRadiationShieldBuilder:
         builder = RadiationShieldBuilder(self.params, {}, self.cryo_koz)
         rad_shield = builder.build()
 
-        assert rad_shield.component().get_component("xz")
-        assert rad_shield.component().get_component("xy")
+        assert rad_shield.get_component("xz")
+        assert rad_shield.get_component("xy")
 
-        xyz = rad_shield.component().get_component("xyz")
+        xyz = rad_shield.get_component("xyz")
         assert xyz
         assert len(xyz.leaves) == self.params["n_TF"]["value"]
 

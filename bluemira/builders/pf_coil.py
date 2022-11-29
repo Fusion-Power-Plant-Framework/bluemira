@@ -25,7 +25,7 @@ Builder for the PF coils
 from dataclasses import dataclass
 from typing import Dict, List, Union
 
-from bluemira.base.builder import Builder, ComponentManager
+from bluemira.base.builder import Builder
 from bluemira.base.components import Component, PhysicalComponent
 from bluemira.base.designer import Designer
 from bluemira.base.parameter_frame import Parameter, ParameterFrame
@@ -35,12 +35,6 @@ from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.parameterisations import PictureFrame
 from bluemira.geometry.tools import make_circle, offset_wire, revolve_shape
 from bluemira.geometry.wire import BluemiraWire
-
-
-class PFCoil(ComponentManager):
-    """
-    Wrapper around a PF coil component tree.
-    """
 
 
 @dataclass
@@ -76,16 +70,14 @@ class PFCoilBuilder(Builder):
         super().__init__(params, build_config)
         self.xz_cross_section = xz_cross_section
 
-    def build(self) -> PFCoil:
+    def build(self) -> Component:
         """
         Build the PFCoil component.
         """
-        return PFCoil(
-            self.component_tree(
-                xz=self.build_xz(self.xz_cross_section),
-                xy=self.build_xy(self.xz_cross_section),
-                xyz=self.build_xyz(self.xz_cross_section),
-            )
+        return self.component_tree(
+            xz=self.build_xz(self.xz_cross_section),
+            xy=self.build_xy(self.xz_cross_section),
+            xyz=self.build_xyz(self.xz_cross_section),
         )
 
     def build_xy(self, shape: BluemiraWire) -> List[PhysicalComponent]:

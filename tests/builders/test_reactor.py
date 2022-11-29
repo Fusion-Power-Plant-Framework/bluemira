@@ -73,5 +73,5 @@ class TestReactor:
         reactor = MyReactor(REACTOR_NAME)
         # use a square plasma, as circle causes topological naming issue
         lcfs = make_polygon({"x": [1, 1, 5, 5], "z": [-2, 2, 2, -2]}, closed=True)
-        reactor.plasma = PlasmaBuilder({}, lcfs).build()
+        reactor.plasma = Plasma(PlasmaBuilder({}, lcfs).build())
         return reactor

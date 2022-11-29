@@ -297,17 +297,15 @@ class PlasmaBuilder(Builder):
         super().__init__(None, build_config)
         self.wire = wire
 
-    def build(self) -> Plasma:
+    def build(self) -> Component:
         """
         Run the full build of the Plasma
         """
         xz = self.build_xz()
-        return Plasma(
-            self.component_tree(
-                xz=[xz],
-                xy=[Component("")],
-                xyz=[self.build_xyz(xz.shape)],
-            )
+        return self.component_tree(
+            xz=[xz],
+            xy=[Component("")],
+            xyz=[self.build_xyz(xz.shape)],
         )
 
     def build_xz(self) -> PhysicalComponent:
@@ -409,16 +407,14 @@ class TFCoilBuilder(Builder):
         )
         return wire
 
-    def build(self) -> TFCoil:
+    def build(self) -> Component:
         """
         Run the full build for the TF coils.
         """
-        return TFCoil(
-            self.component_tree(
-                xz=[self.build_xz()],
-                xy=[Component("")],
-                xyz=[self.build_xyz()],
-            )
+        return self.component_tree(
+            xz=[self.build_xz()],
+            xy=[Component("")],
+            xyz=[self.build_xyz()],
         )
 
     def build_xz(self) -> PhysicalComponent:
@@ -535,7 +531,7 @@ build_config = {
 
 # %%[markdown]
 
-# Now we set up our ParamterFrames
+# Now we set up our ParameterFrames
 
 # %%
 
@@ -559,7 +555,7 @@ plasma_parameterisation = plasma_designer.execute()
 plasma_builder = PlasmaBuilder(
     plasma_parameterisation.create_shape(), build_config["Plasma"]
 )
-plasma = plasma_builder.build()
+plasma = Plasma(plasma_builder.build())
 
 # %%[markdown]
 
@@ -572,7 +568,7 @@ tf_coil_designer = TFCoilDesigner(
 tf_parameterisation = tf_coil_designer.execute()
 
 tf_coil_builder = TFCoilBuilder(tf_coil_params, tf_parameterisation.create_shape())
-tf_coil = tf_coil_builder.build()
+tf_coil = TFCoil(tf_coil_builder.build())
 
 # %%[markdown]
 
