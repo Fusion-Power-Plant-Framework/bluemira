@@ -242,7 +242,7 @@
         "long_name": "Bootstrap fraction"
     },
     "P_heat_max": {
-        "value": 130,
+        "value": 130.0,
         "unit": "megawatt",
         "source": "Input",
         "long_name": "Max allowed power for control (fusion power, H-mode)"

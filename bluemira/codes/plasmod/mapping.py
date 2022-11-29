@@ -382,7 +382,7 @@ PLASMOD_INPUTS = {
     # [-] required fraction of non inductive current, if 0, dont use CD
     "f_ni": ("f_ni", "dimensionless"),
     # [MW] max allowed power for control (fusion power, H-mode)
-    "P_heat_max": {"pheat_max", "MW"},
+    # ###### "BM_INP": ("pheat_max", "MW")
     # [MW] fixed auxiliary heating power required for control
     "q_control": ("q_control", "MW"),
     # [MW] total auxiliary power  (0.) DO NOT CHANGE
