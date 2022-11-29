@@ -57,6 +57,35 @@ class CoilGroup(CoilGroupFieldsMixin):
         self._coils = coils
         self._pad_discretisation(self.__list_getter("_quad_x"))
 
+    def assign_material(
+        self, j_max: Union[float, Iterable[float]], b_max: Union[float, Iterable[float]]
+    ):
+        """Assign material J and B to Coilgroup"""
+        self.j_max = j_max
+        self.b_max = b_max
+
+    def n_coils(self, ctype: Optional[Union[str, CoilType]] = None) -> int:
+        """
+        Get number of coils
+
+        Parameters
+        ----------
+        ctype: Optional[Union[str, CoilType]]
+            get number of coils of a specific type
+
+        Returns
+        -------
+        int
+            Number of coils
+        """
+        if ctype is None:
+            return len(self.x)
+
+        if not isinstance(ctype, CoilType):
+            ctype = CoilType[ctype]
+
+        return Counter(self.ctype)[ctype]
+
     def add_coil(self, *coils: Union[Coil, CoilGroup[Coil]]):
         """Add coils to the coil group"""
         self._coils = (*self._coils, *coils)
@@ -153,6 +182,25 @@ class CoilGroup(CoilGroupFieldsMixin):
                 setattr(coil, attr, values[no:end_no])
                 no = end_no
 
+    def __copy__(self):
+        """Copy dunder method, needed because attribute setter fails for quadratures"""
+        cls = self.__class__
+        result = cls.__new__(cls)
+        result.__dict__.update(self.__dict__)
+        return result
+
+    def __deepcopy__(self, memo):
+        """
+        Deepcopy dunder method, needed because attribute setter fails for
+        quadratures
+        """
+        cls = self.__class__
+        result = cls.__new__(cls)
+        memo[id(self)] = result
+        for k, v in self.__dict__.items():
+            setattr(result, k, deepcopy(v, memo))
+        return result
+
     def _pad_discretisation(
         self,
         _to_pad: List[np.ndarray],
@@ -182,35 +230,6 @@ class CoilGroup(CoilGroupFieldsMixin):
         self._einsum_str = (
             "...j, ...ij -> ...i" if len(_to_pad) == 1 else "...ij, ...ij -> ...i"
         )
-
-    def assign_material(
-        self, j_max: Union[float, Iterable[float]], b_max: Union[float, Iterable[float]]
-    ):
-        """Assign material J and B to Coilgroup"""
-        self.j_max = j_max
-        self.b_max = b_max
-
-    def n_coils(self, ctype: Optional[Union[str, CoilType]] = None) -> int:
-        """
-        Get number of coils
-
-        Parameters
-        ----------
-        ctype: Optional[Union[str, CoilType]]
-            get number of coils of a specific type
-
-        Returns
-        -------
-        int
-            Number of coils
-        """
-        if ctype is None:
-            return len(self.x)
-
-        if not isinstance(ctype, CoilType):
-            ctype = CoilType[ctype]
-
-        return Counter(self.ctype)[ctype]
 
     @property
     def name(self) -> np.ndarray:
@@ -375,25 +394,6 @@ class CoilGroup(CoilGroupFieldsMixin):
     def n_turns(self, values: Union[float, Iterable[float]]):
         """Set coil number of turns"""
         self.__setter("n_turns", values)
-
-    def __copy__(self):
-        """Copy dunder method, needed because attribute setter fails for quadratures"""
-        cls = self.__class__
-        result = cls.__new__(cls)
-        result.__dict__.update(self.__dict__)
-        return result
-
-    def __deepcopy__(self, memo):
-        """
-        Deepcopy dunder method, needed because attribute setter fails for
-        quadratures
-        """
-        cls = self.__class__
-        result = cls.__new__(cls)
-        memo[id(self)] = result
-        for k, v in self.__dict__.items():
-            setattr(result, k, deepcopy(v, memo))
-        return result
 
 
 class Circuit(CoilGroup):
