@@ -1,6 +1,7 @@
 from pprint import pformat
 
 import matplotlib.pyplot as plt
+import numpy as np
 import pytest
 
 from bluemira.base.look_and_feel import bluemira_debug
@@ -328,7 +329,6 @@ class TestPowerLoad:
             {pformat(powerloadmodel_r)}
             """
         )
-
         assert isinstance(result, PowerLoad)
         assert powerdata_r == powerdata_1 + powerdata_2
         assert powerloadmodel_r == powerloadmodel_1 + powerloadmodel_2
@@ -362,3 +362,38 @@ class TestPowerLoad:
             else:
                 with pytest.raises(PowerLoadError):
                     time = PowerLoad._validate_time(argument)
+
+    def test_single_curve(self):
+
+        out1, out2 = self.extract_input_samples()
+        powerdata_samples, powerloadmodel_samples = out1, out2
+
+        test_time = list(np.arange(-2, 12, 0.1))
+        time_length = len(test_time)
+
+        for powerdata in powerdata_samples:
+            power_points = powerdata.data
+            max_point = max(power_points)
+            min_point = min(power_points)
+
+            for model in powerloadmodel_samples:
+                curve = PowerLoad._single_curve(
+                    powerdata,
+                    model,
+                    test_time,
+                )
+                assert len(curve) == time_length
+                self.check_interpolation(max_point, min_point, curve)
+
+    @staticmethod
+    def check_interpolation(original_max, original_min, curve):
+        """
+        Confirm that curve is an interpolation. Current simplified
+        approach: no curve value is out of the bounds of the original
+        defining interpolation points, except if it is a zero (fill
+        value for 'interp1d').
+        """
+        curve_max = max(curve)
+        curve_min = min(curve)
+        assert (curve_max <= original_max) or (curve_max == 0)
+        assert (curve_min >= original_min) or (curve_min == 0)
