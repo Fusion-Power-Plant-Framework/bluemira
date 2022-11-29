@@ -107,12 +107,10 @@ called to create the `Component`.
         param_cls = BuilderPF
 
         def build(self) -> Component
-            return MyComponentManager(
-                self.component_tree(
-                    xz=[self.build_xz()],
-                    xy=[self.build_xy()],
-                    xyz=[self.build_xyz()],
-                )
+            return self.component_tree(
+                xz=[self.build_xz()],
+                xy=[self.build_xy()],
+                xyz=[self.build_xyz()],
             )
 
         def build_xz(self):
