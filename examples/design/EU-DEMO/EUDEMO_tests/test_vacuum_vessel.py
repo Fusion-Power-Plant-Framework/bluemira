@@ -37,7 +37,12 @@ class TestVacuumVesselBuilder:
         }
 
         cls.picture_frame = PictureFrame(
-            {"x1": {"value": 2}, "ro": {"value": 6}, "ri": {"value": 3}},
+            {
+                "x1": {"value": 2},
+                "ro": {"value": 3.5},
+                "ri": {"value": 3},
+                "x2": {"value": 10},
+            },
         ).create_shape()
 
     def test_components_and_segments(self):

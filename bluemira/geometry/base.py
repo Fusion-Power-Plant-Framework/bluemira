@@ -30,12 +30,16 @@ import enum
 
 # import for abstract class
 from abc import ABC, abstractmethod
+from typing import List
+
+import numpy as np
 
 import bluemira.mesh.meshing as meshing
 
 # import freecad api
 from bluemira.codes import _freecadapi as cadapi
 from bluemira.geometry.bound_box import BoundingBox
+from bluemira.geometry.coordinates import Coordinates
 
 
 class GeoMeshable(meshing.Meshable):
@@ -94,9 +98,9 @@ class BluemiraGeo(ABC, GeoMeshable):
     ):
         super().__init__()
         self._boundary_classes = boundary_classes
-        self.boundary = boundary
+        self.__orientation = _Orientation.FORWARD
         self.label = label
-        self.__orientation = _Orientation("Forward")
+        self._set_boundary(boundary)
 
     @property
     def _orientation(self):
@@ -122,12 +126,21 @@ class BluemiraGeo(ABC, GeoMeshable):
     def _check_boundary(self, objs):
         """
         Check if objects objs can be used as boundaries.
+
+        Note: empty BluemiraGeo are allowed in case of objs == None.
         """
+        if objs is None:
+            return objs
+
         if not hasattr(objs, "__len__"):
             objs = [objs]
+
         check = False
         for c in self._boundary_classes:
-            check = check or (all(isinstance(o, c) for o in objs))
+            # # in case of obj = [], this check returns True instead of False
+            # check = check or (all(isinstance(o, c) for o in objs))
+            for o in objs:
+                check = check or isinstance(o, c)
             if check:
                 return objs
         raise TypeError(
@@ -135,79 +148,99 @@ class BluemiraGeo(ABC, GeoMeshable):
         )
 
     @property
-    def boundary(self):
+    def boundary(self) -> tuple:
         """
         The shape's boundary.
         """
-        return self._boundary
+        return tuple(self._boundary)
 
-    @boundary.setter
-    def boundary(self, objs):
+    def _set_boundary(self, objs, replace_shape=True):
         self._boundary = self._check_boundary(objs)
+        if replace_shape:
+            if self._boundary is None:
+                self._set_shape(None)
+            else:
+                self._set_shape(self._create_shape())
 
-    @property
     @abstractmethod
-    def _shape(self):
+    def _create_shape(self):
         """
-        The primitive shape of the object.
+        Create the shape from the boundary
         """
         # Note: this is the "hidden" connection with primitive shapes
         pass
 
     @property
-    def length(self):
+    def shape(self):
+        """
+        The primitive shape of the object.
+        """
+        # Note: this is the "hidden" connection with primitive shapes
+        return self._shape
+
+    def _set_shape(self, value):
+        self._shape = value
+
+    @property
+    def length(self) -> float:
         """
         The shape's length.
         """
-        return cadapi.length(self._shape)
+        return cadapi.length(self.shape)
 
     @property
-    def area(self):
+    def area(self) -> float:
         """
         The shape's area.
         """
-        return cadapi.area(self._shape)
+        return cadapi.area(self.shape)
 
     @property
-    def volume(self):
+    def volume(self) -> float:
         """
         The shape's volume.
         """
-        return cadapi.volume(self._shape)
+        return cadapi.volume(self.shape)
 
     @property
-    def center_of_mass(self):
+    def center_of_mass(self) -> np.ndarray:
         """
         The shape's center of mass.
         """
-        return cadapi.center_of_mass(self._shape)
+        return cadapi.center_of_mass(self.shape)
 
     @property
-    def bounding_box(self):
+    def bounding_box(self) -> BoundingBox:
         """
         The bounding box of the shape."""
-        x_min, y_min, z_min, x_max, y_max, z_max = cadapi.bounding_box(self._shape)
+        x_min, y_min, z_min, x_max, y_max, z_max = cadapi.bounding_box(self.shape)
         return BoundingBox(x_min, x_max, y_min, y_max, z_min, z_max)
 
-    def is_null(self):
+    def is_null(self) -> bool:
         """
         Check if the shape is null.
         """
-        return cadapi.is_null(self._shape)
+        return cadapi.is_null(self.shape)
 
-    def is_closed(self):
+    def is_closed(self) -> bool:
         """
         Check if the shape is closed.
         """
-        return cadapi.is_closed(self._shape)
+        return cadapi.is_closed(self.shape)
 
-    def is_valid(self):
+    def is_valid(self) -> bool:
         """
         Check if the shape is valid.
         """
-        return cadapi.is_valid(self._shape)
+        return cadapi.is_valid(self.shape)
 
-    def search(self, label: str):
+    def is_same(self, obj: BluemiraGeo) -> bool:
+        """
+        Check if obj has the same shape as self
+        """
+        return cadapi.is_same(self.shape, obj.shape)
+
+    def search(self, label: str) -> List[BluemiraGeo]:
         """
         Search for a shape with the specified label
 
@@ -234,19 +267,44 @@ class BluemiraGeo(ABC, GeoMeshable):
         """
         Apply scaling with factor to this object. This function modifies the self
         object.
+
+        Note
+        ----
+        The operation is made on shape and boundary in order to maintain the consistency.
+        Shape is then not reconstructed from boundary (in order to reduce the
+        computational time and avoid problems due to api objects orientation).
         """
         for o in self.boundary:
-            o.scale(factor)
+            if isinstance(o, BluemiraGeo):
+                o.scale(factor)
+            else:
+                cadapi.scale_shape(o, factor)
+        cadapi.scale_shape(self.shape, factor)
 
     def translate(self, vector) -> None:
         """
         Translate this shape with the vector. This function modifies the self
         object.
+
+        Note
+        ----
+        The operation is made on shape and boundary in order to maintain the consistency.
+        Shape is then not reconstructed from boundary (in order to reduce the
+        computational time and avoid problems due to api objects orientation).
         """
         for o in self.boundary:
-            o.translate(vector)
+            if isinstance(o, BluemiraGeo):
+                o.translate(vector)
+            else:
+                cadapi.translate_shape(o, vector)
+        cadapi.translate_shape(self.shape, vector)
 
-    def rotate(self, base, direction, degree) -> None:
+    def rotate(
+        self,
+        base: tuple = (0.0, 0.0, 0.0),
+        direction: tuple = (0.0, 0.0, 1.0),
+        degree: float = 180,
+    ):
         """
         Rotate this shape.
 
@@ -258,16 +316,35 @@ class BluemiraGeo(ABC, GeoMeshable):
             The direction vector
         degree: float
             rotation angle
+
+        Note
+        ----
+        The operation is made on shape and boundary in order to maintain the consistency.
+        Shape is then not reconstructed from boundary (in order to reduce the
+        computational time and avoid problems due to api objects orientation).
         """
         for o in self.boundary:
-            o.rotate(base, direction, degree)
+            if isinstance(o, BluemiraGeo):
+                o.rotate(base, direction, degree)
+            else:
+                cadapi.rotate_shape(o, base, direction, degree)
+        cadapi.rotate_shape(self.shape, base, direction, degree)
 
     def change_placement(self, placement) -> None:
         """
         Change the placement of self
+        Note
+        ----
+        The operation is made on shape and boundary in order to maintain the consistency.
+        Shape is then not reconstructed from boundary (in order to reduce the
+        computational time and avoid problems due to api objects orientation).
         """
         for o in self.boundary:
-            o.change_placement(placement)
+            if isinstance(o, BluemiraGeo):
+                o.change_placement(placement)
+            else:
+                cadapi.change_placement(o, placement._shape)
+        cadapi.change_placement(self.shape, placement._shape)
 
     def __repr__(self):  # noqa D105
         new = []
@@ -300,20 +377,50 @@ class BluemiraGeo(ABC, GeoMeshable):
             geo_copy.label = self.label
         return geo_copy
 
-    # Obsolete.
-    # It was used to getattr from the primitive object, but it was replaced
-    # with specific implementation into the respective api. However it could be still
-    # useful (for this reason is just commented).
-    # def __getattr__(self, key):
-    #     """
-    #     Transfer the key getattr to shape object.
-    #     """
-    #     if key in type(self).attrs:
-    #         output = getattr(self._shape, type(self).attrs[key])
-    #         if callable(output):
-    #             return self.__class__._converter(output)
-    #         else:
-    #             return output
-    #     else:
-    #         raise AttributeError("'{}' has no attribute '{}'".format(str(type(
-    #             self).__name__), key))
+    @property
+    @abstractmethod
+    def vertexes(self) -> Coordinates:
+        """
+        The vertexes of the BluemiraGeo.
+        """
+        pass
+
+    @property
+    @abstractmethod
+    def edges(self) -> tuple:
+        """
+        The edges of the BluemiraGeo.
+        """
+        pass
+
+    @property
+    @abstractmethod
+    def wires(self) -> tuple:
+        """
+        The wires of the BluemiraGeo.
+        """
+        pass
+
+    @property
+    @abstractmethod
+    def faces(self) -> tuple:
+        """
+        The faces of the BluemiraGeo.
+        """
+        pass
+
+    @property
+    @abstractmethod
+    def shells(self) -> tuple:
+        """
+        The shells of the BluemiraGeo.
+        """
+        pass
+
+    @property
+    @abstractmethod
+    def solids(self) -> tuple:
+        """
+        The solids of the BluemiraGeo.
+        """
+        pass

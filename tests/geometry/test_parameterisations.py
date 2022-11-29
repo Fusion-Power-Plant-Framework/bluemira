@@ -185,7 +185,7 @@ class TestPictureFrame:
             }
         )
         wire = p.create_shape()
-        assert _wire_edges_tangent(wire._shape)
+        assert _wire_edges_tangent(wire.shape)
 
 
 class TestComplexPictureFrame:
@@ -270,7 +270,7 @@ class TestComplexPictureFrame:
     def test_ordering(self, upper, lower, inner):
         p = PictureFrame(upper=upper, lower=lower, inner=inner)
         wire = p.create_shape()
-        assert _wire_edges_tangent(wire._shape)
+        assert _wire_edges_tangent(wire.shape)
 
     def test_tapered_segments(self):
         p = PictureFrame(inner="TAPERED_INNER")

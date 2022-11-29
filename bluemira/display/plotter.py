@@ -544,10 +544,10 @@ class FacePlotter(BasePlotter):
     def _populate_data(self, face):
         self._data = []
         self._wplotters = []
-        # TODO: the for must be done using face._shape.Wires because FreeCAD
+        # TODO: the for must be done using face.shape.Wires because FreeCAD
         #  re-orient the Wires in the correct way for display. Find another way to do
         #  it (maybe adding this function to the freecadapi.
-        for w in face._shape.Wires:
+        for w in face.shape.Wires:
             boundary = wire.BluemiraWire(w)
             wplotter = WirePlotter(self.options)
             self._wplotters.append(wplotter)

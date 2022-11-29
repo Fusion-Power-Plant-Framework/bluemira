@@ -116,7 +116,7 @@ class Meshable:
 
     def __init__(self):
         super().__init__()
-        self._mesh_options = None
+        self._mesh_options = MeshOptions()
 
     @property
     def mesh_options(self) -> MeshOptions:

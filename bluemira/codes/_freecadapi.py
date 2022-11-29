@@ -70,6 +70,9 @@ apiPlacement = Base.Placement  # noqa : N816
 apiPlane = Part.Plane  # noqa :N816
 apiCompound = Part.Compound  # noqa :N816
 
+WORKING_PRECISION = 1e-5
+MIN_PRECISION = 1e-5
+MAX_PRECISION = 1e-5
 # ======================================================================================
 # Array, List, Vector, Point manipulation
 # ======================================================================================
@@ -556,6 +559,36 @@ def offset_wire(
     return wire
 
 
+def make_face(wire: apiWire) -> apiFace:
+    """
+    Make a face given a wire boundary.
+
+    Parameters
+    ----------
+    wire: apiWire
+        Wire boundary from which to make a face
+
+    Returns
+    -------
+    face: apiFace
+        Face created from the wire boundary
+
+    Raises
+    ------
+    FreeCADError
+        If the created face is invalid
+    """
+    face = apiFace(wire)
+    if face.isValid():
+        return face
+    else:
+        face.fix(WORKING_PRECISION, MIN_PRECISION, MAX_PRECISION)
+        if face.isValid():
+            return face
+        else:
+            raise FreeCADError("An invalid face has been generated")
+
+
 # ======================================================================================
 # Object properties
 # ======================================================================================
@@ -601,6 +634,11 @@ def is_valid(obj) -> bool:
     return _get_api_attr(obj, "isValid")()
 
 
+def is_same(obj1, obj2) -> bool:
+    """True if obj1 and obj2 have the same shape."""
+    return obj1.isSame(obj2)
+
+
 def bounding_box(obj) -> Tuple[float, float, float, float, float, float]:
     """Object's bounding box"""
     box = _get_api_attr(obj, "BoundBox")
@@ -617,6 +655,53 @@ def end_point(obj) -> np.ndarray:
     """The end point of the object"""
     point = obj.Edges[-1].lastVertex().Point
     return vector_to_numpy(point)
+
+
+def ordered_vertexes(obj) -> np.ndarray:
+    """Ordered vertexes of the object"""
+    vertexes = _get_api_attr(obj, "OrderedVertexes")
+    return vertex_to_numpy(vertexes)
+
+
+def vertexes(obj) -> np.ndarray:
+    """Wires of the object"""
+    vertexes = _get_api_attr(obj, "Vertexes")
+    return vertex_to_numpy(vertexes)
+
+
+def orientation(obj) -> bool:
+    """True if obj is valid"""
+    return _get_api_attr(obj, "Orientation")
+
+
+def edges(obj) -> list[apiWire]:
+    """Edges of the object"""
+    return _get_api_attr(obj, "Edges")
+
+
+def ordered_edges(obj) -> np.ndarray:
+    """Ordered edges of the object"""
+    return _get_api_attr(obj, "OrderedEdges")
+
+
+def wires(obj) -> list[apiWire]:
+    """Wires of the object"""
+    return _get_api_attr(obj, "Wires")
+
+
+def faces(obj) -> list[apiFace]:
+    """Faces of the object"""
+    return _get_api_attr(obj, "Faces")
+
+
+def shells(obj) -> list[apiShell]:
+    """Shells of the object"""
+    return _get_api_attr(obj, "Shells")
+
+
+def solids(obj) -> list[apiSolid]:
+    """Solids of the object"""
+    return _get_api_attr(obj, "Solids")
 
 
 # ======================================================================================
@@ -798,7 +883,7 @@ def wire_value_at(wire: apiWire, distance: float):
     return np.array(point)
 
 
-def wire_parameter_at(wire: apiWire, vertex: Iterable, tolerance=EPS):
+def wire_parameter_at(wire: apiWire, vertex: Iterable, tolerance=EPS) -> float:
     """
     Get the parameter value at a vertex along a wire.
 
@@ -1037,7 +1122,7 @@ def translate_shape(shape, vector: tuple):
     -------
     shape: the modified shape
     """
-    return shape.translate(vector)
+    return shape.translate(Base.Vector(vector))
 
 
 def rotate_shape(
@@ -1192,7 +1277,7 @@ def sweep_shape(profiles, path, solid=True, frenet=True):
 # ======================================================================================
 # Boolean operations
 # ======================================================================================
-def boolean_fuse(shapes):
+def boolean_fuse(shapes, remove_splitter=True):
     """
     Fuse two or more shapes together. Internal splitter are removed.
 
@@ -1201,6 +1286,10 @@ def boolean_fuse(shapes):
     shapes: Iterable
         List of FreeCAD shape objects to be fused together. All the objects in the
         list must be of the same type.
+    remove_splitter: booelan
+        if True, shape is refined removing extra edges.
+        See(https://wiki.freecadweb.org/Part_RefineShape)
+
 
     Returns
     -------
@@ -1245,7 +1334,8 @@ def boolean_fuse(shapes):
 
         elif _type == apiFace:
             merged_shape = shapes[0].fuse(shapes[1:])
-            merged_shape = merged_shape.removeSplitter()
+            if remove_splitter:
+                merged_shape = merged_shape.removeSplitter()
             if len(merged_shape.Faces) > 1:
                 raise FreeCADError(
                     f"Boolean fuse operation on {shapes} gives more than one face."
@@ -1254,7 +1344,8 @@ def boolean_fuse(shapes):
 
         elif _type == apiSolid:
             merged_shape = shapes[0].fuse(shapes[1:])
-            merged_shape = merged_shape.removeSplitter()
+            if remove_splitter:
+                merged_shape = merged_shape.removeSplitter()
             if len(merged_shape.Solids) > 1:
                 raise FreeCADError(
                     f"Boolean fuse operation on {shapes} gives more than one solid."
@@ -1642,8 +1733,9 @@ def face_from_plane(plane: Part.Plane, width: float, height: float):
         Base.Vector(width / 2, height / 2, 0),
         Base.Vector(-width / 2, height / 2, 0),
     ]
-    border = Part.makePolygon(corners + [corners[0]])  # will return a closed Wire
-    wall = Part.Face(plane, border)
+    # create the closed border
+    border = Part.makePolygon(corners + [corners[0]])
+    wall = Part.Face(border)
 
     wall.Placement = placement_from_plane(plane)
 

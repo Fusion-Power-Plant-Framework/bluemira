@@ -45,13 +45,17 @@ A geometry tutorial for users.
 # %%
 import os
 
+import matplotlib.pyplot as plt
 import numpy as np
 
 from bluemira.base.file import get_bluemira_path
 
 # Some display functionality
-from bluemira.display import plot_2d, show_cad
+from bluemira.display import plotter, show_cad
 from bluemira.display.displayer import DisplayCADOptions
+
+# Basic objects
+from bluemira.geometry.coordinates import Coordinates
 from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.shell import BluemiraShell
 from bluemira.geometry.solid import BluemiraSolid
@@ -68,54 +72,132 @@ from bluemira.geometry.tools import (
     save_as_STP,
     sweep_shape,
 )
-
-# Basic objects
 from bluemira.geometry.wire import BluemiraWire
 
 # %%[markdown]
+# ## Geometry creation (1-D)
 
-# ## Make a cylinder
+# Let's get familiar with some ways of making 1-D geometries.
+# Bluemira implements functions for the creation of:
+# * polygons
+# * splines
+# * arcs
+# * a bit of everything (check geometry.tools module for an extensive list)
 
-# There are many ways to make a cylinder, but perhaps the simplest way is as follows:
-# * Make a circular Wire
-# * Make a Face from that Wire
-# * Extrude that Face along a vector, to make a Solid
+# Any 1-D geometry is stored in a BluemiraWire object. Just as example, we can start
+# considering a simple linear segmented wire with vertexes on
+# (0,0,0), (1,0,0), and (1,1,0).
 
 # %%
-# Note that we are going to give these geometries some labels, which
-# we might use later.
-circle_wire = make_circle(
-    radius=5,
-    center=(0, 0, 0),
-    axis=(0, 0, 1),
-    start_angle=0,
-    end_angle=360,
-    label="my_wire",
+
+points1 = Coordinates({"x": [0, 1, 1], "y": [0, 0, 1], "z": [0, 0, 0]})
+first_wire = make_polygon(points1, label="wire1")
+
+# A print of the object will return some useful info
+print(first_wire)
+
+# however, each information can be accessed through the respective
+# obj property, e.g.
+print(f"Wire length: {first_wire.length}")
+
+# %%[markdown]
+# Concatenation of more wires is also allowed:
+
+# %%
+points2 = Coordinates({"x": [1, 2], "y": [1, 2], "z": [0, 0]})
+second_wire = make_polygon(points2, label="wire2")
+full_wire = BluemiraWire([first_wire, second_wire], label="full_wire")
+print(full_wire)
+
+# %%[markdown]
+# In such a case, sub-wires are still accessible as separate entities and
+# can be returned through a search operation on the full wire:
+
+# %%
+first_wire1 = full_wire.search("wire1")[0]
+print(
+    f"first_wire and first_wire1 have the same shape: {first_wire1.is_same(first_wire)}"
 )
-circle_face = BluemiraFace(circle_wire, label="my_face")
-cylinder = extrude_shape(circle_face, vec=(0, 0, 10), label="my_solid")
+
+# Simple plot
+wire_plotter = plotter.WirePlotter()
+wire_plotter.options.view = "xy"
+wire_plotter.plot_2d(full_wire)
 
 # %%[markdown]
-
-# ## Simple properties and representations
+# More complex geometries can be created using splines, arcs, etc.
 
 # %%
-# Let's start off with some simple properties
-print(f"Circle length: {circle_wire.length} m")
-print(f"Circle area: {circle_face.area} m^2")
-print(f"Cylinder volume: {cylinder.volume} m^3")
-
-# You can also just print or repr these objects to get some useful info
-print(cylinder)
+wires = []
+wires.append(make_polygon([[0, 3], [0, 0], [0, 0]], label="w1"))
+wires.append(make_circle(1, (3, 1, 0), 270, 360, label="c2"))
+wires.append(make_polygon([[4, 4], [1, 3], [0, 0]], label="w3"))
+wires.append(make_circle(1, (3, 3, 0), 0, 90, label="c4"))
+wires.append(make_polygon([[3, 0], [4, 4], [0, 0]], label="w5"))
+wires.append(make_polygon([[0, 0], [4, 0], [0, 0]], label="w6"))
+closed_wire = BluemiraWire(wires, label="closed_wire")
+wire_plotter.plot_2d(closed_wire)
 
 # %%[markdown]
-# ## Display
+# In such a case, the created wire is closed. A check can be done interrogating
+# the is_closed function of the wire:
+
+# %%
+print(f"wire is closed: {closed_wire.is_closed()}")
+
+# %%[markdown]
+# ## Geometry creation (2-D and 3-D)
+
+# A closed planar 1-D geometry can be used as boundary to generate a 2-D face.
+
+# %%
+first_face = BluemiraFace(boundary=closed_wire, label="first_face")
+print(first_face)
+
+# %%[markdown]
+# A matplotlib-style plotting of a face can be made similarly to what was done for
+# a wire, i.e. using a FacePlotter
+
+# %%
+face_plotter = plotter.FacePlotter()
+face_plotter.options.view = "xy"
+face_plotter.plot_2d(first_face)
+
+
+# %%[markdown]
+# If more than one closed wire is given as boundary for a face, the first one is
+# used as the external boundary and subsequent ones are considered as holes.
+
+# %%
+points = Coordinates({"x": [1, 2, 2, 1], "y": [1, 1, 2, 2]})
+hole = make_polygon(points, label="hole", closed=True)
+face_with_hole = BluemiraFace(boundary=[closed_wire, hole], label="face_with_hole")
+print(face_with_hole)
+face_plotter.plot_2d(face_with_hole)
+
+
+# %%[markdown]
+# Starting from 1-D or 2-D geometries, 3-D objects can be created, for example,
+# by revolution or extrusion.
+
+# %%
+first_solid = extrude_shape(face_with_hole, (0, 0, 1), "first_solid")
+print(first_solid)
+
+# Note: 3-D operations generate solids that are disconnected from the primitive shape.
+# For this reason, it is not possible to retrieve our initial "face_with_hole"
+# interrogating "fist_solid".
+
+
+# %%[markdown]
+# ## 3-D Display
 
 # Geometry objects can be displayed via `show_cad`, and the appearance
 # of said objects customised by specifying `color` and `transparency`.
 
 # %%
-show_cad(cylinder, DisplayCADOptions(color="blue", transparency=0.1))
+show_cad(first_solid, DisplayCADOptions(color="blue", transparency=0.1))
+
 
 # %%[markdown]
 # ## Matryoshka structure
@@ -128,13 +210,13 @@ show_cad(cylinder, DisplayCADOptions(color="blue", transparency=0.1))
 # These are accessible via the boundary attribute, so, in general, the boundary
 # of a Solid is a Shell or set of Shells, and a Shell will have a set of Faces, etc.
 
-# Let's take a little peek under the hood of our cylinder
+# Let's take a little peek under the hood of our solid:
 
 # %%
-print(f"Our cylinder is a BluemiraSolid: {isinstance(cylinder, BluemiraSolid)}")
+print(f"Our shape is a BluemiraSolid: {isinstance(first_solid, BluemiraSolid)}")
 
 i, j, k = 0, 0, 0  # This is just to facilitate comprehension
-for i, shell in enumerate(cylinder.boundary):
+for i, shell in enumerate(first_solid.boundary):
     print(f"Shell: {i}.{j}.{k} is a BluemiraShell: {isinstance(shell, BluemiraShell)}")
     for j, face in enumerate(shell.boundary):
         print(f"Face: {i}.{j}.{k} is a BluemiraFace: {isinstance(face, BluemiraFace)}")
@@ -143,37 +225,50 @@ for i, shell in enumerate(cylinder.boundary):
                 f"Wire: {i}.{j}.{k} is a BluemiraWire: {isinstance(wire, BluemiraWire)}"
             )
 
-# %%[markdown]
-# OK, so a cylinder is pretty simple, but more complicated shapes
-# will follow the same pattern.
-
-# It does go deeper than this, but that is outside the intended
-# user-realm.
 
 # %%[markdown]
-# ## Geometry creation
 
-# Let's get familiar with some more ways of making geometries. We've
-# looked at circle already, but what else is out there:
-# * polygons
-# * splines
-# * a bit of everything
+# ## Geometric transformations
+
+# When applying a geometric transformation to a BluemiraGeo object, that operation
+# is transferred also to the boundary objects (in a recursive manner). That allows
+# consistency between the object shape and its boundary without recreating
+# the boundary set.
+
+# Just as example, we are going to apply a translation to our "face_with_hole".
 
 # %%
-# Polygon
-theta = np.linspace(0, 2 * np.pi, 6)
-x = 5 * np.cos(theta)
-y = np.zeros(6)
-z = 5 * np.sin(theta)
+# To have a reference to the initial object, we make a deepcopy of the face
+face_with_hole_copy = face_with_hole.deepcopy("face_copy")
 
-points = np.array([x, y, z])
-pentagon = make_polygon(points)
+# Now we apply the translation
+face_with_hole.translate((6, 1, 0))
 
-plot_2d(pentagon)
+# and plot the face before and after the transformation (the translated face
+# is plotted in red)
+ax = face_plotter.plot_2d(face_with_hole_copy, show=False)
+face_plotter.options.face_options["color"] = "red"
+face_plotter.plot_2d(face_with_hole, ax=ax, show=False)
+plt.title("Translated wire")
+plt.show()
+
+# The same happens, for example, to the wire that identifies the hole.
+hole_copy = face_with_hole_copy.search("hole")[0]
+wire_plotter.options.wire_options["color"] = "black"
+ax = wire_plotter.plot_2d(hole_copy, show=False)
+wire_plotter.options.wire_options["color"] = "red"
+wire_plotter.plot_2d(hole, ax=ax, show=False)
+plt.title("Translated wire test")
+plt.show()
+
 
 # %%[markdown]
+# ## Geometry creation (complex shapes)
+
+# OK, let's do something more complicated now.
+
 # Polygons are good for things with straight lines.
-# Circles you've met already.
+# Arcs you've met already.
 # For everything else, there's splines.
 
 # Say you have a weird shape, that you might calculate via a equation.
@@ -205,28 +300,12 @@ show_cad(
 )
 
 
-# %%
-# There is nothing stopping you from combining different primitives, though!
-
-radius = 2
-part_circle = make_circle(radius=radius, start_angle=0, end_angle=270)
-
-points = np.array([[radius, 0, 0], [0, 0, -radius], [0, 0, 0]])
-closure = make_polygon(points)
-
-my_shape = BluemiraWire([part_circle, closure])
-
-# Let's just check we got that right...
-print(f"My shape is closed: {my_shape.is_closed()}")
-
-show_cad(BluemiraFace(my_shape))
-
 # %%[markdown]
-# ## Geometry operations: Part 1
+# ## Additional examples
 # Making 3-D shapes from 2-D shapes
 
 # You can:
-# * extrude a shape `extrude_shape`, as we did with our cylinder
+# * extrude a shape `extrude_shape`, as we did with our solid
 # * revolve a shape `revolve_shape`
 # * sweep a shape `sweep_shape`
 
@@ -252,7 +331,6 @@ solid = sweep_shape(rectangle.boundary[0], path)
 show_cad(solid)
 
 # %%[markdown]
-# ## Geometry operations: Part 2
 # Making 3-D shapes from 3-D shapes
 
 # Boolean operations often come in very useful when making CAD.

@@ -237,10 +237,10 @@ class TestTFCoilBuilder:
         wp = xyz.get_component(f"{TFCoilBuilder.WP} 1")
         insgap = self.params["tk_tf_ins"]["value"] + self.params["tk_tf_insgap"]["value"]
         assert np.isclose(
-            wp._shape.bounding_box.x_min - ins._shape.bounding_box.x_min, insgap
+            wp.shape.bounding_box.x_min - ins.shape.bounding_box.x_min, insgap
         )
         assert np.isclose(
-            ins._shape.bounding_box.y_max - wp._shape.bounding_box.y_max, insgap
+            ins.shape.bounding_box.y_max - wp.shape.bounding_box.y_max, insgap
         )
 
         ib_cas = xy.get_component(f"{TFCoilBuilder.CASING} 1").get_component("inboard 1")
@@ -250,6 +250,6 @@ class TestTFCoilBuilder:
             + self.params["tk_tf_front_ib"]["value"]
         )
         assert np.isclose(
-            ib_cas._shape.bounding_box.x_max - ib_cas._shape.bounding_box.x_min,
+            ib_cas.shape.bounding_box.x_max - ib_cas.shape.bounding_box.x_min,
             case_thick,
         )

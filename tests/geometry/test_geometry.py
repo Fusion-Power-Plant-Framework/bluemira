@@ -495,7 +495,7 @@ class TestGeometry:
         solid2 = extrude_shape(face2, (0, 0, direction))
 
         results = boolean_cut(solid2, solid)
-        fc_result = cadapi.boolean_cut(solid2._shape, solid._shape)
+        fc_result = cadapi.boolean_cut(solid2.shape, solid.shape)
         assert len(results) == len(fc_result) == 2
 
         for fc_shape, bm_shape in zip(fc_result, results):
@@ -529,7 +529,6 @@ class TestGeometry:
         assert solid.is_valid()
         assert np.isclose(solid.volume, true_volume)
 
-    @pytest.mark.xfail
     def test_cut_hollow_circle(self):
         # TODO: More fun to be had with circles...
         x_c = 10
@@ -569,7 +568,7 @@ class TestGeometry:
         )
         solid2 = extrude_shape(face2, (0, 0, direction))
         result = boolean_fuse([solid, solid2])
-        fc_result = cadapi.boolean_fuse([solid._shape, solid2._shape])
+        fc_result = cadapi.boolean_fuse([solid.shape, solid2.shape])
         assert result.is_valid()
         assert fc_result.isValid()
         self._compare_fc_bm(fc_result, result)

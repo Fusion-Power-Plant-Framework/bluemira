@@ -161,9 +161,9 @@ class TestMixedFaces:
                 100,
                 {
                     "center_of_mass": (
-                        3.50440,
-                        4.17634,
-                        1.17870,
+                        3.50437337,
+                        4.17634955,
+                        1.17868604,
                     ),
                     "volume": 106.080,
                     "area": 348.296,
@@ -174,12 +174,12 @@ class TestMixedFaces:
                 15,
                 {
                     "center_of_mass": (
-                        11.583014,
-                        1.524777,
-                        -0.186182,
+                        11.5828485,
+                        1.52491093,
+                        -0.18624372,
                     ),
-                    "volume": 43.0233,
-                    "area": 121.5713,
+                    "volume": 43.02953145397336,
+                    "area": 121.585591636,
                 },
             ),
         ],
@@ -190,7 +190,7 @@ class TestMixedFaces:
         """
         coords = Coordinates.from_json(os.sep.join([TEST_PATH, filename]))
         face = make_mixed_face(*coords.xyz)
-        part = revolve_shape(face, degree=degree)
+        part = revolve_shape(face, degree=degree, label=filename)
         self.assert_properties(true_props, part)
 
     @pytest.mark.parametrize(
@@ -207,19 +207,6 @@ class TestMixedFaces:
                     ),
                     "volume": 185.185,
                     "area": 423.998,
-                },
-            ),
-            (
-                "div_test_mfm.json",
-                (0, 2, 0),
-                {
-                    "center_of_mass": (
-                        8.03233,
-                        0.990000,
-                        -6.44430,
-                    ),
-                    "volume": 4.58653,
-                    "area": 29.2239,
                 },
             ),
             (
@@ -244,7 +231,8 @@ class TestMixedFaces:
         fn = os.sep.join([TEST_PATH, filename])
         coords = Coordinates.from_json(fn)
         face = make_mixed_face(*coords.xyz)
-        part = extrude_shape(face, vec=vec)
+        part = extrude_shape(face, vec=vec, label=filename)
+
         self.assert_properties(true_props, part)
 
     def test_face_seg_fault(self):
