@@ -10,6 +10,7 @@ from bluemira.base.error import BluemiraError
 class PowerCycleError(BluemiraError):
     """
     Exception class for Power Cycle classes.
+
     Class should be named in the following format: '(Class)Error',
     where '(Class)' is the name of the associated class (source) for
     which the exception class is being defined.
@@ -41,8 +42,9 @@ class PowerCycleError(BluemiraError):
 
 
 class PowerCycleABCError(PowerCycleError):
-    def _associated_class(self) -> str:
-        return
+    """
+    Exception class for 'PowerCycleABC' class of the Power Cycle module.
+    """
 
     def _errors(self):
         errors = {
