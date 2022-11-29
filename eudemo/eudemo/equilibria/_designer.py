@@ -464,7 +464,7 @@ class FixedEquilibriumDesigner(Designer[Equilibrium]):
         r_circ = 0.5 * (z_max + abs(z_min))
         semi_circle = make_circle(
             r_circ + offset_value,
-            center=(x_circ, z_circ),
+            center=(x_circ, 0, z_circ),
             start_angle=-90,
             end_angle=90,
             axis=(0, 1, 0),
