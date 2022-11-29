@@ -79,10 +79,10 @@ from bluemira.geometry.wire import BluemiraWire
 
 # Let's get familiar with some ways of making 1-D geometries.
 # Bluemira implements functions for the creation of:
-# # * polygons
-# # * splines
-# # * arcs
-# # * a bit of everything (check geometry.tools module for an extensive list)
+# * polygons
+# * splines
+# * arcs
+# * a bit of everything (check geometry.tools module for an extensive list)
 
 # Any 1-D geometry is stored in a BluemiraWire object. Just as example, we can start
 # considering a simple linear segmented wire with vertexes on
