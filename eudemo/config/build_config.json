@@ -15,7 +15,7 @@
             "phi_l_neg": -120.0,
             "phi_l_pos": 30.0,
             "phi_u_neg": 0.0,
-            "phi_u_pos": 10.0
+            "phi_u_pos": 0.0
         },
         "plasmod_settings": {
             "i_impmodel": "PED_FIXED",
@@ -23,7 +23,7 @@
             "i_equiltype": "q95_sawtooth",
             "i_pedestal": "SAARELMA"
         },
-        "equilibrium_settings": {
+        "fixed_equilibrium_settings": {
             "p_order": 2,
             "max_iter": 30,
             "iter_err_max": 1e-2,
@@ -32,9 +32,14 @@
         "transport_eq_settings": {
             "lcar_mesh": 0.3,
             "max_iter": 15,
-            "iter_err_max": 1e-2,
+            "iter_err_max": 5e-2,
             "relaxation":0.0,
             "plot": false
+        },
+        "free_equilibrium_settings": {
+            "iter_err_max": 1e-2,
+            "relaxation": 0.2,
+            "plot": true
         }
     },
     "IVC": {

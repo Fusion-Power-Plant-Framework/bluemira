@@ -277,6 +277,7 @@ class ReferenceConstraints(MagneticConstraintSet):
         z_max = np.max(coords.z)
         arg_xl = np.argmin(coords.z)
         arg_xu = np.argmax(coords.z)
+        arg_xin = np.argmin(coords.x)
 
         if np.isclose(abs(z_min), z_max):
             # Double null
@@ -297,6 +298,10 @@ class ReferenceConstraints(MagneticConstraintSet):
                 FieldNullConstraint(coords.x[arg_xu], coords.z[arg_xu]),
             ]
 
-        constraints.append(IsofluxConstraint(coords.x, coords.z, tolerance=1e-3))
+        constraints.append(
+            IsofluxConstraint(
+                coords.x, coords.z, coords.x[arg_xin], coords.z[arg_xin], tolerance=1e-3
+            )
+        )
 
         super().__init__(constraints)

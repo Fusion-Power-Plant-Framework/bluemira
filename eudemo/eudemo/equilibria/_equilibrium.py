@@ -105,6 +105,7 @@ class ReferenceEquilibriumParams(ParameterFrame):
     A: Parameter[float]
     B_0: Parameter[float]
     I_p: Parameter[float]
+    kappa: Parameter[float]
     R_0: Parameter[float]
     r_cs_in: Parameter[float]
     tk_cs: Parameter[float]
@@ -125,8 +126,8 @@ def make_reference_equilibrium(
         tf_track,
         r_cs=params.r_cs_in.value + params.tk_cs.value / 2,
         tk_cs=params.tk_cs.value / 2,
-        n_CS=9,
-        n_PF=20,
+        n_CS=7,
+        n_PF=10,
     )
 
     grid = make_grid(

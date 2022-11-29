@@ -287,6 +287,11 @@ class FixedEquilibriumDesignerParams(ParameterFrame):
     f_ni: Parameter[float]
     T_e_ped: Parameter[float]
 
+    # Updated parameters
+    beta_p: Parameter[float]
+    l_i: Parameter[float]
+    shaf_shift: Parameter[float]
+
 
 class FixedEquilibriumDesigner(Designer[Equilibrium]):
     """
@@ -361,8 +366,7 @@ class FixedEquilibriumDesigner(Designer[Equilibrium]):
         # Make free boundary equilibrium (with coils) from fixed boundary equilibrium
 
         # Make dummy tf coil boundary
-        offset_value = self.params.tk_bb_ob.value + self.params.tk_vv_out.value + 1.5
-        tf_coil_boundary = self._make_tf_boundary(lcfs_shape, offset_value)
+        tf_coil_boundary = self._make_tf_boundary(lcfs_shape)
 
         eq = make_reference_equilibrium(
             ReferenceEquilibriumParams.from_frame(self.params),
@@ -372,13 +376,17 @@ class FixedEquilibriumDesigner(Designer[Equilibrium]):
         )
 
         opt_problem = self._make_fbe_opt_problem(eq, lcfs_shape)
+
+        defaults = {"plot": False, "relaxation": 0.02}
+        settings = self.build_config.get("free_equilibrium_settings", {})
+        iter_err_max = settings.pop("iter_err_max", 1e-2)
+        settings = {**defaults, **settings}
         iterator_program = PicardIterator(
             eq,
             opt_problem,
-            convergence=DudsonConvergence(),
-            relaxation=0.2,
+            convergence=DudsonConvergence(iter_err_max),
             fixed_coils=True,
-            plot=self.plot_optimisation,
+            **settings,
         )
         iterator_program()
         self._update_params_from_eq(eq)
@@ -441,7 +449,7 @@ class FixedEquilibriumDesigner(Designer[Equilibrium]):
         )
 
     def _get_fixed_equilibrium_solver(self):
-        eq_settings = self.build_config.get("equilibrium_settings", {})
+        eq_settings = self.build_config.get("fixed_equilibrium_settings", {})
         defaults = {
             "p_order": 2,
             "max_iter": 30,
@@ -452,7 +460,8 @@ class FixedEquilibriumDesigner(Designer[Equilibrium]):
         return FemGradShafranovFixedBoundary(**eq_settings)
 
     def _make_tf_boundary(
-        self, lcfs_shape: BluemiraWire, offset_value: float
+        self,
+        lcfs_shape: BluemiraWire,
     ) -> BluemiraWire:
         coords = lcfs_shape.discretize(byedges=True, ndiscr=200)
         xu_arg = np.argmax(coords.z)
@@ -462,6 +471,8 @@ class FixedEquilibriumDesigner(Designer[Equilibrium]):
         x_circ = min(xz_min, xz_max)
         z_circ = z_max - abs(z_min)
         r_circ = 0.5 * (z_max + abs(z_min))
+
+        offset_value = self.params.tk_bb_ob.value + self.params.tk_vv_out.value + 2.5
         semi_circle = make_circle(
             r_circ + offset_value,
             center=(x_circ, 0, z_circ),
@@ -489,3 +500,18 @@ class FixedEquilibriumDesigner(Designer[Equilibrium]):
         return UnconstrainedTikhonovCurrentGradientCOP(
             eq.coilset, eq, eq_targets, gamma=1e-8
         )
+
+    def _update_params_from_eq(self, eq: Equilibrium):
+        plasma_dict = eq.analyse_plasma()
+        new_values = {
+            "beta_p": plasma_dict["beta_p"],
+            "delta_95": plasma_dict["delta_95"],
+            "delta": plasma_dict["delta"],
+            "I_p": plasma_dict["Ip"],
+            "kappa_95": plasma_dict["kappa_95"],
+            "kappa": plasma_dict["kappa"],
+            "l_i": plasma_dict["li"],
+            "q_95": plasma_dict["q_95"],
+            "shaf_shift": np.hypot(plasma_dict["dx_shaf"], plasma_dict["dz_shaf"]),
+        }
+        self.params.update_values(new_values, source=type(self).__name__)

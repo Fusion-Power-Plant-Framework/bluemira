@@ -227,7 +227,7 @@ def make_reference_coilset(
     bb = tf_track.bounding_box
     z_min = bb.z_min
     z_max = bb.z_max
-    solenoid = make_solenoid(r_cs, tk_cs, z_min, z_max, n_CS)
+    solenoid = make_solenoid(r_cs, tk_cs, z_min, z_max, 0, 0, 0, n_CS)
     t = np.linspace(0, 1, n_PF)
     points = [tf_track.value_at(ti) for ti in t]
 
@@ -241,6 +241,7 @@ def make_reference_coilset(
             control=True,
             name=f"PF_{i+1}",
             flag_sizefix=False,
+            j_max=100.0,
         )
         pf_coils.append(coil)
     return CoilSet(pf_coils + solenoid)
