@@ -30,6 +30,7 @@ import enum
 
 # import for abstract class
 from abc import ABC, abstractmethod
+from typing import List
 
 import numpy as np
 
@@ -208,37 +209,37 @@ class BluemiraGeo(ABC, GeoMeshable):
         return cadapi.center_of_mass(self.shape)
 
     @property
-    def bounding_box(self):
+    def bounding_box(self) -> BoundingBox:
         """
         The bounding box of the shape."""
         x_min, y_min, z_min, x_max, y_max, z_max = cadapi.bounding_box(self.shape)
         return BoundingBox(x_min, x_max, y_min, y_max, z_min, z_max)
 
-    def is_null(self):
+    def is_null(self) -> bool:
         """
         Check if the shape is null.
         """
         return cadapi.is_null(self.shape)
 
-    def is_closed(self):
+    def is_closed(self) -> bool:
         """
         Check if the shape is closed.
         """
         return cadapi.is_closed(self.shape)
 
-    def is_valid(self):
+    def is_valid(self) -> bool:
         """
         Check if the shape is valid.
         """
         return cadapi.is_valid(self.shape)
 
-    def is_same(self, obj: BluemiraGeo):
+    def is_same(self, obj: BluemiraGeo) -> bool:
         """
         Check if obj has the same shape as self
         """
         return cadapi.is_same(self.shape, obj.shape)
 
-    def search(self, label: str):
+    def search(self, label: str) -> List[BluemiraGeo]:
         """
         Search for a shape with the specified label
 
