@@ -407,8 +407,8 @@ class FixedEquilibriumDesigner(Designer[Equilibrium]):
     def _get_transport_solver(self):
         plasmod_params = deepcopy(self.params)
         # Ugh gross...
-        plasmod_params.V_p = -2500
-        plasmod_params.v_burn = -1.0e-6
+        plasmod_params.V_p.value = -2500
+        plasmod_params.v_burn.value = -1.0e-6
 
         defaults = {
             "i_impmodel": "PED_FIXED",
