@@ -22,10 +22,11 @@
 """
 Wrapper for FreeCAD Part.Wire objects
 """
-
 from __future__ import annotations
 
-from typing import Iterable, List, Optional
+from typing import Iterable, List, Optional, Tuple
+
+import numpy as np
 
 import bluemira.codes._freecadapi as cadapi
 from bluemira.base.constants import EPS
@@ -147,7 +148,9 @@ class BluemiraWire(BluemiraGeo):
             points = cadapi.discretize(self.shape, ndiscr=ndiscr, dl=dl)
         return Coordinates(points)
 
-    def value_at(self, alpha: Optional[float] = None, distance: Optional[float] = None):
+    def value_at(
+        self, alpha: Optional[float] = None, distance: Optional[float] = None
+    ) -> np.ndarray:
         """
         Get a point along the wire at a given parameterised length or length.
 
@@ -183,7 +186,7 @@ class BluemiraWire(BluemiraGeo):
 
         return cadapi.wire_value_at(self.shape, distance)
 
-    def parameter_at(self, vertex: Iterable, tolerance: float = EPS):
+    def parameter_at(self, vertex: Iterable, tolerance: float = EPS) -> float:
         """
         Get the parameter value at a vertex along a wire.
 
@@ -226,42 +229,42 @@ class BluemiraWire(BluemiraGeo):
         return Coordinates(cadapi.end_point(self.shape))
 
     @property
-    def vertexes(self):
+    def vertexes(self) -> Coordinates:
         """
         The vertexes of the wire.
         """
         return Coordinates(cadapi.vertexes(self.shape))
 
     @property
-    def edges(self):
+    def edges(self) -> Tuple[BluemiraWire]:
         """
         The edges of the wire.
         """
         return tuple([BluemiraWire(cadapi.apiWire(o)) for o in cadapi.edges(self.shape)])
 
     @property
-    def wires(self):
+    def wires(self) -> Tuple[BluemiraWire]:
         """
         The wires of the wire. By definition a list of itself.
         """
-        return self
+        return tuple(self)
 
     @property
-    def faces(self):
+    def faces(self) -> tuple:
         """
         The faces of the wire. By definition an empty list.
         """
         return ()
 
     @property
-    def shells(self):
+    def shells(self) -> tuple:
         """
         The shells of the wire. By definition an empty list.
         """
         return ()
 
     @property
-    def solids(self):
+    def solids(self) -> tuple:
         """
         The solids of the wire. By definition an empty list.
         """

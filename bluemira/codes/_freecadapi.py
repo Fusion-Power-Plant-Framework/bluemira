@@ -883,7 +883,7 @@ def wire_value_at(wire: apiWire, distance: float):
     return np.array(point)
 
 
-def wire_parameter_at(wire: apiWire, vertex: Iterable, tolerance=EPS):
+def wire_parameter_at(wire: apiWire, vertex: Iterable, tolerance=EPS) -> float:
     """
     Get the parameter value at a vertex along a wire.
 
