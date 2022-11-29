@@ -2,8 +2,10 @@
 Classes for the calculation of net power in the power cycle model.
 """
 from abc import ABCMeta
-from enum import Enum, auto
+from enum import Enum
 from typing import List, Union
+
+from scipy.interpolate import interp1d
 
 from bluemira.power_cycle.base import PowerCycleABC, PowerCycleError
 from bluemira.power_cycle.tools import _add_dict_entries, validate_axes
@@ -239,12 +241,16 @@ class PowerData(NetPowerABC):
 
 class PowerLoadModel(Enum):
     """
-    Possible models used by the methods of the 'PowerLoad' class to
-    compute values between its load definition points.
+    Members define possible models used by the methods defined in the
+    'PowerLoad' class to compute values between load definition points.
+
+    Member names roughly describe the interpolation behavior, while
+    associated values specify which kind of interpolation is applied
+    when calling the imported `scipy.interpolate.interp1d` method.
     """
 
-    RAMP = auto()
-    STEP = auto()
+    RAMP = "linear"  # 'interp1d' linear interpolation
+    STEP = "previous"  # 'interp1d' previous-value interpolation
 
 
 class PowerLoadError(PowerCycleError):
@@ -373,9 +379,8 @@ class PowerLoad(NetPowerABC):
                 raise PowerLoadError("time")
         return time
 
-    '''
-    @classmethod
-    def _single_curve(cls, powerdata, model, time):
+    @staticmethod
+    def _single_curve(powerdata, model, time):
         """
         This method applies the `scipy.interpolate.interp1d` imported
         method to a single instance of the `PowerData` class. The kind
@@ -384,25 +389,27 @@ class PowerLoad(NetPowerABC):
         out-of-bound values set to zero.
         """
 
-        # Validate `model`
-        if model == "ramp":
-            k = "linear"  # Linear interpolation
-        elif model == "step":
-            k = "previous"  # Previous-value interpolation
-        else:
-            cls._issue_error("model")
+        try:
+            interpolation_kind = model.value
+        except (AttributeError):
+            raise PowerLoadError("model")
 
-        # Define interpolation function
         x = powerdata.time
         y = powerdata.data
-        b = False  # out-of-bound values do not raise error
-        f = (0, 0)  # below-bounds/above-bounds values set to 0
-        lookup = interp1d(x, y, kind=k, fill_value=f, bounds_error=b)
+        out_of_bounds_raises_error = False  # no error for out-of-bound
+        out_of_bounds_fill_value = (0, 0)  # below-bounds/above-bounds
+        interpolation_operator = interp1d(
+            x,
+            y,
+            kind=interpolation_kind,
+            fill_value=out_of_bounds_fill_value,  # substitute values
+            bounds_error=out_of_bounds_raises_error,  # turn-off error
+        )
 
-        # Output interpolated curve
-        curve = list(lookup(time))
-        return curve
+        interpolated_curve = list(interpolation_operator(time))
+        return interpolated_curve
 
+    '''
     def curve(self, time):
         """
         Create a curve by calculating power load values at the specified
