@@ -23,7 +23,7 @@
 Tests for plasma builder.
 """
 
-from bluemira.builders.plasma import PlasmaBuilder
+from bluemira.builders.plasma import Plasma, PlasmaBuilder
 from bluemira.geometry.tools import make_polygon
 
 
@@ -38,7 +38,7 @@ class TestPlasmaBuilder:
 
     def test_plasma_contains_components_in_3_dimensions(self):
         builder = PlasmaBuilder({}, self.square)
-        plasma = builder.build()
+        plasma = Plasma(builder.build())
 
         assert plasma.component().get_component("xz")
         assert plasma.component().get_component("xy")
@@ -47,6 +47,6 @@ class TestPlasmaBuilder:
     def test_lcfs_eq_to_designer_shape(self):
         builder = PlasmaBuilder({}, self.square)
 
-        plasma = builder.build()
+        plasma = Plasma(builder.build())
 
         assert plasma.lcfs() == self.square
