@@ -25,6 +25,8 @@ Wrapper for FreeCAD Part.Face objects
 
 from __future__ import annotations
 
+from typing import Tuple
+
 # import from freecad
 import bluemira.codes._freecadapi as cadapi
 
@@ -96,42 +98,42 @@ class BluemiraSolid(BluemiraGeo):
         )
 
     @property
-    def vertexes(self):
+    def vertexes(self) -> Coordinates:
         """
         The vertexes of the solid.
         """
         return Coordinates(cadapi.vertexes(self.shape))
 
     @property
-    def edges(self):
+    def edges(self) -> Tuple[BluemiraWire]:
         """
         The edges of the solid.
         """
         return tuple([BluemiraWire(cadapi.apiWire(o)) for o in cadapi.edges(self.shape)])
 
     @property
-    def wires(self):
+    def wires(self) -> Tuple[BluemiraWire]:
         """
         The wires of the solid.
         """
         return tuple([BluemiraWire(o) for o in cadapi.wires(self.shape)])
 
     @property
-    def faces(self):
+    def faces(self) -> Tuple[BluemiraFace]:
         """
         The faces of the solid.
         """
         return tuple([BluemiraFace(o) for o in cadapi.faces(self.shape)])
 
     @property
-    def shells(self):
+    def shells(self) -> Tuple[BluemiraShell]:
         """
         The shells of the solid.
         """
         return tuple([BluemiraShell(o) for o in cadapi.shells(self.shape)])
 
     @property
-    def solids(self):
+    def solids(self) -> Tuple[BluemiraSolid]:
         """
         The solids of the solid. By definition a list of itself.
         """
