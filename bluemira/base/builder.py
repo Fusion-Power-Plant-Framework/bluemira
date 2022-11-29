@@ -113,8 +113,8 @@ class Builder(abc.ABC):
         pass
 
     @abc.abstractmethod
-    def build(self) -> ComponentManager:
-        """Build the component and return a component manager instance."""
+    def build(self) -> Component:
+        """Build the component."""
         pass
 
     def component_tree(
