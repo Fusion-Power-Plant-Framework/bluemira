@@ -44,10 +44,10 @@ class TestVVTSBuilder:
         builder = VVTSBuilder(self.params, {}, self.vv_koz)
         vvts = builder.build()
 
-        assert vvts.component().get_component("xz")
-        assert vvts.component().get_component("xy")
+        assert vvts.get_component("xz")
+        assert vvts.get_component("xy")
 
-        xyz = vvts.component().get_component("xyz")
+        xyz = vvts.get_component("xyz")
         assert xyz
 
         # not sectioned because of #1319 and related issues
@@ -84,9 +84,9 @@ class TestCryostatTSBuilder:
         builder = CryostatTSBuilder(self.params, {}, self.pf_coil_koz, self.tf_xz_koz)
         cryostat_ts = builder.build()
 
-        assert cryostat_ts.component().get_component("xz")
-        assert cryostat_ts.component().get_component("xy")
+        assert cryostat_ts.get_component("xz")
+        assert cryostat_ts.get_component("xy")
 
-        xyz = cryostat_ts.component().get_component("xyz")
+        xyz = cryostat_ts.get_component("xyz")
         assert xyz
         assert len(xyz.leaves) == self.params["n_TF"]["value"]
