@@ -117,7 +117,7 @@ class EUDEMOReactorParams(ParameterFrame):
     Z_eff: Parameter[float]
 
     # PLASMOD
-    pheat_max: Parameter[float]
+    P_heat_max: Parameter[float]
     q_control: Parameter[float]
 
     # Equilibrium

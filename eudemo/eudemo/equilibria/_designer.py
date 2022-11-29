@@ -278,7 +278,7 @@ class FixedEquilibriumDesignerParams(ParameterFrame):
     tk_cs: Parameter[float]
     v_burn: Parameter[float]
     P_fus: Parameter[float]
-    pheat_max: Parameter[float]
+    P_heat_max: Parameter[float]
     q_control: Parameter[float]
 
 
@@ -419,7 +419,7 @@ class FixedEquilibriumDesigner(Designer[Equilibrium]):
         problem_settings = self.build_config.get("plasmod_settings", defaults)
         problem_settings["amin"] = self.params.R_0.value / self.params.A.value
         problem_settings["pfus_req"] = self.params.P_fus.value
-        problem_settings["pheat_max"] = self.params.pheat_max.value
+        problem_settings["pheat_max"] = self.params.P_heat_max.value
         problem_settings["q_control"] = self.params.q_control.value
 
         plasmod_build_config = {
