@@ -241,11 +241,11 @@
         "source": "Input",
         "long_name": "Bootstrap fraction"
     },
-    "P_heat_max": {
-        "value": 130.0,
-        "unit": "megawatt",
+    "T_e_ped": {
+        "value": 5.5,
+        "unit": "keV",
         "source": "Input",
-        "long_name": "Max allowed power for control (fusion power, H-mode)"
+        "long_name": "Electrons/ions temperature at pedestal"
     },
     "f_ni": {
         "value": 0.1,

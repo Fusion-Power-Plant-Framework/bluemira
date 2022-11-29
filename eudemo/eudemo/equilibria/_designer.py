@@ -276,11 +276,14 @@ class FixedEquilibriumDesignerParams(ParameterFrame):
     R_0: Parameter[float]
     r_cs_in: Parameter[float]
     tk_cs: Parameter[float]
-    V_p: Parameter[float]
     v_burn: Parameter[float]
     P_fus: Parameter[float]
-    P_heat_max: Parameter[float]
+
+    # PLASMOD parameters
     q_control: Parameter[float]
+    e_nbi: Parameter[float]
+    f_ni: Parameter[float]
+    T_e_ped: Parameter[float]
 
 
 class FixedEquilibriumDesigner(Designer[Equilibrium]):
@@ -406,11 +409,6 @@ class FixedEquilibriumDesigner(Designer[Equilibrium]):
         )
 
     def _get_transport_solver(self):
-        plasmod_params = deepcopy(self.params)
-        # Ugh gross...
-        plasmod_params.V_p.set_value(-2500, f"{self.__class__.__name__}")
-        plasmod_params.v_burn.set_value(-1e-6, f"{self.__class__.__name__}")
-
         defaults = {
             "i_impmodel": "PED_FIXED",
             "i_modeltype": "GYROBOHM_2",
@@ -420,9 +418,9 @@ class FixedEquilibriumDesigner(Designer[Equilibrium]):
         problem_settings = self.build_config.get("plasmod_settings", defaults)
         problem_settings["amin"] = self.params.R_0.value / self.params.A.value
         problem_settings["pfus_req"] = self.params.P_fus.value
-        problem_settings["pheat_max"] = self.params.P_heat_max.value
         problem_settings["q_control"] = self.params.q_control.value
         problem_settings["volume_in"] = -2500.0
+        problem_settings["v_loop"] = -1.0e-6
 
         plasmod_build_config = {
             "problem_settings": problem_settings,
@@ -432,7 +430,7 @@ class FixedEquilibriumDesigner(Designer[Equilibrium]):
         }
 
         return transport_code_solver(
-            params=plasmod_params, build_config=plasmod_build_config, module="PLASMOD"
+            params=self.params, build_config=plasmod_build_config, module="PLASMOD"
         )
 
     def _get_fixed_equilibrium_solver(self):
