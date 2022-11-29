@@ -278,6 +278,8 @@ class FixedEquilibriumDesignerParams(ParameterFrame):
     tk_cs: Parameter[float]
     v_burn: Parameter[float]
     P_fus: Parameter[float]
+    tk_bb_ob: Parameter[float]
+    tk_vv_out: Parameter[float]
 
     # PLASMOD parameters
     q_control: Parameter[float]
@@ -358,7 +360,7 @@ class FixedEquilibriumDesigner(Designer[Equilibrium]):
         # Make free boundary equilibrium (with coils) from fixed boundary equilibrium
 
         # Make dummy tf coil boundary
-        offset_value = self.params.tk_bb_ob.value + self.params.tk_vv_ob.value + 1.5
+        offset_value = self.params.tk_bb_ob.value + self.params.tk_vv_out.value + 1.5
         tf_coil_boundary = self._make_tf_boundary(lcfs_shape, offset_value)
 
         eq = make_reference_equilibrium(
@@ -445,7 +447,7 @@ class FixedEquilibriumDesigner(Designer[Equilibrium]):
             "relaxation": 0.05,
         }
         return FemGradShafranovFixedBoundary(
-            self.build_config.get("equilibrium_settings", defaults)
+            **self.build_config.get("equilibrium_settings", defaults)
         )
 
     def _make_tf_boundary(
