@@ -401,7 +401,7 @@ class FixedEquilibriumDesigner(Designer[Equilibrium]):
         kappa_95 = self.params.kappa_95.value
         delta_95 = self.params.delta_95.value
         kappa_l = shape_config["f_kappa_l"] * kappa_95
-        kappa_u = shape_config["f_kappa_l"] ** 2 * kappa_95
+        kappa_u = shape_config["f_kappa_l"] ** 0.5 * kappa_95
         delta_l = shape_config["f_delta_l"] * delta_95
         delta_u = delta_95
         return kappa_u, kappa_l, delta_u, delta_l

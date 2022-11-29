@@ -300,7 +300,7 @@ class ReferenceConstraints(MagneticConstraintSet):
 
         constraints.append(
             IsofluxConstraint(
-                coords.x, coords.z, coords.x[arg_xin], coords.z[arg_xin], tolerance=1e-3
+                coords.x, coords.z, coords.x[arg_xin], coords.z[arg_xin], tolerance=1e-6
             )
         )
 
