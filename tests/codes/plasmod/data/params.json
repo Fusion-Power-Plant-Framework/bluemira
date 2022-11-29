@@ -144,6 +144,12 @@
         "source": "Input",
         "long_name": "Total fusion power"
     },
+    "P_heat_max": {
+        "value": 130,
+        "unit": "megawatt",
+        "source": "Input",
+        "long_name": "Max allowed power for control (fusion power, H-mode)"
+    },
     "P_rad": {
         "value": 400,
         "unit": "megawatt",
