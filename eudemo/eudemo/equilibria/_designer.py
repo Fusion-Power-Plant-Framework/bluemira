@@ -417,8 +417,12 @@ class FixedEquilibriumDesigner(Designer[Equilibrium]):
         }
         problem_settings = self.build_config.get("plasmod_settings", defaults)
         problem_settings["amin"] = self.params.R_0.value / self.params.A.value
-        problem_settings["pfus_req"] = self.params.P_fus.value
-        problem_settings["q_control"] = self.params.q_control.value
+        problem_settings["pfus_req"] = (
+            self.params.P_fus.value / 1e6
+        )  # TODO: Move into PLASMOD params
+        problem_settings["q_control"] = (
+            self.params.q_control.value / 1e6
+        )  # TODO: Move into PLASMOD params
         problem_settings["volume_in"] = -2500.0
         problem_settings["v_loop"] = -1.0e-6
 
