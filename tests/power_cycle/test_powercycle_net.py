@@ -313,6 +313,22 @@ class TestPowerLoad:
         powerdata_r = result.data_set
         powerloadmodel_r = result.model
 
+        bluemira_debug(
+            f"""
+            {script_title()} (PowerLoadModel.__add__)
+
+            Load data in data sets:
+            {pformat([p.data for p in powerdata_1])}
+            {pformat([p.data for p in powerdata_2])}
+            {pformat([p.data for p in powerdata_r])}
+
+            Load models:
+            {pformat(powerloadmodel_1)}
+            {pformat(powerloadmodel_2)}
+            {pformat(powerloadmodel_r)}
+            """
+        )
+
         assert isinstance(result, PowerLoad)
         assert powerdata_r == powerdata_1 + powerdata_2
         assert powerloadmodel_r == powerloadmodel_1 + powerloadmodel_2
