@@ -31,6 +31,8 @@ import enum
 # import for abstract class
 from abc import ABC, abstractmethod
 
+import numpy as np
+
 import bluemira.mesh.meshing as meshing
 
 # import freecad api
@@ -144,7 +146,7 @@ class BluemiraGeo(ABC, GeoMeshable):
         )
 
     @property
-    def boundary(self):
+    def boundary(self) -> tuple:
         """
         The shape's boundary.
         """
@@ -178,28 +180,28 @@ class BluemiraGeo(ABC, GeoMeshable):
         self._shape = value
 
     @property
-    def length(self):
+    def length(self) -> float:
         """
         The shape's length.
         """
         return cadapi.length(self.shape)
 
     @property
-    def area(self):
+    def area(self) -> float:
         """
         The shape's area.
         """
         return cadapi.area(self.shape)
 
     @property
-    def volume(self):
+    def volume(self) -> float:
         """
         The shape's volume.
         """
         return cadapi.volume(self.shape)
 
     @property
-    def center_of_mass(self):
+    def center_of_mass(self) -> np.ndarray:
         """
         The shape's center of mass.
         """
