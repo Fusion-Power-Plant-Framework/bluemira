@@ -559,8 +559,25 @@ def offset_wire(
     return wire
 
 
-def make_face(wire: apiWire):
-    """Make a face give a wire boundary"""
+def make_face(wire: apiWire) -> apiFace:
+    """
+    Make a face given a wire boundary.
+
+    Parameters
+    ----------
+    wire: apiWire
+        Wire boundary from which to make a face
+
+    Returns
+    -------
+    face: apiFace
+        Face created from the wire boundary
+
+    Raises
+    ------
+    FreeCADError
+        If the created face is invalid
+    """
     face = apiFace(wire)
     if face.isValid():
         return face
