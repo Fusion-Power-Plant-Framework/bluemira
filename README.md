@@ -85,7 +85,7 @@ you show professional courtesy when using this code:
    you discuss your work and results with one of the ``bluemira`` authors first so that
    we can check them. It is not necessary to list ``bluemira`` developers as co-authors.
    If one or more of the ``bluemira`` team are involved in preparing results or
-   functionality used in your work, then those members should appear as co-authors.
+   new functionality used in your work, then those members should be offered a co-authorship.
 
 3. If you use ``bluemira`` or any of its modules in your work, please help ensure that
    all the authors get the credit they deserve by citing the relevant ``bluemira``,
