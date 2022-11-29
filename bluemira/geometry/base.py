@@ -94,7 +94,7 @@ class BluemiraGeo(ABC, GeoMeshable):
     ):
         super().__init__()
         self._boundary_classes = boundary_classes
-        self.__orientation = _Orientation("Forward")
+        self.__orientation = _Orientation.FORWARD
         self.label = label
         self._set_boundary(boundary)
 
