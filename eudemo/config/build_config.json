@@ -26,13 +26,13 @@
         "equilibrium_settings": {
             "p_order": 2,
             "max_iter": 30,
-            "iter_err_max": 1e-4,
+            "iter_err_max": 1e-2,
             "relaxation": 0.05
         },
         "transport_eq_settings": {
             "lcar_mesh": 0.3,
             "max_iter": 15,
-            "iter_err_max": 1e-3,
+            "iter_err_max": 1e-2,
             "relaxation":0.0,
             "plot": false
         }

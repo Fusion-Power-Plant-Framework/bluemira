@@ -342,7 +342,8 @@ class FixedEquilibriumDesigner(Designer[Equilibrium]):
             "relaxation": 0.0,
             "plot": False,
         }
-        settings = self.build_config.get("transport_eq_settings", defaults)
+        settings = self.build_config.get("transport_eq_settings", {})
+        settings = {**defaults, **settings}
         solve_transport_fixed_boundary(
             geom_parameterisation,
             transport_solver,
@@ -440,15 +441,15 @@ class FixedEquilibriumDesigner(Designer[Equilibrium]):
         )
 
     def _get_fixed_equilibrium_solver(self):
+        eq_settings = self.build_config.get("equilibrium_settings", {})
         defaults = {
             "p_order": 2,
             "max_iter": 30,
             "iter_err_max": 1e-4,
             "relaxation": 0.05,
         }
-        return FemGradShafranovFixedBoundary(
-            **self.build_config.get("equilibrium_settings", defaults)
-        )
+        eq_settings = {**defaults, **eq_settings}
+        return FemGradShafranovFixedBoundary(**eq_settings)
 
     def _make_tf_boundary(
         self, lcfs_shape: BluemiraWire, offset_value: float
