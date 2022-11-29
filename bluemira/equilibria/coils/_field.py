@@ -32,7 +32,6 @@ import numpy as np
 
 from bluemira.base.constants import MU_0
 from bluemira.equilibria.constants import I_MIN, X_TOLERANCE
-from bluemira.equilibria.plotting import CoilPlotter, CoilSetPlotter
 from bluemira.magnetostatics.greens import greens_Bx, greens_Bz, greens_psi
 from bluemira.magnetostatics.semianalytic_2d import semianalytic_Bx, semianalytic_Bz
 from bluemira.utilities.tools import consec_repeat_elem

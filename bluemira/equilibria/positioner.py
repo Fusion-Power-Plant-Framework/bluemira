@@ -33,7 +33,7 @@ from scipy.spatial import ConvexHull
 
 from bluemira.base.constants import EPS
 from bluemira.base.look_and_feel import bluemira_warn
-from bluemira.equilibria.coils import Coil, CoilSet, Solenoid, get_max_current
+from bluemira.equilibria.coils import Coil, CoilSet, get_max_current
 from bluemira.equilibria.constants import NBTI_J_MAX
 from bluemira.equilibria.error import EquilibriaError
 from bluemira.equilibria.plotting import RegionPlotter, XZLPlotter
@@ -168,11 +168,29 @@ class CoilPositioner:
         xint, zint = interp1d(l_norm, tf_loop.x)(pos), interp1d(l_norm, tf_loop.z)(pos)
         return [Coil(xint[i], zint[i], j_max=NBTI_J_MAX) for i in range(n_PF)]
 
-    def equispace_CS(self, x_cs, tk_cs, z_min, z_max, n_CS):
+    def equispace_CS(self, x_cs, tk_cs, z_min, z_max, n_CS, j_max=12.5):
         """
         Defines a Solenoid object with equally spaced nCS modules
         """
-        return Solenoid(x_cs, tk_cs, z_min, z_max, n_CS, gap=self.csgap)
+        dz = ((z_max - z_min) - self.csgap * (n_CS - 1)) / n_CS / 2
+        v1 = np.arange(0, n_CS)
+        v2 = np.arange(1, n_CS * 2, 2)
+        zc = z_max - self.csgap * v1 - dz * v2
+
+        return [
+            Coil(
+                x_cs,
+                _zc,
+                current=0,
+                n_turns=1,
+                # control=True,
+                ctype="CS",
+                j_max=j_max,
+                dx=tk_cs,
+                dz=dz,
+            )
+            for _zc in zc
+        ]
 
     def demospace_CS(self, x_cs, tk_cs, z_min, z_max, n_CS):
         """
@@ -195,7 +213,7 @@ class CoilPositioner:
         z_cs -= a * length / 2 + b * self.csgap
         heights = length / 2 * np.ones(n_CS)
         heights[n_CS // 2] = length  # Central module
-        c = [
+        return [
             Coil(
                 x_cs,
                 z_cs[i],
@@ -206,7 +224,6 @@ class CoilPositioner:
             )
             for i in range(n_CS)
         ]
-        return c  # Solenoid(x_cs, tk_cs, z_min, z_max, n_CS, gap=self.csgap, coils=c)
 
     def make_coilset(self, d_coil=0.5):
         """
@@ -226,7 +243,9 @@ class CoilPositioner:
                 )
             else:
                 raise ValueError("Elige entre ITER y DEMO. " "Mas opciones no hay.")
-        return CoilSet(*coils, d_coil=d_coil)
+        cset = CoilSet(*coils)
+        cset.discretisation = 0.5
+        return cset
 
 
 class XZLMapper:

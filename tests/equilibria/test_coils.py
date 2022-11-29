@@ -361,6 +361,7 @@ class TestSymmetricCircuit:
         self.test_fields("")
 
     def test_attributes(self):
+
         circ = copy.deepcopy(self.circuit)
         circ.x = 4
         assert circ.x[0] == 4

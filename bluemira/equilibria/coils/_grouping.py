@@ -35,7 +35,8 @@ from bluemira.equilibria.coils._coil import Coil, CoilType
 from bluemira.equilibria.coils._field import CoilGroupFieldsMixin
 from bluemira.equilibria.constants import I_MIN
 from bluemira.equilibria.error import EquilibriaError
-from bluemira.equilibria.plotting import CoilPlotter, CoilSetPlotter
+
+# from bluemira.equilibria.plotting import CoilPlotter, CoilSetPlotter
 from bluemira.utilities.tools import flatten_iterable, yintercept
 
 
