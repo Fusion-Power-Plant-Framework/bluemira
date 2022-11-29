@@ -332,3 +332,33 @@ class TestPowerLoad:
         assert isinstance(result, PowerLoad)
         assert powerdata_r == powerdata_1 + powerdata_2
         assert powerloadmodel_r == powerloadmodel_1 + powerloadmodel_2
+
+    def test_validate_time(self):
+        load = self.load_1
+        test_arguments = [
+            None,
+            1.2,
+            -1.2,
+            70,
+            -70,
+            "some string",
+            [1, 2, 3, 4],
+            (1, 2, 3, 4),
+            load,
+        ]
+
+        for argument in test_arguments:
+            bluemira_debug(
+                f"""
+                {script_title()} (PowerLoadModel._validate_time)
+
+                Argument currently being tested:
+                {pformat(argument)}
+                """
+            )
+            if isinstance(argument, (int, float, list)):
+                time = PowerLoad._validate_time(argument)
+                assert isinstance(time, list)
+            else:
+                with pytest.raises(PowerLoadError):
+                    time = PowerLoad._validate_time(argument)

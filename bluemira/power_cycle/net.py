@@ -362,18 +362,18 @@ class PowerLoad(NetPowerABC):
         another = PowerLoad(another_name, another_set, another_model)
         return another
 
-    '''
-    @classmethod
-    def _validate_time(cls, time):
+    @staticmethod
+    def _validate_time(time):
         """
         Validate 'time' input to be a list of numeric values.
         """
-        time = super()._validate_list(time)
+        time = super(PowerLoad, PowerLoad).validate_list(time)
         for element in time:
             if not isinstance(element, (int, float)):
-                cls._issue_error("time")
+                raise PowerLoadError("time")
         return time
 
+    '''
     @classmethod
     def _single_curve(cls, powerdata, model, time):
         """
