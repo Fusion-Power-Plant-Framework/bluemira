@@ -8,6 +8,7 @@
         "file_path": "config/equilibrium_eqdsk.json"
     },
     "Fixed boundary equilibrium":{
+        "run_mode": "run",
         "shape_config": {
             "f_delta_l": 1.351,
             "f_kappa_l": 1.059,

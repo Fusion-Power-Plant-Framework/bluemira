@@ -274,7 +274,7 @@ class FixedEquilibriumDesignerParams(ParameterFrame):
     kappa_95: Parameter[float]
     q_95: Parameter[float]
     R_0: Parameter[float]
-    r_cs: Parameter[float]
+    r_cs_in: Parameter[float]
     tk_cs: Parameter[float]
     v_burn: Parameter[float]
     P_fus: Parameter[float]
@@ -465,7 +465,7 @@ class FixedEquilibriumDesigner(Designer[Equilibrium]):
 
         xs, zs = semi_circle.start_point().points[0].xz
         xe, ze = semi_circle.end_point().points[0].xz
-        r_cs_out = self.params.r_cs.value + self.params.tk_cs.value
+        r_cs_out = self.params.r_cs_in.value + self.params.tk_cs.value
 
         lower_wire = make_polygon({"x": [r_cs_out, xs], "y": [0, 0], "z": [zs, zs]})
         upper_wire = make_polygon({"x": [xe, r_cs_out], "y": [0, 0], "z": [ze, ze]})
