@@ -531,7 +531,7 @@ build_config = {
 
 # %%[markdown]
 
-# Now we set up our ParamterFrames
+# Now we set up our ParameterFrames
 
 # %%
 
