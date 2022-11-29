@@ -422,6 +422,7 @@ class FixedEquilibriumDesigner(Designer[Equilibrium]):
         problem_settings["pfus_req"] = self.params.P_fus.value
         problem_settings["pheat_max"] = self.params.P_heat_max.value
         problem_settings["q_control"] = self.params.q_control.value
+        problem_settings["volume_in"] = -2500.0
 
         plasmod_build_config = {
             "problem_settings": problem_settings,
