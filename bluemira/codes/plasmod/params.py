@@ -64,8 +64,6 @@ class PlasmodSolverParams(MappedParameterFrame):
     """NBI energy [keV]."""
     f_ni: Parameter[float]
     """Required fraction of non inductive current, if 0, dont use CD [dimensionless]."""
-    P_heat_max: Parameter[float]
-    """Max allowed power for control (fusion power, H-mode)"""
     q_control: Parameter[float]
     """Fixed auxiliary heating power required for control [MW]."""
     PsepB_qAR_max: Parameter[float]
