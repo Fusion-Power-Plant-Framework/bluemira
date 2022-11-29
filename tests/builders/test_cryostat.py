@@ -44,10 +44,10 @@ class TestCryostatBuilder:
         builder = CryostatBuilder(self.params, {}, 10, 10)
         cryostat = builder.build()
 
-        assert cryostat.component().get_component("xz")
-        assert cryostat.component().get_component("xy")
+        assert cryostat.get_component("xz")
+        assert cryostat.get_component("xy")
 
-        xyz = cryostat.component().get_component("xyz")
+        xyz = cryostat.get_component("xyz")
         assert xyz
         assert len(xyz.leaves) == self.params["n_TF"]["value"]
 

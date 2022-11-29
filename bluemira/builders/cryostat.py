@@ -27,20 +27,14 @@ from typing import Dict, List, Tuple, Type, Union
 
 import numpy as np
 
-from bluemira.base.builder import Builder, ComponentManager
-from bluemira.base.components import PhysicalComponent
+from bluemira.base.builder import Builder
+from bluemira.base.components import Component, PhysicalComponent
 from bluemira.base.designer import Designer
 from bluemira.base.parameter_frame import Parameter, ParameterFrame
 from bluemira.builders.tools import build_sectioned_xyz, make_circular_xy_ring
 from bluemira.display.palettes import BLUE_PALETTE
 from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.tools import make_polygon
-
-
-class Cryostat(ComponentManager):
-    """
-    Wrapper around a cryostat component tree.
-    """
 
 
 @dataclass
@@ -116,19 +110,16 @@ class CryostatBuilder(Builder):
         self.x_out = x_out
         self.z_top = z_top
 
-    def build(self) -> Cryostat:
+    def build(self) -> Component:
         """
         Build the cryostat component.
         """
         xz_cryostat = self.build_xz(self.x_out, self.z_top)
         xz_cross_section: BluemiraFace = xz_cryostat.get_component_properties("shape")
-
-        return Cryostat(
-            self.component_tree(
-                xz=[xz_cryostat],
-                xy=[self.build_xy(self.x_out)],
-                xyz=self.build_xyz(xz_cross_section),
-            )
+        return self.component_tree(
+            xz=[xz_cryostat],
+            xy=[self.build_xy(self.x_out)],
+            xyz=self.build_xyz(xz_cross_section),
         )
 
     def build_xz(self, x_out: float, z_top: float) -> PhysicalComponent:
