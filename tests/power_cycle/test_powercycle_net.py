@@ -301,4 +301,18 @@ class TestPowerLoad:
                                     model_input,
                                 )
 
-    # def test_add():
+    def test_add(self):
+        load_1 = self.load_1
+        load_2 = self.load_2
+        powerdata_1 = load_1.data_set
+        powerdata_2 = load_2.data_set
+        powerloadmodel_1 = load_1.model
+        powerloadmodel_2 = load_2.model
+
+        result = load_1 + load_2
+        powerdata_r = result.data_set
+        powerloadmodel_r = result.model
+
+        assert isinstance(result, PowerLoad)
+        assert powerdata_r == powerdata_1 + powerdata_2
+        assert powerloadmodel_r == powerloadmodel_1 + powerloadmodel_2
