@@ -340,7 +340,7 @@ class PowerLoad(NetPowerABC):
     # ------------------------------------------------------------------
     # OPERATIONS
     # ------------------------------------------------------------------
-    '''
+
     def __add__(self, other):
         """
         Addition of `PowerLoad` instances is a new `PowerLoad` instance
@@ -362,6 +362,7 @@ class PowerLoad(NetPowerABC):
         another = PowerLoad(another_name, another_set, another_model)
         return another
 
+    '''
     @classmethod
     def _validate_time(cls, time):
         """
