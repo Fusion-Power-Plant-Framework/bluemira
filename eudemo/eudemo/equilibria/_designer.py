@@ -470,8 +470,8 @@ class FixedEquilibriumDesigner(Designer[Equilibrium]):
             axis=(0, 1, 0),
         )
 
-        xs, zs = semi_circle.start_point().points[0].xz
-        xe, ze = semi_circle.end_point().points[0].xz
+        xs, zs = semi_circle.start_point().xz.T[0]
+        xe, ze = semi_circle.end_point().xz.T[0]
         r_cs_out = self.params.r_cs_in.value + self.params.tk_cs.value
 
         lower_wire = make_polygon({"x": [r_cs_out, xs], "y": [0, 0], "z": [zs, zs]})
