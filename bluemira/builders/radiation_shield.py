@@ -27,19 +27,13 @@ from typing import Dict, List, Type, Union
 
 import numpy as np
 
-from bluemira.base.builder import Builder, ComponentManager
-from bluemira.base.components import PhysicalComponent
+from bluemira.base.builder import Builder
+from bluemira.base.components import Component, PhysicalComponent
 from bluemira.base.parameter_frame import Parameter, ParameterFrame
 from bluemira.builders.tools import build_sectioned_xyz, make_circular_xy_ring
 from bluemira.display.palettes import BLUE_PALETTE
 from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.tools import boolean_cut, boolean_fuse, make_polygon, offset_wire
-
-
-class RadiationShield(ComponentManager):
-    """
-    Wrapper around a Radiation Shield component tree.
-    """
 
 
 @dataclass
@@ -71,19 +65,17 @@ class RadiationShieldBuilder(Builder):
         super().__init__(params, build_config)
         self.cryo_vv = cryo_vv
 
-    def build(self) -> RadiationShield:
+    def build(self) -> Component:
         """
         Build the radiation shield component.
         """
         rs_xz = self.build_xz()
         rs_face = rs_xz.get_component_properties("shape")
 
-        return RadiationShield(
-            self.component_tree(
-                xz=[rs_xz],
-                xy=[self.build_xy()],
-                xyz=self.build_xyz(rs_face),
-            )
+        return self.component_tree(
+            xz=[rs_xz],
+            xy=[self.build_xy()],
+            xyz=self.build_xyz(rs_face),
         )
 
     def build_xz(self) -> PhysicalComponent:
