@@ -12,6 +12,10 @@ from bluemira.power_cycle.tools import _add_dict_entries, validate_axes
 
 
 class NetPowerABCError(PowerCycleError):
+    """
+    Exception class for 'NetPowerABC' class of the Power Cycle module.
+    """
+
     def _errors(self):
         errors = {
             "n_points": [
@@ -102,6 +106,10 @@ class NetPowerABC(PowerCycleABC, metaclass=ABCMeta):
 
 
 class PowerDataError(PowerCycleError):
+    """
+    Exception class for 'PowerData' class of the Power Cycle module.
+    """
+
     def _errors(self):
         errors = {
             "increasing": [
@@ -244,9 +252,10 @@ class PowerLoadModel(Enum):
     Members define possible models used by the methods defined in the
     'PowerLoad' class to compute values between load definition points.
 
-    Member names roughly describe the interpolation behavior, while
-    associated values specify which kind of interpolation is applied
-    when calling the imported `scipy.interpolate.interp1d` method.
+    The 'name' of a member roughly describes the interpolation behavior,
+    while its associated 'value' specifies which kind of interpolation
+    is applied when calling the imported `scipy.interpolate.interp1d`
+    method.
     """
 
     RAMP = "linear"  # 'interp1d' linear interpolation
@@ -254,6 +263,10 @@ class PowerLoadModel(Enum):
 
 
 class PowerLoadError(PowerCycleError):
+    """
+    Exception class for 'PowerLoad' class of the Power Cycle module.
+    """
+
     def _errors(self):
         errors = {
             "model": [
@@ -353,15 +366,12 @@ class PowerLoad(NetPowerABC):
         with joined `load` and `model` attributes.
         """
 
-        # Retrieve `load` attributes
         this_set = self.data_set
-        other_set = other.data_set
-
-        # Retrieve `model` attributes
         this_model = self.model
+
+        other_set = other.data_set
         other_model = other.model
 
-        # Create and output `another`
         another_set = this_set + other_set
         another_model = this_model + other_model
         another_name = "Resulting PowerLoad"

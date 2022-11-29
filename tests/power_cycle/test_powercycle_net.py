@@ -388,10 +388,11 @@ class TestPowerLoad:
     @staticmethod
     def check_interpolation(original_max, original_min, curve):
         """
-        Confirm that curve is an interpolation. Current simplified
-        approach: no curve value is out of the bounds of the original
-        defining interpolation points, except if it is a zero (fill
-        value for 'interp1d').
+        Confirm that curve is an interpolation.
+
+        Current simplified approach: no curve value is out of the bounds
+        of the original defining interpolation points, except if it is a
+        zero ('fill_value' argument of 'interp1d').
         """
         curve_max = max(curve)
         curve_min = min(curve)
