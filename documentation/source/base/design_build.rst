@@ -81,8 +81,8 @@ Builders
 The minimal design problem output if required along with user input to the `Builder` is all
 the information needed to build the CAD for the `Component`.
 The `build` method of the `Builder` usually builds the xz, xy and xyz views of a `Component`,
-creates the component tree and sets up the `ComponentManager` although what the build method does
-is up to the :ref:`Reactor Designer <how to use>`.
+and build the component tree.
+Although what the build method does is up to the :ref:`Reactor Designer <how to use>`.
 
 Like a `Designer` a `Builder` requires a `param_cls` attribute and is initialised with a `ParameterFrame`
 instance that is a superset of `param_cls` and optionally the `Designer.execute()` output and a
@@ -94,22 +94,19 @@ called to create the `Component`.
 
     from dataclasses import dataclass
 
-    from bluemira.base.builder import Builder, ComponentManager
+    from bluemira.base.builder import Builder
     from bluemira.base.parameter_frame import Parameter, ParameterFrame
 
     @dataclass
     class BuilderPF(ParameterFrame):
         R_0: Parameter[float]
 
-    class MyComponentManager(ComponentManager):
-        """Blank Component Manager"""
-
 
     class MyBuilder(Builder):
 
         param_cls = BuilderPF
 
-        def build(self) -> MyComponentManager
+        def build(self) -> Component
             return MyComponentManager(
                 self.component_tree(
                     xz=[self.build_xz()],
@@ -119,10 +116,10 @@ called to create the `Component`.
             )
 
         def build_xz(self):
-            # return A 2D geometry PhysicalComponent
+            """Build a 2D geometry PhysicalComponent"""
 
         def build_xy(self):
-            # return A 2D geometry PhysicalComponent
+            """Build a 2D geometry PhysicalComponent"""
 
         def build_xyz(self):
-            # return A 3D geometry PhysicalComponent
+            """Build a 3D geometry PhysicalComponent"""
