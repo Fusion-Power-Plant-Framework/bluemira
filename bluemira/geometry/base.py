@@ -39,6 +39,7 @@ import bluemira.mesh.meshing as meshing
 # import freecad api
 from bluemira.codes import _freecadapi as cadapi
 from bluemira.geometry.bound_box import BoundingBox
+from bluemira.geometry.coordinates import Coordinates
 
 
 class GeoMeshable(meshing.Meshable):
@@ -378,7 +379,7 @@ class BluemiraGeo(ABC, GeoMeshable):
 
     @property
     @abstractmethod
-    def vertexes(self):
+    def vertexes(self) -> Coordinates:
         """
         The vertexes of the BluemiraGeo.
         """
@@ -386,7 +387,7 @@ class BluemiraGeo(ABC, GeoMeshable):
 
     @property
     @abstractmethod
-    def edges(self):
+    def edges(self) -> tuple:
         """
         The edges of the BluemiraGeo.
         """
@@ -394,7 +395,7 @@ class BluemiraGeo(ABC, GeoMeshable):
 
     @property
     @abstractmethod
-    def wires(self):
+    def wires(self) -> tuple:
         """
         The wires of the BluemiraGeo.
         """
@@ -402,7 +403,7 @@ class BluemiraGeo(ABC, GeoMeshable):
 
     @property
     @abstractmethod
-    def faces(self):
+    def faces(self) -> tuple:
         """
         The faces of the BluemiraGeo.
         """
@@ -410,7 +411,7 @@ class BluemiraGeo(ABC, GeoMeshable):
 
     @property
     @abstractmethod
-    def shells(self):
+    def shells(self) -> tuple:
         """
         The shells of the BluemiraGeo.
         """
@@ -418,7 +419,7 @@ class BluemiraGeo(ABC, GeoMeshable):
 
     @property
     @abstractmethod
-    def solids(self):
+    def solids(self) -> tuple:
         """
         The solids of the BluemiraGeo.
         """
