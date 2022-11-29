@@ -25,7 +25,7 @@ Builder for making a parameterised EU-DEMO divertor.
 from dataclasses import dataclass
 from typing import Dict, Type, Union
 
-from bluemira.base.builder import Builder, ComponentManager
+from bluemira.base.builder import Builder
 from bluemira.base.components import Component, PhysicalComponent
 from bluemira.base.parameter_frame import Parameter, ParameterFrame
 from bluemira.builders.tools import (
@@ -35,12 +35,6 @@ from bluemira.builders.tools import (
 )
 from bluemira.display.palettes import BLUE_PALETTE
 from bluemira.geometry.face import BluemiraFace
-
-
-class Divertor(ComponentManager):
-    """
-    Wrapper around a Divertor component tree.
-    """
 
 
 @dataclass
@@ -74,16 +68,14 @@ class DivertorBuilder(Builder):
         super().__init__(params, build_config)
         self.div_koz = divertor_silhouette
 
-    def build(self) -> Divertor:
+    def build(self) -> Component:
         """
         Build the divertor component.
         """
-        return Divertor(
-            self.component_tree(
-                xz=[self.build_xz()],
-                xy=[],
-                xyz=self.build_xyz(),
-            )
+        return self.component_tree(
+            xz=[self.build_xz()],
+            xy=[],
+            xyz=self.build_xyz(),
         )
 
     def build_xz(self) -> PhysicalComponent:

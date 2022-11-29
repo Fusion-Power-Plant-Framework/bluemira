@@ -39,10 +39,10 @@ class TestDivertorBuilder:
         builder = DivertorBuilder(self.params, {}, self.div_koz)
         cryostat_ts = builder.build()
 
-        assert cryostat_ts.component().get_component("xz")
-        assert cryostat_ts.component().get_component("xy")
+        assert cryostat_ts.get_component("xz")
+        assert cryostat_ts.get_component("xy")
 
-        xyz = cryostat_ts.component().get_component("xyz")
+        xyz = cryostat_ts.get_component("xyz")
         assert xyz
         assert (
             len(xyz.leaves)
