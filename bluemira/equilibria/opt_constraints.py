@@ -162,8 +162,8 @@ class FieldConstraints(UpdateableConstraint, OptimisationConstraint):
         Calculate control response of a CoilSet to the constraint.
         """
         return (
-            coilset.unit_Bx(self.x, self.z),
-            coilset.unit_Bz(self.x, self.z),
+            coilset.unit_Bx(self.x, self.z, control=True),
+            coilset.unit_Bz(self.x, self.z, control=True),
         )
 
     def evaluate(self, equilibrium):
@@ -492,7 +492,10 @@ class FieldNullConstraint(AbsoluteMagneticConstraint):
         Calculate control response of a CoilSet to the constraint.
         """
         return np.vstack(
-            [coilset.unit_Bx(self.x, self.z), coilset.unit_Bz(self.x, self.z)]
+            [
+                coilset.unit_Bx(self.x, self.z, control=True),
+                coilset.unit_Bz(self.x, self.z, control=True),
+            ]
         )
 
     def evaluate(self, eq):
@@ -543,7 +546,7 @@ class PsiConstraint(AbsoluteMagneticConstraint):
         """
         Calculate control response of a CoilSet to the constraint.
         """
-        return coilset.unit_psi(self.x, self.z)
+        return coilset.unit_psi(self.x, self.z, control=True)
 
     def evaluate(self, eq):
         """
@@ -591,8 +594,8 @@ class IsofluxConstraint(RelativeMagneticConstraint):
         """
         Calculate control response of a CoilSet to the constraint.
         """
-        return coilset.unit_psi(self.x, self.z) - coilset.unit_psi(
-            self.ref_x, self.ref_z
+        return coilset.unit_psi(self.x, self.z, control=True) - coilset.unit_psi(
+            self.ref_x, self.ref_z, control=True
         )
 
     def evaluate(self, eq):
@@ -648,7 +651,7 @@ class PsiBoundaryConstraint(AbsoluteMagneticConstraint):
         """
         Calculate control response of a CoilSet to the constraint.
         """
-        return coilset.unit_psi(self.x, self.z).T
+        return coilset.unit_psi(self.x, self.z, control=True).T
 
     def evaluate(self, eq):
         """
