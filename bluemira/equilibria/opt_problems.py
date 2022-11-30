@@ -172,10 +172,9 @@ class CoilsetOptimisationProblem(OptimisationProblem):
         # SymmetricCircuits, it appears...
         # positions = list(zip(x, z))
         # self.coilset.set_positions(positions)
-        for i, coil in enumerate(coilset.coils.values()):
-            coil.x = x[i]
-            coil.z = z[i]
-        coilset.set_control_currents(currents * current_scale)
+        coilset.x = x
+        coilset.z = z
+        coilset.current[coilset._control_ind] = currents * current_scale
 
     @staticmethod
     def get_state_bounds(x_bounds, z_bounds, current_bounds):
@@ -227,7 +226,7 @@ class CoilsetOptimisationProblem(OptimisationProblem):
             Tuple of arrays containing lower and upper bounds for currents
             permitted in each control coil.
         """
-        n_control_currents = len(coilset.get_control_currents())
+        n_control_currents = len(coilset.current[coilset._control_ind])
         scaled_input_current_limits = np.inf * np.ones(n_control_currents)
 
         if max_currents is not None:
@@ -243,15 +242,9 @@ class CoilsetOptimisationProblem(OptimisationProblem):
 
         # Get the current limits from coil current densities
         coilset_current_limits = np.infty * np.ones(n_control_currents)
-        for i, coil in enumerate(coilset._ccoils):
-            if coil.flag_sizefix:
-                coilset_current_limits[i] = coil.get_max_current()
-
-        if len(coilset_current_limits) != n_control_currents:
-            raise EquilibriaError(
-                "Length of array containing coilset current limits"
-                "is not equal to the number of control currents in optimiser."
-            )
+        coilset_current_limits[coilset._flag_sizefix] = coilset.get_max_current()[
+            coilset._flag_sizefix
+        ]
 
         # Limit the control current magnitude by the smaller of the two limits
         control_current_limits = np.minimum(
@@ -270,7 +263,7 @@ class CoilsetOptimisationProblem(OptimisationProblem):
         max_currents: np.ndarray
             Vector of maximum currents [A]
         """
-        n_control_currents = len(self.coilset.get_control_currents())
+        n_control_currents = len(self.coilset.current[self.coilset._control_ind])
         if len(max_currents) != n_control_currents:
             raise ValueError(
                 "Length of maximum current vector must be equal to the number of controls."
