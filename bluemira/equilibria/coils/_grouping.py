@@ -224,7 +224,8 @@ class CoilGroup(CoilGroupFieldsMixin):
         dtype: Union[Type, None] = None,
     ):
         """Set attributes on coils"""
-        values = np.array([values], dtype=dtype)
+        values = np.atleast_1d(values)
+        values.dtype = dtype
         no_val = values.size
         no = 0
         for coil in flatten_iterable(self._coils):
@@ -303,6 +304,11 @@ class CoilGroup(CoilGroupFieldsMixin):
     def z(self) -> np.ndarray:
         """Get coil z positions"""
         return self.__getter("z")
+
+    @property
+    def position(self):
+        """Get coil x, z positions"""
+        return np.array([self.x, self.z])
 
     @property
     def ctype(self) -> np.ndarray:
@@ -411,6 +417,12 @@ class CoilGroup(CoilGroupFieldsMixin):
     def z(self, values: Union[float, Iterable[float]]):
         """Set coil z positions"""
         self.__setter("z", values)
+
+    @position.setter
+    def position(self, values: np.ndarray):
+        """Set coil positions"""
+        self.__setter("x", values[0])
+        self.__setter("z", values[1])
 
     @ctype.setter
     def ctype(self, values: Union[CoilType, Iterable[CoilType]]):
