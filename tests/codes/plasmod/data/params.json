@@ -53,6 +53,12 @@
         "source": "Input",
         "long_name": "Control HCD power"
     },
+    "PsepB_qAR_max": {
+        "value": 9.2,
+        "unit": "MW.T/m",
+        "source": "Input",
+        "long_name": "Maximum PsepB/q95AR value"
+    },
     "delta": {
         "value": 0.5,
         "unit": "dimensionless",
