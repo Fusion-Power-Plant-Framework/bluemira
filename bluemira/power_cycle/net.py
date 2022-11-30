@@ -5,6 +5,7 @@ from abc import ABCMeta
 from enum import Enum
 from typing import List, Union
 
+import numpy as np
 from scipy.interpolate import interp1d
 
 from bluemira.power_cycle.base import PowerCycleABC, PowerCycleError
@@ -360,35 +361,6 @@ class PowerLoad(NetPowerABC):
     # OPERATIONS
     # ------------------------------------------------------------------
 
-    def __add__(self, other):
-        """
-        Addition of `PowerLoad` instances is a new `PowerLoad` instance
-        with joined `load` and `model` attributes.
-        """
-
-        this_set = self.data_set
-        this_model = self.model
-
-        other_set = other.data_set
-        other_model = other.model
-
-        another_set = this_set + other_set
-        another_model = this_model + other_model
-        another_name = "Resulting PowerLoad"
-        another = PowerLoad(another_name, another_set, another_model)
-        return another
-
-    @staticmethod
-    def _validate_time(time):
-        """
-        Validate 'time' input to be a list of numeric values.
-        """
-        time = super(PowerLoad, PowerLoad).validate_list(time)
-        for element in time:
-            if not isinstance(element, (int, float)):
-                raise PowerLoadError("time")
-        return time
-
     @staticmethod
     def _single_curve(powerdata, model, time):
         """
@@ -419,21 +391,31 @@ class PowerLoad(NetPowerABC):
         interpolated_curve = list(interpolation_operator(time))
         return interpolated_curve
 
-    '''
+    @staticmethod
+    def _validate_time(time):
+        """
+        Validate 'time' input to be a list of numeric values.
+        """
+        time = super(PowerLoad, PowerLoad).validate_list(time)
+        for element in time:
+            if not isinstance(element, (int, float)):
+                raise PowerLoadError("time")
+        return time
+
     def curve(self, time):
         """
         Create a curve by calculating power load values at the specified
         times.
 
-        This method applies the `scipy.interpolate.interp1d` imported
-        method to each `PowerData` object stored in the `data_set`
+        This method applies the 'scipy.interpolate.interp1d' imported
+        method to each 'PowerData' object stored in the 'data_set'
         attribute and sums the results. The kind of interpolation is
-        determined by each respective value in the `model` attribute.
+        determined by each respective value in the 'model' attribute.
         Any out-of-bound values are set to zero.
 
         Parameters
         ----------
-        time: list[float]
+        time: float | list[float]
             List of time values. [s]
 
         Returns
@@ -442,44 +424,36 @@ class PowerLoad(NetPowerABC):
             List of power values. [W]
         """
 
-        # Validate `time`
         time = self._validate_time(time)
-        n_time = len(time)
+        time_length = len(time)
+        preallocated_curve = np.array([0] * time_length)
 
-        # Retrieve instance attributes
         data_set = self.data_set
+        data_set_length = len(data_set)
+
         model = self.model
 
-        # Number of elements in `data_set`
-        n_elements = len(data_set)
+        for d in range(data_set_length):
 
-        # Preallocate curve (with length of `time` input)
-        curve = np.array([0] * n_time)
+            current_powerdata = data_set[d]
+            current_model = model[d]
 
-        # For each element
-        for e in range(n_elements):
-
-            # Current PowerData
-            current_powerdata = data_set[e]
-
-            # Current model
-            current_model = model[e]
-
-            # Compute current curve
-            current_curve = self._single_curve(current_powerdata, current_model, time)
-
-            # Add current curve to total curve
+            current_curve = self._single_curve(
+                current_powerdata,
+                current_model,
+                time,
+            )
             current_curve = np.array(current_curve)
-            curve = curve + current_curve
 
-        # Output curve converted into list
-        curve = curve.tolist()
+            preallocated_curve = preallocated_curve + current_curve
+
+        curve = preallocated_curve.tolist()
         return curve
 
     # ------------------------------------------------------------------
     # VISUALIZATION
     # ------------------------------------------------------------------
-
+    '''
     @staticmethod
     def _refine_vector(vector, n_points):
         """
@@ -656,4 +630,26 @@ class PowerLoad(NetPowerABC):
 
         # Return list of plot objects
         return plot_list
+
+    # ------------------------------------------------------------------
+    # ARITHMETICS
+    # ------------------------------------------------------------------
+
+    def __add__(self, other):
+        """
+        Addition of `PowerLoad` instances is a new `PowerLoad` instance
+        with joined `load` and `model` attributes.
+        """
+
+        this_set = self.data_set
+        this_model = self.model
+
+        other_set = other.data_set
+        other_model = other.model
+
+        another_set = this_set + other_set
+        another_model = this_model + other_model
+        another_name = "Resulting PowerLoad"
+        another = PowerLoad(another_name, another_set, another_model)
+        return another
     '''
