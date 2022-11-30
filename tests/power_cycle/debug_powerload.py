@@ -48,14 +48,12 @@ adjust_2d_graph_ranges()
 pprint(plot_list_1)
 pprint(plot_list_2)
 
-"""
 # Test addition method
 plt.figure()
 plt.grid()
 instance_3 = instance_1 + instance_2
-plot_list = instance_3.plot(detailed=True)
+plot_list = instance_3.plot(detailed=True, c="m")
 pprint(plot_list)
-"""
 
 # Show plots
 plt.show()

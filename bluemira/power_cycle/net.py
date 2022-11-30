@@ -641,7 +641,6 @@ class PowerLoad(NetPowerABC):
     # ------------------------------------------------------------------
     # ARITHMETICS
     # ------------------------------------------------------------------
-    '''
     def __add__(self, other):
         """
         Addition of `PowerLoad` instances is a new `PowerLoad` instance
@@ -659,4 +658,3 @@ class PowerLoad(NetPowerABC):
         another_name = "Resulting PowerLoad"
         another = PowerLoad(another_name, another_set, another_model)
         return another
-    '''
