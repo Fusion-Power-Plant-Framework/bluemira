@@ -43,6 +43,12 @@
         "source": "Input",
         "long_name": "Steady-state HCD power"
     },
+    "PsepB_qAR_max": {
+        "value": 9.2,
+        "unit": "MW.T/m",
+        "source": "Input",
+        "long_name": "Maximum PsepB/q95AR value"
+    },
     "TF_ripple_limit": {
         "value": 0.6,
         "unit": "percent",
