@@ -93,7 +93,7 @@ class TestSTEquilibrium:
                 Coil(x=x, z=z, dx=dx, dz=dz, name=f"PF_{i+1}", ctype="PF")
             )
             coils.append(coil)
-        coilset = CoilSet(coils)
+        coilset = CoilSet(*coils)
 
         grid = Grid(
             x_min=0.0,
@@ -263,9 +263,10 @@ class TestSTEquilibrium:
             dz=0,
             current=plasma_current,
             name="plasma_dummy",
-            control=False,
         )
+
         coilset_temp.add_coil(dummy)
+        coilset_temp.control = coilset.name
 
         eq = Equilibrium(
             coilset_temp, grid, self.profiles, force_symmetry=True, psi=None
@@ -282,4 +283,6 @@ class TestSTEquilibrium:
         # no idea why it works better with what is blatantly a worse starting solution.
         # Really you could just avoid adding the dummy plasma coil in the first place..
         # Perhaps the current centre is poorly estimated by R_0 + 0.5
-        return coilset_temp.psi(grid.x, grid.z).copy() - dummy.psi(grid.x, grid.z)
+        return coilset_temp.psi(grid.x, grid.z).copy() - np.squeeze(
+            dummy.psi(grid.x, grid.z)
+        )
