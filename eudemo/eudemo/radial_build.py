@@ -36,7 +36,8 @@ def radial_build(params: _PfT, build_config: Dict) -> _PfT:
     read in a previous PROCESS run, as the PROCESS solver hasn't yet
     been made to work with the new ParameterFrame yet.
     """
-    run_mode = build_config.pop("run_mode", "read")
+    run_mode = build_config.pop("run_mode", "mock")
     solver = process.Solver(params, build_config)
-    params = solver.execute(run_mode)
+    new_params = solver.execute(run_mode)
+    params.update_from_frame(new_params)
     return params
