@@ -341,7 +341,7 @@ class Breakdown(MHDState):
             "Bx": self.Bx(),
             "Bz": self.Bz(),
             "Bp": self.Bp(),
-            "ncoil": self.coilset.n_coils,
+            "ncoil": self.coilset.n_coils(),
             "xc": xc,
             "zc": zc,
             "dxc": dxc,

@@ -207,16 +207,17 @@ class CoilFieldConstraints(FieldConstraints):
     """
 
     def __init__(self, coilset, B_max, tolerance=1.0e-6):
+        n_coils = coilset.n_coils()
         if is_num(B_max):
-            B_max = B_max * np.ones(coilset.n_coils)
-        if len(B_max) != coilset.n_coils:
+            B_max = B_max * np.ones(n_coils)
+        if len(B_max) != n_coils:
             raise ValueError(
                 "Maximum field vector length not equal to the number of coils."
             )
 
         if is_num(tolerance):
-            tolerance = tolerance * np.ones(coilset.n_coils)
-        if len(tolerance) != coilset.n_coils:
+            tolerance = tolerance * np.ones(n_coils)
+        if len(tolerance) != n_coils:
             raise ValueError("Tolerance vector length not equal to the number of coils.")
 
         x, z = self._get_constraint_points(coilset)
@@ -225,11 +226,7 @@ class CoilFieldConstraints(FieldConstraints):
 
     @staticmethod
     def _get_constraint_points(coilset):
-        x, z = np.zeros(coilset.n_coils), np.zeros(coilset.n_coils)
-        for i, coil in enumerate(coilset.coils.values()):
-            x[i] = coil.x - coil.dx
-            z[i] = coil.z
-        return x, z
+        return coilset.x - coilset.dx, coilset.z
 
     def prepare(self, equilibrium, I_not_dI=False, fixed_coils=False):
         """
@@ -278,8 +275,8 @@ class CoilForceConstraints(UpdateableConstraint, OptimisationConstraint):
         self, coilset, PF_Fz_max, CS_Fz_sum_max, CS_Fz_sep_max, tolerance=1.0e-6
     ):
 
-        n_PF = coilset.n_PF
-        n_CS = coilset.n_CS
+        n_PF = coilset.n_coils("PF")
+        n_CS = coilset.n_coils("CS")
         n_f_constraints = n_PF + n_CS
 
         if is_num(tolerance):
@@ -319,23 +316,15 @@ class CoilForceConstraints(UpdateableConstraint, OptimisationConstraint):
         """
         Calculate control response of a CoilSet to the constraint.
         """
-        Fa = np.zeros((coilset.n_coils, coilset.n_coils, 2))  # noqa :N803
-        for i, coil1 in enumerate(coilset.coils.values()):
-            for j, coil2 in enumerate(coilset.coils.values()):
-                Fa[i, j, :] = coil1.control_F(coil2)
-        return Fa
+        return self.coilset.control_F(self.coilset)
 
     def evaluate(self, equilibrium):
         """
         Calculate the value of the constraint in an Equilibrium.
         """
-        Fp = np.zeros((equilibrium.coilset.n_coils, 2))  # noqa :N803
-        for i, coil in enumerate(equilibrium.coilset.coils.values()):
-            if coil.current != 0:
-                Fp[i, :] = coil.F(equilibrium) / coil.current
-            else:
-                Fp[i, :] = np.zeros(2)
-        return Fp
+        current = equilibrium.coilset.current
+        non_zero = np.where(current != 0)[0]
+        return equilibrium.coilset.F(equilibrium)[non_zero] / current[non_zero]
 
 
 class MagneticConstraint(UpdateableConstraint, OptimisationConstraint):
@@ -760,7 +749,7 @@ class MagneticConstraintSet(ABC):
         """
         Build the control response matrix used in optimisation.
         """
-        self.A = np.zeros((len(self), len(self.coilset._control)))
+        self.A = np.zeros((len(self), len(self.coilset.control)))
 
         i = 0
         for constraint in self.constraints:
