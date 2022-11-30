@@ -530,3 +530,63 @@ for i in range(5):
     plt.pause(0.001)
 
 plt.close()
+
+
+import time
+
+import matplotlib.pyplot as plt
+import numpy as np
+from mpl_toolkits.axes_grid1 import make_axes_locatable
+
+
+def run():
+    v = 1 + abs(np.random.rand())
+    data1 = v * (xx + v * zz)
+    data2 = v * (xx * zz * v)
+    data3 = v * np.hypot(xx, v * zz)
+    return data1, data2, data3
+
+
+x = np.linspace(1, 10, 50)
+z = np.linspace(-10, 10, 100)
+xx, zz = np.meshgrid(x, z)
+fig, ax = plt.subplots(1, 3, figsize=(18, 10))
+plt.subplots_adjust(wspace=0.5)
+
+for axis in ax:
+    axis.set_xlabel("x")
+    axis.set_ylabel("z")
+    axis.set_aspect("equal")
+
+
+cax = []
+for axis in ax:
+    divider = make_axes_locatable(axis)
+    cax.append(divider.append_axes("right", size="10%", pad=0.1))
+
+
+def update_fig(data1, data2, data3):
+    for axis in ax:
+        axis.clear()
+
+    for axis, data, ca in zip(ax, [data1, data2, data3], cax):
+        im1 = axis.contourf(xx, zz, data, cmap="bone")
+        add_colorbar(im1, ca)
+
+
+def add_colorbar(mappable, ca):
+    last_axes = plt.gca()
+    ax = mappable.axes
+    fig = ax.figure
+    cbar = fig.colorbar(mappable, cax=ca)
+    plt.sca(last_axes)
+    return cbar
+
+
+for i in range(5):
+    data1, data2, data3 = run()
+    time.sleep(1)
+    update_fig(data1, data2, data3)
+    plt.pause(0.001)
+
+plt.close()
