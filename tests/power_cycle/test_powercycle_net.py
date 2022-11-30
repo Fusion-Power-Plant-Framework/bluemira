@@ -402,6 +402,27 @@ class TestPowerLoad:
     # VISUALIZATION
     # ------------------------------------------------------------------
 
+    def test_refine_vector(self):
+
+        powerdata_samples, _ = self.extract_input_samples()
+
+        max_number_of_refinements = 10
+        all_refinement_orders = range(max_number_of_refinements)
+        for sample in powerdata_samples:
+            time = sample.time
+
+            for refinement_order in all_refinement_orders:
+                refined_time = PowerLoad._refine_vector(
+                    time,
+                    refinement_order,
+                )
+
+                set_from_time = set(time)
+                set_from_refined_time = set(refined_time)
+                check = set_from_time.issubset(set_from_refined_time)
+                time_is_subset_of_refined_time = check
+                assert time_is_subset_of_refined_time
+
     # ------------------------------------------------------------------
     # ARITHMETICS
     # ------------------------------------------------------------------

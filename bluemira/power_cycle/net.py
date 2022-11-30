@@ -453,38 +453,35 @@ class PowerLoad(NetPowerABC):
     # ------------------------------------------------------------------
     # VISUALIZATION
     # ------------------------------------------------------------------
-    '''
+
     @staticmethod
     def _refine_vector(vector, n_points):
         """
-        Add `n_point` equidistant points between each pair of points in
-        the input `vector`.
+        Add 'n_point' equidistant points between each segment (defined
+        by a subsequent pair of points) in the input 'vector'.
         """
 
-        # Number of vector segments
-        n_segments = len(vector) - 1
-
-        # Preallocate output
-        refined_vector = []
-
-        # Validate `n_points`
-        n = n_points
-        if n == 0:
-            refined_vector = vector  # No alterations to vector
+        number_of_curve_segments = len(vector) - 1
+        if n_points == 0:
+            refined_vector = vector
         else:
-
-            # For each curve segment (i.e. pair of points)
-            for s in range(n_segments):
-                first = vector[s]
-                last = vector[s + 1]
-                refined_segment = np.linspace(first, last, n + 1, endpoint=False)
+            refined_vector = []
+            for s in range(number_of_curve_segments):
+                first_point = vector[s]
+                second_point = vector[s + 1]
+                refined_segment = np.linspace(
+                    first_point,
+                    second_point,
+                    n_points + 1,
+                    endpoint=False,
+                )
                 refined_segment = refined_segment.tolist()
                 refined_vector = refined_vector + refined_segment
             refined_vector.append(vector[-1])
 
-        # Output refined vector
         return refined_vector
 
+    '''
     def plot(self, ax=None, n_points=None, detailed=False, **kwargs):
         """
         Plot a `PowerLoad` curve, built using the attributes that define
