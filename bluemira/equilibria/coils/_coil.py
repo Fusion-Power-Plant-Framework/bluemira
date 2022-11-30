@@ -30,6 +30,7 @@ from typing import Iterable, Optional, Union
 import numpy as np
 
 from bluemira.equilibria.coils._field import CoilFieldsMixin
+from bluemira.equilibria.coils._tools import get_max_current
 from bluemira.equilibria.constants import NBTI_B_MAX, NBTI_J_MAX
 from bluemira.equilibria.error import EquilibriaError
 
@@ -362,6 +363,14 @@ class Coil(CoilFieldsMixin):
         """
         self.j_max = j_max
         self.b_max = b_max
+
+    def get_max_current(self):
+        """Get max current"""
+        return (
+            np.infty
+            if np.isnan(self.j_max)
+            else get_max_current(self.dx, self.dz, self.j_max)
+        )
 
     def _discretise(self):
         """

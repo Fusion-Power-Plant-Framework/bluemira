@@ -31,14 +31,61 @@ from typing import Iterable, List, Optional, Tuple, Type, Union
 
 import numpy as np
 
+from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.equilibria.coils._coil import Coil, CoilType
 from bluemira.equilibria.coils._field import CoilGroupFieldsMixin
+from bluemira.equilibria.coils._tools import (
+    _get_symmetric_coils,
+    check_coilset_symmetric,
+    get_max_current,
+)
 from bluemira.equilibria.constants import I_MIN
 from bluemira.equilibria.error import EquilibriaError
 from bluemira.equilibria.file import EQDSKInterface
 
 # from bluemira.equilibria.plotting import CoilPlotter, CoilSetPlotter
 from bluemira.utilities.tools import flatten_iterable, yintercept
+
+
+def symmetrise_coilset(coilset):
+    """
+    Symmetrise a CoilSet by converting any coils that are up-down symmetric about
+    z=0 to SymmetricCircuits.
+
+    Parameters
+    ----------
+    coilset: CoilSet
+        CoilSet to symmetrise
+
+    Returns
+    -------
+    symmetric_coilset: CoilSet
+        New CoilSet with SymmetricCircuits where appropriate
+    """
+    if not check_coilset_symmetric(coilset):
+        bluemira_warn(
+            "Symmetrising a CoilSet which is not purely symmetric about z=0. This can result in undesirable behaviour."
+        )
+    coilset = deepcopy(coilset)
+
+    sym_stack = _get_symmetric_coils(coilset)
+    counts = np.array(sym_stack, dtype=object).T[1]
+
+    new_coils = []
+    for coil, count in zip(coilset._coils, counts):
+        if count == 1:
+            new_coils.append(coil)
+        elif count == 2:
+            if isinstance(coil, SymmetricCircuit):
+                new_coils.append(coil)
+            elif isinstance(coil, Coil):
+                new_coils.append(SymmetricCircuit(coil))
+            else:
+                raise EquilibriaError(f"Unrecognised class {coil.__class__.__name__}")
+        else:
+            raise EquilibriaError("There are super-posed Coils in this CoilSet.")
+
+    return CoilSet(*new_coils)
 
 
 class CoilGroup(CoilGroupFieldsMixin):

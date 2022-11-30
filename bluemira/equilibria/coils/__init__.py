@@ -29,10 +29,10 @@ from bluemira.equilibria.coils._grouping import (
     CoilGroup,
     CoilSet,
     SymmetricCircuit,
+    symmetrise_coilset,
 )
 from bluemira.equilibria.coils._tools import (
     check_coilset_symmetric,
     get_max_current,
     make_mutual_inductance_matrix,
-    symmetrise_coilset,
 )
