@@ -34,9 +34,10 @@ following steps in a mac or Ubuntu command terminal.
 
 .. code-block:: bash
 
+    # Install curl if its not available (eg vanilla Ubuntu 22.04)
+     sudo apt install -y curl
     # Run the conda installation script
     # This installs miniforge, if not already present, and sets up a bluemira environment
-    sudo apt install curl
     bash scripts/install-conda.sh
     # To activate your environment
     source ~/.miniforge-init.sh
