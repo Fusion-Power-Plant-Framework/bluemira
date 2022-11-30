@@ -657,7 +657,7 @@ class Equilibrium(MHDState):
             "nbdry": nbdry,
             "xbdry": lcfs.x,
             "zbdry": lcfs.z,
-            "ncoil": self.coilset.n_coils,
+            "ncoil": self.coilset.n_coils(),
             "xc": x_c,
             "zc": z_c,
             "dxc": dxc,
