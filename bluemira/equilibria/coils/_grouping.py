@@ -635,7 +635,7 @@ class CoilSet(CoilGroup):
     @control.setter
     def control(self, control_names: List):
         """Set control coils"""
-        names = self.names
+        names = self.name
         self._control_ind = (
             np.arange(len(names)).tolist()
             if control_names is None
