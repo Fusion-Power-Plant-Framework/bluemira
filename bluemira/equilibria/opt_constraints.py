@@ -557,7 +557,7 @@ class PsiConstraint(AbsoluteMagneticConstraint):
         """
         Calculate control response of a CoilSet to the constraint.
         """
-        return coilset.control_psi(self.x, self.z)
+        return coilset.unit_psi(self.x, self.z)
 
     def evaluate(self, eq):
         """
@@ -605,7 +605,7 @@ class IsofluxConstraint(RelativeMagneticConstraint):
         """
         Calculate control response of a CoilSet to the constraint.
         """
-        return coilset.control_psi(self.x, self.z) - coilset.control_psi(
+        return coilset.unit_psi(self.x, self.z) - coilset.unit_psi(
             self.ref_x, self.ref_z
         )
 
@@ -662,7 +662,7 @@ class PsiBoundaryConstraint(AbsoluteMagneticConstraint):
         """
         Calculate control response of a CoilSet to the constraint.
         """
-        return coilset.control_psi(self.x, self.z).T
+        return coilset.unit_psi(self.x, self.z).T
 
     def evaluate(self, eq):
         """

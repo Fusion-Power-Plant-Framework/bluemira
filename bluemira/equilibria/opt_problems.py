@@ -1250,7 +1250,7 @@ class BreakdownCOP(CoilsetOptimisationProblem):
             objectives.maximise_flux,
             f_objective_args={
                 "c_psi_mat": np.array(
-                    coilset.control_psi(*breakdown_strategy.breakdown_point)
+                    coilset.unit_psi(*breakdown_strategy.breakdown_point)
                 ),
                 "scale": self.scale,
             },
