@@ -72,18 +72,49 @@ def make_mutual_inductance_matrix(coilset):
     return M
 
 
-def symmetrise_coilset():
+def _get_symmetric_coils(coilset):
     """
-    Dummy
+    Coilset symmetry utility
     """
-    pass
+    x, z, dx, dz, currents = coilset.to_group_vecs()
+    coil_matrix = np.array([x, np.abs(z), dx, dz, currents]).T
+
+    sym_stack = [[coil_matrix[0], 1]]
+    for i in range(1, len(x)):
+        coil = coil_matrix[i]
+
+        for j, sym_coil in enumerate(sym_stack):
+            if np.allclose(coil, sym_coil[0]):
+                sym_stack[j][1] += 1
+                break
+
+        else:
+            sym_stack.append([coil, 1])
+
+    return sym_stack
 
 
-def check_coilset_symmetric():
+def check_coilset_symmetric(coilset):
     """
-    Dummy
+    Check whether or not a CoilSet is purely symmetric about z=0.
+
+    Parameters
+    ----------
+    coilset: CoilSet
+        CoilSet to check for symmetry
+
+    Returns
+    -------
+    symmetric: bool
+        Whether or not the CoilSet is symmetric about z=0
     """
-    pass
+    sym_stack = _get_symmetric_coils(coilset)
+    for coil, count in sym_stack:
+        if count != 2:
+            if not np.isclose(coil[1], 0.0):
+                # z = 0
+                return False
+    return True
 
 
 def get_max_current(dx, dz, j_max):
