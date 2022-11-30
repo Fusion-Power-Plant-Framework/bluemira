@@ -1,6 +1,6 @@
 # 1. Record architecture decisions
 
-Date: 2022-06-14
+Date: 2022-06-15 - 2022-11-30
 
 ## Status
 
@@ -38,8 +38,10 @@ Options:
 
 ## Decision
 
-We will investigate caching, and see how tricky it is to set up a simple FE problem with
-a shared boundary.
+The recreation of the shapes was causing serious, frequent, often not-perfectly-reproducible
+problems when trying to run the code. After experimenting with geometry caching, noting that
+it was more stable and faster, we decided to cache the underlying FreeCAD shapes, rather than
+recreate them.
 
 ## Consequences
 
