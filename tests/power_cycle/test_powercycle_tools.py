@@ -23,8 +23,8 @@ def test_add_dict_entries():
         "value_3": 3,
     }
     new_entries = {
-        "value_1": 1,
-        "value_4": 4,
+        "value_1": 10,
+        "value_4": 40,
     }
     new_dict = _add_dict_entries(old_dict, new_entries)
     bluemira_debug(
@@ -43,6 +43,7 @@ def test_add_dict_entries():
     )
     assert isinstance(new_dict, dict)
     assert new_dict == {**old_dict, **new_entries}
+    assert 0
 
 
 def test_join_delimited_values():
