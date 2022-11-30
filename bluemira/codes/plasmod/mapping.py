@@ -287,9 +287,9 @@ PLASMOD_INPUTS = {
     # ###### "BM_INP": ("pradpos", # TODO
     # [-] radiation fraction used for core transport
     # ###### "BM_INP": ("pradfrac", "dimensionless"),
-    # [MW*T/m] Divertor challenging criterion Psep * Bt / (q95 * A R0)
+    # [MW*T/m] Divertor challenge criterion Psep * Bt / (q95 * A * R_0)
     # if PsepBt_qAR > PsepBt_qAR_max seed Xenon
-    # ###### "BM_INP": ("psepb_q95AR_sup", "MW.T/m"),
+    "PsepB_qAR_max": ("psepb_q95AR_sup", "MW.T/m"),
     # [MW/m] Divertor challenging criterion Psep / R0
     # if Psep/R0 > Psep_R0_max seed Xenon
     # ###### "BM_INP": ("psep_r_sup" "MW/m"),

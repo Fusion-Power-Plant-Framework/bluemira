@@ -66,6 +66,8 @@ class PlasmodSolverParams(MappedParameterFrame):
     """Required fraction of non inductive current, if 0, dont use CD [dimensionless]."""
     q_control: Parameter[float]
     """Fixed auxiliary heating power required for control [MW]."""
+    PsepB_qAR_max: Parameter[float]
+    """Divertor challenging criterion Psep * Bt / (q95 * A * R_0) [MW.T/m]"""
 
     # In-out parameters
     delta: Parameter[float]
