@@ -13,9 +13,9 @@ import numpy as np
 
 def _add_dict_entries(dictionary, new_entries):
     """
-    Add (key,value) pairs to a dictionary, only if they are not
-    already specified (i.e. no substitutions). If dictionary is
-    empty, returns only `new_entries`.
+    Add new (key,value) pairs to a dictionary. If a key for that entry
+    already exists, it is substituted. If 'dictionary' is empty, returns
+    only 'new_entries'.
 
     Parameters
     ----------
@@ -23,7 +23,7 @@ def _add_dict_entries(dictionary, new_entries):
         Dictionary to be modified.
     new_entries: dict
         Second dictionary, which entries will be added to
-        `dictionary`, unless they already exist.
+        'dictionary', unless they already exist.
 
     Returns
     -------

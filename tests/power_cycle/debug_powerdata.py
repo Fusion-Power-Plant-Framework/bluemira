@@ -8,7 +8,7 @@ from bluemira.power_cycle.net import PowerData
 from bluemira.power_cycle.tools import adjust_2d_graph_ranges
 
 # Header
-bluemira_print("Test PowerData")
+bluemira_print("Debug PowerData")
 
 # Test data
 test_name = "test_powerdata"
@@ -38,7 +38,7 @@ except (PowerCycleABCError):
 # Test visualization method
 plt.figure()
 plt.grid()
-plot_list = test_instance.plot()
+plot_list = test_instance.plot(c="r")
 pprint(plot_list, indent=4)
 adjust_2d_graph_ranges()
 

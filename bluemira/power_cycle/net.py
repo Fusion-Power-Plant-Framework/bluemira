@@ -46,7 +46,10 @@ class NetPowerABC(PowerCycleABC, metaclass=ABCMeta):
     # Default number of points (for any plotting method)
     _n_points = 50
 
-    # Plot defaults (arguments for `matplotlib.pyplot.plot`)
+    # Index of (time,data) points used as location for 'text'
+    _text_index = -1
+
+    # Plot defaults (kwargs arguments for 'matplotlib.pyplot' methods)
     _plot_kwargs = {
         "c": "k",  # Line color
         "lw": 2,  # Line width
@@ -57,10 +60,11 @@ class NetPowerABC(PowerCycleABC, metaclass=ABCMeta):
         "s": 100,  # Marker size
         "marker": "x",  # Marker style
     }
-
-    # Plot text settings (for `matplotlib.pyplot.text`)
-    _text_angle = 45  # rotation angle
-    _text_index = -1  # index of (time,data) point used for location
+    _text_kwargs = {
+        "c": "k",  # Font color
+        "size": 10,  # Font size
+        "rotation": 45,  # Rotation angle (º)
+    }
 
     # ------------------------------------------------------------------
     # METHODS
@@ -91,8 +95,8 @@ class NetPowerABC(PowerCycleABC, metaclass=ABCMeta):
 
     def _make_secondary_in_plot(self):
         """
-        Alters the '_plot_kwargs' and '_text_index' attributes of an
-        instance of this class to enforce:
+        Alters the '_text_index' and kwargs attributes of an instance
+        of this class to enforce:
             - more subtle plotting characteristics for lines; and
             - a different location for texts;
         that are displayed on a plot, as to not coincide with the
@@ -104,6 +108,43 @@ class NetPowerABC(PowerCycleABC, metaclass=ABCMeta):
             "lw": 1,  # Line width
             "ls": "--",  # Line style
         }
+        self._scatter_kwargs = {
+            "c": "k",  # Marker color
+            "s": 100,  # Marker size
+            "marker": "x",  # Marker style
+        }
+        self._text_kwargs = {
+            "c": "k",  # Font color
+            "size": 10,  # Font size
+            "rotation": 45,  # Rotation angle (º)
+        }
+
+    def _add_text_to_point_in_plot(
+        self,
+        axes,
+        name,
+        x_list,
+        y_list,
+        **kwargs,
+    ):
+
+        class_calling_method = self.__class__.__name__
+        text_to_be_added = f"{name} ({class_calling_method})"
+        label_of_text_object = name + " (name)"
+
+        # Set each default options in kwargs, if not specified
+        default_text_kwargs = self._text_kwargs
+        final_kwargs = _add_dict_entries(default_text_kwargs, kwargs)
+
+        index_for_text_placement = self._text_index
+        plot_object = axes.text(
+            x_list[index_for_text_placement],
+            y_list[index_for_text_placement],
+            text_to_be_added,
+            label=label_of_text_object,
+            **final_kwargs,
+        )
+        return plot_object
 
 
 class PowerDataError(PowerCycleError):
@@ -215,37 +256,36 @@ class PowerData(NetPowerABC):
             list is the plot object created using the 'pyplot.text'
             method.
         """
-
         ax = validate_axes(ax)
 
         # Set each default options in kwargs, if not specified
-        default_scatter_settings = self._scatter_kwargs
-        kwargs = _add_dict_entries(kwargs, default_scatter_settings)
+        default_scatter_kwargs = self._scatter_kwargs
+        final_kwargs = _add_dict_entries(default_scatter_kwargs, kwargs)
 
         name = self.name
         time = self.time
         data = self.data
-        plot_list = []
+        list_of_plot_objects = []
 
         label = name + " (data)"
-        plot_obj = ax.scatter(time, data, label=label, **kwargs)
-        plot_list.append(plot_obj)
-
-        # Add text to plot to describe points
-        index = self._text_index
-        text = f"{name} (PowerData)"
-        label = name + " (name)"
-        angle = self._text_angle
-        plot_obj = ax.text(
-            time[index],
-            data[index],
-            text,
+        plot_object = ax.scatter(
+            time,
+            data,
             label=label,
-            rotation=angle,
+            **final_kwargs,
         )
-        plot_list.append(plot_obj)
+        list_of_plot_objects.append(plot_object)
 
-        return plot_list
+        plot_object = self._add_text_to_point_in_plot(
+            ax,
+            name,
+            time,
+            data,
+            **kwargs,
+        )
+        list_of_plot_objects.append(plot_object)
+
+        return list_of_plot_objects
 
 
 class PowerLoadModel(Enum):
@@ -370,7 +410,6 @@ class PowerLoad(NetPowerABC):
         returned at the times specified in the `time` input, with any
         out-of-bound values set to zero.
         """
-
         try:
             interpolation_kind = model.value
         except (AttributeError):
@@ -423,7 +462,6 @@ class PowerLoad(NetPowerABC):
         curve: list[float]
             List of power values. [W]
         """
-
         time = self._validate_time(time)
         time_length = len(time)
         preallocated_curve = np.array([0] * time_length)
@@ -460,7 +498,6 @@ class PowerLoad(NetPowerABC):
         Add 'n_point' equidistant points between each segment (defined
         by a subsequent pair of points) in the input 'vector'.
         """
-
         number_of_curve_segments = len(vector) - 1
         if n_points == 0:
             refined_vector = vector
@@ -481,7 +518,6 @@ class PowerLoad(NetPowerABC):
 
         return refined_vector
 
-    '''
     def plot(self, ax=None, n_points=None, detailed=False, **kwargs):
         """
         Plot a `PowerLoad` curve, built using the attributes that define
@@ -527,111 +563,85 @@ class PowerLoad(NetPowerABC):
             the `PowerData` class, with the addition of plotted curves
             for the visualization of the model selected for each load.
         """
-
-        # Validate axes
         ax = validate_axes(ax)
-
-        # Retrieve default plot options (main curve)
-        default = self._plot_kwargs
-
-        # Set each default options in kwargs, if not specified
-        kwargs = add_dict_entries(kwargs, default)
-
-        # Validate `n_points`
         n_points = self._validate_n_points(n_points)
 
-        # Retrieve instance attributes
+        # Set each default options in kwargs, if not specified
+        default_plot_kwargs = self._plot_kwargs
+        final_kwargs = _add_dict_entries(default_plot_kwargs, kwargs)
+
         name = self.name
         data_set = self.data_set
         model = self.model
 
-        # Number of elements in `load`
-        n_elements = len(data_set)
+        number_of_load_elements = len(data_set)
+        preallocated_time = []
 
-        # Preallocate time vector for plotting
-        time = []
-
-        # For each element
-        for e in range(n_elements):
-
-            # Current PowerData time vector
+        for e in range(number_of_load_elements):
             current_powerdata = data_set[e]
             current_time = current_powerdata.time
 
-            # Refine current time vector
             current_time = self._refine_vector(current_time, n_points)
+            preallocated_time = preallocated_time + current_time
 
-            # Append current time in time vector for plotting
-            time = time + current_time
+        unique_times = list(set(preallocated_time))
+        sorted_time = sorted(unique_times)
+        computed_curve = self.curve(sorted_time)
 
-        # Sort and unique of complete time vector
-        sorted_time = list(set(time))
-
-        # Compute complete curve
-        curve = self.curve(sorted_time)
-
-        # Preallocate output
-        plot_list = []
+        list_of_plot_objects = []
 
         # Plot curve as line
         label = name + " (curve)"
-        plot_obj = ax.plot(sorted_time, curve, label=label, **kwargs)
-        plot_list.append(plot_obj)
-
-        # Add descriptive label to curve
-        index = self._text_index
-        text = f"{name} (PowerLoad)"
-        label = name + " (name)"
-        angle = self._text_angle
-        plot_obj = ax.text(
-            sorted_time[index],
-            curve[index],
-            text,
+        plot_object = ax.plot(
+            sorted_time,
+            computed_curve,
             label=label,
-            rotation=angle,
+            **final_kwargs,
         )
-        plot_list.append(plot_obj)
+        list_of_plot_objects.append(plot_object)
 
-        # Validate `detailed` option
+        # Add descriptive text next to curve
+        plot_object = self._add_text_to_point_in_plot(
+            ax,
+            name,
+            sorted_time,
+            computed_curve,
+            **kwargs,
+        )
+        list_of_plot_objects.append(plot_object)
+
         if detailed:
-
-            # For each element
-            for e in range(n_elements):
-
-                # Current PowerData
+            for e in range(number_of_load_elements):
                 current_powerdata = data_set[e]
-
-                # Current model
                 current_model = model[e]
 
-                # Compute current curve
                 current_curve = self._single_curve(
-                    current_powerdata, current_model, sorted_time
+                    current_powerdata,
+                    current_model,
+                    sorted_time,
                 )
 
-                # Change PowerData to secondary in plot
+                # Plot current PowerData with seconday kwargs
                 current_powerdata._make_secondary_in_plot()
-
-                # Plot PowerData with same plot options
                 current_plot_list = current_powerdata.plot()
 
-                # Plot current curve as line with secondary options
+                # Plot current curve as line with secondary kwargs
                 kwargs.update(current_powerdata._plot_kwargs)
-                plot_obj = ax.plot(sorted_time, current_curve, **kwargs)
+                plot_object = ax.plot(
+                    sorted_time,
+                    current_curve,
+                    **kwargs,
+                )
+                current_plot_list.append(plot_object)
 
-                # Append current plot list with current curve
-                current_plot_list.append(plot_obj)
+                list_of_plot_objects.append(current_plot_list)
 
-                # Store current plot list in output
-                plot_list.append(current_plot_list)
-
-        # Return list of plot objects
-        return plot_list
+        return list_of_plot_objects
 
     # ------------------------------------------------------------------
     # ARITHMETICS
     # ------------------------------------------------------------------
-
+    '''
     def __add__(self, other):
         """
         Addition of `PowerLoad` instances is a new `PowerLoad` instance
