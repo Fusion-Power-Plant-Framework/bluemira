@@ -21,7 +21,7 @@
 
 import numpy as np
 
-from bluemira.equilibria.coils import Coil, CoilGroup, SymmetricCircuit
+from bluemira.equilibria.coils import Coil, CoilSet, SymmetricCircuit
 from bluemira.equilibria.opt_problems import CoilsetPositionCOP
 from bluemira.geometry.coordinates import Coordinates
 
@@ -30,7 +30,6 @@ class TestCoilsetOptimiser:
     @classmethod
     def setup_class(cls):
         circuit = SymmetricCircuit(
-            np.array([[0, 0], [1, 0]]),
             Coil(
                 x=1.5,
                 z=6.0,
@@ -40,7 +39,7 @@ class TestCoilsetOptimiser:
                 j_max=1e-5,
                 b_max=100,
                 ctype="PF",
-                name="PF_2.1",
+                name="PF_2",
             ),
             Coil(
                 x=1.5,
@@ -51,8 +50,9 @@ class TestCoilsetOptimiser:
                 j_max=1e-5,
                 b_max=100,
                 ctype="PF",
-                name="PF_2.2",
+                name="PF_4",
             ),
+            symmetry_line=np.array([[0, 0], [1, 0]]),
         )
 
         coil2 = Coil(
@@ -72,11 +72,11 @@ class TestCoilsetOptimiser:
             current=7e6,
             dx=0.5,
             dz=0.33,
-            j_max=None,
+            j_max=np.nan,
             b_max=50.0,
             name="PF_3",
         )
-        cls.coilset = CoilGroup(circuit, coil2, coil3)
+        cls.coilset = CoilSet(circuit, coil2, coil3)
 
         max_coil_shifts = {
             "x_shifts_lower": -2.0,

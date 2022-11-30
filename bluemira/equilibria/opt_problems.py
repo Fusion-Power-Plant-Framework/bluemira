@@ -315,7 +315,7 @@ class CoilsetPositionCOP(CoilsetOptimisationProblem):
         Dictionary of Coordinates that specify convex hull regions inside which
         each PF control coil position is to be optimised.
         The Coordinates must be 2d in x,z in units of [m].
-    max_currents: float or np.array(len(coilset._ccoils)) (default = None)
+    max_currents: float or np.ndarray (default = None)
         Maximum allowed current for each independent coil current in coilset [A].
         If specified as a float, the float will set the maximum allowed current
         for all coils.
@@ -398,7 +398,7 @@ class CoilsetPositionCOP(CoilsetOptimisationProblem):
         region_mapper: RegionMapper
             RegionMapper mapping coil positions within the allowed optimisation
             regions.
-        max_currents float or np.array(len(coilset._ccoils)) (default = None)
+        max_currents Union[float, np.ndarray] (default = None)
             Maximum allowed current for each independent coil current in coilset [A].
             If specified as a float, the float will set the maximum allowed current
             for all coils.
@@ -756,7 +756,7 @@ class TikhonovCurrentCOP(CoilsetOptimisationProblem):
         Set of magnetic field targets to use in objective function.
     gamma: float (default = 1e-8)
         Tikhonov regularisation parameter in units of [A⁻¹].
-    max_currents float or np.array(len(coilset._ccoils)) (default = None)
+    max_currents Union[float, np.ndarray] (default = None)
         Maximum allowed current for each independent coil current in coilset [A].
         If specified as a float, the float will set the maximum allowed current
         for all coils.

@@ -519,18 +519,23 @@ class TestCoilSetSymmetry:
             Coil(5, -5, current=1e6, dx=1, dz=1),
         )
         new = symmetrise_coilset(coilset)
-        assert len(new.coils) == 1
+        assert len(new._coils) == 1
         assert new.n_coils() == 2
-        assert isinstance(list(new.coils.values())[0], SymmetricCircuit)
+        assert isinstance(list(new._coils)[0], SymmetricCircuit)
 
         coilset = CoilSet(
-            SymmetricCircuit(Coil(5, 5, current=1e6, dx=1, dz=1)),
-            SymmetricCircuit(Coil(12, 7, current=1e6, dx=1, dz=1)),
+            SymmetricCircuit(
+                Coil(5, 5, current=1e6, dx=1, dz=1), Coil(5, -5, current=1e6, dx=1, dz=1)
+            ),
+            SymmetricCircuit(
+                Coil(12, 7, current=1e6, dx=1, dz=1),
+                Coil(12, -7, current=1e6, dx=1, dz=1),
+            ),
             SymmetricCircuit(Coil(4, 9, current=1e6, dx=1, dz=1)),
             Coil(5, 0, current=1e6, dx=1, dz=1),
         )
         new = symmetrise_coilset(coilset)
-        assert len(new.coils) == len(coilset.coils)
+        assert len(new._coils) == len(coilset._coils)
         assert new.n_coils() == coilset.n_coils()
 
 
