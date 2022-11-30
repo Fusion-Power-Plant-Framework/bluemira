@@ -36,6 +36,7 @@ following steps in a mac or Ubuntu command terminal.
 
     # Run the conda installation script
     # This installs miniforge, if not already present, and sets up a bluemira environment
+    sudo apt install curl
     bash scripts/install-conda.sh
     # To activate your environment
     source ~/.miniforge-init.sh
