@@ -215,30 +215,30 @@ class MHDState:
         limiter: Union[Limiter, None]
             Limiter instance if any limiters are in file
         """
-        e = EQDSKInterface.from_file(filename).to_dict()
-        if "equilibria" in e["name"]:
-            psi = e["psi"]
-        elif "SCENE" in e["name"] and not isinstance(cls, Breakdown):
-            psi = e["psi"]
-            e["dxc"] = e["dxc"] / 2
-            e["dzc"] = e["dzc"] / 2
-        elif "fiesta" in e["name"].lower():
-            psi = e["psi"]
+        e = EQDSKInterface.from_file(filename)
+        if "equilibria" in e.name:
+            psi = e.psi
+        elif "SCENE" in e.name and not isinstance(cls, Breakdown):
+            psi = e.psi
+            e.dxc = e.dxc / 2
+            e.dzc = e.dzc / 2
+        elif "fiesta" in e.name.lower():
+            psi = e.psi
         else:  # CREATE
-            psi = e["psi"] / (2 * np.pi)  # V.s as opposed to V.s/rad
-            e["dxc"] = e["dxc"] / 2
-            e["dzc"] = e["dzc"] / 2
-            e["cplasma"] = abs(e["cplasma"])
+            psi = e.psi / (2 * np.pi)  # V.s as opposed to V.s/rad
+            e.dxc = e.dxc / 2
+            e.dzc = e.dzc / 2
+            e.cplasma = abs(e.cplasma)
 
         coilset = CoilSet.from_group_vecs(e)
         if force_symmetry:
             coilset = symmetrise_coilset(coilset)
 
-        grid = Grid.from_eqdict(e)
-        if e["nlim"] == 0:
+        grid = Grid.from_eqdsk(e)
+        if e.nlim == 0:
             limiter = None
-        elif e["nlim"] < 5:
-            limiter = Limiter(e["xlim"], e["zlim"])
+        elif e.nlim < 5:
+            limiter = Limiter(e.xlim, e.zlim)
         else:
             limiter = None  # CREATE..
 

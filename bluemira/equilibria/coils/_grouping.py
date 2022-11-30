@@ -35,6 +35,7 @@ from bluemira.equilibria.coils._coil import Coil, CoilType
 from bluemira.equilibria.coils._field import CoilGroupFieldsMixin
 from bluemira.equilibria.constants import I_MIN
 from bluemira.equilibria.error import EquilibriaError
+from bluemira.equilibria.file import EQDSKInterface
 
 # from bluemira.equilibria.plotting import CoilPlotter, CoilSetPlotter
 from bluemira.utilities.tools import flatten_iterable, yintercept
@@ -141,6 +142,63 @@ class CoilGroup(CoilGroupFieldsMixin):
 
         if not _top_level:
             return removed_names + to_remove
+
+    @classmethod
+    def from_group_vecs(cls, eqdsk: EQDSKInterface):
+        """
+        Initialises an instance of CoilSet from group vectors. This has been
+        implemented as a dict operation, because it will occur for eqdsks only.
+        Future dict instantiation methods will likely differ, hence the
+        confusing name of this method.
+        """
+        pfcoils = []
+        cscoils = []
+        passivecoils = []
+        for i in range(eqdsk.ncoil):
+            dx = eqdsk.dxc[i]
+            dz = eqdsk.dzc[i]
+            if abs(eqdsk.Ic[i]) < I_MIN:
+                # Catch CREATE's crap 0's
+                passivecoils.append(
+                    Coil(
+                        eqdsk.xc[i],
+                        eqdsk.zc[i],
+                        current=0,
+                        dx=dx,
+                        dz=dz,
+                        ctype="NONE",
+                        control=False,
+                    )
+                )
+            else:
+                if dx != dz:  # Rough and ready
+                    cscoils.append(
+                        Coil(
+                            eqdsk.xc[i],
+                            eqdsk.zc[i],
+                            current=eqdsk.Ic[i],
+                            dx=dx,
+                            dz=dz,
+                            ctype="CS",
+                        )
+                    )
+                else:
+                    coil = Coil(
+                        eqdsk.xc[i],
+                        eqdsk.zc[i],
+                        current=eqdsk.Ic[i],
+                        dx=dx,
+                        dz=dz,
+                        ctype="PF",
+                    )
+                    coil.fix_size()  # Oh ja
+                    pfcoils.append(coil)
+
+        coils = pfcoils
+        if len(cscoils) != 0:
+            coils.extend(cscoils)
+        coils.extend(passivecoils)
+        return cls(*coils)
 
     def __list_getter(self, attr: str) -> List:
         """Get attributes from coils tuple"""
