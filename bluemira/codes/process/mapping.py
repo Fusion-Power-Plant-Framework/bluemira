@@ -91,7 +91,7 @@ IN_mappings = {
     "tk_cr_vv": ("ddwex", "m"),
     "tk_tf_front_ib": ("casthi", "m"),
     "tk_tf_side": ("casths", "m"),
-    "PsepB_qAR_max": {"psepbqarmax", "MW.T/m"},
+    "PsepB_qAR_max": ("psepbqarmax", "MW.T/m"),
 }
 
 OUT_mappings = {
