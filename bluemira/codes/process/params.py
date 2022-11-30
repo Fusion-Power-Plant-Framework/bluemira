@@ -105,6 +105,9 @@ class ProcessSolverParams(MappedParameterFrame):
     tk_vv_top: Parameter[float]
     """Upper vacuum vessel thickness [meter]."""
 
+    PsepB_qAR_max: Parameter[float]
+    """Maximum PsepB/q95AR vale [MW.T/m]"""
+
     # Out parameters
     B_0: Parameter[float]
     """Toroidal field at R_0 [tesla]."""
