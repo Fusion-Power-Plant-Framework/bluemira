@@ -23,6 +23,7 @@
 from typing import Dict, TypeVar
 
 from bluemira.base.parameter_frame import ParameterFrame
+from bluemira.codes import process
 
 _PfT = TypeVar("_PfT", bound=ParameterFrame)
 
@@ -35,9 +36,7 @@ def radial_build(params: _PfT, build_config: Dict) -> _PfT:
     read in a previous PROCESS run, as the PROCESS solver hasn't yet
     been made to work with the new ParameterFrame yet.
     """
-    import json
-
-    with open(build_config["file_path"], "r") as f:
-        param_values = json.load(f)
-    params.update_values(param_values, source="PROCESS (mock)")
+    run_mode = build_config.pop("run_mode", "read")
+    solver = process.Solver(params, build_config)
+    params = solver.execute(run_mode)
     return params

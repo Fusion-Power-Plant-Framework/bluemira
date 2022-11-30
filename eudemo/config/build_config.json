@@ -1,5 +1,6 @@
 {
     "Radial build": {
+        "run_mode": "run",
         "file_path": "config/mockPROCESS.json"
     },
     "Equilibrium": {
