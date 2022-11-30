@@ -302,36 +302,54 @@ class TestPowerLoad:
                                     model_input,
                                 )
 
-    def test_add(self):
-        load_1 = self.load_1
-        load_2 = self.load_2
-        powerdata_1 = load_1.data_set
-        powerdata_2 = load_2.data_set
-        powerloadmodel_1 = load_1.model
-        powerloadmodel_2 = load_2.model
+    # ------------------------------------------------------------------
+    # OPERATIONS
+    # ------------------------------------------------------------------
 
-        result = load_1 + load_2
-        powerdata_r = result.data_set
-        powerloadmodel_r = result.model
+    @staticmethod
+    def make_time_list_for_interpolation():
+        start = -2
+        stop = 12
+        step = 0.1
+        time_vector = np.arange(start, stop, step)
+        time_list = list(time_vector)
+        return time_list
 
-        bluemira_debug(
-            f"""
-            {script_title()} (PowerLoadModel.__add__)
+    @staticmethod
+    def check_interpolation(original_points, curve):
+        """
+        Confirm that curve is an interpolation.
 
-            Load data in data sets:
-            {pformat([p.data for p in powerdata_1])}
-            {pformat([p.data for p in powerdata_2])}
-            {pformat([p.data for p in powerdata_r])}
+        Current simplified approach: no curve value is out of the bounds
+        of the original defining interpolation points, except if it is a
+        zero ('fill_value' argument of 'interp1d').
+        """
+        original_max = max(original_points)
+        original_min = min(original_points)
+        curve_max = max(curve)
+        curve_min = min(curve)
+        assert (curve_max <= original_max) or (curve_max == 0)
+        assert (curve_min >= original_min) or (curve_min == 0)
 
-            Load models:
-            {pformat(powerloadmodel_1)}
-            {pformat(powerloadmodel_2)}
-            {pformat(powerloadmodel_r)}
-            """
-        )
-        assert isinstance(result, PowerLoad)
-        assert powerdata_r == powerdata_1 + powerdata_2
-        assert powerloadmodel_r == powerloadmodel_1 + powerloadmodel_2
+    def test_single_curve(self):
+
+        out1, out2 = self.extract_input_samples()
+        powerdata_samples, powerloadmodel_samples = out1, out2
+
+        test_time = self.make_time_list_for_interpolation()
+        time_length = len(test_time)
+
+        for powerdata in powerdata_samples:
+            power_points = powerdata.data
+
+            for model in powerloadmodel_samples:
+                curve = PowerLoad._single_curve(
+                    powerdata,
+                    model,
+                    test_time,
+                )
+                assert len(curve) == time_length
+                self.check_interpolation(power_points, curve)
 
     def test_validate_time(self):
         load = self.load_1
@@ -363,38 +381,59 @@ class TestPowerLoad:
                 with pytest.raises(PowerLoadError):
                     time = PowerLoad._validate_time(argument)
 
-    def test_single_curve(self):
+    def test_curve(self):
 
-        out1, out2 = self.extract_input_samples()
-        powerdata_samples, powerloadmodel_samples = out1, out2
+        load_samples = [
+            self.load_1,
+            self.load_2,
+        ]
 
-        test_time = list(np.arange(-2, 12, 0.1))
+        test_time = self.make_time_list_for_interpolation()
         time_length = len(test_time)
 
-        for powerdata in powerdata_samples:
-            power_points = powerdata.data
-            max_point = max(power_points)
-            min_point = min(power_points)
+        for sample in load_samples:
+            curve = sample.curve(test_time)
+            curve_length = len(curve)
+            assert curve_length == time_length
 
-            for model in powerloadmodel_samples:
-                curve = PowerLoad._single_curve(
-                    powerdata,
-                    model,
-                    test_time,
-                )
-                assert len(curve) == time_length
-                self.check_interpolation(max_point, min_point, curve)
+            # How to test interpolation of a super-imposed data set?
 
-    @staticmethod
-    def check_interpolation(original_max, original_min, curve):
-        """
-        Confirm that curve is an interpolation.
+    # ------------------------------------------------------------------
+    # VISUALIZATION
+    # ------------------------------------------------------------------
 
-        Current simplified approach: no curve value is out of the bounds
-        of the original defining interpolation points, except if it is a
-        zero ('fill_value' argument of 'interp1d').
-        """
-        curve_max = max(curve)
-        curve_min = min(curve)
-        assert (curve_max <= original_max) or (curve_max == 0)
-        assert (curve_min >= original_min) or (curve_min == 0)
+    # ------------------------------------------------------------------
+    # ARITHMETICS
+    # ------------------------------------------------------------------
+    '''
+    def test_add(self):
+        load_1 = self.load_1
+        load_2 = self.load_2
+        powerdata_1 = load_1.data_set
+        powerdata_2 = load_2.data_set
+        powerloadmodel_1 = load_1.model
+        powerloadmodel_2 = load_2.model
+
+        result = load_1 + load_2
+        powerdata_r = result.data_set
+        powerloadmodel_r = result.model
+
+        bluemira_debug(
+            f"""
+            {script_title()} (PowerLoadModel.__add__)
+
+            Load data in data sets:
+            {pformat([p.data for p in powerdata_1])}
+            {pformat([p.data for p in powerdata_2])}
+            {pformat([p.data for p in powerdata_r])}
+
+            Load models:
+            {pformat(powerloadmodel_1)}
+            {pformat(powerloadmodel_2)}
+            {pformat(powerloadmodel_r)}
+            """
+        )
+        assert isinstance(result, PowerLoad)
+        assert powerdata_r == powerdata_1 + powerdata_2
+        assert powerloadmodel_r == powerloadmodel_1 + powerloadmodel_2
+    '''
