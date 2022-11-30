@@ -200,6 +200,25 @@ class CoilGroup(CoilGroupFieldsMixin):
         coils.extend(passivecoils)
         return cls(*coils)
 
+    def to_group_vecs(self):
+        """
+        Output CoilGroup properties as numpy arrays
+
+        Returns
+        -------
+        x: np.ndarray(n_coils)
+            The x-positions of coils
+        z: np.ndarray(n_coils)
+            The z-positions of coils.
+        dx: np.ndarray(n_coils)
+            The coil size in the x-direction.
+        dz: np.ndarray(n_coils)
+            The coil size in the z-direction.
+        currents: np.ndarray(n_coils)
+            The coil currents.
+        """
+        return self.x, self.z, self.dx, self.dz, self.current
+
     def __list_getter(self, attr: str) -> List:
         """Get attributes from coils tuple"""
         return np.frompyfunc(attrgetter(attr), 1, 1)(self._coils)

@@ -157,7 +157,7 @@ class Coil(CoilFieldsMixin):
         self._dx = None
         self._dz = None
         self._discretisation = 1
-        self._flag_sizefix = None
+        self._flag_sizefix = None not in (dx, dz)
 
         self.x = x
         self.z = z
@@ -330,7 +330,7 @@ class Coil(CoilFieldsMixin):
     def j_max(self, value: float):
         """Set coil max current density"""
         self._j_max = float(value)
-        if None not in (self.dx, self.dz):
+        if None not in (self.dx, self.dz) and not self._flag_sizefix:
             self.resize()
 
     @b_max.setter
