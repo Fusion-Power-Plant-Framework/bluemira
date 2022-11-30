@@ -159,16 +159,16 @@ class MHDState:
         Will not work for symmetric circuits
         """
         no_coils = len(self.coilset.x)
-        coils = list(self.coilset.coils.values())
-        currents = self.coilset.get_control_currents()
+        currents = self.coilset.current[self.coilset._control_ind]
         plasma = self.plasma
         response = np.zeros((no_coils, no_coils, 2))
         background = np.zeros((no_coils, 2))
-        for i, coil1 in enumerate(coils):
-            for j, coil2 in enumerate(coils):
-                response[i, j, :] = coil1.control_F(coil2)
-            if coil1.current != 0.0:
-                background[i, :] = coil1.F(plasma) / coil1.current
+        non_zero_current = np.where(self.coilset.current != 0)[0]
+        response = self.coilset.control_F(self.coilset)
+        background = (
+            self.coilset.F(plasma)[non_zero_current]
+            / self.coilset.current[non_zero_current]
+        )
 
         forces = np.zeros((no_coils, 2))
         forces[:, 0] = currents * (response[:, :, 0] @ currents + background[:, 0])
@@ -186,9 +186,7 @@ class MHDState:
         B: np.array(n_coils)
             The Bp array of fields on coils [T]
         """
-        x = [c.x - c.dx for c in self.coilset.coils.values()]
-        z = [c.z for c in self.coilset.coils.values()]
-        return self.Bp(x, z)
+        return self.Bp(self.coilset.x - self.coilset.dx, self.coilset.z)
 
     @classmethod
     def _get_eqdsk(cls, filename, force_symmetry=False):

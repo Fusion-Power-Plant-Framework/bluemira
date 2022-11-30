@@ -161,13 +161,10 @@ class FieldConstraints(UpdateableConstraint, OptimisationConstraint):
         """
         Calculate control response of a CoilSet to the constraint.
         """
-        Bx = np.zeros((len(self), coilset.n_coils))
-        Bz = np.zeros((len(self), coilset.n_coils))
-        for i, (x, z) in enumerate(zip(self.x, self.z)):
-            for j, coil in enumerate(coilset.coils.values()):
-                Bx[i, j] = np.array(coil.control_Bx(x, z))
-                Bz[i, j] = np.array(coil.control_Bz(x, z))
-        return Bx, Bz
+        return (
+            coilset.unit_Bx(self.x, self.z),
+            coilset.unit_Bz(self.x, self.z),
+        )
 
     def evaluate(self, equilibrium):
         """
@@ -506,7 +503,7 @@ class FieldNullConstraint(AbsoluteMagneticConstraint):
         Calculate control response of a CoilSet to the constraint.
         """
         return np.vstack(
-            [coilset.control_Bx(self.x, self.z), coilset.control_Bz(self.x, self.z)]
+            [coilset.unit_Bx(self.x, self.z), coilset.unit_Bz(self.x, self.z)]
         )
 
     def evaluate(self, eq):

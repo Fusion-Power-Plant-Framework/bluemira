@@ -596,11 +596,15 @@ class CoilGroupFieldsMixin:
         pos = np.array([self.x, self.z])
 
         same_pos = np.where(pos == np.array([coil.x, coil.z]))
+        z_pos = consec_repeat_elem(same_pos[1], 2)
 
-        if same_pos[0] != [] and all(same_pos[0] == np.array([0, 1])):  # x and z points
+        if (
+            z_pos.size > 0
+            and same_pos[0] != []
+            and all(np.unique(same_pos[0]) == np.array([0, 1]))
+        ):  # x and z points
             Bz = np.zeros(pos[0].size)
             Bx = Bz.copy()
-            z_pos = consec_repeat_elem(same_pos[1], 2)
             cr = self._current_radius[z_pos]
             Bz[z_pos] = np.where(
                 cr == 0,
@@ -612,7 +616,6 @@ class CoilGroupFieldsMixin:
             Bx[z_pos] = 0  # Should be 0 anyway
             Bz[~z_pos] = coil.unit_Bz(*pos[:, ~z_pos])
             Bx[~z_pos] = coil.unit_Bx(*pos[:, ~z_pos])
-
         else:
             Bz = coil.unit_Bz(*pos)
             Bx = coil.unit_Bx(*pos)
