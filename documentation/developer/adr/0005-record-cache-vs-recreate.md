@@ -45,4 +45,5 @@ recreate them.
 
 ## Consequences
 
-The consequences of this decision are to be explored.
+The known consequences are, generally speaking, that setting up finite element problems is going
+to be trickier, particularly when it comes to finding the right boundaries post-creation.
