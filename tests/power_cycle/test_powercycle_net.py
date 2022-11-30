@@ -429,9 +429,13 @@ class TestPowerLoad:
                 time_is_subset_of_refined_time = check
                 assert time_is_subset_of_refined_time
 
-    def run_plot(self, detailed_plot_flag):
+    @staticmethod
+    def prepare_figure():
         fig = plt.figure()
         plt.grid()
+
+    def run_plot(self, detailed_plot_flag):
+        self.prepare_figure()
         all_axes = validate_axes()
         list_of_plot_objects = []
 
@@ -468,8 +472,9 @@ class TestPowerLoad:
     # ------------------------------------------------------------------
     # ARITHMETICS
     # ------------------------------------------------------------------
-    '''
     def test_add(self):
+        self.prepare_figure()
+
         load_1 = self.load_1
         load_2 = self.load_2
         powerdata_1 = load_1.data_set
@@ -499,4 +504,6 @@ class TestPowerLoad:
         assert isinstance(result, PowerLoad)
         assert powerdata_r == powerdata_1 + powerdata_2
         assert powerloadmodel_r == powerloadmodel_1 + powerloadmodel_2
-    '''
+        list_of_plot_objects = result.plot(detailed=True, c="b")
+        adjust_2d_graph_ranges()
+        plt.show()  # Run with `pytest --plotting-on` to visualize
