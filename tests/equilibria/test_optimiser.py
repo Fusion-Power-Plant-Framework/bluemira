@@ -87,10 +87,10 @@ class TestCoilsetOptimiser:
 
         cls.pfregions = {}
 
-        xup = cls.coilset.x[cls.coilset._control] + max_coil_shifts["x_shifts_upper"]
-        xlo = cls.coilset.x[cls.coilset._control] + max_coil_shifts["x_shifts_lower"]
-        zup = cls.coilset.z[cls.coilset._control] + max_coil_shifts["z_shifts_upper"]
-        zlo = cls.coilset.z[cls.coilset._control] + max_coil_shifts["z_shifts_lower"]
+        xup = cls.coilset.x[cls.coilset._control_ind] + max_coil_shifts["x_shifts_upper"]
+        xlo = cls.coilset.x[cls.coilset._control_ind] + max_coil_shifts["x_shifts_lower"]
+        zup = cls.coilset.z[cls.coilset._control_ind] + max_coil_shifts["z_shifts_upper"]
+        zlo = cls.coilset.z[cls.coilset._control_ind] + max_coil_shifts["z_shifts_lower"]
 
         for name, xl, xu, zl, zu in zip(cls.coilset.name, xup, xlo, zup, zlo):
             rect = Coordinates({"x": [xl, xu, xu, xl, xl], "z": [zl, zl, zu, zu, zl]})

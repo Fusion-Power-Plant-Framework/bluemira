@@ -411,7 +411,7 @@ class TestCoilSet:
             ),
         )
 
-        cls.coilset = CoilGroup(coil, circuit)
+        cls.coilset = CoilSet(coil, circuit)
 
     def test_group_vecs(self):
         x, z, dx, dz, currents = self.coilset.to_group_vecs()

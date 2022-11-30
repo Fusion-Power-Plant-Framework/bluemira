@@ -339,10 +339,18 @@ class TestRegionMapper:
 
         pfregions = {}
 
-        xup = self.coilset.x[self.coilset._control] + max_coil_shifts["x_shifts_upper"]
-        xlo = self.coilset.x[self.coilset._control] + max_coil_shifts["x_shifts_lower"]
-        zup = self.coilset.z[self.coilset._control] + max_coil_shifts["z_shifts_upper"]
-        zlo = self.coilset.z[self.coilset._control] + max_coil_shifts["z_shifts_lower"]
+        xup = (
+            self.coilset.x[self.coilset._control_ind] + max_coil_shifts["x_shifts_upper"]
+        )
+        xlo = (
+            self.coilset.x[self.coilset._control_ind] + max_coil_shifts["x_shifts_lower"]
+        )
+        zup = (
+            self.coilset.z[self.coilset._control_ind] + max_coil_shifts["z_shifts_upper"]
+        )
+        zlo = (
+            self.coilset.z[self.coilset._control_ind] + max_coil_shifts["z_shifts_lower"]
+        )
 
         for name, xl, xu, zl, zu in zip(self.coilset.name, xup, xlo, zup, zlo):
             rect = Coordinates({"x": [xl, xu, xu, xl, xl], "z": [zl, zl, zu, zu, zl]})
