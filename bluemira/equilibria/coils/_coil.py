@@ -30,7 +30,7 @@ from typing import Iterable, Optional, Union
 import numpy as np
 
 from bluemira.equilibria.coils._field import CoilFieldsMixin
-from bluemira.equilibria.constants import I_MIN, NBTI_B_MAX, NBTI_J_MAX
+from bluemira.equilibria.constants import NBTI_B_MAX, NBTI_J_MAX
 from bluemira.equilibria.error import EquilibriaError
 
 # from bluemira.equilibria.plotting import CoilPlotter, CoilSetPlotter

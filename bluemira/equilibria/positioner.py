@@ -616,7 +616,7 @@ class RegionMapper:
         if coil_to_region:
             return self.name_str.format(num)
         else:
-            return PF_COIL_NAME.format(num)
+            return f"PF_{num}"
 
     def add_region(self, pfregion):
         """
