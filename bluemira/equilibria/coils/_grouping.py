@@ -307,6 +307,10 @@ class CoilGroup(CoilGroupFieldsMixin):
                 setattr(coil, attr, values[no:end_no])
                 no = end_no
 
+    def __getitem__(self, item):
+        """Get coils"""
+        return self._find_coil(item)
+
     def __copy__(self):
         """Copy dunder method, needed because attribute setter fails for quadratures"""
         cls = self.__class__
@@ -354,6 +358,25 @@ class CoilGroup(CoilGroupFieldsMixin):
 
         self._einsum_str = (
             "...j, ...ij -> ...i" if len(_to_pad) == 1 else "...ij, ...ij -> ...i"
+        )
+
+    def _find_coil(self, name):
+        """Find coil by name"""
+        for c in self._coils:
+            if isinstance(c, CoilGroup):
+                try:
+                    return c._find_coil(name)
+                except KeyError:
+                    pass
+            elif c.name == name:
+                return c
+        else:
+            raise KeyError("Coil not found in Group")
+
+    def get_max_current(self) -> np.ndarray:
+        """Get max currents"""
+        return np.where(
+            np.isnan(self.j_max), np.infty, get_max_current(self.dx, self.dz, self.j_max)
         )
 
     @property
@@ -443,6 +466,11 @@ class CoilGroup(CoilGroupFieldsMixin):
             return zb.reshape(-1, 4)
         else:
             return zb
+
+    @property
+    def _flag_sizefix(self) -> np.ndarray:
+        """Get coil current radius"""
+        return self.__getter("_flag_sizefix")
 
     @property
     def _current_radius(self) -> np.ndarray:
@@ -596,6 +624,8 @@ class SymmetricCircuit(Circuit):
         *coils: Union[Coil, CoilGroup[Coil]],
         symmetry_line: Union[Tuple, np.ndarray] = ((0, 0), (1, 0)),
     ):
+        if len(coils) == 1:
+            coils = (coils[0], deepcopy(coils[0]))
         if len(coils) != 2:
             raise EquilibriaError(
                 f"Wrong number of coils to create a {type(self).__name__}"
@@ -618,9 +648,11 @@ class SymmetricCircuit(Circuit):
             two points making a symmetry line
 
         """
-        if isinstance(symmetry_line, tuple):
-            self._symmetry_line = np.array(symmetry_line)
-
+        self._symmetry_line = (
+            np.array(symmetry_line)
+            if isinstance(symmetry_line, tuple)
+            else symmetry_line
+        )
         self._symmetry_matrix()
 
     def _symmetry_matrix(self):
