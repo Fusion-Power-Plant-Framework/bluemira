@@ -14,6 +14,7 @@ from bluemira.power_cycle.net import (
     PowerLoadError,
     PowerLoadModel,
 )
+from bluemira.power_cycle.tools import adjust_2d_graph_ranges, validate_axes
 
 
 def script_title():
@@ -29,7 +30,12 @@ def test_NetPowerABCError():
 
 
 class TestNetPowerABC:
-    class SampleConcreteClass(NetPowerABC):  # Inner Class
+    class SampleConcreteClass(NetPowerABC):
+        """
+        Inner class that is a dummy concrete class for testing the main
+        abstract class of the test.
+        """
+
         pass
 
     def setup_method(self):
@@ -176,6 +182,7 @@ class TestPowerData:
             {pformat(all_axes)}
             """
         )
+        adjust_2d_graph_ranges()
         plt.show()  # Run with `pytest --plotting-on` to visualize
 
 
@@ -387,7 +394,6 @@ class TestPowerLoad:
             self.load_1,
             self.load_2,
         ]
-
         test_time = self.make_time_list_for_interpolation()
         time_length = len(test_time)
 
@@ -422,6 +428,42 @@ class TestPowerLoad:
                 check = set_from_time.issubset(set_from_refined_time)
                 time_is_subset_of_refined_time = check
                 assert time_is_subset_of_refined_time
+
+    def run_plot(self, detailed_plot_flag):
+        fig = plt.figure()
+        plt.grid()
+        all_axes = validate_axes()
+        list_of_plot_objects = []
+
+        load_samples_and_associated_colors = {
+            "r": self.load_1,
+            "b": self.load_2,
+        }
+        for sample_color in load_samples_and_associated_colors:
+            sample = load_samples_and_associated_colors[sample_color]
+            current_list_of_plot_objects = sample.plot(
+                ax=all_axes, detailed=detailed_plot_flag, c=sample_color
+            )
+            list_of_plot_objects.append(current_list_of_plot_objects)
+            bluemira_debug(
+                f"""
+                {script_title()} (PowerData._plot)
+
+                All plotted objects:
+                {pformat(list_of_plot_objects)}
+                """
+            )
+
+        adjust_2d_graph_ranges()
+        plt.show()  # Run with `pytest --plotting-on` to visualize
+
+    def test_simple_plot(self):
+        detailed_flag = False
+        self.run_plot(detailed_flag)
+
+    def test_detailed_plot(self):
+        detailed_flag = True
+        self.run_plot(detailed_flag)
 
     # ------------------------------------------------------------------
     # ARITHMETICS
