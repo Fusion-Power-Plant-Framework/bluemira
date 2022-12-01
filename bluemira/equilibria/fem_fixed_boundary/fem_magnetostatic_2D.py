@@ -34,8 +34,8 @@ from bluemira.base.look_and_feel import bluemira_print_flush
 from bluemira.equilibria.fem_fixed_boundary.utilities import (
     ScalarSubFunc,
     find_magnetic_axis,
-    plot_scalar_field,
 )
+from bluemira.equilibria.plotting import PLOT_DEFAULTS
 
 
 class FemMagnetostatic2d:
@@ -407,6 +407,7 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
         neumann_bc_function: Optional[Union[dolfin.Expression, dolfin.Function]] = None,
         plot: bool = False,
         debug: bool = False,
+        gif: bool = False,
     ) -> dolfin.Function:
         """
         Solve the G-S problem.
@@ -432,7 +433,7 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
         points = self.mesh.coordinates()
 
         if plot:
-            f, ax, cax = self._setup_plot()
+            f, ax, cax = self._setup_plot(debug)
 
         super().solve(dirichlet_bc_function, dirichlet_marker, neumann_bc_function)
         self._reset_psi_cache()
@@ -449,9 +450,7 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
             diff = new - prev
 
             if plot:
-                self._plot_current_iteration(f, ax, cax, i, points, prev)
-
-                # self._plot_array(ax[2], points, diff, f"G-S error at iteration {i}")
+                self._plot_current_iteration(f, ax, cax, i, points, prev, diff, debug)
 
             eps = np.linalg.norm(diff, ord=2) / np.linalg.norm(new, ord=2)
 
@@ -474,13 +473,10 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
 
         return self.psi
 
-    def _setup_plot(self):
-        fig, ax = plt.subplots(1, 2, figsize=(18, 10))
+    def _setup_plot(self, debug):
+        n_col = 3 if debug else 2
+        fig, ax = plt.subplots(1, n_col, figsize=(18, 10))
         plt.subplots_adjust(wspace=0.5)
-        for axis in ax:
-            axis.set_xlabel("x")
-            axis.set_ylabel("z")
-            axis.set_aspect("equal")
 
         cax = []
         for axis in ax:
@@ -490,25 +486,47 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
         return fig, ax, cax
 
     def _plot_current_iteration(
-        self, f, ax, cax, i_iter: int, points: Iterable, prev: np.ndarray
+        self,
+        f,
+        ax,
+        cax,
+        i_iter: int,
+        points: Iterable,
+        prev: np.ndarray,
+        diff: np.ndarray,
+        debug: bool,
     ):
         for axis in ax:
             axis.clear()
+            axis.set_xlabel("x")
+            axis.set_ylabel("z")
+            axis.set_aspect("equal")
+
         self._plot_array(
             ax[0],
             cax[0],
             points,
             np.array([self._g_func(p) for p in points]),
-            f"J current at iteration {i_iter}",
-            contour=False,
+            f"({i_iter}) " + "$J_{tor}$",
+            PLOT_DEFAULTS["current"]["cmap"],
         )
         self._plot_array(
             ax[1],
             cax[1],
             points,
             prev,
-            f"Normalized magnetic coordinate at iteration {i_iter}",
+            f"({i_iter})" + "$\\Psi_{n}$",
+            PLOT_DEFAULTS["psi"]["cmap"],
         )
+        if debug:
+            self._plot_array(
+                ax[2],
+                cax[2],
+                points,
+                diff,
+                f"({i_iter})" + "$\\Psi_{n} error$",
+                "seismic",
+            )
         plt.pause(0.001)
 
     def _plot_array(
@@ -518,14 +536,19 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
         points: np.ndarray,
         array: np.ndarray,
         title: str,
+        cmap: str,
         contour: bool = True,
     ):
-        cm = ax.tricontourf(points[:, 0], points[:, 1], array)
+        cm = ax.tricontourf(points[:, 0], points[:, 1], array, cmap=cmap)
 
         if contour:
-            ax.tricontour(points[:, 0], points[:, 1], array)
+            ax.tricontour(points[:, 0], points[:, 1], array, colors="k", linewidths=0.2)
 
-        add_colorbar(cm, cax)
+            last_axes = plt.gca()
+        ax = cm.axes
+        fig = ax.figure
+        cbar = fig.colorbar(cm, cax=cax)
+        plt.sca(last_axes)
 
         ax.set_title(title)
 
@@ -629,13 +652,13 @@ from mpl_toolkits.axes_grid1 import make_axes_locatable
 #         add_colorbar(im1, ca)
 
 
-def add_colorbar(mappable, ca):
-    last_axes = plt.gca()
-    ax = mappable.axes
-    fig = ax.figure
-    cbar = fig.colorbar(mappable, cax=ca)
-    plt.sca(last_axes)
-    return cbar
+# def add_colorbar(mappable, ca):
+#     last_axes = plt.gca()
+#     ax = mappable.axes
+#     fig = ax.figure
+#     cbar = fig.colorbar(mappable, cax=ca)
+#     plt.sca(last_axes)
+#     return cbar
 
 
 # for i in range(5):
