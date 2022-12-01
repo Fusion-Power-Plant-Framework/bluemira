@@ -103,12 +103,11 @@ class TestPowerCyclePhase:
             "ramp-up": constants.raw_uc(5.2, "minute", "second"),
             "heating": constants.raw_uc(1.4, "minute", "second"),
         }
-        sample = PowerCyclePhase(sample_name, sample_breakdown)
-        self.sample = sample
+        self.sample_name = sample_name
+        self.sample_breakdown = sample_breakdown
 
     def test_validate_breakdown(self):
-        sample = self.sample
-        name = sample.name
+        name = self.sample_name
         test_arguments = [
             [None, None, None, None],
             [1, 2, 3, 4],
@@ -118,7 +117,23 @@ class TestPowerCyclePhase:
         ]
         for test_keys in test_arguments:
             for test_values in test_arguments:
+
                 breakdown = dict(zip(test_keys, test_values))
+                bluemira_debug(
+                    f"""
+                    {script_title()} (PowerCyclePhase._validate_breakdown)
+
+                    Test keys:
+                    {pformat(test_keys)}
+
+                    Test values:
+                    {pformat(test_keys)}
+
+                    Test breakdown dictionary:
+                    {pformat(breakdown)}
+                    """
+                )
+
                 try:
                     sample = PowerCyclePhase(name, breakdown)
                 except (PowerCyclePhaseError, PowerCycleABCError):
@@ -133,3 +148,26 @@ class TestPowerCyclePhase:
                         # Error must be of non-string dictionary keys
                         with pytest.raises(PowerCyclePhaseError):
                             sample = PowerCyclePhase(name, breakdown)
+
+    def test_constructor(self):
+        sample_name = self.sample_name
+        sample_breakdown = self.sample_breakdown
+        sample = PowerCyclePhase(sample_name, sample_breakdown)
+
+        all_durations_in_breakdown = list(sample_breakdown.values())
+        total_duration = sum(all_durations_in_breakdown)
+        bluemira_debug(
+            f"""
+            {script_title()} (PowerCyclePhase constructor)
+
+            Breakdown dictionary:
+            {pformat(sample_breakdown)}
+
+            Total duration:
+            {pformat(total_duration)}
+
+            Duration calculated by instance:
+            {pformat(sample.duration)}
+            """
+        )
+        assert sample.duration == total_duration
