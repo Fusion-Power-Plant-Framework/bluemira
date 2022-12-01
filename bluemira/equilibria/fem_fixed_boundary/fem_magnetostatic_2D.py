@@ -441,13 +441,13 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
         )
         figname = "Fixed boundary equilibrium iteration "
 
+        diff = np.zeros(len(points))
         if plot:
             f, ax, cax = self._setup_plot(debug)
-
+    
         super().solve(dirichlet_bc_function, dirichlet_marker, neumann_bc_function)
         self._reset_psi_cache()
         self._update_curr()
-        diff = np.zeros(len(points))
 
         for i in range(1, self.max_iter + 1):
             prev_psi = self.psi.vector()[:]
@@ -531,7 +531,7 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
         )
         self._add_colorbar(cm, cax[0], "A/m$^{2}$\n")
 
-        levels = np.linspace(np.amin(prev), np.amax(prev), 20)
+        levels = np.linspace(0, 1, 20)
         cm = self._plot_array(
             ax[1],
             points,
@@ -540,14 +540,17 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
             PLOT_DEFAULTS["psi"]["cmap"],
             levels=levels,
         )
-        self._add_colorbar(cm, cax[1], "")
+        cb = self._add_colorbar(cm, cax[1], "")
+        cb.ax.locator_params(nbins=9)
+        cb.update_ticks()
+        # cb.set_ticks(np.linspace(0, 1, 9))
 
         if debug:
             cm = self._plot_array(
                 ax[2],
                 points,
                 100 * diff,
-                f"({i_iter})" + "$\\Psi_{n} error$",
+                f"({i_iter})" + "$\\Psi_{n}$ error",
                 "seismic",
             )
             self._add_colorbar(cm, cax[2], "%")
@@ -563,8 +566,10 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
         cmap: str,
         levels: Optional[np.ndarray] = None,
     ):
-        cm = ax.tricontourf(points[:, 0], points[:, 1], array, cmap=cmap)
-        ax.tricontour(points[:, 0], points[:, 1], array, colors="k", linewidths=0.2)
+        cm = ax.tricontourf(points[:, 0], points[:, 1], array, cmap=cmap, levels=levels)
+        ax.tricontour(
+            points[:, 0], points[:, 1], array, colors="k", linewidths=0.5, levels=levels
+        )
 
         ax.set_title(title)
         return cm
@@ -574,6 +579,7 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
         last_axes = plt.gca()
         ax = cm.axes
         fig = ax.figure
-        fig.colorbar(cm, cax=cax)
+        cb = fig.colorbar(cm, cax=cax)
         cax.set_title(title)
         plt.sca(last_axes)
+        return cb
