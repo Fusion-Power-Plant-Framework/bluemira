@@ -156,4 +156,5 @@ solve_transport_fixed_boundary(
     relaxation=0.0,
     plot=True,
     debug=True,
+    gif=True,
 )

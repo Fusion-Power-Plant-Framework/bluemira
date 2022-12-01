@@ -236,7 +236,8 @@ def solve_transport_fixed_boundary(
     transport_run_mode: Union[str, RunMode] = "run",
     mesh_filename: str = "FixedBoundaryEquilibriumMesh",
     plot: bool = False,
-    debug: bool = True,
+    debug: bool = False,
+    gif: bool = False,
 ):
     """
     Solve the plasma fixed boundary problem using delta95 and kappa95 as target
@@ -334,7 +335,7 @@ def solve_transport_fixed_boundary(
 
         bluemira_print("Solving fixed boundary Grad-Shafranov...")
 
-        gs_solver.solve(plot=plot, debug=debug)
+        gs_solver.solve(plot=plot, debug=debug, gif=gif)
 
         _, kappa_95, delta_95 = calculate_plasma_shape_params(
             gs_solver.psi_norm_2d,
