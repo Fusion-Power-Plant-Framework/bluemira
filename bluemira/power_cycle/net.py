@@ -11,6 +11,8 @@ from scipy.interpolate import interp1d
 from bluemira.power_cycle.base import PowerCycleABC, PowerCycleError
 from bluemira.power_cycle.tools import _add_dict_entries, validate_axes
 
+# from bluemira.power_cycle.time import PowerCyclePhase
+
 
 class NetPowerABCError(PowerCycleError):
     """
@@ -32,11 +34,6 @@ class NetPowerABC(PowerCycleABC, metaclass=ABCMeta):
     """
     Abstract base class for classes in the Power Cycle module that are
     used to account, sum and manage power loads.
-
-    Parameters
-    ----------
-    name: str
-        Description of the instance.
     """
 
     # ------------------------------------------------------------------
@@ -49,7 +46,7 @@ class NetPowerABC(PowerCycleABC, metaclass=ABCMeta):
     # Index of (time,data) points used as location for 'text'
     _text_index = -1
 
-    # Plot defaults (kwargs arguments for 'matplotlib.pyplot' methods)
+    # Pyplot defaults (kwargs arguments for 'matplotlib.pyplot' methods)
     _plot_kwargs = {
         "c": "k",  # Line color
         "lw": 2,  # Line width
@@ -454,7 +451,7 @@ class PowerLoad(NetPowerABC):
 
         Parameters
         ----------
-        time: float | list[float]
+        time: int | float | list[ int | float ]
             List of time values. [s]
 
         Returns
@@ -658,3 +655,125 @@ class PowerLoad(NetPowerABC):
         another_name = "Resulting PowerLoad"
         another = PowerLoad(another_name, another_set, another_model)
         return another
+
+
+class PhaseLoadError(PowerCycleError):
+    """
+    Exception class for 'PhaseLoad' class of the Power Cycle module.
+    """
+
+    def _errors(self):
+        errors = {
+            "normalize": [
+                "The argument given for 'normalize' is not a valid "
+                f"value for an instance of the {self._source} class. "
+                "Each element of 'normalize' must be a boolean."
+            ],
+            "sanity": [
+                "The attributes 'load_set' and 'normalize' of an "
+                f"instance of the {self._source} class must have the "
+                "same length."
+            ],
+            "display_data": [
+                "The argument passed to the 'display_data' method of "
+                f"the {self._source} class for the input 'option' is "
+                "not valid. Only the strings 'load' and 'normal' are "
+                "accepted.",
+            ],
+        }
+        return errors
+
+
+class PhaseLoad(NetPowerABC):
+    """
+    Representation of the total power load during a pulse phase.
+
+    Defines the phase load with a set of `PowerLoad` instances.
+
+    Parameters
+    ----------
+    name: str
+        Description of the `PhaseLoad` instance.
+    phase: PowerCyclePhase
+        Pulse phase specification, that determines in which phase the
+        load happens.
+    load_set: PowerLoad | list[PowerLoad]
+        Collection of instances of the `PowerLoad` class that define
+        the `PhaseLoad` object.
+    normalize: bool | list[bool]
+        List of boolean values that defines which elements of `load_set`
+        have their time-dependence normalized in respect to the phase
+        duration. A value of `True` forces a normalization, while a
+        value of `False` does not and time values beyond the phase
+        duration are ignored.
+    """
+
+    # ------------------------------------------------------------------
+    # CLASS ATTRIBUTES & CONSTRUCTOR
+    # ------------------------------------------------------------------
+
+    # Override number of points
+    _n_points = 100
+
+    # Override pyplot defaults
+    _plot_defaults = {
+        "c": "k",  # Line color
+        "lw": 2,  # Line width
+        "ls": "-",  # Line style
+    }
+
+    # Defaults for detailed plots
+    _detailed_defaults = {
+        "c": "k",  # Line color
+        "lw": 1,  # Line width
+        "ls": "--",  # Line style
+    }
+
+    def __init__(self, name, phase, load_set, normalize):
+
+        super().__init__(name)
+
+        self.phase = self._validate_phase(phase)
+        self.load_set = self._validate_load_set(load_set)
+        self.normalize = self._validate_normalize(normalize)
+
+        self._sanity()
+
+    '''
+    @staticmethod
+    def _validate_phase(phase):
+        """
+        Validate 'phase' input to be a valid PowerCycleTimeline phase.
+        """
+        PowerCyclePhase._validate(phase)
+        return phase
+
+    @classmethod
+    def _validate_load_set(cls, load_set):
+        """
+        Validate 'load_set' input to be a list of `PowerLoad` instances.
+        """
+        load_set = super()._validate_list(load_set)
+        for element in load_set:
+            PowerLoad._validate(element)
+        return load_set
+
+    @classmethod
+    def _validate_normalize(cls, normalize):
+        """
+        Validate 'normalize' input to be a list of boolean values.
+        """
+        normalize = super()._validate_list(normalize)
+        for element in normalize:
+            if not isinstance(element, (bool)):
+                cls._issue_error("normalize")
+        return normalize
+
+    def _sanity(self):
+        """
+        Validate instance to have `load_set` and `normalize` attributes
+        of same length.
+        """
+        if not len(self.load_set) == len(self.normalize):
+            self._issue_error("sanity")
+    '''

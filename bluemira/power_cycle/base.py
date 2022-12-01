@@ -57,6 +57,12 @@ class PowerCycleABCError(PowerCycleError):
                 "Invalid instance. The tested object is not an "
                 f"instance of the {self._source} class."
             ],
+            "nonnegative": [
+                "Invalid value. The tested value must be a non-"
+                "numerical negative value to be processed by this "
+                f"instance of a child class of the {self._source} "
+                "class."
+            ],
         }
         return errors
 
@@ -97,6 +103,27 @@ class PowerCycleABC(ABC):
         if not isinstance(argument, list):
             argument = [argument]
         return argument
+
+    @staticmethod
+    def validate_nonnegative(argument):
+        """
+        Validate an argument to be a nonnegative numerical value (i.e.
+        an instance of either the 'int' or the 'float' classes).
+        """
+        if isinstance(argument, int) or isinstance(argument, float):
+            if argument >= 0:
+                return argument
+            else:
+                raise PowerCycleABCError(
+                    "nonnegative",
+                    "The value is negative.",
+                )
+        else:
+            raise PowerCycleABCError(
+                "nonnegative",
+                "The value is not an instance of either the 'int' nor "
+                "the 'float' classes.",
+            )
 
     @classmethod
     def validate_class(cls, instance):
