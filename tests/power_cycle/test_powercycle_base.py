@@ -5,8 +5,6 @@ import pytest
 from bluemira.base.look_and_feel import bluemira_debug
 from bluemira.power_cycle.base import PowerCycleABC, PowerCycleABCError
 
-# import matplotlib.pyplot as plt
-
 
 def script_title():
     return "Test Power Cycle 'base'"
@@ -25,7 +23,12 @@ def test_PowerCycleABCError():
 
 
 class TestPowerCycleABC:
-    class SampleConcreteClass(PowerCycleABC):  # Inner Class
+    class SampleConcreteClass(PowerCycleABC):
+        """
+        Inner class that is a dummy concrete class for testing the main
+        abstract class of the test.
+        """
+
         pass
 
     def setup_method(self):
@@ -35,7 +38,9 @@ class TestPowerCycleABC:
         test_arguments = [
             None,
             1.2,
+            -1.2,
             70,
+            -70,
             "some string",
             [1, 2, 3, 4],
             (1, 2, 3, 4),
@@ -77,6 +82,25 @@ class TestPowerCycleABC:
         for argument in all_arguments:
             validated_argument = sample.validate_list(argument)
             assert isinstance(validated_argument, list)
+
+    def test_validate_nonnegative(self):
+        sample = self.sample
+        all_arguments = self.test_arguments
+        for argument in all_arguments:
+            is_integer = isinstance(argument, int)
+            is_float = isinstance(argument, float)
+            is_numerical = is_integer or is_float
+            if is_numerical:
+                is_nonnegative = argument >= 0
+                if is_nonnegative:
+                    out = sample.validate_nonnegative(argument)
+                    assert out == argument
+                else:
+                    with pytest.raises(PowerCycleABCError):
+                        out = sample.validate_nonnegative(argument)
+            else:
+                with pytest.raises(PowerCycleABCError):
+                    out = sample.validate_nonnegative(argument)
 
     def test_validate_class(self):
         sample = self.sample
