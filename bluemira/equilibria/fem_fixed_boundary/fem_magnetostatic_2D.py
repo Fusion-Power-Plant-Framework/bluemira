@@ -28,14 +28,18 @@ from typing import Callable, Iterable, Optional, Union
 import dolfin
 import matplotlib.pyplot as plt
 import numpy as np
+from mpl_toolkits.axes_grid1 import make_axes_locatable
 
 from bluemira.base.constants import MU_0
+from bluemira.base.file import try_get_bluemira_path
 from bluemira.base.look_and_feel import bluemira_print_flush
+from bluemira.equilibria.constants import DPI_GIF, PLT_PAUSE
 from bluemira.equilibria.fem_fixed_boundary.utilities import (
     ScalarSubFunc,
     find_magnetic_axis,
 )
 from bluemira.equilibria.plotting import PLOT_DEFAULTS
+from bluemira.utilities.plot_tools import make_gif, save_figure
 
 
 class FemMagnetostatic2d:
@@ -431,6 +435,11 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
             dolfin.Function for psi
         """
         points = self.mesh.coordinates()
+        plot = any((plot, debug, gif))
+        folder = try_get_bluemira_path(
+            "", subfolder="generated_data", allow_missing=False
+        )
+        figname = "Fixed boundary equilibrium iteration "
 
         if plot:
             f, ax, cax = self._setup_plot(debug)
@@ -451,6 +460,14 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
 
             if plot:
                 self._plot_current_iteration(f, ax, cax, i, points, prev, diff, debug)
+                if debug or gif:
+                    save_figure(
+                        f,
+                        figname + str(i),
+                        save=True,
+                        folder=folder,
+                        dpi=DPI_GIF,
+                    )
 
             eps = np.linalg.norm(diff, ord=2) / np.linalg.norm(new, ord=2)
 
@@ -470,6 +487,8 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
 
         if plot:
             plt.close(f)
+        if gif:
+            make_gif(folder, figname, clean=not debug)
 
         return self.psi
 
@@ -502,169 +521,58 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
             axis.set_ylabel("z")
             axis.set_aspect("equal")
 
-        self._plot_array(
+        cm = self._plot_array(
             ax[0],
-            cax[0],
             points,
             np.array([self._g_func(p) for p in points]),
             f"({i_iter}) " + "$J_{tor}$",
             PLOT_DEFAULTS["current"]["cmap"],
         )
-        self._plot_array(
+        self._add_colorbar(cm, cax[0], "A/m$^{2}$\n")
+
+        levels = np.linspace(np.amin(prev), np.amax(prev), 20)
+        cm = self._plot_array(
             ax[1],
-            cax[1],
             points,
             prev,
             f"({i_iter})" + "$\\Psi_{n}$",
             PLOT_DEFAULTS["psi"]["cmap"],
+            levels=levels,
         )
+        self._add_colorbar(cm, cax[1], "")
+
         if debug:
-            self._plot_array(
+            cm = self._plot_array(
                 ax[2],
-                cax[2],
                 points,
-                diff,
+                100 * diff,
                 f"({i_iter})" + "$\\Psi_{n} error$",
                 "seismic",
             )
-        plt.pause(0.001)
+            self._add_colorbar(cm, cax[2], "%")
+
+        plt.pause(PLT_PAUSE)
 
     def _plot_array(
         self,
         ax,
-        cax,
         points: np.ndarray,
         array: np.ndarray,
         title: str,
         cmap: str,
-        contour: bool = True,
+        levels: Optional[np.ndarray] = None,
     ):
         cm = ax.tricontourf(points[:, 0], points[:, 1], array, cmap=cmap)
-
-        if contour:
-            ax.tricontour(points[:, 0], points[:, 1], array, colors="k", linewidths=0.2)
-
-            last_axes = plt.gca()
-        ax = cm.axes
-        fig = ax.figure
-        cbar = fig.colorbar(cm, cax=cax)
-        plt.sca(last_axes)
+        ax.tricontour(points[:, 0], points[:, 1], array, colors="k", linewidths=0.2)
 
         ax.set_title(title)
+        return cm
 
-
-# import time
-
-# import matplotlib.pyplot as plt
-# import numpy as np
-from mpl_toolkits.axes_grid1 import make_axes_locatable
-
-# def run():
-#     v = 1 + abs(np.random.rand())
-#     data1 = v * (xx + v * zz)
-#     data2 = v * (xx * zz * v)
-#     data3 = v * np.hypot(xx, v * zz)
-#     return data1, data2, data3
-
-
-# x = np.linspace(1, 10, 50)
-# z = np.linspace(-10, 10, 100)
-# xx, zz = np.meshgrid(x, z)
-# fig, ax = plt.subplots(1, 3, figsize=(18, 10))
-# plt.subplots_adjust(wspace=0.5)
-# for axis in ax:
-#     axis.set_xlabel("x")
-#     axis.set_ylabel("z")
-#     axis.set_aspect("equal")
-
-# cax = []
-# for axis in ax:
-#     divider = make_axes_locatable(axis)
-#     cax.append(divider.append_axes("right", size="10%", pad=0.1))
-
-
-# def update_fig(data1, data2, data3):
-#     for axis in ax:
-#         axis.clear()
-
-#     for axis, data, ca in zip(ax, [data1, data2, data3], cax):
-#         im1 = axis.contourf(xx, zz, data, cmap="bone")
-#         add_colorbar(im1, ca)
-
-
-# def add_colorbar(mappable, ca):
-#     last_axes = plt.gca()
-#     ax = mappable.axes
-#     fig = ax.figure
-#     cbar = fig.colorbar(mappable, cax=ca)
-#     plt.sca(last_axes)
-#     return cbar
-
-
-# for i in range(5):
-#     data1, data2, data3 = run()
-#     time.sleep(1)
-#     update_fig(data1, data2, data3)
-#     plt.pause(0.001)
-
-# plt.close()
-
-
-# import time
-
-# import matplotlib.pyplot as plt
-# import numpy as np
-# from mpl_toolkits.axes_grid1 import make_axes_locatable
-
-
-# def run():
-#     v = 1 + abs(np.random.rand())
-#     data1 = v * (xx + v * zz)
-#     data2 = v * (xx * zz * v)
-#     data3 = v * np.hypot(xx, v * zz)
-#     return data1, data2, data3
-
-
-# x = np.linspace(1, 10, 50)
-# z = np.linspace(-10, 10, 100)
-# xx, zz = np.meshgrid(x, z)
-# fig, ax = plt.subplots(1, 3, figsize=(18, 10))
-# plt.subplots_adjust(wspace=0.5)
-
-# for axis in ax:
-#     axis.set_xlabel("x")
-#     axis.set_ylabel("z")
-#     axis.set_aspect("equal")
-
-
-# cax = []
-# for axis in ax:
-#     divider = make_axes_locatable(axis)
-#     cax.append(divider.append_axes("right", size="10%", pad=0.1))
-
-
-# def update_fig(data1, data2, data3):
-#     for axis in ax:
-#         axis.clear()
-
-#     for axis, data, ca in zip(ax, [data1, data2, data3], cax):
-#         im1 = axis.contourf(xx, zz, data, cmap="bone")
-#         add_colorbar(im1, ca)
-
-
-# def add_colorbar(mappable, ca):
-#     last_axes = plt.gca()
-#     ax = mappable.axes
-#     fig = ax.figure
-#     cbar = fig.colorbar(mappable, cax=ca)
-#     plt.sca(last_axes)
-#     return cbar
-
-
-# for i in range(5):
-#     data1, data2, data3 = run()
-#     time.sleep(1)
-#     update_fig(data1, data2, data3)
-#     plt.pause(0.001)
-
-# plt.close()
+    @staticmethod
+    def _add_colorbar(cm, cax, title):
+        last_axes = plt.gca()
+        ax = cm.axes
+        fig = ax.figure
+        fig.colorbar(cm, cax=cax)
+        cax.set_title(title)
+        plt.sca(last_axes)
