@@ -376,7 +376,7 @@ class TestSymmetricCircuit:
     def test_position(self):
         circ = copy.deepcopy(self.circuit)
         before = circ.x.copy()
-        circ.x += 1
+        circ.x = circ.x + 1
         assert np.allclose(before + 1, circ.x)
 
 
@@ -396,7 +396,7 @@ class TestCoilSet:
                 j_max=10.0,
                 b_max=100,
                 ctype="PF",
-                name="PF_2.1",
+                name="PF_2",
             ),
             Coil(
                 x=1.5,
@@ -407,7 +407,7 @@ class TestCoilSet:
                 j_max=10.0,
                 b_max=100,
                 ctype="PF",
-                name="PF_2.2",
+                name="PF_3",
             ),
         )
 
@@ -416,11 +416,11 @@ class TestCoilSet:
     def test_group_vecs(self):
         x, z, dx, dz, currents = self.coilset.to_group_vecs()
 
+        assert np.allclose(currents, np.array([2e6, 1e6, 1e6]))
         assert np.allclose(x, np.array([4, 1.5, 1.5]))
         assert np.allclose(z, np.array([10, 6, -6]))
-        assert np.allclose(dx, np.array([1, 0.25, 0.25]))
         assert np.allclose(dz, np.array([0.5, 0.5, 0.5]))
-        assert np.allclose(currents, np.array([2e6, 1e6, 1e6]))
+        assert np.allclose(dx, np.array([1, 0.25, 0.25]))
 
     def test_member_attributes(self):
         assert np.isclose(self.coilset["PF_1"].x, 4)
@@ -444,13 +444,13 @@ class TestCoilSet:
         assert np.isclose(self.coilset["PF_1"].current, 2e6)
         assert np.isclose(self.coilset["PF_2"].current, 1e6)
 
-        coil2 = self.coilset["PF_1"]
-        coil2.set_dz(0.77)
-        symm_circuit = self.coilset["PF_2"]
-        symm_circuit.set_dz(0.6)
-        assert np.isclose(coil2.dz, 0.77)
-        assert np.isclose(symm_circuit["PF_2.1"].dz, 0.6)
-        assert np.isclose(symm_circuit["PF_2.2"].dz, 0.6)
+        coil1 = self.coilset["PF_1"]
+        coil1.dz = 0.77
+        symm_circuit = self.coilset._coils[1]
+        symm_circuit.dz = 0.6
+        assert np.isclose(coil1.dz, 0.77)
+        assert np.allclose(symm_circuit.dz, 0.6)
+        assert np.isclose(self.coilset["PF_3"].dz, 0.6)
 
     def test_numbers(self):
         assert self.coilset.n_coils("PF") == 2
@@ -459,22 +459,21 @@ class TestCoilSet:
         assert self.coilset.n_coils() == 3
 
     def test_currents(self):
-        raise
         set_currents = np.array([3e6, 4e6])
-        self.coilset.control_current = set_currents
-        currents = self.coilset.control_current
-        assert np.allclose(set_currents, currents)
+        self.coilset.get_control_coils().current = set_currents
+        currents = self.coilset.get_control_coils().current
+        assert np.allclose(set_currents, currents[:-1])
+        assert np.isclose(set_currents[-1], currents[-1])
 
     def test_material_assignment(self):
         test_j_max = 7.0
         test_b_max = 24.0
-        self.coilset.assign_coil_materials("PF", j_max=test_j_max, b_max=test_b_max)
-        n_indep_coils = len(self.coilset.coils.values())
-        assert len(self.coilset.get_max_currents(0.0)) == n_indep_coils
-        assert len(self.coilset.get_max_fields()) == n_indep_coils
-        for coil in self.coilset.coils.values():
-            assert np.isclose(coil.j_max, test_j_max)
-            assert np.isclose(coil.b_max, test_b_max)
+        self.coilset.assign_material("PF", j_max=test_j_max, b_max=test_b_max)
+        n_indep_coils = self.coilset.n_coils("PF")
+        assert len(self.coilset.get_max_current()) == n_indep_coils + 1
+        assert len(self.coilset.b_max) == n_indep_coils + 1
+        assert np.allclose(self.coilset.j_max[1:], test_j_max)
+        assert np.allclose(self.coilset.b_max[1:], test_b_max)
 
 
 class TestCoilSetSymmetry:

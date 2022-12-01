@@ -105,13 +105,6 @@ class CoilGroup(CoilGroupFieldsMixin):
         self._coils = coils
         self._pad_discretisation(self.__list_getter("_quad_x"))
 
-    def assign_material(
-        self, j_max: Union[float, Iterable[float]], b_max: Union[float, Iterable[float]]
-    ):
-        """Assign material J and B to Coilgroup"""
-        self.j_max = j_max
-        self.b_max = b_max
-
     def n_coils(self, ctype: Optional[Union[str, CoilType]] = None) -> int:
         """
         Get number of coils
@@ -272,7 +265,9 @@ class CoilGroup(CoilGroupFieldsMixin):
 
     def __getter(self, attr: str) -> np.ndarray:
         """Get attribute from coils and convert to flattened numpy array"""
-        return np.array([*flatten_iterable(self.__list_getter(attr))])
+        arr = np.array([*flatten_iterable(self.__list_getter(attr))])
+        arr.flags.writeable = False
+        return arr
 
     def __quad_getter(self, attr: str) -> np.ndarray:
         """Get quadratures and autopad to create non ragged array"""
@@ -281,7 +276,7 @@ class CoilGroup(CoilGroupFieldsMixin):
         for i, d in enumerate(self._pad_size):
             _quad_list[i] = np.pad(_quad_list[i], (0, d))
 
-        return np.array(_quad_list.tolist())
+        return np.vstack(_quad_list)
 
     def __setter(
         self,
@@ -299,6 +294,8 @@ class CoilGroup(CoilGroupFieldsMixin):
             if end_no > no_val:
                 if no_val == 1:
                     setattr(coil, attr, np.repeat(values[0], end_no - no))
+                elif isinstance(coil, Circuit):
+                    setattr(coil, attr, np.repeat(values[-1], coil.n_coils()))
                 else:
                     raise ValueError(
                         "The number of elements is less than the number of coils"
@@ -352,7 +349,7 @@ class CoilGroup(CoilGroupFieldsMixin):
         exists in the :func:_combined_control method of CoilGroupFieldMixin.
 
         """
-        all_len = np.array([len(q) for q in _to_pad])
+        all_len = np.array([q.shape[-1] for q in _to_pad])
         max_len = max(all_len)
         self._pad_size = max_len - all_len
 
@@ -372,6 +369,27 @@ class CoilGroup(CoilGroupFieldsMixin):
                 return c
         else:
             raise KeyError("Coil not found in Group")
+
+    def _get_coiltype(self, ctype):
+        """Find coil by type"""
+        coils = []
+        if isinstance(ctype, str):
+            ctype = CoilType[ctype]
+        for c in self._coils:
+            if isinstance(c, CoilGroup):
+                coils.extend(c._get_coiltype(ctype))
+            elif c.ctype == ctype:
+                coils.append(c)
+        return coils
+
+    def get_coiltype(self, ctype):
+        return CoilGroup(*self._get_coiltype(ctype))
+
+    def assign_material(self, ctype, j_max, b_max):
+        """Assign material J and B to Coilgroup"""
+        cg = self.get_coiltype(ctype)
+        cg.j_max = j_max
+        cg.b_max = b_max
 
     def get_max_current(self) -> np.ndarray:
         """Get max currents"""
@@ -688,16 +706,20 @@ class SymmetricCircuit(Circuit):
         """
         Set x coordinate of each coil
         """
-        self._coils[0].x += np.mean(new_x) - self._get_group_x_centre()
-        self._coils[1].x -= self._symmetrise()[0]
+        if isinstance(new_x, np.ndarray):
+            new_x = np.mean(new_x[0])
+        self._coils[0].x = self._coils[0].x + new_x - self._get_group_x_centre()
+        self._coils[1].x = self._coils[1].x - self._symmetrise()[0]
 
     @Circuit.z.setter
     def z(self, new_z: float):
         """
         Set z coordinate of each coil
         """
-        self._coils[0].z += np.mean(new_z) - self._get_group_z_centre()
-        self._coils[1].z -= self._symmetrise()[1]
+        if isinstance(new_z, np.ndarray):
+            new_z = np.mean(new_z[0])
+        self._coils[0].z = self._coils[0].z + new_z - self._get_group_z_centre()
+        self._coils[1].z = self._coils[1].z + self._symmetrise()[1]
 
     def _get_group_x_centre(self) -> np.ndarray:
         """Get the x centre of the first coil group"""
@@ -732,7 +754,9 @@ class CoilSet(CoilGroup):
     """
 
     def __init__(
-        self, *coils: Union[Coil, CoilGroup[Coil]], control_names: Optional[List] = None
+        self,
+        *coils: Union[Coil, CoilGroup[Coil]],
+        control_names: Union[bool, List] = True,
     ):
         super().__init__(*coils)
         self.control = control_names
@@ -743,15 +767,30 @@ class CoilSet(CoilGroup):
         return self._control
 
     @control.setter
-    def control(self, control_names: List):
+    def control(self, control_names: Union[bool, List]):
         """Set control coils"""
         names = self.name
-        self._control_ind = (
-            np.arange(len(names)).tolist()
-            if control_names is None
-            else [names.index(c) for c in control_names]
-        )
+        if isinstance(control_names, List):
+            self._control_ind = np.arange(len([names.index(c) for c in control_names]))
+        elif control_names or control_names is None:
+            self._control_ind = np.arange(len(names)).tolist()
+        else:
+            self._control_ind = []
         self._control = [names[c] for c in self._control_ind]
+
+    def get_control_coils(self):
+        coils = []
+        for c in self._coils:
+            names = c.name
+            if isinstance(names, List):
+                # is subset of list
+                if isinstance(c, Circuit) and any([n in self.control for n in names]):
+                    coils.append(c)
+                else:
+                    coils.extend(c.get_control_coils()._coils)
+            elif names in self.control:
+                coils.append(c)
+        return CoilGroup(*coils)
 
     def _sum(
         self, output: np.ndarray, sum_coils: bool = False, control: bool = False
@@ -776,6 +815,9 @@ class CoilSet(CoilGroup):
         ind = self._control_ind if control else slice(None)
 
         return np.sum(output[..., ind], axis=-1) if sum_coils else output[..., ind]
+
+    def get_coiltype(self, ctype):
+        return CoilSet(*super()._get_coiltype(ctype))
 
     @property
     def area(self) -> float:

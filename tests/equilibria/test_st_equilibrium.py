@@ -272,7 +272,7 @@ class TestSTEquilibrium:
             coilset_temp, grid, self.profiles, force_symmetry=True, psi=None
         )
         opt_problem = UnconstrainedTikhonovCurrentGradientCOP(
-            coilset_temp, eq, constraint_set, gamma=tikhonov_gamma
+            coilset, eq, constraint_set, gamma=tikhonov_gamma
         )
         opt_problem.optimise()
 

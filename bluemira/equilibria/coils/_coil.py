@@ -182,6 +182,7 @@ class Coil(CoilFieldsMixin):
         if not self._flag_sizefix and None in (self.dx, self.dz):
             self._dx, self._dz = 0, 0
             self._discretise()
+            self._set_coil_attributes()
 
     def __repr__(self):
         """

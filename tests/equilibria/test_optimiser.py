@@ -108,6 +108,7 @@ class TestCoilsetOptimiser:
         x += 1.1
         z += 0.6
         currents += 0.99
+
         updated_coilset_state = np.concatenate((x, z, currents))
         self.optimiser.set_coilset_state(
             self.optimiser.coilset, updated_coilset_state, self.optimiser.scale
@@ -122,12 +123,12 @@ class TestCoilsetOptimiser:
         assert np.allclose(state_i, currents)
 
     def test_current_bounds(self):
-        n_control_currents = len(self.coilset.get_control_currents())
+        n_control_currents = len(self.coilset.current[self.coilset._control_ind])
         user_max_current = 2.0e9
         user_current_limits = (
             user_max_current * np.ones(n_control_currents) / self.optimiser.scale
         )
-        coilset_current_limits = self.optimiser.coilset.get_max_currents(0.0)
+        coilset_current_limits = self.optimiser.coilset.get_max_current()
 
         control_current_limits = np.minimum(user_current_limits, coilset_current_limits)
         bounds = (-control_current_limits, control_current_limits)

@@ -168,13 +168,9 @@ class CoilsetOptimisationProblem(OptimisationProblem):
         """
         x, z, currents = np.array_split(coilset_state, 3)
 
-        # coilset.set_positions not currently working for
-        # SymmetricCircuits, it appears...
-        # positions = list(zip(x, z))
-        # self.coilset.set_positions(positions)
         coilset.x = x
         coilset.z = z
-        coilset.current[coilset._control_ind] = currents * current_scale
+        coilset.current = currents * current_scale
 
     @staticmethod
     def get_state_bounds(x_bounds, z_bounds, current_bounds):
@@ -728,7 +724,7 @@ class UnconstrainedTikhonovCurrentGradientCOP(CoilsetOptimisationProblem):
         current_adjustment = tikhonov(a_mat, b_vec, self.gamma)
 
         # Update parameterisation (coilset).
-        self.coilset.current += current_adjustment
+        self.coilset.current = self.coilset.current + current_adjustment
         return self.coilset
 
 
@@ -825,7 +821,7 @@ class TikhonovCurrentCOP(CoilsetOptimisationProblem):
 
             x0 = np.clip(initial_currents, self.opt.lower_bounds, self.opt.upper_bounds)
         currents = self.opt.optimise(x0=x0)
-        self.coilset.set_control_currents(currents * self.scale)
+        self.coilset.get_control_coils().current = currents * self.scale
         return self.coilset
 
 
@@ -881,7 +877,7 @@ class MinimalCurrentCOP(CoilsetOptimisationProblem):
             x0 = np.clip(initial_currents, self.opt.lower_bounds, self.opt.upper_bounds)
 
         currents = self.opt.optimise(x0=x0)
-        self.coilset.set_control_currents(currents * self.scale)
+        self.coilset.get_control_coils().current = currents * self.scale
         return self.coilset
 
 
@@ -1285,5 +1281,5 @@ class BreakdownCOP(CoilsetOptimisationProblem):
             initial_currents, self.opt.lower_bounds, self.opt.upper_bounds
         )
         currents = self.opt.optimise(x0=initial_currents)
-        self.coilset.set_control_currents(currents * self.scale)
+        self.coilset.get_control_coils().current = currents * self.scale
         return self.coilset

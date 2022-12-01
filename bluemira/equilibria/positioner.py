@@ -166,7 +166,9 @@ class CoilPositioner:
         l_norm = vector_lengthnorm(tf_loop.x, tf_loop.z)
         pos = np.linspace(0, 1, n_PF)
         xint, zint = interp1d(l_norm, tf_loop.x)(pos), interp1d(l_norm, tf_loop.z)(pos)
-        return [Coil(xint[i], zint[i], j_max=NBTI_J_MAX) for i in range(n_PF)]
+        return [
+            Coil(xint[i], zint[i], ctype="PF", j_max=NBTI_J_MAX) for i in range(n_PF)
+        ]
 
     def equispace_CS(self, x_cs, tk_cs, z_min, z_max, n_CS, j_max=12.5):
         """
@@ -393,14 +395,22 @@ class XZLMapper:
         l_values = np.zeros(track_coils)
         lb = np.zeros(track_coils)
         ub = np.zeros(track_coils)
-        pf_coils = [coil for coil in coilset.coils.values() if coil.name in mapping]
+        pf_coils = [self._coilset[m] for m in mapping]
         for i, coil in enumerate(pf_coils):
             loc = self.xz_to_L(coil.x, coil.z)
             if self.exclusions is not None:
                 for ex in self.exclusions:
                     if ex[0] < loc < ex[1]:
-                        back = -(loc - ex[0] + 2 * coil.rc / self.pf_coords.length)
-                        forw = ex[1] - loc + 2 * coil.rc / self.pf_coords.length
+                        back = -(
+                            loc
+                            - ex[0]
+                            + 2 * coil._current_radius / self.pf_coords.length
+                        )
+                        forw = (
+                            ex[1]
+                            - loc
+                            + 2 * coil._current_radius / self.pf_coords.length
+                        )
                         if abs(back) >= abs(forw):
                             d_l = forw
                             break
@@ -418,13 +428,11 @@ class XZLMapper:
         # El vector L tiene que ser adjustado a sus nuevos limites
         l_values = tools.clip(l_values, lb, ub)
         if self.flag_CS:
-            l_cs = np.zeros(coilset.n_CS)
-            lbcs = np.zeros(coilset.n_CS)
-            ubcs = np.ones(coilset.n_CS)
-            z = []
-            for i, coil in enumerate(coilset.coils.values()):
-                if coil.ctype == "CS":
-                    z.append(coil.z)
+            n_CS = coilset.n_coils("CS")
+            l_cs = np.zeros(n_CS)
+            lbcs = np.zeros(n_CS)
+            ubcs = np.ones(n_CS)
+            z = coilset.get_coiltype("CS").z
             z = np.sort(z)[::-1]
             l_cs = self.z_to_L(z)
             l_values = np.append(l_values, l_cs)
@@ -728,7 +736,7 @@ class RegionMapper:
 
         """
         for no, (name, region) in enumerate(self.regions.items()):
-            coil = self._coilset.coils[self._name_converter(name)]
+            coil = self._coilset[self._name_converter(name)]
             self.max_currents[no] = get_max_current(
                 *inscribed_rect_in_poly(
                     region.loop.x, region.loop.z, coil.x, coil.z, coil.dx / coil.dz

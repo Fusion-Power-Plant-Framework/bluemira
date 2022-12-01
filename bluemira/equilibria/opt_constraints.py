@@ -316,7 +316,7 @@ class CoilForceConstraints(UpdateableConstraint, OptimisationConstraint):
         """
         Calculate control response of a CoilSet to the constraint.
         """
-        return self.coilset.control_F(self.coilset)
+        return np.moveaxis(self.coilset.control_F(self.coilset), -1, 0)
 
     def evaluate(self, equilibrium):
         """
@@ -651,7 +651,7 @@ class PsiBoundaryConstraint(AbsoluteMagneticConstraint):
         """
         Calculate control response of a CoilSet to the constraint.
         """
-        return coilset.unit_psi(self.x, self.z, control=True).T
+        return coilset.unit_psi(self.x, self.z, control=True)
 
     def evaluate(self, eq):
         """

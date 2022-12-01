@@ -73,19 +73,14 @@ class TestXZLMapper:
         plt.close("all")
 
     def test_xzl(self):
-        l_pos, lb, ub = self.xzl_map.get_Lmap(
-            self.coilset, set(self.coilset.get_PF_names())
-        )
+        pfcoils = self.coilset.get_coiltype("PF")
+
+        l_pos, lb, ub = self.xzl_map.get_Lmap(self.coilset, set(pfcoils.name))
 
         self.xzl_map.add_exclusion_zones(self.zones)
 
-        l_pos, lb, ub = self.xzl_map.get_Lmap(
-            self.coilset, set(self.coilset.get_PF_names())
-        )
-        positions = []
-        for pos in l_pos:
-            positions.append(self.xzl_map.L_to_xz(pos))
-        self.coilset.set_positions(positions)
+        l_pos, lb, ub = self.xzl_map.get_Lmap(self.coilset, set(pfcoils.name))
+        pfcoils.position = np.array([self.xzl_map.L_to_xz(pos) for pos in l_pos]).T
         self.coilset.plot(self.ax)
 
     def test_2(self):
@@ -260,9 +255,14 @@ class TestZLMapperEdges:
         positioner = CoilPositioner(9, 3.1, 0.33, 1.59, tf, 2.6, 0.5, 6, 5)
         cls.coilset = positioner.make_coilset()
         cls.coilset.current = 1e6
-        solenoid = cls.coilset.get_solenoid()
+        solenoid = cls.coilset.get_coiltype("CS")
         cls.xz_map = XZLMapper(
-            tf, solenoid.radius, solenoid.z_min, solenoid.z_max, solenoid.gap, CS=True
+            tf,
+            solenoid.x[0],
+            np.min(solenoid.z - solenoid.dz[0]),
+            np.max(solenoid.z + solenoid.dz),
+            0.1,
+            CS=True,
         )
 
         _, cls.ax = plt.subplots()
@@ -277,17 +277,15 @@ class TestZLMapperEdges:
     def test_cs_zl(self):
 
         l_pos, lb, ub = self.xz_map.get_Lmap(
-            self.coilset, set(self.coilset.get_PF_names())
+            self.coilset, set(self.coilset.get_coiltype("PF").name)
         )
         self.xz_map.add_exclusion_zones(self.zones)  # au cas ou
-        _, _ = self.xz_map.L_to_xz(l_pos[: self.coilset.n_PF])
-        xcs, zcs, dzcs = self.xz_map.L_to_zdz(l_pos[self.coilset.n_PF :])
+        _, _ = self.xz_map.L_to_xz(l_pos[: self.coilset.n_coils("PF")])
+        xcs, zcs, dzcs = self.xz_map.L_to_zdz(l_pos[self.coilset.n_coils("PF") :])
         l_cs = self.xz_map.z_to_L(zcs)
-        assert np.allclose(l_cs, l_pos[self.coilset.n_PF :])
-        solenoid = self.coilset.get_solenoid()
-        z = []
-        for c in solenoid.coils:
-            z.append(c.z)
+        assert np.allclose(l_cs, l_pos[self.coilset.n_coils("PF") :])
+        solenoid = self.coilset.get_coiltype("CS")
+        z = solenoid.z
         z = np.sort(z)  # [::-1]  # Fixed somewhere else jcrois
         assert np.allclose(z, zcs), z - zcs
 

@@ -186,6 +186,8 @@ def make_coilset(
     z_min = bb.z_min
     z_max = bb.z_max
     solenoid = make_solenoid(r_cs, tk_cs, z_min, z_max, g_cs, tk_cs_ins, tk_cs_cas, n_CS)
+    for s in solenoid:
+        s.fix_size()
 
     tf_track = offset_wire(tf_boundary, 1, join="arc")
     x_c, z_c = make_PF_coil_positions(
@@ -206,10 +208,11 @@ def make_coilset(
             j_max=PF_jmax,
             b_max=PF_bmax,
         )
+        coil.fix_size()
         pf_coils.append(coil)
-    coilset = CoilSet(*pf_coils + solenoid, sizefix=True, control=True)
-    coilset.assign_coil_materials("PF", j_max=PF_jmax, b_max=PF_bmax)
-    coilset.assign_coil_materials("CS", j_max=CS_jmax, b_max=CS_bmax)
+    coilset = CoilSet(*pf_coils + solenoid, control_names=True)
+    coilset.assign_material("PF", j_max=PF_jmax, b_max=PF_bmax)
+    coilset.assign_material("CS", j_max=CS_jmax, b_max=CS_bmax)
     return coilset
 
 
