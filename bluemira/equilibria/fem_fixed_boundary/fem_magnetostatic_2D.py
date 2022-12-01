@@ -447,16 +447,11 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
         super().solve(dirichlet_bc_function, dirichlet_marker, neumann_bc_function)
         self._reset_psi_cache()
         self._update_curr()
+        diff = np.zeros(len(points))
 
         for i in range(1, self.max_iter + 1):
             prev_psi = self.psi.vector()[:]
             prev = np.array([self.psi_norm_2d(p) for p in points])
-
-            super().solve(dirichlet_bc_function, dirichlet_marker, neumann_bc_function)
-            self._reset_psi_cache()
-
-            new = np.array([self.psi_norm_2d(p) for p in points])
-            diff = new - prev
 
             if plot:
                 self._plot_current_iteration(f, ax, cax, i, points, prev, diff, debug)
@@ -468,6 +463,12 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
                         folder=folder,
                         dpi=DPI_GIF,
                     )
+
+            super().solve(dirichlet_bc_function, dirichlet_marker, neumann_bc_function)
+            self._reset_psi_cache()
+
+            new = np.array([self.psi_norm_2d(p) for p in points])
+            diff = new - prev
 
             eps = np.linalg.norm(diff, ord=2) / np.linalg.norm(new, ord=2)
 
