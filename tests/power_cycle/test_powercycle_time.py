@@ -5,9 +5,12 @@ import pytest
 import bluemira.base.constants as constants
 from bluemira.base.look_and_feel import bluemira_debug
 from bluemira.power_cycle.base import PowerCycleABCError
-from bluemira.power_cycle.time import (  # BOPPhaseDependency,; BOPPhase,
+from bluemira.power_cycle.time import (  # BOPPhase,
+    BOPPhaseDependency,
     PowerCyclePhase,
     PowerCyclePhaseError,
+    PowerCyclePulse,
+    PowerCyclePulseError,
     PowerCycleTimeABC,
     PowerCycleTimeABCError,
 )
@@ -171,3 +174,89 @@ class TestPowerCyclePhase:
             """
         )
         assert sample.duration == total_duration
+
+
+def test_PowerCyclePulseError():
+    with pytest.raises(PowerCyclePulseError):
+        raise PowerCyclePulseError(
+            None,
+            "Some error in the 'PowerCyclePulse' class.",
+        )
+
+
+class TestPowerCyclePulse:
+    def setup_method(self):
+        phase_names = [
+            "phase 1",
+            "phase 2",
+            "phase 3",
+        ]
+        phase_breakdowns = [
+            {
+                "phase 1 - subphase 1": 1,
+                "phase 1 - subphase 2": 2,
+                "phase 1 - subphase 3": 4,
+                "phase 1 - subphase 4": 8,
+            },
+            {
+                "phase 2 - subphase 1": 10,
+            },
+            {
+                "phase 3 - subphase 1": 100,
+                "phase 3 - subphase 2": 100,
+                "phase 3 - subphase 3": 100,
+            },
+        ]
+
+        test_phases = []
+        n_phases = len(phase_names)
+        for p in range(n_phases):
+
+            name = phase_names[p]
+            breakdown = phase_breakdowns[p]
+            phase = PowerCyclePhase(name, breakdown)
+            test_phases.append(phase)
+
+        self.test_phases = test_phases
+
+    def test_validate_phase_set(self):
+        all_phases = self.test_phases
+        bluemira_debug(
+            f"""
+            {script_title()} (PowerCyclePhase._validate_phase_set)
+
+            All phases:
+            {pformat(all_phases)}
+            """
+        )
+        for phase in all_phases:
+            phase_set = PowerCyclePulse._validate_phase_set(phase)
+            assert isinstance(phase_set, list)
+        phase_set = PowerCyclePulse._validate_phase_set(all_phases)
+        assert isinstance(phase_set, list)
+
+
+class TestBOPPhaseDependency:
+    def test_members(self):
+
+        all_names = [member.name for member in BOPPhaseDependency]
+        all_values = [member.value for member in BOPPhaseDependency]
+        bluemira_debug(
+            f"""
+            {script_title()} (BOPPhaseDependency)
+
+            All member names:
+            {pformat(all_names)}
+
+            All member values:
+            {pformat(all_values)}
+            """
+        )
+
+
+class TestBOPPhase:
+    pass
+
+
+class TestBOPPulse:
+    pass
