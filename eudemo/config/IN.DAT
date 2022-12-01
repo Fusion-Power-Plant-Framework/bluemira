@@ -1,0 +1,588 @@
+
+*--------------------------------------------------*
+
+
+*---------------Constraint Equations---------------*
+
+icc = 1 * Beta
+icc = 2 * Global power balance
+icc = 5 * Density upper limit
+icc = 8 * Neutron wall load upper limit
+icc = 11 * Radial build
+icc = 13 * Burn time lower limit
+icc = 15 * LH power threshold limit
+icc = 16 * Net electric power lower limit
+icc = 24 * Beta upper limit
+icc = 25 * Peak toroidal field upper limit
+icc = 26 * Central solenoid EOF current density upper limit
+icc = 27 * Central solenoid BOP current density upper limit
+icc = 30 * Injection power upper limit
+icc = 31 * TF coil case stress upper limit
+icc = 32 * TF coil conduit stress upper limit
+icc = 33 * I_op
+icc = 34 * Dump voltage upper limit
+icc = 35 * J_winding pack
+icc = 36 * TF coil temperature margin lower limit
+icc = 60 * Central solenoid temperature margin lower limit
+icc = 62 * taup
+icc = 65 * Dump time set by VV loads
+icc = 68 * Psep
+icc = 72 * central solenoid shear stress limit
+
+*---------------Iteration Variables----------------*
+
+ixc = 2 * bt
+boundu(2) = 20.0
+ixc = 3 * rmajor
+boundu(3) = 13
+ixc = 4 * te
+boundu(4) = 150.0
+ixc = 5 * beta
+ixc = 6 * dene
+ixc = 9 * fdene
+boundu(9) = 1.2
+ixc = 13 * tfcth
+ixc = 14 * fwalld
+ixc = 16 * ohcth
+ixc = 18 * q
+boundl(18) = 3.5
+ixc = 29 * bore
+boundl(29) = 0.1
+ixc = 36 * fbetatry
+ixc = 37 * coheof
+ixc = 38 * fjohc
+boundu(38) = 1.0
+ixc = 39 * fjohc0
+boundu(39) = 1.0
+ixc = 41 * fcohbop
+ixc = 42 * gapoh
+boundl(42) = 0.05
+boundu(42) = 0.1
+ixc = 44 * fvsbrnni
+ixc = 48 * fstrcase
+ixc = 49 * fstrcond
+ixc = 50 * fiooic
+boundu(50) = 1.0
+ixc = 51 * fvdump
+ixc = 52 * vdalw
+boundu(52) = 10.0
+ixc = 53 * fjprot
+ixc = 54 * ftmargtf
+ixc = 56 * tdmptf
+ixc = 57 * thkcas
+ixc = 58 * thwcndut
+ixc = 59 * fcutfsu
+boundl(59) = 0.50
+boundu(59) = 0.94
+ixc = 60 * cpttf
+boundl(60) = 6.0d4
+boundu(60) = 9.0d4
+ixc = 61 * gapds
+boundl(61) = 0.02
+ixc = 102 * fimpvar
+ixc = 103 * flhthresh
+boundu(103) = 10.0
+ixc = 106 * ftmargoh
+ixc = 109 * ralpne
+ixc = 110 * ftaulimit
+ixc = 113 * ftaucq
+ixc = 117 * fpsepbqar
+ixc = 122 * oh_steel_frac
+ixc = 123 * foh_stress
+
+*--------------------Cs Fatigue--------------------*
+
+
+*---------------Cs Fatigue Variables---------------*
+
+
+*----------------------Abs Cd----------------------*
+
+
+*----------------------Bsquar----------------------*
+
+
+*----------------------Build-----------------------*
+
+
+*-----------------Build Variables------------------*
+
+blnkith  = 0.8 *
+blnkoth  = 1.1 *
+bore     = 2.3322 *
+ddwex    = 0.3 *
+d_vv_in  = 0.6 *
+d_vv_out = 1.1 *
+d_vv_top = 0.6 *
+d_vv_bot = 0.6 *
+gapds    = 0.02 *
+gapoh    = 0.05 *
+gapomin  = 0.2 *
+iohcl    = 1 *
+ohcth    = 0.55242 *
+scrapli  = 0.225 *
+scraplo  = 0.225 *
+shldith  = 1e-06 *
+shldlth  = 1e-06 *
+shldoth  = 1e-06 *
+shldtth  = 1e-06 *
+tfcth    = 1.208 *
+tftsgap  = 0.05 *
+thshield = 0.05 * TF-VV thermal shield thickness (m)
+vgap2    = 0.05 *
+vvblgap  = 0.02 *
+
+*---------------Buildings Variables----------------*
+
+
+*-----------------Ccfe Hcpb Module-----------------*
+
+
+*---------------Const And Precisions---------------*
+
+
+*--------------------Constants---------------------*
+
+
+*---------------Constraint Variables---------------*
+
+bmxlim   = 11.2 *
+fbetatry = 0.48251 *
+fdene    = 1.2 *
+ffuspow  = 1.0 *
+fiooic   = 0.63437 *
+fjohc    = 0.57941 *
+fjohc0   = 0.53923 *
+fjprot   = 1.0 *
+flhthresh = 1.4972 *
+foh_stress = 1.0 *
+fpeakb   = 1.0 *
+fpinj    = 1.0 *
+fpnetel  = 1.0 *
+fpsepbqar = 1.0 *
+fstrcase = 1.0 *
+fstrcond = 0.92007 *
+ftaucq   = 0.91874 *
+ftburn   = 1.0 *
+ftmargoh = 1.0 *
+ftmargtf = 1.0 *
+fvdump   = 1.0 *
+fwalld   = 0.131 *
+pnetelin = 500.0 *
+psepbqarmax = 9.2 *
+tbrnmn   = 7200.0 *
+walalw   = 8.0 *
+ftaulimit = 1.0 *
+
+*-------------------Constraints--------------------*
+
+
+*------------------Cost Variables------------------*
+
+abktflnc = 15.0 *
+adivflnc = 20.0 *
+cfactr   = 0.75 *
+cost_model = 0 *
+dintrt   = 0.0 *
+fcap0    = 1.15 *
+fcap0cp  = 1.06 *
+fcontng  = 0.15 *
+fcr0     = 0.065 *
+fkind    = 1.0 *
+iavail   = 0 *
+ifueltyp = 1 *
+lsa      = 2 *
+output_costs = 0 *
+discount_rate = 0.06 *
+tlife    = 40.0 *
+ucblvd   = 280.0 *
+ucdiv    = 500000.0 *
+ucme     = 300000000.0 *
+
+*----------------Costs 2015 Module-----------------*
+
+
+*-------------------Costs Module-------------------*
+
+
+*--------------------Costs Step--------------------*
+
+
+*---------------Current Drive Module---------------*
+
+
+*-------------Current Drive Variables--------------*
+
+bscfmax  = 0.99 *
+enbeam   = 1000.0 *
+etaech   = 0.4 *
+etanbi   = 0.3 *
+gamma_ecrh = 0.3 *
+iefrf    = 10 *
+pheat    = 50.0 *
+pinjalw  = 50.0 *
+
+*------------Define Iteration Variables------------*
+
+
+*-------------------Div Kal Vars-------------------*
+
+
+*-------------------Divertor Ode-------------------*
+
+
+*-----------------Divertor Ode Var-----------------*
+
+
+*----------------Divertor Variables----------------*
+
+divdum   = 1 *
+divfix   = 0.621 *
+hldivlim = 10.0 *
+ksic     = 1.4 *
+prn1     = 0.4 *
+zeffdiv  = 3.5 *
+
+*------------------Error Handling------------------*
+
+
+*-------------------Final Module-------------------*
+
+
+*----------------Fispact Variables-----------------*
+
+
+*-----------------------Freq-----------------------*
+
+
+*-------------------Fson Library-------------------*
+
+
+*-------------------Fson Path M--------------------*
+
+
+*------------------Fson String M-------------------*
+
+
+*-------------------Fson Value M-------------------*
+
+
+*----------------Function Evaluator----------------*
+
+
+*--------------------Fw Module---------------------*
+
+
+*-------------------Fwbs Module--------------------*
+
+
+*------------------Fwbs Variables------------------*
+
+emult    = 1.35 *
+inuclear = 1 *
+qnuc     = 12920.0 *
+primary_pumping = 3 *
+secondary_cycle = 2 *
+vfshld   = 0.6 *
+etaiso   = 0.9 *
+etahtp   = 0.87 *
+
+*-----------------Global Variables-----------------*
+
+
+*------------------Green Func Ext------------------*
+
+
+*-----------------------Hare-----------------------*
+
+
+*-------------Heat Transport Variables-------------*
+
+etath    = 0.375 *
+ipowerflow = 0 *
+iprimshld = 1 *
+
+*--------------------Ife Module--------------------*
+
+
+*------------------Ife Variables-------------------*
+
+
+*------------Impurity Radiation Module-------------*
+
+coreradius = 0.75 *
+coreradiationfraction = 0.6 *
+fimp(1) = 1.0
+fimp(2) = 0.1
+fimp(3) = 0.0
+fimp(4) = 0.0
+fimp(5) = 0.0
+fimp(6) = 0.0
+fimp(7) = 0.0
+fimp(8) = 0.0
+fimp(9) = 0.0
+fimp(10) = 0.0
+fimp(11) = 0.0
+fimp(12) = 0.0
+fimp(13) = 0.00044
+fimp(14) = 5e-05
+fimpvar  = 0.00037786 *
+impvar   = 13 *
+
+*-------------------Init Module--------------------*
+
+
+*----------------Kallenbach Module-----------------*
+
+
+*----------------Kit Blanket Model-----------------*
+
+
+*-----------------Kit Hcll Module------------------*
+
+
+*-----------------Kit Hcpb Module------------------*
+
+
+*----------------------Linliu----------------------*
+
+
+*----------------------Machin----------------------*
+
+
+*-------------------Main Module--------------------*
+
+
+*------------------Maths Library-------------------*
+
+
+*-------------------Mod F90 Kind-------------------*
+
+
+*-----------------------Mode-----------------------*
+
+
+*---------------------Numerics---------------------*
+
+ioptimz  = 1 * for optimisation VMCON only
+minmax   = 1 *
+epsvmc   = 1e-08 *
+
+*---------------------Ode Mod----------------------*
+
+
+*------------------Optimiz Module------------------*
+
+
+*----------------------Param-----------------------*
+
+
+*----------------Pf Power Variables----------------*
+
+
+*------------------Pfcoil Module-------------------*
+
+
+*-----------------Pfcoil Variables-----------------*
+
+alstroh  = 660000000.0 *
+coheof   = 20726000.0 *
+cptdin   = 42200.0, 42200.0, 42200.0, 42200.0, 43000.0, 43000.0, 43000.0, 43000.0 *
+fcohbop  = 0.93176 *
+fcuohsu  = 0.7 *
+ipfloc   = 2, 2, 3, 3 *
+isumatoh = 5 *
+isumatpf = 3 *
+ncls     = 1, 1, 2, 2 *
+ngrp     = 4 *
+ohhghf   = 0.9 *
+oh_steel_frac = 0.57875 *
+rjconpf  = 11000000.0, 11000000.0, 6000000.0, 6000000.0, 8000000.0, 8000000.0, 8000000.0, 8000000.0 *
+rpf2     = -1.825 *
+zref(1) = 3.6
+zref(2) = 1.2
+zref(3) = 1.0
+zref(4) = 2.8
+zref(5) = 1.0
+zref(6) = 1.0
+zref(7) = 1.0
+zref(8) = 1.0
+zref(9) = 1.0
+zref(10) = 1.0
+
+*-------------Physics Functions Module-------------*
+
+
+*------------------Physics Module------------------*
+
+
+*----------------Physics Variables-----------------*
+
+alphan   = 1.0 *
+alphat   = 1.45 *
+aspect   = 3.1 *
+beta     = 0.031421 *
+bt       = 5.3292 *
+dene     = 7.4321e+19 *
+dnbeta   = 3.0 *
+fgwped   = 0.85 *
+fkzohm   = 1.0245 *
+fvsbrnni = 0.39566 *
+gamma    = 0.4 *
+hfact    = 1.1 *
+ibss     = 4 *
+iculbl   = 1 *
+icurr    = 4 *
+idensl   = 7 *
+ifalphap = 1 *
+ifispact = 0 *
+iinvqd   = 1 *
+ipedestal = 1 *
+ieped    = 1 *
+neped    = 6.78e+19 *
+nesep    = 2e+19 *
+plasma_res_factor = 0.66 *
+rhopedn  = 0.94 *
+rhopedt  = 0.94 *
+tbeta    = 2.0 *
+teped    = 5.5 *
+tesep    = 0.1 *
+iprofile = 1 *
+isc      = 34 *
+ishape   = 0 *
+kappa    = 1.848 *
+q        = 3.5 *
+q0       = 1.0 *
+ralpne   = 0.06894 *
+rmajor   = 8.8901 *
+i_single_null = 1 *
+ssync    = 0.6 *
+te       = 12.33 *
+triang   = 0.5 *
+
+*--------------Plasma Geometry Module--------------*
+
+
+*------------------Plasmod Module------------------*
+
+
+*----------------Plasmod Variables-----------------*
+
+
+*-------------------Power Module-------------------*
+
+
+*------------------Precision Mod-------------------*
+
+
+*------------Primary Pumping Variables-------------*
+
+
+*------------------Process Input-------------------*
+
+
+*------------------Process Output------------------*
+
+
+*-----------------Profiles Module------------------*
+
+
+*-------------------Pulse Module-------------------*
+
+
+*-----------------Pulse Variables------------------*
+
+lpulse   = 1 *
+
+*-------------Read And Get Atomic Data-------------*
+
+
+*------------------Read Radiation------------------*
+
+
+*---------------------Real Mod---------------------*
+
+
+*-----------------Rebco Variables------------------*
+
+
+*------------------Reinke Module-------------------*
+
+
+*-----------------Reinke Variables-----------------*
+
+
+*---------------Resistive Materials----------------*
+
+
+*-------------------Scan Module--------------------*
+
+
+*-----------------Sctfcoil Module------------------*
+
+
+*----------------Startup Variables-----------------*
+
+
+*------------Stellarator Configuration-------------*
+
+
+*----------------Stellarator Module----------------*
+
+
+*--------------Stellarator Variables---------------*
+
+
+*---------------Structure Variables----------------*
+
+
+*-----------------Superconductors------------------*
+
+
+*-----------------Tfcoil Variables-----------------*
+
+sig_tf_case_max = 580000000.0 *
+sig_tf_wp_max = 580000000.0 *
+casthi   = 0.06 *
+casths   = 0.1 *
+cpttf    = 65000.0 *
+dhecoil  = 0.01 *
+fcutfsu  = 0.80884 *
+i_tf_turns_integer = 1 *
+i_tf_sc_mat = 5 *
+n_pancake = 20 *
+n_layer  = 10 *
+oacdcp   = 8673900.0 *
+ripmax   = 0.6 *
+tdmptf   = 25.829 *
+n_tf     = 16.0 *
+tftmp    = 4.75 *
+thicndut = 0.002 *
+thkcas   = 0.52465 *
+thwcndut = 0.008 *
+tinstf   = 0.008 *
+tmargmin = 1.5 *
+vdalw    = 10.0 *
+vftf     = 0.3 *
+
+*-----------------Times Variables------------------*
+
+pulsetimings = 0.0 *
+tburn    = 10000.0 *
+tdwell   = 0.0 *
+tramp    = 500.0 *
+
+*---------------Torga Curgap Module----------------*
+
+
+*--------------------Utilities---------------------*
+
+
+*-----------------Vacuum Variables-----------------*
+
+
+*-------------------Vmcon Module-------------------*
+
+gamma    = 0.4 *
+
+*--------------Water Usage Variables---------------*
