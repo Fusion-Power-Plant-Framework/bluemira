@@ -2,7 +2,7 @@
 Classes to define the timeline for Power Cycle simulations.
 """
 from enum import Enum
-from typing import Dict, Union
+from typing import Dict, List, Union
 
 from bluemira.power_cycle.base import PowerCycleABC, PowerCycleError
 
@@ -115,10 +115,61 @@ class PowerCyclePhase(PowerCycleTimeABC):
         return duration_breakdown
 
 
+class PowerCyclePulseError(PowerCycleError):
+    """
+    Exception class for 'PowerCyclePulse' class of the Power Cycle
+    module.
+    """
+
+    def _errors(self):
+        errors = {}
+        return errors
+
+
+class PowerCyclePulse(PowerCycleABC):
+    """
+    Class to define pulses for a Power Cycle timeline.
+
+    Parameters
+    ----------
+    name: str
+        Description of the `PowerCyclePulse` instance.
+    phase_set: PowerCyclePhase | list[PowerCyclePhase]
+        List of phases that compose the pulse, in chronological order.
+    """
+
+    def __init__(
+        self,
+        name,
+        phase_set: Union[PowerCyclePhase, List[PowerCyclePhase]],
+    ):
+        super().__init__(name)
+        self.phase_set = self._validate_phase_set(phase_set)
+
+    @staticmethod
+    def _validate_phase_set(phase_set):
+        """
+        Validate 'phase_set' input to be a list of 'PowerCyclePhase'
+        instances.
+        """
+        owner = PowerCyclePulse
+        phase_set = super(owner, owner).validate_list(phase_set)
+        for element in phase_set:
+            PowerCyclePhase.validate_class(element)
+        return phase_set
+
+
 class BOPPhaseDependency(Enum):
     """
-    Possible classifications of an instance of the `PowerCyclePhase`
-    class in terms of time-dependent calculation.
+    Members define possible classifications of an instance of the
+    'BOPPhase' class. This classification is to establish the procedure
+    taken by the Power Cycle model in terms of time-dependent
+    calculations.
+
+    The 'name' of a member describes a time-dependent calculation
+    approach to be used in models, while its associated 'value' is
+    used in methods throughout the module as a label to quickly assess
+    the type of time dependency.
     """
 
     STEADY_STATE = "ss"
@@ -126,4 +177,8 @@ class BOPPhaseDependency(Enum):
 
 
 class BOPPhase(PowerCyclePhase):
+    pass
+
+
+class BOPPulse(PowerCyclePulse):
     pass

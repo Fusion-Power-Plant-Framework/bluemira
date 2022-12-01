@@ -189,8 +189,8 @@ class TestPowerData:
 class TestPowerLoadModel:
     def test_members(self):
 
-        all_values = [member.value for member in PowerLoadModel]
         all_names = [member.name for member in PowerLoadModel]
+        all_values = [member.value for member in PowerLoadModel]
         bluemira_debug(
             f"""
             {script_title()} (PowerLoadModel)
