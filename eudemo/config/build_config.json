@@ -1,6 +1,7 @@
 {
     "Radial build": {
-        "file_path": "config/mockPROCESS.json"
+        "run_mode": "mock",
+        "read_dir": "config/"
     },
     "Equilibrium": {
         "plot_optimisation": false,

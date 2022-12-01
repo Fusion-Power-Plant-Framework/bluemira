@@ -23,21 +23,29 @@
 from typing import Dict, TypeVar
 
 from bluemira.base.parameter_frame import ParameterFrame
+from bluemira.codes import systems_code_solver
 
 _PfT = TypeVar("_PfT", bound=ParameterFrame)
 
 
 def radial_build(params: _PfT, build_config: Dict) -> _PfT:
     """
-    Update parameters after a radial build is run.
+    Update parameters after a radial build is run/read/mocked using PROCESS.
 
-    Usually this would run an external code like PROCESS, but we'll just
-    read in a previous PROCESS run, as the PROCESS solver hasn't yet
-    been made to work with the new ParameterFrame yet.
+    Parameters
+    ----------
+    params: ParameterFrame
+        Parameters on which to perform the solve (updated)
+    build_config: dict
+        Build configuration
+
+    Returns
+    -------
+    params: ParameterFrame
+        Updated parameters following the solve.
     """
-    import json
-
-    with open(build_config["file_path"], "r") as f:
-        param_values = json.load(f)
-    params.update_values(param_values, source="PROCESS (mock)")
+    run_mode = build_config.pop("run_mode", "mock")
+    solver = systems_code_solver(params, build_config)
+    new_params = solver.execute(run_mode)
+    params.update_from_frame(new_params)
     return params
