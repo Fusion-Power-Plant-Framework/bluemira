@@ -571,21 +571,26 @@ class CoilGroupFieldsMixin:
         \t:math:`F_z = -IBx`
         """  # noqa :W505
         multiplier = self.current * 2 * np.pi * self.x
+        cr = self._current_radius
+        if any(cr != 0):
+            # true divide errors for zero current coils
+            cr_ind = np.where(cr != 0)
+            fx = np.zeros_like(cr)
+            fx[cr_ind] = (
+                MU_0
+                * self.current[cr_ind] ** 2
+                / (4 * np.pi * self.x[cr_ind])
+                * (np.log(8 * self.x[cr_ind] / cr[cr_ind]) - 1 + 0.25)
+            )
+        else:
+            fx = 0
 
-        fx = np.where(
-            self._current_radius == 0,
-            0,  # true divide errors for zero current coils
-            MU_0
-            * self.current**2
-            / (4 * np.pi * self.x)
-            * (np.log(8 * self.x / self._current_radius) - 1 + 0.25),
-        )
         return np.array(
             [
-                multiplier * (eqcoil.Bx(self.x, self.z).T + fx),
-                multiplier * eqcoil.Bz(self.x, self.z).T,
+                multiplier * (eqcoil.Bz(self.x, self.z) + fx),
+                -multiplier * eqcoil.Bx(self.x, self.z),
             ]
-        )
+        ).T
 
     def control_F(self, coil: CoilGroup) -> np.ndarray:  # noqa :N802
         """
@@ -593,34 +598,41 @@ class CoilGroupFieldsMixin:
 
         \t:math:`Fz_{i,j}=-2\\pi X_i\\mathcal{G}(X_j,Z_j,X_i,Z_i)`
         """
-        pos = np.array([self.x, self.z])
+        # TODO Vectorise
+        x, z = np.atleast_1d(self.x), np.atleast_1d(self.z)  # single coil
+        pos = np.array([x, z])
+        response = np.zeros((x.size, coil.x.size, 2))
+        coils = coil._coils
+        for j, coil2 in enumerate(coils):
+            xw = np.where(x == coil2.x)[0]
+            zw = np.where(z == coil2.z)[0]
+            same_pos = np.where(xw == zw)[0]
+            if same_pos.size > 0:
+                # self inductance
+                xxw = xw[same_pos]
+                cr = self._current_radius[xxw]
+                Bz = np.zeros((x.size, 1))
+                Bx = Bz.copy()  # Should be 0 anyway
+                mask = np.zeros_like(Bz, dtype=bool)
+                mask[same_pos] = True
+                if any(cr != 0):
+                    cr_ind = np.where(cr != 0)
+                    Bz[mask][cr_ind] = (
+                        MU_0
+                        / (4 * np.pi * xxw[cr_ind])
+                        * (np.log(8 * xxw[cr_ind] / cr[cr_ind]) - 1 + 0.25)
+                    )
+                if False in mask:
+                    Bz[~mask] = coil2.unit_Bz(*pos[~mask[:, 0]].T)
+                    Bx[~mask] = coil2.unit_Bx(*pos[~mask[:, 0]].T)
 
-        same_pos = np.where(pos == np.array([coil.x, coil.z]))
-        z_pos = consec_repeat_elem(same_pos[1], 2)
-
-        if (
-            z_pos.size > 0
-            and same_pos[0] != []
-            and all(np.unique(same_pos[0]) == np.array([0, 1]))
-        ):  # x and z points
-            Bz = np.zeros(pos[0].size)
-            Bx = Bz.copy()
-            cr = self._current_radius[z_pos]
-            Bz[z_pos] = np.where(
-                cr == 0,
-                0,
-                MU_0
-                / (4 * np.pi * pos[0][z_pos])
-                * (np.log(8 * pos[0][z_pos] / cr) - 1 + 0.25),
-            )
-            Bx[z_pos] = 0  # Should be 0 anyway
-            Bz[~z_pos] = coil.unit_Bz(*pos[:, ~z_pos])
-            Bx[~z_pos] = coil.unit_Bx(*pos[:, ~z_pos])
-        else:
-            Bz = coil.unit_Bz(*pos)
-            Bx = coil.unit_Bx(*pos)
-
-        return 2 * np.pi * pos[0] * np.array([Bz, -Bx]).T  # 1 cross B
+            else:
+                Bz = coil2.unit_Bz(x, z)
+                Bx = coil2.unit_Bx(x, z)
+            response[:, j, :] = np.squeeze(
+                2 * np.pi * x * np.array([Bz, -Bx]).T
+            )  # 1 cross B
+        return response
 
 
 class CoilFieldsMixin(CoilGroupFieldsMixin):
