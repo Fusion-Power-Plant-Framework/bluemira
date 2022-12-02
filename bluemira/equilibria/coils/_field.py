@@ -34,7 +34,6 @@ from bluemira.base.constants import MU_0
 from bluemira.equilibria.constants import X_TOLERANCE
 from bluemira.magnetostatics.greens import greens_Bx, greens_Bz, greens_psi
 from bluemira.magnetostatics.semianalytic_2d import semianalytic_Bx, semianalytic_Bz
-from bluemira.utilities.tools import consec_repeat_elem
 
 if TYPE_CHECKING:
     from bluemira.equilibria.coils._grouping import CoilGroup

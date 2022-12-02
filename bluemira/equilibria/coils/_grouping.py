@@ -383,6 +383,7 @@ class CoilGroup(CoilGroupFieldsMixin):
         return coils
 
     def get_coiltype(self, ctype):
+        """Get coil by coil type"""
         return CoilGroup(*self._get_coiltype(ctype))
 
     def assign_material(self, ctype, j_max, b_max):
@@ -779,6 +780,7 @@ class CoilSet(CoilGroup):
         self._control = [names[c] for c in self._control_ind]
 
     def get_control_coils(self):
+        """Get Control coils"""
         coils = []
         for c in self._coils:
             names = c.name
@@ -790,7 +792,7 @@ class CoilSet(CoilGroup):
                     coils.extend(c.get_control_coils()._coils)
             elif names in self.control:
                 coils.append(c)
-        return CoilGroup(*coils)
+        return CoilSet(*coils)
 
     def _sum(
         self, output: np.ndarray, sum_coils: bool = False, control: bool = False
@@ -817,6 +819,7 @@ class CoilSet(CoilGroup):
         return np.sum(output[..., ind], axis=-1) if sum_coils else output[..., ind]
 
     def get_coiltype(self, ctype):
+        """Get coils by coils type"""
         return CoilSet(*super()._get_coiltype(ctype))
 
     @property
