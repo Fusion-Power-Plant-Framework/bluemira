@@ -308,7 +308,7 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
                 a = r * (pprime(x_psi) if callable(pprime) else pprime)
                 b = 1 / MU_0 / r * (ffprime(x_psi) if callable(ffprime) else ffprime)
 
-                return self.k * (a + b)
+                return self.k * 2 * np.pi * (a + b)
 
         return g
 
