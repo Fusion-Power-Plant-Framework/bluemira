@@ -81,7 +81,8 @@ class TestXZLMapper:
 
         l_pos, lb, ub = self.xzl_map.get_Lmap(self.coilset, set(pfcoils.name))
         pfcoils.position = np.array([self.xzl_map.L_to_xz(pos) for pos in l_pos]).T
-        self.coilset.plot(self.ax)
+        # TODO rewrite plotting
+        # self.coilset.plot(self.ax)
 
     def test_2(self):
         lb = [0.9, 0.7, 0.7, 0.5, 0.25, 0.25, 0]
