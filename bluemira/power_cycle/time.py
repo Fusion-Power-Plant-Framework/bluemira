@@ -167,6 +167,59 @@ class PowerCyclePulse(PowerCycleTimeABC):
         return durations_list
 
 
+class PowerCycleTimelineError(PowerCycleError):
+    """
+    Exception class for 'PowerCycleTimeline' class of the Power Cycle
+    module.
+    """
+
+    def _errors(self):
+        errors = {}
+        return errors
+
+
+class PowerCycleTimeline(PowerCycleTimeABC):
+    """
+    Class to define pulses for a Power Cycle timeline.
+
+    Parameters
+    ----------
+    name: str
+        Description of the 'PowerCycleTimeline' instance.
+    pulse_set: PowerCyclePulse | list[PowerCyclePulse]
+        List of pulses that compose the timeline, in chronological
+        order.
+    """
+
+    def __init__(
+        self,
+        name,
+        pulse_set: Union[PowerCyclePulse, List[PowerCyclePulse]],
+    ):
+        self.pulse_set = self._validate_pulse_set(pulse_set)
+        durations_list = self._extract_pulse_durations()
+        super().__init__(name, durations_list)
+
+    @staticmethod
+    def _validate_pulse_set(pulse_set):
+        """
+        Validate 'pulse_set' input to be a list of 'PowerCyclePulse'
+        instances.
+        """
+        owner = PowerCycleTimeline
+        pulse_set = super(owner, owner).validate_list(pulse_set)
+        for element in pulse_set:
+            PowerCyclePulse.validate_class(element)
+        return pulse_set
+
+    def _extract_pulse_durations(self):
+        pulse_set = self.pulse_set
+        durations_list = []
+        for pulse in pulse_set:
+            durations_list.append(pulse.duration)
+        return durations_list
+
+
 class BOPPhaseDependency(Enum):
     """
     Members define possible classifications of an instance of the
@@ -189,4 +242,8 @@ class BOPPhase(PowerCyclePhase):
 
 
 class BOPPulse(PowerCyclePulse):
+    pass
+
+
+class BOPTimeline(PowerCycleTimeline):
     pass

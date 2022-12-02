@@ -13,6 +13,8 @@ from bluemira.power_cycle.time import (  # BOPPhase,
     PowerCyclePulseError,
     PowerCycleTimeABC,
     PowerCycleTimeABCError,
+    PowerCycleTimeline,
+    PowerCycleTimelineError,
 )
 
 # from bluemira.power_cycle.tools import (
@@ -231,9 +233,11 @@ class TestPowerCyclePulse:
         )
         for phase in all_phases:
             phase_set = PowerCyclePulse._validate_phase_set(phase)
-            assert isinstance(phase_set, list)
+            individual_phase_becomes_list = isinstance(phase_set, list)
+            assert individual_phase_becomes_list
         phase_set = PowerCyclePulse._validate_phase_set(all_phases)
-        assert isinstance(phase_set, list)
+        phase_set_becomes_list = isinstance(phase_set, list)
+        assert phase_set_becomes_list
 
     def test_constructor(self):
         sample_phases = self.test_phases
@@ -241,7 +245,7 @@ class TestPowerCyclePulse:
         sample = PowerCyclePulse(sample_name, sample_phases)
         bluemira_debug(
             f"""
-            {script_title()} (PowerCyclePhase._validate_phase_set)
+            {script_title()} (PowerCyclePulse constructor)
 
             Sample phases:
             {pformat(sample_phases)}
@@ -259,6 +263,70 @@ class TestPowerCyclePulse:
             {pformat(sample.duration)}
             """
         )
+        self.sample = sample
+
+
+def test_PowerCycleTimelineError():
+    with pytest.raises(PowerCycleTimelineError):
+        raise PowerCycleTimelineError(
+            None,
+            "Some error in the 'PowerCycleTimeline' class.",
+        )
+
+
+class TestPowerCycleTimeline:
+    def setup_method(self):
+        pulse_test_class = TestPowerCyclePulse()
+        pulse_test_class.setup_method()
+        pulse_test_class.test_constructor()
+        pulse_sample = pulse_test_class.sample
+        number_of_pulses = 10
+        test_pulses = [pulse_sample] * number_of_pulses
+        self.test_pulses = test_pulses
+
+    def test_validate_pulse_set(self):
+        all_pulses = self.test_pulses
+        bluemira_debug(
+            f"""
+            {script_title()} (PowerCycleTimeline._validate_pulse_set)
+
+            All pulses:
+            {pformat(all_pulses)}
+            """
+        )
+        for pulse in all_pulses:
+            pulse_set = PowerCycleTimeline._validate_pulse_set(pulse)
+            individual_pulse_becomes_list = isinstance(pulse_set, list)
+            assert individual_pulse_becomes_list
+        pulse_set = PowerCycleTimeline._validate_pulse_set(all_pulses)
+        pulse_set_becomes_list = isinstance(pulse_set, list)
+        assert pulse_set_becomes_list
+
+    def test_constructor(self):
+        sample_pulses = self.test_pulses
+        sample_name = "Test instance of PowerCycleTimeline"
+        sample = PowerCycleTimeline(sample_name, sample_pulses)
+        bluemira_debug(
+            f"""
+            {script_title()} (PowerCycleTimeline constructor)
+
+            Sample pulses:
+            {pformat(sample_pulses)}
+
+            Pulse durations:
+            {pformat([p.duration for p in sample_pulses])}
+
+            Test sample:
+            {pformat(sample)}
+
+            Sample durations list (total duration of each pulse):
+            {pformat(sample.durations_list)}
+
+            Sample duration:
+            {pformat(sample.duration)}
+            """
+        )
+        self.sample = sample
 
 
 class TestBOPPhaseDependency:

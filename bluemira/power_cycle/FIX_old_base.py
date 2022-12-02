@@ -22,6 +22,32 @@ class classproperty(object):
 
 class PowerCycleABC(abc.ABC):
 
+    def __init__(self, name, label):
+
+        # Validate label
+        self.label = self._validate_label(label)
+
+    @classmethod
+    def _validate_label(cls, label):
+        """
+        Validate `label` input for class instance creation to be a
+        string of length 3.
+        """
+        if not len(label) == 3:
+            cls._issue_error("label")
+            """
+            LABEL ERROR MESSAGE:
+            "label": PowerCycleError(
+                "Value",
+                f"""
+                The argument given for the attribute `label` is not a
+                valid value. Instances of the class {class_name} must
+                be labeled with strings of 3 characters.
+                """,
+            ),
+            """
+        return input
+
     @classmethod
     def _issue_error(cls, label):
         """
