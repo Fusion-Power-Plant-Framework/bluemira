@@ -72,6 +72,23 @@ class EquilibriumModel(Model):
     Ip_sawtooth = 2
 
 
+class SafetyProfileModel(Model):
+    """
+    Safety Factor Profile Model Selector
+
+    0 - PLASMOD allows q < 1 in the core (fully relaxed q profile)
+    1 - PLASMOD clamps q >= 1 in the core (sawteeth forced)
+
+    Plasmod variable name: isawt
+
+    NOTE: Running with 1 means that p' and FF' will not correspond well
+    with jpar.
+    """
+
+    FULLY_RELAXED = 0
+    SAWTEETH = 1
+
+
 class PedestalModel(Model):
     """
     Pedestal Model Selector
@@ -213,9 +230,6 @@ PLASMOD_INPUTS = {
     # ###### "BM_INP": ("capA", "dimensionless"),
     # [-] diagnostics for ASTRA (0 or 1)
     # ###### "BM_INP": ("i_diagz", "dimensionless"),
-    # [-] sawtooth correction of q
-    # (fix q = 1 if q below 1)
-    # ###### "BM_INP": ("isawt, "dimensionless")",
     # [-] number of interpolated grid points
     # ###### "BM_INP": ("nx", "dimensionless"),
     # [-] number of reduced grid points
