@@ -228,7 +228,6 @@ class CoilGroupPlotter(Plotter):
         """
         Plot a coil onto the Axes.
         """
-        label = True
         if hasattr(self._cg, "_control_ind"):
             control = self._cg._control_ind
             centre = self._get_centre()
