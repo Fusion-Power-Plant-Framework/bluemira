@@ -2,20 +2,13 @@
 Classes to define the timeline for Power Cycle simulations.
 """
 
-# Import general packages
+'''
 from typing import Union  # , List
 
-# Import Power Cycle packages
 from bluemira.power_cycle.base import (
     PowerCycleABC,
     PowerCycleError,
-    PowerCycleUtilities,
-    classproperty,
 )
-
-# ######################################################################
-# POWER CYCLE PHASE
-# ######################################################################
 
 
 class PowerCyclePhase(PowerCycleABC):
@@ -28,10 +21,9 @@ class PowerCyclePhase(PowerCycleABC):
         Description of the `PowerCyclePhase` instance.
     label: str
         Shorthand label for addressing the `PowerCyclePhase` instance.
-    dependency: str
+    dependency: PowerCycleDependency
         Classification of the `PowerCyclePhase` instance in terms of
-        time-dependent calculation: 'ss' (stready-state) or 'tt'
-        (transient).
+        time - dependent calculation.
     duration: float
         Phase duration. [s]
     """
@@ -39,11 +31,6 @@ class PowerCyclePhase(PowerCycleABC):
     # ------------------------------------------------------------------
     # CLASS ATTRIBUTES
     # ------------------------------------------------------------------
-
-    _valid_dependencies = {
-        "ss": "steady-state",
-        "tt": "transient",
-    }
 
     # Error messages
     @classproperty
@@ -73,7 +60,7 @@ class PowerCyclePhase(PowerCycleABC):
                 "Value",
                 """
                 The argument given for the attribute `duration` is not
-                a valid value. This attribute can only hold non-negative
+                a valid value. This attribute can only hold non - negative
                 numeric values.
                 """,
             ),
@@ -102,16 +89,6 @@ class PowerCyclePhase(PowerCycleABC):
 
         # Validate duration
         self.duration = self._validate_duration(duration)
-
-    @classmethod
-    def _validate_label(cls, label):
-        """
-        Validate `label` input for class instance creation to be a
-        string of length 3.
-        """
-        if not len(label) == 3:
-            cls._issue_error("label")
-        return input
 
     @classmethod
     def _validate_dependency(cls, dependency):
@@ -172,12 +149,6 @@ class PowerCyclePulse(PowerCycleABC):
         "ss": "steady-state",
         "tt": "transient",
     }
-
-    # Error messages
-    @classproperty
-    def _errors(cls):
-        e = {}
-        return e
 
     # ------------------------------------------------------------------
     # CONSTRUCTOR
@@ -307,3 +278,5 @@ class PowerCycleTimeline(PowerCycleABC):
     # ------------------------------------------------------------------
     # OPERATIONS
     # ------------------------------------------------------------------
+
+'''
