@@ -26,15 +26,13 @@ Coil and coil grouping objects
 from enum import Enum, EnumMeta, auto
 from typing import Optional, Union
 
-# import matplotlib.pyplot as plt
 import numpy as np
 
 from bluemira.equilibria.coils._field import CoilFieldsMixin
 from bluemira.equilibria.coils._tools import get_max_current
 from bluemira.equilibria.constants import NBTI_B_MAX, NBTI_J_MAX
 from bluemira.equilibria.error import EquilibriaError
-
-# from bluemira.equilibria.plotting import CoilPlotter, CoilSetPlotter
+from bluemira.equilibria.plotting import CoilGroupPlotter
 from bluemira.utilities.tools import is_num
 
 __all__ = ["CoilType", "Coil"]
@@ -187,6 +185,14 @@ class Coil(CoilFieldsMixin):
             f" discretisation={self.discretisation:.2g})"
         )
 
+    def plot(self, ax=None, subcoil=True, label=False, force=None, **kwarg):
+        """
+        Plot a Coil
+        """
+        return CoilGroupPlotter(
+            self, ax=ax, subcoil=subcoil, label=label, force=force, **kwarg
+        )
+
     def n_coils(self):
         """Number of coils in coil"""
         return 1
@@ -274,6 +280,13 @@ class Coil(CoilFieldsMixin):
             return self._z_boundary
         return self._make_boundary(self.x, self.z, self.dx, self.dz)[1]
 
+    @property
+    def _quad_boundary(self):
+        """Get coil x coordinate boundary"""
+        return self._make_boundary(
+            self._quad_x, self._quad_z, self._quad_dx, self._quad_dz
+        )
+
     @x.setter
     def x(self, value: float):
         """Set coil x position"""
@@ -319,6 +332,8 @@ class Coil(CoilFieldsMixin):
     def current(self, value: float):
         """Set coil current"""
         self._current = float(value)
+        if None not in (self.dx, self.dz) and not self._flag_sizefix:
+            self.resize()
 
     @j_max.setter
     def j_max(self, value: float):

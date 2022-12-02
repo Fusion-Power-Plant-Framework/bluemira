@@ -31,6 +31,7 @@ import numpy as np
 from matplotlib.gridspec import GridSpec
 from scipy.interpolate import RectBivariateSpline
 
+from bluemira.base.constants import raw_uc
 from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.display.plotter import plot_coordinates
 from bluemira.equilibria.constants import J_TOR_MIN, M_PER_MN
@@ -42,9 +43,8 @@ __all__ = [
     "GridPlotter",
     "ConstraintPlotter",
     "LimiterPlotter",
-    "CoilPlotter",
     "PlasmaCoilPlotter",
-    "CoilSetPlotter",
+    "CoilGroupPlotter",
     "EquilibriumPlotter",
     "BreakdownPlotter",
     "XZLPlotter",
@@ -184,77 +184,13 @@ class LimiterPlotter(Plotter):
         self.ax.plot(self.limiter.x, self.limiter.z, "s", color=color, marker=marker)
 
 
-def _plot_coil(ax, coil, fill=True, **kwargs):
-    """
-    Single coil plot utility
-    """
-    mask = kwargs.pop("mask", True)
-
-    fcolor = kwargs.pop("facecolor", PLOT_DEFAULTS["coil"]["facecolor"][coil.ctype])
-
-    color = kwargs.pop("edgecolor", PLOT_DEFAULTS["coil"]["edgecolor"])
-    linewidth = kwargs.pop("linewidth", PLOT_DEFAULTS["coil"]["linewidth"])
-    alpha = kwargs.pop("alpha", PLOT_DEFAULTS["coil"]["alpha"])
-
-    x = np.append(coil.x_corner, coil.x_corner[0])
-    z = np.append(coil.z_corner, coil.z_corner[0])
-
-    ax.plot(x, z, zorder=11, color=color, linewidth=linewidth)
-    if fill:
-        if mask:
-            ax.fill(x, z, color="w", zorder=10, alpha=1)
-
-        ax.fill(x, z, zorder=10, color=fcolor, alpha=alpha)
-
-
-def _annotate_coil(ax, coil, force=None, centre=None):
-    """
-    Single coil annotation utility function
-    """
-    off = max(0.2, coil.dx + 0.02)
-    if coil.ctype == "CS":
-        drs = -1.5 * off
-        ha = "right"
-    else:
-        drs = 2 * off
-        ha = "left"
-    text = "\n".join([str_to_latex(coil.name), f"{coil.current/1E6:.2f} MA"])
-    if force is not None:
-        text = "\n".join([text, f"{force[1]/1E6:.2f} MN"])
-    x = float(coil.x) + drs
-    z = float(coil.z)
-    if centre is not None:
-        if coil.ctype == "PF":
-            v = np.array([coil.x - centre[0], coil.z - centre[1]])
-            v /= np.sqrt(sum(v**2))
-            d = 1 + np.sqrt(2) * coil.dx
-            x += d * v[0] - drs * 1.5
-            z += d * v[1]
-    ax.text(
-        x,
-        z,
-        text,
-        fontsize=PLOT_DEFAULTS["coil"]["fontsize"],
-        ha=ha,
-        va="center",
-        color="k",
-        backgroundcolor="white",
-        bbox={
-            "boxstyle": "round",
-            "facecolor": "white",
-            "linewidth": 1,
-            "edgecolor": "k",
-        },
-    )
-
-
-class CoilPlotter(Plotter):
+class CoilGroupPlotter(Plotter):
     """
     Utility class for plotting individual Coils (for checking / testing only)
 
     Parameters
     ----------
-    coil: Coil object
+    coil: CoilGroup
         The Coil to be plotted
     ax: Matplotlib axis object
         The ax on which to plot the Coil. (plt.gca() default)
@@ -268,26 +204,158 @@ class CoilPlotter(Plotter):
 
     def __init__(self, coil, ax=None, subcoil=True, label=False, force=None, **kwargs):
         super().__init__(ax)
-        self.coil = coil
-        self.plot_coil(subcoil=subcoil, **kwargs)
-        if label:
-            _annotate_coil(self.ax, self.coil, force=force)
+        self._cg = coil
+        self.colors = kwargs.pop("facecolor", None)
+        self.linewidth = kwargs.pop("linewidth", PLOT_DEFAULTS["coil"]["linewidth"])
+        self.edgecolor = kwargs.pop("edgecolor", PLOT_DEFAULTS["coil"]["edgecolor"])
+        if "alpha" in kwargs:
+            # Alpha can be provided as a list or cycle to other systems, so make sure we
+            # support that here.
+            alpha = kwargs["alpha"]
+            if isinstance(alpha, cycle):
+                kwargs["alpha"] = next(alpha)
+            if isinstance(kwargs["alpha"], list):
+                kwargs["alpha"] = alpha[0]
 
-        if force is not None:
-            d_fx, d_fz = force / M_PER_MN
-            self.ax.arrow(self.coil.x, self.coil.z, 0, d_fz, color="r", width=0.1)
+        self.plot_coil(subcoil=subcoil, label=label, force=force, **kwargs)
+        if label:  # Margins and labels fighting
+            self.ax.set_xlim(left=-2)
+            ymin, ymax = self.ax.get_ylim()
+            self.ax.set_ylim(bottom=ymin - 1)
+            self.ax.set_ylim(top=ymax + 1)
 
-    def plot_coil(self, subcoil, **kwargs):
+    def plot_coil(self, subcoil, label=False, force=None, **kwargs):
         """
         Plot a coil onto the Axes.
         """
+        label = True
+        if hasattr(self._cg, "_control_ind"):
+            control = self._cg._control_ind
+            centre = self._get_centre()
+        else:
+            control = slice(None)
+            centre = None
+
+        xx = self._cg.x
+        zz = self._cg.z
+        dxx = self._cg.dx
+        xx_b = self._cg.x_boundary
+        zz_b = self._cg.z_boundary
+        ctype = self._cg.ctype
+        name = self._cg.name
+        current = self._cg.current
+        control_ind = np.atleast_1d(np.zeros_like(xx, dtype=bool))
+        control_ind[control] = True
+
         if subcoil:
-            if self.coil.sub_coils is None:
-                pass
+            qb = self._cg._quad_boundary
+
+        if force is not None:
+            d_fx, d_fz = force / M_PER_MN
+
+        for i, (x, z, x_b, z_b, dx, ct, n, cur) in enumerate(
+            zip(xx, zz, xx_b, zz_b, dxx, ctype, name, current)
+        ):
+            if control_ind[i]:
+                if self.colors is not None:
+                    if ct.name == "PF":
+                        kwargs["facecolor"] = self.colors[0]
+                    elif ct.name == "CS":
+                        kwargs["facecolor"] = self.colors[1]
+
+                self._plot_coil(
+                    x_b,
+                    z_b,
+                    ct,
+                    color=self.edgecolor,
+                    linewidth=self.linewidth,
+                    **kwargs,
+                )
+                if subcoil:
+                    _qx_b, _qz_b = qb[i]
+                    for ind in range(_qx_b.shape[0]):
+                        self._plot_coil(_qx_b[ind], _qz_b[ind], ct, fill=False, **kwargs)
+                if label:
+                    self._annotate_coil(x, z, dx, n, cur, ct, force=force, centre=centre)
+                if force is not None:
+                    self.ax.arrow(x, z, 0, d_fz[i], color="r", width=0.1)
             else:
-                for name, sc in self.coil.sub_coils.items():
-                    _plot_coil(self.ax, sc, fill=False, **kwargs)
-        _plot_coil(self.ax, self.coil, fill=True, **kwargs)
+                self._plot_coil(x_b, z_b, ct, **kwargs)
+
+    def _get_centre(self):
+        """
+        Get a "centre" position for the coils to arrange the labels.
+        """
+        try:
+            x, z = self._cg.get_control_coils().position
+            xc = (max(x) + min(x)) / 2
+            zc = (max(z) + min(z)) / 2
+            return xc, zc
+        except AttributeError:
+            # Not a coilset
+            return None
+
+    def _annotate_coil(self, x, z, dx, name, current, ctype, force=None, centre=None):
+        """
+        Single coil annotation utility function
+        """
+        off = max(0.2, dx + 0.02)
+        if ctype.name == "CS":
+            drs = -1.5 * off
+            ha = "right"
+        else:
+            drs = 2 * off
+            ha = "left"
+        text = "\n".join([str_to_latex(name), f"{raw_uc(current, 'A', 'MA'):.2f} MA"])
+        if force is not None:
+            text = "\n".join([text, f"{raw_uc(force[1], 'N', 'MN'):.2f} MN"])
+        x = float(x) + drs
+        z = float(z)
+        if centre is not None:
+            if ctype.name == "PF":
+                v = np.array([x - centre[0], z - centre[1]])
+                v /= np.sqrt(sum(v**2))
+                d = 1 + np.sqrt(2) * dx
+                x += d * v[0] - drs * 1.5
+                z += d * v[1]
+        self.ax.text(
+            x,
+            z,
+            text,
+            fontsize=PLOT_DEFAULTS["coil"]["fontsize"],
+            ha=ha,
+            va="center",
+            color="k",
+            backgroundcolor="white",
+            bbox={
+                "boxstyle": "round",
+                "facecolor": "white",
+                "linewidth": 1,
+                "edgecolor": "k",
+            },
+        )
+
+    def _plot_coil(self, x_boundary, z_boundary, ctype, fill=True, **kwargs):
+        """
+        Single coil plot utility
+        """
+        mask = kwargs.pop("mask", True)
+
+        fcolor = kwargs.pop("facecolor", PLOT_DEFAULTS["coil"]["facecolor"][ctype.name])
+
+        color = kwargs.pop("edgecolor", PLOT_DEFAULTS["coil"]["edgecolor"])
+        linewidth = kwargs.pop("linewidth", PLOT_DEFAULTS["coil"]["linewidth"])
+        alpha = kwargs.pop("alpha", PLOT_DEFAULTS["coil"]["alpha"])
+
+        x = np.append(x_boundary, x_boundary[0])
+        z = np.append(z_boundary, z_boundary[0])
+
+        self.ax.plot(x, z, zorder=11, color=color, linewidth=linewidth)
+        if fill:
+            if mask:
+                self.ax.fill(x, z, color="w", zorder=10, alpha=1)
+
+            self.ax.fill(x, z, zorder=10, color=fcolor, alpha=alpha)
 
 
 class PlasmaCoilPlotter(Plotter):
@@ -330,86 +398,6 @@ class PlasmaCoilPlotter(Plotter):
                 levels=levels,
             )
             self.ax.plot(sq_x, sq_z, linewidth=1.5, color="k")
-
-
-class CoilSetPlotter(Plotter):
-    """
-    Utility class for plotting CoilSets
-
-    Parameters
-    ----------
-    coilset: CoilSet object
-        The CoilSet to be plotted
-    ax: Matplotlib axis object
-        The ax on which to plot the CoilSet. (plt.gca() default)
-    subcoil: bool
-        Whether or not to plot subcoils
-    label: bool
-        Whether or not to plot labels on the coils
-    force: None or np.array((n_coils, 2))
-        Whether to plot force vectors, and if so the array of force vectors
-    """
-
-    def __init__(
-        self, coilset, ax=None, subcoil=False, label=True, force=None, **kwargs
-    ):
-        super().__init__(ax)
-        self.coilset = coilset
-        self.colors = kwargs.pop("facecolor", None)
-        self.linewidth = kwargs.pop("linewidth", PLOT_DEFAULTS["coil"]["linewidth"])
-        self.edgecolor = kwargs.pop("edgecolor", PLOT_DEFAULTS["coil"]["edgecolor"])
-        if "alpha" in kwargs:
-            # Alpha can be provided as a list or cycle to other systems, so make sure we
-            # support that here.
-            alpha = kwargs["alpha"]
-            if isinstance(alpha, cycle):
-                kwargs["alpha"] = next(alpha)
-            if isinstance(kwargs["alpha"], list):
-                kwargs["alpha"] = alpha[0]
-
-        self.plot_coils(subcoil=subcoil, label=label, force=force, **kwargs)
-        if label:  # Margins and labels fighting
-            self.ax.set_xlim(left=-2)
-            ymin, ymax = self.ax.get_ylim()
-            self.ax.set_ylim(bottom=ymin - 1)
-            self.ax.set_ylim(top=ymax + 1)
-
-    def plot_coils(self, subcoil=False, label=True, force=None, **kwargs):
-        """
-        Plots all coils in CoilSet.
-        """
-        centre = self.get_centre()
-        for i, (name, coil) in enumerate(self.coilset.coils.items()):
-            if self.colors is not None:
-                if coil.ctype == "PF":
-                    kwargs["facecolor"] = self.colors[0]
-                elif coil.ctype == "CS":
-                    kwargs["facecolor"] = self.colors[1]
-            if not coil.control:
-                coil.plot(  # include self.linewidth here?
-                    ax=self.ax, label=False, **kwargs
-                )
-            else:
-                coil_force = None if force is None else force[i]
-                coil.plot(
-                    ax=self.ax,
-                    subcoil=subcoil,
-                    color=self.edgecolor,
-                    linewidth=self.linewidth,
-                    label=label,
-                    force=coil_force,
-                    centre=centre,
-                    **kwargs,
-                )
-
-    def get_centre(self):
-        """
-        Get a "centre" position for the coils to arrange the labels.
-        """
-        x, z = self.coilset.get_positions()
-        xc = (max(x) + min(x)) / 2
-        zc = (max(z) + min(z)) / 2
-        return xc, zc
 
 
 class EquilibriumPlotter(Plotter):
@@ -465,7 +453,7 @@ class EquilibriumPlotter(Plotter):
             self.plot_O_points()
 
         if plasma:
-            _plot_coil(self.ax, self.eq.plasma_coil())
+            self.plot_plasma_coil()
 
     def plot_Bp(self, **kwargs):
         """
@@ -575,9 +563,7 @@ class EquilibriumPlotter(Plotter):
         """
         Plot the plasma coil.
         """
-        pcoil = self.eq.plasma_coil()
-        for coil in pcoil.values():
-            _plot_coil(self.ax, coil)
+        PlasmaCoilPlotter(self.ax, self.eq.plasma_coil())
 
 
 class BreakdownPlotter(Plotter):

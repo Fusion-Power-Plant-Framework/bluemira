@@ -42,8 +42,7 @@ from bluemira.equilibria.coils._tools import (
 from bluemira.equilibria.constants import I_MIN
 from bluemira.equilibria.error import EquilibriaError
 from bluemira.equilibria.file import EQDSKInterface
-
-# from bluemira.equilibria.plotting import CoilPlotter, CoilSetPlotter
+from bluemira.equilibria.plotting import CoilGroupPlotter
 from bluemira.utilities.tools import flatten_iterable, yintercept
 
 
@@ -126,6 +125,14 @@ class CoilGroup(CoilGroupFieldsMixin):
             ctype = CoilType[ctype]
 
         return Counter(self.ctype)[ctype]
+
+    def plot(self, ax=None, subcoil=True, label=False, force=None, **kwarg):
+        """
+        Plot a CoilGroup
+        """
+        return CoilGroupPlotter(
+            self, ax=ax, subcoil=subcoil, label=label, force=force, **kwarg
+        )
 
     def add_coil(self, *coils: Union[Coil, CoilGroup[Coil]]):
         """Add coils to the coil group"""
@@ -520,6 +527,11 @@ class CoilGroup(CoilGroupFieldsMixin):
     def _quad_weighting(self):
         """Get coil quadrature weightings"""
         return self.__quad_getter("_quad_weighting")
+
+    @property
+    def _quad_boundary(self):
+        """Get coil quadrature boundaries"""
+        return [*self.__list_getter("_quad_boundary")]
 
     @x.setter
     def x(self, values: Union[float, Iterable[float]]):

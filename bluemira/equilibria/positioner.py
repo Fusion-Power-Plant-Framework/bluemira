@@ -461,6 +461,7 @@ class XZLMapper:
         sub-track into two, so that two coils don't end up on top of each other
         """
         # beware of np.zeros_like!
+        # TODO this feels tempramental
         lb_new, ub_new = np.zeros(len(lb)), np.zeros(len(ub))
         lb, ub = list(lb), list(ub)
         flag = False
@@ -476,6 +477,8 @@ class XZLMapper:
             elif n != 1 and flag is False:
                 flag = True
                 last_n = i + n
+                if last_n > len(lb_new):
+                    continue
                 delta = (upper - lower) / n
                 for k, j in enumerate(range(i, i + n)):
                     lb_new[j] = upper - (k + 1) * delta
