@@ -24,7 +24,7 @@ Coil and coil grouping objects
 """
 
 from enum import Enum, EnumMeta, auto
-from typing import Iterable, Optional, Union
+from typing import Optional, Union
 
 # import matplotlib.pyplot as plt
 import numpy as np
@@ -36,8 +36,6 @@ from bluemira.equilibria.error import EquilibriaError
 
 # from bluemira.equilibria.plotting import CoilPlotter, CoilSetPlotter
 from bluemira.utilities.tools import is_num
-
-
 
 __all__ = ["CoilType", "Coil"]
 
