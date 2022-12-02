@@ -235,6 +235,31 @@ class TestPowerCyclePulse:
         phase_set = PowerCyclePulse._validate_phase_set(all_phases)
         assert isinstance(phase_set, list)
 
+    def test_constructor(self):
+        sample_phases = self.test_phases
+        sample_name = "Test instance of PowerCyclePulse"
+        sample = PowerCyclePulse(sample_name, sample_phases)
+        bluemira_debug(
+            f"""
+            {script_title()} (PowerCyclePhase._validate_phase_set)
+
+            Sample phases:
+            {pformat(sample_phases)}
+
+            Phase duration breakdowns:
+            {pformat([p.duration_breakdown for p in sample_phases])}
+
+            Test sample:
+            {pformat(sample)}
+
+            Sample durations list (total duration of each phase):
+            {pformat(sample.durations_list)}
+
+            Sample duration:
+            {pformat(sample.duration)}
+            """
+        )
+
 
 class TestBOPPhaseDependency:
     def test_members(self):
