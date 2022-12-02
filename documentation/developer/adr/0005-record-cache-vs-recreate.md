@@ -1,4 +1,4 @@
-# 1. Record architecture decisions
+# 1. Caching vs. recreation of geometry from Matryoshkas
 
 Date: 2022-06-15 - 2022-11-30
 
@@ -47,3 +47,9 @@ recreate them.
 
 The known consequences are, generally speaking, that setting up finite element problems is going
 to be trickier, particularly when it comes to finding the right boundaries post-creation.
+
+## Additional context
+
+It is possible that future changes, either in terms of moving from FreeCAD to
+another library, or in terms of FreeCAD's scheduled v1 release, will change
+the landscape of this decision, and we will need to re-assess.
