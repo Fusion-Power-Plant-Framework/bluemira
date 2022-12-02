@@ -126,14 +126,14 @@ class PowerCyclePulseError(PowerCycleError):
         return errors
 
 
-class PowerCyclePulse(PowerCycleABC):
+class PowerCyclePulse(PowerCycleTimeABC):
     """
     Class to define pulses for a Power Cycle timeline.
 
     Parameters
     ----------
     name: str
-        Description of the `PowerCyclePulse` instance.
+        Description of the 'PowerCyclePulse' instance.
     phase_set: PowerCyclePhase | list[PowerCyclePhase]
         List of phases that compose the pulse, in chronological order.
     """
@@ -143,8 +143,9 @@ class PowerCyclePulse(PowerCycleABC):
         name,
         phase_set: Union[PowerCyclePhase, List[PowerCyclePhase]],
     ):
-        super().__init__(name)
         self.phase_set = self._validate_phase_set(phase_set)
+        durations_list = self._extract_phase_durations()
+        super().__init__(name, durations_list)
 
     @staticmethod
     def _validate_phase_set(phase_set):
@@ -157,6 +158,13 @@ class PowerCyclePulse(PowerCycleABC):
         for element in phase_set:
             PowerCyclePhase.validate_class(element)
         return phase_set
+
+    def _extract_phase_durations(self):
+        phase_set = self.phase_set
+        durations_list = []
+        for phase in phase_set:
+            durations_list.append(phase.duration)
+        return durations_list
 
 
 class BOPPhaseDependency(Enum):
