@@ -158,8 +158,7 @@ class MHDState:
         -----
         Will not work for symmetric circuits
         """
-        no_coils = len(self.coilset.x)
-        currents = self.coilset.current[self.coilset._control_ind]
+        no_coils = self.coilset.no_coils()
         plasma = self.plasma
         response = np.zeros((no_coils, no_coils, 2))
         background = np.zeros((no_coils, 2))

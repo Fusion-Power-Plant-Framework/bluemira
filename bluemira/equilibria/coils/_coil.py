@@ -37,7 +37,6 @@ from bluemira.equilibria.error import EquilibriaError
 # from bluemira.equilibria.plotting import CoilPlotter, CoilSetPlotter
 from bluemira.utilities.tools import is_num
 
-# from scipy.interpolate import RectBivariateSpline
 
 
 __all__ = ["CoilType", "Coil"]
@@ -63,11 +62,6 @@ class CoilType(Enum, metaclass=CoilTypeEnumMeta):
     PF = auto()
     CS = auto()
     NONE = auto()
-
-
-__ITERABLE_FLOAT = Union[float, Iterable[float]]
-__ITERABLE_COILTYPE = Union[str, CoilType, Iterable[Union[str, CoilType]]]
-__ANY_ITERABLE = Union[__ITERABLE_COILTYPE, __ITERABLE_FLOAT]
 
 
 class CoilNumber:

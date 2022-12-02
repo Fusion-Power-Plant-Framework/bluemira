@@ -47,7 +47,6 @@ class TestFields:
     def setup_class(cls):
         # Let's make a complete **** equilibrium..
         _coilset_setup(cls)
-
         grid = Grid(4.5, 14, -9, 9, 65, 65)
 
         profiles = CustomProfile(

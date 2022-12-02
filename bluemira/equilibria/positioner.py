@@ -185,7 +185,6 @@ class CoilPositioner:
                 _zc,
                 current=0,
                 n_turns=1,
-                # control=True,
                 ctype="CS",
                 j_max=j_max,
                 dx=tk_cs,
