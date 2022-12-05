@@ -146,7 +146,6 @@ class CoilGroup(CoilGroupFieldsMixin):
     def add_coil(self, *coils: Union[Coil, CoilGroup[Coil]]):
         """Add coils to the coil group"""
         self._coils = (*self._coils, *coils)
-        self._pad_discretisation(self.__list_getter("_quad_x"))
 
     def remove_coil(self, *coil_name: str, _top_level: bool = True) -> Union[None, List]:
         """
@@ -194,7 +193,6 @@ class CoilGroup(CoilGroupFieldsMixin):
                 mask[no] = False
 
         self._coils = tuple(coils[mask])
-        self._pad_discretisation(self.__list_getter("_quad_x"))
 
         if not _top_level:
             return removed_names + to_remove
