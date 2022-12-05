@@ -425,6 +425,7 @@ class FixedEquilibriumDesigner(Designer[Equilibrium]):
             "i_modeltype": "GYROBOHM_2",
             "i_equiltype": "q95_sawtooth",
             "i_pedestal": "SAARELMA",
+            "isawt": "FULLY_RELAXED",
         }
         problem_settings = self.build_config.get("plasmod_settings", defaults)
         problem_settings["amin"] = self.params.R_0.value / self.params.A.value

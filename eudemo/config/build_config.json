@@ -21,7 +21,8 @@
             "i_impmodel": "PED_FIXED",
             "i_modeltype": "GYROBOHM_2",
             "i_equiltype": "q95_sawtooth",
-            "i_pedestal": "SAARELMA"
+            "i_pedestal": "SAARELMA",
+            "isawt": "FULLY_RELAXED"
         },
         "fixed_equilibrium_settings": {
             "p_order": 2,
