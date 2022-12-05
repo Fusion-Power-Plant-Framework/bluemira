@@ -92,7 +92,7 @@ html_css_files = ["css/custom.css"]
 
 _html_version = release.split("+")[0]
 
-html_title = f"Welcome to bluemira’s documentation! &mdash; bluemira {_html_version} documentation"
+html_title = f"bluemira {_html_version} documentation"
 
 numfig = True
 
