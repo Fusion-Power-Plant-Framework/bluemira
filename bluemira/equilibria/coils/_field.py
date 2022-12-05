@@ -73,17 +73,24 @@ class CoilGroupFieldsMixin:
         """
         x, z = np.ascontiguousarray(x), np.ascontiguousarray(z)
 
-        return np.einsum(
-            self._einsum_str,
-            greens_psi(
-                self._quad_x[None],
-                self._quad_z[None],
-                x[..., None, None],
-                z[..., None, None],
-                self._quad_dx[None],
-                self._quad_dz[None],
-            ),
-            self._quad_weighting[None],
+        ind = np.where(self._quad_weighting != 0)
+        out = np.zeros((*x.shape, *self._quad_x.shape))
+
+        out[(*(slice(None) for _ in x.shape), *ind)] = greens_psi.py_func(
+            self._quad_x[ind][None],
+            self._quad_z[ind][None],
+            x[..., None],
+            z[..., None],
+            self._quad_dx[ind][None],
+            self._quad_dz[ind][None],
+        )
+
+        return np.squeeze(
+            np.einsum(
+                self._einsum_str,
+                out,
+                self._quad_weighting[None],
+            )
         )
 
     def Bx(self, x: Union[float, np.ndarray], z: Union[float, np.ndarray]):
@@ -346,16 +353,21 @@ class CoilGroupFieldsMixin:
             _quad_z = self._quad_z
             _quad_weight = self._quad_weighting
 
+        ind = np.where(_quad_weight != 0)
+        out = np.zeros((*x.shape, *_quad_x.shape))
+
+        out[(*(slice(None) for _ in x.shape), *ind)] = greens(
+            _quad_x[ind][None],
+            _quad_z[ind][None],
+            x[..., None],
+            z[..., None],
+        )
+
         return np.squeeze(
             np.einsum(
                 self._einsum_str,
-                greens(
-                    _quad_x[None],
-                    _quad_z[None],
-                    x[..., None, None],
-                    z[..., None, None],
-                ),
-                _quad_weight[None],
+                out,
+                _quad_weight,
             )
         )
 
@@ -620,19 +632,20 @@ class CoilGroupFieldsMixin:
                     cr_ind = np.where(cr != 0)
                     Bz[mask][cr_ind] = (
                         MU_0
-                        / (4 * np.pi * xxw[cr_ind])
-                        * (np.log(8 * xxw[cr_ind] / cr[cr_ind]) - 1 + 0.25)
+                        / (4 * np.pi * x[cr_ind])
+                        * (np.log(8 * x[cr_ind] / cr[cr_ind]) - 1 + 0.25)
                     )
                 if False in mask:
-                    Bz[~mask] = coil2.unit_Bz(*pos[~mask[:, 0]].T)
-                    Bx[~mask] = coil2.unit_Bx(*pos[~mask[:, 0]].T)
+                    Bz[~mask] = coil2.unit_Bz(*pos[:, ~mask[:, 0]])
+                    Bx[~mask] = coil2.unit_Bx(*pos[:, ~mask[:, 0]])
 
             else:
                 Bz = coil2.unit_Bz(x, z)
                 Bx = coil2.unit_Bx(x, z)
-            response[:, j, :] = np.squeeze(
-                2 * np.pi * x * np.array([Bz, -Bx]).T
-            )  # 1 cross B
+            # 1 cross B
+            response[:, j, :] = (
+                2 * np.pi * x[:, None] * np.squeeze(np.array([Bz, -Bx]).T)
+            )
         return response
 
 
@@ -711,7 +724,7 @@ class CoilFieldsMixin(CoilGroupFieldsMixin):
 
         """
         response = np.zeros(inside.shape[:-1])
-        points = inside[:, :, 0]
+        points = inside[..., 0]
 
         if np.any(~points):
             response[~points] = greens_func(x[~points], z[~points])

@@ -107,19 +107,18 @@ for i, (xi, zi, dxi, dzi) in enumerate(zip(x, z, dx, dz)):
         dx=dxi,
         dz=dzi,
         ctype=ctype,
-        control=True,
         name=f"{ctype}_{j}",
     )
     coils.append(coil)
     j += 1
 
-coilset = CoilSet(coils)
+coilset = CoilSet(*coils)
 
 # Assign current density and peak field constraints
-coilset.assign_coil_materials("CS", j_max=16.5e6, b_max=12.5)
-coilset.assign_coil_materials("PF", j_max=12.5e6, b_max=11)
+coilset.assign_material("CS", j_max=16.5e6, b_max=12.5)
+coilset.assign_material("PF", j_max=12.5e6, b_max=11)
 coilset.fix_sizes()
-coilset.mesh_coils(0.3)
+coilset.discretisation = 0.3
 
 coilset.plot()
 
@@ -171,16 +170,12 @@ grid = Grid(2, 16.0, -9.0, 9.0, 100, 100)
 
 # %%
 
-field_constraints = CoilFieldConstraints(
-    coilset, coilset.get_max_fields(), tolerance=1e-6
-)
+field_constraints = CoilFieldConstraints(coilset, coilset.b_max, tolerance=1e-6)
 force_constraints = CoilForceConstraints(
     coilset, PF_Fz_max, CS_Fz_sum, CS_Fz_sep, tolerance=1e-6
 )
 
-max_currents = coilset.get_max_currents(0)
-
-
+max_currents = coilset.get_max_current(0.0)
 breakdown = Breakdown(deepcopy(coilset), grid)
 
 bd_opt_problem = BreakdownCOP(

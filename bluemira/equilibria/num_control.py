@@ -89,13 +89,11 @@ class VirtualController(CoilGroup):
         self.Xc = (self.eq.grid.x_min + self.eq.grid.x_max) / 2
         self.Zc = self.eq.grid.z_max + 2  # outside computational domain
         self.gz = gz
-        self.coils = {
-            "V1": Coil(self.Xc, self.Zc, current=1, Nt=1, control=True, ctype="virtual"),
-            "V2": Coil(
-                self.Xc, -self.Zc, current=1, Nt=1, control=True, ctype="virtual"
-            ),
-        }
-        self._pgreen = self.map_psi_greens(self.eq.x, self.eq.z)
+        self._pgreen = self.unit_psi(self.eq.x, self.eq.z)
+        super().__init__(
+            Coil(self.Xc, self.Zc, current=1, name="V1", ctype="NONE"),
+            Coil(self.Xc, -self.Zc, current=1, name="V2", ctype="NONE"),
+        )
 
     def feedback_current(self):
         """
@@ -107,15 +105,13 @@ class VirtualController(CoilGroup):
         """
         xcur, zcur = self.eq.effective_centre()
 
-        currents = -self.gz * self.coilset.Bx(xcur, zcur) / self.control_Bx(xcur, zcur)
-        return currents
+        return -self.gz * self.coilset.Bx(xcur, zcur) / self.control_Bx(xcur, zcur)
 
-    def adjust_currents(self, d_currents):
+    def adjust_currents(self, d_current):
         """
         Adjust the currents in the virtual control coils.
         """
-        for coil, d_current in zip(self.coils.values(), d_currents):
-            coil.current += d_current
+        self.current = self.current + d_current
 
     def stabilise(self):
         """
@@ -129,7 +125,4 @@ class VirtualController(CoilGroup):
         """
         Get the psi array of the VirtualController
         """
-        psi = np.zeros((self.eq.grid.nx, self.eq.grid.nz))
-        for name, coil in self.coils.items():
-            psi += coil.current * self._pgreen[name]
-        return psi
+        return self.current * self._pgreen

@@ -160,12 +160,12 @@ class Grid:
     @classmethod
     def from_eqdsk(cls, e):
         """
-        Initialise a Grid object from an EQDSK dictionary.
+        Initialise a Grid object from an EQDSKInterface.
 
         Parameters
         ----------
-        e: dict
-            EQDSK dictionary
+        e: EQDSKInterface
+
         """
         return cls(
             e.xgrid1,

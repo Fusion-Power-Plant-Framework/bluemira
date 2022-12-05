@@ -316,15 +316,20 @@ class CoilForceConstraints(UpdateableConstraint, OptimisationConstraint):
         """
         Calculate control response of a CoilSet to the constraint.
         """
-        return np.moveaxis(self.coilset.control_F(self.coilset), -1, 0)
+        return coilset.control_F(coilset)
 
     def evaluate(self, equilibrium):
         """
         Calculate the value of the constraint in an Equilibrium.
         """
+        fp = np.zeros((equilibrium.coilset.n_coils(), 2))
         current = equilibrium.coilset.current
         non_zero = np.where(current != 0)[0]
-        return equilibrium.coilset.F(equilibrium)[non_zero] / current[non_zero]
+        if non_zero.size:
+            fp[non_zero] = (
+                equilibrium.coilset.F(equilibrium)[non_zero] / current[non_zero][:, None]
+            )
+        return fp
 
 
 class MagneticConstraint(UpdateableConstraint, OptimisationConstraint):

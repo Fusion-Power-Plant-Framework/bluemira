@@ -450,13 +450,16 @@ class Breakdown(MHDState):
         """
         Returns the poloidal field within each coil
         """
-        b = np.zeros(len(self.coilset.coils))
-        for i, coil in enumerate(self.coilset.coils.values()):
-            if coil.dx > 0:
-                mask = in_zone(self.x, self.z, np.array([coil.x, coil.z]).T)
-                b[i] = np.amax(self.Bp() * mask)
-            else:
-                b[i] = np.amax(self.Bp(coil.x, coil.z))
+        b = np.zeros(self.coilset.n_coils())
+        dx_mask = np.zeros_like(self.coilset.dx)
+        dx_mask[self.coilset.dx > 0] = True
+        mask = in_zone(
+            self.x[dx_mask],
+            self.z[dx_mask],
+            np.array([self.x[dx_mask], self.z[dx_mask]]).T,
+        )
+        b[dx_mask] = np.max(self.Bp()[dx_mask] * mask[dx_mask], axis=-1)
+        b[~dx_mask] = np.max(self.Bp(self.x, self.z)[~dx_mask] * mask[~dx_mask], axis=-1)
         return b
 
     def plot(self, ax=None, Bp=False):
@@ -1266,15 +1269,16 @@ class Equilibrium(MHDState):
         Analyse and summarise the electro-magneto-mechanical characteristics
         of the equilbrium and coilset.
         """
-        c_names = self.coilset.get_control_names()
-        currents = self.coilset.get_control_currents()
+        ccoils = self.coilset.get_control_coils()
+        c_names = ccoils.name
+        currents = ccoils.currents
         fields = self.get_coil_fields()
         forces = self.get_coil_forces()
         fz = forces.T[1]
-        fz_cs = fz[self.coilset.n_PF :]
+        fz_cs = fz[self.coilset.n_coils("PF") :]
         fz_c_stot = sum(fz_cs)
         fsep = []
-        for j in range(self.coilset.n_CS - 1):
+        for j in range(self.coilset.n_coils("CS") - 1):
             fsep.append(np.sum(fz_cs[j + 1 :]) - np.sum(fz_cs[: j + 1]))
         fsep = max(fsep)
         table = {"I [A]": currents, "B [T]": fields, "F [N]": fz}

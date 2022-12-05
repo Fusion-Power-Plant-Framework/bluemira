@@ -922,7 +922,7 @@ class PulsedNestedPositionCOP(CoilsetOptimisationProblem):
         if initial_currents:
             self._initial_currents = initial_currents / self.sub_opt_probs[0].scale
         else:
-            self._initial_currents = np.zeros(coilset.n_control)
+            self._initial_currents = np.zeros(coilset.get_control_coils().n_coils())
         self._debug = {0: debug}
         self._iter = {0: 0.0}
 
@@ -933,7 +933,7 @@ class PulsedNestedPositionCOP(CoilsetOptimisationProblem):
                 "sub_opt_problems": sub_opt_problems,
                 "position_mapper": position_mapper,
                 "initial_currents": self._initial_currents,
-                "iter": self._iter,
+                "itern": self._iter,
                 "debug": self._debug,
                 "verbose": False,
             },
@@ -945,12 +945,12 @@ class PulsedNestedPositionCOP(CoilsetOptimisationProblem):
         self.set_up_optimiser(dimension, bounds)
 
     @staticmethod
-    def _run_reporting(iter, max_fom, verbose):
+    def _run_reporting(itern, max_fom, verbose):
         """
         Keep track of objective function value over iterations.
         """
-        i = max(list(iter.keys())) + 1
-        iter[i] = max_fom
+        i = max(list(itern.keys())) + 1
+        itern[i] = max_fom
 
         if verbose:
             bluemira_print_flush(f"Coil position iteration {i} FOM value: {max_fom:.6e}")
@@ -980,7 +980,7 @@ class PulsedNestedPositionCOP(CoilsetOptimisationProblem):
         position_mapper,
         sub_opt_problems,
         initial_currents,
-        iter,
+        itern,
         verbose,
         debug,
     ):
@@ -997,13 +997,14 @@ class PulsedNestedPositionCOP(CoilsetOptimisationProblem):
 
         fom_values = []
         for sub_opt_prob in sub_opt_problems:
-            sub_opt_prob.coilset.set_positions(positions)
+            for coil, position in positions.items():
+                sub_opt_prob.coilset[coil].position = position
             sub_opt_prob.optimise(x0=initial_currents, fixed_coils=False)
             PulsedNestedPositionCOP._run_diagnostics(debug, sub_opt_prob)
             fom_values.append(sub_opt_prob.opt.optimum_value)
         max_fom = max(fom_values)
 
-        PulsedNestedPositionCOP._run_reporting(iter, max_fom, verbose)
+        PulsedNestedPositionCOP._run_reporting(itern, max_fom, verbose)
 
         return max_fom
 
@@ -1015,7 +1016,7 @@ class PulsedNestedPositionCOP(CoilsetOptimisationProblem):
         sub_opt_problems,
         position_mapper,
         initial_currents,
-        iter,
+        itern,
         verbose,
         debug,
     ):
@@ -1028,7 +1029,7 @@ class PulsedNestedPositionCOP(CoilsetOptimisationProblem):
             position_mapper,
             sub_opt_problems,
             initial_currents,
-            iter,
+            itern,
             verbose,
             debug,
         )
@@ -1048,8 +1049,8 @@ class PulsedNestedPositionCOP(CoilsetOptimisationProblem):
         """
         x, z = [], []
         for name in self.position_mapper.interpolators:
-            x.append(self.coilset.coils[name].x)
-            z.append(self.coilset.coils[name].z)
+            x.append(self.coilset[name].x)
+            z.append(self.coilset[name].z)
         return self.position_mapper.to_L(x, z)
 
     def optimise(self, x0=None, verbose=False):
@@ -1080,7 +1081,7 @@ class PulsedNestedPositionCOP(CoilsetOptimisationProblem):
             self.position_mapper,
             self.sub_opt_probs,
             self._initial_currents,
-            iter=self._iter,
+            itern=self._iter,
             verbose=verbose,
             debug=self._debug,
         )
@@ -1268,7 +1269,7 @@ class BreakdownCOP(CoilsetOptimisationProblem):
         Solve the optimisation problem.
         """
         if x0 is None:
-            x0 = 1e-6 * np.ones(self.coilset.n_control)
+            x0 = 1e-6 * np.ones(len(self.coilset.control))
         else:
             x0 = np.array(x0) / self.scale
 

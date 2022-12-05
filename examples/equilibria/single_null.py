@@ -49,6 +49,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 from IPython import get_ipython
 
+from bluemira.base.constants import raw_uc
 from bluemira.display import plot_defaults
 from bluemira.display.plotter import plot_coordinates
 from bluemira.equilibria.coils import Coil, CoilSet
@@ -106,13 +107,12 @@ for i, (xi, zi, dxi, dzi) in enumerate(zip(x, z, dx, dz)):
         dx=dxi,
         dz=dzi,
         ctype=ctype,
-        control=True,
         name=f"{ctype}_{j}",
     )
     coils.append(coil)
     j += 1
 
-coilset = CoilSet(coils)
+coilset = CoilSet(*coils)
 
 # %%[markdown]
 
@@ -127,16 +127,15 @@ coilset = CoilSet(coils)
 
 # %%
 
-coilset.assign_coil_materials("CS", j_max=16.5e6, b_max=12.5)
-coilset.assign_coil_materials("PF", j_max=12.5e6, b_max=11.0)
+coilset.assign_material("CS", j_max=16.5e6, b_max=12.5)
+coilset.assign_material("PF", j_max=12.5e6, b_max=11.0)
 
 # Later on, we will optimise the PF coil positions, but for the CS coils we can fix sizes
 # and mesh them already.
 
-for coil in coilset.coils.values():
-    if coil.ctype == "CS":
-        coil.flag_sizefix = True
-        coil.mesh_coil(0.3)
+cs = coilset.get_coiltype("CS")
+cs.fix_sizes()
+cs.discretisation = 0.3
 
 # %%[markdown]
 
@@ -266,9 +265,7 @@ program()
 
 # %%
 
-field_constraints = CoilFieldConstraints(
-    eq.coilset, eq.coilset.get_max_fields(), tolerance=1e-6
-)
+field_constraints = CoilFieldConstraints(eq.coilset, eq.coilset.b_max, tolerance=1e-6)
 
 force_constraints = CoilForceConstraints(
     eq.coilset,
@@ -284,7 +281,7 @@ current_opt_problem = TikhonovCurrentCOP(
     targets=MagneticConstraintSet([isoflux]),
     gamma=0.0,
     optimiser=Optimiser("SLSQP", opt_conditions={"max_eval": 2000, "ftol_rel": 1e-6}),
-    max_currents=coilset.get_max_currents(0.0),
+    max_currents=coilset.get_max_current(0.0),
     constraints=[x_point, field_constraints, force_constraints],
 )
 
@@ -322,7 +319,7 @@ minimal_current_opt_problem = MinimalCurrentCOP(
     Optimiser(
         "SLSQP", opt_conditions={"max_eval": 5000, "ftol_rel": 1e-6, "xtol_rel": 1e-6}
     ),
-    max_currents=coilset.get_max_currents(0.0),
+    max_currents=coilset.get_max_current(0.0),
     constraints=[isoflux, x_point, field_constraints, force_constraints],
 )
 
@@ -336,11 +333,14 @@ program = PicardIterator(
 )
 program()
 
+control_coils = coilset.get_control_coils()
+min_control_coils = minimal_current_coilset.get_control_coils()
+
 print(
-    f"Total currents from minimal error optimisation problem: {np.sum(np.abs(coilset.get_control_currents()))/1e6:.2f} MA"
+    f"Total currents from minimal error optimisation problem: {raw_uc(np.sum(np.abs(control_coils.current)), 'A', 'MA'):.2f} MA"
 )
 print(
-    f"Total currents from minimal current optimisation problem: {np.sum(np.abs(minimal_current_coilset.get_control_currents()))/1e6:.2f} MA"
+    f"Total currents from minimal current optimisation problem: {raw_uc(np.sum(np.abs(min_control_coils.current)), 'A', 'MA'):.2f} MA"
 )
 
 
@@ -402,7 +402,7 @@ current_opt_problem_sof = TikhonovCurrentCOP(
     optimiser=Optimiser(
         "SLSQP", opt_conditions={"max_eval": 2000, "ftol_rel": 1e-6, "xtol_rel": 1e-6}
     ),
-    max_currents=coilset.get_max_currents(I_p),
+    max_currents=coilset.get_max_current(I_p),
     constraints=[sof_psi_boundary, x_point, field_constraints, force_constraints],
 )
 
@@ -414,7 +414,7 @@ current_opt_problem_eof = TikhonovCurrentCOP(
     optimiser=Optimiser(
         "COBYLA", opt_conditions={"max_eval": 5000, "ftol_rel": 1e-6, "xtol_rel": 1e-6}
     ),
-    max_currents=coilset.get_max_currents(I_p),
+    max_currents=coilset.get_max_current(I_p),
     constraints=[eof_psi_boundary, x_point, field_constraints, force_constraints],
 )
 
@@ -451,14 +451,13 @@ old_coilset = deepcopy(coilset)
 old_eq = deepcopy(eq)
 
 region_interpolators = {}
-for coil in coilset.coils.values():
-    if coil.ctype == "PF":
-        x, z = coil.x, coil.z
-        region = make_polygon(
-            {"x": [x - 1, x + 1, x + 1, x - 1], "z": [z - 1, z - 1, z + 1, z + 1]},
-            closed=True,
-        )
-        region_interpolators[coil.name] = RegionInterpolator(region)
+pf_coils = coilset.get_coiltype("PF")
+for x, z, name in zip(pf_coils.x, pf_coils.z, pf_coils.name):
+    region = make_polygon(
+        {"x": [x - 1, x + 1, x + 1, x - 1], "z": [z - 1, z - 1, z + 1, z + 1]},
+        closed=True,
+    )
+    region_interpolators[name] = RegionInterpolator(region)
 
 position_mapper = PositionMapper(region_interpolators)
 
@@ -486,21 +485,22 @@ optimised_coilset = position_opt_problem.optimise(verbose=True)
 
 # %%
 
-sof_pf_currents = sof.coilset.get_control_currents()[: sof.coilset.n_PF]
-eof_pf_currents = eof.coilset.get_control_currents()[: sof.coilset.n_PF]
-max_pf_currents = np.max(np.abs([sof_pf_currents, eof_pf_currents]), axis=0)
-pf_coil_names = optimised_coilset.get_PF_names()
 
-max_cs_currents = optimised_coilset.get_max_currents(0.0)[optimised_coilset.n_PF :]
+sof_pf_currents = sof.coilset.get_coiltype("PF").get_control_coils().current
+eof_pf_currents = eof.coilset.get_coiltype("PF").get_control_coils().current
+max_pf_currents = np.max(np.abs([sof_pf_currents, eof_pf_currents]), axis=0)
+
+pf_coil_names = optimised_coilset.get_coiltype("PF").name
+
+max_cs_currents = optimised_coilset.get_coiltype("CS").get_max_current()
 
 max_currents = np.concatenate([max_pf_currents, max_cs_currents])
 
 for problem in [current_opt_problem_sof, current_opt_problem_eof]:
     for pf_name, max_current in zip(pf_coil_names, max_pf_currents):
-        problem.eq.coilset.coils[pf_name].make_size(max_current)
-        problem.eq.coilset.coils[pf_name].fix_size()
-        problem.eq.coilset.coils[pf_name].mesh_coil(0.3)
-
+        problem.eq.coilset[pf_name].resize(max_current)
+        problem.eq.coilset[pf_name].fix_size()
+        problem.eq.coilset[pf_name].discretisation = 0.3
     problem.set_current_bounds(max_currents)
 
 
@@ -545,8 +545,8 @@ program()
 # %%
 
 f, ax = plt.subplots()
-x_old, z_old = old_coilset.get_positions()
-x_new, z_new = sof.coilset.get_positions()
+x_old, z_old = old_coilset.position
+x_new, z_new = sof.coilset.position
 plot_coordinates(old_eq.get_LCFS(), ax=ax, edgecolor="b", fill=False)
 plot_coordinates(sof.get_LCFS(), ax=ax, edgecolor="r", fill=False)
 plot_coordinates(eof.get_LCFS(), ax=ax, edgecolor="g", fill=False)
@@ -568,14 +568,14 @@ plt.show()
 f, (ax_1, ax_2, ax_3) = plt.subplots(1, 3)
 
 old_eq.plot(ax=ax_1)
-old_coilset.plot(ax=ax_1)
+old_coilset.plot(ax=ax_1, label=True)
 
 sof.plot(ax=ax_2)
-sof.coilset.plot(ax=ax_2)
+sof.coilset.plot(ax=ax_2, label=True)
 ax_2.set_title("SOF $\\Psi_{b} = $" + f"{sof.get_OX_psis()[1] * 2*np.pi:.2f} V.s")
 
 
 eof.plot(ax=ax_3)
-eof.coilset.plot(ax=ax_3)
+eof.coilset.plot(ax=ax_3, label=True)
 ax_3.set_title("EOF $\\Psi_{b} = $" + f"{eof.get_OX_psis()[1] * 2*np.pi:.2f} V.s")
 plt.show()

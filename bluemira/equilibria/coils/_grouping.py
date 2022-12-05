@@ -101,6 +101,8 @@ class CoilGroup(CoilGroupFieldsMixin):
     """
 
     def __init__(self, *coils: Union[Coil, CoilGroup[Coil]]):
+        if isinstance(coils[0], Iterable):
+            raise TypeError("Iterable is not a Coil or CoilGroup")
         self._coils = coils
         self._pad_discretisation(self.__list_getter("_quad_x"))
 
@@ -133,6 +135,13 @@ class CoilGroup(CoilGroupFieldsMixin):
         return CoilGroupPlotter(
             self, ax=ax, subcoil=subcoil, label=label, force=force, **kwarg
         )
+
+    def fix_sizes(self):
+        """
+        Fix coils sizes
+        """
+        for fx in self.__list_getter("fix_size"):
+            fx()
 
     def add_coil(self, *coils: Union[Coil, CoilGroup[Coil]]):
         """Add coils to the coil group"""
@@ -279,6 +288,7 @@ class CoilGroup(CoilGroupFieldsMixin):
     def __quad_getter(self, attr: str) -> np.ndarray:
         """Get quadratures and autopad to create non ragged array"""
         _quad_list = self.__list_getter(attr)
+        self._pad_discretisation(_quad_list)
 
         for i, d in enumerate(self._pad_size):
             _quad_list[i] = np.pad(_quad_list[i], (0, d))
@@ -293,7 +303,8 @@ class CoilGroup(CoilGroupFieldsMixin):
     ):
         """Set attributes on coils"""
         values = np.atleast_1d(values)
-        values.dtype = dtype
+        if dtype is not None:
+            values.dtype = np.dtype(dtype)
         no_val = values.size
         no = 0
         for coil in flatten_iterable(self._coils):
@@ -332,6 +343,7 @@ class CoilGroup(CoilGroupFieldsMixin):
         memo[id(self)] = result
         for k, v in self.__dict__.items():
             setattr(result, k, deepcopy(v, memo))
+        result._einsum_str = self._einsum_str
         return result
 
     def _pad_discretisation(
@@ -360,9 +372,7 @@ class CoilGroup(CoilGroupFieldsMixin):
         max_len = max(all_len)
         self._pad_size = max_len - all_len
 
-        self._einsum_str = (
-            "...j, ...ij -> ...i" if len(_to_pad) == 1 else "...ij, ...ij -> ...i"
-        )
+        self._einsum_str = "...j, ...j -> ..."
 
     def _find_coil(self, name):
         """Find coil by name"""
@@ -399,10 +409,26 @@ class CoilGroup(CoilGroupFieldsMixin):
         cg.j_max = j_max
         cg.b_max = b_max
 
-    def get_max_current(self) -> np.ndarray:
-        """Get max currents"""
+    def get_max_current(self, max_current: float = np.infty) -> np.ndarray:
+        """
+        Get max currents
+
+        If a max current argument is provided and the max current isnt set the value
+        will be as input.
+
+        Parameters
+        ----------
+        max_current: float
+            max current value if j_max == nan
+
+        Returns
+        -------
+        np.ndarray
+        """
         return np.where(
-            np.isnan(self.j_max), np.infty, get_max_current(self.dx, self.dz, self.j_max)
+            np.isnan(self.j_max),
+            max_current,
+            get_max_current(self.dx, self.dz, self.j_max),
         )
 
     @property
