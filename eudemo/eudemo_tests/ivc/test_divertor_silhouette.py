@@ -80,7 +80,7 @@ class TestDivertorSilhouetteDesigner:
 
         divertor = designer.execute()
 
-        for target in [divertor[0], divertor[1]]:
+        for target in [divertor[1], divertor[3]]:
             assert signed_distance(target, self.separatrix) == 0
 
     def test_target_length_set_by_parameter(self):
@@ -89,7 +89,7 @@ class TestDivertorSilhouetteDesigner:
 
         divertor = designer.execute()
 
-        for target in [divertor[0], divertor[1]]:
+        for target in [divertor[1], divertor[3]]:
             assert target.length == 1.5
 
     def test_dome_added_to_divertor(self):
@@ -102,7 +102,7 @@ class TestDivertorSilhouetteDesigner:
     def test_dome_intersects_targets(self):
         designer = DivertorSilhouetteDesigner(self.params, self.eq, self.wall)
 
-        inner_target, outer_target, dome, _, _ = designer.execute()
+        _, inner_target, dome, outer_target, _ = designer.execute()
 
         assert signed_distance(dome, inner_target) == 0
         assert signed_distance(dome, outer_target) == 0
@@ -128,7 +128,7 @@ class TestDivertorSilhouetteDesigner:
     def test_baffle_start_and_end_points_and_target_intersects(self):
         designer = DivertorSilhouetteDesigner(self.params, self.eq, self.wall)
 
-        inner_target, outer_target, _, inner_baffle, outer_baffle = designer.execute()
+        inner_baffle, inner_target, _, outer_target, outer_baffle = designer.execute()
 
         assert inner_baffle is not None
         assert inner_baffle.start_point()[0] == min(designer.x_limits)
