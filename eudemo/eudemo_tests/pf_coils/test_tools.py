@@ -44,10 +44,10 @@ class TestMakeCoilMapper:
             {
                 "x1": {"value": 4, "upper_bound": 5, "lower_bound": 0.3},
                 "x2": {"value": 11.5, "upper_bound": 12, "lower_bound": 6},
-                "ri": {"value": 0.1},
+                "ri": {"value": 0},
                 "ro": {"value": 1},
                 "z1": {"value": 8},
-                "z2": {"value": 9, "upper_bound": 10},
+                "z2": {"value": -9},
             },
         ).create_shape(label="PFrame"),
         TripleArc().create_shape(label="TripleArc"),
