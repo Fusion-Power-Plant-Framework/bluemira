@@ -285,7 +285,6 @@ class TestRegionMapper:
                 b_max=100,
                 name="PF_3",
             ),
-            symmetry_line=np.array([[0, 0], [1, 0]]),
         )
 
         coil = Coil(

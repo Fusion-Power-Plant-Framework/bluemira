@@ -52,7 +52,6 @@ class TestCoilsetOptimiser:
                 ctype="PF",
                 name="PF_4",
             ),
-            symmetry_line=np.array([[0, 0], [1, 0]]),
         )
 
         coil2 = Coil(

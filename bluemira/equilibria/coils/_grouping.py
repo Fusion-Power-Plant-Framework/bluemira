@@ -687,20 +687,22 @@ class SymmetricCircuit(Circuit):
     ----------
     coils: Union[Coil, CoilGroup[Coil]]
         2 coil or coil group objects to symmetrise in a circuit
-    symmetry_line: Union[Tuple, np.ndarray]
-        Symmetry line, by default the line z=0
+
 
     Notes
     -----
     Although two groups can be defined any movement of the coils is
-    achieved by offsets to the mean position of the coilgroups
+    achieved by offsets to the mean position of the coilgroups.
+
+    Currently only symmetric about z = 0 see gh issue #210
     """
 
     def __init__(
         self,
         *coils: Union[Coil, CoilGroup[Coil]],
-        symmetry_line: Union[Tuple, np.ndarray] = ((0, 0), (1, 0)),
     ):
+        symmetry_line: Union[Tuple, np.ndarray] = ((0, 0), (1, 0))
+
         if len(coils) == 1:
             coils = (coils[0], deepcopy(coils[0]))
         if len(coils) != 2:
