@@ -757,7 +757,7 @@ def sweep_shape(profiles, path, solid=True, frenet=True, label=""):
     return convert(result, label=label)
 
 
-def distance_to(geo1: BluemiraGeo, geo2: BluemiraGeo):
+def distance_to(geo1: Union[Iterable, BluemiraGeo], geo2: Union[Iterable, BluemiraGeo]):
     """
     Calculate the distance between two BluemiraGeos.
 
