@@ -20,7 +20,7 @@
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 
 """
-Deprecated discretised offset operations.
+Discretised offset operations used in case of failure in primitive offsetting.
 """
 
 from copy import deepcopy

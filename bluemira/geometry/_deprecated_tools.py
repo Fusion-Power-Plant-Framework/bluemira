@@ -20,7 +20,7 @@
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 
 """
-A collection of geometry tools.
+A collection of private geometry tools.
 """
 
 from functools import partial
