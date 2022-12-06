@@ -20,7 +20,7 @@
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 
 """
-A collection of private geometry tools for discretised. Do not use these;
+A collection of private geometry tools for discretised geometry. Do not use these;
 use primitive operations in geometry/tools.py instead.
 """
 
