@@ -400,6 +400,11 @@ class Coil(CoilFieldsMixin):
         b_max: float
             Overwrite default constant material max field [T]
 
+        Notes
+        -----
+        Will always modify both j_max and b_max of the coil with the either the default
+        or specified values.
+
         """
         self.j_max = j_max
         self.b_max = b_max
