@@ -44,7 +44,7 @@ from bluemira.equilibria.coils import (
 from bluemira.equilibria.constants import NBTI_J_MAX
 from bluemira.equilibria.error import EquilibriaError
 from bluemira.equilibria.plotting import RegionPlotter, XZLPlotter
-from bluemira.geometry._deprecated_tools import offset
+from bluemira.geometry._private_tools import offset
 from bluemira.geometry.constants import VERY_BIG
 from bluemira.geometry.coordinates import (
     Coordinates,

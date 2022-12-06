@@ -27,7 +27,7 @@ from matplotlib import pyplot as plt
 from bluemira.base.file import get_bluemira_path
 from bluemira.equilibria.coils import Coil, CoilSet, SymmetricCircuit
 from bluemira.equilibria.positioner import CoilPositioner, RegionMapper, XZLMapper
-from bluemira.geometry._deprecated_tools import offset
+from bluemira.geometry._private_tools import offset
 from bluemira.geometry.coordinates import Coordinates
 
 DATA_PATH = get_bluemira_path("geometry", subfolder="data")
