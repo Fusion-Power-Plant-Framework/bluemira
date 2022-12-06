@@ -34,7 +34,7 @@ from scipy.spatial import ConvexHull
 from bluemira.base.constants import EPS
 from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.equilibria.coils import Coil, CoilSet, get_max_current
-from bluemira.equilibria.constants import NBTI_J_MAX
+from bluemira.equilibria.constants import NB3SN_J_MAX, NBTI_J_MAX
 from bluemira.equilibria.error import EquilibriaError
 from bluemira.equilibria.plotting import RegionPlotter, XZLPlotter
 from bluemira.geometry._private_tools import offset
@@ -170,7 +170,7 @@ class CoilPositioner:
             Coil(xint[i], zint[i], ctype="PF", j_max=NBTI_J_MAX) for i in range(n_PF)
         ]
 
-    def equispace_CS(self, x_cs, tk_cs, z_min, z_max, n_CS, j_max=12.5):
+    def equispace_CS(self, x_cs, tk_cs, z_min, z_max, n_CS, j_max=NB3SN_J_MAX):
         """
         Defines a Solenoid object with equally spaced nCS modules
         """
