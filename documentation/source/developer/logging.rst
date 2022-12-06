@@ -3,8 +3,8 @@ Logging in Bluemira
 
 To organise and have granularity in text (and potentially graphical) outputs
 we use some wrappers around python's built-in logging module.
-This allows us to both store the output in a log file but also be precise about
-how much information is presented at any one time.
+This allows us to store the output in a log file whilst also being precise about
+what information is displayed in standard out.
 
 What does this mean for a developer
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -57,7 +57,7 @@ There are a few actions that should be taken:
             if loglevel == "DEBUG":
                 # Do stuff
 
-* For updated text (ex. progress bars) there are a few functions that do not print newlines
+* For updated text (e.g. progress bars) there are a few functions that do not print newlines
 
 
     .. code-block:: python
@@ -70,7 +70,7 @@ There are a few actions that should be taken:
         bluemira_print_flush('my message')
         bluemira_print_flush('my other message')  # overwrites the first message
 
-* If formatted output is not desired there are error and print functions the direct to the logger
+* If formatted output is not desired, there are error and print functions that direct to the logger
   as needed with no other modifications. This is used internally for external code outputs.
 
     .. code-block:: python
