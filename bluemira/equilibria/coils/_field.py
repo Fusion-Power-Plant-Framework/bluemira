@@ -668,9 +668,233 @@ class CoilGroupFieldsMixin:
         return response
 
 
+class CoilSetFieldsMixin(CoilGroupFieldsMixin):
+    """
+    CoilSet magnetic fields mixin.
+
+    Adjust output of coilgroup field calculations dealing with control coils
+    or summing over coils
+    """
+
+    def psi(
+        self, x: np.ndarray, z: np.ndarray, sum_coils: bool = True, control: bool = False
+    ) -> np.ndarray:
+        """
+        Psi of Coilset
+
+        Parameters
+        ----------
+        x: np.ndarray
+            The x values at which to calculate the psi response
+        z: np.ndarray
+            The z values at which to calculate the psi response
+        sum_coils: bool
+            sum over coils
+        control: bool
+            operations on control coils only
+
+        Returns
+        -------
+        np.ndarray of response
+        """
+        return self._sum(super().psi(x, z), sum_coils=sum_coils, control=control)
+
+    def Bx(
+        self, x: np.ndarray, z: np.ndarray, sum_coils: bool = True, control: bool = False
+    ) -> np.ndarray:
+        """
+        Bx of Coilset
+
+        Parameters
+        ----------
+        x: np.ndarray
+            The x values at which to calculate the Bx response
+        z: np.ndarray
+            The z values at which to calculate the Bx response
+        sum_coils: bool
+            sum over coils
+        control: bool
+            operations on control coils only
+
+        Returns
+        -------
+        np.ndarray of response
+        """
+        return self._sum(super().Bx(x, z), sum_coils=sum_coils, control=control)
+
+    def Bz(
+        self, x: np.ndarray, z: np.ndarray, sum_coils: bool = True, control: bool = False
+    ) -> np.ndarray:
+        """
+        Bz of Coilset
+
+        Parameters
+        ----------
+        x: np.ndarray
+            The x values at which to calculate the Bz response
+        z: np.ndarray
+            The z values at which to calculate the Bz response
+        sum_coils: bool
+            sum over coils
+        control: bool
+            operations on control coils only
+
+        Returns
+        -------
+        np.ndarray of response
+        """
+        return self._sum(super().Bz(x, z), sum_coils=sum_coils, control=control)
+
+    def unit_psi(
+        self,
+        x: np.ndarray,
+        z: np.ndarray,
+        sum_coils: bool = False,
+        control: bool = False,
+    ) -> np.ndarray:
+        """
+        Unit psi of Coilset
+
+        Parameters
+        ----------
+        x: np.ndarray
+            The x values at which to calculate the psi response
+        z: np.ndarray
+            The z values at which to calculate the psi response
+        sum_coils: bool
+            sum over coils
+        control: bool
+            operations on control coils only
+
+        Returns
+        -------
+        np.ndarray of response
+        """
+        return self._sum(super().unit_psi(x, z), sum_coils=sum_coils, control=control)
+
+    def unit_Bx(
+        self,
+        x: np.ndarray,
+        z: np.ndarray,
+        sum_coils: bool = False,
+        control: bool = False,
+    ) -> np.ndarray:
+        """
+        Unit Bx of Coilset
+
+        Parameters
+        ----------
+        x: np.ndarray
+            The x values at which to calculate the Bx response
+        z: np.ndarray
+            The z values at which to calculate the Bx response
+        sum_coils: bool
+            sum over coils
+        control: bool
+            operations on control coils only
+
+        Returns
+        -------
+        np.ndarray of response
+        """
+        return self._sum(super().unit_Bx(x, z), sum_coils=sum_coils, control=control)
+
+    def unit_Bz(
+        self,
+        x: np.ndarray,
+        z: np.ndarray,
+        sum_coils: bool = False,
+        control: bool = False,
+    ) -> np.ndarray:
+        """
+        Bz of Coilset
+
+        Parameters
+        ----------
+        x: np.ndarray
+            The x values at which to calculate the Bz response
+        z: np.ndarray
+            The z values at which to calculate the Bz response
+        sum_coils: bool
+            sum over coils
+        control: bool
+            operations on control coils only
+
+        Returns
+        -------
+        np.ndarray of response
+        """
+        return self._sum(super().unit_Bz(x, z), sum_coils=sum_coils, control=control)
+
+    def psi_greens(
+        self, psigreens: np.ndarray, sum_coils: bool = True, control: bool = False
+    ) -> np.ndarray:
+        """
+        Uses the Greens mapped dict to quickly compute the psi
+
+        Parameters
+        ----------
+        psigreens: np.ndarray
+            The unit psi response
+        sum_coils: bool
+            sum over coils
+        control: bool
+            operations on control coils only
+
+        Returns
+        -------
+        np.ndarray of response
+        """
+        return self._sum(
+            super().psi_greens(psigreens), sum_coils=sum_coils, control=control
+        )
+
+    def Bx_greens(
+        self, bgreen: np.ndarray, sum_coils: bool = True, control: bool = False
+    ) -> np.ndarray:
+        """
+        Uses the Greens mapped dict to quickly compute the Bx
+
+        Parameters
+        ----------
+        bgreen: np.ndarray
+            The unit Bx response
+        sum_coils: bool
+            sum over coils
+        control: bool
+            operations on control coils only
+
+        Returns
+        -------
+        np.ndarray of response
+        """
+        return self._sum(super().Bx_greens(bgreen), sum_coils=sum_coils, control=control)
+
+    def Bz_greens(
+        self, bgreen: np.ndarray, sum_coils: bool = True, control: bool = False
+    ) -> np.ndarray:
+        """
+        Uses the Greens mapped dict to quickly compute the Bz
+
+        Parameters
+        ----------
+        bgreen: np.ndarray
+            The unit Bz response
+        sum_coils: bool
+            sum over coils
+        control: bool
+            operations on control coils only
+
+        Returns
+        -------
+        np.ndarray of response
+        """
+        return self._sum(super().Bz_greens(bgreen), sum_coils=sum_coils, control=control)
+
+
 class CoilFieldsMixin(CoilGroupFieldsMixin):
     """
-    Coilmagnetic fields mixin.
+    Coil magnetic fields mixin.
 
     Add field calculation mechanics to Coils
     """
