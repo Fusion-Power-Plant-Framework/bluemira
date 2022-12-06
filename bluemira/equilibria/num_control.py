@@ -89,7 +89,7 @@ class VirtualController(CoilGroup):
         self.Xc = (self.eq.grid.x_min + self.eq.grid.x_max) / 2
         self.Zc = self.eq.grid.z_max + 2  # outside computational domain
         self.gz = gz
-        self._pgreen = self.unit_psi(self.eq.x, self.eq.z)
+        self._pgreen = self.psi_response(self.eq.x, self.eq.z)
         super().__init__(
             Coil(self.Xc, self.Zc, current=1, name="V1", ctype="NONE"),
             Coil(self.Xc, -self.Zc, current=1, name="V2", ctype="NONE"),

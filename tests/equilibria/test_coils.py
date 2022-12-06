@@ -127,10 +127,10 @@ class TestCoil:
         x, z = np.meshgrid(x_1_d, z_1_d, indexing="ij")
         c = Coil(x=4, z=0, current=1591550, dx=0.3, dz=1)
 
-        gbx = c.unit_Bx(x, z)
-        gbz = c.unit_Bz(x, z)
+        gbx = c.Bx_response(x, z)
+        gbz = c.Bz_response(x, z)
         _ = np.sqrt(gbx**2 + gbz**2)
-        _ = c.unit_psi(x, z)
+        _ = c.psi_response(x, z)
 
         _, ax = plt.subplots()
         cc = ax.contourf(x, z, gbx)
@@ -142,10 +142,10 @@ class TestCoil:
 
         c.discretisation = 0.1
 
-        gbxn = c.unit_Bx(x, z)
-        _ = c.unit_Bz(x, z)
+        gbxn = c.Bx_response(x, z)
+        _ = c.Bz_response(x, z)
         _ = np.sqrt(gbx**2 + gbz**2)
-        _ = c.unit_psi(x, z)
+        _ = c.psi_response(x, z)
 
         _, ax = plt.subplots()
         c = ax.contourf(x, z, gbxn)

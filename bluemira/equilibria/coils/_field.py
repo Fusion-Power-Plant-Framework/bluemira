@@ -59,7 +59,7 @@ class CoilGroupFieldsMixin:
         """
         Calculate poloidal flux at (x, z)
         """
-        return self.unit_psi(x, z) * self.current
+        return self.psi_response(x, z) * self.current
 
     def psi_greens(self, pgreen: Union[float, np.ndarray]):
         """
@@ -67,7 +67,7 @@ class CoilGroupFieldsMixin:
         """
         return self.current * pgreen
 
-    def unit_psi(self, x: Union[float, np.ndarray], z: Union[float, np.ndarray]):
+    def psi_response(self, x: Union[float, np.ndarray], z: Union[float, np.ndarray]):
         """
         Calculate poloidal flux at (x, z) due to a unit current
         """
@@ -97,7 +97,7 @@ class CoilGroupFieldsMixin:
         """
         Calculate radial magnetic field Bx at (x, z)
         """
-        return self.unit_Bx(x, z) * self.current
+        return self.Bx_response(x, z) * self.current
 
     def Bx_greens(self, bgreen: Union[float, np.ndarray]):
         """
@@ -105,7 +105,7 @@ class CoilGroupFieldsMixin:
         """
         return self.current * bgreen
 
-    def unit_Bx(self, x: Union[float, np.ndarray], z: Union[float, np.ndarray]):
+    def Bx_response(self, x: Union[float, np.ndarray], z: Union[float, np.ndarray]):
         """
         Calculate the radial magnetic field response at (x, z) due to a unit
         current. Green's functions are used outside the coil, and a semianalytic
@@ -124,14 +124,14 @@ class CoilGroupFieldsMixin:
             The radial magnetic field response at the x, z coordinates.
         """
         return self._mix_control_method(
-            x, z, self._unit_Bx_greens, self._unit_Bx_analytical
+            x, z, self._Bx_response_greens, self._Bx_response_analytical
         )
 
     def Bz(self, x: Union[float, np.ndarray], z: Union[float, np.ndarray]):
         """
         Calculate vertical magnetic field Bz at (x, z)
         """
-        return self.unit_Bz(x, z) * self.current
+        return self.Bz_response(x, z) * self.current
 
     def Bz_greens(self, bgreen: Union[float, np.ndarray]):
         """
@@ -139,7 +139,7 @@ class CoilGroupFieldsMixin:
         """
         return self.current * bgreen
 
-    def unit_Bz(self, x: Union[float, np.ndarray], z: Union[float, np.ndarray]):
+    def Bz_response(self, x: Union[float, np.ndarray], z: Union[float, np.ndarray]):
         """
         Calculate the vertical magnetic field response at (x, z) due to a unit
         current. Green's functions are used outside the coil, and a semianalytic
@@ -158,7 +158,7 @@ class CoilGroupFieldsMixin:
             The vertical magnetic field response at the x, z coordinates.
         """
         return self._mix_control_method(
-            x, z, self._unit_Bz_greens, self._unit_Bz_analytical
+            x, z, self._Bz_response_greens, self._Bz_response_analytical
         )
 
     def Bp(self, x: Union[float, np.ndarray], z: Union[float, np.ndarray]):
@@ -321,7 +321,7 @@ class CoilGroupFieldsMixin:
             & (z <= z_max[np.newaxis])
         )
 
-    def _unit_B_greens(
+    def _B_response_greens(
         self,
         greens: Callable,
         x: Union[float, np.ndarray],
@@ -380,7 +380,7 @@ class CoilGroupFieldsMixin:
             )
         )
 
-    def _unit_Bx_greens(
+    def _Bx_response_greens(
         self,
         x: Union[float, np.ndarray],
         z: Union[float, np.ndarray],
@@ -415,11 +415,11 @@ class CoilGroupFieldsMixin:
         response: np.ndarray
 
         """
-        return self._unit_B_greens(
+        return self._B_response_greens(
             greens_Bx, x, z, split, _quad_x, _quad_z, _quad_weight
         )
 
-    def _unit_Bz_greens(
+    def _Bz_response_greens(
         self,
         x: Union[float, np.ndarray],
         z: Union[float, np.ndarray],
@@ -453,11 +453,11 @@ class CoilGroupFieldsMixin:
         response: np.ndarray
 
         """
-        return self._unit_B_greens(
+        return self._B_response_greens(
             greens_Bz, x, z, split, _quad_x, _quad_z, _quad_weight
         )
 
-    def _unit_B_analytical(
+    def _B_response_analytical(
         self,
         semianalytic: Callable,
         x: np.ndarray,
@@ -513,7 +513,7 @@ class CoilGroupFieldsMixin:
             )
         )
 
-    def _unit_Bx_analytical(
+    def _Bx_response_analytical(
         self,
         x: np.ndarray,
         z: np.ndarray,
@@ -548,11 +548,11 @@ class CoilGroupFieldsMixin:
         -------
         response: np.ndarray
         """
-        return self._unit_B_analytical(
+        return self._B_response_analytical(
             semianalytic_Bx, x, z, split, coil_x, coil_z, coil_dx, coil_dz
         )
 
-    def _unit_Bz_analytical(
+    def _Bz_response_analytical(
         self,
         x: np.ndarray,
         z: np.ndarray,
@@ -587,7 +587,7 @@ class CoilGroupFieldsMixin:
         -------
         response: np.ndarray
         """
-        return self._unit_B_analytical(
+        return self._B_response_analytical(
             semianalytic_Bz, x, z, split, coil_x, coil_z, coil_dx, coil_dz
         )
 
@@ -655,12 +655,12 @@ class CoilGroupFieldsMixin:
                         * (np.log(8 * x[cr_ind] / cr[cr_ind]) - 1 + 0.25)
                     )
                 if False in mask:
-                    Bz[~mask] = coil2.unit_Bz(*pos[:, ~mask[:, 0]])
-                    Bx[~mask] = coil2.unit_Bx(*pos[:, ~mask[:, 0]])
+                    Bz[~mask] = coil2.Bz_response(*pos[:, ~mask[:, 0]])
+                    Bx[~mask] = coil2.Bx_response(*pos[:, ~mask[:, 0]])
 
             else:
-                Bz = coil2.unit_Bz(x, z)
-                Bx = coil2.unit_Bx(x, z)
+                Bz = coil2.Bz_response(x, z)
+                Bx = coil2.Bx_response(x, z)
             # 1 cross B
             response[:, j, :] = (
                 2 * np.pi * x[:, np.newaxis] * np.squeeze(np.array([Bz, -Bx]).T)
@@ -745,7 +745,7 @@ class CoilSetFieldsMixin(CoilGroupFieldsMixin):
         """
         return self._sum(super().Bz(x, z), sum_coils=sum_coils, control=control)
 
-    def unit_psi(
+    def psi_response(
         self,
         x: np.ndarray,
         z: np.ndarray,
@@ -770,9 +770,11 @@ class CoilSetFieldsMixin(CoilGroupFieldsMixin):
         -------
         np.ndarray of response
         """
-        return self._sum(super().unit_psi(x, z), sum_coils=sum_coils, control=control)
+        return self._sum(
+            super().psi_response(x, z), sum_coils=sum_coils, control=control
+        )
 
-    def unit_Bx(
+    def Bx_response(
         self,
         x: np.ndarray,
         z: np.ndarray,
@@ -797,9 +799,9 @@ class CoilSetFieldsMixin(CoilGroupFieldsMixin):
         -------
         np.ndarray of response
         """
-        return self._sum(super().unit_Bx(x, z), sum_coils=sum_coils, control=control)
+        return self._sum(super().Bx_response(x, z), sum_coils=sum_coils, control=control)
 
-    def unit_Bz(
+    def Bz_response(
         self,
         x: np.ndarray,
         z: np.ndarray,
@@ -824,7 +826,7 @@ class CoilSetFieldsMixin(CoilGroupFieldsMixin):
         -------
         np.ndarray of response
         """
-        return self._sum(super().unit_Bz(x, z), sum_coils=sum_coils, control=control)
+        return self._sum(super().Bz_response(x, z), sum_coils=sum_coils, control=control)
 
     def psi_greens(
         self, psigreens: np.ndarray, sum_coils: bool = True, control: bool = False
@@ -982,7 +984,7 @@ class CoilFieldsMixin(CoilGroupFieldsMixin):
 
         return response
 
-    def _unit_B_analytical(
+    def _B_response_analytical(
         self,
         semianalytic: Callable,
         x: np.ndarray,
@@ -1008,7 +1010,7 @@ class CoilFieldsMixin(CoilGroupFieldsMixin):
         response: np.ndarray
 
         """
-        return super()._unit_B_analytical(
+        return super()._B_response_analytical(
             semianalytic,
             x,
             z,
