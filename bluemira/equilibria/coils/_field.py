@@ -76,7 +76,7 @@ class CoilGroupFieldsMixin:
         ind = np.where(self._quad_weighting != 0)
         out = np.zeros((*x.shape, *self._quad_x.shape))
 
-        out[(*(slice(None) for _ in x.shape), *ind)] = greens_psi.py_func(
+        out[(*(slice(None) for _ in x.shape), *ind)] = greens_psi(
             self._quad_x[ind][np.newaxis],
             self._quad_z[ind][np.newaxis],
             x[..., np.newaxis],
@@ -203,7 +203,7 @@ class CoilGroupFieldsMixin:
         if False in zero_coil_size:
             # if dx or dz is not 0 and x,z inside coil
             inside = np.logical_and(
-                self._points_inside_coil(x, z), ~zero_coil_size[None]
+                self._points_inside_coil(x, z), ~zero_coil_size[np.newaxis]
             )
             if np.all(~inside):
                 return greens_func(x, z)
@@ -297,7 +297,10 @@ class CoilGroupFieldsMixin:
         inside: np.array(dtype=bool)
             The Boolean array of point indices inside/outside the coil boundary
         """
-        x, z = np.ascontiguousarray(x)[..., np.newaxis], np.ascontiguousarray(z)[..., np.newaxis]
+        x, z = (
+            np.ascontiguousarray(x)[..., np.newaxis],
+            np.ascontiguousarray(z)[..., np.newaxis],
+        )
 
         x_min, x_max = (
             self.x - self.dx - atol,
@@ -308,10 +311,10 @@ class CoilGroupFieldsMixin:
             self.z + self.dz + atol,
         )
         return (
-            (x >= x_min[None])
-            & (x <= x_max[None])
-            & (z >= z_min[None])
-            & (z <= z_max[None])
+            (x >= x_min[np.newaxis])
+            & (x <= x_max[np.newaxis])
+            & (z >= z_min[np.newaxis])
+            & (z <= z_max[np.newaxis])
         )
 
     def _unit_B_greens(
@@ -357,10 +360,10 @@ class CoilGroupFieldsMixin:
         out = np.zeros((*x.shape, *_quad_x.shape))
 
         out[(*(slice(None) for _ in x.shape), *ind)] = greens(
-            _quad_x[ind][None],
-            _quad_z[ind][None],
-            x[..., None],
-            z[..., None],
+            _quad_x[ind][np.newaxis],
+            _quad_z[ind][np.newaxis],
+            x[..., np.newaxis],
+            z[..., np.newaxis],
         )
 
         return np.squeeze(
@@ -489,12 +492,12 @@ class CoilGroupFieldsMixin:
 
         return np.squeeze(
             semianalytic(
-                coil_x[None],
-                coil_z[None],
-                x[..., None],
-                z[..., None],
-                d_xc=coil_dx[None],
-                d_zc=coil_dz[None],
+                coil_x[np.newaxis],
+                coil_z[np.newaxis],
+                x[..., np.newaxis],
+                z[..., np.newaxis],
+                d_xc=coil_dx[np.newaxis],
+                d_zc=coil_dz[np.newaxis],
             )
         )
 
@@ -644,7 +647,7 @@ class CoilGroupFieldsMixin:
                 Bx = coil2.unit_Bx(x, z)
             # 1 cross B
             response[:, j, :] = (
-                2 * np.pi * x[:, None] * np.squeeze(np.array([Bz, -Bx]).T)
+                2 * np.pi * x[:, np.newaxis] * np.squeeze(np.array([Bz, -Bx]).T)
             )
         return response
 
@@ -681,7 +684,10 @@ class CoilFieldsMixin(CoilGroupFieldsMixin):
         inside: np.array(dtype=bool)
             The Boolean array of point indices inside/outside the coil boundary
         """
-        x, z = np.ascontiguousarray(x)[..., None], np.ascontiguousarray(z)[..., None]
+        x, z = (
+            np.ascontiguousarray(x)[..., np.newaxis],
+            np.ascontiguousarray(z)[..., np.newaxis],
+        )
 
         x_min, x_max = (
             self.x - self.dx - atol,

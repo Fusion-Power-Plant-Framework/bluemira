@@ -94,6 +94,8 @@ class CoilNumber:
         elif ctype == CoilType.PF:
             idx = CoilNumber.__PF_counter
             CoilNumber.__PF_counter += 1
+        else:
+            raise ValueError(f"Unknown coil type {ctype}")
 
         return idx
 
@@ -102,7 +104,7 @@ class Coil(CoilFieldsMixin):
     """
     Coil Object
 
-    For use with PF/CS/passive coils.
+    For use with PF/CS/passive coils. All coils have a rectangular cross section.
 
     Parameters
     ----------
@@ -194,7 +196,13 @@ class Coil(CoilFieldsMixin):
         )
 
     def n_coils(self):
-        """Number of coils in coil"""
+        """
+        Number of coils in coil
+
+        Notes
+        -----
+        Allows n_coils to be accessed if an individual coil or a CoilGroup
+        """
         return 1
 
     @property
@@ -282,7 +290,7 @@ class Coil(CoilFieldsMixin):
 
     @property
     def _quad_boundary(self):
-        """Get coil x coordinate boundary"""
+        """Get coil quadrature x,z coordinate boundary"""
         return self._make_boundary(
             self._quad_x, self._quad_z, self._quad_dx, self._quad_dz
         )
@@ -508,7 +516,7 @@ class Coil(CoilFieldsMixin):
 
         Returns
         -------
-        x_boundary: np.ndarray 
+        x_boundary: np.ndarray
         z_boundary: np.ndarray
 
         Note
