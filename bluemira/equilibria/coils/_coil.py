@@ -28,6 +28,7 @@ from typing import Iterable, Optional, Union
 
 import numpy as np
 
+from bluemira.base.constants import EPS
 from bluemira.equilibria.coils._field import CoilFieldsMixin
 from bluemira.equilibria.coils._tools import get_max_current
 from bluemira.equilibria.constants import NBTI_B_MAX, NBTI_J_MAX
@@ -127,7 +128,9 @@ class Coil(CoilFieldsMixin):
     b_max: float
         Maximum magnetic field at the coil [T]
     discretisation: float
-        discretise the coil (between 0 and 1)
+        discretise the coil. The value (between 0 and 1) is the fractional value of
+        the width and the height of the coils to discretise over.
+        For example 0.5 will result in 4 magnetic filaments.
     n_turns: int
         Number of turns
 
@@ -379,7 +382,7 @@ class Coil(CoilFieldsMixin):
     @discretisation.setter
     def discretisation(self, value: float):
         """Set coil discretisation"""
-        self._discretisation = float(value)
+        self._discretisation = np.clip(float(value), EPS, 1)
         self._discretise()
 
     def assign_material(
@@ -416,6 +419,9 @@ class Coil(CoilFieldsMixin):
         Notes
         -----
         Only discretisation method currently implemented is rectangular fraction
+        The discretisation value (between 0 and 1) is the fractional value of
+        the width and the height of the coils to discretise over.
+        For example 0.5 will result in 4 magnetic filaments.
 
         Possible improvement: multiple discretisations for different coils
 

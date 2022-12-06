@@ -113,9 +113,9 @@ class CoilGroupFieldsMixin:
 
         Parameters
         ----------
-        x: Union[float, int, np.array]
+        x: Union[float, np.ndarray]
             The x values at which to calculate the Bx response
-        z: Union[float, int, np.array]
+        z: Union[float, np.ndarray]
             The z values at which to calculate the Bx response
 
         Returns
@@ -147,9 +147,9 @@ class CoilGroupFieldsMixin:
 
         Parameters
         ----------
-        x: Union[float, int, np.array]
+        x: Union[float, np.ndarray]
             The x values at which to calculate the Bz response
-        z: Union[float, int, np.array]
+        z: Union[float, np.ndarray]
             The z values at which to calculate the Bz response
 
         Returns
@@ -181,8 +181,10 @@ class CoilGroupFieldsMixin:
 
         Parameters
         ----------
-        x,z: Union[float, int, np.array]
-            Points to calculate field at
+        x: Union[float, np.ndarray]
+            The x values at which to calculate the response at
+        z: Union[float, np.ndarray]
+            The z values at which to calculate the response at
         greens_func: Callable
             greens function
         semianalytic_func: Callable
@@ -235,8 +237,10 @@ class CoilGroupFieldsMixin:
         ----------
         inside: np.ndarray[bool]
             array of if the point is inside a coil
-        x,z: Union[float, int, np.array]
-            Points to calculate field at
+        x: Union[float, np.ndarray]
+            The x values at which to calculate the response at
+        z: Union[float, np.ndarray]
+            The z values at which to calculate the response at
         greens_func: Callable
             greens function
         semianalytic_func: Callable
@@ -284,9 +288,9 @@ class CoilGroupFieldsMixin:
 
         Parameters
         ----------
-        x: Union[float, np.array]
+        x: Union[float, np.ndarray]
             The x coordinates to check
-        z: Union[float, np.array]
+        z: Union[float, np.ndarray]
             The z coordinates to check
         atol: Optional[float]
             Add an offset, to ensure points very near the edge are counted as
@@ -335,8 +339,10 @@ class CoilGroupFieldsMixin:
         ----------
         greens: Callable
             greens function
-        x,z: Union[float, int, np.array]
-            Points to calculate field at
+        x: Union[float, np.ndarray]
+            The x values at which to calculate the response at
+        z: Union[float, np.ndarray]
+            The z values at which to calculate the response at
         split: bool
             Flag for if :func:_combined_control is used
         _quad_x: Optional[np.ndarray]
@@ -391,8 +397,10 @@ class CoilGroupFieldsMixin:
         ----------
         greens: Callable
             greens function
-        x,z: Union[float, int, np.array]
-            Points to calculate field at
+        x: Union[float, np.ndarray]
+            The x values at which to calculate the response at
+        z: Union[float, np.ndarray]
+            The z values at which to calculate the response at
         split: bool
             Flag for if :func:_combined_control is used
         _quad_x: Optional[np.ndarray]
@@ -427,8 +435,10 @@ class CoilGroupFieldsMixin:
         ----------
         greens: Callable
             greens function
-        x,z: Union[float, np.ndarray]
-            Points to calculate field at
+        x: Union[float, np.ndarray]
+            The x values at which to calculate the response at
+        z: Union[float, np.ndarray]
+            The z values at which to calculate the response at
         split: bool
             Flag for if :func:_combined_control is used
         _quad_x: Optional[np.ndarray]
@@ -466,8 +476,10 @@ class CoilGroupFieldsMixin:
         ----------
         semianalytic: Callable
             semianalytic function
-        x,z: Union[float, np.ndarray]
-            Points to calculate field at
+        x: Union[float, np.ndarray]
+            The x values at which to calculate the response at
+        z: Union[float, np.ndarray]
+            The z values at which to calculate the response at
         split: bool
             Flag for if :func:_combined_control is used
         coil_x: Optional[np.ndarray]
@@ -517,8 +529,10 @@ class CoilGroupFieldsMixin:
 
         Parameters
         ----------
-        x,z: Union[float, int, np.array]
-            Points to calculate field at
+        x: Union[float, np.ndarray]
+            The x values at which to calculate the response at
+        z: Union[float, np.ndarray]
+            The z values at which to calculate the response at
         split: bool
             Flag for if :func:_combined_control is used
         coil_x: Optional[np.ndarray]
@@ -554,8 +568,10 @@ class CoilGroupFieldsMixin:
 
         Parameters
         ----------
-        x,z: Union[float, int, np.array]
-            Points to calculate field at
+        x: Union[float, np.ndarray]
+            The x values at which to calculate the response at
+        z: Union[float, np.ndarray]
+            The z values at which to calculate the response at
         split: bool
             Flag for if :func:_combined_control is used
         coil_x: Optional[np.ndarray]
@@ -671,10 +687,10 @@ class CoilFieldsMixin(CoilGroupFieldsMixin):
 
         Parameters
         ----------
-        x: Union[float, np.array]
-            The x coordinates to check
-        z: Union[float, np.array]
-            The z coordinates to check
+        x: Union[float, np.ndarray]
+            The x values to check
+        z: Union[float, np.ndarray]
+            The z values to check
         atol: Optional[float]
             Add an offset, to ensure points very near the edge are counted as
             being on the edge of a coil
@@ -717,8 +733,10 @@ class CoilFieldsMixin(CoilGroupFieldsMixin):
         ----------
         inside: np.ndarray[bool]
             array of if the point is inside a coil
-        x,z: Union[float, int, np.array]
-            Points to calculate field at
+        x: Union[float, np.ndarray]
+            The x values at which to calculate the response at
+        z: Union[float, np.ndarray]
+            The z values at which to calculate the response at
         greens_func: Callable
             greens function
         semianalytic_func: Callable
@@ -756,8 +774,10 @@ class CoilFieldsMixin(CoilGroupFieldsMixin):
         ----------
         semianalytic: Callable
             semianalytic function
-        x,z: Union[float, int, np.array]
-            Points to calculate field at
+        x: Union[float, np.ndarray]
+            The x values at which to calculate the response at
+        z: Union[float, np.ndarray]
+            The z values at which to calculate the response at
 
         Returns
         -------

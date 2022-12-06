@@ -119,7 +119,7 @@ def check_coilset_symmetric(coilset):
 
 def get_max_current(dx, dz, j_max):
     """
-    Get the maximum current in a coil cross-sectional area
+    Get the maximum current in a rectangular coil cross-sectional area
 
     Parameters
     ----------
