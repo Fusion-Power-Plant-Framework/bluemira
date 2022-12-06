@@ -210,6 +210,7 @@ class CoilGroup(CoilGroupFieldsMixin):
 
         for no, c in enumerate(self._coils):
             if c.name == []:
+                # if a coil group is empty the name list will be empty
                 mask[no] = False
 
         self._coils = tuple(coils[mask])
