@@ -27,7 +27,7 @@ import pytest
 from scipy.interpolate import UnivariateSpline, interp1d
 
 from bluemira.base.file import get_bluemira_path
-from bluemira.geometry._deprecated_tools import offset
+from bluemira.geometry._private_tools import offset
 from bluemira.geometry.coordinates import Coordinates, vector_lengthnorm
 from bluemira.geometry.parameterisations import PictureFrame, PrincetonD, TripleArc
 from bluemira.geometry.tools import make_circle

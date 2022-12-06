@@ -28,7 +28,7 @@ import pytest
 
 from bluemira.base.file import get_bluemira_path
 from bluemira.codes.error import FreeCADError
-from bluemira.geometry._deprecated_tools import (
+from bluemira.geometry._private_tools import (
     convert_coordinates_to_face,
     convert_coordinates_to_wire,
     make_face,
