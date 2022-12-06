@@ -90,6 +90,10 @@ html_theme_options = {
 
 html_css_files = ["css/custom.css"]
 
+_html_version = release.split("+")[0]
+
+html_title = f"bluemira {_html_version} documentation"
+
 numfig = True
 
 
