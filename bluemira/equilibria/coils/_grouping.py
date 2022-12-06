@@ -46,7 +46,7 @@ from bluemira.equilibria.plotting import CoilGroupPlotter
 from bluemira.utilities.tools import flatten_iterable, yintercept
 
 
-def symmetrise_coilset(coilset):
+def symmetrise_coilset(coilset) -> CoilSet:
     """
     Symmetrise a CoilSet by converting any coils that are up-down symmetric about
     z=0 to SymmetricCircuits.
@@ -101,8 +101,8 @@ class CoilGroup(CoilGroupFieldsMixin):
     """
 
     def __init__(self, *coils: Union[Coil, CoilGroup[Coil]]):
-        if isinstance(coils[0], Iterable):
-            raise TypeError("Iterable is not a Coil or CoilGroup")
+        if any(not isinstance(c, (Coil, CoilGroup)) for c in coils):
+            raise TypeError("Not all arguments are a Coil or CoilGroup.")
         self._coils = coils
         self._pad_discretisation(self.__list_getter("_quad_x"))
 
@@ -200,8 +200,10 @@ class CoilGroup(CoilGroupFieldsMixin):
     @classmethod
     def from_group_vecs(cls, eqdsk: EQDSKInterface):
         """
-        Initialises an instance of CoilSet from group vectors. This has been
-        implemented as a dict operation, because it will occur for eqdsks only.
+        Initialises an instance of CoilSet from group vectors. 
+        
+        This has been implemented as a dict operation, because it will 
+        occur for eqdsks only.
         Future dict instantiation methods will likely differ, hence the
         confusing name of this method.
         """
@@ -249,8 +251,7 @@ class CoilGroup(CoilGroupFieldsMixin):
                     pfcoils.append(coil)
 
         coils = pfcoils
-        if len(cscoils) != 0:
-            coils.extend(cscoils)
+        coils.extend(cscoils)
         coils.extend(passivecoils)
         return cls(*coils)
 
@@ -383,7 +384,7 @@ class CoilGroup(CoilGroupFieldsMixin):
             elif c.name == name:
                 return c
         else:
-            raise KeyError("Coil not found in Group")
+            raise KeyError(f"Coil '{name}' not found in Group")
 
     def _get_coiltype(self, ctype):
         """Find coil by type"""
@@ -397,7 +398,7 @@ class CoilGroup(CoilGroupFieldsMixin):
                 coils.append(c)
         return coils
 
-    def get_coiltype(self, ctype):
+    def get_coiltype(self, ctype: Union[str, CoilType]):
         """Get coil by coil type"""
         return CoilGroup(*self._get_coiltype(ctype))
 

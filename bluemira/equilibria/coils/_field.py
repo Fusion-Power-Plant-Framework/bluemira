@@ -77,19 +77,19 @@ class CoilGroupFieldsMixin:
         out = np.zeros((*x.shape, *self._quad_x.shape))
 
         out[(*(slice(None) for _ in x.shape), *ind)] = greens_psi.py_func(
-            self._quad_x[ind][None],
-            self._quad_z[ind][None],
-            x[..., None],
-            z[..., None],
-            self._quad_dx[ind][None],
-            self._quad_dz[ind][None],
+            self._quad_x[ind][np.newaxis],
+            self._quad_z[ind][np.newaxis],
+            x[..., np.newaxis],
+            z[..., np.newaxis],
+            self._quad_dx[ind][np.newaxis],
+            self._quad_dz[ind][np.newaxis],
         )
 
         return np.squeeze(
             np.einsum(
                 self._einsum_str,
                 out,
-                self._quad_weighting[None],
+                self._quad_weighting[np.newaxis],
             )
         )
 
@@ -297,7 +297,7 @@ class CoilGroupFieldsMixin:
         inside: np.array(dtype=bool)
             The Boolean array of point indices inside/outside the coil boundary
         """
-        x, z = np.ascontiguousarray(x)[..., None], np.ascontiguousarray(z)[..., None]
+        x, z = np.ascontiguousarray(x)[..., np.newaxis], np.ascontiguousarray(z)[..., np.newaxis]
 
         x_min, x_max = (
             self.x - self.dx - atol,
@@ -424,7 +424,7 @@ class CoilGroupFieldsMixin:
         ----------
         greens: Callable
             greens function
-        x,z: Union[float, int, np.array]
+        x,z: Union[float, np.ndarray]
             Points to calculate field at
         split: bool
             Flag for if :func:_combined_control is used
@@ -463,7 +463,7 @@ class CoilGroupFieldsMixin:
         ----------
         semianalytic: Callable
             semianalytic function
-        x,z: Union[float, int, np.array]
+        x,z: Union[float, np.ndarray]
             Points to calculate field at
         split: bool
             Flag for if :func:_combined_control is used

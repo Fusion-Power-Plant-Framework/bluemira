@@ -102,7 +102,7 @@ class Coil(CoilFieldsMixin):
     """
     Coil Object
 
-    For used with PF/CS/passive coils
+    For use with PF/CS/passive coils.
 
     Parameters
     ----------
@@ -223,7 +223,7 @@ class Coil(CoilFieldsMixin):
         return self._dz
 
     @property
-    def current(self):
+    def current(self) -> float:
         """Get coil current"""
         return self._current
 
@@ -460,8 +460,8 @@ class Coil(CoilFieldsMixin):
 
             self._quad_x = x_sc.flatten()
             self._quad_z = z_sc.flatten()
-            self._quad_dx = np.ones(x_sc.size) * sc_dx
-            self._quad_dz = np.ones(x_sc.size) * sc_dz
+            self._quad_dx = np.full(x_sc.size, sc_dx)
+            self._quad_dz = np.full(x_sc.size, sc_dz)
 
             self._quad_weighting = np.ones(x_sc.size) / x_sc.size
 
@@ -508,7 +508,8 @@ class Coil(CoilFieldsMixin):
 
         Returns
         -------
-        x_boundary, z_boundary: np.array
+        x_boundary: np.ndarray 
+        z_boundary: np.ndarray
 
         Note
         ----
