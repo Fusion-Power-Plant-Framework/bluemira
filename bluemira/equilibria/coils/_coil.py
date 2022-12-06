@@ -24,7 +24,7 @@ Coil and coil grouping objects
 """
 
 from enum import Enum, EnumMeta, auto
-from typing import Optional, Union
+from typing import Iterable, Optional, Union
 
 import numpy as np
 
@@ -187,12 +187,33 @@ class Coil(CoilFieldsMixin):
             f" discretisation={self.discretisation:.2g})"
         )
 
-    def plot(self, ax=None, subcoil=True, label=False, force=None, **kwarg):
+    def plot(
+        self,
+        ax=None,
+        subcoil: bool = True,
+        label: bool = False,
+        force: Optional[Iterable] = None,
+        **kwargs,
+    ):
         """
         Plot a Coil
+
+        Parameters
+        ----------
+        ax: Optional[Axes]
+            Matplotlib axis object
+        subcoil: bool
+            plot coil discretisations
+        label: bool
+            show coil labels on plot
+        force: Optional[Iterable]
+            force arrows iterable
+        kwargs:
+            passed to matplotlib plotting
+
         """
         return CoilGroupPlotter(
-            self, ax=ax, subcoil=subcoil, label=label, force=force, **kwarg
+            self, ax=ax, subcoil=subcoil, label=label, force=force, **kwargs
         )
 
     def n_coils(self):

@@ -128,12 +128,32 @@ class CoilGroup(CoilGroupFieldsMixin):
 
         return Counter(self.ctype)[ctype]
 
-    def plot(self, ax=None, subcoil=True, label=False, force=None, **kwarg):
+    def plot(
+        self,
+        ax=None,
+        subcoil: bool = True,
+        label: bool = False,
+        force: Optional[Iterable] = None,
+        **kwargs,
+    ):
         """
         Plot a CoilGroup
+
+        Parameters
+        ----------
+        ax: Optional[Axes]
+            Matplotlib axis object
+        subcoil: bool
+            plot coil discretisations
+        label: bool
+            show coil labels on plot
+        force: Optional[Iterable]
+            force arrows iterable
+        kwargs:
+            passed to matplotlib plotting
         """
         return CoilGroupPlotter(
-            self, ax=ax, subcoil=subcoil, label=label, force=force, **kwarg
+            self, ax=ax, subcoil=subcoil, label=label, force=force, **kwargs
         )
 
     def fix_sizes(self):
@@ -200,9 +220,9 @@ class CoilGroup(CoilGroupFieldsMixin):
     @classmethod
     def from_group_vecs(cls, eqdsk: EQDSKInterface):
         """
-        Initialises an instance of CoilSet from group vectors. 
-        
-        This has been implemented as a dict operation, because it will 
+        Initialises an instance of CoilSet from group vectors.
+
+        This has been implemented as a dict operation, because it will
         occur for eqdsks only.
         Future dict instantiation methods will likely differ, hence the
         confusing name of this method.
@@ -431,7 +451,7 @@ class CoilGroup(CoilGroupFieldsMixin):
         )
 
     @property
-    def name(self) -> np.ndarray:
+    def name(self) -> List:
         """Get coil names"""
         return self.__getter("name").tolist()
 
@@ -451,7 +471,7 @@ class CoilGroup(CoilGroupFieldsMixin):
         return np.array([self.x, self.z])
 
     @property
-    def ctype(self) -> np.ndarray:
+    def ctype(self) -> List:
         """Get coil types"""
         return self.__getter("ctype").tolist()
 
@@ -618,7 +638,7 @@ class CoilGroup(CoilGroupFieldsMixin):
 
 class Circuit(CoilGroup):
     """
-    A CoilGroup with the same currents
+    A CoilGroup where all coils have the same current
 
     Parameters
     ----------
@@ -794,7 +814,7 @@ class CoilSet(CoilGroup):
     def __init__(
         self,
         *coils: Union[Coil, CoilGroup[Coil]],
-        control_names: Union[bool, List] = True,
+        control_names: Optional[List] = None,
     ):
         super().__init__(*coils)
         self.control = control_names
@@ -805,12 +825,12 @@ class CoilSet(CoilGroup):
         return self._control
 
     @control.setter
-    def control(self, control_names: Union[bool, List]):
+    def control(self, control_names: Optional[List] = None):
         """Set control coils"""
         names = self.name
         if isinstance(control_names, List):
             self._control_ind = np.arange(len([names.index(c) for c in control_names]))
-        elif control_names or control_names is None:
+        elif control_names is None:
             self._control_ind = np.arange(len(names)).tolist()
         else:
             self._control_ind = []
