@@ -20,7 +20,8 @@
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 
 """
-A collection of private geometry tools.
+A collection of private geometry tools for discretised. Do not use these;
+use primitive operations in geometry/tools.py instead.
 """
 
 from functools import partial
