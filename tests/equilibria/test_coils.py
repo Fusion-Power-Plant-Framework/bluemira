@@ -257,9 +257,9 @@ class TestSemiAnalytic:
             [self.cg1, self.grid],
             [self.cg2, self.grid2],
         ]:
-            gp_greens.append(getattr(cl, f"_unit_{fd}_greens")(grid.x, grid.z))
-            gp_analytic.append(getattr(cl, f"_unit_{fd}_analytical")(grid.x, grid.z))
-            gp.append(getattr(cl, f"unit_{fd}")(grid.x, grid.z))
+            gp_greens.append(getattr(cl, f"_{fd}_response_greens")(grid.x, grid.z))
+            gp_analytic.append(getattr(cl, f"_{fd}_response_analytical")(grid.x, grid.z))
+            gp.append(getattr(cl, f"{fd}_response")(grid.x, grid.z))
 
         self._plotter(gp, gp_greens, gp_analytic)
 
@@ -325,7 +325,7 @@ class TestSymmetricCircuit:
         cls.circuit = SymmetricCircuit(coil, mirror_coil)
         cls.coils = [copy.deepcopy(coil), copy.deepcopy(mirror_coil)]
 
-    @pytest.mark.parametrize("fieldtype", ["unit_", ""])
+    @pytest.mark.parametrize("fieldtype", ["_response", ""])
     def test_fields(self, fieldtype):
         points = [
             [1, 1],
@@ -337,18 +337,18 @@ class TestSymmetricCircuit:
 
         for point in points:
             coil_psi = sum(
-                [getattr(coil, f"{fieldtype}psi")(*point) for coil in self.coils]
+                [getattr(coil, f"psi{fieldtype}")(*point) for coil in self.coils]
             )
             coil_Bx = sum(
-                [getattr(coil, f"{fieldtype}Bx")(*point) for coil in self.coils]
+                [getattr(coil, f"Bx{fieldtype}")(*point) for coil in self.coils]
             )
             coil_Bz = sum(
-                [getattr(coil, f"{fieldtype}Bz")(*point) for coil in self.coils]
+                [getattr(coil, f"Bz{fieldtype}")(*point) for coil in self.coils]
             )
 
-            circuit_psi = getattr(self.circuit, f"{fieldtype}psi")(*point)
-            circuit_Bx = getattr(self.circuit, f"{fieldtype}Bx")(*point)
-            circuit_Bz = getattr(self.circuit, f"{fieldtype}Bz")(*point)
+            circuit_psi = getattr(self.circuit, f"psi{fieldtype}")(*point)
+            circuit_Bx = getattr(self.circuit, f"Bx{fieldtype}")(*point)
+            circuit_Bz = getattr(self.circuit, f"Bz{fieldtype}")(*point)
 
             assert np.allclose(coil_psi, np.sum(circuit_psi))
             assert np.allclose(coil_Bx, np.sum(circuit_Bx))

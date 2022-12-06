@@ -134,6 +134,10 @@ class Coil(CoilFieldsMixin):
     n_turns: int
         Number of turns
 
+    Notes
+    -----
+    If dx and dz are specified the coil size is fixed when modifying j_max or current
+
     """
 
     def __init__(
@@ -176,8 +180,7 @@ class Coil(CoilFieldsMixin):
         self._validate_size()
         if not self._flag_sizefix and None in (self.dx, self.dz):
             self._dx, self._dz = 0, 0
-            self._discretise()
-            self._set_coil_attributes()
+            self._re_discretise()
 
     def __repr__(self):
         """
@@ -323,17 +326,13 @@ class Coil(CoilFieldsMixin):
     def x(self, value: float):
         """Set coil x position"""
         self._x = float(value)
-        if None not in (self.dx, self.dz):
-            self._discretise()
-            self._set_coil_attributes()
+        self._re_discretise()
 
     @z.setter
     def z(self, value: float):
         """Set coil z position"""
         self._z = float(value)
-        if None not in (self.dx, self.dz):
-            self._discretise()
-            self._set_coil_attributes()
+        self._re_discretise()
 
     @ctype.setter
     def ctype(self, value: Union[str, CoilType]):
@@ -348,30 +347,26 @@ class Coil(CoilFieldsMixin):
     def dx(self, value: float):
         """Set coil dx size"""
         self._dx = None if value is None else float(value)
-        if None not in (self.dx, self.dz):
-            self._discretise()
-            self._set_coil_attributes()
+        self._re_discretise()
 
     @dz.setter
     def dz(self, value: float):
         """Set coil dz size"""
         self._dz = None if value is None else float(value)
-        if None not in (self.dx, self.dz):
-            self._discretise()
-            self._set_coil_attributes()
+        self._re_discretise()
 
     @current.setter
     def current(self, value: float):
         """Set coil current"""
         self._current = float(value)
-        if None not in (self.dx, self.dz) and not self._flag_sizefix:
+        if None not in (self.dx, self.dz):
             self.resize()
 
     @j_max.setter
     def j_max(self, value: float):
         """Set coil max current density"""
         self._j_max = float(value)
-        if None not in (self.dx, self.dz) and not self._flag_sizefix:
+        if None not in (self.dx, self.dz):
             self.resize()
 
     @b_max.setter
@@ -453,8 +448,7 @@ class Coil(CoilFieldsMixin):
         if dxdz_spec:
             # If dx and dz are specified, we presume the coil size should
             # remain fixed
-            if not self._flag_sizefix:
-                self._flag_sizefix = True
+            self._flag_sizefix = True
 
             self._set_coil_attributes()
             self._discretise()
@@ -463,8 +457,7 @@ class Coil(CoilFieldsMixin):
                 # Check there is a viable way to size the coil
                 raise EquilibriaError("Must specify either dx and dz or j_max.")
 
-            if self._flag_sizefix:
-                self._flag_sizefix = False
+            self._flag_sizefix = False
 
     def _set_coil_attributes(self):
         self._current_radius = 0.5 * np.hypot(self.dx, self.dz)
@@ -516,6 +509,14 @@ class Coil(CoilFieldsMixin):
         if not self._flag_sizefix:
             # Adjust the size of the coil
             self.dx, self.dz = self._make_size(current)
+            self._set_coil_attributes()
+
+    def _re_discretise(self):
+        """
+        Re discretise and re set attibutes if sizing information changes.
+        """
+        if None not in (self.dx, self.dz):
+            self._discretise()
             self._set_coil_attributes()
 
     def _make_size(self, current=None):
