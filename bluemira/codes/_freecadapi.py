@@ -79,7 +79,7 @@ MAX_PRECISION = 1e-5
 # ======================================================================================
 
 
-def catch_caderr(raise_error):
+def catch_caderr(new_error_type):
     """
     Catch CAD errors with given error
     """
@@ -89,7 +89,7 @@ def catch_caderr(raise_error):
             try:
                 return func(*args, **kwargs)
             except FreeCADError as fe:
-                raise raise_error(fe.args[0]) from None
+                raise new_error_type(fe.args[0]) from fe
 
         return wrapper
 
