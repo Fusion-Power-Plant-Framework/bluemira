@@ -73,6 +73,29 @@ apiCompound = Part.Compound  # noqa :N816
 WORKING_PRECISION = 1e-5
 MIN_PRECISION = 1e-5
 MAX_PRECISION = 1e-5
+
+# ======================================================================================
+# Error catching
+# ======================================================================================
+
+
+def catch_caderr(new_error_type):
+    """
+    Catch CAD errors with given error
+    """
+
+    def argswrap(func):
+        def wrapper(*args, **kwargs):
+            try:
+                return func(*args, **kwargs)
+            except FreeCADError as fe:
+                raise new_error_type(fe.args[0]) from fe
+
+        return wrapper
+
+    return argswrap
+
+
 # ======================================================================================
 # Array, List, Vector, Point manipulation
 # ======================================================================================

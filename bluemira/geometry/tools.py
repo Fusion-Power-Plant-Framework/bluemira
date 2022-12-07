@@ -51,6 +51,7 @@ from bluemira.geometry.solid import BluemiraSolid
 from bluemira.geometry.wire import BluemiraWire
 
 
+@cadapi.catch_caderr(GeometryError)
 def convert(apiobj, label=""):
     """Convert a FreeCAD shape into the corresponding BluemiraGeo object."""
     if isinstance(apiobj, cadapi.apiWire):
