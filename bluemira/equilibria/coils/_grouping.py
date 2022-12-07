@@ -150,7 +150,7 @@ class CoilGroup(CoilGroupFieldsMixin):
         force: Optional[Iterable]
             force arrows iterable
         kwargs:
-            passed to matplotlib plotting
+            passed to matplotlib's Axes.plot
         """
         return CoilGroupPlotter(
             self, ax=ax, subcoil=subcoil, label=label, force=force, **kwargs
@@ -235,7 +235,9 @@ class CoilGroup(CoilGroupFieldsMixin):
             dx = eqdsk.dxc[i]
             dz = eqdsk.dzc[i]
             if abs(eqdsk.Ic[i]) < I_MIN:
-                # Catch CREATE's crap 0's
+                # Some eqdsk formats (e.g., CREATE) contain 'quasi-coils'
+                # with currents very close to 0.
+                # Catch these cases and make sure current is set to zero.
                 passivecoils.append(
                     Coil(
                         eqdsk.xc[i],
@@ -832,7 +834,9 @@ class CoilSet(CoilSetFieldsMixin, CoilGroup):
         """Set control coils"""
         names = self.name
         if isinstance(control_names, List):
-            self._control_ind = np.arange(len([names.index(c) for c in control_names]))
+            self._control_ind = np.arange(
+                len([names.index(c) for c in control_names])
+            ).tolist()
         elif control_names or control_names is None:
             self._control_ind = np.arange(len(names)).tolist()
         else:

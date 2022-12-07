@@ -29,6 +29,7 @@ from typing import Iterable, Optional, Union
 import numpy as np
 
 from bluemira.base.constants import EPS
+from bluemira.base.look_and_feel import bluemira_debug
 from bluemira.equilibria.coils._field import CoilFieldsMixin
 from bluemira.equilibria.coils._tools import get_max_current
 from bluemira.equilibria.constants import NBTI_B_MAX, NBTI_J_MAX
@@ -131,6 +132,8 @@ class Coil(CoilFieldsMixin):
         discretise the coil. The value (between 0 and 1) is the fractional value of
         the width and the height of the coils to discretise over.
         For example 0.5 will result in 4 magnetic filaments.
+        Rectangular discretisation (the only available type) enforces the smallest
+        whole number of filaments therefore 0.5 <= d < 1 always gives 4 filaments.
     n_turns: int
         Number of turns
 
@@ -215,7 +218,7 @@ class Coil(CoilFieldsMixin):
         force: Optional[Iterable]
             force arrows iterable
         kwargs:
-            passed to matplotlib plotting
+            passed to matplotlib's Axes.plot
 
         """
         return CoilGroupPlotter(
@@ -335,7 +338,7 @@ class Coil(CoilFieldsMixin):
         self._re_discretise()
 
     @ctype.setter
-    def ctype(self, value: Union[str, CoilType]):
+    def ctype(self, value: Union[str, np.ndarray, CoilType]):
         """Set coil type"""
         self._ctype = (
             value
@@ -448,7 +451,7 @@ class Coil(CoilFieldsMixin):
         if dxdz_spec:
             # If dx and dz are specified, we presume the coil size should
             # remain fixed
-            self._flag_sizefix = True
+            self.fix_size()
 
             self._set_coil_attributes()
             self._discretise()
@@ -503,6 +506,11 @@ class Coil(CoilFieldsMixin):
         Fixes the size of all coils
         """
         self._flag_sizefix = True
+        bluemira_debug(
+            "Coil size fixed\n"
+            "Adjusting the current or max current density will no"
+            " longer change the coil size."
+        )
 
     def resize(self, current: Optional[float] = None):
         """Resize coil given a current"""
