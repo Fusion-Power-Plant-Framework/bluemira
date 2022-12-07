@@ -142,12 +142,12 @@ if __name__ == "__main__":
     vacuum_vessel = build_vacuum_vessel(
         params, build_config.get("Vacuum vessel", {}), ivc_boundary
     )
-    # reactor.divertor = build_divertor(
-    #     params, build_config.get("Divertor", {}), divertor_face
-    # )
-    # reactor.blanket = build_blanket(
-    #     params, build_config.get("Blanket", {}), blanket_face
-    # )
+    reactor.divertor = build_divertor(
+        params, build_config.get("Divertor", {}), divertor_face
+    )
+    reactor.blanket = build_blanket(
+        params, build_config.get("Blanket", {}), blanket_face
+    )
 
     thermal_shield_config = build_config.get("Thermal shield", {})
     vv_thermal_shield = VVTSBuilder(
