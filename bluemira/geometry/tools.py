@@ -757,23 +757,25 @@ def sweep_shape(profiles, path, solid=True, frenet=True, label=""):
     return convert(result, label=label)
 
 
-def distance_to(geo1: Union[Iterable, BluemiraGeo], geo2: Union[Iterable, BluemiraGeo]):
+def distance_to(
+    geo1: Union[Iterable[float], BluemiraGeo], geo2: Union[Iterable[float], BluemiraGeo]
+):
     """
     Calculate the distance between two BluemiraGeos.
 
     Parameters
     ----------
-    geo1: BluemiraGeo
-        reference shape.
-    geo2: BluemiraGeo
-        target shape.
+    geo1: Union[Iterable[float], BluemiraGeo]
+        Reference shape. If an iterable of length 3, converted to a point.
+    geo2: Union[Iterable[float], BluemiraGeo]
+        Target shape. If an iterable of length 3, converted to a point.
 
     Returns
     -------
-    output: a tuple of two -> (dist, vectors)
-        dist is the minimum distance (float value)
-        vectors is a list of tuples corresponding to the nearest points
-        between geo1 and geo2. The distance between those points
+    dist: float
+        Minimum distance
+    vectors: List[Tuple]
+        List of tuples corresponding to the nearest points between geo1 and geo2. The distance between those points
         is the minimum distance given by dist.
     """
     # Check geometry for vertices
