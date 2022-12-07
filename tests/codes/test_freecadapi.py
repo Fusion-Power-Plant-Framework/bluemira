@@ -28,6 +28,7 @@ import pytest
 from FreeCAD import Base
 
 import bluemira.codes._freecadapi as cadapi
+from bluemira.codes.error import FreeCADError
 from bluemira.geometry.constants import D_TOLERANCE
 
 
@@ -245,3 +246,11 @@ class TestFreecadapi:
 
         assert isinstance(end_point, np.ndarray)
         np.testing.assert_equal(end_point, np.array([1, 1, 0]))
+
+    def test_catcherror(self):
+        @cadapi.catch_caderr(ValueError)
+        def func():
+            raise FreeCADError("Error")
+
+        with pytest.raises(ValueError):
+            func()
