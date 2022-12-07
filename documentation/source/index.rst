@@ -45,7 +45,6 @@ The documentation is divided into the following sections:
 
    Configuring SSH keys <developer/ssh>
    Logging customisation <developer/logging>
-   Bluemira Parameterisations <developer/parameterisations>
    Module API Reference <autoapi/index>
    Release Workflow <developer/release_workflow>
    FAQs <developer/faq>
