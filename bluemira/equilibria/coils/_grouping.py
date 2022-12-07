@@ -433,7 +433,7 @@ class CoilGroup(CoilGroupFieldsMixin):
         """
         Get max currents
 
-        If a max current argument is provided and the max current isnt set the value
+        If a max current argument is provided and the max current isn't, set the value
         will be as input.
 
         Parameters

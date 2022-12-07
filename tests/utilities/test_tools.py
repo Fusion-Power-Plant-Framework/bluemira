@@ -272,8 +272,8 @@ def test_consec_repeat_elem():
 
     arr = np.array([0, 1, 1, 2, 2, 2, 3, 3, 4])
 
-    assert np.allclose(consec_repeat_elem(arr, 2), np.array([1, 3, 4, 6]))
-    assert np.allclose(consec_repeat_elem(arr, 3), np.array([3]))
+    np.testing.assert_array_equal(consec_repeat_elem(arr, 2), np.array([1, 3, 4, 6]))
+    np.testing.assert_array_equal(consec_repeat_elem(arr, 3), np.array([3]))
 
     with pytest.raises(NotImplementedError):
         consec_repeat_elem(arr, 1)

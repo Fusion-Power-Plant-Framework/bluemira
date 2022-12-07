@@ -397,7 +397,7 @@ class Coil(CoilFieldsMixin):
 
         Notes
         -----
-        Will always modify both j_max and b_max of the coil with the either the default
+        Will always modify both j_max and b_max of the coil with either the default
         or specified values.
 
         """
