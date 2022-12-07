@@ -24,6 +24,7 @@ import pytest
 
 from bluemira.display.plotter import PlotOptions, plot_2d
 from bluemira.geometry._private_tools import make_circle_arc
+from bluemira.geometry.constants import MINIMUM_LENGTH
 from bluemira.geometry.coordinates import Coordinates, get_area, in_polygon
 from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.inscribed_rect import _rect, inscribed_rect_in_poly
@@ -56,6 +57,8 @@ class TestInscribedRectangle:
     aspectratios = np.logspace(-1, 1, num=5)
 
     po = PlotOptions(face_options={})
+
+    MIN_AREA = MINIMUM_LENGTH**2
 
     @pytest.mark.parametrize("shape, convex", zip(shapes, convex))
     def test_inscribed_rectangle(self, shape, convex):
@@ -103,7 +106,11 @@ class TestInscribedRectangle:
                         if tf is not None:
                             # Some overlaps are points or lines of 0 area
                             if not all(
-                                [get_area(*seg.xyz) == 0.0 for t in tf for seg in t]
+                                [
+                                    get_area(*seg.xyz) <= self.MIN_AREA
+                                    for t in tf
+                                    for seg in t
+                                ]
                             ):
                                 self.assertion_error_creator(
                                     "Overlap", [dx, dz, point, k, convex]
