@@ -96,7 +96,10 @@ class TestInscribedRectangle:
                                 BluemiraFace(make_polygon(sq.xyz, closed=True)),
                                 shape_face,
                             )
-                            tf = [seg.discretize(byedges=True, ndiscr=50) for seg in tf]
+                            tf = [
+                                Coordinates(seg.discretize(byedges=True, ndiscr=50))
+                                for seg in tf
+                            ]
                         except ValueError:
                             tf = None
 
@@ -105,13 +108,7 @@ class TestInscribedRectangle:
 
                         if tf is not None:
                             # Some overlaps are points or lines of 0 area
-                            if not all(
-                                [
-                                    get_area(*seg.xyz) <= self.MIN_AREA
-                                    for t in tf
-                                    for seg in t
-                                ]
-                            ):
+                            if not all([get_area(*t.xz) <= self.MIN_AREA for t in tf]):
                                 self.assertion_error_creator(
                                     "Overlap", [dx, dz, point, k, convex]
                                 )
