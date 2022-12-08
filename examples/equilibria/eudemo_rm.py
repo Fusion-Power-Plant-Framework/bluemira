@@ -67,10 +67,12 @@ from bluemira.equilibria.physics import calc_psib
 from bluemira.equilibria.profiles import CustomProfile
 from bluemira.equilibria.run import PulsedNestedPositionCOP
 from bluemira.equilibria.solve import PicardIterator
+from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.plane import BluemiraPlane
 from bluemira.geometry.tools import make_polygon, offset_wire, slice_shape, split_wire
 from bluemira.utilities.optimiser import Optimiser
 from bluemira.utilities.positioning import PathInterpolator, PositionMapper
+from eudemo.pf_coils.tools import make_coil_mapper, make_pf_coil_path
 
 # %%[markdown]
 
@@ -425,50 +427,56 @@ tf_outer = TF_outer[:, np.where(TF_outer[1] == np.max(TF_outer[1]))[0][0] :]
 tf_outer = tf_outer[:, : np.where(tf_outer[0] == np.min(tf_outer[0]))[0][2]]
 t_outer = np.array([tf_outer[0], np.zeros(len(tf_outer[0])), tf_outer[1]])
 
-full_path = offset_wire(make_polygon(t_outer), offset_val)
+# full_path = offset_wire(make_polygon(t_outer), offset_val)
 
-# offset planes in x
-offset1 = min(koz_UP[0])
-offset2 = max(koz_UP[0])
-offset3 = min(koz_LP[0])
+# # offset planes in x
+# offset1 = min(koz_UP[0])
+# offset2 = max(koz_UP[0])
+# offset3 = min(koz_LP[0])
 
-p1 = BluemiraPlane.from_3_points([offset1, 0, 0], [offset1, 1, 0], [offset1, 1, 1])
-p2 = BluemiraPlane.from_3_points([offset2, 0, 0], [offset2, 1, 0], [offset2, 1, 1])
-p3 = BluemiraPlane.from_3_points([offset3, 0, 0], [offset3, 1, 0], [offset3, 1, 1])
+# p1 = BluemiraPlane.from_3_points([offset1, 0, 0], [offset1, 1, 0], [offset1, 1, 1])
+# p2 = BluemiraPlane.from_3_points([offset2, 0, 0], [offset2, 1, 0], [offset2, 1, 1])
+# p3 = BluemiraPlane.from_3_points([offset3, 0, 0], [offset3, 1, 0], [offset3, 1, 1])
 
-# offset plane in z
-offset4 = max(koz_LP[1])
-p4 = BluemiraPlane.from_3_points([0, 0, offset4], [0, 1, offset4], [1, 1, offset4])
+# # offset plane in z
+# offset4 = max(koz_LP[1])
+# p4 = BluemiraPlane.from_3_points([0, 0, offset4], [0, 1, offset4], [1, 1, offset4])
 
 
-point1 = slice_shape(full_path, p1)[0]
-point2 = slice_shape(full_path, p2)[0]
-point3 = slice_shape(full_path, p3)[1]
-point4 = slice_shape(full_path, p4)[0]
+# point1 = slice_shape(full_path, p1)[0]
+# point2 = slice_shape(full_path, p2)[0]
+# point3 = slice_shape(full_path, p3)[1]
+# point4 = slice_shape(full_path, p4)[0]
 
-# create paths
+# # create paths
 
-split1 = split_wire(full_path, point1)[0]
-split2_5 = split_wire(split_wire(full_path, point2)[1], point4)[0]
-split6 = split_wire(full_path, point3)[1]
+# split1 = split_wire(full_path, point1)[0]
+# split2_5 = split_wire(split_wire(full_path, point2)[1], point4)[0]
+# split6 = split_wire(full_path, point3)[1]
 
-discr = split2_5.discretize(5).xyz
-split2, split3_5 = split_wire(split2_5, discr[:, 1], tolerance=1e-15)
-split3, split4_5 = split_wire(split3_5, discr[:, 2], tolerance=1e-15)
-split4, split5 = split_wire(split4_5, discr[:, 3], tolerance=1e-15)
+# discr = split2_5.discretize(5).xyz
+# split2, split3_5 = split_wire(split2_5, discr[:, 1], tolerance=1e-15)
+# split3, split4_5 = split_wire(split3_5, discr[:, 2], tolerance=1e-15)
+# split4, split5 = split_wire(split4_5, discr[:, 3], tolerance=1e-15)
 
-paths = [split1, split2, split3, split4, split5, split6]
+# paths = [split1, split2, split3, split4, split5, split6]
+
+
+face_koz_UP = BluemiraFace(
+    make_polygon(np.array([koz_UP[0], np.zeros_like(koz_UP[0]), koz_UP[1]]))
+)
+face_koz_LP = BluemiraFace(
+    make_polygon(np.array([koz_LP[0], np.zeros_like(koz_LP[0]), koz_LP[1]]))
+)
+position_mapper = make_coil_mapper(
+    make_pf_coil_path(make_polygon(t_outer), offset_val / 2),
+    [face_koz_UP, face_koz_LP],
+    [c for c in coilset.coils.values() if c.ctype == "PF"],
+)
+
 
 # %%
 
-path_interpolators = {}
-for coil in coilset.coils.values():
-    if coil.ctype == "PF":
-        x, z = coil.x, coil.z
-        path = paths[int(coil.name.split("_")[-1]) - 1]
-        path_interpolators[coil.name] = PathInterpolator(path)
-
-position_mapper = PositionMapper(path_interpolators)
 
 position_opt_problem = PulsedNestedPositionCOP(
     coilset,
