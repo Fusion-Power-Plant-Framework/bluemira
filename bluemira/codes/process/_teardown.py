@@ -26,6 +26,8 @@ import json
 import os
 from typing import Dict, Iterable, List, Union
 
+import numpy as np
+
 from bluemira.base.look_and_feel import bluemira_print, bluemira_warn
 from bluemira.codes.error import CodesError
 from bluemira.codes.interface import CodesTeardown
@@ -205,9 +207,9 @@ class _MFileWrapper:
                 bluemira_warn(
                     f"PROCESS parameter '{process_param_name}' is obsolete and has no "
                     " alternative.\n"
-                    "Setting value to 0.0."
+                    "Setting value to NaN"
                 )
-                self.data[process_param_name] = 0.0
+                self.data[process_param_name] = np.nan
             elif isinstance(param_name, list):
                 for name in param_name:
                     self.data[name] = value["scan01"]
