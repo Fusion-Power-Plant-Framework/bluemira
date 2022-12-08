@@ -562,7 +562,7 @@ def consec_repeat_elem(arr: np.ndarray, num_rep: int) -> np.ndarray:
 def slope(arr: np.ndarray) -> float:
     """Calculate gradient of a 2x2 point array"""
     b = arr[1, 0] - arr[0, 0]
-    return np.inf if b == 0 else arr[1, 1] - arr[0, 1] / b
+    return np.inf if b == 0 else (arr[1, 1] - arr[0, 1]) / b
 
 
 def yintercept(arr: np.ndarray) -> Tuple[float]:
