@@ -304,22 +304,30 @@ def make_coil_mapper(track, exclusion_zones, coils):
                 sorted_coils.append(coils[i])
             coils = sorted_coils
 
-            sub_segs = []
-            for i, split_pos in enumerate(split_positions):
-                split = segment.parameter_at(split_pos, tolerance=10 * EPS)
-                sub_seg_1, segment = split_wire(
-                    segment, segment.value_at(alpha=split), tolerance=10 * EPS
-                )
-                if sub_seg_1:
-                    sub_segs.append(sub_seg_1)
-                else:
-                    bluemira_warn("Sub-segment of 0 length!")
-            sub_segs.append(segment)
+            sub_segs = _split_segment(segment, split_positions)
 
             for coil, sub_seg in zip(coils, sub_segs):
                 interpolator_dict[coil.name] = PathInterpolator(sub_seg)
 
     return PositionMapper(interpolator_dict)
+
+
+def _split_segment(segment, split_positions):
+    """
+    Split a segment into sub-segments at various split positions
+    """
+    sub_segs = []
+    for _, split_pos in enumerate(split_positions):
+        split = segment.parameter_at(split_pos, tolerance=10 * EPS)
+        sub_seg_1, segment = split_wire(
+            segment, segment.value_at(alpha=split), tolerance=10 * EPS
+        )
+        if sub_seg_1:
+            sub_segs.append(sub_seg_1)
+        else:
+            bluemira_warn("Sub-segment of 0 length!")
+    sub_segs.append(segment)
+    return sub_segs
 
 
 def make_pf_coil_path(tf_boundary: BluemiraWire, offset_value: float) -> BluemiraWire:
