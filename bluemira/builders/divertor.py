@@ -25,7 +25,7 @@ Builder for making a parameterised EU-DEMO divertor.
 from dataclasses import dataclass
 from typing import Dict, Type, Union
 
-from bluemira.base.builder import Builder
+from bluemira.base.builder import Builder, ComponentManager
 from bluemira.base.components import Component, PhysicalComponent
 from bluemira.base.parameter_frame import Parameter, ParameterFrame
 from bluemira.builders.tools import (
@@ -35,6 +35,22 @@ from bluemira.builders.tools import (
 )
 from bluemira.display.palettes import BLUE_PALETTE
 from bluemira.geometry.face import BluemiraFace
+from bluemira.geometry.wire import BluemiraWire
+
+
+class Divertor(ComponentManager):
+    """
+    Wrapper around a divertor component tree.
+    """
+
+    def silhouette(self) -> BluemiraWire:
+        """Return a wire representing the divertor poloidal silhouette."""
+        return (
+            self.component()
+            .get_component("xz")
+            .get_component(DivertorBuilder.BODY)
+            .shape.boundary[0]
+        )
 
 
 @dataclass
