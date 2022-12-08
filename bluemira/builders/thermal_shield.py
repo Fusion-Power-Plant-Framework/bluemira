@@ -29,7 +29,7 @@ from typing import Dict, List, Type, Union
 import numpy as np
 from scipy.spatial import ConvexHull
 
-from bluemira.base.builder import Builder
+from bluemira.base.builder import Builder, ComponentManager
 from bluemira.base.components import Component, PhysicalComponent
 from bluemira.base.parameter_frame import Parameter, ParameterFrame
 from bluemira.builders.tools import (
@@ -44,6 +44,21 @@ from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.plane import BluemiraPlane
 from bluemira.geometry.tools import boolean_cut, boolean_fuse, make_polygon, offset_wire
 from bluemira.geometry.wire import BluemiraWire
+
+
+class VacuumVesselThermalShield(ComponentManager):
+    """
+    Wrapper around a VVTS component tree.
+    """
+
+    def silhouette(self) -> BluemiraWire:
+        """Return a wire representing the VVTS poloidal silhouette."""
+        return (
+            self.component()
+            .get_component("xz")
+            .get_component(VVTSBuilder.VVTS)
+            .shape.boundary[0]
+        )
 
 
 @dataclass
