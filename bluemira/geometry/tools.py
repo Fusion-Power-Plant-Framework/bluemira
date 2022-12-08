@@ -775,8 +775,8 @@ def distance_to(
     dist: float
         Minimum distance
     vectors: List[Tuple]
-        List of tuples corresponding to the nearest points between geo1 and geo2. The distance
-        between those points is the minimum distance given by dist.
+        List of tuples corresponding to the nearest points between geo1 and geo2. The
+        distance between those points is the minimum distance given by dist.
     """
     # Check geometry for vertices
     if isinstance(geo1, Iterable):
