@@ -90,7 +90,7 @@ PLOT_DEFAULTS = {
             "PF": "#0098D4",
             "CS": "#003688",
             "Plasma": "r",
-            "Passive": "grey",
+            "NONE": "grey",
         },
         "edgecolor": "k",
         "linewidth": 2,
@@ -228,34 +228,18 @@ class CoilGroupPlotter(Plotter):
         """
         Plot a coil onto the Axes.
         """
-        if hasattr(self._cg, "_control_ind"):
-            control = self._cg._control_ind
-            centre = self._get_centre()
-        else:
-            control = slice(None)
-            centre = None
-
-        xx = self._cg.x
-        zz = self._cg.z
-        dxx = self._cg.dx
-        xx_b = self._cg.x_boundary
-        zz_b = self._cg.z_boundary
-        ctype = self._cg.ctype
-        name = self._cg.name
-        current = self._cg.current
-        control_ind = np.atleast_1d(np.zeros_like(xx, dtype=bool))
-        control_ind[control] = True
+        centre, *arrays = self._plotting_array_shaping()
 
         if subcoil:
             qb = self._cg._quad_boundary
+            if isinstance(qb, tuple):
+                qb = [qb]
 
         if force is not None:
             d_fx, d_fz = force / M_PER_MN
 
-        for i, (x, z, x_b, z_b, dx, ct, n, cur) in enumerate(
-            zip(xx, zz, xx_b, zz_b, dxx, ctype, name, current)
-        ):
-            if control_ind[i]:
+        for i, (x, z, x_b, z_b, dx, ct, n, cur, ctrl) in enumerate(zip(*arrays)):
+            if ctrl:
                 if self.colors is not None:
                     if ct.name == "PF":
                         kwargs["facecolor"] = self.colors[0]
@@ -280,6 +264,35 @@ class CoilGroupPlotter(Plotter):
                     self.ax.arrow(x, z, 0, d_fz[i], color="r", width=0.1)
             else:
                 self._plot_coil(x_b, z_b, ct, **kwargs)
+
+    def _plotting_array_shaping(self):
+        """
+        Shape arrays to account for single coils or groups of coils
+        """
+        xx = np.atleast_1d(self._cg.x)
+        control_ind = np.zeros_like(xx, dtype=bool)
+
+        if hasattr(self._cg, "_control_ind"):
+            control = self._cg._control_ind
+            centre = self._get_centre()
+        else:
+            control = slice(None)
+            centre = None
+
+        control_ind[control] = True
+
+        return (
+            centre,
+            xx,
+            np.atleast_1d(self._cg.z),
+            np.atleast_1d(self._cg.dx),
+            np.atleast_2d(self._cg.x_boundary),
+            np.atleast_2d(self._cg.z_boundary),
+            np.atleast_1d(self._cg.ctype).tolist(),
+            np.atleast_1d(self._cg.name).tolist(),
+            np.atleast_1d(self._cg.current),
+            control_ind,
+        )
 
     def _get_centre(self):
         """

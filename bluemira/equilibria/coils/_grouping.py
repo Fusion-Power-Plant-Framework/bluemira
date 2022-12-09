@@ -325,7 +325,7 @@ class CoilGroup(CoilGroupFieldsMixin):
     ):
         """Set attributes on coils"""
         values = np.atleast_1d(values)
-        if dtype is not None:
+        if dtype not in (None, object):
             values.dtype = np.dtype(dtype)
         no_val = values.size
         no = 0
@@ -823,6 +823,13 @@ class CoilSet(CoilSetFieldsMixin, CoilGroup):
     ):
         super().__init__(*coils)
         self.control = control_names
+
+    def remove_coil(self, *coil_name: str, _top_level: bool = True) -> Union[None, List]:
+        """
+        Remove coil from CoilSet
+        """
+        super().remove_coil(*coil_name, _top_level=_top_level)
+        self.control = list(set(self.control) & set(self.name))
 
     @property
     def control(self) -> List:
