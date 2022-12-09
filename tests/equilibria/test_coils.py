@@ -42,8 +42,8 @@ from bluemira.equilibria.grid import Grid
 
 def callable_tester(f_callable, coils=1):
     """
-    Checks that all different field calls (with different inputs) behave
-    as expected
+    Checks that all different field calls (with different inputs,
+    float, arrays of varying length etc) all return the same result
     """
     # This should go without a hitch...
     value = f_callable(8, 0)
