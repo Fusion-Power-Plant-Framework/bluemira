@@ -176,6 +176,38 @@ class TestReactivity:
         ]
     )
 
+    sv_DD_Tp = 1e-6 * np.array(
+        [
+            4.640e-28,
+            2.071e-26,
+            2.237e-25,
+            1.204e-24,
+            4.321e-24,
+            1.193e-23,
+            2.751e-23,
+            1.017e-22,
+            3.387e-22,
+            4.143e-22,
+            8.431e-22,
+            1.739e-21,
+            1.976e-21,
+            3.150e-21,
+            7.969e-21,
+            1.608e-20,
+            4.428e-20,
+            9.024e-20,
+            1.545e-19,
+            3.354e-19,
+            5.781e-19,
+            8.723e-19,
+            1.390e-18,
+            2.399e-18,
+            4.728e-18,
+            7.249e-18,
+            9.838e-18,
+        ]
+    )
+
     @pytest.mark.parametrize("temp_kev, sigmav", np.c_[temp, sv_DT])
     def test_Bosch_Hale_DT(self, temp_kev, sigmav):
         result = reactivity(temp_kev, reaction="D-T", method="Bosch-Hale")
@@ -190,3 +222,8 @@ class TestReactivity:
     def test_Bosch_Hale_DHe(self, temp_kev, sigmav):
         result = reactivity(temp_kev, reaction="D-D1", method="Bosch-Hale")
         np.testing.assert_allclose(result, sigmav, rtol=0.003, atol=0)
+
+    @pytest.mark.parametrize("temp_kev, sigmav", np.c_[temp, sv_DD_Tp])
+    def test_Bosch_Hale_DHe(self, temp_kev, sigmav):
+        result = reactivity(temp_kev, reaction="D-D2", method="Bosch-Hale")
+        np.testing.assert_allclose(result, sigmav, rtol=0.0035, atol=0)
