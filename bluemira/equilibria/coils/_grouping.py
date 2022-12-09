@@ -726,7 +726,7 @@ class SymmetricCircuit(Circuit):
         self.modify_symmetry(symmetry_line)
         diff = self._symmetrise()
         self._coils[1].x = self._coils[1].x - diff[0]
-        self._coils[1].z = self._coils[1].x - diff[1]
+        self._coils[1].z = self._coils[1].z - diff[1]
 
     def modify_symmetry(self, symmetry_line: np.ndarray):
         """
