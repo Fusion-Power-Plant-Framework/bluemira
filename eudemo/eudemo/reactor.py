@@ -45,7 +45,7 @@ from bluemira.base.parameter_frame import make_parameter_frame
 from bluemira.base.reactor import Reactor
 from bluemira.builders.divertor import DivertorBuilder
 from bluemira.builders.plasma import Plasma, PlasmaBuilder
-from bluemira.builders.thermal_shield import VacuumVesselThermalShield, VVTSBuilder
+from bluemira.builders.thermal_shield import VVTSBuilder
 from bluemira.equilibria.equilibrium import Equilibrium
 from bluemira.geometry.tools import make_polygon
 from eudemo.blanket import Blanket, BlanketBuilder
@@ -56,6 +56,7 @@ from eudemo.params import EUDEMOReactorParams
 from eudemo.pf_coils import PFCoilsDesigner
 from eudemo.radial_build import radial_build
 from eudemo.tf_coils import TFCoil, TFCoilBuilder, TFCoilDesigner
+from eudemo.thermal_shield import VacuumVesselThermalShield
 from eudemo.vacuum_vessel import VacuumVessel, VacuumVesselBuilder
 
 CONFIG_DIR = Path(__file__).parent.parent / "config"
