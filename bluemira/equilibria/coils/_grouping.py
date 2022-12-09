@@ -106,6 +106,15 @@ class CoilGroup(CoilGroupFieldsMixin):
         self._coils = coils
         self._pad_discretisation(self.__list_getter("_quad_x"))
 
+    def __repr__(self):
+        """
+        Pretty print
+        """
+        coils_repr = "\n    "
+        coils_repr += "".join(f"{c.__repr__()}\n    " for c in self._coils)
+        coils_repr = coils_repr.replace("\n", "\n    ")
+        return f"{type(self).__name__}({coils_repr[:-5]})"
+
     def n_coils(self, ctype: Optional[Union[str, CoilType]] = None) -> int:
         """
         Get number of coils
@@ -716,8 +725,8 @@ class SymmetricCircuit(Circuit):
 
         self.modify_symmetry(symmetry_line)
         diff = self._symmetrise()
-        self._coils[1].x -= diff[0]
-        self._coils[1].z -= diff[1]
+        self._coils[1].x = self._coils[1].x - diff[0]
+        self._coils[1].z = self._coils[1].x - diff[1]
 
     def modify_symmetry(self, symmetry_line: np.ndarray):
         """
