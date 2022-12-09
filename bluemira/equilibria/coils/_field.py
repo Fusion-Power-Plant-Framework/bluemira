@@ -59,7 +59,7 @@ class CoilGroupFieldsMixin:
         """
         return self.psi_response(x, z) * self.current
 
-    def psi_greens(self, pgreen: Union[float, np.ndarray]):
+    def _psi_greens(self, pgreen: Union[float, np.ndarray]):
         """
         Calculate plasma psi from Greens functions and current
         """
@@ -97,7 +97,7 @@ class CoilGroupFieldsMixin:
         """
         return self.Bx_response(x, z) * self.current
 
-    def Bx_greens(self, bgreen: Union[float, np.ndarray]):
+    def _Bx_greens(self, bgreen: Union[float, np.ndarray]):
         """
         Uses the Greens mapped dict to quickly compute the Bx
         """
@@ -131,7 +131,7 @@ class CoilGroupFieldsMixin:
         """
         return self.Bz_response(x, z) * self.current
 
-    def Bz_greens(self, bgreen: Union[float, np.ndarray]):
+    def _Bz_greens(self, bgreen: Union[float, np.ndarray]):
         """
         Uses the Greens mapped dict to quickly compute the Bx
         """
@@ -826,7 +826,7 @@ class CoilSetFieldsMixin(CoilGroupFieldsMixin):
         """
         return self._sum(super().Bz_response(x, z), sum_coils=sum_coils, control=control)
 
-    def psi_greens(
+    def _psi_greens(
         self, psigreens: np.ndarray, sum_coils: bool = True, control: bool = False
     ) -> np.ndarray:
         """
@@ -846,10 +846,10 @@ class CoilSetFieldsMixin(CoilGroupFieldsMixin):
         np.ndarray of response
         """
         return self._sum(
-            super().psi_greens(psigreens), sum_coils=sum_coils, control=control
+            super()._psi_greens(psigreens), sum_coils=sum_coils, control=control
         )
 
-    def Bx_greens(
+    def _Bx_greens(
         self, bgreen: np.ndarray, sum_coils: bool = True, control: bool = False
     ) -> np.ndarray:
         """
@@ -868,9 +868,11 @@ class CoilSetFieldsMixin(CoilGroupFieldsMixin):
         -------
         np.ndarray of response
         """
-        return self._sum(super().Bx_greens(bgreen), sum_coils=sum_coils, control=control)
+        return self._sum(
+            super()._Bx_greens(bgreen), sum_coils=sum_coils, control=control
+        )
 
-    def Bz_greens(
+    def _Bz_greens(
         self, bgreen: np.ndarray, sum_coils: bool = True, control: bool = False
     ) -> np.ndarray:
         """
@@ -889,7 +891,9 @@ class CoilSetFieldsMixin(CoilGroupFieldsMixin):
         -------
         np.ndarray of response
         """
-        return self._sum(super().Bz_greens(bgreen), sum_coils=sum_coils, control=control)
+        return self._sum(
+            super()._Bz_greens(bgreen), sum_coils=sum_coils, control=control
+        )
 
 
 class CoilFieldsMixin(CoilGroupFieldsMixin):
