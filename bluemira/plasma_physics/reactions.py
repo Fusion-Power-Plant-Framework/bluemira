@@ -23,6 +23,8 @@
 Fusion reactions
 """
 
+from dataclasses import dataclass
+
 import numpy as np
 
 from bluemira.base.constants import (
@@ -174,3 +176,106 @@ def r_D_burn_DT(p_fus):  # noqa :N802
         {17.58 [MeV]eV[J]N_{A}[1/mol]} [g/s]
     """
     return n_DT_reactions(p_fus) * D_MOLAR_MASS / N_AVOGADRO
+
+
+REACTIONS = {
+    "D-T": 0,  # D + T --> 4He + n reaction
+    "D-D": -1,  # D + D --> 0.5 D-D1 + 0.5 D-D2
+    "D-D1": 1,  # D + D --> 3He + n reaction [50 %]
+    "D-D2": 2,  # D + D --> T + p reaction [50 %]
+    "D-He3": 3,  # D + 3He --> 4He + p reaction
+}
+
+
+def reactivity(temp_kev, reaction="D-T", method="Bosch-Hale"):
+    """
+    Calculate the thermal reactivity of a fusion reaction in Maxwellian plasmas,
+    \\t:math:`<\\sigma v>`
+
+    Parameters
+    ----------
+    temp_kev: float
+        Temperature [keV]
+    reaction: str
+        The fusion reaction
+    method: str
+        The parameterisation to use when calculating the reactivity
+
+    Returns
+    -------
+    sigma_v: float
+    """
+    if reaction not in REACTIONS:
+        raise ValueError(f"Unknown reaction: {reaction}")
+
+    mapping = {
+        "Bosch-Hale": _bosch_hale,
+    }
+    if method not in mapping:
+        raise ValueError(f"Unknown method: {method}")
+
+    func = mapping.get(method)
+
+
+@dataclass
+class BoschHale_DT_4Hen:
+    """
+    Bosch-Hale parameterisation data for the reaction:
+
+    D + T --> 4He + n
+    """
+
+    t_min = 0.2  # [keV]
+    t_max = 100  # [keV]
+    bg = 34.3827  # [keV**0.5]
+    mrc2 = 1.124656e6  # [keV]
+    c = np.array(
+        [
+            1.17302e-9,
+            1.51361e-2,
+            7.51886e-2,
+            4.60643e-3,
+            1.35000e-2,
+            -1.06750e-4,
+            1.36600e-5,
+        ]
+    )
+
+
+@dataclass
+class BoschHale_DHe3_4Hep:
+    """
+    Bosch-Hale parameterisation data for the reaction:
+
+    D + 3He --> 4He + p
+    """
+
+    t_min = 0.5  # [keV]
+    t_max = 190  # [keV]
+    bg = 68.7508  # [keV**0.5]
+    mrc2 = 1.124572e6  # [keV]
+    c = np.array(
+        [
+            5.51036e-10,
+            6.41918e-3,
+            -2.02896e-3,
+            -1.91080e-5,
+            1.35776e-4,
+            0.0,
+            0.0,
+        ]
+    )
+
+
+def _bosch_hale(temp_kev, reaction):
+    if reaction == "D-D":
+        return 0.5 * (_bosch_hale(temp_kev, "D-D1") + _bosch_hale(temp_kev, "D-D2"))
+    mapping = {
+        "D-T": BoschHale_DT_4Hen,
+        "D-He3": BoschHale_DHe3_4Hep,
+    }
+    data = mapping.get(reaction)
+
+    # theta = temp_kev * (data.c[1] + temp_kev * (data.c[3] + temp_kev * data.c[5]))/(1 + temp_kev * (data.c[2] + temp_kev * (data.c[4] + temp_kev * data.c[6])))
+    # theta = temp_kev / (1 - theta)
+    # xi = ((data.bg ** 2) / (4 * theta)) ** (1 / 3)
