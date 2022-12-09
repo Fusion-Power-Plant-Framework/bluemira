@@ -1268,11 +1268,6 @@ class BreakdownCOP(CoilsetOptimisationProblem):
         """
         Solve the optimisation problem.
         """
-        if x0 is None:
-            x0 = 1e-6 * np.ones(len(self.coilset.control))
-        else:
-            x0 = np.array(x0) / self.scale
-
         self.update_magnetic_constraints(I_not_dI=True, fixed_coils=fixed_coils)
 
         initial_state, n_states = self.read_coilset_state(self.coilset, self.scale)

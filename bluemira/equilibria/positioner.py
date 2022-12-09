@@ -226,7 +226,7 @@ class CoilPositioner:
             for i in range(n_CS)
         ]
 
-    def make_coilset(self, d_coil=0.5):
+    def make_coilset(self, d_coil: float = 0.5) -> CoilSet:
         """
         Returns a CoilSet object
         """
@@ -245,7 +245,7 @@ class CoilPositioner:
             else:
                 raise ValueError("Elige entre ITER y DEMO. " "Mas opciones no hay.")
         cset = CoilSet(*coils)
-        cset.discretisation = 0.5
+        cset.discretisation = d_coil
         return cset
 
 
@@ -428,15 +428,10 @@ class XZLMapper:
         l_values = tools.clip(l_values, lb, ub)
         if self.flag_CS:
             n_CS = coilset.n_coils("CS")
-            l_cs = np.zeros(n_CS)
-            lbcs = np.zeros(n_CS)
-            ubcs = np.ones(n_CS)
             z = coilset.get_coiltype("CS").z
-            z = np.sort(z)[::-1]
-            l_cs = self.z_to_L(z)
-            l_values = np.append(l_values, l_cs)
-            lb = np.append(lb, lbcs)
-            ub = np.append(ub, ubcs)
+            l_values = np.append(l_values, self.z_to_L(np.sort(z)[::-1]))
+            lb = np.append(lb, np.zeros(n_CS))
+            ub = np.append(ub, np.ones(n_CS))
         return l_values, lb, ub
 
     def _get_bounds(self, l_values):

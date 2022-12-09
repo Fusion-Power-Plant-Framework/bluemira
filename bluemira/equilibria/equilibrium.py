@@ -160,8 +160,6 @@ class MHDState:
         """
         no_coils = self.coilset.n_coils()
         plasma = self.plasma
-        response = np.zeros((no_coils, no_coils, 2))
-        background = np.zeros((no_coils, 2))
         non_zero_current = np.where(self.coilset.current != 0)[0]
         response = self.coilset.control_F(self.coilset)
         background = (

@@ -333,7 +333,6 @@ class TestSymmetricCircuit:
             [1.5, 6],
             [1.5, -6],
         ]
-        # circuit_Bx = getattr(self.circuit, f"{fieldtype}Bx")(*np.array(points).T)
 
         for point in points:
             coil_psi = sum(

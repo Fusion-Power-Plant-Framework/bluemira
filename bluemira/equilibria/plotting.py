@@ -310,13 +310,12 @@ class CoilGroupPlotter(Plotter):
             text = "\n".join([text, f"{raw_uc(force[1], 'N', 'MN'):.2f} MN"])
         x = float(x) + drs
         z = float(z)
-        if centre is not None:
-            if ctype.name == "PF":
-                v = np.array([x - centre[0], z - centre[1]])
-                v /= np.sqrt(sum(v**2))
-                d = 1 + np.sqrt(2) * dx
-                x += d * v[0] - drs * 1.5
-                z += d * v[1]
+        if centre is not None and ctype.name == "PF":
+            v = np.array([x - centre[0], z - centre[1]])
+            v /= np.sqrt(sum(v**2))
+            d = 1 + np.sqrt(2) * dx
+            x += d * v[0] - drs * 1.5
+            z += d * v[1]
         self.ax.text(
             x,
             z,

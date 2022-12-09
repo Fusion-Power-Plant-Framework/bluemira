@@ -110,10 +110,9 @@ def check_coilset_symmetric(coilset):
     """
     sym_stack = _get_symmetric_coils(coilset)
     for coil, count in sym_stack:
-        if count != 2:
-            if not np.isclose(coil[1], 0.0):
-                # z = 0
-                return False
+        if count != 2 and not np.isclose(coil[1], 0.0):
+            # therefore z = 0
+            return False
     return True
 
 

@@ -406,8 +406,8 @@ class CoilGroup(CoilGroupFieldsMixin):
                     pass
             elif c.name == name:
                 return c
-        else:
-            raise KeyError(f"Coil '{name}' not found in Group")
+
+        raise KeyError(f"Coil '{name}' not found in Group")
 
     def _get_coiltype(self, ctype):
         """Find coil by type"""

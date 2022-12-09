@@ -24,10 +24,8 @@ Coil and coil grouping objects
 """
 from __future__ import annotations
 
-# from re import split
 from typing import TYPE_CHECKING, Callable, Optional, Union
 
-# import matplotlib.pyplot as plt
 import numpy as np
 
 from bluemira.base.constants import MU_0

@@ -486,7 +486,7 @@ class Coil(CoilFieldsMixin):
         nx = np.maximum(1, np.ceil(self.dx * 2 / self.discretisation))
         nz = np.maximum(1, np.ceil(self.dz * 2 / self.discretisation))
 
-        if not nx * nz == 1:
+        if nx * nz != 1:
             sc_dx, sc_dz = self.dx / nx, self.dz / nz
 
             # Calculate sub-coil centroids
