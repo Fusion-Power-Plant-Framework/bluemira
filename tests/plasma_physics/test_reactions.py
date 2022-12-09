@@ -188,5 +188,5 @@ class TestReactivity:
 
     @pytest.mark.parametrize("temp_kev, sigmav", np.c_[temp, sv_DD_He3p])
     def test_Bosch_Hale_DHe(self, temp_kev, sigmav):
-        result = reactivity(temp_kev, reaction="D-D1", method="Bosch-Hale")
+        result = reactivity(temp_kev, reaction="D-D2", method="Bosch-Hale")
         np.testing.assert_allclose(result, sigmav, rtol=0.003, atol=0)
