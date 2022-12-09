@@ -238,7 +238,7 @@ class CoilGroupPlotter(Plotter):
         if force is not None:
             d_fx, d_fz = force / M_PER_MN
 
-        for i, (x, z, x_b, z_b, dx, ct, n, cur, ctrl) in enumerate(zip(*arrays)):
+        for i, (x, z, dx, x_b, z_b, ct, n, cur, ctrl) in enumerate(zip(*arrays)):
             if ctrl:
                 if self.colors is not None:
                     if ct.name == "PF":
