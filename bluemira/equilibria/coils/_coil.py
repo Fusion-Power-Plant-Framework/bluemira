@@ -129,11 +129,7 @@ class Coil(CoilFieldsMixin):
     b_max: float
         Maximum magnetic field at the coil [T]
     discretisation: float
-        discretise the coil. The value (between 0 and 1) is the fractional value of
-        the width and the height of the coils to discretise over.
-        For example 0.5 will result in 4 magnetic filaments.
-        Rectangular discretisation (the only available type) enforces the smallest
-        whole number of filaments therefore 0.5 <= d < 1 always gives 4 filaments.
+        discretise the coil, value in [m].
     n_turns: int
         Number of turns
 
@@ -328,7 +324,7 @@ class Coil(CoilFieldsMixin):
     @x.setter
     def x(self, value: float):
         """Set coil x position"""
-        self._x = float(value)
+        self._x = np.maximum(float(value), 0)
         self._re_discretise()
 
     @z.setter
@@ -350,6 +346,14 @@ class Coil(CoilFieldsMixin):
     def dx(self, value: float):
         """Set coil dx size"""
         self._dx = None if value is None else float(value)
+        if isinstance(self._dx, float) and self._x - self._dx < 0:
+            bluemira_debug(
+                "Coil extent crossing x=0, "
+                "setting dx to its largest value "
+                "keeping the coil above x=0"
+            )
+            self._dx = self._x
+
         self._re_discretise()
 
     @dz.setter
@@ -421,10 +425,7 @@ class Coil(CoilFieldsMixin):
 
         Notes
         -----
-        Only discretisation method currently implemented is rectangular fraction
-        The discretisation value (between 0 and 1) is the fractional value of
-        the width and the height of the coils to discretise over.
-        For example 0.5 will result in 4 magnetic filaments.
+        Only discretisation method currently implemented is rectangular.
 
         Possible improvement: multiple discretisations for different coils
 
@@ -453,6 +454,8 @@ class Coil(CoilFieldsMixin):
             # remain fixed
             self.fix_size()
 
+            if self.x - self.dx < 0:
+                raise ValueError("Coil extent crosses x=0")
             self._set_coil_attributes()
             self._discretise()
         else:
@@ -470,8 +473,8 @@ class Coil(CoilFieldsMixin):
 
     def _rectangular_discretisation(self):
         """
-        Discretise a coil into smaller rectangles based on fraction of
-        coil dimensions
+        Discretise a coil into smaller rectangles based on the length
+        in [m] of the discretisation.
 
         Parameters
         ----------
