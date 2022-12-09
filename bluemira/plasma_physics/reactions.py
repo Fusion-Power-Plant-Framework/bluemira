@@ -333,11 +333,13 @@ def _bosch_hale(temp_kev, reaction):
 
     if np.min(temp_kev) < data.t_min:
         bluemira_warn(
-            f"The Bosch-Hale parameterisation for reaction {reaction} is only valid between {data.t_min} and {data.t_max} keV, not {np.min(temp_kev)}"
+            f"The Bosch-Hale parameterisation for reaction {reaction} is only valid "
+            f"between {data.t_min} and {data.t_max} keV, not {np.min(temp_kev)} keV."
         )
     if np.max(temp_kev) > data.t_max:
         bluemira_warn(
-            f"The Bosch-Hale parameterisation for reaction {reaction} is only valid between {data.t_min} and {data.t_max} keV, not {np.max(temp_kev)}"
+            f"The Bosch-Hale parameterisation for reaction {reaction} is only valid "
+            f"between {data.t_min} and {data.t_max} keV, not {np.max(temp_kev)} keV."
         )
 
     frac = (data.c[1] + temp_kev * (data.c[3] + temp_kev * data.c[5])) / (
