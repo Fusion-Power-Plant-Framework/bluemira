@@ -19,9 +19,13 @@
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 
+import json
+import os
+
 import numpy as np
 import pytest
 
+from bluemira.base.file import get_bluemira_path
 from bluemira.plasma_physics.reactions import E_DD_fusion, E_DT_fusion, reactivity
 
 
@@ -49,164 +53,17 @@ class TestReactivity:
     H.-S. Bosch and G.M. Hale 1993 Nucl. Fusion 33 1919
     """
 
-    temp = np.array(
-        [
-            0.2,
-            0.3,
-            0.4,
-            0.5,
-            0.6,
-            0.7,
-            0.8,
-            1.0,
-            1.25,
-            1.3,
-            1.5,
-            1.75,
-            1.8,
-            2.0,
-            2.5,
-            3.0,
-            4.0,
-            5.0,
-            6.0,
-            8.0,
-            10.0,
-            12.0,
-            15.0,
-            20.0,
-            30.0,
-            40.0,
-            50.0,
-        ]
-    )
-    sv_DT = 1e-6 * np.array(
-        [
-            1.254e-26,
-            7.292e-25,
-            9.344e-24,
-            5.697e-23,
-            2.253e-22,
-            6.740e-22,
-            1.662e-21,
-            6.857e-21,
-            2.546e-20,
-            3.174e-20,
-            6.923e-20,
-            1.539e-19,
-            1.773e-19,
-            2.977e-19,
-            8.425e-19,
-            1.867e-18,
-            5.974e-18,
-            1.366e-17,
-            2.554e-17,
-            6.222e-17,
-            1.136e-16,
-            1.747e-16,
-            2.74e-16,
-            4.33e-16,
-            6.681e-16,
-            7.998e-16,
-            8.649e-16,
-        ]
-    )
+    path = get_bluemira_path("plasma_physics/test_data", subfolder="tests")
+    filename = "reactivity_Bosch_Hale_1993.json"
+    file_path = os.path.join(path, filename)
+    with open(file_path, "r") as file:
+        data = json.load(file)
 
-    sv_DHe3 = 1e-6 * np.array(
-        [
-            1.414e-35,
-            1.033e-32,
-            6.537e-31,
-            1.241e-29,
-            1.166e-28,
-            6.960e-28,
-            3.032e-27,
-            3.057e-26,
-            2.590e-25,
-            3.708e-25,
-            1.317e-24,
-            4.813e-24,
-            6.053e-24,
-            1.399e-23,
-            7.477e-23,
-            2.676e-22,
-            1.710e-21,
-            6.377e-21,
-            1.739e-20,
-            7.504e-20,
-            2.126e-19,
-            4.715e-19,
-            1.175e-18,
-            3.482e-18,
-            1.363e-17,
-            3.160e-17,
-            5.554e-17,
-        ]
-    )
-
-    sv_DD_He3p = 1e-6 * np.array(
-        [
-            4.482e-28,
-            2.004e-26,
-            2.168e-25,
-            1.169e-24,
-            4.200e-24,
-            1.162e-23,
-            2.681e-23,
-            9.933e-23,
-            3.319e-22,
-            4.660e-22,  # OMG
-            8.284e-22,
-            1.713e-21,
-            1.948e-21,
-            3.110e-21,
-            7.905e-21,
-            1.602e-20,
-            4.447e-20,
-            9.128e-20,
-            1.573e-19,
-            3.457e-19,
-            6.023e-19,
-            9.175e-19,
-            1.481e-18,
-            2.603e-18,
-            5.271e-18,
-            8.235e-18,
-            1.133e-17,
-        ]
-    )
-
-    sv_DD_Tp = 1e-6 * np.array(
-        [
-            4.640e-28,
-            2.071e-26,
-            2.237e-25,
-            1.204e-24,
-            4.321e-24,
-            1.193e-23,
-            2.751e-23,
-            1.017e-22,
-            3.387e-22,
-            4.143e-22,
-            8.431e-22,
-            1.739e-21,
-            1.976e-21,
-            3.150e-21,
-            7.969e-21,
-            1.608e-20,
-            4.428e-20,
-            9.024e-20,
-            1.545e-19,
-            3.354e-19,
-            5.781e-19,
-            8.723e-19,
-            1.390e-18,
-            2.399e-18,
-            4.728e-18,
-            7.249e-18,
-            9.838e-18,
-        ]
-    )
+    temp = np.array(data["temperature_kev"])
+    sv_DT = np.array(data["sv_DT_m3s"])
+    sv_DHe3 = np.array(data["sv_DHe3_m3s"])
+    sv_DD_He3p = np.array(data["sv_DD_He3p_m3s"])
+    sv_DD_Tp = np.array(data["sv_DD_Tp_m3s"])
 
     @pytest.mark.parametrize("method, rtol", [("Bosch-Hale", 0.0025), ("PLASMOD", 0.1)])
     @pytest.mark.parametrize("temp_kev, sigmav", np.c_[temp, sv_DT])
