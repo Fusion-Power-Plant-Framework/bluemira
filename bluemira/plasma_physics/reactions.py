@@ -338,8 +338,22 @@ class BoschHale_DHe3_4Hep:
 
 def _reactivity_bosch_hale(temp_kev, reaction):
     """
-    Bosch-Hale reactivity parameterisation
+    Bosch-Hale reactivity parameterisation for Maxwellian plasmas
 
+    Parameters
+    ----------
+    temp_kev: Union[float, np.ndarray]
+        Temperature [keV]
+    reaction: str
+        The fusion reaction
+
+    Returns
+    -------
+    sigma_v: float
+        Reactivity of the reaction at the specified temperature(s) [m^3/s]
+
+    Notes
+    -----
     H.-S. Bosch and G.M. Hale 1992 Nucl. Fusion 32 611
     DOI 10.1088/0029-5515/32/4/I07
     """
@@ -386,6 +400,18 @@ def _reactivity_bosch_hale(temp_kev, reaction):
 def _reactivity_plasmod(temp_kev, reaction):
     """
     Reactivity equations used in PLASMOD (original source unknown)
+
+    Parameters
+    ----------
+    temp_kev: Union[float, np.ndarray]
+        Temperature [keV]
+    reaction: str
+        The fusion reaction
+
+    Returns
+    -------
+    sigma_v: float
+        Reactivity of the reaction at the specified temperature(s) [m^3/s]
     """
 
     if reaction == "D-T":
