@@ -104,3 +104,14 @@ class Designer(abc.ABC, Generic[_DesignerReturnT]):
             return getattr(self, mode)
         except AttributeError:
             raise ValueError(f"{type(self).__name__} has no run mode '{mode}'.")
+
+
+def run_designer(
+    designer_cls: Type[Designer[_DesignerReturnT]],
+    params: ParameterFrame,
+    build_config: Dict,
+    **kwargs,
+) -> _DesignerReturnT:
+    """Make and run a designer, returning the result."""
+    designer = designer_cls(params, build_config, **kwargs)
+    return designer.execute()
