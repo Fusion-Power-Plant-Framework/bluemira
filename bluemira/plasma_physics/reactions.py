@@ -42,6 +42,7 @@ from bluemira.base.constants import (
     T_MOLAR_MASS,
     raw_uc,
 )
+from bluemira.base.look_and_feel import bluemira_warn
 
 
 def E_DT_fusion():  # noqa :N802
@@ -194,7 +195,7 @@ def reactivity(temp_kev, reaction="D-T", method="Bosch-Hale"):
 
     Parameters
     ----------
-    temp_kev: float
+    temp_kev: Union[float, np.ndarray]
         Temperature [keV]
     reaction: str
         The fusion reaction
@@ -204,6 +205,7 @@ def reactivity(temp_kev, reaction="D-T", method="Bosch-Hale"):
     Returns
     -------
     sigma_v: float
+        Reactivity of the reaction at the specified temperature(s) [m^3/s]
     """
     if reaction not in REACTIONS:
         raise ValueError(f"Unknown reaction: {reaction}")
@@ -328,6 +330,16 @@ def _bosch_hale(temp_kev, reaction):
         "D-He3": BoschHale_DHe3_4Hep,
     }
     data = mapping[reaction]
+
+    if np.min(temp_kev) < data.t_min:
+        bluemira_warn(
+            f"The Bosch-Hale parameterisation for reaction {reaction} is only valid between {data.t_min} and {data.t_max} keV, not {np.min(temp_kev)}"
+        )
+    if np.max(temp_kev) > data.t_max:
+        bluemira_warn(
+            f"The Bosch-Hale parameterisation for reaction {reaction} is only valid between {data.t_min} and {data.t_max} keV, not {np.max(temp_kev)}"
+        )
+
     frac = (data.c[1] + temp_kev * (data.c[3] + temp_kev * data.c[5])) / (
         1 + temp_kev * (data.c[2] + temp_kev * (data.c[4] + temp_kev * data.c[6]))
     )
