@@ -226,6 +226,9 @@ class BoschHale_DT_4Hen:
     Bosch-Hale parameterisation data for the reaction:
 
     D + T --> 4He + n
+
+    H.-S. Bosch and G.M. Hale 1992 Nucl. Fusion 32 611
+    DOI 10.1088/0029-5515/32/4/I07
     """
 
     t_min = 0.2  # [keV]
@@ -251,6 +254,9 @@ class BoschHale_DD_3Hen:
     Bosch-Hale parameterisation data for the reaction:
 
     D + D --> 3He + n
+
+    H.-S. Bosch and G.M. Hale 1992 Nucl. Fusion 32 611
+    DOI 10.1088/0029-5515/32/4/I07
     """
 
     t_min = 0.2  # [keV]
@@ -276,6 +282,9 @@ class BoschHale_DD_Tp:
     Bosch-Hale parameterisation data for the reaction:
 
     D + D --> T + p
+
+    H.-S. Bosch and G.M. Hale 1992 Nucl. Fusion 32 611
+    DOI 10.1088/0029-5515/32/4/I07
     """
 
     t_min = 0.2  # [keV]
@@ -301,6 +310,9 @@ class BoschHale_DHe3_4Hep:
     Bosch-Hale parameterisation data for the reaction:
 
     D + 3He --> 4He + p
+
+    H.-S. Bosch and G.M. Hale 1992 Nucl. Fusion 32 611
+    DOI 10.1088/0029-5515/32/4/I07
     """
 
     t_min = 0.5  # [keV]
@@ -321,6 +333,12 @@ class BoschHale_DHe3_4Hep:
 
 
 def _bosch_hale(temp_kev, reaction):
+    """
+    Bosch-Hale
+
+    H.-S. Bosch and G.M. Hale 1992 Nucl. Fusion 32 611
+    DOI 10.1088/0029-5515/32/4/I07
+    """
     if reaction == "D-D":
         return 0.5 * (_bosch_hale(temp_kev, "D-D1") + _bosch_hale(temp_kev, "D-D2"))
     mapping = {
@@ -342,11 +360,17 @@ def _bosch_hale(temp_kev, reaction):
             f"between {data.t_min} and {data.t_max} keV, not {np.max(temp_kev)} keV."
         )
 
-    frac = (data.c[1] + temp_kev * (data.c[3] + temp_kev * data.c[5])) / (
-        1 + temp_kev * (data.c[2] + temp_kev * (data.c[4] + temp_kev * data.c[6]))
+    frac = (
+        temp_kev
+        * (data.c[1] + temp_kev * (data.c[3] + temp_kev * data.c[5]))
+        / (1 + temp_kev * (data.c[2] + temp_kev * (data.c[4] + temp_kev * data.c[6])))
     )
-    theta = temp_kev / (1 - temp_kev * frac)
+    theta = temp_kev / (1 - frac)
     chi = (data.bg**2 / (4 * theta)) ** (1 / 3)
     return (
-        1e-6 * data.c[0] * np.sqrt(chi / (data.mrc2 * temp_kev**3)) * np.exp(-3 * chi)
+        1e-6
+        * data.c[0]
+        * theta
+        * np.sqrt(chi / (data.mrc2 * temp_kev**3))
+        * np.exp(-3 * chi)
     )
