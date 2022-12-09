@@ -415,9 +415,9 @@ def _reactivity_plasmod(temp_kev, reaction):
     """
 
     if reaction == "D-T":
-        T3 = temp_kev ** (-1 / 3)
+        t3 = temp_kev ** (-1 / 3)
 
-        term_1 = 8.972 * np.exp(-19.9826 * T3) * T3**2
+        term_1 = 8.972 * np.exp(-19.9826 * t3) * t3**2
         term_2 = (temp_kev + 1.0134) / (1 + 6.386e-3 * (temp_kev + 1.0134) ** 2)
         term_3 = 1.877 * np.exp(-0.16176 * temp_kev * np.sqrt(temp_kev))
         return 1e-19 * term_1 * (term_2 + term_3)
