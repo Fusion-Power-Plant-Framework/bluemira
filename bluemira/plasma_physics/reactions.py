@@ -214,7 +214,8 @@ def reactivity(temp_kev, reaction="D-T", method="Bosch-Hale"):
     if method not in mapping:
         raise ValueError(f"Unknown method: {method}")
 
-    func = mapping.get(method)
+    func = mapping[method]
+    return func(temp_kev, reaction)
 
 
 @dataclass
@@ -238,6 +239,56 @@ class BoschHale_DT_4Hen:
             1.35000e-2,
             -1.06750e-4,
             1.36600e-5,
+        ]
+    )
+
+
+@dataclass
+class BoschHale_DD_3Hen:
+    """
+    Bosch-Hale parameterisation data for the reaction:
+
+    D + D --> 3He + n
+    """
+
+    t_min = 0.2  # [keV]
+    t_max = 100  # [keV]
+    bg = 31.3970  # [keV**0.5]
+    mrc2 = 0.937814e6  # [keV]
+    c = np.array(
+        [
+            5.43360e-12,
+            5.85778e-3,
+            7.68222e-3,
+            0.0,
+            -2.96400e-6,
+            0.0,
+            0.0,
+        ]
+    )
+
+
+@dataclass
+class BoschHale_DD_Tp:
+    """
+    Bosch-Hale parameterisation data for the reaction:
+
+    D + D --> T + p
+    """
+
+    t_min = 0.2  # [keV]
+    t_max = 100  # [keV]
+    bg = 31.3970  # [keV**0.5]
+    mrc2 = 0.937814e6  # [keV]
+    c = np.array(
+        [
+            5.65718e-12,
+            3.41267e-3,
+            1.99167e-3,
+            0.0,
+            1.05060e-5,
+            0.0,
+            0.0,
         ]
     )
 
@@ -272,10 +323,16 @@ def _bosch_hale(temp_kev, reaction):
         return 0.5 * (_bosch_hale(temp_kev, "D-D1") + _bosch_hale(temp_kev, "D-D2"))
     mapping = {
         "D-T": BoschHale_DT_4Hen,
+        "D-D1": BoschHale_DD_3Hen,
+        "D-D2": BoschHale_DD_Tp,
         "D-He3": BoschHale_DHe3_4Hep,
     }
-    data = mapping.get(reaction)
-
-    # theta = temp_kev * (data.c[1] + temp_kev * (data.c[3] + temp_kev * data.c[5]))/(1 + temp_kev * (data.c[2] + temp_kev * (data.c[4] + temp_kev * data.c[6])))
-    # theta = temp_kev / (1 - theta)
-    # xi = ((data.bg ** 2) / (4 * theta)) ** (1 / 3)
+    data = mapping[reaction]
+    frac = (data.c[1] + temp_kev * (data.c[3] + temp_kev * data.c[5])) / (
+        1 + temp_kev * (data.c[2] + temp_kev * (data.c[4] + temp_kev * data.c[6]))
+    )
+    theta = temp_kev / (1 - temp_kev * frac)
+    chi = (data.bg**2 / (4 * theta)) ** (1 / 3)
+    return (
+        1e-6 * data.c[0] * np.sqrt(chi / (data.mrc2 * temp_kev**3)) * np.exp(-3 * chi)
+    )
