@@ -24,6 +24,7 @@ Fusion reactions
 """
 
 from dataclasses import dataclass
+from typing import Union
 
 import numpy as np
 
@@ -188,7 +189,9 @@ REACTIONS = {
 }
 
 
-def reactivity(temp_kev, reaction="D-T", method="Bosch-Hale"):
+def reactivity(
+    temp_kev: Union[float, np.ndarray], reaction="D-T", method="Bosch-Hale"
+) -> Union[float, np.ndarray]:
     """
     Calculate the thermal reactivity of a fusion reaction in Maxwellian plasmas,
     \\t:math:`<\\sigma v>`
@@ -211,7 +214,8 @@ def reactivity(temp_kev, reaction="D-T", method="Bosch-Hale"):
         raise ValueError(f"Unknown reaction: {reaction}")
 
     mapping = {
-        "Bosch-Hale": _bosch_hale,
+        "Bosch-Hale": _reactivity_bosch_hale,
+        "PLASMOD": _reactivity_plasmod,
     }
     if method not in mapping:
         raise ValueError(f"Unknown method: {method}")
@@ -332,15 +336,18 @@ class BoschHale_DHe3_4Hep:
     )
 
 
-def _bosch_hale(temp_kev, reaction):
+def _reactivity_bosch_hale(temp_kev, reaction):
     """
-    Bosch-Hale
+    Bosch-Hale reactivity parameterisation
 
     H.-S. Bosch and G.M. Hale 1992 Nucl. Fusion 32 611
     DOI 10.1088/0029-5515/32/4/I07
     """
     if reaction == "D-D":
-        return 0.5 * (_bosch_hale(temp_kev, "D-D1") + _bosch_hale(temp_kev, "D-D2"))
+        return 0.5 * (
+            _reactivity_bosch_hale(temp_kev, "D-D1")
+            + _reactivity_bosch_hale(temp_kev, "D-D2")
+        )
     mapping = {
         "D-T": BoschHale_DT_4Hen,
         "D-D1": BoschHale_DD_3Hen,
@@ -374,3 +381,26 @@ def _bosch_hale(temp_kev, reaction):
         * np.sqrt(chi / (data.mrc2 * temp_kev**3))
         * np.exp(-3 * chi)
     )
+
+
+def _reactivity_plasmod(temp_kev, reaction):
+    """
+    Reactivity equations used in PLASMOD (original source unknown)
+    """
+
+    if reaction == "D-T":
+        T3 = temp_kev ** (-1 / 3)
+
+        term_1 = 8.972 * np.exp(-19.9826 * T3) * T3**2
+        term_2 = (temp_kev + 1.0134) / (1 + 6.386e-3 * (temp_kev + 1.0134) ** 2)
+        term_3 = 1.877 * np.exp(-0.16176 * temp_kev * np.sqrt(temp_kev))
+        return 1e-19 * term_1 * (term_2 + term_3)
+
+    elif reaction == "D-D":
+        term_1 = (
+            0.16247 + 0.001741 * temp_kev - 0.029 * np.exp(-0.3843 * np.sqrt(temp_kev))
+        )
+        term_2 = np.exp(-18.8085 / (temp_kev ** (1 / 3))) / (temp_kev ** (1 / 3)) ** 2
+        return 1e-19 * term_1 * term_2
+    else:
+        raise ValueError(f"This function only supports D-D and D-T, not {reaction}")

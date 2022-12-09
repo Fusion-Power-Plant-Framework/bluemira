@@ -208,10 +208,11 @@ class TestReactivity:
         ]
     )
 
+    @pytest.mark.parametrize("method, rtol", [("Bosch-Hale", 0.0025), ("PLASMOD", 0.1)])
     @pytest.mark.parametrize("temp_kev, sigmav", np.c_[temp, sv_DT])
-    def test_Bosch_Hale_DT(self, temp_kev, sigmav):
-        result = reactivity(temp_kev, reaction="D-T", method="Bosch-Hale")
-        np.testing.assert_allclose(result, sigmav, rtol=0.0025, atol=0)
+    def test_Bosch_Hale_DT(self, temp_kev, sigmav, method, rtol):
+        result = reactivity(temp_kev, reaction="D-T", method=method)
+        np.testing.assert_allclose(result, sigmav, rtol=rtol, atol=0)
 
     @pytest.mark.parametrize("temp_kev, sigmav", np.c_[temp, sv_DHe3])
     def test_Bosch_Hale_DHe(self, temp_kev, sigmav):
