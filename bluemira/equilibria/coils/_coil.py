@@ -158,6 +158,9 @@ class Coil(CoilFieldsMixin):
         self._discretisation = 1
         self._flag_sizefix = None not in (dx, dz)
 
+        if dx is not None and x - dx < 0:
+            raise ValueError("Coil extent crosses x=0")
+
         self.x = x
         self.z = z
         self.dx = dx
@@ -454,8 +457,6 @@ class Coil(CoilFieldsMixin):
             # remain fixed
             self.fix_size()
 
-            if self.x - self.dx < 0:
-                raise ValueError("Coil extent crosses x=0")
             self._set_coil_attributes()
             self._discretise()
         else:
