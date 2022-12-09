@@ -139,9 +139,7 @@ if __name__ == "__main__":
         params, build_config["IVC"], equilibrium=eq
     )
 
-    # Do not add VV to the reactor, as the built shape errors when
-    # displayed (cannot build face from wire).
-    vacuum_vessel = build_vacuum_vessel(
+    reactor.vacuum_vessel = build_vacuum_vessel(
         params, build_config.get("Vacuum vessel", {}), ivc_boundary
     )
     reactor.divertor = build_divertor(
@@ -155,7 +153,7 @@ if __name__ == "__main__":
     vv_thermal_shield = VVTSBuilder(
         params,
         thermal_shield_config.get("Vacuum vessel", {}),
-        keep_out_zone=vacuum_vessel.xz_boundary(),
+        keep_out_zone=reactor.vacuum_vessel.xz_boundary(),
     )
     reactor.vv_thermal = vv_thermal_shield.build()
 
@@ -163,7 +161,7 @@ if __name__ == "__main__":
         params,
         build_config.get("TF coils", {}),
         reactor.plasma.lcfs(),
-        vacuum_vessel.xz_boundary(),
+        reactor.vacuum_vessel.xz_boundary(),
     )
 
     pf_coil_keep_out_zones = []  # Update when ports are added
