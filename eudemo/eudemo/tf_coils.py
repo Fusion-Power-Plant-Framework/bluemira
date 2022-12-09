@@ -417,7 +417,7 @@ class TFCoilBuilder(Builder):
         self.wp_x_size = bb.x_max - bb.x_min
         self.wp_y_size = bb.y_max - bb.y_min
 
-    def build(self) -> TFCoil:
+    def build(self) -> Component:
         """
         Build the vacuum vessel component.
         """
@@ -425,15 +425,10 @@ class TFCoilBuilder(Builder):
         y_in, ib_cas_wire, ob_cas_wire = self._make_cas_xsec()
 
         xyz_case, xyz = self.build_xyz(y_in, ins_inner_face, ib_cas_wire, ob_cas_wire)
-        return TFCoil(
-            self.component_tree(
-                xz=self.build_xz(xyz_case),
-                xy=self.build_xy(
-                    ins_inner_face, ins_outer_face, ib_cas_wire, ob_cas_wire
-                ),
-                xyz=xyz,
-            ),
-            self._make_field_solver(),
+        return self.component_tree(
+            xz=self.build_xz(xyz_case),
+            xy=self.build_xy(ins_inner_face, ins_outer_face, ib_cas_wire, ob_cas_wire),
+            xyz=xyz,
         )
 
     def build_xz(

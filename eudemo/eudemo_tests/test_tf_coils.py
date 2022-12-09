@@ -221,11 +221,11 @@ class TestTFCoilBuilder:
         builder = TFCoilBuilder(self.params, {}, centreline, wp_xs)
         tf_coil = builder.build()
 
-        assert tf_coil.component().get_component("xz")
-        xy = tf_coil.component().get_component("xy")
+        assert tf_coil.get_component("xz")
+        xy = tf_coil.get_component("xy")
         assert xy
 
-        xyz = tf_coil.component().get_component("xyz")
+        xyz = tf_coil.get_component("xyz")
         assert xyz
         xyz.show_cad()
 

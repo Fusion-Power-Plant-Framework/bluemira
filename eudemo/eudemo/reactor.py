@@ -43,18 +43,20 @@ from typing import Dict
 from bluemira.base.designer import run_designer
 from bluemira.base.parameter_frame import make_parameter_frame
 from bluemira.base.reactor import Reactor
-from bluemira.builders.divertor import Divertor, DivertorBuilder
+from bluemira.builders.divertor import DivertorBuilder
 from bluemira.builders.plasma import Plasma, PlasmaBuilder
-from bluemira.builders.thermal_shield import VacuumVesselThermalShield, VVTSBuilder
+from bluemira.builders.thermal_shield import VVTSBuilder
 from bluemira.equilibria.equilibrium import Equilibrium
 from bluemira.geometry.tools import make_polygon
 from eudemo.blanket import Blanket, BlanketBuilder
 from eudemo.equilibria import EquilibriumDesigner
 from eudemo.ivc import design_ivc
+from eudemo.ivc.divertor_silhouette import Divertor
 from eudemo.params import EUDEMOReactorParams
 from eudemo.pf_coils import PFCoilsDesigner
 from eudemo.radial_build import radial_build
 from eudemo.tf_coils import TFCoil, TFCoilBuilder, TFCoilDesigner
+from eudemo.thermal_shield import VacuumVesselThermalShield
 from eudemo.vacuum_vessel import VacuumVessel, VacuumVesselBuilder
 
 CONFIG_DIR = Path(__file__).parent.parent / "config"
@@ -77,25 +79,25 @@ def build_plasma(build_config: Dict, eq: Equilibrium) -> Plasma:
     lcfs_loop = eq.get_LCFS()
     lcfs_wire = make_polygon({"x": lcfs_loop.x, "z": lcfs_loop.z}, closed=True)
     builder = PlasmaBuilder(build_config, lcfs_wire)
-    return builder.build()
+    return Plasma(builder.build())
 
 
 def build_vacuum_vessel(params, build_config, ivc_koz) -> VacuumVessel:
     """Build the vacuum vessel around the given IVC keep-out zone."""
     vv_builder = VacuumVesselBuilder(params, build_config, ivc_koz)
-    return vv_builder.build()
+    return VacuumVessel(vv_builder.build())
 
 
 def build_divertor(params, build_config, div_silhouette) -> Divertor:
     """Build the divertor given a silhouette of a sector."""
     builder = DivertorBuilder(params, build_config, div_silhouette)
-    return builder.build()
+    return Divertor(builder.build())
 
 
 def build_blanket(params, build_config, blanket_face) -> Blanket:
     """Build the blanket given a silhouette of a sector."""
     builder = BlanketBuilder(params, build_config, blanket_face)
-    return builder.build()
+    return Blanket(builder.build())
 
 
 def build_tf_coils(
@@ -109,9 +111,10 @@ def build_tf_coils(
         separatrix=separatrix,
         keep_out_zone=vacuum_vessel_cross_section,
     )
-    return TFCoilBuilder(
+    builder = TFCoilBuilder(
         params, build_config, centreline.create_shape(), wp_cross_section
-    ).build()
+    )
+    return TFCoil(builder.build(), builder._make_field_solver())
 
 
 def _read_json(file_path: str) -> Dict:
@@ -137,9 +140,7 @@ if __name__ == "__main__":
         params, build_config["IVC"], equilibrium=eq
     )
 
-    # Do not add VV to the reactor, as the built shape errors when
-    # displayed (cannot build face from wire).
-    vacuum_vessel = build_vacuum_vessel(
+    reactor.vacuum_vessel = build_vacuum_vessel(
         params, build_config.get("Vacuum vessel", {}), ivc_boundary
     )
     reactor.divertor = build_divertor(
@@ -153,7 +154,7 @@ if __name__ == "__main__":
     vv_thermal_shield = VVTSBuilder(
         params,
         thermal_shield_config.get("Vacuum vessel", {}),
-        keep_out_zone=vacuum_vessel.xz_boundary(),
+        keep_out_zone=reactor.vacuum_vessel.xz_boundary(),
     )
     reactor.vv_thermal = vv_thermal_shield.build()
 
@@ -161,7 +162,7 @@ if __name__ == "__main__":
         params,
         build_config.get("TF coils", {}),
         reactor.plasma.lcfs(),
-        vacuum_vessel.xz_boundary(),
+        reactor.vacuum_vessel.xz_boundary(),
     )
 
     pf_coil_keep_out_zones = []  # Update when ports are added

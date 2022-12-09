@@ -47,11 +47,11 @@ class TestVacuumVesselBuilder:
 
     def test_components_and_segments(self):
         builder = VacuumVesselBuilder(self.params, {}, self.picture_frame)
-        cryostat_ts = builder.build()
+        vacuum_vessel = builder.build()
 
-        assert cryostat_ts.component().get_component("xz")
-        assert cryostat_ts.component().get_component("xy")
+        assert vacuum_vessel.get_component("xz")
+        assert vacuum_vessel.get_component("xy")
 
-        xyz = cryostat_ts.component().get_component("xyz")
+        xyz = vacuum_vessel.get_component("xyz")
         assert xyz
         assert len(xyz.leaves) == self.params["n_TF"]["value"]
