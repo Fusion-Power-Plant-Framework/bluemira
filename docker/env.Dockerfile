@@ -76,8 +76,9 @@ COPY --from=build_deps /usr /usr
 COPY --from=build_deps /etc /etc
 
 # QT5 has some not standard lib locations which freecad install doesnt remember
-# Fenics needs help finding Boost libaries installed in local/lib
-ENV LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/lib:/usr/local/Qt-5.15.5/lib
+ENV LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/Qt-5.15.5/lib
+# Dolfin needs help finding Boost runtime libaries
+ENV LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/lib
 
 RUN useradd -ms /bin/bash user
 COPY --from=build_deps --chown=user /opt/venv/ /opt/venv/
