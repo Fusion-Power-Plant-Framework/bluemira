@@ -96,12 +96,10 @@ class VVTSBuilder(Builder):
         xz_vvts = self.build_xz(self.keep_out_zone)
         vvts_face: BluemiraFace = xz_vvts.get_component_properties("shape")
 
-        return VacuumVesselThermalShield(
-            self.component_tree(
-                xz=[xz_vvts],
-                xy=self.build_xy(vvts_face),
-                xyz=self.build_xyz(vvts_face),
-            )
+        return self.component_tree(
+            xz=[xz_vvts],
+            xy=self.build_xy(vvts_face),
+            xyz=self.build_xyz(vvts_face),
         )
 
     def build_xz(self, koz: BluemiraWire) -> PhysicalComponent:

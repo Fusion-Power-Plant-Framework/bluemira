@@ -69,12 +69,10 @@ class PlasmaBuilder(Builder):
         """
         Build the plasma component.
         """
-        return Plasma(
-            self.component_tree(
-                xz=[self.build_xz(self.xz_lcfs)],
-                xy=[self.build_xy(self.xz_lcfs)],
-                xyz=[self.build_xyz(self.xz_lcfs)],
-            )
+        return self.component_tree(
+            xz=[self.build_xz(self.xz_lcfs)],
+            xy=[self.build_xy(self.xz_lcfs)],
+            xyz=[self.build_xyz(self.xz_lcfs)],
         )
 
     def build_xz(self, lcfs: BluemiraWire) -> PhysicalComponent:

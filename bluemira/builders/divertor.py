@@ -88,12 +88,10 @@ class DivertorBuilder(Builder):
         """
         Build the divertor component.
         """
-        return Divertor(
-            self.component_tree(
-                xz=[self.build_xz()],
-                xy=[],
-                xyz=self.build_xyz(),
-            )
+        return self.component_tree(
+            xz=[self.build_xz()],
+            xy=[],
+            xyz=self.build_xyz(),
         )
 
     def build_xz(self) -> PhysicalComponent:
