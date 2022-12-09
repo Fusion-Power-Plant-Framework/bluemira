@@ -45,14 +45,111 @@ class TestReactionEnergies:
 
 
 class TestReactivity:
+    """
+    H.-S. Bosch and G.M. Hale 1993 Nucl. Fusion 33 1919
+    """
+
     temp = np.array(
-        [0.2, 0.3]
-    )  # , 0.4, 0.5, 0.6, 0.7, 0.8, 1., 1.25, 1.3, 1.5, 1.75, 1.8, 2., 2.5, 3., 4., 5., 6., 8., 10., 12., 15., 20., 30., 40., 50.])
+        [
+            0.2,
+            0.3,
+            0.4,
+            0.5,
+            0.6,
+            0.7,
+            0.8,
+            1.0,
+            1.25,
+            1.3,
+            1.5,
+            1.75,
+            1.8,
+            2.0,
+            2.5,
+            3.0,
+            4.0,
+            5.0,
+            6.0,
+            8.0,
+            10.0,
+            12.0,
+            15.0,
+            20.0,
+            30.0,
+            40.0,
+            50.0,
+        ]
+    )
     sv_DT = 1e-6 * np.array(
-        [1.254e-26, 7.292e-25]
-    )  # , 9.344e-24, 5.967e-23, 2.253e-22, 6.740e-22, 1.662e-21, 6.857e-21, 2.546e-20, 3.174e-20,6.923e-20, 1.539e-19, 1.773e-19, 2.977e-19, 8.425e-19, 1.867e-18, 5.974e-18, 1.366e-17, 2.554e-17, 6.222e-17, 1.136e-16, 1.747e-16, 2.74e-16, 4.33e-16, 6.681e-16, 7.998e-16, 8.649e-16])
+        [
+            1.254e-26,
+            7.292e-25,
+            9.344e-24,
+            5.697e-23,
+            2.253e-22,
+            6.740e-22,
+            1.662e-21,
+            6.857e-21,
+            2.546e-20,
+            3.174e-20,
+            6.923e-20,
+            1.539e-19,
+            1.773e-19,
+            2.977e-19,
+            8.425e-19,
+            1.867e-18,
+            5.974e-18,
+            1.366e-17,
+            2.554e-17,
+            6.222e-17,
+            1.136e-16,
+            1.747e-16,
+            2.74e-16,
+            4.33e-16,
+            6.681e-16,
+            7.998e-16,
+            8.649e-16,
+        ]
+    )
+
+    sv_DHe3 = 1e-6 * np.array(
+        [
+            1.414e-35,
+            1.033e-32,
+            6.537e-31,
+            1.241e-29,
+            1.166e-28,
+            6.960e-28,
+            3.032e-27,
+            3.057e-26,
+            2.590e-25,
+            3.708e-25,
+            1.317e-24,
+            4.813e-24,
+            6.053e-24,
+            1.399e-23,
+            7.477e-23,
+            2.676e-22,
+            1.710e-21,
+            6.377e-21,
+            1.739e-20,
+            7.504e-20,
+            2.126e-19,
+            4.715e-19,
+            1.175e-18,
+            3.482e-18,
+            1.363e-17,
+            3.160e-17,
+            5.554e-17,
+        ]
+    )
 
     @pytest.mark.parametrize("temp_kev, sigmav", np.c_[temp, sv_DT])
     def test_Bosch_Hale_DT(self, temp_kev, sigmav):
         result = reactivity(temp_kev, reaction="D-T", method="Bosch-Hale")
-        np.testing.assert_approx_equal(result, sigmav, 8)
+        np.testing.assert_allclose(result, sigmav, rtol=0.00025, atol=0)
+
+    @pytest.mark.parametrize("temp_kev, sigmav", np.c_[temp, sv_DHe3])
+    def test_Bosch_Hale_DHe(self, temp_kev, sigmav):
+        result = reactivity(temp_kev, reaction="D-He3", method="Bosch-Hale")
+        np.testing.assert_allclose(result, sigmav, rtol=0.00025, atol=0)
