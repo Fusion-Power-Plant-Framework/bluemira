@@ -50,12 +50,12 @@ class TestDivertorBuilder:
 
     def test_components_and_segments(self):
         builder = BlanketBuilder(self.params, {}, self.silhouette)
-        cryostat_ts = builder.build()
+        blanket = builder.build()
 
-        assert cryostat_ts.component().get_component("xz")
-        assert cryostat_ts.component().get_component("xy")
+        assert blanket.get_component("xz")
+        assert blanket.get_component("xy")
 
-        xyz = cryostat_ts.component().get_component("xyz")
+        xyz = blanket.get_component("xyz")
         assert xyz
         assert len(xyz.leaves) == self.params["n_TF"]["value"] * (
             self.params["n_bb_inboard"]["value"] + self.params["n_bb_outboard"]["value"]
