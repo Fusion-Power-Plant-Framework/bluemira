@@ -84,14 +84,16 @@ class DivertorBuilder(Builder):
         super().__init__(params, build_config)
         self.div_koz = divertor_silhouette
 
-    def build(self) -> Component:
+    def build(self) -> ComponentManager:
         """
         Build the divertor component.
         """
-        return self.component_tree(
-            xz=[self.build_xz()],
-            xy=[],
-            xyz=self.build_xyz(),
+        return Divertor(
+            self.component_tree(
+                xz=[self.build_xz()],
+                xy=[],
+                xyz=self.build_xyz(),
+            )
         )
 
     def build_xz(self) -> PhysicalComponent:
