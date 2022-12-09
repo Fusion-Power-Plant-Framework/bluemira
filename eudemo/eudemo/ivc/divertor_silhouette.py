@@ -28,12 +28,29 @@ from typing import Callable, Dict, Iterable, List, Sequence, Tuple, Union
 
 import numpy as np
 
+from bluemira.base.builder import ComponentManager
 from bluemira.base.designer import Designer
 from bluemira.base.parameter_frame import Parameter, ParameterFrame
+from bluemira.builders.divertor import DivertorBuilder
 from bluemira.equilibria import Equilibrium
 from bluemira.equilibria.find import find_flux_surface_through_point, get_legs
 from bluemira.geometry.tools import make_polygon
 from bluemira.geometry.wire import BluemiraWire
+
+
+class Divertor(ComponentManager):
+    """
+    Wrapper around a divertor component tree.
+    """
+
+    def silhouette(self) -> BluemiraWire:
+        """Return a wire representing the divertor poloidal silhouette."""
+        return (
+            self.component()
+            .get_component("xz")
+            .get_component(DivertorBuilder.BODY)
+            .shape.boundary[0]
+        )
 
 
 @dataclass

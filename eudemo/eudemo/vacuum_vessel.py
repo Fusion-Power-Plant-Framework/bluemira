@@ -26,7 +26,7 @@ from dataclasses import dataclass
 from typing import Dict, List, Type, Union
 
 from bluemira.base.builder import Builder, ComponentManager
-from bluemira.base.components import PhysicalComponent
+from bluemira.base.components import Component, PhysicalComponent
 from bluemira.base.parameter_frame import Parameter, ParameterFrame
 from bluemira.builders.tools import (
     build_sectioned_xy,
@@ -88,19 +88,17 @@ class VacuumVesselBuilder(Builder):
         super().__init__(params, build_config)
         self.ivc_koz = ivc_koz
 
-    def build(self) -> VacuumVessel:
+    def build(self) -> Component:
         """
         Build the vacuum vessel component.
         """
         xz_vv = self.build_xz()
         vv_face = xz_vv.get_component_properties("shape")
 
-        return VacuumVessel(
-            self.component_tree(
-                xz=[xz_vv],
-                xy=self.build_xy(vv_face),
-                xyz=self.build_xyz(vv_face),
-            )
+        return self.component_tree(
+            xz=[xz_vv],
+            xy=self.build_xy(vv_face),
+            xyz=self.build_xyz(vv_face),
         )
 
     def build_xz(

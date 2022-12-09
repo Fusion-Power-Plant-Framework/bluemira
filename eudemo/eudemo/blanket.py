@@ -77,19 +77,17 @@ class BlanketBuilder(Builder):
         super().__init__(params, build_config)
         self.silhouette = blanket_silhouette
 
-    def build(self) -> Blanket:
+    def build(self) -> Component:
         """
         Build the blanket component.
         """
         ibs_silhouette, obs_silhouette = self.segment_blanket()
         segments = self.get_segments(ibs_silhouette, obs_silhouette)
 
-        return Blanket(
-            self.component_tree(
-                xz=[self.build_xz(ibs_silhouette, obs_silhouette)],
-                xy=self.build_xy(segments),
-                xyz=self.build_xyz(segments),
-            )
+        return self.component_tree(
+            xz=[self.build_xz(ibs_silhouette, obs_silhouette)],
+            xy=self.build_xy(segments),
+            xyz=self.build_xyz(segments),
         )
 
     def build_xz(self, ibs_silhouette: BluemiraFace, obs_silhouette: BluemiraFace):
