@@ -219,7 +219,7 @@ class TestZLMapper:
     )
     def test_cs_zl(self, up):
         self._setup(up)
-        l_pos, lb, ub = self.xz_map.get_Lmap(
+        l_pos, lb, ub = self.xzl_map.get_Lmap(
             self.coilset, set(self.coilset.get_PF_names())
         )
         self.xzl_map.add_exclusion_zones(self.zones)  # au cas ou

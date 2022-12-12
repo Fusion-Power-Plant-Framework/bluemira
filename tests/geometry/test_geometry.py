@@ -393,7 +393,7 @@ class TestGeometry:
 
     @staticmethod
     def _setup_faces():
-        face, face2 = param_face(
+        return param_face(
             [[0, 0, 0], [1, 0, 0], [1, 1, 0], [0, 1, 0]],
             [[-1, 0, 1], [2, 0, 1], [2, 1, 1], [-1, 1, 1]],
         )
