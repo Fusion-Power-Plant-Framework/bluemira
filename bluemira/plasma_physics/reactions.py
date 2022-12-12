@@ -413,7 +413,6 @@ def _reactivity_plasmod(temp_kev, reaction):
     sigma_v: float
         Reactivity of the reaction at the specified temperature(s) [m^3/s]
     """
-
     if reaction == "D-T":
         t3 = temp_kev ** (-1 / 3)
 

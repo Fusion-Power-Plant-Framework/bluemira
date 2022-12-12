@@ -23,26 +23,33 @@
 Fusion reactivity example
 """
 
+# %%
 import matplotlib.pyplot as plt
 import numpy as np
 
 from bluemira.display import plot_defaults
 from bluemira.plasma_physics.reactions import reactivity
 
+# %%[markdown]
+
+# Let's plot the reactivity of a couple of well-known fusion reactions.
+
 # %%
 plot_defaults()
 
-temperature = np.linspace(0.2, 100, 1000)  # [keV]
+temperature = np.linspace(0.5, 100, 1000)  # [keV]
 
-sigma_v_DT = reactivity(temperature, "D-T")
-sigma_v_DD = reactivity(temperature, "D-D")
-sigma_v_DHe3 = reactivity(temperature, "D-He3")
+sigma_v_DT = reactivity(temperature, "D-T")  # noqa: N816
+sigma_v_DD = reactivity(temperature, "D-D")  # noqa: N816
+sigma_v_DHe3 = reactivity(temperature, "D-He3")  # noqa: N816
 
 f, ax = plt.subplots()
 ax.loglog(temperature, sigma_v_DT, label="D-T")
 ax.loglog(temperature, sigma_v_DD, label="D-D")
 ax.loglog(temperature, sigma_v_DHe3, label="D-He3")
 
+ax.grid(which="both")
 ax.set_xlabel("T [keV]")
 ax.set_ylabel("$\\sigma_{v}$ [$m^{3}/s$]")
 ax.legend()
+plt.show()
