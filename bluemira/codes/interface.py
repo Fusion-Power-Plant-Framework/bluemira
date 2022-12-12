@@ -24,6 +24,8 @@ import abc
 import enum
 from typing import Any, Callable, Dict, List, Optional, Type, Union
 
+import numpy as np
+
 from bluemira.base.constants import raw_uc
 from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.codes.error import CodesError
@@ -231,29 +233,26 @@ class CodesTeardown(CodesTask):
             if not (mapping.recv or recv_all):
                 continue
             output_value = self._get_output_or_raise(external_outputs, mapping.name)
-            if output_value is None or mapping.unit is None:
-                continue
-            value = raw_uc(
-                output_value, mapping.unit, getattr(self.params, bm_name).unit
-            )
+            if mapping.unit is None:
+                bluemira_warn(f"{mapping.name} from code {self._name} has no known unit")
+                value = output_value
+            else:
+                value = raw_uc(
+                    output_value, mapping.unit, getattr(self.params, bm_name).unit
+                )
             mapped_outputs[bm_name] = value
         return mapped_outputs
 
     def _get_output_or_raise(
         self, external_outputs: Dict[str, Any], parameter_name: str
     ):
-        try:
-            output_value = external_outputs.get(parameter_name, None)
-        except KeyError as key_error:
-            raise CodesError(
-                f"No output value from code '{self._name}' found for parameter "
-                f"'{parameter_name}'."
-            ) from key_error
+        output_value = external_outputs.get(parameter_name, None)
         if output_value is None:
             bluemira_warn(
                 f"No value for output parameter '{parameter_name}' from code "
-                f"'{self._name}'."
+                f"'{self._name}', setting value to NaN."
             )
+            output_value = np.nan
         return output_value
 
 
