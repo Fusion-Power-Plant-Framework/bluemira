@@ -49,7 +49,7 @@ from bluemira.builders.thermal_shield import VVTSBuilder
 from bluemira.equilibria.equilibrium import Equilibrium
 from bluemira.geometry.tools import make_polygon
 from eudemo.blanket import Blanket, BlanketBuilder
-from eudemo.equilibria import EquilibriumDesigner
+from eudemo.equilibria import EquilibriumDesigner, FixedEquilibriumDesigner
 from eudemo.ivc import design_ivc
 from eudemo.ivc.divertor_silhouette import Divertor
 from eudemo.params import EUDEMOReactorParams
@@ -132,7 +132,7 @@ if __name__ == "__main__":
 
     params = radial_build(params, build_config["Radial build"])
 
-    eq = run_designer(EquilibriumDesigner, params, build_config["Equilibrium"])
+    eq = run_designer(FixedEquilibriumDesigner, params, build_config["Equilibrium"])
 
     reactor.plasma = build_plasma(build_config.get("Plasma", {}), eq)
 
