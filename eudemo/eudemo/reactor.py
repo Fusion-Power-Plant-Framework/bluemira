@@ -132,7 +132,9 @@ if __name__ == "__main__":
 
     params = radial_build(params, build_config["Radial build"])
 
-    eq = run_designer(FixedEquilibriumDesigner, params, build_config["Equilibrium"])
+    eq = run_designer(
+        FixedEquilibriumDesigner, params, build_config["Fixed boundary equilibrium"]
+    )
 
     reactor.plasma = build_plasma(build_config.get("Plasma", {}), eq)
 
