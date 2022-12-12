@@ -79,14 +79,14 @@ class TestTeardown:
         Tested for a value with units.
         """
 
-        class mfile:
+        class MFile:
             data = {"enbeam": {"var_mod": "some info", "scan01": 1234}}
 
         class MFW(_MFileWrapper):
             # Overwrite some methods because data doesnt exist in 'mfile'
 
             def __init__(self, path):
-                self.mfile = mfile()
+                self.mfile = MFile()
 
             def _derive_radial_build_params(self, data):
                 return {}
