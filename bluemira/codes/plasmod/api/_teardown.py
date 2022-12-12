@@ -55,7 +55,6 @@ class Teardown(CodesTeardown):
         self, params: PlasmodSolverParams, output_file: str, profiles_file: str
     ):
         super().__init__(params, PLASMOD_NAME)
-        self.outputs = PlasmodOutputs()
         self.output_file = output_file
         self.profiles_file = profiles_file
 
@@ -70,8 +69,10 @@ class Teardown(CodesTeardown):
         """
         Update this object's plasmod params with default values.
         """
-        self.outputs = PlasmodOutputs()
-        self._update_params_with_outputs(vars(self.outputs))
+        raise NotImplementedError
+        mock_file_path = os.path.join(self.read_directory, self.MOCK_JSON_NAME)
+        outputs = _read_json_file_or_raise(mock_file_path)
+        self.params.update_values(outputs, source=self._name)
 
     def read(self):
         """
