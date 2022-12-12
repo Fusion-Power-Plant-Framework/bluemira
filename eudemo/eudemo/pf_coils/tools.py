@@ -215,6 +215,39 @@ def make_coilset(
     return coilset
 
 
+def make_reference_coilset(
+    tf_track,
+    r_cs,
+    tk_cs,
+    n_CS,
+    n_PF,
+):
+    """
+    Make a reference coilset.
+    """
+    bb = tf_track.bounding_box
+    z_min = bb.z_min
+    z_max = bb.z_max
+    solenoid = make_solenoid(r_cs, tk_cs, z_min, z_max, 0, 0, 0, n_CS)
+    t = np.linspace(0, 1, n_PF)
+    points = [tf_track.value_at(ti) for ti in t]
+
+    pf_coils = []
+    for i, (x, _, z) in enumerate(points):
+        coil = Coil(
+            x,
+            z,
+            current=0,
+            ctype="PF",
+            control=True,
+            name=f"PF_{i+1}",
+            flag_sizefix=False,
+            j_max=100.0,
+        )
+        pf_coils.append(coil)
+    return CoilSet(pf_coils + solenoid)
+
+
 def make_grid(R_0, A, kappa, scale_x=1.6, scale_z=1.7, nx=65, nz=65):
     """
     Make a finite difference Grid for an Equilibrium.
