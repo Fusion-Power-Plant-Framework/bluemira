@@ -116,6 +116,8 @@ def make_reference_equilibrium(
     tf_track: BluemiraWire,
     p_prime: np.ndarray,
     ff_prime: np.ndarray,
+    nx: int = 65,
+    nz: int = 65,
 ):
     if isinstance(_params, dict):
         params = ReferenceEquilibriumParams.from_dict(_params)
@@ -136,8 +138,8 @@ def make_reference_equilibrium(
         params.kappa.value,
         scale_x=1.6,
         scale_z=1.7,
-        nx=65,
-        nz=65,
+        nx=nx,
+        nz=nz,
     )
 
     profiles = CustomProfile(

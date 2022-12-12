@@ -41,7 +41,9 @@
         "free_equilibrium_settings": {
             "iter_err_max": 1e-2,
             "relaxation": 0.2,
-            "plot": true
+            "plot": true,
+            "nx": 65,
+            "nz": 127
         }
     },
     "IVC": {

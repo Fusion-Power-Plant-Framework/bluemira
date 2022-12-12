@@ -368,19 +368,22 @@ class FixedEquilibriumDesigner(Designer[Equilibrium]):
         # Make dummy tf coil boundary
         tf_coil_boundary = self._make_tf_boundary(lcfs_shape)
 
+        defaults = {"plot": False, "relaxation": 0.02, "nx": 65, "nz": 65}
+        settings = self.build_config.get("free_equilibrium_settings", {})
+        settings = {**defaults, **settings}
+
         eq = make_reference_equilibrium(
             ReferenceEquilibriumParams.from_frame(self.params),
             tf_coil_boundary,
             p_prime,
             ff_prime,
+            nx=settings["nx"],
+            nz=settings["nz"],
         )
 
         opt_problem = self._make_fbe_opt_problem(eq, lcfs_shape)
 
-        defaults = {"plot": False, "relaxation": 0.02}
-        settings = self.build_config.get("free_equilibrium_settings", {})
         iter_err_max = settings.pop("iter_err_max", 1e-2)
-        settings = {**defaults, **settings}
         iterator_program = PicardIterator(
             eq,
             opt_problem,
