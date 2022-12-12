@@ -322,6 +322,7 @@ class FixedEquilibriumDesigner(Designer[Equilibrium]):
         build_config: Optional[Dict] = None,
     ):
         super().__init__(params, build_config)
+        self.file_path = self.build_config.get("file_path", None)
         if self.run_mode == "read" and self.file_path is None:
             raise ValueError(
                 f"Cannot execute {type(self).__name__} in 'read' mode: "
