@@ -28,7 +28,7 @@
         "fixed_equilibrium_settings": {
             "p_order": 2,
             "max_iter": 30,
-            "iter_err_max": 1e-2,
+            "iter_err_max": 1e-3,
             "relaxation": 0.05
         },
         "transport_eq_settings": {

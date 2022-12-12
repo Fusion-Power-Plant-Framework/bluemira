@@ -127,7 +127,7 @@ def make_reference_equilibrium(
         r_cs=params.r_cs_in.value + params.tk_cs.value / 2,
         tk_cs=params.tk_cs.value / 2,
         n_CS=5,
-        n_PF=12,
+        n_PF=6,
     )
 
     grid = make_grid(
