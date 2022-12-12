@@ -1148,7 +1148,7 @@ def _parse_to_xyz_array(xyz_array):
 
 def _parse_array(xyz_array):
     try:
-        xyz_array = np.array(np.atleast_2d(xyz_array), dtype=np.float64)
+        xyz_array = np.array(np.atleast_2d(np.squeeze(xyz_array)), dtype=np.float64)
     except ValueError:
         raise CoordinatesError(
             "Cannot instantiate Coordinates with a ragged (3, N | M) array."
