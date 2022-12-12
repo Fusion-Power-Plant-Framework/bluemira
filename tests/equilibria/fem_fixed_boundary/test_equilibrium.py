@@ -96,7 +96,6 @@ def test_plasma_xz_cross_section():
     assert plasma.shape.mesh_options.lcar == 1
     assert plasma.shape.boundary[0].mesh_options.lcar == 2
     assert isinstance(plasma, PhysicalComponent)
-    assert not plasma.plot_options.show_faces
 
     assert transport_params.V_p.value == pytest.approx(19.7392)
 
