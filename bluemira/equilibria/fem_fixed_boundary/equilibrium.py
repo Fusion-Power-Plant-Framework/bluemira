@@ -373,7 +373,9 @@ def solve_transport_fixed_boundary(
             relaxation,
         )
 
-        bluemira_print(f"PLASMOD <-> Fixed boundary G-S iter {n_iter} : {iter_err:.3E}")
+        bluemira_print(
+            f"{transport_solver.name} <-> Fixed boundary G-S iter {n_iter} : {iter_err:.3E}"
+        )
 
         if iter_err <= iter_err_max:
             message = bluemira_print
@@ -392,7 +394,7 @@ def solve_transport_fixed_boundary(
         ltgt = ">"
 
     message(
-        f"PLASMOD <-> Fixed boundary G-S {line_1}:\n\t"
+        f"{transport_solver.name} <-> Fixed boundary G-S {line_1}:\n\t"
         f"Target kappa_95: {kappa95_t:.3f}\n\t"
         f"Actual kappa_95: {kappa_95:.3f}\n\t"
         f"Target delta_95: {delta95_t:.3f}\n\t"
