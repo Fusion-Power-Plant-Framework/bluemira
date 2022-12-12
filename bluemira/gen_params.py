@@ -25,6 +25,7 @@ A helper script to generate ParameterFrames as a python file and json file
 
 import argparse
 import inspect
+from abc import abstractproperty
 from copy import deepcopy
 from pathlib import Path
 from typing import Dict, Optional
@@ -39,7 +40,7 @@ def def_param() -> Dict:
     """
     Get the defualt parameter json skeleton
     """
-    dp = ParamDictT.__annotations__
+    dp = deepcopy(ParamDictT.__annotations__)
     del dp["name"]
     for k in dp:
         if k != "value":
@@ -119,6 +120,20 @@ def parse_args():
     return parser.parse_args()
 
 
+def get_param_classes(module) -> Dict:
+    """
+    Get all ParameterFrame classes
+
+    TODO - recursive get classes
+    """
+    return {
+        f"{m[0]}: {m[1].param_cls.__name__}": m[1].param_cls
+        for m in inspect.getmembers(module, inspect.isclass)
+        if hasattr(m[1], "param_cls")
+        and not isinstance(m[1].param_cls, (type(None), abstractproperty))
+    }
+
+
 def main():
     """
     Generate python and json paramterframe files
@@ -126,12 +141,7 @@ def main():
     args = parse_args()
     module = get_module(args.module)
 
-    param_classes = {
-        f"{m[0]}: {m[1].param_cls.__name__}": m[1].param_cls
-        for m in inspect.getmembers(module, inspect.isclass)
-        if hasattr(m[1], "param_cls") and m[1].param_cls is not None
-    }
-
+    param_classes = get_param_classes(module)
     output = {}
     params = {}
 
