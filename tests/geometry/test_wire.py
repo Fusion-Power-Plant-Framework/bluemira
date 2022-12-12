@@ -102,38 +102,28 @@ class ValueParameterBase:
         )
 
 
+wireat_parametrize = (
+    [
+        (0, [0, 0, 0]),
+        (0.25, [2, 0, 0]),
+        (0.375, [2, 0, 1]),
+        (0.5, [2, 0, 2]),
+        ([0.75, [0, 0, 2]]),
+        ([1.0, [0, 0, 0]]),
+        ([1.1, [0, 0, 0]]),
+        ([-1.0, [0, 0, 0]]),
+    ],
+)
+
+
 class TestWireValueAt(ValueParameterBase):
-    @pytest.mark.parametrize(
-        "alpha, expected_point",
-        [
-            (0, [0, 0, 0]),
-            (0.25, [2, 0, 0]),
-            (0.375, [2, 0, 1]),
-            (0.5, [2, 0, 2]),
-            ([0.75, [0, 0, 2]]),
-            ([1.0, [0, 0, 0]]),
-            ([1.1, [0, 0, 0]]),
-            ([-1.0, [0, 0, 0]]),
-        ],
-    )
+    @pytest.mark.parametrize("alpha, expected_point", wireat_parametrize)
     def test_square_alpha(self, alpha, expected_point):
         np.testing.assert_allclose(
             self.square.value_at(alpha=alpha), np.array(expected_point)
         )
 
-    @pytest.mark.parametrize(
-        "l_frac, expected_point",
-        [
-            (0, [0, 0, 0]),
-            (0.25, [2, 0, 0]),
-            (0.375, [2, 0, 1]),
-            (0.5, [2, 0, 2]),
-            ([0.75, [0, 0, 2]]),
-            ([1.0, [0, 0, 0]]),
-            ([1.1, [0, 0, 0]]),
-            ([-1.0, [0, 0, 0]]),
-        ],
-    )
+    @pytest.mark.parametrize("l_frac, expected_point", wireat_parametrize)
     def test_square_distance(self, l_frac, expected_point):
         length = self.square.length
         np.testing.assert_allclose(
