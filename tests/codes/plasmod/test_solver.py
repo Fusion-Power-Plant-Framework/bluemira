@@ -436,7 +436,7 @@ class TestPlasmodSolver:
         solver = plasmod.Solver(self.default_pf, self.build_config)
         solver.execute(plasmod.RunMode.RUN)
 
-        f, ax = plasmod.plot_default_profiles(solver.plasmod_outputs())
+        f, ax = plasmod.plot_default_profiles(solver)
         assert len(f.get_axes()) == 6
 
     @staticmethod
