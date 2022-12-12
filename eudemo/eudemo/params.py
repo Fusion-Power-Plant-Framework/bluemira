@@ -27,6 +27,7 @@ class EUDEMOReactorParams(ParameterFrame):
     eta_nb: Parameter[float]
     f_bs: Parameter[float]
     f_ni: Parameter[float]
+    q_control: Parameter[float]
     g_cs_mod: Parameter[float]
     g_cs_tf: Parameter[float]
     g_ts_tf: Parameter[float]
