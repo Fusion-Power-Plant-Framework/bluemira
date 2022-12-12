@@ -247,6 +247,12 @@
         "source": "Input",
         "long_name": "Non-inductive current drive fraction"
     },
+    "q_control": {
+        "value": 50,
+        "unit": "megawatt",
+        "source": "Input",
+        "long_name": "Control HCD power"
+    },
     "g_cs_tf": {
         "value": 0.05,
         "unit": "meter",
