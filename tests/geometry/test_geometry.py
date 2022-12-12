@@ -42,6 +42,19 @@ from bluemira.geometry.tools import (
 from bluemira.geometry.wire import BluemiraWire
 
 
+def param_face(*coords):
+    return [
+        BluemiraFace(
+            make_polygon(
+                c,
+                label=f"wire{no}",
+                closed=True,
+            )
+        )
+        for no, c in enumerate(coords, start=1)
+    ]
+
+
 class TestGeometry:
     @classmethod
     def setup_class(cls):
@@ -154,14 +167,7 @@ class TestGeometry:
         pytest.param(
             [
                 make_polygon([[0, 1, 1], [0, 0, 1], [0, 0, 0]], label="wire1"),
-                make_polygon(
-                    [
-                        [0, 1, 1],
-                        [0, 0, 1],
-                        [0, 0, 0],
-                    ],
-                    label="wire2",
-                ),
+                make_polygon([[0, 1, 1], [0, 0, 1], [0, 0, 0]], label="wire2"),
             ],
             (2, False),
             id="coincident",
@@ -169,22 +175,8 @@ class TestGeometry:
         ),
         pytest.param(
             [
-                make_polygon(
-                    [
-                        [0, 1, 1],
-                        [0, 0, 1],
-                        [0, 0, 0],
-                    ],
-                    label="wire1",
-                ),
-                make_polygon(
-                    [
-                        [1, 0, 0],
-                        [1, 1, 0],
-                        [0, 0, 0],
-                    ],
-                    label="wire2",
-                ),
+                make_polygon([[0, 1, 1], [0, 0, 1], [0, 0, 0]], label="wire1"),
+                make_polygon([[1, 0, 0], [1, 1, 0], [0, 0, 0]], label="wire2"),
             ],
             (4, True),
             id="closed",
@@ -203,14 +195,7 @@ class TestGeometry:
         pytest.param(
             [
                 make_polygon([[0, 1, -1], [0, 0, 1], [0, 0, -1]], label="wire1"),
-                make_polygon(
-                    [
-                        [1, 0, 0],
-                        [1, 1, 0],
-                        [0, 0, 0],
-                    ],
-                    label="wire2",
-                ),
+                make_polygon([[1, 0, 0], [1, 1, 0], [0, 0, 0]], label="wire2"),
             ],
             (4, True),
             id="intersection",
@@ -225,83 +210,35 @@ class TestGeometry:
 
     params_for_fuse_faces = [
         pytest.param(
-            [
-                BluemiraFace(
-                    make_polygon(
-                        [[0, 0, 0], [1, 0, 0], [1, 1, 0], [0, 1, 0]],
-                        label="wire1",
-                        closed=True,
-                    )
-                ),
-                BluemiraFace(
-                    make_polygon(
-                        [[0, 0, 0], [1, 0, 0], [1, 1, 0], [0, 1, 0]],
-                        label="wire2",
-                        closed=True,
-                    )
-                ),
-            ],
+            param_face(
+                [[0, 0, 0], [1, 0, 0], [1, 1, 0], [0, 1, 0]],
+                [[0, 0, 0], [1, 0, 0], [1, 1, 0], [0, 1, 0]],
+            ),
             (4, 1),
             id="coincident",
         ),
         pytest.param(
-            [
-                BluemiraFace(
-                    make_polygon(
-                        [[0, 0, 0], [1, 0, 0], [1, 1, 0], [0, 1, 0]],
-                        label="wire1",
-                        closed=True,
-                    )
-                ),
-                BluemiraFace(
-                    make_polygon(
-                        [[1, 0, 0], [2, 0, 0], [2, 1, 0], [0, 1, 0]],
-                        label="wire2",
-                        closed=True,
-                    )
-                ),
-            ],
+            param_face(
+                [[0, 0, 0], [1, 0, 0], [1, 1, 0], [0, 1, 0]],
+                [[1, 0, 0], [2, 0, 0], [2, 1, 0], [0, 1, 0]],
+            ),
             (6, 2),
             id="1-edge-coincident",
         ),
         pytest.param(
-            [
-                BluemiraFace(
-                    make_polygon(
-                        [[0, 0, 0], [1, 0, 0], [1, 1, 0], [0, 1, 0]],
-                        label="wire1",
-                        closed=True,
-                    )
-                ),
-                BluemiraFace(
-                    make_polygon(
-                        [[0, 0, 0], [-1, 0, 0], [-1, -1, 0], [0, -1, 0]],
-                        label="wire2",
-                        closed=True,
-                    )
-                ),
-            ],
+            param_face(
+                [[0, 0, 0], [1, 0, 0], [1, 1, 0], [0, 1, 0]],
+                [[0, 0, 0], [-1, 0, 0], [-1, -1, 0], [0, -1, 0]],
+            ),
             (6, 2),
             id="1-vertex-coincident",
             marks=pytest.mark.xfail(reason="Only one vertex intersection"),
         ),
         pytest.param(
-            [
-                BluemiraFace(
-                    make_polygon(
-                        [[0, 0, 0], [1, 0, 0], [1, 1, 0], [0, 1, 0]],
-                        label="wire1",
-                        closed=True,
-                    )
-                ),
-                BluemiraFace(
-                    make_polygon(
-                        [[0.5, 0.5, 0], [1.5, 0.5, 0], [1.5, 1.5, 0], [0.5, 1.5, 0]],
-                        label="wire2",
-                        closed=True,
-                    )
-                ),
-            ],
+            param_face(
+                [[0, 0, 0], [1, 0, 0], [1, 1, 0], [0, 1, 0]],
+                [[0.5, 0.5, 0], [1.5, 0.5, 0], [1.5, 1.5, 0], [0.5, 1.5, 0]],
+            ),
             (6, 1.75),
             id="semi intersection",
         ),
@@ -318,22 +255,8 @@ class TestGeometry:
     params_for_cut_wires = [
         pytest.param(
             [
-                make_polygon(
-                    [
-                        [0, 1, 1],
-                        [0, 0, 1],
-                        [0, 0, 0],
-                    ],
-                    label="wire1",
-                ),
-                make_polygon(
-                    [
-                        [0, 1, 1],
-                        [0, 0, 1],
-                        [0, 0, 0],
-                    ],
-                    label="wire2",
-                ),
+                make_polygon([[0, 1, 1], [0, 0, 1], [0, 0, 0]], label="wire1"),
+                make_polygon([[0, 1, 1], [0, 0, 1], [0, 0, 0]], label="wire2"),
             ],
             ([]),
             id="coincident",
@@ -374,83 +297,35 @@ class TestGeometry:
 
     params_for_cut_faces = [
         pytest.param(
-            [
-                BluemiraFace(
-                    make_polygon(
-                        [[0, 0, 0], [1, 0, 0], [1, 1, 0], [0, 1, 0]],
-                        label="wire1",
-                        closed=True,
-                    )
-                ),
-                BluemiraFace(
-                    make_polygon(
-                        [[0, 0, 0], [1, 0, 0], [1, 1, 0], [0, 1, 0]],
-                        label="wire2",
-                        closed=True,
-                    )
-                ),
-            ],
+            param_face(
+                [[0, 0, 0], [1, 0, 0], [1, 1, 0], [0, 1, 0]],
+                [[0, 0, 0], [1, 0, 0], [1, 1, 0], [0, 1, 0]],
+            ),
             [],
             id="coincident",
         ),
         pytest.param(
-            [
-                BluemiraFace(
-                    make_polygon(
-                        [[0, 0, 0], [1, 0, 0], [1, 1, 0], [0, 1, 0]],
-                        label="wire1",
-                        closed=True,
-                    )
-                ),
-                BluemiraFace(
-                    make_polygon(
-                        [[1, 0, 0], [2, 0, 0], [2, 1, 0], [1, 1, 0]],
-                        label="wire2",
-                        closed=True,
-                    )
-                ),
-            ],
+            param_face(
+                [[0, 0, 0], [1, 0, 0], [1, 1, 0], [0, 1, 0]],
+                [[1, 0, 0], [2, 0, 0], [2, 1, 0], [1, 1, 0]],
+            ),
             [(4, 1)],
             id="1-edge-coincident",
         ),
         pytest.param(
-            [
-                BluemiraFace(
-                    make_polygon(
-                        [[0, 0, 0], [1, 0, 0], [1, 1, 0], [0, 1, 0]],
-                        label="wire1",
-                        closed=True,
-                    )
-                ),
-                BluemiraFace(
-                    make_polygon(
-                        [[0, 0, 0], [-1, 0, 0], [-1, -1, 0], [0, -1, 0]],
-                        label="wire2",
-                        closed=True,
-                    )
-                ),
-            ],
+            param_face(
+                [[0, 0, 0], [1, 0, 0], [1, 1, 0], [0, 1, 0]],
+                [[0, 0, 0], [-1, 0, 0], [-1, -1, 0], [0, -1, 0]],
+            ),
             [(4, 1)],
             id="1-vertex-coincident",
             # marks=pytest.mark.xfail(reason="Only one vertex intersection"),
         ),
         pytest.param(
-            [
-                BluemiraFace(
-                    make_polygon(
-                        [[0, 0, 0], [1, 0, 0], [1, 1, 0], [0, 1, 0]],
-                        label="wire1",
-                        closed=True,
-                    )
-                ),
-                BluemiraFace(
-                    make_polygon(
-                        [[0.5, 0.5, 0], [1.5, 0.5, 0], [1.5, 1.5, 0], [0.5, 1.5, 0]],
-                        label="wire2",
-                        closed=True,
-                    )
-                ),
-            ],
+            param_face(
+                [[0, 0, 0], [1, 0, 0], [1, 1, 0], [0, 1, 0]],
+                [[0.5, 0.5, 0], [1.5, 0.5, 0], [1.5, 1.5, 0], [0.5, 1.5, 0]],
+            ),
             [(4, 0.75)],
             id="semi intersection",
         ),
@@ -472,37 +347,6 @@ class TestGeometry:
             for w, fw in zip(f.boundary, fc.Wires):
                 assert w.length == fw.Length
                 assert w._orientation.value == fw.Orientation
-
-    @pytest.mark.parametrize("direction", [1, -1])
-    def test_cut_solids(self, direction):
-        face = BluemiraFace(
-            make_polygon(
-                [[0, 0, 0], [1, 0, 0], [1, 1, 0], [0, 1, 0]],
-                label="wire1",
-                closed=True,
-            )
-        )
-
-        solid = extrude_shape(face, (0, 0, 5))
-
-        face2 = BluemiraFace(
-            make_polygon(
-                [[-1, 0, 1], [2, 0, 1], [2, 1, 1], [-1, 1, 1]],
-                label="wire2",
-                closed=True,
-            )
-        )
-        solid2 = extrude_shape(face2, (0, 0, direction))
-
-        results = boolean_cut(solid2, solid)
-        fc_result = cadapi.boolean_cut(solid2.shape, solid.shape)
-        assert len(results) == len(fc_result) == 2
-
-        for fc_shape, bm_shape in zip(fc_result, results):
-            fc_shape.isValid()
-            bm_shape.is_valid()
-            self._compare_fc_bm(fc_shape, bm_shape)
-            assert bm_shape.volume < solid2.volume
 
     def test_cut_hollow(self):
         x_c = 10
@@ -547,26 +391,19 @@ class TestGeometry:
         assert solid.is_valid()
         assert np.isclose(solid.volume, true_volume)
 
+    @staticmethod
+    def _setup_faces():
+        face, face2 = param_face(
+            [[0, 0, 0], [1, 0, 0], [1, 1, 0], [0, 1, 0]],
+            [[-1, 0, 1], [2, 0, 1], [2, 1, 1], [-1, 1, 1]],
+        )
+
     @pytest.mark.parametrize("direction", [1, -1])
     def test_fuse_solids(self, direction):
-        face = BluemiraFace(
-            make_polygon(
-                [[0, 0, 0], [1, 0, 0], [1, 1, 0], [0, 1, 0]],
-                label="wire1",
-                closed=True,
-            )
-        )
-
+        face, face2 = self._setup_faces()
         solid = extrude_shape(face, (0, 0, direction * 5))
-
-        face2 = BluemiraFace(
-            make_polygon(
-                [[-1, 0, 1], [2, 0, 1], [2, 1, 1], [-1, 1, 1]],
-                label="wire2",
-                closed=True,
-            )
-        )
         solid2 = extrude_shape(face2, (0, 0, direction))
+
         result = boolean_fuse([solid, solid2])
         fc_result = cadapi.boolean_fuse([solid.shape, solid2.shape])
         assert result.is_valid()
@@ -574,6 +411,23 @@ class TestGeometry:
         self._compare_fc_bm(fc_result, result)
         assert result.volume > solid.volume
         assert result.volume > solid2.volume
+
+    @pytest.mark.parametrize("direction", [1, -1])
+    def test_cut_solids(self, direction):
+        face, face2 = self._setup_faces()
+
+        solid = extrude_shape(face, (0, 0, 5))
+        solid2 = extrude_shape(face2, (0, 0, direction))
+
+        results = boolean_cut(solid2, solid)
+        fc_result = cadapi.boolean_cut(solid2.shape, solid.shape)
+        assert len(results) == len(fc_result) == 2
+
+        for fc_shape, bm_shape in zip(fc_result, results):
+            fc_shape.isValid()
+            bm_shape.is_valid()
+            self._compare_fc_bm(fc_shape, bm_shape)
+            assert bm_shape.volume < solid2.volume
 
 
 class TestShapeTransformations:
