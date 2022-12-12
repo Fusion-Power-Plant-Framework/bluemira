@@ -35,8 +35,8 @@ following steps in a mac or Ubuntu command terminal.
 .. code-block:: bash
 
     # Install curl if its not available (eg vanilla Ubuntu 22.04)
-     sudo apt install -y curl
-    # Run the conda installation script
+     sudo apt install -y curl gettext-base
+     # Run the conda installation script
     # This installs mambaforge, if not already present, and sets up a bluemira environment
     bash scripts/install-conda.sh
     # To activate your environment
