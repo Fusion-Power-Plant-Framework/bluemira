@@ -192,8 +192,19 @@ class TestRemove:
 
 
 class TestMove:
-    def test_move_node(self):
+    @staticmethod
+    def _add_element(g):
         x_section = IBeam(0.1, 0.1, 0.025, 0.05)
+
+        g.add_element(0, 1, x_section, SS316)  # 0
+        g.add_element(1, 2, x_section, SS316)  # 1
+        g.add_element(2, 3, x_section, SS316)  # 2
+        g.add_element(3, 4, x_section, SS316)  # 3
+        g.add_element(4, 5, x_section, SS316)  # 4
+        g.add_element(5, 0, x_section, SS316)  # 5
+        g.add_element(2, 5, x_section, SS316)  # 6
+
+    def test_move_node(self):
         g = Geometry()
         add_node(
             g,
@@ -204,13 +215,7 @@ class TestMove:
             (0, 4, 0),  # 4
             (0, 2, 0),  # 5
         )
-        g.add_element(0, 1, x_section, SS316)  # 0
-        g.add_element(1, 2, x_section, SS316)  # 1
-        g.add_element(2, 3, x_section, SS316)  # 2
-        g.add_element(3, 4, x_section, SS316)  # 3
-        g.add_element(4, 5, x_section, SS316)  # 4
-        g.add_element(5, 0, x_section, SS316)  # 5
-        g.add_element(2, 5, x_section, SS316)  # 6
+        self._add_element(g)
 
         g.move_node(2, dx=-0.5)
         assert g.n_nodes == 6
@@ -221,7 +226,6 @@ class TestMove:
         assert g.n_elements == 6
 
     def test_move_node2(self):
-        x_section = IBeam(0.1, 0.1, 0.025, 0.05)
         g = Geometry()
         add_node(
             g,
@@ -232,13 +236,7 @@ class TestMove:
             (0, 2, 0),  # 4
             (0, 1, 0),  # 5
         )
-        g.add_element(0, 1, x_section, SS316)  # 0
-        g.add_element(1, 2, x_section, SS316)  # 1
-        g.add_element(2, 3, x_section, SS316)  # 2
-        g.add_element(3, 4, x_section, SS316)  # 3
-        g.add_element(4, 5, x_section, SS316)  # 4
-        g.add_element(5, 0, x_section, SS316)  # 5
-        g.add_element(2, 5, x_section, SS316)  # 6
+        self._add_element(g)
 
         g.move_node(5, dx=0.5)
         assert g.n_nodes == 6
