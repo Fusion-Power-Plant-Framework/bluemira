@@ -125,6 +125,8 @@ class TranspOutParams(ParameterFrame):
 
 
 class DummyTransportSolver:
+    name = "DUMMY"
+
     def __init__(self):
         self.i = 0
 
