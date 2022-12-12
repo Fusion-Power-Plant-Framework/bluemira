@@ -21,6 +21,8 @@
 from dataclasses import dataclass
 from typing import Dict, Union
 
+import numpy as np
+
 from bluemira.base.parameter_frame import Parameter, ParameterFrame
 from bluemira.equilibria import Equilibrium
 from bluemira.equilibria.profiles import BetaIpProfile, CustomProfile
