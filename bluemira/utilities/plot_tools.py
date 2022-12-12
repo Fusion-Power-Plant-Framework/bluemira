@@ -96,7 +96,9 @@ def str_to_latex(string):
 
 def make_gif(folder, figname, formatt="png", clean=True):
     """
-    Makes a GIF image from a set of images with similar names in a folder
+    Make a GIF image from a set of images with similar names in a folder.
+    Figures are sorted in increasing order based on a trailing number, e.g.
+    'figure_A'[1, 2, 3, ..].
     Cleans up the temporary figure files (deletes!)
     Creates a GIF file in the folder directory
 
@@ -105,7 +107,7 @@ def make_gif(folder, figname, formatt="png", clean=True):
     folder: str
         Full path folder name
     figname: str
-        Figure name prefix. E.g. 'figure_A'[1, 2, 3, ..]
+        Figure name prefix
     formatt: str (default = 'png')
         Figure filename extension
     clean: bool (default = True)
