@@ -89,7 +89,7 @@ def test_plasma_xz_cross_section():
     )
     lcfs_options = {"face": {"lcar": 1}, "lcfs": {"lcar": 2}}
     plasma = create_plasma_xz_cross_section(
-        DummyCircle(), transport_params, pp, 1.652, 0.333, lcfs_options, "source", True
+        DummyCircle(), transport_params, pp, 1.652, 0.333, lcfs_options, "source"
     )
 
     assert isinstance(plasma.shape, BluemiraFace)
