@@ -241,6 +241,12 @@
         "source": "Input",
         "long_name": "Bootstrap fraction"
     },
+    "T_e_ped": {
+        "value": 5.5,
+        "unit": "keV",
+        "source": "Input",
+        "long_name": "Electrons/ions temperature at pedestal"
+    },
     "f_ni": {
         "value": 0.1,
         "unit": "dimensionless",
