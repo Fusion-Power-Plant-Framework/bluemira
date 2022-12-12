@@ -206,8 +206,7 @@ class _MFileWrapper:
             if param_name is None:
                 bluemira_warn(
                     f"PROCESS parameter '{process_param_name}' is obsolete and has no "
-                    " alternative.\n"
-                    "Setting value to NaN"
+                    " alternative. Setting value to NaN"
                 )
                 self.data[process_param_name] = np.nan
             elif isinstance(param_name, list):
