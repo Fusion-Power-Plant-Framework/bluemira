@@ -356,7 +356,12 @@ def solve_transport_fixed_boundary(
 
         bluemira_print("Solving fixed boundary Grad-Shafranov...")
 
-        gs_solver.solve(plot=plot, debug=debug, gif=gif)
+        gs_solver.solve(
+            plot=plot,
+            debug=debug,
+            gif=gif,
+            figname=f"{n_iter} Fixed boundary equilibrium iteration ",
+        )
 
         _, kappa_95, delta_95 = calculate_plasma_shape_params(
             gs_solver.psi_norm_2d,
