@@ -25,16 +25,18 @@ from copy import deepcopy
 from dataclasses import asdict, dataclass, fields
 from typing import Callable, Dict, List, Tuple, Union
 
+import matplotlib.pyplot as plt
 import numpy as np
 from dolfin import Mesh
 from scipy.interpolate import interp1d
 from tabulate import tabulate
 
 from bluemira.base.components import PhysicalComponent
-from bluemira.base.file import get_bluemira_path
+from bluemira.base.file import get_bluemira_path, try_get_bluemira_path
 from bluemira.base.look_and_feel import bluemira_debug, bluemira_print, bluemira_warn
 from bluemira.base.parameter_frame import Parameter, ParameterFrame
 from bluemira.codes.interface import CodesSolver, RunMode
+from bluemira.equilibria.constants import DPI_GIF, PLT_PAUSE
 from bluemira.equilibria.fem_fixed_boundary.fem_magnetostatic_2D import (
     FemGradShafranovFixedBoundary,
 )
@@ -46,6 +48,7 @@ from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.parameterisations import GeometryParameterisation
 from bluemira.mesh import meshing
 from bluemira.mesh.tools import import_mesh, msh_to_xdmf
+from bluemira.utilities.plot_tools import make_gif, save_figure
 
 __all__ = ["solve_transport_fixed_boundary"]
 
@@ -298,6 +301,11 @@ def solve_transport_fixed_boundary(
         "lcfs": {"lcar": lcar_mesh, "physical_group": "lcfs"},
     }
 
+    plot = any((plot, debug, gif))
+    folder = try_get_bluemira_path("", subfolder="generated_data", allow_missing=False)
+    figname = "Transport iteration "
+    f, ax = None, None
+
     for n_iter in range(max_iter):
 
         plasma = create_plasma_xz_cross_section(
@@ -308,7 +316,7 @@ def solve_transport_fixed_boundary(
             delta_95,
             lcfs_options,
             f"from equilibrium iteration {n_iter}",
-            plot,
+            debug,
         )
 
         transp_out_params, x, pprime, ffprime = _run_transport_solver(
@@ -316,8 +324,22 @@ def solve_transport_fixed_boundary(
         )
 
         if plot:
-            plot_profile(x, _interpolate_profile(x, pprime)(x), "pprime", "-")
-            plot_profile(x, _interpolate_profile(x, ffprime)(x), "ffrime", "-")
+            from bluemira.codes.plasmod import plot_default_profiles
+
+            if ax is not None:
+                for axis in ax.flat:
+                    axis.clear()
+            f, ax = plot_default_profiles(transport_solver, show=False, f=f, ax=ax)
+            f.suptitle(figname + str(n_iter))
+            plt.pause(PLT_PAUSE)
+            if debug or gif:
+                save_figure(
+                    f,
+                    figname + str(n_iter),
+                    save=True,
+                    folder=folder,
+                    dpi=DPI_GIF,
+                )
 
         mesh = create_mesh(
             plasma,
@@ -378,3 +400,6 @@ def solve_transport_fixed_boundary(
         f"Actual delta_95: {delta_95:.3f}\n\t"
         f"Error: {iter_err:.3E} {ltgt} {iter_err_max:.3E}\n"
     )
+
+    if gif:
+        make_gif(folder, figname, clean=not debug)

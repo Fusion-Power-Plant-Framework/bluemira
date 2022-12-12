@@ -29,7 +29,7 @@ from bluemira.display import plot_defaults
 __all__ = ["plot_default_profiles"]
 
 
-def plot_default_profiles(plasmod_solver, show=True):
+def plot_default_profiles(plasmod_solver, show=True, f=None, ax=None):
     """
     Plot a default set of profiles from a PLASMOD solver.
 
@@ -48,8 +48,9 @@ def plot_default_profiles(plasmod_solver, show=True):
         Array of matplotlib Axes
     """
     plot_defaults()
+    if f is None and ax is None:
+        f, ax = plt.subplots(2, 3, figsize=(18, 10))
 
-    f, ax = plt.subplots(2, 3)
     rho = plasmod_solver.get_profile("x")
 
     # Temperature profiles
