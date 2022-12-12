@@ -73,10 +73,10 @@ class TestReactivity:
         data = json.load(file)
 
     temp = np.array(data["temperature_kev"])
-    sv_DT = np.array(data["sv_DT_m3s"])
-    sv_DHe3 = np.array(data["sv_DHe3_m3s"])
-    sv_DD_He3p = np.array(data["sv_DD_He3p_m3s"])
-    sv_DD_Tp = np.array(data["sv_DD_Tp_m3s"])
+    sv_DT = np.array(data["sv_DT_m3s"])  # noqa: N815
+    sv_DHe3 = np.array(data["sv_DHe3_m3s"])  # noqa: N815
+    sv_DD_He3p = np.array(data["sv_DD_He3p_m3s"])  # noqa: N815
+    sv_DD_Tp = np.array(data["sv_DD_Tp_m3s"])  # noqa: N815
 
     @pytest.mark.parametrize("method, rtol", [("Bosch-Hale", 0.0025), ("PLASMOD", 0.1)])
     @pytest.mark.parametrize("temp_kev, sigmav", np.c_[temp, sv_DT])
