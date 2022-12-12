@@ -117,7 +117,6 @@ def create_plasma_xz_cross_section(
     delta_95: float,
     lcfs_options: Dict[str, Dict],
     source: str,
-    plot: bool,
 ) -> PhysicalComponent:
     """
     Build the plasma x-z cross-section, get its volume and update transport solver
@@ -140,10 +139,6 @@ def create_plasma_xz_cross_section(
     # Set mesh options
     lcfs.boundary[0].mesh_options = lcfs_options["lcfs"]
     lcfs.mesh_options = lcfs_options["face"]
-
-    if plot:
-        plasma.plot_options.show_faces = False
-        plasma.plot_2d(show=True)
 
     bluemira_debug(
         f"FB Params\n\n"
@@ -315,7 +310,6 @@ def solve_transport_fixed_boundary(
             delta_95,
             lcfs_options,
             f"from equilibrium iteration {n_iter}",
-            debug,
         )
 
         transp_out_params, x, pprime, ffprime = _run_transport_solver(
