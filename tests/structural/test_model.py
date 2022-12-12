@@ -55,7 +55,8 @@ def test_illconditioned(caplog):
 
 
 class TestFEModel:
-    def test_errors(self):
+    @pytest.mark.parametrize("sup, dof", zip([False, True], [5, 6]))
+    def test_errors(self, sup, dof):
         """
         Checks rigid-body motion detection (insufficient constraints)
         """
@@ -73,35 +74,9 @@ class TestFEModel:
         model.add_element(0, 1, i_beam, SS316)
         model.add_element(1, 2, i_beam, SS316)
         model.add_support(0, True, True, True, False, False, False)
-        model.add_support(2, False, True, True, False, False, False)
+        model.add_support(2, sup, True, True, False, False, False)
         model.find_supports()
-        assert model.n_fixed_dofs == 5
-        assert model.geometry.n_nodes == 3
-        assert model.geometry.n_elements == 2
-        load_case = LoadCase()
-        load_case.add_node_load(1, p3, "Fy")
-        load_case.add_node_load(1, m4, "Mz")
-        load_case.add_node_load(2, m6, "Mz")
-        with pytest.raises(StructuralError):
-            model.solve(load_case)
-
-        model = FiniteElementModel()
-        i_beam = IBeam(0.5, 0.8, 0.2, 0.2)
-
-        length = 10
-        p3 = -110
-        m4 = -40
-        m6 = -60
-        model.add_node(0, 0, 0)
-        model.add_node(length, 0, 0)
-        model.add_node(2 * length, 0, 0)
-
-        model.add_element(0, 1, i_beam, SS316)
-        model.add_element(1, 2, i_beam, SS316)
-        model.add_support(0, True, True, True, False, False, False)
-        model.add_support(2, True, True, True, False, False, False)
-        model.find_supports()
-        assert model.n_fixed_dofs == 6
+        assert model.n_fixed_dofs == dof
         assert model.geometry.n_nodes == 3
         assert model.geometry.n_elements == 2
         load_case = LoadCase()
@@ -690,40 +665,33 @@ class TestMiniEiffelTower:
             model.add_support(i, *6 * [True])
 
         make_platform(70.69, 57.64, cs2, internodes=True)
-        model.add_element(0, 4, cs1, SS316)
-        model.add_element(0, 5, cs1, SS316)
-        model.add_element(0, 11, cs1, SS316)
-        model.add_element(1, 5, cs1, SS316)
-        model.add_element(1, 6, cs1, SS316)
-        model.add_element(1, 7, cs1, SS316)
-        model.add_element(2, 7, cs1, SS316)
-        model.add_element(2, 8, cs1, SS316)
-        model.add_element(2, 9, cs1, SS316)
-        model.add_element(3, 9, cs1, SS316)
-        model.add_element(3, 10, cs1, SS316)
-        model.add_element(3, 11, cs1, SS316)
+        cs1_array = np.array(
+            [
+                [0, 0, 0, 1, 1, 1, 2, 2, 2, 3, 3, 3],
+                [4, 5, 11, 5, 6, 7, 7, 8, 9, 9, 10, 11],
+            ]
+        ).T
+
+        for x1, x2 in cs1_array:
+            model.add_element(x1, x2, cs1, SS316)
 
         make_platform(40.96, 115.73, cs3)
 
-        model.add_element(4, 12, cs2, SS316)
-        model.add_element(5, 12, cs2, SS316)
-        model.add_element(11, 12, cs2, SS316)
-        model.add_element(5, 13, cs2, SS316)
-        model.add_element(6, 13, cs2, SS316)
-        model.add_element(7, 13, cs2, SS316)
-        model.add_element(7, 14, cs2, SS316)
-        model.add_element(8, 14, cs2, SS316)
-        model.add_element(9, 14, cs2, SS316)
-        model.add_element(9, 15, cs2, SS316)
-        model.add_element(10, 15, cs2, SS316)
-        model.add_element(11, 15, cs2, SS316)
+        cs2_array = np.array(
+            [
+                [4, 5, 11, 5, 6, 7, 7, 8, 9, 9, 10, 11],
+                [12, 12, 12, 13, 13, 13, 14, 14, 14, 15, 15, 15],
+            ]
+        ).T
+        for x1, x2 in cs2_array:
+            model.add_element(x1, x2, cs2, SS316)
 
         make_platform(18.65, 276.13, cs4)
 
-        model.add_element(12, 16, cs3, SS316)
-        model.add_element(13, 17, cs3, SS316)
-        model.add_element(14, 18, cs3, SS316)
-        model.add_element(15, 19, cs3, SS316)
+        cs3_array = np.array([[12, 13, 14, 15], [16, 17, 18, 19]]).T
+
+        for x1, x2 in cs3_array:
+            model.add_element(x1, x2, cs3, SS316)
 
         model.add_node(0, 0, 316)
 
