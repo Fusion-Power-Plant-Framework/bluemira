@@ -496,10 +496,10 @@ class FixedEquilibriumDesigner(Designer[Equilibrium]):
         Create the `UnconstrainedTikhonovCurrentGradientCOP` optimisation problem.
         """
 
-        eq_targets = ReferenceConstraints(lcfs_shape, 100)
+        eq_targets = ReferenceConstraints(lcfs_shape, 200)
 
         return UnconstrainedTikhonovCurrentGradientCOP(
-            eq.coilset, eq, eq_targets, gamma=1e-8
+            eq.coilset, eq, eq_targets, gamma=1e-12
         )
 
     def _update_params_from_eq(self, eq: Equilibrium):
