@@ -98,7 +98,7 @@ def make_gif(folder, figname, formatt="png", clean=True):
     """
     Make a GIF image from a set of images with similar names in a folder.
     Figures are sorted in increasing order based on a trailing number, e.g.
-    'figure_A'[1, 2, 3, ..].
+    'figure_A[1, 2, 3, ..].png'
     Cleans up the temporary figure files (deletes!)
     Creates a GIF file in the folder directory
 
