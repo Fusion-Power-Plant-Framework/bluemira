@@ -68,7 +68,7 @@ class TestXZLMapper:
         )
         cls.xzl_map = XZLMapper(cls.TF, solenoid.radius, -10, 10, 0.1, CS=False)
 
-    def teardown(self):
+    def teardown_method(self):
         plt.show()
         plt.close("all")
 
@@ -206,7 +206,7 @@ class TestZLMapper:
             CS=True,
         )
 
-    def teardown(self):
+    def teardown_method(self):
         plt.show()
         plt.close(self.fig)
 
