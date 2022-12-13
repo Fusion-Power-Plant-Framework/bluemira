@@ -126,10 +126,10 @@ def make_reference_equilibrium(
 
     coilset = make_reference_coilset(
         tf_track,
-        r_cs=params.r_cs_in.value + params.tk_cs.value / 2,
-        tk_cs=params.tk_cs.value / 2,
-        n_CS=5,
-        n_PF=6,
+        r_cs=params.r_cs_in.value + 0.5 * params.tk_cs.value,
+        tk_cs=0.5 * params.tk_cs.value,
+        n_CS=10,
+        n_PF=20,
     )
 
     grid = make_grid(
