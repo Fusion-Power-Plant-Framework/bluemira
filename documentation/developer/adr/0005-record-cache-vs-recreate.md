@@ -35,6 +35,8 @@ Options:
         all the boundaries and find the "right" ones and label post-instantiation (fiddly!)
         * This means that we cannot track shared boundaries (upon creation, but see above)
         * Meshing and FE problems are more complicated to set up
+        * Recreation of geometry is not totally avoided, however, as there is
+        still a need to serialize/deserialize objects.
 
 ## Decision
 
@@ -47,6 +49,8 @@ recreate them.
 
 The known consequences are, generally speaking, that setting up finite element problems is going
 to be trickier, particularly when it comes to finding the right boundaries post-creation.
+
+At present, only BluemiraWires support serialisation/deserialise, minimising the amount of recreation involved in the present implementation. Longer-term, though, this is likely to cause problems.
 
 ## Additional context
 
