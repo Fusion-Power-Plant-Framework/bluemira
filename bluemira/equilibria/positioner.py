@@ -243,7 +243,9 @@ class CoilPositioner:
                     self.demospace_CS(self.x_cs, self.tk_cs, z_min, z_max, self.n_CS)
                 )
             else:
-                raise ValueError(f"Valid options are 'ITER' and 'DEMO', not '{self.cslayout}'")
+                raise ValueError(
+                    f"Valid options are 'ITER' and 'DEMO', not '{self.cslayout}'"
+                )
         cset = CoilSet(*coils)
         cset.discretisation = d_coil
         return cset
