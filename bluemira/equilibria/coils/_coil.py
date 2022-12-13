@@ -480,7 +480,7 @@ class Coil(CoilFieldsMixin):
         Parameters
         ----------
         d_coil: float
-            Target discretisation fraction
+            Target discretisation length [m]
 
         Returns
         -------
@@ -507,7 +507,7 @@ class Coil(CoilFieldsMixin):
 
     def fix_size(self):
         """
-        Fixes the size of all coils
+        Fixes the size of the coil
         """
         self._flag_sizefix = True
         bluemira_debug(

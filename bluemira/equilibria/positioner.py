@@ -243,7 +243,7 @@ class CoilPositioner:
                     self.demospace_CS(self.x_cs, self.tk_cs, z_min, z_max, self.n_CS)
                 )
             else:
-                raise ValueError("Elige entre ITER y DEMO. " "Mas opciones no hay.")
+                raise ValueError(f"Valid options are 'ITER' and 'DEMO', not '{self.cslayout}'")
         cset = CoilSet(*coils)
         cset.discretisation = d_coil
         return cset
@@ -424,7 +424,7 @@ class XZLMapper:
                 l_values[i] = loc
                 lb[i], ub[i] = 0, 1
         lb, ub = self._segment_tracks(lb, ub)
-        # El vector L tiene que ser adjustado a sus nuevos limites
+        # The L vector must be adjusted to its new bounds
         l_values = tools.clip(l_values, lb, ub)
         if self.flag_CS:
             n_CS = coilset.n_coils("CS")

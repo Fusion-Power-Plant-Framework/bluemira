@@ -167,7 +167,7 @@ class CoilGroup(CoilGroupFieldsMixin):
 
     def fix_sizes(self):
         """
-        Fix coils sizes
+        Fix the sizes of coils in CoilGroup
         """
         for fx in self.__list_getter("fix_size"):
             fx()
