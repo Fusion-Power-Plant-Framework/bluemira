@@ -932,59 +932,38 @@ class MixedFaceMaker:
         polygon_coords = []
         spline_coords = []
 
-        for seg in polygon_sequences:
-            if seg[0] > seg[1]:
-                # There is a bridge
-                coords = np.hstack(
-                    (
-                        np.array([self.x[seg[0] :], self.y[seg[0] :], self.z[seg[0] :]]),
-                        np.array(
-                            [
-                                self.x[0 : seg[1] + 1],
-                                self.y[0 : seg[1] + 1],
-                                self.z[0 : seg[1] + 1],
-                            ]
-                        ),
+        for sequence, s_coords in [
+            [polygon_sequences, polygon_coords],
+            [spline_sequences, spline_coords],
+        ]:
+            for seg in sequence:
+                if seg[0] > seg[1]:
+                    # There is a bridge
+                    coords = np.hstack(
+                        (
+                            np.array(
+                                [self.x[seg[0] :], self.y[seg[0] :], self.z[seg[0] :]]
+                            ),
+                            np.array(
+                                [
+                                    self.x[0 : seg[1] + 1],
+                                    self.y[0 : seg[1] + 1],
+                                    self.z[0 : seg[1] + 1],
+                                ]
+                            ),
+                        )
                     )
-                )
-            else:
-                coords = np.array(
-                    [
-                        self.x[seg[0] : seg[1] + 1],
-                        self.y[seg[0] : seg[1] + 1],
-                        self.z[seg[0] : seg[1] + 1],
-                    ]
-                )
-            clean_coords = self._clean_coordinates(coords)
-            if all(shape >= 2 for shape in clean_coords.shape):
-                polygon_coords.append(clean_coords)
-
-        for seg in spline_sequences:
-            if seg[0] > seg[1]:
-                # There is a bridge
-                coords = np.hstack(
-                    (
-                        np.array([self.x[seg[0] :], self.y[seg[0] :], self.z[seg[0] :]]),
-                        np.array(
-                            [
-                                self.x[0 : seg[1] + 1],
-                                self.y[0 : seg[1] + 1],
-                                self.z[0 : seg[1] + 1],
-                            ]
-                        ),
+                else:
+                    coords = np.array(
+                        [
+                            self.x[seg[0] : seg[1] + 1],
+                            self.y[seg[0] : seg[1] + 1],
+                            self.z[seg[0] : seg[1] + 1],
+                        ]
                     )
-                )
-            else:
-                coords = np.array(
-                    [
-                        self.x[seg[0] : seg[1] + 1],
-                        self.y[seg[0] : seg[1] + 1],
-                        self.z[seg[0] : seg[1] + 1],
-                    ]
-                )
-            clean_coords = self._clean_coordinates(coords)
-            if all(shape >= 2 for shape in clean_coords.shape):
-                spline_coords.append(clean_coords)
+                clean_coords = self._clean_coordinates(coords)
+                if all(shape >= 2 for shape in clean_coords.shape):
+                    s_coords.append(clean_coords)
 
         self.spline_coords = spline_coords
         self.polygon_coords = polygon_coords

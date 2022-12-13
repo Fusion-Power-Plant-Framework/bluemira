@@ -522,8 +522,8 @@ class TestInPolygon:
 
 
 class TestIntersections:
-    @classmethod
-    def teardown_class(cls):
+    def teardown_method(self):
+        plt.show()
         plt.close("all")
 
     @pytest.mark.parametrize("c1, c2", [["x", "z"], ["x", "y"], ["y", "z"]])
@@ -550,11 +550,20 @@ class TestIntersections:
         np.testing.assert_allclose(loop1.points[5], [2.5, 0, 1.5])
         np.testing.assert_allclose(loop1.points[10], [2.5, 0, 5])
 
-    def test_join_intersect_arg1(self):
-        tf = Coordinates.from_json(os.sep.join([TEST_PATH, "test_TF_intersect.json"]))
-        lp = Coordinates.from_json(os.sep.join([TEST_PATH, "test_LP_intersect.json"]))
-        eq = Coordinates.from_json(os.sep.join([TEST_PATH, "test_EQ_intersect.json"]))
-        up = Coordinates.from_json(os.sep.join([TEST_PATH, "test_UP_intersect.json"]))
+    @pytest.mark.parametrize("file", ["", "2"])
+    def test_join_intersect_arg(self, file):
+        tf = Coordinates.from_json(
+            os.sep.join([TEST_PATH, f"test_TF_intersect{file}.json"])
+        )
+        lp = Coordinates.from_json(
+            os.sep.join([TEST_PATH, f"test_LP_intersect{file}.json"])
+        )
+        eq = Coordinates.from_json(
+            os.sep.join([TEST_PATH, f"test_EQ_intersect{file}.json"])
+        )
+        up = Coordinates.from_json(
+            os.sep.join([TEST_PATH, f"test_UP_intersect{file}.json"])
+        )
 
         _, ax = plt.subplots()
         for coords in [tf, up, eq, lp]:
@@ -571,31 +580,6 @@ class TestIntersections:
 
         for coords in [tf, up, eq, lp]:
             plot_coordinates(coords, ax=ax, fill=False, points=True)
-        ax.plot(*tf.xz.T[args].T, marker="o", color="r")
-        ax.plot(intx, intz, marker="^", color="k")
-
-        assert len(intx) == len(args), f"{len(intx)} != {len(args)}"
-        assert np.allclose(np.sort(intx), np.sort(tf.x[args]))
-        assert np.allclose(np.sort(intz), np.sort(tf.z[args]))
-
-    def test_join_intersect_arg2(self):
-        tf = Coordinates.from_json(os.path.join(TEST_PATH, "test_TF_intersect2.json"))
-        lp = Coordinates.from_json(os.path.join(TEST_PATH, "test_LP_intersect2.json"))
-        eq = Coordinates.from_json(os.path.join(TEST_PATH, "test_EQ_intersect2.json"))
-        up = Coordinates.from_json(os.path.join(TEST_PATH, "test_UP_intersect2.json"))
-
-        _, ax = plt.subplots()
-        for coords in [tf, up, eq, lp]:
-            plot_coordinates(coords, ax=ax, fill=False)
-
-        args = []
-        intx, intz = [], []
-        for coords in [lp, eq, up]:
-            i = get_intersect(tf.xz, coords.xz)
-            a = join_intersect(tf, coords, get_arg=True)
-            args.extend(a)
-            intx.extend(i[0])
-            intz.extend(i[1])
 
         ax.plot(*tf.xz.T[args].T, marker="o", color="r")
         ax.plot(intx, intz, marker="^", color="k")
