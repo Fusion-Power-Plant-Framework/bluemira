@@ -473,8 +473,9 @@ class Coil(CoilFieldsMixin):
 
     def _rectangular_discretisation(self):
         """
-        Discretise a coil into smaller rectangles based on the length
-        in [m] of the discretisation.
+        Discretise a coil into filaments based on the length in [m]
+        of the discretisation. Each filament will be plotted as a rectangle
+        with the filament at its centre.
 
         Parameters
         ----------
