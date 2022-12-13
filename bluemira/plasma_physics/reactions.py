@@ -469,7 +469,7 @@ def _reactivity_johner(temp_kev, reaction):
     t1 = temp_kev[idx_1]
     t2 = temp_kev[idx_2]
     t3 = temp_kev[idx_3]
-    t4 = temp_kev[idx_4]
+
     sigma_v[idx_1] = 1.15e-25 * t1**3
     sigma_v[idx_2] = 1.18e-24 * t2**2
     sigma_v[idx_3] = 2.18e-23 * t3
