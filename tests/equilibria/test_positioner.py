@@ -215,37 +215,6 @@ class TestZLMapper:
     def test_cs_zl(self, up):
         self._setup(up)
         l_pos, lb, ub = self.xzl_map.get_Lmap(
-            self.coilset, set(self.coilset.get_PF_names())
-        )
-        self.xzl_map.add_exclusion_zones(self.zones)  # au cas ou
-        _, _ = self.xzl_map.L_to_xz(l_pos[: self.coilset.n_PF])
-        xcs, zcs, dzcs = self.xzl_map.L_to_zdz(l_pos[self.coilset.n_PF :])
-        l_cs = self.xzl_map.z_to_L(zcs)
-        assert np.allclose(l_cs, l_pos[self.coilset.n_PF :])
-        solenoid = self.coilset.get_solenoid()
-        z = []
-        for c in solenoid.coils:
-            z.append(c.z)
-        z = np.sort(z)  # [::-1]  # Fixed somewhere else jcrois
-        assert np.allclose(z, zcs), z - zcs
-
-        self.xzl_map.plot(ax=self.ax)
-
-
-class TestZLMapperEdges:
-    def setup_method(self):
-        """
-        Sets up an XZLMapper that will trigger edge cases where a zone covers
-        the start or end of a track
-        """
-
-    def teardown_method(self):
-        plt.show()
-        plt.close("all")
-
-    def test_cs_zl(self):
-
-        l_pos, lb, ub = self.xzl_map.get_Lmap(
             self.coilset, set(self.coilset.get_coiltype("PF").name)
         )
         self.xzl_map.add_exclusion_zones(self.zones)  # au cas ou
