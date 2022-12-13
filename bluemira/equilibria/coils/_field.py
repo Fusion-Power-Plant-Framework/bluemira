@@ -674,6 +674,8 @@ class CoilSetFieldsMixin(CoilGroupFieldsMixin):
     or summing over coils
     """
 
+    __slots__ = ()
+
     def psi(
         self, x: np.ndarray, z: np.ndarray, sum_coils: bool = True, control: bool = False
     ) -> np.ndarray:
@@ -902,6 +904,8 @@ class CoilFieldsMixin(CoilGroupFieldsMixin):
 
     Add field calculation mechanics to Coils
     """
+
+    __slots__ = ()
 
     def _points_inside_coil(
         self,

@@ -100,6 +100,8 @@ class CoilGroup(CoilGroupFieldsMixin):
 
     """
 
+    __slots__ = ("_coils", "_pad_size")
+
     def __init__(self, *coils: Union[Coil, CoilGroup[Coil]]):
         if any(not isinstance(c, (Coil, CoilGroup)) for c in coils):
             raise TypeError("Not all arguments are a Coil or CoilGroup.")
@@ -361,7 +363,8 @@ class CoilGroup(CoilGroupFieldsMixin):
         """Copy dunder method, needed because attribute setter fails for quadratures"""
         cls = self.__class__
         result = cls.__new__(cls)
-        result.__dict__.update(self.__dict__)
+        for k in self.__slots__:
+            setattr(result, k, getattr(self, k))
         return result
 
     def __deepcopy__(self, memo):
@@ -372,8 +375,8 @@ class CoilGroup(CoilGroupFieldsMixin):
         cls = self.__class__
         result = cls.__new__(cls)
         memo[id(self)] = result
-        for k, v in self.__dict__.items():
-            setattr(result, k, deepcopy(v, memo))
+        for k in self.__slots__:
+            setattr(result, k, deepcopy(getattr(self, k), memo))
         result._einsum_str = self._einsum_str
         return result
 
@@ -660,6 +663,8 @@ class Circuit(CoilGroup):
         The current value, if not provided the first coil current is used
     """
 
+    __slots__ = ()
+
     def __init__(
         self, *coils: Union[Coil, CoilGroup[Coil]], current: Optional[float] = None
     ):
@@ -707,6 +712,8 @@ class SymmetricCircuit(Circuit):
 
     Currently only symmetric about z = 0 see gh issue #210
     """
+
+    __slots__ = ("_symmetry_line", "_shift", "sym_mat", *CoilGroup.__slots__)
 
     def __init__(
         self,
@@ -824,6 +831,8 @@ class CoilSet(CoilSetFieldsMixin, CoilGroup):
         List of coil names to be controlled
 
     """
+
+    __slots__ = ("_control", "_control_ind", *CoilGroup.__slots__)
 
     def __init__(
         self,

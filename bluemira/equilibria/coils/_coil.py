@@ -138,6 +138,25 @@ class Coil(CoilFieldsMixin):
 
     """
 
+    __slots__ = (
+        "_x",
+        "_z",
+        "_dx",
+        "_dz",
+        "_discretisation",
+        "_current",
+        "_j_max",
+        "_b_max",
+        "_ctype",
+        "name",
+        "n_turns",
+        "_number",
+        "_flag_sizefix",
+        "_current_radius",
+        "_x_boundary",
+        "_z_boundary",
+    )
+
     def __init__(
         self,
         x: float,
