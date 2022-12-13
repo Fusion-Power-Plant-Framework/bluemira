@@ -25,7 +25,7 @@ repos:
     - id: black
       language_version: python3.8
 
--   repo: https://gitlab.com/pycqa/flake8
+-   repo: https://github.com/pycqa/flake8
     rev: 3.9.2
     hooks:
     - id: flake8
@@ -42,7 +42,7 @@ repos:
       args: [--check]
       types: [python]
       files: ^examples/
-      exclude: ^(examples/design/EU-DEMO/EUDEMO_builders/|examples/design/EU-DEMO/EUDEMO_tests/|examples/convert_py_to_ipynb.py)
+      exclude: ^examples/convert_py_to_ipynb.py
 
 -   repo: https://github.com/psf/black
     rev: 22.3.0

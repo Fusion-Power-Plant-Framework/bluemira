@@ -31,6 +31,7 @@ from bluemira.codes._freecadapi import _wire_edges_tangent
 from bluemira.geometry.error import GeometryParameterisationError
 from bluemira.geometry.parameterisations import (
     GeometryParameterisation,
+    PFrameSection,
     PictureFrame,
     PolySpline,
     PrincetonD,
@@ -62,7 +63,7 @@ def test_read_write(param_class: Type[GeometryParameterisation]):
         new_param = param_class.from_json(the_path)
         for attr in GeometryParameterisation.__slots__:
             if attr == "variables":
-                assert new_param.variables._to_records() == param.variables._to_records()
+                assert new_param.variables.as_dict() == param.variables.as_dict()
             else:
                 assert getattr(new_param, attr) == getattr(param, attr)
     finally:
@@ -184,30 +185,92 @@ class TestPictureFrame:
             }
         )
         wire = p.create_shape()
-        assert _wire_edges_tangent(wire._shape)
+        assert _wire_edges_tangent(wire.shape)
 
 
 class TestComplexPictureFrame:
     @pytest.mark.parametrize(
-        "upper, lower, result",
+        "upper, lower, inner, result",
         [
-            ["CURVED", "CURVED", 57.6308],
-            ["CURVED", "FLAT", 56.829],
-            ["FLAT", "CURVED", 56.829],
+            ["CURVED", "CURVED", "TAPERED_INNER", 56.331],
+            ["CURVED", "FLAT", "TAPERED_INNER", 54.714],
+            ["FLAT", "CURVED", "TAPERED_INNER", 54.714],
+            [
+                PFrameSection.CURVED,
+                PFrameSection.CURVED,
+                PFrameSection.TAPERED_INNER,
+                56.331,
+            ],
+            [
+                PFrameSection.CURVED,
+                PFrameSection.FLAT,
+                PFrameSection.TAPERED_INNER,
+                54.714,
+            ],
+            [
+                PFrameSection.FLAT,
+                PFrameSection.CURVED,
+                PFrameSection.TAPERED_INNER,
+                54.714,
+            ],
+            ["CURVED", "CURVED", None, 57.6308],
+            ["CURVED", "FLAT", None, 56.014],
+            ["FLAT", "CURVED", None, 56.014],
+            [PFrameSection.CURVED, PFrameSection.CURVED, None, 57.6308],
+            [PFrameSection.CURVED, PFrameSection.FLAT, None, 56.014],
+            [PFrameSection.FLAT, PFrameSection.CURVED, None, 56.014],
         ],
     )
-    def test_length(self, upper, lower, result):
-        p = PictureFrame(upper=upper, lower=lower)
+    def test_length(self, upper, lower, inner, result):
+        p = PictureFrame(upper=upper, lower=lower, inner=inner)
         wire = p.create_shape()
         assert np.isclose(wire.length, result, rtol=1e-4, atol=1e-5)
 
     @pytest.mark.parametrize(
-        "upper, lower", [["CURVED", "CURVED"], ["CURVED", "FLAT"], ["FLAT", "CURVED"]]
+        "upper, lower, inner",
+        [
+            pytest.param("FLAT", "FLAT", "TAPERED_INNER", marks=pytest.mark.xfail),
+            pytest.param("CURVED", "CURVED", "TAPERED_INNER", marks=pytest.mark.xfail),
+            pytest.param("CURVED", "FLAT", "TAPERED_INNER", marks=pytest.mark.xfail),
+            pytest.param("FLAT", "CURVED", "TAPERED_INNER", marks=pytest.mark.xfail),
+            pytest.param(
+                PFrameSection.FLAT,
+                PFrameSection.FLAT,
+                PFrameSection.TAPERED_INNER,
+                marks=pytest.mark.xfail,
+            ),
+            pytest.param(
+                PFrameSection.CURVED,
+                PFrameSection.CURVED,
+                PFrameSection.TAPERED_INNER,
+                marks=pytest.mark.xfail,
+            ),
+            pytest.param(
+                PFrameSection.CURVED,
+                PFrameSection.FLAT,
+                PFrameSection.TAPERED_INNER,
+                marks=pytest.mark.xfail,
+            ),
+            pytest.param(
+                PFrameSection.FLAT,
+                PFrameSection.CURVED,
+                PFrameSection.TAPERED_INNER,
+                marks=pytest.mark.xfail,
+            ),
+            ["FLAT", "FLAT", None],
+            ["CURVED", "CURVED", None],
+            ["CURVED", "FLAT", None],
+            ["FLAT", "CURVED", None],
+            [PFrameSection.FLAT, PFrameSection.FLAT, None],
+            [PFrameSection.CURVED, PFrameSection.CURVED, None],
+            [PFrameSection.CURVED, PFrameSection.FLAT, None],
+            [PFrameSection.FLAT, PFrameSection.CURVED, None],
+        ],
     )
-    def test_ordering(self, upper, lower):
-        p = PictureFrame(upper=upper, lower=lower)
+    def test_ordering(self, upper, lower, inner):
+        p = PictureFrame(upper=upper, lower=lower, inner=inner)
         wire = p.create_shape()
-        assert _wire_edges_tangent(wire._shape)
+        assert _wire_edges_tangent(wire.shape)
 
     def test_tapered_segments(self):
         p = PictureFrame(inner="TAPERED_INNER")
@@ -220,7 +283,14 @@ class TestComplexPictureFrame:
 
     @pytest.mark.parametrize(
         "vals",
-        [{"inner": "CURVED"}, {"upper": "TAPERED_INNER"}, {"lower": "TAPERED_INNER"}],
+        [
+            {"inner": "CURVED"},
+            {"upper": "TAPERED_INNER"},
+            {"lower": "TAPERED_INNER"},
+            {"inner": PFrameSection.CURVED},
+            {"upper": PFrameSection.TAPERED_INNER},
+            {"lower": PFrameSection.TAPERED_INNER},
+        ],
     )
     def test_bad_combinations_raise_ValueError(self, vals):
         with pytest.raises(ValueError):

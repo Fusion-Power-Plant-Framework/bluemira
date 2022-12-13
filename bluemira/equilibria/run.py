@@ -67,19 +67,19 @@ class Snapshot:
 
     Parameters
     ----------
-    eq: Equilibrium object
+    eq: Equilibrium
         The equilibrium at the snapshot
     coilset: CoilSet
         The coilset at the snapshot
     opt_problem: CoilsetOptimisationProblem
         The constraints at the snapshot
-    profiles: Profile object
+    profiles: Profile
         The profile at the snapshot
     optimiser: EquilibriumOptimiser object
         The optimiser for the snapshot
-    limiter: Limiter object
+    limiter: Limiter
         The limiter for the snapshot
-    tfcoil: Loop object
+    tfcoil: Coordinates
         The PF coil placement boundary
     """
 
@@ -155,7 +155,7 @@ class PulsedCoilsetDesign:
                 # Coilset max currents known because the coilset geometry is fixed
                 max_currents = self.coilset.get_max_currents(0)
             else:
-                max_currents = self.coilset.get_max_currents(1e6 * self.params.I_p.value)
+                max_currents = self.coilset.get_max_currents(self.params.I_p.value)
                 coilset.set_control_currents(max_currents, update_size=True)
                 coilset.mesh_coils(self._eq_settings["coil_mesh_size"])
             problem = self._bd_prob_cls(
@@ -251,7 +251,7 @@ class PulsedCoilsetDesign:
         psi_sof = calc_psib(
             2 * np.pi * psi_premag,
             self.params.R_0.value,
-            1e6 * self.params.I_p.value,
+            self.params.I_p.value,
             self.params.l_i.value,
             self.params.C_Ejima.value,
         )
@@ -260,7 +260,7 @@ class PulsedCoilsetDesign:
 
     def _get_max_currents(self, coilset):
         factor = self._eq_settings["peak_PF_current_factor"]
-        return coilset.get_max_currents(factor * 1e6 * self.params.I_p.value)
+        return coilset.get_max_currents(factor * self.params.I_p.value)
 
     def _get_sof_eof_opt_problems(self, psi_sof, psi_eof):
 

@@ -37,6 +37,7 @@ from bluemira.codes.plasmod.mapping import (
     ImpurityModel,
     PedestalModel,
     PLHModel,
+    SafetyProfileModel,
     SOLModel,
     TransportModel,
 )
@@ -46,6 +47,7 @@ MODEL_MAP: Mapping[str, Type[enum.Enum]] = {
     "i_modeltype": TransportModel,
     "i_equiltype": EquilibriumModel,
     "i_pedestal": PedestalModel,
+    "isawt": SafetyProfileModel,
     "isiccir": SOLModel,
     "plh": PLHModel,
 }
@@ -111,7 +113,7 @@ class PlasmodInputs:
     i_modeltype: TransportModel = TransportModel.GYROBOHM_1
     i_pedestal: PedestalModel = PedestalModel.SAARELMA
     Ip: float = 17.75
-    isawt: int = 1
+    isawt: SafetyProfileModel = SafetyProfileModel.FULLY_RELAXED
     isiccir: SOLModel = SOLModel.EICH_FIT
     k: float = 1.6969830041844367
     k95: float = 1.652

@@ -6,4 +6,11 @@ updates:
     schedule:
       interval: "weekly"
       day: "monday"
-      time: "07:00"
+      time: "06:00"
+  - package-ecosystem: "github-actions"
+    target-branch: "develop"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "06:00"

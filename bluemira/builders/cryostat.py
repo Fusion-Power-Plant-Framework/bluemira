@@ -22,19 +22,73 @@
 """
 Cryostat builder
 """
-
-from typing import List
+from dataclasses import dataclass
+from typing import Dict, List, Tuple, Type, Union
 
 import numpy as np
 
-import bluemira.utilities.plot_tools as bm_plot_tools
-from bluemira.base.builder import BuildConfig, Builder
+from bluemira.base.builder import Builder
 from bluemira.base.components import Component, PhysicalComponent
-from bluemira.base.config import Configuration
-from bluemira.builders.tools import circular_pattern_component
+from bluemira.base.designer import Designer
+from bluemira.base.parameter_frame import Parameter, ParameterFrame
+from bluemira.builders.tools import build_sectioned_xyz, make_circular_xy_ring
 from bluemira.display.palettes import BLUE_PALETTE
 from bluemira.geometry.face import BluemiraFace
-from bluemira.geometry.tools import make_circle, make_polygon, revolve_shape
+from bluemira.geometry.tools import make_polygon
+
+
+@dataclass
+class CryostatDesignerParams(ParameterFrame):
+    """
+    Cryostat designer parameters
+    """
+
+    g_cr_ts: Parameter[float]
+
+
+@dataclass
+class CryostatBuilderParams(ParameterFrame):
+    """
+    Cryostat builder parameters
+    """
+
+    g_cr_ts: Parameter[float]
+    n_TF: Parameter[int]
+    tk_cr_vv: Parameter[float]
+    # TODO add to Parameter default = 5 chickens
+    well_depth: Parameter[float]
+    x_g_support: Parameter[float]
+    # TODO add to Parameter default = 2
+    x_gs_kink_diff: Parameter[float]
+    # TODO add to Parameter default (z gravity support) = -15 chickens
+    z_gs: Parameter[float]
+
+
+class CryostatDesigner(Designer[Tuple[float, float]]):
+    """
+    Designer for the cryostat
+    """
+
+    param_cls: Type[CryostatDesignerParams] = CryostatDesignerParams
+
+    def __init__(
+        self,
+        params: Union[ParameterFrame, Dict],
+        cryo_ts_xz: BluemiraFace,
+    ):
+        super().__init__(params)
+        self.cryo_ts_xz = cryo_ts_xz
+
+    def run(self) -> Tuple[float, float]:
+        """
+        Cryostat designer run method
+        """
+        bound_box = self.cryo_ts_xz.bounding_box
+        z_max = bound_box.z_max
+        x_max = bound_box.x_max
+        x_out = x_max + self.params.g_cr_ts.value
+        z_top = z_max + self.params.g_cr_ts.value
+        return x_out, z_top
 
 
 class CryostatBuilder(Builder):
@@ -42,132 +96,98 @@ class CryostatBuilder(Builder):
     Builder for the cryostat
     """
 
-    _required_params: List[str] = [
-        "tk_cr_vv",
-        "g_cr_ts",
-        "o_p_cr",
-        "n_cr_lab",
-        "cr_l_d",
-        "n_TF",
-        "x_g_support",
-    ]
-    _params: Configuration
-    _cts_xz: BluemiraFace
+    CRYO = "Cryostat VV"
+    param_cls: Type[CryostatBuilderParams] = CryostatBuilderParams
 
     def __init__(
         self,
-        params,
-        build_config: BuildConfig,
-        cts_xz: BluemiraFace,
+        params: Union[ParameterFrame, Dict, None],
+        build_config: Dict,
+        x_out: float,
+        z_top: float,
     ):
-        super().__init__(
-            params,
-            build_config,
-            cts_xz=cts_xz,
-        )
-
-    def reinitialise(self, params, cts_xz) -> None:
-        """
-        Initialise the state of this builder ready for a new run.
-        """
-        super().reinitialise(params)
-        self._cts_xz = cts_xz
+        super().__init__(params, build_config)
+        self.x_out = x_out
+        self.z_top = z_top
 
     def build(self) -> Component:
         """
         Build the cryostat component.
-
-        Returns
-        -------
-        component: Component
-            The Component built by this builder.
         """
-        super().build()
+        xz_cryostat = self.build_xz(self.x_out, self.z_top)
+        xz_cross_section: BluemiraFace = xz_cryostat.get_component_properties("shape")
+        return self.component_tree(
+            xz=[xz_cryostat],
+            xy=[self.build_xy(self.x_out)],
+            xyz=self.build_xyz(xz_cross_section),
+        )
 
-        component = Component(name=self.name)
-        component.add_child(self.build_xz())
-        component.add_child(self.build_xy())
-        component.add_child(self.build_xyz())
-        return component
-
-    def build_xz(self):
+    def build_xz(self, x_out: float, z_top: float) -> PhysicalComponent:
         """
         Build the x-z components of the cryostat.
-        """
-        # Cryostat VV
-        x_in = 0
-        x_out, z_top = self._get_extrema()
-        z_gs = -15  # TODO: Get from gravity support
-        x_gs_kink = self._params.x_g_support.value - 2  # TODO: Get from a parameter
-        well_depth = 5  # TODO: Get from a parameter
-        z_mid = z_gs - self._params.g_cr_ts.value
-        z_bot = z_mid - well_depth
-        tk = self._params.tk_cr_vv.value
 
-        x_inner = [x_in, x_out, x_out, x_gs_kink, x_gs_kink, x_in]
-        z_inner = [z_top, z_top, z_mid, z_mid, z_bot, z_bot]
-        x_outer = [x_in, x_gs_kink + tk, x_gs_kink + tk, x_out + tk, x_out + tk, x_in]
-        z_outer = [
-            z_bot - tk,
-            z_bot - tk,
-            z_mid - tk,
-            z_mid - tk,
-            z_top + tk,
-            z_top + tk,
-        ]
+        Parameters
+        ----------
+        x_out: float
+            x coordinate extremity
+        z_top: float
+            z coordinate extremity
+        """
+        x_in = 0
+        x_gs_kink = self.params.x_g_support.value - self.params.x_gs_kink_diff.value
+        z_mid = self.params.z_gs.value - self.params.g_cr_ts.value
+        z_bot = z_mid - self.params.well_depth.value
+        tk = self.params.tk_cr_vv.value
+
+        x_inner = np.array([x_in, x_out, x_out, x_gs_kink, x_gs_kink, x_in])
+        z_inner = np.array([z_top, z_top, z_mid, z_mid, z_bot, z_bot])
+
+        x_outer = np.array([x_in, x_gs_kink, x_gs_kink, x_out, x_out, x_in])
+        x_outer[1:-1] += tk
+
+        z_outer = np.array([z_bot, z_bot, z_mid, z_mid, z_top, z_top])
+        z_outer[:2] -= tk
+        z_outer[2:] += tk
+
         x = np.concatenate([x_inner, x_outer])
         z = np.concatenate([z_inner, z_outer])
 
-        shape = BluemiraFace(make_polygon({"x": x, "y": 0, "z": z}, closed=True))
-        self._cryo_vv = shape
-        cryostat_vv = PhysicalComponent("Cryostat VV", shape)
+        cryostat_vv = PhysicalComponent(
+            self.CRYO, BluemiraFace(make_polygon({"x": x, "y": 0, "z": z}, closed=True))
+        )
         cryostat_vv.plot_options.face_options["color"] = BLUE_PALETTE["CR"][0]
-        component = Component("xz", children=[cryostat_vv])
-        bm_plot_tools.set_component_view(component, "xz")
-        return component
+        return cryostat_vv
 
-    def build_xy(self):
+    def build_xy(self, x_out: float) -> PhysicalComponent:
         """
         Build the x-y components of the cryostat.
+
+        Parameters
+        ----------
+        x_out: float
+            x coordinate extremity
         """
-        r_in, _ = self._get_extrema()
-        r_out = r_in + self.params.tk_cr_vv
-        inner = make_circle(radius=r_in)
-        outer = make_circle(radius=r_out)
-
-        shape = BluemiraFace([outer, inner])
-        cryostat_vv = PhysicalComponent("Cryostat VV", shape)
+        cryostat_vv = PhysicalComponent(
+            self.CRYO, make_circular_xy_ring(x_out, x_out + self.params.tk_cr_vv.value)
+        )
         cryostat_vv.plot_options.face_options["color"] = BLUE_PALETTE["CR"][0]
-        component = Component("xy", children=[cryostat_vv])
-        bm_plot_tools.set_component_view(component, "xy")
-        return component
+        return cryostat_vv
 
-    def build_xyz(self, degree=360.0):
+    def build_xyz(
+        self, xz_cross_section: BluemiraFace, degree=360
+    ) -> List[PhysicalComponent]:
         """
         Build the x-y-z components of the cryostat.
+
+        Parameters
+        ----------
+        xz_cross_section: BluemiraFace
+            xz cross section of cryostat
         """
-        n_cr_draw = max(1, int(degree // (360 // self._params.n_TF.value)))
-        degree = (360.0 / self._params.n_TF.value) * n_cr_draw
-
-        component = Component("xyz")
-        cr_face = self._cryo_vv.deepcopy()
-        base = (0, 0, 0)
-        direction = (0, 0, 1)
-        shape = revolve_shape(
-            cr_face, base=base, direction=direction, degree=360 / self._params.n_TF.value
+        return build_sectioned_xyz(
+            xz_cross_section,
+            self.CRYO,
+            self.params.n_TF.value,
+            BLUE_PALETTE["CR"][0],
+            degree,
         )
-
-        cryostat_vv = PhysicalComponent("Cryostat VV", shape)
-        cryostat_vv.display_cad_options.color = BLUE_PALETTE["CR"][0]
-        sectors = circular_pattern_component(cryostat_vv, n_cr_draw, degree=degree)
-        component.add_children(sectors, merge_trees=True)
-
-        return component
-
-    def _get_extrema(self):
-        bound_box = self._cts_xz.bounding_box
-        z_max = bound_box.z_max
-        x_max = bound_box.x_max
-        x_out = x_max + self._params.g_cr_ts.value
-        z_top = z_max + self._params.g_cr_ts.value
-        return x_out, z_top

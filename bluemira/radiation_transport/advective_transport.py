@@ -23,17 +23,21 @@
 A simplified 2-D solver for calculating charged particle heat loads.
 """
 
+from copy import deepcopy
+from dataclasses import dataclass, fields
+from typing import Dict
+
 import matplotlib.pyplot as plt
 import numpy as np
+from matplotlib.axes import Axes
 
 from bluemira.base.constants import EPS
 from bluemira.base.look_and_feel import bluemira_warn
-from bluemira.base.parameter import ParameterFrame
+from bluemira.display.plotter import plot_coordinates
 from bluemira.equilibria.find import find_flux_surface_through_point
 from bluemira.equilibria.flux_surfaces import OpenFluxSurface
-from bluemira.geometry._deprecated_base import Plane
-from bluemira.geometry._deprecated_loop import Loop
-from bluemira.geometry._deprecated_tools import loop_plane_intersect
+from bluemira.geometry.coordinates import Coordinates, coords_plane_intersect
+from bluemira.geometry.plane import BluemiraPlane
 from bluemira.radiation_transport.error import AdvectionTransportError
 
 __all__ = ["ChargedParticleSolver"]
@@ -42,31 +46,25 @@ __all__ = ["ChargedParticleSolver"]
 class ChargedParticleSolver:
     """
     A simplified charged particle transport model along open field lines.
+
+    Parameters
+    ----------
+    config: Dict[str, float]
+        The parameters for running the transport model. See
+        :class:`ChargedParticleSolverParams` for available parameters
+        and their defaults.
+    equilibrium: Equilibrium
+        The equilibrium defining flux surfaces.
+    dx_mp: float (optional)
+        The midplane spatial resolution between flux surfaces [m]
+        (default: 0.001).
     """
 
-    # fmt: off
-    default_params = [
-        ['P_sep_particle', 'Separatrix power', 150, 'MW', None, 'Input'],
-        ["f_p_sol_near", "near scrape-off layer power rate", 0.50, "dimensionless", None, "Input"],
-        ["fw_lambda_q_near_omp", "Lambda q near SOL at the outboard", 0.003, "m", None, "Input"],
-        ["fw_lambda_q_far_omp", "Lambda q far SOL at the outboard", 0.05, "m", None, "Input"],
-        ["fw_lambda_q_near_imp", "Lambda q near SOL at the inboard", 0.003, "m", None, "Input"],
-        ["fw_lambda_q_far_imp", "Lambda q far SOL at the inboard", 0.05, "m", None, "Input"],
-        ["f_lfs_lower_target", "Fraction of SOL power deposited on the LFS lower target", 0.9, "dimensionless", None, "Input"],
-        ["f_hfs_lower_target", "Fraction of SOL power deposited on the HFS lower target", 0.1, "dimensionless", None, "Input"],
-        ["f_lfs_upper_target", "Fraction of SOL power deposited on the LFS upper target (DN only)", 0, "dimensionless", None, "Input"],
-        ["f_hfs_upper_target", "Fraction of SOL power deposited on the HFS upper target (DN only)", 0, "dimensionless", None, "Input"],
-    ]
-    # fmt: on
-
-    def __init__(self, config, equilibrium, **kwargs):
+    def __init__(self, config: Dict[str, float], equilibrium, dx_mp: float = 0.001):
         self.eq = equilibrium
-        self.params = ParameterFrame(self.default_params)
-        self.params.update_kw_parameters(config, f"{self.__class__.__name__} input")
+        self.params = self._make_params(config)
         self._check_params()
-
-        # Midplane spatial resolution between flux surfaces
-        self.dx_mp = kwargs.get("dx_mp", 0.001)
+        self.dx_mp = dx_mp
 
         # Constructors
         self.first_wall = None
@@ -82,7 +80,7 @@ class ChargedParticleSolver:
         o_points, _ = self.eq.get_OX_points()
         self._o_point = o_points[0]
         z = self._o_point.z
-        self._yz_plane = Plane([0, 0, z], [1, 0, z], [1, 1, z])
+        self._yz_plane = BluemiraPlane.from_3_points([0, 0, z], [1, 0, z], [1, 1, z])
 
     @property
     def flux_surfaces(self):
@@ -137,9 +135,9 @@ class ChargedParticleSolver:
         """
         Force working first wall geometry to be closed and counter-clockwise.
         """
-        first_wall = first_wall.copy()
+        first_wall = deepcopy(first_wall)
 
-        if not first_wall.ccw:
+        if not first_wall.check_ccw(axis=[0, 1, 0]):
             bluemira_warn(
                 "First wall should be oriented counter-clockwise. Reversing it."
             )
@@ -170,9 +168,9 @@ class ChargedParticleSolver:
         o_point = self._o_point
         separatrix = self.eq.get_separatrix()
 
-        if not isinstance(separatrix, Loop):
-            sep1_intersections = loop_plane_intersect(separatrix[0], yz_plane)
-            sep2_intersections = loop_plane_intersect(separatrix[1], yz_plane)
+        if not isinstance(separatrix, Coordinates):
+            sep1_intersections = coords_plane_intersect(separatrix[0], yz_plane)
+            sep2_intersections = coords_plane_intersect(separatrix[1], yz_plane)
             sep1_arg = np.argmin(np.abs(sep1_intersections.T[0] - o_point.x))
             sep2_arg = np.argmin(np.abs(sep2_intersections.T[0] - o_point.x))
             x_sep1_mp = sep1_intersections.T[0][sep1_arg]
@@ -182,11 +180,11 @@ class ChargedParticleSolver:
             else:
                 x_sep_mp = x_sep1_mp if x_sep1_mp < x_sep2_mp else x_sep2_mp
         else:
-            sep_intersections = loop_plane_intersect(separatrix, yz_plane)
+            sep_intersections = coords_plane_intersect(separatrix, yz_plane)
             sep_arg = np.argmin(np.abs(sep_intersections.T[0] - o_point.x))
             x_sep_mp = sep_intersections.T[0][sep_arg]
 
-        out_intersections = loop_plane_intersect(self.first_wall, yz_plane)
+        out_intersections = coords_plane_intersect(self.first_wall, yz_plane)
         if outboard:
             x_out_mp = np.max(out_intersections.T[0])
         else:
@@ -198,11 +196,11 @@ class ChargedParticleSolver:
         """
         Make individual PartialOpenFluxSurfaces through a point.
         """
-        loop = find_flux_surface_through_point(
+        coords = find_flux_surface_through_point(
             self.eq.x, self.eq.z, self.eq.psi(), x, z, self.eq.psi(x, z)
         )
-        loop = Loop(loop[0], z=loop[1])
-        f_s = OpenFluxSurface(loop)
+        coords = Coordinates({"x": coords[0], "z": coords[1]})
+        f_s = OpenFluxSurface(coords)
         lfs, hfs = f_s.split(self._o_point, plane=self._yz_plane)
         return lfs, hfs
 
@@ -263,7 +261,7 @@ class ChargedParticleSolver:
 
         Parameters
         ----------
-        first_wall: Loop
+        first_wall: Coordinates
             The closed first wall geometry on which to calculate the heat flux
 
         Returns
@@ -464,24 +462,24 @@ class ChargedParticleSolver:
             / (Bp * 2 * np.pi * x)
         )
 
-    def plot(self, ax=None):
+    def plot(self, ax: Axes = None, show=False):
         """
         Plot the ChargedParticleSolver results.
         """
         if ax is None:
-            ax = plt.gca()
+            _, ax = plt.subplots()
 
-        self.first_wall.plot(ax, linewidth=0.5, fill=False)
+        plot_coordinates(self.first_wall, ax=ax, linewidth=0.5, fill=False)
         separatrix = self.eq.get_separatrix()
 
-        if isinstance(separatrix, Loop):
+        if isinstance(separatrix, Coordinates):
             separatrix = [separatrix]
 
         for sep in separatrix:
-            sep.plot(ax, linewidth=0.2)
+            plot_coordinates(sep, ax=ax, linewidth=0.2)
 
         for f_s in self.flux_surfaces:
-            f_s.plot(ax, linewidth=0.01)
+            plot_coordinates(f_s.coords, ax=ax, linewidth=0.01)
 
         cm = ax.scatter(
             self.result[0],
@@ -491,5 +489,66 @@ class ChargedParticleSolver:
             zorder=40,
             cmap="plasma",
         )
-        f = plt.gcf()
-        f.colorbar(cm, label="MW/m^2")
+        f = ax.figure
+        f.colorbar(cm, label="MW/m²")
+        if show:
+            plt.show()
+        return ax
+
+    def _make_params(self, config):
+        """Convert the given params to ``ChargedParticleSolverParams``"""
+        if isinstance(config, dict):
+            try:
+                return ChargedParticleSolverParams(**config)
+            except TypeError:
+                unknown = [
+                    k for k in config if k not in fields(ChargedParticleSolverParams)
+                ]
+                raise TypeError(f"Unknown config parameter(s) {str(unknown)[1:-1]}")
+        elif isinstance(config, ChargedParticleSolverParams):
+            return config
+        else:
+            raise TypeError(
+                "Unsupported type: 'config' must be a 'dict', or "
+                "'ChargedParticleSolverParams' instance; found "
+                f"'{type(config).__name__}'."
+            )
+
+
+@dataclass
+class ChargedParticleSolverParams:
+    P_sep_particle: float = 150
+    """Separatrix power [MW]."""
+
+    f_p_sol_near: float = 0.5
+    """Near scrape-off layer power rate [dimensionless]."""
+
+    fw_lambda_q_near_omp: float = 0.003
+    """Lambda q near SOL at the outboard [m]."""
+
+    fw_lambda_q_far_omp: float = 0.05
+    """Lambda q far SOL at the outboard [m]."""
+
+    fw_lambda_q_near_imp: float = 0.003
+    """Lambda q near SOL at the inboard [m]."""
+
+    fw_lambda_q_far_imp: float = 0.05
+    """Lambda q far SOL at the inboard [m]."""
+
+    f_lfs_lower_target: float = 0.9
+    """Fraction of SOL power deposited on the LFS lower target [dimensionless]."""
+
+    f_hfs_lower_target: float = 0.1
+    """Fraction of SOL power deposited on the HFS lower target [dimensionless]."""
+
+    f_lfs_upper_target: float = 0
+    """
+    Fraction of SOL power deposited on the LFS upper target (DN only)
+    [dimensionless].
+    """
+
+    f_hfs_upper_target: float = 0
+    """
+    Fraction of SOL power deposited on the HFS upper target (DN only)
+    [dimensionless].
+    """

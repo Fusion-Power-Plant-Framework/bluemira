@@ -30,7 +30,6 @@ from numba.types import CPointer, float64, intc
 from scipy import LowLevelCallable
 from scipy.integrate import IntegrationWarning, nquad, quad
 
-from bluemira.geometry._deprecated_loop import Loop
 from bluemira.geometry.coordinates import Coordinates
 from bluemira.magnetostatics.error import (
     MagnetostaticsError,
@@ -44,7 +43,7 @@ __all__ = [
     "jit_llc7",
     "integrate",
     "n_integrate",
-    "process_loop_array",
+    "process_coords_array",
     "process_xyz_array",
 ]
 
@@ -89,29 +88,20 @@ def process_xyz_array(func):
     return wrapper
 
 
-def process_loop_array(shape):
+def process_coords_array(shape):
     """
-    Parse a Loop or array to an array.
+    Parse Coordinates or array to an array.
 
     Parameters
     ----------
-    shape: Union[np.array(N, 3), Loop]
-        The Loop or array to make into a coordinate array
+    shape: Union[np.array(N, 3), Coordinates]
+        The Coordinates or array to make into a coordinate array
 
     Returns
     -------
     shape: np.array(N, 3)
     """
-    if isinstance(shape, Loop):
-        # Convert Loop to numpy array
-        # TODO: Raise DeprecationWarning
-        shape = shape.xyz.T
-
-    elif shape.__class__.__name__ == "Loop":
-        # Deprecated.. Deprecation warning raised in old Loop class.
-        shape = shape.xyz.T
-
-    elif isinstance(shape, np.ndarray):
+    if isinstance(shape, np.ndarray):
         pass
 
     elif isinstance(shape, Coordinates):
@@ -135,8 +125,6 @@ def process_to_coordinates(shape):
     """
     if isinstance(shape, Coordinates):
         return shape
-    elif isinstance(shape, Loop) or shape.__class__.__name__ == "Loop":
-        return Coordinates(shape.xyz)
     else:
         return Coordinates(shape)
 

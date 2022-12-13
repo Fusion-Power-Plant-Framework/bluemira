@@ -21,24 +21,60 @@
 """Base classes for solvers using external codes."""
 
 import abc
-from typing import Any, Callable, Dict, List, Optional, Union
+import enum
+from typing import Any, Callable, Dict, List, Optional, Type, Union
 
 from bluemira.base.constants import raw_uc
 from bluemira.base.look_and_feel import bluemira_warn
-from bluemira.base.parameter import ParameterFrame
-from bluemira.base.solver import SolverABC, Task
 from bluemira.codes.error import CodesError
-from bluemira.codes.utilities import get_recv_mapping, get_send_mapping, run_subprocess
+from bluemira.codes.params import MappedParameterFrame
+from bluemira.codes.utilities import run_subprocess
 
 
-class CodesTask(Task):
+class RunMode(enum.Enum):
+    """
+    Base enum class for defining run modes within a solver.
+
+    Note that no two enumeration's names should be case-insensitively
+    equal.
+    """
+
+    def to_string(self) -> str:
+        """
+        Convert the enum name to a string; its name in lower-case.
+        """
+        return self.name.lower()
+
+    @classmethod
+    def from_string(cls, mode_str: str):
+        """
+        Retrieve an enum value from a case-insensitive string.
+
+        Parameters
+        ----------
+        mode_str: str
+            The run mode's name.
+        """
+        for run_mode_str, enum_value in cls.__members__.items():
+            if run_mode_str.lower() == mode_str.lower():
+                return enum_value
+        raise ValueError(f"Unknown run mode '{mode_str}'.")
+
+
+class CodesTask(abc.ABC):
     """
     Base class for a task used by a solver for an external code.
     """
 
-    def __init__(self, params: ParameterFrame, codes_name: str) -> None:
-        super().__init__(params)
+    def __init__(self, params: MappedParameterFrame, codes_name: str) -> None:
+        super().__init__()
+        self.params = params
         self._name = codes_name
+
+    @abc.abstractmethod
+    def run(self):
+        """Run the task."""
+        pass
 
     def _run_subprocess(self, command: List[str], **kwargs):
         """
@@ -53,6 +89,19 @@ class CodesTask(Task):
             )
 
 
+class NoOpTask(CodesTask):
+    """
+    A task that does nothing.
+
+    This can be assigned to a solver to skip any of the setup, run, or
+    teardown stages.
+    """
+
+    def run(self) -> None:
+        """Do nothing."""
+        return
+
+
 class CodesSetup(CodesTask):
     """
     Base class for setup tasks of a solver for an external code.
@@ -62,7 +111,7 @@ class CodesSetup(CodesTask):
         self, remapper: Optional[Union[Callable, Dict[str, str]]] = None
     ) -> Dict[str, float]:
         """
-        Retrieve inputs values to the external code from this tasks'
+        Retrieve inputs values to the external code from this task's
         ParameterFrame.
 
         Convert the inputs' units to those used by the external code.
@@ -94,22 +143,22 @@ class CodesSetup(CodesTask):
             def remapper(x):
                 return x
 
-        send_mappings = get_send_mapping(self.params, self._name)
-        for external_key, bm_key in send_mappings.items():
-            external_key = remapper(external_key)
-            if isinstance(external_key, list):
-                for key in external_key:
-                    _inputs[key] = self._convert_units(self.params.get_param(bm_key))
+        for bm_name, mapping in self.params.mappings.items():
+            if not mapping.send:
                 continue
-
-            _inputs[external_key] = self._convert_units(self.params.get_param(bm_key))
-
+            external_name = remapper(mapping.name)
+            bm_param = getattr(self.params, bm_name)
+            target_unit = mapping.unit
+            if isinstance(external_name, list):
+                for name in external_name:
+                    _inputs[name] = self._convert_units(bm_param, target_unit)
+            else:
+                _inputs[external_name] = self._convert_units(bm_param, target_unit)
         return _inputs
 
-    def _convert_units(self, param):
-        code_unit = param.mapping[self._name].unit
-        if code_unit is not None:
-            return raw_uc(param.value, param.unit, code_unit)
+    def _convert_units(self, param, target_unit: str):
+        if target_unit is not None:
+            return raw_uc(param.value, param.unit, target_unit)
         else:
             return param.value
 
@@ -151,7 +200,7 @@ class CodesTeardown(CodesTask):
             does not exist in this object's ParameterFrame.
         """
         mapped_outputs = self._map_external_outputs_to_bluemira_params(outputs, recv_all)
-        self.params.update_kw_parameters(mapped_outputs, source=self._name)
+        self.params.update_values(mapped_outputs, source=self._name)
 
     def _map_external_outputs_to_bluemira_params(
         self, external_outputs: Dict[str, Any], recv_all: bool
@@ -172,31 +221,29 @@ class CodesTeardown(CodesTask):
 
         Returns
         -------
-        mapped_outputs: Dict[str, Dict[str, Any]]
-            The keys are bluemira parameter names and the values are a
-            dict of form '{"value": Any, "unit": str}', where the value
-            is the external code's output value, and the unit is the
-            external code's unit.
+        mapped_outputs: Dict[str, float]
+            The keys are bluemira parameter names and the values are the
+            external codes' outputs for those parameters (with necessary
+            unit conversions made).
         """
         mapped_outputs = {}
-        recv_mappings = get_recv_mapping(self.params, self._name, recv_all)
-        for external_key, bluemira_key in recv_mappings.items():
-            output_value = self._get_output_or_raise(external_outputs, external_key)
-            if output_value is None:
+        for bm_name, mapping in self.params.mappings.items():
+            if not (mapping.recv or recv_all):
                 continue
-            param_mapping = self._get_parameter_mapping_or_raise(bluemira_key)
-            if param_mapping.unit is not None:
-                mapped_outputs[bluemira_key] = {
-                    "value": output_value,
-                    "unit": param_mapping.unit,
-                }
+            output_value = self._get_output_or_raise(external_outputs, mapping.name)
+            if output_value is None or mapping.unit is None:
+                continue
+            value = raw_uc(
+                output_value, mapping.unit, getattr(self.params, bm_name).unit
+            )
+            mapped_outputs[bm_name] = value
         return mapped_outputs
 
     def _get_output_or_raise(
         self, external_outputs: Dict[str, Any], parameter_name: str
     ):
         try:
-            output_value = external_outputs[parameter_name]
+            output_value = external_outputs.get(parameter_name, None)
         except KeyError as key_error:
             raise CodesError(
                 f"No output value from code '{self._name}' found for parameter "
@@ -209,20 +256,19 @@ class CodesTeardown(CodesTask):
             )
         return output_value
 
-    def _get_parameter_mapping_or_raise(self, bluemira_param_name: str):
-        try:
-            return self.params.get_param(bluemira_param_name).mapping[self._name]
-        except AttributeError as attr_error:
-            raise CodesError(
-                f"No mapping defined between parameter '{bluemira_param_name}' and "
-                f"code '{self._name}'."
-            ) from attr_error
 
-
-class CodesSolver(SolverABC):
+class CodesSolver(abc.ABC):
     """
     Base class for solvers running an external code.
     """
+
+    params: MappedParameterFrame
+
+    def __init__(self, params: MappedParameterFrame):
+        self.params = params
+        self._setup = self.setup_cls(self.params, self.name)
+        self._run = self.run_cls(self.params, self.name)
+        self._teardown = self.teardown_cls(self.params, self.name)
 
     @abc.abstractproperty
     def name(self):
@@ -233,6 +279,64 @@ class CodesSolver(SolverABC):
         error messages for the concrete solver.
         """
         pass
+
+    @abc.abstractproperty
+    def setup_cls(self) -> Type[CodesTask]:
+        """
+        Class defining the run modes for the setup stage of the solver.
+
+        Typically, this class performs parameter mappings for some
+        external code, or derives dependent parameters. But it can also
+        define any required non-computational set up.
+        """
+        pass
+
+    @abc.abstractproperty
+    def run_cls(self) -> Type[CodesTask]:
+        """
+        Class defining the run modes for the computational stage of the
+        solver.
+
+        This class is where computations should be defined. This may be
+        something like calling a Bluemira problem, or executing some
+        external code or process.
+        """
+        pass
+
+    @abc.abstractproperty
+    def teardown_cls(self) -> Type[CodesTask]:
+        """
+        Class defining the run modes for the teardown stage of the
+        solver.
+
+        This class should perform any clean-up operations required by
+        the solver. This may be deleting temporary files, or could
+        involve mapping parameters from some external code to Bluemira
+        parameters.
+        """
+        pass
+
+    @abc.abstractproperty
+    def run_mode_cls(self) -> Type[RunMode]:
+        """
+        Class enumerating the run modes for this solver.
+
+        Common run modes are RUN, MOCK, READ, etc,.
+        """
+        pass
+
+    def execute(self, run_mode: Union[str, RunMode]) -> Any:
+        """Execute the setup, run, and teardown tasks, in order."""
+        if isinstance(run_mode, str):
+            run_mode = self.run_mode_cls.from_string(run_mode)
+        result = None
+        if setup := self._get_execution_method(self._setup, run_mode):
+            result = setup()
+        if run := self._get_execution_method(self._run, run_mode):
+            result = run(result)
+        if teardown := self._get_execution_method(self._teardown, run_mode):
+            result = teardown(result)
+        return result
 
     def modify_mappings(self, send_recv: Dict[str, Dict[str, bool]]):
         """
@@ -258,11 +362,23 @@ class CodesSolver(SolverABC):
                     "var2": {"recv": False}
                 }
         """
+        param_mappings = self.params.mappings
         for key, val in send_recv.items():
             try:
-                p_map = getattr(self.params, key).mapping[self.name]
-            except (AttributeError, KeyError):
-                bluemira_warn(f"No mapping known for {key} in {self.name}")
+                p_map = param_mappings[key]
+            except KeyError:
+                bluemira_warn(f"No mapping known for '{key}' in '{self.name}'.")
             else:
                 for sr_key, sr_val in val.items():
                     setattr(p_map, sr_key, sr_val)
+
+    def _get_execution_method(
+        self, task: CodesTask, run_mode: RunMode
+    ) -> Optional[Callable]:
+        """
+        Return the method on the task corresponding to this solver's run
+        mode (e.g., :code:`task.run`).
+
+        If the method on the task does not exist, return :code:`None`.
+        """
+        return getattr(task, run_mode.to_string(), None)

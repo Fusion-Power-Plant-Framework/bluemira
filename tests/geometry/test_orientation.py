@@ -36,14 +36,14 @@ class TestOrientation:
         )
 
         bm_wire = BluemiraWire(wire)
-        assert bm_wire._boundary[0].Orientation == wire.Orientation
-        assert bm_wire._shape.Orientation == wire.Orientation
+        assert bm_wire.boundary[0].Orientation == wire.Orientation
+        assert bm_wire.shape.Orientation == wire.Orientation
 
         wire.reverse()
 
         bm_wire = BluemiraWire(wire)
-        assert bm_wire._boundary[0].Orientation == wire.Orientation
-        assert bm_wire._shape.Orientation == wire.Orientation
+        assert bm_wire.boundary[0].Orientation == wire.Orientation
+        assert bm_wire.shape.Orientation == wire.Orientation
 
     def test_face(self):
         wire = cadapi.make_polygon(
@@ -52,12 +52,12 @@ class TestOrientation:
         face = cadapi.apiFace(wire)
         bm_face = BluemiraFace._create(face)
 
-        assert bm_face._shape.Orientation == face.Orientation
+        assert bm_face.shape.Orientation == face.Orientation
 
         face.reverse()
         bm_face = BluemiraFace._create(face)
 
-        assert bm_face._shape.Orientation == face.Orientation
+        assert bm_face.shape.Orientation == face.Orientation
 
     def test_face_with_hole(self):
         wire = cadapi.make_polygon(
@@ -67,13 +67,13 @@ class TestOrientation:
         face = cadapi.apiFace([circle, wire])
         bm_face = BluemiraFace._create(face)
 
-        assert bm_face._shape.Orientation == face.Orientation
+        assert bm_face.shape.Orientation == face.Orientation
         assert bm_face.area == face.Area
 
         face.reverse()
         bm_face = BluemiraFace._create(face)
 
-        assert bm_face._shape.Orientation == face.Orientation
+        assert bm_face.shape.Orientation == face.Orientation
         assert bm_face.area == face.Area
 
     def test_bad_wire(self):
@@ -111,7 +111,7 @@ class ExtrudeOrientation:
     def test_shapes(self, shapes_name: str):
         shapes_name = shapes_name.capitalize()
         shapes_fc = getattr(self.solid_fc, shapes_name)
-        shapes_bm = getattr(self.solid_bm._shape, shapes_name)
+        shapes_bm = getattr(self.solid_bm.shape, shapes_name)
         assert all(
             [fc.Orientation == bm.Orientation for fc, bm in zip(shapes_fc, shapes_bm)]
         )

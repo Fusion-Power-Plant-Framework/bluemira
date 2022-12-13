@@ -235,6 +235,20 @@ ax.set_title("Face plot with points")
 plt.show()
 
 # %%[markdown]
+# ## Face Plot with only Points
+#
+# Only show the wire of a face
+
+# %%
+f, ax = plt.subplots()
+fplotter = FacePlotter(plane="xz")
+fplotter.options.show_wires = True
+fplotter.options.show_faces = False
+fplotter.plot_2d(face, ax=ax, show=False)
+ax.set_title("Face plot its wire")
+plt.show()
+
+# %%[markdown]
 # ## Make a Second Face
 #
 # A second geometry is created, surrounding our original face.
@@ -366,6 +380,22 @@ c.plot_options.plane = "xz"
 c.plot_options.ndiscr = 30
 ax = c.plot_2d(show=False)
 ax.set_title("test component plot")
+plt.show(block=True)
+
+# %%[markdown]
+# ## PhysicalComponent Plot
+#
+# Creates a `PhysicalComponent` and plots only the wire and not the face.
+
+# Note that unlike the `FacePlotter` when `show_faces = False` the wire is
+# shown by default.
+
+# %%
+c = PhysicalComponent("Comp", face)
+c.plot_options.plane = "xz"
+c.plot_options.show_faces = False
+ax = c.plot_2d(show=False)
+ax.set_title("test component plot wire of face")
 plt.show(block=True)
 
 # %%[markdown]

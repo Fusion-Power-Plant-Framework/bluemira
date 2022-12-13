@@ -1,4 +1,4 @@
-[![docs](https://readthedocs.org/projects/bluemira/badge/?version=develop)](https://bluemira.readthedocs.io/en/develop) [![codecov](https://codecov.io/gh/Fusion-Power-Plant-Framework/bluemira/branch/develop/graph/badge.svg?token=BYTJ4CZ8BI)](https://codecov.io/gh/Fusion-Power-Plant-Framework/bluemira)
+[![docs](https://readthedocs.org/projects/bluemira/badge/?version=latest)](https://bluemira.readthedocs.io/en/latest) [![codecov](https://codecov.io/gh/Fusion-Power-Plant-Framework/bluemira/branch/develop/graph/badge.svg?token=BYTJ4CZ8BI)](https://codecov.io/gh/Fusion-Power-Plant-Framework/bluemira)
 
 
 # Bluemira
@@ -24,9 +24,9 @@ caused our feature roadmap to slip. A lot of functionality that was present in  
 changes in the near future. We apologise in advance for these. Please do get in touch
 before starting to use any modules, so we can warn you of changes to come.
 
-Below is an overview of our development roadmap for 2022:
+Below is an overview of our development roadmap for 2023:
 
-![bluemira-roadmap](./documentation/source/bluemira-roadmap.png)
+![bluemira-roadmap](./documentation/source/bluemira-roadmap.svg)
 
 
 ## Modules
@@ -85,7 +85,7 @@ you show professional courtesy when using this code:
    you discuss your work and results with one of the ``bluemira`` authors first so that
    we can check them. It is not necessary to list ``bluemira`` developers as co-authors.
    If one or more of the ``bluemira`` team are involved in preparing results or
-   functionality used in your work, then those members should appear as co-authors.
+   new functionality used in your work, then those members should be offered a co-authorship.
 
 3. If you use ``bluemira`` or any of its modules in your work, please help ensure that
    all the authors get the credit they deserve by citing the relevant ``bluemira``,

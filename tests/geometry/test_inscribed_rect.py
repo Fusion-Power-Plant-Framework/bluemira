@@ -23,8 +23,9 @@ import numpy as np
 import pytest
 
 from bluemira.display.plotter import PlotOptions, plot_2d
-from bluemira.geometry._deprecated_tools import in_polygon, make_circle_arc
-from bluemira.geometry.coordinates import Coordinates
+from bluemira.geometry._private_tools import make_circle_arc
+from bluemira.geometry.constants import MINIMUM_LENGTH
+from bluemira.geometry.coordinates import Coordinates, get_area, in_polygon
 from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.inscribed_rect import _rect, inscribed_rect_in_poly
 from bluemira.geometry.tools import boolean_cut, make_circle, make_polygon
@@ -56,6 +57,8 @@ class TestInscribedRectangle:
     aspectratios = np.logspace(-1, 1, num=5)
 
     po = PlotOptions(face_options={})
+
+    MIN_AREA = MINIMUM_LENGTH**2
 
     @pytest.mark.parametrize("shape, convex", zip(shapes, convex))
     def test_inscribed_rectangle(self, shape, convex):
@@ -94,9 +97,7 @@ class TestInscribedRectangle:
                                 shape_face,
                             )
                             tf = [
-                                Coordinates(
-                                    seg.discretize(byedges=True, ndiscr=50)._array
-                                )
+                                Coordinates(seg.discretize(byedges=True, ndiscr=50))
                                 for seg in tf
                             ]
                         except ValueError:
@@ -107,7 +108,7 @@ class TestInscribedRectangle:
 
                         if tf is not None:
                             # Some overlaps are points or lines of 0 area
-                            if not all([t.area == 0.0 for t in tf]):
+                            if not all([get_area(*t.xz) <= self.MIN_AREA for t in tf]):
                                 self.assertion_error_creator(
                                     "Overlap", [dx, dz, point, k, convex]
                                 )

@@ -26,17 +26,14 @@ A collection of miscellaneous tools.
 import operator
 import string
 from collections.abc import Iterable
-from functools import partial
 from importlib import import_module as imp
 from importlib import machinery as imp_mach
 from importlib import util as imp_u
 from itertools import permutations
 from json import JSONEncoder, dumps
-from json.encoder import _make_iterencode
 from os import listdir
 from types import ModuleType
 from typing import Any, Type, Union
-from unittest.mock import patch
 
 import nlopt
 import numpy as np
@@ -61,52 +58,6 @@ class NumpyJSONEncoder(JSONEncoder):
         if isinstance(obj, np.ndarray):
             return obj.tolist()
         return super().default(obj)
-
-    @staticmethod
-    def floatstr(_floatstr, obj, *args, **kwargs):
-        """
-        Awaiting python bugs:
-
-        https://github.com/python/cpython/pull/13233
-        https://bugs.python.org/issue36841
-        https://bugs.python.org/issue42434
-        https://bugs.python.org/issue31466
-        """
-        from bluemira.base.parameter import Parameter
-
-        if isinstance(obj, Parameter):
-            obj = obj.value
-        return _floatstr(obj, *args, **kwargs)
-
-    def iterencode(self, o, _one_shot=False):
-        """
-        Patch iterencode type checking
-        """
-        with patch("json.encoder._make_iterencode", new=_patcher):
-            return super().iterencode(o, _one_shot=_one_shot)
-
-
-def _patcher(markers, _default, _encoder, _indent, _floatstr, *args, **kwargs):
-    """
-    Modify the json encoder to be less strict on
-    type checking.
-    Pythons built in types (float, int) have __repr__ written in c
-    and json encoder doesn't yet allow custom type checking
-
-    For example
-    p = Parameter(var='hi', value=1, source='here')
-    repr(p) == '1' # True
-    isinstance(p, int) # True
-    int.__repr__(p) # TypeError
-
-    Currently there is a comment in the _make_iterencode function that
-    calls itself a hack therefore this is ok...
-    """
-    _floatstr = partial(NumpyJSONEncoder.floatstr, _floatstr)
-    kwargs["_intstr"] = repr
-    return _make_iterencode(
-        markers, _default, _encoder, _indent, _floatstr, *args, **kwargs
-    )
 
 
 def json_writer(data, file=None, return_output=False, *, cls=NumpyJSONEncoder, **kwargs):

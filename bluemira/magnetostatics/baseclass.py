@@ -29,7 +29,8 @@ from typing import List
 
 import numpy as np
 
-from bluemira.geometry._deprecated_tools import bounding_box, rotation_matrix
+from bluemira.geometry.bound_box import BoundingBox
+from bluemira.geometry.coordinates import rotation_matrix
 from bluemira.utilities.plot_tools import Plot3D
 
 __all__ = ["CurrentSource", "RectangularCrossSectionCurrentSource", "SourceGroup"]
@@ -177,7 +178,7 @@ class RectangularCrossSectionCurrentSource(CurrentSource):
             edge_points = np.concatenate(self.points)
 
             # Invisible bounding box to set equal aspect ratio plot
-            xbox, ybox, zbox = bounding_box(*edge_points.T)
+            xbox, ybox, zbox = BoundingBox.from_xyz(*edge_points.T).get_box_arrays()
             ax.plot(1.1 * xbox, 1.1 * ybox, 1.1 * zbox, "s", alpha=0)
 
         for points in self.points:
@@ -265,7 +266,7 @@ class SourceGroup(ABC):
             ax = Plot3D()
 
         # Invisible bounding box to set equal aspect ratio plot
-        xbox, ybox, zbox = bounding_box(*self.points.T)
+        xbox, ybox, zbox = BoundingBox.from_xyz(*self.points.T).get_box_arrays()
         ax.plot(1.1 * xbox, 1.1 * ybox, 1.1 * zbox, "s", alpha=0)
 
         for source in self.sources:

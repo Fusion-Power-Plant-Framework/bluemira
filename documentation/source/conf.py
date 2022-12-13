@@ -90,7 +90,12 @@ html_theme_options = {
 
 html_css_files = ["css/custom.css"]
 
+_html_version = release.split("+")[0]
+
+html_title = f"bluemira {_html_version} documentation"
+
 numfig = True
+
 
 # --- Configuration for sphinx-autoapi ---
 extensions.append("sphinx.ext.inheritance_diagram")
@@ -98,15 +103,20 @@ extensions.append("autoapi.extension")
 
 autoapi_type = "python"
 autoapi_dirs = ["../../bluemira"]
-autoapi_keep_files = False
+autoapi_keep_files = True
 autoapi_options = [
     "members",
     "undoc-members",
+    "private-members",
     "show-inheritance",
     "show-inheritance-diagram",
     "show-module-summary",
     "special-members",
 ]
+
+# --- Configuration for graphviz ---
+extensions.append("sphinx.ext.graphviz")
+graphviz_output_format = "svg"
 
 
 class ParamsDirective(Directive):
@@ -160,20 +170,56 @@ class SkipAlreadyDocumented:
     """
 
     def __init__(self):
-        lis = [
+        skip_list = [
             "bluemira.codes.process.api.ENABLED",
             "bluemira.codes.process.api.PROCESS_DICT",
+            "bluemira.codes._nlopt_api.NLOPTOptimiser._opt_inputs_ready",
         ]
 
-        self.dict = {i: 0 for i in lis}
+        self.skip_dict = {i: 0 for i in skip_list}
 
     def __call__(self, app, what, name, obj, skip, options):
         """autoapi-skip-member definition"""
-        if name in self.dict:
+        if name in self.skip_dict:
             # Skip first occurrence
-            if self.dict[name] < 1:
+            if self.skip_dict[name] < 1:
                 skip = True
-            else:
-                skip = False
-            self.dict[name] += 1
+            self.skip_dict[name] += 1
         return skip
+
+
+# autoapi inheritance diagram hack
+import sphinx.ext.inheritance_diagram as inheritance_diagram  # noqa: E402
+
+_old_html_visit_inheritance_diagram = inheritance_diagram.html_visit_inheritance_diagram
+
+
+def html_visit_inheritance_diagram(self, node):
+    """
+    Hacks the uri of the inheritance diagram if its an autoapi diagram
+
+    By default the refuri link is to ../../<expected file>.html whereas
+    the actual file lives at autoapi/bluemira/<expected file>.html.
+
+    refuri is used for parent classes outside of the current file.
+
+    The original function appends a further ../ to the refuri which has the
+    effect of returning to the root directory of the built documentation.
+
+    I havent found a method to set the default expected path and it seems to
+    be a slight incompatibility between autoapi and inheritance-diagram
+
+    This replaces the wrong path with a corrected path to the autoapi folder,
+    otherwise we get 404 links from the diagram links.
+    """
+    current_filename = self.builder.current_docname + self.builder.out_suffix
+    if "autoapi" in current_filename:
+        for n in node:
+            refuri = n.get("refuri")
+            if refuri is not None:
+                n["refuri"] = f"autoapi/bluemira/{refuri[6:]}"
+
+    return _old_html_visit_inheritance_diagram(self, node)
+
+
+inheritance_diagram.html_visit_inheritance_diagram = html_visit_inheritance_diagram

@@ -72,6 +72,23 @@ class EquilibriumModel(Model):
     Ip_sawtooth = 2
 
 
+class SafetyProfileModel(Model):
+    """
+    Safety Factor Profile Model Selector
+
+    0 - PLASMOD allows q < 1 in the core (fully relaxed q profile)
+    1 - PLASMOD clamps q >= 1 in the core (sawteeth forced)
+
+    Plasmod variable name: isawt
+
+    NOTE: Running with 1 means that p' and FF' will not correspond well
+    with jpar.
+    """
+
+    FULLY_RELAXED = 0
+    SAWTEETH = 1
+
+
 class PedestalModel(Model):
     """
     Pedestal Model Selector
@@ -138,10 +155,10 @@ class Profiles(Model):
     jbs     [A/m²] Bootstrap parallel current density profile
     jcd     [A/m²] CD parallel current density profile
     nions   [10¹⁹/m³] ion density profile
-    nfuel   [10¹⁹/m3] fuel density profile
-    ndeut   [10¹⁹/m3] deuterium density profile
-    ntrit   [10¹⁹/m3] tritium density profile
-    nalf    [10¹⁹/m3] helium density profile
+    nfuel   [10¹⁹/m³] fuel density profile
+    ndeut   [10¹⁹/m³] deuterium density profile
+    ntrit   [10¹⁹/m³] tritium density profile
+    nalf    [10¹⁹/m³] helium density profile
 
     Not yet enabled in plasmod:
      * qrad   radiation density profile
@@ -213,9 +230,6 @@ PLASMOD_INPUTS = {
     # ###### "BM_INP": ("capA", "dimensionless"),
     # [-] diagnostics for ASTRA (0 or 1)
     # ###### "BM_INP": ("i_diagz", "dimensionless"),
-    # [-] sawtooth correction of q
-    # (fix q = 1 if q below 1)
-    # ###### "BM_INP": ("isawt, "dimensionless")",
     # [-] number of interpolated grid points
     # ###### "BM_INP": ("nx", "dimensionless"),
     # [-] number of reduced grid points
@@ -287,9 +301,9 @@ PLASMOD_INPUTS = {
     # ###### "BM_INP": ("pradpos", # TODO
     # [-] radiation fraction used for core transport
     # ###### "BM_INP": ("pradfrac", "dimensionless"),
-    # [MW*T/m] Divertor challenging criterion Psep * Bt / (q95 * A R0)
+    # [MW*T/m] Divertor challenge criterion Psep * Bt / (q95 * A * R_0)
     # if PsepBt_qAR > PsepBt_qAR_max seed Xenon
-    # ###### "BM_INP": ("psepb_q95AR_sup", "MW.T/m"),
+    "PsepB_qAR_max": ("psepb_q95AR_sup", "MW.T/m"),
     # [MW/m] Divertor challenging criterion Psep / R0
     # if Psep/R0 > Psep_R0_max seed Xenon
     # ###### "BM_INP": ("psep_r_sup" "MW/m"),

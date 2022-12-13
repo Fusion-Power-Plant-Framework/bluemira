@@ -23,11 +23,11 @@ Defines the 'Teardown' stage for the plasmod solver.
 """
 
 from bluemira.base.look_and_feel import bluemira_debug
-from bluemira.base.parameter import ParameterFrame
 from bluemira.codes.error import CodesError
 from bluemira.codes.interface import CodesTeardown
 from bluemira.codes.plasmod.api._outputs import PlasmodOutputs
 from bluemira.codes.plasmod.constants import NAME as PLASMOD_NAME
+from bluemira.codes.plasmod.params import PlasmodSolverParams
 
 
 class Teardown(CodesTeardown):
@@ -49,7 +49,11 @@ class Teardown(CodesTeardown):
         The path to the plasmod profiles file.
     """
 
-    def __init__(self, params: ParameterFrame, output_file: str, profiles_file: str):
+    params: PlasmodSolverParams
+
+    def __init__(
+        self, params: PlasmodSolverParams, output_file: str, profiles_file: str
+    ):
         super().__init__(params, PLASMOD_NAME)
         self.outputs = PlasmodOutputs()
         self.output_file = output_file
@@ -95,12 +99,19 @@ class Teardown(CodesTeardown):
         """
         Check the returned exit code of plasmod.
 
-        1: PLASMOD converged successfully
-        -1: Max number of iterations achieved
-            (equilibrium oscillating, pressure too high, reduce H)
-            0: transport solver crashed (abnormal parameters
-            or too large dtmin and/or dtmin
-        -2: Equilibrium solver crashed: too high pressure
+        1: PLASMOD converged successfully:
+
+        -1: Max number of iterations achieved:
+
+            Equilibrium oscillating, pressure too high, reduce H
+
+        0: transport solver crashed:
+
+            Abnormal parameters or too large dtmin and/or dtmin
+
+        -2: Equilibrium solver crashed:
+
+            Pressure too high
 
         Raises
         ------

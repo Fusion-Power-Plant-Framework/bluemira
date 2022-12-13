@@ -552,7 +552,7 @@ class BetaIpProfile(Profile):
             lcfs, _ = find_LCFS_separatrix(
                 x, z, psi, o_points=o_points, x_points=x_points
             )
-            v_plasma = revolved_volume(*lcfs.d2)
+            v_plasma = revolved_volume(*lcfs.xz)
             Bp = MU_0 * self.I_p / lcfs.length
             p_avg = volume_integral(pfunc, x, self.dx, self.dz) / v_plasma
             beta_p_actual = 2 * MU_0 * p_avg / Bp**2
@@ -698,14 +698,13 @@ class CustomProfile(Profile):
         """
         Initialises a CustomProfile object from an eqdsk file
         """
-        eqdsk = EQDSKInterface()
-        e = eqdsk.read(filename)
+        e = EQDSKInterface.from_file(filename)
         return cls(
-            e["pprime"],
-            e["ffprime"],
-            R_0=e["xcentre"],
-            B_0=abs(e["bcentre"]),
-            p_func=e["pressure"],
-            f_func=e["fpol"],
-            I_p=abs(e["cplasma"]),
+            e.pprime,
+            e.ffprime,
+            R_0=e.xcentre,
+            B_0=abs(e.bcentre),
+            p_func=e.pressure,
+            f_func=e.fpol,
+            I_p=abs(e.cplasma),
         )

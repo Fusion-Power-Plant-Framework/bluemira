@@ -18,122 +18,105 @@
 #
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
-
 """
-Built-in build steps for making a parameterised plasma
+Plasma builder.
 """
 
-from typing import Dict, Type
+from typing import Dict
 
-from bluemira.base.builder import BuildConfig
+from bluemira.base.builder import Builder, ComponentManager
 from bluemira.base.components import Component, PhysicalComponent
-from bluemira.builders.shapes import ParameterisedShapeBuilder
 from bluemira.display.palettes import BLUE_PALETTE
 from bluemira.geometry.face import BluemiraFace
-from bluemira.geometry.parameterisations import GeometryParameterisation
 from bluemira.geometry.tools import make_circle, revolve_shape
 from bluemira.geometry.wire import BluemiraWire
 
 
-class MakeParameterisedPlasma(ParameterisedShapeBuilder):
+class Plasma(ComponentManager):
     """
-    A class that builds a plasma based on a parameterised shape
+    Wrapper around a plasma component tree.
     """
 
-    _param_class: Type[GeometryParameterisation]
-    _variables_map: Dict[str, str]
-    _label: str
-    _boundary: BluemiraWire
+    def lcfs(self) -> BluemiraWire:
+        """Return a wire representing the last-closed flux surface."""
+        return (
+            self.component()
+            .get_component("xz")
+            .get_component(PlasmaBuilder.LCFS)
+            .shape.boundary[0]
+        )
 
-    def _extract_config(self, build_config: BuildConfig):
-        super()._extract_config(build_config)
 
-        self._label = build_config.get("label", "LCFS")
+class PlasmaBuilder(Builder):
+    """
+    Builder for a poloidally symmetric plasma.
+    """
 
-    def reinitialise(self, params):
+    LCFS = "LCFS"
+
+    # This builder has no parameters
+    param_cls = None
+
+    def __init__(
+        self,
+        build_config: Dict,
+        xz_lcfs: BluemiraWire,
+    ):
+        super().__init__(None, build_config)
+        self.xz_lcfs = xz_lcfs
+
+    def build(self) -> Component:
         """
-        Create the GeometryParameterisation from the provided param_class and
-        variables_map and extract the resulting shape as the plasma boundary.
+        Build the plasma component.
+        """
+        return self.component_tree(
+            xz=[self.build_xz(self.xz_lcfs)],
+            xy=[self.build_xy(self.xz_lcfs)],
+            xyz=[self.build_xyz(self.xz_lcfs)],
+        )
+
+    def build_xz(self, lcfs: BluemiraWire) -> PhysicalComponent:
+        """
+        Build the x-z components of the plasma.
 
         Parameters
         ----------
-        params: Dict[str, Any]
-            The parameterisation containing at least the required params for this
-            Builder.
+        lcfs: BluemiraWire
+            LCFS wire
         """
-        super().reinitialise(params)
-
-        self._boundary = self._shape.create_shape()
-
-    def build(self):
-        """
-        Build a plasma with a boundary shape defined by the parameterisation.
-        """
-        component = super().build()
-
-        component.add_child(self.build_xz())
-        component.add_child(self.build_xy())
-        component.add_child(self.build_xyz())
-
+        face = BluemiraFace(lcfs, self.name)
+        component = PhysicalComponent(self.LCFS, face)
+        component.plot_options.face_options["color"] = BLUE_PALETTE["PL"]
         return component
 
-    def build_xz(self) -> Component:
+    def build_xy(self, lcfs: BluemiraWire) -> PhysicalComponent:
         """
-        Build a PhysicalComponent with a BluemiraFace using the provided plasma boundary
-        in the xz plane.
-
-        Returns
-        -------
-        result: Component
-            The resulting component representing the xz view of the Plasma.
-        """
-        face = BluemiraFace(self._boundary, self._label)
-        component = PhysicalComponent(self._label, face)
-        component.plot_options.face_options["color"] = BLUE_PALETTE["PL"]
-
-        return Component("xz").add_child(component)
-
-    def build_xy(self) -> Component:
-        """
-        Build a PhysicalComponent with a BluemiraFace using the plasma boundary in the
-        xy plane.
-
-        The projection onto the xy plane is taken as the ring bound by the maximum and
-        minimum values of the boundary in the radial direction.
-
-        Returns
-        -------
-        result: PhysicalComponent
-            The resulting component representing the xy view of the Plasma.
-        """
-        inner = make_circle(self._boundary.bounding_box.x_min, axis=[0, 1, 0])
-        outer = make_circle(self._boundary.bounding_box.x_max, axis=[0, 1, 0])
-
-        face = BluemiraFace([outer, inner], self._label)
-        component = PhysicalComponent(self._label, face)
-        component.plot_options.face_options["color"] = BLUE_PALETTE["PL"]
-
-        return Component("xy").add_child(component)
-
-    def build_xyz(self, degree: float = 360.0) -> PhysicalComponent:
-        """
-        Build a PhysicalComponent with a BluemiraShell using the plasma boundary in 3D.
-
-        The 3D shell is created by revolving the boundary through the angle provided
-        through the degree parameter.
+        Build the x-y components of the plasma.
 
         Parameters
         ----------
-        degree: float
-            The angle [°] around which to revolve the 3D geometry, by default 360.0.
-
-        Returns
-        -------
-        result: PhysicalComponent
-            The resulting component.
+        lcfs: BluemiraWire
+            LCFS wire
         """
-        shell = revolve_shape(self._boundary, direction=(0, 0, 1), degree=degree)
-        component = PhysicalComponent(self._label, shell)
-        component.display_cad_options.color = BLUE_PALETTE["PL"]
+        inner = make_circle(lcfs.bounding_box.x_min, axis=[0, 1, 0])
+        outer = make_circle(lcfs.bounding_box.x_max, axis=[0, 1, 0])
+        face = BluemiraFace([outer, inner], self.name)
+        component = PhysicalComponent(self.LCFS, face)
+        component.plot_options.face_options["color"] = BLUE_PALETTE["PL"]
+        return component
 
-        return Component("xyz").add_child(component)
+    def build_xyz(self, lcfs: BluemiraWire, degree: float = 360.0) -> PhysicalComponent:
+        """
+        Build the x-y-z components of the plasma.
+
+        Parameters
+        ----------
+        lcfs: BluemiraWire
+            LCFS wire
+        degree: float
+            degrees to sweep the shape
+        """
+        shell = revolve_shape(lcfs, direction=(0, 0, 1), degree=degree)
+        component = PhysicalComponent(self.LCFS, shell)
+        component.display_cad_options.color = BLUE_PALETTE["PL"]
+        return component

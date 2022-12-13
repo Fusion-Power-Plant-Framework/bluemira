@@ -20,6 +20,7 @@
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 
 import os
+from copy import deepcopy
 
 import numpy as np
 import pytest
@@ -36,7 +37,7 @@ from bluemira.equilibria.flux_surfaces import (
     poloidal_angle,
 )
 from bluemira.equilibria.shapes import flux_surface_cunningham, flux_surface_johner
-from bluemira.geometry._deprecated_loop import Loop
+from bluemira.geometry.coordinates import Coordinates, interpolate_points
 
 TEST_PATH = get_bluemira_path("equilibria/test_data", subfolder="tests")
 
@@ -49,11 +50,11 @@ class TestOpenFluxSurfaceStuff:
         cls.eq = Equilibrium.from_eqdsk(filename)
 
     def test_bad_geometry(self):
-        closed_loop = Loop(x=[0, 4, 5, 8, 0], z=[1, 2, 3, 4, 1])
+        closed_coords = Coordinates({"x": [0, 4, 5, 8, 0], "z": [1, 2, 3, 4, 1]})
         with pytest.raises(FluxSurfaceError):
-            _ = OpenFluxSurface(closed_loop)
+            _ = OpenFluxSurface(closed_coords)
         with pytest.raises(FluxSurfaceError):
-            _ = PartialOpenFluxSurface(closed_loop)
+            _ = PartialOpenFluxSurface(closed_coords)
 
     def test_connection_length(self):
         """
@@ -69,20 +70,20 @@ class TestOpenFluxSurfaceStuff:
             z_start,
             self.eq.psi(x_start, z_start),
         )
-        fs = OpenFluxSurface(Loop(x=x_loop, z=z_loop))
+        fs = OpenFluxSurface(Coordinates({"x": x_loop, "z": z_loop}))
         lfs, hfs = fs.split(self.eq.get_OX_points()[0][0])
         l_lfs = lfs.connection_length(self.eq)
         l_hfs = hfs.connection_length(self.eq)
 
         # test discretisation sensitivity
-        lfs_loop = lfs.loop.copy()
-        lfs_loop.interpolate(3 * len(lfs_loop))
+        lfs_loop = deepcopy(lfs.coords)
+        lfs_loop = Coordinates(interpolate_points(*lfs_loop.xyz, 3 * len(lfs_loop)))
         lfs_interp = PartialOpenFluxSurface(lfs_loop)
         l_lfs_interp = lfs_interp.connection_length(self.eq)
         assert np.isclose(l_lfs, l_lfs_interp, rtol=5e-3)
 
-        hfs_loop = hfs.loop.copy()
-        hfs_loop.interpolate(3 * len(hfs_loop))
+        hfs_loop = deepcopy(hfs.coords)
+        hfs_loop = Coordinates(interpolate_points(*hfs_loop.xyz, 3 * len(hfs_loop)))
         hfs_interp = PartialOpenFluxSurface(hfs_loop)
         l_hfs_interp = hfs_interp.connection_length(self.eq)
         assert np.isclose(l_hfs, l_hfs_interp, rtol=5e-3)
@@ -93,14 +94,14 @@ class TestOpenFluxSurfaceStuff:
         l_flt_hfs = flt.trace_field_line(
             x_start, z_start, n_turns_max=20, forward=False
         ).connection_length
-        print(len(l_flt_lfs.loop))
+        print(len(l_flt_lfs.coords))
         assert np.isclose(l_flt_lfs.connection_length, l_lfs, rtol=2e-2)
         assert np.isclose(l_flt_hfs, l_hfs, rtol=2e-2)
 
 
 class TestClosedFluxSurface:
     def test_bad_geometry(self):
-        open_loop = Loop(x=[0, 4, 5, 8], z=[1, 2, 3, 4])
+        open_loop = Coordinates({"x": [0, 4, 5, 8], "z": [1, 2, 3, 4]})
         with pytest.raises(FluxSurfaceError):
             _ = ClosedFluxSurface(open_loop)
 
@@ -126,16 +127,17 @@ class TestClosedFluxSurface:
             1.6,
             0.4,
             0.33,
-            -20,
-            5,
-            60,
+            0,
+            0,
+            45,
             30,
         )
         fs = flux_surface_johner(
-            7, 0, 2, kappa_u, kappa_l, delta_u, delta_l, a1, a2, a3, a4, n=1000
+            R_0, z_0, a, kappa_u, kappa_l, delta_u, delta_l, a1, a2, a3, a4, n=1000
         )
         fs.close()
         fs = ClosedFluxSurface(fs)
+
         assert np.isclose(fs.major_radius, R_0)
         assert np.isclose(fs._z_centre, z_0)
         assert np.isclose(fs.minor_radius, a)
@@ -159,7 +161,7 @@ class TestFieldLine:
         flt = FieldLineTracer(self.eq)
         field_line = flt.trace_field_line(13, 0, n_points=1000)
         assert np.isclose(
-            field_line.connection_length, field_line.loop.length, rtol=5e-2
+            field_line.connection_length, field_line.coords.length, rtol=5e-2
         )
 
 

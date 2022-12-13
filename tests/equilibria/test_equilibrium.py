@@ -267,14 +267,13 @@ class TestQBenchmark:
     @classmethod
     def setup_class(cls):
         root = try_get_bluemira_private_data_root()
-        path = os.sep.join([root, "equilibria", "STEP_SPR_08"])
+        path = os.path.join(root, "equilibria", "STEP_SPR_08")
         jetto_file = "SPR-008_3_Inputs_jetto.eqdsk_out"
-        jetto_file = os.sep.join([path, jetto_file])
-        reader = EQDSKInterface()
-        jetto = reader.read(jetto_file)
-        cls.q_ref = jetto["qpsi"]
+        jetto_file = os.path.join(path, jetto_file)
+        jetto = EQDSKInterface.from_file(jetto_file)
+        cls.q_ref = jetto.qpsi
         eq_file = "SPR-008_3_Outputs_STEP_eqref.eqdsk"
-        eq_file = os.sep.join([path, eq_file])
+        eq_file = os.path.join(path, eq_file)
         cls.eq = Equilibrium.from_eqdsk(eq_file)
 
     def test_q_benchmark(self):

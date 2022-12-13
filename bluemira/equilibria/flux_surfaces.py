@@ -38,15 +38,16 @@ from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.equilibria.constants import PSI_NORM_TOL
 from bluemira.equilibria.error import FluxSurfaceError
 from bluemira.equilibria.find import find_flux_surface_through_point
-from bluemira.geometry._deprecated_base import Plane
-from bluemira.geometry._deprecated_loop import Loop
-from bluemira.geometry._deprecated_tools import (
+from bluemira.geometry.coordinates import (
+    Coordinates,
     check_linesegment,
+    coords_plane_intersect,
     get_angle_between_points,
+    get_area_2d,
     get_intersect,
     join_intersect,
-    loop_plane_intersect,
 )
+from bluemira.geometry.plane import BluemiraPlane
 
 
 @nb.jit(nopython=True, cache=True)
@@ -63,45 +64,45 @@ class FluxSurface:
 
     Parameters
     ----------
-    geometry: Loop
+    geometry: Coordinates
         Flux surface geometry object
     """
 
-    __slots__ = "loop"
+    __slots__ = "coords"
 
     def __init__(self, geometry):
-        self.loop = geometry
+        self.coords = geometry
 
     @property
     def x_start(self):
         """
         Start radial coordinate of the FluxSurface.
         """
-        return self.loop.x[0]
+        return self.coords.x[0]
 
     @property
     def z_start(self):
         """
         Start vertical coordinate of the FluxSurface.
         """
-        return self.loop.z[0]
+        return self.coords.z[0]
 
     @property
     def x_end(self):
         """
         End radial coordinate of the FluxSurface.
         """
-        return self.loop.x[-1]
+        return self.coords.x[-1]
 
     @property
     def z_end(self):
         """
         End vertical coordinate of the FluxSurface.
         """
-        return self.loop.z[-1]
+        return self.coords.z[-1]
 
     def _dl(self, eq):
-        x, z = self.loop.x, self.loop.z
+        x, z = self.coords.x, self.coords.z
         Bp = eq.Bp(x, z)
         Bt = eq.Bt(x)
         return _flux_surface_dl(x, z, np.diff(x), np.diff(z), Bp, Bt)
@@ -133,7 +134,7 @@ class FluxSurface:
         kwargs["linewidth"] = kwargs.get("linewidth", 0.05)
         kwargs["color"] = kwargs.get("color", "r")
 
-        self.loop.plot(ax, **kwargs)
+        self.coords.plot(ax, **kwargs)
 
     def copy(self):
         """
@@ -155,17 +156,17 @@ class ClosedFluxSurface(FluxSurface):
                 "Cannot make a ClosedFluxSurface from an open geometry."
             )
         super().__init__(geometry)
-        i_p1 = np.argmax(self.loop.x)
-        i_p2 = np.argmax(self.loop.z)
-        i_p3 = np.argmin(self.loop.x)
-        i_p4 = np.argmin(self.loop.z)
-        self._p1 = (self.loop.x[i_p1], self.loop.z[i_p1])
-        self._p2 = (self.loop.x[i_p2], self.loop.z[i_p2])
-        self._p3 = (self.loop.x[i_p3], self.loop.z[i_p3])
-        self._p4 = (self.loop.x[i_p4], self.loop.z[i_p4])
+        i_p1 = np.argmax(self.coords.x)
+        i_p2 = np.argmax(self.coords.z)
+        i_p3 = np.argmin(self.coords.x)
+        i_p4 = np.argmin(self.coords.z)
+        self._p1 = (self.coords.x[i_p1], self.coords.z[i_p1])
+        self._p2 = (self.coords.x[i_p2], self.coords.z[i_p2])
+        self._p3 = (self.coords.x[i_p3], self.coords.z[i_p3])
+        self._p4 = (self.coords.x[i_p4], self.coords.z[i_p4])
 
         # Still debatable what convention to follow...
-        self._z_centre = 0.5 * (self.loop.z[i_p1] + self.loop.z[i_p3])
+        self._z_centre = 0.5 * (self.coords.z[i_p1] + self.coords.z[i_p3])
 
     @property
     @lru_cache(1)
@@ -173,7 +174,7 @@ class ClosedFluxSurface(FluxSurface):
         """
         Major radius of the ClosedFluxSurface.
         """
-        return np.min(self.loop.x) + self.minor_radius
+        return np.min(self.coords.x) + self.minor_radius
 
     @property
     @lru_cache(1)
@@ -181,7 +182,7 @@ class ClosedFluxSurface(FluxSurface):
         """
         Minor radius of the ClosedFluxSurface.
         """
-        return 0.5 * (np.max(self.loop.x) - np.min(self.loop.x))
+        return 0.5 * (np.max(self.coords.x) - np.min(self.coords.x))
 
     @property
     @lru_cache(1)
@@ -197,7 +198,7 @@ class ClosedFluxSurface(FluxSurface):
         """
         Average elongation of the ClosedFluxSurface.
         """
-        return 0.5 * (np.max(self.loop.z) - np.min(self.loop.z)) / self.minor_radius
+        return 0.5 * (np.max(self.coords.z) - np.min(self.coords.z)) / self.minor_radius
 
     @property
     @lru_cache(1)
@@ -205,7 +206,7 @@ class ClosedFluxSurface(FluxSurface):
         """
         Upper elongation of the ClosedFluxSurface.
         """
-        return (np.max(self.loop.z) - self._z_centre) / self.minor_radius
+        return (np.max(self.coords.z) - self._z_centre) / self.minor_radius
 
     @property
     @lru_cache(1)
@@ -213,7 +214,7 @@ class ClosedFluxSurface(FluxSurface):
         """
         Lower elongation of the ClosedFluxSurface.
         """
-        return abs(np.min(self.loop.z) - self._z_centre) / self.minor_radius
+        return abs(np.min(self.coords.z) - self._z_centre) / self.minor_radius
 
     @property
     @lru_cache(1)
@@ -253,12 +254,12 @@ class ClosedFluxSurface(FluxSurface):
         """
         Outer upper squareness of the ClosedFluxSurface.
         """
-        z_max = np.max(self.loop.z)
-        arg_z_max = np.argmax(self.loop.z)
-        x_z_max = self.loop.x[arg_z_max]
-        x_max = np.max(self.loop.x)
-        arg_x_max = np.argmax(self.loop.x)
-        z_x_max = self.loop.z[arg_x_max]
+        z_max = np.max(self.coords.z)
+        arg_z_max = np.argmax(self.coords.z)
+        x_z_max = self.coords.x[arg_z_max]
+        x_max = np.max(self.coords.x)
+        arg_x_max = np.argmax(self.coords.x)
+        z_x_max = self.coords.z[arg_x_max]
 
         a = z_max - z_x_max
         b = x_max - x_z_max
@@ -270,12 +271,12 @@ class ClosedFluxSurface(FluxSurface):
         """
         Outer lower squareness of the ClosedFluxSurface.
         """
-        z_min = np.min(self.loop.z)
-        arg_z_min = np.argmin(self.loop.z)
-        x_z_min = self.loop.x[arg_z_min]
-        x_max = np.max(self.loop.x)
-        arg_x_max = np.argmax(self.loop.x)
-        z_x_max = self.loop.z[arg_x_max]
+        z_min = np.min(self.coords.z)
+        arg_z_min = np.argmin(self.coords.z)
+        x_z_min = self.coords.x[arg_z_min]
+        x_max = np.max(self.coords.x)
+        arg_x_max = np.argmax(self.coords.x)
+        z_x_max = self.coords.z[arg_x_max]
 
         a = z_min - z_x_max
         b = x_max - x_z_min
@@ -293,8 +294,8 @@ class ClosedFluxSurface(FluxSurface):
         xc = xa + b * np.sqrt(0.5)
         zc = za + a * np.sqrt(0.5)
 
-        line = Loop([xa, xd], z=[za, zd])
-        xb, zb = get_intersect(self.loop, line)
+        line = Coordinates({"x": [xa, xd], "z": [za, zd]})
+        xb, zb = get_intersect(self.coords.xz, line.xz)
         d_ab = np.hypot(xb - xa, zb - za)
         d_ac = np.hypot(xc - xa, zc - za)
         d_cd = np.hypot(xd - xc, zd - zc)
@@ -306,7 +307,7 @@ class ClosedFluxSurface(FluxSurface):
         """
         Enclosed area of the ClosedFluxSurface.
         """
-        return self.loop.area
+        return get_area_2d(*self.coords.xz)
 
     @property
     @lru_cache(1)
@@ -314,7 +315,7 @@ class ClosedFluxSurface(FluxSurface):
         """
         Volume of the ClosedFluxSurface.
         """
-        return 2 * np.pi * self.loop.area * self.loop.centroid[0]
+        return 2 * np.pi * self.area * self.coords.center_of_mass[0]
 
     def shafranov_shift(self, eq):
         """
@@ -350,7 +351,7 @@ class ClosedFluxSurface(FluxSurface):
         q: float
             Cylindrical safety factor of the closed flux surface
         """
-        x, z = self.loop.x, self.loop.z
+        x, z = self.coords.x, self.coords.z
         dx, dz = np.diff(x), np.diff(z)
         x = x[:-1] + 0.5 * dx  # Segment centre-points
         z = z[:-1] + 0.5 * dz
@@ -367,12 +368,12 @@ class OpenFluxSurface(FluxSurface):
 
     __slots__ = ()
 
-    def __init__(self, loop):
-        if loop.closed:
+    def __init__(self, coords):
+        if coords.closed:
             raise FluxSurfaceError(
                 "OpenFluxSurface cannot be made from a closed geometry."
             )
-        super().__init__(loop)
+        super().__init__(coords)
 
     def split(self, o_point, plane=None):
         """
@@ -394,20 +395,20 @@ class OpenFluxSurface(FluxSurface):
             The downwards and upwards open flux surfaces from the splitting point
         """
 
-        def reset_direction(loop):
-            if loop.argmin([x_mp, z_mp]) != 0:
-                loop.reverse()
-            return loop
+        def reset_direction(coords):
+            if coords.argmin([x_mp, 0, z_mp]) != 0:
+                coords.reverse()
+            return coords
 
         if plane is None:
-            plane = Plane(
+            plane = BluemiraPlane.from_3_points(
                 [o_point.x, 0, o_point.z],
                 [o_point.x + 1, 0, o_point.z],
                 [o_point.x, 1, o_point.z],
             )
 
-        ref_loop = self.loop.copy()
-        intersections = loop_plane_intersect(ref_loop, plane)
+        ref_coords = deepcopy(self.coords)
+        intersections = coords_plane_intersect(ref_coords, plane)
         x_inter = intersections.T[0]
 
         # Pick the first intersection, travelling from the o_point outwards
@@ -419,25 +420,25 @@ class OpenFluxSurface(FluxSurface):
         # Split the flux surface geometry into LFS and HFS geometries
 
         delta = 1e-1 if o_point.x < x_mp else -1e-1
-        radial_line = Loop(x=[o_point.x, x_mp + delta], z=[z_mp, z_mp])
-        # Add the intersection point to the loop
-        arg_inter = join_intersect(ref_loop, radial_line, get_arg=True)[0]
+        radial_line = Coordinates({"x": [o_point.x, x_mp + delta], "z": [z_mp, z_mp]})
+        # Add the intersection point to the Coordinates
+        arg_inter = join_intersect(ref_coords, radial_line, get_arg=True)[0]
 
         # Split the flux surface geometry
-        loop1 = Loop.from_array(ref_loop[: arg_inter + 1])
-        loop2 = Loop.from_array(ref_loop[arg_inter:])
+        coords1 = Coordinates(ref_coords[:, : arg_inter + 1])
+        coords2 = Coordinates(ref_coords[:, arg_inter:])
 
-        loop1 = reset_direction(loop1)
-        loop2 = reset_direction(loop2)
+        coords1 = reset_direction(coords1)
+        coords2 = reset_direction(coords2)
 
         # Sort the segments into down / outboard and up / inboard geometries
-        if loop1.z[1] > z_mp:
-            lfs_loop = loop2
-            hfs_loop = loop1
+        if coords1.z[1] > z_mp:
+            lfs_coords = coords2
+            hfs_coords = coords1
         else:
-            lfs_loop = loop1
-            hfs_loop = loop2
-        return PartialOpenFluxSurface(lfs_loop), PartialOpenFluxSurface(hfs_loop)
+            lfs_coords = coords1
+            hfs_coords = coords2
+        return PartialOpenFluxSurface(lfs_coords), PartialOpenFluxSurface(hfs_coords)
 
 
 class PartialOpenFluxSurface(OpenFluxSurface):
@@ -448,8 +449,8 @@ class PartialOpenFluxSurface(OpenFluxSurface):
 
     __slots__ = ["alpha"]
 
-    def __init__(self, loop):
-        super().__init__(loop)
+    def __init__(self, coords):
+        super().__init__(coords)
 
         self.alpha = None
 
@@ -459,12 +460,12 @@ class PartialOpenFluxSurface(OpenFluxSurface):
 
         Parameters
         ----------
-        first_wall: Loop
+        first_wall: Coordinates
             The geometry of the first wall to clip the OpenFluxSurface to
         """
-        first_wall = first_wall.copy()
+        first_wall = deepcopy(first_wall)
 
-        args = join_intersect(self.loop, first_wall, get_arg=True)
+        args = join_intersect(self.coords, first_wall, get_arg=True)
 
         if not args:
             bluemira_warn(
@@ -473,24 +474,24 @@ class PartialOpenFluxSurface(OpenFluxSurface):
             self.alpha = None
             return
 
-        # Because we oriented the loop the "right" way, the first intersection
+        # Because we oriented the Coordinates the "right" way, the first intersection
         # is at the smallest argument
-        self.loop = Loop.from_array(self.loop[: min(args) + 1], enforce_ccw=False)
+        self.coords = Coordinates(self.coords[:, : min(args) + 1])
 
-        fw_arg = int(first_wall.argmin([self.x_end, self.z_end]))
+        fw_arg = int(first_wall.argmin([self.x_end, 0, self.z_end]))
 
         if fw_arg + 1 == len(first_wall):
             pass
         elif check_linesegment(
-            first_wall.d2.T[fw_arg],
-            first_wall.d2.T[fw_arg + 1],
+            first_wall.xz.T[fw_arg],
+            first_wall.xz.T[fw_arg + 1],
             np.array([self.x_end, self.z_end]),
         ):
             fw_arg = fw_arg + 1
 
         # Relying on the fact that first wall is ccw, get the intersection angle
         self.alpha = get_angle_between_points(
-            self.loop[-2], self.loop[-1], first_wall[fw_arg]
+            self.coords.points[-2], self.coords.points[-1], first_wall.points[fw_arg]
         )
 
     def flux_expansion(self, eq):
@@ -524,10 +525,10 @@ def analyse_plasma_core(eq, n_points=50):
         Results dataclass
     """
     psi_n = np.linspace(PSI_NORM_TOL, 1 - PSI_NORM_TOL, n_points, endpoint=False)
-    loops = [eq.get_flux_surface(pn) for pn in psi_n]
-    loops.append(eq.get_LCFS())
+    coords = [eq.get_flux_surface(pn) for pn in psi_n]
+    coords.append(eq.get_LCFS())
     psi_n = np.append(psi_n, 1.0)
-    flux_surfaces = [ClosedFluxSurface(loop) for loop in loops]
+    flux_surfaces = [ClosedFluxSurface(coord) for coord in coords]
     vars = ["major_radius", "minor_radius", "aspect_ratio", "area", "volume"]
     vars += [
         f"{v}{end}"
@@ -573,14 +574,14 @@ class FieldLine:
 
     Parameters
     ----------
-    loop: Loop
+    coords: Coordinates
         Geometry of the FieldLine
     connection_length: float
         Connection length of the FieldLine
     """
 
-    def __init__(self, loop, connection_length):
-        self.loop = loop
+    def __init__(self, coords, connection_length):
+        self.coords = coords
         self.connection_length = connection_length
 
     def plot(self, ax=None, **kwargs):
@@ -592,7 +593,7 @@ class FieldLine:
         ax: Optional[Axes]
             Matplotlib axes onto which to plot
         """
-        self.loop.plot(ax=ax, **kwargs)
+        self.coords.plot(ax=ax, **kwargs)
 
     def pointcare_plot(self, ax=None):
         """
@@ -606,8 +607,8 @@ class FieldLine:
         if ax is None:
             ax = plt.gca()
 
-        xz_plane = Plane([0, 0, 0], [1, 0, 0], [0, 0, 1])
-        xi, _, zi = loop_plane_intersect(self.loop, xz_plane).T
+        xz_plane = BluemiraPlane.from_3_points([0, 0, 0], [1, 0, 0], [0, 0, 1])
+        xi, _, zi = coords_plane_intersect(self.coords, xz_plane).T
         idx = np.where(xi >= 0)
         xi = xi[idx]
         zi = zi[idx]
@@ -623,7 +624,7 @@ class FieldLineTracer:
     ----------
     eq: Equilibrium
         Equilibrium in which to trace a field line
-    first_wall: Union[Grid, Loop]
+    first_wall: Union[Grid, Coordinates]
         Boundary at which to stop tracing the field line
 
     Notes
@@ -644,7 +645,7 @@ class FieldLineTracer:
 
         Parameters
         ----------
-        boundary: Union[Grid, Loop]
+        boundary: Union[Grid, Coordinates]
             Boundary at which to stop tracing the field line.
         """
 
@@ -704,8 +705,8 @@ class FieldLineTracer:
 
         x = r * np.cos(phi)
         y = r * np.sin(phi)
-        loop = Loop(x=x, y=y, z=z, enforce_ccw=False)
-        return FieldLine(loop, connection_length)
+        coords = Coordinates({"x": x, "y": y, "z": z})
+        return FieldLine(coords, connection_length)
 
     def _dxzl_dphi(self, phi, xz, forward):
         """
@@ -757,7 +758,7 @@ def calculate_connection_length_flt(
         Vertical coordinate of the starting point
     forward: bool (default = True)
         Whether or not to follow the field line forwards or backwards (+B or -B)
-    first_wall: Union[Loop, Grid]
+    first_wall: Union[Coordinates, Grid]
         Flux-intercepting surface. Defaults to the grid of the equilibrium
     n_turns_max: Union[int, float]
         Maximum number of toroidal turns to trace the field line
@@ -798,7 +799,7 @@ def calculate_connection_length_fs(eq, x, z, forward=True, first_wall=None):
         Vertical coordinate of the starting point
     forward: bool (default = True)
         Whether or not to follow the field line forwards or backwards
-    first_wall: Union[Loop, Grid]
+    first_wall: Union[Coordinates, Grid]
         Flux-intercepting surface. Defaults to the grid of the equilibrium
 
     Returns
@@ -821,10 +822,10 @@ def calculate_connection_length_fs(eq, x, z, forward=True, first_wall=None):
     if first_wall is None:
         x1, x2 = eq.grid.x_min, eq.grid.x_max
         z1, z2 = eq.grid.z_min, eq.grid.z_max
-        first_wall = Loop(x=[x1, x2, x2, x1, x1], z=[z1, z1, z2, z2, z1])
+        first_wall = Coordinates({"x": [x1, x2, x2, x1, x1], "z": [z1, z1, z2, z2, z1]})
 
     xfs, zfs = find_flux_surface_through_point(eq.x, eq.z, eq.psi(), x, z, eq.psi(x, z))
-    f_s = OpenFluxSurface(Loop(x=xfs, z=zfs))
+    f_s = OpenFluxSurface(Coordinates({"x": xfs, "z": zfs}))
 
     class Point:
         def __init__(self, x, z):

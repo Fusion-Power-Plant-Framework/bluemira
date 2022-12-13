@@ -216,7 +216,7 @@ def calc_dx_sep(eq):
         null and the next closest flux surface with a null [m]
     """
     o_points, x_points = eq.get_OX_points()
-    x, z = eq.get_LCFS().d2
+    x, z = eq.get_LCFS().xz
     lfs = np.argmax(x)
     lfp = eq.get_midplane(x[lfs], z[lfs], x_points[0].psi)
     d_x = []
@@ -235,7 +235,7 @@ def calc_volume(eq):
     """
     Calculates plasma volume [m^3]
     """
-    lcfs = eq.get_LCFS().d2
+    lcfs = eq.get_LCFS().xz
     return revolved_volume(*lcfs)
 
 
@@ -453,7 +453,7 @@ def normalise_beta(beta, a, b_tor, I_p):
     b_tor: float
         Toroidal field [T]
     I_p: float
-        Plasma current [MA]
+        Plasma current [A]
 
     Returns
     -------
@@ -478,7 +478,7 @@ def beta_N_to_beta(beta_N, a, Btor, I_p):  # noqa :N802
     b_tor: float
         Toroidal field [T]
     I_p: float
-        Plasma current [MA]
+        Plasma current [A]
 
     Returns
     -------

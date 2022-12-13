@@ -41,6 +41,7 @@ from bluemira.base.file import force_file_extension, get_bluemira_path
 from bluemira.base.look_and_feel import bluemira_debug, bluemira_warn
 from bluemira.codes import _freecadapi as cadapi
 from bluemira.geometry.base import BluemiraGeo, GeoMeshable
+from bluemira.geometry.constants import D_TOLERANCE
 from bluemira.geometry.coordinates import Coordinates
 from bluemira.geometry.error import GeometryError
 from bluemira.geometry.face import BluemiraFace
@@ -50,6 +51,7 @@ from bluemira.geometry.solid import BluemiraSolid
 from bluemira.geometry.wire import BluemiraWire
 
 
+@cadapi.catch_caderr(GeometryError)
 def convert(apiobj, label=""):
     """Convert a FreeCAD shape into the corresponding BluemiraGeo object."""
     if isinstance(apiobj, cadapi.apiWire):
@@ -495,7 +497,7 @@ def wire_closure(bmwire: BluemiraWire, label="closure") -> BluemiraWire:
         closure: BluemiraWire
             Closure wire
     """
-    wire = bmwire._shape
+    wire = bmwire.shape
     closure = BluemiraWire(cadapi.wire_closure(wire), label=label)
     return closure
 
@@ -522,7 +524,7 @@ def _offset_wire_discretised(
         If the wire is not closed. This function cannot handle the offet of an open
         wire.
     """
-    from bluemira.geometry._deprecated_offset import offset_clipper
+    from bluemira.geometry._pyclipper_offset import offset_clipper
 
     if not wire.is_closed() and not open_wire:
         wire = wire.deepcopy()
@@ -594,7 +596,7 @@ def offset_wire(
         Offset wire
     """
     return BluemiraWire(
-        cadapi.offset_wire(wire._shape, thickness, join, open_wire), label=label
+        cadapi.offset_wire(wire.shape, thickness, join, open_wire), label=label
     )
 
 
@@ -682,23 +684,23 @@ def revolve_shape(
     if degree == 360:
         # We split into two separate revolutions of 180 degree and fuse them
         if isinstance(shape, BluemiraWire):
-            shape = BluemiraFace(shape)._shape
+            shape = BluemiraFace(shape).shape
             flag_shell = True
         else:
-            shape = shape._shape
+            shape = shape.shape
             flag_shell = False
 
         shape_1 = cadapi.revolve_shape(shape, base, direction, degree=180)
         shape_2 = deepcopy(shape_1)
-        shape_2 = cadapi.rotate_shape(shape_2, base, direction, degree=180)
-        result = cadapi.boolean_fuse([shape_1, shape_2])
+        shape_2 = cadapi.rotate_shape(shape_2, base, direction, degree=-180)
+        result = cadapi.boolean_fuse([shape_1, shape_2], remove_splitter=False)
 
         if flag_shell:
             result = result.Shells[0]
 
         return convert(result, label)
 
-    return convert(cadapi.revolve_shape(shape._shape, base, direction, degree), label)
+    return convert(cadapi.revolve_shape(shape.shape, base, direction, degree), label)
 
 
 def extrude_shape(shape: BluemiraGeo, vec: tuple, label="") -> BluemiraSolid:
@@ -722,7 +724,7 @@ def extrude_shape(shape: BluemiraGeo, vec: tuple, label="") -> BluemiraSolid:
     if not label:
         label = shape.label
 
-    return convert(cadapi.extrude_shape(shape._shape, vec), label)
+    return convert(cadapi.extrude_shape(shape.shape, vec), label)
 
 
 def sweep_shape(profiles, path, solid=True, frenet=True, label=""):
@@ -749,41 +751,43 @@ def sweep_shape(profiles, path, solid=True, frenet=True, label=""):
     if not isinstance(profiles, Iterable):
         profiles = [profiles]
 
-    profile_shapes = [p._shape for p in profiles]
+    profile_shapes = [p.shape for p in profiles]
 
-    result = cadapi.sweep_shape(profile_shapes, path._shape, solid, frenet)
+    result = cadapi.sweep_shape(profile_shapes, path.shape, solid, frenet)
 
     return convert(result, label=label)
 
 
-def distance_to(geo1: BluemiraGeo, geo2: BluemiraGeo):
+def distance_to(
+    geo1: Union[Iterable[float], BluemiraGeo], geo2: Union[Iterable[float], BluemiraGeo]
+):
     """
     Calculate the distance between two BluemiraGeos.
 
     Parameters
     ----------
-    geo1: BluemiraGeo
-        reference shape.
-    geo2: BluemiraGeo
-        target shape.
+    geo1: Union[Iterable[float], BluemiraGeo]
+        Reference shape. If an iterable of length 3, converted to a point.
+    geo2: Union[Iterable[float], BluemiraGeo]
+        Target shape. If an iterable of length 3, converted to a point.
 
     Returns
     -------
-    output: a tuple of two -> (dist, vectors)
-        dist is the minimum distance (float value)
-        vectors is a list of tuples corresponding to the nearest points
-        between geo1 and geo2. The distance between those points
-        is the minimum distance given by dist.
+    dist: float
+        Minimum distance
+    vectors: List[Tuple]
+        List of tuples corresponding to the nearest points between geo1 and geo2. The
+        distance between those points is the minimum distance given by dist.
     """
     # Check geometry for vertices
     if isinstance(geo1, Iterable):
         shape1 = _make_vertex(geo1)
     else:
-        shape1 = geo1._shape
+        shape1 = geo1.shape
     if isinstance(geo2, Iterable):
         shape2 = _make_vertex(geo2)
     else:
-        shape2 = geo2._shape
+        shape2 = geo2.shape
     return cadapi.dist_to_shape(shape1, shape2)
 
 
@@ -812,9 +816,7 @@ def split_wire(wire: BluemiraWire, vertex: Iterable, tolerance: float = EPS):
     GeometryError:
         If the vertex is further away to the wire than the specified tolerance
     """
-    wire_1, wire_2 = cadapi.split_wire(
-        wire.get_single_wire()._shape, vertex, tolerance=tolerance
-    )
+    wire_1, wire_2 = cadapi.split_wire(wire.shape, vertex, tolerance=tolerance)
     if wire_1:
         wire_1 = BluemiraWire(wire_1)
     if wire_2:
@@ -846,7 +848,7 @@ def slice_shape(shape: BluemiraGeo, plane: BluemiraPlane):
     Further investigation needed.
 
     """
-    _slice = cadapi.slice_shape(shape._shape, plane.base, plane.axis)
+    _slice = cadapi.slice_shape(shape.shape, plane.base, plane.axis)
 
     if isinstance(_slice, np.ndarray) and _slice.size > 0:
         return _slice
@@ -914,7 +916,7 @@ def save_as_STP(
     if not isinstance(shapes, list):
         shapes = [shapes]
 
-    freecad_shapes = [s._shape for s in shapes]
+    freecad_shapes = [s.shape for s in shapes]
     cadapi.save_as_STP(freecad_shapes, filename, scale)
 
 
@@ -1123,7 +1125,7 @@ def boolean_fuse(shapes, label=""):
     if not all(isinstance(s, _type) for s in shapes):
         raise ValueError(f"All instances in {shapes} must be of the same type.")
 
-    api_shapes = [s._shape for s in shapes]
+    api_shapes = [s.shape for s in shapes]
     try:
         merged_shape = cadapi.boolean_fuse(api_shapes)
         return convert(merged_shape, label)
@@ -1153,10 +1155,10 @@ def boolean_cut(shape, tools):
     error: GeometryError
         In case the boolean operation fails.
     """
-    apishape = shape._shape
+    apishape = shape.shape
     if not isinstance(tools, list):
         tools = [tools]
-    apitools = [t._shape for t in tools]
+    apitools = [t.shape for t in tools]
     cut_shape = cadapi.boolean_cut(apishape, apitools)
 
     if isinstance(cut_shape, Iterable):
@@ -1167,7 +1169,7 @@ def boolean_cut(shape, tools):
 
 def point_inside_shape(point, shape):
     """
-    Whether or not a point is inside a shape.
+    Check whether or not a point is inside a shape.
 
     Parameters
     ----------
@@ -1181,7 +1183,35 @@ def point_inside_shape(point, shape):
     inside: bool
         Whether or not the point is inside the shape
     """
-    return cadapi.point_inside_shape(point, shape._shape)
+    return cadapi.point_inside_shape(point, shape.shape)
+
+
+def point_on_plane(point, plane, tolerance=D_TOLERANCE):
+    """
+    Check whether or not a point is on a plane.
+
+    Parameters
+    ----------
+    point: Iterable
+        Coordinates of the point
+    plane: BluemiraPlane
+        Plane to check
+    tolerance: float
+        Tolerance with which to check
+
+    Returns
+    -------
+    point_on_plane: bool
+        Whether or not the point is on the plane
+    """
+    return (
+        abs(
+            cadapi.apiVector(point).distanceToPlane(
+                plane.shape.Position, plane.shape.Axis
+            )
+        )
+        < tolerance
+    )
 
 
 # # =============================================================================

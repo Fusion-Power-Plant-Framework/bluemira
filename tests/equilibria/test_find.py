@@ -91,9 +91,9 @@ class TestFindLCFSSeparatrix:
             assert lcfs.closed
             assert not separatrix.closed
             primary_xp = x_points[0]
-            distances = lcfs.distance_to([primary_xp.x, primary_xp.z])
+            distances = lcfs.distance_to([primary_xp.x, 0, primary_xp.z])
             assert np.amin(distances) <= grid_tol
-            distances = separatrix.distance_to([primary_xp.x, primary_xp.z])
+            distances = separatrix.distance_to([primary_xp.x, 0, primary_xp.z])
             assert np.amin(distances) <= grid_tol
 
     def test_double_null(self):
@@ -115,13 +115,13 @@ class TestFindLCFSSeparatrix:
 
             assert lcfs.closed
             primary_xp = x_points[0]
-            distances = lcfs.distance_to([primary_xp.x, primary_xp.z])
+            distances = lcfs.distance_to([primary_xp.x, 0, primary_xp.z])
             assert np.amin(distances) <= grid_tol
 
             assert isinstance(separatrix, list)
             for loop in separatrix:
                 assert not loop.closed
-                distances = loop.distance_to([primary_xp.x, primary_xp.z])
+                distances = loop.distance_to([primary_xp.x, 0, primary_xp.z])
                 assert np.amin(distances) <= grid_tol
 
 

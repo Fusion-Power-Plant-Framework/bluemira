@@ -71,20 +71,20 @@ M_PER_MN = 100e6
 #       Used when calculating coil constraints
 NBTI_B_MAX = 11.5  # Eyeball // Louis Zani mentioned this once?
 
-# The maximum allowable current density at a NbTi superconducting coil [MA/m^2]
+# The maximum allowable current density at a NbTi superconducting coil [A/m^2]
 #       Used when calculating coil constraints
-NBTI_J_MAX = 12.5  # A classic EUROfusion assumption
+NBTI_J_MAX = 12.5e6  # A classic EUROfusion assumption
 
 # The maximum allowable field at a Nb3Sn superconducting coil [T]
 #       Used when calculating coil constraints
 NB3SN_B_MAX = 13  # Eyeball
 
-# The max allowable current density at a Nb3Sn superconducting coil [MA/m^2]
+# The max allowable current density at a Nb3Sn superconducting coil [A/m^2]
 #       Used when calculating coil constraints
-NB3SN_J_MAX = 16.5  # From Simon McIntosh CS calc, 2019
+NB3SN_J_MAX = 16.5e6  # From Simon McIntosh CS calc, 2019
 
 # Dots per inch for GIFs
-DPI_GIF = 80
+DPI_GIF = 200
 
 # Matplotlib event plotting pause (shitty stupid API)
 PLT_PAUSE = 0.001  # Completely arbitrary number of seconds?

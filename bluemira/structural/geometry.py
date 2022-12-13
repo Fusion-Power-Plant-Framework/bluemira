@@ -27,7 +27,7 @@ from copy import deepcopy
 import numpy as np
 from scipy.sparse import lil_matrix
 
-from bluemira.geometry._deprecated_tools import bounding_box
+from bluemira.geometry.bound_box import BoundingBox
 from bluemira.structural.constants import D_TOLERANCE
 from bluemira.structural.element import Element
 from bluemira.structural.error import StructuralError
@@ -313,7 +313,7 @@ class Geometry:
 
     def add_coordinates(self, coordinates, cross_section, material=None):
         """
-        Adds a Loop object to the Geometry
+        Adds a Coordinates object to the Geometry
 
         Parameters
         ----------
@@ -403,7 +403,7 @@ class Geometry:
         x = np.array([node.x for node in self.nodes])
         y = np.array([node.y for node in self.nodes])
         z = np.array([node.z for node in self.nodes])
-        return bounding_box(x, y, z)
+        return BoundingBox.from_xyz(x, y, z).get_box_arrays()
 
     def interpolate(self, scale=100):
         """

@@ -30,8 +30,15 @@ Wrapper for FreeCAD Part.Compounds objects
 
 from __future__ import annotations
 
-from bluemira.codes._freecadapi import apiCompound
+from typing import Tuple
+
+import bluemira.codes._freecadapi as cadapi
 from bluemira.geometry.base import BluemiraGeo
+from bluemira.geometry.coordinates import Coordinates
+from bluemira.geometry.face import BluemiraFace
+from bluemira.geometry.shell import BluemiraShell
+from bluemira.geometry.solid import BluemiraSolid
+from bluemira.geometry.wire import BluemiraWire
 
 
 class BluemiraCompound(BluemiraGeo):
@@ -41,7 +48,48 @@ class BluemiraCompound(BluemiraGeo):
         boundary_classes = [BluemiraGeo]
         super().__init__(boundary, label, boundary_classes)
 
-    @property
-    def _shape(self) -> apiCompound:
+    def _create_shape(self) -> cadapi.apiCompound:
         """apiCompound: shape of the object as a single compound"""
-        return apiCompound([s._shape for s in self.boundary])
+        return cadapi.apiCompound([s.shape for s in self.boundary])
+
+    @property
+    def vertexes(self) -> Coordinates:
+        """
+        The vertexes of the compound.
+        """
+        return Coordinates(cadapi.vertexes(self.shape))
+
+    @property
+    def edges(self) -> Tuple[BluemiraWire]:
+        """
+        The edges of the compound.
+        """
+        return tuple([BluemiraWire(cadapi.apiWire(o)) for o in cadapi.edges(self.shape)])
+
+    @property
+    def wires(self) -> Tuple[BluemiraWire]:
+        """
+        The wires of the compound.
+        """
+        return tuple([BluemiraWire(o) for o in cadapi.wires(self.shape)])
+
+    @property
+    def faces(self) -> Tuple[BluemiraFace]:
+        """
+        The faces of the compound.
+        """
+        return tuple([BluemiraFace(o) for o in cadapi.faces(self.shape)])
+
+    @property
+    def shells(self) -> Tuple[BluemiraShell]:
+        """
+        The shells of the compound.
+        """
+        return tuple([BluemiraShell(o) for o in cadapi.shells(self.shape)])
+
+    @property
+    def solids(self) -> Tuple[BluemiraSolid]:
+        """
+        The solids of the compound.
+        """
+        return tuple([BluemiraSolid(o) for o in cadapi.solids(self.shape)])

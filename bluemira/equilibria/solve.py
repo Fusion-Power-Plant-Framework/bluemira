@@ -423,7 +423,7 @@ class PicardIterator:
         optimisation_problem,
         convergence=DudsonConvergence(),
         fixed_coils: bool = False,
-        relaxation: int = 0,
+        relaxation: float = 0,
         maxiter: int = 30,
         plot=True,
         gif=False,
@@ -444,10 +444,12 @@ class PicardIterator:
         self.relaxation = relaxation
         self.maxiter = maxiter
         self.plot_flag = plot
+        if gif and not plot:
+            self.plot_flag = True
         self.gif_flag = gif
         if figure_folder is None:
             figure_folder = try_get_bluemira_path(
-                "plots/equilibria", subfolder="data", allow_missing=not self.gif_flag
+                "", subfolder="generated_data", allow_missing=not self.gif_flag
             )
         self.figure_folder = figure_folder
         self.store = []
@@ -586,7 +588,7 @@ class PicardIterator:
         """
         self.ax.clear()
         self.eq.plot(ax=self.ax)
-        self.ax.figure.canvas.draw()
+        plt.pause(PLT_PAUSE)
         save_figure(
             self.f,
             self.pname + str(self.i),
@@ -594,7 +596,6 @@ class PicardIterator:
             folder=self.figure_folder,
             dpi=DPI_GIF,
         )
-        plt.pause(PLT_PAUSE)
 
     def _solve(self):
         """

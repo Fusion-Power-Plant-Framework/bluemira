@@ -25,7 +25,7 @@ Useful parameterisations for plasma flux surface shapes.
 
 import numpy as np
 
-from bluemira.geometry._deprecated_loop import Loop
+from bluemira.geometry.coordinates import Coordinates
 from bluemira.geometry.parameterisations import GeometryParameterisation
 from bluemira.geometry.tools import interpolate_bspline
 from bluemira.geometry.wire import BluemiraWire
@@ -62,7 +62,7 @@ def flux_surface_cunningham(r_0, z_0, a, kappa, delta, delta2=None, n=20):
 
     Returns
     -------
-    flux_surface: Loop(x, z)
+    flux_surface: Coordinates
         Plasma flux surface shape
     """
     t = np.linspace(0, 2 * np.pi, n)[:-1]  # Theta
@@ -72,7 +72,7 @@ def flux_surface_cunningham(r_0, z_0, a, kappa, delta, delta2=None, n=20):
     else:
         x = r_0 + a * np.cos(t + delta * np.sin(t) + delta2 * np.sin(2 * t))
     z = z_0 + a * kappa * np.sin(t)
-    return Loop(x=x, z=z)
+    return Coordinates({"x": x, "z": z})
 
 
 def flux_surface_manickam(r_0, z_0, a, kappa=1, delta=0, indent=0, n=20):
@@ -98,13 +98,13 @@ def flux_surface_manickam(r_0, z_0, a, kappa=1, delta=0, indent=0, n=20):
 
     Returns
     -------
-    flux_surface: Loop(x, z)
+    flux_surface: Coordinates
         Plasma flux surface shape
     """
     t = np.linspace(0, 2 * np.pi, n)[:-1]  # Theta
     x = r_0 - indent + (a + indent * np.cos(t)) * np.cos(t + delta * np.sin(t))
     z = z_0 + kappa * a * np.sin(t)
-    return Loop(x=x, z=z)
+    return Coordinates({"x": x, "z": z})
 
 
 def calc_t_neg(delta, kappa, phi_neg):
@@ -190,11 +190,11 @@ def flux_surface_johner_quadrants(
     psi_l_pos: float
         Lower outer angle [°]
     n: int (defeault = 100)
-        Number of point to generate on the flux surface Loop
+        Number of point to generate on the flux surface
 
     Returns
     -------
-    flux_surface: Loop(x, z)
+    flux_surface: Coordinates
         Plasma flux surface shape
     """
     # May appear tempting to refactor, but equations subtly different
@@ -357,11 +357,11 @@ def flux_surface_johner(
     psi_l_pos: float
         Lower outer angle [°]
     n: int (defeault = 100)
-        Number of point to generate on the flux surface Loop
+        Number of point to generate on the flux surface
 
     Returns
     -------
-    flux_surface: Loop(x, z)
+    flux_surface: Coordinates
         Plasma flux surface shape
     """
     x_quadrants, z_quadrants = flux_surface_johner_quadrants(
@@ -379,7 +379,9 @@ def flux_surface_johner(
         n=n,
     )
 
-    return Loop(x=np.concatenate(x_quadrants), z=np.concatenate(z_quadrants))
+    return Coordinates(
+        {"x": np.concatenate(x_quadrants), "z": np.concatenate(z_quadrants)}
+    )
 
 
 class JohnerLCFS(GeometryParameterisation):
@@ -408,29 +410,29 @@ class JohnerLCFS(GeometryParameterisation):
                 BoundedVariable(
                     "kappa_u",
                     1.6,
-                    lower_bound=1.3,
-                    upper_bound=1.9,
+                    lower_bound=1.0,
+                    upper_bound=3.0,
                     descr="Upper elongation",
                 ),
                 BoundedVariable(
                     "kappa_l",
                     1.8,
-                    lower_bound=1.3,
-                    upper_bound=1.9,
+                    lower_bound=1.0,
+                    upper_bound=3.0,
                     descr="Lower elongation",
                 ),
                 BoundedVariable(
                     "delta_u",
                     0.4,
-                    lower_bound=0.2,
-                    upper_bound=0.6,
+                    lower_bound=0.0,
+                    upper_bound=1.0,
                     descr="Upper triangularity",
                 ),
                 BoundedVariable(
                     "delta_l",
                     0.4,
-                    lower_bound=0.2,
-                    upper_bound=0.6,
+                    lower_bound=0.0,
+                    upper_bound=1.0,
                     descr="Lower triangularity",
                 ),
                 BoundedVariable(

@@ -39,7 +39,7 @@ class TestBluemiraFace:
             [[4, -2, 0], [6, -2, 0], [6, 2, 0], [4, 2, 0]],
             closed=True,
         )
-        princeton = PrincetonD().create_shape(n_points=80)
+        princeton = PrincetonD().create_shape(n_points=150)
         triple = TripleArc().create_shape()
         sextuple = SextupleArc().create_shape()
         tapered = PictureFrame(inner="TAPERED_INNER").create_shape()

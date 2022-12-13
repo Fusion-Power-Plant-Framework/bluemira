@@ -28,7 +28,7 @@ from __future__ import annotations
 import copy
 import inspect
 import pprint
-from typing import Dict, Union
+from typing import Dict, Iterable, List, Union
 
 # import mesher lib (gmsh)
 import gmsh
@@ -116,7 +116,7 @@ class Meshable:
 
     def __init__(self):
         super().__init__()
-        self._mesh_options = None
+        self._mesh_options = MeshOptions()
 
     @property
     def mesh_options(self) -> MeshOptions:
@@ -628,74 +628,43 @@ class _FreeCADGmsh:
         curve_tag = []
         for type_ in buffer:
             if type_ == "LineSegment":
-                start_point = buffer[type_]["StartPoint"]
-                points_tag.append(
-                    gmsh.model.occ.addPoint(
-                        start_point[0], start_point[1], start_point[2]
-                    )
-                )
-                end_point = buffer[type_]["EndPoint"]
-                points_tag.append(
-                    gmsh.model.occ.addPoint(end_point[0], end_point[1], end_point[2])
+                points_tag.extend(
+                    _add_points(buffer[type_]["StartPoint"], buffer[type_]["EndPoint"])
                 )
                 curve_tag.append(gmsh.model.occ.addLine(points_tag[0], points_tag[1]))
             elif type_ == "BezierCurve":
-                poles = buffer[type_]["Poles"]
-                for p in poles:
-                    cntrpoints_tag.append(gmsh.model.occ.addPoint(p[0], p[1], p[2]))
+                cntrpoints_tag.extend(_add_points(*buffer[type_]["Poles"]))
                 curve_tag.append(gmsh.model.occ.addBezier(cntrpoints_tag))
-                points_tag.append(cntrpoints_tag[0])
-                points_tag.append(cntrpoints_tag[-1])
+                points_tag.extend((cntrpoints_tag[0], cntrpoints_tag[-1]))
             elif type_ == "BSplineCurve":
-                poles = buffer[type_]["Poles"]
-                for p in poles:
-                    cntrpoints_tag.append(gmsh.model.occ.addPoint(p[0], p[1], p[2]))
+                cntrpoints_tag.extend(_add_points(*buffer[type_]["Poles"]))
                 curve_tag.append(gmsh.model.occ.addBSpline(cntrpoints_tag))
-                points_tag.append(cntrpoints_tag[0])
-                points_tag.append(cntrpoints_tag[-1])
+                points_tag.extend((cntrpoints_tag[0], cntrpoints_tag[-1]))
             elif type_ == "ArcOfCircle":
-                start_point = buffer[type_]["StartPoint"]
-                start_point_tag = gmsh.model.occ.addPoint(
-                    start_point[0], start_point[1], start_point[2]
+                start_tag, end_tag, centre_tag = _add_points(
+                    buffer[type_]["StartPoint"],
+                    buffer[type_]["EndPoint"],
+                    buffer[type_]["Center"],
                 )
-                points_tag.append(start_point_tag)
-                end_point = buffer[type_]["EndPoint"]
-                end_point_tag = gmsh.model.occ.addPoint(
-                    end_point[0], end_point[1], end_point[2]
-                )
-                points_tag.append(end_point_tag)
-                center = buffer[type_]["Center"]
-                center_tag = gmsh.model.occ.addPoint(center[0], center[1], center[2])
-
+                points_tag.extend((start_tag, end_tag))
                 curve_tag.append(
-                    gmsh.model.occ.addCircleArc(
-                        start_point_tag, center_tag, end_point_tag
-                    )
+                    gmsh.model.occ.addCircleArc(start_tag, centre_tag, end_tag)
                 )
-                cntrpoints_tag.append(center_tag)
+                cntrpoints_tag.append(centre_tag)
             elif type_ == "ArcOfEllipse":
-                start_point = buffer[type_]["StartPoint"]
-                start_point_tag = gmsh.model.occ.addPoint(
-                    start_point[0], start_point[1], start_point[2]
+                start_tag, end_tag, focus_tag, centre_tag = _add_points(
+                    buffer[type_]["StartPoint"],
+                    buffer[type_]["EndPoint"],
+                    buffer[type_]["Focus1"],
+                    buffer[type_]["Center"],
                 )
-                points_tag.append(start_point_tag)
-                end_point = buffer[type_]["EndPoint"]
-                end_point_tag = gmsh.model.occ.addPoint(
-                    end_point[0], end_point[1], end_point[2]
-                )
-                points_tag.append(end_point_tag)
-                center = buffer[type_]["Center"]
-                center_tag = gmsh.model.occ.addPoint(center[0], center[1], center[2])
-                focus = buffer[type_]["Focus1"]
-                focus_tag = gmsh.model.occ.addPoint(focus[0], focus[1], focus[2])
+                points_tag.extend((start_tag, end_tag))
                 curve_tag.append(
                     gmsh.model.occ.addEllipseArc(
-                        start_point_tag, center_tag, focus_tag, end_point_tag
+                        start_tag, centre_tag, focus_tag, end_tag
                     )
                 )
-
-                cntrpoints_tag.append(center_tag)
-                cntrpoints_tag.append(focus_tag)
+                cntrpoints_tag.extend((centre_tag, focus_tag))
             else:
                 raise NotImplementedError(
                     f"Gmsh curve creation non implemented for {type_}"
@@ -777,3 +746,13 @@ class _FreeCADGmsh:
     @staticmethod
     def _get_boundary(dimtags, combined=False, recursive=False):
         return gmsh.model.getBoundary(dimtags, combined, recursive)
+
+
+def _add_points(*point: Iterable) -> List:
+    """
+    Add gmsh model points
+    """
+    tags = []
+    for p in point:
+        tags.append(gmsh.model.occ.addPoint(p[0], p[1], p[2]))
+    return tags

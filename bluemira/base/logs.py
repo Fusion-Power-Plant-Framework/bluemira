@@ -40,13 +40,13 @@ class LogLevel(Enum):
     NOTSET = 0
 
 
-def logger_setup(logfilename="bluemira_logging.log", *, level="INFO"):
+def logger_setup(logfilename="bluemira.log", *, level="INFO"):
     """
     Create logger with two handlers.
 
     Parameters
     ----------
-    logfilename: str (default = bluemira_logging.log)
+    logfilename: str (default = bluemira.log)
         Name of file to write logs to
     level: str or int (default = INFO)
         The initial logging level to be printed to the console.

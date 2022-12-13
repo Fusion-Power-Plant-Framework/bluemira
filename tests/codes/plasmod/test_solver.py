@@ -28,16 +28,15 @@ from unittest import mock
 import numpy as np
 import pytest
 
-from bluemira.base.config import Configuration
 from bluemira.codes import plasmod
 from bluemira.codes.error import CodesError
 from bluemira.codes.plasmod.api import Run, Setup, Teardown
-from bluemira.codes.plasmod.mapping import mappings as plasmod_mappings
-from bluemira.codes.utilities import add_mapping
+from bluemira.codes.plasmod.params import PlasmodSolverParams
 from tests._helpers import combine_text_mock_write_calls
 
 SOLVER_MODULE_REF = "bluemira.codes.plasmod.api"
 RUN_SUBPROCESS_REF = "bluemira.codes.interface.run_subprocess"
+PARAMS_FILE = os.path.join(os.path.dirname(__file__), "data", "params.json")
 
 
 class TestPlasmodSetup:
@@ -45,8 +44,7 @@ class TestPlasmodSetup:
     MODULE_REF = f"{SOLVER_MODULE_REF}._setup"
 
     def setup_method(self):
-        self.default_pf = Configuration()
-        add_mapping(plasmod.NAME, self.default_pf, plasmod_mappings)
+        self.default_pf = PlasmodSolverParams.from_json(PARAMS_FILE)
         self.input_file = "/path/to/input.dat"
 
     def test_inputs_updated_from_problem_settings_on_init(self):
@@ -68,6 +66,7 @@ class TestPlasmodSetup:
             "q_heat": 1.5,
             "nx": 25,
         }
+
         setup = Setup(self.default_pf, {}, self.input_file)
 
         setup.update_inputs(new_inputs)
@@ -134,8 +133,7 @@ class TestPlasmodRun:
         self.run_subprocess_mock = self._run_subprocess_patch.start()
         self.run_subprocess_mock.return_value = 0
 
-        self.default_pf = Configuration()
-        add_mapping(plasmod.NAME, self.default_pf, plasmod_mappings)
+        self.default_pf = PlasmodSolverParams.from_json(PARAMS_FILE)
 
     def teardown_method(self):
         self._run_subprocess_patch.stop()
@@ -189,8 +187,7 @@ class TestPlasmodTeardown:
     )
 
     def setup_method(self):
-        self.default_pf = Configuration()
-        add_mapping(plasmod.NAME, self.default_pf, plasmod_mappings)
+        self.default_pf = PlasmodSolverParams.from_json(PARAMS_FILE)
 
     @pytest.mark.parametrize("run_mode_func", ["run", "read"])
     def test_run_mode_function_updates_plasmod_params_from_file(self, run_mode_func):
@@ -205,9 +202,9 @@ class TestPlasmodTeardown:
         ):
             getattr(teardown, run_mode_func)()
 
-        assert teardown.params["beta_N"] == pytest.approx(0.14092930140e2)
-        assert teardown.params["f_bs"] == pytest.approx(0.14366031154e2)
-        assert teardown.params["l_i"] == pytest.approx(0.16682353334e2)
+        assert teardown.params.beta_N.value == pytest.approx(0.14092930140e2)
+        assert teardown.params.f_bs.value == pytest.approx(0.14366031154e2)
+        assert teardown.params.l_i.value == pytest.approx(0.16682353334e2)
 
     def test_mock_leaves_plasmod_params_with_defaults(self):
         default_pf_copy = copy.deepcopy(self.default_pf)
@@ -222,9 +219,9 @@ class TestPlasmodTeardown:
         ):
             teardown.mock()
 
-        assert teardown.params["beta_N"] == default_pf_copy["beta_N"]
-        assert teardown.params["f_bs"] == default_pf_copy["f_bs"]
-        assert teardown.params["l_i"] == default_pf_copy["l_i"]
+        assert teardown.params.beta_N.value == default_pf_copy.beta_N.value
+        assert teardown.params.f_bs.value == default_pf_copy.f_bs.value
+        assert teardown.params.l_i.value == default_pf_copy.l_i.value
 
     @pytest.mark.parametrize("run_mode_func", ["run", "read"])
     def test_CodesError_if_output_files_cannot_be_read(self, run_mode_func):
@@ -289,7 +286,7 @@ class TestPlasmodTeardown:
 
 class TestPlasmodSolver:
     def setup_method(self):
-        self.default_pf = Configuration()
+        self.default_pf = PlasmodSolverParams.from_json(PARAMS_FILE)
         self.build_config = {
             "input_file": tempfile.NamedTemporaryFile("w").name,
             "output_file": tempfile.NamedTemporaryFile("w").name,
@@ -323,8 +320,16 @@ class TestPlasmodSolver:
 
         assert getattr(solver, key) == default
 
-    def test_execute_in_run_mode_sets_expected_params(self):
-        solver = plasmod.Solver(self.default_pf, self.build_config)
+    @pytest.mark.parametrize("param_type", ["kvdict", "dict", "frame"])
+    def test_execute_in_run_mode_sets_expected_params(self, param_type):
+        if param_type == "kvdict":
+            param = {k: data["value"] for k, data in self.default_pf.to_dict().items()}
+        elif param_type == "dict":
+            param = self.default_pf.to_dict()
+        else:
+            param = self.default_pf
+
+        solver = plasmod.Solver(param, self.build_config)
 
         pf = solver.execute(plasmod.RunMode.RUN)
 
@@ -336,7 +341,8 @@ class TestPlasmodSolver:
                 self.build_config["profiles_file"],
             ]
         )
-        assert pf.beta_N == pytest.approx(3.0007884293)
+        self.run_subprocess_mock.reset_mock()
+        assert pf.beta_N.value == pytest.approx(3.0007884293)
 
     def test_get_profile_returns_profile_array(self):
         solver = plasmod.Solver(self.default_pf, self.build_config)
@@ -383,7 +389,7 @@ class TestPlasmodSolver:
 
     def test_param_not_modified_in_plasmod_input_if_modify_mapping_send_is_False(self):
         solver = plasmod.Solver(self.default_pf, self.build_config)
-        solver.params.q_95 = (5, "Input")
+        solver.params.q_95.set_value(5, source="Input")
 
         solver.modify_mappings({"q_95": {"send": False}})
         solver.execute(plasmod.RunMode.RUN)
@@ -400,7 +406,14 @@ class TestPlasmodSolver:
         solver.modify_mappings({"beta_N": {"recv": False}})
         solver.execute(plasmod.RunMode.RUN)
 
-        assert solver.params.beta_N == original_beta_n
+        assert solver.params.beta_N.value == original_beta_n
+
+    def test_plasmod_solver_plotting(self):
+        solver = plasmod.Solver(self.default_pf, self.build_config)
+        solver.execute(plasmod.RunMode.RUN)
+
+        f, ax = plasmod.plot_default_profiles(solver.plasmod_outputs())
+        assert len(f.get_axes()) == 6
 
     @staticmethod
     def read_data_file(file_name):
@@ -438,6 +451,6 @@ class TestPlasmodSolver:
         with open(file_path, "r") as f:
             input_file = f.read()
         param_regex = param + r" +([0-9]+(\.[0-9]+E[\+-][0-9]+)?)"
-        match = re.search(param_regex, input_file, re.MULTILINE)
-        if match:
-            return float(match.group(1))
+        re_match = re.search(param_regex, input_file, re.MULTILINE)
+        if re_match:
+            return float(re_match.group(1))

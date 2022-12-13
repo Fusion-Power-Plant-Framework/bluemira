@@ -25,8 +25,8 @@ The documentation is divided into the following sections:
    :caption: Bluemira Modules
    :name: bluemira-modules
 
-    Balance of Plant <balance_of_plant/balance_of_plant>
     Base <base/base>
+    Balance of Plant <balance_of_plant/balance_of_plant>
     Interfaces to external codes <codes/codes>
     2-D fixed and free boundary equilibrium solvers <equilibria/equilibria>
     Fuel cycle model <fuel_cycle/fuel_cycle>
@@ -43,8 +43,8 @@ The documentation is divided into the following sections:
    :caption: Developer Documentation
    :name: dev-docs
 
-   Configuring SSH keys <ssh>
-   Bluemira Parameterisations <parameterisations>
+   Configuring SSH keys <developer/ssh>
+   Logging customisation <developer/logging>
    Module API Reference <autoapi/index>
-   Release Workflow <release_workflow>
-   FAQs <faq>
+   Release Workflow <developer/release_workflow>
+   FAQs <developer/faq>

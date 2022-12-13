@@ -25,7 +25,6 @@ A typical fuel cycle result for an EU-DEMO reference point
 
 # %%
 
-from bluemira.base.parameter import ParameterFrame
 from bluemira.display.auto_config import plot_defaults
 from bluemira.fuel_cycle.analysis import FuelCycleAnalysis
 from bluemira.fuel_cycle.cycle import EUDEMOFuelCycleModel
@@ -61,31 +60,24 @@ else:
     TBR = 1.02
     f_dir = 0.6
 
-# fmt:off
-lifecycle_config = ParameterFrame([
-    ["A_global", "Global load factor", A_global, "dimensionless", "Not always used", "Input"],
-    ["I_p", "Plasma current", 19.2, "MA", None, "Input"],
-    ["bmd", "Blanket maintenance duration", 150, "days", "Full replacement intervention duration", "Input"],
-    ["dmd", "Divertor maintenance duration", 90, "days", "Full replacement intervention duration", "Input"],
-    ["t_pulse", "Pulse length", 7200, "s", "Includes ramp-up and ramp-down time", "Input"],
-    ["t_cs_recharge", "CS recharge time", 600, "s", "Presently assumed to dictate minimum dwell period", "Input"],
-    ["t_pumpdown", "Pump down duration of the vessel in between pulses", 599, "s",
-     "Presently assumed to take less time than the CS recharge", "Input"],
-    ["s_ramp_up", "Plasma current ramp-up rate", 0.1, "MA/s", None, "R. Wenninger"],
-    ["s_ramp_down", "Plasma current ramp-down rate", 0.1, "MA/s", None, "R. Wenninger"],
-    ["n_DT_reactions", "D-T fusion reaction rate", n_DT_reactions(p_fus_DT), "1/s", "At full power", "Input"],
-    ["n_DD_reactions", "D-D fusion reaction rate", n_DD_reactions(p_fus_DD), "1/s", "At full power", "Input"],
-    ["blk_1_dpa", "Starter blanket life limit (EUROfer)", 20, "dpa",
-     "https://iopscience.iop.org/article/10.1088/1741-4326/57/9/092002/pdf", "Input"],
-    ["blk_2_dpa", "Second blanket life limit (EUROfer)", 50, "dpa",
-     "https://iopscience.iop.org/article/10.1088/1741-4326/57/9/092002/pdf", "Input"],
-    ["div_dpa", "Divertor life limit (CuCrZr)", 5, "dpa",
-     "https://iopscience.iop.org/article/10.1088/1741-4326/57/9/092002/pdf", "Input"],
-    ["vv_dpa", "Vacuum vessel life limit (SS316-LN-IG)", 3.25, "dpa", "RCC-Mx or whatever it is called", "Input"],
-    ["tf_fluence", "Insulation fluence limit for ITER equivalent to 10 MGy", 3.2e21, "1/m^2",
-     "https://ieeexplore.ieee.org/document/6374236/", "Input"],
-])
-# fmt:on
+lifecycle_config = {
+    "A_global": A_global,
+    "I_p": 19.2,
+    "bmd": 150,
+    "dmd": 90,
+    "t_pulse": 7200,
+    "t_cs_recharge": 600,
+    "t_pumpdown": 599,
+    "s_ramp_up": 0.1,
+    "s_ramp_down": 0.1,
+    "n_DT_reactions": n_DT_reactions(p_fus_DT),
+    "n_DD_reactions": n_DD_reactions(p_fus_DD),
+    "blk_1_dpa": 20,
+    "blk_2_dpa": 50,
+    "div_dpa": 5,
+    "vv_dpa": 3.25,
+    "tf_fluence": 3.2e21,
+}
 
 # %%[markdown]
 
@@ -173,12 +165,7 @@ fw_flow = convert_flux_to_flow(fw_retention_flux, 1400)
 
 # Normalise sqrt sink factors, because T flows are off...
 eta_norm = fw_flow / vessel_outflux
-
-
-if eta_norm >= 1:
-    eta_ivc /= eta_norm
-else:
-    eta_ivc /= eta_norm
+eta_ivc /= eta_norm
 
 m_dir_pump = 0.024
 t_pump = m_dir_pump / vessel_outflux
@@ -186,33 +173,31 @@ t_pump = m_dir_pump / vessel_outflux
 # It was agreed that this 1.8 kg is needed steady-state, and is used as I_TFV_min
 m_cryodistillation = 1.8
 
-# fmt: off
-tfv_config = ParameterFrame([
-    ['TBR', 'Tritium breeding ratio', TBR, 'dimensionless', None, 'Input'],
-    ['f_b', 'Burn-up fraction', 0.015, 'dimensionless', None, 'Input'],
-    ['m_gas', 'Gas puff flow rate', 50, 'Pa m^3/s', 'To maintain detachment - no chance of fusion from gas injection', 'Discussions with Chris Day and Yannick Hörstenmeyer'],
-    ['A_global', 'Load factor', A_global, 'dimensionless', None, 'Silent input'],
-    ['r_learn', 'Learning rate', 1, 'dimensionless', None, 'Silent input'],
-    ['t_pump', 'Time in DIR loop', t_pump, 's', 'Time between exit from plasma and entry into plasma through DIR loop', 'Discussions with Chris Day and Yannick Hörstenmeyer'],
-    ['t_exh', 'Time in INDIR loop', t_exh, 's', 'Time between exit from plasma and entry into TFV systems INDIR', 'Input'],
-    ['t_ters', 'Time from BB exit to TFV system', 6750, 's', None, 'Input'],
-    ['t_freeze', 'Time taken to freeze pellets', 3600 / 2, 's', None, 'Discussions with Chris Day and Yannick Hörstenmeyer'],
-    ['f_dir', 'Fraction of flow through DIR loop', f_dir, 'dimensionless', None, 'Discussions with Chris Day and Yannick Hörstenmeyer'],
-    ['t_detrit', 'Time in detritiation system', 0, 's', None, 'Input'],
-    ['f_detrit_split', 'Fraction of detritiation line tritium extracted', 0.9999, 'dimensionless', None, 'Input'],
-    ['f_exh_split', 'Fraction of exhaust tritium extracted', 0.99, 'dimensionless', None, 'Input'],
-    ['eta_fuel_pump', 'Efficiency of fuel line pump', 0.9, 'dimensionless', 'Pump which pumps down the fuelling lines', 'Input'],
-    ['eta_f', 'Fuelling efficiency', 0.5, 'dimensionless', 'Efficiency of the fuelling lines prior to entry into the VV chamber', 'Input'],
-    ['I_miv', 'Maximum in-vessel T inventory', max_ivc_inventory, 'kg', None, 'Input'],
-    ['I_tfv_min', 'Minimum TFV inventory', m_cryodistillation, 'kg', 'Without which e.g. cryodistillation columns are not effective', "Discussions with Chris Day and Jonas Schwenzer (N.B. working assumptions only)"],
-    ['I_tfv_max', 'Maximum TFV inventory', m_cryodistillation + 0.2, 'kg', "Account for T sequestration inside the T plant", "Discussions with Chris Day and Jonas Schwenzer (N.B. working assumptions only)"],
-    ['I_mbb', 'Maximum BB T inventory', max_bb_inventory, 'kg', None, 'Input'],
-    ['eta_iv', 'In-vessel bathtub parameter', eta_ivc, 'dimensionless', None, 'Input'],
-    ['eta_bb', 'BB bathtub parameter', 0.995, 'dimensionless', None, 'Input'],
-    ['eta_tfv', 'TFV bathtub parameter', 0.998, 'dimensionless', None, 'Input'],
-    ['f_terscwps', 'TERS and CWPS cumulated factor', 0.9999, 'dimensionless', None, 'Input']
-])
-# fmt:on
+tfv_config = {
+    "TBR": TBR,
+    "f_b": 0.015,
+    "m_gas": 50,
+    "A_global": A_global,
+    "r_learn": 1,
+    "t_pump": t_pump,
+    "t_exh": t_exh,
+    "t_ters": 6750,
+    "t_freeze": 1800.0,
+    "f_dir": f_dir,
+    "t_detrit": 0,
+    "f_detrit_split": 0.9999,
+    "f_exh_split": 0.99,
+    "eta_fuel_pump": 0.9,
+    "eta_f": 0.5,
+    "I_miv": max_ivc_inventory,
+    "I_tfv_min": m_cryodistillation,
+    "I_tfv_max": m_cryodistillation + 0.2,
+    "I_mbb": max_bb_inventory,
+    "eta_iv": eta_ivc,
+    "eta_bb": 0.995,
+    "eta_tfv": 0.998,
+    "f_terscwps": 0.9999,
+}
 
 # %%[markdown]
 

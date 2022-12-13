@@ -76,3 +76,7 @@ class DesignError(BluemiraError):
     """
 
     pass
+
+
+class ReactorError(BluemiraError):
+    """Exceptions related to :class:`bluemira.base.reactor.Reactor` objects."""

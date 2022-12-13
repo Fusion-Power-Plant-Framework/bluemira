@@ -28,7 +28,6 @@ from typing import Iterable
 
 import numpy as np
 import tabulate
-from pandas import DataFrame
 from scipy.optimize import minimize
 
 from bluemira.base.constants import MU_0
@@ -60,7 +59,7 @@ from bluemira.equilibria.plotting import (
     EquilibriumPlotter,
 )
 from bluemira.equilibria.profiles import CustomProfile
-from bluemira.geometry._deprecated_loop import Loop
+from bluemira.geometry.coordinates import Coordinates
 from bluemira.utilities.opt_tools import process_scipy_result
 from bluemira.utilities.tools import abs_rel_difference
 
@@ -131,14 +130,16 @@ class MHDState:
         Stores Green's functions arrays in a dictionary of coils. Used upon
         initialisation and must be called after meshing of coils.
 
+        Notes
+        -----
         Modifies:
-        ------
-        ._pgreen: dict
-            Greens function coil mapping for psi
-        ._bxgreen: dict
-            Greens function coil mapping for Bx
-        .bzgreen: dict
-            Greens function coil mapping for Bz
+
+            ._pgreen: dict
+                Greens function coil mapping for psi
+            ._bxgreen: dict
+                Greens function coil mapping for Bx
+            .bzgreen: dict
+                Greens function coil mapping for Bz
         """
         self._psi_green = self.coilset.map_psi_greens(self.x, self.z)
         self._bx_green = self.coilset.map_Bx_greens(self.x, self.z)
@@ -151,7 +152,7 @@ class MHDState:
         Returns
         -------
         F: np.array(n_coils, 2)
-            [Fx, Fz] array of forces on coils [MN]
+            [Fx, Fz] array of forces on coils [N]
 
         Notes
         -----
@@ -172,7 +173,7 @@ class MHDState:
         forces[:, 0] = currents * (response[:, :, 0] @ currents + background[:, 0])
         forces[:, 1] = currents * (response[:, :, 1] @ currents + background[:, 1])
 
-        return forces / 1e6
+        return forces
 
     def get_coil_fields(self):
         """
@@ -213,8 +214,7 @@ class MHDState:
         limiter: Union[Limiter, None]
             Limiter instance if any limiters are in file
         """
-        eqdsk = EQDSKInterface()
-        e = eqdsk.read(filename)
+        e = EQDSKInterface.from_file(filename).to_dict()
         if "equilibria" in e["name"]:
             psi = e["psi"]
         elif "SCENE" in e["name"] and not isinstance(cls, Breakdown):
@@ -270,9 +270,9 @@ class MHDState:
         else:
             filename = os.sep.join([directory, filename])
 
-        self.filename = filename  # Conveniente
-        eqdsk = EQDSKInterface()
-        eqdsk.write(filename, data, formatt=filetype, **kwargs)
+        self.filename = filename  # Convenient
+        eqdsk = EQDSKInterface(**data)
+        eqdsk.write(filename, format=filetype, **kwargs)
 
 
 class Breakdown(MHDState):
@@ -630,7 +630,7 @@ class Equilibrium(MHDState):
             q = np.zeros(n_x)
 
         lcfs = self.get_LCFS(psi)
-        nbdry = lcfs.d2.shape[1]
+        nbdry = lcfs.xz.shape[1]
         x_c, z_c, dxc, dzc, currents = self.coilset.to_group_vecs()
 
         result = {
@@ -654,10 +654,10 @@ class Equilibrium(MHDState):
             "ffprime": self.ffprime(psinorm),
             "pprime": self.pprime(psinorm),
             "pressure": self.pressure(psinorm),
-            "pnorm": psinorm,
+            "psinorm": psinorm,
             "nbdry": nbdry,
-            "xbdry": lcfs["x"],
-            "zbdry": lcfs["z"],
+            "xbdry": lcfs.x,
+            "zbdry": lcfs.z,
             "ncoil": self.coilset.n_coils,
             "xc": x_c,
             "zc": z_c,
@@ -670,8 +670,8 @@ class Equilibrium(MHDState):
 
         if self.limiter is None:  # Needed for eqdsk file format
             result["nlim"] = 0
-            result["xlim"] = 0
-            result["zlim"] = 0
+            result["xlim"] = np.ndarray([])
+            result["zlim"] = np.ndarray([])
         else:
             result["nlim"] = len(self.limiter)
             result["xlim"] = self.limiter.x
@@ -828,9 +828,10 @@ class Equilibrium(MHDState):
         Note
         ----
         Modifies the following in-place:
-            .plasma_psi                                                          \n
-            .psi_func                                                            \n
-            ._I_p                                                                 \n
+
+            .plasma_psi
+            .psi_func
+            ._I_p
             ._Jtor
         """
         if self._li is None:
@@ -1082,7 +1083,7 @@ class Equilibrium(MHDState):
 
     def get_flux_surface(self, psi_n, psi=None, o_points=None, x_points=None):
         """
-        Get a flux surface Loop. NOTE: Continuous surface (bridges grid)
+        Get a flux surface Coordinates. NOTE: Continuous surface (bridges grid)
 
         Parameters
         ----------
@@ -1093,15 +1094,15 @@ class Equilibrium(MHDState):
 
         Returns
         -------
-        flux_surface: Loop(x, z) object
-            Flux surface Loop
+        flux_surface: Coordinates
+            Flux surface Coordinates
         """
         if psi is None:
             psi = self.psi()
         f = find_flux_surf(
             self.x, self.z, psi, psi_n, o_points=o_points, x_points=x_points
         )
-        return Loop(x=f[0], z=f[1])
+        return Coordinates({"x": f[0], "z": f[1]})
 
     def get_LCFS(self, psi=None):
         """
@@ -1115,8 +1116,8 @@ class Equilibrium(MHDState):
 
         Returns
         -------
-        lcfs: Loop
-            The Loop of the LCFS
+        lcfs: Coordinates
+            The Coordinates of the LCFS
         """
         if psi is None:
             psi = self.psi()
@@ -1134,8 +1135,8 @@ class Equilibrium(MHDState):
 
         Returns
         -------
-        separatrix: Union[Loop, MultiLoop]
-            The separatrix loop(s) (Loop for SN, MultiLoop for DN)
+        separatrix: Union[Coordinates, List[Coordinates]]
+            The separatrix loop(s) (Coordinates for SN, List[Coordinates]] for DN)
         """
         if psi is None:
             psi = self.psi()
@@ -1267,9 +1268,9 @@ class Equilibrium(MHDState):
         of the equilbrium and coilset.
         """
         c_names = self.coilset.get_control_names()
-        currents = self.coilset.get_control_currents() / 1e6
+        currents = self.coilset.get_control_currents()
         fields = self.get_coil_fields()
-        forces = self.get_coil_forces() / 1e6
+        forces = self.get_coil_forces()
         fz = forces.T[1]
         fz_cs = fz[self.coilset.n_PF :]
         fz_c_stot = sum(fz_cs)
@@ -1277,10 +1278,15 @@ class Equilibrium(MHDState):
         for j in range(self.coilset.n_CS - 1):
             fsep.append(np.sum(fz_cs[j + 1 :]) - np.sum(fz_cs[: j + 1]))
         fsep = max(fsep)
-        table = {"I [MA]": currents, "B [T]": fields, "F [MN]": fz}
-        df = DataFrame(list(table.values()), index=list(table.keys()))
-        df = df.applymap(lambda x: f"{x:.2f}")
-        print(tabulate.tabulate(df, headers=c_names))
+        table = {"I [A]": currents, "B [T]": fields, "F [N]": fz}
+        print(
+            tabulate.tabulate(
+                list(table.values()),
+                headers=c_names,
+                floatfmt=".2f",
+                showindex=table.keys(),
+            )
+        )
         return table, fz_c_stot, fsep
 
     @property
@@ -1321,8 +1327,8 @@ class Equilibrium(MHDState):
             field=True,
         )
 
-    def plot_core(self, ax=None):
+    def plot_core(self):
         """
         Plot a 1-D section through the magnetic axis.
         """
-        return CorePlotter2(self, ax)
+        return CorePlotter2(self)

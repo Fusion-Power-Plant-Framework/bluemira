@@ -28,7 +28,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 from bluemira.base.constants import MU_0_4PI
-from bluemira.geometry._deprecated_tools import make_circle_arc
+from bluemira.geometry._private_tools import make_circle_arc
 from bluemira.magnetostatics.baseclass import RectangularCrossSectionCurrentSource
 from bluemira.magnetostatics.tools import (
     integrate,

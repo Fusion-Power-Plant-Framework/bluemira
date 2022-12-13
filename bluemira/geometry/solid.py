@@ -25,13 +25,18 @@ Wrapper for FreeCAD Part.Face objects
 
 from __future__ import annotations
 
+from typing import Tuple
+
 # import from freecad
 import bluemira.codes._freecadapi as cadapi
 
 # import from bluemira
 from bluemira.geometry.base import BluemiraGeo
-from bluemira.geometry.error import DisjointedSolid
+from bluemira.geometry.coordinates import Coordinates
+from bluemira.geometry.error import DisjointedSolid, GeometryError
+from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.shell import BluemiraShell
+from bluemira.geometry.wire import BluemiraWire
 
 __all__ = ["BluemiraSolid"]
 
@@ -49,7 +54,7 @@ class BluemiraSolid(BluemiraGeo):
         solid = cadapi.apiSolid(new_shell)
 
         if len(self.boundary) > 1:
-            shell_holes = [cadapi.apiSolid(s._shape) for s in self.boundary[1:]]
+            shell_holes = [cadapi.apiSolid(s.shape) for s in self.boundary[1:]]
             solid = solid.cut(shell_holes)
             if len(solid.Solids) == 1:
                 solid = solid.Solids[0]
@@ -61,27 +66,75 @@ class BluemiraSolid(BluemiraGeo):
         else:
             return solid
 
-    @property
-    def _shape(self):
+    def _create_shape(self):
         """Part.Solid: shape of the object as a single solid"""
         return self._create_solid()
 
     @classmethod
     def _create(cls, obj: cadapi.apiSolid, label=""):
         if isinstance(obj, cadapi.apiSolid):
-            orientation = obj.Orientation
 
             if len(obj.Solids) > 1:
                 raise DisjointedSolid("Disjointed solids are not accepted.")
+
+            if not obj.isValid():
+                # cadapi.save_as_STP(obj, "objet_not_valid")
+                raise GeometryError(f"Solid {obj} is not valid.")
 
             bm_shells = []
             for shell in obj.Shells:
                 bm_shells.append(BluemiraShell._create(shell))
 
-            bmsolid = cls(bm_shells, label=label)
-            bmsolid._orientation = orientation
+            # create an empty BluemiraSolid
+            bmsolid = cls(None, label=label)
+            # assign shape, boundary, and orientation
+            bmsolid._set_shape(obj)
+            bmsolid._boundary = bm_shells
+            bmsolid._orientation = obj.Orientation
             return bmsolid
 
         raise TypeError(
             f"Only Part.Solid objects can be used to create a {cls} instance"
         )
+
+    @property
+    def vertexes(self) -> Coordinates:
+        """
+        The vertexes of the solid.
+        """
+        return Coordinates(cadapi.vertexes(self.shape))
+
+    @property
+    def edges(self) -> Tuple[BluemiraWire]:
+        """
+        The edges of the solid.
+        """
+        return tuple([BluemiraWire(cadapi.apiWire(o)) for o in cadapi.edges(self.shape)])
+
+    @property
+    def wires(self) -> Tuple[BluemiraWire]:
+        """
+        The wires of the solid.
+        """
+        return tuple([BluemiraWire(o) for o in cadapi.wires(self.shape)])
+
+    @property
+    def faces(self) -> Tuple[BluemiraFace]:
+        """
+        The faces of the solid.
+        """
+        return tuple([BluemiraFace(o) for o in cadapi.faces(self.shape)])
+
+    @property
+    def shells(self) -> Tuple[BluemiraShell]:
+        """
+        The shells of the solid.
+        """
+        return tuple([BluemiraShell(o) for o in cadapi.shells(self.shape)])
+
+    @property
+    def solids(self) -> Tuple[BluemiraSolid]:
+        """
+        The solids of the solid. By definition a list of itself.
+        """
+        return tuple(self)

@@ -23,10 +23,10 @@ jobs:
 
     steps:
     - name: Checkout
-      uses: actions/checkout@v2
+      uses: actions/checkout@v3
 
     - name: Checkout bluemira-private-data
-      uses: actions/checkout@v2
+      uses: actions/checkout@v3
       with:
         repository: 'Fusion-Power-Plant-Framework/bluemira-private-data'
         ssh-key: ${{ secrets.BLUEMIRA_PRIVATE_DATA_DEPLOY_KEY }}
@@ -38,7 +38,7 @@ jobs:
           mv ~/work/bluemira/bluemira/bluemira-private-data ~/work/bluemira/bluemira-private-data
 
     - name: Cache pip
-      uses: actions/cache@v2
+      uses: actions/cache@v3
       env:
         # Increase this value to reset cache if requirements.txt has not changed
         PIP_CACHE_NUMBER: 1
@@ -50,7 +50,7 @@ jobs:
 
 
     - name: Cache conda
-      uses: actions/cache@v2
+      uses: actions/cache@v3
       env:
         # Increase this value to reset cache if conda/environment.yml has not changed
         CONDA_CACHE_NUMBER: 1
@@ -96,7 +96,7 @@ jobs:
     - name: Build Documentation bluemira
       shell: bash -l {0}
       run: |
-        sphinx-build -W documentation/source documentation/build
+        sphinx-build -j auto -W documentation/source documentation/build
 
     - name: Run pytest bluemira
       shell: bash -l {0}
@@ -105,12 +105,13 @@ jobs:
         # https://github.com/actions/runner/issues/409#issuecomment-752775072
         PYTEST_LONGRUN: ${{ github.event.pull_request.head.ref == 'develop_dependencies' && '--longrun' || '' }}
       run: |
+        export PYTHONPATH="$(pwd)/eudemo"
         pytest --cov=bluemira \
                --cov-report html:htmlcov_bluemira \
                --cov-report xml \
                --json-report \
                --json-report-indent=3 \
-               tests examples/design/EU-DEMO --reactor --private ${PYTEST_LONGRUN}
+               tests eudemo/eudemo_tests --reactor --private ${PYTEST_LONGRUN}
 
     - name: Upload test report
       uses: actions/upload-artifact@v3
@@ -121,6 +122,6 @@ jobs:
         path: .report.json
 
     - name: "Upload coverage to Codecov"
-      uses: codecov/codecov-action@v2
+      uses: codecov/codecov-action@v3
       with:
-        fail_ci_if_error: true
+        fail_ci_if_error: ${{ github.ref_name == 'develop' || github.ref_name == 'main' }}
