@@ -109,6 +109,8 @@ class ReferenceEquilibriumParams(ParameterFrame):
     R_0: Parameter[float]
     r_cs_in: Parameter[float]
     tk_cs: Parameter[float]
+    beta_p: Parameter[float]
+    l_i: Parameter[float]
 
 
 def make_reference_equilibrium(
@@ -142,9 +144,8 @@ def make_reference_equilibrium(
         nz=nz,
     )
 
-    profiles = CustomProfile(
-        p_prime,
-        ff_prime,
+    profiles = BetaIpProfile(
+        betap=params.beta_p.value,
         R_0=params.R_0.value,
         B_0=params.B_0.value,
         I_p=params.I_p.value,

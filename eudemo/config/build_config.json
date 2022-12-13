@@ -39,7 +39,7 @@
             "max_iter": 15,
             "iter_err_max": 5e-2,
             "relaxation": 0.0,
-            "plot": true
+            "plot": false
         },
         "free_equilibrium_settings": {
             "iter_err_max": 1e-2,
