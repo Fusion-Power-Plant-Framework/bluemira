@@ -40,11 +40,13 @@ plot_defaults()
 temperature = np.linspace(0.5, 100, 1000)  # [keV]
 
 sigma_v_DT = reactivity(temperature, "D-T")  # noqa: N816
+sigma_v_DT2 = reactivity(temperature, "D-T", method="Johner")  # noqa: N816
 sigma_v_DD = reactivity(temperature, "D-D")  # noqa: N816
 sigma_v_DHe3 = reactivity(temperature, "D-He3")  # noqa: N816
 
 f, ax = plt.subplots()
 ax.loglog(temperature, sigma_v_DT, label="D-T")
+ax.loglog(temperature, sigma_v_DT2, label="D-T Johner")
 ax.loglog(temperature, sigma_v_DD, label="D-D")
 ax.loglog(temperature, sigma_v_DHe3, label="D-He3")
 

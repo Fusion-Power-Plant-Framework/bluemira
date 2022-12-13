@@ -216,6 +216,7 @@ def reactivity(
     mapping = {
         "Bosch-Hale": _reactivity_bosch_hale,
         "PLASMOD": _reactivity_plasmod,
+        "Johner": _reactivity_johner,
     }
     if method not in mapping:
         raise ValueError(f"Unknown method: {method}")
@@ -429,3 +430,50 @@ def _reactivity_plasmod(temp_kev, reaction):
         return 1e-19 * term_1 * term_2
     else:
         raise ValueError(f"This function only supports D-D and D-T, not {reaction}")
+
+
+def _reactivity_johner(temp_kev, reaction):
+    """
+    Johner's monomial fit for analytical calculations
+
+    Parameters
+    ----------
+    temp_kev: Union[float, np.ndarray]
+        Temperature [keV]
+    reaction: str
+        The fusion reaction
+
+    Returns
+    -------
+    sigma_v: float
+        Reactivity of the reaction at the specified temperature(s) [m^3/s]
+
+    Notes
+    -----
+    Johner, Jean (2011). HELIOS: a zero-dimensional tool for next step and reactor studies.
+    Fusion Science and Technology, 59(2), 308-313. Appendix E.II
+    """
+    if reaction != "D-T":
+        raise ValueError(f"This function only supports D-T, not {reaction}")
+
+    if np.max(temp_kev) > 100:
+        bluemira_warn("The Johner parameterisation is not valid for T > 100 keV")
+    if np.min(temp_kev) < 5.3:
+        bluemira_warn("The Johner parameterisation is not valid for T < 5.3 keV")
+
+    sigma_v = np.zeros_like(temp_kev)
+    idx_1 = np.where((5.3 <= temp_kev) & (temp_kev <= 10.3))[0]
+    idx_2 = np.where((10.3 <= temp_kev) & (temp_kev <= 18.5))[0]
+    idx_3 = np.where((18.5 <= temp_kev) & (temp_kev <= 39.9))[0]
+    idx_4 = np.where((39.9 <= temp_kev) & (temp_kev <= 100.0))[0]
+    t1 = temp_kev[idx_1]
+    t2 = temp_kev[idx_2]
+    t3 = temp_kev[idx_3]
+    t4 = temp_kev[idx_4]
+    sigma_v[idx_1] = 1.15e-25 * t1**3
+    sigma_v[idx_2] = 1.18e-24 * t2**2
+    sigma_v[idx_3] = 2.18e-23 * t3
+    sigma_v[idx_4] = 8.69e-22
+    if isinstance(temp_kev, (float, int)):
+        return float(sigma_v)
+    return sigma_v
