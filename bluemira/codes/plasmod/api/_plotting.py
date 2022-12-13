@@ -23,7 +23,9 @@ Plotting for PLASMOD.
 """
 
 import matplotlib.pyplot as plt
+import numpy as np
 
+from bluemira.base.constants import MU_0
 from bluemira.display import plot_defaults
 
 __all__ = ["plot_default_profiles"]
@@ -52,6 +54,11 @@ def plot_default_profiles(plasmod_solver, show=True, f=None, ax=None):
         f, ax = plt.subplots(2, 3, figsize=(18, 10))
 
     rho = plasmod_solver.get_profile("x")
+    R_0 = plasmod_solver.params.R_0.value
+    pprime = plasmod_solver.get_profile("pprime")
+    ffprime = plasmod_solver.get_profile("ffprime")
+    # Current density profile reconstruction from flux functions
+    jpar_recon = 2 * np.pi * (R_0 * pprime + 1 / (MU_0 * R_0) * ffprime)
 
     # Temperature profiles
     ti = plasmod_solver.get_profile("Ti")
@@ -67,6 +74,7 @@ def plot_default_profiles(plasmod_solver, show=True, f=None, ax=None):
     ax[0, 1].plot(rho, jpar, label="$j_{||}$")
     ax[0, 1].plot(rho, jbs, label="$j_{BS}$")
     ax[0, 1].plot(rho, jcd, label="$j_{CD}$")
+    ax[0, 1].plot(rho, jpar_recon, label="$j_{p', FF'}$")
     ax[0, 1].set_ylabel("Current density [A/m²]")
 
     # Density profiles
@@ -82,13 +90,11 @@ def plot_default_profiles(plasmod_solver, show=True, f=None, ax=None):
     ax[1, 1].set_ylabel("Safety factor")
 
     # Flux functions
-    pprime = plasmod_solver.get_profile("pprime")
     ax[0, 2].plot(rho, pprime, label="p'")
     ax[0, 2].set_ylabel("[Pa/Wb]")
     axi: plt.Axes = ax[0, 2]
     axi.ticklabel_format(axis="y", style="scientific", scilimits=(0, 0))
 
-    ffprime = plasmod_solver.get_profile("ffprime")
     ax[1, 2].plot(rho, ffprime, label="FF'")
     ax[1, 2].set_ylabel("[T]")
 
