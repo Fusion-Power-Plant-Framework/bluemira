@@ -28,7 +28,6 @@ from typing import Iterable, Optional, Union
 
 import numpy as np
 
-from bluemira.base.constants import EPS
 from bluemira.base.look_and_feel import bluemira_debug
 from bluemira.equilibria.coils._field import CoilFieldsMixin
 from bluemira.equilibria.coils._tools import get_max_current
@@ -129,7 +128,7 @@ class Coil(CoilFieldsMixin):
     b_max: float
         Maximum magnetic field at the coil [T]
     discretisation: float
-        discretise the coil, value in [m].
+        discretise the coil, value in [m]. The minimum size is 0.05m
     n_turns: int
         Number of turns
 
@@ -387,7 +386,7 @@ class Coil(CoilFieldsMixin):
     @discretisation.setter
     def discretisation(self, value: float):
         """Set coil discretisation"""
-        self._discretisation = np.clip(float(value), EPS, 1)
+        self._discretisation = np.clip(float(value), 0.05, None)
         self._discretise()
 
     def assign_material(
