@@ -58,7 +58,7 @@ def plot_default_profiles(plasmod_solver, show=True, f=None, ax=None):
     pprime = plasmod_solver.get_profile("pprime")
     ffprime = plasmod_solver.get_profile("ffprime")
     # Current density profile reconstruction from flux functions
-    jpar_recon = 2 * np.pi * (R_0 * pprime + 1 / (MU_0 * R_0) * ffprime)
+    jpar_recon = 2 * np.pi * (R_0 * pprime + ffprime / (MU_0 * R_0))
 
     # Temperature profiles
     ti = plasmod_solver.get_profile("Ti")
