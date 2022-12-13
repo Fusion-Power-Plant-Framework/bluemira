@@ -162,8 +162,6 @@ class PlasmodInputs:
     x_heat_ech: float = 0.0
     x_heat_nbi: float = 0.0
     xtglf_1: float = 0.1
-    xtglf_10: float = 0.75
-    xtglf_11: float = 0.8
     xtglf_2: float = 0.15
     xtglf_3: float = 0.2
     xtglf_4: float = 0.25
@@ -172,6 +170,8 @@ class PlasmodInputs:
     xtglf_7: float = 0.5
     xtglf_8: float = 0.6
     xtglf_9: float = 0.7
+    xtglf_10: float = 0.75
+    xtglf_11: float = 0.8
 
     _FORTRAN_INT_FORMAT = "a20,  i10"
     _FORTRAN_FLOAT_FORMAT = "a20, e17.9"

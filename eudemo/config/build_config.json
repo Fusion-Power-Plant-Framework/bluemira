@@ -23,7 +23,10 @@
             "i_modeltype": "GYROBOHM_2",
             "i_equiltype": "q95_sawtooth",
             "i_pedestal": "SAARELMA",
-            "isawt": "FULLY_RELAXED"
+            "isawt": "FULLY_RELAXED",
+            "nx": 41,
+            "nxt": 21,
+            "ntglf": 11
         },
         "fixed_equilibrium_settings": {
             "p_order": 2,
@@ -35,8 +38,8 @@
             "lcar_mesh": 0.3,
             "max_iter": 15,
             "iter_err_max": 5e-2,
-            "relaxation":0.0,
-            "plot": false
+            "relaxation": 0.0,
+            "plot": true
         },
         "free_equilibrium_settings": {
             "iter_err_max": 1e-2,

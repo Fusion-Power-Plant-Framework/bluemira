@@ -377,8 +377,8 @@ class FixedEquilibriumDesigner(Designer[Equilibrium]):
             tf_coil_boundary,
             p_prime,
             ff_prime,
-            nx=settings["nx"],
-            nz=settings["nz"],
+            nx=settings.pop("nx"),
+            nz=settings.pop("nz"),
         )
 
         opt_problem = self._make_fbe_opt_problem(eq, lcfs_shape)
