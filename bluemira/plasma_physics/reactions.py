@@ -450,8 +450,8 @@ def _reactivity_johner(temp_kev, reaction):
 
     Notes
     -----
-    Johner, Jean (2011). HELIOS: a zero-dimensional tool for next step and reactor studies.
-    Fusion Science and Technology, 59(2), 308-313. Appendix E.II
+    Johner, Jean (2011). HELIOS: a zero-dimensional tool for next step and reactor
+    studies. Fusion Science and Technology, 59(2), 308-313. Appendix E.II
     """
     if reaction != "D-T":
         raise ValueError(f"This function only supports D-T, not {reaction}")
