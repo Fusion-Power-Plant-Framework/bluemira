@@ -22,8 +22,8 @@
 """
 Constants for use in the structural module.
 """
-import matplotlib.colormaps as cm
 import numpy as np
+from matplotlib import colormaps as cm
 
 from bluemira.base.constants import EPS
 
