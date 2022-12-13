@@ -23,7 +23,7 @@
 Constants for use in the structural module.
 """
 import numpy as np
-from matplotlib import colormaps as cm
+from matplotlib.pyplot import get_cmap
 
 from bluemira.base.constants import EPS
 
@@ -78,7 +78,7 @@ DISP_MAPPING = {"Dx": 0, "Dy": 1, "Dz": 2, "Rx": 3, "Ry": 4, "Rz": 5}
 N_INTERP = 7
 
 # Color map for Element stresses
-STRESS_COLOR = cm.get_cmap("seismic", 1000)
+STRESS_COLOR = get_cmap("seismic", 1000)
 
 # Color map for Element deflections
-DEFLECT_COLOR = cm.get_cmap("viridis", 1000)
+DEFLECT_COLOR = get_cmap("viridis", 1000)
