@@ -11,6 +11,7 @@ from typing import List
 from unittest import mock
 
 import matplotlib as mpl
+import matplotlib.pyplot as plt
 
 from bluemira.base.file import get_bluemira_path
 
@@ -72,6 +73,8 @@ def run_example(file_path: str) -> bool:
     except (SyntaxError, Exception) as e:
         print(e, file=sys.stderr)
         return False
+    finally:
+        plt.close("all")
     return True
 
 
