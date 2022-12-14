@@ -50,19 +50,11 @@ def edit_files(files: List[str], copyright_line: str):
     """
     for file in files:
         with fileinput.FileInput(file, inplace=True) as fh:
-            next = False
             for line in fh:
-                if line.startswith(r"# Copyright"):
-                    print(
-                        "# Copyright (C) 2021-2022 M. Coleman, J. Cook, F. Franza, I.A. Maione, S. McIntosh,",
-                    )
-                    next = True
+                if line.startswith(r"# Copyright") and copyright_line not in line:
+                    print(line.replace(line.split(" ", 4)[-2], copyright_line), end="")
                     yield file
-                elif next:
-                    next = False
-                    print("#                         J. Morris, D. Short")
                 else:
-
                     print(line, end="")
 
 
