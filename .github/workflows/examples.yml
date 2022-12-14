@@ -26,5 +26,6 @@ jobs:
 
       - name: Run examples
         id: run-examples
+        shell: bash -l {0}
         run: |
           ./scripts/run_examples
