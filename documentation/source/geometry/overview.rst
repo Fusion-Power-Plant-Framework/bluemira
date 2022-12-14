@@ -64,7 +64,7 @@ A basic example for the creation of the geometrical objects:
     .. warning:: faces shall not intersect. No internal check is implemented for the
         moment, so the check is on the user.
 
-    .. code-block:: pycon
+    .. code-block:: python
 
         vertexes = [(0.0, 0.0, 0.0), (1.0, 0.0, 0.0), (1.0, 1.0, 0.0), (0.0, 1.0, 0.0),
                     (0.0, 0.0, 1.0), (1.0, 0.0, 1.0), (1.0, 1.0, 1.0), (0.0, 1.0, 1.0)]
@@ -83,7 +83,7 @@ A basic example for the creation of the geometrical objects:
     A BluemiraSolid object is defined by its boundary that must be a closed
     BluemiraShell object.
 
-    .. code-block:: pycon
+    .. code-block:: python
 
         # solid creation from shell
         solid = geo.solid.BluemiraSolid(shell, "solid")
@@ -93,7 +93,7 @@ Shape operations
 Shape operations that modify the shape itself are implemented as methods. For
 example, the following command applies a translation with the specified vector:
 
-    .. code-block:: pycon
+    .. code-block:: python
 
         vector = (5.0, 2.0, 0.0)
         bmface.translate(vector)
@@ -102,7 +102,7 @@ Shape operations that, when applied, create a new shape topology are implemented
 ``bluemira.geometry.tools``. For example, the following command creates a solid
 by revolving a face of 30 degrees along the z-axis:
 
-    .. code-block:: pycon
+    .. code-block:: python
 
         base = (0., 0., 0.)
         direction = (0., 0., 1.)
@@ -114,7 +114,7 @@ Exporting
 Each bluemira geometry object can be exported as step file (list of objects are
 exported as a single compound):
 
-    .. code-block:: pycon
+    .. code-block:: python
 
         bluemira.geometry.tools.save_as_STP(bmface, "face.step")
         bluemira.geometry.tools.save_as_STP([bmface1, bmface2], "compound.step")
@@ -126,18 +126,18 @@ FreeCAD objects
 Below a list of typical geometry object properties of FreeCAD. Only those labelled as
 `converted` are available in bluemira.
 
-    .. code-block:: pycon
+    .. code-block:: python
 
-        ['Area', -> converted
-         'BoundBox', -> converted
-         'CenterOfMass', -> converted
+        ['Area',  # converted
+         'BoundBox',  # converted
+         'CenterOfMass',  # converted
          'CompSolids',
          'Compounds',
          'Content',
          'Continuity',
          'Edges',
          'Faces',
-         'Length', -> converted
+         'Length',  # converted
          'Mass',
          'Matrix',
          'MatrixOfInertia',
@@ -156,7 +156,7 @@ Below a list of typical geometry object properties of FreeCAD. Only those labell
          'Tag',
          'TypeId',
          'Vertexes',
-         'Volume', -> converted
+         'Volume',  # converted
          'Wires',
          '__class__',
          '__delattr__',
@@ -195,7 +195,7 @@ Below a list of typical geometry object properties of FreeCAD. Only those labell
          'countElement',
          'cut',
          'defeaturing',
-         'discretize', -> converted/improved
+         'discretize',  # converted/improved
          'distToShape',
          'dumpContent',
          'dumpToString',
@@ -203,9 +203,9 @@ Below a list of typical geometry object properties of FreeCAD. Only those labell
          'exportBrep',
          'exportBrepToString',
          'exportIges',
-         'exportStep', -> converted
+         'exportStep',  # converted
          'exportStl',
-         'extrude', -> converted
+         'extrude',  # converted
          'findPlane',
          'fix',
          'fixTolerance',
@@ -222,13 +222,13 @@ Below a list of typical geometry object properties of FreeCAD. Only those labell
          'importBrep',
          'importBrepFromString',
          'inTolerance',
-         'isClosed', -> converted
+         'isClosed',  # converted
          'isCoplanar',
          'isDerivedFrom',
          'isEqual',
          'isInfinite',
          'isInside',
-         'isNull', -> converted
+         'isNull',  # converted
          'isPartner',
          'isSame',
          'isValid',
@@ -263,10 +263,10 @@ Below a list of typical geometry object properties of FreeCAD. Only those labell
          'restoreContent',
          'reverse',
          'reversed',
-         'revolve', -> converted
+         'revolve',  # converted
          'rotate',
          'rotated',
-         'scale', -> converted
+         'scale',  # converted
          'scaled',
          'section',
          'sewShape',
