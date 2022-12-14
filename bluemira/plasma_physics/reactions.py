@@ -24,6 +24,7 @@ Fusion reactions
 """
 
 from dataclasses import dataclass
+from enum import Enum, auto
 from typing import Union
 
 import numpy as np
@@ -180,13 +181,13 @@ def r_D_burn_DT(p_fus):  # noqa :N802
     return n_DT_reactions(p_fus) * D_MOLAR_MASS / N_AVOGADRO
 
 
-REACTIONS = {
-    "D-T": 0,  # D + T --> 4He + n reaction
-    "D-D": -1,  # D + D --> 0.5 D-D1 + 0.5 D-D2
-    "D-D1": 1,  # D + D --> 3He + n reaction [50 %]
-    "D-D2": 2,  # D + D --> T + p reaction [50 %]
-    "D-He3": 3,  # D + 3He --> 4He + p reaction
-}
+class Reactions(Enum):
+    D_T =  auto(),  # D + T --> 4He + n reaction
+    D_D = auto(),  # D + D --> 0.5 D-D1 + 0.5 D-D2
+    D_D1 = auto(),  # D + D --> 3He + n reaction [50 %]
+    D_D2 =  auto(),  # D + D --> T + p reaction [50 %]
+    D_He3 = auto(),  # D + 3He --> 4He + p reaction
+
 
 
 def reactivity(
@@ -210,8 +211,7 @@ def reactivity(
     sigma_v: float
         Reactivity of the reaction at the specified temperature(s) [m^3/s]
     """
-    if reaction not in REACTIONS:
-        raise ValueError(f"Unknown reaction: {reaction}")
+    reaction = Reactions[reaction.replace('-','_')]
 
     mapping = {
         "Bosch-Hale": _reactivity_bosch_hale,
@@ -337,7 +337,7 @@ class BoschHale_DHe3_4Hep:
     )
 
 
-def _reactivity_bosch_hale(temp_kev, reaction):
+def _reactivity_bosch_hale(temp_kev: Union[float, np.ndarray], reaction: Reactions) -> Union[float, np.ndarray]:
     """
     Bosch-Hale reactivity parameterisation for Maxwellian plasmas
 
@@ -358,16 +358,16 @@ def _reactivity_bosch_hale(temp_kev, reaction):
     H.-S. Bosch and G.M. Hale 1992 Nucl. Fusion 32 611
     DOI 10.1088/0029-5515/32/4/I07
     """
-    if reaction == "D-D":
+    if reaction == Reactions.D_D:
         return 0.5 * (
-            _reactivity_bosch_hale(temp_kev, "D-D1")
-            + _reactivity_bosch_hale(temp_kev, "D-D2")
+            _reactivity_bosch_hale(temp_kev, Reactions.D_D1)
+            + _reactivity_bosch_hale(temp_kev, Reactions.D_D2)
         )
     mapping = {
-        "D-T": BoschHale_DT_4Hen,
-        "D-D1": BoschHale_DD_3Hen,
-        "D-D2": BoschHale_DD_Tp,
-        "D-He3": BoschHale_DHe3_4Hep,
+        Reactions.D_T: BoschHale_DT_4Hen,
+        Reactions.D_D1: BoschHale_DD_3Hen,
+        Reactions.D_D2: BoschHale_DD_Tp,
+        Reactions.D_He3: BoschHale_DHe3_4Hep,
     }
     data = mapping[reaction]
 
@@ -398,7 +398,7 @@ def _reactivity_bosch_hale(temp_kev, reaction):
     )
 
 
-def _reactivity_plasmod(temp_kev, reaction):
+def _reactivity_plasmod(temp_kev: Union[float, np.ndarray], reaction: Reactions) -> Union[float, np.ndarray]:
     """
     Reactivity equations used in PLASMOD (original source unknown)
 
@@ -406,7 +406,7 @@ def _reactivity_plasmod(temp_kev, reaction):
     ----------
     temp_kev: Union[float, np.ndarray]
         Temperature [keV]
-    reaction: str
+    reaction: Reactions
         The fusion reaction
 
     Returns
@@ -414,7 +414,7 @@ def _reactivity_plasmod(temp_kev, reaction):
     sigma_v: float
         Reactivity of the reaction at the specified temperature(s) [m^3/s]
     """
-    if reaction == "D-T":
+    if reaction == Reactions.D_T:
         t3 = temp_kev ** (-1 / 3)
 
         term_1 = 8.972 * np.exp(-19.9826 * t3) * t3**2
@@ -422,17 +422,17 @@ def _reactivity_plasmod(temp_kev, reaction):
         term_3 = 1.877 * np.exp(-0.16176 * temp_kev * np.sqrt(temp_kev))
         return 1e-19 * term_1 * (term_2 + term_3)
 
-    elif reaction == "D-D":
+    elif reaction == Reactions.D_D:
         term_1 = (
             0.16247 + 0.001741 * temp_kev - 0.029 * np.exp(-0.3843 * np.sqrt(temp_kev))
         )
         term_2 = np.exp(-18.8085 / (temp_kev ** (1 / 3))) / (temp_kev ** (1 / 3)) ** 2
         return 1e-19 * term_1 * term_2
     else:
-        raise ValueError(f"This function only supports D-D and D-T, not {reaction}")
+        raise ValueError(f"This function only supports D-D and D-T, not {reaction.name.replace('_','-')}")
 
 
-def _reactivity_johner(temp_kev, reaction):
+def _reactivity_johner(temp_kev: Union[float, np.ndarray], reaction: Reactions) -> Union[float, np.ndarray]:
     """
     Johner's monomial fit for analytical calculations
 
@@ -440,7 +440,7 @@ def _reactivity_johner(temp_kev, reaction):
     ----------
     temp_kev: Union[float, np.ndarray]
         Temperature [keV]
-    reaction: str
+    reaction: Reactions
         The fusion reaction
 
     Returns
@@ -453,8 +453,8 @@ def _reactivity_johner(temp_kev, reaction):
     Johner, Jean (2011). HELIOS: a zero-dimensional tool for next step and reactor
     studies. Fusion Science and Technology, 59(2), 308-313. Appendix E.II
     """
-    if reaction != "D-T":
-        raise ValueError(f"This function only supports D-T, not {reaction}")
+    if reaction != Reactions.D_T:
+        raise ValueError(f"This function only supports D-T, not {reaction.name.replace('_','-')}")
 
     if np.max(temp_kev) > 100:
         bluemira_warn("The Johner parameterisation is not valid for T > 100 keV")
