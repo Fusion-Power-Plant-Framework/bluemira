@@ -1,0 +1,109 @@
+#!/usr/bin/env python3
+"""Run Bluemira example files in sequence. Exit with code 1 if any errors."""
+
+import os
+import re
+import sys
+from argparse import ArgumentParser
+from dataclasses import dataclass
+from pathlib import Path
+from typing import List
+from unittest import mock
+
+import matplotlib as mpl
+
+from bluemira.base.file import get_bluemira_path
+
+EXAMPLES_ROOT = os.path.normpath(get_bluemira_path("examples", subfolder=""))
+EXCLUDE_PATTERNS = ["convert_py_to_ipynb"]
+
+
+@dataclass
+class Args:
+    """Command line arguments."""
+
+    examples_dir: str
+    exclude_pattern: List[str]
+    plotting_on: bool
+
+
+def parse_args(sys_args: List[str]) -> Args:
+    """Parse command line arguments"""
+    parser = ArgumentParser(description=__doc__)
+    parser.add_argument(
+        "--examples-dir",
+        default=EXAMPLES_ROOT,
+        help=f"the directory in which to look for examples (default: {EXAMPLES_ROOT})",
+    )
+    parser.add_argument(
+        "-e",
+        "--exclude-pattern",
+        action="append",
+        default=EXCLUDE_PATTERNS,
+        help=(
+            "do not run example files that contain this regex pattern. "
+            "This argument may be used more than once"
+        ),
+    )
+    parser.add_argument(
+        "--plotting-on",
+        action="store_true",
+        default=False,
+        help="disable plotting windows",
+    )
+    args = parser.parse_args(sys_args)
+    return Args(**vars(args))
+
+
+def find_python_files(examples_dir: str, exclude_patterns: List[str]) -> List[str]:
+    """Glob for Python files in the given directory."""
+    files = []
+    for path in Path(examples_dir).rglob("*.py"):
+        if not any(re.search(p, str(path)) for p in exclude_patterns):
+            files.append(path)
+    return sorted(files)
+
+
+def run_example(file_path: str) -> bool:
+    """Run the given Python file; return True if no errors, else False."""
+    source = Path(file_path).read_text()
+    try:
+        exec(compile(source, file_path, "exec"), globals())  # noqa: S102
+    except (SyntaxError, Exception) as e:
+        print(e, file=sys.stderr)
+        return False
+    return True
+
+
+def run_examples(example_files: List[str], plotting_on=False) -> List[str]:
+    """Run the given example files and return a list of those that failed."""
+    if not plotting_on:
+        mpl.use("Agg")
+        # Disable CAD viewer by mocking out FreeCAD API's displayer.
+        # Note that if we use a new CAD backend, this must be changed.
+        mock.patch("bluemira.codes._freecadapi.show_cad").start()
+
+    failed = []
+    for example in example_files:
+        display_path = Path(example).relative_to(args.examples_dir)
+        print(f"{display_path} ", flush=True)
+        result = run_example(example)
+        print()
+        if not result:
+            failed.append(display_path)
+    return failed
+
+
+if __name__ == "__main__":
+    args = parse_args(sys.argv[1:])
+    example_py_files = find_python_files(args.examples_dir, args.exclude_pattern)
+    if not example_py_files:
+        print(f"found no python files in '{args.examples_dir}'.")
+        sys.exit(1)
+
+    failed = run_examples(example_py_files, args.plotting_on)
+    if failed:
+        print("Example(s) failed:")
+        for example in failed:
+            print(f"❌ {example}")
+    sys.exit(len(failed) > 0)
