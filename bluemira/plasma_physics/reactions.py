@@ -46,6 +46,16 @@ from bluemira.base.constants import (
 )
 from bluemira.base.look_and_feel import bluemira_warn
 
+__all__ = [
+    "E_DT_fusion",
+    "E_DD_fusion",
+    "n_DT_reactions",
+    "n_DD_reactions",
+    "reactivity",
+    "r_T_burn",
+    "r_D_burn_DT",
+]
+
 
 def E_DT_fusion():  # noqa :N802
     """
