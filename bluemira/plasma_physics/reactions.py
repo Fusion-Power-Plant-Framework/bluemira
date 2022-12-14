@@ -194,7 +194,7 @@ class Reactions(Enum):
 
 
 def reactivity(
-    temp_kev: Union[float, np.ndarray], reaction="D-T", method="Bosch-Hale"
+    temp_k: Union[float, np.ndarray], reaction="D-T", method="Bosch-Hale"
 ) -> Union[float, np.ndarray]:
     """
     Calculate the thermal reactivity of a fusion reaction in Maxwellian plasmas,
@@ -202,8 +202,8 @@ def reactivity(
 
     Parameters
     ----------
-    temp_kev: Union[float, np.ndarray]
-        Temperature [keV]
+    temp_k: Union[float, np.ndarray]
+        Temperature [K]
     reaction: str
         The fusion reaction
     method: str
@@ -214,6 +214,7 @@ def reactivity(
     sigma_v: float
         Reactivity of the reaction at the specified temperature(s) [m^3/s]
     """
+    temp_kev = raw_uc(temp_k, "K", "keV")
     reaction = Reactions[reaction.replace("-", "_")]
 
     mapping = {

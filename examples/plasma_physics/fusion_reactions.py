@@ -37,7 +37,7 @@ from bluemira.plasma_physics.reactions import reactivity
 # %%
 plot_defaults()
 
-temperature = np.linspace(0.5, 100, 1000)  # [keV]
+temperature = np.linspace(10e6, 100e6, 1000)  # [K]
 
 sigma_v_DT = reactivity(temperature, "D-T")  # noqa: N816
 sigma_v_DD = reactivity(temperature, "D-D")  # noqa: N816
@@ -49,7 +49,7 @@ ax.loglog(temperature, sigma_v_DD, label="D-D")
 ax.loglog(temperature, sigma_v_DHe3, label="D-He3")
 
 ax.grid(which="both")
-ax.set_xlabel("T [keV]")
+ax.set_xlabel("T [K]")
 ax.set_ylabel("$\\sigma_{v}$ [$m^{3}/s$]")
 ax.legend()
 plt.show()
