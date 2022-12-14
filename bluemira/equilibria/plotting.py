@@ -717,10 +717,8 @@ class CorePlotter2(Plotter):
         zz = np.linspace(zmag, zmag, n)
         gs = GridSpec(3, 1)
         ccycle = cycle(plt.rcParams["axes.prop_cycle"].by_key()["color"])
-        psi = []
-        for x, z in zip(xx, zz):
-            psi.append(eq.psi(x, z)[0])
-        psi = np.array(psi) * 2 * np.pi
+
+        psi = eq.psi(xx, zz) * 2 * np.pi
         self.ax = [plt.subplot(gs[i]) for i in range(3)]
         self.ax[0].plot(xx, pfunc(xx, zz, grid=False), color=next(ccycle))
         self.ax[0].annotate("$p$", xy=[0.05, 0.8], xycoords="axes fraction")
