@@ -51,7 +51,6 @@ extensions = [
     "sphinx.ext.napoleon",
     "sphinx.ext.mathjax",
     "sphinx_rtd_theme",
-    "matplotlib.sphinxext.plot_directive",
 ]
 
 # Add any paths that contain templates here, relative to this directory.
@@ -114,6 +113,10 @@ autoapi_options = [
     "show-module-summary",
     "special-members",
 ]
+
+# --- Configuration for plotting ---
+extensions.append("matplotlib.sphinxext.plot_directive")
+plot_formats = ["svg", "pdf"]
 
 # --- Configuration for graphviz ---
 extensions.append("sphinx.ext.graphviz")

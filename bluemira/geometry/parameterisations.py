@@ -364,6 +364,7 @@ class PrincetonD(GeometryParameterisation):
 
         from bluemira.geometry.parameterisations import PrincetonD
         PrincetonD().plot()
+
     """
 
     __slots__ = ()
@@ -553,9 +554,9 @@ class TripleArc(GeometryParameterisation):
     sl: float
         Length of inboard straigh section [m]
     f1: float
-
+        rs == f1*z small
     f2: float
-
+        rm == f2*rs mid
     a1: float
         Small arc angle [degrees]
     a2: float
@@ -1725,7 +1726,12 @@ class PictureFrame(
     .. plot::
 
         from bluemira.geometry.parameterisations import PictureFrame
-        PictureFrame(inner="TAPERED_INNER", upper="FLAT", lower="CURVED").plot()
+        PictureFrame(
+                     inner="TAPERED_INNER",
+                     upper="FLAT",
+                     lower="CURVED",
+                     var_dict={'ri': {'value': 1}}
+        ).plot()
     """
 
     __slots__ = tuple(
