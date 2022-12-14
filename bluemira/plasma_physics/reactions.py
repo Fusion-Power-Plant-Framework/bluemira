@@ -23,6 +23,10 @@
 Fusion reactions
 """
 
+from dataclasses import dataclass
+from enum import Enum, auto
+from typing import Union
+
 import numpy as np
 
 from bluemira.base.constants import (
@@ -40,6 +44,17 @@ from bluemira.base.constants import (
     T_MOLAR_MASS,
     raw_uc,
 )
+from bluemira.base.look_and_feel import bluemira_warn
+
+__all__ = [
+    "E_DT_fusion",
+    "E_DD_fusion",
+    "n_DT_reactions",
+    "n_DD_reactions",
+    "reactivity",
+    "r_T_burn",
+    "r_D_burn_DT",
+]
 
 
 def E_DT_fusion():  # noqa :N802
@@ -174,3 +189,315 @@ def r_D_burn_DT(p_fus):  # noqa :N802
         {17.58 [MeV]eV[J]N_{A}[1/mol]} [g/s]
     """
     return n_DT_reactions(p_fus) * D_MOLAR_MASS / N_AVOGADRO
+
+
+class Reactions(Enum):
+    """
+    Reactions with support for reactivity.
+    """
+
+    D_T = auto()  # D + T --> 4He + n reaction
+    D_D = auto()  # D + D --> 0.5 D-D1 + 0.5 D-D2
+    D_D1 = auto()  # D + D --> 3He + n reaction [50 %]
+    D_D2 = auto()  # D + D --> T + p reaction [50 %]
+    D_He3 = auto()  # D + 3He --> 4He + p reaction
+
+
+def reactivity(
+    temp_k: Union[float, np.ndarray], reaction="D-T", method="Bosch-Hale"
+) -> Union[float, np.ndarray]:
+    """
+    Calculate the thermal reactivity of a fusion reaction in Maxwellian plasmas,
+    \\t:math:`<\\sigma v>`
+
+    Parameters
+    ----------
+    temp_k: Union[float, np.ndarray]
+        Temperature [K]
+    reaction: str
+        The fusion reaction
+    method: str
+        The parameterisation to use when calculating the reactivity
+
+    Returns
+    -------
+    sigma_v: float
+        Reactivity of the reaction at the specified temperature(s) [m^3/s]
+    """
+    temp_kev = raw_uc(temp_k, "K", "keV")
+    reaction = Reactions[reaction.replace("-", "_")]
+
+    mapping = {
+        "Bosch-Hale": _reactivity_bosch_hale,
+        "PLASMOD": _reactivity_plasmod,
+        "Johner": _reactivity_johner,
+    }
+    if method not in mapping:
+        raise ValueError(f"Unknown method: {method}")
+
+    func = mapping[method]
+    return func(temp_kev, reaction)
+
+
+@dataclass
+class BoschHale_DT_4Hen:
+    """
+    Bosch-Hale parameterisation data for the reaction:
+
+    D + T --> 4He + n
+
+    H.-S. Bosch and G.M. Hale 1992 Nucl. Fusion 32 611
+    DOI 10.1088/0029-5515/32/4/I07
+    """
+
+    t_min = 0.2  # [keV]
+    t_max = 100  # [keV]
+    bg = 34.3827  # [keV**0.5]
+    mrc2 = 1.124656e6  # [keV]
+    c = np.array(
+        [
+            1.17302e-9,
+            1.51361e-2,
+            7.51886e-2,
+            4.60643e-3,
+            1.35000e-2,
+            -1.06750e-4,
+            1.36600e-5,
+        ]
+    )
+
+
+@dataclass
+class BoschHale_DD_3Hen:
+    """
+    Bosch-Hale parameterisation data for the reaction:
+
+    D + D --> 3He + n
+
+    H.-S. Bosch and G.M. Hale 1992 Nucl. Fusion 32 611
+    DOI 10.1088/0029-5515/32/4/I07
+    """
+
+    t_min = 0.2  # [keV]
+    t_max = 100  # [keV]
+    bg = 31.3970  # [keV**0.5]
+    mrc2 = 0.937814e6  # [keV]
+    c = np.array(
+        [
+            5.43360e-12,
+            5.85778e-3,
+            7.68222e-3,
+            0.0,
+            -2.96400e-6,
+            0.0,
+            0.0,
+        ]
+    )
+
+
+@dataclass
+class BoschHale_DD_Tp:
+    """
+    Bosch-Hale parameterisation data for the reaction:
+
+    D + D --> T + p
+
+    H.-S. Bosch and G.M. Hale 1992 Nucl. Fusion 32 611
+    DOI 10.1088/0029-5515/32/4/I07
+    """
+
+    t_min = 0.2  # [keV]
+    t_max = 100  # [keV]
+    bg = 31.3970  # [keV**0.5]
+    mrc2 = 0.937814e6  # [keV]
+    c = np.array(
+        [
+            5.65718e-12,
+            3.41267e-3,
+            1.99167e-3,
+            0.0,
+            1.05060e-5,
+            0.0,
+            0.0,
+        ]
+    )
+
+
+@dataclass
+class BoschHale_DHe3_4Hep:
+    """
+    Bosch-Hale parameterisation data for the reaction:
+
+    D + 3He --> 4He + p
+
+    H.-S. Bosch and G.M. Hale 1992 Nucl. Fusion 32 611
+    DOI 10.1088/0029-5515/32/4/I07
+    """
+
+    t_min = 0.5  # [keV]
+    t_max = 190  # [keV]
+    bg = 68.7508  # [keV**0.5]
+    mrc2 = 1.124572e6  # [keV]
+    c = np.array(
+        [
+            5.51036e-10,
+            6.41918e-3,
+            -2.02896e-3,
+            -1.91080e-5,
+            1.35776e-4,
+            0.0,
+            0.0,
+        ]
+    )
+
+
+def _reactivity_bosch_hale(
+    temp_kev: Union[float, np.ndarray], reaction: Reactions
+) -> Union[float, np.ndarray]:
+    """
+    Bosch-Hale reactivity parameterisation for Maxwellian plasmas
+
+    Parameters
+    ----------
+    temp_kev: Union[float, np.ndarray]
+        Temperature [keV]
+    reaction: str
+        The fusion reaction
+
+    Returns
+    -------
+    sigma_v: float
+        Reactivity of the reaction at the specified temperature(s) [m^3/s]
+
+    Notes
+    -----
+    H.-S. Bosch and G.M. Hale 1992 Nucl. Fusion 32 611
+    DOI 10.1088/0029-5515/32/4/I07
+    """
+    if reaction == Reactions.D_D:
+        return 0.5 * (
+            _reactivity_bosch_hale(temp_kev, Reactions.D_D1)
+            + _reactivity_bosch_hale(temp_kev, Reactions.D_D2)
+        )
+    mapping = {
+        Reactions.D_T: BoschHale_DT_4Hen,
+        Reactions.D_D1: BoschHale_DD_3Hen,
+        Reactions.D_D2: BoschHale_DD_Tp,
+        Reactions.D_He3: BoschHale_DHe3_4Hep,
+    }
+    data = mapping[reaction]
+
+    if np.min(temp_kev) < data.t_min:
+        bluemira_warn(
+            f"The Bosch-Hale parameterisation for reaction {reaction} is only valid "
+            f"between {data.t_min} and {data.t_max} keV, not {np.min(temp_kev)} keV."
+        )
+    if np.max(temp_kev) > data.t_max:
+        bluemira_warn(
+            f"The Bosch-Hale parameterisation for reaction {reaction} is only valid "
+            f"between {data.t_min} and {data.t_max} keV, not {np.max(temp_kev)} keV."
+        )
+
+    frac = (
+        temp_kev
+        * (data.c[1] + temp_kev * (data.c[3] + temp_kev * data.c[5]))
+        / (1 + temp_kev * (data.c[2] + temp_kev * (data.c[4] + temp_kev * data.c[6])))
+    )
+    theta = temp_kev / (1 - frac)
+    chi = (data.bg**2 / (4 * theta)) ** (1 / 3)
+    return (
+        1e-6
+        * data.c[0]
+        * theta
+        * np.sqrt(chi / (data.mrc2 * temp_kev**3))
+        * np.exp(-3 * chi)
+    )
+
+
+def _reactivity_plasmod(
+    temp_kev: Union[float, np.ndarray], reaction: Reactions
+) -> Union[float, np.ndarray]:
+    """
+    Reactivity equations used in PLASMOD (original source unknown)
+
+    Parameters
+    ----------
+    temp_kev: Union[float, np.ndarray]
+        Temperature [keV]
+    reaction: Reactions
+        The fusion reaction
+
+    Returns
+    -------
+    sigma_v: float
+        Reactivity of the reaction at the specified temperature(s) [m^3/s]
+    """
+    if reaction == Reactions.D_T:
+        t3 = temp_kev ** (-1 / 3)
+
+        term_1 = 8.972 * np.exp(-19.9826 * t3) * t3**2
+        term_2 = (temp_kev + 1.0134) / (1 + 6.386e-3 * (temp_kev + 1.0134) ** 2)
+        term_3 = 1.877 * np.exp(-0.16176 * temp_kev * np.sqrt(temp_kev))
+        return 1e-19 * term_1 * (term_2 + term_3)
+
+    elif reaction == Reactions.D_D:
+        term_1 = (
+            0.16247 + 0.001741 * temp_kev - 0.029 * np.exp(-0.3843 * np.sqrt(temp_kev))
+        )
+        term_2 = np.exp(-18.8085 / (temp_kev ** (1 / 3))) / (temp_kev ** (1 / 3)) ** 2
+        return 1e-19 * term_1 * term_2
+    else:
+        raise ValueError(
+            f"This function only supports D-D and D-T, not {reaction.name.replace('_','-')}"
+        )
+
+
+def _reactivity_johner(
+    temp_kev: Union[float, np.ndarray], reaction: Reactions
+) -> Union[float, np.ndarray]:
+    """
+    Johner's monomial fit for analytical calculations
+
+    Parameters
+    ----------
+    temp_kev: Union[float, np.ndarray]
+        Temperature [keV]
+    reaction: Reactions
+        The fusion reaction
+
+    Returns
+    -------
+    sigma_v: float
+        Reactivity of the reaction at the specified temperature(s) [m^3/s]
+
+    Notes
+    -----
+    Johner, Jean (2011). HELIOS: a zero-dimensional tool for next step and reactor
+    studies. Fusion Science and Technology, 59(2), 308-313. Appendix E.II
+    """
+    if reaction != Reactions.D_T:
+        raise ValueError(
+            f"This function only supports D-T, not {reaction.name.replace('_','-')}"
+        )
+
+    if np.max(temp_kev) > 100:
+        bluemira_warn("The Johner parameterisation is not valid for T > 100 keV")
+    if np.min(temp_kev) < 5.3:
+        bluemira_warn("The Johner parameterisation is not valid for T < 5.3 keV")
+
+    sigma_v = np.zeros_like(temp_kev)
+    idx_1 = np.where((5.3 <= temp_kev) & (temp_kev <= 10.3))[0]
+    idx_2 = np.where((10.3 <= temp_kev) & (temp_kev <= 18.5))[0]
+    idx_3 = np.where((18.5 <= temp_kev) & (temp_kev <= 39.9))[0]
+    idx_4 = np.where((39.9 <= temp_kev) & (temp_kev <= 100.0))[0]
+    t1 = temp_kev[idx_1]
+    t2 = temp_kev[idx_2]
+    t3 = temp_kev[idx_3]
+
+    sigma_v[idx_1] = 1.15e-25 * t1**3
+    sigma_v[idx_2] = 1.18e-24 * t2**2
+    sigma_v[idx_3] = 2.18e-23 * t3
+    sigma_v[idx_4] = 8.69e-22
+    if isinstance(temp_kev, (float, int)):
+        return float(sigma_v)
+    return sigma_v
