@@ -22,7 +22,7 @@ A basic example for the creation of the geometrical objects:
         >>> wire1.is_closed()
         Out: True
 
-    Same procedure can be applied to ``make_bezier`` and ``make_bspline`` to generate
+    The same procedure can be applied to ``make_bezier`` and ``make_bspline`` to generate
     bezier and bspline curves, respectively.
 
 * a `BluemiraFace`:
@@ -90,7 +90,7 @@ A basic example for the creation of the geometrical objects:
 
 Shape operations
 ----------------
-Shape operations that modify the shape itself are implement as object functions. For
+Shape operations that modify the shape itself are implemented as methods. For
 example, the following command applies a translation with the specified vector:
 
     .. code-block:: pycon
@@ -98,16 +98,16 @@ example, the following command applies a translation with the specified vector:
         vector = (5.0, 2.0, 0.0)
         bmface.translate(vector)
 
-Shape operations that, when applied, create a new shape topology are implemented into
+Shape operations that, when applied, create a new shape topology are implemented in
 ``bluemira.geometry.tools``. For example, the following command creates a solid
-revolving a face of 30 degrees along the z-axis:
+by revolving a face of 30 degrees along the z-axis:
 
     .. code-block:: pycon
 
         base = (0., 0., 0.)
         direction = (0., 0., 1.)
         degree = 30
-        bmsolid = bluemira.geometry.tools.revolve(bmface, base, direction, degree )
+        bmsolid = bluemira.geometry.tools.revolve(bmface, base, direction, degree)
 
 Exporting
 ---------
@@ -123,7 +123,7 @@ exported as a single compound):
 FreeCAD objects
 ---------------
 
-Below a list of typical geometry object properties of FreeCAD. Only that labelled as
+Below a list of typical geometry object properties of FreeCAD. Only those labelled as
 `converted` are available in bluemira.
 
     .. code-block:: pycon
