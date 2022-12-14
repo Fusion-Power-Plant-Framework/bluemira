@@ -25,6 +25,7 @@ import os
 import numpy as np
 import pytest
 
+from bluemira.base.constants import raw_uc
 from bluemira.base.file import get_bluemira_path
 from bluemira.plasma_physics.reactions import E_DD_fusion, E_DT_fusion, reactivity
 
@@ -81,21 +82,25 @@ class TestReactivity:
     @pytest.mark.parametrize("method, rtol", [("Bosch-Hale", 0.0025), ("PLASMOD", 0.1)])
     @pytest.mark.parametrize("temp_kev, sigmav", np.c_[temp, sv_DT])
     def test_Bosch_Hale_DT(self, temp_kev, sigmav, method, rtol):
-        result = reactivity(temp_kev, reaction="D-T", method=method)
+        temp_k = raw_uc(temp_kev, "keV", "K")
+        result = reactivity(temp_k, reaction="D-T", method=method)
         np.testing.assert_allclose(result, sigmav, rtol=rtol, atol=0)
 
     @pytest.mark.parametrize("temp_kev, sigmav", np.c_[temp, sv_DHe3])
     def test_Bosch_Hale_DHe(self, temp_kev, sigmav):
-        result = reactivity(temp_kev, reaction="D-He3", method="Bosch-Hale")
+        temp_k = raw_uc(temp_kev, "keV", "K")
+        result = reactivity(temp_k, reaction="D-He3", method="Bosch-Hale")
         np.testing.assert_allclose(result, sigmav, rtol=0.003, atol=0)
 
     @pytest.mark.parametrize("temp_kev, sigmav", np.c_[temp, sv_DD_He3p])
     @pytest.mark.usefixtures("xfail_DD_He3p_erratum_erratum")
     def test_Bosch_Hale_DD_He3p(self, temp_kev, sigmav):
-        result = reactivity(temp_kev, reaction="D-D1", method="Bosch-Hale")
+        temp_k = raw_uc(temp_kev, "keV", "K")
+        result = reactivity(temp_k, reaction="D-D1", method="Bosch-Hale")
         np.testing.assert_allclose(result, sigmav, rtol=0.003, atol=0)
 
     @pytest.mark.parametrize("temp_kev, sigmav", np.c_[temp, sv_DD_Tp])
     def test_Bosch_Hale_DD_Tp(self, temp_kev, sigmav):
-        result = reactivity(temp_kev, reaction="D-D2", method="Bosch-Hale")
+        temp_k = raw_uc(temp_kev, "keV", "K")
+        result = reactivity(temp_k, reaction="D-D2", method="Bosch-Hale")
         np.testing.assert_allclose(result, sigmav, rtol=0.0035, atol=0)
