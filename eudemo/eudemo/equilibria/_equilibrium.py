@@ -138,8 +138,8 @@ def make_reference_equilibrium(
         params.R_0.value,
         params.A.value,
         params.kappa.value,
-        scale_x=1.6,
-        scale_z=1.7,
+        scale_x=1.5,
+        scale_z=1.6,
         nx=nx,
         nz=nz,
     )
