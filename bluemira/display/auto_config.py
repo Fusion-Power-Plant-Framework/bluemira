@@ -145,7 +145,7 @@ def plot_defaults(force=False):
 
     sf = 1 if force else get_figure_scale_factor(figsize)
 
-    sns.set(
+    sns.set_theme(
         context="paper",
         style="ticks",
         font="DejaVu Sans",
@@ -154,14 +154,10 @@ def plot_defaults(force=False):
         rc={
             "axes.labelweight": "normal",
             "axes.titlesize": 20 * sf,
+            "contour.negative_linestyle": "solid",
             "figure.figsize": list(figsize * sf),
             "lines.linewidth": 4 * sf,
             "lines.markersize": 13 * sf,
-            "contour.negative_linestyle": "solid",
-        },
-    )
-    sns.set_style(
-        {
             "xtick.direction": "in",
             "ytick.direction": "in",
             "xtick.major.size": 8 * sf,
@@ -169,6 +165,6 @@ def plot_defaults(force=False):
             "xtick.minor.size": 4 * sf,
             "ytick.minor.size": 4 * sf,
             "xtick.color": "k",
-        }
+        },
     )
     sns.set_palette(BLUEMIRA_PALETTE)
