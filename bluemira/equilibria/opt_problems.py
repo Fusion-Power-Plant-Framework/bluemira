@@ -143,8 +143,8 @@ class CoilsetOptimisationProblem(OptimisationProblem):
             Number of substates (blocks) in the state vector.
         """
         substates = 3
-        x, z = coilset.get_positions()
-        currents = coilset.get_control_currents() / current_scale
+        x, z = coilset.position
+        currents = coilset.current / current_scale
 
         coilset_state = np.concatenate((x, z, currents))
         return coilset_state, substates
@@ -168,14 +168,9 @@ class CoilsetOptimisationProblem(OptimisationProblem):
         """
         x, z, currents = np.array_split(coilset_state, 3)
 
-        # coilset.set_positions not currently working for
-        # SymmetricCircuits, it appears...
-        # positions = list(zip(x, z))
-        # self.coilset.set_positions(positions)
-        for i, coil in enumerate(coilset.coils.values()):
-            coil.x = x[i]
-            coil.z = z[i]
-        coilset.set_control_currents(currents * current_scale)
+        coilset.x = x
+        coilset.z = z
+        coilset.current = currents * current_scale
 
     @staticmethod
     def get_state_bounds(x_bounds, z_bounds, current_bounds):
@@ -227,7 +222,7 @@ class CoilsetOptimisationProblem(OptimisationProblem):
             Tuple of arrays containing lower and upper bounds for currents
             permitted in each control coil.
         """
-        n_control_currents = len(coilset.get_control_currents())
+        n_control_currents = len(coilset.current[coilset._control_ind])
         scaled_input_current_limits = np.inf * np.ones(n_control_currents)
 
         if max_currents is not None:
@@ -243,15 +238,9 @@ class CoilsetOptimisationProblem(OptimisationProblem):
 
         # Get the current limits from coil current densities
         coilset_current_limits = np.infty * np.ones(n_control_currents)
-        for i, coil in enumerate(coilset._ccoils):
-            if coil.flag_sizefix:
-                coilset_current_limits[i] = coil.get_max_current()
-
-        if len(coilset_current_limits) != n_control_currents:
-            raise EquilibriaError(
-                "Length of array containing coilset current limits"
-                "is not equal to the number of control currents in optimiser."
-            )
+        coilset_current_limits[coilset._flag_sizefix] = coilset.get_max_current()[
+            coilset._flag_sizefix
+        ]
 
         # Limit the control current magnitude by the smaller of the two limits
         control_current_limits = np.minimum(
@@ -270,7 +259,7 @@ class CoilsetOptimisationProblem(OptimisationProblem):
         max_currents: np.ndarray
             Vector of maximum currents [A]
         """
-        n_control_currents = len(self.coilset.get_control_currents())
+        n_control_currents = len(self.coilset.current[self.coilset._control_ind])
         if len(max_currents) != n_control_currents:
             raise ValueError(
                 "Length of maximum current vector must be equal to the number of controls."
@@ -315,7 +304,7 @@ class CoilsetPositionCOP(CoilsetOptimisationProblem):
         Dictionary of Coordinates that specify convex hull regions inside which
         each PF control coil position is to be optimised.
         The Coordinates must be 2d in x,z in units of [m].
-    max_currents: float or np.array(len(coilset._ccoils)) (default = None)
+    max_currents: float or np.ndarray (default = None)
         Maximum allowed current for each independent coil current in coilset [A].
         If specified as a float, the float will set the maximum allowed current
         for all coils.
@@ -398,7 +387,7 @@ class CoilsetPositionCOP(CoilsetOptimisationProblem):
         region_mapper: RegionMapper
             RegionMapper mapping coil positions within the allowed optimisation
             regions.
-        max_currents float or np.array(len(coilset._ccoils)) (default = None)
+        max_currents Union[float, np.ndarray] (default = None)
             Maximum allowed current for each independent coil current in coilset [A].
             If specified as a float, the float will set the maximum allowed current
             for all coils.
@@ -735,7 +724,7 @@ class UnconstrainedTikhonovCurrentGradientCOP(CoilsetOptimisationProblem):
         current_adjustment = tikhonov(a_mat, b_vec, self.gamma)
 
         # Update parameterisation (coilset).
-        self.coilset.adjust_currents(current_adjustment)
+        self.coilset.current = self.coilset.current + current_adjustment
         return self.coilset
 
 
@@ -756,7 +745,7 @@ class TikhonovCurrentCOP(CoilsetOptimisationProblem):
         Set of magnetic field targets to use in objective function.
     gamma: float (default = 1e-8)
         Tikhonov regularisation parameter in units of [A⁻¹].
-    max_currents float or np.array(len(coilset._ccoils)) (default = None)
+    max_currents Union[float, np.ndarray] (default = None)
         Maximum allowed current for each independent coil current in coilset [A].
         If specified as a float, the float will set the maximum allowed current
         for all coils.
@@ -832,7 +821,7 @@ class TikhonovCurrentCOP(CoilsetOptimisationProblem):
 
             x0 = np.clip(initial_currents, self.opt.lower_bounds, self.opt.upper_bounds)
         currents = self.opt.optimise(x0=x0)
-        self.coilset.set_control_currents(currents * self.scale)
+        self.coilset.get_control_coils().current = currents * self.scale
         return self.coilset
 
 
@@ -888,7 +877,7 @@ class MinimalCurrentCOP(CoilsetOptimisationProblem):
             x0 = np.clip(initial_currents, self.opt.lower_bounds, self.opt.upper_bounds)
 
         currents = self.opt.optimise(x0=x0)
-        self.coilset.set_control_currents(currents * self.scale)
+        self.coilset.get_control_coils().current = currents * self.scale
         return self.coilset
 
 
@@ -933,7 +922,7 @@ class PulsedNestedPositionCOP(CoilsetOptimisationProblem):
         if initial_currents:
             self._initial_currents = initial_currents / self.sub_opt_probs[0].scale
         else:
-            self._initial_currents = np.zeros(coilset.n_control)
+            self._initial_currents = np.zeros(coilset.get_control_coils().n_coils())
         self._debug = {0: debug}
         self._iter = {0: 0.0}
 
@@ -944,7 +933,7 @@ class PulsedNestedPositionCOP(CoilsetOptimisationProblem):
                 "sub_opt_problems": sub_opt_problems,
                 "position_mapper": position_mapper,
                 "initial_currents": self._initial_currents,
-                "iter": self._iter,
+                "itern": self._iter,
                 "debug": self._debug,
                 "verbose": False,
             },
@@ -956,12 +945,12 @@ class PulsedNestedPositionCOP(CoilsetOptimisationProblem):
         self.set_up_optimiser(dimension, bounds)
 
     @staticmethod
-    def _run_reporting(iter, max_fom, verbose):
+    def _run_reporting(itern, max_fom, verbose):
         """
         Keep track of objective function value over iterations.
         """
-        i = max(list(iter.keys())) + 1
-        iter[i] = max_fom
+        i = max(list(itern.keys())) + 1
+        itern[i] = max_fom
 
         if verbose:
             bluemira_print_flush(f"Coil position iteration {i} FOM value: {max_fom:.6e}")
@@ -991,7 +980,7 @@ class PulsedNestedPositionCOP(CoilsetOptimisationProblem):
         position_mapper,
         sub_opt_problems,
         initial_currents,
-        iter,
+        itern,
         verbose,
         debug,
     ):
@@ -1008,13 +997,14 @@ class PulsedNestedPositionCOP(CoilsetOptimisationProblem):
 
         fom_values = []
         for sub_opt_prob in sub_opt_problems:
-            sub_opt_prob.coilset.set_positions(positions)
+            for coil, position in positions.items():
+                sub_opt_prob.coilset[coil].position = position
             sub_opt_prob.optimise(x0=initial_currents, fixed_coils=False)
             PulsedNestedPositionCOP._run_diagnostics(debug, sub_opt_prob)
             fom_values.append(sub_opt_prob.opt.optimum_value)
         max_fom = max(fom_values)
 
-        PulsedNestedPositionCOP._run_reporting(iter, max_fom, verbose)
+        PulsedNestedPositionCOP._run_reporting(itern, max_fom, verbose)
 
         return max_fom
 
@@ -1026,7 +1016,7 @@ class PulsedNestedPositionCOP(CoilsetOptimisationProblem):
         sub_opt_problems,
         position_mapper,
         initial_currents,
-        iter,
+        itern,
         verbose,
         debug,
     ):
@@ -1039,7 +1029,7 @@ class PulsedNestedPositionCOP(CoilsetOptimisationProblem):
             position_mapper,
             sub_opt_problems,
             initial_currents,
-            iter,
+            itern,
             verbose,
             debug,
         )
@@ -1059,8 +1049,8 @@ class PulsedNestedPositionCOP(CoilsetOptimisationProblem):
         """
         x, z = [], []
         for name in self.position_mapper.interpolators:
-            x.append(self.coilset.coils[name].x)
-            z.append(self.coilset.coils[name].z)
+            x.append(self.coilset[name].x)
+            z.append(self.coilset[name].z)
         return self.position_mapper.to_L(x, z)
 
     def optimise(self, x0=None, verbose=False):
@@ -1091,7 +1081,7 @@ class PulsedNestedPositionCOP(CoilsetOptimisationProblem):
             self.position_mapper,
             self.sub_opt_probs,
             self._initial_currents,
-            iter=self._iter,
+            itern=self._iter,
             verbose=verbose,
             debug=self._debug,
         )
@@ -1250,7 +1240,7 @@ class BreakdownCOP(CoilsetOptimisationProblem):
             objectives.maximise_flux,
             f_objective_args={
                 "c_psi_mat": np.array(
-                    coilset.control_psi(*breakdown_strategy.breakdown_point)
+                    coilset.psi_response(*breakdown_strategy.breakdown_point)
                 ),
                 "scale": self.scale,
             },
@@ -1278,11 +1268,6 @@ class BreakdownCOP(CoilsetOptimisationProblem):
         """
         Solve the optimisation problem.
         """
-        if x0 is None:
-            x0 = 1e-6 * np.ones(self.coilset.n_control)
-        else:
-            x0 = np.array(x0) / self.scale
-
         self.update_magnetic_constraints(I_not_dI=True, fixed_coils=fixed_coils)
 
         initial_state, n_states = self.read_coilset_state(self.coilset, self.scale)
@@ -1292,5 +1277,5 @@ class BreakdownCOP(CoilsetOptimisationProblem):
             initial_currents, self.opt.lower_bounds, self.opt.upper_bounds
         )
         currents = self.opt.optimise(x0=initial_currents)
-        self.coilset.set_control_currents(currents * self.scale)
+        self.coilset.get_control_coils().current = currents * self.scale
         return self.coilset

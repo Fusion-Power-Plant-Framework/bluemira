@@ -157,6 +157,25 @@ class Grid:
             e["nz"],
         )
 
+    @classmethod
+    def from_eqdsk(cls, e):
+        """
+        Initialise a Grid object from an EQDSKInterface.
+
+        Parameters
+        ----------
+        e: EQDSKInterface
+
+        """
+        return cls(
+            e.xgrid1,
+            e.xgrid1 + e.xdim,
+            e.zmid - 0.5 * e.zdim,
+            e.zmid + 0.5 * e.zdim,
+            e.nx,
+            e.nz,
+        )
+
     def point_inside(self, x, z=None):
         """
         Determine if a point is inside the rectangular grid (includes edges).

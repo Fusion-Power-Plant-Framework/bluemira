@@ -144,7 +144,7 @@ class TestMakeCoilset:
             PF_bmax=10,
         )
 
-        assert len(coilset.coils) == n_PF + n_CS
+        assert coilset.n_coils() == n_PF + n_CS
 
 
 class TestMakePfCoilPath:

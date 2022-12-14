@@ -40,7 +40,7 @@ class TestForceField:
             c = Coil(xi, zi, current=10e6, ctype="PF", name=f"PF_{i+1}", dx=0, dz=0)
 
             coils.append(c)
-        cls.coilset = CoilSet(coils)
+        cls.coilset = CoilSet(*coils)
         cls.eq = Equilibrium(
             cls.coilset,
             Grid(0.1, 10, -10, 10, 10, 10),
@@ -53,8 +53,7 @@ class TestForceField:
         Verbose: https://ieeexplore.ieee.org/stamp/stamp.jsp?arnumber=6472319
         """
         forces = self.eq.get_coil_forces()
-        x, z = self.coilset.coils["PF_1"].x, self.coilset.coils["PF_1"].z
-        xc, zc = self.coilset.coils["PF_2"].x, self.coilset.coils["PF_2"].z
+        (x, xc), (z, zc) = self.coilset.x, self.coilset.z
         i1 = i2 = 10e6
         a = ((x + xc) ** 2 + (z - zc) ** 2) ** 0.5
         k = 4 * x * xc / a**2

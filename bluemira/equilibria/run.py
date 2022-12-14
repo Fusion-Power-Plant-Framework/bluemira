@@ -143,43 +143,40 @@ class PulsedCoilsetDesign:
             R_0, self.params.A.value, self.params.tk_sol_ib.value
         )
 
-        relaxed = all([c.flag_sizefix for c in self.coilset.coils.values()])
-        i = 0
+        relaxed = all(self.coilset._flag_sizefix)
         i_max = 30
-        while i == 0 or not relaxed:
-            coilset = deepcopy(self.coilset)
-            breakdown = Breakdown(coilset, self.grid)
+        if not relaxed:
+            for i in range(i_max):
+                coilset = deepcopy(self.coilset)
+                breakdown = Breakdown(coilset, self.grid)
+                constraints = deepcopy(self._coil_cons)
 
-            constraints = deepcopy(self._coil_cons)
-            if relaxed:
-                # Coilset max currents known because the coilset geometry is fixed
-                max_currents = self.coilset.get_max_currents(0)
-            else:
                 max_currents = self.coilset.get_max_currents(self.params.I_p.value)
-                coilset.set_control_currents(max_currents, update_size=True)
-                coilset.mesh_coils(self._eq_settings["coil_mesh_size"])
-            problem = self._bd_prob_cls(
-                breakdown.coilset,
-                breakdown,
-                strategy,
-                B_stray_max=self.params.B_premag_stray_max.value,
-                B_stray_con_tol=self._bd_settings["B_stray_con_tol"],
-                n_B_stray_points=self._bd_settings["n_B_stray_points"],
-                optimiser=self._bd_opt,
-                max_currents=max_currents,
-                constraints=constraints,
-            )
-            coilset = problem.optimise(x0=max_currents, fixed_coils=False)
-            breakdown.set_breakdown_point(*strategy.breakdown_point)
-            psi_premag = breakdown.breakdown_psi
 
-            if i == 0:
-                psi_1 = psi_premag
+                coilset.get_control_coils().current = max_currents
+                coilset.discretisation = self._eq_settings["coil_mesh_size"]
+
+                problem = self._bd_prob_cls(
+                    breakdown.coilset,
+                    breakdown,
+                    strategy,
+                    B_stray_max=self.params.B_premag_stray_max.value,
+                    B_stray_con_tol=self._bd_settings["B_stray_con_tol"],
+                    n_B_stray_points=self._bd_settings["n_B_stray_points"],
+                    optimiser=self._bd_opt,
+                    max_currents=max_currents,
+                    constraints=constraints,
+                )
+                coilset = problem.optimise(x0=max_currents, fixed_coils=False)
+                breakdown.set_breakdown_point(*strategy.breakdown_point)
+                psi_premag = breakdown.breakdown_psi
+
+                if i == 0:
+                    psi_1 = psi_premag
+                elif np.isclose(psi_premag, psi_1, rtol=1e-2):
+                    # Coilset max currents known because the coilset geometry is fixed
+                    break
             else:
-                relaxed = np.isclose(psi_premag, psi_1, rtol=1e-2)
-                psi_1 = psi_premag
-            i += 1
-            if i == i_max:
                 raise EquilibriaError(
                     "Unable to relax the breakdown optimisation for coil sizes."
                 )
@@ -561,9 +558,11 @@ class OptimisedPulsedCoilsetDesign(PulsedCoilsetDesign):
 
     def _prepare_coilset(self, coilset):
         coilset = deepcopy(coilset)
-        for coil in coilset.coils.values():
-            if coil.flag_sizefix:
-                coil.mesh_coil(self._eq_settings["coil_mesh_size"])
+        coilset.discretisation = np.where(
+            coilset._flag_sizefix,
+            self._eq_settings["coil_mesh_size"],
+            coilset.discretisation,
+        )
         return coilset
 
     def optimise_positions(self, verbose=False):
@@ -609,29 +608,25 @@ class OptimisedPulsedCoilsetDesign(PulsedCoilsetDesign):
         Set the current bounds on the current optimisation problems, fix coil sizes, and
         mesh.
         """
-        pf_current_vectors = []
-        pf_coil_names = coilset.get_PF_names()
-        n_PF = coilset.n_PF
-
-        for problem in sub_opt_problems:
-            pf_currents = problem.eq.coilset.get_control_currents()[:n_PF]
-            pf_current_vectors.append(pf_currents)
+        pf_coil_names = coilset.get_coiltype("PF").name
+        pf_current_vectors = [
+            problem.eq.coilset.get_coiltype("PF").get_control_coils().current
+            for problem in sub_opt_problems
+        ]
 
         max_pf_currents = np.max(np.abs(pf_current_vectors), axis=0)
-        max_cs_currents = coilset.get_max_currents(0.0)[n_PF:]
+        max_cs_currents = coilset.get_coiltype("CS").get_max_current(0.0)
         max_currents = np.concatenate([max_pf_currents, max_cs_currents])
 
         for problem in sub_opt_problems:
             for pf_name, max_current in zip(pf_coil_names, max_pf_currents):
-                problem.eq.coilset.coils[pf_name].make_size(max_current)
-                problem.eq.coilset.coils[pf_name].fix_size()
-                problem.eq.coilset.coils[pf_name].mesh_coil(
-                    self._eq_settings["coil_mesh_size"]
-                )
+                problem.eq.coilset[pf_name].resize(max_current)
+                problem.eq.coilset[pf_name].fix_size()
+                problem.eq.coilset[pf_name].discretisation = self._eq_settings[
+                    "coil_mesh_size"
+                ]
             problem.set_current_bounds(max_currents)
         consolidated_coilset = deepcopy(problem.eq.coilset)
-        consolidated_coilset.set_control_currents(
-            np.zeros(consolidated_coilset.n_control), update_size=False
-        )
+        consolidated_coilset.get_control_coils().current = 0
         consolidated_coilset.fix_sizes()
         return consolidated_coilset

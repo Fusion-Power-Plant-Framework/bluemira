@@ -29,18 +29,30 @@ from bluemira.geometry.coordinates import Coordinates
 class TestCoilsetOptimiser:
     @classmethod
     def setup_class(cls):
-        coil = Coil(
-            x=1.5,
-            z=6.0,
-            current=1e6,
-            dx=0.25,
-            dz=0.5,
-            j_max=1e-5,
-            b_max=100,
-            ctype="PF",
-            name="PF_2",
+        circuit = SymmetricCircuit(
+            Coil(
+                x=1.5,
+                z=6.0,
+                current=1e6,
+                dx=0.25,
+                dz=0.5,
+                j_max=1e-5,
+                b_max=100,
+                ctype="PF",
+                name="PF_2",
+            ),
+            Coil(
+                x=1.5,
+                z=-6.0,
+                current=1e6,
+                dx=0.25,
+                dz=0.5,
+                j_max=1e-5,
+                b_max=100,
+                ctype="PF",
+                name="PF_4",
+            ),
         )
-        circuit = SymmetricCircuit(coil)
 
         coil2 = Coil(
             x=4.0,
@@ -59,11 +71,11 @@ class TestCoilsetOptimiser:
             current=7e6,
             dx=0.5,
             dz=0.33,
-            j_max=None,
+            j_max=np.nan,
             b_max=50.0,
             name="PF_3",
         )
-        cls.coilset = CoilSet([circuit, coil2, coil3])
+        cls.coilset = CoilSet(circuit, coil2, coil3)
 
         max_coil_shifts = {
             "x_shifts_lower": -2.0,
@@ -73,15 +85,15 @@ class TestCoilsetOptimiser:
         }
 
         cls.pfregions = {}
-        for coil in cls.coilset._ccoils:
-            xu = coil.x + max_coil_shifts["x_shifts_upper"]
-            xl = coil.x + max_coil_shifts["x_shifts_lower"]
-            zu = coil.z + max_coil_shifts["z_shifts_upper"]
-            zl = coil.z + max_coil_shifts["z_shifts_lower"]
 
+        xup = cls.coilset.x[cls.coilset._control_ind] + max_coil_shifts["x_shifts_upper"]
+        xlo = cls.coilset.x[cls.coilset._control_ind] + max_coil_shifts["x_shifts_lower"]
+        zup = cls.coilset.z[cls.coilset._control_ind] + max_coil_shifts["z_shifts_upper"]
+        zlo = cls.coilset.z[cls.coilset._control_ind] + max_coil_shifts["z_shifts_lower"]
+
+        for name, xl, xu, zl, zu in zip(cls.coilset.name, xup, xlo, zup, zlo):
             rect = Coordinates({"x": [xl, xu, xu, xl, xl], "z": [zl, zl, zu, zu, zl]})
-
-            cls.pfregions[coil.name] = rect
+            cls.pfregions[name] = rect
 
         cls.optimiser = CoilsetPositionCOP(cls.coilset, None, None, cls.pfregions)
 
@@ -95,6 +107,7 @@ class TestCoilsetOptimiser:
         x += 1.1
         z += 0.6
         currents += 0.99
+
         updated_coilset_state = np.concatenate((x, z, currents))
         self.optimiser.set_coilset_state(
             self.optimiser.coilset, updated_coilset_state, self.optimiser.scale
@@ -109,12 +122,12 @@ class TestCoilsetOptimiser:
         assert np.allclose(state_i, currents)
 
     def test_current_bounds(self):
-        n_control_currents = len(self.coilset.get_control_currents())
+        n_control_currents = len(self.coilset.current[self.coilset._control_ind])
         user_max_current = 2.0e9
         user_current_limits = (
             user_max_current * np.ones(n_control_currents) / self.optimiser.scale
         )
-        coilset_current_limits = self.optimiser.coilset.get_max_currents(0.0)
+        coilset_current_limits = self.optimiser.coilset.get_max_current()
 
         control_current_limits = np.minimum(user_current_limits, coilset_current_limits)
         bounds = (-control_current_limits, control_current_limits)

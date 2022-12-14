@@ -33,15 +33,8 @@ from scipy.spatial import ConvexHull
 
 from bluemira.base.constants import EPS
 from bluemira.base.look_and_feel import bluemira_warn
-from bluemira.equilibria.coils import (
-    CS_COIL_NAME,
-    PF_COIL_NAME,
-    Coil,
-    CoilSet,
-    Solenoid,
-    get_max_current,
-)
-from bluemira.equilibria.constants import NBTI_J_MAX
+from bluemira.equilibria.coils import Coil, CoilSet, get_max_current
+from bluemira.equilibria.constants import NB3SN_J_MAX, NBTI_J_MAX
 from bluemira.equilibria.error import EquilibriaError
 from bluemira.equilibria.plotting import RegionPlotter, XZLPlotter
 from bluemira.geometry._private_tools import offset
@@ -174,15 +167,31 @@ class CoilPositioner:
         pos = np.linspace(0, 1, n_PF)
         xint, zint = interp1d(l_norm, tf_loop.x)(pos), interp1d(l_norm, tf_loop.z)(pos)
         return [
-            Coil(xint[i], zint[i], name=PF_COIL_NAME.format(n_PF - i), j_max=NBTI_J_MAX)
-            for i in range(n_PF)
+            Coil(xint[i], zint[i], ctype="PF", j_max=NBTI_J_MAX) for i in range(n_PF)
         ]
 
-    def equispace_CS(self, x_cs, tk_cs, z_min, z_max, n_CS):
+    def equispace_CS(self, x_cs, tk_cs, z_min, z_max, n_CS, j_max=NB3SN_J_MAX):
         """
         Defines a Solenoid object with equally spaced nCS modules
         """
-        return Solenoid(x_cs, tk_cs, z_min, z_max, n_CS, gap=self.csgap)
+        dz = ((z_max - z_min) - self.csgap * (n_CS - 1)) / n_CS / 2
+        v1 = np.arange(0, n_CS)
+        v2 = np.arange(1, n_CS * 2, 2)
+        zc = z_max - self.csgap * v1 - dz * v2
+
+        return [
+            Coil(
+                x_cs,
+                _zc,
+                current=0,
+                n_turns=1,
+                ctype="CS",
+                j_max=j_max,
+                dx=tk_cs,
+                dz=dz,
+            )
+            for _zc in zc
+        ]
 
     def demospace_CS(self, x_cs, tk_cs, z_min, z_max, n_CS):
         """
@@ -205,21 +214,19 @@ class CoilPositioner:
         z_cs -= a * length / 2 + b * self.csgap
         heights = length / 2 * np.ones(n_CS)
         heights[n_CS // 2] = length  # Central module
-        c = [
+        return [
             Coil(
                 x_cs,
                 z_cs[i],
                 dx=tk_cs,
                 dz=heights[i],
-                name=CS_COIL_NAME.format(i + 1),
                 ctype="CS",
                 j_max=NBTI_J_MAX,
             )
             for i in range(n_CS)
         ]
-        return c  # Solenoid(x_cs, tk_cs, z_min, z_max, n_CS, gap=self.csgap, coils=c)
 
-    def make_coilset(self, d_coil=0.5):
+    def make_coilset(self, d_coil: float = 0.5) -> CoilSet:
         """
         Returns a CoilSet object
         """
@@ -236,8 +243,12 @@ class CoilPositioner:
                     self.demospace_CS(self.x_cs, self.tk_cs, z_min, z_max, self.n_CS)
                 )
             else:
-                raise ValueError("Elige entre ITER y DEMO. " "Mas opciones no hay.")
-        return CoilSet(coils, d_coil=d_coil)
+                raise ValueError(
+                    f"Valid options are 'ITER' and 'DEMO', not '{self.cslayout}'"
+                )
+        cset = CoilSet(*coils)
+        cset.discretisation = d_coil
+        return cset
 
 
 class XZLMapper:
@@ -385,14 +396,22 @@ class XZLMapper:
         l_values = np.zeros(track_coils)
         lb = np.zeros(track_coils)
         ub = np.zeros(track_coils)
-        pf_coils = [coil for coil in coilset.coils.values() if coil.name in mapping]
+        pf_coils = [self._coilset[m] for m in mapping]
         for i, coil in enumerate(pf_coils):
             loc = self.xz_to_L(coil.x, coil.z)
             if self.exclusions is not None:
                 for ex in self.exclusions:
                     if ex[0] < loc < ex[1]:
-                        back = -(loc - ex[0] + 2 * coil.rc / self.pf_coords.length)
-                        forw = ex[1] - loc + 2 * coil.rc / self.pf_coords.length
+                        back = -(
+                            loc
+                            - ex[0]
+                            + 2 * coil._current_radius / self.pf_coords.length
+                        )
+                        forw = (
+                            ex[1]
+                            - loc
+                            + 2 * coil._current_radius / self.pf_coords.length
+                        )
                         if abs(back) >= abs(forw):
                             d_l = forw
                             break
@@ -407,21 +426,14 @@ class XZLMapper:
                 l_values[i] = loc
                 lb[i], ub[i] = 0, 1
         lb, ub = self._segment_tracks(lb, ub)
-        # El vector L tiene que ser adjustado a sus nuevos limites
+        # The L vector must be adjusted to its new bounds
         l_values = tools.clip(l_values, lb, ub)
         if self.flag_CS:
-            l_cs = np.zeros(coilset.n_CS)
-            lbcs = np.zeros(coilset.n_CS)
-            ubcs = np.ones(coilset.n_CS)
-            z = []
-            for i, coil in enumerate(coilset.coils.values()):
-                if coil.ctype == "CS":
-                    z.append(coil.z)
-            z = np.sort(z)[::-1]
-            l_cs = self.z_to_L(z)
-            l_values = np.append(l_values, l_cs)
-            lb = np.append(lb, lbcs)
-            ub = np.append(ub, ubcs)
+            n_CS = coilset.n_coils("CS")
+            z = coilset.get_coiltype("CS").z
+            l_values = np.append(l_values, self.z_to_L(np.sort(z)[::-1]))
+            lb = np.append(lb, np.zeros(n_CS))
+            ub = np.append(ub, np.ones(n_CS))
         return l_values, lb, ub
 
     def _get_bounds(self, l_values):
@@ -446,6 +458,7 @@ class XZLMapper:
         sub-track into two, so that two coils don't end up on top of each other
         """
         # beware of np.zeros_like!
+        # TODO this feels tempramental
         lb_new, ub_new = np.zeros(len(lb)), np.zeros(len(ub))
         lb, ub = list(lb), list(ub)
         flag = False
@@ -461,6 +474,8 @@ class XZLMapper:
             elif n != 1 and flag is False:
                 flag = True
                 last_n = i + n
+                if last_n > len(lb_new):
+                    continue
                 delta = (upper - lower) / n
                 for k, j in enumerate(range(i, i + n)):
                     lb_new[j] = upper - (k + 1) * delta
@@ -608,7 +623,7 @@ class RegionMapper:
         if coil_to_region:
             return self.name_str.format(num)
         else:
-            return PF_COIL_NAME.format(num)
+            return f"PF_{num}"
 
     def add_region(self, pfregion):
         """
@@ -720,7 +735,7 @@ class RegionMapper:
 
         """
         for no, (name, region) in enumerate(self.regions.items()):
-            coil = self._coilset.coils[self._name_converter(name)]
+            coil = self._coilset[self._name_converter(name)]
             self.max_currents[no] = get_max_current(
                 *inscribed_rect_in_poly(
                     region.loop.x, region.loop.z, coil.x, coil.z, coil.dx / coil.dz

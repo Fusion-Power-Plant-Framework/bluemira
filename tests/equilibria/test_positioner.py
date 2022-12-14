@@ -54,8 +54,8 @@ def _setup_zl_class(cls, _up):
     cls.zones = [eq, lp, up]
     positioner = CoilPositioner(9, 3.1, 0.33, 1.59, tf, 2.6, 0.5, 6, 5)
     cls.coilset = positioner.make_coilset()
-    cls.coilset.set_control_currents(1e6 * np.ones(cls.coilset.n_coils))
-    solenoid = cls.coilset.get_solenoid()
+    solenoid = cls.coilset.get_coiltype("CS")
+    cls.coilset.current = 1e6
     cls.TF = tf
     return solenoid
 
@@ -66,26 +66,21 @@ class TestXZLMapper:
         solenoid = _setup_zl_class(
             cls, _up={"x": [7.5, 14, 14, 7.5, 7.5], "z": [3, 3, 15, 15, 3]}
         )
-        cls.xzl_map = XZLMapper(cls.TF, solenoid.radius, -10, 10, 0.1, CS=False)
+        cls.xzl_map = XZLMapper(cls.TF, solenoid.x, -10, 10, 0.1, CS=False)
 
     def teardown_method(self):
         plt.show()
         plt.close("all")
 
     def test_xzl(self):
-        l_pos, lb, ub = self.xzl_map.get_Lmap(
-            self.coilset, set(self.coilset.get_PF_names())
-        )
+        pfcoils = self.coilset.get_coiltype("PF")
+
+        l_pos, lb, ub = self.xzl_map.get_Lmap(self.coilset, set(pfcoils.name))
 
         self.xzl_map.add_exclusion_zones(self.zones)
 
-        l_pos, lb, ub = self.xzl_map.get_Lmap(
-            self.coilset, set(self.coilset.get_PF_names())
-        )
-        positions = []
-        for pos in l_pos:
-            positions.append(self.xzl_map.L_to_xz(pos))
-        self.coilset.set_positions(positions)
+        l_pos, lb, ub = self.xzl_map.get_Lmap(self.coilset, set(pfcoils.name))
+        pfcoils.position = np.array([self.xzl_map.L_to_xz(pos) for pos in l_pos]).T
         self.coilset.plot(self.ax)
 
     def test_2(self):
@@ -199,16 +194,16 @@ class TestZLMapper:
         solenoid = _setup_zl_class(self, _up=up)
         self.xzl_map = XZLMapper(
             self.TF,
-            solenoid.radius,
-            solenoid.z_min,
-            solenoid.z_max,
-            solenoid.gap,
+            solenoid.x,
+            np.min(solenoid.z - solenoid.dz),
+            np.max(solenoid.z + solenoid.dz),
+            0.1,
             CS=True,
         )
 
     def teardown_method(self):
         plt.show()
-        plt.close(self.fig)
+        plt.close("all")
 
     @pytest.mark.parametrize(
         "up",
@@ -220,17 +215,15 @@ class TestZLMapper:
     def test_cs_zl(self, up):
         self._setup(up)
         l_pos, lb, ub = self.xzl_map.get_Lmap(
-            self.coilset, set(self.coilset.get_PF_names())
+            self.coilset, set(self.coilset.get_coiltype("PF").name)
         )
         self.xzl_map.add_exclusion_zones(self.zones)  # au cas ou
-        _, _ = self.xzl_map.L_to_xz(l_pos[: self.coilset.n_PF])
-        xcs, zcs, dzcs = self.xzl_map.L_to_zdz(l_pos[self.coilset.n_PF :])
+        _, _ = self.xzl_map.L_to_xz(l_pos[: self.coilset.n_coils("PF")])
+        xcs, zcs, dzcs = self.xzl_map.L_to_zdz(l_pos[self.coilset.n_coils("PF") :])
         l_cs = self.xzl_map.z_to_L(zcs)
-        assert np.allclose(l_cs, l_pos[self.coilset.n_PF :])
-        solenoid = self.coilset.get_solenoid()
-        z = []
-        for c in solenoid.coils:
-            z.append(c.z)
+        assert np.allclose(l_cs, l_pos[self.coilset.n_coils("PF") :])
+        solenoid = self.coilset.get_coiltype("CS")
+        z = solenoid.z
         z = np.sort(z)  # [::-1]  # Fixed somewhere else jcrois
         assert np.allclose(z, zcs), z - zcs
 
@@ -240,24 +233,34 @@ class TestZLMapper:
 class TestRegionMapper:
     @classmethod
     def setup_class(cls):
-        coil = Coil(
-            x=1.5,
-            z=6,
-            current=1e6,
-            dx=0.25,
-            dz=0.5,
-            j_max=1e7,
-            b_max=100,
-            ctype="PF",
-            name="PF_2",
+        circuit = SymmetricCircuit(
+            Coil(
+                x=1.5,
+                z=6,
+                current=1e6,
+                dx=0.25,
+                dz=0.5,
+                j_max=1e7,
+                b_max=100,
+                name="PF_2",
+            ),
+            Coil(
+                x=1.5,
+                z=-6,
+                current=1e6,
+                dx=0.25,
+                dz=0.5,
+                j_max=1e7,
+                b_max=100,
+                name="PF_3",
+            ),
         )
-        circuit = SymmetricCircuit(coil)
 
-        coil2 = Coil(
+        coil = Coil(
             x=4, z=10, current=2e6, dx=1, dz=0.5, j_max=5e6, b_max=50, name="PF_1"
         )
 
-        cls.coilset = CoilSet([coil2, circuit])
+        cls.coilset = CoilSet(coil, circuit)
 
     def create_rectangular_region(self):
         max_coil_shifts = {
@@ -268,21 +271,23 @@ class TestRegionMapper:
         }
 
         pfregions = {}
-        for coil in self.coilset._ccoils:
-            xu = coil.x + max_coil_shifts["x_shifts_upper"]
-            xl = coil.x + max_coil_shifts["x_shifts_lower"]
-            zu = coil.z + max_coil_shifts["z_shifts_upper"]
-            zl = coil.z + max_coil_shifts["z_shifts_lower"]
 
+        control_coils = self.coilset.get_control_coils()
+        xup = control_coils.x + max_coil_shifts["x_shifts_upper"]
+        xlo = control_coils.x + max_coil_shifts["x_shifts_lower"]
+        zup = control_coils.z + max_coil_shifts["z_shifts_upper"]
+        zlo = control_coils.z + max_coil_shifts["z_shifts_lower"]
+
+        for name, xl, xu, zl, zu in zip(self.coilset.name, xup, xlo, zup, zlo):
             rect = Coordinates({"x": [xl, xu, xu, xl, xl], "z": [zl, zl, zu, zu, zl]})
+            pfregions[name] = rect
 
-            pfregions[coil.name] = rect
         return pfregions
 
     def test_region_mapper(self):
         pfregions = self.create_rectangular_region()
         region_mapper = RegionMapper(pfregions)
-        x_init, z_init = self.coilset.get_positions()
+        x_init, z_init = self.coilset.position
 
         mapped_positions = region_mapper.get_Lmap(self.coilset)[0]
         region_mapper.set_Lmap(mapped_positions)

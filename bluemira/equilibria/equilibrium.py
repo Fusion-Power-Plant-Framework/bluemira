@@ -141,9 +141,9 @@ class MHDState:
             .bzgreen: dict
                 Greens function coil mapping for Bz
         """
-        self._psi_green = self.coilset.map_psi_greens(self.x, self.z)
-        self._bx_green = self.coilset.map_Bx_greens(self.x, self.z)
-        self._bz_green = self.coilset.map_Bz_greens(self.x, self.z)
+        self._psi_green = self.coilset.psi_response(self.x, self.z)
+        self._bx_green = self.coilset.Bx_response(self.x, self.z)
+        self._bz_green = self.coilset.Bz_response(self.x, self.z)
 
     def get_coil_forces(self):
         """
@@ -158,18 +158,17 @@ class MHDState:
         -----
         Will not work for symmetric circuits
         """
-        coils = list(self.coilset.coils.values())
-        currents = self.coilset.get_control_currents()
+        no_coils = self.coilset.n_coils()
         plasma = self.plasma
-        response = np.zeros((len(coils), len(coils), 2))
-        background = np.zeros((len(coils), 2))
-        for i, coil1 in enumerate(coils):
-            for j, coil2 in enumerate(coils):
-                response[i, j, :] = coil1.control_F(coil2)
-            if coil1.current != 0.0:
-                background[i, :] = coil1.F(plasma) / coil1.current
+        non_zero_current = np.where(self.coilset.current != 0)[0]
+        response = self.coilset.control_F(self.coilset)
+        background = (
+            self.coilset.F(plasma)[non_zero_current]
+            / self.coilset.current[non_zero_current]
+        )
 
-        forces = np.zeros((len(coils), 2))
+        forces = np.zeros((no_coils, 2))
+        currents = self.coilset.get_control_coils().current
         forces[:, 0] = currents * (response[:, :, 0] @ currents + background[:, 0])
         forces[:, 1] = currents * (response[:, :, 1] @ currents + background[:, 1])
 
@@ -185,9 +184,7 @@ class MHDState:
         B: np.array(n_coils)
             The Bp array of fields on coils [T]
         """
-        x = [c.x - c.dx for c in self.coilset.coils.values()]
-        z = [c.z for c in self.coilset.coils.values()]
-        return self.Bp(x, z)
+        return self.Bp(self.coilset.x - self.coilset.dx, self.coilset.z)
 
     @classmethod
     def _get_eqdsk(cls, filename, force_symmetry=False):
@@ -214,30 +211,30 @@ class MHDState:
         limiter: Union[Limiter, None]
             Limiter instance if any limiters are in file
         """
-        e = EQDSKInterface.from_file(filename).to_dict()
-        if "equilibria" in e["name"]:
-            psi = e["psi"]
-        elif "SCENE" in e["name"] and not isinstance(cls, Breakdown):
-            psi = e["psi"]
-            e["dxc"] = e["dxc"] / 2
-            e["dzc"] = e["dzc"] / 2
-        elif "fiesta" in e["name"].lower():
-            psi = e["psi"]
+        e = EQDSKInterface.from_file(filename)
+        if "equilibria" in e.name:
+            psi = e.psi
+        elif "SCENE" in e.name and not isinstance(cls, Breakdown):
+            psi = e.psi
+            e.dxc = e.dxc / 2
+            e.dzc = e.dzc / 2
+        elif "fiesta" in e.name.lower():
+            psi = e.psi
         else:  # CREATE
-            psi = e["psi"] / (2 * np.pi)  # V.s as opposed to V.s/rad
-            e["dxc"] = e["dxc"] / 2
-            e["dzc"] = e["dzc"] / 2
-            e["cplasma"] = abs(e["cplasma"])
+            psi = e.psi / (2 * np.pi)  # V.s as opposed to V.s/rad
+            e.dxc = e.dxc / 2
+            e.dzc = e.dzc / 2
+            e.cplasma = abs(e.cplasma)
 
         coilset = CoilSet.from_group_vecs(e)
         if force_symmetry:
             coilset = symmetrise_coilset(coilset)
 
-        grid = Grid.from_eqdict(e)
-        if e["nlim"] == 0:
+        grid = Grid.from_eqdsk(e)
+        if e.nlim == 0:
             limiter = None
-        elif e["nlim"] < 5:
-            limiter = Limiter(e["xlim"], e["zlim"])
+        elif e.nlim < 5:
+            limiter = Limiter(e.xlim, e.zlim)
         else:
             limiter = None  # CREATE..
 
@@ -342,7 +339,7 @@ class Breakdown(MHDState):
             "Bx": self.Bx(),
             "Bz": self.Bz(),
             "Bp": self.Bp(),
-            "ncoil": self.coilset.n_coils,
+            "ncoil": self.coilset.n_coils(),
             "xc": xc,
             "zc": zc,
             "dxc": dxc,
@@ -398,7 +395,7 @@ class Breakdown(MHDState):
         Total radial magnetic field at point (x, z) from coils
         """
         if x is None and z is None:
-            return self.coilset.Bx_greens(self._bx_green)
+            return self.coilset._Bx_greens(self._bx_green)
 
         return self.coilset.Bx(x, z)
 
@@ -407,7 +404,7 @@ class Breakdown(MHDState):
         Total vertical magnetic field at point (x, z) from coils and plasma
         """
         if x is None and z is None:
-            return self.coilset.Bz_greens(self._bz_green)
+            return self.coilset._Bz_greens(self._bz_green)
 
         return self.coilset.Bz(x, z)
 
@@ -417,8 +414,8 @@ class Breakdown(MHDState):
         """
         if x is None and z is None:
             return np.hypot(
-                self.coilset.Bx_greens(self._bx_green),
-                self.coilset.Bz_greens(self._bz_green),
+                self.coilset._Bx_greens(self._bx_green),
+                self.coilset._Bz_greens(self._bz_green),
             )
 
         return np.hypot(self.Bx(x, z), self.Bz(x, z))
@@ -443,7 +440,7 @@ class Breakdown(MHDState):
             Values of psi at (x, z)
         """
         if x is None and z is None:
-            return self.coilset.psi_greens(self._psi_green)
+            return self.coilset._psi_greens(self._psi_green)
 
         return self.coilset.psi(x, z)
 
@@ -451,13 +448,16 @@ class Breakdown(MHDState):
         """
         Returns the poloidal field within each coil
         """
-        b = np.zeros(len(self.coilset.coils))
-        for i, coil in enumerate(self.coilset.coils.values()):
-            if coil.dx > 0:
-                mask = in_zone(self.x, self.z, np.array([coil.x, coil.z]).T)
-                b[i] = np.amax(self.Bp() * mask)
-            else:
-                b[i] = np.amax(self.Bp(coil.x, coil.z))
+        b = np.zeros(self.coilset.n_coils())
+        dx_mask = np.zeros_like(self.coilset.dx)
+        dx_mask[self.coilset.dx > 0] = True
+        mask = in_zone(
+            self.x[dx_mask],
+            self.z[dx_mask],
+            np.array([self.x[dx_mask], self.z[dx_mask]]).T,
+        )
+        b[dx_mask] = np.max(self.Bp()[dx_mask] * mask[dx_mask], axis=-1)
+        b[~dx_mask] = np.max(self.Bp(self.x, self.z)[~dx_mask] * mask[~dx_mask], axis=-1)
         return b
 
     def plot(self, ax=None, Bp=False):
@@ -658,7 +658,7 @@ class Equilibrium(MHDState):
             "nbdry": nbdry,
             "xbdry": lcfs.x,
             "zbdry": lcfs.z,
-            "ncoil": self.coilset.n_coils,
+            "ncoil": self.coilset.n_coils(),
             "xc": x_c,
             "zc": z_c,
             "dxc": dxc,
@@ -942,7 +942,7 @@ class Equilibrium(MHDState):
         Total radial magnetic field at point (x, z) from coils and plasma
         """
         if x is None and z is None:
-            return self.plasma.Bx() + self.coilset.Bx_greens(self._bx_green)
+            return self.plasma.Bx() + self.coilset._Bx_greens(self._bx_green)
 
         return self.plasma.Bx(x, z) + self.coilset.Bx(x, z)
 
@@ -951,7 +951,7 @@ class Equilibrium(MHDState):
         Total vertical magnetic field at point (x, z) from coils and plasma
         """
         if x is None and z is None:
-            return self.plasma.Bz() + self.coilset.Bz_greens(self._bz_green)
+            return self.plasma.Bz() + self.coilset._Bz_greens(self._bz_green)
 
         return self.plasma.Bz(x, z) + self.coilset.Bz(x, z)
 
@@ -989,7 +989,7 @@ class Equilibrium(MHDState):
                 self.controller.stabilise()
             return (
                 self.plasma.psi()
-                + self.coilset.psi_greens(self._psi_green)
+                + self.coilset._psi_greens(self._psi_green)
                 + self.controller.psi()
             )
 
@@ -1267,15 +1267,16 @@ class Equilibrium(MHDState):
         Analyse and summarise the electro-magneto-mechanical characteristics
         of the equilbrium and coilset.
         """
-        c_names = self.coilset.get_control_names()
-        currents = self.coilset.get_control_currents()
+        ccoils = self.coilset.get_control_coils()
+        c_names = ccoils.name
+        currents = ccoils.currents
         fields = self.get_coil_fields()
         forces = self.get_coil_forces()
         fz = forces.T[1]
-        fz_cs = fz[self.coilset.n_PF :]
+        fz_cs = fz[self.coilset.n_coils("PF") :]
         fz_c_stot = sum(fz_cs)
         fsep = []
-        for j in range(self.coilset.n_CS - 1):
+        for j in range(self.coilset.n_coils("CS") - 1):
             fsep.append(np.sum(fz_cs[j + 1 :]) - np.sum(fz_cs[: j + 1]))
         fsep = max(fsep)
         table = {"I [A]": currents, "B [T]": fields, "F [N]": fz}

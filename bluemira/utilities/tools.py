@@ -33,7 +33,7 @@ from itertools import permutations
 from json import JSONEncoder, dumps
 from os import listdir
 from types import ModuleType
-from typing import Any, Type, Union
+from typing import Any, Tuple, Type, Union
 
 import nlopt
 import numpy as np
@@ -331,6 +331,16 @@ def is_num(thing):
         return False
 
 
+def is_num_array(thing):
+    """
+    :func:is_num but also includes arrays
+    """
+    if isinstance(thing, np.ndarray) and thing.dtype in [float, int, complex]:
+        return ~np.isnan(thing)
+    else:
+        return is_num(thing)
+
+
 def abs_rel_difference(v2, v1_ref):
     """
     Calculate the absolute relative difference between a new value and an old
@@ -512,13 +522,53 @@ def flatten_iterable(iters):
     Yields
     ------
         elements of iterable
+
+    Notes
+    -----
+    Does not cater for nested dictionaries
+
     """
     for _iter in iters:
-        if isinstance(_iter, Iterable) and not isinstance(_iter, (str, bytes)):
+        if isinstance(_iter, Iterable) and not isinstance(_iter, (str, bytes, dict)):
             for _it in flatten_iterable(_iter):
                 yield _it
         else:
             yield _iter
+
+
+def consec_repeat_elem(arr: np.ndarray, num_rep: int) -> np.ndarray:
+    """
+    Get array of repeated elements with n or more repeats
+
+    Parameters
+    ----------
+    arr: np.ndarray
+        array to find repeats in
+    num_rep: int
+        number of repetitions to find
+
+    Returns
+    -------
+    np.ndarray
+
+    """
+    if num_rep <= 1:
+        raise NotImplementedError("Not implemented for less than 2 repeat elements")
+    n = num_rep - 1
+    m = arr[:-1] == arr[1:]
+    return np.flatnonzero(np.convolve(m, np.ones(n, dtype=int)) == n) - n + 1
+
+
+def slope(arr: np.ndarray) -> float:
+    """Calculate gradient of a 2x2 point array"""
+    b = arr[1, 0] - arr[0, 0]
+    return np.inf if b == 0 else (arr[1, 1] - arr[0, 1]) / b
+
+
+def yintercept(arr: np.ndarray) -> Tuple[float]:
+    """Calculate the y intercept and gradient of an array"""
+    s = slope(arr)
+    return arr[0, 1] - s * arr[0, 0], s
 
 
 # ======================================================================================

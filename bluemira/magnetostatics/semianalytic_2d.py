@@ -161,15 +161,38 @@ def _array_dispatcher(func):
 
         # Handle arrays
         if len(x.shape) == 1:
-            result = np.zeros(len(x))
-            for i in range(len(x)):
-                result[i] = func(xc, zc, x[i], z[i], d_xc, d_zc)
+            if not isinstance(xc, np.ndarray) or len(xc.shape) == 1:
+                result = np.zeros(len(x))
+                for i in range(len(x)):
+                    result[i] = func(xc, zc, x[i], z[i], d_xc, d_zc)
+            else:
+                result = np.zeros((len(x), len(xc)))
+                for j in range(xc.shape[1]):
+                    for i in range(len(x)):
+                        result[i, j] = func(
+                            xc[:, j], zc[:, j], x[i], z[i], d_xc[:, j], d_zc[:, j]
+                        )
+
         else:
             # 2-D arrays
-            result = np.zeros(x.shape)
-            for i in range(x.shape[0]):
-                for j in range(z.shape[1]):
-                    result[i, j] = func(xc, zc, x[i, j], z[i, j], d_xc, d_zc)
+            if not isinstance(xc, np.ndarray) or len(xc.shape) == 1:
+                result = np.zeros(x.shape)
+                for i in range(x.shape[0]):
+                    for j in range(z.shape[1]):
+                        result[i, j] = func(xc, zc, x[i, j], z[i, j], d_xc, d_zc)
+            else:
+                result = np.zeros((list(x.shape) + [xc.shape[1]]))
+                for k in range(xc.shape[1]):
+                    for i in range(x.shape[0]):
+                        for j in range(z.shape[1]):
+                            result[i, j, ..., k] = func(
+                                xc[:, k],
+                                zc[:, k],
+                                x[i, j],
+                                z[i, j],
+                                d_xc[:, k],
+                                d_zc[:, k],
+                            )
         return result
 
     return wrapper
