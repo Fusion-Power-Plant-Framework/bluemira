@@ -552,7 +552,7 @@ class FieldDirectionConstraint(AbsoluteMagneticConstraint):
     ):
         # self.target_vector = target_vector / np.linalg.norm(target_vector, ord=2, axis=1)
         self.target_vector = target_vector / np.linalg.norm(target_vector)
-        super().__init__(x, z, 0, weights, tolerance, f_constraint, constraint_type)
+        super().__init__(x, z, 1.0, weights, tolerance, f_constraint, constraint_type)
 
     def control_response(self, coilset):
         """
@@ -561,7 +561,7 @@ class FieldDirectionConstraint(AbsoluteMagneticConstraint):
         response = np.array(
             [coilset.control_Bx(self.x, self.z), coilset.control_Bz(self.x, self.z)]
         )
-        return -np.dot(response.T, self.target_vector)
+        return np.dot(response.T, self.target_vector)
 
     def evaluate(self, equilibrium):
         """
@@ -571,7 +571,7 @@ class FieldDirectionConstraint(AbsoluteMagneticConstraint):
         Bz = equilibrium.Bz(self.x, self.z)
         field = np.array([Bx, Bz])
 
-        return 1 - np.dot(field, self.target_vector)
+        return np.dot(field, self.target_vector)
 
     def plot(self, ax):
         """
