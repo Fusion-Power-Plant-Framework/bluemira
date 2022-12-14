@@ -1,0 +1,30 @@
+# Runs the bluemira examples and checks for errors
+name: bluemira_examples
+
+on:
+  workflow_dispatch:
+  schedule:
+    # Runs every Monday at 04:37
+    - cron: "37 4 * * 1"
+
+jobs:
+  examples:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Install Environment
+        uses: conda-incubator/setup-miniconda@v2
+        with:
+          activate-environment: bluemira
+          environment-file: conda/environment.yml
+          miniforge-version: "latest"
+          use-only-tar-bz2: true
+          miniforge-variant: Mambaforge
+          use-mamba: true
+
+      - name: Run examples
+        id: run-examples
+        run: |
+          ./scripts/run_examples
