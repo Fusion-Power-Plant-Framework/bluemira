@@ -3,7 +3,6 @@ name: bluemira_examples
 
 on:
   workflow_dispatch:
-  push:
   schedule:
     # Runs every Monday at 04:37
     - cron: "37 4 * * 1"
