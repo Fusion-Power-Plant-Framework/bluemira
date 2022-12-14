@@ -544,12 +544,13 @@ class FieldDirectionConstraint(AbsoluteMagneticConstraint):
         self,
         x,
         z,
-        target_value,
+        target_value: np.ndarray,
         weights: Union[float, np.ndarray] = 1,
         tolerance=0.000001,
         f_constraint=Ax_b_constraint,
         constraint_type="equality",
     ):
+        target_value /= np.linalg.norm(target_value)
         super().__init__(
             x, z, target_value, weights, tolerance, f_constraint, constraint_type
         )
@@ -558,13 +559,20 @@ class FieldDirectionConstraint(AbsoluteMagneticConstraint):
         """
         Calculate control response of a CoilSet to the constraint.
         """
-        return
+        response = np.array(
+            [coilset.control_Bx(self.x, self.z), coilset.control_Bz(self.x, self.z)]
+        )
+        return -np.dot(response, self.target_value)
 
     def evaluate(self, equilibrium):
         """
         Calculate the value of the constraint in an Equilibrium.
         """
-        return
+        Bx = equilibrium.Bx(self.x, self.z)
+        Bz = equilibrium.Bz(self.x, self.z)
+        field = np.array([Bx, Bz])
+
+        return 1 - np.dot(field, self.target_value)
 
     def plot(self, ax):
         """
@@ -572,6 +580,12 @@ class FieldDirectionConstraint(AbsoluteMagneticConstraint):
         """
         kwargs = {"marker": "s", "markersize": 8, "color": "b", "linestyle": "None"}
         ax.plot(self.x, self.z, **kwargs)
+
+    def __len__(self):
+        """
+        The mathematical size of the constraint.
+        """
+        return 1
 
 
 class PsiConstraint(AbsoluteMagneticConstraint):
