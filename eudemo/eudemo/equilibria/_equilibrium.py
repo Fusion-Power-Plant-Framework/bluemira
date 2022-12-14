@@ -130,8 +130,8 @@ def make_reference_equilibrium(
         tf_track,
         r_cs=params.r_cs_in.value + 0.5 * params.tk_cs.value,
         tk_cs=0.5 * params.tk_cs.value,
-        n_CS=10,
-        n_PF=20,
+        n_CS=5,
+        n_PF=6,
     )
 
     grid = make_grid(
@@ -144,6 +144,13 @@ def make_reference_equilibrium(
         nz=nz,
     )
 
+    profiles = CustomProfile(
+        p_prime,
+        ff_prime,
+        R_0=params.R_0.value,
+        B_0=params.B_0.value,
+        I_p=params.I_p.value,
+    )
     profiles = BetaIpProfile(
         betap=params.beta_p.value,
         R_0=params.R_0.value,

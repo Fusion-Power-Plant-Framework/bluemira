@@ -393,7 +393,8 @@ class FixedEquilibriumDesigner(Designer[Equilibrium]):
         )
         iterator_program()
         self._update_params_from_eq(eq)
-        return eq
+
+        return (geom_parameterisation, transport_solver, fem_fixed_be_solver, eq)
 
     def read(self) -> Equilibrium:
         """Load an equilibrium from a file."""

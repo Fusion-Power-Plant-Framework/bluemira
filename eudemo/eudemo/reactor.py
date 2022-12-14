@@ -136,44 +136,44 @@ if __name__ == "__main__":
         FixedEquilibriumDesigner, params, build_config["Fixed boundary equilibrium"]
     )
 
-    reactor.plasma = build_plasma(build_config.get("Plasma", {}), eq)
+    # reactor.plasma = build_plasma(build_config.get("Plasma", {}), eq)
 
-    blanket_face, divertor_face, ivc_boundary = design_ivc(
-        params, build_config["IVC"], equilibrium=eq
-    )
+    # blanket_face, divertor_face, ivc_boundary = design_ivc(
+    #     params, build_config["IVC"], equilibrium=eq
+    # )
 
-    reactor.vacuum_vessel = build_vacuum_vessel(
-        params, build_config.get("Vacuum vessel", {}), ivc_boundary
-    )
-    reactor.divertor = build_divertor(
-        params, build_config.get("Divertor", {}), divertor_face
-    )
-    reactor.blanket = build_blanket(
-        params, build_config.get("Blanket", {}), blanket_face
-    )
+    # reactor.vacuum_vessel = build_vacuum_vessel(
+    #     params, build_config.get("Vacuum vessel", {}), ivc_boundary
+    # )
+    # reactor.divertor = build_divertor(
+    #     params, build_config.get("Divertor", {}), divertor_face
+    # )
+    # reactor.blanket = build_blanket(
+    #     params, build_config.get("Blanket", {}), blanket_face
+    # )
 
-    thermal_shield_config = build_config.get("Thermal shield", {})
-    vv_thermal_shield = VVTSBuilder(
-        params,
-        thermal_shield_config.get("Vacuum vessel", {}),
-        keep_out_zone=reactor.vacuum_vessel.xz_boundary(),
-    )
-    reactor.vv_thermal = vv_thermal_shield.build()
+    # thermal_shield_config = build_config.get("Thermal shield", {})
+    # vv_thermal_shield = VVTSBuilder(
+    #     params,
+    #     thermal_shield_config.get("Vacuum vessel", {}),
+    #     keep_out_zone=reactor.vacuum_vessel.xz_boundary(),
+    # )
+    # reactor.vv_thermal = vv_thermal_shield.build()
 
-    reactor.tf_coils = build_tf_coils(
-        params,
-        build_config.get("TF coils", {}),
-        reactor.plasma.lcfs(),
-        reactor.vacuum_vessel.xz_boundary(),
-    )
+    # reactor.tf_coils = build_tf_coils(
+    #     params,
+    #     build_config.get("TF coils", {}),
+    #     reactor.plasma.lcfs(),
+    #     reactor.vacuum_vessel.xz_boundary(),
+    # )
 
-    pf_coil_keep_out_zones = []  # Update when ports are added
-    pf_designer = PFCoilsDesigner(
-        params,
-        build_config.get("PF coils", {}),
-        reactor.tf_coils.boundary(),
-        pf_coil_keep_out_zones,
-    )
-    coilset = pf_designer.execute()
+    # pf_coil_keep_out_zones = []  # Update when ports are added
+    # pf_designer = PFCoilsDesigner(
+    #     params,
+    #     build_config.get("PF coils", {}),
+    #     reactor.tf_coils.boundary(),
+    #     pf_coil_keep_out_zones,
+    # )
+    # coilset = pf_designer.execute()
 
-    reactor.show_cad()
+    # reactor.show_cad()
