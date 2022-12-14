@@ -284,11 +284,17 @@ def semi_circle_angle_fig(height=20, width=20, ax=None, x0=50, y0=0):
         ax.set_aspect("equal")
 
     ax.plot(x, y)
-    ax.plot(*tr_1)
-    ax.plot(*tr_2)
-    ax.plot(*tr_3)
+    ax.plot(*tr_1, color="k")
+    ax.plot(*tr_2, color="k")
+    ax.plot(*tr_3, color="k")
     AngleAnnotation(
-        (x0, height), tr_1[:, 0], tr_2[:, 1], ax=ax, size=75, text=r"$2\alpha$"
+        (x0, height),
+        tr_1[:, 0],
+        tr_2[:, 1],
+        ax=ax,
+        size=75,
+        text=r"$2\alpha$",
+        edgecolor="k",
     )
 
     return ax
@@ -318,8 +324,9 @@ def annotated_figure():
     return fig, ax
 
 
-if __name__ == "__main__":
+def main():
+    """Main"""
     fig, ax = annotated_figure()
-    ax.set_xlim(27, 75)
+    ax.set_xlim(27, 80)
+    ax.set_ylim(-5, 21)
     ax.axis("off")
-    fig.savefig("semi_circle_chord.svg", bbox_inches="tight")

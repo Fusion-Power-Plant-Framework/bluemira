@@ -116,7 +116,9 @@ autoapi_options = [
 
 # --- Configuration for plotting ---
 extensions.append("matplotlib.sphinxext.plot_directive")
-plot_formats = ["svg", "pdf"]
+plot_formats = ["svg"]
+plot_html_show_formats = False
+plot_html_show_source_link = False
 
 # --- Configuration for graphviz ---
 extensions.append("sphinx.ext.graphviz")
