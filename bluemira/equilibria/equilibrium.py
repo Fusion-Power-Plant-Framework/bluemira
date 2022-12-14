@@ -1314,7 +1314,7 @@ class Equilibrium(MHDState):
         """
         return EquilibriumPlotter(self, ax, plasma=plasma, show_ox=show_ox)
 
-    def plot_field(self, ax=None, update_ox=False, show_ox=True):
+    def plot_field(self, ax=None, show_ox=True):
         """
         Plot the equilibrium field structure onto `ax`.
         """
