@@ -1308,7 +1308,7 @@ class Equilibrium(MHDState):
         psi_2 = x_points[1].psi
         return abs(psi_1 - psi_2) < PSI_NORM_TOL
 
-    def plot(self, ax=None, plasma=False, update_ox=False, show_ox=True):
+    def plot(self, ax=None, plasma=False, show_ox=True):
         """
         Plot the equilibrium magnetic flux surfaces object onto `ax`.
         """
@@ -1322,7 +1322,6 @@ class Equilibrium(MHDState):
             self,
             ax,
             plasma=False,
-            update_ox=update_ox,
             show_ox=show_ox,
             field=True,
         )
