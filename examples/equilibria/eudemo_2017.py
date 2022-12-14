@@ -81,8 +81,8 @@ filename = os.sep.join([path, name])
 with open(filename, "r") as file:
     data = json.load(file)
 
-sof_xbdry = data["xbdry"]
-sof_zbdry = data["zbdry"]
+sof_xbdry = np.array(data["xbdry"])
+sof_zbdry = np.array(data["zbdry"])
 
 # %%[markdown]
 
@@ -247,13 +247,34 @@ reference_eq = Equilibrium(
 #   * divertor legs are not treated, but could easily be added
 
 isoflux = IsofluxConstraint(
-    np.array(sof_xbdry)[::10],
-    np.array(sof_zbdry)[::10],
+    sof_xbdry[::20],
+    sof_zbdry[::20],
     sof_xbdry[0],
     sof_zbdry[0],
     tolerance=1e-3,
     constraint_value=0.25,  # Difficult to choose...
 )
+from bluemira.equilibria.opt_constraints import FieldDirectionConstraint
+
+top_idx = np.argmax(sof_zbdry)
+field_dirs = []
+dx = np.diff(sof_xbdry)
+dz = np.diff(sof_zbdry)
+
+top = np.where(sof_zbdry > 0)[0][:-1]
+dx = np.diff(sof_xbdry[top])
+dz = np.diff(sof_zbdry[top])
+
+for i in range(1, len(top) - 2, 5):
+    field_dir = FieldDirectionConstraint(
+        sof_xbdry[top][i],
+        sof_zbdry[top][i],
+        target_vector=np.array([dx[i], dz[i]]),
+        tolerance=1e-3,
+        weights=1.0,
+    )
+    field_dirs.append(field_dir)
+
 xp_idx = np.argmin(sof_zbdry)
 x_point = FieldNullConstraint(
     sof_xbdry[xp_idx],
@@ -261,10 +282,12 @@ x_point = FieldNullConstraint(
     tolerance=1e-3,
 )
 
+constraints = field_dirs
+constraints.extend([isoflux, x_point])
 ref_opt_problem = UnconstrainedTikhonovCurrentGradientCOP(
     reference_eq.coilset,
     reference_eq,
-    MagneticConstraintSet([isoflux, x_point]),
+    MagneticConstraintSet(constraints),
     gamma=1e-7,
 )
 
@@ -272,74 +295,74 @@ program = PicardIterator(reference_eq, ref_opt_problem, fixed_coils=True, relaxa
 program()
 
 
-sof_psi_boundary = PsiBoundaryConstraint(
-    np.array(sof_xbdry)[::10],
-    np.array(sof_zbdry)[::10],
-    psi_sof / (2 * np.pi),
-    tolerance=1.0,
-)
-
-optimiser = Optimiser("SLSQP", opt_conditions={"max_eval": 1000, "ftol_rel": 1e-6})
-sof = deepcopy(reference_eq)
-
-sof_opt_problem = MinimalCurrentCOP(
-    sof.coilset,
-    sof,
-    optimiser=optimiser,
-    max_currents=max_currents,
-    constraints=[sof_psi_boundary, x_point],
-)
-
-iterator = PicardIterator(
-    sof, sof_opt_problem, plot=True, fixed_coils=True, relaxation=0.2
-)
-iterator()
-
-
-eof_psi_boundary = PsiBoundaryConstraint(
-    np.array(sof_xbdry)[::10],
-    np.array(sof_zbdry)[::10],
-    psi_eof / (2 * np.pi),
-    tolerance=1.0,
-)
-
-eof = deepcopy(reference_eq)
-eof_opt_problem = MinimalCurrentCOP(
-    eof.coilset,
-    eof,
-    optimiser=optimiser,
-    max_currents=max_currents,
-    constraints=[eof_psi_boundary, x_point],
-)
-
-
-iterator = PicardIterator(
-    eof, eof_opt_problem, plot=True, relaxation=0.2, fixed_coils=True
-)
-iterator()
-
-# %%[markdown]
-# Plot the results
-
-# %%
-f, ax = plt.subplots(1, 3)
-breakdown.plot(ax[0])
-breakdown.coilset.plot(ax[0])
-sof.plot(ax[1])
-sof.coilset.plot(ax[1])
-eof.plot(ax[2])
-eof.coilset.plot(ax[2])
-
-sof_psi = 2 * np.pi * sof.psi(*sof._x_points[0][:2])
-eof_psi = 2 * np.pi * eof.psi(*eof._x_points[0][:2])
-ax[1].set_title("$\\psi_{b}$ = " + f"{sof_psi:.2f} V.s")
-ax[2].set_title("$\\psi_{b}$ = " + f"{eof_psi:.2f} V.s")
-
-plt.show()
-
-# TODO: Fix this example...
-# bluemira_print(
-#     "SOF:\n" f"beta_p: {calc_beta_p_approx(sof):.2f}\n" f"l_i: {calc_li(sof):.2f}"
+# sof_psi_boundary = PsiBoundaryConstraint(
+#     np.array(sof_xbdry)[::10],
+#     np.array(sof_zbdry)[::10],
+#     psi_sof / (2 * np.pi),
+#     tolerance=1.0,
 # )
 
-# bluemira_print("EOF:\n" f"beta_p: {calc_beta_p(eof):.2f}\n" f"l_i: {calc_li(sof):.2f}")
+# optimiser = Optimiser("SLSQP", opt_conditions={"max_eval": 1000, "ftol_rel": 1e-6})
+# sof = deepcopy(reference_eq)
+
+# sof_opt_problem = MinimalCurrentCOP(
+#     sof.coilset,
+#     sof,
+#     optimiser=optimiser,
+#     max_currents=max_currents,
+#     constraints=[sof_psi_boundary, x_point],
+# )
+
+# iterator = PicardIterator(
+#     sof, sof_opt_problem, plot=True, fixed_coils=True, relaxation=0.2
+# )
+# iterator()
+
+
+# eof_psi_boundary = PsiBoundaryConstraint(
+#     np.array(sof_xbdry)[::10],
+#     np.array(sof_zbdry)[::10],
+#     psi_eof / (2 * np.pi),
+#     tolerance=1.0,
+# )
+
+# eof = deepcopy(reference_eq)
+# eof_opt_problem = MinimalCurrentCOP(
+#     eof.coilset,
+#     eof,
+#     optimiser=optimiser,
+#     max_currents=max_currents,
+#     constraints=[eof_psi_boundary, x_point],
+# )
+
+
+# iterator = PicardIterator(
+#     eof, eof_opt_problem, plot=True, relaxation=0.2, fixed_coils=True
+# )
+# iterator()
+
+# # %%[markdown]
+# # Plot the results
+
+# # %%
+# f, ax = plt.subplots(1, 3)
+# breakdown.plot(ax[0])
+# breakdown.coilset.plot(ax[0])
+# sof.plot(ax[1])
+# sof.coilset.plot(ax[1])
+# eof.plot(ax[2])
+# eof.coilset.plot(ax[2])
+
+# sof_psi = 2 * np.pi * sof.psi(*sof._x_points[0][:2])
+# eof_psi = 2 * np.pi * eof.psi(*eof._x_points[0][:2])
+# ax[1].set_title("$\\psi_{b}$ = " + f"{sof_psi:.2f} V.s")
+# ax[2].set_title("$\\psi_{b}$ = " + f"{eof_psi:.2f} V.s")
+
+# plt.show()
+
+# # TODO: Fix this example...
+# # bluemira_print(
+# #     "SOF:\n" f"beta_p: {calc_beta_p_approx(sof):.2f}\n" f"l_i: {calc_li(sof):.2f}"
+# # )
+
+# # bluemira_print("EOF:\n" f"beta_p: {calc_beta_p(eof):.2f}\n" f"l_i: {calc_li(sof):.2f}")
