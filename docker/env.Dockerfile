@@ -64,21 +64,21 @@ COPY requirements.txt .
 # Update and install dependencies available through pip
 RUN pip install -i https://test.pypi.org/simple/ 'CoolProp==6.4.2.dev0' \
     && python -m pip install -r requirements.txt
-# Coolprop numba-scipy neutronics-materal-maker
 
 # Build and install fenics
 COPY scripts/fenics ./scripts/fenics/
 RUN bash scripts/fenics/install-fenics-deps.sh
 RUN bash scripts/fenics/install-fenics.sh
 
-FROM base as release
-COPY --from=build_deps /usr /usr
-COPY --from=build_deps /etc /etc
-
 # QT5 has some not standard lib locations which freecad install doesnt remember
 ENV LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/Qt-5.15.5/lib
 # Dolfin needs help finding Boost runtime libaries
 ENV LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/lib
+
+FROM base as release
+COPY --from=build_deps /usr /usr
+COPY --from=build_deps /etc /etc
+RUN pip install git+https://github.com/Fusion-Power-Plant-Framework/bluemira.git@v0.1.0
 
 RUN useradd -ms /bin/bash user
 COPY --from=build_deps --chown=user /opt/venv/ /opt/venv/
@@ -86,6 +86,7 @@ RUN chown user:user /opt/venv
 USER user
 WORKDIR /home/user
 
-FROM release as develop
+FROM base as develop
 COPY requirements-develop.txt .
 RUN pip install --no-cache-dir -r requirements-develop.txt
+RUN apt-get install git -y

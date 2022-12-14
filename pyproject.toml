@@ -25,6 +25,7 @@ dependencies = [
     "gmsh",
     "imageio",
     "matplotlib>=3.5,<3.6",
+    "meshio",
     "neutronics-material-maker==0.1.11",  # Crash on upgrade
     "nlopt",
     "numba",
