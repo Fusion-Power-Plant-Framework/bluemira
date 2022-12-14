@@ -351,6 +351,11 @@ class PrincetonD(GeometryParameterisation):
 
     Notes
     -----
+    .. plot::
+
+        from bluemira.geometry.parameterisations import PrincetonD
+        PrincetonD().plot()
+
     The dictionary keys in var_dict are:
 
     x1: float
@@ -359,11 +364,6 @@ class PrincetonD(GeometryParameterisation):
         Radial position of outer limb [m]
     dz: float
         Vertical offset from z=0 [m]
-
-    .. plot::
-
-        from bluemira.geometry.parameterisations import PrincetonD
-        PrincetonD().plot()
 
     """
 
@@ -545,6 +545,11 @@ class TripleArc(GeometryParameterisation):
 
     Notes
     -----
+    .. plot::
+
+        from bluemira.geometry.parameterisations import TripleArc
+        TripleArc().plot()
+
     The dictionary keys in var_dict are:
 
     x1: float
@@ -561,11 +566,6 @@ class TripleArc(GeometryParameterisation):
         Small arc angle [degrees]
     a2: float
         Middle arc angle [degrees]
-
-    .. plot::
-
-        from bluemira.geometry.parameterisations import TripleArc
-        TripleArc().plot()
 
     """
 
@@ -752,6 +752,11 @@ class SextupleArc(GeometryParameterisation):
 
     Notes
     -----
+    .. plot::
+
+        from bluemira.geometry.parameterisations import SextupleArc
+        SextupleArc().plot()
+
     The dictionary keys in var_dict are:
 
     x1: float
@@ -762,11 +767,6 @@ class SextupleArc(GeometryParameterisation):
         arc radius [m]
     a1 - a5: float
         arc angle [degrees]
-
-    .. plot::
-
-        from bluemira.geometry.parameterisations import SextupleArc
-        SextupleArc().plot()
     """
 
     __slots__ = ()
@@ -978,6 +978,11 @@ class PolySpline(GeometryParameterisation):
 
     Notes
     -----
+    .. plot::
+
+        from bluemira.geometry.parameterisations import PolySpline
+        PolySpline().plot()
+
     The dictionary keys in var_dict are:
 
     x1: float
@@ -1007,10 +1012,6 @@ class PolySpline(GeometryParameterisation):
     l0e - l3e: float
         Tension variable segment end
 
-    .. plot::
-
-        from bluemira.geometry.parameterisations import PolySpline
-        PolySpline().plot()
     """
 
     __slots__ = ()
@@ -1691,6 +1692,16 @@ class PictureFrame(
 
     Notes
     -----
+    .. plot::
+
+        from bluemira.geometry.parameterisations import PictureFrame
+        PictureFrame(
+                     inner="TAPERED_INNER",
+                     upper="FLAT",
+                     lower="CURVED",
+                     var_dict={'ri': {'value': 1}}
+        ).plot()
+
     The base dictionary keys in var_dict are:
 
     x1: float
@@ -1723,15 +1734,6 @@ class PictureFrame(
     z3: float
         Vertical position of top of tapered section [m]
 
-    .. plot::
-
-        from bluemira.geometry.parameterisations import PictureFrame
-        PictureFrame(
-                     inner="TAPERED_INNER",
-                     upper="FLAT",
-                     lower="CURVED",
-                     var_dict={'ri': {'value': 1}}
-        ).plot()
     """
 
     __slots__ = tuple(
