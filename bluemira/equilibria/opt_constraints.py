@@ -535,6 +535,45 @@ class FieldNullConstraint(AbsoluteMagneticConstraint):
         return 2
 
 
+class FieldDirectionConstraint(AbsoluteMagneticConstraint):
+    """
+    Normalised field direction constraint.
+    """
+
+    def __init__(
+        self,
+        x,
+        z,
+        target_value,
+        weights: Union[float, np.ndarray] = 1,
+        tolerance=0.000001,
+        f_constraint=Ax_b_constraint,
+        constraint_type="equality",
+    ):
+        super().__init__(
+            x, z, target_value, weights, tolerance, f_constraint, constraint_type
+        )
+
+    def control_response(self, coilset):
+        """
+        Calculate control response of a CoilSet to the constraint.
+        """
+        return
+
+    def evaluate(self, equilibrium):
+        """
+        Calculate the value of the constraint in an Equilibrium.
+        """
+        return
+
+    def plot(self, ax):
+        """
+        Plot the constraint onto an Axes.
+        """
+        kwargs = {"marker": "s", "markersize": 8, "color": "b", "linestyle": "None"}
+        ax.plot(self.x, self.z, **kwargs)
+
+
 class PsiConstraint(AbsoluteMagneticConstraint):
     """
     Absolute psi value constraint.
