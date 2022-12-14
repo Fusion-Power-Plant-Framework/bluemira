@@ -24,6 +24,7 @@ Update copyright on files
 import fileinput
 from argparse import ArgumentParser
 from datetime import date
+from sys import exit
 from typing import List
 
 
@@ -62,8 +63,10 @@ def main():
     """Run the copyright updater"""
     edited = list(edit_files(arguments(), r"2021-{}".format(date.today().year)))
 
-    for file in edited:
-        print(f"Updated {file}")
+    if edited != []:
+        for file in edited:
+            print(f"Updated {file}")
+        exit(1)
 
 
 main()
