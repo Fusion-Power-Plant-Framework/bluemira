@@ -89,9 +89,6 @@ openmc = [
 process = [
     "cmake>=3.13.0",
 ]
-prominence = [
-    "prominence",
-]
 
 [build-system]
 requires = ["setuptools", "versioneer[toml]>=0.26"]
