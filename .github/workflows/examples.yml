@@ -24,8 +24,14 @@ jobs:
           miniforge-variant: Mambaforge
           use-mamba: true
 
+      - name: Install bluemira
+        shell: bash -l {0}
+        run: pip install .
+
       - name: Run examples
         shell: bash -l {0}
         run: |
-          pip install .
-          python ./scripts/run_examples
+          python ./scripts/run_examples \
+            -e 'plasmod_example' \
+            -e 'solver_example' \
+            -e 'equilibria/fem_fixed_boundary'
