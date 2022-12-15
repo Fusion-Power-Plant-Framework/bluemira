@@ -28,7 +28,10 @@ import inspect
 from abc import abstractproperty
 from copy import deepcopy
 from pathlib import Path
-from typing import Dict, Optional
+from pkgutil import iter_modules
+from typing import Dict, Optional, Set
+
+from setuptools import find_packages
 
 from bluemira.base.look_and_feel import bluemira_print, print_banner
 from bluemira.base.parameter_frame import ParameterFrame
@@ -134,14 +137,35 @@ def get_param_classes(module) -> Dict:
     }
 
 
+def find_modules(path: str) -> Set:
+    """Recursively get modules from package"""
+    modules = set()
+    for pkg in find_packages(path):
+        modules.add(pkg)
+        pkgpath = path + "/" + pkg.replace(".", "/")
+        for info in iter_modules([pkgpath]):
+            if not info.ispkg:
+                modules.add(pkg + "." + info.name)
+    return modules
+
+
 def main():
     """
     Generate python and json paramterframe files
     """
     args = parse_args()
-    module = get_module(args.module)
+    param_classes = {}
+    mods = find_modules(args.module)
+    if len(mods) > 0:
+        for mod in mods:
+            path = Path(args.module, mod.replace(".", "/"))
+            if not path.is_dir():
+                module = get_module(f"{path}.py")
+                param_classes.update(get_param_classes(module))
+    else:
+        module = get_module(args.module)
+        param_classes.update(get_param_classes(module))
 
-    param_classes = get_param_classes(module)
     output = {}
     params = {}
 
