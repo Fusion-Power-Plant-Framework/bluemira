@@ -263,6 +263,11 @@ class Coil(CoilFieldsMixin):
         return self._z
 
     @property
+    def position(self):
+        """Get coil x, z position"""
+        return np.array([self.x, self.z])
+
+    @property
     def ctype(self) -> CoilType:
         """Get coil type"""
         return self._ctype
@@ -353,6 +358,12 @@ class Coil(CoilFieldsMixin):
         """Set coil z position"""
         self._z = float(value)
         self._re_discretise()
+
+    @position.setter
+    def position(self, values: np.ndarray):
+        """Set coil position"""
+        self.x = values[0]
+        self.z = values[1]
 
     @ctype.setter
     def ctype(self, value: Union[str, np.ndarray, CoilType]):
