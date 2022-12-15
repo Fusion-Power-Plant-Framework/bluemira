@@ -78,7 +78,7 @@ ENV LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/lib
 FROM base as release
 COPY --from=build_deps /usr /usr
 COPY --from=build_deps /etc /etc
-RUN pip install git+https://github.com/Fusion-Power-Plant-Framework/bluemira.git@v0.1.0
+RUN pip install git+https://github.com/Fusion-Power-Plant-Framework/bluemira.git@main
 
 RUN useradd -ms /bin/bash user
 COPY --from=build_deps --chown=user /opt/venv/ /opt/venv/
