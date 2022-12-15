@@ -1,5 +1,15 @@
 #!/usr/bin/env python3
-"""Run Bluemira example files in sequence. Exit with code 1 if any errors."""
+"""
+Run Bluemira example files in sequence. Exit with code 1 if any errors.
+
+This will recursively search for python files within a given directory,
+and run them in sequence. It will report which ran without error, and
+which failed.
+
+By default, this script will disable plot/CAD display windows. The idea
+being that this script will mostly be automatically run in a
+non-interactive shell.
+"""
 
 import os
 import re
