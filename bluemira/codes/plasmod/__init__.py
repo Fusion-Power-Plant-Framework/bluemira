@@ -31,6 +31,7 @@ from bluemira.codes.plasmod.mapping import (
     PedestalModel,
     PLHModel,
     Profiles,
+    SafetyProfileModel,
     SOLModel,
     TransportModel,
 )
@@ -43,6 +44,7 @@ __all__ = [
     "plot_default_profiles",
     "Profiles",
     "SOLModel",
+    "SafetyProfileModel",
     "TransportModel",
     "BINARY",
     "NAME",

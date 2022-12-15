@@ -238,6 +238,7 @@ solver.params.q_95.set_value(3.5, "Input 1")
 
 solver.problem_settings["pfus_req"] = 2000.0
 solver.problem_settings["i_equiltype"] = plasmod.EquilibriumModel.q95_sawtooth
+solver.problem_settings["isawt"] = plasmod.SafetyProfileModel.SAWTEETH
 solver.problem_settings["q_control"] = 50.0
 
 solver.execute(plasmod.RunMode.RUN)
