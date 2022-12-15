@@ -3,8 +3,8 @@
 # codes, to carry out a range of typical conceptual fusion reactor design
 # activities.
 #
-# Copyright (C) 2021 M. Coleman, J. Cook, F. Franza, I.A. Maione, S. McIntosh, J. Morris,
-#                    D. Short
+# Copyright (C) 2021-2022 M. Coleman, J. Cook, F. Franza, I.A. Maione, S. McIntosh,
+#                         J. Morris, D. Short
 #
 # bluemira is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -186,19 +186,18 @@ for i, (xi, zi, dxi, dzi) in enumerate(zip(x, z, dx, dz)):
         dx=dxi,
         dz=dzi,
         ctype=ctype,
-        control=True,
         name=f"{ctype}_{j}",
     )
     coils.append(coil)
     j += 1
 
-coilset = CoilSet(coils)
+coilset = CoilSet(*coils)
 
 # Assign current density and peak field constraints
-coilset.assign_coil_materials("CS", j_max=16.5e6, b_max=12.5)
-coilset.assign_coil_materials("PF", j_max=12.5e6, b_max=11)
+coilset.assign_material("CS", j_max=16.5e6, b_max=12.5)
+coilset.assign_material("PF", j_max=12.5e6, b_max=11)
 coilset.fix_sizes()
-coilset.mesh_coils(0.3)
+coilset.discretisation = 0.3
 
 # %%[markdown]
 
@@ -275,14 +274,12 @@ grid = Grid(2, 16.0, -9.0, 9.0, 100, 100)
 
 # %%
 
-field_constraints = CoilFieldConstraints(
-    coilset, coilset.get_max_fields(), tolerance=1e-6
-)
+field_constraints = CoilFieldConstraints(coilset, coilset.b_max, tolerance=1e-6)
 force_constraints = CoilForceConstraints(
     coilset, PF_Fz_max, CS_Fz_sum, CS_Fz_sep, tolerance=1e-6
 )
 
-max_currents = coilset.get_max_currents(0)
+max_currents = coilset.get_max_current(0)
 
 
 breakdown = Breakdown(deepcopy(coilset), grid)
@@ -471,7 +468,7 @@ face_koz_LP = BluemiraFace(
 position_mapper = make_coil_mapper(
     make_pf_coil_path(make_polygon(t_outer), offset_val / 2),
     [face_koz_UP, face_koz_LP],
-    [c for c in coilset.coils.values() if c.ctype == "PF"],
+    coilset.get_coiltype("PF"),
 )
 
 
@@ -493,21 +490,21 @@ optimised_coilset = position_opt_problem.optimise(verbose=True)
 # %%
 
 
-sof_pf_currents = sof.coilset.get_control_currents()[: sof.coilset.n_PF]
-eof_pf_currents = eof.coilset.get_control_currents()[: sof.coilset.n_PF]
+sof_pf_currents = sof.coilset.get_coiltype("PF").get_control_coils().current
+eof_pf_currents = eof.coilset.get_coiltype("PF").get_control_coils().current
 max_pf_currents = np.max(np.abs([sof_pf_currents, eof_pf_currents]), axis=0)
-pf_coil_names = optimised_coilset.get_PF_names()
 
-max_cs_currents = optimised_coilset.get_max_currents(0.0)[optimised_coilset.n_PF :]
+pf_coil_names = optimised_coilset.get_coiltype("PF").name
+
+max_cs_currents = optimised_coilset.get_coiltype("CS").get_max_current()
 
 max_currents = np.concatenate([max_pf_currents, max_cs_currents])
 
 for problem in [sof_opt_problem, eof_opt_problem]:
     for pf_name, max_current in zip(pf_coil_names, max_pf_currents):
-        problem.eq.coilset.coils[pf_name].make_size(max_current)
-        problem.eq.coilset.coils[pf_name].fix_size()
-        problem.eq.coilset.coils[pf_name].mesh_coil(0.3)
-
+        problem.eq.coilset[pf_name].resize(max_current)
+        problem.eq.coilset[pf_name].fix_size()
+        problem.eq.coilset[pf_name].discretisation = 0.3
     problem.set_current_bounds(max_currents)
 
 # %%
