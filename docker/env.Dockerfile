@@ -75,18 +75,19 @@ ENV LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/Qt-5.15.5/lib
 # Dolfin needs help finding Boost runtime libaries
 ENV LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/lib
 
-FROM base as release
+RUN useradd -ms /bin/bash user
 COPY --from=build_deps /usr /usr
 COPY --from=build_deps /etc /etc
-RUN pip install git+https://github.com/Fusion-Power-Plant-Framework/bluemira.git@main
-
-RUN useradd -ms /bin/bash user
 COPY --from=build_deps --chown=user /opt/venv/ /opt/venv/
 RUN chown user:user /opt/venv
 USER user
 WORKDIR /home/user
 
+FROM base as release
+RUN pip install git+https://github.com/Fusion-Power-Plant-Framework/bluemira.git@main
+
 FROM base as develop
 COPY requirements-develop.txt .
-RUN pip install --no-cache-dir -r requirements-develop.txt
+RUN pip install --no-cache-dir -r requirements-develop.txt && rm requirements-develop.txt
+# git is required for bluemira tests
 RUN apt-get install git -y
