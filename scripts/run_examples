@@ -7,7 +7,7 @@ import sys
 from argparse import ArgumentParser
 from dataclasses import dataclass
 from pathlib import Path
-from typing import List
+from typing import List, Tuple
 from unittest import mock
 
 import matplotlib as mpl
@@ -15,6 +15,7 @@ import matplotlib.pyplot as plt
 
 from bluemira.base.file import get_bluemira_path
 
+BANNER = "\n" + "-" * 72 + "\n| {}\n" + "-" * 72 + "\n"
 EXAMPLES_ROOT = os.path.normpath(get_bluemira_path("examples", subfolder=""))
 EXCLUDE_PATTERNS = ["convert_py_to_ipynb"]
 
@@ -78,8 +79,14 @@ def run_example(file_path: str) -> bool:
     return True
 
 
-def run_examples(example_files: List[str], plotting_on=False) -> List[str]:
-    """Run the given example files and return a list of those that failed."""
+def run_examples(example_files: List[str], plotting_on=False) -> List[Tuple[str, bool]]:
+    """
+    Run the given example files.
+
+    Returns the list of examples run, along with a boolean indicating
+    whether there were any errors when running the example (True
+    indicating no errors, and False the opposite).
+    """
     if not plotting_on:
         mpl.use("Agg")
         # Disable CAD viewer by mocking out FreeCAD API's displayer.
@@ -89,11 +96,9 @@ def run_examples(example_files: List[str], plotting_on=False) -> List[str]:
     failed = []
     for example in example_files:
         display_path = Path(example).relative_to(args.examples_dir)
-        print(f"{display_path} ", flush=True)
+        print(BANNER.format(display_path), flush=True)
         result = run_example(example)
-        print()
-        if not result:
-            failed.append(display_path)
+        failed.append((display_path, result))
     return failed
 
 
@@ -104,9 +109,9 @@ if __name__ == "__main__":
         print(f"found no python files in '{args.examples_dir}'.")
         sys.exit(1)
 
-    failed = run_examples(example_py_files, args.plotting_on)
-    if failed:
-        print("Example(s) failed:")
-        for example in failed:
-            print(f"❌ {example}")
-    sys.exit(len(failed) > 0)
+    results = run_examples(example_py_files, args.plotting_on)
+    print("\nExamples run:")
+    print("-------------")
+    for example, result in results:
+        print(f"{'✔️' if result else '❌'} {example}")
+    sys.exit(not all(r[1] for r in results))
