@@ -126,8 +126,6 @@ def parse_args():
 def get_param_classes(module) -> Dict:
     """
     Get all ParameterFrame classes
-
-    TODO - recursive get classes
     """
     return {
         f"{m[0]}: {m[1].param_cls.__name__}": m[1].param_cls
