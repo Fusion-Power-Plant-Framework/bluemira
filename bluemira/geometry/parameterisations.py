@@ -268,7 +268,7 @@ class GeometryParameterisation(abc.ABC):
             },
         )
         ax.annotate(
-            r"$\it{" f"{str_to_latex(key)}" "}$",
+            r"$\it{" f"{str_to_latex(key).strip('$')}" "}$",
             xy=xy3,
             xycoords="data",
             xytext=(0, 5),
