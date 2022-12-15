@@ -181,6 +181,16 @@ class TestCoil:
         assert np.all(~outside)
         assert np.alltrue(coil._points_inside_coil(coil.x_boundary, coil.z_boundary))
 
+    def test_position(self):
+        coil = Coil(x=4, z=4, current=10, dx=1, dz=2)
+        pos = np.array([coil.x, coil.z])
+        pos += 1
+        coil.position == pos
+        assert coil.position == np.array([5, 5])
+        coil.x = 6
+        coil.z = 6
+        assert coil.position == np.array([6, 6])
+
 
 class TestSemiAnalytic:
     """
