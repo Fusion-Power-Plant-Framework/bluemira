@@ -319,7 +319,7 @@ class GeometryParameterisation(abc.ABC):
                 offset_ar_z += 1.5
         return offset_ar_x, offset_ar_z
 
-    def plot(self, ax=None, labels=True, **kwargs):
+    def plot(self, ax=None, labels=False, **kwargs):
         """
         Plot the geometry parameterisation
 
@@ -329,6 +329,8 @@ class GeometryParameterisation(abc.ABC):
             Matplotlib axes object
         labels: bool
             Label variables on figure
+        kwargs: Dict
+            Passed to matplotlib Axes.plot function
         """
         if ax is None:
             _, ax = plt.subplots()
@@ -336,7 +338,8 @@ class GeometryParameterisation(abc.ABC):
 
         if labels:
             self._label_function(ax, shape)
-        plot_2d(shape, ax=ax, show=False, ndiscr=200)
+        ndiscr = kwargs.pop("ndiscr") if "ndiscr" in kwargs else 200
+        plot_2d(shape, ax=ax, show=False, ndiscr=ndiscr, **kwargs)
         return ax
 
 
@@ -354,7 +357,7 @@ class PrincetonD(GeometryParameterisation):
     .. plot::
 
         from bluemira.geometry.parameterisations import PrincetonD
-        PrincetonD().plot()
+        PrincetonD().plot(labels=True)
 
     The dictionary keys in var_dict are:
 
@@ -548,7 +551,7 @@ class TripleArc(GeometryParameterisation):
     .. plot::
 
         from bluemira.geometry.parameterisations import TripleArc
-        TripleArc().plot()
+        TripleArc().plot(labels=True)
 
     The dictionary keys in var_dict are:
 
@@ -755,7 +758,7 @@ class SextupleArc(GeometryParameterisation):
     .. plot::
 
         from bluemira.geometry.parameterisations import SextupleArc
-        SextupleArc().plot()
+        SextupleArc().plot(labels=True)
 
     The dictionary keys in var_dict are:
 
@@ -981,7 +984,7 @@ class PolySpline(GeometryParameterisation):
     .. plot::
 
         from bluemira.geometry.parameterisations import PolySpline
-        PolySpline().plot()
+        PolySpline().plot(labels=True)
 
     The dictionary keys in var_dict are:
 
@@ -1700,7 +1703,7 @@ class PictureFrame(
                      upper="FLAT",
                      lower="CURVED",
                      var_dict={'ri': {'value': 1}}
-        ).plot()
+        ).plot(labels=True)
 
     The base dictionary keys in var_dict are:
 

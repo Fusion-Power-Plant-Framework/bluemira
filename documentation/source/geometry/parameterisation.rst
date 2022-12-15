@@ -22,7 +22,7 @@ PrincetonD
     :caption: Princeton D
 
     from bluemira.geometry.parameterisations import PrincetonD
-    PrincetonD().plot()
+    PrincetonD().plot(labels=True)
 
 The famous PrincetonD only has a few customisations available the inside lim radius, x1,
 the outer lim radius, x2, and the z offset, dz.
@@ -34,7 +34,7 @@ TripleArc
     :caption: Triple Arc
 
     from bluemira.geometry.parameterisations import TripleArc
-    TripleArc().plot()
+    TripleArc().plot(labels=True)
 
 The TripleArc has more customisations than show here including the length of inboard
 straigh section, sl, and the small and middle arc angles (a1 and a2). Please see the
@@ -47,7 +47,7 @@ SextupleArc
     :caption: Sextuple Arc
 
     from bluemira.geometry.parameterisations import SextupleArc
-    SextupleArc().plot()
+    SextupleArc().plot(labels=True)
 
 The Sextuple are has the basic customisations as shown above along with the arc radius'
 (r1 - r5) and the arc angles (a1-a5).
@@ -59,7 +59,7 @@ Polyspline
     :caption: Polyspline
 
     from bluemira.geometry.parameterisations import PolySpline
-    PolySpline().plot()
+    PolySpline().plot(labels=True)
 
 This is Simon McIntosh's Poly-Bézier-spline geometry parameterisation with 19 variables
 please see the API documentation for all the variables.
@@ -71,7 +71,7 @@ PictureFrame
     :caption: PictureFrame
 
     from bluemira.geometry.parameterisations import PictureFrame
-    PictureFrame().plot()
+    PictureFrame().plot(labels=True)
 
 The PictureFrame parameterisation has the most customisation options. The classic
 PictureFrame is shown above but there are further options. All the options can be
@@ -85,7 +85,7 @@ Tapered Inner Leg
     :caption: Tapered PictureFrame
 
     from bluemira.geometry.parameterisations import PictureFrame
-    PictureFrame(inner="TAPERED_INNER").plot()
+    PictureFrame(inner="TAPERED_INNER").plot(labels=True)
 
 The Tapered PictureFrame coil type is similar to a regular PictureFrame shaped TF coil
 with the extra option of the inboard leg of the coil can have a taper.
@@ -112,7 +112,7 @@ Curved Top or Bottom Legs
     :caption: Curved PictureFrame
 
     from bluemira.geometry.parameterisations import PictureFrame
-    PictureFrame(upper="CURVED", lower="FLAT").plot()
+    PictureFrame(upper="CURVED", lower="FLAT").plot(labels=True)
 
 The Curved Pictureframe (“CP”) shape is a variant of the regular Pictureframe
 coils with either one or both of the top and bottom legs domed. This is mainly to make
