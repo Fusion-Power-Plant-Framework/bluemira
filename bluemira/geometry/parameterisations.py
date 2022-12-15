@@ -47,6 +47,7 @@ from bluemira.geometry.tools import (
 )
 from bluemira.geometry.wire import BluemiraWire
 from bluemira.utilities.opt_variables import BoundedVariable, OptVariables
+from bluemira.utilities.plot_tools import str_to_latex
 
 __all__ = [
     "GeometryParameterisation",
@@ -252,7 +253,6 @@ class GeometryParameterisation(abc.ABC):
             Tuple for arrow label location
 
         """
-        key = key.replace("_", "")  # TODO proper latex
         ax.annotate(
             "",
             xy=xy1,
@@ -268,7 +268,7 @@ class GeometryParameterisation(abc.ABC):
             },
         )
         ax.annotate(
-            r"$\it{" f"{key}" "}$",
+            r"$\it{" f"{str_to_latex(key)}" "}$",
             xy=xy3,
             xycoords="data",
             xytext=(0, 5),
