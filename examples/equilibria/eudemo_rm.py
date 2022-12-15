@@ -468,7 +468,7 @@ face_koz_LP = BluemiraFace(
 position_mapper = make_coil_mapper(
     make_pf_coil_path(make_polygon(t_outer), offset_val / 2),
     [face_koz_UP, face_koz_LP],
-    coilset.get_coiltype("PF"),
+    coilset.get_coiltype("PF")._coils,
 )
 
 
@@ -478,7 +478,8 @@ position_mapper = make_coil_mapper(
 position_opt_problem = PulsedNestedPositionCOP(
     coilset,
     position_mapper,
-    sub_opt_problems=[sof_opt_problem, eof_opt_problem],
+    # sub_opt_problems=[sof_opt_problem, eof_opt_problem],
+    sub_opt_problems=[eof_opt_problem],
     optimiser=Optimiser(
         "COBYLA", opt_conditions={"max_eval": 50, "ftol_rel": 1e-6, "xtol_rel": 1e-6}
     ),
@@ -500,7 +501,8 @@ max_cs_currents = optimised_coilset.get_coiltype("CS").get_max_current()
 
 max_currents = np.concatenate([max_pf_currents, max_cs_currents])
 
-for problem in [sof_opt_problem, eof_opt_problem]:
+# for problem in [sof_opt_problem, eof_opt_problem]:
+for problem in [eof_opt_problem]:
     for pf_name, max_current in zip(pf_coil_names, max_pf_currents):
         problem.eq.coilset[pf_name].resize(max_current)
         problem.eq.coilset[pf_name].fix_size()
@@ -531,9 +533,9 @@ ax3 = ax[1]
 # breakdown.plot(ax1)
 # breakdown.coilset.plot(ax1)
 sof.plot(ax2)
-sof.coilset.plot(ax2)
+sof.coilset.plot(ax2, label=True)
 eof.plot(ax3)
-eof.coilset.plot(ax3)
+eof.coilset.plot(ax3, label=True)
 
 sof_psi = 2 * np.pi * sof.psi(*sof._x_points[0][:2])
 eof_psi = 2 * np.pi * eof.psi(*eof._x_points[0][:2])
