@@ -186,10 +186,10 @@ class TestCoil:
         pos = np.array([coil.x, coil.z])
         pos += 1
         coil.position = pos
-        assert coil.position == np.array([5, 5])
+        assert np.allclose(coil.position, np.array([5, 5]))
         coil.x = 6
         coil.z = 6
-        assert coil.position == np.array([6, 6])
+        assert np.allclose(coil.position, np.array([6, 6]))
 
 
 class TestSemiAnalytic:
