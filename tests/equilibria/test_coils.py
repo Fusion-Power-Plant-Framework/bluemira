@@ -185,7 +185,7 @@ class TestCoil:
         coil = Coil(x=4, z=4, current=10, dx=1, dz=2)
         pos = np.array([coil.x, coil.z])
         pos += 1
-        coil.position == pos
+        coil.position = pos
         assert coil.position == np.array([5, 5])
         coil.x = 6
         coil.z = 6
