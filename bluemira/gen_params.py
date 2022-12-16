@@ -25,6 +25,7 @@ A helper script to generate ParameterFrames as a python file and json file
 
 import argparse
 import inspect
+import os
 from abc import abstractproperty
 from copy import deepcopy
 from pathlib import Path
@@ -33,7 +34,13 @@ from typing import Dict, Optional, Set
 
 from setuptools import find_packages
 
-from bluemira.base.look_and_feel import bluemira_print, print_banner
+from bluemira.base.logs import set_log_level
+from bluemira.base.look_and_feel import (
+    bluemira_debug,
+    bluemira_print,
+    bluemira_warn,
+    print_banner,
+)
 from bluemira.base.parameter_frame import ParameterFrame
 from bluemira.base.parameter_frame._parameter import ParamDictT
 from bluemira.utilities.tools import get_module, json_writer
@@ -111,11 +118,27 @@ def parse_args():
     """
     print_banner()
     parser = argparse.ArgumentParser(
-        description="Generate ParameterFrame files from module"
+        description="Generate ParameterFrame files from module or package"
     )
-    parser.add_argument("module", type=str)
-    parser.add_argument("-c", "--collapse", action="store_true")
-    parser.add_argument("-d", "--directory", type=str, default="./")
+    parser.add_argument("module", type=str, helpr="Module or Package to search through")
+    parser.add_argument(
+        "-c", "--collapse", action="store_true", help="Collapse to one ParameterFrame"
+    )
+    parser.add_argument(
+        "-d", "--save-directory", dest="directory", type=str, default="./"
+    )
+    parser.add_argument(
+        "-v",
+        action="count",
+        default=0,
+        help="Increase logging severity level.",
+    )
+    parser.add_argument(
+        "-q",
+        action="count",
+        default=0,
+        help="Decrease logging severity level.",
+    )
 
     args = parser.parse_args()
     args.module = Path(args.module).resolve()
@@ -139,11 +162,22 @@ def find_modules(path: str) -> Set:
     """Recursively get modules from package"""
     modules = set()
     for pkg in find_packages(path):
+        if "test" in pkg:
+            bluemira_debug(f"Ignoring {pkg}, possible test package")
+            continue
         modules.add(pkg)
         pkgpath = path + "/" + pkg.replace(".", "/")
         for info in iter_modules([pkgpath]):
-            if not info.ispkg:
-                modules.add(pkg + "." + info.name)
+            if "test" in info.name:
+                bluemira_debug(f"Ignoring {info.name}, possible test module")
+            elif not info.ispkg:
+                modules.add(f"{pkg}.{info.name}")
+    bluemira_print("Found modules:\n" + "\n".join(sorted(m for m in modules)))
+    if not os.path.commonprefix(list(modules)):
+        bluemira_warn(
+            "Not all modules come from the same package."
+            " Is you module path one level too deep?"
+        )
     return modules
 
 
@@ -152,6 +186,8 @@ def main():
     Generate python and json paramterframe files
     """
     args = parse_args()
+    set_log_level(min(max(0, 2 + args.q - args.v), 5))
+
     param_classes = {}
     mods = find_modules(args.module)
     if len(mods) > 0:
@@ -163,6 +199,10 @@ def main():
     else:
         module = get_module(args.module)
         param_classes.update(get_param_classes(module))
+
+    bluemira_print(
+        "Found ParameterFrames:\n" + "\n".join(sorted(k for k in param_classes.keys()))
+    )
 
     output = {}
     params = {}
