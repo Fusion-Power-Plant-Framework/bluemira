@@ -29,11 +29,13 @@ import abc
 import json
 from enum import Enum
 from functools import partial
-from typing import Dict, Iterable, Optional, TextIO, Union
+from typing import Dict, Iterable, Optional, TextIO, Tuple, Union
 
+import matplotlib.pyplot as plt
 import numpy as np
 from scipy.special import iv as bessel
 
+from bluemira.display.plotter import plot_2d
 from bluemira.geometry.error import GeometryParameterisationError
 from bluemira.geometry.tools import (
     interpolate_bspline,
@@ -45,6 +47,7 @@ from bluemira.geometry.tools import (
 )
 from bluemira.geometry.wire import BluemiraWire
 from bluemira.utilities.opt_variables import BoundedVariable, OptVariables
+from bluemira.utilities.plot_tools import str_to_latex
 
 __all__ = [
     "GeometryParameterisation",
@@ -232,6 +235,113 @@ class GeometryParameterisation(abc.ABC):
         var_dict = json.load(file)
         return cls(var_dict)
 
+    def _annotator(self, ax, key: str, xy1: Tuple, xy2: Tuple, xy3: Tuple):
+        """
+        Create annotation arrow with label
+
+        Parameters
+        ----------
+        ax: Axes
+            Matplotlib axis instance
+        key: str
+            label of annotation
+        xy1: Tuple
+            Tuple for first arrow point
+        xy2: Tuple
+            Tuple for second arrow point
+        xy3: Tuple
+            Tuple for arrow label location
+
+        """
+        ax.annotate(
+            "",
+            xy=xy1,
+            xycoords="data",
+            xytext=xy2,
+            textcoords="data",
+            arrowprops={
+                "arrowstyle": "<|-|>",
+                "edgecolor": "k",
+                "facecolor": "k",
+                "shrinkA": 0,
+                "shrinkB": 0,
+            },
+        )
+        ax.annotate(
+            r"$\it{" f"{str_to_latex(key).strip('$')}" "}$",
+            xy=xy3,
+            xycoords="data",
+            xytext=(0, 5),
+            textcoords="offset points",
+        )
+
+    def _label_function(self, ax, shape):
+        """
+        Adds labels to parameterisation plots
+
+        Parameters
+        ----------
+        ax: Axes
+            Matplotlib axis instance
+        shape: BluemiraWire
+            parameterisation wire
+
+        """
+        offset_ar_x = 0
+        offset_ar_z = 0
+        for key, var in self.variables.as_dict().items():
+            if key.startswith("x"):
+                self._annotator(
+                    ax,
+                    key,
+                    (0, offset_ar_x),
+                    (var["_value"], offset_ar_x),
+                    (var["_value"] * 0.4, offset_ar_x),
+                )
+                ax.plot([0, 0], [0, offset_ar_x], color="k")
+                ax.plot([var["_value"], var["_value"]], [0, offset_ar_x], color="k")
+                offset_ar_x += 2
+            elif key.startswith("z") or key[1] == "z":
+                xcor = shape.center_of_mass[0] + offset_ar_z
+                self._annotator(
+                    ax,
+                    key,
+                    (xcor, 0),
+                    (xcor, var["_value"]),
+                    (xcor, var["_value"] * 0.4),
+                )
+                ax.plot([shape.center_of_mass[0], xcor], [0, 0], color="k")
+                ax.plot(
+                    [shape.center_of_mass[0], xcor],
+                    [var["_value"], var["_value"]],
+                    color="k",
+                )
+                offset_ar_z += 1.5
+        return offset_ar_x, offset_ar_z
+
+    def plot(self, ax=None, labels=False, **kwargs):
+        """
+        Plot the geometry parameterisation
+
+        Parameters
+        ----------
+        ax: Optional[Axes]
+            Matplotlib axes object
+        labels: bool
+            Label variables on figure
+        kwargs: Dict
+            Passed to matplotlib Axes.plot function
+        """
+        if ax is None:
+            _, ax = plt.subplots()
+        shape = self.create_shape()
+
+        if labels:
+            self._label_function(ax, shape)
+        ndiscr = kwargs.pop("ndiscr") if "ndiscr" in kwargs else 200
+        plot_2d(shape, ax=ax, show=False, ndiscr=ndiscr, **kwargs)
+        return ax
+
 
 class PrincetonD(GeometryParameterisation):
     """
@@ -241,6 +351,23 @@ class PrincetonD(GeometryParameterisation):
     ----------
     var_dict: Optional[dict]
         Dictionary with which to update the default values of the parameterisation.
+
+    Notes
+    -----
+    .. plot::
+
+        from bluemira.geometry.parameterisations import PrincetonD
+        PrincetonD().plot(labels=True)
+
+    The dictionary keys in var_dict are:
+
+    x1: float
+        Radial position of inner limb [m]
+    x2: float
+        Radial position of outer limb [m]
+    dz: float
+        Vertical offset from z=0 [m]
+
     """
 
     __slots__ = ()
@@ -418,6 +545,31 @@ class TripleArc(GeometryParameterisation):
     ----------
     var_dict: Optional[dict]
         Dictionary with which to update the default values of the parameterisation.
+
+    Notes
+    -----
+    .. plot::
+
+        from bluemira.geometry.parameterisations import TripleArc
+        TripleArc().plot(labels=True)
+
+    The dictionary keys in var_dict are:
+
+    x1: float
+        Radial position of inner limb [m]
+    dz: float
+        Vertical offset from z=0 [m]
+    sl: float
+        Length of inboard straigh section [m]
+    f1: float
+        rs == f1*z small
+    f2: float
+        rm == f2*rs mid
+    a1: float
+        Small arc angle [degrees]
+    a2: float
+        Middle arc angle [degrees]
+
     """
 
     __slots__ = ()
@@ -575,6 +727,22 @@ class TripleArc(GeometryParameterisation):
         wire.translate((0, 0, dz))
         return wire
 
+    def _label_function(self, ax, shape):
+        """
+        Adds labels to parameterisation plots
+
+        TODO add labels for sl f1 f2 a1 a2
+
+        Parameters
+        ----------
+        ax: Axes
+            Matplotlib axis instance
+        shape: BluemiraWire
+            parameterisation wire
+
+        """
+        offset_x, offset_z = super()._label_function(ax, shape)
+
 
 class SextupleArc(GeometryParameterisation):
     """
@@ -584,6 +752,24 @@ class SextupleArc(GeometryParameterisation):
     ----------
     var_dict: Optional[dict]
         Dictionary with which to update the default values of the parameterisation.
+
+    Notes
+    -----
+    .. plot::
+
+        from bluemira.geometry.parameterisations import SextupleArc
+        SextupleArc().plot(labels=True)
+
+    The dictionary keys in var_dict are:
+
+    x1: float
+        Radial position of inner limb [m]
+    z1: float
+        Inboard limb height [m]
+    r1 - r5: float
+        arc radius [m]
+    a1 - a5: float
+        arc angle [degrees]
     """
 
     __slots__ = ()
@@ -767,6 +953,22 @@ class SextupleArc(GeometryParameterisation):
 
         return BluemiraWire(wires, label=label)
 
+    def _label_function(self, ax, shape):
+        """
+        Adds labels to parameterisation plots
+
+        TODO add labels for r1-5 a1-5
+
+        Parameters
+        ----------
+        ax: Axes
+            Matplotlib axis instance
+        shape: BluemiraWire
+            parameterisation wire
+
+        """
+        offset_x, offset_z = super()._label_function(ax, shape)
+
 
 class PolySpline(GeometryParameterisation):
     """
@@ -776,6 +978,43 @@ class PolySpline(GeometryParameterisation):
     ----------
     var_dict: Optional[dict]
         Dictionary with which to update the default values of the parameterisation.
+
+    Notes
+    -----
+    .. plot::
+
+        from bluemira.geometry.parameterisations import PolySpline
+        PolySpline().plot(labels=True)
+
+    The dictionary keys in var_dict are:
+
+    x1: float
+        Radial position of inner limb [m]
+    x2: float
+        Radial position of outer limb [m]
+    z2: float
+        Outer note vertical shift [m]
+    height: float
+        Full height [m]
+    top: float
+        Horizontal shift [m]
+    upper: float
+        Vertical shift [m]
+    dz: float
+        Vertical offset [m]
+    flat: float
+        Fraction of straight outboard leg []
+    tilt: float
+        Outboard angle [degrees]
+    bottom: float
+        Lower horizontal shift [m]
+    lower: float
+        Lower vertical shift [m]
+    l0s - l3s: float
+        Tension variable segment start
+    l0e - l3e: float
+        Tension variable segment end
+
     """
 
     __slots__ = ()
@@ -990,6 +1229,24 @@ class PolySpline(GeometryParameterisation):
             control_point[2] = point[2] + d_tension * np.sin(angle)
 
         return p1, p2
+
+    def _label_function(self, ax, shape):
+        """
+        Adds labels to parameterisation plots
+
+        TODO add labels for:
+
+            height top upper dz flat tilt bottom lower l0s - l3s l0e - l3e
+
+        Parameters
+        ----------
+        ax: Axes
+            Matplotlib axis instance
+        shape: BluemiraWire
+            parameterisation wire
+
+        """
+        offset_x, offset_z = super()._label_function(ax, shape)
 
 
 class PictureFrameTools:
@@ -1438,10 +1695,20 @@ class PictureFrame(
 
     Notes
     -----
+    .. plot::
+
+        from bluemira.geometry.parameterisations import PictureFrame
+        PictureFrame(
+                     inner="TAPERED_INNER",
+                     upper="FLAT",
+                     lower="CURVED",
+                     var_dict={'ri': {'value': 1}}
+        ).plot(labels=True)
+
     The base dictionary keys in var_dict are:
 
     x1: float
-        Radial position of inner edge of upper/lower limb [m]
+        Radial position of inner limb [m]
     x2: float
         Radial position of outer limb [m]
     z1: float
@@ -1453,7 +1720,7 @@ class PictureFrame(
     ro: float
         Radius of outer corners [m]
 
-    For curved pictures frames there is no 'ro' on the curved section but there
+    For curved pictures frames 'ro' is ignored on curved sections but there
     are additional keys:
 
     z1_peak: float
@@ -1469,6 +1736,7 @@ class PictureFrame(
         Radial position of outer limb [m]
     z3: float
         Vertical position of top of tapered section [m]
+
     """
 
     __slots__ = tuple(
@@ -1572,3 +1840,32 @@ class PictureFrame(
         out_leg = self.outer(*self.outer_vars(top_leg, bot_leg, self.variables))
 
         return BluemiraWire([inb_leg, top_leg, out_leg, bot_leg], label=label)
+
+    def _label_function(self, ax, shape):
+        super()._label_function(ax, shape)
+        ro = self.variables.ro
+        ri = self.variables.ri
+        z = self.variables.z1
+        x_in = getattr(
+            self.variables, "x4" if "x4" in self.variables._var_dict else "x1"
+        )
+        x_out = self.variables.x2
+        _r1 = ri * (1 - np.sqrt(0.5))
+        _r2 = ro * (1 - np.sqrt(0.5))
+        self._annotator(
+            ax,
+            "ri",
+            (x_in + ri, z - ri),
+            (x_in + _r1, z - _r1),
+            ((x_in + ri) * 0.8, z - 6 * _r1),
+        )
+        self._annotator(
+            ax,
+            "ro",
+            (x_out - ro, z - ro),
+            (x_out - _r2, z - _r2),
+            ((x_out + ro) * 0.6, z - 3 * _r2),
+        )
+
+        xmin, xmax = ax.get_xlim()
+        ax.set_xlim(xmin, xmax * 1.1)
