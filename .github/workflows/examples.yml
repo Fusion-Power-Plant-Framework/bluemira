@@ -31,6 +31,8 @@ jobs:
       - name: Run examples
         shell: bash -l {0}
         run: |
+          # Exclude examples using plasmod or process, as these aren't available
+          # to the CI runners
           python ./scripts/run_examples \
             -e 'plasmod_example' \
             -e 'solver_example' \
