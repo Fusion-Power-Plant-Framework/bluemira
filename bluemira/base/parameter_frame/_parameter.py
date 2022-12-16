@@ -12,7 +12,7 @@ from bluemira.base.constants import raw_uc
 ParameterValueType = TypeVar("ParameterValueType")
 
 
-class ParamDictT(TypedDict, Generic[ParameterValueType]):
+class ParamDictT(TypedDict):
     """Typed dictionary for a Parameter."""
 
     name: str
