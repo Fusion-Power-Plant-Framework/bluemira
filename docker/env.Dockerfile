@@ -62,8 +62,7 @@ RUN bash scripts/freecad/install-freecad.sh
 
 COPY requirements.txt .
 # Update and install dependencies available through pip
-RUN pip install -i https://test.pypi.org/simple/ 'CoolProp==6.4.2.dev0' \
-    && python -m pip install -r requirements.txt
+RUN python -m pip install -r requirements.txt
 
 # Build and install fenics
 COPY scripts/fenics ./scripts/fenics/
