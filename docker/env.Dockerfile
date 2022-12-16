@@ -70,6 +70,14 @@ COPY scripts/fenics ./scripts/fenics/
 RUN bash scripts/fenics/install-fenics-deps.sh
 RUN bash scripts/fenics/install-fenics.sh
 
+# h5py is a dependency of meshio. We need to manually install it or we run into
+# a segfault when meshio attempts to import it, even though we can import h5py
+# separately without issue.
+# see https://github.com/Fusion-Power-Plant-Framework/bluemira/issues/1258 and
+# https://github.com/h5py/h5py/issues/695
+COPY scripts/h5py ./scripts/h5py
+RUN bash scripts/h5py/install-h5py.sh
+
 # QT5 has some not standard lib locations which freecad install doesnt remember
 ENV LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/Qt-5.15.5/lib
 # Dolfin needs help finding Boost runtime libaries
