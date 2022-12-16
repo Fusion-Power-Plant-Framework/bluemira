@@ -26,6 +26,7 @@ A helper script to generate ParameterFrames as a python file and json file
 import argparse
 import inspect
 import os
+import sys
 from abc import abstractproperty
 from copy import deepcopy
 from pathlib import Path
@@ -180,6 +181,7 @@ def find_modules(path: str) -> Set:
             "Not all modules come from the same package."
             " Is you module path one level too deep?"
         )
+
     return modules
 
 
@@ -190,6 +192,8 @@ def main():
     args = parse_args()
 
     param_classes = {}
+
+    sys.path.insert(0, args.module)
     mods = find_modules(args.module)
     if len(mods) > 0:
         for mod in mods:
