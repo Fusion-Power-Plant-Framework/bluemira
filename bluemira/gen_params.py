@@ -116,7 +116,6 @@ def parse_args():
     """
     Parse arguments
     """
-    print_banner()
     parser = argparse.ArgumentParser(
         description="Generate ParameterFrame files from module or package"
     )
@@ -141,9 +140,12 @@ def parse_args():
     )
 
     args = parser.parse_args()
-    args.module = Path(args.module).resolve()
-    args.directory = Path(args.directory).resolve()
-    return parser.parse_args()
+    args.module = str(Path(args.module).resolve())
+    args.directory = str(Path(args.directory).resolve())
+
+    set_log_level(min(max(0, 2 + args.q - args.v), 5))
+    print_banner()
+    return args
 
 
 def get_param_classes(module) -> Dict:
@@ -186,7 +188,6 @@ def main():
     Generate python and json paramterframe files
     """
     args = parse_args()
-    set_log_level(min(max(0, 2 + args.q - args.v), 5))
 
     param_classes = {}
     mods = find_modules(args.module)
