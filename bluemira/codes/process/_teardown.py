@@ -33,7 +33,7 @@ from bluemira.codes.interface import CodesTeardown
 from bluemira.codes.process.api import MFile, update_obsolete_vars
 from bluemira.codes.process.constants import NAME as PROCESS_NAME
 from bluemira.codes.process.params import ProcessSolverParams
-from bluemira.codes.utilities import read_json_file_or_raise
+from bluemira.codes.utilities import read_mock_json_or_raise
 
 
 class Teardown(CodesTeardown):
@@ -109,7 +109,7 @@ class Teardown(CodesTeardown):
         """
         bluemira_print("Mocking PROCESS systems code run")
         mock_file_path = os.path.join(self.read_directory, self.MOCK_JSON_NAME)
-        outputs = read_json_file_or_raise(mock_file_path, self._name)
+        outputs = read_mock_json_or_raise(mock_file_path, self._name)
         self.params.update_values(outputs, source=self._name)
 
     def get_raw_outputs(self, params: Union[Iterable, str]) -> List[float]:

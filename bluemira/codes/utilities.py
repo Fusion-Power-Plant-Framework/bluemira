@@ -55,7 +55,7 @@ class Model(Enum):
         bluemira_print(infostr)
 
 
-def read_json_file_or_raise(file_path: str, name: str) -> Dict[str, float]:
+def read_mock_json_or_raise(file_path: str, name: str) -> Dict[str, float]:
     """
     Read json file or raise CodesError
     """

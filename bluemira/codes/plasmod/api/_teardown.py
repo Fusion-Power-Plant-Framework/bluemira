@@ -29,7 +29,7 @@ from bluemira.codes.interface import CodesTeardown
 from bluemira.codes.plasmod.api._outputs import PlasmodOutputs
 from bluemira.codes.plasmod.constants import NAME as PLASMOD_NAME
 from bluemira.codes.plasmod.params import PlasmodSolverParams
-from bluemira.codes.utilities import read_json_file_or_raise
+from bluemira.codes.utilities import read_mock_json_or_raise
 
 
 class Teardown(CodesTeardown):
@@ -82,7 +82,7 @@ class Teardown(CodesTeardown):
         """
         Update this object's plasmod params with default values.
         """
-        scalars = read_json_file_or_raise(
+        scalars = read_mock_json_or_raise(
             Path(self.read_directory, self.MOCK_JSON_NAME), self._name
         )
         self.params.update_values(scalars, source=self._name)
