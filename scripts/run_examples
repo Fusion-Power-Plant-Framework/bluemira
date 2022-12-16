@@ -61,7 +61,7 @@ def parse_args(sys_args: List[str]) -> Args:
         "--plotting-on",
         action="store_true",
         default=False,
-        help="disable plotting windows",
+        help="enable interactive plotting windows",
     )
     args = parser.parse_args(sys_args)
     return Args(**vars(args))
