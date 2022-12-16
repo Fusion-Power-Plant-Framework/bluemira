@@ -23,15 +23,11 @@ Defines the 'Teardown' stage for the plasmod solver.
 """
 from pathlib import Path
 
-import numpy as np
-
-from bluemira.base.constants import raw_uc
 from bluemira.base.look_and_feel import bluemira_debug
 from bluemira.codes.error import CodesError
 from bluemira.codes.interface import CodesTeardown
 from bluemira.codes.plasmod.api._outputs import PlasmodOutputs
 from bluemira.codes.plasmod.constants import NAME as PLASMOD_NAME
-from bluemira.codes.plasmod.mapping import Profiles
 from bluemira.codes.plasmod.params import PlasmodSolverParams
 from bluemira.codes.utilities import read_json_file_or_raise
 
