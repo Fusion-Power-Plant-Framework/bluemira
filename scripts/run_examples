@@ -106,8 +106,11 @@ def run_examples(example_files: List[str], plotting_on=False) -> List[Tuple[str,
     failed = []
     for example in example_files:
         display_path = Path(example).relative_to(args.examples_dir)
-        print(BANNER.format(display_path), flush=True)
+        print(BANNER.format(display_path))
         result = run_example(example)
+        # Flush stdout so we don't get un-flushed output from previous
+        # examples under this example's banner
+        sys.stdout.flush()
         failed.append((display_path, result))
     return failed
 
