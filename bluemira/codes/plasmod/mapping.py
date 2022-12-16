@@ -23,6 +23,8 @@
 PLASMOD mappings
 """
 
+from types import DynamicClassAttribute
+
 from bluemira.codes.utilities import Model, create_mapping
 
 
@@ -166,34 +168,48 @@ class Profiles(Model):
 
     """
 
-    x = "x"
-    ne = "n_e"
-    Te = "Te"
-    Ti = "Ti"
-    psi = "psi"
-    phi = "phi"
-    press = "pressure"
-    pprime = "pprime"
-    ffprime = "ffprime"
-    kprof = "kappa"
-    dprof = "delta"
-    shif = "GS"
-    g2 = "g2"
-    g3 = "g3"
-    volprof = "V"
-    vprime = "Vprime"
-    ipol = "i_pol"
-    qprof = "q"
-    jpar = "jpar"
-    jbs = "jbs"
-    jcd = "jcd"
-    nions = "n_ion"
-    nfuel = "n_fuel"
-    ndeut = "n_D"
-    ntrit = "n_T"
-    nalf = "n_He"
+    x = ("x", "")
+    ne = ("n_e", "10^19/m^3")
+    Te = ("Te", "keV")
+    Ti = ("Ti", "keV")
+    psi = ("psi", "Wb")
+    phi = ("phi", "Wb")
+    press = ("pressure", "Pa")
+    pprime = ("pprime", "Pa/Wb")
+    ffprime = ("ffprime", "T")
+    kprof = ("kappa", "")
+    dprof = ("delta", "")
+    shif = ("GS", "m")
+    g2 = ("g2", "m^2")
+    g3 = ("g3", "m^-2")
+    volprof = ("V", "m^3")
+    vprime = ("Vprime", "m^3")
+    ipol = ("i_pol", "m.T")
+    qprof = ("q", "")
+    jpar = ("jpar", "A/m^2")
+    jbs = ("jbs", "A/m^2")
+    jcd = ("jcd", "A/m^2")
+    nions = ("n_ion", "10^19/m^3")
+    nfuel = ("n_fuel", "10^19/m^3")
+    ndeut = ("n_D", "10^19/m^3")
+    ntrit = ("n_T", "10^19/m^3")
+    nalf = ("n_He", "10^19/m^3")
     # qrad = "q_rad"
     # qneut = "q_neut"
+
+    @DynamicClassAttribute
+    def value(self):
+        """Modified value to not return unit"""
+        return self._value_[0]
+
+    @DynamicClassAttribute
+    def unit(self):
+        """The unit of the profile"""
+        return self._value_[1]
+
+    def __repr__(self):
+        """Modified repr to only show value"""
+        return "<%s.%s: %r>" % (self.__class__.__name__, self._name_, self._value_[0])
 
 
 PLASMOD_INPUTS = {

@@ -24,12 +24,16 @@ Defines the 'Teardown' stage for the plasmod solver.
 from pathlib import Path
 from typing import Union
 
+import numpy as np
+
+from bluemira.base.constants import raw_uc
 from bluemira.base.look_and_feel import bluemira_debug
 from bluemira.codes.error import CodesError
 from bluemira.codes.interface import CodesTeardown
 from bluemira.codes.plasmod.api._outputs import PlasmodOutputs
 from bluemira.codes.plasmod.constants import NAME as PLASMOD_NAME
-from bluemira.codes.plasmod.params import PlasmodSolverParams
+from bluemira.codes.plasmod.mapping import Profiles
+from bluemira.codes.plasmod.params import PlasmodSolverParams, PlasmodSolverProfiles
 from bluemira.codes.utilities import read_mock_json_or_raise
 
 
@@ -53,7 +57,9 @@ class Teardown(CodesTeardown):
     """
 
     params: PlasmodSolverParams
+    profiles = PlasmodSolverProfiles()
     MOCK_JSON_NAME = "mockPLASMOD.json"
+    MOCK_PROFILES_JSON_NAME = "mockprofilesPLASMOD.json"
 
     def __init__(
         self,
@@ -86,7 +92,13 @@ class Teardown(CodesTeardown):
         scalars = read_mock_json_or_raise(
             Path(self.read_directory, self.MOCK_JSON_NAME), self._name
         )
+        profiles = read_json_file_or_raise(
+            Path(self.read_directory, self.MOCK_PROFILES_JSON_NAME), self._name
+        )
         self.params.update_values(scalars, source=self._name)
+        self.profiles.update_values(
+            {k: np.array(v) for k, v in profiles.items()}, source=self._name
+        )
 
     def read(self):
         """
@@ -117,6 +129,7 @@ class Teardown(CodesTeardown):
             ) from os_error
         self._raise_on_plasmod_error_code(self.outputs.i_flag)
         self._update_params_with_outputs(vars(self.outputs))
+        self._convert_profiles()
 
     @staticmethod
     def _raise_on_plasmod_error_code(exit_code: int):
@@ -161,3 +174,17 @@ class Teardown(CodesTeardown):
             )
         else:
             raise CodesError(f"plasmod error: Unknown error code '{exit_code}'.")
+
+    def _convert_profiles(self):
+        self.profiles.update_values(
+            {
+                prof.value: raw_uc(
+                    getattr(self.outputs, prof.name),
+                    prof.unit,
+                    getattr(self.profiles, prof.value).unit,
+                )
+                for prof in Profiles
+                if getattr(self.outputs, prof.name) is not None
+            },
+            self._name,
+        )

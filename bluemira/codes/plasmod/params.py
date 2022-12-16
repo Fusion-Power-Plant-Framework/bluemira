@@ -145,3 +145,52 @@ class PlasmodSolverParams(MappedParameterFrame):
         Initialise from defaults
         """
         return super().from_defaults(asdict(cls._defaults))
+
+
+class PlasmodSolverProfiles(MappedParameterFrame):
+
+    x: Parameter[np.ndarray] = Parameter(name="x", value=np.array([]), unit="")
+    n_e: Parameter[np.ndarray] = Parameter(name="n_e", value=np.array([]), unit="1/m^3")
+    Te: Parameter[np.ndarray] = Parameter(name="Te", value=np.array([]), unit="K")
+    Ti: Parameter[np.ndarray] = Parameter(name="Ti", value=np.array([]), unit="K")
+    psi: Parameter[np.ndarray] = Parameter(name="psi", value=np.array([]), unit="Wb")
+    phi: Parameter[np.ndarray] = Parameter(name="phi", value=np.array([]), unit="Wb")
+    pressure: Parameter[np.ndarray] = Parameter(
+        name="pressue", value=np.array([]), unit="Pa"
+    )
+    pprime: Parameter[np.ndarray] = Parameter(
+        name="pprime", value=np.array([]), unit="Pa/Wb"
+    )
+    ffprime: Parameter[np.ndarray] = Parameter(
+        name="ffprime", value=np.array([]), unit="T"
+    )
+    kappa: Parameter[np.ndarray] = Parameter(name="kappa", value=np.array([]), unit="")
+    delta: Parameter[np.ndarray] = Parameter(name="delta", value=np.array([]), unit="")
+    GS: Parameter[np.ndarray] = Parameter(name="GS", value=np.array([]), unit="m")
+    g2: Parameter[np.ndarray] = Parameter(name="g2", value=np.array([]), unit="m^2")
+    g3: Parameter[np.ndarray] = Parameter(name="g3", value=np.array([]), unit="m^-2")
+    V: Parameter[np.ndarray] = Parameter(name="V", value=np.array([]), unit="m^3")
+    Vprime: Parameter[np.ndarray] = Parameter(
+        name="Vprime", value=np.array([]), unit="m^3"
+    )
+    i_pol: Parameter[np.ndarray] = Parameter(
+        name="i_pol", value=np.array([]), unit="m.T"
+    )
+    q: Parameter[np.ndarray] = Parameter(name="q", value=np.array([]), unit="")
+    jpar: Parameter[np.ndarray] = Parameter(
+        name="jpar", value=np.array([]), unit="A/m^2"
+    )
+    jbs: Parameter[np.ndarray] = Parameter(name="jbs", value=np.array([]), unit="A/m^2")
+    jcd: Parameter[np.ndarray] = Parameter(name="jcd", value=np.array([]), unit="A/m^2")
+    n_ion: Parameter[np.ndarray] = Parameter(
+        name="n_ion", value=np.array([]), unit="1/m^3"
+    )
+    n_fuel: Parameter[np.ndarray] = Parameter(
+        name="n_fuel", value=np.array([]), unit="1/m^3"
+    )
+    n_D: Parameter[np.ndarray] = Parameter(name="n_D", value=np.array([]), unit="1/m^3")
+    n_T: Parameter[np.ndarray] = Parameter(name="n_T", value=np.array([]), unit="1/m^3")
+    n_He: Parameter[np.ndarray] = Parameter(
+        name="n_He", value=np.array([]), unit="1/m^3"
+    )
+>>>>>>> 0a24ca339 (🚧 attempt 1)
