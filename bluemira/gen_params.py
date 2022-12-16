@@ -120,7 +120,7 @@ def parse_args():
     parser = argparse.ArgumentParser(
         description="Generate ParameterFrame files from module or package"
     )
-    parser.add_argument("module", type=str, helpr="Module or Package to search through")
+    parser.add_argument("module", type=str, help="Module or Package to search through")
     parser.add_argument(
         "-c", "--collapse", action="store_true", help="Collapse to one ParameterFrame"
     )
