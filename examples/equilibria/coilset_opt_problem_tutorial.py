@@ -3,8 +3,8 @@
 # codes, to carry out a range of typical conceptual fusion reactor design
 # activities.
 #
-# Copyright (C) 2021-2022 M. Coleman, J. Cook, F. Franza, I.A. Maione, S. McIntosh, J. Morris,
-#                    D. Short
+# Copyright (C) 2021-2022 M. Coleman, J. Cook, F. Franza, I.A. Maione, S. McIntosh,
+#                         J. Morris, D. Short
 #
 # bluemira is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -128,7 +128,7 @@ for i in range(len(coil_x)):
     )
     circuit = SymmetricCircuit(coil)
     circuits.append(circuit)
-coilset = CoilSet(circuits)
+coilset = CoilSet(*circuits)
 
 # %%[markdown]
 
@@ -176,10 +176,11 @@ lcfs_isoflux = IsofluxConstraint(
     x_lcfs, z_lcfs, ref_x=x_lcfs[2], ref_z=z_lcfs[2], constraint_value=0.1
 )
 
-x_lfs = np.array([1.86, 2.24, 2.53, 2.90, 3.43, 4.28, 5.80, 6.70])
-z_lfs = np.array([4.80, 5.38, 5.84, 6.24, 6.60, 6.76, 6.71, 6.71])
-x_hfs = np.array([1.42, 1.06, 0.81, 0.67, 0.62, 0.62, 0.64, 0.60])
-z_hfs = np.array([4.80, 5.09, 5.38, 5.72, 6.01, 6.65, 6.82, 7.34])
+x_lfs = np.array([1.86, 2.53, 3.43, 5.80, 6.70])
+z_lfs = np.array([4.80, 5.84, 6.60, 6.71, 6.71])
+x_hfs = np.array([1.42, 0.81, 0.62, 0.64, 0.60])
+z_hfs = np.array([4.80, 5.38, 6.01, 6.82, 7.34])
+
 
 x_legs = np.concatenate([x_lfs, x_lfs, x_hfs, x_hfs])
 z_legs = np.concatenate([z_lfs, -z_lfs, z_hfs, -z_hfs])
@@ -210,74 +211,24 @@ z0, z1 = -8, 8
 nx, nz = 129, 257
 grid = Grid(r0, r1, z0, z1, nx, nz)
 
+# fmt: off
 pprime = np.array(
     [
-        -850951,
-        -844143,
-        -782311,
-        -714610,
-        -659676,
-        -615987,
-        -572963,
-        -540556,
-        -509991,
-        -484261,
-        -466462,
-        -445186,
-        -433472,
-        -425413,
-        -416325,
-        -411020,
-        -410672,
-        -406795,
-        -398001,
-        -389309,
-        -378528,
-        -364607,
-        -346119,
-        -330297,
-        -312817,
-        -293764,
-        -267515,
-        -261466,
-        -591725,
-        -862663,
+        -850951, -844143, -782311, -714610, -659676, -615987, -572963, -540556, -509991,
+        -484261, -466462, -445186, -433472, -425413, -416325, -411020, -410672, -406795,
+        -398001, -389309, -378528, -364607, -346119, -330297, -312817, -293764, -267515,
+        -261466, -591725, -862663,
     ]
 )
 ffprime = np.array(
     [
-        7.23,
-        5.89,
-        4.72,
-        3.78,
-        3.02,
-        2.39,
-        1.86,
-        1.43,
-        1.01,
-        0.62,
-        0.33,
-        0.06,
-        -0.27,
-        -0.61,
-        -0.87,
-        -1.07,
-        -1.24,
-        -1.18,
-        -0.83,
-        -0.51,
-        -0.2,
-        0.08,
-        0.24,
-        0.17,
-        0.13,
-        0.1,
-        0.07,
-        0.05,
-        0.15,
-        0.28,
+        7.23, 5.89, 4.72, 3.78, 3.02, 2.39, 1.86, 1.43, 1.01, 0.62, 0.33, 0.06, -0.27,
+        -0.61, -0.87, -1.07, -1.24, -1.18, -0.83, -0.51, -0.2, 0.08, 0.24, 0.17, 0.13,
+        0.1, 0.07, 0.05, 0.15, 0.28,
     ]
 )
+# fmt: on
+
 profiles = CustomProfile(pprime, ffprime, R_0=R_0, B_0=B_t, I_p=I_p)
 eq = Equilibrium(
     coilset,
