@@ -33,7 +33,7 @@ jobs:
         run: |
           # Exclude examples using plasmod or process, as these aren't available
           # to the CI runners
-          python ./scripts/run_examples \
+          python ./scripts/run_examples.py \
             -e 'plasmod_example' \
             -e 'solver_example' \
             -e 'equilibria/fem_fixed_boundary'
