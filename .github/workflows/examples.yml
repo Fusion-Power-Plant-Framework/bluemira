@@ -26,7 +26,7 @@ jobs:
 
       - name: Install bluemira
         shell: bash -l {0}
-        run: pip install .
+        run: pip install -e .
 
       - name: Run examples
         shell: bash -l {0}
