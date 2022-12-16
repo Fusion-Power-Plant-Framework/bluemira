@@ -22,9 +22,10 @@
 PROCESS teardown functions
 """
 
-import json
 import os
 from typing import Dict, Iterable, List, Union
+
+import numpy as np
 
 from bluemira.base.look_and_feel import bluemira_print, bluemira_warn
 from bluemira.codes.error import CodesError
@@ -32,6 +33,7 @@ from bluemira.codes.interface import CodesTeardown
 from bluemira.codes.process.api import MFile, update_obsolete_vars
 from bluemira.codes.process.constants import NAME as PROCESS_NAME
 from bluemira.codes.process.params import ProcessSolverParams
+from bluemira.codes.utilities import read_mock_json_or_raise
 
 
 class Teardown(CodesTeardown):
@@ -107,7 +109,7 @@ class Teardown(CodesTeardown):
         """
         bluemira_print("Mocking PROCESS systems code run")
         mock_file_path = os.path.join(self.read_directory, self.MOCK_JSON_NAME)
-        outputs = _read_json_file_or_raise(mock_file_path)
+        outputs = read_mock_json_or_raise(mock_file_path, self._name)
         self.params.update_values(outputs, source=self._name)
 
     def get_raw_outputs(self, params: Union[Iterable, str]) -> List[float]:
@@ -128,7 +130,7 @@ class Teardown(CodesTeardown):
         """
         if not self._mfile_wrapper:
             raise CodesError(
-                "Cannot retrieve output from PROCESS MFile. "
+                f"Cannot retrieve output from {self._name} MFile. "
                 "The solver has not been run, so no MFile is available to read."
             )
         if isinstance(params, str):
@@ -144,7 +146,7 @@ class Teardown(CodesTeardown):
                 value = data[process_name]
             except KeyError:
                 raise CodesError(
-                    "No PROCESS output, or bluemira parameter mapped to a PROCESS "
+                    f"No {self._name} output, or bluemira parameter mapped to a {self._name} "
                     f"output, with name '{param_name}'."
                 )
             outputs.append(value)
@@ -168,7 +170,7 @@ class Teardown(CodesTeardown):
         Read an MFile, applying the given mappings, and performing unit
         conversions.
         """
-        self._mfile_wrapper = _MFileWrapper(path)
+        self._mfile_wrapper = _MFileWrapper(path, self._name)
         self._mfile_wrapper.read()
         return self._mfile_wrapper
 
@@ -184,13 +186,14 @@ class _MFileWrapper:
         Path to an MFile.
     """
 
-    def __init__(self, file_path: str):
+    def __init__(self, file_path: str, name: str = "PROCESS"):
         if not os.path.isfile(file_path):
             raise CodesError(f"Path '{file_path}' is not a file.")
         self.file_path = file_path
         self.mfile = MFile(file_path)
         _raise_on_infeasible_solution(self.mfile)
         self.data = {}
+        self._name = name
 
     def read(self) -> Dict:
         """
@@ -203,11 +206,10 @@ class _MFileWrapper:
             param_name = update_obsolete_vars(process_param_name)
             if param_name is None:
                 bluemira_warn(
-                    f"PROCESS parameter '{process_param_name}' is obsolete and has no "
-                    " alternative.\n"
-                    "Setting value to 0.0."
+                    f"{self._name} parameter '{process_param_name}' is obsolete and has no "
+                    " alternative. Setting value to NaN"
                 )
-                self.data[process_param_name] = 0.0
+                self.data[process_param_name] = np.nan
             elif isinstance(param_name, list):
                 for name in param_name:
                     self.data[name] = value["scan01"]
@@ -257,16 +259,6 @@ class _MFileWrapper:
         }
 
 
-def _read_json_file_or_raise(file_path: str) -> Dict[str, float]:
-    try:
-        with open(file_path, "r") as f:
-            return json.load(f)
-    except OSError as os_error:
-        raise CodesError(
-            f"Cannot open mock PROCESS results file '{file_path}'."
-        ) from os_error
-
-
 def _raise_on_infeasible_solution(m_file) -> None:
     """
     Check that PROCESS found a feasible solution.
@@ -284,7 +276,7 @@ def _raise_on_infeasible_solution(m_file) -> None:
     error_code = int(m_file.data["ifail"]["scan01"])
     if error_code != 1:
         message = (
-            f"PROCESS did not find a feasible solution. ifail = {error_code}."
+            f"{m_file._name} did not find a feasible solution. ifail = {error_code}."
             " Check PROCESS logs."
         )
         raise CodesError(message)

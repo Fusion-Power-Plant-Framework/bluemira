@@ -22,10 +22,11 @@ import copy
 import os
 from unittest import mock
 
+import numpy as np
 import pytest
 
 from bluemira.codes.error import CodesError
-from bluemira.codes.process._teardown import Teardown
+from bluemira.codes.process._teardown import Teardown, _MFileWrapper
 from bluemira.codes.process.params import ProcessSolverParams
 from tests._helpers import file_exists
 from tests.codes.process import utilities as utils
@@ -70,6 +71,46 @@ class TestTeardown:
         assert teardown.params.tau_e.value == pytest.approx(4.3196)
         # auto unit conversion
         assert teardown.params.P_el_net.value == pytest.approx(5e8)
+
+    def test_read_unknown_outputs_set_to_nan(self):
+        """
+        If a variable no longer exists in PROCESS we assume its OBS_VARS
+        entry is None. If a user asks for that var we set its value to np.nan
+        Tested for a value with units.
+        """
+
+        class MFile:
+            data = {"enbeam": {"var_mod": "some info", "scan01": 1234}}
+
+        class MFW(_MFileWrapper):
+            # Overwrite some methods because data doesnt exist in 'mfile'
+
+            def __init__(self, path, name):
+                self.mfile = MFile()
+                self._name = name
+
+            def _derive_radial_build_params(self, data):
+                return {}
+
+        teardown = Teardown(self.default_pf, None, utils.READ_DIR)
+
+        # Less Warnings
+        for m in teardown.params.mappings.values():
+            m.recv = False
+
+        teardown.params.mappings["e_nbi"].recv = True
+
+        # Test
+        with mock.patch(f"{self.MODULE_REF}._MFileWrapper", new=MFW):
+            with file_exists(
+                os.path.join(utils.READ_DIR, "MFILE.DAT"), self.IS_FILE_REF
+            ):
+                with mock.patch(
+                    "bluemira.codes.process.api.OBS_VARS", new={"enbeam": None}
+                ):
+                    teardown.read()
+
+        assert np.isnan(teardown.params.e_nbi.value)
 
     @pytest.mark.parametrize(
         "run_func, data_dir", [("runinput", utils.RUN_DIR), ("readall", utils.READ_DIR)]

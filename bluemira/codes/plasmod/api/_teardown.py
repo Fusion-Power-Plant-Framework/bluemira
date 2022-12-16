@@ -21,6 +21,7 @@
 """
 Defines the 'Teardown' stage for the plasmod solver.
 """
+from pathlib import Path
 
 from bluemira.base.look_and_feel import bluemira_debug
 from bluemira.codes.error import CodesError
@@ -28,6 +29,7 @@ from bluemira.codes.interface import CodesTeardown
 from bluemira.codes.plasmod.api._outputs import PlasmodOutputs
 from bluemira.codes.plasmod.constants import NAME as PLASMOD_NAME
 from bluemira.codes.plasmod.params import PlasmodSolverParams
+from bluemira.codes.utilities import read_mock_json_or_raise
 
 
 class Teardown(CodesTeardown):
@@ -50,12 +52,19 @@ class Teardown(CodesTeardown):
     """
 
     params: PlasmodSolverParams
+    MOCK_JSON_NAME = "mockPLASMOD.json"
 
     def __init__(
-        self, params: PlasmodSolverParams, output_file: str, profiles_file: str
+        self,
+        params: PlasmodSolverParams,
+        output_file: str,
+        profiles_file: str,
+        run_directory: str,
+        read_directory: str,
     ):
         super().__init__(params, PLASMOD_NAME)
-        self.outputs = PlasmodOutputs()
+        self.read_directory = read_directory
+        self.run_directory = run_directory
         self.output_file = output_file
         self.profiles_file = profiles_file
 
@@ -64,14 +73,19 @@ class Teardown(CodesTeardown):
         Load the plasmod results files and update this object's params
         with the read values.
         """
-        self.read()
+        self._get_data(
+            Path(self.run_directory, self.output_file),
+            Path(self.run_directory, self.profiles_file),
+        )
 
     def mock(self):
         """
         Update this object's plasmod params with default values.
         """
-        self.outputs = PlasmodOutputs()
-        self._update_params_with_outputs(vars(self.outputs))
+        scalars = read_mock_json_or_raise(
+            Path(self.read_directory, self.MOCK_JSON_NAME), self._name
+        )
+        self.params.update_values(scalars, source=self._name)
 
     def read(self):
         """
@@ -83,9 +97,18 @@ class Teardown(CodesTeardown):
         CodesError
             If any of the plasmod files cannot be opened.
         """
+        self._get_data(
+            Path(self.read_directory, self.output_file),
+            Path(self.read_directory, self.profiles_file),
+        )
+
+    def _get_data(self, output_file: str, profiles_file: str):
+        """
+        Get data for read or run modes
+        """
         try:
-            with open(self.output_file, "r") as scalar_file:
-                with open(self.profiles_file, "r") as profiles_file:
+            with open(output_file, "r") as scalar_file:
+                with open(profiles_file, "r") as profiles_file:
                     self.outputs = PlasmodOutputs.from_files(scalar_file, profiles_file)
         except OSError as os_error:
             raise CodesError(

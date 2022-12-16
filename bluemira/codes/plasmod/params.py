@@ -27,6 +27,8 @@ from dataclasses import asdict, dataclass
 from enum import Enum
 from typing import Dict, Union
 
+import numpy as np
+
 from bluemira.base.parameter_frame import Parameter
 from bluemira.codes.params import MappedParameterFrame
 from bluemira.codes.plasmod.api._inputs import PlasmodInputs
@@ -153,5 +155,5 @@ class PlasmodSolverParams(MappedParameterFrame):
         """
         default_dict = asdict(cls._defaults)
         for k in PLASMOD_OUT_ONLY_KEYS:
-            default_dict[k] = 0
+            default_dict[k] = np.nan
         return super().from_defaults(default_dict)

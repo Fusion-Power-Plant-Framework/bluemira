@@ -27,6 +27,8 @@ from copy import deepcopy
 from dataclasses import dataclass
 from typing import Dict, List, Union
 
+import numpy as np
+
 from bluemira.base.parameter_frame import Parameter
 from bluemira.codes.params import MappedParameterFrame, ParameterMapping
 from bluemira.codes.process._inputs import ProcessInputs
@@ -372,5 +374,5 @@ class ProcessSolverParams(MappedParameterFrame):
         default_dict = cls._defaults.to_dict()
         for k in PROCESS_DEFAULT_ONLY_KEYS:
             if k not in default_dict:
-                default_dict[k] = 0
+                default_dict[k] = np.nan
         return super().from_defaults(default_dict)
