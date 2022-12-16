@@ -81,7 +81,7 @@ def run_example(file_path: str) -> bool:
     source = Path(file_path).read_text()
     try:
         exec(compile(source, file_path, "exec"), globals())  # noqa: S102
-    except (SyntaxError, Exception) as e:
+    except Exception as e:
         print(e, file=sys.stderr)
         return False
     finally:
