@@ -22,6 +22,7 @@
 import difflib
 import json
 import os
+import re
 from datetime import datetime
 from unittest import mock
 
@@ -637,6 +638,8 @@ class TestMakeCircle:
 
 
 class TestSavingCAD:
+    STP_VERSION_RE = r"(processor)|(translator) [0-9]+\.[0-9]+"
+
     def test_save_as_STP(self):
         fp = get_bluemira_path("geometry/test_data", subfolder="tests")
         test_file = os.path.join(fp, "test_circ.stp")
@@ -661,7 +664,9 @@ class TestSavingCAD:
                 try:
                     datetime.fromisoformat(line.split(",")[1].strip("'"))
                 except (ValueError, IndexError):
-                    lines += [line]
+                    # Attempt to ignore version number
+                    if not re.search(self.STP_VERSION_RE, line):
+                        lines += [line]
 
         assert lines == []
         os.remove(generated_file)
