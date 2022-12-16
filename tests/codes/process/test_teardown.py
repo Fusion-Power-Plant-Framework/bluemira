@@ -85,8 +85,9 @@ class TestTeardown:
         class MFW(_MFileWrapper):
             # Overwrite some methods because data doesnt exist in 'mfile'
 
-            def __init__(self, path):
+            def __init__(self, path, name):
                 self.mfile = MFile()
+                self._name = name
 
             def _derive_radial_build_params(self, data):
                 return {}

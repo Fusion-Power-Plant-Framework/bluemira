@@ -59,8 +59,9 @@ class FakeMFile:
 
     data = mfile_data()
 
-    def __init__(self, filename):
+    def __init__(self, filename, name="PROCESS"):
         self.filename = filename
+        self._name = name
 
     @classmethod
     def reset_data(cls):
