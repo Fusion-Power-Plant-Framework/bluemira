@@ -36,6 +36,7 @@ from bluemira.base.look_and_feel import (
     bluemira_print,
     bluemira_print_clean,
 )
+from bluemira.codes.error import CodesError
 from bluemira.codes.params import ParameterMapping
 from bluemira.utilities.tools import get_module
 

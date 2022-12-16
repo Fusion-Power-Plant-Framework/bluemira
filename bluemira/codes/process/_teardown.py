@@ -22,7 +22,6 @@
 PROCESS teardown functions
 """
 
-import json
 import os
 from typing import Dict, Iterable, List, Union
 
