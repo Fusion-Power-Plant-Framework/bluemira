@@ -23,12 +23,12 @@
 Utility functions for interacting with external codes
 """
 
-
+import json
 import os
 import subprocess  # noqa: S404
 import threading
 from enum import Enum
-from typing import List
+from typing import Dict, List
 
 from bluemira.base.look_and_feel import (
     _bluemira_clean_flush,
@@ -52,6 +52,19 @@ class Model(Enum):
         """
         infostr = f"{cls.__doc__}\n" + "\n".join(repr(l_) for l_ in list(cls))
         bluemira_print(infostr)
+
+
+def read_json_file_or_raise(file_path: str, name: str) -> Dict[str, float]:
+    """
+    Read json file or raise CodesError
+    """
+    try:
+        with open(file_path, "r") as f:
+            return json.load(f)
+    except OSError as os_error:
+        raise CodesError(
+            f"Cannot open mock {name} results file '{file_path}'."
+        ) from os_error
 
 
 def get_code_interface(module):

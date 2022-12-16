@@ -21,13 +21,19 @@
 """
 Defines the 'Teardown' stage for the plasmod solver.
 """
+from pathlib import Path
 
+import numpy as np
+
+from bluemira.base.constants import raw_uc
 from bluemira.base.look_and_feel import bluemira_debug
 from bluemira.codes.error import CodesError
 from bluemira.codes.interface import CodesTeardown
 from bluemira.codes.plasmod.api._outputs import PlasmodOutputs
 from bluemira.codes.plasmod.constants import NAME as PLASMOD_NAME
-from bluemira.codes.plasmod.params import PlasmodSolverParams
+from bluemira.codes.plasmod.mapping import Profiles
+from bluemira.codes.plasmod.params import PlasmodSolverParams, PlasmodSolverProfiles
+from bluemira.codes.utilities import read_json_file_or_raise
 
 
 class Teardown(CodesTeardown):
@@ -52,9 +58,16 @@ class Teardown(CodesTeardown):
     params: PlasmodSolverParams
 
     def __init__(
-        self, params: PlasmodSolverParams, output_file: str, profiles_file: str
+        self,
+        params: PlasmodSolverParams,
+        output_file: str,
+        profiles_file: str,
+        run_directory: str,
+        read_directory: str,
     ):
         super().__init__(params, PLASMOD_NAME)
+        self.read_directory = read_directory
+        self.run_directory = run_directory
         self.output_file = output_file
         self.profiles_file = profiles_file
 
@@ -84,9 +97,18 @@ class Teardown(CodesTeardown):
         CodesError
             If any of the plasmod files cannot be opened.
         """
+        self._get_data(
+            Path(self.read_directory, self.output_file),
+            Path(self.read_directory, self.profiles_file),
+        )
+
+    def _get_data(self, output_file: str, profiles_file: str):
+        """
+        Get data for read or run modes
+        """
         try:
-            with open(self.output_file, "r") as scalar_file:
-                with open(self.profiles_file, "r") as profiles_file:
+            with open(output_file, "r") as scalar_file:
+                with open(profiles_file, "r") as profiles_file:
                     self.outputs = PlasmodOutputs.from_files(scalar_file, profiles_file)
         except OSError as os_error:
             raise CodesError(

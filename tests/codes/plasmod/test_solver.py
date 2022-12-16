@@ -22,6 +22,7 @@ import copy
 import os
 import re
 import tempfile
+from pathlib import Path
 from typing import List
 from unittest import mock
 
@@ -36,7 +37,8 @@ from tests._helpers import combine_text_mock_write_calls
 
 SOLVER_MODULE_REF = "bluemira.codes.plasmod.api"
 RUN_SUBPROCESS_REF = "bluemira.codes.interface.run_subprocess"
-PARAMS_FILE = os.path.join(os.path.dirname(__file__), "data", "params.json")
+DATA_DIR = os.path.join(os.path.dirname(__file__), "data")
+PARAMS_FILE = os.path.join(DATA_DIR, "params.json")
 
 
 class TestPlasmodSetup:
@@ -186,20 +188,32 @@ class TestPlasmodTeardown:
         " i_flag           1\n"
     )
 
+    plasmod_prof_sample = "ntrit           0.00000000000E+0000      0.25000000000E-0001      0.50000000000E-0001\n"
+
     def setup_method(self):
         self.default_pf = PlasmodSolverParams.from_json(PARAMS_FILE)
+
+    def mock_file_open(self, filename, mode="r"):
+        if "prof" in str(filename):
+            content = self.plasmod_prof_sample
+        elif "file" in str(filename):
+            content = self.plasmod_out_sample
+
+        file_object = mock.mock_open(read_data=content).return_value
+        file_object.__iter__.return_value = content
+        return file_object
 
     @pytest.mark.parametrize("run_mode_func", ["run", "read"])
     def test_run_mode_function_updates_plasmod_params_from_file(self, run_mode_func):
         teardown = Teardown(
-            self.default_pf, "/path/to/output/file.csv", "/path/to/profiles/file.csv"
+            self.default_pf,
+            "file.csv",
+            "prof.csv",
+            "/path/to/output/",
+            "/path/to/output/",
         )
 
-        with mock.patch(
-            "builtins.open",
-            new_callable=mock.mock_open,
-            read_data=self.plasmod_out_sample,
-        ):
+        with mock.patch("builtins.open", new=self.mock_file_open):
             getattr(teardown, run_mode_func)()
 
         assert teardown.params.beta_N.value == pytest.approx(0.14092930140e2)
@@ -208,16 +222,9 @@ class TestPlasmodTeardown:
 
     def test_mock_leaves_plasmod_params_with_defaults(self):
         default_pf_copy = copy.deepcopy(self.default_pf)
-        teardown = Teardown(
-            self.default_pf, "/path/to/output/file.csv", "/path/to/profiles/file.csv"
-        )
+        teardown = Teardown(self.default_pf, "file.csv", "file.csv", DATA_DIR, DATA_DIR)
 
-        with mock.patch(
-            "builtins.open",
-            new_callable=mock.mock_open,
-            read_data=self.plasmod_out_sample,
-        ):
-            teardown.mock()
+        teardown.mock()
 
         assert teardown.params.beta_N.value == default_pf_copy.beta_N.value
         assert teardown.params.f_bs.value == default_pf_copy.f_bs.value
@@ -226,7 +233,11 @@ class TestPlasmodTeardown:
     @pytest.mark.parametrize("run_mode_func", ["run", "read"])
     def test_CodesError_if_output_files_cannot_be_read(self, run_mode_func):
         teardown = Teardown(
-            self.default_pf, "/path/to/output/file.csv", "/path/to/profiles/file.csv"
+            self.default_pf,
+            "file.csv",
+            "file.csv",
+            "/path/to/output/",
+            "/path/to/output/",
         )
 
         with mock.patch("builtins.open", side_effect=OSError):
@@ -236,7 +247,11 @@ class TestPlasmodTeardown:
     @pytest.mark.parametrize("run_mode_func", ["run", "read"])
     def test_run_mode_function_opens_both_output_files(self, run_mode_func):
         teardown = Teardown(
-            self.default_pf, "/path/to/output/file.csv", "/path/to/profiles/file.csv"
+            self.default_pf,
+            "out.csv",
+            "prof.csv",
+            "/path/to/output/",
+            "/path/to/output/",
         )
 
         with mock.patch(
@@ -248,8 +263,8 @@ class TestPlasmodTeardown:
 
         assert open_mock.call_count == 2
         call_args = [call.args for call in open_mock.call_args_list]
-        assert ("/path/to/output/file.csv", "r") in call_args
-        assert ("/path/to/profiles/file.csv", "r") in call_args
+        assert (Path("/path/to/output/out.csv"), "r") in call_args
+        assert (Path("/path/to/output/prof.csv"), "r") in call_args
 
     @pytest.mark.parametrize("i_flag", [2, 0, -1, -2, 100, -100])
     def test_CodesError_if_plasmod_status_flag_ne_1(self, i_flag):
@@ -261,7 +276,11 @@ class TestPlasmodTeardown:
         )
         open_mock = mock.mock_open(read_data=output_sample)
         teardown = Teardown(
-            self.default_pf, "/path/to/output/file.csv", "/path/to/profiles/file.csv"
+            self.default_pf,
+            "file.csv",
+            "file.csv",
+            "/path/to/output/",
+            "/path/to/output/",
         )
 
         with mock.patch("builtins.open", new=open_mock):
@@ -272,7 +291,11 @@ class TestPlasmodTeardown:
     def test_warning_issued_if_output_param_is_missing(self, bm_warn_mock):
         open_mock = mock.mock_open(read_data=self.plasmod_out_sample)
         teardown = Teardown(
-            self.default_pf, "/path/to/output/file.csv", "/path/to/profiles/file.csv"
+            self.default_pf,
+            "file.csv",
+            "file.csv",
+            "/path/to/output/",
+            "/path/to/output/",
         )
 
         with mock.patch("builtins.open", new=open_mock):

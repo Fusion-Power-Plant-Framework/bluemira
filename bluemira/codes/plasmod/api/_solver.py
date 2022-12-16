@@ -114,7 +114,12 @@ class Solver(CodesSolver):
         self.profiles_file = self.build_config.get(
             "profiles_file", self.DEFAULT_PROFILES_FILE
         )
-        self.directory = self.build_config.get("directory", "./")
+        self.run_directory = self.build_config.get(
+            "run_directory", self.build_config.get("directory", "./")
+        )
+        self.read_directory = self.build_config.get(
+            "read_directory", self.build_config.get("directory", "./")
+        )
 
     def execute(self, run_mode: Union[str, RunMode]) -> ParameterFrame:
         """
@@ -137,20 +142,22 @@ class Solver(CodesSolver):
             run_mode = self.run_mode_cls.from_string(run_mode)
 
         self._setup = Setup(
-            self.params, self.problem_settings, Path(self.directory, self.input_file)
+            self.params, self.problem_settings, Path(self.run_directory, self.input_file)
         )
         self._run = Run(
             self.params,
             self.input_file,
             self.output_file,
             self.profiles_file,
-            self.directory,
+            self.run_directory,
             self.binary,
         )
         self._teardown = Teardown(
             self.params,
-            Path(self.directory, self.output_file),
-            Path(self.directory, self.profiles_file),
+            self.output_file,
+            self.profiles_file,
+            self.read_directory,
+            self.run_directory,
         )
         if setup := self._get_execution_method(self._setup, run_mode):
             setup()
@@ -237,5 +244,5 @@ class Solver(CodesSolver):
             return self._teardown.outputs
         except AttributeError as attr_error:
             raise CodesError(
-                "Cannot get outputs before the solver has been executed."
+                "Cannot get outputs before the solver has been run."
             ) from attr_error
