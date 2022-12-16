@@ -89,7 +89,9 @@ def run_example(file_path: str) -> bool:
     return True
 
 
-def run_examples(example_files: List[str], plotting_on=False) -> List[Tuple[str, bool]]:
+def run_examples(
+    example_files: List[str], plotting_on: bool = False
+) -> List[Tuple[str, bool]]:
     """
     Run the given example files.
 
