@@ -32,7 +32,7 @@ from bluemira.codes.interface import CodesTeardown
 from bluemira.codes.plasmod.api._outputs import PlasmodOutputs
 from bluemira.codes.plasmod.constants import NAME as PLASMOD_NAME
 from bluemira.codes.plasmod.mapping import Profiles
-from bluemira.codes.plasmod.params import PlasmodSolverParams, PlasmodSolverProfiles
+from bluemira.codes.plasmod.params import PlasmodSolverParams
 from bluemira.codes.utilities import read_json_file_or_raise
 
 
@@ -56,6 +56,7 @@ class Teardown(CodesTeardown):
     """
 
     params: PlasmodSolverParams
+    MOCK_JSON_NAME = "mockPLASMOD.json"
 
     def __init__(
         self,
@@ -76,16 +77,19 @@ class Teardown(CodesTeardown):
         Load the plasmod results files and update this object's params
         with the read values.
         """
-        self.read()
+        self._get_data(
+            Path(self.run_directory, self.output_file),
+            Path(self.run_directory, self.profiles_file),
+        )
 
     def mock(self):
         """
         Update this object's plasmod params with default values.
         """
-        raise NotImplementedError
-        mock_file_path = os.path.join(self.read_directory, self.MOCK_JSON_NAME)
-        outputs = _read_json_file_or_raise(mock_file_path)
-        self.params.update_values(outputs, source=self._name)
+        scalars = read_json_file_or_raise(
+            Path(self.read_directory, self.MOCK_JSON_NAME), self._name
+        )
+        self.params.update_values(scalars, source=self._name)
 
     def read(self):
         """

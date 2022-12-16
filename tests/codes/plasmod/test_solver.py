@@ -226,9 +226,10 @@ class TestPlasmodTeardown:
 
         teardown.mock()
 
-        assert teardown.params.beta_N.value == default_pf_copy.beta_N.value
-        assert teardown.params.f_bs.value == default_pf_copy.f_bs.value
-        assert teardown.params.l_i.value == default_pf_copy.l_i.value
+        # Read from data/mockPLASMOD.json
+        assert teardown.params.beta_N.value == pytest.approx(3.109, rel=1e-3)
+        assert teardown.params.f_bs.value == pytest.approx(0.369, rel=1e-3)
+        assert teardown.params.l_i.value == pytest.approx(2.423, rel=1e-3)
 
     @pytest.mark.parametrize("run_mode_func", ["run", "read"])
     def test_CodesError_if_output_files_cannot_be_read(self, run_mode_func):
