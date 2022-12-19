@@ -529,15 +529,15 @@ def analyse_plasma_core(eq, n_points=50):
     coords.append(eq.get_LCFS())
     psi_n = np.append(psi_n, 1.0)
     flux_surfaces = [ClosedFluxSurface(coord) for coord in coords]
-    vars = ["major_radius", "minor_radius", "aspect_ratio", "area", "volume"]
-    vars += [
+    _vars = ["major_radius", "minor_radius", "aspect_ratio", "area", "volume"]
+    _vars += [
         f"{v}{end}"
         for end in ["", "_upper", "_lower"]
         for v in ["kappa", "delta", "zeta"]
     ]
     return CoreResults(
         psi_n,
-        *[[getattr(fs, var) for fs in flux_surfaces] for var in vars],
+        *[[getattr(fs, var) for fs in flux_surfaces] for var in _vars],
         [fs.safety_factor(eq) for fs in flux_surfaces],
         [fs.shafranov_shift(eq)[0] for fs in flux_surfaces],
     )

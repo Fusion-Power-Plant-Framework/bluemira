@@ -98,7 +98,7 @@ def regularised_lsq_fom(x, A, b, gamma):
     number_of_targets = np.float(len(residual))
     fom = residual.T @ residual / number_of_targets + gamma * gamma * x.T @ x
 
-    if not fom > 0:
+    if fom <= 0:
         raise bluemira_warn("Least-squares objective function less than zero or nan.")
     return fom, residual
 

@@ -112,10 +112,9 @@ def make_gif(folder, figname, formatt="png", clean=True):
     """
     ims = []
     for filename in os.listdir(folder):
-        if filename.startswith(figname):
-            if filename.endswith(formatt):
-                fp = os.path.join(folder, filename)
-                ims.append(fp)
+        if filename.startswith(figname) and filename.endswith(formatt):
+            fp = os.path.join(folder, filename)
+            ims.append(fp)
     ims = sorted(ims)
     images = [imageio.imread(fp) for fp in ims]
     if clean:
@@ -137,8 +136,6 @@ def save_figure(fig, name, save=False, folder=None, dpi=600, formatt="png", **kw
         if os.path.isfile(name):
             os.remove(name)  # f.savefig will otherwise not overwrite
         fig.savefig(name, dpi=dpi, bbox_inches="tight", format=formatt, **kwargs)
-    else:
-        pass
 
 
 def ring_coding(n):

@@ -262,18 +262,16 @@ class MaterialProperty:
             If any of the requested temperatures are outside of the valid range
         """
         temperatures = list_array(temperature)
-        if self.temp_min is not None:
-            if (temperatures < self.temp_min).any():
-                raise ValueError(
-                    "Material property not valid outside of temperature range: "
-                    f"{temperatures} < T_min = {self.temp_min}"
-                )
-        if self.temp_max is not None:
-            if (temperatures > self.temp_max).any():
-                raise ValueError(
-                    "Material property not valid outside of temperature range: "
-                    f"{temperature} > T_max = {self.temp_max}"
-                )
+        if self.temp_min is not None and (temperatures < self.temp_min).any():
+            raise ValueError(
+                "Material property not valid outside of temperature range: "
+                f"{temperatures} < T_min = {self.temp_min}"
+            )
+        if self.temp_max is not None and (temperatures > self.temp_max).any():
+            raise ValueError(
+                "Material property not valid outside of temperature range: "
+                f"{temperature} > T_max = {self.temp_max}"
+            )
 
 
 class SerialisedMaterial:
@@ -386,7 +384,7 @@ class SerialisedMaterial:
         non_equality: bool
             True if the two materials have different attribute values, else false.
         """
-        return not (self == other)
+        return self != other
 
 
 class Void(SerialisedMaterial, nmm.Material):

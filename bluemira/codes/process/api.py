@@ -180,7 +180,7 @@ def update_obsolete_vars(process_map_name: str) -> Union[str, List[str], None]:
     """
     process_name = _nested_check(process_map_name)
 
-    if process_name is not None and not process_name == process_map_name:
+    if process_name is not None and process_name != process_map_name:
         bluemira_print(
             f"Obsolete {process_map_name} PROCESS mapping name."
             f"The current PROCESS name is {process_name}"

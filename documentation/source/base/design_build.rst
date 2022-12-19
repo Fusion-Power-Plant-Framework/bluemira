@@ -8,29 +8,33 @@ The two main classes are:
 * :py:class:`bluemira.base.designer.Designer`: the Designer base class
 * :py:class:`bluemira.base.builder.Builder`: the Builder base class
 
-A `Designer` carries out component design activities,
+A :py:class:`Designer` carries out component design activities,
 for example evaluating a geometry parameterisation,
 or performing an optimisation.
 It outputs a minimal representation of a component that can be used to generate geometry
 (note that this minimal representation may itself be some, simple, geometry).
 
-A Builder is responsible for generating and manipulating ``bluemira`` geometry objects (CAD),
-to create a Component.
+A :py:class:`Builder` is responsible for generating and manipulating ``bluemira``
+geometry objects (CAD), to create a :py:class:`Component`.
 It will typically perform geometry operations like offsets or sweeps,
 and is not intended to perform any complex calculations.
 
 Designers
 ^^^^^^^^^
 
-`Designers` solve the minimal design problem of a `Component`. The minimal design problem could
-result in, for instance, a geometric wire or some relevant values that allow the `Builder` to build
-the `Component` CAD. A Designer is optional as some `Components` can be completely built with
+:py:class:`Designers` solve the minimal design problem of a :py:class:`Component`.
+The minimal design problem could result in, for instance, a geometric wire
+or some relevant values that allow the :py:class:`Builder` to build
+the :py:class:`Component` CAD.
+A Designer is optional as some components can be completely built with
 user input and calculations from previous component design stages.
-Optimisation problems should be run within a `Designer`.
+Optimisation problems should be run within a :py:class:`Designer`.
 
-A basic `Designer` only requires a `run` method and a `param_cls` attribute to store the
-`ParameterFrame` class reference. Once initialised the `Designer` is run with its `execute` method.
-The below is for illustrative purposes and is overkill, in this instance you would just have a `Builder`.
+A basic :py:class:`Designer` only requires a :py:meth:`run` method and a
+:py:attr:`param_cls` attribute to store the :py:class:`ParameterFrame` class reference.
+Once initialised the :py:class:`Designer` is run with its :py:meth:`execute` method.
+The below is for illustrative purposes and is overkill,
+in this instance you would just have a :py:class:`Builder`.
 
 .. code-block:: python
 
@@ -52,11 +56,12 @@ The below is for illustrative purposes and is overkill, in this instance you wou
             return  self.params.A.value
 
 
-To initialise a `Designer` you need any `ParameterFrame` instance that is a superset of `param_cls`
-and optionally a `build_config` dictionary which contains configuration options for the `Designer`.
-It is possible to execute a `Designer` in different ways depending on requirements or software
-availability. If another method such as `mock` or `read` is defined and `run_mode` is specified in
-the `build_config` the `execute` method will call the specified method.
+To initialise a :py:class:`Designer` you need any :py:class:`ParameterFrame` instance that is a
+superset of :py:attr:`Designer.param_cls` and optionally a `build_config` dictionary which
+contains configuration options for the :py:class:`Designer`.
+It is possible to execute a :py:class:`Designer` in different ways depending on requirements or
+software availability. If another method such as :py:meth:`mock` or :py:meth:`read` is defined
+and `run_mode` is specified in the `build_config` the :py:meth:`execute` method will call the specified method.
 
 .. code-block:: python
 
@@ -78,17 +83,17 @@ the `build_config` the `execute` method will call the specified method.
 Builders
 ^^^^^^^^
 
-The minimal design problem output if required along with user input to the `Builder` is all
-the information needed to build the CAD for the `Component`.
-The `build` method of the `Builder` usually builds the xz, xy and xyz views of a `Component`,
-and build the component tree.
+The minimal design problem output if required along with user input to the :py:class:`Builder` is all
+the information needed to build the CAD for the :py:class:`Component`.
+The :py:meth:`build` method of the :py:class:`Builder` usually builds
+the xz, xy and xyz views of a :py:class:`Component`, and combines them into a component tree.
 Although what the build method does is up to the :ref:`Reactor Designer <how to use>`.
 
-Like a `Designer` a `Builder` requires a `param_cls` attribute and is initialised with a `ParameterFrame`
-instance that is a superset of `param_cls` and optionally the `Designer.execute()` output and a
-`build_config` dictionary.
-The below is an example of a standard `Builder` structure and once initialised the `build` method is
-called to create the `Component`.
+Like a :py:class:`Designer` a :py:class:`Builder` requires a :py:attr:`param_cls` attribute
+and is initialised with a :py:class:`ParameterFrame` instance that is a superset of :py:attr:`param_cls`
+and optionally the :py:meth:`Designer.execute` output and a `build_config` dictionary.
+The below is an example of a standard :py:class:`Builder` structure and once initialised
+the :py:meth:`build` method is called to create the :py:class:`Component`.
 
 .. code-block:: python
 

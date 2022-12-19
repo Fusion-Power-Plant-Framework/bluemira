@@ -100,7 +100,6 @@ class Xpoint(PsiPoint):
     """
 
     __slots__ = ()
-    pass
 
 
 class Opoint(PsiPoint):
@@ -109,7 +108,6 @@ class Opoint(PsiPoint):
     """
 
     __slots__ = ()
-    pass
 
 
 class Lpoint(PsiPoint):
@@ -118,7 +116,6 @@ class Lpoint(PsiPoint):
     """
 
     __slots__ = ()
-    pass
 
 
 def find_local_minima(f):
@@ -893,13 +890,7 @@ def grid_2d_contour(x, z):
         z_new.append(zi)
         if not np.isclose(xi, x[i + 1]) and not np.isclose(zi, z[i + 1]):
             # Add an intermediate point (ccw)
-            if x[i + 1] > xi and z[i + 1] < zi:
-                x_new.append(x[i + 1])
-                z_new.append(zi)
-            elif x[i + 1] > xi and z[i + 1] > zi:
-                x_new.append(xi)
-                z_new.append(z[i + 1])
-            elif x[i + 1] < xi and z[i + 1] > zi:
+            if (x[i + 1] > xi and z[i + 1] < zi) or (x[i + 1] < xi and z[i + 1] > zi):
                 x_new.append(x[i + 1])
                 z_new.append(zi)
             else:

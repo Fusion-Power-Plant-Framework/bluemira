@@ -814,9 +814,8 @@ def _get_ndim(coords):
     count = 0
     length = coords.shape[1]
     for c in coords.xyz:
-        if len(c) == length:
-            if not np.allclose(c, c[0] * np.ones(length)):
-                count += 1
+        if len(c) == length and not np.allclose(c, c[0] * np.ones(length)):
+            count += 1
 
     return max(count, 2)
 
@@ -836,9 +835,7 @@ def _get_plan_dims(array):
         temp = []
         for i, k in enumerate(axes):  # both all equal to something
             c = array[i]
-            if c[0] == 0.0:
-                pass
-            else:
+            if c[0] != 0.0:
                 temp.append(k)
         if len(temp) == 1:
             dims.append(temp[0])

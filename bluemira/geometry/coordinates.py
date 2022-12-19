@@ -64,7 +64,7 @@ def xyz_process(func):
 
 def _validate_coordinates(x, y, z=None):
     if z is None:
-        if not len(x) == len(y):
+        if len(x) != len(y):
             raise CoordinatesError(
                 "All coordinates must have the same length but "
                 f"got len(x) = {len(x)}, len(y) = {len(y)}"
@@ -1050,21 +1050,15 @@ def in_polygon(x, z, poly, include_edges=False):
         if x == x1 and z == z1:
             return include_edges
 
-        if z > min(z0, z1):
-            if z <= max(z0, z1):
-                if x <= max(x0, x1):
-
-                    if z0 != z1:
-                        x_inter = (z - z0) * (x1 - x0) / (z1 - z0) + x0
-                        if x == x_inter:
-                            return include_edges
-                    if x0 == x1 or x <= x_inter:
-
-                        inside = not inside  # Beautiful
-        elif z == min(z0, z1):
-            if z0 == z1:
-                if (x <= max(x0, x1)) and (x >= min(x0, x1)):
+        if z > min(z0, z1) and z <= max(z0, z1) and x <= max(x0, x1):
+            if z0 != z1:
+                x_inter = (z - z0) * (x1 - x0) / (z1 - z0) + x0
+                if x == x_inter:
                     return include_edges
+            if x0 == x1 or x <= x_inter:
+                inside = not inside  # Beautiful
+        elif z == min(z0, z1) and z0 == z1 and (x <= max(x0, x1)) and (x >= min(x0, x1)):
+            return include_edges
 
         x0, z0 = x1, z1
     return inside
@@ -1325,7 +1319,7 @@ class Coordinates:
             axis = self.normal_vector
         else:
             axis = np.array(axis, dtype=float)
-            if not axis.size == 3:
+            if axis.size != 3:
                 raise CoordinatesError("Base vector must be of size 3.")
             axis /= np.linalg.norm(axis)
 
@@ -1574,11 +1568,11 @@ class Coordinates:
             return
 
         base = np.array(base, dtype=float)
-        if not base.size == 3:
+        if base.size != 3:
             raise CoordinatesError("Base vector must be of size 3.")
 
         direction = np.array(direction, dtype=float)
-        if not direction.size == 3:
+        if direction.size != 3:
             raise CoordinatesError("Direction vector must be of size 3.")
         direction /= np.linalg.norm(direction)
 
@@ -1596,7 +1590,7 @@ class Coordinates:
         object.
         """
         vector = np.array(vector)
-        if not vector.size == 3:
+        if vector.size != 3:
             raise CoordinatesError("Translation vector must be of size 3.")
 
         self._array += vector.reshape(3, 1)

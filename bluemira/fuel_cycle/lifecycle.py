@@ -230,8 +230,6 @@ class LifeCycle:
             if phases[i][1].startswith("Phase P"):
                 # TODO: Change to //
                 n_pulse_p.append(int(round(YR_TO_S * phases[i][0] / self.t_flattop, 0)))
-            else:
-                pass
         self.n_pulse_p = n_pulse_p
 
     def get_op_phases(self):

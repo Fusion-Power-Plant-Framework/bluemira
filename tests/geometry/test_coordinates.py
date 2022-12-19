@@ -673,7 +673,7 @@ class TestCoordinatesPlaneIntersect:
                 "y": [-1, -2, -3, -4, -5, -6, -7, -8, -4, -2, 3, 2, 4, 2, 0, -1],
             }
         )
-        coords.translate([-2, 0, 0])
+        coords.translate((-2, 0, 0))
         plane = BluemiraPlane.from_3_points([0, 0, 0], [1, 1, 1], [2, 0, 0])  # x-y-z
         intersect = coords_plane_intersect(coords, plane)
 

@@ -202,9 +202,9 @@ class OffsetOperationManager(PyclipperMixin):
         """
         # Find the first non-zero dimension (low number of iterations)
         for i in range(len(path) - 1):
-            if not path[i][0] == 0:
+            if path[i][0] != 0:
                 return path[i][0] / coordinates.x[i]
-            if not path[i][1] == 0:
+            if path[i][1] != 0:
                 return path[i][1] / coordinates.z[i]
 
 
@@ -295,7 +295,7 @@ def offset_clipper(coordinates: Coordinates, delta, method="square", miter_limit
         tool = MiterOffset(t_coordinates, miter_limit=miter_limit)
     else:
         raise GeometryError(
-            "Please choose an offset method from:\n" " round \n square \n miter"
+            "Please choose an offset method from:\n round \n square \n miter"
         )
 
     result = tool.perform(delta)

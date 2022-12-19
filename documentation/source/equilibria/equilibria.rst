@@ -776,7 +776,7 @@ and for them to carry the same current. In reality, these coils might be in an a
 that allows them to be controlled simultaneously and maintain proportional currents.
 To replicate this setup, a Circuit class treating a pair of up-down symmetric
 coils as one has been developed. We instantiate a Circuit by specifying the position,
-dimensions, and current of a coil in the upper hlaf plane. A *virtual* coil (with the same parameterisation
+dimensions, and current of a coil in the upper half plane. A *virtual* coil (with the same parameterisation
 except mirrored position) is then considered in calculations by the equilibrium solver.
 This second coil is considered identical in every way to the coil in the
 upper half plane except with negative :math:`z` position.

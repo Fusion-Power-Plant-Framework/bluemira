@@ -38,7 +38,7 @@ but other information can be added:
     >>> print(r_0)
     <Parameter(R_0=5000 cm)>
 
-Only the value of the :py:class:`Parameter` can be updated after initialisation.
+Only the value of the :py:class:`Parameter` can be directly updated after initialisation.
 However if you want to change the source the :py:meth:`set_value` method can be used.
 
 .. code-block:: pycon
@@ -50,7 +50,7 @@ However if you want to change the source the :py:meth:`set_value` method can be 
    <Parameter(R_0=20 cm)> New Input
 
 If you want to access the value of the :py:class:`Parameter` in a different unit,
-the :py:meth:`set_value` method can be used.
+the :py:meth:`value_as` method can be used.
 
 .. code-block:: pycon
 

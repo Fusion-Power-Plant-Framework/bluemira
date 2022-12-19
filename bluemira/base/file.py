@@ -57,7 +57,7 @@ def get_bluemira_root() -> str:
     return root
 
 
-def try_get_bluemira_private_data_root() -> str:
+def try_get_bluemira_private_data_root() -> Union[str, None]:
     """
     Get the bluemira-private-data root install folder.
 
@@ -399,7 +399,6 @@ class FileManager:
         path = os.sep.join(
             [self.generated_data_dirs[sub_dir_name], path.replace("/", os.sep)]
         )
-        if make_dir:
-            if not os.path.isdir(path):
-                os.makedirs(path)
+        if make_dir and not os.path.isdir(path):
+            os.makedirs(path)
         return path

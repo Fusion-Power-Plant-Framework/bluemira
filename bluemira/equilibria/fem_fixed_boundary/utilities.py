@@ -363,7 +363,9 @@ def calculate_plasma_shape_params(
         """
         return psi_norm_func(x) - psi_norm
 
-    def find_extremum(func: Callable[[np.ndarray], np.ndarray], x0: float) -> np.ndarray:
+    def find_extremum(
+        func: Callable[[np.ndarray], np.ndarray], x0: Iterable[float]
+    ) -> np.ndarray:
         """
         Extremum finding using constrained optimisation
         """

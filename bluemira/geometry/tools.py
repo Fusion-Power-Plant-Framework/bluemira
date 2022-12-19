@@ -197,7 +197,7 @@ def _make_vertex(point):
     vertex: apiVertex
         Vertex at the point
     """
-    if not len(point) == 3:
+    if len(point) != 3:
         raise GeometryError("Points must be of dimension 3.")
 
     return cadapi.apiVertex(*point)
@@ -1225,16 +1225,15 @@ def serialize_shape(shape: BluemiraGeo):
 
     output = []
     if isinstance(shape, BluemiraGeo):
-        dict = {"label": shape.label, "boundary": output}
+        sdict = {"label": shape.label, "boundary": output}
         for obj in shape.boundary:
             output.append(serialize_shape(obj))
-            if isinstance(shape, GeoMeshable):
-                if shape.mesh_options is not None:
-                    if shape.mesh_options.lcar is not None:
-                        dict["lcar"] = shape.mesh_options.lcar
-                    if shape.mesh_options.physical_group is not None:
-                        dict["physical_group"] = shape.mesh_options.physical_group
-        return {str(type(shape).__name__): dict}
+            if isinstance(shape, GeoMeshable) and shape.mesh_options is not None:
+                if shape.mesh_options.lcar is not None:
+                    sdict["lcar"] = shape.mesh_options.lcar
+                if shape.mesh_options.physical_group is not None:
+                    sdict["physical_group"] = shape.mesh_options.physical_group
+        return {str(type(shape).__name__): sdict}
     elif isinstance(shape, cadapi.apiWire):
         return cadapi.serialize_shape(shape)
     else:
@@ -1259,12 +1258,10 @@ def deserialize_shape(buffer: dict):
     def _extract_mesh_options(shape_dict: dict):
         mesh_options = None
         if "lcar" in shape_dict:
-            if mesh_options is None:
-                mesh_options = meshing.MeshOptions()
+            mesh_options = meshing.MeshOptions()
             mesh_options.lcar = shape_dict["lcar"]
         if "physical_group" in shape_dict:
-            if mesh_options is None:
-                mesh_options = meshing.MeshOptions()
+            mesh_options = mesh_options or meshing.MeshOptions()
             mesh_options.physical_group = shape_dict["physical_group"]
         return mesh_options
 
@@ -1295,8 +1292,8 @@ def deserialize_shape(buffer: dict):
         for supported_types in supported_types:
             if type_ == supported_types.__name__:
                 return _extract_shape(v, BluemiraWire)
-        else:
-            raise NotImplementedError(f"Deserialization non implemented for {type_}")
+
+        raise NotImplementedError(f"Deserialization non implemented for {type_}")
 
 
 # # =============================================================================
