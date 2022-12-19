@@ -243,7 +243,7 @@ def make_reference_coilset(
             j_max=100.0,
         )
         pf_coils.append(coil)
-    return CoilSet(pf_coils + solenoid, control_names=True)
+    return CoilSet(*pf_coils + solenoid, control_names=True)
 
 
 def make_grid(R_0, A, kappa, scale_x=1.6, scale_z=1.7, nx=65, nz=65):
