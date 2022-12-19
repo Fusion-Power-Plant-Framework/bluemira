@@ -49,6 +49,7 @@ from bluemira.equilibria.error import EquilibriaError
 from bluemira.equilibria.opt_constraints import (
     FieldConstraints,
     MagneticConstraintSet,
+    RelativeMagneticConstraint,
     UpdateableConstraint,
 )
 from bluemira.equilibria.positioner import RegionMapper
@@ -280,6 +281,8 @@ class CoilsetOptimisationProblem(OptimisationProblem):
                     constraint.prepare(
                         self.eq, I_not_dI=I_not_dI, fixed_coils=fixed_coils
                     )
+                if isinstance(constraint, RelativeMagneticConstraint):
+                    constraint.update_target(self.eq)
                 if "scale" in constraint._args:
                     constraint._args["scale"] = self.scale
 
