@@ -1256,10 +1256,12 @@ def deserialize_shape(buffer: dict):
     supported_types = [BluemiraWire, BluemiraFace, BluemiraShell]
 
     def _extract_mesh_options(shape_dict: dict):
-        mesh_options = meshing.MeshOptions()
+        mesh_options = None
         if "lcar" in shape_dict:
+            mesh_options = meshing.MeshOptions()
             mesh_options.lcar = shape_dict["lcar"]
         if "physical_group" in shape_dict:
+            mesh_options = mesh_options or meshing.MeshOptions()
             mesh_options.physical_group = shape_dict["physical_group"]
         return mesh_options
 
