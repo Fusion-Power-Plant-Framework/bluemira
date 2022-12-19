@@ -453,13 +453,12 @@ def find_magnetic_axis(psi_func, mesh=None):
 
         x0 = points[psi_max_arg]
         search_range = mesh.hmax()
-        bounds = [(xi - search_range, xi + search_range) for xi in x0]
+        lower_bounds = x0 - search_range
+        upper_bounds = x0 + search_range
     else:
         x0 = np.array([0.1, 0.0])
-        bounds = [(0.0, 20.0), (-2.0, 2.0)]
-
-    lower_bounds = [bounds[0][0], bounds[1][0]]
-    upper_bounds = [bounds[0][1], bounds[1][1]]
+        lower_bounds = np.array([0, -2.0])
+        upper_bounds = np.array([20.0, 2.0])
 
     def maximise_psi(x, grad):
         result = -psi_func(x)
