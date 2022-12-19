@@ -699,8 +699,9 @@ def _loadfromspec(name: str) -> ModuleType:
     mod_file = f"{dirname}/{requested}"
 
     name, ext = requested.rsplit(".", 1) if "." in requested else (requested, "")
-
     if ext not in imp_mach.SOURCE_SUFFIXES:
+        if ext != "" and not ext.startswith("."):
+            ext = f".{ext}"
         n_suffix = True
         imp_mach.SOURCE_SUFFIXES.append(ext)
     else:
@@ -710,8 +711,10 @@ def _loadfromspec(name: str) -> ModuleType:
         spec = imp_u.spec_from_file_location(name, mod_file)
         module = imp_u.module_from_spec(spec)
         spec.loader.exec_module(module)
+    except ModuleNotFoundError as mnfe:
+        raise mnfe
     except (AttributeError, ImportError, SyntaxError):
-        raise ImportError("File '{}' is not a module".format(mod_files[0]))
+        raise ImportError(f"File '{mod_files[0]}' is not a module")
 
     if n_suffix:
         imp_mach.SOURCE_SUFFIXES.pop()

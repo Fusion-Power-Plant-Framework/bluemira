@@ -45,6 +45,7 @@ The documentation is divided into the following sections:
 
    Configuring SSH keys <developer/ssh>
    Logging customisation <developer/logging>
+   Generating ParameterFrames <developer/gen_params>
    Module API Reference <autoapi/index>
    Release Workflow <developer/release_workflow>
    FAQs <developer/faq>
