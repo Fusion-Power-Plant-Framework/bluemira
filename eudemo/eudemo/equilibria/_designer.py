@@ -401,8 +401,6 @@ class FixedEquilibriumDesigner(Designer[Equilibrium]):
         eq.plot(ax=ax)
         plot_2d(geom_parameterisation.create_shape().discretize(), ax=ax)
         plt.show()
-        eq.plot_core()
-        plt.show()
 
         self._update_params_from_eq(eq)
 
@@ -515,7 +513,7 @@ class FixedEquilibriumDesigner(Designer[Equilibrium]):
         eq_targets = ReferenceConstraints(lcfs_shape, 500)
 
         return UnconstrainedTikhonovCurrentGradientCOP(
-            eq.coilset, eq, eq_targets, gamma=1e-12
+            eq.coilset, eq, eq_targets, gamma=1e-10
         )
 
     def _update_params_from_eq(self, eq: Equilibrium):

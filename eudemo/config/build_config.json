@@ -11,7 +11,7 @@
     "Fixed boundary equilibrium":{
         "run_mode": "run",
         "shape_config": {
-            "f_delta_l": 1.35,
+            "f_delta_l": 1.45,
             "f_kappa_l": 1.15,
             "phi_l_neg": 30.0,
             "phi_l_pos": -120.0,
