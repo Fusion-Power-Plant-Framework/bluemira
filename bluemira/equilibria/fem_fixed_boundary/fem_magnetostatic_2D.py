@@ -252,7 +252,13 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
         )
 
         if self._psi_ax is None:
-            self._psi_ax = self.psi(find_magnetic_axis(self.psi, self.mesh))
+            print("\n")
+            print(
+                f"New: {self.psi(find_magnetic_axis_new(self.psi, self.mesh)):.2f} V.s"
+            )
+            print(f"Old: {self.psi(find_magnetic_axis(self.psi, self.mesh)):.2f} V.s")
+            print("\n")
+            self._psi_ax = self.psi(find_magnetic_axis_new(self.psi, self.mesh))
         return self._psi_ax
 
     @property

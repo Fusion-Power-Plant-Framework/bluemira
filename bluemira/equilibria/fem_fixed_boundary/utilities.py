@@ -497,7 +497,12 @@ def find_magnetic_axis_new(psi_func, mesh=None):
     from bluemira.utilities.optimiser import Optimiser, approx_derivative
 
     optimiser = Optimiser(
-        "SLSQP", 2, opt_conditions={"ftol_abs": 1e-14, "max_eval": 1000}
+        "SLSQP",
+        2,
+        opt_conditions={
+            "ftol_abs": 1e-14,
+            "max_eval": 1000,
+        },  # opt_parameters={"initial_step": 1.4901161193847656e-08}
     )
 
     if mesh:
@@ -515,12 +520,14 @@ def find_magnetic_axis_new(psi_func, mesh=None):
     lower_bounds = [bounds[0][0], bounds[1][0]]
     upper_bounds = [bounds[0][1], bounds[1][1]]
 
-    def maximise_psi(x, grad, args=(psi_func,)):
-        psi_func = args[0]
+    def maximise_psi(x, grad):
         result = psi_func(x)
         if grad.size > 0:
-            approx_derivative(
-                psi_func, x0=x, f0=result, bounds=[lower_bounds, upper_bounds]
+            grad[:] = approx_derivative(
+                psi_func,
+                x,
+                f0=result,
+                bounds=[lower_bounds, upper_bounds],
             )
 
         return result
