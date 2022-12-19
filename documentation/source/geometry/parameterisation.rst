@@ -49,7 +49,7 @@ SextupleArc
     from bluemira.geometry.parameterisations import SextupleArc
     SextupleArc().plot(labels=True)
 
-The Sextuple are has the basic customisations as shown above along with the arc radius'
+The Sextuple are has the basic customisations as shown above along with the arc radii
 (r1 - r5) and the arc angles (a1-a5).
 
 Polyspline

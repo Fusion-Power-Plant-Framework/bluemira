@@ -1,15 +1,14 @@
 Welcome to bluemira's documentation!
 =====================================
 
-.. figure:: bluemira_intro_mosaic.png
-   :name: bluemira intro mosaic
-
 The documentation is divided into the following sections:
 
 *  :ref:`getting-started`, where you can learn more about the code and how to install it
 *  :ref:`bluemira-modules`, where you can learn more about the individual modules
 *  :ref:`dev-docs`, where you can find the API reference, and more developer-focused documentation
 
+.. figure:: bluemira_intro_mosaic.png
+   :name: bluemira intro mosaic
 
 .. toctree::
    :maxdepth: 1

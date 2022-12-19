@@ -19,7 +19,7 @@ The meshing module of bluemira implements the following main classes:
 
 Meshable objects
 ----------------
-All objects that inherit from Meshable are provided by a mesh_options dictionary
+All objects that inherit from :py:class:`Meshable` are provided by a mesh_options dictionary
 in which the following properties can be specified:
 
 * lcar: characteristic mesh length size associated to the vertexes of the geometric
@@ -30,7 +30,7 @@ in which the following properties can be specified:
 
 Geometry definition and Mesh assignment
 ---------------------------------------
-All BluemiraGeo objects inherit from Meshable. After creating a geo object,
+All :py:class:`BluemiraGeo` objects inherit from :py:class:`Meshable`. After creating a geo object,
 `mesh_options` must to be specified (no default values are used). Easiest way is to
 use a simple dictionary with `lcar` and `physical_group` keys.
 

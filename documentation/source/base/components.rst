@@ -1,17 +1,17 @@
 Components
 ==========
 
-`Components` are the fundamental building blocks of a bluemira design.
-A `Component` is a physical object or a group of physical objects, organised in a tree structure.
-A user may want access to some properties associated with a `Component` that are related
+:py:class:`Components` are the fundamental building blocks of a bluemira design.
+A :py:class:`Component` is a physical object or a group of physical objects, organised in a tree structure.
+A user may want access to some properties associated with a :py:class:`Component` that are related
 but not directly connected to the physical object.
-For this reason we have `ComponentManagers` which can provide helper functions for common operations or
-have extra information stored such as the equilibira in a plasma `ComponentManager`.
+For this reason we have :py:class:`ComponentManagers` which can provide helper functions for common operations or
+have extra information stored such as the equilibira in a plasma :py:class:`ComponentManager`.
 
 The Component class
 -------------------
 
-Various types of `Component` classes are defined that can be used to represent different parts of a design:
+Two types of :py:class:`Component` classes are defined that can be used to represent different parts of a design:
 
 - :py:class:`bluemira.base.components.Component` is the base class and defines the
   framework on which other components can be defined within bluemira.
@@ -23,7 +23,7 @@ Various types of `Component` classes are defined that can be used to represent d
   As implementations of :py:class:`bluemira.base.components.PhysicalComponent` correspond to a physical object,
   instances of that class can be defined with a shape and a material.
 
-A `Component` can be used as shown below:
+A :py:class:`Component` can be used as shown below:
 
 .. code-block:: pycon
 
@@ -44,8 +44,8 @@ A `Component` can be used as shown below:
 ComponentManagers
 -----------------
 
-`ComponentManagers` are designed to be created by the Reactor Designer.
-The aim is to make it easier to access logically associated properties of a `Component` that may not be directly connected to the physical object.
+:py:class:`ComponentManagers` are designed to be created by the :ref:`Reactor Designer <how to use>`.
+The aim is to make it easier to access logically associated properties of a :py:class:`Component` that may not be directly connected to the physical object.
 It also can contain helper methods to ease access of specific sections of geometry,
 for instance the separatrix of a plasma.
 
@@ -63,4 +63,4 @@ for instance the separatrix of a plasma.
                 .shape.boundary[0]
             )
 
-A `ComponentManager` should be how a `Component` is used after creation within the top level of the reactor design.
+A :py:class:`ComponentManager` should be how a :py:class:`Component` is used after creation within the top level of the reactor design.
