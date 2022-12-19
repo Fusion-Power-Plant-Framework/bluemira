@@ -474,7 +474,72 @@ def find_magnetic_axis(psi_func, mesh=None):
 
     optimiser.set_objective_function(maximise_psi)
 
+    return np.array(result.x, dtype=float)
+
+
+def find_magnetic_axis_new(psi_func, mesh=None):
+    """
+    Find the magnetic axis in the poloidal flux map.
+
+    Parameters
+    ----------
+    psi_func: Callable[[np.ndarray], float]
+        Function to return psi at a given point
+    mesh: Optional[dolfin.Mesh]
+        Mesh object to use to estimate magnetic axis prior to optimisation
+        If None, a reasonable guess is made.
+
+    Returns
+    -------
+    mag_axis: np.ndarray
+        Position vector (2) of the magnetic axis [m]
+    """
+    from bluemira.utilities.optimiser import Optimiser, approx_derivative
+
+    optimiser = Optimiser(
+        "SLSQP", 2, opt_conditions={"ftol_abs": 1e-14, "max_eval": 1000}
+    )
+
+    if mesh:
+        points = mesh.coordinates()
+        psi_array = [psi_func(x) for x in points]
+        psi_max_arg = np.argmax(psi_array)
+
+        x0 = points[psi_max_arg]
+        search_range = mesh.hmax()
+        bounds = [(xi - search_range, xi + search_range) for xi in x0]
+    else:
+        x0 = np.array([0.1, 0.0])
+        bounds = [(0.0, 20.0), (-2.0, 2.0)]
+
+    lower_bounds = [bounds[0][0], bounds[1][0]]
+    upper_bounds = [bounds[0][1], bounds[1][1]]
+
+    def maximise_psi(x, grad, args=(psi_func,)):
+        psi_func = args[0]
+        result = psi_func(x)
+        if grad.size > 0:
+            approx_derivative(
+                psi_func, x0=x, f0=result, bounds=[lower_bounds, upper_bounds]
+            )
+
+        return result
+
+    optimiser.set_objective_function(maximise_psi)
+
     optimiser.set_lower_bounds(lower_bounds)
     optimiser.set_upper_bounds(upper_bounds)
     x_star = optimiser.optimise(x0)
     return np.array(x_star, dtype=float)
+
+    result = scipy.optimize.minimize(
+        lambda x: -psi_func(x),
+        x0,
+        method="SLSQP",
+        bounds=bounds,
+        options={"disp": False, "ftol": 1e-14, "maxiter": 1000},
+    )
+    if not result.success:
+        bluemira_warn("Poloidal flux maximum finding failing:\n" f"{result.message}")
+
+    return np.array(result.x, dtype=float)

@@ -247,6 +247,10 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
     @property
     def psi_ax(self) -> float:
         """Poloidal flux on the magnetic axis"""
+        from bluemira.equilibria.fem_fixed_boundary.utilities import (
+            find_magnetic_axis_new,
+        )
+
         if self._psi_ax is None:
             self._psi_ax = self.psi(find_magnetic_axis(self.psi, self.mesh))
         return self._psi_ax
