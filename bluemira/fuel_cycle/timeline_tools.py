@@ -154,9 +154,6 @@ class LearningStrategy(abc.ABC):
     availability over different operational phases.
     """
 
-    def __init__(self):
-        pass
-
     @abc.abstractmethod
     def generate_phase_availabilities(self, lifetime_op_availability, op_durations):
         """
@@ -326,9 +323,6 @@ class OperationalAvailabilityStrategy(abc.ABC):
     Abstract base class for operational availability strategies to generate
     distributions of unplanned outages.
     """
-
-    def __init__(self, *args):
-        pass
 
     @abc.abstractmethod
     def generate_distribution(self, n, integral):

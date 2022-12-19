@@ -272,7 +272,7 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
         self,
         pprime: Union[Callable[[np.ndarray], np.ndarray], float],
         ffprime: Union[Callable[[np.ndarray], np.ndarray], float],
-        curr_target: Optional[float],
+        curr_target: Optional[float] = None,
     ) -> Callable[[np.ndarray], float]:
         """
         Return the density current function given pprime and ffprime.
@@ -283,7 +283,7 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
             pprime as function of psi_norm (1-D function)
         ffprime: Union[callable, float]
             ffprime as function of psi_norm (1-D function)
-        curr_target: float
+        curr_target: Optional[float]
             Target current (also used to initialize the solution in case self.psi is
             still 0 and pprime and ffprime are, then, not defined) [A]
 

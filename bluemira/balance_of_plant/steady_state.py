@@ -44,9 +44,6 @@ class CoolantPumping(abc.ABC):
     Pumping power strategy abstract base class
     """
 
-    def __init__(self, *args, **kwargs):
-        pass
-
     @abc.abstractmethod
     def pump(self, power):
         """
@@ -142,9 +139,6 @@ class PowerCycleEfficiencyCalc(abc.ABC):
     Power cycle efficiency calculation abstract base class
     """
 
-    def __init__(self, *args, **kwargs):
-        pass
-
     @abc.abstractmethod
     def calculate(self, *args) -> float:
         """
@@ -204,9 +198,6 @@ class FractionSplitStrategy(abc.ABC):
     """
     Strategy ABC for splitting flows according to fractions.
     """
-
-    def __init__(self, *args, **kwargs):
-        pass
 
     @abc.abstractmethod
     def split(self, *args):
@@ -372,9 +363,6 @@ class ParasiticLoadStrategy(abc.ABC):
     """
     Strategy for calculating the parasitic loads
     """
-
-    def __init__(self, *args, **kwargs):
-        pass
 
     @abc.abstractmethod
     def calculate(*args, **kwargs):

@@ -486,12 +486,11 @@ def primitive_bzc(r_pc, r_j, z_k, phi_pc, theta):
     result = 0
     if bf1_singularities:
         # Treat BF1(-z_k)
-        if phi_pc == 0:
-            if theta != np.pi and theta != 2 * np.pi:
-                # At pi and 2 * pi the BF1 integral is 0
-                # Elsewhere:
-                # result += 0 (the first part of BF1 is 0)
-                result -= integrate(bf1_zk_integrand, args, -theta, np.pi - theta)
+        if phi_pc == 0 and theta != np.pi and theta != 2 * np.pi:
+            # At pi and 2 * pi the BF1 integral is 0
+            # Elsewhere:
+            # result += 0 (the first part of BF1 is 0)
+            result -= integrate(bf1_zk_integrand, args, -theta, np.pi - theta)
 
         if phi_pc == theta:
             # result += 0 (the first part of BF1 is 0)

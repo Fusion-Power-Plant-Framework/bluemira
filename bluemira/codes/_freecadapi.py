@@ -27,8 +27,6 @@ from __future__ import annotations
 
 import math
 from copy import deepcopy
-
-# import typing
 from typing import Dict, Iterable, List, Optional, Tuple, Union
 
 import freecad  # noqa: F401
@@ -45,16 +43,12 @@ import FreeCADGui
 import numpy as np
 import Part
 from FreeCAD import Base
-
-# import visualisation
 from pivy import coin, quarter
 from PySide2.QtWidgets import QApplication
 
 from bluemira.base.constants import EPS
 from bluemira.base.file import force_file_extension
 from bluemira.base.look_and_feel import bluemira_warn
-
-# import errors and warnings
 from bluemira.codes.error import FreeCADError, InvalidCADInputsError
 from bluemira.geometry.constants import MINIMUM_LENGTH
 
@@ -1553,7 +1547,7 @@ def _shapes_are_coaxis(shapes):
     axis = shapes[0].findPlane().Axis
     for shape in shapes[1:]:
         other_axis = shape.findPlane().Axis
-        if not axis == other_axis:
+        if axis != other_axis:
             return False
     return True
 
@@ -1565,7 +1559,7 @@ def _make_shapes_coaxis(shapes):
     axis = shapes[0].findPlane().Axis
     for shape in shapes[1:]:
         other_axis = shape.findPlane().Axis
-        if not axis == other_axis:
+        if axis != other_axis:
             shape.reverse()
 
 
@@ -1629,7 +1623,7 @@ def make_placement_from_matrix(matrix):
         [cos_31, cos_32, cos_33, dz]
         [     0,      0,      0,  1]
     """
-    if not matrix.shape == (4, 4):
+    if matrix.shape != (4, 4):
         raise FreeCADError(f"Matrix must be of shape (4, 4), not: {matrix.shape}")
 
     for i in range(3):
@@ -2090,9 +2084,8 @@ def _convert_edge_to_curve(edge):
         # output.interpolate(p)
     elif isinstance(curve, Part.OffsetCurve):
         c = curve.toNurbs()
-        if isinstance(c, Part.BSplineCurve):
-            if edge.Orientation == "Reversed":
-                c.reverse()
+        if isinstance(c, Part.BSplineCurve) and edge.Orientation == "Reversed":
+            c.reverse()
         output = _convert_edge_to_curve(Part.Edge(c))
     else:
         bluemira_warn("Conversion of {} is still not supported!".format(type(curve)))

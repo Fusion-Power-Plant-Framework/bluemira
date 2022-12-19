@@ -344,9 +344,7 @@ class Element:
             p = self._properties
             k = local_k(p["EA"], p["EIyy"], p["EIzz"], self.length, p["GJ"])
 
-            if not (p["ry"] / self.length <= SD_LIMIT) or (
-                p["rz"] / self.length < SD_LIMIT
-            ):
+            if (p["ry"] / self.length > SD_LIMIT) or (p["rz"] / self.length < SD_LIMIT):
                 bluemira_warn(
                     "Thick cross-section detected. Slender beam approximation being used, so be careful."
                 )

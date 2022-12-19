@@ -53,11 +53,11 @@ def serialize_component(comp: Component):
 
     output = []
     if isinstance(comp, Component):
-        dict = {"label": comp.name, "children": output}
+        cdict = {"label": comp.name, "children": output}
         for child in comp.children:
             output.append(serialize_component(child))
         if isinstance(comp, PhysicalComponent):
-            dict["shape"] = serialize_shape(comp.shape)
-        return {str(type(comp).__name__): dict}
+            cdict["shape"] = serialize_shape(comp.shape)
+        return {str(type(comp).__name__): cdict}
     else:
         raise NotImplementedError(f"Serialization non implemented for {type_}")

@@ -422,8 +422,6 @@ class Mesh:
                     # fragment points_tag and curves
                     all_ent = dict_gmsh["points_tag"] + dict_gmsh["curve_tag"]
                     self.__apply_fragment(buffer, all_ent, [], False, False)
-                else:
-                    pass
             else:
                 raise NotImplementedError(f"Serialization non implemented for {type_}")
 
@@ -460,8 +458,6 @@ class Mesh:
                         gmsh.model.occ.addPlaneSurface(value["gmsh"]["curveloop_tag"])
                     ]
                     gmsh.model.occ.synchronize()
-                else:
-                    pass
 
     def __convert_shell_to_gmsh(self, buffer, dim):
         """
@@ -484,8 +480,6 @@ class Mesh:
                 elif dim == 2:
                     for item in boundary:
                         self.__convert_face_to_gmsh(item, dim)
-                else:
-                    pass
 
     def __convert_compound_to_gmsh(self, buffer, dim):
         """
@@ -508,8 +502,6 @@ class Mesh:
                 elif dim == 2:
                     for item in boundary:
                         self.__convert_item_to_gmsh(item, dim)
-                else:
-                    pass
 
     def get_gmsh_dict(self, buffer, format="default"):
         """

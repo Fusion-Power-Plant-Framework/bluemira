@@ -118,7 +118,7 @@ def regularised_lsq_objective(vector, grad, scale, a_mat, b_vec, gamma):
         jac -= 2 * a_mat.T @ b_vec / float(len(b_vec))
         jac += 2 * gamma * gamma * vector
         grad[:] = scale * jac
-    if not fom > 0:
+    if fom <= 0:
         raise EquilibriaError(
             "Optimiser least-squares objective function less than zero or nan."
         )
@@ -215,6 +215,6 @@ def regularised_lsq_fom(x, a_mat, b_vec, gamma):
     number_of_targets = float(len(residual))
     fom = residual.T @ residual / number_of_targets + gamma * gamma * x.T @ x
 
-    if not fom > 0:
+    if fom <= 0:
         raise EquilibriaError("Least-squares objective function less than zero or nan.")
     return fom, residual
