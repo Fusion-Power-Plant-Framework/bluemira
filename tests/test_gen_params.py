@@ -53,8 +53,8 @@ def test_add_to_dict():
             "value": "float",
             "unit": "str",
             "source": "str",
-            "description": "str",
-            "long_name": "str",
+            "description": "",
+            "long_name": "",
         }
     }
     assert params_d == {"A": Parameter[float]}
@@ -65,7 +65,7 @@ def test_create_parameterframe():
     params_d = {"A": Parameter[float]}
     outstr = (
         "from dataclasses import dataclass\n\n"
-        "from bluemira.base.parameterframe import Parameter, ParameterFrame\n\n"
+        "from bluemira.base.parameterframe import Parameter, ParameterFrame\n\n\n"
     )
     dclassstr = "@dataclass\nclass {}Params(ParameterFrame):\n    A: Parameter[float]\n"
     assert create_parameterframe(params_d) == outstr + dclassstr.format("Reactor")
