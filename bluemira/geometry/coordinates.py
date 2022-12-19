@@ -63,11 +63,12 @@ def xyz_process(func):
 
 
 def _validate_coordinates(x, y, z=None):
-    if z is None and len(x) != len(y):
-        raise CoordinatesError(
-            "All coordinates must have the same length but "
-            f"got len(x) = {len(x)}, len(y) = {len(y)}"
-        )
+    if z is None:
+        if len(x) != len(y):
+            raise CoordinatesError(
+                "All coordinates must have the same length but "
+                f"got len(x) = {len(x)}, len(y) = {len(y)}"
+            )
     else:
         if not len(x) == len(y) == len(z):
             raise CoordinatesError(
