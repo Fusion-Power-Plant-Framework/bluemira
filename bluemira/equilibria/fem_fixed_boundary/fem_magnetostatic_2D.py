@@ -255,14 +255,20 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
         )
 
         if self._psi_ax is None:
-            self._psi_ax = self.psi(find_magnetic_axis(self.psi, self.mesh))
+            print("\n")
+            print(
+                f"New: {self.psi(find_magnetic_axis_new(self.psi, self.mesh)):.2f} V.s"
+            )
+            print(f"Old: {self.psi(find_magnetic_axis(self.psi, self.mesh)):.2f} V.s")
+            print("\n")
+            self._psi_ax = self.psi(find_magnetic_axis_new(self.psi, self.mesh))
         return self._psi_ax
 
     @property
     def psi_b(self) -> float:
         """Poloidal flux on the boundary"""
         if self._psi_b is None:
-            self._psi_b = np.min(self.psi.vector()[:])
+            self._psi_b = 0.0
         return self._psi_b
 
     @property
