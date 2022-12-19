@@ -494,15 +494,8 @@ def find_magnetic_axis_new(psi_func, mesh=None):
     mag_axis: np.ndarray
         Position vector (2) of the magnetic axis [m]
     """
-    from bluemira.utilities.optimiser import Optimiser, approx_derivative
-
     optimiser = Optimiser(
-        "SLSQP",
-        2,
-        opt_conditions={
-            "ftol_abs": 1e-14,
-            "max_eval": 1000,
-        },  # opt_parameters={"initial_step": 1.4901161193847656e-08}
+        "SLSQP", 2, opt_conditions={"ftol_abs": 1e-6, "max_eval": 1000}
     )
 
     if mesh:
@@ -538,15 +531,3 @@ def find_magnetic_axis_new(psi_func, mesh=None):
     optimiser.set_upper_bounds(upper_bounds)
     x_star = optimiser.optimise(x0)
     return np.array(x_star, dtype=float)
-
-    result = scipy.optimize.minimize(
-        lambda x: -psi_func(x),
-        x0,
-        method="SLSQP",
-        bounds=bounds,
-        options={"disp": False, "ftol": 1e-14, "maxiter": 1000},
-    )
-    if not result.success:
-        bluemira_warn("Poloidal flux maximum finding failing:\n" f"{result.message}")
-
-    return np.array(result.x, dtype=float)
