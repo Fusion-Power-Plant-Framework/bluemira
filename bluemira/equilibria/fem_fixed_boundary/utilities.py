@@ -521,10 +521,10 @@ def find_magnetic_axis_new(psi_func, mesh=None):
     upper_bounds = [bounds[0][1], bounds[1][1]]
 
     def maximise_psi(x, grad):
-        result = psi_func(x)
+        result = -psi_func(x)
         if grad.size > 0:
             grad[:] = approx_derivative(
-                psi_func,
+                lambda x: -psi_func(x),
                 x,
                 f0=result,
                 bounds=[lower_bounds, upper_bounds],
