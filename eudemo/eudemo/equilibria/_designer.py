@@ -392,6 +392,18 @@ class FixedEquilibriumDesigner(Designer[Equilibrium]):
             **settings,
         )
         iterator_program()
+        import matplotlib.pyplot as plt
+
+        from bluemira.display import plot_2d
+
+        f, ax = plt.subplots()
+
+        eq.plot(ax=ax)
+        plot_2d(geom_parameterisation.create_shape().discretize(), ax=ax)
+        plt.show()
+        eq.plot_core()
+        plt.show()
+
         self._update_params_from_eq(eq)
 
         return (geom_parameterisation, transport_solver, fem_fixed_be_solver, eq)
@@ -500,7 +512,7 @@ class FixedEquilibriumDesigner(Designer[Equilibrium]):
         Create the `UnconstrainedTikhonovCurrentGradientCOP` optimisation problem.
         """
 
-        eq_targets = ReferenceConstraints(lcfs_shape, 200)
+        eq_targets = ReferenceConstraints(lcfs_shape, 500)
 
         return UnconstrainedTikhonovCurrentGradientCOP(
             eq.coilset, eq, eq_targets, gamma=1e-12
