@@ -53,9 +53,8 @@ def def_param() -> Dict:
     """
     dp = deepcopy(ParamDictT.__annotations__)
     del dp["name"]
-    for k in dp:
-        if k != "value":
-            dp[k] = "str"
+    dp["description"] = dp["long_name"] = ""
+    dp["unit"] = dp["source"] = "str"
     return dp
 
 
@@ -92,7 +91,7 @@ def create_parameterframe(
     param_cls = (
         (
             "from dataclasses import dataclass\n\n"
-            "from bluemira.base.parameterframe import Parameter, ParameterFrame\n\n"
+            "from bluemira.base.parameterframe import Parameter, ParameterFrame\n\n\n"
         )
         if header
         else ""
@@ -179,7 +178,7 @@ def find_modules(path: str) -> Set:
     if not os.path.commonprefix(list(modules)):
         bluemira_warn(
             "Not all modules come from the same package."
-            " Is you module path one level too deep?"
+            " Is your module path one level too deep?"
         )
 
     return modules

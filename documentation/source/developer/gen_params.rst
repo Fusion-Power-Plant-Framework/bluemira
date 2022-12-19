@@ -1,5 +1,5 @@
-Generating ParameterFrames
---------------------------
+Generating ParameterFrames and Parameter Files
+----------------------------------------------
 
 You can generate a py:class:ParameterFrame or set of py:class:ParameterFrames
 from a reactor design.
