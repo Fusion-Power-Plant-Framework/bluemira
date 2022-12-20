@@ -335,12 +335,24 @@ def solve_transport_fixed_boundary(
 
         gs_solver.solve(plot=plot)
 
+        from bluemira.equilibria.fem_fixed_boundary.utilities import (
+            calculate_plasma_shape_params_new,
+        )
+
         _, kappa_95, delta_95 = calculate_plasma_shape_params(
             gs_solver.psi_norm_2d,
             mesh,
             np.sqrt(0.95),
         )
-
+        print("\n")
+        print(f"Old: {kappa_95=}, {delta_95=}")
+        _, kappa_95, delta_95 = calculate_plasma_shape_params_new(
+            gs_solver.psi_norm_2d,
+            mesh,
+            np.sqrt(0.95),
+        )
+        print(f"New: {kappa_95=}, {delta_95=}")
+        print("\n")
         iter_err = _update_delta_kappa(
             paramet_params,
             kappa_95,
