@@ -126,8 +126,6 @@ class FemMagnetostatic2d:
         # initialize solution
         self.psi = dolfin.Function(self.V)
         self.psi.set_allow_extrapolation(True)
-        self._psi_ax = None
-        self._psi_b = None
 
     def define_g(self, g: Union[dolfin.Expression, dolfin.Function]):
         """
@@ -190,9 +188,8 @@ class FemMagnetostatic2d:
             solver_parameters={"linear_solver": "default"},
         )
 
-        # Reset cached psi-axis and psi-boundary property
-        self._psi_ax = None
-        self._psi_b = None
+        # self._psi_ax = None
+        # self._psi_b = None
         return self.psi
 
     def calculate_b(self) -> dolfin.Function:
@@ -246,6 +243,8 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
         self.max_iter = max_iter
         self.relaxation = relaxation
         self.k = 1
+        self._psi_ax = None
+        self._psi_b = None
 
     @property
     def psi_ax(self) -> float:
@@ -267,6 +266,13 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
         return lambda x: np.sqrt(
             np.abs((self.psi(x) - self.psi_ax) / (self.psi_b - self.psi_ax))
         )
+
+    def set_mesh(
+        self, mesh: Union[dolfin.Mesh, str], boundaries: Union[dolfin.Mesh, str] = None
+    ):
+        super().set_mesh(mesh=mesh, boundaries=boundaries)
+        self._psi_ax = None
+        self._psi_b = None
 
     def _create_g_func(
         self,
@@ -411,6 +417,9 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
 
         super().solve(dirichlet_bc_function, dirichlet_marker, neumann_bc_function)
         self._update_curr()
+        # Reset cached psi-axis and psi-boundary property
+        self._psi_b = None
+        self._psi_ax = None
 
         for i in range(1, self.max_iter + 1):
             prev_psi = self.psi.vector()[:]
@@ -420,6 +429,9 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
                 self._plot_current_iteration(i, points, prev)
 
             super().solve(dirichlet_bc_function, dirichlet_marker, neumann_bc_function)
+            # Reset cached psi-axis and psi-boundary property
+            self._psi_b = None
+            self._psi_ax = None
 
             new = np.array([self.psi_norm_2d(p) for p in points])
             diff = new - prev
