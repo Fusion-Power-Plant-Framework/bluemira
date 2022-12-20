@@ -447,6 +447,24 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
             new = np.array([self.psi_norm_2d(p) for p in points])
             diff = new - prev
 
+            from bluemira.equilibria.fem_fixed_boundary.utilities import (
+                find_flux_surface,
+                find_flux_surface_new,
+            )
+
+            fs = find_flux_surface(self.psi_norm_2d, np.sqrt(0.95), mesh=self.mesh)
+            fs_new = find_flux_surface_new(
+                self.psi_norm_2d, np.sqrt(0.95), mesh=self.mesh
+            )
+            f, ax = plt.subplots()
+            ax.plot(*fs, label="old")
+            ax.plot(*fs_new, label="new", ls="--")
+
+            dolfin.plot(self.mesh)
+            ax.set_aspect("equal")
+            ax.legend()
+            plt.show()
+
             if plot:
                 self._plot_array(points, diff, f"G-S error at iteration {i}")
                 plt.show()
