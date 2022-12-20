@@ -416,7 +416,7 @@ def calculate_plasma_shape_params_new(
     po = contour[ind_x_max]
     pi = contour[ind_x_min]
 
-    search_range = 1.1 * mesh.hmax()
+    search_range = mesh.hmax()
 
     def find_extremum(
         func: Callable[[np.ndarray], np.ndarray], x0: Iterable[float]
@@ -446,27 +446,8 @@ def calculate_plasma_shape_params_new(
             constraint_type="equality",
         )
 
-        optimiser.add_eq_constraints(f_constraint, tolerance=1e-10)
-        result = optimiser.optimise(x0)
-        optimiser = Optimiser(
-            "SLSQP", 2, opt_conditions={"ftol_abs": 1e-10, "max_eval": 1000}
-        )
-        optimiser.set_objective_function(func)
-        optimiser.set_lower_bounds(lower_bounds)
-        optimiser.set_upper_bounds(upper_bounds)
-
-        f_constraint = OptimisationConstraint(
-            _f_constrain_psi_norm,
-            f_constraint_args={
-                "psi_norm_func": f_psi_norm,
-                "lower_bounds": lower_bounds,
-                "upper_bounds": upper_bounds,
-            },
-            constraint_type="equality",
-        )
-
-        optimiser.add_eq_constraints(f_constraint, tolerance=1e-12)
-        return optimiser.optimise(result)
+        optimiser.add_eq_constraints(f_constraint, tolerance=psi_norm_tolerance)
+        return optimiser.optimise(x0)
 
     pi_opt = find_extremum(_f_min_radius, pi)
     pl_opt = find_extremum(_f_min_vert, pl)
