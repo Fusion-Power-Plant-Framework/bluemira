@@ -266,94 +266,22 @@ def find_flux_surface(psi_norm_func, psi_norm, mesh=None, n_points=100):
         contour = get_tricontours(
             mpoints[:, 0], mpoints[:, 1], psi_norm_array, psi_norm
         )[0]
-        d_guess = abs(np.max(contour[0, :]) - x_axis) - search_range
-        bounds = [(d_guess - 2 * search_range, d_guess + 2 * search_range)]
+        d_guess = np.array([abs(np.max(contour[0, :]) - x_axis) - search_range])
 
-        def get_next_guess(points, distances, i):  # noqa: U100
-            return np.hypot(points[0, i - 1] - x_axis, points[1, i - 1] - z_axis)
+        def lower_bound(x):
+            return max(0.1, x - search_range)
 
-    else:
-        d_guess = 0.5
-        bounds = [(0.1, None)]
-
-        def get_next_guess(points, distances, i):  # noqa: U100
-            return distances[i]
-
-    def psi_norm_match(x):
-        return abs(psi_norm_func(x) - psi_norm)
-
-    def theta_line(d, theta_i):
-        return float(x_axis + d * np.cos(theta_i)), float(z_axis + d * np.sin(theta_i))
-
-    def psi_line_match(d, *args):
-        return psi_norm_match(theta_line(d, args[0]))
-
-    theta = np.linspace(0, 2 * np.pi, n_points - 1, endpoint=False, dtype=float)
-    points = np.zeros((2, n_points), dtype=float)
-    distances = np.zeros(n_points)
-    for i in range(len(theta)):
-        result = scipy.optimize.minimize(
-            psi_line_match,
-            x0=d_guess,
-            args=(theta[i]),
-            bounds=bounds,
-            method="SLSQP",
-            options={"disp": False, "ftol": 1e-14, "maxiter": 1000},
-        )
-        points[:, i] = theta_line(result.x, theta[i])
-        distances[i] = result.x
-        d_guess = get_next_guess(points, distances, i)
-
-    points[:, -1] = points[:, 0]
-
-    return points
-
-
-def find_flux_surface_new(psi_norm_func, psi_norm, mesh=None, n_points=100):
-    """
-    Find a flux surface in the psi_norm function precisely by normalised psi value.
-
-    Parameters
-    ----------
-    psi_norm_func: Callable[[np.ndarray], float]
-        Function to calculate normalised psi
-    mesh: dolfin.Mesh
-        Mesh object to use to estimate extrema prior to optimisation
-    psi_norm: float
-        Normalised psi value for which to find the flux surface
-    mesh: Optional[dolfin.Mesh]
-        Mesh object to use to estimate the flux surface
-        If None, reasonable guesses are used.
-    n_points: int
-        Number of points along the flux surface
-
-    Returns
-    -------
-    points: np.ndarray
-        x, z coordinates of the flux surface
-    """
-    x_axis, z_axis = find_magnetic_axis(lambda x: -psi_norm_func(x), mesh=mesh)
-
-    if mesh:
-        search_range = mesh.hmax()
-        mpoints = mesh.coordinates()
-        psi_norm_array = [psi_norm_func(x) for x in mpoints]
-        contour = get_tricontours(
-            mpoints[:, 0], mpoints[:, 1], psi_norm_array, psi_norm
-        )[0]
-        d_guess = abs(np.max(contour[0, :]) - x_axis) - search_range
-        bounds = [(d_guess - 2 * search_range, d_guess + 2 * search_range)]
-
-        def get_next_guess(points, distances, i):  # noqa: U100
-
-            return np.hypot(points[0, i - 1] - x_axis, points[1, i - 1] - z_axis)
+        def upper_bound(x):
+            return x + search_range
 
     else:
-        d_guess = 0.5
-        bounds = [(0.1, np.inf)]
+        d_guess = np.array([0.5])
 
-        def get_next_guess(points, distances, i):  # noqa: U100
-            return distances[i]
+        def lower_bound(x):
+            return 0.1
+
+        def upper_bound(x):
+            return np.inf
 
     def psi_norm_match(x):
         return abs(psi_norm_func(x) - psi_norm)
@@ -365,7 +293,10 @@ def find_flux_surface_new(psi_norm_func, psi_norm, mesh=None, n_points=100):
         result = psi_norm_match(theta_line(d, theta))
         if grad.size > 0:
             grad[:] = approx_derivative(
-                lambda x: psi_norm_match(theta_line(x, theta)), d, f0=result
+                lambda x: psi_norm_match(theta_line(x, theta)),
+                d,
+                f0=result,
+                bounds=[lower_bound(d), upper_bound(d)],
             )
 
         return result
@@ -377,16 +308,16 @@ def find_flux_surface_new(psi_norm_func, psi_norm, mesh=None, n_points=100):
         optimiser = Optimiser(
             "SLSQP", 1, opt_conditions={"ftol_abs": 1e-14, "max_eval": 1000}
         )
-        optimiser.set_lower_bounds(d_guess - search_range)
-        optimiser.set_upper_bounds(d_guess + search_range)
+        optimiser.set_lower_bounds(lower_bound(d_guess))
+        optimiser.set_upper_bounds(upper_bound(d_guess))
         optimiser.set_objective_function(
             OptimisationObjective(psi_line_match, f_objective_args={"theta": theta[i]})
         )
-        result = optimiser.optimise(np.array([d_guess]))
+        result = optimiser.optimise(d_guess)
 
         points[:, i] = theta_line(result, theta[i])
         distances[i] = result
-        d_guess = get_next_guess(points, distances, i)
+        d_guess = result
 
     points[:, -1] = points[:, 0]
 
