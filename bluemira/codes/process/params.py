@@ -27,25 +27,11 @@ from copy import deepcopy
 from dataclasses import dataclass
 from typing import Dict, List, Union
 
-import numpy as np
-
 from bluemira.base.parameter_frame import Parameter
 from bluemira.codes.params import MappedParameterFrame, ParameterMapping
 from bluemira.codes.process._inputs import ProcessInputs
 from bluemira.codes.process.api import _INVariable
 from bluemira.codes.process.mapping import mappings
-
-# fmt: off
-PROCESS_DEFAULT_ONLY_KEYS = [
-    "betap", "bmaxtfrp", "bootipf", "dr_tf_wp", "estotftgj", "faccd", "fwith", "fwoth",
-    "h_cp_top", "hmax", "kappa95", "pbrempv*vol", "pcoreradmw", "pdd", "pdivt", "pdt",
-    "pedgeradmw", "pinjmw", "plascur/1d6", "plinepv*vol", "pnetelmw", "powfmw", "pradmw",
-    "psyncpv*vol", "q95", "qss/1.0D6", "r_cp_top", "r_fw_ib_in", "r_fw_ob_in",
-    "r_tf_inboard_mid", "r_tf_inboard_out", "r_tf_outboard_mid", "r_ts_ib_in",
-    "r_vv_ib_in", "r_vv_ob_in", "rli", "rtfin", "taueff", "tfbusres", "tfinsgap",
-    "tflegres", "tfthko", "thshield", "triang95", "vburn", "vol", "wwp1", "zeff", "ztot",
-]
-# fmt: on
 
 
 @dataclass
@@ -371,8 +357,4 @@ class ProcessSolverParams(MappedParameterFrame):
         """
         Initialise from defaults
         """
-        default_dict = cls._defaults.to_dict()
-        for k in PROCESS_DEFAULT_ONLY_KEYS:
-            if k not in default_dict:
-                default_dict[k] = np.nan
-        return super().from_defaults(default_dict)
+        return super().from_defaults(cls._defaults.to_dict())
