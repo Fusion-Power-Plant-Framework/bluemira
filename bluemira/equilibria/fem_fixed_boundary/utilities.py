@@ -450,127 +450,6 @@ def calculate_plasma_shape_params_new(
     pl_opt = find_extremum(_f_min_vert, pl)
     po_opt = find_extremum(_f_max_radius, po)
     pu_opt = find_extremum(_f_max_vert, pu)
-    print(f"New pi error: {psi_norm_func(pi_opt)-psi_norm}")
-    print(f"New pl error: {psi_norm_func(pl_opt)-psi_norm}")
-    print(f"New po error: {psi_norm_func(po_opt)-psi_norm}")
-    print(f"New pu error: {psi_norm_func(pu_opt)-psi_norm}")
-    if plot:
-        _, ax = plt.subplots()
-        dolfin.plot(mesh)
-        ax.tricontour(points[:, 0], points[:, 1], psi_norm_array)
-        ax.plot(x, z, color="r")
-        ax.plot(*po, marker="o", color="r")
-        ax.plot(*pi, marker="o", color="r")
-        ax.plot(*pu, marker="o", color="r")
-        ax.plot(*pl, marker="o", color="r")
-
-        ax.plot(*po_opt, marker="o", color="b")
-        ax.plot(*pi_opt, marker="o", color="b")
-        ax.plot(*pu_opt, marker="o", color="b")
-        ax.plot(*pl_opt, marker="o", color="b")
-        ax.set_aspect("equal")
-        plt.show()
-
-    # geometric center of a magnetic flux surface
-    r_geo = 0.5 * (po_opt[0] + pi_opt[0])
-
-    # elongation
-    a = 0.5 * (po_opt[0] - pi_opt[0])
-    b = 0.5 * (pu_opt[1] - pl_opt[1])
-    kappa = 1 if a == 0 else b / a
-
-    # triangularity
-    c = r_geo - pl_opt[0]
-    d = r_geo - pu_opt[0]
-    delta = 0 if a == 0 else 0.5 * (c + d) / a
-
-    return r_geo, kappa, delta
-
-
-def calculate_plasma_shape_params(
-    psi_norm_func: Callable[[np.ndarray], np.ndarray],
-    mesh: dolfin.Mesh,
-    psi_norm: float,
-    plot: bool = False,
-) -> Tuple[float, float, float]:
-    """
-    Calculate the plasma parameters (r_geo, kappa, delta) for a given magnetic
-    isoflux using optimisation.
-
-    Parameters
-    ----------
-    psi_norm_func: Callable[[np.ndarray], float]
-        Function to calculate normalised psi
-    mesh: dolfin.Mesh
-        Mesh object to use to estimate extrema prior to optimisation
-    psi_norm: float
-        Normalised psi value for which to calculate the shape parameters
-    plot: bool
-        Whether or not to plot
-
-    Returns
-    -------
-    r_geo: float
-        Geometric major radius of the flux surface at psi_norm
-    kappa: float
-        Elongation of the flux surface at psi_norm
-    delta: float
-        Triangularity of the flux surface at psi_norm
-    """
-    points = mesh.coordinates()
-    psi_norm_array = [psi_norm_func(x) for x in points]
-
-    contour = get_tricontours(points[:, 0], points[:, 1], psi_norm_array, psi_norm)[0]
-    x, z = contour.T
-
-    ind_z_max = np.argmax(z)
-    ind_z_min = np.argmin(z)
-    ind_x_max = np.argmax(x)
-    ind_x_min = np.argmin(x)
-
-    pu = contour[ind_z_max]
-    pl = contour[ind_z_min]
-    po = contour[ind_x_max]
-    pi = contour[ind_x_min]
-
-    search_range = mesh.hmax()
-
-    def f_constrain_p95(x: np.ndarray) -> np.ndarray:
-        """
-        Constraint function for points on the psi_norm surface.
-        """
-        return psi_norm_func(x) - psi_norm
-
-    def find_extremum(
-        func: Callable[[np.ndarray], np.ndarray], x0: Iterable[float]
-    ) -> np.ndarray:
-        """
-        Extremum finding using constrained optimisation
-        """
-        # TODO: Replace scipy minimize with something a little more robust
-        bounds = [(xi - search_range, xi + search_range) for xi in x0]
-        result = scipy.optimize.minimize(
-            func,
-            x0,
-            constraints=({"fun": f_constrain_p95, "type": "eq"}),
-            method="SLSQP",
-            bounds=bounds,
-            options={"disp": False, "ftol": 1e-10, "maxiter": 1000},
-        )
-        if not result.success:
-            bluemira_warn("Flux surface extremum finding failing:\n" f"{result.message}")
-
-        return result.x
-
-    pi_opt = find_extremum(lambda x: x[0], pi)
-    pl_opt = find_extremum(lambda x: x[1], pl)
-
-    po_opt = find_extremum(lambda x: -x[0], po)
-    pu_opt = find_extremum(lambda x: -x[1], pu)
-    print(f"Old pi error: {psi_norm_func(pi_opt)-psi_norm}")
-    print(f"Old pl error: {psi_norm_func(pl_opt)-psi_norm}")
-    print(f"Old po error: {psi_norm_func(po_opt)-psi_norm}")
-    print(f"Old pu error: {psi_norm_func(pu_opt)-psi_norm}")
 
     if plot:
         _, ax = plt.subplots()
@@ -589,7 +468,6 @@ def calculate_plasma_shape_params(
         ax.set_aspect("equal")
         plt.show()
 
-    pi, po, pu, pl = pi_opt, po_opt, pu_opt, pl_opt
     # geometric center of a magnetic flux surface
     r_geo = 0.5 * (po_opt[0] + pi_opt[0])
 
