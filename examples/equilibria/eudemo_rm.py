@@ -376,42 +376,33 @@ ref_opt_problem = UnconstrainedTikhonovCurrentGradientCOP(
 
 program = PicardIterator(reference_eq, ref_opt_problem, fixed_coils=True, relaxation=0.2)
 program()
-
-
-sof_psi_boundary = PsiBoundaryConstraint(
-    np.array(sof_xbdry)[::10],
-    np.array(sof_zbdry)[::10],
-    psi_sof / (2 * np.pi),
-    tolerance=1.0,
-)
-
 optimiser = Optimiser("SLSQP", opt_conditions={"max_eval": 1000, "ftol_rel": 1e-6})
-sof = deepcopy(reference_eq)
 
-sof_opt_problem = MinimalCurrentCOP(
-    sof.coilset,
-    sof,
-    optimiser=optimiser,
-    max_currents=max_currents,
-    constraints=[sof_psi_boundary, x_point],
-)
+opt_problems = []
+eqs = []
+for psi in [psi_sof, psi_eof]:
+    # for psi in [psi_sof]:
+    # for psi in [psi_eof]:
 
+    psi_boundary = PsiBoundaryConstraint(
+        np.array(sof_xbdry)[::10],
+        np.array(sof_zbdry)[::10],
+        psi / (2 * np.pi),
+        tolerance=1.0,
+    )
 
-eof_psi_boundary = PsiBoundaryConstraint(
-    np.array(sof_xbdry)[::10],
-    np.array(sof_zbdry)[::10],
-    psi_eof / (2 * np.pi),
-    tolerance=1.0,
-)
+    ft_eq = deepcopy(reference_eq)
+    eqs.append(ft_eq)
+    opt_problems.append(
+        MinimalCurrentCOP(
+            ft_eq.coilset,
+            ft_eq,
+            optimiser=optimiser,
+            max_currents=max_currents,
+            constraints=[psi_boundary, x_point],
+        )
+    )
 
-eof = deepcopy(reference_eq)
-eof_opt_problem = MinimalCurrentCOP(
-    eof.coilset,
-    eof,
-    optimiser=optimiser,
-    max_currents=max_currents,
-    constraints=[eof_psi_boundary, x_point],
-)
 
 # %%
 
@@ -423,41 +414,6 @@ offset_val = np.max([dx, dz])
 tf_outer = TF_outer[:, np.where(TF_outer[1] == np.max(TF_outer[1]))[0][0] :]
 tf_outer = tf_outer[:, : np.where(tf_outer[0] == np.min(tf_outer[0]))[0][2]]
 t_outer = np.array([tf_outer[0], np.zeros(len(tf_outer[0])), tf_outer[1]])
-
-# full_path = offset_wire(make_polygon(t_outer), offset_val)
-
-# # offset planes in x
-# offset1 = min(koz_UP[0])
-# offset2 = max(koz_UP[0])
-# offset3 = min(koz_LP[0])
-
-# p1 = BluemiraPlane.from_3_points([offset1, 0, 0], [offset1, 1, 0], [offset1, 1, 1])
-# p2 = BluemiraPlane.from_3_points([offset2, 0, 0], [offset2, 1, 0], [offset2, 1, 1])
-# p3 = BluemiraPlane.from_3_points([offset3, 0, 0], [offset3, 1, 0], [offset3, 1, 1])
-
-# # offset plane in z
-# offset4 = max(koz_LP[1])
-# p4 = BluemiraPlane.from_3_points([0, 0, offset4], [0, 1, offset4], [1, 1, offset4])
-
-
-# point1 = slice_shape(full_path, p1)[0]
-# point2 = slice_shape(full_path, p2)[0]
-# point3 = slice_shape(full_path, p3)[1]
-# point4 = slice_shape(full_path, p4)[0]
-
-# # create paths
-
-# split1 = split_wire(full_path, point1)[0]
-# split2_5 = split_wire(split_wire(full_path, point2)[1], point4)[0]
-# split6 = split_wire(full_path, point3)[1]
-
-# discr = split2_5.discretize(5).xyz
-# split2, split3_5 = split_wire(split2_5, discr[:, 1], tolerance=1e-15)
-# split3, split4_5 = split_wire(split3_5, discr[:, 2], tolerance=1e-15)
-# split4, split5 = split_wire(split4_5, discr[:, 3], tolerance=1e-15)
-
-# paths = [split1, split2, split3, split4, split5, split6]
-
 
 face_koz_UP = BluemiraFace(
     make_polygon(np.array([koz_UP[0], np.zeros_like(koz_UP[0]), koz_UP[1]]))
@@ -474,26 +430,24 @@ position_mapper = make_coil_mapper(
 
 # %%
 
-
 position_opt_problem = PulsedNestedPositionCOP(
     coilset,
     position_mapper,
-    sub_opt_problems=[sof_opt_problem, eof_opt_problem],
-    # sub_opt_problems=[eof_opt_problem],
+    sub_opt_problems=opt_problems,
     optimiser=Optimiser(
         "COBYLA", opt_conditions={"max_eval": 50, "ftol_rel": 1e-6, "xtol_rel": 1e-6}
     ),
     debug=False,
 )
-
 optimised_coilset = position_opt_problem.optimise(verbose=True)
 
 # %%
 
 
-sof_pf_currents = sof.coilset.get_coiltype("PF").get_control_coils().current
-eof_pf_currents = eof.coilset.get_coiltype("PF").get_control_coils().current
-max_pf_currents = np.max(np.abs([sof_pf_currents, eof_pf_currents]), axis=0)
+max_pf_currents = np.max(
+    np.abs([eq.coilset.get_coiltype("PF").get_control_coils().current for eq in eqs]),
+    axis=0,
+)
 
 pf_coil_names = optimised_coilset.get_coiltype("PF").name
 
@@ -501,8 +455,7 @@ max_cs_currents = optimised_coilset.get_coiltype("CS").get_max_current()
 
 max_currents = np.concatenate([max_pf_currents, max_cs_currents])
 
-for problem in [sof_opt_problem, eof_opt_problem]:
-    # for problem in [eof_opt_problem]:
+for problem in opt_problems:
     for pf_name, max_current in zip(pf_coil_names, max_pf_currents):
         problem.eq.coilset[pf_name].resize(max_current)
         problem.eq.coilset[pf_name].fix_size()
@@ -510,15 +463,8 @@ for problem in [sof_opt_problem, eof_opt_problem]:
     problem.set_current_bounds(max_currents)
 
 # %%
-
-iterator = PicardIterator(
-    sof, sof_opt_problem, plot=True, fixed_coils=True, relaxation=0.2
-)
-iterator()
-iterator = PicardIterator(
-    eof, eof_opt_problem, plot=True, relaxation=0.2, fixed_coils=True
-)
-iterator()
+for eq, problem in zip(eqs, opt_problems):
+    PicardIterator(eq, problem, plot=True, relaxation=0.2, fixed_coils=True)()
 
 # %%[markdown]
 # Plot the results
@@ -532,17 +478,15 @@ ax3 = ax[1]
 
 # breakdown.plot(ax1)
 # breakdown.coilset.plot(ax1)
-sof.plot(ax2)
-sof.coilset.plot(ax2, label=True)
-eof.plot(ax3)
-eof.coilset.plot(ax3, label=True)
-
-sof_psi = 2 * np.pi * sof.psi(*sof._x_points[0][:2])
-eof_psi = 2 * np.pi * eof.psi(*eof._x_points[0][:2])
-
 # ax1.set_title(f"Breakdown {ax[0].get_title()}")
-ax2.set_title("SOF $\\psi_{b}$ = " + f"{sof_psi:.2f} V.s")
-ax3.set_title("EOF $\\psi_{b}$ = " + f"{eof_psi:.2f} V.s")
+
+for name, _ax, eq in zip(["SOF", "EOF"], [ax2, ax3], eqs):
+    eq.plot(_ax)
+    eq.coilset.plot(_ax, label=True)
+
+    psi = 2 * np.pi * eq.psi(*eq._x_points[0][:2])
+
+    _ax.set_title(f"{name}" " $\\psi_{b}$ = " + f"{psi:.2f} V.s")
 
 
 for i in range(len(ax)):
