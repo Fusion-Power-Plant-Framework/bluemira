@@ -365,11 +365,11 @@ def solve_transport_fixed_boundary(
     else:
         # If we don't break we didn't converge
         message = bluemira_warn
-        line_1 = f"did not converge within {max_iter}"
+        line_1 = f"did not converge within {max_iter} iterations"
         ltgt = ">"
 
     message(
-        f"PLASMOD <-> Fixed boundary G-S {line_1} iterations:\n\t"
+        f"PLASMOD <-> Fixed boundary G-S {line_1}:\n\t"
         f"Target kappa_95: {kappa95_t:.3f}\n\t"
         f"Actual kappa_95: {kappa_95:.3f}\n\t"
         f"Target delta_95: {delta95_t:.3f}\n\t"
