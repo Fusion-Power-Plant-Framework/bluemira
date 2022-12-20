@@ -32,6 +32,7 @@ from matplotlib.axes._axes import Axes
 from matplotlib.tri.triangulation import Triangulation
 
 from bluemira.base.look_and_feel import bluemira_warn
+from bluemira.utilities.opt_problems import OptimisationConstraint
 from bluemira.utilities.optimiser import Optimiser, approx_derivative
 from bluemira.utilities.tools import is_num
 
@@ -426,12 +427,10 @@ def calculate_plasma_shape_params(
         """
         lower_bounds = x0 - search_range
         upper_bounds = x0 + search_range
-        optimiser = Optimiser("SLSQP", 2, opt_conditions={"ftol_abs": 1e-10})
+        optimiser = Optimiser("SLSQP", 2, opt_conditions={"ftol_abs": 1e-6})
         optimiser.set_objective_function(func)
         optimiser.set_lower_bounds(lower_bounds)
         optimiser.set_upper_bounds(upper_bounds)
-
-        from bluemira.utilities.opt_problems import OptimisationConstraint
 
         f_constraint = OptimisationConstraint(
             _f_constrain_psi_norm,
