@@ -478,8 +478,8 @@ position_mapper = make_coil_mapper(
 position_opt_problem = PulsedNestedPositionCOP(
     coilset,
     position_mapper,
-    # sub_opt_problems=[sof_opt_problem, eof_opt_problem],
-    sub_opt_problems=[eof_opt_problem],
+    sub_opt_problems=[sof_opt_problem, eof_opt_problem],
+    # sub_opt_problems=[eof_opt_problem],
     optimiser=Optimiser(
         "COBYLA", opt_conditions={"max_eval": 50, "ftol_rel": 1e-6, "xtol_rel": 1e-6}
     ),
@@ -501,8 +501,8 @@ max_cs_currents = optimised_coilset.get_coiltype("CS").get_max_current()
 
 max_currents = np.concatenate([max_pf_currents, max_cs_currents])
 
-# for problem in [sof_opt_problem, eof_opt_problem]:
-for problem in [eof_opt_problem]:
+for problem in [sof_opt_problem, eof_opt_problem]:
+    # for problem in [eof_opt_problem]:
     for pf_name, max_current in zip(pf_coil_names, max_pf_currents):
         problem.eq.coilset[pf_name].resize(max_current)
         problem.eq.coilset[pf_name].fix_size()
