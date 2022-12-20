@@ -358,12 +358,6 @@ def calculate_plasma_shape_params(
 
     search_range = mesh.hmax()
 
-    def f_constrain_p95(x: np.ndarray) -> np.ndarray:
-        """
-        Constraint function for points on the psi_norm surface.
-        """
-        return psi_norm_func(x) - psi_norm
-
     def find_extremum(
         func: Callable[[np.ndarray], np.ndarray], x0: Iterable[float]
     ) -> np.ndarray:
@@ -371,25 +365,66 @@ def calculate_plasma_shape_params(
         Extremum finding using constrained optimisation
         """
         # TODO: Replace scipy minimize with something a little more robust
-        bounds = [(xi - search_range, xi + search_range) for xi in x0]
-        result = scipy.optimize.minimize(
-            func,
-            x0,
-            constraints=({"fun": f_constrain_p95, "type": "eq"}),
-            method="SLSQP",
-            bounds=bounds,
-            options={"disp": False, "ftol": 1e-10, "maxiter": 1000},
-        )
-        if not result.success:
-            bluemira_warn("Flux surface extremum finding failing:\n" f"{result.message}")
+        lower_bounds = x0 - search_range
+        upper_bounds = x0 + search_range
+        optimiser = Optimiser("SLSQP", 2, opt_conditions={"ftol_abs": 1e-10})
+        optimiser.set_objective_function(func)
+        optimiser.set_lower_bounds(lower_bounds)
+        optimiser.set_upper_bounds(upper_bounds)
 
-        return result.x
+        def f_constrain_p95(
+            constraint: np.ndarray, x: np.ndarray, grad: np.ndarray
+        ) -> np.ndarray:
+            """
+            Constraint function for points on the psi_norm surface.
+            """
+            result = psi_norm_func(x) - psi_norm
+            constraint[:] = result
+            if grad.size > 0:
+                grad[:] = approx_derivative(
+                    psi_norm_func,
+                    x,
+                    f0=result + psi_norm,
+                    bounds=[lower_bounds, upper_bounds],
+                )
+            return constraint
 
-    pi_opt = find_extremum(lambda x: x[0], pi)
-    pl_opt = find_extremum(lambda x: x[1], pl)
+        optimiser.add_eq_constraints(f_constrain_p95, tolerance=1e-6)
+        return optimiser.optimise(x0)
 
-    po_opt = find_extremum(lambda x: -x[0], po)
-    pu_opt = find_extremum(lambda x: -x[1], pu)
+    def max_radius(x, grad):
+        result = -x[0]
+        if grad.size > 0:
+            grad[0] = -1.0
+            grad[1] = 0.0
+        return result
+
+    def min_radius(x, grad):
+        result = x[0]
+        if grad.size > 0:
+            grad[0] = 1.0
+            grad[1] = 0.0
+        return result
+
+    def max_vert(x, grad):
+        result = -x[1]
+        if grad.size > 0:
+            grad[0] = 0.0
+            grad[1] = -1.0
+        return result
+
+    def min_vert(x, grad):
+        result = x[1]
+        if grad.size > 0:
+            grad[0] = 0.0
+            grad[1] = 1.0
+        return result
+
+    pi_opt = find_extremum(min_radius, pi)
+    pl_opt = find_extremum(min_vert, pl)
+
+    po_opt = find_extremum(max_radius, po)
+    pu_opt = find_extremum(max_vert, pu)
 
     if plot:
         _, ax = plt.subplots()
