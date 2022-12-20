@@ -364,7 +364,6 @@ def calculate_plasma_shape_params(
         """
         Extremum finding using constrained optimisation
         """
-        # TODO: Replace scipy minimize with something a little more robust
         lower_bounds = x0 - search_range
         upper_bounds = x0 + search_range
         optimiser = Optimiser("SLSQP", 2, opt_conditions={"ftol_abs": 1e-10})
