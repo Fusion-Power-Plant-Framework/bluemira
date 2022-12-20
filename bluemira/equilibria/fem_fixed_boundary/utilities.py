@@ -406,15 +406,10 @@ def calculate_plasma_shape_params_new(
     contour = get_tricontours(points[:, 0], points[:, 1], psi_norm_array, psi_norm)[0]
     x, z = contour.T
 
-    ind_z_max = np.argmax(z)
-    ind_z_min = np.argmin(z)
-    ind_x_max = np.argmax(x)
-    ind_x_min = np.argmin(x)
-
-    pu = contour[ind_z_max]
-    pl = contour[ind_z_min]
-    po = contour[ind_x_max]
-    pi = contour[ind_x_min]
+    pu = contour[np.argmax(z)]
+    pl = contour[np.argmin(z)]
+    po = contour[np.argmax(x)]
+    pi = contour[np.argmin(x)]
 
     search_range = mesh.hmax()
 
@@ -424,11 +419,13 @@ def calculate_plasma_shape_params_new(
         """
         Extremum finding using constrained optimisation
         """
-        psi_norm_tolerance = 1e-12
-        if not abs(f_psi_norm(x0)) < psi_norm_tolerance:
-            print("Starting solution infeasible")
         lower_bounds = x0 - search_range
         upper_bounds = x0 + search_range
+        # NOTE: COBYLA appears to do a better job here, as it seems that the
+        # NLOpt implementation of SLSQP really requires a feasible starting
+        # solution, which is not so readily available with this tight equality
+        # constraint. The scipy SLSQP implementation apparently does not require
+        # such a good starting solution.
         optimiser = Optimiser(
             "COBYLA", 2, opt_conditions={"ftol_abs": 1e-10, "max_eval": 1000}
         )
@@ -446,7 +443,7 @@ def calculate_plasma_shape_params_new(
             constraint_type="equality",
         )
 
-        optimiser.add_eq_constraints(f_constraint, tolerance=psi_norm_tolerance)
+        optimiser.add_eq_constraints(f_constraint, tolerance=1e-10)
         return optimiser.optimise(x0)
 
     pi_opt = find_extremum(_f_min_radius, pi)
