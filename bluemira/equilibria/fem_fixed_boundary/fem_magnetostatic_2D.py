@@ -433,7 +433,6 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
         super().solve(dirichlet_bc_function, dirichlet_marker, neumann_bc_function)
         self._reset_psi_cache()
         self._update_curr()
-        self._reset_psi_cache()
 
         for i in range(1, self.max_iter + 1):
             prev_psi = self.psi.vector()[:]
