@@ -270,6 +270,17 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
     def set_mesh(
         self, mesh: Union[dolfin.Mesh, str], boundaries: Union[dolfin.Mesh, str] = None
     ):
+        """
+        Set the mesh for the solver
+
+        Parameters
+        ----------
+        mesh : Union[dolfin.Mesh, str]
+            Filename of the xml file with the mesh definition or a dolfin mesh
+        boundaries : Union[dolfin.Mesh, str]
+            Filename of the xml file with the boundaries definition or a MeshFunction
+            that defines the boundaries
+        """
         super().set_mesh(mesh=mesh, boundaries=boundaries)
         self._psi_ax = None
         self._psi_b = None
