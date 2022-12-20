@@ -31,7 +31,6 @@ from matplotlib._tri import TriContourGenerator
 from matplotlib.axes._axes import Axes
 from matplotlib.tri.triangulation import Triangulation
 
-from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.utilities.opt_problems import OptimisationConstraint
 from bluemira.utilities.optimiser import Optimiser, approx_derivative
 from bluemira.utilities.tools import is_num
@@ -354,7 +353,6 @@ def _f_constrain_psi_norm(
     """
     Constraint function for points on the psi_norm surface.
     """
-
     result = psi_norm_func(x)
     constraint[:] = result
     if grad.size > 0:
