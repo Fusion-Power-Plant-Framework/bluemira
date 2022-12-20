@@ -467,7 +467,6 @@ def calculate_plasma_shape_params(
         ax.set_aspect("equal")
         plt.show()
 
-    pi, po, pu, pl = pi_opt, po_opt, pu_opt, pl_opt
     # geometric center of a magnetic flux surface
     r_geo = 0.5 * (po_opt[0] + pi_opt[0])
 
