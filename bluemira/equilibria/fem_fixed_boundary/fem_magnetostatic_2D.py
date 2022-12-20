@@ -126,8 +126,6 @@ class FemMagnetostatic2d:
         # initialize solution
         self.psi = dolfin.Function(self.V)
         self.psi.set_allow_extrapolation(True)
-        self._psi_ax = None
-        self._psi_b = None
 
     def define_g(self, g: Union[dolfin.Expression, dolfin.Function]):
         """
@@ -190,9 +188,6 @@ class FemMagnetostatic2d:
             solver_parameters={"linear_solver": "default"},
         )
 
-        # Reset cached psi-axis and psi-boundary property
-        self._psi_ax = None
-        self._psi_b = None
         return self.psi
 
     def calculate_b(self) -> dolfin.Function:
@@ -246,6 +241,8 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
         self.max_iter = max_iter
         self.relaxation = relaxation
         self.k = 1
+        self._psi_ax = None
+        self._psi_b = None
 
     @property
     def psi_ax(self) -> float:
@@ -258,7 +255,7 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
     def psi_b(self) -> float:
         """Poloidal flux on the boundary"""
         if self._psi_b is None:
-            self._psi_b = np.min(self.psi.vector()[:])
+            self._psi_b = 0.0
         return self._psi_b
 
     @property
@@ -267,6 +264,23 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
         return lambda x: np.sqrt(
             np.abs((self.psi(x) - self.psi_ax) / (self.psi_b - self.psi_ax))
         )
+
+    def set_mesh(
+        self, mesh: Union[dolfin.Mesh, str], boundaries: Union[dolfin.Mesh, str] = None
+    ):
+        """
+        Set the mesh for the solver
+
+        Parameters
+        ----------
+        mesh : Union[dolfin.Mesh, str]
+            Filename of the xml file with the mesh definition or a dolfin mesh
+        boundaries : Union[dolfin.Mesh, str]
+            Filename of the xml file with the boundaries definition or a MeshFunction
+            that defines the boundaries
+        """
+        super().set_mesh(mesh=mesh, boundaries=boundaries)
+        self._reset_psi_cache()
 
     def _create_g_func(
         self,
@@ -345,6 +359,13 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
         if self._curr_target:
             self.k = self._curr_target / self._calculate_curr_tot()
 
+    def _reset_psi_cache(self):
+        """
+        Reset cached psi-axis and psi-boundary properties.
+        """
+        self._psi_b = None
+        self._psi_ax = None
+
     def _plot_current_iteration(
         self, i_iter: int, points: Iterable, prev: Optional[np.ndarray] = None
     ):
@@ -410,6 +431,7 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
             self._plot_current_iteration(0, points)
 
         super().solve(dirichlet_bc_function, dirichlet_marker, neumann_bc_function)
+        self._reset_psi_cache()
         self._update_curr()
 
         for i in range(1, self.max_iter + 1):
@@ -420,6 +442,7 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
                 self._plot_current_iteration(i, points, prev)
 
             super().solve(dirichlet_bc_function, dirichlet_marker, neumann_bc_function)
+            self._reset_psi_cache()
 
             new = np.array([self.psi_norm_2d(p) for p in points])
             diff = new - prev
