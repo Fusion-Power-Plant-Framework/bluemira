@@ -26,7 +26,6 @@ from typing import Callable, Iterable, List, Optional, Tuple, Union
 import dolfin
 import matplotlib.pyplot as plt
 import numpy as np
-import scipy
 from matplotlib._tri import TriContourGenerator
 from matplotlib.axes._axes import Axes
 from matplotlib.tri.triangulation import Triangulation
