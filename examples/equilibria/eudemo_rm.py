@@ -201,33 +201,6 @@ coilset.discretisation = 0.15
 
 # %%[markdown]
 
-# Plot keep out zones and coils
-
-# %%
-
-# Adjust axis limits
-fig, ax = plt.subplots()
-axis_pad = 1
-ax.set_xlim(0, max(np.max(koz_UP[0]), np.max(koz_LP[0])) + axis_pad)
-ax.set_ylim(
-    -(max(np.max(koz_UP[1]), -np.min(koz_LP[1])) + axis_pad),
-    max(np.max(koz_UP[1]), np.max(koz_LP[1])) + axis_pad,
-)
-
-# add TF and koz to plot
-ax.plot(*koz_UP)
-ax.plot(*koz_LP)
-ax.plot(*TF_inner)
-ax.plot(*TF_outer)
-
-coilset.plot(ax=ax)
-
-# %%
-plt.draw()
-plt.pause(0.001)
-
-# %%[markdown]
-
 # Define parameters
 
 # %%
@@ -257,9 +230,9 @@ r_zone = 2.0  # ??
 b_zone_max = 0.003  # T
 
 # Coil constraints
-PF_Fz_max = 450e6
-CS_Fz_sum = 300e6
-CS_Fz_sep = 350e6
+PF_Fz_max = 450
+CS_Fz_sum = 300
+CS_Fz_sep = 350
 
 # %%[markdown]
 # Use the same grid as CREATE (but less discretised):
@@ -303,12 +276,6 @@ bd_opt_problem = BreakdownCOP(
 
 coilset = bd_opt_problem.optimise(max_currents)
 bluemira_print(f"Breakdown psi: {breakdown.breakdown_psi*2*np.pi:.2f} V.s")
-
-plt.close()
-f, ax = plt.subplots()
-breakdown.plot(ax=ax)
-breakdown.coilset.plot(ax=ax, label=True)
-plt.show()
 
 # force breakdown flux to 320 Vs
 breakdown_flux = 320  # breakdown.breakdown_psi*2*np.pi
@@ -401,7 +368,7 @@ for psi in [psi_sof, psi_eof]:
 
     for name in ft_eq.coilset.get_coiltype("PF").name:
         ft_eq.coilset[name]._flag_sizefix = False
-        ft_eq.coilset[name].discretisation = 10
+
     eqs.append(ft_eq)
     opt_problems.append(
         MinimalCurrentCOP(
@@ -409,7 +376,7 @@ for psi in [psi_sof, psi_eof]:
             ft_eq,
             optimiser=optimiser,
             max_currents=max_currents,
-            constraints=[deepcopy(psi_boundary), deepcopy(x_point)],
+            constraints=[psi_boundary, x_point],
         )
     )
 
@@ -420,7 +387,7 @@ for psi in [psi_sof, psi_eof]:
 old_coilset = deepcopy(coilset)
 old_eq = deepcopy(reference_eq)
 
-offset_val = np.max([dx, dz])
+offset_val = np.max([dx[:6], dz[:6]])
 tf_outer = TF_outer[:, np.where(TF_outer[1] == np.max(TF_outer[1]))[0][0] :]
 tf_outer = tf_outer[:, : np.where(tf_outer[0] == np.min(tf_outer[0]))[0][2]]
 t_outer = np.array([tf_outer[0], np.zeros(len(tf_outer[0])), tf_outer[1]])
@@ -431,17 +398,12 @@ face_koz_UP = BluemiraFace(
 face_koz_LP = BluemiraFace(
     make_polygon(np.array([koz_LP[0], np.zeros_like(koz_LP[0]), koz_LP[1]]))
 )
-from bluemira.display import plot_2d
+
 from bluemira.geometry.coordinates import Coordinates
 
 pf_coil_path = make_pf_coil_path(
     make_polygon(Coordinates({"x": TF_outer[0], "z": TF_outer[1]})), offset_val
 )
-
-f, ax = plt.subplots()
-plot_2d([pf_coil_path, face_koz_UP, face_koz_LP], ax=ax)
-plt.show()
-
 
 position_mapper = make_coil_mapper(
     pf_coil_path,
@@ -492,33 +454,16 @@ for eq, problem in zip(eqs, opt_problems):
 
 # %%
 
-f, ax = plt.subplots(1, 2)
-ax1 = None
-ax2 = ax[0]
-ax3 = ax[1]
 
-# breakdown.plot(ax1)
-# breakdown.coilset.plot(ax1)
-# ax1.set_title(f"Breakdown {ax[0].get_title()}")
+f, ax = plt.subplots(1, 3)
 
-for name, _ax, eq in zip(["SOF", "EOF"], [ax2, ax3], eqs):
+for name, _ax, eq in zip(["Breakdown", "SOF", "EOF"], ax, [breakdown] + eqs):
     eq.plot(_ax)
     eq.coilset.plot(_ax, label=True)
 
-    psi = 2 * np.pi * eq.psi(*eq._x_points[0][:2])
+    if isinstance(eq, Equilibrium):
+        psi = 2 * np.pi * eq.get_OX_psis()[1]
+    else:
+        psi = 2 * np.pi * eq.breakdown_psi
 
     _ax.set_title(f"{name}" " $\\psi_{b}$ = " + f"{psi:.2f} V.s")
-
-
-for i in range(len(ax)):
-    ax[i].set_xlim(0, max(np.max(koz_UP[0]), np.max(koz_LP[0])) + axis_pad)
-    ax[i].set_ylim(
-        -(max(np.max(koz_UP[1]), -np.min(koz_LP[1])) + axis_pad),
-        max(np.max(koz_UP[1]), np.max(koz_LP[1])) + axis_pad,
-    )
-    ax[i].plot(*koz_UP)
-    ax[i].plot(*koz_LP)
-    ax[i].plot(*TF_inner)
-    ax[i].plot(*TF_outer)
-
-plt.show()
