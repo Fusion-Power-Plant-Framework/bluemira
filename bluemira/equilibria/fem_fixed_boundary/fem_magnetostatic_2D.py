@@ -371,38 +371,6 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
         self._psi_b = None
         self._psi_ax = None
 
-    def _plot_current_iteration(
-        self, ax, i_iter: int, points: Iterable, prev: Optional[np.ndarray] = None
-    ):
-        self._plot_array(
-            ax[0],
-            points,
-            np.array([self._g_func(p) for p in points]),
-            f"J current at iteration {i_iter}",
-            contour=False,
-        )
-        if prev is not None:
-            self._plot_array(
-                ax[1],
-                points,
-                prev,
-                f"Normalized magnetic coordinate at iteration {i_iter}",
-            )
-
-    def _plot_array(
-        self, ax, points: np.ndarray, array: np.ndarray, title: str, contour: bool = True
-    ):
-        ax, _, _ = plot_scalar_field(
-            points[:, 0],
-            points[:, 1],
-            array,
-            levels=20,
-            ax=ax,
-            tofill=True,
-            contour=contour,
-        )
-        ax.set_title(title)
-
     def solve(
         self,
         dirichlet_bc_function: Optional[
@@ -449,11 +417,10 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
         super().solve(dirichlet_bc_function, dirichlet_marker, neumann_bc_function)
         self._reset_psi_cache()
         self._update_curr()
-    
+
         if plot:
             plot_defaults()
             f, ax, cax = self._setup_plot(debug)
-
 
         diff = np.zeros(len(points))
         for i in range(1, self.max_iter + 1):
