@@ -159,16 +159,16 @@ z = [9.26, 7.9, 2.5, -2.5, -7.9, -10.5, 7.07, 4.08, -0.4, -4.88, -7.86]
 dx = [0.6, 0.7, 0.5, 0.5, 0.7, 1.0, 0.4, 0.4, 0.4, 0.4, 0.4]
 dz = [0.6, 0.7, 0.5, 0.5, 0.7, 1.0, 2.99 / 2, 2.99 / 2, 5.97 / 2, 2.99 / 2, 2.99 / 2]
 
-# crude movement of coils
-x[0] = min(x[0], min(koz_UP[0])) - dx[0]
-x[1] = max(x[1], max(koz_UP[0])) + dx[1]
-x[4] = x[4] + 2 * dx[4]
-x[5] = min(x[5], min(koz_LP[0]))
+# # crude movement of coils
+# x[0] = min(x[0], min(koz_UP[0])) - dx[0]
+# x[1] = max(x[1], max(koz_UP[0])) + dx[1]
+# x[4] = x[4] + 2 * dx[4]
+# x[5] = min(x[5], min(koz_LP[0]))
 
-z[1] = z[1] - dz[1]
-z[4] = z[4] + 2 * dz[4]
+# z[1] = z[1] - dz[1]
+# z[4] = z[4] + 2 * dz[4]
 
-# Matti's positions
+# # Matti's positions
 # x[:6] = np.array([4, 14.54, 17.75, 17.75, 15.4, 7.0])
 # z[:6] = np.array([9.26, 7.25, 2.5, -2.5, -6.55, -10.5])
 
@@ -194,10 +194,10 @@ for i, (xi, zi, dxi, dzi) in enumerate(zip(x, z, dx, dz)):
 coilset = CoilSet(*coils)
 
 # Assign current density and peak field constraints
-coilset.assign_material("CS", j_max=16.5e6, b_max=12.5)
+coilset.assign_material("CS", j_max=16.5e6, b_max=13)
 coilset.assign_material("PF", j_max=12.5e6, b_max=11)
 coilset.fix_sizes()
-coilset.discretisation = 0.3
+coilset.discretisation = 0.15
 
 # %%[markdown]
 
@@ -257,9 +257,9 @@ r_zone = 2.0  # ??
 b_zone_max = 0.003  # T
 
 # Coil constraints
-PF_Fz_max = 450
-CS_Fz_sum = 300
-CS_Fz_sep = 350
+PF_Fz_max = 450e6
+CS_Fz_sum = 300e6
+CS_Fz_sep = 350e6
 
 # %%[markdown]
 # Use the same grid as CREATE (but less discretised):
@@ -280,6 +280,8 @@ force_constraints = CoilForceConstraints(
 )
 
 max_currents = coilset.get_max_current(0)
+max_CS_currents = coilset.get_coiltype("CS").get_max_current(0)
+coilset.get_coiltype("CS").current = max_CS_currents
 
 
 breakdown = Breakdown(deepcopy(coilset), grid)
@@ -299,8 +301,14 @@ bd_opt_problem = BreakdownCOP(
     ],
 )
 
-coilset = bd_opt_problem.optimise(x0=max_currents)
+coilset = bd_opt_problem.optimise(max_currents)
 bluemira_print(f"Breakdown psi: {breakdown.breakdown_psi*2*np.pi:.2f} V.s")
+
+plt.close()
+f, ax = plt.subplots()
+breakdown.plot(ax=ax)
+breakdown.coilset.plot(ax=ax, label=True)
+plt.show()
 
 # force breakdown flux to 320 Vs
 breakdown_flux = 320  # breakdown.breakdown_psi*2*np.pi
@@ -371,7 +379,7 @@ ref_opt_problem = UnconstrainedTikhonovCurrentGradientCOP(
     reference_eq.coilset,
     reference_eq,
     MagneticConstraintSet([isoflux, x_point]),
-    gamma=1e-7,
+    gamma=1e-12,
 )
 
 program = PicardIterator(reference_eq, ref_opt_problem, fixed_coils=True, relaxation=0.2)
@@ -421,12 +429,23 @@ face_koz_UP = BluemiraFace(
 face_koz_LP = BluemiraFace(
     make_polygon(np.array([koz_LP[0], np.zeros_like(koz_LP[0]), koz_LP[1]]))
 )
+from bluemira.display import plot_2d
+from bluemira.geometry.coordinates import Coordinates
+
+pf_coil_path = make_pf_coil_path(
+    make_polygon(Coordinates({"x": TF_outer[0], "z": TF_outer[1]})), offset_val
+)
+
+f, ax = plt.subplots()
+plot_2d([pf_coil_path, face_koz_UP, face_koz_LP], ax=ax)
+plt.show()
+
+
 position_mapper = make_coil_mapper(
-    make_pf_coil_path(make_polygon(t_outer), offset_val / 2),
+    pf_coil_path,
     [face_koz_UP, face_koz_LP],
     coilset.get_coiltype("PF")._coils,
 )
-
 
 # %%
 
