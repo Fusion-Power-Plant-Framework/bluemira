@@ -153,9 +153,9 @@ r_zone = 2.0  # ??
 b_zone_max = 0.003  # T
 
 # Coil constraints
-PF_Fz_max = 450
-CS_Fz_sum = 300
-CS_Fz_sep = 350
+PF_Fz_max = 450e6  # [N]
+CS_Fz_sum = 300e6  # [N]
+CS_Fz_sep = 350e6  # [N]
 
 # %%[markdown]
 # Use the same grid as CREATE (but less discretised):

@@ -223,6 +223,9 @@ def coil_force_constraints(
 
     # get coil force and jacobian
     F = np.zeros((n_coils, 2))
+    PF_Fz_max /= scale
+    CS_Fz_sep_max /= scale
+    CS_Fz_sum_max /= scale
 
     for i in range(2):  # coil force
         # NOTE: * Hadamard matrix product

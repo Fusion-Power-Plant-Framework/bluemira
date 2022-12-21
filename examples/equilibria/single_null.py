@@ -269,9 +269,9 @@ field_constraints = CoilFieldConstraints(eq.coilset, eq.coilset.b_max, tolerance
 
 force_constraints = CoilForceConstraints(
     eq.coilset,
-    PF_Fz_max=450,
-    CS_Fz_sum_max=300,
-    CS_Fz_sep_max=250,
+    PF_Fz_max=450e6,
+    CS_Fz_sum_max=300e6,
+    CS_Fz_sep_max=250e6,
     tolerance=5e-5,
 )
 
