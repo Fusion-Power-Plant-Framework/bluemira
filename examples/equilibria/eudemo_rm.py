@@ -197,7 +197,7 @@ coilset = CoilSet(*coils)
 coilset.assign_material("CS", j_max=16.5e6, b_max=13)
 coilset.assign_material("PF", j_max=12.5e6, b_max=11)
 coilset.fix_sizes()
-coilset.discretisation = 0.15
+coilset.discretisation = 0.3
 
 # %%[markdown]
 
@@ -358,10 +358,10 @@ for psi in [psi_sof, psi_eof]:
     optimiser = Optimiser("SLSQP", opt_conditions={"max_eval": 1000, "ftol_rel": 1e-6})
 
     psi_boundary = PsiBoundaryConstraint(
-        np.array(sof_xbdry)[::10],
-        np.array(sof_zbdry)[::10],
+        np.array(sof_xbdry)[::5],
+        np.array(sof_zbdry)[::5],
         psi / (2 * np.pi),
-        tolerance=1.0,
+        tolerance=np.sqrt(1.5 * len(sof_xbdry[::5])),
     )
 
     ft_eq = deepcopy(reference_eq)
@@ -376,7 +376,7 @@ for psi in [psi_sof, psi_eof]:
             ft_eq,
             optimiser=optimiser,
             max_currents=max_currents,
-            constraints=[psi_boundary, x_point],
+            constraints=[psi_boundary, x_point, deepcopy(field_constraints)],
         )
     )
 
@@ -417,9 +417,7 @@ position_opt_problem = PulsedNestedPositionCOP(
     coilset,
     position_mapper,
     sub_opt_problems=opt_problems,
-    optimiser=Optimiser(
-        "COBYLA", opt_conditions={"max_eval": 50, "ftol_rel": 1e-6, "xtol_rel": 1e-6}
-    ),
+    optimiser=Optimiser("COBYLA", opt_conditions={"max_eval": 200, "ftol_rel": 1e-6}),
     debug=False,
 )
 optimised_coilset = position_opt_problem.optimise(verbose=True)
@@ -454,7 +452,7 @@ for eq, problem in zip(eqs, opt_problems):
 
 # %%
 
-
+plt.close("all")
 f, ax = plt.subplots(1, 3)
 
 for name, _ax, eq in zip(["Breakdown", "SOF", "EOF"], ax, [breakdown] + eqs):
@@ -467,3 +465,4 @@ for name, _ax, eq in zip(["Breakdown", "SOF", "EOF"], ax, [breakdown] + eqs):
         psi = 2 * np.pi * eq.breakdown_psi
 
     _ax.set_title(f"{name}" " $\\psi_{b}$ = " + f"{psi:.2f} V.s")
+plt.show()
