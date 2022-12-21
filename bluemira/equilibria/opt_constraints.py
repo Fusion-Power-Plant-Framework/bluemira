@@ -246,7 +246,6 @@ class CoilFieldConstraints(FieldConstraints):
         bxp_vec, bzp_vec = self.evaluate(equilibrium)
         self._args["bxp_vec"] = bxp_vec
         self._args["bzp_vec"] = bzp_vec
-        self._args["scale"] = 1e6
 
 
 class CoilForceConstraints(UpdateableConstraint, OptimisationConstraint):
@@ -290,7 +289,7 @@ class CoilForceConstraints(UpdateableConstraint, OptimisationConstraint):
             f_constraint_args={
                 "a_mat": None,
                 "b_vec": None,
-                "scale": 1.0e6,
+                "scale": 1.0,
                 "PF_Fz_max": PF_Fz_max,
                 "CS_Fz_sum_max": CS_Fz_sum_max,
                 "CS_Fz_sep_max": CS_Fz_sep_max,
