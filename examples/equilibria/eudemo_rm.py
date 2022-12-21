@@ -67,6 +67,7 @@ from bluemira.equilibria.physics import calc_psib
 from bluemira.equilibria.profiles import CustomProfile
 from bluemira.equilibria.run import PulsedNestedPositionCOP
 from bluemira.equilibria.solve import PicardIterator
+from bluemira.geometry.coordinates import Coordinates
 from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.plane import BluemiraPlane
 from bluemira.geometry.tools import make_polygon, offset_wire, slice_shape, split_wire
@@ -102,6 +103,11 @@ sof_zbdry = data["zbdry"]
 # Import keep out zones
 
 # %%
+
+# plotting
+with_koz_and_TF = True
+
+# get shapes
 xl_dict = pd.read_excel(sys.argv[1], None)
 
 koz_LP_k = koz_UP_k = TF_inner_k = TF_outer_k = None
@@ -159,7 +165,7 @@ z = [9.26, 7.9, 2.5, -2.5, -7.9, -10.5, 7.07, 4.08, -0.4, -4.88, -7.86]
 dx = [0.6, 0.7, 0.5, 0.5, 0.7, 1.0, 0.4, 0.4, 0.4, 0.4, 0.4]
 dz = [0.6, 0.7, 0.5, 0.5, 0.7, 1.0, 2.99 / 2, 2.99 / 2, 5.97 / 2, 2.99 / 2, 2.99 / 2]
 
-# # crude movement of coils
+# crude movement of coils
 # x[0] = min(x[0], min(koz_UP[0])) - dx[0]
 # x[1] = max(x[1], max(koz_UP[0])) + dx[1]
 # x[4] = x[4] + 2 * dx[4]
@@ -274,11 +280,10 @@ bd_opt_problem = BreakdownCOP(
     ],
 )
 
-coilset = bd_opt_problem.optimise(max_currents)
-bluemira_print(f"Breakdown psi: {breakdown.breakdown_psi*2*np.pi:.2f} V.s")
+coilset = bd_opt_problem.optimise(x0=max_currents)
 
-# force breakdown flux to 320 Vs
-breakdown_flux = 320  # breakdown.breakdown_psi*2*np.pi
+breakdown_flux = breakdown.breakdown_psi * 2 * np.pi
+bluemira_print(f"Breakdown psi: {breakdown.breakdown_psi*2*np.pi:.2f} V.s")
 
 # %%[markdown]
 
@@ -356,7 +361,6 @@ opt_problems = []
 eqs = []
 for psi in [psi_sof, psi_eof]:
     optimiser = Optimiser("SLSQP", opt_conditions={"max_eval": 1000, "ftol_rel": 1e-6})
-
     psi_boundary = PsiBoundaryConstraint(
         np.array(sof_xbdry)[::5],
         np.array(sof_zbdry)[::5],
@@ -376,7 +380,12 @@ for psi in [psi_sof, psi_eof]:
             ft_eq,
             optimiser=optimiser,
             max_currents=max_currents,
-            constraints=[psi_boundary, x_point, deepcopy(field_constraints)],
+            constraints=[
+                psi_boundary,
+                x_point,
+                deepcopy(field_constraints),
+                deepcopy(force_constraints),
+            ],
         )
     )
 
@@ -392,14 +401,33 @@ tf_outer = TF_outer[:, np.where(TF_outer[1] == np.max(TF_outer[1]))[0][0] :]
 tf_outer = tf_outer[:, : np.where(tf_outer[0] == np.min(tf_outer[0]))[0][2]]
 t_outer = np.array([tf_outer[0], np.zeros(len(tf_outer[0])), tf_outer[1]])
 
+koz_UP_adjust = koz_UP.copy()
+adjust_x_min = np.where(np.isclose(np.min(koz_UP[0]), koz_UP[0]))
+adjust_x_max = np.where(np.isclose(np.max(koz_UP[0]), koz_UP[0]))
+koz_UP_adjust[0][adjust_x_min] -= dx[0]
+koz_UP_adjust[0][adjust_x_max] += dx[1]
+
+
+koz_LP_adjust = koz_LP.copy()
+adjust_z_min = np.where(np.isclose(np.max(koz_LP[1]), koz_LP[1]))
+adjust_z_max = np.where(np.isclose(np.min(koz_LP[1]), koz_LP[1]))
+koz_LP_adjust[1][adjust_z_min] += np.max([dz[4], dz[5]])
+koz_LP_adjust[1][adjust_z_max] -= dz[-1]
+
+
 face_koz_UP = BluemiraFace(
-    make_polygon(np.array([koz_UP[0], np.zeros_like(koz_UP[0]), koz_UP[1]]))
+    make_polygon(
+        np.array([koz_UP_adjust[0], np.zeros_like(koz_UP[0]), koz_UP_adjust[1]]),
+        closed=True,
+    )
 )
 face_koz_LP = BluemiraFace(
-    make_polygon(np.array([koz_LP[0], np.zeros_like(koz_LP[0]), koz_LP[1]]))
+    make_polygon(
+        np.array([koz_LP_adjust[0], np.zeros_like(koz_LP[0]), koz_LP_adjust[1]]),
+        closed=True,
+    )
 )
 
-from bluemira.geometry.coordinates import Coordinates
 
 pf_coil_path = make_pf_coil_path(
     make_polygon(Coordinates({"x": TF_outer[0], "z": TF_outer[1]})), offset_val
@@ -447,11 +475,34 @@ for problem in opt_problems:
 for eq, problem in zip(eqs, opt_problems):
     PicardIterator(eq, problem, plot=True, relaxation=0.2, fixed_coils=True)()
 
+
+max_currents = eqs[0].get_max_current(0)
+breakdown = Breakdown(deepcopy(eqs[0].coilset), grid)
+
+bd_opt_problem = BreakdownCOP(
+    breakdown.coilset,
+    breakdown,
+    OutboardBreakdownZoneStrategy(R_0, A, 0.225),
+    optimiser=Optimiser("COBYLA", opt_conditions={"max_eval": 3000, "ftol_rel": 1e-6}),
+    max_currents=max_currents,
+    B_stray_max=1e-3,
+    B_stray_con_tol=1e-6,
+    n_B_stray_points=10,
+    constraints=[
+        deepcopy(field_constraints),
+        deepcopy(force_constraints),
+    ],
+)
+
+optimised_coilset = bd_opt_problem.optimise(x0=max_currents)
+
+breakdown_flux = breakdown.breakdown_psi * 2 * np.pi
+bluemira_print(f"Breakdown psi: {breakdown_flux:.2f} V.s")
+
 # %%[markdown]
 # Plot the results
 
 # %%
-
 plt.close("all")
 f, ax = plt.subplots(1, 3)
 
@@ -465,4 +516,18 @@ for name, _ax, eq in zip(["Breakdown", "SOF", "EOF"], ax, [breakdown] + eqs):
         psi = 2 * np.pi * eq.breakdown_psi
 
     _ax.set_title(f"{name}" " $\\psi_{b}$ = " + f"{psi:.2f} V.s")
+
+if with_koz_and_TF:
+    axis_pad = 1
+    for _ax in ax:
+        _ax.set_xlim(0, max(np.max(koz_UP[0]), np.max(koz_LP[0])) + axis_pad)
+        _ax.set_ylim(
+            -(max(np.max(koz_UP[1]), -np.min(koz_LP[1])) + axis_pad),
+            max(np.max(koz_UP[1]), np.max(koz_LP[1])) + axis_pad,
+        )
+        _ax.plot(*koz_UP)
+        _ax.plot(*koz_LP)
+        _ax.plot(*TF_inner)
+        _ax.plot(*TF_outer)
+
 plt.show()
