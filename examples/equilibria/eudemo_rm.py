@@ -384,13 +384,11 @@ ref_opt_problem = UnconstrainedTikhonovCurrentGradientCOP(
 
 program = PicardIterator(reference_eq, ref_opt_problem, fixed_coils=True, relaxation=0.2)
 program()
-optimiser = Optimiser("SLSQP", opt_conditions={"max_eval": 1000, "ftol_rel": 1e-6})
 
 opt_problems = []
 eqs = []
 for psi in [psi_sof, psi_eof]:
-    # for psi in [psi_sof]:
-    # for psi in [psi_eof]:
+    optimiser = Optimiser("SLSQP", opt_conditions={"max_eval": 1000, "ftol_rel": 1e-6})
 
     psi_boundary = PsiBoundaryConstraint(
         np.array(sof_xbdry)[::10],
@@ -400,6 +398,10 @@ for psi in [psi_sof, psi_eof]:
     )
 
     ft_eq = deepcopy(reference_eq)
+
+    for name in ft_eq.coilset.get_coiltype("PF").name:
+        ft_eq.coilset[name]._flag_sizefix = False
+        ft_eq.coilset[name].discretisation = 10
     eqs.append(ft_eq)
     opt_problems.append(
         MinimalCurrentCOP(
@@ -407,7 +409,7 @@ for psi in [psi_sof, psi_eof]:
             ft_eq,
             optimiser=optimiser,
             max_currents=max_currents,
-            constraints=[psi_boundary, x_point],
+            constraints=[deepcopy(psi_boundary), deepcopy(x_point)],
         )
     )
 
