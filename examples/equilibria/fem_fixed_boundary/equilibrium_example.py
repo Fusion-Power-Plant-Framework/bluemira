@@ -112,6 +112,7 @@ problem_settings = {
     "i_modeltype": "GYROBOHM_2",
     "i_equiltype": "q95_sawtooth",
     "i_pedestal": "SAARELMA",
+    "isawt": "FULLY_RELAXED",
 }
 
 plasmod_build_config = {
