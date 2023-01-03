@@ -73,7 +73,8 @@ def pytest_configure(config):
         mpl.use("Agg")
         # Disable CAD viewer by mocking out FreeCAD API's displayer.
         # Note that if we use a new CAD backend, this must be changed.
-        mock.patch("bluemira.display.displayer.ps").start()
+        mock.patch("bluemira.codes._polyscope.ps").start()
+        mock.patch("bluemira.codes._freecadapi.show_cad").start()
 
     options = {
         "longrun": config.option.longrun,

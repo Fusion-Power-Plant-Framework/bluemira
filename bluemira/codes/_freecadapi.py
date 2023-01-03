@@ -27,9 +27,11 @@ from __future__ import annotations
 
 import math
 from copy import deepcopy
+from dataclasses import dataclass, field
 from typing import Dict, Iterable, List, Optional, Tuple, Union
 
 import freecad  # noqa: F401
+import FreeCAD
 import BOPTools
 import BOPTools.GeneralFuseResult
 import BOPTools.JoinAPI
@@ -38,13 +40,11 @@ import BOPTools.ShapeMerge
 import BOPTools.SplitAPI
 import BOPTools.SplitFeatures
 import BOPTools.Utils
+import FreeCADGui
+import matplotlib.colors as colors
 import numpy as np
 import Part
 from FreeCAD import Base
-from pivy import coin, quarter
-from PySide2.QtWidgets import QApplication
-
-# import visualisation
 from pivy import coin, quarter
 from PySide2.QtWidgets import QApplication
 
@@ -1817,6 +1817,19 @@ def placement_from_plane(plane):
 # ======================================================================================
 # Geometry visualisation
 # ======================================================================================
+
+
+def _colourise(node: coin.SoNode, options: Dict):
+    if isinstance(node, coin.SoMaterial):
+        rgb = options["colour"]
+        transparency = options["transparency"]
+        node.ambientColor.setValue(coin.SbColor(*rgb))
+        node.diffuseColor.setValue(coin.SbColor(*rgb))
+        node.transparency.setValue(transparency)
+    for child in node.getChildren() or []:
+        _colourise(child, options)
+
+
 def collect_verts_faces(
     solid: Part.Shape, tesselation: float = 0.1
 ) -> (np.ndarray, np.ndarray):
@@ -1880,6 +1893,93 @@ def collect_wires(solid: Part.Shape, **kwds) -> (np.ndarray, np.ndarray):
         voffset += len(v)
     edges = np.concatenate(edges)[:, None]
     return np.vstack(verts), np.hstack([edges, edges + 1])
+
+
+@dataclass
+class DefaultDisplayOptions:
+    """Polyscope default display options"""
+
+    colour: Union[Tuple, str]
+    transparency: float = 0.0
+
+    _colour: Union[Tuple, str] = field(
+        init=False, default_factory=lambda: (0.5, 0.5, 0.5)
+    )
+
+    @property
+    def colour(self):
+        """Colour as rbg"""
+        return colors.to_rgb(self._colour)
+
+    @colour.setter
+    def colour(self, value):
+        """Set colour"""
+        self._colour = value
+
+    @property
+    def color(self):
+        """Americanism"""
+        return self.colour
+
+    @color.setter
+    def color(self, value):
+        """Americanism"""
+        self.colour = value
+
+
+def show_cad(
+    parts: Union[BluemiraGeo, List[BluemiraGeo]],  # noqa: F821
+    options: Optional[Union[Dict, List[Dict]]] = None,
+    **kwargs,
+):
+    """
+    The implementation of the display API for FreeCAD parts.
+
+    Parameters
+    ----------
+    parts
+        The parts to display.
+    options
+        The options to use to display the parts.
+    """
+    if None in options:
+        options = [DefaultDisplayOptions() if o is None else o for o in options]
+
+    if len(options) != len(parts):
+        raise FreeCADError(
+            "If options for display are provided then there must be as many options as "
+            "there are parts to display."
+        )
+
+    app = QApplication.instance()
+    if app is None:
+        app = QApplication([])
+
+    if not hasattr(FreeCADGui, "subgraphFromObject"):
+        FreeCADGui.setupWithoutGUI()
+
+    doc = FreeCAD.newDocument()
+
+    root = coin.SoSeparator()
+
+    for part, option in zip(parts, options):
+        new_part = part.shape.copy()
+        new_part.rotate((0.0, 0.0, 0.0), (1.0, 0.0, 0.0), -90.0)
+        obj = doc.addObject("Part::Feature")
+        obj.Shape = new_part
+        doc.recompute()
+        subgraph = FreeCADGui.subgraphFromObject(obj)
+        _colourise(subgraph, option)
+        root.addChild(subgraph)
+
+    viewer = quarter.QuarterWidget()
+    viewer.setBackgroundColor(coin.SbColor(1, 1, 1))
+    viewer.setTransparencyType(coin.SoGLRenderAction.SCREEN_DOOR)
+    viewer.setSceneGraph(root)
+
+    viewer.setWindowTitle("Bluemira Display")
+    viewer.show()
+    app.exec_()
 
 
 # # =============================================================================

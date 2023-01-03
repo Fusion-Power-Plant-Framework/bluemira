@@ -24,11 +24,7 @@ Display and plotting module
 """
 
 from bluemira.display.auto_config import plot_defaults
-
-from . import displayer, plotter  # noqa: ABS101
+from bluemira.display.displayer import show_cad
+from bluemira.display.plotter import plot_2d, plot_3d
 
 plot_defaults()
-
-plot_2d = plotter.plot_2d
-plot_3d = plotter.plot_3d
-show_cad = displayer.show_cad

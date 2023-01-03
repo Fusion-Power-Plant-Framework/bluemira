@@ -24,37 +24,30 @@ api for plotting using freecad
 """
 from __future__ import annotations
 
-import copy
 from abc import ABC, abstractmethod
-from typing import TYPE_CHECKING, Dict, Iterable, List, Optional, Tuple, Union
-
-import matplotlib.colors as colors
-import polyscope as ps
+from dataclasses import asdict
+from enum import Enum
+from typing import List, Optional, Union
 
 from bluemira.base.look_and_feel import bluemira_debug
-from bluemira.codes import _freecadapi as cadapi
 from bluemira.display.error import DisplayError
 from bluemira.display.palettes import BLUE_PALETTE
 from bluemira.display.plotter import DisplayOptions
-
-if TYPE_CHECKING:
-    from bluemira.geometry.base import BluemiraGeo
-
-DEFAULT_DISPLAY_OPTIONS = {
-    "color": (0.5, 0.5, 0.5),
-    "transparency": 1.0,
-    "material": "wax",
-    "tesselation": 0.05,
-    "wires_on": False,
-    "wire_radius": 0.001,
-}
+from bluemira.utilities.tools import get_module
 
 
-def get_default_options():
+class ViewerBackend(Enum):
+    """CAD viewer backends."""
+
+    FREECAD = "bluemira.codes._freecadapi"
+    POLYSCOPE = "bluemira.codes._polyscope"
+
+
+def get_default_options(backend=ViewerBackend.FREECAD):
     """
     Returns the default display options.
     """
-    return copy.deepcopy(DEFAULT_DISPLAY_OPTIONS)
+    return get_module(backend.value).DefaultDisplayOptions()
 
 
 class DisplayCADOptions(DisplayOptions):
@@ -63,16 +56,14 @@ class DisplayCADOptions(DisplayOptions):
 
     Parameters
     ----------
-    color: Union[str, Tuple[float, float, float]]
-        The colour to display the object, by default (0.5, 0.5, 0.5).
-    transparency: float
-        The transparency to display the object, by default 0.0.
+    backend
+        the backend viewer being used
     """
 
     __slots__ = ("_options",)
 
-    def __init__(self, **kwargs):
-        self._options = get_default_options()
+    def __init__(self, backend=ViewerBackend.FREECAD, **kwargs):
+        self._options = get_default_options(backend)
         self.modify(**kwargs)
 
     def __setattr__(self, attr, val):
@@ -82,9 +73,9 @@ class DisplayCADOptions(DisplayOptions):
         if (
             hasattr(self, "_options")
             and self._options is not None
-            and attr in self._options
+            and attr in self._options.__annotations__
         ):
-            self._options[attr] = val
+            setattr(self._options, attr, val)
         else:
             super().__setattr__(attr, val)
 
@@ -97,34 +88,29 @@ class DisplayCADOptions(DisplayOptions):
         except AttributeError as ae:
             if attr != "_options":
                 try:
-                    return self._options[attr]
-                except KeyError:
+                    return getattr(self._options, attr)
+                except AttributeError:
                     raise ae
             else:
                 raise ae
+
+    def modify(self, **kwargs):
+        """Modify options"""
+        for k, v in kwargs.items():
+            setattr(self, k, v)
 
     def as_dict(self):
         """
         Returns the instance as a dictionary.
         """
-        dict_ = super().as_dict()
-        if "color" in dict_:
-            dict_["color"] = self.color
-        return dict_
-
-    @property
-    def color(self) -> Tuple[float, float, float]:
-        """
-        The RBG colour to display the object.
-        """
-        # NOTE: We only convert to (R,G,B) at the last minute, so that the reprs are
-        # legible.
-        return colors.to_rgb(self._options["color"])
+        return asdict(super().as_dict())
 
 
 # =======================================================================================
 # Visualisation
 # =======================================================================================
+
+
 def _get_displayer_class(part):
     """
     Get the displayer class for an object.
@@ -152,7 +138,7 @@ def _validate_display_inputs(parts, options):
         parts = [parts]
 
     if options is None:
-        options = [get_default_options()] * len(parts)
+        options = [None] * len(parts)
     elif not isinstance(options, list):
         options = [options] * len(parts)
 
@@ -165,8 +151,9 @@ def _validate_display_inputs(parts, options):
 
 
 def show_cad(
-    parts: Optional[Union[BluemiraGeo, List[BluemiraGeo]]] = None,
+    parts: Optional[Union[BluemiraGeo, List[BluemiraGeo]]] = None,  # noqa: F821
     options: Optional[Union[DisplayCADOptions, List[DisplayCADOptions]]] = None,
+    backend: Union[str, ViewerBackend] = ViewerBackend.FREECAD,
     **kwargs,
 ):
     """
@@ -174,170 +161,33 @@ def show_cad(
 
     Parameters
     ----------
-    parts: Optional[Union[BluemiraGeo, List[BluemiraGeo]]]
+    parts
         The parts to display.
-    options: Optional[Union[_PlotCADOptions, List[_PlotCADOptions]]]
+    options
         The options to use to display the parts.
-    kwargs: Dict
-        Passed on to polyscope_setup
+    backend
+        Viewer backend
+    kwargs
+        Passed on to modifications to the plotting style options and backend
     """
+    print(backend)
+    if isinstance(backend, str):
+        backend = ViewerBackend[backend.upper()]
+
     parts, options = _validate_display_inputs(parts, options)
 
     new_options = []
     for o in options:
         if isinstance(o, DisplayCADOptions):
-            temp = DisplayCADOptions(**o.as_dict())
+            temp = DisplayCADOptions(**o.as_dict(), backend=backend)
             temp.modify(**kwargs)
             new_options.append(temp)
         else:
-            new_options.append(DisplayCADOptions(**kwargs))
+            new_options.append(DisplayCADOptions(**kwargs, backend=backend))
 
     part_options = [o.as_dict() for o in new_options]
 
-    transparency = "none"
-    for opt in part_options:
-        if opt["transparency"] < 1:
-            transparency = "pretty"
-            break
-
-    polyscope_setup(
-        up_direction=kwargs.get("up_direction", "z_up"),
-        fps=kwargs.get("fps", 60),
-        aa=kwargs.get("aa", 1),
-        transparency=transparency,
-        render_passes=kwargs.get("render_passes", 2),
-        gplane=kwargs.get("gplane", "none"),
-    )
-
-    add_features(parts, part_options)
-
-    ps.show()
-
-
-def polyscope_setup(
-    up_direction: str = "z_up",
-    fps: int = 60,
-    aa: int = 1,
-    transparency: str = "pretty",
-    render_passes: int = 2,
-    gplane: str = "none",
-):
-    """
-    Setup Polyscope default scene
-
-    Parameters
-    ----------
-    up_direction: str
-        'x_up' The positive X-axis is up.
-        'neg_x_up' The negative X-axis is up.
-        'y_up' The positive Y-axis is up.
-        'neg_y_up' The negative Y-axis is up.
-        'z_up' The positive Z-axis is up.
-        'neg_z_up' The negative Z-axis is up.
-    fps: int
-        maximum frames per second of viewer (-1 == infinite)
-    aa: int
-        anti aliasing amount, 1 is off, 2 is usually enough
-    transparency: str
-        the transparency mode (none, simple, pretty)
-    render_passes: int
-        for transparent shapes how many render passes to undertake
-    gplane: str
-        the ground plane mode (none, tile, tile_reflection, shadon_only)
-    """
-    ps.set_program_name("Bluemira Display")
-    ps.set_max_fps(fps)
-    ps.set_SSAA_factor(aa)
-    ps.set_transparency_mode(transparency)
-    if transparency != "none":
-        ps.set_transparency_render_passes(render_passes)
-    ps.set_ground_plane_mode(gplane)
-    ps.set_up_dir(up_direction)
-
-    # initialize
-    ps.init()
-    ps.remove_all_structures()
-
-
-def add_features(
-    parts: Union[BluemiraGeo, List[BluemiraGeo]],
-    options: Optional[Union[Dict, List[Dict]]] = None,
-) -> List[ps.SurfaceMesh]:
-    """
-    Grab meshes of all parts to be displayed by Polyscope
-
-    Parameters
-    ----------
-    parts: Union[BluemiraGeo, List[BluemiraGeo]]
-        parts to be displayed
-    options: Optional[Union[Dict, List[Dict]]]
-        display options
-
-    Returns
-    -------
-    meshes: List[ps.SurfaceMesh]
-        Registered Polyspline surface meshes
-
-    """
-    meshes = []
-    curves = []
-    if not isinstance(parts, list):
-        parts = [parts]
-
-    # loop over every face adding their meshes to polyscope
-    for shape_i, (part, option) in enumerate(zip(parts, options)):
-        verts, faces = cadapi.collect_verts_faces(part._shape, option["tesselation"])
-
-        if not (verts is None or faces is None):
-            m = ps.register_surface_mesh(
-                clean_name(part.label, shape_i),
-                verts,
-                faces,
-            )
-            m.set_color(option["color"])
-            m.set_transparency(option["transparency"])
-            m.set_material(option["material"])
-            meshes.append(m)
-
-        if option["wires_on"] or (verts is None or faces is None):
-            verts, edges = cadapi.collect_wires(part._shape, Deflection=0.01)
-            c = ps.register_curve_network(
-                clean_name(part.label, f"{shape_i}_wire"),
-                verts,
-                edges,
-                radius=option["wire_radius"],
-            )
-            c.set_color(option["color"])
-            c.set_transparency(option["transparency"])
-            c.set_material(option["material"])
-            curves.append(c)
-
-    return meshes, curves
-
-
-def clean_name(name: str, number: int) -> str:
-    """
-    Cleans or creates name.
-    Polyscope doesn't like hashes in names,
-    repeat names overwrite existing component.
-
-    Parameters
-    ----------
-    name: str
-        name to be cleaned
-    number: int
-        if name is empty <NO LABEL num >
-
-    Returns
-    -------
-    name: str
-
-    """
-    name = name.replace("#", "_")
-    if len(name) == 0 or name == "_":
-        return f"<NO LABEL {number}>"
-    else:
-        return name
+    get_module(backend.value).show_cad(parts, part_options, **kwargs)
 
 
 class BaseDisplayer(ABC):
@@ -399,7 +249,7 @@ class DisplayableCAD:
     def __init__(self):
         super().__init__()
         self._display_cad_options: DisplayCADOptions = DisplayCADOptions()
-        self._display_cad_options.color = next(BLUE_PALETTE)
+        self._display_cad_options.colour = next(BLUE_PALETTE)
 
     @property
     def display_cad_options(self) -> DisplayCADOptions:
