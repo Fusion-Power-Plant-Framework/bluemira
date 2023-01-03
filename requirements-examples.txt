@@ -49,7 +49,7 @@ stack-data==0.6.2
 terminado==0.17.1
 tinycss2==1.2.1
 tornado==6.2
-traitlets==5.7.1
+traitlets==5.8.0
 wcwidth==0.2.5
 webencodings==0.5.1
 zipp==3.11.0
