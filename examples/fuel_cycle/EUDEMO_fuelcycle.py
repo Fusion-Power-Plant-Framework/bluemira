@@ -1,3 +1,4 @@
+# %%
 # bluemira is an integrated inter-disciplinary design tool for future fusion
 # reactors. It incorporates several modules, some of which rely on other
 # codes, to carry out a range of typical conceptual fusion reactor design
@@ -40,7 +41,7 @@ from bluemira.utilities.tools import set_random_seed
 plot_defaults()
 
 # %% [markdown]
-
+#
 # First let's set up a configuration with some values (a la EU-DEMO 2015)
 
 # %%
@@ -80,12 +81,12 @@ lifecycle_config = {
 }
 
 # %% [markdown]
-
+#
 # Now we set a LifeCycle object in order generate some pseudo-randomised timelines.
-
+#
 # We're going to define a LearningStrategy to determine how the operational availability
 # of our reactor improves over time.
-
+#
 # We're going to define an AvailabilityStrategy to determine how the durations in
 # between pulses are distributed.
 
@@ -107,7 +108,7 @@ lifecycle = LifeCycle(
 )
 
 # %% [markdown]
-
+#
 # Now we use the LifeCycle to generate pseudo-randomised timelines. Let's set a
 # random seed number first to get repeatable results
 
@@ -120,11 +121,11 @@ n = 50
 time_dicts = [lifecycle.make_timeline().to_dict() for _ in range(n)]
 
 # %% [markdown]
-
+#
 # Now let's set up a TFVSystem
-
+#
 # First we need to get some input parameters
-
+#
 # Some conversions from inventories to residence times
 # (as discussed with Jonas Schwenzer, KIT)
 
@@ -200,9 +201,9 @@ tfv_config = {
 }
 
 # %% [markdown]
-
+#
 # Now we set up a fuel cycle model
-
+#
 # We can run a single model and look at a typical result
 
 # %%

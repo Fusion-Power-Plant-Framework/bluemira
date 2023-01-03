@@ -1,3 +1,4 @@
+# %%
 # bluemira is an integrated inter-disciplinary design tool for future fusion
 # reactors. It incorporates several modules, some of which rely on other
 # codes, to carry out a range of typical conceptual fusion reactor design
@@ -34,7 +35,7 @@ from bluemira.geometry.coordinates import Coordinates
 from bluemira.radiation_transport.advective_transport import ChargedParticleSolver
 
 # %% [markdown]
-
+#
 # First we load an up equilibrium
 
 # %%
@@ -44,7 +45,7 @@ eq_name = os.path.join(read_path, eq_name)
 eq = Equilibrium.from_eqdsk(eq_name)
 
 # %% [markdown]
-
+#
 # Now we load a first wall geometry, so that the solver can determine where the flux
 # surfaces intersect the first wall.
 
@@ -55,7 +56,7 @@ fw_name = os.path.join(read_path, fw_name)
 fw_shape = Coordinates.from_json(fw_name)
 
 # %% [markdown]
-
+#
 # Then we define some input `Parameter`s for the solver.
 
 # %%
@@ -72,7 +73,7 @@ params = {
 }
 
 # %% [markdown]
-
+#
 # Finally, we initialise the `ChargedParticleSolver` and run it.
 
 # %%

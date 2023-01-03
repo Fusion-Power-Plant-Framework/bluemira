@@ -1,3 +1,4 @@
+# %%
 # bluemira is an integrated inter-disciplinary design tool for future fusion
 # reactors. It incorporates several modules, some of which rely on other
 # codes, to carry out a range of typical conceptual fusion reactor design
@@ -26,7 +27,7 @@ An example to show the use of the raw unit converters
 
 # %% [markdown]
 # ## Raw conversion
-
+#
 # In some situations it may be useful to convert a raw value to a different unit.
 # It is recommended that all conversions,
 # however simple, are made using `bluemira.constants.raw_uc`.

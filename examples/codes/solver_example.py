@@ -1,3 +1,4 @@
+# %%
 # bluemira is an integrated inter-disciplinary design tool for future fusion
 # reactors. It incorporates several modules, some of which rely on other
 # codes, to carry out a range of typical conceptual fusion reactor design
@@ -36,14 +37,14 @@ from bluemira.base.logs import set_log_level
 
 # %% [markdown]
 # # Configuring a solver
-
+#
 # PROCESS is one of the codes bluemira can use to compliment a reactor design.
 # As with any of the external codes bluemira uses, a solver object is created.
 # The solver object abstracts away most of the complexities of running different
 # programs within bluemira.
-
+#
 # ## Setting up
-
+#
 # ### Logging
 # To enable debug logging run the below cell
 

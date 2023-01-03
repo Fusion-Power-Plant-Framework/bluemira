@@ -1,3 +1,4 @@
+# %%
 # bluemira is an integrated inter-disciplinary design tool for future fusion
 # reactors. It incorporates several modules, some of which rely on other
 # codes, to carry out a range of typical conceptual fusion reactor design
@@ -56,7 +57,7 @@ plasma.shape.mesh_options = {"lcar": 0.3, "physical_group": "plasma"}
 plasma.shape.boundary[0].mesh_options = {"lcar": 0.3, "physical_group": "lcfs"}
 
 # %% [markdown]
-
+#
 # Initialize and create the mesh
 
 # %%
@@ -65,7 +66,7 @@ meshfiles = [os.path.join(directory, p) for p in ["Mesh.geo_unrolled", "Mesh.msh
 meshing.Mesh(meshfile=meshfiles)(plasma)
 
 # %% [markdown]
-
+#
 # # Convert to xdmf
 
 # %%

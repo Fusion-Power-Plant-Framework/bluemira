@@ -1,3 +1,4 @@
+# %%
 # bluemira is an integrated inter-disciplinary design tool for future fusion
 # reactors. It incorporates several modules, some of which rely on other
 # codes, to carry out a range of typical conceptual fusion reactor design
@@ -24,7 +25,7 @@ A quick tutorial on the optimisation of geometry in bluemira
 
 # %% [markdown]
 # ## Introduction
-
+#
 # We're going to set up some geometry optimisation problems and solve them with different
 # optimisastion algorithms.
 
@@ -41,7 +42,7 @@ from bluemira.utilities.tools import set_random_seed
 # %% [markdown]
 # Let's set up a simple GeometryOptimisationProblem, where we minimise the length of
 # parameterised geometry.
-
+#
 # First, we set up the GeometryParameterisation, with some bounds on the variables.
 
 # %%
@@ -62,7 +63,7 @@ parameterisation_1 = PrincetonD(
 parameterisation_1.fix_variable("dz", value=0)
 
 # %% [markdown]
-
+#
 # Now, we set up our optimiser. We'll start with a gradient-based optimisation algorithm
 
 # %%
@@ -72,9 +73,9 @@ slsqp_optimiser = Optimiser(
 )
 
 # %% [markdown]
-
+#
 # Next, we make our objective function, using in this case one of the ready-made ones.
-
+#
 # NOTE: This `minimise_length` function includes automatic numerical calculation of the
 # objective function gradient, and expects a certain signature.
 
@@ -85,7 +86,7 @@ objective = OptimisationObjective(
 )
 
 # %% [markdown]
-
+#
 # Finally, we initialise our `GeometryOptimisationProblem` and run it.
 
 # %%
@@ -94,7 +95,7 @@ my_problem = GeometryOptimisationProblem(parameterisation_1, slsqp_optimiser, ob
 my_problem.optimise()
 
 # %% [markdown]
-
+#
 # Here we're minimising the length, within the bounds of our PrincetonD parameterisation,
 # so we'd expect that x1 goes to its upper bound, and x2 goes to its lower bound.
 
@@ -148,7 +149,7 @@ print(
 )
 
 # %% [markdown]
-
+#
 # Now let's include a relatively arbitrary constraint:
 # We're going to minimise length again, but with a constraint that says that we don't
 # want the length to be below some arbitrary value of 50.
@@ -195,7 +196,7 @@ constraint_function = OptimisationConstraint(
 )
 
 # %% [markdown]
-
+#
 # Setting up the problem with a constraint is the same as before, but with an additional
 # argument
 
@@ -225,7 +226,7 @@ problem = GeometryOptimisationProblem(
 problem.optimise()
 
 # %% [markdown]
-
+#
 # Both x1 and x2 are free variables and between them they should be create a PrincetonD
 # shape of length exactly 50 (as the bounds on these variables surely allow it).
 # As we are minimising length, we'd expect to see a function value of 50 here (+/- the
@@ -240,7 +241,7 @@ print(f"n_evals: {problem.opt.n_evals}")
 # This is because we're using numerical gradients and jacobians for our objective and
 # inequality constraint functions. This can be faster than other approaches, but is less
 # robust and also less likely to find the best solution.
-
+#
 # Let's try a few different optimisers, noting the different termination conditions we
 # can play with and their effect.
 
@@ -276,7 +277,7 @@ print(f"n_evals: {problem.opt.n_evals}")
 
 
 # %% [markdown]
-
+#
 # ISRES is a stochastic optimisation algorithm; if we want to see the same results every
 # time, it's advisable to set the random seed to a known value.
 

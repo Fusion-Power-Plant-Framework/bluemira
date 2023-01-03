@@ -1,3 +1,4 @@
+# %%
 # bluemira is an integrated inter-disciplinary design tool for future fusion
 # reactors. It incorporates several modules, some of which rely on other
 # codes, to carry out a range of typical conceptual fusion reactor design
@@ -25,7 +26,7 @@ Simple HelmholzCage example with different current sources.
 
 # %% [markdown]
 # ## Introduction
-
+#
 # In this example we will build some HelmholtzCages with different types of current
 # sources.
 
@@ -147,7 +148,7 @@ analytical_xz_fields = np.sqrt(np.sum(analytical_xz_fields**2, axis=0))
 analytical_xz_fields2 = np.sqrt(np.sum(analytical_xz_fields2**2, axis=0))
 
 # %% [markdown]
-
+#
 # Let's visualise the results
 
 # %%

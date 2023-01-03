@@ -1,3 +1,4 @@
+# %%
 # bluemira is an integrated inter-disciplinary design tool for future fusion
 # reactors. It incorporates several modules, some of which rely on other
 # codes, to carry out a range of typical conceptual fusion reactor design
@@ -51,7 +52,7 @@ face = BluemiraFace(wire)
 
 # %% [markdown]
 # ## Default plotting
-
+#
 # We can plot the list of points, as well as the BluemiraWire and BluemiraFace
 # in the following way, using the display built-in function with default settings
 
@@ -62,7 +63,7 @@ display.plot_2d(face)
 display.plot_3d(face)
 
 # %% [markdown]
-
+#
 # In a similar way, it is possible to use specific Plotters for each entity,
 # i.e. PointsPlotter, WirePlotter, and FacePlotter. For example:
 
@@ -71,7 +72,7 @@ plotter_2d = WirePlotter()
 plotter_2d.plot_2d(wire)
 
 # %% [markdown]
-
+#
 # ## Modifying defaults
 #
 # Default plot options can be obtained in form of a dictionary instancing one of the
@@ -82,7 +83,7 @@ my_options = display.plotter.get_default_options()
 print(my_options)
 
 # %% [markdown]
-
+#
 # Modifying the dictionary and passing it to a plot function will display the plot
 # with the new options
 
@@ -91,7 +92,7 @@ my_options["wire_options"] = {"color": "red", "linewidth": "1.5"}
 display.plot_2d(wire, **my_options)
 
 # %% [markdown]
-
+#
 # Alternatively, plot options can be modified directly inside a Plotter, e.g.:
 
 # %%
@@ -100,8 +101,8 @@ plotter_2d.options.ndiscr = 15
 plotter_2d.plot_2d(wire)
 
 # %% [markdown]
-
-
+#
+#
 # Once you get familiar with the options, you can also make your own dictionaries, and
 # pass them to the plotting functions
 
@@ -113,7 +114,7 @@ my_options = {
 display.plot_2d(wire, **my_options)
 
 # %% [markdown]
-
+#
 # Being matplotlib the default plot library, points_options, wire_options,
 # and face_options are equivalent to the **kwargs passed to the functions scatter,
 # plot, and fill, respectively.
@@ -370,7 +371,7 @@ w1face = BluemiraFace(wire1)
 # ## PhysicalComponent Plot
 #
 # Creates a `PhysicalComponent` and plots it in the xz plane
-
+#
 # Note that if no face colour is set, a colour from the default palette will be chosen
 # by default. This will not be the same every time.
 
@@ -386,7 +387,7 @@ plt.show(block=True)
 # ## PhysicalComponent Plot
 #
 # Creates a `PhysicalComponent` and plots only the wire and not the face.
-
+#
 # Note that unlike the `FacePlotter` when `show_faces = False` the wire is
 # shown by default.
 
@@ -450,7 +451,7 @@ display.show_cad(face)
 
 # %% [markdown]
 # For what concern Components, the component function show_cad is used.
-
+#
 # Note that if no colour is set, a colour from the default palette will be chosen
 # by default. This will not be the same every time.
 # %%
