@@ -21,7 +21,7 @@ greenlet==2.0.1
 identify==2.5.11
 idna==3.4
 imagesize==1.4.1
-importlib-metadata==5.2.0
+importlib-metadata==6.0.0
 iniconfig==1.1.1
 isort==5.12.0
 Jinja2==3.1.2
@@ -44,7 +44,7 @@ pre-commit==2.21.0
 pycodestyle==2.10.0
 pydocstyle==6.1.1
 pyflakes==3.0.1
-Pygments==2.13.0
+Pygments==2.14.0
 pytest==7.2.0
 pytest-cov==4.0.0
 pytest-html==3.2.0
