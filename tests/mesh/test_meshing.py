@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2021-2022 M. Coleman, J. Cook, F. Franza, I.A. Maione, S. McIntosh,
+# Copyright (C) 2021-2023 M. Coleman, J. Cook, F. Franza, I.A. Maione, S. McIntosh,
 #                         J. Morris, D. Short
 #
 # bluemira is free software; you can redistribute it and/or
