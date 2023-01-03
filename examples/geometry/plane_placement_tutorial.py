@@ -22,7 +22,7 @@
 Plotting module examples
 """
 
-# %%[markdown]
+# %% [markdown]
 # Necessary imports
 
 # %%
@@ -31,7 +31,7 @@ import numpy as np
 import bluemira.display as display
 from bluemira.geometry.plane import BluemiraPlane
 
-# %%[markdown]
+# %% [markdown]
 # Creation of a random plane
 
 # %%
@@ -40,7 +40,7 @@ axis = np.array([0, 1, 0])
 plane = BluemiraPlane(base=base, axis=axis)
 print(plane)
 
-# %%[markdown]
+# %% [markdown]
 # The plane can be converted into a BluemiraFace both for plotting purpose or to be
 # used for the generation of components or in boolena operations.
 
@@ -51,13 +51,13 @@ options = display.plotter.PlotOptions()
 options.view = "xz"
 display.plot_2d(face, options)
 
-# %%[markdown]
+# %% [markdown]
 # A placement can be created from a plane
 
 # %%
 placement = plane.to_placement()
 
-# %%[markdown]
+# %% [markdown]
 # On the other side, default xy, yz, and xz plane can be extracted from a placement.
 # Note: xy, yz, and xz plane are referred to the placement axes. Thus, in this
 # particular case, xy plane lies on the GLOBAL xz plane.

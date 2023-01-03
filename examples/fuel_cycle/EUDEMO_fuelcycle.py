@@ -39,7 +39,7 @@ from bluemira.utilities.tools import set_random_seed
 
 plot_defaults()
 
-# %%[markdown]
+# %% [markdown]
 
 # First let's set up a configuration with some values (a la EU-DEMO 2015)
 
@@ -79,7 +79,7 @@ lifecycle_config = {
     "tf_fluence": 3.2e21,
 }
 
-# %%[markdown]
+# %% [markdown]
 
 # Now we set a LifeCycle object in order generate some pseudo-randomised timelines.
 
@@ -106,7 +106,7 @@ lifecycle = LifeCycle(
     lifecycle_config, learning_strategy, availability_strategy, lifecycle_inputs
 )
 
-# %%[markdown]
+# %% [markdown]
 
 # Now we use the LifeCycle to generate pseudo-randomised timelines. Let's set a
 # random seed number first to get repeatable results
@@ -119,7 +119,7 @@ set_random_seed(2358203947)
 n = 50
 time_dicts = [lifecycle.make_timeline().to_dict() for _ in range(n)]
 
-# %%[markdown]
+# %% [markdown]
 
 # Now let's set up a TFVSystem
 
@@ -199,7 +199,7 @@ tfv_config = {
     "f_terscwps": 0.9999,
 }
 
-# %%[markdown]
+# %% [markdown]
 
 # Now we set up a fuel cycle model
 
@@ -211,20 +211,20 @@ model = EUDEMOFuelCycleModel(tfv_config, {})
 model.run(time_dicts[0])
 model.plot()
 
-# %%[markdown]
+# %% [markdown]
 # Now, let's run the fuel cycle model for all the timelines we generated
 
 # %%
 tfv_analysis = FuelCycleAnalysis(model)
 tfv_analysis.run_model(time_dicts)
 
-# %%[markdown]
+# %% [markdown]
 # And the distributions for the start-up inventory and doubling time:
 
 # %%
 tfv_analysis.plot()
 
-# %%[markdown]
+# %% [markdown]
 # And finally, you can get the desired statistical results:
 
 # %%

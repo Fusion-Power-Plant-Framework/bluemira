@@ -23,7 +23,7 @@
 Simple HelmholzCage example with different current sources.
 """
 
-# %%[markdown]
+# %% [markdown]
 # ## Introduction
 
 # In this example we will build some HelmholtzCages with different types of current
@@ -42,7 +42,7 @@ from bluemira.magnetostatics.circuits import (
 from bluemira.magnetostatics.circular_arc import CircularArcCurrentSource
 from bluemira.utilities.plot_tools import Plot3D
 
-# %%[markdown]
+# %% [markdown]
 # Set up some geometry and key parameters
 
 # %%
@@ -56,7 +56,7 @@ z_c = 0
 
 circle = make_circle(radius, center=(x_c, 0, z_c), axis=(0, 1, 0))
 
-# %%[markdown]
+# %% [markdown]
 # Make a Biot-Savart filament (which needs to be properly discretised)
 
 # %%
@@ -81,7 +81,7 @@ biotsavart_circuit = BiotSavartFilament(
     filaments, radius=fil_radius, current=current / (n_filaments_x * n_filaments_y)
 )
 
-# %%[markdown]
+# %% [markdown]
 # Make an analytical circuit with a rectangular cross-section comprised
 # of several trapezoidal prism elements
 
@@ -92,7 +92,7 @@ analytical_circuit1 = ArbitraryPlanarRectangularXSCircuit(
     coordinates, breadth=breadth, depth=depth, current=current
 )
 
-# %%[markdown]
+# %% [markdown]
 # Make an analytical circuit of a circle arc with a rectangular cross-section
 
 # %%
@@ -108,7 +108,7 @@ analytical_circuit2 = CircularArcCurrentSource(
     current=current,
 )
 
-# %%[markdown]
+# %% [markdown]
 # Pattern the three circuits into HelmholtzCages
 
 # %%
@@ -116,7 +116,7 @@ biotsavart_tf_cage = HelmholtzCage(biotsavart_circuit, n_TF=n_TF)
 analytical_tf_cage1 = HelmholtzCage(analytical_circuit1, n_TF=n_TF)
 analytical_tf_cage2 = HelmholtzCage(analytical_circuit2, n_TF=n_TF)
 
-# %%[markdown]
+# %% [markdown]
 # Calculate the fields in the x-y and x-z planes
 
 # %%
@@ -146,7 +146,7 @@ biotsavart_xz_fields = np.sqrt(np.sum(biotsavart_xz_fields**2, axis=0))
 analytical_xz_fields = np.sqrt(np.sum(analytical_xz_fields**2, axis=0))
 analytical_xz_fields2 = np.sqrt(np.sum(analytical_xz_fields2**2, axis=0))
 
-# %%[markdown]
+# %% [markdown]
 
 # Let's visualise the results
 

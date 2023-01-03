@@ -23,7 +23,7 @@
 A geometry tutorial for users.
 """
 
-# %%[markdown]
+# %% [markdown]
 # ## Introduction
 
 # Geometry is not plasma physics, but it isn't trivial either. Chances are most of
@@ -74,7 +74,7 @@ from bluemira.geometry.tools import (
 )
 from bluemira.geometry.wire import BluemiraWire
 
-# %%[markdown]
+# %% [markdown]
 # ## Geometry creation (1-D)
 
 # Let's get familiar with some ways of making 1-D geometries.
@@ -100,7 +100,7 @@ print(first_wire)
 # obj property, e.g.
 print(f"Wire length: {first_wire.length}")
 
-# %%[markdown]
+# %% [markdown]
 # Concatenation of more wires is also allowed:
 
 # %%
@@ -109,7 +109,7 @@ second_wire = make_polygon(points2, label="wire2")
 full_wire = BluemiraWire([first_wire, second_wire], label="full_wire")
 print(full_wire)
 
-# %%[markdown]
+# %% [markdown]
 # In such a case, sub-wires are still accessible as separate entities and
 # can be returned through a search operation on the full wire:
 
@@ -124,7 +124,7 @@ wire_plotter = plotter.WirePlotter()
 wire_plotter.options.view = "xy"
 wire_plotter.plot_2d(full_wire)
 
-# %%[markdown]
+# %% [markdown]
 # More complex geometries can be created using splines, arcs, etc.
 
 # %%
@@ -138,14 +138,14 @@ wires.append(make_polygon([[0, 0], [4, 0], [0, 0]], label="w6"))
 closed_wire = BluemiraWire(wires, label="closed_wire")
 wire_plotter.plot_2d(closed_wire)
 
-# %%[markdown]
+# %% [markdown]
 # In such a case, the created wire is closed. A check can be done interrogating
 # the is_closed function of the wire:
 
 # %%
 print(f"wire is closed: {closed_wire.is_closed()}")
 
-# %%[markdown]
+# %% [markdown]
 # ## Geometry creation (2-D and 3-D)
 
 # A closed planar 1-D geometry can be used as boundary to generate a 2-D face.
@@ -154,7 +154,7 @@ print(f"wire is closed: {closed_wire.is_closed()}")
 first_face = BluemiraFace(boundary=closed_wire, label="first_face")
 print(first_face)
 
-# %%[markdown]
+# %% [markdown]
 # A matplotlib-style plotting of a face can be made similarly to what was done for
 # a wire, i.e. using a FacePlotter
 
@@ -164,7 +164,7 @@ face_plotter.options.view = "xy"
 face_plotter.plot_2d(first_face)
 
 
-# %%[markdown]
+# %% [markdown]
 # If more than one closed wire is given as boundary for a face, the first one is
 # used as the external boundary and subsequent ones are considered as holes.
 
@@ -176,7 +176,7 @@ print(face_with_hole)
 face_plotter.plot_2d(face_with_hole)
 
 
-# %%[markdown]
+# %% [markdown]
 # Starting from 1-D or 2-D geometries, 3-D objects can be created, for example,
 # by revolution or extrusion.
 
@@ -189,7 +189,7 @@ print(first_solid)
 # interrogating "fist_solid".
 
 
-# %%[markdown]
+# %% [markdown]
 # ## 3-D Display
 
 # Geometry objects can be displayed via `show_cad`, and the appearance
@@ -199,7 +199,7 @@ print(first_solid)
 show_cad(first_solid, DisplayCADOptions(color="blue", transparency=0.1))
 
 
-# %%[markdown]
+# %% [markdown]
 # ## Matryoshka structure
 
 # Bluemira geometries are structured in a commonly used "Matryoshka" or
@@ -226,7 +226,7 @@ for i, shell in enumerate(first_solid.boundary):
             )
 
 
-# %%[markdown]
+# %% [markdown]
 
 # ## Geometric transformations
 
@@ -262,7 +262,7 @@ plt.title("Translated wire test")
 plt.show()
 
 
-# %%[markdown]
+# %% [markdown]
 # ## Geometry creation (complex shapes)
 
 # OK, let's do something more complicated now.
@@ -300,7 +300,7 @@ show_cad(
 )
 
 
-# %%[markdown]
+# %% [markdown]
 # ## Additional examples
 # Making 3-D shapes from 2-D shapes
 
@@ -330,7 +330,7 @@ path = BluemiraWire([straight_line, quarter_turn])
 solid = sweep_shape(rectangle.boundary[0], path)
 show_cad(solid)
 
-# %%[markdown]
+# %% [markdown]
 # Making 3-D shapes from 3-D shapes
 
 # Boolean operations often come in very useful when making CAD.
@@ -368,7 +368,7 @@ cut_box_1 = boolean_cut(box_1, box_2)[0]
 
 show_cad(cut_box_1)
 
-# %%[markdown]
+# %% [markdown]
 # ## Modification of existing geometries
 
 # Now we're going to look at some stuff that we can do to change
@@ -387,7 +387,7 @@ new_cut_box_1.scale(3)
 blue_red_options = [DisplayCADOptions(color="blue"), DisplayCADOptions(color="red")]
 show_cad([cut_box_1, new_cut_box_1], options=blue_red_options)
 
-# %%[markdown]
+# %% [markdown]
 # ## Exporting geometry
 
 # At present, only the STEP Assembly format is supported

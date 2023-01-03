@@ -1,3 +1,4 @@
+# %%
 # bluemira is an integrated inter-disciplinary design tool for future fusion
 # reactors. It incorporates several modules, some of which rely on other
 # codes, to carry out a range of typical conceptual fusion reactor design
@@ -37,8 +38,8 @@ from bluemira.balance_of_plant.steady_state import (
     SuperheatedRankine,
 )
 
-# %%[markdown]
-
+# %% [markdown]
+#
 # Let's set up a typical power balance model. We start by specifying some parameters we
 # want to use.
 
@@ -53,8 +54,8 @@ default_params = {
 }
 # fmt: on
 
-# %%[markdown]
-
+# %% [markdown]
+#
 # We then weed to specify how we're going to treat the neutrons, radiation, and charged
 # particle loads. We do this by specifying "strategies".
 
@@ -75,8 +76,8 @@ rad_sep_strat = RadChargedPowerStrategy(
     f_fw_aux=0.09,
 )
 
-# %%[markdown]
-
+# %% [markdown]
+#
 # Now we specify how the in-vessel components are being cooled, to calculate pumping
 # powers, and the balance of plant cycle design.
 
@@ -87,8 +88,8 @@ blanket_pump_strat = HePumping(
 bop_cycle = SuperheatedRankine(bb_t_out=500 + 273.15, delta_t_turbine=20)
 divertor_pump_strat = H2OPumping(f_pump=0.05, eta_isentropic=0.99, eta_electric=0.87)
 
-# %%[markdown]
-
+# %% [markdown]
+#
 # Maybe we don't have any good models to estimate some of the other parasitic loads. We
 # can set up a simple scaling with respect to a known reference point, by sub-classing
 # from the ABC and specifying some calculation in the `calculate` method.
@@ -122,8 +123,8 @@ class EUDEMOReferenceParasiticLoadStrategy(ParasiticLoadStrategy):
 
 parasitic_load_strat = EUDEMOReferenceParasiticLoadStrategy()
 
-# %%[markdown]
-
+# %% [markdown]
+#
 # Now, we put everything together and build it
 
 # %%
@@ -138,16 +139,16 @@ HCPB_bop = BalanceOfPlantModel(
 )
 HCPB_bop.build()
 
-# %%[markdown]
-
+# %% [markdown]
+#
 # And we can take a look...
 
 # %%
 HCPB_bop.plot(title="HCPB blanket")
 
 
-# %%[markdown]
-
+# %% [markdown]
+#
 # What about if we had a different blanket concept? The coolant is different, which means
 # the pumping loads will differ, and the power cycle will also be different. It's likely
 # that the energy multiplication is different too

@@ -28,7 +28,7 @@ import numpy as np
 
 from bluemira.utilities.optimiser import Optimiser, approx_derivative
 
-# %%[markdown]
+# %% [markdown]
 
 # Optimisation example
 

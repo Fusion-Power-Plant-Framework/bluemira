@@ -23,7 +23,7 @@
 An example to run PROCESS
 """
 
-# %%[markdown]
+# %% [markdown]
 # # Solvers
 # This example shows how to use File interface solvers.
 # Using PROCESS as the external solver
@@ -34,7 +34,7 @@ import bluemira.codes.process as process
 from bluemira.base.file import get_bluemira_path
 from bluemira.base.logs import set_log_level
 
-# %%[markdown]
+# %% [markdown]
 # # Configuring a solver
 
 # PROCESS is one of the codes bluemira can use to compliment a reactor design.
@@ -51,7 +51,7 @@ from bluemira.base.logs import set_log_level
 
 set_log_level("DEBUG")
 
-# %%[markdown]
+# %% [markdown]
 # ### Binary Location
 # Firstly if process is not in your system path we need to provide the
 # binary location to the solver.
@@ -62,7 +62,7 @@ set_log_level("DEBUG")
 PROCESS_PATH = ""
 binary = f"{PROCESS_PATH}process"
 
-# %%[markdown]
+# %% [markdown]
 # ### Creating the solver object
 # bluemira-PROCESS parameter names have been mapped across where possible.
 # Some example parameters have been set here in `new_params`
@@ -85,7 +85,7 @@ params = {
 }
 
 
-# %%[markdown]
+# %% [markdown]
 # Finally the `build_config` dictionary collates the configuration settings for
 # the solver
 
@@ -95,14 +95,14 @@ build_config = {
     "run_dir": get_bluemira_path(subfolder="generated_data"),
 }
 
-# %%[markdown]
+# %% [markdown]
 # Now we can create the solver object with the parameters and build configuration
 
 # %%
 
 process_solver = process.Solver(params=params, build_config=build_config)
 
-# %%[markdown]
+# %% [markdown]
 # ### Running the solver
 # Call the `execute` method of the solver, using one of the solver's
 # run modes.

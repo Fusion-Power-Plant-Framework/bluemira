@@ -23,7 +23,7 @@
 Equilibrium and coilset optimisation - developer tutorial
 """
 
-# %%[markdown]
+# %% [markdown]
 
 # Here we explore how to optimise equilibria, coil currents, and coil positions.
 
@@ -83,7 +83,7 @@ try:
 except AttributeError:
     pass
 
-# %%[markdown]
+# %% [markdown]
 
 # First let's create our inital coilset. This is taken from a reference EU-DEMO design
 # but as you will see we will change this later on.
@@ -114,7 +114,7 @@ for i, (xi, zi, dxi, dzi) in enumerate(zip(x, z, dx, dz)):
 
 coilset = CoilSet(*coils)
 
-# %%[markdown]
+# %% [markdown]
 
 # Now we can also specify our coilset a little further, by assigning maximum current
 # densities and peak fields. This can then be used in the bounds and constraints for our
@@ -137,7 +137,7 @@ cs = coilset.get_coiltype("CS")
 cs.fix_sizes()
 cs.discretisation = 0.3
 
-# %%[markdown]
+# %% [markdown]
 
 # Now, we set up our grid, equilibrium, and profiles.
 
@@ -167,7 +167,7 @@ profiles = CustomProfile(
 
 eq = Equilibrium(coilset, grid, profiles, psi=None)
 
-# %%[markdown]
+# %% [markdown]
 
 # Now we need to specify some constraints on the plasma.
 
@@ -217,7 +217,7 @@ x_point = FieldNullConstraint(
     tolerance=1e-4,  # [T]
 )
 
-# %%[markdown]
+# %% [markdown]
 
 # It's often very useful to solve an unconstrained optimised problem in order to get
 # an initial guess for the equilibrium result. The initial equilibrium can be used as
@@ -244,7 +244,7 @@ program = PicardIterator(
 program()
 
 
-# %%[markdown]
+# %% [markdown]
 
 # Now say we want to use bounds on our current vector, and that we want to solve a
 # constrained optimisation problem.
@@ -296,7 +296,7 @@ program = PicardIterator(
 program()
 
 
-# %%[markdown]
+# %% [markdown]
 
 # Now let's say we don't actually want to minimise the error, but we want to minimise the
 # coil currents, and use the constraints that we specified above as actual constraints
@@ -344,7 +344,7 @@ print(
 )
 
 
-# %%[markdown]
+# %% [markdown]
 
 # Coil position optimisation
 
@@ -418,7 +418,7 @@ current_opt_problem_eof = TikhonovCurrentCOP(
     constraints=[eof_psi_boundary, x_point, field_constraints, force_constraints],
 )
 
-# %%[markdown]
+# %% [markdown]
 
 # We set up a position mapping of the regions in which we would like the PF coils
 # to be. The positions themselves are bounded by the specification of the
@@ -473,7 +473,7 @@ position_opt_problem = PulsedNestedPositionCOP(
 
 optimised_coilset = position_opt_problem.optimise(verbose=True)
 
-# %%[markdown]
+# %% [markdown]
 
 # We've just optimised the PF coil positions using a single current filament at the
 # centre of each PF coil. This is a reasonable approximation when performing a position
@@ -504,7 +504,7 @@ for problem in [current_opt_problem_sof, current_opt_problem_eof]:
     problem.set_current_bounds(max_currents)
 
 
-# %%[markdown]
+# %% [markdown]
 
 # Now that we've:
 #   * optimised the coil positions for a fixed plasma,
@@ -538,7 +538,7 @@ program = PicardIterator(
 )
 program()
 
-# %%[markdown]
+# %% [markdown]
 
 # Now let's compare the old equilibrium and coilset to the one with optimised positions.
 
@@ -555,7 +555,7 @@ ax.plot(x_new, z_new, linewidth=0, marker="+", color="r")
 isoflux.plot(ax=ax)
 plt.show()
 
-# %%[markdown]
+# %% [markdown]
 
 # Note that one could converge the Grad-Shafranov equation for each set of coil positions
 # but this would be much slower and probably less robust. Personally, I don't think it is

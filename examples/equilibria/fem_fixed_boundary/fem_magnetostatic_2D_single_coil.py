@@ -23,7 +23,7 @@
 Application of the dolfin fem 2D magnetostatic to a single coil problem
 """
 
-# %%[markdown]
+# %% [markdown]
 
 # # Introduction
 
@@ -54,7 +54,7 @@ from bluemira.geometry.face import BluemiraFace
 from bluemira.mesh import meshing
 from bluemira.mesh.tools import import_mesh, msh_to_xdmf
 
-# %%[markdown]
+# %% [markdown]
 
 # # Creation of the geometry
 
@@ -68,7 +68,7 @@ rc = 5
 drc = 0.01
 lcar_coil = 0.01
 
-# %%[markdown]
+# %% [markdown]
 
 # create the coil (rectangular cross section) and set the mesh options
 
@@ -84,7 +84,7 @@ poly_coil.mesh_options = {"lcar": lcar_coil, "physical_group": "poly_coil"}
 coil = BluemiraFace(poly_coil)
 coil.mesh_options = {"lcar": lcar_coil, "physical_group": "coil"}
 
-# %%[markdown]
+# %% [markdown]
 
 # create the enclosure (rectangular cross section) and set the mesh options
 
@@ -99,7 +99,7 @@ poly_enclo.mesh_options = {"lcar": lcar_enclo, "physical_group": "poly_enclo"}
 enclosure = BluemiraFace([poly_enclo, poly_coil])
 enclosure.mesh_options = {"lcar": lcar_enclo, "physical_group": "enclo"}
 
-# %%[markdown]
+# %% [markdown]
 
 # create the different components
 
@@ -108,7 +108,7 @@ c_universe = Component(name="universe")
 c_enclo = PhysicalComponent(name="enclosure", shape=enclosure, parent=c_universe)
 c_coil = PhysicalComponent(name="coil", shape=coil, parent=c_universe)
 
-# %%[markdown]
+# %% [markdown]
 
 # # Mesh
 
@@ -120,7 +120,7 @@ meshfiles = [os.path.join(directory, p) for p in ["Mesh.geo_unrolled", "Mesh.msh
 
 meshing.Mesh(meshfile=meshfiles)(c_universe, dim=2)
 
-# %%[markdown]
+# %% [markdown]
 
 # Convert the mesh in xdmf for reading in fenics.
 
@@ -136,7 +136,7 @@ mesh, boundaries, subdomains, labels = import_mesh(
 dolfin.plot(mesh)
 plt.show()
 
-# %%[markdown]
+# %% [markdown]
 
 # # Setup EM problem
 
@@ -147,7 +147,7 @@ plt.show()
 em_solver = FemMagnetostatic2d(3)
 em_solver.set_mesh(mesh, boundaries)
 
-# %%[markdown]
+# %% [markdown]
 
 # Define source term (coil current distribution) for the fem problem
 
@@ -159,7 +159,7 @@ markers = [labels["coil"]]
 functions = [jc]
 jtot = ScalarSubFunc(functions, markers, subdomains)
 
-# %%[markdown]
+# %% [markdown]
 
 # plot the source term
 # Note: depending on the geometric dimension of the coil, enclosure, and mesh
@@ -173,7 +173,7 @@ f.interpolate(jtot)
 dolfin.plot(f, title="Source term")
 plt.show()
 
-# %%[markdown]
+# %% [markdown]
 
 # solve the em problem and calculate the magnetic field B
 
@@ -183,7 +183,7 @@ em_solver.define_g(jtot)
 em_solver.solve()
 em_solver.calculate_b()
 
-# %%[markdown]
+# %% [markdown]
 
 # Compare the obtained B with both the theoretical value
 
@@ -210,7 +210,7 @@ ax.plot(z_points_axis, diff, label="B_calc - B_teo")
 plt.legend()
 plt.show()
 
-# %%[markdown]
+# %% [markdown]
 
 # 1) Along a radial path at z_offset (solution from green function)
 

@@ -42,7 +42,7 @@ from bluemira.mesh.tools import import_mesh, msh_to_xdmf
 
 import dolfin  # isort:skip
 
-# %%[markdown]
+# %% [markdown]
 # # Create a plasma shape
 
 
@@ -55,7 +55,7 @@ plasma = PhysicalComponent(
 plasma.shape.mesh_options = {"lcar": 0.3, "physical_group": "plasma"}
 plasma.shape.boundary[0].mesh_options = {"lcar": 0.3, "physical_group": "lcfs"}
 
-# %%[markdown]
+# %% [markdown]
 
 # Initialize and create the mesh
 
@@ -64,7 +64,7 @@ directory = get_bluemira_path("", subfolder="generated_data")
 meshfiles = [os.path.join(directory, p) for p in ["Mesh.geo_unrolled", "Mesh.msh"]]
 meshing.Mesh(meshfile=meshfiles)(plasma)
 
-# %%[markdown]
+# %% [markdown]
 
 # # Convert to xdmf
 

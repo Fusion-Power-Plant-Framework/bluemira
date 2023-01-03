@@ -52,7 +52,7 @@ from bluemira.utilities.opt_problems import OptimisationConstraint, Optimisation
 from bluemira.utilities.optimiser import Optimiser, approx_derivative
 from bluemira.utilities.tools import get_class_from_module
 
-# %%[markdown]
+# %% [markdown]
 
 # # Simplistic Reactor Design
 
@@ -97,7 +97,7 @@ class TFCoilBuilderParams(ParameterFrame):
     tf_wp_depth: Parameter[float]
 
 
-# %%[markdown]
+# %% [markdown]
 
 # To manage access to properties of the components we need some `ComponentManagers`
 
@@ -127,7 +127,7 @@ class TFCoil(ComponentManager):
         )
 
 
-# %%[markdown]
+# %% [markdown]
 
 # We then need a reactor in which to store the components.
 # Notice that the typing of the components here is the relevent `ComponentManager`
@@ -142,7 +142,7 @@ class MyReactor(Reactor):
     tf_coil: TFCoil
 
 
-# %%[markdown]
+# %% [markdown]
 
 # Now we want to define a way to optimise the TF coil shape.
 # We want to minimise the length of the TF coil, constraining the optimiser such that
@@ -241,7 +241,7 @@ class MyTFCoilOptProblem(GeometryOptimisationProblem):
         return super().optimise(x0)
 
 
-# %%[markdown]
+# %% [markdown]
 
 # We need to define some `Designers` and `Builders` for our various `Components`.
 
@@ -331,7 +331,7 @@ class PlasmaBuilder(Builder):
         return component
 
 
-# %%[markdown]
+# %% [markdown]
 
 # And now the TF Coil, in this instance for simplicity we are only making one TF coil.
 
@@ -435,7 +435,7 @@ class TFCoilBuilder(Builder):
         return PhysicalComponent("Winding pack", volume)
 
 
-# %%[markdown]
+# %% [markdown]
 
 # Now let us setup our build configuration.
 # This could be stored as a JSON file and read in but for simplicity it is all written
@@ -529,7 +529,7 @@ build_config = {
 }
 
 
-# %%[markdown]
+# %% [markdown]
 
 # Now we set up our ParameterFrames
 
@@ -544,7 +544,7 @@ tf_coil_params = TFCoilBuilderParams.from_dict(
     {**build_config["params"], **build_config["TF Coil"]["Builder"].pop("params")}
 )
 
-# %%[markdown]
+# %% [markdown]
 
 # We create our plasma
 
@@ -557,7 +557,7 @@ plasma_builder = PlasmaBuilder(
 )
 plasma = Plasma(plasma_builder.build())
 
-# %%[markdown]
+# %% [markdown]
 
 # We create our TF coil
 
@@ -570,7 +570,7 @@ tf_parameterisation = tf_coil_designer.execute()
 tf_coil_builder = TFCoilBuilder(tf_coil_params, tf_parameterisation.create_shape())
 tf_coil = TFCoil(tf_coil_builder.build())
 
-# %%[markdown]
+# %% [markdown]
 
 # Finally we add the components to the reactor and show the CAD
 

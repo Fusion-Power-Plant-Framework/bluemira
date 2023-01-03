@@ -24,7 +24,7 @@ An example to show the use of the raw unit converters
 """
 
 
-# %%[markdown]
+# %% [markdown]
 # ## Raw conversion
 
 # In some situations it may be useful to convert a raw value to a different unit.
@@ -50,7 +50,7 @@ print(const.gas_flow_uc(1, "mol/s", "Pa m^3/s", gas_flow_temperature=298.15))
 # boltzmann constant conversion
 print(const.raw_uc(1, "eV", "K"))
 
-# %%[markdown]
+# %% [markdown]
 # ## Raw Temperature conversion with checks from different units
 # The explicit temperature conversion routines guard against temperatures
 # below absolute zero

@@ -33,7 +33,7 @@ from bluemira.equilibria import Equilibrium
 from bluemira.geometry.coordinates import Coordinates
 from bluemira.radiation_transport.advective_transport import ChargedParticleSolver
 
-# %%[markdown]
+# %% [markdown]
 
 # First we load an up equilibrium
 
@@ -43,7 +43,7 @@ eq_name = "EU-DEMO_EOF.json"
 eq_name = os.path.join(read_path, eq_name)
 eq = Equilibrium.from_eqdsk(eq_name)
 
-# %%[markdown]
+# %% [markdown]
 
 # Now we load a first wall geometry, so that the solver can determine where the flux
 # surfaces intersect the first wall.
@@ -54,7 +54,7 @@ fw_name = "first_wall.json"
 fw_name = os.path.join(read_path, fw_name)
 fw_shape = Coordinates.from_json(fw_name)
 
-# %%[markdown]
+# %% [markdown]
 
 # Then we define some input `Parameter`s for the solver.
 
@@ -71,7 +71,7 @@ params = {
     "f_hfs_upper_target": 0,
 }
 
-# %%[markdown]
+# %% [markdown]
 
 # Finally, we initialise the `ChargedParticleSolver` and run it.
 
