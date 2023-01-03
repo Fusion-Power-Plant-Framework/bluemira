@@ -12,7 +12,7 @@ defusedxml==0.7.1
 entrypoints==0.4
 executing==1.2.0
 fastjsonschema==2.16.2
-importlib-resources==5.10.1
+importlib-resources==5.10.2
 ipykernel==6.19.4
 ipython==8.7.0
 ipython-genutils==0.2.0
