@@ -98,6 +98,8 @@ numfig = True
 
 
 # --- Configuration for sphinx-autoapi ---
+autodoc_typehints = "both"
+
 extensions.append("sphinx.ext.inheritance_diagram")
 extensions.append("autoapi.extension")
 
