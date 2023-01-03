@@ -7,7 +7,7 @@ The bluemira examples have been written with the intention that they will be run
 Within your bluemira virtual environment, run the following to ensure Jupyter is installed with notebook support - this lets us run the examples within a web browser:
 
 ```bash
-pip install notebook
+pip install notebook jupytext
 ```
 
 When the install has completed, we can start a Jupyter server by running the following from your ~/code/bluemira directory:
@@ -34,6 +34,6 @@ You can stop the Jupyter server by double-pressing `ctrl+c` in your terminal.
 
 ## Maintaining the examples
 
-To add a new example, or to edit an existing one, make your changes in the `.py` version
-of the example and then run the `convert_py_to_ipynb.py` script. This will convert all
-`.py` files with notebook blocks e.g. `# %%` to the corresponding `.ipynb` file.
+To add a new example, or to edit an existing one, make your changes in the `.py` file
+of the example. Jupytext will automatically render all python files with markdown comments
+when percentage blocks (`# %%` or `# %% [markdown]`) to mark cells of the rendered notebook.
