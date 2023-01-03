@@ -32,7 +32,7 @@ nodeenv==1.7.0
 pathspec==0.10.3
 pbr==5.11.0
 pep8-naming==0.13.3
-platformdirs==2.6.0
+platformdirs==2.6.2
 pluggy==1.0.0
 pre-commit==2.21.0
 pycodestyle==2.10.0
