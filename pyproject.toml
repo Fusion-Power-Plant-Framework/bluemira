@@ -9,7 +9,7 @@ readme = "README.md"
 requires-python = ">=3.8"
 dynamic=['version']
 classifiers=[
-        "Development Status :: 3 - Alpha",
+        "Development Status :: 5 - Production/Stable",
         "Programming Language :: Python :: 3",
         "License :: OSI Approved :: GNU Lesser General Public License v2.1 or later (LGPLv2.1+)",
         "Operating System :: POSIX :: Linux",
@@ -59,6 +59,7 @@ dev = [
     "flake8-absolute-import",
     "flake8-bandit",
     "flake8-docstrings",
+    "mypy",
     "pep8-naming",
     "pre-commit",
     "pytest",
@@ -119,6 +120,30 @@ profile = "black"
 skip_gitignore = true
 known_first_party = ["bluemira", "eudemo"]
 force_to_top = ["freecad"]
+
+[tool.mypy]
+python_version = "3.8"
+check_untyped_defs = true
+disallow_any_generics = true
+disallow_subclassing_any = true
+disallow_untyped_calls = true
+disallow_untyped_defs = false
+disallow_incomplete_defs = true
+disallow_untyped_decorators = true
+ignore_missing_imports = true
+no_implicit_reexport = true
+strict_equality = true
+strict_concatenate = true
+warn_return_any = false
+warn_no_return = false
+warn_unused_configs = true
+warn_unused_ignores = true
+warn_redundant_casts = true
+
+[[tool.mypy.overrides]]
+module = "bluemira._version.*"
+follow_imports = "skip"
+ignore_errors = true
 
 [tool.pytest.ini_options]
 markers = [
