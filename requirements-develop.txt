@@ -9,7 +9,7 @@ charset-normalizer==2.1.1
 coverage[toml]==7.0.2
 distlib==0.3.6
 docutils==0.17.1
-filelock==3.8.2
+filelock==3.9.0
 flake8==6.0.0
 flake8-absolute-import==1.0.0.1
 flake8-bandit==4.1.1
