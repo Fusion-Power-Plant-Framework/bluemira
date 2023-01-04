@@ -22,7 +22,7 @@ class DefaultDisplayOptions:
     wire_radius: float = 0.001
 
     _colour: Union[Tuple, str] = field(
-        init=False, default_factory=lambda: (0.5, 0.5, 0.5)
+        init=False, repr=False, default_factory=lambda: (0.5, 0.5, 0.5)
     )
 
     @property
