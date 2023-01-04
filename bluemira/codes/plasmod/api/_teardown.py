@@ -92,7 +92,7 @@ class Teardown(CodesTeardown):
         scalars = read_mock_json_or_raise(
             Path(self.read_directory, self.MOCK_JSON_NAME), self._name
         )
-        profiles = read_json_file_or_raise(
+        profiles = read_mock_json_or_raise(
             Path(self.read_directory, self.MOCK_PROFILES_JSON_NAME), self._name
         )
         self.params.update_values(scalars, source=self._name)
