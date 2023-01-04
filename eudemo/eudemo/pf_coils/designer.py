@@ -144,7 +144,7 @@ class PFCoilsDesigner(Designer[CoilSet]):
         # boundary optimisation
         profiles = BetaIpProfile(
             self.params.beta_p.value,
-            self.params.I_p.value * 1e6,
+            self.params.I_p.value,
             self.params.R_0.value,
             self.params.B_0.value,
         )
