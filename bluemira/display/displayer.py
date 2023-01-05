@@ -20,7 +20,7 @@
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 
 """
-api for plotting using freecad
+api for plotting using CAD backend
 """
 from __future__ import annotations
 
@@ -111,21 +111,6 @@ class DisplayCADOptions(DisplayOptions):
 # =======================================================================================
 
 
-def _get_displayer_class(part):
-    """
-    Get the displayer class for an object.
-    """
-    import bluemira.base.components
-
-    if isinstance(part, bluemira.base.components.Component):
-        plot_class = ComponentDisplayer
-    else:
-        raise DisplayError(
-            f"{part} object cannot be displayed. No Displayer available for {type(part)}"
-        )
-    return plot_class
-
-
 def _validate_display_inputs(parts, options):
     """
     Validate the lists of parts and options, applying some default options.
@@ -157,7 +142,7 @@ def show_cad(
     **kwargs,
 ):
     """
-    The CAD display API using Polyscope.
+    The CAD display API.
 
     Parameters
     ----------
@@ -170,7 +155,6 @@ def show_cad(
     kwargs
         Passed on to modifications to the plotting style options and backend
     """
-    print(backend)
     if isinstance(backend, str):
         backend = ViewerBackend[backend.upper()]
 
@@ -213,32 +197,19 @@ class BaseDisplayer(ABC):
         pass
 
 
-class ComponentDisplayer(BaseDisplayer):
+def _get_displayer_class(part):
     """
-    CAD displayer for Components
+    Get the displayer class for an object.
     """
+    import bluemira.base.components
 
-    def show_cad(
-        self,
-        comps,
-        **kwargs,
-    ):
-        """
-        Display the CAD of a component or iterable of components
-
-        Parameters
-        ----------
-        comp: Union[Iterable[Component], Component]
-            Component, or iterable of Components, to be displayed
-        """
-        import bluemira.base.components as bm_comp
-
-        show_cad(
-            *bm_comp.get_properties_from_components(
-                comps, ("shape", "display_cad_options")
-            ),
-            **kwargs,
+    if isinstance(part, bluemira.base.components.Component):
+        plot_class = ComponentDisplayer
+    else:
+        raise DisplayError(
+            f"{part} object cannot be displayed. No Displayer available for {type(part)}"
         )
+    return plot_class
 
 
 class DisplayableCAD:
@@ -284,3 +255,31 @@ class DisplayableCAD:
             The axes that the plot has been displayed onto.
         """
         return self._displayer.show_cad(self, **kwargs)
+
+
+class ComponentDisplayer(BaseDisplayer):
+    """
+    CAD displayer for Components
+    """
+
+    def show_cad(
+        self,
+        comps,
+        **kwargs,
+    ):
+        """
+        Display the CAD of a component or iterable of components
+
+        Parameters
+        ----------
+        comp: Union[Iterable[Component], Component]
+            Component, or iterable of Components, to be displayed
+        """
+        import bluemira.base.components as bm_comp
+
+        show_cad(
+            *bm_comp.get_properties_from_components(
+                comps, ("shape", "display_cad_options")
+            ),
+            **kwargs,
+        )

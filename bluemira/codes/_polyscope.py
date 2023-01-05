@@ -37,12 +37,12 @@ class DefaultDisplayOptions:
 
     @property
     def color(self):
-        """Americanism"""
+        """See colour"""
         return self.colour
 
     @color.setter
     def color(self, value):
-        """Americanism"""
+        """See colour"""
         self.colour = value
 
 

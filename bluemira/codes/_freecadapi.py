@@ -1897,7 +1897,7 @@ def collect_wires(solid: Part.Shape, **kwds) -> (np.ndarray, np.ndarray):
 
 @dataclass
 class DefaultDisplayOptions:
-    """Polyscope default display options"""
+    """Freecad default display options"""
 
     colour: Union[Tuple, str]
     transparency: float = 0.0
@@ -1918,12 +1918,12 @@ class DefaultDisplayOptions:
 
     @property
     def color(self):
-        """Americanism"""
+        """See colour"""
         return self.colour
 
     @color.setter
     def color(self, value):
-        """Americanism"""
+        """See colour"""
         self.colour = value
 
 
