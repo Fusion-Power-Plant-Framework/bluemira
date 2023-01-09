@@ -169,22 +169,28 @@ class ParameterFrame:
             out[param_name] = param_data
         return out
 
-    def tabulate(self, keys: Optional[List] = None, tablefmt: str = "fancy_grid") -> str:
+    def tabulate(
+        self,
+        keys: Optional[List] = None,
+        tablefmt: str = "fancy_grid",
+        floatfmt: str = ".5g",
+    ) -> str:
         """
         Tabulate the ParameterFrame
 
         Parameters
         ----------
-        keys: Optional[List]
+        keys
             table column keys
-        tablefmt: str (default="fancy_grid")
-            The format of the table - see
+        tablefmt
+            The format of the table (default="fancy_grid") - see
             https://github.com/astanin/python-tabulate#table-format
+        floatfmt
+            Format floats to this precision
 
         Returns
         -------
-        tabulated: str
-            The tabulated data
+        The tabulated data
         """
         columns = list(ParamDictT.__annotations__.keys()) if keys is None else keys
         rec_col = copy.deepcopy(columns)
@@ -195,6 +201,11 @@ class ParameterFrame:
                 for key, param in self.to_dict().items()
             ]
         )
+        # tabulate's floatfmt only works if the whole column is a float
+        for r in records:
+            if isinstance(r[1], float):
+                r[1] = f"{r[1]: {floatfmt}}"
+
         return tabulate(
             records,
             headers=columns,

@@ -24,6 +24,7 @@ Three-dimensional current source terms.
 """
 
 from copy import deepcopy
+from typing import List, Union
 
 import numpy as np
 
@@ -109,17 +110,17 @@ class ArbitraryPlanarRectangularXSCircuit(SourceGroup):
         """
         Get the first and second half-angles (transformed to the x-z plane)
         """
-        shape = deepcopy(shape)
-        shape = self._transform_to_xz(shape)
+        shape = self._transform_to_xz(deepcopy(shape))
         self._t_shape = shape
         closed = shape.closed
         self._clockwise = shape.check_ccw((0, 1, 0))
         d_l = np.diff(shape.T, axis=0)
         midpoints = shape.T[:-1, :] + 0.5 * d_l
-        if closed:
-            betas = [self._get_half_angle(midpoints[-1], shape.points[0], midpoints[0])]
-        else:
-            betas = [0.0]
+        betas = (
+            [self._get_half_angle(midpoints[-1], shape.points[0], midpoints[0])]
+            if closed
+            else [0.0]
+        )
         alphas = []
 
         for i, (midpoint, d_l) in enumerate(zip(midpoints, d_l)):
@@ -127,13 +128,10 @@ class ArbitraryPlanarRectangularXSCircuit(SourceGroup):
                 alpha = self._get_half_angle(
                     midpoint, shape.points[i + 1], midpoints[i + 1]
                 )
+            elif closed:
+                alpha = self._get_half_angle(midpoint, shape.points[-1], midpoints[0])
             else:
-                if closed:
-                    alpha = self._get_half_angle(
-                        midpoint, shape.points[-1], midpoints[0]
-                    )
-                else:
-                    alpha = 0.0
+                alpha = 0.0
             alphas.append(alpha)
             beta = alpha
             betas.append(beta)
@@ -147,8 +145,7 @@ class ArbitraryPlanarRectangularXSCircuit(SourceGroup):
         shape.translate(-np.array(shape.center_of_mass))
 
         rot_mat = rotation_matrix_v1v2(normal_vector, np.array([0.0, -1.0, 0.0]))
-        shape = Coordinates(rot_mat @ shape._array)
-        return shape
+        return Coordinates(rot_mat @ shape._array)
 
     def _get_half_angle(self, p0, p1, p2):
         """
@@ -190,12 +187,9 @@ class ArbitraryPlanarRectangularXSCircuit(SourceGroup):
         return angle
 
     def _point_inside_xz(self, point):
-        if self._clockwise:
-            xz_poly = self._t_shape.xz[:, ::-1].T
-        else:
-            xz_poly = self._t_shape.xz.T
-
-        return in_polygon(point[0], point[2], xz_poly)
+        # reverse second axis if clockwise
+        ind = (slice(None), slice(None, None, -1)) if self._clockwise else slice(None)
+        return in_polygon(point[0], point[2], self._t_shape.xz[ind].T)
 
 
 class HelmholtzCage(SourceGroup):
@@ -213,36 +207,39 @@ class HelmholtzCage(SourceGroup):
 
         super().__init__(sources)
 
-    def _pattern(self, circuit):
+    def _pattern(self, circuit) -> List:
         """
         Pattern the CurrentSource axisymmetrically.
         """
-        angles = np.linspace(0, 360, int(self.n_TF), endpoint=False)
         sources = []
-        for angle in angles:
+        for angle in np.linspace(0, 360, int(self.n_TF), endpoint=False):
             source = circuit.copy()
             source.rotate(angle, axis="z")
             sources.append(source)
         return sources
 
     @process_xyz_array
-    def ripple(self, x, y, z):
+    def ripple(
+        self,
+        x: Union[float, np.ndarray],
+        y: Union[float, np.ndarray],
+        z: Union[float, np.ndarray],
+    ) -> float:
         """
         Get the toroidal field ripple at a point.
 
         Parameters
         ----------
-        x: Union[float, np.array]
+        x
             The x coordinate(s) of the points at which to calculate the ripple
-        y: Union[float, np.array]
+        y
             The y coordinate(s) of the points at which to calculate the ripple
-        z: Union[float, np.array]
+        z
             The z coordinate(s) of the points at which to calculate the ripple
 
         Returns
         -------
-        ripple: float
-            The value of the TF ripple at the point(s) [%]
+        The value of the TF ripple at the point(s) [%]
         """
         point = np.array([x, y, z])
         ripple_field = np.zeros(2)
@@ -256,5 +253,4 @@ class HelmholtzCage(SourceGroup):
             field = self.field(*sr)
             ripple_field[i] = np.dot(nr, field)
 
-        ripple = 1e2 * (ripple_field[0] - ripple_field[1]) / np.sum(ripple_field)
-        return ripple
+        return 1e2 * (ripple_field[0] - ripple_field[1]) / np.sum(ripple_field)
