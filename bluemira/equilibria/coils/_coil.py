@@ -109,25 +109,25 @@ class Coil(CoilFieldsMixin):
 
     Parameters
     ----------
-    x: float
+    x
         Coil geometric centre x coordinate [m]
-    z: float
+    z
         Coil geometric centre z coordinate [m]
-    dx: float
+    dx
         Coil radial half-width [m] from coil centre to edge (either side)
-    dz: float
+    dz
         Coil vertical half-width [m] from coil centre to edge (either side)
-    name: str
+    name
         The name of the coil
-    ctype: Union[str, CoilType]
+    ctype
         Type of coil as defined in CoilType
-    current: float (default = 0)
-        Coil current [A]
-    j_max: float
+    current
+        Coil current [A] (default = 0)
+    j_max
         Maximum current density in the coil [A/m^2]
-    b_max: float
+    b_max
         Maximum magnetic field at the coil [T]
-    discretisation: float
+    discretisation
         discretise the coil, value in [m]. The minimum size is 0.05m
     n_turns: int
         Number of turns
@@ -168,12 +168,12 @@ class Coil(CoilFieldsMixin):
         current: float = 0,
         j_max: float = np.nan,
         b_max: float = np.nan,
-        discretisation: float = 1,
+        discretisation: float = np.nan,
         n_turns: int = 1,
     ):
         self._dx = None
         self._dz = None
-        self._discretisation = 1
+        self._discretisation = np.nan
         self._flag_sizefix = None not in (dx, dz)
 
         if dx is not None and x - dx < 0:
@@ -469,7 +469,7 @@ class Coil(CoilFieldsMixin):
         self._quad_weighting = np.ones_like(self._quad_x)
         self._einsum_str = "...j, ...j -> ..."
 
-        if self.discretisation < 1:
+        if not np.isnan(self.discretisation):
             # How fancy do we want the mesh or just smaller rectangles?
             self._rectangular_discretisation()
 
