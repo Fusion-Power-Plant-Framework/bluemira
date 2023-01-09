@@ -8,7 +8,7 @@ cycler==0.11.0
 fonttools==4.38.0
 fortranformat==1.2.2
 gmsh==4.11.1
-imageio==2.23.0
+imageio==2.24.0
 joblib==1.2.0
 kiwisolver==1.4.4
 llvmlite==0.39.1
