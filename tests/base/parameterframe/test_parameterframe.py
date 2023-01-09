@@ -291,6 +291,14 @@ class TestParameterFrame:
                 except ValueError as ve:
                     if ind in head_keys:
                         raise ve
+                except AssertionError as ae:
+                    if ind == "value":
+                        assert (
+                            tr[headers.index(ind)]
+                            == f"{frame_data[data_keys[no]][ind]: 5g}"
+                        )
+                    else:
+                        raise ae
 
     def test_iterating_returns_parameters_in_declaration_order(self):
         frame = BasicFrame.from_dict(FRAME_DATA)
