@@ -93,3 +93,7 @@ PLT_PAUSE = 0.001  # Completely arbitrary number of seconds?
 # Minimum discretisation for finite difference grids.
 #       In practice should be much higher than this
 MIN_N_DISCR = 10
+
+# Minimum discretisation of a coil [m], limit imposed to avoid massive memory
+# usage
+COIL_DISCR = 0.05
