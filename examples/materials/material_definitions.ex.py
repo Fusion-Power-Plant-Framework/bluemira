@@ -1,4 +1,4 @@
-# %%
+# %% nbsphinx="hidden"
 # bluemira is an integrated inter-disciplinary design tool for future fusion
 # reactors. It incorporates several modules, some of which rely on other
 # codes, to carry out a range of typical conceptual fusion reactor design

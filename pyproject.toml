@@ -60,6 +60,7 @@ dev = [
     "flake8-bandit",
     "flake8-docstrings",
     "mypy",
+    "nbsphinx",
     "pep8-naming",
     "pre-commit",
     "pytest",
@@ -69,6 +70,8 @@ dev = [
     "pytest-json-report",
     "sphinx",
     "sphinx-autoapi",
+    "sphinx_copybutton",
+    "sphinx_gallery",
     "sphinx-rtd-theme",
     "versioneer",
 ]

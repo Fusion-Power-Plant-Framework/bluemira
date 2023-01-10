@@ -1,4 +1,4 @@
-# %%
+# %% nbsphinx="hidden"
 # bluemira is an integrated inter-disciplinary design tool for future fusion
 # reactors. It incorporates several modules, some of which rely on other
 # codes, to carry out a range of typical conceptual fusion reactor design
@@ -40,9 +40,10 @@ from bluemira.radiation_transport.advective_transport import ChargedParticleSolv
 
 # %%
 read_path = get_bluemira_path("equilibria", subfolder="data")
-eq_name = "EU-DEMO_EOF.json"
+eq_name = "DN-DEMO_eqref.json"
 eq_name = os.path.join(read_path, eq_name)
 eq = Equilibrium.from_eqdsk(eq_name)
+
 
 # %% [markdown]
 #
@@ -51,7 +52,7 @@ eq = Equilibrium.from_eqdsk(eq_name)
 
 # %%
 read_path = get_bluemira_path("radiation_transport/test_data", subfolder="tests")
-fw_name = "first_wall.json"
+fw_name = "DN_fw_shape.json"
 fw_name = os.path.join(read_path, fw_name)
 fw_shape = Coordinates.from_json(fw_name)
 
@@ -60,16 +61,17 @@ fw_shape = Coordinates.from_json(fw_name)
 # Then we define some input `Parameter`s for the solver.
 
 # %%
-
 params = {
     "P_sep_particle": 150,
-    "f_p_sol_near": 0.50,
-    "fw_lambda_q_near_omp": 0.01,
-    "fw_lambda_q_far_omp": 0.05,
-    "f_lfs_lower_target": 0.75,
-    "f_hfs_lower_target": 0.25,
-    "f_lfs_upper_target": 0,
-    "f_hfs_upper_target": 0,
+    "f_p_sol_near": 0.65,
+    "fw_lambda_q_near_omp": 0.003,
+    "fw_lambda_q_far_omp": 0.1,
+    "fw_lambda_q_near_imp": 0.003,
+    "fw_lambda_q_far_imp": 0.1,
+    "f_lfs_lower_target": 0.9 * 0.5,
+    "f_hfs_lower_target": 0.1 * 0.5,
+    "f_lfs_upper_target": 0.9 * 0.5,
+    "f_hfs_upper_target": 0.1 * 0.5,
 }
 
 # %% [markdown]
@@ -77,9 +79,9 @@ params = {
 # Finally, we initialise the `ChargedParticleSolver` and run it.
 
 # %%
+
 solver = ChargedParticleSolver(params, eq, dx_mp=0.001)
 x, z, hf = solver.analyse(first_wall=fw_shape)
 
-# Plot the analysis
 solver.plot()
 plt.show()

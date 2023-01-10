@@ -49,6 +49,7 @@ extensions = [
     "sphinx.ext.napoleon",
     "sphinx.ext.mathjax",
     "sphinx_rtd_theme",
+    "sphinx_copybutton",
 ]
 
 # Add any paths that contain templates here, relative to this directory.
@@ -123,6 +124,17 @@ plot_html_show_source_link = False
 # --- Configuration for graphviz ---
 extensions.append("sphinx.ext.graphviz")
 graphviz_output_format = "svg"
+
+# --- Configuration for nbsphinx ---
+extensions.append("nbsphinx")
+nbsphinx_execute = "never"
+nbsphinx_custom_formats = {
+    ".ex.py": ["jupytext.reads", {"fmt": "py:percent"}],
+}
+exclude_patterns.append("doc*.py")
+
+# --- Configuration for sphinx-gallery ---
+extensions.append("sphinx_gallery.load_style")
 
 
 class ParamsDirective(Directive):

@@ -18,6 +18,7 @@ The documentation is divided into the following sections:
    Introduction <introduction>
    Installation <installation>
    Conventions <conventions>
+   Examples <examples>
 
 .. toctree::
    :maxdepth: 1
