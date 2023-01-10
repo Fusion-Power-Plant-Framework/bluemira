@@ -35,5 +35,6 @@ You can stop the Jupyter server by double-pressing `ctrl+c` in your terminal.
 ## Maintaining the examples
 
 To add a new example, or to edit an existing one, make your changes in the `.py` file
-of the example. Jupytext will automatically render all python files with markdown comments
-when percentage blocks (`# %%` or `# %% [markdown]`) to mark cells of the rendered notebook.
+of the example. Use percentage blocks (`# %%` or `# %% [markdown]`) to mark cells
+of the notebook. Your IDE or Jupytext if you are using jupyter will render the python file as a
+notebook.
