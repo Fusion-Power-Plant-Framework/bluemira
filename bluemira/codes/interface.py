@@ -158,7 +158,7 @@ class CodesSetup(CodesTask):
                 _inputs[external_name] = self._convert_units(bm_param, target_unit)
         return _inputs
 
-    def _convert_units(self, param, target_unit: str):
+    def _convert_units(self, param, target_unit: Union[str, None]):
         value = (
             param.value
             if target_unit is None
