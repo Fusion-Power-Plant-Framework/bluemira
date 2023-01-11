@@ -122,6 +122,8 @@ class TestKuiroukidis:
         [
             pytest.param(6.2, 3.1, 1.55, 2.0, -0.5, -0.5),
             pytest.param(6.2, 3.1, 1.55, 2.0, 0.5, 0.5),
+            pytest.param(6.2, 3.1, 1.55, 2.0, -0.5, 0.5),
+            pytest.param(6.2, 3.1, 1.55, 2.0, 0.5, -0.5),
             pytest.param(1.717, 1.717 / 0.5151, 1.55, 2.0, 0.15, 0.15),
         ],
     )
@@ -142,6 +144,12 @@ class TestKuiroukidis:
         z_inner = 0.0
         x_outer = R_0 + R_0 / A
         z_outer = 0.0
+
+        f, ax = plt.subplots()
+        ax.plot(flux_surface.x, flux_surface.z)
+        ax.set_aspect("equal")
+        plt.show()
+
         np.testing.assert_allclose(
             np.array([x_lower, z_lower]), flux_surface.xz.T[arg_lower]
         )
@@ -154,10 +162,6 @@ class TestKuiroukidis:
         np.testing.assert_allclose(
             np.array([x_outer, z_outer]), flux_surface.xz.T[arg_outer], atol=1e-12
         )
-        f, ax = plt.subplots()
-        ax.plot(flux_surface.x, flux_surface.z)
-        ax.set_aspect("equal")
-        plt.show()
 
 
 johner_names = [

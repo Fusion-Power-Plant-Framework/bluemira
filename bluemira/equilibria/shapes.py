@@ -160,12 +160,17 @@ def flux_surface_kuiroukidis(
     is just an offset. The key may lie in understand what "relative to the X-point" means
     but it's not enough for me to go on at the moment.
     """
-    if delta_u < 0 and delta_l < 0:
+    if delta_u < 0:
         delta_u *= -1
-        delta_l *= -1
-        negative = True
+        upper_negative = True
     else:
-        negative = False
+        upper_negative = False
+    if delta_l < 0:
+        delta_l *= -1
+        lower_negative = True
+    else:
+        lower_negative = False
+
     n_quart = n_points // 4
     e_0 = a / r_0  # inverse aspect ratio
 
@@ -199,14 +204,14 @@ def flux_surface_kuiroukidis(
     z_right = -r_0 * np.sqrt(2 * p_2 * e_0 * (1 - np.cos(theta)))
 
     x_x_true = r_0 - delta_l * a
-    x_x_actual = x_left[-1]
+    x_x_actual = r_0 * (1 + e_0 * np.cos(theta_delta_lower))
 
     # The lower X-point does not match up with the input kappa_l and delta_l...
     corr_ratio = x_x_true / x_x_actual
     corr_power = 2
     if corr_ratio == 1.0:
         # For good measure, but the maths is wrong...
-        correction = 1.0
+        correction = np.ones(n_quart)
     elif corr_ratio < 1.0:
         correction = (
             1
@@ -218,11 +223,37 @@ def flux_surface_kuiroukidis(
             + np.linspace(0, (corr_ratio - 1) ** (1 / corr_power), n_quart) ** corr_power
         )
 
-    x = np.concatenate([x_upper, x_left * correction, x_right * correction[::-1]])
-    z = z_0 + np.concatenate([z_upper, z_left, z_right])
+    x_left *= correction
+    x_right *= correction[::-1]
+    if upper_negative:
+        x_upper = -x_upper + 2 * r_0
+        x_upper = x_upper[::-1]
+        z_upper = z_upper[::-1]
+    if lower_negative:
+        x_left = -x_left + 2 * r_0
+        x_right = -x_right + 2 * r_0
+        x_left = x_left[::-1]
+        z_left = z_left[::-1]
+        x_right = x_right[::-1]
+        z_right = z_right[::-1]
 
-    if negative:
-        x = -x + 2 * r_0
+    import matplotlib.pyplot as plt
+
+    f, ax = plt.subplots()
+    ax.plot(x_upper, z_upper, color="b", marker="o", markersize=2)
+    ax.plot(x_upper[0], z_upper[0], color="b", marker="o")
+    ax.plot(x_upper[-1], z_upper[-1], color="b", marker="^")
+    ax.plot(x_left, z_left, color="r", marker="o", markersize=2)
+    ax.plot(x_left[0], z_left[0], color="r", marker="o")
+    ax.plot(x_left[-1], z_left[-1], color="r", marker="^")
+    ax.plot(x_right, z_right, color="g", marker="o", markersize=2)
+    ax.plot(x_right[0], z_right[0], color="g", marker="o")
+    ax.plot(x_right[-1], z_right[-1], color="g", marker="^")
+    ax.set_aspect("equal")
+    plt.show()
+
+    x = np.concatenate([x_upper, x_left, x_right])
+    z = z_0 + np.concatenate([z_upper, z_left, z_right])
 
     return Coordinates({"x": x, "z": z})
 
