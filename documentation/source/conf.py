@@ -60,6 +60,7 @@ templates_path = ["_templates"]
 # This pattern also affects html_static_path and html_extra_path.
 exclude_patterns = []
 
+suppress_warnings = []
 
 # -- Options for HTML output -------------------------------------------------
 
@@ -131,8 +132,7 @@ nbsphinx_execute = "never"
 nbsphinx_custom_formats = {
     ".ex.py": ["jupytext.reads", {"fmt": "py:percent"}],
 }
-exclude_patterns.append("doc*.py")
-
+suppress_warnings.append("nbsphinx.localfile")
 # --- Configuration for sphinx-gallery ---
 extensions.append("sphinx_gallery.load_style")
 
