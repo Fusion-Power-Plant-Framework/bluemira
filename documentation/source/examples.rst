@@ -9,6 +9,7 @@ Introductory Examples
     examples/base/params
     examples/base/components_tutorial
     examples/geometry/geometry_tutorial
+    examples/geometry/plotting_tutorial
 
 Equilibria Examples
 
@@ -26,7 +27,6 @@ Geometry Examples
 
     examples/geometry/optimisation_tutorial
     examples/geometry/plane_placement_tutorial
-    examples/geometry/plotting_tutorial
 
 External Code Examples
 
@@ -39,8 +39,8 @@ Other Examples
 
 .. nbgallery::
 
-    examples/balance_of_plant/steady_state_example
     examples/base/units
+    examples/balance_of_plant/steady_state_example
     examples/fuel_cycle/EUDEMO_fuelcycle
     examples/magnetostatics/helmholtz_example
     examples/materials/material_definitions
