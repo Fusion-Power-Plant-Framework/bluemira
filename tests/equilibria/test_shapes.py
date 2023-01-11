@@ -157,6 +157,7 @@ class TestKuiroukidis:
         f, ax = plt.subplots()
         ax.plot(flux_surface.x, flux_surface.z)
         ax.set_aspect("equal")
+        plt.show()
 
 
 johner_names = [
