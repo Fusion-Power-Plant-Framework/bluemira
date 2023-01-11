@@ -160,6 +160,12 @@ def flux_surface_kuiroukidis(
     is just an offset. The key may lie in understand what "relative to the X-point" means
     but it's not enough for me to go on at the moment.
     """
+    if delta_u < 0 and delta_l < 0:
+        delta_u *= -1
+        delta_l *= -1
+        negative = True
+    else:
+        negative = False
     n_quart = n_points // 4
     e_0 = a / r_0  # inverse aspect ratio
 
@@ -214,6 +220,9 @@ def flux_surface_kuiroukidis(
 
     x = np.concatenate([x_upper, x_left * correction, x_right * correction[::-1]])
     z = z_0 + np.concatenate([z_upper, z_left, z_right])
+
+    if negative:
+        x = -x + 2 * r_0
 
     return Coordinates({"x": x, "z": z})
 

@@ -121,6 +121,7 @@ class TestKuiroukidis:
         "R_0, A, kappa_u, kappa_l, delta_u, delta_l",
         [
             pytest.param(6.2, 3.1, 1.55, 2.0, -0.5, -0.5),
+            pytest.param(6.2, 3.1, 1.55, 2.0, 0.5, 0.5),
             pytest.param(1.717, 1.717 / 0.5151, 1.55, 2.0, 0.15, 0.15),
         ],
     )
