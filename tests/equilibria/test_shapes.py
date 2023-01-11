@@ -22,6 +22,7 @@
 import numpy as np
 import pytest
 from matplotlib import pyplot as plt
+from scipy.spatial import ConvexHull
 
 from bluemira.equilibria.shapes import (
     JohnerLCFS,
@@ -117,17 +118,19 @@ class TestManickam:
 
 
 class TestKuiroukidis:
+    fixture = [
+        pytest.param(6.2, 3.1, 1.55, 2.0, -0.5, -0.5),
+        pytest.param(6.2, 3.1, 1.55, 2.0, 0.5, 0.5),
+        pytest.param(6.2, 3.1, 1.55, 2.0, -0.5, 0.5),
+        pytest.param(6.2, 3.1, 1.55, 2.0, 0.5, -0.5),
+        pytest.param(1.717, 1.717 / 0.5151, 1.55, 2.0, 0.15, 0.15),
+    ]
+
     @pytest.mark.parametrize(
         "R_0, A, kappa_u, kappa_l, delta_u, delta_l",
-        [
-            pytest.param(6.2, 3.1, 1.55, 2.0, -0.5, -0.5),
-            pytest.param(6.2, 3.1, 1.55, 2.0, 0.5, 0.5),
-            pytest.param(6.2, 3.1, 1.55, 2.0, -0.5, 0.5),
-            pytest.param(6.2, 3.1, 1.55, 2.0, 0.5, -0.5),
-            pytest.param(1.717, 1.717 / 0.5151, 1.55, 2.0, 0.15, 0.15),
-        ],
+        fixture,
     )
-    def test_kuiroukidis(self, R_0, A, kappa_u, kappa_l, delta_u, delta_l):
+    def test_kuiroukidis_coords(self, R_0, A, kappa_u, kappa_l, delta_u, delta_l):
         flux_surface = flux_surface_kuiroukidis(
             R_0, 0, R_0 / A, kappa_u, kappa_l, delta_u, delta_l, 8, 500
         )
@@ -162,6 +165,17 @@ class TestKuiroukidis:
         np.testing.assert_allclose(
             np.array([x_outer, z_outer]), flux_surface.xz.T[arg_outer], atol=1e-12
         )
+
+    @pytest.mark.parametrize(
+        "R_0, A, kappa_u, kappa_l, delta_u, delta_l",
+        fixture,
+    )
+    def test_kuiroukidis_ccw(self, R_0, A, kappa_u, kappa_l, delta_u, delta_l):
+        flux_surface = flux_surface_kuiroukidis(
+            R_0, 0, R_0 / A, kappa_u, kappa_l, delta_u, delta_l, 8, 500
+        )
+        hull = ConvexHull(flux_surface.xz.T)
+        np.testing.assert_approx_equal(hull.area, flux_surface.length)
 
 
 johner_names = [
