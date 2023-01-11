@@ -3,7 +3,7 @@
 # codes, to carry out a range of typical conceptual fusion reactor design
 # activities.
 #
-# Copyright (C) 2021-2022 M. Coleman, J. Cook, F. Franza, I.A. Maione, S. McIntosh,
+# Copyright (C) 2021-2023 M. Coleman, J. Cook, F. Franza, I.A. Maione, S. McIntosh,
 #                         J. Morris, D. Short
 #
 # bluemira is free software; you can redistribute it and/or
@@ -23,7 +23,7 @@
 Attempt at recreating the EU-DEMO 2017 reference equilibria from a known coilset.
 """
 
-# %%[markdown]
+# %% [markdown]
 
 # # EU-DEMO 2017 reference breakdown and equilibrium benchmark
 
@@ -75,7 +75,7 @@ from bluemira.utilities.optimiser import Optimiser
 from bluemira.utilities.positioning import PathInterpolator, PositionMapper
 from eudemo.pf_coils.tools import make_coil_mapper, make_pf_coil_path
 
-# %%[markdown]
+# %% [markdown]
 
 # Load the reference equilibria from EFDA_D_2MUW9R
 
@@ -98,7 +98,7 @@ sof_xbdry = data["xbdry"]
 sof_zbdry = data["zbdry"]
 
 
-# %%[markdown]
+# %% [markdown]
 
 # Import keep out zones
 
@@ -155,7 +155,7 @@ TF_outer = raw_uc(
     TF_outer_raw.to_numpy()[:, :2].astype(float), get_unit(TF_outer_raw.columns[0]), "m"
 ).T
 
-# %%[markdown]
+# %% [markdown]
 
 # Make the same CoilSet as CREATE
 
@@ -205,7 +205,7 @@ coilset.assign_material("PF", j_max=12.5e6, b_max=11)
 coilset.fix_sizes()
 coilset.discretisation = 0.3
 
-# %%[markdown]
+# %% [markdown]
 
 # Define parameters
 
@@ -240,14 +240,14 @@ PF_Fz_max = 450e6
 CS_Fz_sum = 300e6
 CS_Fz_sep = 350e6
 
-# %%[markdown]
+# %% [markdown]
 # Use the same grid as CREATE (but less discretised):
 
 # %%
 
 grid = Grid(2, 16.0, -9.0, 9.0, 100, 100)
 
-# %%[markdown]
+# %% [markdown]
 
 # Set up the Breakdown object
 
@@ -285,7 +285,7 @@ coilset = bd_opt_problem.optimise(x0=max_currents)
 breakdown_flux = breakdown.breakdown_psi * 2 * np.pi
 bluemira_print(f"Breakdown psi: {breakdown.breakdown_psi*2*np.pi:.2f} V.s")
 
-# %%[markdown]
+# %% [markdown]
 
 # Calculate SOF and EOF plasma boundary fluxes
 
@@ -298,7 +298,7 @@ psi_eof = psi_sof - tau_flattop * v_burn
 psi_sof -= 10
 psi_eof -= 10
 
-# %%[markdown]
+# %% [markdown]
 
 # Set up a parameterised profile
 
@@ -315,7 +315,7 @@ profiles = CustomProfile(
 # profile = BetaIpProfile(beta_p, I_p, R_0, B_0, shape=shape)
 
 
-# %%[markdown]
+# %% [markdown]
 # Solve the SOF and EOF equilibria
 
 # %%
@@ -475,8 +475,9 @@ for problem in opt_problems:
 for eq, problem in zip(eqs, opt_problems):
     PicardIterator(eq, problem, plot=True, relaxation=0.2, fixed_coils=True)()
 
+# %%
 
-max_currents = eqs[0].get_max_current(0)
+max_currents = eqs[0].coilset.get_max_current(0)
 breakdown = Breakdown(deepcopy(eqs[0].coilset), grid)
 
 bd_opt_problem = BreakdownCOP(
@@ -499,7 +500,7 @@ optimised_coilset = bd_opt_problem.optimise(x0=max_currents)
 breakdown_flux = breakdown.breakdown_psi * 2 * np.pi
 bluemira_print(f"Breakdown psi: {breakdown_flux:.2f} V.s")
 
-# %%[markdown]
+# %% [markdown]
 # Plot the results
 
 # %%
