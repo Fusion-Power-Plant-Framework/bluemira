@@ -25,7 +25,7 @@ Useful parameterisations for plasma flux surface shapes.
 
 import numpy as np
 
-from bluemira.geometry.coordinates import Coordinates
+from bluemira.geometry.coordinates import Coordinates, interpolate_points
 from bluemira.geometry.parameterisations import GeometryParameterisation
 from bluemira.geometry.tools import interpolate_bspline
 from bluemira.geometry.wire import BluemiraWire
@@ -179,25 +179,33 @@ def flux_surface_kuiroukidis(
     denom = np.pi * theta_delta**n_power - theta_delta**2 * np.pi ** (n_power - 1)
     t_0 = (theta_delta**n_power - 0.5 * np.pi**n_power) / denom
     t_1 = (-(theta_delta**2) + 0.5 * np.pi**2) / denom
-    theta = np.concatenate(
-        (np.linspace(0, theta_delta, n_quart), np.linspace(theta_delta, np.pi, n_quart))
-    )
-    tau = t_0 * theta**2 + t_1 * theta**n_power
+    theta_up_right = np.linspace(0, theta_delta, n_quart)
+    tau_up_right = t_0 * theta_up_right**2 + t_1 * theta_up_right**n_power
 
     # The theta -> tau conversion approach seems flawed, and overshoots np.pi so we have
     # to adjust
-    tau = np.clip(tau, None, np.pi)
-    clip_args = np.where(tau == np.pi)[0][0]
-    theta_max = theta[clip_args]
-    theta = np.concatenate(
-        (
-            np.linspace(0, theta_delta, n_quart),
-            np.linspace(theta_delta, theta_max, n_quart),
-        )
+    theta_up_left = np.linspace(theta_delta, np.pi, n_quart)
+    tau_up_left = t_0 * theta_up_left**2 + t_1 * theta_up_left**n_power
+
+    tau_up_left = np.clip(tau_up_left, None, np.pi)
+    clip_arg = np.where(tau_up_left == np.pi)[0][0]
+    tau_up_left = tau_up_left[: clip_arg + 1]
+
+    x_upper_right = r_0 * (
+        1 + e_0 * np.cos(tau_up_right + np.arcsin(delta_u) * np.sin(tau_up_right))
+    )
+    z_upper_right = r_0 * kappa_u * e_0 * np.sin(tau_up_right)
+
+    x_upper_left = r_0 * (
+        1 + e_0 * np.cos(tau_up_left + np.arcsin(delta_u) * np.sin(tau_up_left))
+    )
+    z_upper_left = r_0 * kappa_u * e_0 * np.sin(tau_up_left)
+    x_upper_left, _, z_upper_left = interpolate_points(
+        x_upper_left, np.zeros(len(x_upper_left)), z_upper_left, n_quart
     )
 
-    x_upper = r_0 * (1 + e_0 * np.cos(tau + np.arcsin(delta_u) * np.sin(tau)))
-    z_upper = r_0 * kappa_u * e_0 * np.sin(tau)
+    x_upper = np.concatenate((x_upper_right, x_upper_left))
+    z_upper = np.concatenate((z_upper_right, z_upper_left))
 
     # lower left
     theta_delta_lower = np.pi - np.arctan(kappa_l / delta_l)
