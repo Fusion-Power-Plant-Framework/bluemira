@@ -232,10 +232,8 @@ def flux_surface_kuiroukidis(
     if lower_negative:
         x_left = -x_left + 2 * r_0
         x_right = -x_right + 2 * r_0
-        x_left = x_left[::-1]
-        z_left = z_left[::-1]
-        x_right = x_right[::-1]
-        z_right = z_right[::-1]
+        x_left, x_right = x_right[::-1], x_left[::-1]
+        z_left, z_right = z_right[::-1], z_left[::-1]
 
     import matplotlib.pyplot as plt
 
