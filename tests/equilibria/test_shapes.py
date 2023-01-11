@@ -117,29 +117,25 @@ class TestManickam:
 
 
 class TestKuiroukidis:
-    @classmethod
-    def setup_class(cls):
-        cls.f, cls.ax = plt.subplots(4, 2)
-
     @pytest.mark.parametrize(
-        "R_0, A, kappa_u, kappa_l, delta_u, delta_l, grad_p",
+        "R_0, A, kappa_u, kappa_l, delta_u, delta_l",
         [
-            pytest.param(6.2, 3.1, 1.55, 2.0, 0.5, 0.5, 0.0),
-            pytest.param(1.717, 1.717 / 0.5151, 1.55, 2.0, 0.15, 0.15, 0.05),
+            pytest.param(6.2, 3.1, 1.55, 2.0, 0.5, 0.5),
+            pytest.param(1.717, 1.717 / 0.5151, 1.55, 2.0, 0.15, 0.15),
         ],
     )
-    def test_kuiroukidis(self, R_0, A, kappa_u, kappa_l, delta_u, delta_l, grad_p):
+    def test_kuiroukidis(self, R_0, A, kappa_u, kappa_l, delta_u, delta_l):
         flux_surface = flux_surface_kuiroukidis(
-            R_0, 0, R_0 / A, kappa_u, kappa_l, delta_u, delta_l, grad_p, 8, 200
+            R_0, 0, R_0 / A, kappa_u, kappa_l, delta_u, delta_l, 8, 500
         )
         arg_inner = np.argmin(flux_surface.x)
         arg_outer = np.argmax(flux_surface.x)
         arg_lower = np.argmin(flux_surface.z)
         arg_upper = np.argmax(flux_surface.z)
 
-        x_lower = R_0 + delta_l * R_0 / A
+        x_lower = R_0 - delta_l * R_0 / A
         z_lower = -kappa_l * R_0 / A
-        x_upper = R_0 + delta_u * R_0 / A
+        x_upper = R_0 - delta_u * R_0 / A
         z_upper = kappa_u * R_0 / A
         x_inner = R_0 - R_0 / A
         z_inner = 0.0
@@ -152,17 +148,11 @@ class TestKuiroukidis:
             np.array([x_upper, z_upper]), flux_surface.xz.T[arg_upper]
         )
         np.testing.assert_allclose(
-            np.array([x_inner, z_inner]), flux_surface.xz.T[arg_inner]
+            np.array([x_inner, z_inner]), flux_surface.xz.T[arg_inner], atol=1e-12
         )
         np.testing.assert_allclose(
-            np.array([x_outer, z_outer]), flux_surface.xz.T[arg_outer]
+            np.array([x_outer, z_outer]), flux_surface.xz.T[arg_outer], atol=1e-12
         )
-
-    @classmethod
-    def teardown_class(cls):
-        cls.f.suptitle("Kuiroukidis parameterisations")
-        plt.show()
-        plt.close(cls.f)
 
 
 johner_names = [

@@ -116,7 +116,6 @@ def flux_surface_kuiroukidis(
     kappa_l,
     delta_u,
     delta_l,
-    grad_p,
     n_power: int = 8,
     n_points: int = 100,
 ):
@@ -142,8 +141,6 @@ def flux_surface_kuiroukidis(
         Upper plasma triangularity
     delta_l: float
         Lower plasma triangularity
-    grad_p: float
-        Displacement parameter (mean value of dx/dtheta)
     n_power: int
         Exponent related to the steepness of the triangularity
     n_points: int
@@ -153,8 +150,18 @@ def flux_surface_kuiroukidis(
     -------
     flux_surface: Coordinates
         Plasma flux surface shape
+
+    Notes
+    -----
+    As far as I can tell, the reference parameterisation is either flawed in two places
+    or is insufficiently specified to reproduce properly. I've included two workarounds
+    here, which actually result in a very decent shape description.
+    Furthermore, the grad_rho term does not appear to behave as described, given that it
+    is just an offset. The key may lie in understand what "relative to the X-point" means
+    but it's not enough for me to go on at the moment.
     """
     n_half = n_points // 2
+    n_quart = n_points // 4
     e_0 = a / r_0  # inverse aspect ratio
 
     # upper part
@@ -162,28 +169,51 @@ def flux_surface_kuiroukidis(
     denom = np.pi * theta_delta**n_power - theta_delta**2 * np.pi ** (n_power - 1)
     t_0 = (theta_delta**n_power - 0.5 * np.pi**n_power) / denom
     t_1 = (-(theta_delta**2) + 0.5 * np.pi**2) / denom
-    theta = np.linspace(0, np.pi, n_half)
+    theta = np.concatenate(
+        (np.linspace(0, theta_delta, n_quart), np.linspace(theta_delta, np.pi, n_quart))
+    )
     tau = t_0 * theta**2 + t_1 * theta**n_power
+    tau = np.clip(tau, None, np.pi)  # Bad theta parameterisation...
 
-    x_upper = r_0 * (1 + e_0 * np.cos(tau + np.arcsin(delta_u) * np.sin(tau)) - grad_p)
+    x_upper = r_0 * (1 + e_0 * np.cos(tau + np.arcsin(delta_u) * np.sin(tau)))
     z_upper = r_0 * kappa_u * e_0 * np.sin(tau)
 
     # lower left
     theta_delta_lower = np.pi - np.arctan(kappa_l / delta_l)
     p_1 = (kappa_l * e_0) ** 2 / (2 * e_0 * (1 + np.cos(theta_delta_lower)))
-    theta = np.linspace(np.pi, 2 * np.pi - theta_delta_lower, n_half // 2)
-
-    x_left = r_0 * (1 + e_0 * np.cos(theta) - grad_p)
+    theta = np.linspace(np.pi, 2 * np.pi - theta_delta_lower, n_quart)
+    corr = delta_l - theta_delta_lower
+    x_left = r_0 * (1 + e_0 * np.cos(theta))
     z_left = -r_0 * np.sqrt(2 * p_1 * e_0 * (1 + np.cos(theta)))
 
     # lower right
     p_2 = (kappa_l * e_0) ** 2 / (2 * e_0 * (1 - np.cos(theta_delta_lower)))
-    theta = np.linspace(2 * np.pi - theta_delta_lower, 2 * np.pi, n_half // 2)
+    theta = np.linspace(2 * np.pi - theta_delta_lower, 2 * np.pi, n_quart)
 
-    x_right = r_0 * (1 + e_0 * np.cos(theta) - grad_p)
+    x_right = r_0 * (1 + e_0 * np.cos(theta))
     z_right = -r_0 * np.sqrt(2 * p_2 * e_0 * (1 - np.cos(theta)))
 
-    x = np.concatenate([x_upper, x_left, x_right])
+    x_x_true = r_0 - delta_l * a
+    x_x_actual = x_left[-1]
+
+    # The lower X-point does not match up with the input kappa_l and delta_l...
+    corr_ratio = x_x_true / x_x_actual
+    corr_power = 2
+    if corr_ratio == 1.0:
+        # For good measure, but the maths is wrong...
+        correction = 1.0
+    elif corr_ratio < 1.0:
+        correction = (
+            1
+            - np.linspace(0, (1 - corr_ratio) ** (1 / corr_power), n_quart) ** corr_power
+        )
+    elif corr_ratio > 1.0:
+        correction = (
+            1
+            + np.linspace(0, (corr_ratio - 1) ** (1 / corr_power), n_quart) ** corr_power
+        )
+
+    x = np.concatenate([x_upper, x_left * correction, x_right * correction[::-1]])
     z = z_0 + np.concatenate([z_upper, z_left, z_right])
 
     return Coordinates({"x": x, "z": z})
