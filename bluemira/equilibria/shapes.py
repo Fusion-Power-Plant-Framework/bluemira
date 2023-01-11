@@ -35,6 +35,7 @@ __all__ = [
     "flux_surface_cunningham",
     "flux_surface_johner",
     "flux_surface_manickam",
+    "flux_surface_kuiroukidis",
     "JohnerLCFS",
 ]
 
@@ -110,45 +111,45 @@ def flux_surface_manickam(r_0, z_0, a, kappa=1, delta=0, indent=0, n=20):
 def flux_surface_kuiroukidis(
     r_0, z_0, a, kappa_u, kappa_l, delta_u, delta_l, grad_p, n_power=8, n_point=100
 ):
-    n_upper = n_point // 2
+    """ """
+    n_half = n_point // 2
 
     e_0 = a / r_0
     # upper part
     theta_delta = np.pi - np.arctan(kappa_u / delta_u)
     denom = np.pi * theta_delta**n_power - theta_delta**2 * np.pi ** (n_power - 1)
-    t_0 = theta_delta**n_power - 0.5 * np.pi**n_power / denom
-    t_1 = -(theta_delta**2) + 0.5 * np.pi**2 / denom
-    theta = np.linspace(0, np.pi, n_upper)
+    t_0 = (theta_delta**n_power - 0.5 * np.pi**n_power) / denom
+    t_1 = (-(theta_delta**2) + 0.5 * np.pi**2) / denom
+    theta = np.linspace(0, np.pi, n_half)
     tau = t_0 * theta**2 + t_1 * theta**n_power
 
     lizard_u = kappa_u * e_0
-    squiggle = (1 - delta_u) / e_0
     alpha = np.arcsin(delta_u)
-    rho_delta = 1 - delta_u * e_0
 
     x_upper = r_0 * (1 + e_0 * np.cos(tau + alpha * np.sin(tau)) - grad_p)
     z_upper = r_0 * lizard_u * np.sin(tau)
 
-    import matplotlib.pyplot as plt
-
-    f, ax = plt.subplots()
-    ax.plot(x_upper, z_upper)
-    ax.set_aspect("equal")
-    plt.show()
-
     # lower left
+    lizard_d = kappa_l * e_0
+    theta_delta_lower = np.pi - np.arctan(kappa_l / delta_l)
+    p_1 = lizard_d**2 / (2 * e_0 * (1 + np.cos(theta_delta_lower)))
+    theta = np.linspace(np.pi, 2 * np.pi - theta_delta_lower, n_half // 2)
 
-    x_left = np.array([])
-    z_left = np.array([])
+    x_left = r_0 * (1 + e_0 * np.cos(theta) - grad_p)
+    z_left = -r_0 * np.sqrt(2 * p_1 * e_0 * (1 + np.cos(theta)))
 
     # lower right
 
-    x_right = np.array([])
-    z_right = np.array([])
+    p_2 = lizard_d**2 / (2 * e_0 * (1 - np.cos(theta_delta_lower)))
+    theta = np.linspace(2 * np.pi - theta_delta_lower, 2 * np.pi, n_half // 2)
+
+    x_right = r_0 * (1 + e_0 * np.cos(theta) - grad_p)
+    z_right = -r_0 * np.sqrt(2 * p_2 * e_0 * (1 - np.cos(theta)))
 
     x = np.concatenate([x_upper, x_left, x_right])
-    z = np.concatenate([z_upper, z_left, z_right])
-    return x, z
+    z = z_0 + np.concatenate([z_upper, z_left, z_right])
+
+    return Coordinates({"x": x, "z": z})
 
 
 def calc_t_neg(delta, kappa, phi_neg):
