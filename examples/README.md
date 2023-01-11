@@ -38,3 +38,8 @@ To add a new example, or to edit an existing one, make your changes in the `.py`
 of the example. Use percentage blocks (`# %%` or `# %% [markdown]`) to mark cells
 of the notebook. Your IDE or Jupytext if you are using jupyter will render the python file as a
 notebook.
+
+To include the examples in the rendered documentation please add the file to `examples.rst`.
+The first line of the python file should be `# %% nbsphinx="hidden"` to hide the copyright notice
+from the rendered script in the documentation (the copyright is in the footer of all documentation
+pages).
