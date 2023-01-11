@@ -1,3 +1,4 @@
+# %%
 # bluemira is an integrated inter-disciplinary design tool for future fusion
 # reactors. It incorporates several modules, some of which rely on other
 # codes, to carry out a range of typical conceptual fusion reactor design
@@ -33,16 +34,16 @@ from bluemira.base.file import get_bluemira_path, get_bluemira_root
 from bluemira.base.logs import set_log_level
 from bluemira.codes import plasmod
 
-# %%[markdown]
+# %% [markdown]
 # # Configuring the PLASMOD solver
-
+#
 # PLASMOD is one of the codes bluemira can use to compliment a reactor design.
 # As with any of the external codes bluemira uses, a solver object is created.
 # The solver object abstracts away most of the complexities of running different
 # programs within bluemira.
-
+#
 # ## Setting up
-
+#
 # ### Logging
 # To enable debug logging run the below cell
 
@@ -50,7 +51,7 @@ from bluemira.codes import plasmod
 
 set_log_level("DEBUG")
 
-# %%[markdown]
+# %% [markdown]
 # ### Binary Location
 # Firstly if plasmod is not on your system path, we need to provide the
 # binary location to the solver.
@@ -59,7 +60,7 @@ set_log_level("DEBUG")
 PLASMOD_PATH = os.path.join(os.path.dirname(get_bluemira_root()), "plasmod")
 binary = os.path.join(PLASMOD_PATH, "bin", "plasmod")
 
-# %%[markdown]
+# %% [markdown]
 # ### Creating the solver object
 # bluemira-plasmod parameter names have been mapped across where possible.
 # Some example parameters have been set here in `new_params`
@@ -83,7 +84,7 @@ new_params = {
 }
 
 
-# %%[markdown]
+# %% [markdown]
 # Some values are not linked into bluemira. These plasmod parameters can be set
 # directly in `problem_settings`.
 # H-factor is set here as input therefore we will force plasmod to
@@ -100,7 +101,7 @@ problem_settings = {
     "i_pedestal": "SAARELMA",
 }
 
-# %%[markdown]
+# %% [markdown]
 # There are also some model choices that can be set in `problem_settings`.
 # The available models with their options and explanations
 # can be seen by running the below snippet.
@@ -111,7 +112,7 @@ for var_name in dir(plasmod.mapping):
         model = getattr(plasmod.mapping, var_name)
         model.info()
 
-# %%[markdown]
+# %% [markdown]
 # Finally the `build_config` dictionary collates the configuration settings for
 # the solver
 
@@ -122,14 +123,14 @@ build_config = {
     "directory": get_bluemira_path("", subfolder="generated_data"),
 }
 
-# %%[markdown]
+# %% [markdown]
 # Now we can create the solver object with the parameters and build configuration
 
 # %%
 
 solver = plasmod.Solver(params=new_params, build_config=build_config)
 
-# %%[markdown]
+# %% [markdown]
 # These few functions are helpers to simplify the remainder of the tutorial.
 # The first shows a few of the output scalar values and the second plots a
 # given profile.
@@ -180,7 +181,7 @@ def plot_profile(solver, profile, var_unit):
     plt.show()
 
 
-# %%[markdown]
+# %% [markdown]
 # ### Running the solver
 # Very simply use the `run` method of the solver
 
@@ -188,7 +189,7 @@ def plot_profile(solver, profile, var_unit):
 
 solver.execute(plasmod.RunMode.RUN)
 
-# %%[markdown]
+# %% [markdown]
 # ### Using the results
 # Outputs can be accessed through 3 ways depending on the
 # linking mechanism.
@@ -210,7 +211,7 @@ pprint(list(plasmod.mapping.Profiles))
 plot_profile(solver, plasmod.Profiles.Te, "keV")
 print_outputs(solver)
 
-# %%[markdown]
+# %% [markdown]
 # ### Plotting the results
 # There is a default set of output profiles that can be plotted easily:
 
@@ -219,7 +220,7 @@ print_outputs(solver)
 plasmod.plot_default_profiles(solver.plasmod_outputs())
 
 
-# %%[markdown]
+# %% [markdown]
 # ### Rerunning with modified settings
 # #### Changing the transport model
 
@@ -229,7 +230,7 @@ solver.execute(plasmod.RunMode.RUN)
 print_outputs(solver)
 
 
-# %%[markdown]
+# %% [markdown]
 # #### Fixing fusion power to 2000 MW and safety factor `q_95` to 3.5.
 # Plasmod calculates the additional heating power and the plasma current
 
@@ -244,7 +245,7 @@ solver.problem_settings["q_control"] = 50.0
 solver.execute(plasmod.RunMode.RUN)
 print_outputs(solver)
 
-# %%[markdown]
+# %% [markdown]
 # #### Setting heat flux on divertor target to 10 MW/m²
 # plasmod calculates the argon concentration to fulfill the constraint
 
@@ -253,7 +254,7 @@ solver.problem_settings["qdivt_sup"] = 10.0
 solver.execute(plasmod.RunMode.RUN)
 print_outputs(solver)
 
-# %%[markdown]
+# %% [markdown]
 # #### Changing the mapping sending or receiving
 # The mapping can be changed on a given parameter or set of parameters.
 # Notice how the value of `q_95` doesn't change in the output,

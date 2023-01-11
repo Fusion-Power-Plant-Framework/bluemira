@@ -1,3 +1,4 @@
+# %%
 # bluemira is an integrated inter-disciplinary design tool for future fusion
 # reactors. It incorporates several modules, some of which rely on other
 # codes, to carry out a range of typical conceptual fusion reactor design
@@ -24,9 +25,9 @@ An example to show the use of the raw unit converters
 """
 
 
-# %%[markdown]
+# %% [markdown]
 # ## Raw conversion
-
+#
 # In some situations it may be useful to convert a raw value to a different unit.
 # It is recommended that all conversions,
 # however simple, are made using `bluemira.constants.raw_uc`.
@@ -50,7 +51,7 @@ print(const.gas_flow_uc(1, "mol/s", "Pa m^3/s", gas_flow_temperature=298.15))
 # boltzmann constant conversion
 print(const.raw_uc(1, "eV", "K"))
 
-# %%[markdown]
+# %% [markdown]
 # ## Raw Temperature conversion with checks from different units
 # The explicit temperature conversion routines guard against temperatures
 # below absolute zero

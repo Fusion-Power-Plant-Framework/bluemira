@@ -1,3 +1,4 @@
+# %%
 # bluemira is an integrated inter-disciplinary design tool for future fusion
 # reactors. It incorporates several modules, some of which rely on other
 # codes, to carry out a range of typical conceptual fusion reactor design
@@ -22,9 +23,9 @@
 A quick tutorial on the optimisation of geometry in bluemira
 """
 
-# %%[markdown]
+# %% [markdown]
 # ## Introduction
-
+#
 # We're going to set up some geometry optimisation problems and solve them with different
 # optimisastion algorithms.
 
@@ -38,10 +39,10 @@ from bluemira.utilities.opt_problems import OptimisationConstraint, Optimisation
 from bluemira.utilities.optimiser import Optimiser, approx_derivative
 from bluemira.utilities.tools import set_random_seed
 
-# %%[markdown]
+# %% [markdown]
 # Let's set up a simple GeometryOptimisationProblem, where we minimise the length of
 # parameterised geometry.
-
+#
 # First, we set up the GeometryParameterisation, with some bounds on the variables.
 
 # %%
@@ -54,15 +55,15 @@ parameterisation_1 = PrincetonD(
     }
 )
 
-# %%[markdown]
+# %% [markdown]
 # Here we're minimising the length, and we can work out that the dz variable will not
 # affect the optimisation, so let's just fix at some value and remove it from the problem
 
 # %%
 parameterisation_1.fix_variable("dz", value=0)
 
-# %%[markdown]
-
+# %% [markdown]
+#
 # Now, we set up our optimiser. We'll start with a gradient-based optimisation algorithm
 
 # %%
@@ -71,10 +72,10 @@ slsqp_optimiser = Optimiser(
     "SLSQP", opt_conditions={"max_eval": 100, "ftol_abs": 1e-12, "ftol_rel": 1e-12}
 )
 
-# %%[markdown]
-
+# %% [markdown]
+#
 # Next, we make our objective function, using in this case one of the ready-made ones.
-
+#
 # NOTE: This `minimise_length` function includes automatic numerical calculation of the
 # objective function gradient, and expects a certain signature.
 
@@ -84,8 +85,8 @@ objective = OptimisationObjective(
     f_objective_args={"parameterisation": parameterisation_1},
 )
 
-# %%[markdown]
-
+# %% [markdown]
+#
 # Finally, we initialise our `GeometryOptimisationProblem` and run it.
 
 # %%
@@ -93,8 +94,8 @@ objective = OptimisationObjective(
 my_problem = GeometryOptimisationProblem(parameterisation_1, slsqp_optimiser, objective)
 my_problem.optimise()
 
-# %%[markdown]
-
+# %% [markdown]
+#
 # Here we're minimising the length, within the bounds of our PrincetonD parameterisation,
 # so we'd expect that x1 goes to its upper bound, and x2 goes to its lower bound.
 
@@ -106,7 +107,7 @@ print(
     f"x2: value: {parameterisation_1.variables['x2'].value}, lower_bound: {parameterisation_1.variables['x2'].lower_bound}"
 )
 
-# %%[markdown]
+# %% [markdown]
 # Now let's do the same with an optimisation algorithm that doesn't require gradients.
 # The `minimise_length` function will not calculate the gradients numerically if the
 # optimisation algorithm does not require them.
@@ -136,7 +137,7 @@ objective = OptimisationObjective(
 problem = GeometryOptimisationProblem(parameterisation_2, cobyla_optimiser, objective)
 problem.optimise()
 
-# %%[markdown]
+# %% [markdown]
 # Again, let's check it's found the correct result:
 
 # %%
@@ -147,8 +148,8 @@ print(
     f"x2: value: {parameterisation_2.variables['x2'].value}, lower_bound: {parameterisation_2.variables['x2'].lower_bound}"
 )
 
-# %%[markdown]
-
+# %% [markdown]
+#
 # Now let's include a relatively arbitrary constraint:
 # We're going to minimise length again, but with a constraint that says that we don't
 # want the length to be below some arbitrary value of 50.
@@ -194,8 +195,8 @@ constraint_function = OptimisationConstraint(
     tolerance=np.array([c_tolerance]),
 )
 
-# %%[markdown]
-
+# %% [markdown]
+#
 # Setting up the problem with a constraint is the same as before, but with an additional
 # argument
 
@@ -224,8 +225,8 @@ problem = GeometryOptimisationProblem(
 )
 problem.optimise()
 
-# %%[markdown]
-
+# %% [markdown]
+#
 # Both x1 and x2 are free variables and between them they should be create a PrincetonD
 # shape of length exactly 50 (as the bounds on these variables surely allow it).
 # As we are minimising length, we'd expect to see a function value of 50 here (+/- the
@@ -236,11 +237,11 @@ print(f"Theoretical optimum: {c_value-c_tolerance}")
 print(f"Length with SLSQP: {parameterisation_3.create_shape().length}")
 print(f"n_evals: {problem.opt.n_evals}")
 
-# %%[markdown]
+# %% [markdown]
 # This is because we're using numerical gradients and jacobians for our objective and
 # inequality constraint functions. This can be faster than other approaches, but is less
 # robust and also less likely to find the best solution.
-
+#
 # Let's try a few different optimisers, noting the different termination conditions we
 # can play with and their effect.
 
@@ -275,8 +276,8 @@ print(f"Length with COBYLA: {parameterisation_4.create_shape().length}")
 print(f"n_evals: {problem.opt.n_evals}")
 
 
-# %%[markdown]
-
+# %% [markdown]
+#
 # ISRES is a stochastic optimisation algorithm; if we want to see the same results every
 # time, it's advisable to set the random seed to a known value.
 
@@ -312,7 +313,7 @@ print(f"Theoretical optimum: {c_value - c_tolerance}")
 print(f"Length with ISRES: {parameterisation_5.create_shape().length}")
 print(f"n_evals: {problem.opt.n_evals}")
 
-# %%[markdown]
+# %% [markdown]
 # Horses for courses folks... YMMV. Best thing you can do is specify your optimisation
 # problem intelligently, using well-behaved objective and constraint functions, and smart
 # bounds. Trying out different optimisers doesn't hurt. There's a trade-off between speed

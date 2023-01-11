@@ -1,3 +1,4 @@
+# %%
 # bluemira is an integrated inter-disciplinary design tool for future fusion
 # reactors. It incorporates several modules, some of which rely on other
 # codes, to carry out a range of typical conceptual fusion reactor design
@@ -23,8 +24,8 @@
 Attempt at recreating the EU-DEMO 2017 reference equilibria from a known coilset.
 """
 
-# %%[markdown]
-
+# %% [markdown]
+#
 # # EU-DEMO 2017 reference breakdown and equilibrium benchmark
 
 # %%
@@ -62,8 +63,8 @@ from bluemira.equilibria.profiles import CustomProfile
 from bluemira.equilibria.solve import PicardIterator
 from bluemira.utilities.optimiser import Optimiser
 
-# %%[markdown]
-
+# %% [markdown]
+#
 # Load the reference equilibria from EFDA_D_2MUW9R
 
 # %%
@@ -84,8 +85,8 @@ with open(filename, "r") as file:
 sof_xbdry = data["xbdry"]
 sof_zbdry = data["zbdry"]
 
-# %%[markdown]
-
+# %% [markdown]
+#
 # Make the same CoilSet as CREATE
 
 # %%
@@ -122,8 +123,8 @@ coilset.discretisation = 0.3
 
 coilset.plot()
 
-# %%[markdown]
-
+# %% [markdown]
+#
 # Define parameters
 
 # %%
@@ -157,15 +158,15 @@ PF_Fz_max = 450e6  # [N]
 CS_Fz_sum = 300e6  # [N]
 CS_Fz_sep = 350e6  # [N]
 
-# %%[markdown]
+# %% [markdown]
 # Use the same grid as CREATE (but less discretised):
 
 # %%
 
 grid = Grid(2, 16.0, -9.0, 9.0, 100, 100)
 
-# %%[markdown]
-
+# %% [markdown]
+#
 # Set up the Breakdown object
 
 # %%
@@ -194,8 +195,8 @@ coilset = bd_opt_problem.optimise(x0=max_currents)
 
 bluemira_print(f"Breakdown psi: {breakdown.breakdown_psi*2*np.pi:.2f} V.s")
 
-# %%[markdown]
-
+# %% [markdown]
+#
 # Calculate SOF and EOF plasma boundary fluxes
 
 # %%
@@ -207,8 +208,8 @@ psi_eof = psi_sof - tau_flattop * v_burn
 psi_sof -= 10
 psi_eof -= 10
 
-# %%[markdown]
-
+# %% [markdown]
+#
 # Set up a parameterised profile
 
 # %%
@@ -224,7 +225,7 @@ profiles = CustomProfile(
 # profile = BetaIpProfile(beta_p, I_p, R_0, B_0, shape=shape)
 
 
-# %%[markdown]
+# %% [markdown]
 # Solve the SOF and EOF equilibria
 
 # %%
@@ -313,7 +314,7 @@ iterator = PicardIterator(
 )
 iterator()
 
-# %%[markdown]
+# %% [markdown]
 # Plot the results
 
 # %%

@@ -1,3 +1,4 @@
+# %%
 # bluemira is an integrated inter-disciplinary design tool for future fusion
 # reactors. It incorporates several modules, some of which rely on other
 # codes, to carry out a range of typical conceptual fusion reactor design
@@ -40,7 +41,7 @@ from bluemira.equilibria.shapes import JohnerLCFS
 
 set_log_level("NOTSET")
 
-# %%[markdown]
+# %% [markdown]
 # Setup the Plasma shape parameterisation variables
 
 # %%
@@ -55,7 +56,7 @@ johner_parameterisation = JohnerLCFS(
     }
 )
 
-# %%[markdown]
+# %% [markdown]
 # Initialise the transport solver in this case PLASMOD is used
 
 # %%
@@ -126,7 +127,7 @@ plasmod_solver = transport_code_solver(
     module="PLASMOD",
 )
 
-# %%[markdown]
+# %% [markdown]
 # Initialise the FEM problem
 
 # %%
@@ -138,7 +139,7 @@ fem_GS_fixed_boundary = FemGradShafranovFixedBoundary(
     relaxation=0.05,
 )
 
-# %%[markdown]
+# %% [markdown]
 # Solve
 
 # %%

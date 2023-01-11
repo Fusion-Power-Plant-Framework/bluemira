@@ -1,3 +1,4 @@
+# %%
 # bluemira is an integrated inter-disciplinary design tool for future fusion
 # reactors. It incorporates several modules, some of which rely on other
 # codes, to carry out a range of typical conceptual fusion reactor design
@@ -30,8 +31,8 @@ import numpy as np
 from bluemira.display import plot_defaults
 from bluemira.plasma_physics.reactions import reactivity
 
-# %%[markdown]
-
+# %% [markdown]
+#
 # Let's plot the reactivity of a couple of well-known fusion reactions.
 
 # %%

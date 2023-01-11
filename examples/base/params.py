@@ -1,3 +1,4 @@
+# %%
 # bluemira is an integrated inter-disciplinary design tool for future fusion
 # reactors. It incorporates several modules, some of which rely on other
 # codes, to carry out a range of typical conceptual fusion reactor design
@@ -23,7 +24,7 @@
 An example of how to use Parameters and ParameterFrames within bluemira.
 """
 
-# %%[markdown]
+# %% [markdown]
 # # Parameters and ParameterFrames in bluemira
 # `Parameters` and `ParameterFrames` are the mechanism bluemira uses to contain
 # metadata about a given value.
@@ -41,7 +42,7 @@ from pint.errors import DimensionalityError
 
 from bluemira.base.parameter_frame import Parameter, ParameterFrame
 
-# %%[markdown]
+# %% [markdown]
 # ## Parameters and Units
 # First, I make a small `ParameterFrame` and compare the two methods of creating it.
 
@@ -69,7 +70,7 @@ print(mypf2)
 # Both frames equal
 assert mypf == mypf2  # noqa: S101
 
-# %%[markdown]
+# %% [markdown]
 # Trying to set a unit with the wrong dimension
 
 # %%
@@ -82,7 +83,7 @@ try:
 except DimensionalityError as de:
     print(de)
 
-# %%[markdown]
+# %% [markdown]
 # Changing a value of a parameter with a compatible but different unit
 
 # %%
@@ -91,8 +92,8 @@ mypf.update_from_dict({"R_0": {"value": 6000, "unit": "mm"}})
 
 print(mypf)
 
-# %%[markdown]
-
+# %% [markdown]
+#
 # Accessing the value of a parameter in a different unit
 
 # %%

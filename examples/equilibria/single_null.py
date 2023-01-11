@@ -1,3 +1,4 @@
+# %%
 # bluemira is an integrated inter-disciplinary design tool for future fusion
 # reactors. It incorporates several modules, some of which rely on other
 # codes, to carry out a range of typical conceptual fusion reactor design
@@ -23,20 +24,20 @@
 Equilibrium and coilset optimisation - developer tutorial
 """
 
-# %%[markdown]
-
+# %% [markdown]
+#
 # Here we explore how to optimise equilibria, coil currents, and coil positions.
-
+#
 # This is an in-depth example, intended for developers and people familiar with plasma
 # equilibrium problems, walking you through many of the objects, approaches,
 # and optimisation problems that are often used when designing plasma equilibria and
 # poloidal field coils.
-
+#
 # There are many ways of optimising equilibria, and this example shows just one
 # relatively crude approach. The choice of constraints, optimisation algorithms, and even
 # the sequence of operations has a big influence on the outcome. It is a bit of a dark
 # art, and over time you will hopefully find an approach that works for your problem.
-
+#
 # Heavily constraining the plasma shape as we do here is not particularly robust, or
 # even philosophically "right". It's however a common approach and comes in useful when
 # one wants to optimise coil positions without affecting the plasma too much.
@@ -83,8 +84,8 @@ try:
 except AttributeError:
     pass
 
-# %%[markdown]
-
+# %% [markdown]
+#
 # First let's create our inital coilset. This is taken from a reference EU-DEMO design
 # but as you will see we will change this later on.
 
@@ -114,12 +115,12 @@ for i, (xi, zi, dxi, dzi) in enumerate(zip(x, z, dx, dz)):
 
 coilset = CoilSet(*coils)
 
-# %%[markdown]
-
+# %% [markdown]
+#
 # Now we can also specify our coilset a little further, by assigning maximum current
 # densities and peak fields. This can then be used in the bounds and constraints for our
 # optimisation problems.
-
+#
 # We also fix the sizes of our CS coils for this example, and 'mesh' them. Unless
 # otherwise specified a `Coil` is represented by a single current filament. `mesh`ing
 # here refers to the sub-division of this coil filament into several filaments
@@ -137,10 +138,10 @@ cs = coilset.get_coiltype("CS")
 cs.fix_sizes()
 cs.discretisation = 0.3
 
-# %%[markdown]
-
+# %% [markdown]
+#
 # Now, we set up our grid, equilibrium, and profiles.
-
+#
 # We'll just use a `CustomProfile` for now, but you can also use a `BetaIpProfile` with
 # a flux function parameterisation if you want to directly constrain poloidal beta
 # values in your equilibrium optimisation.
@@ -167,13 +168,13 @@ profiles = CustomProfile(
 
 eq = Equilibrium(coilset, grid, profiles, psi=None)
 
-# %%[markdown]
-
+# %% [markdown]
+#
 # Now we need to specify some constraints on the plasma.
-
+#
 # We'll instantiate a parameterisation for the last closed flux surface (LCFS) which
 # tends to do a good job at describing an EU-DEMO-like single null plasma.
-
+#
 # We'll use this to specify some constraints on the plasma equilibrium problem:
 # * An `IsofluxConstraint` forces the flux at a set of points to be equal
 # * A `FieldNullConstraint` forces the poloidal field at a point to be zero.
@@ -217,18 +218,18 @@ x_point = FieldNullConstraint(
     tolerance=1e-4,  # [T]
 )
 
-# %%[markdown]
-
+# %% [markdown]
+#
 # It's often very useful to solve an unconstrained optimised problem in order to get
 # an initial guess for the equilibrium result. The initial equilibrium can be used as
 # the "starting guess" for subsequent constrained optimisation problems.
-
+#
 # This is done by using the magnetic constraints in a "set" for which the error is then
 # minimised with an L2 norm and a Tikhonov regularisation on the currents.
-
+#
 # Note that when we use equilibrium constraints in a "constraint set" as part of an
 # optimisation objective (as is the case here) the tolerances are not used actively.
-
+#
 # We can use this to optimise the current gradients during the solution of the
 # equilibrium until convergence.
 
@@ -244,22 +245,22 @@ program = PicardIterator(
 program()
 
 
-# %%[markdown]
-
+# %% [markdown]
+#
 # Now say we want to use bounds on our current vector, and that we want to solve a
 # constrained optimisation problem.
-
+#
 # We can minimise the error on our target isoflux surface set with some bounds on the
 # current vector, and some additional constraints.
-
+#
 # First let's set up some constraints on the coils (peak fields and peak vertical forces)
 # are common constraints. We can even use our X-point constraint from earlier as a
 # constraint in the optimiser. In other words, we don't need to lump it together with the
 # isoflux target minimisation objective.
-
+#
 # We then instantiate a new optimisation problem, and use this in a Picard iteration
 # scheme, using the previously converged equilibrium as a starting point.
-
+#
 # Note that here we are optimising the current vector and not the current gradient
 # vector.
 
@@ -296,15 +297,15 @@ program = PicardIterator(
 program()
 
 
-# %%[markdown]
-
+# %% [markdown]
+#
 # Now let's say we don't actually want to minimise the error, but we want to minimise the
 # coil currents, and use the constraints that we specified above as actual constraints
 # in the optimisation problem (rather than in the objective function as above)
-
+#
 # Note that here we've got rather a lot of constraints, and that we need to choose the
 # value and tolerance of the isoflux constraint (in particular) wisely.
-
+#
 # Too strict a tolerance will likely result in an unsuccessful optimisation with the
 # final result potentially violating the constraint and probably not being an actual
 # optimum.
@@ -344,26 +345,26 @@ print(
 )
 
 
-# %%[markdown]
-
+# %% [markdown]
+#
 # Coil position optimisation
-
+#
 # Now, say that we want to optimise the positions the PF coils, and the currents of the
 # entire CoilSet for two different snapshots in a pulse. These snapshots are typically
 # the start of flat-top (SOF) and end of flat-top (EOF) as they represent the most
 # challenging conditions for the coils and plasma shape.
-
+#
 # Here we set the flux at the desired LCFS to be 50 V.s and -150 V.s for the SOF and EOF,
 # respectively. In this example, this is an arbitrary decision. In reality, this would
 # relate to the desired pulse duration for a given machine.
-
+#
 # We're going to optimise the positions for an objective function that takes the maximum
 # objective function value of two current sub-optimisation problems.
-
+#
 # This is what we refer to as a `nested` optimisation, in other words that the
 # positions and the currents (in two different situations) are being optimised
 # separately.
-
+#
 # First we specify the sub-optimisation problems (objective functions and constraints).
 # Then we specify the position optimisation problem for a single current sub-optimisation
 # problem.
@@ -418,28 +419,28 @@ current_opt_problem_eof = TikhonovCurrentCOP(
     constraints=[eof_psi_boundary, x_point, field_constraints, force_constraints],
 )
 
-# %%[markdown]
-
+# %% [markdown]
+#
 # We set up a position mapping of the regions in which we would like the PF coils
 # to be. The positions themselves are bounded by the specification of the
 # `RegionInterpolator`s.
-
+#
 # Finally, we specify our position optimisation problem, in this case with the two
 # previously defined current sub-optimisation problems (but we could specify more if we
 # wanted to).
-
+#
 # Typically the currents can be varied linearly from the SOF to the EOF, so there isn't
 # really much point in doing more than two different equilibria here from an optimisation
 # perspective.
-
+#
 # Note that there are no constraints here, and if we wanted to add some they would have
 # to pertain to the position vector in some form.
-
+#
 # For each set of positions, we treat the plasma contribution as being "frozen" and
 # optimise the coil currents (with the various constraints). This works as for relatively
 # good starting guesses (converged equilibria) the plasma contribution to the various
 # constraints does not change much when the equilibrium is subsequently converged.
-
+#
 # For the sake of brevity, we set the maximum number of iterations for the position
 # optimisation to 50. This is unlikely to find the best solution given our specified
 # coil regions, but demonstrates the principle with acceptable run-times.
@@ -473,14 +474,14 @@ position_opt_problem = PulsedNestedPositionCOP(
 
 optimised_coilset = position_opt_problem.optimise(verbose=True)
 
-# %%[markdown]
-
+# %% [markdown]
+#
 # We've just optimised the PF coil positions using a single current filament at the
 # centre of each PF coil. This is a reasonable approximation when performing a position
 # optimisation, but we probably want to do better when it comes to our final equilibria.
 # We will figure out the appropriate sizes of the PF coils, and fix them and mesh them
 # accordingly.
-
+#
 # We also need to remember to update the bounds of the current optimisation problem!
 
 # %%
@@ -504,8 +505,8 @@ for problem in [current_opt_problem_sof, current_opt_problem_eof]:
     problem.set_current_bounds(max_currents)
 
 
-# %%[markdown]
-
+# %% [markdown]
+#
 # Now that we've:
 #   * optimised the coil positions for a fixed plasma,
 #   * fixed our PF coil sizes,
@@ -538,8 +539,8 @@ program = PicardIterator(
 )
 program()
 
-# %%[markdown]
-
+# %% [markdown]
+#
 # Now let's compare the old equilibrium and coilset to the one with optimised positions.
 
 # %%
@@ -555,13 +556,13 @@ ax.plot(x_new, z_new, linewidth=0, marker="+", color="r")
 isoflux.plot(ax=ax)
 plt.show()
 
-# %%[markdown]
-
+# %% [markdown]
+#
 # Note that one could converge the Grad-Shafranov equation for each set of coil positions
 # but this would be much slower and probably less robust. Personally, I don't think it is
 # worthwhile, but were it to succeed it would be fair to say it would be a better
 # optimum.
-
+#
 # Let's look at the full result: reference equilibrium, SOF, and EOF
 
 # %%

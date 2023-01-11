@@ -1,3 +1,4 @@
+# %%
 # bluemira is an integrated inter-disciplinary design tool for future fusion
 # reactors. It incorporates several modules, some of which rely on other
 # codes, to carry out a range of typical conceptual fusion reactor design
@@ -28,7 +29,7 @@ from anytree import RenderTree
 
 from bluemira.base.components import Component, MagneticComponent, PhysicalComponent
 
-# %%[markdown]
+# %% [markdown]
 # Example of a Tree structure
 # Definition of some Components as groups. These do not have a physical shape / material
 # but represent common systems within a reactor (or indeed the reactor itself).
@@ -40,7 +41,7 @@ magnets = Component("Magnets", parent=reactor)
 tf_coils = Component("TFCoils", parent=magnets)
 pf_coils = Component("PFCoils", parent=magnets)
 
-# %%[markdown]
+# %% [markdown]
 # Definition of some sub-components as physical components
 # Note: it is not necessary to store the component in a variable. It is already
 # stored as child of the parent, if any.
@@ -55,7 +56,7 @@ for i in range(6):
         parent=pf_coils,
     )
 
-# %%[markdown]
+# %% [markdown]
 # Do the same for the CS coils
 
 # %%
@@ -69,7 +70,7 @@ for i in range(6):
         parent=cs_coils,
     )
 
-# %%[markdown]
+# %% [markdown]
 # Adding in vessel components
 
 # %%
@@ -93,7 +94,7 @@ vessel = PhysicalComponent(
     parent=in_vessel,
 )
 
-# %%[markdown]
+# %% [markdown]
 # Printing the tree
 
 # %%

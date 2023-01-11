@@ -38,17 +38,6 @@ repos:
       language: system
       types: [python]
 
--   repo: local
-    hooks:
-    - id: regenerate-ipynb-examples
-      name: regenerate-ipynb-examples
-      entry: python examples/convert_py_to_ipynb.py
-      language: system
-      args: [--check]
-      types: [python]
-      files: ^examples/
-      exclude: ^examples/convert_py_to_ipynb.py
-
 -   repo: https://github.com/psf/black
     rev: 22.12.0
     hooks:

@@ -1,3 +1,4 @@
+# %%
 # bluemira is an integrated inter-disciplinary design tool for future fusion
 # reactors. It incorporates several modules, some of which rely on other
 # codes, to carry out a range of typical conceptual fusion reactor design
@@ -23,13 +24,13 @@
 A geometry tutorial for users.
 """
 
-# %%[markdown]
+# %% [markdown]
 # ## Introduction
-
+#
 # Geometry is not plasma physics, but it isn't trivial either. Chances are most of
 # your day-to-day interaction with bluemira will revolve around geometry in some form
 # or another. Puns intended.
-
+#
 # There a few basic concepts you need to familiarise yourself with:
 # * Basic objects: [`BluemiraWire`, `BluemiraFace`, `BluemiraShell`, `BluemiraSolid`]
 # * Basic properties
@@ -37,9 +38,9 @@ A geometry tutorial for users.
 # * Geometry creation
 # * Geometry modification
 # * Geometry operations
-
+#
 # ## Imports
-
+#
 # Let's start out by importing all the basic objects, and some typical tools
 
 # %%
@@ -74,16 +75,16 @@ from bluemira.geometry.tools import (
 )
 from bluemira.geometry.wire import BluemiraWire
 
-# %%[markdown]
+# %% [markdown]
 # ## Geometry creation (1-D)
-
+#
 # Let's get familiar with some ways of making 1-D geometries.
 # Bluemira implements functions for the creation of:
 # * polygons
 # * splines
 # * arcs
 # * a bit of everything (check geometry.tools module for an extensive list)
-
+#
 # Any 1-D geometry is stored in a BluemiraWire object. Just as example, we can start
 # considering a simple linear segmented wire with vertexes on
 # (0,0,0), (1,0,0), and (1,1,0).
@@ -100,7 +101,7 @@ print(first_wire)
 # obj property, e.g.
 print(f"Wire length: {first_wire.length}")
 
-# %%[markdown]
+# %% [markdown]
 # Concatenation of more wires is also allowed:
 
 # %%
@@ -109,7 +110,7 @@ second_wire = make_polygon(points2, label="wire2")
 full_wire = BluemiraWire([first_wire, second_wire], label="full_wire")
 print(full_wire)
 
-# %%[markdown]
+# %% [markdown]
 # In such a case, sub-wires are still accessible as separate entities and
 # can be returned through a search operation on the full wire:
 
@@ -124,7 +125,7 @@ wire_plotter = plotter.WirePlotter()
 wire_plotter.options.view = "xy"
 wire_plotter.plot_2d(full_wire)
 
-# %%[markdown]
+# %% [markdown]
 # More complex geometries can be created using splines, arcs, etc.
 
 # %%
@@ -138,23 +139,23 @@ wires.append(make_polygon([[0, 0], [4, 0], [0, 0]], label="w6"))
 closed_wire = BluemiraWire(wires, label="closed_wire")
 wire_plotter.plot_2d(closed_wire)
 
-# %%[markdown]
+# %% [markdown]
 # In such a case, the created wire is closed. A check can be done interrogating
 # the is_closed function of the wire:
 
 # %%
 print(f"wire is closed: {closed_wire.is_closed()}")
 
-# %%[markdown]
+# %% [markdown]
 # ## Geometry creation (2-D and 3-D)
-
+#
 # A closed planar 1-D geometry can be used as boundary to generate a 2-D face.
 
 # %%
 first_face = BluemiraFace(boundary=closed_wire, label="first_face")
 print(first_face)
 
-# %%[markdown]
+# %% [markdown]
 # A matplotlib-style plotting of a face can be made similarly to what was done for
 # a wire, i.e. using a FacePlotter
 
@@ -164,7 +165,7 @@ face_plotter.options.view = "xy"
 face_plotter.plot_2d(first_face)
 
 
-# %%[markdown]
+# %% [markdown]
 # If more than one closed wire is given as boundary for a face, the first one is
 # used as the external boundary and subsequent ones are considered as holes.
 
@@ -176,7 +177,7 @@ print(face_with_hole)
 face_plotter.plot_2d(face_with_hole)
 
 
-# %%[markdown]
+# %% [markdown]
 # Starting from 1-D or 2-D geometries, 3-D objects can be created, for example,
 # by revolution or extrusion.
 
@@ -189,9 +190,9 @@ print(first_solid)
 # interrogating "fist_solid".
 
 
-# %%[markdown]
+# %% [markdown]
 # ## 3-D Display
-
+#
 # Geometry objects can be displayed via `show_cad`, and the appearance
 # of said objects customised by specifying `color` and `transparency`.
 
@@ -199,17 +200,17 @@ print(first_solid)
 show_cad(first_solid, DisplayCADOptions(color="blue", transparency=0.1))
 
 
-# %%[markdown]
+# %% [markdown]
 # ## Matryoshka structure
-
+#
 # Bluemira geometries are structured in a commonly used "Matryoshka" or
 # "Russian doll"-like structure.
-
+#
 # Solid -> Shell -> Face -> Wire
-
+#
 # These are accessible via the boundary attribute, so, in general, the boundary
 # of a Solid is a Shell or set of Shells, and a Shell will have a set of Faces, etc.
-
+#
 # Let's take a little peek under the hood of our solid:
 
 # %%
@@ -226,15 +227,15 @@ for i, shell in enumerate(first_solid.boundary):
             )
 
 
-# %%[markdown]
-
+# %% [markdown]
+#
 # ## Geometric transformations
-
+#
 # When applying a geometric transformation to a BluemiraGeo object, that operation
 # is transferred also to the boundary objects (in a recursive manner). That allows
 # consistency between the object shape and its boundary without recreating
 # the boundary set.
-
+#
 # Just as example, we are going to apply a translation to our "face_with_hole".
 
 # %%
@@ -262,15 +263,15 @@ plt.title("Translated wire test")
 plt.show()
 
 
-# %%[markdown]
+# %% [markdown]
 # ## Geometry creation (complex shapes)
-
+#
 # OK, let's do something more complicated now.
-
+#
 # Polygons are good for things with straight lines.
 # Arcs you've met already.
 # For everything else, there's splines.
-
+#
 # Say you have a weird shape, that you might calculate via a equation.
 # It's not a good idea to make a polygon with lots of very small sides
 # for this. It's computationally expensive, and it will look ugly.
@@ -300,10 +301,10 @@ show_cad(
 )
 
 
-# %%[markdown]
+# %% [markdown]
 # ## Additional examples
 # Making 3-D shapes from 2-D shapes
-
+#
 # You can:
 # * extrude a shape `extrude_shape`, as we did with our solid
 # * revolve a shape `revolve_shape`
@@ -330,9 +331,9 @@ path = BluemiraWire([straight_line, quarter_turn])
 solid = sweep_shape(rectangle.boundary[0], path)
 show_cad(solid)
 
-# %%[markdown]
+# %% [markdown]
 # Making 3-D shapes from 3-D shapes
-
+#
 # Boolean operations often come in very useful when making CAD.
 # * You can join geometries together with `boolean_fuse`
 # * You can cut geometries from one another with `boolean_cut`
@@ -368,9 +369,9 @@ cut_box_1 = boolean_cut(box_1, box_2)[0]
 
 show_cad(cut_box_1)
 
-# %%[markdown]
+# %% [markdown]
 # ## Modification of existing geometries
-
+#
 # Now we're going to look at some stuff that we can do to change
 # geometries we've already made.
 # * Rotate
@@ -387,9 +388,9 @@ new_cut_box_1.scale(3)
 blue_red_options = [DisplayCADOptions(color="blue"), DisplayCADOptions(color="red")]
 show_cad([cut_box_1, new_cut_box_1], options=blue_red_options)
 
-# %%[markdown]
+# %% [markdown]
 # ## Exporting geometry
-
+#
 # At present, only the STEP Assembly format is supported
 # for exporting geometry.
 

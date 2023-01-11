@@ -1,3 +1,4 @@
+# %%
 # bluemira is an integrated inter-disciplinary design tool for future fusion
 # reactors. It incorporates several modules, some of which rely on other
 # codes, to carry out a range of typical conceptual fusion reactor design
@@ -23,15 +24,15 @@
 Some examples of using bluemira mesh module.
 """
 
-# %%[markdown]
-
+# %% [markdown]
+#
 # # Introduction
-
+#
 # In this example, we will show how to use the mesh module to create a 2D mesh for fem
 # application
-
+#
 # # Imports
-
+#
 # Import necessary module definitions.
 
 # %%
@@ -53,10 +54,10 @@ from bluemira.mesh.tools import import_mesh, msh_to_xdmf
 set_log_level("DEBUG")
 
 
-# %%[markdown]
-
+# %% [markdown]
+#
 # # Geometry
-
+#
 # Creation of a simple 2-D geometry, i.e. a Johner shape + a coil with casing
 
 # %%
@@ -82,10 +83,10 @@ coil_out = BluemiraFace([poly_out, poly_in], label="coil_out")
 coil_in = BluemiraFace([poly_in], label="coil_in")
 
 
-# %%[markdown]
-
+# %% [markdown]
+#
 # # Mesh setup
-
+#
 # setup characteristic mesh length
 
 # %%
@@ -101,8 +102,8 @@ poly4.mesh_options = {"lcar": 0.75, "physical_group": "poly4"}
 coil_out.mesh_options = {"lcar": 1, "physical_group": "coil"}
 coil_in.mesh_options = {"lcar": 0.3, "physical_group": "coil"}
 
-# %%[markdown]
-
+# %% [markdown]
+#
 # In order to mesh all the geometry in one, the best solution is to create a component
 # tree as in the following
 
@@ -113,8 +114,8 @@ c_coil = Component(name="coil", parent=c_all)
 c_coil_in = PhysicalComponent(name="coil_in", shape=coil_in, parent=c_coil)
 c_coil_out = PhysicalComponent(name="coil_out", shape=coil_out, parent=c_coil)
 
-# %%[markdown]
-
+# %% [markdown]
+#
 # Initialize and create the mesh
 
 # %%
@@ -125,8 +126,8 @@ m = meshing.Mesh(meshfile=meshfiles)
 buffer = m(c_all)
 print(m.get_gmsh_dict(buffer))
 
-# %%[markdown]
-
+# %% [markdown]
+#
 # # Convert to xdmf
 
 # %%

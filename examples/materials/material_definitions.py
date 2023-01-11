@@ -1,3 +1,4 @@
+# %%
 # bluemira is an integrated inter-disciplinary design tool for future fusion
 # reactors. It incorporates several modules, some of which rely on other
 # codes, to carry out a range of typical conceptual fusion reactor design
@@ -26,7 +27,7 @@ An example of how to generate materials
 # %%
 from bluemira.materials import MaterialCache
 
-# %%[markdown]
+# %% [markdown]
 # # Material Definitions
 #
 # Materials play an important role in reactor design, be that via neutronics properties,
@@ -84,7 +85,7 @@ mixture_dict = {
     },
 }
 
-# %%[markdown]
+# %% [markdown]
 # ## The Materials Cache
 #
 # Bluemira materials are managed by a defining a `MaterialCache` instance. This allows
@@ -101,7 +102,7 @@ material_cache.load_from_dict("Strawberry", material_dict)
 material_cache.load_from_dict("Cream", material_dict)
 material_cache.load_from_dict("StrawberriesAndCream", mixture_dict)
 
-# %%[markdown]
+# %% [markdown]
 # We can then get our materials from the cache as below. Note that the mixture
 # represents the constituent materials as actual material objects, not strings.
 
@@ -114,7 +115,7 @@ summer_time = material_cache.get_material("StrawberriesAndCream")
 print(another_strawberry.elements)
 print(summer_time.materials, summer_time.fracs)
 
-# %%[markdown]
+# %% [markdown]
 # It may be important to note that the default way to retrieve a material is through
 # a cloning method - that means that you actually get back a new material that has the
 # same attributes as the material in the cache, rather than the material that is stored
