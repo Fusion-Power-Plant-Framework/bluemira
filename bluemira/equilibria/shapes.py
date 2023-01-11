@@ -183,7 +183,18 @@ def flux_surface_kuiroukidis(
         (np.linspace(0, theta_delta, n_quart), np.linspace(theta_delta, np.pi, n_quart))
     )
     tau = t_0 * theta**2 + t_1 * theta**n_power
-    tau = np.clip(tau, None, np.pi)  # Bad theta parameterisation...
+
+    # The theta -> tau conversion approach seems flawed, and overshoots np.pi so we have
+    # to adjust
+    tau = np.clip(tau, None, np.pi)
+    clip_args = np.where(tau == np.pi)[0][0]
+    theta_max = theta[clip_args]
+    theta = np.concatenate(
+        (
+            np.linspace(0, theta_delta, n_quart),
+            np.linspace(theta_delta, theta_max, n_quart),
+        )
+    )
 
     x_upper = r_0 * (1 + e_0 * np.cos(tau + np.arcsin(delta_u) * np.sin(tau)))
     z_upper = r_0 * kappa_u * e_0 * np.sin(tau)

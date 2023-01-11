@@ -132,7 +132,7 @@ class TestKuiroukidis:
     )
     def test_kuiroukidis_coords(self, R_0, A, kappa_u, kappa_l, delta_u, delta_l):
         flux_surface = flux_surface_kuiroukidis(
-            R_0, 0, R_0 / A, kappa_u, kappa_l, delta_u, delta_l, 8, 500
+            R_0, 0, R_0 / A, kappa_u, kappa_l, delta_u, delta_l, 8, 100
         )
         arg_inner = np.argmin(flux_surface.x)
         arg_outer = np.argmax(flux_surface.x)
@@ -172,7 +172,7 @@ class TestKuiroukidis:
     )
     def test_kuiroukidis_ccw(self, R_0, A, kappa_u, kappa_l, delta_u, delta_l):
         flux_surface = flux_surface_kuiroukidis(
-            R_0, 0, R_0 / A, kappa_u, kappa_l, delta_u, delta_l, 8, 200
+            R_0, 0, R_0 / A, kappa_u, kappa_l, delta_u, delta_l, 8, 100
         )
         hull = ConvexHull(flux_surface.xz.T)
         np.testing.assert_approx_equal(hull.area, flux_surface.length)
