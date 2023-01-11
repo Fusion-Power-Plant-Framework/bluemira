@@ -109,12 +109,54 @@ def flux_surface_manickam(r_0, z_0, a, kappa=1, delta=0, indent=0, n=20):
 
 
 def flux_surface_kuiroukidis(
-    r_0, z_0, a, kappa_u, kappa_l, delta_u, delta_l, grad_p, n_power=8, n_point=100
+    r_0,
+    z_0,
+    a,
+    kappa_u,
+    kappa_l,
+    delta_u,
+    delta_l,
+    grad_p,
+    n_power: int = 8,
+    n_points: int = 100,
 ):
-    """ """
-    n_half = n_point // 2
+    """
+    Make an up-down asymmetric flux surface with a lower X-point.
 
-    e_0 = a / r_0
+    Ap. Kuiroukidis and G. N. Throumoulopoulos, Plasma Phys. Contol. Fusion 57  (2015)
+    078001
+
+    Parameters
+    ----------
+    r_0: float
+        Plasma geometric major radius [m]
+    z_0: float
+        Plasma geometric vertical height [m]
+    a: float
+        Plasma geometric minor radius [m]
+    kappa_u: float
+        Upper plasma elongation
+    kappa_l: float
+        Lower plasma elongation
+    delta_u: float
+        Upper plasma triangularity
+    delta_l: float
+        Lower plasma triangularity
+    grad_p: float
+        Displacement parameter (mean value of dx/dtheta)
+    n_power: int
+        Exponent related to the steepness of the triangularity
+    n_points: int
+        Number of points
+
+    Returns
+    -------
+    flux_surface: Coordinates
+        Plasma flux surface shape
+    """
+    n_half = n_points // 2
+    e_0 = a / r_0  # inverse aspect ratio
+
     # upper part
     theta_delta = np.pi - np.arctan(kappa_u / delta_u)
     denom = np.pi * theta_delta**n_power - theta_delta**2 * np.pi ** (n_power - 1)
@@ -123,24 +165,19 @@ def flux_surface_kuiroukidis(
     theta = np.linspace(0, np.pi, n_half)
     tau = t_0 * theta**2 + t_1 * theta**n_power
 
-    lizard_u = kappa_u * e_0
-    alpha = np.arcsin(delta_u)
-
-    x_upper = r_0 * (1 + e_0 * np.cos(tau + alpha * np.sin(tau)) - grad_p)
-    z_upper = r_0 * lizard_u * np.sin(tau)
+    x_upper = r_0 * (1 + e_0 * np.cos(tau + np.arcsin(delta_u) * np.sin(tau)) - grad_p)
+    z_upper = r_0 * kappa_u * e_0 * np.sin(tau)
 
     # lower left
-    lizard_d = kappa_l * e_0
     theta_delta_lower = np.pi - np.arctan(kappa_l / delta_l)
-    p_1 = lizard_d**2 / (2 * e_0 * (1 + np.cos(theta_delta_lower)))
+    p_1 = (kappa_l * e_0) ** 2 / (2 * e_0 * (1 + np.cos(theta_delta_lower)))
     theta = np.linspace(np.pi, 2 * np.pi - theta_delta_lower, n_half // 2)
 
     x_left = r_0 * (1 + e_0 * np.cos(theta) - grad_p)
     z_left = -r_0 * np.sqrt(2 * p_1 * e_0 * (1 + np.cos(theta)))
 
     # lower right
-
-    p_2 = lizard_d**2 / (2 * e_0 * (1 - np.cos(theta_delta_lower)))
+    p_2 = (kappa_l * e_0) ** 2 / (2 * e_0 * (1 - np.cos(theta_delta_lower)))
     theta = np.linspace(2 * np.pi - theta_delta_lower, 2 * np.pi, n_half // 2)
 
     x_right = r_0 * (1 + e_0 * np.cos(theta) - grad_p)
