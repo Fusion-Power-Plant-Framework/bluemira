@@ -2,6 +2,7 @@ Examples
 --------
 
 Introductory Examples
+^^^^^^^^^^^^^^^^^^^^^
 
 .. nbgallery::
 
@@ -12,6 +13,7 @@ Introductory Examples
     examples/geometry/plotting_tutorial
 
 Equilibria Examples
+^^^^^^^^^^^^^^^^^^^
 
 .. nbgallery::
 
@@ -22,6 +24,7 @@ Equilibria Examples
     examples/equilibria/single_null
 
 Geometry Examples
+^^^^^^^^^^^^^^^^^
 
 .. nbgallery::
 
@@ -29,6 +32,7 @@ Geometry Examples
     examples/geometry/plane_placement_tutorial
 
 External Code Examples
+^^^^^^^^^^^^^^^^^^^^^^
 
 .. nbgallery::
 
@@ -36,6 +40,7 @@ External Code Examples
     examples/codes/solver_example
 
 Other Examples
+^^^^^^^^^^^^^^
 
 .. nbgallery::
 
