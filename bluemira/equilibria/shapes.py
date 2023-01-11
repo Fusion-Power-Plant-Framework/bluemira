@@ -160,7 +160,6 @@ def flux_surface_kuiroukidis(
     is just an offset. The key may lie in understand what "relative to the X-point" means
     but it's not enough for me to go on at the moment.
     """
-    n_half = n_points // 2
     n_quart = n_points // 4
     e_0 = a / r_0  # inverse aspect ratio
 
@@ -182,7 +181,7 @@ def flux_surface_kuiroukidis(
     theta_delta_lower = np.pi - np.arctan(kappa_l / delta_l)
     p_1 = (kappa_l * e_0) ** 2 / (2 * e_0 * (1 + np.cos(theta_delta_lower)))
     theta = np.linspace(np.pi, 2 * np.pi - theta_delta_lower, n_quart)
-    corr = delta_l - theta_delta_lower
+
     x_left = r_0 * (1 + e_0 * np.cos(theta))
     z_left = -r_0 * np.sqrt(2 * p_1 * e_0 * (1 + np.cos(theta)))
 
