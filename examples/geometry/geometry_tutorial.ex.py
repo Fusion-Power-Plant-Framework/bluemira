@@ -25,6 +25,7 @@ A geometry tutorial for users.
 """
 
 # %% [markdown]
+# # Geometry Tutorial
 # ## Introduction
 #
 # Geometry is not plasma physics, but it isn't trivial either. Chances are most of

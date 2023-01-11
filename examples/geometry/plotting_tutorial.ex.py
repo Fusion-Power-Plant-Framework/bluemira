@@ -34,6 +34,7 @@ from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.parameterisations import PrincetonD
 
 # %% [markdown]
+# # Plotting examples
 # ## Setup
 #
 # Creation of a closed wire and respective face and discretisation points.

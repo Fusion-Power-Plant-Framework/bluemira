@@ -25,13 +25,13 @@ Some examples of using bluemira mesh module.
 """
 
 # %% [markdown]
-#
-# # Introduction
+# # Meshing Example
+# ## Introduction
 #
 # In this example, we will show how to use the mesh module to create a 2D mesh for fem
 # application
 #
-# # Imports
+# ## Imports
 #
 # Import necessary module definitions.
 
@@ -56,7 +56,7 @@ set_log_level("DEBUG")
 
 # %% [markdown]
 #
-# # Geometry
+# ## Geometry
 #
 # Creation of a simple 2-D geometry, i.e. a Johner shape + a coil with casing
 
@@ -85,7 +85,7 @@ coil_in = BluemiraFace([poly_in], label="coil_in")
 
 # %% [markdown]
 #
-# # Mesh setup
+# ## Mesh setup
 #
 # setup characteristic mesh length
 
@@ -128,7 +128,7 @@ print(m.get_gmsh_dict(buffer))
 
 # %% [markdown]
 #
-# # Convert to xdmf
+# ## Convert to xdmf
 
 # %%
 

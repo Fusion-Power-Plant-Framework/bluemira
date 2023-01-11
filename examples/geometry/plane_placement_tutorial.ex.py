@@ -20,10 +20,11 @@
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 """
-Plotting module examples
+Plane placement example
 """
 
 # %% [markdown]
+# # Plane placement examples
 # Necessary imports
 
 # %%

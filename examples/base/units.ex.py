@@ -26,6 +26,7 @@ An example to show the use of the raw unit converters
 
 
 # %% [markdown]
+# # Units Example
 # ## Raw conversion
 #
 # In some situations it may be useful to convert a raw value to a different unit.

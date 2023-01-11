@@ -32,6 +32,7 @@ from bluemira.display import plot_defaults
 from bluemira.plasma_physics.reactions import reactivity
 
 # %% [markdown]
+# # Fusion Reactivity example
 #
 # Let's plot the reactivity of a couple of well-known fusion reactions.
 

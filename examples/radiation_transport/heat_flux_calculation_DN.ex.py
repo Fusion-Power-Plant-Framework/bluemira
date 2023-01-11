@@ -21,7 +21,7 @@
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 
 """
-Example single null first wall particle heat flux
+Example double null first wall particle heat flux
 """
 
 # %%
@@ -35,6 +35,7 @@ from bluemira.geometry.coordinates import Coordinates
 from bluemira.radiation_transport.advective_transport import ChargedParticleSolver
 
 # %% [markdown]
+# # Double Null first wall particle heat flux
 #
 # First we load an up equilibrium
 

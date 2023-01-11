@@ -44,7 +44,8 @@ from bluemira.mesh.tools import import_mesh, msh_to_xdmf
 import dolfin  # isort:skip
 
 # %% [markdown]
-# # Create a plasma shape
+# # GS FEM solver for a Johner plasma parametrization
+# ## Create a plasma shape
 
 
 # %%
@@ -67,7 +68,7 @@ meshing.Mesh(meshfile=meshfiles)(plasma)
 
 # %% [markdown]
 #
-# # Convert to xdmf
+# ## Convert to xdmf
 
 # %%
 msh_to_xdmf("Mesh.msh", dimensions=(0, 2), directory=directory)

@@ -36,16 +36,16 @@ from bluemira.base.file import get_bluemira_path
 from bluemira.base.logs import set_log_level
 
 # %% [markdown]
-# # Configuring a solver
+# ## Configuring a solver
 #
 # PROCESS is one of the codes bluemira can use to compliment a reactor design.
 # As with any of the external codes bluemira uses, a solver object is created.
 # The solver object abstracts away most of the complexities of running different
 # programs within bluemira.
 #
-# ## Setting up
+# ### Setting up
 #
-# ### Logging
+# #### Logging
 # To enable debug logging run the below cell
 
 # %%
@@ -53,7 +53,7 @@ from bluemira.base.logs import set_log_level
 set_log_level("DEBUG")
 
 # %% [markdown]
-# ### Binary Location
+# #### Binary Location
 # Firstly if process is not in your system path we need to provide the
 # binary location to the solver.
 
@@ -64,7 +64,7 @@ PROCESS_PATH = ""
 binary = f"{PROCESS_PATH}process"
 
 # %% [markdown]
-# ### Creating the solver object
+# #### Creating the solver object
 # bluemira-PROCESS parameter names have been mapped across where possible.
 # Some example parameters have been set here in `new_params`
 # before being converted into a bluemira configuration store.
@@ -104,7 +104,7 @@ build_config = {
 process_solver = process.Solver(params=params, build_config=build_config)
 
 # %% [markdown]
-# ### Running the solver
+# #### Running the solver
 # Call the `execute` method of the solver, using one of the solver's
 # run modes.
 

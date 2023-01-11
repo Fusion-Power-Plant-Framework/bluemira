@@ -41,6 +41,7 @@ from bluemira.utilities.tools import set_random_seed
 plot_defaults()
 
 # %% [markdown]
+# # Fuel cycle example
 #
 # First let's set up a configuration with some values (a la EU-DEMO 2015)
 

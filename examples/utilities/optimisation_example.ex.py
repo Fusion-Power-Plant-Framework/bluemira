@@ -31,7 +31,7 @@ from bluemira.utilities.optimiser import Optimiser, approx_derivative
 
 # %% [markdown]
 #
-# Optimisation example
+# # Optimisation example
 
 # %%
 

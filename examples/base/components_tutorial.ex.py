@@ -30,6 +30,8 @@ from anytree import RenderTree
 from bluemira.base.components import Component, MagneticComponent, PhysicalComponent
 
 # %% [markdown]
+# # Components
+#
 # Example of a Tree structure
 # Definition of some Components as groups. These do not have a physical shape / material
 # but represent common systems within a reactor (or indeed the reactor itself).

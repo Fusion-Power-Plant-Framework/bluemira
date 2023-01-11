@@ -40,6 +40,8 @@ from bluemira.balance_of_plant.steady_state import (
 
 # %% [markdown]
 #
+# # Simple Example of a 0-D steady-state balance of plant.
+#
 # Let's set up a typical power balance model. We start by specifying some parameters we
 # want to use.
 

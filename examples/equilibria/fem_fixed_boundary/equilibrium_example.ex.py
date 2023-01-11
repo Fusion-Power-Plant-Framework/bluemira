@@ -46,6 +46,8 @@ from bluemira.equilibria.shapes import JohnerLCFS
 set_log_level("NOTSET")
 
 # %% [markdown]
+#
+# # Fixed Boundary Equilibrium
 # Setup the Plasma shape parameterisation variables
 
 # %%

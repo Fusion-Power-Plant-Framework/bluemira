@@ -26,6 +26,7 @@ Equilibrium and coilset optimisation - developer tutorial
 
 # %% [markdown]
 #
+# # Equilibrium and Coilset Optimisation
 # Here we explore how to optimise equilibria, coil currents, and coil positions.
 #
 # This is an in-depth example, intended for developers and people familiar with plasma

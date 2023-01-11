@@ -35,6 +35,7 @@ from bluemira.geometry.coordinates import Coordinates
 from bluemira.radiation_transport.advective_transport import ChargedParticleSolver
 
 # %% [markdown]
+# # Single null first wall particle heat flux
 #
 # First we load an up equilibrium
 
