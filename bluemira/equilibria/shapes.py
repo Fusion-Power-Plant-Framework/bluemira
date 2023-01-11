@@ -235,21 +235,6 @@ def flux_surface_kuiroukidis(
         x_left, x_right = x_right[::-1], x_left[::-1]
         z_left, z_right = z_right[::-1], z_left[::-1]
 
-    import matplotlib.pyplot as plt
-
-    f, ax = plt.subplots()
-    ax.plot(x_upper, z_upper, color="b", marker="o", markersize=2)
-    ax.plot(x_upper[0], z_upper[0], color="b", marker="o")
-    ax.plot(x_upper[-1], z_upper[-1], color="b", marker="^")
-    ax.plot(x_left, z_left, color="r", marker="o", markersize=2)
-    ax.plot(x_left[0], z_left[0], color="r", marker="o")
-    ax.plot(x_left[-1], z_left[-1], color="r", marker="^")
-    ax.plot(x_right, z_right, color="g", marker="o", markersize=2)
-    ax.plot(x_right[0], z_right[0], color="g", marker="o")
-    ax.plot(x_right[-1], z_right[-1], color="g", marker="^")
-    ax.set_aspect("equal")
-    plt.show()
-
     x = np.concatenate([x_upper, x_left, x_right])
     z = z_0 + np.concatenate([z_upper, z_left, z_right])
 
