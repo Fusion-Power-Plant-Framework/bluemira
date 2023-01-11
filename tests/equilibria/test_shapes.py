@@ -154,6 +154,9 @@ class TestKuiroukidis:
         np.testing.assert_allclose(
             np.array([x_outer, z_outer]), flux_surface.xz.T[arg_outer], atol=1e-12
         )
+        f, ax = plt.subplots()
+        ax.plot(flux_surface.x, flux_surface.z)
+        ax.set_aspect("equal")
 
 
 johner_names = [
