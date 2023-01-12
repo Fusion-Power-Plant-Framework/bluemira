@@ -23,6 +23,8 @@
 """
 Optimiser API tutorial
 """
+
+# %%
 from pprint import pprint
 
 import numpy as np
@@ -72,13 +74,15 @@ for algorithm in ["SLSQP", "COBYLA", "ISRES"]:
 print("Rosenbrock results:")
 pprint(results)
 
+# %% [markdown]
 # They all get pretty close to the optimum here.
-
+#
 # The SLSQP algorithm which leverages the gradient we (in this case not so painfully)
 # derived, does better here. It finds the optimum exactly, and in very few iterations.
-
-
+#
 # Now let's add in a constraint
+
+# %%
 
 
 def f_constraint(constraint, x, grad):
@@ -124,18 +128,21 @@ for algorithm in ["SLSQP", "COBYLA", "ISRES"]:
 print("Constrained Rosenbrock results")
 pprint(results)
 
+# %% [markdown]
 # So SLSQP and COBYLA do fine here, because there is only one minimum and it is a problem
 # well suited to these algorithms. Note that the optimum complies with the constraints,
 # so these algorithms actually perform better with the constraints (there is less space
 # to search, and more rules and gradients to leverage).
-
+#
 # ISRES probably won't do so well here on average. Note that every time you run ISRES,
 # you will get different results unless you set the same random seed.
-
+#
 # It's usually wise to set a max_eval termination condition when doing optimisations,
 # otherwise they can take a very long time... and may never converge.
-
+#
 # What about a strongly multi-modal function with no easy analytical gradient?
+
+# %%
 
 
 def f_eggholder(x):
@@ -189,7 +196,10 @@ for algorithm in ["SLSQP", "COBYLA", "ISRES"]:
 print("Eggholder results:")
 pprint(results)
 
+# %% [markdown]
 # SLSQP and COBYLA are local optimisation algorithms, and converge rapidly on a local
 # minimum. ISRES is a stochastic global optimisation algorithm, and keeps looking for
 # longer, finding a much better minimum, but caps out at the maximum number of
 # evaluations (usually).
+
+# %%

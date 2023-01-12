@@ -11,6 +11,7 @@ Introductory Examples
     examples/base/components_tutorial
     examples/geometry/geometry_tutorial
     examples/geometry/plotting_tutorial
+    examples/utilities/optimisation_example
 
 Equilibria Examples
 ^^^^^^^^^^^^^^^^^^^
@@ -54,4 +55,3 @@ Other Examples
     examples/radiation_transport/heat_flux_calculation
     examples/radiation_transport/heat_flux_calculation_DN
     examples/structural/tour_eiffel_example
-    examples/utilities/optimisation_example
