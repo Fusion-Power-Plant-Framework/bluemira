@@ -36,7 +36,6 @@ from bluemira.equilibria.fem_fixed_boundary.fem_magnetostatic_2D import (
 from bluemira.equilibria.fem_fixed_boundary.utilities import find_magnetic_axis
 from bluemira.equilibria.file import EQDSKInterface
 from bluemira.equilibria.grid import Grid
-from bluemira.geometry.coordinates import Coordinates
 
 
 def _pressure_profile(pprime, psi_norm, psi_mag):
