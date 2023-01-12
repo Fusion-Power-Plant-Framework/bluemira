@@ -25,8 +25,6 @@ import abc
 from dataclasses import dataclass
 from typing import Dict, Literal, Optional, Union
 
-import numpy as np
-
 from bluemira.base.parameter_frame import ParameterFrame
 from bluemira.codes.error import CodesError
 
@@ -56,13 +54,13 @@ class MappedParameterFrame(ParameterFrame):
         External codes are likely to have variables that are not changed often
         therefore in some cases sane defaults are needed.
 
-        If a default value is not found for a givne mapping it is set to NaN
+        If a default value is not found for a given mapping it is set to NaN
 
         """
         new_param_dict = {}
         for bm_map_name, param_map in cls._mappings.items():
             new_param_dict[bm_map_name] = {
-                "value": data.get(param_map.name, np.nan),
+                "value": data.get(param_map.name, None),
                 "unit": param_map.unit,
                 "source": "bluemira codes default",
             }

@@ -62,7 +62,7 @@ class Parameter(Generic[ParameterValueType]):
         long_name: str = "",
         _value_types: Tuple[Type, ...] = None,
     ):
-        if _value_types:
+        if _value_types and value is not None:
             if float in _value_types and isinstance(value, int):
                 value = float(value)
             elif not isinstance(value, _value_types):

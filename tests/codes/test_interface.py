@@ -45,10 +45,18 @@ class Params(MappedParameterFrame):
     param1: Parameter[float]
     param2: Parameter[int]
 
-    mappings = {
-        "param1": ParameterMapping("ext1", send=True, recv=True),
+    _mappings = {
+        "param1": ParameterMapping("ext1", send=True, recv=True, unit="MW"),
         "param2": ParameterMapping("ext2", send=False, recv=False),
     }
+
+    @property
+    def mappings(self):
+        return self._mappings
+
+    @classmethod
+    def from_defaults(cls):
+        return super().from_defaults({})
 
 
 class TestCodesSolver:
@@ -72,3 +80,10 @@ class TestCodesSolver:
         assert solver.params.mappings["param1"].recv is True
         assert solver.params.mappings["param2"].send is True
         assert solver.params.mappings["param2"].recv is False
+
+    def test_no_defaults_are_set_to_None(self):
+        params = Params.from_defaults()
+        assert params.param1.value is None
+        assert params.param2.value is None
+        assert params.param1.unit == "W"
+        assert params.param2.value == ""

@@ -226,10 +226,17 @@ def _validate_units(param_data: Dict, value_type: Iterable[Type]):
     except KeyError as ke:
         raise ValueError("Parameters need a value and a unit") from ke
     except TypeError as te:
-        if not isinstance(param_data["value"], bool):
+        if param_data["value"] is None:
+            # dummy for None values
+            if param_data["unit"] is None:
+                quantity = pint.Quantity(1)
+            else:
+                quantity = pint.Quantity(param_data["unit"])
+        elif isinstance(param_data["value"], (bool, str)):
+            param_data["unit"] = "dimensionless"
+            return
+        else:
             raise te
-        param_data["unit"] = "dimensionless"
-        return
 
     if dimensionality := quantity.units.dimensionality:
         unit = _fix_combined_units(_remake_units(dimensionality))
@@ -238,7 +245,7 @@ def _validate_units(param_data: Dict, value_type: Iterable[Type]):
 
     unit = _fix_weird_units(unit, quantity.units)
 
-    if unit != quantity.units:
+    if unit != quantity.units and param_data["value"] is not None:
         val = raw_uc(quantity.magnitude, quantity.units, unit)
         if isinstance(param_data["value"], int) and int in value_type:
             val = int(val)
