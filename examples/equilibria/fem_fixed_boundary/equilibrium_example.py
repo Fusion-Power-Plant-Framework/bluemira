@@ -174,6 +174,7 @@ data = save_fixed_boundary_to_file(
     formatt="json",
 )
 
+# Will remove once I'm done
 import matplotlib.pyplot as plt
 import numpy as np
 
