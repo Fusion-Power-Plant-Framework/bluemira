@@ -112,6 +112,7 @@ problem_settings = {
     "i_modeltype": "GYROBOHM_2",
     "i_equiltype": "q95_sawtooth",
     "i_pedestal": "SAARELMA",
+    "isawt": "FULLY_RELAXED",
 }
 
 plasmod_build_config = {
@@ -154,5 +155,7 @@ solve_transport_fixed_boundary(
     max_iter=15,
     iter_err_max=1e-4,
     relaxation=0.0,
-    plot=False,
+    plot=True,
+    debug=False,
+    gif=True,
 )

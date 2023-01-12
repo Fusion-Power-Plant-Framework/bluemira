@@ -28,14 +28,19 @@ from typing import Callable, Iterable, Optional, Union
 import dolfin
 import matplotlib.pyplot as plt
 import numpy as np
+from mpl_toolkits.axes_grid1 import make_axes_locatable
 
 from bluemira.base.constants import MU_0
+from bluemira.base.file import try_get_bluemira_path
 from bluemira.base.look_and_feel import bluemira_print_flush
+from bluemira.display import plot_defaults
+from bluemira.equilibria.constants import DPI_GIF, PLT_PAUSE
 from bluemira.equilibria.fem_fixed_boundary.utilities import (
     ScalarSubFunc,
     find_magnetic_axis,
-    plot_scalar_field,
 )
+from bluemira.equilibria.plotting import PLOT_DEFAULTS
+from bluemira.utilities.plot_tools import make_gif, save_figure
 
 
 class FemMagnetostatic2d:
@@ -366,35 +371,6 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
         self._psi_b = None
         self._psi_ax = None
 
-    def _plot_current_iteration(
-        self, i_iter: int, points: Iterable, prev: Optional[np.ndarray] = None
-    ):
-        self._plot_array(
-            points,
-            np.array([self._g_func(p) for p in points]),
-            f"J current at iteration {i_iter}",
-            contour=False,
-        )
-        if prev is not None:
-            self._plot_array(
-                points, prev, f"Normalized magnetic coordinate at iteration {i_iter}"
-            )
-        plt.show()
-
-    def _plot_array(
-        self, points: np.ndarray, array: np.ndarray, title: str, contour: bool = True
-    ):
-        ax, _, _ = plot_scalar_field(
-            points[:, 0],
-            points[:, 1],
-            array,
-            levels=20,
-            ax=None,
-            tofill=True,
-            contour=contour,
-        )
-        ax.set_title(title)
-
     def solve(
         self,
         dirichlet_bc_function: Optional[
@@ -403,6 +379,9 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
         dirichlet_marker: Optional[int] = None,
         neumann_bc_function: Optional[Union[dolfin.Expression, dolfin.Function]] = None,
         plot: bool = False,
+        debug: bool = False,
+        gif: bool = False,
+        figname: Optional[str] = None,
     ) -> dolfin.Function:
         """
         Solve the G-S problem.
@@ -419,6 +398,8 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
             condition of 0 on the plasma boundary.
         plot: bool
             Whether or not to plot
+        figname: Optional[str]
+            The name of the figure. If None, a suitable default is used.
 
         Returns
         -------
@@ -426,30 +407,42 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
             dolfin.Function for psi
         """
         points = self.mesh.coordinates()
-
-        if plot:
-            self._plot_current_iteration(0, points)
+        plot = any((plot, debug, gif))
+        folder = try_get_bluemira_path(
+            "", subfolder="generated_data", allow_missing=False
+        )
+        if figname is None:
+            figname = "Fixed boundary equilibrium iteration "
 
         super().solve(dirichlet_bc_function, dirichlet_marker, neumann_bc_function)
         self._reset_psi_cache()
         self._update_curr()
 
+        if plot:
+            plot_defaults()
+            f, ax, cax = self._setup_plot(debug)
+
+        diff = np.zeros(len(points))
         for i in range(1, self.max_iter + 1):
             prev_psi = self.psi.vector()[:]
             prev = np.array([self.psi_norm_2d(p) for p in points])
 
             if plot:
-                self._plot_current_iteration(i, points, prev)
+                self._plot_current_iteration(f, ax, cax, i, points, prev, diff, debug)
+                if debug or gif:
+                    save_figure(
+                        f,
+                        figname + str(i),
+                        save=True,
+                        folder=folder,
+                        dpi=DPI_GIF,
+                    )
 
             super().solve(dirichlet_bc_function, dirichlet_marker, neumann_bc_function)
             self._reset_psi_cache()
 
             new = np.array([self.psi_norm_2d(p) for p in points])
             diff = new - prev
-
-            if plot:
-                self._plot_array(points, diff, f"G-S error at iteration {i}")
-                plt.show()
 
             eps = np.linalg.norm(diff, ord=2) / np.linalg.norm(new, ord=2)
 
@@ -467,4 +460,96 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
             if eps < self.iter_err_max:
                 break
 
+        if plot:
+            plt.close(f)
+        if gif:
+            make_gif(folder, figname, clean=not debug)
+
         return self.psi
+
+    def _setup_plot(self, debug):
+        n_col = 3 if debug else 2
+        fig, ax = plt.subplots(1, n_col, figsize=(18, 10))
+        plt.subplots_adjust(wspace=0.5)
+
+        cax = []
+        for axis in ax:
+            divider = make_axes_locatable(axis)
+            cax.append(divider.append_axes("right", size="10%", pad=0.1))
+
+        return fig, ax, cax
+
+    def _plot_current_iteration(
+        self,
+        f,
+        ax,
+        cax,
+        i_iter: int,
+        points: Iterable,
+        prev: np.ndarray,
+        diff: np.ndarray,
+        debug: bool,
+    ):
+        for axis in ax:
+            axis.clear()
+            axis.set_xlabel("x")
+            axis.set_ylabel("z")
+            axis.set_aspect("equal")
+
+        cm = self._plot_array(
+            ax[0],
+            points,
+            np.array([self._g_func(p) for p in points]),
+            f"({i_iter}) " + "$J_{tor}$",
+            PLOT_DEFAULTS["current"]["cmap"],
+        )
+        self._add_colorbar(cm, cax[0], "A/m$^{2}$\n")
+
+        levels = np.linspace(0, 1, 11)
+        cm = self._plot_array(
+            ax[1],
+            points,
+            prev,
+            f"({i_iter}) " + "$\\Psi_{n}$",
+            PLOT_DEFAULTS["psi"]["cmap"],
+            levels,
+        )
+        self._add_colorbar(cm, cax[1], "")
+
+        if debug:
+            cm = self._plot_array(
+                ax[2],
+                points,
+                100 * diff,
+                f"({i_iter}) " + "$\\Psi_{n}$ error",
+                "seismic",
+            )
+            self._add_colorbar(cm, cax[2], "%")
+
+        plt.pause(PLT_PAUSE)
+
+    def _plot_array(
+        self,
+        ax,
+        points: np.ndarray,
+        array: np.ndarray,
+        title: str,
+        cmap: str,
+        levels: Optional[np.ndarray] = None,
+    ):
+        cm = ax.tricontourf(points[:, 0], points[:, 1], array, cmap=cmap, levels=levels)
+        ax.tricontour(
+            points[:, 0], points[:, 1], array, colors="k", linewidths=0.5, levels=levels
+        )
+
+        ax.set_title(title)
+        return cm
+
+    @staticmethod
+    def _add_colorbar(cm, cax, title):
+        last_axes = plt.gca()
+        ax = cm.axes
+        fig = ax.figure
+        fig.colorbar(cm, cax=cax)
+        cax.set_title(title)
+        plt.sca(last_axes)

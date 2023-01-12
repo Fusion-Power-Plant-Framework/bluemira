@@ -89,14 +89,13 @@ def test_plasma_xz_cross_section():
     )
     lcfs_options = {"face": {"lcar": 1}, "lcfs": {"lcar": 2}}
     plasma = create_plasma_xz_cross_section(
-        DummyCircle(), transport_params, pp, 1.652, 0.333, lcfs_options, "source", True
+        DummyCircle(), transport_params, pp, 1.652, 0.333, lcfs_options, "source"
     )
 
     assert isinstance(plasma.shape, BluemiraFace)
     assert plasma.shape.mesh_options.lcar == 1
     assert plasma.shape.boundary[0].mesh_options.lcar == 2
     assert isinstance(plasma, PhysicalComponent)
-    assert not plasma.plot_options.show_faces
 
     assert transport_params.V_p.value == pytest.approx(19.7392)
 
@@ -125,6 +124,8 @@ class TranspOutParams(ParameterFrame):
 
 
 class DummyTransportSolver:
+    name = "DUMMY"
+
     def __init__(self):
         self.i = 0
 

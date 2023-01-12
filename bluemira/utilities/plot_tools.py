@@ -24,6 +24,7 @@ A collection of plotting tools.
 """
 
 import os
+import re
 from typing import Union
 
 import imageio
@@ -95,7 +96,9 @@ def str_to_latex(string):
 
 def make_gif(folder, figname, formatt="png", clean=True):
     """
-    Makes a GIF image from a set of images with similar names in a folder
+    Make a GIF image from a set of images with similar names in a folder.
+    Figures are sorted in increasing order based on a trailing number, e.g.
+    'figure_A[1, 2, 3, ..].png'
     Cleans up the temporary figure files (deletes!)
     Creates a GIF file in the folder directory
 
@@ -104,7 +107,7 @@ def make_gif(folder, figname, formatt="png", clean=True):
     folder: str
         Full path folder name
     figname: str
-        Figure name prefix. E.g. 'figure_A'[1, 2, 3, ..]
+        Figure name prefix
     formatt: str (default = 'png')
         Figure filename extension
     clean: bool (default = True)
@@ -115,7 +118,9 @@ def make_gif(folder, figname, formatt="png", clean=True):
         if filename.startswith(figname) and filename.endswith(formatt):
             fp = os.path.join(folder, filename)
             ims.append(fp)
-    ims = sorted(ims)
+
+    find_digit = re.compile("(\\d+)")
+    ims = sorted(ims, key=lambda x: int(find_digit.findall(x)[-1]))
     images = [imageio.imread(fp) for fp in ims]
     if clean:
         for fp in ims:

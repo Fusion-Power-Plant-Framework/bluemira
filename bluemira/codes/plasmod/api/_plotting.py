@@ -23,19 +23,21 @@ Plotting for PLASMOD.
 """
 
 import matplotlib.pyplot as plt
+import numpy as np
 
+from bluemira.base.constants import MU_0
 from bluemira.display import plot_defaults
 
 __all__ = ["plot_default_profiles"]
 
 
-def plot_default_profiles(plasmod_outputs, show=True):
+def plot_default_profiles(plasmod_solver, show=True, f=None, ax=None):
     """
     Plot a default set of profiles from a PLASMOD solver.
 
     Parameters
     ----------
-    plasmod_outputs: plasmod.PlasmodOutputs
+    plasmod_solver: plasmod.Solver
         Solver for which to plot profiles
     show: bool
         Whether or not to show the plot
@@ -48,46 +50,51 @@ def plot_default_profiles(plasmod_outputs, show=True):
         Array of matplotlib Axes
     """
     plot_defaults()
+    if f is None and ax is None:
+        f, ax = plt.subplots(2, 3, figsize=(18, 10))
 
-    f, ax = plt.subplots(2, 3)
-    rho = plasmod_outputs.x
+    rho = plasmod_solver.get_profile("x")
+    R_0 = plasmod_solver.params.R_0.value
+    pprime = plasmod_solver.get_profile("pprime")
+    ffprime = plasmod_solver.get_profile("ffprime")
+    # Current density profile reconstruction from flux functions
+    jpar_recon = 2 * np.pi * (R_0 * pprime + ffprime / (MU_0 * R_0))
 
     # Temperature profiles
-    ti = plasmod_outputs.Ti
-    te = plasmod_outputs.Te
+    ti = plasmod_solver.get_profile("Ti")
+    te = plasmod_solver.get_profile("Te")
     ax[0, 0].plot(rho, ti, label="$T_{i}$")
     ax[0, 0].plot(rho, te, label="$T_{e}$")
     ax[0, 0].set_ylabel("Temperature [keV]")
 
     # Current profiles
-    jpar = plasmod_outputs.jpar
-    jbs = plasmod_outputs.jbs
-    jcd = plasmod_outputs.jcd
+    jpar = plasmod_solver.get_profile("jpar")
+    jbs = plasmod_solver.get_profile("jbs")
+    jcd = plasmod_solver.get_profile("jcd")
     ax[0, 1].plot(rho, jpar, label="$j_{||}$")
     ax[0, 1].plot(rho, jbs, label="$j_{BS}$")
     ax[0, 1].plot(rho, jcd, label="$j_{CD}$")
+    ax[0, 1].plot(rho, jpar_recon, label="$j_{p', FF'}$")
     ax[0, 1].set_ylabel("Current density [A/m²]")
 
     # Density profiles
-    ni = plasmod_outputs.nions
-    ne = plasmod_outputs.ne
+    ni = plasmod_solver.get_profile("n_ion")
+    ne = plasmod_solver.get_profile("n_e")
     ax[1, 0].plot(rho, ni, label="$n_{i}$")
     ax[1, 0].plot(rho, ne, label="$n_{e}$")
     ax[1, 0].set_ylabel("Density [10¹⁹/m³]")
 
     # q profile
-    qprof = plasmod_outputs.qprof
+    qprof = plasmod_solver.get_profile("q")
     ax[1, 1].plot(rho, qprof, label="$q$")
     ax[1, 1].set_ylabel("Safety factor")
 
     # Flux functions
-    pprime = plasmod_outputs.pprime
     ax[0, 2].plot(rho, pprime, label="p'")
     ax[0, 2].set_ylabel("[Pa/Wb]")
     axi: plt.Axes = ax[0, 2]
     axi.ticklabel_format(axis="y", style="scientific", scilimits=(0, 0))
 
-    ffprime = plasmod_outputs.ffprime
     ax[1, 2].plot(rho, ffprime, label="FF'")
     ax[1, 2].set_ylabel("[T]")
 
@@ -96,6 +103,8 @@ def plot_default_profiles(plasmod_outputs, show=True):
         axe.set_xlabel("$\\rho$")
         axe.set_xlim([0.0, 1.0])
         axe.legend(loc="best")
+
+    plt.subplots_adjust(hspace=0.3, wspace=0.3)
 
     if show:
         plt.show()
