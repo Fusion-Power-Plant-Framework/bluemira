@@ -336,6 +336,7 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
         pprime: Union[Callable[[np.ndarray], np.ndarray], float],
         ffprime: Union[Callable[[np.ndarray], np.ndarray], float],
         curr_target: Optional[float],
+        B_0: Optional[float],
     ):
         """
         Return the density current DOLFIN function given pprime and ffprime.
@@ -350,8 +351,11 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
             Target current (also used to initialize the solution in case self.psi is
             still 0 and pprime and ffprime are, then, not defined).
             If None, plasma current is calculated and not constrained
+        B_0: float
+            Toroidal field at R_0 [T]. Used when saving to file.
         """
         self._curr_target = curr_target
+        self._B_0 = B_0
         self._pprime = pprime
         self._ffprime = ffprime
         self._g_func = self._create_g_func(pprime, ffprime, self._curr_target)

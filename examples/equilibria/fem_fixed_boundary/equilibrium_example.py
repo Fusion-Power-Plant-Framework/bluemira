@@ -154,7 +154,7 @@ solve_transport_fixed_boundary(
     delta95_t=0.333,  # Target delta_95
     lcar_mesh=0.3,
     max_iter=15,
-    iter_err_max=1e-4,
+    iter_err_max=1e1,
     relaxation=0.0,
     plot=True,
     debug=False,
@@ -165,6 +165,28 @@ solve_transport_fixed_boundary(
 # Save to a file
 
 # %%
-save_fixed_boundary_to_file(
-    "/home/matti/code/bluemira/generated_data/test_1.json", fem_GS_fixed_boundary
+data = save_fixed_boundary_to_file(
+    "/home/matti/code/bluemira/generated_data/test_1.json",
+    "something",
+    fem_GS_fixed_boundary,
+    100,
+    100,
+    formatt="json",
 )
+
+import matplotlib.pyplot as plt
+import numpy as np
+
+xx, zz = np.meshgrid(data.x, data.z, indexing="ij")
+f, ax = plt.subplots()
+ax.contour(xx, zz, data.psi)
+ax.plot(data.xbdry, data.zbdry)
+ax.set_aspect("equal")
+
+f, ax = plt.subplots()
+ax.plot(data.psinorm, abs(data.pprime) / max(abs(data.pprime)), label="p'")
+ax.plot(data.psinorm, abs(data.ffprime) / max(abs(data.ffprime)), label="FF'")
+ax.plot(data.psinorm, abs(data.fpol) / max(abs(data.fpol)), label="F")
+ax.plot(data.psinorm, abs(data.pressure) / max(abs(data.pressure)), label="p")
+ax.legend()
+plt.show()

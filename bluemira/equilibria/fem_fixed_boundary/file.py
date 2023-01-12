@@ -27,6 +27,8 @@ from typing import Dict, Optional
 
 import numpy as np
 from dolfin import BoundaryMesh
+from scipy.integrate import quad, quadrature
+from scipy.spatial import ConvexHull
 
 from bluemira.equilibria.fem_fixed_boundary.fem_magnetostatic_2D import (
     FemGradShafranovFixedBoundary,
@@ -37,9 +39,28 @@ from bluemira.equilibria.grid import Grid
 from bluemira.geometry.coordinates import Coordinates
 
 
+def _pressure_profile(pprime, psi_norm, psi_mag):
+    pressure = np.zeros(len(psi_norm))
+    for i in range(len(psi_norm)):
+        pressure[i] = quad(pprime, psi_norm[i], 1.0, limit=500)[0] * psi_mag
+    return pressure
+
+
+def _fpol_profile(ffprime, psi_norm, psi_mag, fvac):
+    fpol = np.zeros(len(psi_norm))
+    for i in range(len(psi_norm)):
+        fpol[i] = np.sqrt(
+            2
+            * quadrature(ffprime, psi_norm[i], 1.0, maxiter=500, rtol=1e-6, tol=1e-6)[0]
+            * psi_mag
+            + fvac**2
+        )
+    return fpol
+
+
 def save_fixed_boundary_to_file(
-    file_path,
-    file_name,
+    file_path: str,
+    file_name: str,
     gs_solver: FemGradShafranovFixedBoundary,
     nx: int,
     nz: int,
@@ -57,41 +78,55 @@ def save_fixed_boundary_to_file(
     nz: int
         Number of vertical points to use in the psi map
     """
+    # Recover the FE boundary from the mesh
     mesh = gs_solver.mesh
-    xb, zb = BoundaryMesh(mesh, "exterior").coordinates().T
-
-    boundary = Coordinates({"x": xb, "y": 0, "z": zb})
-    boundary.set_ccw([0, 1, 0])
-    xbdry, zbdry = boundary.x, boundary.z
+    boundary = BoundaryMesh(mesh, "exterior", False).coordinates()
+    # It's not ordered by connectivity, so we take the convex hull (same
+    # number of points, because the shape should be convex)
+    hull = ConvexHull(boundary)
+    xbdry, zbdry = hull.points[hull.vertices].T
+    xbdry = np.append(xbdry, xbdry[0])
+    zbdry = np.append(zbdry, zbdry[0])
     nbdry = len(xbdry)
 
+    x_mag, z_mag = find_magnetic_axis(gs_solver.psi, gs_solver.mesh)
+    psi_mag = gs_solver.psi(x_mag, z_mag)
+
+    # Make a minimum grid
     x_coords, z_coords = gs_solver.mesh.coordinates().T
     x_min = np.min(x_coords)
     x_max = np.max(x_coords)
     z_min = np.min(z_coords)
     z_max = np.max(z_coords)
     grid = Grid(x_min, x_max, z_min, z_max, nx=nx, nz=nz)
-    psi = gs_solver.psi(grid.x, grid.z)
+
+    psi = np.zeros((nx, nz))
+    for i, xi in enumerate(grid.x_1d):
+        for j, zj in enumerate(grid.z_1d):
+            psi[i, j] = gs_solver.psi([xi, zj])
 
     psi_norm = np.linspace(0, 1, 50)
     pprime = gs_solver._pprime
     ffprime = gs_solver._ffprime
     if callable(pprime):
-        pprime = pprime(psi_norm)
+        pprime_values = pprime(psi_norm)
     if callable(ffprime):
-        ffprime = ffprime(psi_norm)
+        ffprime_values = ffprime(psi_norm)
     else:
         psi_norm = np.linspace(0, 1, len(ffprime))
 
-    x_mag, z_mag = find_magnetic_axis(gs_solver.psi, gs_solver.mesh)
-    psi_mag = gs_solver.psi(x_mag, z_mag)
+    fvac = grid.x_mid * gs_solver._B_0
+    psi_vector = psi_norm * psi_mag
+    pressure = _pressure_profile(pprime, psi_vector, psi_mag)
+    fpol = _fpol_profile(ffprime, psi_norm, psi_mag, fvac)
+
     data = EQDSKInterface(
-        bcentre=99.9,  # TODO
+        bcentre=gs_solver._B_0,
         cplasma=gs_solver._curr_target,
         dxc=np.array([]),
         dzc=np.array([]),
-        ffprime=ffprime,
-        fpol=ffprime,  # TODO
+        ffprime=ffprime_values,
+        fpol=fpol,
         Ic=np.array([]),
         name="test",
         nbdry=nbdry,
@@ -99,8 +134,8 @@ def save_fixed_boundary_to_file(
         nlim=0,
         nx=nx,
         nz=nz,
-        pressure=np.array([]),
-        pprime=pprime,
+        pressure=pressure,
+        pprime=pprime_values,
         psi=psi,
         psibdry=np.zeros(nbdry),
         psimag=psi_mag,
@@ -122,4 +157,5 @@ def save_fixed_boundary_to_file(
         psinorm=psi_norm,
         qpsi=np.array([]),
     )
-    data.write(file_path, format=format, json_kwargs=json_kwargs)
+    data.write(file_path, format=formatt, json_kwargs=json_kwargs)
+    return data
