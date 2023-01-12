@@ -37,6 +37,7 @@ from bluemira.equilibria.fem_fixed_boundary.equilibrium import (
 from bluemira.equilibria.fem_fixed_boundary.fem_magnetostatic_2D import (
     FemGradShafranovFixedBoundary,
 )
+from bluemira.equilibria.fem_fixed_boundary.file import save_fixed_boundary_to_file
 from bluemira.equilibria.shapes import JohnerLCFS
 
 set_log_level("NOTSET")
@@ -158,4 +159,12 @@ solve_transport_fixed_boundary(
     plot=True,
     debug=False,
     gif=True,
+)
+
+# %% [markdown]
+# Save to a file
+
+# %%
+save_fixed_boundary_to_file(
+    "/home/matti/code/bluemira/generated_data/test_1.json", fem_GS_fixed_boundary
 )

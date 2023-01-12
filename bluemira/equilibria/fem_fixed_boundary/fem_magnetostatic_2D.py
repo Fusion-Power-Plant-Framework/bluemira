@@ -352,6 +352,8 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
             If None, plasma current is calculated and not constrained
         """
         self._curr_target = curr_target
+        self._pprime = pprime
+        self._ffprime = ffprime
         self._g_func = self._create_g_func(pprime, ffprime, self._curr_target)
         super().define_g(ScalarSubFunc(self._g_func))
 
