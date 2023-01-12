@@ -86,4 +86,4 @@ class TestCodesSolver:
         assert params.param1.value is None
         assert params.param2.value is None
         assert params.param1.unit == "W"
-        assert params.param2.value == ""
+        assert params.param2.unit == ""
