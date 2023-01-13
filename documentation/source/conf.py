@@ -32,9 +32,7 @@ def setup(app):
 # -- Project information -----------------------------------------------------
 
 project = "bluemira"
-copyright = (
-    "2021, M. Coleman, J. Cook, F. Franza, I.A. Maione, S. McIntosh, J. Morris, D. Short"
-)
+copyright = "2021-2023, M. Coleman, J. Cook, F. Franza, I.A. Maione, S. McIntosh, J. Morris, D. Short"
 author = "M. Coleman, J. Cook, F. Franza, I.A. Maione, S. McIntosh, J. Morris, D. Short, UKAEA & contributors"
 
 # The full version, including alpha/beta/rc tags

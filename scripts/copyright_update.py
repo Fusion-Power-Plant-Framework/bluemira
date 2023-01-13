@@ -55,6 +55,15 @@ def edit_files(files: List[str], copyright_line: str):
                 if line.startswith(r"# Copyright") and copyright_line not in line:
                     print(line.replace(line.split(" ", 4)[-2], copyright_line), end="")
                     yield file
+                elif (
+                    "conf.py" in file
+                    and line.startswith(r"copyright")
+                    and copyright_line not in line
+                ):
+                    print(
+                        line.replace(line.split(" ", 4)[-2], f'"{copyright_line},'),
+                        end="",
+                    )
                 else:
                     print(line, end="")
 
