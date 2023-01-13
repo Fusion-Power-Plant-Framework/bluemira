@@ -35,6 +35,7 @@ All :py:class:`BluemiraGeo` objects inherit from :py:class:`Meshable`. After cre
 use a simple dictionary with `lcar` and `physical_group` keys.
 
 .. code-block:: python
+
         from bluemira.geometry.tools import make_polygon
         from bluemira.mesh.meshing import Mesh
 
@@ -63,6 +64,7 @@ Once the mesh has been generated, it can be imported in a PDEs solver. Fenics_ s
 is integrated into bluemira.
 
 .. code-block:: python
+
     from bluemira.mesh.tools import import_mesh
 
     mesh, boundaries, subdomains, labels = import_mesh(
