@@ -121,6 +121,7 @@ class TranspOutParams(ParameterFrame):
     """Transport Solver ParameterFrame"""
 
     I_p: Parameter[float]
+    B_0: Parameter[float]
 
 
 class DummyTransportSolver:
@@ -130,7 +131,9 @@ class DummyTransportSolver:
         self.i = 0
 
     def execute(self, mode):
-        return TranspOutParams.from_dict({"I_p": {"value": 5, "unit": "A"}})
+        return TranspOutParams.from_dict(
+            {"I_p": {"value": 5, "unit": "A"}, "B_0": {"value": 5, "unit": "T"}}
+        )
 
     def get_profile(self, prof):
         self.i += 1
