@@ -28,7 +28,6 @@ from typing import Dict, Optional
 import numpy as np
 from dolfin import BoundaryMesh, Vertex
 from scipy.integrate import quad, quadrature
-from scipy.spatial import ConvexHull
 
 from bluemira.equilibria.fem_fixed_boundary.fem_magnetostatic_2D import (
     FemGradShafranovFixedBoundary,
