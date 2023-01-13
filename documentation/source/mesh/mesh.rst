@@ -36,16 +36,17 @@ use a simple dictionary with `lcar` and `physical_group` keys.
 
 .. code-block:: python
         from bluemira.geometry.tools import make_polygon
-        from bluemira.meshing import Mesh
+        from bluemira.mesh.meshing import Mesh
 
         poly = make_polygon(
             [[0, 0, 0], [1, 0, 0], [1, 0, 1], [0, 0, 1]], closed=True, label="poly"
         )
 
-        poly.mesh_options = {"lcar": lcar, "physical_group": "poly"}
+        poly.mesh_options = {"lcar": 0.1, "physical_group": "poly"}
 
         m = Mesh()
         m(poly)
+
 
 The previous code results in the generation of a mesh file, `Mesh.msh` by default, in
 which the mesh is stored, and a gmsh file, `Mesh.geo_unrolled` by default, for
@@ -62,7 +63,7 @@ Once the mesh has been generated, it can be imported in a PDEs solver. Fenics_ s
 is integrated into bluemira.
 
 .. code-block:: python
-    from bluemira.meshing import import_mesh
+    from bluemira.mesh.tools import import_mesh
 
     mesh, boundaries, subdomains, labels = import_mesh(
         "Mesh",
