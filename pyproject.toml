@@ -59,6 +59,7 @@ dev = [
     "flake8-absolute-import",
     "flake8-bandit",
     "flake8-docstrings",
+    "jupytext",
     "mypy",
     "nbsphinx",
     "pep8-naming",
