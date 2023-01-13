@@ -28,6 +28,9 @@ An example that shows how to set up the problem for the fixed boundary equilibri
 import os
 import shutil
 
+import matplotlib.pyplot as plt
+import numpy as np
+
 from bluemira.base.file import get_bluemira_path, get_bluemira_root
 from bluemira.base.logs import set_log_level
 from bluemira.codes import transport_code_solver
@@ -154,7 +157,7 @@ solve_transport_fixed_boundary(
     delta95_t=0.333,  # Target delta_95
     lcar_mesh=0.3,
     max_iter=15,
-    iter_err_max=1e1,
+    iter_err_max=1e-4,
     relaxation=0.0,
     plot=True,
     debug=False,
@@ -170,14 +173,14 @@ data = save_fixed_boundary_to_file(
     "something",
     fem_GS_fixed_boundary,
     100,
-    100,
+    110,
     formatt="json",
 )
 
-# Will remove once I'm done
-import matplotlib.pyplot as plt
-import numpy as np
+# %% [markdown]
+# Inspect the final converged equilibrum
 
+# %%
 xx, zz = np.meshgrid(data.x, data.z, indexing="ij")
 f, ax = plt.subplots()
 ax.contour(xx, zz, data.psi)

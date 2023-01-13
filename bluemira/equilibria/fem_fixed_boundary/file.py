@@ -85,8 +85,8 @@ def _get_mesh_boundary(mesh):
         temp_v = [v for v in temp_edge if v not in sorted_v][0]
         sorted_v.append(temp_v)
         check_edge[index] = 0
-        connected = np.where(edges == temp_v)
-        index = [e for e in connected[0] if check_edge[e] == 1][0]
+        connected = np.where(edges == temp_v)[0]
+        index = [e for e in connected if check_edge[e] == 1][0]
         temp_edge = edges[index]
 
     points_sorted = []
