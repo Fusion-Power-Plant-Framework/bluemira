@@ -112,25 +112,30 @@ class TestManickam:
 
     @classmethod
     def teardown_class(cls):
-        cls.f.suptitle("Kuirokidis parameterisations")
+        cls.f.suptitle("Manickam parameterisations")
         plt.show()
         plt.close(cls.f)
 
 
 class TestKuiroukidis:
     fixture = [
-        pytest.param(6.2, 3.1, 1.55, 2.0, -0.5, -0.5),
-        pytest.param(6.2, 3.1, 1.55, 2.0, 0.5, 0.5),
-        pytest.param(6.2, 3.1, 1.55, 2.0, -0.5, 0.5),
-        pytest.param(6.2, 3.1, 1.55, 2.0, 0.5, -0.5),
-        pytest.param(1.717, 1.717 / 0.5151, 1.55, 2.0, 0.15, 0.15),
+        pytest.param(6.2, 3.1, 1.55, 2.0, -0.5, -0.5, [0, 0]),
+        pytest.param(6.2, 3.1, 1.55, 2.0, 0.5, 0.5, [0, 1]),
+        pytest.param(6.2, 3.1, 1.55, 2.0, -0.5, 0.5, [0, 2]),
+        pytest.param(6.2, 3.1, 1.55, 2.0, 0.5, -0.5, [1, 0]),
+        pytest.param(1.717, 1.717 / 0.5151, 1.55, 2.0, 0.15, 0.15, [1, 1]),
+        pytest.param(9, 9 / 3, 1.55, 1.8, 0.333, 0.333, [1, 2]),
     ]
 
+    @classmethod
+    def setup_class(cls):
+        cls.f, cls.ax = plt.subplots(2, 3)
+
     @pytest.mark.parametrize(
-        "R_0, A, kappa_u, kappa_l, delta_u, delta_l",
+        "R_0, A, kappa_u, kappa_l, delta_u, delta_l, ax",
         fixture,
     )
-    def test_kuiroukidis_coords(self, R_0, A, kappa_u, kappa_l, delta_u, delta_l):
+    def test_kuiroukidis_coords(self, R_0, A, kappa_u, kappa_l, delta_u, delta_l, ax):
         flux_surface = flux_surface_kuiroukidis(
             R_0, 0, R_0 / A, kappa_u, kappa_l, delta_u, delta_l, 8, 100
         )
@@ -148,10 +153,11 @@ class TestKuiroukidis:
         x_outer = R_0 + R_0 / A
         z_outer = 0.0
 
-        f, ax = plt.subplots()
-        ax.plot(flux_surface.x, flux_surface.z)
-        ax.set_aspect("equal")
-        plt.show()
+        n1, n2 = ax
+        self.ax[n1, n2].plot(flux_surface.x, flux_surface.z)
+        self.ax[n1, n2].set_xlabel("x")
+        self.ax[n1, n2].set_ylabel("z")
+        self.ax[n1, n2].set_aspect("equal")
 
         np.testing.assert_allclose(
             np.array([x_lower, z_lower]), flux_surface.xz.T[arg_lower]
@@ -167,15 +173,22 @@ class TestKuiroukidis:
         )
 
     @pytest.mark.parametrize(
-        "R_0, A, kappa_u, kappa_l, delta_u, delta_l",
+        "R_0, A, kappa_u, kappa_l, delta_u, delta_l, ax",
         fixture,
     )
-    def test_kuiroukidis_ccw(self, R_0, A, kappa_u, kappa_l, delta_u, delta_l):
+    def test_kuiroukidis_ccw(self, R_0, A, kappa_u, kappa_l, delta_u, delta_l, ax):
         flux_surface = flux_surface_kuiroukidis(
             R_0, 0, R_0 / A, kappa_u, kappa_l, delta_u, delta_l, 8, 100
         )
         hull = ConvexHull(flux_surface.xz.T)
         np.testing.assert_approx_equal(hull.area, flux_surface.length)
+
+    @classmethod
+    def teardown_class(cls):
+        cls.f.suptitle("Kuiroukidis parameterisations")
+        plt.subplots_adjust(hspace=0.4)
+        plt.show()
+        plt.close(cls.f)
 
 
 johner_names = [
