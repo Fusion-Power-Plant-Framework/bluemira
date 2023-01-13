@@ -98,7 +98,7 @@ def _get_mesh_boundary(mesh):
 
 def save_fixed_boundary_to_file(
     file_path: str,
-    file_name: str,
+    file_header_name: str,
     gs_solver: FemGradShafranovFixedBoundary,
     nx: int,
     nz: int,
@@ -125,11 +125,10 @@ def save_fixed_boundary_to_file(
     psi_mag = gs_solver.psi(x_mag, z_mag)
 
     # Make a minimum grid
-    x_coords, z_coords = gs_solver.mesh.coordinates().T
-    x_min = np.min(x_coords)
-    x_max = np.max(x_coords)
-    z_min = np.min(z_coords)
-    z_max = np.max(z_coords)
+    x_min = np.min(xbdry)
+    x_max = np.max(xbdry)
+    z_min = np.min(zbdry)
+    z_max = np.max(zbdry)
     grid = Grid(x_min, x_max, z_min, z_max, nx=nx, nz=nz)
 
     psi = np.zeros((nx, nz))
@@ -160,7 +159,7 @@ def save_fixed_boundary_to_file(
         ffprime=ffprime_values,
         fpol=fpol,
         Ic=np.array([]),
-        name="test",
+        name=file_header_name,
         nbdry=nbdry,
         ncoil=0,
         nlim=0,
