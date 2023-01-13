@@ -52,17 +52,19 @@ class MappedParameterFrame(ParameterFrame):
         Create ParameterFrame with default values for external codes.
 
         External codes are likely to have variables that are not changed often
-        therefore in some cases sane defaults are needed
+        therefore in some cases sane defaults are needed.
+
+        If a default value is not found for a given mapping it is set to NaN
 
         """
         new_param_dict = {}
         for bm_map_name, param_map in cls._mappings.items():
-            if param_map.name in data:
-                new_param_dict[bm_map_name] = {
-                    "value": data[param_map.name],
-                    "unit": param_map.unit,
-                    "source": "bluemira codes default",
-                }
+            new_param_dict[bm_map_name] = {
+                "value": data.get(param_map.name, None),
+                "unit": param_map.unit,
+                "source": "bluemira codes default",
+            }
+
         return cls.from_dict(new_param_dict)
 
     @abc.abstractproperty

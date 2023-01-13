@@ -27,20 +27,11 @@ from dataclasses import asdict, dataclass
 from enum import Enum
 from typing import Dict, Union
 
-import numpy as np
-
 from bluemira.base.parameter_frame import Parameter
 from bluemira.codes.params import MappedParameterFrame
 from bluemira.codes.plasmod.api._inputs import PlasmodInputs
 from bluemira.codes.plasmod.mapping import mappings
 from bluemira.codes.utilities import ParameterMapping
-
-# fmt: off
-PLASMOD_OUT_ONLY_KEYS = [
-    "betapol", "betan", "fbs", "rli", "Hcorr", "taueff", "rplas", "Pfusdd", "Pfusdt",
-    "Pfus", "Prad", "Psep", "Psync", "Pbrehms", "Pline", "PLH", "Pohm", "Zeff",
-]
-# fmt: on
 
 
 @dataclass
@@ -153,7 +144,4 @@ class PlasmodSolverParams(MappedParameterFrame):
         """
         Initialise from defaults
         """
-        default_dict = asdict(cls._defaults)
-        for k in PLASMOD_OUT_ONLY_KEYS:
-            default_dict[k] = np.nan
-        return super().from_defaults(default_dict)
+        return super().from_defaults(asdict(cls._defaults))

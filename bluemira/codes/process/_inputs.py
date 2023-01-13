@@ -246,6 +246,7 @@ class ProcessInputs:
     tftsgap: float = 0.05
     thicndut: float = 0.002
     thkcas: float = 0.52465
+    thshield: float = 0
     thwcndut: float = 0.008
     tinstf: float = 0.008
     tlife: float = 40.0

@@ -158,11 +158,17 @@ class CodesSetup(CodesTask):
                 _inputs[external_name] = self._convert_units(bm_param, target_unit)
         return _inputs
 
-    def _convert_units(self, param, target_unit: str):
-        if target_unit is not None:
-            return raw_uc(param.value, param.unit, target_unit)
-        else:
-            return param.value
+    def _convert_units(self, param, target_unit: Union[str, None]):
+        value = (
+            param.value
+            if target_unit is None
+            else raw_uc(param.value, param.unit, target_unit)
+        )
+        if np.isnan(value):
+            bluemira_warn(
+                f"{param.name} is set to NaN or unset, consider setting mapping.send=False"
+            )
+        return value
 
 
 class CodesTeardown(CodesTask):
