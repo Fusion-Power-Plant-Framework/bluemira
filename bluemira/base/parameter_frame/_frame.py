@@ -228,10 +228,9 @@ def _validate_units(param_data: Dict, value_type: Iterable[Type]):
     except TypeError as te:
         if param_data["value"] is None:
             # dummy for None values
-            if param_data["unit"] is None:
-                quantity = pint.Quantity(1)
-            else:
-                quantity = pint.Quantity(param_data["unit"])
+            quantity = pint.Quantity(
+                1 if param_data["unit"] is None else param_data["unit"]
+            )
         elif isinstance(param_data["value"], (bool, str)):
             param_data["unit"] = "dimensionless"
             return
