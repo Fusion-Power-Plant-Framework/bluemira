@@ -184,10 +184,12 @@ ax.contour(xx, zz, data.psi)
 ax.plot(data.xbdry, data.zbdry)
 ax.set_aspect("equal")
 
-f, ax = plt.subplots()
-ax.plot(data.psinorm, abs(data.pprime) / max(abs(data.pprime)), label="p'")
-ax.plot(data.psinorm, abs(data.ffprime) / max(abs(data.ffprime)), label="FF'")
-ax.plot(data.psinorm, abs(data.fpol) / max(abs(data.fpol)), label="F")
-ax.plot(data.psinorm, abs(data.pressure) / max(abs(data.pressure)), label="p")
-ax.legend()
+f, ax = plt.subplots(2, 2)
+ax[0, 0].plot(data.psinorm, data.pprime, label="p'")
+ax[0, 1].plot(data.psinorm, data.ffprime, label="FF'")
+ax[1, 1].plot(data.psinorm, data.fpol, label="F")
+ax[1, 0].plot(data.psinorm, data.pressure, label="p")
+for axi in ax.flat:
+    axi.legend()
+
 plt.show()
