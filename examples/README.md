@@ -34,12 +34,34 @@ You can stop the Jupyter server by double-pressing `ctrl+c` in your terminal.
 
 ## Maintaining the examples
 
-To add a new example, or to edit an existing one, make your changes in the `.py` file
-of the example. Use percentage blocks (`# %%` or `# %% [markdown]`) to mark cells
-of the notebook. Your IDE or Jupytext if you are using jupyter will render the python file as a
+To add a new example, or to edit an existing one, make your changes in an `.ex.py` file.
+The extra 'ex' in the file extension is used to detect notebooks.
+Use percentage blocks (`# %%` or `# %% [markdown]`) to mark cells of the notebook.
+Your IDE or Jupytext if you are using jupyter will render the python file as a
 notebook.
 
 To include the examples in the rendered documentation please add the file to `examples.rst`.
-The first line of the python file should be `# %% nbsphinx="hidden"` to hide the copyright notice
-from the rendered script in the documentation (the copyright is in the footer of all documentation
+There should be the below header on the files followed by the copyright notice:
+
+```
+# ---
+# jupyter:
+#   jupytext:
+#     cell_metadata_filter: tags,-all
+#     notebook_metadata_filter: -jupytext.text_representation.jupytext_version
+#     text_representation:
+#       extension: .py
+#       format_name: percent
+#       format_version: '1.3'
+#   kernelspec:
+#     display_name: Python 3 (ipykernel)
+#     language: python
+#     name: python3
+# ---
+
+# %% tags=["remove-cell"]
+```
+
+This deals with the formatting of the notebook when it is rendered into the documentation and
+hides the copyright notice from the rendered script (the copyright is in the footer of all documentation
 pages).
