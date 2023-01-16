@@ -174,6 +174,10 @@ class CoilGroup(CoilGroupFieldsMixin):
         for fx in self.__list_getter("fix_size"):
             fx()
 
+    def _resize(self, currents):
+        for rs, current in zip(self.__list_getter("_resize"), currents):
+            rs(current)
+
     def add_coil(self, *coils: Union[Coil, CoilGroup[Coil]]):
         """Add coils to the coil group"""
         self._coils = (*self._coils, *coils)
