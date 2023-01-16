@@ -52,7 +52,7 @@ from bluemira.materials import MaterialCache
 # ## Defining Materials
 #
 # Materials will usually be defined via JSON files, such as the default definitions
-# [provided with bluemira](../../data/materials). Whe defining your own materials for
+# provided with bluemira (see data folder). Whe defining your own materials for
 # your studies you can either take the JSON approach, or for preliminary analysis you can
 # define materials using dictionaries as shown below.
 
