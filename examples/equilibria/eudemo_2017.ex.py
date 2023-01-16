@@ -44,7 +44,6 @@ Attempt at recreating the EU-DEMO 2017 reference equilibria from a known coilset
 # # EU-DEMO 2017 reference breakdown and equilibrium benchmark
 
 # %%
-
 import json
 import os
 from copy import deepcopy
@@ -83,7 +82,6 @@ from bluemira.utilities.optimiser import Optimiser
 # Load the reference equilibria from EFDA_D_2MUW9R
 
 # %%
-
 plot_defaults()
 
 try:
@@ -143,7 +141,6 @@ coilset.plot()
 # Define parameters
 
 # %%
-
 # Machine parameters
 I_p = 19.07e6  # A
 beta_p = 1.141
@@ -177,7 +174,6 @@ CS_Fz_sep = 350e6  # [N]
 # Use the same grid as CREATE (but less discretised):
 
 # %%
-
 grid = Grid(2, 16.0, -9.0, 9.0, 100, 100)
 
 # %% [markdown]
@@ -185,7 +181,6 @@ grid = Grid(2, 16.0, -9.0, 9.0, 100, 100)
 # Set up the Breakdown object
 
 # %%
-
 field_constraints = CoilFieldConstraints(coilset, coilset.b_max, tolerance=1e-6)
 force_constraints = CoilForceConstraints(
     coilset, PF_Fz_max, CS_Fz_sum, CS_Fz_sep, tolerance=1e-6
@@ -244,7 +239,6 @@ profiles = CustomProfile(
 # Solve the SOF and EOF equilibria
 
 # %%
-
 reference_eq = Equilibrium(
     deepcopy(coilset),
     grid,

@@ -64,7 +64,6 @@ from bluemira.base.logs import set_log_level
 # To enable debug logging run the below cell
 
 # %%
-
 set_log_level("DEBUG")
 
 # %% [markdown]
@@ -73,7 +72,6 @@ set_log_level("DEBUG")
 # binary location to the solver.
 
 # %%
-
 # PROCESS_PATH = "/home/process/lives/here"
 PROCESS_PATH = ""
 binary = f"{PROCESS_PATH}process"
@@ -85,7 +83,6 @@ binary = f"{PROCESS_PATH}process"
 # before being converted into a bluemira configuration store.
 
 # %%
-
 params = {
     "A": 3.1,
     "R_0": 9.002,
@@ -115,7 +112,6 @@ build_config = {
 # Now we can create the solver object with the parameters and build configuration
 
 # %%
-
 process_solver = process.Solver(params=params, build_config=build_config)
 
 # %% [markdown]
@@ -124,5 +120,4 @@ process_solver = process.Solver(params=params, build_config=build_config)
 # run modes.
 
 # %%
-
 process_solver.execute(process_solver.run_mode_cls.RUN)

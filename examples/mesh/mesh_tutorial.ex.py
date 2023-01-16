@@ -76,7 +76,6 @@ set_log_level("DEBUG")
 # Creation of a simple 2-D geometry, i.e. a Johner shape + a coil with casing
 
 # %%
-
 p = JohnerLCFS()
 lcfs = p.create_shape(label="LCFS")
 
@@ -105,7 +104,6 @@ coil_in = BluemiraFace([poly_in], label="coil_in")
 # setup characteristic mesh length
 
 # %%
-
 lcfs.mesh_options = {"lcar": 0.75, "physical_group": "LCFS"}
 face = BluemiraFace(lcfs, label="plasma_surface")
 face.mesh_options = {"lcar": 0.5, "physical_group": "surface"}
@@ -146,7 +144,6 @@ print(m.get_gmsh_dict(buffer))
 # ## Convert to xdmf
 
 # %%
-
 msh_to_xdmf(
     "Mesh.msh",
     dimensions=(0, 2),

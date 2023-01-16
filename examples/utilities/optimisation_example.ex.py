@@ -50,9 +50,8 @@ from bluemira.utilities.optimiser import Optimiser, approx_derivative
 #
 # # Optimisation example
 
+
 # %%
-
-
 def f_rosenbrock(x, grad):
     """
     The rosenbrock function has a single optimum at:
@@ -89,6 +88,7 @@ for algorithm in ["SLSQP", "COBYLA", "ISRES"]:
 print("Rosenbrock results:")
 pprint(results)
 
+
 # %% [markdown]
 # They all get pretty close to the optimum here.
 #
@@ -98,8 +98,6 @@ pprint(results)
 # Now let's add in a constraint
 
 # %%
-
-
 def f_constraint(constraint, x, grad):
     """
     Let's say that we only want to search the space in which some combinations of
@@ -143,6 +141,7 @@ for algorithm in ["SLSQP", "COBYLA", "ISRES"]:
 print("Constrained Rosenbrock results")
 pprint(results)
 
+
 # %% [markdown]
 # So SLSQP and COBYLA do fine here, because there is only one minimum and it is a problem
 # well suited to these algorithms. Note that the optimum complies with the constraints,
@@ -158,8 +157,6 @@ pprint(results)
 # What about a strongly multi-modal function with no easy analytical gradient?
 
 # %%
-
-
 def f_eggholder(x):
     """
     The multi-dimensional Eggholder function. It is strongly multi-modal.
@@ -216,5 +213,3 @@ pprint(results)
 # minimum. ISRES is a stochastic global optimisation algorithm, and keeps looking for
 # longer, finding a much better minimum, but caps out at the maximum number of
 # evaluations (usually).
-
-# %%

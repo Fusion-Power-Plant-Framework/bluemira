@@ -95,7 +95,6 @@ params = {
 # Finally, we initialise the `ChargedParticleSolver` and run it.
 
 # %%
-
 solver = ChargedParticleSolver(params, eq, dx_mp=0.001)
 x, z, hf = solver.analyse(first_wall=fw_shape)
 

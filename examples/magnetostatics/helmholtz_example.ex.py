@@ -103,7 +103,6 @@ biotsavart_circuit = BiotSavartFilament(
 # of several trapezoidal prism elements
 
 # %%
-
 coordinates = circle.discretize(ndiscr=100, byedges=True)
 analytical_circuit1 = ArbitraryPlanarRectangularXSCircuit(
     coordinates, breadth=breadth, depth=depth, current=current
@@ -163,13 +162,12 @@ biotsavart_xz_fields = np.sqrt(np.sum(biotsavart_xz_fields**2, axis=0))
 analytical_xz_fields = np.sqrt(np.sum(analytical_xz_fields**2, axis=0))
 analytical_xz_fields2 = np.sqrt(np.sum(analytical_xz_fields2**2, axis=0))
 
+
 # %% [markdown]
 #
 # Let's visualise the results
 
 # %%
-
-
 def plot_cage_results(cage, xz_fields, xy_fields):
     """
     Plot utility for contours in 3-D projections in matplotlib.

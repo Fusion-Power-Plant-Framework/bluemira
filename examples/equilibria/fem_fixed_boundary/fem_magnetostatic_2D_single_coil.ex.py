@@ -89,7 +89,6 @@ lcar_coil = 0.01
 # create the coil (rectangular cross section) and set the mesh options
 
 # %%
-
 poly_coil = tools.make_polygon(
     [[rc - drc, rc + drc, rc + drc, rc - drc], [0, 0, 0, 0], [-drc, -drc, +drc, +drc]],
     closed=True,
@@ -141,7 +140,6 @@ meshing.Mesh(meshfile=meshfiles)(c_universe, dim=2)
 # Convert the mesh in xdmf for reading in fenics.
 
 # %%
-
 msh_to_xdmf("Mesh.msh", dimensions=(0, 2), directory=directory)
 
 mesh, boundaries, subdomains, labels = import_mesh(
@@ -159,7 +157,6 @@ plt.show()
 # Finally, instantiate the em solver
 
 # %%
-
 em_solver = FemMagnetostatic2d(3)
 em_solver.set_mesh(mesh, boundaries)
 
@@ -168,7 +165,6 @@ em_solver.set_mesh(mesh, boundaries)
 # Define source term (coil current distribution) for the fem problem
 
 # %%
-
 Ic = 1e6
 jc = Ic / coil.area
 markers = [labels["coil"]]
@@ -182,7 +178,6 @@ jtot = ScalarSubFunc(functions, markers, subdomains)
 # characteristic length, the plot could be not so "explanatory".
 
 # %%
-
 f_space = dolfin.FunctionSpace(mesh, "DG", 0)
 f = dolfin.Function(f_space)
 f.interpolate(jtot)
@@ -194,7 +189,6 @@ plt.show()
 # solve the em problem and calculate the magnetic field B
 
 # %%
-
 em_solver.define_g(jtot)
 em_solver.solve()
 em_solver.calculate_b()
@@ -231,7 +225,6 @@ plt.show()
 # 1) Along a radial path at z_offset (solution from green function)
 
 # %%
-
 z_offset = 40 * drc
 
 points_x = np.linspace(0, r_enclo, 200)

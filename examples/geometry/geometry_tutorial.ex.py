@@ -106,7 +106,6 @@ from bluemira.geometry.wire import BluemiraWire
 # (0,0,0), (1,0,0), and (1,1,0).
 
 # %%
-
 points1 = Coordinates({"x": [0, 1, 1], "y": [0, 0, 1], "z": [0, 0, 0]})
 first_wire = make_polygon(points1, label="wire1")
 

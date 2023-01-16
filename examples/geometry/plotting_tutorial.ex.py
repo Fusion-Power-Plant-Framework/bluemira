@@ -212,7 +212,6 @@ display.plot_2d(wire, points_options={})
 # automatic display of the plot (show=False), and apply a title to the plot
 
 # %%
-
 f, ax = plt.subplots()
 wplotter.options.point_options = {}
 wplotter.plot_2d(wire, ax=ax, show=False)

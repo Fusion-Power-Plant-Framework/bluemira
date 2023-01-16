@@ -40,7 +40,6 @@ A typical fuel cycle result for an EU-DEMO reference point
 """
 
 # %%
-
 from bluemira.display.auto_config import plot_defaults
 from bluemira.fuel_cycle.analysis import FuelCycleAnalysis
 from bluemira.fuel_cycle.cycle import EUDEMOFuelCycleModel
@@ -107,7 +106,6 @@ lifecycle_config = {
 # between pulses are distributed.
 
 # %%
-
 lifecycle_inputs = {}
 
 # We need to define some stragies to define the pseudo-random timelines
@@ -223,7 +221,6 @@ tfv_config = {
 # We can run a single model and look at a typical result
 
 # %%
-
 model = EUDEMOFuelCycleModel(tfv_config, {})
 model.run(time_dicts[0])
 model.plot()

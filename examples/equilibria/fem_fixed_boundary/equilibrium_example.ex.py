@@ -153,7 +153,6 @@ plasmod_solver = transport_code_solver(
 # Initialise the FEM problem
 
 # %%
-
 fem_GS_fixed_boundary = FemGradShafranovFixedBoundary(
     p_order=2,
     max_iter=30,
@@ -165,7 +164,6 @@ fem_GS_fixed_boundary = FemGradShafranovFixedBoundary(
 # Solve
 
 # %%
-
 equilibrium = solve_transport_fixed_boundary(
     johner_parameterisation,
     plasmod_solver,

@@ -61,9 +61,8 @@ from bluemira.base.parameter_frame import Parameter, ParameterFrame
 # ## Parameters and Units
 # First, I make a small `ParameterFrame` and compare the two methods of creating it.
 
+
 # %%
-
-
 @dataclass
 class MyParameterFrame(ParameterFrame):
     """A ParameterFrame"""
@@ -102,7 +101,6 @@ except DimensionalityError as de:
 # Changing a value of a parameter with a compatible but different unit
 
 # %%
-
 mypf.update_from_dict({"R_0": {"value": 6000, "unit": "mm"}})
 
 print(mypf)
@@ -112,5 +110,4 @@ print(mypf)
 # Accessing the value of a parameter in a different unit
 
 # %%
-
 print(mypf.R_0.value_as("cm"))  # 600

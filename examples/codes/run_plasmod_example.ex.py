@@ -63,7 +63,6 @@ from bluemira.codes import plasmod
 # To enable debug logging run the below cell
 
 # %%
-
 set_log_level("DEBUG")
 
 # %% [markdown]
@@ -84,7 +83,6 @@ binary = os.path.join(PLASMOD_PATH, "bin", "plasmod")
 # These parameters mirror running the plasmod input demoH.i reference configuration
 
 # %%
-
 new_params = {
     "A": 3.1,
     "R_0": 9.002,
@@ -142,8 +140,8 @@ build_config = {
 # Now we can create the solver object with the parameters and build configuration
 
 # %%
-
 solver = plasmod.Solver(params=new_params, build_config=build_config)
+
 
 # %% [markdown]
 # These few functions are helpers to simplify the remainder of the tutorial.
@@ -151,8 +149,6 @@ solver = plasmod.Solver(params=new_params, build_config=build_config)
 # given profile.
 
 # %%
-
-
 def print_outputs(solver):
     """
     Print plasmod scalars
@@ -201,7 +197,6 @@ def plot_profile(solver, profile, var_unit):
 # Very simply use the `run` method of the solver
 
 # %%
-
 solver.execute(plasmod.RunMode.RUN)
 
 # %% [markdown]
@@ -231,7 +226,6 @@ print_outputs(solver)
 # There is a default set of output profiles that can be plotted easily:
 
 # %%
-
 plasmod.plot_default_profiles(solver)
 
 

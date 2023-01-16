@@ -105,6 +105,7 @@ blanket_pump_strat = HePumping(
 bop_cycle = SuperheatedRankine(bb_t_out=500 + 273.15, delta_t_turbine=20)
 divertor_pump_strat = H2OPumping(f_pump=0.05, eta_isentropic=0.99, eta_electric=0.87)
 
+
 # %% [markdown]
 #
 # Maybe we don't have any good models to estimate some of the other parasitic loads. We
@@ -112,8 +113,6 @@ divertor_pump_strat = H2OPumping(f_pump=0.05, eta_isentropic=0.99, eta_electric=
 # from the ABC and specifying some calculation in the `calculate` method.
 
 # %%
-
-
 class EUDEMOReferenceParasiticLoadStrategy(ParasiticLoadStrategy):
     """
     One way of defining the parasitic loads w.r.t. a known reference point.
@@ -171,7 +170,6 @@ HCPB_bop.plot(title="HCPB blanket")
 # that the energy multiplication is different too
 
 # %%
-
 neutron_power_strat = NeutronPowerStrategy(
     f_blanket=0.9,
     f_divertor=0.05,

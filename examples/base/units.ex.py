@@ -53,11 +53,9 @@ An example to show the use of the raw unit converters
 # base unit change.
 
 # %%
-
 import bluemira.base.constants as const
 
 # %%
-
 print(const.raw_uc(1, "um^3", "m^3"))
 # gas flow rate conversion @OdegC
 print(const.raw_uc(1, "mol/s", "Pa m^3/s"))
@@ -73,7 +71,6 @@ print(const.raw_uc(1, "eV", "K"))
 # below absolute zero
 
 # %%
-
 try:
     const.to_kelvin(-300)
 except ValueError as v:

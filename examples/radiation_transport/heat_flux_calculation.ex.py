@@ -76,7 +76,6 @@ fw_shape = Coordinates.from_json(fw_name)
 # Then we define some input `Parameter`s for the solver.
 
 # %%
-
 params = {
     "P_sep_particle": 150,
     "f_p_sol_near": 0.50,
