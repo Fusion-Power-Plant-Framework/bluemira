@@ -35,3 +35,5 @@ class TestSnapshot:
         for cl, sn in zip(classes, fields(type(snapshot))):
             if sn.name not in ("constraints", "tfcoil"):
                 assert cl != getattr(snapshot, sn.name)
+            else:
+                assert cl == getattr(snapshot, sn.name)
