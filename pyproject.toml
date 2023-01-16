@@ -78,7 +78,7 @@ pinned = [
     "numba==0.56.4",
     "numba-scipy==0.3.1",
     "numpy==1.23.2",
-    "matplotlib==3.6.2",
+    "matplotlib==3.6.3",
     "scipy==1.7.3",
 ]
 openmoc = [
