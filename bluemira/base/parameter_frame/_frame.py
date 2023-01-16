@@ -79,7 +79,10 @@ class ParameterFrame:
                 key, self.__dataclass_fields__[key].type
             )
             new_param = Parameter(name=key, **value, _value_types=value_type)
-            param.set_value(new_param.value_as(param.unit), new_param.source)
+            param.set_value(
+                new_param.value if param.unit == "" else new_param.value_as(param.unit),
+                new_param.source,
+            )
             if new_param.long_name != "":
                 param._long_name = new_param.long_name
             if new_param.description != "":
