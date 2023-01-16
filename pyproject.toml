@@ -61,7 +61,7 @@ dev = [
     "flake8-docstrings",
     "jupytext",
     "mypy",
-    "nbsphinx",
+    "myst-nb",
     "pep8-naming",
     "pre-commit",
     "pytest",
@@ -72,7 +72,6 @@ dev = [
     "sphinx",
     "sphinx-autoapi",
     "sphinx_copybutton",
-    "sphinx_gallery",
     "sphinx-rtd-theme",
     "versioneer",
 ]

@@ -126,15 +126,12 @@ plot_html_show_source_link = False
 extensions.append("sphinx.ext.graphviz")
 graphviz_output_format = "svg"
 
-# --- Configuration for nbsphinx ---
-extensions.append("nbsphinx")
-nbsphinx_execute = "never"
-nbsphinx_custom_formats = {
+# --- Configuration for myst-nb ---
+extensions.append("myst_nb")
+nb_execution_mode = "off"
+nb_custom_formats = {
     ".ex.py": ["jupytext.reads", {"fmt": "py:percent"}],
 }
-suppress_warnings.append("nbsphinx.localfile")
-# --- Configuration for sphinx-gallery ---
-extensions.append("sphinx_gallery.load_style")
 
 
 class ParamsDirective(Directive):

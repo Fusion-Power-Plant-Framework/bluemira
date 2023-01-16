@@ -4,7 +4,8 @@ Examples
 Introductory Examples
 ^^^^^^^^^^^^^^^^^^^^^
 
-.. nbgallery::
+.. toctree::
+    :maxdepth: 1
 
     examples/design/simple_reactor
     examples/base/params
@@ -16,7 +17,8 @@ Introductory Examples
 Equilibria Examples
 ^^^^^^^^^^^^^^^^^^^
 
-.. nbgallery::
+.. toctree::
+    :maxdepth: 1
 
     examples/equilibria/eudemo_2017
     examples/equilibria/fem_fixed_boundary/equilibrium_example
@@ -27,7 +29,8 @@ Equilibria Examples
 Geometry Examples
 ^^^^^^^^^^^^^^^^^
 
-.. nbgallery::
+.. toctree::
+    :maxdepth: 1
 
     examples/geometry/optimisation_tutorial
     examples/geometry/plane_placement_tutorial
@@ -35,7 +38,8 @@ Geometry Examples
 External Code Examples
 ^^^^^^^^^^^^^^^^^^^^^^
 
-.. nbgallery::
+.. toctree::
+    :maxdepth: 1
 
     examples/codes/run_plasmod_example
     examples/codes/solver_example
@@ -43,7 +47,8 @@ External Code Examples
 Other Examples
 ^^^^^^^^^^^^^^
 
-.. nbgallery::
+.. toctree::
+    :maxdepth: 1
 
     examples/base/units
     examples/balance_of_plant/steady_state_example
