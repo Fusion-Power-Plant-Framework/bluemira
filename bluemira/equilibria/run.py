@@ -179,11 +179,11 @@ class PulsedCoilsetDesign:
         self.limiter = limiter
 
     @property
-    def _bd_settings(self):
+    def _bd_settings(self) -> BreakdownCOPSettings:
         return self.__bd_settings
 
     @_bd_settings.setter
-    def _bd_settings(self, value: Optional[Dict]):
+    def _bd_settings(self, value: Optional[Dict] = None):
         self.__bd_settings = BreakdownCOPSettings(
             **{
                 **{"B_stray_con_tol": 1e-8, "n_B_stray_points": 20},
@@ -192,11 +192,11 @@ class PulsedCoilsetDesign:
         )
 
     @property
-    def _eq_settings(self):
+    def _eq_settings(self) -> EQSettings:
         return self.__eq_settings
 
     @_eq_settings.setter
-    def _eq_settings(self, value: Optional[Dict]):
+    def _eq_settings(self, value: Optional[Dict] = None):
         self.__eq_settings = EQSettings(
             **{
                 **{
@@ -209,7 +209,14 @@ class PulsedCoilsetDesign:
             }
         )
 
-    def take_snapshot(self, name, eq, coilset, problem, profiles=None):
+    def take_snapshot(
+        self,
+        name: str,
+        eq: Equilibrium,
+        coilset: CoilSet,
+        problem: CoilsetOptimisationProblem,
+        profiles: Profile = None,
+    ):
         """
         Take a snapshot of the pulse.
         """
@@ -342,7 +349,7 @@ class PulsedCoilsetDesign:
         psi_eof = psi_sof - self.params.tau_flattop.value * self.params.v_burn.value
         return psi_sof, psi_eof
 
-    def _get_max_currents(self, coilset):
+    def _get_max_currents(self, coilset: CoilSet) -> np.ndarray:
         return coilset.get_max_current(
             self._eq_settings.peak_PF_current_factor * self.params.I_p.value
         )
@@ -382,7 +389,12 @@ class PulsedCoilsetDesign:
         return opt_problems
 
     def _make_opt_problem(
-        self, eq, optimiser, max_currents, current_constraints, eq_constraints
+        self,
+        eq: Equilibrium,
+        optimiser,
+        max_currents: np.ndarray,
+        current_constraints,
+        eq_constraints,
     ):
         if self._eq_prob_cls == MinimalCurrentCOP:
             constraints = eq_constraints
@@ -408,7 +420,7 @@ class PulsedCoilsetDesign:
             )
         return problem
 
-    def converge_equilibrium(self, eq, problem):
+    def converge_equilibrium(self, eq: Equilibrium, problem):
         """
         Converge an equilibrium problem from a 'frozen' plasma optimised state.
         """
@@ -581,7 +593,7 @@ class OptimisedPulsedCoilsetDesign(PulsedCoilsetDesign):
         self._pos_prob_cls = position_problem_cls
         self._pos_opt = position_optimiser
 
-    def _prepare_coilset(self, coilset):
+    def _prepare_coilset(self, coilset: CoilSet) -> CoilSet:
         coilset = deepcopy(coilset)
         coilset.discretisation = np.where(
             coilset._flag_sizefix,
@@ -590,7 +602,7 @@ class OptimisedPulsedCoilsetDesign(PulsedCoilsetDesign):
         )
         return coilset
 
-    def optimise_positions(self, verbose=False):
+    def optimise_positions(self, verbose: bool = False) -> CoilSet:
         """
         Optimise the coil positions for the start and end of the current flat-top.
         """
@@ -628,7 +640,7 @@ class OptimisedPulsedCoilsetDesign(PulsedCoilsetDesign):
             )
         return optimised_coilset
 
-    def _consolidate_coilset(self, coilset, sub_opt_problems):
+    def _consolidate_coilset(self, coilset: CoilSet, sub_opt_problems):
         """
         Set the current bounds on the current optimisation problems, fix coil sizes, and
         mesh.
