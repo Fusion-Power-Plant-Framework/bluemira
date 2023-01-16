@@ -22,8 +22,10 @@
 """
 Interface for building and loading equilibria and coilset designs
 """
+from __future__ import annotations
 
 from copy import deepcopy
+from dataclasses import dataclass, fields
 from typing import Dict, List, Optional, Type
 
 import matplotlib.pyplot as plt
@@ -61,52 +63,45 @@ from bluemira.utilities.optimiser import Optimiser
 from bluemira.utilities.positioning import PositionMapper
 
 
+@dataclass
 class Snapshot:
     """
     Abstract object for grouping of equilibria objects in a given state.
 
     Parameters
     ----------
-    eq: Equilibrium
+    eq
         The equilibrium at the snapshot
-    coilset: CoilSet
+    coilset
         The coilset at the snapshot
-    opt_problem: CoilsetOptimisationProblem
+    opt_problem
         The constraints at the snapshot
-    profiles: Profile
+    profiles
         The profile at the snapshot
-    optimiser: EquilibriumOptimiser object
+    optimiser
         The optimiser for the snapshot
-    limiter: Limiter
+    limiter
         The limiter for the snapshot
-    tfcoil: Coordinates
+    tfcoil
         The PF coil placement boundary
     """
 
-    def __init__(
-        self,
-        eq,
-        coilset,
-        opt_problem,
-        profiles,
-        limiter=None,
-        tfcoil=None,
-    ):
-        self.eq = deepcopy(eq)
-        self.coilset = deepcopy(coilset)
-        if opt_problem is not None:
-            self.constraints = opt_problem
-        else:
-            self.constraints = None
-        if profiles is not None:
-            self.profiles = deepcopy(profiles)
-        else:
-            self.profiles = None
-        if limiter is not None:
-            self.limiter = deepcopy(limiter)
-        else:
-            self.limiter = None
-        self.tf = tfcoil
+    eq: Equilibrium
+    coilset: CoilSet
+    constraints: Optional[CoilsetOptimisationProblem] = None
+    profiles: Optional[Profile] = None
+    optimiser: Optional[EquilibriumOptimiser] = None  # noqa: F821
+    limiter: Optional[Limiter] = None
+    tfcoil: Optional[Coordinates] = None  # noqa: F821
+
+    def __post_init__(self):
+        """Copy some variables on initialisation"""
+        for field in fields(type(self)):
+            if (val := getattr(self, field.name)) is not None and field.name not in (
+                "constraints",
+                "tfcoil",
+            ):
+                setattr(self, field.name, deepcopy(val))
 
 
 class PulsedCoilsetDesign:
