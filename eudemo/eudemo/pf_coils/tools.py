@@ -266,6 +266,10 @@ def make_coil_mapper(track, exclusion_zones, coils):
     -------
     mapper: PositionMapper
         Position mapper for coil position interpolation
+
+    Notes
+    -----
+    TODO use coilset directly instead of list of coils
     """
     # Break down the track into subsegments
     if exclusion_zones:

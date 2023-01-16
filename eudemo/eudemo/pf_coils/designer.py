@@ -231,7 +231,7 @@ class PFCoilsDesigner(Designer[CoilSet]):
         )
         x_point = FieldNullConstraint(x_lcfs[arg_xp], z_lcfs[arg_xp], tolerance=1e-4)
         coil_field_constraints = [
-            CoilFieldConstraints(coilset, coilset.get_max_fields(), tolerance=1e-6),
+            CoilFieldConstraints(coilset, coilset.b_max, tolerance=1e-6),
             CoilForceConstraints(
                 coilset,
                 self.params.F_pf_zmax.value,
@@ -252,8 +252,7 @@ class PFCoilsDesigner(Designer[CoilSet]):
         # current equal to Ip
         offset_value = 0.5 * np.sqrt(self.params.I_p.value / self.params.PF_jmax.value)
         pf_coil_path = make_pf_coil_path(self.tf_coil_boundary, offset_value)
-        pf_coil_names = coilset.get_PF_names()
-        pf_coils = [coilset.coils[name] for name in pf_coil_names]
+        pf_coils = coilset.get_coiltype("PF")._coils
         return make_coil_mapper(pf_coil_path, self.keep_out_zones, pf_coils)
 
     def _make_coilset(self):

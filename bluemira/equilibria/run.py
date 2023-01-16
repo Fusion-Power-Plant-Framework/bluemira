@@ -143,43 +143,45 @@ class PulsedCoilsetDesign:
             R_0, self.params.A.value, self.params.tk_sol_ib.value
         )
 
-        relaxed = all(self.coilset._flag_sizefix)
         i_max = 30
-        if not relaxed:
-            for i in range(i_max):
-                coilset = deepcopy(self.coilset)
-                breakdown = Breakdown(coilset, self.grid)
-                constraints = deepcopy(self._coil_cons)
+        relaxed = all(self.coilset._flag_sizefix)
+        for i in range(i_max):
+            coilset = deepcopy(self.coilset)
+            breakdown = Breakdown(coilset, self.grid)
+            constraints = deepcopy(self._coil_cons)
 
-                max_currents = self.coilset.get_max_currents(self.params.I_p.value)
-
+            if relaxed:
+                max_currents = self.coilset.get_max_current(0)
+            else:
+                max_currents = self.coilset.get_max_current(self.params.I_p.value)
                 coilset.get_control_coils().current = max_currents
                 coilset.discretisation = self._eq_settings["coil_mesh_size"]
 
-                problem = self._bd_prob_cls(
-                    breakdown.coilset,
-                    breakdown,
-                    strategy,
-                    B_stray_max=self.params.B_premag_stray_max.value,
-                    B_stray_con_tol=self._bd_settings["B_stray_con_tol"],
-                    n_B_stray_points=self._bd_settings["n_B_stray_points"],
-                    optimiser=self._bd_opt,
-                    max_currents=max_currents,
-                    constraints=constraints,
-                )
-                coilset = problem.optimise(x0=max_currents, fixed_coils=False)
-                breakdown.set_breakdown_point(*strategy.breakdown_point)
-                psi_premag = breakdown.breakdown_psi
+            problem = self._bd_prob_cls(
+                breakdown.coilset,
+                breakdown,
+                strategy,
+                B_stray_max=self.params.B_premag_stray_max.value,
+                B_stray_con_tol=self._bd_settings["B_stray_con_tol"],
+                n_B_stray_points=self._bd_settings["n_B_stray_points"],
+                optimiser=self._bd_opt,
+                max_currents=max_currents,
+                constraints=constraints,
+            )
+            coilset = problem.optimise(x0=max_currents, fixed_coils=False)
+            breakdown.set_breakdown_point(*strategy.breakdown_point)
+            psi_premag = breakdown.breakdown_psi
 
-                if i == 0:
-                    psi_1 = psi_premag
-                elif np.isclose(psi_premag, psi_1, rtol=1e-2):
-                    # Coilset max currents known because the coilset geometry is fixed
-                    break
-            else:
-                raise EquilibriaError(
-                    "Unable to relax the breakdown optimisation for coil sizes."
-                )
+            if i == 0:
+                psi_1 = psi_premag
+            elif relaxed:
+                break
+            elif np.isclose(psi_premag, psi_1, rtol=1e-2):
+                relaxed = True
+        else:
+            raise EquilibriaError(
+                "Unable to relax the breakdown optimisation for coil sizes."
+            )
 
         bluemira_print(f"Premagnetisation flux = {2*np.pi * psi_premag:.2f} V.s")
 
@@ -257,7 +259,7 @@ class PulsedCoilsetDesign:
 
     def _get_max_currents(self, coilset):
         factor = self._eq_settings["peak_PF_current_factor"]
-        return coilset.get_max_currents(factor * self.params.I_p.value)
+        return coilset.get_max_current(factor * self.params.I_p.value)
 
     def _get_sof_eof_opt_problems(self, psi_sof, psi_eof):
 
@@ -267,7 +269,7 @@ class PulsedCoilsetDesign:
         opt_problems = []
         for psi_boundary in [psi_sof, psi_eof]:
             eq = deepcopy(eq_ref)
-            eq.coilset.adjust_sizes(max_currents)
+            eq.coilset.get_coiltype("PF")._resize(max_currents)
             optimiser = deepcopy(self._eq_opt)
 
             current_constraints = []
