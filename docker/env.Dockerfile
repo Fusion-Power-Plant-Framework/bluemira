@@ -95,7 +95,7 @@ WORKDIR /home/user
 FROM user_base as develop
 USER root
 # git is required for bluemira tests
-RUN apt-get install git pandoc -y
+RUN apt-get install git -y
 USER user
 COPY requirements-develop.txt .
 RUN pip install --no-cache-dir -r requirements-develop.txt && rm requirements-develop.txt

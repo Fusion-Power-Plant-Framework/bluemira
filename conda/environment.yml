@@ -31,7 +31,6 @@ dependencies:
   - meshio=4.4.5
   - mshr=2019.1.0
   - scipy=1.7.3
-  - pandoc
   - graphviz
   - pip
   - pip:
