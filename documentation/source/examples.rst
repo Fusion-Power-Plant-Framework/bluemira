@@ -41,6 +41,7 @@ External Code Examples
 .. toctree::
     :maxdepth: 1
 
+    examples/codes/external_code
     examples/codes/run_plasmod_example
     examples/codes/solver_example
 
