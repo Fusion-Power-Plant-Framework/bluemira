@@ -24,8 +24,6 @@ import abc
 import enum
 from typing import Any, Callable, Dict, List, Optional, Type, Union
 
-import numpy as np
-
 from bluemira.base.constants import raw_uc
 from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.codes.error import CodesError
