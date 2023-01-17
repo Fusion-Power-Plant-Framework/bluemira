@@ -167,10 +167,10 @@ class PulsedCoilsetDesign:
             breakdown.set_breakdown_point(*strategy.breakdown_point)
             psi_premag = breakdown.breakdown_psi
 
-            if i == 0:
-                psi_1 = psi_premag
-            elif relaxed:
+            if relaxed:
                 break
+            elif i == 0:
+                psi_1 = psi_premag
             elif np.isclose(psi_premag, psi_1, rtol=1e-2):
                 relaxed = True
         else:
