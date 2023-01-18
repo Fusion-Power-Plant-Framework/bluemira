@@ -20,12 +20,14 @@
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 """Public exception classes for the optimisation module."""
 
+from bluemira.base.error import BluemiraError
 
-class OptimisationError(Exception):
+
+class OptimisationError(BluemiraError):
     """Generic optimisation error."""
 
 
-class GeometryOptimisationError(Exception):
+class GeometryOptimisationError(BluemiraError):
     """Generic geometry optimisation error."""
 
 
