@@ -312,6 +312,24 @@ class TestCoilGroup:
 
         # TODO test nested removal
 
+    def test_resize(self):
+        initdx = self.group.dx
+        initdz = self.group.dz
+
+        self.group.fix_sizes()
+        self.group.resize(10)
+
+        np.testing.assert_allclose(self.group.dx, initdx)
+        np.testing.assert_allclose(self.group.dz, initdz)
+
+        self.group._resize(10)
+
+        assert not np.allclose(self.group.dx, initdx)
+        assert not np.allclose(self.group.dz, initdz)
+
+        with pytest.raises(ValueError):
+            self.group.resize([10, 10])
+
     def test_psi(self):
         callable_tester(self.group.psi, self.group.n_coils())
 

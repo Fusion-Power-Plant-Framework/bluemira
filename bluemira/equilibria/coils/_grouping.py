@@ -171,12 +171,42 @@ class CoilGroup(CoilGroupFieldsMixin):
         """
         Fix the sizes of coils in CoilGroup
         """
-        for fx in self.__list_getter("fix_size"):
-            fx()
+        self.__run_func("fix_size")
 
-    def _resize(self, currents):
-        for rs, current in zip(self.__list_getter("_resize"), currents):
-            rs(current)
+    def resize(self, currents: Union[float, List, np.ndarray]):
+        """
+        Resize coils based on their current if their size is not fixed
+        """
+        self.__run_func("resize", currents)
+
+    def _resize(self, currents: Union[float, List, np.ndarray]):
+        """
+        Resize coils based on their current
+
+        Notes
+        -----
+        Ignores any protections on their size
+        """
+        self.__run_func("_resize", currents)
+
+    def __run_func(self, func: str, *args, **kwargs):
+        """Runs a function with no outputs that exists on a coil or coilgroup"""
+        if not args:
+            for ff in self.__list_getter(func):
+                ff(**kwargs)
+        else:
+            args = list(args)
+            funclist = self.__list_getter(func)
+            len_funclist = len(funclist)
+            for no, arg in enumerate(args):
+                if isinstance(arg, (float, int)):
+                    args[no] = np.full(len_funclist, arg)
+                elif len(arg) != len_funclist:
+                    raise ValueError(
+                        f"length of {arg} != number of coilgroups ({len_funclist})"
+                    )
+            for ff, *_args in zip(funclist, *args):
+                ff(*_args, **kwargs)
 
     def add_coil(self, *coils: Union[Coil, CoilGroup[Coil]]):
         """Add coils to the coil group"""
