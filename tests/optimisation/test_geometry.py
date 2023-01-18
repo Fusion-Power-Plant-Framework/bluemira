@@ -1,0 +1,108 @@
+# bluemira is an integrated inter-disciplinary design tool for future fusion
+# reactors. It incorporates several modules, some of which rely on other
+# codes, to carry out a range of typical conceptual fusion reactor design
+# activities.
+#
+# Copyright (C) 2021-2023 M. Coleman, J. Cook, F. Franza, I.A. Maione, S. McIntosh,
+#                         J. Morris, D. Short
+#
+# bluemira is free software; you can redistribute it and/or
+# modify it under the terms of the GNU Lesser General Public
+# License as published by the Free Software Foundation; either
+# version 2.1 of the License, or (at your option) any later version.
+#
+# bluemira is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+# Lesser General Public License for more details.
+#
+# You should have received a copy of the GNU Lesser General Public
+# License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
+import numpy as np
+import pytest
+
+from bluemira.geometry.parameterisations import (
+    GeometryParameterisation,
+    PictureFrame,
+    PrincetonD,
+)
+from bluemira.geometry.tools import make_circle, signed_distance
+from bluemira.optimisation import optimise_geometry
+
+
+class TestGeometry:
+    def test_simple_optimisation_with_keep_out_zone(self):
+        def length(geom: GeometryParameterisation):
+            return geom.create_shape().length
+
+        # Create a PictureFrame with un-rounded edges (a rectangle) and
+        # a circular keep-out zone within it.
+        # We expect the rectangle to contract such that the distance
+        # between the parallel edges is equal to the diameter of the
+        # keep-out zone.
+        koz_radius = 4.5
+        koz_center = [10, 0, 0]
+        keep_out_zone = make_circle(radius=koz_radius, center=koz_center, axis=[0, 1, 0])
+        parameterisation = PictureFrame(
+            {
+                # Make sure bounds are set within the keep-out zone so
+                # we know it's doing some work
+                "x1": {"value": 4.5, "upper_bound": 6, "lower_bound": 3},
+                "x2": {"value": 16, "upper_bound": 17.5, "lower_bound": 14.5},
+                "z1": {"value": 8, "upper_bound": 15, "lower_bound": 2.5},
+                "z2": {"value": -6, "upper_bound": -2.5, "lower_bound": -15},
+                "ri": {"value": 0, "fixed": True},
+                "ro": {"value": 0, "fixed": True},
+            }
+        )
+
+        opt_result = optimise_geometry(
+            parameterisation,
+            length,
+            keep_out_zones=[keep_out_zone],
+            algorithm="SLSQP",
+        )
+
+        optimised_shape = opt_result.geom.create_shape()
+        np.testing.assert_array_almost_equal(
+            list(optimised_shape.center_of_mass), koz_center, decimal=2
+        )
+        bounds = optimised_shape.bounding_box
+        assert bounds.x_max - bounds.x_min == pytest.approx(2 * koz_radius, rel=0.01)
+        assert bounds.z_max - bounds.z_min == pytest.approx(2 * koz_radius, rel=0.01)
+
+    def test_princeton_d(self):
+        parameterisation = PrincetonD(
+            {
+                "x1": {"value": 5.5, "upper_bound": 10, "lower_bound": 5},
+                "x2": {"value": 16, "upper_bound": 19.5, "lower_bound": 12.5},
+                "dz": {"value": 1, "upper_bound": 1.5, "lower_bound": -1.5},
+            }
+        )
+        # TODO(hsaunders1904): think about whether we want to keep the
+        # original parameterisation constant, or whether we change it
+        # in-place. Add a test for the behaviour
+        original_length = parameterisation.create_shape().length
+        koz_radius = 4.5
+        koz_center = [12.5, 0, 0]
+        keep_out_zone = make_circle(radius=koz_radius, center=koz_center, axis=[0, 1, 0])
+
+        opt_result = optimise_geometry(
+            parameterisation,
+            lambda geom: geom.create_shape().length,
+            keep_out_zones=[keep_out_zone],
+        )
+
+        opt_shape = opt_result.geom.create_shape()
+        # The x-extrema of the PrincetonD should be right on the edge of
+        # the keep-out zone
+        assert opt_result.geom.variables["x1"].value == pytest.approx(
+            koz_center[0] - koz_radius, rel=1e-3
+        )
+        assert opt_result.geom.variables["x2"].value == pytest.approx(
+            koz_center[0] + koz_radius, rel=1e-3
+        )
+        assert opt_shape.length < original_length
+        signed_dist = signed_distance(opt_shape, keep_out_zone)
+        # The PrincetonD should fully enclose the keep-out zone
+        np.testing.assert_array_less(signed_dist, np.zeros_like(signed_dist))
