@@ -48,7 +48,7 @@ class TestGeometry:
                 # Make sure bounds are set within the keep-out zone so
                 # we know it's doing some work
                 "x1": {"value": 4.5, "upper_bound": 6, "lower_bound": 3},
-                "x2": {"value": 16, "upper_bound": 17.5, "lower_bound": 14.5},
+                "x2": {"value": 16, "upper_bound": 17.5, "lower_bound": 14.0},
                 "z1": {"value": 8, "upper_bound": 15, "lower_bound": 2.5},
                 "z2": {"value": -6, "upper_bound": -2.5, "lower_bound": -15},
                 "ri": {"value": 0, "fixed": True},
