@@ -85,13 +85,14 @@ def f_ineq_constraint_princeton_d(geom: GeometryParameterisation) -> np.ndarray:
 
 
 def df_ineq_constraint_princeton_d(geom: GeometryParameterisation) -> np.ndarray:
-    """Inequality constraint for PrincetonD."""
-    free_vars = geom.variables.get_normalised_values()
-    grad = np.zeros(len(free_vars) ** 2)
+    """Inequality constraint gradient for PrincetonD."""
+    opt_vars = geom.variables
+    free_vars = opt_vars.get_normalised_values()
+    grad = np.zeros((1, len(free_vars)))
     if not geom.variables["x1"].fixed:
-        grad[0, _get_x_norm_index(free_vars, "x1")] = 1
+        grad[0, _get_x_norm_index(opt_vars, "x1")] = 1
     if not geom.variables["x2"].fixed:
-        grad[0, _get_x_norm_index(free_vars, "x2")] = -1
+        grad[0, _get_x_norm_index(opt_vars, "x2")] = -1
     return grad
 
 
@@ -100,7 +101,7 @@ INEQ_CONSTRAINT_REGISTRY = {
         {
             "f_constraint": f_ineq_constraint_princeton_d,
             "df_constraint": df_ineq_constraint_princeton_d,
-            "tol": np.full((2, 2), np.finfo(float).eps),
+            "tolerance": np.array([np.finfo(float).eps]),
         }
     ]
 }

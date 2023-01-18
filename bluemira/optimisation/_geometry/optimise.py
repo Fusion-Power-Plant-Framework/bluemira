@@ -218,7 +218,7 @@ def _make_keep_out_zone_constraint(koz: BluemiraWire) -> GeomConstraintT:
 
 
 def _get_shape_ineq_constraint(geom: GeometryParameterisation) -> List[GeomConstraintT]:
-    return INEQ_CONSTRAINT_REGISTRY.get(geom, [])
+    return INEQ_CONSTRAINT_REGISTRY.get(type(geom), [])
 
 
 def _to_constraint(
