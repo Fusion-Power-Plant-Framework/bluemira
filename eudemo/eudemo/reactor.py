@@ -44,6 +44,7 @@ from bluemira.base.designer import run_designer
 from bluemira.base.parameter_frame import make_parameter_frame
 from bluemira.base.reactor import Reactor
 from bluemira.builders.divertor import DivertorBuilder
+from bluemira.builders.pf_coil import PFCoilBuilder, PFCoilPictureFrame
 from bluemira.builders.plasma import Plasma, PlasmaBuilder
 from bluemira.builders.thermal_shield import VVTSBuilder
 from bluemira.equilibria.equilibrium import Equilibrium
@@ -56,6 +57,7 @@ from eudemo.equilibria import (
 from eudemo.ivc import design_ivc
 from eudemo.ivc.divertor_silhouette import Divertor
 from eudemo.params import EUDEMOReactorParams
+from eudemo.pf_coils import PFCoil, PFCoilsDesigner
 from eudemo.radial_build import radial_build
 from eudemo.tf_coils import TFCoil, TFCoilBuilder, TFCoilDesigner
 from eudemo.thermal_shield import VacuumVesselThermalShield
@@ -74,6 +76,7 @@ class EUDEMO(Reactor):
     blanket: Blanket
     tf_coils: TFCoil
     vv_thermal: VacuumVesselThermalShield
+    pf_coils: PFCoil
 
 
 def build_plasma(build_config: Dict, eq: Equilibrium) -> Plasma:
