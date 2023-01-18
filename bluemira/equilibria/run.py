@@ -258,12 +258,13 @@ class PulsedCoilsetDesign:
     def _get_sof_eof_opt_problems(self, psi_sof, psi_eof):
 
         eq_ref = self.snapshots[self.EQ_REF].eq
+        max_currents_pf = self._get_max_currents(self.coilset.get_coiltype("PF"))
         max_currents = self._get_max_currents(self.coilset)
 
         opt_problems = []
         for psi_boundary in [psi_sof, psi_eof]:
             eq = deepcopy(eq_ref)
-            eq.coilset.get_coiltype("PF")._resize(max_currents)
+            eq.coilset.get_coiltype("PF")._resize(max_currents_pf)
             optimiser = deepcopy(self._eq_opt)
 
             current_constraints = []
