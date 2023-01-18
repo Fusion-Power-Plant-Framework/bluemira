@@ -306,16 +306,16 @@ class PulsedCoilsetDesign:
         )
         program()
 
-        eq_constraints = deepcopy(self.eq_constraints)
-        for con in eq_constraints:
-            if isinstance(con, (PsiConstraint, PsiBoundaryConstraint)):
-                eq_constraints.remove(con)
         opt_problem = self._make_opt_problem(
             eq,
             deepcopy(self._eq_opt),
             self._get_max_currents(eq.coilset),
             current_constraints=None,
-            eq_constraints=eq_constraints,
+            eq_constraints=[
+                con
+                for con in deepcopy(self.eq_constraints)
+                if not isinstance(con, (PsiConstraint, PsiBoundaryConstraint))
+            ],
         )
 
         program = PicardIterator(
@@ -373,18 +373,16 @@ class PulsedCoilsetDesign:
                 current_constraints += deepcopy(self._coil_cons)
 
             eq_constraints = deepcopy(self.eq_constraints)
-            for con in eq_constraints:
-                if isinstance(con, (PsiBoundaryConstraint, PsiConstraint)):
-                    con.target_value = psi_boundary / (2 * np.pi)
-            for con in current_constraints:
-                if isinstance(con, (PsiBoundaryConstraint, PsiConstraint)):
-                    con.target_value = psi_boundary / (2 * np.pi)
+            for constraints in (eq_constraints, current_constraints):
+                for con in constraints:
+                    if isinstance(con, (PsiBoundaryConstraint, PsiConstraint)):
+                        con.target_value = psi_boundary / (2 * np.pi)
 
-            problem = self._make_opt_problem(
-                eq, optimiser, max_currents, current_constraints, eq_constraints
+            opt_problems.append(
+                self._make_opt_problem(
+                    eq, optimiser, max_currents, current_constraints, eq_constraints
+                )
             )
-
-            opt_problems.append(problem)
 
         return opt_problems
 
@@ -447,17 +445,12 @@ class PulsedCoilsetDesign:
             axi = ax[i]
             snap.eq.plot(ax=axi)
             snap.coilset.plot(ax=axi)
-            if k == "Breakdown":
-                title = (
-                    k + " $\\Psi_{bd}$: " + f"{2*np.pi * snap.eq.breakdown_psi:.2f} V.s"
-                )
-            else:
-                title = (
-                    k
-                    + " $\\Psi_{b}$: "
-                    + f"{2*np.pi * snap.eq.get_OX_points()[1][0].psi:.2f} V.s"
-                )
-            axi.set_title(title)
+            psi_bd = (
+                snap.eq.breakdown_psi
+                if k == "Breakdown"
+                else snap.eq.get_OX_points()[1][0].psi
+            )
+            axi.set_title(f"{k} $\\Psi_{{bd}}$: {2* np.pi * psi_bd} V.s")
         return f
 
 
@@ -619,10 +612,9 @@ class OptimisedPulsedCoilsetDesign(PulsedCoilsetDesign):
             self._pos_opt,
             constraints=None,
         )
-        optimised_coilset = pos_opt_problem.optimise(verbose=verbose)
 
         optimised_coilset = self._consolidate_coilset(
-            optimised_coilset, sub_opt_problems
+            pos_opt_problem.optimise(verbose=verbose), sub_opt_problems
         )
 
         for snap, problem in zip([self.SOF, self.EOF], sub_opt_problems):
