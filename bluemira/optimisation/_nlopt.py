@@ -25,7 +25,7 @@ from __future__ import annotations
 import enum
 import warnings
 from dataclasses import dataclass
-from typing import Any, Callable, List, Mapping, Optional, Union
+from typing import Any, Callable, List, Mapping, Optional, Tuple, Union
 
 import nlopt
 import numpy as np
@@ -319,7 +319,7 @@ class _ConstraintType(enum.Enum):
 
 
 class _Constraint:
-    """Holder for constraint functions."""
+    """Holder for NLOpt constraint functions."""
 
     def __init__(
         self,
@@ -332,6 +332,7 @@ class _Constraint:
         self.f = f
         self.tolerance = tolerance
         self.df = df if df is not None else self._approx_derivative
+        self.f0 = None
 
     def nlopt_call(self, result: np.ndarray, x: np.ndarray, grad: np.ndarray):
         """
@@ -342,9 +343,10 @@ class _Constraint:
         if grad.size > 0:
             grad[:] = self.df(x)
         result[:] = self.f(x)
+        self.f0 = result
 
     def _approx_derivative(self, x: np.ndarray) -> np.ndarray:
-        return approx_derivative(self.f, x)
+        return approx_derivative(self.f, x, f0=self.f0)
 
 
 @dataclass
@@ -400,26 +402,40 @@ class _NloptObjectiveFunction:
 
     Adapts the given objective function, and optional derivative, to a
     form understood by NLOpt.
+
+    If no optimiser derivative is given, and the algorithm is gradient
+    based, a numerical approximation of the gradient is calculated.
     """
 
-    def __init__(self, f: OptimiserCallable, df: Optional[OptimiserCallable] = None):
+    def __init__(
+        self,
+        f: OptimiserCallable,
+        df: Optional[OptimiserCallable] = None,
+        bounds: Tuple[np.ndarray, np.ndarray] = (-np.inf, np.inf),
+    ):
         self.f = f
+        self.f0 = None
         self.df = df if df is not None else self._approx_derivative
+        self.bounds = bounds
         self.history: List[np.ndarray] = []
 
     def call(self, x: np.ndarray, grad: np.ndarray) -> np.ndarray:
+        """Execute the NLOpt objective function."""
         if grad.size > 0:
             grad[:] = self.df(x)
-        return self.f(x)
+        self.f0 = self.f(x)
+        return self.f0
 
     def call_with_history(self, x: np.ndarray, grad: np.ndarray) -> np.ndarray:
+        """Execute the NLOpt objective function, recording the iteration history"""
         self.history.append(np.copy(x))
         if grad.size > 0:
             grad[:] = self.df(x)
-        return self.f(x)
+        self.f0 = self.f(x)
+        return self.f0
 
     def _approx_derivative(self, x: np.ndarray) -> np.ndarray:
-        return approx_derivative(self.f, x)
+        return approx_derivative(self.f, x, f0=self.f0, bounds=self.bounds)
 
 
 def _check_algorithm(algorithm: Union[str, Algorithm]) -> Algorithm:

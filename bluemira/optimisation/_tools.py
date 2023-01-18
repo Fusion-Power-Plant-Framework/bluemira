@@ -25,7 +25,7 @@ from scipy.optimize._numdiff import approx_derivative as _approx_derivative
 
 
 def approx_derivative(
-    func, x0, method="3-point", rel_step=None, f0=None, bounds=None, args=()
+    func, x0, method="3-point", rel_step=None, f0=None, bounds=(-np.inf, np.inf), args=()
 ):
     """
     Approximate the gradient of a function about a point.
@@ -47,8 +47,6 @@ def approx_derivative(
     args: tuple
         Additional arguments to func.
     """
-    if bounds is None:
-        bounds = (-np.inf, np.inf)
     return _approx_derivative(
         func, x0, method=method, rel_step=rel_step, f0=f0, bounds=bounds, args=args
     )
