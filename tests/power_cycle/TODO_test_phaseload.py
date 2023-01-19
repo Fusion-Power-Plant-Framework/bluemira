@@ -7,9 +7,9 @@ import matplotlib.pyplot as plt
 import bluemira.base.constants as constants
 
 # Import Power Cycle packages
-from bluemira.power_cycle.loads import PhaseLoad, PowerData, PowerLoad
-from bluemira.power_cycle.timeline import PowerCyclePhase
-from bluemira.power_cycle.utilities import adjust_2d_graph_ranges, print_header
+from bluemira.power_cycle.OLD_loads import PhaseLoad, PowerData, PowerLoad
+from bluemira.power_cycle.OLD_timeline import PowerCyclePhase
+from bluemira.power_cycle.tools import adjust_2d_graph_ranges, print_header
 
 # Header
 print_header("Test PhaseLoad")
@@ -28,6 +28,7 @@ data_11 = PowerData(
     [0, 1],
     [2, 2],
 )
+
 data_12 = PowerData(
     "Load 1 - Variable Consumption",
     [0, 4, 7, 8],
