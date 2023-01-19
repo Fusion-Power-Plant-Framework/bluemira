@@ -481,7 +481,7 @@ class FixedPulsedCoilsetDesign(PulsedCoilsetDesign):
         """
         Run pulsed coilset design optimisation
         """
-        self.optimise_currents
+        self.optimise_currents()
         return self.coilset
 
     def optimise_currents(self):
