@@ -608,25 +608,22 @@ class OptimisedPulsedCoilsetDesign(PulsedCoilsetDesign):
         Set the current bounds on the current optimisation problems, fix coil sizes, and
         mesh.
         """
-        pf_coil_names = coilset.get_coiltype("PF").name
-        pf_current_vectors = [
-            problem.eq.coilset.get_coiltype("PF").get_control_coils().current
-            for problem in sub_opt_problems
-        ]
-
-        max_pf_currents = np.max(np.abs(pf_current_vectors), axis=0)
         max_cs_currents = coilset.get_coiltype("CS").get_max_current(0.0)
-        max_currents = np.concatenate([max_pf_currents, max_cs_currents])
 
         for problem in sub_opt_problems:
-            for pf_name, max_current in zip(pf_coil_names, max_pf_currents):
-                problem.eq.coilset[pf_name].resize(max_current)
-                problem.eq.coilset[pf_name].fix_size()
-                problem.eq.coilset[pf_name].discretisation = self._eq_settings[
-                    "coil_mesh_size"
-                ]
-            problem.set_current_bounds(max_currents)
+            pf_coils = problem.eq.coilset.get_coiltype("PF").get_control_coils()
+            pf_current = pf_coils.current
+            max_pf_current = np.max(np.abs(pf_current))
+            pf_coils.resize(max_pf_current)
+            pf_coils.fix_sizes()
+            pf_coils.discretisation = self._eq_settings.coil_mesh_size
+            problem.set_current_bounds(
+                np.concatenate(
+                    [np.full(pf_current.size, max_pf_current), max_cs_currents]
+                )
+            )
+
         consolidated_coilset = deepcopy(problem.eq.coilset)
-        consolidated_coilset.get_control_coils().current = 0
         consolidated_coilset.fix_sizes()
+        consolidated_coilset.get_control_coils().current = 0
         return consolidated_coilset
