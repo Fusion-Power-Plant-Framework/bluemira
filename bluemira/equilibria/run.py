@@ -24,6 +24,7 @@ Interface for building and loading equilibria and coilset designs
 """
 from __future__ import annotations
 
+from abc import ABC, abstractmethod
 from copy import deepcopy
 from dataclasses import dataclass, fields
 from typing import Dict, List, Optional, Type
@@ -122,9 +123,9 @@ class EQSettings:
     peak_PF_current_factor: float
 
 
-class PulsedCoilsetDesign:
+class PulsedCoilsetDesign(ABC):
     """
-    Base class for the procedural design of a pulsed tokamak poloidal field
+    Abstract base class for the procedural design of a pulsed tokamak poloidal field
     coilset.
     """
 
@@ -177,6 +178,13 @@ class PulsedCoilsetDesign:
 
         self._coil_cons = [] if coil_constraints is None else coil_constraints
         self.limiter = limiter
+
+    @abstractmethod
+    def optimise(self, *args, **kwargs) -> CoilSet:
+        """
+        Run pulsed coilset design optimisation
+        """
+        pass
 
     @property
     def _bd_settings(self) -> BreakdownCOPSettings:
@@ -355,7 +363,6 @@ class PulsedCoilsetDesign:
         )
 
     def _get_sof_eof_opt_problems(self, psi_sof, psi_eof):
-
         eq_ref = self.snapshots[self.EQ_REF].eq
         max_currents_pf = self._get_max_currents(self.coilset.get_coiltype("PF"))
         max_currents = self._get_max_currents(self.coilset)
@@ -470,6 +477,13 @@ class FixedPulsedCoilsetDesign(PulsedCoilsetDesign):
         pass
     """
 
+    def optimise(self) -> CoilSet:
+        """
+        Run pulsed coilset design optimisation
+        """
+        self.optimise_currents
+        return self.coilset
+
     def optimise_currents(self):
         """
         Optimise the coil currents at the start and end of the current flat-top.
@@ -566,7 +580,6 @@ class OptimisedPulsedCoilsetDesign(PulsedCoilsetDesign):
             params,
             coilset,
             grid,
-            current_opt_constraints,
             equilibrium_constraints,
             profiles,
             breakdown_strategy_cls,
@@ -577,6 +590,7 @@ class OptimisedPulsedCoilsetDesign(PulsedCoilsetDesign):
             equilibrium_optimiser,
             equilibrium_convergence,
             equilibrium_settings,
+            current_opt_constraints,
             coil_constraints,
             limiter,
         )
@@ -595,7 +609,7 @@ class OptimisedPulsedCoilsetDesign(PulsedCoilsetDesign):
         )
         return coilset
 
-    def optimise_positions(self, verbose: bool = False) -> CoilSet:
+    def optimise(self, verbose: bool = False) -> CoilSet:
         """
         Optimise the coil positions for the start and end of the current flat-top.
         """

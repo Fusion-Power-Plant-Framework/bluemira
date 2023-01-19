@@ -325,6 +325,12 @@
         "source": "Input",
         "long_name": "Plasma safety factor"
     },
+    "r_corner": {
+        "value": 0,
+        "unit": "meter",
+        "source": "Input",
+        "long_name": "PF Coil corner radius"
+    },
     "r_cp_top": {
         "value": 0.8934,
         "unit": "meter",
@@ -464,6 +470,18 @@
         "unit": "meter",
         "source": "Input",
         "long_name": "Outboard first wall thickness"
+    },
+    "tk_pf_insulation":{
+        "value": 0.1,
+        "unit": "meter",
+        "source": "Input",
+        "long_name": "PF coil insulation thickness"
+    },
+    "tk_pf_casing":{
+        "value": 0.1,
+        "unit": "meter",
+        "source": "Input",
+        "long_name": "PF coil casing thickness"
     },
     "tk_sh_bot": {
         "value": 1e-06,

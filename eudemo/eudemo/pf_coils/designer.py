@@ -153,7 +153,7 @@ class PFCoilsDesigner(Designer[CoilSet]):
             coilset, grid, profiles, coil_mapper, constraints
         )
         bluemira_print(f"Solving design problem: {opt_problem.__class__.__name__}")
-        return opt_problem.optimise_positions(verbose=True)
+        return opt_problem.optimise(verbose=True)
 
     def _make_pulsed_coilset_opt_problem(
         self, coilset, grid, profiles, position_mapper, constraints

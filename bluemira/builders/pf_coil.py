@@ -30,7 +30,7 @@ from bluemira.base.components import Component, PhysicalComponent
 from bluemira.base.designer import Designer
 from bluemira.base.parameter_frame import Parameter, ParameterFrame
 from bluemira.display.palettes import BLUE_PALETTE
-from bluemira.equilibria.coils import Coil
+from bluemira.equilibria.coils import Coil, CoilType
 from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.parameterisations import PictureFrame
 from bluemira.geometry.tools import make_circle, offset_wire, revolve_shape
@@ -45,7 +45,7 @@ class PFCoilBuilderParams(ParameterFrame):
 
     tk_insulation: Parameter[float]
     tk_casing: Parameter[float]
-    ctype: Parameter[str]
+    ctype: Parameter[Union[str, CoilType]]
 
 
 class PFCoilBuilder(Builder):
@@ -179,6 +179,8 @@ class PFCoilPictureFrame(Designer):
     Designer for the shape of a PF coil in the xz plane using a
     PictureFrame parameterisation.
     """
+
+    param_cls = PFCoilPictureFrameParams
 
     def __init__(self, params: Union[PFCoilPictureFrameParams, Dict], coil: Coil):
         super().__init__(params)

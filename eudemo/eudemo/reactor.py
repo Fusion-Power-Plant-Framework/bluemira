@@ -40,6 +40,7 @@ import os
 from pathlib import Path
 from typing import Dict
 
+from bluemira.base.components import Component
 from bluemira.base.designer import run_designer
 from bluemira.base.parameter_frame import make_parameter_frame
 from bluemira.base.reactor import Reactor
@@ -130,6 +131,49 @@ def build_tf_coils(
     return TFCoil(builder.build(), builder._make_field_solver())
 
 
+def build_pf_coils(params, build_config, tf_coil_boundary, pf_coil_keep_out_zones=()):
+    """
+    Design and build the PF coils for the reactor.
+    """
+    pf_designer = PFCoilsDesigner(
+        params,
+        build_config,
+        tf_coil_boundary,
+        pf_coil_keep_out_zones,
+    )
+    coilset = pf_designer.execute()
+
+    wires = []
+    for name in coilset.name:
+        if not (coilset[name].dx == 0 or coilset[name].dz == 0):
+            wires.append(
+                (PFCoilPictureFrame(params, coilset[name]), coilset[name].ctype)
+            )
+
+    builders = []
+    for (des, ctype) in wires:
+        tk_ins = (
+            params.tk_pf_insulation if ctype.name == "PF" else params.tk_cs_insulation
+        )
+        tk_case = params.tk_pf_casing if ctype.name == "PF" else params.tk_cs_casing
+        builders.append(
+            PFCoilBuilder(
+                {
+                    "tk_insulation": {"value": tk_ins.value, "unit": "m"},
+                    "tk_casing": {"value": tk_case.value, "unit": "m"},
+                    "ctype": {"value": ctype, "unit": ""},
+                },
+                build_config,
+                des.execute(),
+            )
+        )
+
+    return PFCoil(
+        Component("PF Coils", children=[builder.build() for builder in builders]),
+        coilset,
+    )
+
+
 def _read_json(file_path: str) -> Dict:
     """Read a JSON file to a dictionary."""
     with open(file_path, "r") as f:
@@ -181,20 +225,11 @@ if __name__ == "__main__":
         reactor.vacuum_vessel.xz_boundary(),
     )
 
-    # reactor.tf_coils = build_tf_coils(
-    #     params,
-    #     build_config.get("TF coils", {}),
-    #     reactor.plasma.lcfs(),
-    #     reactor.vacuum_vessel.xz_boundary(),
-    # )
-
-    # pf_coil_keep_out_zones = []  # Update when ports are added
-    # pf_designer = PFCoilsDesigner(
-    #     params,
-    #     build_config.get("PF coils", {}),
-    #     reactor.tf_coils.boundary(),
-    #     pf_coil_keep_out_zones,
-    # )
-    # coilset = pf_designer.execute()
+    reactor.pf_coils = build_pf_coils(
+        params,
+        build_config.get("PF coils", {}),
+        reactor.tf_coils.boundary(),
+        pf_coil_keep_out_zones=[],
+    )
 
     reactor.show_cad()
