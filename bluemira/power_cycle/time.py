@@ -86,7 +86,7 @@ class PowerCyclePhase(PowerCycleTimeABC):
     Parameters
     ----------
     name: str
-        Description of the `PowerCyclePhase` instance.
+        Description of the 'PowerCyclePhase' instance.
     duration_breakdown: dict[str, int | float]
         Dictionary of descriptions and durations of time lengths. [s]
         The dictionary defines all time lenghts of sub-phases that
