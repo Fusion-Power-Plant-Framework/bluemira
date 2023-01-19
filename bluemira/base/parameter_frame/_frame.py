@@ -215,8 +215,14 @@ def _validate_parameter_field(field, member_type: Type) -> Tuple[Type, ...]:
         not hasattr(member_type, "__origin__") or member_type.__origin__ is not Parameter
     ):
         raise TypeError(f"Field '{field}' does not have type Parameter.")
-    value_types = get_args(member_type)
-    return value_types
+    value_types = list(get_args(member_type))
+    vt = []
+    for v in value_types:
+        if new_v := get_args(v):
+            vt.extend(new_v)
+        else:
+            vt.append(v)
+    return tuple(vt)
 
 
 def _validate_units(param_data: Dict, value_type: Iterable[Type]):
