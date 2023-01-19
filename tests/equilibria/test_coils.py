@@ -450,6 +450,8 @@ class TestCoilSet:
         assert np.allclose(dx, np.array([1, 0.25, 0.25]))
 
     def test_member_attributes(self):
+        coilset = copy.deepcopy(self.coilset)
+
         assert np.isclose(self.coilset["PF_1"].x, 4)
         assert np.isclose(self.coilset["PF_2"].x, 1.5)
 
@@ -471,13 +473,13 @@ class TestCoilSet:
         assert np.isclose(self.coilset["PF_1"].current, 2e6)
         assert np.isclose(self.coilset["PF_2"].current, 1e6)
 
-        coil1 = self.coilset["PF_1"]
+        coil1 = coilset["PF_1"]
         coil1.dz = 0.77
-        symm_circuit = self.coilset._coils[1]
+        symm_circuit = coilset._coils[1]
         symm_circuit.dz = 0.6
         assert np.isclose(coil1.dz, 0.77)
         assert np.allclose(symm_circuit.dz, 0.6)
-        assert np.isclose(self.coilset["PF_3"].dz, 0.6)
+        assert np.isclose(coilset["PF_3"].dz, 0.6)
 
     def test_numbers(self):
         assert self.coilset.n_coils("PF") == 2
