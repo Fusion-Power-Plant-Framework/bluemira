@@ -486,21 +486,38 @@ class TestCoilSet:
         assert self.coilset.n_coils() == 3
 
     def test_currents(self):
+        coilset = copy.deepcopy(self.coilset)
+
         set_currents = np.array([3e6, 4e6])
-        self.coilset.get_control_coils().current = set_currents
-        currents = self.coilset.get_control_coils().current
+        coilset.get_control_coils().current = set_currents
+        currents = coilset.get_control_coils().current
         assert np.allclose(set_currents, currents[:-1])
         assert np.isclose(set_currents[-1], currents[-1])
 
     def test_material_assignment(self):
+        coilset = copy.deepcopy(self.coilset)
         test_j_max = 7.0
         test_b_max = 24.0
-        self.coilset.assign_material("PF", j_max=test_j_max, b_max=test_b_max)
-        n_indep_coils = self.coilset.n_coils("PF")
-        assert len(self.coilset.get_max_current()) == n_indep_coils + 1
-        assert len(self.coilset.b_max) == n_indep_coils + 1
-        assert np.allclose(self.coilset.j_max[1:], test_j_max)
-        assert np.allclose(self.coilset.b_max[1:], test_b_max)
+        coilset.assign_material("PF", j_max=test_j_max, b_max=test_b_max)
+        n_indep_coils = coilset.n_coils("PF")
+        assert len(coilset.get_max_current()) == n_indep_coils + 1
+        assert len(coilset.b_max) == n_indep_coils + 1
+        assert np.allclose(coilset.j_max[1:], test_j_max)
+        assert np.allclose(coilset.b_max[1:], test_b_max)
+
+    def test_get_max_current(self):
+        coilset = copy.deepcopy(self.coilset)
+        coilset["PF_1"]._flag_sizefix = False
+
+        np.testing.assert_allclose(coilset.get_max_current(10), [10, 5, 5])
+        np.testing.assert_allclose(coilset.get_max_current(), [np.infty, 5, 5])
+
+        coilset.assign_material("PF", j_max=np.nan, b_max=5)
+
+        np.testing.assert_allclose(coilset.get_max_current(10), [10, 10, 10])
+        np.testing.assert_allclose(
+            coilset.get_max_current(), [np.infty, np.infty, np.infty]
+        )
 
 
 class TestCoilSetSymmetry:
