@@ -1,6 +1,7 @@
 import io
 from copy import deepcopy
 from dataclasses import dataclass
+from enum import Enum
 from typing import Union
 from unittest import mock
 
@@ -20,6 +21,15 @@ FRAME_DATA = {
 class BasicFrame(ParameterFrame):
     height: Parameter[float]
     age: Parameter[int]
+
+
+class MyEnum(Enum):
+    A = 1
+
+
+@dataclass
+class UnionFrame(ParameterFrame):
+    thing: Parameter[Union[str, MyEnum]]
 
 
 @dataclass
@@ -318,6 +328,12 @@ class TestParameterFrame:
         with pytest.raises(ValueError) as error:
             BasicFrame.from_json(["x"])
         assert "Cannot read JSON" in str(error)
+
+    def test_union_of_parameter_types(self):
+        strframe = UnionFrame.from_dict({"thing": {"value": "A", "unit": ""}})
+        enumframe = UnionFrame.from_dict({"thing": {"value": MyEnum.A, "unit": ""}})
+
+        assert enumframe.thing.value == MyEnum[strframe.thing.value]
 
 
 @dataclass
