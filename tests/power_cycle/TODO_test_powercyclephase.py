@@ -5,8 +5,8 @@ from pprint import pprint
 import bluemira.base.constants as constants
 
 # Import Power Cycle packages
-from bluemira.power_cycle.base import print_header
-from bluemira.power_cycle.timeline import PowerCyclePhase
+from bluemira.power_cycle.OLD_timeline import PowerCyclePhase
+from bluemira.power_cycle.tools import print_header
 
 # Header
 print_header("Test PowerCyclePhase")
