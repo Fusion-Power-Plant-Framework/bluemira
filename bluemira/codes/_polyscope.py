@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import functools
 from dataclasses import dataclass, field
 from typing import Dict, List, Optional, Tuple, Union
 
@@ -115,7 +116,8 @@ def polyscope_setup(
     gplane: str
         the ground plane mode (none, tile, tile_reflection, shadon_only)
     """
-    ps.set_program_name("Bluemira Display")
+    _init_polyscope()
+
     ps.set_max_fps(fps)
     ps.set_SSAA_factor(aa)
     ps.set_transparency_mode(transparency)
@@ -124,9 +126,16 @@ def polyscope_setup(
     ps.set_ground_plane_mode(gplane)
     ps.set_up_dir(up_direction)
 
-    # initialize
-    ps.init()
     ps.remove_all_structures()
+
+
+@functools.lru_cache(maxsize=1)
+def _init_polyscope():
+    """
+    Initialise polyscope (just once)
+    """
+    ps.set_program_name("Bluemira Display")
+    ps.init()
 
 
 def add_features(
