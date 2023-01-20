@@ -139,6 +139,10 @@ class CryostatBuilder(Builder):
         """
         x_in = 0
         x_gs_kink = self.params.x_g_support.value - self.params.x_gs_kink_diff.value
+        if x_gs_kink > x_out:
+            raise ValueError(
+                "Outward kinks not supported x_g_support-x_gs_kink_diff > x_out"
+            )
         z_mid = self.params.z_gs.value - self.params.g_cr_ts.value
         z_bot = z_mid - self.params.well_depth.value
         tk = self.params.tk_cr_vv.value
