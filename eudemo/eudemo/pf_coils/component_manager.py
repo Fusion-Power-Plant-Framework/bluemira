@@ -37,3 +37,9 @@ class PFCoil(ComponentManager):
         The poloidal coilset
         """
         return self._coilset
+
+    def xz_boundary(self):
+        return [
+            pf.get_component("Casing").shape.boundary[0]
+            for pf in self.component().get_component("xz", first=False)
+        ]
