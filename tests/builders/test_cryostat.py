@@ -36,7 +36,7 @@ class TestCryostatBuilder:
             "tk_cr_vv": {"value": 0.3, "unit": "m"},
             "well_depth": {"value": 5, "unit": "m"},
             "x_g_support": {"value": 13, "unit": "m"},
-            "x_gs_kink_diff": {"value": 2, "unit": "m"},
+            "x_gs_kink_diff": {"value": 4, "unit": "m"},
             "z_gs": {"value": -15, "unit": "m"},
         }
 
