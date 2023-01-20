@@ -460,7 +460,7 @@ class BalanceOfPlantModel:
             self.params = params
         else:
             raise TypeError(
-                f"Unsupported type '{type(self.params).__name__}' for params. "
+                f"Unsupported type '{type(params).__name__}' for params. "
                 "Must be 'dict' or 'BoPModelParams'."
             )
         self.rad_sep_strat = rad_sep_strat

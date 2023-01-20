@@ -97,17 +97,20 @@ class VVTSBuilder(Builder):
             keep out zone for the thermal shield
         """
         # This split hack works round #1319
+        # We shouldnt need to close again here also but otherwise it sometimes fails
         ex_args = dict(
             join="intersect",
             open_wire=False,
             ndiscr=600,
         )
         vvts_inner_wire = offset_wire(koz, self.params.g_vv_ts.value, **ex_args)
+        vvts_inner_wire.close()
         vvts_outer_wire = offset_wire(
             vvts_inner_wire,
             self.params.tk_ts.value + self.params.g_vv_ts.value,
             **ex_args
         )
+        vvts_outer_wire.close()
         vvts_face = BluemiraFace([vvts_outer_wire, vvts_inner_wire])
         self.vvts_face = vvts_face
 

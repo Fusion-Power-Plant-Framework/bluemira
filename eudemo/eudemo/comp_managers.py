@@ -22,7 +22,8 @@
 EUDEMO thermal shield classes
 """
 from bluemira.base.builder import ComponentManager
-from bluemira.builders.thermal_shield import VVTSBuilder
+from bluemira.builders.cryostat import CryostatBuilder
+from bluemira.builders.thermal_shield import CryostatTSBuilder, VVTSBuilder
 from bluemira.geometry.wire import BluemiraWire
 
 
@@ -41,6 +42,21 @@ class VacuumVesselThermalShield(ComponentManager):
         )
 
 
+class Cryostat(ComponentManager):
+    """
+    Wrapper around a VVTS component tree.
+    """
+
+    def xz_boundary(self) -> BluemiraWire:
+        """Return a wire representing the VVTS poloidal silhouette."""
+        return (
+            self.component()
+            .get_component("xz")
+            .get_component(CryostatBuilder.CRYO)
+            .shape.boundary[0]
+        )
+
+
 class CryostatThermalShield(ComponentManager):
     """
     Wrapper around a VVTS component tree.
@@ -48,7 +64,12 @@ class CryostatThermalShield(ComponentManager):
 
     def xz_boundary(self) -> BluemiraWire:
         """Return a wire representing the VVTS poloidal silhouette."""
-        return self.component().get_component("xz").shape.boundary[0]
+        return (
+            self.component()
+            .get_component("xz")
+            .get_component(CryostatTSBuilder.CRYO_TS)
+            .shape.boundary[0]
+        )
 
 
 class RadiationShield(ComponentManager):

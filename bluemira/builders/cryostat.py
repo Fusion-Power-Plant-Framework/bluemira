@@ -146,8 +146,8 @@ class CryostatBuilder(Builder):
         x_outer[1:-1] += tk
 
         z_outer = np.array([z_bot, z_bot, z_mid, z_mid, z_top, z_top])
-        z_outer[:2] -= tk
-        z_outer[2:] += tk
+        z_outer[:4] -= tk
+        z_outer[4:] += tk
 
         x = np.concatenate([x_inner, x_outer])
         z = np.concatenate([z_inner, z_outer])
