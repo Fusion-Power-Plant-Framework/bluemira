@@ -61,6 +61,7 @@ from eudemo.equilibria import (
     FixedEquilibriumDesigner,
     FreeBoundaryEquilibriumFromFixedDesigner,
 )
+from eudemo.cryostat import Cryostat
 from eudemo.ivc import design_ivc
 from eudemo.ivc.divertor_silhouette import Divertor
 from eudemo.params import EUDEMOReactorParams
@@ -203,6 +204,9 @@ def build_pf_coils(params, build_config, tf_coil_boundary, pf_coil_keep_out_zone
 
 
 def build_cryots(params, build_config, pf_kozs, tf_koz):
+    """
+    Build the Cryostat thermal shield for the reactor.
+    """
     cryoTSb = CryostatTSBuilder(
         params,
         build_config.get("Cryostat", {}),
@@ -213,22 +217,19 @@ def build_cryots(params, build_config, pf_kozs, tf_koz):
 
 
 def build_cryostat(params, build_config, cryostat_thermal_koz):
-    cryod = CryostatDesigner(
-        params,
-        reactor.cryostat_thermal.get_component("xz").get_component_properties(
-            "shape", first=False
-        )[0],
-    )
+    """
+    Design and build the Cryostat for the reactor.
+    """
+    cryod = CryostatDesigner(params, cryostat_thermal_koz)
     cryob = CryostatBuilder(params, build_config, cryod)
     return Cryostat(cryob.build())
 
 
 def build_radiation_shield(params, build_config, cryostat_koz):
-    radshieldd = RadiationShieldDesigner(
-        reactor.cryostat.get_component("xz").get_component_properties(
-            "shape", first=False
-        )[0]
-    )
+    """
+    Design and build the Radition shield for the reactor.
+    """
+    radshieldd = RadiationShieldDesigner(cryostat_koz)
     radshieldb = RadiationShieldBuilder(params, build_config, radshieldd)
     return RadiationShield(radshieldb.build())
 
@@ -310,7 +311,7 @@ if __name__ == "__main__":
     )
 
     reactor.radiation_shield = build_radiation_shield(
-        params, build_config, reactor.cryostat.xz_boundary()
+        params, build_config("RadiationShield", {}), reactor.cryostat.xz_boundary()
     )
 
     sspc_solver = SteadyStatePowerCycleSolver(params)
