@@ -161,7 +161,7 @@ def build_pf_coils(params, build_config, tf_coil_boundary, pf_coil_keep_out_zone
                 {
                     "tk_insulation": {"value": tk_ins.value, "unit": "m"},
                     "tk_casing": {"value": tk_case.value, "unit": "m"},
-                    "ctype": {"value": ctype, "unit": ""},
+                    "ctype": {"value": ctype.name, "unit": ""},
                 },
                 build_config,
                 des.execute(),
