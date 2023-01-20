@@ -39,6 +39,9 @@ class PFCoil(ComponentManager):
         return self._coilset
 
     def xz_boundary(self):
+        """
+        Boundaries of the coils in xz
+        """
         return [
             pf.get_component("Casing").shape.boundary[0]
             for pf in self.component().get_component("xz", first=False)
