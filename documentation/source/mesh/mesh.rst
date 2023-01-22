@@ -31,19 +31,23 @@ in which the following properties can be specified:
 Geometry definition and Mesh assignment
 ---------------------------------------
 All :py:class:`BluemiraGeo` objects inherit from :py:class:`Meshable`. After creating a geo object,
-`mesh_options` must to be specified (no default values are used). Easiest way is to
+`mesh_options` must to be specified (no default values are used). The easiest way is to
 use a simple dictionary with `lcar` and `physical_group` keys.
 
 .. code-block:: python
 
-        poly = tools.make_polygon(
+        from bluemira.geometry.tools import make_polygon
+        from bluemira.mesh.meshing import Mesh
+
+        poly = make_polygon(
             [[0, 0, 0], [1, 0, 0], [1, 0, 1], [0, 0, 1]], closed=True, label="poly"
         )
 
-        poly.mesh_options = {"lcar": lcar, "physical_group": "poly"}
+        poly.mesh_options = {"lcar": 0.1, "physical_group": "poly"}
 
-        m = meshing.Mesh()
+        m = Mesh()
         m(poly)
+
 
 The previous code results in the generation of a mesh file, `Mesh.msh` by default, in
 which the mesh is stored, and a gmsh file, `Mesh.geo_unrolled` by default, for
@@ -54,18 +58,17 @@ checking purpose.
     Only objects that have a `physical_group` are exported into the `Mesh.msh` file (see
     gmsh_ for more information).
 
-msh2xdmf and fenics import
---------------------------
+fenics import
+-------------
 Once the mesh has been generated, it can be imported in a PDEs solver. Fenics_ solver,
-is integrated into bluemira. Coupling with mesh is made through msh2xdmf package.
+is integrated into bluemira.
 
 .. code-block:: python
 
-    msh2xdmf.msh2xdmf("Mesh.msh", dim=2, directory=".")
+    from bluemira.mesh.tools import import_mesh
 
-    mesh, boundaries, subdomains, labels = msh2xdmf.import_mesh(
-        prefix="Mesh",
-        dim=2,
+    mesh, boundaries, subdomains, labels = import_mesh(
+        "Mesh",
         directory=".",
         subdomains=True,
     )
