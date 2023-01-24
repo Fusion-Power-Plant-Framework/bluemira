@@ -150,14 +150,16 @@ def save_fixed_boundary_to_file(
 
     if equilibrium.R_0 is None:
         bluemira_warn(
-            "No explicit R_0 information provided when saving fixed boundary equilibrium to file. Taking the average of the boundary radial coordinate extrema."
+            "No explicit R_0 information provided when saving fixed boundary equilibrium "
+            "to file. Taking the average of the boundary radial coordinate extrema."
         )
         R_0 = grid.x_mid
     else:
         R_0 = equilibrium.R_0
     if equilibrium.B_0 is None:
         bluemira_warn(
-            "No explicit B_0 information provided when saving fixed boundary equilibrium to file. Setting to 0!"
+            "No explicit B_0 information provided when saving fixed boundary equilibrium "
+            "to file. Setting to 0!"
         )
         B_0 = 0.0
     else:
