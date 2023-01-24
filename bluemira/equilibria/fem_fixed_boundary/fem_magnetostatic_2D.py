@@ -23,6 +23,7 @@
 Bluemira module for the solution of a 2D magnetostatic problem with cylindrical symmetry
 and toroidal current source using fenics FEM solver
 """
+from dataclasses import dataclass
 from typing import Callable, Iterable, Optional, Union
 
 import dolfin
@@ -233,6 +234,19 @@ def _parse_to_callable(profile_data: Union[None, np.ndarray]):
         return None
 
 
+@dataclass
+class FixedBoundaryEquilibrium:
+    # Solver information
+    mesh: dolfin.Mesh
+    psi: Callable[[float, float], float]
+
+    # Profile information
+    p_prime: np.ndarray
+    ff_prime: np.ndarray
+    B_0: float
+    I_p: float
+
+
 class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
     """
     A 2D fem Grad Shafranov solver. The solver is thought as support for the fem fixed
@@ -383,8 +397,8 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
 
     def set_profiles(
         self,
-        p_prime: np.ndarray,
-        ff_prime: np.ndarray,
+        p_prime: Union[np.ndarray, Callable[[float], float]],
+        ff_prime: Union[np.ndarray, Callable[[float], float]],
         curr_target: Optional[float],
         B_0: Optional[float],
     ):
@@ -457,8 +471,8 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
 
         Returns
         -------
-        psi: dolfin.Function
-            dolfin.Function for psi
+        equilibrium: FixedBoundaryEquilibrium
+            FixedBoundaryEquilibrium object corresponding to the solve
         """
         points = self.mesh.coordinates()
         plot = any((plot, debug, gif))
@@ -519,7 +533,14 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
         if gif:
             make_gif(folder, figname, clean=not debug)
 
-        return self.psi
+        return FixedBoundaryEquilibrium(
+            self.mesh,
+            self.psi,
+            self._pprime_data,
+            self._ffprime_data,
+            self._B_0,
+            self._calculate_curr_tot(),
+        )
 
     def _setup_plot(self, debug):
         n_col = 3 if debug else 2

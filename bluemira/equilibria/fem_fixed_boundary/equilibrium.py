@@ -261,6 +261,11 @@ def solve_transport_fixed_boundary(
     plot: bool
         Whether or not to plot
 
+    Returns
+    -------
+    equilibrium: FixedBoundaryEquilibrium
+        Final fixed boundary equilibrium result from the transport <-> fixed boundary
+        equilibrium solve
     """
     kappa_95 = kappa95_t
     delta_95 = delta95_t
@@ -307,7 +312,6 @@ def solve_transport_fixed_boundary(
         transp_out_params, x, pprime, ffprime = _run_transport_solver(
             transport_solver, transport_params, transport_run_mode
         )
-        print(x)
 
         if plot:
             from bluemira.codes.plasmod import plot_default_profiles
@@ -344,7 +348,7 @@ def solve_transport_fixed_boundary(
 
         bluemira_print("Solving fixed boundary Grad-Shafranov...")
 
-        gs_solver.solve(
+        equilibrium = gs_solver.solve(
             plot=plot,
             debug=debug,
             gif=gif,
@@ -397,3 +401,4 @@ def solve_transport_fixed_boundary(
 
     if gif:
         make_gif(folder, figname, clean=not debug)
+    return equilibrium

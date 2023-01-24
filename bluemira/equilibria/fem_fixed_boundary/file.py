@@ -30,7 +30,7 @@ from dolfin import BoundaryMesh, Vertex
 from scipy.integrate import quad, quadrature
 
 from bluemira.equilibria.fem_fixed_boundary.fem_magnetostatic_2D import (
-    FemGradShafranovFixedBoundary,
+    FixedBoundaryEquilibrium,
 )
 from bluemira.equilibria.fem_fixed_boundary.utilities import find_magnetic_axis
 from bluemira.equilibria.file import EQDSKInterface
@@ -99,7 +99,7 @@ def _get_mesh_boundary(mesh):
 def save_fixed_boundary_to_file(
     file_path: str,
     file_header_name: str,
-    gs_solver: FemGradShafranovFixedBoundary,
+    equilibrium: FixedBoundaryEquilibrium,
     nx: int,
     nz: int,
     formatt: str = "json",
@@ -110,19 +110,20 @@ def save_fixed_boundary_to_file(
 
     Parameters
     ----------
-    gs_solver: FemGradShafranovFixedBoundary
+    equilibrium: FixedBoundaryEquilibrium
+        Equilibrium object to save to file
     nx: int
         Number of radial points to use in the psi map
     nz: int
         Number of vertical points to use in the psi map
     """
-    xbdry, zbdry = _get_mesh_boundary(gs_solver.mesh)
+    xbdry, zbdry = _get_mesh_boundary(equilibrium.mesh)
     xbdry = np.append(xbdry, xbdry[0])
     zbdry = np.append(zbdry, zbdry[0])
     nbdry = len(xbdry)
 
-    x_mag, z_mag = find_magnetic_axis(gs_solver.psi, gs_solver.mesh)
-    psi_mag = gs_solver.psi(x_mag, z_mag)
+    x_mag, z_mag = find_magnetic_axis(equilibrium.psi, equilibrium.mesh)
+    psi_mag = equilibrium.psi(x_mag, z_mag)
 
     # Make a minimum grid
     x_min = np.min(xbdry)
@@ -134,29 +135,23 @@ def save_fixed_boundary_to_file(
     psi = np.zeros((nx, nz))
     for i, xi in enumerate(grid.x_1d):
         for j, zj in enumerate(grid.z_1d):
-            psi[i, j] = gs_solver.psi([xi, zj])
+            psi[i, j] = equilibrium.psi([xi, zj])
 
-    psi_norm = np.linspace(0, 1, 50)
-    pprime = gs_solver._pprime
-    ffprime = gs_solver._ffprime
-    if callable(pprime):
-        pprime_values = pprime(psi_norm)
-    if callable(ffprime):
-        ffprime_values = ffprime(psi_norm)
-    else:
-        psi_norm = np.linspace(0, 1, len(ffprime))
+    p_prime = equilibrium.p_prime
+    ff_prime = equilibrium.ff_prime
+    psi_norm = np.linspace(0, 1, len(ff_prime))
 
-    fvac = grid.x_mid * gs_solver._B_0
+    fvac = grid.x_mid * equilibrium.B_0
     psi_vector = psi_norm * psi_mag
-    pressure = _pressure_profile(pprime, psi_vector, psi_mag)
-    fpol = _fpol_profile(ffprime, psi_norm, psi_mag, fvac)
+    pressure = _pressure_profile(p_prime, psi_vector, psi_mag)
+    fpol = _fpol_profile(ff_prime, psi_norm, psi_mag, fvac)
 
     data = EQDSKInterface(
-        bcentre=gs_solver._B_0,
-        cplasma=gs_solver._curr_target,
+        bcentre=equilibrium.B_0,
+        cplasma=equilibrium.I_p,
         dxc=np.array([]),
         dzc=np.array([]),
-        ffprime=ffprime_values,
+        ffprime=ff_prime,
         fpol=fpol,
         Ic=np.array([]),
         name=file_header_name,
@@ -166,7 +161,7 @@ def save_fixed_boundary_to_file(
         nx=nx,
         nz=nz,
         pressure=pressure,
-        pprime=pprime_values,
+        pprime=p_prime,
         psi=psi,
         psibdry=np.zeros(nbdry),
         psimag=psi_mag,

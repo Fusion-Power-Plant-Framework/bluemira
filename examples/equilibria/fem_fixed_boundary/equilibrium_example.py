@@ -149,7 +149,7 @@ fem_GS_fixed_boundary = FemGradShafranovFixedBoundary(
 
 # %%
 
-solve_transport_fixed_boundary(
+equilibrium = solve_transport_fixed_boundary(
     johner_parameterisation,
     plasmod_solver,
     fem_GS_fixed_boundary,
@@ -157,7 +157,7 @@ solve_transport_fixed_boundary(
     delta95_t=0.333,  # Target delta_95
     lcar_mesh=0.3,
     max_iter=15,
-    iter_err_max=1e-4,
+    iter_err_max=1e1,
     relaxation=0.0,
     plot=True,
     debug=False,
@@ -171,7 +171,7 @@ solve_transport_fixed_boundary(
 data = save_fixed_boundary_to_file(
     "/home/matti/code/bluemira/generated_data/test_1.json",
     "something",
-    fem_GS_fixed_boundary,
+    equilibrium,
     100,
     110,
     formatt="json",
