@@ -236,12 +236,22 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
 
     def __init__(
         self,
+        p_prime: Optional[callable] = None,
+        ff_prime: Optional[callable] = None,
+        I_p: Optional[float] = None,
+        R_0: Optional[float] = None,
+        B_0: Optional[float] = None,
         p_order: int = 3,
         max_iter: int = 10,
         iter_err_max: float = 1e-5,
         relaxation: float = 0.0,
     ):
         super().__init__(p_order)
+        self._pprime = p_prime
+        self._ffprime = ff_prime
+        self._curr_target = I_p
+        self._R_0 = R_0
+        self._B_0 = B_0
         self.iter_err_max = iter_err_max
         self.max_iter = max_iter
         self.relaxation = relaxation

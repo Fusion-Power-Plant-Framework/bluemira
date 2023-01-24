@@ -315,6 +315,7 @@ def solve_transport_fixed_boundary(
         transp_out_params, x, pprime, ffprime = _run_transport_solver(
             transport_solver, transport_params, transport_run_mode
         )
+        print(x)
 
         if plot:
             from bluemira.codes.plasmod import plot_default_profiles
