@@ -23,7 +23,7 @@
 import os
 from copy import deepcopy
 from dataclasses import asdict, dataclass, fields
-from typing import Callable, Dict, List, Tuple, Union
+from typing import Dict, List, Tuple, Union
 
 import matplotlib.pyplot as plt
 import numpy as np

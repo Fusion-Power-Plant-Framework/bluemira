@@ -236,6 +236,10 @@ def _parse_to_callable(profile_data: Union[None, np.ndarray]):
 
 @dataclass
 class FixedBoundaryEquilibrium:
+    """
+    Simple minimal dataclass for a fixed boundary equilibrium.
+    """
+
     # Solver information
     mesh: dolfin.Mesh
     psi: Callable[[float, float], float]
