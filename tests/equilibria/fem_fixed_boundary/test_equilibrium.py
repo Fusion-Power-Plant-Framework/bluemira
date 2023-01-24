@@ -197,13 +197,18 @@ class TestFEMGSSolver:
         )
         assert message in caplog.records[-1].getMessage()
         assert self.gs_solver.set_mesh.call_count == iters
-        assert self.gs_solver.define_g.call_count == iters
+        assert self.gs_solver.set_profiles.call_count == iters
         assert self.gs_solver.solve.call_count == iters
 
-        # scipy interpolation extrapolation
-        assert self.gs_solver.define_g.call_args[0][0](10) == interp[0]
-        assert self.gs_solver.define_g.call_args[0][1](10) == interp[1]
         assert (
-            self.gs_solver.define_g.call_args[0][2]
+            self.gs_solver.set_profiles.call_args[0][0][0]
+            == self.transport_solver.get_profile("pprime")[0]
+        )
+        assert (
+            self.gs_solver.set_profiles.call_args[0][1][0]
+            == self.transport_solver.get_profile("ffprime")[0]
+        )
+        assert (
+            self.gs_solver.set_profiles.call_args[0][2]
             == self.transport_solver.execute("").I_p.value
         )
