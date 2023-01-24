@@ -29,6 +29,7 @@ import numpy as np
 from dolfin import BoundaryMesh, Vertex
 from scipy.integrate import quad, quadrature
 
+from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.equilibria.fem_fixed_boundary.fem_magnetostatic_2D import (
     FixedBoundaryEquilibrium,
 )
@@ -147,13 +148,28 @@ def save_fixed_boundary_to_file(
     p_prime_func = _interpolate_profile(psi_norm, p_prime)
     ff_prime_func = _interpolate_profile(psi_norm, ff_prime)
 
-    fvac = equilibrium.R_0 * equilibrium.B_0
+    if equilibrium.R_0 is None:
+        bluemira_warn(
+            "No explicit R_0 information provided when saving fixed boundary equilibrium to file. Taking the average of the boundary radial coordinate extrema."
+        )
+        R_0 = grid.x_mid
+    else:
+        R_0 = equilibrium.R_0
+    if equilibrium.B_0 is None:
+        bluemira_warn(
+            "No explicit B_0 information provided when saving fixed boundary equilibrium to file. Setting to 0!"
+        )
+        B_0 = 0.0
+    else:
+        B_0 = equilibrium.B_0
+
+    fvac = R_0 * B_0
     psi_vector = psi_norm * psi_mag
     pressure = _pressure_profile(p_prime_func, psi_vector, psi_mag)
     fpol = _fpol_profile(ff_prime_func, psi_norm, psi_mag, fvac)
 
     data = EQDSKInterface(
-        bcentre=equilibrium.B_0,
+        bcentre=B_0,
         cplasma=equilibrium.I_p,
         dxc=np.array([]),
         dzc=np.array([]),
