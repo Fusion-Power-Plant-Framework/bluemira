@@ -548,6 +548,10 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
         if gif:
             make_gif(folder, figname, clean=not debug)
 
+        return self._equilibrium()
+
+    def _equilibrium(self):
+        """Equilibrium data object"""
         return FixedBoundaryEquilibrium(
             self.mesh,
             self.psi,

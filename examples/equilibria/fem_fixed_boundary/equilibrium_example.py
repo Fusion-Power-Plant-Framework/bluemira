@@ -169,7 +169,9 @@ equilibrium = solve_transport_fixed_boundary(
 
 # %%
 data = save_fixed_boundary_to_file(
-    "/home/matti/code/bluemira/generated_data/test_1.json",
+    os.sep.join(
+        [get_bluemira_path("", subfolder="generated_data"), "fixed_boundary_data.json"]
+    ),
     "something",
     equilibrium,
     100,
