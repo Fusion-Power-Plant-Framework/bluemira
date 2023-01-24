@@ -410,9 +410,9 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
         self,
         p_prime: Union[np.ndarray, Callable[[float], float]],
         ff_prime: Union[np.ndarray, Callable[[float], float]],
-        curr_target: Optional[float],
-        B_0: Optional[float],
-        R_0: Optional[float],
+        curr_target: Optional[float] = None,
+        B_0: Optional[float] = None,
+        R_0: Optional[float] = None,
     ):
         """
         Set the profies for the FEM G-S solver.
