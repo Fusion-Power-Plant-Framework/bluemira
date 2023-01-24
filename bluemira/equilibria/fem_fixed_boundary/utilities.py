@@ -30,6 +30,7 @@ import scipy
 from matplotlib._tri import TriContourGenerator
 from matplotlib.axes._axes import Axes
 from matplotlib.tri.triangulation import Triangulation
+from scipy.interpolate import interp1d
 
 from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.utilities.optimiser import Optimiser, approx_derivative
@@ -478,3 +479,10 @@ def find_magnetic_axis(psi_func, mesh=None):
     optimiser.set_upper_bounds(upper_bounds)
     x_star = optimiser.optimise(x0)
     return np.array(x_star, dtype=float)
+
+
+def _interpolate_profile(
+    x: np.ndarray, profile_data: np.ndarray
+) -> Callable[[np.ndarray], np.ndarray]:
+    """Interpolate profile data"""
+    return interp1d(x, profile_data, kind="linear", fill_value="extrapolate")

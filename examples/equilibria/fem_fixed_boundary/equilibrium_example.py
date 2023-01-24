@@ -28,6 +28,9 @@ An example that shows how to set up the problem for the fixed boundary equilibri
 import os
 import shutil
 
+import matplotlib.pyplot as plt
+import numpy as np
+
 from bluemira.base.file import get_bluemira_path, get_bluemira_root
 from bluemira.base.logs import set_log_level
 from bluemira.codes import transport_code_solver
@@ -37,6 +40,7 @@ from bluemira.equilibria.fem_fixed_boundary.equilibrium import (
 from bluemira.equilibria.fem_fixed_boundary.fem_magnetostatic_2D import (
     FemGradShafranovFixedBoundary,
 )
+from bluemira.equilibria.fem_fixed_boundary.file import save_fixed_boundary_to_file
 from bluemira.equilibria.shapes import JohnerLCFS
 
 set_log_level("NOTSET")
@@ -145,7 +149,7 @@ fem_GS_fixed_boundary = FemGradShafranovFixedBoundary(
 
 # %%
 
-solve_transport_fixed_boundary(
+equilibrium = solve_transport_fixed_boundary(
     johner_parameterisation,
     plasmod_solver,
     fem_GS_fixed_boundary,
@@ -159,3 +163,38 @@ solve_transport_fixed_boundary(
     debug=False,
     gif=True,
 )
+
+# %% [markdown]
+# Save to a file
+
+# %%
+data = save_fixed_boundary_to_file(
+    os.sep.join(
+        [get_bluemira_path("", subfolder="generated_data"), "fixed_boundary_data.json"]
+    ),
+    "something",
+    equilibrium,
+    100,
+    110,
+    formatt="json",
+)
+
+# %% [markdown]
+# Inspect the final converged equilibrum
+
+# %%
+xx, zz = np.meshgrid(data.x, data.z, indexing="ij")
+f, ax = plt.subplots()
+ax.contour(xx, zz, data.psi)
+ax.plot(data.xbdry, data.zbdry)
+ax.set_aspect("equal")
+
+f, ax = plt.subplots(2, 2)
+ax[0, 0].plot(data.psinorm, data.pprime, label="p'")
+ax[0, 1].plot(data.psinorm, data.ffprime, label="FF'")
+ax[1, 1].plot(data.psinorm, data.fpol, label="F")
+ax[1, 0].plot(data.psinorm, data.pressure, label="p")
+for axi in ax.flat:
+    axi.legend()
+
+plt.show()

@@ -121,6 +121,8 @@ class TranspOutParams(ParameterFrame):
     """Transport Solver ParameterFrame"""
 
     I_p: Parameter[float]
+    B_0: Parameter[float]
+    R_0: Parameter[float]
 
 
 class DummyTransportSolver:
@@ -130,7 +132,13 @@ class DummyTransportSolver:
         self.i = 0
 
     def execute(self, mode):
-        return TranspOutParams.from_dict({"I_p": {"value": 5, "unit": "A"}})
+        return TranspOutParams.from_dict(
+            {
+                "I_p": {"value": 5, "unit": "A"},
+                "B_0": {"value": 5, "unit": "T"},
+                "R_0": {"value": 9, "unit": "m"},
+            }
+        )
 
     def get_profile(self, prof):
         self.i += 1
@@ -194,13 +202,18 @@ class TestFEMGSSolver:
         )
         assert message in caplog.records[-1].getMessage()
         assert self.gs_solver.set_mesh.call_count == iters
-        assert self.gs_solver.define_g.call_count == iters
+        assert self.gs_solver.set_profiles.call_count == iters
         assert self.gs_solver.solve.call_count == iters
 
-        # scipy interpolation extrapolation
-        assert self.gs_solver.define_g.call_args[0][0](10) == interp[0]
-        assert self.gs_solver.define_g.call_args[0][1](10) == interp[1]
         assert (
-            self.gs_solver.define_g.call_args[0][2]
+            self.gs_solver.set_profiles.call_args[0][0][0]
+            == self.transport_solver.get_profile("pprime")[0]
+        )
+        assert (
+            self.gs_solver.set_profiles.call_args[0][1][0]
+            == self.transport_solver.get_profile("ffprime")[0]
+        )
+        assert (
+            self.gs_solver.set_profiles.call_args[0][2]
             == self.transport_solver.execute("").I_p.value
         )

@@ -23,6 +23,7 @@
 Bluemira module for the solution of a 2D magnetostatic problem with cylindrical symmetry
 and toroidal current source using fenics FEM solver
 """
+from dataclasses import dataclass
 from typing import Callable, Iterable, Optional, Union
 
 import dolfin
@@ -37,6 +38,7 @@ from bluemira.display import plot_defaults
 from bluemira.equilibria.constants import DPI_GIF, PLT_PAUSE
 from bluemira.equilibria.fem_fixed_boundary.utilities import (
     ScalarSubFunc,
+    _interpolate_profile,
     find_magnetic_axis,
 )
 from bluemira.equilibria.plotting import PLOT_DEFAULTS
@@ -217,6 +219,32 @@ class FemMagnetostatic2d:
         return self.B
 
 
+def _parse_to_callable(profile_data: Union[None, np.ndarray]):
+    if isinstance(profile_data, np.ndarray):
+        x = np.linspace(0, 1, len(profile_data))
+        return _interpolate_profile(x, profile_data)
+    elif profile_data is None:
+        return None
+
+
+@dataclass
+class FixedBoundaryEquilibrium:
+    """
+    Simple minimal dataclass for a fixed boundary equilibrium.
+    """
+
+    # Solver information
+    mesh: dolfin.Mesh
+    psi: Callable[[float, float], float]
+
+    # Profile information
+    p_prime: np.ndarray
+    ff_prime: np.ndarray
+    R_0: float
+    B_0: float
+    I_p: float
+
+
 class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
     """
     A 2D fem Grad Shafranov solver. The solver is thought as support for the fem fixed
@@ -224,6 +252,21 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
 
     Parameters
     ----------
+    p_prime: Optional[Union[np.ndarray, Callable[[float], float]]]
+        p' flux function. If callable, then used directly (50 points saved in file).
+        If array, linear interpolation is used and the values are stored in the file.
+        If None, these must be specified later on, but before the solve.
+    ff_prime: Optional[Union[np.ndarray, Callable[[float], float]]]
+        FF' flux function. If callable, then used directly (50 points saved in file).
+        If array, linear interpolation is used and the values are stored in the file.
+        If None, these must be specified later on, but before the solve.
+    I_p: Optional[float]
+        Plasma current [A]. If None, the plasma current is calculated, otherwise
+        the source term is scaled to match the plasma current.
+    B_0: Optional[float]
+        Toroidal field at R_0 [T]. Used when saving to file.
+    R_0: Optional[float]
+        Major radius [m]. Used when saving to file.
     p_order : int
         Order of the approximating polynomial basis functions
     max_iter: int
@@ -236,18 +279,41 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
 
     def __init__(
         self,
+        p_prime: Optional[Union[np.ndarray, Callable[[float], float]]] = None,
+        ff_prime: Optional[Union[np.ndarray, Callable[[float], float]]] = None,
+        I_p: Optional[float] = None,
+        R_0: Optional[float] = None,
+        B_0: Optional[float] = None,
         p_order: int = 3,
         max_iter: int = 10,
         iter_err_max: float = 1e-5,
         relaxation: float = 0.0,
     ):
         super().__init__(p_order)
+        self._process_profiles(p_prime, ff_prime)
+        self._curr_target = I_p
+        self._R_0 = R_0
+        self._B_0 = B_0
         self.iter_err_max = iter_err_max
         self.max_iter = max_iter
         self.relaxation = relaxation
         self.k = 1
         self._psi_ax = None
         self._psi_b = None
+
+    def _process_profiles(self, p_prime, ff_prime):
+        if callable(p_prime):
+            self._pprime = p_prime
+            self._pprime_data = p_prime(np.linspace(0, 1, 50))
+        else:
+            self._pprime_data = p_prime
+            self._pprime = _parse_to_callable(p_prime)
+        if callable(ff_prime):
+            self._ffprime = ff_prime
+            self._ffprime_data = ff_prime(np.linspace(0, 1, 50))
+        else:
+            self._ffprime_data = ff_prime
+            self._ffprime = _parse_to_callable(ff_prime)
 
     @property
     def psi_ax(self) -> float:
@@ -324,21 +390,32 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
                 r = x[0]
                 x_psi = self.psi_norm_2d(x)
 
-                a = r * (pprime(x_psi) if callable(pprime) else pprime)
-                b = 1 / MU_0 / r * (ffprime(x_psi) if callable(ffprime) else ffprime)
+                a = r * pprime(x_psi)
+                b = 1 / MU_0 / r * ffprime(x_psi)
 
                 return self.k * 2 * np.pi * (a + b)
 
         return g
 
-    def define_g(
-        self,
-        pprime: Union[Callable[[np.ndarray], np.ndarray], float],
-        ffprime: Union[Callable[[np.ndarray], np.ndarray], float],
-        curr_target: Optional[float],
-    ):
+    def define_g(self):
         """
         Return the density current DOLFIN function given pprime and ffprime.
+        """
+        self._g_func = self._create_g_func(
+            self._pprime, self._ffprime, self._curr_target
+        )
+        super().define_g(ScalarSubFunc(self._g_func))
+
+    def set_profiles(
+        self,
+        p_prime: Union[np.ndarray, Callable[[float], float]],
+        ff_prime: Union[np.ndarray, Callable[[float], float]],
+        curr_target: Optional[float] = None,
+        B_0: Optional[float] = None,
+        R_0: Optional[float] = None,
+    ):
+        """
+        Set the profies for the FEM G-S solver.
 
         Parameters
         ----------
@@ -346,14 +423,20 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
             pprime as function of psi_norm (1-D function)
         ffprime: Union[Callable[[np.ndarray], np.ndarray]
             ffprime as function of psi_norm (1-D function)
-        curr_target: float
+        curr_target: Optional[float]
             Target current (also used to initialize the solution in case self.psi is
             still 0 and pprime and ffprime are, then, not defined).
             If None, plasma current is calculated and not constrained
+        B_0: Optional[float]
+            Toroidal field at R_0 [T]. Used when saving to file.
+        R_0: Optional[float]
+            Major radius [m]. Used when saving to file.
         """
+        self._process_profiles(p_prime, ff_prime)
         self._curr_target = curr_target
-        self._g_func = self._create_g_func(pprime, ffprime, self._curr_target)
-        super().define_g(ScalarSubFunc(self._g_func))
+        self._B_0 = B_0
+        self._R_0 = R_0
+        self.define_g()
 
     def _calculate_curr_tot(self) -> float:
         """Calculate the total current into the domain"""
@@ -403,8 +486,8 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
 
         Returns
         -------
-        psi: dolfin.Function
-            dolfin.Function for psi
+        equilibrium: FixedBoundaryEquilibrium
+            FixedBoundaryEquilibrium object corresponding to the solve
         """
         points = self.mesh.coordinates()
         plot = any((plot, debug, gif))
@@ -465,7 +548,19 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
         if gif:
             make_gif(folder, figname, clean=not debug)
 
-        return self.psi
+        return self._equilibrium()
+
+    def _equilibrium(self):
+        """Equilibrium data object"""
+        return FixedBoundaryEquilibrium(
+            self.mesh,
+            self.psi,
+            self._pprime_data,
+            self._ffprime_data,
+            self._R_0,
+            self._B_0,
+            self._calculate_curr_tot(),
+        )
 
     def _setup_plot(self, debug):
         n_col = 3 if debug else 2

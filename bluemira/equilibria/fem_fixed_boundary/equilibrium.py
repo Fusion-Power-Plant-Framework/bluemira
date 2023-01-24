@@ -23,12 +23,11 @@
 import os
 from copy import deepcopy
 from dataclasses import asdict, dataclass, fields
-from typing import Callable, Dict, List, Tuple, Union
+from typing import Dict, List, Tuple, Union
 
 import matplotlib.pyplot as plt
 import numpy as np
 from dolfin import Mesh
-from scipy.interpolate import interp1d
 from tabulate import tabulate
 
 from bluemira.base.components import PhysicalComponent
@@ -100,13 +99,6 @@ class TransportSolverParams(ParameterFrame):
     kappa: Parameter[float]
     q_95: Parameter[float]
     f_ni: Parameter[float]
-
-
-def _interpolate_profile(
-    x: np.ndarray, profile_data: np.ndarray
-) -> Callable[[np.ndarray], np.ndarray]:
-    """Interpolate profile data"""
-    return interp1d(x, profile_data, kind="linear", fill_value="extrapolate")
 
 
 def create_plasma_xz_cross_section(
@@ -269,6 +261,11 @@ def solve_transport_fixed_boundary(
     plot: bool
         Whether or not to plot
 
+    Returns
+    -------
+    equilibrium: FixedBoundaryEquilibrium
+        Final fixed boundary equilibrium result from the transport <-> fixed boundary
+        equilibrium solve
     """
     kappa_95 = kappa95_t
     delta_95 = delta95_t
@@ -342,15 +339,17 @@ def solve_transport_fixed_boundary(
         )
 
         gs_solver.set_mesh(mesh)
-        gs_solver.define_g(
-            _interpolate_profile(x, pprime),
-            _interpolate_profile(x, ffprime),
+        gs_solver.set_profiles(
+            pprime,
+            ffprime,
             transp_out_params.I_p.value,
+            transp_out_params.B_0.value,
+            transp_out_params.R_0.value,
         )
 
         bluemira_print("Solving fixed boundary Grad-Shafranov...")
 
-        gs_solver.solve(
+        equilibrium = gs_solver.solve(
             plot=plot,
             debug=debug,
             gif=gif,
@@ -403,3 +402,4 @@ def solve_transport_fixed_boundary(
 
     if gif:
         make_gif(folder, figname, clean=not debug)
+    return equilibrium

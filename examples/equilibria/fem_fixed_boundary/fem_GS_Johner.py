@@ -84,7 +84,7 @@ Ic = 18e6
 
 gs_solver = FemGradShafranovFixedBoundary(max_iter=20)
 gs_solver.set_mesh(mesh)
-gs_solver.define_g(1, 0, Ic)
+gs_solver.set_profiles(np.ones(2), np.zeros(2), Ic)
 gs_solver.solve(plot=True)
 
 points = mesh.coordinates()
