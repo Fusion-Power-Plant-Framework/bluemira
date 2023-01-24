@@ -29,6 +29,7 @@ import dolfin
 import matplotlib.pyplot as plt
 import numpy as np
 from mpl_toolkits.axes_grid1 import make_axes_locatable
+from scipy.interpolate import interp1d
 
 from bluemira.base.constants import MU_0
 from bluemira.base.file import try_get_bluemira_path
@@ -217,6 +218,21 @@ class FemMagnetostatic2d:
         return self.B
 
 
+def _interpolate_profile(
+    x: np.ndarray, profile_data: np.ndarray
+) -> Callable[[np.ndarray], np.ndarray]:
+    """Interpolate profile data"""
+    return interp1d(x, profile_data, kind="linear", fill_value="extrapolate")
+
+
+def _parse_to_callable(profile_data: Union[None, np.ndarray]):
+    if isinstance(profile_data, np.ndarray):
+        x = np.linspace(0, 1, len(profile_data))
+        return _interpolate_profile(x, profile_data)
+    elif profile_data is None:
+        return None
+
+
 class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
     """
     A 2D fem Grad Shafranov solver. The solver is thought as support for the fem fixed
@@ -224,6 +240,8 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
 
     Parameters
     ----------
+    p_prime: Optional[callable]
+
     p_order : int
         Order of the approximating polynomial basis functions
     max_iter: int
@@ -247,8 +265,7 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
         relaxation: float = 0.0,
     ):
         super().__init__(p_order)
-        self._pprime = p_prime
-        self._ffprime = ff_prime
+        self._process_profiles(p_prime, ff_prime)
         self._curr_target = I_p
         self._R_0 = R_0
         self._B_0 = B_0
@@ -258,6 +275,20 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
         self.k = 1
         self._psi_ax = None
         self._psi_b = None
+
+    def _process_profiles(self, p_prime, ff_prime):
+        if callable(p_prime):
+            self._pprime = p_prime
+            self._pprime_data = p_prime(np.linspace(0, 1, 50))
+        else:
+            self._pprime_data = p_prime
+            self._pprime = _parse_to_callable(p_prime)
+        if callable(ff_prime):
+            self._ffprime = ff_prime
+            self._ffprime_data = ff_prime(np.linspace(0, 1, 50))
+        else:
+            self._ffprime_data = ff_prime
+            self._ffprime = _parse_to_callable(ff_prime)
 
     @property
     def psi_ax(self) -> float:
@@ -341,15 +372,24 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
 
         return g
 
-    def define_g(
+    def define_g(self):
+        """
+        Return the density current DOLFIN function given pprime and ffprime.
+        """
+        self._g_func = self._create_g_func(
+            self._pprime, self._ffprime, self._curr_target
+        )
+        super().define_g(ScalarSubFunc(self._g_func))
+
+    def set_profiles(
         self,
-        pprime: Union[Callable[[np.ndarray], np.ndarray], float],
-        ffprime: Union[Callable[[np.ndarray], np.ndarray], float],
+        p_prime: np.ndarray,
+        ff_prime: np.ndarray,
         curr_target: Optional[float],
         B_0: Optional[float],
     ):
         """
-        Return the density current DOLFIN function given pprime and ffprime.
+        Set the profies for the FEM G-S solver.
 
         Parameters
         ----------
@@ -364,12 +404,10 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
         B_0: float
             Toroidal field at R_0 [T]. Used when saving to file.
         """
+        self._process_profiles(p_prime, ff_prime)
         self._curr_target = curr_target
         self._B_0 = B_0
-        self._pprime = pprime
-        self._ffprime = ffprime
-        self._g_func = self._create_g_func(pprime, ffprime, self._curr_target)
-        super().define_g(ScalarSubFunc(self._g_func))
+        self.define_g()
 
     def _calculate_curr_tot(self) -> float:
         """Calculate the total current into the domain"""
