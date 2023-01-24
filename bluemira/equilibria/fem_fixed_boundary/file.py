@@ -32,7 +32,10 @@ from scipy.integrate import quad, quadrature
 from bluemira.equilibria.fem_fixed_boundary.fem_magnetostatic_2D import (
     FixedBoundaryEquilibrium,
 )
-from bluemira.equilibria.fem_fixed_boundary.utilities import find_magnetic_axis
+from bluemira.equilibria.fem_fixed_boundary.utilities import (
+    _interpolate_profile,
+    find_magnetic_axis,
+)
 from bluemira.equilibria.file import EQDSKInterface
 from bluemira.equilibria.grid import Grid
 
@@ -141,10 +144,13 @@ def save_fixed_boundary_to_file(
     ff_prime = equilibrium.ff_prime
     psi_norm = np.linspace(0, 1, len(ff_prime))
 
+    p_prime_func = _interpolate_profile(psi_norm, p_prime)
+    ff_prime_func = _interpolate_profile(psi_norm, ff_prime)
+
     fvac = grid.x_mid * equilibrium.B_0
     psi_vector = psi_norm * psi_mag
-    pressure = _pressure_profile(p_prime, psi_vector, psi_mag)
-    fpol = _fpol_profile(ff_prime, psi_norm, psi_mag, fvac)
+    pressure = _pressure_profile(p_prime_func, psi_vector, psi_mag)
+    fpol = _fpol_profile(ff_prime_func, psi_norm, psi_mag, fvac)
 
     data = EQDSKInterface(
         bcentre=equilibrium.B_0,

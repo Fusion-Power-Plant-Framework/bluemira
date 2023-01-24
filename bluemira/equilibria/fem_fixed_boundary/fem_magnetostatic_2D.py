@@ -30,7 +30,6 @@ import dolfin
 import matplotlib.pyplot as plt
 import numpy as np
 from mpl_toolkits.axes_grid1 import make_axes_locatable
-from scipy.interpolate import interp1d
 
 from bluemira.base.constants import MU_0
 from bluemira.base.file import try_get_bluemira_path
@@ -39,6 +38,7 @@ from bluemira.display import plot_defaults
 from bluemira.equilibria.constants import DPI_GIF, PLT_PAUSE
 from bluemira.equilibria.fem_fixed_boundary.utilities import (
     ScalarSubFunc,
+    _interpolate_profile,
     find_magnetic_axis,
 )
 from bluemira.equilibria.plotting import PLOT_DEFAULTS
@@ -219,13 +219,6 @@ class FemMagnetostatic2d:
         return self.B
 
 
-def _interpolate_profile(
-    x: np.ndarray, profile_data: np.ndarray
-) -> Callable[[np.ndarray], np.ndarray]:
-    """Interpolate profile data"""
-    return interp1d(x, profile_data, kind="linear", fill_value="extrapolate")
-
-
 def _parse_to_callable(profile_data: Union[None, np.ndarray]):
     if isinstance(profile_data, np.ndarray):
         x = np.linspace(0, 1, len(profile_data))
@@ -272,8 +265,8 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
 
     def __init__(
         self,
-        p_prime: Optional[callable] = None,
-        ff_prime: Optional[callable] = None,
+        p_prime: Optional[Union[np.ndarray, Callable[[float], float]]] = None,
+        ff_prime: Optional[Union[np.ndarray, Callable[[float], float]]] = None,
         I_p: Optional[float] = None,
         R_0: Optional[float] = None,
         B_0: Optional[float] = None,
@@ -383,8 +376,8 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
                 r = x[0]
                 x_psi = self.psi_norm_2d(x)
 
-                a = r * (pprime(x_psi) if callable(pprime) else pprime)
-                b = 1 / MU_0 / r * (ffprime(x_psi) if callable(ffprime) else ffprime)
+                a = r * pprime(x_psi)
+                b = 1 / MU_0 / r * ffprime(x_psi)
 
                 return self.k * 2 * np.pi * (a + b)
 
