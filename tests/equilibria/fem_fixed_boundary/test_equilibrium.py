@@ -122,6 +122,7 @@ class TranspOutParams(ParameterFrame):
 
     I_p: Parameter[float]
     B_0: Parameter[float]
+    R_0: Parameter[float]
 
 
 class DummyTransportSolver:
@@ -132,7 +133,11 @@ class DummyTransportSolver:
 
     def execute(self, mode):
         return TranspOutParams.from_dict(
-            {"I_p": {"value": 5, "unit": "A"}, "B_0": {"value": 5, "unit": "T"}}
+            {
+                "I_p": {"value": 5, "unit": "A"},
+                "B_0": {"value": 5, "unit": "T"},
+                "R_0": {"value": 9, "unit": "m"},
+            }
         )
 
     def get_profile(self, prof):

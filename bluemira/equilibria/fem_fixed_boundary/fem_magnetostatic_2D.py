@@ -240,6 +240,7 @@ class FixedBoundaryEquilibrium:
     # Profile information
     p_prime: np.ndarray
     ff_prime: np.ndarray
+    R_0: float
     B_0: float
     I_p: float
 
@@ -251,8 +252,21 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
 
     Parameters
     ----------
-    p_prime: Optional[callable]
-
+    p_prime: Optional[Union[np.ndarray, Callable[[float], float]]]
+        p' flux function. If callable, then used directly (50 points saved in file).
+        If array, linear interpolation is used and the values are stored in the file.
+        If None, these must be specified later on, but before the solve.
+    ff_prime: Optional[Union[np.ndarray, Callable[[float], float]]]
+        FF' flux function. If callable, then used directly (50 points saved in file).
+        If array, linear interpolation is used and the values are stored in the file.
+        If None, these must be specified later on, but before the solve.
+    I_p: Optional[float]
+        Plasma current [A]. If None, the plasma current is calculated, otherwise
+        the source term is scaled to match the plasma current.
+    B_0: Optional[float]
+        Toroidal field at R_0 [T]. Used when saving to file.
+    R_0: Optional[float]
+        Major radius [m]. Used when saving to file.
     p_order : int
         Order of the approximating polynomial basis functions
     max_iter: int
@@ -398,6 +412,7 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
         ff_prime: Union[np.ndarray, Callable[[float], float]],
         curr_target: Optional[float],
         B_0: Optional[float],
+        R_0: Optional[float],
     ):
         """
         Set the profies for the FEM G-S solver.
@@ -408,16 +423,19 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
             pprime as function of psi_norm (1-D function)
         ffprime: Union[Callable[[np.ndarray], np.ndarray]
             ffprime as function of psi_norm (1-D function)
-        curr_target: float
+        curr_target: Optional[float]
             Target current (also used to initialize the solution in case self.psi is
             still 0 and pprime and ffprime are, then, not defined).
             If None, plasma current is calculated and not constrained
-        B_0: float
+        B_0: Optional[float]
             Toroidal field at R_0 [T]. Used when saving to file.
+        R_0: Optional[float]
+            Major radius [m]. Used when saving to file.
         """
         self._process_profiles(p_prime, ff_prime)
         self._curr_target = curr_target
         self._B_0 = B_0
+        self._R_0 = R_0
         self.define_g()
 
     def _calculate_curr_tot(self) -> float:
@@ -535,6 +553,7 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
             self.psi,
             self._pprime_data,
             self._ffprime_data,
+            self._R_0,
             self._B_0,
             self._calculate_curr_tot(),
         )

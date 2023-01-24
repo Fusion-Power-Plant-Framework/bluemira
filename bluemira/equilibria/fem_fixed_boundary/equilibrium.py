@@ -344,6 +344,7 @@ def solve_transport_fixed_boundary(
             ffprime,
             transp_out_params.I_p.value,
             transp_out_params.B_0.value,
+            transp_out_params.R_0.value,
         )
 
         bluemira_print("Solving fixed boundary Grad-Shafranov...")

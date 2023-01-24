@@ -147,7 +147,7 @@ def save_fixed_boundary_to_file(
     p_prime_func = _interpolate_profile(psi_norm, p_prime)
     ff_prime_func = _interpolate_profile(psi_norm, ff_prime)
 
-    fvac = grid.x_mid * equilibrium.B_0
+    fvac = equilibrium.R_0 * equilibrium.B_0
     psi_vector = psi_norm * psi_mag
     pressure = _pressure_profile(p_prime_func, psi_vector, psi_mag)
     fpol = _fpol_profile(ff_prime_func, psi_norm, psi_mag, fvac)
