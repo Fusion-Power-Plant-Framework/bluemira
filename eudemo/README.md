@@ -1,5 +1,7 @@
 # EU-DEMO Reactor Design
 
+__Work in progress: this model is not yet fully functional__
+
 This folder contains the EU-DEMO reactor design.
 To use the `eudemo` package, you must add its path to your Python path:
 
