@@ -504,7 +504,15 @@ class FreeBoundaryEquilibriumFromFixedDesigner(Designer[Equilibrium]):
         # Make dummy tf coil boundary
         tf_coil_boundary = self._make_tf_boundary(lcfs_shape)
 
-        defaults = {"plot": False, "relaxation": 0.02, "nx": 65, "nz": 65}
+        defaults = {
+            "plot": False,
+            "relaxation": 0.02,
+            "nx": 65,
+            "nz": 65,
+            "gamma": 1e-8,
+            "iter_err_max": 1e-2,
+            "max_iter": 30,
+        }
         settings = self.build_config.get("settings", {})
         settings = {**defaults, **settings}
 
@@ -517,9 +525,13 @@ class FreeBoundaryEquilibriumFromFixedDesigner(Designer[Equilibrium]):
             nz=settings.pop("nz"),
         )
 
-        opt_problem = self._make_fbe_opt_problem(eq, lcfs_shape)
+        opt_problem = self._make_fbe_opt_problem(
+            eq, lcfs_shape, len(data.xbdry), settings.pop("gamma")
+        )
 
-        iter_err_max = settings.pop("iter_err_max", 1e-2)
+        iter_err_max = settings.pop("iter_err_max")
+        max_iter = settings.pop("max_iter")
+        settings["maxiter"] = max_iter  # TODO: Standardise name in PicardIterator
         iterator_program = PicardIterator(
             eq,
             opt_problem,
@@ -575,15 +587,17 @@ class FreeBoundaryEquilibriumFromFixedDesigner(Designer[Equilibrium]):
 
         return BluemiraWire([lower_wire, semi_circle, upper_wire])
 
-    def _make_fbe_opt_problem(self, eq: Equilibrium, lcfs_shape: BluemiraWire):
+    def _make_fbe_opt_problem(
+        self, eq: Equilibrium, lcfs_shape: BluemiraWire, n_points: int, gamma: float
+    ):
         """
         Create the `UnconstrainedTikhonovCurrentGradientCOP` optimisation problem.
         """
 
-        eq_targets = ReferenceConstraints(lcfs_shape, 500)
+        eq_targets = ReferenceConstraints(lcfs_shape, n_points)
 
         return UnconstrainedTikhonovCurrentGradientCOP(
-            eq.coilset, eq, eq_targets, gamma=1e-10
+            eq.coilset, eq, eq_targets, gamma=gamma
         )
 
     def _update_params_from_eq(self, eq: Equilibrium):
