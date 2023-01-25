@@ -41,14 +41,19 @@
             "iter_err_max": 5e-2,
             "relaxation": 0.0,
             "plot": false
-        },
-        "free_equilibrium_settings": {
-            "iter_err_max": 1e-2,
-            "relaxation": 0.2,
-            "plot": true,
-            "nx": 127,
-            "nz": 127
         }
+    },
+    "Free boundary equilibrium":{
+            "run_mode": "run",
+            "fixed_eq_file_path": "config/fixed_boundary_eqdsk.json",
+            "file_path": "config/equilibrium_eqdsk.json",
+            "settings": {
+                "iter_err_max": 1e-2,
+                "relaxation": 0.2,
+                "plot": true,
+                "nx": 127,
+                "nz": 127
+            }
     },
     "IVC": {
         "Wall silhouette": {

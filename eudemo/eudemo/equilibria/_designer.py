@@ -247,6 +247,7 @@ from bluemira.equilibria.fem_fixed_boundary.fem_magnetostatic_2D import (
     FixedBoundaryEquilibrium,
 )
 from bluemira.equilibria.fem_fixed_boundary.file import save_fixed_boundary_to_file
+from bluemira.equilibria.file import EQDSKInterface
 from bluemira.equilibria.shapes import JohnerLCFS
 from bluemira.geometry.tools import make_circle
 from eudemo.equilibria._equilibrium import (
@@ -291,11 +292,6 @@ class FixedEquilibriumDesignerParams(ParameterFrame):
     f_ni: Parameter[float]
     T_e_ped: Parameter[float]
 
-    # Updated parameters
-    beta_p: Parameter[float]
-    l_i: Parameter[float]
-    shaf_shift: Parameter[float]
-
 
 class FixedEquilibriumDesigner(Designer[Equilibrium]):
     """
@@ -327,6 +323,9 @@ class FixedEquilibriumDesigner(Designer[Equilibrium]):
             )
 
     def run(self) -> FixedBoundaryEquilibrium:
+        """
+        Run the FixedEquilibriumDesigner.
+        """
         # Get geometry parameterisation
         geom_parameterisation = self._get_geometry_parameterisation()
 
@@ -354,76 +353,15 @@ class FixedEquilibriumDesigner(Designer[Equilibrium]):
             delta95_t=self.params.delta_95.value,  # Target delta_95
             **settings,
         )
-        save_fixed_boundary_to_file(
-            self.file_path,
-            f"Transport-fixed-boundary-solve {fem_fixed_be_solver.iter_err_max:.3e}",
-            fixed_equilibrium,
-            65,
-            127,
-        )
+        if self.file_path is not None:
+            save_fixed_boundary_to_file(
+                self.file_path,
+                f"Transport-fixed-boundary-solve {fem_fixed_be_solver.iter_err_max:.3e}",
+                fixed_equilibrium,
+                65,
+                127,
+            )
         return fixed_equilibrium
-
-        # Retrieve infromation from end state
-        lcfs_shape = geom_parameterisation.create_shape()
-        p_prime = transport_solver.get_profile("pprime")
-        ff_prime = transport_solver.get_profile("ffprime")
-
-        # Make free boundary equilibrium (with coils) from fixed boundary equilibrium
-
-        # Make dummy tf coil boundary
-        tf_coil_boundary = self._make_tf_boundary(lcfs_shape)
-
-        defaults = {"plot": False, "relaxation": 0.02, "nx": 65, "nz": 65}
-        settings = self.build_config.get("free_equilibrium_settings", {})
-        settings = {**defaults, **settings}
-
-        eq = make_reference_equilibrium(
-            ReferenceEquilibriumParams.from_frame(self.params),
-            tf_coil_boundary,
-            p_prime,
-            ff_prime,
-            nx=settings.pop("nx"),
-            nz=settings.pop("nz"),
-        )
-
-        opt_problem = self._make_fbe_opt_problem(eq, lcfs_shape)
-
-        iter_err_max = settings.pop("iter_err_max", 1e-2)
-        iterator_program = PicardIterator(
-            eq,
-            opt_problem,
-            convergence=DudsonConvergence(iter_err_max),
-            fixed_coils=True,
-            **settings,
-        )
-        iterator_program()
-        import matplotlib.pyplot as plt
-
-        from bluemira.display import plot_2d
-
-        f, ax = plt.subplots()
-
-        eq.plot(ax=ax)
-        plot_2d(geom_parameterisation.create_shape().discretize(), ax=ax)
-        plt.show()
-
-        self._update_params_from_eq(eq)
-
-        return (geom_parameterisation, transport_solver, fem_fixed_be_solver, eq)
-
-    def read(self) -> Equilibrium:
-        """Load an equilibrium from a file."""
-        pass
-
-    def _derive_shape_params(self):
-        shape_config = self.build_config.get("shape_config", {})
-        kappa_95 = self.params.kappa_95.value
-        delta_95 = self.params.delta_95.value
-        kappa_l = shape_config["f_kappa_l"] * kappa_95
-        kappa_u = shape_config["f_kappa_l"] ** 0.5 * kappa_95
-        delta_l = shape_config["f_delta_l"] * delta_95
-        delta_u = delta_95
-        return kappa_u, kappa_l, delta_u, delta_l
 
     def _get_geometry_parameterisation(self):
         kappa_u, kappa_l, delta_u, delta_l = self._derive_shape_params()
@@ -437,6 +375,16 @@ class FixedEquilibriumDesigner(Designer[Equilibrium]):
                 "delta_l": {"value": delta_l},
             }
         )
+
+    def _derive_shape_params(self):
+        shape_config = self.build_config.get("shape_config", {})
+        kappa_95 = self.params.kappa_95.value
+        delta_95 = self.params.delta_95.value
+        kappa_l = shape_config["f_kappa_l"] * kappa_95
+        kappa_u = shape_config["f_kappa_l"] ** 0.5 * kappa_95
+        delta_l = shape_config["f_delta_l"] * delta_95
+        delta_u = delta_95
+        return kappa_u, kappa_l, delta_u, delta_l
 
     def _get_transport_solver(self):
         defaults = {
@@ -478,6 +426,119 @@ class FixedEquilibriumDesigner(Designer[Equilibrium]):
         }
         eq_settings = {**defaults, **eq_settings}
         return FemGradShafranovFixedBoundary(**eq_settings)
+
+
+@dataclass
+class FreeBoundaryEquilibriumFromFixedDesignerParams(ParameterFrame):
+    """Parameters for running the fixed boundary equilibrium solver."""
+
+    A: Parameter[float]
+    B_0: Parameter[float]
+    I_p: Parameter[float]
+    kappa: Parameter[float]
+    R_0: Parameter[float]
+    r_cs_in: Parameter[float]
+    tk_cs: Parameter[float]
+
+    # Updated parameters
+    delta_95: Parameter[float]
+    delta: Parameter[float]
+    kappa_95: Parameter[float]
+    q_95: Parameter[float]
+    beta_p: Parameter[float]
+    l_i: Parameter[float]
+    shaf_shift: Parameter[float]
+
+
+class FreeBoundaryEquilibriumFromFixedDesigner(Designer[Equilibrium]):
+    """
+    Solves a free boundary equilibrium from a fixed boundary equilibrium.
+
+    Parameters
+    ----------
+    params: Union[Dict, ParameterFrame]
+        The parameters for the solver
+    build_config: Optional[Dict]
+        The config for the solver.
+    """
+
+    params: FreeBoundaryEquilibriumFromFixedDesignerParams
+    param_cls = FreeBoundaryEquilibriumFromFixedDesignerParams
+
+    def __init__(
+        self,
+        params: Union[Dict, ParameterFrame],
+        build_config: Optional[Dict] = None,
+    ):
+        super().__init__(params, build_config)
+        self.file_path = self.build_config.get("file_path", None)
+        self.fixed_eq_file_path = self.build_config.get("fixed_eq_file_path", None)
+        if self.run_mode == "read" and self.file_path is None:
+            raise ValueError(
+                f"Cannot execute {type(self).__name__} in 'read' mode: "
+                "'file_path' missing from build config."
+            )
+
+        if self.run_move == "run" and self.fixed_eq_file_path is None:
+            raise ValueError(
+                f"Cannot execute {type(self).__name__} in 'run' mode: "
+                "'fixed_eq_file_path' missing from build config."
+            )
+
+    def run(self) -> Equilibrium:
+        """
+        Run the FreeBoundaryEquilibriumFromFixedDesigner.
+        """
+        # Retrieve infromation from end state
+        data = EQDSKInterface.from_file(self.fixed_eq_file_path)
+        p_prime = data.pprime
+        ff_prime = data.ffprime
+        lcfs_shape = make_polygon({"x": data.xbdry, "y": 0, "z": data.zbdry})
+
+        # Make free boundary equilibrium (with coils) from fixed boundary equilibrium
+
+        # Make dummy tf coil boundary
+        tf_coil_boundary = self._make_tf_boundary(lcfs_shape)
+
+        defaults = {"plot": False, "relaxation": 0.02, "nx": 65, "nz": 65}
+        settings = self.build_config.get("settings", {})
+        settings = {**defaults, **settings}
+
+        eq = make_reference_equilibrium(
+            ReferenceEquilibriumParams.from_frame(self.params),
+            tf_coil_boundary,
+            p_prime,
+            ff_prime,
+            nx=settings.pop("nx"),
+            nz=settings.pop("nz"),
+        )
+
+        opt_problem = self._make_fbe_opt_problem(eq, lcfs_shape)
+
+        iter_err_max = settings.pop("iter_err_max", 1e-2)
+        iterator_program = PicardIterator(
+            eq,
+            opt_problem,
+            convergence=DudsonConvergence(iter_err_max),
+            fixed_coils=True,
+            **settings,
+        )
+        iterator_program()
+        import matplotlib.pyplot as plt
+
+        f, ax = plt.subplots()
+
+        eq.plot(ax=ax)
+        ax.plot(data.xbdry, data.zbdry, "", marker="o")
+        plt.show()
+
+        self._update_params_from_eq(eq)
+
+        return eq
+
+    def read(self) -> Equilibrium:
+        """Load an equilibrium from a file."""
+        pass
 
     def _make_tf_boundary(
         self,

@@ -49,7 +49,11 @@ from bluemira.builders.thermal_shield import VVTSBuilder
 from bluemira.equilibria.equilibrium import Equilibrium
 from bluemira.geometry.tools import make_polygon
 from eudemo.blanket import Blanket, BlanketBuilder
-from eudemo.equilibria import EquilibriumDesigner, FixedEquilibriumDesigner
+from eudemo.equilibria import (
+    EquilibriumDesigner,
+    FixedEquilibriumDesigner,
+    FreeBoundaryEquilibriumFromFixedDesigner,
+)
 from eudemo.ivc import design_ivc
 from eudemo.ivc.divertor_silhouette import Divertor
 from eudemo.params import EUDEMOReactorParams
@@ -134,6 +138,12 @@ if __name__ == "__main__":
 
     fixed_boundary_eq = run_designer(
         FixedEquilibriumDesigner, params, build_config["Fixed boundary equilibrium"]
+    )
+
+    free_boundary_eq = run_designer(
+        FreeBoundaryEquilibriumFromFixedDesigner,
+        params,
+        build_config["Free boundary equilibrium"],
     )
 
     # reactor.plasma = build_plasma(build_config.get("Plasma", {}), eq)
