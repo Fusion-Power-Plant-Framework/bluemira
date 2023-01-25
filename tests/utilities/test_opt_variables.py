@@ -171,7 +171,7 @@ class TestOptVariables:
             the_path = os.sep.join([tempdir, "opt_var_test.json"])
             self.vars.to_json(the_path)
             new_vars = OptVariables.from_json(the_path)
-            new_vars.as_dict == self.vars.as_dict()
+            assert new_vars.as_dict() == self.vars.as_dict()
         finally:
             shutil.rmtree(tempdir)
 
