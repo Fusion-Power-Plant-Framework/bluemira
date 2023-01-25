@@ -272,7 +272,7 @@ def flux_surface_kuiroukidis(
     is just an offset. The key may lie in understand what "relative to the X-point" means
     but it's not enough for me to go on at the moment.
     """
-    x_quadrants, z_quadrants = flux_surface_johner_quadrants(
+    x_quadrants, z_quadrants = flux_surface_kuiroukidis_quadrants(
         r_0,
         z_0,
         a,
