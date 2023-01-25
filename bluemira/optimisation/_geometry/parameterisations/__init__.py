@@ -19,8 +19,12 @@
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 
-from bluemira.geometry.parameterisations import PrincetonD, TripleArc
-from bluemira.optimisation._geometry.parameterisations import princeton_d, triple_arc
+from bluemira.geometry.parameterisations import PrincetonD, SextupleArc, TripleArc
+from bluemira.optimisation._geometry.parameterisations import (
+    princeton_d,
+    sextuple_arc,
+    triple_arc,
+)
 
 INEQ_CONSTRAINT_REGISTRY = {
     PrincetonD: [
@@ -35,6 +39,13 @@ INEQ_CONSTRAINT_REGISTRY = {
             "f_constraint": triple_arc.f_ineq_constraint,
             "df_constraint": triple_arc.df_ineq_constraint,
             "tolerance": triple_arc.tol(),
+        }
+    ],
+    SextupleArc: [
+        {
+            "f_constraint": sextuple_arc.f_ineq_constraint,
+            "df_constraint": sextuple_arc.df_ineq_constraint,
+            "tolerance": sextuple_arc.tol(),
         }
     ],
 }

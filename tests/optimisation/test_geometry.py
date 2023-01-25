@@ -25,6 +25,7 @@ from bluemira.geometry.parameterisations import (
     GeometryParameterisation,
     PictureFrame,
     PrincetonD,
+    SextupleArc,
     TripleArc,
 )
 from bluemira.geometry.tools import make_circle, make_polygon, signed_distance
@@ -135,3 +136,47 @@ class TestGeometry:
         assert bbox.z_max == pytest.approx(6, rel=0.01)
         assert bbox.x_min >= 3
         assert bbox.x_max * 0.99905 <= 13
+
+    def test_maximise_angles_with_TripleArc(self):
+        # Maximise the sum of the angles in a TripleArc. The shape's
+        # constraint should guarantee that the sum is never greater than
+        # 180 degrees
+        angle_vars = ["a1", "a2"]
+
+        def sum_angles(geom: TripleArc) -> float:
+            angles = [geom.variables[a].value for a in angle_vars]
+            return np.sum(angles)
+
+        arc = TripleArc()
+        original_angle_sum = sum_angles(arc)
+
+        result = optimise_geometry(
+            arc,
+            f_objective=lambda geom: -sum_angles(geom),
+            opt_conditions={"max_eval": 5000, "ftol_rel": 1e-6},
+        )
+
+        assert sum_angles(result.geom) <= 180
+        assert sum_angles(result.geom) > original_angle_sum
+
+    def test_maximise_angles_with_SextupleArc(self):
+        # Run an optimisation to maximise the size of the angles in a
+        # SextupleArc. The shape constraint should ensure the angles do
+        # not sum to more than 360 degrees.
+        angle_vars = ["a1", "a2", "a3", "a3", "a4", "a5"]
+
+        def sum_angles(geom: SextupleArc) -> float:
+            angles = [geom.variables[a].value for a in angle_vars]
+            return np.sum(angles)
+
+        arc = SextupleArc()
+        original_angle_sum = sum_angles(arc)
+
+        opt = optimise_geometry(
+            arc,
+            f_objective=lambda geom: -sum_angles(geom),
+            opt_conditions={"max_eval": 1000, "ftol_rel": 1e-6},
+        )
+
+        assert sum_angles(opt.geom) <= 360
+        assert sum_angles(opt.geom) > original_angle_sum
