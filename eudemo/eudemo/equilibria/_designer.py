@@ -519,6 +519,7 @@ class FreeBoundaryEquilibriumFromFixedDesigner(Designer[Equilibrium]):
         eq = make_reference_equilibrium(
             ReferenceEquilibriumParams.from_frame(self.params),
             tf_coil_boundary,
+            lcfs_shape,
             p_prime,
             ff_prime,
             nx=settings.pop("nx"),
@@ -542,9 +543,11 @@ class FreeBoundaryEquilibriumFromFixedDesigner(Designer[Equilibrium]):
         iterator_program()
         import matplotlib.pyplot as plt
 
+        print(f"Ip value: {self.params.I_p.value}")
         f, ax = plt.subplots()
-
+        print(eq.coilset.current)
         eq.plot(ax=ax)
+        eq.coilset.plot(ax=ax)
         ax.plot(data.xbdry, data.zbdry, "", marker="o")
         plt.show()
 

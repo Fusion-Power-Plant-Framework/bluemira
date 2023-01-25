@@ -116,6 +116,7 @@ class ReferenceEquilibriumParams(ParameterFrame):
 def make_reference_equilibrium(
     _params: Union[ReferenceEquilibriumParams, Dict],
     tf_track: BluemiraWire,
+    lcfs_shape: BluemiraWire,
     p_prime: np.ndarray,
     ff_prime: np.ndarray,
     nx: int = 65,
@@ -128,6 +129,7 @@ def make_reference_equilibrium(
 
     coilset = make_reference_coilset(
         tf_track,
+        lcfs_shape,
         r_cs=params.r_cs_in.value + 0.5 * params.tk_cs.value,
         tk_cs=0.5 * params.tk_cs.value,
         n_CS=5,
