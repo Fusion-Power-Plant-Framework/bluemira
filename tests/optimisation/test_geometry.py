@@ -62,6 +62,7 @@ class TestGeometry:
             length,
             keep_out_zones=[keep_out_zone],
             algorithm="SLSQP",
+            opt_conditions={"max_eval": 5000, "ftol_rel": 1e-6},
         )
 
         optimised_shape = opt_result.geom.create_shape()
@@ -92,6 +93,7 @@ class TestGeometry:
             parameterisation,
             lambda geom: geom.create_shape().length,
             keep_out_zones=[keep_out_zone],
+            opt_conditions={"max_eval": 5000, "ftol_rel": 1e-6},
         )
 
         opt_shape = opt_result.geom.create_shape()
@@ -123,6 +125,7 @@ class TestGeometry:
             arc,
             f_objective=lambda geom: -geom.create_shape().length,
             keep_in_zones=(kiz,),
+            opt_conditions={"max_eval": 5000, "ftol_rel": 1e-6},
         )
 
         opt_shape = result.geom.create_shape()
