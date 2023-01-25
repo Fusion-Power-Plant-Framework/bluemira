@@ -51,10 +51,11 @@
                 "iter_err_max": 1e-2,
                 "max_iter": 50,
                 "relaxation": 0.2,
+                "coil_discretisation": 0.3,
                 "plot": true,
                 "nx": 127,
                 "nz": 127,
-                "gamma": 1e-8
+                "gamma": 0.0
             }
     },
     "IVC": {

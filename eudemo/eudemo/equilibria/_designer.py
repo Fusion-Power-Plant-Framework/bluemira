@@ -507,6 +507,7 @@ class FreeBoundaryEquilibriumFromFixedDesigner(Designer[Equilibrium]):
         defaults = {
             "plot": False,
             "relaxation": 0.02,
+            "coil_discretisation": 0.3,
             "nx": 65,
             "nz": 65,
             "gamma": 1e-8,
@@ -525,6 +526,7 @@ class FreeBoundaryEquilibriumFromFixedDesigner(Designer[Equilibrium]):
             nx=settings.pop("nx"),
             nz=settings.pop("nz"),
         )
+        eq.coilset.discretisation = settings.pop("coil_discretisation")
 
         opt_problem = self._make_fbe_opt_problem(
             eq, lcfs_shape, len(data.xbdry), settings.pop("gamma")
