@@ -20,29 +20,35 @@
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 import numpy as np
 
-from bluemira.geometry.parameterisations import PrincetonD
+from bluemira.geometry.parameterisations import TripleArc
 from bluemira.optimisation._geometry.parameterisations import tools
 
 
-def f_ineq_constraint(geom: PrincetonD) -> np.ndarray:
-    """Inequality constraint for PrincetonD."""
+def f_ineq_constraint(geom: TripleArc) -> np.ndarray:
+    """
+    Inequality constraint for TripleArc.
+
+    Constrain such that a1 + a2 is less than or equal to 180 degrees.
+    """
+    norm_vals = geom.variables.get_normalised_values()
+    x_actual = tools.process_x_norm_fixed(geom.variables, norm_vals)
+    _, _, _, _, _, a1, a2 = x_actual
+    return np.array([a1 + a2 - 180])
+
+
+def df_ineq_constraint(geom: TripleArc) -> np.ndarray:
+    """Inequality constraint gradient for TripleArc."""
     free_vars = geom.variables.get_normalised_values()
-    x1, x2, _ = tools.process_x_norm_fixed(geom.variables, free_vars)
-    return np.array([x1 - x2])
-
-
-def df_ineq_constraint(geom: PrincetonD) -> np.ndarray:
-    """Inequality constraint gradient for PrincetonD."""
-    opt_vars = geom.variables
-    free_vars = opt_vars.get_normalised_values()
-    grad = np.zeros((1, len(free_vars)))
-    if not geom.variables["x1"].fixed:
-        grad[0, tools.get_x_norm_index(opt_vars, "x1")] = 1
-    if not geom.variables["x2"].fixed:
-        grad[0, tools.get_x_norm_index(opt_vars, "x2")] = -1
-    return grad
+    g = np.zeros((len(free_vars), 1))
+    if not geom.variables["a1"].fixed:
+        idx_a1 = tools.get_x_norm_index(geom.variables, "a1")
+        g[idx_a1] = 1
+    if not geom.variables["a2"].fixed:
+        idx_a2 = tools.get_x_norm_index(geom.variables, "a2")
+        g[idx_a2] = 1
+    return g[0, :]
 
 
 def tol() -> np.ndarray:
-    """The constraint tolerance for PrincetonD."""
+    """The constraint tolerance for TripleArc."""
     return np.array([np.finfo(float).eps])

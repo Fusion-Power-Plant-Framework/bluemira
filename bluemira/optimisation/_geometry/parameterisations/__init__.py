@@ -18,17 +18,23 @@
 #
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
-import numpy as np
 
-from bluemira.geometry.parameterisations import PrincetonD
-from bluemira.optimisation._geometry.parameterisations import princeton_d
+from bluemira.geometry.parameterisations import PrincetonD, TripleArc
+from bluemira.optimisation._geometry.parameterisations import princeton_d, triple_arc
 
 INEQ_CONSTRAINT_REGISTRY = {
     PrincetonD: [
         {
             "f_constraint": princeton_d.f_ineq_constraint,
             "df_constraint": princeton_d.df_ineq_constraint,
-            "tolerance": np.array([np.finfo(float).eps]),
+            "tolerance": princeton_d.tol(),
+        }
+    ],
+    TripleArc: [
+        {
+            "f_constraint": triple_arc.f_ineq_constraint,
+            "df_constraint": triple_arc.df_ineq_constraint,
+            "tolerance": triple_arc.tol(),
         }
     ],
 }
