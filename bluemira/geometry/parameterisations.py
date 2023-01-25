@@ -625,7 +625,7 @@ class TripleArc(GeometryParameterisation):
         Parameters
         ----------
         constraint: np.ndarray
-            Contraint vector (assign in place)
+            Constraint vector (assign in place)
         x: np.ndarray
             Normalised vector of free variables
         grad: np.ndarray
