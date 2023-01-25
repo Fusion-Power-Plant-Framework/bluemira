@@ -37,6 +37,7 @@ __all__ = [
     "flux_surface_manickam",
     "flux_surface_kuiroukidis",
     "JohnerLCFS",
+    "KuiroukidisLCFS",
 ]
 
 
@@ -754,7 +755,7 @@ class JohnerLCFS(GeometryParameterisation):
         variables.adjust_variables(var_dict, strict_bounds=False)
         super().__init__(variables)
 
-    def create_shape(self, label="LCFS", n_points=100):
+    def create_shape(self, label="LCFS", n_points=1000):
         """
         Make a CAD representation of the Johner LCFS.
 
