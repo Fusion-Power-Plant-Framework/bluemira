@@ -243,6 +243,10 @@ from bluemira.equilibria.fem_fixed_boundary.equilibrium import (
     FemGradShafranovFixedBoundary,
     solve_transport_fixed_boundary,
 )
+from bluemira.equilibria.fem_fixed_boundary.fem_magnetostatic_2D import (
+    FixedBoundaryEquilibrium,
+)
+from bluemira.equilibria.fem_fixed_boundary.file import save_fixed_boundary_to_file
 from bluemira.equilibria.shapes import JohnerLCFS
 from bluemira.geometry.tools import make_circle
 from eudemo.equilibria._equilibrium import (
@@ -295,22 +299,15 @@ class FixedEquilibriumDesignerParams(ParameterFrame):
 
 class FixedEquilibriumDesigner(Designer[Equilibrium]):
     """
-    Solves an unconstrained Tikhnov current gradient coil-set
-    optimisation problem, outputting an `Equilibrium`.
+    Solves a transport <-> fixed boundary equilibrium problem to convergence,
+    returning a `FixedBoundaryEquilibrium`.
+
     Parameters
     ----------
     params: Union[Dict, ParameterFrame]
-        The parameters for the solver, the dictionary or frame must
-        contain all the parameters present in
-        `UnconstrainedTikhonovSolverParams`.
+        The parameters for the solver
     build_config: Optional[Dict]
-        The config for the solver. Optional keys:
-        - `read_file_path`: str
-            the path to an eqdsk file to read the equilibrium from,
-            required in `read` mode.
-        - `plot_optimisation`: bool
-            set to `True` to plot the iterations in the optimisation,
-            only used in `run` mode
+        The config for the solver.
     """
 
     params: FixedEquilibriumDesignerParams
@@ -329,7 +326,7 @@ class FixedEquilibriumDesigner(Designer[Equilibrium]):
                 "'file_path' missing from build config."
             )
 
-    def run(self) -> Equilibrium:
+    def run(self) -> FixedBoundaryEquilibrium:
         # Get geometry parameterisation
         geom_parameterisation = self._get_geometry_parameterisation()
 
@@ -349,7 +346,7 @@ class FixedEquilibriumDesigner(Designer[Equilibrium]):
         }
         settings = self.build_config.get("transport_eq_settings", {})
         settings = {**defaults, **settings}
-        solve_transport_fixed_boundary(
+        fixed_equilibrium = solve_transport_fixed_boundary(
             geom_parameterisation,
             transport_solver,
             fem_fixed_be_solver,
@@ -357,6 +354,14 @@ class FixedEquilibriumDesigner(Designer[Equilibrium]):
             delta95_t=self.params.delta_95.value,  # Target delta_95
             **settings,
         )
+        save_fixed_boundary_to_file(
+            self.file_path,
+            f"Transport-fixed-boundary-solve {fem_fixed_be_solver.iter_err_max:.3e}",
+            fixed_equilibrium,
+            65,
+            127,
+        )
+        return fixed_equilibrium
 
         # Retrieve infromation from end state
         lcfs_shape = geom_parameterisation.create_shape()

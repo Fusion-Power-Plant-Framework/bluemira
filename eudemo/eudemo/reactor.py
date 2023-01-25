@@ -132,7 +132,7 @@ if __name__ == "__main__":
 
     params = radial_build(params, build_config["Radial build"])
 
-    eq = run_designer(
+    fixed_boundary_eq = run_designer(
         FixedEquilibriumDesigner, params, build_config["Fixed boundary equilibrium"]
     )
 
