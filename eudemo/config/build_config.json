@@ -9,7 +9,7 @@
         "file_path": "config/equilibrium_eqdsk.json"
     },
     "Fixed boundary equilibrium":{
-        "run_mode": "run",
+        "run_mode": "read",
         "file_path": "config/fixed_boundary_eqdsk.json",
         "shape_config": {
             "f_delta_l": 1.45,

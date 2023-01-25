@@ -283,8 +283,6 @@ class FixedEquilibriumDesignerParams(ParameterFrame):
     tk_cs: Parameter[float]
     v_burn: Parameter[float]
     P_fus: Parameter[float]
-    tk_bb_ob: Parameter[float]
-    tk_vv_out: Parameter[float]
 
     # PLASMOD parameters
     q_control: Parameter[float]
@@ -363,6 +361,10 @@ class FixedEquilibriumDesigner(Designer[Equilibrium]):
             )
         return fixed_equilibrium
 
+    def read(self):
+        # TODO: Load a FixedBoundaryEquilibrium (need mesh and solver probably...)
+        pass
+
     def _get_geometry_parameterisation(self):
         kappa_u, kappa_l, delta_u, delta_l = self._derive_shape_params()
         return JohnerLCFS(
@@ -439,6 +441,8 @@ class FreeBoundaryEquilibriumFromFixedDesignerParams(ParameterFrame):
     R_0: Parameter[float]
     r_cs_in: Parameter[float]
     tk_cs: Parameter[float]
+    tk_bb_ob: Parameter[float]
+    tk_vv_out: Parameter[float]
 
     # Updated parameters
     delta_95: Parameter[float]
@@ -479,7 +483,7 @@ class FreeBoundaryEquilibriumFromFixedDesigner(Designer[Equilibrium]):
                 "'file_path' missing from build config."
             )
 
-        if self.run_move == "run" and self.fixed_eq_file_path is None:
+        if self.run_mode == "run" and self.fixed_eq_file_path is None:
             raise ValueError(
                 f"Cannot execute {type(self).__name__} in 'run' mode: "
                 "'fixed_eq_file_path' missing from build config."

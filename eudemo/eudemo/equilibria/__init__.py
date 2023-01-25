@@ -28,4 +28,8 @@ from eudemo.equilibria._designer import (
     FreeBoundaryEquilibriumFromFixedDesigner,
 )
 
-__all__ = ["EquilibriumDesigner", "FixedEquilibriumDesigner"]
+__all__ = [
+    "EquilibriumDesigner",
+    "FixedEquilibriumDesigner",
+    "FreeBoundaryEquilibriumFromFixedDesigner",
+]
