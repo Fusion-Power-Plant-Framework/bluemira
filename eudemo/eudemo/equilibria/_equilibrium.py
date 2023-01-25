@@ -151,7 +151,7 @@ def make_reference_equilibrium(
         ff_prime,
         R_0=params.R_0.value,
         B_0=params.B_0.value,
-        I_p=params.I_p.value,
+        I_p=params.I_p.value * 1e6,  # This is in fact required, James.
     )
     # profiles = BetaIpProfile(
     #     betap=params.beta_p.value,
