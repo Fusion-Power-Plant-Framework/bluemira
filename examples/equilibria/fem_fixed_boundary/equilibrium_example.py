@@ -41,7 +41,7 @@ from bluemira.equilibria.fem_fixed_boundary.fem_magnetostatic_2D import (
     FemGradShafranovFixedBoundary,
 )
 from bluemira.equilibria.fem_fixed_boundary.file import save_fixed_boundary_to_file
-from bluemira.equilibria.shapes import JohnerLCFS, KuiroukidisLCFS
+from bluemira.equilibria.shapes import JohnerLCFS
 
 set_log_level("NOTSET")
 
@@ -49,7 +49,7 @@ set_log_level("NOTSET")
 # Setup the Plasma shape parameterisation variables
 
 # %%
-johner_parameterisation = KuiroukidisLCFS(
+johner_parameterisation = JohnerLCFS(
     {
         "r_0": {"value": 8.9830e00},
         "a": {"value": 3.1},

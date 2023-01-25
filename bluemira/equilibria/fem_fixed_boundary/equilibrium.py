@@ -115,7 +115,7 @@ def create_plasma_xz_cross_section(
     parameters
     """
     plasma = PhysicalComponent(
-        "Plasma", shape=BluemiraFace(parameterisation.create_shape(n_points=250))
+        "Plasma", shape=BluemiraFace(parameterisation.create_shape())
     )
     lcfs = plasma.shape
     plasma_volume = 2 * np.pi * lcfs.center_of_mass[0] * lcfs.area
@@ -337,11 +337,6 @@ def solve_transport_fixed_boundary(
             mesh_filename,
             mesh_name_msh,
         )
-        plt.close("all")
-        import dolfin
-
-        dolfin.plot(mesh)
-        plt.show()
 
         gs_solver.set_mesh(mesh)
         gs_solver.set_profiles(
