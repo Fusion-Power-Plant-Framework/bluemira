@@ -163,9 +163,6 @@ def flux_surface_kuiroukidis_quadrants(
         x_upper_left, np.zeros(len(x_upper_left)), z_upper_left, n_quart
     )
 
-    x_upper = np.concatenate((x_upper_right, x_upper_left))
-    z_upper = np.concatenate((z_upper_right, z_upper_left))
-
     # lower left
     theta_delta_lower = np.pi - np.arctan(kappa_l / delta_l)
     p_1 = (kappa_l * e_0) ** 2 / (2 * e_0 * (1 + np.cos(theta_delta_lower)))
@@ -203,19 +200,30 @@ def flux_surface_kuiroukidis_quadrants(
 
     x_left *= correction
     x_right *= correction[::-1]
+
     if upper_negative:
-        x_upper = -x_upper + 2 * r_0
-        x_upper = x_upper[::-1]
-        z_upper = z_upper[::-1]
+        x_upper_right = -x_upper_right + 2 * r_0
+        x_upper_left = -x_upper_left + 2 * r_0
+        x_upper_right = x_upper_right[::-1]
+        x_upper_left = x_upper_left[::-1]
+        z_upper_right = z_upper_right[::-1]
+        z_upper_left = z_upper_left[::-1]
+
     if lower_negative:
         x_left = -x_left + 2 * r_0
         x_right = -x_right + 2 * r_0
         x_left, x_right = x_right[::-1], x_left[::-1]
         z_left, z_right = z_right[::-1], z_left[::-1]
-    z_upper += z_0
+    z_upper_right += z_0
+    z_upper_left += z_0
     z_left += z_0
     z_right += z_0
-    return [x_upper, x_left, x_right], [z_upper, z_left, z_right]
+    return [x_upper_right, x_upper_left, x_left, x_right], [
+        z_upper_right,
+        z_upper_left,
+        z_left,
+        z_right,
+    ]
 
 
 def flux_surface_kuiroukidis(
@@ -371,11 +379,11 @@ class KuiroukidisLCFS(GeometryParameterisation):
             CAD Wire of the geometry
         """
         x_quadrants, z_quadrants = flux_surface_kuiroukidis_quadrants(
-            *self.variables.values, n=n_points
+            *self.variables.values, n_points=n_points
         )
 
         wires = []
-        labels = ["upper", "lower_inner", "lower_outer"]
+        labels = ["upper_outer", "upper_inner", "lower_inner", "lower_outer"]
         for x_q, z_q, lab in zip(x_quadrants, z_quadrants, labels):
             wires.append(
                 interpolate_bspline(
@@ -748,7 +756,7 @@ class JohnerLCFS(GeometryParameterisation):
         variables.adjust_variables(var_dict, strict_bounds=False)
         super().__init__(variables)
 
-    def create_shape(self, label="LCFS", n_points=1000):
+    def create_shape(self, label="LCFS", n_points=100):
         """
         Make a CAD representation of the Johner LCFS.
 
