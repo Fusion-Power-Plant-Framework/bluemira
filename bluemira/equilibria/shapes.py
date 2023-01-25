@@ -204,10 +204,8 @@ def flux_surface_kuiroukidis_quadrants(
     if upper_negative:
         x_upper_right = -x_upper_right + 2 * r_0
         x_upper_left = -x_upper_left + 2 * r_0
-        x_upper_right = x_upper_right[::-1]
-        x_upper_left = x_upper_left[::-1]
-        z_upper_right = z_upper_right[::-1]
-        z_upper_left = z_upper_left[::-1]
+        x_upper_left, x_upper_right = x_upper_right[::-1], x_upper_left[::-1]
+        z_upper_left, z_upper_right = z_upper_right[::-1], z_upper_left[::-1]
 
     if lower_negative:
         x_left = -x_left + 2 * r_0
