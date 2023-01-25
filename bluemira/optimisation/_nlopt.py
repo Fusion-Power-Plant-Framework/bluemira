@@ -332,7 +332,7 @@ class _Constraint:
         self.f = f
         self.tolerance = tolerance
         self.df = df if df is not None else self._approx_derivative
-        self.f0 = None
+        self.f0: Optional[np.ndarray] = None
 
     def nlopt_call(self, result: np.ndarray, x: np.ndarray, grad: np.ndarray):
         """

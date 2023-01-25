@@ -19,7 +19,7 @@
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 from dataclasses import asdict, dataclass
-from typing import Dict, Iterable, List, Optional, Union
+from typing import Dict, Generic, Iterable, List, Optional, TypeVar, Union
 
 import numpy as np
 
@@ -37,16 +37,18 @@ from bluemira.optimisation._optimiser import OptimiserResult
 from bluemira.optimisation._typing import ConstraintT, OptimiserCallable
 from bluemira.optimisation.error import GeometryOptimisationError
 
+_GeomT = TypeVar("_GeomT", bound=GeometryParameterisation)
+
 
 @dataclass
-class GeomOptimiserResult(OptimiserResult):
+class GeomOptimiserResult(OptimiserResult, Generic[_GeomT]):
     """Container for the result of a geometry optimisation."""
 
-    geom: GeometryParameterisation
+    geom: _GeomT
 
 
 def optimise_geometry(
-    geom: GeometryParameterisation,
+    geom: _GeomT,
     f_objective: GeomOptimiserCallable,  # TODO(hsaunders1904): typing is wrong here
     df_objective: Optional[GeomOptimiserCallable] = None,
     keep_out_zones: Iterable[BluemiraWire] = (),
@@ -57,7 +59,7 @@ def optimise_geometry(
     eq_constraints: Iterable[GeomConstraintT] = (),
     ineq_constraints: Iterable[GeomConstraintT] = (),
     keep_history: bool = False,
-) -> GeomOptimiserResult:
+) -> GeomOptimiserResult[_GeomT]:
     r"""
     Minimise the given objective function for a geometry parameterisation.
 
@@ -139,7 +141,7 @@ def optimise_geometry(
     ineq_constraints: Iterable[GeomConstraintT]
         The geometric inequality constraints for the optimiser.
         This argument has the same form as the `eq_constraint` argument,
-        but each constraint is in the form $f_{c}(x) \le 0$.
+        but each constraint is of the form $f_{c}(x) \le 0$.
 
         Inequality constraints are only supported by algorithms:
 
