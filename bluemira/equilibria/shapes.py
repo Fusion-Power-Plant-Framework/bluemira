@@ -108,7 +108,7 @@ def flux_surface_manickam(r_0, z_0, a, kappa=1, delta=0, indent=0, n=20):
     return Coordinates({"x": x, "z": z})
 
 
-def flux_surface_kuiroukidis(
+def flux_surface_kuiroukidis_quadrants(
     r_0,
     z_0,
     a,
@@ -119,49 +119,6 @@ def flux_surface_kuiroukidis(
     n_power: int = 8,
     n_points: int = 100,
 ):
-    """
-    Make an up-down asymmetric flux surface with a lower X-point.
-
-    Ap. Kuiroukidis and G. N. Throumoulopoulos, Plasma Phys. Contol. Fusion 57  (2015)
-    078001
-
-    DOI: 10.1088/0741-3335/57/7/078001
-
-    Parameters
-    ----------
-    r_0: float
-        Plasma geometric major radius [m]
-    z_0: float
-        Plasma geometric vertical height [m]
-    a: float
-        Plasma geometric minor radius [m]
-    kappa_u: float
-        Upper plasma elongation
-    kappa_l: float
-        Lower plasma elongation
-    delta_u: float
-        Upper plasma triangularity
-    delta_l: float
-        Lower plasma triangularity
-    n_power: int
-        Exponent related to the steepness of the triangularity
-    n_points: int
-        Number of points
-
-    Returns
-    -------
-    flux_surface: Coordinates
-        Plasma flux surface shape
-
-    Notes
-    -----
-    As far as I can tell, the reference parameterisation is either flawed in two places
-    or is insufficiently specified to reproduce properly. I've included two workarounds
-    here, which actually result in a very decent shape description.
-    Furthermore, the grad_rho term does not appear to behave as described, given that it
-    is just an offset. The key may lie in understand what "relative to the X-point" means
-    but it's not enough for me to go on at the moment.
-    """
     if delta_u < 0:
         delta_u *= -1
         upper_negative = True
@@ -255,9 +212,80 @@ def flux_surface_kuiroukidis(
         x_right = -x_right + 2 * r_0
         x_left, x_right = x_right[::-1], x_left[::-1]
         z_left, z_right = z_right[::-1], z_left[::-1]
+    z_upper += z_0
+    z_left += z_0
+    z_right += z_0
+    return [x_upper, x_left, x_right], [z_upper, z_left, z_right]
 
-    x = np.concatenate([x_upper, x_left, x_right])
-    z = z_0 + np.concatenate([z_upper, z_left, z_right])
+
+def flux_surface_kuiroukidis(
+    r_0,
+    z_0,
+    a,
+    kappa_u,
+    kappa_l,
+    delta_u,
+    delta_l,
+    n_power: int = 8,
+    n_points: int = 100,
+):
+    """
+    Make an up-down asymmetric flux surface with a lower X-point.
+
+    Ap. Kuiroukidis and G. N. Throumoulopoulos, Plasma Phys. Contol. Fusion 57  (2015)
+    078001
+
+    DOI: 10.1088/0741-3335/57/7/078001
+
+    Parameters
+    ----------
+    r_0: float
+        Plasma geometric major radius [m]
+    z_0: float
+        Plasma geometric vertical height [m]
+    a: float
+        Plasma geometric minor radius [m]
+    kappa_u: float
+        Upper plasma elongation
+    kappa_l: float
+        Lower plasma elongation
+    delta_u: float
+        Upper plasma triangularity
+    delta_l: float
+        Lower plasma triangularity
+    n_power: int
+        Exponent related to the steepness of the triangularity
+    n_points: int
+        Number of points
+
+    Returns
+    -------
+    flux_surface: Coordinates
+        Plasma flux surface shape
+
+    Notes
+    -----
+    As far as I can tell, the reference parameterisation is either flawed in two places
+    or is insufficiently specified to reproduce properly. I've included two workarounds
+    here, which actually result in a very decent shape description.
+    Furthermore, the grad_rho term does not appear to behave as described, given that it
+    is just an offset. The key may lie in understand what "relative to the X-point" means
+    but it's not enough for me to go on at the moment.
+    """
+    x_quadrants, z_quadrants = flux_surface_johner_quadrants(
+        r_0,
+        z_0,
+        a,
+        kappa_u,
+        kappa_l,
+        delta_u,
+        delta_l,
+        n_power,
+        n_points,
+    )
+
+    x = np.concatenate(x_quadrants)
+    z = np.concatenate(z_quadrants)
 
     return Coordinates({"x": x, "z": z})
 
