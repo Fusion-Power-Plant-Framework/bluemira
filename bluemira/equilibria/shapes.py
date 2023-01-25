@@ -290,6 +290,102 @@ def flux_surface_kuiroukidis(
     return Coordinates({"x": x, "z": z})
 
 
+class KuiroukidisLCFS(GeometryParameterisation):
+    """
+    Kuiroukidis last closed flux surface geometry parameterisation (adjusted).
+    """
+
+    __slots__ = ()
+
+    def __init__(self, var_dict=None):
+        variables = OptVariables(
+            [
+                BoundedVariable(
+                    "r_0", 9, lower_bound=0, upper_bound=np.inf, descr="Major radius"
+                ),
+                BoundedVariable(
+                    "z_0",
+                    0,
+                    lower_bound=-np.inf,
+                    upper_bound=np.inf,
+                    descr="Vertical coordinate at geometry centroid",
+                ),
+                BoundedVariable(
+                    "a", 3, lower_bound=0, upper_bound=np.inf, descr="Minor radius"
+                ),
+                BoundedVariable(
+                    "kappa_u",
+                    1.6,
+                    lower_bound=1.0,
+                    upper_bound=np.inf,
+                    descr="Upper elongation",
+                ),
+                BoundedVariable(
+                    "kappa_l",
+                    1.8,
+                    lower_bound=1.0,
+                    upper_bound=np.inf,
+                    descr="Lower elongation",
+                ),
+                BoundedVariable(
+                    "delta_u",
+                    0.4,
+                    lower_bound=0.0,
+                    upper_bound=1.0,
+                    descr="Upper triangularity",
+                ),
+                BoundedVariable(
+                    "delta_l",
+                    0.4,
+                    lower_bound=0.0,
+                    upper_bound=1.0,
+                    descr="Lower triangularity",
+                ),
+                BoundedVariable(
+                    "n_power",
+                    8,
+                    lower_bound=2,
+                    upper_bound=10,
+                    descr="Exponent power",
+                ),
+            ],
+            frozen=True,
+        )
+        variables.adjust_variables(var_dict, strict_bounds=False)
+        super().__init__(variables)
+
+    def create_shape(self, label="LCFS", n_points=1000):
+        """
+        Make a CAD representation of the Kuiroukidis LCFS.
+
+        Parameters
+        ----------
+        label: str, default = "LCFS"
+            Label to give the wire
+        n_points: int
+            Number of points to use when creating the Bspline representation
+
+        Returns
+        -------
+        shape: BluemiraWire
+            CAD Wire of the geometry
+        """
+        x_quadrants, z_quadrants = flux_surface_kuiroukidis_quadrants(
+            *self.variables.values, n=n_points
+        )
+
+        wires = []
+        labels = ["upper", "lower_inner", "lower_outer"]
+        for x_q, z_q, lab in zip(x_quadrants, z_quadrants, labels):
+            wires.append(
+                interpolate_bspline(
+                    np.array([x_q, np.zeros(len(x_q)), z_q]).T, label=lab
+                )
+            )
+
+        return BluemiraWire(wires, label=label)
+
+
 def calc_t_neg(delta, kappa, phi_neg):
     return np.tan(phi_neg) * (1 - delta) / kappa
 
