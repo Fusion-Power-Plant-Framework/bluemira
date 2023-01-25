@@ -47,9 +47,10 @@ class GeomOptimiserResult(OptimiserResult):
 
 def optimise_geometry(
     geom: GeometryParameterisation,
-    f_objective: GeomOptimiserCallable,
+    f_objective: GeomOptimiserCallable,  # TODO(hsaunders1904): typing is wrong here
     df_objective: Optional[GeomOptimiserCallable] = None,
     keep_out_zones: Iterable[BluemiraWire] = (),
+    keep_in_zones: Iterable[BluemiraWire] = (),
     algorithm: Union[Algorithm, str] = Algorithm.SLSQP,
     opt_conditions: Optional[Dict] = None,
     opt_parameters: Optional[Dict] = None,
@@ -62,21 +63,24 @@ def optimise_geometry(
 
     Parameters
     ----------
-    geom : GeometryParameterisation
+    geom: GeometryParameterisation
         The geometry to optimise the parameters of.
-    f_objective : GeomOptimiserCallable
+    f_objective: GeomOptimiserCallable
         The objective function to minimise. Must take as an argument a
         `GeometryParameterisation`and return a numpy array.
             TODO(hsaunders1904): should this not return a scalar?
-    df_objective : Optional[GeomOptimiserCallable], optional
+    df_objective: Optional[GeomOptimiserCallable], optional
         The derivative of the objective function, by default None. If
         not given, an approximation of the derivative is made using
         the 'central differences' method.
         This argument is ignored if a non-gradient based algorithm is
         used.
-    keep_out_zones : Iterable[BluemiraWire], optional
-        A list of closed wires, defining areas the geometry must not
-        intersect.
+    keep_out_zones: Iterable[BluemiraWire], optional
+        An iterable of closed wires, defining areas the geometry must
+        not intersect.
+    keep_in_zones: Iterable[BluemiraWire], optional
+        An iterable list of closed wires, defining areas the geometry
+        must wholly lie within.
     algorithm : Union[Algorithm, str], optional
         The optimisation algorithm to use, by default `Algorithm.SLSQP`.
     opt_conditions: Optional[Dict]
@@ -165,6 +169,8 @@ def optimise_geometry(
         ineq_constraints_list.append(constraint)
     for koz in keep_out_zones:
         ineq_constraints_list.append(_make_keep_out_zone_constraint(koz))
+    for kiz in keep_in_zones:
+        ineq_constraints_list.append(_make_keep_in_zone_constraint(kiz))
 
     result = optimise(
         f_obj,
@@ -204,7 +210,7 @@ def calculate_signed_distance(parameterisation, n_shape_discr, koz_points):
 
 
 def _make_keep_out_zone_constraint(koz: BluemiraWire) -> GeomConstraintT:
-    """Make a keep-out-zone inequality constraint from a wire."""
+    """Make a keep-out zone inequality constraint from a wire."""
     if not koz.is_closed():
         raise GeometryOptimisationError(
             f"Keep-out zone with label '{koz.label}' is not closed."
@@ -213,6 +219,20 @@ def _make_keep_out_zone_constraint(koz: BluemiraWire) -> GeomConstraintT:
 
     def _f_constraint(geom: GeometryParameterisation) -> np.ndarray:
         return calculate_signed_distance(geom, n_shape_discr=100, koz_points=koz_points)
+
+    return {"f_constraint": _f_constraint, "tolerance": np.full(100, 1e-3)}
+
+
+def _make_keep_in_zone_constraint(koz: BluemiraWire) -> GeomConstraintT:
+    """Make a keep-in zone inequality constraint from a wire."""
+    if not koz.is_closed():
+        raise GeometryOptimisationError(
+            f"Keep-in zone with label '{koz.label}' is not closed."
+        )
+    koz_points = koz.discretize(100, byedges=True).xz
+
+    def _f_constraint(geom: GeometryParameterisation) -> np.ndarray:
+        return -calculate_signed_distance(geom, n_shape_discr=100, koz_points=koz_points)
 
     return {"f_constraint": _f_constraint, "tolerance": np.full(100, 1e-3)}
 
