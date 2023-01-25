@@ -31,7 +31,10 @@ import numpy as np
 from bluemira.base.designer import Designer
 from bluemira.base.parameter_frame import Parameter, ParameterFrame
 from bluemira.equilibria import Equilibrium
-from bluemira.equilibria.opt_problems import UnconstrainedTikhonovCurrentGradientCOP
+from bluemira.equilibria.opt_problems import (
+    TikhonovCurrentCOP,
+    UnconstrainedTikhonovCurrentGradientCOP,
+)
 from bluemira.equilibria.solve import DudsonConvergence, PicardIterator
 from bluemira.geometry.parameterisations import PrincetonD
 from bluemira.geometry.tools import make_polygon, offset_wire
@@ -458,6 +461,10 @@ class FreeBoundaryEquilibriumFromFixedDesigner(Designer[Equilibrium]):
     """
     Solves a free boundary equilibrium from a fixed boundary equilibrium.
 
+    Some coils are positioned at sensible locations to try and get an initial
+    free boundary equilibrium in order to be able to draw an initial first wall
+    shape.
+
     Parameters
     ----------
     params: Union[Dict, ParameterFrame]
@@ -526,7 +533,9 @@ class FreeBoundaryEquilibriumFromFixedDesigner(Designer[Equilibrium]):
             nx=settings.pop("nx"),
             nz=settings.pop("nz"),
         )
-        eq.coilset.discretisation = settings.pop("coil_discretisation")
+        # TODO: Check coil discretisation is sensible when size not set...
+        settings.pop("coil_discretisation")
+        # eq.coilset.discretisation = settings.pop("coil_discretisation")
 
         opt_problem = self._make_fbe_opt_problem(
             eq, lcfs_shape, len(data.xbdry), settings.pop("gamma")
@@ -545,9 +554,7 @@ class FreeBoundaryEquilibriumFromFixedDesigner(Designer[Equilibrium]):
         iterator_program()
         import matplotlib.pyplot as plt
 
-        print(f"Ip value: {self.params.I_p.value}")
         f, ax = plt.subplots()
-        print(eq.coilset.current)
         eq.plot(ax=ax)
         eq.coilset.plot(ax=ax)
         ax.plot(data.xbdry, data.zbdry, "", marker="o")
@@ -600,7 +607,12 @@ class FreeBoundaryEquilibriumFromFixedDesigner(Designer[Equilibrium]):
         """
 
         eq_targets = ReferenceConstraints(lcfs_shape, n_points)
-
+        # from bluemira.utilities.optimiser import Optimiser
+        # from bluemira.equilibria.opt_constraints import FieldNullConstraint
+        # coords = lcfs_shape.discretize(byedges=True)
+        # arg_x = np.argmin(coords.z)
+        # return TikhonovCurrentCOP(eq.coilset, eq, eq_targets, gamma=gamma, optimiser=Optimiser("SLSQP", opt_conditions={"ftol_rel": 1e-6}),
+        # constraints=[FieldNullConstraint(coords.x[arg_x], coords.z[arg_x], tolerance=1e-4)])
         return UnconstrainedTikhonovCurrentGradientCOP(
             eq.coilset, eq, eq_targets, gamma=gamma
         )

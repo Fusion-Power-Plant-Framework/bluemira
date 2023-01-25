@@ -55,7 +55,7 @@
                 "plot": true,
                 "nx": 127,
                 "nz": 127,
-                "gamma": 0.0
+                "gamma": 1e-8
             }
     },
     "IVC": {
