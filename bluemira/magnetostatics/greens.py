@@ -211,6 +211,16 @@ def greens_dpsi_dx(xc, zc, x, z, d_xc=0, d_zc=0):
     -------
     dpsi_dx: float or np.array(N, M)
         Radial derivative of the poloidal flux response at (x, z)
+
+    Notes
+    -----
+    \t:math:`G_{\\dfrac{\\partial \\psi}{\\partial x}}(x_{c}, z_{c}; x, z) = \\dfrac{{\\mu}_{0}}{2{\\pi}}`
+    \t:math:`\\dfrac{\\sqrt{xx_{c}}}{k}`
+    \t:math:`[(2-\\mathbf{K}(k)-2\\mathbf{E}(k)]`\n
+    Where:
+    \t:math:`k^{2}\\equiv\\dfrac{4xx_{c}}{(x+x_{c})^{2}+(z-z_{c})^{2}}`\n
+    \t:math:`\\mathbf{K} \\equiv` complete elliptic integral of the first kind\n
+    \t:math:`\\mathbf{E} \\equiv` complete elliptic integral of the second kind
     """
     a = ((x + xc) ** 2 + (z - zc) ** 2) ** 0.5
     k2 = 4 * x * xc / a**2
@@ -257,7 +267,13 @@ def greens_dpsi_dz(xc, zc, x, z, d_xc=0, d_zc=0):
 
     Notes
     -----
-
+    \t:math:`G_{\\dfrac{\\partial \\psi}{\\partial z}}(x_{c}, z_{c}; x, z) = \\dfrac{{\\mu}_{0}}{2{\\pi}}`
+    \t:math:`\\dfrac{\\sqrt{xx_{c}}}{k}`
+    \t:math:`[(2-\\mathbf{K}(k)-2\\mathbf{E}(k)]`\n
+    Where:
+    \t:math:`k^{2}\\equiv\\dfrac{4xx_{c}}{(x+x_{c})^{2}+(z-z_{c})^{2}}`\n
+    \t:math:`\\mathbf{K} \\equiv` complete elliptic integral of the first kind\n
+    \t:math:`\\mathbf{E} \\equiv` complete elliptic integral of the second kind
     """
     a = ((x + xc) ** 2 + (z - zc) ** 2) ** 0.5
     k2 = 4 * x * xc / a**2
