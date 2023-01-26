@@ -21,6 +21,7 @@
 
 import numba as nb
 import numpy as np
+import pytest
 
 from bluemira.base.constants import MU_0_2PI, MU_0_4PI
 from bluemira.magnetostatics.greens import (
@@ -120,3 +121,52 @@ def greens_Bz_old(xc, zc, x, z, d_xc=0, d_zc=0):
     part_a = (z - zc) ** 2 + x**2 + xc**2
     part_b = -2 * x * xc
     return MU_0_4PI * xc * ((xc + x * part_a / part_b) * i2 - i1 * x / part_b)
+
+
+class TestGreenFieldsRegression:
+
+    np.random.seed(846023420)
+    fixtures = []
+    for _ in range(20):
+        fixtures.append(
+            [
+                10 * np.clip(np.random.rand(), GREENS_ZERO, None),
+                10 - 5 * np.clip(np.random.rand(), GREENS_ZERO, None),
+                10 * np.clip(np.random.rand(100, 100), GREENS_ZERO, None),
+                10 - 5 * np.clip(np.random.rand(100, 100), GREENS_ZERO, None),
+            ]
+        )
+
+    @pytest.mark.parametrize("xc, zc, x, z", fixtures)
+    def test_greens_Bx(self, xc, zc, x, z):
+        self.runner(greens_Bx, greens_Bx_old, xc, zc, x, z)
+
+    @pytest.mark.parametrize("xc, zc, x, z", fixtures)
+    def test_greens_Bz(self, xc, zc, x, z):
+        self.runner(greens_Bz, greens_Bz_old, xc, zc, x, z)
+
+    def runner(self, new_greens_func, old_greens_func, xc, zc, x, z):
+        new = new_greens_func(xc, zc, x, z)
+        old = old_greens_func(xc, zc, x, z)
+        np.testing.assert_allclose(new, old)
+
+
+class TestGreensEdgeCases:
+    @pytest.mark.parametrize(
+        "func", [greens_psi, greens_dpsi_dz, greens_dpsi_dx, greens_Bx, greens_Bz]
+    )
+    @pytest.mark.parametrize("fail_point", [[0, 0, 0, 0]])
+    def test_greens_on_axis(self, func, fail_point):
+        with pytest.raises(ZeroDivisionError):
+            func(*fail_point)
+
+    @pytest.mark.parametrize("func", [greens_Bx, greens_Bz])
+    @pytest.mark.parametrize("fail_point", [[1, 1, 0, 0], [-1, -1, 0, 0]])
+    def test_greens_on_axis_field(self, func, fail_point):
+        with pytest.raises(ZeroDivisionError):
+            func(*fail_point)
+
+    @pytest.mark.parametrize("func", [greens_Bx, greens_dpsi_dz])
+    @pytest.mark.parametrize("zero_point", [[1, 1, 1, 1], [-1, -1, -1, -1]])
+    def test_greens_at_same_point(self, func, zero_point):
+        np.testing.assert_allclose(0.0, func(*zero_point), atol=1e-6)
