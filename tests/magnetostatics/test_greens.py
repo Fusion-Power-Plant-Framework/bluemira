@@ -127,7 +127,7 @@ class TestGreenFieldsRegression:
 
     np.random.seed(846023420)
     fixtures = []
-    for _ in range(20):
+    for _ in range(2000):
         fixtures.append(
             [
                 10 * np.clip(np.random.rand(), GREENS_ZERO, None),
