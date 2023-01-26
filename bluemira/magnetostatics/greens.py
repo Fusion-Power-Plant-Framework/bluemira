@@ -28,7 +28,14 @@ from scipy.special import ellipe, ellipk
 
 from bluemira.base.constants import MU_0, MU_0_2PI, MU_0_4PI
 
-__all__ = ["greens_psi", "greens_Bx", "greens_Bz", "greens_all"]
+__all__ = [
+    "greens_psi",
+    "greens_Bx",
+    "greens_Bz",
+    "greens_dpsi_dx",
+    "greens_dpsi_dz",
+    "greens_all",
+]
 
 # Offset from 0<x<1
 #     Used in calculating Green's functions to avoid np.nan
@@ -188,7 +195,6 @@ def greens_dpsi_dx(xc, zc, x, z, d_xc=0, d_zc=0):
     k2 = clip_nb(k2, GREENS_ZERO, 1.0 - GREENS_ZERO)
     i1 = ellipk_nb(k2) / a
     i2 = ellipe_nb(k2) / (a**3 * (1 - k2))
-
     return MU_0_2PI * x * ((xc**2 - (z - zc) ** 2 - x**2) * i2 + i1)
 
     h2 = (z - zc) ** 2
@@ -220,16 +226,6 @@ def greens_dpsi_dz(xc, zc, x, z, d_xc=0, d_zc=0):
 
 @nb.jit(nopython=True)
 def greens_Bx(xc, zc, x, z, d_xc=0, d_zc=0):  # noqa :N802
-    return -1 / x * greens_dpsi_dz(xc, zc, x, z, d_xc, d_zc)
-
-
-@nb.jit(nopython=True)
-def greens_Bz(xc, zc, x, z, d_xc=0, d_zc=0):  # noqa :N802
-    return 1 / x * greens_dpsi_dx(xc, zc, x, z, d_xc, d_zc)
-
-
-@nb.jit(nopython=True)
-def greens_Bx_old(xc, zc, x, z, d_xc=0, d_zc=0):  # noqa :N802
     """
     Calculate radial magnetic field at (x, z) due to unit current at (xc, zc)
     using a Greens function.
@@ -260,16 +256,11 @@ def greens_Bx_old(xc, zc, x, z, d_xc=0, d_zc=0):  # noqa :N802
         if xc <= 0
         if x <= 0
     """
-    a = ((x + xc) ** 2 + (z - zc) ** 2) ** 0.5
-    k2 = 4 * x * xc / a**2
-    k2 = clip_nb(k2, GREENS_ZERO, 1.0 - GREENS_ZERO)
-    i1 = ellipk_nb(k2) / a
-    i2 = ellipe_nb(k2) / (a**3 * (1 - k2))
-    return MU_0_2PI * ((z - zc) * (-i1 + i2 * ((z - zc) ** 2 + x**2 + xc**2)) / x)
+    return -1 / x * greens_dpsi_dz(xc, zc, x, z, d_xc, d_zc)
 
 
 @nb.jit(nopython=True)
-def greens_Bz_old(xc, zc, x, z, d_xc=0, d_zc=0):
+def greens_Bz(xc, zc, x, z, d_xc=0, d_zc=0):  # noqa :N802
     """
     Calculate vertical magnetic field at (x, z) due to unit current at (xc, zc)
     using a Greens function.
@@ -300,16 +291,7 @@ def greens_Bz_old(xc, zc, x, z, d_xc=0, d_zc=0):
         if xc <= 0
         if x <= 0
     """
-    a = ((x + xc) ** 2 + (z - zc) ** 2) ** 0.5
-    k2 = 4 * x * xc / a**2
-    # Avoid NaN when coil on grid point
-    k2 = clip_nb(k2, GREENS_ZERO, 1.0 - GREENS_ZERO)
-    e, k = ellipe_nb(k2), ellipk_nb(k2)
-    i1 = 4 * k / a
-    i2 = 4 * e / (a**3 * (1 - k2))
-    part_a = (z - zc) ** 2 + x**2 + xc**2
-    part_b = -2 * x * xc
-    return MU_0_4PI * xc * ((xc + x * part_a / part_b) * i2 - i1 * x / part_b)
+    return 1 / x * greens_dpsi_dx(xc, zc, x, z, d_xc, d_zc)
 
 
 @nb.jit(nopython=True)
