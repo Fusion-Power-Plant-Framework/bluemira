@@ -73,6 +73,10 @@ def clip_nb(val, val_min, val_max):
 def ellipe_nb(k):
     """
     Vectorised scipy ellipe
+
+    Notes
+    -----
+    K, E in scipy are set as K(k^2), E(k^2)
     """
     return ellipe(k)
 
@@ -84,6 +88,10 @@ ellipe_nb.__doc__ += ellipe.__doc__
 def ellipk_nb(k):
     """
     Vectorised scipy ellipk
+
+    Notes
+    -----
+    K, E in scipy are set as K(k^2), E(k^2)
     """
     return ellipk(k)
 
@@ -168,7 +176,7 @@ def greens_psi(xc, zc, x, z, d_xc=0, d_zc=0):
     -----
     \t:math:`G_{\\psi}(x_{c}, z_{c}; x, z) = \\dfrac{{\\mu}_{0}}{2{\\pi}}`
     \t:math:`\\dfrac{\\sqrt{xx_{c}}}{k}`
-    \t:math:`[(2-\\mathbf{K}(k)-2\\mathbf{E}(k)]`\n
+    \t:math:`[(2-\\mathbf{K}(k^2)-2\\mathbf{E}(k^2)]`\n
     Where:
     \t:math:`k^{2}\\equiv\\dfrac{4xx_{c}}{(x+x_{c})^{2}+(z-z_{c})^{2}}`\n
     \t:math:`\\mathbf{K} \\equiv` complete elliptic integral of the first kind\n
@@ -177,7 +185,6 @@ def greens_psi(xc, zc, x, z, d_xc=0, d_zc=0):
     k2 = 4 * x * xc / ((x + xc) ** 2 + (z - zc) ** 2)
     # Avoid NaN when coil on grid point
     k2 = clip_nb(k2, GREENS_ZERO, 1.0 - GREENS_ZERO)
-    # K, E in scipy are set as K(k^2), E(k^2)
     return (
         MU_0_2PI
         * np.sqrt(x * xc)
@@ -215,12 +222,18 @@ def greens_dpsi_dx(xc, zc, x, z, d_xc=0, d_zc=0):
     Notes
     -----
     \t:math:`G_{\\dfrac{\\partial \\psi}{\\partial x}}(x_{c}, z_{c}; x, z) = \\dfrac{{\\mu}_{0}}{2{\\pi}}`
-    \t:math:`\\dfrac{\\sqrt{xx_{c}}}{k}`
-    \t:math:`[(2-\\mathbf{K}(k)-2\\mathbf{E}(k)]`\n
+    \t:math:`\\dfrac{1}{u}`
+    \t:math:`[\\dfrac{w^2}{d^2}\\mathbf{E}(k^2)+\\mathbf{K}(k^2)]`\n
     Where:
+    \t:math:`h^{2}\\equiv z_{c}-z`\n
+    \t:math:`u^2\\equiv(x+x_{c})^2+h^2`\n
+    \t:math:`d^{2}\\equiv (x - x_{c})^2 + h^2`\n
+    \t:math:`w^{2}\\equiv x^2 -x_{c}^2 - h^2`\n
     \t:math:`k^{2}\\equiv\\dfrac{4xx_{c}}{(x+x_{c})^{2}+(z-z_{c})^{2}}`\n
     \t:math:`\\mathbf{K} \\equiv` complete elliptic integral of the first kind\n
     \t:math:`\\mathbf{E} \\equiv` complete elliptic integral of the second kind
+
+    The implementation used here refactors the above to avoid some zero divisions.
     """
     a = ((x + xc) ** 2 + (z - zc) ** 2) ** 0.5
     k2 = 4 * x * xc / a**2
@@ -229,14 +242,6 @@ def greens_dpsi_dx(xc, zc, x, z, d_xc=0, d_zc=0):
     i1 = ellipk_nb(k2) / a
     i2 = ellipe_nb(k2) / (a**3 * (1 - k2))
     return MU_0_2PI * x * ((xc**2 - (z - zc) ** 2 - x**2) * i2 + i1)
-
-    h2 = (z - zc) ** 2
-    u2 = (x + xc) ** 2 + h2
-    k2 = 4 * x * xc / u2
-    k2 = clip_nb(k2, GREENS_ZERO, 1.0 - GREENS_ZERO)
-    d2 = (xc - x) ** 2 + h2
-    w2 = xc**2 - x**2 - h2
-    return MU_0_2PI * (x / np.sqrt(u2)) * (w2 / d2 * ellipe_nb(k2) + ellipk_nb(k2))
 
 
 @nb.jit(nopython=True)
@@ -268,12 +273,18 @@ def greens_dpsi_dz(xc, zc, x, z, d_xc=0, d_zc=0):
     Notes
     -----
     \t:math:`G_{\\dfrac{\\partial \\psi}{\\partial z}}(x_{c}, z_{c}; x, z) = \\dfrac{{\\mu}_{0}}{2{\\pi}}`
-    \t:math:`\\dfrac{\\sqrt{xx_{c}}}{k}`
-    \t:math:`[(2-\\mathbf{K}(k)-2\\mathbf{E}(k)]`\n
+    \t:math:`\\dfrac{h}{u}`
+    \t:math:`[\\mathbf{K}(k^2) - \\dfrac{v^2}{d^2}\\mathbf{E}(k^2)]`\n
     Where:
+    \t:math:`h^{2}\\equiv z_{c}-z`\n
+    \t:math:`u^2\\equiv(x+x_{c})^2+h^2`\n
+    \t:math:`d^{2}\\equiv (x - x_{c})^2 + h^2`\n
+    \t:math:`v^{2}\\equiv x^2 +x_{c}^2 + h^2`\n
     \t:math:`k^{2}\\equiv\\dfrac{4xx_{c}}{(x+x_{c})^{2}+(z-z_{c})^{2}}`\n
     \t:math:`\\mathbf{K} \\equiv` complete elliptic integral of the first kind\n
     \t:math:`\\mathbf{E} \\equiv` complete elliptic integral of the second kind
+
+    The implementation used here refactors the above to avoid some zero divisions.
     """
     a = ((x + xc) ** 2 + (z - zc) ** 2) ** 0.5
     k2 = 4 * x * xc / a**2
@@ -281,14 +292,6 @@ def greens_dpsi_dz(xc, zc, x, z, d_xc=0, d_zc=0):
     i1 = ellipk_nb(k2) / a
     i2 = ellipe_nb(k2) / (a**3 * (1 - k2))
     return MU_0_2PI * ((z - zc) * (i1 - i2 * ((z - zc) ** 2 + x**2 + xc**2)))
-    h = z - zc
-    h2 = h**2
-    u2 = (x + xc) ** 2 + h2
-    k2 = 4 * x * xc / u2
-    k2 = clip_nb(k2, GREENS_ZERO, 1.0 - GREENS_ZERO)
-    v2 = x**2 + xc**2 + h2
-    d2 = (xc - x) ** 2 + h2
-    return MU_0_2PI * (h / np.sqrt(u2)) * (ellipk_nb(k2) - v2 / d2 * ellipe_nb(k2))
 
 
 @nb.jit(nopython=True)
@@ -321,6 +324,10 @@ def greens_Bx(xc, zc, x, z, d_xc=0, d_zc=0):  # noqa :N802
     ------
     ZeroDivisionError
         if x <= 0
+
+    Notes
+    -----
+    \t:math:`G_{B_{x}} = -\\dfrac{1}{x} G_{\\dfrac{\\partial \\psi}{\\partial z}}(x_{c}, z_{c}; x, z)`
     """
     return -1 / x * greens_dpsi_dz(xc, zc, x, z, d_xc, d_zc)
 
@@ -355,6 +362,10 @@ def greens_Bz(xc, zc, x, z, d_xc=0, d_zc=0):  # noqa :N802
     ------
     ZeroDivisionError
         if x <= 0
+
+    Notes
+    -----
+    \t:math:`G_{B_{z}} = \\dfrac{1}{x} G_{\\dfrac{\\partial \\psi}{\\partial x}}(x_{c}, z_{c}; x, z)`
     """
     return 1 / x * greens_dpsi_dx(xc, zc, x, z, d_xc, d_zc)
 
