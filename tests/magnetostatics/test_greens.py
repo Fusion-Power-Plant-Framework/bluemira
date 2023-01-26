@@ -164,7 +164,7 @@ class TestGreensEdgeCases:
             func(*fail_point)
 
     @pytest.mark.parametrize("func", [greens_Bx, greens_Bz])
-    @pytest.mark.parametrize("fail_point", [[1, 1, 0, 10], [-1, -1, 0, 10]])
+    @pytest.mark.parametrize("fail_point", [[1, 1, 0, 10], [-1, -1, -10, 10]])
     def test_greens_on_axis_field(self, func, fail_point):
         with pytest.raises(ZeroDivisionError):
             func(*fail_point)
