@@ -182,6 +182,15 @@ def greens_psi(xc, zc, x, z, d_xc=0, d_zc=0):
 
 @nb.jit(nopython=True)
 def greens_dpsi_dx(xc, zc, x, z, d_xc=0, d_zc=0):
+    a = ((x + xc) ** 2 + (z - zc) ** 2) ** 0.5
+    k2 = 4 * x * xc / a**2
+    # Avoid NaN when coil on grid point
+    k2 = clip_nb(k2, GREENS_ZERO, 1.0 - GREENS_ZERO)
+    i1 = ellipk_nb(k2) / a
+    i2 = ellipe_nb(k2) / (a**3 * (1 - k2))
+
+    return MU_0_2PI * x * ((xc**2 - (z - zc) ** 2 - x**2) * i2 + i1)
+
     h2 = (z - zc) ** 2
     u2 = (x + xc) ** 2 + h2
     k2 = 4 * x * xc / u2
@@ -193,6 +202,12 @@ def greens_dpsi_dx(xc, zc, x, z, d_xc=0, d_zc=0):
 
 @nb.jit(nopython=True)
 def greens_dpsi_dz(xc, zc, x, z, d_xc=0, d_zc=0):
+    a = ((x + xc) ** 2 + (z - zc) ** 2) ** 0.5
+    k2 = 4 * x * xc / a**2
+    k2 = clip_nb(k2, GREENS_ZERO, 1.0 - GREENS_ZERO)
+    i1 = ellipk_nb(k2) / a
+    i2 = ellipe_nb(k2) / (a**3 * (1 - k2))
+    return MU_0_2PI * ((z - zc) * (i1 - i2 * ((z - zc) ** 2 + x**2 + xc**2)))
     h = z - zc
     h2 = h**2
     u2 = (x + xc) ** 2 + h2
@@ -204,17 +219,17 @@ def greens_dpsi_dz(xc, zc, x, z, d_xc=0, d_zc=0):
 
 
 @nb.jit(nopython=True)
-def greens_Bx_new(xc, zc, x, z, d_xc=0, d_zc=0):  # noqa :N802
+def greens_Bx(xc, zc, x, z, d_xc=0, d_zc=0):  # noqa :N802
     return -1 / x * greens_dpsi_dz(xc, zc, x, z, d_xc, d_zc)
 
 
 @nb.jit(nopython=True)
-def greens_Bz_new(xc, zc, x, z, d_xc=0, d_zc=0):  # noqa :N802
+def greens_Bz(xc, zc, x, z, d_xc=0, d_zc=0):  # noqa :N802
     return 1 / x * greens_dpsi_dx(xc, zc, x, z, d_xc, d_zc)
 
 
 @nb.jit(nopython=True)
-def greens_Bx(xc, zc, x, z, d_xc=0, d_zc=0):  # noqa :N802
+def greens_Bx_old(xc, zc, x, z, d_xc=0, d_zc=0):  # noqa :N802
     """
     Calculate radial magnetic field at (x, z) due to unit current at (xc, zc)
     using a Greens function.
@@ -254,7 +269,7 @@ def greens_Bx(xc, zc, x, z, d_xc=0, d_zc=0):  # noqa :N802
 
 
 @nb.jit(nopython=True)
-def greens_Bz(xc, zc, x, z, d_xc=0, d_zc=0):
+def greens_Bz_old(xc, zc, x, z, d_xc=0, d_zc=0):
     """
     Calculate vertical magnetic field at (x, z) due to unit current at (xc, zc)
     using a Greens function.
