@@ -161,7 +161,6 @@ def greens_psi(xc, zc, x, z, d_xc=0, d_zc=0):
     d_zc: float
         The coil half-height (overload argument)
 
-
     Returns
     -------
     psi: float or np.array(N, M)
@@ -325,7 +324,7 @@ def greens_Bx(xc, zc, x, z, d_xc=0, d_zc=0):  # noqa :N802
     Raises
     ------
     ZeroDivisionError
-        if x <= 0
+        if x == 0
 
     Notes
     -----
@@ -364,7 +363,7 @@ def greens_Bz(xc, zc, x, z, d_xc=0, d_zc=0):  # noqa :N802
     Raises
     ------
     ZeroDivisionError
-        if x <= 0
+        if x == 0
 
     Notes
     -----
