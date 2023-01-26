@@ -221,7 +221,8 @@ def greens_dpsi_dx(xc, zc, x, z, d_xc=0, d_zc=0):
 
     Notes
     -----
-    \t:math:`G_{\\dfrac{\\partial \\psi}{\\partial x}}(x_{c}, z_{c}; x, z) = \\dfrac{{\\mu}_{0}}{2{\\pi}}`
+    \t:math:`G_{\\dfrac{\\partial \\psi}{\\partial x}}(x_{c}, z_{c}; x, z) = `
+    \t:math:`\\dfrac{{\\mu}_{0}}{2{\\pi}}`
     \t:math:`\\dfrac{1}{u}`
     \t:math:`[\\dfrac{w^2}{d^2}\\mathbf{E}(k^2)+\\mathbf{K}(k^2)]`\n
     Where:
@@ -272,7 +273,8 @@ def greens_dpsi_dz(xc, zc, x, z, d_xc=0, d_zc=0):
 
     Notes
     -----
-    \t:math:`G_{\\dfrac{\\partial \\psi}{\\partial z}}(x_{c}, z_{c}; x, z) = \\dfrac{{\\mu}_{0}}{2{\\pi}}`
+    \t:math:`G_{\\dfrac{\\partial \\psi}{\\partial z}}(x_{c}, z_{c}; x, z) = `
+    \t:math:`\\dfrac{{\\mu}_{0}}{2{\\pi}}`
     \t:math:`\\dfrac{h}{u}`
     \t:math:`[\\mathbf{K}(k^2) - \\dfrac{v^2}{d^2}\\mathbf{E}(k^2)]`\n
     Where:
@@ -327,7 +329,8 @@ def greens_Bx(xc, zc, x, z, d_xc=0, d_zc=0):  # noqa :N802
 
     Notes
     -----
-    \t:math:`G_{B_{x}} = -\\dfrac{1}{x} G_{\\dfrac{\\partial \\psi}{\\partial z}}(x_{c}, z_{c}; x, z)`
+    \t:math:`G_{B_{x}} = -\\dfrac{1}{x} G_{\\dfrac{\\partial \\psi}{\\partial z}}`
+    \t:math:`(x_{c}, z_{c}; x, z)`
     """
     return -1 / x * greens_dpsi_dz(xc, zc, x, z, d_xc, d_zc)
 
@@ -365,7 +368,8 @@ def greens_Bz(xc, zc, x, z, d_xc=0, d_zc=0):  # noqa :N802
 
     Notes
     -----
-    \t:math:`G_{B_{z}} = \\dfrac{1}{x} G_{\\dfrac{\\partial \\psi}{\\partial x}}(x_{c}, z_{c}; x, z)`
+    \t:math:`G_{B_{z}} = \\dfrac{1}{x} G_{\\dfrac{\\partial \\psi}{\\partial x}}`
+    \t:math:`(x_{c}, z_{c}; x, z)`
     """
     return 1 / x * greens_dpsi_dx(xc, zc, x, z, d_xc, d_zc)
 
