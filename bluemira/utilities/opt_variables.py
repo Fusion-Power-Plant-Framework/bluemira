@@ -585,7 +585,7 @@ class OptVariables:
         if keys is not None:
             columns = keys
 
-        records = sorted([tuple(val) for val in self.as_dict().values()])
+        records = sorted([tuple(val.values()) for val in self.as_dict().values()])
 
         return tabulate(
             records,

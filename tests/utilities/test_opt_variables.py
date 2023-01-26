@@ -20,6 +20,7 @@
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 
 import os
+import re
 import shutil
 import tempfile
 
@@ -170,6 +171,30 @@ class TestOptVariables:
             the_path = os.sep.join([tempdir, "opt_var_test.json"])
             self.vars.to_json(the_path)
             new_vars = OptVariables.from_json(the_path)
-            new_vars.as_dict == self.vars.as_dict()
+            assert new_vars.as_dict() == self.vars.as_dict()
         finally:
             shutil.rmtree(tempdir)
+
+    def test_tabulate_displays_column_values(self):
+        v1 = BoundedVariable("a", 2, 0, 3, descr="var a")
+        v2 = BoundedVariable("b", 0, -1, 1, fixed=True)
+        v3 = BoundedVariable("c", -1, -10, 10)
+        opt_vars = OptVariables([v3, v1, v2])
+
+        table = opt_vars.tabulate()
+
+        table_pattern = "\n".join(
+            [
+                ".*",
+                ".*Name.*Value.*Lower Bound.*Upper Bound.*Fixed.*Description.*",
+                ".*",
+                ".*a.*2.*0.*3.*False.*var a.*",
+                ".*",
+                ".*b.*0.*-1.*1.*True.* .*",
+                ".*",
+                ".*c.*-1.*-10.*10.*False.* .*",
+                ".*",
+            ]
+        )
+        assert len(table.split("\n")) == 9
+        assert re.match(table_pattern, table, flags=re.MULTILINE)
