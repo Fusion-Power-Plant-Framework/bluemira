@@ -136,7 +136,7 @@ def circular_coil_inductance_kirchhoff(radius, rc):
 def greens_psi(xc, zc, x, z, d_xc=0, d_zc=0):
     """
     Calculate poloidal flux at (x, z) due to a unit current at (xc, zc)
-    using Greens function.
+    using a Greens function.
 
     Parameters
     ----------
@@ -189,6 +189,30 @@ def greens_psi(xc, zc, x, z, d_xc=0, d_zc=0):
 
 @nb.jit(nopython=True)
 def greens_dpsi_dx(xc, zc, x, z, d_xc=0, d_zc=0):
+    """
+    Calculate the radial derivative of the poloidal flux at (x, z)
+    due to a unit current at (xc, zc) using a Greens function.
+
+    Parameters
+    ----------
+    xc: float or 1-D array
+        Coil x coordinates [m]
+    zc: float or 1-D array
+        Coil z coordinates [m]
+    x: float or np.array(N, M)
+        Calculation x locations
+    z: float or np.array(N, M)
+        Calculation z
+    d_xc: float
+        The coil half-width (overload argument)
+    d_zc: float
+        The coil half-height (overload argument)
+
+    Returns
+    -------
+    dpsi_dx: float or np.array(N, M)
+        Radial derivative of the poloidal flux response at (x, z)
+    """
     a = ((x + xc) ** 2 + (z - zc) ** 2) ** 0.5
     k2 = 4 * x * xc / a**2
     # Avoid NaN when coil on grid point
@@ -208,6 +232,30 @@ def greens_dpsi_dx(xc, zc, x, z, d_xc=0, d_zc=0):
 
 @nb.jit(nopython=True)
 def greens_dpsi_dz(xc, zc, x, z, d_xc=0, d_zc=0):
+    """
+    Calculate the vertical derivative of the poloidal flux at (x, z)
+    due to a unit current at (xc, zc) using a Greens function.
+
+    Parameters
+    ----------
+    xc: float or 1-D array
+        Coil x coordinates [m]
+    zc: float or 1-D array
+        Coil z coordinates [m]
+    x: float or np.array(N, M)
+        Calculation x locations
+    z: float or np.array(N, M)
+        Calculation z
+    d_xc: float
+        The coil half-width (overload argument)
+    d_zc: float
+        The coil half-height (overload argument)
+
+    Returns
+    -------
+    dpsi_dz: float or np.array(N, M)
+        Vertical derivative of the poloidal flux response at (x, z)
+    """
     a = ((x + xc) ** 2 + (z - zc) ** 2) ** 0.5
     k2 = 4 * x * xc / a**2
     k2 = clip_nb(k2, GREENS_ZERO, 1.0 - GREENS_ZERO)
@@ -253,7 +301,6 @@ def greens_Bx(xc, zc, x, z, d_xc=0, d_zc=0):  # noqa :N802
     Raises
     ------
     ZeroDivisionError
-        if xc <= 0
         if x <= 0
     """
     return -1 / x * greens_dpsi_dz(xc, zc, x, z, d_xc, d_zc)
@@ -288,7 +335,6 @@ def greens_Bz(xc, zc, x, z, d_xc=0, d_zc=0):  # noqa :N802
     Raises
     ------
     ZeroDivisionError
-        if xc <= 0
         if x <= 0
     """
     return 1 / x * greens_dpsi_dx(xc, zc, x, z, d_xc, d_zc)
