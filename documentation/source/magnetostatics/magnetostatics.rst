@@ -30,6 +30,10 @@ simply multiply the Green's functions by the current at the source point in AmpÃ
     The above Green's functions are effectively for an infinitely thin filament and
     diverge logarithmically as the evaluation point approaches the source point.
 
+.. Warning::
+    The above Green's functions should only be used for :math:`x` > 0. Errors and
+    garbage are to be expected for :math:`x` <= 0.
+
 Semi-analytical functions
 #########################
 
