@@ -39,14 +39,14 @@ def f_ineq_constraint(geom: TripleArc) -> np.ndarray:
 def df_ineq_constraint(geom: TripleArc) -> np.ndarray:
     """Inequality constraint gradient for TripleArc."""
     free_vars = geom.variables.get_normalised_values()
-    g = np.zeros((len(free_vars), 1))
+    g = np.zeros((1, len(free_vars)))
     if not geom.variables["a1"].fixed:
         idx_a1 = tools.get_x_norm_index(geom.variables, "a1")
-        g[idx_a1] = 1
+        g[0][idx_a1] = 1
     if not geom.variables["a2"].fixed:
         idx_a2 = tools.get_x_norm_index(geom.variables, "a2")
-        g[idx_a2] = 1
-    return g[0, :]
+        g[0][idx_a2] = 1
+    return g
 
 
 def tol() -> np.ndarray:

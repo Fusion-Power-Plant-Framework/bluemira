@@ -40,11 +40,11 @@ def f_ineq_constraint(geom: SextupleArc) -> np.ndarray:
 def df_ineq_constraint(geom: SextupleArc) -> np.ndarray:
     """Inequality constraint gradient for TripleArc."""
     x_norm = geom.variables.get_normalised_values()
-    gradient = np.zeros(len(x_norm))
+    gradient = np.zeros((1, len(x_norm)))
     for var in ["a1", "a2", "a3", "a4", "a5"]:
         if not geom.variables[var].fixed:
             var_idx = tools.get_x_norm_index(geom.variables, var)
-            gradient[var_idx] = 1
+            gradient[0][var_idx] = 1
     return gradient
 
 
