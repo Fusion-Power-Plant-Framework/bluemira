@@ -200,7 +200,17 @@ def greens_dpsi_dz(xc, zc, x, z, d_xc=0, d_zc=0):
     k2 = clip_nb(k2, GREENS_ZERO, 1.0 - GREENS_ZERO)
     v2 = x**2 + xc**2 + h2
     d2 = (xc - x) ** 2 + h2
-    return MU_0_2PI * (h / np.sqrt(u2)) * (v2 / d2 * ellipe_nb(k2) - ellipk_nb(k2))
+    return MU_0_2PI * (h / np.sqrt(u2)) * (ellipk_nb(k2) - v2 / d2 * ellipe_nb(k2))
+
+
+@nb.jit(nopython=True)
+def greens_Bx_new(xc, zc, x, z, d_xc=0, d_zc=0):  # noqa :N802
+    return -1 / x * greens_dpsi_dz(xc, zc, x, z, d_xc, d_zc)
+
+
+@nb.jit(nopython=True)
+def greens_Bz_new(xc, zc, x, z, d_xc=0, d_zc=0):  # noqa :N802
+    return 1 / x * greens_dpsi_dx(xc, zc, x, z, d_xc, d_zc)
 
 
 @nb.jit(nopython=True)
