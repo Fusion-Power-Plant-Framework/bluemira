@@ -26,7 +26,7 @@ import numba as nb
 import numpy as np
 from scipy.special import ellipe, ellipk
 
-from bluemira.base.constants import MU_0, MU_0_4PI
+from bluemira.base.constants import MU_0, MU_0_2PI, MU_0_4PI
 
 __all__ = ["greens_psi", "greens_Bx", "greens_Bz", "greens_all"]
 
@@ -173,11 +173,34 @@ def greens_psi(xc, zc, x, z, d_xc=0, d_zc=0):
     k2 = clip_nb(k2, GREENS_ZERO, 1.0 - GREENS_ZERO)
     # K, E in scipy are set as K(k^2), E(k^2)
     return (
-        2e-7  # MU_0 / (2 * np.pi)
+        MU_0_2PI
         * np.sqrt(x * xc)
         * ((2 - k2) * ellipk_nb(k2) - 2 * ellipe_nb(k2))
         / np.sqrt(k2)
     )
+
+
+@nb.jit(nopython=True)
+def greens_dpsi_dx(xc, zc, x, z, d_xc=0, d_zc=0):
+    h2 = (z - zc) ** 2
+    u2 = (x + xc) ** 2 + h2
+    k2 = 4 * x * xc / u2
+    k2 = clip_nb(k2, GREENS_ZERO, 1.0 - GREENS_ZERO)
+    d2 = (xc - x) ** 2 + h2
+    w2 = xc**2 - x**2 - h2
+    return MU_0_2PI * (x / np.sqrt(u2)) * (w2 / d2 * ellipe_nb(k2) + ellipk_nb(k2))
+
+
+@nb.jit(nopython=True)
+def greens_dpsi_dz(xc, zc, x, z, d_xc=0, d_zc=0):
+    h = z - zc
+    h2 = h**2
+    u2 = (x + xc) ** 2 + h2
+    k2 = 4 * x * xc / u2
+    k2 = clip_nb(k2, GREENS_ZERO, 1.0 - GREENS_ZERO)
+    v2 = x**2 + xc**2 + h2
+    d2 = (xc - x) ** 2 + h2
+    return MU_0_2PI * (h / np.sqrt(u2)) * (v2 / d2 * ellipe_nb(k2) - ellipk_nb(k2))
 
 
 @nb.jit(nopython=True)
@@ -217,9 +240,7 @@ def greens_Bx(xc, zc, x, z, d_xc=0, d_zc=0):  # noqa :N802
     k2 = clip_nb(k2, GREENS_ZERO, 1.0 - GREENS_ZERO)
     i1 = ellipk_nb(k2) / a
     i2 = ellipe_nb(k2) / (a**3 * (1 - k2))
-    return 2e-7 * (  # MU_0 / (2 * np.pi)
-        (z - zc) * (-i1 + i2 * ((z - zc) ** 2 + x**2 + xc**2)) / x
-    )
+    return MU_0_2PI * ((z - zc) * (-i1 + i2 * ((z - zc) ** 2 + x**2 + xc**2)) / x)
 
 
 @nb.jit(nopython=True)
