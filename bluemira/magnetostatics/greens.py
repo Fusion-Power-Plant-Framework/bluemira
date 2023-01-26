@@ -166,14 +166,13 @@ def greens_psi(xc, zc, x, z, d_xc=0, d_zc=0):
 
     Notes
     -----
-    \t:math:`{\\psi}(x, z)=\\int\\int G(x, z; x_{c}, z_{c})J_{{\\phi}}`
-    \t:math:`(x_{c}, z_{c})dx_{c}dz_{c}`\n
-    Where:
-    \t:math:`G(x, z; x_{c}, z_{c})=\\dfrac{{\\mu}_{0}}{2{\\pi}}`
+    \t:math:`G_{\\psi}(x_{c}, z_{c}; x, z) = \\dfrac{{\\mu}_{0}}{2{\\pi}}`
     \t:math:`\\dfrac{\\sqrt{xx_{c}}}{k}`
     \t:math:`[(2-\\mathbf{K}(k)-2\\mathbf{E}(k)]`\n
+    Where:
     \t:math:`k^{2}\\equiv\\dfrac{4xx_{c}}{(x+x_{c})^{2}+(z-z_{c})^{2}}`\n
-    \t:math:`J_{\\phi}(x_{c}, z_{c}) = 1`
+    \t:math:`\\mathbf{K} \\equiv` complete elliptic integral of the first kind\n
+    \t:math:`\\mathbf{E} \\equiv` complete elliptic integral of the second kind
     """
     k2 = 4 * x * xc / ((x + xc) ** 2 + (z - zc) ** 2)
     # Avoid NaN when coil on grid point
@@ -255,6 +254,10 @@ def greens_dpsi_dz(xc, zc, x, z, d_xc=0, d_zc=0):
     -------
     dpsi_dz: float or np.array(N, M)
         Vertical derivative of the poloidal flux response at (x, z)
+
+    Notes
+    -----
+
     """
     a = ((x + xc) ** 2 + (z - zc) ** 2) ** 0.5
     k2 = 4 * x * xc / a**2
