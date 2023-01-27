@@ -18,6 +18,7 @@
 #
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
+from copy import deepcopy
 from dataclasses import asdict, dataclass
 from typing import Dict, Generic, Iterable, List, Optional, TypeVar, Union
 
@@ -166,7 +167,7 @@ def optimise_geometry(
         df_obj = _to_optimiser_callable(df_objective, geom)
     else:
         df_obj = None
-    ineq_constraints_list = _get_shape_ineq_constraint(geom)
+    ineq_constraints_list = deepcopy(_get_shape_ineq_constraint(geom))
     for constraint in ineq_constraints:
         ineq_constraints_list.append(constraint)
     for koz in keep_out_zones:
