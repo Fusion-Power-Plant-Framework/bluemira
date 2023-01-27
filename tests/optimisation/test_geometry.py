@@ -181,7 +181,8 @@ class TestGeometry:
 
         def d_sum_angles(geom: SextupleArc) -> np.ndarray:
             grad = np.zeros(len(geom.variables.get_normalised_values()))
-            grad[-5:] = 1
+            for angle in angle_vars:
+                grad[geom._get_x_norm_index(angle)] = 1
             return grad
 
         arc = SextupleArc()
