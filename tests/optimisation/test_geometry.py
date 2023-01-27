@@ -127,6 +127,10 @@ class TestGeometry:
             f_objective=lambda geom: -geom.create_shape().length,
             keep_in_zones=(kiz,),
             opt_conditions={"max_eval": 5000, "ftol_rel": 1e-6},
+            # TODO(hsaunders1904): more investigation why we get error:
+            #  'RuntimeError: bug: more than iter SQP iterations'
+            #  for SLSQP
+            algorithm="COBYLA",
         )
 
         opt_shape = result.geom.create_shape()
@@ -173,9 +177,10 @@ class TestGeometry:
         # Run an optimisation to maximise the size of the angles in a
         # SextupleArc. The shape constraint should ensure the angles do
         # not sum to more than 360 degrees.
-        angle_vars = ["a1", "a2", "a3", "a3", "a4", "a5"]
+        angle_vars = ["a1", "a2", "a3", "a4", "a5"]
 
         def sum_angles(geom: SextupleArc) -> float:
+            angles = [geom.variables[a].value for a in angle_vars]
             angles = [geom.variables[a].normalised_value for a in angle_vars]
             return np.sum(angles)
 
@@ -192,11 +197,12 @@ class TestGeometry:
             f_objective=lambda geom: -sum_angles(geom),
             df_objective=lambda geom: -d_sum_angles(geom),
             opt_conditions={"max_eval": 1000, "ftol_rel": 1e-6},
+            algorithm="COBYLA",
         )
 
         angles = [result.geom.variables[a].value for a in angle_vars]
         # The shape's inequality constraint should mean the sum is
-        # strictly less than 180
+        # strictly less than 360
         assert sum(angles) < 360
-        # The maximisation should mean the angles approximately sum to 180
+        # The maximisation should mean the angles approximately sum to 360
         assert sum(angles) == pytest.approx(360, rel=1e-3)

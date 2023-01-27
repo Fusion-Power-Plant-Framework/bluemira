@@ -180,7 +180,11 @@ class NloptOptimiser(Optimiser):
                 f"constraints."
             )
         constraint = _Constraint(
-            _ConstraintType.EQUALITY, f_constraint, tolerance, df_constraint
+            _ConstraintType.EQUALITY,
+            f_constraint,
+            tolerance,
+            df_constraint,
+            bounds=(self.lower_bounds, self.upper_bounds),
         )
         self._opt.add_equality_mconstraint(constraint.f, constraint.tolerance)
         self._eq_constraints.append(constraint)
@@ -206,7 +210,11 @@ class NloptOptimiser(Optimiser):
                 f"constraints."
             )
         constraint = _Constraint(
-            _ConstraintType.INEQUALITY, f_constraint, tolerance, df_constraint
+            _ConstraintType.INEQUALITY,
+            f_constraint,
+            tolerance,
+            df_constraint,
+            bounds=(self.lower_bounds, self.upper_bounds),
         )
         self._opt.add_inequality_mconstraint(constraint.nlopt_call, constraint.tolerance)
         self._ineq_constraints.append(constraint)
@@ -256,6 +264,12 @@ class NloptOptimiser(Optimiser):
         Set to `-np.inf` to unbound the parameter's minimum.
         """
         self._opt.set_lower_bounds(bounds)
+        # As we use the optimisation variable bounds when calculating an
+        # approximate derivative, we must set the new bounds on the
+        # objective function and constraints.
+        self._objective.set_approx_derivative_lower_bound(bounds)
+        for constraint in self._eq_constraints + self._ineq_constraints:
+            constraint.set_approx_derivative_lower_bound(bounds)
 
     def set_upper_bounds(self, bounds: np.ndarray):
         """
@@ -265,6 +279,12 @@ class NloptOptimiser(Optimiser):
         """
         # TODO(hsaunders1904): validate bounds.size
         self._opt.set_upper_bounds(bounds)
+        # As we use the optimisation variable bounds when calculating an
+        # approximate derivative, we must set the new bounds on the
+        # objective function and constraints.
+        self._objective.set_approx_derivative_upper_bound(bounds)
+        for constraint in self._eq_constraints + self._ineq_constraints:
+            constraint.set_approx_derivative_upper_bound(bounds)
 
     def _set_algorithm(self, alg: Union[str, Algorithm]):
         """Set the optimiser's algorithm."""
@@ -272,7 +292,9 @@ class NloptOptimiser(Optimiser):
 
     def _set_objective_function(self, func: Callable, df: Union[None, Callable]):
         """Wrap and set the objective function."""
-        self._objective = _NloptObjectiveFunction(func, df)
+        self._objective = _NloptObjectiveFunction(
+            func, df, bounds=(self.lower_bounds, self.upper_bounds)
+        )
         if self._keep_history:
             self._opt.set_min_objective(self._objective.call_with_history)
         else:
@@ -327,12 +349,14 @@ class _Constraint:
         f: OptimiserCallable,
         tolerance: np.ndarray,
         df: Optional[OptimiserCallable] = None,
+        bounds: Tuple[np.ndarray, np.ndarray] = (-np.inf, np.inf),
     ):
         self.constraint_type = constraint_type
         self.f = f
         self.tolerance = tolerance
         self.df = df if df is not None else self._approx_derivative
         self.f0: Optional[np.ndarray] = None
+        self.bounds = bounds
 
     def nlopt_call(self, result: np.ndarray, x: np.ndarray, grad: np.ndarray):
         """
@@ -346,7 +370,13 @@ class _Constraint:
         self.f0 = result
 
     def _approx_derivative(self, x: np.ndarray) -> np.ndarray:
-        return approx_derivative(self.f, x, f0=self.f0)
+        return approx_derivative(self.f, x, f0=self.f0, bounds=self.bounds)
+
+    def set_approx_derivative_lower_bound(self, lower_bound: np.ndarray):
+        self.bounds = (lower_bound, self.bounds[1])
+
+    def set_approx_derivative_upper_bound(self, upper_bound: np.ndarray):
+        self.bounds = (self.bounds[0], upper_bound)
 
 
 @dataclass
@@ -427,7 +457,7 @@ class _NloptObjectiveFunction:
         return self.f0
 
     def call_with_history(self, x: np.ndarray, grad: np.ndarray) -> np.ndarray:
-        """Execute the NLOpt objective function, recording the iteration history"""
+        """Execute the NLOpt objective function, recording the iteration history."""
         self.history.append(np.copy(x))
         if grad.size > 0:
             grad[:] = self.df(x)
@@ -436,6 +466,12 @@ class _NloptObjectiveFunction:
 
     def _approx_derivative(self, x: np.ndarray) -> np.ndarray:
         return approx_derivative(self.f, x, f0=self.f0, bounds=self.bounds)
+
+    def set_approx_derivative_lower_bound(self, lower_bound: np.ndarray):
+        self.bounds = (lower_bound, self.bounds[1])
+
+    def set_approx_derivative_upper_bound(self, upper_bound: np.ndarray):
+        self.bounds = (self.bounds[0], upper_bound)
 
 
 def _check_algorithm(algorithm: Union[str, Algorithm]) -> Algorithm:
