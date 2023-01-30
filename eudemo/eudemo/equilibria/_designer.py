@@ -23,6 +23,8 @@ Designer for an `Equilibrium` solving an unconstrained Tikhnov current
 gradient coil-set optimisation problem.
 """
 
+import os
+import shutil
 from dataclasses import dataclass
 from typing import Dict, Optional, Union
 
@@ -30,15 +32,32 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 from bluemira.base.designer import Designer
+from bluemira.base.file import get_bluemira_path, get_bluemira_root
 from bluemira.base.parameter_frame import Parameter, ParameterFrame
+from bluemira.codes.wrapper import transport_code_solver
 from bluemira.equilibria import Equilibrium
+from bluemira.equilibria.fem_fixed_boundary.equilibrium import (
+    FemGradShafranovFixedBoundary,
+    solve_transport_fixed_boundary,
+)
+from bluemira.equilibria.fem_fixed_boundary.fem_magnetostatic_2D import (
+    FixedBoundaryEquilibrium,
+)
+from bluemira.equilibria.fem_fixed_boundary.file import save_fixed_boundary_to_file
+from bluemira.equilibria.file import EQDSKInterface
 from bluemira.equilibria.opt_problems import UnconstrainedTikhonovCurrentGradientCOP
+from bluemira.equilibria.shapes import JohnerLCFS
 from bluemira.equilibria.solve import DudsonConvergence, PicardIterator
 from bluemira.geometry.parameterisations import PrincetonD
-from bluemira.geometry.tools import make_polygon, offset_wire
+from bluemira.geometry.tools import make_circle, make_polygon, offset_wire
 from bluemira.geometry.wire import BluemiraWire
-from eudemo.equilibria._equilibrium import EquilibriumParams, make_equilibrium
-from eudemo.equilibria.tools import EUDEMOSingleNullConstraints
+from eudemo.equilibria._equilibrium import (
+    EquilibriumParams,
+    ReferenceEquilibriumParams,
+    make_equilibrium,
+    make_reference_equilibrium,
+)
+from eudemo.equilibria.tools import EUDEMOSingleNullConstraints, ReferenceConstraints
 
 
 @dataclass
@@ -232,30 +251,6 @@ def _flatten_shape(x, z):
     zz[-1] = zmax
 
     return xx, zz
-
-
-import os
-import shutil
-from copy import deepcopy
-
-from bluemira.base.file import get_bluemira_path, get_bluemira_root
-from bluemira.codes.wrapper import transport_code_solver
-from bluemira.equilibria.fem_fixed_boundary.equilibrium import (
-    FemGradShafranovFixedBoundary,
-    solve_transport_fixed_boundary,
-)
-from bluemira.equilibria.fem_fixed_boundary.fem_magnetostatic_2D import (
-    FixedBoundaryEquilibrium,
-)
-from bluemira.equilibria.fem_fixed_boundary.file import save_fixed_boundary_to_file
-from bluemira.equilibria.file import EQDSKInterface
-from bluemira.equilibria.shapes import JohnerLCFS
-from bluemira.geometry.tools import make_circle
-from eudemo.equilibria._equilibrium import (
-    ReferenceEquilibriumParams,
-    make_reference_equilibrium,
-)
-from eudemo.equilibria.tools import ReferenceConstraints
 
 
 def get_plasmod_binary_path():
