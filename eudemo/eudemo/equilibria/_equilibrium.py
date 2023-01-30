@@ -127,6 +127,10 @@ def make_reference_equilibrium(
     nx: int = 65,
     nz: int = 65,
 ):
+    """
+    Make a crude reference equilibrium, scaling coils and grid for a first pass
+    solve.
+    """
     if isinstance(_params, dict):
         params = ReferenceEquilibriumParams.from_dict(_params)
     else:

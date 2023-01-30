@@ -614,14 +614,7 @@ class FreeBoundaryEquilibriumFromFixedDesigner(Designer[Equilibrium]):
         """
         Create the `UnconstrainedTikhonovCurrentGradientCOP` optimisation problem.
         """
-
         eq_targets = ReferenceConstraints(lcfs_shape, n_points)
-        # from bluemira.utilities.optimiser import Optimiser
-        # from bluemira.equilibria.opt_constraints import FieldNullConstraint
-        # coords = lcfs_shape.discretize(byedges=True)
-        # arg_x = np.argmin(coords.z)
-        # return TikhonovCurrentCOP(eq.coilset, eq, eq_targets, gamma=gamma, optimiser=Optimiser("SLSQP", opt_conditions={"ftol_rel": 1e-6}),
-        # constraints=[FieldNullConstraint(coords.x[arg_x], coords.z[arg_x], tolerance=1e-4)])
         return UnconstrainedTikhonovCurrentGradientCOP(
             eq.coilset, eq, eq_targets, gamma=gamma
         )
