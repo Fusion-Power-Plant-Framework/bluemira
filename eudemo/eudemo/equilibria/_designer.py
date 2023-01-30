@@ -26,15 +26,13 @@ gradient coil-set optimisation problem.
 from dataclasses import dataclass
 from typing import Dict, Optional, Union
 
+import matplotlib.pyplot as plt
 import numpy as np
 
 from bluemira.base.designer import Designer
 from bluemira.base.parameter_frame import Parameter, ParameterFrame
 from bluemira.equilibria import Equilibrium
-from bluemira.equilibria.opt_problems import (
-    TikhonovCurrentCOP,
-    UnconstrainedTikhonovCurrentGradientCOP,
-)
+from bluemira.equilibria.opt_problems import UnconstrainedTikhonovCurrentGradientCOP
 from bluemira.equilibria.solve import DudsonConvergence, PicardIterator
 from bluemira.geometry.parameterisations import PrincetonD
 from bluemira.geometry.tools import make_polygon, offset_wire
@@ -552,14 +550,14 @@ class FreeBoundaryEquilibriumFromFixedDesigner(Designer[Equilibrium]):
             **settings,
         )
         iterator_program()
-        import matplotlib.pyplot as plt
 
-        f, ax = plt.subplots()
-        eq.plot(ax=ax)
-        eq.coilset.plot(ax=ax)
-        ax.plot(data.xbdry, data.zbdry, "", marker="o")
-        opt_problem.targets.plot(ax=ax)
-        plt.show()
+        if settings["plot"]:
+            _, ax = plt.subplots()
+            eq.plot(ax=ax)
+            eq.coilset.plot(ax=ax)
+            ax.plot(data.xbdry, data.zbdry, "", marker="o")
+            opt_problem.targets.plot(ax=ax)
+            plt.show()
 
         self._update_params_from_eq(eq)
 
