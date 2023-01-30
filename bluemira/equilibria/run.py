@@ -22,8 +22,10 @@
 """
 Interface for building and loading equilibria and coilset designs
 """
+from __future__ import annotations
 
 from copy import deepcopy
+from dataclasses import dataclass, fields
 from typing import Dict, List, Optional, Type
 
 import matplotlib.pyplot as plt
@@ -61,52 +63,45 @@ from bluemira.utilities.optimiser import Optimiser
 from bluemira.utilities.positioning import PositionMapper
 
 
+@dataclass
 class Snapshot:
     """
     Abstract object for grouping of equilibria objects in a given state.
 
     Parameters
     ----------
-    eq: Equilibrium
+    eq
         The equilibrium at the snapshot
-    coilset: CoilSet
+    coilset
         The coilset at the snapshot
-    opt_problem: CoilsetOptimisationProblem
+    opt_problem
         The constraints at the snapshot
-    profiles: Profile
+    profiles
         The profile at the snapshot
-    optimiser: EquilibriumOptimiser object
+    optimiser
         The optimiser for the snapshot
-    limiter: Limiter
+    limiter
         The limiter for the snapshot
-    tfcoil: Coordinates
+    tfcoil
         The PF coil placement boundary
     """
 
-    def __init__(
-        self,
-        eq,
-        coilset,
-        opt_problem,
-        profiles,
-        limiter=None,
-        tfcoil=None,
-    ):
-        self.eq = deepcopy(eq)
-        self.coilset = deepcopy(coilset)
-        if opt_problem is not None:
-            self.constraints = opt_problem
-        else:
-            self.constraints = None
-        if profiles is not None:
-            self.profiles = deepcopy(profiles)
-        else:
-            self.profiles = None
-        if limiter is not None:
-            self.limiter = deepcopy(limiter)
-        else:
-            self.limiter = None
-        self.tf = tfcoil
+    eq: Equilibrium
+    coilset: CoilSet
+    constraints: Optional[CoilsetOptimisationProblem] = None
+    profiles: Optional[Profile] = None
+    optimiser: Optional[EquilibriumOptimiser] = None  # noqa: F821
+    limiter: Optional[Limiter] = None
+    tfcoil: Optional[Coordinates] = None  # noqa: F821
+
+    def __post_init__(self):
+        """Copy some variables on initialisation"""
+        for field in fields(type(self)):
+            if (val := getattr(self, field.name)) is not None and field.name not in (
+                "constraints",
+                "tfcoil",
+            ):
+                setattr(self, field.name, deepcopy(val))
 
 
 class PulsedCoilsetDesign:
@@ -143,43 +138,44 @@ class PulsedCoilsetDesign:
             R_0, self.params.A.value, self.params.tk_sol_ib.value
         )
 
-        relaxed = all(self.coilset._flag_sizefix)
         i_max = 30
-        if not relaxed:
-            for i in range(i_max):
-                coilset = deepcopy(self.coilset)
-                breakdown = Breakdown(coilset, self.grid)
-                constraints = deepcopy(self._coil_cons)
+        relaxed = all(self.coilset._flag_sizefix)
+        for i in range(i_max):
+            coilset = deepcopy(self.coilset)
+            breakdown = Breakdown(coilset, self.grid)
+            constraints = deepcopy(self._coil_cons)
 
-                max_currents = self.coilset.get_max_currents(self.params.I_p.value)
-
+            if relaxed:
+                max_currents = self.coilset.get_max_current(0)
+            else:
+                max_currents = self.coilset.get_max_current(self.params.I_p.value)
                 coilset.get_control_coils().current = max_currents
                 coilset.discretisation = self._eq_settings["coil_mesh_size"]
 
-                problem = self._bd_prob_cls(
-                    breakdown.coilset,
-                    breakdown,
-                    strategy,
-                    B_stray_max=self.params.B_premag_stray_max.value,
-                    B_stray_con_tol=self._bd_settings["B_stray_con_tol"],
-                    n_B_stray_points=self._bd_settings["n_B_stray_points"],
-                    optimiser=self._bd_opt,
-                    max_currents=max_currents,
-                    constraints=constraints,
-                )
-                coilset = problem.optimise(x0=max_currents, fixed_coils=False)
-                breakdown.set_breakdown_point(*strategy.breakdown_point)
-                psi_premag = breakdown.breakdown_psi
+            problem = self._bd_prob_cls(
+                breakdown.coilset,
+                breakdown,
+                strategy,
+                B_stray_max=self.params.B_premag_stray_max.value,
+                B_stray_con_tol=self._bd_settings["B_stray_con_tol"],
+                n_B_stray_points=self._bd_settings["n_B_stray_points"],
+                optimiser=self._bd_opt,
+                max_currents=max_currents,
+                constraints=constraints,
+            )
+            coilset = problem.optimise(x0=max_currents, fixed_coils=False)
+            breakdown.set_breakdown_point(*strategy.breakdown_point)
+            psi_premag = breakdown.breakdown_psi
 
-                if i == 0:
-                    psi_1 = psi_premag
-                elif np.isclose(psi_premag, psi_1, rtol=1e-2):
-                    # Coilset max currents known because the coilset geometry is fixed
-                    break
-            else:
-                raise EquilibriaError(
-                    "Unable to relax the breakdown optimisation for coil sizes."
-                )
+            if i == 0:
+                psi_1 = psi_premag
+            if relaxed or np.isclose(psi_premag, psi_1, rtol=1e-2):
+                break
+
+        else:
+            raise EquilibriaError(
+                "Unable to relax the breakdown optimisation for coil sizes."
+            )
 
         bluemira_print(f"Premagnetisation flux = {2*np.pi * psi_premag:.2f} V.s")
 
@@ -257,17 +253,18 @@ class PulsedCoilsetDesign:
 
     def _get_max_currents(self, coilset):
         factor = self._eq_settings["peak_PF_current_factor"]
-        return coilset.get_max_currents(factor * self.params.I_p.value)
+        return coilset.get_max_current(factor * self.params.I_p.value)
 
     def _get_sof_eof_opt_problems(self, psi_sof, psi_eof):
 
         eq_ref = self.snapshots[self.EQ_REF].eq
+        max_currents_pf = self._get_max_currents(self.coilset.get_coiltype("PF"))
         max_currents = self._get_max_currents(self.coilset)
 
         opt_problems = []
         for psi_boundary in [psi_sof, psi_eof]:
             eq = deepcopy(eq_ref)
-            eq.coilset.adjust_sizes(max_currents)
+            eq.coilset.get_coiltype("PF").resize(max_currents_pf)
             optimiser = deepcopy(self._eq_opt)
 
             current_constraints = []
@@ -611,25 +608,22 @@ class OptimisedPulsedCoilsetDesign(PulsedCoilsetDesign):
         Set the current bounds on the current optimisation problems, fix coil sizes, and
         mesh.
         """
-        pf_coil_names = coilset.get_coiltype("PF").name
-        pf_current_vectors = [
-            problem.eq.coilset.get_coiltype("PF").get_control_coils().current
-            for problem in sub_opt_problems
-        ]
-
-        max_pf_currents = np.max(np.abs(pf_current_vectors), axis=0)
         max_cs_currents = coilset.get_coiltype("CS").get_max_current(0.0)
-        max_currents = np.concatenate([max_pf_currents, max_cs_currents])
 
         for problem in sub_opt_problems:
-            for pf_name, max_current in zip(pf_coil_names, max_pf_currents):
-                problem.eq.coilset[pf_name].resize(max_current)
-                problem.eq.coilset[pf_name].fix_size()
-                problem.eq.coilset[pf_name].discretisation = self._eq_settings[
-                    "coil_mesh_size"
-                ]
-            problem.set_current_bounds(max_currents)
+            pf_coils = problem.eq.coilset.get_coiltype("PF").get_control_coils()
+            pf_current = pf_coils.current
+            max_pf_current = np.max(np.abs(pf_current))
+            pf_coils.resize(max_pf_current)
+            pf_coils.fix_sizes()
+            pf_coils.discretisation = self._eq_settings.coil_mesh_size
+            problem.set_current_bounds(
+                np.concatenate(
+                    [np.full(pf_current.size, max_pf_current), max_cs_currents]
+                )
+            )
+
         consolidated_coilset = deepcopy(problem.eq.coilset)
-        consolidated_coilset.get_control_coils().current = 0
         consolidated_coilset.fix_sizes()
+        consolidated_coilset.get_control_coils().current = 0
         return consolidated_coilset

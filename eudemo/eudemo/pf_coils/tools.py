@@ -189,7 +189,7 @@ def make_coilset(
     for s in solenoid:
         s.fix_size()
 
-    tf_track = offset_wire(tf_boundary, 1, join="arc")
+    tf_track = offset_wire(tf_boundary, 1)
     x_c, z_c = make_PF_coil_positions(
         tf_track,
         n_PF,
@@ -208,7 +208,6 @@ def make_coilset(
             j_max=PF_jmax,
             b_max=PF_bmax,
         )
-        coil.fix_size()
         pf_coils.append(coil)
     coilset = CoilSet(*pf_coils + solenoid, control_names=True)
     coilset.assign_material("PF", j_max=PF_jmax, b_max=PF_bmax)
@@ -266,6 +265,10 @@ def make_coil_mapper(track, exclusion_zones, coils):
     -------
     mapper: PositionMapper
         Position mapper for coil position interpolation
+
+    Notes
+    -----
+    TODO use coilset directly instead of list of coils
     """
     # Break down the track into subsegments
     if exclusion_zones:
@@ -282,14 +285,14 @@ def make_coil_mapper(track, exclusion_zones, coils):
     # Check if multiple coils are on the same segment and split the segments and make
     # PathInterpolators
     interpolator_dict = {}
-    for segment, bin in zip(segments, coil_bins):
-        if len(bin) < 1:
+    for segment, _bin in zip(segments, coil_bins):
+        if len(_bin) < 1:
             bluemira_warn("There is a segment of the track which has no coils on it.")
-        elif len(bin) == 1:
-            coil = bin[0]
+        elif len(_bin) == 1:
+            coil = _bin[0]
             interpolator_dict[coil.name] = PathInterpolator(segment)
         else:
-            coils = bin
+            coils = _bin
             l_values = np.array(
                 [segment.parameter_at([c.x, 0, c.z], tolerance=VERY_BIG) for c in coils]
             )

@@ -550,8 +550,11 @@ class Coil(CoilFieldsMixin):
         """Resize coil given a current"""
         if not self._flag_sizefix:
             # Adjust the size of the coil
-            self.dx, self.dz = self._make_size(current)
-            self._set_coil_attributes()
+            self._resize(current)
+
+    def _resize(self, current):
+        self.dx, self.dz = self._make_size(current)
+        self._set_coil_attributes()
 
     def _re_discretise(self):
         """

@@ -171,8 +171,49 @@ class CoilGroup(CoilGroupFieldsMixin):
         """
         Fix the sizes of coils in CoilGroup
         """
-        for fx in self.__list_getter("fix_size"):
-            fx()
+        self.__run_func("fix_size")
+
+    def resize(self, currents: Union[float, List, np.ndarray]):
+        """
+        Resize coils based on their current if their size is not fixed
+        """
+        self.__run_func("resize", currents)
+
+    def _resize(self, currents: Union[float, List, np.ndarray]):
+        """
+        Resize coils based on their current
+
+        Notes
+        -----
+        Ignores any protections on their size
+        """
+        self.__run_func("_resize", currents)
+
+    def __run_func(self, func: str, *args, **kwargs):
+        """
+        Runs a function with no outputs that exists on a coil or coilgroup
+
+        This function aims to deal with the edge cases that are around nested coilgroups
+        If kwargs are passed they will be passed to all function calls as is.
+        If args are passed an attempt is made to push the right shaped argument to a
+        given function.
+        """
+        if not args:
+            for ff in self.__list_getter(func):
+                ff(**kwargs)
+        else:
+            args = list(args)
+            funclist = self.__list_getter(func)
+            len_funclist = len(funclist)
+            for no, arg in enumerate(args):
+                if isinstance(arg, (float, int)):
+                    args[no] = np.full(len_funclist, arg)
+                elif len(arg) != len_funclist:
+                    raise ValueError(
+                        f"length of {arg} != number of coilgroups ({len_funclist})"
+                    )
+            for ff, *_args in zip(funclist, *args):
+                ff(*_args, **kwargs)
 
     def add_coil(self, *coils: Union[Coil, CoilGroup[Coil]]):
         """Add coils to the coil group"""
@@ -460,7 +501,7 @@ class CoilGroup(CoilGroupFieldsMixin):
         np.ndarray
         """
         return np.where(
-            np.isnan(self.j_max),
+            np.isnan(self.j_max) | ~self._flag_sizefix,  # or not
             max_current,
             get_max_current(self.dx, self.dz, self.j_max),
         )
