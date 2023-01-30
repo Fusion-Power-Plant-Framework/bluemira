@@ -56,7 +56,6 @@ from eudemo.equilibria import (
 from eudemo.ivc import design_ivc
 from eudemo.ivc.divertor_silhouette import Divertor
 from eudemo.params import EUDEMOReactorParams
-from eudemo.pf_coils import PFCoilsDesigner
 from eudemo.radial_build import radial_build
 from eudemo.tf_coils import TFCoil, TFCoilBuilder, TFCoilDesigner
 from eudemo.thermal_shield import VacuumVesselThermalShield
