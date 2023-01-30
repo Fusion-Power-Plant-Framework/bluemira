@@ -575,7 +575,9 @@ class FreeBoundaryEquilibriumFromFixedDesigner(Designer[Equilibrium]):
 
     def read(self) -> Equilibrium:
         """Load an equilibrium from a file."""
-        pass
+        eq = Equilibrium.from_eqdsk(self.file_path)
+        self._update_params_from_eq(eq)
+        return eq
 
     def _make_tf_boundary(
         self,

@@ -91,6 +91,14 @@ def build_vacuum_vessel(params, build_config, ivc_koz) -> VacuumVessel:
     return VacuumVessel(vv_builder.build())
 
 
+def build_vacuum_vessel_thermal_shield(
+    params, build_config, vv_koz
+) -> VacuumVesselThermalShield:
+    """Build the vacuum vessel thermal shield around the given  VV keep-out zone"""
+    vvts_builder = VVTSBuilder(params, build_config, vv_koz)
+    return VacuumVesselThermalShield(vvts_builder.build())
+
+
 def build_divertor(params, build_config, div_silhouette) -> Divertor:
     """Build the divertor given a silhouette of a sector."""
     builder = DivertorBuilder(params, build_config, div_silhouette)
@@ -154,6 +162,7 @@ if __name__ == "__main__":
     reactor.vacuum_vessel = build_vacuum_vessel(
         params, build_config.get("Vacuum vessel", {}), ivc_boundary
     )
+
     reactor.divertor = build_divertor(
         params, build_config.get("Divertor", {}), divertor_face
     )
@@ -161,13 +170,12 @@ if __name__ == "__main__":
         params, build_config.get("Blanket", {}), blanket_face
     )
 
-    # thermal_shield_config = build_config.get("Thermal shield", {})
-    # vv_thermal_shield = VVTSBuilder(
-    #     params,
-    #     thermal_shield_config.get("Vacuum vessel", {}),
-    #     keep_out_zone=reactor.vacuum_vessel.xz_boundary(),
-    # )
-    # reactor.vv_thermal = vv_thermal_shield.build()
+    thermal_shield_config = build_config.get("Thermal shield", {})
+    reactor.vv_thermal = build_vacuum_vessel_thermal_shield(
+        params,
+        thermal_shield_config.get("VVTS", {}),
+        reactor.vacuum_vessel.xz_boundary(),
+    )
 
     # reactor.tf_coils = build_tf_coils(
     #     params,
@@ -185,4 +193,4 @@ if __name__ == "__main__":
     # )
     # coilset = pf_designer.execute()
 
-    # reactor.show_cad()
+    reactor.show_cad()
