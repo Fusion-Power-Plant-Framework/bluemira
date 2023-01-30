@@ -494,7 +494,7 @@ class CoilGroup(CoilGroupFieldsMixin):
         np.ndarray
         """
         return np.where(
-            np.isnan(self.j_max) ^ ~self._flag_sizefix,  # or not
+            np.isnan(self.j_max) | ~self._flag_sizefix,  # or not
             max_current,
             get_max_current(self.dx, self.dz, self.j_max),
         )
