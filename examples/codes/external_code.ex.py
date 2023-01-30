@@ -43,6 +43,9 @@ from enum import auto
 from pprint import pprint
 from typing import Dict, List, Union
 
+# %%
+from ext_code_script import get_filename
+
 from bluemira.base.parameter_frame import Parameter, ParameterFrame
 from bluemira.codes.interface import CodesSetup, CodesSolver, CodesTask, CodesTeardown
 from bluemira.codes.interface import RunMode as BaseRunMode
@@ -58,11 +61,19 @@ from bluemira.codes.utilities import ParameterMapping
 # Firstly we define the options available in the code and its name.
 # In this example we're wrapping the python script
 # [ext_code_script.py](ext_code_script.py).
-# Unusually the BINARY global variable is a list instead of a string because there are
-# two base commands to run the script from the commandline.
+# The script reads in a file and writes out to a different file with
+# two possible modifications:
+#   * Add a header
+#   * Add line numbers
 #
-# The program has been named "External Code" for simiplicity and is used to help the user
-# trace where variables come from. It is a simple script that slightly modifies
+# Unusually the BINARY global variable is a list instead of a string because there are
+# two base commands to run the script from the commandline. We have used a little hack
+# with the `get_filename` function so you don't have to find the external code script
+# file location.
+# Usually the program is in your PATH or provided by the config.
+#
+# The program has been named "External Code" for simiplicity and is used to help the
+# user trace where variables come from. It is a simple script that slightly modifies
 # a file provided to it.
 #
 # There are 3 dataclasses containing the commandline options for the code,
@@ -70,7 +81,7 @@ from bluemira.codes.utilities import ParameterMapping
 
 # %%
 PRG_NAME = "External Code"
-BINARY = ["python", "ext_code_script.py"]
+BINARY = ["python", get_filename()]
 
 
 @dataclass
@@ -89,8 +100,8 @@ class ECOpts:
 class ECInputs:
     """External Code Inputs"""
 
-    param1: float = 6
-    param2: float = None
+    param1: float = None
+    param2: float = 6
 
 
 @dataclass
@@ -194,7 +205,7 @@ class Setup(CodesSetup):
                     getattr(self.inputs, k)
                     setattr(self.inputs, k, v)
 
-        return {k: getattr(self.inputs, k) for k, v in inp.items() if v}
+        return {k: v for k, v in asdict(self.inputs).items() if v}
 
     def run(self) -> List:
         """Run mode"""
@@ -324,7 +335,24 @@ class Solver(CodesSolver):
 # Be aware `problem_settings` should be used sparingly for options that won't
 # change within the rerunning of the solver,
 # it has the same effect as modifying the default.
-# Also note the units of the parameter values returned back have been updated
+# Also note the units of the parameter values returned back have been updated.
+#
+# Some warnings will be shown because some of the situations here are usually
+# undesireable.
+# In this first block we will see 3 warnings.
+# The first 2 are the same for the `run` and `read` modes:
+#   * "No value for param1"
+#       - param 1 has its send mapping set to `False` so no value is sent to
+#         the code and therefore it is not read back in. As `read` mode is executed
+#         with the output of the `run` mode the same error is repeated.
+#
+# The 3rd is for the `mock` mode:
+#   * "No value or param2"
+#       - The mock output doesn't have a param2 output
+#
+# Notice that `param2` does not take the value given in problems settings as we
+# overwrite it because `solver.params.mappings['param2'].send == True`,
+# set in the `ECParameterFrame` default mappings.
 
 # %%
 params = {
@@ -337,7 +365,6 @@ build_config = {
     "infile": "infile.txt",
     "outfile": "outfile.txt",
 }
-
 solver = Solver(params, build_config)
 
 # Running in all the different modes
@@ -346,11 +373,18 @@ for mode in ["run", "read", "mock"]:
     out_params = solver.execute(mode)
     print(out_params)
 
+# %% [markdown]
+# 1 warning this time, we still havent sent a value for `param1` in `run` mode.
+# Notice how the default for `param2` from our `problem_settings` is used when we
+# turn off the send mapping
+
 # %%
 solver.modify_mappings({"param2": {"send": False}})
-# Change from the previous run method because mapping
-# has changed
 print(solver.execute("run"))
+
+# %% [markdown]
+# Again the same warning. This time we have modified the value of `param2` and turned
+# the send mapping back on
 
 # %%
 # problem_settings param2 overridden
@@ -358,30 +392,36 @@ solver.modify_mappings({"param2": {"send": True}})
 solver.params.param2.value = 5
 print(solver.execute("run"))
 
-# %%
-# param 2 not sent
-solver.modify_mappings({"param2": {"send": False}})
-solver.params.param2.value = None
-print(solver.execute("run"))
+# %% [markdown]
+# No warnings this time, we have now set a value for `param1` and sent it
 
 # %%
-# problem_setting param2 sent
-solver.modify_mappings({"param2": {"send": True}})
-print(solver.execute("run"))
-
-# %%
-# param 1 sent default used
 solver.modify_mappings({"param1": {"send": True}})
-solver.params.param2.set_value(5, "param1 sent with default value")
+solver.params.param1.value = 5e3
 print(solver.execute("run"))
 
+# %% [markdown]
+# Turning on the header option (that output wont change) but the source has changed
+# because we havent updated it
+
 # %%
-# param 1 sent
-solver.params.param1.value = 5
-solver.params.param2.value = 5
+solver.params.header.value = True
 print(solver.execute("run"))
+
+# %% [markdown]
+# Now we set the `param2` source and only send and not recieve the result
+
+# %%
+solver.modify_mappings({"param2": {"recv": False}})
+solver.params.param2.set_value(9, "param2 sent with new value")
+print(solver.execute("run"))
+
+# %% [markdown]
+# Now we can show all the changes to the parameters during the solver runs.
+# All Parameters have an associated history.
 
 # %%
 for param in solver.params:
-    print(param.name)
+    print(f"{param.name}\n{'-' * len(param.name)}")
     pprint(param.history())
+    print()

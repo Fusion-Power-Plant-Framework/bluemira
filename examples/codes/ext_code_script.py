@@ -22,7 +22,13 @@
 Dummy external code
 """
 
+import os
 from argparse import ArgumentParser
+
+
+def get_filename():
+    """Get filename of script"""
+    return os.path.realpath(__file__)
 
 
 def parse_args():
