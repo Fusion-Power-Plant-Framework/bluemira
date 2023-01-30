@@ -13,7 +13,7 @@ filelock==3.9.0
 flake8==6.0.0
 flake8-absolute-import==1.0.0.1
 flake8-bandit==4.1.1
-flake8-docstrings==1.6.0
+flake8-docstrings==1.7.0
 flake8-polyfill==1.0.2
 gitdb==4.0.10
 GitPython==3.1.30
