@@ -511,9 +511,13 @@ class TestCoilSet:
         coilset = copy.deepcopy(self.coilset)
         coilset["PF_1"]._flag_sizefix = False
 
+        # isnan(j_max) = False False False
+        # not flagsizefix = True False False
         np.testing.assert_allclose(coilset.get_max_current(10), [10, 5, 5])
         np.testing.assert_allclose(coilset.get_max_current(), [np.infty, 5, 5])
 
+        # isnan(j_max) = True True True
+        # not flagsizefix = True False False
         coilset.assign_material("PF", j_max=np.nan, b_max=5)
 
         np.testing.assert_allclose(coilset.get_max_current(10), [10, 10, 10])
