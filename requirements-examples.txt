@@ -35,7 +35,7 @@ pandocfilters==1.5.0
 parso==0.8.3
 pexpect==4.8.0
 pickleshare==0.7.5
-prometheus-client==0.15.0
+prometheus-client==0.16.0
 prompt-toolkit==3.0.36
 psutil==5.9.4
 ptyprocess==0.7.0
