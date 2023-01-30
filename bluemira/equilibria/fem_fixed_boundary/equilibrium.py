@@ -31,6 +31,7 @@ from dolfin import Mesh
 from tabulate import tabulate
 
 from bluemira.base.components import PhysicalComponent
+from bluemira.base.constants import MU_0
 from bluemira.base.file import get_bluemira_path, try_get_bluemira_path
 from bluemira.base.look_and_feel import bluemira_debug, bluemira_print, bluemira_warn
 from bluemira.base.parameter_frame import Parameter, ParameterFrame
@@ -150,11 +151,41 @@ def _run_transport_solver(
     transport_solver.params.update_from_frame(transport_params)
     transp_out_params = transport_solver.execute(transport_run_mode)
 
+    # PLASMOD does not produce flux functions that are consistent with its jtor...
+    jpar_true = transport_solver.get_profile("jpar")
+    pprime = transport_solver.get_profile("pprime")
+    ffprime = transport_solver.get_profile("ffprime")
+    R_0 = transp_out_params.R_0.value
+    jpar_recon = 2 * np.pi * (R_0 * pprime + ffprime / (MU_0 * R_0))
+    ratio = jpar_true / jpar_recon
+    pprime_adj = ratio * deepcopy(pprime)
+    ffprime_adj = ratio * deepcopy(ffprime)
+    # for idx in range(len(pprime)):
+    #     if np.sign(ffprime_adj[idx]) != np.sign(ffprime[idx]):
+    #         ffprime_adj[idx] *= -1
+    #     if np.sign(pprime_adj[idx]) != np.sign(pprime[idx]):
+    #         pprime_adj[idx] *= -1
+
+    jpar_adj = 2 * np.pi * (R_0 * pprime_adj + ffprime_adj / (MU_0 * R_0))
+    x = transport_solver.get_profile("x")
+    # f, ax = plt.subplots(1, 3)
+
+    # ax[0].plot(x, pprime, label="p'")
+    # ax[0].plot(x, pprime_adj, label="p' adj", ls="--")
+    # ax[1].plot(x, ffprime, label="FF'")
+    # ax[1].plot(x, ffprime_adj, label="FF' adj", ls="--")
+    # ax[2].plot(x, jpar_true, label="jpar")
+    # ax[2].plot(x, jpar_recon, label="jpar recon", ls="--")
+    # ax[2].plot(x, jpar_adj, label="jpar adj", ls="--")
+    # ax[0].legend()
+    # ax[1].legend()
+    # ax[2].legend()
+    # plt.show()
     return (
         transp_out_params,
         transport_solver.get_profile("x"),
-        transport_solver.get_profile("pprime"),
-        transport_solver.get_profile("ffprime"),
+        pprime_adj,
+        ffprime_adj,
     )
 
 

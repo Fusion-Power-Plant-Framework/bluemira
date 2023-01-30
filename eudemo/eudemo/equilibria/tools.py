@@ -288,7 +288,15 @@ class ReferenceConstraints(MagneticConstraintSet):
         elif abs(z_min) > z_max:
             # Lower single null
             constraints = [
-                FieldNullConstraint(coords.x[arg_xl], coords.z[arg_xl]),
+                FieldNullConstraint(
+                    coords.x[arg_xl], coords.z[arg_xl], weights=n_points // 5
+                ),
+                # TODO: This is a hack so I can move on with my life. I'm not even sorry.
+                FieldNullConstraint(
+                    0.85 * coords.x[arg_xu],
+                    1.35 * coords.z[arg_xu],
+                    weights=n_points // 5,
+                ),
             ]
 
         else:

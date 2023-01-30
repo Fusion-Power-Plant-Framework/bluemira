@@ -24,7 +24,7 @@
             "i_modeltype": "GYROBOHM_2",
             "i_equiltype": "q95_sawtooth",
             "i_pedestal": "SAARELMA",
-            "isawt": "FULLY_RELAXED",
+            "isawt": "SAWTEETH",
             "nx": 41,
             "nxt": 21,
             "ntglf": 11
@@ -32,15 +32,15 @@
         "fixed_equilibrium_settings": {
             "p_order": 2,
             "max_iter": 30,
-            "iter_err_max": 1e-3,
+            "iter_err_max": 1e-4,
             "relaxation": 0.05
         },
         "transport_eq_settings": {
             "lcar_mesh": 0.3,
             "max_iter": 15,
-            "iter_err_max": 5e-2,
+            "iter_err_max": 1e-3,
             "relaxation": 0.0,
-            "plot": false
+            "plot": true
         }
     },
     "Free boundary equilibrium":{
@@ -48,9 +48,9 @@
             "fixed_eq_file_path": "config/fixed_boundary_eqdsk.json",
             "file_path": "config/equilibrium_eqdsk.json",
             "settings": {
-                "iter_err_max": 1e-2,
+                "iter_err_max": 1e-4,
                 "max_iter": 50,
-                "relaxation": 0.2,
+                "relaxation": 0.1,
                 "coil_discretisation": 0.3,
                 "plot": true,
                 "nx": 127,

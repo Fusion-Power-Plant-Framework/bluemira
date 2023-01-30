@@ -558,6 +558,7 @@ class FreeBoundaryEquilibriumFromFixedDesigner(Designer[Equilibrium]):
         eq.plot(ax=ax)
         eq.coilset.plot(ax=ax)
         ax.plot(data.xbdry, data.zbdry, "", marker="o")
+        opt_problem.targets.plot(ax=ax)
         plt.show()
 
         self._update_params_from_eq(eq)
