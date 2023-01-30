@@ -116,7 +116,7 @@ class PlasmaBuilder(Builder):
         degree: float
             degrees to sweep the shape
         """
-        shell = revolve_shape(lcfs, direction=(0, 0, 1), degree=degree)
+        shell = revolve_shape(lcfs, direction=(0, 0, 1), degree=degree, label=self.LCFS)
         component = PhysicalComponent(self.LCFS, shell)
         component.display_cad_options.color = BLUE_PALETTE["PL"]
         return component
