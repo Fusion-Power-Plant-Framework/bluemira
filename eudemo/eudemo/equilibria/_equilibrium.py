@@ -108,9 +108,14 @@ class ReferenceEquilibriumParams(ParameterFrame):
     kappa: Parameter[float]
     R_0: Parameter[float]
     r_cs_in: Parameter[float]
+    g_cs_mod: Parameter[float]
+    tk_cs_casing: Parameter[float]
+    tk_cs_insulation: Parameter[float]
     tk_cs: Parameter[float]
     beta_p: Parameter[float]
     l_i: Parameter[float]
+    n_CS: Parameter[int]
+    n_PF: Parameter[int]
 
 
 def make_reference_equilibrium(
@@ -132,8 +137,11 @@ def make_reference_equilibrium(
         lcfs_shape,
         r_cs=params.r_cs_in.value + 0.5 * params.tk_cs.value,
         tk_cs=0.5 * params.tk_cs.value,
-        n_CS=5,
-        n_PF=6,
+        g_cs_mod=params.g_cs_mod.value,
+        tk_cs_casing=params.tk_cs_casing.value,
+        tk_cs_insulation=params.tk_cs_insulation.value,
+        n_CS=params.n_CS.value,
+        n_PF=params.n_PF.value,
     )
 
     grid = make_grid(

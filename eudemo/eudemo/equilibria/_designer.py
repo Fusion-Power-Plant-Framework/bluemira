@@ -254,6 +254,9 @@ def _flatten_shape(x, z):
 
 
 def get_plasmod_binary_path():
+    """
+    Get the path to the PLASMOD binary.
+    """
     if plasmod_binary := shutil.which("plasmod"):
         PLASMOD_PATH = os.path.dirname(plasmod_binary)
     else:
@@ -358,7 +361,11 @@ class FixedEquilibriumDesigner(Designer[Equilibrium]):
         return fixed_equilibrium
 
     def read(self):
+        """
+        Read in a fixed boundary equilibrium
+        """
         # TODO: Load a FixedBoundaryEquilibrium (need mesh and solver probably...)
+        # Cannot do this from just an EQDSK without loss of information.
         pass
 
     def _get_geometry_parameterisation(self):
@@ -436,9 +443,16 @@ class FreeBoundaryEquilibriumFromFixedDesignerParams(ParameterFrame):
     kappa: Parameter[float]
     R_0: Parameter[float]
     r_cs_in: Parameter[float]
+    g_cs_mod: Parameter[float]
+    tk_cs_casing: Parameter[float]
+    tk_cs_insulation: Parameter[float]
+
     tk_cs: Parameter[float]
     tk_bb_ob: Parameter[float]
     tk_vv_out: Parameter[float]
+
+    n_CS: Parameter[int]
+    n_PF: Parameter[int]
 
     # Updated parameters
     delta_95: Parameter[float]
@@ -527,8 +541,9 @@ class FreeBoundaryEquilibriumFromFixedDesigner(Designer[Equilibrium]):
             nz=settings.pop("nz"),
         )
         # TODO: Check coil discretisation is sensible when size not set...
-        settings.pop("coil_discretisation")
+        discretisation = settings.pop("coil_discretisation")
         # eq.coilset.discretisation = settings.pop("coil_discretisation")
+        eq.coilset.get_coiltype("CS").discretisation = discretisation
 
         opt_problem = self._make_fbe_opt_problem(
             eq, lcfs_shape, len(data.xbdry), settings.pop("gamma")
@@ -549,7 +564,7 @@ class FreeBoundaryEquilibriumFromFixedDesigner(Designer[Equilibrium]):
         if settings["plot"]:
             _, ax = plt.subplots()
             eq.plot(ax=ax)
-            eq.coilset.plot(ax=ax)
+            eq.coilset.plot(ax=ax, label=True)
             ax.plot(data.xbdry, data.zbdry, "", marker="o")
             opt_problem.targets.plot(ax=ax)
             plt.show()

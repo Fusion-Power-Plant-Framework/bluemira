@@ -224,6 +224,9 @@ def make_reference_coilset(
     lcfs_shape: BluemiraWire,
     r_cs: float,
     tk_cs: float,
+    g_cs_mod: float,
+    tk_cs_casing: float,
+    tk_cs_insulation: float,
     n_CS: int,
     n_PF: int,
 ):
@@ -233,7 +236,16 @@ def make_reference_coilset(
     bb = tf_track.bounding_box
     z_min = bb.z_min
     z_max = bb.z_max
-    solenoid = make_solenoid(r_cs, tk_cs, z_min, z_max, 0, 0, 0, n_CS)
+    solenoid = make_solenoid(
+        r_cs,
+        tk_cs,
+        z_min,
+        z_max,
+        g_cs_mod,
+        tk_cs_ins=tk_cs_insulation,
+        tk_cs_cas=tk_cs_casing,
+        n_CS=n_CS,
+    )
 
     lcfs_coords = lcfs_shape.discretize(byedges=True)
     arg_z_max = np.argmax(lcfs_coords.z)
