@@ -3,13 +3,8 @@
         "run_mode": "mock",
         "read_dir": "config/"
     },
-    "Equilibrium": {
-        "plot_optimisation": false,
-        "run_mode": "read",
-        "file_path": "config/equilibrium_eqdsk.json"
-    },
     "Fixed boundary equilibrium":{
-        "run_mode": "read",
+        "run_mode": "run",
         "file_path": "config/fixed_boundary_eqdsk.json",
         "shape_config": {
             "f_delta_l": 1.45,
@@ -44,7 +39,7 @@
         }
     },
     "Free boundary equilibrium":{
-            "run_mode": "read",
+            "run_mode": "run",
             "fixed_eq_file_path": "config/fixed_boundary_eqdsk.json",
             "file_path": "config/equilibrium_eqdsk.json",
             "settings": {
