@@ -50,7 +50,6 @@ from bluemira.equilibria.equilibrium import Equilibrium
 from bluemira.geometry.tools import make_polygon
 from eudemo.blanket import Blanket, BlanketBuilder
 from eudemo.equilibria import (
-    EquilibriumDesigner,
     FixedEquilibriumDesigner,
     FreeBoundaryEquilibriumFromFixedDesigner,
 )
@@ -146,21 +145,21 @@ if __name__ == "__main__":
         build_config["Free boundary equilibrium"],
     )
 
-    # reactor.plasma = build_plasma(build_config.get("Plasma", {}), eq)
+    reactor.plasma = build_plasma(build_config.get("Plasma", {}), free_boundary_eq)
 
-    # blanket_face, divertor_face, ivc_boundary = design_ivc(
-    #     params, build_config["IVC"], equilibrium=eq
-    # )
+    blanket_face, divertor_face, ivc_boundary = design_ivc(
+        params, build_config["IVC"], equilibrium=free_boundary_eq
+    )
 
-    # reactor.vacuum_vessel = build_vacuum_vessel(
-    #     params, build_config.get("Vacuum vessel", {}), ivc_boundary
-    # )
-    # reactor.divertor = build_divertor(
-    #     params, build_config.get("Divertor", {}), divertor_face
-    # )
-    # reactor.blanket = build_blanket(
-    #     params, build_config.get("Blanket", {}), blanket_face
-    # )
+    reactor.vacuum_vessel = build_vacuum_vessel(
+        params, build_config.get("Vacuum vessel", {}), ivc_boundary
+    )
+    reactor.divertor = build_divertor(
+        params, build_config.get("Divertor", {}), divertor_face
+    )
+    reactor.blanket = build_blanket(
+        params, build_config.get("Blanket", {}), blanket_face
+    )
 
     # thermal_shield_config = build_config.get("Thermal shield", {})
     # vv_thermal_shield = VVTSBuilder(
