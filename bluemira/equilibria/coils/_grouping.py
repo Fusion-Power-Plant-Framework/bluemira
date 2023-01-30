@@ -190,7 +190,14 @@ class CoilGroup(CoilGroupFieldsMixin):
         self.__run_func("_resize", currents)
 
     def __run_func(self, func: str, *args, **kwargs):
-        """Runs a function with no outputs that exists on a coil or coilgroup"""
+        """
+        Runs a function with no outputs that exists on a coil or coilgroup
+
+        This function aims to deal with the edge cases that are around nested coilgroups
+        If kwargs are passed they will be passed to all function calls as is.
+        If args are passed an attempt is made to push the right shaped argument to a
+        given function.
+        """
         if not args:
             for ff in self.__list_getter(func):
                 ff(**kwargs)
