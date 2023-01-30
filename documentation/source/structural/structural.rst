@@ -7,7 +7,7 @@ suitable for statically indeterminate structures. The notation used in
 this module follows the Theory of Matrix Structural Analysis, (mostly
 Chapter 6).
 
-J. S. Przemieniecki: `Theory of Matrix Structural Analysis (1968) <https://s3.amazonaws.com/academia.edu.documents/44535182/45917260-Theory-of-Matrix-Structural-Analysis-1.pdf?response-content-disposition=inline;%20filename=Theory_of_Matrix_Structural_Analysis.pdf&X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIAIWOWYYGZ2Y53UL3A/20191021/us-east-1/s3/aws4_request&X-Amz-Date=20191021T123238Z&X-Amz-Expires=3600&X-Amz-SignedHeaders=host&X-Amz-Signature=b6d1a533f21ca4eb57c4d6d99a23befd1acc7d506ebc05a704b6959288d31ab6>`_,
+J. S. Przemieniecki: Theory of Matrix Structural Analysis (1968), ISBN 13: 9780070509047,
 which actually made that structural matrix course I failed in university
 look like it might make sense when using computers.
 
