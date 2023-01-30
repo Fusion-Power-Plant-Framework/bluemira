@@ -48,9 +48,9 @@
             "fixed_eq_file_path": "config/fixed_boundary_eqdsk.json",
             "file_path": "config/equilibrium_eqdsk.json",
             "settings": {
-                "iter_err_max": 1e-4,
+                "iter_err_max": 1e-3,
                 "max_iter": 50,
-                "relaxation": 0.1,
+                "relaxation": 0.15,
                 "coil_discretisation": 0.3,
                 "plot": true,
                 "nx": 127,
