@@ -352,7 +352,7 @@ class Profile:
         """
         Convert from integral in psi_norm to integral in psi
         """
-        val = quad(prime, norm, 1)[0]
+        val = quad(prime, norm, 1, limit=500)[0]
         return val * (self.psiax - self.psisep)
 
     @staticmethod
