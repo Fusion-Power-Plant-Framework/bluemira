@@ -123,8 +123,6 @@ def lambda_q(B_t: float, q_cyl: float, p_sol: float, R_0: float, error: bool = F
     """
     Scrape-off layer power width scaling (Eich et al., 2011) [4]
 
-    \t:math:`\\lambda_q=(0.73\\pm0.38)B_t^{-0.78\\pm0.25}q_{95}^{1.2\\pm0.27}P_{SOL}^{0.1\\pm0.11}R_{0}^{0.02\\pm0.2}`
-
     Parameters
     ----------
     B_t: float
@@ -149,6 +147,8 @@ def lambda_q(B_t: float, q_cyl: float, p_sol: float, R_0: float, error: bool = F
     -----
     [4] Eich et al., 2011
         <https://journals.aps.org/prl/pdf/10.1103/PhysRevLett.107.215001>
+
+    \t:math:`\\lambda_q=(0.73\\pm0.38)B_t^{-0.78\\pm0.25}q_{95}^{1.2\\pm0.27}P_{SOL}^{0.1\\pm0.11}R_{0}^{0.02\\pm0.2}`
     """  # noqa: W505
     law = PowerLawScaling(
         constant=0.73e-3,
@@ -212,41 +212,49 @@ def P_LH(n_e, B_t, A, R_0, error=False):  # noqa: N802
         return value
 
 
-def IPB98y2(I_p, B_t, p_sep, n, mass, R_0, A, kappa):  # noqa: N802
+def IPB98y2(  # noqa: N802
+    I_p: float,
+    B_t: float,
+    p_sep: float,
+    n: float,
+    mass: float,
+    R_0: float,
+    A: float,
+    kappa: float,
+) -> float:
     """
     ITER IPB98(y, 2) Confinement time scaling for ELMy H-mode [2]
 
     Parameters
     ----------
-    I_p: float
+    I_p
         Plasma current [A]
-    B_t: float
+    B_t
         Toroidal field at R_0 [T]
-    p_sep: float
+    p_sep
         Separatrix power [W]  (a.k.a. loss power (corrected for charge exchange and
         orbit losses))
-    n: float
+    n
         Line average plasma density [1/m^3]
-    R_0: float
-        Major radius [m]
-    mass: float
+    mass
         Average ion mass [a.m.u.]
-    A: float
+    R_0
+        Major radius [m]
+    A
         Aspect ratio
-    kappa: float
+    kappa
         Plasma elongation
 
     Returns
     -------
-    tau_E: float
-        The energy confinement time [s]
+    tau_E, the energy confinement time [s]
 
     Notes
     -----
     [2] ITER Physics Expert Group, Nucl. Fus. 39, 12, <https://iopscience.iop.org/article/10.1088/0029-5515/39/12/302/pdf>
     equation (20)
 
-    \t:math:`\\tau_{E}=0.0562I_p^{0.93}B_t^{0.15}P_{sep}^{-0.69}n^{0.41}M^{0.19}R_0^{1.97}A^{-0.57}\\kappa^{0.78}`
+    \t:math:`\\tau_{E}=0.0562I_p^{0.93}B_t^{0.15}P_{sep}^{-0.69}n^{0.41}M^{0.19}R_0^{1.97}A^{-0.58}\\kappa^{0.78}`
     """  # noqa :W505
     I_p = raw_uc(I_p, "A", "MA")
     p_sep = raw_uc(p_sep, "W", "MW")
