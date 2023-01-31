@@ -373,14 +373,11 @@ class TestPlasmodSolver:
         solver = plasmod.Solver(self.default_pf, self.build_config)
         solver.execute(plasmod.RunMode.RUN)
 
-        # Scaled profile
-        profile = solver.get_profile(plasmod.Profiles.Te)
         # Raw profile
         outputs = solver.plasmod_outputs()
         profile = outputs.Te
         # Expected values taken from 'data/sample_profiles.dat'
         expected_values = [43.9383, 44.7500, 45.3127, 45.6264, 45.6912, 45.5069, 45.0737]
-        plasmod.Solver._from_phi_to_psi
         np.testing.assert_almost_equal(profile, np.array(expected_values), decimal=4)
 
     def test_get_profile_returns_profile_array(self):
@@ -394,10 +391,20 @@ class TestPlasmodSolver:
         scaled_expected_values = interp1d(solver._x_psi, expected_values, kind="linear")(
             solver._x_phi
         )
-        plasmod.Solver._from_phi_to_psi
         np.testing.assert_almost_equal(
             profile, np.array(scaled_expected_values), decimal=4
         )
+
+    def test_scaled_profile_not_equal_raw_profile(self):
+        solver = plasmod.Solver(self.default_pf, self.build_config)
+        solver.execute(plasmod.RunMode.RUN)
+
+        # Scaled profile
+        profile = solver.get_profile(plasmod.Profiles.Te)
+        # Raw profile
+        outputs = solver.plasmod_outputs()
+        raw_profile = outputs.Te
+        assert np.any(np.not_equal(profile, raw_profile))
 
     def test_get_profiles_returns_dict_of_profiles(self):
         solver = plasmod.Solver(self.default_pf, self.build_config)
