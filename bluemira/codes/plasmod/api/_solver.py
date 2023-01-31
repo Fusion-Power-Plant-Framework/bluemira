@@ -204,8 +204,7 @@ class Solver(CodesSolver):
             prof_data = self._x_phi
         else:
             prof_data = getattr(self.plasmod_outputs(), profile.name)
-            if profile in (Profiles.psi, Profiles.pprime, Profiles.ffprime):
-                prof_data = self._from_phi_to_psi(prof_data)
+            prof_data = self._from_phi_to_psi(prof_data)
         return prof_data
 
     def get_profiles(
