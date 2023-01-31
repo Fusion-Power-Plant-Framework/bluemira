@@ -179,6 +179,7 @@ class TestNloptOptimiser:
             "SLSQP",
             2,
             lambda _: 5,
+            df_objective=lambda _: np.array([1]),
             opt_conditions={"max_eval": 200},
             opt_parameters={"not_a_param": 1},
         )
