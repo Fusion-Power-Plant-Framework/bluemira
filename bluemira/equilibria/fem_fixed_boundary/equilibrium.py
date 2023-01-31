@@ -31,7 +31,6 @@ from dolfin import Mesh
 from tabulate import tabulate
 
 from bluemira.base.components import PhysicalComponent
-from bluemira.base.constants import MU_0
 from bluemira.base.file import get_bluemira_path, try_get_bluemira_path
 from bluemira.base.look_and_feel import bluemira_debug, bluemira_print, bluemira_warn
 from bluemira.base.parameter_frame import Parameter, ParameterFrame
