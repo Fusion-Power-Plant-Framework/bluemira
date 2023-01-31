@@ -27,6 +27,7 @@ from typing import Any, Dict, Iterable, Union
 import numpy as np
 from scipy.interpolate import interp1d
 
+from bluemira.base.constants import MU_0
 from bluemira.base.parameter_frame import ParameterFrame
 from bluemira.codes.error import CodesError
 from bluemira.codes.interface import CodesSolver
@@ -196,15 +197,43 @@ class Solver(CodesSolver):
         -------
         profile_values: np.ndarray
             A plasmod profile.
+
+        Notes
+        -----
+        pprime and ffprime profiles from PLASMOD are currently inconsistent with the output
+        jpar profile, even if isawt=FULLY_RELAXED. This is a known issue, and is under
+        investigation. In the meantime, a crude rescaling of the flux functions is
+        provided here.
         """
         if isinstance(profile, str):
             profile = Profiles(profile)
 
         if profile is Profiles.x:
             prof_data = self._x_phi
+        elif profile in [Profiles.pprime, Profiles.ffprime]:
+            jpar_true = self.get_profile("jpar")
+            pprime = getattr(self.plasmod_outputs(), "pprime")
+            pprime = self._from_phi_to_psi(pprime)
+            ffprime = getattr(self.plasmod_outputs(), "ffprime")
+            ffprime = self._from_phi_to_psi(ffprime)
+            jpar_recon = (
+                2
+                * np.pi
+                * (
+                    self.params.R_0.value * pprime
+                    + ffprime / (MU_0 * self.params.R_0.value)
+                )
+            )
+
+            # Scale the flux functions with the correction ratio of the reconstructed jpar profile
+            # indiscriminately applied to pprime and ffprime
+            ratio = jpar_true / jpar_recon
+            prof_data = getattr(self.plasmod_outputs(), profile.name)
+            prof_data = ratio * self._from_phi_to_psi(prof_data)
         else:
             prof_data = getattr(self.plasmod_outputs(), profile.name)
             prof_data = self._from_phi_to_psi(prof_data)
+
         return prof_data
 
     def get_profiles(
