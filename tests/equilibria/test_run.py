@@ -20,8 +20,16 @@
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 
 from dataclasses import fields
+from unittest import mock
 
-from bluemira.equilibria.run import Snapshot
+import pytest
+
+from bluemira.equilibria.run import (
+    BreakdownCOPSettings,
+    EQSettings,
+    PulsedCoilsetDesign,
+    Snapshot,
+)
 
 
 class TestSnapshot:
@@ -37,3 +45,50 @@ class TestSnapshot:
                 assert cl != getattr(snapshot, sn.name)
             else:
                 assert cl == getattr(snapshot, sn.name)
+
+
+class TestPulsedCoilSetDesign:
+    class MyPulsedCoilset(PulsedCoilsetDesign):  # noqa: D106
+        def optimise(self):
+            return self.coilset
+
+    def test_breakdown_settings(self):
+        mypcs = self.MyPulsedCoilset(*[None] * 7)
+        assert isinstance(mypcs._bd_settings, BreakdownCOPSettings)
+        mypcs._bd_settings.n_B_stray_points = 9
+        assert mypcs._bd_settings.n_B_stray_points == 9
+
+        mypcs = self.MyPulsedCoilset(
+            *[None] * 7, breakdown_settings={"n_B_stray_points": 10}
+        )
+        assert isinstance(mypcs._bd_settings, BreakdownCOPSettings)
+        assert mypcs._bd_settings.n_B_stray_points == 10
+
+        with pytest.raises(TypeError):
+            mypcs = self.MyPulsedCoilset(*[None] * 7, breakdown_settings={"gamma": 1e-5})
+
+    def test_equilibrium_settings(self):
+        mypcs = self.MyPulsedCoilset(*[None] * 7)
+        assert isinstance(mypcs._eq_settings, EQSettings)
+        mypcs._eq_settings.gamma = 9
+        assert mypcs._eq_settings.gamma == 9
+
+        mypcs = self.MyPulsedCoilset(*[None] * 7, equilibrium_settings={"gamma": 1e-5})
+        assert isinstance(mypcs._eq_settings, EQSettings)
+        assert mypcs._eq_settings.gamma == 1e-5
+
+        with pytest.raises(TypeError):
+            mypcs = self.MyPulsedCoilset(
+                *[None] * 7, equilibrium_settings={"n_B_stray_points": 10}
+            )
+
+    @mock.patch("bluemira.equilibria.run.Snapshot", return_value="SNAP")
+    def test_take_snapshot(self, snapshot, caplog):
+        mypcs = self.MyPulsedCoilset(*[None] * 7)
+        mypcs.take_snapshot("test", "eq", "coilset", "problem", "profiles")
+        snapshot.assert_called_with("eq", "coilset", "problem", "profiles", limiter=None)
+
+        assert mypcs.snapshots["test"] == "SNAP"
+        # Overwrite snapshot
+        mypcs.take_snapshot("test", "eq", "coilset", "problem", "profiles")
+        assert len(caplog.messages) == 1
