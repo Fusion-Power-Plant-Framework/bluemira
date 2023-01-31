@@ -200,10 +200,10 @@ class Solver(CodesSolver):
 
         Notes
         -----
-        pprime and ffprime profiles from PLASMOD are currently inconsistent with the output
-        jpar profile, even if isawt=FULLY_RELAXED. This is a known issue, and is under
-        investigation. In the meantime, a crude rescaling of the flux functions is
-        provided here.
+        pprime and ffprime profiles from PLASMOD are currently inconsistent with the
+        output jpar profile, even if isawt=FULLY_RELAXED. This is a known issue,
+        and is under investigation. In the meantime, a crude rescaling of the flux
+        functions is provided here.
         """
         if isinstance(profile, str):
             profile = Profiles(profile)
@@ -225,8 +225,8 @@ class Solver(CodesSolver):
                 )
             )
 
-            # Scale the flux functions with the correction ratio of the reconstructed jpar profile
-            # indiscriminately applied to pprime and ffprime
+            # Scale the flux functions with the correction ratio of the reconstructed
+            # jpar profile. Indiscriminately applied to pprime and ffprime
             ratio = jpar_true / jpar_recon
             prof_data = getattr(self.plasmod_outputs(), profile.name)
             prof_data = ratio * self._from_phi_to_psi(prof_data)
