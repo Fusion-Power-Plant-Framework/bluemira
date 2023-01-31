@@ -333,6 +333,9 @@ class Solver(CodesSolver):
 # it has the same effect as modifying the default.
 # Also note the units of the parameter values returned back have been updated.
 #
+# The files written and read by the external code are stored in the generated_data
+# folder in the root of the bluemira repository.
+#
 # Some warnings will be shown because some of the situations here are usually
 # undesireable.
 # In this first block we will see 3 warnings.
