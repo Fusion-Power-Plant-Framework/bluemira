@@ -40,12 +40,14 @@ External Codes Example
 # %%
 from dataclasses import asdict, dataclass
 from enum import auto
+from pathlib import Path
 from pprint import pprint
 from typing import Dict, List, Union
 
 # %%
 from ext_code_script import get_filename
 
+from bluemira.base.file import get_bluemira_path
 from bluemira.base.parameter_frame import Parameter, ParameterFrame
 from bluemira.codes.interface import CodesSetup, CodesSolver, CodesTask, CodesTeardown
 from bluemira.codes.interface import RunMode as BaseRunMode
@@ -349,6 +351,8 @@ class Solver(CodesSolver):
 # set in the `ECParameterFrame` default mappings.
 
 # %%
+io_path = get_bluemira_path("", "generated_data")
+
 params = {
     "header": {"value": False, "unit": "", "source": "here"},
     "param1": {"value": 5, "unit": "W"},
@@ -356,8 +360,8 @@ params = {
 
 build_config = {
     "problem_settings": {"param2": 10},
-    "infile": "infile.txt",
-    "outfile": "outfile.txt",
+    "infile": Path(io_path, "infile.txt"),
+    "outfile": Path(io_path, "outfile.txt"),
 }
 solver = Solver(params, build_config)
 
