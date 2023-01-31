@@ -1,4 +1,19 @@
-# %%
+# ---
+# jupyter:
+#   jupytext:
+#     cell_metadata_filter: tags,-all
+#     notebook_metadata_filter: -jupytext.text_representation.jupytext_version
+#     text_representation:
+#       extension: .py
+#       format_name: percent
+#       format_version: '1.3'
+#   kernelspec:
+#     display_name: Python 3 (ipykernel)
+#     language: python
+#     name: python3
+# ---
+
+# %% tags=["remove-cell"]
 # bluemira is an integrated inter-disciplinary design tool for future fusion
 # reactors. It incorporates several modules, some of which rely on other
 # codes, to carry out a range of typical conceptual fusion reactor design
@@ -25,6 +40,7 @@ A geometry tutorial for users.
 """
 
 # %% [markdown]
+# # Geometry Tutorial
 # ## Introduction
 #
 # Geometry is not plasma physics, but it isn't trivial either. Chances are most of
@@ -90,7 +106,6 @@ from bluemira.geometry.wire import BluemiraWire
 # (0,0,0), (1,0,0), and (1,1,0).
 
 # %%
-
 points1 = Coordinates({"x": [0, 1, 1], "y": [0, 0, 1], "z": [0, 0, 0]})
 first_wire = make_polygon(points1, label="wire1")
 

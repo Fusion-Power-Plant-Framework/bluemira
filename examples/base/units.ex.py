@@ -1,4 +1,19 @@
-# %%
+# ---
+# jupyter:
+#   jupytext:
+#     cell_metadata_filter: tags,-all
+#     notebook_metadata_filter: -jupytext.text_representation.jupytext_version
+#     text_representation:
+#       extension: .py
+#       format_name: percent
+#       format_version: '1.3'
+#   kernelspec:
+#     display_name: Python 3 (ipykernel)
+#     language: python
+#     name: python3
+# ---
+
+# %% tags=["remove-cell"]
 # bluemira is an integrated inter-disciplinary design tool for future fusion
 # reactors. It incorporates several modules, some of which rely on other
 # codes, to carry out a range of typical conceptual fusion reactor design
@@ -26,6 +41,7 @@ An example to show the use of the raw unit converters
 
 
 # %% [markdown]
+# # Units Example
 # ## Raw conversion
 #
 # In some situations it may be useful to convert a raw value to a different unit.
@@ -37,11 +53,9 @@ An example to show the use of the raw unit converters
 # base unit change.
 
 # %%
-
 import bluemira.base.constants as const
 
 # %%
-
 print(const.raw_uc(1, "um^3", "m^3"))
 # gas flow rate conversion @OdegC
 print(const.raw_uc(1, "mol/s", "Pa m^3/s"))
@@ -57,7 +71,6 @@ print(const.raw_uc(1, "eV", "K"))
 # below absolute zero
 
 # %%
-
 try:
     const.to_kelvin(-300)
 except ValueError as v:

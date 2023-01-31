@@ -1,4 +1,19 @@
-# %%
+# ---
+# jupyter:
+#   jupytext:
+#     cell_metadata_filter: tags,-all
+#     notebook_metadata_filter: -jupytext.text_representation.jupytext_version
+#     text_representation:
+#       extension: .py
+#       format_name: percent
+#       format_version: '1.3'
+#   kernelspec:
+#     display_name: Python 3 (ipykernel)
+#     language: python
+#     name: python3
+# ---
+
+# %% tags=["remove-cell"]
 # bluemira is an integrated inter-disciplinary design tool for future fusion
 # reactors. It incorporates several modules, some of which rely on other
 # codes, to carry out a range of typical conceptual fusion reactor design
@@ -34,6 +49,7 @@ from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.parameterisations import PrincetonD
 
 # %% [markdown]
+# # Plotting examples
 # ## Setup
 #
 # Creation of a closed wire and respective face and discretisation points.
@@ -196,7 +212,6 @@ display.plot_2d(wire, points_options={})
 # automatic display of the plot (show=False), and apply a title to the plot
 
 # %%
-
 f, ax = plt.subplots()
 wplotter.options.point_options = {}
 wplotter.plot_2d(wire, ax=ax, show=False)

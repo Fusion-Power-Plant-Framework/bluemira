@@ -1,4 +1,19 @@
-# %%
+# ---
+# jupyter:
+#   jupytext:
+#     cell_metadata_filter: tags,-all
+#     notebook_metadata_filter: -jupytext.text_representation.jupytext_version
+#     text_representation:
+#       extension: .py
+#       format_name: percent
+#       format_version: '1.3'
+#   kernelspec:
+#     display_name: Python 3 (ipykernel)
+#     language: python
+#     name: python3
+# ---
+
+# %% tags=["remove-cell"]
 # bluemira is an integrated inter-disciplinary design tool for future fusion
 # reactors. It incorporates several modules, some of which rely on other
 # codes, to carry out a range of typical conceptual fusion reactor design
@@ -70,9 +85,8 @@ from bluemira.utilities.tools import get_class_from_module
 # Firstly we need to define the parameters we're going to use in our reactor design for
 # each component.
 
+
 # %%
-
-
 @dataclass
 class PlasmaDesignerParams(ParameterFrame):
     """Plasma Designer ParameterFrame"""
@@ -103,8 +117,6 @@ class TFCoilBuilderParams(ParameterFrame):
 # To manage access to properties of the components we need some `ComponentManagers`
 
 # %%
-
-
 class Plasma(ComponentManager):
     """Plasma manager"""
 
@@ -134,8 +146,6 @@ class TFCoil(ComponentManager):
 # Notice that the typing of the components here is the relevent `ComponentManager`
 
 # %%
-
-
 class MyReactor(Reactor):
     """Reactor container"""
 
@@ -155,8 +165,6 @@ class MyReactor(Reactor):
 # [geometry optimisation tutorial](../geometry/optimisation_tutorial.ipynb).
 
 # %%
-
-
 class MyTFCoilOptProblem(GeometryOptimisationProblem):
     """
     A simple geometry optimisation problem for the TF coil current centreline
@@ -255,8 +263,6 @@ class MyTFCoilOptProblem(GeometryOptimisationProblem):
 # not
 
 # %%
-
-
 class PlasmaDesigner(Designer):
     """Design a plasma's LCFS using a Johner paramterisation."""
 
@@ -350,8 +356,6 @@ class PlasmaBuilder(Builder):
 # Notice that only `TFCoilBuilder` has required parameters in this case.
 
 # %%
-
-
 class TFCoilDesigner(Designer):
     """TF coil Designer"""
 
@@ -444,7 +448,6 @@ class TFCoilBuilder(Builder):
 # Notice there are no 'global' parameters as neither of the components share a variable.
 
 # %%
-
 build_config = {
     # This reactor has no global parameters, but this key would usually
     # be used to set parameters that are shared between components
@@ -535,7 +538,6 @@ build_config = {
 # Now we set up our ParameterFrames
 
 # %%
-
 # TODO improve build config manipulation
 plasma_params = PlasmaDesignerParams.from_dict(
     {**build_config["params"], **build_config["Plasma"]["Designer"].pop("params")}

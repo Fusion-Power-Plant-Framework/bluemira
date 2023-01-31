@@ -1,4 +1,19 @@
-# %%
+# ---
+# jupyter:
+#   jupytext:
+#     cell_metadata_filter: tags,-all
+#     notebook_metadata_filter: -jupytext.text_representation.jupytext_version
+#     text_representation:
+#       extension: .py
+#       format_name: percent
+#       format_version: '1.3'
+#   kernelspec:
+#     display_name: Python 3 (ipykernel)
+#     language: python
+#     name: python3
+# ---
+
+# %% tags=["remove-cell"]
 # bluemira is an integrated inter-disciplinary design tool for future fusion
 # reactors. It incorporates several modules, some of which rely on other
 # codes, to carry out a range of typical conceptual fusion reactor design
@@ -39,6 +54,8 @@ from bluemira.balance_of_plant.steady_state import (
 )
 
 # %% [markdown]
+#
+# # Simple Example of a 0-D steady-state balance of plant.
 #
 # Let's set up a typical power balance model. We start by specifying some parameters we
 # want to use.
@@ -88,6 +105,7 @@ blanket_pump_strat = HePumping(
 bop_cycle = SuperheatedRankine(bb_t_out=500 + 273.15, delta_t_turbine=20)
 divertor_pump_strat = H2OPumping(f_pump=0.05, eta_isentropic=0.99, eta_electric=0.87)
 
+
 # %% [markdown]
 #
 # Maybe we don't have any good models to estimate some of the other parasitic loads. We
@@ -95,8 +113,6 @@ divertor_pump_strat = H2OPumping(f_pump=0.05, eta_isentropic=0.99, eta_electric=
 # from the ABC and specifying some calculation in the `calculate` method.
 
 # %%
-
-
 class EUDEMOReferenceParasiticLoadStrategy(ParasiticLoadStrategy):
     """
     One way of defining the parasitic loads w.r.t. a known reference point.
@@ -154,7 +170,6 @@ HCPB_bop.plot(title="HCPB blanket")
 # that the energy multiplication is different too
 
 # %%
-
 neutron_power_strat = NeutronPowerStrategy(
     f_blanket=0.9,
     f_divertor=0.05,

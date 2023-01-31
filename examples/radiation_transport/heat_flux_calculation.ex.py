@@ -1,4 +1,19 @@
-# %%
+# ---
+# jupyter:
+#   jupytext:
+#     cell_metadata_filter: tags,-all
+#     notebook_metadata_filter: -jupytext.text_representation.jupytext_version
+#     text_representation:
+#       extension: .py
+#       format_name: percent
+#       format_version: '1.3'
+#   kernelspec:
+#     display_name: Python 3 (ipykernel)
+#     language: python
+#     name: python3
+# ---
+
+# %% tags=["remove-cell"]
 # bluemira is an integrated inter-disciplinary design tool for future fusion
 # reactors. It incorporates several modules, some of which rely on other
 # codes, to carry out a range of typical conceptual fusion reactor design
@@ -35,6 +50,7 @@ from bluemira.geometry.coordinates import Coordinates
 from bluemira.radiation_transport.advective_transport import ChargedParticleSolver
 
 # %% [markdown]
+# # Single null first wall particle heat flux
 #
 # First we load an up equilibrium
 
@@ -60,7 +76,6 @@ fw_shape = Coordinates.from_json(fw_name)
 # Then we define some input `Parameter`s for the solver.
 
 # %%
-
 params = {
     "P_sep_particle": 150,
     "f_p_sol_near": 0.50,

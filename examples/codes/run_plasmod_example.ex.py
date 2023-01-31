@@ -1,4 +1,19 @@
-# %%
+# ---
+# jupyter:
+#   jupytext:
+#     cell_metadata_filter: tags,-all
+#     notebook_metadata_filter: -jupytext.text_representation.jupytext_version
+#     text_representation:
+#       extension: .py
+#       format_name: percent
+#       format_version: '1.3'
+#   kernelspec:
+#     display_name: Python 3 (ipykernel)
+#     language: python
+#     name: python3
+# ---
+
+# %% tags=["remove-cell"]
 # bluemira is an integrated inter-disciplinary design tool for future fusion
 # reactors. It incorporates several modules, some of which rely on other
 # codes, to carry out a range of typical conceptual fusion reactor design
@@ -48,7 +63,6 @@ from bluemira.codes import plasmod
 # To enable debug logging run the below cell
 
 # %%
-
 set_log_level("DEBUG")
 
 # %% [markdown]
@@ -69,7 +83,6 @@ binary = os.path.join(PLASMOD_PATH, "bin", "plasmod")
 # These parameters mirror running the plasmod input demoH.i reference configuration
 
 # %%
-
 new_params = {
     "A": 3.1,
     "R_0": 9.002,
@@ -127,8 +140,8 @@ build_config = {
 # Now we can create the solver object with the parameters and build configuration
 
 # %%
-
 solver = plasmod.Solver(params=new_params, build_config=build_config)
+
 
 # %% [markdown]
 # These few functions are helpers to simplify the remainder of the tutorial.
@@ -136,8 +149,6 @@ solver = plasmod.Solver(params=new_params, build_config=build_config)
 # given profile.
 
 # %%
-
-
 def print_outputs(solver):
     """
     Print plasmod scalars
@@ -186,7 +197,6 @@ def plot_profile(solver, profile, var_unit):
 # Very simply use the `run` method of the solver
 
 # %%
-
 solver.execute(plasmod.RunMode.RUN)
 
 # %% [markdown]
@@ -216,7 +226,6 @@ print_outputs(solver)
 # There is a default set of output profiles that can be plotted easily:
 
 # %%
-
 plasmod.plot_default_profiles(solver)
 
 

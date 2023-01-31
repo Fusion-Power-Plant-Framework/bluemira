@@ -59,7 +59,9 @@ dev = [
     "flake8-absolute-import",
     "flake8-bandit",
     "flake8-docstrings",
+    "jupytext",
     "mypy",
+    "myst-nb",
     "pep8-naming",
     "pre-commit",
     "pytest",
@@ -69,6 +71,7 @@ dev = [
     "pytest-json-report",
     "sphinx",
     "sphinx-autoapi",
+    "sphinx_copybutton",
     "sphinx-rtd-theme",
     "versioneer",
 ]

@@ -1,4 +1,19 @@
-# %%
+# ---
+# jupyter:
+#   jupytext:
+#     cell_metadata_filter: tags,-all
+#     notebook_metadata_filter: -jupytext.text_representation.jupytext_version
+#     text_representation:
+#       extension: .py
+#       format_name: percent
+#       format_version: '1.3'
+#   kernelspec:
+#     display_name: Python 3 (ipykernel)
+#     language: python
+#     name: python3
+# ---
+
+# %% tags=["remove-cell"]
 # bluemira is an integrated inter-disciplinary design tool for future fusion
 # reactors. It incorporates several modules, some of which rely on other
 # codes, to carry out a range of typical conceptual fusion reactor design
@@ -25,7 +40,6 @@ A typical fuel cycle result for an EU-DEMO reference point
 """
 
 # %%
-
 from bluemira.display.auto_config import plot_defaults
 from bluemira.fuel_cycle.analysis import FuelCycleAnalysis
 from bluemira.fuel_cycle.cycle import EUDEMOFuelCycleModel
@@ -41,6 +55,7 @@ from bluemira.utilities.tools import set_random_seed
 plot_defaults()
 
 # %% [markdown]
+# # Fuel cycle example
 #
 # First let's set up a configuration with some values (a la EU-DEMO 2015)
 
@@ -91,7 +106,6 @@ lifecycle_config = {
 # between pulses are distributed.
 
 # %%
-
 lifecycle_inputs = {}
 
 # We need to define some stragies to define the pseudo-random timelines
@@ -207,7 +221,6 @@ tfv_config = {
 # We can run a single model and look at a typical result
 
 # %%
-
 model = EUDEMOFuelCycleModel(tfv_config, {})
 model.run(time_dicts[0])
 model.plot()

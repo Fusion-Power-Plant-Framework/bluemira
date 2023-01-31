@@ -1,4 +1,19 @@
-# %%
+# ---
+# jupyter:
+#   jupytext:
+#     cell_metadata_filter: tags,-all
+#     notebook_metadata_filter: -jupytext.text_representation.jupytext_version
+#     text_representation:
+#       extension: .py
+#       format_name: percent
+#       format_version: '1.3'
+#   kernelspec:
+#     display_name: Python 3 (ipykernel)
+#     language: python
+#     name: python3
+# ---
+
+# %% tags=["remove-cell"]
 # bluemira is an integrated inter-disciplinary design tool for future fusion
 # reactors. It incorporates several modules, some of which rely on other
 # codes, to carry out a range of typical conceptual fusion reactor design
@@ -36,41 +51,38 @@ from bluemira.base.file import get_bluemira_path
 from bluemira.base.logs import set_log_level
 
 # %% [markdown]
-# # Configuring a solver
+# ## Configuring a solver
 #
 # PROCESS is one of the codes bluemira can use to compliment a reactor design.
 # As with any of the external codes bluemira uses, a solver object is created.
 # The solver object abstracts away most of the complexities of running different
 # programs within bluemira.
 #
-# ## Setting up
+# ### Setting up
 #
-# ### Logging
+# #### Logging
 # To enable debug logging run the below cell
 
 # %%
-
 set_log_level("DEBUG")
 
 # %% [markdown]
-# ### Binary Location
+# #### Binary Location
 # Firstly if process is not in your system path we need to provide the
 # binary location to the solver.
 
 # %%
-
 # PROCESS_PATH = "/home/process/lives/here"
 PROCESS_PATH = ""
 binary = f"{PROCESS_PATH}process"
 
 # %% [markdown]
-# ### Creating the solver object
+# #### Creating the solver object
 # bluemira-PROCESS parameter names have been mapped across where possible.
 # Some example parameters have been set here in `new_params`
 # before being converted into a bluemira configuration store.
 
 # %%
-
 params = {
     "A": 3.1,
     "R_0": 9.002,
@@ -100,14 +112,12 @@ build_config = {
 # Now we can create the solver object with the parameters and build configuration
 
 # %%
-
 process_solver = process.Solver(params=params, build_config=build_config)
 
 # %% [markdown]
-# ### Running the solver
+# #### Running the solver
 # Call the `execute` method of the solver, using one of the solver's
 # run modes.
 
 # %%
-
 process_solver.execute(process_solver.run_mode_cls.RUN)

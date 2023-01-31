@@ -1,4 +1,19 @@
-# %%
+# ---
+# jupyter:
+#   jupytext:
+#     cell_metadata_filter: tags,-all
+#     notebook_metadata_filter: -jupytext.text_representation.jupytext_version
+#     text_representation:
+#       extension: .py
+#       format_name: percent
+#       format_version: '1.3'
+#   kernelspec:
+#     display_name: Python 3 (ipykernel)
+#     language: python
+#     name: python3
+# ---
+
+# %% tags=["remove-cell"]
 # bluemira is an integrated inter-disciplinary design tool for future fusion
 # reactors. It incorporates several modules, some of which rely on other
 # codes, to carry out a range of typical conceptual fusion reactor design
@@ -46,6 +61,8 @@ from bluemira.equilibria.shapes import JohnerLCFS
 set_log_level("NOTSET")
 
 # %% [markdown]
+#
+# # Fixed Boundary Equilibrium
 # Setup the Plasma shape parameterisation variables
 
 # %%
@@ -136,7 +153,6 @@ plasmod_solver = transport_code_solver(
 # Initialise the FEM problem
 
 # %%
-
 fem_GS_fixed_boundary = FemGradShafranovFixedBoundary(
     p_order=2,
     max_iter=30,
@@ -148,7 +164,6 @@ fem_GS_fixed_boundary = FemGradShafranovFixedBoundary(
 # Solve
 
 # %%
-
 equilibrium = solve_transport_fixed_boundary(
     johner_parameterisation,
     plasmod_solver,

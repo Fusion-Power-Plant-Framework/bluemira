@@ -49,6 +49,7 @@ extensions = [
     "sphinx.ext.napoleon",
     "sphinx.ext.mathjax",
     "sphinx_rtd_theme",
+    "sphinx_copybutton",
 ]
 
 # Add any paths that contain templates here, relative to this directory.
@@ -57,8 +58,9 @@ templates_path = ["_templates"]
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
 # This pattern also affects html_static_path and html_extra_path.
-exclude_patterns = []
+exclude_patterns = ["**/*.md"]
 
+suppress_warnings = []
 
 # -- Options for HTML output -------------------------------------------------
 
@@ -123,6 +125,13 @@ plot_html_show_source_link = False
 # --- Configuration for graphviz ---
 extensions.append("sphinx.ext.graphviz")
 graphviz_output_format = "svg"
+
+# --- Configuration for myst-nb ---
+extensions.append("myst_nb")
+nb_execution_mode = "off"
+nb_custom_formats = {
+    ".ex.py": ["jupytext.reads", {"fmt": "py:percent"}],
+}
 
 
 class ParamsDirective(Directive):

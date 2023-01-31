@@ -26,7 +26,7 @@ jupytext==1.14.4
 MarkupSafe==2.1.1
 matplotlib-inline==0.1.6
 mistune==2.0.4
-nbclient==0.7.2
+nbclient==0.5.13
 nbconvert==7.2.6
 nbformat==5.7.0
 nest-asyncio==1.5.6

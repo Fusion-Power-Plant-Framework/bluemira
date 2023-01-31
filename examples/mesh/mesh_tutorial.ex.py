@@ -1,4 +1,19 @@
-# %%
+# ---
+# jupyter:
+#   jupytext:
+#     cell_metadata_filter: tags,-all
+#     notebook_metadata_filter: -jupytext.text_representation.jupytext_version
+#     text_representation:
+#       extension: .py
+#       format_name: percent
+#       format_version: '1.3'
+#   kernelspec:
+#     display_name: Python 3 (ipykernel)
+#     language: python
+#     name: python3
+# ---
+
+# %% tags=["remove-cell"]
 # bluemira is an integrated inter-disciplinary design tool for future fusion
 # reactors. It incorporates several modules, some of which rely on other
 # codes, to carry out a range of typical conceptual fusion reactor design
@@ -25,13 +40,13 @@ Some examples of using bluemira mesh module.
 """
 
 # %% [markdown]
-#
-# # Introduction
+# # Meshing Example
+# ## Introduction
 #
 # In this example, we will show how to use the mesh module to create a 2D mesh for fem
 # application
 #
-# # Imports
+# ## Imports
 #
 # Import necessary module definitions.
 
@@ -56,12 +71,11 @@ set_log_level("DEBUG")
 
 # %% [markdown]
 #
-# # Geometry
+# ## Geometry
 #
 # Creation of a simple 2-D geometry, i.e. a Johner shape + a coil with casing
 
 # %%
-
 p = JohnerLCFS()
 lcfs = p.create_shape(label="LCFS")
 
@@ -85,12 +99,11 @@ coil_in = BluemiraFace([poly_in], label="coil_in")
 
 # %% [markdown]
 #
-# # Mesh setup
+# ## Mesh setup
 #
 # setup characteristic mesh length
 
 # %%
-
 lcfs.mesh_options = {"lcar": 0.75, "physical_group": "LCFS"}
 face = BluemiraFace(lcfs, label="plasma_surface")
 face.mesh_options = {"lcar": 0.5, "physical_group": "surface"}
@@ -128,10 +141,9 @@ print(m.get_gmsh_dict(buffer))
 
 # %% [markdown]
 #
-# # Convert to xdmf
+# ## Convert to xdmf
 
 # %%
-
 msh_to_xdmf(
     "Mesh.msh",
     dimensions=(0, 2),

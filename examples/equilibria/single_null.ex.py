@@ -1,4 +1,19 @@
-# %%
+# ---
+# jupyter:
+#   jupytext:
+#     cell_metadata_filter: tags,-all
+#     notebook_metadata_filter: -jupytext.text_representation.jupytext_version
+#     text_representation:
+#       extension: .py
+#       format_name: percent
+#       format_version: '1.3'
+#   kernelspec:
+#     display_name: Python 3 (ipykernel)
+#     language: python
+#     name: python3
+# ---
+
+# %% tags=["remove-cell"]
 # bluemira is an integrated inter-disciplinary design tool for future fusion
 # reactors. It incorporates several modules, some of which rely on other
 # codes, to carry out a range of typical conceptual fusion reactor design
@@ -26,6 +41,7 @@ Equilibrium and coilset optimisation - developer tutorial
 
 # %% [markdown]
 #
+# # Equilibrium and Coilset Optimisation
 # Here we explore how to optimise equilibria, coil currents, and coil positions.
 #
 # This is an in-depth example, intended for developers and people familiar with plasma
@@ -43,7 +59,6 @@ Equilibrium and coilset optimisation - developer tutorial
 # one wants to optimise coil positions without affecting the plasma too much.
 
 # %%
-
 from copy import deepcopy
 
 import matplotlib.pyplot as plt
@@ -127,7 +142,6 @@ coilset = CoilSet(*coils)
 # equi-spaced around the coil cross-section.
 
 # %%
-
 coilset.assign_material("CS", j_max=16.5e6, b_max=12.5)
 coilset.assign_material("PF", j_max=12.5e6, b_max=11.0)
 
@@ -147,7 +161,6 @@ cs.discretisation = 0.3
 # values in your equilibrium optimisation.
 
 # %%
-
 # Machine parameters
 R_0 = 8.938
 A = 3.1
@@ -180,7 +193,6 @@ eq = Equilibrium(coilset, grid, profiles, psi=None)
 # * A `FieldNullConstraint` forces the poloidal field at a point to be zero.
 
 # %%
-
 lcfs_parameterisation = JohnerLCFS(
     {
         "r_0": {"value": R_0},
@@ -234,7 +246,6 @@ x_point = FieldNullConstraint(
 # equilibrium until convergence.
 
 # %%
-
 current_opt_problem = UnconstrainedTikhonovCurrentGradientCOP(
     coilset, eq, MagneticConstraintSet([isoflux, x_point]), gamma=1e-7
 )
@@ -265,7 +276,6 @@ program()
 # vector.
 
 # %%
-
 field_constraints = CoilFieldConstraints(eq.coilset, eq.coilset.b_max, tolerance=1e-6)
 
 force_constraints = CoilForceConstraints(
@@ -311,7 +321,6 @@ program()
 # optimum.
 
 # %%
-
 minimal_current_eq = deepcopy(eq)
 minimal_current_coilset = deepcopy(coilset)
 minimal_current_opt_problem = MinimalCurrentCOP(
@@ -370,7 +379,6 @@ print(
 # problem.
 
 # %%
-
 isoflux = IsofluxConstraint(
     x_bdry,
     z_bdry,
@@ -446,7 +454,6 @@ current_opt_problem_eof = TikhonovCurrentCOP(
 # coil regions, but demonstrates the principle with acceptable run-times.
 
 # %%
-
 # We'll store these so that we can look at them again later
 old_coilset = deepcopy(coilset)
 old_eq = deepcopy(eq)
@@ -485,8 +492,6 @@ optimised_coilset = position_opt_problem.optimise(verbose=True)
 # We also need to remember to update the bounds of the current optimisation problem!
 
 # %%
-
-
 sof_pf_currents = sof.coilset.get_coiltype("PF").get_control_coils().current
 eof_pf_currents = eof.coilset.get_coiltype("PF").get_control_coils().current
 max_pf_currents = np.max(np.abs([sof_pf_currents, eof_pf_currents]), axis=0)
@@ -517,8 +522,6 @@ for problem in [current_opt_problem_sof, current_opt_problem_eof]:
 # coil positions at SOF and EOF.
 
 # %%
-
-
 program = PicardIterator(
     sof,
     current_opt_problem_sof,
@@ -544,7 +547,6 @@ program()
 # Now let's compare the old equilibrium and coilset to the one with optimised positions.
 
 # %%
-
 f, ax = plt.subplots()
 x_old, z_old = old_coilset.position
 x_new, z_new = sof.coilset.position

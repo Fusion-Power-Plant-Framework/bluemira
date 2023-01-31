@@ -1,4 +1,19 @@
-# %%
+# ---
+# jupyter:
+#   jupytext:
+#     cell_metadata_filter: tags,-all
+#     notebook_metadata_filter: -jupytext.text_representation.jupytext_version
+#     text_representation:
+#       extension: .py
+#       format_name: percent
+#       format_version: '1.3'
+#   kernelspec:
+#     display_name: Python 3 (ipykernel)
+#     language: python
+#     name: python3
+# ---
+
+# %% tags=["remove-cell"]
 # bluemira is an integrated inter-disciplinary design tool for future fusion
 # reactors. It incorporates several modules, some of which rely on other
 # codes, to carry out a range of typical conceptual fusion reactor design
@@ -24,13 +39,13 @@ A quick tutorial on the optimisation of geometry in bluemira
 """
 
 # %% [markdown]
+# # Optimisation of Geometry
 # ## Introduction
 #
 # We're going to set up some geometry optimisation problems and solve them with different
 # optimisastion algorithms.
 
 # %%
-
 import numpy as np
 
 from bluemira.geometry.optimisation import GeometryOptimisationProblem, minimise_length
@@ -46,7 +61,6 @@ from bluemira.utilities.tools import set_random_seed
 # First, we set up the GeometryParameterisation, with some bounds on the variables.
 
 # %%
-
 parameterisation_1 = PrincetonD(
     {
         "x1": {"lower_bound": 2, "value": 4, "upper_bound": 6},
@@ -67,7 +81,6 @@ parameterisation_1.fix_variable("dz", value=0)
 # Now, we set up our optimiser. We'll start with a gradient-based optimisation algorithm
 
 # %%
-
 slsqp_optimiser = Optimiser(
     "SLSQP", opt_conditions={"max_eval": 100, "ftol_abs": 1e-12, "ftol_rel": 1e-12}
 )
@@ -90,7 +103,6 @@ objective = OptimisationObjective(
 # Finally, we initialise our `GeometryOptimisationProblem` and run it.
 
 # %%
-
 my_problem = GeometryOptimisationProblem(parameterisation_1, slsqp_optimiser, objective)
 my_problem.optimise()
 
@@ -148,6 +160,7 @@ print(
     f"x2: value: {parameterisation_2.variables['x2'].value}, lower_bound: {parameterisation_2.variables['x2'].lower_bound}"
 )
 
+
 # %% [markdown]
 #
 # Now let's include a relatively arbitrary constraint:
@@ -157,8 +170,6 @@ print(
 # inequality constraint.
 
 # %%
-
-
 def calculate_constraint(vector, parameterisation, c_value):
     """
     Some arbitrary constraint function
