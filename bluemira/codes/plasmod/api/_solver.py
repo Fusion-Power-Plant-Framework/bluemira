@@ -205,6 +205,7 @@ class Solver(CodesSolver):
         else:
             prof_data = getattr(self.plasmod_outputs(), profile.name)
             prof_data = self._from_phi_to_psi(prof_data)
+
         return prof_data
 
     def get_profiles(
