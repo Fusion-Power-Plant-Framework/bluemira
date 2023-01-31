@@ -120,11 +120,11 @@ def flux_surface_kuiroukidis_quadrants(
     n_power: int = 8,
     n_points: int = 100,
 ):
-"""
-Kuiroukidis flux surface individual quadrants
+    """
+    Kuiroukidis flux surface individual quadrants
 
-please see :func:flux_surface_kuiroukidis for more information
-"""
+    please see :func:flux_surface_kuiroukidis for more information
+    """
     if delta_u < 0:
         delta_u *= -1
         upper_negative = True
@@ -291,10 +291,9 @@ def flux_surface_kuiroukidis(
         n_points,
     )
 
-    x = np.concatenate(x_quadrants)
-    z = np.concatenate(z_quadrants)
-
-    return Coordinates({"x": x, "z": z})
+    return Coordinates(
+        {"x": np.concatenate(x_quadrants), "z": np.concatenate(z_quadrants)}
+    )
 
 
 class KuiroukidisLCFS(GeometryParameterisation):
@@ -381,7 +380,6 @@ class KuiroukidisLCFS(GeometryParameterisation):
             *self.variables.values, n_points=n_points
         )
 
-        wires = []
         labels = ["upper_outer", "upper_inner", "lower_inner", "lower_outer"]
         return BluemiraWire(
             [
