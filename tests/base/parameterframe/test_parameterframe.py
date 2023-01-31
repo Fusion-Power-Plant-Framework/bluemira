@@ -198,10 +198,24 @@ class TestParameterFrame:
         )
         assert frame.age.source != "a test"
 
-    def test_update_from_dict(self):
+    def test_update_using_values_edits_frames_values(self):
         frame = BasicFrame.from_dict(FRAME_DATA)
 
-        frame.update_from_dict(
+        frame.update({"height": 160.4})
+
+        assert frame.height.value == 160.4
+        assert (
+            frame.age.value
+            == pint.Quantity(FRAME_DATA["age"]["value"], FRAME_DATA["age"]["unit"])
+            .to("s")
+            .magnitude
+        )
+
+    @pytest.mark.parametrize("func", ("update_from_dict", "update"))
+    def test_update_from_dict(self, func):
+        frame = BasicFrame.from_dict(FRAME_DATA)
+
+        getattr(frame, func)(
             {
                 "height": {
                     "name": "height",
@@ -212,6 +226,26 @@ class TestParameterFrame:
                 "age": {"value": 20, "unit": "years"},
             }
         )
+
+        assert frame.height.value == 160.4
+        assert frame.height.source == "a test"
+        assert frame.age.value == pint.Quantity(20, "years").to("s").magnitude
+        assert frame.age.source != "a test"
+
+    @pytest.mark.parametrize("func", ("update_from_frame", "update"))
+    def test_update_from_frame(self, func):
+        frame = BasicFrame.from_dict(FRAME_DATA)
+        update_frame = BasicFrame.from_dict(
+            {
+                "height": {
+                    "value": 160.4,
+                    "unit": "m",
+                    "source": "a test",
+                },
+                "age": {"value": 20, "unit": "years"},
+            }
+        )
+        getattr(frame, func)(update_frame)
 
         assert frame.height.value == 160.4
         assert frame.height.source == "a test"

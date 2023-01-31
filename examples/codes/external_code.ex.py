@@ -294,14 +294,8 @@ class Solver(CodesSolver):
     def __init__(self, params: Union[ParameterFrame, Dict], build_config: Dict):
 
         self.params = ECParameterFrame.from_defaults()
+        self.params.update(params)
 
-        if isinstance(params, ParameterFrame):
-            self.params.update_from_frame(params)
-        else:
-            try:
-                self.params.update_from_dict(params)
-            except TypeError:
-                self.params.update_values(params)
         self._setup = self.setup_cls(
             self.params, build_config.get("problem_settings", {}), build_config["infile"]
         )

@@ -63,6 +63,19 @@ class ParameterFrame:
         for field in fields(self):
             yield getattr(self, field.name)
 
+    def update(
+        self,
+        new_values: Union[Dict[str, ParameterValueType], ParamDictT, ParameterFrame],
+    ):
+        """Update the given frame"""
+        if isinstance(new_values, ParameterFrame):
+            self.update_from_frame(new_values)
+        else:
+            try:
+                self.update_from_dict(new_values)
+            except TypeError:
+                self.update_values(new_values)
+
     def update_values(self, new_values: Dict[str, ParameterValueType], source: str = ""):
         """Update the given parameter values."""
         for key, value in new_values.items():
