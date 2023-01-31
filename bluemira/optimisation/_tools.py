@@ -25,14 +25,16 @@ from typing import Callable, Iterable, Optional, Union
 import numpy as np
 from scipy.optimize._numdiff import approx_derivative as _approx_derivative
 
+_FloatOrArray = Union[float, np.ndarray]
+
 
 def approx_derivative(
-    func: Callable[[np.ndarray], float],
+    func: Callable[[np.ndarray], _FloatOrArray],
     x0: np.ndarray,
     method: str = "3-point",
-    rel_step: Optional[Union[float, np.ndarray]] = None,
-    f0: Optional[Union[float, np.ndarray]] = None,
-    bounds: Optional[Iterable[Union[float, np.ndarray]]] = (-np.inf, np.inf),
+    rel_step: Optional[_FloatOrArray] = None,
+    f0: Optional[_FloatOrArray] = None,
+    bounds: Optional[Iterable[_FloatOrArray]] = (-np.inf, np.inf),
     args=(),
 ) -> np.ndarray:
     """

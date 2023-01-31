@@ -18,29 +18,22 @@
 #
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
-"""Implementation of optimiser using NLOpt as a backend."""
-
 from __future__ import annotations
 
-import enum
 import warnings
-from dataclasses import dataclass
-from typing import Any, List, Mapping, Optional, Tuple, Union
+from typing import Any, Dict, List, Mapping, Optional, Union
 
 import nlopt
 import numpy as np
 
 from bluemira.optimisation._algorithm import Algorithm
+from bluemira.optimisation._nlopt.conditions import NLOptConditions
+from bluemira.optimisation._nlopt.constraint import Constraint, ConstraintType
+from bluemira.optimisation._nlopt.objective import NloptObjectiveFunction
 from bluemira.optimisation._optimiser import Optimiser, OptimiserResult
-from bluemira.optimisation._tools import approx_derivative
 from bluemira.optimisation._typing import ObjectiveCallable, OptimiserCallable
-from bluemira.optimisation.error import (
-    OptimisationConditionsError,
-    OptimisationError,
-    OptimisationParametersError,
-)
+from bluemira.optimisation.error import OptimisationError, OptimisationParametersError
 
-EPS: float = np.finfo(np.float64).eps
 _NLOPT_ALG_MAPPING = {
     Algorithm.SLSQP: nlopt.LD_SLSQP,
     Algorithm.COBYLA: nlopt.LN_COBYLA,
@@ -133,8 +126,8 @@ class NloptOptimiser(Optimiser):
         self._set_objective_function(f_objective, df_objective)
         self._set_termination_conditions(opt_conditions)
         self._set_algorithm_parameters(opt_parameters)
-        self._eq_constraints: List[_Constraint] = []
-        self._ineq_constraints: List[_Constraint] = []
+        self._eq_constraints: List[Constraint] = []
+        self._ineq_constraints: List[Constraint] = []
 
     @property
     def algorithm(self) -> Algorithm:
@@ -142,9 +135,9 @@ class NloptOptimiser(Optimiser):
         return self._algorithm
 
     @property
-    def opt_conditions(self) -> _Conditions:
+    def opt_conditions(self) -> Dict[str, float]:
         """Return the optimiser's stopping conditions."""
-        return self._opt_conditions
+        return self._opt_conditions.to_dict()
 
     @property
     def opt_parameters(self) -> Mapping:
@@ -179,8 +172,8 @@ class NloptOptimiser(Optimiser):
                 f"Algorithm '{self.algorithm.name}' does not support equality "
                 f"constraints."
             )
-        constraint = _Constraint(
-            _ConstraintType.EQUALITY,
+        constraint = Constraint(
+            ConstraintType.EQUALITY,
             f_constraint,
             tolerance,
             df_constraint,
@@ -209,8 +202,8 @@ class NloptOptimiser(Optimiser):
                 f"Algorithm '{self.algorithm.name}' does not support inequality "
                 f"constraints."
             )
-        constraint = _Constraint(
-            _ConstraintType.INEQUALITY,
+        constraint = Constraint(
+            ConstraintType.INEQUALITY,
             f_constraint,
             tolerance,
             df_constraint,
@@ -294,7 +287,7 @@ class NloptOptimiser(Optimiser):
         self, func: ObjectiveCallable, df: Union[None, OptimiserCallable]
     ) -> None:
         """Wrap and set the objective function."""
-        self._objective = _NloptObjectiveFunction(
+        self._objective = NloptObjectiveFunction(
             func, df, bounds=(self.lower_bounds, self.upper_bounds)
         )
         if self._keep_history:
@@ -302,23 +295,23 @@ class NloptOptimiser(Optimiser):
         else:
             self._opt.set_min_objective(self._objective.call)
 
-    def _set_termination_conditions(self, opt_conditions: Mapping) -> None:
+    def _set_termination_conditions(self, opt_conditions: Mapping[str, float]) -> None:
         """Validate and set the termination conditions."""
-        self._opt_conditions = _Conditions(**opt_conditions)
-        if self.opt_conditions.ftol_abs:
-            self._opt.set_ftol_abs(self.opt_conditions.ftol_abs)
-        if self.opt_conditions.ftol_rel:
-            self._opt.set_ftol_rel(self.opt_conditions.ftol_rel)
-        if self.opt_conditions.xtol_abs:
-            self._opt.set_xtol_abs(self.opt_conditions.xtol_abs)
-        if self.opt_conditions.xtol_rel:
-            self._opt.set_xtol_rel(self.opt_conditions.xtol_rel)
-        if self.opt_conditions.max_time:
-            self._opt.set_maxtime(self.opt_conditions.max_time)
-        if self.opt_conditions.max_eval:
-            self._opt.set_maxeval(self.opt_conditions.max_eval)
-        if self.opt_conditions.stop_val:
-            self._opt.set_stopval(self.opt_conditions.stop_val)
+        self._opt_conditions = NLOptConditions(**opt_conditions)
+        if self._opt_conditions.ftol_abs:
+            self._opt.set_ftol_abs(self._opt_conditions.ftol_abs)
+        if self._opt_conditions.ftol_rel:
+            self._opt.set_ftol_rel(self._opt_conditions.ftol_rel)
+        if self._opt_conditions.xtol_abs:
+            self._opt.set_xtol_abs(self._opt_conditions.xtol_abs)
+        if self._opt_conditions.xtol_rel:
+            self._opt.set_xtol_rel(self._opt_conditions.xtol_rel)
+        if self._opt_conditions.max_time:
+            self._opt.set_maxtime(self._opt_conditions.max_time)
+        if self._opt_conditions.max_eval:
+            self._opt.set_maxeval(self._opt_conditions.max_eval)
+        if self._opt_conditions.stop_val:
+            self._opt.set_stopval(self._opt_conditions.stop_val)
 
     def _set_algorithm_parameters(self, opt_parameters: Mapping) -> None:
         self._opt_parameters = opt_parameters
@@ -335,151 +328,6 @@ class NloptOptimiser(Optimiser):
             raise OptimisationParametersError(
                 f"Unrecognised algorithm parameter(s): {str(unrecognised)[1:-1]}"
             )
-
-
-class _ConstraintType(enum.Enum):
-    EQUALITY = enum.auto()
-    INEQUALITY = enum.auto()
-
-
-class _Constraint:
-    """Holder for NLOpt constraint functions."""
-
-    def __init__(
-        self,
-        constraint_type: _ConstraintType,
-        f: OptimiserCallable,
-        tolerance: np.ndarray,
-        df: Optional[OptimiserCallable] = None,
-        bounds: Tuple[Union[np.ndarray, float], Union[np.ndarray, float]] = (
-            -np.inf,
-            np.inf,
-        ),
-    ):
-        self.constraint_type = constraint_type
-        self.f = f
-        self.tolerance = tolerance
-        self.df = df if df is not None else self._approx_derivative
-        self.f0: Optional[np.ndarray] = None
-        self.bounds = bounds
-
-    def nlopt_call(self, result: np.ndarray, x: np.ndarray, grad: np.ndarray) -> None:
-        """
-        Execute the constraint function in the form required by NLOpt.
-
-        https://nlopt.readthedocs.io/en/latest/NLopt_Python_Reference/#vector-valued-constraints
-        """
-        if grad.size > 0:
-            grad[:] = self.df(x)
-        result[:] = self.f(x)
-        self.f0 = result
-
-    def _approx_derivative(self, x: np.ndarray) -> np.ndarray:
-        return approx_derivative(self.f, x, f0=self.f0, bounds=self.bounds)
-
-    def set_approx_derivative_lower_bound(self, lower_bound: np.ndarray) -> None:
-        self.bounds = (lower_bound, self.bounds[1])
-
-    def set_approx_derivative_upper_bound(self, upper_bound: np.ndarray) -> None:
-        self.bounds = (self.bounds[0], upper_bound)
-
-
-@dataclass
-class _Conditions:
-    """Hold and validate optimiser stopping conditions."""
-
-    ftol_abs: Optional[float] = None
-    ftol_rel: Optional[float] = None
-    xtol_abs: Optional[float] = None
-    xtol_rel: Optional[float] = None
-    max_eval: Optional[int] = None
-    max_time: Optional[float] = None
-    stop_val: Optional[float] = None
-
-    def __post_init__(self):
-        self._validate()
-
-    def _validate(self) -> None:
-        for condition in [
-            self.ftol_abs,
-            self.ftol_rel,
-            self.xtol_abs,
-            self.xtol_rel,
-        ]:
-            if condition and condition < EPS:
-                warnings.warn(
-                    "optimisation: Setting stopping condition to less than machine "
-                    "precision. This condition may never be met."
-                )
-        if self._no_stopping_condition_set():
-            raise OptimisationConditionsError(
-                "Must specify at least one stopping condition for the optimiser."
-            )
-
-    def _no_stopping_condition_set(self) -> bool:
-        return all(
-            condition is None
-            for condition in [
-                self.ftol_abs,
-                self.ftol_rel,
-                self.xtol_abs,
-                self.xtol_rel,
-                self.max_eval,
-                self.max_time,
-                self.stop_val,
-            ]
-        )
-
-
-class _NloptObjectiveFunction:
-    """
-    Holds an objective function for an NLOpt optimiser.
-
-    Adapts the given objective function, and optional derivative, to a
-    form understood by NLOpt.
-
-    If no optimiser derivative is given, and the algorithm is gradient
-    based, a numerical approximation of the gradient is calculated.
-    """
-
-    def __init__(
-        self,
-        f: ObjectiveCallable,
-        df: Optional[OptimiserCallable] = None,
-        bounds: Tuple[Union[np.ndarray, float], Union[np.ndarray, float]] = (
-            -np.inf,
-            np.inf,
-        ),
-    ):
-        self.f = f
-        self.f0: Optional[float] = None
-        self.df = df if df is not None else self._approx_derivative
-        self.bounds = bounds
-        self.history: List[np.ndarray] = []
-
-    def call(self, x: np.ndarray, grad: np.ndarray) -> float:
-        """Execute the NLOpt objective function."""
-        if grad.size > 0:
-            grad[:] = self.df(x)
-        self.f0 = self.f(x)
-        return self.f0
-
-    def call_with_history(self, x: np.ndarray, grad: np.ndarray) -> float:
-        """Execute the NLOpt objective function, recording the iteration history."""
-        self.history.append(np.copy(x))
-        if grad.size > 0:
-            grad[:] = self.df(x)
-        self.f0 = self.f(x)
-        return self.f0
-
-    def _approx_derivative(self, x: np.ndarray) -> np.ndarray:
-        return approx_derivative(self.f, x, f0=self.f0, bounds=self.bounds)
-
-    def set_approx_derivative_lower_bound(self, lower_bound: np.ndarray) -> None:
-        self.bounds = (lower_bound, self.bounds[1])
-
-    def set_approx_derivative_upper_bound(self, upper_bound: np.ndarray) -> None:
-        self.bounds = (self.bounds[0], upper_bound)
 
 
 def _check_algorithm(algorithm: Union[str, Algorithm]) -> Algorithm:

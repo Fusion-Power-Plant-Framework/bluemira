@@ -25,17 +25,17 @@ import nlopt
 import numpy as np
 import pytest
 
+from bluemira.base.constants import EPS
 from bluemira.optimisation._algorithm import Algorithm
-from bluemira.optimisation._nlopt import (
-    EPS,
-    NloptOptimiser,
+from bluemira.optimisation._nlopt import NloptOptimiser
+from bluemira.optimisation.error import (
     OptimisationConditionsError,
     OptimisationError,
     OptimisationParametersError,
 )
 from tests.optimisation.tools import rosenbrock
 
-NLOPT_OPT_REF = "bluemira.optimisation._nlopt.nlopt.opt"
+NLOPT_OPT_REF = "bluemira.optimisation._nlopt.optimiser.nlopt.opt"
 
 
 def no_op():
