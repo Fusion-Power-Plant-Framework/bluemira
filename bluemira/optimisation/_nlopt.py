@@ -25,7 +25,7 @@ from __future__ import annotations
 import enum
 import warnings
 from dataclasses import dataclass
-from typing import Any, Callable, List, Mapping, Optional, Tuple, Union
+from typing import Any, List, Mapping, Optional, Tuple, Union
 
 import nlopt
 import numpy as np
@@ -33,14 +33,14 @@ import numpy as np
 from bluemira.optimisation._algorithm import Algorithm
 from bluemira.optimisation._optimiser import Optimiser, OptimiserResult
 from bluemira.optimisation._tools import approx_derivative
-from bluemira.optimisation._typing import OptimiserCallable
+from bluemira.optimisation._typing import ObjectiveCallable, OptimiserCallable
 from bluemira.optimisation.error import (
     OptimisationConditionsError,
     OptimisationError,
     OptimisationParametersError,
 )
 
-EPS = np.finfo(np.float64).eps
+EPS: float = np.finfo(np.float64).eps
 _NLOPT_ALG_MAPPING = {
     Algorithm.SLSQP: nlopt.LD_SLSQP,
     Algorithm.COBYLA: nlopt.LN_COBYLA,
@@ -75,7 +75,7 @@ class NloptOptimiser(Optimiser):
 
     n_variables: int
         The number of optimisation parameters.
-    f_objective: Callable[[Arg(np.ndarray, 'x')], np.ndarray]
+    f_objective: Callable[[Arg(np.ndarray, 'x')], float]
         The objective function to minimise. This function must take one
         argument (a numpy array), and return a numpy array or float.
     df_objective: Optional[Callable[[Arg(np.ndarray, 'x')], np.ndarray]]
@@ -118,10 +118,10 @@ class NloptOptimiser(Optimiser):
         self,
         algorithm: Union[str, Algorithm],
         n_variables: int,
-        f_objective: OptimiserCallable,
+        f_objective: ObjectiveCallable,
         df_objective: Optional[OptimiserCallable] = None,
-        opt_conditions: Mapping[str, Union[int, float]] = None,
-        opt_parameters: Mapping[str, Any] = None,
+        opt_conditions: Optional[Mapping[str, Union[int, float]]] = None,
+        opt_parameters: Optional[Mapping[str, Any]] = None,
         keep_history: bool = False,
     ):
         opt_conditions = {} if opt_conditions is None else opt_conditions
@@ -166,7 +166,7 @@ class NloptOptimiser(Optimiser):
         f_constraint: OptimiserCallable,
         tolerance: np.ndarray,
         df_constraint: Optional[OptimiserCallable] = None,
-    ):
+    ) -> None:
         """
         Add an equality constraint to the optimiser.
 
@@ -196,7 +196,7 @@ class NloptOptimiser(Optimiser):
         f_constraint: OptimiserCallable,
         tolerance: np.ndarray,
         df_constraint: Optional[OptimiserCallable] = None,
-    ):
+    ) -> None:
         r"""
         Add an inequality constraint to the optimiser.
 
@@ -257,7 +257,7 @@ class NloptOptimiser(Optimiser):
             x_star, n_evals=self._opt.get_numevals(), history=self._objective.history
         )
 
-    def set_lower_bounds(self, bounds: np.ndarray):
+    def set_lower_bounds(self, bounds: np.ndarray) -> None:
         """
         Set the lower bound for each optimisation parameter.
 
@@ -271,7 +271,7 @@ class NloptOptimiser(Optimiser):
         for constraint in self._eq_constraints + self._ineq_constraints:
             constraint.set_approx_derivative_lower_bound(bounds)
 
-    def set_upper_bounds(self, bounds: np.ndarray):
+    def set_upper_bounds(self, bounds: np.ndarray) -> None:
         """
         Set the upper bound for each optimisation parameter.
 
@@ -286,11 +286,13 @@ class NloptOptimiser(Optimiser):
         for constraint in self._eq_constraints + self._ineq_constraints:
             constraint.set_approx_derivative_upper_bound(bounds)
 
-    def _set_algorithm(self, alg: Union[str, Algorithm]):
+    def _set_algorithm(self, alg: Union[str, Algorithm]) -> None:
         """Set the optimiser's algorithm."""
         self._algorithm = _check_algorithm(alg)
 
-    def _set_objective_function(self, func: Callable, df: Union[None, Callable]):
+    def _set_objective_function(
+        self, func: ObjectiveCallable, df: Union[None, OptimiserCallable]
+    ) -> None:
         """Wrap and set the objective function."""
         self._objective = _NloptObjectiveFunction(
             func, df, bounds=(self.lower_bounds, self.upper_bounds)
@@ -300,7 +302,7 @@ class NloptOptimiser(Optimiser):
         else:
             self._opt.set_min_objective(self._objective.call)
 
-    def _set_termination_conditions(self, opt_conditions: Mapping):
+    def _set_termination_conditions(self, opt_conditions: Mapping) -> None:
         """Validate and set the termination conditions."""
         self._opt_conditions = _Conditions(**opt_conditions)
         if self.opt_conditions.ftol_abs:
@@ -318,7 +320,7 @@ class NloptOptimiser(Optimiser):
         if self.opt_conditions.stop_val:
             self._opt.set_stopval(self.opt_conditions.stop_val)
 
-    def _set_algorithm_parameters(self, opt_parameters: Mapping):
+    def _set_algorithm_parameters(self, opt_parameters: Mapping) -> None:
         self._opt_parameters = opt_parameters
         unrecognised = []
         for k, v in self.opt_parameters.items():
@@ -349,7 +351,10 @@ class _Constraint:
         f: OptimiserCallable,
         tolerance: np.ndarray,
         df: Optional[OptimiserCallable] = None,
-        bounds: Tuple[np.ndarray, np.ndarray] = (-np.inf, np.inf),
+        bounds: Tuple[Union[np.ndarray, float], Union[np.ndarray, float]] = (
+            -np.inf,
+            np.inf,
+        ),
     ):
         self.constraint_type = constraint_type
         self.f = f
@@ -358,7 +363,7 @@ class _Constraint:
         self.f0: Optional[np.ndarray] = None
         self.bounds = bounds
 
-    def nlopt_call(self, result: np.ndarray, x: np.ndarray, grad: np.ndarray):
+    def nlopt_call(self, result: np.ndarray, x: np.ndarray, grad: np.ndarray) -> None:
         """
         Execute the constraint function in the form required by NLOpt.
 
@@ -372,10 +377,10 @@ class _Constraint:
     def _approx_derivative(self, x: np.ndarray) -> np.ndarray:
         return approx_derivative(self.f, x, f0=self.f0, bounds=self.bounds)
 
-    def set_approx_derivative_lower_bound(self, lower_bound: np.ndarray):
+    def set_approx_derivative_lower_bound(self, lower_bound: np.ndarray) -> None:
         self.bounds = (lower_bound, self.bounds[1])
 
-    def set_approx_derivative_upper_bound(self, upper_bound: np.ndarray):
+    def set_approx_derivative_upper_bound(self, upper_bound: np.ndarray) -> None:
         self.bounds = (self.bounds[0], upper_bound)
 
 
@@ -394,7 +399,7 @@ class _Conditions:
     def __post_init__(self):
         self._validate()
 
-    def _validate(self):
+    def _validate(self) -> None:
         for condition in [
             self.ftol_abs,
             self.ftol_rel,
@@ -411,7 +416,7 @@ class _Conditions:
                 "Must specify at least one stopping condition for the optimiser."
             )
 
-    def _no_stopping_condition_set(self):
+    def _no_stopping_condition_set(self) -> bool:
         return all(
             condition is None
             for condition in [
@@ -439,24 +444,27 @@ class _NloptObjectiveFunction:
 
     def __init__(
         self,
-        f: OptimiserCallable,
+        f: ObjectiveCallable,
         df: Optional[OptimiserCallable] = None,
-        bounds: Tuple[np.ndarray, np.ndarray] = (-np.inf, np.inf),
+        bounds: Tuple[Union[np.ndarray, float], Union[np.ndarray, float]] = (
+            -np.inf,
+            np.inf,
+        ),
     ):
         self.f = f
-        self.f0 = None
+        self.f0: Optional[float] = None
         self.df = df if df is not None else self._approx_derivative
         self.bounds = bounds
         self.history: List[np.ndarray] = []
 
-    def call(self, x: np.ndarray, grad: np.ndarray) -> np.ndarray:
+    def call(self, x: np.ndarray, grad: np.ndarray) -> float:
         """Execute the NLOpt objective function."""
         if grad.size > 0:
             grad[:] = self.df(x)
         self.f0 = self.f(x)
         return self.f0
 
-    def call_with_history(self, x: np.ndarray, grad: np.ndarray) -> np.ndarray:
+    def call_with_history(self, x: np.ndarray, grad: np.ndarray) -> float:
         """Execute the NLOpt objective function, recording the iteration history."""
         self.history.append(np.copy(x))
         if grad.size > 0:
@@ -467,10 +475,10 @@ class _NloptObjectiveFunction:
     def _approx_derivative(self, x: np.ndarray) -> np.ndarray:
         return approx_derivative(self.f, x, f0=self.f0, bounds=self.bounds)
 
-    def set_approx_derivative_lower_bound(self, lower_bound: np.ndarray):
+    def set_approx_derivative_lower_bound(self, lower_bound: np.ndarray) -> None:
         self.bounds = (lower_bound, self.bounds[1])
 
-    def set_approx_derivative_upper_bound(self, upper_bound: np.ndarray):
+    def set_approx_derivative_upper_bound(self, upper_bound: np.ndarray) -> None:
         self.bounds = (self.bounds[0], upper_bound)
 
 

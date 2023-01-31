@@ -22,7 +22,7 @@
 
 import abc
 from dataclasses import dataclass, field
-from typing import List, Optional, Union
+from typing import List, Optional
 
 import numpy as np
 
@@ -46,9 +46,9 @@ class Optimiser(abc.ABC):
     def add_eq_constraint(
         self,
         f_constraint: OptimiserCallable,
-        tolerance: Union[float, np.ndarray],
-        df_constraint: OptimiserCallable = None,
-    ):
+        tolerance: np.ndarray,
+        df_constraint: Optional[OptimiserCallable] = None,
+    ) -> None:
         """
         Add an equality constraint to the optimiser.
 
@@ -67,10 +67,8 @@ class Optimiser(abc.ABC):
         ----------
         f_constraint: Callable[[Arg(np.ndarray, 'x')], np.ndarray]
             The constraint function, with form as described above.
-        tolerance: Union[float, np.ndarray]
+        tolerance: np.ndarray
             The tolerances for each optimisation parameter.
-            If this is a single value, the same tolerance is applied for
-            each optimisation parameter.
         df_constraint: Optional[Callable[[Arg(np.ndarray, 'x')], np.ndarray]]
             The gradient of the constraint function. This should have the
             same form as the constraint function, however its output
@@ -91,9 +89,9 @@ class Optimiser(abc.ABC):
     def add_ineq_constraint(
         self,
         f_constraint: OptimiserCallable,
-        tolerance: Union[float, np.ndarray],
-        df_constraint: OptimiserCallable = None,
-    ):
+        tolerance: np.ndarray,
+        df_constraint: Optional[OptimiserCallable] = None,
+    ) -> None:
         r"""
         Add an inequality constrain to the optimiser.
 
@@ -114,8 +112,6 @@ class Optimiser(abc.ABC):
             The constraint function, with form as described above.
         tolerance: Union[float, np.ndarray]
             The tolerances for each optimisation parameter.
-            If this is a single value, the same tolerance is applied for
-            each optimisation parameter.
         df_constraint: Optional[Callable[[Arg(np.ndarray, 'x')], np.ndarray]]
             The gradient of the constraint function. This should have the
             same form as the constraint function, however its output
@@ -154,7 +150,7 @@ class Optimiser(abc.ABC):
         """
 
     @abc.abstractmethod
-    def set_lower_bounds(self, bounds: np.ndarray):
+    def set_lower_bounds(self, bounds: np.ndarray) -> None:
         """
         Set the lower bound for each optimisation parameter.
 
@@ -162,7 +158,7 @@ class Optimiser(abc.ABC):
         """
 
     @abc.abstractmethod
-    def set_upper_bounds(self, bounds: np.ndarray):
+    def set_upper_bounds(self, bounds: np.ndarray) -> None:
         """
         Set the upper bound for each optimisation parameter.
 

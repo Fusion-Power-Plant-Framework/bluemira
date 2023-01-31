@@ -26,8 +26,16 @@ import numpy as np
 from typing_extensions import NotRequired
 
 
+class ObjectiveCallable(Protocol):
+    """Form for an optimiser objective function."""
+
+    def __call__(self, x: np.ndarray) -> float:
+        """Call the optimiser function."""
+        ...
+
+
 class OptimiserCallable(Protocol):
-    """Form for an optimiser function (objective, derivative, constraint, etc.)."""
+    """Form for an non-objective optimiser function (derivative, constraint, etc.)."""
 
     def __call__(self, x: np.ndarray) -> np.ndarray:
         """Call the optimiser function."""

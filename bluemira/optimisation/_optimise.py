@@ -20,24 +20,28 @@
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 """Definition of the generic `optimise` function."""
 
-from typing import Callable, Dict, Iterable, Optional, Tuple, Union
+from typing import Dict, Iterable, Mapping, Optional, Tuple, Union
 
 import numpy as np
 
 from bluemira.optimisation._algorithm import Algorithm
 from bluemira.optimisation._nlopt import NloptOptimiser
 from bluemira.optimisation._optimiser import Optimiser, OptimiserResult
-from bluemira.optimisation._typing import ConstraintT, OptimiserCallable
+from bluemira.optimisation._typing import (
+    ConstraintT,
+    ObjectiveCallable,
+    OptimiserCallable,
+)
 
 
 def optimise(
-    f_objective: OptimiserCallable,
+    f_objective: ObjectiveCallable,
     dimensions: Optional[int] = None,
     x0: Optional[np.ndarray] = None,
     df_objective: Optional[OptimiserCallable] = None,
     algorithm: Union[Algorithm, str] = Algorithm.SLSQP,
-    opt_conditions: Optional[Dict] = None,
-    opt_parameters: Optional[Dict] = None,
+    opt_conditions: Optional[Mapping] = None,
+    opt_parameters: Optional[Mapping] = None,
     bounds: Optional[Tuple[np.ndarray, np.ndarray]] = None,
     eq_constraints: Iterable[ConstraintT] = (),
     ineq_constraints: Iterable[ConstraintT] = (),
@@ -62,7 +66,7 @@ def optimise(
         The optimisation algorithm to use. See enum
         :obj:`optimisation.Algorithm` for supported algorithms.
         (default: "SLSQP")
-    opt_conditions: Optional[Dict]
+    opt_conditions: Optional[Mapping]
         The stopping conditions for the optimiser. Supported conditions
         are:
 
@@ -75,7 +79,7 @@ def optimise(
             * stop_val: float
 
         (default: {"max_eval": 2000})
-    opt_parameters: Optional[Dict]
+    opt_parameters: Optional[Mapping]
         The algorithm-specific optimisation parameters.
     bounds: Tuple[np.ndarray, np.ndarray]
         The upper and lower bounds for the optimisation parameters.
@@ -154,9 +158,9 @@ def optimise(
 
 
 def _make_optimiser(
-    f_objective: Callable,
+    f_objective: ObjectiveCallable,
     dimensions: int,
-    df_objective: Optional[Callable] = None,
+    df_objective: Optional[OptimiserCallable] = None,
     algorithm: Union[Algorithm, str] = Algorithm.SLSQP,
     opt_conditions: Optional[Dict] = None,
     opt_parameters: Optional[Dict] = None,

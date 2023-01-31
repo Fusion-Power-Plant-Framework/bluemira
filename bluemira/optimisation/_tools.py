@@ -20,13 +20,21 @@
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 """Collection of utility functions for the module."""
 
+from typing import Callable, Iterable, Optional, Union
+
 import numpy as np
 from scipy.optimize._numdiff import approx_derivative as _approx_derivative
 
 
 def approx_derivative(
-    func, x0, method="3-point", rel_step=None, f0=None, bounds=(-np.inf, np.inf), args=()
-):
+    func: Callable[[np.ndarray], float],
+    x0: np.ndarray,
+    method: str = "3-point",
+    rel_step: Optional[Union[float, np.ndarray]] = None,
+    f0: Optional[Union[float, np.ndarray]] = None,
+    bounds: Optional[Iterable[Union[float, np.ndarray]]] = (-np.inf, np.inf),
+    args=(),
+) -> np.ndarray:
     """
     Approximate the gradient of a function about a point.
 
