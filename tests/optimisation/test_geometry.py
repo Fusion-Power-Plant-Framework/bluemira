@@ -202,7 +202,7 @@ class TestGeometry:
 
         angles = [result.geom.variables[a].value for a in angle_vars]
         # The shape's inequality constraint should mean the sum is
-        # strictly less than 360
-        assert sum(angles) < 360
+        # strictly less than 360, allowing for a floating point tolerance.
+        assert sum(angles) < 360 + 1e-12
         # The maximisation should mean the angles approximately sum to 360
         assert sum(angles) == pytest.approx(360, rel=1e-3)
