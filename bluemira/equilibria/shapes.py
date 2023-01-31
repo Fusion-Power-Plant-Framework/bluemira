@@ -120,6 +120,11 @@ def flux_surface_kuiroukidis_quadrants(
     n_power: int = 8,
     n_points: int = 100,
 ):
+"""
+Kuiroukidis flux surface individual quadrants
+
+please see :func:flux_surface_kuiroukidis for more information
+"""
     if delta_u < 0:
         delta_u *= -1
         upper_negative = True
@@ -213,16 +218,11 @@ def flux_surface_kuiroukidis_quadrants(
         x_right = -x_right + 2 * r_0
         x_left, x_right = x_right[::-1], x_left[::-1]
         z_left, z_right = z_right[::-1], z_left[::-1]
-    z_upper_right += z_0
-    z_upper_left += z_0
-    z_left += z_0
-    z_right += z_0
-    return [x_upper_right, x_upper_left, x_left, x_right], [
-        z_upper_right,
-        z_upper_left,
-        z_left,
-        z_right,
-    ]
+
+    return (
+        np.array([x_upper_right, x_upper_left, x_left, x_right]),
+        np.array([z_upper_right, z_upper_left, z_left, z_right]) + z_0,
+    )
 
 
 def flux_surface_kuiroukidis(
@@ -383,14 +383,15 @@ class KuiroukidisLCFS(GeometryParameterisation):
 
         wires = []
         labels = ["upper_outer", "upper_inner", "lower_inner", "lower_outer"]
-        for x_q, z_q, lab in zip(x_quadrants, z_quadrants, labels):
-            wires.append(
+        return BluemiraWire(
+            [
                 interpolate_bspline(
                     np.array([x_q, np.zeros(len(x_q)), z_q]).T, label=lab
                 )
-            )
-
-        return BluemiraWire(wires, label=label)
+                for x_q, z_q, lab in zip(x_quadrants, z_quadrants, labels)
+            ],
+            label=label,
+        )
 
 
 def calc_t_neg(delta, kappa, phi_neg):
