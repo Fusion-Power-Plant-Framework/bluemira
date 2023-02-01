@@ -37,6 +37,7 @@ __all__ = [
     "flux_surface_manickam",
     "flux_surface_kuiroukidis",
     "JohnerLCFS",
+    "KuiroukidisLCFS",
 ]
 
 
@@ -108,6 +109,122 @@ def flux_surface_manickam(r_0, z_0, a, kappa=1, delta=0, indent=0, n=20):
     return Coordinates({"x": x, "z": z})
 
 
+def flux_surface_kuiroukidis_quadrants(
+    r_0,
+    z_0,
+    a,
+    kappa_u,
+    kappa_l,
+    delta_u,
+    delta_l,
+    n_power: int = 8,
+    n_points: int = 100,
+):
+    """
+    Kuiroukidis flux surface individual quadrants
+
+    please see :func:flux_surface_kuiroukidis for more information
+    """
+    if delta_u < 0:
+        delta_u *= -1
+        upper_negative = True
+    else:
+        upper_negative = False
+    if delta_l < 0:
+        delta_l *= -1
+        lower_negative = True
+    else:
+        lower_negative = False
+
+    n_quart = n_points // 4
+    e_0 = a / r_0  # inverse aspect ratio
+
+    # upper part
+    theta_delta = np.pi - np.arctan(kappa_u / delta_u)
+    denom = np.pi * theta_delta**n_power - theta_delta**2 * np.pi ** (n_power - 1)
+    t_0 = (theta_delta**n_power - 0.5 * np.pi**n_power) / denom
+    t_1 = (-(theta_delta**2) + 0.5 * np.pi**2) / denom
+    theta_up_right = np.linspace(0, theta_delta, n_quart)
+    tau_up_right = t_0 * theta_up_right**2 + t_1 * theta_up_right**n_power
+
+    # The theta -> tau conversion approach seems flawed, and overshoots np.pi so we have
+    # to adjust
+    theta_up_left = np.linspace(theta_delta, np.pi, n_quart)
+    tau_up_left = t_0 * theta_up_left**2 + t_1 * theta_up_left**n_power
+
+    tau_up_left = np.clip(tau_up_left, None, np.pi)
+    clip_arg = np.where(tau_up_left == np.pi)[0][0]
+    tau_up_left = tau_up_left[: clip_arg + 1]
+
+    x_upper_right = r_0 * (
+        1 + e_0 * np.cos(tau_up_right + np.arcsin(delta_u) * np.sin(tau_up_right))
+    )
+    z_upper_right = r_0 * kappa_u * e_0 * np.sin(tau_up_right)
+
+    x_upper_left = r_0 * (
+        1 + e_0 * np.cos(tau_up_left + np.arcsin(delta_u) * np.sin(tau_up_left))
+    )
+    z_upper_left = r_0 * kappa_u * e_0 * np.sin(tau_up_left)
+    x_upper_left, _, z_upper_left = interpolate_points(
+        x_upper_left, np.zeros(len(x_upper_left)), z_upper_left, n_quart
+    )
+
+    # lower left
+    theta_delta_lower = np.pi - np.arctan(kappa_l / delta_l)
+    p_1 = (kappa_l * e_0) ** 2 / (2 * e_0 * (1 + np.cos(theta_delta_lower)))
+    theta = np.linspace(np.pi, 2 * np.pi - theta_delta_lower, n_quart)
+
+    x_left = r_0 * (1 + e_0 * np.cos(theta))
+    z_left = -r_0 * np.sqrt(2 * p_1 * e_0 * (1 + np.cos(theta)))
+
+    # lower right
+    p_2 = (kappa_l * e_0) ** 2 / (2 * e_0 * (1 - np.cos(theta_delta_lower)))
+    theta = np.linspace(2 * np.pi - theta_delta_lower, 2 * np.pi, n_quart)
+
+    x_right = r_0 * (1 + e_0 * np.cos(theta))
+    z_right = -r_0 * np.sqrt(2 * p_2 * e_0 * (1 - np.cos(theta)))
+
+    x_x_true = r_0 - delta_l * a
+    x_x_actual = r_0 * (1 + e_0 * np.cos(theta_delta_lower))
+
+    # The lower X-point does not match up with the input kappa_l and delta_l...
+    corr_ratio = x_x_true / x_x_actual
+    corr_power = 2
+    if corr_ratio == 1.0:
+        # For good measure, but the maths is wrong...
+        correction = np.ones(n_quart)
+    elif corr_ratio < 1.0:
+        correction = (
+            1
+            - np.linspace(0, (1 - corr_ratio) ** (1 / corr_power), n_quart) ** corr_power
+        )
+    elif corr_ratio > 1.0:
+        correction = (
+            1
+            + np.linspace(0, (corr_ratio - 1) ** (1 / corr_power), n_quart) ** corr_power
+        )
+
+    x_left *= correction
+    x_right *= correction[::-1]
+
+    if upper_negative:
+        x_upper_right = -x_upper_right + 2 * r_0
+        x_upper_left = -x_upper_left + 2 * r_0
+        x_upper_left, x_upper_right = x_upper_right[::-1], x_upper_left[::-1]
+        z_upper_left, z_upper_right = z_upper_right[::-1], z_upper_left[::-1]
+
+    if lower_negative:
+        x_left = -x_left + 2 * r_0
+        x_right = -x_right + 2 * r_0
+        x_left, x_right = x_right[::-1], x_left[::-1]
+        z_left, z_right = z_right[::-1], z_left[::-1]
+
+    return (
+        np.array([x_upper_right, x_upper_left, x_left, x_right]),
+        np.array([z_upper_right, z_upper_left, z_left, z_right]) + z_0,
+    )
+
+
 def flux_surface_kuiroukidis(
     r_0,
     z_0,
@@ -162,104 +279,117 @@ def flux_surface_kuiroukidis(
     is just an offset. The key may lie in understand what "relative to the X-point" means
     but it's not enough for me to go on at the moment.
     """
-    if delta_u < 0:
-        delta_u *= -1
-        upper_negative = True
-    else:
-        upper_negative = False
-    if delta_l < 0:
-        delta_l *= -1
-        lower_negative = True
-    else:
-        lower_negative = False
-
-    n_quart = n_points // 4
-    e_0 = a / r_0  # inverse aspect ratio
-
-    # upper part
-    theta_delta = np.pi - np.arctan(kappa_u / delta_u)
-    denom = np.pi * theta_delta**n_power - theta_delta**2 * np.pi ** (n_power - 1)
-    t_0 = (theta_delta**n_power - 0.5 * np.pi**n_power) / denom
-    t_1 = (-(theta_delta**2) + 0.5 * np.pi**2) / denom
-    theta_up_right = np.linspace(0, theta_delta, n_quart)
-    tau_up_right = t_0 * theta_up_right**2 + t_1 * theta_up_right**n_power
-
-    # The theta -> tau conversion approach seems flawed, and overshoots np.pi so we have
-    # to adjust
-    theta_up_left = np.linspace(theta_delta, np.pi, n_quart)
-    tau_up_left = t_0 * theta_up_left**2 + t_1 * theta_up_left**n_power
-
-    tau_up_left = np.clip(tau_up_left, None, np.pi)
-    clip_arg = np.where(tau_up_left == np.pi)[0][0]
-    tau_up_left = tau_up_left[: clip_arg + 1]
-
-    x_upper_right = r_0 * (
-        1 + e_0 * np.cos(tau_up_right + np.arcsin(delta_u) * np.sin(tau_up_right))
-    )
-    z_upper_right = r_0 * kappa_u * e_0 * np.sin(tau_up_right)
-
-    x_upper_left = r_0 * (
-        1 + e_0 * np.cos(tau_up_left + np.arcsin(delta_u) * np.sin(tau_up_left))
-    )
-    z_upper_left = r_0 * kappa_u * e_0 * np.sin(tau_up_left)
-    x_upper_left, _, z_upper_left = interpolate_points(
-        x_upper_left, np.zeros(len(x_upper_left)), z_upper_left, n_quart
+    x_quadrants, z_quadrants = flux_surface_kuiroukidis_quadrants(
+        r_0,
+        z_0,
+        a,
+        kappa_u,
+        kappa_l,
+        delta_u,
+        delta_l,
+        n_power,
+        n_points,
     )
 
-    x_upper = np.concatenate((x_upper_right, x_upper_left))
-    z_upper = np.concatenate((z_upper_right, z_upper_left))
+    return Coordinates(
+        {"x": np.concatenate(x_quadrants), "z": np.concatenate(z_quadrants)}
+    )
 
-    # lower left
-    theta_delta_lower = np.pi - np.arctan(kappa_l / delta_l)
-    p_1 = (kappa_l * e_0) ** 2 / (2 * e_0 * (1 + np.cos(theta_delta_lower)))
-    theta = np.linspace(np.pi, 2 * np.pi - theta_delta_lower, n_quart)
 
-    x_left = r_0 * (1 + e_0 * np.cos(theta))
-    z_left = -r_0 * np.sqrt(2 * p_1 * e_0 * (1 + np.cos(theta)))
+class KuiroukidisLCFS(GeometryParameterisation):
+    """
+    Kuiroukidis last closed flux surface geometry parameterisation (adjusted).
+    """
 
-    # lower right
-    p_2 = (kappa_l * e_0) ** 2 / (2 * e_0 * (1 - np.cos(theta_delta_lower)))
-    theta = np.linspace(2 * np.pi - theta_delta_lower, 2 * np.pi, n_quart)
+    __slots__ = ()
 
-    x_right = r_0 * (1 + e_0 * np.cos(theta))
-    z_right = -r_0 * np.sqrt(2 * p_2 * e_0 * (1 - np.cos(theta)))
-
-    x_x_true = r_0 - delta_l * a
-    x_x_actual = r_0 * (1 + e_0 * np.cos(theta_delta_lower))
-
-    # The lower X-point does not match up with the input kappa_l and delta_l...
-    corr_ratio = x_x_true / x_x_actual
-    corr_power = 2
-    if corr_ratio == 1.0:
-        # For good measure, but the maths is wrong...
-        correction = np.ones(n_quart)
-    elif corr_ratio < 1.0:
-        correction = (
-            1
-            - np.linspace(0, (1 - corr_ratio) ** (1 / corr_power), n_quart) ** corr_power
+    def __init__(self, var_dict=None):
+        variables = OptVariables(
+            [
+                BoundedVariable(
+                    "r_0", 9, lower_bound=0, upper_bound=np.inf, descr="Major radius"
+                ),
+                BoundedVariable(
+                    "z_0",
+                    0,
+                    lower_bound=-np.inf,
+                    upper_bound=np.inf,
+                    descr="Vertical coordinate at geometry centroid",
+                ),
+                BoundedVariable(
+                    "a", 3, lower_bound=0, upper_bound=np.inf, descr="Minor radius"
+                ),
+                BoundedVariable(
+                    "kappa_u",
+                    1.6,
+                    lower_bound=1.0,
+                    upper_bound=np.inf,
+                    descr="Upper elongation",
+                ),
+                BoundedVariable(
+                    "kappa_l",
+                    1.8,
+                    lower_bound=1.0,
+                    upper_bound=np.inf,
+                    descr="Lower elongation",
+                ),
+                BoundedVariable(
+                    "delta_u",
+                    0.4,
+                    lower_bound=0.0,
+                    upper_bound=1.0,
+                    descr="Upper triangularity",
+                ),
+                BoundedVariable(
+                    "delta_l",
+                    0.4,
+                    lower_bound=0.0,
+                    upper_bound=1.0,
+                    descr="Lower triangularity",
+                ),
+                BoundedVariable(
+                    "n_power",
+                    8,
+                    lower_bound=2,
+                    upper_bound=10,
+                    descr="Exponent power",
+                ),
+            ],
+            frozen=True,
         )
-    elif corr_ratio > 1.0:
-        correction = (
-            1
-            + np.linspace(0, (corr_ratio - 1) ** (1 / corr_power), n_quart) ** corr_power
+        variables.adjust_variables(var_dict, strict_bounds=False)
+        super().__init__(variables)
+
+    def create_shape(self, label="LCFS", n_points=1000):
+        """
+        Make a CAD representation of the Kuiroukidis LCFS.
+
+        Parameters
+        ----------
+        label: str, default = "LCFS"
+            Label to give the wire
+        n_points: int
+            Number of points to use when creating the Bspline representation
+
+        Returns
+        -------
+        shape: BluemiraWire
+            CAD Wire of the geometry
+        """
+        x_quadrants, z_quadrants = flux_surface_kuiroukidis_quadrants(
+            *self.variables.values, n_points=n_points
         )
 
-    x_left *= correction
-    x_right *= correction[::-1]
-    if upper_negative:
-        x_upper = -x_upper + 2 * r_0
-        x_upper = x_upper[::-1]
-        z_upper = z_upper[::-1]
-    if lower_negative:
-        x_left = -x_left + 2 * r_0
-        x_right = -x_right + 2 * r_0
-        x_left, x_right = x_right[::-1], x_left[::-1]
-        z_left, z_right = z_right[::-1], z_left[::-1]
-
-    x = np.concatenate([x_upper, x_left, x_right])
-    z = z_0 + np.concatenate([z_upper, z_left, z_right])
-
-    return Coordinates({"x": x, "z": z})
+        labels = ["upper_outer", "upper_inner", "lower_inner", "lower_outer"]
+        return BluemiraWire(
+            [
+                interpolate_bspline(
+                    np.array([x_q, np.zeros(len(x_q)), z_q]).T, label=lab
+                )
+                for x_q, z_q, lab in zip(x_quadrants, z_quadrants, labels)
+            ],
+            label=label,
+        )
 
 
 def calc_t_neg(delta, kappa, phi_neg):
