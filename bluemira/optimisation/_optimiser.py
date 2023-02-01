@@ -36,7 +36,6 @@ class OptimiserResult:
     x: np.ndarray
     n_evals: int
     history: List[np.ndarray] = field(repr=False)
-    # TODO(hsaunders1904): add 'converged' property that's true if converged within tol
 
 
 class Optimiser(abc.ABC):
