@@ -20,7 +20,7 @@
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 """Definition of the generic `optimise` function."""
 
-from typing import Dict, Iterable, Mapping, Optional, Tuple, Union
+from typing import Any, Iterable, Mapping, Optional, Tuple, Union
 
 import numpy as np
 
@@ -41,7 +41,7 @@ def optimise(
     df_objective: Optional[OptimiserCallable] = None,
     algorithm: Union[Algorithm, str] = Algorithm.SLSQP,
     opt_conditions: Optional[Mapping[str, Union[int, float]]] = None,
-    opt_parameters: Optional[Mapping] = None,
+    opt_parameters: Optional[Mapping[str, Any]] = None,
     bounds: Optional[Tuple[np.ndarray, np.ndarray]] = None,
     eq_constraints: Iterable[ConstraintT] = (),
     ineq_constraints: Iterable[ConstraintT] = (),
@@ -79,7 +79,7 @@ def optimise(
             * stop_val: float
 
         (default: {"max_eval": 2000})
-    opt_parameters: Optional[Mapping]
+    opt_parameters: Optional[Mapping[str, Any]]
         The algorithm-specific optimisation parameters.
     bounds: Tuple[np.ndarray, np.ndarray]
         The upper and lower bounds for the optimisation parameters.
@@ -163,7 +163,7 @@ def _make_optimiser(
     df_objective: Optional[OptimiserCallable] = None,
     algorithm: Union[Algorithm, str] = Algorithm.SLSQP,
     opt_conditions: Optional[Mapping[str, Union[int, float]]] = None,
-    opt_parameters: Optional[Dict] = None,
+    opt_parameters: Optional[Mapping[str, Any]] = None,
     bounds: Optional[Tuple[np.ndarray, np.ndarray]] = None,
     eq_constraints: Iterable[ConstraintT] = (),
     ineq_constraints: Iterable[ConstraintT] = (),

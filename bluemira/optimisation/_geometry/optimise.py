@@ -18,30 +18,22 @@
 #
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
-from copy import deepcopy
 from dataclasses import asdict, dataclass
-from typing import Dict, Generic, Iterable, List, Mapping, Optional, TypeVar, Union
+from typing import Any, Generic, Iterable, Mapping, Optional, TypeVar, Union
 
 import numpy as np
 
 from bluemira.geometry.parameterisations import GeometryParameterisation
-from bluemira.geometry.tools import signed_distance_2D_polygon
 from bluemira.geometry.wire import BluemiraWire
 from bluemira.optimisation._algorithm import Algorithm
+from bluemira.optimisation._geometry import _tools
 from bluemira.optimisation._geometry._typing import (
     GeomConstraintT,
     GeomOptimiserCallable,
     GeomOptimiserObjective,
 )
-from bluemira.optimisation._geometry.parameterisations import INEQ_CONSTRAINT_REGISTRY
 from bluemira.optimisation._optimise import optimise
 from bluemira.optimisation._optimiser import OptimiserResult
-from bluemira.optimisation._typing import (
-    ConstraintT,
-    ObjectiveCallable,
-    OptimiserCallable,
-)
-from bluemira.optimisation.error import GeometryOptimisationError
 
 _GeomT = TypeVar("_GeomT", bound=GeometryParameterisation)
 
@@ -61,7 +53,7 @@ def optimise_geometry(
     keep_in_zones: Iterable[BluemiraWire] = (),
     algorithm: Union[Algorithm, str] = Algorithm.SLSQP,
     opt_conditions: Optional[Mapping[str, Union[int, float]]] = None,
-    opt_parameters: Optional[Dict] = None,
+    opt_parameters: Optional[Mapping[str, Any]] = None,
     eq_constraints: Iterable[GeomConstraintT] = (),
     ineq_constraints: Iterable[GeomConstraintT] = (),
     keep_history: bool = False,
@@ -103,7 +95,7 @@ def optimise_geometry(
             * stop_val: float
 
         (default: {"max_eval": 2000})
-    opt_parameters: Optional[Dict]
+    opt_parameters: Optional[Mapping[str, Any]]
         The algorithm-specific optimisation parameters.
     bounds: Tuple[np.ndarray, np.ndarray]
         The upper and lower bounds for the optimisation parameters.
@@ -166,18 +158,18 @@ def optimise_geometry(
         The result of the optimisation.
     """
     dimensions = geom.variables.n_free_variables
-    f_obj = _to_objective(f_objective, geom)
+    f_obj = _tools.to_objective(f_objective, geom)
     if df_objective is not None:
-        df_obj = _to_optimiser_callable(df_objective, geom)
+        df_obj = _tools.to_optimiser_callable(df_objective, geom)
     else:
         df_obj = None
-    ineq_constraints_list = deepcopy(_get_shape_ineq_constraint(geom))
+    ineq_constraints_list = _tools.get_shape_ineq_constraint(geom)
     for constraint in ineq_constraints:
         ineq_constraints_list.append(constraint)
     for koz in keep_out_zones:
-        ineq_constraints_list.append(_make_keep_out_zone_constraint(koz))
+        ineq_constraints_list.append(_tools.make_keep_out_zone_constraint(koz))
     for kiz in keep_in_zones:
-        ineq_constraints_list.append(_make_keep_in_zone_constraint(kiz))
+        ineq_constraints_list.append(_tools.make_keep_in_zone_constraint(kiz))
 
     result = optimise(
         f_obj,
@@ -188,94 +180,8 @@ def optimise_geometry(
         opt_conditions=opt_conditions,
         opt_parameters=opt_parameters,
         bounds=(np.zeros(dimensions), np.ones(dimensions)),
-        eq_constraints=[_to_constraint(c, geom) for c in eq_constraints],
-        ineq_constraints=[_to_constraint(c, geom) for c in ineq_constraints_list],
+        eq_constraints=[_tools.to_constraint(c, geom) for c in eq_constraints],
+        ineq_constraints=[_tools.to_constraint(c, geom) for c in ineq_constraints_list],
         keep_history=keep_history,
     )
     return GeomOptimiserResult(**asdict(result), geom=geom)
-
-
-def _to_objective(
-    geom_objective: GeomOptimiserObjective, geom: GeometryParameterisation
-) -> ObjectiveCallable:
-    """Convert a geometry objective function to a normal objective function."""
-
-    def f(x):
-        geom.variables.set_values_from_norm(x)
-        return geom_objective(geom)
-
-    return f
-
-
-def _to_optimiser_callable(
-    geom_callable: GeomOptimiserCallable,
-    geom: GeometryParameterisation,
-) -> OptimiserCallable:
-    """
-    Convert a geometry optimiser function to a normal optimiser function.
-
-    For example, a gradient or constraint.
-    """
-
-    def f(x):
-        geom.variables.set_values_from_norm(x)
-        return geom_callable(geom)
-
-    return f
-
-
-def calculate_signed_distance(parameterisation, n_shape_discr, koz_points):
-    """
-    Signed distance from the parameterised shape to the keep-out zone.
-    """
-    shape = parameterisation.create_shape()
-    s = shape.discretize(ndiscr=n_shape_discr).xz
-    return signed_distance_2D_polygon(s.T, koz_points.T).T
-
-
-def _make_keep_out_zone_constraint(koz: BluemiraWire) -> GeomConstraintT:
-    """Make a keep-out zone inequality constraint from a wire."""
-    if not koz.is_closed():
-        raise GeometryOptimisationError(
-            f"Keep-out zone with label '{koz.label}' is not closed."
-        )
-    koz_points = koz.discretize(100, byedges=True).xz
-
-    def _f_constraint(geom: GeometryParameterisation) -> np.ndarray:
-        return calculate_signed_distance(geom, n_shape_discr=100, koz_points=koz_points)
-
-    return {"f_constraint": _f_constraint, "tolerance": np.full(100, 1e-3)}
-
-
-def _make_keep_in_zone_constraint(koz: BluemiraWire) -> GeomConstraintT:
-    """Make a keep-in zone inequality constraint from a wire."""
-    if not koz.is_closed():
-        raise GeometryOptimisationError(
-            f"Keep-in zone with label '{koz.label}' is not closed."
-        )
-    koz_points = koz.discretize(100, byedges=True).xz
-
-    def _f_constraint(geom: GeometryParameterisation) -> np.ndarray:
-        return -calculate_signed_distance(geom, n_shape_discr=100, koz_points=koz_points)
-
-    return {"f_constraint": _f_constraint, "tolerance": np.full(100, 1e-3)}
-
-
-def _get_shape_ineq_constraint(geom: GeometryParameterisation) -> List[GeomConstraintT]:
-    return INEQ_CONSTRAINT_REGISTRY.get(type(geom), [])
-
-
-def _to_constraint(
-    geom_constraint: GeomConstraintT, geom: GeometryParameterisation
-) -> ConstraintT:
-    """Convert a geometry constraint to a normal one."""
-    constraint: ConstraintT = {
-        "f_constraint": _to_optimiser_callable(geom_constraint["f_constraint"], geom),
-        "tolerance": geom_constraint["tolerance"],
-    }
-    if "df_constraint" in geom_constraint:
-        constraint["df_constraint"] = _to_optimiser_callable(
-            geom_constraint["df_constraint"], geom
-        )
-
-    return constraint
