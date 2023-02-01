@@ -40,7 +40,7 @@ def optimise(
     x0: Optional[np.ndarray] = None,
     df_objective: Optional[OptimiserCallable] = None,
     algorithm: Union[Algorithm, str] = Algorithm.SLSQP,
-    opt_conditions: Optional[Mapping] = None,
+    opt_conditions: Optional[Mapping[str, Union[int, float]]] = None,
     opt_parameters: Optional[Mapping] = None,
     bounds: Optional[Tuple[np.ndarray, np.ndarray]] = None,
     eq_constraints: Iterable[ConstraintT] = (),
@@ -66,7 +66,7 @@ def optimise(
         The optimisation algorithm to use. See enum
         :obj:`optimisation.Algorithm` for supported algorithms.
         (default: "SLSQP")
-    opt_conditions: Optional[Mapping]
+    opt_conditions: Optional[Mapping[str, Union[int, float]]]
         The stopping conditions for the optimiser. Supported conditions
         are:
 
@@ -162,7 +162,7 @@ def _make_optimiser(
     dimensions: int,
     df_objective: Optional[OptimiserCallable] = None,
     algorithm: Union[Algorithm, str] = Algorithm.SLSQP,
-    opt_conditions: Optional[Dict] = None,
+    opt_conditions: Optional[Mapping[str, Union[int, float]]] = None,
     opt_parameters: Optional[Dict] = None,
     bounds: Optional[Tuple[np.ndarray, np.ndarray]] = None,
     eq_constraints: Iterable[ConstraintT] = (),

@@ -19,14 +19,22 @@
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 
-from bluemira.geometry.parameterisations import PrincetonD, SextupleArc, TripleArc
+from typing import Dict, List, Type
+
+from bluemira.geometry.parameterisations import (
+    GeometryParameterisation,
+    PrincetonD,
+    SextupleArc,
+    TripleArc,
+)
+from bluemira.optimisation._geometry._typing import GeomConstraintT
 from bluemira.optimisation._geometry.parameterisations import (
     princeton_d,
     sextuple_arc,
     triple_arc,
 )
 
-INEQ_CONSTRAINT_REGISTRY = {
+INEQ_CONSTRAINT_REGISTRY: Dict[Type[GeometryParameterisation], List[GeomConstraintT]] = {
     PrincetonD: [
         {
             "f_constraint": princeton_d.f_ineq_constraint,

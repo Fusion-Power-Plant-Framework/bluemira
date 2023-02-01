@@ -26,8 +26,16 @@ from typing_extensions import NotRequired
 from bluemira.geometry.parameterisations import GeometryParameterisation
 
 
-class GeomOptimiserCallable(Protocol):
+class GeomOptimiserObjective(Protocol):
     """Form for a geometry optimiser function (objective, derivative, etc.)."""
+
+    def __call__(self, geom: GeometryParameterisation) -> float:
+        """Call the geometry optimiser objective function."""
+        ...
+
+
+class GeomOptimiserCallable(Protocol):
+    """Form for a geometry optimiser function (derivative, constraint, etc.)."""
 
     def __call__(self, geom: GeometryParameterisation) -> np.ndarray:
         """Call the geometry optimiser function."""

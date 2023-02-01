@@ -20,7 +20,7 @@
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 from copy import deepcopy
 from dataclasses import asdict, dataclass
-from typing import Dict, Generic, Iterable, List, Optional, TypeVar, Union
+from typing import Dict, Generic, Iterable, List, Mapping, Optional, TypeVar, Union
 
 import numpy as np
 
@@ -31,11 +31,16 @@ from bluemira.optimisation._algorithm import Algorithm
 from bluemira.optimisation._geometry._typing import (
     GeomConstraintT,
     GeomOptimiserCallable,
+    GeomOptimiserObjective,
 )
 from bluemira.optimisation._geometry.parameterisations import INEQ_CONSTRAINT_REGISTRY
 from bluemira.optimisation._optimise import optimise
 from bluemira.optimisation._optimiser import OptimiserResult
-from bluemira.optimisation._typing import ConstraintT, OptimiserCallable
+from bluemira.optimisation._typing import (
+    ConstraintT,
+    ObjectiveCallable,
+    OptimiserCallable,
+)
 from bluemira.optimisation.error import GeometryOptimisationError
 
 _GeomT = TypeVar("_GeomT", bound=GeometryParameterisation)
@@ -50,12 +55,12 @@ class GeomOptimiserResult(OptimiserResult, Generic[_GeomT]):
 
 def optimise_geometry(
     geom: _GeomT,
-    f_objective: GeomOptimiserCallable,  # TODO(hsaunders1904): typing is wrong here
+    f_objective: GeomOptimiserObjective,
     df_objective: Optional[GeomOptimiserCallable] = None,
     keep_out_zones: Iterable[BluemiraWire] = (),
     keep_in_zones: Iterable[BluemiraWire] = (),
     algorithm: Union[Algorithm, str] = Algorithm.SLSQP,
-    opt_conditions: Optional[Dict] = None,
+    opt_conditions: Optional[Mapping[str, Union[int, float]]] = None,
     opt_parameters: Optional[Dict] = None,
     eq_constraints: Iterable[GeomConstraintT] = (),
     ineq_constraints: Iterable[GeomConstraintT] = (),
@@ -68,10 +73,9 @@ def optimise_geometry(
     ----------
     geom: GeometryParameterisation
         The geometry to optimise the parameters of.
-    f_objective: GeomOptimiserCallable
+    f_objective: GeomOptimiserObjective
         The objective function to minimise. Must take as an argument a
-        `GeometryParameterisation`and return a numpy array.
-            TODO(hsaunders1904): should this not return a scalar?
+        `GeometryParameterisation`and return a float.
     df_objective: Optional[GeomOptimiserCallable], optional
         The derivative of the objective function, by default None. If
         not given, an approximation of the derivative is made using
@@ -86,7 +90,7 @@ def optimise_geometry(
         must wholly lie within.
     algorithm : Union[Algorithm, str], optional
         The optimisation algorithm to use, by default `Algorithm.SLSQP`.
-    opt_conditions: Optional[Dict]
+    opt_conditions: Optional[Mapping[str, Union[int, float]]]
         The stopping conditions for the optimiser. Supported conditions
         are:
 
@@ -162,7 +166,7 @@ def optimise_geometry(
         The result of the optimisation.
     """
     dimensions = geom.variables.n_free_variables
-    f_obj = _to_optimiser_callable(f_objective, geom)
+    f_obj = _to_objective(f_objective, geom)
     if df_objective is not None:
         df_obj = _to_optimiser_callable(df_objective, geom)
     else:
@@ -191,10 +195,27 @@ def optimise_geometry(
     return GeomOptimiserResult(**asdict(result), geom=geom)
 
 
-def _to_optimiser_callable(
-    geom_callable: GeomOptimiserCallable, geom: GeometryParameterisation
-) -> OptimiserCallable:
+def _to_objective(
+    geom_objective: GeomOptimiserObjective, geom: GeometryParameterisation
+) -> ObjectiveCallable:
     """Convert a geometry objective function to a normal objective function."""
+
+    def f(x):
+        geom.variables.set_values_from_norm(x)
+        return geom_objective(geom)
+
+    return f
+
+
+def _to_optimiser_callable(
+    geom_callable: GeomOptimiserCallable,
+    geom: GeometryParameterisation,
+) -> OptimiserCallable:
+    """
+    Convert a geometry optimiser function to a normal optimiser function.
+
+    For example, a gradient or constraint.
+    """
 
     def f(x):
         geom.variables.set_values_from_norm(x)
@@ -248,22 +269,13 @@ def _to_constraint(
     geom_constraint: GeomConstraintT, geom: GeometryParameterisation
 ) -> ConstraintT:
     """Convert a geometry constraint to a normal one."""
-
-    def _f_constraint(x: np.ndarray) -> np.ndarray:
-        geom.variables.set_values_from_norm(x)
-        return geom_constraint["f_constraint"](geom)
-
-    constraint = {
-        "f_constraint": _f_constraint,
+    constraint: ConstraintT = {
+        "f_constraint": _to_optimiser_callable(geom_constraint["f_constraint"], geom),
         "tolerance": geom_constraint["tolerance"],
     }
-
     if "df_constraint" in geom_constraint:
-
-        def _df_constraint(x: np.ndarray) -> np.ndarray:
-            geom.variables.set_values_from_norm(x)
-            return geom_constraint["df_constraint"](geom)
-
-        constraint["df_constraint"] = _df_constraint
+        constraint["df_constraint"] = _to_optimiser_callable(
+            geom_constraint["df_constraint"], geom
+        )
 
     return constraint
