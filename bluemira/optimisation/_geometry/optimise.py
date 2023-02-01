@@ -184,4 +184,7 @@ def optimise_geometry(
         ineq_constraints=[_tools.to_constraint(c, geom) for c in ineq_constraints_list],
         keep_history=keep_history,
     )
+    # Make sure we update the geometry with the result, the last
+    # geometry update may not have been with the optimum result
+    geom.variables.set_values_from_norm(result.x)
     return GeomOptimiserResult(**asdict(result), geom=geom)

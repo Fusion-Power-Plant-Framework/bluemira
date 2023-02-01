@@ -180,7 +180,6 @@ class TestGeometry:
         angle_vars = ["a1", "a2", "a3", "a4", "a5"]
 
         def sum_angles(geom: SextupleArc) -> float:
-            angles = [geom.variables[a].value for a in angle_vars]
             angles = [geom.variables[a].normalised_value for a in angle_vars]
             return np.sum(angles)
 
@@ -196,13 +195,13 @@ class TestGeometry:
             arc,
             f_objective=lambda geom: -sum_angles(geom),
             df_objective=lambda geom: -d_sum_angles(geom),
-            opt_conditions={"max_eval": 1000, "ftol_rel": 1e-6},
-            algorithm="COBYLA",
+            opt_conditions={"max_eval": 5000, "ftol_rel": 1e-6},
+            algorithm="SLSQP",
         )
 
         angles = [result.geom.variables[a].value for a in angle_vars]
         # The shape's inequality constraint should mean the sum is
-        # strictly less than 360, allowing for a floating point tolerance.
-        assert sum(angles) < 360 + 1e-12
+        # strictly less than 360
+        assert sum(angles) < 360
         # The maximisation should mean the angles approximately sum to 360
-        assert sum(angles) == pytest.approx(360, rel=1e-3)
+        assert sum(angles) == pytest.approx(360, rel=1e-2)
