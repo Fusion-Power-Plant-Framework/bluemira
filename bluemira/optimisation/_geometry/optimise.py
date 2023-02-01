@@ -64,7 +64,9 @@ def optimise_geometry(
     Parameters
     ----------
     geom: GeometryParameterisation
-        The geometry to optimise the parameters of.
+        The geometry to optimise the parameters of. The existing
+        parameterisation is used as the initial guess in the
+        optimisation.
     f_objective: GeomOptimiserObjective
         The objective function to minimise. Must take as an argument a
         `GeometryParameterisation`and return a float.

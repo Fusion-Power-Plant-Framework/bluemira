@@ -329,3 +329,54 @@ class TestNloptOptimiser:
 
         with pytest.raises(ValueError):
             opt.set_upper_bounds(np.array([[1, 2], [3, 4]]))
+
+    @pytest.mark.parametrize(
+        "fixture",
+        [
+            ((np.full(4, -np.inf), np.full(4, np.inf)), [0, 0, 0, 0]),
+            (
+                ([-np.inf, -50, 0, 50], [0, 0, 50, np.inf]),
+                [
+                    -np.finfo(np.float64).max / 2,
+                    -25,
+                    25,
+                    np.finfo(np.float64).max / 2 + 25,
+                ],
+            ),
+        ],
+    )
+    def test_initial_guess_derived_from_bounds_if_not_given(self, fixture):
+        bounds, x0 = fixture
+        opt = NloptOptimiser(
+            "SLSQP", 4, no_op, df_objective=no_op, opt_conditions={"max_eval": 200}
+        )
+        opt.set_lower_bounds(bounds[0])
+        opt.set_upper_bounds(bounds[1])
+
+        with mock.patch(f"{NLOPT_OPT_REF}.optimize") as optimize_mock:
+            opt.optimise()
+
+        assert optimize_mock.call_count == 1
+        call_args = optimize_mock.call_args[0]
+        assert len(call_args) == 1
+        np.testing.assert_allclose(call_args[0], x0)
+
+    def test_set_lower_bounds_sets_bounds(self):
+        bounds = np.array([0, 1, 2, 3])
+        opt = NloptOptimiser(
+            "SLSQP", 4, no_op, df_objective=no_op, opt_conditions={"max_eval": 200}
+        )
+
+        opt.set_lower_bounds(bounds)
+
+        np.testing.assert_allclose(opt.lower_bounds, bounds)
+
+    def test_set_upper_bounds_sets_bounds(self):
+        bounds = np.array([0, 1, 2, 3])
+        opt = NloptOptimiser(
+            "SLSQP", 4, no_op, df_objective=no_op, opt_conditions={"max_eval": 200}
+        )
+
+        opt.set_upper_bounds(bounds)
+
+        np.testing.assert_allclose(opt.upper_bounds, bounds)

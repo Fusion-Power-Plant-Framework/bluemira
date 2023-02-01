@@ -219,18 +219,7 @@ class NloptOptimiser(Optimiser):
         the form the arguments should take.
         """
         if x0 is None:
-            # TODO(hsaunders1904): deal with the case where only one
-            #  set of bounds are finite
-            bounds = np.array([self.lower_bounds, self.upper_bounds])
-            # bounds are +/- inf by default, change to real numbers so
-            # we can take an average
-            np.nan_to_num(
-                bounds,
-                posinf=np.finfo(np.float64).max,
-                neginf=np.finfo(np.float64).min,
-                copy=False,
-            )
-            x0 = np.mean(bounds, axis=0)
+            x0 = _inital_guess_from_bounds(self.lower_bounds, self.upper_bounds)
 
         try:
             x_star = self._opt.optimize(x0)
@@ -248,12 +237,13 @@ class NloptOptimiser(Optimiser):
             x_star, n_evals=self._opt.get_numevals(), history=self._objective.history
         )
 
-    def set_lower_bounds(self, bounds: Union[np.ndarray, float]) -> None:
+    def set_lower_bounds(self, bounds: np.ndarray) -> None:
         """
         Set the lower bound for each optimisation parameter.
 
         Set to `-np.inf` to unbound the parameter's minimum.
         """
+        bounds = np.array(bounds)
         _check_bounds(self._opt.get_dimension(), bounds)
         self._opt.set_lower_bounds(bounds)
         # As we use the optimisation variable bounds when calculating an
@@ -269,6 +259,7 @@ class NloptOptimiser(Optimiser):
 
         Set to `np.inf` to unbound the parameter's minimum.
         """
+        bounds = np.array(bounds)
         _check_bounds(self._opt.get_dimension(), bounds)
         self._opt.set_upper_bounds(bounds)
         # As we use the optimisation variable bounds when calculating an
@@ -347,3 +338,21 @@ def _check_bounds(n_dims: int, new_bounds: np.ndarray) -> None:
             f"Cannot set bounds with shape '{new_bounds.shape}', "
             f"array must be one dimensional and have '{n_dims}' elements."
         )
+
+
+def _inital_guess_from_bounds(lower: np.ndarray, upper: np.ndarray) -> np.ndarray:
+    """
+    Derive an initial guess for the optimiser.
+
+    Takes the center of the bounds for each parameter.
+    """
+    bounds = np.array([lower, upper])
+    # bounds are +/- inf by default, change to real numbers so
+    # we can take an average
+    np.nan_to_num(
+        bounds,
+        posinf=np.finfo(np.float64).max,
+        neginf=np.finfo(np.float64).min,
+        copy=False,
+    )
+    return np.mean(bounds, axis=0)
