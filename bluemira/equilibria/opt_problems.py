@@ -83,7 +83,7 @@ class CoilsetOptimisationProblem(OptimisationProblem):
     ----------
     coilset: Coilset
         Coilset to be optimised.
-    optimiser: Optimiser (default: None)
+    optimiser: bluemira.utilities.optimiser.Optimiser (default: None)
         Optimiser object to use for constrained optimisation.
         Does not need to be provided if not used by
         optimise(), such as for purely unconstrained
@@ -310,7 +310,7 @@ class CoilsetPositionCOP(CoilsetOptimisationProblem):
         for all coils.
     gamma: float (default = 1e-8)
         Tikhonov regularisation parameter in units of [A⁻¹].
-    optimiser: Optimiser
+    optimiser: bluemira.utilities.optimiser.Optimiser
         Optimiser object to use for constrained optimisation.
     constraints: List[OptimisationConstraint] (default: None)
         Optional list of OptimisationConstraint objects storing
@@ -523,7 +523,7 @@ class NestedCoilsetPositionCOP(CoilsetOptimisationProblem):
         Dictionary of Coordinates that specify convex hull regions inside which
         each PF control coil position is to be optimised.
         The Coordinates must be 2d in x,z in units of [m].
-    optimiser: Optimiser
+    optimiser: bluemira.utilities.optimiser.Optimiser
         Optimiser object to use for constrained optimisation.
     constraints: List[OptimisationConstraint] (default: None)
         Optional list of OptimisationConstraint objects storing
@@ -749,7 +749,7 @@ class TikhonovCurrentCOP(CoilsetOptimisationProblem):
         Maximum allowed current for each independent coil current in coilset [A].
         If specified as a float, the float will set the maximum allowed current
         for all coils.
-    optimiser: Optimiser
+    optimiser: bluemira.utilities.optimiser.Optimiser
         Optimiser object to use for constrained optimisation.
     constraints: List[OptimisationConstraint] (default: None)
         Optional list of OptimisationConstraint objects storing
@@ -833,7 +833,7 @@ class MinimalCurrentCOP(CoilsetOptimisationProblem):
     ----------
     eq: Equilibrium
         Equilibrium object to optimise the currents for
-    optimiser: Optimiser
+    optimiser: bluemira.utilities.optimiser.Optimiser
         Optimiser object to use
     max_currents: np.ndarray
         Current bounds vector [A]
@@ -893,7 +893,7 @@ class PulsedNestedPositionCOP(CoilsetOptimisationProblem):
         Position mapper tool to parameterise coil positions
     sub_opt_problems: List[CoilsetOptimisationProblem]
         The list of sub-optimisation problems to solve
-    optimiser: Optimiser
+    optimiser: bluemira.utilities.optimiser.Optimiser
         Optimiser object to use
     constraints: Optional[List[OptimisationConstraint]]
         Constraints to use. Note these should be applicable to the parametric position

@@ -68,7 +68,7 @@ class UpperPortOP(OptimisationProblem):
     params: Union[Dict, ParameterFrame]
         Parameter frame for the problem. See
         :class:`UpperPortOPParameters` for parameter details.
-    optimiser: Optimiser
+    optimiser: bluemira.utilities.optimiser.Optimiser
         Optimiser object to use when solving this problem
     breeding_blanket_xz: BluemiraFace
         Unsegmented breeding blanket x-z geometry

@@ -69,7 +69,7 @@ def optimise_geometry(
         optimisation.
     f_objective: GeomOptimiserObjective
         The objective function to minimise. Must take as an argument a
-        `GeometryParameterisation`and return a float.
+        `GeometryParameterisation` and return a float.
     df_objective: Optional[GeomOptimiserCallable], optional
         The derivative of the objective function, by default None. If
         not given, an approximation of the derivative is made using
@@ -83,7 +83,7 @@ def optimise_geometry(
         An iterable list of closed wires, defining areas the geometry
         must wholly lie within.
     algorithm : Union[Algorithm, str], optional
-        The optimisation algorithm to use, by default `Algorithm.SLSQP`.
+        The optimisation algorithm to use, by default ``Algorithm.SLSQP``.
     opt_conditions: Optional[Mapping[str, Union[int, float]]]
         The stopping conditions for the optimiser. Supported conditions
         are:
@@ -115,12 +115,12 @@ def optimise_geometry(
         A constraint is a vector-valued, non-linear, inequality
         constraint of the form $f_{c}(x) \le 0$.
 
-        The constraint function should have the form `f(g) -> y`,
+        The constraint function should have the form ``f(g) -> y``,
         where:
 
             * `g` is a geometry parameterisation.
             * `y` is a numpy array containing the values of the
-              constraint at the current parameterisation of `g`.
+              constraint at the current parameterisation of ``g``.
               It must have size $m$, where $m$ is the dimensionality of
               the constraint.
 

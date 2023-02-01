@@ -120,7 +120,7 @@ class GeometryOptimisationProblem(OptimisationProblem):
     ----------
     parameterisation: GeometryParameterisation
         Geometry parameterisation instance to use in the optimisation problem
-    optimiser: Optimiser
+    optimiser: bluemira.utilities.optimiser.Optimiser
         Optimiser instance to use in the optimisation problem
     """
 

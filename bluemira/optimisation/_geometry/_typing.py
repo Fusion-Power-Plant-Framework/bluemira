@@ -27,7 +27,7 @@ from bluemira.geometry.parameterisations import GeometryParameterisation
 
 
 class GeomOptimiserObjective(Protocol):
-    """Form for a geometry optimiser function (objective, derivative, etc.)."""
+    """Form for a geometry optimisation objective function."""
 
     def __call__(self, geom: GeometryParameterisation) -> float:
         """Call the geometry optimiser objective function."""
