@@ -484,6 +484,12 @@
         "long_name": "TF coil winding pack radial width",
         "description": "Including insulation"
     },
+    "bb_min_angle": {
+        "value": 70,
+        "unit": "degrees",
+        "source": "Input",
+        "long_name": "Minimum breeding blanket angle"
+    },
     "tk_bb_ib": {
         "value": 0.8,
         "unit": "meter",

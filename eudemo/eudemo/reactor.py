@@ -70,6 +70,7 @@ from eudemo.comp_managers import (
 )
 from eudemo.ivc import design_ivc
 from eudemo.ivc.divertor_silhouette import Divertor
+from eudemo.maintenance.upper_port import UpperPortDesigner
 from eudemo.params import EUDEMOReactorParams
 from eudemo.pf_coils import PFCoil, PFCoilsDesigner
 from eudemo.power_cycle import SteadyStatePowerCycleSolver
@@ -124,9 +125,11 @@ def build_divertor(params, build_config, div_silhouette) -> Divertor:
     return Divertor(builder.build())
 
 
-def build_blanket(params, build_config, blanket_face) -> Blanket:
+def build_blanket(
+    params, build_config, blanket_face, r_inner_cut: float, cut_angle: float
+) -> Blanket:
     """Build the blanket given a silhouette of a sector."""
-    builder = BlanketBuilder(params, build_config, blanket_face)
+    builder = BlanketBuilder(params, build_config, blanket_face, r_inner_cut, cut_angle)
     return Blanket(builder.build())
 
 
@@ -270,6 +273,11 @@ if __name__ == "__main__":
         params, build_config["IVC"], equilibrium=free_boundary_eq
     )
 
+    upper_port_designer = UpperPortDesigner(
+        params, build_config.get("Upper Port", {}), blanket_face
+    )
+    upper_port_xz, r_inner_cut, cut_angle = upper_port_designer.execute()
+
     reactor.vacuum_vessel = build_vacuum_vessel(
         params, build_config.get("Vacuum vessel", {}), ivc_boundary
     )
@@ -278,7 +286,7 @@ if __name__ == "__main__":
         params, build_config.get("Divertor", {}), divertor_face
     )
     reactor.blanket = build_blanket(
-        params, build_config.get("Blanket", {}), blanket_face
+        params, build_config.get("Blanket", {}), blanket_face, r_inner_cut, cut_angle
     )
 
     thermal_shield_config = build_config.get("Thermal shield", {})

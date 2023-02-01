@@ -16,6 +16,7 @@ class EUDEMOReactorParams(ParameterFrame):
     B_tf_peak: Parameter[float]
     beta_p: Parameter[float]
     beta: Parameter[float]
+    bb_min_angle: Parameter[float]
     C_Ejima: Parameter[float]
     condrad_cryo_heat: Parameter[float]
     CS_bmax: Parameter[float]
