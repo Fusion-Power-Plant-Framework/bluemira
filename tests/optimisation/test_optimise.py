@@ -51,9 +51,10 @@ class TestOptimise:
         )
 
         assert len(result.history) == result.n_evals
-        # TODO(hsaunders1904):
-        # do something to test that the history changes, i.e. we're not
-        # just appending the same array every time
+        # Just check that the first and second x values are not equal.
+        # We just want to verify we're not just adding the same array
+        # every time
+        assert not np.allclose(result.history[0], result.history[1])
 
     @pytest.mark.parametrize(
         "algorithm",
