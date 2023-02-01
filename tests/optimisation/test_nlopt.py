@@ -317,3 +317,15 @@ class TestNloptOptimiser:
     def test_TypeError_setting_alg_with_invalid_type(self, bad_alg):
         with pytest.raises(TypeError):
             NloptOptimiser(bad_alg, 2, no_op)
+
+    def test_ValueError_setting_lower_bounds_with_wrong_dims(self):
+        opt = NloptOptimiser("SLSQP", 2, no_op, opt_conditions={"max_eval": 200})
+
+        with pytest.raises(ValueError):
+            opt.set_lower_bounds(np.array([1, 2, 3]))
+
+    def test_ValueError_setting_upper_bounds_with_wrong_dims(self):
+        opt = NloptOptimiser("SLSQP", 4, no_op, opt_conditions={"max_eval": 200})
+
+        with pytest.raises(ValueError):
+            opt.set_upper_bounds(np.array([[1, 2], [3, 4]]))

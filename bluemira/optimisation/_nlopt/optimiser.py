@@ -182,8 +182,6 @@ class NloptOptimiser(Optimiser):
         self._opt.add_equality_mconstraint(constraint.f, constraint.tolerance)
         self._eq_constraints.append(constraint)
 
-    # TODO(hsaunders1904): resolve tolerance typing conflict here and in base class.
-    #  Should we be allowing a float? How do we get the dimensionality of the constraint?
     def add_ineq_constraint(
         self,
         f_constraint: OptimiserCallable,
@@ -250,12 +248,13 @@ class NloptOptimiser(Optimiser):
             x_star, n_evals=self._opt.get_numevals(), history=self._objective.history
         )
 
-    def set_lower_bounds(self, bounds: np.ndarray) -> None:
+    def set_lower_bounds(self, bounds: Union[np.ndarray, float]) -> None:
         """
         Set the lower bound for each optimisation parameter.
 
         Set to `-np.inf` to unbound the parameter's minimum.
         """
+        _check_bounds(self._opt.get_dimension(), bounds)
         self._opt.set_lower_bounds(bounds)
         # As we use the optimisation variable bounds when calculating an
         # approximate derivative, we must set the new bounds on the
@@ -264,13 +263,13 @@ class NloptOptimiser(Optimiser):
         for constraint in self._eq_constraints + self._ineq_constraints:
             constraint.set_approx_derivative_lower_bound(bounds)
 
-    def set_upper_bounds(self, bounds: np.ndarray) -> None:
+    def set_upper_bounds(self, bounds: Union[np.ndarray, float]) -> None:
         """
         Set the upper bound for each optimisation parameter.
 
         Set to `np.inf` to unbound the parameter's minimum.
         """
-        # TODO(hsaunders1904): validate bounds.size
+        _check_bounds(self._opt.get_dimension(), bounds)
         self._opt.set_upper_bounds(bounds)
         # As we use the optimisation variable bounds when calculating an
         # approximate derivative, we must set the new bounds on the
@@ -339,3 +338,12 @@ def _check_algorithm(algorithm: Union[str, Algorithm]) -> Algorithm:
     elif isinstance(algorithm, Algorithm):
         return algorithm
     raise TypeError(f"Cannot set algorithm with object of type '{type(algorithm)}'.")
+
+
+def _check_bounds(n_dims: int, new_bounds: np.ndarray) -> None:
+    """Validate that the bounds have the correct dimensions."""
+    if new_bounds.ndim != 1 or new_bounds.size != n_dims:
+        raise ValueError(
+            f"Cannot set bounds with shape '{new_bounds.shape}', "
+            f"array must be one dimensional and have '{n_dims}' elements."
+        )
