@@ -20,12 +20,12 @@
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 from __future__ import annotations
 
-import warnings
 from typing import Any, Dict, List, Mapping, Optional, Union
 
 import nlopt
 import numpy as np
 
+from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.optimisation._algorithm import Algorithm
 from bluemira.optimisation._nlopt.conditions import NLOptConditions
 from bluemira.optimisation._nlopt.constraint import Constraint, ConstraintType
@@ -238,7 +238,7 @@ class NloptOptimiser(Optimiser):
             x_star = self._opt.optimize(x0)
         except nlopt.RoundoffLimited:
             # It's likely that the last call was still a reasonably good solution.
-            warnings.warn(
+            bluemira_warn(
                 "optimisation: round-off error occurred, returning last optimisation "
                 "parameterisation."
             )

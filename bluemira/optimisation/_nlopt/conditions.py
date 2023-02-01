@@ -1,8 +1,8 @@
-import warnings
 from dataclasses import asdict, dataclass
 from typing import Dict, Optional
 
 from bluemira.base.constants import EPS
+from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.optimisation.error import OptimisationConditionsError
 
 
@@ -34,8 +34,7 @@ class NLOptConditions:
             self.xtol_rel,
         ]:
             if condition and condition < EPS:
-                # TODO(hsaunders1904): use bluemira_warn
-                warnings.warn(
+                bluemira_warn(
                     "optimisation: Setting stopping condition to less than machine "
                     "precision. This condition may never be met."
                 )

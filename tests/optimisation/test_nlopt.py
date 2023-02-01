@@ -18,7 +18,6 @@
 #
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
-import warnings
 from unittest import mock
 
 import nlopt
@@ -278,18 +277,19 @@ class TestNloptOptimiser:
         "cond",
         ["ftol_abs", "ftol_rel", "xtol_abs", "xtol_rel"],
     )
-    def test_warning_given_stopping_condition_lt_eps(self, cond):
-        with pytest.warns(UserWarning):
-            NloptOptimiser("SLSQP", 1, no_op, opt_conditions={cond: EPS / 1.1})
+    @mock.patch("bluemira.optimisation._nlopt.conditions.bluemira_warn")
+    def test_warning_given_stopping_condition_lt_eps(self, bm_warn, cond):
+        NloptOptimiser("SLSQP", 1, no_op, opt_conditions={cond: EPS / 1.1})
+        bm_warn.assert_called_once()
 
     @pytest.mark.parametrize(
         "cond",
         ["ftol_abs", "ftol_rel", "xtol_abs", "xtol_rel"],
     )
-    def test_no_warning_given_stopping_condition_gt_eps(self, cond):
-        with warnings.catch_warnings():
-            warnings.simplefilter("error")
-            NloptOptimiser("SLSQP", 1, no_op, opt_conditions={cond: EPS * 1.1})
+    @mock.patch("bluemira.optimisation._nlopt.conditions.bluemira_warn")
+    def test_no_warning_given_stopping_condition_gt_eps(self, bm_warn, cond):
+        NloptOptimiser("SLSQP", 1, no_op, opt_conditions={cond: EPS * 1.1})
+        assert bm_warn.call_count == 0
 
     @pytest.mark.parametrize("t", ["eq", "ineq"])
     def test_OptimisationError_adding_constraint_to_unsupported_algorithm(self, t):
@@ -299,13 +299,17 @@ class TestNloptOptimiser:
             getattr(opt, f"add_{t}_constraint")(no_op, np.array([1e-4, 1e-4]))
 
     @mock.patch(f"{NLOPT_OPT_REF}.optimize")
-    def test_warning_and_prev_iter_result_given_round_off_error(self, nlopt_mock):
+    @mock.patch("bluemira.optimisation._nlopt.optimiser.bluemira_warn")
+    def test_warning_and_prev_iter_result_given_round_off_error(
+        self, bm_warn, nlopt_mock
+    ):
         nlopt_mock.side_effect = nlopt.RoundoffLimited
         x0 = np.array([1, 2])
         opt = NloptOptimiser("SLSQP", 2, no_op, opt_conditions={"max_eval": 200})
 
-        with pytest.warns(UserWarning):
-            res = opt.optimise(x0)
+        res = opt.optimise(x0)
+
+        bm_warn.assert_called_once()
         assert res.n_evals == 0
         np.testing.assert_allclose(res.x, x0)
 
