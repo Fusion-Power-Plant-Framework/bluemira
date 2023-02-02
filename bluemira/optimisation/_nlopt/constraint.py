@@ -52,7 +52,6 @@ class Constraint:
         self.f = f
         self.tolerance = tolerance
         self.df = df if df is not None else self._approx_derivative
-        self.f0: Optional[np.ndarray] = None
         self.bounds = bounds
 
     def nlopt_call(self, result: np.ndarray, x: np.ndarray, grad: np.ndarray) -> None:
@@ -64,10 +63,9 @@ class Constraint:
         if grad.size > 0:
             grad[:] = self.df(x)
         result[:] = self.f(x)
-        self.f0 = result
 
     def _approx_derivative(self, x: np.ndarray) -> np.ndarray:
-        return approx_derivative(self.f, x, f0=self.f0, bounds=self.bounds)
+        return approx_derivative(self.f, x, bounds=self.bounds)
 
     def set_approx_derivative_lower_bound(self, lower_bound: np.ndarray) -> None:
         """Set the lower bounds for use in derivative approximation."""

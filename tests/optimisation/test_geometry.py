@@ -117,7 +117,12 @@ class TestGeometry:
         # height of the TripleArc to match the height of the keep-in
         # zone, and the width of the TripleArc should be less than the
         # width of the keep-in zone.
-        arc = TripleArc()
+        arc = TripleArc(
+            {
+                "x1": {"value": 3.5, "lower_bound": 2.75},
+                "dz": {"value": 0},
+            }
+        )
         kiz = make_polygon(
             np.array([[3, 13, 13, 3], [0, 0, 0, 0], [-5, -5, 6, 6]]), closed=True
         )
@@ -126,11 +131,8 @@ class TestGeometry:
             arc,
             f_objective=lambda geom: -geom.create_shape().length,
             keep_in_zones=(kiz,),
+            algorithm="SLSQP",
             opt_conditions={"max_eval": 5000, "ftol_rel": 1e-6},
-            # TODO(hsaunders1904): more investigation why we get error:
-            #  'RuntimeError: bug: more than iter SQP iterations'
-            #  for SLSQP
-            algorithm="COBYLA",
         )
 
         opt_shape = result.geom.create_shape()
@@ -177,24 +179,16 @@ class TestGeometry:
         # Run an optimisation to maximise the size of the angles in a
         # SextupleArc. The shape constraint should ensure the angles do
         # not sum to more than 360 degrees.
+        arc = SextupleArc()
         angle_vars = ["a1", "a2", "a3", "a4", "a5"]
 
         def sum_angles(geom: SextupleArc) -> float:
             angles = [geom.variables[a].normalised_value for a in angle_vars]
             return np.sum(angles)
 
-        def d_sum_angles(geom: SextupleArc) -> np.ndarray:
-            grad = np.zeros(len(geom.variables.get_normalised_values()))
-            for angle in angle_vars:
-                grad[geom._get_x_norm_index(angle)] = 1
-            return grad
-
-        arc = SextupleArc()
-
         result = optimise_geometry(
             arc,
             f_objective=lambda geom: -sum_angles(geom),
-            df_objective=lambda geom: -d_sum_angles(geom),
             opt_conditions={"max_eval": 5000, "ftol_rel": 1e-6},
             algorithm="SLSQP",
         )

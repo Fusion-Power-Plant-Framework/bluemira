@@ -49,7 +49,6 @@ class NloptObjectiveFunction:
         ),
     ):
         self.f = f
-        self.f0: Optional[float] = None
         self.df = df if df is not None else self._approx_derivative
         self.bounds = bounds
         self.history: List[np.ndarray] = []
@@ -58,19 +57,17 @@ class NloptObjectiveFunction:
         """Execute the NLOpt objective function."""
         if grad.size > 0:
             grad[:] = self.df(x)
-        self.f0 = self.f(x)
-        return self.f0
+        return self.f(x)
 
     def call_with_history(self, x: np.ndarray, grad: np.ndarray) -> float:
         """Execute the NLOpt objective function, recording the iteration history."""
         self.history.append(np.copy(x))
         if grad.size > 0:
             grad[:] = self.df(x)
-        self.f0 = self.f(x)
-        return self.f0
+        return self.f(x)
 
     def _approx_derivative(self, x: np.ndarray) -> np.ndarray:
-        return approx_derivative(self.f, x, f0=self.f0, bounds=self.bounds)
+        return approx_derivative(self.f, x, bounds=self.bounds)
 
     def set_approx_derivative_lower_bound(self, lower_bound: np.ndarray) -> None:
         """Set the lower bounds for use in derivative approximation."""
