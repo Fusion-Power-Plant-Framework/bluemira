@@ -1,4 +1,19 @@
-# %%
+# ---
+# jupyter:
+#   jupytext:
+#     cell_metadata_filter: tags,-all
+#     notebook_metadata_filter: -jupytext.text_representation.jupytext_version
+#     text_representation:
+#       extension: .py
+#       format_name: percent
+#       format_version: '1.3'
+#   kernelspec:
+#     display_name: Python 3 (ipykernel)
+#     language: python
+#     name: python3
+# ---
+
+# %% tags=["remove-cell"]
 # bluemira is an integrated inter-disciplinary design tool for future fusion
 # reactors. It incorporates several modules, some of which rely on other
 # codes, to carry out a range of typical conceptual fusion reactor design
@@ -20,12 +35,15 @@
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 
-"""Non-linearly constrained optimisation problem"""
+"""
+Non-Linearly Constrained Optimisation Problem
+"""
 
-# %%[markdown]
-# Let's solve the nonlinearly constrained minimization problem:
+# %% [markdown]
+# # Non-Linearly Constrained Optimisation Problem
+# Let's solve the non-linearly constrained minimization problem:
 #
-# $$ \min_{x \in \R^2} \sqrt{x_2} \tag{1}$$
+# $$ \min_{x \in \mathbb{R}^2} \sqrt{x_2} \tag{1}$$
 #
 # subject to
 #
@@ -35,10 +53,11 @@
 #
 # for parameters $a_1 = 2$, $b_1 = 0$, $a_2 = -1$, $b_2 = 1$.
 #
-# This example problem is ripped straight from the
+# This problem expects a minimum at $ x = ( \frac{1}{3}, \frac{8}{27} ) $.
+#
+# This example is ripped straight from the
 # [NLOpt docs](https://nlopt.readthedocs.io/en/latest/NLopt_Tutorial/#example-nonlinearly-constrained-problem).
 #
-# This problem expects a minimum at $ x = ( \frac{1}{3}, \frac{8}{27} ) $.
 
 # %%
 import numpy as np
@@ -83,4 +102,6 @@ result = optimise(
         },
     ],
 )
+for x in result.history:
+    print(x)
 print(result)
