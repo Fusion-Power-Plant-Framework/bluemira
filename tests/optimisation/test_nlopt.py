@@ -38,6 +38,7 @@ NLOPT_OPT_REF = "bluemira.optimisation._nlopt.optimiser.nlopt.opt"
 
 
 def no_op():
+    # No op for use as a dummy function within tests
     pass
 
 
