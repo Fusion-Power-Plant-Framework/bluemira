@@ -18,6 +18,10 @@
 #
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
+from random import uniform
+
+import pytest
+
 from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.tools import make_polygon
 from eudemo.blanket import BlanketBuilder
@@ -48,8 +52,12 @@ class TestDivertorBuilder:
             )
         )
 
-    def test_components_and_segments(self):
-        builder = BlanketBuilder(self.params, {}, self.silhouette)
+    @pytest.mark.parametrize("cut_angle", [uniform(0, 90) for _ in range(2)])
+    @pytest.mark.parametrize("r_inner_cut", [uniform(2, 4) for _ in range(2)])
+    def test_components_and_segments(self, r_inner_cut, cut_angle):
+        builder = BlanketBuilder(
+            self.params, {}, self.silhouette, r_inner_cut, cut_angle
+        )
         blanket = builder.build()
 
         assert blanket.get_component("xz")
