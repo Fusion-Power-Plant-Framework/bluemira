@@ -31,7 +31,18 @@ from __future__ import annotations
 import enum
 
 
-class Algorithm(enum.Enum):
+class _AlgorithmMeta(enum.EnumMeta):
+    def __getitem__(self, s: str) -> Algorithm:
+        try:
+            return super().__getitem__(s)
+        except KeyError:
+            if s == "DIRECT-L":
+                # special case for backward compatibility
+                return super().__getitem__("DIRECT_L")
+            raise ValueError(f"No such Algorithm value '{s}'.")
+
+
+class Algorithm(enum.Enum, metaclass=_AlgorithmMeta):
     """Enumeration of available optimisation algorithms."""
 
     SLSQP = enum.auto()
@@ -43,31 +54,3 @@ class Algorithm(enum.Enum):
     DIRECT_L = enum.auto()
     CRS = enum.auto()
     ISRES = enum.auto()
-
-    @classmethod
-    def from_string(cls, s: str) -> Algorithm:
-        """
-        Get enumeration value from the given string.
-
-        Parameters
-        ----------
-        s: str
-            String representation of the enum
-
-        Returns
-        -------
-        e: Algorithm
-            The enumeration.
-
-        Raises
-        ------
-        ValueError
-            If the string does not correspond to an enum name.
-        """
-        try:
-            return getattr(cls, s)
-        except AttributeError:
-            if s == "DIRECT-L":
-                # special case for backward compatibility
-                return Algorithm.DIRECT_L
-            raise ValueError(f"No such Algorithm value '{s}'.")

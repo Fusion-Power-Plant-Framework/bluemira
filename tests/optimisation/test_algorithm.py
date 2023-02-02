@@ -26,11 +26,11 @@ from bluemira.optimisation._algorithm import Algorithm
 class TestAlgorithm:
     @pytest.mark.parametrize("alg", list(Algorithm))
     def test_algorithm_can_be_made_from_name(self, alg):
-        assert Algorithm.from_string(alg.name) == alg
+        assert Algorithm[alg.name] == alg
 
     def test_direct_l_can_be_made_from_str_with_hyphen(self):
-        assert Algorithm.from_string("DIRECT-L") == Algorithm.DIRECT_L
+        assert Algorithm["DIRECT-L"] == Algorithm.DIRECT_L
 
     def test_ValueError_given_unknown_algorithm_str(self):
         with pytest.raises(ValueError):
-            Algorithm.from_string("NOT_AN_ALG")
+            Algorithm["NOT_AN_ALG"]

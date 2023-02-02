@@ -325,7 +325,7 @@ class NloptOptimiser(Optimiser):
 def _check_algorithm(algorithm: Union[str, Algorithm]) -> Algorithm:
     """Validate, and convert, the given algorithm."""
     if isinstance(algorithm, str):
-        return Algorithm.from_string(algorithm)
+        return Algorithm[algorithm]
     elif isinstance(algorithm, Algorithm):
         return algorithm
     raise TypeError(f"Cannot set algorithm with object of type '{type(algorithm)}'.")
