@@ -232,13 +232,20 @@ class TestNloptOptimiser:
 
     @pytest.mark.parametrize("alg", [Algorithm.SLSQP, Algorithm.COBYLA, Algorithm.ISRES])
     def test_add_eq_constraint_sets_constraint(self, alg):
-        opt = NloptOptimiser(alg, 2, no_op, opt_conditions={"max_eval": 200})
+        opt = NloptOptimiser(alg, 1, no_op, opt_conditions={"max_eval": 200})
 
         with mock.patch(f"{NLOPT_OPT_REF}.add_equality_mconstraint") as add_eq_mock:
-            opt.add_eq_constraint(no_op, 1)
+            opt.add_eq_constraint(lambda _: -1, 1, lambda _: 2)
 
-        add_eq_mock.call_count == 1
-        add_eq_mock.call_args[0][0] == no_op
+        assert add_eq_mock.call_count == 1
+        # Retrieve the constraint from the mock, and call it to check it
+        # returns what we've told it to
+        result = np.zeros(1)
+        grad = np.zeros(1)
+        constraint_func = add_eq_mock.call_args[0][0]
+        constraint_func(result, np.zeros(1), grad)
+        np.testing.assert_equal(result, [-1])
+        np.testing.assert_equal(grad, [2])
         np.testing.assert_allclose(add_eq_mock.call_args[0][1], np.array([1, 1]))
 
     @pytest.mark.parametrize(
@@ -264,13 +271,20 @@ class TestNloptOptimiser:
 
     @pytest.mark.parametrize("alg", [Algorithm.SLSQP, Algorithm.COBYLA, Algorithm.ISRES])
     def test_add_ineq_constraint_sets_constraint(self, alg):
-        opt = NloptOptimiser(alg, 2, no_op, opt_conditions={"max_eval": 200})
+        opt = NloptOptimiser(alg, 1, lambda _: 1, opt_conditions={"max_eval": 200})
 
         with mock.patch(f"{NLOPT_OPT_REF}.add_inequality_mconstraint") as add_ineq_mock:
-            opt.add_ineq_constraint(no_op, 1)
+            opt.add_ineq_constraint(lambda _: -1, 1, lambda _: 2)
 
-        add_ineq_mock.call_count == 1
-        add_ineq_mock.call_args[0][0] == no_op
+        assert add_ineq_mock.call_count == 1
+        # Retrieve the constraint from the mock, and call it to check it
+        # returns what we've told it to
+        result = np.zeros(1)
+        grad = np.zeros(1)
+        constraint_func = add_ineq_mock.call_args[0][0]
+        constraint_func(result, np.zeros(1), grad)
+        np.testing.assert_equal(result, [-1])
+        np.testing.assert_equal(grad, [2])
         np.testing.assert_allclose(add_ineq_mock.call_args[0][1], np.array([1, 1]))
 
     @pytest.mark.parametrize(
