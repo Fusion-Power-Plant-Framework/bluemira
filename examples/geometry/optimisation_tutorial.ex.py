@@ -39,6 +39,10 @@ A quick tutorial on the optimisation of geometry in bluemira
 """
 
 # %% [markdown]
+# ## ⚠️ This method of defining optimisations is deprecated ⚠️
+# See [examples/optimisation/geometry_optimisation](../optimisation/geometry_optimisation.ex.py)
+
+# %% [markdown]
 # # Optimisation of Geometry
 # ## Introduction
 #
