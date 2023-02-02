@@ -179,7 +179,7 @@ class NloptOptimiser(Optimiser):
             df_constraint,
             bounds=(self.lower_bounds, self.upper_bounds),
         )
-        self._opt.add_equality_mconstraint(constraint.f, constraint.tolerance)
+        self._opt.add_equality_mconstraint(constraint.nlopt_call, constraint.tolerance)
         self._eq_constraints.append(constraint)
 
     def add_ineq_constraint(
