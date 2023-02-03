@@ -1,25 +1,12 @@
-from pprint import pformat
+# COPYRIGHT PLACEHOLDER
 
 import pytest
 
-from bluemira.base.look_and_feel import bluemira_debug
-from bluemira.power_cycle.base import PowerCycleABC, PowerCycleABCError
-
-
-def script_title():
-    return "Test Power Cycle 'base'"
-
-
-class TestPowerCycleABCError:
-    pass
-
-
-def test_PowerCycleABCError():
-    with pytest.raises(PowerCycleABCError):
-        raise PowerCycleABCError(
-            None,
-            "Some error in the 'PowerCycleABC' class.",
-        )
+from bluemira.power_cycle.base import NetPowerABC, PowerCycleABC, PowerCycleTimeABC
+from bluemira.power_cycle.errors import (  # PowerCycleTimeABCError,
+    NetPowerABCError,
+    PowerCycleABCError,
+)
 
 
 class TestPowerCycleABC:
@@ -64,17 +51,6 @@ class TestPowerCycleABC:
             else:
                 with pytest.raises(PowerCycleABCError):
                     wrong_sample = self.SampleConcreteClass(argument)
-                    bluemira_debug(
-                        f"""
-                        {script_title()} (PowerCycleABC constructor)
-
-                        Name given to sample:
-                        {pformat(wrong_sample.name)}
-
-                        Class of name given to sample:
-                        {pformat(wrong_sample.name.__class__)}
-                        """
-                    )
 
     def test_validate_list(self):
         sample = self.sample
@@ -112,3 +88,115 @@ class TestPowerCycleABC:
             else:
                 with pytest.raises(PowerCycleABCError):
                     validated_argument = sample.validate_class(argument)
+
+
+class TestPowerCycleTimeABC:
+    class SampleConcreteClass(PowerCycleTimeABC):
+        """
+        Inner class that is a dummy concrete class for testing the main
+        abstract class of the test.
+        """
+
+        pass
+
+    def setup_method(self):
+        name = "A sample instance name"
+        durations_list = [0, 1, 5, 10]
+        sample = self.SampleConcreteClass(name, durations_list)
+        self.sample = sample
+
+    def test_constructor(self):
+        sample = self.sample
+        name = "instance being created in constructor test"
+        test_arguments = [
+            None,
+            1.2,
+            -1.2,
+            70,
+            -70,
+            [0, 1, 2, 3, 4],
+            [0, -1, -2, -3, -4],
+            "some string",
+            (0, 1, 2, 3, 4),
+            (0, -1, -2, -3, -4),
+            sample,
+        ]
+
+        for argument in test_arguments:
+
+            # If not already, insert argument in a list, for e.g. 'sum'
+            argument_in_list = sample.validate_list(argument)
+            try:
+                test_instance = self.SampleConcreteClass(name, argument)
+                assert test_instance.duration == sum(argument_in_list)
+
+            except (PowerCycleABCError):
+                with pytest.raises(PowerCycleABCError):
+                    if argument:
+                        for value in argument_in_list:
+                            sample.validate_nonnegative(value)
+                    else:
+                        sample.validate_nonnegative(argument)
+
+
+class TestNetPowerABC:
+    class SampleConcreteClass(NetPowerABC):
+        """
+        Inner class that is a dummy concrete class for testing the main
+        abstract class of the test.
+        """
+
+        pass
+
+    def setup_method(self):
+        sample = self.SampleConcreteClass("A sample instance name")
+        another_sample = self.SampleConcreteClass("Another name")
+
+        test_arguments = [
+            None,
+            1.2,
+            70,
+            "some string",
+            [1, 2, 3, 4],
+            (1, 2, 3, 4),
+            sample,
+            another_sample,
+        ]
+
+        self.sample = sample
+        self.another_sample = another_sample
+        self.test_arguments = test_arguments
+
+    def test_validate_n_points(self):
+        sample = self.sample
+        all_arguments = self.test_arguments
+        for argument in all_arguments:
+            if not argument:
+                default_n_points = sample._n_points
+                validated_arg = sample._validate_n_points(argument)
+                assert validated_arg == default_n_points
+
+            elif (type(argument) is int) or (type(argument) is float):
+                validated_arg = sample._validate_n_points(argument)
+                assert isinstance(validated_arg, int)
+
+            else:
+                with pytest.raises(NetPowerABCError):
+                    validated_arg = sample._validate_n_points(argument)
+
+    @pytest.mark.parametrize(
+        "attribute",
+        [
+            "_text_index",
+            "_plot_kwargs",
+        ],
+    )
+    def test_make_secondary_in_plot(self, attribute):
+        one_sample = self.sample
+        another_sample = self.another_sample
+
+        another_sample._make_secondary_in_plot()
+
+        one_attr = getattr(one_sample, attribute)
+        another_attr = getattr(another_sample, attribute)
+        assert one_attr != another_attr

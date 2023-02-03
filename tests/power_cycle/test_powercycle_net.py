@@ -1,109 +1,12 @@
-from pprint import pformat
+# COPYRIGHT PLACEHOLDER
 
 import matplotlib.pyplot as plt
 import numpy as np
 import pytest
 
-from bluemira.base.look_and_feel import bluemira_debug
-from bluemira.power_cycle.net import (
-    NetPowerABC,
-    NetPowerABCError,
-    PowerData,
-    PowerDataError,
-    PowerLoad,
-    PowerLoadError,
-    PowerLoadModel,
-)
-from bluemira.power_cycle.tools import adjust_2d_graph_ranges, validate_axes
-
-
-def script_title():
-    return "Test Power Cycle 'net'"
-
-
-def test_NetPowerABCError():
-    with pytest.raises(NetPowerABCError):
-        raise NetPowerABCError(
-            None,
-            "Some error in the 'NetPowerABC' class.",
-        )
-
-
-class TestNetPowerABC:
-    class SampleConcreteClass(NetPowerABC):
-        """
-        Inner class that is a dummy concrete class for testing the main
-        abstract class of the test.
-        """
-
-        pass
-
-    def setup_method(self):
-        sample = self.SampleConcreteClass("A sample instance name")
-        another_sample = self.SampleConcreteClass("Another name")
-
-        test_arguments = [
-            None,
-            1.2,
-            70,
-            "some string",
-            [1, 2, 3, 4],
-            (1, 2, 3, 4),
-            sample,
-            another_sample,
-        ]
-
-        self.sample = sample
-        self.another_sample = another_sample
-        self.test_arguments = test_arguments
-
-    def test_validate_n_points(self):
-        sample = self.sample
-        all_arguments = self.test_arguments
-        for argument in all_arguments:
-            bluemira_debug(
-                f"""
-                {script_title()} (NetPowerABC._validate_n_points)
-
-                Argument:
-                {pformat(argument)}
-                """
-            )
-            if not argument:
-                default_n_points = sample._n_points
-                validated_arg = sample._validate_n_points(argument)
-                assert validated_arg == default_n_points
-
-            elif (type(argument) is int) or (type(argument) is float):
-                validated_arg = sample._validate_n_points(argument)
-                assert isinstance(validated_arg, int)
-
-            else:
-                with pytest.raises(NetPowerABCError):
-                    validated_arg = sample._validate_n_points(argument)
-
-    def test_make_secondary_in_plot(self):
-        one_sample = self.sample
-        another_sample = self.another_sample
-
-        another_sample._make_secondary_in_plot()
-        attr_to_compare = [
-            "_text_index",
-            "_plot_kwargs",
-        ]
-
-        for attribute in attr_to_compare:
-            one_attr = getattr(one_sample, attribute)
-            another_attr = getattr(another_sample, attribute)
-            assert one_attr != another_attr
-
-
-def test_PowerDataError():
-    with pytest.raises(PowerDataError):
-        raise PowerDataError(
-            None,
-            "Some error in the 'PowerData' class.",
-        )
+from bluemira.power_cycle.errors import PowerDataError, PowerLoadError  # PhaseLoadError,
+from bluemira.power_cycle.net import PowerData, PowerLoad, PowerLoadModel  # PhaseLoad,
+from bluemira.power_cycle.tools import adjust_2d_graph_ranges  # validate_axes,
 
 
 class TestPowerData:
@@ -118,17 +21,6 @@ class TestPowerData:
         sample = self.sample
         increasing_list_example = sample.time
         non_increasing_list_example = sample.data
-        bluemira_debug(
-            f"""
-            {script_title()} (PowerData._is_increasing)
-
-            Example of increasing list:
-            {pformat(increasing_list_example)}
-
-            Example of non-increasing list:
-            {pformat(non_increasing_list_example)}
-            """
-        )
         assert sample._is_increasing(increasing_list_example)
         with pytest.raises(PowerDataError):
             sample._is_increasing(non_increasing_list_example)
@@ -149,18 +41,6 @@ class TestPowerData:
 
                 length_time = len(time)
                 length_data = len(data)
-                bluemira_debug(
-                    f"""
-                    {script_title()} (PowerData._sanity)
-
-                    List used as time vector:
-                    {pformat(time)}
-
-                    List used as data vector:
-                    {pformat(data)}
-                    """
-                )
-
                 if length_time == length_data:
                     test_instance = PowerData(name, time, data)
                     assert isinstance(test_instance, PowerData)
@@ -170,46 +50,22 @@ class TestPowerData:
                         test_instance = PowerData(name, time, data)
 
     def test_plot(self):
-        fig = plt.figure()
-        plt.grid()
+        _, ax = plt.subplots()
         sample = self.sample
-        all_axes = sample.plot()
-        bluemira_debug(
-            f"""
-            {script_title()} (PowerData._plot)
-
-            All plotted objects:
-            {pformat(all_axes)}
-            """
-        )
-        adjust_2d_graph_ranges()
+        plot_list = sample.plot(ax=ax)
+        adjust_2d_graph_ranges(ax=ax)
+        plt.grid()
         plt.show()  # Run with `pytest --plotting-on` to visualize
 
 
 class TestPowerLoadModel:
     def test_members(self):
-
         all_names = [member.name for member in PowerLoadModel]
         all_values = [member.value for member in PowerLoadModel]
-        bluemira_debug(
-            f"""
-            {script_title()} (PowerLoadModel)
 
-            All member names:
-            {pformat(all_names)}
-
-            All member values:
-            {pformat(all_values)}
-            """
-        )
-
-
-def test_PowerLoadError():
-    with pytest.raises(PowerLoadError):
-        raise PowerLoadError(
-            None,
-            "Some error in the 'PowerLoad' class.",
-        )
+        for (name, value) in zip(all_names, all_values):
+            assert isinstance(name, str)
+            assert isinstance(value, str)
 
 
 class TestPowerLoad:
@@ -281,18 +137,6 @@ class TestPowerLoad:
                     for n_plm in range(max_powerloadmodel_length):
                         model_input = powerloadmodel_samples[0:n_plm]
                         model_input.insert(0, base_powerloadmodel_input)
-
-                        bluemira_debug(
-                            f"""
-                            {script_title()} (PowerLoadModel._sanity)
-
-                            Current PowerData input:
-                            {pformat(data_input)}
-
-                            Current PowerLoadModel input:
-                            {pformat(model_input)}
-                            """
-                        )
 
                         if n_pd == n_plm:
                             load = PowerLoad(
@@ -373,14 +217,6 @@ class TestPowerLoad:
         ]
 
         for argument in test_arguments:
-            bluemira_debug(
-                f"""
-                {script_title()} (PowerLoadModel._validate_time)
-
-                Argument currently being tested:
-                {pformat(argument)}
-                """
-            )
             if isinstance(argument, (int, float, list)):
                 time = PowerLoad._validate_time(argument)
                 assert isinstance(time, list)
@@ -403,6 +239,7 @@ class TestPowerLoad:
             assert curve_length == time_length
 
             # How to test interpolation of a super-imposed data set?
+            # Use `mock` from `unittest` or `monkeypatch` from `pytest`
 
     # ------------------------------------------------------------------
     # VISUALIZATION
@@ -430,13 +267,16 @@ class TestPowerLoad:
                 assert time_is_subset_of_refined_time
 
     @staticmethod
-    def prepare_figure():
-        fig = plt.figure()
+    def prepare_figure(figure_title):
+        _, ax = plt.subplots()
         plt.grid()
+        plt.title(figure_title)
+        return ax
 
-    def run_plot(self, detailed_plot_flag):
-        self.prepare_figure()
-        all_axes = validate_axes()
+    @pytest.mark.parametrize("detailed_plot_flag", [False, True])
+    def test_plot(self, detailed_plot_flag):
+        figure_title = "Detailed plot flag = " + str(detailed_plot_flag)
+        ax = self.prepare_figure(figure_title)
         list_of_plot_objects = []
 
         load_samples_and_associated_colors = {
@@ -446,34 +286,19 @@ class TestPowerLoad:
         for sample_color in load_samples_and_associated_colors:
             sample = load_samples_and_associated_colors[sample_color]
             current_list_of_plot_objects = sample.plot(
-                ax=all_axes, detailed=detailed_plot_flag, c=sample_color
+                ax=ax, detailed=detailed_plot_flag, c=sample_color
             )
             list_of_plot_objects.append(current_list_of_plot_objects)
-            bluemira_debug(
-                f"""
-                {script_title()} (PowerData._plot)
 
-                All plotted objects:
-                {pformat(list_of_plot_objects)}
-                """
-            )
-
-        adjust_2d_graph_ranges()
+        adjust_2d_graph_ranges(ax=ax)
         plt.show()  # Run with `pytest --plotting-on` to visualize
-
-    def test_simple_plot(self):
-        detailed_flag = False
-        self.run_plot(detailed_flag)
-
-    def test_detailed_plot(self):
-        detailed_flag = True
-        self.run_plot(detailed_flag)
 
     # ------------------------------------------------------------------
     # ARITHMETICS
     # ------------------------------------------------------------------
     def test_add(self):
-        self.prepare_figure()
+        figure_title = "Power Load Addition"
+        ax = self.prepare_figure(figure_title)
 
         load_1 = self.load_1
         load_2 = self.load_2
@@ -486,24 +311,13 @@ class TestPowerLoad:
         powerdata_r = result.data_set
         powerloadmodel_r = result.model
 
-        bluemira_debug(
-            f"""
-            {script_title()} (PowerLoadModel.__add__)
-
-            Load data in data sets:
-            {pformat([p.data for p in powerdata_1])}
-            {pformat([p.data for p in powerdata_2])}
-            {pformat([p.data for p in powerdata_r])}
-
-            Load models:
-            {pformat(powerloadmodel_1)}
-            {pformat(powerloadmodel_2)}
-            {pformat(powerloadmodel_r)}
-            """
-        )
         assert isinstance(result, PowerLoad)
         assert powerdata_r == powerdata_1 + powerdata_2
         assert powerloadmodel_r == powerloadmodel_1 + powerloadmodel_2
-        list_of_plot_objects = result.plot(detailed=True, c="b")
-        adjust_2d_graph_ranges()
+        list_of_plot_objects = result.plot(ax=ax, detailed=True, c="b")
+        adjust_2d_graph_ranges(ax=ax)
         plt.show()  # Run with `pytest --plotting-on` to visualize
+
+
+class TestPhaseLoad:
+    pass

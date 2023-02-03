@@ -1,166 +1,19 @@
+# COPYRIGHT PLACEHOLDER
+
 """
 Classes for the calculation of net power in the power cycle model.
 """
-from abc import ABCMeta
 from enum import Enum
 from typing import List, Union
 
 import numpy as np
 from scipy.interpolate import interp1d
 
-from bluemira.power_cycle.base import PowerCycleABC, PowerCycleError
-from bluemira.power_cycle.tools import _add_dict_entries, validate_axes
+from bluemira.power_cycle.base import NetPowerABC
+from bluemira.power_cycle.errors import PowerDataError, PowerLoadError  # PhaseLoadError,
+from bluemira.power_cycle.tools import validate_axes
 
 # from bluemira.power_cycle.time import PowerCyclePhase
-
-
-class NetPowerABCError(PowerCycleError):
-    """
-    Exception class for 'NetPowerABC' class of the Power Cycle module.
-    """
-
-    def _errors(self):
-        errors = {
-            "n_points": [
-                "The argument given for 'n_points' is not a valid "
-                f"value for plotting an instance of the {self._source} "
-                "class. Only non-negative integers are accepted."
-            ],
-        }
-        return errors
-
-
-class NetPowerABC(PowerCycleABC, metaclass=ABCMeta):
-    """
-    Abstract base class for classes in the Power Cycle module that are
-    used to account, sum and manage power loads.
-    """
-
-    # ------------------------------------------------------------------
-    # CLASS ATTRIBUTES
-    # ------------------------------------------------------------------
-
-    # Default number of points (for any plotting method)
-    _n_points = 50
-
-    # Index of (time,data) points used as location for 'text'
-    _text_index = -1
-
-    # Pyplot defaults (kwargs arguments for 'matplotlib.pyplot' methods)
-    _plot_kwargs = {
-        "c": "k",  # Line color
-        "lw": 2,  # Line width
-        "ls": "-",  # Line style
-    }
-    _scatter_kwargs = {
-        "c": "k",  # Marker color
-        "s": 100,  # Marker size
-        "marker": "x",  # Marker style
-    }
-    _text_kwargs = {
-        "c": "k",  # Font color
-        "size": 10,  # Font size
-        "rotation": 45,  # Rotation angle (º)
-    }
-
-    # ------------------------------------------------------------------
-    # METHODS
-    # ------------------------------------------------------------------
-
-    def _validate_n_points(self, n_points: Union[int, None]):
-        """
-        Validate an 'n_points' argument that specifies a "number of
-        points". If the argument is 'None', retrieves the default of
-        the class; else it must be a non-negative integer.
-        """
-        if not n_points:
-            n_points = self._n_points
-        else:
-            try:
-                n_points = int(n_points)
-                if n_points < 0:
-                    raise NetPowerABCError(
-                        "n_points",
-                        f"The value '{n_points}' is negative.",
-                    )
-            except (TypeError, ValueError):
-                raise NetPowerABCError(
-                    "n_points",
-                    f"The value '{n_points}' is non-numeric.",
-                )
-        return n_points
-
-    def _make_secondary_in_plot(self):
-        """
-        Alters the '_text_index' and kwargs attributes of an instance
-        of this class to enforce:
-            - more subtle plotting characteristics for lines; and
-            - a different location for texts;
-        that are displayed on a plot, as to not coincide with the
-        primary plot.
-        """
-        self._text_index = 0
-        self._plot_kwargs = {
-            "c": "k",  # Line color
-            "lw": 1,  # Line width
-            "ls": "--",  # Line style
-        }
-        self._scatter_kwargs = {
-            "c": "k",  # Marker color
-            "s": 100,  # Marker size
-            "marker": "x",  # Marker style
-        }
-        self._text_kwargs = {
-            "c": "k",  # Font color
-            "size": 10,  # Font size
-            "rotation": 45,  # Rotation angle (º)
-        }
-
-    def _add_text_to_point_in_plot(
-        self,
-        axes,
-        name,
-        x_list,
-        y_list,
-        **kwargs,
-    ):
-
-        class_calling_method = self.__class__.__name__
-        text_to_be_added = f"{name} ({class_calling_method})"
-        label_of_text_object = name + " (name)"
-
-        # Set each default options in kwargs, if not specified
-        default_text_kwargs = self._text_kwargs
-        final_kwargs = _add_dict_entries(default_text_kwargs, kwargs)
-
-        index_for_text_placement = self._text_index
-        plot_object = axes.text(
-            x_list[index_for_text_placement],
-            y_list[index_for_text_placement],
-            text_to_be_added,
-            label=label_of_text_object,
-            **final_kwargs,
-        )
-        return plot_object
-
-
-class PowerDataError(PowerCycleError):
-    """
-    Exception class for 'PowerData' class of the Power Cycle module.
-    """
-
-    def _errors(self):
-        errors = {
-            "increasing": [
-                "The 'time' parameter used to create an instance of "
-                f"the {self._source} class must be an increasing list.",
-            ],
-            "sanity": [
-                "The attributes 'data' and 'time' of an instance of "
-                f"the {self._source} class must have the same length."
-            ],
-        }
-        return errors
 
 
 class PowerData(NetPowerABC):
@@ -257,7 +110,7 @@ class PowerData(NetPowerABC):
 
         # Set each default options in kwargs, if not specified
         default_scatter_kwargs = self._scatter_kwargs
-        final_kwargs = _add_dict_entries(default_scatter_kwargs, kwargs)
+        final_kwargs = {**default_scatter_kwargs, **kwargs}
 
         name = self.name
         time = self.time
@@ -290,39 +143,14 @@ class PowerLoadModel(Enum):
     Members define possible models used by the methods defined in the
     'PowerLoad' class to compute values between load definition points.
 
-    The 'name' of a member roughly describes the interpolation behavior,
-    while its associated 'value' specifies which kind of interpolation
-    is applied when calling the imported `scipy.interpolate.interp1d`
-    method.
+    The 'name' of a member is a 'str' that roughly describes the
+    interpolation behavior, while its associated 'value' is 'str' that
+    specifies which kind of interpolation is applied when calling the
+    imported `scipy.interpolate.interp1d` method.
     """
 
     RAMP = "linear"  # 'interp1d' linear interpolation
     STEP = "previous"  # 'interp1d' previous-value interpolation
-
-
-class PowerLoadError(PowerCycleError):
-    """
-    Exception class for 'PowerLoad' class of the Power Cycle module.
-    """
-
-    def _errors(self):
-        errors = {
-            "model": [
-                "The argument given for the attribute 'model' is not "
-                "a valid value. A model must be specified with an "
-                "instance of the 'PowerLoadModel' 'Enum' class."
-            ],
-            "sanity": [
-                "The attributes 'load' and 'model' of an instance of "
-                f"the {self._source} class must have the same length."
-            ],
-            "time": [
-                "The 'time' input used to create a curve with an "
-                f"instance of the {self._source} class must be numeric "
-                "or a list of numeric values.",
-            ],
-        }
-        return errors
 
 
 class PowerLoad(NetPowerABC):
@@ -565,7 +393,7 @@ class PowerLoad(NetPowerABC):
 
         # Set each default options in kwargs, if not specified
         default_plot_kwargs = self._plot_kwargs
-        final_kwargs = _add_dict_entries(default_plot_kwargs, kwargs)
+        final_kwargs = {**default_plot_kwargs, **kwargs}
 
         name = self.name
         data_set = self.data_set
@@ -620,7 +448,7 @@ class PowerLoad(NetPowerABC):
 
                 # Plot current PowerData with seconday kwargs
                 current_powerdata._make_secondary_in_plot()
-                current_plot_list = current_powerdata.plot()
+                current_plot_list = current_powerdata.plot(ax=ax)
 
                 # Plot current curve as line with secondary kwargs
                 kwargs.update(current_powerdata._plot_kwargs)
@@ -655,33 +483,6 @@ class PowerLoad(NetPowerABC):
         another_name = "Resulting PowerLoad"
         another = PowerLoad(another_name, another_set, another_model)
         return another
-
-
-class PhaseLoadError(PowerCycleError):
-    """
-    Exception class for 'PhaseLoad' class of the Power Cycle module.
-    """
-
-    def _errors(self):
-        errors = {
-            "normalize": [
-                "The argument given for 'normalize' is not a valid "
-                f"value for an instance of the {self._source} class. "
-                "Each element of 'normalize' must be a boolean."
-            ],
-            "sanity": [
-                "The attributes 'load_set' and 'normalize' of an "
-                f"instance of the {self._source} class must have the "
-                "same length."
-            ],
-            "display_data": [
-                "The argument passed to the 'display_data' method of "
-                f"the {self._source} class for the input 'option' is "
-                "not valid. Only the strings 'load' and 'normal' are "
-                "accepted.",
-            ],
-        }
-        return errors
 
 
 class PhaseLoad(NetPowerABC):
