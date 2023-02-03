@@ -1,6 +1,7 @@
 """
 Classes to create loads in the power cycle model.
 """
+'''
 import numpy as np
 
 # Import Power Cycle packages
@@ -460,3 +461,4 @@ class PulseLoad(PowerCycleABC):
     """
 
     pass
+'''
