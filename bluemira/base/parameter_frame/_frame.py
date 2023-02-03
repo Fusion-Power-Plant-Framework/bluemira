@@ -234,7 +234,7 @@ def _validate_parameter_field(field, member_type: Type) -> Tuple[Type, ...]:
         if not hasattr(member_regex, "string"):
             raise TypeError(f"Field '{field}' does not have type Parameter.")
         try:
-            member_type = eval(member_type, {"Parameter": Parameter}, {})
+            member_type = eval(member_type, {"Parameter": Parameter}, {})  # noqa: S307
         except NameError:
             raise ParameterError(
                 f"Field {member_type} can't be evaluated safely, consider"
