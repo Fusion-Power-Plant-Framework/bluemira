@@ -28,8 +28,11 @@ import numpy as np
 from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.optimisation._algorithm import Algorithm
 from bluemira.optimisation._nlopt.conditions import NLOptConditions
-from bluemira.optimisation._nlopt.constraint import Constraint, ConstraintType
-from bluemira.optimisation._nlopt.objective import NloptObjectiveFunction
+from bluemira.optimisation._nlopt.functions import (
+    Constraint,
+    ConstraintType,
+    ObjectiveFunction,
+)
 from bluemira.optimisation._optimiser import Optimiser, OptimiserResult
 from bluemira.optimisation._typing import ObjectiveCallable, OptimiserCallable
 from bluemira.optimisation.error import OptimisationError, OptimisationParametersError
@@ -179,7 +182,7 @@ class NloptOptimiser(Optimiser):
             df_constraint,
             bounds=(self.lower_bounds, self.upper_bounds),
         )
-        self._opt.add_equality_mconstraint(constraint.nlopt_call, constraint.tolerance)
+        self._opt.add_equality_mconstraint(constraint.call, constraint.tolerance)
         self._eq_constraints.append(constraint)
 
     def add_ineq_constraint(
@@ -207,7 +210,7 @@ class NloptOptimiser(Optimiser):
             df_constraint,
             bounds=(self.lower_bounds, self.upper_bounds),
         )
-        self._opt.add_inequality_mconstraint(constraint.nlopt_call, constraint.tolerance)
+        self._opt.add_inequality_mconstraint(constraint.call, constraint.tolerance)
         self._ineq_constraints.append(constraint)
 
     def optimise(self, x0: Optional[np.ndarray] = None) -> OptimiserResult:
@@ -277,7 +280,7 @@ class NloptOptimiser(Optimiser):
         self, func: ObjectiveCallable, df: Union[None, OptimiserCallable]
     ) -> None:
         """Wrap and set the objective function."""
-        self._objective = NloptObjectiveFunction(
+        self._objective = ObjectiveFunction(
             func, df, bounds=(self.lower_bounds, self.upper_bounds)
         )
         if self._keep_history:
