@@ -1,82 +1,13 @@
+# COPYRIGHT PLACEHOLDER
+
 """
 Classes to define the timeline for Power Cycle simulations.
 """
 from enum import Enum
 from typing import Dict, List, Union
 
-from bluemira.power_cycle.base import PowerCycleABC, PowerCycleError
-
-
-class PowerCycleTimeABCError(PowerCycleError):
-    """
-    Exception class for 'PowerCycleTimeABC' class of the Power Cycle
-    module.
-    """
-
-    def _errors(self):
-        errors = {}
-        return errors
-
-
-class PowerCycleTimeABC(PowerCycleABC):
-    """
-    Abstract base class for classes in the Power Cycle module that are
-    used to describe a timeline.
-
-    Parameters
-    ----------
-    durations_list: int | float | list[ int | float ]
-        List of all numerical values that compose the duration of an
-        instance of a child class. Values must be non-negative.
-
-    Attributes
-    ----------
-    duration: float
-        Total duration. [s]
-        Sum of all numerical values in the 'durations_list' attribute.
-    """
-
-    # ------------------------------------------------------------------
-    # CLASS ATTRIBUTES & CONSTRUCTOR
-    # ------------------------------------------------------------------
-    def __init__(self, name, durations_list):
-
-        super().__init__(name)
-        self.durations_list = self._validate_durations(durations_list)
-        self.duration = sum(self.durations_list)
-
-    @staticmethod
-    def _validate_durations(argument):
-        """
-        Validate 'durations_list' input to be a list of non-negative
-        numerical values.
-        """
-        owner = PowerCycleTimeABC
-        durations_list = super(owner, owner).validate_list(argument)
-        for value in durations_list:
-            value = super(owner, owner).validate_nonnegative(value)
-        return durations_list
-
-
-class PowerCyclePhaseError(PowerCycleError):
-    """
-    Exception class for 'PowerCyclePhase' class of the Power Cycle
-    module.
-    """
-
-    def _errors(self):
-        errors = {
-            "breakdown": [
-                "The argument given for 'duration_breakdown' is not "
-                "valid. It must be a dictionary with keys that are "
-                "instances of the 'str' class. Each key should "
-                "describe its associated time length value in the "
-                "dictionary that characterizes a period that composes "
-                "the full duration of an instance of the "
-                f"{self._source} class."
-            ],
-        }
-        return errors
+from bluemira.power_cycle.base import PowerCycleTimeABC
+from bluemira.power_cycle.errors import PowerCyclePhaseError
 
 
 class PowerCyclePhase(PowerCycleTimeABC):
@@ -113,17 +44,6 @@ class PowerCyclePhase(PowerCycleTimeABC):
             if not isinstance(key, str):
                 raise PowerCyclePhaseError("breakdown")
         return duration_breakdown
-
-
-class PowerCyclePulseError(PowerCycleError):
-    """
-    Exception class for 'PowerCyclePulse' class of the Power Cycle
-    module.
-    """
-
-    def _errors(self):
-        errors = {}
-        return errors
 
 
 class PowerCyclePulse(PowerCycleTimeABC):
@@ -165,17 +85,6 @@ class PowerCyclePulse(PowerCycleTimeABC):
         for phase in phase_set:
             durations_list.append(phase.duration)
         return durations_list
-
-
-class PowerCycleTimelineError(PowerCycleError):
-    """
-    Exception class for 'PowerCycleTimeline' class of the Power Cycle
-    module.
-    """
-
-    def _errors(self):
-        errors = {}
-        return errors
 
 
 class PowerCycleTimeline(PowerCycleTimeABC):
@@ -227,10 +136,10 @@ class BOPPhaseDependency(Enum):
     taken by the Power Cycle model in terms of time-dependent
     calculations.
 
-    The 'name' of a member describes a time-dependent calculation
-    approach to be used in models, while its associated 'value' is
-    used in methods throughout the module as a label to quickly assess
-    the type of time dependency.
+    The 'name' of a member is a 'str' that describes a time-dependent
+    calculation approach to be used in models, while its associated
+    'value' is a 'str' used in methods throughout the module as a label
+    to quickly assess the type of time dependency.
     """
 
     STEADY_STATE = "ss"
