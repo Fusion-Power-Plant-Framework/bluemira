@@ -38,13 +38,12 @@
 External Codes Example
 """
 # %%
-from dataclasses import asdict, dataclass
+from dataclasses import asdict, dataclass, fields
 from enum import auto
 from pathlib import Path
 from pprint import pprint
 from typing import Dict, List, Union
 
-# %%
 from ext_code_script import get_filename
 
 from bluemira.base.file import get_bluemira_path
@@ -196,17 +195,20 @@ class Setup(CodesSetup):
         self.inputs = ECInputs()
         self.options = ECOpts()
         inp = self._get_new_inputs()
-        for thing in (self.problem_settings.items(), inp.items()):
-            for k, v in thing:
-                if k in self.options.__annotations__:
-                    if v:
-                        setattr(self.options, k, v)
-                    else:
-                        continue
-                elif v is not None:
-                    getattr(self.inputs, k)
+
+        # Get inputs
+        for code_input in (self.problem_settings, inp):
+            for k, v in code_input.items():
+                if k in fields(self.inputs) and v is not None:
                     setattr(self.inputs, k, v)
 
+        # Get options
+        for code_input in (self.problem_settings, inp):
+            for k, v in code_input.items():
+                if k in fields(self.options) and v:
+                    setattr(self.options, k, v)
+
+        # Protects against writing default values if unset
         return {k: v for k, v in asdict(self.inputs).items() if v}
 
     def run(self) -> List:
@@ -214,7 +216,7 @@ class Setup(CodesSetup):
         inp = self.update_inputs()
         with open(self.infile, "w") as input_file:
             for k, v in inp.items():
-                _if.write(f"{k}  {v}\n")
+                input_file.write(f"{k}  {v}\n")
         return self.options.to_list()
 
 
@@ -253,7 +255,7 @@ class Teardown(CodesTeardown):
     def _read_file(self):
         out_params = {}
         with open(self.outfile, "r") as output_file:
-            for line in of:
+            for line in output_file:
                 if line.startswith("#"):
                     pass
                 if line.startswith(" "):
