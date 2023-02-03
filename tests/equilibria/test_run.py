@@ -113,7 +113,6 @@ class TestPulsedCoilSetDesign:
         # Overwrite snapshot
         mypcs.take_snapshot("test", "eq", "coilset", "problem", "profiles")
         assert len(caplog.messages) == 1
-        assert False
 
     # def test_run_premagnetisation(self):
     # def test_run_reference_equilibrium(self):
