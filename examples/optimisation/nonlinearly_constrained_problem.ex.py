@@ -66,18 +66,22 @@ from bluemira.optimisation import optimise
 
 
 def f_objective(x):
+    """Objective function to minimise."""
     return np.sqrt(x[1])
 
 
 def df_objective(x):
+    """Gradient of the objective function."""
     return np.array([0.0, 0.5 / np.sqrt(x[1])])
 
 
 def f_constraint(x, a, b):
+    """Inequality constraint function."""
     return (a * x[0] + b) ** 3 - x[1]
 
 
 def df_constraint(x, a, b):
+    """Inequality constraint gradient."""
     return np.array([3 * a * (a * x[0] + b) * (a * x[0] + b), -1.0])
 
 
