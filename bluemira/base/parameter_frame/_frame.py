@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import copy
 import json
+import re
 from contextlib import suppress
 from dataclasses import dataclass, fields
 from typing import (
@@ -28,6 +29,7 @@ from bluemira.base.constants import (
     combined_unit_dimensions,
     raw_uc,
 )
+from bluemira.base.error import ParameterError
 from bluemira.base.parameter_frame._parameter import (
     ParamDictT,
     Parameter,
@@ -222,6 +224,22 @@ class ParameterFrame:
 
 
 def _validate_parameter_field(field, member_type: Type) -> Tuple[Type, ...]:
+    if isinstance(member_type, str):
+        # https://peps.python.org/pep-0563/#resolving-type-hints-at-runtime
+        # but eval is dangerous, try and protect against wild evaluations
+        # https://nedbatchelder.com/blog/201206/eval_really_is_dangerous.html
+        member_type = member_type.replace("__import__", "").replace("_", "")
+        member_regex = re.search(r"^Parameter[\[].*[\]]$", member_type)
+
+        if not hasattr(member_regex, "string"):
+            raise TypeError(f"Field '{field}' does not have type Parameter.")
+        try:
+            member_type = eval(member_type, {"Parameter": Parameter}, {})
+        except NameError:
+            raise ParameterError(
+                f"Field {member_type} can't be evaluated safely, consider"
+                " not importing `from __future__ import annotations`"
+            )
     if (member_type is not Parameter) and (
         not hasattr(member_type, "__origin__") or member_type.__origin__ is not Parameter
     ):
