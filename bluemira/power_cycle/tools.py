@@ -1,86 +1,10 @@
+# COPYRIGHT PLACEHOLDER
+
 """
 Utility functions for the power cycle model.
 """
-import sys
-
 import matplotlib.pyplot as plt
 import numpy as np
-
-# ######################################################################
-# MANIPULATION
-# ######################################################################
-
-
-def _add_dict_entries(dictionary, new_entries):
-    """
-    Add new (key,value) pairs to a dictionary. If a key for that entry
-    already exists, it is substituted. If 'dictionary' is empty, returns
-    only 'new_entries'.
-
-    Parameters
-    ----------
-    dictionary: dict
-        Dictionary to be modified.
-    new_entries: dict
-        Second dictionary, which entries will be added to
-        'dictionary', unless they already exist.
-
-    Returns
-    -------
-    dictionary: dict
-        Modified dictionary.
-    """
-    python_version = sys.version_info
-    if python_version >= (3, 9):
-        new_dictionary = dictionary | new_entries
-    elif python_version >= (3, 8):
-        new_dictionary = {**dictionary, **new_entries}
-    elif python_version >= (3, 4):
-        new_dictionary = dictionary.copy()
-        new_dictionary.update(new_entries)
-    else:
-        if dictionary:
-            new_dictionary = dictionary
-            new_entries_keys = new_entries.keys()
-            for key in new_entries_keys:
-                value = new_entries[key]
-                # Add entry to dictionary, if not yet there
-                new_dictionary.setdefault(key, value)
-        else:
-            new_dictionary = new_entries
-    return new_dictionary
-
-
-def _join_delimited_values(multiple_values):
-    """
-    Given a collection of values, join them by creating a string with
-    quotation marks around each value and separating them with commas as
-    delimiters.
-    (Useful when printing valid values as part of an error message.)
-
-    Parameters
-    ----------
-    multiple_values: list | dict
-        Values to be joined. If the input is a `list`, elements of the
-        list are considered the values to be joined. If the input is a
-        `dict`, the dictionary keys are considered instead.
-    """
-    try:
-
-        # Convert every value to string
-        string_values = [str(element) for element in multiple_values]
-
-        # Create string message with delimiters
-        values_msg = "', '".join(string_values)
-        values_msg = "'" + values_msg + "'"
-
-    except (TypeError):
-        TypeError(
-            "The argument to be transformed into a delimited string of "
-            "values is not a `list` or `dict`."
-        )
-    return values_msg
-
 
 # ######################################################################
 # PLOTTING
@@ -93,7 +17,7 @@ def validate_axes(ax=None):
     new `axes` instance.
     """
     if ax is None:
-        ax = plt.gca()
+        _, ax = plt.subplots()
     elif not isinstance(ax, plt.Axes):
         raise TypeError(
             "The argument 'ax' used to create a plot is not an "
