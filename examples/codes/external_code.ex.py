@@ -395,7 +395,7 @@ solver.params.param2.value = 5
 print(solver.execute("run"))
 
 # %% [markdown]
-# No warnings this time, we have now set a value for `param1` and sent it
+# No warnings this time, we have now set a value for `param1` and sent it.
 
 # %%
 solver.modify_mappings({"param1": {"send": True}})
@@ -404,14 +404,14 @@ print(solver.execute("run"))
 
 # %% [markdown]
 # Turning on the header option (that output wont change) but the source has changed
-# because we havent updated it
+# because we havent updated it.
 
 # %%
 solver.params.header.value = True
 print(solver.execute("run"))
 
 # %% [markdown]
-# Now we set the `param2` source and only send and not receive the result
+# Now we set the `param2` source and only send and not receive the result.
 
 # %%
 solver.modify_mappings({"param2": {"recv": False}})
