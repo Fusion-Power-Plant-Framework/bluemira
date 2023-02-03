@@ -58,7 +58,7 @@ from bluemira.codes.utilities import ParameterMapping
 # # External Code Wrapping
 #
 # This example goes though the minimal steps taken to wrap an external code and
-# retrive its outputs
+# retrieve its outputs.
 #
 # Firstly we define the options available in the code and its name.
 # In this example we're wrapping the python script
@@ -69,16 +69,16 @@ from bluemira.codes.utilities import ParameterMapping
 #   * Add line numbers
 #
 # Unusually the BINARY global variable is a list instead of a string because there are
-# two base commands to run the script from the commandline. We have used a little hack
+# two base commands to run the script from the command line. We have used a little hack
 # with the `get_filename` function so you don't have to find the external code script
 # file location.
 # Usually the program is in your PATH or provided by the config.
 #
-# The program has been named "External Code" for simiplicity and is used to help the
+# The program has been named "External Code" for simplicity and is used to help the
 # user trace where variables come from. It is a simple script that slightly modifies
 # a file provided to it.
 #
-# There are 3 dataclasses containing the commandline options for the code,
+# There are 3 dataclasses containing the command line options for the code,
 # the input parameters and the output parameters.
 
 # %%
@@ -122,8 +122,8 @@ class ECOutputs:
 # * A `MappedParameterFrame` that links bluemira parameter names and units to the
 #   external code
 # * A `RunMode` class to specify the possibly running modes
-# * A `Solver` that orchistrates the running of the code
-# * Some task for the `Solver` to run typically there are three:
+# * A `Solver` that orchestrates the running of the code
+# * Some task, or tasks, for the `Solver` to run. Typically there are three:
 #     * A `Setup` task which writes the input file for the code
 #     * A `Run` task which runs the code
 #     * A `Teardown` task which reads the output file of the code
@@ -178,7 +178,7 @@ class RunMode(BaseRunMode):
 # %% [markdown]
 # The `Setup` class pulls over the inputs from bluemira as described by the
 # mapping and creates the input file. The output of the run method returns
-# the commandline options list.
+# the command line options list.
 
 # %%
 class Setup(CodesSetup):
@@ -212,14 +212,14 @@ class Setup(CodesSetup):
     def run(self) -> List:
         """Run mode"""
         inp = self.update_inputs()
-        with open(self.infile, "w") as _if:
+        with open(self.infile, "w") as input_file:
             for k, v in inp.items():
                 _if.write(f"{k}  {v}\n")
         return self.options.to_list()
 
 
 # %% [markdown]
-# `Run` simply runs the code in a subprocess with the given options
+# `Run` simply runs the code in a subprocess with the given options.
 
 # %%
 class Run(CodesTask):
@@ -239,8 +239,8 @@ class Run(CodesTask):
 
 
 # %% [markdown]
-# `Teardown` reads in a given output file or in the case of mock returns a known
-# value sending the new parameter values back to the `ParameterFrame`
+# `Teardown` reads in a given output file or, in the case of mock, returns a known
+# value, sending the new parameter values back to the `ParameterFrame`.
 
 # %%
 class Teardown(CodesTeardown):
@@ -252,7 +252,7 @@ class Teardown(CodesTeardown):
 
     def _read_file(self):
         out_params = {}
-        with open(self.outfile, "r") as of:
+        with open(self.outfile, "r") as output_file:
             for line in of:
                 if line.startswith("#"):
                     pass
@@ -279,7 +279,7 @@ class Teardown(CodesTeardown):
 
 # %% [markdown]
 # `Solver` combines the three tasks into one object for execution.
-# The execute method has been overridden here for our usecase and returns
+# The execute method has been overridden here for our use-case and returns
 # the `ParameterFrame`.
 
 # %%
@@ -294,7 +294,6 @@ class Solver(CodesSolver):
     run_mode_cls = RunMode
 
     def __init__(self, params: Union[ParameterFrame, Dict], build_config: Dict):
-
         self.params = ECParameterFrame.from_defaults()
         self.params.update(params)
 
@@ -327,7 +326,7 @@ class Solver(CodesSolver):
 # ### Using the solver
 #
 # To run the solver you just need to provide the parameters and the configuration
-# to initialse the object.
+# to initialise the object.
 # Be aware `problem_settings` should be used sparingly for options that won't
 # change within the rerunning of the solver,
 # it has the same effect as modifying the default.
@@ -337,7 +336,7 @@ class Solver(CodesSolver):
 # folder in the root of the bluemira repository.
 #
 # Some warnings will be shown because some of the situations here are usually
-# undesireable.
+# undesirable.
 # In this first block we will see 3 warnings.
 # The first 2 are the same for the `run` and `read` modes:
 #   * "No value for param1"
@@ -346,7 +345,7 @@ class Solver(CodesSolver):
 #         with the output of the `run` mode the same error is repeated.
 #
 # The 3rd is for the `mock` mode:
-#   * "No value or param2"
+#   * "No value for param2"
 #       - The mock output doesn't have a param2 output
 #
 # Notice that `param2` does not take the value given in problems settings as we
@@ -375,9 +374,9 @@ for mode in ["run", "read", "mock"]:
     print(out_params)
 
 # %% [markdown]
-# 1 warning this time, we still havent sent a value for `param1` in `run` mode.
+# 1 warning this time, we still haven't sent a value for `param1` in `run` mode.
 # Notice how the default for `param2` from our `problem_settings` is used when we
-# turn off the send mapping
+# turn off the send mapping.
 
 # %%
 solver.modify_mappings({"param2": {"send": False}})
@@ -385,7 +384,7 @@ print(solver.execute("run"))
 
 # %% [markdown]
 # Again the same warning. This time we have modified the value of `param2` and turned
-# the send mapping back on
+# the send mapping back on.
 
 # %%
 # problem_settings param2 overridden
@@ -410,7 +409,7 @@ solver.params.header.value = True
 print(solver.execute("run"))
 
 # %% [markdown]
-# Now we set the `param2` source and only send and not recieve the result
+# Now we set the `param2` source and only send and not receive the result
 
 # %%
 solver.modify_mappings({"param2": {"recv": False}})
