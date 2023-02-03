@@ -7,7 +7,7 @@
 set -e
 
 # Ensure we are working in the (bluemira) conda environment
-source ~/.miniforge-init.sh && conda activate bluemira
+source ~/.mambaforge-init.sh && conda activate bluemira
 
 if [[ $(basename $PWD) == *"bluemira"* ]]; then
   cd ..
@@ -25,7 +25,7 @@ if [ "$1" ]
   then
     git checkout "$1"
 else
-    git checkout v2.3.0
+    git checkout v2.3.0-hotfix
 fi
 
 
