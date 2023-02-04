@@ -26,13 +26,12 @@ from typing import Callable, Iterable, List, Optional, Tuple, Union
 import dolfin
 import matplotlib.pyplot as plt
 import numpy as np
-import scipy
 from matplotlib._tri import TriContourGenerator
 from matplotlib.axes._axes import Axes
 from matplotlib.tri.triangulation import Triangulation
 from scipy.interpolate import interp1d
 
-from bluemira.base.look_and_feel import bluemira_warn
+from bluemira.utilities.opt_problems import OptimisationConstraint, OptimisationObjective
 from bluemira.utilities.optimiser import Optimiser, approx_derivative
 from bluemira.utilities.tools import is_num
 
@@ -267,18 +266,22 @@ def find_flux_surface(psi_norm_func, psi_norm, mesh=None, n_points=100):
         contour = get_tricontours(
             mpoints[:, 0], mpoints[:, 1], psi_norm_array, psi_norm
         )[0]
-        d_guess = abs(np.max(contour[0, :]) - x_axis) - search_range
-        bounds = [(d_guess - 2 * search_range, d_guess + 2 * search_range)]
+        d_guess = np.array([abs(np.max(contour[0, :]) - x_axis) - search_range])
 
-        def get_next_guess(points, distances, i):  # noqa: U100
-            return np.hypot(points[0, i - 1] - x_axis, points[1, i - 1] - z_axis)
+        def lower_bound(x):
+            return max(0.1, x - search_range)
+
+        def upper_bound(x):
+            return x + search_range
 
     else:
-        d_guess = 0.5
-        bounds = [(0.1, None)]
+        d_guess = np.array([0.5])
 
-        def get_next_guess(points, distances, i):  # noqa: U100
-            return distances[i]
+        def lower_bound(x):
+            return 0.1
+
+        def upper_bound(x):
+            return np.inf
 
     def psi_norm_match(x):
         return abs(psi_norm_func(x) - psi_norm)
@@ -286,29 +289,95 @@ def find_flux_surface(psi_norm_func, psi_norm, mesh=None, n_points=100):
     def theta_line(d, theta_i):
         return float(x_axis + d * np.cos(theta_i)), float(z_axis + d * np.sin(theta_i))
 
-    def psi_line_match(d, *args):
-        return psi_norm_match(theta_line(d, args[0]))
+    def psi_line_match(d, grad, theta):
+        result = psi_norm_match(theta_line(d, theta))
+        if grad.size > 0:
+            grad[:] = approx_derivative(
+                lambda x: psi_norm_match(theta_line(x, theta)),
+                d,
+                f0=result,
+                bounds=[lower_bound(d), upper_bound(d)],
+            )
+
+        return result
 
     theta = np.linspace(0, 2 * np.pi, n_points - 1, endpoint=False, dtype=float)
     points = np.zeros((2, n_points), dtype=float)
     distances = np.zeros(n_points)
     for i in range(len(theta)):
-
-        result = scipy.optimize.minimize(
-            psi_line_match,
-            x0=d_guess,
-            args=(theta[i]),
-            bounds=bounds,
-            method="SLSQP",
-            options={"disp": False, "ftol": 1e-14, "maxiter": 1000},
+        optimiser = Optimiser(
+            "SLSQP", 1, opt_conditions={"ftol_abs": 1e-14, "max_eval": 1000}
         )
-        points[:, i] = theta_line(result.x, theta[i])
-        distances[i] = result.x
-        d_guess = get_next_guess(points, distances, i)
+        optimiser.set_lower_bounds(lower_bound(d_guess))
+        optimiser.set_upper_bounds(upper_bound(d_guess))
+        optimiser.set_objective_function(
+            OptimisationObjective(psi_line_match, f_objective_args={"theta": theta[i]})
+        )
+        result = optimiser.optimise(d_guess)
+
+        points[:, i] = theta_line(result, theta[i])
+        distances[i] = result
+        d_guess = result
 
     points[:, -1] = points[:, 0]
 
     return points
+
+
+def _f_max_radius(x, grad):
+    result = -x[0]
+    if grad.size > 0:
+        grad[0] = -1.0
+        grad[1] = 0.0
+    return result
+
+
+def _f_min_radius(x, grad):
+    result = x[0]
+    if grad.size > 0:
+        grad[0] = 1.0
+        grad[1] = 0.0
+    return result
+
+
+def _f_max_vert(x, grad):
+    result = -x[1]
+    if grad.size > 0:
+        grad[0] = 0.0
+        grad[1] = -1.0
+    return result
+
+
+def _f_min_vert(x, grad):
+    result = x[1]
+    if grad.size > 0:
+        grad[0] = 0.0
+        grad[1] = 1.0
+    return result
+
+
+def _f_constrain_psi_norm(
+    constraint: np.ndarray,
+    x: np.ndarray,
+    grad: np.ndarray,
+    psi_norm_func=None,
+    lower_bounds=None,
+    upper_bounds=None,
+) -> np.ndarray:
+    """
+    Constraint function for points on the psi_norm surface.
+    """
+    result = psi_norm_func(x)
+    constraint[:] = result
+    if grad.size > 0:
+        grad[:] = approx_derivative(
+            psi_norm_func,
+            x,
+            f0=result,
+            bounds=[lower_bounds, upper_bounds],
+            method="3-point",
+        )
+    return np.array([result])
 
 
 def calculate_plasma_shape_params(
@@ -341,29 +410,22 @@ def calculate_plasma_shape_params(
     delta: float
         Triangularity of the flux surface at psi_norm
     """
+
+    def f_psi_norm(x):
+        return psi_norm_func(x) - psi_norm
+
     points = mesh.coordinates()
     psi_norm_array = [psi_norm_func(x) for x in points]
 
     contour = get_tricontours(points[:, 0], points[:, 1], psi_norm_array, psi_norm)[0]
     x, z = contour.T
 
-    ind_z_max = np.argmax(z)
-    ind_z_min = np.argmin(z)
-    ind_x_max = np.argmax(x)
-    ind_x_min = np.argmin(x)
-
-    pu = contour[ind_z_max]
-    pl = contour[ind_z_min]
-    po = contour[ind_x_max]
-    pi = contour[ind_x_min]
+    pu = contour[np.argmax(z)]
+    pl = contour[np.argmin(z)]
+    po = contour[np.argmax(x)]
+    pi = contour[np.argmin(x)]
 
     search_range = mesh.hmax()
-
-    def f_constrain_p95(x: np.ndarray) -> np.ndarray:
-        """
-        Constraint function for points on the psi_norm surface.
-        """
-        return psi_norm_func(x) - psi_norm
 
     def find_extremum(
         func: Callable[[np.ndarray], np.ndarray], x0: Iterable[float]
@@ -371,26 +433,38 @@ def calculate_plasma_shape_params(
         """
         Extremum finding using constrained optimisation
         """
-        # TODO: Replace scipy minimize with something a little more robust
-        bounds = [(xi - search_range, xi + search_range) for xi in x0]
-        result = scipy.optimize.minimize(
-            func,
-            x0,
-            constraints=({"fun": f_constrain_p95, "type": "eq"}),
-            method="SLSQP",
-            bounds=bounds,
-            options={"disp": False, "ftol": 1e-10, "maxiter": 1000},
+        lower_bounds = x0 - search_range
+        upper_bounds = x0 + search_range
+        # NOTE: COBYLA appears to do a better job here, as it seems that the
+        # NLOpt implementation of SLSQP really requires a feasible starting
+        # solution, which is not so readily available with this tight equality
+        # constraint. The scipy SLSQP implementation apparently does not require
+        # such a good starting solution. Neither SLSQP nor COBYLA can guarantee
+        # convergence without a feasible starting point.
+        optimiser = Optimiser(
+            "COBYLA", 2, opt_conditions={"ftol_abs": 1e-10, "max_eval": 1000}
         )
-        if not result.success:
-            bluemira_warn("Flux surface extremum finding failing:\n" f"{result.message}")
+        optimiser.set_objective_function(func)
+        optimiser.set_lower_bounds(lower_bounds)
+        optimiser.set_upper_bounds(upper_bounds)
 
-        return result.x
+        f_constraint = OptimisationConstraint(
+            _f_constrain_psi_norm,
+            f_constraint_args={
+                "psi_norm_func": f_psi_norm,
+                "lower_bounds": lower_bounds,
+                "upper_bounds": upper_bounds,
+            },
+            constraint_type="equality",
+        )
 
-    pi_opt = find_extremum(lambda x: x[0], pi)
-    pl_opt = find_extremum(lambda x: x[1], pl)
+        optimiser.add_eq_constraints(f_constraint, tolerance=1e-10)
+        return optimiser.optimise(x0)
 
-    po_opt = find_extremum(lambda x: -x[0], po)
-    pu_opt = find_extremum(lambda x: -x[1], pu)
+    pi_opt = find_extremum(_f_min_radius, pi)
+    pl_opt = find_extremum(_f_min_vert, pl)
+    po_opt = find_extremum(_f_max_radius, po)
+    pu_opt = find_extremum(_f_max_vert, pu)
 
     if plot:
         _, ax = plt.subplots()
@@ -409,7 +483,6 @@ def calculate_plasma_shape_params(
         ax.set_aspect("equal")
         plt.show()
 
-    pi, po, pu, pl = pi_opt, po_opt, pu_opt, pl_opt
     # geometric center of a magnetic flux surface
     r_geo = 0.5 * (po_opt[0] + pi_opt[0])
 
