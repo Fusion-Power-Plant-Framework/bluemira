@@ -119,7 +119,6 @@ class TestSignedDistanceFunctions:
         cls.subject_wire = make_polygon(np.array([x, y, z]).T)
 
     def test_sdf_2d(self):
-
         p1 = np.array([0, 0])  # Corner point
         p2 = np.array([0.5, -0.5])  # Mid edge point
         p3 = np.array([3, 0])  # Inside point
@@ -292,7 +291,6 @@ class TestWirePlaneIntersect:
 
 
 class TestSolidFacePlaneIntersect:
-
     big = 10
     small = 5
     centre = 15
@@ -336,7 +334,6 @@ class TestSolidFacePlaneIntersect:
         ]
 
     def test_solid_nested_donut(self):
-
         circ = make_circle(self.small, [0, 0, self.centre], axis=[0, 1, 0])
         circ2 = make_circle(self.big, [0, 0, self.centre], axis=[0, 1, 0])
 
@@ -360,7 +357,6 @@ class TestSolidFacePlaneIntersect:
         assert no_small == 2
 
     def test_primitive_cut(self):
-
         path = PrincetonD({"x2": {"value": self.big}}).create_shape()
         p2 = offset_wire(path, self.offset)
         face = BluemiraFace([p2, path])
@@ -373,7 +369,6 @@ class TestSolidFacePlaneIntersect:
         assert len(_slice_xz) == 2
 
     def test_polygon_cut(self):
-
         face = BluemiraFace(generic_wire)
         _slice_face = slice_shape(face, BluemiraPlane())
         assert generic_wire.length == _slice_face[0].length
@@ -583,7 +578,6 @@ def naughty_function_fallback(wire, var=1, *, var2=[1, 2], **kwargs):
 
 
 class TestLogFailedGeometryOperationSerialisation:
-
     wires = [
         make_polygon({"x": [0, 2, 2, 0], "y": [-1, -1, 1, 1]}, closed=True),
         make_circle(),
@@ -675,7 +669,6 @@ class TestSavingCAD:
 
 
 class TestMirrorShape:
-
     wire = make_polygon(
         {"x": [4, 6, 6, 4], "y": [5, 5, 5, 5], "z": [0, 0, 2, 2]}, closed=True
     )

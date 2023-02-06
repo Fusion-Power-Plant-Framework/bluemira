@@ -7,7 +7,6 @@ from bluemira.base.parameter_frame import Parameter, ParameterFrame
 
 @dataclass
 class PFrame(ParameterFrame):
-
     a: Parameter[float]
     b: Parameter[int]
 

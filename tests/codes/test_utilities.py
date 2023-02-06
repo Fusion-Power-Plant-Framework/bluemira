@@ -31,7 +31,6 @@ from bluemira.codes.utilities import run_subprocess
 
 
 class TestRunSubprocess:
-
     MODULE_REF = "bluemira.codes.utilities"
 
     def setup_method(self):

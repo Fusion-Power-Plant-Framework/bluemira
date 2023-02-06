@@ -171,7 +171,6 @@ class TestWallSilhouetteDesigner:
         assert np.isclose(bounding_box.z_max - bounding_box.z_min, 20.0)
 
     def test_width_matches_params_given_PrincetonD_mock_mode(self):
-
         vm = {
             "x1": {  # ib radius
                 "value": "r_fw_ib_in",
@@ -199,7 +198,6 @@ class TestWallSilhouetteDesigner:
         )
 
     def test_DesignError_for_small_silhouette(self):
-
         config = copy.deepcopy(CONFIG)
         config.update({"param_class": f"{WALL_MODULE_REF}::WallPrincetonD"})
 

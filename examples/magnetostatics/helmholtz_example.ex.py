@@ -167,6 +167,7 @@ analytical_xz_fields2 = np.sqrt(np.sum(analytical_xz_fields2**2, axis=0))
 #
 # Let's visualise the results
 
+
 # %%
 def plot_cage_results(cage, xz_fields, xy_fields):
     """

@@ -183,7 +183,7 @@ def build_pf_coils(
             bluemira_warn(f"Coil {name} has no size")
 
     builders = []
-    for (designer, coil_type) in wires:
+    for designer, coil_type in wires:
         tk_ins = (
             params.tk_pf_insulation
             if coil_type.name == "PF"

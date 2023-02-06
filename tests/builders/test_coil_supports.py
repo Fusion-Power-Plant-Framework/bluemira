@@ -111,7 +111,6 @@ class TestITERGravitySupportBuilder:
 
 
 class TestPFCoilSupportBuilder:
-
     my_test_params = PFCoilSupportBuilderParams(
         Parameter("tf_wp_depth", 1.4, unit="m"),
         Parameter("tf_wp_width", 0.8, unit="m"),
@@ -277,7 +276,6 @@ class TestOISBuilder:
 
 
 class TestStraightOISDesigner:
-
     tf_wp_depth = 1.4
     tk_tf_side = 0.1
     n_TF = 16
@@ -307,7 +305,6 @@ class TestStraightOISDesigner:
         assert len(ois_wires) == n_ois
 
     def test_that_gradient_based_optimiser_works(self):
-
         wire = make_polygon({"x": [9, 8, 7, 6, 5, 4], "z": [0, 1, 2, 3, 3.5, 4]})
         wire = make_circle_arc_3P([9, 0, 0], [7, 0, 2], [4, 0, 4])
         keep_out_zone = BluemiraFace(

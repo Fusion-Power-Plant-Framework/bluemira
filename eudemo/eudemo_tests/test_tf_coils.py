@@ -43,7 +43,6 @@ OPTIMISER_MODULE_REF = "bluemira.builders.tf_coils"
 
 
 class TestTFCoilDesigner:
-
     CONFIG = {
         "param_class": "TripleArc",
         "variables_map": {},
@@ -201,7 +200,6 @@ def centreline_setup():
 
 
 class TestTFCoilBuilder:
-
     params = {
         "R_0": {"value": 9, "unit": "m"},
         "z_0": {"value": 0.0, "unit": "m"},

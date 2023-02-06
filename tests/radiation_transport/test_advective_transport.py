@@ -91,7 +91,6 @@ class TestChargedParticleRecursionSN:
         cls.solver = solver
 
     def test_recursion(self):
-
         assert np.isclose(np.max(self.hf), 5.379, rtol=1e-2)
         assert np.argmax(self.hf) == 0
         assert np.isclose(np.sum(self.hf), 399, rtol=1e-2)

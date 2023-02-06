@@ -29,7 +29,6 @@ from eudemo.ivc import PlasmaFaceDesigner
 
 
 class TestPlasmaFaceDesigner:
-
     _params = {
         "div_type": {"value": "SN", "unit": ""},
         "c_rm": {"value": 0.02, "unit": "m"},
@@ -37,7 +36,6 @@ class TestPlasmaFaceDesigner:
 
     @classmethod
     def setup_class(cls):
-
         cls.wall_boundary = make_polygon(
             [[1, 0, -10], [1, 0, 10], [11, 0, 10], [11, 0, -10]]
         )

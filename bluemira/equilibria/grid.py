@@ -76,7 +76,6 @@ class Grid:
     ]
 
     def __init__(self, x_min, x_max, z_min, z_max, nx, nz):
-
         if x_min == x_max or z_min == z_max:
             raise EquilibriaError("Invalid Grid dimensions specified.")
 

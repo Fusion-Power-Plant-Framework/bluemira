@@ -47,7 +47,7 @@ class AngleAnnotation(Arc):
         text="",
         textposition="inside",
         text_kw=None,
-        **kwargs
+        **kwargs,
     ):
         """
         Parameters
@@ -103,7 +103,7 @@ class AngleAnnotation(Arc):
             angle=0.0,
             theta1=self.theta1,
             theta2=self.theta2,
-            **kwargs
+            **kwargs,
         )
 
         self.set_transform(IdentityTransform())

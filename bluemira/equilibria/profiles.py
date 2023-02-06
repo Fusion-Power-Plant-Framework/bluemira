@@ -495,7 +495,6 @@ class BetaIpProfile(Profile):
     # NOTE: For high betap >= 2, this can lead to there being no plasma current
     # on the high field side...
     def __init__(self, betap, I_p, R_0, B_0, shape=None):
-
         self.betap = betap
         self.I_p = I_p
         self._fvac = R_0 * B_0

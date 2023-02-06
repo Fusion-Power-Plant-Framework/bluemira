@@ -512,7 +512,6 @@ class FiniteElementModel:
         return k, p
 
     def _apply_boundary_conditions_sparse(self, k, p):
-
         for i in self.fixed_dof_ids:
             row = np.zeros((1, 6 * self.geometry.n_nodes))
             row[0, i] = 1

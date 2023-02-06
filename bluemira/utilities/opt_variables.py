@@ -377,7 +377,6 @@ class OptVariables:
         """
         if var_dict:
             for k, v in var_dict.items():
-
                 args = [
                     v.get("value", None),
                     v.get("lower_bound", None),

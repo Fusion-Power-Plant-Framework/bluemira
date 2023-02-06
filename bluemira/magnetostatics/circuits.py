@@ -87,7 +87,6 @@ class ArbitraryPlanarRectangularXSCircuit(SourceGroup):
         sources = []
 
         for midpoint, d_l, beta, alpha in zip(self.midpoints, self.d_l, betas, alphas):
-
             d_l_norm = d_l / np.linalg.norm(d_l)
             t_vec = np.cross(d_l_norm, normal)
 

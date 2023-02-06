@@ -274,7 +274,6 @@ class CoilForceConstraints(UpdateableConstraint, OptimisationConstraint):
     def __init__(
         self, coilset, PF_Fz_max, CS_Fz_sum_max, CS_Fz_sep_max, tolerance=1.0e-6
     ):
-
         n_PF = coilset.n_coils("PF")
         n_CS = coilset.n_coils("CS")
         n_f_constraints = n_PF + n_CS
@@ -582,7 +581,6 @@ class IsofluxConstraint(RelativeMagneticConstraint):
         weights: Union[float, np.ndarray] = 1.0,
         tolerance: float = 1e-6,
     ):
-
         super().__init__(
             x,
             z,

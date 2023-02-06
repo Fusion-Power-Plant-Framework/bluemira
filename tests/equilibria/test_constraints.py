@@ -95,7 +95,7 @@ class TestWeightedConstraints:
             assert np.allclose(
                 problem._objective._args["b_vec"], weights * constraint_set.b
             )
-            for (i, weight) in enumerate(weights):
+            for i, weight in enumerate(weights):
                 assert np.allclose(
                     problem._objective._args["a_mat"][i, :],
                     weight * constraint_set.A[i, :],

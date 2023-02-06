@@ -46,7 +46,6 @@ class TestSetup:
         self._indat_patch.stop()
 
     def test_run_adds_bluemira_params_to_InDat_writer(self):
-
         with self._writer_patch as writer_cls_mock:
             setup = Setup(self.default_pf, "")
             writer_cls_mock.return_value.data = {"x": 0}
@@ -110,7 +109,6 @@ class TestSetup:
         self, model_name, model_cls
     ):
         with self._writer_patch as writer_cls_mock:
-
             setup = Setup(self.default_pf, "")
             # Just use the first member of the enum's name for testing
             field_str = list(model_cls.__members__)[0]

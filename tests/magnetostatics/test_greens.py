@@ -124,7 +124,6 @@ def greens_Bz_old(xc, zc, x, z, d_xc=0, d_zc=0):
 
 
 class TestGreenFieldsRegression:
-
     np.random.seed(846023420)
     fixtures = []
     for _ in range(5):  # Tested with 2000, with one failure in Bz:
