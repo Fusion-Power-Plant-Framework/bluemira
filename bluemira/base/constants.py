@@ -277,6 +277,10 @@ MU_0 = ureg.Quantity("mu_0").to_base_units().magnitude  # [T.m/A] or [V.s/(A.m)]
 # Vacuum permittivity
 EPS_0 = ureg.Quantity("eps_0").to_base_units().magnitude  # [A^2.s^4/kg/m^3]
 
+
+# Commonly used..
+MU_0_2PI = 2e-7  # [T.m/A] or [V.s/(A.m)]
+
 # Commonly used..
 MU_0_4PI = 1e-7  # [T.m/A] or [V.s/(A.m)]
 

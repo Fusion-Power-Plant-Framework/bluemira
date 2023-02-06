@@ -26,9 +26,16 @@ import numba as nb
 import numpy as np
 from scipy.special import ellipe, ellipk
 
-from bluemira.base.constants import MU_0, MU_0_4PI
+from bluemira.base.constants import MU_0, MU_0_2PI, MU_0_4PI
 
-__all__ = ["greens_psi", "greens_Bx", "greens_Bz", "greens_all"]
+__all__ = [
+    "greens_psi",
+    "greens_Bx",
+    "greens_Bz",
+    "greens_dpsi_dx",
+    "greens_dpsi_dz",
+    "greens_all",
+]
 
 # Offset from 0<x<1
 #     Used in calculating Green's functions to avoid np.nan
@@ -66,6 +73,10 @@ def clip_nb(val, val_min, val_max):
 def ellipe_nb(k):
     """
     Vectorised scipy ellipe
+
+    Notes
+    -----
+    K, E in scipy are set as K(k^2), E(k^2)
     """
     return ellipe(k)
 
@@ -77,6 +88,10 @@ ellipe_nb.__doc__ += ellipe.__doc__
 def ellipk_nb(k):
     """
     Vectorised scipy ellipk
+
+    Notes
+    -----
+    K, E in scipy are set as K(k^2), E(k^2)
     """
     return ellipk(k)
 
@@ -129,7 +144,7 @@ def circular_coil_inductance_kirchhoff(radius, rc):
 def greens_psi(xc, zc, x, z, d_xc=0, d_zc=0):
     """
     Calculate poloidal flux at (x, z) due to a unit current at (xc, zc)
-    using Greens function.
+    using a Greens function.
 
     Parameters
     ----------
@@ -146,7 +161,6 @@ def greens_psi(xc, zc, x, z, d_xc=0, d_zc=0):
     d_zc: float
         The coil half-height (overload argument)
 
-
     Returns
     -------
     psi: float or np.array(N, M)
@@ -159,25 +173,126 @@ def greens_psi(xc, zc, x, z, d_xc=0, d_zc=0):
 
     Notes
     -----
-    \t:math:`{\\psi}(x, z)=\\int\\int G(x, z; x_{c}, z_{c})J_{{\\phi}}`
-    \t:math:`(x_{c}, z_{c})dx_{c}dz_{c}`\n
-    Where:
-    \t:math:`G(x, z; x_{c}, z_{c})=\\dfrac{{\\mu}_{0}}{2{\\pi}}`
+    \t:math:`G_{\\psi}(x_{c}, z_{c}; x, z) = \\dfrac{{\\mu}_{0}}{2{\\pi}}`
     \t:math:`\\dfrac{\\sqrt{xx_{c}}}{k}`
-    \t:math:`[(2-\\mathbf{K}(k)-2\\mathbf{E}(k)]`\n
+    \t:math:`[(2-\\mathbf{K}(k^2)-2\\mathbf{E}(k^2)]`\n
+    Where:
     \t:math:`k^{2}\\equiv\\dfrac{4xx_{c}}{(x+x_{c})^{2}+(z-z_{c})^{2}}`\n
-    \t:math:`J_{\\phi}(x_{c}, z_{c}) = 1`
+    \t:math:`\\mathbf{K} \\equiv` complete elliptic integral of the first kind\n
+    \t:math:`\\mathbf{E} \\equiv` complete elliptic integral of the second kind
     """
     k2 = 4 * x * xc / ((x + xc) ** 2 + (z - zc) ** 2)
     # Avoid NaN when coil on grid point
     k2 = clip_nb(k2, GREENS_ZERO, 1.0 - GREENS_ZERO)
-    # K, E in scipy are set as K(k^2), E(k^2)
     return (
-        2e-7  # MU_0 / (2 * np.pi)
+        MU_0_2PI
         * np.sqrt(x * xc)
         * ((2 - k2) * ellipk_nb(k2) - 2 * ellipe_nb(k2))
         / np.sqrt(k2)
     )
+
+
+@nb.jit(nopython=True)
+def greens_dpsi_dx(xc, zc, x, z, d_xc=0, d_zc=0):
+    """
+    Calculate the radial derivative of the poloidal flux at (x, z)
+    due to a unit current at (xc, zc) using a Greens function.
+
+    Parameters
+    ----------
+    xc: float or 1-D array
+        Coil x coordinates [m]
+    zc: float or 1-D array
+        Coil z coordinates [m]
+    x: float or np.array(N, M)
+        Calculation x locations
+    z: float or np.array(N, M)
+        Calculation z
+    d_xc: float
+        The coil half-width (overload argument)
+    d_zc: float
+        The coil half-height (overload argument)
+
+    Returns
+    -------
+    dpsi_dx: float or np.array(N, M)
+        Radial derivative of the poloidal flux response at (x, z)
+
+    Notes
+    -----
+    \t:math:`G_{\\dfrac{\\partial \\psi}{\\partial x}}(x_{c}, z_{c}; x, z) = `
+    \t:math:`\\dfrac{{\\mu}_{0}}{2{\\pi}}`
+    \t:math:`\\dfrac{1}{u}`
+    \t:math:`[\\dfrac{w^2}{d^2}\\mathbf{E}(k^2)+\\mathbf{K}(k^2)]`\n
+    Where:
+    \t:math:`h^{2}\\equiv z_{c}-z`\n
+    \t:math:`u^2\\equiv(x+x_{c})^2+h^2`\n
+    \t:math:`d^{2}\\equiv (x - x_{c})^2 + h^2`\n
+    \t:math:`w^{2}\\equiv x^2 -x_{c}^2 - h^2`\n
+    \t:math:`k^{2}\\equiv\\dfrac{4xx_{c}}{(x+x_{c})^{2}+(z-z_{c})^{2}}`\n
+    \t:math:`\\mathbf{K} \\equiv` complete elliptic integral of the first kind\n
+    \t:math:`\\mathbf{E} \\equiv` complete elliptic integral of the second kind
+
+    The implementation used here refactors the above to avoid some zero divisions.
+    """
+    a = ((x + xc) ** 2 + (z - zc) ** 2) ** 0.5
+    k2 = 4 * x * xc / a**2
+    # Avoid NaN when coil on grid point
+    k2 = clip_nb(k2, GREENS_ZERO, 1.0 - GREENS_ZERO)
+    i1 = ellipk_nb(k2) / a
+    i2 = ellipe_nb(k2) / (a**3 * (1 - k2))
+    return MU_0_2PI * x * ((xc**2 - (z - zc) ** 2 - x**2) * i2 + i1)
+
+
+@nb.jit(nopython=True)
+def greens_dpsi_dz(xc, zc, x, z, d_xc=0, d_zc=0):
+    """
+    Calculate the vertical derivative of the poloidal flux at (x, z)
+    due to a unit current at (xc, zc) using a Greens function.
+
+    Parameters
+    ----------
+    xc: float or 1-D array
+        Coil x coordinates [m]
+    zc: float or 1-D array
+        Coil z coordinates [m]
+    x: float or np.array(N, M)
+        Calculation x locations
+    z: float or np.array(N, M)
+        Calculation z
+    d_xc: float
+        The coil half-width (overload argument)
+    d_zc: float
+        The coil half-height (overload argument)
+
+    Returns
+    -------
+    dpsi_dz: float or np.array(N, M)
+        Vertical derivative of the poloidal flux response at (x, z)
+
+    Notes
+    -----
+    \t:math:`G_{\\dfrac{\\partial \\psi}{\\partial z}}(x_{c}, z_{c}; x, z) = `
+    \t:math:`\\dfrac{{\\mu}_{0}}{2{\\pi}}`
+    \t:math:`\\dfrac{h}{u}`
+    \t:math:`[\\mathbf{K}(k^2) - \\dfrac{v^2}{d^2}\\mathbf{E}(k^2)]`\n
+    Where:
+    \t:math:`h^{2}\\equiv z_{c}-z`\n
+    \t:math:`u^2\\equiv(x+x_{c})^2+h^2`\n
+    \t:math:`d^{2}\\equiv (x - x_{c})^2 + h^2`\n
+    \t:math:`v^{2}\\equiv x^2 +x_{c}^2 + h^2`\n
+    \t:math:`k^{2}\\equiv\\dfrac{4xx_{c}}{(x+x_{c})^{2}+(z-z_{c})^{2}}`\n
+    \t:math:`\\mathbf{K} \\equiv` complete elliptic integral of the first kind\n
+    \t:math:`\\mathbf{E} \\equiv` complete elliptic integral of the second kind
+
+    The implementation used here refactors the above to avoid some zero divisions.
+    """
+    a = ((x + xc) ** 2 + (z - zc) ** 2) ** 0.5
+    k2 = 4 * x * xc / a**2
+    k2 = clip_nb(k2, GREENS_ZERO, 1.0 - GREENS_ZERO)
+    i1 = ellipk_nb(k2) / a
+    i2 = ellipe_nb(k2) / (a**3 * (1 - k2))
+    return MU_0_2PI * ((z - zc) * (i1 - i2 * ((z - zc) ** 2 + x**2 + xc**2)))
 
 
 @nb.jit(nopython=True)
@@ -209,21 +324,18 @@ def greens_Bx(xc, zc, x, z, d_xc=0, d_zc=0):  # noqa :N802
     Raises
     ------
     ZeroDivisionError
-        if xc <= 0
-        if x <= 0
+        if x == 0
+
+    Notes
+    -----
+    \t:math:`G_{B_{x}} = -\\dfrac{1}{x} G_{\\dfrac{\\partial \\psi}{\\partial z}}`
+    \t:math:`(x_{c}, z_{c}; x, z)`
     """
-    a = ((x + xc) ** 2 + (z - zc) ** 2) ** 0.5
-    k2 = 4 * x * xc / a**2
-    k2 = clip_nb(k2, GREENS_ZERO, 1.0 - GREENS_ZERO)
-    i1 = ellipk_nb(k2) / a
-    i2 = ellipe_nb(k2) / (a**3 * (1 - k2))
-    return 2e-7 * (  # MU_0 / (2 * np.pi)
-        (z - zc) * (-i1 + i2 * ((z - zc) ** 2 + x**2 + xc**2)) / x
-    )
+    return -1 / x * greens_dpsi_dz(xc, zc, x, z, d_xc, d_zc)
 
 
 @nb.jit(nopython=True)
-def greens_Bz(xc, zc, x, z, d_xc=0, d_zc=0):
+def greens_Bz(xc, zc, x, z, d_xc=0, d_zc=0):  # noqa :N802
     """
     Calculate vertical magnetic field at (x, z) due to unit current at (xc, zc)
     using a Greens function.
@@ -251,19 +363,14 @@ def greens_Bz(xc, zc, x, z, d_xc=0, d_zc=0):
     Raises
     ------
     ZeroDivisionError
-        if xc <= 0
-        if x <= 0
+        if x == 0
+
+    Notes
+    -----
+    \t:math:`G_{B_{z}} = \\dfrac{1}{x} G_{\\dfrac{\\partial \\psi}{\\partial x}}`
+    \t:math:`(x_{c}, z_{c}; x, z)`
     """
-    a = ((x + xc) ** 2 + (z - zc) ** 2) ** 0.5
-    k2 = 4 * x * xc / a**2
-    # Avoid NaN when coil on grid point
-    k2 = clip_nb(k2, GREENS_ZERO, 1.0 - GREENS_ZERO)
-    e, k = ellipe_nb(k2), ellipk_nb(k2)
-    i1 = 4 * k / a
-    i2 = 4 * e / (a**3 * (1 - k2))
-    part_a = (z - zc) ** 2 + x**2 + xc**2
-    part_b = -2 * x * xc
-    return MU_0_4PI * xc * ((xc + x * part_a / part_b) * i2 - i1 * x / part_b)
+    return 1 / x * greens_dpsi_dx(xc, zc, x, z, d_xc, d_zc)
 
 
 @nb.jit(nopython=True)
