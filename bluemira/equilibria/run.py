@@ -256,7 +256,6 @@ class PulsedCoilsetDesign:
         return coilset.get_max_current(factor * self.params.I_p.value)
 
     def _get_sof_eof_opt_problems(self, psi_sof, psi_eof):
-
         eq_ref = self.snapshots[self.EQ_REF].eq
         max_currents_pf = self._get_max_currents(self.coilset.get_coiltype("PF"))
         max_currents = self._get_max_currents(self.coilset)

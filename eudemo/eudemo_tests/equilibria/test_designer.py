@@ -32,7 +32,6 @@ from eudemo.equilibria._designer import EquilibriumDesignerParams
 
 
 class TestEquilibriumDesigner:
-
     EQDSK_FILE = os.path.join(
         get_bluemira_path("equilibria", subfolder="data"), "EU-DEMO_EOF.json"
     )

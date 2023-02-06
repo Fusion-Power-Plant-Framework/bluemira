@@ -39,12 +39,10 @@ class TestParameterMapping:
         ),
     )
     def test_no_keyvalue_change(self, attr, value):
-
         with pytest.raises(KeyError):
             setattr(self.pm, attr, value)
 
     def test_value_change(self):
-
         for var in ["send", "recv"]:
             with pytest.raises(ValueError):
                 setattr(self.pm, var, "A string")

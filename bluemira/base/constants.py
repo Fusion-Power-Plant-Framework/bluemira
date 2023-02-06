@@ -51,7 +51,6 @@ class BMUnitRegistry(UnitRegistry):
     """
 
     def __init__(self):
-
         # Preprocessor replacements have spaces so
         # the units dont become prefixes or get prefixed
         # space before on % so that M% is not a thing
@@ -189,11 +188,9 @@ class BMUnitRegistry(UnitRegistry):
             [UnitRegistry, Union[float, complex, Quantity]], float
         ],
     ):
-
         formatters = ["{}", "{} / [time]"]
 
         for form in formatters:
-
             context.add_transformation(
                 form.format(units_from), form.format(units_to), forward_transform
             )

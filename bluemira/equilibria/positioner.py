@@ -579,7 +579,6 @@ class RegionMapper:
     """
 
     def __init__(self, pfregions):
-
         self.pfregions = pfregions
 
         self.regions = {}
@@ -599,7 +598,6 @@ class RegionMapper:
         self.max_currents = np.zeros(self.no_regions)
 
     def _region_setup(self, pf_name, loop_reg):
-
         if all(loop_reg.y != 0):
             raise EquilibriaError(
                 "Coordinates object must be 2D- in x, z for RegionMapper"
@@ -779,7 +777,6 @@ class RegionInterpolator:
     """
 
     def __init__(self, coords):
-
         self.x = coords.x
         self.z = coords.z
         self.coords = coords

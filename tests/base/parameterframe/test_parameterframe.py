@@ -370,7 +370,6 @@ class UnitFrame5(ParameterFrame):
 
 
 class TestParameterFrameUnits:
-
     SIMPLE_FRAME_DATA = {
         "length": {"value": 180.5, "unit": "in"},
         "time": {"value": 30, "unit": "day"},

@@ -10,7 +10,6 @@ class ClassicalSNConstraints(MagneticConstraintSet):
     def __init__(
         self, R_0, A, kappa_upper, kappa_lower, delta_upper, delta_lower, n_points=40
     ):
-
         shape = flux_surface_johner(
             R_0,
             0,

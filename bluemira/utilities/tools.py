@@ -159,7 +159,6 @@ class EinsumWrapper:
     """
 
     def __init__(self):
-
         norm_a0 = "ij, ij -> j"
         norm_a1 = "ij, ij -> i"
 

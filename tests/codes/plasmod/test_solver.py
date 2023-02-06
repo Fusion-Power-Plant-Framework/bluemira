@@ -43,7 +43,6 @@ PARAMS_FILE = os.path.join(DATA_DIR, "params.json")
 
 
 class TestPlasmodSetup:
-
     MODULE_REF = f"{SOLVER_MODULE_REF}._setup"
 
     def setup_method(self):
@@ -181,7 +180,6 @@ class TestPlasmodRun:
 
 
 class TestPlasmodTeardown:
-
     plasmod_out_sample = (
         "     betan      0.14092930140E+0002\n"
         "      fbs       0.14366031154E+0002\n"

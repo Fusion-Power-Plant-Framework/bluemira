@@ -113,7 +113,7 @@ def create_mapping(
         [none_mappings, nones],
     ]:
         if puts is not None:
-            for (bm_key, (ec_key, unit)) in puts.items():
+            for bm_key, (ec_key, unit) in puts.items():
                 mappings[bm_key] = ParameterMapping(
                     ec_key, send=sr["send"], recv=sr["recv"], unit=unit
                 )

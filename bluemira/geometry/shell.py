@@ -63,7 +63,6 @@ class BluemiraShell(BluemiraGeo):
     @classmethod
     def _create(cls, obj: cadapi.apiShell, label=""):
         if isinstance(obj, cadapi.apiShell):
-
             faces = obj.Faces
             bmfaces = []
             for face in faces:

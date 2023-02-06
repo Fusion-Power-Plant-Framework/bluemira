@@ -116,6 +116,7 @@ class TFCoilBuilderParams(ParameterFrame):
 #
 # To manage access to properties of the components we need some `ComponentManagers`
 
+
 # %%
 class Plasma(ComponentManager):
     """Plasma manager"""
@@ -145,6 +146,7 @@ class TFCoil(ComponentManager):
 # We then need a reactor in which to store the components.
 # Notice that the typing of the components here is the relevent `ComponentManager`
 
+
 # %%
 class MyReactor(Reactor):
     """Reactor container"""
@@ -163,6 +165,7 @@ class MyReactor(Reactor):
 # [geometry tutorial](../geometry/geometry_tutorial.ipynb) and information about
 # geometry optimisation can be found in the
 # [geometry optimisation tutorial](../geometry/optimisation_tutorial.ipynb).
+
 
 # %%
 class MyTFCoilOptProblem(GeometryOptimisationProblem):
@@ -262,6 +265,7 @@ class MyTFCoilOptProblem(GeometryOptimisationProblem):
 # In this case `PlasmaDesigner` has some required parameters but `PlasmaBuilder` does
 # not
 
+
 # %%
 class PlasmaDesigner(Designer):
     """Design a plasma's LCFS using a Johner paramterisation."""
@@ -354,6 +358,7 @@ class PlasmaBuilder(Builder):
 # be modified.
 #
 # Notice that only `TFCoilBuilder` has required parameters in this case.
+
 
 # %%
 class TFCoilDesigner(Designer):

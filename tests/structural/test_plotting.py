@@ -32,7 +32,6 @@ from bluemira.structural.plotting import GeometryPlotter
 
 class TestPlotting:
     def test_no_errors(self):
-
         fem = FiniteElementModel()
 
         geometry = Geometry()
