@@ -29,7 +29,6 @@ PARAM_FILE = os.path.join(os.path.dirname(__file__), "data", "params.json")
 
 
 class TestProcessSolverParams:
-
     params = PlasmodSolverParams.from_json(PARAM_FILE)
 
     @pytest.mark.parametrize("param", params, ids=lambda p: p.name)

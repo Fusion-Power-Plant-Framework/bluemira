@@ -36,13 +36,11 @@ from bluemira.fuel_cycle.tools import _dec_I_mdot, _find_t15, _fountain_linear_s
     "n,integral,parameter", [[100, 600, 1.0], [6000, 1.5e7, 1.5], [6000, 1.5e7, 0.5]]
 )
 def test_distributions(n, integral, parameter):
-
     for func in [
         generate_lognorm_distribution,
         generate_truncnorm_distribution,
         generate_exponential_distribution,
     ]:
-
         d = func(n, integral, parameter)
         assert len(d) == n
         assert np.isclose(np.sum(d), integral)

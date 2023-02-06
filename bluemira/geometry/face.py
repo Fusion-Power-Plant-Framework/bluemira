@@ -122,7 +122,6 @@ class BluemiraFace(BluemiraGeo):
     @classmethod
     def _create(cls, obj: cadapi.apiFace, label="") -> BluemiraFace:
         if isinstance(obj, cadapi.apiFace):
-
             bmwires = []
             for w in obj.Wires:
                 w_orientation = w.Orientation

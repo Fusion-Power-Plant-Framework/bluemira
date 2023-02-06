@@ -1471,7 +1471,6 @@ class PictureFrameTools:
 
         # Outer corner
         if r_o != 0.0:
-
             wires.append(
                 make_circle(
                     r_o,
@@ -1552,7 +1551,6 @@ class PictureFrameTools:
         return BluemiraWire([bot_straight, ct_angle, top_straight], label="inner_limb")
 
     def _connect_to_outer_limb(self, top, bottom, top_curve=False, bot_curve=False):
-
         return self._outer_limb(
             top.discretize(100, byedges=True)[:, -1] if top_curve else top,
             bottom.discretize(100, byedges=True)[:, 0] if bot_curve else bottom,

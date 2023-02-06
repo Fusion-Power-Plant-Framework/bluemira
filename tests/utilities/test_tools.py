@@ -141,7 +141,7 @@ class TestEinsumDot:
         np.testing.assert_allclose(dot(val3, val), np.dot(val3, val))
 
         # a, abc -> ac | ab, abc -> ac | abc, bc -> ac -- undefined behaviour
-        for (a, b) in [(val, val3.T), (val2, val3), (val3, val3[1:])]:
+        for a, b in [(val, val3.T), (val2, val3), (val3, val3[1:])]:
             with pytest.raises(ValueError):
                 dot(a, b)
 
@@ -269,7 +269,6 @@ class TestClip:
 
 
 def test_consec_repeat_elem():
-
     arr = np.array([0, 1, 1, 2, 2, 2, 3, 3, 4])
 
     np.testing.assert_array_equal(consec_repeat_elem(arr, 2), np.array([1, 3, 4, 6]))
@@ -301,7 +300,6 @@ class TestGetModule:
             assert module.__name__.rsplit(".", 1)[-1] == self.test_mod.rsplit(".", 1)[-1]
 
     def test_getmodule_failures(self):
-
         # Path doesn't exist
         with pytest.raises(FileNotFoundError):
             get_module("/This/file/doesnt/exist.py")

@@ -950,7 +950,6 @@ def sqrt_bathtub(flow, t, factor, bci, max_inventory, _testing=False):
     m_out, inventory = np.zeros(len(flow)), np.zeros(len(flow))
 
     for i, mflow in enumerate(flow[:-1]):
-
         m_out[i], inventory[i], sum_in, decayed = _sqrt_thresh_sink(
             mflow,
             t[i],

@@ -1197,7 +1197,7 @@ class Equilibrium(MHDState):
         zMP: float
             z coordinate of the midplane point with flux value Xpsi
         """
-        # NOTE: Moved from EquilibriumManipulator
+
         def psi_err(x_opt, *args):
             """
             The psi error minimisation objective function.

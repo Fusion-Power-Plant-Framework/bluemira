@@ -55,7 +55,7 @@ class SuperSankey(Sankey):
         future=None,
         connect=(0, 0),
         rotation=0,
-        **kwargs
+        **kwargs,
     ):
         __doc__ = super().__doc__  # noqa :F841
         # Here we first check if the "add" method has received arguments that
@@ -72,7 +72,7 @@ class SuperSankey(Sankey):
                 prior,
                 connect,
                 rotation,
-                **kwargs
+                **kwargs,
             )
         else:
             # There are two connections, use new method
@@ -87,7 +87,7 @@ class SuperSankey(Sankey):
                 future,
                 connect,
                 rotation,
-                **kwargs
+                **kwargs,
             )
 
     def _double_connect(
@@ -102,7 +102,7 @@ class SuperSankey(Sankey):
         future,
         connect,
         rotation,
-        **kwargs
+        **kwargs,
     ):
         """
         Handles two connections in a Sankey diagram.

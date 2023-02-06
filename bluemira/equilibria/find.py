@@ -246,7 +246,7 @@ def triage_OX_points(f_psi, points):
     \t:math:`\\bigg)^{2}`
     """
     o_points, x_points = [], []
-    for (xi, zi) in points:
+    for xi, zi in points:
         d2dx2 = f_psi(xi, zi, dx=2, grid=False)
         d2dz2 = f_psi(xi, zi, dy=2, grid=False)
         d2dxdz = f_psi(xi, zi, dx=1, dy=1, grid=False)
@@ -761,7 +761,6 @@ def _extract_leg(flux_line, x_cut, z_cut, delta_x, o_point_z):
 
 
 def _extract_offsets(equilibrium, dx_offsets, ref_leg, direction, delta_x, o_point_z):
-
     offset_legs = []
     for dx in dx_offsets:
         x, z = ref_leg.x[0] + direction * dx, ref_leg.z[0]

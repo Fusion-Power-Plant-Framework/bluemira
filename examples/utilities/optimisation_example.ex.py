@@ -97,6 +97,7 @@ pprint(results)
 #
 # Now let's add in a constraint
 
+
 # %%
 def f_constraint(constraint, x, grad):
     """
@@ -155,6 +156,7 @@ pprint(results)
 # otherwise they can take a very long time... and may never converge.
 #
 # What about a strongly multi-modal function with no easy analytical gradient?
+
 
 # %%
 def f_eggholder(x):

@@ -253,7 +253,6 @@ class TestSTEquilibrium:
         plasma_current,
         tikhonov_gamma,
     ):
-
         coilset_temp = copy.deepcopy(coilset)
 
         dummy = Coil(

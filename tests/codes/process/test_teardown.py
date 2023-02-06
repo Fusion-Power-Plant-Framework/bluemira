@@ -33,7 +33,6 @@ from tests.codes.process import utilities as utils
 
 
 class TestTeardown:
-
     MODULE_REF = "bluemira.codes.process._teardown"
     IS_FILE_REF = f"{MODULE_REF}.os.path.isfile"
 

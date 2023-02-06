@@ -53,6 +53,7 @@ model = FiniteElementModel()
 # %% [markdown]
 # # Structural Example
 
+
 # %%
 def make_platform(width, elevation, cross_section, elements=True, internodes=False):
     """

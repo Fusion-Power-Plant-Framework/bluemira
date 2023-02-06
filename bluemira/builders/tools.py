@@ -266,7 +266,6 @@ def pattern_lofted_silhouette(face, n_seg_p_sector, n_sectors, gap):
         shapes.append(volume)
 
     if gap > 0.0:
-
         if len(shapes) > 1:
             full_volume = boolean_fuse(shapes)
         else:

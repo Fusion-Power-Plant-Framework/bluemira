@@ -48,7 +48,7 @@ def inscribed_rect_in_poly(
     *,
     convex=True,
     rtol=1e-06,
-    atol=1e-08
+    atol=1e-08,
 ):
     """
     Find largest inscribed rectangle in a given polygon.
@@ -134,7 +134,6 @@ def inscribed_rect_in_poly(
     left, right = 0, dx
 
     while not np.isclose(right, left, rtol=rtol, atol=atol):
-
         dx = (left + right) / 2
         dz = dx / aspectratio
 

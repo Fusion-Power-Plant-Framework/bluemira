@@ -298,7 +298,6 @@ def solve_transport_fixed_boundary(
     f, ax = None, None
 
     for n_iter in range(max_iter):
-
         plasma = create_plasma_xz_cross_section(
             parameterisation,
             transport_params,

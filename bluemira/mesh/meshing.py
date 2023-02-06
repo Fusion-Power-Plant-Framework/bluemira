@@ -556,7 +556,6 @@ class Mesh:
 class _FreeCADGmsh:
     @staticmethod
     def _initialize_mesh(terminal=1, modelname="Mesh"):
-
         # GMSH file generation #######################
         # Before using any functions in the Python API,
         # Gmsh must be initialized:
@@ -583,7 +582,6 @@ class _FreeCADGmsh:
 
     @staticmethod
     def _finalize_mesh(logfile="gmsh.log"):
-
         with open(logfile, "w") as file_handler:
             file_handler.write("\n".join(str(item) for item in gmsh.logger.get()))
 
