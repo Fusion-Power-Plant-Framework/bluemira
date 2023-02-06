@@ -521,6 +521,14 @@ def make_ellipse(
     return Part.Wire(Part.Edge(output))
 
 
+class JoinType(enum.IntEnum):
+    """See Part/PartEnums.py, its not importable"""
+
+    Arc = 0
+    Tangent = 1
+    Intersect = 2
+
+
 def offset_wire(
     wire: apiWire, thickness: float, join: str = "intersect", open_wire: bool = True
 ) -> apiWire:
@@ -553,14 +561,12 @@ def offset_wire(
     if not _wire_is_planar(wire):
         raise InvalidCADInputsError("Cannot offset a non-planar wire.")
 
-    if join == "arc":
-        f_join = 0
-    elif join == "intersect":
-        f_join = 2
-    else:
+    f_join = JoinType[join.lower().capitalize()]
+    if f_join is JoinType.Tangent:
         # NOTE: The "tangent": 1 option misbehaves in FreeCAD
-        raise InvalidCADInputsError(
-            f"Unrecognised join value: {join}. Please choose from ['arc', 'intersect']."
+        bluemira_warn(
+            f"Join type: {join} is unstable."
+            " Please consider using from ['arc', 'intersect']."
         )
 
     if wire.isClosed() and open_wire:
@@ -569,7 +575,7 @@ def offset_wire(
     shape = apiShape(wire)
     try:
         wire = arrange_edges(
-            wire, shape.makeOffset2D(thickness, f_join, False, open_wire)
+            wire, shape.makeOffset2D(thickness, f_join.value, False, open_wire)
         )
     except Base.FreeCADError as error:
         msg = "\n".join(
