@@ -1045,7 +1045,7 @@ def save_as_STP(
 
 
 def save_cad(
-    components: Union[Component, Iterable[Component]], filename: str, scale: float = 1
+    components: Union[Component, Iterable[Component]], filename: str, formatt: str ="stp", **kwargs
 ):
     """
     Save the CAD of a component (eg a reactor) or a list of components
@@ -1056,10 +1056,13 @@ def save_cad(
         components to save
     filename:
         Full path filename of the STP assembly
-    scale:
-        The scale in which to save the Shape objects
+    formatt:
+        file format to save as
+    kwargs:
+        arguments passed to cadapi save function
     """
-    save_as_STP(get_properties_from_components(components, "shape"), filename, scale)
+    shapes, names = zip(*get_properties_from_components(components, ("shape", "name")))
+    cadapi.save_cad(shapes, filename, formatt=formatt, labels=names, **kwargs)
 
 
 # ======================================================================================
