@@ -103,7 +103,6 @@ class Result:
         return DeformedGeometry(self.geometry, scale=scale)
 
     def _make_cyclic_geometry(self, geometry=None):
-
         if geometry is None:
             geometry = self.geometry
 
@@ -120,7 +119,7 @@ class Result:
         stress=False,
         deflection=False,
         pattern=False,
-        **kwargs
+        **kwargs,
     ):
         """
         Plot the Result of the finite element analysis

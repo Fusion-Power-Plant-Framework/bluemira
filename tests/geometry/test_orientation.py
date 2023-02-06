@@ -30,7 +30,6 @@ from bluemira.geometry.wire import BluemiraWire
 
 class TestOrientation:
     def test_wire(self):
-
         wire = cadapi.make_polygon(
             [[0, 0, 0], [1, 0, 0], [1, 0, 1], [0, 0, 1], [0, 0, 0]],
         )

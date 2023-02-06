@@ -37,7 +37,6 @@ class TFCoil(ComponentManager):
 
 
 class MyReactor(Reactor):
-
     SOME_CONSTANT: str = "not a component"
 
     plasma: Plasma

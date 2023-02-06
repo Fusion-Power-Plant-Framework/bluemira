@@ -30,7 +30,6 @@ from eudemo.ivc import IVCBoundaryDesigner
 
 
 class TestIVCBoundaryDesigner:
-
     picture_frame = PictureFrame({"ro": {"value": 6}, "ri": {"value": 3}}).create_shape()
     params = {
         "tk_bb_ib": {"value": 0.8, "unit": "m"},

@@ -125,7 +125,6 @@ class TestClosedFluxSurface:
         assert np.isclose(fs.zeta_lower, fs.zeta_upper)
 
     def test_johner(self):
-
         R_0, z_0, a, kappa_u, kappa_l, delta_u, delta_l, a1, a2, a3, a4 = (
             7,
             0,

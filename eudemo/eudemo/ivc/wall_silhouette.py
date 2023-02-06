@@ -75,7 +75,6 @@ class WallSilhouetteDesigner(Designer[GeometryParameterisation]):
         build_config: Dict,
         equilibrium: Equilibrium,
     ) -> None:
-
         super().__init__(params, build_config)
 
         self.parameterisation_cls: Type[

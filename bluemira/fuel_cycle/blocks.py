@@ -123,7 +123,6 @@ class FuelCycleComponent:
         summing=False,
         _testing=False,
     ):
-
         self.name = name
         self.t = t
         self.eta = eta

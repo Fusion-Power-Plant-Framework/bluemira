@@ -80,7 +80,6 @@ class TestCoil:
         plt.close("all")
 
     def test_name(self):
-
         assert self.coil.ctype == CoilType.PF
         assert self.cs_coil.ctype == CoilType.CS
         assert self.no_coil.ctype == CoilType.NONE
@@ -388,7 +387,6 @@ class TestSymmetricCircuit:
         self.test_fields("")
 
     def test_attributes(self):
-
         circ = copy.deepcopy(self.circuit)
         circ.x = 4
         assert circ.x[0] == 4

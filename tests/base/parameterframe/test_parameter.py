@@ -6,7 +6,6 @@ from bluemira.base.parameter_frame import Parameter
 
 
 class TestParameter:
-
     SERIALIZED_PARAM = {
         "name": "my_param",
         "value": 100,

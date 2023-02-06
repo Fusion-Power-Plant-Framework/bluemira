@@ -26,7 +26,6 @@ from tests.codes.process.utilities import PARAM_FILE
 
 
 class TestProcessSolverParams:
-
     params = ProcessSolverParams.from_json(PARAM_FILE)
 
     @pytest.mark.parametrize("param", params, ids=lambda p: p.name)

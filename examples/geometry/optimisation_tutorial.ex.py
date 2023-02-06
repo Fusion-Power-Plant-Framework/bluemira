@@ -169,6 +169,7 @@ print(
 # There are much better ways of doing this, but this is to demonstrate the use of an
 # inequality constraint.
 
+
 # %%
 def calculate_constraint(vector, parameterisation, c_value):
     """

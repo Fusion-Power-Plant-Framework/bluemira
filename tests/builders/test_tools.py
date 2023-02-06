@@ -89,7 +89,6 @@ class TestGetNSectors:
 
 
 class TestVariedOffsetFunction:
-
     fixtures = [
         {
             "wire": PictureFrame(

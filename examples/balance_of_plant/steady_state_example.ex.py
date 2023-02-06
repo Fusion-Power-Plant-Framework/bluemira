@@ -113,6 +113,7 @@ divertor_pump_strat = H2OPumping(f_pump=0.05, eta_isentropic=0.99, eta_electric=
 # can set up a simple scaling with respect to a known reference point, by sub-classing
 # from the ABC and specifying some calculation in the `calculate` method.
 
+
 # %%
 class EUDEMOReferenceParasiticLoadStrategy(ParasiticLoadStrategy):
     """

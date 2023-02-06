@@ -130,6 +130,7 @@ class ECOutputs:
 # The `MappedParameterFrame` here gets the defaults and sets the mappings.
 # Notice that "param2" is sent to the code but "param1" is not.
 
+
 # %%
 @dataclass
 class ECParameterFrame(MappedParameterFrame):
@@ -179,6 +180,7 @@ class RunMode(BaseRunMode):
 # mapping and creates the input file. The output of the run method returns
 # the command line options list.
 
+
 # %%
 class Setup(CodesSetup):
     """Setup task"""
@@ -223,6 +225,7 @@ class Setup(CodesSetup):
 # %% [markdown]
 # `Run` simply runs the code in a subprocess with the given options.
 
+
 # %%
 class Run(CodesTask):
     """Run task"""
@@ -243,6 +246,7 @@ class Run(CodesTask):
 # %% [markdown]
 # `Teardown` reads in a given output file or, in the case of mock, returns a known
 # value, sending the new parameter values back to the `ParameterFrame`.
+
 
 # %%
 class Teardown(CodesTeardown):
@@ -283,6 +287,7 @@ class Teardown(CodesTeardown):
 # `Solver` combines the three tasks into one object for execution.
 # The execute method has been overridden here for our use-case and returns
 # the `ParameterFrame`.
+
 
 # %%
 class Solver(CodesSolver):

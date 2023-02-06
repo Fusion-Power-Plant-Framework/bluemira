@@ -148,6 +148,7 @@ solver = plasmod.Solver(params=new_params, build_config=build_config)
 # The first shows a few of the output scalar values and the second plots a
 # given profile.
 
+
 # %%
 def print_outputs(solver):
     """

@@ -141,7 +141,6 @@ class LifeCycle:
         m_long = self.maintenance_l * S_TO_YR
         phases = []
         for i in range(ndivch_in1blk):
-
             p_str = "Phase P1." + str(i + 1)
             m_str = "Phase M1." + str(i + 1)
             phases.append([divl, p_str])
@@ -152,7 +151,6 @@ class LifeCycle:
         phases.append([blk1l % divl, "Phase P1." + str(count + 2)])
         phases.append([m_long, "Phase M1." + str(count + 2)])
         for i in range(ndivch_in2blk):
-
             p_str = "Phase P2." + str(i + 1)
             m_str = "Phase M2." + str(i + 1)
             phases.append([divl, p_str])
