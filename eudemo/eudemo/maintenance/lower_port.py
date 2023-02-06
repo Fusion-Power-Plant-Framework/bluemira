@@ -38,10 +38,10 @@ class LowerPortDesigner(Designer):
         self,
         params: Union[Dict, ParameterFrame],
         build_config: Dict,
-        divertor_face: BluemiraFace,
+        divertor_xz: BluemiraFace,
     ):
         super().__init__(params, build_config)
-        self.divertor_face = divertor_face
+        self.divertor_xz = divertor_xz
 
     def run(self):
         """Run method of Designer"""
