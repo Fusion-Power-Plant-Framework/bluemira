@@ -61,7 +61,6 @@ def test_add_to_dict():
 
 
 def test_create_parameterframe():
-
     params_d = {"A": Parameter[float]}
     outstr = (
         "from dataclasses import dataclass\n\n"

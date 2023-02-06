@@ -35,7 +35,6 @@ from tests.codes.process import utilities as utils
 
 
 class TestSolver:
-
     MODULE_REF = "bluemira.codes.process._solver"
 
     @classmethod
@@ -96,7 +95,6 @@ class TestSolver:
 
 @pytest.mark.skipif(not ENABLED, reason="PROCESS is not installed on the system.")
 class TestSolverIntegration:
-
     DATA_DIR = os.path.join(os.path.dirname(__file__), "test_data")
 
     def setup_method(self):

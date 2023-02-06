@@ -106,7 +106,6 @@ class Plotter:
     """
 
     def __init__(self, ax=None, **kwargs):
-
         for kwarg in kwargs:
             if kwarg not in PLOT_DEFAULTS:
                 bluemira_warn(f"Unrecognised plot kwarg: {kwarg}")

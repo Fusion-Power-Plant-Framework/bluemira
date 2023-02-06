@@ -293,7 +293,6 @@ def find_flux_surface(psi_norm_func, psi_norm, mesh=None, n_points=100):
     points = np.zeros((2, n_points), dtype=float)
     distances = np.zeros(n_points)
     for i in range(len(theta)):
-
         result = scipy.optimize.minimize(
             psi_line_match,
             x0=d_guess,

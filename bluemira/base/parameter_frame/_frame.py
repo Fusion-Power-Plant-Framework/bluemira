@@ -231,7 +231,6 @@ def _validate_parameter_field(field, member_type: Type) -> Tuple[Type, ...]:
 
 
 def _validate_units(param_data: Dict, value_type: Iterable[Type]):
-
     try:
         quantity = pint.Quantity(param_data["value"], param_data["unit"])
     except KeyError as ke:

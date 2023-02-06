@@ -106,7 +106,7 @@ class VVTSBuilder(Builder):
         vvts_outer_wire = offset_wire(
             vvts_inner_wire,
             self.params.tk_ts.value + self.params.g_vv_ts.value,
-            **ex_args
+            **ex_args,
         )
         vvts_face = BluemiraFace([vvts_outer_wire, vvts_inner_wire])
         self.vvts_face = vvts_face

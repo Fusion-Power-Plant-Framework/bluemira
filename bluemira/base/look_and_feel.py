@@ -429,7 +429,6 @@ class BluemiraClock:
     """
 
     def __init__(self, n_iter, print_rate=1, width=73):
-
         self.rate = print_rate
         self.elapsed = " elapsed"
         self.left = " left"

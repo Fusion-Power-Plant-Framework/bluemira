@@ -47,7 +47,6 @@ class TestCircularArcCurrentSource:
         )
 
     def test_2D_vs_3D_circular(self):
-
         nx, nz = 50, 60
         x = np.linspace(self.xc - 2, self.xc + 2, nx)
         z = np.linspace(self.zc - 2, self.zc + 2, nz)

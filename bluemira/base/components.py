@@ -356,7 +356,6 @@ def get_properties_from_components(
         comps = [comps]
 
     for comp in comps:
-
         props = comp.get_component_properties(properties, first=False)
         if not isinstance(props, tuple):
             props = tuple(props)

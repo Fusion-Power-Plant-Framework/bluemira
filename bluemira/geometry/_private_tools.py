@@ -787,7 +787,6 @@ class MixedFaceMaker:
 
         start = vertices[0]
         for i, vertex in enumerate(vertices[:-1]):
-
             delta = vertices[i + 1] - vertex
 
             if i == len(vertices) - 2:

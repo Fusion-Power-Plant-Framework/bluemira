@@ -32,7 +32,6 @@ class NoOpRunMode(RunMode):
 
 
 class NoOpSolver(interface.CodesSolver):
-
     name = "MyTestSolver"
     setup_cls = NoOpTask
     run_cls = NoOpTask

@@ -53,7 +53,6 @@ class BiotSavartFilament(CurrentSource):
     """
 
     def __init__(self, arrays, radius, current=1.0):
-
         if not isinstance(arrays, list):
             # Handle single Coordinates/array
             arrays = [arrays]

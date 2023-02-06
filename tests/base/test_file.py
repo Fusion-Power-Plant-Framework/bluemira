@@ -246,7 +246,6 @@ def test_generated_data_dirs(file_manager_good: FileManager):
 
 
 def test_force_file_extension():
-
     file_path = "/path/to/a/file"
 
     assert force_file_extension(file_path, [".mf", ".mo"]) == file_path + ".mf"

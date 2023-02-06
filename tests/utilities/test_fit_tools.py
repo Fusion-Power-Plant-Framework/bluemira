@@ -47,7 +47,6 @@ class TestSurfaceFit:
         assert np.all(np.abs(np.array([0, 0, 34]) - coeffs) < 0.12)
 
     def test_quadratic_fit(self):
-
         coeffs_true = np.array([34, 2, 1.4, 5, 0.4, 5])
 
         def quadratic_surface(x, y):
@@ -106,7 +105,6 @@ class TestSurfaceFit:
             surface_fit(x, y, z, order=1)
 
     def test_power_arange(self):
-
         power_2 = np.array([[0, 0], [1, 0], [0, 1], [2, 0], [1, 1], [0, 2]])
 
         power_3 = np.array(

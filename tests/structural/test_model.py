@@ -207,7 +207,6 @@ class TestCantilever:
         self.model.clear_loads()
 
     def test_single_load(self):
-
         load = -1000
         length = 4
         b = 3
@@ -251,7 +250,6 @@ class TestCantilever:
             assert np.isclose(end_deflection1, end_deflection)
 
     def test_end_moment(self):
-
         load = -41278
         length = 8
         e_mat = self.material.E
@@ -337,7 +335,6 @@ class TestCantilever:
             assert np.isclose(end_deflection1, analytical)
 
     def test_node_load(self):
-
         load = 40000
         e_mat = self.material.E
         i_xs = self.cross_section.i_yy
@@ -360,7 +357,6 @@ class TestCantilever:
         assert np.isclose(deflections[6 + 2], end_deflection)
 
     def test_mixed_neutral_load(self):
-
         load = 40000
 
         load_case = LoadCase()
