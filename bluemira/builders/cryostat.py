@@ -135,7 +135,7 @@ class CryostatBuilder(Builder):
 
         Notes
         -----
-        Only designed for an inward kind, outward kinks will fail
+        Only designed for an inward kink, outward kinks will fail
         """
         x_in = 0
         x_gs_kink = self.params.x_g_support.value - self.params.x_gs_kink_diff.value

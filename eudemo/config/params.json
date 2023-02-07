@@ -183,25 +183,25 @@
         "value": 5,
         "unit": "m",
         "source": "Input",
-        "long_name": "cryostat well depth (is the unit right?)"
+        "long_name": "cryostat well depth"
     },
     "x_g_support": {
         "value": 13,
         "unit": "m",
         "source": "Input",
-        "long_name": "TODO add me"
+        "long_name": "Gravity support radius. Used for TF and VV supports (assuming a supporting ring)"
     },
     "x_gs_kink_diff": {
         "value": 2,
         "unit": "m",
         "source": "Input",
-        "long_name": "TODO add me"
+        "long_name": "Lower port kink radius offset from the gravity support radius."
     },
     "z_gs": {
         "value": -15,
         "unit": "m",
         "source": "Input",
-        "long_name": "TODO improve this name: z gravity support"
+        "long_name": "Gravity support vertical position at the ground"
     },
     "Z_eff": {
         "value": 2.2,
