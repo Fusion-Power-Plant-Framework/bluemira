@@ -1,6 +1,6 @@
 {
     "Radial build": {
-        "run_mode": "mock",
+        "run_mode": "run",
         "read_dir": "config/"
     },
     "Fixed boundary equilibrium":{
