@@ -49,11 +49,13 @@ from bluemira.builders.thermal_shield import VVTSBuilder
 from bluemira.equilibria.equilibrium import Equilibrium
 from bluemira.geometry.tools import make_polygon
 from eudemo.blanket import Blanket, BlanketBuilder
-from eudemo.equilibria import EquilibriumDesigner
+from eudemo.equilibria import (
+    FixedEquilibriumDesigner,
+    FreeBoundaryEquilibriumFromFixedDesigner,
+)
 from eudemo.ivc import design_ivc
 from eudemo.ivc.divertor_silhouette import Divertor
 from eudemo.params import EUDEMOReactorParams
-from eudemo.pf_coils import PFCoilsDesigner
 from eudemo.radial_build import radial_build
 from eudemo.tf_coils import TFCoil, TFCoilBuilder, TFCoilDesigner
 from eudemo.thermal_shield import VacuumVesselThermalShield
@@ -86,6 +88,14 @@ def build_vacuum_vessel(params, build_config, ivc_koz) -> VacuumVessel:
     """Build the vacuum vessel around the given IVC keep-out zone."""
     vv_builder = VacuumVesselBuilder(params, build_config, ivc_koz)
     return VacuumVessel(vv_builder.build())
+
+
+def build_vacuum_vessel_thermal_shield(
+    params, build_config, vv_koz
+) -> VacuumVesselThermalShield:
+    """Build the vacuum vessel thermal shield around the given  VV keep-out zone"""
+    vvts_builder = VVTSBuilder(params, build_config, vv_koz)
+    return VacuumVesselThermalShield(vvts_builder.build())
 
 
 def build_divertor(params, build_config, div_silhouette) -> Divertor:
@@ -130,19 +140,30 @@ if __name__ == "__main__":
         raise ValueError("Params cannot be None")
     build_config = _read_json(os.path.join(CONFIG_DIR, "build_config.json"))
 
+    print(params.I_p)
     params = radial_build(params, build_config["Radial build"])
+    print(params.I_p)
+    fixed_boundary_eq = run_designer(
+        FixedEquilibriumDesigner, params, build_config["Fixed boundary equilibrium"]
+    )
+    print(params.I_p)
+    free_boundary_eq = run_designer(
+        FreeBoundaryEquilibriumFromFixedDesigner,
+        params,
+        build_config["Free boundary equilibrium"],
+    )
+    print(params.I_p)
 
-    eq = run_designer(EquilibriumDesigner, params, build_config["Equilibrium"])
-
-    reactor.plasma = build_plasma(build_config.get("Plasma", {}), eq)
+    reactor.plasma = build_plasma(build_config.get("Plasma", {}), free_boundary_eq)
 
     blanket_face, divertor_face, ivc_boundary = design_ivc(
-        params, build_config["IVC"], equilibrium=eq
+        params, build_config["IVC"], equilibrium=free_boundary_eq
     )
 
     reactor.vacuum_vessel = build_vacuum_vessel(
         params, build_config.get("Vacuum vessel", {}), ivc_boundary
     )
+
     reactor.divertor = build_divertor(
         params, build_config.get("Divertor", {}), divertor_face
     )
@@ -151,27 +172,26 @@ if __name__ == "__main__":
     )
 
     thermal_shield_config = build_config.get("Thermal shield", {})
-    vv_thermal_shield = VVTSBuilder(
+    reactor.vv_thermal = build_vacuum_vessel_thermal_shield(
         params,
-        thermal_shield_config.get("Vacuum vessel", {}),
-        keep_out_zone=reactor.vacuum_vessel.xz_boundary(),
-    )
-    reactor.vv_thermal = vv_thermal_shield.build()
-
-    reactor.tf_coils = build_tf_coils(
-        params,
-        build_config.get("TF coils", {}),
-        reactor.plasma.lcfs(),
+        thermal_shield_config.get("VVTS", {}),
         reactor.vacuum_vessel.xz_boundary(),
     )
 
-    pf_coil_keep_out_zones = []  # Update when ports are added
-    pf_designer = PFCoilsDesigner(
-        params,
-        build_config.get("PF coils", {}),
-        reactor.tf_coils.boundary(),
-        pf_coil_keep_out_zones,
-    )
-    coilset = pf_designer.execute()
+    # reactor.tf_coils = build_tf_coils(
+    #     params,
+    #     build_config.get("TF coils", {}),
+    #     reactor.plasma.lcfs(),
+    #     reactor.vacuum_vessel.xz_boundary(),
+    # )
+
+    # pf_coil_keep_out_zones = []  # Update when ports are added
+    # pf_designer = PFCoilsDesigner(
+    #     params,
+    #     build_config.get("PF coils", {}),
+    #     reactor.tf_coils.boundary(),
+    #     pf_coil_keep_out_zones,
+    # )
+    # coilset = pf_designer.execute()
 
     reactor.show_cad()

@@ -136,6 +136,22 @@ def make_solenoid(r_cs, tk_cs, z_min, z_max, g_cs, tk_cs_ins, tk_cs_cas, n_CS):
     return coils
 
 
+def _get_intersections_from_angles(boundary, ref_x, ref_z, angles):
+    n_angles = len(angles)
+    x_c, z_c = np.zeros(n_angles), np.zeros(n_angles)
+    for i, angle in enumerate(angles):
+        line = make_polygon(
+            [
+                [ref_x, ref_x + VERY_BIG * np.cos(angle)],
+                [0, 0],
+                [ref_z, ref_z + VERY_BIG * np.sin(angle)],
+            ]
+        )
+        _, intersection = distance_to(boundary, line)
+        x_c[i], _, z_c[i] = intersection[0][0]
+    return x_c, z_c
+
+
 def make_PF_coil_positions(tf_boundary, n_PF, R_0, kappa, delta):
     """
     Make a set of PF coil positions crudely with respect to the intended plasma
@@ -147,19 +163,7 @@ def make_PF_coil_positions(tf_boundary, n_PF, R_0, kappa, delta):
     scale = 1.1
 
     angles = np.linspace(scale * angle_upper, scale * angle_lower, n_PF)
-
-    x_c, z_c = np.zeros(n_PF), np.zeros(n_PF)
-    for i, angle in enumerate(angles):
-        line = make_polygon(
-            [
-                [R_0, R_0 + VERY_BIG * np.cos(angle)],
-                [0, 0],
-                [0, VERY_BIG * np.sin(angle)],
-            ]
-        )
-        _, intersection = distance_to(tf_boundary, line)
-        x_c[i], _, z_c[i] = intersection[0][0]
-    return x_c, z_c
+    return _get_intersections_from_angles(tf_boundary, R_0, 0.0, angles)
 
 
 def make_coilset(
@@ -213,6 +217,63 @@ def make_coilset(
     coilset.assign_material("PF", j_max=PF_jmax, b_max=PF_bmax)
     coilset.assign_material("CS", j_max=CS_jmax, b_max=CS_bmax)
     return coilset
+
+
+def make_reference_coilset(
+    tf_track: BluemiraWire,
+    lcfs_shape: BluemiraWire,
+    r_cs: float,
+    tk_cs: float,
+    g_cs_mod: float,
+    tk_cs_casing: float,
+    tk_cs_insulation: float,
+    n_CS: int,
+    n_PF: int,
+):
+    """
+    Make a reference coilset.
+    """
+    bb = tf_track.bounding_box
+    z_min = bb.z_min
+    z_max = bb.z_max
+    solenoid = make_solenoid(
+        r_cs,
+        tk_cs,
+        z_min,
+        z_max,
+        g_cs_mod,
+        tk_cs_ins=tk_cs_insulation,
+        tk_cs_cas=tk_cs_casing,
+        n_CS=n_CS,
+    )
+
+    lcfs_coords = lcfs_shape.discretize(byedges=True)
+    arg_z_max = np.argmax(lcfs_coords.z)
+    arg_z_min = np.argmin(lcfs_coords.z)
+
+    r_mid = 0.5 * (np.min(lcfs_coords.x) + np.max(lcfs_coords.x))
+    d_delta_u = lcfs_coords.x[arg_z_max] - r_mid
+    d_kappa_u = lcfs_coords.z[arg_z_max]
+    d_delta_l = lcfs_coords.x[arg_z_min] - r_mid
+    d_kappa_l = lcfs_coords.z[arg_z_min]
+
+    angle_upper = np.arctan2(d_kappa_u, d_delta_u)
+    angle_lower = np.arctan2(d_kappa_l, d_delta_l)
+    angles = np.linspace(angle_upper, angle_lower, n_PF)
+    x_c, z_c = _get_intersections_from_angles(tf_track, r_mid, 0.0, angles)
+
+    pf_coils = []
+    for i, (x, z) in enumerate(zip(x_c, z_c)):
+        coil = Coil(
+            x,
+            z,
+            current=0,
+            ctype="PF",
+            name=f"PF_{i+1}",
+            j_max=100.0e6,
+        )
+        pf_coils.append(coil)
+    return CoilSet(*pf_coils + solenoid, control_names=True)
 
 
 def make_grid(R_0, A, kappa, scale_x=1.6, scale_z=1.7, nx=65, nz=65):

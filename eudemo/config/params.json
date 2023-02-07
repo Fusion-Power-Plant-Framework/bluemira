@@ -241,11 +241,23 @@
         "source": "Input",
         "long_name": "Bootstrap fraction"
     },
+    "T_e_ped": {
+        "value": 5.5,
+        "unit": "keV",
+        "source": "Input",
+        "long_name": "Electrons/ions temperature at pedestal"
+    },
     "f_ni": {
         "value": 0.1,
         "unit": "dimensionless",
         "source": "Input",
         "long_name": "Non-inductive current drive fraction"
+    },
+    "q_control": {
+        "value": 50,
+        "unit": "megawatt",
+        "source": "Input",
+        "long_name": "Control HCD power"
     },
     "g_cs_tf": {
         "value": 0.05,

@@ -1,12 +1,57 @@
 {
     "Radial build": {
-        "run_mode": "mock",
+        "run_mode": "run",
         "read_dir": "config/"
     },
-    "Equilibrium": {
-        "plot_optimisation": false,
-        "run_mode": "read",
-        "file_path": "config/equilibrium_eqdsk.json"
+    "Fixed boundary equilibrium":{
+        "run_mode": "run",
+        "file_path": "config/fixed_boundary_eqdsk.json",
+        "shape_config": {
+            "f_delta_l": 1.45,
+            "f_kappa_l": 1.15,
+            "phi_l_neg": 30.0,
+            "phi_l_pos": -120.0,
+            "phi_u_neg": 0.0,
+            "phi_u_pos": 0.0
+        },
+        "plasmod_settings": {
+            "i_impmodel": "PED_FIXED",
+            "i_modeltype": "GYROBOHM_2",
+            "i_equiltype": "q95_sawtooth",
+            "i_pedestal": "SAARELMA",
+            "isawt": "SAWTEETH",
+            "nx": 41,
+            "nxt": 21,
+            "ntglf": 11
+        },
+        "fixed_equilibrium_settings": {
+            "p_order": 2,
+            "max_iter": 30,
+            "iter_err_max": 1e-4,
+            "relaxation": 0.05
+        },
+        "transport_eq_settings": {
+            "lcar_mesh": 0.3,
+            "max_iter": 15,
+            "iter_err_max": 1e-3,
+            "relaxation": 0.0,
+            "plot": true
+        }
+    },
+    "Free boundary equilibrium":{
+            "run_mode": "run",
+            "fixed_eq_file_path": "config/fixed_boundary_eqdsk.json",
+            "file_path": "config/equilibrium_eqdsk.json",
+            "settings": {
+                "iter_err_max": 1e-3,
+                "max_iter": 50,
+                "relaxation": 0.15,
+                "coil_discretisation": 0.3,
+                "plot": true,
+                "nx": 127,
+                "nz": 127,
+                "gamma": 1e-7
+            }
     },
     "IVC": {
         "Wall silhouette": {
@@ -28,7 +73,7 @@
     "TF coils": {
         "param_class": "TripleArc",
         "variables_map": {},
-        "run_mode": "read",
+        "run_mode": "run",
         "file_path": "config/TFCoilDesign.json",
         "problem_class": "bluemira.builders.tf_coils::RippleConstrainedLengthGOP"
     }

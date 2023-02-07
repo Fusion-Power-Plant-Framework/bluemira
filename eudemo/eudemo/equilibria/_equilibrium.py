@@ -21,11 +21,13 @@
 from dataclasses import dataclass
 from typing import Dict, Union
 
+import numpy as np
+
 from bluemira.base.parameter_frame import Parameter, ParameterFrame
 from bluemira.equilibria import Equilibrium
-from bluemira.equilibria.profiles import BetaIpProfile
+from bluemira.equilibria.profiles import BetaIpProfile, CustomProfile
 from bluemira.geometry.wire import BluemiraWire
-from eudemo.pf_coils.tools import make_coilset, make_grid
+from eudemo.pf_coils.tools import make_coilset, make_grid, make_reference_coilset
 
 KAPPA_95_TO_100 = 1.12
 
@@ -93,4 +95,80 @@ def make_equilibrium(
         params.R_0.value, params.A.value, kappa, scale_x=1.6, scale_z=1.7, nx=65, nz=65
     )
 
+    return Equilibrium(coilset, grid, profiles)
+
+
+@dataclass
+class ReferenceEquilibriumParams(ParameterFrame):
+    """Parameters required to make a new reference equilibrium."""
+
+    A: Parameter[float]
+    B_0: Parameter[float]
+    I_p: Parameter[float]
+    kappa: Parameter[float]
+    R_0: Parameter[float]
+    r_cs_in: Parameter[float]
+    g_cs_mod: Parameter[float]
+    tk_cs_casing: Parameter[float]
+    tk_cs_insulation: Parameter[float]
+    tk_cs: Parameter[float]
+    beta_p: Parameter[float]
+    l_i: Parameter[float]
+    n_CS: Parameter[int]
+    n_PF: Parameter[int]
+
+
+def make_reference_equilibrium(
+    _params: Union[ReferenceEquilibriumParams, Dict],
+    tf_track: BluemiraWire,
+    lcfs_shape: BluemiraWire,
+    p_prime: np.ndarray,
+    ff_prime: np.ndarray,
+    nx: int = 65,
+    nz: int = 65,
+):
+    """
+    Make a crude reference equilibrium, scaling coils and grid for a first pass
+    solve.
+    """
+    if isinstance(_params, dict):
+        params = ReferenceEquilibriumParams.from_dict(_params)
+    else:
+        params = _params
+
+    coilset = make_reference_coilset(
+        tf_track,
+        lcfs_shape,
+        r_cs=params.r_cs_in.value + 0.5 * params.tk_cs.value,
+        tk_cs=0.5 * params.tk_cs.value,
+        g_cs_mod=params.g_cs_mod.value,
+        tk_cs_casing=params.tk_cs_casing.value,
+        tk_cs_insulation=params.tk_cs_insulation.value,
+        n_CS=params.n_CS.value,
+        n_PF=params.n_PF.value,
+    )
+
+    grid = make_grid(
+        params.R_0.value,
+        params.A.value,
+        params.kappa.value,
+        scale_x=1.5,
+        scale_z=1.6,
+        nx=nx,
+        nz=nz,
+    )
+
+    profiles = CustomProfile(
+        p_prime,
+        ff_prime,
+        R_0=params.R_0.value,
+        B_0=params.B_0.value,
+        I_p=params.I_p.value,
+    )
+    # profiles = BetaIpProfile(
+    #     betap=params.beta_p.value,
+    #     R_0=params.R_0.value,
+    #     B_0=params.B_0.value,
+    #     I_p=params.I_p.value,
+    # )
     return Equilibrium(coilset, grid, profiles)

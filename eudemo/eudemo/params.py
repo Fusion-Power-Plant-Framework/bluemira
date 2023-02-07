@@ -116,6 +116,10 @@ class EUDEMOReactorParams(ParameterFrame):
     V_p: Parameter[float]
     Z_eff: Parameter[float]
 
+    # PLASMOD
+    T_e_ped: Parameter[float]
+    q_control: Parameter[float]
+
     # Equilibrium
     div_L2D_ib: Parameter[float]
     div_L2D_ob: Parameter[float]
