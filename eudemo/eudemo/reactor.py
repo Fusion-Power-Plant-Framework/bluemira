@@ -57,16 +57,15 @@ from bluemira.equilibria.equilibrium import Equilibrium
 from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.tools import make_polygon
 from eudemo.blanket import Blanket, BlanketBuilder
-from eudemo.equilibria import (
-    FixedEquilibriumDesigner,
-    FreeBoundaryEquilibriumFromFixedDesigner,
-)
-from eudemo.cryostat import Cryostat
 from eudemo.comp_managers import (
     Cryostat,
     CryostatThermalShield,
     RadiationShield,
     VacuumVesselThermalShield,
+)
+from eudemo.equilibria import (
+    FixedEquilibriumDesigner,
+    FreeBoundaryEquilibriumFromFixedDesigner,
 )
 from eudemo.ivc import design_ivc
 from eudemo.ivc.divertor_silhouette import Divertor
