@@ -189,11 +189,11 @@ class _MFileWrapper:
     def __init__(self, file_path: str, name: str = "PROCESS"):
         if not os.path.isfile(file_path):
             raise CodesError(f"Path '{file_path}' is not a file.")
+        self._name = name
         self.file_path = file_path
         self.mfile = MFile(file_path)
-        _raise_on_infeasible_solution(self.mfile)
+        _raise_on_infeasible_solution(self)
         self.data = {}
-        self._name = name
 
     def read(self) -> Dict:
         """
@@ -259,13 +259,13 @@ class _MFileWrapper:
         }
 
 
-def _raise_on_infeasible_solution(m_file) -> None:
+def _raise_on_infeasible_solution(m_file: _MFileWrapper):
     """
     Check that PROCESS found a feasible solution.
 
     Parameters
     ----------
-    m_file: _MFileWrapper
+    m_file
         The PROCESS MFILE to check for a feasible solution
 
     Raises
@@ -273,7 +273,7 @@ def _raise_on_infeasible_solution(m_file) -> None:
     CodesError
         If a feasible solution was not found.
     """
-    error_code = int(m_file.data["ifail"]["scan01"])
+    error_code = int(m_file.mfile.data["ifail"]["scan01"])
     if error_code != 1:
         message = (
             f"{m_file._name} did not find a feasible solution. ifail = {error_code}."

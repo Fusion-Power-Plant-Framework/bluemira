@@ -42,7 +42,7 @@ class EUDEMOReactorParams(ParameterFrame):
     l_i: Parameter[float]
     n_CS: Parameter[int]
     n_PF: Parameter[int]
-    n_TF: Parameter[float]
+    n_TF: Parameter[int]
     ob_offset_angle: Parameter[float]
     P_bd_in: Parameter[float]
     P_brehms: Parameter[float]
