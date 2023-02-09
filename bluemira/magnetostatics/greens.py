@@ -207,7 +207,7 @@ def greens_dpsi_dx(xc, zc, x, z, d_xc=0, d_zc=0):
     x: float or np.array(N, M)
         Calculation x locations
     z: float or np.array(N, M)
-        Calculation z
+        Calculation z locations
     d_xc: float
         The coil half-width (overload argument)
     d_zc: float
@@ -220,8 +220,8 @@ def greens_dpsi_dx(xc, zc, x, z, d_xc=0, d_zc=0):
 
     Notes
     -----
-    \t:math:`G_{\\dfrac{\\partial \\psi}{\\partial x}}(x_{c}, z_{c}; x, z) = `
-    \t:math:`\\dfrac{{\\mu}_{0}}{2{\\pi}}`
+    \t:math:`G_{\\dfrac{\\partial \\psi}{\\partial x}}(x_{c}, z_{c}; x, z) =`
+    \t:math:`\\dfrac{\\mu_0}{2\\pi}`
     \t:math:`\\dfrac{1}{u}`
     \t:math:`[\\dfrac{w^2}{d^2}\\mathbf{E}(k^2)+\\mathbf{K}(k^2)]`\n
     Where:
@@ -259,7 +259,7 @@ def greens_dpsi_dz(xc, zc, x, z, d_xc=0, d_zc=0):
     x: float or np.array(N, M)
         Calculation x locations
     z: float or np.array(N, M)
-        Calculation z
+        Calculation z locations
     d_xc: float
         The coil half-width (overload argument)
     d_zc: float
@@ -272,8 +272,8 @@ def greens_dpsi_dz(xc, zc, x, z, d_xc=0, d_zc=0):
 
     Notes
     -----
-    \t:math:`G_{\\dfrac{\\partial \\psi}{\\partial z}}(x_{c}, z_{c}; x, z) = `
-    \t:math:`\\dfrac{{\\mu}_{0}}{2{\\pi}}`
+    \t:math:`G_{\\dfrac{\\partial \\psi}{\\partial z}}(x_{c}, z_{c}; x, z) =`
+    \t:math:`\\dfrac{\\mu_0}{2\\pi}`
     \t:math:`\\dfrac{h}{u}`
     \t:math:`[\\mathbf{K}(k^2) - \\dfrac{v^2}{d^2}\\mathbf{E}(k^2)]`\n
     Where:
@@ -310,7 +310,7 @@ def greens_Bx(xc, zc, x, z, d_xc=0, d_zc=0):  # noqa :N802
     x: float or np.array(N, M)
         Calculation x locations
     z: float or np.array(N, M)
-        Calculation z
+        Calculation z locations
     d_xc: float
         The coil half-width (overload argument)
     d_zc: float
