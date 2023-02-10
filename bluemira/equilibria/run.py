@@ -200,7 +200,7 @@ class PulsedCoilsetDesign(ABC):
             "COBYLA", opt_conditions={"max_eval": 5000, "ftol_rel": 1e-10}
         ),
         breakdown_settings: Optional[Dict] = None,
-        equilibrium_problem_cls: CoilsetOptimisationProblem = MinimalCurrentCOP,
+        equilibrium_problem_cls: Type[CoilsetOptimisationProblem] = MinimalCurrentCOP,
         equilibrium_optimiser: Optimiser = Optimiser(
             "SLSQP", opt_conditions={"max_eval": 1000, "ftol_rel": 1e-6}
         ),
@@ -373,8 +373,8 @@ class PulsedCoilsetDesign(ABC):
             self._get_max_currents(eq.coilset),
             current_constraints=None,
             eq_constraints=[
-                con
-                for con in deepcopy(self.eq_constraints)
+                deepcopy(con)
+                for con in self.eq_constraints
                 if not isinstance(con, (PsiConstraint, PsiBoundaryConstraint))
             ],
         )
