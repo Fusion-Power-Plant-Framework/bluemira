@@ -531,43 +531,6 @@ class PulsedCoilsetDesign(ABC):
 class FixedPulsedCoilsetDesign(PulsedCoilsetDesign):
     """
     Procedural design for a pulsed tokamak with a known, fixed PF coilset.
-
-    Parameters
-    ----------
-    params
-        Parameter frame with which to perform the problem
-    coilset
-        PF coilset to use in the equilibrium design
-    grid
-        Grid to use in the equilibrium design
-    equilibrium_constraints
-        List of magnetic constraints to use for equilibria. Depending on the optimisation
-        problem, these may be used in the objective function or constraints
-    profiles
-        Plasma profile object to use when solving equilibria
-    breakdown_strategy_cls
-        BreakdownZoneStrategy class to use when determining breakdown constraints
-    breakdown_problem_cls
-        Coilset optimisation problem class for the breakdown phase
-    breakdown_optimiser
-        Optimiser for the breakdown
-    breakdown_settings
-        Breakdown optimiser settings
-    equilibrium_problem_cls
-        Coilset optimisation problem class for the equilibria and current vector
-    equilibrium_optimiser
-        Optimiser for the equilibria and current vector
-    equilibrium_convergence
-        Convergence criteria to use when solving equilibria
-    equilibrium_settings
-        Settings for the solution of equilibria
-    current_opt_constraints
-        List of current optimisation constraints for equilibria
-    coil_constraints
-        List of coil current optimisation constraints for all snapshots (including
-        breakdown)
-    limiter
-        Limiter to use when solving equilibria
     """
 
     def optimise(self) -> CoilSet:
