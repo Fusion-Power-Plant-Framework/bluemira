@@ -1832,7 +1832,7 @@ def _colourise(node: coin.SoNode, options: Dict):
 
 def collect_verts_faces(
     solid: Part.Shape, tesselation: float = 0.1
-) -> (np.ndarray, np.ndarray):
+) -> Tuple[np.ndarray]:
     """
     Collects verticies and faces of parts and tessellates them
     for the CAD viewer
@@ -1868,7 +1868,7 @@ def collect_verts_faces(
         return None, None
 
 
-def collect_wires(solid: Part.Shape, **kwds) -> (np.ndarray, np.ndarray):
+def collect_wires(solid: Part.Shape, **kwds) -> Tuple[np.ndarray]:
     """
     Collects verticies and edges of parts and discretizes them
     for the CAD viewer
