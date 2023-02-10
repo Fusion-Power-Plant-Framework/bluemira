@@ -136,7 +136,9 @@ def _validate_display_inputs(parts, options):
 
 
 def show_cad(
-    parts: Optional[Union[BluemiraGeo, List[BluemiraGeo]]] = None,  # noqa: F821
+    parts: Optional[
+        Union[BluemiraGeo, List[BluemiraGeo]]  # noqa: F821
+    ] = None,  # avoiding circular deps
     options: Optional[Union[DisplayCADOptions, List[DisplayCADOptions]]] = None,
     backend: Union[str, ViewerBackend] = ViewerBackend.FREECAD,
     **kwargs,
