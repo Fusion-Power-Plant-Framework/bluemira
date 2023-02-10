@@ -15,8 +15,9 @@ from typing import (
     Type,
     TypeVar,
     Union,
-    get_args,
 )
+from typing import _GenericAlias as GenericAlias  # TODO python >=3.9 import from types
+from typing import get_args, get_type_hints
 
 import pint
 from tabulate import tabulate
@@ -53,6 +54,16 @@ class ParameterFrame:
 
     """
 
+    def __post_init__(self):
+        """Get types from frame"""
+        self._types = self._get_types()
+
+    @classmethod
+    def _get_types(cls) -> Dict[str, GenericAlias]:
+        """Gets types for the frame even with annotations imported"""
+        frame_type_hints = get_type_hints(cls)
+        return {f.name: frame_type_hints[f.name] for f in fields(cls)}
+
     def __iter__(self) -> Generator[Parameter, None, None]:
         """
         Iterate over this frame's parameters.
@@ -75,9 +86,7 @@ class ParameterFrame:
             param: Parameter = getattr(self, key)
             if "name" in value:
                 del value["name"]
-            value_type = _validate_parameter_field(
-                key, self.__dataclass_fields__[key].type
-            )
+            value_type = _validate_parameter_field(key, self._types[key])
             new_param = Parameter(name=key, **value, _value_types=value_type)
             param.set_value(new_param.value_as(param.unit), new_param.source)
             if new_param.long_name != "":
@@ -113,9 +122,7 @@ class ParameterFrame:
             except KeyError as e:
                 raise ValueError(f"Data for parameter '{member}' not found.") from e
 
-            value_type = _validate_parameter_field(
-                member, cls.__dataclass_fields__[member].type
-            )
+            value_type = _validate_parameter_field(member, cls._get_types()[member])
             try:
                 _validate_units(param_data, value_type)
             except pint.errors.PintError as pe:

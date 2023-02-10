@@ -31,7 +31,7 @@ class VacuumVesselThermalShield(ComponentManager):
     Wrapper around a VVTS component tree.
     """
 
-    def silhouette(self) -> BluemiraWire:
+    def xz_boundary(self) -> BluemiraWire:
         """Return a wire representing the VVTS poloidal silhouette."""
         return (
             self.component()

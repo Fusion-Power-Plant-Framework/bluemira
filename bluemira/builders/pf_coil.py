@@ -180,6 +180,8 @@ class PFCoilPictureFrame(Designer):
     PictureFrame parameterisation.
     """
 
+    param_cls = PFCoilPictureFrameParams
+
     def __init__(self, params: Union[PFCoilPictureFrameParams, Dict], coil: Coil):
         super().__init__(params)
         self.coil = coil

@@ -18,8 +18,22 @@
 #
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
-"""PF Coil designer/builder for EUDEMO"""
+"""Component Manager for PF coils."""
+from bluemira.base.builder import ComponentManager
 
-from eudemo.pf_coils.builder import PFCoilsBuilder
-from eudemo.pf_coils.component_manager import PFCoil
-from eudemo.pf_coils.designer import PFCoilsDesigner
+
+class PFCoil(ComponentManager):
+    """
+    Wrapper around the PF Coil component tree.
+    """
+
+    def __init__(self, component, coilset):
+        super().__init__(component)
+        self._coilset = coilset
+
+    @property
+    def coilset(self):
+        """
+        The poloidal coilset
+        """
+        return self._coilset
