@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import copy
 import json
-import re
 from contextlib import suppress
 from dataclasses import dataclass, fields
 from typing import (
@@ -16,8 +15,9 @@ from typing import (
     Type,
     TypeVar,
     Union,
-    get_args,
 )
+from typing import _GenericAlias as GenericAlias  # TODO python >=3.9 import from types
+from typing import get_args, get_type_hints
 
 import pint
 from tabulate import tabulate
@@ -29,7 +29,6 @@ from bluemira.base.constants import (
     combined_unit_dimensions,
     raw_uc,
 )
-from bluemira.base.error import ParameterError
 from bluemira.base.parameter_frame._parameter import (
     ParamDictT,
     Parameter,
@@ -55,6 +54,16 @@ class ParameterFrame:
 
     """
 
+    def __post_init__(self):
+        """Get types from frame"""
+        self._types = self._get_types()
+
+    @classmethod
+    def _get_types(cls) -> Dict[str, GenericAlias]:
+        """Gets types for the frame even with annotations imported"""
+        frame_type_hints = get_type_hints(cls)
+        return {f.name: frame_type_hints[f.name] for f in fields(cls)}
+
     def __iter__(self) -> Generator[Parameter, None, None]:
         """
         Iterate over this frame's parameters.
@@ -77,9 +86,7 @@ class ParameterFrame:
             param: Parameter = getattr(self, key)
             if "name" in value:
                 del value["name"]
-            value_type = _validate_parameter_field(
-                key, self.__dataclass_fields__[key].type
-            )
+            value_type = _validate_parameter_field(key, self._types[key])
             new_param = Parameter(name=key, **value, _value_types=value_type)
             param.set_value(new_param.value_as(param.unit), new_param.source)
             if new_param.long_name != "":
@@ -115,9 +122,7 @@ class ParameterFrame:
             except KeyError as e:
                 raise ValueError(f"Data for parameter '{member}' not found.") from e
 
-            value_type = _validate_parameter_field(
-                member, cls.__dataclass_fields__[member].type
-            )
+            value_type = _validate_parameter_field(member, cls._get_types()[member])
             try:
                 _validate_units(param_data, value_type)
             except pint.errors.PintError as pe:
@@ -224,22 +229,6 @@ class ParameterFrame:
 
 
 def _validate_parameter_field(field, member_type: Type) -> Tuple[Type, ...]:
-    if isinstance(member_type, str):
-        # https://peps.python.org/pep-0563/#resolving-type-hints-at-runtime
-        # but eval is dangerous, try and protect against wild evaluations
-        # https://nedbatchelder.com/blog/201206/eval_really_is_dangerous.html
-        member_type = member_type.replace("__import__", "").replace("_", "")
-        member_regex = re.search(r"^Parameter[\[].*[\]]$", member_type)
-
-        if not hasattr(member_regex, "string"):
-            raise TypeError(f"Field '{field}' does not have type Parameter.")
-        try:
-            member_type = eval(member_type, {"Parameter": Parameter}, {})  # noqa: S307
-        except NameError:
-            raise ParameterError(
-                f"Field {member_type} can't be evaluated safely, consider"
-                " not importing `from __future__ import annotations`"
-            )
     if (member_type is not Parameter) and (
         not hasattr(member_type, "__origin__") or member_type.__origin__ is not Parameter
     ):
