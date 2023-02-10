@@ -13,6 +13,10 @@ class PFrame(ParameterFrame):
 
 
 def test_future_annotations_are_typed():
+    """
+    The purpose of the test is to check we can still do type validation
+    when we've imported annotations (because of delayed evaluations).
+    """
 
     d = {
         "a": {"value": 3.14, "unit": ""},
