@@ -163,15 +163,18 @@ class PulsedCoilsetDesign(ABC):
     breakdown_problem_cls
         Coilset optimisation problem class for the breakdown phase
     breakdown_optimiser
-        Optimiser for the breakdown
+        Optimiser for the breakdown,
+        default is COBYLA with ftol_rel=1e-10 and max_eval=5000
     breakdown_settings
         Breakdown optimiser settings
     equilibrium_problem_cls
         Coilset optimisation problem class for the equilibria and current vector
     equilibrium_optimiser
         Optimiser for the equilibria and current vector
+        default is SLSQP with ftol_rel=1e-6 and max_eval=1000
     equilibrium_convergence
         Convergence criteria to use when solving equilibria
+        default is 1e-2 DudsonConvergence
     equilibrium_settings
         Settings for the solution of equilibria
     current_opt_constraints
@@ -197,15 +200,11 @@ class PulsedCoilsetDesign(ABC):
         profiles: Profile,
         breakdown_strategy_cls: Type[BreakdownZoneStrategy],
         breakdown_problem_cls: Type[BreakdownCOP],
-        breakdown_optimiser: Optimiser = Optimiser(
-            "COBYLA", opt_conditions={"max_eval": 5000, "ftol_rel": 1e-10}
-        ),
+        breakdown_optimiser: Optional[Optimiser] = None,
         breakdown_settings: Optional[Dict] = None,
         equilibrium_problem_cls: Type[CoilsetOptimisationProblem] = MinimalCurrentCOP,
-        equilibrium_optimiser: Optimiser = Optimiser(
-            "SLSQP", opt_conditions={"max_eval": 1000, "ftol_rel": 1e-6}
-        ),
-        equilibrium_convergence: ConvergenceCriterion = DudsonConvergence(1e-2),
+        equilibrium_optimiser: Optional[Optimiser] = None,
+        equilibrium_convergence: Optional[ConvergenceCriterion] = None,
         equilibrium_settings: Optional[Dict] = None,
         current_opt_constraints: Optional[List[OptimisationConstraint]] = None,
         coil_constraints: Optional[List[OptimisationConstraint]] = None,
@@ -222,13 +221,17 @@ class PulsedCoilsetDesign(ABC):
 
         self._bd_strat_cls = breakdown_strategy_cls
         self._bd_prob_cls = breakdown_problem_cls
-        self._bd_opt = breakdown_optimiser
+        self._bd_opt = breakdown_optimiser or Optimiser(
+            "COBYLA", opt_conditions={"max_eval": 5000, "ftol_rel": 1e-10}
+        )
         self._bd_settings = breakdown_settings
 
         self._eq_settings = equilibrium_settings
-        self._eq_convergence = equilibrium_convergence
+        self._eq_convergence = equilibrium_convergence or DudsonConvergence(1e-2)
         self._eq_prob_cls = equilibrium_problem_cls
-        self._eq_opt = equilibrium_optimiser
+        self._eq_opt = equilibrium_optimiser or Optimiser(
+            "SLSQP", opt_conditions={"max_eval": 1000, "ftol_rel": 1e-6}
+        )
 
         self._coil_cons = [] if coil_constraints is None else coil_constraints
         self.limiter = limiter
@@ -581,15 +584,18 @@ class OptimisedPulsedCoilsetDesign(PulsedCoilsetDesign):
     breakdown_problem_cls
         Coilset optimisation problem class for the breakdown phase
     breakdown_optimiser
-        Optimiser for the breakdown
+        Optimiser for the breakdown,
+        default is COBYLA with ftol_rel=1e-10 and max_eval=5000
     breakdown_settings
         Breakdown optimiser settings
     equilibrium_problem_cls
         Coilset optimisation problem class for the equilibria and current vector
     equilibrium_optimiser
         Optimiser for the equilibria and current vector
+        default is SLSQP with ftol_rel=1e-6 and max_eval=1000
     equilibrium_convergence
         Convergence criteria to use when solving equilibria
+        default is 1e-2 DudsonConvergence
     equilibrium_settings
         Settings for the solution of equilibria
     current_opt_constraints: Optional[List[OptimisationConstraint]]
@@ -603,6 +609,8 @@ class OptimisedPulsedCoilsetDesign(PulsedCoilsetDesign):
         Coilset optimisation problem class for the coil positions
     position_optimiser
         Optimiser for the coil positions
+        default is COBYLA with ftol_rel=1e-4 and max_eval=100
+
     """
 
     def __init__(
@@ -615,23 +623,17 @@ class OptimisedPulsedCoilsetDesign(PulsedCoilsetDesign):
         profiles: Profile,
         breakdown_strategy_cls: Type[BreakdownZoneStrategy],
         breakdown_problem_cls: Type[BreakdownCOP],
-        breakdown_optimiser: Optimiser = Optimiser(
-            "COBYLA", opt_conditions={"max_eval": 5000, "ftol_rel": 1e-10}
-        ),
+        breakdown_optimiser: Optional[Optimiser] = None,
         breakdown_settings: Optional[Dict] = None,
         equilibrium_problem_cls: Type[CoilsetOptimisationProblem] = MinimalCurrentCOP,
-        equilibrium_optimiser: Optimiser = Optimiser(
-            "SLSQP", opt_conditions={"max_eval": 1000, "ftol_rel": 1e-6}
-        ),
-        equilibrium_convergence: ConvergenceCriterion = DudsonConvergence(1e-2),
+        equilibrium_optimiser: Optional[Optimiser] = None,
+        equilibrium_convergence: ConvergenceCriterion = None,
         equilibrium_settings: Optional[Dict] = None,
         current_opt_constraints: Optional[List[OptimisationConstraint]] = None,
         coil_constraints: Optional[List[OptimisationConstraint]] = None,
         limiter: Optional[Limiter] = None,
         position_problem_cls: Type[PulsedNestedPositionCOP] = PulsedNestedPositionCOP,
-        position_optimiser: Optimiser = Optimiser(
-            "COBYLA", opt_conditions={"max_eval": 100, "ftol_rel": 1e-4}
-        ),
+        position_optimiser: Optional[Optimiser] = None,
     ):
         super().__init__(
             params,
@@ -655,7 +657,9 @@ class OptimisedPulsedCoilsetDesign(PulsedCoilsetDesign):
         self.position_mapper = position_mapper
 
         self._pos_prob_cls = position_problem_cls
-        self._pos_opt = position_optimiser
+        self._pos_opt = position_optimiser or Optimiser(
+            "COBYLA", opt_conditions={"max_eval": 100, "ftol_rel": 1e-4}
+        )
 
     def _prepare_coilset(self, coilset: CoilSet) -> CoilSet:
         coilset = deepcopy(coilset)
