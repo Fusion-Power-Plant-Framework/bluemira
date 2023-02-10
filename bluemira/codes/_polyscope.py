@@ -9,6 +9,7 @@ import numpy as np
 import polyscope as ps
 
 import bluemira.codes._freecadapi as cadapi
+from bluemira.base.look_and_feel import bluemira_warn
 
 
 @dataclass
@@ -134,6 +135,10 @@ def _init_polyscope():
     """
     Initialise polyscope (just once)
     """
+    bluemira_warn(
+        "Polyscope is a point based viewer."
+        " Some features may appear different to their actual structure"
+    )
     ps.set_program_name("Bluemira Display")
     ps.init()
 
