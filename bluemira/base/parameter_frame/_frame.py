@@ -74,6 +74,19 @@ class ParameterFrame:
         for field in fields(self):
             yield getattr(self, field.name)
 
+    def update(
+        self,
+        new_values: Union[Dict[str, ParameterValueType], ParamDictT, ParameterFrame],
+    ):
+        """Update the given frame"""
+        if isinstance(new_values, ParameterFrame):
+            self.update_from_frame(new_values)
+        else:
+            try:
+                self.update_from_dict(new_values)
+            except TypeError:
+                self.update_values(new_values)
+
     def update_values(self, new_values: Dict[str, ParameterValueType], source: str = ""):
         """Update the given parameter values."""
         for key, value in new_values.items():
@@ -88,7 +101,10 @@ class ParameterFrame:
                 del value["name"]
             value_type = _validate_parameter_field(key, self._types[key])
             new_param = Parameter(name=key, **value, _value_types=value_type)
-            param.set_value(new_param.value_as(param.unit), new_param.source)
+            param.set_value(
+                new_param.value if param.unit == "" else new_param.value_as(param.unit),
+                new_param.source,
+            )
             if new_param.long_name != "":
                 param._long_name = new_param.long_name
             if new_param.description != "":

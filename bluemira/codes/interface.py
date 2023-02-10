@@ -24,8 +24,6 @@ import abc
 import enum
 from typing import Any, Callable, Dict, List, Optional, Type, Union
 
-import numpy as np
-
 from bluemira.base.constants import raw_uc
 from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.codes.error import CodesError
@@ -161,12 +159,12 @@ class CodesSetup(CodesTask):
     def _convert_units(self, param, target_unit: Union[str, None]):
         value = (
             param.value
-            if target_unit is None
+            if target_unit is None or param.value is None
             else raw_uc(param.value, param.unit, target_unit)
         )
-        if np.isnan(value):
+        if value is None:
             bluemira_warn(
-                f"{param.name} is set to NaN or unset, consider setting mapping.send=False"
+                f"{param.name} is set to None or unset, consider setting mapping.send=False"
             )
         return value
 
@@ -242,6 +240,8 @@ class CodesTeardown(CodesTask):
             if mapping.unit is None:
                 bluemira_warn(f"{mapping.name} from code {self._name} has no known unit")
                 value = output_value
+            elif output_value is None:
+                value = output_value
             else:
                 value = raw_uc(
                     output_value, mapping.unit, getattr(self.params, bm_name).unit
@@ -256,9 +256,8 @@ class CodesTeardown(CodesTask):
         if output_value is None:
             bluemira_warn(
                 f"No value for output parameter '{parameter_name}' from code "
-                f"'{self._name}', setting value to NaN."
+                f"'{self._name}', setting value to None."
             )
-            output_value = np.nan
         return output_value
 
 
