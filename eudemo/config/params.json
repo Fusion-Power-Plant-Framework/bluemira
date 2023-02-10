@@ -179,6 +179,30 @@
         "source": "Calculated",
         "long_name": "Plasma volume"
     },
+    "well_depth": {
+        "value": 5,
+        "unit": "m",
+        "source": "Input",
+        "long_name": "cryostat well depth"
+    },
+    "x_g_support": {
+        "value": 13,
+        "unit": "m",
+        "source": "Input",
+        "long_name": "Gravity support radius. Used for TF and VV supports (assuming a supporting ring)"
+    },
+    "x_gs_kink_diff": {
+        "value": 2,
+        "unit": "m",
+        "source": "Input",
+        "long_name": "Lower port kink radius offset from the gravity support radius."
+    },
+    "z_gs": {
+        "value": -15,
+        "unit": "m",
+        "source": "Input",
+        "long_name": "Gravity support vertical position at the ground"
+    },
     "Z_eff": {
         "value": 2.2,
         "unit": "unified_atomic_mass_unit",
@@ -191,6 +215,13 @@
         "source": "Input (HCPB classic)",
         "long_name": "Energy multiplication factor",
         "description": "Instantaneous energy multiplication due to neutron multiplication and the like"
+    },
+    "e_decay_mult": {
+        "value": 1.0175,
+        "unit": "dimensionless",
+        "source": "Input (HCPB classic)",
+        "long_name": "Decay heat multiplication factor",
+        "description": "Quasi-instantaneous energy multiplication; still present when plasma is off (PPCS FWBL Helium Cooled Model P PPCS04 D5part1)"
     },
     "beta": {
         "value": 0.04,
@@ -259,11 +290,29 @@
         "source": "Input",
         "long_name": "Control HCD power"
     },
+    "g_cr_rs": {
+        "value": 0.3,
+        "unit": "meter",
+        "source": "Input",
+        "long_name": "Gap between Cyrostat and radition shield"
+    },
+    "g_cr_ts": {
+        "value": 0.3,
+        "unit": "meter",
+        "source": "Input",
+        "long_name": "Gap between Cyrostat and Cryostat thermal shield"
+    },
     "g_cs_tf": {
         "value": 0.05,
         "unit": "meter",
         "source": "Input",
         "long_name": "Gap between CS and TF"
+    },
+    "g_ts_pf": {
+        "value": 0.3,
+        "unit": "meter",
+        "source": "Input",
+        "long_name": "Gap between TS and PF"
     },
     "g_ts_tf": {
         "value": 0.05,
@@ -435,6 +484,12 @@
         "long_name": "TF coil winding pack radial width",
         "description": "Including insulation"
     },
+    "bb_min_angle": {
+        "value": 70,
+        "unit": "degrees",
+        "source": "Input",
+        "long_name": "Minimum breeding blanket angle"
+    },
     "tk_bb_ib": {
         "value": 0.8,
         "unit": "meter",
@@ -452,6 +507,12 @@
         "unit": "meter",
         "source": "Input",
         "long_name": "Cryostat VV thickness"
+    },
+    "tk_rs": {
+        "value": 0.02,
+        "unit": "meter",
+        "source": "Input",
+        "long_name": "thickness of the radiation shield"
     },
     "tk_cs": {
         "value": 0.8,
@@ -595,6 +656,12 @@
         "unit": "meter",
         "source": "Input",
         "long_name": "Upper vacuum vessel thickness"
+    },
+    "vvpfrac": {
+        "value": 0.04,
+        "unit": "volt",
+        "source": "Input",
+        "long_name": "Fraction of neutrons deposited in VV"
     },
     "v_burn": {
         "value": 0.05,
@@ -787,5 +854,80 @@
         "value": 450,
         "unit": "MN",
         "long_name": "Maximum vertical force on a single PF coil"
+    },
+    "blanket_type": {
+        "value": "HCPB",
+        "unit": "",
+        "long_name": "Blanket Type"
+    },
+    "bb_p_inlet": {
+        "value": 8e6,
+        "unit": "Pa",
+        "long_name": "Breeding blanket inlet pressure"
+    },
+    "bb_p_outlet": {
+        "value": 7.5e6,
+        "unit": "Pa",
+        "long_name": "Breeding blanket outlet pressure"
+    },
+    "bb_pump_eta_el": {
+        "value": 0.87,
+        "unit": "",
+        "long_name": "Breeding blanket pumping electrical efficiency"
+    },
+    "bb_pump_eta_isen": {
+        "value": 0.9,
+        "unit": "MN",
+        "long_name": "Breeding blanket pumping isentropic efficiency"
+    },
+    "bb_t_inlet": {
+        "value": 573.15,
+        "unit": "K",
+        "long_name": "Breeding blanket inlet temperature"
+    },
+    "bb_t_outlet": {
+        "value": 773.15,
+        "unit": "K",
+        "long_name": "Breeding blanket outlet temperature"
+    },
+    "div_pump_eta_el": {
+        "value": 0.87,
+        "unit": "",
+        "long_name": "Divertor pumping electrical efficiency"
+    },
+    "div_pump_eta_isen": {
+        "value": 0.99,
+        "unit": "",
+        "long_name": "Divertor pumping isentropic efficiency"
+    },
+    "f_core_rad_fw": {
+        "value": 0.9,
+        "unit": "",
+        "long_name": "Fraction of core radiation power that is distributed to the blanket FW"
+    },
+    "f_fw_aux": {
+        "value": 0.09,
+        "unit": "",
+        "long_name":"Fraction of first wall power that goes into auxiliary systems"
+    },
+    "f_sol_ch_fw": {
+        "value": 0.8,
+        "unit": "",
+        "long_name": "Fraction of SOL charged particle power that is distributed to the blanket FW"
+    },
+    "f_sol_rad": {
+        "value": 0.75,
+        "unit": "",
+        "long_name": "Fraction of SOL power radiated"
+    },
+    "f_sol_rad_fw": {
+        "value": 0.8,
+        "unit": "",
+        "long_name": "Fraction of radiated SOL power that is distributed to the blanket FW"
+    },
+    "P_hcd_ss_el": {
+        "value": 150,
+        "unit": "MW",
+        "long_name": "Steady-state heating and current drive electrical power"
     }
 }

@@ -18,31 +18,6 @@
 #
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
-"""Component Manager for PF coils."""
-from bluemira.base.builder import ComponentManager
-
-
-class PFCoil(ComponentManager):
-    """
-    Wrapper around the PF Coil component tree.
-    """
-
-    def __init__(self, component, coilset):
-        super().__init__(component)
-        self._coilset = coilset
-
-    @property
-    def coilset(self):
-        """
-        The poloidal coilset
-        """
-        return self._coilset
-
-    def xz_boundary(self):
-        """
-        Boundaries of the coils in xz
-        """
-        return [
-            pf.get_component("Casing").shape.boundary[0]
-            for pf in self.component().get_component("xz", first=False)
-        ]
+"""
+Module containing builders for the EUDEMO ports
+"""

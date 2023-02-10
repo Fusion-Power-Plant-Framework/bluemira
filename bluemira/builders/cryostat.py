@@ -132,9 +132,17 @@ class CryostatBuilder(Builder):
             x coordinate extremity
         z_top: float
             z coordinate extremity
+
+        Notes
+        -----
+        Only designed for an inward kink, outward kinks will fail
         """
         x_in = 0
         x_gs_kink = self.params.x_g_support.value - self.params.x_gs_kink_diff.value
+        if x_gs_kink > x_out:
+            raise ValueError(
+                "Outward kinks not supported x_g_support-x_gs_kink_diff > x_out"
+            )
         z_mid = self.params.z_gs.value - self.params.g_cr_ts.value
         z_bot = z_mid - self.params.well_depth.value
         tk = self.params.tk_cr_vv.value
@@ -146,8 +154,8 @@ class CryostatBuilder(Builder):
         x_outer[1:-1] += tk
 
         z_outer = np.array([z_bot, z_bot, z_mid, z_mid, z_top, z_top])
-        z_outer[:2] -= tk
-        z_outer[2:] += tk
+        z_outer[:4] -= tk
+        z_outer[4:] += tk
 
         x = np.concatenate([x_inner, x_outer])
         z = np.concatenate([z_inner, z_outer])

@@ -42,7 +42,13 @@ from bluemira.display.palettes import BLUE_PALETTE
 from bluemira.geometry.error import GeometryError
 from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.plane import BluemiraPlane
-from bluemira.geometry.tools import boolean_cut, boolean_fuse, make_polygon, offset_wire
+from bluemira.geometry.tools import (
+    _offset_wire_discretised,
+    boolean_cut,
+    boolean_fuse,
+    make_polygon,
+    offset_wire,
+)
 from bluemira.geometry.wire import BluemiraWire
 
 
@@ -97,16 +103,19 @@ class VVTSBuilder(Builder):
             keep out zone for the thermal shield
         """
         # This split hack works round #1319
+        # _offset_wire_discretised used because
+        # the cad offset regulary doesnt work properly here.
+        # due to topology but unknown why here particularly
         ex_args = dict(
             join="intersect",
             open_wire=False,
             ndiscr=600,
         )
-        vvts_inner_wire = offset_wire(koz, self.params.g_vv_ts.value, **ex_args)
-        vvts_outer_wire = offset_wire(
-            vvts_inner_wire,
-            self.params.tk_ts.value + self.params.g_vv_ts.value,
-            **ex_args
+        vvts_inner_wire = _offset_wire_discretised(
+            koz, self.params.g_vv_ts.value, **ex_args
+        )
+        vvts_outer_wire = _offset_wire_discretised(
+            koz, self.params.tk_ts.value + self.params.g_vv_ts.value, **ex_args
         )
         vvts_face = BluemiraFace([vvts_outer_wire, vvts_inner_wire])
         self.vvts_face = vvts_face

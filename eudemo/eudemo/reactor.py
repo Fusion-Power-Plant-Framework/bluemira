@@ -40,28 +40,41 @@ import os
 from pathlib import Path
 from typing import Dict
 
+import matplotlib.pyplot as plt
+
 from bluemira.base.components import Component
 from bluemira.base.designer import run_designer
+from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.base.parameter_frame import make_parameter_frame
 from bluemira.base.reactor import Reactor
+from bluemira.builders.cryostat import CryostatBuilder, CryostatDesigner
 from bluemira.builders.divertor import DivertorBuilder
 from bluemira.builders.pf_coil import PFCoilBuilder, PFCoilPictureFrame
 from bluemira.builders.plasma import Plasma, PlasmaBuilder
-from bluemira.builders.thermal_shield import VVTSBuilder
+from bluemira.builders.radiation_shield import RadiationShieldBuilder
+from bluemira.builders.thermal_shield import CryostatTSBuilder, VVTSBuilder
 from bluemira.equilibria.equilibrium import Equilibrium
+from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.tools import make_polygon
 from eudemo.blanket import Blanket, BlanketBuilder
+from eudemo.comp_managers import (
+    Cryostat,
+    CryostatThermalShield,
+    RadiationShield,
+    VacuumVesselThermalShield,
+)
 from eudemo.equilibria import (
     FixedEquilibriumDesigner,
     FreeBoundaryEquilibriumFromFixedDesigner,
 )
 from eudemo.ivc import design_ivc
 from eudemo.ivc.divertor_silhouette import Divertor
+from eudemo.maintenance.upper_port import UpperPortDesigner
 from eudemo.params import EUDEMOReactorParams
 from eudemo.pf_coils import PFCoil, PFCoilsDesigner
+from eudemo.power_cycle import SteadyStatePowerCycleSolver
 from eudemo.radial_build import radial_build
 from eudemo.tf_coils import TFCoil, TFCoilBuilder, TFCoilDesigner
-from eudemo.thermal_shield import VacuumVesselThermalShield
 from eudemo.vacuum_vessel import VacuumVessel, VacuumVesselBuilder
 
 CONFIG_DIR = Path(__file__).parent.parent / "config"
@@ -78,6 +91,9 @@ class EUDEMO(Reactor):
     tf_coils: TFCoil
     vv_thermal: VacuumVesselThermalShield
     pf_coils: PFCoil
+    cryostat: Cryostat
+    cryostat_thermal: CryostatThermalShield
+    radiation_shield: RadiationShield
 
 
 def build_plasma(build_config: Dict, eq: Equilibrium) -> Plasma:
@@ -108,10 +124,22 @@ def build_divertor(params, build_config, div_silhouette) -> Divertor:
     return Divertor(builder.build())
 
 
-def build_blanket(params, build_config, blanket_face) -> Blanket:
+def build_blanket(
+    params, build_config, blanket_face, r_inner_cut: float, cut_angle: float
+) -> Blanket:
     """Build the blanket given a silhouette of a sector."""
-    builder = BlanketBuilder(params, build_config, blanket_face)
+    builder = BlanketBuilder(params, build_config, blanket_face, r_inner_cut, cut_angle)
     return Blanket(builder.build())
+
+
+def build_vvts(params, build_config, vv_boundary) -> VacuumVesselThermalShield:
+    """Build the vacuum vessel thermal shield"""
+    vv_thermal_shield = VVTSBuilder(
+        params,
+        build_config.get("Vacuum vessel", {}),
+        keep_out_zone=vv_boundary,
+    )
+    return VacuumVesselThermalShield(vv_thermal_shield.build())
 
 
 def build_tf_coils(
@@ -131,7 +159,9 @@ def build_tf_coils(
     return TFCoil(builder.build(), builder._make_field_solver())
 
 
-def build_pf_coils(params, build_config, tf_coil_boundary, pf_coil_keep_out_zones=()):
+def build_pf_coils(
+    params, build_config, tf_coil_boundary, pf_coil_keep_out_zones=()
+) -> PFCoil:
     """
     Design and build the PF coils for the reactor.
     """
@@ -149,6 +179,8 @@ def build_pf_coils(params, build_config, tf_coil_boundary, pf_coil_keep_out_zone
             wires.append(
                 (PFCoilPictureFrame(params, coilset[name]), coilset[name].ctype)
             )
+        else:
+            bluemira_warn(f"Coil {name} has no size")
 
     builders = []
     for (designer, coil_type) in wires:
@@ -173,6 +205,37 @@ def build_pf_coils(params, build_config, tf_coil_boundary, pf_coil_keep_out_zone
     return PFCoil(
         Component("PF Coils", children=[builder.build() for builder in builders]),
         coilset,
+    )
+
+
+def build_cryots(params, build_config, pf_kozs, tf_koz) -> CryostatThermalShield:
+    """
+    Build the Cryostat thermal shield for the reactor.
+    """
+    return CryostatThermalShield(
+        CryostatTSBuilder(
+            params,
+            build_config.get("Cryostat", {}),
+            reactor.pf_coils.xz_boundary(),
+            reactor.tf_coils.boundary(),
+        ).build()
+    )
+
+
+def build_cryostat(params, build_config, cryostat_thermal_koz) -> Cryostat:
+    """
+    Design and build the Cryostat for the reactor.
+    """
+    cryod = CryostatDesigner(params, cryostat_thermal_koz)
+    return Cryostat(CryostatBuilder(params, build_config, *cryod.execute()).build())
+
+
+def build_radiation_shield(params, build_config, cryostat_koz) -> RadiationShield:
+    """
+    Design and build the Radition shield for the reactor.
+    """
+    return RadiationShield(
+        RadiationShieldBuilder(params, build_config, BluemiraFace(cryostat_koz)).build()
     )
 
 
@@ -209,6 +272,11 @@ if __name__ == "__main__":
         params, build_config["IVC"], equilibrium=free_boundary_eq
     )
 
+    upper_port_designer = UpperPortDesigner(
+        params, build_config.get("Upper Port", {}), blanket_face
+    )
+    upper_port_xz, r_inner_cut, cut_angle = upper_port_designer.execute()
+
     reactor.vacuum_vessel = build_vacuum_vessel(
         params, build_config.get("Vacuum vessel", {}), ivc_boundary
     )
@@ -217,7 +285,7 @@ if __name__ == "__main__":
         params, build_config.get("Divertor", {}), divertor_face
     )
     reactor.blanket = build_blanket(
-        params, build_config.get("Blanket", {}), blanket_face
+        params, build_config.get("Blanket", {}), blanket_face, r_inner_cut, cut_angle
     )
 
     thermal_shield_config = build_config.get("Thermal shield", {})
@@ -240,5 +308,26 @@ if __name__ == "__main__":
         reactor.tf_coils.boundary(),
         pf_coil_keep_out_zones=[],
     )
+
+    reactor.cryostat_thermal = build_cryots(
+        params,
+        build_config.get("Thermal shield", {}),
+        reactor.pf_coils.xz_boundary(),
+        reactor.tf_coils.boundary(),
+    )
+
+    reactor.cryostat = build_cryostat(
+        params, build_config.get("Cryostat", {}), reactor.cryostat_thermal.xz_boundary()
+    )
+
+    reactor.radiation_shield = build_radiation_shield(
+        params, build_config.get("RadiationShield", {}), reactor.cryostat.xz_boundary()
+    )
+
+    # TODO fix units
+    sspc_solver = SteadyStatePowerCycleSolver(params)
+    sspc_result = sspc_solver.execute()
+    sspc_solver.model.plot()
+    plt.show()
 
     reactor.show_cad()

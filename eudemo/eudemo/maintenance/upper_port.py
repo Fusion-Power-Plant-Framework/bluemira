@@ -24,37 +24,23 @@ Some crude EU-DEMO remote maintenance considerations
 """
 
 from dataclasses import dataclass
+from typing import Dict, Union
 
 import numpy as np
 
 from bluemira.base.constants import EPS
-from bluemira.base.error import BuilderError
-from bluemira.base.look_and_feel import bluemira_warn
+from bluemira.base.designer import Designer
 from bluemira.base.parameter_frame import Parameter, ParameterFrame, make_parameter_frame
-from bluemira.geometry.constants import VERY_BIG
 from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.plane import BluemiraPlane
-from bluemira.geometry.tools import boolean_cut, make_polygon, slice_shape
+from bluemira.geometry.tools import make_polygon, slice_shape
 from bluemira.utilities.opt_problems import (
     OptimisationConstraint,
     OptimisationObjective,
     OptimisationProblem,
 )
 from bluemira.utilities.optimiser import Optimiser, approx_derivative
-
-
-def _get_inner_cut_point(breeding_blanket_xz, r_inner_cut):
-    """
-    Get the inner cut point of the breeding blanket geometry.
-    """
-    cut_plane = BluemiraPlane.from_3_points(
-        [r_inner_cut, 0, 0], [r_inner_cut, 0, 1], [r_inner_cut, 1, 1]
-    )
-    # Get the first intersection with the vertical inner cut plane
-    intersections = slice_shape(breeding_blanket_xz.boundary[0], cut_plane)
-    intersections = intersections[intersections[:, -1] > 0.0]
-    intersection = sorted(intersections, key=lambda x: x[-1])[0]
-    return intersection
+from eudemo.tools import get_inner_cut_point
 
 
 @dataclass
@@ -193,7 +179,7 @@ class UpperPortOP(OptimisationProblem):
         Get the outer cut point radius of the cutting plane with the breeding blanket
         geometry.
         """
-        intersection = _get_inner_cut_point(bb, ci)
+        intersection = get_inner_cut_point(bb, ci)
         x, y, z = intersection
         x2 = x - np.sin(np.deg2rad(gamma))
         y2 = y
@@ -217,52 +203,41 @@ class UpperPortOP(OptimisationProblem):
         return self.opt.optimise(x0)
 
 
-def segment_blanket_xz(breeding_blanket_xz, r_inner_cut, cut_angle, cut_thickness):
-    """
-    Segment the breeding blanket poloidal cross-section into inboard and outboard
-    segment silhouettes.
+class UpperPortDesigner(Designer):
+    """Upper Port Designer"""
 
-    Parameters
-    ----------
-    breeding_blanket_xz: BluemiraFace
-        Breeding blanket poloidal cross-section (unsegmented)
-    r_inner_cut: float
-        Cut radius on the plasma-facing surface
-    cut_angle: float
-        Cut plane angle (off from vertical) [degrees]
-    cut_thickness: float
-        Thickness of the cut zone
+    param_cls = UpperPortOPParameters
 
-    Returns
-    -------
-    ib_silhouette: BluemiraFace
-        Inboard blanket segment silhouette
-    ob_silhouette: BluemiraFace
-        Outboard blanket segment silhouette
-    """
-    # Make cutting geometry
-    p0 = _get_inner_cut_point(breeding_blanket_xz, r_inner_cut)
-    p1 = [p0[0], 0, p0[2] + VERY_BIG]
-    p2 = [p0[0] - cut_thickness, 0, p1[2]]
-    p3 = [p2[0], 0, p0[2] - np.sqrt(2) * cut_thickness]
-    cut_zone = BluemiraFace(make_polygon([p0, p1, p2, p3], closed=True))
-    if cut_angle != 0.0:
-        cut_zone.rotate(base=p0, direction=(0, -1, 0), degree=cut_angle)
+    def __init__(
+        self,
+        params: Union[Dict, ParameterFrame],
+        build_config: Dict,
+        blanket_face: BluemiraFace,
+        upper_port_extrema=10,
+    ):
+        super().__init__(params, build_config)
+        self.blanket_face = blanket_face
+        self.opt_conditions = {
+            **{"max_eval": 1000, "ftol_rel": 1e-8},
+            **self.build_config.get("opt_conditions", {}),
+        }
+        self.upper_port_extrema = upper_port_extrema
 
-    # Do cut
-    cut_result = boolean_cut(breeding_blanket_xz, cut_zone)
-    if len(cut_result) < 2:
-        raise BuilderError(
-            f"BB poloidal segmentation only returning {len(cut_result)} faces."
+    def run(self):
+        """Run Method of Designer"""
+        design_problem = UpperPortOP(
+            self.params,
+            Optimiser("SLSQP", opt_conditions=self.opt_conditions),
+            self.blanket_face,
         )
-    if len(cut_result) > 2:
-        bluemira_warn(
-            f"The BB poloidal segmentation operation returned more than 2 faces ({len(cut_result)}); only taking the first two..."
+
+        r_up_inner, r_up_outer, r_cut, cut_angle = design_problem.optimise()
+
+        return (
+            build_upper_port_zone(r_up_inner, r_up_outer, z_max=self.upper_port_extrema),
+            r_cut,
+            cut_angle,
         )
-    ib_silhouette, ob_silhouette = sorted(cut_result, key=lambda x: x.center_of_mass[0])[
-        :2
-    ]
-    return ib_silhouette, ob_silhouette
 
 
 def build_upper_port_zone(r_up_inner, r_up_outer, z_max=10, z_min=0):
@@ -288,27 +263,3 @@ def build_upper_port_zone(r_up_inner, r_up_outer, z_max=10, z_min=0):
     x = [r_up_inner, r_up_outer, r_up_outer, r_up_inner]
     z = [z_min, z_min, z_max, z_max]
     return BluemiraFace(make_polygon({"x": x, "y": 0, "z": z}, closed=True))
-
-
-if __name__ == "__main__":
-    # TODO: Remove this once threaded into the reactor build via some kind of builder
-    # See issues #906, #907
-    from bluemira.base.config import Configuration
-    from bluemira.display import show_cad
-
-    params = Configuration()
-    bb = make_polygon(
-        {"x": [5, 6, 6, 11, 11, 12, 12, 5], "y": 0, "z": [-5, -5, 5, 5, -5, -5, 6, 6]},
-        closed=True,
-    )
-    bb = BluemiraFace(bb)
-    optimiser = Optimiser("SLSQP", opt_conditions={"max_eval": 1000, "ftol_rel": 1e-8})
-
-    design_problem = UpperPortOP(params, optimiser, bb)
-
-    r_up_inner, r_up_outer, r_cut, cut_angle = design_problem.optimise()
-    print(r_up_inner, r_up_outer, r_cut, cut_angle)
-
-    ib, ob = segment_blanket_xz(bb, r_cut, cut_angle, params.c_rm.value)
-    up_port = build_upper_port_zone(r_up_inner, r_up_outer, z_max=10)
-    show_cad([ib, ob, up_port])

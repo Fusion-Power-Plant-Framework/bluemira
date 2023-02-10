@@ -18,24 +18,24 @@
 #
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
+
 """
-EUDEMO thermal shield classes
+A collection of tools used in the EU-DEMO design.
 """
-from bluemira.base.builder import ComponentManager
-from bluemira.builders.thermal_shield import VVTSBuilder
-from bluemira.geometry.wire import BluemiraWire
+
+from bluemira.geometry.plane import BluemiraPlane
+from bluemira.geometry.tools import slice_shape
 
 
-class VacuumVesselThermalShield(ComponentManager):
+def get_inner_cut_point(breeding_blanket_xz, r_inner_cut):
     """
-    Wrapper around a VVTS component tree.
+    Get the inner cut point of the breeding blanket geometry.
     """
-
-    def xz_boundary(self) -> BluemiraWire:
-        """Return a wire representing the VVTS poloidal silhouette."""
-        return (
-            self.component()
-            .get_component("xz")
-            .get_component(VVTSBuilder.VVTS)
-            .shape.boundary[0]
-        )
+    cut_plane = BluemiraPlane.from_3_points(
+        [r_inner_cut, 0, 0], [r_inner_cut, 0, 1], [r_inner_cut, 1, 1]
+    )
+    # Get the first intersection with the vertical inner cut plane
+    intersections = slice_shape(breeding_blanket_xz.boundary[0], cut_plane)
+    intersections = intersections[intersections[:, -1] > 0.0]
+    intersection = sorted(intersections, key=lambda x: x[-1])[0]
+    return intersection

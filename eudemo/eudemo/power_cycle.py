@@ -28,6 +28,7 @@ import numpy as np
 
 from bluemira.balance_of_plant.steady_state import (
     BalanceOfPlantModel,
+    BoPModelParams,
     H2OPumping,
     HePumping,
     NeutronPowerStrategy,
@@ -36,7 +37,9 @@ from bluemira.balance_of_plant.steady_state import (
     RadChargedPowerStrategy,
     SuperheatedRankine,
 )
-from bluemira.base.solver import RunMode, SolverABC, Task
+from bluemira.codes.interface import CodesSolver
+from bluemira.codes.interface import CodesTask as Task
+from bluemira.codes.interface import RunMode
 
 __all__ = ["SteadyStatePowerCycleSolver"]
 
@@ -145,7 +148,13 @@ class SteadyStatePowerCycleRun(Task):
         """
         Run the run task. (o.O)
         """
-        bop = BalanceOfPlantModel(self.params, *setup_result)
+        params = BoPModelParams(
+            **{
+                name: getattr(self.params, name).value
+                for name in ("P_fus_DT", "P_fus_DD", "P_rad", "P_hcd_ss", "P_hcd_ss_el")
+            }
+        )
+        bop = BalanceOfPlantModel(params, *setup_result)
         bop.build()
         return bop
 
@@ -172,11 +181,12 @@ class SteadyStatePowerCycleTeardown(Task):
         }
 
 
-class SteadyStatePowerCycleSolver(SolverABC):
+class SteadyStatePowerCycleSolver(CodesSolver):
     """
     Solver for the steady-state power cycle of an EU-DEMO reactor.
     """
 
+    name = "SteadyStatePowerCycle"
     setup_cls = SteadyStatePowerCycleSetup
     run_cls = SteadyStatePowerCycleRun
     teardown_cls = SteadyStatePowerCycleTeardown

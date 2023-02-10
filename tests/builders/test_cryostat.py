@@ -24,6 +24,8 @@ Tests for cryostat builder.
 """
 from unittest import mock
 
+import pytest
+
 from bluemira.builders.cryostat import CryostatBuilder, CryostatDesigner
 
 
@@ -36,7 +38,7 @@ class TestCryostatBuilder:
             "tk_cr_vv": {"value": 0.3, "unit": "m"},
             "well_depth": {"value": 5, "unit": "m"},
             "x_g_support": {"value": 13, "unit": "m"},
-            "x_gs_kink_diff": {"value": 2, "unit": "m"},
+            "x_gs_kink_diff": {"value": 4, "unit": "m"},
             "z_gs": {"value": -15, "unit": "m"},
         }
 
@@ -50,6 +52,11 @@ class TestCryostatBuilder:
         xyz = cryostat.get_component("xyz")
         assert xyz
         assert len(xyz.leaves) == self.params["n_TF"]["value"]
+
+    def test_outward_kink_raises_ValueError(self):
+        builder = CryostatBuilder(self.params, {}, 8, 10)
+        with pytest.raises(ValueError):
+            builder.build()
 
 
 class TestCryostatDesigner:

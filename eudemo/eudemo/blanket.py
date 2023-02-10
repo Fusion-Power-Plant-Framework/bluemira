@@ -22,12 +22,14 @@
 EUDEMO builder for blanket
 """
 from dataclasses import dataclass
-from typing import Dict, List, Type, Union
+from typing import Dict, List, Tuple, Type, Union
 
 import numpy as np
 
 from bluemira.base.builder import Builder, Component, ComponentManager
 from bluemira.base.components import PhysicalComponent
+from bluemira.base.error import BuilderError
+from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.base.parameter_frame import Parameter, ParameterFrame
 from bluemira.builders.tools import (
     circular_pattern_component,
@@ -35,9 +37,11 @@ from bluemira.builders.tools import (
     pattern_revolved_silhouette,
 )
 from bluemira.display.palettes import BLUE_PALETTE
+from bluemira.geometry.constants import VERY_BIG
 from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.placement import BluemiraPlacement
 from bluemira.geometry.tools import boolean_cut, make_polygon, slice_shape
+from eudemo.tools import get_inner_cut_point
 
 
 class Blanket(ComponentManager):
@@ -61,6 +65,20 @@ class BlanketBuilderParams(ParameterFrame):
 class BlanketBuilder(Builder):
     """
     Blanket builder
+
+    Parameters
+    ----------
+    params
+        the parameter frame
+    build_config
+        the build config
+    blanket_silhouette
+        breeding blanket silhouette
+    r_inner_cut
+        Cut radius on the plasma-facing surface
+    cut_angle
+        Cut plane angle (off from vertical) [degrees]
+
     """
 
     BB = "BB"
@@ -73,9 +91,13 @@ class BlanketBuilder(Builder):
         params: Union[BlanketBuilderParams, Dict],
         build_config: Dict,
         blanket_silhouette: BluemiraFace,
+        r_inner_cut: float,
+        cut_angle: float,
     ):
         super().__init__(params, build_config)
         self.silhouette = blanket_silhouette
+        self.r_inner_cut = r_inner_cut
+        self.cut_angle = cut_angle
 
     def build(self) -> Component:
         """
@@ -160,23 +182,32 @@ class BlanketBuilder(Builder):
                 segments.append(segment)
         return segments
 
-    def segment_blanket(self, offset: float = 0.1):
+    def segment_blanket(self) -> Tuple[BluemiraFace]:
         """
-        Cut the blanket silhouette into segment silhouettes. Simple vertical cut for now.
+        Segment the breeding blanket poloidal cross-section into inboard and outboard
+        segment silhouettes.
+
+        Returns
+        -------
+        Inboard blanket segment and Outboard blanket segment silhouette
         """
-        bb = self.silhouette.bounding_box
-        x_mid = 0.5 * (bb.x_min + bb.x_max)
-        delta = 0.5 * self.params.c_rm.value
+        # Make cutting geometry
+        p0 = get_inner_cut_point(self.silhouette, self.r_inner_cut)
+        p1 = [p0[0], 0, p0[2] + VERY_BIG]
+        p2 = [p0[0] - self.params.c_rm.value, 0, p1[2]]
+        p3 = [p2[0], 0, p0[2] - np.sqrt(2) * self.params.c_rm.value]
+        cut_zone = BluemiraFace(make_polygon([p0, p1, p2, p3], closed=True))
+        if self.cut_angle != 0.0:
+            cut_zone.rotate(base=p0, direction=(0, -1, 0), degree=self.cut_angle)
 
-        x = np.full(4, x_mid)
-        x[[0, 3]] -= delta
-        x[[1, 2]] += delta
-
-        z = np.zeros(4)
-        z[2:] += bb.z_max + offset
-
-        cut_wire = make_polygon({"x": x, "y": 0, "z": z}, closed=True)
-        cut_face = BluemiraFace(cut_wire)
-        segments = boolean_cut(self.silhouette, cut_face)
-        segments.sort(key=lambda seg: seg.bounding_box.x_min)
-        return segments
+        # Do cut
+        cut_result = boolean_cut(self.silhouette, cut_zone)
+        if len(cut_result) < 2:
+            raise BuilderError(
+                f"BB poloidal segmentation only returning {len(cut_result)} faces."
+            )
+        if len(cut_result) > 2:
+            bluemira_warn(
+                f"The BB poloidal segmentation operation returned more than 2 faces ({len(cut_result)}); only taking the first two..."
+            )
+        return sorted(cut_result, key=lambda x: x.center_of_mass[0])[:2]
