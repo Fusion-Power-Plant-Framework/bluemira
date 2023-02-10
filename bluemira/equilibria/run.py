@@ -40,6 +40,7 @@ from bluemira.equilibria.error import EquilibriaError
 from bluemira.equilibria.grid import Grid
 from bluemira.equilibria.limiter import Limiter
 from bluemira.equilibria.opt_constraints import (
+    MagneticConstraint,
     MagneticConstraintSet,
     PsiBoundaryConstraint,
     PsiConstraint,
@@ -189,10 +190,10 @@ class PulsedCoilsetDesign(ABC):
 
     def __init__(
         self,
-        params,
+        params: ParameterFrame,
         coilset: CoilSet,
         grid: Grid,
-        equilibrium_constraints: MagneticConstraintSet,
+        equilibrium_constraints: List[MagneticConstraint],
         profiles: Profile,
         breakdown_strategy_cls: Type[BreakdownZoneStrategy],
         breakdown_problem_cls: Type[BreakdownCOP],
@@ -455,7 +456,7 @@ class PulsedCoilsetDesign(ABC):
         optimiser: Optimiser,
         max_currents: np.ndarray,
         current_constraints: List[OptimisationConstraint],
-        eq_constraints: MagneticConstraintSet,
+        eq_constraints: List[MagneticConstraint],
     ) -> CoilsetOptimisationProblem:
         if self._eq_prob_cls == MinimalCurrentCOP:
             constraints = eq_constraints
@@ -478,6 +479,11 @@ class PulsedCoilsetDesign(ABC):
                 optimiser=optimiser,
                 max_currents=max_currents,
                 constraints=current_constraints,
+            )
+        else:
+            raise EquilibriaError(
+                "Only MinimalCurrentCOP and TikhonovCurrentCOP"
+                " equilibrium problems supported"
             )
         return problem
 
@@ -601,7 +607,7 @@ class OptimisedPulsedCoilsetDesign(PulsedCoilsetDesign):
 
     def __init__(
         self,
-        params,
+        params: ParameterFrame,
         coilset: CoilSet,
         position_mapper: PositionMapper,
         grid: Grid,

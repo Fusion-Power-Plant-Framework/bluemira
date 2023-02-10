@@ -151,20 +151,22 @@ def build_pf_coils(params, build_config, tf_coil_boundary, pf_coil_keep_out_zone
             )
 
     builders = []
-    for (des, ctype) in wires:
+    for (designer, coil_type) in wires:
         tk_ins = (
-            params.tk_pf_insulation if ctype.name == "PF" else params.tk_cs_insulation
+            params.tk_pf_insulation
+            if coil_type.name == "PF"
+            else params.tk_cs_insulation
         )
-        tk_case = params.tk_pf_casing if ctype.name == "PF" else params.tk_cs_casing
+        tk_case = params.tk_pf_casing if coil_type.name == "PF" else params.tk_cs_casing
         builders.append(
             PFCoilBuilder(
                 {
                     "tk_insulation": {"value": tk_ins.value, "unit": "m"},
                     "tk_casing": {"value": tk_case.value, "unit": "m"},
-                    "ctype": {"value": ctype.name, "unit": ""},
+                    "ctype": {"value": coil_type.name, "unit": ""},
                 },
                 build_config,
-                des.execute(),
+                designer.execute(),
             )
         )
 
