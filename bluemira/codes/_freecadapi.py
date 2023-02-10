@@ -1858,9 +1858,10 @@ def collect_verts_faces(
         # tesselation is likely to be the most expensive part of this
         v, f = face.tessellate(tesselation)
 
-        verts.append(np.array(v))
-        faces.append(np.array(f) + voffset)
-        voffset += len(v)
+        if v != []:
+            verts.append(np.array(v))
+            faces.append(np.array(f) + voffset)
+            voffset += len(v)
 
     if len(solid.Faces) > 0:
         return np.vstack(verts), np.vstack(faces)
