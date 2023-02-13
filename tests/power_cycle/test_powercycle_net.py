@@ -169,11 +169,14 @@ class TestPowerLoad:
     @staticmethod
     def check_interpolation(original_points, curve):
         """
-        Confirm that curve is an interpolation.
+        Confirm that curve is an interpolation with possibility of
+        out-of-bounds values.
 
         Current simplified approach: no curve value is out of the bounds
         of the original defining interpolation points, except if it is a
         zero ('fill_value' argument of 'interp1d').
+
+        Possibly to be substituted by `unittest.mock`.
         """
         original_max = max(original_points)
         original_min = min(original_points)
@@ -199,7 +202,8 @@ class TestPowerLoad:
                     model,
                     test_time,
                 )
-                assert len(curve) == time_length
+                curve_length = len(curve)
+                assert curve_length == time_length
                 self.check_interpolation(power_points, curve)
 
     def test_validate_time(self):
@@ -233,13 +237,26 @@ class TestPowerLoad:
         test_time = self.make_time_list_for_interpolation()
         time_length = len(test_time)
 
+        all_data = []
+        all_sets = []
+        all_models = []
         for sample in load_samples:
             curve = sample.curve(test_time)
             curve_length = len(curve)
             assert curve_length == time_length
 
-            # How to test interpolation of a super-imposed data set?
-            # Use `mock` from `unittest` or `monkeypatch` from `pytest`
+            all_data.append(sample.data_set[0].data)
+            all_sets.append(sample.data_set[0])
+            all_models.append(sample.model[0])
+        multiset_load = PowerLoad("Multi Load", all_sets, all_models)
+        multiset_curve = multiset_load.curve(test_time)
+
+        data_maxima = [max(data) for data in all_data]
+        data_minima = [min(data) for data in all_data]
+        sum_of_maxima = sum(data_maxima)
+        sum_of_minima = sum(data_minima)
+        extreme_points = [sum_of_minima, sum_of_maxima]
+        self.check_interpolation(extreme_points, multiset_curve)
 
     # ------------------------------------------------------------------
     # VISUALIZATION
