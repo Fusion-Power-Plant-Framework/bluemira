@@ -4,10 +4,12 @@ import pytest
 
 import bluemira.base.constants as constants
 from bluemira.power_cycle.errors import (  # PowerCycleTimeABCError,; PowerCyclePulseError,; PowerCycleTimelineError,
+    BOPPhaseError,
     PowerCycleABCError,
     PowerCyclePhaseError,
 )
-from bluemira.power_cycle.time import (  # BOPPhase,; BOPPulse,; BOPTimeline,
+from bluemira.power_cycle.time import (  # BOPPulse,; BOPTimeline,
+    BOPPhase,
     BOPPhaseDependency,
     PowerCyclePhase,
     PowerCyclePulse,
@@ -23,16 +25,21 @@ from bluemira.power_cycle.time import (  # BOPPhase,; BOPPulse,; BOPTimeline,
 # )
 
 
+def example_phase_inputs():
+    phase_name = "Transition between dwell and flat-top"
+    phase_breakdown = {
+        "pump-down": constants.raw_uc(10, "minute", "second"),
+        "ramp-up": constants.raw_uc(5.2, "minute", "second"),
+        "heating": constants.raw_uc(1.4, "minute", "second"),
+    }
+    return phase_name, phase_breakdown
+
+
 class TestPowerCyclePhase:
     def setup_method(self):
-        sample_name = "Transition between dwell and flat-top"
-        sample_breakdown = {
-            "pump-down": constants.raw_uc(10, "minute", "second"),
-            "ramp-up": constants.raw_uc(5.2, "minute", "second"),
-            "heating": constants.raw_uc(1.4, "minute", "second"),
-        }
-        self.sample_name = sample_name
-        self.sample_breakdown = sample_breakdown
+        phase_name, phase_breakdown = example_phase_inputs()
+        self.sample_name = phase_name
+        self.sample_breakdown = phase_breakdown
 
     breakdown_arguments = [
         [None, None, None, None],
@@ -163,8 +170,35 @@ class TestBOPPhaseDependency:
 
 
 class TestBOPPhase:
-    pass
+    def setup_method(self):
+        phase_name, phase_breakdown = example_phase_inputs()
+        self.sample_name = phase_name
+        self.sample_breakdown = phase_breakdown
+
+    dependency_arguments = [
+        None,
+        154,
+        "ss",
+        "tt",
+        BOPPhaseDependency("ss"),
+        BOPPhaseDependency("tt"),
+    ]
+
+    @pytest.mark.parametrize("test_dependency", dependency_arguments)
+    def test_constructor(self, test_dependency):
+        name = self.sample_name
+        breakdown = self.sample_breakdown
+        try:
+            sample = BOPPhase(name, breakdown, test_dependency)
+        except (BOPPhaseError):
+            dependency_class = type(test_dependency)
+            dependency_is_valid = dependency_class == BOPPhaseDependency
+            assert not dependency_is_valid
 
 
 class TestBOPPulse:
+    pass
+
+
+class TestBOPTimeline:
     pass
