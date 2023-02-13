@@ -146,7 +146,7 @@ class PowerLoadModel(Enum):
     The 'name' of a member is a 'str' that roughly describes the
     interpolation behavior, while its associated 'value' is 'str' that
     specifies which kind of interpolation is applied when calling the
-    imported `scipy.interpolate.interp1d` method.
+    imported 'scipy.interpolate.interp1d' method.
     """
 
     RAMP = "linear"  # 'interp1d' linear interpolation
@@ -157,8 +157,8 @@ class PowerLoad(NetPowerABC):
     """
     Generic representation of a power load.
 
-    Defines a power load with a set of `PowerData` instances. Each
-    instance must be accompanied by a `model` specification, used to
+    Defines a power load with a set of 'PowerData' instances. Each
+    instance must be accompanied by a 'model' specification, used to
     compute additional values between data points. This enables the
     instance to compute time-dependent curves.
 
@@ -179,7 +179,12 @@ class PowerLoad(NetPowerABC):
     # ------------------------------------------------------------------
     _n_points = 100
 
-    def __init__(self, name, data_set, model):
+    def __init__(
+        self,
+        name,
+        data_set,
+        model: Union[PowerLoadModel, List[PowerLoadModel]],
+    ):
 
         super().__init__(name)
 
@@ -229,10 +234,10 @@ class PowerLoad(NetPowerABC):
     @staticmethod
     def _single_curve(powerdata, model, time):
         """
-        This method applies the `scipy.interpolate.interp1d` imported
-        method to a single instance of the `PowerData` class. The kind
-        of interpolation is determined by the `model` input. Values are
-        returned at the times specified in the `time` input, with any
+        This method applies the 'scipy.interpolate.interp1d' imported
+        method to a single instance of the 'PowerData' class. The kind
+        of interpolation is determined by the 'model' input. Values are
+        returned at the times specified in the 'time' input, with any
         out-of-bound values set to zero.
         """
         try:
@@ -345,47 +350,47 @@ class PowerLoad(NetPowerABC):
 
     def plot(self, ax=None, n_points=None, detailed=False, **kwargs):
         """
-        Plot a `PowerLoad` curve, built using the attributes that define
+        Plot a 'PowerLoad' curve, built using the attributes that define
         the instance. The number of points interpolated in each curve
         segment can be specified.
 
-        This method applies the `matplotlib.pyplot.plot` imported
-        method to a list of values built using the `curve` method.
+        This method applies the 'matplotlib.pyplot.plot' imported
+        method to a list of values built using the 'curve' method.
         The default options for this plot are defined as class
         attributes, but can be overridden.
 
-        This method can also plot the individual `PowerData` objects
-        stored in the `data_set` attribute that define the `PowerLoad`
+        This method can also plot the individual 'PowerData' objects
+        stored in the 'data_set' attribute that define the 'PowerLoad'
         instance.
 
         Parameters
         ----------
         n_points: int
             Number of points interpolated in each curve segment. The
-            default value is `None`, which indicates to the method
+            default value is 'None', which indicates to the method
             that the default value should be used, defined as a class
             attribute.
         detailed: bool
             Determines whether the plot will include all individual
-            `PowerData` instances (computed with their respective
-            `model` entries), that summed result in the normal plotted
+            'PowerData' instances (computed with their respective
+            'model' entries), that summed result in the normal plotted
             curve. Plotted as secondary plots, as defined in
-            `PowerCycleABC` class. By default this input is set to
-            `False`.
+            'PowerCycleABC' class. By default this input is set to
+            'False'.
         **kwargs: dict
-            Options for the `plot` method.
+            Options for the 'plot' method.
 
         Returns
         -------
         plot_list: list
-            List of plot objects created by the `matplotlib` package.
+            List of plot objects created by the 'matplotlib' package.
             The first element of the list is the plot object created
-            using the `pyplot.plot`, while the second element of the
-            list is the plot object created using the `pyplot.text`
+            using the 'pyplot.plot', while the second element of the
+            list is the plot object created using the 'pyplot.text'
             method.
-            If the `detailed` argument is set to `True`, the list
+            If the 'detailed' argument is set to 'True', the list
             continues to include the lists of plot objects created by
-            the `PowerData` class, with the addition of plotted curves
+            the 'PowerData' class, with the addition of plotted curves
             for the visualization of the model selected for each load.
         """
         ax = validate_axes(ax)
@@ -468,8 +473,8 @@ class PowerLoad(NetPowerABC):
     # ------------------------------------------------------------------
     def __add__(self, other):
         """
-        Addition of `PowerLoad` instances is a new `PowerLoad` instance
-        with joined `load` and `model` attributes.
+        The addition of 'PowerLoad' instances creates a new 'PowerLoad'
+        instance with joined 'load' and 'model' attributes.
         """
 
         this_set = self.data_set
@@ -489,23 +494,23 @@ class PhaseLoad(NetPowerABC):
     """
     Representation of the total power load during a pulse phase.
 
-    Defines the phase load with a set of `PowerLoad` instances.
+    Defines the phase load with a set of 'PowerLoad' instances.
 
     Parameters
     ----------
     name: str
-        Description of the `PhaseLoad` instance.
+        Description of the 'PhaseLoad' instance.
     phase: PowerCyclePhase
         Pulse phase specification, that determines in which phase the
         load happens.
     load_set: PowerLoad | list[PowerLoad]
-        Collection of instances of the `PowerLoad` class that define
-        the `PhaseLoad` object.
+        Collection of instances of the 'PowerLoad' class that define
+        the 'PhaseLoad' object.
     normalize: bool | list[bool]
-        List of boolean values that defines which elements of `load_set`
+        List of boolean values that defines which elements of 'load_set'
         have their time-dependence normalized in respect to the phase
-        duration. A value of `True` forces a normalization, while a
-        value of `False` does not and time values beyond the phase
+        duration. A value of 'True' forces a normalization, while a
+        value of 'False' does not and time values beyond the phase
         duration are ignored.
     """
 
@@ -552,7 +557,7 @@ class PhaseLoad(NetPowerABC):
     @classmethod
     def _validate_load_set(cls, load_set):
         """
-        Validate 'load_set' input to be a list of `PowerLoad` instances.
+        Validate 'load_set' input to be a list of 'PowerLoad' instances.
         """
         load_set = super()._validate_list(load_set)
         for element in load_set:
@@ -572,7 +577,7 @@ class PhaseLoad(NetPowerABC):
 
     def _sanity(self):
         """
-        Validate instance to have `load_set` and `normalize` attributes
+        Validate instance to have 'load_set' and 'normalize' attributes
         of same length.
         """
         if not len(self.load_set) == len(self.normalize):

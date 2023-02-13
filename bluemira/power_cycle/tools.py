@@ -13,15 +13,15 @@ import numpy as np
 
 def validate_axes(ax=None):
     """
-    Validate axes argument for plotting method. If `None`, create
-    new `axes` instance.
+    Validate axes argument for plotting method. If 'None', create
+    new 'axes' instance.
     """
     if ax is None:
         _, ax = plt.subplots()
     elif not isinstance(ax, plt.Axes):
         raise TypeError(
             "The argument 'ax' used to create a plot is not an "
-            "instance of the `Axes` class, but an instance of the "
+            "instance of the 'Axes' class, but an instance of the "
             f"'{ax.__class__}' class instead."
         )
     return ax
@@ -29,8 +29,8 @@ def validate_axes(ax=None):
 
 def adjust_2d_graph_ranges(x_frac=0.1, y_frac=0.1, ax=None):
     """
-    Adjust x-axis and y-axis limits of a plot given an input `axes`
-    instance (from `matplotlib.axes`) and the chosen fractional
+    Adjust x-axis and y-axis limits of a plot given an input 'axes'
+    instance (from 'matplotlib.axes') and the chosen fractional
     proportions.
     New lower limits will be shifted negatively by current range
     multiplied by the input proportion. New upper limits will be
@@ -45,7 +45,7 @@ def adjust_2d_graph_ranges(x_frac=0.1, y_frac=0.1, ax=None):
         Fractional number by which y-scale will be enlarged. By
         default, this fraction is set to 10%.
     ax: Axes
-        Instance of the `matplotlib.axes.Axes` class. By default,
+        Instance of the 'matplotlib.axes.Axes' class. By default,
         the currently selected axes are used.
     """
 
