@@ -25,7 +25,10 @@ from matplotlib import pyplot as plt
 from scipy.spatial import ConvexHull
 
 from bluemira.equilibria.shapes import (
+    CunninghamLCFS,
     JohnerLCFS,
+    KuiroukidisLCFS,
+    ManickamLCFS,
     flux_surface_cunningham,
     flux_surface_johner,
     flux_surface_kuiroukidis,
@@ -263,6 +266,46 @@ class TestJohnerCAD:
         p_pos.adjust_variable("delta_l", 0.4)
         p_neg.adjust_variable("delta_u", -0.4, lower_bound=-0.5)
         p_neg.adjust_variable("delta_l", -0.4, lower_bound=-0.5)
+        wire_pos = p_pos.create_shape()
+        wire_neg = p_neg.create_shape()
+
+        assert np.isclose(wire_pos.length, wire_neg.length)
+
+
+class TestKuiroukidisCAD:
+    def test_segments(self):
+        p = KuiroukidisLCFS()
+        wire = p.create_shape()
+        assert len(wire._boundary) == 4
+
+    def test_symmetry(self):
+        p_pos = KuiroukidisLCFS()
+        p_neg = KuiroukidisLCFS()
+
+        p_pos.adjust_variable("delta_u", 0.4)
+        p_pos.adjust_variable("delta_l", 0.4)
+        p_neg.adjust_variable("delta_u", -0.4, lower_bound=-0.5)
+        p_neg.adjust_variable("delta_l", -0.4, lower_bound=-0.5)
+        wire_pos = p_pos.create_shape()
+        wire_neg = p_neg.create_shape()
+
+        assert np.isclose(wire_pos.length, wire_neg.length)
+
+
+class TestManickamCunninghamCAD:
+    @pytest.mark.parametrize("parameterisation", [ManickamLCFS, CunninghamLCFS])
+    def test_segments(self, parameterisation):
+        p = parameterisation()
+        wire = p.create_shape()
+        assert len(wire._boundary) == 1
+
+    @pytest.mark.parametrize("parameterisation", [ManickamLCFS, CunninghamLCFS])
+    def test_symmetry(self, parameterisation):
+        p_pos = parameterisation()
+        p_neg = parameterisation()
+
+        p_pos.adjust_variable("delta", 0.4)
+        p_neg.adjust_variable("delta", -0.4, lower_bound=-0.5)
         wire_pos = p_pos.create_shape()
         wire_neg = p_neg.create_shape()
 
