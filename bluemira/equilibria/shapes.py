@@ -41,7 +41,7 @@ __all__ = [
 ]
 
 
-def flux_surface_cunningham(r_0, z_0, a, kappa, delta, delta2=None, n=20):
+def flux_surface_cunningham(r_0, z_0, a, kappa, delta, delta2=0.0, n=20):
     """
     As featured in Geof Cunningham's FIESTA (shape_fun)
 
@@ -69,12 +69,75 @@ def flux_surface_cunningham(r_0, z_0, a, kappa, delta, delta2=None, n=20):
     """
     t = np.linspace(0, 2 * np.pi, n)[:-1]  # Theta
 
-    if delta2 is None:
-        x = r_0 + a * np.cos(t + delta * np.sin(t))
-    else:
-        x = r_0 + a * np.cos(t + delta * np.sin(t) + delta2 * np.sin(2 * t))
+    x = r_0 + a * np.cos(t + delta * np.sin(t) + delta2 * np.sin(2 * t))
     z = z_0 + a * kappa * np.sin(t)
     return Coordinates({"x": x, "z": z})
+
+
+class CunninghamLCFS(GeometryParameterisation):
+    """
+    Cunningham last closed flux surface geometry parameterisation.
+    """
+
+    __slots__ = ()
+
+    def __init__(self, var_dict=None):
+        variables = OptVariables(
+            [
+                BoundedVariable(
+                    "r_0", 9, lower_bound=0, upper_bound=np.inf, descr="Major radius"
+                ),
+                BoundedVariable(
+                    "z_0",
+                    0,
+                    lower_bound=-np.inf,
+                    upper_bound=np.inf,
+                    descr="Vertical coordinate at geometry centroid",
+                ),
+                BoundedVariable(
+                    "a", 3, lower_bound=0, upper_bound=np.inf, descr="Minor radius"
+                ),
+                BoundedVariable(
+                    "kappa", 1.5, lower_bound=1.0, upper_bound=np.inf, descr="Elongation"
+                ),
+                BoundedVariable(
+                    "delta",
+                    0.4,
+                    lower_bound=0.0,
+                    upper_bound=1.0,
+                    descr="Triangularity",
+                ),
+                BoundedVariable(
+                    "delta2",
+                    0.0,
+                    lower_bound=0.0,
+                    upper_bound=1.0,
+                    descr="Curliness?",
+                ),
+            ],
+            frozen=True,
+        )
+        variables.adjust_variables(var_dict, strict_bounds=False)
+        super().__init__(variables)
+
+    def create_shape(self, label="LCFS", n_points=1000):
+        """
+        Make a CAD representation of the Manickam LCFS.
+
+        Parameters
+        ----------
+        label: str, default = "LCFS"
+            Label to give the wire
+        n_points: int
+            Number of points to use when creating the Bspline representation
+
+        Returns
+        -------
+        shape: BluemiraWire
+            CAD Wire of the geometry
+        """
+        coordinates = flux_surface_cunningham(*self.variables.values, n=n_points)
+        return interpolate_bspline(coordinates.xyz, closed=True, label=label)
 
 
 def flux_surface_manickam(r_0, z_0, a, kappa=1, delta=0, indent=0, n=20):
@@ -107,6 +170,72 @@ def flux_surface_manickam(r_0, z_0, a, kappa=1, delta=0, indent=0, n=20):
     x = r_0 - indent + (a + indent * np.cos(t)) * np.cos(t + delta * np.sin(t))
     z = z_0 + kappa * a * np.sin(t)
     return Coordinates({"x": x, "z": z})
+
+
+class ManickamLCFS(GeometryParameterisation):
+    """
+    Manickam last closed flux surface geometry parameterisation.
+    """
+
+    __slots__ = ()
+
+    def __init__(self, var_dict=None):
+        variables = OptVariables(
+            [
+                BoundedVariable(
+                    "r_0", 9, lower_bound=0, upper_bound=np.inf, descr="Major radius"
+                ),
+                BoundedVariable(
+                    "z_0",
+                    0,
+                    lower_bound=-np.inf,
+                    upper_bound=np.inf,
+                    descr="Vertical coordinate at geometry centroid",
+                ),
+                BoundedVariable(
+                    "a", 3, lower_bound=0, upper_bound=np.inf, descr="Minor radius"
+                ),
+                BoundedVariable(
+                    "kappa", 1.5, lower_bound=1.0, upper_bound=np.inf, descr="Elongation"
+                ),
+                BoundedVariable(
+                    "delta",
+                    0.4,
+                    lower_bound=0.0,
+                    upper_bound=1.0,
+                    descr="Triangularity",
+                ),
+                BoundedVariable(
+                    "indent",
+                    0.0,
+                    lower_bound=0.0,
+                    upper_bound=1.0,
+                    descr="Indentation",
+                ),
+            ],
+            frozen=True,
+        )
+        variables.adjust_variables(var_dict, strict_bounds=False)
+        super().__init__(variables)
+
+    def create_shape(self, label="LCFS", n_points=1000):
+        """
+        Make a CAD representation of the Manickam LCFS.
+
+        Parameters
+        ----------
+        label: str, default = "LCFS"
+            Label to give the wire
+        n_points: int
+            Number of points to use when creating the Bspline representation
+
+        Returns
+        -------
+        shape: BluemiraWire
+            CAD Wire of the geometry
+        """
+        coordinates = flux_surface_manickam(*self.variables.values, n=n_points)
+        return interpolate_bspline(coordinates.xyz, closed=True, label=label)
 
 
 def flux_surface_kuiroukidis_quadrants(

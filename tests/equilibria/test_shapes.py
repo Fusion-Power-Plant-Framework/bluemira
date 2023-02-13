@@ -42,9 +42,7 @@ class TestCunningham:
         "kappa, delta, delta2, ax, label",
         [
             pytest.param(1.6, 0.33, 0.5, [0, 0], "Normal", id="Normal"),
-            pytest.param(
-                1.6, -0.33, None, [0, 1], "Negative delta", id="Negative delta"
-            ),
+            pytest.param(1.6, -0.33, 0.0, [0, 1], "Negative delta", id="Negative delta"),
             pytest.param(1.6, 0.33, 0.5, [1, 1], "Indent 1.5", id="Indent 1.5"),
             pytest.param(1.6, 0.33, 0.25, [1, 0], "Indent 1.5", id="Indent 1.5_2"),
             pytest.param(1.6, 0, 0.3, [2, 0], "Indent $delta$=0", id="Indent delta=0"),
@@ -54,12 +52,12 @@ class TestCunningham:
             pytest.param(
                 1,
                 0,
-                None,
+                0.0,
                 [3, 0],
                 "$\\delta$=0\n$\\kappa$=1",
                 id="$\\delta$=0\n$\\kappa$=1",
             ),
-            pytest.param(1.6, 0, None, [3, 1], "$\\delta$=0", id="$\\delta$=0"),
+            pytest.param(1.6, 0, 0.0, [3, 1], "$\\delta$=0", id="$\\delta$=0"),
         ],
     )
     def test_cunningham(self, kappa, delta, delta2, ax, label):
