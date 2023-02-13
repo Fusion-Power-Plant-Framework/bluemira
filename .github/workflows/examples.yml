@@ -36,4 +36,5 @@ jobs:
           python ./scripts/run_examples.py \
             -e 'plasmod_example' \
             -e 'solver_example' \
-            -e 'equilibria/fem_fixed_boundary'
+            -e 'equilibria/fem_fixed_boundary' \
+            -e 'codes/ext_code_script
