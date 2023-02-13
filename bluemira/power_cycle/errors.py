@@ -8,10 +8,6 @@ from typing import Dict
 
 from bluemira.base.error import BluemiraError
 
-# ######################################################################
-# BASE
-# ######################################################################
-
 
 class PowerCycleError(BluemiraError):
     """
@@ -43,6 +39,11 @@ class PowerCycleError(BluemiraError):
         pass
 
 
+# ######################################################################
+# BASE
+# ######################################################################
+
+
 class PowerCycleABCError(PowerCycleError):
     """
     Exception class for 'PowerCycleABC' class of the Power Cycle module.
@@ -69,11 +70,6 @@ class PowerCycleABCError(PowerCycleError):
         return errors
 
 
-# ######################################################################
-# TIME
-# ######################################################################
-
-
 class PowerCycleTimeABCError(PowerCycleError):
     """
     Exception class for 'PowerCycleTimeABC' class of the Power Cycle
@@ -83,6 +79,27 @@ class PowerCycleTimeABCError(PowerCycleError):
     def _errors(self):
         errors = {}
         return errors
+
+
+class NetPowerABCError(PowerCycleError):
+    """
+    Exception class for 'NetPowerABC' class of the Power Cycle module.
+    """
+
+    def _errors(self):
+        errors = {
+            "n_points": [
+                "The argument given for 'n_points' is not a valid "
+                f"value for plotting an instance of the {self._source} "
+                "class. Only non-negative integers are accepted."
+            ],
+        }
+        return errors
+
+
+# ######################################################################
+# TIME
+# ######################################################################
 
 
 class PowerCyclePhaseError(PowerCycleError):
@@ -128,25 +145,33 @@ class PowerCycleTimelineError(PowerCycleError):
         return errors
 
 
-# ######################################################################
-# NET
-# ######################################################################
-
-
-class NetPowerABCError(PowerCycleError):
+class BOPPhaseError(PowerCycleError):
     """
-    Exception class for 'NetPowerABC' class of the Power Cycle module.
+    Exception class for 'BOPPhase' class of the Power Cycle module.
     """
 
     def _errors(self):
         errors = {
-            "n_points": [
-                "The argument given for 'n_points' is not a valid "
-                f"value for plotting an instance of the {self._source} "
-                "class. Only non-negative integers are accepted."
-            ],
+            "dependency": (
+                "The 'dependency' parameter used to create an instance "
+                f"of the {self._source} class must be an instance of "
+                "the 'BOPPhaseDependency' class."
+            ),
         }
         return errors
+
+
+class BOPPulseError(PowerCycleError):
+    pass
+
+
+class BOPTimelineError(PowerCycleError):
+    pass
+
+
+# ######################################################################
+# NET
+# ######################################################################
 
 
 class PowerDataError(PowerCycleError):
