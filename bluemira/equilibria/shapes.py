@@ -38,6 +38,8 @@ __all__ = [
     "flux_surface_kuiroukidis",
     "JohnerLCFS",
     "KuiroukidisLCFS",
+    "ManickamLCFS",
+    "CunninghamLCFS",
 ]
 
 
