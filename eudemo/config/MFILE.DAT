@@ -3,14 +3,14 @@
  # PROCESS #
  # Power Reactor Optimisation Code #
  PROCESS_version_number__________________________________________________ (procver)_____________________     "2.3.0   R"
- Date_of_run_____________________________________________________________ (date)________________________     "30/11/2022"
- Time_of_run_____________________________________________________________ (time)________________________     "13:44"
+ Date_of_run_____________________________________________________________ (date)________________________     "13/02/2023"
+ Time_of_run_____________________________________________________________ (time)________________________     "09:50"
  User____________________________________________________________________ (username)____________________     "matti"
  PROCESS_run_title_______________________________________________________ (runtitle)____________________     "Run Title (change this line using input variable 'runtitle')
  PROCESS_tag_number______________________________________________________ (tagno)_______________________     "v2.1-1495-g7e1b031b"
  PROCESS_git_branch_name_________________________________________________ (branch_name)_________________     "develop"
  PROCESS_last_commit_message_____________________________________________ (commsg)______________________     "Merge\ branch\ |1618-input-will-not-accept-long-arra"
- Input_filename__________________________________________________________ (fileprefix)__________________     "/home/matti/code/bluemira/eudemo/IN.DAT                                                                                                                                                                 "
+ Input_filename__________________________________________________________ (fileprefix)__________________     "/home/matti/code/bluemira/eudemo/config/IN.DAT                                                                                                                                                          "
  # Numerics #
  VMCON_error_flag________________________________________________________ (ifail)_______________________              1
  # PROCESS found a feasible solution #
@@ -1164,7 +1164,7 @@ shldoth  = 1e-06 *
 shldtth  = 1e-06 *
 tfcth    = 1.208 *
 tftsgap  = 0.05 *
-thshield = 0.05 * TF-VV thermal shield thickness (m)
+thshield = 0.05 *
 vgap2    = 0.05 *
 vvblgap  = 0.02 *
 
@@ -1591,7 +1591,7 @@ n_layer  = 10 *
 oacdcp   = 8673900.0 *
 ripmax   = 0.6 *
 tdmptf   = 25.829 *
-n_tf     = 16.0 *
+n_tf     = 16 *
 tftmp    = 4.75 *
 thicndut = 0.002 *
 thkcas   = 0.52465 *
