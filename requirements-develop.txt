@@ -73,4 +73,4 @@ Unidecode==1.3.6
 urllib3==1.26.14
 versioneer==0.28
 virtualenv==20.19.0
-zipp==3.12.1
+zipp==3.13.0
