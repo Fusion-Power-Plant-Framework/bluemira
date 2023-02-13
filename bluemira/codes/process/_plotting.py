@@ -158,6 +158,7 @@ def setup_radial_build(run, width=1.0):
     ax.set_xlim([0, np.ceil(run["Radial Build"][-1][-1])])
     ax.set_ylim([-width * 0.5, width * 0.5])
     ax.set_xticks(list(ax.get_xticks()) + [R_0])
+    ax.axes.set_axisbelow(False)
 
     def tick_format(value, n):
         if value == R_0:
