@@ -32,16 +32,15 @@ from typing import Tuple, Union
 
 import meshio
 import numpy as np
-from dolfin import MeshValueCollection
 from dolfin.cpp.mesh import MeshFunctionSizet
-from dolfinx.io import XDMFFile
-from dolfinx.mesh import Mesh, XDMFFile
+from dolfinx.io import XDMFFile, gmshio
+from dolfinx.mesh import Mesh, MeshValueCollection
 from tabulate import tabulate
 
 from bluemira.base.look_and_feel import bluemira_debug, bluemira_warn
 from bluemira.mesh.error import MeshConversionError
 
-__all__ = ("msh_to_xdmf", "import_mesh")
+__all__ = ("read_from_msh", "import_mesh")
 
 
 CELL_TYPE_DIM = {
@@ -59,49 +58,9 @@ BOUNDARY_SUFFIX = "boundaries.xdmf"
 LINKFILE_SUFFIX = "linkfile.json"
 
 
-def msh_to_xdmf(
-    mesh_name: str,
-    dimensions: Union[Tuple[int], int] = (0, 2),
-    directory: str = ".",
-):
-    """
-    Convert a MSH file to an XMDF file.
-
-    Parameters
-    ----------
-    mesh_name: str
-        Name of the MSH file to convert to XDMF
-    dimensions: Union[Tuple[int], int]
-        Dimensions of the mesh (0: x, 1: y, 2: z), defaults to x-z
-        (0, 1, 2) would be a 3-D mesh
-    directory: str
-        Directory in which the MSH file exists and where the XDMF files will be written
-
-    Raises
-    ------
-    MeshConversionError:
-        * If the file does not exist
-        * If the dimensionality != [2, 3]
-        * If no domain physical groups are found
-
-    Notes
-    -----
-    Creates the following files:
-        * DOMAIN_SUFFIX
-        * BOUNDARY_SUFFIX
-        * LINKFILE_SUFFIX
-    """
-    dimensions = _check_dimensions(dimensions)
-
-    file_path = os.path.join(directory, mesh_name)
-    if not os.path.exists(file_path):
-        raise MeshConversionError(f"No such file: {file_path}")
-
-    file_prefix = mesh_name.split(".")[0]
-    mesh = meshio.read(file_path)
-    _export_domain(mesh, file_prefix, directory, dimensions)
-    _export_boundaries(mesh, file_prefix, directory, dimensions)
-    _export_link_file(mesh, file_prefix, directory)
+def read_from_msh(filename, dimension=2):
+    mesh, cell_markers, facet_markers = gmshio.read_from_msh(filename, gdim=dimension)
+    return mesh, cell_markers, facet_markers
 
 
 def import_mesh(file_prefix="mesh", subdomains=False, directory="."):
@@ -137,23 +96,21 @@ def import_mesh(file_prefix="mesh", subdomains=False, directory="."):
         msg = "\n".join([fn for fn, exist in zip(files, exists) if not exist])
         raise MeshConversionError(f"No mesh file(s) found:\n {msg}")
 
-    mesh = Mesh()
-
     with XDMFFile(domain_file) as file:
-        file.read(mesh)
+        mesh = file.read_mesh()
 
     dimension = mesh.topology().dim()
     boundaries_mvc = MeshValueCollection("size_t", mesh, dim=dimension)
 
     with XDMFFile(boundary_file) as file:
-        file.read(boundaries_mvc, "boundaries")
+        file.read_mesh(boundaries_mvc, "boundaries")
 
     boundaries_mf = MeshFunctionSizet(mesh, boundaries_mvc)
 
     if subdomains:
         subdomains_mvc = MeshValueCollection("size_t", mesh, dim=dimension)
         with XDMFFile(domain_file) as file:
-            file.read(subdomains_mvc, "subdomains")
+            file.read_mesh(subdomains_mvc, "subdomains")
         subdomains_mf = MeshFunctionSizet(mesh, subdomains_mvc)
     else:
         subdomains_mf = None

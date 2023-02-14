@@ -53,8 +53,9 @@ Some examples of using bluemira mesh module.
 # %%
 import os
 
-import dolfinx
 import matplotlib.pyplot as plt
+from dolfinx import plot
+from dolfinx.io import gmshio
 
 import bluemira.geometry.tools as tools
 from bluemira.base.components import Component, PhysicalComponent
@@ -64,7 +65,6 @@ from bluemira.equilibria.shapes import JohnerLCFS
 from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.wire import BluemiraWire
 from bluemira.mesh import meshing
-from bluemira.mesh.tools import import_mesh, msh_to_xdmf
 
 set_log_level("DEBUG")
 
@@ -141,21 +141,11 @@ print(m.get_gmsh_dict(buffer))
 
 # %% [markdown]
 #
-# ## Convert to xdmf
+# ## Read in mesh
 
 # %%
-msh_to_xdmf(
-    "Mesh.msh",
-    dimensions=(0, 2),
-    directory=directory,
-)
-
-mesh, boundaries, subdomains, labels = import_mesh(
-    "Mesh",
-    directory=directory,
-    subdomains=True,
-)
-dolfinx.plot(mesh)
+mesh, cell_markers, facet_markers = gmshio.read_from_msh(f"{directory}/Mesh.msh", gdim=2)
+plot(mesh)
 plt.show()
 
 print(mesh.coordinates())
