@@ -20,34 +20,21 @@
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 
 import os
-from unittest import mock
 
 import numpy as np
 import pytest
 
-from bluemira.geometry.error import GeometryError
 from bluemira.geometry.parameterisations import PrincetonD
-from bluemira.geometry.tools import make_polygon
-from eudemo.ivc.panelling import WrappedString
+from eudemo.ivc.panelling import make_pivoted_string
+
+DATA_DIR = os.path.join(os.path.dirname(__file__), "data")
 
 
-class TestWrappedString:
-
-    DATA_DIR = os.path.join(os.path.dirname(__file__), "data")
-
-    @staticmethod
-    def make_princeton_d():
-        return PrincetonD(
-            {"x1": {"value": 4}, "x2": {"value": 14}, "dz": {"value": 0}}
-        ).create_shape()
-
-    def test_created_shape_points_match_snapshot(self):
+class TestMakePivotedString:
+    def test_returns_points_matching_snapshot(self):
         """
         The data for this test was generated using the
         BLUEPRINT.geometry.stringgeom.String class from BLUEPRINT.
-
-        WrappedString is intended to replicate the functionality of
-        BLUEPRINT's String, so we check we get consistent results here.
 
         The code used to generate the test data:
 
@@ -64,72 +51,24 @@ class TestWrappedString:
 
         Using bluemira 437a1c10, and BLUEPRINT e3fb8d1c.
         """
-        boundary = self.make_princeton_d()
-        string = WrappedString(
-            boundary,
-            var_dict={
-                "max_angle": {"value": 20},
-                "min_segment_len": {"value": 0.5},
-                "max_segment_len": {"value": 2.5},
-            },
-            n_boundary_points=100,
-        )
-        string_shape = string.create_shape()
+        boundary = PrincetonD(
+            {"x1": {"value": 4}, "x2": {"value": 14}, "dz": {"value": 0}}
+        ).create_shape()
+        boundary_points = boundary.discretize().T
 
-        new_points = string_shape.discretize(ndiscr=100, byedges=True)
-
-        ref_data = np.load(os.path.join(self.DATA_DIR, "panelling_ref_data.npy"))
-        ref_wire = make_polygon(ref_data, closed=True)
-        ref_points = ref_wire.discretize(ndiscr=100, byedges=True)
-        np.testing.assert_almost_equal(new_points.xyz, ref_points)
-
-    @pytest.mark.parametrize("max_len", [1.0001, 1.5, 4])
-    def test_shape_ineq_constraint_lt_0_given_max_segment_len_gt_min(self, max_len):
-        shape = WrappedString(
-            self.make_princeton_d(),
-            var_dict={
-                "min_segment_len": {"value": 1},
-                "max_segment_len": {"value": max_len},
-            },
+        new_points = make_pivoted_string(
+            boundary_points, max_angle=20, dx_min=0.5, dx_max=2.5
         )
 
-        constraint = np.zeros(1)
-        x = shape.variables.get_normalised_values()
-        grad = np.zeros((1, 3))
-        shape.shape_ineq_constraints(constraint, x, grad)
+        ref_data = np.load(os.path.join(DATA_DIR, "panelling_ref_data.npy"))
+        np.testing.assert_almost_equal(new_points, ref_data)
 
-        assert constraint.size == 1
-        assert constraint[0] < 0
-        np.testing.assert_allclose(grad, [[0, 1, -1]])
+    @pytest.mark.parametrize("dx_max", [0, 0.5, 0.9999])
+    def test_ValueError_given_dx_min_gt_dx_max(self, dx_max):
+        boundary = PrincetonD(
+            {"x1": {"value": 4}, "x2": {"value": 14}, "dz": {"value": 0}}
+        ).create_shape()
+        boundary_points = boundary.discretize().T
 
-    @pytest.mark.parametrize("max_len", [0.9999, 0.5, 0])
-    def test_shape_ineq_constraint_gt_0_given_max_segment_len_lt_min(self, max_len):
-        shape = WrappedString(
-            self.make_princeton_d(),
-            var_dict={
-                "min_segment_len": {"value": 1},
-                "max_segment_len": {"value": max_len},
-            },
-        )
-
-        constraint = np.zeros(1)
-        x = shape.variables.get_normalised_values()
-        grad = np.zeros((1, 3))
-        shape.shape_ineq_constraints(constraint, x, grad)
-
-        assert constraint.size == 1
-        assert constraint[0] > 0
-        np.testing.assert_allclose(grad, [[0, 1, -1]])
-
-    @pytest.mark.parametrize("max_len", [0.9999, 0.5, 0])
-    def test_GeometryError_on_create_shape_given_min_gt_max_segment_len(self, max_len):
-        shape = WrappedString(
-            self.make_princeton_d(),
-            var_dict={
-                "min_segment_len": {"value": 1},
-                "max_segment_len": {"value": max_len},
-            },
-        )
-
-        with pytest.raises(GeometryError):
-            shape.create_shape()
+        with pytest.raises(ValueError):
+            make_pivoted_string(boundary_points, max_angle=20, dx_min=1, dx_max=dx_max)
