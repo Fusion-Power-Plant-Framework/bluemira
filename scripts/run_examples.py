@@ -118,6 +118,9 @@ def run_examples(
 
 
 if __name__ == "__main__":
+    # Hack to make external_code example run
+    sys.path.insert(0, str(Path(Path(__file__).parent.parent, "examples", "codes")))
+
     args = parse_args(sys.argv[1:])
     example_py_files = find_python_files(args.examples_dir, args.exclude_pattern)
     if not example_py_files:
