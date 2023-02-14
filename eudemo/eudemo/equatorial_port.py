@@ -41,6 +41,7 @@ from bluemira.geometry.tools import (
     offset_wire,
     make_polygon, 
     slice_shape,
+    boolean_fuse
 )
 from bluemira.geometry.wire import BluemiraWire
 
@@ -50,8 +51,8 @@ class EquatorialPort(ComponentManager):
     Wrapper around a Equatorial Port component tree
     """
     @property
-    def xz_boundary(self) -> BluemiraWire:
-        """ Returns a wire defining the xz-plane boundary of the Equatorial Port"""
+    def xz_koz_boundary(self) -> BluemiraWire:
+        """ Returns a wire defining the xz-plane keep-out zone boundary of the Equatorial Port"""
         # TODO: Implement xz_boundary functionality
         pass
 
@@ -103,25 +104,31 @@ class EquatorialPortBuilder(Builder):
         """
         Build the x-z components of the equatorial port
         """
-        # Placeholder magic numbers
-        x_min = 1
-        x_max = 4
-        z_min = 1
-        z_max = 4
-        thick = 1
 
-        z_bottom_in = x_min + thick
-        z_top_in = x_max - thick
+        x_min = self.params.ep_x_inner.value
+        x_max = self.params.ep_x_outer.value
+        z_min = self.params.ep_z_inner.value
+        z_max = self.params.ep_x_outer.value
+        wall_thickness = self.params.ep_thickness.value
+
+        z_bottom_in = z_min + wall_thickness
+        z_top_in = z_max - wall_thickness
 
         ep_top_x = [x_min, x_max, x_max, x_min]
         ep_top_z = [z_top_in, z_top_in, z_max, z_max]
         ep_bottom_x = [x_min, x_max, x_max, x_min]
         ep_bottom_z = [z_min, z_min, z_bottom_in, z_bottom_in]
-        face_top = BluemiraFace(make_polygon({"x": ep_top_x, "y": 0, "z": ep_top_z}, closed=True))
-        face_bottom = BluemiraFace(make_polygon({"x": ep_bottom_x, "y": 0, "z": ep_bottom_z}, closed=True))
 
-        body = PhysicalComponent(self.BODY, face_top)
+        face_top = BluemiraFace(make_polygon(
+            {"x": ep_top_x, "y": 0, "z": ep_top_z}, closed=True
+            ))
+        face_bottom = BluemiraFace(make_polygon(
+            {"x": ep_bottom_x, "y": 0, "z": ep_bottom_z}, closed=True
+            ))
+
+        body = PhysicalComponent(self.BODY, boolean_fuse([face_top, face_bottom]))
         body.plot_options.face_options["color"] = BLUE_PALETTE["VV"][0]
+        # TODO: Assess if a new Palette colour is needed for the Ports
 
         return body
 
