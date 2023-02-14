@@ -3,7 +3,18 @@
 import matplotlib.pyplot as plt
 import pytest
 
-from bluemira.power_cycle.tools import adjust_2d_graph_ranges, validate_axes
+from bluemira.power_cycle.tools import adjust_2d_graph_ranges, unnest_list, validate_axes
+
+
+class TestManipulationTools:
+    def test_unnest_list(self):
+        list_of_lists = [
+            [1, 2, 3, 4],
+            [5, 6, 7],
+            [8, 9],
+        ]
+        simple_list = unnest_list(list_of_lists)
+        assert len(simple_list) == 9
 
 
 class TestPlottingTools:
