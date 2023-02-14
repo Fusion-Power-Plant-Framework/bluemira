@@ -11,7 +11,7 @@ from scipy.interpolate import interp1d
 
 from bluemira.power_cycle.base import NetPowerABC
 from bluemira.power_cycle.errors import PhaseLoadError, PowerDataError, PowerLoadError
-from bluemira.power_cycle.time import PowerCyclePhase
+from bluemira.power_cycle.time import PowerCyclePhase, PowerCyclePulse
 from bluemira.power_cycle.tools import validate_axes
 
 
@@ -588,6 +588,86 @@ class PhaseLoad(NetPowerABC):
         if not len(self.load_set) == len(self.normalize):
             self._issue_error("sanity")
 
+    # ------------------------------------------------------------------
+    # VISUALIZATION
+    # ------------------------------------------------------------------
+    # def plot(self, ax=None, n_points=None, detailed=False, **kwargs):
+
 
 class PulseLoad(NetPowerABC):
-    pass
+    """
+    Representation of the total power load during a pulse.
+
+    Defines the pulse load with a set of 'PhaseLoad' instances.
+
+    Parameters
+    ----------
+    name: str
+        Description of the 'PulseLoad' instance.
+    load_set: PhaseLoad | list[PhaseLoad]
+        Ordered collection of instances of the 'PhaseLoad' class that
+        define the 'PulseLoad' object.
+
+    Attributes
+    ----------
+    pulse: PowerCyclePulse
+        Pulse specification, determined by the 'phase' attributes of the
+        'PhaseLoad' instances used to define the 'PulseLoad'.
+    """
+
+    # ------------------------------------------------------------------
+    # CLASS ATTRIBUTES & CONSTRUCTOR
+    # ------------------------------------------------------------------
+
+    # Override number of points
+    _n_points = 100
+
+    # Override pyplot defaults
+    _plot_defaults = {
+        "c": "k",  # Line color
+        "lw": 2,  # Line width
+        "ls": "-",  # Line style
+    }
+
+    # Defaults for detailed plots
+    _detailed_defaults = {
+        "c": "k",  # Line color
+        "lw": 1,  # Line width
+        "ls": "--",  # Line style
+    }
+
+    def __init__(self, name, load_set):
+
+        super().__init__(name)
+
+        self.load_set = self._validate_load_set(load_set)
+        self.pulse = self._build_pulse()
+
+    @staticmethod
+    def _validate_load_set(load_set):
+        """
+        Validate 'load_set' input to be a list of 'PhaseLoad' instances.
+        """
+        load_set = super(PulseLoad, PulseLoad).validate_list(load_set)
+        for element in load_set:
+            PhaseLoad.validate_class(element)
+        return load_set
+
+    def _build_pulse(self):
+        """
+        Build pulse from 'PowerCyclePhase' instances stored in the
+        'phase' attributes of each 'PhaseLoad' instance in the
+        'load_set' ordered list.
+        """
+        load_set = self.load_set
+        phase_set = []
+        for load in load_set:
+            phase = load.phase
+            phase_set.append(phase)
+        pulse = PowerCyclePulse("Pulse", phase_set)
+        return pulse
+
+    # ------------------------------------------------------------------
+    # VISUALIZATION
+    # ------------------------------------------------------------------
+    # def plot(self, ax=None, n_points=None, detailed=False, **kwargs):

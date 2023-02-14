@@ -7,11 +7,12 @@ import numpy as np
 import pytest
 
 from bluemira.power_cycle.errors import PowerDataError, PowerLoadError  # PhaseLoadError,
-from bluemira.power_cycle.NET_loads import (
+from bluemira.power_cycle.net_loads import (
     PhaseLoad,
     PowerData,
     PowerLoad,
     PowerLoadModel,
+    PulseLoad,
 )
 from bluemira.power_cycle.tools import adjust_2d_graph_ranges  # validate_axes,
 from tests.power_cycle.test_powercycle_time import inputs_for_pulse
@@ -509,15 +510,106 @@ class TestPhaseLoad:
         self.sample_normalflags = sample_normalflags
         self.all_samples = all_samples
 
-    def test_constructor_with_multiple_arguments(self):
+    def construct_multisample(self):
         sample_phases = self.sample_phases
         sample_powerloads = self.sample_powerloads
         sample_normalflags = self.sample_normalflags
 
-        multi_load = PhaseLoad(
-            "PhaseLoad with multiple powerdata & model arguments",
-            sample_phases[0],
+        name = "PhaseLoad with multiple powerload & flag arguments"
+        example_phase = sample_phases[0]
+        multisample = PhaseLoad(
+            name,
+            example_phase,
             sample_powerloads,
             sample_normalflags,
         )
-        assert isinstance(multi_load, PhaseLoad)
+        return multisample
+
+    def test_constructor_with_multiple_arguments(self):
+        multisample = self.construct_multisample()
+        assert isinstance(multisample, PhaseLoad)
+
+    # ------------------------------------------------------------------
+    # VISUALIZATION
+    # ------------------------------------------------------------------
+    # @pytest.mark.parametrize("detailed_plot_flag", [False, True])
+    # def test_plot(self, detailed_plot_flag):
+    #   multi_load = self.construct_multisample()
+
+
+@functools.lru_cache(maxsize=1)
+def inputs_for_pulseload():
+    """
+    Function to create inputs for PulseLoad testing, based on the
+    function that creates inputs for PhaseLoad testing.
+    """
+    (
+        n_inputs,
+        input_phases,
+    ) = inputs_for_pulse()
+
+    (
+        _,
+        _,
+        _,
+        input_powerloads,
+        input_normalflags,
+    ) = inputs_for_phaseload()
+
+    input_names = []
+    input_phaseloads = []
+    for i in range(n_inputs):
+        phase = input_phases[i]
+        name = "PhaseLoad for " + phase.name + " (phase)"
+        powerloads = input_powerloads
+        normalflags = input_normalflags
+        phaseload = PhaseLoad(name, phase, powerloads, normalflags)
+        input_phaseloads.append(phaseload)
+
+        name = "PulseLoad" + str(i)
+        input_names.append(name)
+
+    return (
+        n_inputs,
+        input_names,
+        input_phaseloads,
+    )
+
+
+class TestPulseLoad:
+    def setup_method(self):
+        (
+            n_samples,
+            sample_names,
+            sample_phaseloads,
+        ) = inputs_for_pulseload()
+
+        all_samples = []
+        for s in range(n_samples):
+            name = sample_names[s]
+            phaseload = sample_phaseloads[s]
+            sample = PulseLoad(name, phaseload)
+            all_samples.append(sample)
+        self.sample_phaseloads = sample_phaseloads
+        self.all_samples = all_samples
+
+    def construct_multisample(self):
+        sample_phaseloads = self.sample_phaseloads
+
+        name = "PulseLoad with multiple phaseload arguments"
+        multisample = PulseLoad(
+            name,
+            sample_phaseloads,
+        )
+        return multisample
+
+    def test_constructor_with_multiple_arguments(self):
+        multisample = self.construct_multisample()
+        assert isinstance(multisample, PulseLoad)
+
+    # ------------------------------------------------------------------
+    # VISUALIZATION
+    # ------------------------------------------------------------------
+    # @pytest.mark.parametrize("detailed_plot_flag", [False, True])
+    # def test_plot(self, detailed_plot_flag):
+    #   multi_load = self.construct_multisample()
