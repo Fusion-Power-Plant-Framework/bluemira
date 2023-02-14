@@ -145,30 +145,6 @@ class PowerCycleTimelineError(PowerCycleError):
         return errors
 
 
-class BOPPhaseError(PowerCycleError):
-    """
-    Exception class for 'BOPPhase' class of the Power Cycle module.
-    """
-
-    def _errors(self):
-        errors = {
-            "dependency": (
-                "The 'dependency' parameter used to create an instance "
-                f"of the {self._source} class must be an instance of "
-                "the 'BOPPhaseDependency' class."
-            ),
-        }
-        return errors
-
-
-class BOPPulseError(PowerCycleError):
-    pass
-
-
-class BOPTimelineError(PowerCycleError):
-    pass
-
-
 # ######################################################################
 # NET
 # ######################################################################
@@ -243,3 +219,32 @@ class PhaseLoadError(PowerCycleError):
             ],
         }
         return errors
+
+
+# ######################################################################
+# BOP
+# ######################################################################
+
+
+class BOPPhaseError(PowerCycleError):
+    """
+    Exception class for 'BOPPhase' class of the Power Cycle module.
+    """
+
+    def _errors(self):
+        errors = {
+            "dependency": (
+                "The 'dependency' parameter used to create an instance "
+                f"of the {self._source} class must be an instance of "
+                "the 'BOPPhaseDependency' class."
+            ),
+        }
+        return errors
+
+
+class BOPPulseError(PowerCycleError):
+    pass
+
+
+class BOPTimelineError(PowerCycleError):
+    pass

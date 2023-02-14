@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 
 from bluemira.base.look_and_feel import bluemira_print
 from bluemira.power_cycle.base import PowerCycleABCError
-from bluemira.power_cycle.net import PowerData
+from bluemira.power_cycle.NET_loads import PowerData
 from bluemira.power_cycle.tools import adjust_2d_graph_ranges
 
 # Header

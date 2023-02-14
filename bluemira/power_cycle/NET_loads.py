@@ -10,10 +10,9 @@ import numpy as np
 from scipy.interpolate import interp1d
 
 from bluemira.power_cycle.base import NetPowerABC
-from bluemira.power_cycle.errors import PowerDataError, PowerLoadError  # PhaseLoadError,
+from bluemira.power_cycle.errors import PhaseLoadError, PowerDataError, PowerLoadError
+from bluemira.power_cycle.time import PowerCyclePhase
 from bluemira.power_cycle.tools import validate_axes
-
-# from bluemira.power_cycle.time import PowerCyclePhase
 
 
 class PowerData(NetPowerABC):
@@ -56,13 +55,10 @@ class PowerData(NetPowerABC):
     def _is_increasing(parameter):
         """
         Validate a parameter for creation of a class instance to be an
-        increasing list.
+        (not necessarily strictly) increasing list.
         """
-        check_increasing = []
-        for i in range(len(parameter) - 1):
-            check_increasing.append(parameter[i] <= parameter[i + 1])
-
-        if not all(check_increasing):
+        check = [i <= j for i, j in zip(parameter, parameter[1:])]
+        if not all(check):
             raise PowerDataError("increasing")
         return parameter
 
@@ -489,6 +485,16 @@ class PowerLoad(NetPowerABC):
         another = PowerLoad(another_name, another_set, another_model)
         return another
 
+    def __radd__(self, other):
+        """
+        The reverse addition operator, to enable the 'sum' method for
+        'PowerLoad' instances.
+        """
+        if other == 0:
+            return self
+        else:
+            return self.__add__(other)
+
 
 class PhaseLoad(NetPowerABC):
     """
@@ -545,34 +551,33 @@ class PhaseLoad(NetPowerABC):
 
         self._sanity()
 
-    '''
     @staticmethod
     def _validate_phase(phase):
         """
-        Validate 'phase' input to be a valid PowerCycleTimeline phase.
+        Validate 'phase' input to be a PowerCycleTimeline instance.
         """
-        PowerCyclePhase._validate(phase)
+        PowerCyclePhase.validate_class(phase)
         return phase
 
-    @classmethod
-    def _validate_load_set(cls, load_set):
+    @staticmethod
+    def _validate_load_set(load_set):
         """
         Validate 'load_set' input to be a list of 'PowerLoad' instances.
         """
-        load_set = super()._validate_list(load_set)
+        load_set = super(PhaseLoad, PhaseLoad).validate_list(load_set)
         for element in load_set:
-            PowerLoad._validate(element)
+            PowerLoad.validate_class(element)
         return load_set
 
-    @classmethod
-    def _validate_normalize(cls, normalize):
+    @staticmethod
+    def _validate_normalize(normalize):
         """
         Validate 'normalize' input to be a list of boolean values.
         """
-        normalize = super()._validate_list(normalize)
+        normalize = super(PhaseLoad, PhaseLoad).validate_list(normalize)
         for element in normalize:
             if not isinstance(element, (bool)):
-                cls._issue_error("normalize")
+                raise PhaseLoadError("normalize")
         return normalize
 
     def _sanity(self):
@@ -582,4 +587,7 @@ class PhaseLoad(NetPowerABC):
         """
         if not len(self.load_set) == len(self.normalize):
             self._issue_error("sanity")
-    '''
+
+
+class PulseLoad(NetPowerABC):
+    pass

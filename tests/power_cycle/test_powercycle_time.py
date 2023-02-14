@@ -1,45 +1,71 @@
 # COPYRIGHT PLACEHOLDER
 
+import functools
+
 import pytest
 
 import bluemira.base.constants as constants
-from bluemira.power_cycle.errors import (  # PowerCycleTimeABCError,; PowerCyclePulseError,; PowerCycleTimelineError,
-    BOPPhaseError,
-    PowerCycleABCError,
-    PowerCyclePhaseError,
-)
-from bluemira.power_cycle.time import (  # BOPPulse,; BOPTimeline,
-    BOPPhase,
-    BOPPhaseDependency,
+from bluemira.power_cycle.errors import PowerCycleABCError, PowerCyclePhaseError
+from bluemira.power_cycle.time import (
     PowerCyclePhase,
     PowerCyclePulse,
     PowerCycleTimeline,
 )
 
-# from bluemira.power_cycle.base import PowerCycleTimeABC
 
+@functools.lru_cache(maxsize=1)
+def inputs_for_phase():
+    """
+    Function to create inputs for PowerCyclePhase testing.
+    The lists 'input_names' and 'input_breakdowns' must have the same
+    length.
+    """
+    input_names = [
+        "Dwell",
+        "Transition between dwell and flat-top",
+        "Flat-top",
+        "Transition between flat-top and dwell",
+    ]
+    input_breakdowns = [
+        {
+            "CS-recharge + pumping": constants.raw_uc(10, "minute", "second"),
+        },
+        {
+            "ramp-up": 157,
+            "heating": 19,
+        },
+        {"burn": constants.raw_uc(2, "hour", "second")},
+        {
+            "cooling": 123,
+            "ramp-down": 157,
+        },
+    ]
+    assert len(input_names) == len(input_breakdowns)
+    n_inputs = len(input_names)
 
-# from bluemira.power_cycle.tools import (
-#    adjust_2d_graph_ranges,
-#    validate_axes,
-# )
-
-
-def example_phase_inputs():
-    phase_name = "Transition between dwell and flat-top"
-    phase_breakdown = {
-        "pump-down": constants.raw_uc(10, "minute", "second"),
-        "ramp-up": constants.raw_uc(5.2, "minute", "second"),
-        "heating": constants.raw_uc(1.4, "minute", "second"),
-    }
-    return phase_name, phase_breakdown
+    return (
+        n_inputs,
+        input_names,
+        input_breakdowns,
+    )
 
 
 class TestPowerCyclePhase:
     def setup_method(self):
-        phase_name, phase_breakdown = example_phase_inputs()
-        self.sample_name = phase_name
-        self.sample_breakdown = phase_breakdown
+        (
+            n_samples,
+            sample_names,
+            sample_breakdowns,
+        ) = inputs_for_phase()
+
+        all_samples = []
+        for s in range(n_samples):
+            name = sample_names[s]
+            breakdown = sample_breakdowns[s]
+            sample = PowerCyclePhase(name, breakdown)
+            all_samples.append(sample)
+        self.sample_breakdowns = sample_breakdowns
+        self.all_samples = all_samples
 
     breakdown_arguments = [
         [None, None, None, None],
@@ -52,7 +78,7 @@ class TestPowerCyclePhase:
     @pytest.mark.parametrize("test_keys", breakdown_arguments)
     @pytest.mark.parametrize("test_values", breakdown_arguments)
     def test_validate_breakdown(self, test_keys, test_values):
-        name = self.sample_name
+        name = "Name for dummy sample"
         breakdown = dict(zip(test_keys, test_values))
 
         try:
@@ -62,143 +88,113 @@ class TestPowerCyclePhase:
             str_keys = [isinstance(k, str) for k in test_keys]
             all_keys_are_str = all(str_keys)
             if all_keys_are_str:
-                # Error must be of nonnegative values
+                # Error informs requirement of nonnegative values
                 with pytest.raises(PowerCycleABCError):
                     sample = PowerCyclePhase(name, breakdown)
             else:
-                # Error must be of non-string dictionary keys
+                # Error informs requirement of non-string dict keys
                 with pytest.raises(PowerCyclePhaseError):
                     sample = PowerCyclePhase(name, breakdown)
 
-    def test_constructor(self):
-        sample_name = self.sample_name
-        sample_breakdown = self.sample_breakdown
-        sample = PowerCyclePhase(sample_name, sample_breakdown)
+    def test_duration(self):
+        all_samples = self.all_samples
+        for sample in all_samples:
+            breakdown = sample.duration_breakdown
+            durations_in_breakdown = list(breakdown.values())
+            total_duration = sum(durations_in_breakdown)
+            assert sample.duration == total_duration
 
-        all_durations_in_breakdown = list(sample_breakdown.values())
-        total_duration = sum(all_durations_in_breakdown)
-        assert sample.duration == total_duration
+
+def inputs_for_pulse():
+    """
+    Function to create inputs for PowerCyclePulse testing.
+    """
+    (
+        n_inputs,
+        input_names,
+        input_breakdowns,
+    ) = inputs_for_phase()
+
+    input_phases = []
+    for i in range(n_inputs):
+        name = input_names[i]
+        breakdown = input_breakdowns[i]
+        phase = PowerCyclePhase(name, breakdown)
+        input_phases.append(phase)
+
+    return (
+        n_inputs,
+        input_phases,
+    )
 
 
 class TestPowerCyclePulse:
     def setup_method(self):
-        phase_names = [
-            "phase 1",
-            "phase 2",
-            "phase 3",
-        ]
-        phase_breakdowns = [
-            {
-                "phase 1 - subphase 1": 1,
-                "phase 1 - subphase 2": 2,
-                "phase 1 - subphase 3": 4,
-                "phase 1 - subphase 4": 8,
-            },
-            {
-                "phase 2 - subphase 1": 10,
-            },
-            {
-                "phase 3 - subphase 1": 100,
-                "phase 3 - subphase 2": 100,
-                "phase 3 - subphase 3": 100,
-            },
-        ]
+        (
+            n_samples,
+            sample_phases,
+        ) = inputs_for_pulse()
 
-        test_phases = []
-        n_phases = len(phase_names)
-        for p in range(n_phases):
-
-            name = phase_names[p]
-            breakdown = phase_breakdowns[p]
-            phase = PowerCyclePhase(name, breakdown)
-            test_phases.append(phase)
-
-        self.test_phases = test_phases
+        name = "Pulse example"
+        phase_set = sample_phases
+        pulse = PowerCyclePulse(name, phase_set)
+        self.sample_phases = sample_phases
+        self.sample = pulse
 
     def test_validate_phase_set(self):
-        all_phases = self.test_phases
-        for phase in all_phases:
+        sample_phases = self.sample_phases
+        for phase in sample_phases:
             phase_set = PowerCyclePulse._validate_phase_set(phase)
             individual_phase_becomes_list = isinstance(phase_set, list)
             assert individual_phase_becomes_list
-        phase_set = PowerCyclePulse._validate_phase_set(all_phases)
+        phase_set = PowerCyclePulse._validate_phase_set(sample_phases)
         phase_set_becomes_list = isinstance(phase_set, list)
         assert phase_set_becomes_list
 
-    def test_constructor(self):
-        sample_phases = self.test_phases
-        sample_name = "Test instance of PowerCyclePulse"
-        sample = PowerCyclePulse(sample_name, sample_phases)
-        self.sample = sample
+
+def inputs_for_timeline():
+    """
+    Function to create inputs for PowerCycleTimeline testing.
+    """
+    (
+        _,
+        input_phases,
+    ) = inputs_for_pulse()
+
+    n_pulses = 10
+
+    input_pulses = []
+    for p in range(n_pulses):
+        name = "Pulse " + str(p)
+        phase = input_phases
+        pulse = PowerCyclePulse(name, phase)
+        input_pulses.append(pulse)
+
+    return (
+        n_pulses,
+        input_pulses,
+    )
 
 
 class TestPowerCycleTimeline:
     def setup_method(self):
-        pulse_test_class = TestPowerCyclePulse()
-        pulse_test_class.setup_method()
-        pulse_test_class.test_constructor()
-        pulse_sample = pulse_test_class.sample
-        number_of_pulses = 10
-        test_pulses = [pulse_sample] * number_of_pulses
-        self.test_pulses = test_pulses
+        (
+            n_samples,
+            sample_pulses,
+        ) = inputs_for_timeline()
+
+        name = "Timeline example"
+        pulse_set = sample_pulses
+        timeline = PowerCycleTimeline(name, pulse_set)
+        self.sample_pulses = pulse_set
+        self.sample = timeline
 
     def test_validate_pulse_set(self):
-        all_pulses = self.test_pulses
-        for pulse in all_pulses:
+        sample_pulses = self.sample_pulses
+        for pulse in sample_pulses:
             pulse_set = PowerCycleTimeline._validate_pulse_set(pulse)
             individual_pulse_becomes_list = isinstance(pulse_set, list)
             assert individual_pulse_becomes_list
-        pulse_set = PowerCycleTimeline._validate_pulse_set(all_pulses)
+        pulse_set = PowerCycleTimeline._validate_pulse_set(sample_pulses)
         pulse_set_becomes_list = isinstance(pulse_set, list)
         assert pulse_set_becomes_list
-
-    def test_constructor(self):
-        sample_pulses = self.test_pulses
-        sample_name = "Test instance of PowerCycleTimeline"
-        sample = PowerCycleTimeline(sample_name, sample_pulses)
-        self.sample = sample
-
-
-class TestBOPPhaseDependency:
-    def test_members(self):
-        all_names = [member.name for member in BOPPhaseDependency]
-        all_values = [member.value for member in BOPPhaseDependency]
-
-        for (name, value) in zip(all_names, all_values):
-            assert isinstance(name, str)
-            assert isinstance(value, str)
-
-
-class TestBOPPhase:
-    def setup_method(self):
-        phase_name, phase_breakdown = example_phase_inputs()
-        self.sample_name = phase_name
-        self.sample_breakdown = phase_breakdown
-
-    dependency_arguments = [
-        None,
-        154,
-        "ss",
-        "tt",
-        BOPPhaseDependency("ss"),
-        BOPPhaseDependency("tt"),
-    ]
-
-    @pytest.mark.parametrize("test_dependency", dependency_arguments)
-    def test_constructor(self, test_dependency):
-        name = self.sample_name
-        breakdown = self.sample_breakdown
-        try:
-            sample = BOPPhase(name, breakdown, test_dependency)
-        except (BOPPhaseError):
-            dependency_class = type(test_dependency)
-            dependency_is_valid = dependency_class == BOPPhaseDependency
-            assert not dependency_is_valid
-
-
-class TestBOPPulse:
-    pass
-
-
-class TestBOPTimeline:
-    pass
