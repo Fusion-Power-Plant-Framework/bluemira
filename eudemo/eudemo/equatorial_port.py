@@ -62,65 +62,33 @@ class EquatorialPortBuilderParams(ParameterFrame):
     Equatorial Port builder parameters
     """
 
-    n_TF: Parameter[int]
-    r_vv_ib_in: Parameter[float]
-    r_vv_ob_in: Parameter[float]
-    tk_vv_in: Parameter[float]
-    tk_vv_out: Parameter[float]
-    g_vv_bb: Parameter[float]
-    vv_in_off_deg: Parameter[float]
-    vv_out_off_deg: Parameter[float]
-
-
-class EquatorialPortDesigner(Designer):
-    """
-    Equatorial Port Designer
-    """
-
-    param_cls = None
-
-    def __init__(
-        self,
-        params: Union[Dict, ParameterFrame],
-        build_config: Dict,
-        divertor_xz: BluemiraFace,
-    ):
-        super().__init__(params, build_config)
-        self.divertor_xz = divertor_xz
-
-    def run(self):
-        """Run method of Designer"""
-
-        # TODO return port koz
-
-        # Task 1 create trajectory
-        # step 1, what angle is the divertor taken out at
-        # step 2, trace path through reactor
-        # step 3, return to horizontal
-        #         (at what level or just immediately outside reactor)
+    ep_x_inner: Parameter[float]
+    ep_x_outer: Parameter[float]
+    ep_z_min: Parameter[float]
+    ep_z_max: Parameter[float]
+    # ep_y_min: Parameter[float]
+    # ep_y_max: Parameter[float]
+    ep_thickness : Parameter[float] 
+    """ May need to expand parameters further for asymmetric port cases """
 
 
 class EquatorialPortBuilder(Builder):
     """
     Equatorial Port Builder
     """
-
-    VV = "VV"
-    BODY = "Body"
+    BODY = "Equatorial Port"
     param_cls: Type[EquatorialPortBuilderParams] = EquatorialPortBuilderParams
 
     def __init__(
         self,
         params: Union[ParameterFrame, Dict],
         build_config: Dict,
-        ivc_koz: BluemiraWire,
     ):
         super().__init__(params, build_config)
-        self.ivc_koz = ivc_koz
 
     def build(self) -> Component:
         """
-        Build the vacuum vessel component.
+        Build the equatorial port component.
         """
         xz_vv = self.build_xz()
         vv_face = xz_vv.get_component_properties("shape")
@@ -131,42 +99,50 @@ class EquatorialPortBuilder(Builder):
             xyz=self.build_xyz(vv_face),
         )
 
-    def build_xz(self, ) -> PhysicalComponent:
+    def build_xz(self) -> PhysicalComponent:
         """
         Build the x-z components of the equatorial port
         """
-        inner_vv = offset_wire(
-            self.ivc_koz, self.params.g_vv_bb.value, join="arc", open_wire=False
-        )
-        outer_vv = varied_offset(
-            inner_vv,
-            self.params.tk_vv_in.value,
-            self.params.tk_vv_out.value,
-            self.params.vv_in_off_deg.value,
-            self.params.vv_out_off_deg.value,
-            num_points=300,
-        )
-        face = BluemiraFace([outer_vv, inner_vv])
+        # Placeholder magic numbers
+        x_min = 1
+        x_max = 4
+        z_min = 1
+        z_max = 4
+        thick = 1
 
-        body = PhysicalComponent(self.BODY, face)
-        body.plot_options.face_options["color"] = BLUE_PALETTE[self.VV][0]
+        z_bottom_in = x_min + thick
+        z_top_in = x_max - thick
+
+        ep_top_x = [x_min, x_max, x_max, x_min]
+        ep_top_z = [z_top_in, z_top_in, z_max, z_max]
+        ep_bottom_x = [x_min, x_max, x_max, x_min]
+        ep_bottom_z = [z_min, z_min, z_bottom_in, z_bottom_in]
+        face_top = BluemiraFace(make_polygon({"x": ep_top_x, "y": 0, "z": ep_top_z}, closed=True))
+        face_bottom = BluemiraFace(make_polygon({"x": ep_bottom_x, "y": 0, "z": ep_bottom_z}, closed=True))
+
+        body = PhysicalComponent(self.BODY, face_top)
+        body.plot_options.face_options["color"] = BLUE_PALETTE["VV"][0]
 
         return body
 
-    def build_xy(self, vv_face: BluemiraFace) -> List[PhysicalComponent]:
+    def build_xy(self) -> PhysicalComponent:
         """
         Build the x-y components of the equatorial port
         """
-        return build_sectioned_xy(vv_face, BLUE_PALETTE[self.VV][0])
+        # TODO: Implement build_xy functionality
+        #     return build_sectioned_xy(vv_face, BLUE_PALETTE[self.VV][0])
+        pass
 
     def build_xyz(self, vv_face: BluemiraFace) -> PhysicalComponent:
         """
         Build the x-y-z components of the equatorial port
         """
-        return build_sectioned_xyz(
-            vv_face,
-            self.BODY,
-            self.params.n_TF.value,
-            BLUE_PALETTE[self.VV][0],
-            degree,
-        )
+        # TODO: Implement build_xyz functionality
+        #     return build_sectioned_xyz(
+        #         vv_face,
+        #         self.BODY,
+        #         self.params.n_TF.value,
+        #         BLUE_PALETTE[self.VV][0],
+        #         degree,
+        #     )
+        pass
