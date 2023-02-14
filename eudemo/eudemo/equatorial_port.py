@@ -107,8 +107,8 @@ class EquatorialPortBuilder(Builder):
 
         x_min = self.params.ep_x_inner.value
         x_max = self.params.ep_x_outer.value
-        z_min = self.params.ep_z_inner.value
-        z_max = self.params.ep_x_outer.value
+        z_min = self.params.ep_z_min.value
+        z_max = self.params.ep_z_max.value
         wall_thickness = self.params.ep_thickness.value
 
         z_bottom_in = z_min + wall_thickness
