@@ -102,7 +102,9 @@ class ParameterFrame:
             value_type = _validate_parameter_field(key, self._types[key])
             new_param = Parameter(name=key, **value, _value_types=value_type)
             param.set_value(
-                new_param.value if param.unit == "" else new_param.value_as(param.unit),
+                new_param.value
+                if param.unit == "" or new_param.value is None
+                else new_param.value_as(param.unit),
                 new_param.source,
             )
             if new_param.long_name != "":
@@ -116,7 +118,10 @@ class ParameterFrame:
             if hasattr(self, o_param.name):
                 param = getattr(self, o_param.name)
                 param.set_value(
-                    raw_uc(o_param.value, o_param.unit, param.unit), o_param.source
+                    o_param.value
+                    if param.unit == "" or o_param.value is None
+                    else o_param.value_as(param.unit),
+                    o_param.source,
                 )
                 if o_param.long_name != "":
                     param._long_name = o_param.long_name
