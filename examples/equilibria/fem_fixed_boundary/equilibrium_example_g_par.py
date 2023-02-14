@@ -214,13 +214,17 @@ for axi in ax.flat:
 
 plt.show()
 
-# calculate g param
+# %% [markdown]
+# Calculate g param
+
+# %%
 gs_solver = fem_GS_fixed_boundary
 transport_solver = plasmod_solver
 
 from bluemira.geometry.coordinates import Coordinates
 
-x1D = np.concatenate((np.array([0]), np.linspace(0.1, 0.99, 100)))
+x1D = np.linspace(0.1, 1, 100)
+#x1D = transport_solver.get_profile("x")
 
 x2D = gs_solver.psi_norm_2d
 mesh = gs_solver.mesh
@@ -235,17 +239,23 @@ z = mesh_points[:, 1]
 x2D_data = np.array([x2D(p) for p in mesh_points])
 
 ax, cntr, cntrf = utilities.plot_scalar_field(x, z, x2D_data, levels=x1D)
+plt.title("psi_norm")
 plt.show()
 
 index = []
 FS = []
 for i in range(nx):
-    path = cntr.collections[i].get_paths()
-    if len(path):
-        FS.append(path[0].vertices)
+    if x1D[i] == 1:
+        from bluemira.equilibria.fem_fixed_boundary import file
+        path = np.transpose(file._get_mesh_boundary(mesh))
+        FS.append(path)
     else:
-        print(f"Cannot calculate volume for psi_norm = {x1D[i]}")
-        index.append(i)
+        path = cntr.collections[i].get_paths()
+        if len(path):
+            FS.append(path[0].vertices)
+        else:
+            print(f"Cannot calculate volume for psi_norm = {x1D[i]}")
+            index.append(i)
 
 n = len(index)
 for i in range(n):
@@ -272,7 +282,9 @@ for i in range(nx):
     V[i] = 2 * np.pi * pgonFac.center_of_mass[0] * pgonFac.area
     FS_pol.append(pgonPol)
 
-root.plot_2d()
+root.plot_2d(show=False)
+plt.title("Flux surfaces for g2,g3 calculation")
+plt.show()
 
 V = V.reshape(-1)
 
@@ -288,9 +300,11 @@ import numdifftools as nd
 gradV_x1D = nd.Gradient(V_fun)
 gradV_x1D_data = np.array([gradV_x1D(x) for x in x1D])
 
-plt.plot(x1D, V)
+plt.plot(x1D, V, label='V')
 # plt.plot(x1D, dVdx_data, 'ro')
-plt.plot(x1D, gradV_x1D_data, "g-")
+plt.plot(x1D, gradV_x1D_data, "g-", label="gradV")
+plt.xlabel("psi_norm")
+plt.legend()
 plt.show()
 
 grad_x2D = nd.Gradient(x2D)
@@ -303,10 +317,8 @@ def grad_x2D_norm(x):
 grad_x2D_data = np.array([grad_x2D(p) for p in mesh_points])
 grad_x2D_norm_data = np.sqrt(np.sum(np.abs(grad_x2D_data) ** 2, axis=-1))
 
-ax, cntr, cntrf = utilities.plot_scalar_field(x, z, x2D_data)
-plt.show()
-
 ax, cntr, cntrf = utilities.plot_scalar_field(x, z, grad_x2D_norm_data)
+plt.title("|grad psi_norm|")
 plt.show()
 
 psi_data = np.array([gs_solver.psi(p) for p in mesh_points])
@@ -321,9 +333,11 @@ def grad_psi_norm(x):
 grad_psi_norm_data = np.array([grad_psi_norm(p) for p in mesh_points])
 
 ax, cntr, cntrf = utilities.plot_scalar_field(x, z, psi_data)
+plt.title("psi")
 plt.show()
 
 ax, cntr, cntrf = utilities.plot_scalar_field(x, z, grad_psi_norm_data)
+plt.title("|grad psi|")
 plt.show()
 
 r2D = mesh_points[:, 0]
@@ -335,12 +349,13 @@ def gradV_norm(x):
 gradV_norm_data = np.array([gradV_norm(p) for p in mesh_points])
 
 ax, cntr, cntrf = utilities.plot_scalar_field(x, z, gradV_norm_data)
+plt.title("|grad V|")
 plt.show()
 
 
 def Bp(x):
     """Bp"""
-    return np.divide(grad_psi_norm(x), x[0]) / (2 * np.pi)
+    return np.divide(grad_psi_norm(x), x[0]) / (2 * np.pi * x[0])
 
 
 Bp_data = np.array([Bp(p) for p in mesh_points])
@@ -356,7 +371,7 @@ for i in range(nx):
     lp.append(np.cumsum(dlp[i]))
 
 for i in range(nx):
-    print(f"integrating over FS[{i}")
+    print(f"integrating over FS[{i}]")
     points = FS_pol[i].vertexes[[0, 2], :]
     points = np.transpose(points)
     points = np.concatenate((points, [points[0]]))
@@ -370,16 +385,38 @@ for i in range(nx):
     g2[i] = np.trapz(y2_data, x_data) / np.trapz(y0_data, x_data)
     g3[i] = np.trapz(y3_data, x_data) / np.trapz(y0_data, x_data)
 
+g1 = g1.flatten()
+g2 = g2.flatten()
+g3 = g3.flatten()
+
+x1D = np.insert(x1D, 0, 0)
+g1 = np.insert(g1, 0, 0)
+g2 = np.insert(g2, 0, 0)
+g3 = np.insert(g3, 0, 0)
+
+g2_temp = interp1d(x1D[1:-1], g2[1:-1], fill_value="extrapolate")
+g2[-1] = g2_temp(x1D[-1])
+
+g3_temp = interp1d(x1D[1:-1], g3[1:-1], fill_value="extrapolate")
+g3[0] = g3_temp(x1D[0])
+g3[-1] = g3_temp(x1D[-1])
+
 x_plasmod = transport_solver.get_profile("x")
 g2_plasmod = transport_solver.get_profile("g2")
 g3_plasmod = transport_solver.get_profile("g3")
 
-plt.plot(x_plasmod, g2_plasmod, "ro")
-plt.plot(x1D, g2, "b-")
+plt.plot(x_plasmod, g2_plasmod, "ro", label="PLASMOD")
+plt.plot(x1D, g2, "b-", label="bluemira")
+plt.grid()
 plt.title("g2")
+plt.xlabel("psi_norm")
+plt.legend()
 plt.show()
 
-plt.plot(x_plasmod, g3_plasmod, "ro")
-plt.plot(x1D, g3, "b-")
+plt.plot(x_plasmod, g3_plasmod, "ro", label="PLASMOD")
+plt.plot(x1D, g3, "b-", label="bluemira")
+plt.grid()
 plt.title("g3")
+plt.xlabel("psi_norm")
+plt.legend()
 plt.show()
