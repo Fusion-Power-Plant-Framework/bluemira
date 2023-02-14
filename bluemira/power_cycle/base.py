@@ -120,8 +120,8 @@ class PowerCycleTimeABC(PowerCycleABC):
 
 class NetPowerABC(PowerCycleABC, metaclass=ABCMeta):
     """
-    Abstract base class for classes in the Power Cycle module that are
-    used to account, sum and manage power loads.
+    Abstract base class for classes in the NET submodule of the Power
+    Cycle module that are used to account, sum and manage power loads.
     """
 
     # ------------------------------------------------------------------

@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 
 # Import Power Cycle packages
 from bluemira.base.look_and_feel import bluemira_print
-from bluemira.power_cycle.net import PowerData, PowerLoad, PowerLoadModel
+from bluemira.power_cycle.NET_loads import PowerData, PowerLoad, PowerLoadModel
 from bluemira.power_cycle.tools import adjust_2d_graph_ranges
 
 # from scipy.interpolate import interp1d as imported_interp1d

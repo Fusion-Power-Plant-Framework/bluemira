@@ -7,6 +7,18 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 # ######################################################################
+# MANIPULATION
+# ######################################################################
+
+
+def unnest_list(list_of_lists):
+    """
+    Un-nest a list of lists into a simple list, maintaining order.
+    """
+    return [item for sublist in list_of_lists for item in sublist]
+
+
+# ######################################################################
 # PLOTTING
 # ######################################################################
 
