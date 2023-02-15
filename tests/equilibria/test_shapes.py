@@ -333,7 +333,7 @@ class TestManickamCunninghamZakahrovCAD:
     @pytest.mark.xfail
     @pytest.mark.parametrize("parameterisation", [CunninghamLCFS, ManickamLCFS])
     @pytest.mark.parametrize("delta", [0.33, -0.33, 0.5, -0.5])
-    def test_delta(self, parameterisation, delta):
+    def test_delta_fail(self, parameterisation, delta):
         pos = parameterisation()
         lb, ub = 0.9 * delta, 1.1 * delta
         lb, ub = min(lb, ub), max(lb, ub)
