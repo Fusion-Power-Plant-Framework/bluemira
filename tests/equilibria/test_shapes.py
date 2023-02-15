@@ -24,11 +24,13 @@ import pytest
 from matplotlib import pyplot as plt
 from scipy.spatial import ConvexHull
 
+from bluemira.equilibria.flux_surfaces import ClosedFluxSurface
 from bluemira.equilibria.shapes import (
     CunninghamLCFS,
     JohnerLCFS,
     KuiroukidisLCFS,
     ManickamLCFS,
+    ZakharovLCFS,
     flux_surface_cunningham,
     flux_surface_johner,
     flux_surface_kuiroukidis,
@@ -292,14 +294,18 @@ class TestKuiroukidisCAD:
         assert np.isclose(wire_pos.length, wire_neg.length)
 
 
-class TestManickamCunninghamCAD:
-    @pytest.mark.parametrize("parameterisation", [ManickamLCFS, CunninghamLCFS])
+class TestManickamCunninghamZakahrovCAD:
+    @pytest.mark.parametrize(
+        "parameterisation", [ManickamLCFS, CunninghamLCFS, ZakharovLCFS]
+    )
     def test_segments(self, parameterisation):
         p = parameterisation()
         wire = p.create_shape()
         assert len(wire._boundary) == 1
 
-    @pytest.mark.parametrize("parameterisation", [ManickamLCFS, CunninghamLCFS])
+    @pytest.mark.parametrize(
+        "parameterisation", [ManickamLCFS, CunninghamLCFS, ZakharovLCFS]
+    )
     def test_symmetry(self, parameterisation):
         p_pos = parameterisation()
         p_neg = parameterisation()
@@ -310,3 +316,30 @@ class TestManickamCunninghamCAD:
         wire_neg = p_neg.create_shape()
 
         assert np.isclose(wire_pos.length, wire_neg.length)
+
+    @pytest.mark.parametrize(
+        "parameterisation", [ManickamLCFS, CunninghamLCFS, ZakharovLCFS]
+    )
+    @pytest.mark.parametrize("delta", [0.33, -0.33, 0.5, -0.5, 0])
+    def test_delta(self, parameterisation, delta):
+        pos = parameterisation()
+        lb, ub = 0.9 * delta, 1.1 * delta
+        lb, ub = min(lb, ub), max(lb, ub)
+        pos.adjust_variable("delta", delta, lower_bound=lb, upper_bound=ub)
+        wire = pos.create_shape(n_points=1000)
+
+        fs = ClosedFluxSurface(wire.discretize(ndiscr=1000, byedges=True))
+        np.testing.assert_almost_equal(delta, fs.delta)
+
+    @pytest.mark.parametrize(
+        "parameterisation", [ManickamLCFS, CunninghamLCFS, ZakharovLCFS]
+    )
+    @pytest.mark.parametrize("kappa", [1.0, 1.5, 2.0])
+    def test_kappa(self, parameterisation, kappa):
+        pos = parameterisation()
+        lb, ub = 0.9 * kappa, 1.1 * kappa
+        pos.adjust_variable("kappa", kappa, lower_bound=lb, upper_bound=ub)
+        wire = pos.create_shape(n_points=1000)
+
+        fs = ClosedFluxSurface(wire.discretize(ndiscr=1000, byedges=True))
+        np.testing.assert_almost_equal(kappa, fs.kappa)

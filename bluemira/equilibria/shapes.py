@@ -45,6 +45,30 @@ __all__ = [
 ]
 
 
+def _generate_theta(n):
+    """
+    Generate a poloidal angle vector that encompasses all extrema
+    """
+    quart_values = np.array([0, 0.5 * np.pi, np.pi, 1.5 * np.pi, 2 * np.pi])
+    if n <= 4:
+        return quart_values
+
+    n_leftover = n % 4
+    n_chunk = n // 4
+
+    thetas = []
+    for i in range(0, 3):
+        if n_leftover != 0:
+            n_quart = n_chunk + 1
+            n_leftover -= 1
+        else:
+            n_quart = n_chunk
+        theta = np.linspace(quart_values[i], quart_values[i + 1], n_quart)
+        thetas.append(theta)
+
+    return np.concatenate(thetas)
+
+
 def flux_surface_zakharov(r_0, z_0, a, kappa, delta, n=20):
     """
     As featured in Zakharov's EMEQ
@@ -79,7 +103,7 @@ def flux_surface_zakharov(r_0, z_0, a, kappa, delta, n=20):
         (4). This is because benchmarking with EMEQ shows this does not
         appear to occur.
     """
-    t = np.linspace(0, 2 * np.pi, n)  # Theta
+    t = _generate_theta(n)
     x = r_0 + a * np.cos(t) - a * (delta) * np.sin(t) ** 2
     z = z_0 + a * kappa * np.sin(t)
     return Coordinates({"x": x, "z": z})
@@ -171,7 +195,7 @@ def flux_surface_cunningham(r_0, z_0, a, kappa, delta, delta2=0.0, n=20):
         Plasma flux surface shape
     """
     t = np.linspace(0, 2 * np.pi, n)[:-1]  # Theta
-
+    t = _generate_theta(n)
     x = r_0 + a * np.cos(t + delta * np.sin(t) + delta2 * np.sin(2 * t))
     z = z_0 + a * kappa * np.sin(t)
     return Coordinates({"x": x, "z": z})
@@ -270,6 +294,7 @@ def flux_surface_manickam(r_0, z_0, a, kappa=1, delta=0, indent=0, n=20):
         Plasma flux surface shape
     """
     t = np.linspace(0, 2 * np.pi, n)[:-1]  # Theta
+    t = _generate_theta(n)
     x = r_0 - indent + (a + indent * np.cos(t)) * np.cos(t + delta * np.sin(t))
     z = z_0 + kappa * a * np.sin(t)
     return Coordinates({"x": x, "z": z})
