@@ -45,6 +45,7 @@ import shutil
 
 import matplotlib.pyplot as plt
 import numpy as np
+import scipy.integrate
 
 from bluemira.base.file import get_bluemira_path, get_bluemira_root
 from bluemira.base.logs import set_log_level
@@ -420,3 +421,37 @@ plt.title("g3")
 plt.xlabel("psi_norm")
 plt.legend()
 plt.show()
+
+# second step: calculate H
+x_plasmod = transport_solver.get_profile("x")
+q_plasmod = transport_solver.get_profile("q")
+p_plasmod = transport_solver.get_profile("pressure")
+B_0 = plasmod_params["B_0"]["value"]
+R_0 = plasmod_params["R_0"]["value"]
+
+g2_fun = interp1d(x1D, g2, fill_value="extrapolate")
+grad_g2_x1D = nd.Gradient(g2_fun)
+
+g3_fun = interp1d(x1D, g3, fill_value="extrapolate")
+grad_g3_x1D = nd.Gradient(g3_fun)
+
+q_fun = interp1d(x_plasmod, q_plasmod, fill_value="extrapolate")
+p_fun = interp1d(x_plasmod, p_plasmod, fill_value="extrapolate")
+grad_p_x1D = nd.Gradient(p_fun)
+
+def q2_g32(x):
+    return q_fun(x) ** 2 / g3_fun(x) ** 2
+
+def func_A(x):
+    return (grad_g2_x1D(x) + 8 * np.pi ** 4 * nd.Gradient(q2_g32)(x)) / (
+                g2_fun(x) / 2 + 8 * np.pi ** 4 * q_fun(x) ** 2 / g3_fun(x) ** 2)
+
+from bluemira.base.constants import MU_0
+def func_P(x):
+    return 4 * np.pi ** 2 * MU_0 * grad_p_x1D(x) / (g2_fun(x) / 2 + 8 * np.pi ** 4 * q_fun(x) ** 2 / g3_fun(x) ** 2)
+
+
+from scipy.integrate import quad
+def c1(x):
+    return quad(func_A, x, 1)
+
