@@ -64,13 +64,19 @@ def _generate_theta(n):
         else:
             n_quart = n_chunk
         if n_quart > 1:
-            theta = np.linspace(
-                quart_values[i], quart_values[i + 1], n_quart, endpoint=i == 3
-            )
+            if i != 3:
+                theta = np.linspace(
+                    quart_values[i], quart_values[i + 1], n_quart + 1, endpoint=True
+                )[:-1]
+            else:
+                theta = np.linspace(
+                    quart_values[i], quart_values[i + 1], n_quart, endpoint=False
+                )[:-1]
         else:
             theta = np.array([quart_values[i]])
         thetas.append(theta)
-
+    if n > 7:
+        thetas.append(np.array([2 * np.pi]))
     return np.concatenate(thetas)
 
 
