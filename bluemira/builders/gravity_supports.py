@@ -40,6 +40,7 @@ from bluemira.builders.tools import (
     make_circular_xy_ring,
 )
 from bluemira.display.palettes import BLUE_PALETTE
+from bluemira.geometry.compound import BluemiraCompound
 from bluemira.geometry.coordinates import Coordinates
 from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.plane import BluemiraPlane
@@ -66,6 +67,7 @@ class ITERGravitySupportBuilderParams(ParameterFrame):
     tf_wp_depth: Parameter[float]
     tk_tf_side: Parameter[float]
     tf_gs_tk_plate: Parameter[float]
+    tf_gs_g_plate: Parameter[float]
     tf_gs_base_depth: Parameter[float]
 
 
@@ -101,10 +103,9 @@ class ITERGravitySupportBuilder(Builder):
         shape_list = []
         # First, project upwards at the radius of the GS into the keep-out-zone
         # and get a x-z face of the boolean difference.
-        tf_face = BluemiraFace(self.tf_xz_keep_out_zone)
 
         # Get the square width
-        width = self.params.tf_wp_depth * 2 * self.params.tk_tf_side
+        width = self.params.tf_wp_depth + 2 * self.params.tk_tf_side
         x_inner_line = self.params.x_g_support - 0.5 * width
         x_outer_line = self.params.x_g_support + 0.5 * width
         z_min = self.tf_xz_keep_out_zone.bounding_box.z_min
@@ -137,7 +138,11 @@ class ITERGravitySupportBuilder(Builder):
 
         intersection_wire = sorted(cut_result, key=lambda wire: wire.length)[0]
         v1 = intersection_wire.start_point()
-        z_block_lower = v1.z - self.params.tk_tf_side
+        v4 = intersection_wire.end_point()
+        if v1.x > v4.x:
+            v1, v4 = v4, v1
+
+        z_block_lower = v1.z - 5 * self.params.tf_gs_tk_plate
         v2 = Coordinates(np.array([v1.x, 0, z_block_lower]))
         v4 = intersection_wire.end_point()
         v3 = Coordinates(np.array([v4.x, 0, z_block_lower]))
@@ -154,7 +159,7 @@ class ITERGravitySupportBuilder(Builder):
         # Next, make the plates in a linear pattern, in y-z, along x
         yz_profile = Coordinates(
             {
-                "x": x_inner_line,
+                "x": 4 * [x_inner_line],
                 "y": [
                     -0.5 * width,
                     0.5 * width,
@@ -163,16 +168,51 @@ class ITERGravitySupportBuilder(Builder):
                 ],
                 "z": [z_block_lower, z_block_lower, self.params.z_gs, self.params.z_gs],
             },
-            closed=True,
         )
+        yz_profile = make_polygon(yz_profile, closed=True)
+
+        plating_width = x_outer_line - x_inner_line
+        plate_and_gap = self.params.tf_gs_g_plate + self.params.tf_gs_tk_plate
+        n_plates = (plating_width + self.params.tf_gs_g_plate) / plate_and_gap
+        total_width = (
+            int(n_plates) * self.params.tf_gs_tk_plate
+            + (int(n_plates) - 1) * self.params.tf_gs_g_plate
+        )
+        delta_width = plating_width - total_width
+        yz_profile.translate(vector=(0.5 * delta_width, 0, 0))
+
+        plate = extrude_shape(
+            BluemiraFace(yz_profile), vec=(self.params.tf_gs_tk_plate, 0, 0)
+        )
+        shape_list.append(plate)
+        for _ in range(int(n_plates) - 1):
+            plate = plate.deepcopy()
+            plate.translate(
+                vector=(self.params.tf_gs_g_plate + self.params.tf_gs_tk_plate, 0, 0)
+            )
+            shape_list.append(plate)
 
         # Finally, make the floor block
-
-        # Fuse the whole thing together, because we are lazy and compounds are ugly
-
-        shape = boolean_fuse(shape_list)
-
+        xz_profile = Coordinates(
+            {
+                "x": [x_inner_line, x_inner_line, x_outer_line, x_outer_line],
+                "y": [
+                    -0.5 * self.params.tf_gs_base_depth,
+                    0.5 * self.params.tf_gs_base_depth,
+                    0.5 * self.params.tf_gs_base_depth,
+                    -0.5 * self.params.tf_gs_base_depth,
+                ],
+                "z": 4 * [self.params.z_gs],
+            },
+        )
+        xz_profile = make_polygon(xz_profile, closed=True)
+        floor_block = extrude_shape(
+            xz_profile, vec=(0, 0, -5 * self.params.tf_gs_tk_plate)
+        )
+        shape_list.append(floor_block)
+        shape = BluemiraCompound(shape_list)
         component = PhysicalComponent("ITER-like gravity support", shape)
+        component.display_cad_options.color = BLUE_PALETTE["TF"][2]
         return component
 
 
@@ -182,12 +222,13 @@ if __name__ == "__main__":
 
     my_test_params = ITERGravitySupportBuilderParams(
         x_g_support=10,
-        z_gs=-20,
+        z_gs=-15,
         tf_wp_depth=1.4,
         tf_wp_width=0.8,
-        tk_tf_side=0.1,
-        tf_gs_tk_plate=0.15,
-        tf_gs_base_depth=2.0,
+        tk_tf_side=0.05,
+        tf_gs_tk_plate=0.025,
+        tf_gs_g_plate=0.025,
+        tf_gs_base_depth=2.4,
     )
 
     my_dummy_tf = PrincetonD()
@@ -198,4 +239,4 @@ if __name__ == "__main__":
     my_builder = ITERGravitySupportBuilder(my_test_params, {}, my_dummy_tf_xz_koz)
 
     component = my_builder.build()
-    show_cad(component)
+    component.show_cad()
