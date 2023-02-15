@@ -24,34 +24,19 @@ Gravity support builders
 """
 
 from dataclasses import dataclass
-from typing import Dict, List, Type, Union
+from typing import Dict, Type, Union
 
 import numpy as np
-from scipy.spatial import ConvexHull
 
 from bluemira.base.builder import Builder
 from bluemira.base.components import Component, PhysicalComponent
 from bluemira.base.error import BuilderError
 from bluemira.base.parameter_frame import Parameter, ParameterFrame
-from bluemira.builders.tools import (
-    build_sectioned_xy,
-    build_sectioned_xyz,
-    find_xy_plane_radii,
-    make_circular_xy_ring,
-)
 from bluemira.display.palettes import BLUE_PALETTE
 from bluemira.geometry.compound import BluemiraCompound
 from bluemira.geometry.coordinates import Coordinates
 from bluemira.geometry.face import BluemiraFace
-from bluemira.geometry.plane import BluemiraPlane
-from bluemira.geometry.tools import (
-    _offset_wire_discretised,
-    boolean_cut,
-    boolean_fuse,
-    distance_to,
-    extrude_shape,
-    make_polygon,
-)
+from bluemira.geometry.tools import boolean_cut, extrude_shape, make_polygon
 from bluemira.geometry.wire import BluemiraWire
 
 
