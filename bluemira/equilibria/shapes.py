@@ -204,7 +204,6 @@ def flux_surface_cunningham(r_0, z_0, a, kappa, delta, delta2=0.0, n=20):
     This parameterisation does not appear to match delta perfectly for
     abs(delta) > 0 and delta2=0.
     """
-    t = np.linspace(0, 2 * np.pi, n)[:-1]  # Theta
     t = _generate_theta(n)
     x = r_0 + a * np.cos(t + delta * np.sin(t) + delta2 * np.sin(2 * t))
     z = z_0 + a * kappa * np.sin(t)
@@ -308,7 +307,6 @@ def flux_surface_manickam(r_0, z_0, a, kappa=1, delta=0, indent=0, n=20):
     This parameterisation does not appear to match delta perfectly for
     abs(delta) > 0 and indent=0.
     """
-    t = np.linspace(0, 2 * np.pi, n)[:-1]  # Theta
     t = _generate_theta(n)
     x = r_0 - indent + (a + indent * np.cos(t)) * np.cos(t + delta * np.sin(t))
     z = z_0 + kappa * a * np.sin(t)
