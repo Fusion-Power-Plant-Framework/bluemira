@@ -36,10 +36,12 @@ __all__ = [
     "flux_surface_johner",
     "flux_surface_manickam",
     "flux_surface_kuiroukidis",
+    "flux_surface_zakharov",
     "JohnerLCFS",
     "KuiroukidisLCFS",
     "ManickamLCFS",
     "CunninghamLCFS",
+    "ZakharovLCFS",
 ]
 
 
@@ -81,6 +83,65 @@ def flux_surface_zakharov(r_0, z_0, a, kappa, delta, n=20):
     x = r_0 + a * np.cos(t) - a * (delta) * np.sin(t) ** 2
     z = z_0 + a * kappa * np.sin(t)
     return Coordinates({"x": x, "z": z})
+
+
+class ZakharovLCFS(GeometryParameterisation):
+    """
+    Zakharov last closed flux surface geometry parameterisation.
+    """
+
+    __slots__ = ()
+
+    def __init__(self, var_dict=None):
+        variables = OptVariables(
+            [
+                BoundedVariable(
+                    "r_0", 9, lower_bound=0, upper_bound=np.inf, descr="Major radius"
+                ),
+                BoundedVariable(
+                    "z_0",
+                    0,
+                    lower_bound=-np.inf,
+                    upper_bound=np.inf,
+                    descr="Vertical coordinate at geometry centroid",
+                ),
+                BoundedVariable(
+                    "a", 3, lower_bound=0, upper_bound=np.inf, descr="Minor radius"
+                ),
+                BoundedVariable(
+                    "kappa", 1.5, lower_bound=1.0, upper_bound=np.inf, descr="Elongation"
+                ),
+                BoundedVariable(
+                    "delta",
+                    0.4,
+                    lower_bound=0.0,
+                    upper_bound=1.0,
+                    descr="Triangularity",
+                ),
+            ],
+            frozen=True,
+        )
+        variables.adjust_variables(var_dict, strict_bounds=False)
+        super().__init__(variables)
+
+    def create_shape(self, label="LCFS", n_points=1000):
+        """
+        Make a CAD representation of the Zakharov LCFS.
+
+        Parameters
+        ----------
+        label: str, default = "LCFS"
+            Label to give the wire
+        n_points: int
+            Number of points to use when creating the Bspline representation
+
+        Returns
+        -------
+        shape: BluemiraWire
+            CAD Wire of the geometry
+        """
+        coordinates = flux_surface_zakharov(*self.variables.values, n=n_points)
+        return interpolate_bspline(coordinates.xyz, closed=True, label=label)
 
 
 def flux_surface_cunningham(r_0, z_0, a, kappa, delta, delta2=0.0, n=20):
@@ -164,7 +225,7 @@ class CunninghamLCFS(GeometryParameterisation):
 
     def create_shape(self, label="LCFS", n_points=1000):
         """
-        Make a CAD representation of the Manickam LCFS.
+        Make a CAD representation of the Cunningham LCFS.
 
         Parameters
         ----------
