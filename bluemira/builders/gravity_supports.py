@@ -202,7 +202,6 @@ class ITERGravitySupportBuilder(Builder):
 
 
 if __name__ == "__main__":
-    from bluemira.display import show_cad
     from bluemira.geometry.parameterisations import PrincetonD
 
     my_test_params = ITERGravitySupportBuilderParams(
