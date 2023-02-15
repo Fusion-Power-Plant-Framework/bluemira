@@ -330,7 +330,22 @@ class TestManickamCunninghamZakahrovCAD:
         fs = ClosedFluxSurface(wire.discretize(ndiscr=1000, byedges=True))
         np.testing.assert_almost_equal(delta, fs.delta)
 
-    @pytest.mark.parametrize("parameterisation", [ZakharovLCFS])
+    @pytest.mark.xfail
+    @pytest.mark.parametrize("parameterisation", [CunninghamLCFS, ManickamLCFS])
+    @pytest.mark.parametrize("delta", [0.33, -0.33, 0.5, -0.5])
+    def test_delta(self, parameterisation, delta):
+        pos = parameterisation()
+        lb, ub = 0.9 * delta, 1.1 * delta
+        lb, ub = min(lb, ub), max(lb, ub)
+        pos.adjust_variable("delta", delta, lower_bound=lb, upper_bound=ub)
+        wire = pos.create_shape(n_points=25)
+
+        fs = ClosedFluxSurface(wire.discretize(ndiscr=1000, byedges=True))
+        np.testing.assert_almost_equal(delta, fs.delta)
+
+    @pytest.mark.parametrize(
+        "parameterisation", [ManickamLCFS, CunninghamLCFS, ZakharovLCFS]
+    )
     @pytest.mark.parametrize("kappa", [1.0, 1.5, 2.0])
     def test_kappa(self, parameterisation, kappa):
         pos = parameterisation()
