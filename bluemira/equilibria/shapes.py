@@ -43,6 +43,46 @@ __all__ = [
 ]
 
 
+def flux_surface_zakharov(r_0, z_0, a, kappa, delta, n=20):
+    """
+    As featured in Zakharov's EMEQ
+
+    Parameters
+    ----------
+    r_0: float
+        Plasma magnetic axis radius [m]
+    z_0: float
+        Plasma magnetic axis height [m]
+    a: float
+        Plasma geometric minor radius [m]
+    kappa: float
+        Plasma elongation
+    delta: float
+        Plasma triangularity
+    n: int
+        Number of points
+
+    Returns
+    -------
+    flux_surface: Coordinates
+        Plasma flux surface shape
+
+    Notes
+    -----
+        https://inis.iaea.org/collection/NCLCollectionStore/_Public/17/074/17074881.pdf?r=1
+
+        Shafranov shift should be included in the r_0 parameter, as R_0 is
+        defined in the above as the magnetic axis. The Shafranov shift is
+        not subtracted to the r coordinates, contrary to the above equation
+        (4). This is because benchmarking with EMEQ shows this does not
+        appear to occur.
+    """
+    t = np.linspace(0, 2 * np.pi, n)  # Theta
+    x = r_0 + a * np.cos(t) - a * (delta) * np.sin(t) ** 2
+    z = z_0 + a * kappa * np.sin(t)
+    return Coordinates({"x": x, "z": z})
+
+
 def flux_surface_cunningham(r_0, z_0, a, kappa, delta, delta2=0.0, n=20):
     """
     As featured in Geof Cunningham's FIESTA (shape_fun)
