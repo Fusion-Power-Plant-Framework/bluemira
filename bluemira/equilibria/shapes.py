@@ -57,13 +57,18 @@ def _generate_theta(n):
     n_chunk = n // 4
 
     thetas = []
-    for i in range(0, 3):
+    for i in range(0, 4):
         if n_leftover != 0:
             n_quart = n_chunk + 1
             n_leftover -= 1
         else:
             n_quart = n_chunk
-        theta = np.linspace(quart_values[i], quart_values[i + 1], n_quart)
+        if n_quart > 1:
+            theta = np.linspace(
+                quart_values[i], quart_values[i + 1], n_quart, endpoint=i == 3
+            )
+        else:
+            theta = np.array([quart_values[i]])
         thetas.append(theta)
 
     return np.concatenate(thetas)
@@ -193,6 +198,10 @@ def flux_surface_cunningham(r_0, z_0, a, kappa, delta, delta2=0.0, n=20):
     -------
     flux_surface: Coordinates
         Plasma flux surface shape
+
+    Notes
+    -----
+    This parameterisation does not appear to match delta perfectly.
     """
     t = np.linspace(0, 2 * np.pi, n)[:-1]  # Theta
     t = _generate_theta(n)
@@ -292,6 +301,10 @@ def flux_surface_manickam(r_0, z_0, a, kappa=1, delta=0, indent=0, n=20):
     -------
     flux_surface: Coordinates
         Plasma flux surface shape
+
+    Notes
+    -----
+    This parameterisation does not appear to match delta perfectly.
     """
     t = np.linspace(0, 2 * np.pi, n)[:-1]  # Theta
     t = _generate_theta(n)
