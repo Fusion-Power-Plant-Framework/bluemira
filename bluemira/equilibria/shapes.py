@@ -36,11 +36,147 @@ __all__ = [
     "flux_surface_johner",
     "flux_surface_manickam",
     "flux_surface_kuiroukidis",
+    "flux_surface_zakharov",
     "JohnerLCFS",
     "KuiroukidisLCFS",
     "ManickamLCFS",
     "CunninghamLCFS",
+    "ZakharovLCFS",
 ]
+
+
+def _generate_theta(n):
+    """
+    Generate a poloidal angle vector that encompasses all extrema
+    """
+    quart_values = np.array([0, 0.5 * np.pi, np.pi, 1.5 * np.pi, 2 * np.pi])
+    if n <= 4:
+        return quart_values[:n]
+
+    n_leftover = n % 4
+    n_chunk = n // 4
+
+    thetas = []
+    for i in range(0, 4):
+        if n_leftover != 0:
+            n_quart = n_chunk + 1
+            n_leftover -= 1
+        else:
+            n_quart = n_chunk
+        if n_quart > 1:
+            if i != 3:
+                theta = np.linspace(
+                    quart_values[i], quart_values[i + 1], n_quart + 1, endpoint=True
+                )[:-1]
+            else:
+                theta = np.linspace(
+                    quart_values[i], quart_values[i + 1], n_quart, endpoint=False
+                )[:-1]
+        else:
+            theta = np.array([quart_values[i]])
+        thetas.append(theta)
+    if n > 7:
+        thetas.append(np.array([2 * np.pi]))
+    return np.concatenate(thetas)
+
+
+def flux_surface_zakharov(r_0, z_0, a, kappa, delta, n=20):
+    """
+    As featured in Zakharov's EMEQ
+
+    Parameters
+    ----------
+    r_0: float
+        Plasma magnetic axis radius [m]
+    z_0: float
+        Plasma magnetic axis height [m]
+    a: float
+        Plasma geometric minor radius [m]
+    kappa: float
+        Plasma elongation
+    delta: float
+        Plasma triangularity
+    n: int
+        Number of points
+
+    Returns
+    -------
+    flux_surface: Coordinates
+        Plasma flux surface shape
+
+    Notes
+    -----
+        https://inis.iaea.org/collection/NCLCollectionStore/_Public/17/074/17074881.pdf?r=1
+
+        Shafranov shift should be included in the r_0 parameter, as R_0 is
+        defined in the above as the magnetic axis. The Shafranov shift is
+        not subtracted to the r coordinates, contrary to the above equation
+        (4). This is because benchmarking with EMEQ shows this does not
+        appear to occur.
+    """
+    t = _generate_theta(n)
+    x = r_0 + a * np.cos(t) - a * (delta) * np.sin(t) ** 2
+    z = z_0 + a * kappa * np.sin(t)
+    return Coordinates({"x": x, "z": z})
+
+
+class ZakharovLCFS(GeometryParameterisation):
+    """
+    Zakharov last closed flux surface geometry parameterisation.
+    """
+
+    __slots__ = ()
+
+    def __init__(self, var_dict=None):
+        variables = OptVariables(
+            [
+                BoundedVariable(
+                    "r_0", 9, lower_bound=0, upper_bound=np.inf, descr="Major radius"
+                ),
+                BoundedVariable(
+                    "z_0",
+                    0,
+                    lower_bound=-np.inf,
+                    upper_bound=np.inf,
+                    descr="Vertical coordinate at geometry centroid",
+                ),
+                BoundedVariable(
+                    "a", 3, lower_bound=0, upper_bound=np.inf, descr="Minor radius"
+                ),
+                BoundedVariable(
+                    "kappa", 1.5, lower_bound=1.0, upper_bound=np.inf, descr="Elongation"
+                ),
+                BoundedVariable(
+                    "delta",
+                    0.4,
+                    lower_bound=0.0,
+                    upper_bound=1.0,
+                    descr="Triangularity",
+                ),
+            ],
+            frozen=True,
+        )
+        variables.adjust_variables(var_dict, strict_bounds=False)
+        super().__init__(variables)
+
+    def create_shape(self, label="LCFS", n_points=1000):
+        """
+        Make a CAD representation of the Zakharov LCFS.
+
+        Parameters
+        ----------
+        label: str, default = "LCFS"
+            Label to give the wire
+        n_points: int
+            Number of points to use when creating the Bspline representation
+
+        Returns
+        -------
+        shape: BluemiraWire
+            CAD Wire of the geometry
+        """
+        coordinates = flux_surface_zakharov(*self.variables.values, n=n_points)
+        return interpolate_bspline(coordinates.xyz, closed=True, label=label)
 
 
 def flux_surface_cunningham(r_0, z_0, a, kappa, delta, delta2=0.0, n=20):
@@ -68,9 +204,13 @@ def flux_surface_cunningham(r_0, z_0, a, kappa, delta, delta2=0.0, n=20):
     -------
     flux_surface: Coordinates
         Plasma flux surface shape
-    """
-    t = np.linspace(0, 2 * np.pi, n)[:-1]  # Theta
 
+    Notes
+    -----
+    This parameterisation does not appear to match delta perfectly for
+    abs(delta) > 0 and delta2=0.
+    """
+    t = _generate_theta(n)
     x = r_0 + a * np.cos(t + delta * np.sin(t) + delta2 * np.sin(2 * t))
     z = z_0 + a * kappa * np.sin(t)
     return Coordinates({"x": x, "z": z})
@@ -124,7 +264,7 @@ class CunninghamLCFS(GeometryParameterisation):
 
     def create_shape(self, label="LCFS", n_points=1000):
         """
-        Make a CAD representation of the Manickam LCFS.
+        Make a CAD representation of the Cunningham LCFS.
 
         Parameters
         ----------
@@ -167,8 +307,13 @@ def flux_surface_manickam(r_0, z_0, a, kappa=1, delta=0, indent=0, n=20):
     -------
     flux_surface: Coordinates
         Plasma flux surface shape
+
+    Notes
+    -----
+    This parameterisation does not appear to match delta perfectly for
+    abs(delta) > 0 and indent=0.
     """
-    t = np.linspace(0, 2 * np.pi, n)[:-1]  # Theta
+    t = _generate_theta(n)
     x = r_0 - indent + (a + indent * np.cos(t)) * np.cos(t + delta * np.sin(t))
     z = z_0 + kappa * a * np.sin(t)
     return Coordinates({"x": x, "z": z})
