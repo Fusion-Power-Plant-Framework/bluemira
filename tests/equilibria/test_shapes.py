@@ -326,7 +326,7 @@ class TestManickamCunninghamZakahrovCAD:
         lb, ub = 0.9 * delta, 1.1 * delta
         lb, ub = min(lb, ub), max(lb, ub)
         pos.adjust_variable("delta", delta, lower_bound=lb, upper_bound=ub)
-        wire = pos.create_shape(n_points=1000)
+        wire = pos.create_shape(n_points=5)
 
         fs = ClosedFluxSurface(wire.discretize(ndiscr=1000, byedges=True))
         np.testing.assert_almost_equal(delta, fs.delta)
@@ -339,7 +339,7 @@ class TestManickamCunninghamZakahrovCAD:
         pos = parameterisation()
         lb, ub = 0.9 * kappa, 1.1 * kappa
         pos.adjust_variable("kappa", kappa, lower_bound=lb, upper_bound=ub)
-        wire = pos.create_shape(n_points=1000)
+        wire = pos.create_shape(n_points=5)
 
         fs = ClosedFluxSurface(wire.discretize(ndiscr=1000, byedges=True))
         np.testing.assert_almost_equal(kappa, fs.kappa)

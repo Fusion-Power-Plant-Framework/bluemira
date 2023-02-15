@@ -51,7 +51,7 @@ def _generate_theta(n):
     """
     quart_values = np.array([0, 0.5 * np.pi, np.pi, 1.5 * np.pi, 2 * np.pi])
     if n <= 4:
-        return quart_values
+        return quart_values[:n]
 
     n_leftover = n % 4
     n_chunk = n // 4
