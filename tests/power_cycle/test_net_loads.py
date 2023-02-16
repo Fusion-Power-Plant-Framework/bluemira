@@ -14,7 +14,7 @@ from bluemira.power_cycle.net_loads import (
     PowerLoadModel,
     PulseLoad,
 )
-from bluemira.power_cycle.tools import adjust_2d_graph_ranges  # validate_axes,
+from bluemira.power_cycle.tools import adjust_2d_graph_ranges, validate_axes
 from tests.power_cycle.test_powercycle_time import inputs_for_pulse
 
 color_order_for_plotting = [
@@ -26,6 +26,13 @@ color_order_for_plotting = [
     "y",
 ]
 n_colors = len(color_order_for_plotting)
+
+
+def prepare_figure(figure_title):
+    ax = validate_axes()
+    plt.grid()
+    plt.title(figure_title)
+    return ax
 
 
 @functools.lru_cache(maxsize=1)
@@ -122,8 +129,24 @@ class TestPowerData:
                         with pytest.raises(PowerDataError):
                             test_instance = PowerData(name, time, data)
 
+    @pytest.mark.parametrize("new_end_time", [10 ** (e - 5) for e in range(10)])
+    def test_normalize_time(self, new_end_time):
+        all_samples = self.all_samples
+        for sample in all_samples:
+            old_time = sample.time
+            sample._normalize_time(new_end_time)
+            new_time = sample.time
+
+            norm = new_time[-1] / old_time[-1]
+
+            old_time = [to for to in old_time if to != 0]  # filter 0s
+            new_time = [tn for tn in new_time if tn != 0]  # filter 0s
+            ratios = [tn / to for tn, to in zip(new_time, old_time)]
+            assert all([r == norm for r in ratios])
+
     def test_plot(self):
-        _, ax = plt.subplots()
+        figure_title = "PowerData Plotting"
+        ax = prepare_figure(figure_title)
         all_samples = self.all_samples
         n_samples = len(all_samples)
         plot_list = []
@@ -135,7 +158,6 @@ class TestPowerData:
             sample = all_samples[s]
             plot_list.append(sample.plot(ax=ax, c=sample_color))
         adjust_2d_graph_ranges(ax=ax)
-        plt.grid()
         plt.show()  # Run with `pytest --plotting-on` to visualize
 
 
@@ -211,19 +233,22 @@ class TestPowerLoad:
         self.sample_models = sample_models
         self.all_samples = all_samples
 
-    def test_constructor_with_multiple_arguments(self):
+    def construct_multisample(self):
         sample_powerdatas = self.sample_powerdatas
         sample_models = self.sample_models
 
-        multi_load = PowerLoad(
+        multisample = PowerLoad(
             "PowerLoad with multiple powerdata & model arguments",
             sample_powerdatas,
             sample_models,
         )
-        assert isinstance(multi_load, PowerLoad)
+        return multisample
+
+    def test_constructor_with_multiple_arguments(self):
+        multisample = self.construct_multisample()
+        assert isinstance(multisample, PowerLoad)
 
     def test_sanity(self):
-
         sample_powerdatas = self.sample_powerdatas
         sample_models = self.sample_models
 
@@ -334,7 +359,6 @@ class TestPowerLoad:
                     time = PowerLoad._validate_time(argument)
 
     def test_curve(self):
-
         all_samples = self.all_samples
         test_time = self.make_time_list_for_interpolation()
         time_length = len(test_time)
@@ -360,12 +384,34 @@ class TestPowerLoad:
         extreme_points = [sum_of_minima, sum_of_maxima]
         self.check_interpolation(extreme_points, multiset_curve)
 
+    ""
+
+    @pytest.mark.parametrize("new_end_time", [10 ** (e - 5) for e in range(10)])
+    def test_normalize_time(self, new_end_time):
+        all_samples = self.all_samples
+        multisample = self.construct_multisample()
+        all_samples.append(multisample)
+        for sample in all_samples:
+            old_data_set = sample.data_set
+            sample._normalize_time(new_end_time)
+            new_data_set = sample.data_set
+
+            # Assert length of 'data_set' has not changed
+            correct_number_of_powerdatas = len(old_data_set)
+            assert len(new_data_set) == correct_number_of_powerdatas
+
+            # Assert 'data' has not changed
+            for p in range(correct_number_of_powerdatas):
+                old_data = old_data_set[p]
+                new_data = new_data_set[p]
+                assert old_data == new_data
+
+    ""
     # ------------------------------------------------------------------
     # VISUALIZATION
     # ------------------------------------------------------------------
 
     def test_refine_vector(self):
-
         sample_powerdatas = self.sample_powerdatas
 
         max_number_of_refinements = 10
@@ -385,17 +431,12 @@ class TestPowerLoad:
                 time_is_subset_of_refined_time = check
                 assert time_is_subset_of_refined_time
 
-    @staticmethod
-    def prepare_figure(figure_title):
-        _, ax = plt.subplots()
-        plt.grid()
-        plt.title(figure_title)
-        return ax
-
     @pytest.mark.parametrize("detailed_plot_flag", [False, True])
     def test_plot(self, detailed_plot_flag):
-        figure_title = "Detailed plot flag = " + str(detailed_plot_flag)
-        ax = self.prepare_figure(figure_title)
+        figure_title = "'detailed' flag = " + str(detailed_plot_flag)
+        figure_title = "PowerLoad Plotting (" + figure_title + ")"
+        ax = prepare_figure(figure_title)
+
         list_of_plot_objects = []
 
         all_samples = self.all_samples
@@ -417,9 +458,10 @@ class TestPowerLoad:
     # ------------------------------------------------------------------
     # ARITHMETICS
     # ------------------------------------------------------------------
+
     def test_addition(self):
-        figure_title = "Power Load Addition"
-        ax = self.prepare_figure(figure_title)
+        figure_title = "PowerLoad Addition"
+        ax = prepare_figure(figure_title)
 
         all_samples = self.all_samples
         sample_powerdatas = self.sample_powerdatas
@@ -532,9 +574,22 @@ class TestPhaseLoad:
     # ------------------------------------------------------------------
     # VISUALIZATION
     # ------------------------------------------------------------------
-    # @pytest.mark.parametrize("detailed_plot_flag", [False, True])
-    # def test_plot(self, detailed_plot_flag):
-    #   multi_load = self.construct_multisample()
+
+    @pytest.mark.parametrize("color_index", [1])
+    @pytest.mark.parametrize("detailed_plot_flag", [False, True])
+    def test_plot(self, color_index, detailed_plot_flag):
+        sample_color = color_order_for_plotting[color_index]
+        figure_title = "'detailed' flag = " + str(detailed_plot_flag)
+        figure_title = "PhaseLoad Plotting (" + figure_title + ")"
+        ax = prepare_figure(figure_title)
+
+        multisample = self.construct_multisample()
+        list_of_plot_objects = multisample.plot(
+            ax=ax, detailed=detailed_plot_flag, c=sample_color
+        )
+
+        adjust_2d_graph_ranges(ax=ax)
+        plt.show()  # Run with `pytest --plotting-on` to visualize
 
 
 @functools.lru_cache(maxsize=1)

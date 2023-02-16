@@ -73,6 +73,21 @@ class PowerData(NetPowerABC):
             raise PowerDataError("sanity")
 
     # ------------------------------------------------------------------
+    # OPERATIONS
+    # ------------------------------------------------------------------
+    def _normalize_time(self, new_end_time):
+        """
+        Normalize values stored in the 'time' attribute, so that the
+        last time value coincides with 'new_end_time'.
+        """
+        old_time = self.time
+        old_end_time = old_time[-1]
+        norm = new_end_time / old_end_time
+        new_time = [norm * t for t in old_time]
+        self.time = new_time
+        self._is_increasing(self.time)
+
+    # ------------------------------------------------------------------
     # VISUALIZATION
     # ------------------------------------------------------------------
 
@@ -95,7 +110,7 @@ class PowerData(NetPowerABC):
 
         Returns
         -------
-        plot_list: list
+        list_of_plot_objects: list
             List of plot objects created by the 'matplotlib' package.
             The first element of the list is the plot object created
             using the 'pyplot.scatter', while the second element of the
@@ -314,6 +329,19 @@ class PowerLoad(NetPowerABC):
         curve = preallocated_curve.tolist()
         return curve
 
+    def _normalize_time(self, new_end_time):
+        """
+        Normalize the time of all 'PowerData' objects stored in the
+        'data_set' attribute, so that their last time values coincide
+        with 'new_end_time'.
+        """
+        old_data_set = self.data_set
+        new_data_set = []
+        for powerdata in old_data_set:
+            powerdata._normalize_time(new_end_time)
+            new_data_set.append(powerdata)
+        self.data_set = new_data_set
+
     # ------------------------------------------------------------------
     # VISUALIZATION
     # ------------------------------------------------------------------
@@ -378,7 +406,7 @@ class PowerLoad(NetPowerABC):
 
         Returns
         -------
-        plot_list: list
+        list_of_plot_objects: list
             List of plot objects created by the 'matplotlib' package.
             The first element of the list is the plot object created
             using the 'pyplot.plot', while the second element of the
@@ -589,9 +617,87 @@ class PhaseLoad(NetPowerABC):
             self._issue_error("sanity")
 
     # ------------------------------------------------------------------
+    # OPERATIONS
+    # ------------------------------------------------------------------
+    def curve(self, time):
+        """
+        Create a curve by calculating power load values at the specified
+        times.
+
+        This method applies the 'curve' method of the 'PowerLoad' class
+        to the 'PowerLoad' instance that is created by the sum of all
+        'PowerLoad' objects stored in the 'load_set' attribute.
+
+        Parameters
+        ----------
+        time: int | float | list[ int | float ]
+            List of time values. [s]
+
+        Returns
+        -------
+        curve: list[float]
+            List of power values. [W]
+        """
+        phase = self.phase
+        load_set = self.load_set
+        normalize = self.normalize
+
+        n_loads = len(load_set)
+        for i in range(n_loads):
+            normalization_flag = normalize[i]
+            powerload = load_set[i]
+            if normalization_flag:
+                powerload._normalize_time(phase.duration)
+
+        resulting_load = sum(load_set)
+        curve = resulting_load.curve(time)
+        return curve
+
+    # ------------------------------------------------------------------
     # VISUALIZATION
     # ------------------------------------------------------------------
-    # def plot(self, ax=None, n_points=None, detailed=False, **kwargs):
+    def plot(self, ax=None, n_points=None, detailed=False, **kwargs):
+        """
+        Plot a 'PhaseLoad' curve, built using the attributes that define
+        the instance. The number of points interpolated in each curve
+        segment can be specified.
+
+        This method applies the 'plot' method of the 'PowerLoad' class
+        to the resulting load created by the 'curve' method.
+
+        This method can also plot the individual 'PowerLoad' objects
+        stored in the 'load_set' attribute.
+
+        Parameters
+        ----------
+        n_points: int
+            Number of points interpolated in each curve segment. The
+            default value is 'None', which indicates to the method
+            that the default value should be used, defined as a class
+            attribute.
+        detailed: bool
+            Determines whether the plot will include all individual
+            'PowerLoad' instances (computed with their respective
+            'model' entries), that summed result in the normal plotted
+            curve. Plotted as secondary plots, as defined in
+            'PowerCycleABC' class. By default this input is set to
+            'False'.
+        **kwargs: dict
+            Options for the 'plot' method.
+
+        Returns
+        -------
+        list_of_plot_objects: list
+            List of plot objects created by the 'matplotlib' package.
+            The first element of the list is the plot object created
+            using the 'pyplot.plot', while the second element of the
+            list is the plot object created using the 'pyplot.text'
+            method.
+            If the 'detailed' argument is set to 'True', the list
+            continues to include the lists of plot objects created by
+            the 'PowerLoad' class.
+        """
+        pass
 
 
 class PulseLoad(NetPowerABC):
