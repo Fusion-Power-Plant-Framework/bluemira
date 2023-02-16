@@ -27,6 +27,7 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from dataclasses import asdict
 from enum import Enum
+from functools import lru_cache
 from typing import List, Optional, Union
 
 from bluemira.base.look_and_feel import bluemira_debug
@@ -42,12 +43,17 @@ class ViewerBackend(Enum):
     FREECAD = "bluemira.codes._freecadapi"
     POLYSCOPE = "bluemira.codes._polyscope"
 
+    @lru_cache(2)
+    def get_module(self):
+        """Load viewer module"""
+        return get_module(self.value)
+
 
 def get_default_options(backend=ViewerBackend.FREECAD):
     """
     Returns the default display options.
     """
-    return get_module(backend.value).DefaultDisplayOptions()
+    return backend.get_module().DefaultDisplayOptions()
 
 
 class DisplayCADOptions(DisplayOptions):
@@ -173,7 +179,7 @@ def show_cad(
 
     part_options = [o.as_dict() for o in new_options]
 
-    get_module(backend.value).show_cad(parts, part_options, **kwargs)
+    backend.get_module().show_cad(parts, part_options, **kwargs)
 
 
 class BaseDisplayer(ABC):
@@ -220,7 +226,6 @@ class DisplayableCAD:
     """
 
     def __init__(self):
-        super().__init__()
         self._display_cad_options: DisplayCADOptions = DisplayCADOptions()
         self._display_cad_options.colour = next(BLUE_PALETTE)
 
@@ -244,7 +249,7 @@ class DisplayableCAD:
         """
         The options that will be used to display the object.
         """
-        return _get_displayer_class(self)(self._display_cad_options)
+        return _get_displayer_class(self)(self.display_cad_options)
 
     def show_cad(self, **kwargs) -> None:
         """
