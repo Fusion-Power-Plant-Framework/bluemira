@@ -129,23 +129,21 @@ class PFCoilSupportBuilder(Builder):
                 )
                 d_intersection, info = distance_to(self.tf_xz_keep_out_zone, line)
 
+                # Get the first intersection point, what ever happened to my
+                # get_first_intersection?!
                 distances = []
                 for inter_point_pair in info:
                     dist = np.hypot(
                         inter_point_pair[0][0] - point[0],
                         inter_point_pair[0][2] - point[1],
                     )
-                    print(f"{dist=}")
                     distances.append(dist)
+
                 i_min = np.argmin(distances)
                 p_inter = info[i_min][0]
 
-                # p_inter = info[0][0]
-                print(f"{info=}")
-                print(f"{d_intersection=}")
                 if np.isclose(d_intersection, 0.0):
                     d = np.hypot(point[0] - p_inter[0], point[1] - p_inter[2])
-                    print(f"{d=}")
                     if d < distance:
                         distance = d
                         best_angle = sign * angle
@@ -174,35 +172,29 @@ class PFCoilSupportBuilder(Builder):
         # to the TF coil
         start_point, end_point, angle = self._get_support_point_angle(support_face)
 
+        # Get the intersection with the TF edge wire and use this for the rib profile
         bb = support_face.bounding_box
         if start_point[1] > end_point[1]:
-            # Then we're connecting the coil upwards from the top of the support
-            # block
-            x_out1 = bb.x_min + np.cos(angle) * 2
-            z_out1 = bb.z_min + np.sin(angle) * 2
-            x_out2 = bb.x_max + np.cos(angle) * 2
-            z_out2 = bb.z_min + np.sin(angle) * 2
-            v1 = np.array([bb.x_min, 0, bb.z_min])
-            v2 = np.array([bb.x_max, 0, bb.z_min])
-            v3 = np.array([x_out2, 0, z_out2])
-            v4 = np.array([x_out1, 0, z_out1])
-
+            z_s = bb.z_min
         else:
-            # Then we're connecting the coil downwards from the bottom of the support
-            # block
-            x_out1 = bb.x_min + np.cos(angle) * 2
-            z_out1 = bb.z_max + np.sin(angle) * 2
-            x_out2 = bb.x_max + np.cos(angle) * 2
-            z_out2 = bb.z_max + np.sin(angle) * 2
-            v1 = np.array([bb.x_min, 0, bb.z_max])
-            v2 = np.array([bb.x_max, 0, bb.z_max])
-            v3 = np.array([x_out2, 0, z_out2])
-            v4 = np.array([x_out1, 0, z_out1])
+            z_s = bb.z_max
+
+        # some offset to get one small wire when cutting
+        x_out1 = bb.x_min + np.cos(angle) * 2
+        z_out1 = z_s + np.sin(angle) * 2
+        x_out2 = bb.x_max + np.cos(angle) * 2
+        z_out2 = z_s + np.sin(angle) * 2
+        v1 = np.array([bb.x_min, 0, z_s])
+        v2 = np.array([bb.x_max, 0, z_s])
+        v3 = np.array([x_out2, 0, z_out2])
+        v4 = np.array([x_out1, 0, z_out1])
 
         cut_box = make_polygon([v1, v2, v3, v4], closed=True)
         intersection_wire = sorted(
             boolean_cut(self.tf_xz_keep_out_zone, cut_box), key=lambda wire: wire.length
         )[0]
+
+        # Make the closing wire, and make sure the polygon doesn't self-intersect
         v3 = intersection_wire.start_point().xyz.T[0]
         v4 = intersection_wire.end_point().xyz.T[0]
         d1 = np.sqrt(np.sum((v3 - v1) ** 2))
@@ -218,8 +210,9 @@ class PFCoilSupportBuilder(Builder):
             },
             closed=False,
         )
+
+        # Make the rib x-z profile
         xz_profile = BluemiraFace(BluemiraWire([intersection_wire, closing_wire]))
-        # show_cad([intersection_wire, closing_wire])
 
         # Calculate the rib gap width and make the ribs
         total_rib_tk = self.params.pf_s_n_plate * self.params.pf_s_tk_plate
@@ -247,7 +240,6 @@ class PFCoilSupportBuilder(Builder):
 
 
 if __name__ == "__main__":
-    from bluemira.display import show_cad
     from bluemira.geometry.parameterisations import PictureFrame, PrincetonD
     from bluemira.geometry.tools import revolve_shape
 
