@@ -25,9 +25,13 @@ EU-DEMO Lower Port
 from dataclasses import dataclass
 from typing import Dict, Union
 
+import numpy as np
+
 from bluemira.base.designer import Designer
 from bluemira.base.parameter_frame import Parameter, ParameterFrame
+from bluemira.geometry.coordinates import Coordinates
 from bluemira.geometry.face import BluemiraFace
+from bluemira.geometry.tools import make_polygon
 
 
 @dataclass
@@ -45,10 +49,14 @@ class LowerPortDesigner(Designer):
         params: Union[Dict, ParameterFrame],
         build_config: Dict,
         divertor_xz: BluemiraFace,
-        x_extrema: float = 10,
+        x_wall_inner: float,
+        x_wall_outer: float,
+        x_extrema: float,
     ):
         super().__init__(params, build_config)
         self.divertor_xz = divertor_xz
+        self.x_wall_inner = x_wall_inner
+        self.x_wall_outer = x_wall_outer
         self.x_extrema = x_extrema
 
     def run(self):
@@ -64,11 +72,19 @@ class LowerPortDesigner(Designer):
         #         (at what level or just immediately outside reactor)
         # x_start = com_divertor
         # z_start = z_min@x_com
+        z_start = self.divertor_xz.bounding_box.z_min
+        z_outer = z_start + (self.x_wall_inner - self.x_wall_outer) * np.sin(
+            self.params.lower_port_angle
+        )
+        x_start = self.divertor_xz.centrer_of_mass[0]
 
-        z_outer = z_inner + (x_inner - x_outer) * np.sin(self.params.lower_port_angle)
-
-        traj = np.array(
-            [[x_start, x_inner, x_outer, x_stop], [z_start, z_inner, z_outer, z_fin]]
+        traj = make_polygon(
+            Coordinates(
+                {
+                    "x": [x_start, self.x_wall_inner, self.x_wall_outer, self.x_extrema],
+                    "z": [z_start, z_start, z_outer, z_outer],
+                }
+            )
         )
 
         # Task 2 size of port along trajectory
