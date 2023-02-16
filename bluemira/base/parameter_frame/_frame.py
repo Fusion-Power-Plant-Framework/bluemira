@@ -96,37 +96,38 @@ class ParameterFrame:
     def update_from_dict(self, new_values: ParamDictT):
         """Update from a dictionary representation of a ``ParameterFrame``"""
         for key, value in new_values.items():
-            param: Parameter = getattr(self, key)
             if "name" in value:
                 del value["name"]
-            value_type = _validate_parameter_field(key, self._types[key])
-            new_param = Parameter(name=key, **value, _value_types=value_type)
-            param.set_value(
-                new_param.value
-                if param.unit == "" or new_param.value is None
-                else new_param.value_as(param.unit),
-                new_param.source,
+            self._set_param(
+                key,
+                Parameter(
+                    name=key,
+                    **value,
+                    _value_types=_validate_parameter_field(key, self._types[key]),
+                ),
             )
-            if new_param.long_name != "":
-                param._long_name = new_param.long_name
-            if new_param.description != "":
-                param._description = new_param.description
 
     def update_from_frame(self, frame: ParameterFrame):
         """Update the frame with the values of another frame"""
         for o_param in frame:
             if hasattr(self, o_param.name):
-                param = getattr(self, o_param.name)
-                param.set_value(
-                    o_param.value
-                    if param.unit == "" or o_param.value is None
-                    else o_param.value_as(param.unit),
-                    o_param.source,
-                )
-                if o_param.long_name != "":
-                    param._long_name = o_param.long_name
-                if o_param.description != "":
-                    param._description = o_param.description
+                self._set_param(o_param.name, o_param)
+
+    def _set_param(self, name: str, o_param: Parameter):
+        """
+        Sets the information from a Parameter to an existing Parameter in this frame.
+        """
+        param = getattr(self, name)
+        param.set_value(
+            o_param.value
+            if param.unit == "" or o_param.value is None
+            else o_param.value_as(param.unit),
+            o_param.source,
+        )
+        if o_param.long_name != "":
+            param._long_name = o_param.long_name
+        if o_param.description != "":
+            param._description = o_param.description
 
     @classmethod
     def from_dict(
@@ -259,7 +260,6 @@ def _validate_parameter_field(field, member_type: Type) -> Tuple[Type, ...]:
 
 
 def _validate_units(param_data: Dict, value_type: Iterable[Type]):
-
     try:
         quantity = pint.Quantity(param_data["value"], param_data["unit"])
     except KeyError as ke:
