@@ -78,19 +78,7 @@ class ITERGravitySupportBuilder(Builder):
         """
         return self.build_xyz()
 
-    def build_xyz(
-        self,
-    ) -> PhysicalComponent:
-        """
-        Build the x-y-z components of the ITER-like gravity support.
-
-        """
-        shape_list = []
-        # First, project upwards at the radius of the GS into the keep-out-zone
-        # and get a x-z face of the boolean difference.
-
-        # Get the square width
-        width = self.params.tf_wp_depth + 2 * self.params.tk_tf_side
+    def _get_intersection_wire(self, width):
         x_inner_line = self.params.x_g_support - 0.5 * width
         x_outer_line = self.params.x_g_support + 0.5 * width
         z_min = self.tf_xz_keep_out_zone.bounding_box.z_min
@@ -122,6 +110,22 @@ class ITERGravitySupportBuilder(Builder):
             )
 
         intersection_wire = sorted(cut_result, key=lambda wire: wire.length)[0]
+        return intersection_wire
+
+    def build_xyz(
+        self,
+    ) -> PhysicalComponent:
+        """
+        Build the x-y-z components of the ITER-like gravity support.
+
+        """
+        shape_list = []
+        # First, project upwards at the radius of the GS into the keep-out-zone
+        # and get a x-z face of the boolean difference.
+
+        # Get the square width
+        width = self.params.tf_wp_depth + 2 * self.params.tk_tf_side
+        intersection_wire = self._get_intersection_wire(width)
         v1 = intersection_wire.start_point()
         v4 = intersection_wire.end_point()
         if v1.x > v4.x:
@@ -142,9 +146,12 @@ class ITERGravitySupportBuilder(Builder):
         shape_list.append(block)
 
         # Next, make the plates in a linear pattern, in y-z, along x
+
+        v1x = float(v1.x)
+        v4x = float(v4.x)
         yz_profile = Coordinates(
             {
-                "x": 4 * [x_inner_line],
+                "x": 4 * [v1x],
                 "y": [
                     -0.5 * width,
                     0.5 * width,
@@ -156,7 +163,7 @@ class ITERGravitySupportBuilder(Builder):
         )
         yz_profile = make_polygon(yz_profile, closed=True)
 
-        plating_width = x_outer_line - x_inner_line
+        plating_width = v4.x - v1.x
         plate_and_gap = self.params.tf_gs_g_plate + self.params.tf_gs_tk_plate
         n_plates = (plating_width + self.params.tf_gs_g_plate) / plate_and_gap
         total_width = (
@@ -180,7 +187,7 @@ class ITERGravitySupportBuilder(Builder):
         # Finally, make the floor block
         xz_profile = Coordinates(
             {
-                "x": [x_inner_line, x_inner_line, x_outer_line, x_outer_line],
+                "x": [v1x, v1x, v4x, v4x],
                 "y": [
                     -0.5 * self.params.tf_gs_base_depth,
                     0.5 * self.params.tf_gs_base_depth,
