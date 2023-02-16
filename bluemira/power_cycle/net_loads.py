@@ -389,6 +389,9 @@ class PowerLoad(NetPowerABC):
 
         Parameters
         ----------
+        ax: matplotlib.axes.Axes
+            Axes on which to plot curve. If 'None' is given, a new
+            instance of axes is created.
         n_points: int
             Number of points interpolated in each curve segment. The
             default value is 'None', which indicates to the method
@@ -697,7 +700,50 @@ class PhaseLoad(NetPowerABC):
             continues to include the lists of plot objects created by
             the 'PowerLoad' class.
         """
-        pass
+        ax = validate_axes(ax)
+
+        name = self.name
+        load_set = self.load_set
+
+        resulting_load = sum(load_set)
+        resulting_load.name = name
+
+        list_of_plot_objects = []
+
+        # Plot resulting load
+        plot_object = resulting_load.plot(
+            ax=ax,
+            n_points=n_points,
+            detailed=False,
+            **kwargs,
+        )
+        list_of_plot_objects.append(plot_object)
+
+        if detailed:
+            number_of_load_elements = len(load_set)
+            for e in range(number_of_load_elements):
+                current_powerload = load_set[e]
+                current_powerload._make_secondary_in_plot()
+                current_plot_list = current_powerload.plot(ax=ax)
+
+                """
+                # Plot current PowerLoad with seconday kwargs
+                current_powerload._make_secondary_in_plot()
+                current_plot_list = current_powerdata.plot(ax=ax)
+
+                # Plot current curve as line with secondary kwargs
+                kwargs.update(current_powerdata._plot_kwargs)
+                plot_object = ax.plot(
+                    sorted_time,
+                    current_curve,
+                    **kwargs,
+                )
+                current_plot_list.append(plot_object)
+                """
+
+                list_of_plot_objects.append(current_plot_list)
+
+        return list_of_plot_objects
 
 
 class PulseLoad(NetPowerABC):
