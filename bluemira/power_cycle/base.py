@@ -213,13 +213,16 @@ class NetPowerABC(PowerCycleABC, metaclass=ABCMeta):
         **kwargs,
     ):
 
-        class_calling_method = self.__class__.__name__
-        text_to_be_added = f"{name} ({class_calling_method})"
+        # class_calling_method = self.__class__.__name__
+        # text_to_be_added = f"{name} ({class_calling_method})"
+        text_to_be_added = name
         label_of_text_object = name + " (name)"
 
         # Set each default options in kwargs, if not specified
         default_text_kwargs = self._text_kwargs
-        final_kwargs = {**kwargs, **default_text_kwargs}
+        final_kwargs = {**default_text_kwargs, **kwargs}
+
+        # Filter kwargs
 
         index_for_text_placement = self._text_index
         plot_object = axes.text(
