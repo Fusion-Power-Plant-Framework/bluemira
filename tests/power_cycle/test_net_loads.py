@@ -1,7 +1,5 @@
 # COPYRIGHT PLACEHOLDER
 
-import functools
-
 import matplotlib.pyplot as plt
 import numpy as np
 import pytest
@@ -35,7 +33,6 @@ def prepare_figure(figure_title):
     return ax
 
 
-@functools.lru_cache(maxsize=1)
 def inputs_for_powerdata():
     """
     Function to create inputs for PowerData testing.
@@ -171,7 +168,6 @@ class TestPowerLoadModel:
             assert isinstance(value, str)
 
 
-@functools.lru_cache(maxsize=1)
 def inputs_for_powerload():
     """
     Function to create inputs for PowerLoad testing, based on the
@@ -384,8 +380,6 @@ class TestPowerLoad:
         extreme_points = [sum_of_minima, sum_of_maxima]
         self.check_interpolation(extreme_points, multiset_curve)
 
-    ""
-
     @pytest.mark.parametrize("new_end_time", [10 ** (e - 5) for e in range(10)])
     def test_normalize_time(self, new_end_time):
         all_samples = self.all_samples
@@ -406,7 +400,6 @@ class TestPowerLoad:
                 new_data = new_data_set[p]
                 assert old_data == new_data
 
-    ""
     # ------------------------------------------------------------------
     # VISUALIZATION
     # ------------------------------------------------------------------
@@ -481,7 +474,6 @@ class TestPowerLoad:
         plt.show()  # Run with `pytest --plotting-on` to visualize
 
 
-@functools.lru_cache(maxsize=1)
 def inputs_for_phaseload():
     """
     Function to create inputs for PhaseLoad testing, based on the
@@ -592,7 +584,6 @@ class TestPhaseLoad:
         plt.show()  # Run with `pytest --plotting-on` to visualize
 
 
-@functools.lru_cache(maxsize=1)
 def inputs_for_pulseload():
     """
     Function to create inputs for PulseLoad testing, based on the
