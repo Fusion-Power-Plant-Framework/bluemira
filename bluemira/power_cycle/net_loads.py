@@ -177,12 +177,12 @@ class PowerLoad(NetPowerABC):
     ----------
     name: str
         Description of the 'PowerLoad' instance.
-    data_set: PowerData | list[PowerData]
+    powerdata_set: PowerData | list[PowerData]
         Collection of instances of the 'PowerData' class that define
         the 'PowerLoad' object.
     model: PowerLoadModel | list[PowerLoadModel]
-        Mathematical model used to compute values between 'data_set'
-        definition points.
+        Mathematical model used to compute values between
+        'powerdata_set' definition points.
     """
 
     # ------------------------------------------------------------------
@@ -193,26 +193,27 @@ class PowerLoad(NetPowerABC):
     def __init__(
         self,
         name,
-        data_set,
+        powerdata_set,
         model: Union[PowerLoadModel, List[PowerLoadModel]],
     ):
 
         super().__init__(name)
 
-        self.data_set = self._validate_data_set(data_set)
+        self.powerdata_set = self._validate_powerdata_set(powerdata_set)
         self.model = self._validate_model(model)
 
         self._sanity()
 
     @staticmethod
-    def _validate_data_set(data_set):
+    def _validate_powerdata_set(powerdata_set):
         """
-        Validate 'data_set' input to be a list of 'PowerData' instances.
+        Validate 'powerdata_set' input to be a list of 'PowerData'
+        instances.
         """
-        data_set = super(PowerLoad, PowerLoad).validate_list(data_set)
-        for element in data_set:
+        powerdata_set = super(PowerLoad, PowerLoad).validate_list(powerdata_set)
+        for element in powerdata_set:
             PowerData.validate_class(element)
-        return data_set
+        return powerdata_set
 
     @staticmethod
     def _validate_model(model):
@@ -232,10 +233,10 @@ class PowerLoad(NetPowerABC):
 
     def _sanity(self):
         """
-        Validate instance to have 'data_set' and 'model' attributes of
-        same length.
+        Validate instance to have 'powerdata_set' and 'model' attributes
+        of same length.
         """
-        if len(self.data_set) != len(self.model):
+        if len(self.powerdata_set) != len(self.model):
             raise PowerLoadError("sanity")
 
     # ------------------------------------------------------------------
@@ -288,7 +289,7 @@ class PowerLoad(NetPowerABC):
         times.
 
         This method applies the 'scipy.interpolate.interp1d' imported
-        method to each 'PowerData' object stored in the 'data_set'
+        method to each 'PowerData' object stored in the 'powerdata_set'
         attribute and sums the results. The kind of interpolation is
         determined by each respective value in the 'model' attribute.
         Any out-of-bound values are set to zero.
@@ -307,14 +308,14 @@ class PowerLoad(NetPowerABC):
         time_length = len(time)
         preallocated_curve = np.array([0] * time_length)
 
-        data_set = self.data_set
-        data_set_length = len(data_set)
+        powerdata_set = self.powerdata_set
+        powerdata_set_length = len(powerdata_set)
 
         model = self.model
 
-        for d in range(data_set_length):
+        for d in range(powerdata_set_length):
 
-            current_powerdata = data_set[d]
+            current_powerdata = powerdata_set[d]
             current_model = model[d]
 
             current_curve = self._single_curve(
@@ -332,24 +333,24 @@ class PowerLoad(NetPowerABC):
     def _normalize_time(self, new_end_time):
         """
         Normalize the time of all 'PowerData' objects stored in the
-        'data_set' attribute, so that their last time values coincide
-        with 'new_end_time'.
+        'powerdata_set' attribute, so that their last time values
+        coincide with 'new_end_time'.
         """
-        old_data_set = self.data_set
-        new_data_set = []
-        for powerdata in old_data_set:
+        old_powerdata_set = self.powerdata_set
+        new_powerdata_set = []
+        for powerdata in old_powerdata_set:
             powerdata._normalize_time(new_end_time)
-            new_data_set.append(powerdata)
-        self.data_set = new_data_set
+            new_powerdata_set.append(powerdata)
+        self.powerdata_set = new_powerdata_set
 
     # ------------------------------------------------------------------
     # VISUALIZATION
     # ------------------------------------------------------------------
 
     def _refine_intrinsic_time(self, n_points):
-        data_set = self.data_set
+        powerdata_set = self.powerdata_set
         preallocated_time = []
-        for powerdata in data_set:
+        for powerdata in powerdata_set:
             original_time = powerdata.time
             refined_time = self._refine_vector(original_time, n_points)
             preallocated_time = preallocated_time + refined_time
@@ -368,8 +369,8 @@ class PowerLoad(NetPowerABC):
         attributes, but can be overridden.
 
         This method can also plot the individual 'PowerData' objects
-        stored in the 'data_set' attribute that define the 'PowerLoad'
-        instance.
+        stored in the 'powerdata_set' attribute that define the
+        'PowerLoad' instance.
 
         Parameters
         ----------
@@ -440,12 +441,12 @@ class PowerLoad(NetPowerABC):
 
         if detailed:
 
-            data_set = self.data_set
+            powerdata_set = self.powerdata_set
             model = self.model
-            number_of_data_elements = len(data_set)
+            number_of_data_elements = len(powerdata_set)
 
             for e in range(number_of_data_elements):
-                current_powerdata = data_set[e]
+                current_powerdata = powerdata_set[e]
                 current_model = model[e]
 
                 current_curve = self._single_curve(
@@ -480,10 +481,10 @@ class PowerLoad(NetPowerABC):
         instance with joined 'load' and 'model' attributes.
         """
 
-        this_set = self.data_set
+        this_set = self.powerdata_set
         this_model = self.model
 
-        other_set = other.data_set
+        other_set = other.powerdata_set
         other_model = other.model
 
         another_set = this_set + other_set
@@ -516,15 +517,15 @@ class PhaseLoad(NetPowerABC):
     phase: PowerCyclePhase
         Pulse phase specification, that determines in which phase the
         load happens.
-    load_set: PowerLoad | list[PowerLoad]
+    powerload_set: PowerLoad | list[PowerLoad]
         Collection of instances of the 'PowerLoad' class that define
         the 'PhaseLoad' object.
     normalize: bool | list[bool]
-        List of boolean values that defines which elements of 'load_set'
-        have their time-dependence normalized in respect to the phase
-        duration. A value of 'True' forces a normalization, while a
-        value of 'False' does not and time values beyond the phase
-        duration are ignored.
+        List of boolean values that defines which elements of
+        'powerload_set' have their time-dependence normalized in respect
+        to the phase duration. A value of 'True' forces a normalization,
+        while a value of 'False' does not and time values beyond the
+        phase duration are ignored.
     """
 
     # ------------------------------------------------------------------
@@ -548,12 +549,12 @@ class PhaseLoad(NetPowerABC):
         "ls": "--",  # Line style
     }
 
-    def __init__(self, name, phase, load_set, normalize):
+    def __init__(self, name, phase, powerload_set, normalize):
 
         super().__init__(name)
 
         self.phase = self._validate_phase(phase)
-        self.load_set = self._validate_load_set(load_set)
+        self.powerload_set = self._validate_powerload_set(powerload_set)
         self.normalize = self._validate_normalize(normalize)
 
         self._sanity()
@@ -567,14 +568,15 @@ class PhaseLoad(NetPowerABC):
         return phase
 
     @staticmethod
-    def _validate_load_set(load_set):
+    def _validate_powerload_set(powerload_set):
         """
-        Validate 'load_set' input to be a list of 'PowerLoad' instances.
+        Validate 'powerload_set' input to be a list of 'PowerLoad'
+        instances.
         """
-        load_set = super(PhaseLoad, PhaseLoad).validate_list(load_set)
-        for element in load_set:
+        powerload_set = super(PhaseLoad, PhaseLoad).validate_list(powerload_set)
+        for element in powerload_set:
             PowerLoad.validate_class(element)
-        return load_set
+        return powerload_set
 
     @staticmethod
     def _validate_normalize(normalize):
@@ -589,10 +591,10 @@ class PhaseLoad(NetPowerABC):
 
     def _sanity(self):
         """
-        Validate instance to have 'load_set' and 'normalize' attributes
-        of same length.
+        Validate instance to have 'powerload_set' and 'normalize'
+        attributes of same length.
         """
-        if len(self.load_set) != len(self.normalize):
+        if len(self.powerload_set) != len(self.normalize):
             self._issue_error("sanity")
 
     # ------------------------------------------------------------------
@@ -600,13 +602,13 @@ class PhaseLoad(NetPowerABC):
     # ------------------------------------------------------------------
     def _compute_normalized_set(self):
         phase = self.phase
-        load_set = self.load_set
+        powerload_set = self.powerload_set
         normalize = self.normalize
-        number_of_load_elements = len(load_set)
+        number_of_load_elements = len(powerload_set)
 
         normalized_set = []
         for e in range(number_of_load_elements):
-            powerload = load_set[e]
+            powerload = powerload_set[e]
             normalization_flag = normalize[e]
             if normalization_flag:
                 powerload._normalize_time(phase.duration)
@@ -621,7 +623,7 @@ class PhaseLoad(NetPowerABC):
 
         This method applies the 'curve' method of the 'PowerLoad' class
         to the 'PowerLoad' instance that is created by the sum of all
-        'PowerLoad' objects stored in the 'load_set' attribute.
+        'PowerLoad' objects stored in the 'powerload_set' attribute.
 
         Parameters
         ----------
@@ -656,7 +658,7 @@ class PhaseLoad(NetPowerABC):
 
     def plot(self, ax=None, n_points=None, detailed=False, **kwargs):
         """
-        Plot a 'PhaseLoad' curve, built using the 'load_set' and
+        Plot a 'PhaseLoad' curve, built using the 'powerload_set' and
         'normalize' attributes that define the instance. The number of
         points interpolated in each curve segment can be specified.
 
@@ -664,7 +666,7 @@ class PhaseLoad(NetPowerABC):
         to the resulting load created by the 'curve' method.
 
         This method can also plot the individual 'PowerLoad' objects
-        stored in the 'load_set' attribute.
+        stored in the 'powerload_set' attribute.
 
         Parameters
         ----------
@@ -751,7 +753,7 @@ class PulseLoad(NetPowerABC):
     ----------
     name: str
         Description of the 'PulseLoad' instance.
-    load_set: PhaseLoad | list[PhaseLoad]
+    phaseload_set: PhaseLoad | list[PhaseLoad]
         Ordered collection of instances of the 'PhaseLoad' class that
         define the 'PulseLoad' object.
 
@@ -783,34 +785,35 @@ class PulseLoad(NetPowerABC):
         "ls": "--",  # Line style
     }
 
-    def __init__(self, name, load_set):
+    def __init__(self, name, phaseload_set):
 
         super().__init__(name)
 
-        self.load_set = self._validate_load_set(load_set)
+        self.phaseload_set = self._validate_phaseload_set(phaseload_set)
         self.pulse = self._build_pulse()
 
     @staticmethod
-    def _validate_load_set(load_set):
+    def _validate_phaseload_set(phaseload_set):
         """
-        Validate 'load_set' input to be a list of 'PhaseLoad' instances.
+        Validate 'phaseload_set' input to be a list of 'PhaseLoad'
+        instances.
         """
-        load_set = super(PulseLoad, PulseLoad).validate_list(load_set)
-        for element in load_set:
+        phaseload_set = super(PulseLoad, PulseLoad).validate_list(phaseload_set)
+        for element in phaseload_set:
             PhaseLoad.validate_class(element)
-        return load_set
+        return phaseload_set
 
     def _build_pulse(self):
         """
         Build pulse from 'PowerCyclePhase' instances stored in the
         'phase' attributes of each 'PhaseLoad' instance in the
-        'load_set' ordered list.
+        'phaseload_set' ordered list.
         """
         name = self.name
-        load_set = self.load_set
+        phaseload_set = self.phaseload_set
         phase_set = []
-        for load in load_set:
-            phase = load.phase
+        for phaseload in phaseload_set:
+            phase = phaseload.phase
             phase_set.append(phase)
         name = "Pulse for " + name
         pulse = PowerCyclePulse(name, phase_set)
@@ -826,7 +829,7 @@ class PulseLoad(NetPowerABC):
 
         This method applies the 'curve' method of the 'PowerLoad' class
         to the 'PowerLoad' instance that is created by the sum of all
-        'PowerLoad' objects stored in the 'load_set' attribute.
+        'PowerLoad' objects stored in the 'phaseload_set' attribute.
 
         Parameters
         ----------
@@ -841,25 +844,25 @@ class PulseLoad(NetPowerABC):
 
         """
         pulse = self.pulse
-        load_set = self.load_set
+        phaseload_set = self.phaseload_set
 
         phase_set = pulse.phase_set
         number_of_phases = len(phase_set)
 
         for p in range(number_of_phases):
             phase = phase_set[p]
-            phaseload = load_set[p]
+            phaseload = phaseload_set[p]
 
             intrinsic_time =
 
-        n_loads = len(load_set)
+        n_loads = len(phaseload_set)
         for i in range(n_loads):
             normalization_flag = normalize[i]
-            powerload = load_set[i]
+            powerload = phaseload_set[i]
             if normalization_flag:
                 powerload._normalize_time(phase.duration)
 
-        resulting_load = sum(load_set)
+        resulting_load = sum(phaseload_set)
         curve = resulting_load.curve(time)
         return curve
         """
@@ -881,7 +884,8 @@ class PulseLoad(NetPowerABC):
         to the resulting load created by the 'curve' method.
 
         This method can also plot the individual 'PowerLoad' objects
-        stored in the 'load_set' attribute.
+        stored in each 'PhaseLoad' instance of the 'phaseload_set'
+        attribute.
 
         Parameters
         ----------

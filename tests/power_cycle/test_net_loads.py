@@ -383,8 +383,8 @@ class TestPowerLoad:
             curve_length = len(curve)
             assert curve_length == time_length
 
-            all_data.append(sample.data_set[0].data)
-            all_sets.append(sample.data_set[0])
+            all_data.append(sample.powerdata_set[0].data)
+            all_sets.append(sample.powerdata_set[0])
             all_models.append(sample.model[0])
         multiset_load = PowerLoad("Multi Load", all_sets, all_models)
         multiset_curve = multiset_load.curve(test_time)
@@ -402,18 +402,18 @@ class TestPowerLoad:
         multisample = self.construct_multisample()
         all_samples.append(multisample)
         for sample in all_samples:
-            old_data_set = sample.data_set
+            old_powerdata_set = sample.powerdata_set
             sample._normalize_time(new_end_time)
-            new_data_set = sample.data_set
+            new_powerdata_set = sample.powerdata_set
 
-            # Assert length of 'data_set' has not changed
-            correct_number_of_powerdatas = len(old_data_set)
-            assert len(new_data_set) == correct_number_of_powerdatas
+            # Assert length of 'powerdata_set' has not changed
+            correct_number_of_powerdatas = len(old_powerdata_set)
+            assert len(new_powerdata_set) == correct_number_of_powerdatas
 
             # Assert 'data' has not changed
             for p in range(correct_number_of_powerdatas):
-                old_data = old_data_set[p]
-                new_data = new_data_set[p]
+                old_data = old_powerdata_set[p]
+                new_data = new_powerdata_set[p]
                 assert old_data == new_data
 
     # ------------------------------------------------------------------
@@ -459,7 +459,7 @@ class TestPowerLoad:
         result = sum(all_samples)
         assert isinstance(result, PowerLoad)
 
-        result_powerdata = result.data_set
+        result_powerdata = result.powerdata_set
         assert result_powerdata == sample_powerdatas
 
         result_powerloadmodel = result.model
@@ -576,8 +576,8 @@ class TestPhaseLoad:
             curve_length = len(curve)
             assert curve_length == time_length
 
-            all_data.append(sample.data_set[0].data)
-            all_sets.append(sample.data_set[0])
+            all_data.append(sample.powerdata_set[0].data)
+            all_sets.append(sample.powerdata_set[0])
             all_models.append(sample.model[0])
         multiset_load = PowerLoad("Multi Load", all_sets, all_models)
         multiset_curve = multiset_load.curve(test_time)
