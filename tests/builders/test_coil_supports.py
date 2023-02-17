@@ -138,7 +138,7 @@ class TestPFCoilSupportBuilder:
             (14.5, 6, 0.5, 0.5),
         ],
     )
-    def test_good_positions(self, x, z, dx, dz):
+    def test_good_positions_up_down_equal_volume(self, x, z, dx, dz):
         pf_xz_upper = self.make_dummy_pf(x, z, dx, dz)
         pf_xz_lower = self.make_dummy_pf(x, -z, dx, dz)
 

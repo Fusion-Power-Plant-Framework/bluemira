@@ -370,7 +370,7 @@ class PFCoilSupportBuilder(Builder):
         best_angle = None
         start_point = None
         end_point = None
-        for point, sign in zip([[x_2, z_2], [x_2, z_3]], [-1, 1]):
+        for point, sign in zip([[x_2, z_3], [x_2, z_2]], [1, -1]):
             for angle in [0.5 * np.pi, 2 / 3 * np.pi]:
                 x_out = point[0] + np.cos(sign * angle) * 100
                 z_out = point[1] + np.sin(sign * angle) * 100
