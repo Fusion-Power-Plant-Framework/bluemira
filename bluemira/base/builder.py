@@ -26,7 +26,7 @@ Interfaces for builder classes.
 from __future__ import annotations
 
 import abc
-from typing import Dict, List, Type, Union
+from typing import Dict, List, Optional, Type, Union
 
 from bluemira.base.components import Component
 from bluemira.base.parameter_frame import ParameterFrame, make_parameter_frame
@@ -118,18 +118,21 @@ class Builder(abc.ABC):
         pass
 
     def component_tree(
-        self, xz: List[Component], xy: List[Component], xyz: List[Component]
+        self,
+        xz: Optional[List[Component]],
+        xy: Optional[List[Component]],
+        xyz: Optional[List[Component]],
     ) -> Component:
         """
         Adds views of components to an overall component tree.
 
         Parameters
         ----------
-        xz: List[Component]
+        xz:
             xz view of component
-        xy: List[Component]
+        xy:
             xy view of component
-        xyz: List[Component]
+        xyz:
             xyz view of component
 
         Returns
@@ -138,9 +141,12 @@ class Builder(abc.ABC):
 
         """
         component = Component(self.name)
-        component.add_child(Component("xz", children=xz))
-        component.add_child(Component("xy", children=xy))
-        component.add_child(Component("xyz", children=xyz))
+        if xz:
+            component.add_child(Component("xz", children=xz))
+        if xy:
+            component.add_child(Component("xy", children=xy))
+        if xyz:
+            component.add_child(Component("xyz", children=xyz))
 
         set_component_view(component.get_component("xz"), "xz")
         set_component_view(component.get_component("xy"), "xy")
