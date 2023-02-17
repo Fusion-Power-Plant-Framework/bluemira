@@ -133,7 +133,6 @@ class ITERGravitySupportBuilder(Builder):
                 "The gravity support footprint is not contained within the provided TF coil geometry!"
             )
 
-        print(x_min)
         if (self.params.z_gs - 6 * self.params.tf_gs_tk_plate) > z_min:
             raise BuilderError(
                 "The gravity support floor is not lower than where the TF coil is!"
