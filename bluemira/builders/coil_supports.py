@@ -338,6 +338,9 @@ class PFCoilSupportBuilder(Builder):
         bb = self.pf_coil_xz.bounding_box
         width = self.params.tf_wp_depth + 2 * self.params.tk_tf_side
         half_width = 0.5 * width
+        if bb.x_min < half_width:
+            raise BuilderError("PF coil has too small a minimum radius!")
+
         alpha = np.arcsin(half_width / bb.x_min)
         inner_dr = half_width * np.tan(alpha)
 
@@ -371,7 +374,7 @@ class PFCoilSupportBuilder(Builder):
         start_point = None
         end_point = None
         for point, sign in zip([[x_2, z_3], [x_2, z_2]], [1, -1]):
-            for angle in [0.5 * np.pi, 2 / 3 * np.pi]:
+            for angle in [0.5 * np.pi, 2 / 3 * np.pi, 5 / 3 * np.pi]:
                 x_out = point[0] + np.cos(sign * angle) * 100
                 z_out = point[1] + np.sin(sign * angle) * 100
                 line = make_polygon(

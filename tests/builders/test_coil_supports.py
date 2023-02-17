@@ -162,3 +162,16 @@ class TestPFCoilSupportBuilder:
         np.testing.assert_almost_equal(
             lower_support.shape.volume, upper_support.shape.volume
         )
+
+    @pytest.mark.parametrize(
+        "x, z, dx, dz",
+        [
+            (100, 0, 0.3, 0.3),
+            (1, 1, 0.3, 0.3),
+        ],
+    )
+    def test_bad_positions(self, x, z, dx, dz):
+        pf_xz = self.make_dummy_pf(x, z, dx, dz)
+        builder = PFCoilSupportBuilder(self.my_test_params, {}, self.tf_xz_koz, pf_xz)
+        with pytest.raises(BuilderError):
+            builder.build()
