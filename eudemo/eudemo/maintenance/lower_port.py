@@ -23,7 +23,7 @@
 EU-DEMO Lower Port
 """
 from dataclasses import dataclass
-from typing import Dict, Union
+from typing import Dict, Tuple, Union
 
 import numpy as np
 
@@ -32,10 +32,13 @@ from bluemira.base.parameter_frame import Parameter, ParameterFrame
 from bluemira.geometry.coordinates import Coordinates
 from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.tools import make_polygon
+from bluemira.geometry.wire import BluemiraWire
 
 
 @dataclass
 class LowerPortDesignerParams(ParameterFrame):
+    """LowerPort ParameterFrame"""
+
     lower_port_angle: Parameter[float]
 
 
@@ -59,32 +62,40 @@ class LowerPortDesigner(Designer):
         self.x_wall_outer = x_wall_outer
         self.x_extrema = x_extrema
 
-    def run(self):
+    def run(self) -> Tuple[BluemiraFace, BluemiraWire]:
         """Run method of Designer"""
-
-        # TODO return port koz
-
-        # Task 1 create trajectory
-        # step 1, what angle is the divertor taken out at
-
-        # step 2, trace path through reactor
-        # step 3, return to horizontal
-        #         (at what level or just immediately outside reactor)
-        # x_start = com_divertor
-        # z_start = z_min@x_com
-        z_start = self.divertor_xz.bounding_box.z_min
-        z_outer = z_start + (self.x_wall_inner - self.x_wall_outer) * np.sin(
-            self.params.lower_port_angle
-        )
-        x_start = self.divertor_xz.centrer_of_mass[0]
-
-        traj = make_polygon(
-            Coordinates(
-                {
-                    "x": [x_start, self.x_wall_inner, self.x_wall_outer, self.x_extrema],
-                    "z": [z_start, z_start, z_outer, z_outer],
-                }
+        if not -90 < self.params.lower_port_angle.value < 90:
+            raise ValueError(
+                f"{self.params.lower_port_angle.name}"
+                f" must be within the range -90 < x < 90 degrees: {self.params.lower_port_angle.value}"
             )
+
+        z_start = self.divertor_xz.bounding_box.z_min
+        z_outer = z_start + (self.x_wall_inner - self.x_wall_outer) * np.tan(
+            np.deg2rad(self.params.lower_port_angle.value)
+        )
+        x_start = self.divertor_xz.center_of_mass[0]
+
+        x_path = np.array(
+            [x_start, self.x_wall_inner, self.x_wall_outer, self.x_extrema]
+        )
+        z_lower_path = np.array([z_start, z_start, z_outer, z_outer])
+
+        traj = Coordinates(
+            {
+                "x": x_path,
+                "z": z_lower_path,
+            }
         )
 
-        # Task 2 size of port along trajectory
+        port = Coordinates(
+            {
+                "x": np.append(x_path, x_path[::-1]),
+                "z": np.append(
+                    z_lower_path,
+                    (z_lower_path + self.divertor_xz.bounding_box.z_max)[::-1],
+                ),
+            }
+        )
+
+        return BluemiraFace(make_polygon(port, closed=True)), traj
