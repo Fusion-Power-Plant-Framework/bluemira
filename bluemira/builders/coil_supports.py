@@ -161,10 +161,10 @@ class ITERGravitySupportBuilder(Builder):
         if v1.x > v4.x:
             v1, v4 = v4, v1
 
-        z_block_lower = v1.z - 5 * self.params.tf_gs_tk_plate
-        v2 = Coordinates(np.array([v1.x, 0, z_block_lower]))
+        z_block_lower = v1.z[0] - 5 * self.params.tf_gs_tk_plate
+        v2 = Coordinates(np.array([v1.x[0], 0, z_block_lower]))
         v4 = intersection_wire.end_point()
-        v3 = Coordinates(np.array([v4.x, 0, z_block_lower]))
+        v3 = Coordinates(np.array([v4.x[0], 0, z_block_lower]))
 
         points = np.concatenate([v1.xyz, v2.xyz, v3.xyz, v4.xyz], axis=1)
         closing_wire = make_polygon(points, closed=False)
