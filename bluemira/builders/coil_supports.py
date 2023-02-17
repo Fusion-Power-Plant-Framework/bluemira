@@ -115,14 +115,19 @@ class ITERGravitySupportBuilder(Builder):
         z_min = self.tf_xz_keep_out_zone.bounding_box.z_min
         z_max = self.tf_xz_keep_out_zone.bounding_box.z_max
         z_max = z_min + 0.5 * (z_max - z_min)
-        z_min -= 10.0  # just some offset downwards
-        x_min = self.tf_xz_keep_out_zone.bounding_box.x_min - 0.5 * width
-        x_max = self.tf_xz_keep_out_zone.bounding_box.x_max + 0.5 * width
+        x_min = self.tf_xz_keep_out_zone.bounding_box.x_min + 0.5 * width
+        x_max = self.tf_xz_keep_out_zone.bounding_box.x_max - 0.5 * width
 
         if (self.params.x_g_support < x_min) | (self.params.x_g_support > x_max):
             raise BuilderError(
                 "The gravity support footprint is not contained within the provided TF coil geometry!"
             )
+
+        if abs(self.params.z_gs - 6 * self.params.tf_gs_tk_plate) < abs(z_min):
+            raise BuilderError(
+                "The gravity support floor is not lower than where the TF coil is!"
+            )
+        z_min = self.params.z_gs - 6 * self.params.tf_gs_tk_plate
 
         cut_box = make_polygon(
             {
@@ -161,9 +166,8 @@ class ITERGravitySupportBuilder(Builder):
         if v1.x > v4.x:
             v1, v4 = v4, v1
 
-        z_block_lower = v1.z[0] - 5 * self.params.tf_gs_tk_plate
+        z_block_lower = min(v1.z[0], v4.z[0]) - 5 * self.params.tf_gs_tk_plate
         v2 = Coordinates(np.array([v1.x[0], 0, z_block_lower]))
-        v4 = intersection_wire.end_point()
         v3 = Coordinates(np.array([v4.x[0], 0, z_block_lower]))
 
         points = np.concatenate([v1.xyz, v2.xyz, v3.xyz, v4.xyz], axis=1)
