@@ -301,6 +301,7 @@ class PFCoilSupportBuilder(Builder):
     PF coil support builder
     """
 
+    SUPPORT = "PF coil support"
     param_cls: Type[PFCoilSupportBuilderParams] = PFCoilSupportBuilderParams
 
     def __init__(
@@ -318,7 +319,20 @@ class PFCoilSupportBuilder(Builder):
         """
         Build the PF coil support component.
         """
-        return self.build_xyz()
+        xyz = self.build_xyz()
+        return self.component_tree(self.build_xz(xyz), self.build_xy(), [xyz])
+
+    def build_xy(self):
+        """
+        Build the x-y components of the PF coil support.
+        """
+        pass
+
+    def build_xz(self, xyz):
+        """
+        Build the x-z components of the PF coil support.
+        """
+        pass
 
     def _build_support_xs(self):
         bb = self.pf_coil_xz.bounding_box
@@ -394,8 +408,7 @@ class PFCoilSupportBuilder(Builder):
         self,
     ) -> PhysicalComponent:
         """
-        Build the x-y-z components of the ITER-like gravity support.
-
+        Build the x-y-z components of the PF coil support.
         """
         shape_list = []
         # First build the support block around the PF coil
@@ -470,7 +483,7 @@ class PFCoilSupportBuilder(Builder):
 
         shape = boolean_fuse(shape_list)
         shape.translate(vector=(0, -0.5 * width, 0))
-        component = PhysicalComponent("PF coil support", shape)
+        component = PhysicalComponent(self.SUPPORT, shape)
         component.display_cad_options.color = BLUE_PALETTE["TF"][2]
         return component
 
