@@ -366,50 +366,55 @@ class PFCoilSupportBuilder(Builder):
 
     @staticmethod
     def _get_first_intersection(point, angle, wire):
+        """
+        This used to be so easy, and now it sucks
+        """
+        point = np.array(point)
         x_out = point[0] + np.cos(angle) * VERY_BIG
         z_out = point[2] + np.sin(angle) * VERY_BIG
         from bluemira.geometry.tools import slice_shape
+
+        correct_direction = np.array([np.cos(angle), 0, np.sin(angle)])
 
         plane = BluemiraPlane.from_3_points(point, [x_out, 0, z_out], [x_out, 1, z_out])
         intersections = slice_shape(wire, plane)
         distances = []
         if intersections is None:
             return None
+
+        directed_intersections = []
         for inter in intersections:
-            dist = np.hypot(inter[0] - point[0], inter[2] - point[2])
-            distances.append(dist)
-        # line = make_polygon({"x": [point[0], x_out], "y": 0, "z": [point[2], z_out]})
-        # d_intersection, info = distance_to(wire, line)
-        # distances = []
+            direction = point - inter
+            direction /= np.linalg.norm(direction)
+            print(f"{direction=}, {correct_direction=}")
+            if np.dot(correct_direction, direction) > 0:
+                pass
+            else:
 
-        # for inter_point_pair in info:
-        #     dist = np.hypot(
-        #         inter_point_pair[0][0] - point[0],
-        #         inter_point_pair[0][2] - point[2],
-        #     )
-        #     distances.append(dist)
+                dx = inter[0] - point[0]
+                dz = inter[2] - point[2]
 
-        # if np.isclose(d_intersection, 0.0):
-        if len(intersections) > 0:
-            # print(f"{info=}")
+                dist = np.hypot(dx, dz)
+                distances.append(dist)
+                directed_intersections.append(inter)
+
+        if len(directed_intersections) > 0:
             i_min = np.argmin(distances)
-            p_inter = intersections[i_min]
-            # p_inter = info[i_min][0]
+            p_inter = directed_intersections[i_min]
             return p_inter
         else:
             return None
 
     def _get_support_point_angle(self, support_face: BluemiraFace):
         bb = support_face.boundary[0].bounding_box
-        x_2 = bb.x_min + 0.5 * (bb.x_max - bb.x_min)
-        z_2 = bb.z_min
-        z_3 = bb.z_max
+        z_down = bb.z_min
+        z_up = bb.z_max
 
         distance = np.inf
         best_angle = None
         v1, v2, v3, v4 = None, None, None, None
-        for z, sign in zip([z_3, z_2], [1, -1]):
-            for angle in [0.5 * np.pi, 2 / 3 * np.pi]:
+        for z, sign in zip([z_up, z_down], [1, -1]):
+            for angle in [0.5 * np.pi, 2 / 3 * np.pi, 5 / 3 * np.pi]:
                 p_inters = []
                 distances = []
                 for x in [bb.x_min, bb.x_max]:
