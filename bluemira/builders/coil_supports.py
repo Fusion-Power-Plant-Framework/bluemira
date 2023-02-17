@@ -35,7 +35,11 @@ from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.base.parameter_frame import Parameter, ParameterFrame
 from bluemira.display.palettes import BLUE_PALETTE
 from bluemira.geometry.constants import VERY_BIG
-from bluemira.geometry.coordinates import Coordinates
+from bluemira.geometry.coordinates import (
+    Coordinates,
+    CoordinatesError,
+    vector_intersect_3d,
+)
 from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.plane import BluemiraPlane
 from bluemira.geometry.tools import (
@@ -372,11 +376,12 @@ class PFCoilSupportBuilder(Builder):
         point = np.array(point)
         x_out = point[0] + np.cos(angle) * VERY_BIG
         z_out = point[2] + np.sin(angle) * VERY_BIG
-        from bluemira.geometry.tools import slice_shape
+        dir_point = np.array([x_out, 0, z_out])
 
-        correct_direction = np.array([np.cos(angle), 0, np.sin(angle)])
+        correct_direction = dir_point - point
+        correct_direction /= np.linalg.norm(correct_direction)
 
-        plane = BluemiraPlane.from_3_points(point, [x_out, 0, z_out], [x_out, 1, z_out])
+        plane = BluemiraPlane.from_3_points(point, dir_point, [x_out, 1, z_out])
         intersections = slice_shape(wire, plane)
         distances = []
         if intersections is None:
@@ -384,10 +389,9 @@ class PFCoilSupportBuilder(Builder):
 
         directed_intersections = []
         for inter in intersections:
-            direction = point - inter
+            direction = inter - point
             direction /= np.linalg.norm(direction)
-            print(f"{direction=}, {correct_direction=}")
-            if np.dot(correct_direction, direction) > 0:
+            if np.dot(correct_direction, direction) < 0:
                 pass
             else:
 
@@ -414,7 +418,7 @@ class PFCoilSupportBuilder(Builder):
         best_angle = None
         v1, v2, v3, v4 = None, None, None, None
         for z, sign in zip([z_up, z_down], [1, -1]):
-            for angle in [0.5 * np.pi, 2 / 3 * np.pi, 5 / 3 * np.pi]:
+            for angle in [0.5 * np.pi, 2 / 3 * np.pi, 1 / 3 * np.pi]:
                 p_inters = []
                 distances = []
                 for x in [bb.x_min, bb.x_max]:
@@ -432,8 +436,8 @@ class PFCoilSupportBuilder(Builder):
                     avg_distance = np.average(distances)
                     if avg_distance <= distance:
                         distance = avg_distance
-                        v1 = [bb.x_min, 0, z]
-                        v2 = [bb.x_max, 0, z]
+                        v1 = np.array([bb.x_min, 0, z])
+                        v2 = np.array([bb.x_max, 0, z])
                         v3 = p_inters[1]
                         v4 = p_inters[0]
                         best_angle = sign * angle
@@ -441,13 +445,9 @@ class PFCoilSupportBuilder(Builder):
         if distance == np.inf:
             raise BuilderError("No intersections found!")
 
-        cut_box = make_polygon([v1, v2, v3, v4], closed=True)
-        from bluemira.display import show_cad
-
-        show_cad([support_face, cut_box, self.tf_xz_keep_out_zone])
         return v1, v2, v3, v4, best_angle
 
-    def _get_intersecting_wire(self, support_face, v1, v2, v3, v4, angle):
+    def _get_intersecting_wire(self, v1, v2, v3, v4, angle):
         # Add some offset to get one small wire when cutting
         v3 += 0.1 * np.array([np.cos(angle), 0, np.sin(angle)])
         v4 += 0.1 * np.array([np.cos(angle), 0, np.sin(angle)])
@@ -457,7 +457,7 @@ class PFCoilSupportBuilder(Builder):
         intersection_wire = sorted(
             boolean_cut(self.tf_xz_keep_out_zone, cut_box), key=lambda wire: wire.length
         )[0]
-        return v1, v2, intersection_wire
+        return intersection_wire
 
     def build_xyz(
         self,
@@ -477,18 +477,27 @@ class PFCoilSupportBuilder(Builder):
         v1, v2, v3, v4, angle = self._get_support_point_angle(support_face)
 
         # Get the intersection with the TF edge wire and use this for the rib profile
-        print(angle)
-        v1, v2, intersection_wire = self._get_intersecting_wire(
-            support_face, v1, v2, v3, v4, angle
-        )
+        intersection_wire = self._get_intersecting_wire(v1, v2, v3, v4, angle)
 
         # Make the closing wire, and make sure the polygon doesn't self-intersect
         v3 = intersection_wire.start_point().xyz.T[0]
         v4 = intersection_wire.end_point().xyz.T[0]
-        d1 = np.sqrt(np.sum((v3 - v1) ** 2))
-        d2 = np.sqrt(np.sum((v4 - v1) ** 2))
-        if d1 > d2:
+
+        from bluemira.geometry.coordinates import get_intersect
+
+        inter1 = get_intersect(
+            np.array([v1[0], v3[0]], [v1[2], v3[2]]),
+            np.array([[v2[0], v4[0], [v2[2], v4[2]]]]),
+        )
+        print(inter1)
+        if ~np.isnan(inter1[0]):
             v3, v4 = v4, v3
+
+        # try:
+        #     vector_intersect_3d(v1, v3, v2, v4)
+        #     v3, v4 = v4, v3
+        # except CoordinatesError:
+        #     pass
 
         closing_wire = make_polygon(
             {
@@ -583,6 +592,7 @@ if __name__ == "__main__":
     pf_shapes.append(make_dummy_pf(14.5, -6, 0.5, 0.5))
     pf_shapes.append(make_dummy_pf(10, -11, 0.5, 0.5))
     pf_shapes.append(make_dummy_pf(6, -12.5, 0.5, 0.5))
+    pf_shapes.append(make_dummy_pf(2.5, -10, 0.5, 0.5))
 
     guff = Component("wtf")
     guff.add_child(tf)
