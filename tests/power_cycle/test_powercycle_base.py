@@ -52,12 +52,33 @@ class TestPowerCycleABC:
                 with pytest.raises(PowerCycleABCError):
                     wrong_sample = self.SampleConcreteClass(argument)
 
+    def test_validate_class(self):
+        sample = self.sample
+        all_arguments = self.test_arguments
+        for argument in all_arguments:
+            if isinstance(argument, self.SampleConcreteClass):
+                validated_argument = sample.validate_class(argument)
+                assert validated_argument == argument
+            else:
+                with pytest.raises(PowerCycleABCError):
+                    validated_argument = sample.validate_class(argument)
+
     def test_validate_list(self):
         sample = self.sample
         all_arguments = self.test_arguments
         for argument in all_arguments:
             validated_argument = sample.validate_list(argument)
             assert isinstance(validated_argument, list)
+
+    def test_validate_numerical(self):
+        sample = self.sample
+        all_arguments = self.test_arguments
+        for argument in all_arguments:
+            check_int = isinstance(argument, int)
+            check_float = isinstance(argument, float)
+            if not (check_int or check_float):
+                with pytest.raises(PowerCycleABCError):
+                    argument = sample.validate_numerical(argument)
 
     def test_validate_nonnegative(self):
         sample = self.sample
@@ -78,16 +99,9 @@ class TestPowerCycleABC:
                 with pytest.raises(PowerCycleABCError):
                     out = sample.validate_nonnegative(argument)
 
-    def test_validate_class(self):
-        sample = self.sample
-        all_arguments = self.test_arguments
-        for argument in all_arguments:
-            if isinstance(argument, self.SampleConcreteClass):
-                validated_argument = sample.validate_class(argument)
-                assert validated_argument == argument
-            else:
-                with pytest.raises(PowerCycleABCError):
-                    validated_argument = sample.validate_class(argument)
+    def test_validate_vector(self):
+        # Only calls other already tested methods
+        pass
 
 
 class TestPowerCycleTimeABC:
@@ -183,6 +197,38 @@ class TestNetPowerABC:
             else:
                 with pytest.raises(NetPowerABCError):
                     validated_arg = sample._validate_n_points(argument)
+
+    @pytest.mark.parametrize("refinement_order", range(10))
+    def test_refine_vector(self, refinement_order):
+        sample = self.sample
+        test_arguments = self.test_arguments
+
+        for argument in test_arguments:
+
+            try:
+                argument = sample.validate_vector(argument)
+            except PowerCycleABCError:
+                return
+
+            numeric_list = argument
+            refined_list = sample._refine_vector(
+                numeric_list,
+                refinement_order,
+            )
+            numeric_list_set = set(numeric_list)
+            refined_time_set = set(refined_list)
+            assert numeric_list_set.issubset(refined_time_set)
+
+            numeric_list_length = len(numeric_list)
+            number_of_segments = numeric_list_length - 1
+            points_in_refined = number_of_segments * refinement_order + 1
+
+            refined_list_length = len(refined_list)
+            assert points_in_refined == refined_list_length
+
+    def test_unique_and_sorted_vector(self):
+        # Only calls built-in methods
+        pass
 
     @pytest.mark.parametrize(
         "attribute",
