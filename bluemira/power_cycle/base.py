@@ -6,6 +6,8 @@ Base classes for the power cycle model.
 from abc import ABC, ABCMeta
 from typing import Union
 
+import numpy as np
+
 from bluemira.power_cycle.errors import NetPowerABCError, PowerCycleABCError
 
 
@@ -36,6 +38,16 @@ class PowerCycleABC(ABC):
             raise PowerCycleABCError("name")
         return argument
 
+    @classmethod
+    def validate_class(cls, instance):
+        """
+        Validate 'instance' to be an object of the class that calls
+        this method.
+        """
+        if not isinstance(instance, cls):
+            raise PowerCycleABCError("class")
+        return instance
+
     @staticmethod
     def validate_list(argument):
         """
@@ -47,35 +59,43 @@ class PowerCycleABC(ABC):
         return argument
 
     @staticmethod
-    def validate_nonnegative(argument):
+    def validate_numerical(argument):
         """
-        Validate an argument to be a nonnegative numerical value (i.e.
-        an instance of either the 'int' or the 'float' classes).
+        Validate an argument to be a numerical value (i.e. an instance
+        of either the 'int' or the 'float' classes).
         """
         if isinstance(argument, int) or isinstance(argument, float):
-            if argument >= 0:
-                return argument
-            else:
-                raise PowerCycleABCError(
-                    "nonnegative",
-                    "The value is negative.",
-                )
+            return argument
+        else:
+            argument_class = type(argument)
+            raise PowerCycleABCError(
+                "numerical",
+                f"The value is an object of the {argument_class!r} " "class instead.",
+            )
+
+    @staticmethod
+    def validate_nonnegative(argument):
+        """
+        Validate an argument to be a nonnegative numerical value.
+        """
+        argument = PowerCycleABC.validate_numerical(argument)
+        if argument >= 0:
+            return argument
         else:
             raise PowerCycleABCError(
                 "nonnegative",
-                "The value is not an instance of either the 'int' nor "
-                "the 'float' classes.",
+                "The value is negative.",
             )
 
-    @classmethod
-    def validate_class(cls, instance):
+    @staticmethod
+    def validate_vector(argument):
         """
-        Validate 'instance' to be an object of the class that calls
-        this method.
+        Validate an argument to be a numerical list.
         """
-        if not isinstance(instance, cls):
-            raise PowerCycleABCError("class")
-        return instance
+        argument = PowerCycleABC.validate_list(argument)
+        for element in argument:
+            element = PowerCycleABC.validate_numerical(element)
+        return argument
 
 
 class PowerCycleTimeABC(PowerCycleABC):
@@ -178,6 +198,44 @@ class NetPowerABC(PowerCycleABC, metaclass=ABCMeta):
                 )
         return n_points
 
+    @staticmethod
+    def _refine_vector(vector, n_points):
+        """
+        Add 'n_point' equidistant points between each segment (defined
+        by a subsequent pair of points) in the input 'vector'.
+        """
+        try:
+            vector = PowerCycleABC.validate_vector(vector)
+        except PowerCycleABCError:
+            raise NetPowerABCError("refine_vector")
+
+        number_of_curve_segments = len(vector) - 1
+        if n_points == 0:
+            refined_vector = vector
+        else:
+            refined_vector = []
+            for s in range(number_of_curve_segments):
+                first_point = vector[s]
+                second_point = vector[s + 1]
+                refined_segment = np.linspace(
+                    first_point,
+                    second_point,
+                    n_points + 1,
+                    endpoint=False,
+                )
+                refined_segment = refined_segment.tolist()
+                refined_vector = refined_vector + refined_segment
+            refined_vector.append(vector[-1])
+
+        return refined_vector
+
+    @staticmethod
+    def _unique_and_sorted_vector(vector):
+        vector = PowerCycleABC.validate_vector(vector)
+        unique_vector = list(set(vector))
+        sorted_vector = sorted(unique_vector)
+        return sorted_vector
+
     def _make_secondary_in_plot(self):
         """
         Alters the '_text_index' and kwargs attributes of an instance
@@ -212,10 +270,8 @@ class NetPowerABC(PowerCycleABC, metaclass=ABCMeta):
         y_list,
         **kwargs,
     ):
-
-        # class_calling_method = self.__class__.__name__
-        # text_to_be_added = f"{name} ({class_calling_method})"
-        text_to_be_added = name
+        class_calling_method = self.__class__.__name__
+        text_to_be_added = f"{name} ({class_calling_method})"
         label_of_text_object = name + " (name)"
 
         # Set each default options in kwargs, if not specified

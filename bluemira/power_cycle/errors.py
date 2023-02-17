@@ -60,6 +60,12 @@ class PowerCycleABCError(PowerCycleError):
                 "Invalid instance. The tested object is not an "
                 f"instance of the {self._source} class."
             ],
+            "numerical": (
+                "Invalid value. The tested value must be an instance "
+                "of either the 'int' or 'float' classes to be "
+                "processed by this instance of a child class of the "
+                f"{self._source} class."
+            ),
             "nonnegative": [
                 "Invalid value. The tested value must be a non-"
                 "numerical negative value to be processed by this "
@@ -92,6 +98,10 @@ class NetPowerABCError(PowerCycleError):
                 "The argument given for 'n_points' is not a valid "
                 f"value for plotting an instance of the {self._source} "
                 "class. Only non-negative integers are accepted."
+            ],
+            "refine_vector": [
+                "The argument given for 'vector' is not a valid "
+                "value. Only lists of numerical values are accepted."
             ],
         }
         return errors

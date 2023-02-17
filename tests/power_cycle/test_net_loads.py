@@ -12,7 +12,7 @@ from bluemira.power_cycle.net_loads import (
     PowerLoadModel,
     PulseLoad,
 )
-from bluemira.power_cycle.tools import adjust_2d_graph_ranges, validate_axes
+from bluemira.power_cycle.tools import adjust_2d_graph_ranges, unnest_list, validate_axes
 from tests.power_cycle.test_powercycle_time import inputs_for_pulse
 
 color_order_for_plotting = [
@@ -31,6 +31,25 @@ def prepare_figure(figure_title):
     plt.grid()
     plt.title(figure_title)
     return ax
+
+
+def assert_is_interpolation(original_points, curve):
+    """
+    Confirm that curve is an interpolation with possibility of
+    out-of-bounds values.
+
+    Current simplified approach: no curve value is out of the bounds
+    of the original defining interpolation points, except if it is a
+    zero ('fill_value' argument of 'interp1d').
+
+    Possibly to be substituted by `unittest.mock`.
+    """
+    original_max = max(original_points)
+    original_min = min(original_points)
+    curve_max = max(curve)
+    curve_min = min(curve)
+    assert (curve_max <= original_max) or (curve_max == 0)
+    assert (curve_min >= original_min) or (curve_min == 0)
 
 
 def inputs_for_powerdata():
@@ -60,6 +79,32 @@ def inputs_for_powerdata():
         input_times,
         input_datas,
     )
+
+
+def inputs_for_time_interpolation():
+    """
+    Function to create inputs time interpolation testing.
+    """
+
+    (
+        n_inputs,
+        _,
+        input_times,
+        _,
+    ) = inputs_for_powerdata()
+
+    all_times = unnest_list(input_times)
+    minimum_time = min(all_times)
+    maximum_time = min(all_times)
+
+    time_extrapolation = 2
+    time_step = 0.1
+
+    start = minimum_time - time_extrapolation
+    stop = maximum_time + time_extrapolation
+    time_vector = np.arange(start, stop, time_step)
+    time_list = list(time_vector)
+    return time_list
 
 
 class TestPowerData:
@@ -284,40 +329,11 @@ class TestPowerLoad:
     # OPERATIONS
     # ------------------------------------------------------------------
 
-    @staticmethod
-    def make_time_list_for_interpolation():
-        start = -2
-        stop = 12
-        step = 0.1
-        time_vector = np.arange(start, stop, step)
-        time_list = list(time_vector)
-        return time_list
-
-    @staticmethod
-    def check_interpolation(original_points, curve):
-        """
-        Confirm that curve is an interpolation with possibility of
-        out-of-bounds values.
-
-        Current simplified approach: no curve value is out of the bounds
-        of the original defining interpolation points, except if it is a
-        zero ('fill_value' argument of 'interp1d').
-
-        Possibly to be substituted by `unittest.mock`.
-        """
-        original_max = max(original_points)
-        original_min = min(original_points)
-        curve_max = max(curve)
-        curve_min = min(curve)
-        assert (curve_max <= original_max) or (curve_max == 0)
-        assert (curve_min >= original_min) or (curve_min == 0)
-
     def test_single_curve(self):
-
         sample_powerdatas = self.sample_powerdatas
         sample_models = self.sample_models
 
-        test_time = self.make_time_list_for_interpolation()
+        test_time = inputs_for_time_interpolation()
         time_length = len(test_time)
 
         for powerdata in sample_powerdatas:
@@ -331,7 +347,7 @@ class TestPowerLoad:
                 )
                 curve_length = len(curve)
                 assert curve_length == time_length
-                self.check_interpolation(power_points, curve)
+                assert_is_interpolation(power_points, curve)
 
     def test_validate_time(self):
         test_arguments = [
@@ -356,7 +372,7 @@ class TestPowerLoad:
 
     def test_curve(self):
         all_samples = self.all_samples
-        test_time = self.make_time_list_for_interpolation()
+        test_time = inputs_for_time_interpolation()
         time_length = len(test_time)
 
         all_data = []
@@ -378,7 +394,7 @@ class TestPowerLoad:
         sum_of_maxima = sum(data_maxima)
         sum_of_minima = sum(data_minima)
         extreme_points = [sum_of_minima, sum_of_maxima]
-        self.check_interpolation(extreme_points, multiset_curve)
+        assert_is_interpolation(extreme_points, multiset_curve)
 
     @pytest.mark.parametrize("new_end_time", [10 ** (e - 5) for e in range(10)])
     def test_normalize_time(self, new_end_time):
@@ -403,26 +419,6 @@ class TestPowerLoad:
     # ------------------------------------------------------------------
     # VISUALIZATION
     # ------------------------------------------------------------------
-
-    def test_refine_vector(self):
-        sample_powerdatas = self.sample_powerdatas
-
-        max_number_of_refinements = 10
-        all_refinement_orders = range(max_number_of_refinements)
-        for powerdata in sample_powerdatas:
-            time = powerdata.time
-
-            for refinement_order in all_refinement_orders:
-                refined_time = PowerLoad._refine_vector(
-                    time,
-                    refinement_order,
-                )
-
-                set_from_time = set(time)
-                set_from_refined_time = set(refined_time)
-                check = set_from_time.issubset(set_from_refined_time)
-                time_is_subset_of_refined_time = check
-                assert time_is_subset_of_refined_time
 
     @pytest.mark.parametrize("detailed_plot_flag", [False, True])
     def test_plot(self, detailed_plot_flag):
@@ -564,10 +560,41 @@ class TestPhaseLoad:
         assert isinstance(multisample, PhaseLoad)
 
     # ------------------------------------------------------------------
+    # OPERATIONS
+    # ------------------------------------------------------------------
+    def test_curve(self):
+        all_samples = self.all_samples
+        test_time = inputs_for_time_interpolation()
+        time_length = len(test_time)
+
+        """
+        all_data = []
+        all_sets = []
+        all_models = []
+        for sample in all_samples:
+            curve = sample.curve(test_time)
+            curve_length = len(curve)
+            assert curve_length == time_length
+
+            all_data.append(sample.data_set[0].data)
+            all_sets.append(sample.data_set[0])
+            all_models.append(sample.model[0])
+        multiset_load = PowerLoad("Multi Load", all_sets, all_models)
+        multiset_curve = multiset_load.curve(test_time)
+
+        data_maxima = [max(data) for data in all_data]
+        data_minima = [min(data) for data in all_data]
+        sum_of_maxima = sum(data_maxima)
+        sum_of_minima = sum(data_minima)
+        extreme_points = [sum_of_minima, sum_of_maxima]
+        assert_is_interpolation(extreme_points, multiset_curve)
+        """
+
+    # ------------------------------------------------------------------
     # VISUALIZATION
     # ------------------------------------------------------------------
 
-    @pytest.mark.parametrize("color_index", [1])
+    @pytest.mark.parametrize("color_index", [2])
     @pytest.mark.parametrize("detailed_plot_flag", [False, True])
     def test_plot(self, color_index, detailed_plot_flag):
         sample_color = color_order_for_plotting[color_index]
@@ -654,8 +681,26 @@ class TestPulseLoad:
         assert isinstance(multisample, PulseLoad)
 
     # ------------------------------------------------------------------
+    # OPERATIONS
+    # ------------------------------------------------------------------
+    def test_curve(self):
+        pass
+
+    # ------------------------------------------------------------------
     # VISUALIZATION
     # ------------------------------------------------------------------
-    # @pytest.mark.parametrize("detailed_plot_flag", [False, True])
-    # def test_plot(self, detailed_plot_flag):
-    #   multi_load = self.construct_multisample()
+    @pytest.mark.parametrize("color_index", [3])
+    @pytest.mark.parametrize("detailed_plot_flag", [False, True])
+    def test_plot(self, color_index, detailed_plot_flag):
+        sample_color = color_order_for_plotting[color_index]
+        figure_title = "'detailed' flag = " + str(detailed_plot_flag)
+        figure_title = "PulseLoad Plotting (" + figure_title + ")"
+        ax = prepare_figure(figure_title)
+
+        multisample = self.construct_multisample()
+        list_of_plot_objects = multisample.plot(
+            ax=ax, detailed=detailed_plot_flag, c=sample_color
+        )
+
+        adjust_2d_graph_ranges(ax=ax)
+        plt.show()  # Run with `pytest --plotting-on` to visualize

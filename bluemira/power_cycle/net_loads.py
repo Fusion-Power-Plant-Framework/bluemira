@@ -346,31 +346,15 @@ class PowerLoad(NetPowerABC):
     # VISUALIZATION
     # ------------------------------------------------------------------
 
-    @staticmethod
-    def _refine_vector(vector, n_points):
-        """
-        Add 'n_point' equidistant points between each segment (defined
-        by a subsequent pair of points) in the input 'vector'.
-        """
-        number_of_curve_segments = len(vector) - 1
-        if n_points == 0:
-            refined_vector = vector
-        else:
-            refined_vector = []
-            for s in range(number_of_curve_segments):
-                first_point = vector[s]
-                second_point = vector[s + 1]
-                refined_segment = np.linspace(
-                    first_point,
-                    second_point,
-                    n_points + 1,
-                    endpoint=False,
-                )
-                refined_segment = refined_segment.tolist()
-                refined_vector = refined_vector + refined_segment
-            refined_vector.append(vector[-1])
-
-        return refined_vector
+    def _refine_time_vector(self, n_points):
+        data_set = self.data_set
+        preallocated_time = []
+        for powerdata in data_set:
+            original_time = powerdata.time
+            refined_time = self._refine_vector(original_time, n_points)
+            preallocated_time = preallocated_time + refined_time
+        complete_time = self._unique_and_sorted_vector(preallocated_time)
+        return complete_time
 
     def plot(self, ax=None, n_points=None, detailed=False, **kwargs):
         """
@@ -428,29 +412,16 @@ class PowerLoad(NetPowerABC):
         final_kwargs = {**default_plot_kwargs, **kwargs}
 
         name = self.name
-        data_set = self.data_set
-        model = self.model
 
-        number_of_load_elements = len(data_set)
-        preallocated_time = []
-
-        for e in range(number_of_load_elements):
-            current_powerdata = data_set[e]
-            current_time = current_powerdata.time
-
-            current_time = self._refine_vector(current_time, n_points)
-            preallocated_time = preallocated_time + current_time
-
-        unique_times = list(set(preallocated_time))
-        sorted_time = sorted(unique_times)
-        computed_curve = self.curve(sorted_time)
+        computed_time = self._refine_time_vector(n_points)
+        computed_curve = self.curve(computed_time)
 
         list_of_plot_objects = []
 
         # Plot curve as line
         label = name + " (curve)"
         plot_object = ax.plot(
-            sorted_time,
+            computed_time,
             computed_curve,
             label=label,
             **final_kwargs,
@@ -461,21 +432,26 @@ class PowerLoad(NetPowerABC):
         plot_object = self._add_text_to_point_in_plot(
             ax,
             name,
-            sorted_time,
+            computed_time,
             computed_curve,
             **kwargs,
         )
         list_of_plot_objects.append(plot_object)
 
         if detailed:
-            for e in range(number_of_load_elements):
+
+            data_set = self.data_set
+            model = self.model
+            number_of_data_elements = len(data_set)
+
+            for e in range(number_of_data_elements):
                 current_powerdata = data_set[e]
                 current_model = model[e]
 
                 current_curve = self._single_curve(
                     current_powerdata,
                     current_model,
-                    sorted_time,
+                    computed_time,
                 )
 
                 # Plot current PowerData with seconday kwargs
@@ -485,7 +461,7 @@ class PowerLoad(NetPowerABC):
                 # Plot current curve as line with secondary kwargs
                 kwargs.update(current_powerdata._plot_kwargs)
                 plot_object = ax.plot(
-                    sorted_time,
+                    computed_time,
                     current_curve,
                     **kwargs,
                 )
@@ -661,9 +637,9 @@ class PhaseLoad(NetPowerABC):
     # ------------------------------------------------------------------
     def plot(self, ax=None, n_points=None, detailed=False, **kwargs):
         """
-        Plot a 'PhaseLoad' curve, built using the attributes that define
-        the instance. The number of points interpolated in each curve
-        segment can be specified.
+        Plot a 'PhaseLoad' curve, built using the 'load_set' and
+        'normalize' attributes that define the instance. The number of
+        points interpolated in each curve segment can be specified.
 
         This method applies the 'plot' method of the 'PowerLoad' class
         to the resulting load created by the 'curve' method.
@@ -701,46 +677,62 @@ class PhaseLoad(NetPowerABC):
             the 'PowerLoad' class.
         """
         ax = validate_axes(ax)
+        n_points = self._validate_n_points(n_points)
+
+        # Set each default options in kwargs, if not specified
+        default_plot_kwargs = self._plot_kwargs
+        final_kwargs = {**default_plot_kwargs, **kwargs}
 
         name = self.name
+        phase = self.phase
         load_set = self.load_set
+        normalize = self.normalize
 
-        resulting_load = sum(load_set)
-        resulting_load.name = name
+        number_of_load_elements = len(load_set)
+        normalized_set = []
+
+        preallocated_time = []
+        for e in range(number_of_load_elements):
+            powerload = load_set[e]
+            normalization_flag = normalize[e]
+
+            if normalization_flag:
+                powerload._normalize_time(phase.duration)
+            normalized_set.append(powerload)
+
+            refined_time = powerload._refine_time_vector(n_points)
+            preallocated_time = preallocated_time + refined_time
+
+        computed_time = self._unique_and_sorted_vector(preallocated_time)
+        computed_curve = self.curve(computed_time)
 
         list_of_plot_objects = []
 
-        # Plot resulting load
-        plot_object = resulting_load.plot(
-            ax=ax,
-            n_points=n_points,
-            detailed=False,
+        # Plot curve as line
+        label = name + " (curve)"
+        plot_object = ax.plot(
+            computed_time,
+            computed_curve,
+            label=label,
+            **final_kwargs,
+        )
+        list_of_plot_objects.append(plot_object)
+
+        # Add descriptive text next to curve
+        plot_object = self._add_text_to_point_in_plot(
+            ax,
+            name,
+            computed_time,
+            computed_curve,
             **kwargs,
         )
         list_of_plot_objects.append(plot_object)
 
         if detailed:
-            number_of_load_elements = len(load_set)
             for e in range(number_of_load_elements):
-                current_powerload = load_set[e]
-                current_powerload._make_secondary_in_plot()
-                current_plot_list = current_powerload.plot(ax=ax)
-
-                """
-                # Plot current PowerLoad with seconday kwargs
-                current_powerload._make_secondary_in_plot()
-                current_plot_list = current_powerdata.plot(ax=ax)
-
-                # Plot current curve as line with secondary kwargs
-                kwargs.update(current_powerdata._plot_kwargs)
-                plot_object = ax.plot(
-                    sorted_time,
-                    current_curve,
-                    **kwargs,
-                )
-                current_plot_list.append(plot_object)
-                """
-
+                powerload = normalized_set[e]
+                powerload._make_secondary_in_plot()
+                current_plot_list = powerload.plot(ax=ax)
                 list_of_plot_objects.append(current_plot_list)
 
         return list_of_plot_objects
@@ -820,6 +812,83 @@ class PulseLoad(NetPowerABC):
         return pulse
 
     # ------------------------------------------------------------------
+    # OPERATIONS
+    # ------------------------------------------------------------------
+    def curve(self, time):
+        """
+        Create a curve by calculating power load values at the specified
+        times.
+
+        This method applies the 'curve' method of the 'PowerLoad' class
+        to the 'PowerLoad' instance that is created by the sum of all
+        'PowerLoad' objects stored in the 'load_set' attribute.
+
+        Parameters
+        ----------
+        time: int | float | list[ int | float ]
+            List of time values. [s]
+
+        Returns
+        -------
+        curve: list[float]
+            List of power values. [W]
+        """
+        phase = self.phase
+        load_set = self.load_set
+        normalize = self.normalize
+
+        n_loads = len(load_set)
+        for i in range(n_loads):
+            normalization_flag = normalize[i]
+            powerload = load_set[i]
+            if normalization_flag:
+                powerload._normalize_time(phase.duration)
+
+        resulting_load = sum(load_set)
+        curve = resulting_load.curve(time)
+        return curve
+
+    # ------------------------------------------------------------------
     # VISUALIZATION
     # ------------------------------------------------------------------
-    # def plot(self, ax=None, n_points=None, detailed=False, **kwargs):
+    def plot(self, ax=None, n_points=None, detailed=False, **kwargs):
+        """
+        Plot a 'PulseLoad' curve, built using the attributes that define
+        the instance. The number of points interpolated in each curve
+        segment can be specified.
+
+        This method applies the 'plot' method of the 'PowerLoad' class
+        to the resulting load created by the 'curve' method.
+
+        This method can also plot the individual 'PowerLoad' objects
+        stored in the 'load_set' attribute.
+
+        Parameters
+        ----------
+        n_points: int
+            Number of points interpolated in each curve segment. The
+            default value is 'None', which indicates to the method
+            that the default value should be used, defined as a class
+            attribute.
+        detailed: bool
+            Determines whether the plot will include all individual
+            'PowerLoad' instances (computed with their respective
+            'model' entries), that summed result in the normal plotted
+            curve. Plotted as secondary plots, as defined in
+            'PowerCycleABC' class. By default this input is set to
+            'False'.
+        **kwargs: dict
+            Options for the 'plot' method.
+
+        Returns
+        -------
+        list_of_plot_objects: list
+            List of plot objects created by the 'matplotlib' package.
+            The first element of the list is the plot object created
+            using the 'pyplot.plot', while the second element of the
+            list is the plot object created using the 'pyplot.text'
+            method.
+            If the 'detailed' argument is set to 'True', the list
+            continues to include the lists of plot objects created by
+            the 'PowerLoad' class.
+        """
