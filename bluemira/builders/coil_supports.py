@@ -65,6 +65,16 @@ class ITERGravitySupportBuilderParams(ParameterFrame):
 class ITERGravitySupportBuilder(Builder):
     """
     ITER-like gravity support builder
+
+    Parameters
+    ----------
+    params:
+        Parameters to use
+    build_config:
+        Build config to use
+    tf_kz_keep_out_zone:
+        TF coil wire keep-out-zone for the outer edge of the TF coil (including casing)
+        Note that this should be on the y=0 plane.
     """
 
     param_cls: Type[ITERGravitySupportBuilderParams] = ITERGravitySupportBuilderParams
