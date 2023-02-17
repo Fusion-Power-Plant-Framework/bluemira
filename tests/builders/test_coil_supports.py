@@ -66,7 +66,7 @@ class TestITERGravitySupportBuilder:
 
     tf_kozs = [pd_xz_koz, pf_xz_koz, ta_xz_koz]
 
-    @pytest.mark.parametrize("tf", [tf_kozs])
+    @pytest.mark.parametrize("tf", tf_kozs)
     @pytest.mark.parametrize("x_gs", [0, 2, 100])
     def test_bad_support_radius(self, tf, x_gs):
         params = ITERGravitySupportBuilderParams(
