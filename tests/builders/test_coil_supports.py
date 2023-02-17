@@ -19,8 +19,66 @@
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 
-from bluemira.builders.coil_supports import ITERGra, ITERGravitySupportBuilder
+import pytest
+
+from bluemira.base.error import BuilderError
+from bluemira.builders.coil_supports import (
+    ITERGravitySupportBuilder,
+    ITERGravitySupportBuilderParams,
+)
+from bluemira.geometry.parameterisations import PictureFrame, PrincetonD, TripleArc
+
+my_test_params = ITERGravitySupportBuilderParams(
+    x_g_support=10,
+    z_gs=-15,
+    tf_wp_depth=1.4,
+    tf_wp_width=0.8,
+    tk_tf_side=0.05,
+    tf_gs_tk_plate=0.025,
+    tf_gs_g_plate=0.025,
+    tf_gs_base_depth=2.4,
+)
+
+my_dummy_tf = PrincetonD()
+my_dummy_tf.adjust_variable("x1", value=3, lower_bound=2, upper_bound=4)
+my_dummy_tf.adjust_variable("x2", value=15, lower_bound=2, upper_bound=24)
+my_dummy_tf_xz_koz = my_dummy_tf.create_shape()
+
+my_builder = ITERGravitySupportBuilder(my_test_params, {}, my_dummy_tf_xz_koz)
+
+component = my_builder.build()
+component.get_component("xyz").show_cad()
+component.get_component("xz").plot_2d()
 
 
 class TestITERGravitySupportBuilder:
-    pass
+    pd = PrincetonD()
+    pd.adjust_variable("x1", value=3, lower_bound=2, upper_bound=4)
+    pd.adjust_variable("x2", value=15, lower_bound=2, upper_bound=24)
+    pd_xz_koz = pd.create_shape()
+    pf = PictureFrame()
+    pf.adjust_variable("x1", value=3, lower_bound=2, upper_bound=4)
+    pf.adjust_variable("x2", value=15, lower_bound=2, upper_bound=24)
+    pf_xz_koz = pf.create_shape()
+    ta = TripleArc()
+    ta.adjust_variable("x1", value=3, lower_bound=2, upper_bound=4)
+    ta_xz_koz = ta.create_shape()
+
+    tf_kozs = [pd_xz_koz, pf_xz_koz, ta_xz_koz]
+
+    @pytest.mark.parametrize("tf", [tf_kozs])
+    @pytest.mark.parametrize("x_gs", [0, 2, 100])
+    def test_bad_support_radius(self, tf, x_gs):
+        params = ITERGravitySupportBuilderParams(
+            x_g_support=x_gs,
+            z_gs=-15,
+            tf_wp_depth=1.4,
+            tf_wp_width=0.8,
+            tk_tf_side=0.05,
+            tf_gs_tk_plate=0.025,
+            tf_gs_g_plate=0.025,
+            tf_gs_base_depth=2.4,
+        )
+        builder = ITERGravitySupportBuilder(params, {}, tf)
+        with pytest.raises(BuilderError):
+            builder.build()
