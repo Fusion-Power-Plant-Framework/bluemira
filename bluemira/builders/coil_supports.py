@@ -236,29 +236,3 @@ class ITERGravitySupportBuilder(Builder):
         component = PhysicalComponent("ITER-like gravity support", shape)
         component.display_cad_options.color = BLUE_PALETTE["TF"][2]
         return component
-
-
-if __name__ == "__main__":
-    from bluemira.geometry.parameterisations import PrincetonD
-
-    my_test_params = ITERGravitySupportBuilderParams(
-        x_g_support=10,
-        z_gs=-15,
-        tf_wp_depth=1.4,
-        tf_wp_width=0.8,
-        tk_tf_side=0.05,
-        tf_gs_tk_plate=0.025,
-        tf_gs_g_plate=0.025,
-        tf_gs_base_depth=2.4,
-    )
-
-    my_dummy_tf = PrincetonD()
-    my_dummy_tf.adjust_variable("x1", value=3, lower_bound=2, upper_bound=4)
-    my_dummy_tf.adjust_variable("x2", value=15, lower_bound=2, upper_bound=24)
-    my_dummy_tf_xz_koz = my_dummy_tf.create_shape()
-
-    my_builder = ITERGravitySupportBuilder(my_test_params, {}, my_dummy_tf_xz_koz)
-
-    component = my_builder.build()
-    component.get_component("xyz").show_cad()
-    component.get_component("xz").plot_2d()
