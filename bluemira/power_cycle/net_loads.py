@@ -1,7 +1,7 @@
 # COPYRIGHT PLACEHOLDER
 
 """
-Classes for the calculation of net power in the power cycle model.
+Classes for the definition of power loads in the power cycle model.
 """
 from enum import Enum
 from typing import List, Union
