@@ -34,6 +34,7 @@ from bluemira.base.error import BuilderError
 from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.base.parameter_frame import Parameter, ParameterFrame
 from bluemira.display.palettes import BLUE_PALETTE
+from bluemira.geometry.constants import VERY_BIG
 from bluemira.geometry.coordinates import Coordinates
 from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.plane import BluemiraPlane
@@ -363,6 +364,27 @@ class PFCoilSupportBuilder(Builder):
         face = BluemiraFace([box_outer, box_inner])
         return face
 
+    @staticmethod
+    def _get_first_intersection(point, angle, wire):
+        x_out = point[0] + np.cos(angle) * VERY_BIG
+        z_out = point[2] + np.sin(angle) * VERY_BIG
+        line = make_polygon({"x": [point[0], x_out], "y": 0, "z": [point[2], z_out]})
+        d_intersection, info = distance_to(wire, line)
+        distances = []
+        for inter_point_pair in info:
+            dist = np.hypot(
+                inter_point_pair[0][0] - point[0],
+                inter_point_pair[0][2] - point[2],
+            )
+            distances.append(dist)
+
+        if np.isclose(d_intersection, 0.0):
+            i_min = np.argmin(distances)
+            p_inter = info[i_min][0]
+            return p_inter
+        else:
+            return None
+
     def _get_support_point_angle(self, support_face: BluemiraFace):
         bb = support_face.boundary[0].bounding_box
         x_2 = bb.x_min + 0.5 * (bb.x_max - bb.x_min)
@@ -373,30 +395,14 @@ class PFCoilSupportBuilder(Builder):
         best_angle = None
         start_point = None
         end_point = None
-        for point, sign in zip([[x_2, z_3], [x_2, z_2]], [1, -1]):
-            for angle in [0.5 * np.pi, 2 / 3 * np.pi, 5 / 3 * np.pi]:
-                x_out = point[0] + np.cos(sign * angle) * 100
-                z_out = point[1] + np.sin(sign * angle) * 100
-                line = make_polygon(
-                    {"x": [point[0], x_out], "y": 0, "z": [point[1], z_out]}
+        for point, sign in zip([[x_2, 0, z_3], [x_2, 0, z_2]], [1, -1]):
+            for angle in [0.5 * np.pi, 2 / 3 * np.pi]:
+                p_inter = self._get_first_intersection(
+                    point, sign * angle, self.tf_xz_keep_out_zone
                 )
-                d_intersection, info = distance_to(self.tf_xz_keep_out_zone, line)
 
-                # Get the first intersection point, what ever happened to my
-                # get_first_intersection?!
-                distances = []
-                for inter_point_pair in info:
-                    dist = np.hypot(
-                        inter_point_pair[0][0] - point[0],
-                        inter_point_pair[0][2] - point[1],
-                    )
-                    distances.append(dist)
-
-                i_min = np.argmin(distances)
-                p_inter = info[i_min][0]
-
-                if np.isclose(d_intersection, 0.0):
-                    d = np.hypot(point[0] - p_inter[0], point[1] - p_inter[2])
+                if p_inter is not None:
+                    d = np.hypot(point[0] - p_inter[0], point[2] - p_inter[2])
                     if d <= distance:
                         distance = d
                         best_angle = sign * angle
@@ -406,6 +412,32 @@ class PFCoilSupportBuilder(Builder):
         if distance == np.inf:
             raise BuilderError("No intersections found!")
         return start_point, end_point, best_angle
+
+    def _get_intersecting_wire(self, support_face, start_point, end_point, angle):
+        bb = support_face.bounding_box
+        if start_point[2] > end_point[2]:
+            z_s = bb.z_min
+        else:
+            z_s = bb.z_max
+
+        # some offset to get one small wire when cutting
+        x_out1 = bb.x_min + np.cos(angle) * 2
+        z_out1 = z_s + np.sin(angle) * 2
+        x_out2 = bb.x_max + np.cos(angle) * 2
+        z_out2 = z_s + np.sin(angle) * 2
+        v1 = np.array([bb.x_min, 0, z_s])
+        v2 = np.array([bb.x_max, 0, z_s])
+        v3 = np.array([x_out2, 0, z_out2])
+        v4 = np.array([x_out1, 0, z_out1])
+
+        cut_box = make_polygon([v1, v2, v3, v4], closed=True)
+        from bluemira.display import show_cad
+
+        show_cad([support_face, cut_box, self.tf_xz_keep_out_zone])
+        intersection_wire = sorted(
+            boolean_cut(self.tf_xz_keep_out_zone, cut_box), key=lambda wire: wire.length
+        )[0]
+        return v1, v2, intersection_wire
 
     def build_xyz(
         self,
@@ -425,26 +457,9 @@ class PFCoilSupportBuilder(Builder):
         start_point, end_point, angle = self._get_support_point_angle(support_face)
 
         # Get the intersection with the TF edge wire and use this for the rib profile
-        bb = support_face.bounding_box
-        if start_point[1] > end_point[1]:
-            z_s = bb.z_min
-        else:
-            z_s = bb.z_max
-
-        # some offset to get one small wire when cutting
-        x_out1 = bb.x_min + np.cos(angle) * 2
-        z_out1 = z_s + np.sin(angle) * 2
-        x_out2 = bb.x_max + np.cos(angle) * 2
-        z_out2 = z_s + np.sin(angle) * 2
-        v1 = np.array([bb.x_min, 0, z_s])
-        v2 = np.array([bb.x_max, 0, z_s])
-        v3 = np.array([x_out2, 0, z_out2])
-        v4 = np.array([x_out1, 0, z_out1])
-
-        cut_box = make_polygon([v1, v2, v3, v4], closed=True)
-        intersection_wire = sorted(
-            boolean_cut(self.tf_xz_keep_out_zone, cut_box), key=lambda wire: wire.length
-        )[0]
+        v1, v2, intersection_wire = self._get_intersecting_wire(
+            support_face, start_point, end_point, angle
+        )
 
         # Make the closing wire, and make sure the polygon doesn't self-intersect
         v3 = intersection_wire.start_point().xyz.T[0]
@@ -540,6 +555,7 @@ if __name__ == "__main__":
         return my_dummy_pf.create_shape()
 
     pf_shapes = []
+    # pf_shapes.append(make_dummy_pf(2.5, 10, 0.5, 0.5))
     pf_shapes.append(make_dummy_pf(6, 12.5, 0.5, 0.5))
     pf_shapes.append(make_dummy_pf(10, 11, 0.5, 0.5))
     pf_shapes.append(make_dummy_pf(14.5, 6, 0.5, 0.5))
