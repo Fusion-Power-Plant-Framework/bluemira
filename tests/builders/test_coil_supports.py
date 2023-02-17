@@ -66,19 +66,34 @@ class TestITERGravitySupportBuilder:
 
     tf_kozs = [pd_xz_koz, pf_xz_koz, ta_xz_koz]
 
+    @staticmethod
+    def _make_builder(tf, **kwargs):
+        defaults = {
+            "x_g_support": 10,
+            "z_gs": 15,
+            "tf_wp_depth": 1.4,
+            "tf_wp_width": 0.8,
+            "tk_tf_side": 0.05,
+            "tf_gs_tk_plate": 0.025,
+            "tf_gs_g_plate": 0.025,
+            "tf_gs_base_depth": 2.4,
+        }
+        params = ITERGravitySupportBuilderParams(*list({**defaults, **kwargs}.values()))
+        return ITERGravitySupportBuilder(params, {}, tf)
+
     @pytest.mark.parametrize("tf", tf_kozs)
     @pytest.mark.parametrize("x_gs", [0, 2, 100])
     def test_bad_support_radius(self, tf, x_gs):
-        params = ITERGravitySupportBuilderParams(
-            x_g_support=x_gs,
-            z_gs=-15,
-            tf_wp_depth=1.4,
-            tf_wp_width=0.8,
-            tk_tf_side=0.05,
-            tf_gs_tk_plate=0.025,
-            tf_gs_g_plate=0.025,
-            tf_gs_base_depth=2.4,
-        )
-        builder = ITERGravitySupportBuilder(params, {}, tf)
+        builder = self._make_builder(tf, x_g_support=x_gs)
         with pytest.raises(BuilderError):
             builder.build()
+
+    @pytest.mark.parametrize("tf", tf_kozs)
+    @pytest.mark.parametrize("x_gs", [5, 7, 10])
+    def test_good_support_radius(self, tf, x_gs):
+        builder = self._make_builder(tf, x_g_support=x_gs)
+        component = builder.build()
+
+        assert len(component.get_component("xyz").children) == 1
+        assert len(component.get_component("xz").children) == 1
+        assert len(component.get_component("xy").children) == 0
