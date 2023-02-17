@@ -86,6 +86,9 @@ class ITERGravitySupportBuilder(Builder):
         return self.component_tree([self.build_xz(xyz)], self.build_xy(), [xyz])
 
     def build_xz(self, xyz_component):
+        """
+        Build the x-z component of the ITER-like gravity support.
+        """
         xz_plane = BluemiraPlane((0, 0, 0), (0, 1, 0))
         slice_result = slice_shape(xyz_component.shape, xz_plane)
 
@@ -101,6 +104,9 @@ class ITERGravitySupportBuilder(Builder):
         return component
 
     def build_xy(self):
+        """
+        Build the x-y component of the ITER-like gravity support.
+        """
         pass
 
     def _get_intersection_wire(self, width):
@@ -141,8 +147,7 @@ class ITERGravitySupportBuilder(Builder):
         self,
     ) -> PhysicalComponent:
         """
-        Build the x-y-z components of the ITER-like gravity support.
-
+        Build the x-y-z component of the ITER-like gravity support.
         """
         shape_list = []
         # First, project upwards at the radius of the GS into the keep-out-zone
