@@ -394,7 +394,7 @@ class PFCoilSupportBuilder(Builder):
 
                 if np.isclose(d_intersection, 0.0):
                     d = np.hypot(point[0] - p_inter[0], point[1] - p_inter[2])
-                    if d < distance:
+                    if d <= distance:
                         distance = d
                         best_angle = sign * angle
                         start_point = point
