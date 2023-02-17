@@ -449,9 +449,3 @@ def func_A(x):
 from bluemira.base.constants import MU_0
 def func_P(x):
     return 4 * np.pi ** 2 * MU_0 * grad_p_x1D(x) / (g2_fun(x) / 2 + 8 * np.pi ** 4 * q_fun(x) ** 2 / g3_fun(x) ** 2)
-
-
-from scipy.integrate import quad
-def c1(x):
-    return quad(func_A, x, 1)
-
