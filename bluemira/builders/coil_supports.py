@@ -35,11 +35,13 @@ from bluemira.base.parameter_frame import Parameter, ParameterFrame
 from bluemira.display.palettes import BLUE_PALETTE
 from bluemira.geometry.coordinates import Coordinates
 from bluemira.geometry.face import BluemiraFace
+from bluemira.geometry.plane import BluemiraPlane
 from bluemira.geometry.tools import (
     boolean_cut,
     boolean_fuse,
     extrude_shape,
     make_polygon,
+    slice_shape,
 )
 from bluemira.geometry.wire import BluemiraWire
 
@@ -80,7 +82,25 @@ class ITERGravitySupportBuilder(Builder):
         """
         Build the ITER-like gravity support component.
         """
-        return self.build_xyz()
+        xyz = self.build_xyz()
+        return self.component_tree([self.build_xz(xyz)], None, [xyz])
+
+    def build_xz(self, xyz_component):
+        xz_plane = BluemiraPlane((0, 0, 0), (0, 1, 0))
+        slice_result = slice_shape(xyz_component.shape, xz_plane)
+        # Process UGLY SLICE
+        wires = sorted(slice_result, key=lambda wire: wire.length)
+        outer_wire = wires.pop()
+        wires = [outer_wire].extend(wires)
+        shape = BluemiraFace(wires)
+
+        component = PhysicalComponent("ITER-like gravity support", shape)
+        component.display_cad_options.color = BLUE_PALETTE["TF"][2]
+        component.plot_options.face_options["color"] = BLUE_PALETTE["TF"][2]
+        return component
+
+    def build_xy(self):
+        return []
 
     def _get_intersection_wire(self, width):
         x_inner_line = self.params.x_g_support - 0.5 * width
