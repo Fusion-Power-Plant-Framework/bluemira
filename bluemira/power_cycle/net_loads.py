@@ -346,7 +346,7 @@ class PowerLoad(NetPowerABC):
     # VISUALIZATION
     # ------------------------------------------------------------------
 
-    def _refine_time_vector(self, n_points):
+    def _refine_intrinsic_time(self, n_points):
         data_set = self.data_set
         preallocated_time = []
         for powerdata in data_set:
@@ -413,7 +413,7 @@ class PowerLoad(NetPowerABC):
 
         name = self.name
 
-        computed_time = self._refine_time_vector(n_points)
+        computed_time = self._refine_intrinsic_time(n_points)
         computed_curve = self.curve(computed_time)
 
         list_of_plot_objects = []
@@ -592,12 +592,28 @@ class PhaseLoad(NetPowerABC):
         Validate instance to have 'load_set' and 'normalize' attributes
         of same length.
         """
-        if not len(self.load_set) == len(self.normalize):
+        if len(self.load_set) != len(self.normalize):
             self._issue_error("sanity")
 
     # ------------------------------------------------------------------
     # OPERATIONS
     # ------------------------------------------------------------------
+    def _compute_normalized_set(self):
+        phase = self.phase
+        load_set = self.load_set
+        normalize = self.normalize
+        number_of_load_elements = len(load_set)
+
+        normalized_set = []
+        for e in range(number_of_load_elements):
+            powerload = load_set[e]
+            normalization_flag = normalize[e]
+            if normalization_flag:
+                powerload._normalize_time(phase.duration)
+            normalized_set.append(powerload)
+
+        return normalized_set
+
     def curve(self, time):
         """
         Create a curve by calculating power load values at the specified
@@ -617,24 +633,27 @@ class PhaseLoad(NetPowerABC):
         curve: list[float]
             List of power values. [W]
         """
-        phase = self.phase
-        load_set = self.load_set
-        normalize = self.normalize
-
-        n_loads = len(load_set)
-        for i in range(n_loads):
-            normalization_flag = normalize[i]
-            powerload = load_set[i]
-            if normalization_flag:
-                powerload._normalize_time(phase.duration)
-
-        resulting_load = sum(load_set)
+        normalized_set = self._compute_normalized_set()
+        resulting_load = sum(normalized_set)
         curve = resulting_load.curve(time)
         return curve
 
     # ------------------------------------------------------------------
     # VISUALIZATION
     # ------------------------------------------------------------------
+    def _refine_intrinsic_time(self, n_points):
+        normalized_set = self._compute_normalized_set()
+        number_of_load_elements = len(normalized_set)
+
+        preallocated_time = []
+        for e in range(number_of_load_elements):
+            powerload = normalized_set[e]
+            refined_time = powerload._refine_intrinsic_time(n_points)
+            preallocated_time = preallocated_time + refined_time
+
+        complete_time = self._unique_and_sorted_vector(preallocated_time)
+        return complete_time
+
     def plot(self, ax=None, n_points=None, detailed=False, **kwargs):
         """
         Plot a 'PhaseLoad' curve, built using the 'load_set' and
@@ -684,26 +703,7 @@ class PhaseLoad(NetPowerABC):
         final_kwargs = {**default_plot_kwargs, **kwargs}
 
         name = self.name
-        phase = self.phase
-        load_set = self.load_set
-        normalize = self.normalize
-
-        number_of_load_elements = len(load_set)
-        normalized_set = []
-
-        preallocated_time = []
-        for e in range(number_of_load_elements):
-            powerload = load_set[e]
-            normalization_flag = normalize[e]
-
-            if normalization_flag:
-                powerload._normalize_time(phase.duration)
-            normalized_set.append(powerload)
-
-            refined_time = powerload._refine_time_vector(n_points)
-            preallocated_time = preallocated_time + refined_time
-
-        computed_time = self._unique_and_sorted_vector(preallocated_time)
+        computed_time = self._refine_intrinsic_time(n_points)
         computed_curve = self.curve(computed_time)
 
         list_of_plot_objects = []
@@ -729,6 +729,9 @@ class PhaseLoad(NetPowerABC):
         list_of_plot_objects.append(plot_object)
 
         if detailed:
+            normalized_set = self._compute_normalized_set()
+            number_of_load_elements = len(normalized_set)
+
             for e in range(number_of_load_elements):
                 powerload = normalized_set[e]
                 powerload._make_secondary_in_plot()
@@ -803,12 +806,14 @@ class PulseLoad(NetPowerABC):
         'phase' attributes of each 'PhaseLoad' instance in the
         'load_set' ordered list.
         """
+        name = self.name
         load_set = self.load_set
         phase_set = []
         for load in load_set:
             phase = load.phase
             phase_set.append(phase)
-        pulse = PowerCyclePulse("Pulse", phase_set)
+        name = "Pulse for " + name
+        pulse = PowerCyclePulse(name, phase_set)
         return pulse
 
     # ------------------------------------------------------------------
@@ -833,9 +838,19 @@ class PulseLoad(NetPowerABC):
         curve: list[float]
             List of power values. [W]
         """
-        phase = self.phase
+
+        """
+        pulse = self.pulse
         load_set = self.load_set
-        normalize = self.normalize
+
+        phase_set = pulse.phase_set
+        number_of_phases = len(phase_set)
+
+        for p in range(number_of_phases):
+            phase = phase_set[p]
+            phaseload = load_set[p]
+
+            intrinsic_time =
 
         n_loads = len(load_set)
         for i in range(n_loads):
@@ -847,10 +862,15 @@ class PulseLoad(NetPowerABC):
         resulting_load = sum(load_set)
         curve = resulting_load.curve(time)
         return curve
+        """
+        pass
 
     # ------------------------------------------------------------------
     # VISUALIZATION
     # ------------------------------------------------------------------
+    def _refine_intrinsic_time(self, n_points):
+        pass
+
     def plot(self, ax=None, n_points=None, detailed=False, **kwargs):
         """
         Plot a 'PulseLoad' curve, built using the attributes that define
