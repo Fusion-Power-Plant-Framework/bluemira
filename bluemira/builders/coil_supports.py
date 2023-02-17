@@ -83,7 +83,7 @@ class ITERGravitySupportBuilder(Builder):
         Build the ITER-like gravity support component.
         """
         xyz = self.build_xyz()
-        return self.component_tree([self.build_xz(xyz)], None, [xyz])
+        return self.component_tree([self.build_xz(xyz)], self.build_xy(), [xyz])
 
     def build_xz(self, xyz_component):
         xz_plane = BluemiraPlane((0, 0, 0), (0, 1, 0))
@@ -100,7 +100,7 @@ class ITERGravitySupportBuilder(Builder):
         return component
 
     def build_xy(self):
-        return []
+        pass
 
     def _get_intersection_wire(self, width):
         x_inner_line = self.params.x_g_support - 0.5 * width
@@ -254,4 +254,5 @@ if __name__ == "__main__":
     my_builder = ITERGravitySupportBuilder(my_test_params, {}, my_dummy_tf_xz_koz)
 
     component = my_builder.build()
-    component.show_cad()
+    component.get_component("xyz").show_cad()
+    component.get_component("xy").plot_2d()
