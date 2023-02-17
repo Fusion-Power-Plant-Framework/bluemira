@@ -134,7 +134,7 @@ class ITERGravitySupportBuilder(Builder):
             )
 
         print(x_min)
-        if abs(self.params.z_gs - 6 * self.params.tf_gs_tk_plate) < abs(z_min):
+        if (self.params.z_gs - 6 * self.params.tf_gs_tk_plate) > z_min:
             raise BuilderError(
                 "The gravity support floor is not lower than where the TF coil is!"
             )
