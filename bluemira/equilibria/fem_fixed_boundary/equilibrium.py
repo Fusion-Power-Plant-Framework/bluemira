@@ -49,7 +49,18 @@ from bluemira.mesh import meshing
 from bluemira.mesh.tools import import_mesh, msh_to_xdmf
 from bluemira.utilities.plot_tools import make_gif, save_figure
 
-import scipy
+import numdifftools as nd
+from bluemira.equilibria.fem_fixed_boundary import utilities, file
+from bluemira.codes.plasmod import plot_default_profiles
+
+from bluemira.geometry.tools import make_polygon, BluemiraFace
+from bluemira.base.components import Component, PhysicalComponent
+from bluemira.geometry.coordinates import Coordinates
+
+from scipy.interpolate import interp1d
+from scipy.integrate import trapezoid, cumulative_trapezoid
+
+from bluemira.base.constants import MU_0
 
 __all__ = ["solve_transport_fixed_boundary"]
 
@@ -316,8 +327,6 @@ def solve_transport_fixed_boundary(
         )
 
         if plot:
-            from bluemira.codes.plasmod import plot_default_profiles
-
             if ax is not None:
                 for axis in ax.flat:
                     axis.clear()
@@ -420,8 +429,6 @@ def calc_metric_coefficients(mesh, psi2D: callable, x2D: callable):
     psi2D_data = np.array([psi2D(p) for p in mesh_points])
     x2D_data = np.array([x2D(p) for p in mesh_points])
 
-    from bluemira.equilibria.fem_fixed_boundary import utilities
-
     ax, cntr, cntrf = utilities.plot_scalar_field(x, z, x2D_data, levels=x1D)
     plt.title("psi_norm")
     plt.show()
@@ -430,8 +437,6 @@ def calc_metric_coefficients(mesh, psi2D: callable, x2D: callable):
     FS = []
     for i in range(nx):
         if x1D[i] == 1:
-            from bluemira.equilibria.fem_fixed_boundary import file
-
             path = np.transpose(file._get_mesh_boundary(mesh))
             FS.append(path)
         else:
@@ -454,10 +459,6 @@ def calc_metric_coefficients(mesh, psi2D: callable, x2D: callable):
     V = np.zeros((nx, 1))
 
     # calculate volume
-    from bluemira.geometry.tools import make_polygon, BluemiraFace
-    from bluemira.base.components import Component, PhysicalComponent
-    from bluemira.geometry.coordinates import Coordinates
-
     FS_pol = []
     root = Component("root")
     for i in range(nx):
@@ -475,14 +476,10 @@ def calc_metric_coefficients(mesh, psi2D: callable, x2D: callable):
     # volume
     V = V.reshape(-1)
 
-    from scipy.interpolate import interp1d
-
     V_fun = interp1d(x1D, V, fill_value="extrapolate")
 
     # dVdx_data = np.gradient(V,x1D)
     # dVdx = interp1d(x1D, dVdx_data, fill_value="extrapolate")
-
-    import numdifftools as nd
 
     gradV_x1D = nd.Gradient(V_fun)
     gradV_x1D_data = np.array([gradV_x1D(x) for x in x1D])
@@ -578,6 +575,71 @@ def calc_metric_coefficients(mesh, psi2D: callable, x2D: callable):
 
     return x1D, V, g1, g2, g3
 
-# def calc_curr_dens_profiles(x1D, x2D, p, q, g2, g3, V, Ip, B_0, R_0, Psi_ax, Psi_b):
-#     """Calculate pprime and ffprime from metric coefficients"""
-#     Psi1D = Psi_ax - x1D**2 * (Psi_ax - Psi_b)
+
+def calc_curr_dens_profiles(
+    x1D: np.ndarray,
+    x2D: np.ndarray,
+    p: np.ndarray,
+    q: np.ndarray,
+    g2: np.ndarray,
+    g3: np.ndarray,
+    V: np.ndarray,
+    Ip: float,
+    B_0: float,
+    R_0: float,
+    Psi_ax: float,
+    Psi_b: float,
+):
+    """Calculate pprime and ffprime from metric coefficients"""
+    Psi1D = Psi_ax - x1D**2 * (Psi_ax - Psi_b)
+
+    F_b = B_0 * R_0
+
+    g2_fun = interp1d(x1D, g2, fill_value="extrapolate")
+    g3_fun = interp1d(x1D, g3, fill_value="extrapolate")
+    grad_g2_fun = nd.Gradient(g2_fun)
+    grad_g3_fun = nd.Gradient(g3_fun)
+    grad_g2_data = np.array([grad_g2_fun(xi) for xi in x1D])
+    grad_g3_data = np.array([grad_g3_fun(xi) for xi in x1D])
+    q_fun = interp1d(x1D, q, fill_value="extrapolate")
+    p_fun = interp1d(x1D, p, fill_value="extrapolate")
+    grad_q_fun = nd.Gradient(q_fun)
+    grad_p_fun = nd.Gradient(p_fun)
+    grad_q_data = np.array([grad_q_fun(xi) for xi in x1D])
+    grad_p_data = np.array([grad_p_fun(xi) for xi in x1D])
+
+    for i in range(100):
+        # calculate pprime profile from p
+        p_fun_psi1D = interp1d(Psi1D, p, fill_value="extrapolate")
+        pprime_psi1D = nd.Gradient(p_fun)
+        pprime_psi1D_data = np.array([pprime_psi1D(xi) for xi in x1D])
+        a = g2 / 2.0 + 8 * np.pi**4 * q**2 / g3
+        temp = nd.Gradient(interp1d(x1D, q**2 / g3**2))
+        temp_data = np.array([temp(xi) for xi in x1D])
+        A = (grad_g2_data + 8 * np.pi**4 * g3 * temp_data) / a
+        P = -4 * np.pi**2 * MU_0 * grad_p_data / a
+        y_b = (F_b * g3[-1]) / (q[-1] * 2 * np.pi) ** 2
+        fA = np.exp(-cumulative_trapezoid(A, x1D) - trapezoid(A, x1D))
+        fP = np.exp(cumulative_trapezoid(A, x1D) - trapezoid(A, x1D)) * P
+        fC = cumulative_trapezoid(fP, x1D) - trapezoid(fP, x1D)
+        y = fA * (y_b + fC)
+        dPhidV_data = q * np.sqrt(y)
+        dPsidV_data = -dPsidV_data/q
+        temp = nd.Gradient(interp1d(V, g2 * dPsidV_data))
+        temp_data = np.array([temp(xi) for xi in x1D])
+        FFprime = -1/(4*np.pi**2 * g3) * temp_data - MU_0 / g3 * pprime_psi1D
+
+        # calcualte toroidal flux profile
+        Phi1D = -cumulative_trapezoid(q, Psi1D)
+
+        # calculate F
+        F = 2*np.pi/g3*dPhidV_data
+
+        Psi1D = np.flip(cumulative_trapezoid(np.flip(dPsidV_data), np.flip(V)))
+
+    H = dPsidV_data
+
+    if Ip == 0:
+        Ip = -g2[-1] * dPsidV_data[-1] / (4 * np.pi**2 * MU_0)
+
+    return Ip, Phi1D, Psi1D, pprime_psi1D_data, F, FFprime
