@@ -88,11 +88,12 @@ class ITERGravitySupportBuilder(Builder):
     def build_xz(self, xyz_component):
         xz_plane = BluemiraPlane((0, 0, 0), (0, 1, 0))
         slice_result = slice_shape(xyz_component.shape, xz_plane)
+
         # Process UGLY SLICE
         wires = sorted(slice_result, key=lambda wire: wire.length)
-        outer_wire = wires.pop()
-        wires = [outer_wire].extend(wires)
-        shape = BluemiraFace(wires)
+        wire_list = [wires.pop()]
+        wire_list.extend(wires)
+        shape = BluemiraFace(wire_list)
 
         component = PhysicalComponent("ITER-like gravity support", shape)
         component.display_cad_options.color = BLUE_PALETTE["TF"][2]
@@ -255,4 +256,4 @@ if __name__ == "__main__":
 
     component = my_builder.build()
     component.get_component("xyz").show_cad()
-    component.get_component("xy").plot_2d()
+    component.get_component("xz").plot_2d()
