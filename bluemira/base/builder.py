@@ -137,8 +137,8 @@ class Builder(abc.ABC):
 
         Returns
         -------
-        component
-
+        component:
+            The component comprising all views provided
         """
         component = Component(self.name)
         if xz:
