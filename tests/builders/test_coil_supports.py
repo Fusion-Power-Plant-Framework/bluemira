@@ -48,16 +48,16 @@ class TestITERGravitySupportBuilder:
     @staticmethod
     def _make_builder(tf, **kwargs):
         defaults = {
-            "x_g_support": 10,
-            "z_gs": -20,
-            "tf_wp_depth": 1.4,
-            "tf_wp_width": 0.8,
-            "tk_tf_side": 0.05,
-            "tf_gs_tk_plate": 0.025,
-            "tf_gs_g_plate": 0.025,
-            "tf_gs_base_depth": 2.4,
+            "x_g_support": {"value": 10, "unit": "m"},
+            "z_gs": {"value": -20, "unit": "m"},
+            "tf_wp_depth": {"value": 1.4, "unit": "m"},
+            "tf_wp_width": {"value": 0.8, "unit": "m"},
+            "tk_tf_side": {"value": 0.05, "unit": "m"},
+            "tf_gs_tk_plate": {"value": 0.025, "unit": "m"},
+            "tf_gs_g_plate": {"value": 0.025, "unit": "m"},
+            "tf_gs_base_depth": {"value": 2.4, "unit": "m"},
         }
-        params = ITERGravitySupportBuilderParams(*list({**defaults, **kwargs}.values()))
+        params = ITERGravitySupportBuilderParams.from_dict(defaults)
         return ITERGravitySupportBuilder(params, {}, tf)
 
     @pytest.mark.parametrize("tf", tf_kozs)

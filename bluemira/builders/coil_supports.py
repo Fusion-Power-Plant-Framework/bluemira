@@ -120,24 +120,25 @@ class ITERGravitySupportBuilder(Builder):
         pass
 
     def _get_intersection_wire(self, width):
-        x_inner_line = self.params.x_g_support - 0.5 * width
-        x_outer_line = self.params.x_g_support + 0.5 * width
+        x_g_support = self.params.x_g_support.value
+        x_inner_line = x_g_support - 0.5 * width
+        x_outer_line = x_g_support + 0.5 * width
         z_min = self.tf_xz_keep_out_zone.bounding_box.z_min
         z_max = self.tf_xz_keep_out_zone.bounding_box.z_max
         z_max = z_min + 0.5 * (z_max - z_min)
         x_min = self.tf_xz_keep_out_zone.bounding_box.x_min + 0.5 * width
         x_max = self.tf_xz_keep_out_zone.bounding_box.x_max - 0.5 * width
 
-        if (self.params.x_g_support < x_min) | (self.params.x_g_support > x_max):
+        if (x_g_support < x_min) | (x_g_support > x_max):
             raise BuilderError(
                 "The gravity support footprint is not contained within the provided TF coil geometry!"
             )
 
-        if (self.params.z_gs - 6 * self.params.tf_gs_tk_plate) > z_min:
+        if (self.params.z_gs.value - 6 * self.params.tf_gs_tk_plate.value) > z_min:
             raise BuilderError(
                 "The gravity support floor is not lower than where the TF coil is!"
             )
-        z_min = self.params.z_gs - 6 * self.params.tf_gs_tk_plate
+        z_min = self.params.z_gs.value - 6 * self.params.tf_gs_tk_plate.value
 
         cut_box = make_polygon(
             {
@@ -169,14 +170,14 @@ class ITERGravitySupportBuilder(Builder):
         # and get a x-z face of the boolean difference.
 
         # Get the square width
-        width = self.params.tf_wp_depth + 2 * self.params.tk_tf_side
+        width = self.params.tf_wp_depth.value + 2 * self.params.tk_tf_side.value
         intersection_wire = self._get_intersection_wire(width)
         v1 = intersection_wire.start_point()
         v4 = intersection_wire.end_point()
         if v1.x > v4.x:
             v1, v4 = v4, v1
 
-        z_block_lower = min(v1.z[0], v4.z[0]) - 5 * self.params.tf_gs_tk_plate
+        z_block_lower = min(v1.z[0], v4.z[0]) - 5 * self.params.tf_gs_tk_plate.value
         v2 = Coordinates(np.array([v1.x[0], 0, z_block_lower]))
         v3 = Coordinates(np.array([v4.x[0], 0, z_block_lower]))
 
@@ -199,32 +200,43 @@ class ITERGravitySupportBuilder(Builder):
                 "y": [
                     -0.5 * width,
                     0.5 * width,
-                    0.5 * self.params.tf_gs_base_depth,
-                    -0.5 * self.params.tf_gs_base_depth,
+                    0.5 * self.params.tf_gs_base_depth.value,
+                    -0.5 * self.params.tf_gs_base_depth.value,
                 ],
-                "z": [z_block_lower, z_block_lower, self.params.z_gs, self.params.z_gs],
+                "z": [
+                    z_block_lower,
+                    z_block_lower,
+                    self.params.z_gs.value,
+                    self.params.z_gs.value,
+                ],
             },
         )
         yz_profile = make_polygon(yz_profile, closed=True)
 
         plating_width = v4.x - v1.x
-        plate_and_gap = self.params.tf_gs_g_plate + self.params.tf_gs_tk_plate
-        n_plates = (plating_width + self.params.tf_gs_g_plate) / plate_and_gap
+        plate_and_gap = (
+            self.params.tf_gs_g_plate.value + self.params.tf_gs_tk_plate.value
+        )
+        n_plates = (plating_width + self.params.tf_gs_g_plate.value) / plate_and_gap
         total_width = (
-            int(n_plates) * self.params.tf_gs_tk_plate
-            + (int(n_plates) - 1) * self.params.tf_gs_g_plate
+            int(n_plates) * self.params.tf_gs_tk_plate.value
+            + (int(n_plates) - 1) * self.params.tf_gs_g_plate.value
         )
         delta_width = plating_width - total_width
         yz_profile.translate(vector=(0.5 * delta_width, 0, 0))
 
         plate = extrude_shape(
-            BluemiraFace(yz_profile), vec=(self.params.tf_gs_tk_plate, 0, 0)
+            BluemiraFace(yz_profile), vec=(self.params.tf_gs_tk_plate.value, 0, 0)
         )
         shape_list.append(plate)
         for _ in range(int(n_plates) - 1):
             plate = plate.deepcopy()
             plate.translate(
-                vector=(self.params.tf_gs_g_plate + self.params.tf_gs_tk_plate, 0, 0)
+                vector=(
+                    self.params.tf_gs_g_plate.value + self.params.tf_gs_tk_plate.value,
+                    0,
+                    0,
+                )
             )
             shape_list.append(plate)
 
@@ -233,17 +245,17 @@ class ITERGravitySupportBuilder(Builder):
             {
                 "x": [v1x, v1x, v4x, v4x],
                 "y": [
-                    -0.5 * self.params.tf_gs_base_depth,
-                    0.5 * self.params.tf_gs_base_depth,
-                    0.5 * self.params.tf_gs_base_depth,
-                    -0.5 * self.params.tf_gs_base_depth,
+                    -0.5 * self.params.tf_gs_base_depth.value,
+                    0.5 * self.params.tf_gs_base_depth.value,
+                    0.5 * self.params.tf_gs_base_depth.value,
+                    -0.5 * self.params.tf_gs_base_depth.value,
                 ],
-                "z": 4 * [self.params.z_gs],
+                "z": 4 * [self.params.z_gs.value],
             },
         )
         xz_profile = BluemiraFace(make_polygon(xz_profile, closed=True))
         floor_block = extrude_shape(
-            xz_profile, vec=(0, 0, -5 * self.params.tf_gs_tk_plate)
+            xz_profile, vec=(0, 0, -5 * self.params.tf_gs_tk_plate.value)
         )
         shape_list.append(floor_block)
         shape = boolean_fuse(shape_list)
