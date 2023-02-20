@@ -19,4 +19,10 @@
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 
-from bluemira.equilibria.shapes import *
+from bluemira.equilibria.shapes import flux_surface_zakharov
+
+
+class TestPLASMODRegression:
+    @classmethod
+    def setup_class(cls):
+        pass
