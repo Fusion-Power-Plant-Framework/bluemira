@@ -35,11 +35,7 @@ from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.base.parameter_frame import Parameter, ParameterFrame
 from bluemira.display.palettes import BLUE_PALETTE
 from bluemira.geometry.constants import VERY_BIG
-from bluemira.geometry.coordinates import (
-    Coordinates,
-    CoordinatesError,
-    vector_intersect_3d,
-)
+from bluemira.geometry.coordinates import Coordinates, get_intersect
 from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.plane import BluemiraPlane
 from bluemira.geometry.tools import (
@@ -483,21 +479,12 @@ class PFCoilSupportBuilder(Builder):
         v3 = intersection_wire.start_point().xyz.T[0]
         v4 = intersection_wire.end_point().xyz.T[0]
 
-        from bluemira.geometry.coordinates import get_intersect
-
         inter1 = get_intersect(
-            np.array([v1[0], v3[0]], [v1[2], v3[2]]),
-            np.array([[v2[0], v4[0], [v2[2], v4[2]]]]),
+            np.array([[v1[0], v3[0]], [v1[2], v3[2]]]),
+            np.array([[v2[0], v4[0]], [v2[2], v4[2]]]),
         )
-        print(inter1)
-        if ~np.isnan(inter1[0]):
+        if len(inter1[0]) > 0:
             v3, v4 = v4, v3
-
-        # try:
-        #     vector_intersect_3d(v1, v3, v2, v4)
-        #     v3, v4 = v4, v3
-        # except CoordinatesError:
-        #     pass
 
         closing_wire = make_polygon(
             {
@@ -534,76 +521,3 @@ class PFCoilSupportBuilder(Builder):
         component = PhysicalComponent(self.SUPPORT, shape)
         component.display_cad_options.color = BLUE_PALETTE["TF"][2]
         return component
-
-
-if __name__ == "__main__":
-    from bluemira.geometry.parameterisations import PictureFrame, PrincetonD
-    from bluemira.geometry.tools import revolve_shape
-
-    my_test_params = PFCoilSupportBuilderParams(
-        tf_wp_depth=1.4,
-        tf_wp_width=0.8,
-        tk_tf_side=0.05,
-        pf_s_tk_plate=0.15,
-        pf_s_n_plate=4,
-        pf_s_g=0.05,
-    )
-
-    my_dummy_tf = PrincetonD()
-    my_dummy_tf.adjust_variable("x1", value=3, lower_bound=2, upper_bound=4)
-    my_dummy_tf.adjust_variable("x2", value=15, lower_bound=2, upper_bound=24)
-    my_dummy_tf.adjust_variable("dz", value=0, lower_bound=-10, upper_bound=24)
-    my_dummy_tf_xz_koz = my_dummy_tf.create_shape()
-    inner_wire = offset_wire(my_dummy_tf_xz_koz, -1.0)
-    tf_face = BluemiraFace([my_dummy_tf_xz_koz, inner_wire])
-    tf = extrude_shape(
-        tf_face, (0, my_test_params.tf_wp_depth + 2 * my_test_params.tk_tf_side, 0)
-    )
-    tf.translate((0, -0.5 * my_test_params.tf_wp_depth, 0))
-    tf = PhysicalComponent("TF coil", tf)
-    tf.display_cad_options.color = BLUE_PALETTE["TF"][0]
-
-    def make_dummy_pf(xc, zc, dxc, dzc):
-        """
-        Flake8
-        """
-        my_dummy_pf = PictureFrame()
-        my_dummy_pf.adjust_variable("ri", value=0.1, lower_bound=0, upper_bound=np.inf)
-        my_dummy_pf.adjust_variable("ro", value=0.1, lower_bound=0, upper_bound=np.inf)
-        my_dummy_pf.adjust_variable(
-            "x1", value=xc - dxc, lower_bound=0, upper_bound=np.inf
-        )
-        my_dummy_pf.adjust_variable(
-            "x2", value=xc + dxc, lower_bound=0, upper_bound=np.inf
-        )
-        my_dummy_pf.adjust_variable(
-            "z1", value=zc + dzc, lower_bound=-np.inf, upper_bound=np.inf
-        )
-        my_dummy_pf.adjust_variable(
-            "z2", value=zc - dzc, lower_bound=-np.inf, upper_bound=np.inf
-        )
-        return my_dummy_pf.create_shape()
-
-    pf_shapes = []
-    pf_shapes.append(make_dummy_pf(2.5, 10, 0.5, 0.5))
-    pf_shapes.append(make_dummy_pf(6, 12.5, 0.5, 0.5))
-    pf_shapes.append(make_dummy_pf(10, 11, 0.5, 0.5))
-    pf_shapes.append(make_dummy_pf(14.5, 6, 0.5, 0.5))
-    pf_shapes.append(make_dummy_pf(14.5, -6, 0.5, 0.5))
-    pf_shapes.append(make_dummy_pf(10, -11, 0.5, 0.5))
-    pf_shapes.append(make_dummy_pf(6, -12.5, 0.5, 0.5))
-    pf_shapes.append(make_dummy_pf(2.5, -10, 0.5, 0.5))
-
-    guff = Component("wtf")
-    guff.add_child(tf)
-    for i, pf in enumerate(pf_shapes):
-        my_builder = PFCoilSupportBuilder(my_test_params, {}, my_dummy_tf_xz_koz, pf)
-        component = my_builder.build()
-        component.name = component.name + f" {i}"
-        guff.add_child(component)
-        pf_coil_shape = revolve_shape(BluemiraFace(pf), degree=360)
-        pf_coil = PhysicalComponent(f"PF coil {i}", pf_coil_shape)
-        pf_coil.display_cad_options.color = BLUE_PALETTE["PF"][1]
-        guff.add_child(pf_coil)
-
-    guff.show_cad()
