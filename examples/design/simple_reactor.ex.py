@@ -584,3 +584,4 @@ reactor.plasma = plasma
 reactor.tf_coil = tf_coil
 
 reactor.show_cad()
+reactor.show_cad("xz")

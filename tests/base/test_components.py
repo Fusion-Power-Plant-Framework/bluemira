@@ -20,6 +20,7 @@
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 
 import pytest
+from anytree import PreOrderIter
 
 from bluemira.base.components import (
     Component,
@@ -178,6 +179,140 @@ class TestComponentClass:
 
         with pytest.raises(ComponentError):
             Component("Sector 1", parent=parent)
+
+    def test_copy_does_fully_copy(self):
+        parent = Component("Parent")
+        child1 = Component("Child1", parent=parent)
+        child2 = PhysicalComponent(
+            "Child2", parent=parent, shape="A shape", material="A material"
+        )
+        Component("GrandchildAA", parent=child1)
+        Component("GrandchildAB", parent=child1)
+        PhysicalComponent(
+            "GrandchildBA", parent=child2, shape="B shape", material="B material"
+        )
+        Component("GrandchildBB", parent=child2)
+
+        parent_copy = parent.copy()
+
+        def get_comp_copy_and_compare(comp: Component):
+            cpy = parent_copy.get_component(comp.name)
+
+            # test instance
+            assert cpy is not None
+            assert cpy is not comp
+
+            # test parent
+            if cpy.parent:
+                # assert cpy.parent is not comp.parent
+                assert cpy.parent.name == comp.parent.name
+
+            # test children
+            if cpy.children:
+                comp_children_names = [c.name for c in comp.children]
+                for c in cpy.children:
+                    assert c.name in comp_children_names
+
+            # test properties
+            if type(comp) is PhysicalComponent:
+                assert type(cpy) is PhysicalComponent
+                # assert they are the same instance
+                assert cpy.shape is comp.shape
+                assert cpy.material is comp.material
+
+        [get_comp_copy_and_compare(c) for c in PreOrderIter(parent)]
+
+    def test_filter_components_does_filter_on_single(self):
+        parent = Component("Parent")
+        child1 = Component("Child1", parent=parent)
+        child2 = Component("Child2", parent=parent)
+
+        child1A = Component("child1A", parent=child1)
+        child1B = Component("child1B", parent=child1)
+
+        def attach_dims_and_physical_comps_to(comp: Component):
+            xy = Component("xy", parent=comp)
+            xz = Component("xz", parent=comp)
+            xyz = Component("xyz", parent=comp)
+
+            PhysicalComponent(
+                "pc_xy",
+                parent=xy,
+                shape="pc_xy shape",
+                material="pc_xy material",
+            )
+            PhysicalComponent(
+                "pc_xz",
+                parent=xz,
+                shape="pc_xz shape",
+                material="pc_xz material",
+            )
+            PhysicalComponent(
+                "pc_xyz",
+                parent=xyz,
+                shape="pc_xyz shape",
+                material="pc_xyz material",
+            )
+
+        attach_dims_and_physical_comps_to(child1A)
+        attach_dims_and_physical_comps_to(child1B)
+        attach_dims_and_physical_comps_to(child2)
+
+        parent.filter_components(["xz"])
+
+        xy = parent.get_component("xy")
+        xz = parent.get_component("xz")
+        xyz = parent.get_component("xyz")
+
+        assert xy is None
+        assert type(xz) is Component
+        assert xyz is None
+
+    def test_filter_components_does_filter_on_double(self):
+        parent = Component("Parent")
+        child1 = Component("Child1", parent=parent)
+        child2 = Component("Child2", parent=parent)
+
+        child1A = Component("child1A", parent=child1)
+        child1B = Component("child1B", parent=child1)
+
+        def attach_dims_and_physical_comps_to(comp: Component):
+            xy = Component("xy", parent=comp)
+            xz = Component("xz", parent=comp)
+            xyz = Component("xyz", parent=comp)
+
+            PhysicalComponent(
+                "pc_xy",
+                parent=xy,
+                shape="pc_xy shape",
+                material="pc_xy material",
+            )
+            PhysicalComponent(
+                "pc_xz",
+                parent=xz,
+                shape="pc_xz shape",
+                material="pc_xz material",
+            )
+            PhysicalComponent(
+                "pc_xyz",
+                parent=xyz,
+                shape="pc_xyz shape",
+                material="pc_xyz material",
+            )
+
+        attach_dims_and_physical_comps_to(child1A)
+        attach_dims_and_physical_comps_to(child1B)
+        attach_dims_and_physical_comps_to(child2)
+
+        parent.filter_components(["xy", "xz"])
+
+        xy = parent.get_component("xy")
+        xz = parent.get_component("xz")
+        xyz = parent.get_component("xyz")
+
+        assert type(xy) is Component
+        assert type(xz) is Component
+        assert xyz is None
 
 
 class TestPhysicalComponent:

@@ -27,7 +27,7 @@ from bluemira.base.components import Component
 from bluemira.base.error import ReactorError
 from bluemira.display.displayer import ComponentDisplayer
 
-_PLOT_DIMS = ["xyz", "xz", "xyz"]
+_PLOT_DIMS = ["xy", "xz", "xyz"]
 
 
 class Reactor:
@@ -100,7 +100,7 @@ class Reactor:
             component.add_child(component_manager.component())
         return component
 
-    def show_cad(self, dim: str = "xyz", **kwargs):
+    def show_cad(self, *dims, **kwargs):
         """
         Show the CAD build of the reactor.
 
@@ -110,10 +110,27 @@ class Reactor:
             The dimension of the reactor to show, typically one of
             'xz', 'xy', or 'xyz'. (default: 'xyz')
         """
-        if dim not in _PLOT_DIMS:
-            raise ReactorError(
-                f"Invalid plotting dimension '{dim}'. "
-                f"Must be one of {str(_PLOT_DIMS)[1:-1]}"
-            )
+        # give dims_to_show a default value
+        dims_to_show = ("xyz",) if len(dims) == 0 else dims
+
+        # if a kw "dim" is given, it is only used
+        kw_dim = kwargs.get("dim")
+        if kw_dim is not None:
+            dims_to_show = (kw_dim,)
+
+        for dim in dims_to_show:
+            if dim not in _PLOT_DIMS:
+                raise ReactorError(
+                    f"Invalid plotting dimension '{dim}'. "
+                    f"Must be one of {str(_PLOT_DIMS)}"
+                )
+
         comp = self.component()
-        ComponentDisplayer().show_cad(comp.get_component(dim, first=False), **kwargs)
+
+        # Filtering mutates the underlying components,
+        # which exist in memory regardless of calling self.component() on the reactor.
+        # Thus a copy must be made
+        comp_copy = comp.copy()
+        comp_copy.filter_components(dims_to_show)
+
+        ComponentDisplayer().show_cad(comp_copy, **kwargs)
