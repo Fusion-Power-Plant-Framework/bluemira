@@ -29,7 +29,7 @@ import numpy as np
 import scipy
 from matplotlib._tri import TriContourGenerator
 from matplotlib.axes._axes import Axes
-from matplotlib.tri.triangulation import Triangulation
+from matplotlib.tri import Triangulation
 from scipy.interpolate import interp1d
 
 from bluemira.base.look_and_feel import bluemira_warn
