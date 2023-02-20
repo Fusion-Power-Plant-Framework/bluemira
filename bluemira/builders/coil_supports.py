@@ -155,8 +155,7 @@ class ITERGravitySupportBuilder(Builder):
                 "Boolean cutting returned nothing... check your geometry please."
             )
 
-        intersection_wire = sorted(cut_result, key=lambda wire: wire.length)[0]
-        return intersection_wire
+        return sorted(cut_result, key=lambda wire: wire.length)[0]
 
     def build_xyz(
         self,
