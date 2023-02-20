@@ -42,7 +42,7 @@ combine them.
 
 # %%
 from dataclasses import dataclass
-from typing import Callable, Dict
+from typing import Dict
 
 import numpy as np
 
@@ -220,7 +220,7 @@ class MyTFCoilOptProblem(GeometryOptimisationProblem):
 
     @staticmethod
     def f_constraint(
-        constraint: Callable,
+        constraint: np.ndarray,
         vector: np.ndarray,
         grad: np.ndarray,
         parameterisation: GeometryParameterisation,
