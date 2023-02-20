@@ -238,3 +238,30 @@ def html_visit_inheritance_diagram(self, node):
 
 
 inheritance_diagram.html_visit_inheritance_diagram = html_visit_inheritance_diagram
+
+
+# myst-nb link hack
+import myst_nb.sphinx_ as myst_sphinx  # noqa: E402
+
+
+def new_parse_wrapper(parse):
+    """Wrap `myst_nb.sphinx_.Parser.parse`"""
+
+    def wrapper(self, inputstring, document):
+        """
+        Hacks links to other example notebooks written in py:percent format
+
+        The linking to other py:percent formatted examples only gets converted to an
+        html link if the extension is 'ipynb'. We replace '.ex.py' with '.ipynb' for
+        all text in the original file.
+
+        This could be made more robust but it is unlikely that '.ex.py' is used anywhere
+        else.
+        """
+        inputstring = inputstring.replace(".ex.py", ".ipynb")
+        return parse(self, inputstring, document)
+
+    return wrapper
+
+
+myst_sphinx.Parser.parse = new_parse_wrapper(myst_sphinx.Parser.parse)
