@@ -41,7 +41,6 @@ from bluemira.geometry.plane import BluemiraPlane
 from bluemira.geometry.tools import (
     boolean_cut,
     boolean_fuse,
-    distance_to,
     extrude_shape,
     make_polygon,
     offset_wire,
@@ -367,7 +366,7 @@ class PFCoilSupportBuilder(Builder):
     @staticmethod
     def _get_first_intersection(point, angle, wire):
         """
-        This used to be so easy, and now it sucks
+        Get the first intersection from a point along an angle with a wire.
         """
         point = np.array(point)
         x_out = point[0] + np.cos(angle) * VERY_BIG
