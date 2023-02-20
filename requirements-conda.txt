@@ -12,6 +12,6 @@ PyYAML==6.0
 Shapely==2.0.1
 shiboken2==5.15.5
 sympy==1.11.1
-typing_extensions==4.4.0
+typing_extensions==4.5.0
 vtk==9.1.0
 zipp==3.13.0
