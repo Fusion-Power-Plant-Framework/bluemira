@@ -138,9 +138,11 @@ class Component(NodeMixin, Plottable, DisplayableCAD):
         parent: Optional[Component] = None,
     ) -> Component:
         """
-        Copies this component and its children (recursively) and sets `parent` as this copy's parent.
-        This only creates copies of each Component, the shape and material instances
-        (for a PhysicalComponent for ex.) are shared (i.e. are the same instance).
+        Copies this component and its children (recursively)
+        and sets `parent` as this copy's parent.
+        This only creates copies of each Component,
+        the shape and material instances (for a PhysicalComponent for ex.)
+        are shared (i.e. are the same instance).
 
         Parameters
         ----------
@@ -155,7 +157,6 @@ class Component(NodeMixin, Plottable, DisplayableCAD):
         -----
             This function should be overridden by implementors
         """
-
         # Initially copy self with None children
         self_copy = Component(
             name=self.name,
@@ -172,7 +173,8 @@ class Component(NodeMixin, Plottable, DisplayableCAD):
         parent: Component,
     ) -> list[Component]:
         """
-        Copies this component's children (recursively) and sets `parent` as the copied children's parent.
+        Copies this component's children (recursively)
+        and sets `parent` as the copied children's parent.
 
         Parameters
         ----------
@@ -370,6 +372,13 @@ class PhysicalComponent(Component):
         self,
         parent: Optional[Component] = None,
     ) -> Component:
+        """
+        Copies this component and its children (recursively)
+        and sets `parent` as this copy's parent.
+        This only creates copies of each Component,
+        the shape and material instances (for a PhysicalComponent for ex.)
+        are shared (i.e. are the same instance).
+        """
         # Initially copy self with None children
         self_copy = PhysicalComponent(
             name=self.name,
@@ -427,6 +436,13 @@ class MagneticComponent(PhysicalComponent):
         self,
         parent: Optional[Component] = None,
     ) -> Component:
+        """
+        Copies this component and its children (recursively)
+        and sets `parent` as this copy's parent.
+        This only creates copies of each Component,
+        the shape and material instances (for a PhysicalComponent for ex.)
+        are shared (i.e. are the same instance).
+        """
         # Initially copy self with None children
         self_copy = MagneticComponent(
             name=self.name,

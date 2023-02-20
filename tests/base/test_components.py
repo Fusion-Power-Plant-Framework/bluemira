@@ -227,8 +227,8 @@ class TestComponentClass:
         child1 = Component("Child1", parent=parent)
         child2 = Component("Child2", parent=parent)
 
-        child1A = Component("child1A", parent=child1)
-        child1B = Component("child1B", parent=child1)
+        child1a = Component("child1A", parent=child1)
+        child1b = Component("child1B", parent=child1)
 
         def attach_dims_and_physical_comps_to(comp: Component):
             xy = Component("xy", parent=comp)
@@ -254,8 +254,8 @@ class TestComponentClass:
                 material="pc_xyz material",
             )
 
-        attach_dims_and_physical_comps_to(child1A)
-        attach_dims_and_physical_comps_to(child1B)
+        attach_dims_and_physical_comps_to(child1a)
+        attach_dims_and_physical_comps_to(child1b)
         attach_dims_and_physical_comps_to(child2)
 
         parent.filter_components(["xz"])
@@ -273,8 +273,8 @@ class TestComponentClass:
         child1 = Component("Child1", parent=parent)
         child2 = Component("Child2", parent=parent)
 
-        child1A = Component("child1A", parent=child1)
-        child1B = Component("child1B", parent=child1)
+        child1a = Component("child1A", parent=child1)
+        child1b = Component("child1B", parent=child1)
 
         def attach_dims_and_physical_comps_to(comp: Component):
             xy = Component("xy", parent=comp)
@@ -300,8 +300,8 @@ class TestComponentClass:
                 material="pc_xyz material",
             )
 
-        attach_dims_and_physical_comps_to(child1A)
-        attach_dims_and_physical_comps_to(child1B)
+        attach_dims_and_physical_comps_to(child1a)
+        attach_dims_and_physical_comps_to(child1b)
         attach_dims_and_physical_comps_to(child2)
 
         parent.filter_components(["xy", "xz"])
