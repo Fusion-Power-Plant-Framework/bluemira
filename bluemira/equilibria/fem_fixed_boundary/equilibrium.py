@@ -23,44 +23,39 @@
 import os
 from copy import deepcopy
 from dataclasses import asdict, dataclass, fields
-from typing import Dict, List, Tuple, Union, Optional
+from typing import Dict, List, Optional, Tuple, Union
 
 import matplotlib.pyplot as plt
-from matplotlib.axes._axes import Axes
+import numdifftools as nd
 import numpy as np
 from dolfin import Mesh
+from matplotlib.axes._axes import Axes
+from scipy.integrate import cumulative_trapezoid, trapezoid
+from scipy.interpolate import interp1d
 from tabulate import tabulate
 
-from bluemira.base.components import PhysicalComponent
+from bluemira.base.components import Component, PhysicalComponent
+from bluemira.base.constants import MU_0
 from bluemira.base.file import get_bluemira_path, try_get_bluemira_path
 from bluemira.base.look_and_feel import bluemira_debug, bluemira_print, bluemira_warn
 from bluemira.base.parameter_frame import Parameter, ParameterFrame
 from bluemira.codes.interface import CodesSolver, RunMode
+from bluemira.codes.plasmod import plot_default_profiles
 from bluemira.equilibria.constants import DPI_GIF, PLT_PAUSE
+from bluemira.equilibria.fem_fixed_boundary import file, utilities
 from bluemira.equilibria.fem_fixed_boundary.fem_magnetostatic_2D import (
     FemGradShafranovFixedBoundary,
 )
 from bluemira.equilibria.fem_fixed_boundary.utilities import (
     calculate_plasma_shape_params,
 )
+from bluemira.geometry.coordinates import Coordinates
 from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.parameterisations import GeometryParameterisation
+from bluemira.geometry.tools import BluemiraFace, make_polygon
 from bluemira.mesh import meshing
 from bluemira.mesh.tools import import_mesh, msh_to_xdmf
 from bluemira.utilities.plot_tools import make_gif, save_figure
-
-import numdifftools as nd
-from bluemira.equilibria.fem_fixed_boundary import utilities, file
-from bluemira.codes.plasmod import plot_default_profiles
-
-from bluemira.geometry.tools import make_polygon, BluemiraFace
-from bluemira.base.components import Component, PhysicalComponent
-from bluemira.geometry.coordinates import Coordinates
-
-from scipy.interpolate import interp1d
-from scipy.integrate import trapezoid, cumulative_trapezoid
-
-from bluemira.base.constants import MU_0
 
 __all__ = ["solve_transport_fixed_boundary"]
 
@@ -450,7 +445,6 @@ def calc_metric_coefficients(mesh, psi2D: callable, x2D: callable):
     n = len(index)
     for i in range(n):
         x1D = np.delete(x1D, index[i])
-
     nx = x1D.size
 
     g1 = np.zeros((nx, 1))
@@ -624,16 +618,16 @@ def calc_curr_dens_profiles(
         fC = cumulative_trapezoid(fP, x1D) - trapezoid(fP, x1D)
         y = fA * (y_b + fC)
         dPhidV_data = q * np.sqrt(y)
-        dPsidV_data = -dPsidV_data/q
+        dPsidV_data = -dPsidV_data / q
         temp = nd.Gradient(interp1d(V, g2 * dPsidV_data))
         temp_data = np.array([temp(xi) for xi in x1D])
-        FFprime = -1/(4*np.pi**2 * g3) * temp_data - MU_0 / g3 * pprime_psi1D
+        FFprime = -1 / (4 * np.pi**2 * g3) * temp_data - MU_0 / g3 * pprime_psi1D
 
         # calcualte toroidal flux profile
         Phi1D = -cumulative_trapezoid(q, Psi1D)
 
         # calculate F
-        F = 2*np.pi/g3*dPhidV_data
+        F = 2 * np.pi / g3 * dPhidV_data
 
         Psi1D = np.flip(cumulative_trapezoid(np.flip(dPsidV_data), np.flip(V)))
 

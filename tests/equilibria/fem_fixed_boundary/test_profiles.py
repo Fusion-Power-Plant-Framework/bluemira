@@ -85,7 +85,7 @@ def calc_metric_coefficients_flux_surfaces(flux_surfaces, x_1d, psi_1d):
     xz2d = np.array([np.concatenate(x), np.concatenate(z)])
     psi2d = np.concatenate(psi)
     psi_ax = psi_1d[0]
-    psi_b = psi_1d[-1]
+    psi_b = psi_1d[1]
 
     _psi_func = LinearNDInterpolator(xz2d.T, psi2d, fill_value=psi_b)
 
@@ -98,17 +98,6 @@ def calc_metric_coefficients_flux_surfaces(flux_surfaces, x_1d, psi_1d):
     _x = np.linspace(np.amin(x2d), np.amax(x2d), 50)
     _z = np.linspace(np.amin(z2d), np.amax(z2d), 50)
     _xx, _zz = np.meshgrid(_x, _z, indexing="ij")
-
-    _psi = np.zeros((50, 50))
-    for i in range(50):
-        for j in range(50):
-            _psi[i, j] = psi_func([_xx[i, j], _zz[i, j]])
-    f, ax = plt.subplots()
-
-    cm = ax.contourf(_xx, _zz, _psi)
-    f.colorbar(cm)
-    ax.set_aspect("equal")
-    plt.show()
 
     volume = np.array([fs.volume for fs in flux_surfaces])
     # amin = 2.9075846464
@@ -132,6 +121,18 @@ def calc_metric_coefficients_flux_surfaces(flux_surfaces, x_1d, psi_1d):
 
     g2 = np.zeros(len(flux_surfaces))
     g3 = np.zeros(len(flux_surfaces))
+
+    _psi = np.zeros((50, 50))
+    for i in range(50):
+        for j in range(50):
+            _psi[i, j] = grad_psi_norm([_xx[i, j], _zz[i, j]])
+    f, ax = plt.subplots()
+
+    cm = ax.contourf(_xx, _zz, _psi)
+    f.colorbar(cm)
+    f.suptitle("grad_psi_norm")
+    ax.set_aspect("equal")
+    plt.show()
 
     for i, fs in enumerate(flux_surfaces):
         print(f"integrating over FS[{i}]")
@@ -174,7 +175,7 @@ class TestPLASMODRegressionRaw:
     # fmt:on
 
     n = len(pprime)
-    psi = -(psi - np.max(psi))
+    # psi = -(psi - np.max(psi))
     R_0 = 8.98300000
     amin = 2.9075846464
     a = np.linspace(0, amin, n)
