@@ -68,7 +68,7 @@ def calc_metric_coefficients(flux_surfaces, x_1d, psi_1d):
     _psi = np.zeros((50, 50))
     for i in range(50):
         for j in range(50):
-            _psi[i, j] = psi_norm([_xx[i, j], _zz[i, j]])
+            _psi[i, j] = psi_func([_xx[i, j], _zz[i, j]])
     f, ax = plt.subplots()
 
     cm = ax.contourf(_xx, _zz, _psi)
