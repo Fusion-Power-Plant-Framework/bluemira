@@ -28,7 +28,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 from matplotlib._tri import TriContourGenerator
 from matplotlib.axes._axes import Axes
-from matplotlib.tri.triangulation import Triangulation
+from matplotlib.tri import Triangulation
 from scipy.interpolate import interp1d
 
 from bluemira.utilities.opt_problems import OptimisationConstraint, OptimisationObjective
