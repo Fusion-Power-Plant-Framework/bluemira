@@ -82,7 +82,7 @@ pinned = [
     "numba-scipy==0.3.1",
     "numpy==1.23.2",
     "matplotlib==3.6.3",
-    "scipy==1.7.3",
+    "scipy==1.10.1",
 ]
 openmoc = [
     "OpenMOC @git+https://github.com/mit-crpg/OpenMOC.git@7940c0b",
