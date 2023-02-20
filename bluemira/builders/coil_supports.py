@@ -128,7 +128,6 @@ class ITERGravitySupportBuilder(Builder):
         z_max = z_min + 0.5 * (z_max - z_min)
         x_min = self.tf_xz_keep_out_zone.bounding_box.x_min + 0.5 * width
         x_max = self.tf_xz_keep_out_zone.bounding_box.x_max - 0.5 * width
-
         if (x_g_support < x_min) | (x_g_support > x_max):
             raise BuilderError(
                 "The gravity support footprint is not contained within the provided TF coil geometry!"
@@ -233,7 +232,7 @@ class ITERGravitySupportBuilder(Builder):
             plate = plate.deepcopy()
             plate.translate(
                 vector=(
-                    self.params.tf_gs_g_plate.value + self.params.tf_gs_tk_plate.value,
+                    plate_and_gap,
                     0,
                     0,
                 )
