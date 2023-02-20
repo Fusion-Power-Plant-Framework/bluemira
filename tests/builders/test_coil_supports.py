@@ -58,8 +58,8 @@ class TestITERGravitySupportBuilder:
             "tf_gs_base_depth": {"value": 2.4, "unit": "m"},
         }
         for k, v in kwargs.items():
-            if k in defaults:
-                defaults[k]["value"] = v
+            defaults[k]["value"] = v
+
         params = ITERGravitySupportBuilderParams.from_dict(defaults)
         return ITERGravitySupportBuilder(params, {}, tf)
 
