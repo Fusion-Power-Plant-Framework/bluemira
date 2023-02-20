@@ -133,9 +133,10 @@ class TestPFCoilSupportBuilder:
     @pytest.mark.parametrize(
         "x, z, dx, dz",
         [
+            (2.5, 10, 0.4, 0.5),
             (6, 12.5, 0.5, 0.5),
-            (10, 11, 0.5, 0.5),
-            (14.5, 6, 0.5, 0.5),
+            (10, 11, 0.5, 0.67),
+            (14.5, 6, 0.2, 0.5),
         ],
     )
     def test_good_positions_up_down_equal_volume(self, x, z, dx, dz):
