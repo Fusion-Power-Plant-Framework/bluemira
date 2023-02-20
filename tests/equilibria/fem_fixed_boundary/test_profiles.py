@@ -19,10 +19,106 @@
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 
+import matplotlib.pyplot as plt
+import numdifftools as nd
 import numpy as np
+from scipy.interpolate import SmoothBivariateSpline, interp1d
 
 from bluemira.equilibria.flux_surfaces import ClosedFluxSurface
 from bluemira.equilibria.shapes import flux_surface_zakharov
+
+
+def gradV(volume, x1d):
+    V_fun = interp1d(x1d, volume, fill_value="extrapolate")
+    return nd.Gradient(V_fun)
+
+
+def calc_metric_coefficients(flux_surfaces, x_1d, psi_1d):
+    # Extract coordinates
+    x = []
+    z = []
+    xz = []
+    psi = []
+    for i, fs in enumerate(flux_surfaces):
+        x.append(fs.coords.x[:-1])
+        z.append(fs.coords.z[:-1])
+        xz.append(np.array([fs.coords.x[:-1], fs.coords.z[:-1]]))
+        psi.append(psi_1d[i] * np.ones(len(fs.coords.x) - 1))
+    x2d = np.concatenate(x)
+    z2d = np.concatenate(z)
+    xz2d = np.array([np.concatenate(x), np.concatenate(z)])
+    psi2d = np.concatenate(psi)
+    psi_ax = psi_1d[0]
+    psi_b = psi_1d[-1]
+
+    from scipy.interpolate import CloughTocher2DInterpolator, LinearNDInterpolator
+
+    _psi_func = LinearNDInterpolator(xz2d.T, psi2d, fill_value=psi_b)
+
+    def psi_func(x):
+        return float(_psi_func(x[0], x[1]))
+
+    def psi_norm(x):
+        return np.sqrt((psi_ax - psi_func(x)) / (psi_ax - psi_b))
+
+    _x = np.linspace(np.amin(x2d), np.amax(x2d), 50)
+    _z = np.linspace(np.amin(z2d), np.amax(z2d), 50)
+    _xx, _zz = np.meshgrid(_x, _z, indexing="ij")
+
+    _psi = np.zeros((50, 50))
+    for i in range(50):
+        for j in range(50):
+            _psi[i, j] = psi_norm([_xx[i, j], _zz[i, j]])
+    f, ax = plt.subplots()
+
+    cm = ax.contourf(_xx, _zz, _psi)
+    f.colorbar(cm)
+    ax.set_aspect("equal")
+    plt.show()
+
+    volume = np.array([fs.volume for fs in flux_surfaces])
+
+    gradV_x1D = gradV(volume, x_1d)
+    grad_x2D = nd.Gradient(psi_norm)
+    grad_psi = nd.Gradient(psi_func)
+
+    def grad_x2D_norm(x):
+        return np.sqrt(np.sum(np.abs(grad_x2D(x)) ** 2))
+
+    def grad_psi_norm(x):
+        return np.sqrt(np.sum(np.abs(grad_psi(x)) ** 2))
+
+    def gradV_norm(x):
+        """GradV norm"""
+        return grad_x2D_norm(x) * gradV_x1D(psi_norm(x))
+
+    def Bp(x):
+        """Bp"""
+        return np.divide(grad_psi_norm(x), x[0]) / (2 * np.pi * x[0])
+
+    g2 = np.zeros(len(flux_surfaces))
+    g3 = np.zeros(len(flux_surfaces))
+
+    for i, fs in enumerate(flux_surfaces):
+        print(f"integrating over FS[{i}]")
+        points = fs.coords.xz.T
+
+        dx = np.diff(fs.coords.x)
+        dz = np.diff(fs.coords.z)
+        dl = np.hypot(dx, dz)
+        lp = np.concatenate([np.array([0.0]), np.cumsum(dl)])
+        bp = np.array([Bp(p) for p in points])
+
+        y0_data = 1 / bp
+        y3_data = 1 / (fs.coords.x**2 * bp)
+        y2_data = np.array([gradV_norm(p) ** 2 for p in points]) * y3_data
+        x_data = lp
+
+        denom = np.trapz(y0_data, x_data)
+        g2[i] = np.trapz(y2_data, x_data) / denom
+        g3[i] = np.trapz(y3_data, x_data) / denom
+
+    return volume, g2, g3
 
 
 class TestPLASMODRegressionRaw:
@@ -46,20 +142,72 @@ class TestPLASMODRegressionRaw:
     R_0 = 8.98300000
     amin = 2.9075846464
     a = np.linspace(0, amin, n)
+    rho = np.linspace(0, 1, n)
 
     @classmethod
     def setup_class(cls):
         # Build flux surfaces
         flux_surfaces = []
-
+        x = []
+        z = []
+        xz = []
+        psi = []
         for i in range(cls.n):
             fs = flux_surface_zakharov(
-                cls.R_0 + cls.shif[i], 0, cls.a[i], cls.kprof[i], cls.dprof[i], n=200
+                cls.R_0 + cls.shif[i], 0, cls.a[i], cls.kprof[i], cls.dprof[i], n=50
             )
+            x.append(fs.x)
+            z.append(fs.z)
+            xz.append(np.array([fs.x, fs.z]))
+            psi.append(cls.psi[i] * np.ones(len(fs.x)))
             fs.close()
             flux_surfaces.append(ClosedFluxSurface(fs))
         cls.flux_surfaces = flux_surfaces
+        cls.x2d = np.array(x)
+        cls.z2d = np.array(z)
+        cls.xz2d = np.array([np.concatenate(x), np.concatenate(z)])
+        cls.psi2d = np.concatenate(psi)
 
     def test_volume(self):
         volume = [fs.volume for fs in self.flux_surfaces]
+        f, ax = plt.subplots()
+        ax.plot(self.rho, volume, label="$V$ calculated")
+        ax.plot(self.rho, self.volprof, label="$V$ PLASMOD")
+        ax.set_xlabel("[$m^3$]")
+        ax.set_xlabel("$\\rho$")
+        ax.legend()
+        plt.show()
         np.testing.assert_allclose(volume[1:], self.volprof[1:], rtol=5e-2)
+
+    def test_gradV(self):
+        volume = [fs.volume for fs in self.flux_surfaces]
+        grad_vol = gradV(volume, self.rho)
+        grad_vol = [grad_vol(x) for x in self.rho]
+
+        f, ax = plt.subplots()
+        ax.plot(self.rho, grad_vol, label="$V^'$ calculated")
+        ax.plot(self.rho, self.vprime, label="$V^'$ PLASMOD")
+        ax.set_xlabel("$g_{2}$")
+        ax.set_xlabel("$\\rho$")
+        ax.legend()
+        plt.show()
+        np.testing.assert_allclose(grad_vol[1:], self.vprime[1:], rtol=5e-2)
+
+    def test_g2g3(self):
+        _, g2, g3 = calc_metric_coefficients(self.flux_surfaces, self.rho, self.psi)
+        f, ax = plt.subplots()
+        ax.plot(self.rho, g2, label="$g_2$ calculated")
+        ax.plot(self.rho, self.g2, label="$g_2$ PLASMOD")
+        ax.set_xlabel("$g_{2}$")
+        ax.set_xlabel("$\\rho$")
+        ax.legend()
+        plt.show()
+        f, ax = plt.subplots()
+        ax.plot(self.rho, g3, label="$g_3$ calculated")
+        ax.plot(self.rho, self.g3, label="$g_3$ PLASMOD")
+        ax.set_xlabel("$g_{2}$")
+        ax.set_xlabel("$\\rho$")
+        ax.legend()
+        plt.show()
+        np.testing.assert_allclose(g2, self.g2)
+        np.testing.assert_allclose(g3, self.g3)
