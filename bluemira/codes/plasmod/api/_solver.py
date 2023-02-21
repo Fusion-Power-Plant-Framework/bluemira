@@ -210,26 +210,6 @@ class Solver(CodesSolver):
 
         if profile is Profiles.x:
             prof_data = self._x_phi
-        elif profile in [Profiles.pprime, Profiles.ffprime]:
-            jpar_true = self.get_profile("jpar")
-            pprime = getattr(self.plasmod_outputs(), "pprime")
-            pprime = self._from_phi_to_psi(pprime)
-            ffprime = getattr(self.plasmod_outputs(), "ffprime")
-            ffprime = self._from_phi_to_psi(ffprime)
-            jpar_recon = (
-                2
-                * np.pi
-                * (
-                    self.params.R_0.value * pprime
-                    + ffprime / (MU_0 * self.params.R_0.value)
-                )
-            )
-
-            # Scale the flux functions with the correction ratio of the reconstructed
-            # jpar profile. Indiscriminately applied to pprime and ffprime
-            ratio = jpar_true / jpar_recon
-            prof_data = getattr(self.plasmod_outputs(), profile.name)
-            prof_data = ratio * self._from_phi_to_psi(prof_data)
         else:
             prof_data = getattr(self.plasmod_outputs(), profile.name)
             prof_data = self._from_phi_to_psi(prof_data)
