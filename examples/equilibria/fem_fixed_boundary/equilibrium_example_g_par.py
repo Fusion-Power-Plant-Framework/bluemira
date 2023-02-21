@@ -57,7 +57,7 @@ from bluemira.equilibria.fem_fixed_boundary.fem_magnetostatic_2D import (
     FemGradShafranovFixedBoundary,
 )
 from bluemira.equilibria.fem_fixed_boundary.file import save_fixed_boundary_to_file
-from bluemira.equilibria.shapes import JohnerLCFS
+from bluemira.equilibria.shapes import JohnerLCFS, ZakharovLCFS, flux_surface_zakharov
 
 set_log_level("NOTSET")
 
@@ -75,6 +75,92 @@ johner_parameterisation = JohnerLCFS(
         "kappa_l": {"value": 1.75},
         "delta_u": {"value": 0.33},
         "delta_l": {"value": 0.45},
+    }
+)
+
+from bluemira.geometry.tools import interpolate_bspline
+from bluemira.utilities.opt_variables import BoundedVariable, OptVariables
+
+
+class ModZakharovLCFS(ZakharovLCFS):
+    def __init__(self, var_dict=None):
+        variables = OptVariables(
+            [
+                BoundedVariable(
+                    "r_0", 9, lower_bound=0, upper_bound=np.inf, descr="Major radius"
+                ),
+                BoundedVariable(
+                    "z_0",
+                    0,
+                    lower_bound=-np.inf,
+                    upper_bound=np.inf,
+                    descr="Vertical coordinate at geometry centroid",
+                ),
+                BoundedVariable(
+                    "a", 3, lower_bound=0, upper_bound=np.inf, descr="Minor radius"
+                ),
+                BoundedVariable(
+                    "kappa", 1.5, lower_bound=1.0, upper_bound=np.inf, descr="Elongation"
+                ),
+                BoundedVariable(
+                    "delta",
+                    0.4,
+                    lower_bound=0.0,
+                    upper_bound=1.0,
+                    descr="Triangularity",
+                ),
+                BoundedVariable(
+                    "kappa_l",
+                    1.5,
+                    lower_bound=1.0,
+                    upper_bound=np.inf,
+                    descr="Elongation",
+                ),
+                BoundedVariable(
+                    "kappa_u",
+                    1.5,
+                    lower_bound=1.0,
+                    upper_bound=np.inf,
+                    descr="Elongation",
+                ),
+                BoundedVariable(
+                    "delta_l",
+                    1.5,
+                    lower_bound=1.0,
+                    upper_bound=np.inf,
+                    descr="Elongation",
+                ),
+                BoundedVariable(
+                    "delta_u",
+                    1.5,
+                    lower_bound=1.0,
+                    upper_bound=np.inf,
+                    descr="Elongation",
+                ),
+            ],
+            frozen=True,
+        )
+        variables.adjust_variables(var_dict, strict_bounds=False)
+        self.variables = variables
+
+    def adjust_variable(self, name, value=None, lower_bound=None, upper_bound=None):
+        if name in ["kappa_u", "kappa_l"]:
+            name = "kappa"
+        if name in ["delta_u", "delta_l"]:
+            name = "delta"
+        return super().adjust_variable(name, value, lower_bound, upper_bound)
+
+    def create_shape(self, label="LCFS", n_points=1000):
+        coordinates = flux_surface_zakharov(*self.variables.values[:6], n=n_points)
+        return interpolate_bspline(coordinates.xyz, closed=True, label=label)
+
+
+johner_parameterisation = ModZakharovLCFS(
+    {
+        "r_0": {"value": 8.9830e00},
+        "a": {"value": 3.1},
+        "kappa": {"value": 1.65},
+        "delta": {"value": 0.33},
     }
 )
 
@@ -225,7 +311,7 @@ transport_solver = plasmod_solver
 from bluemira.geometry.coordinates import Coordinates
 
 x1D = np.linspace(0.1, 1, 100)
-#x1D = transport_solver.get_profile("x")
+# x1D = transport_solver.get_profile("x")
 
 x2D = gs_solver.psi_norm_2d
 mesh = gs_solver.mesh
@@ -248,6 +334,7 @@ FS = []
 for i in range(nx):
     if x1D[i] == 1:
         from bluemira.equilibria.fem_fixed_boundary import file
+
         path = np.transpose(file._get_mesh_boundary(mesh))
         FS.append(path)
     else:
@@ -269,9 +356,10 @@ g2 = np.zeros((nx, 1))
 g3 = np.zeros((nx, 1))
 V = np.zeros((nx, 1))
 
-# calculate volume
-from bluemira.geometry.tools import make_polygon, BluemiraFace
 from bluemira.base.components import Component, PhysicalComponent
+
+# calculate volume
+from bluemira.geometry.tools import BluemiraFace, make_polygon
 
 FS_pol = []
 root = Component("root")
@@ -301,7 +389,7 @@ import numdifftools as nd
 gradV_x1D = nd.Gradient(V_fun)
 gradV_x1D_data = np.array([gradV_x1D(x) for x in x1D])
 
-plt.plot(x1D, V, label='V')
+plt.plot(x1D, V, label="V")
 # plt.plot(x1D, dVdx_data, 'ro')
 plt.plot(x1D, gradV_x1D_data, "g-", label="gradV")
 plt.xlabel("psi_norm")
@@ -343,9 +431,11 @@ plt.show()
 
 r2D = mesh_points[:, 0]
 
+
 def gradV_norm(x):
     """gradV norm"""
     return grad_x2D_norm(x) * gradV_x1D(x2D(x))
+
 
 gradV_norm_data = np.array([gradV_norm(p) for p in mesh_points])
 
@@ -439,13 +529,25 @@ q_fun = interp1d(x_plasmod, q_plasmod, fill_value="extrapolate")
 p_fun = interp1d(x_plasmod, p_plasmod, fill_value="extrapolate")
 grad_p_x1D = nd.Gradient(p_fun)
 
+
 def q2_g32(x):
     return q_fun(x) ** 2 / g3_fun(x) ** 2
 
+
 def func_A(x):
-    return (grad_g2_x1D(x) + 8 * np.pi ** 4 * nd.Gradient(q2_g32)(x)) / (
-                g2_fun(x) / 2 + 8 * np.pi ** 4 * q_fun(x) ** 2 / g3_fun(x) ** 2)
+    return (grad_g2_x1D(x) + 8 * np.pi**4 * nd.Gradient(q2_g32)(x)) / (
+        g2_fun(x) / 2 + 8 * np.pi**4 * q_fun(x) ** 2 / g3_fun(x) ** 2
+    )
+
 
 from bluemira.base.constants import MU_0
+
+
 def func_P(x):
-    return 4 * np.pi ** 2 * MU_0 * grad_p_x1D(x) / (g2_fun(x) / 2 + 8 * np.pi ** 4 * q_fun(x) ** 2 / g3_fun(x) ** 2)
+    return (
+        4
+        * np.pi**2
+        * MU_0
+        * grad_p_x1D(x)
+        / (g2_fun(x) / 2 + 8 * np.pi**4 * q_fun(x) ** 2 / g3_fun(x) ** 2)
+    )
