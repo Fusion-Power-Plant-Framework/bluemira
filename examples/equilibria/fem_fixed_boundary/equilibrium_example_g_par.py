@@ -69,8 +69,8 @@ set_log_level("NOTSET")
 # %%
 johner_parameterisation = JohnerLCFS(
     {
-        "r_0": {"value": 8.9830e00},
-        "a": {"value": 3.1},
+        "r_0": {"value": 8.9830},
+        "a": {"value": 2.9075846464},
         "kappa_u": {"value": 1.6},
         "kappa_l": {"value": 1.75},
         "delta_u": {"value": 0.33},
@@ -125,22 +125,26 @@ class ModZakharovLCFS(ZakharovLCFS):
                 ),
                 BoundedVariable(
                     "delta_l",
-                    1.5,
-                    lower_bound=1.0,
-                    upper_bound=np.inf,
+                    0.33,
+                    lower_bound=0.0,
+                    upper_bound=1.0,
                     descr="Elongation",
                 ),
                 BoundedVariable(
                     "delta_u",
-                    1.5,
-                    lower_bound=1.0,
-                    upper_bound=np.inf,
+                    0.33,
+                    lower_bound=0.0,
+                    upper_bound=1.0,
                     descr="Elongation",
                 ),
             ],
             frozen=True,
         )
         variables.adjust_variables(var_dict, strict_bounds=False)
+        variables.adjust_variable("kappa_u", value=variables.kappa)
+        variables.adjust_variable("kappa_l", value=variables.kappa)
+        variables.adjust_variable("delta_u", value=variables.delta)
+        variables.adjust_variable("delta_u", value=variables.delta)
         self.variables = variables
 
     def adjust_variable(self, name, value=None, lower_bound=None, upper_bound=None):
@@ -150,8 +154,8 @@ class ModZakharovLCFS(ZakharovLCFS):
             name = "delta"
         return super().adjust_variable(name, value, lower_bound, upper_bound)
 
-    def create_shape(self, label="LCFS", n_points=1000):
-        coordinates = flux_surface_zakharov(*self.variables.values[:6], n=n_points)
+    def create_shape(self, label="LCFS", n_points=100):
+        coordinates = flux_surface_zakharov(*self.variables.values[:5], n=n_points)
         return interpolate_bspline(coordinates.xyz, closed=True, label=label)
 
 
@@ -159,7 +163,7 @@ johner_parameterisation = ModZakharovLCFS(
     {
         "r_0": {"value": 8.9830e00},
         "a": {"value": 3.1},
-        "kappa": {"value": 1.65},
+        "kappa": {"value": 1.7},
         "delta": {"value": 0.33},
     }
 )
@@ -177,7 +181,7 @@ binary = os.path.join(PLASMOD_PATH, "plasmod")
 
 source = "Plasmod Example"
 plasmod_params = {
-    "A": {"value": johner_parameterisation.variables.a, "unit": "", "source": source},
+    "A": {"value": 3.1, "unit": "", "source": source},
     "R_0": {
         "value": johner_parameterisation.variables.r_0,
         "unit": "m",
@@ -212,7 +216,7 @@ plasmod_params = {
 }
 
 problem_settings = {
-    "amin": plasmod_params["R_0"]["value"] / plasmod_params["A"]["value"],
+    "amin": johner_parameterisation.variables.a,
     "pfus_req": 2000.0,
     "pheat_max": 100.0,
     "q_control": 50.0,
@@ -310,7 +314,7 @@ transport_solver = plasmod_solver
 
 from bluemira.geometry.coordinates import Coordinates
 
-x1D = np.linspace(0.1, 1, 100)
+x1D = np.linspace(0.1, 1, 50)
 # x1D = transport_solver.get_profile("x")
 
 x2D = gs_solver.psi_norm_2d
