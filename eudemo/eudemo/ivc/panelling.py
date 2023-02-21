@@ -20,11 +20,41 @@
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 """Designer, builder, and tools for wall panelling."""
 
+from dataclasses import dataclass
 from itertools import count
+from typing import Dict, Optional, Tuple, Union
 
 import numpy as np
 
+from bluemira.base.designer import Designer
+from bluemira.base.parameter_frame import Parameter, ParameterFrame
+from bluemira.geometry.wire import BluemiraWire
+
 DEG_TO_RAD = np.pi / 180
+
+
+@dataclass
+class PanellingDesignerParams(ParameterFrame):
+    panelling_max_angle: Parameter[float]
+    panelling_min_segment_len: Parameter[float]
+    panelling_max_segment_len: Parameter[float]
+
+
+class PanellingDesigner(Designer[BluemiraWire]):
+
+    param_class = PanellingDesignerParams
+
+    def __init__(
+        self,
+        params: Union[Dict, ParameterFrame],
+        wall_boundary: BluemiraWire,
+        build_config: Optional[Dict] = None,
+    ):
+        super().__init__(params, build_config)
+        self.wall_boundary = wall_boundary
+
+    def run(self) -> BluemiraWire:
+        boundary_points = self.wall_boundary.discretize(byedges=True)
 
 
 def make_pivoted_string(
@@ -32,7 +62,7 @@ def make_pivoted_string(
     max_angle: float = 10,
     dx_min: float = 0,
     dx_max: float = np.inf,
-) -> np.ndarray:
+) -> Tuple[np.ndarray, np.ndarray]:
     """
     Generate a set of pivot points along the given boundary.
 
@@ -59,7 +89,13 @@ def make_pivoted_string(
     new_points
         The pivot points' coordinates. Has shape (M, 3), where M is the
         number of pivot points.
+    index
+        The indices of the pivot points into the input points.
     """
+    if dx_min > dx_max:
+        raise ValueError(
+            f"'dx_min' cannot be greater than 'dx_max': '{dx_min} > {dx_max}'"
+        )
     tangent_vec = boundary_points[1:] - boundary_points[:-1]
     tangent_vec_norm = np.linalg.norm(tangent_vec, axis=1)
     # Protect against dividing by zero
@@ -101,4 +137,4 @@ def make_pivoted_string(
     new_points = new_points[: j + 1]  # trim
     index = index[: j + 1]  # trim
     delta_x = delta_x[:j]  # trim
-    return new_points
+    return new_points, index

@@ -33,6 +33,9 @@ DATA_DIR = os.path.join(os.path.dirname(__file__), "data")
 class TestMakePivotedString:
     def test_returns_points_matching_snapshot(self):
         """
+        This tests that the function returns the same thing as the
+        equivalent class method in BLUEPRINT.
+
         The data for this test was generated using the
         BLUEPRINT.geometry.stringgeom.String class from BLUEPRINT.
 
