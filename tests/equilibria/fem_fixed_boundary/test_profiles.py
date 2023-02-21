@@ -22,7 +22,7 @@
 import matplotlib.pyplot as plt
 import numdifftools as nd
 import numpy as np
-from scipy.interpolate import LinearNDInterpolator, interp1d
+from scipy.interpolate import CloughTocher2DInterpolator, LinearNDInterpolator, interp1d
 
 from bluemira.equilibria.fem_fixed_boundary.equilibrium import calc_metric_coefficients
 from bluemira.equilibria.flux_surfaces import ClosedFluxSurface
@@ -82,38 +82,53 @@ def calc_metric_coefficients_flux_surfaces(flux_surfaces, x_1d, psi_1d):
         psi.append(psi_1d[i] * np.ones(len(fs.coords.x) - 1))
     x2d = np.concatenate(x)
     z2d = np.concatenate(z)
+    nx, nz = 200, 200
+    _x = np.linspace(np.amin(x2d), np.amax(x2d), nx)
+    _z = np.linspace(np.amin(z2d), np.amax(z2d), nz)
+    _xx, _zz = np.meshgrid(_x, _z, indexing="ij")
+
     xz2d = np.array([np.concatenate(x), np.concatenate(z)])
     psi2d = np.concatenate(psi)
     psi_ax = psi_1d[0]
-    psi_b = psi_1d[1]
+    psi_b = psi_1d[-1]
+    print(f"{psi_ax=}")
+    print(f"{psi_b=}")
 
-    _psi_func = LinearNDInterpolator(xz2d.T, psi2d, fill_value=psi_b)
+    _psi_func = LinearNDInterpolator(list(zip(x2d, z2d)), psi2d, fill_value=psi_b)
+    _psi_func = CloughTocher2DInterpolator(list(zip(x2d, z2d)), psi2d, fill_value=psi_b)
 
-    def psi_func(x):
-        return float(_psi_func(x[0], x[1]))
+    def f_psi(x):
+        return _psi_func(x[0], x[1])
 
-    def psi_norm(x):
-        return np.sqrt((psi_ax - psi_func(x)) / (psi_ax - psi_b))
+    def f_psi_norm(x):
+        return np.sqrt((psi_ax - f_psi(x)) / (psi_ax - psi_b))
 
-    _x = np.linspace(np.amin(x2d), np.amax(x2d), 50)
-    _z = np.linspace(np.amin(z2d), np.amax(z2d), 50)
-    _xx, _zz = np.meshgrid(_x, _z, indexing="ij")
+    _value = np.zeros((nx, nz))
+    for i in range(nx):
+        for j in range(nz):
+            _value[i, j] = f_psi([_xx[i, j], _zz[i, j]])
+
+    f, ax = plt.subplots()
+    cm = ax.contourf(_xx, _zz, _value)
+    ax.set_aspect("equal")
+    f.colorbar(cm)
+    plt.show()
 
     volume = np.array([fs.volume for fs in flux_surfaces])
     # amin = 2.9075846464
     gradV_x1D = gradV(volume, x_1d)
-    grad_x2D = nd.Gradient(psi_norm)
-    grad_psi = nd.Gradient(psi_func)
+    grad_x2D = nd.Gradient(f_psi_norm)
+    grad_psi = nd.Gradient(f_psi)
 
     def grad_x2D_norm(x):
-        return np.sqrt(np.sum(np.abs(grad_x2D(x)) ** 2))
+        return np.sqrt(np.sum(grad_x2D(x) ** 2))
 
     def grad_psi_norm(x):
-        return np.sqrt(np.sum(np.abs(grad_psi(x)) ** 2))
+        return np.sqrt(np.sum(grad_psi(x) ** 2))
 
     def gradV_norm(x):
         """GradV norm"""
-        return grad_x2D_norm(x) * gradV_x1D(psi_norm(x))
+        return grad_x2D_norm(x) * gradV_x1D(f_psi_norm(x))
 
     def Bp(x):
         """Bp"""
@@ -121,18 +136,6 @@ def calc_metric_coefficients_flux_surfaces(flux_surfaces, x_1d, psi_1d):
 
     g2 = np.zeros(len(flux_surfaces))
     g3 = np.zeros(len(flux_surfaces))
-
-    _psi = np.zeros((50, 50))
-    for i in range(50):
-        for j in range(50):
-            _psi[i, j] = grad_psi_norm([_xx[i, j], _zz[i, j]])
-    f, ax = plt.subplots()
-
-    cm = ax.contourf(_xx, _zz, _psi)
-    f.colorbar(cm)
-    f.suptitle("grad_psi_norm")
-    ax.set_aspect("equal")
-    plt.show()
 
     for i, fs in enumerate(flux_surfaces):
         print(f"integrating over FS[{i}]")
@@ -153,6 +156,16 @@ def calc_metric_coefficients_flux_surfaces(flux_surfaces, x_1d, psi_1d):
         g2[i] = np.trapz(y2_data, x_data) / denom
         g3[i] = np.trapz(y3_data, x_data) / denom
 
+    x1D = np.insert(x_1d, 0, 0)
+    g2t = np.insert(g2, 0, 0)
+    g3t = np.insert(g3, 0, 0)
+
+    g2_temp = interp1d(x1D[1:-1], g2t[1:-1], fill_value="extrapolate")
+    g2[-1] = g2_temp(x1D[-1])
+
+    g3_temp = interp1d(x1D[1:-1], g3t[1:-1], fill_value="extrapolate")
+    g3[0] = g3_temp(x1D[0])
+    g3[-1] = g3_temp(x1D[-1])
     return volume, g2, g3
 
 
@@ -174,8 +187,10 @@ class TestPLASMODRegressionRaw:
     dprof = np.array([0.00000000000E+0000, 0.19744630848E-0003, 0.46561124132E-0003, 0.83912959078E-0003,      0.12911890855E-0002,      0.18068677519E-0002,      0.23973387433E-0002,      0.30847369392E-0002,      0.38960785315E-0002,      0.48632409560E-0002,      0.60230344120E-0002,      0.74168604800E-0002,      0.90899272690E-0002,      0.11089021539E-0001,      0.13479579887E-0001,      0.16302180510E-0001,      0.19533498171E-0001,      0.23178990193E-0001,      0.27270525106E-0001,      0.31828696328E-0001,      0.36887508193E-0001,      0.42484424661E-0001,      0.48662765250E-0001,      0.55475228563E-0001,     0.62983006655E-0001,     0.71257299865E-0001,     0.80383394063E-0001,      0.90464033775E-0001,      0.10162364024E+0000,      0.11401990265E+0000,      0.12785804610E+0000,      0.14339429174E+0000,     0.16094984235E+0000,      0.18095739450E+0000,      0.20399317942E+0000,     0.23109789045E+0000,      0.26327628148E+0000,      0.30056597073E+0000,     0.33740662361E+0000,      0.37321552658E+0000,      0.42389365851E+0000])  # noqa: E241
     # fmt:on
 
+    rho = np.sqrt(rho / rho[-1])
+
     n = len(pprime)
-    # psi = -(psi - np.max(psi))
+    psi = -(psi - np.max(psi))
     R_0 = 8.98300000
     amin = 2.9075846464
     a = np.linspace(0, amin, n)
