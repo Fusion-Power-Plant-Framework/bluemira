@@ -21,6 +21,7 @@
 """Base class for a Bluemira reactor."""
 
 from typing import Type
+from warnings import warn
 
 from bluemira.base.builder import ComponentManager
 from bluemira.base.components import Component
@@ -114,14 +115,16 @@ class Reactor:
         dims_to_show = ("xyz",) if len(dims) == 0 else dims
 
         # if a kw "dim" is given, it is only used
-        kw_dim = kwargs.get("dim")
-        if kw_dim is not None:
+        if kw_dim := kwargs.pop("dim", None):
+            warn(
+                "Using kwarg 'dim' is no longer supported. Simply pass in the dimensions you would like to show, e.g. show_cad('xz')",
+                category=DeprecationWarning,
+            )
             dims_to_show = (kw_dim,)
-
         for dim in dims_to_show:
             if dim not in _PLOT_DIMS:
                 raise ReactorError(
-                    f"Invalid plotting dimension '{dim}'. "
+                    f"Invalid plotting dimension '{dim}'."
                     f"Must be one of {str(_PLOT_DIMS)}"
                 )
 
