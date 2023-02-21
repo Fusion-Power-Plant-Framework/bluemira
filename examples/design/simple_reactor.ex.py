@@ -160,9 +160,9 @@ class MyReactor(Reactor):
 # the any part of the coil is always a minimum distance away from the plasma.
 #
 # Further information on geometry can be found in the
-# [geometry tutorial](../geometry/geometry_tutorial.ipynb) and information about
+# [geometry tutorial](../geometry/geometry_tutorial.ex.py) and information about
 # geometry optimisation can be found in the
-# [geometry optimisation tutorial](../geometry/optimisation_tutorial.ipynb).
+# [geometry optimisation tutorial](../geometry/optimisation_tutorial.ex.py).
 
 # %%
 class MyTFCoilOptProblem(GeometryOptimisationProblem):
