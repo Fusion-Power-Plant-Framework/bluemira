@@ -94,9 +94,9 @@ class Component(NodeMixin, Plottable, DisplayableCAD):
 
     def filter_components(self, names: List[str]):
         """
-        Removes all components from the tree starting at this component,
+        Removes all components from the tree, starting at this component,
         that are siblings of each component specified in `names`
-        and that aren't in `names` themself.
+        and that aren't in `names` themselves.
 
         Parameters
         ----------
