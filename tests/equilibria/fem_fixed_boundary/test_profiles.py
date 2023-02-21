@@ -30,8 +30,8 @@ from bluemira.equilibria.shapes import flux_surface_zakharov
 
 
 def gradV(volume, x1d):
-    V_fun = interp1d(x1d, volume, fill_value="extrapolate")
-    return nd.Gradient(V_fun)
+    f_volume = interp1d(x1d, volume, fill_value="extrapolate")
+    return nd.Gradient(f_volume)
 
 
 def calc_metric_coefficents_wrap(flux_surfaces, x_1d, psi_1d):
