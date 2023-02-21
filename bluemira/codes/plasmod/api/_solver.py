@@ -27,7 +27,6 @@ from typing import Any, Dict, Iterable, Union
 import numpy as np
 from scipy.interpolate import interp1d
 
-from bluemira.base.constants import MU_0
 from bluemira.base.parameter_frame import ParameterFrame
 from bluemira.codes.error import CodesError
 from bluemira.codes.interface import CodesSolver
