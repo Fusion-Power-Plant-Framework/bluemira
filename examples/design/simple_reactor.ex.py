@@ -51,6 +51,7 @@ from bluemira.base.components import Component, PhysicalComponent
 from bluemira.base.designer import Designer
 from bluemira.base.parameter_frame import Parameter, ParameterFrame
 from bluemira.base.reactor import Reactor
+from bluemira.base.reactor_config import ReactorConfig
 from bluemira.display.palettes import BLUE_PALETTE
 from bluemira.equilibria.shapes import JohnerLCFS
 from bluemira.geometry.face import BluemiraFace
@@ -453,7 +454,7 @@ build_config = {
     # be used to set parameters that are shared between components
     "params": {},
     "Plasma": {
-        "Designer": {
+        "designer": {
             "params": {
                 "R_0": {
                     "value": 9.0,
@@ -506,7 +507,7 @@ build_config = {
     },
     "TF Coil": {
         "params": {},
-        "Designer": {
+        "designer": {
             "runmode": "run",
             "param_class": "PrincetonD",
             "var_dict": {
@@ -514,7 +515,7 @@ build_config = {
                 "x2": {"value": 15, "lower_bound": 12},
             },
         },
-        "Builder": {
+        "builder": {
             "params": {
                 "tf_wp_width": {
                     "value": 0.6,
@@ -533,66 +534,28 @@ build_config = {
     },
 }
 
-
-class BuildConfig:
-    def __init__(self, file_path: str):
-        self.config_data = json.load(file_path)
-        global_params = config_data["params"]
-        super().__init__(global_params)
-
-        for attribute, attr_type in self.__annotations__.items():
-            if attr_type is not dict:
-                continue
-            getattr(self, attribute)["params"] = self._merge_parameter_dicts()
-
-    def get_params(self, param_name: str) -> Dict:
-        local_params = self.config_data["plasma"].get("params", {})
-        return
-
-    def get_designer_params(self) -> Dict[str, ParamT]:
-        pass
-
-    def get_builder_params(self) -> Dict[str, ParamT]:
-        pass
-
-    def _merge_parameter_dicts(self, param_dicts: Iterable[Dict]) -> Dict:
-        local_params = getattr(self, param_name)
-        # validating local_params and global do not share any parameters
-        # print a warning
-        merged = {**local_params, **self.global_params}
-        return merged
-
-
 # %% [markdown]
 #
 # Now we set up our ParameterFrames
 
 # %%
-# TODO improve build config manipulation
-build_config = ReactorConfig("config_file.json")
 
-plasma_params = PlasmaDesignerParams.from_dict(
-    build_config.get_params("Plasma", "designer")
-)
+reactor_config = ReactorConfig(build_config)
 
-plasma_params = PlasmaDesignerParams.from_dict(
-    {**build_config["params"], **build_config["Plasma"]["Designer"].pop("params")}
-)
+plasma_params = PlasmaDesignerParams.from_dict(reactor_config.designer_params("Plasma"))
 
-tf_coil_params = TFCoilBuilderParams.from_dict(
-    {**build_config["params"], **build_config["TF Coil"]["Builder"].pop("params")}
-)
+tf_coil_params = TFCoilBuilderParams.from_dict(reactor_config.builder_params("TF Coil"))
 
 # %% [markdown]
 #
 # We create our plasma
 
 # %%
-plasma_designer = PlasmaDesigner(plasma_params, build_config["Plasma"])
+plasma_designer = PlasmaDesigner(plasma_params, reactor_config.designer_config("Plasma"))
 plasma_parameterisation = plasma_designer.execute()
 
 plasma_builder = PlasmaBuilder(
-    plasma_parameterisation.create_shape(), build_config["Plasma"]
+    plasma_parameterisation.create_shape(), reactor_config.builder_config("Plasma")
 )
 plasma = Plasma(plasma_builder.build())
 
@@ -602,7 +565,7 @@ plasma = Plasma(plasma_builder.build())
 
 # %%
 tf_coil_designer = TFCoilDesigner(
-    plasma.lcfs(), None, build_config["TF Coil"]["Designer"]
+    plasma.lcfs(), None, reactor_config.designer_config("TF Coil")
 )
 tf_parameterisation = tf_coil_designer.execute()
 
