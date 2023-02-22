@@ -476,8 +476,8 @@ def calc_metric_coefficients(mesh, psi2D: callable, x2D: callable, nx: int):
     volume = np.zeros(nx + 1)
     volume[1:] = [fs.volume for fs in flux_surfaces]
 
-    V_fun = interp1d(x1D, volume, fill_value="extrapolate")
-    gradV_x1D = nd.Gradient(V_fun)
+    volume_func = interp1d(x1D, volume, fill_value="extrapolate")
+    gradV_x1D = nd.Gradient(volume_func)
     grad_x2D = nd.Gradient(x2D)
     grad_psi = nd.Gradient(psi2D)
 
@@ -491,10 +491,6 @@ def calc_metric_coefficients(mesh, psi2D: callable, x2D: callable, nx: int):
         """GradV norm"""
         return grad_x2D_norm(x) * gradV_x1D(x2D(x))
 
-    def Bp(x):
-        """Poloidal field"""
-        return np.divide(grad_psi_norm(x), x[0]) / (2 * np.pi * x[0])
-
     for i, fs in enumerate(flux_surfaces):
         print(f"integrating over FS[{i}]")
         points = fs.coords.xz.T
@@ -502,7 +498,10 @@ def calc_metric_coefficients(mesh, psi2D: callable, x2D: callable, nx: int):
         dz = np.diff(fs.coords.z)
         dl = np.hypot(dx, dz)
         x_data = np.concatenate([np.array([0.0]), np.cumsum(dl)])
-        bp = np.array([Bp(p) for p in points])
+        # Poloidal field
+        bp = np.array([grad_psi_norm(p) for p in points]) / (
+            2 * np.pi * fs.coords.x**2
+        )
 
         grad_V_norm_2 = np.array([gradV_norm(p) ** 2 for p in points])
         y0_data = 1 / bp
