@@ -319,7 +319,15 @@ plt.show()
 gs_solver = fem_GS_fixed_boundary
 transport_solver = plasmod_solver
 
+from bluemira.equilibria.fem_fixed_boundary.equilibrium import calc_metric_coefficients
 from bluemira.geometry.coordinates import Coordinates
+
+x1Dn, Vn, g1n, g2n, g3n = calc_metric_coefficients(
+    gs_solver.mesh,
+    gs_solver.psi,
+    gs_solver.psi_norm_2d,
+    len(transport_solver.get_profile("x")),
+)
 
 x1D = np.linspace(0.1, 1, 50)
 x1D = transport_solver.get_profile("x")
@@ -510,6 +518,24 @@ x_plasmod = transport_solver.get_profile("x")
 v_plasmod = transport_solver.get_profile("V")
 g2_plasmod = transport_solver.get_profile("g2")
 g3_plasmod = transport_solver.get_profile("g3")
+
+
+f, ax = plt.subplots(1, 4)
+ax[0].plot(x1Dn, Vn, label="new")
+ax[0].plot(x1D[1:], V, label="old")
+
+ax[1].plot(x1Dn, g1n, label="new")
+ax[1].plot(x1D, g1, label="old")
+
+ax[2].plot(x1Dn, g2n, label="new")
+ax[2].plot(x1D, g2, label="old")
+
+ax[3].plot(x1Dn, g3n, label="new")
+ax[3].plot(x1D, g3, label="old")
+for a in ax:
+    a.legend()
+
+plt.show()
 
 f, ax = plt.subplots(1, 3)
 

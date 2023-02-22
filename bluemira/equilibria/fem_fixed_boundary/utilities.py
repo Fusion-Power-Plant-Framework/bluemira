@@ -233,7 +233,17 @@ def get_tricontours(
     tcg = TriContourGenerator(tri.get_cpp_triangulation(), array)
     if is_num(value):
         value = [value]
-    return [tcg.create_contour(val)[0][0] for val in value]
+
+    results = []
+    for val in value:
+        contour = tcg.create_contour(val)[0]
+        if len(contour) > 0:
+            results.append(contour[0])
+        else:
+            from bluemira.base.look_and_feel import bluemira_warn
+
+            bluemira_warn(f"No tricontour found for {val=}")
+    return results
 
 
 def find_flux_surface(psi_norm_func, psi_norm, mesh=None, n_points=100):

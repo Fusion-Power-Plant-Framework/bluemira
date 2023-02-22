@@ -23,18 +23,17 @@
 import os
 from copy import deepcopy
 from dataclasses import asdict, dataclass, fields
-from typing import Dict, List, Optional, Tuple, Union
+from typing import Dict, List, Tuple, Union
 
 import matplotlib.pyplot as plt
 import numdifftools as nd
 import numpy as np
 from dolfin import Mesh
-from matplotlib.axes._axes import Axes
 from scipy.integrate import cumulative_trapezoid, trapezoid
 from scipy.interpolate import interp1d
 from tabulate import tabulate
 
-from bluemira.base.components import Component, PhysicalComponent
+from bluemira.base.components import PhysicalComponent
 from bluemira.base.constants import MU_0
 from bluemira.base.file import get_bluemira_path, try_get_bluemira_path
 from bluemira.base.look_and_feel import bluemira_debug, bluemira_print, bluemira_warn
@@ -49,10 +48,11 @@ from bluemira.equilibria.fem_fixed_boundary.fem_magnetostatic_2D import (
 from bluemira.equilibria.fem_fixed_boundary.utilities import (
     calculate_plasma_shape_params,
 )
+from bluemira.equilibria.flux_surfaces import ClosedFluxSurface
 from bluemira.geometry.coordinates import Coordinates
 from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.parameterisations import GeometryParameterisation
-from bluemira.geometry.tools import BluemiraFace, make_polygon
+from bluemira.geometry.tools import BluemiraFace
 from bluemira.mesh import meshing
 from bluemira.mesh.tools import import_mesh, msh_to_xdmf
 from bluemira.utilities.plot_tools import make_gif, save_figure
@@ -366,7 +366,6 @@ def solve_transport_fixed_boundary(
             gs_solver.psi_norm_2d,
             mesh,
             np.sqrt(0.95),
-            plot=True,
         )
 
         iter_err = _update_delta_kappa(
@@ -412,35 +411,56 @@ def solve_transport_fixed_boundary(
     return equilibrium
 
 
-def calc_metric_coefficients(mesh, psi2D: callable, x2D: callable):
+def calc_metric_coefficients(mesh, psi2D: callable, x2D: callable, nx: int):
+    """
+    Calculate metric coefficients of a set of flux surfaces.
 
-    x1D = np.linspace(0, 1, 100)
+    Parameters
+    ----------
+    mesh:
+        Mesh on which to calculate the coefficients
+    psi2D:
+        Callable which calculates psi of the form f(p: Iterable[2]) = float
+    x2D:
+        Callable which calculates psi norm of the form f(p: Iterable[2]) = float
+    nx:
+        Number of flux surfaces (linearly spaced)
 
-    nx = x1D.size
+    Returns
+    -------
+    x1D: np.ndarray
+        1-D vector of normalised psi values at which the coefficients were calculated
+    volume: np.ndarray
+        1-D volume vector
+    g1: np.ndarray
+        1-D g1 vector
+    g2: np.ndarray
+        1-D g2 vector
+    g3: np.ndarray
+        1-D g3 vector
+    """
+    x1D = np.linspace(0, 1, nx)
 
     mesh_points = mesh.coordinates()
     x = mesh_points[:, 0]
     z = mesh_points[:, 1]
-
-    psi2D_data = np.array([psi2D(p) for p in mesh_points])
     x2D_data = np.array([x2D(p) for p in mesh_points])
 
-    ax, cntr, cntrf = utilities.plot_scalar_field(x, z, x2D_data, levels=x1D)
-    plt.title("psi_norm")
-    plt.show()
-
     index = []
-    FS = []
+    flux_surfaces = []
     for i in range(nx):
         if x1D[i] == 1:
-            path = np.transpose(file._get_mesh_boundary(mesh))
-            FS.append(path)
+            path = file._get_mesh_boundary(mesh)
+            fs = Coordinates({"x": path[0], "z": path[1]})
+            fs.close()
+            flux_surfaces.append(ClosedFluxSurface(fs))
         else:
-            path = cntr.collections[i].get_paths()
+            path = utilities.get_tricontours(x, z, x2D_data, x1D[i])
             if len(path):
-                FS.append(path[0].vertices)
+                fs = Coordinates({"x": path[0].T[0], "z": path[0].T[1]})
+                fs.close()
+                flux_surfaces.append(ClosedFluxSurface(fs))
             else:
-                print(f"Cannot calculate volume for psi_norm = {x1D[i]}")
                 index.append(i)
 
     n = len(index)
@@ -448,118 +468,52 @@ def calc_metric_coefficients(mesh, psi2D: callable, x2D: callable):
         x1D = np.delete(x1D, index[i])
     nx = x1D.size
 
-    g1 = np.zeros((nx, 1))
-    g2 = np.zeros((nx, 1))
-    g3 = np.zeros((nx, 1))
-    V = np.zeros((nx, 1))
+    # Initialise with 0 at axis
+    x1D = np.insert(x1D, 0, 0)
+    g1 = np.zeros(nx + 1)
+    g2 = np.zeros(nx + 1)
+    g3 = np.zeros(nx + 1)
+    volume = np.zeros(nx + 1)
+    volume[1:] = [fs.volume for fs in flux_surfaces]
 
-    # calculate volume
-    FS_pol = []
-    root = Component("root")
-    for i in range(nx):
-        points = Coordinates({"x": FS[i][:, 0], "z": FS[i][:, 1]})
-        pgonPol = make_polygon(points, closed=True)
-        PhysicalComponent(f"FS{i}", pgonPol, parent=root)
-        pgonFac = BluemiraFace(pgonPol)
-        V[i] = 2 * np.pi * pgonFac.center_of_mass[0] * pgonFac.area
-        FS_pol.append(pgonPol)
-
-    root.plot_2d(show=False)
-    plt.title("Flux surfaces for g2,g3 calculation")
-    plt.show()
-
-    # volume
-    V = V.reshape(-1)
-
-    V_fun = interp1d(x1D, V, fill_value="extrapolate")
-
-    # dVdx_data = np.gradient(V,x1D)
-    # dVdx = interp1d(x1D, dVdx_data, fill_value="extrapolate")
-
+    V_fun = interp1d(x1D, volume, fill_value="extrapolate")
     gradV_x1D = nd.Gradient(V_fun)
-    gradV_x1D_data = np.array([gradV_x1D(x) for x in x1D])
-
-    plt.plot(x1D, V, label="V")
-    # plt.plot(x1D, dVdx_data, 'ro')
-    plt.plot(x1D, gradV_x1D_data, "g-", label="gradV")
-    plt.xlabel("psi_norm")
-    plt.legend()
-    plt.show()
-
     grad_x2D = nd.Gradient(x2D)
-
-    def grad_x2D_norm(x):
-        return np.sqrt(np.sum(np.abs(grad_x2D(x)) ** 2))
-
-    grad_x2D_data = np.array([grad_x2D(p) for p in mesh_points])
-    grad_x2D_norm_data = np.sqrt(np.sum(np.abs(grad_x2D_data) ** 2, axis=-1))
-
-    ax, cntr, cntrf = utilities.plot_scalar_field(x, z, grad_x2D_norm_data)
-    plt.title("|grad psi_norm|")
-    plt.show()
-
     grad_psi = nd.Gradient(psi2D)
 
+    def grad_x2D_norm(x):
+        return np.hypot(*grad_x2D(x))
+
     def grad_psi_norm(x):
-        return np.sqrt(np.sum(np.abs(grad_psi(x)) ** 2))
-
-    grad_psi_norm_data = np.array([grad_psi_norm(p) for p in mesh_points])
-
-    ax, cntr, cntrf = utilities.plot_scalar_field(x, z, psi2D_data)
-    plt.title("psi")
-    plt.show()
-
-    ax, cntr, cntrf = utilities.plot_scalar_field(x, z, grad_psi_norm_data)
-    plt.title("|grad psi|")
-    plt.show()
+        return np.hypot(*grad_psi(x))
 
     def gradV_norm(x):
         """GradV norm"""
         return grad_x2D_norm(x) * gradV_x1D(x2D(x))
 
-    gradV_norm_data = np.array([gradV_norm(p) for p in mesh_points])
-
-    ax, cntr, cntrf = utilities.plot_scalar_field(x, z, gradV_norm_data)
-    plt.title("|grad V|")
-    plt.show()
-
     def Bp(x):
-        """Bp"""
+        """Poloidal field"""
         return np.divide(grad_psi_norm(x), x[0]) / (2 * np.pi * x[0])
 
-    dlp = []
-    lp = []
-    for i in range(nx):
-        dlp.append(
-            np.concatenate(
-                (np.array([0]), np.array([edge.length for edge in FS_pol[i].edges]))
-            )
-        )
-        lp.append(np.cumsum(dlp[i]))
-
-    for i in range(nx):
+    for i, fs in enumerate(flux_surfaces):
         print(f"integrating over FS[{i}]")
-        points = FS_pol[i].vertexes[[0, 2], :]
-        points = np.transpose(points)
-        points = np.concatenate((points, [points[0]]))
+        points = fs.coords.xz.T
+        dx = np.diff(fs.coords.x)
+        dz = np.diff(fs.coords.z)
+        dl = np.hypot(dx, dz)
+        x_data = np.concatenate([np.array([0.0]), np.cumsum(dl)])
+        bp = np.array([Bp(p) for p in points])
 
-        y0_data = np.array([1 / Bp(p) for p in points])
-        y1_data = np.array([gradV_norm(p) ** 2 / Bp(p) for p in points])
-        y2_data = np.array([gradV_norm(p) ** 2 / Bp(p) / p[0] ** 2 for p in points])
-        y3_data = np.array([1 / Bp(p) / p[0] ** 2 for p in points])
-        x_data = lp[i]
-        g1[i] = np.trapz(y1_data, x_data) / np.trapz(y0_data, x_data)
-        g2[i] = np.trapz(y2_data, x_data) / np.trapz(y0_data, x_data)
-        g3[i] = np.trapz(y3_data, x_data) / np.trapz(y0_data, x_data)
+        grad_V_norm_2 = np.array([gradV_norm(p) ** 2 for p in points])
+        y0_data = 1 / bp
+        y1_data = grad_V_norm_2 * y0_data
+        y3_data = 1 / (fs.coords.x**2 * bp)
+        y2_data = grad_V_norm_2 * y3_data
 
-    g1 = g1.flatten()
-    g2 = g2.flatten()
-    g3 = g3.flatten()
-
-    x1D = np.insert(x1D, 0, 0)
-    g1 = np.insert(g1, 0, 0)
-    g2 = np.insert(g2, 0, 0)
-    g3 = np.insert(g3, 0, 0)
+        denom = np.trapz(y0_data, x_data)
+        g1[i + 1] = np.trapz(y1_data, x_data) / denom
+        g2[i + 1] = np.trapz(y2_data, x_data) / denom
+        g3[i + 1] = np.trapz(y3_data, x_data) / denom
 
     g2_temp = interp1d(x1D[1:-1], g2[1:-1], fill_value="extrapolate")
     g2[-1] = g2_temp(x1D[-1])
@@ -568,7 +522,7 @@ def calc_metric_coefficients(mesh, psi2D: callable, x2D: callable):
     g3[0] = g3_temp(x1D[0])
     g3[-1] = g3_temp(x1D[-1])
 
-    return x1D, V, g1, g2, g3
+    return x1D, volume, g1, g2, g3
 
 
 def calc_curr_dens_profiles(
