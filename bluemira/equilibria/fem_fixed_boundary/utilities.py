@@ -271,7 +271,7 @@ def find_flux_surface(psi_norm_func, psi_norm, mesh=None, n_points=100):
         d_guess = np.array([abs(np.max(contour[0, :]) - x_axis) - search_range])
 
         def lower_bound(x):
-            return max(0.1, x - search_range)
+            return max(0.001, x - search_range)
 
         def upper_bound(x):
             return x + search_range

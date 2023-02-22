@@ -154,7 +154,7 @@ class ModZakharovLCFS(ZakharovLCFS):
             name = "delta"
         return super().adjust_variable(name, value, lower_bound, upper_bound)
 
-    def create_shape(self, label="LCFS", n_points=100):
+    def create_shape(self, label="LCFS", n_points=52):
         coordinates = flux_surface_zakharov(*self.variables.values[:5], n=n_points)
         return interpolate_bspline(coordinates.xyz, closed=True, label=label)
 
@@ -162,11 +162,18 @@ class ModZakharovLCFS(ZakharovLCFS):
 johner_parameterisation = ModZakharovLCFS(
     {
         "r_0": {"value": 8.9830e00},
-        "a": {"value": 3.1},
-        "kappa": {"value": 1.7},
-        "delta": {"value": 0.33},
+        "a": {"value": 0.28911660139e0001},
+        "kappa": {"value": 0.17464842648e0001},
+        "delta": {"value": 0.42406696656e0000},
     }
 )
+
+from bluemira.equilibria.flux_surfaces import ClosedFluxSurface
+
+V = ClosedFluxSurface(
+    johner_parameterisation.create_shape(n_points=1000).discretize(1000)
+).volume
+V = -2500
 
 # %% [markdown]
 # Initialise the transport solver in this case PLASMOD is used
@@ -189,7 +196,7 @@ plasmod_params = {
     },
     "I_p": {"value": 19e6, "unit": "A", "source": source},
     "B_0": {"value": 5.31, "unit": "T", "source": source},
-    "V_p": {"value": -2500, "unit": "m^3", "source": source},
+    "V_p": {"value": V, "unit": "m^3", "source": source},
     "v_burn": {"value": -1.0e6, "unit": "V", "source": source},
     "kappa_95": {"value": 1.652, "unit": "", "source": source},
     "delta_95": {"value": 0.333, "unit": "", "source": source},
@@ -315,7 +322,7 @@ transport_solver = plasmod_solver
 from bluemira.geometry.coordinates import Coordinates
 
 x1D = np.linspace(0.1, 1, 50)
-# x1D = transport_solver.get_profile("x")
+x1D = transport_solver.get_profile("x")
 
 x2D = gs_solver.psi_norm_2d
 mesh = gs_solver.mesh
@@ -381,6 +388,7 @@ plt.show()
 
 V = V.reshape(-1)
 
+
 from scipy.interpolate import interp1d
 
 V_fun = interp1d(x1D, V, fill_value="extrapolate")
@@ -393,7 +401,8 @@ import numdifftools as nd
 gradV_x1D = nd.Gradient(V_fun)
 gradV_x1D_data = np.array([gradV_x1D(x) for x in x1D])
 
-plt.plot(x1D, V, label="V")
+plt.plot(x1D, V, label="V, calculated")
+plt.plot(transport_solver.get_profile("x"), transport_solver.get_profile("V"))
 # plt.plot(x1D, dVdx_data, 'ro')
 plt.plot(x1D, gradV_x1D_data, "g-", label="gradV")
 plt.xlabel("psi_norm")
@@ -476,9 +485,10 @@ for i in range(nx):
     y2_data = np.array([gradV_norm(p) ** 2 / Bp(p) / p[0] ** 2 for p in points])
     y3_data = np.array([1 / Bp(p) / p[0] ** 2 for p in points])
     x_data = lp[i]
-    g1[i] = np.trapz(y1_data, x_data) / np.trapz(y0_data, x_data)
-    g2[i] = np.trapz(y2_data, x_data) / np.trapz(y0_data, x_data)
-    g3[i] = np.trapz(y3_data, x_data) / np.trapz(y0_data, x_data)
+    d = np.trapz(y0_data, x_data)
+    g1[i] = np.trapz(y1_data, x_data) / d
+    g2[i] = np.trapz(y2_data, x_data) / d
+    g3[i] = np.trapz(y3_data, x_data) / d
 
 g1 = g1.flatten()
 g2 = g2.flatten()
@@ -497,23 +507,32 @@ g3[0] = g3_temp(x1D[0])
 g3[-1] = g3_temp(x1D[-1])
 
 x_plasmod = transport_solver.get_profile("x")
+v_plasmod = transport_solver.get_profile("V")
 g2_plasmod = transport_solver.get_profile("g2")
 g3_plasmod = transport_solver.get_profile("g3")
 
-plt.plot(x_plasmod, g2_plasmod, "ro", label="PLASMOD")
-plt.plot(x1D, g2, "b-", label="bluemira")
-plt.grid()
-plt.title("g2")
-plt.xlabel("psi_norm")
-plt.legend()
-plt.show()
+f, ax = plt.subplots(1, 3)
 
-plt.plot(x_plasmod, g3_plasmod, "ro", label="PLASMOD")
-plt.plot(x1D, g3, "b-", label="bluemira")
-plt.grid()
-plt.title("g3")
-plt.xlabel("psi_norm")
-plt.legend()
+ax[0].plot(x1D[1:], v_plasmod[index[-1] + 1 :] - V, "b-", label="bluemira")
+ax[0].grid()
+ax[0].set_xlabel("psi_norm")
+ax[0].set_title("$V$")
+ax[0].legend()
+
+
+ax[1].plot(x_plasmod, g2_plasmod, "ro", label="PLASMOD")
+ax[1].plot(x1D, g2, "b-", label="bluemira")
+ax[1].grid()
+ax[1].set_title("g2")
+ax[1].set_xlabel("psi_norm")
+ax[1].legend()
+
+ax[2].plot(x_plasmod, g3_plasmod, "ro", label="PLASMOD")
+ax[2].plot(x1D, g3, "b-", label="bluemira")
+ax[2].grid()
+ax[2].set_title("g3")
+ax[2].set_xlabel("psi_norm")
+ax[2].legend()
 plt.show()
 
 # second step: calculate H

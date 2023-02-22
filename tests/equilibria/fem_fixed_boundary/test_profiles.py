@@ -218,9 +218,14 @@ class TestPLASMODRegressionRaw:
     def test_volume(self):
         volume = [fs.volume for fs in self.flux_surfaces]
         f, ax = plt.subplots()
-        ax.plot(self.rho, volume, marker="o", label="$V$ calculated")
-        ax.plot(self.rho, self.volprof, marker="^", label="$V$ PLASMOD")
-        ax.set_xlabel("[$m^3$]")
+        ax.plot(
+            self.rho,
+            volume - self.volprof,
+            marker="o",
+            label="$V_{Zakharov}$ - $V_{PLASMOD}$",
+        )
+        # ax.plot(self.rho, self.volprof, marker="^", label="$V$ PLASMOD")
+        ax.set_ylabel("[$m^3$]")
         ax.set_xlabel("$\\rho$")
         ax.legend()
         plt.show()

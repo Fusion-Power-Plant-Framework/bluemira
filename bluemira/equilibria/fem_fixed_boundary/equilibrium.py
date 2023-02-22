@@ -366,6 +366,7 @@ def solve_transport_fixed_boundary(
             gs_solver.psi_norm_2d,
             mesh,
             np.sqrt(0.95),
+            plot=True,
         )
 
         iter_err = _update_delta_kappa(
