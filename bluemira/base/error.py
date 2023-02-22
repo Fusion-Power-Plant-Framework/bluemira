@@ -83,5 +83,7 @@ class ReactorError(BluemiraError):
 
 
 class ReactorConfigError(BluemiraError):
-    """Exceptions related to
-    :class:`bluemira.base.reactor_config.ReactorConfig` objects."""
+    """
+    Exceptions related to
+    :class:`bluemira.base.reactor_config.ReactorConfig` objects.
+    """
