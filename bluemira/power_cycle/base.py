@@ -210,7 +210,7 @@ class NetPowerABC(PowerCycleABC, metaclass=ABCMeta):
             raise NetPowerABCError("refine_vector")
 
         number_of_curve_segments = len(vector) - 1
-        if n_points == 0:
+        if (n_points is None) or (n_points == 0):
             refined_vector = vector
         else:
             refined_vector = []
