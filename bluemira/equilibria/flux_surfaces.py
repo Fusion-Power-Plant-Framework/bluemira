@@ -37,8 +37,12 @@ if TYPE_CHECKING:
 import matplotlib.pyplot as plt
 import numba as nb
 import numpy as np
+import pointpats
 from scipy.integrate import solve_ivp
+from scipy.special import lpmv
+from shapely.geometry import Polygon
 
+from bluemira.base.constants import MU_0
 from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.equilibria.constants import PSI_NORM_TOL
 from bluemira.equilibria.error import EquilibriaError, FluxSurfaceError
@@ -913,3 +917,251 @@ def poloidal_angle(Bp_strike: float, Bt_strike: float, gamma: float) -> float:
     sin_theta = num / Bp_strike
 
     return np.rad2deg(np.arcsin(sin_theta))
+
+
+def coil_harmonic_amplitudes(x_f, z_f, i_f, max_degree, r_t):
+    """
+    Returns spherical harmonics coefficients/amplitudes (A_l) to be used
+    in a spherical harmonic approximation of the vacuum/coil contribution
+    to the poilodal flux (psi). Vacuum Psi = Total Psi - Plasma Psi.
+    These coefficients can be used as contraints in optimisation.
+
+    For a single filiment (coil):
+
+        A_l =  1/2 * mu_0 * I_f * sin(theta_f) * (r_t/r_f)**l *
+                    ( P_l * cos(theta_f) / sqrt(l*(l+1)) )
+
+    Where l = degree, and P_l * cos(theta_f) are the associated
+    Legendre polynomials of degree l and order (m) = 1.
+
+    Parmeters
+    ----------
+    x_f: np.array
+        X coordinates of filaments (coils)
+    z_f: np.array
+        Z coordinates of filaments (coils)
+    i_f: np.array
+        Currents of filaments (coils)
+    max_degree: integer
+        Maximum degree of harmonic to calculate up to
+    r_t: float
+        Typical length scale (e.g. radius at outer midplane)
+
+    Returns
+    -------
+    amplitudes: np.array
+        Array of spherical harmonic amplitudes from given coil potitions and currents
+     max_valid_r: float
+        Maximum spherical radius for which the spherical harmonics apply
+    """
+    # SH coeffcients from fuction of the current distribution outside of the sphere
+    # containing the plamsa, i.e., LCFS (r_lcfs)
+    # SH coeffs = currents2harmonics @ coil currents
+    # N.B., max_valid_r >= r_lcfs,
+    # i.e., cannot use coil located within r_lcfs as part of this method.
+    currents2harmonics, max_valid_r = coil_harmonic_amplitude_matrix(
+        x_f, z_f, max_degree, r_t
+    )
+
+    return currents2harmonics @ i_f, max_valid_r
+
+
+def coil_harmonic_amplitude_matrix(x_f, z_f, max_degree, r_t):
+    """
+    Construct matrix from harmonic amplitudes at given coil locations.
+
+    Parmeters
+    ----------
+    x_f: np.array
+        X coordinates of filaments (coils)
+    z_f: np.array
+        Z coordinates of filaments (coils)
+    max_degree: integer
+        Maximum degree of harmonic to calculate up to
+    r_t: float
+        Typical length scale (e.g. radius at outer midplane)
+
+    Returns
+    -------
+    currents2harmonics: np.array
+        Matrix of harmonic amplitudes (to get spherical harmonic coefficents
+        -> matrix @ vector of coil currents, see coil_harmonic_amplitudes)
+     max_valid_r: float
+        Maximum spherical radius for which the spherical harmonic
+        approximation is valid
+    """
+    # Spherical coords
+    r_f = np.sqrt(x_f**2 + z_f**2)
+    theta_f = np.arctan2(x_f, z_f)
+    # Maxmimum r value for the sphere whithin which harmonics apply
+    max_valid_r = np.amin(r_f)
+
+    # [number of degrees, number of coils]
+    currents2harmonics = np.zeros([max_degree, np.size(r_f)])
+    # First 'harmonic' is constant (this line avoids Nan isuues)
+    currents2harmonics[0, :] = 1  #
+
+    # SH coeffcients from fuction of the current distribution
+    # outside of the sphere coitaining the LCFS
+    # SH coeffs = currents2harmonics @ coil currents
+    for degree in np.arange(1, max_degree):
+        currents2harmonics[degree, :] = (
+            0.5
+            * MU_0
+            * (r_t / r_f) ** degree
+            * np.sin(theta_f)
+            * lpmv(1, degree, np.cos(theta_f))
+            / np.sqrt(degree * (degree + 1))
+        )
+
+    return currents2harmonics, max_valid_r
+
+
+def harmonic_amplitude_marix(
+    collocation_r, collocation_theta, n_collocation, max_degree, r_t
+):
+    """
+    Construct matrix from harmonic amplitudes at given points (in spherical coords).
+
+    The matrix is used in a spherical harmonic approximation of the vacuum/coil
+    contribution to the poilodal flux (psi):
+
+        psi = SUM(
+            A_l * ( r**(l+1) / r_t**l ) * sin (theta) *
+            ( P_l * cos(theta_f) / sqrt(l*(l+1)) )
+        )
+
+    Where l = degree, A_l are the spherical harmonic coeffcients/ampletudes,
+    and is P_l * cos(theta_f) are the associated Legendre polynomials of
+    degree l and order (m) = 1.
+
+    N.B. Vacuum Psi = Total Psi - Plasma Psi.
+
+    Parameters
+    ----------
+    collocation_r: np.array
+        R values of collocation points
+    collocation_theta: np.array
+        Theta values of collocation points
+    n_collocation: integer
+        Number of collocation points
+    max_degree: integer
+        Maximum degree of harmonic to calculate up to
+    r_t: float
+        Typical length scale (e.g. radius at outer midplane)
+
+    Returns
+    -------
+    harmonics2collocation: np.array
+        Matrix of harmonic amplitudes (to get spherical harmonic coefficents
+        use matrix @ coefficents = vector psi_vacuum at colocation points)
+    """
+    # [number of points, number of degrees]
+    harmonics2collocation = np.zeros([n_collocation, max_degree])
+    # First 'harmonic' is constant (this line avoids Nan isuues)
+    harmonics2collocation[:, 0] = 1
+
+    # SH coeffcient matrix
+    # SH coeffs = harmonics2collocation \ vector psi_vacuum at colocation points
+    for degree in np.arange(1, max_degree):
+        harmonics2collocation[:, degree] = (
+            collocation_r ** (degree + 1)
+            * np.sin(collocation_theta)
+            * lpmv(1, degree, np.cos(collocation_theta))
+            / ((r_t**degree) * np.sqrt(degree * (degree + 1)))
+        )
+
+    return harmonics2collocation
+
+
+def collocation_points(n_points, x_bdry, z_bdry, point_type):
+    """
+    Create a set of collocation points for use wih spherical harmonic
+    approximations. Points are found within the user-supplied
+    boundary and should correspond to the LCFS of a chosen equilibrium.
+    Curent functionality is for:
+        - equispaced points on an arc of fixed radius,
+        - extrema,
+        - equispaced points on an arc of fixed radius plus extrema,
+
+    Parameters
+    ----------
+    n_points: integer
+        Number of points/targets (not including extrema - these are added
+        automatically if relevent).
+    x_bdry: np.array
+        X location of plamsa bounday
+    z_bdry: np.array
+        Z locations of plamsa boundary
+    point_type: string
+        Method for creating a set of points: 'arc', 'arc_plus_extrema' or 'random'
+
+    Returns
+    -------
+    collocation_r: np.array
+        R values of collocation points
+    collocation_theta: np.array
+        Theta values of collocation points
+    n_collocation: integer
+        Number of collocation points
+    """
+    if point_type == "arc" or point_type == "arc_plus_extrema":
+
+        # Hello spherical coordinates
+        r_bdry = np.sqrt(x_bdry**2 + z_bdry**2)
+        theta_bdry = np.arctan2(x_bdry, z_bdry)
+
+        # Equispaced arc
+        collocation_theta = np.linspace(
+            np.amin(theta_bdry), np.amax(theta_bdry), n_points + 2
+        )
+        collocation_theta = collocation_theta[1:-1]
+        collocation_r = 0.9 * np.amax(x_bdry) * np.ones(n_points)
+
+        # Hasta luego spherical coordinates
+        collocation_x = collocation_r * np.sin(collocation_theta)
+        collocation_z = collocation_r * np.cos(collocation_theta)
+
+    if point_type == "arc_plus_extrema":
+
+        # Extrema
+        d = 0.1
+        extrema_x = np.array(
+            [
+                np.amin(x_bdry) + d,
+                np.amax(x_bdry) - d,
+                x_bdry[np.argmax(z_bdry)],
+                x_bdry[np.argmin(z_bdry)],
+            ]
+        )
+        extrema_z = np.array(
+            [
+                0,
+                0,
+                np.amax(z_bdry) - d,
+                np.amin(z_bdry) + d,
+            ]
+        )
+
+        # Equispaced arc + extrema
+        collocation_x = np.concatenate([collocation_x, extrema_x])
+        collocation_z = np.concatenate([collocation_z, extrema_z])
+
+    if point_type == "random":
+
+        # Create a polygon from the boundary points
+        coords_zip = zip(list(x_bdry), list(z_bdry))
+        coords = list(coords_zip)
+        poly = Polygon(coords)
+
+        # Randomly select points from within the polygon
+        poly_points = pointpats.random.poisson(poly, size=n_points)
+        collocation_x = poly_points[:, 0]
+        collocation_z = poly_points[:, 1]
+
+    # Hello again spherical coordinates
+    n_collocation = np.size(collocation_x)
+    collocation_r = np.sqrt(collocation_x**2 + collocation_z**2)
+    collocation_theta = np.arctan2(collocation_x, collocation_z)
+
+    return collocation_r, collocation_theta, collocation_x, collocation_z, n_collocation
