@@ -214,8 +214,8 @@ class TestComponentClass:
                     assert c.name in comp_children_names
 
             # test properties
-            if type(comp) is PhysicalComponent:
-                assert type(cpy) is PhysicalComponent
+            if isinstance(comp, PhysicalComponent):
+                assert isinstance(cpy, PhysicalComponent)
                 # assert they are the same instance
                 assert cpy.shape is comp.shape
                 assert cpy.material is comp.material
