@@ -108,7 +108,7 @@ class Designer(abc.ABC, Generic[_DesignerReturnT]):
 
 def run_designer(
     designer_cls: Type[Designer[_DesignerReturnT]],
-    params: ParameterFrame,
+    params: Union[ParameterFrame, Dict],
     build_config: Dict,
     **kwargs,
 ) -> _DesignerReturnT:

@@ -505,6 +505,7 @@ build_config = {
         },
     },
     "TF Coil": {
+        "params": {},
         "Designer": {
             "runmode": "run",
             "param_class": "PrincetonD",
@@ -533,12 +534,47 @@ build_config = {
 }
 
 
+class BuildConfig:
+    def __init__(self, file_path: str):
+        self.config_data = json.load(file_path)
+        global_params = config_data["params"]
+        super().__init__(global_params)
+
+        for attribute, attr_type in self.__annotations__.items():
+            if attr_type is not dict:
+                continue
+            getattr(self, attribute)["params"] = self._merge_parameter_dicts()
+
+    def get_params(self, param_name: str) -> Dict:
+        local_params = self.config_data["plasma"].get("params", {})
+        return
+
+    def get_designer_params(self) -> Dict[str, ParamT]:
+        pass
+
+    def get_builder_params(self) -> Dict[str, ParamT]:
+        pass
+
+    def _merge_parameter_dicts(self, param_dicts: Iterable[Dict]) -> Dict:
+        local_params = getattr(self, param_name)
+        # validating local_params and global do not share any parameters
+        # print a warning
+        merged = {**local_params, **self.global_params}
+        return merged
+
+
 # %% [markdown]
 #
 # Now we set up our ParameterFrames
 
 # %%
 # TODO improve build config manipulation
+build_config = ReactorConfig("config_file.json")
+
+plasma_params = PlasmaDesignerParams.from_dict(
+    build_config.get_params("Plasma", "designer")
+)
+
 plasma_params = PlasmaDesignerParams.from_dict(
     {**build_config["params"], **build_config["Plasma"]["Designer"].pop("params")}
 )
