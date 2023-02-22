@@ -318,9 +318,10 @@ class Component(NodeMixin, Plottable, DisplayableCAD):
             This component.
         """
         # rv
-        if not isinstance(children, list) or len(children) == 0:
-            child = children[0] if isinstance(children, list) else children
-            return self.add_child(child)
+        if isinstance(children, Component):
+            return self.add_child(children)
+        if not isinstance(children, List[Component]):
+            raise Exception("children must a list of Components")
 
         duplicates = []
         child: Component
