@@ -529,8 +529,8 @@ pprime_plasmod = transport_solver.get_profile("pprime")
 B_0 = plasmod_params["B_0"]["value"]
 R_0 = plasmod_params["R_0"]["value"]
 I_p = plasmod_params["I_p"]["value"]
-psi_ax = psi_plasmod[0]
-psi_b = psi_plasmod[-1]
+psi_ax = psi_plasmod[-1]
+psi_b = psi_plasmod[0]
 Ip, Phi1D, Psi1D, pprime_psi1D_data, F, FFprime = calc_curr_dens_profiles(
     x_plasmod,
     p_plasmod,
