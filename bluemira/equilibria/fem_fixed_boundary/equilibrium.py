@@ -526,7 +526,6 @@ def calc_metric_coefficients(mesh, psi2D: callable, x2D: callable, nx: int):
 
 def calc_curr_dens_profiles(
     x1D: np.ndarray,
-    x2D: np.ndarray,
     p: np.ndarray,
     q: np.ndarray,
     g2: np.ndarray,
@@ -535,20 +534,14 @@ def calc_curr_dens_profiles(
     Ip: float,
     B_0: float,
     R_0: float,
-    Psi_ax: float,
-    Psi_b: float,
+    psi_ax: float,
+    psi_b: float,
 ):
     """Calculate pprime and ffprime from metric coefficients"""
-    Psi1D = Psi_ax - x1D**2 * (Psi_ax - Psi_b)
+    Psi1D = psi_ax - x1D**2 * (psi_ax - psi_b)
 
     F_b = B_0 * R_0
 
-    g2_fun = interp1d(x1D, g2, fill_value="extrapolate")
-    g3_fun = interp1d(x1D, g3, fill_value="extrapolate")
-    grad_g2_fun = nd.Gradient(g2_fun)
-    grad_g3_fun = nd.Gradient(g3_fun)
-    grad_g2_data = np.array([grad_g2_fun(xi) for xi in x1D])
-    grad_g3_data = np.array([grad_g3_fun(xi) for xi in x1D])
     q_fun = interp1d(x1D, q, fill_value="extrapolate")
     p_fun = interp1d(x1D, p, fill_value="extrapolate")
     grad_q_fun = nd.Gradient(q_fun)
@@ -556,26 +549,41 @@ def calc_curr_dens_profiles(
     grad_q_data = np.array([grad_q_fun(xi) for xi in x1D])
     grad_p_data = np.array([grad_p_fun(xi) for xi in x1D])
 
-    for i in range(100):
+    g2_fun = interp1d(x1D, g2, fill_value="extrapolate")
+    g3_fun = interp1d(x1D, g3, fill_value="extrapolate")
+    grad_g2_fun = nd.Gradient(g2_fun)
+    grad_g3_fun = nd.Gradient(g3_fun)
+    grad_g2_data = np.array([grad_g2_fun(xi) for xi in x1D])
+    grad_g3_data = np.array([grad_g3_fun(xi) for xi in x1D])
+
+    for i in range(1):
         # calculate pprime profile from p
-        p_fun_psi1D = interp1d(Psi1D, p, fill_value="extrapolate")
+        # p_fun_psi1D = interp1d(Psi1D, p, fill_value="extrapolate")
         pprime_psi1D = nd.Gradient(p_fun)
         pprime_psi1D_data = np.array([pprime_psi1D(xi) for xi in x1D])
         a = g2 / 2.0 + 8 * np.pi**4 * q**2 / g3
-        temp = nd.Gradient(interp1d(x1D, q**2 / g3**2))
+        # temp = nd.Gradient(interp1d(x1D, q**2 / g3**2))
+        temp = nd.Gradient(interp1d(x1D, q**2 / g3**2, fill_value="extrapolate"))
         temp_data = np.array([temp(xi) for xi in x1D])
         A = (grad_g2_data + 8 * np.pi**4 * g3 * temp_data) / a
         P = -4 * np.pi**2 * MU_0 * grad_p_data / a
+
         y_b = (F_b * g3[-1]) / (q[-1] * 2 * np.pi) ** 2
-        fA = np.exp(-cumulative_trapezoid(A, x1D) - trapezoid(A, x1D))
-        fP = np.exp(cumulative_trapezoid(A, x1D) - trapezoid(A, x1D)) * P
-        fC = cumulative_trapezoid(fP, x1D) - trapezoid(fP, x1D)
+        ct_Ax = cumulative_trapezoid(A, x1D, initial=0)
+        t_Ax = trapezoid(A, x1D)
+        fA = np.exp(-ct_Ax - t_Ax)
+        fP = np.exp(ct_Ax - t_Ax) * P
+        fC = cumulative_trapezoid(fP, x1D, initial=0) - trapezoid(fP, x1D)
         y = fA * (y_b + fC)
+
         dPhidV_data = q * np.sqrt(y)
-        dPsidV_data = -dPsidV_data / q
-        temp = nd.Gradient(interp1d(V, g2 * dPsidV_data))
+        # dPsidV_data = -dPsidV_data / q
+        dPsidV_data = -dPhidV_data / q
+        # temp = nd.Gradient(interp1d(V, g2 * dPsidV_data))
+        temp = nd.Gradient(interp1d(V, g2 * dPsidV_data, fill_value="extrapolate"))
         temp_data = np.array([temp(xi) for xi in x1D])
-        FFprime = -1 / (4 * np.pi**2 * g3) * temp_data - MU_0 / g3 * pprime_psi1D
+        # FFprime = -1 / (4 * np.pi**2 * g3) * temp_data - MU_0 / g3 * pprime_psi1D
+        FFprime = -1 / (4 * np.pi**2 * g3) * temp_data - MU_0 / g3 * pprime_psi1D_data
 
         # calcualte toroidal flux profile
         Phi1D = -cumulative_trapezoid(q, Psi1D)
