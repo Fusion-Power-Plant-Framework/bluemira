@@ -240,9 +240,8 @@ def get_tricontours(
         if len(contour) > 0:
             results.append(contour[0])
         else:
-            from bluemira.base.look_and_feel import bluemira_warn
-
             bluemira_warn(f"No tricontour found for {val=}")
+            results.append(None)
     return results
 
 

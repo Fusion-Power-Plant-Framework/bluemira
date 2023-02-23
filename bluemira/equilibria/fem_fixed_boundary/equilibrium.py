@@ -455,9 +455,9 @@ def calc_metric_coefficients(mesh, psi2D: callable, x2D: callable, nx: int):
             fs.close()
             flux_surfaces.append(ClosedFluxSurface(fs))
         else:
-            path = utilities.get_tricontours(x, z, x2D_data, x1D[i])
-            if len(path):
-                fs = Coordinates({"x": path[0].T[0], "z": path[0].T[1]})
+            path = utilities.get_tricontours(x, z, x2D_data, x1D[i])[0]
+            if path is not None:
+                fs = Coordinates({"x": path.T[0], "z": path.T[1]})
                 fs.close()
                 flux_surfaces.append(ClosedFluxSurface(fs))
             else:
