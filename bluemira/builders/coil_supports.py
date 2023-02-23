@@ -454,19 +454,7 @@ class PFCoilSupportBuilder(Builder):
         )[0]
         return intersection_wire
 
-    def build_xyz(
-        self,
-    ) -> PhysicalComponent:
-        """
-        Build the x-y-z components of the PF coil support.
-        """
-        shape_list = []
-        # First build the support block around the PF coil
-        support_face = self._build_support_xs()
-        width = self.params.tf_wp_depth + 2 * self.params.tk_tf_side
-        support_block = extrude_shape(support_face, vec=(0, width, 0))
-        shape_list.append(support_block)
-
+    def _make_rib_profile(self, support_face):
         # Then, project sideways to find the minimum distance from a support point
         # to the TF coil
         v1, v2, v3, v4, angle = self._get_support_point_angle(support_face)
@@ -493,11 +481,12 @@ class PFCoilSupportBuilder(Builder):
             },
             closed=False,
         )
+        return BluemiraFace(BluemiraWire([intersection_wire, closing_wire]))
 
-        # Make the rib x-z profile
-        xz_profile = BluemiraFace(BluemiraWire([intersection_wire, closing_wire]))
-
+    def _make_ribs(self, width, support_face):
+        xz_profile = self._make_rib_profile(support_face)
         # Calculate the rib gap width and make the ribs
+        rib_list = []
         total_rib_tk = self.params.pf_s_n_plate * self.params.pf_s_tk_plate
         if total_rib_tk >= width:
             bluemira_warn(
@@ -505,15 +494,32 @@ class PFCoilSupportBuilder(Builder):
             )
             gap_size = 0
             rib_block = extrude_shape(xz_profile, vec=(0, width, 0))
-            shape_list.append(rib_block)
+            rib_list.append(rib_block)
         else:
             gap_size = (width - total_rib_tk) / (self.params.pf_s_n_plate - 1)
             rib = extrude_shape(xz_profile, vec=(0, self.params.pf_s_tk_plate, 0))
-            shape_list.append(rib)
+            rib_list.append(rib)
             for _ in range(self.params.pf_s_n_plate - 1):
                 rib = rib.deepcopy()
                 rib.translate(vector=(0, self.params.pf_s_tk_plate + gap_size, 0))
-                shape_list.append(rib)
+                rib_list.append(rib)
+        return rib_list
+
+    def build_xyz(
+        self,
+    ) -> PhysicalComponent:
+        """
+        Build the x-y-z components of the PF coil support.
+        """
+        shape_list = []
+        # First build the support block around the PF coil
+        support_face = self._build_support_xs()
+        width = self.params.tf_wp_depth + 2 * self.params.tk_tf_side
+        support_block = extrude_shape(support_face, vec=(0, width, 0))
+        shape_list.append(support_block)
+
+        # Make the rib x-z profile and ribs
+        shape_list.extend(self._make_ribs(width, support_face))
 
         shape = boolean_fuse(shape_list)
         shape.translate(vector=(0, -0.5 * width, 0))
