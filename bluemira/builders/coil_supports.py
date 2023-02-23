@@ -157,24 +157,10 @@ class ITERGravitySupportBuilder(Builder):
 
         return sorted(cut_result, key=lambda wire: wire.length)[0]
 
-    def build_xyz(
-        self,
-    ) -> PhysicalComponent:
+    def _make_connection_block(self, width, v1, v4, intersection_wire):
         """
-        Build the x-y-z component of the ITER-like gravity support.
+        Make the connection block of the gravity support with the TF coil
         """
-        shape_list = []
-        # First, project upwards at the radius of the GS into the keep-out-zone
-        # and get a x-z face of the boolean difference.
-
-        # Get the square width
-        width = self.params.tf_wp_depth.value + 2 * self.params.tk_tf_side.value
-        intersection_wire = self._get_intersection_wire(width)
-        v1 = intersection_wire.start_point()
-        v4 = intersection_wire.end_point()
-        if v1.x > v4.x:
-            v1, v4 = v4, v1
-
         z_block_lower = min(v1.z[0], v4.z[0]) - 5 * self.params.tf_gs_tk_plate.value
         v2 = Coordinates(np.array([v1.x[0], 0, z_block_lower]))
         v3 = Coordinates(np.array([v4.x[0], 0, z_block_lower]))
@@ -185,13 +171,13 @@ class ITERGravitySupportBuilder(Builder):
 
         # Then extrude that face in both directions to get the connection block
         face.translate(vector=(0, -0.5 * width, 0))
-        block = extrude_shape(face, vec=(0, width, 0))
-        shape_list.append(block)
+        return extrude_shape(face, vec=(0, width, 0))
 
-        # Next, make the plates in a linear pattern, in y-z, along x
-
-        v1x = float(v1.x)
-        v4x = float(v4.x)
+    def _make_plates(self, width, v1x, v4x, z_block_lower):
+        """
+        Make the gravity support vertical plates
+        """
+        plate_list = []
         yz_profile = Coordinates(
             {
                 "x": 4 * [v1x],
@@ -211,7 +197,7 @@ class ITERGravitySupportBuilder(Builder):
         )
         yz_profile = make_polygon(yz_profile, closed=True)
 
-        plating_width = v4.x - v1.x
+        plating_width = v4x - v1x
         plate_and_gap = (
             self.params.tf_gs_g_plate.value + self.params.tf_gs_tk_plate.value
         )
@@ -226,7 +212,7 @@ class ITERGravitySupportBuilder(Builder):
         plate = extrude_shape(
             BluemiraFace(yz_profile), vec=(self.params.tf_gs_tk_plate.value, 0, 0)
         )
-        shape_list.append(plate)
+        plate_list.append(plate)
         for _ in range(int(n_plates) - 1):
             plate = plate.deepcopy()
             plate.translate(
@@ -236,9 +222,10 @@ class ITERGravitySupportBuilder(Builder):
                     0,
                 )
             )
-            shape_list.append(plate)
+            plate_list.append(plate)
+        return plate_list
 
-        # Finally, make the floor block
+    def _make_floor_block(self, v1x, v4x):
         xz_profile = Coordinates(
             {
                 "x": [v1x, v1x, v4x, v4x],
@@ -252,10 +239,40 @@ class ITERGravitySupportBuilder(Builder):
             },
         )
         xz_profile = BluemiraFace(make_polygon(xz_profile, closed=True))
-        floor_block = extrude_shape(
+        return extrude_shape(
             xz_profile, vec=(0, 0, -5 * self.params.tf_gs_tk_plate.value)
         )
-        shape_list.append(floor_block)
+
+    def build_xyz(
+        self,
+    ) -> PhysicalComponent:
+        """
+        Build the x-y-z component of the ITER-like gravity support.
+        """
+        shape_list = []
+        # First, project upwards at the radius of the GS into the keep-out-zone
+        # and get a x-z face of the boolean difference.
+
+        # Get the square width
+        width = self.params.tf_wp_depth.value + 2 * self.params.tk_tf_side.value
+
+        intersection_wire = self._get_intersection_wire(width)
+        v1 = intersection_wire.start_point()
+        v4 = intersection_wire.end_point()
+        if v1.x > v4.x:
+            v1, v4 = v4, v1
+
+        connection_block = self._make_connection_block(width, v1, v4, intersection_wire)
+        shape_list.append(connection_block)
+
+        # Next, make the plates in a linear pattern, in y-z, along x
+        z_block_lower = connection_block.bounding_box.z_min
+        shape_list.extend(
+            self._make_plates(width, float(v1.x), float(v4.x), z_block_lower)
+        )
+
+        # Finally, make the floor block
+        shape_list.append(self._make_floor_block(float(v1.x), float(v4.x)))
         shape = boolean_fuse(shape_list)
         component = PhysicalComponent("ITER-like gravity support", shape)
         component.display_cad_options.color = BLUE_PALETTE["TF"][2]
