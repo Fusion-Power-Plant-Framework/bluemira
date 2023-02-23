@@ -561,12 +561,13 @@ def calc_curr_dens_profiles(
         # p_fun_psi1D = interp1d(Psi1D, p, fill_value="extrapolate")
         pprime_psi1D = nd.Gradient(p_fun)
         pprime_psi1D_data = np.array([pprime_psi1D(xi) for xi in x1D])
-        a = g2 / 2.0 + 8 * np.pi**4 * q**2 / g3
+        denom = g2 / 2.0 + 8 * np.pi**4 * q**2 / g3
         # temp = nd.Gradient(interp1d(x1D, q**2 / g3**2))
         temp = nd.Gradient(interp1d(x1D, q**2 / g3**2, fill_value="extrapolate"))
         temp_data = np.array([temp(xi) for xi in x1D])
-        A = (grad_g2_data + 8 * np.pi**4 * g3 * temp_data) / a
-        P = -4 * np.pi**2 * MU_0 * grad_p_data / a
+        A = (grad_g2_data + 8 * np.pi**4 * g3 * temp_data) / denom
+        A = (grad_g2_data + 8 * np.pi**4 * temp_data) / denom
+        P = -4 * np.pi**2 * MU_0 * grad_p_data / denom
 
         y_b = (F_b * g3[-1]) / (q[-1] * 2 * np.pi) ** 2
         ct_Ax = cumulative_trapezoid(A, x1D, initial=0)
