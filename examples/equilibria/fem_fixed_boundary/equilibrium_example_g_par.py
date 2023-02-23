@@ -254,8 +254,8 @@ plasmod_solver = transport_code_solver(
 fem_GS_fixed_boundary = FemGradShafranovFixedBoundary(
     p_order=2,
     max_iter=30,
-    iter_err_max=1e-4,
-    relaxation=0.05,
+    iter_err_max=1e-6,
+    relaxation=0.0,
 )
 
 # %% [markdown]
