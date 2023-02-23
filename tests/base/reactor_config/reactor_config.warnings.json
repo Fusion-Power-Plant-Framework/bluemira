@@ -1,0 +1,46 @@
+{
+  "params": {
+    "a": 10
+  },
+  "comp A": {
+    "params": {
+      "a": 5
+    },
+    "designer": {
+      "params": { "a": 1 }
+    }
+  },
+  "comp B": {
+    "designer": {
+      "params": { "a": 1 }
+    }
+  },
+  "comp C": {
+    "params": {
+      "a": 5
+    },
+    "designer": {
+      "params": {}
+    }
+  },
+  "comp D": {
+    "params": {
+      "b": 5
+    },
+    "designer": {
+      "params": {
+        "b": 1
+      }
+    }
+  },
+  "comp E": {
+    "params": {
+      "b": 5
+    },
+    "designer": {
+      "params": {
+        "c": 1
+      }
+    }
+  }
+}

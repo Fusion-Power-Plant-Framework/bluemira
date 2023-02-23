@@ -2,6 +2,7 @@
 
 
 import json
+import pprint
 from typing import Union
 
 from bluemira.base.error import ReactorConfigError
@@ -26,6 +27,15 @@ class ReactorConfig:
         else:
             raise ReactorConfigError("Invalid config_path")
 
+    def __str__(self) -> str:
+        """Returns config_data as a nicely formatted string"""
+        return pprint.pformat(
+            self.config_data,
+            sort_dicts=False,
+            indent=1,
+            width=10,
+        )
+
     @property
     def global_params(self) -> dict:
         """
@@ -48,22 +58,44 @@ class ReactorConfig:
         keyset_local_sub = set(local_sub.keys())
 
         # warnings for duplicate keys
-        for shared_key in keyset_local_sub.intersection(keyset_local_params):
-            bluemira_warn(
-                f"{shared_key} is defined in the {sub_name} '{_PARAMETERS_KEY}' as well as in {component_name}'s '{_PARAMETERS_KEY}'"
-            )
+
         for shared_key in keyset_local_sub.intersection(keyset_global_params):
             bluemira_warn(
-                f"{shared_key} is defined in the {component_name}'s {sub_name} '{_PARAMETERS_KEY}' as well as global '{_PARAMETERS_KEY}'"
+                f"'{shared_key}' is defined in the global {_PARAMETERS_KEY} as well as in {component_name}'s {sub_name} {_PARAMETERS_KEY}"
             )
         for shared_key in keyset_local_params.intersection(keyset_global_params):
             bluemira_warn(
-                f"{shared_key} is defined in the {component_name}'s '{_PARAMETERS_KEY}' as well as global '{_PARAMETERS_KEY}'"
+                f"'{shared_key}' is defined in the global {_PARAMETERS_KEY} as well as in {component_name}'s {_PARAMETERS_KEY}"
+            )
+        for shared_key in keyset_local_sub.intersection(keyset_local_params):
+            bluemira_warn(
+                f"'{shared_key}' is defined in {component_name}'s {_PARAMETERS_KEY} as well as in {component_name}'s {sub_name} {_PARAMETERS_KEY}"
+            )
+
+    def _check_component_in_config(self, component_name: str):
+        if component_name not in self.config_data:
+            raise ReactorConfigError(
+                f"'{component_name}' not present in the config",
+            )
+
+    def _check_sub_in_component(self, component_name: str, sub_name: str):
+        if sub_name not in self.config_data[component_name]:
+            raise ReactorConfigError(
+                f"'{sub_name}' not present in {component_name}",
             )
 
     def _get_params(self, component_name: str, sub_name: str) -> dict:
+        self._check_component_in_config(component_name)
+        self._check_sub_in_component(component_name, sub_name)
+
         global_params = self.global_params
         local_params = self.config_data[component_name].get(_PARAMETERS_KEY, {})
+
+        sub_data = self.config_data[component_name][sub_name]
+        if _PARAMETERS_KEY not in sub_data:
+            raise ReactorConfigError(
+                f"'{_PARAMETERS_KEY}' must present in {component_name}.{sub_name}. It can be empty",
+            )
         local_sub_params = self.config_data[component_name][sub_name][_PARAMETERS_KEY]
 
         self._warn_on_duplicate_keys(
@@ -82,8 +114,12 @@ class ReactorConfig:
         }
 
     def _get_config(self, component_name: str, sub_name: str) -> dict:
+        self._check_component_in_config(component_name)
+        self._check_sub_in_component(component_name, sub_name)
+
         global_params = self.global_params
         local_params = self.config_data[component_name].get(_PARAMETERS_KEY, {})
+
         local_sub_config: dict = self.config_data[component_name][sub_name].copy()
         local_sub_config.pop(_PARAMETERS_KEY, {})
 
@@ -127,5 +163,5 @@ class ReactorConfig:
         """TODO"""
         return self._get_config(
             component_name=component_name,
-            sub_name="designer",
+            sub_name="builder",
         )
