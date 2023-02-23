@@ -561,12 +561,13 @@ def calc_curr_dens_profiles(
         # p_fun_psi1D = interp1d(Psi1D, p, fill_value="extrapolate")
         pprime_psi1D = nd.Gradient(p_fun)
         pprime_psi1D_data = np.array([pprime_psi1D(xi) for xi in x1D])
-        denom = g2 / 2.0 + 8 * np.pi**4 * q**2 / g3
+
         # temp = nd.Gradient(interp1d(x1D, q**2 / g3**2))
         temp = nd.Gradient(interp1d(x1D, q**2 / g3**2, fill_value="extrapolate"))
         temp_data = np.array([temp(xi) for xi in x1D])
+        denom = g2 / 2.0 + 8 * np.pi**4 * q**2 / g3
         A = (grad_g2_data + 8 * np.pi**4 * g3 * temp_data) / denom
-        A = (grad_g2_data + 8 * np.pi**4 * temp_data) / denom
+        # A = (grad_g2_data + 8 * np.pi**4 * temp_data) / denom
         P = -4 * np.pi**2 * MU_0 * grad_p_data / denom
 
         y_b = (F_b * g3[-1]) / (q[-1] * 2 * np.pi) ** 2
@@ -598,5 +599,7 @@ def calc_curr_dens_profiles(
 
     if Ip == 0:
         Ip = -g2[-1] * dPsidV_data[-1] / (4 * np.pi**2 * MU_0)
+        # F_b = B_0 * R_0
+        # Ip = g2[-1]*g3[-1] * F_b / (8 * np.pi**3 * MU_0 * q[-1])
 
     return Ip, Phi1D, Psi1D, pprime_psi1D_data, F, FFprime
