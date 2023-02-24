@@ -1,53 +1,16 @@
 # COPYRIGHT PLACEHOLDER
 
-import functools
-
 import pytest
 
-import bluemira.base.constants as constants
 from bluemira.power_cycle.errors import PowerCycleABCError, PowerCyclePhaseError
 from bluemira.power_cycle.time import (
     PowerCyclePhase,
     PowerCyclePulse,
     PowerCycleTimeline,
 )
+from tests.power_cycle.kits_for_tests import TimeTestKit
 
-
-@functools.lru_cache(maxsize=1)
-def inputs_for_phase():
-    """
-    Function to create inputs for PowerCyclePhase testing.
-    The lists 'input_names' and 'input_breakdowns' must have the same
-    length.
-    """
-    input_names = [
-        "Dwell",
-        "Transition between dwell and flat-top",
-        "Flat-top",
-        "Transition between flat-top and dwell",
-    ]
-    input_breakdowns = [
-        {
-            "CS-recharge + pumping": constants.raw_uc(10, "minute", "second"),
-        },
-        {
-            "ramp-up": 157,
-            "heating": 19,
-        },
-        {"burn": constants.raw_uc(2, "hour", "second")},
-        {
-            "cooling": 123,
-            "ramp-down": 157,
-        },
-    ]
-    assert len(input_names) == len(input_breakdowns)
-    n_inputs = len(input_names)
-
-    return (
-        n_inputs,
-        input_names,
-        input_breakdowns,
-    )
+time_testkit = TimeTestKit()
 
 
 class TestPowerCyclePhase:
@@ -56,7 +19,7 @@ class TestPowerCyclePhase:
             n_samples,
             sample_names,
             sample_breakdowns,
-        ) = inputs_for_phase()
+        ) = time_testkit.inputs_for_phase()
 
         all_samples = []
         for s in range(n_samples):
@@ -83,6 +46,7 @@ class TestPowerCyclePhase:
 
         try:
             sample = PowerCyclePhase(name, breakdown)
+
         except (PowerCyclePhaseError, PowerCycleABCError):
 
             str_keys = [isinstance(k, str) for k in test_keys]
@@ -105,35 +69,12 @@ class TestPowerCyclePhase:
             assert sample.duration == total_duration
 
 
-def inputs_for_pulse():
-    """
-    Function to create inputs for PowerCyclePulse testing.
-    """
-    (
-        n_inputs,
-        input_names,
-        input_breakdowns,
-    ) = inputs_for_phase()
-
-    input_phases = []
-    for i in range(n_inputs):
-        name = input_names[i]
-        breakdown = input_breakdowns[i]
-        phase = PowerCyclePhase(name, breakdown)
-        input_phases.append(phase)
-
-    return (
-        n_inputs,
-        input_phases,
-    )
-
-
 class TestPowerCyclePulse:
     def setup_method(self):
         (
-            n_samples,
+            _,
             sample_phases,
-        ) = inputs_for_pulse()
+        ) = time_testkit.inputs_for_pulse()
 
         name = "Pulse example"
         phase_set = sample_phases
@@ -152,36 +93,12 @@ class TestPowerCyclePulse:
         assert phase_set_becomes_list
 
 
-def inputs_for_timeline():
-    """
-    Function to create inputs for PowerCycleTimeline testing.
-    """
-    (
-        _,
-        input_phases,
-    ) = inputs_for_pulse()
-
-    n_pulses = 10
-
-    input_pulses = []
-    for p in range(n_pulses):
-        name = "Pulse " + str(p)
-        phase = input_phases
-        pulse = PowerCyclePulse(name, phase)
-        input_pulses.append(pulse)
-
-    return (
-        n_pulses,
-        input_pulses,
-    )
-
-
 class TestPowerCycleTimeline:
     def setup_method(self):
         (
-            n_samples,
+            _,
             sample_pulses,
-        ) = inputs_for_timeline()
+        ) = time_testkit.inputs_for_timeline()
 
         name = "Timeline example"
         pulse_set = sample_pulses

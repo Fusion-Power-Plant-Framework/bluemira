@@ -3,10 +3,7 @@
 import pytest
 
 from bluemira.power_cycle.base import NetPowerABC, PowerCycleABC, PowerCycleTimeABC
-from bluemira.power_cycle.errors import (  # PowerCycleTimeABCError,
-    NetPowerABCError,
-    PowerCycleABCError,
-)
+from bluemira.power_cycle.errors import NetPowerABCError, PowerCycleABCError
 
 
 class TestPowerCycleABC:
@@ -100,8 +97,7 @@ class TestPowerCycleABC:
                     out = sample.validate_nonnegative(argument)
 
     def test_validate_vector(self):
-        # Only calls other already tested methods
-        pass
+        pass  # No new functionality to be tested.
 
 
 class TestPowerCycleTimeABC:
@@ -227,8 +223,7 @@ class TestNetPowerABC:
             assert points_in_refined == refined_list_length
 
     def test_unique_and_sorted_vector(self):
-        # Only calls built-in methods
-        pass
+        pass  # No new functionality to be tested.
 
     @pytest.mark.parametrize(
         "attribute",
