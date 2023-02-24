@@ -1169,7 +1169,7 @@ def rotate_shape(
     return shape.rotate(base, direction, degree)
 
 
-def mirror_shape(shape: apiShape, base, direction):
+def mirror_shape(shape, base, direction):
     """
     Mirror a shape about a plane.
 
@@ -1189,7 +1189,17 @@ def mirror_shape(shape: apiShape, base, direction):
     """
     base = Base.Vector(base)
     direction = Base.Vector(direction)
-    return shape.mirror(base, direction)
+    mirrored_shape = shape.mirror(base, direction)
+    if isinstance(shape, apiSolid):
+        return mirrored_shape.Solids[0]
+    elif isinstance(shape, apiCompound):
+        return mirrored_shape.Compounds[0]
+    elif isinstance(shape, apiFace):
+        return mirrored_shape.Faces[0]
+    elif isinstance(shape, apiWire):
+        return mirrored_shape.Wires[0]
+    elif isinstance(shape, apiShell):
+        return mirrored_shape.Shells[0]
 
 
 def revolve_shape(

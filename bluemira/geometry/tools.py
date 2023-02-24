@@ -893,9 +893,11 @@ def circular_pattern(
     return shapes
 
 
-def mirror_shape(shape: BluemiraGeo, base: tuple, direction: tuple) -> BluemiraGeo:
+def mirror_shape(
+    shape: BluemiraGeo, base: tuple, direction: tuple, label=""
+) -> BluemiraGeo:
     """
-    Mirror a shape about a plane.
+    Get a mirrored copy of a shape about a plane.
 
     Parameters
     ----------
@@ -911,7 +913,7 @@ def mirror_shape(shape: BluemiraGeo, base: tuple, direction: tuple) -> BluemiraG
     mirrored_shape
         The mirrored shape
     """
-    return cadapi.mirror_shape(shape, base, direction)
+    return convert(cadapi.mirror_shape(shape.shape, base, direction), label=label)
 
 
 # # =============================================================================
