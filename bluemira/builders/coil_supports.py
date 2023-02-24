@@ -45,6 +45,7 @@ from bluemira.geometry.tools import (
     make_polygon,
     offset_wire,
     slice_shape,
+    sweep_shape,
 )
 from bluemira.geometry.wire import BluemiraWire
 
@@ -596,16 +597,9 @@ class OISBuilder(Builder):
         ois_profile_2.rotate(
             base=(centre_radius, 0.5 * width, 0), degree=np.rad2deg(tf_angle)
         )
-        from bluemira.geometry.tools import sweep_shape
 
         path = make_polygon([ois_profile_1.center_of_mass, ois_profile_2.center_of_mass])
         ois = sweep_shape([ois_profile_1, ois_profile_2], path)
-        # ois_angle = np.pi - 0.5 * tf_angle
-        # ois_length = centre_radius * np.cos(ois_angle)
-        # vector = np.array([-np.cos(ois_angle), np.sin(ois_angle), 0.0])
-        # face = BluemiraFace(self.ois_xz_profile)
-        # ois = extrude_shape(face, ois_length * vector)
-        ois.translate(vector=(0, 0.5 * width, 0))
         component = PhysicalComponent(self.SUPPORT, ois)
         component.display_cad_options.color = BLUE_PALETTE["TF"][2]
         return component
@@ -615,14 +609,19 @@ if __name__ == "__main__":
     from bluemira.base.parameter_frame import Parameter
     from bluemira.base.reactor import Reactor
     from bluemira.geometry.parameterisations import PrincetonD
-    from bluemira.geometry.tools import circular_pattern, make_polygon, sweep_shape
+    from bluemira.geometry.tools import (
+        boolean_cut,
+        circular_pattern,
+        make_polygon,
+        sweep_shape,
+    )
 
     x_1 = 4
     x_2 = 16
     pd = PrincetonD({"x1": {"value": x_1}, "x2": {"value": x_2}}).create_shape()
 
     n_TF = 16
-    hd = 1.6
+    hd = 0.5 * 1.6
     xs = make_polygon(
         {"x": [x_1 - hd, x_1 + hd, x_1 + hd, x_1 - hd], "y": [-hd, -hd, hd, hd], "z": 0},
         closed=True,
@@ -638,11 +637,14 @@ if __name__ == "__main__":
         ],
     )
 
+    for c in p_comps.children:
+        c.display_cad_options.transparency = 0.5
+
     reactor = Component("dummy")
     tf_component = Component("TF", parent=reactor, children=[p_comps])
 
     ois_profile = make_polygon(
-        {"x": [x_2, x_2 + 0.5, 13.5, 13], "y": 0, "z": [0, 0, 6, 6]}, closed=True
+        {"x": [x_2, x_2 + 0.5, 14.5, 14], "y": 0, "z": [0, 0, 6, 6]}, closed=True
     )
 
     params = OISBuilderParams(
@@ -654,5 +656,25 @@ if __name__ == "__main__":
     builder = OISBuilder(params, {}, ois_profile)
     ois = builder.build()
     reactor.add_child(ois)
+
+    result = boolean_cut(
+        pd, make_polygon({"x": [9, 20, 20, 9], "z": [-4, -4, -8, -8]}, closed=True)
+    )[-1]
+    result.translate(vector=(-0.25, 0, 0))
+    r_copy = result.deepcopy()
+    r_copy.translate(vector=(0.5, 0, 0))
+    p1 = result.start_point()
+    p2 = result.end_point()
+    p3 = r_copy.start_point()
+    p4 = r_copy.end_point()
+
+    join_1 = make_polygon([p2, p4])
+    join_2 = make_polygon([p3, p1])
+
+    ois_profile_2 = BluemiraWire([result, join_1, r_copy, join_2])
+    builder = OISBuilder(params, {}, ois_profile_2)
+    ois2 = builder.build()
+    ois2.name = "OIS2"
+    reactor.add_child(ois2)
 
     reactor.show_cad()
