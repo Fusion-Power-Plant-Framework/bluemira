@@ -3,6 +3,7 @@
 """
 Classes for the definition of power loads in the power cycle model.
 """
+import copy
 from enum import Enum
 from typing import List, Union
 
@@ -37,10 +38,6 @@ class PowerData(NetPowerABC):
         List of power values that define the PowerData. [W]
     """
 
-    # Memory for time normalization and shifting
-    _norm = []
-    _shift = []
-
     def __init__(
         self,
         name,
@@ -54,6 +51,9 @@ class PowerData(NetPowerABC):
         self._is_increasing(self.time)
 
         self._sanity()
+
+        self._norm = []  # Memory for time normalization
+        self._shift = []  # Memory for time shifting
 
     @staticmethod
     def _is_increasing(parameter):
@@ -444,7 +444,7 @@ class PowerLoad(NetPowerABC):
 
         name = self.name
 
-        intrinsic_time = self._intrinsic_time()
+        intrinsic_time = self.intrinsic_time()
         computed_time = self._refine_vector(intrinsic_time, n_points)
         computed_curve = self.curve(computed_time)
 
@@ -543,13 +543,14 @@ class PowerLoad(NetPowerABC):
         objects stored in the 'powerdata_set' by that number.
         """
         number = self.validate_numerical(number)
-        powerdata_set = self.powerdata_set
+        other = copy.deepcopy(self)
+        powerdata_set = other.powerdata_set
         for powerdata in powerdata_set:
             data = powerdata.data
             new_data = [d * number for d in data]
             powerdata.data = new_data
-        self.powerdata_set = powerdata_set
-        return self
+        other.powerdata_set = powerdata_set
+        return other
 
     def __truediv__(self, number):
         """
@@ -560,13 +561,14 @@ class PowerLoad(NetPowerABC):
         objects stored in the 'powerdata_set' by that number.
         """
         number = self.validate_numerical(number)
-        powerdata_set = self.powerdata_set
+        other = copy.deepcopy(self)
+        powerdata_set = other.powerdata_set
         for powerdata in powerdata_set:
             data = powerdata.data
             new_data = [d / number for d in data]
             powerdata.data = new_data
-        self.powerdata_set = powerdata_set
-        return self
+        other.powerdata_set = powerdata_set
+        return other
 
 
 class PhaseLoad(NetPowerABC):
@@ -664,7 +666,7 @@ class PhaseLoad(NetPowerABC):
         attributes of same length.
         """
         if len(self.powerload_set) != len(self.normalize):
-            self._issue_error("sanity")
+            raise PhaseLoadError("sanity")
 
     # ------------------------------------------------------------------
     # OPERATIONS
@@ -734,7 +736,10 @@ class PhaseLoad(NetPowerABC):
         normalized in respect to the phase duration).
         """
         normalized_set = self._compute_normalized_set()
-        all_times = [normal_load.time for normal_load in normalized_set]
+        all_times = []
+        for normal_load in normalized_set:
+            normal_load_intrinsic_time = normal_load.intrinsic_time()
+            all_times.append(normal_load_intrinsic_time)
         unnested_times = unnest_list(all_times)
         intrinsic_time = self._unique_and_sorted_vector(unnested_times)
         return intrinsic_time
@@ -789,7 +794,7 @@ class PhaseLoad(NetPowerABC):
 
         name = self.name
 
-        intrinsic_time = self._intrinsic_time()
+        intrinsic_time = self.intrinsic_time()
         computed_time = self._refine_vector(intrinsic_time, n_points)
         computed_curve = self.curve(computed_time)
 
@@ -873,8 +878,6 @@ class PulseLoad(NetPowerABC):
 
         self.phaseload_set = self._validate_phaseload_set(phaseload_set)
         self.pulse = self._build_pulse()
-
-        self._build_pulseload_as_sequence_of_phaseloads()
 
     @staticmethod
     def _validate_phaseload_set(phaseload_set):
