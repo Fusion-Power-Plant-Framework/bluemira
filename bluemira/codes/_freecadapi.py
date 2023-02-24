@@ -1169,6 +1169,29 @@ def rotate_shape(
     return shape.rotate(base, direction, degree)
 
 
+def mirror_shape(shape: apiShape, base, direction):
+    """
+    Mirror a shape about a plane.
+
+    Parameters
+    ----------
+    shape:
+        Shape to mirror
+    base:
+        Mirror plane base point
+    direction:
+        Mirror plane direction
+
+    Returns
+    -------
+    shape:
+        The mirrored shape
+    """
+    base = Base.Vector(base)
+    direction = Base.Vector(direction)
+    return shape.mirror(base, direction)
+
+
 def revolve_shape(
     shape,
     base: tuple = (0.0, 0.0, 0.0),
