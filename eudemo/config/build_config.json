@@ -1,6 +1,6 @@
 {
     "Radial build": {
-        "run_mode": "run",
+        "run_mode": "mock",
         "read_dir": "config/"
     },
     "Fixed boundary equilibrium":{
@@ -19,7 +19,7 @@
             "i_modeltype": "GYROBOHM_2",
             "i_equiltype": "q95_sawtooth",
             "i_pedestal": "SAARELMA",
-            "isawt": "SAWTEETH",
+            "isawt": "FULLY_RELAXED",
             "nx": 41,
             "nxt": 21,
             "ntglf": 11
