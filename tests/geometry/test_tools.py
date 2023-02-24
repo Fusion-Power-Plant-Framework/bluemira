@@ -54,6 +54,7 @@ from bluemira.geometry.tools import (
     make_circle_arc_3P,
     make_ellipse,
     make_polygon,
+    mirror_shape,
     offset_wire,
     point_inside_shape,
     revolve_shape,
@@ -670,3 +671,34 @@ class TestSavingCAD:
 
         assert lines == []
         os.remove(generated_file)
+
+
+class TestMirrorShape:
+
+    wire = make_polygon(
+        {"x": [4, 6, 6, 4], "y": [5, 5, 5, 5], "z": [0, 0, 2, 2]}, closed=True
+    )
+    face = BluemiraFace(wire)
+    solid = extrude_shape(face, (0, 3, 0))
+    shell = solid.boundary[0]
+
+    shapes = [wire, face, solid, shell]
+
+    @pytest.mark.parametrize("shape", shapes)
+    @pytest.mark.parametrize(
+        "direction",
+        [(0, 0, 1), (0, 1, 0), (1, 0, 0), (0, 0, -1), (0, -1, 0), (-1, 0, 0)],
+    )
+    def test_base_mirror(self, shape, direction):
+        m_shape = mirror_shape(shape, (0, 0, 0), direction)
+        cog = shape.center_of_mass
+        m_cog = m_shape.center_of_mass
+        new_cog = cog
+        idx = np.where(list(direction))[0]
+        new_cog[idx] = -cog[idx]
+        assert np.isclose(m_shape.volume, shape.volume)
+        assert np.allclose(m_cog, new_cog)
+
+    @pytest.mark.parametrize("shape", shapes)
+    def test_awkward_mirror(self, shape):
+        m_shape = mirror_shape(shape, (4, 5, 0), ())
