@@ -701,4 +701,8 @@ class TestMirrorShape:
 
     @pytest.mark.parametrize("shape", shapes)
     def test_awkward_mirror(self, shape):
-        m_shape = mirror_shape(shape, (4, 5, 0), ())
+        m_shape = mirror_shape(shape, (4, 5, 0), (-1, -1, 0))
+        assert np.isclose(m_shape.volume, shape.volume)
+        cog = shape.center_of_mass
+        m_cog = m_shape.center_of_mass
+        assert not np.allclose(m_cog, cog)
