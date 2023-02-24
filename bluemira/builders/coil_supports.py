@@ -585,14 +585,27 @@ class OISBuilder(Builder):
         Build the x-y-z component of the OIS
         """
         width = self.params.tf_wp_depth.value + 2 * self.params.tk_tf_side.value
-        tf_angle = 360 / self.params.n_TF.value
+        tf_angle = 2 * np.pi / self.params.n_TF.value
+        ois_profile_1 = self.ois_xz_profile.deepcopy()
+        ois_profile_1.translate(vector=(0, 0.5 * width, 0))
+        ois_profile_2 = ois_profile_1.deepcopy()
+
         centre_radius = self.ois_xz_profile.center_of_mass[0]
-        centre_radius -= width
-        ois_angle = 90 - 0.5 * tf_angle
-        ois_length = centre_radius * np.cos(ois_angle)
-        vector = np.array([-np.cos(ois_angle), np.sin(ois_angle), 0.0])
-        face = BluemiraFace(self.ois_xz_profile)
-        ois = extrude_shape(face, ois_length * vector)
+        centre_radius = 0.5 * width / np.tan(0.5 * tf_angle)
+
+        ois_profile_2.rotate(
+            base=(centre_radius, 0.5 * width, 0), degree=np.rad2deg(tf_angle)
+        )
+        from bluemira.geometry.tools import sweep_shape
+
+        path = make_polygon([ois_profile_1.center_of_mass, ois_profile_2.center_of_mass])
+        ois = sweep_shape([ois_profile_1, ois_profile_2], path)
+        # ois_angle = np.pi - 0.5 * tf_angle
+        # ois_length = centre_radius * np.cos(ois_angle)
+        # vector = np.array([-np.cos(ois_angle), np.sin(ois_angle), 0.0])
+        # face = BluemiraFace(self.ois_xz_profile)
+        # ois = extrude_shape(face, ois_length * vector)
+        ois.translate(vector=(0, 0.5 * width, 0))
         component = PhysicalComponent(self.SUPPORT, ois)
         component.display_cad_options.color = BLUE_PALETTE["TF"][2]
         return component
@@ -600,10 +613,36 @@ class OISBuilder(Builder):
 
 if __name__ == "__main__":
     from bluemira.base.parameter_frame import Parameter
-    from bluemira.geometry.tools import make_polygon
+    from bluemira.base.reactor import Reactor
+    from bluemira.geometry.parameterisations import PrincetonD
+    from bluemira.geometry.tools import circular_pattern, make_polygon, sweep_shape
+
+    x_1 = 4
+    x_2 = 16
+    pd = PrincetonD({"x1": {"value": x_1}, "x2": {"value": x_2}}).create_shape()
+
+    n_TF = 16
+    hd = 1.6
+    xs = make_polygon(
+        {"x": [x_1 - hd, x_1 + hd, x_1 + hd, x_1 - hd], "y": [-hd, -hd, hd, hd], "z": 0},
+        closed=True,
+    )
+
+    solid = sweep_shape(xs, pd)
+
+    solids = circular_pattern(solid, n_shapes=n_TF)
+    p_comps = Component(
+        "xyz",
+        children=[
+            PhysicalComponent(f"tf_{i}", shape) for i, shape in enumerate(solids[:2])
+        ],
+    )
+
+    reactor = Component("dummy")
+    tf_component = Component("TF", parent=reactor, children=[p_comps])
 
     ois_profile = make_polygon(
-        {"x": [12, 12.5, 11.5, 11], "y": 0, "z": [4, 4, 6, 6]}, closed=True
+        {"x": [x_2, x_2 + 0.5, 13.5, 13], "y": 0, "z": [0, 0, 6, 6]}, closed=True
     )
 
     params = OISBuilderParams(
@@ -614,4 +653,6 @@ if __name__ == "__main__":
 
     builder = OISBuilder(params, {}, ois_profile)
     ois = builder.build()
-    ois.show_cad()
+    reactor.add_child(ois)
+
+    reactor.show_cad()
