@@ -4,6 +4,10 @@ import matplotlib.pyplot as plt
 import pytest
 
 from bluemira.power_cycle.tools import adjust_2d_graph_ranges, unnest_list, validate_axes
+from tests.power_cycle.kits_for_tests import TimeTestKit, ToolsTestKit
+
+tools_testkit = ToolsTestKit()
+time_testkit = TimeTestKit()
 
 
 class TestManipulationTools:
@@ -62,29 +66,33 @@ class TestPlottingTools:
     @pytest.mark.parametrize("scale", ("linear", "log"))
     def test_adjust_2d_graph_ranges(self, scale):
 
-        # Assert that output are still axes
-        test_plot = validate_axes()
-        test_plot.plot(self.sample_x, self.sample_y)
-        test_plot.set_xscale(scale)
-        test_plot.set_yscale(scale)
-        old_limits = self._query_axes_limits(test_plot)
-        adjust_2d_graph_ranges(ax=test_plot)
-        new_limits = self._query_axes_limits(test_plot)
-        assert isinstance(test_plot, plt.Axes)
+        ax_title = "Test 2D Graph Ranges Adjustment"
+        test_ax = tools_testkit.prepare_figure(ax_title)
 
-        # Assert that range of each axes is increased
+        test_ax.plot(self.sample_x, self.sample_y)
+        test_ax.set_xscale(scale)
+        test_ax.set_yscale(scale)
+        old_limits = self._query_axes_limits(test_ax)
+        adjust_2d_graph_ranges(ax=test_ax)
+        new_limits = self._query_axes_limits(test_ax)
+        adjusted_ax_is_still_Axes_object = isinstance(test_ax, plt.Axes)
+        assert adjusted_ax_is_still_Axes_object
+
         n_axes = len(old_limits)
         for axis_index in range(n_axes):
-            old_axis = old_limits[axis_index]
-            new_axis = new_limits[axis_index]
+            old_axis_scale_limits = old_limits[axis_index]
+            new_axis_scale_limits = new_limits[axis_index]
 
-            old_lower = old_axis[0]
-            new_lower = new_axis[0]
-            assert new_lower < old_lower
+            lower_limit_of_old_scale = old_axis_scale_limits[0]
+            lower_limit_of_new_scale = new_axis_scale_limits[0]
+            check_lower = lower_limit_of_new_scale < lower_limit_of_old_scale
 
-            old_upper = old_axis[1]
-            new_upper = new_axis[1]
-            assert old_upper < new_upper
+            upper_limit_of_old_scale = old_axis_scale_limits[1]
+            upper_limit_of_new_scale = new_axis_scale_limits[1]
+            check_upper = upper_limit_of_new_scale > upper_limit_of_old_scale
 
-        del test_plot
+            axis_ranges_have_increased = check_lower and check_upper
+            assert axis_ranges_have_increased
+
+        del test_ax
         plt.close("all")
