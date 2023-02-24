@@ -526,3 +526,92 @@ class PFCoilSupportBuilder(Builder):
         component = PhysicalComponent(self.SUPPORT, shape)
         component.display_cad_options.color = BLUE_PALETTE["TF"][2]
         return component
+
+
+@dataclass
+class OISBuilderParams(ParameterFrame):
+    """
+    Outer intercoil structure parameters
+    """
+
+    n_TF: Parameter[int]
+    tf_wp_depth: Parameter[float]
+    tk_tf_side: Parameter[float]
+
+
+class OISBuilder(Builder):
+    """
+    Outer intercoil structure builder
+    """
+
+    SUPPORT = "TF OIS"
+    param_cls: Type[OISBuilderParams] = OISBuilderParams
+
+    def __init__(
+        self,
+        params: Union[OISBuilderParams, Dict],
+        build_config: Dict,
+        ois_xz_profile: BluemiraWire,
+    ):
+        super().__init__(params, build_config)
+        self.ois_xz_profile = ois_xz_profile
+
+    def build(self) -> Component:
+        """
+        Build the PF coil support component.
+        """
+        return self.component_tree(
+            [self.build_xz()], self.build_xy(), [self.build_xyz()]
+        )
+
+    def build_xy(self):
+        """
+        Build the x-y component of the OIS
+        """
+        pass
+
+    def build_xz(self):
+        """
+        Build the x-z component of the OIS
+        """
+        face = BluemiraFace(self.ois_xz_profile)
+        component = PhysicalComponent(self.SUPPORT, face)
+        component.display_cad_options.color = BLUE_PALETTE["TF"][2]
+        component.plot_options.face_options["color"] = BLUE_PALETTE["TF"][2]
+        return component
+
+    def build_xyz(self):
+        """
+        Build the x-y-z component of the OIS
+        """
+        width = self.params.tf_wp_depth.value + 2 * self.params.tk_tf_side.value
+        tf_angle = 360 / self.params.n_TF.value
+        centre_radius = self.ois_xz_profile.center_of_mass[0]
+        centre_radius -= width
+        ois_angle = 90 - 0.5 * tf_angle
+        ois_length = centre_radius * np.cos(ois_angle)
+        vector = np.array([-np.cos(ois_angle), np.sin(ois_angle), 0.0])
+        face = BluemiraFace(self.ois_xz_profile)
+        ois = extrude_shape(face, ois_length * vector)
+        component = PhysicalComponent(self.SUPPORT, ois)
+        component.display_cad_options.color = BLUE_PALETTE["TF"][2]
+        return component
+
+
+if __name__ == "__main__":
+    from bluemira.base.parameter_frame import Parameter
+    from bluemira.geometry.tools import make_polygon
+
+    ois_profile = make_polygon(
+        {"x": [12, 12.5, 11.5, 11], "y": 0, "z": [4, 4, 6, 6]}, closed=True
+    )
+
+    params = OISBuilderParams(
+        Parameter("n_TF", 16),
+        Parameter("tf_wp_depth", 1.4),
+        Parameter("tk_tf_side", 0.1),
+    )
+
+    builder = OISBuilder(params, {}, ois_profile)
+    ois = builder.build()
+    ois.show_cad()
