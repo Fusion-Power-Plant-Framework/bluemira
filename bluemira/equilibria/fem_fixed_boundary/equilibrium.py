@@ -412,20 +412,22 @@ def solve_transport_fixed_boundary(
     return equilibrium
 
 
-def calc_metric_coefficients(mesh, psi2D: callable, x2D: callable, nx: int):
+def calc_metric_coefficients(
+    flux_surfaces, psi2D: callable, x2D: callable, x1D: np.ndarray
+):
     """
     Calculate metric coefficients of a set of flux surfaces.
 
     Parameters
     ----------
-    mesh:
-        Mesh on which to calculate the coefficients
+    flux_surfaces: List[ClosedFluxSurface]
+        List of closed flux surfaces on which to calculate the coefficients
     psi2D:
         Callable which calculates psi of the form f(p: Iterable[2]) = float
     x2D:
         Callable which calculates psi norm of the form f(p: Iterable[2]) = float
-    nx:
-        Number of flux surfaces (linearly spaced)
+    x1D:
+        Array of 1-D normalised psi values
 
     Returns
     -------
@@ -440,16 +442,15 @@ def calc_metric_coefficients(mesh, psi2D: callable, x2D: callable, nx: int):
     g3: np.ndarray
         1-D g3 vector
     """
-    x1D = np.linspace(0, 1, nx)
-    x1D, flux_surfaces = get_flux_surfaces_from_mesh(mesh, x2D, x1D, nx)
+    if x1D[0] != 0:
+        # Initialise with 0 at axis
+        x1D = np.insert(x1D, 0, 0)
     nx = x1D.size
 
-    # Initialise with 0 at axis
-    x1D = np.insert(x1D, 0, 0)
-    g1 = np.zeros(nx + 1)
-    g2 = np.zeros(nx + 1)
-    g3 = np.zeros(nx + 1)
-    volume = np.zeros(nx + 1)
+    g1 = np.zeros(nx)
+    g2 = np.zeros(nx)
+    g3 = np.zeros(nx)
+    volume = np.zeros(nx)
     volume[1:] = [fs.volume for fs in flux_surfaces]
 
     volume_func = interp1d(x1D, volume, fill_value="extrapolate")
@@ -495,7 +496,7 @@ def calc_metric_coefficients(mesh, psi2D: callable, x2D: callable, nx: int):
     g3[0] = g3_temp(x1D[0])
     g3[-1] = g3_temp(x1D[-1])
 
-    return x1D, volume, g1, g2, g3, flux_surfaces
+    return x1D, volume, g1, g2, g3
 
 
 def calc_curr_dens_profiles(

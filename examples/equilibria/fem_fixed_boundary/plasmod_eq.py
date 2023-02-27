@@ -70,16 +70,12 @@ theta = np.linspace(0, 2 * np.pi, 201)
 rPLASMOD_sep = R_0 + shif[-1] + amin * (np.cos(theta) - dprof[-1] * np.sin(theta) ** 2)
 zPLASMOD_sep = amin * kprof[-1] * np.sin(theta)
 
-from bluemira.geometry.coordinates import Coordinates
 import bluemira.geometry.tools as geotools
+from bluemira.geometry.coordinates import Coordinates
 
 points = Coordinates({"x": rPLASMOD_sep, "z": zPLASMOD_sep})
 Plasmod_sep = geotools.interpolate_bspline(points)
 Plasmod_sep_surf = geotools.BluemiraFace(Plasmod_sep)
-
-import bluemira.display as display
-
-display.plot_2d(Plasmod_sep)
 
 xPsiPlasmod = np.sqrt(psi / psi[-1])
 
@@ -96,10 +92,10 @@ except AssertionError as e:
     bluemira_error(f"Assertion error: {e}")
 
 
+from bluemira.base.constants import MU_0
 from bluemira.equilibria.fem_fixed_boundary.fem_magnetostatic_2D import (
     FemGradShafranovFixedBoundary,
 )
-from bluemira.base.constants import MU_0
 
 _pprime = -pprime / (-2 * np.pi * R_0 * 1e-6)
 _ffprime = -ffprime / (-2 * np.pi / MU_0 / R_0 * 1e-6)
@@ -118,7 +114,7 @@ directory = get_bluemira_path("", subfolder="generated_data")
 meshfiles = [os.path.join(directory, p) for p in ["Mesh.geo_unrolled", "Mesh.msh"]]
 meshing.Mesh(meshfile=meshfiles)(plasma)
 
-from bluemira.mesh.tools import msh_to_xdmf, import_mesh
+from bluemira.mesh.tools import import_mesh, msh_to_xdmf
 
 msh_to_xdmf("Mesh.msh", dimensions=(0, 2), directory=directory)
 
@@ -127,15 +123,6 @@ mesh, boundaries, subdomains, labels = import_mesh(
     directory=directory,
     subdomains=True,
 )
-
-import dolfin
-
-dolfin.plot(mesh)
-plt.show()
-
-
-plt.close("all")
-
 
 from scipy.interpolate import interp1d
 
@@ -165,8 +152,11 @@ utilities.plot_scalar_field(mesh_points[:, 0], mesh_points[:, 1], c_psi)
 
 import bluemira.equilibria.fem_fixed_boundary.equilibrium as equilibrium
 
-x1D, V, g1, g2, g3, FS = equilibrium.calc_metric_coefficients(
-    mesh, gs_solver.psi, gs_solver.psi_norm_2d, 50
+x1D, flux_surfaces = utilities.get_flux_surfaces_from_mesh(
+    mesh, gs_solver.psi_norm_2d, nx=50
+)
+x1D, V, g1, g2, g3 = equilibrium.calc_metric_coefficients(
+    flux_surfaces, gs_solver.psi, gs_solver.psi_norm_2d, x1D
 )
 
 q = interp1d(xPsiPlasmod, outputs.qprof, fill_value="extrapolate")

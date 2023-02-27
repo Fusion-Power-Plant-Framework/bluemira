@@ -380,7 +380,10 @@ def get_mesh_boundary(mesh):
 
 
 def get_flux_surfaces_from_mesh(
-    mesh, psi_norm_func: callable, x_1d: Optional[np.ndarray], nx: Optional[int]
+    mesh,
+    psi_norm_func: callable,
+    x_1d: Optional[np.ndarray] = None,
+    nx: Optional[int] = None,
 ):
     """
     Get a list of flux surfaces from a mesh and normalised psi callable.

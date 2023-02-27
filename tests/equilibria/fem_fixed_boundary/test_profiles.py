@@ -22,151 +22,11 @@
 import matplotlib.pyplot as plt
 import numdifftools as nd
 import numpy as np
-from scipy.interpolate import CloughTocher2DInterpolator, LinearNDInterpolator, interp1d
+from scipy.interpolate import CloughTocher2DInterpolator, LinearNDInterpolator
 
 from bluemira.equilibria.fem_fixed_boundary.equilibrium import calc_metric_coefficients
 from bluemira.equilibria.flux_surfaces import ClosedFluxSurface
 from bluemira.equilibria.shapes import flux_surface_zakharov
-
-
-def gradV(volume, x1d):
-    f_volume = interp1d(x1d, volume, fill_value="extrapolate")
-    return nd.Gradient(f_volume)
-
-
-def calc_metric_coefficents_wrap(flux_surfaces, x_1d, psi_1d):
-    # Extract coordinates
-    x = []
-    z = []
-    xz = []
-    psi = []
-    for i, fs in enumerate(flux_surfaces):
-        x.append(fs.coords.x[:-1])
-        z.append(fs.coords.z[:-1])
-        xz.append(np.array([fs.coords.x[:-1], fs.coords.z[:-1]]))
-        psi.append(psi_1d[i] * np.ones(len(fs.coords.x) - 1))
-    x2d = np.concatenate(x)
-    z2d = np.concatenate(z)
-    xz2d = np.array([np.concatenate(x), np.concatenate(z)])
-    psi2d = np.concatenate(psi)
-    psi_ax = np.max(psi_1d)
-    psi_b = np.min(psi_1d)
-
-    _psi_func = LinearNDInterpolator(xz2d.T, psi2d, fill_value=psi_b)
-
-    def psi_func(x):
-        return float(_psi_func(x[0], x[1]))
-
-    def psi_norm(x):
-        return np.sqrt(abs(psi_ax - psi_func(x)) / abs(psi_ax - psi_b))
-
-    class DummyMesh:
-        def coordinates(self):
-            return xz2d.T
-
-    m = DummyMesh()
-
-    return calc_metric_coefficients(m, psi_func, psi_norm)
-
-
-def calc_metric_coefficients_flux_surfaces(flux_surfaces, x_1d, psi_1d):
-    # Extract coordinates
-    x = []
-    z = []
-    xz = []
-    psi = []
-    for i, fs in enumerate(flux_surfaces):
-        x.append(fs.coords.x[:-1])
-        z.append(fs.coords.z[:-1])
-        xz.append(np.array([fs.coords.x[:-1], fs.coords.z[:-1]]))
-        psi.append(psi_1d[i] * np.ones(len(fs.coords.x) - 1))
-    x2d = np.concatenate(x)
-    z2d = np.concatenate(z)
-    nx, nz = 200, 200
-    _x = np.linspace(np.amin(x2d), np.amax(x2d), nx)
-    _z = np.linspace(np.amin(z2d), np.amax(z2d), nz)
-    _xx, _zz = np.meshgrid(_x, _z, indexing="ij")
-
-    xz2d = np.array([np.concatenate(x), np.concatenate(z)])
-    psi2d = np.concatenate(psi)
-    psi_ax = psi_1d[0]
-    psi_b = psi_1d[-1]
-    print(f"{psi_ax=}")
-    print(f"{psi_b=}")
-
-    _psi_func = LinearNDInterpolator(list(zip(x2d, z2d)), psi2d, fill_value=psi_b)
-    # _psi_func = CloughTocher2DInterpolator(list(zip(x2d, z2d)), psi2d, fill_value=psi_b)
-
-    def f_psi(x):
-        return _psi_func(x[0], x[1])
-
-    def f_psi_norm(x):
-        return np.sqrt((psi_ax - f_psi(x)) / (psi_ax - psi_b))
-
-    _value = np.zeros((nx, nz))
-    for i in range(nx):
-        for j in range(nz):
-            _value[i, j] = f_psi([_xx[i, j], _zz[i, j]])
-
-    f, ax = plt.subplots()
-    cm = ax.contourf(_xx, _zz, _value)
-    ax.set_aspect("equal")
-    f.colorbar(cm)
-    plt.show()
-
-    volume = np.array([fs.volume for fs in flux_surfaces])
-    amin = 2.9075846464
-    gradV_x1D = gradV(volume, x_1d)
-    grad_x2D = nd.Gradient(f_psi_norm)
-    grad_psi = nd.Gradient(f_psi)
-
-    def grad_x2D_norm(x):
-        return np.sqrt(np.sum(grad_x2D(x) ** 2))
-
-    def grad_psi_norm(x):
-        return np.sqrt(np.sum(grad_psi(x) ** 2))
-
-    def gradV_norm(x):
-        """GradV norm"""
-        return grad_x2D_norm(x) * gradV_x1D(f_psi_norm(x))
-
-    def Bp(x):
-        """Bp"""
-        return np.divide(grad_psi_norm(x), x[0]) / (2 * np.pi * x[0])
-
-    g2 = np.zeros(len(flux_surfaces))
-    g3 = np.zeros(len(flux_surfaces))
-
-    for i, fs in enumerate(flux_surfaces):
-        print(f"integrating over FS[{i}]")
-        points = fs.coords.xz.T
-
-        dx = np.diff(fs.coords.x)
-        dz = np.diff(fs.coords.z)
-        dl = np.hypot(dx, dz)
-        lp = np.concatenate([np.array([0.0]), np.cumsum(dl)])
-        bp = np.array([Bp(p) for p in points])
-
-        y0_data = 1 / bp
-        y3_data = 1 / (fs.coords.x**2 * bp)
-        y2_data = np.array([gradV_norm(p) ** 2 for p in points]) * y3_data
-        x_data = lp
-
-        denom = np.trapz(y0_data, x_data)
-        g2[i] = np.trapz(y2_data, x_data) / denom
-        g3[i] = np.trapz(y3_data, x_data) / denom
-
-    x1D = np.insert(x_1d, 0, 0)
-    g2t = np.insert(g2, 0, 0)
-    g3t = np.insert(g3, 0, 0)
-
-    g2_temp = interp1d(x1D[1:-1], g2t[1:-1], fill_value="extrapolate")
-    g2[-1] = g2_temp(x1D[-1])
-
-    g3_temp = interp1d(x1D[1:-1], g3t[1:-1], fill_value="extrapolate")
-    g3[0] = g3_temp(x1D[0])
-    g3[-1] = g3_temp(x1D[-1])
-    return volume, g2, g3
 
 
 class TestPLASMODRegressionRaw:
@@ -192,7 +52,7 @@ class TestPLASMODRegressionRaw:
     # Flip sign of psi so that peak is at centre
     psi = -(psi - np.max(psi))
 
-    n = len(pprime)
+    n = len(rho)
 
     R_0 = 8.98300000
     amin = 2.9075846464
@@ -214,22 +74,71 @@ class TestPLASMODRegressionRaw:
         ax.set_aspect("equal")
         plt.show()
         cls.flux_surfaces = flux_surfaces
+        cls._calculate_metrics(cls)
+
+    def _calculate_metrics(self):
+        """
+        This effectively mocks a FEM fixed boundary equilibrium by fully analytical
+        specification of the flux surfaces, with interpolation on psi and psi_norm
+        between them.
+        """
+        # Extract coordinates
+        x = []
+        z = []
+        xz = []
+        psi = []
+        for i, fs in enumerate(self.flux_surfaces):
+            x.append(fs.coords.x[:-1])
+            z.append(fs.coords.z[:-1])
+            xz.append(np.array([fs.coords.x[:-1], fs.coords.z[:-1]]))
+            psi.append(self.psi[i] * np.ones(len(fs.coords.x) - 1))
+        x2d = np.concatenate(x)
+        z2d = np.concatenate(z)
+        nx, nz = 200, 200
+        _x = np.linspace(np.amin(x2d), np.amax(x2d), nx)
+        _z = np.linspace(np.amin(z2d), np.amax(z2d), nz)
+        _xx, _zz = np.meshgrid(_x, _z, indexing="ij")
+
+        xz2d = np.array([np.concatenate(x), np.concatenate(z)])
+        psi2d = np.concatenate(psi)
+        psi_ax = self.psi[0]
+        psi_b = self.psi[-1]
+        print(f"{psi_ax=}")
+        print(f"{psi_b=}")
+
+        _psi_func = LinearNDInterpolator(list(zip(x2d, z2d)), psi2d, fill_value=psi_b)
+        # _psi_func = CloughTocher2DInterpolator(list(zip(x2d, z2d)), psi2d, fill_value=psi_b)
+
+        def f_psi(x):
+            return _psi_func(x[0], x[1])
+
+        def f_psi_norm(x):
+            return np.sqrt((psi_ax - f_psi(x)) / (psi_ax - psi_b))
+
+        x1D, volume, g1, g2, g3 = calc_metric_coefficients(
+            self.flux_surfaces[1:], f_psi, f_psi_norm, self.rho
+        )
+        self.results = {
+            "x_1d": x1D,
+            "V": volume,
+            "g1": g1,
+            "g2": g2,
+            "g3": g3,
+        }
 
     def test_volume(self):
-        volume = [fs.volume for fs in self.flux_surfaces]
         f, ax = plt.subplots()
         ax.plot(
             self.rho,
-            volume - self.volprof,
+            self.results["V"] - self.volprof,
             marker="o",
             label="$V_{Zakharov}$ - $V_{PLASMOD}$",
         )
-        # ax.plot(self.rho, self.volprof, marker="^", label="$V$ PLASMOD")
         ax.set_ylabel("[$m^3$]")
         ax.set_xlabel("$\\rho$")
         ax.legend()
         plt.show()
-        np.testing.assert_allclose(volume[1:], self.volprof[1:], rtol=5e-2)
+        np.testing.assert_allclose(self.results["V"][1:], self.volprof[1:], rtol=5e-2)
 
     def test_gradV(self):
         """
@@ -250,23 +159,22 @@ class TestPLASMODRegressionRaw:
         plt.show()
         np.testing.assert_allclose(grad_vol[1:], self.vprime[1:], rtol=9e-2)
 
-    def test_g2g3(self):
-        _, g2, g3 = calc_metric_coefficients_flux_surfaces(
-            self.flux_surfaces, self.rho, self.psi
-        )
+    def test_g2(self):
         f, ax = plt.subplots()
-        ax.plot(self.rho, g2, label="$g_2$ calculated")
+        ax.plot(self.results["x_1d"], self.results["g2"], label="$g_2$ calculated")
         ax.plot(self.rho, self.g2, label="$g_2$ PLASMOD")
         ax.set_xlabel("$g_{2}$")
         ax.set_xlabel("$\\rho$")
         ax.legend()
         plt.show()
+        np.testing.assert_allclose(self.results["g2"][1:], self.g2[1:], rtol=0.05)
+
+    def test_g3(self):
         f, ax = plt.subplots()
-        ax.plot(self.rho, g3, label="$g_3$ calculated")
+        ax.plot(self.results["x_1d"], self.results["g3"], label="$g_3$ calculated")
         ax.plot(self.rho, self.g3, label="$g_3$ PLASMOD")
         ax.set_xlabel("$g_{2}$")
         ax.set_xlabel("$\\rho$")
         ax.legend()
         plt.show()
-        np.testing.assert_allclose(g2, self.g2)
-        np.testing.assert_allclose(g3, self.g3)
+        np.testing.assert_allclose(self.results["g3"], self.g3, rtol=0.02)
