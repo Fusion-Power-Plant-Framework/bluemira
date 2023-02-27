@@ -49,7 +49,6 @@ from bluemira.equilibria.fem_fixed_boundary.utilities import (
 )
 from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.parameterisations import GeometryParameterisation
-from bluemira.geometry.tools import BluemiraFace
 from bluemira.mesh import meshing
 from bluemira.mesh.tools import import_mesh, msh_to_xdmf
 from bluemira.utilities.plot_tools import make_gif, save_figure
@@ -464,7 +463,6 @@ def calc_metric_coefficients(
         return np.hypot(*grad_psi_2D(x))
 
     def grad_vol_norm(x):
-        """GradV norm"""
         return grad_psi_norm_norm(x) * grad_vol_1D(psi_norm_2D_func(x))
 
     for i, fs in enumerate(flux_surfaces):
@@ -521,49 +519,56 @@ def calc_curr_dens_profiles(
 
     Returns
     -------
+
+    Notes
+    -----
+    Fable et al., A stable scheme for computation of coupled transport and
+    equilibrium equations in tokamaks
+
+    https://pure.mpg.de/rest/items/item_2144754/component/file_2144753/content
     """
     psi_1D = psi_ax - psi_norm_1D**2 * (psi_ax - psi_b)
 
-    Psi1D_0 = psi_1D
-    for i in range(100):
+    psi_1D_0 = psi_1D
+    for _ in range(10):
         # calculate pprime profile from p
         p_fun_psi1D = interp1d(psi_1D, p, fill_value="extrapolate")
         pprime_psi1D = nd.Derivative(p_fun_psi1D)
         pprime_psi1D_data = pprime_psi1D(psi_1D)
 
+        # Here we preserve some PLASMOD notation, for future sanity
         q3 = q / g3
-        AA = g2 / q3**2 + (16 * np.pi**4) * g3
-        C = -4 * np.pi**2 * MU_0 * np.gradient(p, psi_norm_1D) / AA
+        AA = g2 / q3**2 + (16 * np.pi**4) * g3  # noqa: N806
+        C = -4 * np.pi**2 * MU_0 * np.gradient(p, psi_norm_1D) / AA  # noqa: N806
         dum3 = g2 / q3
         dum2 = np.gradient(dum3, psi_norm_1D)
-        B = -dum2 / q3 / AA
-        Fb = -R_0 * B_0 / (2 * np.pi)
+        B = -dum2 / q3 / AA  # noqa: N806
+        Fb = -R_0 * B_0 / (2 * np.pi)  # noqa: N806
         yb = 0.5 * Fb**2
         dum2 = cumulative_trapezoid(B, psi_norm_1D, initial=0)
         dum1 = np.exp(2.0 * dum2)
         dum1 = dum1 / dum1[-1]
         dum3 = cumulative_trapezoid(C / dum1, psi_norm_1D, initial=0)
         dum3 = dum3 - dum3[-1]
-        C1 = yb
+        C1 = yb  # noqa: N806
         y = dum1 * (dum3 + C1)
         dum2 = g2 / q3
         dum3 = np.gradient(dum2, psi_1D)
         betahat = dum3 / q3 / AA
         chat = -4 * np.pi**2 * MU_0 * pprime_psi1D_data / AA
-        FF = np.sqrt(2.0 * y)
-        FFprime = 4 * np.pi**2 * (chat - betahat * FF**2)
+        FF = np.sqrt(2.0 * y)  # noqa: N806
+        ff_prime = 4 * np.pi**2 * (chat - betahat * FF**2)
 
-        Phi1D = -cumulative_trapezoid(q, psi_1D, initial=0)
-        Phib = Phi1D[-1]
+        phi_1D = -cumulative_trapezoid(q, psi_1D, initial=0)
 
         F = 2 * np.pi * FF
-        dPsidV = -F / q * g3 / (2.0 * np.pi)
+        d_psi_dv = -F / q * g3 / (2.0 * np.pi)
         psi_1D = np.flip(
-            cumulative_trapezoid(np.flip(dPsidV), np.flip(volume), initial=0)
+            cumulative_trapezoid(np.flip(d_psi_dv), np.flip(volume), initial=0)
         )
 
-        rms_error = np.sqrt(np.square(np.subtract(psi_1D, Psi1D_0)).mean())
-        Psi1D_0 = psi_1D
+        rms_error = np.sqrt(np.square(np.subtract(psi_1D, psi_1D_0)).mean())
+        psi_1D_0 = psi_1D
 
         if rms_error <= 1e-5:
             break
@@ -573,6 +578,6 @@ def calc_curr_dens_profiles(
         )
 
     if I_p == 0:
-        I_p = -g2[-1] * dPsidV[-1] / (4 * np.pi**2 * MU_0)
+        I_p = -g2[-1] * d_psi_dv[-1] / (4 * np.pi**2 * MU_0)
 
-    return I_p, Phi1D, psi_1D, pprime_psi1D_data, F, FFprime
+    return I_p, phi_1D, psi_1D, pprime_psi1D_data, F, ff_prime
