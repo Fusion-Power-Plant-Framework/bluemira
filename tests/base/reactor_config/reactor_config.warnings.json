@@ -1,14 +1,18 @@
 {
   "params": {
-    "a": 10
+    "height": { "value": 180, "unit": "cm" },
+    "age": { "value": 30, "unit": "years" }
   },
   "comp A": {
     "params": {
-      "a": 5,
-      "b": 5
+      "height": { "value": 18, "unit": "cm" },
+      "name": { "value": "Comp A", "unit": "" }
     },
     "designer": {
-      "params": { "a": 1 }
+      "params": {
+        "age": { "value": 3, "unit": "years" },
+        "name": { "value": "Comp A_designer", "unit": "" }
+      }
     },
     "builder": {
       "params": { "b": 1, "c": 1 }

@@ -17,7 +17,7 @@ from typing import (
     Union,
 )
 from typing import _GenericAlias as GenericAlias  # TODO python >=3.9 import from types
-from typing import get_args, get_type_hints
+from typing import get_args, get_type_hints, TYPE_CHECKING
 
 import pint
 from tabulate import tabulate
@@ -34,7 +34,10 @@ from bluemira.base.parameter_frame._parameter import (
     Parameter,
     ParameterValueType,
 )
-from bluemira.base.reactor_config import ConfigParams
+
+# due to circular import
+if TYPE_CHECKING:
+    from bluemira.base.reactor_config import ConfigParams
 
 _PfT = TypeVar("_PfT", bound="ParameterFrame")
 
@@ -186,41 +189,50 @@ class ParameterFrame:
     def from_config_params(cls: Type[_PfT], config_params: ConfigParams) -> _PfT:
         """
         Initialise an instance from a ConfigParams object,
-        which holds a ParameterFrame and a dict, which must be joined together
-        to form a unified ParameterFrame
+        which holds a ParameterFrame of global_params
+        and a dict of local_params, which must be joined together
+        to form a unified ParameterFrame.
+
+        The global_params must always overwrite the local_params and their
+        references must be maintained (i.e. no copying)
         """
         kwargs = {}
 
-        # from from_frame
-        for field in cls.__dataclass_fields__:
-            try:
-                kwargs[field] = getattr(config_params.global_params, field)
-            except AttributeError:
-                raise ValueError(
-                    f"Cannot create ParameterFrame from other. "
-                    f"Other frame does not contain field '{field}'."
-                )
-
         # from from_dict
-        data = copy.deepcopy(config_params.local_params)
+        lc = config_params.local_params
         for member in cls.__dataclass_fields__:
-            try:
-                param_data = data.pop(member)
-            except KeyError as e:
-                raise ValueError(f"Data for parameter '{member}' not found.") from e
+            # only getting the members that exist in lc
+            # because they could be in global_params
+            if member not in lc:
+                continue
 
+            param_data = lc[member]
             value_type = _validate_parameter_field(member, cls._get_types()[member])
+
             try:
                 _validate_units(param_data, value_type)
             except pint.errors.PintError as pe:
                 raise ValueError("Unit conversion failed") from pe
 
             kwargs[member] = Parameter(
-                name=member, **param_data, _value_types=value_type
+                name=member,
+                **param_data,
+                _value_types=value_type,
             )
 
-        if len(data) > 0:
-            raise ValueError(f"Unknown parameter(s) {str(list(data))[1:-1]} in dict.")
+        for global_param_field in config_params.global_params.__dataclass_fields__:
+            kwargs[global_param_field] = getattr(
+                config_params.global_params,
+                global_param_field,
+            )
+
+        # now validate all dataclass_fields are in kwargs
+        # (which could be super set)
+        for member in cls.__dataclass_fields__:
+            try:
+                kwargs[member]
+            except KeyError as e:
+                raise ValueError(f"Data for parameter '{member}' not found.") from e
 
         return cls(**kwargs)
 
@@ -452,6 +464,12 @@ def _non_comutative_unit_conversion(dimensionality, numerator, dpa, fpy):
     )
 
 
+@dataclass
+class EmptyFrame(ParameterFrame):
+    def __init__(self) -> None:
+        super().__init__()
+
+
 def make_parameter_frame(
     params: Union[Dict[str, ParamDictT], ParameterFrame, ConfigParams, str, None],
     param_cls: Type[_PfT],
@@ -491,6 +509,8 @@ def make_parameter_frame(
         A frame of the type `param_cls`, or `None` if `params` and
         `param_cls` are both `None`.
     """
+    from bluemira.base.reactor_config import ConfigParams
+
     if param_cls is None:
         if params is None:
             # Case for where there are no parameters associated with the object

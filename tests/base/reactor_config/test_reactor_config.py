@@ -1,3 +1,4 @@
+from dataclasses import dataclass
 from pathlib import Path
 
 import pytest
@@ -5,7 +6,25 @@ import pytest
 from bluemira.base.error import ReactorConfigError
 from bluemira.base.reactor_config import ReactorConfig
 
-class
+from bluemira.base.parameter_frame import (
+    Parameter,
+    ParameterFrame,
+    EmptyFrame,
+    make_parameter_frame,
+)
+
+
+@dataclass
+class TestGlobalParams(ParameterFrame):
+    height: Parameter[float]
+    age: Parameter[int]
+
+
+@dataclass
+class TestCompADesignerParams(ParameterFrame):
+    height: Parameter[float]
+    age: Parameter[int]
+    name: Parameter[str]
 
 
 class TestReactorConfigClass:
@@ -15,28 +34,35 @@ class TestReactorConfigClass:
 
     def test_file_loading_with_empty_config(self):
         config_path = Path(__file__).parent / "reactor_config.empty.json"
-        reactor_config = ReactorConfig(config_path.as_posix())
+        reactor_config = ReactorConfig(config_path.as_posix(), EmptyFrame)
 
-        assert isinstance(reactor_config.global_params, dict)
-        assert len(reactor_config.global_params) == 0
+        # want to know explicitly if it is an EmptyFrame
+        assert type(reactor_config.global_params) is EmptyFrame
+        with pytest.raises(ReactorConfigError):
+            reactor_config.params_for("dne")
+            reactor_config.config_for("dne")
+
+    def test_incorrect_global_config_type_empty_config(self):
+        config_path = Path(__file__).parent / "reactor_config.empty.json"
+        with pytest.raises(ValueError):
+            ReactorConfig(config_path.as_posix(), TestGlobalParams)
+
+    def test_incorrect_global_config_type_non_empty_config(self):
+        config_path = Path(__file__).parent / "reactor_config.warnings.json"
+        with pytest.raises(ValueError):
+            ReactorConfig(config_path.as_posix(), EmptyFrame)
 
     def test_warning_global_local_sub_overwrites(self, caplog):
         config_path = Path(__file__).parent / "reactor_config.warnings.json"
-        reactor_config = ReactorConfig(config_path.as_posix())
+        reactor_config = ReactorConfig(config_path.as_posix(), TestGlobalParams)
 
-        dp = reactor_config.designer_params("comp A")
-        bp = reactor_config.builder_params("comp A")
+        dp = reactor_config.params_for("comp A", "designer")
 
-        assert len(caplog.records) == 5
+        assert len(caplog.records) == 1
         for record in caplog.records:
             assert record.levelname == "WARNING"
 
-        assert dp["a"] == 10
-        assert dp["b"] == 5
-
-        assert bp["a"] == 10
-        assert bp["b"] == 5
-        assert bp["c"] == 1
+        make_parameter_frame(dp, TestCompADesignerParams)
 
     def test_warning_global_sub_overwrites(self, caplog):
         config_path = Path(__file__).parent / "reactor_config.warnings.json"

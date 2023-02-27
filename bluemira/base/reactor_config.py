@@ -1,10 +1,9 @@
 """Class to hold parameters and config values."""
 
-
 import json
 import pprint
 from dataclasses import dataclass
-from typing import Dict, List, Type, TypeVar, Union
+from typing import Dict, Tuple, Type, TypeVar, Union
 
 from bluemira.base.error import ReactorConfigError
 from bluemira.base.look_and_feel import bluemira_warn
@@ -108,32 +107,8 @@ class ReactorConfig:
     def _pprint_dict(self, d: dict) -> str:
         return pprint.pformat(d, sort_dicts=False, indent=1)
 
-    def _warn_on_duplicate_keys(
-        self,
-        component_name: str,
-        sub_name: str,
-        global_params: dict,
-        local_params: dict,
-        local_sub: dict,
-    ):
-        keyset_global_params = set(global_params.keys())
-        keyset_local_params = set(local_params.keys())
-        keyset_local_sub = set(local_sub.keys())
-
-        # warnings for duplicate keys
-
-        for shared_key in keyset_local_sub.intersection(keyset_global_params):
-            bluemira_warn(
-                f"'{shared_key}' is defined in the global {_PARAMETERS_KEY} as well as in {component_name}'s {sub_name} {_PARAMETERS_KEY}"
-            )
-        for shared_key in keyset_local_params.intersection(keyset_global_params):
-            bluemira_warn(
-                f"'{shared_key}' is defined in the global {_PARAMETERS_KEY} as well as in {component_name}'s {_PARAMETERS_KEY}"
-            )
-        for shared_key in keyset_local_sub.intersection(keyset_local_params):
-            bluemira_warn(
-                f"'{shared_key}' is defined in {component_name}'s {_PARAMETERS_KEY} as well as in {component_name}'s {sub_name} {_PARAMETERS_KEY}"
-            )
+    def _warn_on_duplicate_keys(self, shared_key: str, arg: str):
+        bluemira_warn(f"'{shared_key}' is already defined for {arg}")
 
     def _check_key_in(self, key: str, config_layer: dict):
         if key not in config_layer:
@@ -146,33 +121,46 @@ class ReactorConfig:
             if not isinstance(a, str):
                 raise ReactorConfigError("args must strings")
 
-    def _extract(self, arg_keys: List[str], is_config: bool) -> dict:
+    def _extract(self, arg_keys: Tuple[str], is_config: bool) -> dict:
         extracted = {}
 
-        prev_layer = self.config_data
+        # this routine is designed not to copy any dict's while parsing
+
+        current_layer = self.config_data
         for next_idx, current_arg_key in enumerate(arg_keys, start=1):
-            self._check_key_in(current_arg_key, prev_layer)
-            current_layer = prev_layer[current_arg_key]
+            self._check_key_in(current_arg_key, current_layer)
+            current_layer: dict = current_layer[current_arg_key]
 
             next_arg_key = arg_keys[next_idx] if next_idx < len(arg_keys) else None
 
+            to_extract = (
+                current_layer if is_config else current_layer.get(_PARAMETERS_KEY, {})
+            )
+
             # add all keys not in extracted already
-            # and don't add the next key
-            # and if doing a config, don't add any "params" (_PARAMETERS_KEY)
-            for k, v in current_layer.items():
+            # if doing a config, ignore the "params" (_PARAMETERS_KEY)
+            # and don't add the next arg key
+            for k, v in to_extract.items():
                 if k in extracted:
+                    self._warn_on_duplicate_keys(k, current_arg_key)
                     continue
-                if next_arg_key and k == next_arg_key:
-                    continue
-                if is_config and k == _PARAMETERS_KEY:
-                    continue
+                if is_config:
+                    if k == _PARAMETERS_KEY:
+                        continue
+                    if next_arg_key and k == next_arg_key:
+                        continue
                 extracted[k] = v
 
         # higher up the tree overwrites lower
         return extracted
 
-    def params_for(self, component_name: str, *args: str, file_name="") -> ConfigParams:
-        args = component_name + args
+    def params_for(
+        self,
+        component_name: str,
+        *args: str,
+        file_name="",
+    ) -> ConfigParams:
+        args = (component_name,) + args
         self._check_args_are_strings(args)
 
         return ConfigParams(
@@ -180,8 +168,13 @@ class ReactorConfig:
             local_params=self._extract(args, is_config=False),
         )
 
-    def config_for(self, component_name: str, *args: str, file_name="") -> dict:
-        args = component_name + args
+    def config_for(
+        self,
+        component_name: str,
+        *args: str,
+        file_name="",
+    ) -> dict:
+        args = (component_name,) + args
         self._check_args_are_strings(args)
 
         return self._extract(args, is_config=True)
