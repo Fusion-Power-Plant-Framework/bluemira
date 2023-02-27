@@ -26,13 +26,17 @@ from typing import Callable, Iterable, List, Optional, Tuple, Union
 import dolfin
 import matplotlib.pyplot as plt
 import numpy as np
+from dolfin import BoundaryMesh, Vertex
 from matplotlib._tri import TriContourGenerator
 from matplotlib.axes._axes import Axes
 from matplotlib.tri import Triangulation
 from scipy.interpolate import interp1d
 
+from bluemira.base.constants import EPS
 from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.utilities.error import ExternalOptError
+from bluemira.equilibria.flux_surfaces import ClosedFluxSurface
+from bluemira.geometry.coordinates import Coordinates
 from bluemira.utilities.opt_problems import OptimisationConstraint, OptimisationObjective
 from bluemira.utilities.optimiser import Optimiser, approx_derivative
 from bluemira.utilities.tools import is_num
@@ -335,6 +339,116 @@ def find_flux_surface(psi_norm_func, psi_norm, mesh=None, n_points=100):
     return points
 
 
+def get_mesh_boundary(mesh):
+    """
+    Retrieve the boundary of the mesh, as an ordered set of coordinates.
+
+    Parameters
+    ----------
+    mesh: dolfin.Mesh
+        Mesh for which to retrieve the exterior boundary
+
+    Returns
+    -------
+    xbdry: np.ndarray
+        x coordinates of the boundary
+    zbdry: np.ndarray
+        z coordinates of the boundary
+    """
+    boundary = BoundaryMesh(mesh, "exterior")
+    edges = boundary.cells()
+    check_edge = np.ones(boundary.num_edges())
+
+    index = 0
+    temp_edge = edges[index]
+    sorted_v = []
+    sorted_v.append(temp_edge[0])
+
+    for i in range(len(edges) - 1):
+        temp_v = [v for v in temp_edge if v not in sorted_v][0]
+        sorted_v.append(temp_v)
+        check_edge[index] = 0
+        connected = np.where(edges == temp_v)[0]
+        index = [e for e in connected if check_edge[e] == 1][0]
+        temp_edge = edges[index]
+
+    points_sorted = []
+    for v in sorted_v:
+        points_sorted.append(Vertex(boundary, v).point().array())
+    points_sorted = np.array(points_sorted)
+    return points_sorted[:, 0], points_sorted[:, 1]
+
+
+def get_flux_surfaces_from_mesh(
+    mesh, psi_norm_func: callable, x_1d: Optional[np.ndarray], nx: Optional[int]
+):
+    """
+    Get a list of flux surfaces from a mesh and normalised psi callable.
+
+    Parameters
+    ----------
+    mesh: Mesh
+        Mesh for which to extract the flux surfaces
+    psi_norm_func: callable
+        Callable for psi_norm on the mesh
+    x_1d: Optional[np.ndarray]
+        Array of 1-D normalised psi_values [0..1]. If None, nx will
+        define a linearly spaced vector.
+    nx: Optional[int]
+        Number of points to linearly space along [0..1]. If x_1d is
+        defined, not used.
+
+    Returns
+    -------
+    x_1d: np.ndarray
+        The 1-D normalised psi_values for which flux surfaces could be
+        retrieved.
+    flux_surfaces: List[ClosedFluxSurface]
+        The list of closed flux surfaces
+
+    Notes
+    -----
+    x_1d is returned, as it is not always possible to return a flux surface for
+    small values of normalised psi.
+    """
+    if x_1d is None:
+        if nx is None:
+            raise ValueError("Please input either x_1d: np.ndarray or nx: int.")
+        else:
+            x_1d = np.linspace(0, 1, nx)
+    else:
+        if nx is not None:
+            bluemira_warn("x_1d and nx specified, discarding nx.")
+
+    mesh_points = mesh.coordinates()
+    x = mesh_points[:, 0]
+    z = mesh_points[:, 1]
+    psi_norm_data = np.array([psi_norm_func(p) for p in mesh_points])
+
+    index = []
+    flux_surfaces = []
+    for i, xi in enumerate(x_1d):
+        if np.isclose(xi, 1.0, rtol=0, atol=EPS):
+            path = get_mesh_boundary(mesh)
+            fs = Coordinates({"x": path[0], "z": path[1]})
+            fs.close()
+            flux_surfaces.append(ClosedFluxSurface(fs))
+        else:
+            path = get_tricontours(x, z, psi_norm_data, xi)[0]
+            if path is not None:
+                fs = Coordinates({"x": path.T[0], "z": path.T[1]})
+                fs.close()
+                flux_surfaces.append(ClosedFluxSurface(fs))
+            else:
+                index.append(i)
+
+    n = len(index)
+    for xi in range(n):
+        x_1d = np.delete(x_1d, index[xi])
+
+    return x_1d, flux_surfaces
+
+
 def _f_max_radius(x, grad):
     result = -x[0]
     if grad.size > 0:
@@ -583,17 +697,17 @@ def integrcc(nx, x, y):
     """1D trapz integral as made in Plasmod"""
     sy = np.zeros(nx)
     for i in range(1, nx):
-        drho = (x(i) - x(i-1))
-        y1tmp = (y(i) + y(i-1))/2.
-        sy[i] = sy[i-1] + y1tmp*drho
+        drho = x(i) - x(i - 1)
+        y1tmp = (y(i) + y(i - 1)) / 2.0
+        sy[i] = sy[i - 1] + y1tmp * drho
     return sy
 
 
 def derivcc(nx, x, y, gga):
     """1D derivate with interpolation at extrema as made in Plasmod"""
     dy = np.zeros(nx)
-    for i in range(1,nx):
-        dy[i] = (y[i+1] - y[i-1])/(x[i+1] - x[i-1])
+    for i in range(1, nx):
+        dy[i] = (y[i + 1] - y[i - 1]) / (x[i + 1] - x[i - 1])
     if gga == 1:
         dy[0] = 0
     if gga == 2:

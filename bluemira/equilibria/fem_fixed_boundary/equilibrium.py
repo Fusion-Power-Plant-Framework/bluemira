@@ -47,6 +47,7 @@ from bluemira.equilibria.fem_fixed_boundary.fem_magnetostatic_2D import (
 )
 from bluemira.equilibria.fem_fixed_boundary.utilities import (
     calculate_plasma_shape_params,
+    get_flux_surfaces_from_mesh,
 )
 from bluemira.equilibria.flux_surfaces import ClosedFluxSurface
 from bluemira.geometry.coordinates import Coordinates
@@ -440,32 +441,7 @@ def calc_metric_coefficients(mesh, psi2D: callable, x2D: callable, nx: int):
         1-D g3 vector
     """
     x1D = np.linspace(0, 1, nx)
-
-    mesh_points = mesh.coordinates()
-    x = mesh_points[:, 0]
-    z = mesh_points[:, 1]
-    x2D_data = np.array([x2D(p) for p in mesh_points])
-
-    index = []
-    flux_surfaces = []
-    for i in range(nx):
-        if x1D[i] == 1:
-            path = file._get_mesh_boundary(mesh)
-            fs = Coordinates({"x": path[0], "z": path[1]})
-            fs.close()
-            flux_surfaces.append(ClosedFluxSurface(fs))
-        else:
-            path = utilities.get_tricontours(x, z, x2D_data, x1D[i])[0]
-            if path is not None:
-                fs = Coordinates({"x": path.T[0], "z": path.T[1]})
-                fs.close()
-                flux_surfaces.append(ClosedFluxSurface(fs))
-            else:
-                index.append(i)
-
-    n = len(index)
-    for i in range(n):
-        x1D = np.delete(x1D, index[i])
+    x1D, flux_surfaces = get_flux_surfaces_from_mesh(mesh, x2D, x1D, nx)
     nx = x1D.size
 
     # Initialise with 0 at axis
@@ -499,9 +475,7 @@ def calc_metric_coefficients(mesh, psi2D: callable, x2D: callable, nx: int):
         dl = np.hypot(dx, dz)
         x_data = np.concatenate([np.array([0.0]), np.cumsum(dl)])
         # Poloidal field
-        bp = np.array([grad_psi_norm(p) for p in points]) / (
-            2 * np.pi * fs.coords.x
-        )
+        bp = np.array([grad_psi_norm(p) for p in points]) / (2 * np.pi * fs.coords.x)
 
         grad_V_norm_2 = np.array([gradV_norm(p) ** 2 for p in points])
         y0_data = 1 / bp
@@ -525,20 +499,20 @@ def calc_metric_coefficients(mesh, psi2D: callable, x2D: callable, nx: int):
 
 
 def calc_curr_dens_profiles(
-        x1D: np.ndarray,
-        p: np.ndarray,
-        q: np.ndarray,
-        g2: np.ndarray,
-        g3: np.ndarray,
-        V: np.ndarray,
-        Ip: float,
-        B_0: float,
-        R_0: float,
-        Psi_ax: float,
-        Psi_b: float,
+    x1D: np.ndarray,
+    p: np.ndarray,
+    q: np.ndarray,
+    g2: np.ndarray,
+    g3: np.ndarray,
+    V: np.ndarray,
+    Ip: float,
+    B_0: float,
+    R_0: float,
+    Psi_ax: float,
+    Psi_b: float,
 ):
     """Calculate pprime and ffprime from metric coefficients"""
-    Psi1D = Psi_ax - x1D ** 2 * (Psi_ax - Psi_b)
+    Psi1D = Psi_ax - x1D**2 * (Psi_ax - Psi_b)
 
     F_b = B_0 * R_0
 
@@ -563,15 +537,15 @@ def calc_curr_dens_profiles(
         pprime_psi1D_data = pprime_psi1D(Psi1D)
 
         q3 = q / g3
-        AA = g2 / q3 ** 2 + (16 * np.pi ** 4) * g3
-        C = -4 * np.pi ** 2 * MU_0 * np.gradient(p, x1D) / AA
+        AA = g2 / q3**2 + (16 * np.pi**4) * g3
+        C = -4 * np.pi**2 * MU_0 * np.gradient(p, x1D) / AA
         dum3 = g2 / q3
         dum2 = np.gradient(dum3, x1D)
         B = -dum2 / q3 / AA
         Fb = -R_0 * B_0 / (2 * np.pi)
-        yb = 0.5 * Fb ** 2
+        yb = 0.5 * Fb**2
         dum2 = cumulative_trapezoid(B, x1D, initial=0)
-        dum1 = np.exp(2. * dum2)
+        dum1 = np.exp(2.0 * dum2)
         dum1 = dum1 / dum1[-1]
         dum3 = cumulative_trapezoid(C / dum1, x1D, initial=0)
         dum3 = dum3 - dum3[-1]
@@ -580,15 +554,15 @@ def calc_curr_dens_profiles(
         dum2 = g2 / q3
         dum3 = np.gradient(dum2, Psi1D)
         betahat = dum3 / q3 / AA
-        chat = -4 * np.pi ** 2 * MU_0 * pprime_psi1D_data / AA
-        FF = np.sqrt(2. * y)
-        FFprime = 4 * np.pi ** 2 * (chat - betahat * FF ** 2)
+        chat = -4 * np.pi**2 * MU_0 * pprime_psi1D_data / AA
+        FF = np.sqrt(2.0 * y)
+        FFprime = 4 * np.pi**2 * (chat - betahat * FF**2)
 
         Phi1D = -cumulative_trapezoid(q, Psi1D, initial=0)
         Phib = Phi1D[-1]
 
         F = 2 * np.pi * FF
-        dPsidV = -F / q * g3 / (2. * np.pi)
+        dPsidV = -F / q * g3 / (2.0 * np.pi)
         Psi1D = np.flip(cumulative_trapezoid(np.flip(dPsidV), np.flip(V), initial=0))
 
         RMSE = np.sqrt(np.square(np.subtract(Psi1D, Psi1D_0)).mean())
@@ -598,6 +572,6 @@ def calc_curr_dens_profiles(
             break
 
     if Ip == 0:
-        Ip = -g2[-1] * dPsidV[-1] / (4 * np.pi ** 2 * MU_0)
+        Ip = -g2[-1] * dPsidV[-1] / (4 * np.pi**2 * MU_0)
 
     return Ip, Phi1D, Psi1D, pprime_psi1D_data, F, FFprime

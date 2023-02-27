@@ -26,7 +26,6 @@ File saving for fixed boundary equilibrium
 from typing import Dict, Optional
 
 import numpy as np
-from dolfin import BoundaryMesh, Vertex
 from scipy.integrate import quad, quadrature
 
 from bluemira.base.look_and_feel import bluemira_warn
@@ -58,46 +57,6 @@ def _fpol_profile(ffprime, psi_norm, psi_mag, fvac):
             + fvac**2
         )
     return fpol
-
-
-def _get_mesh_boundary(mesh):
-    """
-    Retrieve the boundary of the mesh, as an ordered set of coordinates.
-
-    Parameters
-    ----------
-    mesh: dolfin.Mesh
-        Mesh for which to retrieve the exterior boundary
-
-    Returns
-    -------
-    xbdry: np.ndarray
-        x coordinates of the boundary
-    zbdry: np.ndarray
-        z coordinates of the boundary
-    """
-    boundary = BoundaryMesh(mesh, "exterior")
-    edges = boundary.cells()
-    check_edge = np.ones(boundary.num_edges())
-
-    index = 0
-    temp_edge = edges[index]
-    sorted_v = []
-    sorted_v.append(temp_edge[0])
-
-    for i in range(len(edges) - 1):
-        temp_v = [v for v in temp_edge if v not in sorted_v][0]
-        sorted_v.append(temp_v)
-        check_edge[index] = 0
-        connected = np.where(edges == temp_v)[0]
-        index = [e for e in connected if check_edge[e] == 1][0]
-        temp_edge = edges[index]
-
-    points_sorted = []
-    for v in sorted_v:
-        points_sorted.append(Vertex(boundary, v).point().array())
-    points_sorted = np.array(points_sorted)
-    return points_sorted[:, 0], points_sorted[:, 1]
 
 
 def save_fixed_boundary_to_file(
