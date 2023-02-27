@@ -54,10 +54,14 @@ class PLASMODRegressionRawData:
     rho = np.sqrt(psi / psi[-1])
     # Flip sign of psi so that peak is at centre
     psi = -(psi - np.max(psi))
+    psi_ax = psi[0]
+    psi_b = psi[-1]
 
     R_0 = 8.98300000
+    B_0 = 5.31000000
     amin = 2.9075846464
-    a = np.linspace(0, amin, len(rho))
+    n = len(rho)
+    a = np.linspace(0, amin, n)
 
 
 class TestPLASMODRegressionMetricCoefficients(PLASMODRegressionRawData):
@@ -108,17 +112,17 @@ class TestPLASMODRegressionMetricCoefficients(PLASMODRegressionRawData):
         x2d = np.concatenate(x)
         z2d = np.concatenate(z)
         psi2d = np.concatenate(psi)
-        psi_ax = self.psi[0]
-        psi_b = self.psi[-1]
 
         # Make some callables for psi and psi_norm, mimicking a G-S solver.
-        _psi_func = LinearNDInterpolator(list(zip(x2d, z2d)), psi2d, fill_value=psi_b)
+        _psi_func = LinearNDInterpolator(
+            list(zip(x2d, z2d)), psi2d, fill_value=self.psi_b
+        )
 
         def f_psi(x):
             return _psi_func(x[0], x[1])
 
         def f_psi_norm(x):
-            return np.sqrt((psi_ax - f_psi(x)) / (psi_ax - psi_b))
+            return np.sqrt((self.psi_ax - f_psi(x)) / (self.psi_ax - self.psi_b))
 
         x1D, volume, g1, g2, g3 = calc_metric_coefficients(
             self.flux_surfaces[1:], f_psi, f_psi_norm, self.rho
@@ -221,3 +225,15 @@ class TestPLASMODRegressionCurrentProfiles(PLASMODRegressionRawData):
             "F": F,
             "FFprime": ff_prime,
         }
+
+    def test_psi(self):
+        np.testing.assert_allclose(self.results["psi_1D"], self.psi, rtol=0.01)
+
+    def test_phi(self):
+        np.testing.assert_allclose(self.results["phi_1D"][1:], self.phi[1:], rtol=0.0175)
+
+    def test_pprime(self):
+        np.testing.assert_allclose(self.results["pprime"], self.pprime, rtol=0.35)
+
+    def test_ffprime(self):
+        np.testing.assert_allclose(self.results["FFprime"], self.ffprime, rtol=0.25)
