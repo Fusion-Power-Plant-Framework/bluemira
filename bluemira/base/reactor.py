@@ -117,7 +117,8 @@ class Reactor:
         # if a kw "dim" is given, it is only used
         if kw_dim := kwargs.pop("dim", None):
             warn(
-                "Using kwarg 'dim' is no longer supported. Simply pass in the dimensions you would like to show, e.g. show_cad('xz')",
+                "Using kwarg 'dim' is no longer supported. "
+                "Simply pass in the dimensions you would like to show, e.g. show_cad('xz')",
                 category=DeprecationWarning,
             )
             dims_to_show = (kw_dim,)
