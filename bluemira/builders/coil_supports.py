@@ -337,6 +337,7 @@ class PFCoilSupportBuilder(Builder):
         bb = self.pf_coil_xz.bounding_box
         width = self.params.tf_wp_depth.value + 2 * self.params.tk_tf_side.value
         half_width = 0.5 * width
+
         if bb.x_min < half_width:
             raise BuilderError("PF coil has too small a minimum radius!")
 

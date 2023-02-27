@@ -169,7 +169,7 @@ class TestPFCoilSupportBuilder:
         "x, z, dx, dz",
         [
             (100, 0, 0.3, 0.3),
-            (1, 1, 0.3, 0.3),
+            (0.3, 0.3, 0.3, 0.3),
         ],
     )
     def test_bad_positions(self, x, z, dx, dz):
