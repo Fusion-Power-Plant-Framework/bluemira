@@ -564,7 +564,7 @@ def calc_curr_dens_profiles(
     psi_1D = psi_ax - psi_norm_1D**2 * (psi_ax - psi_b)
 
     psi_1D_0 = psi_1D
-    for _ in range(10):
+    for _ in range(50):
         # calculate pprime profile from p
         p_fun_psi1D = interp1d(psi_1D, p, fill_value="extrapolate")
         pprime_psi1D = nd.Derivative(p_fun_psi1D)
@@ -601,14 +601,14 @@ def calc_curr_dens_profiles(
             cumulative_trapezoid(np.flip(d_psi_dv), np.flip(volume), initial=0)
         )
 
-        rms_error = np.sqrt(np.square(np.subtract(psi_1D, psi_1D_0)).mean())
+        rms_error = np.sqrt(np.mean((psi_1D - psi_1D_0) ** 2))
         psi_1D_0 = psi_1D
 
         if rms_error <= 1e-5:
             break
     else:
         bluemira_warn(
-            "Jackpot, you've somehow found a set of inputs for which this calculation does not converge immediately."
+            "Jackpot, you've somehow found a set of inputs for which this calculation does not converge almost immediately."
         )
 
     if I_p == 0:
