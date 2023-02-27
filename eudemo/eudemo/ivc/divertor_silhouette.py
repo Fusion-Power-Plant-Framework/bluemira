@@ -199,7 +199,8 @@ class DivertorSilhouetteDesigner(Designer[Tuple[BluemiraWire, ...]]):
         """
         # Get the flux surface that crosses the through the start point
         # We can use this surface to guide the shape of the dome
-        psi_start = self.equilibrium.psi(*start)
+
+        psi_start = self.equilibrium.psi(*(start if start[1] < end[1] else end))
         flux_surface = find_flux_surface_through_point(
             self.equilibrium.x,
             self.equilibrium.z,
