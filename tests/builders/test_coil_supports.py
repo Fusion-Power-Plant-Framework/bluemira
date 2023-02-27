@@ -202,13 +202,14 @@ class TestOISBuilder:
 
     tf_coils = circular_pattern(sweep_shape(xs, pd), n_shapes=n_TF)[:2]
 
-    def test_rectangular_profile(self):
+    @pytest.mark.parametrize("n_TF", [14, 15, 16, 17, 18, 19])
+    def test_rectangular_profile(self, n_TF):
         ois_profile = make_polygon(
             {"x": [self.x_2, self.x_2 + 0.5, 14.5, 14], "y": 0, "z": [0, 0, 6, 6]},
             closed=True,
         )
         params = OISBuilderParams(
-            Parameter("n_TF", 16),
+            Parameter("n_TF", n_TF),
             Parameter("tf_wp_depth", 1.4),
             Parameter("tk_tf_side", 0.1),
         )
@@ -223,7 +224,8 @@ class TestOISBuilder:
         result = sorted(boolean_cut(ois_body, self.tf_coils[1]), key=lambda s: -s.volume)
         assert np.isclose(ois_body.volume, result[0].volume)
 
-    def test_curved_profile(self):
+    @pytest.mark.parametrize("n_TF", [14, 15, 16, 17, 18, 19])
+    def test_curved_profile(self, n_TF):
         result = boolean_cut(
             self.pd,
             make_polygon({"x": [9, 20, 20, 9], "z": [-4, -4, -8, -8]}, closed=True),
@@ -241,7 +243,7 @@ class TestOISBuilder:
 
         ois_profile_2 = BluemiraWire([result, join_1, r_copy, join_2])
         params = OISBuilderParams(
-            Parameter("n_TF", 16),
+            Parameter("n_TF", n_TF),
             Parameter("tf_wp_depth", 1.4),
             Parameter("tk_tf_side", 0.1),
         )
