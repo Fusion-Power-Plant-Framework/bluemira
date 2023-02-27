@@ -200,10 +200,10 @@ class ITERGravitySupportBuilder(Builder):
         plate_and_gap = (
             self.params.tf_gs_g_plate.value + self.params.tf_gs_tk_plate.value
         )
-        n_plates = (plating_width + self.params.tf_gs_g_plate.value) / plate_and_gap
+        n_plates = int((plating_width + self.params.tf_gs_g_plate.value) / plate_and_gap)
         total_width = (
-            int(n_plates) * self.params.tf_gs_tk_plate.value
-            + (int(n_plates) - 1) * self.params.tf_gs_g_plate.value
+            n_plates * self.params.tf_gs_tk_plate.value
+            + (n_plates - 1) * self.params.tf_gs_g_plate.value
         )
         delta_width = plating_width - total_width
         yz_profile.translate(vector=(0.5 * delta_width, 0, 0))
@@ -212,7 +212,7 @@ class ITERGravitySupportBuilder(Builder):
             BluemiraFace(yz_profile), vec=(self.params.tf_gs_tk_plate.value, 0, 0)
         )
         plate_list.append(plate)
-        for _ in range(int(n_plates) - 1):
+        for _ in range(n_plates - 1):
             plate = plate.deepcopy()
             plate.translate(
                 vector=(
