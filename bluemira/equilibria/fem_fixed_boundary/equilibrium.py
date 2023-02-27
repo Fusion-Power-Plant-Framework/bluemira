@@ -29,7 +29,7 @@ import matplotlib.pyplot as plt
 import numdifftools as nd
 import numpy as np
 from dolfin import Mesh
-from scipy.integrate import cumulative_trapezoid, trapezoid
+from scipy.integrate import cumulative_trapezoid
 from scipy.interpolate import interp1d
 from tabulate import tabulate
 
@@ -41,16 +41,12 @@ from bluemira.base.parameter_frame import Parameter, ParameterFrame
 from bluemira.codes.interface import CodesSolver, RunMode
 from bluemira.codes.plasmod import plot_default_profiles
 from bluemira.equilibria.constants import DPI_GIF, PLT_PAUSE
-from bluemira.equilibria.fem_fixed_boundary import file, utilities
 from bluemira.equilibria.fem_fixed_boundary.fem_magnetostatic_2D import (
     FemGradShafranovFixedBoundary,
 )
 from bluemira.equilibria.fem_fixed_boundary.utilities import (
     calculate_plasma_shape_params,
-    get_flux_surfaces_from_mesh,
 )
-from bluemira.equilibria.flux_surfaces import ClosedFluxSurface
-from bluemira.geometry.coordinates import Coordinates
 from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.parameterisations import GeometryParameterisation
 from bluemira.geometry.tools import BluemiraFace
