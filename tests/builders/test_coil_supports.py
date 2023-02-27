@@ -94,12 +94,14 @@ class TestITERGravitySupportBuilder:
 class TestPFCoilSupportBuilder:
 
     my_test_params = PFCoilSupportBuilderParams(
-        tf_wp_depth=1.4,
-        tf_wp_width=0.8,
-        tk_tf_side=0.05,
-        pf_s_tk_plate=0.15,
-        pf_s_n_plate=4,
-        pf_s_g=0.05,
+        {
+            "tf_wp_depth": {"value": 1.4, "unit": "m"},
+            "tf_wp_width": {"value": 0.8, "unit": "m"},
+            "tk_tf_side": {"value": 0.05, "unit": "m"},
+            "pf_s_tk_plate": {"value": 0.15, "unit": "m"},
+            "pf_s_n_plate": {"value": 4, "unit": "n/a"},
+            "pf_s_g": {"value": 0.05, "unit": "m"},
+        }
     )
 
     tf = PrincetonD()
