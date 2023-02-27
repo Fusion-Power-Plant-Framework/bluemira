@@ -31,9 +31,11 @@ import numpy as np
 from bluemira.base.builder import Builder
 from bluemira.base.components import Component, PhysicalComponent
 from bluemira.base.error import BuilderError
+from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.base.parameter_frame import Parameter, ParameterFrame
 from bluemira.display.palettes import BLUE_PALETTE
-from bluemira.geometry.coordinates import Coordinates
+from bluemira.geometry.constants import VERY_BIG
+from bluemira.geometry.coordinates import Coordinates, get_intersect
 from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.plane import BluemiraPlane
 from bluemira.geometry.tools import (
@@ -41,6 +43,7 @@ from bluemira.geometry.tools import (
     boolean_fuse,
     extrude_shape,
     make_polygon,
+    offset_wire,
     slice_shape,
 )
 from bluemira.geometry.wire import BluemiraWire
@@ -274,5 +277,247 @@ class ITERGravitySupportBuilder(Builder):
         shape_list.append(self._make_floor_block(float(v1.x), float(v4.x)))
         shape = boolean_fuse(shape_list)
         component = PhysicalComponent("ITER-like gravity support", shape)
+        component.display_cad_options.color = BLUE_PALETTE["TF"][2]
+        return component
+
+
+@dataclass
+class PFCoilSupportBuilderParams(ParameterFrame):
+    """
+    PF coil support parameters
+    """
+
+    tf_wp_width: Parameter[float]
+    tf_wp_depth: Parameter[float]
+    tk_tf_side: Parameter[float]
+    pf_s_tk_plate: Parameter[float]
+    pf_s_n_plate: Parameter[int]
+    pf_s_g: Parameter[float]
+
+
+class PFCoilSupportBuilder(Builder):
+    """
+    PF coil support builder
+    """
+
+    SUPPORT = "PF coil support"
+    param_cls: Type[PFCoilSupportBuilderParams] = PFCoilSupportBuilderParams
+
+    def __init__(
+        self,
+        params: Union[PFCoilSupportBuilderParams, Dict],
+        build_config: Dict,
+        tf_xz_keep_out_zone: BluemiraWire,
+        pf_coil_xz: BluemiraWire,
+    ):
+        super().__init__(params, build_config)
+        self.tf_xz_keep_out_zone = tf_xz_keep_out_zone
+        self.pf_coil_xz = pf_coil_xz
+
+    def build(self) -> Component:
+        """
+        Build the PF coil support component.
+        """
+        xyz = self.build_xyz()
+        return self.component_tree(self.build_xz(xyz), self.build_xy(), [xyz])
+
+    def build_xy(self):
+        """
+        Build the x-y components of the PF coil support.
+        """
+        pass
+
+    def build_xz(self, xyz):
+        """
+        Build the x-z components of the PF coil support.
+        """
+        pass
+
+    def _build_support_xs(self):
+        bb = self.pf_coil_xz.bounding_box
+        width = self.params.tf_wp_depth.value + 2 * self.params.tk_tf_side.value
+        half_width = 0.5 * width
+
+        if bb.x_min < half_width:
+            raise BuilderError("PF coil has too small a minimum radius!")
+
+        alpha = np.arcsin(half_width / bb.x_min)
+        inner_dr = half_width * np.tan(alpha)
+
+        beta = np.arcsin(half_width / bb.x_max)
+        outer_dr = half_width * np.tan(beta)
+
+        x_min = bb.x_min - self.params.pf_s_g.value - inner_dr
+        x_max = bb.x_max + self.params.pf_s_g.value + outer_dr
+        z_min = bb.z_min
+        z_max = bb.z_max
+        box_inner = make_polygon(
+            {
+                "x": [x_min, x_max, x_max, x_min],
+                "y": 0,
+                "z": [z_min, z_min, z_max, z_max],
+            },
+            closed=True,
+        )
+        box_outer = offset_wire(box_inner, self.params.pf_s_tk_plate.value)
+        face = BluemiraFace([box_outer, box_inner])
+        return face
+
+    @staticmethod
+    def _get_first_intersection(point, angle, wire):
+        """
+        Get the first intersection from a point along an angle with a wire.
+        """
+        point = np.array(point)
+        x_out = point[0] + np.cos(angle) * VERY_BIG
+        z_out = point[2] + np.sin(angle) * VERY_BIG
+        dir_point = np.array([x_out, 0, z_out])
+
+        correct_direction = dir_point - point
+        correct_direction /= np.linalg.norm(correct_direction)
+
+        plane = BluemiraPlane.from_3_points(point, dir_point, [x_out, 1, z_out])
+        intersections = slice_shape(wire, plane)
+        distances = []
+        if intersections is None:
+            return None
+
+        directed_intersections = []
+        for inter in intersections:
+            direction = inter - point
+            direction /= np.linalg.norm(direction)
+            if not np.dot(correct_direction, direction) < 0:
+                dx = inter[0] - point[0]
+                dz = inter[2] - point[2]
+
+                dist = np.hypot(dx, dz)
+                distances.append(dist)
+                directed_intersections.append(inter)
+
+        if len(directed_intersections) > 0:
+            i_min = np.argmin(distances)
+            p_inter = directed_intersections[i_min]
+            return p_inter
+
+    def _get_support_point_angle(self, support_face: BluemiraFace):
+        bb = support_face.boundary[0].bounding_box
+        z_down = bb.z_min
+        z_up = bb.z_max
+
+        distance = np.inf
+        best_angle = None
+        v1, v2, v3, v4 = None, None, None, None
+        for z, sign in zip([z_up, z_down], [1, -1]):
+            for angle in [0.5 * np.pi, 2 / 3 * np.pi, 1 / 3 * np.pi]:
+                p_inters = []
+                distances = []
+                for x in [bb.x_min, bb.x_max]:
+                    point = [x, 0, z]
+                    p_inter = self._get_first_intersection(
+                        point, sign * angle, self.tf_xz_keep_out_zone
+                    )
+
+                    if p_inter is not None:
+                        d = np.hypot(point[0] - p_inter[0], point[2] - p_inter[2])
+                        p_inters.append(p_inter)
+                        distances.append(d)
+
+                if len(p_inters) == 2:
+                    avg_distance = np.average(distances)
+                    if avg_distance <= distance:
+                        distance = avg_distance
+                        v1 = np.array([bb.x_min, 0, z])
+                        v2 = np.array([bb.x_max, 0, z])
+                        v3 = p_inters[1]
+                        v4 = p_inters[0]
+                        best_angle = sign * angle
+
+        if distance == np.inf:
+            raise BuilderError("No intersections found!")
+
+        return v1, v2, v3, v4, best_angle
+
+    def _get_intersecting_wire(self, v1, v2, v3, v4, angle):
+        # Add some offset to get one small wire when cutting
+        v3 += 0.1 * np.array([np.cos(angle), 0, np.sin(angle)])
+        v4 += 0.1 * np.array([np.cos(angle), 0, np.sin(angle)])
+
+        cut_box = make_polygon([v1, v2, v3, v4], closed=True)
+
+        intersection_wire = sorted(
+            boolean_cut(self.tf_xz_keep_out_zone, cut_box), key=lambda wire: wire.length
+        )[0]
+        return intersection_wire
+
+    def _make_rib_profile(self, support_face):
+        # Then, project sideways to find the minimum distance from a support point
+        # to the TF coil
+        v1, v2, v3, v4, angle = self._get_support_point_angle(support_face)
+
+        # Get the intersection with the TF edge wire and use this for the rib profile
+        intersection_wire = self._get_intersecting_wire(v1, v2, v3, v4, angle)
+
+        # Make the closing wire, and make sure the polygon doesn't self-intersect
+        v3 = intersection_wire.start_point().xyz.T[0]
+        v4 = intersection_wire.end_point().xyz.T[0]
+
+        inter1 = get_intersect(
+            np.array([[v1[0], v3[0]], [v1[2], v3[2]]]),
+            np.array([[v2[0], v4[0]], [v2[2], v4[2]]]),
+        )
+        if len(inter1[0]) > 0:
+            v3, v4 = v4, v3
+
+        closing_wire = make_polygon(
+            {
+                "x": [v3[0], v1[0], v2[0], v4[0]],
+                "y": 0,
+                "z": [v3[2], v1[2], v2[2], v4[2]],
+            },
+            closed=False,
+        )
+        return BluemiraFace(BluemiraWire([intersection_wire, closing_wire]))
+
+    def _make_ribs(self, width, support_face):
+        xz_profile = self._make_rib_profile(support_face)
+        # Calculate the rib gap width and make the ribs
+        rib_list = []
+        total_rib_tk = self.params.pf_s_n_plate.value * self.params.pf_s_tk_plate.value
+        if total_rib_tk >= width:
+            bluemira_warn(
+                "PF coil support rib thickness and number exceed available thickness! You're getting a solid block instead"
+            )
+            gap_size = 0
+            rib_block = extrude_shape(xz_profile, vec=(0, width, 0))
+            rib_list.append(rib_block)
+        else:
+            gap_size = (width - total_rib_tk) / (self.params.pf_s_n_plate.value - 1)
+            rib = extrude_shape(xz_profile, vec=(0, self.params.pf_s_tk_plate.value, 0))
+            rib_list.append(rib)
+            for _ in range(self.params.pf_s_n_plate.value - 1):
+                rib = rib.deepcopy()
+                rib.translate(vector=(0, self.params.pf_s_tk_plate.value + gap_size, 0))
+                rib_list.append(rib)
+        return rib_list
+
+    def build_xyz(
+        self,
+    ) -> PhysicalComponent:
+        """
+        Build the x-y-z components of the PF coil support.
+        """
+        shape_list = []
+        # First build the support block around the PF coil
+        support_face = self._build_support_xs()
+        width = self.params.tf_wp_depth.value + 2 * self.params.tk_tf_side.value
+        support_block = extrude_shape(support_face, vec=(0, width, 0))
+        shape_list.append(support_block)
+
+        # Make the rib x-z profile and ribs
+        shape_list.extend(self._make_ribs(width, support_face))
+
+        shape = boolean_fuse(shape_list)
+        shape.translate(vector=(0, -0.5 * width, 0))
+        component = PhysicalComponent(self.SUPPORT, shape)
         component.display_cad_options.color = BLUE_PALETTE["TF"][2]
         return component

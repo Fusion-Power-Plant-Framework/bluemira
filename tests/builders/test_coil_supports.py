@@ -19,12 +19,16 @@
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 
+import numpy as np
 import pytest
 
 from bluemira.base.error import BuilderError
+from bluemira.base.parameter_frame import Parameter
 from bluemira.builders.coil_supports import (
     ITERGravitySupportBuilder,
     ITERGravitySupportBuilderParams,
+    PFCoilSupportBuilder,
+    PFCoilSupportBuilderParams,
 )
 from bluemira.geometry.parameterisations import PictureFrame, PrincetonD, TripleArc
 
@@ -86,3 +90,90 @@ class TestITERGravitySupportBuilder:
         assert len(component.get_component("xyz").children) == 1
         assert len(component.get_component("xz").children) == 1
         assert len(component.get_component("xy").children) == 0
+
+
+class TestPFCoilSupportBuilder:
+
+    my_test_params = PFCoilSupportBuilderParams(
+        Parameter("tf_wp_depth", 1.4, unit="m"),
+        Parameter("tf_wp_width", 0.8, unit="m"),
+        Parameter("tk_tf_side", 0.05, unit="m"),
+        Parameter("pf_s_tk_plate", 0.15, unit="m"),
+        Parameter("pf_s_n_plate", 4, unit=""),
+        Parameter("pf_s_g", 0.05, unit="m"),
+    )
+
+    tf = PrincetonD()
+    tf.adjust_variable("x1", value=3, lower_bound=2, upper_bound=4)
+    tf.adjust_variable("x2", value=15, lower_bound=2, upper_bound=24)
+    tf.adjust_variable("dz", value=0, lower_bound=-10, upper_bound=24)
+    tf_xz_koz = tf.create_shape()
+
+    @staticmethod
+    def make_dummy_pf(xc, zc, dxc, dzc):
+        """
+        Flake8
+        """
+        my_dummy_pf = PictureFrame()
+        my_dummy_pf.adjust_variable("ri", value=0.1, lower_bound=0, upper_bound=np.inf)
+        my_dummy_pf.adjust_variable("ro", value=0.1, lower_bound=0, upper_bound=np.inf)
+        my_dummy_pf.adjust_variable(
+            "x1", value=xc - dxc, lower_bound=0, upper_bound=np.inf
+        )
+        my_dummy_pf.adjust_variable(
+            "x2", value=xc + dxc, lower_bound=0, upper_bound=np.inf
+        )
+        my_dummy_pf.adjust_variable(
+            "z1", value=zc + dzc, lower_bound=-np.inf, upper_bound=np.inf
+        )
+        my_dummy_pf.adjust_variable(
+            "z2", value=zc - dzc, lower_bound=-np.inf, upper_bound=np.inf
+        )
+        return my_dummy_pf.create_shape()
+
+    @pytest.mark.parametrize(
+        "x, z, dx, dz",
+        [
+            (2.5, 10, 0.4, 0.5),
+            (6, 12.5, 0.5, 0.5),
+            (10, 11, 0.5, 0.67),
+            (14.5, 6, 0.2, 0.5),
+        ],
+    )
+    def test_good_positions_up_down_equal_volume(self, x, z, dx, dz):
+        pf_xz_upper = self.make_dummy_pf(x, z, dx, dz)
+        pf_xz_lower = self.make_dummy_pf(x, -z, dx, dz)
+
+        upper_builder = PFCoilSupportBuilder(
+            self.my_test_params, {}, self.tf_xz_koz, pf_xz_upper
+        )
+        upper_support = (
+            upper_builder.build()
+            .get_component("xyz")
+            .get_component(upper_builder.SUPPORT)
+        )
+
+        lower_builder = PFCoilSupportBuilder(
+            self.my_test_params, {}, self.tf_xz_koz, pf_xz_lower
+        )
+        lower_support = (
+            lower_builder.build()
+            .get_component("xyz")
+            .get_component(lower_builder.SUPPORT)
+        )
+        np.testing.assert_almost_equal(
+            lower_support.shape.volume, upper_support.shape.volume
+        )
+
+    @pytest.mark.parametrize(
+        "x, z, dx, dz",
+        [
+            (100, 0, 0.3, 0.3),
+            (0.3, 0.3, 0.3, 0.3),
+        ],
+    )
+    def test_bad_positions(self, x, z, dx, dz):
+        pf_xz = self.make_dummy_pf(x, z, dx, dz)
+        builder = PFCoilSupportBuilder(self.my_test_params, {}, self.tf_xz_koz, pf_xz)
+        with pytest.raises(BuilderError):
+            builder.build()
