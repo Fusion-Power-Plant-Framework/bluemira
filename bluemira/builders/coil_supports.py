@@ -127,8 +127,7 @@ class ITERGravitySupportBuilder(Builder):
         x_inner_line = x_g_support - 0.5 * width
         x_outer_line = x_g_support + 0.5 * width
         z_min = self.tf_xz_keep_out_zone.bounding_box.z_min
-        z_max = self.tf_xz_keep_out_zone.bounding_box.z_max
-        z_max = z_min + 0.5 * (z_max - z_min)
+        z_max = z_min + 0.5 * (self.tf_xz_keep_out_zone.bounding_box.z_max - z_min)
         x_min = self.tf_xz_keep_out_zone.bounding_box.x_min + 0.5 * width
         x_max = self.tf_xz_keep_out_zone.bounding_box.x_max - 0.5 * width
         if (x_g_support < x_min) | (x_g_support > x_max):
@@ -204,10 +203,10 @@ class ITERGravitySupportBuilder(Builder):
         plate_and_gap = (
             self.params.tf_gs_g_plate.value + self.params.tf_gs_tk_plate.value
         )
-        n_plates = (plating_width + self.params.tf_gs_g_plate.value) / plate_and_gap
+        n_plates = int((plating_width + self.params.tf_gs_g_plate.value) / plate_and_gap)
         total_width = (
-            int(n_plates) * self.params.tf_gs_tk_plate.value
-            + (int(n_plates) - 1) * self.params.tf_gs_g_plate.value
+            n_plates * self.params.tf_gs_tk_plate.value
+            + (n_plates - 1) * self.params.tf_gs_g_plate.value
         )
         delta_width = plating_width - total_width
         yz_profile.translate(vector=(0.5 * delta_width, 0, 0))
@@ -216,7 +215,7 @@ class ITERGravitySupportBuilder(Builder):
             BluemiraFace(yz_profile), vec=(self.params.tf_gs_tk_plate.value, 0, 0)
         )
         plate_list.append(plate)
-        for _ in range(int(n_plates) - 1):
+        for _ in range(n_plates - 1):
             plate = plate.deepcopy()
             plate.translate(
                 vector=(
