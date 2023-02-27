@@ -564,7 +564,7 @@ def calc_curr_dens_profiles(
     psi_1D = psi_ax - psi_norm_1D**2 * (psi_ax - psi_b)
 
     psi_1D_0 = psi_1D
-    for _ in range(50):
+    for i in range(50):
         # calculate pprime profile from p
         p_fun_psi1D = interp1d(psi_1D, p, fill_value="extrapolate")
         pprime_psi1D = nd.Derivative(p_fun_psi1D)
@@ -608,7 +608,8 @@ def calc_curr_dens_profiles(
             break
     else:
         bluemira_warn(
-            "Jackpot, you've somehow found a set of inputs for which this calculation does not converge almost immediately."
+            f"Jackpot, you've somehow found a set of inputs for which this calculation does not converge almost immediately."
+            f"{rms_error=} after {i} iterations."
         )
 
     if I_p == 0:
