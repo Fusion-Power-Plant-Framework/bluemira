@@ -39,6 +39,7 @@ from bluemira.geometry.tools import (
     make_polygon,
     sweep_shape,
 )
+from bluemira.geometry.wire import BluemiraWire
 
 
 class TestITERGravitySupportBuilder:
@@ -213,8 +214,37 @@ class TestOISBuilder:
         )
         builder = OISBuilder(params, {}, ois_profile)
         ois = builder.build()
+        self._check_no_intersection_with_TFs(ois, builder)
+
+    def _check_no_intersection_with_TFs(self, ois, builder):
         ois_body = ois.get_component("xyz").get_component(builder.SUPPORT).shape
         result = sorted(boolean_cut(ois_body, self.tf_coils[0]), key=lambda s: -s.volume)
         assert np.isclose(ois_body.volume, result[0].volume)
         result = sorted(boolean_cut(ois_body, self.tf_coils[1]), key=lambda s: -s.volume)
         assert np.isclose(ois_body.volume, result[0].volume)
+
+    def test_curved_profile(self):
+        result = boolean_cut(
+            self.pd,
+            make_polygon({"x": [9, 20, 20, 9], "z": [-4, -4, -8, -8]}, closed=True),
+        )[-1]
+        result.translate(vector=(-0.25, 0, 0))
+        r_copy = result.deepcopy()
+        r_copy.translate(vector=(0.5, 0, 0))
+        p1 = result.start_point()
+        p2 = result.end_point()
+        p3 = r_copy.start_point()
+        p4 = r_copy.end_point()
+
+        join_1 = make_polygon([p2, p4])
+        join_2 = make_polygon([p3, p1])
+
+        ois_profile_2 = BluemiraWire([result, join_1, r_copy, join_2])
+        params = OISBuilderParams(
+            Parameter("n_TF", 16),
+            Parameter("tf_wp_depth", 1.4),
+            Parameter("tk_tf_side", 0.1),
+        )
+        builder = OISBuilder(params, {}, ois_profile_2)
+        ois = builder.build()
+        self._check_no_intersection_with_TFs(ois, builder)
