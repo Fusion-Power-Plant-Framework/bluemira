@@ -368,35 +368,3 @@ ax[1].plot(x_plasmod, FFprime, label="bluemira")
 ax[1].set_title("FF'")
 ax[1].legend()
 plt.show()
-# g2_fun = interp1d(x1D, g2, fill_value="extrapolate")
-# grad_g2_x1D = nd.Gradient(g2_fun)
-
-# g3_fun = interp1d(x1D, g3, fill_value="extrapolate")
-# grad_g3_x1D = nd.Gradient(g3_fun)
-
-# q_fun = interp1d(x_plasmod, q_plasmod, fill_value="extrapolate")
-# p_fun = interp1d(x_plasmod, p_plasmod, fill_value="extrapolate")
-# grad_p_x1D = nd.Gradient(p_fun)
-
-
-# def q2_g32(x):
-#     return q_fun(x) ** 2 / g3_fun(x) ** 2
-
-
-# def func_A(x):
-#     return (grad_g2_x1D(x) + 8 * np.pi**4 * nd.Gradient(q2_g32)(x)) / (
-#         g2_fun(x) / 2 + 8 * np.pi**4 * q_fun(x) ** 2 / g3_fun(x) ** 2
-#     )
-
-
-# from bluemira.base.constants import MU_0
-
-
-# def func_P(x):
-#     return (
-#         4
-#         * np.pi**2
-#         * MU_0
-#         * grad_p_x1D(x)
-#         / (g2_fun(x) / 2 + 8 * np.pi**4 * q_fun(x) ** 2 / g3_fun(x) ** 2)
-#     )
