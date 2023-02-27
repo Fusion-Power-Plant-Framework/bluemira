@@ -303,7 +303,11 @@ class Component(NodeMixin, Plottable, DisplayableCAD):
 
         return self
 
-    def add_children(self, children: List[Component], merge_trees=False):
+    def add_children(
+        self,
+        children: Optional[Union[Component, List[Component]]],
+        merge_trees: bool = False,
+    ):
         """
         Add multiple children to this node
 
@@ -317,6 +321,8 @@ class Component(NodeMixin, Plottable, DisplayableCAD):
         self: Component
             This component.
         """
+        if children is None:
+            return
         if isinstance(children, Component):
             return self.add_child(children)
         if not isinstance(children, list):
