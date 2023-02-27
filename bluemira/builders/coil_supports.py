@@ -335,7 +335,7 @@ class PFCoilSupportBuilder(Builder):
 
     def _build_support_xs(self):
         bb = self.pf_coil_xz.bounding_box
-        width = self.params.tf_wp_depth + 2 * self.params.tk_tf_side
+        width = self.params.tf_wp_depth.value + 2 * self.params.tk_tf_side.value
         half_width = 0.5 * width
         if bb.x_min < half_width:
             raise BuilderError("PF coil has too small a minimum radius!")
@@ -346,8 +346,8 @@ class PFCoilSupportBuilder(Builder):
         beta = np.arcsin(half_width / bb.x_max)
         outer_dr = half_width * np.tan(beta)
 
-        x_min = bb.x_min - self.params.pf_s_g - inner_dr
-        x_max = bb.x_max + self.params.pf_s_g + outer_dr
+        x_min = bb.x_min - self.params.pf_s_g.value - inner_dr
+        x_max = bb.x_max + self.params.pf_s_g.value + outer_dr
         z_min = bb.z_min
         z_max = bb.z_max
         box_inner = make_polygon(
@@ -358,7 +358,7 @@ class PFCoilSupportBuilder(Builder):
             },
             closed=True,
         )
-        box_outer = offset_wire(box_inner, self.params.pf_s_tk_plate)
+        box_outer = offset_wire(box_inner, self.params.pf_s_tk_plate.value)
         face = BluemiraFace([box_outer, box_inner])
         return face
 
@@ -481,7 +481,7 @@ class PFCoilSupportBuilder(Builder):
         xz_profile = self._make_rib_profile(support_face)
         # Calculate the rib gap width and make the ribs
         rib_list = []
-        total_rib_tk = self.params.pf_s_n_plate * self.params.pf_s_tk_plate
+        total_rib_tk = self.params.pf_s_n_plate.value * self.params.pf_s_tk_plate.value
         if total_rib_tk >= width:
             bluemira_warn(
                 "PF coil support rib thickness and number exceed available thickness! You're getting a solid block instead"
@@ -490,12 +490,12 @@ class PFCoilSupportBuilder(Builder):
             rib_block = extrude_shape(xz_profile, vec=(0, width, 0))
             rib_list.append(rib_block)
         else:
-            gap_size = (width - total_rib_tk) / (self.params.pf_s_n_plate - 1)
-            rib = extrude_shape(xz_profile, vec=(0, self.params.pf_s_tk_plate, 0))
+            gap_size = (width - total_rib_tk) / (self.params.pf_s_n_plate.value - 1)
+            rib = extrude_shape(xz_profile, vec=(0, self.params.pf_s_tk_plate.value, 0))
             rib_list.append(rib)
-            for _ in range(self.params.pf_s_n_plate - 1):
+            for _ in range(self.params.pf_s_n_plate.value - 1):
                 rib = rib.deepcopy()
-                rib.translate(vector=(0, self.params.pf_s_tk_plate + gap_size, 0))
+                rib.translate(vector=(0, self.params.pf_s_tk_plate.value + gap_size, 0))
                 rib_list.append(rib)
         return rib_list
 
@@ -508,7 +508,7 @@ class PFCoilSupportBuilder(Builder):
         shape_list = []
         # First build the support block around the PF coil
         support_face = self._build_support_xs()
-        width = self.params.tf_wp_depth + 2 * self.params.tk_tf_side
+        width = self.params.tf_wp_depth.value + 2 * self.params.tk_tf_side.value
         support_block = extrude_shape(support_face, vec=(0, width, 0))
         shape_list.append(support_block)
 

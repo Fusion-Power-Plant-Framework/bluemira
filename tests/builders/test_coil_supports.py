@@ -23,6 +23,7 @@ import numpy as np
 import pytest
 
 from bluemira.base.error import BuilderError
+from bluemira.base.parameter_frame import Parameter
 from bluemira.builders.coil_supports import (
     ITERGravitySupportBuilder,
     ITERGravitySupportBuilderParams,
@@ -94,14 +95,12 @@ class TestITERGravitySupportBuilder:
 class TestPFCoilSupportBuilder:
 
     my_test_params = PFCoilSupportBuilderParams(
-        {
-            "tf_wp_depth": {"value": 1.4, "unit": "m"},
-            "tf_wp_width": {"value": 0.8, "unit": "m"},
-            "tk_tf_side": {"value": 0.05, "unit": "m"},
-            "pf_s_tk_plate": {"value": 0.15, "unit": "m"},
-            "pf_s_n_plate": {"value": 4, "unit": "n/a"},
-            "pf_s_g": {"value": 0.05, "unit": "m"},
-        }
+        Parameter("tf_wp_depth", 1.4, unit="m"),
+        Parameter("tf_wp_width", 0.8, unit="m"),
+        Parameter("tk_tf_side", 0.05, unit="m"),
+        Parameter("pf_s_tk_plate", 0.15, unit="m"),
+        Parameter("pf_s_n_plate", 4, unit=""),
+        Parameter("pf_s_g", 0.05, unit="m"),
     )
 
     tf = PrincetonD()
