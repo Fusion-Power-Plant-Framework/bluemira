@@ -34,6 +34,7 @@ from bluemira.base.parameter_frame._parameter import (
     Parameter,
     ParameterValueType,
 )
+from bluemira.base.reactor_config import ConfigParams
 
 _PfT = TypeVar("_PfT", bound="ParameterFrame")
 
@@ -180,6 +181,48 @@ class ParameterFrame:
                 return cls.from_dict(json.load(f))
         # load from a JSON string
         return cls.from_dict(json.loads(json_in))
+
+    @classmethod
+    def from_config_params(cls: Type[_PfT], config_params: ConfigParams) -> _PfT:
+        """
+        Initialise an instance from a ConfigParams object,
+        which holds a ParameterFrame and a dict, which must be joined together
+        to form a unified ParameterFrame
+        """
+        kwargs = {}
+
+        # from from_frame
+        for field in cls.__dataclass_fields__:
+            try:
+                kwargs[field] = getattr(config_params.global_params, field)
+            except AttributeError:
+                raise ValueError(
+                    f"Cannot create ParameterFrame from other. "
+                    f"Other frame does not contain field '{field}'."
+                )
+
+        # from from_dict
+        data = copy.deepcopy(config_params.local_params)
+        for member in cls.__dataclass_fields__:
+            try:
+                param_data = data.pop(member)
+            except KeyError as e:
+                raise ValueError(f"Data for parameter '{member}' not found.") from e
+
+            value_type = _validate_parameter_field(member, cls._get_types()[member])
+            try:
+                _validate_units(param_data, value_type)
+            except pint.errors.PintError as pe:
+                raise ValueError("Unit conversion failed") from pe
+
+            kwargs[member] = Parameter(
+                name=member, **param_data, _value_types=value_type
+            )
+
+        if len(data) > 0:
+            raise ValueError(f"Unknown parameter(s) {str(list(data))[1:-1]} in dict.")
+
+        return cls(**kwargs)
 
     def to_dict(self) -> Dict[str, Dict[str, Any]]:
         """Serialize this ParameterFrame to a dictionary."""
@@ -410,7 +453,7 @@ def _non_comutative_unit_conversion(dimensionality, numerator, dpa, fpy):
 
 
 def make_parameter_frame(
-    params: Union[Dict[str, ParamDictT], ParameterFrame, str, None],
+    params: Union[Dict[str, ParamDictT], ParameterFrame, ConfigParams, str, None],
     param_cls: Type[_PfT],
 ) -> Union[_PfT, None]:
     """
@@ -461,4 +504,6 @@ def make_parameter_frame(
         return param_cls.from_json(params)
     elif isinstance(params, ParameterFrame):
         return param_cls.from_frame(params)
+    elif isinstance(params, ConfigParams):
+        return param_cls.from_config_params(params)
     raise TypeError(f"Cannot interpret type '{type(params)}' as {param_cls.__name__}.")

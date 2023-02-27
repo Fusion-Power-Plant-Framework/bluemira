@@ -504,6 +504,7 @@ build_config = {
                 "phi_pos_l": {"value": 0, "unit": "degree", "source": "Input"},
             },
         },
+        "builder": {},
     },
     "TF Coil": {
         "params": {},

@@ -3,23 +3,92 @@
 
 import json
 import pprint
-from typing import Union
+from dataclasses import dataclass
+from typing import Dict, List, Type, TypeVar, Union
 
 from bluemira.base.error import ReactorConfigError
 from bluemira.base.look_and_feel import bluemira_warn
+from bluemira.base.parameter_frame import ParameterFrame, make_parameter_frame
 
+
+@dataclass
+class ConfigParams:
+    global_params: ParameterFrame
+    local_params: Dict
+
+
+_PfT = TypeVar("_PfT", bound=ParameterFrame)
 _PARAMETERS_KEY = "params"
 
 
 class ReactorConfig:
-    """TODO"""
+    """
+    Provide a simple interface over config JSON files
+    to define some structure that the config files must
+    comply to and handles globally vs locally scoped params.
+
+    Global (or more globally scoped) params always overwrite
+    locally scoped params.
+    Params can be defined at the global level
+    (i.e. for every component, for every builder and designer)
+    and at the component (i.e. defined for both builder and designer).
+
+    Parameters
+    ----------
+    config_path: str | dict
+        The path to the config JSON file or a dict of the data.
+
+    Example
+    -------
+
+    .. code-block:: python
+
+        reactor_config = ReactorConfig(
+            {
+                "params": {"a": 10},
+                "comp A": {
+                    "params": {"a": 5, "b": 5},
+                    "designer": {
+                        "params": {"a": 1},
+                        "some_config": "some_value",
+                    },
+                    "builder": {
+                        "params": {"b": 1, "c": 1},
+                        "another_config": "another_value",
+                    },
+                },
+                "comp B": {
+                    "params": {"b": 5},
+                    "builder": {
+                        "third_config": "third_value",
+                    },
+                },
+            }
+        )
+
+        print(reactor_config.designer_params("comp A"))
+        # {'a': 10, 'b': 5}
+        print(reactor_config.designer_config("comp A"))
+        # {'some_config': 'a_value', 'a': 10, 'b': 5}
+        print(reactor_config.builder_params("comp A"))
+        # {'a': 10, 'b': 5, 'c': 1}
+        print(reactor_config.builder_config("comp A"))
+        # {'another_config': 'b_value', 'a': 10, 'b': 5}
+        print(reactor_config.builder_config("comp B"))
+        # {'third_config': 'third_value', 'a': 10, 'b': 5}
+
+    """
 
     @staticmethod
     def _read_json_file(path: str) -> dict:
         with open(path, "r") as f:
             return json.load(f)
 
-    def __init__(self, config_path: Union[str, dict]):
+    def __init__(
+        self,
+        config_path: Union[str, dict],
+        global_params_type: Type[_PfT],
+    ):
         if isinstance(config_path, str):
             self.config_data = ReactorConfig._read_json_file(config_path)
         elif isinstance(config_path, dict):
@@ -27,23 +96,17 @@ class ReactorConfig:
         else:
             raise ReactorConfigError("Invalid config_path")
 
-    def __str__(self) -> str:
-        """Returns config_data as a nicely formatted string"""
-        return pprint.pformat(
-            self.config_data,
-            sort_dicts=False,
-            indent=1,
-            width=10,
+        self.global_params = make_parameter_frame(
+            self.config_data.get(_PARAMETERS_KEY, {}),
+            global_params_type,
         )
 
-    @property
-    def global_params(self) -> dict:
-        """
-        Gets the global parameters (top level "params" in the config file).
-        If no global params were defined in the config file,
-        returns an empty dict.
-        """
-        return self.config_data.get(_PARAMETERS_KEY, {})
+    def __str__(self) -> str:
+        """Returns config_data as a nicely pretty formatted string"""
+        return self._pprint_dict(self.config_data)
+
+    def _pprint_dict(self, d: dict) -> str:
+        return pprint.pformat(d, sort_dicts=False, indent=1)
 
     def _warn_on_duplicate_keys(
         self,
@@ -72,96 +135,53 @@ class ReactorConfig:
                 f"'{shared_key}' is defined in {component_name}'s {_PARAMETERS_KEY} as well as in {component_name}'s {sub_name} {_PARAMETERS_KEY}"
             )
 
-    def _check_component_in_config(self, component_name: str):
-        if component_name not in self.config_data:
+    def _check_key_in(self, key: str, config_layer: dict):
+        if key not in config_layer:
             raise ReactorConfigError(
-                f"'{component_name}' not present in the config",
+                f"'{key}' not present in config:\n{self._pprint_dict(config_layer)}",
             )
 
-    def _check_sub_in_component(self, component_name: str, sub_name: str):
-        if sub_name not in self.config_data[component_name]:
-            raise ReactorConfigError(
-                f"'{sub_name}' not present in {component_name}",
-            )
+    def _check_args_are_strings(self, args):
+        for a in args:
+            if not isinstance(a, str):
+                raise ReactorConfigError("args must strings")
 
-    def _get_params(self, component_name: str, sub_name: str) -> dict:
-        self._check_component_in_config(component_name)
-        self._check_sub_in_component(component_name, sub_name)
+    def _extract(self, arg_keys: List[str], is_config: bool) -> dict:
+        extracted = {}
 
-        global_params = self.global_params
-        local_params = self.config_data[component_name].get(_PARAMETERS_KEY, {})
+        prev_layer = self.config_data
+        for next_idx, current_arg_key in enumerate(arg_keys, start=1):
+            self._check_key_in(current_arg_key, prev_layer)
+            current_layer = prev_layer[current_arg_key]
 
-        sub_data = self.config_data[component_name][sub_name]
-        if _PARAMETERS_KEY not in sub_data:
-            raise ReactorConfigError(
-                f"'{_PARAMETERS_KEY}' must present in {component_name}.{sub_name}. It can be empty",
-            )
-        local_sub_params = self.config_data[component_name][sub_name][_PARAMETERS_KEY]
+            next_arg_key = arg_keys[next_idx] if next_idx < len(arg_keys) else None
 
-        self._warn_on_duplicate_keys(
-            component_name,
-            sub_name,
-            global_params,
-            local_params,
-            local_sub_params,
-        )
+            # add all keys not in extracted already
+            # and don't add the next key
+            # and if doing a config, don't add any "params" (_PARAMETERS_KEY)
+            for k, v in current_layer.items():
+                if k in extracted:
+                    continue
+                if next_arg_key and k == next_arg_key:
+                    continue
+                if is_config and k == _PARAMETERS_KEY:
+                    continue
+                extracted[k] = v
 
         # higher up the tree overwrites lower
-        return {
-            **local_sub_params,
-            **local_params,
-            **global_params,
-        }
+        return extracted
 
-    def _get_config(self, component_name: str, sub_name: str) -> dict:
-        self._check_component_in_config(component_name)
-        self._check_sub_in_component(component_name, sub_name)
+    def params_for(self, component_name: str, *args: str, file_name="") -> ConfigParams:
+        args = component_name + args
+        self._check_args_are_strings(args)
 
-        global_params = self.global_params
-        local_params = self.config_data[component_name].get(_PARAMETERS_KEY, {})
-
-        local_sub_config: dict = self.config_data[component_name][sub_name].copy()
-        local_sub_config.pop(_PARAMETERS_KEY, {})
-
-        self._warn_on_duplicate_keys(
-            component_name,
-            sub_name,
-            global_params,
-            local_params,
-            local_sub_config,
+        return ConfigParams(
+            global_params=self.global_params,
+            local_params=self._extract(args, is_config=False),
         )
 
-        # higher up the tree overwrites lower
-        return {
-            **local_sub_config,
-            **local_params,
-            **global_params,
-        }
+    def config_for(self, component_name: str, *args: str, file_name="") -> dict:
+        args = component_name + args
+        self._check_args_are_strings(args)
 
-    def designer_params(self, component_name: str) -> dict:
-        """TODO"""
-        return self._get_params(
-            component_name=component_name,
-            sub_name="designer",
-        )
-
-    def builder_params(self, component_name: str) -> dict:
-        """TODO"""
-        return self._get_params(
-            component_name=component_name,
-            sub_name="builder",
-        )
-
-    def designer_config(self, component_name: str) -> dict:
-        """TODO"""
-        return self._get_config(
-            component_name=component_name,
-            sub_name="designer",
-        )
-
-    def builder_config(self, component_name: str) -> dict:
-        """TODO"""
-        return self._get_config(
-            component_name=component_name,
-            sub_name="builder",
-        )
+        return self._extract(args, is_config=True)

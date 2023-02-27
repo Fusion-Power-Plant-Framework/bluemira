@@ -4,10 +4,14 @@
   },
   "comp A": {
     "params": {
-      "a": 5
+      "a": 5,
+      "b": 5
     },
     "designer": {
       "params": { "a": 1 }
+    },
+    "builder": {
+      "params": { "b": 1, "c": 1 }
     }
   },
   "comp B": {

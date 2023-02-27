@@ -5,6 +5,8 @@ import pytest
 from bluemira.base.error import ReactorConfigError
 from bluemira.base.reactor_config import ReactorConfig
 
+class
+
 
 class TestReactorConfigClass:
     """
@@ -22,12 +24,19 @@ class TestReactorConfigClass:
         config_path = Path(__file__).parent / "reactor_config.warnings.json"
         reactor_config = ReactorConfig(config_path.as_posix())
 
-        p = reactor_config.designer_params("comp A")
+        dp = reactor_config.designer_params("comp A")
+        bp = reactor_config.builder_params("comp A")
 
-        assert len(caplog.records) == 3
+        assert len(caplog.records) == 5
         for record in caplog.records:
             assert record.levelname == "WARNING"
-        assert p["a"] == 10
+
+        assert dp["a"] == 10
+        assert dp["b"] == 5
+
+        assert bp["a"] == 10
+        assert bp["b"] == 5
+        assert bp["c"] == 1
 
     def test_warning_global_sub_overwrites(self, caplog):
         config_path = Path(__file__).parent / "reactor_config.warnings.json"
