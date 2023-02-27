@@ -200,7 +200,14 @@ class TestOISBuilder:
         closed=True,
     )
 
-    tf_coils = circular_pattern(sweep_shape(xs, pd), n_shapes=n_TF)[:2]
+    tf_coil = sweep_shape(xs, pd)
+
+    def _check_no_intersection_with_TFs(self, ois, builder, tf_coils):
+        ois_body = ois.get_component("xyz").get_component(builder.SUPPORT).shape
+        result = sorted(boolean_cut(ois_body, tf_coils[0]), key=lambda s: -s.volume)
+        assert np.isclose(ois_body.volume, result[0].volume)
+        result = sorted(boolean_cut(ois_body, tf_coils[1]), key=lambda s: -s.volume)
+        assert np.isclose(ois_body.volume, result[0].volume)
 
     @pytest.mark.parametrize("n_TF", [14, 15, 16, 17, 18, 19])
     def test_rectangular_profile(self, n_TF):
@@ -215,14 +222,8 @@ class TestOISBuilder:
         )
         builder = OISBuilder(params, {}, ois_profile)
         ois = builder.build()
-        self._check_no_intersection_with_TFs(ois, builder)
-
-    def _check_no_intersection_with_TFs(self, ois, builder):
-        ois_body = ois.get_component("xyz").get_component(builder.SUPPORT).shape
-        result = sorted(boolean_cut(ois_body, self.tf_coils[0]), key=lambda s: -s.volume)
-        assert np.isclose(ois_body.volume, result[0].volume)
-        result = sorted(boolean_cut(ois_body, self.tf_coils[1]), key=lambda s: -s.volume)
-        assert np.isclose(ois_body.volume, result[0].volume)
+        tf_coils = circular_pattern(self.tf_coil, n_shapes=n_TF)[:2]
+        self._check_no_intersection_with_TFs(ois, builder, tf_coils)
 
     @pytest.mark.parametrize("n_TF", [14, 15, 16, 17, 18, 19])
     def test_curved_profile(self, n_TF):
@@ -249,4 +250,5 @@ class TestOISBuilder:
         )
         builder = OISBuilder(params, {}, ois_profile_2)
         ois = builder.build()
-        self._check_no_intersection_with_TFs(ois, builder)
+        tf_coils = circular_pattern(self.tf_coil, n_shapes=n_TF)[:2]
+        self._check_no_intersection_with_TFs(ois, builder, tf_coils)

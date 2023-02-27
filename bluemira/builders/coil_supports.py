@@ -643,7 +643,7 @@ if __name__ == "__main__":
     )
 
     params = OISBuilderParams(
-        Parameter("n_TF", 16),
+        Parameter("n_TF", 14),
         Parameter("tf_wp_depth", 1.4),
         Parameter("tk_tf_side", 0.1),
     )
