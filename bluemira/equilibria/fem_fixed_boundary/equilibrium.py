@@ -463,7 +463,7 @@ def calc_metric_coefficients(
     def grad_psi_norm(x):
         return np.hypot(*grad_psi_2D(x))
 
-    def gradV_norm(x):
+    def grad_vol_norm(x):
         """GradV norm"""
         return grad_psi_norm_norm(x) * grad_vol_1D(psi_norm_2D_func(x))
 
@@ -476,7 +476,7 @@ def calc_metric_coefficients(
         # Poloidal field
         bp = np.array([grad_psi_norm(p) for p in points]) / (2 * np.pi * fs.coords.x)
 
-        grad_V_norm_2 = np.array([gradV_norm(p) ** 2 for p in points])
+        grad_V_norm_2 = np.array([grad_vol_norm(p) ** 2 for p in points])
         y0_data = 1 / bp
         y1_data = grad_V_norm_2 * y0_data
         y3_data = 1 / (fs.coords.x**2 * bp)
@@ -486,6 +486,8 @@ def calc_metric_coefficients(
         g1[i + 1] = np.trapz(y1_data, x_data) / denom
         g2[i + 1] = np.trapz(y2_data, x_data) / denom
         g3[i + 1] = np.trapz(y3_data, x_data) / denom
+        # NOTE: To future self, g1 is not used (right now), and the calculation could be removed
+        # to speed things up.
 
     g2_temp = interp1d(psi_norm_1D[1:-1], g2[1:-1], fill_value="extrapolate")
     g2[-1] = g2_temp(psi_norm_1D[-1])
@@ -498,17 +500,17 @@ def calc_metric_coefficients(
 
 
 def calc_curr_dens_profiles(
-    x1D: np.ndarray,
+    psi_norm_1D: np.ndarray,
     p: np.ndarray,
     q: np.ndarray,
     g2: np.ndarray,
     g3: np.ndarray,
-    V: np.ndarray,
-    Ip: float,
+    volume: np.ndarray,
+    I_p: float,
     B_0: float,
     R_0: float,
-    Psi_ax: float,
-    Psi_b: float,
+    psi_ax: float,
+    psi_b: float,
 ):
     """
     Calculate pprime and ffprime from metric coefficients, emulating behaviour
@@ -520,66 +522,57 @@ def calc_curr_dens_profiles(
     Returns
     -------
     """
-    Psi1D = Psi_ax - x1D**2 * (Psi_ax - Psi_b)
+    psi_1D = psi_ax - psi_norm_1D**2 * (psi_ax - psi_b)
 
-    F_b = B_0 * R_0
-
-    g2_fun = interp1d(x1D, g2, fill_value="extrapolate")
-    g3_fun = interp1d(x1D, g3, fill_value="extrapolate")
-    grad_g2_fun = nd.Derivative(g2_fun)
-    grad_g3_fun = nd.Derivative(g3_fun)
-    grad_g2_data = grad_g2_fun(x1D)
-    grad_g3_data = grad_g3_fun(x1D)
-    q_fun = interp1d(x1D, q, fill_value="extrapolate")
-    p_fun = interp1d(x1D, p, fill_value="extrapolate")
-    grad_q_fun = nd.Derivative(q_fun)
-    grad_p_fun = nd.Derivative(p_fun)
-    grad_q_data = grad_q_fun(x1D)
-    grad_p_data = grad_p_fun(x1D)
-
-    Psi1D_0 = Psi1D
+    Psi1D_0 = psi_1D
     for i in range(100):
         # calculate pprime profile from p
-        p_fun_psi1D = interp1d(Psi1D, p, fill_value="extrapolate")
+        p_fun_psi1D = interp1d(psi_1D, p, fill_value="extrapolate")
         pprime_psi1D = nd.Derivative(p_fun_psi1D)
-        pprime_psi1D_data = pprime_psi1D(Psi1D)
+        pprime_psi1D_data = pprime_psi1D(psi_1D)
 
         q3 = q / g3
         AA = g2 / q3**2 + (16 * np.pi**4) * g3
-        C = -4 * np.pi**2 * MU_0 * np.gradient(p, x1D) / AA
+        C = -4 * np.pi**2 * MU_0 * np.gradient(p, psi_norm_1D) / AA
         dum3 = g2 / q3
-        dum2 = np.gradient(dum3, x1D)
+        dum2 = np.gradient(dum3, psi_norm_1D)
         B = -dum2 / q3 / AA
         Fb = -R_0 * B_0 / (2 * np.pi)
         yb = 0.5 * Fb**2
-        dum2 = cumulative_trapezoid(B, x1D, initial=0)
+        dum2 = cumulative_trapezoid(B, psi_norm_1D, initial=0)
         dum1 = np.exp(2.0 * dum2)
         dum1 = dum1 / dum1[-1]
-        dum3 = cumulative_trapezoid(C / dum1, x1D, initial=0)
+        dum3 = cumulative_trapezoid(C / dum1, psi_norm_1D, initial=0)
         dum3 = dum3 - dum3[-1]
         C1 = yb
         y = dum1 * (dum3 + C1)
         dum2 = g2 / q3
-        dum3 = np.gradient(dum2, Psi1D)
+        dum3 = np.gradient(dum2, psi_1D)
         betahat = dum3 / q3 / AA
         chat = -4 * np.pi**2 * MU_0 * pprime_psi1D_data / AA
         FF = np.sqrt(2.0 * y)
         FFprime = 4 * np.pi**2 * (chat - betahat * FF**2)
 
-        Phi1D = -cumulative_trapezoid(q, Psi1D, initial=0)
+        Phi1D = -cumulative_trapezoid(q, psi_1D, initial=0)
         Phib = Phi1D[-1]
 
         F = 2 * np.pi * FF
         dPsidV = -F / q * g3 / (2.0 * np.pi)
-        Psi1D = np.flip(cumulative_trapezoid(np.flip(dPsidV), np.flip(V), initial=0))
+        psi_1D = np.flip(
+            cumulative_trapezoid(np.flip(dPsidV), np.flip(volume), initial=0)
+        )
 
-        RMSE = np.sqrt(np.square(np.subtract(Psi1D, Psi1D_0)).mean())
-        Psi1D_0 = Psi1D
-        print(f"{i}: {RMSE}")
-        if RMSE <= 1e-5:
+        rms_error = np.sqrt(np.square(np.subtract(psi_1D, Psi1D_0)).mean())
+        Psi1D_0 = psi_1D
+
+        if rms_error <= 1e-5:
             break
+    else:
+        bluemira_warn(
+            "Jackpot, you've somehow found a set of inputs for which this calculation does not converge immediately."
+        )
 
-    if Ip == 0:
-        Ip = -g2[-1] * dPsidV[-1] / (4 * np.pi**2 * MU_0)
+    if I_p == 0:
+        I_p = -g2[-1] * dPsidV[-1] / (4 * np.pi**2 * MU_0)
 
-    return Ip, Phi1D, Psi1D, pprime_psi1D_data, F, FFprime
+    return I_p, Phi1D, psi_1D, pprime_psi1D_data, F, FFprime
