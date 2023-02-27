@@ -385,10 +385,7 @@ class PFCoilSupportBuilder(Builder):
         for inter in intersections:
             direction = inter - point
             direction /= np.linalg.norm(direction)
-            if np.dot(correct_direction, direction) < 0:
-                pass
-            else:
-
+            if not np.dot(correct_direction, direction) < 0:
                 dx = inter[0] - point[0]
                 dz = inter[2] - point[2]
 
@@ -400,8 +397,6 @@ class PFCoilSupportBuilder(Builder):
             i_min = np.argmin(distances)
             p_inter = directed_intersections[i_min]
             return p_inter
-        else:
-            return None
 
     def _get_support_point_angle(self, support_face: BluemiraFace):
         bb = support_face.boundary[0].bounding_box
