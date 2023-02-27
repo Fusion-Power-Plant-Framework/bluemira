@@ -32,7 +32,7 @@ from bluemira.equilibria.flux_surfaces import ClosedFluxSurface
 from bluemira.equilibria.shapes import flux_surface_zakharov
 
 
-class PLASMODRegressionRawData:
+class PLASMODVerificationRawData:
     # fmt:off
     x = np.array([0.00000000000E+0000, 0.24915370422E-0001, 0.49830740845E-0001, 0.74746111267E-0001,    0.99661481689E-0001,      0.12457685211E+0000,      0.14949222253E+0000,      0.17440759296E+0000,      0.19932296338E+0000,      0.22423833380E+0000,      0.24915370422E+0000,      0.27406907465E+0000,      0.29898444507E+0000,      0.32389981549E+0000,      0.34881518591E+0000,      0.37373055634E+0000,      0.39864592676E+0000,      0.42356129718E+0000,      0.44847666760E+0000,      0.47339203803E+0000,      0.49830740845E+0000,      0.52322277887E+0000,      0.54813814929E+0000,      0.57305351971E+0000,      0.59796889014E+0000,      0.62288426056E+0000,      0.64779963098E+0000,      0.67271500140E+0000,      0.69763037183E+0000,      0.72254574225E+0000 ,     0.74746111267E+0000,      0.77237648309E+0000,      0.79729185352E+0000 ,     0.82220722394E+0000 ,     0.84712259436E+0000,      0.87203796478E+0000 ,     0.89695333521E+0000 ,     0.92186870563E+0000,      0.94678407605E+0000,      0.97169944647E+0000,      0.99661481689E+0000])  # noqa: E241
     pprime = np.array([-0.47221539896E+0005, -0.22431292511E+0005, -0.86875727899E+0004, -0.29871168410E+0004 ,     0.79115841589E+0003  ,    0.35705781947E+0004   ,   0.58006610869E+0004 ,     0.77051386777E+0004  ,    0.93985683515E+0004   ,   0.10936692503E+0005 ,     0.12340718829E+0005  ,    0.13610612778E+0005   ,   0.14733525527E+0005 ,     0.15689282338E+0005  ,    0.16460875548E+0005   ,   0.13781070397E+0005 ,     0.10353390446E+0005  ,    0.97015104443E+0004   ,   0.91970256955E+0004 ,     0.87091289709E+0004  ,    0.82380673106E+0004   ,   0.77832740909E+0004 ,     0.73578597173E+0004  ,    0.69600041379E+0004   ,   0.65672068765E+0004 ,     0.61826632544E+0004  ,    0.58164255669E+0004   ,   0.54681899424E+0004 ,     0.51375378900E+0004  ,    0.48240223653E+0004   ,   0.45293076395E+0004 ,     0.42524727350E+0004   ,   0.39900250682E+0004   ,   0.37408518611E+0004 ,     0.35024972785E+0004   ,   0.32723927636E+0004   ,   0.30533145611E+0004 ,     0.43975983863E+0004   ,   0.78406750693E+0004   ,   0.87186341472E+0004 ,     0.65536842039E+0004])  # noqa: E241
@@ -64,7 +64,7 @@ class PLASMODRegressionRawData:
     a = np.linspace(0, amin, n)
 
 
-class TestPLASMODRegressionMetricCoefficients(PLASMODRegressionRawData):
+class TestPLASMODVerificationMetricCoefficients(PLASMODVerificationRawData):
     """
     A verification test for which a series of flux surfaces are calculated
     using the parameterisation used in EMEQ, in PLASMOD.
@@ -73,7 +73,7 @@ class TestPLASMODRegressionMetricCoefficients(PLASMODRegressionRawData):
     flux surfaces for a given PLASMOD run, and are compared for equality.
 
     Note that PLASMOD uses a number of smoothing and extrapolation tricks,
-    which we have not mimicked here, as such, it is to be expected that
+    which we have not mimicked here. As such, it is to be expected that
     the comparison is not perfect.
     """
 
@@ -192,13 +192,13 @@ class TestPLASMODRegressionMetricCoefficients(PLASMODRegressionRawData):
         np.testing.assert_allclose(self.results["g3"], self.g3, rtol=0.02)
 
 
-class TestPLASMODRegressionCurrentProfiles(PLASMODRegressionRawData):
+class TestPLASMODVerificationCurrentProfiles(PLASMODVerificationRawData):
     """
     A verification test for which we take the raw PLASMOD profiles
     and recalculate p' and FF', among other things.
 
     Note that PLASMOD uses a number of smoothing and extrapolation tricks,
-    which we have not mimicked here, as such, it is to be expected that
+    which we have not mimicked here. As such, it is to be expected that
     the comparison is not perfect.
     """
 
@@ -225,15 +225,42 @@ class TestPLASMODRegressionCurrentProfiles(PLASMODRegressionRawData):
             "F": F,
             "FFprime": ff_prime,
         }
+        cls.f, cls.ax = plt.subplots(2, 4)
+
+    @classmethod
+    def teardown_class(cls):
+        for i, a in enumerate(cls.ax.flat):
+            if i < 4:
+                a.legend()
+            else:
+                a.set_xlabel("x")
+        cls.ax[1, 0].set_ylabel("PLASMOD-bluemira")
+        plt.show()
 
     def test_psi(self):
+        self.ax[0, 0].plot(self.rho, self.psi, label="PLASMOD")
+        self.ax[0, 0].plot(self.rho, self.results["psi_1D"], ls="--", label="bluemira")
+        self.ax[0, 0].set_title("$\\psi$")
+        self.ax[1, 0].plot(self.rho, self.psi - self.results["psi_1D"])
         np.testing.assert_allclose(self.results["psi_1D"], self.psi, rtol=0.01)
 
     def test_phi(self):
+        self.ax[0, 1].plot(self.rho, self.phi, label="PLASMOD")
+        self.ax[0, 1].plot(self.rho, self.results["phi_1D"], ls="--", label="bluemira")
+        self.ax[0, 1].set_title("$\\phi$")
+        self.ax[1, 1].plot(self.rho, self.phi - self.results["phi_1D"])
         np.testing.assert_allclose(self.results["phi_1D"][1:], self.phi[1:], rtol=0.0175)
 
     def test_pprime(self):
+        self.ax[0, 2].plot(self.rho, self.pprime, label="PLASMOD")
+        self.ax[0, 2].plot(self.rho, self.results["pprime"], ls="--", label="bluemira")
+        self.ax[0, 2].set_title("$p^{'}$")
+        self.ax[1, 2].plot(self.rho, self.pprime - self.results["pprime"])
         np.testing.assert_allclose(self.results["pprime"], self.pprime, rtol=0.35)
 
     def test_ffprime(self):
+        self.ax[0, 3].plot(self.rho, self.ffprime, label="PLASMOD")
+        self.ax[0, 3].plot(self.rho, self.results["FFprime"], ls="--", label="bluemira")
+        self.ax[0, 3].set_title("$FF^{'}$")
+        self.ax[1, 3].plot(self.rho, self.ffprime - self.results["FFprime"])
         np.testing.assert_allclose(self.results["FFprime"], self.ffprime, rtol=0.25)
