@@ -85,21 +85,14 @@ class TestPLASMODRegressionRaw:
         # Extract coordinates
         x = []
         z = []
-        xz = []
         psi = []
         for i, fs in enumerate(self.flux_surfaces):
             x.append(fs.coords.x[:-1])
             z.append(fs.coords.z[:-1])
-            xz.append(np.array([fs.coords.x[:-1], fs.coords.z[:-1]]))
             psi.append(self.psi[i] * np.ones(len(fs.coords.x) - 1))
         x2d = np.concatenate(x)
         z2d = np.concatenate(z)
-        nx, nz = 200, 200
-        _x = np.linspace(np.amin(x2d), np.amax(x2d), nx)
-        _z = np.linspace(np.amin(z2d), np.amax(z2d), nz)
-        _xx, _zz = np.meshgrid(_x, _z, indexing="ij")
 
-        xz2d = np.array([np.concatenate(x), np.concatenate(z)])
         psi2d = np.concatenate(psi)
         psi_ax = self.psi[0]
         psi_b = self.psi[-1]
