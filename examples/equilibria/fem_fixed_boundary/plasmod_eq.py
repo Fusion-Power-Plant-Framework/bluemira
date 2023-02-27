@@ -1,0 +1,267 @@
+import os
+import shutil
+
+import matplotlib.pyplot as plt
+import numpy as np
+import scipy.integrate
+
+from bluemira.base.file import get_bluemira_path, get_bluemira_root
+from bluemira.base.logs import set_log_level
+from bluemira.codes import transport_code_solver
+from bluemira.equilibria.fem_fixed_boundary.equilibrium import (
+    solve_transport_fixed_boundary,
+)
+from bluemira.equilibria.fem_fixed_boundary.fem_magnetostatic_2D import (
+    FemGradShafranovFixedBoundary,
+)
+from bluemira.equilibria.fem_fixed_boundary.file import save_fixed_boundary_to_file
+from bluemira.equilibria.shapes import JohnerLCFS
+
+set_log_level("NOTSET")
+
+SOLVER_MODULE_REF = "bluemira.codes.plasmod.api"
+RUN_SUBPROCESS_REF = "bluemira.codes.interface.run_subprocess"
+DATA_DIR = os.path.join(os.path.dirname(__file__), "data")
+PARAMS_FILE = os.path.join(DATA_DIR, "params.json")
+
+if plasmod_binary := shutil.which("plasmod"):
+    PLASMOD_PATH = os.path.dirname(plasmod_binary)
+else:
+    PLASMOD_PATH = os.path.join(os.path.dirname(get_bluemira_root()), "plasmod/bin")
+binary = os.path.join(PLASMOD_PATH, "plasmod")
+
+plasmod_build_config = {
+    "problem_settings": {},
+    "mode": "read",
+    "binary": binary,
+    "directory": get_bluemira_path("", subfolder="generated_data"),
+}
+
+plasmod_solver = transport_code_solver(
+    params={},
+    build_config=plasmod_build_config,
+    module="PLASMOD",
+)
+
+plasmod_solver.execute("read")
+
+outputs = plasmod_solver.plasmod_outputs()
+
+I_p = 0.20501396465e08
+R_0 = 0.898300000e01
+B_0 = 0.531000000e01
+amin = outputs.amin
+shif = outputs.shif
+dprof = outputs.dprof
+kprof = outputs.kprof
+qprof = outputs.qprof
+volprof = outputs.volprof
+
+g2 = outputs.g2
+g3 = outputs.g3
+
+ffprime = outputs.ffprime
+press = outputs.press
+pprime = outputs.pprime
+
+psi = outputs.psi
+
+theta = np.linspace(0, 2 * np.pi, 201)
+rPLASMOD_sep = R_0 + shif[-1] + amin * (np.cos(theta) - dprof[-1] * np.sin(theta) ** 2)
+zPLASMOD_sep = amin * kprof[-1] * np.sin(theta)
+
+from bluemira.geometry.coordinates import Coordinates
+import bluemira.geometry.tools as geotools
+
+points = Coordinates({"x": rPLASMOD_sep, "z": zPLASMOD_sep})
+Plasmod_sep = geotools.interpolate_bspline(points)
+Plasmod_sep_surf = geotools.BluemiraFace(Plasmod_sep)
+
+import bluemira.display as display
+
+display.plot_2d(Plasmod_sep)
+
+xPsiPlasmod = np.sqrt(psi / psi[-1])
+
+c_vol = Plasmod_sep_surf.area * 2 * np.pi * Plasmod_sep_surf.center_of_mass[0]
+
+from bluemira.base.logs import set_log_level
+
+set_log_level("DEBUG")
+from bluemira.base.look_and_feel import bluemira_error
+
+try:
+    np.testing.assert_almost_equal(c_vol, volprof[-1])
+except AssertionError as e:
+    bluemira_error(f"Assertion error: {e}")
+
+
+from bluemira.equilibria.fem_fixed_boundary.fem_magnetostatic_2D import (
+    FemGradShafranovFixedBoundary,
+)
+from bluemira.base.constants import MU_0
+
+_pprime = -pprime / (-2 * np.pi * R_0 * 1e-6)
+_ffprime = -ffprime / (-2 * np.pi / MU_0 / R_0 * 1e-6)
+
+
+from bluemira.base.components import PhysicalComponent
+
+plasma = PhysicalComponent("Plasma", shape=Plasmod_sep_surf)
+
+plasma.shape.mesh_options = {"lcar": 0.1, "physical_group": "plasma"}
+plasma.shape.boundary[0].mesh_options = {"lcar": 0.3, "physical_group": "lcfs"}
+
+from bluemira.mesh import meshing
+
+directory = get_bluemira_path("", subfolder="generated_data")
+meshfiles = [os.path.join(directory, p) for p in ["Mesh.geo_unrolled", "Mesh.msh"]]
+meshing.Mesh(meshfile=meshfiles)(plasma)
+
+from bluemira.mesh.tools import msh_to_xdmf, import_mesh
+
+msh_to_xdmf("Mesh.msh", dimensions=(0, 2), directory=directory)
+
+mesh, boundaries, subdomains, labels = import_mesh(
+    "Mesh",
+    directory=directory,
+    subdomains=True,
+)
+
+import dolfin
+
+dolfin.plot(mesh)
+plt.show()
+
+
+plt.close("all")
+
+
+from scipy.interpolate import interp1d
+
+f_pprime = interp1d(xPsiPlasmod, pprime, fill_value="extrapolate")
+f_ffprime = interp1d(xPsiPlasmod, ffprime, fill_value="extrapolate")
+
+gs_solver = FemGradShafranovFixedBoundary(
+    f_pprime,
+    f_ffprime,
+    I_p,
+    R_0,
+    B_0,
+    max_iter=20,
+    iter_err_max=1e-3,
+)
+gs_solver.set_mesh(mesh)
+gs_solver.set_profiles(f_pprime, f_ffprime, I_p, R_0, B_0)
+
+gs_solver.solve(plot=False)
+
+mesh_points = mesh.coordinates()
+c_psi = np.array([gs_solver.psi(p) for p in mesh_points])
+
+import bluemira.equilibria.fem_fixed_boundary.utilities as utilities
+
+utilities.plot_scalar_field(mesh_points[:, 0], mesh_points[:, 1], c_psi)
+
+import bluemira.equilibria.fem_fixed_boundary.equilibrium as equilibrium
+
+x1D, V, g1, g2, g3, FS = equilibrium.calc_metric_coefficients(
+    mesh, gs_solver.psi, gs_solver.psi_norm_2d, 50
+)
+
+q = interp1d(xPsiPlasmod, outputs.qprof, fill_value="extrapolate")
+q = q(x1D)
+
+p = interp1d(xPsiPlasmod, outputs.press, fill_value="extrapolate")
+p = p(x1D)
+
+Psi_ax = gs_solver.psi_ax
+Psi_b = gs_solver.psi_b
+
+Ip, Phi1D, Psi1D, pprime_psi1D_data, F, FFprime = equilibrium.calc_curr_dens_profiles(
+    x1D, p, q, g2, g3, V, 0, B_0, R_0, Psi_ax, Psi_b
+)
+
+psi_plasmod = outputs.psi[-1] - outputs.psi
+
+fig, axs = plt.subplots(3, 3)
+axs[0, 0].plot(xPsiPlasmod, outputs.g2)
+axs[0, 0].plot(x1D, g2)
+axs[0, 0].set_title("g2")
+axs[0, 1].plot(xPsiPlasmod, outputs.g3)
+axs[0, 1].plot(x1D, g3)
+axs[0, 1].set_title("g3")
+axs[1, 0].plot(xPsiPlasmod, outputs.volprof)
+axs[1, 0].plot(x1D, V)
+axs[1, 0].set_title("V")
+axs[1, 1].plot(xPsiPlasmod, outputs.pprime)
+axs[1, 1].plot(x1D, pprime_psi1D_data)
+axs[1, 1].set_title("pprime")
+axs[1, 2].plot(xPsiPlasmod, outputs.ffprime)
+axs[1, 2].plot(x1D, FFprime)
+axs[1, 2].set_title("FFprime")
+axs[0, 2].plot(x1D, F)
+axs[0, 2].set_title("F")
+axs[2, 0].plot(xPsiPlasmod, psi_plasmod)
+axs[2, 0].plot(x1D, Psi1D)
+axs[2, 0].set_title("Psi1D")
+axs[2, 1].plot(xPsiPlasmod, outputs.phi)
+axs[2, 1].plot(x1D, Phi1D)
+axs[2, 1].set_title("Phi1D")
+plt.show()
+
+
+import bluemira.equilibria.fem_fixed_boundary.utilities as utilities
+
+x_axis, z_axis = utilities.find_magnetic_axis(gs_solver.psi, mesh=mesh)
+
+radius_plasmod = np.linspace(0, outputs.amin, xPsiPlasmod.size)
+vprime_plasmod = np.gradient(outputs.volprof, radius_plasmod)
+
+radius_bluemira = np.linspace(0, R_0 + outputs.amin - x_axis, x1D.size)
+vprime_bluemira = np.gradient(V, radius_bluemira)
+
+plt.plot(radius_plasmod, outputs.vprime)
+plt.plot(radius_plasmod, vprime_plasmod)
+plt.plot(radius_bluemira, vprime_bluemira)
+plt.show()
+
+
+Ip, Phi1D, Psi1D, pprime_psi1D_data, F, FFprime = equilibrium.calc_curr_dens_profiles(
+    xPsiPlasmod,
+    outputs.press,
+    outputs.qprof,
+    outputs.g2,
+    outputs.g3,
+    outputs.volprof,
+    0,
+    B_0,
+    R_0,
+    psi_plasmod[0],
+    psi_plasmod[-1],
+)
+
+fig, axs = plt.subplots(3, 3)
+
+axs[0, 0].plot(xPsiPlasmod, outputs.volprof)
+axs[0, 0].set_title("V")
+axs[0, 1].plot(xPsiPlasmod, outputs.g2)
+axs[0, 1].set_title("g2")
+axs[0, 2].plot(xPsiPlasmod, outputs.g3)
+axs[0, 2].set_title("g3")
+
+axs[1, 0].plot(xPsiPlasmod, outputs.pprime)
+axs[1, 0].plot(xPsiPlasmod, pprime_psi1D_data)
+axs[1, 0].set_title("pprime")
+axs[1, 1].plot(xPsiPlasmod, outputs.ffprime)
+axs[1, 1].plot(xPsiPlasmod, FFprime)
+axs[1, 1].set_title("FFprime")
+
+axs[1, 2].plot(xPsiPlasmod, psi_plasmod)
+axs[1, 2].plot(xPsiPlasmod, Psi1D)
+axs[1, 2].set_title("Psi1D")
+axs[2, 0].plot(xPsiPlasmod, outputs.phi)
+axs[2, 0].plot(xPsiPlasmod, Phi1D)
+axs[2, 0].set_title("Phi1D")
+
+plt.show()

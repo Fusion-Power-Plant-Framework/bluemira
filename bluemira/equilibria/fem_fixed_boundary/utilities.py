@@ -577,3 +577,29 @@ def _interpolate_profile(
 ) -> Callable[[np.ndarray], np.ndarray]:
     """Interpolate profile data"""
     return interp1d(x, profile_data, kind="linear", fill_value="extrapolate")
+
+
+def integrcc(nx, x, y):
+    """1D trapz integral as made in Plasmod"""
+    sy = np.zeros(nx)
+    for i in range(1, nx):
+        drho = (x(i) - x(i-1))
+        y1tmp = (y(i) + y(i-1))/2.
+        sy[i] = sy[i-1] + y1tmp*drho
+    return sy
+
+
+def derivcc(nx, x, y, gga):
+    """1D derivate with interpolation at extrema as made in Plasmod"""
+    dy = np.zeros(nx)
+    for i in range(1,nx):
+        dy[i] = (y[i+1] - y[i-1])/(x[i+1] - x[i-1])
+    if gga == 1:
+        dy[0] = 0
+    if gga == 2:
+        dy[0] = (y[1] - y[0]) / (x[1] - x[0])
+
+    f_dy = interp1d(x[-2:], y[-2:], "quadratic")
+    dy[-1] = f_dy(x[-1])
+
+    return dy

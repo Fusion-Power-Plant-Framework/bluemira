@@ -500,7 +500,7 @@ def calc_metric_coefficients(mesh, psi2D: callable, x2D: callable, nx: int):
         x_data = np.concatenate([np.array([0.0]), np.cumsum(dl)])
         # Poloidal field
         bp = np.array([grad_psi_norm(p) for p in points]) / (
-            2 * np.pi * fs.coords.x**2
+            2 * np.pi * fs.coords.x
         )
 
         grad_V_norm_2 = np.array([gradV_norm(p) ** 2 for p in points])
@@ -521,85 +521,83 @@ def calc_metric_coefficients(mesh, psi2D: callable, x2D: callable, nx: int):
     g3[0] = g3_temp(x1D[0])
     g3[-1] = g3_temp(x1D[-1])
 
-    return x1D, volume, g1, g2, g3
+    return x1D, volume, g1, g2, g3, flux_surfaces
 
 
 def calc_curr_dens_profiles(
-    x1D: np.ndarray,
-    p: np.ndarray,
-    q: np.ndarray,
-    g2: np.ndarray,
-    g3: np.ndarray,
-    V: np.ndarray,
-    Ip: float,
-    B_0: float,
-    R_0: float,
-    psi_ax: float,
-    psi_b: float,
+        x1D: np.ndarray,
+        p: np.ndarray,
+        q: np.ndarray,
+        g2: np.ndarray,
+        g3: np.ndarray,
+        V: np.ndarray,
+        Ip: float,
+        B_0: float,
+        R_0: float,
+        Psi_ax: float,
+        Psi_b: float,
 ):
     """Calculate pprime and ffprime from metric coefficients"""
-    Psi1D = psi_ax - x1D**2 * (psi_ax - psi_b)
+    Psi1D = Psi_ax - x1D ** 2 * (Psi_ax - Psi_b)
 
     F_b = B_0 * R_0
 
-    q_fun = interp1d(x1D, q, fill_value="extrapolate")
-    p_fun = interp1d(x1D, p, fill_value="extrapolate")
-    grad_q_fun = nd.Gradient(q_fun)
-    grad_p_fun = nd.Gradient(p_fun)
-    grad_q_data = np.array([grad_q_fun(xi) for xi in x1D])
-    grad_p_data = np.array([grad_p_fun(xi) for xi in x1D])
-
     g2_fun = interp1d(x1D, g2, fill_value="extrapolate")
     g3_fun = interp1d(x1D, g3, fill_value="extrapolate")
-    grad_g2_fun = nd.Gradient(g2_fun)
-    grad_g3_fun = nd.Gradient(g3_fun)
-    grad_g2_data = np.array([grad_g2_fun(xi) for xi in x1D])
-    grad_g3_data = np.array([grad_g3_fun(xi) for xi in x1D])
+    grad_g2_fun = nd.Derivative(g2_fun)
+    grad_g3_fun = nd.Derivative(g3_fun)
+    grad_g2_data = grad_g2_fun(x1D)
+    grad_g3_data = grad_g3_fun(x1D)
+    q_fun = interp1d(x1D, q, fill_value="extrapolate")
+    p_fun = interp1d(x1D, p, fill_value="extrapolate")
+    grad_q_fun = nd.Derivative(q_fun)
+    grad_p_fun = nd.Derivative(p_fun)
+    grad_q_data = grad_q_fun(x1D)
+    grad_p_data = grad_p_fun(x1D)
 
-    for i in range(1):
+    Psi1D_0 = Psi1D
+    for i in range(100):
         # calculate pprime profile from p
-        # p_fun_psi1D = interp1d(Psi1D, p, fill_value="extrapolate")
-        pprime_psi1D = nd.Gradient(p_fun)
-        pprime_psi1D_data = np.array([pprime_psi1D(xi) for xi in x1D])
+        p_fun_psi1D = interp1d(Psi1D, p, fill_value="extrapolate")
+        pprime_psi1D = nd.Derivative(p_fun_psi1D)
+        pprime_psi1D_data = pprime_psi1D(Psi1D)
 
-        # temp = nd.Gradient(interp1d(x1D, q**2 / g3**2))
-        temp = nd.Gradient(interp1d(x1D, q**2 / g3**2, fill_value="extrapolate"))
-        temp_data = np.array([temp(xi) for xi in x1D])
-        denom = g2 / 2.0 + 8 * np.pi**4 * q**2 / g3
-        A = (grad_g2_data + 8 * np.pi**4 * g3 * temp_data) / denom
-        # A = (grad_g2_data + 8 * np.pi**4 * temp_data) / denom
-        P = -4 * np.pi**2 * MU_0 * grad_p_data / denom
+        q3 = q / g3
+        AA = g2 / q3 ** 2 + (16 * np.pi ** 4) * g3
+        C = -4 * np.pi ** 2 * MU_0 * np.gradient(p, x1D) / AA
+        dum3 = g2 / q3
+        dum2 = np.gradient(dum3, x1D)
+        B = -dum2 / q3 / AA
+        Fb = -R_0 * B_0 / (2 * np.pi)
+        yb = 0.5 * Fb ** 2
+        dum2 = cumulative_trapezoid(B, x1D, initial=0)
+        dum1 = np.exp(2. * dum2)
+        dum1 = dum1 / dum1[-1]
+        dum3 = cumulative_trapezoid(C / dum1, x1D, initial=0)
+        dum3 = dum3 - dum3[-1]
+        C1 = yb
+        y = dum1 * (dum3 + C1)
+        dum2 = g2 / q3
+        dum3 = np.gradient(dum2, Psi1D)
+        betahat = dum3 / q3 / AA
+        chat = -4 * np.pi ** 2 * MU_0 * pprime_psi1D_data / AA
+        FF = np.sqrt(2. * y)
+        FFprime = 4 * np.pi ** 2 * (chat - betahat * FF ** 2)
 
-        y_b = (F_b * g3[-1]) / (q[-1] * 2 * np.pi) ** 2
-        ct_Ax = cumulative_trapezoid(A, x1D, initial=0)
-        t_Ax = trapezoid(A, x1D)
-        fA = np.exp(-ct_Ax - t_Ax)
-        fP = np.exp(ct_Ax - t_Ax) * P
-        fC = cumulative_trapezoid(fP, x1D, initial=0) - trapezoid(fP, x1D)
-        y = fA * (y_b + fC)
+        Phi1D = -cumulative_trapezoid(q, Psi1D, initial=0)
+        Phib = Phi1D[-1]
 
-        dPhidV_data = q * np.sqrt(y)
-        # dPsidV_data = -dPsidV_data / q
-        dPsidV_data = -dPhidV_data / q
-        # temp = nd.Gradient(interp1d(V, g2 * dPsidV_data))
-        temp = nd.Gradient(interp1d(V, g2 * dPsidV_data, fill_value="extrapolate"))
-        temp_data = np.array([temp(xi) for xi in x1D])
-        # FFprime = -1 / (4 * np.pi**2 * g3) * temp_data - MU_0 / g3 * pprime_psi1D
-        FFprime = -1 / (4 * np.pi**2 * g3) * temp_data - MU_0 / g3 * pprime_psi1D_data
+        F = 2 * np.pi * FF
+        dPsidV = -F / q * g3 / (2. * np.pi)
+        Psi1D = np.flip(cumulative_trapezoid(np.flip(dPsidV), np.flip(V), initial=0))
 
-        # calcualte toroidal flux profile
-        Phi1D = -cumulative_trapezoid(q, Psi1D)
-
-        # calculate F
-        F = 2 * np.pi / g3 * dPhidV_data
-
-        Psi1D = np.flip(cumulative_trapezoid(np.flip(dPsidV_data), np.flip(V)))
-
-    H = dPsidV_data
+        RMSE = np.sqrt(np.square(np.subtract(Psi1D, Psi1D_0)).mean())
+        Psi1D_0 = Psi1D
+        print(f"{i}: {RMSE}")
+        if RMSE <= 1e-5:
+            break
 
     if Ip == 0:
-        Ip = -g2[-1] * dPsidV_data[-1] / (4 * np.pi**2 * MU_0)
-        # F_b = B_0 * R_0
-        # Ip = g2[-1]*g3[-1] * F_b / (8 * np.pi**3 * MU_0 * q[-1])
+        Ip = -g2[-1] * dPsidV[-1] / (4 * np.pi ** 2 * MU_0)
 
     return Ip, Phi1D, Psi1D, pprime_psi1D_data, F, FFprime
