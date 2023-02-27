@@ -30,7 +30,7 @@ from bluemira.equilibria.shapes import flux_surface_zakharov
 
 
 class TestPLASMODRegressionRaw:
-    """CloughTocher2DInterpolator,
+    """
     A verification test for which a series of flux surfaces are calculated
     using the parameterisation used in EMEQ, in PLASMOD.
 

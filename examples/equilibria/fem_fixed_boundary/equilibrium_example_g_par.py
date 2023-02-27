@@ -285,213 +285,23 @@ gs_solver = fem_GS_fixed_boundary
 transport_solver = plasmod_solver
 
 from bluemira.equilibria.fem_fixed_boundary.equilibrium import calc_metric_coefficients
-from bluemira.geometry.coordinates import Coordinates
+from bluemira.equilibria.fem_fixed_boundary.utilities import get_flux_surfaces_from_mesh
+
+x1d, flux_surfaces = get_flux_surfaces_from_mesh(
+    gs_solver.mesh, gs_solver.psi_norm_2d, transport_solver.get_profile("x")
+)
 
 x1Dn, Vn, g1n, g2n, g3n = calc_metric_coefficients(
-    gs_solver.mesh,
+    flux_surfaces,
     gs_solver.psi,
     gs_solver.psi_norm_2d,
-    len(transport_solver.get_profile("x")),
+    x1d,
 )
 
 x_plasmod = transport_solver.get_profile("x")
 v_plasmod = transport_solver.get_profile("V")
 g2_plasmod = transport_solver.get_profile("g2")
 g3_plasmod = transport_solver.get_profile("g3")
-
-if False:
-    x1D = np.linspace(0.1, 1, 50)
-    x1D = transport_solver.get_profile("x")
-
-    x2D = gs_solver.psi_norm_2d
-    mesh = gs_solver.mesh
-    nx = x1D.size
-
-    from bluemira.equilibria.fem_fixed_boundary import utilities
-
-    mesh_points = gs_solver.mesh.coordinates()
-    x = mesh_points[:, 0]
-    z = mesh_points[:, 1]
-
-    x2D_data = np.array([x2D(p) for p in mesh_points])
-
-    ax, cntr, cntrf = utilities.plot_scalar_field(x, z, x2D_data, levels=x1D)
-    plt.title("psi_norm")
-    plt.show()
-
-    index = []
-    FS = []
-    for i in range(nx):
-        if x1D[i] == 1:
-            from bluemira.equilibria.fem_fixed_boundary import file
-
-            path = np.transpose(file._get_mesh_boundary(mesh))
-            FS.append(path)
-        else:
-            path = cntr.collections[i].get_paths()
-            if len(path):
-                FS.append(path[0].vertices)
-            else:
-                print(f"Cannot calculate volume for psi_norm = {x1D[i]}")
-                index.append(i)
-
-    n = len(index)
-    for i in range(n):
-        x1D = np.delete(x1D, index[i])
-
-    nx = x1D.size
-
-    g1 = np.zeros((nx, 1))
-    g2 = np.zeros((nx, 1))
-    g3 = np.zeros((nx, 1))
-    V = np.zeros((nx, 1))
-
-    from bluemira.base.components import Component, PhysicalComponent
-
-    # calculate volume
-    from bluemira.geometry.tools import BluemiraFace, make_polygon
-
-    FS_pol = []
-    root = Component("root")
-    for i in range(nx):
-        points = Coordinates({"x": FS[i][:, 0], "z": FS[i][:, 1]})
-        pgonPol = make_polygon(points, closed=True)
-        PhysicalComponent(f"FS{i}", pgonPol, parent=root)
-        pgonFac = BluemiraFace(pgonPol)
-        V[i] = 2 * np.pi * pgonFac.center_of_mass[0] * pgonFac.area
-        FS_pol.append(pgonPol)
-
-    root.plot_2d(show=False)
-    plt.title("Flux surfaces for g2,g3 calculation")
-    plt.show()
-
-    V = V.reshape(-1)
-
-    from scipy.interpolate import interp1d
-
-    V_fun = interp1d(x1D, V, fill_value="extrapolate")
-
-    # dVdx_data = np.gradient(V,x1D)
-    # dVdx = interp1d(x1D, dVdx_data, fill_value="extrapolate")
-
-    import numdifftools as nd
-
-    gradV_x1D = nd.Gradient(V_fun)
-    gradV_x1D_data = np.array([gradV_x1D(x) for x in x1D])
-
-    plt.plot(x1D, V, label="V, calculated")
-    plt.plot(transport_solver.get_profile("x"), transport_solver.get_profile("V"))
-    # plt.plot(x1D, dVdx_data, 'ro')
-    plt.plot(x1D, gradV_x1D_data, "g-", label="gradV")
-    plt.xlabel("psi_norm")
-    plt.legend()
-    plt.show()
-
-    grad_x2D = nd.Gradient(x2D)
-
-    def grad_x2D_norm(x):
-        return np.sqrt(np.sum(np.abs(grad_x2D(x)) ** 2))
-
-    grad_x2D_data = np.array([grad_x2D(p) for p in mesh_points])
-    grad_x2D_norm_data = np.sqrt(np.sum(np.abs(grad_x2D_data) ** 2, axis=-1))
-
-    ax, cntr, cntrf = utilities.plot_scalar_field(x, z, grad_x2D_norm_data)
-    plt.title("|grad psi_norm|")
-    plt.show()
-
-    psi_data = np.array([gs_solver.psi(p) for p in mesh_points])
-    grad_psi = nd.Gradient(gs_solver.psi)
-    grad_psi_data = np.array([grad_psi(p) for p in mesh_points])
-
-    def grad_psi_norm(x):
-        return np.sqrt(np.sum(np.abs(grad_psi(x)) ** 2))
-
-    grad_psi_norm_data = np.array([grad_psi_norm(p) for p in mesh_points])
-
-    ax, cntr, cntrf = utilities.plot_scalar_field(x, z, psi_data)
-    plt.title("psi")
-    plt.show()
-
-    ax, cntr, cntrf = utilities.plot_scalar_field(x, z, grad_psi_norm_data)
-    plt.title("|grad psi|")
-    plt.show()
-
-    r2D = mesh_points[:, 0]
-
-    def gradV_norm(x):
-        """gradV norm"""
-        return grad_x2D_norm(x) * gradV_x1D(x2D(x))
-
-    gradV_norm_data = np.array([gradV_norm(p) for p in mesh_points])
-
-    ax, cntr, cntrf = utilities.plot_scalar_field(x, z, gradV_norm_data)
-    plt.title("|grad V|")
-    plt.show()
-
-    def Bp(x):
-        """Bp"""
-        return np.divide(grad_psi_norm(x), x[0]) / (2 * np.pi * x[0])
-
-    Bp_data = np.array([Bp(p) for p in mesh_points])
-
-    dlp = []
-    lp = []
-    for i in range(nx):
-        dlp.append(
-            np.concatenate(
-                (np.array([0]), np.array([edge.length for edge in FS_pol[i].edges]))
-            )
-        )
-        lp.append(np.cumsum(dlp[i]))
-
-    for i in range(nx):
-        print(f"integrating over FS[{i}]")
-        points = FS_pol[i].vertexes[[0, 2], :]
-        points = np.transpose(points)
-        points = np.concatenate((points, [points[0]]))
-
-        y0_data = np.array([1 / Bp(p) for p in points])
-        y1_data = np.array([gradV_norm(p) ** 2 / Bp(p) for p in points])
-        y2_data = np.array([gradV_norm(p) ** 2 / Bp(p) / p[0] ** 2 for p in points])
-        y3_data = np.array([1 / Bp(p) / p[0] ** 2 for p in points])
-        x_data = lp[i]
-        d = np.trapz(y0_data, x_data)
-        g1[i] = np.trapz(y1_data, x_data) / d
-        g2[i] = np.trapz(y2_data, x_data) / d
-        g3[i] = np.trapz(y3_data, x_data) / d
-
-    g1 = g1.flatten()
-    g2 = g2.flatten()
-    g3 = g3.flatten()
-
-    x1D = np.insert(x1D, 0, 0)
-    g1 = np.insert(g1, 0, 0)
-    g2 = np.insert(g2, 0, 0)
-    g3 = np.insert(g3, 0, 0)
-
-    g2_temp = interp1d(x1D[1:-1], g2[1:-1], fill_value="extrapolate")
-    g2[-1] = g2_temp(x1D[-1])
-
-    g3_temp = interp1d(x1D[1:-1], g3[1:-1], fill_value="extrapolate")
-    g3[0] = g3_temp(x1D[0])
-    g3[-1] = g3_temp(x1D[-1])
-
-    f, ax = plt.subplots(1, 4)
-    ax[0].plot(x1Dn, Vn, label="new")
-    ax[0].plot(x1D[1:], V, label="old")
-
-    ax[1].plot(x1Dn, g1n, label="new")
-    ax[1].plot(x1D, g1, label="old")
-
-    ax[2].plot(x1Dn, g2n, label="new")
-    ax[2].plot(x1D, g2, label="old")
-
-    ax[3].plot(x1Dn, g3n, label="new")
-    ax[3].plot(x1D, g3, label="old")
-    for a in ax:
-        a.legend()
-
-    plt.show()
 
 f, ax = plt.subplots(1, 3)
 

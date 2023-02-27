@@ -413,7 +413,10 @@ def solve_transport_fixed_boundary(
 
 
 def calc_metric_coefficients(
-    flux_surfaces, psi2D: callable, x2D: callable, x1D: np.ndarray
+    flux_surfaces,
+    psi_2D_func: callable,
+    psi_norm_2D_func: callable,
+    psi_norm_1D: np.ndarray,
 ):
     """
     Calculate metric coefficients of a set of flux surfaces.
@@ -422,16 +425,16 @@ def calc_metric_coefficients(
     ----------
     flux_surfaces: List[ClosedFluxSurface]
         List of closed flux surfaces on which to calculate the coefficients
-    psi2D:
+    psi_2D_func:
         Callable which calculates psi of the form f(p: Iterable[2]) = float
-    x2D:
+    psi_norm_2D_func:
         Callable which calculates psi norm of the form f(p: Iterable[2]) = float
-    x1D:
+    psi_norm_1D:
         Array of 1-D normalised psi values
 
     Returns
     -------
-    x1D: np.ndarray
+    psi_norm_1D: np.ndarray
         1-D vector of normalised psi values at which the coefficients were calculated
     volume: np.ndarray
         1-D volume vector
@@ -442,10 +445,10 @@ def calc_metric_coefficients(
     g3: np.ndarray
         1-D g3 vector
     """
-    if x1D[0] != 0:
+    if psi_norm_1D[0] != 0:
         # Initialise with 0 at axis
-        x1D = np.insert(x1D, 0, 0)
-    nx = x1D.size
+        psi_norm_1D = np.insert(psi_norm_1D, 0, 0)
+    nx = psi_norm_1D.size
 
     g1 = np.zeros(nx)
     g2 = np.zeros(nx)
@@ -453,23 +456,22 @@ def calc_metric_coefficients(
     volume = np.zeros(nx)
     volume[1:] = [fs.volume for fs in flux_surfaces]
 
-    volume_func = interp1d(x1D, volume, fill_value="extrapolate")
-    gradV_x1D = nd.Gradient(volume_func)
-    grad_x2D = nd.Gradient(x2D)
-    grad_psi = nd.Gradient(psi2D)
+    volume_func = interp1d(psi_norm_1D, volume, fill_value="extrapolate")
+    grad_vol_1D = nd.Gradient(volume_func)
+    grad_psinorm_2D = nd.Gradient(psi_norm_2D_func)
+    grad_psi_2D = nd.Gradient(psi_2D_func)
 
-    def grad_x2D_norm(x):
-        return np.hypot(*grad_x2D(x))
+    def grad_psi_norm_norm(x):
+        return np.hypot(*grad_psinorm_2D(x))
 
     def grad_psi_norm(x):
-        return np.hypot(*grad_psi(x))
+        return np.hypot(*grad_psi_2D(x))
 
     def gradV_norm(x):
         """GradV norm"""
-        return grad_x2D_norm(x) * gradV_x1D(x2D(x))
+        return grad_psi_norm_norm(x) * grad_vol_1D(psi_norm_2D_func(x))
 
     for i, fs in enumerate(flux_surfaces):
-        print(f"integrating over FS[{i}]")
         points = fs.coords.xz.T
         dx = np.diff(fs.coords.x)
         dz = np.diff(fs.coords.z)
@@ -489,14 +491,14 @@ def calc_metric_coefficients(
         g2[i + 1] = np.trapz(y2_data, x_data) / denom
         g3[i + 1] = np.trapz(y3_data, x_data) / denom
 
-    g2_temp = interp1d(x1D[1:-1], g2[1:-1], fill_value="extrapolate")
-    g2[-1] = g2_temp(x1D[-1])
+    g2_temp = interp1d(psi_norm_1D[1:-1], g2[1:-1], fill_value="extrapolate")
+    g2[-1] = g2_temp(psi_norm_1D[-1])
 
-    g3_temp = interp1d(x1D[1:-1], g3[1:-1], fill_value="extrapolate")
-    g3[0] = g3_temp(x1D[0])
-    g3[-1] = g3_temp(x1D[-1])
+    g3_temp = interp1d(psi_norm_1D[1:-1], g3[1:-1], fill_value="extrapolate")
+    g3[0] = g3_temp(psi_norm_1D[0])
+    g3[-1] = g3_temp(psi_norm_1D[-1])
 
-    return x1D, volume, g1, g2, g3
+    return psi_norm_1D, volume, g1, g2, g3
 
 
 def calc_curr_dens_profiles(
@@ -512,7 +514,16 @@ def calc_curr_dens_profiles(
     Psi_ax: float,
     Psi_b: float,
 ):
-    """Calculate pprime and ffprime from metric coefficients"""
+    """
+    Calculate pprime and ffprime from metric coefficients, emulating behaviour
+    in PLASMOD.
+
+    Parameters
+    ----------
+
+    Returns
+    -------
+    """
     Psi1D = Psi_ax - x1D**2 * (Psi_ax - Psi_b)
 
     F_b = B_0 * R_0

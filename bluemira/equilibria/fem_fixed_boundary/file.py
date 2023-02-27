@@ -35,6 +35,7 @@ from bluemira.equilibria.fem_fixed_boundary.fem_magnetostatic_2D import (
 from bluemira.equilibria.fem_fixed_boundary.utilities import (
     _interpolate_profile,
     find_magnetic_axis,
+    get_mesh_boundary,
 )
 from bluemira.equilibria.file import EQDSKInterface
 from bluemira.equilibria.grid import Grid
@@ -80,7 +81,7 @@ def save_fixed_boundary_to_file(
     nz: int
         Number of vertical points to use in the psi map
     """
-    xbdry, zbdry = _get_mesh_boundary(equilibrium.mesh)
+    xbdry, zbdry = get_mesh_boundary(equilibrium.mesh)
     xbdry = np.append(xbdry, xbdry[0])
     zbdry = np.append(zbdry, zbdry[0])
     nbdry = len(xbdry)
