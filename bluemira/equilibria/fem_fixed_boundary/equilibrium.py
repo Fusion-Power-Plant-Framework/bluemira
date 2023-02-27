@@ -474,18 +474,18 @@ def calc_metric_coefficients(
         # Poloidal field
         bp = np.array([grad_psi_norm(p) for p in points]) / (2 * np.pi * fs.coords.x)
 
-        grad_V_norm_2 = np.array([grad_vol_norm(p) ** 2 for p in points])
+        grad_vol_norm_2 = np.array([grad_vol_norm(p) ** 2 for p in points])
         y0_data = 1 / bp
-        y1_data = grad_V_norm_2 * y0_data
+        y1_data = grad_vol_norm_2 * y0_data
         y3_data = 1 / (fs.coords.x**2 * bp)
-        y2_data = grad_V_norm_2 * y3_data
+        y2_data = grad_vol_norm_2 * y3_data
 
         denom = np.trapz(y0_data, x_data)
         g1[i + 1] = np.trapz(y1_data, x_data) / denom
         g2[i + 1] = np.trapz(y2_data, x_data) / denom
         g3[i + 1] = np.trapz(y3_data, x_data) / denom
-        # NOTE: To future self, g1 is not used (right now), and the calculation could be removed
-        # to speed things up.
+        # NOTE: To future self, g1 is not used (right now), and the calculation could
+        # be removed to speed things up.
 
     g2_temp = interp1d(psi_norm_1D[1:-1], g2[1:-1], fill_value="extrapolate")
     g2[-1] = g2_temp(psi_norm_1D[-1])
@@ -516,9 +516,43 @@ def calc_curr_dens_profiles(
 
     Parameters
     ----------
+    psi_norm_1D:
+        1-D normalised psi array
+    p:
+        1-D pressure array
+    q:
+        1-D safety factor array
+    g2:
+        1-D g2 metric array
+    g3:
+        1-D g3 metric array
+    volume:
+        1-D volume array
+    I_p:
+        Plasma current [A]. If 0.0, recalculated here.
+    B_0:
+        Toroidal field at R_0 [T]
+    R_0:
+        Major radius [m]
+    psi_ax:
+        Poloidal magnetic flux at the magnetic axis [V.s]
+    psi_b:
+        Poloidal magnetic flux at the boundary [V.s]
 
     Returns
     -------
+    I_p:
+        Plasma current [A] (calculated if I_p=0)
+    phi_1D:
+        Toroidal magnetic flux 1-D array
+    psi_1D:
+        Poloidal magnetic flux 1-D array
+    pprime:
+        p' 1-D array
+    F:
+        F 1-D array
+    ff_prime:
+        FF' 1-D array
 
     Notes
     -----
@@ -534,7 +568,7 @@ def calc_curr_dens_profiles(
         # calculate pprime profile from p
         p_fun_psi1D = interp1d(psi_1D, p, fill_value="extrapolate")
         pprime_psi1D = nd.Derivative(p_fun_psi1D)
-        pprime_psi1D_data = pprime_psi1D(psi_1D)
+        pprime = pprime_psi1D(psi_1D)
 
         # Here we preserve some PLASMOD notation, for future sanity
         q3 = q / g3
@@ -555,7 +589,7 @@ def calc_curr_dens_profiles(
         dum2 = g2 / q3
         dum3 = np.gradient(dum2, psi_1D)
         betahat = dum3 / q3 / AA
-        chat = -4 * np.pi**2 * MU_0 * pprime_psi1D_data / AA
+        chat = -4 * np.pi**2 * MU_0 * pprime / AA
         FF = np.sqrt(2.0 * y)  # noqa: N806
         ff_prime = 4 * np.pi**2 * (chat - betahat * FF**2)
 
@@ -580,4 +614,4 @@ def calc_curr_dens_profiles(
     if I_p == 0:
         I_p = -g2[-1] * d_psi_dv[-1] / (4 * np.pi**2 * MU_0)
 
-    return I_p, phi_1D, psi_1D, pprime_psi1D_data, F, ff_prime
+    return I_p, phi_1D, psi_1D, pprime, F, ff_prime
