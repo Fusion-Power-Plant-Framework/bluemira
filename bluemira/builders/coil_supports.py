@@ -45,6 +45,7 @@ from bluemira.geometry.tools import (
     make_polygon,
     offset_wire,
     slice_shape,
+    sweep_shape,
 )
 from bluemira.geometry.wire import BluemiraWire
 

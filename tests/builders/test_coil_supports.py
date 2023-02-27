@@ -27,10 +27,18 @@ from bluemira.base.parameter_frame import Parameter
 from bluemira.builders.coil_supports import (
     ITERGravitySupportBuilder,
     ITERGravitySupportBuilderParams,
+    OISBuilder,
+    OISBuilderParams,
     PFCoilSupportBuilder,
     PFCoilSupportBuilderParams,
 )
 from bluemira.geometry.parameterisations import PictureFrame, PrincetonD, TripleArc
+from bluemira.geometry.tools import (
+    boolean_cut,
+    circular_pattern,
+    make_polygon,
+    sweep_shape,
+)
 
 
 class TestITERGravitySupportBuilder:
@@ -177,3 +185,36 @@ class TestPFCoilSupportBuilder:
         builder = PFCoilSupportBuilder(self.my_test_params, {}, self.tf_xz_koz, pf_xz)
         with pytest.raises(BuilderError):
             builder.build()
+
+
+class TestOISBuilder:
+    x_1 = 4
+    x_2 = 16
+    pd = PrincetonD({"x1": {"value": x_1}, "x2": {"value": x_2}}).create_shape()
+
+    n_TF = 16
+    hd = 0.5 * 1.6
+    xs = make_polygon(
+        {"x": [x_1 - hd, x_1 + hd, x_1 + hd, x_1 - hd], "y": [-hd, -hd, hd, hd], "z": 0},
+        closed=True,
+    )
+
+    tf_coils = circular_pattern(sweep_shape(xs, pd), n_shapes=n_TF)[:2]
+
+    def test_rectangular_profile(self):
+        ois_profile = make_polygon(
+            {"x": [self.x_2, self.x_2 + 0.5, 14.5, 14], "y": 0, "z": [0, 0, 6, 6]},
+            closed=True,
+        )
+        params = OISBuilderParams(
+            Parameter("n_TF", 16),
+            Parameter("tf_wp_depth", 1.4),
+            Parameter("tk_tf_side", 0.1),
+        )
+        builder = OISBuilder(params, {}, ois_profile)
+        ois = builder.build()
+        ois_body = ois.get_component("xyz").get_component(builder.SUPPORT).shape
+        result = sorted(boolean_cut(ois_body, self.tf_coils[0]), key=lambda s: -s.volume)
+        assert np.isclose(ois_body.volume, result[0].volume)
+        result = sorted(boolean_cut(ois_body, self.tf_coils[1]), key=lambda s: -s.volume)
+        assert np.isclose(ois_body.volume, result[0].volume)
