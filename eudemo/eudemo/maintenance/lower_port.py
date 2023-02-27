@@ -31,7 +31,7 @@ from bluemira.base.designer import Designer
 from bluemira.base.parameter_frame import Parameter, ParameterFrame
 from bluemira.geometry.coordinates import Coordinates
 from bluemira.geometry.face import BluemiraFace
-from bluemira.geometry.tools import make_polygon
+from bluemira.geometry.tools import make_polygon, offset_wire
 from bluemira.geometry.wire import BluemiraWire
 
 
@@ -40,6 +40,7 @@ class LowerPortDesignerParams(ParameterFrame):
     """LowerPort ParameterFrame"""
 
     lower_port_angle: Parameter[float]
+    divertor_padding: Parameter[float]
 
 
 class LowerPortDesigner(Designer):
@@ -84,18 +85,21 @@ class LowerPortDesigner(Designer):
         traj = Coordinates(
             {
                 "x": x_path,
-                "z": z_lower_path,
+                "z": z_lower_path - self.params.divertor_padding.value,
             }
         )
 
-        port = Coordinates(
-            {
-                "x": np.append(x_path, x_path[::-1]),
-                "z": np.append(
-                    z_lower_path,
-                    (z_lower_path + self.divertor_xz.bounding_box.z_max)[::-1],
-                ),
-            }
+        port = make_polygon(
+            Coordinates(
+                {
+                    "x": np.append(x_path, x_path[::-1]),
+                    "z": np.append(
+                        z_lower_path,
+                        (z_lower_path + self.divertor_xz.bounding_box.z_max)[::-1],
+                    ),
+                }
+            ),
+            closed=True,
         )
 
-        return BluemiraFace(make_polygon(port, closed=True)), traj
+        return BluemiraFace(offset_wire(port, self.params.divertor_padding.value)), traj
