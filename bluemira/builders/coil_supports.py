@@ -124,8 +124,7 @@ class ITERGravitySupportBuilder(Builder):
         x_inner_line = x_g_support - 0.5 * width
         x_outer_line = x_g_support + 0.5 * width
         z_min = self.tf_xz_keep_out_zone.bounding_box.z_min
-        z_max = self.tf_xz_keep_out_zone.bounding_box.z_max
-        z_max = z_min + 0.5 * (z_max - z_min)
+        z_max = z_min + 0.5 * (self.tf_xz_keep_out_zone.bounding_box.z_max - z_min)
         x_min = self.tf_xz_keep_out_zone.bounding_box.x_min + 0.5 * width
         x_max = self.tf_xz_keep_out_zone.bounding_box.x_max - 0.5 * width
         if (x_g_support < x_min) | (x_g_support > x_max):
