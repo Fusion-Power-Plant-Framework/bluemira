@@ -206,7 +206,7 @@ class TestFieldLine:
         field_line = flt.trace_field_line(12.5, 0, n_points=1000, forward=False)
         self._check_endpoint(field_line, coords)
 
-    def _check_endpoint(self, field_line, coords, tol=1e-4):
+    def _check_endpoint(self, field_line, coords, tol=1e-8):
         """
         Check that the end point of a field line lies near enough to the boundary
         """
