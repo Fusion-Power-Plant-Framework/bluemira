@@ -9,6 +9,7 @@ from typing import Union
 import numpy as np
 
 from bluemira.power_cycle.errors import NetPowerABCError, PowerCycleABCError
+from bluemira.power_cycle.tools import unnest_list
 
 
 class PowerCycleABC(ABC):
@@ -235,6 +236,13 @@ class NetPowerABC(PowerCycleABC, metaclass=ABCMeta):
         unique_vector = list(set(vector))
         sorted_vector = sorted(unique_vector)
         return sorted_vector
+
+    @staticmethod
+    def _build_time_from_power_set(power_set):
+        all_times = [power_object.intrinsic_time for power_object in power_set]
+        unnested_times = unnest_list(all_times)
+        time = NetPowerABC._unique_and_sorted_vector(unnested_times)
+        return time
 
     def _make_secondary_in_plot(self):
         """
