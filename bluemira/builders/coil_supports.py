@@ -43,6 +43,7 @@ from bluemira.geometry.tools import (
     boolean_fuse,
     extrude_shape,
     make_polygon,
+    mirror_shape,
     offset_wire,
     slice_shape,
     sweep_shape,
@@ -556,9 +557,7 @@ class OISBuilder(Builder):
         """
         Build the PF coil support component.
         """
-        return self.component_tree(
-            [self.build_xz()], self.build_xy(), [self.build_xyz()]
-        )
+        return self.component_tree([self.build_xz()], self.build_xy(), self.build_xyz())
 
     def build_xy(self):
         """
@@ -586,15 +585,108 @@ class OISBuilder(Builder):
         ois_profile_1.translate(vector=(0, 0.5 * width, 0))
         ois_profile_2 = ois_profile_1.deepcopy()
 
-        centre_radius = self.ois_xz_profile.center_of_mass[0]
         centre_radius = 0.5 * width / np.tan(0.5 * tf_angle)
 
         ois_profile_2.rotate(
             base=(centre_radius, 0.5 * width, 0), degree=np.rad2deg(tf_angle)
         )
 
+        # First we make the full OIS
         path = make_polygon([ois_profile_1.center_of_mass, ois_profile_2.center_of_mass])
-        ois = sweep_shape([ois_profile_1, ois_profile_2], path)
-        component = PhysicalComponent(self.SUPPORT, ois)
-        component.display_cad_options.color = BLUE_PALETTE["TF"][2]
-        return component
+        ois_right = sweep_shape([ois_profile_1, ois_profile_2], path)
+
+        # Then we "chop" it in half, but without the boolean_cut operation
+        # This is because I cba to write a project_shape function...
+        direction = (-np.sin(0.5 * tf_angle), np.cos(0.5 * tf_angle), 0)
+        half_plane = BluemiraPlane(base=(0, 0, 0), axis=direction)
+        ois_profile_mid = slice_shape(ois_right, half_plane)[0]
+
+        path = make_polygon(
+            [ois_profile_1.center_of_mass, ois_profile_mid.center_of_mass]
+        )
+        ois_right = sweep_shape([ois_profile_1, ois_profile_mid], path)
+        ois_left = mirror_shape(ois_right, base=(0, 0, 0), direction=(0, 1, 0))
+
+        right_component = PhysicalComponent(f"{self.SUPPORT} right", ois_right)
+        right_component.display_cad_options.color = BLUE_PALETTE["TF"][2]
+        left_component = PhysicalComponent(f"{self.SUPPORT} left", ois_left)
+        left_component.display_cad_options.color = BLUE_PALETTE["TF"][2]
+        return [left_component, right_component]
+
+
+if __name__ == "__main__":
+    from bluemira.base.parameter_frame import Parameter
+    from bluemira.builders.tools import circular_pattern_component
+    from bluemira.geometry.parameterisations import PrincetonD
+    from bluemira.geometry.tools import (
+        boolean_cut,
+        circular_pattern,
+        make_polygon,
+        sweep_shape,
+    )
+
+    x_1 = 4
+    x_2 = 16
+    pd = PrincetonD({"x1": {"value": x_1}, "x2": {"value": x_2}}).create_shape()
+
+    n_TF = 16
+    hd = 0.5 * 1.6
+    xs = make_polygon(
+        {"x": [x_1 - hd, x_1 + hd, x_1 + hd, x_1 - hd], "y": [-hd, -hd, hd, hd], "z": 0},
+        closed=True,
+    )
+
+    solid = sweep_shape(xs, pd)
+
+    solids = circular_pattern(solid, n_shapes=n_TF)
+    p_comps = Component(
+        "xyz",
+        children=[
+            PhysicalComponent(f"tf_{i}", shape) for i, shape in enumerate(solids[:2])
+        ],
+    )
+
+    for c in p_comps.children:
+        c.display_cad_options.transparency = 0.5
+
+    reactor = Component("dummy")
+    tf_component = Component("TF", parent=reactor, children=[p_comps])
+
+    ois_profile = make_polygon(
+        {"x": [x_2, x_2 + 0.5, 14.5, 14], "y": 0, "z": [0, 0, 6, 6]}, closed=True
+    )
+
+    params = OISBuilderParams(
+        Parameter("n_TF", 16),
+        Parameter("tf_wp_depth", 1.4),
+        Parameter("tk_tf_side", 0.1),
+    )
+
+    builder = OISBuilder(params, {}, ois_profile)
+    ois = builder.build()
+    oiss = circular_pattern_component(ois, n_children=n_TF)[:2]
+    reactor.add_children(oiss)
+
+    result = boolean_cut(
+        pd, make_polygon({"x": [9, 20, 20, 9], "z": [-4, -4, -8, -8]}, closed=True)
+    )[-1]
+    result.translate(vector=(-0.25, 0, 0))
+    r_copy = result.deepcopy()
+    r_copy.translate(vector=(0.5, 0, 0))
+    p1 = result.start_point()
+    p2 = result.end_point()
+    p3 = r_copy.start_point()
+    p4 = r_copy.end_point()
+
+    join_1 = make_polygon([p2, p4])
+    join_2 = make_polygon([p3, p1])
+
+    ois_profile_2 = BluemiraWire([result, join_1, r_copy, join_2])
+    builder = OISBuilder(params, {}, ois_profile_2)
+    ois2 = builder.build()
+
+    ois2.name = "OIS2"
+
+    reactor.add_child(ois2)
+
+    reactor.show_cad()
