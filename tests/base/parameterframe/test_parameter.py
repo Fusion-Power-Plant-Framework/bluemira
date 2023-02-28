@@ -109,6 +109,26 @@ class TestParameter:
         param = Parameter(**s_param)
         assert param.value_as("km") == 1e-3 * s_param["value"]
 
+    def test_value_as_conversion_for_None(self):
+        s_param = copy.deepcopy(self.SERIALIZED_PARAM)
+        s_param["value"] = None
+        param = Parameter(**s_param)
+
+        with pytest.raises(ValueError):
+            param.value_as("W")
+
+        s_param["unit"] = "metre"
+        param = Parameter(**s_param)
+        assert param.value_as("km") is None
+
+    def test_value_as_conversion_for_bool(self):
+        s_param = copy.deepcopy(self.SERIALIZED_PARAM)
+        s_param["value"] = False
+
+        param = Parameter(**s_param)
+        with pytest.raises(TypeError):
+            param.value_as("km")
+
     @pytest.mark.parametrize(
         "param1, param2",
         [
