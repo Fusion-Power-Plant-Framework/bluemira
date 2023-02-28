@@ -27,7 +27,7 @@ import pytest
 
 from bluemira.base.file import get_bluemira_path
 from bluemira.equilibria import Equilibrium
-from bluemira.equilibria.error import FluxSurfaceError
+from bluemira.equilibria.error import EquilibriaError, FluxSurfaceError
 from bluemira.equilibria.find import find_flux_surface_through_point
 from bluemira.equilibria.flux_surfaces import (
     ClosedFluxSurface,
@@ -37,7 +37,13 @@ from bluemira.equilibria.flux_surfaces import (
     poloidal_angle,
 )
 from bluemira.equilibria.shapes import flux_surface_cunningham, flux_surface_johner
-from bluemira.geometry.coordinates import Coordinates, interpolate_points
+from bluemira.geometry.coordinates import (
+    Coordinates,
+    coords_plane_intersect,
+    interpolate_points,
+)
+from bluemira.geometry.plane import BluemiraPlane
+from bluemira.geometry.tools import _signed_distance_2D
 
 TEST_PATH = get_bluemira_path("equilibria/test_data", subfolder="tests")
 
@@ -157,13 +163,77 @@ class TestFieldLine:
         eq_name = "eqref_OOB.json"
         filename = os.sep.join([TEST_PATH, eq_name])
         cls.eq = Equilibrium.from_eqdsk(filename)
+        cls.flt = FieldLineTracer(cls.eq)
+        cls.field_line = cls.flt.trace_field_line(13, 0, n_points=1000)
+
+    def test_non_planar_coodinates_raises_error(self):
+        with pytest.raises(EquilibriaError):
+            FieldLineTracer(
+                self.eq,
+                Coordinates(
+                    {"x": [6, 3, 3, 4, 5], "y": [0, 2, 0, 4, 0], "z": [1, 2, 3, 4, 5]}
+                ),
+            )
 
     def test_connection_length(self):
-        flt = FieldLineTracer(self.eq)
+        assert np.isclose(
+            self.field_line.connection_length, self.field_line.coords.length, rtol=5e-2
+        )
+
+    def test_connection_length_coordinates_grid(self):
+        """
+        Check to see behaviour is the same with Coordinates and Grid
+        """
+        xmin, xmax = self.eq.grid.x_min, self.eq.grid.x_max
+        zmin, zmax = self.eq.grid.z_min, self.eq.grid.z_max
+        coords = Coordinates(
+            {
+                "x": [xmin, xmax, xmax, xmin, xmin],
+                "y": 0,
+                "z": [zmin, zmin, zmax, zmax, zmin],
+            }
+        )
+        flt = FieldLineTracer(self.eq, coords)
         field_line = flt.trace_field_line(13, 0, n_points=1000)
         assert np.isclose(
             field_line.connection_length, field_line.coords.length, rtol=5e-2
         )
+        assert np.isclose(
+            self.field_line.connection_length, field_line.connection_length
+        )
+        self._check_endpoint(field_line, coords)
+
+    def test_connection_length_coordinates(self):
+        coords = Coordinates(
+            {
+                "x": [self.eq.grid.x_min, 9, 12, 13, 13, 12.5, 4, self.eq.grid.x_min],
+                "y": 0,
+                "z": [self.eq.grid.z_min, -7, -7, -6, 6, 5, 7, self.eq.grid.z_min],
+            }
+        )
+        flt = FieldLineTracer(self.eq, coords)
+        field_line = flt.trace_field_line(12.5, 0, n_points=1000, forward=False)
+        self._check_endpoint(field_line, coords)
+
+    def _check_endpoint(self, field_line, coords, tol=1e-8):
+        """
+        Check that the end point of a field line lies near enough to the boundary
+        """
+        end_point = self._extract_endpoint(field_line)
+        ep_xz = np.array([end_point[0], end_point[2]])
+        assert abs(_signed_distance_2D(ep_xz, coords.xz.T)) < tol
+
+    def _extract_endpoint(self, field_line):
+        """
+        Get the end point of a field line in 3-D and map it to 2-D
+        """
+        end_point = field_line.coords.xyz.T[-1]
+        r = np.hypot(*end_point[:2])
+        z = end_point[2]
+        angle = np.linspace(0, 2 * np.pi, 1000)
+        circle = Coordinates({"x": r * np.cos(angle), "y": r * np.sin(angle), "z": z})
+        inters = coords_plane_intersect(circle, BluemiraPlane(axis=(0, 1, 0)))
+        return [i for i in inters if i[0] > 0][0]
 
 
 def test_poloidal_angle():
