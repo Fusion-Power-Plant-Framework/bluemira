@@ -167,7 +167,10 @@ class TestFieldLine:
         )
         self.cache["fl_con_length_grid"] = field_line.connection_length
 
-    def test_connection_length_coordinates(self):
+    def test_connection_length_coordinates_grid(self):
+        """
+        Check to see behaviour is the same with Coordinates and Grid
+        """
         xmin, xmax = self.eq.grid.x_min, self.eq.grid.x_max
         zmin, zmax = self.eq.grid.z_min, self.eq.grid.z_max
         coords = Coordinates(
@@ -183,6 +186,24 @@ class TestFieldLine:
             field_line.connection_length, field_line.coords.length, rtol=5e-2
         )
         assert np.isclose(self.cache["fl_con_length_grid"], field_line.connection_length)
+
+    def test_connection_length_coordinates(self):
+        coords = Coordinates(
+            {
+                "x": [self.eq.grid.x_min, 9, 12, 13, 13, 12, 4, self.eq.grid.x_min],
+                "y": 0,
+                "z": [self.eq.grid.z_min, -9, -7, -6, 6, 4, 9, self.eq.grid.z_min],
+            }
+        )
+        import matplotlib.pyplot as plt
+
+        f, ax = plt.subplots()
+        self.eq.plot(ax=ax)
+        ax.plot(*coords.xz)
+        flt = FieldLineTracer(self.eq, coords)
+        field_line = flt.trace_field_line(13, 0, n_points=1000)
+
+        field_line.pointcare_plot(ax=ax)
 
 
 def test_poloidal_angle():
