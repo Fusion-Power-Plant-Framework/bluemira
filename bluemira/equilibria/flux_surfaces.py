@@ -46,10 +46,10 @@ from bluemira.geometry.coordinates import (
     get_angle_between_points,
     get_area_2d,
     get_intersect,
-    in_polygon,
     join_intersect,
 )
 from bluemira.geometry.plane import BluemiraPlane
+from bluemira.geometry.tools import _signed_distance_2D
 
 
 @nb.jit(nopython=True, cache=True)
@@ -654,25 +654,28 @@ class FieldLineTracer:
         def __init__(self, boundary):
             self.boundary = boundary
             self.terminal = True
-            if isinstance(boundary, Grid):
-                self._check_inside = self._check_inside_grid
-            else:
-                self._check_inside = self._check_inside_coordinates
 
         def __call__(self, phi, xz, *args):
+            if isinstance(self.boundary, Grid):
+                return self._call_grid(xz)
+            else:
+                return self._call_coordinates(xz)
+
+        def _call_grid(self, xz):
             """
-            Function handle for the CollisionTerminator.
+            Function handle for the CollisionTerminator in the case of a Grid.
+            (slight speed improvement)
             """
-            if self._check_inside(xz[:2]):
+            if self.boundary.point_inside(xz[:2]):
                 return np.min(self.boundary.distance_to(xz[:2]))
             else:
                 return -np.min(self.boundary.distance_to(xz[:2]))
 
-        def _check_inside_grid(self, xz):
-            return self.boundary.point_inside(xz)
-
-        def _check_inside_coordinates(self, xz):
-            return in_polygon(*xz, self.boundary.xz, include_edges=True)
+        def _call_coordinates(self, xz):
+            """
+            Function handle for the CollisionTerminator in the case of Coordinates.
+            """
+            return _signed_distance_2D(xz[:2], self.boundary.xz.T)
 
     def __init__(self, eq, first_wall: Optional[Union[Grid, Coordinates]] = None):
         self.eq = eq

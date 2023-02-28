@@ -157,6 +157,7 @@ class TestFieldLine:
         eq_name = "eqref_OOB.json"
         filename = os.sep.join([TEST_PATH, eq_name])
         cls.eq = Equilibrium.from_eqdsk(filename)
+        cls.cache = {}
 
     def test_connection_length(self):
         flt = FieldLineTracer(self.eq)
@@ -164,6 +165,24 @@ class TestFieldLine:
         assert np.isclose(
             field_line.connection_length, field_line.coords.length, rtol=5e-2
         )
+        self.cache["fl_con_length_grid"] = field_line.connection_length
+
+    def test_connection_length_coordinates(self):
+        xmin, xmax = self.eq.grid.x_min, self.eq.grid.x_max
+        zmin, zmax = self.eq.grid.z_min, self.eq.grid.z_max
+        coords = Coordinates(
+            {
+                "x": [xmin, xmax, xmax, xmin, xmin],
+                "y": 0,
+                "z": [zmin, zmin, zmax, zmax, zmin],
+            }
+        )
+        flt = FieldLineTracer(self.eq, coords)
+        field_line = flt.trace_field_line(13, 0, n_points=1000)
+        assert np.isclose(
+            field_line.connection_length, field_line.coords.length, rtol=5e-2
+        )
+        assert np.isclose(self.cache["fl_con_length_grid"], field_line.connection_length)
 
 
 def test_poloidal_angle():
