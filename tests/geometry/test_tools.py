@@ -33,6 +33,7 @@ from numpy.linalg import norm
 import bluemira.codes._freecadapi as cadapi
 from bluemira.base.constants import EPS
 from bluemira.base.file import get_bluemira_path
+from bluemira.geometry.error import GeometryError
 from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.parameterisations import (
     PictureFrame,
@@ -706,3 +707,8 @@ class TestMirrorShape:
         cog = shape.center_of_mass
         m_cog = m_shape.center_of_mass
         assert not np.allclose(m_cog, cog)
+
+    @pytest.mark.parametrize("shape", shapes)
+    def test_bad_direction(self, shape):
+        with pytest.raises(GeometryError):
+            mirror_shape(shape, base=(0, 0, 0), direction=(0, 0, 0))

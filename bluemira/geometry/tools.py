@@ -913,6 +913,8 @@ def mirror_shape(
     mirrored_shape
         The mirrored shape
     """
+    if np.linalg.norm(direction) == 0:
+        raise GeometryError("Direction vector cannot have a zero norm.")
     return convert(cadapi.mirror_shape(shape.shape, base, direction), label=label)
 
 
