@@ -5,6 +5,7 @@ import json
 from contextlib import suppress
 from dataclasses import dataclass, fields
 from typing import (
+    TYPE_CHECKING,
     Any,
     Dict,
     Generator,
@@ -17,7 +18,7 @@ from typing import (
     Union,
 )
 from typing import _GenericAlias as GenericAlias  # TODO python >=3.9 import from types
-from typing import get_args, get_type_hints, TYPE_CHECKING
+from typing import get_args, get_type_hints
 
 import pint
 from tabulate import tabulate
@@ -198,15 +199,13 @@ class ParameterFrame:
         """
         kwargs = {}
 
-        # from from_dict
-        lc = config_params.local_params
+        lp = config_params.local_params
         for member in cls.__dataclass_fields__:
-            # only getting the members that exist in lc
-            # because they could be in global_params
-            if member not in lc:
+            if member not in lp:
                 continue
 
-            param_data = lc[member]
+            # from from_dict
+            param_data = lp[member]
             value_type = _validate_parameter_field(member, cls._get_types()[member])
 
             try:
@@ -220,11 +219,11 @@ class ParameterFrame:
                 _value_types=value_type,
             )
 
-        for global_param_field in config_params.global_params.__dataclass_fields__:
-            kwargs[global_param_field] = getattr(
-                config_params.global_params,
-                global_param_field,
-            )
+        gp = config_params.global_params
+        for member in cls.__dataclass_fields__:
+            if member not in gp.__dataclass_fields__:
+                continue
+            kwargs[member] = getattr(gp, member)
 
         # now validate all dataclass_fields are in kwargs
         # (which could be super set)
@@ -466,6 +465,11 @@ def _non_comutative_unit_conversion(dimensionality, numerator, dpa, fpy):
 
 @dataclass
 class EmptyFrame(ParameterFrame):
+    """
+    Class to represent an empty ParamterFrame.
+    Can be used with a `ConfigParams` when there are no global params.
+    """
+
     def __init__(self) -> None:
         super().__init__()
 

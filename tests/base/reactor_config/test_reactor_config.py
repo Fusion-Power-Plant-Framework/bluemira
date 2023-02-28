@@ -3,28 +3,36 @@ from pathlib import Path
 
 import pytest
 
+from bluemira.base.constants import raw_uc
 from bluemira.base.error import ReactorConfigError
-from bluemira.base.reactor_config import ReactorConfig
-
 from bluemira.base.parameter_frame import (
+    EmptyFrame,
     Parameter,
     ParameterFrame,
-    EmptyFrame,
     make_parameter_frame,
 )
+from bluemira.base.reactor_config import ReactorConfig
 
 
 @dataclass
 class TestGlobalParams(ParameterFrame):
+    __test__ = False
+
+    only_global: Parameter[int]
     height: Parameter[float]
     age: Parameter[int]
+    extra_global: Parameter[int]
 
 
 @dataclass
 class TestCompADesignerParams(ParameterFrame):
+    __test__ = False
+
+    only_global: Parameter[int]
     height: Parameter[float]
     age: Parameter[int]
     name: Parameter[str]
+    location: Parameter[str]
 
 
 class TestReactorConfigClass:
@@ -48,121 +56,124 @@ class TestReactorConfigClass:
             ReactorConfig(config_path.as_posix(), TestGlobalParams)
 
     def test_incorrect_global_config_type_non_empty_config(self):
-        config_path = Path(__file__).parent / "reactor_config.warnings.json"
+        config_path = Path(__file__).parent / "reactor_config.test.json"
         with pytest.raises(ValueError):
             ReactorConfig(config_path.as_posix(), EmptyFrame)
 
-    def test_warning_global_local_sub_overwrites(self, caplog):
-        config_path = Path(__file__).parent / "reactor_config.warnings.json"
+    def test_params_for_warnings_make_param_frame_type_value_overrides(
+        self,
+        caplog,
+    ):
+        config_path = Path(__file__).parent / "reactor_config.test.json"
         reactor_config = ReactorConfig(config_path.as_posix(), TestGlobalParams)
 
-        dp = reactor_config.params_for("comp A", "designer")
+        cp = reactor_config.params_for("comp A", "designer")
 
         assert len(caplog.records) == 1
         for record in caplog.records:
             assert record.levelname == "WARNING"
 
-        make_parameter_frame(dp, TestCompADesignerParams)
+        cpf = make_parameter_frame(cp, TestCompADesignerParams)
 
-    def test_warning_global_sub_overwrites(self, caplog):
-        config_path = Path(__file__).parent / "reactor_config.warnings.json"
-        reactor_config = ReactorConfig(config_path.as_posix())
+        # value checks
+        assert cpf.only_global.value == raw_uc(1, "years", "s")
+        assert cpf.height.value == 1.8
+        assert cpf.age.value == raw_uc(30, "years", "s")
+        assert cpf.name.value == "Comp A"
+        assert cpf.location.value == "here"
 
-        p = reactor_config.designer_params("comp B")
+        # instance checks
+        assert cpf.only_global is reactor_config.global_params.only_global
+        assert cpf.height is reactor_config.global_params.height
+        assert cpf.age is reactor_config.global_params.age
 
-        assert len(caplog.records) == 1
-        for record in caplog.records:
-            assert record.levelname == "WARNING"
-        assert p["a"] == 10
+    def test_config_for_warnings_value_overrides(
+        self,
+        caplog,
+    ):
+        config_path = Path(__file__).parent / "reactor_config.test.json"
+        reactor_config = ReactorConfig(config_path.as_posix(), TestGlobalParams)
 
-    def test_warning_global_local_overwrites(self, caplog):
-        config_path = Path(__file__).parent / "reactor_config.warnings.json"
-        reactor_config = ReactorConfig(config_path.as_posix())
-
-        p = reactor_config.designer_params("comp C")
-
-        assert len(caplog.records) == 1
-        for record in caplog.records:
-            assert record.levelname == "WARNING"
-        assert p["a"] == 10
-
-    def test_warning_local_sub_overwrites(self, caplog):
-        config_path = Path(__file__).parent / "reactor_config.warnings.json"
-        reactor_config = ReactorConfig(config_path.as_posix())
-
-        p = reactor_config.designer_params("comp D")
+        cf_comp_a = reactor_config.config_for("comp A")
+        cf_comp_a_des = reactor_config.config_for("comp A", "designer")
 
         assert len(caplog.records) == 1
         for record in caplog.records:
             assert record.levelname == "WARNING"
-        assert p["a"] == 10
-        assert p["b"] == 5
 
-    def test_no_warning_no_overwrites(self, caplog):
-        config_path = Path(__file__).parent / "reactor_config.warnings.json"
-        reactor_config = ReactorConfig(config_path.as_posix())
+        assert cf_comp_a["config_a"] == cf_comp_a_des["config_a"]
+        assert cf_comp_a["config_b"] == cf_comp_a_des["config_b"]
+        assert cf_comp_a_des["config_c"]["c_value"] == "c_value"
 
-        p = reactor_config.designer_params("comp E")
-
-        assert len(caplog.records) == 0
-        assert p["a"] == 10
-        assert p["b"] == 5
-        assert p["c"] == 1
-
-    def test_no_params_in_designer_error(self):
+    def test_no_arg_in_config_error(self):
         reactor_config = ReactorConfig(
             {
                 "comp A": {
-                    "params": {"a": 5},
                     "designer": {},
-                    "builder": {},
                 },
-            }
+            },
+            EmptyFrame,
         )
 
         with pytest.raises(ReactorConfigError):
-            reactor_config.designer_params("comp A")
+            reactor_config.params_for("comp A", "dne")
+        with pytest.raises(ReactorConfigError):
+            reactor_config.config_for("comp A", "dne")
 
-    def test_no_params_in_builder_error(self):
+    def test_no_params_warning(self, caplog):
         reactor_config = ReactorConfig(
             {
                 "comp A": {
-                    "params": {"a": 5},
                     "designer": {},
-                    "builder": {},
                 },
-            }
+            },
+            EmptyFrame,
+        )
+
+        cp = reactor_config.params_for("comp A", "designer")
+
+        assert len(caplog.records) == 2
+        for record in caplog.records:
+            assert record.levelname == "WARNING"
+
+        assert len(cp.local_params) == 0
+
+    def test_no_config_warning(self, caplog):
+        reactor_config = ReactorConfig(
+            {
+                "comp A": {
+                    "designer": {},
+                },
+            },
+            EmptyFrame,
+        )
+
+        cf_comp_a = reactor_config.config_for("comp A")
+        cf_comp_a_des = reactor_config.config_for("comp A", "designer")
+
+        assert len(caplog.records) == 1
+        for record in caplog.records:
+            assert record.levelname == "WARNING"
+
+        assert len(cf_comp_a) == 1
+        assert len(cf_comp_a_des) == 0
+
+    def test_invalid_rc_initialization(self, caplog):
+        with pytest.raises(ReactorConfigError):
+            ReactorConfig(
+                ["wrong"],
+                EmptyFrame,
+            )
+
+    def test_args_arent_str(self, caplog):
+        reactor_config = ReactorConfig(
+            {
+                "comp A": {
+                    "designer": {},
+                },
+            },
+            EmptyFrame,
         )
 
         with pytest.raises(ReactorConfigError):
-            reactor_config.builder_params("comp A")
-
-    def test_getting_config_with_no_params(self, caplog):
-        reactor_config = ReactorConfig(
-            {
-                "comp A": {
-                    "params": {"a": 5},
-                    "designer": {"params": {}},
-                    "builder": {"some_config": "a_value"},
-                },
-                "comp B": {
-                    "params": {"b": 5},
-                    "designer": {"some_config": "a_value"},
-                    "builder": {"params": {}},
-                },
-            }
-        )
-
-        dp = reactor_config.designer_params("comp A")
-        bc = reactor_config.builder_config("comp A")
-
-        dc = reactor_config.designer_config("comp B")
-        bp = reactor_config.builder_params("comp B")
-
-        assert len(caplog.records) == 0
-
-        assert dp["a"] == 5
-        assert bc["some_config"] == "a_value"
-
-        assert bp["b"] == 5
-        assert dc["some_config"] == "a_value"
+            reactor_config.config_for("comp A", 1)

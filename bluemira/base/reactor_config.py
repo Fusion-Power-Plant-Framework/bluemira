@@ -12,6 +12,11 @@ from bluemira.base.parameter_frame import ParameterFrame, make_parameter_frame
 
 @dataclass
 class ConfigParams:
+    """
+    Class to hold the params return by `params_for`
+    from a `ReactorConfig` object
+    """
+
     global_params: ParameterFrame
     local_params: Dict
 
@@ -22,15 +27,11 @@ _PARAMETERS_KEY = "params"
 
 class ReactorConfig:
     """
-    Provide a simple interface over config JSON files
-    to define some structure that the config files must
-    comply to and handles globally vs locally scoped params.
+    Class that provides a simple interface over config JSON files and
+    handles overwriting multiply defined attributes.
 
-    Global (or more globally scoped) params always overwrite
-    locally scoped params.
-    Params can be defined at the global level
-    (i.e. for every component, for every builder and designer)
-    and at the component (i.e. defined for both builder and designer).
+    If an attribute is defined more than once in a component,
+    the more globally scoped value is used (global overwrites local).
 
     Parameters
     ----------
@@ -42,39 +43,34 @@ class ReactorConfig:
 
     .. code-block:: python
 
-        reactor_config = ReactorConfig(
-            {
-                "params": {"a": 10},
-                "comp A": {
-                    "params": {"a": 5, "b": 5},
-                    "designer": {
-                        "params": {"a": 1},
-                        "some_config": "some_value",
-                    },
-                    "builder": {
-                        "params": {"b": 1, "c": 1},
-                        "another_config": "another_value",
-                    },
-                },
-                "comp B": {
-                    "params": {"b": 5},
-                    "builder": {
-                        "third_config": "third_value",
-                    },
-                },
-            }
-        )
+    @dataclass
+    class GlobalParams(ParameterFrame):
+        a: Parameter[int]
 
-        print(reactor_config.designer_params("comp A"))
-        # {'a': 10, 'b': 5}
-        print(reactor_config.designer_config("comp A"))
-        # {'some_config': 'a_value', 'a': 10, 'b': 5}
-        print(reactor_config.builder_params("comp A"))
-        # {'a': 10, 'b': 5, 'c': 1}
-        print(reactor_config.builder_config("comp A"))
-        # {'another_config': 'b_value', 'a': 10, 'b': 5}
-        print(reactor_config.builder_config("comp B"))
-        # {'third_config': 'third_value', 'a': 10, 'b': 5}
+
+    reactor_config = ReactorConfig(
+        {
+            "params": {"a": 10},
+            "comp A": {
+                "params": {"a": 5, "b": 5},
+                "designer": {
+                    "params": {"a": 1},
+                    "some_config": "some_value",
+                },
+                "builder": {
+                    "params": {"b": 1, "c": 1},
+                    "another_config": "another_value",
+                },
+            },
+            "comp B": {
+                "params": {"b": 5},
+                "builder": {
+                    "third_config": "third_value",
+                },
+            },
+        },
+        GlobalParams,
+    )
 
     """
 
@@ -95,7 +91,7 @@ class ReactorConfig:
         else:
             raise ReactorConfigError("Invalid config_path")
 
-        self.global_params = make_parameter_frame(
+        self.global_params: _PfT = make_parameter_frame(
             self.config_data.get(_PARAMETERS_KEY, {}),
             global_params_type,
         )
@@ -133,9 +129,13 @@ class ReactorConfig:
 
             next_arg_key = arg_keys[next_idx] if next_idx < len(arg_keys) else None
 
-            to_extract = (
-                current_layer if is_config else current_layer.get(_PARAMETERS_KEY, {})
-            )
+            to_extract = current_layer
+            if not is_config:
+                try:
+                    to_extract = current_layer[_PARAMETERS_KEY]
+                except KeyError:
+                    bluemira_warn(f"'{_PARAMETERS_KEY}' not in {current_arg_key}")
+                    to_extract = {}
 
             # add all keys not in extracted already
             # if doing a config, ignore the "params" (_PARAMETERS_KEY)
@@ -154,12 +154,38 @@ class ReactorConfig:
         # higher up the tree overwrites lower
         return extracted
 
-    def params_for(
-        self,
-        component_name: str,
-        *args: str,
-        file_name="",
-    ) -> ConfigParams:
+    def params_for(self, component_name: str, *args: str) -> ConfigParams:
+        """
+        Gets the params for the `component_name` from the config file.
+
+        These are all the values defined by a "params"
+        key in the config file.
+
+        This will merge all multiply defined params,
+        with global overwriting local.
+
+        Parameters
+        ----------
+        component_name: str
+            The component name, must match a key in the config
+        args
+            Optionally specific the keys of nested attributes,
+            this will hoist the values defined in the nested attributes
+            to the top level of
+            the returned `local_params` dict (in `ConfigParams`)
+
+            The args must be in the order that they appear in the config,
+            in order to drill down to them.
+
+        Returns
+        -------
+        A `ConfigParams` object, holding
+        the global_params (from `self.global_params`)
+        and the extracted local_params.
+
+        Use the `make_parameter_frame` helper function to convert it
+        into a typed ParameterFrame.
+        """
         args = (component_name,) + args
         self._check_args_are_strings(args)
 
@@ -168,13 +194,37 @@ class ReactorConfig:
             local_params=self._extract(args, is_config=False),
         )
 
-    def config_for(
-        self,
-        component_name: str,
-        *args: str,
-        file_name="",
-    ) -> dict:
+    def config_for(self, component_name: str, *args: str) -> dict:
+        """
+        Gets the config for the `component_name` from the config file.
+
+        These are all the values other than
+        those defined by a "params" key in the config file.
+
+        This will merge all multiply defined values,
+        with global overwriting local.
+
+        Parameters
+        ----------
+        component_name: str
+            The component name, must match a key in the config
+        args
+            Optionally specific the keys of nested attributes,
+            this will hoist the values defined in the nested attributes
+            to the top level of the returned dict.
+
+            The args must be in the order that they appear in the config,
+            in order to drill down to them.
+
+        Returns
+        -------
+        A `dict` holding the extracted config.
+        """
         args = (component_name,) + args
         self._check_args_are_strings(args)
 
-        return self._extract(args, is_config=True)
+        _return = self._extract(args, is_config=True)
+        if not _return:
+            bluemira_warn(f"No config found for {component_name}")
+
+        return _return
