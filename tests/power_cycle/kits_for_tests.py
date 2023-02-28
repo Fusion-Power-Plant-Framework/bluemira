@@ -20,6 +20,10 @@ class ToolsTestKit:
 
     @staticmethod
     def prepare_figure(figure_title):
+        """
+        Create figure for plot testing. Use 'plt.show()' to display it.
+        Run test file with with `pytest --plotting-on` to visualize it.
+        """
         ax = validate_axes()
         plt.grid()
         plt.title(figure_title)
@@ -50,7 +54,9 @@ class TimeTestKit:
                 "current ramp-up": 157,
                 "heating": 19,
             },
-            {"plasma burn": constants.raw_uc(2, "hour", "second")},
+            {
+                "plasma burn": constants.raw_uc(2, "hour", "second"),
+            },
             {
                 "cooling": 123,
                 "current ramp-down": 157,

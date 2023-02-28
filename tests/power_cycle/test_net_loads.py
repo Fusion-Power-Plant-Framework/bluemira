@@ -3,7 +3,8 @@
 import copy
 
 import matplotlib.pyplot as plt
-import numpy as np
+
+# import numpy as np
 import pytest
 
 from bluemira.power_cycle.errors import (
@@ -11,6 +12,7 @@ from bluemira.power_cycle.errors import (
     PowerCycleABCError,
     PowerDataError,
     PowerLoadError,
+    PulseLoadError,
 )
 from bluemira.power_cycle.net_loads import (
     PhaseLoad,
@@ -163,6 +165,10 @@ class TestPowerData:
     # VISUALIZATION
     # ------------------------------------------------------------------
 
+    def test_intrinsic_time(self):
+        # TODO
+        pass
+
     def test_plot(self):
         figure_title = "PowerData Plotting"
         ax = tools_testkit.prepare_figure(figure_title)
@@ -181,7 +187,7 @@ class TestPowerData:
             sample = all_samples[s]
             plot_list.append(sample.plot(ax=ax, c=sample_color))
         adjust_2d_graph_ranges(ax=ax)
-        plt.show()  # Run with `pytest --plotting-on` to visualize
+        plt.show()
 
 
 class TestPowerLoadModel:
@@ -335,7 +341,7 @@ class TestPowerLoad:
                 assert curve_length == time_length
                 netloads_testkit.assert_is_interpolation(power_points, curve)
 
-    def test_validate_time(self):
+    def test_validate_curve_input(self):
         test_arguments = [
             None,
             1.2,
@@ -350,11 +356,11 @@ class TestPowerLoad:
 
         for argument in test_arguments:
             if isinstance(argument, (int, float, list)):
-                time = PowerLoad._validate_time(argument)
+                time = PowerLoad._validate_curve_input(argument)
                 assert isinstance(time, list)
             else:
                 with pytest.raises(PowerLoadError):
-                    time = PowerLoad._validate_time(argument)
+                    time = PowerLoad._validate_curve_input(argument)
 
     def test_curve(self):
         all_samples = self.all_samples
@@ -405,7 +411,10 @@ class TestPowerLoad:
                 assert old_data == new_data
 
     def test_shift_time(self):
-        pass  # No new functionality to be tested.
+        """
+        No new functionality to be tested.
+        """
+        pass
 
     # ------------------------------------------------------------------
     # VISUALIZATION
@@ -413,13 +422,17 @@ class TestPowerLoad:
 
     def test_intrinsic_time(self):
         multisample = self.construct_multisample()
-        multisample_powerdatas = multisample.powerdata_set
+        powerdata_set = multisample.powerdata_set
 
-        intrinsic_time = multisample.intrinsic_time()
-        for powerdata in multisample_powerdatas:
-            time = powerdata.time
-            for t in time:
+        intrinsic_time = multisample.intrinsic_time
+        for powerdata in powerdata_set:
+            powerdata_time = powerdata.intrinsic_time
+            for t in powerdata_time:
                 assert t in intrinsic_time
+
+        setter_errors = (AttributeError, PowerLoadError)
+        with pytest.raises(setter_errors):
+            multisample.intrinsic_time = 0
 
     @pytest.mark.parametrize("detailed_plot_flag", [False, True])
     def test_plot(self, detailed_plot_flag):
@@ -446,7 +459,7 @@ class TestPowerLoad:
             list_of_plot_objects.append(current_list_of_plot_objects)
 
         adjust_2d_graph_ranges(ax=ax)
-        plt.show()  # Run with `pytest --plotting-on` to visualize
+        plt.show()
 
     # ------------------------------------------------------------------
     # ARITHMETICS
@@ -474,23 +487,24 @@ class TestPowerLoad:
 
         list_of_plot_objects = result.plot(ax=ax, detailed=True, c="b")
         adjust_2d_graph_ranges(ax=ax)
-        plt.show()  # Run with `pytest --plotting-on` to visualize
+        plt.show()
 
     @pytest.mark.parametrize("number", [2])
     def test_multiplication(self, number):
         """
         Tests both '__mul__' and '__truediv__'.
         """
-        figure_title = "PowerLoad Multiplication"
-        ax = tools_testkit.prepare_figure(figure_title)
         rel_tol = None
         abs_tol = None
+
+        figure_title = "PowerLoad Multiplication"
+        ax = tools_testkit.prepare_figure(figure_title)
 
         colors = netloads_testkit.color_order_for_plotting
         n_colors = netloads_testkit.n_colors
 
         multisample = self.construct_multisample()
-        test_time = multisample.intrinsic_time()
+        test_time = multisample.time
         curve = multisample.curve(test_time)
 
         lesser_multisample = multisample / number
@@ -536,7 +550,7 @@ class TestPowerLoad:
             )
             list_of_plot_objects.append(sample_plot_list)
         adjust_2d_graph_ranges(ax=ax)
-        plt.show()  # Run with `pytest --plotting-on` to visualize
+        plt.show()
 
 
 class TestPhaseLoad:
@@ -704,9 +718,9 @@ class TestPhaseLoad:
     # OPERATIONS
     # ------------------------------------------------------------------
 
-    def test_compute_normalized_set(self):
+    def test_normalized_set(self):
         multisample = self.construct_multisample()
-        normalized_set = multisample._compute_normalized_set()
+        normalized_set = multisample._normalized_set
 
         normalize = multisample.normalize
         n_normalize = len(normalize)
@@ -722,37 +736,55 @@ class TestPhaseLoad:
                 else:
                     assert len(norm) == 0
 
+        powerload_set = multisample.powerload_set
+        setter_errors = (AttributeError, PhaseLoadError)
+        with pytest.raises(setter_errors):
+            multisample._normalized_set = powerload_set
+
     def test_curve(self):
-        pass  # No new functionality to be tested.
-
-    """
-    def test_shift_time(self, time_shift):
-        list_of_time_shifts = attribute_manipulation_examples
-
-        multisample = self.construct_multisample()
-        normalize = multisample.normalize
-        n_normalize = len(normalize)
-
-        for time_shift in list_of_time_shifts:
-            shifted_multisample = multisample._shift_time(time_shift)
-
-            normalized_set = shifted_multisample._compute_normalized_set()
-            for powerload in normalized_set:
-                powerdata_set = powerload.powerdata_set
-                for powerdata in powerdata_set:
-                    shift = powerdata._shift
-                    assert len(shift) != 0
-    """
+        """
+        No new functionality to be tested.
+        """
+        pass
 
     # ------------------------------------------------------------------
     # VISUALIZATION
     # ------------------------------------------------------------------
-
     def test_intrinsic_time(self):
         multisample = self.construct_multisample()
-        normalized_set = multisample._compute_normalized_set()
+        powerload_set = multisample.powerload_set
+
+        intrinsic_time = multisample.intrinsic_time
+        for powerload in powerload_set:
+            powerload_time = powerload.intrinsic_time
+            for t in powerload_time:
+                assert t in intrinsic_time
+
+        setter_errors = (AttributeError, PhaseLoadError)
+        with pytest.raises(setter_errors):
+            multisample.intrinsic_time = 0
+
+    def test_normalized_time(self):
+        multisample = self.construct_multisample()
+        normalized_set = multisample._normalized_set
+
+        normalized_time = multisample.normalized_time
+        for normal_load in normalized_set:
+            normal_load_time = normal_load.intrinsic_time
+            for t in normal_load_time:
+                assert t in normalized_time
+
+        setter_errors = (AttributeError, PhaseLoadError)
+        with pytest.raises(setter_errors):
+            multisample.normalized_time = 0
+
+    """
+    def test_intrinsic_time(self):
         rel_tol = None
         abs_tol = None
+
+        multisample = self.construct_multisample()
+        normalized_set = multisample._compute_normalized_set()
 
         normalize = multisample.normalize
         n_normalize = len(normalize)
@@ -787,8 +819,9 @@ class TestPhaseLoad:
                             c = nt == pytest.approx(it, rel=rel_tol, abs=abs_tol)
                             check.append(c)
 
-                t_was_in_intrinsic_time = any(check)  # CHECK IS ALL FALSE!
+                t_was_in_intrinsic_time = any(check)
                 assert t_was_in_intrinsic_time
+    """
 
     @pytest.mark.parametrize("color_index", [2])
     @pytest.mark.parametrize("detailed_plot_flag", [False, True])
@@ -807,7 +840,7 @@ class TestPhaseLoad:
         )
 
         adjust_2d_graph_ranges(ax=ax)
-        plt.show()  # Run with `pytest --plotting-on` to visualize
+        plt.show()
 
 
 class TestPulseLoad:
@@ -891,27 +924,176 @@ class TestPulseLoad:
     # OPERATIONS
     # ------------------------------------------------------------------
 
-    def _compute_shifted_set(self):
-        # test that the last time of each phaseload intrinsic time,
-        # minus the last time of the previous phase load intrinsic time,
-        # is equal to the phase duration
-        pass
+    def test_shifted_set(self):
+        rel_tol = None
+        abs_tol = None
+
+        multisample = self.construct_multisample()
+        shifted_set = multisample._shifted_set
+
+        time_memory = []
+        for shifted_load in shifted_set:
+            current_phase = shifted_load.phase
+            current_phase_duration = current_phase.duration
+
+            powerload_set = shifted_load.powerload_set
+            current_time = shifted_load._build_time_from_power_set(powerload_set)
+            time_memory.append(current_time)
+
+            first_time = current_time[0]
+            last_time = current_time[-1]
+            time_span = last_time - first_time
+
+            spn = time_span
+            dur = current_phase_duration
+            assert spn == pytest.approx(dur, rel=rel_tol, abs=abs_tol)
+
+        normalized_set = multisample.phaseload_set[0]._normalized_set
+        setter_errors = (AttributeError, PulseLoadError)
+        with pytest.raises(setter_errors):
+            multisample._shifted_set = normalized_set
 
     def test_curve(self):
-        pass  # No new functionality to be tested.
+        """
+        No new functionality to be tested.
+        """
+        pass
 
     # ------------------------------------------------------------------
     # VISUALIZATION
     # ------------------------------------------------------------------
     def test_intrinsic_time(self):
+        multisample = self.construct_multisample()
+        phaseload_set = multisample.phaseload_set
+
+        intrinsic_time = multisample.intrinsic_time
+        for phaseload in phaseload_set:
+            phaseload_time = phaseload.intrinsic_time
+            for t in phaseload_time:
+                assert t in intrinsic_time
+
+        setter_errors = (AttributeError, PulseLoadError)
+        with pytest.raises(setter_errors):
+            multisample.intrinsic_time = 0
+
+    def test_shifted_time(self):
+        multisample = self.construct_multisample()
+        shifted_set = multisample._shifted_set
+
+        shifted_time = multisample.shifted_time
+        for shifted_load in shifted_set:
+            shifted_load_time = shifted_load.intrinsic_time
+            for t in shifted_load_time:
+                assert t in shifted_time
+
+        setter_errors = (AttributeError, PulseLoadError)
+        with pytest.raises(setter_errors):
+            multisample.intrinsic_time = 0
+
+    '''
+    def test_intrinsic_time(self):
+
+        rel_tol = None
+        abs_tol = None
+
+        multisample = self.construct_multisample()
+
+        # n_shifted = len(shifted_set)
+
+        import pprint
+
+        intrinsic_time = multisample.time
+        n_intrinsic = len(intrinsic_time)
+
+        shifted_set = multisample._shifted_set
+        shifted_intrinsic_time = []
+        shifted_powerload_time = []
+        shifted_powerdata_time = []
+        for shifted_load in shifted_set:
+            current_intrinsic_time = shifted_load.time
+            shifted_intrinsic_time.append(current_intrinsic_time)
+
+            current_powerload_time = []
+            for powerload in shifted_load.powerload_set:
+                current_intrinsic_time = powerload.time
+                current_powerload_time.append(current_intrinsic_time)
+
+                current_powerdata_time = []
+                for powerdata in powerload.powerdata_set:
+                    current_powerdata_time.append(powerdata.time)
+                shifted_powerdata_time.append(current_powerdata_time)
+
+            shifted_powerload_time.append(current_powerload_time)
+
+        pprint.pp(intrinsic_time)
+        pprint.pp(shifted_intrinsic_time)
+        pprint.pp(shifted_powerload_time)
+        pprint.pp(shifted_powerdata_time)
+
+        """
+        phaseload_set = multisample.phaseload_set
+        phaseload_intrinsic_time = []
+        phaseload_powerdata_time = []
+        for phaseload in phaseload_set:
+            current_intrinsic_time = phaseload.intrinsic_time()
+            phaseload_intrinsic_time.append(current_intrinsic_time)
+
+            current_powerdata_time = []
+            for powerdata in phaseload.powerdata_set:
+                current_powerdata_time.append(powerdata.time)
+            phaseload_powerdata_time.append(current_powerdata_time)
+
+        # pprint.pp(shifted_intrinsic_time)
+        pprint.pp(shifted_powerdata_time)
+        """
+
+        # assert 0
+
+        """
+        normalize = multisample.normalize
+        n_normalize = len(normalize)
+
+        intrinsic_time = multisample.intrinsic_time()
+        n_intrinsic = len(intrinsic_time)
+        for n in range(n_normalize):
+            normalization_flag = normalize[n]
+            powerload = normalized_set[n]
+            powerdata_set = powerload.powerdata_set
+            for powerdata in powerdata_set:
+                norm = np.prod(powerdata._norm)
+                time = powerdata.time
+
+                check = []
+                for t in time:
+
+                    if normalization_flag:
+                        denormalized_t = t / norm
+                        denormalized_list = [denormalized_t] * n_intrinsic
+
+                        time_zip = zip(denormalized_list, intrinsic_time)
+                        for (dt, it) in time_zip:
+                            c = dt == pytest.approx(it, rel=rel_tol, abs=abs_tol)
+                            check.append(c)
+
+                    else:
+                        normalized_list = [t] * n_intrinsic
+
+                        time_zip = zip(normalized_list, intrinsic_time)
+                        for (nt, it) in time_zip:
+                            c = nt == pytest.approx(it, rel=rel_tol, abs=abs_tol)
+                            check.append(c)
+
+                t_was_in_intrinsic_time = any(check)
+                assert t_was_in_intrinsic_time
+        """
+
         # Test that each time of original power datas can be found in
         # intrinsic time after normalization+shift
-        pass
+    '''
 
     @pytest.mark.parametrize("color_index", [3])
     @pytest.mark.parametrize("detailed_plot_flag", [False, True])
     def test_plot(self, color_index, detailed_plot_flag):
-
         figure_title = "'detailed' flag = " + str(detailed_plot_flag)
         figure_title = "PulseLoad Plotting (" + figure_title + ")"
         ax = tools_testkit.prepare_figure(figure_title)
@@ -925,4 +1107,4 @@ class TestPulseLoad:
         )
 
         adjust_2d_graph_ranges(ax=ax)
-        plt.show()  # Run with `pytest --plotting-on` to visualize
+        plt.show()

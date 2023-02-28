@@ -97,7 +97,10 @@ class TestPowerCycleABC:
                     out = sample.validate_nonnegative(argument)
 
     def test_validate_vector(self):
-        pass  # No new functionality to be tested.
+        """
+        No new functionality to be tested.
+        """
+        pass
 
 
 class TestPowerCycleTimeABC:
@@ -223,7 +226,16 @@ class TestNetPowerABC:
             assert points_in_refined == refined_list_length
 
     def test_unique_and_sorted_vector(self):
-        pass  # No new functionality to be tested.
+        """
+        No new functionality to be tested.
+        """
+        pass
+
+    def test_build_time_from_power_set(self):
+        """
+        No new functionality to be tested.
+        """
+        pass
 
     @pytest.mark.parametrize(
         "attribute",
