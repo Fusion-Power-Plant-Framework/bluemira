@@ -656,6 +656,9 @@ class FieldLineTracer:
             self.terminal = True
 
         def __call__(self, phi, xz, *args):
+            """
+            Function handle for the CollisionTerminator
+            """
             if isinstance(self.boundary, Grid):
                 return self._call_grid(xz)
             else:
