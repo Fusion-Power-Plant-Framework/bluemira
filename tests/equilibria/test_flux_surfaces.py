@@ -27,7 +27,7 @@ import pytest
 
 from bluemira.base.file import get_bluemira_path
 from bluemira.equilibria import Equilibrium
-from bluemira.equilibria.error import FluxSurfaceError
+from bluemira.equilibria.error import EquilibriaError, FluxSurfaceError
 from bluemira.equilibria.find import find_flux_surface_through_point
 from bluemira.equilibria.flux_surfaces import (
     ClosedFluxSurface,
@@ -165,6 +165,15 @@ class TestFieldLine:
         cls.eq = Equilibrium.from_eqdsk(filename)
         cls.flt = FieldLineTracer(cls.eq)
         cls.field_line = cls.flt.trace_field_line(13, 0, n_points=1000)
+
+    def test_non_planar_coodinates_raises_error(self):
+        with pytest.raises(EquilibriaError):
+            FieldLineTracer(
+                self.eq,
+                Coordinates(
+                    {"x": [6, 3, 3, 4, 5], "y": [0, 2, 0, 4, 0], "z": [1, 2, 3, 4, 5]}
+                ),
+            )
 
     def test_connection_length(self):
         assert np.isclose(
