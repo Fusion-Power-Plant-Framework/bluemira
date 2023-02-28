@@ -711,4 +711,4 @@ class TestMirrorShape:
     @pytest.mark.parametrize("shape", shapes)
     def test_bad_direction(self, shape):
         with pytest.raises(GeometryError):
-            mirror_shape(shape, base=(0, 0, 0), direction=(EPS / 3, EPS / 3, EPS / 3))
+            mirror_shape(shape, base=(0, 0, 0), direction=(EPS, EPS, EPS))
