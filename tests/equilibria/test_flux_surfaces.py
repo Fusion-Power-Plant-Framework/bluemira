@@ -163,15 +163,13 @@ class TestFieldLine:
         eq_name = "eqref_OOB.json"
         filename = os.sep.join([TEST_PATH, eq_name])
         cls.eq = Equilibrium.from_eqdsk(filename)
-        cls.cache = {}
+        cls.flt = FieldLineTracer(cls.eq)
+        cls.field_line = cls.flt.trace_field_line(13, 0, n_points=1000)
 
     def test_connection_length(self):
-        flt = FieldLineTracer(self.eq)
-        field_line = flt.trace_field_line(13, 0, n_points=1000)
         assert np.isclose(
-            field_line.connection_length, field_line.coords.length, rtol=5e-2
+            self.field_line.connection_length, self.field_line.coords.length, rtol=5e-2
         )
-        self.cache["fl_con_length_grid"] = field_line.connection_length
 
     def test_connection_length_coordinates_grid(self):
         """
@@ -191,7 +189,9 @@ class TestFieldLine:
         assert np.isclose(
             field_line.connection_length, field_line.coords.length, rtol=5e-2
         )
-        assert np.isclose(self.cache["fl_con_length_grid"], field_line.connection_length)
+        assert np.isclose(
+            self.field_line.connection_length, field_line.connection_length
+        )
         self._check_endpoint(field_line, coords)
 
     def test_connection_length_coordinates(self):
