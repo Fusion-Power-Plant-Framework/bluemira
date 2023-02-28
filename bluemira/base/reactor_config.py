@@ -43,34 +43,34 @@ class ReactorConfig:
 
     .. code-block:: python
 
-    @dataclass
-    class GlobalParams(ParameterFrame):
-        a: Parameter[int]
+        @dataclass
+        class GlobalParams(ParameterFrame):
+            a: Parameter[int]
 
 
-    reactor_config = ReactorConfig(
-        {
-            "params": {"a": 10},
-            "comp A": {
-                "params": {"a": 5, "b": 5},
-                "designer": {
-                    "params": {"a": 1},
-                    "some_config": "some_value",
+        reactor_config = ReactorConfig(
+            {
+                "params": {"a": 10},
+                "comp A": {
+                    "params": {"a": 5, "b": 5},
+                    "designer": {
+                        "params": {"a": 1},
+                        "some_config": "some_value",
+                    },
+                    "builder": {
+                        "params": {"b": 1, "c": 1},
+                        "another_config": "another_value",
+                    },
                 },
-                "builder": {
-                    "params": {"b": 1, "c": 1},
-                    "another_config": "another_value",
+                "comp B": {
+                    "params": {"b": 5},
+                    "builder": {
+                        "third_config": "third_value",
+                    },
                 },
             },
-            "comp B": {
-                "params": {"b": 5},
-                "builder": {
-                    "third_config": "third_value",
-                },
-            },
-        },
-        GlobalParams,
-    )
+            GlobalParams,
+        )
 
     """
 
