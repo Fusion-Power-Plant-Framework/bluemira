@@ -35,7 +35,7 @@ from bluemira.builders.tools import (
 )
 from bluemira.display.palettes import BLUE_PALETTE
 from bluemira.geometry.face import BluemiraFace
-from bluemira.geometry.tools import offset_wire
+from bluemira.geometry.tools import _offset_wire_discretised
 from bluemira.geometry.wire import BluemiraWire
 
 
@@ -107,9 +107,14 @@ class VacuumVesselBuilder(Builder):
         """
         Build the x-z components of the vacuum vessel.
         """
-        inner_vv = offset_wire(
-            self.ivc_koz, self.params.g_vv_bb.value, join="arc", open_wire=False
+        inner_vv = _offset_wire_discretised(
+            self.ivc_koz,
+            self.params.g_vv_bb.value,
+            join="arc",
+            open_wire=False,
+            ndiscr=600,
         )
+
         outer_vv = varied_offset(
             inner_vv,
             self.params.tk_vv_in.value,

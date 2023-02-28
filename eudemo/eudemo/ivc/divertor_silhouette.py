@@ -192,14 +192,20 @@ class DivertorSilhouetteDesigner(Designer[Tuple[BluemiraWire, ...]]):
         self, start: Sequence[float], end: Sequence[float], label: str
     ) -> BluemiraWire:
         """
-        Make a dome between the two given points
-        The dome shape follows a constant line of flux that is closest
-        to the input start coordinate. Finally, the nearset point on the
-        flux surface to the end point and the end point are joined.
+        Make a dome between the two given points.
+
+        Notes
+        -----
+        The dome shape follows a constant line of flux that is closest to the input
+        coordinates.
+        The nearset point on the flux surface to the start point and the end point are
+        joined.
+        The flux surface is picked based on the lowest z coordinate of the start and end
+        point to ensure a continuous divertor shape is produced.
         """
-        # Get the flux surface that crosses the through the start point
-        # We can use this surface to guide the shape of the dome
-        psi_start = self.equilibrium.psi(*start)
+        # Get the flux surface that crosses the through the start or end point.
+        # We can use this surface to guide the shape of the dome.
+        psi_start = self.equilibrium.psi(*(start if start[1] < end[1] else end))
         flux_surface = find_flux_surface_through_point(
             self.equilibrium.x,
             self.equilibrium.z,
