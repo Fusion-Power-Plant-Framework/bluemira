@@ -35,8 +35,10 @@ from bluemira.builders.coil_supports import (
 from bluemira.geometry.parameterisations import PictureFrame, PrincetonD, TripleArc
 from bluemira.geometry.tools import (
     boolean_cut,
+    boolean_fuse,
     circular_pattern,
     make_polygon,
+    mirror_shape,
     sweep_shape,
 )
 from bluemira.geometry.wire import BluemiraWire
@@ -203,11 +205,20 @@ class TestOISBuilder:
     tf_coil = sweep_shape(xs, pd)
 
     def _check_no_intersection_with_TFs(self, ois, builder, tf_coils):
-        ois_body = ois.get_component("xyz").get_component(builder.SUPPORT).shape
+        ois_body = ois.get_component("xyz").get_component(builder.RIGHT_OIS).shape
         result = sorted(boolean_cut(ois_body, tf_coils[0]), key=lambda s: -s.volume)
         assert np.isclose(ois_body.volume, result[0].volume)
-        result = sorted(boolean_cut(ois_body, tf_coils[1]), key=lambda s: -s.volume)
+        ois_body = ois.get_component("xyz").get_component(builder.LEFT_OIS).shape
+        result = sorted(boolean_cut(ois_body, tf_coils[0]), key=lambda s: -s.volume)
         assert np.isclose(ois_body.volume, result[0].volume)
+
+    def _check_no_intersection_when_patterned(self, ois, builder, n_TF):
+        tf_angle = 2 * np.pi / n_TF
+        direction = (-np.sin(0.5 * tf_angle), np.cos(0.5 * tf_angle), 0)
+        right_ois_0 = ois.get_component("xyz").get_component(builder.RIGHT_OIS).shape
+        left_ois_1 = mirror_shape(right_ois_0, base=(0, 0, 0), direction=direction)
+        full_ois = boolean_fuse([right_ois_0, left_ois_1])
+        assert np.isclose(full_ois.volume, 2 * right_ois_0.volume)
 
     @pytest.mark.parametrize("n_TF", [14, 15, 16, 17, 18, 19])
     def test_rectangular_profile(self, n_TF):
@@ -224,6 +235,7 @@ class TestOISBuilder:
         ois = builder.build()
         tf_coils = circular_pattern(self.tf_coil, n_shapes=n_TF)[:2]
         self._check_no_intersection_with_TFs(ois, builder, tf_coils)
+        self._check_no_intersection_when_patterned(ois, builder, n_TF)
 
     @pytest.mark.parametrize("n_TF", [14, 15, 16, 17, 18, 19])
     def test_curved_profile(self, n_TF):
@@ -242,13 +254,14 @@ class TestOISBuilder:
         join_1 = make_polygon([p2, p4])
         join_2 = make_polygon([p3, p1])
 
-        ois_profile_2 = BluemiraWire([result, join_1, r_copy, join_2])
+        ois_profile = BluemiraWire([result, join_1, r_copy, join_2])
         params = OISBuilderParams(
             Parameter("n_TF", n_TF),
             Parameter("tf_wp_depth", 1.4),
             Parameter("tk_tf_side", 0.1),
         )
-        builder = OISBuilder(params, {}, ois_profile_2)
+        builder = OISBuilder(params, {}, ois_profile)
         ois = builder.build()
         tf_coils = circular_pattern(self.tf_coil, n_shapes=n_TF)[:2]
         self._check_no_intersection_with_TFs(ois, builder, tf_coils)
+        self._check_no_intersection_when_patterned(ois, builder, n_TF)
