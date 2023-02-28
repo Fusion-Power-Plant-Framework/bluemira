@@ -4,6 +4,7 @@
 Classes for the definition of power loads in the power cycle model.
 """
 import copy
+import sys
 from enum import Enum
 from typing import List, Union
 
@@ -18,7 +19,7 @@ from bluemira.power_cycle.errors import (
     PulseLoadError,
 )
 from bluemira.power_cycle.time import PowerCyclePhase, PowerCyclePulse
-from bluemira.power_cycle.tools import validate_axes
+from bluemira.power_cycle.tools import unnest_list, validate_axes
 
 
 class PowerData(NetPowerABC):
@@ -977,6 +978,9 @@ class PulseLoad(NetPowerABC):
         "ls": "--",  # Line style
     }
 
+    # Minimal shift for time correction in 'curve' method
+    epsilon = 10 * sys.float_info.epsilon
+
     def __init__(self, name, phaseload_set):
 
         super().__init__(name)
@@ -1050,7 +1054,7 @@ class PulseLoad(NetPowerABC):
         times.
 
         This method applies the 'curve' method of the 'PhaseLoad' class
-        to each object stored in the 'phaseload_set' attribute, and
+        to each object stored in the '_shifted_set' attribute, and
         returns the sum of all individual curves created.
 
         Parameters
@@ -1063,16 +1067,28 @@ class PulseLoad(NetPowerABC):
         curve: list[float]
             List of power values. [W]
         """
-        epsilon = 1e-5  # sys.float_info.epsilon
-
+        epsilon = self.epsilon
         shifted_set = self._shifted_set
-        n_time = len(time)
-        curve = [0] * n_time
+
+        curve = []
+        modified_time = []
         for shifted_load in shifted_set:
-            load_curve = shifted_load._curve(time, primary=False)
-            curve_zip = zip(curve, load_curve)  # ERROR WITH LAST POINTS
-            curve = [c + lc for (c, lc) in curve_zip]
-        return curve
+            intrinsic_time = shifted_load.intrinsic_time
+
+            max_t = max(intrinsic_time)
+            min_t = min(intrinsic_time)
+            load_time = [t for t in time if (min_t <= t) and (t <= max_t)]
+
+            load_time[-1] = load_time[-1] - epsilon
+            load_curve = shifted_load._curve(load_time, primary=False)
+
+            modified_time.append(load_time)
+            curve.append(load_curve)
+
+        modified_time = unnest_list(modified_time)
+        curve = unnest_list(curve)
+
+        return modified_time, curve
 
     # ------------------------------------------------------------------
     # VISUALIZATION
@@ -1121,6 +1137,52 @@ class PulseLoad(NetPowerABC):
             ],
         )
 
+    def _plot_phase_delimiters(self, ax=None):
+        """
+        Add vertical lines to plot to specify where the phases of a
+        pulse end.
+        """
+        ax = validate_axes(ax)
+        axis_limits = ax.get_ylim()
+
+        shifted_set = self._shifted_set
+
+        default_line_kwargs = self._detailed_defaults
+        default_text_kwargs = self._text_kwargs
+        delimiter_kwargs = {"c": "darkorange"}
+
+        line_kwargs = {**default_line_kwargs, **delimiter_kwargs}
+        text_kwargs = {**default_text_kwargs, **delimiter_kwargs}
+
+        list_of_plot_objects = []
+        for shifted_load in shifted_set:
+            intrinsic_time = shifted_load.intrinsic_time
+
+            last_time = intrinsic_time[-1]
+
+            phase = shifted_load.phase
+            name = "End of " + phase.name
+            label = "Phase delimiter for " + phase.name
+
+            plot_object = ax.plot(
+                [last_time, last_time],
+                axis_limits,
+                label=label,
+                **line_kwargs,
+            )
+            list_of_plot_objects.append(plot_object)
+
+            plot_object = ax.text(
+                last_time,
+                axis_limits[-1],
+                name,
+                label=label,
+                **text_kwargs,
+            )
+            list_of_plot_objects.append(plot_object)
+
+        return list_of_plot_objects
+
     def plot(self, ax=None, n_points=None, detailed=False, **kwargs):
         """
         Plot a 'PulseLoad' curve, built using the attributes that define
@@ -1163,7 +1225,6 @@ class PulseLoad(NetPowerABC):
             continues to include the lists of plot objects created by
             the 'PowerLoad' class.
         """
-
         ax = validate_axes(ax)
         n_points = self._validate_n_points(n_points)
 
@@ -1175,14 +1236,15 @@ class PulseLoad(NetPowerABC):
 
         time_to_plot = self.shifted_time
         computed_time = self._refine_vector(time_to_plot, n_points)
-        computed_curve = self.curve(computed_time)
+
+        modified_time, computed_curve = self.curve(computed_time)
 
         list_of_plot_objects = []
 
         # Plot curve as line
         label = name + " (curve)"
         plot_object = ax.plot(
-            computed_time,
+            modified_time,
             computed_curve,
             label=label,
             **final_kwargs,
@@ -1190,35 +1252,26 @@ class PulseLoad(NetPowerABC):
         list_of_plot_objects.append(plot_object)
 
         # Add descriptive text next to curve
-        plot_object = self._add_text_to_point_in_plot(
+        text_object = self._add_text_to_point_in_plot(
             ax,
             name,
             computed_time,
             computed_curve,
             **kwargs,
         )
-        list_of_plot_objects.append(plot_object)
+        list_of_plot_objects.append(text_object)
+
+        # Add phase delimiters
+        delimiter_objects = self._plot_phase_delimiters(ax=ax)
+        list_of_plot_objects = list_of_plot_objects + delimiter_objects
 
         if detailed:
             shifted_set = self._shifted_set
-
-            # import pprint
-            all_colors = [
-                "r",
-                "b",
-                "g",
-                "c",
-                "y",
-            ]
-            all_colors = iter(all_colors)
-
             for shifted_load in shifted_set:
                 shifted_load._make_secondary_in_plot()
                 current_plot_list = shifted_load._plot_as_secondary(
                     ax=ax,
-                    c=next(all_colors),
                 )
                 list_of_plot_objects.append(current_plot_list)
-                breakpoint()
 
         return list_of_plot_objects

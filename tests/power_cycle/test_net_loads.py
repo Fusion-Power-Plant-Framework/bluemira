@@ -98,9 +98,11 @@ class TestPowerData:
     # OPERATIONS
     # ------------------------------------------------------------------
     def test_normalize_time(self):
-        list_of_new_end_times = netloads_testkit.attribute_manipulation_examples
+        time_examples = netloads_testkit.attribute_manipulation_examples
         rel_tol = None
         abs_tol = None
+
+        list_of_new_end_times = time_examples
 
         all_samples = self.all_samples
         for sample in all_samples:
@@ -132,9 +134,11 @@ class TestPowerData:
             assert len(all_norms) == len(list_of_new_end_times)
 
     def test_shift_time(self):
-        list_of_time_shifts = netloads_testkit.attribute_manipulation_examples
+        time_examples = netloads_testkit.attribute_manipulation_examples
         rel_tol = None
         abs_tol = None
+
+        list_of_time_shifts = time_examples
 
         all_samples = self.all_samples
         for sample in all_samples:
@@ -778,51 +782,6 @@ class TestPhaseLoad:
         with pytest.raises(setter_errors):
             multisample.normalized_time = 0
 
-    """
-    def test_intrinsic_time(self):
-        rel_tol = None
-        abs_tol = None
-
-        multisample = self.construct_multisample()
-        normalized_set = multisample._compute_normalized_set()
-
-        normalize = multisample.normalize
-        n_normalize = len(normalize)
-
-        intrinsic_time = multisample.intrinsic_time()
-        n_intrinsic = len(intrinsic_time)
-        for n in range(n_normalize):
-            normalization_flag = normalize[n]
-            powerload = normalized_set[n]
-            powerdata_set = powerload.powerdata_set
-            for powerdata in powerdata_set:
-                norm = np.prod(powerdata._norm)
-                time = powerdata.time
-
-                check = []
-                for t in time:
-
-                    if normalization_flag:
-                        denormalized_t = t / norm
-                        denormalized_list = [denormalized_t] * n_intrinsic
-
-                        time_zip = zip(denormalized_list, intrinsic_time)
-                        for (dt, it) in time_zip:
-                            c = dt == pytest.approx(it, rel=rel_tol, abs=abs_tol)
-                            check.append(c)
-
-                    else:
-                        normalized_list = [t] * n_intrinsic
-
-                        time_zip = zip(normalized_list, intrinsic_time)
-                        for (nt, it) in time_zip:
-                            c = nt == pytest.approx(it, rel=rel_tol, abs=abs_tol)
-                            check.append(c)
-
-                t_was_in_intrinsic_time = any(check)
-                assert t_was_in_intrinsic_time
-    """
-
     @pytest.mark.parametrize("color_index", [2])
     @pytest.mark.parametrize("detailed_plot_flag", [False, True])
     def test_plot(self, color_index, detailed_plot_flag):
@@ -989,107 +948,6 @@ class TestPulseLoad:
         setter_errors = (AttributeError, PulseLoadError)
         with pytest.raises(setter_errors):
             multisample.intrinsic_time = 0
-
-    '''
-    def test_intrinsic_time(self):
-
-        rel_tol = None
-        abs_tol = None
-
-        multisample = self.construct_multisample()
-
-        # n_shifted = len(shifted_set)
-
-        import pprint
-
-        intrinsic_time = multisample.time
-        n_intrinsic = len(intrinsic_time)
-
-        shifted_set = multisample._shifted_set
-        shifted_intrinsic_time = []
-        shifted_powerload_time = []
-        shifted_powerdata_time = []
-        for shifted_load in shifted_set:
-            current_intrinsic_time = shifted_load.time
-            shifted_intrinsic_time.append(current_intrinsic_time)
-
-            current_powerload_time = []
-            for powerload in shifted_load.powerload_set:
-                current_intrinsic_time = powerload.time
-                current_powerload_time.append(current_intrinsic_time)
-
-                current_powerdata_time = []
-                for powerdata in powerload.powerdata_set:
-                    current_powerdata_time.append(powerdata.time)
-                shifted_powerdata_time.append(current_powerdata_time)
-
-            shifted_powerload_time.append(current_powerload_time)
-
-        pprint.pp(intrinsic_time)
-        pprint.pp(shifted_intrinsic_time)
-        pprint.pp(shifted_powerload_time)
-        pprint.pp(shifted_powerdata_time)
-
-        """
-        phaseload_set = multisample.phaseload_set
-        phaseload_intrinsic_time = []
-        phaseload_powerdata_time = []
-        for phaseload in phaseload_set:
-            current_intrinsic_time = phaseload.intrinsic_time()
-            phaseload_intrinsic_time.append(current_intrinsic_time)
-
-            current_powerdata_time = []
-            for powerdata in phaseload.powerdata_set:
-                current_powerdata_time.append(powerdata.time)
-            phaseload_powerdata_time.append(current_powerdata_time)
-
-        # pprint.pp(shifted_intrinsic_time)
-        pprint.pp(shifted_powerdata_time)
-        """
-
-        # assert 0
-
-        """
-        normalize = multisample.normalize
-        n_normalize = len(normalize)
-
-        intrinsic_time = multisample.intrinsic_time()
-        n_intrinsic = len(intrinsic_time)
-        for n in range(n_normalize):
-            normalization_flag = normalize[n]
-            powerload = normalized_set[n]
-            powerdata_set = powerload.powerdata_set
-            for powerdata in powerdata_set:
-                norm = np.prod(powerdata._norm)
-                time = powerdata.time
-
-                check = []
-                for t in time:
-
-                    if normalization_flag:
-                        denormalized_t = t / norm
-                        denormalized_list = [denormalized_t] * n_intrinsic
-
-                        time_zip = zip(denormalized_list, intrinsic_time)
-                        for (dt, it) in time_zip:
-                            c = dt == pytest.approx(it, rel=rel_tol, abs=abs_tol)
-                            check.append(c)
-
-                    else:
-                        normalized_list = [t] * n_intrinsic
-
-                        time_zip = zip(normalized_list, intrinsic_time)
-                        for (nt, it) in time_zip:
-                            c = nt == pytest.approx(it, rel=rel_tol, abs=abs_tol)
-                            check.append(c)
-
-                t_was_in_intrinsic_time = any(check)
-                assert t_was_in_intrinsic_time
-        """
-
-        # Test that each time of original power datas can be found in
-        # intrinsic time after normalization+shift
-    '''
 
     @pytest.mark.parametrize("color_index", [3])
     @pytest.mark.parametrize("detailed_plot_flag", [False, True])
