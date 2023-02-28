@@ -175,6 +175,10 @@ class PowerDataError(PowerCycleError):
                 "The attributes 'data' and 'time' of an instance of "
                 f"the {self._source} class must have the same length."
             ],
+            "time": [
+                "The 'intrinsic_time' property of an instance of the "
+                f"{self._source} class cannot be set.",
+            ],
         }
         return errors
 
@@ -195,10 +199,17 @@ class PowerLoadError(PowerCycleError):
                 "The attributes 'load' and 'model' of an instance of "
                 f"the {self._source} class must have the same length."
             ],
-            "time": [
+            "curve": [
                 "The 'time' input used to create a curve with an "
                 f"instance of the {self._source} class must be numeric "
                 "or a list of numeric values.",
+            ],
+            "time": [
+                "The 'intrinsic_time' property of an instance of the "
+                f"{self._source} class cannot be set; it is instead "
+                "built from the 'intrinsic_time' attributes of the "
+                "'PowerData' objects stored in the 'powerdata_set' "
+                "attribute.",
             ],
         }
         return errors
@@ -226,6 +237,36 @@ class PhaseLoadError(PowerCycleError):
                 f"the {self._source} class for the input 'option' is "
                 "not valid. Only the strings 'load' and 'normal' are "
                 "accepted.",
+            ],
+            "normalized_set": [
+                "The 'normalized_set' property of an instance of the "
+                f"{self._source} class cannot be set; it is instead "
+                "calculated from the 'powerload_set' and 'phase' "
+                "attributes.",
+            ],
+            "time": [
+                "The time properties of an instance of the "
+                f"{self._source} class cannot be set.",
+            ],
+        }
+        return errors
+
+
+class PulseLoadError(PowerCycleError):
+    """
+    Exception class for 'PulseLoad' class of the Power Cycle module.
+    """
+
+    def _errors(self):
+        errors = {
+            "shifted_set": [
+                "The 'shifted_set' property of an instance of the "
+                f"{self._source} class cannot be set; it is instead "
+                "calculated from the 'phaseload_set' attribute.",
+            ],
+            "time": [
+                "The time properties of an instance of the "
+                f"{self._source} class cannot be set.",
             ],
         }
         return errors

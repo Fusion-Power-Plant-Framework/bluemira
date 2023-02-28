@@ -11,9 +11,14 @@ import numpy as np
 from scipy.interpolate import interp1d
 
 from bluemira.power_cycle.base import NetPowerABC
-from bluemira.power_cycle.errors import PhaseLoadError, PowerDataError, PowerLoadError
+from bluemira.power_cycle.errors import (
+    PhaseLoadError,
+    PowerDataError,
+    PowerLoadError,
+    PulseLoadError,
+)
 from bluemira.power_cycle.time import PowerCyclePhase, PowerCyclePulse
-from bluemira.power_cycle.tools import unnest_list, validate_axes
+from bluemira.power_cycle.tools import validate_axes
 
 
 class PowerData(NetPowerABC):
@@ -108,6 +113,18 @@ class PowerData(NetPowerABC):
     # ------------------------------------------------------------------
     # VISUALIZATION
     # ------------------------------------------------------------------
+
+    @property
+    def intrinsic_time(self):
+        """
+        Deep copy of the time vector contained in the 'time' attribute.
+        """
+        time = copy.deepcopy(self.time)
+        return time
+
+    @intrinsic_time.setter
+    def intrinsic_time(self, value) -> None:
+        raise PowerLoadError("time")
 
     def plot(self, ax=None, **kwargs):
         """
@@ -291,14 +308,15 @@ class PowerLoad(NetPowerABC):
         return interpolated_curve
 
     @staticmethod
-    def _validate_time(time):
+    def _validate_curve_input(time):
         """
-        Validate 'time' input to be a list of numeric values.
+        Validate the 'time' input for the 'curve' method to be a list of
+        numeric values.
         """
         time = super(PowerLoad, PowerLoad).validate_list(time)
         for element in time:
             if not isinstance(element, (int, float)):
-                raise PowerLoadError("time")
+                raise PowerLoadError("curve")
         return time
 
     def curve(self, time):
@@ -322,7 +340,7 @@ class PowerLoad(NetPowerABC):
         curve: list[float]
             List of power values. [W]
         """
-        time = self._validate_time(time)
+        time = self._validate_curve_input(time)
         time_length = len(time)
         preallocated_curve = np.array([0] * time_length)
 
@@ -366,26 +384,30 @@ class PowerLoad(NetPowerABC):
         Shift the 'time' attribute of all 'PowerData' objects in the
         'powerdata_set' attribute by the numerical value 'time_shift'.
         """
-        powerdata_set = self.powerdata_set
-        for powerdata in powerdata_set:
+        old_powerdata_set = self.powerdata_set
+        new_powerdata_set = []
+        for powerdata in old_powerdata_set:
             powerdata._shift_time(time_shift)
-        self.powerdata_set = powerdata_set
+            new_powerdata_set.append(powerdata)
+        self.powerdata_set = new_powerdata_set
 
     # ------------------------------------------------------------------
     # VISUALIZATION
     # ------------------------------------------------------------------
 
+    @property
     def intrinsic_time(self):
         """
         Single time vector that contains all values used to define the
         different 'PowerData' objects contained in the 'powerdata_set'
         attribute.
         """
-        powerdata_set = self.powerdata_set
-        all_times = [powerdata.time for powerdata in powerdata_set]
-        unnested_times = unnest_list(all_times)
-        intrinsic_time = self._unique_and_sorted_vector(unnested_times)
-        return intrinsic_time
+        time = self._build_time_from_power_set(self.powerdata_set)
+        return time
+
+    @intrinsic_time.setter
+    def time(self, value) -> None:
+        raise PowerLoadError("time")
 
     def plot(self, ax=None, n_points=None, detailed=False, **kwargs):
         """
@@ -444,7 +466,7 @@ class PowerLoad(NetPowerABC):
 
         name = self.name
 
-        intrinsic_time = self.intrinsic_time()
+        intrinsic_time = self.time
         computed_time = self._refine_vector(intrinsic_time, n_points)
         computed_curve = self.curve(computed_time)
 
@@ -671,21 +693,48 @@ class PhaseLoad(NetPowerABC):
     # ------------------------------------------------------------------
     # OPERATIONS
     # ------------------------------------------------------------------
-    def _compute_normalized_set(self):
+
+    @property
+    def _normalized_set(self):
+        """
+        Modified 'powerload_set' attribute, in which all times are
+        normalized in respect to the 'duration' of the 'phase'
+        attribute.
+        """
         phase = self.phase
-        powerload_set = self.powerload_set
         normalize = self.normalize
+        powerload_set = self.powerload_set
+
         number_of_load_elements = len(powerload_set)
+        original_set = copy.deepcopy(powerload_set)
 
         normalized_set = []
         for e in range(number_of_load_elements):
-            powerload = powerload_set[e]
+            powerload = original_set[e]
             normalization_flag = normalize[e]
             if normalization_flag:
                 powerload._normalize_time(phase.duration)
             normalized_set.append(powerload)
 
         return normalized_set
+
+    @_normalized_set.setter
+    def _normalized_set(self, value) -> None:
+        raise PhaseLoadError("normalized_set")
+
+    def _curve(self, time, primary=False):
+        """
+        If primary, build curve in respect to 'normalized_set'.
+        If secondary (called from 'PulseLoad'), plot in respect to
+        'powerload_set', since set will already have been normalized.
+        """
+        if primary:
+            load_set = self._normalized_set
+        else:
+            load_set = self.powerload_set
+        resulting_load = sum(load_set)
+        curve = resulting_load.curve(time)
+        return curve
 
     def curve(self, time):
         """
@@ -706,43 +755,117 @@ class PhaseLoad(NetPowerABC):
         curve: list[float]
             List of power values. [W]
         """
-        normalized_set = self._compute_normalized_set()
-        resulting_load = sum(normalized_set)
-        curve = resulting_load.curve(time)
+        curve = self._curve(
+            time,
+            primary=True,
+        )
         return curve
-
-    '''
-    def _shift_time(self, time_shift):
-        """
-        Shift all the 'time' attributes of each 'PowerLoad' object in
-        the 'powerload_set' attribute by the numerical value
-        'time_shift'.
-        """
-        powerload_set = self.powerload_set
-        for powerload in powerload_set:
-            powerload._shift_time(time_shift)
-        self.powerload_set = powerload_set
-    '''
 
     # ------------------------------------------------------------------
     # VISUALIZATION
     # ------------------------------------------------------------------
 
+    @property
     def intrinsic_time(self):
         """
         Single time vector that contains all values used to define the
-        different 'PowerLoad' objects contained in the list created with
-        the '_compute_normalized_set' method (i.e. all times are
-        normalized in respect to the phase duration).
+        different 'PowerLoad' objects contained in the 'powerload_set'
+        attribute (i.e. all times are their original values).
         """
-        normalized_set = self._compute_normalized_set()
-        all_times = []
-        for normal_load in normalized_set:
-            normal_load_intrinsic_time = normal_load.intrinsic_time()
-            all_times.append(normal_load_intrinsic_time)
-        unnested_times = unnest_list(all_times)
-        intrinsic_time = self._unique_and_sorted_vector(unnested_times)
-        return intrinsic_time
+        time = self._build_time_from_power_set(self.powerload_set)
+        return time
+
+    @intrinsic_time.setter
+    def intrinsic_time(self, value) -> None:
+        raise PhaseLoadError(
+            "time",
+            [
+                "The 'intrinsic_time' is instead built from the ",
+                "'time' attributes of the 'PowerLoad' objects stored ",
+                "in the 'powerload_set' attribute.",
+            ],
+        )
+
+    @property
+    def normalized_time(self):
+        """
+        Single time vector that contains all values used to define the
+        different 'PowerLoad' objects contained in the '_normalized_set'
+        attribute (i.e. all times are normalized in respect to the phase
+        duration).
+        """
+        time = self._build_time_from_power_set(self._normalized_set)
+        return time
+
+    @normalized_time.setter
+    def normalized_time(self, value) -> None:
+        raise PhaseLoadError(
+            "time",
+            [
+                "The 'normalized_time' is instead built from the ",
+                "'time' attributes of the 'PowerLoad' objects stored ",
+                "in the 'normalized_set' attribute.",
+            ],
+        )
+
+    def _plot(self, primary=False, ax=None, n_points=None, **kwargs):
+        """
+        If primary, plot in respect to 'normalized_time'.
+        If secondary (called from 'PulseLoad'), plot in respect to
+        'intrinsic_time', since set will already have been normalized.
+        """
+        ax = validate_axes(ax)
+        n_points = self._validate_n_points(n_points)
+
+        # Set each default options in kwargs, if not specified
+        default_plot_kwargs = self._plot_kwargs
+        final_kwargs = {**default_plot_kwargs, **kwargs}
+
+        name = self.name
+
+        if primary:
+            time_to_plot = self.normalized_time
+        else:
+            time_to_plot = self.intrinsic_time
+        computed_time = self._refine_vector(time_to_plot, n_points)
+
+        if primary:
+            computed_curve = self._curve(computed_time, primary=True)
+        else:
+            computed_curve = self._curve(computed_time, primary=False)
+
+        list_of_plot_objects = []
+
+        # Plot curve as line
+        label = name + " (curve)"
+        plot_object = ax.plot(
+            computed_time,
+            computed_curve,
+            label=label,
+            **final_kwargs,
+        )
+        list_of_plot_objects.append(plot_object)
+
+        # Add descriptive text next to curve
+        plot_object = self._add_text_to_point_in_plot(
+            ax,
+            name,
+            computed_time,
+            computed_curve,
+            **kwargs,
+        )
+        list_of_plot_objects.append(plot_object)
+
+        return ax, list_of_plot_objects
+
+    def _plot_as_secondary(self, ax=None, n_points=None, **kwargs):
+        _, list_of_plot_objects = self._plot(
+            primary=False,
+            ax=ax,
+            n_points=n_points,
+            **kwargs,
+        )
+        return list_of_plot_objects
 
     def plot(self, ax=None, n_points=None, detailed=False, **kwargs):
         """
@@ -785,43 +908,15 @@ class PhaseLoad(NetPowerABC):
             continues to include the lists of plot objects created by
             the 'PowerLoad' class.
         """
-        ax = validate_axes(ax)
-        n_points = self._validate_n_points(n_points)
-
-        # Set each default options in kwargs, if not specified
-        default_plot_kwargs = self._plot_kwargs
-        final_kwargs = {**default_plot_kwargs, **kwargs}
-
-        name = self.name
-
-        intrinsic_time = self.intrinsic_time()
-        computed_time = self._refine_vector(intrinsic_time, n_points)
-        computed_curve = self.curve(computed_time)
-
-        list_of_plot_objects = []
-
-        # Plot curve as line
-        label = name + " (curve)"
-        plot_object = ax.plot(
-            computed_time,
-            computed_curve,
-            label=label,
-            **final_kwargs,
-        )
-        list_of_plot_objects.append(plot_object)
-
-        # Add descriptive text next to curve
-        plot_object = self._add_text_to_point_in_plot(
-            ax,
-            name,
-            computed_time,
-            computed_curve,
+        ax, list_of_plot_objects = self._plot(
+            primary=True,
+            ax=ax,
+            n_points=n_points,
             **kwargs,
         )
-        list_of_plot_objects.append(plot_object)
 
         if detailed:
-            normalized_set = self._compute_normalized_set()
+            normalized_set = self._normalized_set
             for normal_load in normalized_set:
                 normal_load._make_secondary_in_plot()
                 current_plot_list = normal_load.plot(ax=ax)
@@ -835,6 +930,16 @@ class PulseLoad(NetPowerABC):
     Representation of the total power load during a pulse.
 
     Defines the pulse load with a set of 'PhaseLoad' instances.
+
+    ############################# RE-WRITE #############################
+    Manipulation of the time vectors that define the complete pulse load
+    are :
+        - normalized, given the 'normalize' attribute of each
+            'PhaseLoad', with normalization equal to the 'duration'
+            of its 'phase' attribute;
+        - shifted, given the sum of the 'duration' attributes of
+            the 'phase' of each 'PhaseLoad' that comes before it.
+    ############################# RE-WRITE #############################
 
     Parameters
     ----------
@@ -910,27 +1015,34 @@ class PulseLoad(NetPowerABC):
     # OPERATIONS
     # ------------------------------------------------------------------
 
-    def _compute_shifted_set(self):
-        phaseload_set = self.phaseload_set
-
+    @property
+    def _shifted_set(self):
+        """
+        Modified 'phaseload_set' attribute, in which all times of each
+        'PhaseLoad' object are shifted by the sum of 'duration' values
+        of the 'phase' attribute of each 'PhaseLoad' that comes before
+        it in the 'phaseload_set' attribute.
+        Shifts are applied to the '_normalized_set' property of each
+        'PhaseLoad' object.
+        """
+        phaseload_set = copy.deepcopy(self.phaseload_set)
         shifted_set = []
         time_shift = 0
         for phaseload in phaseload_set:
-            normalized_set = phaseload._compute_normalized_set()
-            n_powerloads = len(normalized_set)
-
-            for p in range(n_powerloads):
-                normal_load = normalized_set[p]
+            normalized_set = phaseload._normalized_set
+            for normal_load in normalized_set:
                 normal_load._shift_time(time_shift)
-                normalized_set[p] = normal_load
             phaseload.powerload_set = normalized_set
 
             shifted_set.append(phaseload)
 
             phase = phaseload.phase
-            time_shift = phase.duration
-
+            time_shift = time_shift + phase.duration
         return shifted_set
+
+    @_shifted_set.setter
+    def _shifted_set(self, value) -> None:
+        raise PulseLoadError("shifted_set")
 
     def curve(self, time):
         """
@@ -951,35 +1063,63 @@ class PulseLoad(NetPowerABC):
         curve: list[float]
             List of power values. [W]
         """
-        shifted_set = self._compute_shifted_set()
+        epsilon = 1e-5  # sys.float_info.epsilon
 
+        shifted_set = self._shifted_set
         n_time = len(time)
         curve = [0] * n_time
         for shifted_load in shifted_set:
-            curve_in_phase = shifted_load.curve(time)
-            curve = [tc + tp for (tc, tp) in zip(curve, curve_in_phase)]
+            load_curve = shifted_load._curve(time, primary=False)
+            curve_zip = zip(curve, load_curve)  # ERROR WITH LAST POINTS
+            curve = [c + lc for (c, lc) in curve_zip]
         return curve
 
     # ------------------------------------------------------------------
     # VISUALIZATION
     # ------------------------------------------------------------------
 
+    @property
     def intrinsic_time(self):
         """
         Single time vector that contains all values used to define the
         different 'PhaseLoad' objects contained in the 'phaseload_set'
-        attribute. Time values are:
-            - normalized, given the 'normalize' attribute of each
-              'PhaseLoad', with normalization equal to the 'duration'
-              of its 'phase' attribute;
-            - shifted, given the sum of the 'duration' attributes of
-              the 'phase' of each 'PhaseLoad' that comes before it.
+        attribute (i.e. all times are their original values).
         """
-        shifted_set = self._compute_shifted_set()
-        all_times = [shifted_load.time for shifted_load in shifted_set]
-        unnested_times = unnest_list(all_times)
-        intrinsic_time = self._unique_and_sorted_vector(unnested_times)
-        return intrinsic_time
+        time = self._build_time_from_power_set(self.phaseload_set)
+        return time
+
+    @intrinsic_time.setter
+    def intrinsic_time(self, value) -> None:
+        raise PulseLoadError(
+            "time",
+            [
+                "The 'intrinsic_time' is instead built from the ",
+                "'intrinsic_time' attributes of the 'PhaseLoad' ",
+                "objects stored in the 'phaseload_set' attribute.",
+            ],
+        )
+
+    @property
+    def shifted_time(self):
+        """
+        Single time vector that contains all values used to define the
+        different 'PowerLoad' objects contained in the '_shifted_set'
+        attribute (i.e. all times are shifted in respect to the
+        duration of previous phases).
+        """
+        time = self._build_time_from_power_set(self._shifted_set)
+        return time
+
+    @shifted_time.setter
+    def shifted_time(self, value) -> None:
+        raise PulseLoadError(
+            "time",
+            [
+                "The 'shifted_time' is instead built from the ",
+                "'intrinsic_time' attributes of the 'PowerLoad' ",
+                "objects stored in the 'shifted_set' attribute.",
+            ],
+        )
 
     def plot(self, ax=None, n_points=None, detailed=False, **kwargs):
         """
@@ -1023,4 +1163,62 @@ class PulseLoad(NetPowerABC):
             continues to include the lists of plot objects created by
             the 'PowerLoad' class.
         """
-        pass
+
+        ax = validate_axes(ax)
+        n_points = self._validate_n_points(n_points)
+
+        # Set each default options in kwargs, if not specified
+        default_plot_kwargs = self._plot_kwargs
+        final_kwargs = {**default_plot_kwargs, **kwargs}
+
+        name = self.name
+
+        time_to_plot = self.shifted_time
+        computed_time = self._refine_vector(time_to_plot, n_points)
+        computed_curve = self.curve(computed_time)
+
+        list_of_plot_objects = []
+
+        # Plot curve as line
+        label = name + " (curve)"
+        plot_object = ax.plot(
+            computed_time,
+            computed_curve,
+            label=label,
+            **final_kwargs,
+        )
+        list_of_plot_objects.append(plot_object)
+
+        # Add descriptive text next to curve
+        plot_object = self._add_text_to_point_in_plot(
+            ax,
+            name,
+            computed_time,
+            computed_curve,
+            **kwargs,
+        )
+        list_of_plot_objects.append(plot_object)
+
+        if detailed:
+            shifted_set = self._shifted_set
+
+            # import pprint
+            all_colors = [
+                "r",
+                "b",
+                "g",
+                "c",
+                "y",
+            ]
+            all_colors = iter(all_colors)
+
+            for shifted_load in shifted_set:
+                shifted_load._make_secondary_in_plot()
+                current_plot_list = shifted_load._plot_as_secondary(
+                    ax=ax,
+                    c=next(all_colors),
+                )
+                list_of_plot_objects.append(current_plot_list)
+                breakpoint()
+
+        return list_of_plot_objects
