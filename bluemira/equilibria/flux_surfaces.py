@@ -684,11 +684,10 @@ class FieldLineTracer:
         self.eq = eq
         if first_wall is None:
             first_wall = self.eq.grid
-        else:
-            if isinstance(first_wall, Coordinates) and not first_wall.is_planar:
-                raise EquilibriaError(
-                    "When tracing a field line, the coordinates object of the boundary must be planar."
-                )
+        elif isinstance(first_wall, Coordinates) and not first_wall.is_planar:
+            raise EquilibriaError(
+                "When tracing a field line, the coordinates object of the boundary must be planar."
+            )
         self.first_wall = first_wall
 
     def trace_field_line(self, x, z, n_points=200, forward=True, n_turns_max=20):
