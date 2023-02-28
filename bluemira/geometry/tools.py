@@ -912,8 +912,12 @@ def mirror_shape(
     -------
     mirrored_shape
         The mirrored shape
+
+    Raises
+    ------
+    GeometryError: if the norm of the direction tuple is < 3* EPS
     """
-    if np.isclose(np.linalg.norm(direction), EPS):
+    if np.linalg.norm(direction) <= 3 * EPS:
         raise GeometryError("Direction vector cannot have a zero norm.")
     return convert(cadapi.mirror_shape(shape.shape, base, direction), label=label)
 
