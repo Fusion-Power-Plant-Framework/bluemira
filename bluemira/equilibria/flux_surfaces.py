@@ -27,7 +27,7 @@ Flux surface utility classes and calculations
 from copy import deepcopy
 from dataclasses import dataclass
 from functools import lru_cache
-from typing import Iterable
+from typing import Iterable, Optional, Union
 
 import matplotlib.pyplot as plt
 import numba as nb
@@ -36,8 +36,9 @@ from scipy.integrate import solve_ivp
 
 from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.equilibria.constants import PSI_NORM_TOL
-from bluemira.equilibria.error import FluxSurfaceError
+from bluemira.equilibria.error import EquilibriaError, FluxSurfaceError
 from bluemira.equilibria.find import find_flux_surface_through_point
+from bluemira.equilibria.grid import Grid
 from bluemira.geometry.coordinates import (
     Coordinates,
     check_linesegment,
@@ -45,6 +46,7 @@ from bluemira.geometry.coordinates import (
     get_angle_between_points,
     get_area_2d,
     get_intersect,
+    in_polygon,
     join_intersect,
 )
 from bluemira.geometry.plane import BluemiraPlane
@@ -652,20 +654,35 @@ class FieldLineTracer:
         def __init__(self, boundary):
             self.boundary = boundary
             self.terminal = True
+            if isinstance(boundary, Grid):
+                self._check_inside = self._check_inside_grid
+            else:
+                self._check_inside = self._check_inside_coordinates
 
         def __call__(self, phi, xz, *args):
             """
             Function handle for the CollisionTerminator.
             """
-            if self.boundary.point_inside(xz[:2]):
+            if self._check_inside(xz[:2]):
                 return np.min(self.boundary.distance_to(xz[:2]))
             else:
                 return -np.min(self.boundary.distance_to(xz[:2]))
 
-    def __init__(self, eq, first_wall=None):
+        def _check_inside_grid(self, xz):
+            return self.boundary.point_inside(xz)
+
+        def _check_inside_coordinates(self, xz):
+            return in_polygon(*xz, self.boundary.xz, include_edges=True)
+
+    def __init__(self, eq, first_wall: Optional[Union[Grid, Coordinates]] = None):
         self.eq = eq
         if first_wall is None:
             first_wall = self.eq.grid
+        else:
+            if isinstance(first_wall, Coordinates) and not first_wall.is_planar:
+                raise EquilibriaError(
+                    "When tracing a field line, the coordinates object of the boundary must be planar."
+                )
         self.first_wall = first_wall
 
     def trace_field_line(self, x, z, n_points=200, forward=True, n_turns_max=20):
