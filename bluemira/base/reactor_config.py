@@ -131,11 +131,15 @@ class ReactorConfig:
 
             to_extract = current_layer
             if not is_config:
+                # if doing a params extraction,
+                # get the values from the _PARAMETERS_KEY
                 try:
                     to_extract = current_layer[_PARAMETERS_KEY]
                 except KeyError:
-                    bluemira_warn(f"'{_PARAMETERS_KEY}' not in {current_arg_key}")
-                    to_extract = {}
+                    if next_arg_key is None:
+                        # only warn if it's the final arg
+                        bluemira_warn(f"'{_PARAMETERS_KEY}' not in {current_arg_key}")
+                    continue
 
             # add all keys not in extracted already
             # if doing a config, ignore the "params" (_PARAMETERS_KEY)
@@ -225,6 +229,6 @@ class ReactorConfig:
 
         _return = self._extract(args, is_config=True)
         if not _return:
-            bluemira_warn(f"No config found for {component_name}")
+            bluemira_warn(f"No config for '{component_name}'")
 
         return _return

@@ -49,7 +49,7 @@ import numpy as np
 from bluemira.base.builder import Builder, ComponentManager
 from bluemira.base.components import Component, PhysicalComponent
 from bluemira.base.designer import Designer
-from bluemira.base.parameter_frame import Parameter, ParameterFrame
+from bluemira.base.parameter_frame import EmptyFrame, Parameter, ParameterFrame
 from bluemira.base.reactor import Reactor
 from bluemira.base.reactor_config import ReactorConfig
 from bluemira.display.palettes import BLUE_PALETTE
@@ -504,7 +504,6 @@ build_config = {
                 "phi_pos_l": {"value": 0, "unit": "degree", "source": "Input"},
             },
         },
-        "builder": {},
     },
     "TF Coil": {
         "params": {},
@@ -541,22 +540,30 @@ build_config = {
 
 # %%
 
-reactor_config = ReactorConfig(build_config)
+reactor_config = ReactorConfig(build_config, EmptyFrame)
 
-plasma_params = PlasmaDesignerParams.from_dict(reactor_config.designer_params("Plasma"))
+plasma_params = PlasmaDesignerParams.from_config_params(
+    reactor_config.params_for("Plasma", "designer")
+)
 
-tf_coil_params = TFCoilBuilderParams.from_dict(reactor_config.builder_params("TF Coil"))
+tf_coil_params = TFCoilBuilderParams.from_config_params(
+    reactor_config.params_for("TF Coil", "builder")
+)
 
 # %% [markdown]
 #
 # We create our plasma
 
 # %%
-plasma_designer = PlasmaDesigner(plasma_params, reactor_config.designer_config("Plasma"))
+plasma_designer = PlasmaDesigner(
+    plasma_params,
+    reactor_config.config_for("Plasma", "designer"),
+)
 plasma_parameterisation = plasma_designer.execute()
 
 plasma_builder = PlasmaBuilder(
-    plasma_parameterisation.create_shape(), reactor_config.builder_config("Plasma")
+    plasma_parameterisation.create_shape(),
+    reactor_config.config_for("Plasma"),
 )
 plasma = Plasma(plasma_builder.build())
 
@@ -566,7 +573,7 @@ plasma = Plasma(plasma_builder.build())
 
 # %%
 tf_coil_designer = TFCoilDesigner(
-    plasma.lcfs(), None, reactor_config.designer_config("TF Coil")
+    plasma.lcfs(), None, reactor_config.config_for("TF Coil", "designer")
 )
 tf_parameterisation = tf_coil_designer.execute()
 
