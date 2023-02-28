@@ -37,7 +37,13 @@ from bluemira.equilibria.flux_surfaces import (
     poloidal_angle,
 )
 from bluemira.equilibria.shapes import flux_surface_cunningham, flux_surface_johner
-from bluemira.geometry.coordinates import Coordinates, interpolate_points
+from bluemira.geometry.coordinates import (
+    Coordinates,
+    coords_plane_intersect,
+    interpolate_points,
+)
+from bluemira.geometry.plane import BluemiraPlane
+from bluemira.geometry.tools import _signed_distance_2D
 
 TEST_PATH = get_bluemira_path("equilibria/test_data", subfolder="tests")
 
@@ -186,24 +192,39 @@ class TestFieldLine:
             field_line.connection_length, field_line.coords.length, rtol=5e-2
         )
         assert np.isclose(self.cache["fl_con_length_grid"], field_line.connection_length)
+        self._check_endpoint(field_line, coords)
 
     def test_connection_length_coordinates(self):
         coords = Coordinates(
             {
-                "x": [self.eq.grid.x_min, 9, 12, 13, 13, 12, 4, self.eq.grid.x_min],
+                "x": [self.eq.grid.x_min, 9, 12, 13, 13, 12.5, 4, self.eq.grid.x_min],
                 "y": 0,
-                "z": [self.eq.grid.z_min, -9, -7, -6, 6, 4, 9, self.eq.grid.z_min],
+                "z": [self.eq.grid.z_min, -7, -7, -6, 6, 5, 7, self.eq.grid.z_min],
             }
         )
-        import matplotlib.pyplot as plt
-
-        f, ax = plt.subplots()
-        self.eq.plot(ax=ax)
-        ax.plot(*coords.xz)
         flt = FieldLineTracer(self.eq, coords)
-        field_line = flt.trace_field_line(13, 0, n_points=1000)
+        field_line = flt.trace_field_line(12.5, 0, n_points=1000, forward=False)
+        self._check_endpoint(field_line, coords)
 
-        field_line.pointcare_plot(ax=ax)
+    def _check_endpoint(self, field_line, coords, tol=1e-4):
+        """
+        Check that the end point of a field line lies near enough to the boundary
+        """
+        end_point = self._extract_endpoint(field_line)
+        ep_xz = np.array([end_point[0], end_point[2]])
+        assert abs(_signed_distance_2D(ep_xz, coords.xz.T)) < tol
+
+    def _extract_endpoint(self, field_line):
+        """
+        Get the end point of a field line in 3-D and map it to 2-D
+        """
+        end_point = field_line.coords.xyz.T[-1]
+        r = np.hypot(*end_point[:2])
+        z = end_point[2]
+        angle = np.linspace(0, 2 * np.pi, 1000)
+        circle = Coordinates({"x": r * np.cos(angle), "y": r * np.sin(angle), "z": z})
+        inters = coords_plane_intersect(circle, BluemiraPlane(axis=(0, 1, 0)))
+        return [i for i in inters if i[0] > 0][0]
 
 
 def test_poloidal_angle():
