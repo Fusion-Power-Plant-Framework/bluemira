@@ -541,7 +541,8 @@ class OISBuilder(Builder):
     Outer intercoil structure builder
     """
 
-    SUPPORT = "TF OIS"
+    RIGHT_OIS = "TF OIS right"
+    LEFT_OIS = "TF OIS left"
     param_cls: Type[OISBuilderParams] = OISBuilderParams
 
     def __init__(
@@ -570,7 +571,7 @@ class OISBuilder(Builder):
         Build the x-z component of the OIS
         """
         face = BluemiraFace(self.ois_xz_profile)
-        component = PhysicalComponent(self.SUPPORT, face)
+        component = PhysicalComponent(self.RIGHT_OIS, face)
         component.display_cad_options.color = BLUE_PALETTE["TF"][2]
         component.plot_options.face_options["color"] = BLUE_PALETTE["TF"][2]
         return component
@@ -607,9 +608,9 @@ class OISBuilder(Builder):
         ois_right = sweep_shape([ois_profile_1, ois_profile_mid], path)
         ois_left = mirror_shape(ois_right, base=(0, 0, 0), direction=(0, 1, 0))
 
-        right_component = PhysicalComponent(f"{self.SUPPORT} right", ois_right)
+        right_component = PhysicalComponent(self.RIGHT_OIS, ois_right)
         right_component.display_cad_options.color = BLUE_PALETTE["TF"][2]
-        left_component = PhysicalComponent(f"{self.SUPPORT} left", ois_left)
+        left_component = PhysicalComponent(self.LEFT_OIS, ois_left)
         left_component.display_cad_options.color = BLUE_PALETTE["TF"][2]
         return [left_component, right_component]
 
