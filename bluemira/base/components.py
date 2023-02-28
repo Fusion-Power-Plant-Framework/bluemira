@@ -92,11 +92,104 @@ class Component(NodeMixin, Plottable, DisplayableCAD):
         """
         return self.name + " (" + self.__class__.__name__ + ")"
 
+    def filter_components(self, names: List[str]):
+        """
+        Removes all components from the tree, starting at this component,
+        that are siblings of each component specified in `names`
+        and that aren't in `names` themselves.
+
+        Parameters
+        ----------
+        names: List[str]
+            The list of names of each component to search for.
+
+        Returns
+        -------
+        None
+
+        Notes
+        -----
+            This function mutates components in the subtree
+        """
+        for n in names:
+            descendent_comps = self.get_component(
+                n,
+                first=False,
+            )
+
+            if descendent_comps is None:
+                continue
+            if not isinstance(descendent_comps, Iterable):
+                descendent_comps = [descendent_comps]
+
+            for c in descendent_comps:
+                for c_sib in c.siblings:
+                    if c_sib.name not in names:
+                        c_sib.parent = None
+
     def tree(self) -> str:
         """
         Get the tree of descendants of this instance.
         """
         return str(RenderTree(self))
+
+    def copy(
+        self,
+        parent: Optional[Component] = None,
+    ) -> Component:
+        """
+        Copies this component and its children (recursively)
+        and sets `parent` as this copy's parent.
+        This only creates copies of each Component,
+        the shape and material instances (for a PhysicalComponent for ex.)
+        are shared (i.e. are the same instance).
+
+        Parameters
+        ----------
+        parent: Optional[Component]
+            The component to set as the copy's parent
+
+        Returns
+        -------
+        The copied component
+
+        Notes
+        -----
+            This function should be overridden by implementors
+        """
+        # Initially copy self with None children
+        self_copy = Component(
+            name=self.name,
+            parent=parent,
+            children=None,
+        )
+        # Attaches children to parent
+        self.copy_children(parent=self_copy)
+
+        return self_copy
+
+    def copy_children(
+        self,
+        parent: Component,
+    ) -> list[Component]:
+        """
+        Copies this component's children (recursively)
+        and sets `parent` as the copied children's parent.
+
+        Parameters
+        ----------
+        parent: Optional[Component]
+            The component to set as the copied children's parent
+
+        Returns
+        -------
+        The copied children components
+
+        Notes
+        -----
+            This function should *not* be overridden by implementors
+        """
+        return [] if len(self.children) == 0 else [c.copy(parent) for c in self.children]
 
     def get_component(
         self, name: str, first: bool = True, full_tree: bool = False
@@ -210,7 +303,11 @@ class Component(NodeMixin, Plottable, DisplayableCAD):
 
         return self
 
-    def add_children(self, children: List[Component], merge_trees=False):
+    def add_children(
+        self,
+        children: Optional[Union[Component, List[Component]]],
+        merge_trees: bool = False,
+    ):
         """
         Add multiple children to this node
 
@@ -224,9 +321,14 @@ class Component(NodeMixin, Plottable, DisplayableCAD):
         self: Component
             This component.
         """
-        if not isinstance(children, list) or len(children) == 0:
-            child = children[0] if isinstance(children, list) else children
-            return self.add_child(child)
+        if children is None:
+            return
+        if isinstance(children, Component):
+            return self.add_child(children)
+        if not isinstance(children, list):
+            return
+        if len(children) == 0:
+            return
 
         duplicates = []
         child: Component
@@ -274,6 +376,30 @@ class PhysicalComponent(Component):
         self.shape = shape
         self.material = material
 
+    def copy(
+        self,
+        parent: Optional[Component] = None,
+    ) -> Component:
+        """
+        Copies this component and its children (recursively)
+        and sets `parent` as this copy's parent.
+        This only creates copies of each Component,
+        the shape and material instances (for a PhysicalComponent for ex.)
+        are shared (i.e. are the same instance).
+        """
+        # Initially copy self with None children
+        self_copy = PhysicalComponent(
+            name=self.name,
+            parent=parent,
+            children=None,
+            shape=self.shape,
+            material=self.material,
+        )
+        # Attaches children to parent
+        self.copy_children(parent=self_copy)
+
+        return self_copy
+
     @property
     def shape(self) -> BluemiraGeo:
         """
@@ -313,6 +439,31 @@ class MagneticComponent(PhysicalComponent):
     ):
         super().__init__(name, shape, material, parent, children)
         self.conductor = conductor
+
+    def copy(
+        self,
+        parent: Optional[Component] = None,
+    ) -> Component:
+        """
+        Copies this component and its children (recursively)
+        and sets `parent` as this copy's parent.
+        This only creates copies of each Component,
+        the shape and material instances (for a PhysicalComponent for ex.)
+        are shared (i.e. are the same instance).
+        """
+        # Initially copy self with None children
+        self_copy = MagneticComponent(
+            name=self.name,
+            parent=parent,
+            children=None,
+            shape=self.shape,
+            material=self.material,
+            conductor=self.conductor,
+        )
+        # Attaches children to parent
+        self.copy_children(parent=self_copy)
+
+        return self_copy
 
     @property
     def conductor(self):

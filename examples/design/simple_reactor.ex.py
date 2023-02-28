@@ -331,7 +331,7 @@ class PlasmaBuilder(Builder):
         Build the 3D (xyz) Component of the plasma by revolving the given face
         360 degrees.
         """
-        shape = revolve_shape(lcfs, degree=359)
+        shape = revolve_shape(lcfs, degree=360)
         component = PhysicalComponent("LCFS", shape)
         component.display_cad_options.color = BLUE_PALETTE["PL"]
         component.display_cad_options.transparency = 0.5
@@ -584,3 +584,4 @@ reactor.plasma = plasma
 reactor.tf_coil = tf_coil
 
 reactor.show_cad()
+reactor.show_cad("xz")
