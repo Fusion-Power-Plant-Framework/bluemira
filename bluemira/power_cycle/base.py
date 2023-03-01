@@ -3,7 +3,7 @@
 """
 Base classes for the power cycle model.
 """
-from abc import ABC, ABCMeta
+from abc import ABC, ABCMeta, abstractproperty
 from typing import Union
 
 import numpy as np
@@ -175,6 +175,10 @@ class NetPowerABC(PowerCycleABC, metaclass=ABCMeta):
     # ------------------------------------------------------------------
     # METHODS
     # ------------------------------------------------------------------
+
+    @abstractproperty
+    def intrinsic_time(self):
+        pass
 
     def _validate_n_points(self, n_points: Union[int, None]):
         """

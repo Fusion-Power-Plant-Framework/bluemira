@@ -6,7 +6,7 @@ from bluemira.power_cycle.errors import PowerCycleABCError, PowerCyclePhaseError
 from bluemira.power_cycle.time import (
     PowerCyclePhase,
     PowerCyclePulse,
-    PowerCycleTimeline,
+    PowerCycleScenario,
 )
 from tests.power_cycle.kits_for_tests import TimeTestKit
 
@@ -93,25 +93,25 @@ class TestPowerCyclePulse:
         assert phase_set_becomes_list
 
 
-class TestPowerCycleTimeline:
+class TestPowerCycleScenario:
     def setup_method(self):
         (
             _,
             sample_pulses,
-        ) = time_testkit.inputs_for_timeline()
+        ) = time_testkit.inputs_for_scenario()
 
-        name = "Timeline example"
+        name = "Scenario example"
         pulse_set = sample_pulses
-        timeline = PowerCycleTimeline(name, pulse_set)
+        timeline = PowerCycleScenario(name, pulse_set)
         self.sample_pulses = pulse_set
         self.sample = timeline
 
     def test_validate_pulse_set(self):
         sample_pulses = self.sample_pulses
         for pulse in sample_pulses:
-            pulse_set = PowerCycleTimeline._validate_pulse_set(pulse)
+            pulse_set = PowerCycleScenario._validate_pulse_set(pulse)
             individual_pulse_becomes_list = isinstance(pulse_set, list)
             assert individual_pulse_becomes_list
-        pulse_set = PowerCycleTimeline._validate_pulse_set(sample_pulses)
+        pulse_set = PowerCycleScenario._validate_pulse_set(sample_pulses)
         pulse_set_becomes_list = isinstance(pulse_set, list)
         assert pulse_set_becomes_list
