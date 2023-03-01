@@ -284,6 +284,79 @@ class ITERGravitySupportBuilder(Builder):
 
 
 @dataclass
+class OISDesignerParams(ParameterFrame):
+    pass
+
+
+from bluemira.base.designer import Designer
+from bluemira.utilities.optimisation import (
+    OptimisationConstraint,
+    OptimisationObjective,
+    OptimisationProblem,
+)
+
+
+def f_L_to_xz(wire, value):
+    point = wire.value_at(value)
+    return np.array([point[0], point[2]])
+
+
+def f_objective_ois(x_norm, grad):
+    x, z = f(x_norm)
+    value = -np.hypot(x, z)
+    if grad.size > 0:
+        grad[:] = 0
+
+    return value
+
+
+def f_constraint_ois(constraint, x_norm, grad):
+
+    constraint[:] = 0
+    if grad.size > 0:
+        grad[:] = 0
+    return constraint
+
+
+class StraightOISDesigner(Designer[BluemiraWire]):
+    """
+    Design a straight length outer inter-coil structure.
+
+    """
+
+    def __init__(
+        self,
+        params: Union[Dict, ParameterFrame],
+        build_config: Dict,
+        tf_coil_centreline_section: BluemiraWire,
+        keep_out_zone: BluemiraFace,
+    ):
+        super().__init__(params, build_config)
+        self.centreline = tf_coil_centreline_section
+        self.koz = keep_out_zone
+
+    def run(self) -> BluemiraWire:
+        """
+        Create and run the design optimisation problem.
+        """
+
+        opt_problem = self._setup_opt_problem()
+        result = opt_problem.optimise()
+        wire = None
+        return wire
+
+    def _setup_opt_problem(self):
+        optimiser = Optimiser("COBYLA")
+        objective = OptimisationObjective()
+        constraint = OptimisationConstraint()
+
+        opt = OptimisationProblem(
+            optimiser,
+        )
+        return opt
+
+
+@dataclass
 class PFCoilSupportBuilderParams(ParameterFrame):
     """
     PF coil support parameters
