@@ -3,8 +3,6 @@
 import copy
 
 import matplotlib.pyplot as plt
-
-# import numpy as np
 import pytest
 
 from bluemira.power_cycle.errors import (
@@ -47,6 +45,10 @@ class TestPowerData:
             sample = PowerData(name, time, data)
             all_samples.append(sample)
         self.all_samples = all_samples
+
+    # ------------------------------------------------------------------
+    # CLASS ATTRIBUTES & CONSTRUCTOR
+    # ------------------------------------------------------------------
 
     @pytest.mark.parametrize("test_attr", ["time", "data"])
     def test_is_increasing(self, test_attr):
@@ -221,6 +223,10 @@ class TestPowerLoad:
         self.sample_powerdatas = sample_powerdatas
         self.sample_models = sample_models
         self.all_samples = all_samples
+
+    # ------------------------------------------------------------------
+    # CLASS ATTRIBUTES & CONSTRUCTOR
+    # ------------------------------------------------------------------
 
     def construct_multisample(self):
         sample_powerdatas = self.sample_powerdatas
@@ -594,6 +600,10 @@ class TestPhaseLoad:
         self.sample_normalflags = sample_normalflags
         self.all_samples = all_samples
 
+    # ------------------------------------------------------------------
+    # CLASS ATTRIBUTES & CONSTRUCTOR
+    # ------------------------------------------------------------------
+
     def construct_multisample(self):
         sample_phases = self.sample_phases
         sample_powerloads = self.sample_powerloads
@@ -846,6 +856,10 @@ class TestPulseLoad:
         self.sample_phaseloads = sample_phaseloads
         self.all_samples = all_samples
 
+    # ------------------------------------------------------------------
+    # CLASS ATTRIBUTES & CONSTRUCTOR
+    # ------------------------------------------------------------------
+
     def construct_multisample(self):
         sample_phaseloads = self.sample_phaseloads
 
@@ -1023,4 +1037,19 @@ class TestPulseLoad:
 
 
 class TestScenarioLoad:
+    # ------------------------------------------------------------------
+    # CLASS ATTRIBUTES & CONSTRUCTOR
+    # ------------------------------------------------------------------
+
+    # ------------------------------------------------------------------
+    # OPERATIONS
+    # ------------------------------------------------------------------
+
+    # ------------------------------------------------------------------
+    # VISUALIZATION
+    # ------------------------------------------------------------------
+
+    # ------------------------------------------------------------------
+    # ARITHMETICS
+    # ------------------------------------------------------------------
     pass

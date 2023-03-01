@@ -144,9 +144,9 @@ class PowerCyclePulseError(PowerCycleError):
         return errors
 
 
-class PowerCycleTimelineError(PowerCycleError):
+class PowerCycleScenarioError(PowerCycleError):
     """
-    Exception class for 'PowerCycleTimeline' class of the Power Cycle
+    Exception class for 'PowerCycleScenario' class of the Power Cycle
     module.
     """
 
@@ -156,7 +156,7 @@ class PowerCycleTimelineError(PowerCycleError):
 
 
 # ######################################################################
-# NET
+# NET LOADS
 # ######################################################################
 
 
@@ -269,6 +269,42 @@ class PulseLoadError(PowerCycleError):
                 f"{self._source} class cannot be set.",
             ],
         }
+        return errors
+
+
+class ScenarioLoadError(PowerCycleError):
+    """
+    Exception class for 'ScenarioLoad' class of the Power Cycle module.
+    """
+
+    def _errors(self):
+        errors = {}
+        return errors
+
+
+# ######################################################################
+# NET MANAGER
+# ######################################################################
+
+
+class PlantSystemError(PowerCycleError):
+    """
+    Exception class for 'PlantSystem' class of the Power Cycle module.
+    """
+
+    def _errors(self):
+        errors = {}
+        return errors
+
+
+class PowerLoadManagerError(PowerCycleError):
+    """
+    Exception class for 'PowerLoadManager' class of the Power Cycle
+    module.
+    """
+
+    def _errors(self):
+        errors = {}
         return errors
 
 
