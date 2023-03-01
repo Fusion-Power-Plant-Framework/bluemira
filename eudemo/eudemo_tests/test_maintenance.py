@@ -19,9 +19,14 @@
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 
+import numpy as np
+import pytest
+
+from bluemira.geometry.coordinates import Coordinates
 from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.tools import make_polygon
 from bluemira.utilities.optimiser import Optimiser
+from eudemo.maintenance.lower_port import LowerPortDesigner
 from eudemo.maintenance.upper_port import UpperPortOP
 
 
@@ -35,11 +40,13 @@ class TestUpperPortOP:
             "tk_bb_ob": {"value": 1.1, "unit": "m"},
         }
         bb = make_polygon(
-            {
-                "x": [5, 6, 6, 11, 11, 12, 12, 5],
-                "y": 0,
-                "z": [-5, -5, 5, 5, -5, -5, 6, 6],
-            },
+            Coordinates(
+                {
+                    "x": [5, 6, 6, 11, 11, 12, 12, 5],
+                    "y": 0,
+                    "z": [-5, -5, 5, 5, -5, -5, 6, 6],
+                }
+            ),
             closed=True,
         )
         bb = BluemiraFace(bb)
@@ -52,3 +59,59 @@ class TestUpperPortOP:
         solution = design_problem.optimise()
 
         assert design_problem.opt.check_constraints(solution)
+
+
+class TestLowerPortDesigner:
+    def setup_method(self):
+        params = {
+            "lower_port_angle": {"value": 0, "unit": "degrees"},
+            "divertor_padding": {"value": 0, "unit": "m"},
+        }
+        divertor_shaped_box = make_polygon(
+            Coordinates(
+                {
+                    "x": [0, 1, 1, 0],
+                    "z": [1, 1, 0, 0],
+                }
+            ),
+            closed=True,
+        )
+        self.designer = LowerPortDesigner(
+            params,
+            {},
+            BluemiraFace(divertor_shaped_box),
+            x_wall_inner=10,
+            x_wall_outer=20,
+            x_extrema=30,
+        )
+
+    @pytest.mark.parametrize("angle", [-90, 90, 180])
+    def test_lower_port_angle_ValueError(self, angle):
+        self.designer.params.lower_port_angle.value = angle
+
+        with pytest.raises(ValueError):
+            self.designer.execute()
+
+    @pytest.mark.parametrize(
+        "angle, z_max", zip([-45, 45, 0, 89], [10, -10, 0, -572.8996])
+    )
+    def test_lower_port_angle(self, angle, z_max):
+        self.designer.params.lower_port_angle.value = angle
+
+        _, traj = self.designer.execute()
+
+        arr = traj.discretize(ndiscr=99)
+
+        np.testing.assert_allclose(arr[2][-1], z_max)
+        np.testing.assert_allclose(arr[0][-1], self.designer.x_extrema)
+
+        assert any(arr[0] >= self.designer.x_wall_outer)
+        np.testing.assert_allclose(
+            arr[2][np.where(arr[0] >= self.designer.x_wall_outer)],
+            arr[2][-1],
+        )
+        assert any(arr[0] <= self.designer.x_wall_inner)
+        np.testing.assert_allclose(
+            arr[2][np.where(arr[0] <= self.designer.x_wall_inner)],
+            arr[2][0],
+        )

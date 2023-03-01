@@ -23,7 +23,7 @@
 EU-DEMO Lower Port
 """
 from dataclasses import dataclass
-from typing import Dict, Tuple, Union
+from typing import Dict, Tuple, Type, Union
 
 import numpy as np
 
@@ -46,7 +46,7 @@ class LowerPortDesignerParams(ParameterFrame):
 class LowerPortDesigner(Designer):
     """Lower Port Designer"""
 
-    param_cls = LowerPortDesignerParams
+    param_cls: Type[ParameterFrame] = LowerPortDesignerParams
 
     def __init__(
         self,
@@ -68,7 +68,8 @@ class LowerPortDesigner(Designer):
         if not -90 < self.params.lower_port_angle.value < 90:
             raise ValueError(
                 f"{self.params.lower_port_angle.name}"
-                f" must be within the range -90 < x < 90 degrees: {self.params.lower_port_angle.value}"
+                " must be within the range -90 < x < 90 degrees:"
+                f" {self.params.lower_port_angle.value}"
             )
 
         z_start = self.divertor_xz.bounding_box.z_min
@@ -82,11 +83,13 @@ class LowerPortDesigner(Designer):
         )
         z_lower_path = np.array([z_start, z_start, z_outer, z_outer])
 
-        traj = Coordinates(
-            {
-                "x": x_path,
-                "z": z_lower_path - self.params.divertor_padding.value,
-            }
+        traj = make_polygon(
+            Coordinates(
+                {
+                    "x": x_path,
+                    "z": z_lower_path - self.params.divertor_padding.value,
+                }
+            )
         )
 
         port = make_polygon(
