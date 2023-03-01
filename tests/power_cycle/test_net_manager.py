@@ -1,38 +1,36 @@
 # COPYRIGHT PLACEHOLDER
 
 """
-Classes for the calculation of net power in the power cycle model.
+import pytest
+import copy
+import matplotlib.pyplot as plt
+
+from bluemira.power_cycle.errors import (
+    PlantSystemError,
+    PowerLoadManagerError,
+)
+from bluemira.power_cycle.net_manager import (
+    PlantSystem,
+    PowerLoadManager,
+)
+from bluemira.power_cycle.tools import adjust_2d_graph_ranges
 """
+from tests.power_cycle.kits_for_tests import (
+    NetLoadsTestKit,
+    NetManagerTestKit,
+    TimeTestKit,
+    ToolsTestKit,
+)
 
-# import os
-
-
-class PlantSystem:
-    # Build active & reactive PowerLoads for a Plant System
-
-    # ------------------------------------------------------------------
-    # CLASS ATTRIBUTES & CONSTRUCTOR
-    # ------------------------------------------------------------------
-
-    # ------------------------------------------------------------------
-    # OPERATIONS
-    # ------------------------------------------------------------------
-
-    # ------------------------------------------------------------------
-    # VISUALIZATION
-    # ------------------------------------------------------------------
-
-    # ------------------------------------------------------------------
-    # ARITHMETICS
-    # ------------------------------------------------------------------
-
-    pass
+tools_testkit = ToolsTestKit()
+time_testkit = TimeTestKit()
+netloads_testkit = NetLoadsTestKit()
+netmanager_testkit = NetManagerTestKit()
 
 
-class PowerLoadManager:
-    # Read inputs.JSON
-    # Read inputs for each Plant System, build all Plant Systems
-    # Build PhaseLoads and PulseLoad
+class TestPlantSystem:
+    def setup_method(self):
+        pass
 
     # ------------------------------------------------------------------
     # CLASS ATTRIBUTES & CONSTRUCTOR
@@ -50,4 +48,23 @@ class PowerLoadManager:
     # ARITHMETICS
     # ------------------------------------------------------------------
 
-    pass
+
+class TestPowerLoadManager:
+    def setup_method(self):
+        pass
+
+    # ------------------------------------------------------------------
+    # CLASS ATTRIBUTES & CONSTRUCTOR
+    # ------------------------------------------------------------------
+
+    # ------------------------------------------------------------------
+    # OPERATIONS
+    # ------------------------------------------------------------------
+
+    # ------------------------------------------------------------------
+    # VISUALIZATION
+    # ------------------------------------------------------------------
+
+    # ------------------------------------------------------------------
+    # ARITHMETICS
+    # ------------------------------------------------------------------

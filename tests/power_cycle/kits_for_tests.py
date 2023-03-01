@@ -1,5 +1,7 @@
 # COPYRIGHT PLACEHOLDER
 
+import os
+
 import matplotlib.pyplot as plt
 import numpy as np
 
@@ -331,3 +333,17 @@ class NetLoadsTestKit:
             input_names,
             input_phaseloads,
         )
+
+
+class NetManagerTestKit:
+    def __init__(self):
+
+        # self.time_testkit = TimeTestKit()
+
+        example_json_path = [
+            "tests",
+            "power_cycle",
+            "test_data",
+            "input_for_manager_test.json",
+        ]
+        self.example_json_path = os.path.join(example_json_path)

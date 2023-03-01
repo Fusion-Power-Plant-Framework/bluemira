@@ -160,7 +160,7 @@ class TestNetPowerABC:
         """
 
         @property
-        def intrinsic_time():
+        def intrinsic_time(self):
             """
             Define concrete version of abstract property.
             """
