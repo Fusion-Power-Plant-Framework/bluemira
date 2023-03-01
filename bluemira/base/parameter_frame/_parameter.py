@@ -7,7 +7,7 @@ from typing import Dict, Generic, List, Tuple, Type, TypedDict, TypeVar, Union
 import pint
 from typeguard import typechecked
 
-from bluemira.base.constants import raw_uc
+from bluemira.base.constants import raw_uc, units_compatible
 
 ParameterValueType = TypeVar("ParameterValueType")
 
@@ -137,12 +137,27 @@ class Parameter(Generic[ParameterValueType]):
     def value(self, new_value: ParameterValueType):
         self.set_value(new_value, source="")
 
-    def value_as(self, unit: Union[str, pint.Unit]) -> ParameterValueType:
-        """Return the current value in a given unit"""
+    def value_as(self, unit: Union[str, pint.Unit]) -> Union[ParameterValueType, None]:
+        """
+        Return the current value in a given unit
+
+        Notes
+        -----
+        If the current value of the parameter is None the function checks for
+        a valid unit conversion
+        """
         try:
             return raw_uc(self.value, self.unit, unit)
         except pint.errors.PintError as pe:
             raise ValueError("Unit conversion failed") from pe
+        except TypeError:
+            if self.value is None:
+                if units_compatible(self.unit, unit):
+                    return None
+                else:
+                    raise ValueError("Unit conversion failed")
+            else:
+                raise
 
     @property
     def unit(self) -> str:

@@ -252,6 +252,47 @@ class TestParameterFrame:
         assert frame.age.value == pint.Quantity(20, "years").to("s").magnitude
         assert frame.age.source != "a test"
 
+    @pytest.mark.parametrize("func", ("update_from_frame", "update"))
+    def test_update_from_frame_with_None(self, func):
+        frame = BasicFrame.from_dict(FRAME_DATA)
+        update_frame = BasicFrame.from_dict(
+            {
+                "height": {
+                    "value": 160.4,
+                    "unit": "m",
+                    "source": "a test",
+                },
+                "age": {"value": None, "unit": "years"},
+            }
+        )
+        getattr(frame, func)(update_frame)
+
+        assert frame.height.value == 160.4
+        assert frame.height.source == "a test"
+        assert frame.age.value is None
+        assert frame.age.source != "a test"
+
+    @pytest.mark.parametrize("func", ("update_from_dict", "update"))
+    def test_update_from_dict_with_None(self, func):
+        frame = BasicFrame.from_dict(FRAME_DATA)
+
+        getattr(frame, func)(
+            {
+                "height": {
+                    "name": "height",
+                    "value": 160.4,
+                    "unit": "m",
+                    "source": "a test",
+                },
+                "age": {"value": None, "unit": "years"},
+            }
+        )
+
+        assert frame.height.value == 160.4
+        assert frame.height.source == "a test"
+        assert frame.age.value is None
+        assert frame.age.source != "a test"
+
     def _call_tabulate(self, head_keys):
         frame_data = deepcopy(FRAME_DATA)
         frame_data["height"]["unit"] = "m"
