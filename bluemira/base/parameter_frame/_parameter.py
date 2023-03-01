@@ -7,7 +7,7 @@ from typing import Dict, Generic, List, Tuple, Type, TypedDict, TypeVar, Union
 import pint
 from typeguard import typechecked
 
-from bluemira.base.constants import raw_uc
+from bluemira.base.constants import raw_uc, units_compatible
 
 ParameterValueType = TypeVar("ParameterValueType")
 
@@ -152,11 +152,10 @@ class Parameter(Generic[ParameterValueType]):
             raise ValueError("Unit conversion failed") from pe
         except TypeError:
             if self.value is None:
-                try:
-                    raw_uc(1, self.unit, unit)
+                if units_compatible(self.unit, unit):
                     return None
-                except pint.errors.PintError as pe2:
-                    raise ValueError("Unit conversion failed") from pe2
+                else:
+                    raise ValueError("Unit conversion failed")
             else:
                 raise
 
