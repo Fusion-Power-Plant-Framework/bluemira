@@ -93,9 +93,9 @@ class TimeTestKit:
             input_phases,
         )
 
-    def inputs_for_timeline(self):
+    def inputs_for_scenario(self):
         """
-        Function to create inputs for PowerCycleTimeline testing.
+        Function to create inputs for PowerCycleScenario testing.
         """
         (
             _,
@@ -145,11 +145,11 @@ class NetLoadsTestKit:
         Confirm that curve is an interpolation with possibility of
         out-of-bounds values.
 
-        Current simplified approach: no curve value is out of the bounds
-        of the original defining interpolation points, except if it is a
-        zero ('fill_value' argument of 'interp1d').
+        Current approach: no curve value is out of the bounds of the
+        original defining interpolation points, except if it is a zero
+        ('fill_value' argument of 'interp1d').
 
-        Possibly to be substituted by `unittest.mock`.
+        Possibly to be substituted by 'unittest.mock'.
         """
         original_max = max(original_points)
         original_min = min(original_points)

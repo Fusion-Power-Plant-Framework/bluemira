@@ -30,9 +30,11 @@ class PowerData(NetPowerABC):
     used to build power load objects to represent the time evolution
     of a given power in the plant.
     Instances of this class do not specify any dependence between the
-    data points it stores, so no method is defined for calculating
-    values (e.g. interpolation). Instead, this class should be called
-    by specialized classes such as 'PowerLoad'.
+    data points it stores, so no method is defined for altering (e.g.
+    applying a multiplicative efficiency) or calculating related values
+    (e.g. interpolation). Instead, these actions are performed with
+    objects of the 'PowerLoad' class, that are built with instances of
+    'PowerData'.
 
     Parameters
     ----------
@@ -42,6 +44,11 @@ class PowerData(NetPowerABC):
         List of time values that define the PowerData. [s]
     data: int | float | list[int | float]
         List of power values that define the PowerData. [W]
+
+    Properties
+    ----------
+    intrinsic_time: list[int | float]
+        Deep copy of the list stored in the 'time' attribute.
     """
 
     def __init__(
@@ -89,8 +96,8 @@ class PowerData(NetPowerABC):
         """
         Normalize values stored in the 'time' attribute, so that the
         last time value coincides with 'new_end_time'.
-        Stores the normalization value in the attribute '_norm', which
-        is always initialized as 'None'.
+        Stores the normalization factor in the attribute '_norm', which
+        is always initialized as an empty list.
         """
         old_time = self.time
         old_end_time = old_time[-1]
@@ -104,6 +111,8 @@ class PowerData(NetPowerABC):
         """
         Shift all time values in the 'time' attribute by the numerical
         value 'time_shift'.
+        Stores the shifting factor in the attribute '_shift', which
+        is always initialized as an empty list.
         """
         time_shift = self.validate_numerical(time_shift)
         time = self.time
@@ -139,13 +148,15 @@ class PowerData(NetPowerABC):
         Parameters
         ----------
         ax: Axes
-            Instance of the 'matplotlib.axes.Axes' class. By default,
-            the currently selected axes are used.
+            Instance of the 'matplotlib.axes.Axes' class, in which to
+            plot. If 'None' is given, a new instance of axes is created.
         **kwargs: dict
             Options for the 'scatter' method.
 
         Returns
         -------
+        ax: Axes
+            Instance of the 'matplotlib.axes.Axes' class.
         list_of_plot_objects: list
             List of plot objects created by the 'matplotlib' package.
             The first element of the list is the plot object created
@@ -182,7 +193,7 @@ class PowerData(NetPowerABC):
         )
         list_of_plot_objects.append(plot_object)
 
-        return list_of_plot_objects
+        return ax, list_of_plot_objects
 
 
 class PowerLoadModel(Enum):
@@ -191,7 +202,7 @@ class PowerLoadModel(Enum):
     'PowerLoad' class to compute values between load definition points.
 
     The 'name' of a member is a 'str' that roughly describes the
-    interpolation behavior, while its associated 'value' is 'str' that
+    interpolation behavior, while its associated 'value' is a 'str' that
     specifies which kind of interpolation is applied when calling the
     imported 'scipy.interpolate.interp1d' method.
     """
@@ -209,6 +220,11 @@ class PowerLoad(NetPowerABC):
     compute additional values between data points. This enables the
     instance to compute time-dependent curves.
 
+    Instances of the 'PowerLoad' class can be added to each other, and
+    a list of them can be summed.
+    Instances can also be multiplied/divided by scalar numerical
+    values.
+
     Parameters
     ----------
     name: str
@@ -219,6 +235,13 @@ class PowerLoad(NetPowerABC):
     model: PowerLoadModel | list[PowerLoadModel]
         Mathematical model used to compute values between
         'powerdata_set' definition points.
+
+    Properties
+    ----------
+    intrinsic_time: list[int | float]
+        List that contains all values in the 'intrinsic_time' properties
+        of the different 'PowerData' objects contained in the
+        'powerdata_set' attribute, ordered and with no repetitions.
     """
 
     # ------------------------------------------------------------------
@@ -282,7 +305,7 @@ class PowerLoad(NetPowerABC):
     @staticmethod
     def _single_curve(powerdata, model, time):
         """
-        This method applies the 'scipy.interpolate.interp1d' imported
+        Method that applies the 'scipy.interpolate.interp1d' imported
         method to a single instance of the 'PowerData' class. The kind
         of interpolation is determined by the 'model' input. Values are
         returned at the times specified in the 'time' input, with any
@@ -401,7 +424,7 @@ class PowerLoad(NetPowerABC):
         """
         Single time vector that contains all values used to define the
         different 'PowerData' objects contained in the 'powerdata_set'
-        attribute.
+        attribute, ordered and with no repetitions.
         """
         time = self._build_time_from_power_set(self.powerdata_set)
         return time
@@ -427,9 +450,9 @@ class PowerLoad(NetPowerABC):
 
         Parameters
         ----------
-        ax: matplotlib.axes.Axes
-            Axes on which to plot curve. If 'None' is given, a new
-            instance of axes is created.
+        ax: Axes
+            Instance of the 'matplotlib.axes.Axes' class, in which to
+            plot. If 'None' is given, a new instance of axes is created.
         n_points: int
             Number of points interpolated in each curve segment. The
             default value is 'None', which indicates to the method
@@ -437,16 +460,18 @@ class PowerLoad(NetPowerABC):
             attribute.
         detailed: bool
             Determines whether the plot will include all individual
-            'PowerData' instances (computed with their respective
+            'PowerData' objects (computed with their respective
             'model' entries), that summed result in the normal plotted
-            curve. Plotted as secondary plots, as defined in
-            'PowerCycleABC' class. By default this input is set to
-            'False'.
+            curve. These objects are plotted as secondary plots, as
+            defined in 'PowerCycleABC' class. By default this input is
+            set to 'False'.
         **kwargs: dict
             Options for the 'plot' method.
 
         Returns
         -------
+        ax: Axes
+            Instance of the 'matplotlib.axes.Axes' class.
         list_of_plot_objects: list
             List of plot objects created by the 'matplotlib' package.
             The first element of the list is the plot object created
@@ -511,7 +536,7 @@ class PowerLoad(NetPowerABC):
 
                 # Plot current PowerData with seconday kwargs
                 current_powerdata._make_secondary_in_plot()
-                current_plot_list = current_powerdata.plot(ax=ax)
+                ax, current_plot_list = current_powerdata.plot(ax=ax)
 
                 # Plot current curve as line with secondary kwargs
                 kwargs.update(current_powerdata._plot_kwargs)
@@ -524,7 +549,7 @@ class PowerLoad(NetPowerABC):
 
                 list_of_plot_objects.append(current_plot_list)
 
-        return list_of_plot_objects
+        return ax, list_of_plot_objects
 
     # ------------------------------------------------------------------
     # ARITHMETICS
@@ -534,7 +559,6 @@ class PowerLoad(NetPowerABC):
         The addition of 'PowerLoad' instances creates a new 'PowerLoad'
         instance with joined 'load' and 'model' attributes.
         """
-
         this_set = self.powerdata_set
         this_model = self.model
 
@@ -596,9 +620,14 @@ class PowerLoad(NetPowerABC):
 
 class PhaseLoad(NetPowerABC):
     """
-    Representation of the total power load during a pulse phase.
+    Generic representation of the total power load during a pulse phase.
 
-    Defines the phase load with a set of 'PowerLoad' instances.
+    Defines the phase load with a set of 'PowerLoad' instances. Each
+    instance must be accompanied by a 'normalize' specification, used to
+    indicate whether that power load must have its curve normalized in
+    time in respect to the 'duration' of the 'phase' Parameter. This
+    enables the instance to adjust the evolution of power loads
+    accordingly, if changes occur to the plant pulse.
 
     Parameters
     ----------
@@ -616,6 +645,17 @@ class PhaseLoad(NetPowerABC):
         to the phase duration. A value of 'True' forces a normalization,
         while a value of 'False' does not and time values beyond the
         phase duration are ignored.
+
+    Properties
+    ----------
+    intrinsic_time: list[int | float]
+        List that contains all values in the 'intrinsic_time' properties
+        of the different 'PowerLoad' objects contained in the
+        'powerload_set' attribute, ordered and with no repetitions.
+    normalized_time: list[int | float]
+        List that contains all values in the 'intrinsic_time' properties
+        of the different 'PowerLoad' objects contained in the
+        '_normalized_set' attribute, ordered and with no repetitions.
     """
 
     # ------------------------------------------------------------------
@@ -860,13 +900,13 @@ class PhaseLoad(NetPowerABC):
         return ax, list_of_plot_objects
 
     def _plot_as_secondary(self, ax=None, n_points=None, **kwargs):
-        _, list_of_plot_objects = self._plot(
+        ax, list_of_plot_objects = self._plot(
             primary=False,
             ax=ax,
             n_points=n_points,
             **kwargs,
         )
-        return list_of_plot_objects
+        return ax, list_of_plot_objects
 
     def plot(self, ax=None, n_points=None, detailed=False, **kwargs):
         """
@@ -889,16 +929,18 @@ class PhaseLoad(NetPowerABC):
             attribute.
         detailed: bool
             Determines whether the plot will include all individual
-            'PowerLoad' instances (computed with their respective
+            'PowerLoad' objects (computed with their respective
             'model' entries), that summed result in the normal plotted
-            curve. Plotted as secondary plots, as defined in
-            'PowerCycleABC' class. By default this input is set to
-            'False'.
+            curve. These objects are plotted as secondary plots, as
+            defined in 'PowerCycleABC' class. By default this input is
+            set to 'False'.
         **kwargs: dict
             Options for the 'plot' method.
 
         Returns
         -------
+        ax: Axes
+            Instance of the 'matplotlib.axes.Axes' class.
         list_of_plot_objects: list
             List of plot objects created by the 'matplotlib' package.
             The first element of the list is the plot object created
@@ -920,27 +962,34 @@ class PhaseLoad(NetPowerABC):
             normalized_set = self._normalized_set
             for normal_load in normalized_set:
                 normal_load._make_secondary_in_plot()
-                current_plot_list = normal_load.plot(ax=ax)
-                list_of_plot_objects.append(current_plot_list)
+                ax, plot_list = normal_load.plot(ax=ax)
+                list_of_plot_objects.append(plot_list)
 
-        return list_of_plot_objects
+        return ax, list_of_plot_objects
 
 
 class PulseLoad(NetPowerABC):
     """
-    Representation of the total power load during a pulse.
+    Generic representation of the total power load during a pulse.
 
-    Defines the pulse load with a set of 'PhaseLoad' instances.
+    Defines the pulse load with a set of 'PhaseLoad' instances. The list
+    of 'PhaseLoad' objects given as a parameter to be stored in the
+    'phaseload_set' attribute must be provided in the order they are
+    expected to occur during a pulse. This ensures that the correct
+    'PowerCyclePulse' object is created and stored in the 'pulse'
+    attribute. This enables the instance to shift power loads in time
+    accordingly.
 
-    ############################# RE-WRITE #############################
-    Manipulation of the time vectors that define the complete pulse load
-    are :
-        - normalized, given the 'normalize' attribute of each
+    Time shifts of each phase load in the 'phaseload_set' occurs AFTER
+    the normalization performed by each 'PhaseLoad' object. In short,
+    'PulseLoad' curves are built by joining each individual 'PhaseLoad'
+    curve after performing the following the manipulations in the order
+    presented below:
+        1) normalization, given the 'normalize' attribute of each
             'PhaseLoad', with normalization equal to the 'duration'
             of its 'phase' attribute;
-        - shifted, given the sum of the 'duration' attributes of
+        2) shift, given the sum of the 'duration' attributes of
             the 'phase' of each 'PhaseLoad' that comes before it.
-    ############################# RE-WRITE #############################
 
     Parameters
     ----------
@@ -955,6 +1004,17 @@ class PulseLoad(NetPowerABC):
     pulse: PowerCyclePulse
         Pulse specification, determined by the 'phase' attributes of the
         'PhaseLoad' instances used to define the 'PulseLoad'.
+
+    Properties
+    ----------
+    intrinsic_time: list[int | float]
+        List that contains all values in the 'intrinsic_time' properties
+        of the different 'PhaseLoad' objects contained in the
+        'phaseload_set' attribute, ordered and with no repetitions.
+    shifted_time: list[int | float]
+        List that contains all values in the 'intrinsic_time' properties
+        of the different 'PhaseLoad' objects contained in the
+        '_shifted_set' attribute, ordered and with no repetitions.
     """
 
     # ------------------------------------------------------------------
@@ -978,8 +1038,13 @@ class PulseLoad(NetPowerABC):
         "ls": "--",  # Line style
     }
 
+    # Defaults for delimiter plots
+    _delimiter_defaults = {
+        "c": "darkorange",  # Line color
+    }
+
     # Minimal shift for time correction in 'curve' method
-    epsilon = 10 * sys.float_info.epsilon
+    epsilon = 1e6 * sys.float_info.epsilon
 
     def __init__(self, name, phaseload_set):
 
@@ -1056,6 +1121,11 @@ class PulseLoad(NetPowerABC):
         This method applies the 'curve' method of the 'PhaseLoad' class
         to each object stored in the '_shifted_set' attribute, and
         returns the sum of all individual curves created.
+
+        The last point of each 'PhaseLoad' curve is shifted by a minimal
+        time 'epsilon', defined as a class attribute, to avoid an
+        overlap with the first point of the curve in the following phase
+        and a super-position of loads at that point.
 
         Parameters
         ----------
@@ -1147,11 +1217,13 @@ class PulseLoad(NetPowerABC):
 
         shifted_set = self._shifted_set
 
-        default_line_kwargs = self._detailed_defaults
-        default_text_kwargs = self._text_kwargs
-        delimiter_kwargs = {"c": "darkorange"}
+        default_delimiter_kwargs = self._delimiter_defaults
+        delimiter_kwargs = default_delimiter_kwargs
 
+        default_line_kwargs = self._detailed_defaults
         line_kwargs = {**default_line_kwargs, **delimiter_kwargs}
+
+        default_text_kwargs = self._text_kwargs
         text_kwargs = {**default_text_kwargs, **delimiter_kwargs}
 
         list_of_plot_objects = []
@@ -1181,7 +1253,7 @@ class PulseLoad(NetPowerABC):
             )
             list_of_plot_objects.append(plot_object)
 
-        return list_of_plot_objects
+        return ax, list_of_plot_objects
 
     def plot(self, ax=None, n_points=None, detailed=False, **kwargs):
         """
@@ -1198,6 +1270,9 @@ class PulseLoad(NetPowerABC):
 
         Parameters
         ----------
+        ax: Axes
+            Instance of the 'matplotlib.axes.Axes' class, in which to
+            plot. If 'None' is given, a new instance of axes is created.
         n_points: int
             Number of points interpolated in each curve segment. The
             default value is 'None', which indicates to the method
@@ -1215,6 +1290,8 @@ class PulseLoad(NetPowerABC):
 
         Returns
         -------
+        ax: Axes
+            Instance of the 'matplotlib.axes.Axes' class.
         list_of_plot_objects: list
             List of plot objects created by the 'matplotlib' package.
             The first element of the list is the plot object created
@@ -1255,23 +1332,58 @@ class PulseLoad(NetPowerABC):
         text_object = self._add_text_to_point_in_plot(
             ax,
             name,
-            computed_time,
+            modified_time,
             computed_curve,
             **kwargs,
         )
         list_of_plot_objects.append(text_object)
 
-        # Add phase delimiters
-        delimiter_objects = self._plot_phase_delimiters(ax=ax)
-        list_of_plot_objects = list_of_plot_objects + delimiter_objects
-
         if detailed:
             shifted_set = self._shifted_set
             for shifted_load in shifted_set:
                 shifted_load._make_secondary_in_plot()
-                current_plot_list = shifted_load._plot_as_secondary(
-                    ax=ax,
-                )
-                list_of_plot_objects.append(current_plot_list)
+                ax, plot_list = shifted_load._plot_as_secondary(ax=ax)
+                list_of_plot_objects.append(plot_list)
 
-        return list_of_plot_objects
+            # Add phase delimiters
+            ax, delimiter_list = self._plot_phase_delimiters(ax=ax)
+            list_of_plot_objects = list_of_plot_objects + delimiter_list
+
+        return ax, list_of_plot_objects
+
+
+class ScenarioLoad(NetPowerABC):
+    """
+    Generic representation of the total power load during a scenario.
+
+    Defines the phase load with a set of 'PulseLoad' instances. Each
+    instance must be accompanied by a 'repetition' specification, used
+    to indicate how many times that pulse load is repeated in the
+    scenario before a new set of pulse loads starts. This enables the
+    instance to adjust the evolution of pulse loads accordingly, if
+    changes occur to the plant scenario.
+
+    Parameters
+    ----------
+    name: str
+        Description of the 'ScenarioLoad' instance.
+    pulseload_set: PulseLoad | list[PulseLoad]
+        Collection of instances of the 'PulseLoad' class that define
+        the 'ScenarioLoad' object.
+    repetition: int | list[int]
+        List of integer values that defines how many repetitions occur
+        for each element of 'pulseload_set' when building the scenario.
+
+    Properties
+    ----------
+    intrinsic_time: list[int | float]
+        List that contains all values in the 'intrinsic_time' properties
+        of the different 'PulseLoad' objects contained in the
+        'pulseload_set' attribute, ordered and with no repetitions.
+    timeline_time: list[int | float]
+        List that contains all values in the 'intrinsic_time' properties
+        of the different 'PulseLoad' objects contained in the
+        '_timeline_set' attribute, ordered and with no repetitions.
+    """
+
+    pass

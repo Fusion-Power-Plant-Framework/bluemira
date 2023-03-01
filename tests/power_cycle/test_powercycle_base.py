@@ -159,7 +159,12 @@ class TestNetPowerABC:
         abstract class of the test.
         """
 
-        pass
+        @property
+        def intrinsic_time():
+            """
+            Define concrete version of abstract property.
+            """
+            pass
 
     def setup_method(self):
         sample = self.SampleConcreteClass("A sample instance name")
@@ -179,6 +184,12 @@ class TestNetPowerABC:
         self.sample = sample
         self.another_sample = another_sample
         self.test_arguments = test_arguments
+
+    def test_intrinsic_time(self):
+        """
+        Abstract property.
+        """
+        pass
 
     def test_validate_n_points(self):
         sample = self.sample
