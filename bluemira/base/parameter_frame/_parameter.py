@@ -154,7 +154,7 @@ class Parameter(Generic[ParameterValueType]):
             if self.value is None:
                 try:
                     raw_uc(1, self.unit, unit)
-                    return
+                    return None
                 except pint.errors.PintError as pe2:
                     raise ValueError("Unit conversion failed") from pe2
             else:
