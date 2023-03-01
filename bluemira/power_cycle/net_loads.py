@@ -51,6 +51,10 @@ class PowerData(NetPowerABC):
         Deep copy of the list stored in the 'time' attribute.
     """
 
+    # ------------------------------------------------------------------
+    # CLASS ATTRIBUTES & CONSTRUCTOR
+    # ------------------------------------------------------------------
+
     def __init__(
         self,
         name,
@@ -1374,6 +1378,12 @@ class ScenarioLoad(NetPowerABC):
         List of integer values that defines how many repetitions occur
         for each element of 'pulseload_set' when building the scenario.
 
+    Attributes
+    ----------
+    scenario: PowerCycleScenario
+        Scenario specification, determined by the 'pulse' attributes of
+        the 'PulseLoad' instances used to define the 'ScenarioLoad'.
+
     Properties
     ----------
     intrinsic_time: list[int | float]
@@ -1385,5 +1395,17 @@ class ScenarioLoad(NetPowerABC):
         of the different 'PulseLoad' objects contained in the
         '_timeline_set' attribute, ordered and with no repetitions.
     """
+
+    # ------------------------------------------------------------------
+    # CLASS ATTRIBUTES & CONSTRUCTOR
+    # ------------------------------------------------------------------
+
+    # ------------------------------------------------------------------
+    # OPERATIONS
+    # ------------------------------------------------------------------
+
+    # ------------------------------------------------------------------
+    # VISUALIZATION
+    # ------------------------------------------------------------------
 
     pass
