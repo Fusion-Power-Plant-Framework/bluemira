@@ -299,9 +299,23 @@ class StraightOISOptimisationProblem(OptimisationProblem):
 
     Parameters
     ----------
+    wire:
+        Sub wire along which to place the OIS
+    keep_out_zone:
+        Region in which the OIS cannot be
+    optimiser: Optimiser
+        Optimiser to use when solving the problem
+    n_koz_discr: int
+        Number of discretisation points to use when checking the keep-out zone constraint
     """
 
-    def __init__(self, wire, keep_out_zone, optimiser=None, n_koz_discr=100):
+    def __init__(
+        self,
+        wire: BluemiraWire,
+        keep_out_zone: BluemiraFace,
+        optimiser=None,
+        n_koz_discr: int = 100,
+    ):
         if optimiser is None:
             optimiser = Optimiser(
                 "COBYLA",
@@ -332,16 +346,25 @@ class StraightOISOptimisationProblem(OptimisationProblem):
         self.set_up_optimiser(2, [[0, 0], [1, 1]])
 
     def optimise(self):
+        """
+        Run the straight OIS optimisation problem.
+        """
         return super().optimise()
 
     @staticmethod
     def f_L_to_wire(wire, x_norm):
+        """
+        Convert a pair of normalised L values to a wire
+        """
         p1 = wire.value_at(x_norm[0])
         p2 = wire.value_at(x_norm[1])
         return make_polygon([p1, p2])
 
     @staticmethod
     def f_L_to_xz(wire, value):
+        """
+        Convert a normalised L value to an x, z pair.
+        """
         point = wire.value_at(value)
         return np.array([point[0], point[2]])
 
@@ -360,6 +383,9 @@ class StraightOISOptimisationProblem(OptimisationProblem):
 
     @staticmethod
     def f_constraint_ois(constraint, x_norm, grad, wire, koz_points):
+        """
+        Constraint the OIS to be outside of a keep out zone
+        """
         straight_line = StraightOISOptimisationProblem.f_L_to_wire(wire, x_norm)
         straight_points = straight_line.discretize(ndiscr=100).xz.T
         value = signed_distance_2D_polygon(straight_points, koz_points)
@@ -371,6 +397,9 @@ class StraightOISOptimisationProblem(OptimisationProblem):
 
     @staticmethod
     def f_constraint_x(constraint, x_norm, grad):
+        """
+        Constrain the second normalised value to be always greater than the first.
+        """
         constraint[0] = x_norm[0] - x_norm[1]
 
         if grad.size > 0:
@@ -392,9 +421,9 @@ class StraightOISDesignerParams(ParameterFrame):
     min_OIS_length: Parameter[float]
 
 
-class StraightOISDesigner(Designer[BluemiraWire]):
+class StraightOISDesigner(Designer[List[BluemiraWire]]):
     """
-    Design a straight length outer inter-coil structure.
+    Design a set of straight length outer inter-coil structures.
 
     Parameters
     ----------
@@ -417,9 +446,14 @@ class StraightOISDesigner(Designer[BluemiraWire]):
         self.tf_face = tf_coil_xz_face
         self.keep_out_zones = keep_out_zones
 
-    def run(self) -> BluemiraWire:
+    def run(self) -> List[BluemiraWire]:
         """
         Create and run the design optimisation problem.
+
+        Returns
+        -------
+        ois_wires:
+            A list of outer inter-coil structure wires on the y=0 plane.
         """
         koz_centreline = offset_wire(
             self.tf_face.boundary[1], self.params.g_ois_tf_edge.value
@@ -454,6 +488,11 @@ class StraightOISDesigner(Designer[BluemiraWire]):
         return make_polygon([p1, p2, p3, p4], closed=True)
 
     def _make_ois_koz(self, koz_centreline):
+        """
+        Make the (fused) keep-out-zone for the outer inter-coil structures.
+        """
+        # Note we use the same offset to the exclusion zones as for the OIS
+        # to the TF.
         koz_wires = [
             offset_wire(koz, self.params.g_ois_tf_edge.value)
             for koz in self.keep_out_zones
@@ -482,9 +521,6 @@ class StraightOISDesigner(Designer[BluemiraWire]):
         cutter = boolean_fuse([cutter, inboard_cutter] + koz_faces)
 
         ois_regions = boolean_cut(ois_centreline, cutter)
-        ois_regions.sort(
-            key=lambda wire: np.arctan2(-wire.center_of_mass[2], wire.center_of_mass[0])
-        )
 
         # Drop regions that are too short for OIS
         big_ois_regions = []
