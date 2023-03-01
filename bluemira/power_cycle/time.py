@@ -87,16 +87,16 @@ class PowerCyclePulse(PowerCycleTimeABC):
         return durations_list
 
 
-class PowerCycleTimeline(PowerCycleTimeABC):
+class PowerCycleScenario(PowerCycleTimeABC):
     """
-    Class to define pulses for a Power Cycle timeline.
+    Class to define pulses for a Power Cycle scenario.
 
     Parameters
     ----------
     name: str
-        Description of the 'PowerCycleTimeline' instance.
+        Description of the 'PowerCycleScenario' instance.
     pulse_set: PowerCyclePulse | list[PowerCyclePulse]
-        List of pulses that compose the timeline, in chronological
+        List of pulses that compose the scenario, in chronological
         order.
     """
 
@@ -115,7 +115,7 @@ class PowerCycleTimeline(PowerCycleTimeABC):
         Validate 'pulse_set' input to be a list of 'PowerCyclePulse'
         instances.
         """
-        owner = PowerCycleTimeline
+        owner = PowerCycleScenario
         pulse_set = super(owner, owner).validate_list(pulse_set)
         for element in pulse_set:
             PowerCyclePulse.validate_class(element)

@@ -170,7 +170,9 @@ class TestPowerData:
     # ------------------------------------------------------------------
 
     def test_intrinsic_time(self):
-        # TODO
+        """
+        No new functionality to be tested.
+        """
         pass
 
     def test_plot(self):
@@ -178,18 +180,14 @@ class TestPowerData:
         ax = tools_testkit.prepare_figure(figure_title)
 
         colors = netloads_testkit.color_order_for_plotting
-        n_colors = netloads_testkit.n_colors
+        colors = iter(colors)
 
         all_samples = self.all_samples
-        n_samples = len(all_samples)
-        plot_list = []
-        for s in range(n_samples):
-
-            # Cycle through available colors
-            sample_color = colors[s % n_colors]
-
-            sample = all_samples[s]
-            plot_list.append(sample.plot(ax=ax, c=sample_color))
+        list_of_plot_objects = []
+        for sample in all_samples:
+            sample_color = next(colors)
+            ax, plot_list = sample.plot(ax=ax, c=sample_color)
+            list_of_plot_objects.append(plot_list)
         adjust_2d_graph_ranges(ax=ax)
         plt.show()
 
@@ -392,9 +390,10 @@ class TestPowerLoad:
         extreme_points = [sum_of_minima, sum_of_maxima]
         netloads_testkit.assert_is_interpolation(extreme_points, multiset_curve)
 
-    new_end_time_examples = netloads_testkit.attribute_manipulation_examples
-
-    @pytest.mark.parametrize("new_end_time", new_end_time_examples)
+    @pytest.mark.parametrize(
+        "new_end_time",
+        netloads_testkit.attribute_manipulation_examples,
+    )
     def test_normalize_time(self, new_end_time):
         all_samples = self.all_samples
         multisample = self.construct_multisample()
@@ -414,11 +413,28 @@ class TestPowerLoad:
                 new_data = new_powerdata_set[p]
                 assert old_data == new_data
 
-    def test_shift_time(self):
-        """
-        No new functionality to be tested.
-        """
-        pass
+    @pytest.mark.parametrize(
+        "time_shift",
+        netloads_testkit.attribute_manipulation_examples,
+    )
+    def test_shift_time(self, time_shift):
+        all_samples = self.all_samples
+        multisample = self.construct_multisample()
+        all_samples.append(multisample)
+        for sample in all_samples:
+            old_powerdata_set = sample.powerdata_set
+            sample._shift_time(time_shift)
+            new_powerdata_set = sample.powerdata_set
+
+            # Assert length of 'powerdata_set' has not changed
+            correct_number_of_powerdatas = len(old_powerdata_set)
+            assert len(new_powerdata_set) == correct_number_of_powerdatas
+
+            # Assert 'data' has not changed
+            for p in range(correct_number_of_powerdatas):
+                old_data = old_powerdata_set[p]
+                new_data = new_powerdata_set[p]
+                assert old_data == new_data
 
     # ------------------------------------------------------------------
     # VISUALIZATION
@@ -445,23 +461,18 @@ class TestPowerLoad:
         ax = tools_testkit.prepare_figure(figure_title)
 
         colors = netloads_testkit.color_order_for_plotting
-        n_colors = netloads_testkit.n_colors
-
-        list_of_plot_objects = []
+        colors = iter(colors)
 
         all_samples = self.all_samples
-        n_samples = len(all_samples)
-        for s in range(n_samples):
-
-            # Cycle through available colors
-            sample_color = colors[s % n_colors]
-
-            sample = all_samples[s]
-            current_list_of_plot_objects = sample.plot(
-                ax=ax, detailed=detailed_plot_flag, c=sample_color
+        list_of_plot_objects = []
+        for sample in all_samples:
+            sample_color = next(colors)
+            ax, plot_list = sample.plot(
+                ax=ax,
+                detailed=detailed_plot_flag,
+                c=sample_color,
             )
-            list_of_plot_objects.append(current_list_of_plot_objects)
-
+            list_of_plot_objects.append(plot_list)
         adjust_2d_graph_ranges(ax=ax)
         plt.show()
 
@@ -489,11 +500,15 @@ class TestPowerLoad:
         result_powerloadmodel = result.model
         assert result_powerloadmodel == sample_models
 
-        list_of_plot_objects = result.plot(ax=ax, detailed=True, c="b")
+        ax, list_of_plot_objects = result.plot(
+            ax=ax,
+            detailed=True,
+            c="b",
+        )
         adjust_2d_graph_ranges(ax=ax)
         plt.show()
 
-    @pytest.mark.parametrize("number", [2])
+    @pytest.mark.parametrize("number", [2, 5])
     def test_multiplication(self, number):
         """
         Tests both '__mul__' and '__truediv__'.
@@ -501,11 +516,12 @@ class TestPowerLoad:
         rel_tol = None
         abs_tol = None
 
-        figure_title = "PowerLoad Multiplication"
+        num_spec = "x" + str(number) + " & /" + str(number)
+        figure_title = "PowerLoad Multiplication (" + num_spec + ")"
         ax = tools_testkit.prepare_figure(figure_title)
 
         colors = netloads_testkit.color_order_for_plotting
-        n_colors = netloads_testkit.n_colors
+        colors = iter(colors)
 
         multisample = self.construct_multisample()
         test_time = multisample.time
@@ -544,10 +560,8 @@ class TestPowerLoad:
             sample = samples_to_plot[s]
             assert isinstance(sample, PowerLoad)
 
-            # Cycle through available colors
-            sample_color = colors[s % n_colors]
-
-            sample_plot_list = sample.plot(
+            sample_color = next(colors)
+            ax, sample_plot_list = sample.plot(
                 ax=ax,
                 detailed=False,
                 c=sample_color,
@@ -745,7 +759,13 @@ class TestPhaseLoad:
         with pytest.raises(setter_errors):
             multisample._normalized_set = powerload_set
 
-    def test_curve(self):
+    def test_private_curve(self):
+        """
+        No new functionality to be tested.
+        """
+        pass
+
+    def test_public_curve(self):
         """
         No new functionality to be tested.
         """
@@ -782,9 +802,15 @@ class TestPhaseLoad:
         with pytest.raises(setter_errors):
             multisample.normalized_time = 0
 
+    def test_private_plot(self):
+        """
+        Tested in 'test_public_plot'.
+        """
+        pass
+
     @pytest.mark.parametrize("color_index", [2])
     @pytest.mark.parametrize("detailed_plot_flag", [False, True])
-    def test_plot(self, color_index, detailed_plot_flag):
+    def test_public_plot(self, color_index, detailed_plot_flag):
 
         figure_title = "'detailed' flag = " + str(detailed_plot_flag)
         figure_title = "PhaseLoad Plotting (" + figure_title + ")"
@@ -794,10 +820,11 @@ class TestPhaseLoad:
         sample_color = colors[color_index]
 
         multisample = self.construct_multisample()
-        list_of_plot_objects = multisample.plot(
-            ax=ax, detailed=detailed_plot_flag, c=sample_color
+        ax, list_of_plot_objects = multisample.plot(
+            ax=ax,
+            detailed=detailed_plot_flag,
+            c=sample_color,
         )
-
         adjust_2d_graph_ranges(ax=ax)
         plt.show()
 
@@ -913,14 +940,35 @@ class TestPulseLoad:
             multisample._shifted_set = normalized_set
 
     def test_curve(self):
-        """
-        No new functionality to be tested.
-        """
-        pass
+        rel_tol = None
+        abs_tol = None
+
+        multisample = self.construct_multisample()
+        shifted_time = multisample.shifted_time
+        epsilon = multisample.epsilon
+
+        rel_tol = epsilon
+
+        original_time = shifted_time
+        modified_time, curve = multisample.curve(original_time)
+        assert len(modified_time) >= len(original_time)
+
+        n_modified = len(modified_time)
+        presence_list = []
+        for i in range(n_modified):
+
+            mt = modified_time[i]
+            present_in_original = mt in modified_time
+            presence_list.append(present_in_original)
+
+            if not present_in_original:
+                next_mt = mt = modified_time[i + 1]
+                assert mt == pytest.approx(next_mt, rel=rel_tol, abs=abs_tol)
 
     # ------------------------------------------------------------------
     # VISUALIZATION
     # ------------------------------------------------------------------
+
     def test_intrinsic_time(self):
         multisample = self.construct_multisample()
         phaseload_set = multisample.phaseload_set
@@ -949,6 +997,12 @@ class TestPulseLoad:
         with pytest.raises(setter_errors):
             multisample.intrinsic_time = 0
 
+    def test_plot_phase_delimiters(self):
+        """
+        Tested in 'test_plot'.
+        """
+        pass
+
     @pytest.mark.parametrize("color_index", [3])
     @pytest.mark.parametrize("detailed_plot_flag", [False, True])
     def test_plot(self, color_index, detailed_plot_flag):
@@ -966,3 +1020,7 @@ class TestPulseLoad:
 
         adjust_2d_graph_ranges(ax=ax)
         plt.show()
+
+
+class TestScenarioLoad:
+    pass
