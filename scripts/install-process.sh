@@ -24,7 +24,7 @@ cd process
 git checkout develop
 git pull
 
-if [ "$1" ]
+if [ $VERSION_TAG ]
   then
     git checkout $VERSION_TAG
 else
@@ -41,7 +41,12 @@ fi
 pip install --upgrade --no-cache-dir -e ../bluemira/'[process]'
 
 # Do the PROCESS build
-cmake -S . -B build -DPython3_ROOT_DIR=$PTYHON_VENV_PATH
+if [ $PTYHON_VENV_PATH ]
+  then
+    cmake -S . -B build -DPython3_ROOT_DIR=$PTYHON_VENV_PATH
+else
+    cmake -S . -B build
+fi
 cmake --build build
 
 #
