@@ -24,7 +24,7 @@ Coil support builders
 """
 
 from dataclasses import dataclass
-from typing import Dict, Type, Union
+from typing import Dict, List, Type, Union
 
 import numpy as np
 
@@ -45,6 +45,7 @@ from bluemira.geometry.tools import (
     make_polygon,
     mirror_shape,
     offset_wire,
+    signed_distance_2D_polygon,
     slice_shape,
     sweep_shape,
 )
@@ -409,130 +410,6 @@ class StraightOISOptimisationProblem(OptimisationProblem):
         return constraint
 
 
-from typing import List
-
-from bluemira.geometry.tools import signed_distance_2D_polygon
-
-
-@dataclass
-class StraightOISDesignerParams(ParameterFrame):
-    tk_ois: Parameter[float]
-    g_ois_tf_edge: Parameter[float]
-    min_OIS_length: Parameter[float]
-
-
-class StraightOISDesigner(Designer[List[BluemiraWire]]):
-    """
-    Design a set of straight length outer inter-coil structures.
-
-    Parameters
-    ----------
-    params
-    build_config
-    tf_coil_xz_face
-    keep_out_zones
-    """
-
-    param_cls = StraightOISDesignerParams
-
-    def __init__(
-        self,
-        params: Union[Dict, ParameterFrame],
-        build_config: Dict,
-        tf_coil_xz_face: BluemiraFace,
-        keep_out_zones: List[BluemiraFace],
-    ):
-        super().__init__(params, build_config)
-        self.tf_face = tf_coil_xz_face
-        self.keep_out_zones = keep_out_zones
-
-    def run(self) -> List[BluemiraWire]:
-        """
-        Create and run the design optimisation problem.
-
-        Returns
-        -------
-        ois_wires:
-            A list of outer inter-coil structure wires on the y=0 plane.
-        """
-        koz_centreline = offset_wire(
-            self.tf_face.boundary[1], self.params.g_ois_tf_edge.value
-        )
-        ois_centreline = offset_wire(
-            self.tf_face.boundary[1], 2 * self.params.g_ois_tf_edge.value
-        )
-        ois_regions = self._make_ois_regions(ois_centreline, koz_centreline)
-        koz = self._make_ois_koz(koz_centreline)
-
-        ois_wires = []
-        for region in ois_regions:
-            opt_problem = StraightOISOptimisationProblem(region, koz)
-            result = opt_problem.optimise()
-            p1 = region.value_at(result[0])
-            p2 = region.value_at(result[1])
-            wire = self._make_ois_wire(p1, p2)
-            ois_wires.append(wire)
-        return ois_wires
-
-    def _make_ois_wire(self, p1, p2):
-        """
-        Make a rectangular wire from the two inner edge points
-        """
-        dx = p2[0] - p1[0]
-        dz = p2[2] - p1[2]
-        normal = np.array([dz, 0, -dx])
-        normal /= np.linalg.norm(normal)
-        tk = self.params.tk_ois.value
-        p3 = p2 + tk * normal
-        p4 = p1 + tk * normal
-        return make_polygon([p1, p2, p3, p4], closed=True)
-
-    def _make_ois_koz(self, koz_centreline):
-        """
-        Make the (fused) keep-out-zone for the outer inter-coil structures.
-        """
-        # Note we use the same offset to the exclusion zones as for the OIS
-        # to the TF.
-        koz_wires = [
-            offset_wire(koz, self.params.g_ois_tf_edge.value)
-            for koz in self.keep_out_zones
-        ]
-        koz_faces = [BluemiraFace(koz) for koz in koz_wires]
-
-        return boolean_fuse([BluemiraFace(koz_centreline)] + koz_faces)
-
-    def _make_ois_regions(self, ois_centreline, koz_centreline):
-        """
-        Select regions that are viable for outer inter-coil structures
-        """
-        inner_wire = self.tf_face.boundary[1]
-        # Drop the inboard (already connected by the vault)
-        x_min = inner_wire.bounding_box.x_min
-        z_min = self.tf_face.bounding_box.z_min - 0.1
-        z_max = self.tf_face.bounding_box.z_max + 0.1
-        inboard_cutter = BluemiraFace(
-            make_polygon(
-                {"x": [0, x_min, x_min, 0], "z": [z_min, z_min, z_max, z_max]},
-                closed=True,
-            )
-        )
-        cutter = BluemiraFace(koz_centreline)
-        koz_faces = [BluemiraFace(koz) for koz in self.keep_out_zones]
-        cutter = boolean_fuse([cutter, inboard_cutter] + koz_faces)
-
-        ois_regions = boolean_cut(ois_centreline, cutter)
-
-        # Drop regions that are too short for OIS
-        big_ois_regions = []
-        for region in ois_regions:
-            length = np.sqrt(
-                np.sum((region.start_point().xyz - region.end_point().xyz) ** 2)
-            )
-            if length > self.params.min_OIS_length.value:
-                big_ois_regions.append(region)
-        return big_ois_regions
-
-
 @dataclass
 class PFCoilSupportBuilderParams(ParameterFrame):
     """
@@ -863,6 +740,127 @@ class OISBuilder(Builder):
         left_component = PhysicalComponent(self.LEFT_OIS, ois_left)
         left_component.display_cad_options.color = BLUE_PALETTE["TF"][2]
         return [left_component, right_component]
+
+
+@dataclass
+class StraightOISDesignerParams(ParameterFrame):
+    tk_ois: Parameter[float]
+    g_ois_tf_edge: Parameter[float]
+    min_OIS_length: Parameter[float]
+
+
+class StraightOISDesigner(Designer[List[BluemiraWire]]):
+    """
+    Design a set of straight length outer inter-coil structures.
+
+    Parameters
+    ----------
+    params
+    build_config
+    tf_coil_xz_face
+    keep_out_zones
+    """
+
+    param_cls = StraightOISDesignerParams
+
+    def __init__(
+        self,
+        params: Union[Dict, ParameterFrame],
+        build_config: Dict,
+        tf_coil_xz_face: BluemiraFace,
+        keep_out_zones: List[BluemiraFace],
+    ):
+        super().__init__(params, build_config)
+        self.tf_face = tf_coil_xz_face
+        self.keep_out_zones = keep_out_zones
+
+    def run(self) -> List[BluemiraWire]:
+        """
+        Create and run the design optimisation problem.
+
+        Returns
+        -------
+        ois_wires:
+            A list of outer inter-coil structure wires on the y=0 plane.
+        """
+        koz_centreline = offset_wire(
+            self.tf_face.boundary[1], self.params.g_ois_tf_edge.value
+        )
+        ois_centreline = offset_wire(
+            self.tf_face.boundary[1], 2 * self.params.g_ois_tf_edge.value
+        )
+        ois_regions = self._make_ois_regions(ois_centreline, koz_centreline)
+        koz = self._make_ois_koz(koz_centreline)
+
+        ois_wires = []
+        for region in ois_regions:
+            opt_problem = StraightOISOptimisationProblem(region, koz)
+            result = opt_problem.optimise()
+            p1 = region.value_at(result[0])
+            p2 = region.value_at(result[1])
+            wire = self._make_ois_wire(p1, p2)
+            ois_wires.append(wire)
+        return ois_wires
+
+    def _make_ois_wire(self, p1, p2):
+        """
+        Make a rectangular wire from the two inner edge points
+        """
+        dx = p2[0] - p1[0]
+        dz = p2[2] - p1[2]
+        normal = np.array([dz, 0, -dx])
+        normal /= np.linalg.norm(normal)
+        tk = self.params.tk_ois.value
+        p3 = p2 + tk * normal
+        p4 = p1 + tk * normal
+        return make_polygon([p1, p2, p3, p4], closed=True)
+
+    def _make_ois_koz(self, koz_centreline):
+        """
+        Make the (fused) keep-out-zone for the outer inter-coil structures.
+        """
+        # Note we use the same offset to the exclusion zones as for the OIS
+        # to the TF.
+        koz_wires = [
+            offset_wire(koz, self.params.g_ois_tf_edge.value)
+            for koz in self.keep_out_zones
+        ]
+        koz_faces = [BluemiraFace(koz) for koz in koz_wires]
+
+        return boolean_fuse([BluemiraFace(koz_centreline)] + koz_faces)
+
+    def _make_ois_regions(self, ois_centreline, koz_centreline):
+        """
+        Select regions that are viable for outer inter-coil structures
+        """
+        inner_wire = self.tf_face.boundary[1]
+        # Drop the inboard (already connected by the vault)
+        x_min = inner_wire.bounding_box.x_min
+        z_min = self.tf_face.bounding_box.z_min - 0.1
+        z_max = self.tf_face.bounding_box.z_max + 0.1
+        inboard_cutter = BluemiraFace(
+            make_polygon(
+                {"x": [0, x_min, x_min, 0], "z": [z_min, z_min, z_max, z_max]},
+                closed=True,
+            )
+        )
+        cutter = BluemiraFace(koz_centreline)
+        koz_faces = [BluemiraFace(koz) for koz in self.keep_out_zones]
+        cutter = boolean_fuse([cutter, inboard_cutter] + koz_faces)
+
+        ois_regions = boolean_cut(ois_centreline, cutter)
+
+        # Drop regions that are too short for OIS
+        big_ois_regions = []
+        for region in ois_regions:
+            length = np.sqrt(
+                np.sum((region.start_point().xyz - region.end_point().xyz) ** 2)
+            )
+            if length > self.params.min_OIS_length.value:
+                big_ois_regions.append(region)
+        return big_ois_regions
+
+
 if __name__ == "__main__":
 
     from bluemira.display import show_cad
