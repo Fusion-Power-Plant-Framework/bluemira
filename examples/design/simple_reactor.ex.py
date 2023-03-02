@@ -542,13 +542,6 @@ build_config = {
 
 reactor_config = ReactorConfig(build_config, EmptyFrame)
 
-plasma_params = PlasmaDesignerParams.from_config_params(
-    reactor_config.params_for("Plasma", "designer")
-)
-
-tf_coil_params = TFCoilBuilderParams.from_config_params(
-    reactor_config.params_for("TF Coil", "builder")
-)
 
 # %% [markdown]
 #
@@ -556,7 +549,7 @@ tf_coil_params = TFCoilBuilderParams.from_config_params(
 
 # %%
 plasma_designer = PlasmaDesigner(
-    plasma_params,
+    reactor_config.params_for("Plasma", "designer"),
     reactor_config.config_for("Plasma", "designer"),
 )
 plasma_parameterisation = plasma_designer.execute()
@@ -577,7 +570,10 @@ tf_coil_designer = TFCoilDesigner(
 )
 tf_parameterisation = tf_coil_designer.execute()
 
-tf_coil_builder = TFCoilBuilder(tf_coil_params, tf_parameterisation.create_shape())
+tf_coil_builder = TFCoilBuilder(
+    reactor_config.params_for("TF Coil", "builder"),
+    tf_parameterisation.create_shape(),
+)
 tf_coil = TFCoil(tf_coil_builder.build())
 
 # %% [markdown]

@@ -35,37 +35,40 @@ class TestCompADesignerParams(ParameterFrame):
     location: Parameter[str]
 
 
+test_config_path = Path(__file__).parent / "data" / "reactor_config.test.json"
+empty_config_path = Path(__file__).parent / "data" / "reactor_config.empty.json"
+
+
 class TestReactorConfigClass:
     """
     Tests for the Reactor Config class functionality.
     """
 
     def test_file_loading_with_empty_config(self):
-        config_path = Path(__file__).parent / "reactor_config.empty.json"
-        reactor_config = ReactorConfig(config_path.as_posix(), EmptyFrame)
+        reactor_config = ReactorConfig(empty_config_path.as_posix(), EmptyFrame)
 
         # want to know explicitly if it is an EmptyFrame
         assert type(reactor_config.global_params) is EmptyFrame
-        with pytest.raises(ReactorConfigError):
+        with pytest.raises(KeyError):
             reactor_config.params_for("dne")
             reactor_config.config_for("dne")
 
     def test_incorrect_global_config_type_empty_config(self):
-        config_path = Path(__file__).parent / "reactor_config.empty.json"
         with pytest.raises(ValueError):
-            ReactorConfig(config_path.as_posix(), TestGlobalParams)
+            ReactorConfig(empty_config_path.as_posix(), TestGlobalParams)
 
     def test_incorrect_global_config_type_non_empty_config(self):
-        config_path = Path(__file__).parent / "reactor_config.test.json"
         with pytest.raises(ValueError):
-            ReactorConfig(config_path.as_posix(), EmptyFrame)
+            ReactorConfig(test_config_path.as_posix(), EmptyFrame)
 
     def test_params_for_warnings_make_param_frame_type_value_overrides(
         self,
         caplog,
     ):
-        config_path = Path(__file__).parent / "reactor_config.test.json"
-        reactor_config = ReactorConfig(config_path.as_posix(), TestGlobalParams)
+        reactor_config = ReactorConfig(
+            test_config_path.as_posix(),
+            TestGlobalParams,
+        )
 
         cp = reactor_config.params_for("comp A", "designer")
 
@@ -91,8 +94,10 @@ class TestReactorConfigClass:
         self,
         caplog,
     ):
-        config_path = Path(__file__).parent / "reactor_config.test.json"
-        reactor_config = ReactorConfig(config_path.as_posix(), TestGlobalParams)
+        reactor_config = ReactorConfig(
+            test_config_path.as_posix(),
+            TestGlobalParams,
+        )
 
         cf_comp_a = reactor_config.config_for("comp A")
         cf_comp_a_des = reactor_config.config_for("comp A", "designer")
@@ -115,9 +120,9 @@ class TestReactorConfigClass:
             EmptyFrame,
         )
 
-        with pytest.raises(ReactorConfigError):
+        with pytest.raises(KeyError):
             reactor_config.params_for("comp A", "dne")
-        with pytest.raises(ReactorConfigError):
+        with pytest.raises(KeyError):
             reactor_config.config_for("comp A", "dne")
 
     def test_no_params_warning(self, caplog):
@@ -132,7 +137,7 @@ class TestReactorConfigClass:
 
         cp = reactor_config.params_for("comp A", "designer")
 
-        assert len(caplog.records) == 2
+        assert len(caplog.records) == 1
         for record in caplog.records:
             assert record.levelname == "WARNING"
 
@@ -158,7 +163,9 @@ class TestReactorConfigClass:
         assert len(cf_comp_a) == 1
         assert len(cf_comp_a_des) == 0
 
-    def test_invalid_rc_initialization(self, caplog):
+    def test_invalid_rc_initialization(
+        self,
+    ):
         with pytest.raises(ReactorConfigError):
             ReactorConfig(
                 ["wrong"],
