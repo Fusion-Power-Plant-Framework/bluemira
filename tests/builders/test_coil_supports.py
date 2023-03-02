@@ -35,16 +35,20 @@ from bluemira.builders.coil_supports import (
     StraightOISDesignerParams,
     StraightOISOptimisationProblem,
 )
+from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.parameterisations import PictureFrame, PrincetonD, TripleArc
 from bluemira.geometry.tools import (
     boolean_cut,
     boolean_fuse,
     circular_pattern,
+    make_circle_arc_3P,
     make_polygon,
     mirror_shape,
+    offset_wire,
     sweep_shape,
 )
 from bluemira.geometry.wire import BluemiraWire
+from bluemira.utilities.optimiser import Optimiser
 
 
 class TestITERGravitySupportBuilder:
@@ -270,11 +274,6 @@ class TestOISBuilder:
         tf_coils = circular_pattern(self.tf_coil, n_shapes=n_TF)[:2]
         self._check_no_intersection_with_TFs(ois, builder, tf_coils)
         self._check_no_intersection_when_patterned(ois, builder, n_TF)
-
-
-from bluemira.geometry.face import BluemiraFace
-from bluemira.geometry.tools import make_circle_arc_3P, offset_wire
-from bluemira.utilities.optimiser import Optimiser
 
 
 class TestStraightOISDesigner:
