@@ -56,7 +56,7 @@ from bluemira.utilities.opt_problems import (
     OptimisationObjective,
     OptimisationProblem,
 )
-from bluemira.utilities.optimiser import Optimiser
+from bluemira.utilities.optimiser import Optimiser, approx_derivative
 
 
 @dataclass
@@ -531,9 +531,6 @@ class PFCoilSupportBuilder(Builder):
         component = PhysicalComponent(self.SUPPORT, shape)
         component.display_cad_options.color = BLUE_PALETTE["TF"][2]
         return component
-
-
-from bluemira.utilities.optimiser import approx_derivative
 
 
 class StraightOISOptimisationProblem(OptimisationProblem):
