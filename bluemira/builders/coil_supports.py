@@ -30,6 +30,7 @@ import numpy as np
 
 from bluemira.base.builder import Builder
 from bluemira.base.components import Component, PhysicalComponent
+from bluemira.base.designer import Designer
 from bluemira.base.error import BuilderError
 from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.base.parameter_frame import Parameter, ParameterFrame
@@ -50,6 +51,12 @@ from bluemira.geometry.tools import (
     sweep_shape,
 )
 from bluemira.geometry.wire import BluemiraWire
+from bluemira.utilities.opt_problems import (
+    OptimisationConstraint,
+    OptimisationObjective,
+    OptimisationProblem,
+)
+from bluemira.utilities.optimiser import Optimiser
 
 
 @dataclass
@@ -282,16 +289,6 @@ class ITERGravitySupportBuilder(Builder):
         component = PhysicalComponent("ITER-like gravity support", shape)
         component.display_cad_options.color = BLUE_PALETTE["TF"][2]
         return component
-
-
-from bluemira.base.designer import Designer
-from bluemira.geometry.tools import distance_to
-from bluemira.utilities.opt_problems import (
-    OptimisationConstraint,
-    OptimisationObjective,
-    OptimisationProblem,
-)
-from bluemira.utilities.optimiser import Optimiser
 
 
 class StraightOISOptimisationProblem(OptimisationProblem):
