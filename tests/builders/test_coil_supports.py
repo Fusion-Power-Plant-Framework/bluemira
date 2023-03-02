@@ -205,17 +205,19 @@ class TestOISBuilder:
     tf_coil = sweep_shape(xs, pd)
 
     def _check_no_intersection_with_TFs(self, ois, builder, tf_coils):
-        ois_body = ois.get_component("xyz").get_component(builder.RIGHT_OIS).shape
+        ois_body = ois.get_component("xyz").get_component(f"{builder.RIGHT_OIS} 1").shape
         result = sorted(boolean_cut(ois_body, tf_coils[0]), key=lambda s: -s.volume)
         assert np.isclose(ois_body.volume, result[0].volume)
-        ois_body = ois.get_component("xyz").get_component(builder.LEFT_OIS).shape
+        ois_body = ois.get_component("xyz").get_component(f"{builder.LEFT_OIS} 1").shape
         result = sorted(boolean_cut(ois_body, tf_coils[0]), key=lambda s: -s.volume)
         assert np.isclose(ois_body.volume, result[0].volume)
 
     def _check_no_intersection_when_patterned(self, ois, builder, n_TF):
         tf_angle = 2 * np.pi / n_TF
         direction = (-np.sin(0.5 * tf_angle), np.cos(0.5 * tf_angle), 0)
-        right_ois_0 = ois.get_component("xyz").get_component(builder.RIGHT_OIS).shape
+        right_ois_0 = (
+            ois.get_component("xyz").get_component(f"{builder.RIGHT_OIS} 1").shape
+        )
         left_ois_1 = mirror_shape(right_ois_0, base=(0, 0, 0), direction=direction)
         full_ois = boolean_fuse([right_ois_0, left_ois_1])
         assert np.isclose(full_ois.volume, 2 * right_ois_0.volume)

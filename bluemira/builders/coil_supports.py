@@ -746,7 +746,9 @@ class StraightOISDesigner(Designer[List[BluemiraWire]]):
         """
         inner_wire = self.tf_face.boundary[1]
         # Drop the inboard (already connected by the vault)
-        x_min = inner_wire.bounding_box.x_min
+        # Note we also drop the probable worst case of the edge corners of the OIS
+        # colliding when swept.
+        x_min = inner_wire.bounding_box.x_min + np.sqrt(2) * self.params.tk_ois.value
         z_min = self.tf_face.bounding_box.z_min - 0.1
         z_max = self.tf_face.bounding_box.z_max + 0.1
         inboard_cutter = BluemiraFace(
@@ -797,10 +799,12 @@ class OISBuilder(Builder):
         self,
         params: Union[OISBuilderParams, Dict],
         build_config: Dict,
-        ois_xz_profile: List[BluemiraWire],
+        ois_xz_profiles: Union[BluemiraWire, List[BluemiraWire]],
     ):
         super().__init__(params, build_config)
-        self.ois_xz_profiles = ois_xz_profile
+        if not isinstance(ois_xz_profiles, List):
+            ois_xz_profiles = [ois_xz_profiles]
+        self.ois_xz_profiles = ois_xz_profiles
 
     def build(self) -> Component:
         """
@@ -834,6 +838,8 @@ class OISBuilder(Builder):
         width = self.params.tf_wp_depth.value + 2 * self.params.tk_tf_side.value
         tf_angle = 2 * np.pi / self.params.n_TF.value
         centre_radius = 0.5 * width / np.tan(0.5 * tf_angle)
+        direction = (-np.sin(0.5 * tf_angle), np.cos(0.5 * tf_angle), 0)
+        half_plane = BluemiraPlane(base=(0, 0, 0), axis=direction)
 
         components = []
         for i, ois_profile in enumerate(self.ois_xz_profiles):
@@ -853,8 +859,6 @@ class OISBuilder(Builder):
 
             # Then we "chop" it in half, but without the boolean_cut operation
             # This is because I cba to write a project_shape function...
-            direction = (-np.sin(0.5 * tf_angle), np.cos(0.5 * tf_angle), 0)
-            half_plane = BluemiraPlane(base=(0, 0, 0), axis=direction)
             ois_profile_mid = slice_shape(ois_right, half_plane)[0]
 
             path = make_polygon(
@@ -877,11 +881,20 @@ if __name__ == "__main__":
     from bluemira.display import show_cad
     from bluemira.geometry.parameterisations import PrincetonD
 
+    tf_wp_depth = 1.4
+    tk_tf_side = 0.1
+    n_TF = 16
+    y_width = tf_wp_depth + 2 * tk_tf_side
     pd = PrincetonD().create_shape()
     pd2 = offset_wire(pd, 1.0)
 
     tf = BluemiraFace([pd2, pd])
-    up = make_polygon({"x": [9, 12, 12, 9], "z": [0, 0, 15, 15]}, closed=True)
+    tf_coil = extrude_shape(tf, (0, y_width, 0))
+    tf_coil.translate((0, -0.5 * y_width, 0))
+    tf_coil = PhysicalComponent("TF coil", tf_coil)
+    tf_coil.display_cad_options.transparency = 0.5
+    tf_coil_comp = Component("tf_coil", children=[tf_coil])
+    up = make_polygon({"x": [6, 12, 12, 6], "z": [0, 0, 15, 15]}, closed=True)
     ep = make_polygon({"x": [0, 20, 20, 0], "z": [-1, -1, 1, 1]}, closed=True)
 
     params = StraightOISDesignerParams(
@@ -892,12 +905,23 @@ if __name__ == "__main__":
 
     designer = StraightOISDesigner(params, {}, tf, [up, ep])
     ois_wires = designer.run()
+    show_cad([tf, up, ep] + ois_wires)
 
     builder_params = OISBuilderParams(
-        n_TF=Parameter("n_TF", 16),
-        tf_wp_depth=Parameter("tf_wp_depth", 1.4),
-        tk_tf_side=Parameter("tk_tf_side", 0.1),
+        n_TF=Parameter("n_TF", n_TF),
+        tf_wp_depth=Parameter("tf_wp_depth", tf_wp_depth),
+        tk_tf_side=Parameter("tk_tf_side", tk_tf_side),
     )
     builder = OISBuilder(builder_params, {}, ois_wires)
-    component = builder.build()
-    component.get_component("xyz").show_cad()
+    ois_component = builder.build()
+
+    from bluemira.builders.tools import circular_pattern_component
+
+    patterned_comps = circular_pattern_component(
+        [tf_coil_comp, ois_component.get_component("xyz")],
+        n_children=2,
+        degree=2 * 360 / n_TF,
+    )
+
+    reactor = Component("", children=patterned_comps)
+    reactor.show_cad()
