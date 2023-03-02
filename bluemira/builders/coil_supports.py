@@ -653,97 +653,11 @@ class PFCoilSupportBuilder(Builder):
 
 
 @dataclass
-class OISBuilderParams(ParameterFrame):
-    """
-    Outer intercoil structure parameters
-    """
-
-    n_TF: Parameter[int]
-    tf_wp_depth: Parameter[float]
-    tk_tf_side: Parameter[float]
-
-
-class OISBuilder(Builder):
-    """
-    Outer intercoil structure builder
-    """
-
-    RIGHT_OIS = "TF OIS right"
-    LEFT_OIS = "TF OIS left"
-    param_cls: Type[OISBuilderParams] = OISBuilderParams
-
-    def __init__(
-        self,
-        params: Union[OISBuilderParams, Dict],
-        build_config: Dict,
-        ois_xz_profile: BluemiraWire,
-    ):
-        super().__init__(params, build_config)
-        self.ois_xz_profile = ois_xz_profile
-
-    def build(self) -> Component:
-        """
-        Build the PF coil support component.
-        """
-        return self.component_tree([self.build_xz()], self.build_xy(), self.build_xyz())
-
-    def build_xy(self):
-        """
-        Build the x-y component of the OIS
-        """
-        pass
-
-    def build_xz(self):
-        """
-        Build the x-z component of the OIS
-        """
-        face = BluemiraFace(self.ois_xz_profile)
-        component = PhysicalComponent(self.RIGHT_OIS, face)
-        component.display_cad_options.color = BLUE_PALETTE["TF"][2]
-        component.plot_options.face_options["color"] = BLUE_PALETTE["TF"][2]
-        return component
-
-    def build_xyz(self):
-        """
-        Build the x-y-z component of the OIS
-        """
-        width = self.params.tf_wp_depth.value + 2 * self.params.tk_tf_side.value
-        tf_angle = 2 * np.pi / self.params.n_TF.value
-        ois_profile_1 = self.ois_xz_profile.deepcopy()
-        ois_profile_1.translate(vector=(0, 0.5 * width, 0))
-        ois_profile_2 = ois_profile_1.deepcopy()
-
-        centre_radius = 0.5 * width / np.tan(0.5 * tf_angle)
-
-        ois_profile_2.rotate(
-            base=(centre_radius, 0.5 * width, 0), degree=np.rad2deg(tf_angle)
-        )
-
-        # First we make the full OIS
-        path = make_polygon([ois_profile_1.center_of_mass, ois_profile_2.center_of_mass])
-        ois_right = sweep_shape([ois_profile_1, ois_profile_2], path)
-
-        # Then we "chop" it in half, but without the boolean_cut operation
-        # This is because I cba to write a project_shape function...
-        direction = (-np.sin(0.5 * tf_angle), np.cos(0.5 * tf_angle), 0)
-        half_plane = BluemiraPlane(base=(0, 0, 0), axis=direction)
-        ois_profile_mid = slice_shape(ois_right, half_plane)[0]
-
-        path = make_polygon(
-            [ois_profile_1.center_of_mass, ois_profile_mid.center_of_mass]
-        )
-        ois_right = sweep_shape([ois_profile_1, ois_profile_mid], path)
-        ois_left = mirror_shape(ois_right, base=(0, 0, 0), direction=(0, 1, 0))
-
-        right_component = PhysicalComponent(self.RIGHT_OIS, ois_right)
-        right_component.display_cad_options.color = BLUE_PALETTE["TF"][2]
-        left_component = PhysicalComponent(self.LEFT_OIS, ois_left)
-        left_component.display_cad_options.color = BLUE_PALETTE["TF"][2]
-        return [left_component, right_component]
-
-
-@dataclass
 class StraightOISDesignerParams(ParameterFrame):
+    """
+    Parameters for the StraightOISDesigner
+    """
+
     tk_ois: Parameter[float]
     g_ois_tf_edge: Parameter[float]
     min_OIS_length: Parameter[float]
@@ -861,6 +775,106 @@ class StraightOISDesigner(Designer[List[BluemiraWire]]):
         return big_ois_regions
 
 
+@dataclass
+class OISBuilderParams(ParameterFrame):
+    """
+    Outer intercoil structure parameters
+    """
+
+    n_TF: Parameter[int]
+    tf_wp_depth: Parameter[float]
+    tk_tf_side: Parameter[float]
+
+
+class OISBuilder(Builder):
+    """
+    Outer intercoil structure builder
+    """
+
+    RIGHT_OIS = "TF OIS right"
+    LEFT_OIS = "TF OIS left"
+    OIS_XZ = "TF OIS"
+    param_cls: Type[OISBuilderParams] = OISBuilderParams
+
+    def __init__(
+        self,
+        params: Union[OISBuilderParams, Dict],
+        build_config: Dict,
+        ois_xz_profile: List[BluemiraWire],
+    ):
+        super().__init__(params, build_config)
+        self.ois_xz_profiles = ois_xz_profile
+
+    def build(self) -> Component:
+        """
+        Build the PF coil support component.
+        """
+        return self.component_tree(self.build_xz(), self.build_xy(), self.build_xyz())
+
+    def build_xy(self):
+        """
+        Build the x-y component of the OIS
+        """
+        pass
+
+    def build_xz(self):
+        """
+        Build the x-z component of the OIS
+        """
+        components = []
+        for i, ois_profile in enumerate(self.ois_xz_profiles):
+            face = BluemiraFace(ois_profile)
+            component = PhysicalComponent(f"{self.OIS_XZ} {i}", face)
+            component.display_cad_options.color = BLUE_PALETTE["TF"][2]
+            component.plot_options.face_options["color"] = BLUE_PALETTE["TF"][2]
+            components.append(component)
+        return components
+
+    def build_xyz(self):
+        """
+        Build the x-y-z component of the OIS
+        """
+        width = self.params.tf_wp_depth.value + 2 * self.params.tk_tf_side.value
+        tf_angle = 2 * np.pi / self.params.n_TF.value
+        centre_radius = 0.5 * width / np.tan(0.5 * tf_angle)
+
+        components = []
+        for i, ois_profile in enumerate(self.ois_xz_profiles):
+            ois_profile_1 = ois_profile.deepcopy()
+            ois_profile_1.translate(vector=(0, 0.5 * width, 0))
+
+            ois_profile_2 = ois_profile_1.deepcopy()
+            ois_profile_2.rotate(
+                base=(centre_radius, 0.5 * width, 0), degree=np.rad2deg(tf_angle)
+            )
+
+            # First we make the full OIS
+            path = make_polygon(
+                [ois_profile_1.center_of_mass, ois_profile_2.center_of_mass]
+            )
+            ois_right = sweep_shape([ois_profile_1, ois_profile_2], path)
+
+            # Then we "chop" it in half, but without the boolean_cut operation
+            # This is because I cba to write a project_shape function...
+            direction = (-np.sin(0.5 * tf_angle), np.cos(0.5 * tf_angle), 0)
+            half_plane = BluemiraPlane(base=(0, 0, 0), axis=direction)
+            ois_profile_mid = slice_shape(ois_right, half_plane)[0]
+
+            path = make_polygon(
+                [ois_profile_1.center_of_mass, ois_profile_mid.center_of_mass]
+            )
+            ois_right = sweep_shape([ois_profile_1, ois_profile_mid], path)
+            ois_left = mirror_shape(ois_right, base=(0, 0, 0), direction=(0, 1, 0))
+
+            right_component = PhysicalComponent(f"{self.RIGHT_OIS} {i+1}", ois_right)
+            right_component.display_cad_options.color = BLUE_PALETTE["TF"][2]
+            left_component = PhysicalComponent(f"{self.LEFT_OIS} {i+1}", ois_left)
+            left_component.display_cad_options.color = BLUE_PALETTE["TF"][2]
+            components.extend([left_component, right_component])
+
+        return components
+
+
 if __name__ == "__main__":
 
     from bluemira.display import show_cad
@@ -880,6 +894,13 @@ if __name__ == "__main__":
     )
 
     designer = StraightOISDesigner(params, {}, tf, [up, ep])
-    new_wires = designer.run()
-    show_stuff = new_wires + [tf, up, ep]
-    show_cad(show_stuff)
+    ois_wires = designer.run()
+
+    builder_params = OISBuilderParams(
+        n_TF=Parameter("n_TF", 16),
+        tf_wp_depth=Parameter("tf_wp_depth", 1.4),
+        tk_tf_side=Parameter("tk_tf_side", 0.1),
+    )
+    builder = OISBuilder(builder_params, {}, ois_wires)
+    component = builder.build()
+    component.get_component("xyz").show_cad()
