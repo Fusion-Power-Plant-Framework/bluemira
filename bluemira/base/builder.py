@@ -33,7 +33,6 @@ from bluemira.base.parameter_frame import ParameterFrame, make_parameter_frame
 from bluemira.base.reactor_config import ConfigParams
 from bluemira.utilities.plot_tools import set_component_view
 
-# rv
 BuildConfig = Dict[str, Union[int, float, str, "BuildConfig"]]
 """
 Type alias for representing nested build configuration information.
