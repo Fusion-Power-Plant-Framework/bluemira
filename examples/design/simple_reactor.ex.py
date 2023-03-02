@@ -49,8 +49,9 @@ import numpy as np
 from bluemira.base.builder import Builder, ComponentManager
 from bluemira.base.components import Component, PhysicalComponent
 from bluemira.base.designer import Designer
-from bluemira.base.parameter_frame import Parameter, ParameterFrame
+from bluemira.base.parameter_frame import EmptyFrame, Parameter, ParameterFrame
 from bluemira.base.reactor import Reactor
+from bluemira.base.reactor_config import ReactorConfig
 from bluemira.display.palettes import BLUE_PALETTE
 from bluemira.equilibria.shapes import JohnerLCFS
 from bluemira.geometry.face import BluemiraFace
@@ -453,7 +454,7 @@ build_config = {
     # be used to set parameters that are shared between components
     "params": {},
     "Plasma": {
-        "Designer": {
+        "designer": {
             "params": {
                 "R_0": {
                     "value": 9.0,
@@ -505,7 +506,8 @@ build_config = {
         },
     },
     "TF Coil": {
-        "Designer": {
+        "params": {},
+        "designer": {
             "runmode": "run",
             "param_class": "PrincetonD",
             "var_dict": {
@@ -513,7 +515,7 @@ build_config = {
                 "x2": {"value": 15, "lower_bound": 12},
             },
         },
-        "Builder": {
+        "builder": {
             "params": {
                 "tf_wp_width": {
                     "value": 0.6,
@@ -532,31 +534,29 @@ build_config = {
     },
 }
 
-
 # %% [markdown]
 #
 # Now we set up our ParameterFrames
 
 # %%
-# TODO improve build config manipulation
-plasma_params = PlasmaDesignerParams.from_dict(
-    {**build_config["params"], **build_config["Plasma"]["Designer"].pop("params")}
-)
 
-tf_coil_params = TFCoilBuilderParams.from_dict(
-    {**build_config["params"], **build_config["TF Coil"]["Builder"].pop("params")}
-)
+reactor_config = ReactorConfig(build_config, EmptyFrame)
+
 
 # %% [markdown]
 #
 # We create our plasma
 
 # %%
-plasma_designer = PlasmaDesigner(plasma_params, build_config["Plasma"])
+plasma_designer = PlasmaDesigner(
+    reactor_config.params_for("Plasma", "designer"),
+    reactor_config.config_for("Plasma", "designer"),
+)
 plasma_parameterisation = plasma_designer.execute()
 
 plasma_builder = PlasmaBuilder(
-    plasma_parameterisation.create_shape(), build_config["Plasma"]
+    plasma_parameterisation.create_shape(),
+    reactor_config.config_for("Plasma"),
 )
 plasma = Plasma(plasma_builder.build())
 
@@ -566,11 +566,14 @@ plasma = Plasma(plasma_builder.build())
 
 # %%
 tf_coil_designer = TFCoilDesigner(
-    plasma.lcfs(), None, build_config["TF Coil"]["Designer"]
+    plasma.lcfs(), None, reactor_config.config_for("TF Coil", "designer")
 )
 tf_parameterisation = tf_coil_designer.execute()
 
-tf_coil_builder = TFCoilBuilder(tf_coil_params, tf_parameterisation.create_shape())
+tf_coil_builder = TFCoilBuilder(
+    reactor_config.params_for("TF Coil", "builder"),
+    tf_parameterisation.create_shape(),
+)
 tf_coil = TFCoil(tf_coil_builder.build())
 
 # %% [markdown]

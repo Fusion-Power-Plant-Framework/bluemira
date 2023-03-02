@@ -5,6 +5,7 @@ import json
 from contextlib import suppress
 from dataclasses import dataclass, fields
 from typing import (
+    TYPE_CHECKING,
     Any,
     Dict,
     Generator,
@@ -34,6 +35,10 @@ from bluemira.base.parameter_frame._parameter import (
     Parameter,
     ParameterValueType,
 )
+
+# due to circular import
+if TYPE_CHECKING:
+    from bluemira.base.reactor_config import ConfigParams
 
 _PfT = TypeVar("_PfT", bound="ParameterFrame")
 
@@ -144,14 +149,9 @@ class ParameterFrame:
             except KeyError as e:
                 raise ValueError(f"Data for parameter '{member}' not found.") from e
 
-            value_type = _validate_parameter_field(member, cls._get_types()[member])
-            try:
-                _validate_units(param_data, value_type)
-            except pint.errors.PintError as pe:
-                raise ValueError("Unit conversion failed") from pe
-
-            kwargs[member] = Parameter(
-                name=member, **param_data, _value_types=value_type
+            kwargs[member] = cls._member_data_to_parameter(
+                member,
+                param_data,
             )
 
         if not allow_unknown and len(data) > 0:
@@ -186,6 +186,65 @@ class ParameterFrame:
                 return cls.from_dict(json.load(f))
         # load from a JSON string
         return cls.from_dict(json.loads(json_in))
+
+    @classmethod
+    def from_config_params(cls: Type[_PfT], config_params: ConfigParams) -> _PfT:
+        """
+        Initialise an instance from a
+        :class:`~bluemira.base.reactor_config.ConfigParams` object.
+
+        A ConfigParams objects holds a ParameterFrame of global_params
+        and a dict of local_params. This function merges the two together
+        to form a unified ParameterFrame.
+
+        Parameters in global_params will overwrite those in
+        local_params, when defined in both.
+        All references to Parameters in global_params are maintained
+        (i.e. there's no copying).
+        """
+        kwargs = {}
+
+        lp = config_params.local_params
+        for member in cls.__dataclass_fields__:
+            if member not in lp:
+                continue
+            kwargs[member] = cls._member_data_to_parameter(
+                member,
+                lp[member],
+            )
+
+        gp = config_params.global_params
+        for member in cls.__dataclass_fields__:
+            if member not in gp.__dataclass_fields__:
+                continue
+            kwargs[member] = getattr(gp, member)
+
+        # now validate all dataclass_fields are in kwargs
+        # (which could be super set)
+        for member in cls.__dataclass_fields__:
+            try:
+                kwargs[member]
+            except KeyError as e:
+                raise ValueError(f"Data for parameter '{member}' not found.") from e
+
+        return cls(**kwargs)
+
+    @classmethod
+    def _member_data_to_parameter(
+        cls,
+        member: str,
+        member_param_data: Dict,
+    ) -> Parameter:
+        value_type = _validate_parameter_field(member, cls._get_types()[member])
+        try:
+            _validate_units(member_param_data, value_type)
+        except pint.errors.PintError as pe:
+            raise ValueError("Unit conversion failed") from pe
+        return Parameter(
+            name=member,
+            **member_param_data,
+            _value_types=value_type,
+        )
 
     def to_dict(self) -> Dict[str, Dict[str, Any]]:
         """Serialize this ParameterFrame to a dictionary."""
@@ -414,8 +473,21 @@ def _non_comutative_unit_conversion(dimensionality, numerator, dpa, fpy):
     )
 
 
+@dataclass
+class EmptyFrame(ParameterFrame):
+    """
+    Class to represent an empty `ParameterFrame` (one with no Parameters).
+
+    Can be used when initializing a
+    :class:`~bluemire.base.reactor_config.ConfigParams` object with no global params.
+    """
+
+    def __init__(self) -> None:
+        super().__init__()
+
+
 def make_parameter_frame(
-    params: Union[Dict[str, ParamDictT], ParameterFrame, str, None],
+    params: Union[Dict[str, ParamDictT], ParameterFrame, ConfigParams, str, None],
     param_cls: Type[_PfT],
 ) -> Union[_PfT, None]:
     """
@@ -423,7 +495,7 @@ def make_parameter_frame(
 
     Parameters
     ----------
-    params: Union[Dict[str, ParamDictT], ParameterFrame, str, None]
+    params: Union[Dict[str, ParamDictT], ParameterFrame, ConfigParams str, None]
         The parameters to initialise the class with.
         This parameter can be several types:
 
@@ -436,6 +508,12 @@ def make_parameter_frame(
                 assigned to the new ParameterFrame's parameters. Note
                 that this makes no copies, so updates to parameters in
                 the new frame will propagate to the old, and vice versa.
+            * :class:`~bluemira.base.reactor_config.ConfigParams`:
+                An object that holds a `global_params` ParameterFrame
+                and a `local_params` dict, which are merged to create
+                a new ParameterFrame. Values defined in `local_params`
+                will be overwritten by those in `global_params` when
+                defined in both.
             * str:
                 The path to a JSON file, or, if the string starts with
                 '{', a JSON string.
@@ -453,6 +531,8 @@ def make_parameter_frame(
         A frame of the type `param_cls`, or `None` if `params` and
         `param_cls` are both `None`.
     """
+    from bluemira.base.reactor_config import ConfigParams
+
     if param_cls is None:
         if params is None:
             # Case for where there are no parameters associated with the object
@@ -466,4 +546,6 @@ def make_parameter_frame(
         return param_cls.from_json(params)
     elif isinstance(params, ParameterFrame):
         return param_cls.from_frame(params)
+    elif isinstance(params, ConfigParams):
+        return param_cls.from_config_params(params)
     raise TypeError(f"Cannot interpret type '{type(params)}' as {param_cls.__name__}.")

@@ -1,0 +1,35 @@
+{
+  "params": {
+    "height": { "value": 180, "unit": "cm" },
+    "age": { "value": 30, "unit": "years" },
+    "only_global": { "value": 1, "unit": "years" },
+    "extra_global": { "value": 1, "unit": "s" }
+  },
+  "comp A": {
+    "params": {
+      "height": { "value": 18, "unit": "cm" },
+      "name": { "value": "Comp A", "unit": "" }
+    },
+    "config_a": {
+      "a_value": "overridden_value"
+    },
+    "config_b": {
+      "b_value": "b_value"
+    },
+    "designer": {
+      "params": {
+        "age": { "value": 3, "unit": "years" },
+        "name": { "value": "Comp A_designer", "unit": "" },
+        "location": { "value": "here", "unit": "" },
+        "extra_local": { "value": 1, "unit": "s" }
+      },
+      "config_a": {
+        "a_value": "a_value"
+      },
+      "config_c": {
+        "c_value": "c_value"
+      }
+    }
+  },
+  "comp B": {}
+}

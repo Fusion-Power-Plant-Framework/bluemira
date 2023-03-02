@@ -30,6 +30,7 @@ from typing import Dict, List, Type, Union
 
 from bluemira.base.components import Component
 from bluemira.base.parameter_frame import ParameterFrame, make_parameter_frame
+from bluemira.base.reactor_config import ConfigParams
 from bluemira.utilities.plot_tools import set_component_view
 
 BuildConfig = Dict[str, Union[int, float, str, "BuildConfig"]]
@@ -99,7 +100,11 @@ class Builder(abc.ABC):
     `param_cls` to `None` and pass `None` into this class's constructor.
     """
 
-    def __init__(self, params: Union[ParameterFrame, Dict, None], build_config: Dict):
+    def __init__(
+        self,
+        params: Union[Dict, ParameterFrame, ConfigParams, None],
+        build_config: Dict,
+    ):
         super().__init__()
         self.name = build_config.get(
             "name", _remove_suffix(self.__class__.__name__, "Builder")
