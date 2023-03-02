@@ -325,6 +325,6 @@ class TestStraightOISDesigner:
         result_2 = opt_problem.optimise()
         length_1 = result_1[1] - result_1[0]
         length_2 = result_2[1] - result_2[0]
-        # Alright so SLSQP isn't going to do as well as COBYLA on this one, but at least the
-        # gradients aren't too wrong.
+        # Alright so SLSQP isn't going to do as well as COBYLA on this one, but at
+        # least the gradients aren't too wrong.
         assert np.isclose(length_1, length_2, rtol=0.01)
