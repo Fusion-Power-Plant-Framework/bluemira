@@ -27,10 +27,21 @@ from bluemira.base.parameter_frame import Parameter
 from bluemira.builders.coil_supports import (
     ITERGravitySupportBuilder,
     ITERGravitySupportBuilderParams,
+    OISBuilder,
+    OISBuilderParams,
     PFCoilSupportBuilder,
     PFCoilSupportBuilderParams,
 )
 from bluemira.geometry.parameterisations import PictureFrame, PrincetonD, TripleArc
+from bluemira.geometry.tools import (
+    boolean_cut,
+    boolean_fuse,
+    circular_pattern,
+    make_polygon,
+    mirror_shape,
+    sweep_shape,
+)
+from bluemira.geometry.wire import BluemiraWire
 
 
 class TestITERGravitySupportBuilder:
@@ -177,3 +188,80 @@ class TestPFCoilSupportBuilder:
         builder = PFCoilSupportBuilder(self.my_test_params, {}, self.tf_xz_koz, pf_xz)
         with pytest.raises(BuilderError):
             builder.build()
+
+
+class TestOISBuilder:
+    x_1 = 4
+    x_2 = 16
+    pd = PrincetonD({"x1": {"value": x_1}, "x2": {"value": x_2}}).create_shape()
+
+    n_TF = 16
+    hd = 0.5 * 1.6
+    xs = make_polygon(
+        {"x": [x_1 - hd, x_1 + hd, x_1 + hd, x_1 - hd], "y": [-hd, -hd, hd, hd], "z": 0},
+        closed=True,
+    )
+
+    tf_coil = sweep_shape(xs, pd)
+
+    def _check_no_intersection_with_TFs(self, ois, builder, tf_coils):
+        ois_body = ois.get_component("xyz").get_component(builder.RIGHT_OIS).shape
+        result = sorted(boolean_cut(ois_body, tf_coils[0]), key=lambda s: -s.volume)
+        assert np.isclose(ois_body.volume, result[0].volume)
+        ois_body = ois.get_component("xyz").get_component(builder.LEFT_OIS).shape
+        result = sorted(boolean_cut(ois_body, tf_coils[0]), key=lambda s: -s.volume)
+        assert np.isclose(ois_body.volume, result[0].volume)
+
+    def _check_no_intersection_when_patterned(self, ois, builder, n_TF):
+        tf_angle = 2 * np.pi / n_TF
+        direction = (-np.sin(0.5 * tf_angle), np.cos(0.5 * tf_angle), 0)
+        right_ois_0 = ois.get_component("xyz").get_component(builder.RIGHT_OIS).shape
+        left_ois_1 = mirror_shape(right_ois_0, base=(0, 0, 0), direction=direction)
+        full_ois = boolean_fuse([right_ois_0, left_ois_1])
+        assert np.isclose(full_ois.volume, 2 * right_ois_0.volume)
+
+    @pytest.mark.parametrize("n_TF", [14, 15, 16, 17, 18, 19])
+    def test_rectangular_profile(self, n_TF):
+        ois_profile = make_polygon(
+            {"x": [self.x_2, self.x_2 + 0.5, 14.5, 14], "y": 0, "z": [0, 0, 6, 6]},
+            closed=True,
+        )
+        params = OISBuilderParams(
+            Parameter("n_TF", n_TF),
+            Parameter("tf_wp_depth", 1.4),
+            Parameter("tk_tf_side", 0.1),
+        )
+        builder = OISBuilder(params, {}, ois_profile)
+        ois = builder.build()
+        tf_coils = circular_pattern(self.tf_coil, n_shapes=n_TF)[:2]
+        self._check_no_intersection_with_TFs(ois, builder, tf_coils)
+        self._check_no_intersection_when_patterned(ois, builder, n_TF)
+
+    @pytest.mark.parametrize("n_TF", [14, 15, 16, 17, 18, 19])
+    def test_curved_profile(self, n_TF):
+        result = boolean_cut(
+            self.pd,
+            make_polygon({"x": [9, 20, 20, 9], "z": [-4, -4, -8, -8]}, closed=True),
+        )[-1]
+        result.translate(vector=(-0.25, 0, 0))
+        r_copy = result.deepcopy()
+        r_copy.translate(vector=(0.5, 0, 0))
+        p1 = result.start_point()
+        p2 = result.end_point()
+        p3 = r_copy.start_point()
+        p4 = r_copy.end_point()
+
+        join_1 = make_polygon([p2, p4])
+        join_2 = make_polygon([p3, p1])
+
+        ois_profile = BluemiraWire([result, join_1, r_copy, join_2])
+        params = OISBuilderParams(
+            Parameter("n_TF", n_TF),
+            Parameter("tf_wp_depth", 1.4),
+            Parameter("tk_tf_side", 0.1),
+        )
+        builder = OISBuilder(params, {}, ois_profile)
+        ois = builder.build()
+        tf_coils = circular_pattern(self.tf_coil, n_shapes=n_TF)[:2]
+        self._check_no_intersection_with_TFs(ois, builder, tf_coils)
+        self._check_no_intersection_when_patterned(ois, builder, n_TF)
