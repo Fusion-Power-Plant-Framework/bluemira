@@ -45,7 +45,7 @@ if [ $PTYHON_VENV_PATH ]
   then
     cmake -S . -B build -DPython3_ROOT_DIR=$PTYHON_VENV_PATH
 else
-    cmake -S . -B build
+    cmake -S . -B build -DPython3_ROOT_DIR=$(which python)
 fi
 cmake --build build
 
