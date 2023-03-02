@@ -31,7 +31,7 @@ from bluemira.base.designer import Designer
 from bluemira.base.parameter_frame import Parameter, ParameterFrame
 from bluemira.geometry.coordinates import Coordinates
 from bluemira.geometry.face import BluemiraFace
-from bluemira.geometry.tools import make_polygon, offset_wire
+from bluemira.geometry.tools import make_polygon
 from bluemira.geometry.wire import BluemiraWire
 
 
@@ -44,7 +44,15 @@ class LowerPortDesignerParams(ParameterFrame):
 
 
 class LowerPortDesigner(Designer):
-    """Lower Port Designer"""
+    """
+    Lower Port Designer
+
+    Notes
+    -----
+    Retrictions on angle is ±45° because there are no protections
+    keeping the port dimensions constant
+
+    """
 
     param_cls: Type[ParameterFrame] = LowerPortDesignerParams
 
@@ -65,10 +73,10 @@ class LowerPortDesigner(Designer):
 
     def run(self) -> Tuple[BluemiraFace, BluemiraWire]:
         """Run method of Designer"""
-        if not -90 < self.params.lower_port_angle.value < 90:
+        if not -45 <= self.params.lower_port_angle.value <= 45:
             raise ValueError(
                 f"{self.params.lower_port_angle.name}"
-                " must be within the range -90 < x < 90 degrees:"
+                " must be within the range -45 < x < 45 degrees:"
                 f" {self.params.lower_port_angle.value}"
             )
 
@@ -97,12 +105,18 @@ class LowerPortDesigner(Designer):
                 {
                     "x": np.append(x_path, x_path[::-1]),
                     "z": np.append(
-                        z_lower_path,
-                        (z_lower_path + self.divertor_xz.bounding_box.z_max)[::-1],
+                        z_lower_path - self.params.divertor_padding.value,
+                        (
+                            z_lower_path
+                            + (
+                                self.divertor_xz.bounding_box.z_max
+                                + self.params.divertor_padding.value,
+                            )
+                        )[::-1],
                     ),
                 }
             ),
             closed=True,
         )
 
-        return BluemiraFace(offset_wire(port, self.params.divertor_padding.value)), traj
+        return BluemiraFace(port), traj

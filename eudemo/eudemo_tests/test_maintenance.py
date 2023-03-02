@@ -85,16 +85,14 @@ class TestLowerPortDesigner:
             x_extrema=30,
         )
 
-    @pytest.mark.parametrize("angle", [-90, 90, 180])
+    @pytest.mark.parametrize("angle", [-90, 90, 45.1])
     def test_lower_port_angle_ValueError(self, angle):
         self.designer.params.lower_port_angle.value = angle
 
         with pytest.raises(ValueError):
             self.designer.execute()
 
-    @pytest.mark.parametrize(
-        "angle, z_max", zip([-45, 45, 0, 89], [10, -10, 0, -572.8996])
-    )
+    @pytest.mark.parametrize("angle, z_max", zip([-45, 45, 0, 33], [10, -10, 0, -6.494]))
     def test_lower_port_angle(self, angle, z_max):
         self.designer.params.lower_port_angle.value = angle
 
@@ -102,7 +100,7 @@ class TestLowerPortDesigner:
 
         arr = traj.discretize(ndiscr=99)
 
-        np.testing.assert_allclose(arr[2][-1], z_max)
+        np.testing.assert_allclose(arr[2][-1], z_max, rtol=2e-5)
         np.testing.assert_allclose(arr[0][-1], self.designer.x_extrema)
 
         assert any(arr[0] >= self.designer.x_wall_outer)
@@ -114,4 +112,19 @@ class TestLowerPortDesigner:
         np.testing.assert_allclose(
             arr[2][np.where(arr[0] <= self.designer.x_wall_inner)],
             arr[2][0],
+        )
+
+    def test_lower_port_padding(self):
+        port, _ = self.designer.execute()
+
+        self.designer.params.divertor_padding.value = 2
+
+        port2, _ = self.designer.execute()
+
+        assert np.isclose(port.length, port2.length - 8)
+        assert np.isclose(
+            port.area,
+            port2.area
+            - 4
+            * (self.designer.x_extrema - self.designer.divertor_xz.center_of_mass[0]),
         )
