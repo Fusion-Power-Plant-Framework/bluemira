@@ -31,6 +31,9 @@ from bluemira.builders.coil_supports import (
     OISBuilderParams,
     PFCoilSupportBuilder,
     PFCoilSupportBuilderParams,
+    StraightOISDesigner,
+    StraightOISDesignerParams,
+    StraightOISOptimisationProblem,
 )
 from bluemira.geometry.parameterisations import PictureFrame, PrincetonD, TripleArc
 from bluemira.geometry.tools import (
@@ -267,3 +270,62 @@ class TestOISBuilder:
         tf_coils = circular_pattern(self.tf_coil, n_shapes=n_TF)[:2]
         self._check_no_intersection_with_TFs(ois, builder, tf_coils)
         self._check_no_intersection_when_patterned(ois, builder, n_TF)
+
+
+from bluemira.geometry.face import BluemiraFace
+from bluemira.geometry.tools import make_circle_arc_3P, offset_wire
+from bluemira.utilities.optimiser import Optimiser
+
+
+class TestStraightOISDesigner:
+
+    tf_wp_depth = 1.4
+    tk_tf_side = 0.1
+    n_TF = 16
+    y_width = tf_wp_depth + 2 * tk_tf_side
+    pd = PrincetonD().create_shape()
+    pd2 = offset_wire(pd, 1.0)
+    tf_xz_face = BluemiraFace([pd2, pd])
+    keep_out_zones = [
+        make_polygon({"x": [6, 12, 12, 6], "z": [0, 0, 15, 15]}, closed=True),
+        make_polygon({"x": [0, 20, 20, 0], "z": [-1, -1, 1, 1]}, closed=True),
+    ]
+    keep_out_zones2 = [
+        make_polygon({"x": [4, 12, 12, 4], "z": [0, 0, 15, 15]}, closed=True),
+        make_polygon({"x": [0, 20, 20, 0], "z": [-1, -1, 1, 1]}, closed=True),
+    ]
+
+    params = StraightOISDesignerParams(
+        tk_ois=Parameter("tk_ois", 0.3),
+        g_ois_tf_edge=Parameter("g_ois_tf_edge", 0.2),
+        min_OIS_length=Parameter("min_OIS_length", 1),
+    )
+
+    @pytest.mark.parametrize("koz, n_ois", [[keep_out_zones, 3], [keep_out_zones2, 2]])
+    def test_that_the_right_number_of_OIS_are_made(self, koz, n_ois):
+        designer = StraightOISDesigner(self.params, {}, self.tf_xz_face, koz)
+        ois_wires = designer.run()
+        assert len(ois_wires) == n_ois
+
+    def test_that_gradient_based_optimiser_works(self):
+
+        wire = make_polygon({"x": [9, 8, 7, 6, 5, 4], "z": [0, 1, 2, 3, 3.5, 4]})
+        wire = make_circle_arc_3P([9, 0, 0], [7, 0, 2], [4, 0, 4])
+        keep_out_zone = BluemiraFace(
+            make_polygon({"x": [6, 7, 7, 6], "z": [0, 0, 1.8, 1.8]}, closed=True)
+        )
+
+        opt_problem = StraightOISOptimisationProblem(wire, keep_out_zone)
+        result_1 = opt_problem.optimise()
+        optimiser = Optimiser(
+            "SLSQP", opt_conditions={"ftol_rel": 1e-10, "max_eval": 1000}
+        )
+        opt_problem = StraightOISOptimisationProblem(
+            wire, keep_out_zone, optimiser=optimiser
+        )
+        result_2 = opt_problem.optimise()
+        length_1 = result_1[1] - result_1[0]
+        length_2 = result_2[1] - result_2[0]
+        # Alright so SLSQP isn't going to do as well as COBYLA on this one, but at least the
+        # gradients aren't too wrong.
+        assert np.isclose(length_1, length_2, rtol=0.01)

@@ -628,7 +628,7 @@ class StraightOISOptimisationProblem(OptimisationProblem):
                 StraightOISOptimisationProblem._f_objective_ois,
                 x_norm,
                 f0=value,
-                bounds=[(0, 1), (0, 1)],
+                bounds=[(0, 0), (1, 1)],
                 args=(wire,),
             )
 
@@ -653,7 +653,7 @@ class StraightOISOptimisationProblem(OptimisationProblem):
                 StraightOISOptimisationProblem._f_constraint_ois,
                 x_norm,
                 f0=constraint,
-                bounds=[(0, 1), (0, 1)],
+                bounds=[(0, 0), (1, 1)],
                 args=(wire, koz_points),
             )
         return constraint
