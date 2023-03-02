@@ -291,122 +291,6 @@ class ITERGravitySupportBuilder(Builder):
         return component
 
 
-class StraightOISOptimisationProblem(OptimisationProblem):
-    """
-    Optimisation problem for a straight outer inter-coil structure
-
-    Parameters
-    ----------
-    wire:
-        Sub wire along which to place the OIS
-    keep_out_zone:
-        Region in which the OIS cannot be
-    optimiser: Optimiser
-        Optimiser to use when solving the problem
-    n_koz_discr: int
-        Number of discretisation points to use when checking the keep-out zone constraint
-    """
-
-    def __init__(
-        self,
-        wire: BluemiraWire,
-        keep_out_zone: BluemiraFace,
-        optimiser=None,
-        n_koz_discr: int = 100,
-    ):
-        if optimiser is None:
-            optimiser = Optimiser(
-                "COBYLA",
-                n_variables=2,
-                opt_conditions={"ftol_rel": 1e-6, "max_eval": 1000},
-            )
-
-        koz_points = (
-            keep_out_zone.boundary[0].discretize(byedges=True, ndiscr=n_koz_discr).xz.T
-        )
-
-        objective = OptimisationObjective(
-            self.f_objective_ois, f_objective_args={"wire": wire}
-        )
-        koz_constraint = OptimisationConstraint(
-            self.f_constraint_ois,
-            f_constraint_args={"wire": wire, "koz_points": koz_points},
-            tolerance=1e-6 * np.ones(n_koz_discr),
-        )
-        x_constraint = OptimisationConstraint(self.f_constraint_x, f_constraint_args={})
-
-        super().__init__(
-            np.array([0, 1]),
-            optimiser,
-            objective,
-            [x_constraint, koz_constraint],
-        )
-        self.set_up_optimiser(2, [[0, 0], [1, 1]])
-
-    def optimise(self):
-        """
-        Run the straight OIS optimisation problem.
-        """
-        return super().optimise()
-
-    @staticmethod
-    def f_L_to_wire(wire, x_norm):
-        """
-        Convert a pair of normalised L values to a wire
-        """
-        p1 = wire.value_at(x_norm[0])
-        p2 = wire.value_at(x_norm[1])
-        return make_polygon([p1, p2])
-
-    @staticmethod
-    def f_L_to_xz(wire, value):
-        """
-        Convert a normalised L value to an x, z pair.
-        """
-        point = wire.value_at(value)
-        return np.array([point[0], point[2]])
-
-    @staticmethod
-    def f_objective_ois(x_norm, grad, wire):
-        """
-        Maximise the length of a straight line
-        """
-        p1 = StraightOISOptimisationProblem.f_L_to_xz(wire, x_norm[0])
-        p2 = StraightOISOptimisationProblem.f_L_to_xz(wire, x_norm[1])
-        value = -np.hypot(*(p2 - p1))
-        if grad.size > 0:
-            grad[:] = 0
-
-        return value
-
-    @staticmethod
-    def f_constraint_ois(constraint, x_norm, grad, wire, koz_points):
-        """
-        Constraint the OIS to be outside of a keep out zone
-        """
-        straight_line = StraightOISOptimisationProblem.f_L_to_wire(wire, x_norm)
-        straight_points = straight_line.discretize(ndiscr=100).xz.T
-        value = signed_distance_2D_polygon(straight_points, koz_points)
-
-        constraint[:] = value
-        if grad.size > 0:
-            grad[:] = 0
-        return constraint
-
-    @staticmethod
-    def f_constraint_x(constraint, x_norm, grad):
-        """
-        Constrain the second normalised value to be always greater than the first.
-        """
-        constraint[0] = x_norm[0] - x_norm[1]
-
-        if grad.size > 0:
-            grad[:, 0] = 1.0
-            grad[:, 1] = -1.0
-
-        return constraint
-
-
 @dataclass
 class PFCoilSupportBuilderParams(ParameterFrame):
     """
@@ -647,6 +531,145 @@ class PFCoilSupportBuilder(Builder):
         component = PhysicalComponent(self.SUPPORT, shape)
         component.display_cad_options.color = BLUE_PALETTE["TF"][2]
         return component
+
+
+from bluemira.utilities.optimiser import approx_derivative
+
+
+class StraightOISOptimisationProblem(OptimisationProblem):
+    """
+    Optimisation problem for a straight outer inter-coil structure
+
+    Parameters
+    ----------
+    wire:
+        Sub wire along which to place the OIS
+    keep_out_zone:
+        Region in which the OIS cannot be
+    optimiser: Optimiser
+        Optimiser to use when solving the problem
+    n_koz_discr: int
+        Number of discretisation points to use when checking the keep-out zone constraint
+    """
+
+    def __init__(
+        self,
+        wire: BluemiraWire,
+        keep_out_zone: BluemiraFace,
+        optimiser=None,
+        n_koz_discr: int = 100,
+    ):
+        if optimiser is None:
+            optimiser = Optimiser(
+                "COBYLA",
+                n_variables=2,
+                opt_conditions={"ftol_rel": 1e-6, "max_eval": 1000},
+            )
+
+        koz_points = (
+            keep_out_zone.boundary[0].discretize(byedges=True, ndiscr=n_koz_discr).xz.T
+        )
+
+        objective = OptimisationObjective(
+            self.f_objective_ois, f_objective_args={"wire": wire}
+        )
+        koz_constraint = OptimisationConstraint(
+            self.f_constraint_ois,
+            f_constraint_args={"wire": wire, "koz_points": koz_points},
+            tolerance=1e-6 * np.ones(n_koz_discr),
+        )
+        x_constraint = OptimisationConstraint(self.f_constraint_x, f_constraint_args={})
+
+        super().__init__(
+            np.array([0, 1]),
+            optimiser,
+            objective,
+            [x_constraint, koz_constraint],
+        )
+        self.set_up_optimiser(2, [[0, 0], [1, 1]])
+
+    def optimise(self):
+        """
+        Run the straight OIS optimisation problem.
+        """
+        return super().optimise()
+
+    @staticmethod
+    def f_L_to_wire(wire, x_norm):  # noqa: N802
+        """
+        Convert a pair of normalised L values to a wire
+        """
+        p1 = wire.value_at(x_norm[0])
+        p2 = wire.value_at(x_norm[1])
+        return make_polygon([p1, p2])
+
+    @staticmethod
+    def f_L_to_xz(wire, value):  # noqa: N802
+        """
+        Convert a normalised L value to an x, z pair.
+        """
+        point = wire.value_at(value)
+        return np.array([point[0], point[2]])
+
+    @staticmethod
+    def _f_objective_ois(x_norm, wire):
+        p1 = StraightOISOptimisationProblem.f_L_to_xz(wire, x_norm[0])
+        p2 = StraightOISOptimisationProblem.f_L_to_xz(wire, x_norm[1])
+        return -np.hypot(*(p2 - p1))
+
+    @staticmethod
+    def f_objective_ois(x_norm, grad, wire):
+        """
+        Maximise the length of a straight line
+        """
+        value = StraightOISOptimisationProblem._f_objective_ois(x_norm, wire)
+        if grad.size > 0:
+            grad[:] = approx_derivative(
+                StraightOISOptimisationProblem._f_objective_ois,
+                x_norm,
+                f0=value,
+                bounds=[(0, 1), (0, 1)],
+                args=(wire,),
+            )
+
+        return value
+
+    @staticmethod
+    def _f_constraint_ois(x_norm, wire, koz_points):
+        straight_line = StraightOISOptimisationProblem.f_L_to_wire(wire, x_norm)
+        straight_points = straight_line.discretize(ndiscr=100).xz.T
+        return signed_distance_2D_polygon(straight_points, koz_points)
+
+    @staticmethod
+    def f_constraint_ois(constraint, x_norm, grad, wire, koz_points):
+        """
+        Constraint the OIS to be outside of a keep out zone
+        """
+        constraint[:] = StraightOISOptimisationProblem._f_constraint_ois(
+            x_norm, wire, koz_points
+        )
+        if grad.size > 0:
+            grad[:] = approx_derivative(
+                StraightOISOptimisationProblem._f_constraint_ois,
+                x_norm,
+                f0=constraint,
+                bounds=[(0, 1), (0, 1)],
+                args=(wire, koz_points),
+            )
+        return constraint
+
+    @staticmethod
+    def f_constraint_x(constraint, x_norm, grad):
+        """
+        Constrain the second normalised value to be always greater than the first.
+        """
+        constraint[0] = x_norm[0] - x_norm[1]
+
+        if grad.size > 0:
+            grad[:, 0] = 1.0
+            grad[:, 1] = -1.0
+
+        return constraint
 
 
 @dataclass
@@ -905,7 +928,8 @@ if __name__ == "__main__":
 
     designer = StraightOISDesigner(params, {}, tf, [up, ep])
     ois_wires = designer.run()
-    show_cad([tf, up, ep] + ois_wires)
+
+    #    show_cad([tf, up, ep] + ois_wires)
 
     builder_params = OISBuilderParams(
         n_TF=Parameter("n_TF", n_TF),
