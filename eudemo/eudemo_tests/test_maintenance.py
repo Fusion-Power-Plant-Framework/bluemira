@@ -21,8 +21,11 @@
 
 from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.tools import make_polygon
+from bluemira.geometry.wire import BluemiraWire
 from bluemira.utilities.optimiser import Optimiser
-from eudemo.maintenance.upper_port import UpperPortOP
+from eudemo.eudemo.maintenance.upper_port import UpperPortOP
+from eudemo.eudemo.equatorial_port import EquatorialPortDesigner
+import pytest
 
 
 class TestUpperPortOP:
@@ -52,3 +55,38 @@ class TestUpperPortOP:
         solution = design_problem.optimise()
 
         assert design_problem.opt.check_constraints(solution)
+
+class TestEquatorialPortDesigner:
+    def __init__(self) -> None:
+        params = {
+            "x_ib": {"value": 0, "unit": "m"},
+            "x_ob": {"value": 0, "unit": "m"},
+            "ep_height": {"value": 0, "unit": "m"},
+        }
+        
+        self.designer = EquatorialPortDesigner(
+            params, None
+            )
+
+    @pytest.mark.parametrize(
+        "xi, xo, zh", 
+        zip(
+            [2, 3, 1], 
+            [9, 9, 4], 
+            [5, 4, 2])
+            )
+    def test_ep_designer(self, xi, xo, zh):
+        params = {
+            "x_ib": {"value": xi, "unit": "m"},
+            "x_ob": {"value": xo, "unit": "m"},
+            "ep_height": {"value": zh, "unit": "m"},
+        }
+        self.designer.params.update_values(params)
+        output = self.designer.execute()
+
+        x = (xi, xo, xo, xi)
+        z = (-zh/2, -zh/2, zh/2, zh/2)
+        expectation = BluemiraWire(
+            make_polygon({"x": x, "y": 0, "z": z}), closed=True
+        )
+        assert output == expectation
