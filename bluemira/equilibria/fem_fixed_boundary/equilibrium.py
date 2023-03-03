@@ -46,6 +46,7 @@ from bluemira.equilibria.fem_fixed_boundary.fem_magnetostatic_2D import (
 )
 from bluemira.equilibria.fem_fixed_boundary.utilities import (
     calculate_plasma_shape_params,
+    get_flux_surfaces_from_mesh,
 )
 from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.parameterisations import GeometryParameterisation
@@ -317,6 +318,9 @@ def solve_transport_fixed_boundary(
             transport_solver, transport_params, transport_run_mode
         )
 
+        f_pprime = interp1d(x, pprime, fill_value="extrapolate")
+        f_ffprime = interp1d(x, ffprime, fill_value="extrapolate")
+
         if plot:
             if ax is not None:
                 for axis in ax.flat:
@@ -333,6 +337,16 @@ def solve_transport_fixed_boundary(
                     dpi=DPI_GIF,
                 )
 
+        plasma = create_plasma_xz_cross_section(
+            parameterisation,
+            transport_params,
+            paramet_params,
+            kappa_95,
+            delta_95,
+            lcfs_options,
+            f"from equilibrium iteration {n_iter}",
+        )
+
         mesh = create_mesh(
             plasma,
             directory,
@@ -341,9 +355,10 @@ def solve_transport_fixed_boundary(
         )
 
         gs_solver.set_mesh(mesh)
+
         gs_solver.set_profiles(
-            pprime,
-            ffprime,
+            f_pprime,
+            f_ffprime,
             transp_out_params.I_p.value,
             transp_out_params.B_0.value,
             transp_out_params.R_0.value,
