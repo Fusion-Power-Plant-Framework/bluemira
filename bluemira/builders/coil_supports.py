@@ -24,12 +24,13 @@ Coil support builders
 """
 
 from dataclasses import dataclass
-from typing import Dict, Type, Union
+from typing import Dict, List, Type, Union
 
 import numpy as np
 
 from bluemira.base.builder import Builder
 from bluemira.base.components import Component, PhysicalComponent
+from bluemira.base.designer import Designer
 from bluemira.base.error import BuilderError
 from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.base.parameter_frame import Parameter, ParameterFrame
@@ -45,10 +46,17 @@ from bluemira.geometry.tools import (
     make_polygon,
     mirror_shape,
     offset_wire,
+    signed_distance_2D_polygon,
     slice_shape,
     sweep_shape,
 )
 from bluemira.geometry.wire import BluemiraWire
+from bluemira.utilities.opt_problems import (
+    OptimisationConstraint,
+    OptimisationObjective,
+    OptimisationProblem,
+)
+from bluemira.utilities.optimiser import Optimiser, approx_derivative
 
 
 @dataclass
@@ -525,6 +533,271 @@ class PFCoilSupportBuilder(Builder):
         return component
 
 
+class StraightOISOptimisationProblem(OptimisationProblem):
+    """
+    Optimisation problem for a straight outer inter-coil structure
+
+    Parameters
+    ----------
+    wire:
+        Sub wire along which to place the OIS
+    keep_out_zone:
+        Region in which the OIS cannot be
+    optimiser: Optimiser
+        Optimiser to use when solving the problem
+    n_koz_discr: int
+        Number of discretisation points to use when checking the keep-out zone constraint
+    """
+
+    def __init__(
+        self,
+        wire: BluemiraWire,
+        keep_out_zone: BluemiraFace,
+        optimiser=None,
+        n_koz_discr: int = 100,
+    ):
+        if optimiser is None:
+            optimiser = Optimiser(
+                "COBYLA",
+                n_variables=2,
+                opt_conditions={"ftol_rel": 1e-6, "max_eval": 1000},
+            )
+
+        koz_points = (
+            keep_out_zone.boundary[0].discretize(byedges=True, ndiscr=n_koz_discr).xz.T
+        )
+
+        objective = OptimisationObjective(
+            self.f_objective_ois, f_objective_args={"wire": wire}
+        )
+        koz_constraint = OptimisationConstraint(
+            self.f_constraint_ois,
+            f_constraint_args={"wire": wire, "koz_points": koz_points},
+            tolerance=1e-6 * np.ones(n_koz_discr),
+        )
+        x_constraint = OptimisationConstraint(self.f_constraint_x, f_constraint_args={})
+
+        super().__init__(
+            np.array([0, 1]),
+            optimiser,
+            objective,
+            [x_constraint, koz_constraint],
+        )
+        self.set_up_optimiser(2, [[0, 0], [1, 1]])
+
+    def optimise(self):
+        """
+        Run the straight OIS optimisation problem.
+        """
+        return super().optimise()
+
+    @staticmethod
+    def f_L_to_wire(wire, x_norm):  # noqa: N802
+        """
+        Convert a pair of normalised L values to a wire
+        """
+        p1 = wire.value_at(x_norm[0])
+        p2 = wire.value_at(x_norm[1])
+        return make_polygon([p1, p2])
+
+    @staticmethod
+    def f_L_to_xz(wire, value):  # noqa: N802
+        """
+        Convert a normalised L value to an x, z pair.
+        """
+        point = wire.value_at(value)
+        return np.array([point[0], point[2]])
+
+    @staticmethod
+    def _f_objective_ois(x_norm, wire):
+        p1 = StraightOISOptimisationProblem.f_L_to_xz(wire, x_norm[0])
+        p2 = StraightOISOptimisationProblem.f_L_to_xz(wire, x_norm[1])
+        return -np.hypot(*(p2 - p1))
+
+    @staticmethod
+    def f_objective_ois(x_norm, grad, wire):
+        """
+        Maximise the length of a straight line
+        """
+        value = StraightOISOptimisationProblem._f_objective_ois(x_norm, wire)
+        if grad.size > 0:
+            grad[:] = approx_derivative(
+                StraightOISOptimisationProblem._f_objective_ois,
+                x_norm,
+                f0=value,
+                bounds=[(0, 0), (1, 1)],
+                args=(wire,),
+            )
+
+        return value
+
+    @staticmethod
+    def _f_constraint_ois(x_norm, wire, koz_points):
+        straight_line = StraightOISOptimisationProblem.f_L_to_wire(wire, x_norm)
+        straight_points = straight_line.discretize(ndiscr=100).xz.T
+        return signed_distance_2D_polygon(straight_points, koz_points)
+
+    @staticmethod
+    def f_constraint_ois(constraint, x_norm, grad, wire, koz_points):
+        """
+        Constraint the OIS to be outside of a keep out zone
+        """
+        constraint[:] = StraightOISOptimisationProblem._f_constraint_ois(
+            x_norm, wire, koz_points
+        )
+        if grad.size > 0:
+            grad[:] = approx_derivative(
+                StraightOISOptimisationProblem._f_constraint_ois,
+                x_norm,
+                f0=constraint,
+                bounds=[(0, 0), (1, 1)],
+                args=(wire, koz_points),
+            )
+        return constraint
+
+    @staticmethod
+    def f_constraint_x(constraint, x_norm, grad):
+        """
+        Constrain the second normalised value to be always greater than the first.
+        """
+        constraint[0] = x_norm[0] - x_norm[1]
+
+        if grad.size > 0:
+            grad[:, 0] = 1.0
+            grad[:, 1] = -1.0
+
+        return constraint
+
+
+@dataclass
+class StraightOISDesignerParams(ParameterFrame):
+    """
+    Parameters for the StraightOISDesigner
+    """
+
+    tk_ois: Parameter[float]
+    g_ois_tf_edge: Parameter[float]
+    min_OIS_length: Parameter[float]
+
+
+class StraightOISDesigner(Designer[List[BluemiraWire]]):
+    """
+    Design a set of straight length outer inter-coil structures.
+
+    Parameters
+    ----------
+    params:
+        ParameterFrame for the StraightOISDesigner
+    build_config:
+        Build config dictionary for the StraightOISDesigner
+    tf_coil_xz_face:
+        x-z face of the TF coil on the y=0 plane
+    keep_out_zones:
+        List of x-z keep_out_zone wires on the y=0 plane
+    """
+
+    param_cls = StraightOISDesignerParams
+
+    def __init__(
+        self,
+        params: Union[Dict, ParameterFrame],
+        build_config: Dict,
+        tf_coil_xz_face: BluemiraFace,
+        keep_out_zones: List[BluemiraFace],
+    ):
+        super().__init__(params, build_config)
+        self.tf_face = tf_coil_xz_face
+        self.keep_out_zones = keep_out_zones
+
+    def run(self) -> List[BluemiraWire]:
+        """
+        Create and run the design optimisation problem.
+
+        Returns
+        -------
+        ois_wires:
+            A list of outer inter-coil structure wires on the y=0 plane.
+        """
+        koz_centreline = offset_wire(
+            self.tf_face.boundary[1], self.params.g_ois_tf_edge.value
+        )
+        ois_centreline = offset_wire(
+            self.tf_face.boundary[1], 2 * self.params.g_ois_tf_edge.value
+        )
+        ois_regions = self._make_ois_regions(ois_centreline, koz_centreline)
+        koz = self._make_ois_koz(koz_centreline)
+
+        ois_wires = []
+        for region in ois_regions:
+            opt_problem = StraightOISOptimisationProblem(region, koz)
+            result = opt_problem.optimise()
+            p1 = region.value_at(result[0])
+            p2 = region.value_at(result[1])
+            wire = self._make_ois_wire(p1, p2)
+            ois_wires.append(wire)
+        return ois_wires
+
+    def _make_ois_wire(self, p1, p2):
+        """
+        Make a rectangular wire from the two inner edge points
+        """
+        dx = p2[0] - p1[0]
+        dz = p2[2] - p1[2]
+        normal = np.array([dz, 0, -dx])
+        normal /= np.linalg.norm(normal)
+        tk = self.params.tk_ois.value
+        p3 = p2 + tk * normal
+        p4 = p1 + tk * normal
+        return make_polygon([p1, p2, p3, p4], closed=True)
+
+    def _make_ois_koz(self, koz_centreline):
+        """
+        Make the (fused) keep-out-zone for the outer inter-coil structures.
+        """
+        # Note we use the same offset to the exclusion zones as for the OIS
+        # to the TF.
+        koz_wires = [
+            offset_wire(koz, self.params.g_ois_tf_edge.value)
+            for koz in self.keep_out_zones
+        ]
+        koz_faces = [BluemiraFace(koz) for koz in koz_wires]
+
+        return boolean_fuse([BluemiraFace(koz_centreline)] + koz_faces)
+
+    def _make_ois_regions(self, ois_centreline, koz_centreline):
+        """
+        Select regions that are viable for outer inter-coil structures
+        """
+        inner_wire = self.tf_face.boundary[1]
+        # Drop the inboard (already connected by the vault)
+        # Note we also drop the probable worst case of the edge corners of the OIS
+        # colliding when swept.
+        x_min = inner_wire.bounding_box.x_min + np.sqrt(2) * self.params.tk_ois.value
+        z_min = self.tf_face.bounding_box.z_min - 0.1
+        z_max = self.tf_face.bounding_box.z_max + 0.1
+        inboard_cutter = BluemiraFace(
+            make_polygon(
+                {"x": [0, x_min, x_min, 0], "z": [z_min, z_min, z_max, z_max]},
+                closed=True,
+            )
+        )
+        cutter = BluemiraFace(koz_centreline)
+        koz_faces = [BluemiraFace(koz) for koz in self.keep_out_zones]
+        cutter = boolean_fuse([cutter, inboard_cutter] + koz_faces)
+
+        ois_regions = boolean_cut(ois_centreline, cutter)
+
+        # Drop regions that are too short for OIS
+        big_ois_regions = []
+        for region in ois_regions:
+            length = np.sqrt(
+                np.sum((region.start_point().xyz - region.end_point().xyz) ** 2)
+            )
+            if length > self.params.min_OIS_length.value:
+                big_ois_regions.append(region)
+        return big_ois_regions
+
+
 @dataclass
 class OISBuilderParams(ParameterFrame):
     """
@@ -543,22 +816,25 @@ class OISBuilder(Builder):
 
     RIGHT_OIS = "TF OIS right"
     LEFT_OIS = "TF OIS left"
+    OIS_XZ = "TF OIS"
     param_cls: Type[OISBuilderParams] = OISBuilderParams
 
     def __init__(
         self,
         params: Union[OISBuilderParams, Dict],
         build_config: Dict,
-        ois_xz_profile: BluemiraWire,
+        ois_xz_profiles: Union[BluemiraWire, List[BluemiraWire]],
     ):
         super().__init__(params, build_config)
-        self.ois_xz_profile = ois_xz_profile
+        if not isinstance(ois_xz_profiles, List):
+            ois_xz_profiles = [ois_xz_profiles]
+        self.ois_xz_profiles = ois_xz_profiles
 
     def build(self) -> Component:
         """
         Build the PF coil support component.
         """
-        return self.component_tree([self.build_xz()], self.build_xy(), self.build_xyz())
+        return self.component_tree(self.build_xz(), self.build_xy(), self.build_xyz())
 
     def build_xy(self):
         """
@@ -570,11 +846,14 @@ class OISBuilder(Builder):
         """
         Build the x-z component of the OIS
         """
-        face = BluemiraFace(self.ois_xz_profile)
-        component = PhysicalComponent(self.RIGHT_OIS, face)
-        component.display_cad_options.color = BLUE_PALETTE["TF"][2]
-        component.plot_options.face_options["color"] = BLUE_PALETTE["TF"][2]
-        return component
+        components = []
+        for i, ois_profile in enumerate(self.ois_xz_profiles):
+            face = BluemiraFace(ois_profile)
+            component = PhysicalComponent(f"{self.OIS_XZ} {i}", face)
+            component.display_cad_options.color = BLUE_PALETTE["TF"][2]
+            component.plot_options.face_options["color"] = BLUE_PALETTE["TF"][2]
+            components.append(component)
+        return components
 
     def build_xyz(self):
         """
@@ -582,34 +861,40 @@ class OISBuilder(Builder):
         """
         width = self.params.tf_wp_depth.value + 2 * self.params.tk_tf_side.value
         tf_angle = 2 * np.pi / self.params.n_TF.value
-        ois_profile_1 = self.ois_xz_profile.deepcopy()
-        ois_profile_1.translate(vector=(0, 0.5 * width, 0))
-        ois_profile_2 = ois_profile_1.deepcopy()
-
         centre_radius = 0.5 * width / np.tan(0.5 * tf_angle)
-
-        ois_profile_2.rotate(
-            base=(centre_radius, 0.5 * width, 0), degree=np.rad2deg(tf_angle)
-        )
-
-        # First we make the full OIS
-        path = make_polygon([ois_profile_1.center_of_mass, ois_profile_2.center_of_mass])
-        ois_right = sweep_shape([ois_profile_1, ois_profile_2], path)
-
-        # Then we "chop" it in half, but without the boolean_cut operation
-        # This is because I cba to write a project_shape function...
         direction = (-np.sin(0.5 * tf_angle), np.cos(0.5 * tf_angle), 0)
         half_plane = BluemiraPlane(base=(0, 0, 0), axis=direction)
-        ois_profile_mid = slice_shape(ois_right, half_plane)[0]
 
-        path = make_polygon(
-            [ois_profile_1.center_of_mass, ois_profile_mid.center_of_mass]
-        )
-        ois_right = sweep_shape([ois_profile_1, ois_profile_mid], path)
-        ois_left = mirror_shape(ois_right, base=(0, 0, 0), direction=(0, 1, 0))
+        components = []
+        for i, ois_profile in enumerate(self.ois_xz_profiles):
+            ois_profile_1 = ois_profile.deepcopy()
+            ois_profile_1.translate(vector=(0, 0.5 * width, 0))
 
-        right_component = PhysicalComponent(self.RIGHT_OIS, ois_right)
-        right_component.display_cad_options.color = BLUE_PALETTE["TF"][2]
-        left_component = PhysicalComponent(self.LEFT_OIS, ois_left)
-        left_component.display_cad_options.color = BLUE_PALETTE["TF"][2]
-        return [left_component, right_component]
+            ois_profile_2 = ois_profile_1.deepcopy()
+            ois_profile_2.rotate(
+                base=(centre_radius, 0.5 * width, 0), degree=np.rad2deg(tf_angle)
+            )
+
+            # First we make the full OIS
+            path = make_polygon(
+                [ois_profile_1.center_of_mass, ois_profile_2.center_of_mass]
+            )
+            ois_right = sweep_shape([ois_profile_1, ois_profile_2], path)
+
+            # Then we "chop" it in half, but without the boolean_cut operation
+            # This is because I cba to write a project_shape function...
+            ois_profile_mid = slice_shape(ois_right, half_plane)[0]
+
+            path = make_polygon(
+                [ois_profile_1.center_of_mass, ois_profile_mid.center_of_mass]
+            )
+            ois_right = sweep_shape([ois_profile_1, ois_profile_mid], path)
+            ois_left = mirror_shape(ois_right, base=(0, 0, 0), direction=(0, 1, 0))
+
+            right_component = PhysicalComponent(f"{self.RIGHT_OIS} {i+1}", ois_right)
+            right_component.display_cad_options.color = BLUE_PALETTE["TF"][2]
+            left_component = PhysicalComponent(f"{self.LEFT_OIS} {i+1}", ois_left)
+            left_component.display_cad_options.color = BLUE_PALETTE["TF"][2]
+            components.extend([left_component, right_component])
+
+        return components
