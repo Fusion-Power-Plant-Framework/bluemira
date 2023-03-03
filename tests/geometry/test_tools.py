@@ -722,9 +722,18 @@ class TestFilletChamfer2D:
 
     @pytest.mark.parametrize("wire", [closed_rectangle, open_rectangle])
     @pytest.mark.parametrize("radius", [0, 0.1, 0.2, 0.3, 0.5])
-    def test_simple_rectangle(self, wire, radius):
+    def test_simple_rectangle_fillet(self, wire, radius):
         n = 4 if wire.is_closed() else 2
         correct_length = wire.length - n * 2 * radius
         correct_length += n * np.pi / 2 * radius
         result = fillet_wire_2D(wire, radius)
+        assert np.isclose(result.length, correct_length)
+
+    @pytest.mark.parametrize("wire", [closed_rectangle, open_rectangle])
+    @pytest.mark.parametrize("radius", [0, 0.1, 0.2, 0.3, 0.5])
+    def test_simple_rectangle_chamfer(self, wire, radius):
+        n = 4 if wire.is_closed() else 2
+        correct_length = wire.length - n * 2 * radius
+        correct_length += n * np.sqrt(2) * radius
+        result = chamfer_wire_2D(wire, radius)
         assert np.isclose(result.length, correct_length)
