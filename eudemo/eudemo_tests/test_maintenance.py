@@ -21,10 +21,9 @@
 
 from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.tools import make_polygon
-from bluemira.geometry.wire import BluemiraWire
 from bluemira.utilities.optimiser import Optimiser
-from eudemo.eudemo.maintenance.upper_port import UpperPortOP
-from eudemo.eudemo.equatorial_port import EquatorialPortDesigner
+from eudemo.maintenance.upper_port import UpperPortOP
+from eudemo.equatorial_port import EquatorialPortDesigner
 import pytest
 
 
@@ -56,37 +55,26 @@ class TestUpperPortOP:
 
         assert design_problem.opt.check_constraints(solution)
 
+
 class TestEquatorialPortDesigner:
-    def __init__(self) -> None:
+    def setup_method(self) -> None:
         params = {
             "x_ib": {"value": 0, "unit": "m"},
             "x_ob": {"value": 0, "unit": "m"},
             "ep_height": {"value": 0, "unit": "m"},
         }
-        
-        self.designer = EquatorialPortDesigner(
-            params, None
-            )
+
+        self.designer = EquatorialPortDesigner(params, None)
 
     @pytest.mark.parametrize(
-        "xi, xo, zh", 
-        zip(
-            [2, 3, 1], 
-            [9, 9, 4], 
-            [5, 4, 2])
-            )
+        "xi, xo, zh", zip([2.0, 3.0, 1.0], [9.0, 9.0, 4.0], [5.0, 4.0, 2.0])
+    )
     def test_ep_designer(self, xi, xo, zh):
-        params = {
-            "x_ib": {"value": xi, "unit": "m"},
-            "x_ob": {"value": xo, "unit": "m"},
-            "ep_height": {"value": zh, "unit": "m"},
-        }
-        self.designer.params.update_values(params)
+        param_values = {"x_ib": xi, "x_ob": xo, "ep_height": zh}
+        self.designer.params.update_values(param_values)
         output = self.designer.execute()
 
         x = (xi, xo, xo, xi)
-        z = (-zh/2, -zh/2, zh/2, zh/2)
-        expectation = BluemiraWire(
-            make_polygon({"x": x, "y": 0, "z": z}), closed=True
-        )
+        z = (-zh / 2, -zh / 2, zh / 2, zh / 2)
+        expectation = BluemiraFace(make_polygon({"x": x, "y": 0, "z": z}, closed=True))
         assert output == expectation
