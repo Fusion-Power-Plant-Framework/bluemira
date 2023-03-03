@@ -686,10 +686,14 @@ class StraightOISDesigner(Designer[List[BluemiraWire]]):
 
     Parameters
     ----------
-    params
-    build_config
-    tf_coil_xz_face
-    keep_out_zones
+    params:
+        ParameterFrame for the StraightOISDesigner
+    build_config:
+        Build config dictionary for the StraightOISDesigner
+    tf_coil_xz_face:
+        x-z face of the TF coil on the y=0 plane
+    keep_out_zones:
+        List of x-z keep_out_zone wires on the y=0 plane
     """
 
     param_cls = StraightOISDesignerParams
