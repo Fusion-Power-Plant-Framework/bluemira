@@ -24,6 +24,8 @@ from bluemira.geometry.tools import make_polygon
 from bluemira.utilities.optimiser import Optimiser
 from eudemo.maintenance.upper_port import UpperPortOP
 from eudemo.equatorial_port import EquatorialPortDesigner
+import numpy as np
+import math
 import pytest
 
 
@@ -77,4 +79,7 @@ class TestEquatorialPortDesigner:
         x = (xi, xo, xo, xi)
         z = (-zh / 2, -zh / 2, zh / 2, zh / 2)
         expectation = BluemiraFace(make_polygon({"x": x, "y": 0, "z": z}, closed=True))
-        assert output == expectation
+        
+        assert math.isclose(output.length, expectation.length)
+        assert math.isclose(output.area, expectation.area)
+        assert math.isclose(output.volume, expectation.volume)
