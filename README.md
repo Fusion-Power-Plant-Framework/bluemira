@@ -32,7 +32,7 @@ Below is an overview of our development roadmap for 2023:
       srcset="https://raw.githubusercontent.com/Fusion-Power-Plant-Framework/bluemira/HEAD/documentation/source/bluemira-roadmap-dark.svg">
       <source media="(prefers-color-scheme: light)"
       srcset="https://raw.githubusercontent.com/Fusion-Power-Plant-Framework/bluemira/HEAD/documentation/source/bluemira-roadmap.svg">
-      <img alt="Bluemira Roadmap" src="https://raw.githubusercontent.com/Fusion-Power-Plant-Framework/bluemira/HEAD/documentation/source/bluemira-roadmap.svg">
+      <img alt="Bluemira Roadmap" src="./documentation/source/bluemira-roadmap.svg">
     </picture>
   </a>
 </p>
