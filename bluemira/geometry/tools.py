@@ -758,6 +758,54 @@ def sweep_shape(profiles, path, solid=True, frenet=True, label=""):
     return convert(result, label=label)
 
 
+def fillet_wire_2D(wire: BluemiraWire, radius: float) -> BluemiraWire:
+    """
+    Fillet all edges of a wire
+
+    Parameters
+    ----------
+    wire:
+        Wire to fillet
+    radius:
+        Radius of the fillet operation
+
+    Returns
+    -------
+    filleted_wire:
+        The filleted wire
+    """
+    if radius == 0:
+        return wire.deepcopy()
+    if radius < 0:
+        raise GeometryError(f"Cannot fillet a wire with a negative {radius=}")
+
+    return BluemiraWire(cadapi.fillet_wire_2D(wire.shape, radius))
+
+
+def chamfer_wire_2D(wire: BluemiraWire, radius: float):
+    """
+    Chamfer all edges of a wire
+
+    Parameters
+    ----------
+    wire:
+        Wire to chamfer
+    radius:
+        Radius of the chamfer operation
+
+    Returns
+    -------
+    chamfered_wire:
+        The chamfered wire
+    """
+    if radius == 0:
+        return wire.deepcopy()
+    if radius < 0:
+        raise GeometryError(f"Cannot chamfer a wire with a negative {radius=}")
+
+    return BluemiraWire(cadapi.fillet_wire_2D(wire.shape, radius, chamfer=True))
+
+
 def distance_to(
     geo1: Union[Iterable[float], BluemiraGeo], geo2: Union[Iterable[float], BluemiraGeo]
 ):

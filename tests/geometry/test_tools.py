@@ -44,10 +44,12 @@ from bluemira.geometry.parameterisations import (
 from bluemira.geometry.plane import BluemiraPlane
 from bluemira.geometry.tools import (
     _signed_distance_2D,
+    chamfer_wire_2D,
     convex_hull_wires_2d,
     deserialize_shape,
     extrude_shape,
     fallback_to,
+    fillet_wire_2D,
     find_clockwise_angle_2d,
     interpolate_bspline,
     log_geometry_on_failure,
@@ -712,3 +714,17 @@ class TestMirrorShape:
     def test_bad_direction(self, shape):
         with pytest.raises(GeometryError):
             mirror_shape(shape, base=(0, 0, 0), direction=(EPS, EPS, EPS))
+
+
+class TestFilletChamfer2D:
+    closed_rectangle = make_polygon({"x": [0, 2, 2, 0], "z": [0, 0, 2, 2]}, closed=True)
+    open_rectangle = make_polygon({"x": [0, 2, 2, 0], "z": [0, 0, 2, 2]}, closed=False)
+
+    @pytest.mark.parametrize("wire", [closed_rectangle, open_rectangle])
+    @pytest.mark.parametrize("radius", [0, 0.1, 0.2, 0.3, 0.5])
+    def test_simple_rectangle(self, wire, radius):
+        n = 4 if wire.is_closed() else 2
+        correct_length = wire.length - n * 2 * radius
+        correct_length += n * np.pi / 2 * radius
+        result = fillet_wire_2D(wire, radius)
+        assert np.isclose(result.length, correct_length)

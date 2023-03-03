@@ -39,6 +39,7 @@ import BOPTools.ShapeMerge
 import BOPTools.SplitAPI
 import BOPTools.SplitFeatures
 import BOPTools.Utils
+import DraftGeomUtils
 import FreeCADGui
 import numpy as np
 import Part
@@ -51,6 +52,7 @@ from bluemira.base.file import force_file_extension
 from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.codes.error import FreeCADError, InvalidCADInputsError
 from bluemira.geometry.constants import MINIMUM_LENGTH
+from bluemira.geometry.error import GeometryError
 
 apiVertex = Part.Vertex  # noqa :N816
 apiVector = Base.Vector  # noqa :N816
@@ -1322,6 +1324,31 @@ def sweep_shape(profiles, path, solid=True, frenet=True):
         return solid_result
     else:
         return solid_result.Shells[0]
+
+
+def fillet_wire_2D(wire: apiWire, radius: float, chamfer: bool = False) -> apiWire:
+    """
+    Fillet or chamfer a two-dimensional wire, returning a new wire
+
+    Parameters
+    ----------
+    wire:
+        Wire to be filleted or chamfered
+    radius:
+        Radius of the fillet or chamfer operation
+    chamfer: bool (default=False)
+        Whether to chamfer or not
+
+    Returns
+    -------
+    result_wire:
+        Resulting filleted or chamfered wire
+    """
+    edges = wire.OrderedEdges
+    if len(edges) < 2:
+        raise GeometryError("Cannot fillet a wire with less than 2 edges!")
+
+    return DraftGeomUtils.filletWire(wire, radius, chamfer=chamfer)
 
 
 # ======================================================================================
