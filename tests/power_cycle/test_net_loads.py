@@ -6,15 +6,15 @@ import matplotlib.pyplot as plt
 import pytest
 
 from bluemira.power_cycle.errors import (
+    LoadDataError,
     PhaseLoadError,
     PowerCycleABCError,
-    PowerDataError,
     PowerLoadError,
     PulseLoadError,
 )
 from bluemira.power_cycle.net_loads import (
+    LoadData,
     PhaseLoad,
-    PowerData,
     PowerLoad,
     PowerLoadModel,
     PulseLoad,
@@ -28,21 +28,21 @@ time_testkit = TimeTestKit()
 netloads_testkit = NetLoadsTestKit()
 
 
-class TestPowerData:
+class TestLoadData:
     def setup_method(self):
         (
             n_samples,
             sample_names,
             sample_times,
             sample_datas,
-        ) = netloads_testkit.inputs_for_powerdata()
+        ) = netloads_testkit.inputs_for_loaddata()
 
         all_samples = []
         for s in range(n_samples):
             time = sample_times[s]
             data = sample_datas[s]
             name = sample_names[s]
-            sample = PowerData(name, time, data)
+            sample = LoadData(name, time, data)
             all_samples.append(sample)
         self.all_samples = all_samples
 
@@ -68,7 +68,7 @@ class TestPowerData:
             if list_is_increasing:
                 assert sample._is_increasing(example_list)
             else:
-                with pytest.raises(PowerDataError):
+                with pytest.raises(LoadDataError):
                     sample._is_increasing(example_list)
 
     def test_sanity(self):
@@ -90,11 +90,11 @@ class TestPowerData:
                     length_time = len(time)
                     length_data = len(data)
                     if length_time == length_data:
-                        test_instance = PowerData(name, time, data)
-                        assert isinstance(test_instance, PowerData)
+                        test_instance = LoadData(name, time, data)
+                        assert isinstance(test_instance, LoadData)
                     else:
-                        with pytest.raises(PowerDataError):
-                            test_instance = PowerData(name, time, data)
+                        with pytest.raises(LoadDataError):
+                            test_instance = LoadData(name, time, data)
 
     # ------------------------------------------------------------------
     # OPERATIONS
@@ -178,7 +178,7 @@ class TestPowerData:
         pass
 
     def test_plot(self):
-        figure_title = "PowerData Plotting"
+        figure_title = "LoadData Plotting"
         ax = tools_testkit.prepare_figure(figure_title)
 
         colors = netloads_testkit.color_order_for_plotting
@@ -209,18 +209,18 @@ class TestPowerLoad:
         (
             n_samples,
             sample_names,
-            sample_powerdatas,
+            sample_loaddatas,
             sample_models,
         ) = netloads_testkit.inputs_for_powerload()
 
         all_samples = []
         for s in range(n_samples):
             name = sample_names[s]
-            powerdata = sample_powerdatas[s]
+            loaddata = sample_loaddatas[s]
             model = sample_models[s]
-            sample = PowerLoad(name, powerdata, model)
+            sample = PowerLoad(name, loaddata, model)
             all_samples.append(sample)
-        self.sample_powerdatas = sample_powerdatas
+        self.sample_loaddatas = sample_loaddatas
         self.sample_models = sample_models
         self.all_samples = all_samples
 
@@ -229,12 +229,12 @@ class TestPowerLoad:
     # ------------------------------------------------------------------
 
     def construct_multisample(self):
-        sample_powerdatas = self.sample_powerdatas
+        sample_loaddatas = self.sample_loaddatas
         sample_models = self.sample_models
 
         multisample = PowerLoad(
-            "PowerLoad with multiple powerdata & model arguments",
-            sample_powerdatas,
+            "PowerLoad with multiple loaddata & model arguments",
+            sample_loaddatas,
             sample_models,
         )
         return multisample
@@ -246,39 +246,39 @@ class TestPowerLoad:
     def assert_constructor_fails(
         self,
         test_name,
-        test_powerdata,
+        test_loaddata,
         test_model,
     ):
         constructor_exceptions = (PowerCycleABCError, PowerLoadError)
         with pytest.raises(constructor_exceptions):
             wrong_sample = PowerLoad(
                 test_name,
-                test_powerdata,
+                test_loaddata,
                 test_model,
             )
 
-    def test_validate_powerdata_set(self):
-        sample_powerdatas = self.sample_powerdatas
+    def test_validate_loaddata_set(self):
+        sample_loaddatas = self.sample_loaddatas
         sample_models = self.sample_models
 
         right_name = [
-            "PowerLoad with a non-PowerData",
-            "element in its 'powerdata_set' list argument",
+            "PowerLoad with a non-LoadData",
+            "element in its 'loaddata_set' list argument",
         ]
         right_name = " ".join(right_name)
-        right_powerdatas = sample_powerdatas
+        right_loaddatas = sample_loaddatas
         right_models = sample_models
 
-        wrong_powerdatas = copy.deepcopy(right_powerdatas)
-        wrong_powerdatas[0] = "non-PowerData"
+        wrong_loaddatas = copy.deepcopy(right_loaddatas)
+        wrong_loaddatas[0] = "non-LoadData"
         self.assert_constructor_fails(
             right_name,
-            wrong_powerdatas,
+            wrong_loaddatas,
             right_models,
         )
 
     def test_validate_model(self):
-        sample_powerdatas = self.sample_powerdatas
+        sample_loaddatas = self.sample_loaddatas
         sample_models = self.sample_models
 
         right_name = [
@@ -286,34 +286,34 @@ class TestPowerLoad:
             "element in its 'model' list argument",
         ]
         right_name = " ".join(right_name)
-        right_powerdatas = sample_powerdatas
+        right_loaddatas = sample_loaddatas
         right_models = sample_models
 
         wrong_models = copy.deepcopy(right_models)
         wrong_models[0] = "non-PowerLoadModel"
         self.assert_constructor_fails(
             right_name,
-            right_powerdatas,
+            right_loaddatas,
             wrong_models,
         )
 
     def test_sanity(self):
-        sample_powerdatas = self.sample_powerdatas
+        sample_loaddatas = self.sample_loaddatas
         sample_models = self.sample_models
 
         right_name = [
             "PowerLoad with different lengths",
-            "of 'powerdata_set' & 'model' arguments",
+            "of 'loaddata_set' & 'model' arguments",
         ]
         right_name = " ".join(right_name)
-        right_powerdatas = sample_powerdatas
+        right_loaddatas = sample_loaddatas
         right_models = sample_models
 
-        wrong_powerdatas = copy.deepcopy(right_powerdatas)
-        wrong_powerdatas.pop()
+        wrong_loaddatas = copy.deepcopy(right_loaddatas)
+        wrong_loaddatas.pop()
         self.assert_constructor_fails(
             right_name,
-            wrong_powerdatas,
+            wrong_loaddatas,
             right_models,
         )
 
@@ -321,7 +321,7 @@ class TestPowerLoad:
         wrong_models.pop()
         self.assert_constructor_fails(
             right_name,
-            right_powerdatas,
+            right_loaddatas,
             wrong_models,
         )
 
@@ -330,18 +330,18 @@ class TestPowerLoad:
     # ------------------------------------------------------------------
 
     def test_single_curve(self):
-        sample_powerdatas = self.sample_powerdatas
+        sample_loaddatas = self.sample_loaddatas
         sample_models = self.sample_models
 
         test_time = netloads_testkit.inputs_for_time_interpolation()
         time_length = len(test_time)
 
-        for powerdata in sample_powerdatas:
-            power_points = powerdata.data
+        for loaddata in sample_loaddatas:
+            power_points = loaddata.data
 
             for powerloadmodel in sample_models:
                 curve = PowerLoad._single_curve(
-                    powerdata,
+                    loaddata,
                     powerloadmodel,
                     test_time,
                 )
@@ -383,8 +383,8 @@ class TestPowerLoad:
             curve_length = len(curve)
             assert curve_length == time_length
 
-            all_data.append(sample.powerdata_set[0].data)
-            all_sets.append(sample.powerdata_set[0])
+            all_data.append(sample.loaddata_set[0].data)
+            all_sets.append(sample.loaddata_set[0])
             all_models.append(sample.model[0])
         multiset_load = PowerLoad("Multi Load", all_sets, all_models)
         multiset_curve = multiset_load.curve(test_time)
@@ -405,18 +405,18 @@ class TestPowerLoad:
         multisample = self.construct_multisample()
         all_samples.append(multisample)
         for sample in all_samples:
-            old_powerdata_set = sample.powerdata_set
+            old_loaddata_set = sample.loaddata_set
             sample._normalize_time(new_end_time)
-            new_powerdata_set = sample.powerdata_set
+            new_loaddata_set = sample.loaddata_set
 
-            # Assert length of 'powerdata_set' has not changed
-            correct_number_of_powerdatas = len(old_powerdata_set)
-            assert len(new_powerdata_set) == correct_number_of_powerdatas
+            # Assert length of 'loaddata_set' has not changed
+            correct_number_of_loaddatas = len(old_loaddata_set)
+            assert len(new_loaddata_set) == correct_number_of_loaddatas
 
             # Assert 'data' has not changed
-            for p in range(correct_number_of_powerdatas):
-                old_data = old_powerdata_set[p]
-                new_data = new_powerdata_set[p]
+            for p in range(correct_number_of_loaddatas):
+                old_data = old_loaddata_set[p]
+                new_data = new_loaddata_set[p]
                 assert old_data == new_data
 
     @pytest.mark.parametrize(
@@ -428,18 +428,18 @@ class TestPowerLoad:
         multisample = self.construct_multisample()
         all_samples.append(multisample)
         for sample in all_samples:
-            old_powerdata_set = sample.powerdata_set
+            old_loaddata_set = sample.loaddata_set
             sample._shift_time(time_shift)
-            new_powerdata_set = sample.powerdata_set
+            new_loaddata_set = sample.loaddata_set
 
-            # Assert length of 'powerdata_set' has not changed
-            correct_number_of_powerdatas = len(old_powerdata_set)
-            assert len(new_powerdata_set) == correct_number_of_powerdatas
+            # Assert length of 'loaddata_set' has not changed
+            correct_number_of_loaddatas = len(old_loaddata_set)
+            assert len(new_loaddata_set) == correct_number_of_loaddatas
 
             # Assert 'data' has not changed
-            for p in range(correct_number_of_powerdatas):
-                old_data = old_powerdata_set[p]
-                new_data = new_powerdata_set[p]
+            for p in range(correct_number_of_loaddatas):
+                old_data = old_loaddata_set[p]
+                new_data = new_loaddata_set[p]
                 assert old_data == new_data
 
     # ------------------------------------------------------------------
@@ -448,12 +448,12 @@ class TestPowerLoad:
 
     def test_intrinsic_time(self):
         multisample = self.construct_multisample()
-        powerdata_set = multisample.powerdata_set
+        loaddata_set = multisample.loaddata_set
 
         intrinsic_time = multisample.intrinsic_time
-        for powerdata in powerdata_set:
-            powerdata_time = powerdata.intrinsic_time
-            for t in powerdata_time:
+        for loaddata in loaddata_set:
+            loaddata_time = loaddata.intrinsic_time
+            for t in loaddata_time:
                 assert t in intrinsic_time
 
         setter_errors = (AttributeError, PowerLoadError)
@@ -494,14 +494,14 @@ class TestPowerLoad:
         ax = tools_testkit.prepare_figure(figure_title)
 
         all_samples = self.all_samples
-        sample_powerdatas = self.sample_powerdatas
+        sample_loaddatas = self.sample_loaddatas
         sample_models = self.sample_models
 
         result = sum(all_samples)  # requires both __add__ and __radd__
         assert isinstance(result, PowerLoad)
 
-        result_powerdata = result.powerdata_set
-        assert result_powerdata == sample_powerdatas
+        result_loaddata = result.loaddata_set
+        assert result_loaddata == sample_loaddatas
 
         result_powerloadmodel = result.model
         assert result_powerloadmodel == sample_models
@@ -756,9 +756,9 @@ class TestPhaseLoad:
         for n in range(n_normalize):
             normalization_flag = normalize[n]
             powerload = normalized_set[n]
-            powerdata_set = powerload.powerdata_set
-            for powerdata in powerdata_set:
-                norm = powerdata._norm
+            loaddata_set = powerload.loaddata_set
+            for loaddata in loaddata_set:
+                norm = loaddata._norm
                 if normalization_flag:
                     assert len(norm) != 0
                 else:

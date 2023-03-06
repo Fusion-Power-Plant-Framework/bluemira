@@ -6,12 +6,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 import bluemira.base.constants as constants
-from bluemira.power_cycle.net_loads import (
-    PhaseLoad,
-    PowerData,
-    PowerLoad,
-    PowerLoadModel,
-)
+from bluemira.power_cycle.net_loads import LoadData, PhaseLoad, PowerLoad, PowerLoadModel
 from bluemira.power_cycle.time import PowerCyclePhase, PowerCyclePulse
 from bluemira.power_cycle.tools import unnest_list, validate_axes
 
@@ -160,9 +155,9 @@ class NetLoadsTestKit:
         assert (curve_max <= original_max) or (curve_max == 0)
         assert (curve_min >= original_min) or (curve_min == 0)
 
-    def inputs_for_powerdata(self):
+    def inputs_for_loaddata(self):
         """
-        Function to create inputs for PowerData testing.
+        Function to create inputs for LoadData testing.
         The lists 'input_times' and 'input_datas' must have the same
         length.
         """
@@ -180,7 +175,7 @@ class NetLoadsTestKit:
 
         input_names = []
         for i in range(n_inputs):
-            input_names.append("PowerData " + str(i))
+            input_names.append("LoadData " + str(i))
 
         return (
             n_inputs,
@@ -198,7 +193,7 @@ class NetLoadsTestKit:
             _,
             input_times,
             _,
-        ) = self.inputs_for_powerdata()
+        ) = self.inputs_for_loaddata()
 
         all_times = unnest_list(input_times)
         minimum_time = min(all_times)
@@ -216,20 +211,20 @@ class NetLoadsTestKit:
     def inputs_for_powerload(self):
         """
         Function to create inputs for PowerLoad testing, based on the
-        function that creates inputs for PowerData testing.
+        function that creates inputs for LoadData testing.
         """
         (
             n_inputs,
             input_names,
             input_times,
             input_datas,
-        ) = self.inputs_for_powerdata()
+        ) = self.inputs_for_loaddata()
 
         all_models = [member.name for member in PowerLoadModel]
         n_models = len(all_models)
 
         input_models = []
-        input_powerdatas = []
+        input_loaddatas = []
         for i in range(n_inputs):
 
             # Cycle through available models to create a model example
@@ -241,14 +236,16 @@ class NetLoadsTestKit:
             time = input_times[i]
             data = input_datas[i]
 
-            powerdata = PowerData(name, time, data)
-            input_powerdatas.append(powerdata)
+            loaddata = LoadData(name, time, data)
+            input_loaddatas.append(loaddata)
 
-        input_names = [name.replace("Data", "Load") for name in input_names]
+        old = "LoadData"
+        new = "PowerLoad"
+        input_names = [name.replace(old, new) for name in input_names]
         return (
             n_inputs,
             input_names,
-            input_powerdatas,
+            input_loaddatas,
             input_models,
         )
 
@@ -260,7 +257,7 @@ class NetLoadsTestKit:
         (
             n_inputs,
             input_names,
-            input_powerdatas,
+            input_loaddatas,
             input_models,
         ) = self.inputs_for_powerload()
 
@@ -279,9 +276,9 @@ class NetLoadsTestKit:
             input_phases.append(phase)
 
             name = input_names[i]
-            powerdata = input_powerdatas[i]
+            loaddata = input_loaddatas[i]
             model = input_models[i]
-            powerload = PowerLoad(name, powerdata, model)
+            powerload = PowerLoad(name, loaddata, model)
             input_powerloads.append(powerload)
 
             # Cycle through True/False to create a flag example
