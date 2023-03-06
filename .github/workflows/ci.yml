@@ -35,6 +35,7 @@ jobs:
 
     - name: Move bluemira-private-data
       working-directory: "/home/runner/work/"
+      if: ${{ github.event.repository.fork == false }}
       run: |
           mv ~/work/bluemira/bluemira/bluemira-private-data ~/work/bluemira/bluemira-private-data
 
