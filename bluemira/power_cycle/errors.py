@@ -160,9 +160,9 @@ class PowerCycleScenarioError(PowerCycleError):
 # ######################################################################
 
 
-class PowerDataError(PowerCycleError):
+class LoadDataError(PowerCycleError):
     """
-    Exception class for 'PowerData' class of the Power Cycle module.
+    Exception class for 'LoadData' class of the Power Cycle module.
     """
 
     def _errors(self):
@@ -208,7 +208,7 @@ class PowerLoadError(PowerCycleError):
                 "The 'intrinsic_time' property of an instance of the "
                 f"{self._source} class cannot be set; it is instead "
                 "built from the 'intrinsic_time' attributes of the "
-                "'PowerData' objects stored in the 'powerdata_set' "
+                "'LoadData' objects stored in the 'loaddata_set' "
                 "attribute.",
             ],
         }
@@ -287,9 +287,10 @@ class ScenarioLoadError(PowerCycleError):
 # ######################################################################
 
 
-class PlantSystemError(PowerCycleError):
+class PowerCycleSystemError(PowerCycleError):
     """
-    Exception class for 'PlantSystem' class of the Power Cycle module.
+    Exception class for 'PowerCycleSystem' class of the Power Cycle
+    module.
     """
 
     def _errors(self):

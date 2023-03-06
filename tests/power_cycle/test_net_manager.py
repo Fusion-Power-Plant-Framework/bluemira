@@ -28,7 +28,7 @@ netloads_testkit = NetLoadsTestKit()
 netmanager_testkit = NetManagerTestKit()
 
 
-class TestPlantSystem:
+class TestPowerCycleSystem:
     def setup_method(self):
         pass
 
