@@ -27,6 +27,7 @@ jobs:
 
     - name: Checkout bluemira-private-data
       uses: actions/checkout@v3
+      if: ${{ github.event.repository.fork == false }}
       with:
         repository: 'Fusion-Power-Plant-Framework/bluemira-private-data'
         ssh-key: ${{ secrets.BLUEMIRA_PRIVATE_DATA_DEPLOY_KEY }}
