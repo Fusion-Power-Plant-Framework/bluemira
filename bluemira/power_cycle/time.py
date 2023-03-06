@@ -48,7 +48,7 @@ class PowerCyclePhase(PowerCycleTimeABC):
 
 class PowerCyclePulse(PowerCycleTimeABC):
     """
-    Class to define pulses for a Power Cycle timeline.
+    Class to define pulses for a Power Cycle scenario.
 
     Parameters
     ----------
@@ -89,7 +89,7 @@ class PowerCyclePulse(PowerCycleTimeABC):
 
 class PowerCycleScenario(PowerCycleTimeABC):
     """
-    Class to define pulses for a Power Cycle scenario.
+    Class to define scenarios for the Power Cycle module.
 
     Parameters
     ----------

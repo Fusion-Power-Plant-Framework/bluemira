@@ -24,7 +24,8 @@ from bluemira.power_cycle.tools import unnest_list, validate_axes
 
 class LoadData(NetPowerABC):
     """
-    Data class to store a set of time and load vectors.
+    Class to store a set of time and data vectors, to be used in
+    creating 'PowerLoad' objects.
 
     Takes a pair of (time,data) vectors and creates a 'LoadData' object
     used to build power load objects to represent the time evolution
