@@ -1821,7 +1821,7 @@ def placement_from_plane(plane):
 
 def _colourise(node: coin.SoNode, options: Dict):
     if isinstance(node, coin.SoMaterial):
-        rgb = options["colour"]
+        rgb = colors.to_rgb(options["colour"])
         transparency = options["transparency"]
         node.ambientColor.setValue(coin.SbColor(*rgb))
         node.diffuseColor.setValue(coin.SbColor(*rgb))
@@ -1904,13 +1904,13 @@ class DefaultDisplayOptions:
     transparency: float = 0.0
 
     _colour: Union[Tuple, str] = field(
-        init=False, repr=False, default_factory=lambda: (0.5, 0.5, 0.5)
+        init=False, repr=False, default_factory=lambda: colors.to_hex((0.5, 0.5, 0.5))
     )
 
     @property
-    def colour(self):
+    def colour(self) -> str:
         """Colour as rbg"""
-        return colors.to_rgb(self._colour)
+        return colors.to_hex(self._colour)
 
     @colour.setter
     def colour(self, value):
@@ -1918,7 +1918,7 @@ class DefaultDisplayOptions:
         self._colour = value
 
     @property
-    def color(self):
+    def color(self) -> str:
         """See colour"""
         return self.colour
 

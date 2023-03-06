@@ -24,13 +24,13 @@ class DefaultDisplayOptions:
     wire_radius: float = 0.001
 
     _colour: Union[Tuple, str] = field(
-        init=False, repr=False, default_factory=lambda: (0.5, 0.5, 0.5)
+        init=False, repr=False, default_factory=lambda: colors.to_hex((0.5, 0.5, 0.5))
     )
 
     @property
     def colour(self):
         """Colour as rbg"""
-        return colors.to_rgb(self._colour)
+        return colors.to_hex(self._colour)
 
     @colour.setter
     def colour(self, value):
@@ -175,7 +175,7 @@ def add_features(
                 verts,
                 faces,
             )
-            m.set_color(option["colour"])
+            m.set_color(colors.to_rgb(option["colour"]))
             m.set_transparency(1 - option["transparency"])
             m.set_material(option["material"])
             meshes.append(m)
