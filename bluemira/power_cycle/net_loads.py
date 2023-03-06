@@ -13,8 +13,8 @@ from scipy.interpolate import interp1d
 
 from bluemira.power_cycle.base import NetPowerABC
 from bluemira.power_cycle.errors import (
+    LoadDataError,
     PhaseLoadError,
-    PowerDataError,
     PowerLoadError,
     PulseLoadError,
 )
@@ -22,11 +22,11 @@ from bluemira.power_cycle.time import PowerCyclePhase, PowerCyclePulse
 from bluemira.power_cycle.tools import unnest_list, validate_axes
 
 
-class PowerData(NetPowerABC):
+class LoadData(NetPowerABC):
     """
     Data class to store a set of time and load vectors.
 
-    Takes a pair of (time,data) vectors and creates a 'PowerData' object
+    Takes a pair of (time,data) vectors and creates a 'LoadData' object
     used to build power load objects to represent the time evolution
     of a given power in the plant.
     Instances of this class do not specify any dependence between the
@@ -34,16 +34,16 @@ class PowerData(NetPowerABC):
     applying a multiplicative efficiency) or calculating related values
     (e.g. interpolation). Instead, these actions are performed with
     objects of the 'PowerLoad' class, that are built with instances of
-    'PowerData'.
+    'LoadData'.
 
     Parameters
     ----------
     name: str
-        Description of the 'PowerData' instance.
+        Description of the 'LoadData' instance.
     time: int | float | list[int | float]
-        List of time values that define the PowerData. [s]
+        List of time values that define the LoadData. [s]
     data: int | float | list[int | float]
-        List of power values that define the PowerData. [W]
+        List of power values that define the LoadData. [W]
 
     Properties
     ----------
@@ -80,7 +80,7 @@ class PowerData(NetPowerABC):
         """
         check = [i <= j for i, j in zip(parameter, parameter[1:])]
         if not all(check):
-            raise PowerDataError("increasing")
+            raise LoadDataError("increasing")
         return parameter
 
     def _sanity(self):
@@ -91,7 +91,7 @@ class PowerData(NetPowerABC):
         length_data = len(self.data)
         length_time = len(self.time)
         if length_data != length_time:
-            raise PowerDataError("sanity")
+            raise LoadDataError("sanity")
 
     # ------------------------------------------------------------------
     # OPERATIONS
@@ -142,10 +142,10 @@ class PowerData(NetPowerABC):
 
     def plot(self, ax=None, **kwargs):
         """
-        Plot the points that define the 'PowerData' instance.
+        Plot the points that define the 'LoadData' instance.
 
         This method applies the 'matplotlib.pyplot.scatter' imported
-        method to the vectors that define the 'PowerData' instance. The
+        method to the vectors that define the 'LoadData' instance. The
         default options for this plot are defined as class attributes,
         but can be overridden.
 
@@ -219,7 +219,7 @@ class PowerLoad(NetPowerABC):
     """
     Generic representation of a power load.
 
-    Defines a power load with a set of 'PowerData' instances. Each
+    Defines a power load with a set of 'LoadData' instances. Each
     instance must be accompanied by a 'model' specification, used to
     compute additional values between data points. This enables the
     instance to compute time-dependent curves.
@@ -233,19 +233,19 @@ class PowerLoad(NetPowerABC):
     ----------
     name: str
         Description of the 'PowerLoad' instance.
-    powerdata_set: PowerData | list[PowerData]
-        Collection of instances of the 'PowerData' class that define
+    LoadData_set: LoadData | list[LoadData]
+        Collection of instances of the 'LoadData' class that define
         the 'PowerLoad' object.
     model: PowerLoadModel | list[PowerLoadModel]
         Mathematical model used to compute values between
-        'powerdata_set' definition points.
+        'LoadData_set' definition points.
 
     Properties
     ----------
     intrinsic_time: list[int | float]
         List that contains all values in the 'intrinsic_time' properties
-        of the different 'PowerData' objects contained in the
-        'powerdata_set' attribute, ordered and with no repetitions.
+        of the different 'LoadData' objects contained in the
+        'loaddata_set' attribute, ordered and with no repetitions.
     """
 
     # ------------------------------------------------------------------
@@ -256,27 +256,27 @@ class PowerLoad(NetPowerABC):
     def __init__(
         self,
         name,
-        powerdata_set,
+        loaddata_set,
         model: Union[PowerLoadModel, List[PowerLoadModel]],
     ):
 
         super().__init__(name)
 
-        self.powerdata_set = self._validate_powerdata_set(powerdata_set)
+        self.loaddata_set = self._validate_loaddata_set(loaddata_set)
         self.model = self._validate_model(model)
 
         self._sanity()
 
     @staticmethod
-    def _validate_powerdata_set(powerdata_set):
+    def _validate_loaddata_set(loaddata_set):
         """
-        Validate 'powerdata_set' input to be a list of 'PowerData'
+        Validate 'loaddata_set' input to be a list of 'LoadData'
         instances.
         """
-        powerdata_set = super(PowerLoad, PowerLoad).validate_list(powerdata_set)
-        for element in powerdata_set:
-            PowerData.validate_class(element)
-        return powerdata_set
+        loaddata_set = super(PowerLoad, PowerLoad).validate_list(loaddata_set)
+        for element in loaddata_set:
+            LoadData.validate_class(element)
+        return loaddata_set
 
     @staticmethod
     def _validate_model(model):
@@ -296,10 +296,10 @@ class PowerLoad(NetPowerABC):
 
     def _sanity(self):
         """
-        Validate instance to have 'powerdata_set' and 'model' attributes
+        Validate instance to have 'loaddata_set' and 'model' attributes
         of same length.
         """
-        if len(self.powerdata_set) != len(self.model):
+        if len(self.loaddata_set) != len(self.model):
             raise PowerLoadError("sanity")
 
     # ------------------------------------------------------------------
@@ -307,10 +307,10 @@ class PowerLoad(NetPowerABC):
     # ------------------------------------------------------------------
 
     @staticmethod
-    def _single_curve(powerdata, model, time):
+    def _single_curve(loaddata, model, time):
         """
         Method that applies the 'scipy.interpolate.interp1d' imported
-        method to a single instance of the 'PowerData' class. The kind
+        method to a single instance of the 'LoadData' class. The kind
         of interpolation is determined by the 'model' input. Values are
         returned at the times specified in the 'time' input, with any
         out-of-bound values set to zero.
@@ -320,8 +320,8 @@ class PowerLoad(NetPowerABC):
         except (AttributeError):
             raise PowerLoadError("model")
 
-        x = powerdata.time
-        y = powerdata.data
+        x = loaddata.time
+        y = loaddata.data
         out_of_bounds_raises_error = False  # no error for out-of-bound
         out_of_bounds_fill_value = (0, 0)  # below-bounds/above-bounds
         interpolation_operator = interp1d(
@@ -353,7 +353,7 @@ class PowerLoad(NetPowerABC):
         times.
 
         This method applies the 'scipy.interpolate.interp1d' imported
-        method to each 'PowerData' object stored in the 'powerdata_set'
+        method to each 'LoadData' object stored in the 'loaddata_set'
         attribute and sums the results. The kind of interpolation is
         determined by each respective value in the 'model' attribute.
         Any out-of-bound values are set to zero.
@@ -372,18 +372,18 @@ class PowerLoad(NetPowerABC):
         time_length = len(time)
         preallocated_curve = np.array([0] * time_length)
 
-        powerdata_set = self.powerdata_set
-        powerdata_set_length = len(powerdata_set)
+        loaddata_set = self.loaddata_set
+        loaddata_set_length = len(loaddata_set)
 
         model = self.model
 
-        for d in range(powerdata_set_length):
+        for d in range(loaddata_set_length):
 
-            current_powerdata = powerdata_set[d]
+            current_loaddata = loaddata_set[d]
             current_model = model[d]
 
             current_curve = self._single_curve(
-                current_powerdata,
+                current_loaddata,
                 current_model,
                 time,
             )
@@ -396,28 +396,28 @@ class PowerLoad(NetPowerABC):
 
     def _normalize_time(self, new_end_time):
         """
-        Normalize the time of all 'PowerData' objects stored in the
-        'powerdata_set' attribute, so that their last time values
+        Normalize the time of all 'LoadData' objects stored in the
+        'loaddata_set' attribute, so that their last time values
         coincide with 'new_end_time'.
         """
-        old_powerdata_set = self.powerdata_set
-        new_powerdata_set = []
-        for powerdata in old_powerdata_set:
-            powerdata._normalize_time(new_end_time)
-            new_powerdata_set.append(powerdata)
-        self.powerdata_set = new_powerdata_set
+        old_loaddata_set = self.loaddata_set
+        new_loaddata_set = []
+        for loaddata in old_loaddata_set:
+            loaddata._normalize_time(new_end_time)
+            new_loaddata_set.append(loaddata)
+        self.loaddata_set = new_loaddata_set
 
     def _shift_time(self, time_shift):
         """
-        Shift the 'time' attribute of all 'PowerData' objects in the
-        'powerdata_set' attribute by the numerical value 'time_shift'.
+        Shift the 'time' attribute of all 'LoadData' objects in the
+        'loaddata_set' attribute by the numerical value 'time_shift'.
         """
-        old_powerdata_set = self.powerdata_set
-        new_powerdata_set = []
-        for powerdata in old_powerdata_set:
-            powerdata._shift_time(time_shift)
-            new_powerdata_set.append(powerdata)
-        self.powerdata_set = new_powerdata_set
+        old_loaddata_set = self.loaddata_set
+        new_loaddata_set = []
+        for loaddata in old_loaddata_set:
+            loaddata._shift_time(time_shift)
+            new_loaddata_set.append(loaddata)
+        self.loaddata_set = new_loaddata_set
 
     # ------------------------------------------------------------------
     # VISUALIZATION
@@ -427,10 +427,10 @@ class PowerLoad(NetPowerABC):
     def intrinsic_time(self):
         """
         Single time vector that contains all values used to define the
-        different 'PowerData' objects contained in the 'powerdata_set'
+        different 'LoadData' objects contained in the 'loaddata_set'
         attribute, ordered and with no repetitions.
         """
-        time = self._build_time_from_power_set(self.powerdata_set)
+        time = self._build_time_from_power_set(self.loaddata_set)
         return time
 
     @intrinsic_time.setter
@@ -448,8 +448,8 @@ class PowerLoad(NetPowerABC):
         The default options for this plot are defined as class
         attributes, but can be overridden.
 
-        This method can also plot the individual 'PowerData' objects
-        stored in the 'powerdata_set' attribute that define the
+        This method can also plot the individual 'LoadData' objects
+        stored in the 'loaddata_set' attribute that define the
         'PowerLoad' instance.
 
         Parameters
@@ -464,7 +464,7 @@ class PowerLoad(NetPowerABC):
             attribute.
         detailed: bool
             Determines whether the plot will include all individual
-            'PowerData' objects (computed with their respective
+            'LoadData' objects (computed with their respective
             'model' entries), that summed result in the normal plotted
             curve. These objects are plotted as secondary plots, as
             defined in 'PowerCycleABC' class. By default this input is
@@ -484,7 +484,7 @@ class PowerLoad(NetPowerABC):
             method.
             If the 'detailed' argument is set to 'True', the list
             continues to include the lists of plot objects created by
-            the 'PowerData' class, with the addition of plotted curves
+            the 'LoadData' class, with the addition of plotted curves
             for the visualization of the model selected for each load.
         """
         ax = validate_axes(ax)
@@ -524,26 +524,26 @@ class PowerLoad(NetPowerABC):
 
         if detailed:
 
-            powerdata_set = self.powerdata_set
+            loaddata_set = self.loaddata_set
             model = self.model
-            number_of_data_elements = len(powerdata_set)
+            number_of_data_elements = len(loaddata_set)
 
             for e in range(number_of_data_elements):
-                current_powerdata = powerdata_set[e]
+                current_loaddata = loaddata_set[e]
                 current_model = model[e]
 
                 current_curve = self._single_curve(
-                    current_powerdata,
+                    current_loaddata,
                     current_model,
                     computed_time,
                 )
 
-                # Plot current PowerData with seconday kwargs
-                current_powerdata._make_secondary_in_plot()
-                ax, current_plot_list = current_powerdata.plot(ax=ax)
+                # Plot current LoadData with seconday kwargs
+                current_loaddata._make_secondary_in_plot()
+                ax, current_plot_list = current_loaddata.plot(ax=ax)
 
                 # Plot current curve as line with secondary kwargs
-                kwargs.update(current_powerdata._plot_kwargs)
+                kwargs.update(current_loaddata._plot_kwargs)
                 plot_object = ax.plot(
                     computed_time,
                     current_curve,
@@ -563,10 +563,10 @@ class PowerLoad(NetPowerABC):
         The addition of 'PowerLoad' instances creates a new 'PowerLoad'
         instance with joined 'load' and 'model' attributes.
         """
-        this_set = self.powerdata_set
+        this_set = self.loaddata_set
         this_model = self.model
 
-        other_set = other.powerdata_set
+        other_set = other.loaddata_set
         other_model = other.model
 
         another_set = this_set + other_set
@@ -590,17 +590,17 @@ class PowerLoad(NetPowerABC):
         An instance of the 'PowerLoad' class can only be multiplied by
         scalar numerical values.
         The multiplication of a 'PowerLoad' instance by a number
-        multiplies all values in the 'data' attributes of 'PowerData'
-        objects stored in the 'powerdata_set' by that number.
+        multiplies all values in the 'data' attributes of 'LoadData'
+        objects stored in the 'loaddata_set' by that number.
         """
         number = self.validate_numerical(number)
         other = copy.deepcopy(self)
-        powerdata_set = other.powerdata_set
-        for powerdata in powerdata_set:
-            data = powerdata.data
+        loaddata_set = other.loaddata_set
+        for loaddata in loaddata_set:
+            data = loaddata.data
             new_data = [d * number for d in data]
-            powerdata.data = new_data
-        other.powerdata_set = powerdata_set
+            loaddata.data = new_data
+        other.loaddata_set = loaddata_set
         return other
 
     def __truediv__(self, number):
@@ -608,17 +608,17 @@ class PowerLoad(NetPowerABC):
         An instance of the 'PowerLoad' class can only be divided by
         scalar numerical values.
         The division of a 'PowerLoad' instance by a number
-        divides all values in the 'data' attributes of 'PowerData'
-        objects stored in the 'powerdata_set' by that number.
+        divides all values in the 'data' attributes of 'LoadData'
+        objects stored in the 'loaddata_set' by that number.
         """
         number = self.validate_numerical(number)
         other = copy.deepcopy(self)
-        powerdata_set = other.powerdata_set
-        for powerdata in powerdata_set:
-            data = powerdata.data
+        loaddata_set = other.loaddata_set
+        for loaddata in loaddata_set:
+            data = loaddata.data
             new_data = [d / number for d in data]
-            powerdata.data = new_data
-        other.powerdata_set = powerdata_set
+            loaddata.data = new_data
+        other.loaddata_set = loaddata_set
         return other
 
 
