@@ -22,6 +22,7 @@ class DefaultDisplayOptions:
     tesselation: float = 0.05
     wires_on: bool = False
     wire_radius: float = 0.001
+    smooth: bool = True
 
     _colour: Union[Tuple, str] = field(
         init=False, repr=False, default_factory=lambda: colors.to_hex((0.5, 0.5, 0.5))
@@ -77,7 +78,7 @@ def show_cad(parts, part_options, **kwargs):
         fps=kwargs.get("fps", 60),
         aa=kwargs.get("aa", 1),
         transparency=transparency,
-        render_passes=kwargs.get("render_passes", 2),
+        render_passes=kwargs.get("render_passes", 3),
         gplane=kwargs.get("gplane", "none"),
     )
 
@@ -136,8 +137,8 @@ def _init_polyscope():
     Initialise polyscope (just once)
     """
     bluemira_warn(
-        "Polyscope is a point based viewer."
-        " Some features may appear different to their actual structure"
+        "Polyscope is not a NURBS based viewer."
+        " Some features may appear subtly different to their CAD representation"
     )
     ps.set_program_name("Bluemira Display")
     ps.init()
@@ -174,10 +175,11 @@ def add_features(
                 clean_name(part.label, shape_i),
                 verts,
                 faces,
+                smooth_shade=option["smooth"],
+                color=colors.to_rgb(option["colour"]),
+                transparency=1 - option["transparency"],
+                material=option["material"],
             )
-            m.set_color(colors.to_rgb(option["colour"]))
-            m.set_transparency(1 - option["transparency"])
-            m.set_material(option["material"])
             meshes.append(m)
 
         if option["wires_on"] or (verts is None or faces is None):
@@ -187,10 +189,10 @@ def add_features(
                 verts,
                 edges,
                 radius=option["wire_radius"],
+                color=colors.to_rgb(option["colour"]),
+                transparency=1 - option["transparency"],
+                material=option["material"],
             )
-            c.set_color(option["colour"])
-            c.set_transparency(1 - option["transparency"])
-            c.set_material(option["material"])
             curves.append(c)
 
     return meshes, curves
