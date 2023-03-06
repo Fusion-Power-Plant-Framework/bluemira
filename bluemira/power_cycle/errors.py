@@ -298,14 +298,24 @@ class PowerCycleSystemError(PowerCycleError):
         return errors
 
 
-class PowerLoadManagerError(PowerCycleError):
+class PowerCycleManagerError(PowerCycleError):
     """
-    Exception class for 'PowerLoadManager' class of the Power Cycle
+    Exception class for 'PowerCycleManager' class of the Power Cycle
     module.
     """
 
     def _errors(self):
-        errors = {}
+        errors = {
+            "file": [
+                "No file exists in the specified path.",
+            ],
+            "pulse_config": [
+                "An incorrect file has been given to function as "
+                "'pulse_config'. It must be a JSON file with the "
+                "following fields: 'pulse-library', 'phase-library' "
+                "and 'breakdown-library'.",
+            ],
+        }
         return errors
 
 
