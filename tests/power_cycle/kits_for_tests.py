@@ -334,13 +334,15 @@ class NetLoadsTestKit:
 
 class NetManagerTestKit:
     def __init__(self):
-
         # self.time_testkit = TimeTestKit()
 
-        example_json_path = [
+        pulse_json_path = (
             "tests",
             "power_cycle",
             "test_data",
-            "input_for_manager_test.json",
-        ]
-        self.example_json_path = os.path.join(example_json_path)
+            "pulse_config.json",
+        )
+        self.pulse_json_path = os.path.join(*pulse_json_path)
+
+    def inputs_for_(self):
+        pass
