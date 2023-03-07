@@ -27,7 +27,7 @@ jobs:
 
     - name: Checkout bluemira-private-data
       uses: actions/checkout@v3
-      if: ${{ !github.event.repository.fork }}
+      if: ${{ !github.event.pull_request.head.repo.fork }}
       with:
         repository: 'Fusion-Power-Plant-Framework/bluemira-private-data'
         ssh-key: ${{ secrets.BLUEMIRA_PRIVATE_DATA_DEPLOY_KEY }}
@@ -35,7 +35,7 @@ jobs:
 
     - name: Move bluemira-private-data
       working-directory: "/home/runner/work/"
-      if: ${{ !github.event.repository.fork }}
+      if: ${{ !github.event.pull_request.head.repo.fork }}
       run: |
           mv ~/work/bluemira/bluemira/bluemira-private-data ~/work/bluemira/bluemira-private-data
 
@@ -106,7 +106,7 @@ jobs:
         # Flag to run longrun tests when merging dependency updates
         # https://github.com/actions/runner/issues/409#issuecomment-752775072
         PYTEST_LONGRUN: ${{ github.event.pull_request.head.ref == 'develop_dependencies' && '--longrun' || '' }}
-        PYTEST_PRIVATE: ${{ !github.event.repository.fork && '--private' || '' }}
+        PYTEST_PRIVATE: ${{ !github.event.pull_request.head.repo.fork && '--private' || '' }}
       run: |
         export PYTHONPATH="$(pwd)/eudemo"
         pytest --cov=bluemira \
