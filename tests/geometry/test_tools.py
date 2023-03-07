@@ -66,6 +66,7 @@ from bluemira.geometry.tools import (
     signed_distance_2D_polygon,
     slice_shape,
 )
+from bluemira.geometry.wire import BluemiraWire
 from tests._helpers import combine_text_mock_write_calls
 
 generic_wire = make_polygon(
@@ -741,3 +742,17 @@ class TestFilletChamfer2D:
         correct_length += n * np.sqrt(2 * radius**2)
 
         assert np.isclose(result.length, correct_length)
+
+    @pytest.mark.parametrize("func", [fillet_wire_2D, chamfer_wire_2D])
+    def test_what_happens_with_two_tangent_edges(self, func):
+        """
+        At present, you will get:
+        DraftGeomUtils.fillet: Warning: edges have same direction. Did nothing
+        Which we don't catch or wrap because it is a print statement.
+        """
+        w1 = make_polygon({"x": [0, 1], "z": [0, 0]})
+        w2 = make_polygon({"x": [1, 2], "z": [0, 0]})
+        wire = BluemiraWire([w1, w2])
+
+        result = func(wire, 0.2)
+        assert wire.length == result.length
