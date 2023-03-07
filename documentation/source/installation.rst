@@ -7,7 +7,6 @@ Cloning the repository
 You can clone with SSH if you have :ref:`configured your SSH keys <ssh-keys>`:
 
 .. code-block:: bash
-
     # Clone bluemira
     sudo apt-get install git
     git clone git@github.com:Fusion-Power-Plant-Framework/bluemira.git
