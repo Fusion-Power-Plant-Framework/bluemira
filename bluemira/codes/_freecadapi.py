@@ -58,6 +58,7 @@ from bluemira.base.file import force_file_extension
 from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.codes._freecadconfig import _freecad_save_config
 from bluemira.codes.error import FreeCADError, InvalidCADInputsError
+from bluemira.display.palettes import ColorPalette
 from bluemira.geometry.constants import MINIMUM_LENGTH
 from bluemira.utilities.tools import ColourDescriptor
 
@@ -2306,7 +2307,7 @@ class DefaultDisplayOptions:
         return self.colour
 
     @color.setter
-    def color(self, value):
+    def color(self, value: Union[str, Tuple[float, float, float], ColorPalette]):
         """See colour"""
         self.colour = value
 
