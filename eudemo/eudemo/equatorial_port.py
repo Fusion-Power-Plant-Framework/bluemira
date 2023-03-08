@@ -23,20 +23,21 @@
 EU-DEMO Equatorial Port
 """
 from dataclasses import dataclass
-from numpy import ndarray, transpose
+from numpy import array, ndarray
 from typing import Dict, Type, Union
 
 from bluemira.base.builder import Builder, ComponentManager
 from bluemira.base.components import Component, PhysicalComponent
 from bluemira.base.designer import Designer
 from bluemira.base.parameter_frame import Parameter, ParameterFrame
+from bluemira.builders.tools import circular_pattern_component
 from bluemira.display.palettes import BLUE_PALETTE
-from bluemira.geometry.face import BluemiraFace
+from bluemira.geometry.plane import BluemiraFace, BluemiraPlane
 from bluemira.geometry.tools import (
     boolean_fuse,
-    circular_pattern,
     extrude_shape,
     make_polygon,
+    slice_shape,
 )
 from bluemira.geometry.wire import BluemiraWire
 
@@ -61,8 +62,6 @@ class EquatorialPortDesignerParams(ParameterFrame):
     Equatorial Port Designer parameters
     """
 
-    x_ib: Parameter[float]
-    x_ob: Parameter[float]
     ep_height: Parameter[float]
 
 
@@ -72,8 +71,7 @@ class EquatorialPortBuilderParams(ParameterFrame):
     Equatorial Port builder parameters
     """
 
-    n_EP: Parameter[int]
-    ep_coordinates: Parameter[ndarray]
+    n_ep: Parameter[int]
     ep_r_corner: Parameter[float]
 
 
@@ -88,19 +86,22 @@ class EquatorialPortDesigner(Designer):
         self,
         params: Union[Dict, ParameterFrame, EquatorialPortDesignerParams],
         build_config: Union[Dict, None],
+        x_ib: float,
+        x_ob: float,
     ):
         super().__init__(params, build_config)
+        self.x_ib = x_ib
+        self.x_ob = x_ob
 
     def run(self) -> BluemiraWire:
         """
         Design the xz keep-out zone profile of the equatorial port
         """
-
-        x_i = self.params.x_ib.value
-        x_o = self.params.x_ob.value
+        x_ib = self.x_ib
+        x_ob = self.x_ob
         z_h = self.params.ep_height.value
 
-        x = (x_i, x_o, x_o, x_i)
+        x = (x_ib, x_ob, x_ob, x_ib)
         z = (-z_h / 2, -z_h / 2, z_h / 2, z_h / 2)
 
         ep_boundary = BluemiraFace(
@@ -123,78 +124,99 @@ class EquatorialPortBuilder(Builder):
         params: Union[Dict, ParameterFrame, EquatorialPortBuilderParams],
         build_config: Union[Dict, None],
         xz_profile: BluemiraFace,
+        y_width: float,
+        x_offsets: list,
+        castellation_offsets: list,
     ):
         super().__init__(params, build_config)
         self.xz_profile = xz_profile
+        self.y_width = y_width
+        self.x_offsets = x_offsets
+        self.cst = castellation_offsets
 
     def build(self) -> Component:
         """
         Build the equatorial port component.
         """
-
-        # TODO: Integrate corner radii
+        # TODO: Implement corner radii
         self.r_rad = self.params.ep_r_corner.value
-        self.coords = self.params.ep_coordinates.value
         self.n_ep = self.params.n_EP.value
 
-        self.x_points, self.y_points, self.z_points = castellation(self.coords)
+        # Set-up coordinates for geometry building
+        xz_plane = BluemiraPlane.from_3_points([0, 0, 0], [1, 0, 0], [1, 0, 1])
+        intersections = slice_shape(self.xz_profile.boundary[0], xz_plane)
+        self.x_ib = min(intersections[:, 0])
+        self.x_ob = max(intersections[:, 0])
+        self.z_lo = min(intersections[:, 2])
+        self.z_hi = max(intersections[:, 2])
+        x_points, y_points, z_points, xyz_coords = self.build_coordinates()
 
         return self.component_tree(
-            xz=self.build_xz(self.xz_profile),
-            xy=self.build_xy(self.x_points, self.y_points, self.n_ep),
-            xyz=self.build_xyz(self.coords, self.n_ep),
+            xz=self.build_xz(x_points, z_points),
+            xy=self.build_xy(x_points, y_points),
+            xyz=self.build_xyz(xyz_coords, n_ep=10),
         )
 
-    def build_xz(self, xz_profile: BluemiraWire) -> PhysicalComponent:
+    def build_xz(self, x: list, z: list) -> PhysicalComponent:
         """
-        Build the x-z components of the equatorial port
+        Build the xz components of the equatorial port
         """
-
+        xz_profile = BluemiraWire(make_polygon({"x": x, "y": 0, "z": z}, closed=True))
         body = PhysicalComponent(self.KOZ, xz_profile)
         body.plot_options.face_options["color"] = BLUE_PALETTE["VV"][0]
         return body
 
     def build_xy(self, x: list, y: list, n_ep: int = 10) -> PhysicalComponent:
         """
-        Build the x-y components of the equatorial port
+        Build the xy components of the equatorial port
         """
-
-        ep_boundary = BluemiraWire(make_polygon({"x": x, "y": y, "z": 0}, closed=True))
-        body = PhysicalComponent(self.NAME, BluemiraFace(ep_boundary))
+        ep_xy_profile = BluemiraWire(make_polygon({"x": x, "y": y, "z": 0}, closed=True))
+        body = PhysicalComponent(self.NAME, BluemiraFace(ep_xy_profile))
         body.plot_options.face_options["color"] = BLUE_PALETTE["VV"][0]
-        return circular_pattern(body, n_shapes=n_ep)
+        return circular_pattern_component(body, n_shapes=n_ep)
 
-    def build_xyz(
-        self, coords: Union[list, ndarray], n_ep: int = 10
-    ) -> PhysicalComponent:
+    def build_xyz(self, coords: ndarray, n_ep: int = 10) -> PhysicalComponent:
         """
-        Build the x-y-z components of the equatorial port
+        Build the xyz components of the equatorial port
         """
         sections = []
-        x_ob = coords[0][-1]  # Outboard x = the last listed x-value
-        new_coords = transpose(coords)
 
-        for r in new_coords:
+        for r in coords:
             x = r[0]
             y = [r[1], r[1], r[2], r[2]]
             z = [r[3], r[4], r[4], r[3]]
-            ext_vec = (x_ob - x, 0, 0)
+            ext_vec = (self.x_ob - x, 0, 0)
             section = BluemiraFace(make_polygon({"x": x, "y": y, "z": z}, closed=True))
             sections.append(extrude_shape(section, ext_vec))
 
         ep_shape = boolean_fuse(sections)
-        return circular_pattern(ep_shape, n_shapes=n_ep)
+        return circular_pattern_component(ep_shape, n_shapes=n_ep)
 
+    def build_coordinates(self, x_pos: list, castellation_offsets: list):
+        """
+        Returns coordinate lists for building the Eq. Port Bluemira geometry
 
-def castellation(cst_coords: list):
-    iter = range(len(cst_coords))
-    x = [cst_coords[value][0] for value in iter]
-    y_min = [cst_coords[value][1] for value in iter]
-    y_max = [cst_coords[value][2] for value in iter]
-    z_min = [cst_coords[value][3] for value in iter]
-    z_max = [cst_coords[value][4] for value in iter]
+        Parameters
+        ----------
+        x_offsets: list
+            list of x positions of castellations
+        castellation_offsets: list
+            list of castellations offsets
+        """
+        offsets = [0] + castellation_offsets + [castellation_offsets[-1]]
 
-    x_points = x + list(reversed(x))
-    y_points = y_min + list(reversed(y_max))
-    z_points = z_min + list(reversed(z_max))
-    return x_points, y_points, z_points
+        x_outwards = [self.x_ib] + x_pos + [self.x_ob]
+        x_points = x_outwards + list(reversed(x_outwards))
+
+        y_pos_half = [self.y_width / 2 + offset for offset in offsets]
+        y_neg_half = [-y for y in y_pos_half]
+        y_points = y_pos_half + list(reversed(y_neg_half))
+
+        z_upper_half = [self.z_hi + offset for offset in offsets]
+        z_lower_half = [self.z_lo - offset for offset in offsets]
+        z_points = z_upper_half + list(reversed(z_lower_half))
+
+        xyz_coords = array(
+            [x_outwards, y_pos_half, y_neg_half, z_upper_half, z_lower_half], float
+        )
+        return x_points, y_points, z_points, xyz_coords

@@ -19,12 +19,12 @@
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 
-from bluemira.geometry.face import BluemiraFace
-from bluemira.geometry.tools import make_polygon
+# from bluemira.geometry.face import BluemiraFace
+from bluemira.geometry.plane import BluemiraPlane, BluemiraFace
+from bluemira.geometry.tools import make_polygon, slice_shape
 from bluemira.utilities.optimiser import Optimiser
 from eudemo.maintenance.upper_port import UpperPortOP
 from eudemo.equatorial_port import EquatorialPortDesigner
-import numpy as np
 import math
 import pytest
 
@@ -61,19 +61,19 @@ class TestUpperPortOP:
 class TestEquatorialPortDesigner:
     def setup_method(self) -> None:
         params = {
-            "x_ib": {"value": 0, "unit": "m"},
-            "x_ob": {"value": 0, "unit": "m"},
             "ep_height": {"value": 0, "unit": "m"},
         }
 
-        self.designer = EquatorialPortDesigner(params, None)
+        self.designer = EquatorialPortDesigner(params, None, 0, 0)
 
     @pytest.mark.parametrize(
         "xi, xo, zh", zip([2.0, 3.0, 1.0], [9.0, 9.0, 4.0], [5.0, 4.0, 2.0])
     )
     def test_ep_designer(self, xi, xo, zh):
-        param_values = {"x_ib": xi, "x_ob": xo, "ep_height": zh}
+        param_values = {"ep_height": zh}
         self.designer.params.update_values(param_values)
+        self.designer.x_ib = xi
+        self.designer.x_ob = xo
         output = self.designer.execute()
 
         x = (xi, xo, xo, xi)
