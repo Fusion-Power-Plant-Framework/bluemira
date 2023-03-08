@@ -3,9 +3,19 @@
 Frequently Asked Questions
 ==========================
 
+Conda warns of ``WARNING: overwriting environment variables set in the machine; overwriting variable {'LANG'}``
+    The warning is printed every time bluemira is activated, and may stop my VSCode's pytest test discoverer from working properly.
+
+    This can be fixed by::
+
+        # This makes sure you're already in the bluemira environment
+        conda activate bluemira
+        # Run this to stop your bluemira environment to stop the overwriting.
+        conda env config vars unset LANG
+
 My github ssh connection doesnt connect
     Firstly make sure you have followed our :ref:`SSH key guide <ssh-keys>`.
-    A simple fix could be to set a new variable in you `~/.ssh/config`::
+    A simple fix could be to set a new variable in your `~/.ssh/config`::
 
         # below Host github.com
         HostName ssh.github.com

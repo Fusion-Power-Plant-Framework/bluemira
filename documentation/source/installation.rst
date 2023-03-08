@@ -7,6 +7,7 @@ Cloning the repository
 You can clone with SSH if you have :ref:`configured your SSH keys <ssh-keys>`:
 
 .. code-block:: bash
+
     # Clone bluemira
     sudo apt-get install git
     git clone git@github.com:Fusion-Power-Plant-Framework/bluemira.git
@@ -34,12 +35,13 @@ following steps in a mac or Ubuntu command terminal.
 .. code-block:: bash
 
     # Install curl if its not available (eg vanilla Ubuntu 22.04)
-     sudo apt install -y curl gettext-base
+    sudo apt install -y curl gettext-base
     # Run the conda installation script
     # This installs mambaforge, if not already present, and sets up a bluemira environment
     bash scripts/install-conda.sh
-    # To activate your environment
+    # To activate conda's base environment
     source ~/.mambaforge-init.sh
+    # To activate your bluemira environment
     conda activate bluemira
 
     # If you are going to be developing bluemira
@@ -55,7 +57,8 @@ after ``conda deactivate``) then you can initialise mambaforge and activate your
     source ~/.mambaforge-init.sh
     conda activate bluemira
 
-Please refer to our :ref:`FAQ <faq>` if you run into issues.
+This may result in a(n otherwise harmless) warning about ``overwriting variable {'LANG'}``.
+To disable this warning and for any other issues, please refer to our :ref:`FAQ <faq>` for solutions.
 
 Installing PROCESS
 ------------------
