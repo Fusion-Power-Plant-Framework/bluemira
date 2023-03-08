@@ -2,7 +2,7 @@
 
 import pytest
 
-from bluemira.power_cycle.errors import PowerCycleABCError, PowerCyclePhaseError
+from bluemira.power_cycle.errors import PowerCyclePhaseError
 from bluemira.power_cycle.time import (
     PowerCyclePhase,
     PowerCyclePulse,
@@ -43,21 +43,21 @@ class TestPowerCyclePhase:
     def test_validate_breakdown(self, test_keys, test_values):
         name = "Name for dummy sample"
         breakdown = dict(zip(test_keys, test_values))
-
+        possible_errors = (TypeError, ValueError, PowerCyclePhaseError)
         try:
             sample = PowerCyclePhase(name, breakdown)
-
-        except (PowerCyclePhaseError, PowerCycleABCError):
+        except possible_errors:
 
             str_keys = [isinstance(k, str) for k in test_keys]
             all_keys_are_str = all(str_keys)
+            nonnegative_errors = (TypeError, ValueError)
+            nonstr_keys_errors = PowerCyclePhaseError
             if all_keys_are_str:
-                # Error informs requirement of nonnegative values
-                with pytest.raises(PowerCycleABCError):
+                with pytest.raises(nonnegative_errors):
                     sample = PowerCyclePhase(name, breakdown)
             else:
                 # Error informs requirement of non-string dict keys
-                with pytest.raises(PowerCyclePhaseError):
+                with pytest.raises(nonstr_keys_errors):
                     sample = PowerCyclePhase(name, breakdown)
 
     def test_duration(self):

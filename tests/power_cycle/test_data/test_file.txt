@@ -1,0 +1,1 @@
+Example TXT file for testing file-related functions and methods.

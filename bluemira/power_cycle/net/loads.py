@@ -11,7 +11,7 @@ from typing import List, Union
 import numpy as np
 from scipy.interpolate import interp1d
 
-from bluemira.power_cycle.base import NetPowerABC
+from bluemira.power_cycle.base import PowerCycleLoadABC
 from bluemira.power_cycle.errors import (
     LoadDataError,
     PhaseLoadError,
@@ -19,10 +19,15 @@ from bluemira.power_cycle.errors import (
     PulseLoadError,
 )
 from bluemira.power_cycle.time import PowerCyclePhase, PowerCyclePulse
-from bluemira.power_cycle.tools import unnest_list, validate_axes
+from bluemira.power_cycle.tools import (
+    unnest_list,
+    validate_axes,
+    validate_list,
+    validate_numerical,
+)
 
 
-class LoadData(NetPowerABC):
+class LoadData(PowerCycleLoadABC):
     """
     Class to store a set of time and data vectors, to be used in
     creating 'PowerLoad' objects.
@@ -64,8 +69,8 @@ class LoadData(NetPowerABC):
     ):
         super().__init__(name)
 
-        self.data = super().validate_list(data)
-        self.time = super().validate_list(time)
+        self.data = validate_list(data)
+        self.time = validate_list(time)
         self._is_increasing(self.time)
 
         self._sanity()
@@ -119,7 +124,7 @@ class LoadData(NetPowerABC):
         Stores the shifting factor in the attribute '_shift', which
         is always initialized as an empty list.
         """
-        time_shift = self.validate_numerical(time_shift)
+        time_shift = validate_numerical(time_shift)
         time = self.time
         shifted_time = [t + time_shift for t in time]
         self.time = shifted_time
@@ -216,7 +221,7 @@ class PowerLoadModel(Enum):
     STEP = "previous"  # 'interp1d' previous-value interpolation
 
 
-class PowerLoad(NetPowerABC):
+class PowerLoad(PowerCycleLoadABC):
     """
     Generic representation of a power load.
 
@@ -274,7 +279,7 @@ class PowerLoad(NetPowerABC):
         Validate 'loaddata_set' input to be a list of 'LoadData'
         instances.
         """
-        loaddata_set = super(PowerLoad, PowerLoad).validate_list(loaddata_set)
+        loaddata_set = validate_list(loaddata_set)
         for element in loaddata_set:
             LoadData.validate_class(element)
         return loaddata_set
@@ -284,7 +289,7 @@ class PowerLoad(NetPowerABC):
         """
         Validate 'model' input to be a list of valid models options.
         """
-        model = super(PowerLoad, PowerLoad).validate_list(model)
+        model = validate_list(model)
         for element in model:
             if type(element) != PowerLoadModel:
                 element_class = type(element)
@@ -342,7 +347,7 @@ class PowerLoad(NetPowerABC):
         Validate the 'time' input for the 'curve' method to be a list of
         numeric values.
         """
-        time = super(PowerLoad, PowerLoad).validate_list(time)
+        time = validate_list(time)
         for element in time:
             if not isinstance(element, (int, float)):
                 raise PowerLoadError("curve")
@@ -594,7 +599,7 @@ class PowerLoad(NetPowerABC):
         multiplies all values in the 'data' attributes of 'LoadData'
         objects stored in the 'loaddata_set' by that number.
         """
-        number = self.validate_numerical(number)
+        number = validate_numerical(number)
         other = copy.deepcopy(self)
         loaddata_set = other.loaddata_set
         for loaddata in loaddata_set:
@@ -612,7 +617,7 @@ class PowerLoad(NetPowerABC):
         divides all values in the 'data' attributes of 'LoadData'
         objects stored in the 'loaddata_set' by that number.
         """
-        number = self.validate_numerical(number)
+        number = validate_numerical(number)
         other = copy.deepcopy(self)
         loaddata_set = other.loaddata_set
         for loaddata in loaddata_set:
@@ -623,7 +628,7 @@ class PowerLoad(NetPowerABC):
         return other
 
 
-class PhaseLoad(NetPowerABC):
+class PhaseLoad(PowerCycleLoadABC):
     """
     Generic representation of the total power load during a pulse phase.
 
@@ -708,7 +713,7 @@ class PhaseLoad(NetPowerABC):
         Validate 'powerload_set' input to be a list of 'PowerLoad'
         instances.
         """
-        powerload_set = super(PhaseLoad, PhaseLoad).validate_list(powerload_set)
+        powerload_set = validate_list(powerload_set)
         for element in powerload_set:
             PowerLoad.validate_class(element)
         return powerload_set
@@ -718,7 +723,7 @@ class PhaseLoad(NetPowerABC):
         """
         Validate 'normalize' input to be a list of boolean values.
         """
-        normalize = super(PhaseLoad, PhaseLoad).validate_list(normalize)
+        normalize = validate_list(normalize)
         for element in normalize:
             if not isinstance(element, (bool)):
                 raise PhaseLoadError(
@@ -973,7 +978,7 @@ class PhaseLoad(NetPowerABC):
         return ax, list_of_plot_objects
 
 
-class PulseLoad(NetPowerABC):
+class PulseLoad(PowerCycleLoadABC):
     """
     Generic representation of the total power load during a pulse.
 
@@ -1064,7 +1069,7 @@ class PulseLoad(NetPowerABC):
         Validate 'phaseload_set' input to be a list of 'PhaseLoad'
         instances.
         """
-        phaseload_set = super(PulseLoad, PulseLoad).validate_list(phaseload_set)
+        phaseload_set = validate_list(phaseload_set)
         for element in phaseload_set:
             PhaseLoad.validate_class(element)
         return phaseload_set
@@ -1357,7 +1362,7 @@ class PulseLoad(NetPowerABC):
         return ax, list_of_plot_objects
 
 
-class ScenarioLoad(NetPowerABC):
+class ScenarioLoad(PowerCycleLoadABC):
     """
     Generic representation of the total power load during a scenario.
 

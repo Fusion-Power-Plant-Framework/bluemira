@@ -8,8 +8,14 @@ from typing import Union
 
 import numpy as np
 
-from bluemira.power_cycle.errors import NetPowerABCError, PowerCycleABCError
-from bluemira.power_cycle.tools import unnest_list
+from bluemira.power_cycle.errors import PowerCycleABCError, PowerCycleLoadABCError
+from bluemira.power_cycle.tools import (
+    unique_and_sorted_vector,
+    unnest_list,
+    validate_list,
+    validate_nonnegative,
+    validate_vector,
+)
 
 
 class PowerCycleABC(ABC):
@@ -29,7 +35,8 @@ class PowerCycleABC(ABC):
     #  METHODS
     # ------------------------------------------------------------------
 
-    def _validate_name(self, argument):
+    @staticmethod
+    def _validate_name(argument):
         """
         Validate an argument to be an instance of the 'str' class to be
         considered a valid name for an instance of a child class of the
@@ -48,55 +55,6 @@ class PowerCycleABC(ABC):
         if not isinstance(instance, cls):
             raise PowerCycleABCError("class")
         return instance
-
-    @staticmethod
-    def validate_list(argument):
-        """
-        Validate an argument to be a list. If the argument is just a
-        single value, insert it in a list.
-        """
-        if not isinstance(argument, list):
-            argument = [argument]
-        return argument
-
-    @staticmethod
-    def validate_numerical(argument):
-        """
-        Validate an argument to be a numerical value (i.e. an instance
-        of either the 'int' or the 'float' classes).
-        """
-        if isinstance(argument, int) or isinstance(argument, float):
-            return argument
-        else:
-            argument_class = type(argument)
-            raise PowerCycleABCError(
-                "numerical",
-                f"The value is an object of the {argument_class!r} " "class instead.",
-            )
-
-    @staticmethod
-    def validate_nonnegative(argument):
-        """
-        Validate an argument to be a nonnegative numerical value.
-        """
-        argument = PowerCycleABC.validate_numerical(argument)
-        if argument >= 0:
-            return argument
-        else:
-            raise PowerCycleABCError(
-                "nonnegative",
-                "The value is negative.",
-            )
-
-    @staticmethod
-    def validate_vector(argument):
-        """
-        Validate an argument to be a numerical list.
-        """
-        argument = PowerCycleABC.validate_list(argument)
-        for element in argument:
-            element = PowerCycleABC.validate_numerical(element)
-        return argument
 
 
 class PowerCycleTimeABC(PowerCycleABC):
@@ -132,17 +90,16 @@ class PowerCycleTimeABC(PowerCycleABC):
         Validate 'durations_list' input to be a list of non-negative
         numerical values.
         """
-        owner = PowerCycleTimeABC
-        durations_list = super(owner, owner).validate_list(argument)
+        durations_list = validate_list(argument)
         for value in durations_list:
-            value = super(owner, owner).validate_nonnegative(value)
+            value = validate_nonnegative(value)
         return durations_list
 
 
-class NetPowerABC(PowerCycleABC, metaclass=ABCMeta):
+class PowerCycleLoadABC(PowerCycleABC, metaclass=ABCMeta):
     """
-    Abstract base class for classes in the NET submodule of the Power
-    Cycle module that are used to account, sum and manage power loads.
+    Abstract base class for classes in the Power Cycle module that are
+    used to represent and sum power loads.
     """
 
     # ------------------------------------------------------------------
@@ -180,11 +137,14 @@ class NetPowerABC(PowerCycleABC, metaclass=ABCMeta):
     def intrinsic_time(self):
         pass
 
-    def _validate_n_points(self, n_points: Union[int, None]):
+    def _validate_n_points(self, n_points: Union[int, float, bool, None]):
         """
         Validate an 'n_points' argument that specifies a "number of
         points". If the argument is 'None', retrieves the default of
-        the class; else it must be a non-negative integer.
+        the class; else it must be a non-negative number.
+        Non-integer arguments are converted into integers.
+        Boolean arguments 'True' and 'False' are treated as 1 and 0
+        respectively.
         """
         if not n_points:
             n_points = self._n_points
@@ -192,12 +152,12 @@ class NetPowerABC(PowerCycleABC, metaclass=ABCMeta):
             try:
                 n_points = int(n_points)
                 if n_points < 0:
-                    raise NetPowerABCError(
+                    raise PowerCycleLoadABCError(
                         "n_points",
                         f"The value '{n_points}' is negative.",
                     )
             except (TypeError, ValueError):
-                raise NetPowerABCError(
+                raise PowerCycleLoadABCError(
                     "n_points",
                     f"The value '{n_points}' is non-numeric.",
                 )
@@ -210,9 +170,9 @@ class NetPowerABC(PowerCycleABC, metaclass=ABCMeta):
         by a subsequent pair of points) in the input 'vector'.
         """
         try:
-            vector = PowerCycleABC.validate_vector(vector)
+            vector = validate_vector(vector)
         except PowerCycleABCError:
-            raise NetPowerABCError("refine_vector")
+            raise PowerCycleLoadABCError("refine_vector")
 
         number_of_curve_segments = len(vector) - 1
         if (n_points is None) or (n_points == 0):
@@ -235,17 +195,10 @@ class NetPowerABC(PowerCycleABC, metaclass=ABCMeta):
         return refined_vector
 
     @staticmethod
-    def _unique_and_sorted_vector(vector):
-        vector = PowerCycleABC.validate_vector(vector)
-        unique_vector = list(set(vector))
-        sorted_vector = sorted(unique_vector)
-        return sorted_vector
-
-    @staticmethod
     def _build_time_from_power_set(power_set):
         all_times = [power_object.intrinsic_time for power_object in power_set]
         unnested_times = unnest_list(all_times)
-        time = NetPowerABC._unique_and_sorted_vector(unnested_times)
+        time = unique_and_sorted_vector(unnested_times)
         return time
 
     def _make_secondary_in_plot(self):
@@ -301,3 +254,13 @@ class NetPowerABC(PowerCycleABC, metaclass=ABCMeta):
             **final_kwargs,
         )
         return plot_object
+
+
+class PowerCycleImporterABC(PowerCycleABC, metaclass=ABCMeta):
+    """
+    Abstract base class for classes in the NET submodule of the Power
+    Cycle module that are used to import data from other Bluemira
+    modules into the Power Cycle module.
+    """
+
+    pass

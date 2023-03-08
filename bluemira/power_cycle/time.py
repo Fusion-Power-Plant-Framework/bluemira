@@ -8,6 +8,7 @@ from typing import Dict, List, Union
 
 from bluemira.power_cycle.base import PowerCycleTimeABC
 from bluemira.power_cycle.errors import PowerCyclePhaseError
+from bluemira.power_cycle.tools import validate_list
 
 
 class PowerCyclePhase(PowerCycleTimeABC):
@@ -73,8 +74,7 @@ class PowerCyclePulse(PowerCycleTimeABC):
         Validate 'phase_set' input to be a list of 'PowerCyclePhase'
         instances.
         """
-        owner = PowerCyclePulse
-        phase_set = super(owner, owner).validate_list(phase_set)
+        phase_set = validate_list(phase_set)
         for element in phase_set:
             PowerCyclePhase.validate_class(element)
         return phase_set
@@ -115,8 +115,7 @@ class PowerCycleScenario(PowerCycleTimeABC):
         Validate 'pulse_set' input to be a list of 'PowerCyclePulse'
         instances.
         """
-        owner = PowerCycleScenario
-        pulse_set = super(owner, owner).validate_list(pulse_set)
+        pulse_set = validate_list(pulse_set)
         for element in pulse_set:
             PowerCyclePulse.validate_class(element)
         return pulse_set

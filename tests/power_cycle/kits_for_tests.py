@@ -6,14 +6,48 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 import bluemira.base.constants as constants
-from bluemira.power_cycle.net_loads import LoadData, PhaseLoad, PowerLoad, PowerLoadModel
+from bluemira.power_cycle.net.loads import LoadData, PhaseLoad, PowerLoad, PowerLoadModel
 from bluemira.power_cycle.time import PowerCyclePhase, PowerCyclePulse
 from bluemira.power_cycle.tools import unnest_list, validate_axes
+
+test_data_folder_path = (
+    "tests",
+    "power_cycle",
+    "test_data",
+)
 
 
 class ToolsTestKit:
     def __init__(self):
-        pass
+
+        test_file_name = tuple(["test_file.txt"])
+        test_file_path = test_data_folder_path + test_file_name
+        self.test_file_path = os.path.join(*test_file_path)
+
+    @staticmethod
+    def build_list_of_example_arguments():
+        example_arguments = [
+            None,
+            True,  # bool
+            "some string",  # string
+            70,  # int
+            -70,  # negative int
+            1.2,  # float
+            -1.2,  # negative float
+            [True, False],  # bool list
+            (True, False),  # bool tuple
+            ["1", "2", "3", "4"],  # str list
+            ("1", "2", "3", "4"),  # str tuple
+            [1, 2, 3, 4],  # int list
+            [-1, -2, -3, -4],  # negative int list
+            (1, 2, 3, 4),  # int tuple
+            (-1, -2, -3, -4),  # negative int tuple
+            [1.2, 2.2, 3.2, 4.2],  # float list
+            [-1.2, -2.2, -3.2, -4.2],  # negative float list
+            (1.2, 2.2, 3.2, 4.2),  # float tuple
+            (-1.2, -2.2, -3.2, -4.2),  # negative float tuple
+        ]
+        return example_arguments
 
     @staticmethod
     def prepare_figure(figure_title):
@@ -332,17 +366,27 @@ class NetLoadsTestKit:
         )
 
 
+class NetImportersTestKit:
+    @staticmethod
+    def equilibria_duration_inputs():
+        possible_inputs = {
+            "desired_data": ["CS-recharge-time", "ramp-up-time", "ramp-down-time"]
+        }
+        return possible_inputs
+
+    @staticmethod
+    def pumping_duration_inputs():
+        possible_inputs = {"desired_data": ["pumpdown-time"]}
+        return possible_inputs
+
+
 class NetManagerTestKit:
     def __init__(self):
         # self.time_testkit = TimeTestKit()
 
-        pulse_json_path = (
-            "tests",
-            "power_cycle",
-            "test_data",
-            "pulse_config.json",
-        )
-        self.pulse_json_path = os.path.join(*pulse_json_path)
+        scenario_json_name = tuple(["scenario_config.json"])
+        scenario_json_path = test_data_folder_path + scenario_json_name
+        self.scenario_json_path = os.path.join(*scenario_json_path)
 
     def inputs_for_(self):
         pass
