@@ -2,8 +2,21 @@
 
 import pytest
 
-from bluemira.power_cycle.base import NetPowerABC, PowerCycleABC, PowerCycleTimeABC
-from bluemira.power_cycle.errors import NetPowerABCError, PowerCycleABCError
+from bluemira.power_cycle.base import (
+    PowerCycleABC,
+    PowerCycleImporterABC,
+    PowerCycleLoadABC,
+    PowerCycleTimeABC,
+)
+from bluemira.power_cycle.errors import PowerCycleABCError, PowerCycleLoadABCError
+from bluemira.power_cycle.tools import (
+    validate_list,
+    validate_nonnegative,
+    validate_vector,
+)
+from tests.power_cycle.kits_for_tests import ToolsTestKit
+
+tools_testkit = ToolsTestKit()
 
 
 class TestPowerCycleABC:
@@ -19,18 +32,9 @@ class TestPowerCycleABC:
         sample = self.SampleConcreteClass("A sample instance name")
         another_sample = self.SampleConcreteClass("Another name")
 
-        test_arguments = [
-            None,
-            1.2,
-            -1.2,
-            70,
-            -70,
-            "some string",
-            [1, 2, 3, 4],
-            (1, 2, 3, 4),
-            sample,
-            another_sample,
-        ]
+        test_arguments = tools_testkit.build_list_of_example_arguments()
+        test_arguments.append(sample)
+        test_arguments.append(another_sample)
 
         self.sample = sample
         self.test_arguments = test_arguments
@@ -60,48 +64,6 @@ class TestPowerCycleABC:
                 with pytest.raises(PowerCycleABCError):
                     validated_argument = sample.validate_class(argument)
 
-    def test_validate_list(self):
-        sample = self.sample
-        all_arguments = self.test_arguments
-        for argument in all_arguments:
-            validated_argument = sample.validate_list(argument)
-            assert isinstance(validated_argument, list)
-
-    def test_validate_numerical(self):
-        sample = self.sample
-        all_arguments = self.test_arguments
-        for argument in all_arguments:
-            check_int = isinstance(argument, int)
-            check_float = isinstance(argument, float)
-            if not (check_int or check_float):
-                with pytest.raises(PowerCycleABCError):
-                    argument = sample.validate_numerical(argument)
-
-    def test_validate_nonnegative(self):
-        sample = self.sample
-        all_arguments = self.test_arguments
-        for argument in all_arguments:
-            is_integer = isinstance(argument, int)
-            is_float = isinstance(argument, float)
-            is_numerical = is_integer or is_float
-            if is_numerical:
-                is_nonnegative = argument >= 0
-                if is_nonnegative:
-                    out = sample.validate_nonnegative(argument)
-                    assert out == argument
-                else:
-                    with pytest.raises(PowerCycleABCError):
-                        out = sample.validate_nonnegative(argument)
-            else:
-                with pytest.raises(PowerCycleABCError):
-                    out = sample.validate_nonnegative(argument)
-
-    def test_validate_vector(self):
-        """
-        No new functionality to be tested.
-        """
-        pass
-
 
 class TestPowerCycleTimeABC:
     class SampleConcreteClass(PowerCycleTimeABC):
@@ -116,44 +78,36 @@ class TestPowerCycleTimeABC:
         name = "A sample instance name"
         durations_list = [0, 1, 5, 10]
         sample = self.SampleConcreteClass(name, durations_list)
+
+        test_arguments = tools_testkit.build_list_of_example_arguments()
+        test_arguments.append(sample)
+
         self.sample = sample
+        self.test_arguments = test_arguments
 
     def test_constructor(self):
-        sample = self.sample
+        test_arguments = self.test_arguments
         name = "instance being created in constructor test"
-        test_arguments = [
-            None,
-            1.2,
-            -1.2,
-            70,
-            -70,
-            [0, 1, 2, 3, 4],
-            [0, -1, -2, -3, -4],
-            "some string",
-            (0, 1, 2, 3, 4),
-            (0, -1, -2, -3, -4),
-            sample,
-        ]
-
+        possible_errors = (TypeError, ValueError)
         for argument in test_arguments:
 
             # If not already, insert argument in a list, for e.g. 'sum'
-            argument_in_list = sample.validate_list(argument)
+            argument_in_list = validate_list(argument)
             try:
                 test_instance = self.SampleConcreteClass(name, argument)
                 assert test_instance.duration == sum(argument_in_list)
 
-            except (PowerCycleABCError):
-                with pytest.raises(PowerCycleABCError):
+            except possible_errors:
+                with pytest.raises(possible_errors):
                     if argument:
                         for value in argument_in_list:
-                            sample.validate_nonnegative(value)
+                            validate_nonnegative(value)
                     else:
-                        sample.validate_nonnegative(argument)
+                        validate_nonnegative(argument)
 
 
-class TestNetPowerABC:
-    class SampleConcreteClass(NetPowerABC):
+class TestPowerCycleLoadABC:
+    class SampleConcreteClass(PowerCycleLoadABC):
         """
         Inner class that is a dummy concrete class for testing the main
         abstract class of the test.
@@ -170,16 +124,9 @@ class TestNetPowerABC:
         sample = self.SampleConcreteClass("A sample instance name")
         another_sample = self.SampleConcreteClass("Another name")
 
-        test_arguments = [
-            None,
-            1.2,
-            70,
-            "some string",
-            [1, 2, 3, 4],
-            (1, 2, 3, 4),
-            sample,
-            another_sample,
-        ]
+        test_arguments = tools_testkit.build_list_of_example_arguments()
+        test_arguments.append(sample)
+        test_arguments.append(another_sample)
 
         self.sample = sample
         self.another_sample = another_sample
@@ -195,17 +142,24 @@ class TestNetPowerABC:
         sample = self.sample
         all_arguments = self.test_arguments
         for argument in all_arguments:
+            arg_is_bool = type(argument) is bool
+
+            arg_type = type(argument)
+            arg_is_numeric = (arg_type is int) or (arg_type is float)
+            if arg_is_numeric:
+                arg_is_nonnegative = argument > 0
+            else:
+                arg_is_nonnegative = False
+
             if not argument:
                 default_n_points = sample._n_points
                 validated_arg = sample._validate_n_points(argument)
                 assert validated_arg == default_n_points
-
-            elif (type(argument) is int) or (type(argument) is float):
+            elif arg_is_bool or arg_is_nonnegative:
                 validated_arg = sample._validate_n_points(argument)
                 assert isinstance(validated_arg, int)
-
             else:
-                with pytest.raises(NetPowerABCError):
+                with pytest.raises(PowerCycleLoadABCError):
                     validated_arg = sample._validate_n_points(argument)
 
     @pytest.mark.parametrize("refinement_order", range(10))
@@ -215,9 +169,10 @@ class TestNetPowerABC:
 
         for argument in test_arguments:
 
+            possible_errors = (TypeError, ValueError)
             try:
-                argument = sample.validate_vector(argument)
-            except PowerCycleABCError:
+                argument = validate_vector(argument)
+            except possible_errors:
                 return
 
             numeric_list = argument
@@ -236,17 +191,12 @@ class TestNetPowerABC:
             refined_list_length = len(refined_list)
             assert points_in_refined == refined_list_length
 
-    def test_unique_and_sorted_vector(self):
-        """
-        No new functionality to be tested.
-        """
-        pass
-
     def test_build_time_from_power_set(self):
         """
         No new functionality to be tested.
         """
-        pass
+        sample = self.sample
+        assert callable(sample._build_time_from_power_set)
 
     @pytest.mark.parametrize(
         "attribute",
@@ -264,3 +214,13 @@ class TestNetPowerABC:
         one_attr = getattr(one_sample, attribute)
         another_attr = getattr(another_sample, attribute)
         assert one_attr != another_attr
+
+
+class TestPowerCycleImporterABC:
+    class SampleConcreteClass(PowerCycleImporterABC):
+        """
+        Inner class that is a dummy concrete class for testing the main
+        abstract class of the test.
+        """
+
+        pass
