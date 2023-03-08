@@ -108,13 +108,14 @@ class TestMakePolygon:
         assert np.isclose(wire.length, 4.0)
 
     @pytest.mark.parametrize("closed", [True, False])
-    def test_closed_wire_with_points(self, closed):
+    def test_closed_wire_with_triangle_points(self, closed):
         wire = make_polygon(
-            {"x": [1, 2, 1.5, 1], "y": 0, "z": [1, 1, 2, 1]}, closed=closed
+            {"x": [1, 2, 2, 1], "y": 0, "z": [1, 1, 2, 1]}, closed=closed
         )
         assert wire.is_closed()
         assert np.isclose(wire.bounding_box.y_min, 0.0)
         assert np.isclose(wire.bounding_box.y_max, 0.0)
+        assert np.isclose(wire.length, 2 + np.sqrt(2))
 
 
 class TestSignedDistanceFunctions:
