@@ -31,7 +31,7 @@ class PowerCycleError(BluemiraError):
     def _source(self):
         class_name = self.__class__
         source_class = class_name.replace("Error", "")
-        source_class = "'" + source_class + "'"
+        source_class = f"{source_class!r}"
         return source_class
 
     @abstractmethod
@@ -56,22 +56,10 @@ class PowerCycleABCError(PowerCycleError):
                 f"instances of the {self._source} class must be of "
                 "the 'str' class."
             ),
-            "class": [
+            "class": (
                 "Invalid instance. The tested object is not an "
                 f"instance of the {self._source} class."
-            ],
-            "numerical": (
-                "Invalid value. The tested value must be an instance "
-                "of either the 'int' or 'float' classes to be "
-                "processed by this instance of a child class of the "
-                f"{self._source} class."
             ),
-            "nonnegative": [
-                "Invalid value. The tested value must be a non-"
-                "numerical negative value to be processed by this "
-                f"instance of a child class of the {self._source} "
-                "class."
-            ],
         }
         return errors
 
@@ -87,22 +75,23 @@ class PowerCycleTimeABCError(PowerCycleError):
         return errors
 
 
-class NetPowerABCError(PowerCycleError):
+class PowerCycleLoadABCError(PowerCycleError):
     """
-    Exception class for 'NetPowerABC' class of the Power Cycle module.
+    Exception class for 'PowerCycleLoadABC' class of the Power Cycle
+    module.
     """
 
     def _errors(self):
         errors = {
-            "n_points": [
+            "n_points": (
                 "The argument given for 'n_points' is not a valid "
                 f"value for plotting an instance of the {self._source} "
                 "class. Only non-negative integers are accepted."
-            ],
-            "refine_vector": [
+            ),
+            "refine_vector": (
                 "The argument given for 'vector' is not a valid "
                 "value. Only lists of numerical values are accepted."
-            ],
+            ),
         }
         return errors
 
@@ -120,7 +109,7 @@ class PowerCyclePhaseError(PowerCycleError):
 
     def _errors(self):
         errors = {
-            "breakdown": [
+            "breakdown": (
                 "The argument given for 'duration_breakdown' is not "
                 "valid. It must be a dictionary with keys that are "
                 "instances of the 'str' class. Each key should "
@@ -128,7 +117,7 @@ class PowerCyclePhaseError(PowerCycleError):
                 "dictionary that characterizes a period that composes "
                 "the full duration of an instance of the "
                 f"{self._source} class."
-            ],
+            ),
         }
         return errors
 
@@ -167,18 +156,18 @@ class LoadDataError(PowerCycleError):
 
     def _errors(self):
         errors = {
-            "increasing": [
+            "increasing": (
                 "The 'time' parameter used to create an instance of "
-                f"the {self._source} class must be an increasing list.",
-            ],
-            "sanity": [
+                f"the {self._source} class must be an increasing list."
+            ),
+            "sanity": (
                 "The attributes 'data' and 'time' of an instance of "
                 f"the {self._source} class must have the same length."
-            ],
-            "time": [
+            ),
+            "time": (
                 "The 'intrinsic_time' property of an instance of the "
                 f"{self._source} class cannot be set.",
-            ],
+            ),
         }
         return errors
 
@@ -190,27 +179,27 @@ class PowerLoadError(PowerCycleError):
 
     def _errors(self):
         errors = {
-            "model": [
+            "model": (
                 "The argument given for the attribute 'model' is not "
                 "a valid value. A model must be specified with an "
                 "instance of the 'PowerLoadModel' 'Enum' class."
-            ],
-            "sanity": [
+            ),
+            "sanity": (
                 "The attributes 'load' and 'model' of an instance of "
                 f"the {self._source} class must have the same length."
-            ],
-            "curve": [
+            ),
+            "curve": (
                 "The 'time' input used to create a curve with an "
                 f"instance of the {self._source} class must be numeric "
-                "or a list of numeric values.",
-            ],
-            "time": [
+                "or a list of numeric values."
+            ),
+            "time": (
                 "The 'intrinsic_time' property of an instance of the "
                 f"{self._source} class cannot be set; it is instead "
                 "built from the 'intrinsic_time' attributes of the "
                 "'LoadData' objects stored in the 'loaddata_set' "
                 "attribute.",
-            ],
+            ),
         }
         return errors
 
@@ -222,32 +211,32 @@ class PhaseLoadError(PowerCycleError):
 
     def _errors(self):
         errors = {
-            "normalize": [
+            "normalize": (
                 "The argument given for 'normalize' is not a valid "
                 f"value for an instance of the {self._source} class. "
                 "Each element of 'normalize' must be a boolean."
-            ],
-            "sanity": [
+            ),
+            "sanity": (
                 "The attributes 'load_set' and 'normalize' of an "
                 f"instance of the {self._source} class must have the "
                 "same length."
-            ],
-            "display_data": [
+            ),
+            "display_data": (
                 "The argument passed to the 'display_data' method of "
                 f"the {self._source} class for the input 'option' is "
                 "not valid. Only the strings 'load' and 'normal' are "
-                "accepted.",
-            ],
-            "normalized_set": [
+                "accepted."
+            ),
+            "normalized_set": (
                 "The 'normalized_set' property of an instance of the "
                 f"{self._source} class cannot be set; it is instead "
                 "calculated from the 'powerload_set' and 'phase' "
-                "attributes.",
-            ],
-            "time": [
+                "attributes."
+            ),
+            "time": (
                 "The time properties of an instance of the "
-                f"{self._source} class cannot be set.",
-            ],
+                f"{self._source} class cannot be set."
+            ),
         }
         return errors
 
@@ -259,15 +248,15 @@ class PulseLoadError(PowerCycleError):
 
     def _errors(self):
         errors = {
-            "shifted_set": [
+            "shifted_set": (
                 "The 'shifted_set' property of an instance of the "
                 f"{self._source} class cannot be set; it is instead "
-                "calculated from the 'phaseload_set' attribute.",
-            ],
-            "time": [
+                "calculated from the 'phaseload_set' attribute."
+            ),
+            "time": (
                 "The time properties of an instance of the "
-                f"{self._source} class cannot be set.",
-            ],
+                f"{self._source} class cannot be set."
+            ),
         }
         return errors
 
@@ -283,8 +272,60 @@ class ScenarioLoadError(PowerCycleError):
 
 
 # ######################################################################
+# NET IMPORTERS
+# ######################################################################
+
+
+class EquilibriaImporterError(PowerCycleError):
+    """
+    Exception class for 'EquilibriaImporter' class of the Power Cycle
+    module.
+    """
+
+    def _errors(self):
+        errors = {
+            "duration": ("Unable to import duration from 'equilibria' module."),
+        }
+        return errors
+
+
+class PumpingImporterError(PowerCycleError):
+    """
+    Exception class for 'PumpingImporter' class of the Power Cycle
+    module.
+    """
+
+    def _errors(self):
+        errors = {
+            "duration": ("Unable to import duration from 'pumping' module."),
+        }
+        return errors
+
+
+# ######################################################################
 # NET MANAGER
 # ######################################################################
+
+
+class ScenarioBuilderError(PowerCycleError):
+    """
+    Exception class for 'ScenarioBuilder' class of the Power Cycle
+    module.
+    """
+
+    def _errors(self):
+        errors = {
+            "config": (
+                "An incorrect file has been passed as 'config'. It "
+                "must be a JSON file with a structure that matches "
+                f"the 'struct' class attributes of the {self._source} "
+                "class."
+            ),
+            "import": ("Bluemira data import failed."),
+            "library": ("Requested element is not present in library."),
+            "operator": ("Breakdown for phase could not be built."),
+        }
+        return errors
 
 
 class PowerCycleSystemError(PowerCycleError):
@@ -305,17 +346,7 @@ class PowerCycleManagerError(PowerCycleError):
     """
 
     def _errors(self):
-        errors = {
-            "file": [
-                "No file exists in the specified path.",
-            ],
-            "pulse_config": [
-                "An incorrect file has been given to function as "
-                "'pulse_config'. It must be a JSON file with the "
-                "following fields: 'pulse-library', 'phase-library' "
-                "and 'breakdown-library'.",
-            ],
-        }
+        errors = {}
         return errors
 
 

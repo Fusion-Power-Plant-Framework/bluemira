@@ -1,63 +1,94 @@
 {
+    "scenario": {
+        "name": "Standard scenario",
+        "pulses": [
+            "std"
+        ],
+        "repetition": [
+            1
+        ]
+    },
     "pulse-library": {
         "std": {
             "name": "Standard pulse",
-            "phases": "['dwl', 'd2f', 'ftt', 'f2d']"
+            "phases": [
+                "dwl",
+                "d2f",
+                "ftt",
+                "f2d"
+            ]
+        },
+        "wrd": {
+            "name": "Weird pulse (for testing purposes only)",
+            "phases": [
+                "dwl",
+                "dwl",
+                "ftt",
+                "d2f",
+                "f2d"
+            ]
         }
     },
     "phase-library": {
         "dwl": {
             "name": "Dwell",
-            "breakdown": "csr | pmp"
+            "logical": "|",
+            "breakdown": [
+                "csr",
+                "pmp"
+            ]
         },
         "d2f": {
             "name": "Transition between dwell and flat-top",
-            "breakdown": "cru & bri"
+            "logical": "&",
+            "breakdown": [
+                "cru",
+                "bri"
+            ]
         },
         "ftt": {
             "name": "Flat-top",
-            "breakdown": "plb"
+            "logical": "&",
+            "breakdown": [
+                "plb"
+            ]
         },
         "f2d": {
             "name": "Transition between flat-top and dwell",
-            "breakdown": "brt & crd"
+            "logical": "&",
+            "breakdown": [
+                "brt",
+                "crd"
+            ]
         }
     },
     "breakdown-library": {
         "csr": {
             "name": "Central Solenoid recharge",
-            "module": "None",
+            "module": "equilibria",
             "variables_map": {
-                "duration": 5,
-                "unit": "minute",
-                "reference": "?"
+                "desired_data": "CS-recharge-time"
             }
         },
         "pmp": {
             "name": "Reactor pump-down",
-            "module": "None",
+            "module": "pumping",
             "variables_map": {
-                "duration": 10,
-                "unit": "minute",
-                "reference": "?"
+                "desired_data": "pumpdown-time"
             }
         },
         "cru": {
             "name": "Current ramp-up",
-            "module": "None",
+            "module": "equilibria",
             "variables_map": {
-                "duration": 157,
-                "unit": "second",
-                "reference": "?"
+                "desired_data": "ramp-up-time"
             }
         },
         "crd": {
             "name": "Current ramp-down",
-            "module": "None",
+            "module": "equilibria",
             "variables_map": {
-                "duration": 157,
-                "unit": "second",
-                "reference": "?"
+                "desired_data": "ramp-down-time"
             }
         },
         "bri": {

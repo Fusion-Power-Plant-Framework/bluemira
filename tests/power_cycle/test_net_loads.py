@@ -12,7 +12,7 @@ from bluemira.power_cycle.errors import (
     PowerLoadError,
     PulseLoadError,
 )
-from bluemira.power_cycle.net_loads import (
+from bluemira.power_cycle.net.loads import (
     LoadData,
     PhaseLoad,
     PowerLoad,
