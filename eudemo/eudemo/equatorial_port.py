@@ -180,6 +180,7 @@ class EquatorialPortBuilder(Builder):
         Build the xyz components of the equatorial port
         """
         sections = []
+        coords.transpose()
 
         for r in coords:
             x = r[0]
