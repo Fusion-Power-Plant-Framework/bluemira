@@ -218,7 +218,7 @@ def closed_wire_wrapper(drop_closure_point):
                     )
                 closed = True
                 if drop_closure_point:
-                    points = Coordinates(points.points[:-1])
+                    points = Coordinates(np.array(points.points[:-1]).T)
             wire = func(points, label=label, closed=closed)
             if closed:
                 wire = cadapi.close_wire(wire)
