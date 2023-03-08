@@ -24,10 +24,80 @@ import os
 import numpy as np
 import pytest
 
+from bluemira.equilibria.shapes import JohnerLCFS
 from bluemira.geometry.parameterisations import PrincetonD
-from eudemo.ivc.panelling import make_pivoted_string
+from bluemira.geometry.tools import boolean_cut, find_clockwise_angle_2d, make_polygon
+from eudemo.ivc._paneller import make_pivoted_string
+from eudemo.ivc.panelling import PanellingDesigner
 
 DATA_DIR = os.path.join(os.path.dirname(__file__), "data")
+
+
+class TestPanellingDesigner:
+    @classmethod
+    def setup_class(cls):
+        cls.wall_boundary = make_cut_wall()
+
+    @pytest.mark.parametrize("mode", ["mock", "run"])
+    # @pytest.mark.parametrize("max_angle", [10, 15, 20, 50])
+    @pytest.mark.parametrize("max_angle", [20])
+    def test_all_angles_lt_max_angle(self, mode, max_angle):
+        params = {
+            "panelling_max_angle": {"value": 20, "unit": "degrees"},
+            "panelling_min_segment_len": {"value": 0.5, "unit": "m"},
+            "panelling_max_segment_len": {"value": 2.5, "unit": "m"},
+        }
+        designer = PanellingDesigner(params, self.wall_boundary)
+
+        panel_edges: np.ndarray = getattr(designer, mode)()
+
+        import matplotlib.pyplot as plt
+
+        from bluemira.display import plot_2d
+
+        panel_vecs = np.diff(panel_edges).T
+        angles = []
+        for i in range(len(panel_vecs) - 1):
+            angles.append(find_clockwise_angle_2d(panel_vecs[i], panel_vecs[i + 1]))
+        print(f"angles: {angles}")
+
+        _, ax = plt.subplots()
+        plot_2d(self.wall_boundary, show=False, ax=ax)
+        ax.plot(panel_edges[0], panel_edges[1], "--x", linewidth=0.5, color="r")
+        plt.show()
+
+        assert np.testing.assert_array_less(angles, max_angle)
+
+    def test_panels_fully_enclose_wall_boundary(self):
+        pass
+
+    def test_end_of_panels_at_end_of_boundary(self):
+        pass
+
+
+def make_cut_wall():
+    """
+    Makes a wall shape and cuts it below a (fictional) x-point.
+
+    As this is for testing, we just use a JohnerLCFS with a slightly
+    larger radius than default, then cut it below a z-coordinate that
+    might be the x-point in an equilibrium.
+    """
+    johner_wire = JohnerLCFS(var_dict={"r_0": {"value": 10.5}}).create_shape()
+    # Cut 1/4 of the way up
+    bbox = johner_wire.bounding_box
+    z_cut_coord = 1 / 4 * (bbox.z_max - bbox.z_min) + bbox.z_min
+    cutting_box = np.array(
+        [
+            [bbox.x_min - 1, 0, bbox.z_min - 1],
+            [bbox.x_min - 1, 0, z_cut_coord],
+            [bbox.x_max + 1, 0, z_cut_coord],
+            [bbox.x_max + 1, 0, bbox.z_min - 1],
+            [bbox.x_min - 1, 0, bbox.z_min - 1],
+        ]
+    )
+    pieces = boolean_cut(johner_wire, [make_polygon(cutting_box, closed=True)])
+    return pieces[np.argmax([p.center_of_mass[2] for p in pieces])]
 
 
 class TestMakePivotedString:

@@ -21,120 +21,81 @@
 """Designer, builder, and tools for wall panelling."""
 
 from dataclasses import dataclass
-from itertools import count
-from typing import Dict, Optional, Tuple, Union
+from typing import Dict, Optional, Union
 
 import numpy as np
 
 from bluemira.base.designer import Designer
 from bluemira.base.parameter_frame import Parameter, ParameterFrame
 from bluemira.geometry.wire import BluemiraWire
-
-DEG_TO_RAD = np.pi / 180
+from bluemira.utilities.optimiser import Optimiser
+from eudemo.ivc._paneller import Paneller, PanellingOptProblem
 
 
 @dataclass
 class PanellingDesignerParams(ParameterFrame):
     panelling_max_angle: Parameter[float]
+    """The maximum angle formed between adjacent panels [degrees]."""
     panelling_min_segment_len: Parameter[float]
+    """The minimum length for an individual panel [m]."""
     panelling_max_segment_len: Parameter[float]
+    """The maximum length for an individual panel [m]."""
 
 
-class PanellingDesigner(Designer[BluemiraWire]):
+class PanellingDesigner(Designer[np.ndarray]):
+    r"""
+    Design the shape for panels of the first wall.
 
-    param_class = PanellingDesignerParams
+    The panel design's objective is to minimise the cumulative panel
+    length (minimising the amount of material required).
+
+    Parameters
+    ----------
+    params
+        The parameters for the panelling design problem. See
+        :class:`~.PanellingDesignerParams` for the required parameters.
+    wall_boundary
+        The boundary of the first wall to build the panels around. Note
+        that this designer constructs panels around the *outside* of the
+        given wall boundary; i.e., the panels enclose the wall.
+    build_config
+        Configuration options for the designer:
+
+        * algorithm: str
+            The optimisation algorithm to use (default: ``'COBYLA'``\).
+        * opt_conditions: Dict[str, Union[float, int]]
+            The stopping conditions for the optimiser
+            (default: ``{"max_eval": 400, "ftol_rel": 1e-4}``\).
+
+    """
+
+    param_cls = PanellingDesignerParams
 
     def __init__(
         self,
-        params: Union[Dict, ParameterFrame],
+        params: Union[Dict, PanellingDesignerParams, ParameterFrame],
         wall_boundary: BluemiraWire,
         build_config: Optional[Dict] = None,
     ):
         super().__init__(params, build_config)
+        self._default_opt_conditions = {"max_eval": 400, "ftol_rel": 1e-4}
         self.wall_boundary = wall_boundary
 
-    def run(self) -> BluemiraWire:
-        boundary_points = self.wall_boundary.discretize(byedges=True)
-
-
-def make_pivoted_string(
-    boundary_points: np.ndarray,
-    max_angle: float = 10,
-    dx_min: float = 0,
-    dx_max: float = np.inf,
-) -> Tuple[np.ndarray, np.ndarray]:
-    """
-    Generate a set of pivot points along the given boundary.
-
-    Given a set of boundary points, some maximum angle, and minimum and
-    maximum segment length, this function derives a set of pivot points
-    along the boundary, that define a 'string'. You might picture a
-    'string' as a thread wrapped around some nails (pivot points) on a
-    board.
-
-    Parameters
-    ----------
-    points
-        The coordinates (in 3D) of the pivot points. Must have shape
-        (N, 3) where N is the number of boundary points.
-    max_angle
-        The maximum angle between neighbouring pivot points.
-    dx_min
-        The minimum distance between pivot points.
-    dx_max
-        The maximum distance between pivot points.
-
-    Returns
-    -------
-    new_points
-        The pivot points' coordinates. Has shape (M, 3), where M is the
-        number of pivot points.
-    index
-        The indices of the pivot points into the input points.
-    """
-    if dx_min > dx_max:
-        raise ValueError(
-            f"'dx_min' cannot be greater than 'dx_max': '{dx_min} > {dx_max}'"
+    def run(self) -> np.ndarray:
+        boundary = self.wall_boundary.discretize(byedges=True)
+        paneller = Paneller(boundary.x, boundary.z, 20, 0.5, 2.5)
+        optimiser = Optimiser(
+            self.build_config.get("algorithm", "COBYLA"),
+            n_variables=paneller.n_opt,
+            opt_conditions=self.build_config.get(
+                "opt_conditions", self._default_opt_conditions
+            ),
         )
-    tangent_vec = boundary_points[1:] - boundary_points[:-1]
-    tangent_vec_norm = np.linalg.norm(tangent_vec, axis=1)
-    # Protect against dividing by zero
-    tangent_vec_norm[tangent_vec_norm == 0] = 1e-32
-    average_step_length = np.median(tangent_vec_norm)
-    tangent_vec /= tangent_vec_norm.reshape(-1, 1) * np.ones(
-        (1, np.shape(tangent_vec)[1])
-    )
+        opt_problem = PanellingOptProblem(paneller, optimiser)
+        x_opt = opt_problem.optimise()
+        return paneller.corners(x_opt)[0].T
 
-    new_points = np.zeros_like(boundary_points)
-    index = np.zeros(boundary_points.shape[0], dtype=int)
-    delta_x = np.zeros_like(boundary_points)
-    delta_turn = np.zeros_like(boundary_points)
-
-    new_points[0] = boundary_points[0]
-    to, po = tangent_vec[0], boundary_points[0]
-
-    k = count(1)
-    for i, (p, t) in enumerate(zip(boundary_points[1:], tangent_vec)):
-        c = np.cross(to, t)
-        c_mag = np.linalg.norm(c)
-        dx = np.linalg.norm(p - po)  # segment length
-        if (
-            c_mag > np.sin(max_angle * DEG_TO_RAD) and dx > dx_min
-        ) or dx + average_step_length > dx_max:
-            j = next(k)
-            new_points[j] = boundary_points[i]  # pivot point
-            index[j] = i + 1  # pivot index
-            delta_x[j - 1] = dx  # panel length
-            delta_turn[j - 1] = np.arcsin(c_mag) / DEG_TO_RAD
-            to, po = t, p  # update
-    if dx > dx_min:
-        j = next(k)
-        delta_x[j - 1] = dx  # last segment length
-    else:
-        delta_x[j - 1] += dx  # last segment length
-    new_points[j] = p  # replace/append last point
-    index[j] = i + 1  # replace/append last point index
-    new_points = new_points[: j + 1]  # trim
-    index = index[: j + 1]  # trim
-    delta_x = delta_x[:j]  # trim
-    return new_points, index
+    def mock(self) -> np.ndarray:
+        boundary = self.wall_boundary.discretize(byedges=True)
+        paneller = Paneller(boundary.x, boundary.z, 20, 0.5, 2.5)
+        return paneller.corners(paneller.x_opt)[0].T

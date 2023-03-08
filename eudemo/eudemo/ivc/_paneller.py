@@ -1,3 +1,4 @@
+from itertools import count
 from typing import List, Tuple
 
 import numpy as np
@@ -10,7 +11,8 @@ from bluemira.utilities.opt_problems import (
     OptimisationProblem,
 )
 from bluemira.utilities.optimiser import Optimiser, approx_derivative
-from eudemo.ivc.panelling import make_pivoted_string
+
+DEG_TO_RAD = np.pi / 180
 
 
 class Paneller:
@@ -73,8 +75,6 @@ class Paneller:
         length = self.length(x, 0)
         if grad.size > 0:
             grad[:] = approx_derivative(self.length, x, bounds=self.bounds, args=(0,))
-            # grad[:] = approx_fprime(x, self.length, 1e-6, self.bounds, 0)
-        print(f"\n{self.it}.\n   x: {x}\n   f: {length}\n   g: {grad}")
         self.it += 1
         return length
 
@@ -87,14 +87,6 @@ class Paneller:
                 grad[i, i + 1] = 1
 
             for i in range(2 * self.n_opt + 4):
-                # grad[self.n_opt - 1 + i, :] = approx_fprime(
-                #     x,
-                #     self.set_min_max_constraints,
-                #     1e-6,
-                #     self.bounds,
-                #     np.zeros(2 * self.n_opt + 4),
-                #     i,
-                # )
                 grad[self.n_opt - 1 + i, :] = approx_derivative(
                     self.set_min_max_constraints,
                     x,
@@ -105,7 +97,6 @@ class Paneller:
         constraint[: self.n_opt - 1] = (
             x[: self.n_opt - 1] - x[1 : self.n_opt] + d_l_space
         )
-        print(f"   c: {constraint}\n  cg: {grad}")
         self.set_min_max_constraints(x, constraint[self.n_opt - 1 :], 0)
         return constraint
 
@@ -241,117 +232,88 @@ class PanellingOptProblem(OptimisationProblem):
         self.set_up_optimiser(n_variables, bounds=paneller.bounds)
 
     def optimise(self):
-        paneller.x_opt = self.opt.optimise(paneller.x_opt)
-        return paneller.x_opt
+        self.paneller.x_opt = self.opt.optimise(self.paneller.x_opt)
+        return self.paneller.x_opt
 
 
-def approx_fprime(xk, func, epsilon, bounds, *args, f0=None):
+def make_pivoted_string(
+    boundary_points: np.ndarray,
+    max_angle: float = 10,
+    dx_min: float = 0,
+    dx_max: float = np.inf,
+) -> Tuple[np.ndarray, np.ndarray]:
     """
-    An altered version of a scipy function, but with the added feature
-    of clipping the perturbed variables to be within their prescribed bounds
+    Generate a set of pivot points along the given boundary.
+
+    Given a set of boundary points, some maximum angle, and minimum and
+    maximum segment length, this function derives a set of pivot points
+    along the boundary, that define a 'string'. You might picture a
+    'string' as a thread wrapped around some nails (pivot points) on a
+    board.
 
     Parameters
     ----------
-    xk: array_like
-        The state vector at which to compute the Jacobian matrix.
-    func: callable f(x,*args)
-        The vector-valued function.
-    epsilon: float
-        The perturbation used to determine the partial derivatives.
-    bounds: array_like(len(xk), 2)
-        The bounds the variables to respect
-    args: sequence
-        Additional arguments passed to func.
-    f0: Union[float, None]
-        The initial value of the function at x=xk. If None, will be calculated
+    points
+        The coordinates (in 3D) of the pivot points. Must have shape
+        (N, 3) where N is the number of boundary points.
+    max_angle
+        The maximum angle between neighbouring pivot points.
+    dx_min
+        The minimum distance between pivot points.
+    dx_max
+        The maximum distance between pivot points.
 
     Returns
     -------
-    grad: array_like(len(func), len(xk))
-        The gradient of the func w.r.t to the perturbed variables
-
-    Notes
-    -----
-    The approximation is done using forward differences.
+    new_points
+        The pivot points' coordinates. Has shape (M, 3), where M is the
+        number of pivot points.
+    index
+        The indices of the pivot points into the input points.
     """
-    if f0 is None:
-        f0 = func(*((xk,) + args))
-
-    grad = np.zeros((len(xk),), float)
-    ei = np.zeros((len(xk),), float)
-    for i in range(len(xk)):
-        ei[i] = 1.0
-        # The delta value to add the the variable vector
-        d = epsilon * ei
-        # Clip the perturbed variable vector with the variable bounds
-        xk_d = np.clip(xk + d, bounds[0], bounds[1])
-
-        # Get the clipped length of the perturbation
-        delta = xk_d[i] - xk[i]
-
-        if delta == 0:
-            df = 0
-        else:
-            df = (func(*((xk_d,) + args)) - f0) / delta
-
-        if not np.isscalar(df):
-            try:
-                df = df.item()
-            except (ValueError, AttributeError):
-                raise ValueError(
-                    "The user-provided objective function must return a scalar value."
-                )
-        grad[i] = df
-        ei[i] = 0.0
-    return grad
-
-
-if __name__ == "__main__":
-    import matplotlib.pyplot as plt
-
-    from bluemira.display import plot_2d
-    from bluemira.geometry.tools import make_polygon
-
-    x = np.load("/home/bf2936/bluemira/code/BLUEPRINT/hull_x.npy")
-    z = np.load("/home/bf2936/bluemira/code/BLUEPRINT/hull_z.npy")
-    res_x = np.load("/home/bf2936/bluemira/code/BLUEPRINT/result_x.npy")
-    res_z = np.load("/home/bf2936/bluemira/code/BLUEPRINT/result_z.npy")
-
-    # paneller = Paneller(x, z, angle=20, dx_min=0.5, dx_max=2.5)
-
-    coords = np.array([x, np.zeros_like(x), z])
-    wire = make_polygon(coords)
-    boundary = wire.discretize(400, byedges=True)
-    paneller = Paneller(boundary.x, boundary.z, 20, 0.5, 2.5)
-
-    initial_points = paneller.corners(paneller.x_opt)[0].T
-
-    optimiser = Optimiser(
-        "COBYLA",
-        n_variables=paneller.n_opt,
-        opt_conditions={"max_eval": 400, "ftol_rel": 1e-4},  # , "xtol_rel": 1e-4},
+    if dx_min > dx_max:
+        raise ValueError(
+            f"'dx_min' cannot be greater than 'dx_max': '{dx_min} > {dx_max}'"
+        )
+    tangent_vec = boundary_points[1:] - boundary_points[:-1]
+    tangent_vec_norm = np.linalg.norm(tangent_vec, axis=1)
+    # Protect against dividing by zero
+    tangent_vec_norm[tangent_vec_norm == 0] = 1e-32
+    average_step_length = np.median(tangent_vec_norm)
+    tangent_vec /= tangent_vec_norm.reshape(-1, 1) * np.ones(
+        (1, np.shape(tangent_vec)[1])
     )
-    opt_problem = PanellingOptProblem(paneller, optimiser)
-    x_opt = opt_problem.optimise()
 
-    points = paneller.corners(x_opt)[0].T
+    new_points = np.zeros_like(boundary_points)
+    index = np.zeros(boundary_points.shape[0], dtype=int)
+    delta_x = np.zeros_like(boundary_points)
+    delta_turn = np.zeros_like(boundary_points)
 
-    print("Initial and optimised equal:", np.allclose(initial_points, points))
-    print("Equal to BLUEPRINT:", np.allclose(points, np.vstack([res_x, res_z])))
-    print("BLUEPRINT len:", length(res_x, res_z)[-1])
-    print(" bluemira len:", length(points[0], points[1])[-1])
+    new_points[0] = boundary_points[0]
+    to, po = tangent_vec[0], boundary_points[0]
 
-    _, ax = plt.subplots()
-    # plot_2d(wire, ax=ax, show=False)
-    ax.plot(x, z, color="k")
-    # ax.plot(initial_points[0], initial_points[1], "-o", color="r")
-    ax.plot(points[0], points[1], "-o", color="g")
-    ax.set_aspect("equal", adjustable="box")
-
-    _, ax2 = plt.subplots()
-    ax2.set_title("BLUEPRINT reference")
-    ax2.plot(x, z, color="k")
-    ax2.plot(res_x, res_z, "-o", color="g")
-    ax2.set_aspect("equal", adjustable="box")
-
-    plt.show()
+    k = count(1)
+    for i, (p, t) in enumerate(zip(boundary_points[1:], tangent_vec)):
+        c = np.cross(to, t)
+        c_mag = np.linalg.norm(c)
+        dx = np.linalg.norm(p - po)  # segment length
+        if (
+            c_mag > np.sin(max_angle * DEG_TO_RAD) and dx > dx_min
+        ) or dx + average_step_length > dx_max:
+            j = next(k)
+            new_points[j] = boundary_points[i]  # pivot point
+            index[j] = i + 1  # pivot index
+            delta_x[j - 1] = dx  # panel length
+            delta_turn[j - 1] = np.arcsin(c_mag) / DEG_TO_RAD
+            to, po = t, p  # update
+    if dx > dx_min:
+        j = next(k)
+        delta_x[j - 1] = dx  # last segment length
+    else:
+        delta_x[j - 1] += dx  # last segment length
+    new_points[j] = p  # replace/append last point
+    index[j] = i + 1  # replace/append last point index
+    new_points = new_points[: j + 1]  # trim
+    index = index[: j + 1]  # trim
+    delta_x = delta_x[:j]  # trim
+    return new_points, index
