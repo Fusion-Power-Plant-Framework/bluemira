@@ -20,7 +20,7 @@ from bluemira.base.parameter_frame import Parameter, ParameterFrame
 from bluemira.builders.divertor import DivertorBuilder
 from bluemira.equilibria import Equilibrium
 from bluemira.equilibria.find import find_flux_surface_through_point, get_legs
-from bluemira.geometry.tools import make_polygon
+from bluemira.geometry.tools import interpolate_bspline, make_bezier, make_polygon
 from bluemira.geometry.wire import BluemiraWire
 
 
@@ -226,8 +226,9 @@ class DivertorSilhouetteDesigner(Designer[Tuple[BluemiraWire, ...]]):
     @staticmethod
     def _make_baffle(
         label: str,
-        start: Sequence[float],
-        end: Sequence[float],
+        blanket_join_point: Sequence[float],
+        target_join_point: Sequence[float],
+        roundness: float,
     ) -> BluemiraWire:
         """
         Make a baffle.
@@ -245,8 +246,36 @@ class DivertorSilhouetteDesigner(Designer[Tuple[BluemiraWire, ...]]):
             The position (in x-z) to stop drawing the baffle, e.g., the
             position to the upper part of the first wall.
         """
-        return make_polygon(
-            np.array([[start[0], end[0]], [0, 0], [start[1], end[1]]]), label=label
+        bx = blanket_join_point[0]
+        bz = blanket_join_point[1]
+        tx = target_join_point[0]
+        tz = target_join_point[1]
+
+        # The rounding Bezier point
+        rounding_x = ((tx - bx) * roundness + tx + bx) / 2
+        rounding_z = ((bz - tz) * roundness + bz + tz) / 2
+
+        b_tang = ((tx - bx) * roundness + bx, 0, bz)
+        t_tang = (tx, 0, (tz - bz) * roundness + tz)
+
+        return interpolate_bspline(
+            np.array([
+                [bx, tx],
+                [0, 0],
+                [bz, tz],
+            ]),
+            start_tangent=b_tang,
+            end_tangent=t_tang,
+            label=label,
+        )
+
+        return make_bezier(
+            np.array([
+                [bx, rounding_x, tx],
+                [0, 0, 0],
+                [bz, rounding_z, tz],
+            ]),
+            label=label,
         )
 
     def make_inner_baffle(
@@ -263,8 +292,9 @@ class DivertorSilhouetteDesigner(Designer[Tuple[BluemiraWire, ...]]):
         inner_target_start = self._get_wire_end_with_largest(target, "x")
         return self._make_baffle(
             label=self.INNER_BAFFLE,
-            start=np.array([x_lim, z_lim]),
-            end=inner_target_start,
+            blanket_join_point=np.array([x_lim, z_lim]),
+            target_join_point=inner_target_start,
+            roundness=1,
         )
 
     def make_outer_baffle(
@@ -281,8 +311,9 @@ class DivertorSilhouetteDesigner(Designer[Tuple[BluemiraWire, ...]]):
         outer_target_end = self._get_wire_end_with_largest(target, "x")
         return self._make_baffle(
             label=self.OUTER_BAFFLE,
-            start=outer_target_end,
-            end=np.array([x_lim, z_lim]),
+            blanket_join_point=np.array([x_lim, z_lim]),
+            target_join_point=outer_target_end,
+            roundness=1,
         )
 
     def _get_sols_for_leg(
