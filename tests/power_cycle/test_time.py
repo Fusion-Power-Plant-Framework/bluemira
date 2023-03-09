@@ -1,7 +1,6 @@
 # COPYRIGHT PLACEHOLDER
 
 import copy
-import re
 
 import pytest
 
@@ -12,7 +11,7 @@ from bluemira.power_cycle.time import (
     PowerCycleScenario,
     ScenarioBuilder,
 )
-from tests.power_cycle.kits_for_tests import TimeTestKit
+from tests.power_cycle.kits_for_tests import TimeTestKit, assert_value_is_nonnegative
 
 time_testkit = TimeTestKit()
 
@@ -271,26 +270,36 @@ class TestScenarioBuilder:
             with pytest.raises(ScenarioBuilderError):
                 wrong_configs = sample._validate_config(wrong_contents)
 
-    def test_import_duration(self):
-        """
-        importer_class = self.importer_class
-        import_parameters = self.import_parameters
-        available_modules = import_parameters.keys()
+    @pytest.mark.parametrize(
+        "test_module", ["None", "equilibria", "pumping", "not-implemented_importer"]
+    )
+    def test_import_duration(self, test_module):
+        scenario_json_contents = self.scenario_json_contents
 
-        for module in available_modules:
-            variable_map = import_parameters[module]
-            duration = importer_class.duration_from_module(module, variable_map)
-            self.assert_value_is_nonnegative(duration)
+        tested_class = ScenarioBuilder
+        breakdown_library = scenario_json_contents["breakdown-library"]
 
-        unavailable_module = "not-implemented"
-        example_variable_map = dict()
-        with pytest.raises(PowerCycleImporterError):
-            duration = importer_class.duration_from_module(
-                unavailable_module,
-                example_variable_map,
+        element_with_module_none = "plb"
+        if test_module == "None":
+            element_config = breakdown_library[element_with_module_none]
+            variables_map = element_config["variables_map"]
+            duration = tested_class.import_duration(
+                test_module,
+                variables_map,
             )
-        """
-        pass
+            assert_value_is_nonnegative(duration)
+
+        elif test_module == "not-implemented_importer":
+            variable_map = None
+            with pytest.raises(ScenarioBuilderError):
+                duration = tested_class.import_duration(
+                    test_module,
+                    variable_map,
+                )
+
+        else:
+            duration_comes_from_importer_class = True
+            assert duration_comes_from_importer_class
 
     def test_build_breakdown_library(self):
         """

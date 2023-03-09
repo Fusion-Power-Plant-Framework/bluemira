@@ -4,20 +4,12 @@ import pytest
 
 from bluemira.power_cycle.errors import EquilibriaImporterError, PumpingImporterError
 from bluemira.power_cycle.net.importers import EquilibriaImporter, PumpingImporter
-from bluemira.power_cycle.tools import validate_nonnegative
-from tests.power_cycle.kits_for_tests import NetImportersTestKit
+from tests.power_cycle.kits_for_tests import (
+    NetImportersTestKit,
+    assert_value_is_nonnegative,
+)
 
 importers_testkit = NetImportersTestKit()
-
-
-def assert_value_is_nonnegative(argument):
-    possible_errors = (TypeError, ValueError)
-    try:
-        validate_nonnegative(argument)
-    except possible_errors:
-        assert False
-    else:
-        assert True
 
 
 class TestEquilibriaImporter:
