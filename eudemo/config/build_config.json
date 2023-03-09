@@ -80,7 +80,7 @@
         "Divertor silhouette": {}
     },
     "TF coils": {
-        "param_class": "PolySpline",
+        "param_class": "eudemo.tf_coils.tf_coil_parameterisations::TFCoilPolySpline",
         "variables_map": {},
         "run_mode": "run",
         "file_path": "config/TFCoilDesign.json",

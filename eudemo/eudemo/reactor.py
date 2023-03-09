@@ -67,7 +67,6 @@ from eudemo.equilibria import (
     FixedEquilibriumDesigner,
     FreeBoundaryEquilibriumFromFixedDesigner,
 )
-from eudemo.eudemo.tf_coils.tf_coils import TFCoil, TFCoilBuilder, TFCoilDesigner
 from eudemo.ivc import design_ivc
 from eudemo.ivc.divertor_silhouette import Divertor
 from eudemo.maintenance.upper_port import UpperPortDesigner
@@ -75,6 +74,7 @@ from eudemo.params import EUDEMOReactorParams
 from eudemo.pf_coils import PFCoil, PFCoilsDesigner
 from eudemo.power_cycle import SteadyStatePowerCycleSolver
 from eudemo.radial_build import radial_build
+from eudemo.tf_coils.tf_coils import TFCoil, TFCoilBuilder, TFCoilDesigner
 from eudemo.vacuum_vessel import VacuumVessel, VacuumVesselBuilder
 
 CONFIG_DIR = Path(__file__).parent.parent / "config"
