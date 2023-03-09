@@ -95,6 +95,17 @@ class PowerCycleTimeABC(PowerCycleABC):
             value = validate_nonnegative(value)
         return durations_list
 
+    @staticmethod
+    def _build_durations_list(power_set):
+        """
+        Build a list with the 'duration' attribute of each element in
+        the 'power_set' list.
+        """
+        durations_list = []
+        for element in power_set:
+            durations_list.append(element.duration)
+        return durations_list
+
 
 class PowerCycleLoadABC(PowerCycleABC, metaclass=ABCMeta):
     """

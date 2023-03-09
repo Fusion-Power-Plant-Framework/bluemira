@@ -63,7 +63,10 @@ class ToolsTestKit:
 
 class TimeTestKit:
     def __init__(self):
-        pass
+
+        scenario_json_name = tuple(["scenario_config.json"])
+        scenario_json_path = test_data_folder_path + scenario_json_name
+        self.scenario_json_path = os.path.join(*scenario_json_path)
 
     def inputs_for_phase(self):
         """
@@ -370,23 +373,30 @@ class NetImportersTestKit:
     @staticmethod
     def equilibria_duration_inputs():
         possible_inputs = {
-            "desired_data": ["CS-recharge-time", "ramp-up-time", "ramp-down-time"]
+            "desired_data": [
+                "CS-recharge-time",
+                "ramp-up-time",
+                "ramp-down-time",
+            ]
         }
         return possible_inputs
 
     @staticmethod
     def pumping_duration_inputs():
-        possible_inputs = {"desired_data": ["pumpdown-time"]}
+        possible_inputs = {
+            "desired_data": [
+                "pumpdown-time",
+            ]
+        }
         return possible_inputs
 
 
 class NetManagerTestKit:
     def __init__(self):
         # self.time_testkit = TimeTestKit()
-
-        scenario_json_name = tuple(["scenario_config.json"])
-        scenario_json_path = test_data_folder_path + scenario_json_name
-        self.scenario_json_path = os.path.join(*scenario_json_path)
+        manager_json_name = tuple(["manager_config.json"])
+        manager_json_path = test_data_folder_path + manager_json_name
+        self.manager_json_path = os.path.join(*manager_json_path)
 
     def inputs_for_(self):
         pass

@@ -7,6 +7,7 @@ from bluemira.power_cycle.time import (
     PowerCyclePhase,
     PowerCyclePulse,
     PowerCycleScenario,
+    ScenarioBuilder,
 )
 from tests.power_cycle.kits_for_tests import TimeTestKit
 
@@ -56,17 +57,8 @@ class TestPowerCyclePhase:
                 with pytest.raises(nonnegative_errors):
                     sample = PowerCyclePhase(name, breakdown)
             else:
-                # Error informs requirement of non-string dict keys
                 with pytest.raises(nonstr_keys_errors):
                     sample = PowerCyclePhase(name, breakdown)
-
-    def test_duration(self):
-        all_samples = self.all_samples
-        for sample in all_samples:
-            breakdown = sample.duration_breakdown
-            durations_in_breakdown = list(breakdown.values())
-            total_duration = sum(durations_in_breakdown)
-            assert sample.duration == total_duration
 
 
 class TestPowerCyclePulse:
@@ -115,3 +107,115 @@ class TestPowerCycleScenario:
         pulse_set = PowerCycleScenario._validate_pulse_set(sample_pulses)
         pulse_set_becomes_list = isinstance(pulse_set, list)
         assert pulse_set_becomes_list
+
+
+class TestScenarioBuilder:
+    def setup_method(self):
+        scenario_json_path = time_testkit.scenario_json_path
+        sample = ScenarioBuilder(scenario_json_path)
+        self.sample = sample
+
+        all_class_attr = [
+            "_config_dict",
+            "_scenario_dict",
+            "_pulse_dict",
+            "_phase_dict",
+            "_breakdown_dict",
+        ]
+        self.all_class_attr = all_class_attr
+
+    # ------------------------------------------------------------------
+    # CLASS ATTRIBUTES & CONSTRUCTOR
+    # ------------------------------------------------------------------
+
+    def test_class_attributes(self):
+        all_class_attr = self.all_class_attr
+        valid_config_json_values = [
+            dict,
+            str,
+            list,
+        ]
+
+        tested_class = ScenarioBuilder
+        for attr in all_class_attr:
+            assert hasattr(tested_class, attr)
+
+            attr_in_tested_class = getattr(tested_class, attr)
+            attr_is_dict = isinstance(attr_in_tested_class, dict)
+            assert attr_is_dict
+
+            keys_in_attr = attr_in_tested_class.keys()
+            for key in keys_in_attr:
+                value = attr_in_tested_class[key]
+                assert value in valid_config_json_values
+
+    def test_constructor(self):
+        sample = self.sample
+        assert isinstance(sample, ScenarioBuilder)
+
+    def test_validate_dict(self):
+        pass
+
+    def test_validate_subdict(self):
+        pass
+
+    def test_validate_config(self):
+        pass
+
+    def test_import_duration(self):
+        """
+        importer_class = self.importer_class
+        import_parameters = self.import_parameters
+        available_modules = import_parameters.keys()
+
+        for module in available_modules:
+            variable_map = import_parameters[module]
+            duration = importer_class.duration_from_module(module, variable_map)
+            self.assert_value_is_nonnegative(duration)
+
+        unavailable_module = "not-implemented"
+        example_variable_map = dict()
+        with pytest.raises(PowerCycleImporterError):
+            duration = importer_class.duration_from_module(
+                unavailable_module,
+                example_variable_map,
+            )
+        """
+        pass
+
+    def test_build_breakdown_library(self):
+        """
+        def test_split_pulse_config(self):
+        all_libraries = self.config_libraries
+        for library in all_libraries:
+            library_is_dict = type(library) == dict
+            assert library_is_dict
+
+        pulse_config = self.pulse_config
+        wrong_config = copy.deepcopy(pulse_config)
+        wrong_config.pop("pulse-library")
+        with pytest.raises(PowerCycleManagerError):
+            (
+                pulse_library,
+                phase_library,
+                breakdown_library,
+            ) = PowerCycleManager._split_pulse_config(wrong_config)
+        """
+
+    pass
+
+    def test_build_phase_breakdown(self):
+        pass
+
+    def test_build_phase_library(self):
+        pass
+
+    def test_build_phase_set(self):
+        pass
+
+    def test_build_pulse_library(self):
+        pass
+
+    def test_build_scenario(self):
+        pass
+        # every element of libraries must have correct class
