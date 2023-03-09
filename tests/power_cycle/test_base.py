@@ -39,19 +39,16 @@ class TestPowerCycleABC:
         self.sample = sample
         self.test_arguments = test_arguments
 
-    # ------------------------------------------------------------------
-    #  TESTS
-    # ------------------------------------------------------------------
-
-    def test_constructor(self):
+    def test_validate_name(self):
+        sample = self.sample
         all_arguments = self.test_arguments
         for argument in all_arguments:
             if isinstance(argument, str):
-                right_sample = self.SampleConcreteClass(argument)
-                assert isinstance(right_sample, PowerCycleABC)
+                validated_argument = sample._validate_name(argument)
+                assert validated_argument == argument
             else:
                 with pytest.raises(PowerCycleABCError):
-                    wrong_sample = self.SampleConcreteClass(argument)
+                    validated_argument = sample._validate_name(argument)
 
     def test_validate_class(self):
         sample = self.sample
@@ -85,13 +82,26 @@ class TestPowerCycleTimeABC:
         self.sample = sample
         self.test_arguments = test_arguments
 
+    def test_validate_durations(self):
+        """
+        No new functionality to be tested.
+        """
+        sample = self.sample
+        assert callable(sample._validate_durations)
+
+    def test_build_durations_list(self):
+        """
+        No new functionality to be tested.
+        """
+        sample = self.sample
+        assert callable(sample._build_durations_list)
+
     def test_constructor(self):
         test_arguments = self.test_arguments
         name = "instance being created in constructor test"
         possible_errors = (TypeError, ValueError)
         for argument in test_arguments:
 
-            # If not already, insert argument in a list, for e.g. 'sum'
             argument_in_list = validate_list(argument)
             try:
                 test_instance = self.SampleConcreteClass(name, argument)
@@ -104,6 +114,12 @@ class TestPowerCycleTimeABC:
                             validate_nonnegative(value)
                     else:
                         validate_nonnegative(argument)
+
+    def test_duration(self):
+        sample = self.sample
+        durations_list = sample.durations_list
+        total_duration = sample.duration
+        assert total_duration == sum(durations_list)
 
 
 class TestPowerCycleLoadABC:
@@ -134,9 +150,10 @@ class TestPowerCycleLoadABC:
 
     def test_intrinsic_time(self):
         """
-        Abstract property.
+        No new functionality to be tested.
         """
-        pass
+        sample = self.sample
+        assert hasattr(sample, "intrinsic_time")
 
     def test_validate_n_points(self):
         sample = self.sample
