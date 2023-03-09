@@ -271,7 +271,13 @@ class TestScenarioBuilder:
                 wrong_configs = sample._validate_config(wrong_contents)
 
     @pytest.mark.parametrize(
-        "test_module", ["None", "equilibria", "pumping", "not-implemented_importer"]
+        "test_module",
+        [
+            "None",
+            "equilibria",
+            "pumping",
+            "not-implemented_importer",
+        ],
     )
     def test_import_duration(self, test_module):
         scenario_json_contents = self.scenario_json_contents
