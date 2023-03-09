@@ -663,13 +663,28 @@ class TFCoilBuilder(Builder):
 
         # Cut away straight sweep before fusing to protect against degenerate faces
         # Keep the largest piece
-        pieces = boolean_cut(solid, inboard_casing)
-        solid = max(pieces, key=lambda x: x.volume)
+        try:
+            pieces = boolean_cut(solid, inboard_casing)
+            solid = max(pieces, key=lambda x: x.volume)
+        except:  # Part.OCCError :/
+            from bluemira.base.look_and_feel import bluemira_warn
+
+            bluemira_warn(
+                "Boolean cut operation failed on TF coil, things are likely going to go to shit real soon."
+            )
+            pass
 
         case_solid = boolean_fuse([solid, inboard_casing, joiner_top, joiner_bottom])
         case_solid_hollow = boolean_cut(
             case_solid, BluemiraSolid(ins_solid.boundary[0])
         )[0]
+        from bluemira.display import show_cad
+        from bluemira.display.displayer import DisplayCADOptions
+
+        show_cad(case_solid)
+        print(f"{case_solid.is_valid()}")
+        show_cad(case_solid_hollow, options=DisplayCADOptions(transparency=0.5))
+        print(f"{case_solid_hollow.is_valid()}")
 
         casing = PhysicalComponent(self.CASING, case_solid_hollow)
         casing.display_cad_options.color = BLUE_PALETTE["TF"][0]

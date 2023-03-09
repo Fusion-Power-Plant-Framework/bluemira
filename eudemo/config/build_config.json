@@ -1,6 +1,6 @@
 {
     "Radial build": {
-        "run_mode": "mock",
+        "run_mode": "run",
         "read_dir": "config/",
         "run_dir": "config/",
         "plot": false
@@ -86,7 +86,7 @@
     "TF coils": {
         "param_class": "TripleArc",
         "variables_map": {},
-        "run_mode": "run",
+        "run_mode": "read",
         "file_path": "config/TFCoilDesign.json",
         "problem_class": "bluemira.builders.tf_coils::RippleConstrainedLengthGOP",
         "problem_settings": {
