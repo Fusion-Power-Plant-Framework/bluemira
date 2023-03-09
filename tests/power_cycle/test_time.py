@@ -162,7 +162,11 @@ class TestScenarioBuilder:
         pass
 
     def test_validate_subdict(self):
-        pass
+        """
+        No new functionality to be tested.
+        """
+        sample = self.sample
+        assert callable(sample._validate_subdict)
 
     def test_validate_config(self):
         sample = self.sample
