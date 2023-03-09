@@ -20,7 +20,13 @@ from bluemira.base.parameter_frame import Parameter, ParameterFrame
 from bluemira.builders.divertor import DivertorBuilder
 from bluemira.equilibria import Equilibrium
 from bluemira.equilibria.find import find_flux_surface_through_point, get_legs
-from bluemira.geometry.tools import interpolate_bspline, make_bezier, make_polygon
+from bluemira.geometry.tools import (
+    interpolate_bspline,
+    make_bezier,
+    make_circle,
+    make_ellipse,
+    make_polygon,
+)
 from bluemira.geometry.wire import BluemiraWire
 
 
@@ -228,7 +234,6 @@ class DivertorSilhouetteDesigner(Designer[Tuple[BluemiraWire, ...]]):
         label: str,
         blanket_join_point: Sequence[float],
         target_join_point: Sequence[float],
-        roundness: float,
     ) -> BluemiraWire:
         """
         Make a baffle.
@@ -251,30 +256,39 @@ class DivertorSilhouetteDesigner(Designer[Tuple[BluemiraWire, ...]]):
         tx = target_join_point[0]
         tz = target_join_point[1]
 
-        # The rounding Bezier point
-        rounding_x = ((tx - bx) * roundness + tx + bx) / 2
-        rounding_z = ((bz - tz) * roundness + bz + tz) / 2
+        center_point = (bx, 0, tz)
 
-        b_tang = ((tx - bx) * roundness + bx, 0, bz)
-        t_tang = (tx, 0, (tz - bz) * roundness + tz)
+        radius_to_target = abs(center_point[0] - tx)
+        radius_to_blanket = abs(center_point[2] - bz)
 
-        return interpolate_bspline(
-            np.array([
-                [bx, tx],
-                [0, 0],
-                [bz, tz],
-            ]),
-            start_tangent=b_tang,
-            end_tangent=t_tang,
-            label=label,
-        )
+        axis_to_blanket = (0, 0, 1)
+        axis_to_target = (1, 0, 0)
 
-        return make_bezier(
-            np.array([
-                [bx, rounding_x, tx],
-                [0, 0, 0],
-                [bz, rounding_z, tz],
-            ]),
+        target_on_left = tx < bx
+        if target_on_left:
+            axis_to_target = (-1, 0, 0)
+
+        if radius_to_blanket < radius_to_target:
+            major_radius = radius_to_target
+            major_axis = axis_to_target
+
+            minor_radius = radius_to_blanket
+            minor_axis = axis_to_blanket
+        else:
+            major_radius = radius_to_blanket
+            major_axis = axis_to_blanket
+
+            minor_radius = radius_to_target
+            minor_axis = axis_to_target
+
+        return make_ellipse(
+            center=center_point,
+            major_radius=major_radius,
+            minor_radius=minor_radius,
+            major_axis=major_axis,
+            minor_axis=minor_axis,
+            start_angle=0,
+            end_angle=90,
             label=label,
         )
 
@@ -294,7 +308,6 @@ class DivertorSilhouetteDesigner(Designer[Tuple[BluemiraWire, ...]]):
             label=self.INNER_BAFFLE,
             blanket_join_point=np.array([x_lim, z_lim]),
             target_join_point=inner_target_start,
-            roundness=1,
         )
 
     def make_outer_baffle(
@@ -313,7 +326,6 @@ class DivertorSilhouetteDesigner(Designer[Tuple[BluemiraWire, ...]]):
             label=self.OUTER_BAFFLE,
             blanket_join_point=np.array([x_lim, z_lim]),
             target_join_point=outer_target_end,
-            roundness=1,
         )
 
     def _get_sols_for_leg(
