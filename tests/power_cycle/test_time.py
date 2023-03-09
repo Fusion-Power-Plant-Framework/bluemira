@@ -116,6 +116,9 @@ class TestScenarioBuilder:
         tested_class = ScenarioBuilder
         self.tested_class = tested_class
 
+        scenario_json_path = time_testkit.scenario_json_path
+        self.scenario_json_path = scenario_json_path
+
         scenario_json_contents = time_testkit.inputs_for_builder()
         self.scenario_json_contents = scenario_json_contents
 
@@ -246,9 +249,21 @@ class TestScenarioBuilder:
                 assert value in valid_config_json_values
 
     def test_constructor(self):
-        scenario_json_path = time_testkit.scenario_json_path
+        scenario_json_path = self.scenario_json_path
         sample = ScenarioBuilder(scenario_json_path)
         assert isinstance(sample, ScenarioBuilder)
+
+        scenario = sample.scenario
+        scenario_duration = scenario.duration
+        pulse_set = scenario.pulse_set
+        for pulse in pulse_set:
+            pulse_duration = pulse.duration
+            phase_set = pulse.phase_set
+            for phase in phase_set:
+                phase_duration = phase.duration
+                assert phase_duration == sum(phase.durations_list)
+            assert pulse_duration == sum(pulse.durations_list)
+        assert scenario_duration == sum(scenario.durations_list)
 
     @staticmethod
     def copy_dict_with_wrong_key(right_dict, key_to_substitute):
