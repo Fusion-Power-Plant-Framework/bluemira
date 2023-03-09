@@ -252,19 +252,16 @@ if __name__ == "__main__":
         raise ValueError("Params cannot be None")
     build_config = _read_json(os.path.join(CONFIG_DIR, "build_config.json"))
 
-    print(params.I_p)
     params = radial_build(params, build_config["Radial build"])
-    print(params.I_p)
     fixed_boundary_eq = run_designer(
         FixedEquilibriumDesigner, params, build_config["Fixed boundary equilibrium"]
     )
-    print(params.I_p)
+
     free_boundary_eq = run_designer(
         FreeBoundaryEquilibriumFromFixedDesigner,
         params,
         build_config["Free boundary equilibrium"],
     )
-    print(params.I_p)
 
     reactor.plasma = build_plasma(build_config.get("Plasma", {}), free_boundary_eq)
 

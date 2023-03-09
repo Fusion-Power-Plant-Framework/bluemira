@@ -23,7 +23,7 @@
 from typing import Dict, TypeVar
 
 from bluemira.base.parameter_frame import ParameterFrame
-from bluemira.codes import systems_code_solver
+from bluemira.codes import plot_radial_build, systems_code_solver
 
 _PfT = TypeVar("_PfT", bound=ParameterFrame)
 
@@ -45,7 +45,11 @@ def radial_build(params: _PfT, build_config: Dict) -> _PfT:
         Updated parameters following the solve.
     """
     run_mode = build_config.pop("run_mode", "mock")
+    plot = build_config.pop("plot", False)
     solver = systems_code_solver(params, build_config)
     new_params = solver.execute(run_mode)
+
+    if plot:
+        plot_radial_build(solver.read_directory)
     params.update_from_frame(new_params)
     return params
