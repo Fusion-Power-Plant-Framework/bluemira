@@ -3,7 +3,7 @@
         "run_mode": "mock",
         "read_dir": "config/",
         "run_dir": "config/",
-        "plot": true
+        "plot": false
     },
     "Fixed boundary equilibrium":{
         "run_mode": "read",
@@ -84,7 +84,7 @@
         "Divertor silhouette": {}
     },
     "TF coils": {
-        "param_class": "eudemo.tf_coils.tf_coil_parameterisations::TFCoilPolySpline",
+        "param_class": "TripleArc",
         "variables_map": {},
         "run_mode": "run",
         "file_path": "config/TFCoilDesign.json",

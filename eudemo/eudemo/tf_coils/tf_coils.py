@@ -355,7 +355,9 @@ class TFCoilDesigner(Designer[GeometryParameterisation]):
             bluemira_debug("Applying shape constraints")
             design_problem.apply_shape_constraints()
 
-        return design_problem.optimise(), wp_cross_section
+        result = design_problem.optimise()
+        result.to_json(self.file_path)
+        return result, wp_cross_section
 
     def read(self) -> Tuple[GeometryParameterisation, BluemiraWire]:
         """
