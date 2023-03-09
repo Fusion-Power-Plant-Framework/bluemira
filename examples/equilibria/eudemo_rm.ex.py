@@ -1,3 +1,4 @@
+# %%
 # bluemira is an integrated inter-disciplinary design tool for future fusion
 # reactors. It incorporates several modules, some of which rely on other
 # codes, to carry out a range of typical conceptual fusion reactor design
@@ -24,9 +25,9 @@ Attempt at recreating the EU-DEMO 2017 reference equilibria from a known coilset
 """
 
 # %% [markdown]
-
+#
 # # EU-DEMO 2017 reference breakdown and equilibrium benchmark
-
+#
 # with
 # - 300mw out
 # - 2 hr flat top
@@ -76,17 +77,21 @@ from bluemira.utilities.positioning import PathInterpolator, PositionMapper
 from eudemo.pf_coils.tools import make_coil_mapper, make_pf_coil_path
 
 # %% [markdown]
-
+#
 # Load the reference equilibria from EFDA_D_2MUW9R
 
 # %%
 
 plot_defaults()
 
+jupyter = True
 try:
     get_ipython().run_line_magic("matplotlib", "qt")
 except AttributeError:
-    pass
+    if "terminal" in str(type(get_ipython())):
+        jupyter = False
+except NameError:
+    jupyter = False
 
 path = get_bluemira_path("equilibria", subfolder="examples")
 name = "EUDEMO_2017_CREATE_SOF_separatrix.json"
@@ -99,8 +104,14 @@ sof_zbdry = data["zbdry"]
 
 
 # %% [markdown]
-
+#
 # Import keep out zones
+
+# %%
+if jupyter:
+    file = input("Enter file name: ")
+else:
+    file = sys.argv[1]
 
 # %%
 
@@ -108,7 +119,8 @@ sof_zbdry = data["zbdry"]
 with_koz_and_TF = True
 
 # get shapes
-xl_dict = pd.read_excel(sys.argv[1], None)
+
+xl_dict = pd.read_excel(file, None)
 
 koz_LP_k = koz_UP_k = TF_inner_k = TF_outer_k = None
 for key in xl_dict.keys():
@@ -156,7 +168,7 @@ TF_outer = raw_uc(
 ).T
 
 # %% [markdown]
-
+#
 # Make the same CoilSet as CREATE
 
 # %%
@@ -206,7 +218,7 @@ coilset.fix_sizes()
 coilset.discretisation = 0.3
 
 # %% [markdown]
-
+#
 # Define parameters
 
 # %%
@@ -248,7 +260,7 @@ CS_Fz_sep = 350e6
 grid = Grid(2, 16.0, -9.0, 9.0, 100, 100)
 
 # %% [markdown]
-
+#
 # Set up the Breakdown object
 
 # %%
@@ -286,7 +298,7 @@ breakdown_flux = breakdown.breakdown_psi * 2 * np.pi
 bluemira_print(f"Breakdown psi: {breakdown.breakdown_psi*2*np.pi:.2f} V.s")
 
 # %% [markdown]
-
+#
 # Calculate SOF and EOF plasma boundary fluxes
 
 # %%
@@ -299,7 +311,7 @@ psi_sof -= 10
 psi_eof -= 10
 
 # %% [markdown]
-
+#
 # Set up a parameterised profile
 
 # %%
@@ -532,3 +544,5 @@ if with_koz_and_TF:
         _ax.plot(*TF_outer)
 
 plt.show()
+
+# %%
