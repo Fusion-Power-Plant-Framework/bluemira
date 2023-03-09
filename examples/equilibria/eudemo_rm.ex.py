@@ -514,7 +514,22 @@ bd_opt_problem = BreakdownCOP(
     ],
 )
 
-optimised_coilset = bd_opt_problem.optimise(x0=max_currents)
+
+# cs coils to max current pf to 0
+# alternate PF
+pfs = np.zeros(eqs[0].coilset.n_coils("PF"))
+pfs[
+    (0, 2, 4),
+] = 5e6
+pfs[
+    (1, 3, 5),
+] = -5e6
+new_currents = np.concatenate(
+    [pfs, eqs[0].coilset.get_coiltype("CS").get_max_current(0)]
+)
+# new_currents = np.concatenate([np.zeros(eqs[0].coilset.n_coils("CS")), eqs[0].coilset.get_coiltype("PF").get_max_current(0), ])
+
+optimised_coilset = bd_opt_problem.optimise(x0=new_currents)
 
 breakdown_flux = breakdown.breakdown_psi * 2 * np.pi
 bluemira_print(f"Breakdown psi: {breakdown_flux:.2f} V.s")
