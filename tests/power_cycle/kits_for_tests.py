@@ -8,7 +8,7 @@ import numpy as np
 import bluemira.base.constants as constants
 from bluemira.power_cycle.net.loads import LoadData, PhaseLoad, PowerLoad, PowerLoadModel
 from bluemira.power_cycle.time import PowerCyclePhase, PowerCyclePulse
-from bluemira.power_cycle.tools import unnest_list, validate_axes
+from bluemira.power_cycle.tools import read_json, unnest_list, validate_axes
 
 test_data_folder_path = (
     "tests",
@@ -149,6 +149,11 @@ class TimeTestKit:
             n_pulses,
             input_pulses,
         )
+
+    def inputs_for_builder(self):
+        scenario_json_path = self.scenario_json_path
+        scenario_json_contents = read_json(scenario_json_path)
+        return scenario_json_contents
 
 
 class NetLoadsTestKit:

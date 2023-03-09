@@ -1,8 +1,10 @@
 # COPYRIGHT PLACEHOLDER
 
+import copy
+
 import pytest
 
-from bluemira.power_cycle.errors import PowerCyclePhaseError
+from bluemira.power_cycle.errors import PowerCyclePhaseError, ScenarioBuilderError
 from bluemira.power_cycle.time import (
     PowerCyclePhase,
     PowerCyclePulse,
@@ -111,9 +113,13 @@ class TestPowerCycleScenario:
 
 class TestScenarioBuilder:
     def setup_method(self):
+
         scenario_json_path = time_testkit.scenario_json_path
         sample = ScenarioBuilder(scenario_json_path)
         self.sample = sample
+
+        scenario_json_contents = time_testkit.inputs_for_builder()
+        self.scenario_json_contents = scenario_json_contents
 
         all_class_attr = [
             "_config_dict",
@@ -135,7 +141,6 @@ class TestScenarioBuilder:
             str,
             list,
         ]
-
         tested_class = ScenarioBuilder
         for attr in all_class_attr:
             assert hasattr(tested_class, attr)
@@ -160,7 +165,26 @@ class TestScenarioBuilder:
         pass
 
     def test_validate_config(self):
-        pass
+        sample = self.sample
+        scenario_json_contents = self.scenario_json_contents
+
+        valid_highest_level_json_keys = [
+            "scenario",
+            "pulse-library",
+            "phase-library",
+            "breakdown-library",
+        ]
+
+        all_configs = sample._validate_config(scenario_json_contents)
+        for config in all_configs:
+            config_is_dict = isinstance(config, dict)
+            assert config_is_dict
+
+        for valid_key in valid_highest_level_json_keys:
+            wrong_contents = copy.deepcopy(scenario_json_contents)
+            wrong_contents["wrong_key"] = wrong_contents.pop(valid_key)
+            with pytest.raises(ScenarioBuilderError):
+                wrong_configs = sample._validate_config(wrong_contents)
 
     def test_import_duration(self):
         """
