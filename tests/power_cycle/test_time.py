@@ -1,6 +1,7 @@
 # COPYRIGHT PLACEHOLDER
 
 import copy
+import re
 
 import pytest
 
@@ -130,6 +131,14 @@ class TestScenarioBuilder:
         ]
         self.all_class_attr = all_class_attr
 
+        highest_level_json_keys = [
+            "scenario",
+            "pulse-library",
+            "phase-library",
+            "breakdown-library",
+        ]
+        self.highest_level_json_keys = highest_level_json_keys
+
     # ------------------------------------------------------------------
     # CLASS ATTRIBUTES & CONSTRUCTOR
     # ------------------------------------------------------------------
@@ -158,8 +167,84 @@ class TestScenarioBuilder:
         sample = self.sample
         assert isinstance(sample, ScenarioBuilder)
 
+    @staticmethod
+    def copy_dict_with_wrong_key(right_dict, key_to_substitute):
+        """
+        Make deep copy of dictionary, but substitute one key
+        by the 'wrong_key' string.
+        """
+        wrong_dict = copy.deepcopy(right_dict)
+        wrong_dict["wrong_key"] = wrong_dict.pop(key_to_substitute)
+        return wrong_dict
+
+    @staticmethod
+    def copy_dict_with_wrong_value(right_dict, key, value_to_substitute):
+        """
+        Make deep copy of dictionary, but substitute the value in 'key'
+        by 'value_to_substitute'.
+        """
+        wrong_dict = copy.deepcopy(right_dict)
+        wrong_dict[key] = value_to_substitute
+        return wrong_dict
+
     def test_validate_dict(self):
-        pass
+        all_class_attr = self.all_class_attr
+        scenario_json_contents = self.scenario_json_contents
+        valid_highest_level_json_keys = self.highest_level_json_keys
+
+        tested_class = ScenarioBuilder
+        for valid_key in valid_highest_level_json_keys:
+            key_contents = scenario_json_contents[valid_key]
+
+            necessary_dict = None
+            text_before_hiphen = valid_key.split("-", 1)[0]
+            for class_attr in all_class_attr:
+                if text_before_hiphen in class_attr:
+                    necessary_dict = getattr(tested_class, class_attr)
+
+            wrong_necessary_dict = self.copy_dict_with_wrong_key(
+                necessary_dict,
+                "name",
+            )
+
+            recursion_is_needed = text_before_hiphen != "scenario"
+            if recursion_is_needed:
+
+                validated_contents = tested_class._validate_subdict(
+                    key_contents,
+                    necessary_dict,
+                )
+                with pytest.raises(ScenarioBuilderError):
+                    validated_contents = tested_class._validate_subdict(
+                        key_contents,
+                        wrong_necessary_dict,
+                    )
+
+            else:
+
+                validated_contents = tested_class._validate_dict(
+                    key_contents,
+                    necessary_dict,
+                )
+                with pytest.raises(ScenarioBuilderError):
+                    validated_contents = tested_class._validate_dict(
+                        key_contents,
+                        wrong_necessary_dict,
+                    )
+
+                wrong_contents = self.copy_dict_with_wrong_value(
+                    key_contents,
+                    "name",
+                    ["not", "a", "string"],
+                )
+                with pytest.raises(ScenarioBuilderError):
+                    validated_contents = tested_class._validate_dict(
+                        wrong_contents,
+                        necessary_dict,
+                    )
+
+            validated_contents_is_dict = isinstance(validated_contents, dict)
+            assert validated_contents_is_dict
 
     def test_validate_subdict(self):
         """
@@ -171,13 +256,7 @@ class TestScenarioBuilder:
     def test_validate_config(self):
         sample = self.sample
         scenario_json_contents = self.scenario_json_contents
-
-        valid_highest_level_json_keys = [
-            "scenario",
-            "pulse-library",
-            "phase-library",
-            "breakdown-library",
-        ]
+        valid_highest_level_json_keys = self.highest_level_json_keys
 
         all_configs = sample._validate_config(scenario_json_contents)
         for config in all_configs:
@@ -185,8 +264,10 @@ class TestScenarioBuilder:
             assert config_is_dict
 
         for valid_key in valid_highest_level_json_keys:
-            wrong_contents = copy.deepcopy(scenario_json_contents)
-            wrong_contents["wrong_key"] = wrong_contents.pop(valid_key)
+            wrong_contents = self.copy_dict_with_wrong_key(
+                scenario_json_contents,
+                valid_key,
+            )
             with pytest.raises(ScenarioBuilderError):
                 wrong_configs = sample._validate_config(wrong_contents)
 

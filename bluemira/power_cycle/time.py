@@ -228,7 +228,8 @@ class ScenarioBuilder:
 
             else:
                 raise ScenarioBuilderError(
-                    "config", f"The string {key!r} is not a valid key."
+                    "config",
+                    f"The string {key!r} is not a valid key.",
                 )
         return dictionary
 
