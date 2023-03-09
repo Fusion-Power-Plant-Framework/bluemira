@@ -62,6 +62,7 @@ from bluemira.equilibria.opt_problems import (
     BreakdownCOP,
     MinimalCurrentCOP,
     OutboardBreakdownZoneStrategy,
+    TikhonovCurrentCOP,
     UnconstrainedTikhonovCurrentGradientCOP,
 )
 from bluemira.equilibria.physics import calc_psib
@@ -86,9 +87,10 @@ plot_defaults()
 
 jupyter = True
 try:
-    get_ipython().run_line_magic("matplotlib", "qt")
+    g_ip = get_ipython()
+    g_ip.run_line_magic("matplotlib", "qt")
 except AttributeError:
-    if "terminal" in str(type(get_ipython())):
+    if "terminal" in str(type(g_ip)) or g_ip is None:
         jupyter = False
 except NameError:
     jupyter = False
@@ -383,14 +385,17 @@ for psi in [psi_sof, psi_eof]:
     ft_eq = deepcopy(reference_eq)
 
     for name in ft_eq.coilset.get_coiltype("PF").name:
-        ft_eq.coilset[name]._flag_sizefix = False
+        if name not in ["PF_3", "PF_4"]:
+            ft_eq.coilset[name]._flag_sizefix = False
 
     eqs.append(ft_eq)
     opt_problems.append(
-        MinimalCurrentCOP(
+        TikhonovCurrentCOP(
             ft_eq.coilset,
             ft_eq,
+            targets=MagneticConstraintSet([isoflux, x_point]),
             optimiser=optimiser,
+            gamma=1e-9,
             max_currents=max_currents,
             constraints=[
                 psi_boundary,
@@ -445,6 +450,8 @@ pf_coil_path = make_pf_coil_path(
     make_polygon(Coordinates({"x": TF_outer[0], "z": TF_outer[1]})), offset_val
 )
 
+
+# %%
 position_mapper = make_coil_mapper(
     pf_coil_path,
     [face_koz_UP, face_koz_LP],
@@ -457,7 +464,7 @@ position_opt_problem = PulsedNestedPositionCOP(
     coilset,
     position_mapper,
     sub_opt_problems=opt_problems,
-    optimiser=Optimiser("COBYLA", opt_conditions={"max_eval": 200, "ftol_rel": 1e-6}),
+    optimiser=Optimiser("COBYLA", opt_conditions={"max_eval": 300, "ftol_rel": 1e-6}),
     debug=False,
 )
 optimised_coilset = position_opt_problem.optimise(verbose=True)
