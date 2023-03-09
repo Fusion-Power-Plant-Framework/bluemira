@@ -26,7 +26,6 @@ import copy
 from typing import Dict
 
 from bluemira.geometry.parameterisations import PolySpline
-from bluemira.utilities.opt_variables import BoundedVariable, OptVariables
 
 
 class TFCoilPolySpline(PolySpline):
