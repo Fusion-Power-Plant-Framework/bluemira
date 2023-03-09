@@ -27,66 +27,17 @@ import pytest
 from bluemira.equilibria.shapes import JohnerLCFS
 from bluemira.geometry.parameterisations import PrincetonD
 from bluemira.geometry.tools import boolean_cut, find_clockwise_angle_2d, make_polygon
+from bluemira.geometry.wire import BluemiraWire
 from eudemo.ivc._paneller import make_pivoted_string
 from eudemo.ivc.panelling import PanellingDesigner
 
 DATA_DIR = os.path.join(os.path.dirname(__file__), "data")
 
 
-class TestPanellingDesigner:
-    @classmethod
-    def setup_class(cls):
-        cls.wall_boundary = make_cut_wall()
-
-    @pytest.mark.parametrize("mode", ["mock", "run"])
-    # @pytest.mark.parametrize("max_angle", [10, 15, 20, 50])
-    @pytest.mark.parametrize("max_angle", [20])
-    def test_all_angles_lt_max_angle(self, mode, max_angle):
-        params = {
-            "panelling_max_angle": {"value": 20, "unit": "degrees"},
-            "panelling_min_segment_len": {"value": 0.5, "unit": "m"},
-            "panelling_max_segment_len": {"value": 2.5, "unit": "m"},
-        }
-        designer = PanellingDesigner(params, self.wall_boundary)
-
-        panel_edges: np.ndarray = getattr(designer, mode)()
-
-        import matplotlib.pyplot as plt
-
-        from bluemira.display import plot_2d
-
-        panel_vecs = np.diff(panel_edges).T
-        angles = []
-        for i in range(len(panel_vecs) - 1):
-            angles.append(find_clockwise_angle_2d(panel_vecs[i], panel_vecs[i + 1]))
-        print(f"angles: {angles}")
-
-        _, ax = plt.subplots()
-        plot_2d(self.wall_boundary, show=False, ax=ax)
-        ax.plot(panel_edges[0], panel_edges[1], "--x", linewidth=0.5, color="r")
-        plt.show()
-
-        assert np.testing.assert_array_less(angles, max_angle)
-
-    def test_panels_fully_enclose_wall_boundary(self):
-        pass
-
-    def test_end_of_panels_at_end_of_boundary(self):
-        pass
-
-
-def make_cut_wall():
-    """
-    Makes a wall shape and cuts it below a (fictional) x-point.
-
-    As this is for testing, we just use a JohnerLCFS with a slightly
-    larger radius than default, then cut it below a z-coordinate that
-    might be the x-point in an equilibrium.
-    """
-    johner_wire = JohnerLCFS(var_dict={"r_0": {"value": 10.5}}).create_shape()
-    # Cut 1/4 of the way up
-    bbox = johner_wire.bounding_box
-    z_cut_coord = 1 / 4 * (bbox.z_max - bbox.z_min) + bbox.z_min
+def cut_wire_below_z(wire: BluemiraWire, proportion: float) -> BluemiraWire:
+    """Cut a wire below the z-coordinate that is 'proportion' of the height of the wire."""
+    bbox = wire.bounding_box
+    z_cut_coord = proportion * (bbox.z_max - bbox.z_min) + bbox.z_min
     cutting_box = np.array(
         [
             [bbox.x_min - 1, 0, bbox.z_min - 1],
@@ -96,8 +47,103 @@ def make_cut_wall():
             [bbox.x_min - 1, 0, bbox.z_min - 1],
         ]
     )
-    pieces = boolean_cut(johner_wire, [make_polygon(cutting_box, closed=True)])
+    pieces = boolean_cut(wire, [make_polygon(cutting_box, closed=True)])
     return pieces[np.argmax([p.center_of_mass[2] for p in pieces])]
+
+
+def make_cut_johner():
+    """
+    Make a wall shape and cut it below a (fictional) x-point.
+
+    As this is for testing, we just use a JohnerLCFS with a slightly
+    larger radius than default, then cut it below a z-coordinate that
+    might be the x-point in an equilibrium.
+    """
+    johner_wire = JohnerLCFS(var_dict={"r_0": {"value": 10.5}}).create_shape()
+    return cut_wire_below_z(johner_wire, 1 / 4)
+
+
+def make_cut_polyspline():
+    from eudemo.ivc.wall_silhouette_parameterisation import WallPolySpline
+
+    wall_wire = WallPolySpline().create_shape()
+    return cut_wire_below_z(wall_wire, 1 / 4)
+
+
+class TestPanellingDesigner:
+    @classmethod
+    def setup_class(cls):
+        cls.wall_boundary = make_cut_johner()
+
+    @pytest.mark.parametrize("mode", ["mock", "run"])
+    @pytest.mark.parametrize("max_angle", [25, 50])
+    @pytest.mark.parametrize(
+        "shape", [make_cut_johner(), make_cut_polyspline()], ids=["johner", "polyspline"]
+    )
+    def test_all_angles_lt_max_angle(self, mode, max_angle, shape):
+        params = {
+            "fw_a_max": {"value": max_angle, "unit": "degrees"},
+            "fw_dL_min": {"value": 0, "unit": "m"},
+            "fw_dL_max": {"value": 2.5, "unit": "m"},
+        }
+        designer = PanellingDesigner(params, shape)
+
+        panel_edges: np.ndarray = getattr(designer, mode)()
+
+        import matplotlib.pyplot as plt
+
+        from bluemira.display import plot_2d
+
+        panel_vecs = np.diff(panel_edges).T
+        angles = []
+        lengths = []
+        for i in range(len(panel_vecs) - 1):
+            angles.append(find_clockwise_angle_2d(panel_vecs[i], panel_vecs[i + 1]))
+            lengths.append(np.linalg.norm(panel_vecs[i] - panel_vecs[i + 1]))
+        print(f"angles: {angles}")
+        print(f"lengths: {lengths}")
+
+        _, ax = plt.subplots()
+        plot_2d(shape, show=False, ax=ax)
+        ax.plot(panel_edges[0], panel_edges[1], "--x", linewidth=0.5, color="r")
+        plt.show()
+
+        assert np.less_equal(angles, max_angle).all() or np.isclose(angles, 0).all()
+
+    @pytest.mark.parametrize("dl_min, dl_max", [[0, 5], [0.1, 2], [1, 3]])
+    @pytest.mark.parametrize(
+        "shape", [make_cut_johner(), make_cut_polyspline()], ids=["johner", "polyspline"]
+    )
+    def test_panel_lengths_in_specified_range(self, dl_min, dl_max, shape):
+        params = {
+            "fw_a_max": {"value": 90, "unit": "degrees"},
+            "fw_dL_min": {"value": dl_min, "unit": "m"},
+            "fw_dL_max": {"value": dl_max, "unit": "m"},
+        }
+        build_config = {"algorithm": "COBYLA", "opt_conditions": {"ftol_rel": 1e-5}}
+        panel_edges = PanellingDesigner(params, shape, build_config).run()
+
+        import matplotlib.pyplot as plt
+
+        from bluemira.display import plot_2d
+
+        lengths = np.sqrt(np.sum(np.diff(panel_edges.T, axis=0) ** 2, axis=1))
+        print(f"lengths: {lengths}")
+
+        _, ax = plt.subplots()
+        plot_2d(shape, show=False, ax=ax)
+        ax.plot(panel_edges[0], panel_edges[1], "--x", linewidth=0.5, color="r")
+        plt.show()
+
+        abs_tol = 1e-3
+        assert np.all(lengths >= dl_min - abs_tol)
+        assert np.all(lengths <= dl_max + abs_tol)
+
+    def test_panels_fully_enclose_wall_boundary(self):
+        pass
+
+    def test_end_of_panels_at_end_of_boundary(self):
+        pass
 
 
 class TestMakePivotedString:

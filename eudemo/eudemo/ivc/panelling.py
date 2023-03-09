@@ -34,11 +34,11 @@ from eudemo.ivc._paneller import Paneller, PanellingOptProblem
 
 @dataclass
 class PanellingDesignerParams(ParameterFrame):
-    panelling_max_angle: Parameter[float]
-    """The maximum angle formed between adjacent panels [degrees]."""
-    panelling_min_segment_len: Parameter[float]
+    fw_a_max: Parameter[float]
+    """The maximum angle of rotation between adjacent panels [degrees]."""
+    fw_dL_min: Parameter[float]
     """The minimum length for an individual panel [m]."""
-    panelling_max_segment_len: Parameter[float]
+    fw_dL_max: Parameter[float]
     """The maximum length for an individual panel [m]."""
 
 
@@ -70,6 +70,7 @@ class PanellingDesigner(Designer[np.ndarray]):
     """
 
     param_cls = PanellingDesignerParams
+    params: PanellingDesignerParams
 
     def __init__(
         self,
@@ -78,24 +79,33 @@ class PanellingDesigner(Designer[np.ndarray]):
         build_config: Optional[Dict] = None,
     ):
         super().__init__(params, build_config)
-        self._default_opt_conditions = {"max_eval": 400, "ftol_rel": 1e-4}
         self.wall_boundary = wall_boundary
 
     def run(self) -> np.ndarray:
-        boundary = self.wall_boundary.discretize(byedges=True)
-        paneller = Paneller(boundary.x, boundary.z, 20, 0.5, 2.5)
+        paneller = self._make_paneller()
         optimiser = Optimiser(
             self.build_config.get("algorithm", "COBYLA"),
             n_variables=paneller.n_opt,
             opt_conditions=self.build_config.get(
-                "opt_conditions", self._default_opt_conditions
+                "opt_conditions", {"max_eval": 1000, "ftol_rel": 1e-6}
             ),
         )
+        # change this opt problem to constrain angle and min length
         opt_problem = PanellingOptProblem(paneller, optimiser)
         x_opt = opt_problem.optimise()
         return paneller.corners(x_opt)[0].T
 
     def mock(self) -> np.ndarray:
-        boundary = self.wall_boundary.discretize(byedges=True)
-        paneller = Paneller(boundary.x, boundary.z, 20, 0.5, 2.5)
+        paneller = self._make_paneller()
         return paneller.corners(paneller.x_opt)[0].T
+
+    def _make_paneller(self) -> Paneller:
+        """Make a :class:`~.Paneller` with this designer's params."""
+        boundary = self.wall_boundary.discretize(byedges=True)
+        return Paneller(
+            boundary.x,
+            boundary.z,
+            self.params.fw_a_max.value,
+            self.params.fw_dL_min.value,
+            self.params.fw_dL_max.value,
+        )

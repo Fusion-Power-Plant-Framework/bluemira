@@ -94,8 +94,9 @@ class Paneller:
                     args=(np.zeros(2 * self.n_opt + 4), i),
                 )
 
+        # Where is the constraint on the angles?
         constraint[: self.n_opt - 1] = (
-            x[: self.n_opt - 1] - x[1 : self.n_opt] + d_l_space
+            x[: self.n_opt - 1] - x[1 : self.n_opt]  # + d_l_space
         )
         self.set_min_max_constraints(x, constraint[self.n_opt - 1 :], 0)
         return constraint
