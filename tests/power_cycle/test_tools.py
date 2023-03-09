@@ -89,7 +89,7 @@ class TestManipulationTools:
         test_file_path = tools_testkit.test_file_path
         self.test_file_path = test_file_path
 
-        scenario_json_path = manager_testkit.scenario_json_path
+        scenario_json_path = time_testkit.scenario_json_path
         self.scenario_json_path = scenario_json_path
 
     def test_unnest_list(self):
