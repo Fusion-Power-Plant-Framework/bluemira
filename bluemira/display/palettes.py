@@ -136,7 +136,8 @@ class ColorPalette:
         Create a representation of the ColorPalette
         """
         try:
-            if "terminal" in str(type(get_ipython())):
+            g_ipy = get_ipython()
+            if "terminal" in str(type(g_ipy)) or g_ipy is None:
                 return self._repr_colour_str()
         except NameError:
             return self._repr_colour_str()

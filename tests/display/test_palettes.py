@@ -38,7 +38,7 @@ class TestColorPalette:
         self.pal = ColorPalette({"C1": "#000000", "C2": "#ffffff"})
 
     def test_keys(self):
-        assert self.pal.keys() == set("C1", "C2")
+        assert self.pal.keys() == set(("C1", "C2"))
 
     def test_next(self):
         assert next(self.pal) == "#000000"
@@ -47,10 +47,10 @@ class TestColorPalette:
 
     def test_set_get_item(self):
         self.pal[0] = "#aaaaaa"
-        assert colors.to_hex(self.pal["C1"]._palette[0]) == "#aaaaaa"
+        assert colors.to_hex(self.pal["C1"][0]) == "#aaaaaa"
 
         self.pal["C1"] = "#000000"
-        assert self.pal[0] == "#000000"
+        assert self.pal["C1"][0] == "#000000"
 
     def test_repr_term(self):
         assert (
