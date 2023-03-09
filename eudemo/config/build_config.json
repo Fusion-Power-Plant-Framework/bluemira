@@ -6,7 +6,7 @@
         "plot": true
     },
     "Fixed boundary equilibrium":{
-        "run_mode": "run",
+        "run_mode": "read",
         "file_path": "config/fixed_boundary_eqdsk.json",
         "shape_config": {
             "f_delta_l": 1.45,
@@ -41,7 +41,7 @@
         }
     },
     "Free boundary equilibrium":{
-            "run_mode": "run",
+            "run_mode": "read",
             "fixed_eq_file_path": "config/fixed_boundary_eqdsk.json",
             "file_path": "config/equilibrium_eqdsk.json",
             "settings": {
@@ -68,7 +68,13 @@
             },
             "run_mode": "run",
             "name": "First Wall",
-            "problem_class": "bluemira.geometry.optimisation::MinimiseLengthGOP"
+            "problem_class": "bluemira.geometry.optimisation::MinimiseLengthGOP",
+            "optimisation_settings": {
+                "conditions": {
+                    "max_eval": 200,
+                    "ftol_rel": 1e-6
+                }
+            }
         },
         "Divertor silhouette": {}
     },
