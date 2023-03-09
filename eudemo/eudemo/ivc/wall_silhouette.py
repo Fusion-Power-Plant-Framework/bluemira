@@ -191,7 +191,12 @@ class WallSilhouetteDesigner(Designer[GeometryParameterisation]):
             shape_params[key] = val
 
         if issubclass(self.parameterisation_cls, PolySpline):
-            shape_params["height"] = {"value": self._derive_polyspline_height()}
+            height_value = self._derive_polyspline_height()
+            shape_params["height"] = {
+                "value": height_value,
+                "lower_bound": 0.8 * height_value,
+                "upper_bound": 2.0 * height_value,
+            }
 
         return shape_params
 

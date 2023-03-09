@@ -36,6 +36,7 @@ import numpy as np
 from scipy.special import iv as bessel
 
 from bluemira.display.plotter import plot_2d
+from bluemira.geometry.constants import MINIMUM_LENGTH
 from bluemira.geometry.error import GeometryParameterisationError
 from bluemira.geometry.tools import (
     interpolate_bspline,
@@ -1202,7 +1203,8 @@ class PolySpline(GeometryParameterisation):
             )
             wires.append(make_bezier([p0, p1, p2, p3], label=f"segment_{i}"))
 
-        if flat != 0:
+        if np.hypot(x[2] - x[3], z[2] - z[3]) > MINIMUM_LENGTH:
+            print([[x[2], 0, z[2]], [x[3], 0, z[3]]])
             outer_straight = make_polygon(
                 [[x[2], 0, z[2]], [x[3], 0, z[3]]], label="outer_straight"
             )
