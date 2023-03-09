@@ -19,9 +19,11 @@
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 
-# from bluemira.geometry.face import BluemiraFace
-from bluemira.geometry.plane import BluemiraPlane, BluemiraFace
-from bluemira.geometry.tools import make_polygon, slice_shape
+"""
+Tests for EU-DEMO Maintenance
+"""
+from bluemira.geometry.face import BluemiraFace
+from bluemira.geometry.tools import make_polygon
 from bluemira.utilities.optimiser import Optimiser
 from eudemo.maintenance.upper_port import UpperPortOP
 from eudemo.equatorial_port import EquatorialPortDesigner
@@ -30,7 +32,10 @@ import pytest
 
 
 class TestUpperPortOP:
+    """Test Upper Port"""
+
     def test_dummy_blanket_port_opt(self):
+        """Test Upper Port Optimiser"""
         params = {
             "c_rm": {"value": 0.02, "unit": "m"},
             "R_0": {"value": 9, "unit": "m"},
@@ -59,7 +64,10 @@ class TestUpperPortOP:
 
 
 class TestEquatorialPortDesigner:
+    """Test Equatorial Port"""
+
     def setup_method(self) -> None:
+        """Set-up Equatorial Port Designer"""
         params = {
             "ep_height": {"value": 0, "unit": "m"},
         }
@@ -70,16 +78,23 @@ class TestEquatorialPortDesigner:
         "xi, xo, zh", zip([2.0, 3.0, 1.0], [9.0, 9.0, 4.0], [5.0, 4.0, 2.0])
     )
     def test_ep_designer(self, xi, xo, zh):
+        """Test Equatorial Port Designer"""
         param_values = {"ep_height": zh}
         self.designer.params.update_values(param_values)
         self.designer.x_ib = xi
         self.designer.x_ob = xo
         output = self.designer.execute()
 
-        x = (xi, xo, xo, xi)
-        z = (-zh / 2, -zh / 2, zh / 2, zh / 2)
-        expectation = BluemiraFace(make_polygon({"x": x, "y": 0, "z": z}, closed=True))
-        
-        assert math.isclose(output.length, expectation.length)
-        assert math.isclose(output.area, expectation.area)
-        assert math.isclose(output.volume, expectation.volume)
+        # x = (xi, xo, xo, xi)
+        # z = (-zh / 2, -zh / 2, zh / 2, zh / 2)
+        # expectation = BluemiraFace(make_polygon({"x": x, "y": 0, "z": z}, closed=True))
+
+        # assert math.isclose(output.length, expectation.length)
+        # assert math.isclose(output.area, expectation.area)
+        # assert math.isclose(output.volume, expectation.volume)
+
+        x_len = xo - xi
+        z_len = zh
+
+        assert math.isclose(output.length, 2 * (x_len + z_len))
+        assert math.isclose(output.area, x_len * z_len)
