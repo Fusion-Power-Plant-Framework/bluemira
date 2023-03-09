@@ -339,7 +339,8 @@ class ScenarioBuilder:
                 element = breakdown_library[label]
             except KeyError:
                 raise ScenarioBuilder(
-                    "library", f"Breakdown element {label!r} has not been defined."
+                    "library",
+                    f"Breakdown element {label!r} has not been defined.",
                 )
 
             element_key = list(element.keys())
@@ -379,12 +380,12 @@ class ScenarioBuilder:
         return phase_library
 
     @staticmethod
-    def _build_phase_set(phase_library, phase_list):
-        phase_set = []
-        for phase_label in phase_list:
-            phase = phase_library[phase_label]
-            phase_set.append(phase)
-        return phase_set
+    def _build_time_set(time_library, time_list):
+        time_set = []
+        for time_label in time_list:
+            time_instance = time_library[time_label]
+            time_set.append(time_instance)
+        return time_set
 
     @classmethod
     def _build_pulse_library(cls, pulse_config, phase_library):
@@ -395,7 +396,7 @@ class ScenarioBuilder:
             pulse_name = pulse_specs["name"]
 
             phase_list = pulse_specs["phases"]
-            phase_set = cls._build_phase_set(phase_library, phase_list)
+            phase_set = cls._build_time_set(phase_library, phase_list)
 
             pulse = PowerCyclePulse(pulse_name, phase_set)
             pulse_library[pulse_label] = pulse
@@ -410,10 +411,7 @@ class ScenarioBuilder:
         scenario_name = scenario_config["name"]
         pulse_list = scenario_config["pulses"]
         # pulse_repetitions = scenario_config["repetition"]
-        pulse_set = []
-        for pulse_label in pulse_list:
-            pulse = pulse_library[pulse_label]
-            pulse_set.append(pulse)
+        pulse_set = cls._build_time_set(pulse_library, pulse_list)
 
         scenario = PowerCycleScenario(scenario_name, pulse_set)
         return scenario
