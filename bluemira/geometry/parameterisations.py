@@ -1235,7 +1235,7 @@ class PolySpline(GeometryParameterisation):
             )
             wires.append(make_bezier([p0, p1, p2, p3], label=f"segment_{i}"))
 
-        if np.hypot(x[2] - x[3], z[2] - z[3]) > MINIMUM_LENGTH:
+        if flat != 0:
             print([[x[2], 0, z[2]], [x[3], 0, z[3]]])
             outer_straight = make_polygon(
                 [[x[2], 0, z[2]], [x[3], 0, z[3]]], label="outer_straight"

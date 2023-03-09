@@ -171,7 +171,9 @@ class WallSilhouetteDesigner(Designer[GeometryParameterisation]):
             design_problem.apply_shape_constraints()
 
         bluemira_debug("Solving...")
-        return design_problem.optimise()
+        result = design_problem.optimise()
+        result.to_json(self.file_path)
+        return result
 
     def _get_parameterisation(self):
         return self.parameterisation_cls(self._derive_shape_params())
