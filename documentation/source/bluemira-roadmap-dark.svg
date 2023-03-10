@@ -7,7 +7,7 @@
    viewBox="0 0 278 91"
    version="1.1"
    id="svg5"
-   sodipodi:docname="bluemira-roadmap.svg"
+   sodipodi:docname="bluemira-roadmap-dark.svg"
    inkscape:version="1.1.2 (0a00cf5339, 2022-02-04)"
    xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
    xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
@@ -122,63 +122,66 @@
       </g>
       <g
          id="g231-3"
-         transform="translate(-616.55472,141.82508)">
+         transform="translate(-616.55472,141.82508)"
+         style="fill:#ffffff">
         <text
            transform="matrix(1,0,0,-1,745.398,235.899)"
-           style="font-variant:normal;font-weight:normal;font-size:15.987px;line-height:1;font-family:sans-serif;-inkscape-font-specification:sans-serif;writing-mode:lr-tb;white-space:pre;inline-size:161.734;fill:#000000;fill-opacity:1;fill-rule:nonzero;stroke:none"
+           style="font-variant:normal;font-weight:normal;font-size:15.987px;line-height:1;font-family:sans-serif;-inkscape-font-specification:sans-serif;writing-mode:lr-tb;white-space:pre;inline-size:161.734;fill:#ffffff;fill-opacity:1;fill-rule:nonzero;stroke:none"
            id="text235-6"
            xml:space="preserve"><tspan
              x="0"
              y="12.146373"
-             id="tspan39450">Transient Power </tspan><tspan
+             id="tspan40046">Transient Power </tspan><tspan
              x="0"
              y="28.133374"
-             id="tspan39452">Balance mode
+             id="tspan40048">Balance mode
 </tspan></text>
       </g>
       <g
          id="g231-5"
-         transform="translate(-16.466371,165.7943)">
+         transform="translate(-16.466371,165.7943)"
+         style="fill:#ffffff">
         <text
            transform="matrix(1,0,0,-1,745.398,235.899)"
-           style="font-variant:normal;font-weight:normal;font-size:15.987px;line-height:1;font-family:sans-serif;-inkscape-font-specification:sans-serif;writing-mode:lr-tb;white-space:pre;inline-size:145.862;fill:#000000;fill-opacity:1;fill-rule:nonzero;stroke:none"
+           style="font-variant:normal;font-weight:normal;font-size:15.987px;line-height:1;font-family:sans-serif;-inkscape-font-specification:sans-serif;writing-mode:lr-tb;white-space:pre;inline-size:145.862;fill:#ffffff;fill-opacity:1;fill-rule:nonzero;stroke:none"
            id="text235-3"
            xml:space="preserve"><tspan
              x="0"
              y="0"
-             id="tspan39454">Vertical Stability </tspan><tspan
+             id="tspan40050">Vertical Stability </tspan><tspan
              x="0"
              y="15.987"
-             id="tspan39456">calculations
+             id="tspan40052">calculations
 </tspan></text>
       </g>
       <g
          id="g231-5-6"
-         transform="translate(-216.14715,144.04201)">
+         transform="translate(-216.14715,144.04201)"
+         style="fill:#ffffff">
         <text
            transform="matrix(1,0,0,-1,745.398,253.5097)"
-           style="font-variant:normal;font-weight:normal;font-size:15.987px;line-height:1;font-family:sans-serif;-inkscape-font-specification:sans-serif;writing-mode:lr-tb;white-space:pre;inline-size:173.576;fill:#000000;fill-opacity:1;fill-rule:nonzero;stroke:none"
+           style="font-variant:normal;font-weight:normal;font-size:15.987px;line-height:1;font-family:sans-serif;-inkscape-font-specification:sans-serif;writing-mode:lr-tb;white-space:pre;inline-size:173.576;fill:#ffffff;fill-opacity:1;fill-rule:nonzero;stroke:none"
            id="text235-3-2"
            xml:space="preserve"><tspan
              x="0"
              y="31.974001"
-             id="tspan39458">2-D winding pack </tspan><tspan
+             id="tspan40054">2-D winding pack </tspan><tspan
              x="0"
              y="47.961002"
-             id="tspan39460">design module
+             id="tspan40056">design module
 </tspan></text>
       </g>
       <text
          transform="matrix(1,0,0,-1,526.94217,401.6933)"
-         style="font-variant:normal;font-weight:normal;font-size:15.987px;line-height:1;font-family:sans-serif;-inkscape-font-specification:sans-serif;writing-mode:lr-tb;white-space:pre;inline-size:154.221;fill:#000000;fill-opacity:1;fill-rule:nonzero;stroke:none"
+         style="font-variant:normal;font-weight:normal;font-size:15.987px;line-height:1;font-family:sans-serif;-inkscape-font-specification:sans-serif;writing-mode:lr-tb;white-space:pre;inline-size:154.221;fill:#ffffff;fill-opacity:1;fill-rule:nonzero;stroke:none"
          id="text325-7"
          xml:space="preserve"><tspan
            x="0"
            y="0"
-           id="tspan39462">3-D radiation </tspan><tspan
+           id="tspan40058">3-D radiation </tspan><tspan
            x="0"
            y="15.987"
-           id="tspan39464">transport</tspan></text>
+           id="tspan40060">transport</tspan></text>
       <g
          id="g73"
          transform="matrix(1.0026884,0,0,1.0079576,0.1820512,138.6613)">
@@ -277,10 +280,11 @@
          id="path127-5" />
       <g
          id="g129"
-         transform="translate(-14.852308,134.82226)">
+         transform="translate(-14.852308,134.82226)"
+         style="fill:#ffffff">
         <text
            transform="scale(1,-1)"
-           style="font-variant:normal;font-weight:normal;font-size:18px;font-family:sans-serif;-inkscape-font-specification:sans-serif;writing-mode:lr-tb;fill:#000000;fill-opacity:1;fill-rule:nonzero;stroke:none"
+           style="font-variant:normal;font-weight:normal;font-size:18px;font-family:sans-serif;-inkscape-font-specification:sans-serif;writing-mode:lr-tb;fill:#ffffff;fill-opacity:1;fill-rule:nonzero;stroke:none"
            id="text133"
            x="42.776798"
            y="-157.81059"><tspan
@@ -291,10 +295,11 @@
       </g>
       <g
          id="g135"
-         transform="translate(-5.622617,137.81432)">
+         transform="translate(-5.622617,137.81432)"
+         style="fill:#ffffff">
         <text
            transform="scale(1,-1)"
-           style="font-variant:normal;font-weight:normal;font-size:18.7848px;font-family:sans-serif;-inkscape-font-specification:sans-serif;writing-mode:lr-tb;fill:#1b1013;fill-opacity:1;fill-rule:nonzero;stroke:none"
+           style="font-variant:normal;font-weight:normal;font-size:18.7848px;font-family:sans-serif;-inkscape-font-specification:sans-serif;writing-mode:lr-tb;fill:#ffffff;fill-opacity:1;fill-rule:nonzero;stroke:none"
            id="text139"
            x="21.767338"
            y="-236.07434"><tspan
@@ -302,23 +307,24 @@
              sodipodi:role="line"
              id="tspan137"
              y="-236.07434"
-             style="font-size:18.7848px">Features</tspan></text>
+             style="font-size:18.7848px;fill:#ffffff">Features</tspan></text>
       </g>
       <g
          id="g141"
          transform="translate(0,136.44848)" />
       <g
          id="g147"
-         transform="translate(-10.191885,141.59115)">
+         transform="translate(-10.191885,141.59115)"
+         style="fill:#ffffff">
         <text
            transform="matrix(1,0,0,-1,41.896,313.71)"
-           style="font-variant:normal;font-weight:normal;font-size:18.7848px;font-family:sans-serif;-inkscape-font-specification:sans-serif;writing-mode:lr-tb;fill:#3c3631;fill-opacity:1;fill-rule:nonzero;stroke:none"
+           style="font-variant:normal;font-weight:normal;font-size:18.7848px;font-family:sans-serif;-inkscape-font-specification:sans-serif;writing-mode:lr-tb;fill:#ffffff;fill-opacity:1;fill-rule:nonzero;stroke:none"
            id="text151"><tspan
              x="0"
              y="0"
              sodipodi:role="line"
              id="tspan149"
-             style="font-size:18.7848px">Core</tspan></text>
+             style="font-size:18.7848px;fill:#ffffff">Core</tspan></text>
       </g>
       <g
          id="g153"
@@ -346,45 +352,48 @@
       </g>
       <g
          id="g165"
-         transform="translate(-6.4064244,134.61317)">
+         transform="translate(-6.4064244,134.61317)"
+         style="fill:#ffffff">
         <text
            transform="matrix(1,0,0,-1,135.55414,186.62538)"
-           style="font-variant:normal;font-weight:normal;font-size:15.987px;line-height:1;font-family:sans-serif;-inkscape-font-specification:sans-serif;writing-mode:lr-tb;white-space:pre;inline-size:164.091;fill:#000000;fill-opacity:1;fill-rule:nonzero;stroke:none"
+           style="font-variant:normal;font-weight:normal;font-size:15.987px;line-height:1;font-family:sans-serif;-inkscape-font-specification:sans-serif;writing-mode:lr-tb;white-space:pre;inline-size:164.091;fill:#ffffff;fill-opacity:1;fill-rule:nonzero;stroke:none"
            id="text169"
            xml:space="preserve"><tspan
              x="0"
              y="0"
-             id="tspan39466">Promotion of open </tspan><tspan
+             id="tspan40062">Promotion of open </tspan><tspan
              x="0"
              y="15.987"
-             id="tspan39468">source</tspan></text>
+             id="tspan40064">source</tspan></text>
       </g>
       <g
          id="g219"
-         transform="translate(-215.25584,127.92787)">
+         transform="translate(-215.25584,127.92787)"
+         style="fill:#ffffff">
         <text
            transform="matrix(1,0,0,-1,343.701,265.011)"
-           style="font-variant:normal;font-weight:normal;font-size:15.987px;font-family:sans-serif;-inkscape-font-specification:sans-serif;writing-mode:lr-tb;white-space:pre;inline-size:155.831;fill:#000000;fill-opacity:1;fill-rule:nonzero;stroke:none"
+           style="font-variant:normal;font-weight:normal;font-size:15.987px;font-family:sans-serif;-inkscape-font-specification:sans-serif;writing-mode:lr-tb;white-space:pre;inline-size:155.831;fill:#ffffff;fill-opacity:1;fill-rule:nonzero;stroke:none"
            id="text223"
            xml:space="preserve"><tspan
              x="0"
              y="0"
-             id="tspan39470">EU-DEMO workflow</tspan></text>
+             id="tspan40066">EU-DEMO workflow</tspan></text>
       </g>
       <g
          id="g231"
-         transform="translate(-416.58512,177.94067)">
+         transform="translate(-416.58512,177.94067)"
+         style="fill:#ffffff">
         <text
            transform="matrix(1,0,0,-1,745.398,235.899)"
-           style="font-variant:normal;font-weight:normal;font-size:15.987px;line-height:1;font-family:sans-serif;-inkscape-font-specification:sans-serif;writing-mode:lr-tb;white-space:pre;inline-size:161.734;fill:#000000;fill-opacity:1;fill-rule:nonzero;stroke:none"
+           style="font-variant:normal;font-weight:normal;font-size:15.987px;line-height:1;font-family:sans-serif;-inkscape-font-specification:sans-serif;writing-mode:lr-tb;white-space:pre;inline-size:161.734;fill:#ffffff;fill-opacity:1;fill-rule:nonzero;stroke:none"
            id="text235"
            xml:space="preserve"><tspan
              x="0"
              y="12.146373"
-             id="tspan39472">2-D deterministic </tspan><tspan
+             id="tspan40068">2-D deterministic </tspan><tspan
              x="0"
              y="28.133374"
-             id="tspan39474">radiation transport</tspan></text>
+             id="tspan40070">radiation transport</tspan></text>
       </g>
       <g
          id="g237"
@@ -412,19 +421,20 @@
          transform="translate(0,136.44848)" />
       <g
          id="g261"
-         transform="translate(-412.8773,96.080928)">
+         transform="translate(-412.8773,96.080928)"
+         style="fill:#ffffff">
         <text
            transform="matrix(1,0,0,-1,541.502,189.39662)"
-           style="font-variant:normal;font-weight:normal;font-size:15.987px;line-height:1;font-family:sans-serif;-inkscape-font-specification:sans-serif;writing-mode:lr-tb;white-space:pre;inline-size:179.43;fill:#000000;fill-opacity:1;fill-rule:nonzero;stroke:none"
+           style="font-variant:normal;font-weight:normal;font-size:15.987px;line-height:1;font-family:sans-serif;-inkscape-font-specification:sans-serif;writing-mode:lr-tb;white-space:pre;inline-size:179.43;fill:#ffffff;fill-opacity:1;fill-rule:nonzero;stroke:none"
            id="text265"
            xml:space="preserve"><tspan
              x="0"
              y="0"
-             id="tspan39476">User group
+             id="tspan40072">User group
 </tspan><tspan
              x="0"
              y="15.987"
-             id="tspan39478">meetings/workshops</tspan></text>
+             id="tspan40074">meetings/workshops</tspan></text>
       </g>
       <g
          id="g267"
@@ -504,30 +514,31 @@
          transform="translate(-411.63177,138.72655)">
         <text
            transform="matrix(1,0,0,-1,939.95369,345.52897)"
-           style="font-variant:normal;font-weight:normal;font-size:15.987px;line-height:1;font-family:sans-serif;-inkscape-font-specification:sans-serif;writing-mode:lr-tb;white-space:pre;inline-size:155.261;fill:#000000;fill-opacity:1;fill-rule:nonzero;stroke:none"
+           style="font-variant:normal;font-weight:normal;font-size:15.987px;line-height:1;font-family:sans-serif;-inkscape-font-specification:sans-serif;writing-mode:lr-tb;white-space:pre;inline-size:155.261;fill:#ffffff;fill-opacity:1;fill-rule:nonzero;stroke:none"
            id="text359"
            xml:space="preserve"><tspan
              x="0"
              y="0"
-             id="tspan39480">Switch to PROCESS </tspan><tspan
+             id="tspan40076">Switch to PROCESS </tspan><tspan
              x="0"
              y="15.987"
-             id="tspan39482">Python API</tspan></text>
+             id="tspan40078">Python API</tspan></text>
       </g>
       <g
          id="g355-3"
-         transform="translate(-611.31877,140.68121)">
+         transform="translate(-611.31877,140.68121)"
+         style="fill:#ffffff">
         <text
            transform="matrix(1,0,0,-1,740.27291,342.00683)"
-           style="font-variant:normal;font-weight:normal;font-size:15.987px;line-height:1;font-family:sans-serif;-inkscape-font-specification:sans-serif;writing-mode:lr-tb;white-space:pre;inline-size:155.261;fill:#000000;fill-opacity:1;fill-rule:nonzero;stroke:none"
+           style="font-variant:normal;font-weight:normal;font-size:15.987px;line-height:1;font-family:sans-serif;-inkscape-font-specification:sans-serif;writing-mode:lr-tb;white-space:pre;inline-size:155.261;fill:#ffffff;fill-opacity:1;fill-rule:nonzero;stroke:none"
            id="text359-6"
            xml:space="preserve"><tspan
              x="0"
              y="0"
-             id="tspan39484">Optimisation API </tspan><tspan
+             id="tspan40080">Optimisation API </tspan><tspan
              x="0"
              y="15.987"
-             id="tspan39486">review</tspan></text>
+             id="tspan40082">review</tspan></text>
       </g>
     </g>
   </g>
