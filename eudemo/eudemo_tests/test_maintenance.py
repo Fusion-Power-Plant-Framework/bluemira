@@ -68,6 +68,14 @@ class TestUpperPortOP:
         assert design_problem.opt.check_constraints(solution)
 
 
+class TestDuctConnection:
+    def test_single_wire(self):
+        port_xy_wire = db._single_xy_wire(width)
+        assert self.port_xy_wire.boundingbox.x_min == self.x_min
+        assert port_xy_wire.boundingbox.xmin == self.port_koz.boundingbox.x_min
+        assert port_xy_wire.boundingbox.xmax == self.port_koz.boundingbox.x_max
+
+
 class TestEquatorialPortKOZDesigner:
     """Tests the Equatorial Port KOZ Designer"""
 
@@ -168,3 +176,4 @@ class TestCastellationBuilder:
         if out_cst is None:
             out_cst = output.get_component("xyz").get_component("Castellation")
         assert np.isclose(out_cst.shape.volume, exp_v)
+
