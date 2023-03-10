@@ -1,0 +1,78 @@
+{
+    "NBI": {
+        "name": "Neutral Beam Injection",
+        "production": {},
+        "reactive": {},
+        "active": {
+            "upk": {
+                "name": "NBI consumption due to upkeep",
+                "model_class": "PowerLoad",
+                "variables_map": {
+                    "phases": [
+                        "dwl",
+                        "d2f",
+                        "ftt",
+                        "f2d"
+                    ],
+                    "efficiencies": {
+                        "wall-plug": 0.5
+                    },
+                    "unit": "kW",
+                    "loads": {
+                        "description": [
+                            "main",
+                            "peak"
+                        ],
+                        "time": [
+                            "[0, 1]",
+                            "[0, 1, 2]"
+                        ],
+                        "data": [
+                            "[1, 1]",
+                            "[1, 2, 1]"
+                        ],
+                        "model": [
+                            "STEP",
+                            "RAMP"
+                        ],
+                        "normalize": [
+                            true,
+                            false
+                        ]
+                    }
+                }
+            },
+            "inj": {
+                "name": "NBI consumption due to injection during burn",
+                "model_class": "PowerLoad",
+                "variables_map": {
+                    "phases": [
+                        "ftt"
+                    ],
+                    "efficiencies": {
+                        "cooling": 0.7,
+                        "gyrotron": 0.7
+                    },
+                    "unit": "MW",
+                    "loads": {
+                        "description": [
+                            "injection"
+                        ],
+                        "time": [
+                            "[0, 1, 2, 3, 4]"
+                        ],
+                        "data": [
+                            "[0, 0, 50, 0, 0]"
+                        ],
+                        "model": [
+                            "RAMP"
+                        ],
+                        "normalize": [
+                            true
+                        ]
+                    }
+                }
+            }
+        }
+    }
+}

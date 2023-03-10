@@ -1,5 +1,6 @@
 # COPYRIGHT PLACEHOLDER
 
+import copy
 import os
 
 import matplotlib.pyplot as plt
@@ -12,6 +13,7 @@ from bluemira.power_cycle.tools import (
     read_json,
     unnest_list,
     validate_axes,
+    validate_file,
     validate_nonnegative,
 )
 
@@ -30,6 +32,26 @@ def assert_value_is_nonnegative(argument):
         assert False
     else:
         assert True
+
+
+def copy_dict_with_wrong_key(right_dict, key_to_substitute):
+    """
+    Make deep copy of dictionary, but substitute one key
+    by the 'wrong_key' string.
+    """
+    wrong_dict = copy.deepcopy(right_dict)
+    wrong_dict["wrong_key"] = wrong_dict.pop(key_to_substitute)
+    return wrong_dict
+
+
+def copy_dict_with_wrong_value(right_dict, key, value_to_substitute):
+    """
+    Make deep copy of dictionary, but substitute the value in 'key'
+    by 'value_to_substitute'.
+    """
+    wrong_dict = copy.deepcopy(right_dict)
+    wrong_dict[key] = value_to_substitute
+    return wrong_dict
 
 
 class ToolsTestKit:
@@ -74,6 +96,28 @@ class ToolsTestKit:
         plt.grid()
         plt.title(figure_title)
         return ax
+
+    def build_dictionary_examples(self):
+        argument_examples = self.build_list_of_example_arguments()
+
+        count = 0
+        format_example = dict()
+        dictionary_example = dict()
+        for argument in argument_examples:
+            argument_type = type(argument)
+
+            count += 1
+            current_key = "key " + str(count)
+
+            format_example[current_key] = argument_type
+            dictionary_example[current_key] = argument
+
+        subdictionaries_example = dict()
+        for c in range(count):
+            current_key = "key " + str(c)
+            subdictionaries_example[current_key] = dictionary_example
+
+        return format_example, dictionary_example, subdictionaries_example
 
 
 class TimeTestKit:
@@ -415,9 +459,58 @@ class NetImportersTestKit:
 class NetManagerTestKit:
     def __init__(self):
         # self.time_testkit = TimeTestKit()
+
         manager_json_name = tuple(["manager_config.json"])
         manager_json_path = test_data_folder_path + manager_json_name
         self.manager_json_path = os.path.join(*manager_json_path)
 
-    def inputs_for_(self):
-        pass
+    def inputs_for_manager(self):
+        manager_json_path = self.manager_json_path
+        manager_json_contents = read_json(manager_json_path)
+
+        return manager_json_contents
+
+    def inputs_for_groups(self):
+        manager_json_contents = self.inputs_for_manager()
+
+        all_group_inputs = dict()
+        all_group_labels = manager_json_contents.keys()
+        for group_label in all_group_labels:
+            group_config = manager_json_contents[group_label]
+            group_name = group_config["name"]
+            group_systems = group_config["systems"]
+
+            config_path = group_config["config_path"]
+
+            skip_missing_file = False
+            try:
+                config_path = validate_file(config_path)
+            except FileNotFoundError:
+                skip_missing_file = True
+
+            if skip_missing_file:
+                continue
+            systems_config = read_json(config_path)
+
+            group_inputs = dict()
+            group_inputs["name"] = group_name
+            group_inputs["systems_list"] = group_systems
+            group_inputs["systems_config"] = systems_config
+
+            all_group_inputs[group_label] = group_inputs
+        return all_group_inputs
+
+    def inputs_for_systems(self):
+        all_group_inputs = self.inputs_for_groups()
+
+        all_system_inputs = dict()
+        all_group_labels = all_group_inputs.keys()
+        for group_label in all_group_labels:
+            group_config = all_group_inputs[group_label]
+
+            current_systems_config = group_config["systems_config"]
+            all_system_inputs = {
+                **all_system_inputs,
+                **current_systems_config,
+            }
+        return all_system_inputs

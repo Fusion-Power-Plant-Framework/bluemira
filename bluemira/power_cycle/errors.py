@@ -339,6 +339,17 @@ class PowerCycleSystemError(PowerCycleError):
         return errors
 
 
+class PowerCycleGroupError(PowerCycleError):
+    """
+    Exception class for 'PowerCycleGroup' class of the Power Cycle
+    module.
+    """
+
+    def _errors(self):
+        errors = {}
+        return errors
+
+
 class PowerCycleManagerError(PowerCycleError):
     """
     Exception class for 'PowerCycleManager' class of the Power Cycle

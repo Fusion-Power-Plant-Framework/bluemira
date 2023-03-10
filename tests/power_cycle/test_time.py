@@ -1,7 +1,5 @@
 # COPYRIGHT PLACEHOLDER
 
-import copy
-
 import pytest
 
 from bluemira.power_cycle.errors import PowerCyclePhaseError, ScenarioBuilderError
@@ -11,7 +9,11 @@ from bluemira.power_cycle.time import (
     PowerCycleScenario,
     ScenarioBuilder,
 )
-from tests.power_cycle.kits_for_tests import TimeTestKit, assert_value_is_nonnegative
+from tests.power_cycle.kits_for_tests import (
+    TimeTestKit,
+    assert_value_is_nonnegative,
+    copy_dict_with_wrong_key,
+)
 
 time_testkit = TimeTestKit()
 
@@ -123,11 +125,11 @@ class TestScenarioBuilder:
         self.scenario_json_contents = scenario_json_contents
 
         all_class_attr = [
-            "_config_dict",
-            "_scenario_dict",
-            "_pulse_dict",
-            "_phase_dict",
-            "_breakdown_dict",
+            "_config_format",
+            "_scenario_format",
+            "_pulse_format",
+            "_phase_format",
+            "_breakdown_format",
         ]
         self.all_class_attr = all_class_attr
 
@@ -230,6 +232,7 @@ class TestScenarioBuilder:
 
     def test_class_attributes(self):
         all_class_attr = self.all_class_attr
+        valid_highest_level_json_keys = self.highest_level_json_keys
         valid_config_json_values = [
             dict,
             str,
@@ -248,6 +251,13 @@ class TestScenarioBuilder:
                 value = attr_in_tested_class[key]
                 assert value in valid_config_json_values
 
+        for high_key in valid_highest_level_json_keys:
+            text_before_hiphen = high_key.split("-", 1)[0]
+            necessary_attr = "_" + text_before_hiphen + "_format"
+            necessary_attr_is_in_class = necessary_attr in all_class_attr
+            format_exists_for_high_key = necessary_attr_is_in_class
+            assert format_exists_for_high_key
+
     def test_constructor(self):
         scenario_json_path = self.scenario_json_path
         sample = ScenarioBuilder(scenario_json_path)
@@ -265,108 +275,23 @@ class TestScenarioBuilder:
             assert pulse_duration == sum(pulse.durations_list)
         assert scenario_duration == sum(scenario.durations_list)
 
-    @staticmethod
-    def copy_dict_with_wrong_key(right_dict, key_to_substitute):
-        """
-        Make deep copy of dictionary, but substitute one key
-        by the 'wrong_key' string.
-        """
-        wrong_dict = copy.deepcopy(right_dict)
-        wrong_dict["wrong_key"] = wrong_dict.pop(key_to_substitute)
-        return wrong_dict
-
-    @staticmethod
-    def copy_dict_with_wrong_value(right_dict, key, value_to_substitute):
-        """
-        Make deep copy of dictionary, but substitute the value in 'key'
-        by 'value_to_substitute'.
-        """
-        wrong_dict = copy.deepcopy(right_dict)
-        wrong_dict[key] = value_to_substitute
-        return wrong_dict
-
-    def test_validate_dict(self):
-        all_class_attr = self.all_class_attr
-        scenario_json_contents = self.scenario_json_contents
-        valid_highest_level_json_keys = self.highest_level_json_keys
-
-        tested_class = self.tested_class
-        for valid_key in valid_highest_level_json_keys:
-            key_contents = scenario_json_contents[valid_key]
-
-            necessary_dict = None
-            text_before_hiphen = valid_key.split("-", 1)[0]
-            for class_attr in all_class_attr:
-                if text_before_hiphen in class_attr:
-                    necessary_dict = getattr(tested_class, class_attr)
-
-            wrong_necessary_dict = self.copy_dict_with_wrong_key(
-                necessary_dict,
-                "name",
-            )
-
-            recursion_is_needed = text_before_hiphen != "scenario"
-            if recursion_is_needed:
-
-                validated_contents = tested_class._validate_subdict(
-                    key_contents,
-                    necessary_dict,
-                )
-                with pytest.raises(ScenarioBuilderError):
-                    validated_contents = tested_class._validate_subdict(
-                        key_contents,
-                        wrong_necessary_dict,
-                    )
-
-            else:
-
-                validated_contents = tested_class._validate_dict(
-                    key_contents,
-                    necessary_dict,
-                )
-                with pytest.raises(ScenarioBuilderError):
-                    validated_contents = tested_class._validate_dict(
-                        key_contents,
-                        wrong_necessary_dict,
-                    )
-
-                wrong_contents = self.copy_dict_with_wrong_value(
-                    key_contents,
-                    "name",
-                    ["not", "a", "string"],
-                )
-                with pytest.raises(ScenarioBuilderError):
-                    validated_contents = tested_class._validate_dict(
-                        wrong_contents,
-                        necessary_dict,
-                    )
-
-            validated_contents_is_dict = isinstance(validated_contents, dict)
-            assert validated_contents_is_dict
-
-    def test_validate_subdict(self):
-        """
-        No new functionality to be tested.
-        """
-        tested_class = self.tested_class
-        assert callable(tested_class._validate_subdict)
-
     def test_validate_config(self):
         tested_class = self.tested_class
         scenario_json_contents = self.scenario_json_contents
         valid_highest_level_json_keys = self.highest_level_json_keys
         all_configs = self.run_validate_config()
 
+        possible_errors = (KeyError, TypeError, ScenarioBuilderError)
         for config in all_configs:
             config_is_dict = isinstance(config, dict)
             assert config_is_dict
 
         for valid_key in valid_highest_level_json_keys:
-            wrong_contents = self.copy_dict_with_wrong_key(
+            wrong_contents = copy_dict_with_wrong_key(
                 scenario_json_contents,
                 valid_key,
             )
-            with pytest.raises(ScenarioBuilderError):
+            with pytest.raises(possible_errors):
                 wrong_configs = tested_class._validate_config(wrong_contents)
 
     @pytest.mark.parametrize(

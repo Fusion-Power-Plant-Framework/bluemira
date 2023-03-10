@@ -23,7 +23,19 @@ manager_testkit = NetManagerTestKit()
 
 class TestPowerCycleSystem:
     def setup_method(self):
-        pass
+        all_system_inputs = manager_testkit.inputs_for_systems()
+        self.all_system_inputs = all_system_inputs
+
+    def test_constructor(self):
+        all_system_inputs = self.all_system_inputs
+
+        all_system_labels = all_system_inputs.keys()
+        for system_label in all_system_labels:
+            system_inputs = all_system_inputs[system_label]
+
+        import pprint
+
+        assert 0
 
     # ------------------------------------------------------------------
     # CLASS ATTRIBUTES & CONSTRUCTOR
@@ -40,6 +52,11 @@ class TestPowerCycleSystem:
     # ------------------------------------------------------------------
     # ARITHMETICS
     # ------------------------------------------------------------------
+
+
+class TestPowerCycleGroup:
+    def setup_method(self):
+        pass
 
 
 class TestPowerCycleManager:
