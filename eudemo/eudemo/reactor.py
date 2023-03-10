@@ -343,4 +343,6 @@ if __name__ == "__main__":
     sspc_solver.model.plot()
     plt.show()
 
+    del reactor.pf_coils  # Because of bug
+
     reactor.show_cad()
