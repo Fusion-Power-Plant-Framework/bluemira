@@ -626,7 +626,7 @@ class BetaLiIpProfile(BetaIpProfile):
         super().__init__(betap, I_p, R_0, B_0, shape=shape)
         self._l_i_target = l_i
         self._l_i_rel_tol = li_rel_tol
-        self._l_i_min_iter
+        self._l_i_min_iter = li_min_iter
 
 
 class CustomProfile(Profile):

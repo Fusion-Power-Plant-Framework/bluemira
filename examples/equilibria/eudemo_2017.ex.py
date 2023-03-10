@@ -232,7 +232,13 @@ profiles = CustomProfile(
     B_0=B_0,
     I_p=I_p,
 )
-# profile = BetaIpProfile(beta_p, I_p, R_0, B_0, shape=shape)
+from bluemira.equilibria.profiles import BetaIpProfile, BetaLiIpProfile, DoublePowerFunc
+
+shape = DoublePowerFunc([2, 1])
+profiles = BetaIpProfile(beta_p, I_p, R_0, B_0, shape=shape)
+profiles = BetaLiIpProfile(
+    beta_p, l_i, I_p, R_0, B_0, shape=shape, li_min_iter=0, li_rel_tol=0.001
+)
 
 
 # %% [markdown]
@@ -251,9 +257,12 @@ reference_eq = Equilibrium(
 #   * Field null at lower X-point
 #   * divertor legs are not treated, but could easily be added
 
+sof_xbdry = np.array(sof_xbdry)[::15]
+sof_zbdry = np.array(sof_zbdry)[::15]
+
 isoflux = IsofluxConstraint(
-    np.array(sof_xbdry)[::10],
-    np.array(sof_zbdry)[::10],
+    sof_xbdry,
+    sof_zbdry,
     sof_xbdry[0],
     sof_zbdry[0],
     tolerance=1e-3,
@@ -278,10 +287,10 @@ program()
 
 
 sof_psi_boundary = PsiBoundaryConstraint(
-    np.array(sof_xbdry)[::10],
-    np.array(sof_zbdry)[::10],
+    sof_xbdry,
+    sof_zbdry,
     psi_sof / (2 * np.pi),
-    tolerance=1.0,
+    tolerance=0.5,
 )
 
 optimiser = Optimiser("SLSQP", opt_conditions={"max_eval": 1000, "ftol_rel": 1e-6})
@@ -302,10 +311,10 @@ iterator()
 
 
 eof_psi_boundary = PsiBoundaryConstraint(
-    np.array(sof_xbdry)[::10],
-    np.array(sof_zbdry)[::10],
+    sof_xbdry,
+    sof_zbdry,
     psi_eof / (2 * np.pi),
-    tolerance=1.0,
+    tolerance=0.5,
 )
 
 eof = deepcopy(reference_eq)
