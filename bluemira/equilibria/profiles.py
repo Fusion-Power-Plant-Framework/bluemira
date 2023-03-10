@@ -594,8 +594,8 @@ class BetaIpProfile(Profile):
 
 class BetaLiIpProfile(BetaIpProfile):
     """
-    This is what BLUEPRINT used to do, and Fabrizio told me he had done
-    something similar, at one point.
+    Profile is what BLUEPRINT used to do, and Fabrizio told me he had done
+    something similar in MIRA, at one point.
 
     Parameters
     ----------
@@ -613,12 +613,20 @@ class BetaLiIpProfile(BetaIpProfile):
         The shape function to use for the flux functions
     li_rel_tol: float
         Absolute relative tolerance for the internal inductance constraint
+    li_min_iter: int
+        Iteration at which the profile optimisation should start to be
+        carried out. Usually best not to start solving the equilibrium
+        with the profile constraint, and fold it in later, when the plasma
+        shape is more representative.
     """
 
-    def __init__(self, betap, l_i, I_p, R_0, B_0, shape=None, li_rel_tol=0.015):
+    def __init__(
+        self, betap, l_i, I_p, R_0, B_0, shape=None, li_rel_tol=0.015, li_min_iter=5
+    ):
         super().__init__(betap, I_p, R_0, B_0, shape=shape)
-        self.l_i_target = l_i
-        self.rel_tol = li_rel_tol
+        self._l_i_target = l_i
+        self._l_i_rel_tol = li_rel_tol
+        self._l_i_min_iter
 
 
 class CustomProfile(Profile):

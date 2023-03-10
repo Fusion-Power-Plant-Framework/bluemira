@@ -35,7 +35,7 @@ from bluemira.base.file import get_bluemira_path
 from bluemira.base.look_and_feel import bluemira_print_flush
 from bluemira.equilibria.boundary import FreeBoundary, apply_boundary
 from bluemira.equilibria.coils import CoilSet, symmetrise_coilset
-from bluemira.equilibria.constants import LI_REL_TOL, PSI_NORM_TOL
+from bluemira.equilibria.constants import PSI_NORM_TOL
 from bluemira.equilibria.error import EquilibriaError
 from bluemira.equilibria.file import EQDSKInterface
 from bluemira.equilibria.find import (
@@ -538,7 +538,7 @@ class Equilibrium(MHDState):
         self._li_flag = False
         if isinstance(profiles, BetaLiIpProfile):
             self._li_flag = True
-            self._li = profiles.l_i_target  # target plasma normalised inductance
+            self._li = profiles._l_i_target  # target plasma normalised inductance
             self._li_iter = 0  # li iteration count
             self._li_temp = None
 
@@ -871,7 +871,7 @@ class Equilibrium(MHDState):
             )
             self._li_temp = li
             self._jtor = jtor_opt
-            if abs_rel_difference(self._li_temp, self._li) <= self.profiles.rel_tol:
+            if abs_rel_difference(self._li_temp, self._li) <= self.profiles._l_i_rel_tol:
                 # Scipy's callback argument doesn't seem to work, so we do this
                 # instead...
                 raise StopIteration

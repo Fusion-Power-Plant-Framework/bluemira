@@ -601,7 +601,7 @@ class PicardIterator:
         """
         Solve for this iteration.
         """
-        if self.eq._li_flag and self.i > 5:
+        if self.eq._li_flag and self.i > self.eq.profiles._l_i_min_iter:
             self.eq.solve_li(psi=self.psi)
         else:
             self.eq.solve(psi=self.psi)
