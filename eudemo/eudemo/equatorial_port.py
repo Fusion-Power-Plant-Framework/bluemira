@@ -23,8 +23,9 @@
 EU-DEMO Equatorial Port
 """
 from dataclasses import dataclass
-from numpy import array, ndarray
 from typing import Dict, Type, Union
+
+from numpy import array, ndarray
 
 from bluemira.base.builder import Builder, ComponentManager
 from bluemira.base.components import Component, PhysicalComponent

@@ -22,13 +22,15 @@
 """
 Tests for EU-DEMO Maintenance
 """
+import math
+
+import pytest
+
 from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.tools import make_polygon
 from bluemira.utilities.optimiser import Optimiser
-from eudemo.maintenance.upper_port import UpperPortOP
 from eudemo.equatorial_port import EquatorialPortDesigner
-import math
-import pytest
+from eudemo.maintenance.upper_port import UpperPortOP
 
 
 class TestUpperPortOP:
