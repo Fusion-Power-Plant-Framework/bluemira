@@ -12,13 +12,21 @@ from bluemira.power_cycle.tools import (
     unique_and_sorted_vector,
     unnest_list,
     validate_axes,
+    validate_dict,
     validate_file,
     validate_list,
     validate_nonnegative,
     validate_numerical,
+    validate_subdict,
     validate_vector,
 )
-from tests.power_cycle.kits_for_tests import NetManagerTestKit, TimeTestKit, ToolsTestKit
+from tests.power_cycle.kits_for_tests import (
+    NetManagerTestKit,
+    TimeTestKit,
+    ToolsTestKit,
+    copy_dict_with_wrong_key,
+    copy_dict_with_wrong_value,
+)
 
 tools_testkit = ToolsTestKit()
 time_testkit = TimeTestKit()
@@ -29,6 +37,15 @@ class TestValidationTools:
     def setup_method(self):
         test_arguments = tools_testkit.build_list_of_example_arguments()
         self.test_arguments = test_arguments
+
+        (
+            format_example,
+            dictionary_example,
+            subdictionaries_example,
+        ) = tools_testkit.build_dictionary_examples()
+        self.format_example = format_example
+        self.dictionary_example = dictionary_example
+        self.subdictionaries_example = subdictionaries_example
 
         test_file_path = tools_testkit.test_file_path
         self.test_file_path = test_file_path
@@ -82,6 +99,119 @@ class TestValidationTools:
         wrong_path = absolute_path.replace("txt", "doc")
         with pytest.raises(FileNotFoundError):
             return_path = validate_file(wrong_path)
+
+    def test_validate_dict(self):
+        format_example = self.format_example
+        dictionary_example = self.dictionary_example
+
+        returned_dictionary = validate_dict(
+            dictionary_example,
+            format_example,
+        )
+        assert returned_dictionary == dictionary_example
+
+        all_allowed_keys = format_example.keys()
+        all_dict_keys = returned_dictionary.keys()
+        for dict_key in all_dict_keys:
+            dict_key_is_allowed = dict_key in all_allowed_keys
+            assert dict_key_is_allowed
+
+            dict_value = returned_dictionary[dict_key]
+            dict_value_type = type(dict_value)
+            necessary_type = format_example[dict_key]
+            value_is_the_necessary_type = dict_value_type == necessary_type
+            assert value_is_the_necessary_type
+
+        first_dict_key = list(all_allowed_keys)[0]
+        wrong_format = copy_dict_with_wrong_key(
+            format_example,
+            first_dict_key,
+        )
+        with pytest.raises(KeyError):
+            returned_dictionary = validate_dict(
+                dictionary_example,
+                wrong_format,
+            )
+
+        first_dict_key = list(all_dict_keys)[0]
+        wrong_dictionary = copy_dict_with_wrong_value(
+            dictionary_example,
+            first_dict_key,
+            dict(),
+        )
+        with pytest.raises(TypeError):
+            returned_dictionary = validate_dict(
+                wrong_dictionary,
+                format_example,
+            )
+
+        """
+        all_class_attr = self.all_class_attr
+        scenario_json_contents = self.scenario_json_contents
+        valid_highest_level_json_keys = self.highest_level_json_keys
+
+        possible_errors = (TypeError, KeyError)
+
+        tested_class = self.tested_class
+        for valid_key in valid_highest_level_json_keys:
+            key_contents = scenario_json_contents[valid_key]
+
+            necessary_dict = None
+            text_before_hiphen = valid_key.split("-", 1)[0]
+            for class_attr in all_class_attr:
+                if text_before_hiphen in class_attr:
+                    necessary_dict = getattr(tested_class, class_attr)
+
+            wrong_necessary_dict = copy_dict_with_wrong_key(
+                necessary_dict,
+                "name",
+            )
+
+            recursion_is_needed = text_before_hiphen != "scenario"
+            if recursion_is_needed:
+
+                validated_contents = tested_class._validate_subdict(
+                    key_contents,
+                    necessary_dict,
+                )
+                with pytest.raises(possible_errors):
+                    validated_contents = tested_class._validate_subdict(
+                        key_contents,
+                        wrong_necessary_dict,
+                    )
+
+            else:
+
+                validated_contents = tested_class._validate_dict(
+                    key_contents,
+                    necessary_dict,
+                )
+                with pytest.raises(possible_errors):
+                    validated_contents = tested_class._validate_dict(
+                        key_contents,
+                        wrong_necessary_dict,
+                    )
+
+                wrong_contents = copy_dict_with_wrong_value(
+                    key_contents,
+                    "name",
+                    ["not", "a", "string"],
+                )
+                with pytest.raises(possible_errors):
+                    validated_contents = tested_class._validate_dict(
+                        wrong_contents,
+                        necessary_dict,
+                    )
+
+            validated_contents_is_dict = isinstance(validated_contents, dict)
+            assert validated_contents_is_dict
+    """
+
+    def test_validate_subdict(self):
+        """
+        No new functionality to be tested.
+        """
+        assert callable(validate_subdict)
 
 
 class TestManipulationTools:

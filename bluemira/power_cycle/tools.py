@@ -85,6 +85,57 @@ def validate_file(file_path):
         raise FileNotFoundError("The file does not exist in the specified path.")
 
 
+def validate_dict(dictionary, allowed_format):
+    """
+    Validate the 'dictionary' parameter to be a 'dict' with the format
+    specified by the 'necessary_format' parameter. The format parameter
+    should be given as a 'dict', with:
+        - its keys listing the allowed keys in 'dictionary'; and
+        - each value specifiying the necessary type of that key.
+    Keys of 'dictionary' that are not present in 'allowed_format' do
+    not trigger an exception.
+    """
+    allowed_keys = allowed_format.keys()
+    dictionary_keys = dictionary.keys()
+    for key in dictionary_keys:
+        key_is_allowed = key in allowed_keys
+
+        if key_is_allowed:
+            value = dictionary[key]
+            type_of_value = type(value)
+            necessary_type = allowed_format[key]
+            type_is_incorrect = type_of_value is not necessary_type
+            if type_is_incorrect:
+                raise TypeError(
+                    f"The value in key {key!r} is not of "
+                    f"the {necessary_type!r} class.",
+                )
+        else:
+            raise KeyError(
+                f"The string {key!r} is not a valid key.",
+            )
+    return dictionary
+
+
+def validate_subdict(dictionary, allowed_format):
+    """
+    Applies 'validate_dict' to each dictionary stored as values in
+    'dictionary'.
+    """
+    dictionary_keys = dictionary.keys()
+    for key in dictionary_keys:
+        value = dictionary[key]
+        value_is_dict = type(value) == dict
+        if value_is_dict:
+            sub_dictionary = value
+            sub_dictionary = validate_dict(sub_dictionary, allowed_format)
+        else:
+            raise TypeError(
+                "Values stored in 'dictionary' must be of the " "'dict' class.",
+            )
+    return dictionary
+
+
 # ######################################################################
 # MANIPULATION
 # ######################################################################

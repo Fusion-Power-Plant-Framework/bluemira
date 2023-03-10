@@ -10,7 +10,13 @@ from bluemira.base.constants import raw_uc
 from bluemira.power_cycle.base import PowerCycleTimeABC
 from bluemira.power_cycle.errors import PowerCyclePhaseError, ScenarioBuilderError
 from bluemira.power_cycle.net.importers import EquilibriaImporter, PumpingImporter
-from bluemira.power_cycle.tools import read_json, validate_file, validate_list
+from bluemira.power_cycle.tools import (
+    read_json,
+    validate_dict,
+    validate_file,
+    validate_list,
+    validate_subdict,
+)
 
 
 class PowerCyclePhase(PowerCycleTimeABC):
@@ -140,31 +146,31 @@ class ScenarioBuilder:
     # CLASS ATTRIBUTES & CONSTRUCTOR
     # ------------------------------------------------------------------
 
-    _config_dict = {
+    _config_format = {
         "scenario": dict,
         "pulse-library": dict,
         "phase-library": dict,
         "breakdown-library": dict,
     }
 
-    _scenario_dict = {
+    _scenario_format = {
         "name": str,
         "pulses": list,
         "repetition": list,
     }
 
-    _pulse_dict = {
+    _pulse_format = {
         "name": str,
         "phases": list,
     }
 
-    _phase_dict = {
+    _phase_format = {
         "name": str,
         "logical": str,
         "breakdown": list,
     }
 
-    _breakdown_dict = {
+    _breakdown_format = {
         "name": str,
         "module": str,
         "variables_map": dict,
@@ -207,77 +213,40 @@ class ScenarioBuilder:
 
         self.scenario = scenario
 
-    @staticmethod
-    def _validate_dict(dictionary, necessary_dictionary):
-        necessary_keys = necessary_dictionary.keys()
-        dictionary_keys = dictionary.keys()
-        for key in dictionary_keys:
-            key_is_correct = key in necessary_keys
-
-            if key_is_correct:
-                value = dictionary[key]
-                type_of_value = type(value)
-                necessary_type = necessary_dictionary[key]
-                type_is_incorrect = type_of_value is not necessary_type
-                if type_is_incorrect:
-                    raise ScenarioBuilderError(
-                        "config",
-                        f"The value in key {key!r} is not of "
-                        f"the {necessary_type!r} class.",
-                    )
-
-            else:
-                raise ScenarioBuilderError(
-                    "config",
-                    f"The string {key!r} is not a valid key.",
-                )
-        return dictionary
-
-    @classmethod
-    def _validate_subdict(cls, contents_in_key, necessary_dictionary):
-        content_subkeys = contents_in_key.keys()
-        for subkey in content_subkeys:
-            subkey_specs = contents_in_key[subkey]
-            subkey_specs = cls._validate_dict(
-                subkey_specs,
-                necessary_dictionary,
-            )
-        return contents_in_key
-
     @classmethod
     def _validate_config(cls, json_contents):
-        necessary_dict = cls._config_dict
-        json_contents = cls._validate_dict(
+        allowed_format = cls._config_format
+        json_contents = validate_dict(
             json_contents,
-            necessary_dict,
+            allowed_format,
         )
         json_keys = json_contents.keys()
         for key in json_keys:
             contents_in_key = json_contents[key]
 
             if key == "scenario":
-                necessary_dict = cls._scenario_dict
-                scenario_config = cls._validate_dict(
+                allowed_format = cls._scenario_format
+                scenario_config = validate_dict(
                     contents_in_key,
-                    necessary_dict,
+                    allowed_format,
                 )
             elif key == "pulse-library":
-                necessary_dict = cls._pulse_dict
-                pulse_config = cls._validate_subdict(
+                allowed_format = cls._pulse_format
+                pulse_config = validate_subdict(
                     contents_in_key,
-                    necessary_dict,
+                    allowed_format,
                 )
             elif key == "phase-library":
-                necessary_dict = cls._phase_dict
-                phase_config = cls._validate_subdict(
+                allowed_format = cls._phase_format
+                phase_config = validate_subdict(
                     contents_in_key,
-                    necessary_dict,
+                    allowed_format,
                 )
             elif key == "breakdown-library":
-                necessary_dict = cls._breakdown_dict
-                breakdown_config = cls._validate_subdict(
+                allowed_format = cls._breakdown_format
+                breakdown_config = validate_subdict(
                     contents_in_key,
-                    necessary_dict,
+                    allowed_format,
                 )
             else:
                 raise ScenarioBuilderError(
