@@ -26,13 +26,14 @@ gradient coil-set optimisation problem.
 import os
 import shutil
 from dataclasses import dataclass
-from typing import Dict, Optional, Union
+from typing import Dict, Optional, Type, Union
 
 import matplotlib.pyplot as plt
 import numpy as np
 
 from bluemira.base.designer import Designer
 from bluemira.base.file import get_bluemira_path, get_bluemira_root
+from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.base.parameter_frame import Parameter, ParameterFrame
 from bluemira.codes.wrapper import transport_code_solver
 from bluemira.equilibria import Equilibrium
@@ -48,9 +49,10 @@ from bluemira.equilibria.file import EQDSKInterface
 from bluemira.equilibria.opt_problems import UnconstrainedTikhonovCurrentGradientCOP
 from bluemira.equilibria.shapes import JohnerLCFS
 from bluemira.equilibria.solve import DudsonConvergence, PicardIterator
-from bluemira.geometry.parameterisations import PrincetonD
+from bluemira.geometry.parameterisations import GeometryParameterisation, PrincetonD
 from bluemira.geometry.tools import make_circle, make_polygon, offset_wire
 from bluemira.geometry.wire import BluemiraWire
+from bluemira.utilities.tools import get_class_from_module
 from eudemo.equilibria._equilibrium import (
     EquilibriumParams,
     ReferenceEquilibriumParams,
@@ -370,16 +372,26 @@ class FixedEquilibriumDesigner(Designer[Equilibrium]):
 
     def _get_geometry_parameterisation(self):
         kappa_u, kappa_l, delta_u, delta_l = self._derive_shape_params()
-        return JohnerLCFS(
-            {
-                "r_0": {"value": self.params.R_0.value},
-                "a": {"value": self.params.A.value},
-                "kappa_u": {"value": kappa_u},
-                "kappa_l": {"value": kappa_l},
-                "delta_u": {"value": delta_u},
-                "delta_l": {"value": delta_l},
-            }
+        param_cls: Type[GeometryParameterisation] = get_class_from_module(
+            self.build_config["param_class"], default_module="bluemira.equilibria.shapes"
         )
+
+        input_dict = {
+            "r_0": {"value": self.params.R_0.value},
+            "a": {"value": self.params.A.value},
+            "kappa_u": {"value": kappa_u},
+            "kappa_l": {"value": kappa_l},
+            "delta_u": {"value": delta_u},
+            "delta_l": {"value": delta_l},
+        }
+        for k, v in self.build_config["shape_config"]:
+            if k in param_cls.variables.names:
+                input_dict[k] = {"value": v}
+            else:
+                bluemira_warn(
+                    f"Unknown shape parameter for GeometryParameterisation: {param_cls.name}"
+                )
+        return param_cls(input_dict)
 
     def _derive_shape_params(self):
         shape_config = self.build_config.get("shape_config", {})
