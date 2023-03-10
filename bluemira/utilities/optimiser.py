@@ -233,7 +233,7 @@ class Optimiser(NLOPTOptimiser):
         tolerances = np.array(tolerances)
 
         if not np.all(c_values < tolerances):
-            indices = np.where(c_values < tolerances)[0]
+            indices = np.where(c_values > tolerances)[0]
 
             message = "\n".join(
                 [
