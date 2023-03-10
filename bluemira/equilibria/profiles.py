@@ -479,7 +479,7 @@ class BetaIpProfile(Profile):
     betap: float
         Plasma poloidal beta constraint
     I_p: float
-        Plasma current constraint [Amps]
+        Plasma current constraint [A]
     R_0: float
         Reactor major radius [m] (used in p' and ff' components)
 
@@ -596,6 +596,23 @@ class BetaLiIpProfile(BetaIpProfile):
     """
     This is what BLUEPRINT used to do, and Fabrizio told me he had done
     something similar, at one point.
+
+    Parameters
+    ----------
+    betap: float
+        Plasma poloidal beta constraint
+    l_i: float
+        Normalised internal inductance constraint
+    I_p: float
+        Plasma current constraint [Amps]
+    R_0: float
+        Reactor major radius [m] (used in p' and ff' components)
+    B_0: float
+        Toroidal field [T]
+    shape: Optional[ShapeFunction]
+        The shape function to use for the flux functions
+    li_rel_tol: float
+        Absolute relative tolerance for the internal inductance constraint
     """
 
     def __init__(self, betap, l_i, I_p, R_0, B_0, shape=None, li_rel_tol=0.015):
