@@ -592,6 +592,18 @@ class BetaIpProfile(Profile):
         return MU_0 * self.lambd * (1 - self.beta0) * self.R_0 * self.shape(pn)
 
 
+class BetaLiIpProfile(BetaIpProfile):
+    """
+    This is what BLUEPRINT used to do, and Fabrizio told me he had done
+    something similar, at one point.
+    """
+
+    def __init__(self, betap, l_i, I_p, R_0, B_0, shape=None, li_rel_tol=0.015):
+        super().__init__(betap, I_p, R_0, B_0, shape=shape)
+        self.l_i_target = l_i
+        self.rel_tol = li_rel_tol
+
+
 class CustomProfile(Profile):
     """
     User-specified profile functions p'(psi), ff'(psi)

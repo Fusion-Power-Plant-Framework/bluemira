@@ -58,7 +58,7 @@ from bluemira.equilibria.plotting import (
     CorePlotter2,
     EquilibriumPlotter,
 )
-from bluemira.equilibria.profiles import CustomProfile
+from bluemira.equilibria.profiles import BetaLiIpProfile, CustomProfile
 from bluemira.geometry.coordinates import Coordinates
 from bluemira.utilities.opt_tools import process_scipy_result
 from bluemira.utilities.tools import abs_rel_difference
@@ -507,8 +507,6 @@ class Equilibrium(MHDState):
         Limiter conditions to apply to equilibrium
     psi: None or 2-D numpy array (optional) default = None
         Magnetic flux [V.s] applied to X, Z grid
-    li: None or float (default None)
-        Normalised plasma internal inductance [-]
     jtor: np.array or None
         The toroidal current density array of the plasma. Default = None will
         cause the jtor array to be constructed later as necessary.
@@ -525,7 +523,6 @@ class Equilibrium(MHDState):
         vcontrol=None,
         limiter=None,
         psi=None,
-        li=None,
         jtor=None,
         filename=None,
     ):
@@ -537,9 +534,13 @@ class Equilibrium(MHDState):
         self._x_points = None
         self._solver = None
         self._eqdsk = None
-        self._li = li  # target plasma normalised inductance
-        self._li_iter = 0  # li iteration count
-        self._li_temp = None
+
+        self._li_flag = False
+        if isinstance(profiles, BetaLiIpProfile):
+            self._li_flag = True
+            self._li = profiles.l_i_target  # target plasma normalised inductance
+            self._li_iter = 0  # li iteration count
+            self._li_temp = None
 
         self.plasma = None
 
@@ -834,10 +835,8 @@ class Equilibrium(MHDState):
             ._I_p
             ._Jtor
         """
-        if self._li is None:
-            raise EquilibriaError(
-                "Need to specify a normalised internal inductance to solve an Equilibrium with solve_li."
-            )
+        if not self._li_flag:
+            raise EquilibriaError("Cannot use solve_li without the BetaLiIpProfile.")
         self._clear_OX_points()
         if psi is None:
             psi = self.psi()
@@ -872,7 +871,7 @@ class Equilibrium(MHDState):
             )
             self._li_temp = li
             self._jtor = jtor_opt
-            if abs_rel_difference(self._li_temp, self._li) <= LI_REL_TOL:
+            if abs_rel_difference(self._li_temp, self._li) <= self.profiles.rel_tol:
                 # Scipy's callback argument doesn't seem to work, so we do this
                 # instead...
                 raise StopIteration
