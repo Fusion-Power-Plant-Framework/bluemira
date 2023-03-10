@@ -1,42 +1,42 @@
 {
     "x1": {
-        "value": 4.069332,
+        "value": 4.105036999999999,
         "lower_bound": 4,
         "upper_bound": 5,
         "fixed": true
     },
     "dz": {
-        "value": -0.29268371742616417,
+        "value": -0.3121790258409872,
         "lower_bound": -1,
         "upper_bound": 1,
         "fixed": false
     },
     "sl": {
-        "value": 5.0000000002675025,
+        "value": 6.657042999192838,
         "lower_bound": 5,
         "upper_bound": 10,
         "fixed": false
     },
     "f1": {
-        "value": 6.061240123568973,
+        "value": 4.9226129040423405,
         "lower_bound": 2,
         "upper_bound": 12,
         "fixed": false
     },
     "f2": {
-        "value": 3.6101417899189587,
+        "value": 5.295756121980762,
         "lower_bound": 2,
         "upper_bound": 12,
         "fixed": false
     },
     "a1": {
-        "value": 61.47283662815609,
+        "value": 5.0012516241282094,
         "lower_bound": 5,
         "upper_bound": 120,
         "fixed": false
     },
     "a2": {
-        "value": 36.08368981229508,
+        "value": 97.57693181369945,
         "lower_bound": 10,
         "upper_bound": 120,
         "fixed": false

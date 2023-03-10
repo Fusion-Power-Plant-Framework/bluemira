@@ -246,6 +246,8 @@ def _read_json(file_path: str) -> Dict:
 
 
 if __name__ == "__main__":
+    import time
+
     reactor = EUDEMO("EUDEMO")
     params = make_parameter_frame(PARAMS_FILE, EUDEMOReactorParams)
     if params is None:
@@ -268,22 +270,32 @@ if __name__ == "__main__":
     blanket_face, divertor_face, ivc_boundary = design_ivc(
         params, build_config["IVC"], equilibrium=free_boundary_eq
     )
-
+    t1 = time.time()
     upper_port_designer = UpperPortDesigner(
         params, build_config.get("Upper Port", {}), blanket_face
     )
+    t2 = time.time()
+    print(f"{t2-t1}")
     upper_port_xz, r_inner_cut, cut_angle = upper_port_designer.execute()
-
+    t3 = time.time()
+    print(f"{t3-t2}")
     reactor.vacuum_vessel = build_vacuum_vessel(
         params, build_config.get("Vacuum vessel", {}), ivc_boundary
     )
+    t4 = time.time()
+    print(f"{t4-t3}")
 
     reactor.divertor = build_divertor(
         params, build_config.get("Divertor", {}), divertor_face
     )
+    t5 = time.time()
+    print(f"{t5-t4}")
+
     reactor.blanket = build_blanket(
         params, build_config.get("Blanket", {}), blanket_face, r_inner_cut, cut_angle
     )
+    t6 = time.time()
+    print(f"{t6-t5}")
 
     thermal_shield_config = build_config.get("Thermal shield", {})
     reactor.vv_thermal = build_vacuum_vessel_thermal_shield(
@@ -291,6 +303,8 @@ if __name__ == "__main__":
         thermal_shield_config.get("VVTS", {}),
         reactor.vacuum_vessel.xz_boundary(),
     )
+    t7 = time.time()
+    print(f"{t7-t6}")
 
     reactor.tf_coils = build_tf_coils(
         params,
@@ -298,6 +312,8 @@ if __name__ == "__main__":
         reactor.plasma.lcfs(),
         reactor.vv_thermal.xz_boundary(),
     )
+    t8 = time.time()
+    print(f"{t8-t7}")
 
     reactor.pf_coils = build_pf_coils(
         params,

@@ -641,13 +641,14 @@ class TFCoilBuilder(Builder):
         """
         # Normally I'd do lots more here to get to a proper casing
         # This is just a proof-of-principle
+        from bluemira.display import show_cad
+        from bluemira.display.displayer import DisplayCADOptions
 
         centreline_points = self.centreline.discretize(byedges=True, ndiscr=2000)
 
         solid = self._make_inner_cas_xsec(y_in, inner_xs, outer_xs, centreline_points)
-
-        from bluemira.display import show_cad
-        from bluemira.display.displayer import DisplayCADOptions
+        print("something")
+        show_cad(solid)
 
         cut_wires = slice_shape(
             solid, BluemiraPlane.from_3_points([0, 0, 0], [1, 0, 0], [1, 0, 1])
@@ -663,6 +664,7 @@ class TFCoilBuilder(Builder):
         joiner_top, joiner_bottom = self._make_joining_sections(
             z_min, z_max, centreline_points
         )
+        show_cad([solid, inboard_casing])
 
         # Cut away straight sweep before fusing to protect against degenerate faces
         # Keep the largest piece
@@ -717,7 +719,6 @@ class TFCoilBuilder(Builder):
 
         """
         tf_centreline_min = self.centreline.bounding_box.x_min
-        print(self.params)
         tf_thick = (
             self.params.tk_tf_nose.value
             + self.params.tf_wp_width.value

@@ -1,9 +1,9 @@
 {
     "Radial build": {
-        "run_mode": "run",
+        "run_mode": "read",
         "read_dir": "config/",
         "run_dir": "config/",
-        "plot": true
+        "plot": false
     },
     "Fixed boundary equilibrium":{
         "run_mode": "read",
@@ -38,7 +38,7 @@
             "max_iter": 15,
             "iter_err_max": 1e-1,
             "relaxation": 0.0,
-            "plot": true
+            "plot": false
         }
     },
     "Free boundary equilibrium":{
