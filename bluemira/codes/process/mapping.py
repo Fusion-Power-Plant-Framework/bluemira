@@ -89,7 +89,7 @@ IN_mappings = {
     "tk_vv_top": ("d_vv_top", "m"),
     "tk_vv_bot": ("d_vv_bot", "m"),
     "tk_cr_vv": ("ddwex", "m"),
-    "tk_tf_front_ib": ("casthi", "m"),
+    "tk_tf_front_ib": ("dr_tf_case_out", "m"),
     "tk_tf_side": ("casths", "m"),
     "PsepB_qAR_max": ("psepbqarmax", "MW.T/m"),
 }
@@ -122,7 +122,7 @@ OUT_mappings = {
     "tk_fw_in": ("fwith", "m"),
     "tk_fw_out": ("fwoth", "m"),
     "tk_tf_inboard": ("tfcth", "m"),
-    "tk_tf_nose": ("thkcas", "m"),
+    "tk_tf_nose": ("dr_tf_case_in", "m"),
     "tf_wp_width": ("dr_tf_wp", "m"),
     "tf_wp_depth": ("wwp1", "m"),
     "tk_tf_ins": ("tinstf", "m"),
