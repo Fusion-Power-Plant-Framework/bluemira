@@ -665,11 +665,12 @@ class TFCoilBuilder(Builder):
         try:
             pieces = boolean_cut(solid, inboard_casing)
             solid = max(pieces, key=lambda x: x.volume)
-        except:  # Part.OCCError :/
+        except Exception as e:  # Part.OCCError :/
             from bluemira.base.look_and_feel import bluemira_warn
 
             bluemira_warn(
-                "Boolean cut operation failed on TF coil, things are likely going to go to shit real soon."
+                "Boolean cut operation failed on TF coil, things are likely going to go to shit real soon.\n"
+                f"{e}"
             )
             pass
 
