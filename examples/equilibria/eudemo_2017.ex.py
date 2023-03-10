@@ -351,9 +351,11 @@ ax[2].set_title("$\\psi_{b}$ = " + f"{eof_psi:.2f} V.s")
 
 plt.show()
 
-# TODO: Fix this example...
-# bluemira_print(
-#     "SOF:\n" f"beta_p: {calc_beta_p_approx(sof):.2f}\n" f"l_i: {calc_li(sof):.2f}"
-# )
+from bluemira.equilibria.physics import calc_beta_p, calc_li3
 
-# bluemira_print("EOF:\n" f"beta_p: {calc_beta_p(eof):.2f}\n" f"l_i: {calc_li(sof):.2f}")
+bluemira_print()
+# TODO: Fix this example...
+msg = f"SOF: beta_p: {calc_beta_p(sof):.2f} l_i: {calc_li3(sof):.2f}"
+bluemira_print(msg)
+msg = f"EOF: beta_p: {calc_beta_p(eof):.2f} l_i: {calc_li3(eof):.2f}"
+bluemira_print(msg)

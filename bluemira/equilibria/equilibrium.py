@@ -838,6 +838,7 @@ class Equilibrium(MHDState):
         if not self._li_flag:
             raise EquilibriaError("Cannot use solve_li without the BetaLiIpProfile.")
         self._clear_OX_points()
+        self._li_iter = 0
         if psi is None:
             psi = self.psi()
         # Speed optimisations
