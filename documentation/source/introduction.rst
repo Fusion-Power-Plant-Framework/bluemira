@@ -67,4 +67,4 @@ help you.
 .. figure:: bluemira-roadmap.svg
     :name: fig:bluemira-roadmap
 
-    ``Bluemira`` development roadmap for 2023
+    ``Bluemira`` development roadmap for 2023/24

@@ -24,7 +24,7 @@ caused our feature roadmap to slip. A lot of functionality that was present in  
 changes in the near future. We apologise in advance for these. Please do get in touch
 before starting to use any modules, so we can warn you of changes to come.
 
-Below is an overview of our development roadmap for 2023:
+Below is an overview of our development roadmap for 2023/24:
 <p align="center">
   <a href="https://bluemira.readthedocs.io/en/latest/introduction.html#roadmap" target="_blank">
     <picture>

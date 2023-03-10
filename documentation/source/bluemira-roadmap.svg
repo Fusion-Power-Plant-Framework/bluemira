@@ -34,11 +34,11 @@
      inkscape:snap-nodes="false"
      inkscape:object-nodes="true"
      inkscape:zoom="1"
-     inkscape:cx="585.5"
-     inkscape:cy="172.5"
-     inkscape:window-width="1350"
-     inkscape:window-height="665"
-     inkscape:window-x="8"
+     inkscape:cx="579.5"
+     inkscape:cy="161.5"
+     inkscape:window-width="1904"
+     inkscape:window-height="977"
+     inkscape:window-x="1374"
      inkscape:window-y="58"
      inkscape:window-maximized="0"
      inkscape:current-layer="g35"
@@ -121,8 +121,24 @@
         </g>
       </g>
       <g
+         id="g231-3"
+         transform="translate(-616.55472,141.82508)">
+        <text
+           transform="matrix(1,0,0,-1,745.398,235.899)"
+           style="font-variant:normal;font-weight:normal;font-size:15.987px;line-height:1;font-family:sans-serif;-inkscape-font-specification:sans-serif;writing-mode:lr-tb;white-space:pre;inline-size:161.734;fill:#000000;fill-opacity:1;fill-rule:nonzero;stroke:none"
+           id="text235-6"
+           xml:space="preserve"><tspan
+             x="0"
+             y="12.146373"
+             id="tspan39450">Transient Power </tspan><tspan
+             x="0"
+             y="28.133374"
+             id="tspan39452">Balance mode
+</tspan></text>
+      </g>
+      <g
          id="g231-5"
-         transform="translate(-216.14715,165.77969)">
+         transform="translate(-16.466371,165.7943)">
         <text
            transform="matrix(1,0,0,-1,745.398,235.899)"
            style="font-variant:normal;font-weight:normal;font-size:15.987px;line-height:1;font-family:sans-serif;-inkscape-font-specification:sans-serif;writing-mode:lr-tb;white-space:pre;inline-size:145.862;fill:#000000;fill-opacity:1;fill-rule:nonzero;stroke:none"
@@ -130,39 +146,39 @@
            xml:space="preserve"><tspan
              x="0"
              y="0"
-             id="tspan74309">Vertical Stability </tspan><tspan
+             id="tspan39454">Vertical Stability </tspan><tspan
              x="0"
              y="15.987"
-             id="tspan74311">calculations
+             id="tspan39456">calculations
 </tspan></text>
       </g>
       <g
          id="g231-5-6"
-         transform="translate(-216.14715,128.75803)">
+         transform="translate(-216.14715,144.04201)">
         <text
            transform="matrix(1,0,0,-1,745.398,253.5097)"
            style="font-variant:normal;font-weight:normal;font-size:15.987px;line-height:1;font-family:sans-serif;-inkscape-font-specification:sans-serif;writing-mode:lr-tb;white-space:pre;inline-size:173.576;fill:#000000;fill-opacity:1;fill-rule:nonzero;stroke:none"
            id="text235-3-2"
            xml:space="preserve"><tspan
              x="0"
-             y="15.987"
-             id="tspan74313">Transient Power </tspan><tspan
-             x="0"
              y="31.974001"
-             id="tspan74315">Balance model
+             id="tspan39458">2-D winding pack </tspan><tspan
+             x="0"
+             y="47.961002"
+             id="tspan39460">design module
 </tspan></text>
       </g>
       <text
-         transform="matrix(1,0,0,-1,327.26139,365.57669)"
+         transform="matrix(1,0,0,-1,526.94217,401.6933)"
          style="font-variant:normal;font-weight:normal;font-size:15.987px;line-height:1;font-family:sans-serif;-inkscape-font-specification:sans-serif;writing-mode:lr-tb;white-space:pre;inline-size:154.221;fill:#000000;fill-opacity:1;fill-rule:nonzero;stroke:none"
          id="text325-7"
          xml:space="preserve"><tspan
            x="0"
            y="0"
-           id="tspan74317">3-D radiation </tspan><tspan
+           id="tspan39462">3-D radiation </tspan><tspan
            x="0"
            y="15.987"
-           id="tspan74319">transport</tspan></text>
+           id="tspan39464">transport</tspan></text>
       <g
          id="g73"
          transform="matrix(1.0026884,0,0,1.0079576,0.1820512,138.6613)">
@@ -240,7 +256,7 @@
          style="fill:#70ad47;fill-opacity:1;fill-rule:evenodd;stroke:none"
          id="path115" />
       <path
-         d="m 506.07966,398.91287 8.986,9.978 8.986,-9.978 -8.986,-10.007 z"
+         d="m 705.76044,398.91287 8.986,9.978 8.986,-9.978 -8.986,-10.007 z"
          style="fill:#70ad47;fill-opacity:1;fill-rule:evenodd;stroke:none"
          id="path117" />
       <path
@@ -252,7 +268,7 @@
          style="fill:#5b9bd5;fill-opacity:1;fill-rule:evenodd;stroke:none;stroke-width:1.0001"
          id="path123" />
       <path
-         d="m 306.39888,362.30573 8.986,9.977 8.986,-9.977 -8.986,-10.007 z"
+         d="m 506.07966,398.42234 8.986,9.977 8.986,-9.977 -8.986,-10.007 z"
          style="fill:#70ad47;fill-opacity:1;fill-rule:evenodd;stroke:none"
          id="path127" />
       <path
@@ -314,7 +330,7 @@
              x="0"
              y="0"
              sodipodi:role="line"
-             id="tspan155">Q1</tspan></text>
+             id="tspan155">Q2</tspan></text>
       </g>
       <g
          id="g159"
@@ -326,7 +342,7 @@
              x="0"
              y="0"
              sodipodi:role="line"
-             id="tspan161">Q2</tspan></text>
+             id="tspan161">Q3</tspan></text>
       </g>
       <g
          id="g165"
@@ -338,10 +354,10 @@
            xml:space="preserve"><tspan
              x="0"
              y="0"
-             id="tspan74321">Promotion of open </tspan><tspan
+             id="tspan39466">Promotion of open </tspan><tspan
              x="0"
              y="15.987"
-             id="tspan74323">source</tspan></text>
+             id="tspan39468">source</tspan></text>
       </g>
       <g
          id="g219"
@@ -353,22 +369,22 @@
            xml:space="preserve"><tspan
              x="0"
              y="0"
-             id="tspan74325">EU-DEMO workflow</tspan></text>
+             id="tspan39470">EU-DEMO workflow</tspan></text>
       </g>
       <g
          id="g231"
-         transform="translate(-416.58512,166.5824)">
+         transform="translate(-416.58512,177.94067)">
         <text
            transform="matrix(1,0,0,-1,745.398,235.899)"
-           style="font-variant:normal;font-weight:normal;font-size:15.987px;line-height:1;font-family:sans-serif;-inkscape-font-specification:sans-serif;writing-mode:lr-tb;white-space:pre;inline-size:145.862;fill:#000000;fill-opacity:1;fill-rule:nonzero;stroke:none"
+           style="font-variant:normal;font-weight:normal;font-size:15.987px;line-height:1;font-family:sans-serif;-inkscape-font-specification:sans-serif;writing-mode:lr-tb;white-space:pre;inline-size:161.734;fill:#000000;fill-opacity:1;fill-rule:nonzero;stroke:none"
            id="text235"
            xml:space="preserve"><tspan
              x="0"
-             y="0"
-             id="tspan74327">2-D winding pack </tspan><tspan
+             y="12.146373"
+             id="tspan39472">2-D deterministic </tspan><tspan
              x="0"
-             y="15.987"
-             id="tspan74329">design module</tspan></text>
+             y="28.133374"
+             id="tspan39474">radiation transport</tspan></text>
       </g>
       <g
          id="g237"
@@ -404,11 +420,11 @@
            xml:space="preserve"><tspan
              x="0"
              y="0"
-             id="tspan74331">User group
+             id="tspan39476">User group
 </tspan><tspan
              x="0"
              y="15.987"
-             id="tspan74333">meetings/workshops</tspan></text>
+             id="tspan39478">meetings/workshops</tspan></text>
       </g>
       <g
          id="g267"
@@ -444,7 +460,7 @@
              x="0"
              y="0"
              sodipodi:role="line"
-             id="tspan311">Q3</tspan></text>
+             id="tspan311">Q4</tspan></text>
       </g>
       <g
          id="g315"
@@ -456,7 +472,7 @@
              x="0"
              y="0"
              sodipodi:role="line"
-             id="tspan317">Q4</tspan></text>
+             id="tspan317">Q1</tspan></text>
       </g>
       <g
          id="g321"
@@ -465,13 +481,7 @@
            transform="matrix(1,0,0,-1,545.63223,264.189)"
            style="font-variant:normal;font-weight:normal;font-size:15.987px;line-height:1;font-family:sans-serif;-inkscape-font-specification:sans-serif;writing-mode:lr-tb;white-space:pre;inline-size:154.221;fill:#000000;fill-opacity:1;fill-rule:nonzero;stroke:none"
            id="text325"
-           xml:space="preserve"><tspan
-             x="0"
-             y="0"
-             id="tspan74335">2-D deterministic </tspan><tspan
-             x="0"
-             y="15.987"
-             id="tspan74337">radiation transport</tspan></text>
+           xml:space="preserve" />
       </g>
       <g
          id="g327"
@@ -486,23 +496,23 @@
              y="0" /></text>
       </g>
       <path
-         d="m 306.39888,480.44919 2.75,2.863 -0.142,4.196 3.798,-0.142 2.58,3.061 2.551,-3.061 3.798,0.142 -0.141,-4.196 2.778,-2.863 -2.778,-2.863 0.141,-4.195 -3.798,0.142 -2.551,-3.09 -2.58,3.09 -3.798,-0.142 0.142,4.195 z"
+         d="m 506.07966,480.44919 2.75,2.863 -0.142,4.196 3.798,-0.142 2.58,3.061 2.551,-3.061 3.798,0.142 -0.141,-4.196 2.778,-2.863 -2.778,-2.863 0.141,-4.195 -3.798,0.142 -2.551,-3.09 -2.58,3.09 -3.798,-0.142 0.142,4.195 z"
          style="fill:#ffc000;fill-opacity:1;fill-rule:evenodd;stroke:none"
          id="path353" />
       <g
          id="g355"
          transform="translate(-411.63177,138.72655)">
         <text
-           transform="matrix(1,0,0,-1,740.27291,345.52897)"
+           transform="matrix(1,0,0,-1,939.95369,345.52897)"
            style="font-variant:normal;font-weight:normal;font-size:15.987px;line-height:1;font-family:sans-serif;-inkscape-font-specification:sans-serif;writing-mode:lr-tb;white-space:pre;inline-size:155.261;fill:#000000;fill-opacity:1;fill-rule:nonzero;stroke:none"
            id="text359"
            xml:space="preserve"><tspan
              x="0"
              y="0"
-             id="tspan74339">Switch to PROCESS </tspan><tspan
+             id="tspan39480">Switch to PROCESS </tspan><tspan
              x="0"
              y="15.987"
-             id="tspan74341">Python API</tspan></text>
+             id="tspan39482">Python API</tspan></text>
       </g>
       <g
          id="g355-3"
@@ -514,10 +524,10 @@
            xml:space="preserve"><tspan
              x="0"
              y="0"
-             id="tspan74343">Optimisation API </tspan><tspan
+             id="tspan39484">Optimisation API </tspan><tspan
              x="0"
              y="15.987"
-             id="tspan74345">review</tspan></text>
+             id="tspan39486">review</tspan></text>
       </g>
     </g>
   </g>
