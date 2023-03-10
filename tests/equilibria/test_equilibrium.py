@@ -20,6 +20,7 @@
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 
 import os
+from copy import deepcopy
 from unittest.mock import patch
 
 import numpy as np
@@ -36,8 +37,9 @@ from bluemira.equilibria.opt_constraints import (
     MagneticConstraintSet,
 )
 from bluemira.equilibria.opt_problems import UnconstrainedTikhonovCurrentGradientCOP
-from bluemira.equilibria.profiles import CustomProfile
-from bluemira.equilibria.solve import PicardIterator
+from bluemira.equilibria.profiles import BetaIpProfile, BetaLiIpProfile, CustomProfile
+from bluemira.equilibria.shapes import flux_surface_kuiroukidis
+from bluemira.equilibria.solve import DudsonConvergence, PicardIterator
 from bluemira.utilities.tools import abs_rel_difference, compare_dicts
 from tests.equilibria.setup_methods import _coilset_setup
 
@@ -212,6 +214,110 @@ class TestFields:
         ax4.set_aspect("equal")
         ax4.set_title("plasma_Bp")
         plt.close("all")
+
+
+class TestSolveEquilibrium:
+    R_0 = 9
+    A = 3
+    I_p = 15e6
+    B_0 = 5
+
+    grid = Grid(5, 10, -6, 6, 25, 25)
+    lcfs = flux_surface_kuiroukidis(R_0, 0, R_0 / A, 1.5, 1.7, 0.33, 0.33)
+    x_arg = np.argmin(lcfs.z)
+    targets = MagneticConstraintSet(
+        IsofluxConstraint(lcfs.x, lcfs.z, lcfs.x[0], lcfs.z[0]),
+        FieldNullConstraint(lcfs.x[x_arg], lcfs.z[x_arg]),
+    )
+
+    @classmethod
+    def setup_class(cls):
+        _coilset_setup(cls, materials=True)
+
+    def test_custom_profile(self):
+        profiles = CustomProfile(
+            np.array(
+                [
+                    86856,
+                    86506,
+                    84731,
+                    80784,
+                    74159,
+                    64576,
+                    52030,
+                    36918,
+                    20314,
+                    4807,
+                    0.0,
+                ]
+            ),
+            -np.array(
+                [
+                    0.125,
+                    0.124,
+                    0.122,
+                    0.116,
+                    0.106,
+                    0.093,
+                    0.074,
+                    0.053,
+                    0.029,
+                    0.007,
+                    0.0,
+                ]
+            ),
+            R_0=self.R_0,
+            B_0=self.B_0,
+            I_p=self.I_p,
+        )
+        eq = Equilibrium(deepcopy(self.coilset), self.grid, profiles)
+        opt_problem = UnconstrainedTikhonovCurrentGradientCOP(
+            eq.coilset, eq, self.targets
+        )
+        program = PicardIterator(
+            eq,
+            opt_problem,
+            convergence=DudsonConvergence(1e-1),
+            fixed_coils=True,
+            relaxation=0.2,
+            plot=False,
+            gif=False,
+        )
+        program()
+
+    def test_betaip_profile(self):
+        profiles = BetaIpProfile()
+        eq = Equilibrium(deepcopy(self.coilset), self.grid, profiles)
+        opt_problem = UnconstrainedTikhonovCurrentGradientCOP(
+            eq.coilset, eq, self.targets
+        )
+        program = PicardIterator(
+            eq,
+            opt_problem,
+            convergence=DudsonConvergence(1e-1),
+            fixed_coils=True,
+            relaxation=0.2,
+            plot=False,
+            gif=False,
+        )
+        program()
+
+    def test_betapliip_profile(self):
+        profiles = BetaLiIpProfile()
+        eq = Equilibrium(deepcopy(self.coilset), self.grid, profiles)
+        opt_problem = UnconstrainedTikhonovCurrentGradientCOP(
+            eq.coilset, eq, self.targets
+        )
+        program = PicardIterator(
+            eq,
+            opt_problem,
+            convergence=DudsonConvergence(1e-1),
+            fixed_coils=True,
+            relaxation=0.2,
+            plot=False,
+            gif=False,
+        )
+        program()
 
 
 class TestEquilibrium:
