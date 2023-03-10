@@ -646,6 +646,9 @@ class TFCoilBuilder(Builder):
 
         solid = self._make_inner_cas_xsec(y_in, inner_xs, outer_xs, centreline_points)
 
+        from bluemira.display import show_cad
+        from bluemira.display.displayer import DisplayCADOptions
+
         cut_wires = slice_shape(
             solid, BluemiraPlane.from_3_points([0, 0, 0], [1, 0, 0], [1, 0, 1])
         )
@@ -674,12 +677,11 @@ class TFCoilBuilder(Builder):
             )
             pass
 
+        show_cad([solid, inboard_casing, joiner_top, joiner_bottom])
         case_solid = boolean_fuse([solid, inboard_casing, joiner_top, joiner_bottom])
         case_solid_hollow = boolean_cut(
             case_solid, BluemiraSolid(ins_solid.boundary[0])
         )[0]
-        from bluemira.display import show_cad
-        from bluemira.display.displayer import DisplayCADOptions
 
         show_cad(case_solid)
         print(f"{case_solid.is_valid()}")
@@ -715,6 +717,7 @@ class TFCoilBuilder(Builder):
 
         """
         tf_centreline_min = self.centreline.bounding_box.x_min
+        print(self.params)
         tf_thick = (
             self.params.tk_tf_nose.value
             + self.params.tf_wp_width.value

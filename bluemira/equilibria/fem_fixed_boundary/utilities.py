@@ -31,6 +31,7 @@ from matplotlib.axes._axes import Axes
 from matplotlib.tri import Triangulation
 from scipy.interpolate import interp1d
 
+from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.utilities.opt_problems import OptimisationConstraint, OptimisationObjective
 from bluemira.utilities.optimiser import Optimiser, approx_derivative
 from bluemira.utilities.tools import is_num
@@ -461,10 +462,37 @@ def calculate_plasma_shape_params(
         optimiser.add_eq_constraints(f_constraint, tolerance=1e-10)
         return optimiser.optimise(x0)
 
-    pi_opt = find_extremum(_f_min_radius, pi)
-    pl_opt = find_extremum(_f_min_vert, pl)
-    po_opt = find_extremum(_f_max_radius, po)
-    pu_opt = find_extremum(_f_max_vert, pu)
+    try:
+        pi_opt = find_extremum(_f_min_radius, pi)
+    except Exception as e:
+        bluemira_warn(
+            f"calculate_plasma_shape_params:: inner point find failing, defaulting to mesh: {e}"
+        )
+        pi_opt = pi
+
+    try:
+        pl_opt = find_extremum(_f_min_vert, pl)
+    except Exception as e:
+        bluemira_warn(
+            f"calculate_plasma_shape_params:: lower point find failing, defaulting to mesh: {e}"
+        )
+        pl_opt = pl
+
+    try:
+        po_opt = find_extremum(_f_max_radius, po)
+    except Exception as e:
+        bluemira_warn(
+            f"calculate_plasma_shape_params:: outer point find failing, defaulting to mesh: {e}"
+        )
+        po_opt = po
+
+    try:
+        pu_opt = find_extremum(_f_max_vert, pu)
+    except Exception as e:
+        bluemira_warn(
+            f"calculate_plasma_shape_params:: upper point find failing, defaulting to mesh: {e}"
+        )
+        pu_opt = pu
 
     if plot:
         _, ax = plt.subplots()
