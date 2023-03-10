@@ -72,8 +72,13 @@ from bluemira.equilibria.opt_problems import (
     OutboardBreakdownZoneStrategy,
     UnconstrainedTikhonovCurrentGradientCOP,
 )
-from bluemira.equilibria.physics import calc_psib
-from bluemira.equilibria.profiles import CustomProfile
+from bluemira.equilibria.physics import calc_beta_p, calc_li3, calc_psib
+from bluemira.equilibria.profiles import (
+    BetaIpProfile,
+    BetaLiIpProfile,
+    CustomProfile,
+    DoublePowerFunc,
+)
 from bluemira.equilibria.solve import PicardIterator
 from bluemira.utilities.optimiser import Optimiser
 
@@ -221,7 +226,15 @@ psi_eof -= 10
 # %% [markdown]
 #
 # Set up a parameterised profile
+# Here you can use a CustomProfile, by feeding in arrays describing
+# your p' and FF' flux functions which are linearly interpolated.
 
+# Or you can use either BetaIpProfile or BetaLiIpProfile to constrain
+# the plasma integrals, optimising the shape of the flux functions
+# to match these.
+
+# Comment out the relevant lines below to explore the different
+# behaviour.
 # %%
 profiles = CustomProfile(
     np.array([86856, 86506, 84731, 80784, 74159, 64576, 52030, 36918, 20314, 4807, 0.0]),
@@ -232,7 +245,6 @@ profiles = CustomProfile(
     B_0=B_0,
     I_p=I_p,
 )
-from bluemira.equilibria.profiles import BetaIpProfile, BetaLiIpProfile, DoublePowerFunc
 
 shape = DoublePowerFunc([2, 1])
 profiles = BetaIpProfile(beta_p, I_p, R_0, B_0, shape=shape)
@@ -349,13 +361,8 @@ eof_psi = 2 * np.pi * eof.psi(*eof._x_points[0][:2])
 ax[1].set_title("$\\psi_{b}$ = " + f"{sof_psi:.2f} V.s")
 ax[2].set_title("$\\psi_{b}$ = " + f"{eof_psi:.2f} V.s")
 
+
+bluemira_print(f"SOF: beta_p: {calc_beta_p(sof):.2f} l_i: {calc_li3(sof):.2f}")
+bluemira_print(f"EOF: beta_p: {calc_beta_p(eof):.2f} l_i: {calc_li3(eof):.2f}")
+
 plt.show()
-
-from bluemira.equilibria.physics import calc_beta_p, calc_li3
-
-bluemira_print()
-# TODO: Fix this example...
-msg = f"SOF: beta_p: {calc_beta_p(sof):.2f} l_i: {calc_li3(sof):.2f}"
-bluemira_print(msg)
-msg = f"EOF: beta_p: {calc_beta_p(eof):.2f} l_i: {calc_li3(eof):.2f}"
-bluemira_print(msg)
